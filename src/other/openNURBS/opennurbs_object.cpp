@@ -1,15 +1,30 @@
-#include "opennurbs.h"
+/* $Header$ */
+/* $NoKeywords: $ */
+/*
+//
+// Copyright (c) 1993-2007 Robert McNeel & Associates. All rights reserved.
+// Rhinoceros is a registered trademark of Robert McNeel & Assoicates.
+//
+// THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY.
+// ALL IMPLIED WARRANTIES OF FITNESS FOR ANY PARTICULAR PURPOSE AND OF
+// MERCHANTABILITY ARE HEREBY DISCLAIMED.
+//				
+// For complete openNURBS copyright information see <http://www.opennurbs.org>.
+//
+////////////////////////////////////////////////////////////////
+*/
 
+#include "opennurbs.h"
 
 #if defined(ON_DLL_EXPORTS)
 
 ////////////////////////////////////////////////////////////////////////////////
 //
-// When openNURBS is used as a MS Windows DLL, it is possible
+// When openNURBS is used as a MS Windows DLL, it is possible 
 // for new/delete to allocate memory in one executable and delete
-// it in another.  Because MS Windows has incompatible memory
+// it in another.  Because MS Windows has incompatible memory 
 // managers in its plethora of C libraries and the choice of which
-// C library actually gets used depends on the code generation
+// C library actually gets used depends on the code generation 
 // options you choose,  we get lots of support questions asking
 // about hard to trace crashes.
 //
@@ -97,66 +112,72 @@ void ON::End()
 
 void ON::Begin()
 {
-  // By explicityly calling all the ON_Object::Cast overrides,
+#if !defined(ON_DLL_EXPORTS)
+  // Some statically linked library optimization discard
+  // object code that is not explicitly referenced.
+  // By explicitly calling all the ON_Object::Cast overrides,
   // we can insure that the class definitions get linked in
-  // by making a single call to ON::Begin().  Otherwise, when
-  // openNURBS is used as a static library, a smart linker will
-  // skip linking some class definitions that are needed for the
-  // reading code to work right.
-
-  const ON_Object* p=0;
-  ON_Annotation::Cast(p);
-  ON_Annotation2::Cast(p);
-  ON_Bitmap::Cast(p);
-  ON_Curve::Cast(p);
-  ON_Geometry::Cast(p);
-  ON_Object::Cast(p);
-  ON_Surface::Cast(p);
-  ON_UserData::Cast(p);
-  ON_LinearDimension::Cast(p);
-  ON_RadialDimension::Cast(p);
-  ON_AngularDimension::Cast(p);
-  ON_TextEntity::Cast(p);
-  ON_Leader::Cast(p);
-  ON_AnnotationTextDot::Cast(p);
-  ON_AnnotationArrow::Cast(p);
-  ON_LinearDimension2::Cast(p);
-  ON_RadialDimension2::Cast(p);
-  ON_AngularDimension2::Cast(p);
-  ON_TextEntity2::Cast(p);
-  ON_Leader2::Cast(p);
-  ON_TextDot::Cast(p);
-  ON_ArcCurve::Cast(p);
-  ON_WindowsBitmap::Cast(p);
-  ON_BrepVertex::Cast(p);
-  ON_BrepEdge::Cast(p);
-  ON_BrepTrim::Cast(p);
-  ON_BrepLoop::Cast(p);
-  ON_BrepFace::Cast(p);
-  ON_Brep::Cast(p);
-  ON_CurveOnSurface::Cast(p);
-  ON_CurveProxy::Cast(p);
-  ON_DimStyle::Cast(p);
-  ON_Font::Cast(p);
-  ON_Group::Cast(p);
-  ON_Layer::Cast(p);
-  ON_Light::Cast(p);
-  ON_LineCurve::Cast(p);
-  ON_Material::Cast(p);
-  ON_Mesh::Cast(p);
-  ON_NurbsCurve::Cast(p);
-  ON_NurbsSurface::Cast(p);
-  ON_PlaneSurface::Cast(p);
-  ON_PointCloud::Cast(p);
-  ON_Point::Cast(p);
-  ON_PointGrid::Cast(p);
-  ON_PolyCurve::Cast(p);
-  ON_PolylineCurve::Cast(p);
-  ON_RevSurface::Cast(p);
-  ON_SumSurface::Cast(p);
-  ON_SurfaceProxy::Cast(p);
-  ON_UnknownUserData::Cast(p);
-  ON_Viewport::Cast(p);
+  // by making a single call to ON::Begin().  These definitions
+  // are needed for the file reading code to work right.
+  static bool bRunning = false;
+  if ( !bRunning )
+  {
+    bRunning = true;
+    const ON_Object* p=0;
+    ON_Annotation::Cast(p);
+    ON_Annotation2::Cast(p);
+    ON_Bitmap::Cast(p);
+    ON_Curve::Cast(p);
+    ON_Geometry::Cast(p);
+    ON_Object::Cast(p);
+    ON_Surface::Cast(p);
+    ON_UserData::Cast(p);
+    ON_LinearDimension::Cast(p);
+    ON_RadialDimension::Cast(p);
+    ON_AngularDimension::Cast(p);
+    ON_TextEntity::Cast(p);
+    ON_Leader::Cast(p);
+    ON_AnnotationTextDot::Cast(p);
+    ON_AnnotationArrow::Cast(p);
+    ON_LinearDimension2::Cast(p);
+    ON_RadialDimension2::Cast(p);
+    ON_AngularDimension2::Cast(p);
+    ON_TextEntity2::Cast(p);
+    ON_Leader2::Cast(p);
+    ON_TextDot::Cast(p);
+    ON_ArcCurve::Cast(p);
+    ON_WindowsBitmap::Cast(p);
+    ON_BrepVertex::Cast(p);
+    ON_BrepEdge::Cast(p);
+    ON_BrepTrim::Cast(p);
+    ON_BrepLoop::Cast(p);
+    ON_BrepFace::Cast(p);
+    ON_Brep::Cast(p);
+    ON_CurveOnSurface::Cast(p);
+    ON_CurveProxy::Cast(p);
+    ON_DimStyle::Cast(p);
+    ON_Font::Cast(p);
+    ON_Group::Cast(p);
+    ON_Layer::Cast(p);
+    ON_Light::Cast(p);
+    ON_LineCurve::Cast(p);
+    ON_Material::Cast(p);
+    ON_Mesh::Cast(p);
+    ON_NurbsCurve::Cast(p);
+    ON_NurbsSurface::Cast(p);
+    ON_PlaneSurface::Cast(p);
+    ON_PointCloud::Cast(p);
+    ON_Point::Cast(p);
+    ON_PointGrid::Cast(p);
+    ON_PolyCurve::Cast(p);
+    ON_PolylineCurve::Cast(p);
+    ON_RevSurface::Cast(p);
+    ON_SumSurface::Cast(p);
+    ON_SurfaceProxy::Cast(p);
+    ON_UnknownUserData::Cast(p);
+    ON_Viewport::Cast(p);
+  }
+#endif
 }
 
 
@@ -180,16 +201,16 @@ int ON_ClassId::Purge( int mark_value )
     for ( p = m_p0; p; p = next )
     {
       next = p->m_pNext;
-      if ( p->m_mark == mark_value ) {
-        purge_count++;
-        if ( prev )
-          prev->m_pNext = next;
-        else
-          m_p0 = next;
-        p->m_pNext = 0;
+      if ( (0x7FFFFFFF & p->m_mark) == mark_value ) {
+	purge_count++;
+	if ( prev )
+	  prev->m_pNext = next;
+	else
+	  m_p0 = next;
+	p->m_pNext = 0;
       }
       else
-        prev = p;
+	prev = p;
     }
   }
   return purge_count;
@@ -232,16 +253,58 @@ static void IntToString( int i, char s[7] )
   s[6] = 0;
 }
 
-ON_ClassId::ON_ClassId( const char* sClassName,
-                        const char* sBaseClassName,
-                        ON_Object* (*create)(),
-                        const char* sUUID // UUID in registry format from guidgen
-                        )
-                        : m_pNext(0),
-                          m_pBaseClassId(0),
-                          m_create(create),
-                          m_mark(m_mark0)
+ON_ClassId::ON_ClassId( const char* sClassName, 
+			const char* sBaseClassName, 
+			ON_Object* (*create)(),
+			bool (*copy)( const ON_Object*, ON_Object* ),
+			const char* sUUID // UUID in registry format from guidgen
+			) 
+			: m_pNext(0),
+			  m_pBaseClassId(0),
+			  m_create(create),
+			  m_mark(m_mark0),
+			  m_class_id_version(1),
+			  m_copy(copy),
+			  m_f2(0),
+			  m_f3(0),
+			  m_f4(0),
+			  m_f5(0),
+			  m_f6(0),
+			  m_f7(0),
+			  m_f8(0)
 {
+  // code compiled on or after opennurbs 200703060 calls this constructor
+  ConstructorHelper(sClassName,sBaseClassName,sUUID);
+  m_mark |= 0x80000000; // This bit of m_mark is a flag that indicates 
+			// the new constructor was called.
+}
+
+
+ON_ClassId::ON_ClassId( const char* sClassName, 
+			const char* sBaseClassName, 
+			ON_Object* (*create)(),
+			const char* sUUID // UUID in registry format from guidgen
+			) 
+			: m_pNext(0),
+			  m_pBaseClassId(0),
+			  m_create(create),
+			  m_mark(m_mark0)
+{
+  // Code COMPILED before opennurbs 200703060 calls this constructor.
+  // DO NOT INITIALIZE m_class_id_version or any ON_ClassId fields
+  // after m_class_id_version because the executable calling this 
+  // constructor did not allocate room for this these members.
+  ConstructorHelper(sClassName,sBaseClassName,sUUID);
+}
+
+void ON_ClassId::ConstructorHelper( const char* sClassName, 
+			const char* sBaseClassName, 
+			const char* sUUID // UUID in registry format from guidgen
+			) 
+{
+  // Do not initialize "m_class_id_version" or any fields
+  // after it in this helper.  See comments in the constructors
+  // for more information.
   memset( m_sClassName, 0, sizeof(m_sClassName) );
   memset( m_sBaseClassName, 0, sizeof(m_sBaseClassName) );
   m_uuid = ON_UuidFromString(sUUID);
@@ -294,7 +357,7 @@ ON_ClassId::ON_ClassId( const char* sClassName,
        || m_sClassName[7] != 'c'
        || m_sClassName[8] != 't'
        || m_sClassName[9] != 0 ) {
-    if ( !m_sBaseClassName[0] )
+    if ( !m_sBaseClassName[0] ) 
     {
       ON_ERROR("ON_ClassId::ON_ClassId() - missing baseclass name.");
       return;
@@ -302,7 +365,7 @@ ON_ClassId::ON_ClassId( const char* sClassName,
   }
 
   g_bDisableDemotion = TRUE;
-  if ( ClassId( m_uuid ) )
+  if ( ClassId( m_uuid ) ) 
   {
     g_bDisableDemotion = FALSE;
     ON_ERROR("ON_ClassId::ON_ClassId() - class uuid already in use.");
@@ -317,7 +380,7 @@ ON_ClassId::ON_ClassId( const char* sClassName,
 
   // see if any derived classes need to be updated because their static
   // members got initialized first
-  if ( m_sClassName[0] )
+  if ( m_sClassName[0] ) 
   {
     this->m_pNext = m_p0;
     m_p0 = this;
@@ -325,8 +388,8 @@ ON_ClassId::ON_ClassId( const char* sClassName,
     ON_ClassId* p = this->m_pNext;
     while ( p ) {
       if ( !p->m_pBaseClassId && p->m_sBaseClassName ) {
-        if ( !strcmp( m_sClassName, p->m_sBaseClassName ) )
-          p->m_pBaseClassId = this;
+	if ( !strcmp( m_sClassName, p->m_sBaseClassName ) )
+	  p->m_pBaseClassId = this;
       }
       p = p->m_pNext;
     }
@@ -356,9 +419,9 @@ const ON_ClassId* ON_ClassId::ClassId( const char* sClassName )
     s1 = p->m_sClassName;
     if ( s0 && s1 && *s0 ) {
       while ( *s0 && *s0 == *s1 )
-        {s0++; s1++;}
+	{s0++; s1++;}
       if ( !(*s0) && !(*s1) )
-        break;
+	break;
     }
     else {
       break;
@@ -373,13 +436,13 @@ const ON_ClassId* ON_ClassId::ClassId( ON_UUID uuid )
   // static member function
   // search list of class ids for one with a matching typecode
   const ON_ClassId* p;
-  for(p = m_p0; p; p = p->m_pNext)
+  for(p = m_p0; p; p = p->m_pNext) 
   {
     if ( !ON_UuidCompare(&p->m_uuid,&uuid) )
       break;
   }
 
-  if ( !p && !g_bDisableDemotion)
+  if ( !p && !g_bDisableDemotion) 
   {
     // enable OpenNURBS toolkit to read files that contain old uuids even when
     // old class definitions are not loaded.
@@ -446,14 +509,14 @@ public:
   bool Dump( int depth, ON_TextLog& text_log );
 };
 
-ON__ClassIdDumpNode::ON__ClassIdDumpNode()
+ON__ClassIdDumpNode::ON__ClassIdDumpNode() 
 {
   m_class_id=0;
   m_parent_node=0;
   m_depth=0;
 };
 
-ON__ClassIdDumpNode::~ON__ClassIdDumpNode()
+ON__ClassIdDumpNode::~ON__ClassIdDumpNode() 
 {
 }
 
@@ -475,7 +538,7 @@ int ON__ClassIdDumpNode::CompareClassUuid( const class ON__ClassIdDumpNode& othe
       rc = ON_UuidCompare(a->Uuid(),b->Uuid());
       if ( 0 == rc )
       {
-        rc = CompareClassName(other);
+	rc = CompareClassName(other);
       }
     }
   }
@@ -501,32 +564,32 @@ int ON__ClassIdDumpNode::CompareClassName( const class ON__ClassIdDumpNode& othe
       const char* b_name = b->ClassName();
       if ( 0 == a_name )
       {
-        if ( 0 == b_name )
-        {
-          rc = b->Mark() - a->Mark();
-          if ( 0 == rc )
-            rc = ON_UuidCompare(a->Uuid(),b->Uuid());
-        }
-        else
-          rc = -1;
+	if ( 0 == b_name )
+	{
+	  rc = b->Mark() - a->Mark();
+	  if ( 0 == rc )
+	    rc = ON_UuidCompare(a->Uuid(),b->Uuid());
+	}
+	else
+	  rc = -1;
       }
       else if ( 0 == b_name )
       {
-        rc = 1;
+	rc = 1;
       }
       else
       {
-        rc = on_stricmp(a_name,b_name);
-        if ( 0 == rc )
-        {
-          rc = strcmp(a_name,b_name);
-          if ( 0 == rc )
-          {
-            rc = b->Mark() - a->Mark();
-            if ( 0 == rc )
-              rc = ON_UuidCompare(a->Uuid(),b->Uuid());
-          }
-        }
+	rc = on_stricmp(a_name,b_name);
+	if ( 0 == rc )
+	{
+	  rc = strcmp(a_name,b_name);
+	  if ( 0 == rc )
+	  {
+	    rc = b->Mark() - a->Mark();
+	    if ( 0 == rc )
+	      rc = ON_UuidCompare(a->Uuid(),b->Uuid());
+	  }
+	}
       }
     }
   }
@@ -597,14 +660,14 @@ bool ON__ClassIdDumpNode::Dump( int depth, ON_TextLog& text_log )
       text_log.PushIndent();
       for ( i = 0; i < count; i++ )
       {
-        ON__ClassIdDumpNode* child_node = m_child_nodes[i];
-        if ( 0 == child_node )
-          rc = false;
-        else
-        {
-          if ( !child_node->Dump(depth+1,text_log) )
-            rc = false;
-        }
+	ON__ClassIdDumpNode* child_node = m_child_nodes[i];
+	if ( 0 == child_node )
+	  rc = false;
+	else
+	{
+	  if ( !child_node->Dump(depth+1,text_log) )
+	    rc = false;
+	}
       }
       text_log.PopIndent();
     }
@@ -616,7 +679,7 @@ void ON_ClassId::Dump( ON_TextLog& dump )
 {
   int i, j, count = 0;
   const ON_ClassId* p;
-  for(p = m_p0; p && count < 1000000; p = p->m_pNext)
+  for(p = m_p0; p && count < 1000000; p = p->m_pNext) 
   {
     count++;
   }
@@ -628,7 +691,7 @@ void ON_ClassId::Dump( ON_TextLog& dump )
   {
     ON__ClassIdDumpNode tmp_node;
     ON_ClassArray<ON__ClassIdDumpNode> nodes(count);
-    for(p = m_p0; p; p = p->m_pNext)
+    for(p = m_p0; p; p = p->m_pNext) 
     {
       ON__ClassIdDumpNode& node = nodes.AppendNew();
       node.m_class_id = p;
@@ -644,15 +707,15 @@ void ON_ClassId::Dump( ON_TextLog& dump )
       p = node.m_class_id;
       if ( 0 != p )
       {
-        tmp_node.m_class_id = p->BaseClass();
-        j = nodes.BinarySearch(&tmp_node,ON__ClassIdDumpNode_CompareUuid);
-        if ( j >= 0 && i != j)
-        {
-          ON__ClassIdDumpNode& base_node = nodes[j];
-          node.m_parent_node = &base_node;
-          base_node.m_child_nodes.Append(&node);
-        }
-      }
+	tmp_node.m_class_id = p->BaseClass();
+	j = nodes.BinarySearch(&tmp_node,ON__ClassIdDumpNode_CompareUuid);
+	if ( j >= 0 && i != j)
+	{
+	  ON__ClassIdDumpNode& base_node = nodes[j];
+	  node.m_parent_node = &base_node;
+	  base_node.m_child_nodes.Append(&node);
+	}
+      }      
     }
 
     // print class tree
@@ -665,20 +728,20 @@ void ON_ClassId::Dump( ON_TextLog& dump )
       rc = nodes[i].Dump(1,dump);
       for ( i = 0; i < count && rc; i++ )
       {
-        if ( nodes[i].m_depth <= 0 )
-          rc = false;
+	if ( nodes[i].m_depth <= 0 )
+	  rc = false;
       }
     }
 
     if (!rc)
     {
       // should never happen
-      for(p = m_p0; p; p = p->m_pNext)
+      for(p = m_p0; p; p = p->m_pNext) 
       {
-        dump.Print("%s::ClassId: ",p->m_sClassName);
-        dump.Print( "mark=%d ",p->m_mark );
-        dump.Print( p->m_uuid );
-        dump.Print("  (%08x)\n",p);
+	dump.Print("%s::ClassId: ",p->m_sClassName);
+	dump.Print( "mark=%d ",p->m_mark );
+	dump.Print( p->m_uuid );
+	dump.Print("  (%08x)\n",p);
       }
     }
   }
@@ -701,7 +764,12 @@ ON_UUID ON_ClassId::Uuid() const
 
 int ON_ClassId::Mark() const
 {
-  return m_mark;
+  return (m_mark & 0x7FFFFFFF);
+}
+
+unsigned int ON_ClassId::ClassIdVersion() const
+{
+  return (0 != (m_mark & 0x80000000)) ? m_class_id_version : 0;
 }
 
 
@@ -718,8 +786,8 @@ BOOL ON_ClassId::IsDerivedFrom( const ON_ClassId* pBaseClassId ) const
     const ON_ClassId* p = this;
     for(;p;) {
       if ( p == pBaseClassId ) {
-        b = TRUE;
-        break;
+	b = TRUE;
+	break;
       }
       p = p->m_pBaseClassId;
     }
@@ -731,6 +799,18 @@ BOOL ON_ClassId::IsDerivedFrom( const ON_ClassId* pBaseClassId ) const
 
 ON_VIRTUAL_OBJECT_IMPLEMENT(ON_Object,0,"60B5DBBD-E660-11d3-BFE4-0010830122F0");
 
+bool ON_Object::CopyFrom( const ON_Object* src )
+{
+  // In V6 this will be a virtual function that will be
+  // declared in the ON_OBJECT_DECLARE macro and defined
+  // in the ON_OBJECT_IMPLEMENT macro.  The check for
+  // cid->ClassIdVersion() >= 1 is CRITICAL and it must
+  // happen before looking at the cid->m_copy member.
+  // See the comments in the ON_ClassId constructors for
+  // details.
+  const ON_ClassId* cid = ClassId();
+  return (cid && cid->ClassIdVersion() >= 1 && cid->m_copy) ? cid->m_copy(src,this) : false;
+}
 
 ON_Object::ON_Object() : m_userdata_list(0)
 {}
@@ -757,11 +837,11 @@ ON_Object::~ON_Object()
 
 void ON_Object::PurgeUserData()
 {
-  if ( m_userdata_list )
+  if ( m_userdata_list ) 
   {
     ON_UserData* p = m_userdata_list;
     ON_UserData* next;
-    while(p)
+    while(p) 
     {
       next = p->m_userdata_next;
       p->m_userdata_owner = 0;
@@ -776,24 +856,24 @@ void ON_Object::PurgeUserData()
 BOOL ON_Object::AttachUserData( ON_UserData* p )
 {
   BOOL rc = FALSE;
-  if ( p
+  if ( p 
        && NULL == p->m_userdata_owner
-       && ON_UuidCompare( &ON_nil_uuid, &p->m_userdata_uuid)
+       && ON_UuidCompare( &ON_nil_uuid, &p->m_userdata_uuid) 
        && NULL == GetUserData( p->m_userdata_uuid )
        ) {
     if ( p->IsUnknownUserData() ) {
-      // make sure we have valid user data - the first beta release of Rhino 2.0
+      // make sure we have valid user data - the first beta release of Rhino 2.0 
       // created empty user data.
       ON_UnknownUserData* uud = ON_UnknownUserData::Cast(p);
       if (uud)
-        rc = uud->IsValid();
+	rc = uud->IsValid();
       if ( !rc ) {
-        ON_ERROR("ON_Object::AttachUserData() - attempt to attach invalid UnknownUserData.");
+	ON_ERROR("ON_Object::AttachUserData() - attempt to attach invalid UnknownUserData.");
       }
     }
     else
       rc = TRUE;
-    if (rc)
+    if (rc) 
     {
       p->m_userdata_owner = this;
       p->m_userdata_next = m_userdata_list;
@@ -806,22 +886,22 @@ BOOL ON_Object::AttachUserData( ON_UserData* p )
 BOOL ON_Object::DetachUserData( ON_UserData* p )
 {
   BOOL rc = FALSE;
-  if ( p && p->m_userdata_owner == this )
+  if ( p && p->m_userdata_owner == this ) 
   {
     ON_UserData* prev = 0;
     ON_UserData* ud = m_userdata_list;
-    while ( ud )
+    while ( ud ) 
     {
-      if ( ud == p )
+      if ( ud == p ) 
       {
-        if ( prev )
-          prev->m_userdata_next = ud->m_userdata_next;
-        else
-          m_userdata_list = ud->m_userdata_next;
-        ud->m_userdata_owner = 0;
-        ud->m_userdata_next = 0;
-        rc = TRUE;
-        break;
+	if ( prev )
+	  prev->m_userdata_next = ud->m_userdata_next;
+	else
+	  m_userdata_list = ud->m_userdata_next;
+	ud->m_userdata_owner = 0;
+	ud->m_userdata_next = 0;
+	rc = TRUE;
+	break;
       }
       prev = ud;
       ud = ud->m_userdata_next;
@@ -835,47 +915,47 @@ ON_UserData* ON_Object::GetUserData( const ON_UUID& userdata_uuid ) const
 {
   ON_UserData* prev = NULL;
   ON_UserData* p;
-  for ( p = m_userdata_list; p; prev = p, p = p->m_userdata_next )
+  for ( p = m_userdata_list; p; prev = p, p = p->m_userdata_next ) 
   {
-    if ( !ON_UuidCompare( &p->m_userdata_uuid, &userdata_uuid ) )
+    if ( !ON_UuidCompare( &p->m_userdata_uuid, &userdata_uuid ) ) 
     {
-      if ( p->IsUnknownUserData() )
+      if ( p->IsUnknownUserData() ) 
       {
-        // See if we can convert this unknown user data into something useful.
-        // Unknown user data is created when a 3dm archive is read and
-        // the definition of the specific user data class is not loaded.
-        // If something is getting around to asking for a specific kind
-        // of user data, the class definition has probably be dynamically
-        // loaded.
-        ON_UnknownUserData* uud = ON_UnknownUserData::Cast(p);
-        if ( uud ) {
-          ON_UserData* realp = uud->Convert();
-          if ( realp )
-          {
-            // replace unknown user data with the real thing
-            if ( prev )
-              prev->m_userdata_next = realp;
-            else if ( p == m_userdata_list )
-            {
-              // little white lie to attach the "real" user
-              // data to the object in place of the unknown
-              // user data.
-              ON_Object* pNotConst = const_cast<ON_Object*>(this);
-              pNotConst->m_userdata_list = realp;
-              realp->m_userdata_owner = pNotConst; // Dale Lear added 22 Jan 2004 to fix I/O bug
-            }
-            realp->m_userdata_next = p->m_userdata_next;
-            p->m_userdata_next = 0;
-            p->m_userdata_owner = 0;
-            delete p;
-            p = realp;
-          }
-        }
+	// See if we can convert this unknown user data into something useful.
+	// Unknown user data is created when a 3dm archive is read and
+	// the definition of the specific user data class is not loaded.
+	// If something is getting around to asking for a specific kind
+	// of user data, the class definition has probably be dynamically
+	// loaded.
+	ON_UnknownUserData* uud = ON_UnknownUserData::Cast(p);
+	if ( uud ) {
+	  ON_UserData* realp = uud->Convert();
+	  if ( realp ) 
+	  {
+	    // replace unknown user data with the real thing
+	    if ( prev )
+	      prev->m_userdata_next = realp;
+	    else if ( p == m_userdata_list ) 
+	    {
+	      // little white lie to attach the "real" user
+	      // data to the object in place of the unknown
+	      // user data.
+	      ON_Object* pNotConst = const_cast<ON_Object*>(this);
+	      pNotConst->m_userdata_list = realp;
+	      realp->m_userdata_owner = pNotConst; // Dale Lear added 22 Jan 2004 to fix I/O bug 
+	    }
+	    realp->m_userdata_next = p->m_userdata_next;
+	    p->m_userdata_next = 0;
+	    p->m_userdata_owner = 0;
+	    delete p;
+	    p = realp;
+	  }
+	}
       }
       break;
     }
   }
-  return p;
+  return p; 
 }
 
 ON_UserData* ON_Object::FirstUserData() const
@@ -901,8 +981,8 @@ void ON_Object::CopyUserData( const ON_Object& src )
     if ( p->m_userdata_copycount ) {
       ON_Object* o = p->Duplicate();
       if ( o ) {
-        if ( !AttachUserData(ON_UserData::Cast(o)) )
-          delete o;
+	if ( !AttachUserData(ON_UserData::Cast(o)) )
+	  delete o;
       }
     }
   }
@@ -922,12 +1002,12 @@ void ON_Object::MoveUserData( ON_Object& src )
       src.m_userdata_list = 0;
       for ( p = m_userdata_list; p; p = p->m_userdata_next )
       {
-        p->m_userdata_owner = this;
+	p->m_userdata_owner = this;
       }
     }
   }
   else
-  {
+  {    
     // Carefully move userdata an item at a time to
     // avoid conflicts with existing items on "this".
 
@@ -935,7 +1015,7 @@ void ON_Object::MoveUserData( ON_Object& src )
     for ( p = src.m_userdata_list; p; p = next ) {
       next = p->m_userdata_next;
       if ( GetUserData( p->m_userdata_uuid ) )
-        delete p;
+	delete p;
     }
 
     // append source user data to this user data
@@ -945,13 +1025,13 @@ void ON_Object::MoveUserData( ON_Object& src )
       p->m_userdata_owner = this;
     }
 
-    if ( !m_userdata_list )
+    if ( !m_userdata_list ) 
       m_userdata_list = next;
-    else
+    else 
     {
       p = m_userdata_list;
       while ( p->m_userdata_next )
-        p = p->m_userdata_next;
+	p = p->m_userdata_next;
       p->m_userdata_next = next;
     }
   }
@@ -1061,17 +1141,17 @@ ON__UINT32 ON_Object::DataCRC(ON__UINT32 current_remainder) const
 void ON_Object::Dump( ON_TextLog& dump ) const
 {
   const ON_ClassId* p = ClassId();
-  if ( p )
+  if ( p ) 
   {
     const char* class_name = p->ClassName();
-    if ( 0 == class_name )
+    if ( 0 == class_name ) 
       class_name = "unknown";
     dump.Print("class name: %s\n",class_name);
     dump.Print("class uuid: ");
     dump.Print(p->Uuid());
     dump.Print("\n");
   }
-  else
+  else 
   {
     dump.Print("ON_Object::ClassId() FAILED\n");
   }
@@ -1126,7 +1206,7 @@ void ON_Object::DestroyRuntimeCache( bool bDelete )
 
 void ON_Curve::DestroyRuntimeCache( bool bDelete )
 {
-  if ( m_ctree )
+  if ( m_ctree ) 
   {
 #if defined(OPENNURBS_PLUS_INC_)
     if ( bDelete )
@@ -1139,7 +1219,7 @@ void ON_Curve::DestroyRuntimeCache( bool bDelete )
 
 void ON_CurveProxy::DestroyRuntimeCache( bool bDelete )
 {
-  if ( m_ctree )
+  if ( m_ctree ) 
   {
 #if defined(OPENNURBS_PLUS_INC_)
     if ( bDelete )
@@ -1158,7 +1238,7 @@ void ON_CurveProxy::DestroyRuntimeCache( bool bDelete )
 
 void ON_Surface::DestroyRuntimeCache( bool bDelete )
 {
-  if ( m_stree )
+  if ( m_stree ) 
   {
 #if defined(OPENNURBS_PLUS_INC_)
     if ( bDelete )
@@ -1171,7 +1251,7 @@ void ON_Surface::DestroyRuntimeCache( bool bDelete )
 
 void ON_SurfaceProxy::DestroyRuntimeCache( bool bDelete )
 {
-  if ( m_stree )
+  if ( m_stree ) 
   {
 #if defined(OPENNURBS_PLUS_INC_)
     if ( bDelete )

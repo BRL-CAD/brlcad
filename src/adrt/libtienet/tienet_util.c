@@ -30,7 +30,8 @@
 
 #include "bio.h"
 
-int tienet_send(int socket, void* data, size_t size) {
+int tienet_send(int socket, void* data, size_t size)
+{
     fd_set	set;
     int		ind = 0, r;
 
@@ -46,7 +47,8 @@ int tienet_send(int socket, void* data, size_t size) {
     return(0);
 }
 
-int tienet_recv(int socket, void *data, int size) {
+int tienet_recv(int socket, void *data, int size)
+{
     fd_set	set;
     int		ind = 0, r;
 
@@ -62,25 +64,29 @@ int tienet_recv(int socket, void *data, int size) {
     return(0);
 }
 
-void tienet_sem_init(tienet_sem_t *sem, int val) {
+void tienet_sem_init(tienet_sem_t *sem, int val)
+{
     pthread_mutex_init(&sem->mut, 0);
     pthread_cond_init(&sem->cond, 0);
     sem->val = val;
 }
 
-void tienet_sem_free(tienet_sem_t *sem) {
+void tienet_sem_free(tienet_sem_t *sem)
+{
     pthread_mutex_destroy(&sem->mut);
     pthread_cond_destroy(&sem->cond);
 }
 
-void tienet_sem_post(tienet_sem_t *sem) {
+void tienet_sem_post(tienet_sem_t *sem)
+{
     pthread_mutex_lock(&sem->mut);
     sem->val++;
     pthread_cond_signal(&sem->cond);
     pthread_mutex_unlock(&sem->mut);
 }
 
-void tienet_sem_wait(tienet_sem_t *sem) {
+void tienet_sem_wait(tienet_sem_t *sem)
+{
     pthread_mutex_lock(&sem->mut);
     if (!sem->val)
 	pthread_cond_wait(&sem->cond, &sem->mut);

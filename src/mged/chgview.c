@@ -38,7 +38,6 @@
 #include "nmg.h"
 #include "./sedit.h"
 #include "./mged.h"
-#include "./mged_solid.h"
 #include "./mged_dm.h"
 #include "./cmd.h"
 
@@ -836,8 +835,8 @@ mged_freemem(void)
     register struct solid		*sp;
     register struct bn_vlist	*vp;
 
-    FOR_ALL_SOLIDS(sp, &FreeSolid.l) {
-	GET_SOLID(sp, &FreeSolid.l);
+    FOR_ALL_SOLIDS(sp, &MGED_FreeSolid.l) {
+	GET_SOLID(sp, &MGED_FreeSolid.l);
 	bu_free((genptr_t)sp, "mged_freemem: struct solid");
     }
 
@@ -1447,7 +1446,7 @@ eraseobjall(register struct directory **dpp)
 		button(BE_REJECT);
 
 	    BU_LIST_DEQUEUE(&sp->l);
-	    FREE_SOLID(sp, &FreeSolid.l);
+	    FREE_SOLID(sp, &MGED_FreeSolid.l);
 	}
 	sp = nsp;
     }
@@ -1506,7 +1505,7 @@ eraseobj(register struct directory **dpp)
 		button( BE_REJECT );
 
 	    BU_LIST_DEQUEUE(&sp->l);
-	    FREE_SOLID(sp, &FreeSolid.l);
+	    FREE_SOLID(sp, &MGED_FreeSolid.l);
 	}
 	sp = nsp;
     }
@@ -3256,8 +3255,8 @@ abs_zoom(void)
 	    view_state->vs_vop->vo_scale = view_state->vs_i_Viewscale * (1.0 + (view_state->vs_absolute_scale * -9.0));
     }
 
-    if (view_state->vs_vop->vo_scale < MINVIEW)
-	view_state->vs_vop->vo_scale = MINVIEW;
+    if (view_state->vs_vop->vo_scale < RT_MINVIEWSIZE)
+	view_state->vs_vop->vo_scale = RT_MINVIEWSIZE;
 
     vo_zoom(view_state->vs_vop, interp, 1.0);
 

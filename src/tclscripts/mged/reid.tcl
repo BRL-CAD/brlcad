@@ -18,57 +18,18 @@
 # information.
 #
 ###
-# Author: Christopher Sean Morrison
 #
 # assign region IDs to all regions under some assembly starting at
 # some given region ID number.
 #
 
-set extern_commands "attr"
+set extern_commands [list db get_regions attr]
 foreach cmd $extern_commands {
+    catch {auto_load $cmd} val
     if {[expr [string compare [info command $cmd] $cmd] != 0]} {
 	puts stderr "[info script]: Application fails to provide command '$cmd'"
 	return
     }
-}
-
-
-proc get_regions { args } {
-    if { [llength $args] != 1 } {
-	puts "Usage: get_regions object"
-	return ""
-    }
-
-    set object [lindex $args 0]
-    set objectData [db get $object]
-
-    if { [lindex $objectData 0] != "comb" } {
-	# found primitive
-	return ""
-    }
-
-    set regions ""
-
-    set children [lt $object]
-    if { $children != "" } {
-	foreach node $children {
-	    set child [lindex $node 1]
-
-	    if { [lindex [db get $child] 0] != "comb" } {
-		# ignore primitive
-		continue
-	    }
-
-	    if { [lindex [db get $child] 2] == "yes" } {
-		# found a region, add to the list and stop recursion
-		set regions [concat $regions $child]
-	    } else {
-		# found a combination, recurse
-		set regions [concat $regions [get_regions $child]]
-	    }
-	}
-    }
-    return "$regions"
 }
 
 

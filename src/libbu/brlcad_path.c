@@ -17,13 +17,13 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @addtogroup filesystem */
+/** @addtogroup bu_log */
 /** @{ */
 /** @file brlcad_path.c
  *
  * @brief
- *  A support routine to provide the executable code with the path
- *  to where the BRL-CAD programs and libraries are installed.
+ * A support routine to provide the executable code with the path
+ * to where the BRL-CAD programs and libraries are installed.
  *
  */
 
@@ -189,7 +189,8 @@ bu_argv0_full_path(void)
 }
 
 
-/** b u _ g e t p r o g n a m e
+/**
+ * b u _ g e t p r o g n a m e
  *
  * get the name of the running application if they ran
  * bu_setprogname() first or if we know what it's supposed to be
@@ -217,7 +218,8 @@ bu_getprogname(void) {
 }
 
 
-/** b u _ s e t p r o g n a m e
+/**
+ * b u _ s e t p r o g n a m e
  *
  * Set the name of the running application.  This isn't necessary on
  * modern systems that support getprogname() and call setprogname()
@@ -240,7 +242,8 @@ bu_setprogname(const char *argv0)
 }
 
 
-/** b u _ r o o t _ m i s s i n g
+/**
+ * b u _ r o o t _ m i s s i n g
  *
  *print out an error/warning message if we cannot find the specified
  * BRLCAD_ROOT (compile-time install path)
@@ -373,11 +376,11 @@ bu_find_path(char result[MAXPATHLEN], const char *lhs, const char *rhs, struct b
 	return 0;
     }
 
-    if ( (*(result+llen-1) != BU_DIR_SEPARATOR) && (rhs[0] != BU_DIR_SEPARATOR) ) {
+    if ((*(result+llen-1) != BU_DIR_SEPARATOR) && (rhs[0] != BU_DIR_SEPARATOR)) {
 	/* let the caller give "/usr/brlcad" and "bin" and get "/usr/brlcad/bin" */
 	*(result+llen) = BU_DIR_SEPARATOR;
 	llen++;
-    } else if ( (*(result+llen-1) == BU_DIR_SEPARATOR) && (rhs[0] == BU_DIR_SEPARATOR) ) {
+    } else if ((*(result+llen-1) == BU_DIR_SEPARATOR) && (rhs[0] == BU_DIR_SEPARATOR)) {
 	/* let the caller give "/usr/brlcad/" and "/bin" and get "/usr/brlcad/bin"*/
 	rhs++;
 	rlen--;

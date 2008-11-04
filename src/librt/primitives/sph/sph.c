@@ -1,4 +1,4 @@
-/*                         G _ S P H . C
+/*                           S P H . C
  * BRL-CAD
  *
  * Copyright (c) 1985-2008 United States Government as represented by
@@ -17,9 +17,9 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @addtogroup g_ */
+/** @addtogroup primitives */
 /** @{ */
-/** @file g_sph.c
+/** @file sph.c
  *
  * Intersect a ray with a Sphere.
  * Special case of the Generalized Ellipsoid
@@ -415,6 +415,16 @@ int
 rt_sph_class(void)
 {
     return(0);
+}
+
+/**
+ * R T _ S P H _ P A R A M S
+ *
+ */
+int
+rt_sph_params(struct pc_pc_set * ps, const struct rt_db_internal *ip)
+{
+    return(0);			/* OK */
 }
 
 /* ELL versions of the plot and tess functions are used */

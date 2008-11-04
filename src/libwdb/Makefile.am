@@ -16,6 +16,7 @@ libwdb_nil_la_SOURCES = \
 	ars.c \
 	bot.c \
 	cline.c \
+	constraint.c \
 	dsp.c \
 	dynamic_geometry.c \
 	ebm.c \

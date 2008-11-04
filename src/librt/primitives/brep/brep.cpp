@@ -1,4 +1,4 @@
-/*                     G _ B R E P . C P P
+/*                     B R E P . C P P
  * BRL-CAD
  *
  * Copyright (c) 2007-2008 United States Government as represented by
@@ -19,7 +19,7 @@
  */
 /** @addtogroup g_  */
 /** @{ */
-/** @file g_brep.cpp
+/** @file brep.cpp
  *
  * Implementation of a generalized Boundary Representation (BREP)
  * primitive using the openNURBS library.
@@ -35,10 +35,14 @@
 #include <set>
 #include <utility>
 
+#define BN_VMATH_PREFIX_INDICES 1
+#include "vmath.h"
+
 #include "brep.h"
+#include "vector.h"
+
 #include "raytrace.h"
 #include "rtgeom.h"
-#include "vector.h"
 
 #ifdef write
 #   undef write
@@ -84,7 +88,8 @@ int
 rt_brep_tclget(Tcl_Interp *interp, const struct rt_db_internal *intern, const char *attr);
 int
 rt_brep_tcladjust(Tcl_Interp *interp, struct rt_db_internal *intern, int argc, char **argv);
-
+int
+rt_brep_params(struct pc_pc_set *, const struct rt_db_internal *ip);
 #ifdef __cplusplus
 }
 #endif
@@ -165,7 +170,7 @@ brep_pt_trimmed(pt2d_t pt, const ON_BrepFace& face) {
     from.y = to.y = pt[1];
     surf->GetDomain(0, &umin, &umax);
     to.x = umax + 1;
-    ON_Line ray(from,to);
+    ON_Line ray(from, to);
     int intersections = 0;
     for (int i = 0; i < face.LoopCount(); i++) {
 	ON_BrepLoop* loop = face.Loop(i);
@@ -187,7 +192,7 @@ brep_pt_trimmed(pt2d_t pt, const ON_BrepFace& face) {
     return retVal;
 }
 
-// XXX - most of this function is broken :-( except for the bezier span caching
+// XXX - most of this function is broken :-(except for the bezier span caching
 // need to fix it! - could provide real performance benefits...
 void
 brep_preprocess_trims(const ON_BrepFace& face, SurfaceTree* tree) {
@@ -201,16 +206,16 @@ brep_preprocess_trims(const ON_BrepFace& face, SurfaceTree* tree) {
 
 	// XXX - TODO: check to see if this portion of the surface
 	// needs to be checked for trims
-	pt2d_t test[] = {{bb->m_u.Min(),bb->m_v.Min()},
-			 {bb->m_u.Max(),bb->m_v.Min()},
-			 {bb->m_u.Max(),bb->m_v.Max()},
-			 {bb->m_u.Min(),bb->m_v.Max()}};
+	pt2d_t test[] = {{bb->m_u.Min(), bb->m_v.Min()},
+			 {bb->m_u.Max(), bb->m_v.Min()},
+			 {bb->m_u.Max(), bb->m_v.Max()},
+			 {bb->m_u.Min(), bb->m_v.Max()}};
 
 
 	// check to see if the bbox encloses a trim
-	ON_3dPoint uvmin(bb->m_u.Min(),bb->m_v.Min(),0);
-	ON_3dPoint uvmax(bb->m_u.Max(),bb->m_v.Max(),0);
-	ON_BoundingBox bbox(uvmin,uvmax);
+	ON_3dPoint uvmin(bb->m_u.Min(), bb->m_v.Min(), 0);
+	ON_3dPoint uvmax(bb->m_u.Max(), bb->m_v.Max(), 0);
+	ON_BoundingBox bbox(uvmin, uvmax);
 	bool internalTrim = false;
 	for (int i = 0; i < face.Brep()->m_L.Count(); i++) {
 	    ON_BrepLoop& loop = face.Brep()->m_L[i];
@@ -321,17 +326,17 @@ rt_brep_prep(struct soltab *stp, struct rt_db_internal* ip, struct rt_i* rtip)
     }
 
     point_t adjust;
-    VSETALL(adjust,1);
+    VSETALL(adjust, 1);
     bs->bvh->GetBBox(stp->st_min, stp->st_max);
     // expand outer bounding box...
-    VSUB2(stp->st_min,stp->st_min,adjust);
-    VADD2(stp->st_max,stp->st_max,adjust);
+    VSUB2(stp->st_min, stp->st_min, adjust);
+    VADD2(stp->st_max, stp->st_max, adjust);
     VADD2SCALE(stp->st_center, stp->st_min, stp->st_max, 0.5);
     vect_t work;
     VSUB2SCALE(work, stp->st_max, stp->st_min, 0.5);
     fastf_t f = work[X];
-    V_MAX(f,work[Y]);
-    V_MAX(f,work[Z]);
+    V_MAX(f, work[Y]);
+    V_MAX(f, work[Z]);
     stp->st_aradius = f;
     stp->st_bradius = MAGNITUDE(work);
 
@@ -368,7 +373,7 @@ public:
 //     fastf_t tnear, tfar;
 //     bool intersects = bv->intersected_by(r,&tnear,&tfar);
 //     if (intersects && bv->is_leaf() && !dynamic_cast<SurfaceBV*>(bv)->isTrimmed()) {
-// 	inters.push_back(IRecord(bv,tnear));
+// 	inters.push_back(IRecord(bv, tnear));
 //     }
 //     else if (intersects)
 // 	for (BVList::iterator i = bv->children.begin(); i != bv->children.end(); i++) {
@@ -395,8 +400,8 @@ brep_get_plane_ray(ON_Ray& r, plane_ray& pr)
     VUNITIZE(pr.n1);
     VCROSS(pr.n2, pr.n1, r.m_dir);       // n2 is perpendicular to v1 and n1
     VUNITIZE(pr.n2);
-    pr.d1 = VDOT(pr.n1,r.m_origin);
-    pr.d2 = VDOT(pr.n2,r.m_origin);
+    pr.d1 = VDOT(pr.n1, r.m_origin);
+    pr.d2 = VDOT(pr.n2, r.m_origin);
     TRACE1("n1:" << ON_PRINT3(pr.n1) << " n2:" << ON_PRINT3(pr.n2) << " d1:" << pr.d1 << " d2:" << pr.d2);
 }
 
@@ -447,11 +452,11 @@ public:
     }
 
     bool operator==(const brep_hit& h) {
-	return NEAR_ZERO(DIST_PT_PT(point,h.point), BREP_SAME_POINT_TOLERANCE);
+	return NEAR_ZERO(DIST_PT_PT(point, h.point), BREP_SAME_POINT_TOLERANCE);
     }
 
     bool operator<(const brep_hit& h) {
-	return DIST_PT_PT(point,origin) < DIST_PT_PT(h.point,origin);
+	return DIST_PT_PT(point, origin) < DIST_PT_PT(h.point, origin);
     }
 };
 typedef std::list<brep_hit> HitList;
@@ -465,7 +470,7 @@ typedef std::list<brep_hit> HitList;
 //     }
 
 //     bool operator()(const brep_hit& left, const brep_hit& right) {
-// 	return DIST_PT_PT(left.point,origin) < DIST_PT_PT(right.point,origin);
+// 	return DIST_PT_PT(left.point, origin) < DIST_PT_PT(right.point, origin);
 //     }
 // };
 
@@ -491,7 +496,7 @@ brep_newton_iterate(const ON_Surface* surf, plane_ray& pr, pt2d_t R, ON_3dVector
     }
     else {
 	TRACE2("inverse failed"); // XXX how to handle this?
-	move(out_uv,uv);
+	move(out_uv, uv);
     }
 }
 
@@ -569,11 +574,11 @@ brep_intersect(const SubsurfaceBBNode* sbv, const ON_BrepFace* face, const ON_Su
     plane_ray pr;
     brep_get_plane_ray(ray, pr);
     for (int i = 0; i < BREP_MAX_ITERATIONS; i++) {
-	brep_r(surf,pr,uv,pt,su,sv,Rcurr);
+	brep_r(surf, pr, uv, pt, su, sv, Rcurr);
 	//fastf_t d = v2mag(Rcurr);
-	fastf_t d = DIST_PT_PT(pt,ray.m_origin);
+	fastf_t d = DIST_PT_PT(pt, ray.m_origin);
 	//if (d < BREP_INTERSECTION_ROOT_EPSILON) {
-	if (NEAR_ZERO(d-Dlast,BREP_INTERSECTION_ROOT_EPSILON)) {
+	if (NEAR_ZERO(d-Dlast, BREP_INTERSECTION_ROOT_EPSILON)) {
 	    TRACE1("R:"<<ON_PRINT2(Rcurr));
 	    found = BREP_INTERSECT_FOUND; break;
 	} else if (d > Dlast) {
@@ -588,11 +593,11 @@ brep_intersect(const SubsurfaceBBNode* sbv, const ON_BrepFace* face, const ON_Su
 	Dlast = d;
     }
     if (found > 0) {
-	fastf_t l,h;
+	fastf_t l, h;
 
 	ON_3dPoint _pt;
 	ON_3dVector _norm;
-	surf->EvNormal(uv[0],uv[1],_pt,_norm);
+	surf->EvNormal(uv[0], uv[1],_pt,_norm);
 	if (face->m_bRev) _norm.Reverse();
 	hits.push_back(brep_hit(*face,(const fastf_t*)ray.m_origin,(const fastf_t*)_pt,(const fastf_t*)_norm, uv));
 	hits.back().sbv = sbv;
@@ -639,7 +644,7 @@ opposite(const SubsurfaceBBNode* sbv, pt2d_t uv)
     }
 }
 
-typedef std::pair<int,int> ip_t;
+typedef std::pair<int, int> ip_t;
 typedef std::list<ip_t> MissList;
 
 static int
@@ -661,20 +666,20 @@ plot_file() {
 	plot = fopen("out.pl","w");
 	point_t min, max;
 	VSET(min,-2048,-2048,-2048);
-	VSET(max,2048,2048,2048);
-	pdv_3space(plot,min,max);
+	VSET(max, 2048, 2048, 2048);
+	pdv_3space(plot, min, max);
     }
     return plot;
 }
 
-#define COLOR_PLOT(r,g,b) pl_color(plot_file(),(r),(g),(b))
+#define COLOR_PLOT(r, g, b) pl_color(plot_file(),(r),(g),(b))
 #define PT_PLOT(p) 	{ 			\
     point_t 	pp; 				\
-    VSCALE(pp,p,1.001); 			\
-    pdv_3box(plot_file(),p,pp); 		\
+    VSCALE(pp, p, 1.001); 			\
+    pdv_3box(plot_file(), p, pp); 		\
 }
-#define LINE_PLOT(p1,p2) pdv_3move(plot_file(),p1); pdv_3line(plot_file(),p1,p2)
-#define BB_PLOT(p1,p2) pdv_3box(plot_file(),p1,p2)
+#define LINE_PLOT(p1, p2) pdv_3move(plot_file(), p1); pdv_3line(plot_file(), p1, p2)
+#define BB_PLOT(p1, p2) pdv_3box(plot_file(), p1, p2)
 #endif
 
 /**
@@ -713,14 +718,14 @@ rt_brep_shot(struct soltab *stp, register struct xray *rp, struct application *a
 	const ON_BrepFace* f = sbv->m_face;
 	const ON_Surface* surf = f->SurfaceOf();
 	brep_hit* hit;
-	pt2d_t uv = {sbv->m_u.Mid(),sbv->m_v.Mid()};
+	pt2d_t uv = {sbv->m_u.Mid(), sbv->m_v.Mid()};
 	TRACE1("surface: " << s);
 	int status = brep_intersect(sbv, f, surf, uv, r, all_hits);
 	if (status == BREP_INTERSECT_FOUND) {
 	    TRACE("INTERSECTION: " << PT(all_hits.back().point) << all_hits.back().trimmed << ", " << all_hits.back().closeToEdge << ", " << all_hits.back().oob);
 	} else {
 	    TRACE1("dammit");
-	    misses.push_back(ip_t(all_hits.size()-1,status));
+	    misses.push_back(ip_t(all_hits.size()-1, status));
 	}
 	s++;
     }
@@ -733,7 +738,7 @@ rt_brep_shot(struct soltab *stp, register struct xray *rp, struct application *a
 
     int num = 0;
     for (HitList::iterator i = hits.begin(); i != hits.end(); ++i) {
-	TRACE("hit " << num << ": " << PT(i->point) << " [" << VDOT(i->normal,rp->r_dir) << "] " << i->trimmed << ", " << i->closeToEdge << ", " << i->oob);
+	TRACE("hit " << num << ": " << PT(i->point) << " [" << VDOT(i->normal, rp->r_dir) << "] " << i->trimmed << ", " << i->closeToEdge << ", " << i->oob);
 	++num;
     }
 
@@ -741,7 +746,7 @@ rt_brep_shot(struct soltab *stp, register struct xray *rp, struct application *a
     TRACE("---");
     num = 0;
     for (HitList::iterator i = hits.begin(); i != hits.end(); ++i) {
-	if ((i->trimmed && !i->closeToEdge) || i->oob || NEAR_ZERO(VDOT(i->normal,rp->r_dir),RT_DOT_TOL)) {
+	if ((i->trimmed && !i->closeToEdge) || i->oob || NEAR_ZERO(VDOT(i->normal, rp->r_dir), RT_DOT_TOL)) {
 	    // remove what we were removing earlier
 	    if (i->oob) {
 		TRACE("\toob u: " << i->uv[0] << ", " << IVAL(i->sbv->m_u));
@@ -754,7 +759,7 @@ rt_brep_shot(struct soltab *stp, register struct xray *rp, struct application *a
 
 	    continue;
 	}
-	TRACE("hit " << num << ": " << PT(i->point) << " [" << VDOT(i->normal,rp->r_dir) << "]");
+	TRACE("hit " << num << ": " << PT(i->point) << " [" << VDOT(i->normal, rp->r_dir) << "]");
 	++num;
     }
 
@@ -765,8 +770,8 @@ rt_brep_shot(struct soltab *stp, register struct xray *rp, struct application *a
 	++i;
 	while (i != hits.end()) {
 	    if ((*i) == (*last)) {
-		double lastDot = VDOT(last->normal,rp->r_dir);
-		double iDot = VDOT(i->normal,rp->r_dir);
+		double lastDot = VDOT(last->normal, rp->r_dir);
+		double iDot = VDOT(i->normal, rp->r_dir);
 
 		if (sign(lastDot) != sign(iDot)) {
 		    // delete them both
@@ -798,10 +803,10 @@ rt_brep_shot(struct soltab *stp, register struct xray *rp, struct application *a
 	if (pcount > -1) {
 	    point_t ray;
 	    point_t vscaled;
-	    VSCALE(vscaled,rp->r_dir,100);
-	    VADD2(ray,rp->r_pt,vscaled);
-	    COLOR_PLOT(200,200,200);
-	    LINE_PLOT(rp->r_pt,ray);
+	    VSCALE(vscaled, rp->r_dir, 100);
+	    VADD2(ray, rp->r_pt, vscaled);
+	    COLOR_PLOT(200, 200, 200);
+	    LINE_PLOT(rp->r_pt, ray);
 	}
 #endif
 
@@ -809,33 +814,33 @@ rt_brep_shot(struct soltab *stp, register struct xray *rp, struct application *a
 	int lastSign = 0;
 	MissList::iterator m = misses.begin();
 	for (HitList::iterator i = all_hits.begin(); i != all_hits.end(); ++i) {
-	    double dot = VDOT(i->normal,rp->r_dir);
+	    double dot = VDOT(i->normal, rp->r_dir);
 
 #if PLOTTING
 	    if (pcount > -1) {
 		// set the color of point and normal
 		if (i->trimmed && i->closeToEdge) {
-		    COLOR_PLOT(0,0,255); // blue is trimmed but close to edge
+		    COLOR_PLOT(0, 0, 255); // blue is trimmed but close to edge
 		} else if (i->trimmed) {
-		    COLOR_PLOT(255,255,0); // yellow trimmed
+		    COLOR_PLOT(255, 255, 0); // yellow trimmed
 		} else if (i->oob) {
-		    COLOR_PLOT(255,0,0); // red is oob
-		} else if (NEAR_ZERO(VDOT(i->normal,rp->r_dir),RT_DOT_TOL)) {
-		    COLOR_PLOT(0,255,255); // purple is grazing
+		    COLOR_PLOT(255, 0, 0); // red is oob
+		} else if (NEAR_ZERO(VDOT(i->normal, rp->r_dir), RT_DOT_TOL)) {
+		    COLOR_PLOT(0, 255, 255); // purple is grazing
 		} else {
-		    COLOR_PLOT(0,255,0); // green is regular surface
+		    COLOR_PLOT(0, 255, 0); // green is regular surface
 		}
 
 		// draw normal
 		point_t v;
-		VADD2(v,i->point,i->normal);
-		LINE_PLOT(i->point,v);
+		VADD2(v, i->point, i->normal);
+		LINE_PLOT(i->point, v);
 
 		// draw intersection
 		PT_PLOT(i->point);
 
 		// draw bounding box
-		BB_PLOT(i->sbv->m_node.m_min,i->sbv->m_node.m_max);
+		BB_PLOT(i->sbv->m_node.m_min, i->sbv->m_node.m_max);
 		fflush(plot_file());
 	    }
 #endif
@@ -878,17 +883,17 @@ rt_brep_shot(struct soltab *stp, register struct xray *rp, struct application *a
 
 		VMOVE(segp->seg_in.hit_point, in.point);
 		VMOVE(segp->seg_in.hit_normal, in.normal);
-		segp->seg_in.hit_dist = DIST_PT_PT(rp->r_pt,in.point);
+		segp->seg_in.hit_dist = DIST_PT_PT(rp->r_pt, in.point);
 		segp->seg_in.hit_surfno = in.face.m_face_index;
-		VSET(segp->seg_in.hit_vpriv,in.uv[0],in.uv[1],0.0);
+		VSET(segp->seg_in.hit_vpriv, in.uv[0], in.uv[1], 0.0);
 
 		VMOVE(segp->seg_out.hit_point, out.point);
 		VMOVE(segp->seg_out.hit_normal, out.normal);
-		segp->seg_out.hit_dist = DIST_PT_PT(rp->r_pt,out.point);
+		segp->seg_out.hit_dist = DIST_PT_PT(rp->r_pt, out.point);
 		segp->seg_out.hit_surfno = out.face.m_face_index;
-		VSET(segp->seg_out.hit_vpriv,out.uv[0],out.uv[1],0.0);
+		VSET(segp->seg_out.hit_vpriv, out.uv[0], out.uv[1], 0.0);
 
-		BU_LIST_INSERT( &(seghead->l), &(segp->l) );
+		BU_LIST_INSERT(&(seghead->l), &(segp->l));
 	    }
 	    hit = true;
 	}
@@ -947,8 +952,8 @@ rt_brep_class()
 /**
  *  			R T _ B R E P _ U V
  *
- *  For a hit on the surface of an nurb, return the (u,v) coordinates
- *  of the hit point, 0 <= u,v <= 1.
+ *  For a hit on the surface of an nurb, return the (u, v) coordinates
+ *  of the hit point, 0 <= u, v <= 1.
  *  u = azimuth
  *  v = elevation
  */
@@ -976,14 +981,14 @@ void
 plot_bbnode(BBNode* node, struct bu_list* vhead) {
     ON_3dPoint min = node->m_node.m_min;
     ON_3dPoint max = node->m_node.m_max;
-    point_t verts[] = {{min[0],min[1],min[2]},
-		       {min[0],max[1],min[2]},
-		       {min[0],max[1],max[2]},
-		       {min[0],min[1],max[2]},
-		       {max[0],min[1],min[2]},
-		       {max[0],max[1],min[2]},
-		       {max[0],max[1],max[2]},
-		       {max[0],min[1],max[2]}};
+    point_t verts[] = {{min[0], min[1], min[2]},
+		       {min[0], max[1], min[2]},
+		       {min[0], max[1], max[2]},
+		       {min[0], min[1], max[2]},
+		       {max[0], min[1], min[2]},
+		       {max[0], max[1], min[2]},
+		       {max[0], max[1], max[2]},
+		       {max[0], min[1], max[2]}};
 
     if (node->isLeaf()) {
 
@@ -1387,6 +1392,14 @@ rt_brep_tcladjust(Tcl_Interp *interp, struct rt_db_internal *intern, int argc, c
     return 0;
 }
 
+/**
+ *                      R T _ B R E P _ P A R A M S
+ */
+int
+rt_brep_params(struct pc_pc_set *, const struct rt_db_internal *ip)
+{
+    return 0;
+}
 /** @} */
 
 /*

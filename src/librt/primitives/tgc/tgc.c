@@ -1,4 +1,4 @@
-/*                         G _ T G C . C
+/*                           T G C . C
  * BRL-CAD
  *
  * Copyright (c) 1985-2008 United States Government as represented by
@@ -17,9 +17,9 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @addtogroup g_ */
+/** @addtogroup primitives */
 /** @{ */
-/** @file g_tgc.c
+/** @file tgc.c
  *
  * Intersect a ray with a Truncated General Cone.
  *
@@ -3094,6 +3094,16 @@ nmg_tgc_nurb_cyl(struct faceuse *fu, fastf_t *top_mat, fastf_t *bot_mat)
 	nmg_edge_g_cnurb_plinear(eu);
 	eu = BU_LIST_NEXT(edgeuse, &eu->l);
     }
+}
+
+/**
+ * R T _ T G C _ P A R A M S
+ *
+ */
+int
+rt_tgc_params(struct pc_pc_set * ps, const struct rt_db_internal *ip)
+{
+    return(0);			/* OK */
 }
 
 /*

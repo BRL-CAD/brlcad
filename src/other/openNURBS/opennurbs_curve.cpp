@@ -1,3 +1,19 @@
+/* $Header$ */
+/* $NoKeywords: $ */
+/*
+//
+// Copyright (c) 1993-2007 Robert McNeel & Associates. All rights reserved.
+// Rhinoceros is a registered trademark of Robert McNeel & Assoicates.
+//
+// THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY.
+// ALL IMPLIED WARRANTIES OF FITNESS FOR ANY PARTICULAR PURPOSE AND OF
+// MERCHANTABILITY ARE HEREBY DISCLAIMED.
+//				
+// For complete openNURBS copyright information see <http://www.opennurbs.org>.
+//
+////////////////////////////////////////////////////////////////
+*/
+
 #include "opennurbs.h"
 #include <assert.h>
 #include <list>
@@ -22,13 +38,13 @@ ON_Curve& ON_Curve::operator=(const ON_Curve& src)
 
 ON_Curve::~ON_Curve()
 {
-  // Do not call the (virtual) DestroyRuntimeCache or
+  // Do not call the (virtual) DestroyRuntimeCache or 
   // DestroyCurveTree (which calls DestroyRuntimeCache()
   // because it opens the potential for crashes in a
   // "dirty" destructors of classes derived from ON_Curve
   // that to not use DestroyRuntimeCache() in their
   // destructors and to not set deleted pointers to zero.
-  if ( m_ctree )
+  if ( m_ctree ) 
   {
 #if defined(OPENNURBS_PLUS_INC_)
     delete m_ctree;
@@ -43,7 +59,7 @@ unsigned int ON_Curve::SizeOf() const
   sz += (sizeof(*this) - sizeof(ON_Geometry));
   // Currently, the size of m_ctree is not included
   // because this is cached runtime information.
-  // Applications that care about object size are
+  // Applications that care about object size are 
   // typically storing "inactive" objects for potential
   // future use and should call DestroyRuntimeCache(true)
   // to remove any runtime cache information.
@@ -132,13 +148,13 @@ BOOL ON_Curve::GetSpanVectorIndex(
     if (rc) {
       i = ON_NurbsSpanIndex( 2, span_count+1, span_vector, t, side, 0 );
       if ( i >= 0 && i <= span_count ) {
-        if ( span_vector_i )
-          *span_vector_i = i;
-        if ( span_domain )
-          span_domain->Set( span_vector[i], span_vector[i+1] );
+	if ( span_vector_i )
+	  *span_vector_i = i;
+	if ( span_domain )
+	  span_domain->Set( span_vector[i], span_vector[i+1] );
       }
       else
-        rc = false;
+	rc = false;
     }
     onfree(span_vector);
   }
@@ -179,36 +195,36 @@ BOOL ON_Curve::IsLinear( double tolerance ) const
       ON_SimpleArray<double> s(span_count+1);
       s.SetCount(span_count+1);
       if ( GetSpanVector( s.Array() ) ) {
-        if ( tolerance == 0.0 )
-          tolerance = ON_ZERO_TOLERANCE;
-        ON_Line line( PointAtStart(), PointAtEnd() );
-        if ( line.Length() > tolerance ) {
-          double t, t0, d, delta;
-          ON_Interval sp;
-          int n, i, span_index;
-          rc = true;
-          t0 = 0;              //  Domain()[0];
-          ON_3dPoint P;
+	if ( tolerance == 0.0 )
+	  tolerance = ON_ZERO_TOLERANCE;
+	ON_Line line( PointAtStart(), PointAtEnd() );
+	if ( line.Length() > tolerance ) {
+	  double t, t0, d, delta;
+	  ON_Interval sp;
+	  int n, i, span_index;
+	  rc = true;
+	  t0 = 0;              //  Domain()[0];
+	  ON_3dPoint P;
 
-          for ( span_index = 0; span_index < span_count; span_index++ ) {
-            sp.Set( s[span_index], s[span_index+1] );
-            n = 2*span_degree+1;
-            delta = 1.0/n;
-            for ( i = (span_index)?0:1; i < n; i++ ) {
-              P = PointAt( sp.ParameterAt(i*delta) );
-              if ( !line.ClosestPointTo( P, &t ) )
-                rc = false;
-              else if ( t < t0 )
-                rc = false;
+	  for ( span_index = 0; span_index < span_count; span_index++ ) {
+	    sp.Set( s[span_index], s[span_index+1] );
+	    n = 2*span_degree+1;
+	    delta = 1.0/n;
+	    for ( i = (span_index)?0:1; i < n; i++ ) {
+	      P = PointAt( sp.ParameterAt(i*delta) );
+	      if ( !line.ClosestPointTo( P, &t ) )
+		rc = false;
+	      else if ( t < t0 )
+		rc = false;
 							else if (t > 1.0 + ON_SQRT_EPSILON)
 								rc = false;
-              d = P.DistanceTo( line.PointAt(t) );
-              if ( d > tolerance )
-                rc = false;
-              t0 = t;
-            }
-          }
-        }
+	      d = P.DistanceTo( line.PointAt(t) );
+	      if ( d > tolerance )
+		rc = false;
+	      t0 = t;
+	    }
+	  }
+	}
       }
     }
   }
@@ -283,17 +299,17 @@ BOOL ON_Curve::IsArc( const ON_Plane* plane, ON_Arc* arc, double tolerance ) con
       t = i*delta;
       P = PointAt( (1.0-t)*d[span_index] + t*d[span_index+1] );
       if ( !arc->ClosestPointTo(P,&c) ) {
-        rc = false;
-        break;
+	rc = false;
+	break;        
       }
       if ( c < c0 ) {
-        rc = false;
-        break;
+	rc = false;
+	break;
       }
-      C = arc->PointAt(c);
+      C = arc->PointAt(c);        
       if ( C.DistanceTo(P) > tolerance ) {
-        rc = 0;
-        break;
+	rc = 0;
+	break;
       }
       c0 = c;
     }
@@ -306,7 +322,7 @@ BOOL ON_Curve::IsPlanar( ON_Plane* plane, double tolerance ) const
 {
   BOOL rc = false;
   const int dim = Dimension();
-  if ( dim == 2 )
+  if ( dim == 2 ) 
   {
     // all 2d curves use this code to set the plane
     // so that there is consistent behavior.
@@ -324,10 +340,10 @@ BOOL ON_Curve::IsPlanar( ON_Plane* plane, double tolerance ) const
     {
       ON_Line line( PointAtStart(), PointAtEnd() );
       if ( !line.InPlane( *plane, tolerance ) )
-        line.InPlane( *plane, 0.0 );
+	line.InPlane( *plane, 0.0 );
     }
   }
-  else if ( dim == 3 )
+  else if ( dim == 3 ) 
   {
     const int span_count = SpanCount();
     if ( span_count < 1 )
@@ -356,11 +372,11 @@ BOOL ON_Curve::IsPlanar( ON_Plane* plane, double tolerance ) const
     for ( span_index = 0; span_index < span_count && bNeedY; span_index++ ) {
       d.Set(s[span_index],s[span_index+1]);
       for ( i = span_index ? 0 : 1; i < n && bNeedY; i++ ) {
-        if ( !EvPoint( d.ParameterAt(i*delta), q, 0, &hint ) )
-          return false;
-        y = q-pt;
-        y = y - (y*x)*x;
-        bNeedY = ( y.Length()  <= 1.0e-6 );
+	if ( !EvPoint( d.ParameterAt(i*delta), q, 0, &hint ) )
+	  return false;
+	y = q-pt;
+	y = y - (y*x)*x;
+	bNeedY = ( y.Length()  <= 1.0e-6 );
       }
     }
     if ( bNeedY )
@@ -380,13 +396,13 @@ BOOL ON_Curve::IsPlanar( ON_Plane* plane, double tolerance ) const
     for ( span_index = 0; rc && span_index < span_count; span_index++ ) {
       d.Set(s[span_index],s[span_index+1]);
       for ( i = 0; rc && i < n; i++ ) {
-        if ( !EvPoint( d.ParameterAt(i*delta), q, 0, &hint ) )
-          rc = false;
-        else {
-          h = pln.plane_equation.ValueAt(q);
-          if ( fabs(h) > tolerance )
-            rc = false;
-        }
+	if ( !EvPoint( d.ParameterAt(i*delta), q, 0, &hint ) )
+	  rc = false;
+	else {
+	  h = pln.plane_equation.ValueAt(q);
+	  if ( fabs(h) > tolerance )
+	    rc = false;
+	}
       }
     }
   }
@@ -417,11 +433,11 @@ BOOL ON_Curve::IsClosed() const
     //
     rc = ON_ComparePoint( dim, false, a, p )?false:true;
     if ( rc ) {
-      if (    !ON_ComparePoint( dim, false, a, b )
-           || !ON_ComparePoint( dim, false, a, c )
-           || !ON_ComparePoint( dim, false, p, b )
-           || !ON_ComparePoint( dim, false, p, c ) )
-        rc = false;
+      if (    !ON_ComparePoint( dim, false, a, b ) 
+	   || !ON_ComparePoint( dim, false, a, c ) 
+	   || !ON_ComparePoint( dim, false, p, b ) 
+	   || !ON_ComparePoint( dim, false, p, c ) )
+	rc = false;
     }
     if ( dim>3)
       onfree(a);
@@ -435,16 +451,16 @@ BOOL ON_Curve::IsPeriodic() const
   return false;
 }
 
-bool ON_Curve::GetNextDiscontinuity(
-                ON::continuity c,
-                double t0,
-                double t1,
-                double* t,
-                int* hint,
-                int* dtype,
-                double cos_angle_tolerance,
-                double curvature_tolerance
-                ) const
+bool ON_Curve::GetNextDiscontinuity( 
+		ON::continuity c,
+		double t0,
+		double t1,
+		double* t,
+		int* hint,
+		int* dtype,
+		double cos_angle_tolerance,
+		double curvature_tolerance
+		) const
 {
   // this function must be overridden by curve objects that
   // can have parametric discontinuities on the interior of the curve.
@@ -453,7 +469,7 @@ bool ON_Curve::GetNextDiscontinuity(
 
   if ( dtype )
     *dtype = 0;
-
+  
   if ( t0 != t1 )
   {
     bool bTestC0 = false;
@@ -494,78 +510,78 @@ bool ON_Curve::GetNextDiscontinuity(
       // 20 March 2003 Dale Lear:
       //   Have to look for locus discontinuities at ends.
       //   Must test both ends becuase t0 > t1 is valid input.
-      //   In particular, for ON_CurveProxy::GetNextDiscontinuity()
-      //   to work correctly on reversed "real" curves, the
+      //   In particular, for ON_CurveProxy::GetNextDiscontinuity() 
+      //   to work correctly on reversed "real" curves, the 
       //   t0 > t1 must work right.
       ON_Interval domain = Domain();
 
       if ( t0 < domain[1] && t1 >= domain[1] )
-        t1 = domain[1];
+	t1 = domain[1];
       else if ( t0 > domain[0] && t1 <= domain[0] )
-        t1 = domain[0];
+	t1 = domain[0];
 
       if ( (t0 < domain[1] && t1 >= domain[1]) || (t0 > domain[0] && t1 <= domain[0]) )
       {
-        if ( IsClosed() )
-        {
-          if ( bTestD1 || bTestT )
-          {
-            // need to check locus continuity at start/end of closed curve.
-            ON_3dPoint Pa, Pb;
-            ON_3dVector D1a, D1b, D2a, D2b;
-            if (    Ev2Der(domain[0],Pa,D1a,D2a,1,NULL)
-                 && Ev2Der(domain[1],Pb,D1b,D2b,-1,NULL) )
-            {
-              Pb = Pa; // IsClosed() = true means assume Pa=Pb;
-              if ( bTestD1 )
-              {
-                if ( !(D1a-D1b).IsTiny(D1b.MaximumCoordinate()*ON_SQRT_EPSILON ) )
-                {
-                  if ( dtype )
-                    *dtype = 1;
-                  *t = t1;
-                  rc = true;
-                }
-                else if ( bTestD2 && !(D2a-D2b).IsTiny(D2b.MaximumCoordinate()*ON_SQRT_EPSILON) )
-                {
-                  if ( dtype )
-                    *dtype = 2;
-                  *t = t1;
-                  rc = true;
-                }
+	if ( IsClosed() )
+	{
+	  if ( bTestD1 || bTestT )
+	  {
+	    // need to check locus continuity at start/end of closed curve.
+	    ON_3dPoint Pa, Pb;
+	    ON_3dVector D1a, D1b, D2a, D2b;
+	    if (    Ev2Der(domain[0],Pa,D1a,D2a,1,NULL) 
+		 && Ev2Der(domain[1],Pb,D1b,D2b,-1,NULL) )
+	    {
+	      Pb = Pa; // IsClosed() = true means assume Pa=Pb;
+	      if ( bTestD1 )
+	      {
+		if ( !(D1a-D1b).IsTiny(D1b.MaximumCoordinate()*ON_SQRT_EPSILON ) )
+		{
+		  if ( dtype )
+		    *dtype = 1;
+		  *t = t1;
+		  rc = true;
+		}
+		else if ( bTestD2 && !(D2a-D2b).IsTiny(D2b.MaximumCoordinate()*ON_SQRT_EPSILON) )
+		{
+		  if ( dtype )
+		    *dtype = 2;
+		  *t = t1;
+		  rc = true;
+		}
 
-              }
-              else if ( bTestT )
-              {
-                ON_3dVector Ta, Tb, Ka, Kb;
-                ON_EvCurvature( D1a, D2a, Ta, Ka );
-                ON_EvCurvature( D1b, D2b, Tb, Kb );
-                if ( Ta*Tb < cos_angle_tolerance )
-                {
-                  if ( dtype )
-                    *dtype = 1;
-                  *t = t1;
-                  rc = true;
-                }
-                else if ( bTestK && (Ka-Kb).Length() > curvature_tolerance )
-                {
-                  if ( dtype )
-                    *dtype = 2;
-                  *t = t1;
-                  rc = true;
-                }
-              }
-            }
-          }
-        }
-        else
-        {
-          // open curves are not locus continuous at ends.
-          if (dtype )
-            *dtype = 0; // locus C0 discontinuity
-          *t = t1;
-          rc = true;
-        }
+	      }
+	      else if ( bTestT )
+	      {
+		ON_3dVector Ta, Tb, Ka, Kb;
+		ON_EvCurvature( D1a, D2a, Ta, Ka );
+		ON_EvCurvature( D1b, D2b, Tb, Kb );
+		if ( Ta*Tb < cos_angle_tolerance )
+		{
+		  if ( dtype )
+		    *dtype = 1;
+		  *t = t1;
+		  rc = true;
+		}
+		else if ( bTestK && (Ka-Kb).Length() > curvature_tolerance )
+		{
+		  if ( dtype )
+		    *dtype = 2;
+		  *t = t1;
+		  rc = true;
+		}
+	      }
+	    }
+	  }
+	}
+	else
+	{
+	  // open curves are not locus continuous at ends.
+	  if (dtype )
+	    *dtype = 0; // locus C0 discontinuity
+	  *t = t1;
+	  rc = true;
+	}
       }
     }
   }
@@ -577,7 +593,7 @@ bool ON_Curve::GetNextDiscontinuity(
 
 bool ON_Curve::IsContinuous(
     ON::continuity desired_continuity,
-    double t,
+    double t, 
     int* hint, // default = NULL,
     double point_tolerance, // default=ON_ZERO_TOLERANCE
     double d1_tolerance, // default==ON_ZERO_TOLERANCE
@@ -618,17 +634,17 @@ bool ON_Curve::IsContinuous(
     {
       if ( !IsClosed() )
       {
-        // open curves are not locus continuous at the end parameter
-        // see comments by ON::continuity enum
-        return false;
+	// open curves are not locus continuous at the end parameter
+	// see comments by ON::continuity enum
+	return false;
       }
-      else
+      else 
       {
-        if ( ON::C0_locus_continuous == desired_continuity )
-        {
-          return true;
-        }
-        bIsClosed = true;
+	if ( ON::C0_locus_continuous == desired_continuity )
+	{
+	  return true;
+	}
+	bIsClosed = true;
       }
 
       t0 = domain[0];
@@ -662,7 +678,7 @@ bool ON_Curve::IsContinuous(
   case ON::unknown_continuity:
     break;
 
-  case ON::C0_continuous:
+  case ON::C0_continuous:  
     if ( !EvPoint( t1, Pm, -1, hint ) )
       return false;
     if ( !EvPoint( t0, Pp,  1, hint ) )
@@ -713,8 +729,8 @@ bool ON_Curve::IsContinuous(
       return false;
     if ( bIsClosed )
       Pm = Pp;
-    if ( !(Pm-Pp).IsTiny(point_tolerance) || Tm*Tp < cos_angle_tolerance ||
-					(Km-Kp).Length() > curvature_tolerance ||
+    if ( !(Pm-Pp).IsTiny(point_tolerance) || Tm*Tp < cos_angle_tolerance || 
+					(Km-Kp).Length() > curvature_tolerance || 
 					(!Km.IsTiny() && !Kp.IsTiny() && Km.Unitize()*Kp.Unitize() <.95 )  )
       return false;
     break;
@@ -797,7 +813,7 @@ BOOL ON_Curve::EvTangent(
   ON_3dVector D1, D2;//, K;
   tangent.Zero();
   int rc = Ev1Der( t, point, tangent, side, hint );
-  if ( rc && !tangent.Unitize() )
+  if ( rc && !tangent.Unitize() ) 
   {
     if ( Ev2Der( t, point, D1, D2, side, hint ) )
     {
@@ -805,62 +821,62 @@ BOOL ON_Curve::EvTangent(
       // exists, the 1rst derivative is zero, and the 2nd
       // derivative is nonzero, then the unit tangent is equal
       // to +/-the unitized 2nd derivative.  The sign is equal
-      // to the sign of D1(s) o D2(s) as s approaches the
+      // to the sign of D1(s) o D2(s) as s approaches the 
       // evaluation parameter.
       tangent = D2;
       rc = tangent.Unitize();
       if ( rc )
       {
-        ON_Interval domain = Domain();
-        double tminus = 0.0;
-        double tplus = 0.0;
-        if ( domain.IsIncreasing() && GetParameterTolerance( t, &tminus, &tplus ) )
-        {
-          ON_3dPoint p;
-          ON_3dVector d1, d2;
-          double eps = 0.0;
-          double d1od2tol = 0.0; //1.0e-10; // 1e-5 is too big
-          double d1od2;
-          double tt = t;
-          //double dt = 0.0;
+	ON_Interval domain = Domain();
+	double tminus = 0.0;
+	double tplus = 0.0;
+	if ( domain.IsIncreasing() && GetParameterTolerance( t, &tminus, &tplus ) )
+	{
+	  ON_3dPoint p;
+	  ON_3dVector d1, d2;
+	  double eps = 0.0;
+	  double d1od2tol = 0.0; //1.0e-10; // 1e-5 is too big
+	  double d1od2;
+	  double tt = t;
+	  //double dt = 0.0;
 
-          if ( (t < domain[1] && side >= 0) || (t == domain[0]) )
-          {
-            eps = tplus-t;
-            if ( eps <= 0.0 || t+eps > domain.ParameterAt(0.1) )
-              return rc;
-          }
-          else if ( (t > domain[0] && side < 0) || (t == domain[1]) )
-          {
-            eps = tminus - t;
-            if ( eps >= 0.0 || t+eps < domain.ParameterAt(0.9) )
-              return rc;
-          }
+	  if ( (t < domain[1] && side >= 0) || (t == domain[0]) )
+	  {
+	    eps = tplus-t;
+	    if ( eps <= 0.0 || t+eps > domain.ParameterAt(0.1) )
+	      return rc;
+	  }
+	  else if ( (t > domain[0] && side < 0) || (t == domain[1]) )
+	  {
+	    eps = tminus - t;
+	    if ( eps >= 0.0 || t+eps < domain.ParameterAt(0.9) )
+	      return rc;
+	  }
 
-          int i, negative_count=0, zero_count=0;
-          int test_count = 3;
-          for ( i = 0; i < test_count; i++, eps *= 0.5 )
-          {
-            tt = t + eps;
-            if ( tt == t )
-              break;
-            if (!Ev2Der( tt, p, d1, d2, side, 0 ))
-              break;
-            d1od2 = d1*d2;
-            if ( d1od2 > d1od2tol )
-              break;
-            if ( d1od2 < d1od2tol )
-              negative_count++;
-            else
-              zero_count++;
-          }
-          if ( negative_count > 0 && test_count == negative_count+zero_count )
-          {
-            // all sampled d1od2 values were <= 0
-            // and at least one was strictly < 0.
-            tangent.Reverse();
-          }
-        }
+	  int i, negative_count=0, zero_count=0;
+	  int test_count = 3;
+	  for ( i = 0; i < test_count; i++, eps *= 0.5 )
+	  {
+	    tt = t + eps;
+	    if ( tt == t )
+	      break;
+	    if (!Ev2Der( tt, p, d1, d2, side, 0 ))
+	      break;
+	    d1od2 = d1*d2;
+	    if ( d1od2 > d1od2tol )
+	      break;
+	    if ( d1od2 < d1od2tol )
+	      negative_count++;
+	    else
+	      zero_count++;
+	  }
+	  if ( negative_count > 0 && test_count == negative_count+zero_count )
+	  {
+	    // all sampled d1od2 values were <= 0 
+	    // and at least one was strictly < 0.
+	    tangent.Reverse();
+	  }
+	}
       }
     }
   }
@@ -915,11 +931,11 @@ BOOL ON_Curve::EvPoint( // returns false if unable to evaluate
        double t,         // evaluation parameter
        ON_3dPoint& point,   // returns value of curve
        int side,        // optional - determines which side to evaluate from
-                       //         0 = default
-                       //      <  0 to evaluate from below,
-                       //      >  0 to evaluate from above
+		       //         0 = default
+		       //      <  0 to evaluate from below, 
+		       //      >  0 to evaluate from above
        int* hint       // optional - evaluation hint used to speed repeated
-                       //            evaluations
+		       //            evaluations
        ) const
 {
   BOOL rc = false;
@@ -985,37 +1001,37 @@ bool ON_Curve::EvaluatePoint( const class ON_ObjRef& objref, ON_3dPoint& P ) con
       ON_Ellipse ellipse;
       if ( IsEllipse(0,&ellipse) )
       {
-        P = ellipse.plane.origin;
-        rc = true;
+	P = ellipse.plane.origin;
+	rc = true;
       }
       else
       {
-        ON_SimpleArray<ON_3dPoint> pline;
-        if ( IsClosed() && IsPolyline(&pline) && pline.Count() >= 4 )
-        {
-          P = pline[0];
-          int i;
-          for ( i = pline.Count()-2; i > 0; i-- )
-          {
-            Q = pline[i];
-            P.x += Q.x; P.y += Q.y; P.z += Q.z;
-          }
-          double s = 1.0/(pline.Count()-1.0);
-          P.x *= s; P.y *= s; P.z *= s;
-        }
-        else if ( Q.IsValid() )
-        {
-          ON_3dVector T, K;
-          if ( EvCurvature(objref.m_evp.m_t[0],Q,T,K) )
-          {
-            double k = K.Length();
-            if ( k > 0.0 )
-            {
-              P = Q + (1.0/(k*k))*K;
-              rc = true;
-            }
-          }
-        }
+	ON_SimpleArray<ON_3dPoint> pline;
+	if ( IsClosed() && IsPolyline(&pline) && pline.Count() >= 4 )
+	{
+	  P = pline[0];
+	  int i;
+	  for ( i = pline.Count()-2; i > 0; i-- )
+	  {
+	    Q = pline[i];
+	    P.x += Q.x; P.y += Q.y; P.z += Q.z;
+	  }
+	  double s = 1.0/(pline.Count()-1.0);
+	  P.x *= s; P.y *= s; P.z *= s;
+	}
+	else if ( Q.IsValid() )
+	{
+	  ON_3dVector T, K;
+	  if ( EvCurvature(objref.m_evp.m_t[0],Q,T,K) )
+	  {
+	    double k = K.Length();
+	    if ( k > 0.0 )
+	    {
+	      P = Q + (1.0/(k*k))*K;
+	      rc = true;
+	    }
+	  }
+	}
       }
     }
     break;
@@ -1025,11 +1041,11 @@ bool ON_Curve::EvaluatePoint( const class ON_ObjRef& objref, ON_3dPoint& P ) con
       ON_Ellipse ellipse;
       if ( IsEllipse(0,&ellipse) )
       {
-        ON_3dPoint F1, F2;
-        if ( ellipse.GetFoci(F1,F2) )
-        {
-          P = ( F1.DistanceTo(Q) <= F1.DistanceTo(Q)) ? F1 : F2;
-        }
+	ON_3dPoint F1, F2;
+	if ( ellipse.GetFoci(F1,F2) )
+	{
+	  P = ( F1.DistanceTo(Q) <= F1.DistanceTo(Q)) ? F1 : F2;
+	}
       }
     }
     break;
@@ -1039,7 +1055,7 @@ bool ON_Curve::EvaluatePoint( const class ON_ObjRef& objref, ON_3dPoint& P ) con
       double t;
       if ( GetNormalizedArcLengthPoint(0.5,&t) )
       {
-        EvPoint(t,P);
+	EvPoint(t,P);
       }
     }
     break;
@@ -1049,29 +1065,29 @@ bool ON_Curve::EvaluatePoint( const class ON_ObjRef& objref, ON_3dPoint& P ) con
       ON_SimpleArray<ON_3dPoint> pline;
       if ( IsPolyline(&pline)  )
       {
-        P = pline[0];
-        double d = P.DistanceTo(Q);
-        int i;
-        for ( i = 1; i < pline.Count(); i++ )
-        {
-          double d1 = pline[i].DistanceTo(Q);
-          if ( d1 < d )
-          {
-            d = d1;
-            P = pline[i];
-          }
-        }
+	P = pline[0];
+	double d = P.DistanceTo(Q);
+	int i;
+	for ( i = 1; i < pline.Count(); i++ )
+	{
+	  double d1 = pline[i].DistanceTo(Q);
+	  if ( d1 < d )
+	  {
+	    d = d1;
+	    P = pline[i];
+	  }
+	}
       }
       else
       {
-        P = PointAtStart();
-        if ( !IsClosed() )
-        {
-          ON_3dPoint P1 = PointAtEnd();
-          if ( P.DistanceTo(Q) > P1.DistanceTo(Q) )
-            P = P1;
-        }
-      }
+	P = PointAtStart();
+	if ( !IsClosed() )
+	{
+	  ON_3dPoint P1 = PointAtEnd();
+	  if ( P.DistanceTo(Q) > P1.DistanceTo(Q) )
+	    P = P1;
+	}
+      }      
     }
     break;
 
@@ -1092,10 +1108,10 @@ BOOL ON_Curve::Ev1Der( // returns false if unable to evaluate
        ON_3dPoint& point,
        ON_3dVector& derivative,
        int side,        // optional - determines which side to evaluate from
-                       //      <= 0 to evaluate from below,
-                       //      >  0 to evaluate from above
+		       //      <= 0 to evaluate from below, 
+		       //      >  0 to evaluate from above
        int* hint       // optional - evaluation hint used to speed repeated
-                       //            evaluations
+		       //            evaluations
        ) const
 {
   BOOL rc = false;
@@ -1124,7 +1140,7 @@ BOOL ON_Curve::Ev1Der( // returns false if unable to evaluate
       point.z = v[2];
       derivative.z = v[dim+2];
       if ( dim > 64 )
-        onfree(v);
+	onfree(v);
     }
   }
 
@@ -1137,10 +1153,10 @@ BOOL ON_Curve::Ev2Der( // returns false if unable to evaluate
        ON_3dVector& firstDervative,
        ON_3dVector& secondDervative,
        int side,        // optional - determines which side to evaluate from
-                       //      <= 0 to evaluate from below,
-                       //      >  0 to evaluate from above
+		       //      <= 0 to evaluate from below, 
+		       //      >  0 to evaluate from above
        int* hint       // optional - evaluation hint used to speed repeated
-                       //            evaluations
+		       //            evaluations
        ) const
 {
   BOOL rc = false;
@@ -1175,7 +1191,7 @@ BOOL ON_Curve::Ev2Der( // returns false if unable to evaluate
       firstDervative.z = v[dim+2];
       secondDervative.z = v[2*dim+2];
       if ( dim > 64 )
-        onfree(v);
+	onfree(v);
     }
   }
 
@@ -1183,10 +1199,10 @@ BOOL ON_Curve::Ev2Der( // returns false if unable to evaluate
 }
 
 BOOL ON_Curve::GetLocalClosestPoint( const ON_3dPoint& test_point,
-        double seed_parameter,
-        double* t,
-        const ON_Interval* sub_domain
-        ) const
+	double seed_parameter,
+	double* t,
+	const ON_Interval* sub_domain
+	) const
 {
   // TODO: add simple dbrent search for base class default that will work
   //       with C1 curves that have a non-vanishing derivative.
@@ -1194,10 +1210,10 @@ BOOL ON_Curve::GetLocalClosestPoint( const ON_3dPoint& test_point,
 }
 
 BOOL ON_Curve::GetLength(
-        double* length,               // length returned here
-        double fractional_tolerance,  // default = 1.0e-8
-        const ON_Interval* sub_domain // default = NULL
-        ) const
+	double* length,               // length returned here
+	double fractional_tolerance,  // default = 1.0e-8
+	const ON_Interval* sub_domain // default = NULL
+	) const
 {
   BOOL rc = false;
   if ( length )
@@ -1233,7 +1249,7 @@ bool ON_LineCurve::IsShort(
     {
       domain.Intersection(*sub_domain);
       if ( !domain.IsIncreasing() )
-        return true;
+	return true;
       sub_domain = &domain;
     }
   }
@@ -1265,7 +1281,7 @@ bool ON_ArcCurve::IsShort(
     {
       domain.Intersection(*sub_domain);
       if ( !domain.IsIncreasing() )
-        return true;
+	return true;
       sub_domain = &domain;
     }
   }
@@ -1297,7 +1313,7 @@ bool ON_PolyCurve::IsShort(
     {
       domain.Intersection(*sub_domain);
       if ( !domain.IsIncreasing() )
-        return true;
+	return true;
       sub_domain = &domain;
     }
   }
@@ -1334,20 +1350,20 @@ bool ON_PolyCurve::IsShort(
       tmp1 = segment_curve->Domain();
       if ( tmp0 != tmp1 )
       {
-        double t = sub_domain->Min();
-        double s0 = tmp0.NormalizedParameterAt(t);
-        if ( s0 < 0.0 )
-          s0 = 0.0;
-        t = sub_domain->Max();
-        double s1 = tmp1.NormalizedParameterAt(t);
-        if ( s1 > 1.0 )
-          s1 = 1.0;
-        tmp0[0] = tmp1.ParameterAt(s0);
-        tmp0[1] = tmp1.ParameterAt(s1);
-      }
+	double t = sub_domain->Min();
+	double s0 = tmp0.NormalizedParameterAt(t);
+	if ( s0 < 0.0 )
+	  s0 = 0.0;
+	t = sub_domain->Max();
+	double s1 = tmp1.NormalizedParameterAt(t);
+	if ( s1 > 1.0 )
+	  s1 = 1.0;
+	tmp0[0] = tmp1.ParameterAt(s0);
+	tmp0[1] = tmp1.ParameterAt(s1);
+      }  
       else
       {
-        tmp0.Intersection(*sub_domain);
+	tmp0.Intersection(*sub_domain);
       }
       seg_sub_domain = &tmp0;
     }
@@ -1373,7 +1389,7 @@ bool ON_CurveProxy::IsShort(
     {
       domain.Intersection(*sub_domain);
       if ( !domain.IsIncreasing() )
-        return true;
+	return true;
       sub_domain = &domain;
     }
   }
@@ -1414,7 +1430,7 @@ bool ON_PolylineCurve::IsShort(
     double s;
     double t = sub_domain->Min();
     i0 = ON_NurbsSpanIndex(2,count,m_t,t,0,0);
-    if ( i0 < 0 || i0 >= count )
+    if ( i0 < 0 || i0 >= count ) 
     {
       // handle degenerate cases when m_t[] array is bogus
       i0 = 0;
@@ -1451,7 +1467,7 @@ bool ON_PolylineCurve::IsShort(
   }
   for (i0++; i0 <= i1 && length <= tolerance; i0++)
     length += pline[i0-1].DistanceTo(pline[i0]);
-
+  
   return (length <= tolerance);
 }
 
@@ -1482,7 +1498,7 @@ bool ON_Curve::IsShort(
     {
       domain.Intersection(*sub_domain);
       if ( !domain.IsIncreasing() )
-        return true;
+	return true;
       sub_domain = &domain;
     }
   }
@@ -1495,7 +1511,7 @@ bool ON_Curve::IsShort(
       bool rc = false;
       const ON_ArcCurve* arc_curve = ON_ArcCurve::Cast(this);
       if ( 0 != arc_curve )
-        rc = arc_curve->ON_ArcCurve::IsShort(tolerance,sub_domain);
+	rc = arc_curve->ON_ArcCurve::IsShort(tolerance,sub_domain);
       return rc;
     }
 
@@ -1504,7 +1520,7 @@ bool ON_Curve::IsShort(
       bool rc = false;
       const ON_LineCurve* line_curve = ON_LineCurve::Cast(this);
       if ( 0 != line_curve )
-        rc = line_curve->ON_LineCurve::IsShort(tolerance,sub_domain);
+	rc = line_curve->ON_LineCurve::IsShort(tolerance,sub_domain);
       return rc;
     }
 
@@ -1513,7 +1529,7 @@ bool ON_Curve::IsShort(
       bool rc = false;
       const ON_PolylineCurve* polyline_curve = ON_PolylineCurve::Cast(this);
       if ( 0 != polyline_curve )
-        rc = polyline_curve->ON_PolylineCurve::IsShort(tolerance,sub_domain);
+	rc = polyline_curve->ON_PolylineCurve::IsShort(tolerance,sub_domain);
       return rc;
     }
 
@@ -1522,7 +1538,7 @@ bool ON_Curve::IsShort(
       bool rc = false;
       const ON_PolyCurve* poly_curve = ON_PolyCurve::Cast(this);
       if ( 0 != poly_curve )
-        rc = poly_curve->ON_PolyCurve::IsShort(tolerance,sub_domain);
+	rc = poly_curve->ON_PolyCurve::IsShort(tolerance,sub_domain);
       return rc;
     }
 
@@ -1531,7 +1547,7 @@ bool ON_Curve::IsShort(
       bool rc = false;
       const ON_CurveProxy* proxy = ON_CurveProxy::Cast(this);
       if ( 0 != proxy )
-        rc = proxy->ON_CurveProxy::IsShort(tolerance,sub_domain);
+	rc = proxy->ON_CurveProxy::IsShort(tolerance,sub_domain);
       return rc;
     }
 
@@ -1555,7 +1571,7 @@ bool ON_Curve::IsShort(
     ON_3dPoint P[65];
     int v_stride = 3;
     memset(P,0,sizeof(P));
-
+    
     if ( !Evaluate(domain[0],0,v_stride,&P[0].x,0,&hint0) )
       return false;
 
@@ -1565,7 +1581,7 @@ bool ON_Curve::IsShort(
     for ( i = 16; i <= 64 && length <= tolerance; i += 16 )
     {
       if ( !Evaluate(domain.ParameterAt(i/64.0),0,v_stride,&P[i].x,0,&hint) )
-        return false;
+	return false;
       length += P[i].DistanceTo(P[i-16]);
     }
 
@@ -1576,28 +1592,28 @@ bool ON_Curve::IsShort(
       hint = hint0;
       for ( i = 8; i <= 64 && length <= tolerance; i += 8 )
       {
-        if ( i%16 )
-        {
-          if ( !Evaluate(domain.ParameterAt(i/64.0),0,v_stride,&P[i].x,0,&hint) )
-            return false;
-        }
-        length += P[i-8].DistanceTo(P[i]);
+	if ( i%16 )
+	{
+	  if ( !Evaluate(domain.ParameterAt(i/64.0),0,v_stride,&P[i].x,0,&hint) )
+	    return false;
+	}
+	length += P[i-8].DistanceTo(P[i]);
       }
 
       if ( length <= tolerance )
       {
-        // 64 point check
-        length = 0.0;
-        hint = hint0;
-        for ( i = 1; i <= 64 && length <= tolerance; i++ )
-        {
-          if ( i%8 )
-          {
-            if ( !Evaluate(domain.ParameterAt(i/64.0),0,v_stride,&P[i].x,0,&hint) )
-              return false;
-          }
-          length += P[i-1].DistanceTo(P[i]);
-        }
+	// 64 point check
+	length = 0.0;
+	hint = hint0;
+	for ( i = 1; i <= 64 && length <= tolerance; i++ )
+	{
+	  if ( i%8 )
+	  {
+	    if ( !Evaluate(domain.ParameterAt(i/64.0),0,v_stride,&P[i].x,0,&hint) )
+	      return false;
+	  }
+	  length += P[i-1].DistanceTo(P[i]);
+	}
       }
     }
   }
@@ -1631,7 +1647,7 @@ ON::eCurveType ON_CurveType( const ON_Curve* curve )
       return ON::ctOnsurface;
     id = id->BaseClass();
   }
-
+  
   return ON::ctCurve;
 }
 
@@ -1651,21 +1667,21 @@ Returns:
   True if ends of curves are matched to requested gap_tolerance.
 */
 bool ON_MatchCurveEnds( ON_Curve* curve0,
-                        int end0,
-                        ON_Curve* curve1,
-                        int end1,
-                        double gap_tolerance = 0.0
-                        );
+			int end0,
+			ON_Curve* curve1,
+			int end1,
+			double gap_tolerance = 0.0
+			);
 
 bool ON_MatchCurveEnds( ON_Curve* curve0,
-                        int end0,
-                        ON_Curve* curve1,
-                        int end1,
-                        double gap_tolerance )
+			int end0,
+			ON_Curve* curve1,
+			int end1,
+			double gap_tolerance )
 {
   BOOL rc = false;
-  if ( 0 != curve0 && 0 != curve1
-       && end0 >= 0 && end0 <= 1
+  if ( 0 != curve0 && 0 != curve1 
+       && end0 >= 0 && end0 <= 1 
        && end1 >= 0 && end1 <= 1 )
   {
     ON_3dPoint P0 = end0 ? curve0->PointAtEnd() : curve0->PointAtStart();
@@ -1686,160 +1702,160 @@ bool ON_MatchCurveEnds( ON_Curve* curve0,
       int i;
       for ( i = 0; i <= 1; i++ )
       {
-        ON_3dPoint Q0 = ON_UNSET_POINT;
-        ON_3dPoint Q1 = ON_UNSET_POINT;
-        ON_Curve* c = i ? curve1 : curve0;
-        ON::eCurveType ct = ON_CurveType(c);
-        int e = i ? end1 : end0;
-        while ( ON::ctPolycurve == ct )
-        {
-          c->DestroyRuntimeCache();
-          ON_PolyCurve* polycurve = ON_PolyCurve::Cast(c);
-          if ( 0 == polycurve )
-            break;
-          c = polycurve->SegmentCurve(e?(polycurve->Count()-1):0);
-          if( 0 == c )
-            return false;
-          ct = ON_CurveType(c);
-        }
-        seg[i] = c;
-        switch(ct)
-        {
-        case ON::ctArc: // arc
-          if ( c->IsClosed() )
-            fix[i] = 200;
-          else
-          {
-            fix[i] = 100;
-          }
-          Q0 = c->PointAtStart();
-          Q1 = c->PointAtEnd();
-          break;
-        case ON::ctLine: // line
-          fix[i] = 20;
-          Q0 = c->PointAtStart();
-          Q1 = c->PointAtEnd();
-          break;
-        case ON::ctPolyline: // polyline
-          fix[i] = 10;
-          if ( c->SpanCount() == 1 )
-          {
-            // same as a line
-            fix[i] = 20;
-            Q0 = c->PointAtStart();
-            Q1 = c->PointAtEnd();
-          }
-          else
-            fix[i] = 10;
-          break;
-        case ON::ctProxy: // proxy
-          fix[i] = 1000; // cannot change
-          break;
-        case ON::ctPolycurve: // polycurve
-          fix[i] = 1000; // if this happens, something is bad
-          break;
-        case ON::ctNurbs: // nurbs
-          {
-            if ( c->Degree() == 1 )
-            {
-              if ( c->SpanCount() == 1 )
-              {
-                // same as a line
-                fix[i] = 20;
-                Q0 = c->PointAtStart();
-                Q1 = c->PointAtEnd();
-              }
-              else
-              {
-                // same as a polyline
-                fix[i] = 10;
-              }
-            }
-            else
-              fix[i] = 0;
-          }
-          break;
-        case ON::ctOnsurface: // curve on surface
-          fix[i] = 1000; // cannot change
-          break;
-        default: // ???
-          fix[i] = 50;
-          break;
-        }
+	ON_3dPoint Q0 = ON_UNSET_POINT;
+	ON_3dPoint Q1 = ON_UNSET_POINT;
+	ON_Curve* c = i ? curve1 : curve0;
+	ON::eCurveType ct = ON_CurveType(c);
+	int e = i ? end1 : end0;
+	while ( ON::ctPolycurve == ct )
+	{
+	  c->DestroyRuntimeCache();
+	  ON_PolyCurve* polycurve = ON_PolyCurve::Cast(c);
+	  if ( 0 == polycurve )
+	    break;
+	  c = polycurve->SegmentCurve(e?(polycurve->Count()-1):0);
+	  if( 0 == c )
+	    return false;
+	  ct = ON_CurveType(c);
+	}
+	seg[i] = c;
+	switch(ct)
+	{
+	case ON::ctArc: // arc
+	  if ( c->IsClosed() )
+	    fix[i] = 200;
+	  else
+	  {
+	    fix[i] = 100;
+	  }
+	  Q0 = c->PointAtStart();
+	  Q1 = c->PointAtEnd();
+	  break;
+	case ON::ctLine: // line
+	  fix[i] = 20;
+	  Q0 = c->PointAtStart();
+	  Q1 = c->PointAtEnd();
+	  break;
+	case ON::ctPolyline: // polyline
+	  fix[i] = 10;
+	  if ( c->SpanCount() == 1 )
+	  {
+	    // same as a line
+	    fix[i] = 20;
+	    Q0 = c->PointAtStart();
+	    Q1 = c->PointAtEnd();
+	  }
+	  else
+	    fix[i] = 10;
+	  break;
+	case ON::ctProxy: // proxy
+	  fix[i] = 1000; // cannot change
+	  break;
+	case ON::ctPolycurve: // polycurve
+	  fix[i] = 1000; // if this happens, something is bad
+	  break;
+	case ON::ctNurbs: // nurbs
+	  {
+	    if ( c->Degree() == 1 )
+	    {
+	      if ( c->SpanCount() == 1 )
+	      {
+		// same as a line
+		fix[i] = 20; 
+		Q0 = c->PointAtStart();
+		Q1 = c->PointAtEnd();
+	      }
+	      else
+	      {
+		// same as a polyline
+		fix[i] = 10;
+	      }
+	    }
+	    else
+	      fix[i] = 0;
+	  }
+	  break;
+	case ON::ctOnsurface: // curve on surface
+	  fix[i] = 1000; // cannot change
+	  break;
+	default: // ???
+	  fix[i] = 50;
+	  break;
+	}
 
-        int j = 0;
-        if ( ON_UNSET_VALUE != Q0.x && Q0.x == Q1.x )
-        {
-          fixPoint[i].x = Q0.x;
-          j++;
-        }
-        if ( ON_UNSET_VALUE != Q0.y && Q0.y == Q1.y )
-        {
-          fixPoint[i].y = Q0.y;
-          j++;
-        }
-        if ( ON_UNSET_VALUE != Q0.z && Q0.z == Q1.z )
-        {
-          fixPoint[i].z = Q0.z;
-          j++;
-        }
-        if ( 2 == j )
-          fix[i] += 9;
-        else if ( 1 == j )
-          fix[i] += 1;
+	int j = 0;
+	if ( ON_UNSET_VALUE != Q0.x && Q0.x == Q1.x )
+	{
+	  fixPoint[i].x = Q0.x;
+	  j++;
+	}
+	if ( ON_UNSET_VALUE != Q0.y && Q0.y == Q1.y )
+	{
+	  fixPoint[i].y = Q0.y;
+	  j++;
+	}
+	if ( ON_UNSET_VALUE != Q0.z && Q0.z == Q1.z )
+	{
+	  fixPoint[i].z = Q0.z;
+	  j++;
+	}
+	if ( 2 == j )
+	  fix[i] += 9;
+	else if ( 1 == j )
+	  fix[i] += 1;
       }
 
       if ( fix[0] >= 1000 || fix[1] < fix[0] )
       {
-        if ( fix[1] >= 1000 )
-          return false;
-        rc =  end1
-           ? curve1->SetEndPoint(P0)
-           : curve1->SetStartPoint(P0);
+	if ( fix[1] >= 1000 )
+	  return false;
+	rc =  end1
+	   ? curve1->SetEndPoint(P0)
+	   : curve1->SetStartPoint(P0);
       }
       else if ( fix[1] >= 1000 || fix[0] < fix[1] )
       {
-        rc =  end0
-           ? curve0->SetEndPoint(P1)
-           : curve0->SetStartPoint(P1);
+	rc =  end0
+	   ? curve0->SetEndPoint(P1)
+	   : curve0->SetStartPoint(P1);
       }
-      else
+      else 
       {
-        ON_3dPoint P = 0.5*(P0+P1);
-        if ( P0.x == P1.x )
-          P.x = P0.x;
-        else if ( fixPoint[0].x != ON_UNSET_VALUE && fixPoint[1].x == ON_UNSET_VALUE )
-          P.x = fixPoint[0].x;
-        else if ( fixPoint[0].x == ON_UNSET_VALUE && fixPoint[1].x != ON_UNSET_VALUE )
-          P.x = fixPoint[1].x;
-        if ( P0.y == P1.y )
-          P.y = P0.y;
-        else if ( fixPoint[0].y != ON_UNSET_VALUE && fixPoint[1].y == ON_UNSET_VALUE )
-          P.y = fixPoint[0].y;
-        else if ( fixPoint[0].y == ON_UNSET_VALUE && fixPoint[1].y != ON_UNSET_VALUE )
-          P.y = fixPoint[1].y;
-        if ( P0.z == P1.z )
-          P.z = P0.z;
-        else if ( fixPoint[0].z != ON_UNSET_VALUE && fixPoint[1].z == ON_UNSET_VALUE )
-          P.z = fixPoint[0].z;
-        else if ( fixPoint[0].z == ON_UNSET_VALUE && fixPoint[1].z != ON_UNSET_VALUE )
-          P.z = fixPoint[1].z;
-        BOOL rc0 =  end0
-           ? curve0->SetEndPoint(P)
-           : curve0->SetStartPoint(P);
-        BOOL rc1 =  end1
-           ? curve1->SetEndPoint(P)
-           : curve1->SetStartPoint(P);
-        rc = (rc0 && rc1);
+	ON_3dPoint P = 0.5*(P0+P1);
+	if ( P0.x == P1.x )
+	  P.x = P0.x;
+	else if ( fixPoint[0].x != ON_UNSET_VALUE && fixPoint[1].x == ON_UNSET_VALUE )
+	  P.x = fixPoint[0].x;
+	else if ( fixPoint[0].x == ON_UNSET_VALUE && fixPoint[1].x != ON_UNSET_VALUE )
+	  P.x = fixPoint[1].x;
+	if ( P0.y == P1.y )
+	  P.y = P0.y;
+	else if ( fixPoint[0].y != ON_UNSET_VALUE && fixPoint[1].y == ON_UNSET_VALUE )
+	  P.y = fixPoint[0].y;
+	else if ( fixPoint[0].y == ON_UNSET_VALUE && fixPoint[1].y != ON_UNSET_VALUE )
+	  P.y = fixPoint[1].y;
+	if ( P0.z == P1.z )
+	  P.z = P0.z;
+	else if ( fixPoint[0].z != ON_UNSET_VALUE && fixPoint[1].z == ON_UNSET_VALUE )
+	  P.z = fixPoint[0].z;
+	else if ( fixPoint[0].z == ON_UNSET_VALUE && fixPoint[1].z != ON_UNSET_VALUE )
+	  P.z = fixPoint[1].z;   
+	BOOL rc0 =  end0
+	   ? curve0->SetEndPoint(P)
+	   : curve0->SetStartPoint(P);
+	BOOL rc1 =  end1
+	   ? curve1->SetEndPoint(P)
+	   : curve1->SetStartPoint(P);
+	rc = (rc0 && rc1);
       }
       if ( rc )
       {
-        P0 = end0 ? curve0->PointAtEnd() : curve0->PointAtStart();
-        P1 = end1 ? curve1->PointAtEnd() : curve1->PointAtStart();
-        double d = P0.DistanceTo(P1);
-        rc = ( gap_tolerance <= 0.0 ) // <= is correct here
-           ? (0==ON_ComparePoint( 3, false, &P0.x, &P1.x ) )
-           : (d <= gap_tolerance);
+	P0 = end0 ? curve0->PointAtEnd() : curve0->PointAtStart();
+	P1 = end1 ? curve1->PointAtEnd() : curve1->PointAtStart();
+	double d = P0.DistanceTo(P1);
+	rc = ( gap_tolerance <= 0.0 ) // <= is correct here
+	   ? (0==ON_ComparePoint( 3, false, &P0.x, &P1.x ) )
+	   : (d <= gap_tolerance);
       }
     }
   }
@@ -1864,11 +1880,11 @@ bool ON_PolyCurve::RemoveShortSegments( double tolerance, bool bRemoveShortSegme
     {
       if ( !rc )
       {
-        rc = true;
-        if ( bRemoveShortSegments )
-          DestroyRuntimeCache();
-        else
-          return rc;
+	rc = true;
+	if ( bRemoveShortSegments )
+	  DestroyRuntimeCache();
+	else
+	  return rc;
       }
     }
     if ( segment_curve->IsShort(tolerance) )
@@ -1886,25 +1902,25 @@ bool ON_PolyCurve::RemoveShortSegments( double tolerance, bool bRemoveShortSegme
     {
       if ( i == short_seg[i0] )
       {
-        if ( !rc )
-        {
-          rc =true;
-          if ( bRemoveShortSegments )
-            DestroyCurveTree();
-          else
-            return rc;
-        }
-        segment_curve = m_segment[i];
-        delete segment_curve;
-        segment_curve = 0;
-        m_segment.Remove(i);
-        m_t.Remove(i);
-        if ( i > 0 && i < segment_count-1 )
-        {
-          // close up gap
-          ON_MatchCurveEnds( m_segment[i-1], 1, m_segment[i], 0, -1.0 );
-        }
-        i0--;
+	if ( !rc )
+	{
+	  rc =true;
+	  if ( bRemoveShortSegments )
+	    DestroyCurveTree();
+	  else
+	    return rc;
+	}
+	segment_curve = m_segment[i];
+	delete segment_curve;
+	segment_curve = 0;
+	m_segment.Remove(i);
+	m_t.Remove(i);
+	if ( i > 0 && i < segment_count-1 )
+	{
+	  // close up gap
+	  ON_MatchCurveEnds( m_segment[i-1], 1, m_segment[i], 0, -1.0 );
+	}
+	i0--;
       }
     }
 
@@ -1912,11 +1928,11 @@ bool ON_PolyCurve::RemoveShortSegments( double tolerance, bool bRemoveShortSegme
     {
       // do not change start/end or domain
       if ( 0 == short_seg[0] )
-        SetStartPoint(P0);
+	SetStartPoint(P0);
       if ( segment_count == *(short_seg.Last()) )
-        SetEndPoint(P1);
+	SetEndPoint(P1);
       if ( domain != Domain() )
-        SetDomain( domain[0], domain[1] );
+	SetDomain( domain[0], domain[1] );
     }
   }
   return rc;
@@ -1926,7 +1942,7 @@ bool ON_NurbsCurve::RepairBadKnots( double knot_tolerance, bool bRepair )
 {
   bool rc = false;
   if ( m_order >= 2 && m_cv_count > m_order
-       && 0 != m_cv && 0 != m_knot
+       && 0 != m_cv && 0 != m_knot 
        && m_dim > 0
        && m_cv_stride >= (m_is_rat)?(m_dim+1):m_dim
        && 0 != m_cv
@@ -1948,11 +1964,11 @@ bool ON_NurbsCurve::RepairBadKnots( double knot_tolerance, bool bRepair )
     {
       if ( m_knot[0] != m_knot[m_order-2] || m_knot[m_cv_count-1] != m_knot[m_cv_count+m_order-3] )
       {
-        rc = true;
-        if ( bRepair )
-          ClampEnd(2);
-        else
-          return rc;
+	rc = true;
+	if ( bRepair )
+	  ClampEnd(2);
+	else
+	  return rc;
       }
     }
 
@@ -1961,28 +1977,28 @@ bool ON_NurbsCurve::RepairBadKnots( double knot_tolerance, bool bRepair )
     {
       if ( m_knot[m_cv_count-1] - m_knot[i] > knot_tolerance )
       {
-        if ( i < m_cv_count-2 )
-        {
-          rc = true;
-          if ( bRepair )
-          {
-            // remove extra knots but do not change end point location
-            DestroyRuntimeCache();
-            double* cv = (double*)onmalloc(sizeof_cv);
-            ClampEnd(2);
-            memcpy( cv, CV(m_cv_count-1), sizeof_cv );
-            m_cv_count = i+2;
-            ClampEnd(2);
-            memcpy( CV(m_cv_count-1), cv, sizeof_cv );
-            for ( i = m_cv_count-1; i < m_cv_count+m_order-2; i++ )
-              m_knot[i] = domain[1];
-            onfree(cv);
-            cv = 0;
-          }
-          else
-            return rc;
-        }
-        break; // there at least one valid span
+	if ( i < m_cv_count-2 )
+	{
+	  rc = true;
+	  if ( bRepair )
+	  {
+	    // remove extra knots but do not change end point location
+	    DestroyRuntimeCache();
+	    double* cv = (double*)onmalloc(sizeof_cv);
+	    ClampEnd(2);
+	    memcpy( cv, CV(m_cv_count-1), sizeof_cv );
+	    m_cv_count = i+2;
+	    ClampEnd(2);
+	    memcpy( CV(m_cv_count-1), cv, sizeof_cv );
+	    for ( i = m_cv_count-1; i < m_cv_count+m_order-2; i++ )
+	      m_knot[i] = domain[1];
+	    onfree(cv);
+	    cv = 0;
+	  }
+	  else
+	    return rc;
+	}
+	break; // there at least one valid span
       }
     }
 
@@ -1991,69 +2007,69 @@ bool ON_NurbsCurve::RepairBadKnots( double knot_tolerance, bool bRepair )
     {
       if ( m_knot[i] - m_knot[m_order-2] > knot_tolerance )
       {
-        if ( i > m_order-1 )
-        {
-          rc = true;
-          if ( bRepair )
-          {
-            // remove extra knots but do not change end point location
-            DestroyRuntimeCache();
-            i -= (m_order+1);
-            double* cv = (double*)onmalloc(sizeof_cv);
-            ClampEnd(2);
-            memcpy(cv,CV(0),sizeof_cv);
-            for ( j0 = 0, j1 = i; j1 < m_cv_count; j0++, j1++ )
-              memcpy(CV(j0),CV(j1),sizeof_cv);
-            for ( j0 = 0, j1 = i; j1 < m_cv_count+m_order-2; j0++, j1++ )
-              m_knot[j0] = m_knot[j1];
-            m_cv_count -= i;
-            ClampEnd(2);
-            memcpy( CV(0), cv, sizeof_cv );
-            for ( i = 0; i <= m_order-2; i++ )
-              m_knot[i] = domain[0];
-            onfree(cv);
-            cv = 0;
-          }
-          else
-            return rc;
-        }
-        break; // there at least one valid span
+	if ( i > m_order-1 )
+	{
+	  rc = true;
+	  if ( bRepair )
+	  {
+	    // remove extra knots but do not change end point location
+	    DestroyRuntimeCache();
+	    i -= (m_order+1);
+	    double* cv = (double*)onmalloc(sizeof_cv);
+	    ClampEnd(2);
+	    memcpy(cv,CV(0),sizeof_cv);
+	    for ( j0 = 0, j1 = i; j1 < m_cv_count; j0++, j1++ )
+	      memcpy(CV(j0),CV(j1),sizeof_cv);
+	    for ( j0 = 0, j1 = i; j1 < m_cv_count+m_order-2; j0++, j1++ )
+	      m_knot[j0] = m_knot[j1];
+	    m_cv_count -= i;
+	    ClampEnd(2);
+	    memcpy( CV(0), cv, sizeof_cv );
+	    for ( i = 0; i <= m_order-2; i++ )
+	      m_knot[i] = domain[0];
+	    onfree(cv);
+	    cv = 0;
+	  }
+	  else
+	    return rc;
+	}
+	break; // there at least one valid span
       }
     }
 
 
-    if (    m_knot[m_order-1]-m_knot[m_order-2] > knot_tolerance
-         && m_knot[m_cv_count-1]-m_knot[m_cv_count-2] > knot_tolerance )
+    if (    m_knot[m_order-1]-m_knot[m_order-2] > knot_tolerance 
+	 && m_knot[m_cv_count-1]-m_knot[m_cv_count-2] > knot_tolerance )
     {
       // Remove interior knots with mulitiplicity >= m_order
       for ( i = m_cv_count-m_order-1; i >= m_order; i-- )
       {
-        if ( m_knot[i+m_order-1] - m_knot[i] <= knot_tolerance )
-        {
-          rc = true;
-          if ( bRepair )
-          {
-            // empty evaluation span - remove CV and knot
-            DestroyRuntimeCache();
-            for ( j0 = i, j1 = i+1; j1 < m_cv_count; j0++, j1++ )
-              memcpy( CV(j0), CV(j1), sizeof_cv );
-            for ( j0 = i, j1 = i+1; j1 < m_cv_count+m_order-2; j0++, j1++ )
-              m_knot[j0] = m_knot[j1];
-            m_cv_count--;
-          }
-          else
-          {
-            // query mode
-            return rc;
-          }
-        }
+	if ( m_knot[i+m_order-1] - m_knot[i] <= knot_tolerance )
+	{
+	  rc = true;
+	  if ( bRepair )
+	  {
+	    // empty evaluation span - remove CV and knot
+	    DestroyRuntimeCache();
+	    for ( j0 = i, j1 = i+1; j1 < m_cv_count; j0++, j1++ )
+	      memcpy( CV(j0), CV(j1), sizeof_cv );
+	    for ( j0 = i, j1 = i+1; j1 < m_cv_count+m_order-2; j0++, j1++ )
+	      m_knot[j0] = m_knot[j1];
+	    m_cv_count--;
+	  }
+	  else
+	  {
+	    // query mode
+	    return rc;
+	  }
+	}
       }
     }
 
     if ( bRepair && bIsPeriodic && rc )
     {
       if ( !IsPeriodic() )
-        ClampEnd(2);
+	ClampEnd(2);
     }
   }
   return rc;
@@ -2062,11 +2078,11 @@ bool ON_NurbsCurve::RepairBadKnots( double knot_tolerance, bool bRepair )
 bool ON_NurbsCurve::RemoveShortSegments( double tolerance, bool bRemoveShortSegments )
 {
   bool rc = false;
-  if ( m_order >= 2
+  if ( m_order >= 2 
        && m_cv_count > m_order
-       && 0 != m_cv && 0 != m_knot
+       && 0 != m_cv && 0 != m_knot 
        && m_dim > 0
-       && m_cv_stride >= (m_is_rat)?(m_dim+1):m_dim
+       && (m_cv_stride >= (m_is_rat)?(m_dim+1):m_dim)
        )
   {
     rc = RepairBadKnots(0.0, bRemoveShortSegments);
@@ -2097,27 +2113,27 @@ bool ON_NurbsCurve::RemoveShortSegments( double tolerance, bool bRemoveShortSegm
       span.GetCV(0,P0);
       for ( i = 0; i < m_cv_count - m_order; i++ )
       {
-        span.GetCV(1,P1);
-        if ( P0.DistanceTo(P1) > tolerance && ON_ComparePoint( m_dim, m_is_rat, CV(0), span.CV(1) ) )
-        {
-          // line segment from start to this->CV(i+1) is not "short"
-          break;
-        }
-        span.m_cv += span.m_cv_stride;
-        span.m_knot++;
+	span.GetCV(1,P1);
+	if ( P0.DistanceTo(P1) > tolerance && ON_ComparePoint( m_dim, m_is_rat, CV(0), span.CV(1) ) )
+	{
+	  // line segment from start to this->CV(i+1) is not "short"
+	  break;
+	}
+	span.m_cv += span.m_cv_stride;
+	span.m_knot++;
       }
     }
     else
     {
       for ( i = 0; i < m_cv_count - m_order; i++ )
       {
-        if ( span.m_knot[m_order-2] < span.m_knot[m_order-1] && !span.IsShort(tolerance) )
-        {
-          // span with index i is not short
-          break;
-        }
-        span.m_cv += span.m_cv_stride;
-        span.m_knot++;
+	if ( span.m_knot[m_order-2] < span.m_knot[m_order-1] && !span.IsShort(tolerance) )
+	{
+	  // span with index i is not short
+	  break;
+	}
+	span.m_cv += span.m_cv_stride;
+	span.m_knot++;
       }
     }
 
@@ -2125,127 +2141,127 @@ bool ON_NurbsCurve::RemoveShortSegments( double tolerance, bool bRemoveShortSegm
     {
       if ( i > 0 )
       {
-        rc = true;
-        if ( bRemoveShortSegments )
-        {
-          // remove short start span(s)
-          DestroyRuntimeCache();
-          c = (double*)onmalloc(sizeof_cv);
-          ClampEnd(2);
-          memcpy(c,CV(0),sizeof_cv);
-          for ( j0=0,j1=i; j1 < m_cv_count+m_order-2; j0++,j1++ )
-            m_knot[j0] = m_knot[j1];
-          for ( j0=0,j1=i; j1 < m_cv_count; j0++,j1++ )
-            memcpy( CV(j0), CV(j1), sizeof_cv );
-          m_cv_count -= i;
-          ClampEnd(2);
-          // do not change start point
-          memcpy(CV(0),c,sizeof_cv);
-          SetDomain( domain[0], domain[1] );
-        }
-        else
-        {
-          // query mode
-          return rc;
-        }
+	rc = true;
+	if ( bRemoveShortSegments )
+	{
+	  // remove short start span(s)
+	  DestroyRuntimeCache();
+	  c = (double*)onmalloc(sizeof_cv);
+	  ClampEnd(2);
+	  memcpy(c,CV(0),sizeof_cv);
+	  for ( j0=0,j1=i; j1 < m_cv_count+m_order-2; j0++,j1++ )
+	    m_knot[j0] = m_knot[j1];
+	  for ( j0=0,j1=i; j1 < m_cv_count; j0++,j1++ )
+	    memcpy( CV(j0), CV(j1), sizeof_cv );
+	  m_cv_count -= i;
+	  ClampEnd(2);
+	  // do not change start point
+	  memcpy(CV(0),c,sizeof_cv);
+	  SetDomain( domain[0], domain[1] );
+	}
+	else
+	{
+	  // query mode
+	  return rc;
+	}
       }
 
       if ( m_cv_count > m_order )
       {
-        // see if there are short span(s) at the end
-        span.m_cv = CV(m_cv_count-m_order);
-        span.m_knot = m_knot + (m_cv_count-m_order);
-        if ( 2 == m_order )
-        {
-          ON_3dPoint P0, P1;
-          span.GetCV(1,P0);
-          for ( i = 0; i < m_cv_count-m_order; i++ )
-          {
-            span.GetCV(0,P1);
-            if ( P0.DistanceTo(P1) > tolerance && ON_ComparePoint( m_dim, m_is_rat, CV(m_cv_count-1), span.CV(0) ) )
-            {
-              // line segment from end to this->CV(m_cv_count-2-i) is not short
-              break;
-            }
-            span.m_cv -= span.m_cv_stride;
-            span.m_knot--;
-          }
-        }
-        else
-        {
-          for ( i = 0; i < m_cv_count-m_order; i++ )
-          {
-            if ( span.m_knot[m_order-2] < span.m_knot[m_order-1] && !span.IsShort(tolerance) )
-            {
-              // this span is not short
-              break;
-            }
-            span.m_cv -= span.m_cv_stride;
-            span.m_knot--;
-          }
-        }
+	// see if there are short span(s) at the end
+	span.m_cv = CV(m_cv_count-m_order);
+	span.m_knot = m_knot + (m_cv_count-m_order);
+	if ( 2 == m_order )
+	{
+	  ON_3dPoint P0, P1;
+	  span.GetCV(1,P0);
+	  for ( i = 0; i < m_cv_count-m_order; i++ )
+	  {
+	    span.GetCV(0,P1);
+	    if ( P0.DistanceTo(P1) > tolerance && ON_ComparePoint( m_dim, m_is_rat, CV(m_cv_count-1), span.CV(0) ) )
+	    {
+	      // line segment from end to this->CV(m_cv_count-2-i) is not short
+	      break;
+	    }
+	    span.m_cv -= span.m_cv_stride;
+	    span.m_knot--;
+	  }
+	}
+	else
+	{
+	  for ( i = 0; i < m_cv_count-m_order; i++ )
+	  {
+	    if ( span.m_knot[m_order-2] < span.m_knot[m_order-1] && !span.IsShort(tolerance) )
+	    {
+	      // this span is not short
+	      break;
+	    }
+	    span.m_cv -= span.m_cv_stride;
+	    span.m_knot--;
+	  }
+	}
 
-        if ( i < m_cv_count-m_order  )
-        {
-          if ( i > 0 )
-          {
-            // remove short end span(s)
-            rc = true;
-            if ( bRemoveShortSegments )
-            {
-              DestroyRuntimeCache();
-              ClampEnd(2);
-              if ( 0 == c )
-                c = (double*)onmalloc(sizeof_cv);
-              memcpy(c,CV(m_cv_count-1),sizeof_cv);
-              m_cv_count -= i;
-              ClampEnd(2);
-              // do not change domain or end point
-              memcpy(CV(m_cv_count-1),c,sizeof_cv);
-              SetDomain( domain[0], domain[1] );
-            }
-            else
-            {
-              // query mode
-              return rc;
-            }
-          }
+	if ( i < m_cv_count-m_order  )
+	{
+	  if ( i > 0 )
+	  {
+	    // remove short end span(s)
+	    rc = true;
+	    if ( bRemoveShortSegments )
+	    {
+	      DestroyRuntimeCache();
+	      ClampEnd(2);
+	      if ( 0 == c )
+		c = (double*)onmalloc(sizeof_cv);
+	      memcpy(c,CV(m_cv_count-1),sizeof_cv);
+	      m_cv_count -= i;
+	      ClampEnd(2);
+	      // do not change domain or end point
+	      memcpy(CV(m_cv_count-1),c,sizeof_cv);
+	      SetDomain( domain[0], domain[1] );
+	    }
+	    else
+	    {
+	      // query mode
+	      return rc;
+	    }
+	  }
 
-          // remove short interior spans
-          for (i = m_cv_count-m_order-1; i>0; i-- )
-          {
-            span.m_knot = m_knot+i;
-            span.m_cv = CV(i);
-            if (    span.m_knot[0] == span.m_knot[m_order-2]
-                 && span.m_knot[m_order-2] < span.m_knot[m_order-1]
-                 && span.m_knot[m_order-1] == span.m_knot[2*m_order-3]
-                 && span.IsShort(tolerance) )
-            {
-              // remove short bezier span
-              rc = true;
-              if ( bRemoveShortSegments )
-              {
-                DestroyRuntimeCache();
-                for ( j0=i,j1=j0+m_order-1; j1 < m_cv_count; j0++,j1++ )
-                {
-                  memcpy(CV(j0),CV(j1),sizeof_cv);
-                }
-                for ( j0=i,j1=j0+m_order-1; j1 < m_cv_count+m_order-2; j0++,j1++ )
-                {
-                  m_knot[j0] = m_knot[j1];
-                }
-                m_cv_count -= (m_order-1);
-                SetDomain( domain[0], domain[1] );
-              }
-              else
-                return true;
-            }
-          }
-        }
+	  // remove short interior spans
+	  for (i = m_cv_count-m_order-1; i>0; i-- )
+	  {
+	    span.m_knot = m_knot+i;
+	    span.m_cv = CV(i);
+	    if (    span.m_knot[0] == span.m_knot[m_order-2]
+		 && span.m_knot[m_order-2] < span.m_knot[m_order-1]
+		 && span.m_knot[m_order-1] == span.m_knot[2*m_order-3]
+		 && span.IsShort(tolerance) )
+	    {
+	      // remove short bezier span
+	      rc = true;
+	      if ( bRemoveShortSegments )
+	      {
+		DestroyRuntimeCache();
+		for ( j0=i,j1=j0+m_order-1; j1 < m_cv_count; j0++,j1++ )
+		{
+		  memcpy(CV(j0),CV(j1),sizeof_cv);
+		}
+		for ( j0=i,j1=j0+m_order-1; j1 < m_cv_count+m_order-2; j0++,j1++ )
+		{
+		  m_knot[j0] = m_knot[j1];
+		}
+		m_cv_count -= (m_order-1);
+		SetDomain( domain[0], domain[1] );
+	      }
+	      else
+		return true;
+	    }
+	  }
+	}
       }
 
       if ( 0 != c )
-        onfree(c);
+	onfree(c);
     }
 
     if ( bRemoveShortSegments && (m_knot[m_order-2] != domain[0] || m_knot[m_cv_count-1] != domain[1]) )
@@ -2289,10 +2305,10 @@ bool ON_PolylineCurve::RemoveShortSegments( double tolerance, bool bRemoveShortS
 bool ON_Curve::RemoveShortSegments( double tolerance, bool bRemoveShortSegments )
 {
   bool rc = false;
-  // When the SDK freeze ends, RemoveShortSegments() will become a
+  // When the SDK freeze ends, RemoveShortSegments() will become a 
   // virtual function and this will be done right.  For now, I have
-  // to hack at it this way because adding a new virtual function
-  // will change the vtable and break existing plug-ins.
+  // to hack at it this way because adding a new virtual function 
+  // will change the vtable and break existing plug-ins.  
   // (The classid stuff avoids multiple (slow) calls to failed Cast().
   // When Cast() returns non-NULL, it is fast.)
 
@@ -2302,9 +2318,9 @@ bool ON_Curve::RemoveShortSegments( double tolerance, bool bRemoveShortSegments 
   // "fake virtual" handling of fast/easy special cases
   while (0 != id && curve_id != id )
   {
-    if (    &ON_ArcCurve::m_ON_ArcCurve_class_id == id
-         || &ON_LineCurve::m_ON_LineCurve_class_id == id
-         || &ON_CurveProxy::m_ON_CurveProxy_class_id == id )
+    if (    &ON_ArcCurve::m_ON_ArcCurve_class_id == id 
+	 || &ON_LineCurve::m_ON_LineCurve_class_id == id
+	 || &ON_CurveProxy::m_ON_CurveProxy_class_id == id )
     {
       // nothing to do
       break;
@@ -2314,23 +2330,23 @@ bool ON_Curve::RemoveShortSegments( double tolerance, bool bRemoveShortSegments 
     {
       ON_PolylineCurve* polyline_curve = ON_PolylineCurve::Cast(this);
       if ( 0 != polyline_curve )
-        rc = polyline_curve->ON_PolylineCurve::RemoveShortSegments(tolerance,bRemoveShortSegments);
+	rc = polyline_curve->ON_PolylineCurve::RemoveShortSegments(tolerance,bRemoveShortSegments);
       break;
     }
-
+    
     if ( &ON_PolyCurve::m_ON_PolyCurve_class_id == id )
     {
       ON_PolyCurve* poly_curve = ON_PolyCurve::Cast(this);
       if ( 0 != poly_curve )
-        rc = poly_curve->ON_PolyCurve::RemoveShortSegments(tolerance,bRemoveShortSegments);
+	rc = poly_curve->ON_PolyCurve::RemoveShortSegments(tolerance,bRemoveShortSegments);
       break;
     }
-
+    
     if ( &ON_NurbsCurve::m_ON_NurbsCurve_class_id == id )
     {
       ON_NurbsCurve* nurbs_curve = ON_NurbsCurve::Cast(this);
       if ( 0 != nurbs_curve )
-        rc = nurbs_curve->ON_NurbsCurve::RemoveShortSegments(tolerance,bRemoveShortSegments);
+	rc = nurbs_curve->ON_NurbsCurve::RemoveShortSegments(tolerance,bRemoveShortSegments);
       break;
     }
 
@@ -2351,24 +2367,24 @@ bool ON_Curve::RemoveShortSegments( double tolerance, bool bRemoveShortSegments 
 //}
 
 BOOL ON_Curve::GetNormalizedArcLengthPoint(
-        double s,
-        double* t,
-        double fractional_tolerance,
-        const ON_Interval* sub_domain
-        ) const
+	double s,
+	double* t,
+	double fractional_tolerance,
+	const ON_Interval* sub_domain
+	) const
 {
   // override when possible
   return false;
 }
 
 BOOL ON_Curve::GetNormalizedArcLengthPoints(
-        int count,
-        const double* s,
-        double* t,
-        double absolute_tolerance,
-        double fractional_tolerance,
-        const ON_Interval* sub_domain
-        ) const
+	int count,
+	const double* s,
+	double* t,
+	double absolute_tolerance,
+	double fractional_tolerance,
+	const ON_Interval* sub_domain
+	) const
 {
   // override when possible
   return false;
@@ -2391,10 +2407,10 @@ bool ON_Curve::Extend(
 }
 
 
-ON_Curve* ON_TrimCurve(
-            const ON_Curve& curve,
-            ON_Interval trim_parameters
-            )
+ON_Curve* ON_TrimCurve( 
+	    const ON_Curve& curve,
+	    ON_Interval trim_parameters
+	    )
 {
   ON_Curve* trimmed_curve = 0;
 
@@ -2407,7 +2423,7 @@ ON_Curve* ON_TrimCurve(
     if ( trim_parameters[0] == curve_domain[1] )
     {
       if ( trim_parameters[1] == curve_domain[0] )
-        return 0;
+	return 0;
       trim_parameters[0] = curve_domain[0];
     }
     else if ( trim_parameters[1] == curve_domain[0] )
@@ -2434,7 +2450,7 @@ ON_Curve* ON_TrimCurve(
     ON_PolyCurve* polycurve = ON_PolyCurve::Cast(left_crv);
     if ( polycurve == NULL )
     {
-      polycurve = new ON_PolyCurve();
+      polycurve = new ON_PolyCurve();      
       polycurve->Append( left_crv );
     }
 
@@ -2444,10 +2460,10 @@ ON_Curve* ON_TrimCurve(
       int i;
       for ( i = 0; i < ptmp->Count(); i++ )
       {
-        ON_Interval sdom = ptmp->SegmentDomain(i);
-        ON_Curve* segment = ptmp->HarvestSegment(i);
-        segment->SetDomain(sdom[0],sdom[1]); // to keep relative parameterization unchanged
-        polycurve->Append( segment );
+	ON_Interval sdom = ptmp->SegmentDomain(i);
+	ON_Curve* segment = ptmp->HarvestSegment(i);
+	segment->SetDomain(sdom[0],sdom[1]); // to keep relative parameterization unchanged
+	polycurve->Append( segment );
       }
       delete right_crv;
       ptmp = 0;
@@ -2538,8 +2554,8 @@ BOOL ON_Curve::GetNurbFormParameterFromCurveParameter(
   return false;
 }
 
-ON_CurveArray::ON_CurveArray( int initial_capacity )
-              : ON_SimpleArray<ON_Curve*>(initial_capacity)
+ON_CurveArray::ON_CurveArray( int initial_capacity ) 
+	      : ON_SimpleArray<ON_Curve*>(initial_capacity)
 {}
 
 ON_CurveArray::~ON_CurveArray()
@@ -2567,14 +2583,14 @@ bool ON_CurveArray::Duplicate( ON_CurveArray& dst ) const
   const int count = Count();
   int i;
   ON_Curve* curve;
-  for ( i = 0; i < count; i++ )
+  for ( i = 0; i < count; i++ ) 
   {
     curve = 0;
-    if ( m_a[i] )
+    if ( m_a[i] ) 
     {
       curve = m_a[i]->Duplicate();
     }
-    dst.Append(curve);
+    dst.Append(curve);      
   }
   return true;
 }
@@ -2588,13 +2604,13 @@ bool ON_CurveArray::Write( ON_BinaryArchive& file ) const
     rc = file.WriteInt( Count() );
     for ( i = 0; rc && i < Count(); i++ ) {
       if ( m_a[i] ) {
-        rc = file.WriteInt(1);
-        if ( rc )
-          rc = file.WriteObject( *m_a[i] ); // polymorphic curves
+	rc = file.WriteInt(1);
+	if ( rc ) 
+	  rc = file.WriteObject( *m_a[i] ); // polymorphic curves
       }
       else {
-        // NULL curve
-        rc = file.WriteInt(0);
+	// NULL curve
+	rc = file.WriteInt(0);
       }
     }
     if ( !file.EndWrite3dmChunk() )
@@ -2612,37 +2628,37 @@ bool ON_CurveArray::Read( ON_BinaryArchive& file )
   int i, flag;
   Destroy();
   bool rc = file.BeginRead3dmChunk( &tcode, &i );
-  if (rc)
+  if (rc) 
   {
     rc = ( tcode == TCODE_ANONYMOUS_CHUNK );
     if (rc) rc = file.Read3dmChunkVersion(&major_version,&minor_version);
-    if (rc && major_version == 1)
+    if (rc && major_version == 1) 
     {
       ON_Object* p;
       int count;
       BOOL rc = file.ReadInt( &count );
-      if (rc)
+      if (rc) 
       {
-        SetCapacity(count);
-        SetCount(count);
-        Zero();
-        int i;
-        for ( i = 0; rc && i < count && rc; i++ )
-        {
-          flag = 0;
-          rc = file.ReadInt(&flag);
-          if (rc && flag==1)
-          {
-            p = 0;
-            rc = file.ReadObject( &p ); // polymorphic curves
-            m_a[i] = ON_Curve::Cast(p);
-            if ( !m_a[i] )
-              delete p;
-          }
-        }
+	SetCapacity(count);
+	SetCount(count);
+	Zero();
+	int i;
+	for ( i = 0; rc && i < count && rc; i++ ) 
+	{
+	  flag = 0;
+	  rc = file.ReadInt(&flag);
+	  if (rc && flag==1) 
+	  {
+	    p = 0;
+	    rc = file.ReadObject( &p ); // polymorphic curves
+	    m_a[i] = ON_Curve::Cast(p);
+	    if ( !m_a[i] )
+	      delete p;
+	  }
+	}
       }
     }
-    else
+    else 
     {
       rc = false;
     }
@@ -2695,10 +2711,10 @@ static void ReverseSegs(ON_SimpleArray<CurveJoinSeg>& SArray)
 ///////////////////////////////////////////////////////////////////////////////////////
 
 
-bool ON_Curve::IsClosable(double tolerance,
-                          double min_abs_size, //0.0
-                          double min_rel_size  //10.0
-                          ) const
+bool ON_Curve::IsClosable(double tolerance, 
+			  double min_abs_size, //0.0
+			  double min_rel_size  //10.0
+			  ) const
 
 {
   if (IsClosed()) return true;
@@ -2724,13 +2740,13 @@ bool ON_Curve::IsClosable(double tolerance,
 
     for (i=1; i<6; i++){
       if (i!=5)
-        P[i] = PointAt(Domain().ParameterAt(0.2*i));
+	P[i] = PointAt(Domain().ParameterAt(0.2*i));
       if (!abs_ok && P[i].DistanceTo(P[0]) > min_abs_size)
-        abs_ok = true;
+	abs_ok = true;
       if (!rel_ok){
-        len += P[i-1].DistanceTo(P[i]);
-        if (len >= min_rel_size*gap)
-          rel_ok = true;
+	len += P[i-1].DistanceTo(P[i]);
+	if (len >= min_rel_size*gap)
+	  rel_ok = true;
       }
       ok = abs_ok && rel_ok;
       if (ok) break;
@@ -2745,13 +2761,13 @@ bool ON_Curve::IsClosable(double tolerance,
 
 
 
-int
+int 
 ON_JoinCurves(const ON_SimpleArray<const ON_Curve*>& InCurves,
-                      ON_SimpleArray<ON_Curve*>& OutCurves,
-                      double join_tol,
-                      bool bPreserveDirection, // = false
-                      ON_SimpleArray<int>* key //=0
-                      )
+		      ON_SimpleArray<ON_Curve*>& OutCurves,
+		      double join_tol,
+		      bool bPreserveDirection, // = false
+		      ON_SimpleArray<int>* key //=0
+		      )
 
 {
 
@@ -2769,7 +2785,7 @@ ON_JoinCurves(const ON_SimpleArray<const ON_Curve*>& InCurves,
     for (i=0; i<InCurves.Count(); i++) key->Append(-1);
   }
 
-  //Copy curves, take out closed curves.
+  //Copy curves, take out closed curves. 
   OutCurves.Reserve(InCurves.Count());
   ON_SimpleArray<ON_Curve*> IC(InCurves.Count());
   ON_SimpleArray<int> cmap(InCurves.Count());
@@ -2805,32 +2821,32 @@ ON_JoinCurves(const ON_SimpleArray<const ON_Curve*>& InCurves,
       if (i==j) continue;
       double dist = Start[i].DistanceTo(End[j]);
       if (dist <= join_tol){
-        CurveJoinEndData& ED = EData.AppendNew();
-        ED.id[0] = i;
-        ED.end[0] = 0;
-        ED.id[1] = j;
-        ED.end[1] = 1;
-        ED.dist = dist;
+	CurveJoinEndData& ED = EData.AppendNew();
+	ED.id[0] = i;
+	ED.end[0] = 0;
+	ED.id[1] = j;
+	ED.end[1] = 1;
+	ED.dist = dist;
       }
       if (!bPreserveDirection && i<j){
-        dist = Start[i].DistanceTo(Start[j]);
-        if (dist <= join_tol){
-          CurveJoinEndData& ED = EData.AppendNew();
-          ED.id[0] = i;
-          ED.end[0] = 0;
-          ED.id[1] = j;
-          ED.end[1] = 0;
-          ED.dist = dist;
-        }
-        dist = End[i].DistanceTo(End[j]);
-        if (dist <= join_tol){
-          CurveJoinEndData& ED = EData.AppendNew();
-          ED.id[0] = i;
-          ED.end[0] = 1;
-          ED.id[1] = j;
-          ED.end[1] = 1;
-          ED.dist = dist;
-        }
+	dist = Start[i].DistanceTo(Start[j]);
+	if (dist <= join_tol){
+	  CurveJoinEndData& ED = EData.AppendNew();
+	  ED.id[0] = i;
+	  ED.end[0] = 0;
+	  ED.id[1] = j;
+	  ED.end[1] = 0;
+	  ED.dist = dist;
+	}
+	dist = End[i].DistanceTo(End[j]);
+	if (dist <= join_tol){
+	  CurveJoinEndData& ED = EData.AppendNew();
+	  ED.id[0] = i;
+	  ED.end[0] = 1;
+	  ED.id[1] = j;
+	  ED.end[1] = 1;
+	  ED.dist = dist;
+	}
       }
     }
   }
@@ -2858,118 +2874,118 @@ ON_JoinCurves(const ON_SimpleArray<const ON_Curve*>& InCurves,
       continue; //one of these endpoints has already been join to a closer end
     if (endarray[ED.id[0]][1 - ED.end[0]] == 0){
       if (endarray[ED.id[1]][1 - ED.end[1]] == 0){//new curve
-        endarray[ED.id[0]][ED.end[0]] = endarray[ED.id[1]][ED.end[1]] = SegsArray.Count()+1;
-        ON_SimpleArray<CurveJoinSeg>& SArray = SegsArray.AppendNew();
-        SArray.Reserve(4);
-        CurveJoinSeg& Seg0 = SArray.AppendNew();
-        CurveJoinSeg& Seg1 = SArray.AppendNew();
-        if (ED.end[0]) {
-          Seg0.id = ED.id[0];
-          Seg0.bRev = false;
-          Seg1.id = ED.id[1];
-          Seg1.bRev = (ED.end[1]) ? true : false;
-        }
-        else {
-          Seg1.id = ED.id[0];
-          Seg1.bRev = false;
-          Seg0.id = ED.id[1];
-          Seg0.bRev = (ED.end[1]) ? false : true;
-        }
+	endarray[ED.id[0]][ED.end[0]] = endarray[ED.id[1]][ED.end[1]] = SegsArray.Count()+1;
+	ON_SimpleArray<CurveJoinSeg>& SArray = SegsArray.AppendNew();
+	SArray.Reserve(4);
+	CurveJoinSeg& Seg0 = SArray.AppendNew();
+	CurveJoinSeg& Seg1 = SArray.AppendNew();
+	if (ED.end[0]) {
+	  Seg0.id = ED.id[0];
+	  Seg0.bRev = false;
+	  Seg1.id = ED.id[1];
+	  Seg1.bRev = (ED.end[1]) ? true : false;
+	}
+	else {
+	  Seg1.id = ED.id[0];
+	  Seg1.bRev = false;
+	  Seg0.id = ED.id[1];
+	  Seg0.bRev = (ED.end[1]) ? false : true;
+	}
       }
 
       else {
 
-        //second curve is part of an existing sequence. Insert or append first curve.
-        ON_SimpleArray<CurveJoinSeg>& SArray = SegsArray[endarray[ED.id[1]][1 - ED.end[1]] - 1];
-        endarray[ED.id[0]][ED.end[0]] = endarray[ED.id[1]][ED.end[1]] =
-          endarray[ED.id[1]][1 - ED.end[1]];
+	//second curve is part of an existing sequence. Insert or append first curve.
+	ON_SimpleArray<CurveJoinSeg>& SArray = SegsArray[endarray[ED.id[1]][1 - ED.end[1]] - 1];
+	endarray[ED.id[0]][ED.end[0]] = endarray[ED.id[1]][ED.end[1]] = 
+	  endarray[ED.id[1]][1 - ED.end[1]];
 
-        if (SArray[0].id == ED.id[1]){
-          CurveJoinSeg Seg;
-          Seg.id = ED.id[0];
-          Seg.bRev = (ED.end[0]) ? false : true;
-          SArray.Insert(0, Seg);
-        }
-        else {
-          CurveJoinSeg& Seg = SArray.AppendNew();
-          Seg.id = ED.id[0];
-          Seg.bRev = (ED.end[0]) ? true : false;
-        }
+	if (SArray[0].id == ED.id[1]){
+	  CurveJoinSeg Seg;
+	  Seg.id = ED.id[0];
+	  Seg.bRev = (ED.end[0]) ? false : true;
+	  SArray.Insert(0, Seg);
+	}
+	else {
+	  CurveJoinSeg& Seg = SArray.AppendNew();
+	  Seg.id = ED.id[0];
+	  Seg.bRev = (ED.end[0]) ? true : false;
+	}
       }
     }
     else if (endarray[ED.id[1]][1 - ED.end[1]] == 0){
     //first curve is part of an existing sequence. Insert or append second curve.
       ON_SimpleArray<CurveJoinSeg>& SArray = SegsArray[endarray[ED.id[0]][1 - ED.end[0]] - 1];
-      endarray[ED.id[0]][ED.end[0]] = endarray[ED.id[1]][ED.end[1]] =
-        endarray[ED.id[0]][1 - ED.end[0]];
+      endarray[ED.id[0]][ED.end[0]] = endarray[ED.id[1]][ED.end[1]] = 
+	endarray[ED.id[0]][1 - ED.end[0]];
 
       if (SArray[0].id == ED.id[0]){
-        CurveJoinSeg Seg;
-        Seg.id = ED.id[1];
-        Seg.bRev = (ED.end[1]) ? false : true;
-        SArray.Insert(0, Seg);
+	CurveJoinSeg Seg;
+	Seg.id = ED.id[1];
+	Seg.bRev = (ED.end[1]) ? false : true;
+	SArray.Insert(0, Seg);
       }
       else {
-        CurveJoinSeg& Seg = SArray.AppendNew();
-        Seg.id = ED.id[1];
-        Seg.bRev = (ED.end[1]) ? true : false;
+	CurveJoinSeg& Seg = SArray.AppendNew();
+	Seg.id = ED.id[1];
+	Seg.bRev = (ED.end[1]) ? true : false;
       }
     }
     else {
       //both are in existing sequences.  join the sequences.
       if (endarray[ED.id[0]][1 - ED.end[0]] == endarray[ED.id[1]][1 - ED.end[1]])
-        //closes off this curve
-        endarray[ED.id[0]][ED.end[0]] = endarray[ED.id[1]][ED.end[1]] =
-          endarray[ED.id[0]][1 - ED.end[0]];
+	//closes off this curve
+	endarray[ED.id[0]][ED.end[0]] = endarray[ED.id[1]][ED.end[1]] = 
+	  endarray[ED.id[0]][1 - ED.end[0]];
       else {
-        int segid0 = endarray[ED.id[0]][1 - ED.end[0]];
-        int segid1 = endarray[ED.id[1]][1 - ED.end[1]];
-        ON_SimpleArray<CurveJoinSeg>& SArray0 = SegsArray[segid0 - 1];
-        ON_SimpleArray<CurveJoinSeg>& SArray1 = SegsArray[segid1 - 1];
-        if (SArray0[0].id == ED.id[0]){
-          if (SArray1[0].id == ED.id[1]){
-            ReverseSegs(SArray0);
-            int j;
-            for (j=0; j<SArray1.Count(); j++){
-              if (endarray[SArray1[j].id][0] > 0) endarray[SArray1[j].id][0] = segid0;
-              if (endarray[SArray1[j].id][1] > 0) endarray[SArray1[j].id][1] = segid0;
-              SArray0.Append(SArray1[j]);
-            }
-            endarray[ED.id[0]][ED.end[0]] = endarray[ED.id[1]][ED.end[1]] = segid0;
-            SArray1.SetCount(0);
-          }
-          else {
-            int j;
-            for (j=0; j<SArray0.Count(); j++){
-              if (endarray[SArray0[j].id][0] > 0) endarray[SArray0[j].id][0] = segid1;
-              if (endarray[SArray0[j].id][1] > 0) endarray[SArray0[j].id][1] = segid1;
-              SArray1.Append(SArray0[j]);
-            }
-            endarray[ED.id[0]][ED.end[0]] = endarray[ED.id[1]][ED.end[1]] = segid1;
-            SArray0.SetCount(0);
-          }
-        }
-        else if (SArray1[0].id == ED.id[1]){
-          int j;
-          for (j=0; j<SArray1.Count(); j++){
-            if (endarray[SArray1[j].id][0] > 0) endarray[SArray1[j].id][0] = segid0;
-            if (endarray[SArray1[j].id][1] > 0) endarray[SArray1[j].id][1] = segid0;
-            SArray0.Append(SArray1[j]);
-          }
-          endarray[ED.id[0]][ED.end[0]] = endarray[ED.id[1]][ED.end[1]] = segid0;
-          SArray1.SetCount(0);
-        }
-        else {
-          ReverseSegs(SArray1);
-          int j;
-          for (j=0; j<SArray1.Count(); j++) {
-            if (endarray[SArray1[j].id][0] > 0) endarray[SArray1[j].id][0] = segid0;
-            if (endarray[SArray1[j].id][1] > 0) endarray[SArray1[j].id][1] = segid0;
-            SArray0.Append(SArray1[j]);
-          }
-          endarray[ED.id[0]][ED.end[0]] = endarray[ED.id[1]][ED.end[1]] = segid0;
-          SArray1.SetCount(0);
-        }
+	int segid0 = endarray[ED.id[0]][1 - ED.end[0]];
+	int segid1 = endarray[ED.id[1]][1 - ED.end[1]];
+	ON_SimpleArray<CurveJoinSeg>& SArray0 = SegsArray[segid0 - 1];
+	ON_SimpleArray<CurveJoinSeg>& SArray1 = SegsArray[segid1 - 1];
+	if (SArray0[0].id == ED.id[0]){
+	  if (SArray1[0].id == ED.id[1]){
+	    ReverseSegs(SArray0);
+	    int j;
+	    for (j=0; j<SArray1.Count(); j++){
+	      if (endarray[SArray1[j].id][0] > 0) endarray[SArray1[j].id][0] = segid0;
+	      if (endarray[SArray1[j].id][1] > 0) endarray[SArray1[j].id][1] = segid0;
+	      SArray0.Append(SArray1[j]);
+	    }
+	    endarray[ED.id[0]][ED.end[0]] = endarray[ED.id[1]][ED.end[1]] = segid0;
+	    SArray1.SetCount(0);
+	  }
+	  else {
+	    int j;
+	    for (j=0; j<SArray0.Count(); j++){
+	      if (endarray[SArray0[j].id][0] > 0) endarray[SArray0[j].id][0] = segid1;
+	      if (endarray[SArray0[j].id][1] > 0) endarray[SArray0[j].id][1] = segid1;
+	      SArray1.Append(SArray0[j]);
+	    }
+	    endarray[ED.id[0]][ED.end[0]] = endarray[ED.id[1]][ED.end[1]] = segid1;
+	    SArray0.SetCount(0);
+	  }
+	}
+	else if (SArray1[0].id == ED.id[1]){
+	  int j;
+	  for (j=0; j<SArray1.Count(); j++){
+	    if (endarray[SArray1[j].id][0] > 0) endarray[SArray1[j].id][0] = segid0;
+	    if (endarray[SArray1[j].id][1] > 0) endarray[SArray1[j].id][1] = segid0;
+	    SArray0.Append(SArray1[j]);
+	  }
+	  endarray[ED.id[0]][ED.end[0]] = endarray[ED.id[1]][ED.end[1]] = segid0;
+	  SArray1.SetCount(0);
+	}
+	else {
+	  ReverseSegs(SArray1);
+	  int j;
+	  for (j=0; j<SArray1.Count(); j++) {
+	    if (endarray[SArray1[j].id][0] > 0) endarray[SArray1[j].id][0] = segid0;
+	    if (endarray[SArray1[j].id][1] > 0) endarray[SArray1[j].id][1] = segid0;
+	    SArray0.Append(SArray1[j]);
+	  }
+	  endarray[ED.id[0]][ED.end[0]] = endarray[ED.id[1]][ED.end[1]] = segid0;
+	  SArray1.SetCount(0);
+	}
       }
     }
   }
@@ -2983,10 +2999,10 @@ ON_JoinCurves(const ON_SimpleArray<const ON_Curve*>& InCurves,
       int count= 0;
       int j;
       for (j=0; j<SArray.Count(); j++) {
-        if (SArray[j].bRev) count++;
+	if (SArray[j].bRev) count++;
       }
       if (2*count > SArray.Count())
-        ReverseSegs(SArray);
+	ReverseSegs(SArray);
     }
     ON_PolyCurve* PC = new ON_PolyCurve(SArray.Count());
     bool pc_added = false;
@@ -2997,49 +3013,49 @@ ON_JoinCurves(const ON_SimpleArray<const ON_Curve*>& InCurves,
       if (key) (*key)[cmap[SArray[j].id]] = OutCurves.Count();
       ON_Curve* C = IC[SArray[j].id];
       if (min_id < 0 || SArray[j].id < min_id){
-        min_id = SArray[j].id;
-        min_seg = j;
+	min_id = SArray[j].id;
+	min_seg = j;
       }
       if (SArray[j].bRev) C->Reverse();
       if (PC->Count()){
-        ON_3dPoint P = PC->PointAtEnd();
-        ON_3dPoint Q = C->PointAtStart();
-        P = 0.5*(P+Q);
-        if (!PC->SetEndPoint(P) || !C->SetStartPoint(P)) {
-          if (PC->Count()) {
-            pc_added = true;
-            OutCurves.Append(PC);
-          }
-          if (key) (*key)[cmap[SArray[j].id]]++;
-          OutCurves.Append(C);
-          int k;
-          for (k=j+1; k<SArray.Count(); k++){
-            if (key) (*key)[cmap[SArray[k].id]] = OutCurves.Count();
-            OutCurves.Append(IC[SArray[k].id]);
-          }
-          break;
-        }
+	ON_3dPoint P = PC->PointAtEnd();
+	ON_3dPoint Q = C->PointAtStart();
+	P = 0.5*(P+Q);
+	if (!PC->SetEndPoint(P) || !C->SetStartPoint(P)) {
+	  if (PC->Count()) {
+	    pc_added = true;
+	    OutCurves.Append(PC);
+	  }
+	  if (key) (*key)[cmap[SArray[j].id]]++;
+	  OutCurves.Append(C);
+	  int k;
+	  for (k=j+1; k<SArray.Count(); k++){
+	    if (key) (*key)[cmap[SArray[k].id]] = OutCurves.Count();
+	    OutCurves.Append(IC[SArray[k].id]);
+	  }
+	  break;
+	}
       }
       ON_PolyCurve* pPoly = ON_PolyCurve::Cast(C);
       if( pPoly){
-        int si;
-        for (si=0; si<pPoly->Count(); si++){
-          const ON_Curve* SC = pPoly->SegmentCurve(si);
-          ON_Curve* SCCopy = SC->DuplicateCurve();
-          if (SCCopy) PC->Append(SCCopy);
-        }
-        delete pPoly;
+	int si;
+	for (si=0; si<pPoly->Count(); si++){
+	  const ON_Curve* SC = pPoly->SegmentCurve(si);
+	  ON_Curve* SCCopy = SC->DuplicateCurve();
+	  if (SCCopy) PC->Append(SCCopy);
+	}
+	delete pPoly;
       }
       else PC->Append(C);
     }
     if (!PC->Count()) delete PC;
     else if (!pc_added) {
       if (!PC->IsClosed() && PC->IsClosable(join_tol))
-        PC->SetEndPoint(PC->PointAtStart());
+	PC->SetEndPoint(PC->PointAtStart());
       if (PC->IsClosed() && min_id >= 0){
-        //int sc = PC->SpanCount();
-        double t = PC->SegmentDomain(min_seg)[0];
-        PC->ChangeClosedCurveSeam(t);
+	//int sc = PC->SpanCount();
+	double t = PC->SegmentDomain(min_seg)[0];
+	PC->ChangeClosedCurveSeam(t);
       }
 
       OutCurves.Append(PC);
@@ -3061,7 +3077,7 @@ ON_JoinCurves(const ON_SimpleArray<const ON_Curve*>& InCurves,
 			ON_3dPoint s= OutCurves[i]->PointAtStart();
 			ON_3dPoint e = OutCurves[i]->PointAtEnd();
 			if(s.DistanceTo(e)<join_tol)
-				OutCurves[i]->SetEndPoint( s );
+				OutCurves[i]->SetEndPoint( s );			
 		}
 	}
   */
@@ -3073,7 +3089,7 @@ ON_JoinCurves(const ON_SimpleArray<const ON_Curve*>& InCurves,
     if (C->IsClosable(join_tol))
       C->SetEndPoint(C->PointAtStart());
   }
-
+    
   onfree((void*)endarray);
   onfree((void*)endspace);
 
@@ -3094,7 +3110,7 @@ bool ON_Curve::ParameterSearch(double t, int& index, bool bEnableSnap,
 	index = -1;
 	if(count>1 && ON_IsValid(t))
   {
-
+		
     index = ON_SearchMonotoneArray(m_t, count, t);
     // index < 0       : means t < m_t[0]
     // index == count-1: means t == m_t[count-1]
@@ -3108,37 +3124,37 @@ bool ON_Curve::ParameterSearch(double t, int& index, bool bEnableSnap,
 
       if (index >= 0 && index < count-1 )
       {
-        // If we get here, then m_t[index] < t < m_t[index+1]
-        double middle_t = 0.5*(m_t[index] + m_t[index+1]);
+	// If we get here, then m_t[index] < t < m_t[index+1]
+	double middle_t = 0.5*(m_t[index] + m_t[index+1]);
 			  if( t < middle_t && t - m_t[index] <= ktol)
-        {
-          // t is a hair bigger than m_t[index]
+	{
+	  // t is a hair bigger than m_t[index]
 					rc = true;
-			  }
-        else if( t > middle_t && m_t[index+1]-t <= ktol)
-        {
-          // t is a hair smaller than m_t[index+1]
+			  } 
+	else if( t > middle_t && m_t[index+1]-t <= ktol)
+	{
+	  // t is a hair smaller than m_t[index+1]
 					rc = true;
 					index ++;
-			  }
+			  }	
       }
       else if (index == count)
       {
-        // If we get here, then t > m_t[count-1]
+	// If we get here, then t > m_t[count-1]
 				if( t-m_t[count-1]<=ktol)
-        {
-          // t is a hair bigger than m_t[count-1]
+	{
+	  // t is a hair bigger than m_t[count-1]
 					rc = true;
 					index = count-1;
 				}
 			}
       else if (index<0)
       {
-        // 22 October 2003 Dale Lear - added this case to match the index==count case above.
-        // If we get here, then t < m_t[0]
+	// 22 October 2003 Dale Lear - added this case to match the index==count case above.
+	// If we get here, then t < m_t[0]
 				if( m_t[0]-t <= ktol)
-        {
-          // t is a hair smaller than m_t[count-1]
+	{
+	  // t is a hair smaller than m_t[count-1]
 					rc = true;
 					index = 0;
 				}
@@ -3350,26 +3366,25 @@ ON_Curve::CloseTo(const ON_Ray& ray, double epsilon, Sample& closest) const
 }
 
 
-
-bool ON_SortLines(
-        int line_count,
-        const ON_Line* line_list,
-        int* index,
-        bool* bReverse
-        )
+bool ON_SortLines( 
+	int line_count, 
+	const ON_Line* line_list, 
+	int* index, 
+	bool* bReverse 
+	)
 {
   ON_3dPoint StartP, EndP, Q;
   double d, startd, endd;
   int Ni, start_i, start_end, end_i, end_end, i, end;
 
-  if ( index )
+  if ( index ) 
   {
-    for ( i = 0; i < line_count; i++ )
+    for ( i = 0; i < line_count; i++ ) 
       index[i] = i;
   }
   if ( bReverse  )
   {
-    for ( i = 0; i < line_count; i++ )
+    for ( i = 0; i < line_count; i++ ) 
       bReverse[i] = false;
   }
   if ( line_count < 1 || 0 == line_list || 0 == index || 0 == bReverse )
@@ -3383,7 +3398,7 @@ bool ON_SortLines(
   }
 
   // sort lines
-  for ( Ni = 1; Ni < line_count; Ni++ )
+  for ( Ni = 1; Ni < line_count; Ni++ ) 
   {
     /* index[] = some permutation of {0,...,line_count-1}
     // N[index[0]], ..., N[index[Ni-1]] are in order
@@ -3396,47 +3411,47 @@ bool ON_SortLines(
     startd = StartP.DistanceTo( line_list[index[start_i]].from ); // "from" is correct here
     endd   = EndP.DistanceTo( line_list[index[end_i]].from );     // "from" is correct here
 
-    for ( i = Ni; i < line_count; i++ )
+    for ( i = Ni; i < line_count; i++ ) 
     {
       Q = line_list[index[i]].from;
-      for ( end = 0; end < 2; end++ )
+      for ( end = 0; end < 2; end++ ) 
       {
-        d = StartP.DistanceTo( Q );
-        if ( d < startd )
-        {
-          start_i = i;
-          start_end = end;
-          startd = d;
-        }
+	d = StartP.DistanceTo( Q );
+	if ( d < startd ) 
+	{
+	  start_i = i;
+	  start_end = end;
+	  startd = d;
+	}
 
-        d = EndP.DistanceTo( Q );
-        if ( d < endd )
-        {
-          end_i = i;
-          end_end = end;
-          endd = d;
-        }
+	d = EndP.DistanceTo( Q );
+	if ( d < endd ) 
+	{
+	  end_i = i;
+	  end_end = end;
+	  endd = d;
+	}
 
-        Q = line_list[index[i]].to;
+	Q = line_list[index[i]].to;
       }
     }
 
-    if ( startd < endd )
+    if ( startd < endd ) 
     {
       // N[index[start_i]] will be first in list
       i = index[Ni];
       index[Ni] = index[start_i];
       index[start_i] = i;
       start_i = index[Ni];
-      for ( i = Ni; i > 0; i-- )
+      for ( i = Ni; i > 0; i-- ) 
       {
-        index[i] = index[i-1];
-        bReverse[i] = bReverse[i-1];
+	index[i] = index[i-1];
+	bReverse[i] = bReverse[i-1];
       }
       index[0] = start_i;
       bReverse[0] = (start_end != 1);
     }
-    else
+    else 
     {
       // N[index[end_i]] will be next in the list
       i = index[Ni];
@@ -3451,11 +3466,11 @@ bool ON_SortLines(
 
 
 
-bool ON_SortLines(
-        const ON_SimpleArray<ON_Line>& line_list,
-        int* index,
-        bool* bReverse
-        )
+bool ON_SortLines( 
+	const ON_SimpleArray<ON_Line>& line_list,
+	int* index, 
+	bool* bReverse 
+	)
 {
   return ON_SortLines(line_list.Count(),line_list.Array(),index,bReverse);
 }
@@ -3466,15 +3481,15 @@ bool ON_SortCurves( int curve_count, const ON_Curve* const* curve_list, int* ind
 
   if ( curve_count < 1 || 0 == curve_list || 0 == curve_list[0] || 0 == index || 0 == bReverse )
   {
-    if ( index )
+    if ( index ) 
     {
-      for ( i = 0; i < curve_count; i++ )
-        index[i] = i;
+      for ( i = 0; i < curve_count; i++ ) 
+	index[i] = i;
     }
     if ( bReverse  )
     {
-      for ( i = 0; i < curve_count; i++ )
-        bReverse[i] = false;
+      for ( i = 0; i < curve_count; i++ ) 
+	bReverse[i] = false;
     }
     ON_ERROR("ON_SortCurves - illegal input");
     return false;
@@ -3491,7 +3506,7 @@ bool ON_SortCurves( int curve_count, const ON_Curve* const* curve_list, int* ind
   ON_SimpleArray< ON_Line > line_list(curve_count);
   ON_Interval d;
   bool rc = true;
-  for ( i = 0; i < curve_count; i++ )
+  for ( i = 0; i < curve_count; i++ ) 
   {
     index[i] = i;
     bReverse[0] = false;

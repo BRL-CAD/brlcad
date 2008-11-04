@@ -50,8 +50,7 @@ slave_load_free ()
     free (texture_list);
 
     /* Free mesh data */
-    for (i = 0; i < db->mesh_num; i++)
-    {
+    for (i = 0; i < db->mesh_num; i++) {
 	/* Free triangle data */
 	free (db->mesh_list[i]->tri_list);
 	free (db->mesh_list[i]);
@@ -84,13 +83,21 @@ slave_load_MySQL (uint32_t pid, tie_t *tie, const char *hostname)
     mysql_init (&slave_load_mysql_db);
 
     /* establish connection to database */
-    mysql_real_connect (&slave_load_mysql_db, hostname, ADRT_MYSQL_USER, ADRT_MYSQL_PASS, ADRT_MYSQL_DB, 0, 0, 0);
+
+    if ( mysql_real_connect (&slave_load_mysql_db, hostname, ADRT_MYSQL_USER, ADRT_MYSQL_PASS, ADRT_MYSQL_DB, 0, 0, 0) == NULL ) {
+	printf("Unable to connect to db: %s\n", mysql_error(&slave_load_mysql_db));
+	return -1;
+    }
 
 
     /* Obtain the geometry id for this project id */
     sprintf (query, "select gid from project where pid = '%d'", pid);
     mysql_query (&slave_load_mysql_db, query);
     res = mysql_use_result (&slave_load_mysql_db);
+    if (res == NULL) {
+	printf("Unable to get gid... \"%s\"\n", query);
+	return -1;
+    }
     row = mysql_fetch_row (res);
     gid = atoi (row[0]);
     mysql_free_result (res);
@@ -123,8 +130,7 @@ slave_load_MySQL (uint32_t pid, tie_t *tie, const char *hostname)
     gind = sizeof(uint16_t);
 
     /* For each mesh */
-    while (gind < gsize)
-    {
+    while (gind < gsize) {
 	slave_load_mesh_list[mind].texture = NULL;
 	slave_load_mesh_list[mind].flags = 0;
 	slave_load_mesh_list[mind].attributes = (adrt_mesh_attributes_t *)bu_malloc(sizeof(adrt_mesh_attributes_t), "mesh attributes");
@@ -232,15 +238,55 @@ slave_load_MySQL (uint32_t pid, tie_t *tie, const char *hostname)
 #endif
 
 int
+slave_load_g (tie_t *tie, char *data)
+{
+    char *filename, *region;
+    filename = data;
+    region = data + strlen(filename) + 1;
+    printf("Want to read %s from %s\n", region, filename);
+    return -1;
+}
+
+int
+slave_load_region (tie_t *tie, char *data)
+{
+    /* 
+     * data contains a region name and the triangle soup.
+     * Meant to be called several times, with slave_load_kdtree called at the
+     * end to finally prep it up.
+     */
+    return -1;
+}
+
+int
+slave_load_kdtree (tie_t *tie, char *data)
+{
+    /* after slave_load_region calls have filled in all the geometry, this loads
+     * a tree or requests a tree generation if data is NULL
+     */
+    return -1;
+}
+
+int
 slave_load (tie_t *tie, struct adrt_load_info *li, uint32_t dlen)
 {
+    void *data = (void *)li;
     TIE_VAL(tie_check_degenerate) = 0;
 
-    switch(li->fmt) {
+    switch ( *(char *)data) {
+	case ADRT_LOAD_FORMAT_MYSQL_F:	/* mysql float */
 #if HAVE_MYSQL
-	case 0x0:	/* mysql float */
-		return slave_load_MySQL ( li->pid, tie, li->dbnam );
+	    return slave_load_MySQL ( *((uint32_t *)data + 1), tie, (char *)data + 9);
+#else
+	    printf("Not compiled to support MySQL.\n");
+	    return -1;
 #endif
+	case ADRT_LOAD_FORMAT_G:	/* given a filename and 1 toplevel region, recursively load from a .g file */
+	    return slave_load_g ( tie, (char *)data + 1 );
+	case ADRT_LOAD_FORMAT_REG:	/* special magic for catching data on the pipe */
+	    return slave_load_region (tie, (char *)data + 1);
+	case ADRT_LOAD_FORMAT_KDTREE:	/* more special magic */
+	    return slave_load_kdtree (tie, (char *)data + 1);
 	default:
 	    fprintf(stderr, "Unknown load format\n");
 	    return 1;

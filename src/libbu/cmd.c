@@ -22,7 +22,7 @@
 /** @file libbu/cmd.c
  *
  * @brief
- *	Utility routines for handling commands.
+ * Utility routines for handling commands.
  *
  */
 
@@ -36,28 +36,28 @@
 
 /**
  *
- *	bu_cmd
+ * bu_cmd
  *
- *	This function is intended to be used for parsing subcommands.
- *	If the command is found in the array of commands, the associated
- *	function is called. Otherwise, an error message is created and
- *	added to interp.
+ * This function is intended to be used for parsing subcommands.
+ * If the command is found in the array of commands, the associated
+ * function is called. Otherwise, an error message is created and
+ * added to interp.
  *
- *	@param clientData	- data/state associated with the command
- *	@param interp		- tcl interpreter wherein this command is registered
- *			  (Note - the result of the command is also stored here)
- *	@param argc		- number of arguments in argv
- *	@param argv		- command to execute and its arguments
- *	@param cmds		- commands and related function pointers
- *	@param cmd_index	- indicates which argv element holds the subcommand
+ * @param clientData	- data/state associated with the command
+ * @param interp		- tcl interpreter wherein this command is registered
+ * (Note - the result of the command is also stored here)
+ * @param argc		- number of arguments in argv
+ * @param argv		- command to execute and its arguments
+ * @param cmds		- commands and related function pointers
+ * @param cmd_index	- indicates which argv element holds the subcommand
  *
- *	@return TCL_OK if successful, otherwise, TCL_ERROR.
+ * @return TCL_OK if successful, otherwise, TCL_ERROR.
  */
 int
 bu_cmd(ClientData	clientData,
        Tcl_Interp	*interp,
        int		argc,
-       char		**argv,
+       const char	**argv,
        struct bu_cmdtab	*cmds,
        int		cmd_index)
 {
@@ -95,17 +95,17 @@ bu_cmd(ClientData	clientData,
 
 /**
  *
- *	bu_register_cmds
+ * bu_register_cmds
  *
- *	This is a convenience routine for registering an array of commands
- *	with a Tcl interpreter. Note - this is not intended for use by
- *	commands with associated state (i.e. ClientData).
+ * This is a convenience routine for registering an array of commands
+ * with a Tcl interpreter. Note - this is not intended for use by
+ * commands with associated state (i.e. ClientData).
  *
- *	@param interp		- Tcl interpreter wherein to register the commands
- *	@param cmds		- commands and related function pointers
+ * @param interp		- Tcl interpreter wherein to register the commands
+ * @param cmds		- commands and related function pointers
  *
  * @return
- *	void
+ * void
  */
 void
 bu_register_cmds(Tcl_Interp		*interp,

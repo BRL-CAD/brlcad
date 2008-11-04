@@ -496,32 +496,31 @@ rt_plot_all_solids(
  */
 int
 rt_vlist_solid(
-    struct bu_list		*vhead,
+    struct bu_list	*vhead,
     struct rt_i		*rtip,
     const struct soltab	*stp,
-    struct resource		*resp)
+    struct resource	*resp)
 {
-    struct rt_db_internal		intern;
+    struct rt_db_internal intern;
+    int ret;
 
-    if ( rt_db_get_internal( &intern, stp->st_dp, rtip->rti_dbip, stp->st_matp, resp ) < 0 )  {
-	bu_log("rt_vlist_solid(%s): rt_db_get_internal() failed\n",
-	       stp->st_name);
+    if (rt_db_get_internal( &intern, stp->st_dp, rtip->rti_dbip, stp->st_matp, resp) < 0) {
+	bu_log("rt_vlist_solid(%s): rt_db_get_internal() failed\n", stp->st_name);
 	return(-1);			/* FAIL */
     }
-    RT_CK_DB_INTERNAL( &intern );
+    RT_CK_DB_INTERNAL(&intern);
 
-    if ( rt_functab[intern.idb_type].ft_plot(
-	     vhead,
-	     &intern,
-	     &rtip->rti_ttol,
-	     &rtip->rti_tol
-	     ) < 0 )  {
-	bu_log("rt_vlist_solid(%s): ft_plot() failure\n",
-	       stp->st_name);
-	rt_db_free_internal( &intern, resp );
+    ret = -1;
+    if (rt_functab[intern.idb_type].ft_plot) {
+	ret = rt_functab[intern.idb_type].ft_plot(vhead, &intern, &rtip->rti_ttol, &rtip->rti_tol);
+    }
+    if (ret < 0) {
+	bu_log("rt_vlist_solid(%s): ft_plot() failure\n", stp->st_name);
+	rt_db_free_internal(&intern, resp);
 	return(-2);
     }
-    rt_db_free_internal( &intern, resp );
+    rt_db_free_internal(&intern, resp);
+
     return 0;
 }
 

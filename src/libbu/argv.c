@@ -25,6 +25,8 @@
 
 #include "common.h"
 
+#include <string.h>
+
 #include "bu.h"
 
 
@@ -34,7 +36,8 @@ bu_free_argv(int argc, char *argv[])
     register int i;
 
     for (i = 0; i < argc; ++i)
-	bu_free((void *)argv[i], "bu_free_argv");
+	if (argv[i] != (char *)0)
+	    bu_free((void *)argv[i], "bu_free_argv");
 
     bu_free((void *)argv, "bu_free_argv");
 }

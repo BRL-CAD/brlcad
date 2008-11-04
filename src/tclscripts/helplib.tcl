@@ -71,7 +71,7 @@ set helplib_data(wdb_attr)        {{ {set|get|show|rm|append} object [args]}
 set helplib_data(wdb_bot_face_sort)     {{triangles_per_piece bot_solid1 [bot_solid2 bot_solid3 ...]} {sort the facelist of BOT solids to optimize ray trace performance for a particular number of triangles per raytrace piece }}
 set helplib_data(wdb_bot_decimate)      {{ -c maximum_chord_error -n maximum_normal_error -e minimum_edge_length new_bot_name current_bot_name} {Uses edge decimation to reduce the number of triangles in the specified BOT while keeping within the specified constraints}}
 set helplib_data(wdb_cat)		{{<objects>} {list attributes (brief)}}
-set helplib_data(wdb_color)		{{low high r g b} {make color entry}}
+set helplib_data(wdb_color)		{{[-e] [low high r g b]} {text edit color table or make new color entry}}
 set helplib_data(wdb_comb)		{{comb_name <operation solid>}	{create or extend combination w/booleans}}
 set helplib_data(wdb_comb_std)		{{[-cr] comb_name <boolean_expr>}	{create or extend a combination using standard notation}}
 set helplib_data(wdb_concat)		{{[-s|-p] file.g [suffix|prefix]} {import a database into the current database using an auto-incrementing or custom affix}}
@@ -91,7 +91,7 @@ set helplib_data(wdb_instance)		{{obj comb [op]} {add instance of obj to comb}}
 set helplib_data(wdb_keep)		{{file object(s)} {save named objects in the specified file}}
 set helplib_data(wdb_kill)		{{<objects>} {kill/delete database objects}}
 set helplib_data(wdb_killall)		{{<objects>} {kill/delete database objects, removing all references}}
-set helplib_data(wdb_killtree)		{{<objects>} {kill all paths belonging to objects}}
+set helplib_data(wdb_killtree)		{{[-a] <objects>} {kill all paths belonging to objects}}
 set helplib_data(wdb_list)		{{[-r] <objects>} {list object information, verbose}}
 set helplib_data(wdb_listeval)		{{}	{lists 'evaluated' path solids}}
 set helplib_data(wdb_ls)		{{[-A name/value pairs] OR [-acrslop] object(s)} {list objects in this database}}
@@ -117,6 +117,7 @@ set helplib_data(wdb_region)		{{object(s)} {create or append objects to a region
 set helplib_data(wdb_remove)		{{comb object(s)} {remove members from a combination}}
 set helplib_data(wdb_reopen)		{{[filename]} {open a database}}
 set helplib_data(wdb_rt_gettrees)	{{procname [-i] [-u] treetops...} {create an rt instance object}}
+set helplib_data(wdb_search)		{{[pathname][options]} {search database for objects matching parameters defined by options within specified path}}
 set helplib_data(wdb_shells)		{{nmg_model}	{breaks model into seperate shells}}
 set helplib_data(wdb_showmats)		{{path}	{show xform matrices along path}}
 set helplib_data(wdb_bot_smooth)        {{[-t norm_tolerance_degrees] new_bot_name old_bot_name} {calculate vertex normals for BOT primitive}}
@@ -170,10 +171,10 @@ set helplib_data(vo_zoom)		{{sf} {zoom view by specified scale factor}}
 
 set helplib_data(dgo_assoc)		{{[wdb_obj]} {set/get the associated database object}}
 set helplib_data(dgo_autoview)		{{view_obj} {calculate an appropriate view size and center for view_obj}}
-set helplib_data(dgo_blast)		{{"[-A -o -C#/#/# -s] <object(s) | attribute name/value pairs>"} {erase all currently displayed geometry and draw the specified object(s)}}
+set helplib_data(dgo_blast)		{{"[-A] [-o] [-C#/#/#] [-s] <object(s) | attribute name/value pairs>"} {erase all currently displayed geometry and draw the specified object(s)}}
 set helplib_data(dgo_clear)		{{} {erase all objects from the display}}
-set helplib_data(dgo_draw)		{{"[-A -o -C#/#/# -s] <objects | attribute name/value pairs>"} {prepare object(s) for display}}
-set helplib_data(dgo_E)			{{[-s] <objects>} {evaluated display of objects}}
+set helplib_data(dgo_draw)		{{"[-A] [-o] [-C#/#/#] [-s] <objects | attribute name/value pairs>"} {prepare object(s) for display}}
+set helplib_data(dgo_E)			{{"[-C#/#/#] [-s] <objects>"} {evaluated display of objects}}
 set helplib_data(dgo_erase)		{{<objects>} {erase objects from the display}}
 set helplib_data(dgo_erase_all)		{{<objects>} {erase all occurrences of objects from the display}}
 set helplib_data(dgo_ev)		{{"[-dfnstuvwT] [-P #] <objects>"}	{evaluate objects via NMG tessellation}}

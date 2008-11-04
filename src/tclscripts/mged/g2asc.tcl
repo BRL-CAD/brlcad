@@ -60,7 +60,8 @@ to put the acsii converted database."}} OK Cancel]
 		}
 	    }
 
-	    catch {exec g2asc $db_name $ascii_filename} msg
+	    set g2asc [bu_brlcad_root "bin/g2asc"]
+	    catch {exec $g2asc $db_name $ascii_filename} msg
 	}
     } else {
 	if { $ret == 0 } {

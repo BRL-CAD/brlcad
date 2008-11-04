@@ -2,20 +2,19 @@
 /* $NoKeywords: $ */
 /*
 //
-// Copyright (c) 1993-2003 Robert McNeel & Associates. All rights reserved.
+// Copyright (c) 1993-2007 Robert McNeel & Associates. All rights reserved.
 // Rhinoceros is a registered trademark of Robert McNeel & Assoicates.
 //
 // THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY.
 // ALL IMPLIED WARRANTIES OF FITNESS FOR ANY PARTICULAR PURPOSE AND OF
 // MERCHANTABILITY ARE HEREBY DISCLAIMED.
-//
+//				
 // For complete openNURBS copyright information see <http://www.opennurbs.org>.
 //
 ////////////////////////////////////////////////////////////////
 */
 
 #include "opennurbs.h"
-
 
 // If you are using opennurbs as a DLL or writing a Rhino plug-in
 // and you want to use the same zlib that opennurbs uses, then

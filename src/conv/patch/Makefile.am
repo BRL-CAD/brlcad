@@ -23,6 +23,7 @@ man_MANS = patch-g.1 rpatch.1
 
 EXTRA_DIST = \
 	$(man_MANS) \
+	CMakeLists.txt \
 	pull_comp.sh \
 	pull_solidsub.sh \
 	rpatch.f

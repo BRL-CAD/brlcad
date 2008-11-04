@@ -29,7 +29,7 @@
 
 
 int
-ged_edmater(struct rt_wdb *wdbp, int argc, const char *argv[])
+ged_edmater(struct ged *gedp, int argc, const char *argv[])
 {
     FILE *fp;
     int i;
@@ -38,14 +38,17 @@ ged_edmater(struct rt_wdb *wdbp, int argc, const char *argv[])
     static const char *usage = "comb(s)";
     char tmpfil[MAXPATHLEN];
 
-    GED_CHECK_DATABASE_OPEN(wdbp, GED_ERROR);
-    GED_CHECK_READ_ONLY(wdbp, GED_ERROR);
+    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
+    GED_CHECK_READ_ONLY(gedp, BRLCAD_ERROR);
+    GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
+
+    /* initialize result */
+    bu_vls_trunc(&gedp->ged_result_str, 0);
 
     /* must be wanting help */
     if (argc == 1) {
-	wdbp->wdb_result_flags |= GED_RESULT_FLAGS_HELP_BIT;
-	bu_vls_printf(&wdbp->wdb_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_OK;
+	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	return BRLCAD_HELP;
     }
 
     fp = bu_temp_file(tmpfil, MAXPATHLEN);
@@ -60,7 +63,7 @@ ged_edmater(struct rt_wdb *wdbp, int argc, const char *argv[])
 
     av[i] = NULL;
 
-    if (ged_wmater(wdbp, argc + 1, av) == TCL_ERROR) {
+    if (ged_wmater(gedp, argc + 1, av) == TCL_ERROR) {
 	(void)unlink(tmpfil);
 	bu_free((genptr_t)av, "f_edmater: av");
 	return TCL_ERROR;
@@ -71,7 +74,7 @@ ged_edmater(struct rt_wdb *wdbp, int argc, const char *argv[])
     if (ged_editit(tmpfil)) {
 	av[0] = "rmater";
 	av[2] = NULL;
-	status = ged_rmater(wdbp, 2, av);
+	status = ged_rmater(gedp, 2, av);
     } else {
 	status = TCL_ERROR;
     }

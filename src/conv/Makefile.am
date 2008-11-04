@@ -2,13 +2,19 @@
 
 AM_CPPFLAGS = ${TCL_CPPFLAGS}
 
-COMMON_EXTRA = \
+EXTRA_DIST = \
+	CMakeLists.txt \
+	Formats.csv \
 	dbclean.sh \
-	Formats.csv
+	g-xxx.c \
+	g-xxx_facets.c \
+	g4-g5.c \
+	g5-g4.c \
+	walk_example.c
 
 if ONLY_BENCHMARK
 
-SUBDIRS =
+SUBDIRS = .
 
 bin_PROGRAMS = \
 	asc2g \
@@ -16,21 +22,15 @@ bin_PROGRAMS = \
 	g2asc \
 	pix2asc
 
-EXTRA_DIST =
-	$(COMMON_EXTRA) \
-	CMakeLists.txt \
-	g-xxx.c \
-	g-xxx_facets.c \
-	g4-g5.c \
-	g5-g4.c \
-	walk_example.c
-
 else !ONLY_BENCHMARK
 
 SUBDIRS = \
-        3dm \
+	. \
+	3dm \
 	comgeom \
+	dxf \
 	iges \
+	intaval \
 	jack \
 	off \
 	patch
@@ -39,13 +39,11 @@ bin_PROGRAMS = \
 	asc-nmg \
 	asc2g \
 	asc2pix \
-	bot-bldxf \
-	bot-raw \
+	bot_dump \
 	bot_shell-vtk \
 	conv-vg2g \
 	cy-g \
 	dbupgrade \
-	dxf-g \
 	enf-g \
 	euclid-g \
 	euclid_format \
@@ -53,7 +51,6 @@ bin_PROGRAMS = \
 	fast4-g \
 	g-acad \
 	g-adrt \
-	g-dxf \
 	g-euclid \
 	g-euclid1 \
 	g-var \
@@ -85,9 +82,6 @@ noinst_PROGRAMS = \
 	g-xxx_facets \
 	walk_example
 
-EXTRA_DIST = \
-	$(COMMON_EXTRA)
-
 endif
 # end ONLY_BENCHMARK
 
@@ -106,11 +100,8 @@ asc2pix_SOURCES = asc2pix.c
 asc_nmg_SOURCES = asc-nmg.c
 asc_nmg_LDADD = ${WDB}
 
-bot_bldxf_SOURCES = bot-bldxf.c
-bot_bldxf_LDADD = ${RT}
-
-bot_raw_SOURCES = bot-raw.c
-bot_raw_LDADD = ${RT}
+bot_dump_SOURCES = bot_dump.c
+bot_dump_LDADD = ${RT} ${GED}
 
 bot_shell_vtk_SOURCES = bot_shell-vtk.c
 bot_shell_vtk_LDADD = ${RT}
@@ -124,9 +115,6 @@ cy_g_LDADD = ${WDB}
 dbupgrade_SOURCES = dbupgrade.c
 dbupgrade_LDADD = ${WDB}
 
-dxf_g_SOURCES = dxf-g.c
-dxf_g_LDADD = ${WDB}
-
 enf_g_SOURCES = enf-g.c
 enf_g_LDADD = ${WDB}
 
@@ -137,7 +125,7 @@ euclid_g_SOURCES = euclid-g.c
 euclid_g_LDADD = ${WDB}
 
 euclid_unformat_SOURCES = euclid_unformat.c
-euclid_unformat_LDADD = ${BU} ${SYSV}
+euclid_unformat_LDADD = ${BU} ${BN} ${SYSV}
 
 fast4_g_SOURCES = fast4-g.c
 fast4_g_LDADD = ${WDB}
@@ -156,9 +144,6 @@ g_acad_LDADD = ${WDB}
 
 g_adrt_SOURCES = g-adrt.c
 g_adrt_LDADD = ${WDB}
-
-g_dxf_SOURCES = g-dxf.c
-g_dxf_LDADD = ${WDB}
 
 g_euclid1_SOURCES = g-euclid1.c
 g_euclid1_LDADD = ${RT}
@@ -179,7 +164,7 @@ g_shell_rect_SOURCES = g-shell.rect.c
 g_shell_rect_LDADD = ${WDB}
 
 g_stl_SOURCES = g-stl.c
-g_stl_LDADD = ${WDB}
+g_stl_LDADD = ${WDB} ${GCV}
 
 g_tankill_SOURCES = g-tankill.c
 g_tankill_LDADD = ${RT}
@@ -243,12 +228,10 @@ dist_man_MANS = \
 	cy-g.1 \
 	dbclean.1 \
 	dbupgrade.1 \
-	dxf-g.1 \
 	enf-g.1 \
 	euclid-g.1 \
 	fast4-g.1 \
 	g-acad.1 \
-	g-dxf.1 \
 	g-euclid.1 \
 	g-var.1 \
 	g-nff.1 \
@@ -295,13 +278,11 @@ FAST_OBJECTS = \
 	$(asc2g_OBJECTS) \
 	$(asc2pix_OBJECTS) \
 	$(asc_nmg_OBJECTS) \
-	$(bot_bldxf_OBJECTS) \
 	$(bot_raw_OBJECTS) \
 	$(bot_shell_vtk_OBJECTS) \
 	$(conv_vg2g_OBJECTS) \
 	$(cy_g_OBJECTS) \
 	$(dbupgrade_OBJECTS) \
-	$(dxf_g_OBJECTS) \
 	$(enf_g_OBJECTS) \
 	$(euclid_format_OBJECTS) \
 	$(euclid_g_OBJECTS) \
@@ -312,7 +293,6 @@ FAST_OBJECTS = \
 	$(g5_g4_OBJECTS) \
 	$(g_acad_OBJECTS) \
 	$(g_adrt_OBJECTS) \
-	$(g_dxf_OBJECTS) \
 	$(g_euclid1_OBJECTS) \
 	$(g_euclid_OBJECTS) \
 	$(g_nff_OBJECTS) \

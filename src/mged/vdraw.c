@@ -101,22 +101,21 @@ Example Use -
 
 #include "common.h"
 
-#include <stdio.h>
 #include <string.h>
 #include <math.h>
 #include <signal.h>
+#include "bio.h"
 
 #include "tcl.h"
 
-#include "bio.h"
 #include "bu.h"
 #include "vmath.h"
 #include "mater.h"
 #include "nmg.h"
 #include "raytrace.h"
+
 #include "./sedit.h"
 #include "./mged.h"
-#include "./mged_solid.h"
 #include "./mged_dm.h"
 
 

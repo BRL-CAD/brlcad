@@ -362,9 +362,6 @@ db_update_ident( struct db_i *dbip, const char *new_title, double local2mm )
     if (RT_G_DEBUG&DEBUG_DB)
 	bu_log("db_update_ident( x%x, '%s', %g )\n", dbip, new_title, local2mm);
 
-    if ( dbip->dbi_read_only )
-	return -1;
-
     /* make sure dbip is a valid version */
     if ( dbip->dbi_version <= 0 ) {
 	bu_log("Invalid geometry database write request encountered.\n"

@@ -449,7 +449,7 @@ int
 wdb_comb_std_cmd(struct rt_wdb	*wdbp,
 		 Tcl_Interp	*interp,
 		 int		argc,
-		 char 		**argv)
+		 char 		*argv[])
 {
     char				*comb_name;
     int				ch;
@@ -759,7 +759,7 @@ int
 wdb_comb_std_tcl(ClientData	clientData,
 		 Tcl_Interp	*interp,
 		 int     	argc,
-		 char    	**argv)
+		 char    	*argv[])
 {
     struct rt_wdb *wdbp = (struct rt_wdb *)clientData;
 

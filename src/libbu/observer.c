@@ -34,9 +34,9 @@
 #include "tcl.h"
 #include "cmd.h"                  /* includes bu.h */
 
-static int bu_observer_attach_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
-static int bu_observer_detach_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
-static int bu_observer_show_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
+static int bu_observer_attach_tcl(ClientData clientData, Tcl_Interp *interp, int argc, const char **argv);
+static int bu_observer_detach_tcl(ClientData clientData, Tcl_Interp *interp, int argc, const char **argv);
+static int bu_observer_show_tcl(ClientData clientData, Tcl_Interp *interp, int argc, const char **argv);
 
 
 /**
@@ -47,7 +47,7 @@ static struct bu_cmdtab bu_observer_cmds[] = {
     {"attach",	bu_observer_attach_tcl},
     {"detach",	bu_observer_detach_tcl},
     {"show",	bu_observer_show_tcl},
-    {(char *)0,	(int (*)())0}
+    {(char *)0,	CMD_NULL}
 };
 
 
@@ -56,7 +56,7 @@ static struct bu_cmdtab bu_observer_cmds[] = {
  * if it matches.
  */
 int
-bu_observer_cmd(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
+bu_observer_cmd(ClientData clientData, Tcl_Interp *interp, int argc, const char **argv)
 {
     return bu_cmd(clientData, interp, argc, argv, bu_observer_cmds, 0);
 }
@@ -66,11 +66,11 @@ bu_observer_cmd(ClientData clientData, Tcl_Interp *interp, int argc, char **argv
  * Attach observer.
  *
  * Usage:
- *	  attach observer [cmd]
+ * attach observer [cmd]
  *
  */
 static int
-bu_observer_attach_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
+bu_observer_attach_tcl(ClientData clientData, Tcl_Interp *interp, int argc, const char **argv)
 {
     struct bu_observer *headp = (struct bu_observer *)clientData;
     struct bu_observer *op;
@@ -119,11 +119,11 @@ bu_observer_attach_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char
  * Detach observer.
  *
  * Usage:
- *	  detach observer
+ * detach observer
  *
  */
 static int
-bu_observer_detach_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
+bu_observer_detach_tcl(ClientData clientData, Tcl_Interp *interp, int argc, const char **argv)
 {
     struct bu_observer *headp = (struct bu_observer *)clientData;
     struct bu_observer *op;
@@ -157,11 +157,11 @@ bu_observer_detach_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char
  * Show/list observers.
  *
  * Usage:
- *	  show
+ * show
  *
  */
 static int
-bu_observer_show_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
+bu_observer_show_tcl(ClientData clientData, Tcl_Interp *interp, int argc, const char **argv)
 {
     struct bu_observer *headp = (struct bu_observer *)clientData;
     struct bu_observer *op;
@@ -188,7 +188,7 @@ bu_observer_show_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char *
  * Notify observers.
  */
 void
-bu_observer_notify(Tcl_Interp *interp, struct bu_observer *headp, char *this)
+bu_observer_notify(Tcl_Interp *interp, struct bu_observer *headp, char *self)
 {
     struct bu_observer *op;
     struct bu_vls vls;
@@ -202,7 +202,7 @@ bu_observer_notify(Tcl_Interp *interp, struct bu_observer *headp, char *this)
 	} else {
 	    /* Assume that observer is some object that has an update method */
 	    bu_vls_trunc(&vls, 0);
-	    bu_vls_printf(&vls, "%s update %s", bu_vls_addr(&op->observer), this);
+	    bu_vls_printf(&vls, "%s update %s", bu_vls_addr(&op->observer), self);
 	    Tcl_Eval(interp, bu_vls_addr(&vls));
 	}
     }

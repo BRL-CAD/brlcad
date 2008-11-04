@@ -2,13 +2,13 @@
 /* $NoKeywords: $ */
 /*
 //
-// Copyright (c) 1993-2001 Robert McNeel & Associates. All rights reserved.
+// Copyright (c) 1993-2007 Robert McNeel & Associates. All rights reserved.
 // Rhinoceros is a registered trademark of Robert McNeel & Assoicates.
 //
 // THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY.
 // ALL IMPLIED WARRANTIES OF FITNESS FOR ANY PARTICULAR PURPOSE AND OF
 // MERCHANTABILITY ARE HEREBY DISCLAIMED.
-//
+//				
 // For complete openNURBS copyright information see <http://www.opennurbs.org>.
 //
 ////////////////////////////////////////////////////////////////
@@ -144,10 +144,10 @@ double ON_Torus::MinorRadius() const
   return minor_radius;
 }
 
-BOOL ON_Torus::ClosestPointTo(
-         ON_3dPoint test_point,
-         double* major__angle_radians,
-         double* minor__angle_radians
+BOOL ON_Torus::ClosestPointTo( 
+	 ON_3dPoint test_point, 
+	 double* major__angle_radians, 
+	 double* minor__angle_radians
        ) const
 {
   double major_angle_radians, minor_angle_radians;
@@ -164,7 +164,7 @@ BOOL ON_Torus::ClosestPointTo(
       double cma = v*raxis;
       minor_angle_radians = atan2(sma,cma);
       if ( minor_angle_radians < 0.0 )
-        minor_angle_radians += 2.0*ON_PI;
+	minor_angle_radians += 2.0*ON_PI;
     }
     else
       minor_angle_radians = 0.0;
@@ -289,10 +289,10 @@ ON_RevSurface* ON_Torus::RevSurfaceForm( ON_RevSurface* srf ) const
     {
       for (j=0;j<2;j++)
       {
-        for (k=0;k<2;k++)
-        {
-          pt[n++] = plane.PointAt( r[i], r[j], h[k] );
-        }
+	for (k=0;k<2;k++)
+	{
+	  pt[n++] = plane.PointAt( r[i], r[j], h[k] );
+	}
       }
     }
     pRevSurface->m_bbox.Set( 3, 0, 8, 3, &pt[0].x );

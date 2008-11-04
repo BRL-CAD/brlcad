@@ -43,11 +43,11 @@
 #include "bu.h"
 
 /**
- *  B U _ F O P E N _ U N I Q
- *@brief
- *  Open a file for output.  Assures that the file did not previously exist.
+ * B U _ F O P E N _ U N I Q
+ * @brief
+ * Open a file for output.  Assures that the file did not previously exist.
  *
- *  Typical Usages:
+ * Typical Usages:
  @code
  *	static int n = 0;
  *	FILE *fp;
@@ -69,10 +69,10 @@ bu_fopen_uniq(const char *outfmt, const char *namefmt, int n)
     int fd;
     FILE *fp;
 
-    if ( ! namefmt || ! *namefmt)
+    if (! namefmt || ! *namefmt)
 	bu_bomb("bu_uniq_file called with null string\n");
 
-    bu_semaphore_acquire( BU_SEM_SYSCALL);
+    bu_semaphore_acquire(BU_SEM_SYSCALL);
 
     /* NOTE: can't call bu_log because of the semaphore */
 
@@ -80,14 +80,14 @@ bu_fopen_uniq(const char *outfmt, const char *namefmt, int n)
     if ((fd = open(filename, O_RDWR|O_CREAT|O_EXCL, 0600)) < 0) {
 	bu_exit(-1, "Cannot open %s, %s\n", filename, strerror(errno));
     }
-    if ( (fp=fdopen(fd, "w")) == (FILE *)NULL) {
+    if ((fp=fdopen(fd, "w")) == (FILE *)NULL) {
 	bu_exit(-1, "%s", strerror(errno));
     }
 
     if (outfmt)
 	fprintf(stderr, outfmt, filename);
 
-    bu_semaphore_release( BU_SEM_SYSCALL);
+    bu_semaphore_release(BU_SEM_SYSCALL);
 
     return fp;
 }

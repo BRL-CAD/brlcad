@@ -38,11 +38,6 @@
 extern	int	width;			/* # of pixels in X; picture width */
 extern int	npsw;			/* number of worker PSWs to run */
 
-
-int		use_air = 0;		/* Internal air recognition is off */
-
-int		using_mlib = 0;		/* Material routines NOT used */
-
 /* Viewing module specific "set" variables */
 struct bu_structparse view_parse[] = {
     {"",	0, (char *)0,	0,	BU_STRUCTPARSE_FUNC_NULL }
@@ -57,7 +52,7 @@ Options:\n\
  -e Elev	Elevation in degrees	(conflicts with -M)\n\
  -M		Read model2view matrix on stdin (conflicts with -a, -e)\n\
  -o model.g	Specify output file (default=stdout)\n\
- -U #		Set use_air boolean to # (default=1)\n\
+ -U #		Set use_air boolean to # (default=0)\n\
  -x #		Set librt debug flags\n\
 ";
 

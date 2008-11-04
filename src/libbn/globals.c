@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file globals.c
+/** @file libbn/globals.c
  *
  * Global variables in LIBBN.
  *

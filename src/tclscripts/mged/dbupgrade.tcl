@@ -256,7 +256,8 @@ proc dbupgrade {args} {
     file attributes $db_orig -permissions 0440
 
     # dbupgrade converts the original database to the current db format
-    catch {exec dbupgrade $db_orig $dbname} ret
+    set dbupgrade [bu_brlcad_root "bin/dbupgrade"]
+    catch {exec $dbupgrade $db_orig $dbname} ret
 
     if {[file exists $dbname]} {
 	#XXX There may eventually need to be more checks, but

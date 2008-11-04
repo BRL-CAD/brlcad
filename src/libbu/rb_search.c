@@ -21,7 +21,7 @@
 /** @{ */
 /** @file rb_search.c
  *
- *	Routines to search for a node in a red-black tree
+ * Routines to search for a node in a red-black tree
  *
  */
 /** @} */
@@ -37,15 +37,16 @@
 #include "./rb_internals.h"
 
 
-/**		        _ R B _ S E A R C H ( )
+/**
+ * _ R B _ S E A R C H ()
  *
- *	   	Search for a node in a red-black tree
+ * Search for a node in a red-black tree
  *
- *	This function has four parameters: the root and order of the tree
- *	in which to search, the comparison function, and a data block
- *	containing the desired value of the key.  On success, _rb_search()
- *	returns a pointer to the discovered node.  Otherwise, it returns
- *	(tree -> rbt_empty_node).
+ * This function has four parameters: the root and order of the tree
+ * in which to search, the comparison function, and a data block
+ * containing the desired value of the key.  On success, _rb_search()
+ * returns a pointer to the discovered node.  Otherwise, it returns
+ * (tree -> rbt_empty_node).
  */
 static struct bu_rb_node *_rb_search (struct bu_rb_node *root, int order_nm, int (*order) (/* ??? */), void *data)
 {
@@ -72,15 +73,16 @@ static struct bu_rb_node *_rb_search (struct bu_rb_node *root, int order_nm, int
     return (root);
 }
 
-/**		        B U _ R B _ S E A R C H ( )
+/**
+ * B U _ R B _ S E A R C H ()
  *
- *	        Applications interface to _rb_search()
+ * Applications interface to _rb_search()
  *
- *	This function has three parameters: the tree in which to search,
- *	the order on which to do the searching, and a data block containing
- *	the desired value of the key.  On success, bu_rb_search() returns a
- *	pointer to the data block in the discovered node.  Otherwise,
- *	it returns NULL.
+ * This function has three parameters: the tree in which to search,
+ * the order on which to do the searching, and a data block containing
+ * the desired value of the key.  On success, bu_rb_search() returns a
+ * pointer to the data block in the discovered node.  Otherwise,
+ * it returns NULL.
  */
 void *bu_rb_search (bu_rb_tree *tree, int order, void *data)
 {

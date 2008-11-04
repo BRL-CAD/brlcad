@@ -233,7 +233,7 @@ run_client(const char *server, int port, const char *file)
     static const int TPKG_BUFSIZE = 2048;
     char *buffer;
 
-    buffer = bu_calloc(TPKG_BUFSIZE, 1, "buffer allocation");
+    buffer = (char *)bu_calloc(TPKG_BUFSIZE, 1, "buffer allocation");
 
     /* make sure the file can be opened */
     fp = fopen(file, "rb");

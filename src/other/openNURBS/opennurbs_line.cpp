@@ -2,13 +2,13 @@
 /* $NoKeywords: $ */
 /*
 //
-// Copyright (c) 1993-2001 Robert McNeel & Associates. All rights reserved.
+// Copyright (c) 1993-2007 Robert McNeel & Associates. All rights reserved.
 // Rhinoceros is a registered trademark of Robert McNeel & Assoicates.
 //
 // THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY.
 // ALL IMPLIED WARRANTIES OF FITNESS FOR ANY PARTICULAR PURPOSE AND OF
 // MERCHANTABILITY ARE HEREBY DISCLAIMED.
-//
+//				
 // For complete openNURBS copyright information see <http://www.opennurbs.org>.
 //
 ////////////////////////////////////////////////////////////////
@@ -73,15 +73,15 @@ ON_3dVector ON_Line::Tangent() const
 ON_3dPoint ON_Line::PointAt( double t ) const
 {
   // 26 Feb 2003 Dale Lear
-  //     Changed
+  //     Changed 
   //          return (1-t)*from + t*to;
   //     to the following so that axis aligned lines will
-  //     return exact answers for large values of t.
+  //     return exact answers for large values of t.  
   //     See RR 9683.
   const double s = 1.0-t;
   return  ON_3dPoint( (from.x == to.x) ? from.x : s*from.x + t*to.x,
-                      (from.y == to.y) ? from.y : s*from.y + t*to.y,
-                      (from.z == to.z) ? from.z : s*from.z + t*to.z );
+		      (from.y == to.y) ? from.y : s*from.y + t*to.y,
+		      (from.z == to.z) ? from.z : s*from.z + t*to.z );
 }
 
 void ON_Line::Reverse()
@@ -99,10 +99,10 @@ bool ON_Line::ClosestPointTo( const ON_3dPoint& point, double *t ) const
     const double DoD = D.LengthSquared();
     if ( DoD > 0.0 ) {
       if ( point.DistanceTo(from) <= point.DistanceTo(to) ) {
-        *t = ((point - from)*D)/DoD;
+	*t = ((point - from)*D)/DoD;
       }
       else {
-        *t = 1.0 + ((point - to)*D)/DoD;
+	*t = 1.0 + ((point - to)*D)/DoD;
       }
       rc = true;
     }
@@ -175,22 +175,22 @@ bool ON_Line::Translate(
 }
 
 int ON_ArePointsOnLine( // returns 0=no, 1 = yes, 2 = pointset is (to tolerance) a single point on the line
-        int dim,     // 2 or 3
-        int is_rat,
-        int count,
-        int stride, const double* point,
-        const ON_BoundingBox& bbox, // if needed, use ON_GetBoundingBox(dim,is_rat,count,stride,point)
-        const ON_Line& line,  // line to test
-        double tolerance
-        )
+	int dim,     // 2 or 3
+	int is_rat,
+	int count, 
+	int stride, const double* point,
+	const ON_BoundingBox& bbox, // if needed, use ON_GetBoundingBox(dim,is_rat,count,stride,point)
+	const ON_Line& line,  // line to test
+	double tolerance
+	)
 {
   double w;
   int rc, i, j, k;
 
   rc = 0;
 
-  ON_ASSERT_OR_RETURN( line.IsValid(), rc );
-  ON_ASSERT_OR_RETURN( bbox.IsValid(), rc );
+  ON_ASSERT_OR_RETURN( line.IsValid(), rc ); 
+  ON_ASSERT_OR_RETURN( bbox.IsValid(), rc ); 
   ON_ASSERT_OR_RETURN( tolerance >= 0.0, rc );
   if ( count < 1 )
     return rc;
@@ -210,9 +210,9 @@ int ON_ArePointsOnLine( // returns 0=no, 1 = yes, 2 = pointset is (to tolerance)
     for ( j = 0; rc && j < 2; j++) {
       Q.y = bbox[j].y;
       for ( k = 0; rc && k < 2; k++) {
-        Q.z = bbox[k].z;
-        if ( Q.DistanceTo( line.ClosestPointTo( Q ) ) > tolerance )
-          rc = 0;
+	Q.z = bbox[k].z;
+	if ( Q.DistanceTo( line.ClosestPointTo( Q ) ) > tolerance )
+	  rc = 0;
       }
     }
   }
@@ -223,27 +223,27 @@ int ON_ArePointsOnLine( // returns 0=no, 1 = yes, 2 = pointset is (to tolerance)
     rc = (count == 1 || bbox.Diagonal().Length() <= tolerance) ? 2 : 1;
     if ( is_rat ) {
       for ( i = 0; i < count; i++ ) {
-        w = point[dim];
-        if ( w == 0.0 ) {
-          ON_ERROR("rational point has zero weight");
-          return 0;
-        }
-        ON_ArrayScale( dim, 1.0/w, point, &Q.x );
-        if ( Q.DistanceTo( line.ClosestPointTo( Q ) ) > tolerance ) {
-          rc = 0;
-          break;
-        }
-        point += stride;
+	w = point[dim];
+	if ( w == 0.0 ) {
+	  ON_ERROR("rational point has zero weight");
+	  return 0;
+	}
+	ON_ArrayScale( dim, 1.0/w, point, &Q.x );
+	if ( Q.DistanceTo( line.ClosestPointTo( Q ) ) > tolerance ) {
+	  rc = 0;
+	  break;
+	}
+	point += stride;
       }
     }
     else {
       for ( i = 0; i < count; i++ ) {
-        memcpy( &Q.x, point, dim*sizeof(Q.x) );
-        if ( Q.DistanceTo( line.ClosestPointTo( Q ) ) > tolerance ) {
-          rc = 0;
-          break;
-        }
-        point += stride;
+	memcpy( &Q.x, point, dim*sizeof(Q.x) );
+	if ( Q.DistanceTo( line.ClosestPointTo( Q ) ) > tolerance ) {
+	  rc = 0;
+	  break;
+	}
+	point += stride;
       }
     }
   }
@@ -302,8 +302,8 @@ bool ON_Line::InPlane( ON_Plane& plane, double tolerance ) const
       rc = FALSE;
       if ( X.IsZero() )
       {
-        X = ON_xaxis;
-        Y = ON_yaxis;
+	X = ON_xaxis;
+	Y = ON_yaxis;
       }
     }
   }
@@ -364,7 +364,7 @@ double ON_Line::MinimumDistanceTo( const ON_Line& L ) const
     if (x < d )
       d = x;
   }
-
+ 
   return d;
 }
 
@@ -449,9 +449,9 @@ bool ON_Line::IsFartherThan( double d, const ON_Line& L ) const
       // If ( b >= 0.0), then this->from and L(b) are a pair of closest points.
       if ( b < 0.0 )
       {
-        // Othersise L.from and this(a) are a pair of closest points.
-        b = 0.0;
-        ClosestPointTo(L.from,&a);
+	// Othersise L.from and this(a) are a pair of closest points.
+	b = 0.0;
+	ClosestPointTo(L.from,&a);
       }
     }
     else
@@ -462,9 +462,9 @@ bool ON_Line::IsFartherThan( double d, const ON_Line& L ) const
       // If ( b >= 0.0), then this->to and L(b) are a pair of closest points.
       if ( b < 0.0 )
       {
-        // Othersise L.to and this(a) are a pair of closest points.
-        b = 0.0;
-        ClosestPointTo(L.from,&a);
+	// Othersise L.to and this(a) are a pair of closest points.
+	b = 0.0;
+	ClosestPointTo(L.from,&a);
       }
     }
   }
@@ -502,7 +502,7 @@ bool ON_Line::IsFartherThan( double d, const ON_Line& L ) const
       x = t;
     }
   }
-
+ 
   return (x > d);
 }
 

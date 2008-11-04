@@ -70,6 +70,9 @@ fi
 
 AC_DEFUN([BC_CONFIGURE_STAGE], [
 
+AC_REQUIRE([BC_BOLD])
+AC_REQUIRE([BC_UNBOLD])
+
 _bc_stage="[$1]"
 _bc_status="[$2]"
 _bc_stage="`echo $_bc_stage | sed 's/\(.\)/\1 /g'`"

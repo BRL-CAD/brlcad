@@ -630,7 +630,7 @@ namespace brlcad {
 
     //--------------------------------------------------------------------------------
     // read
-    bool readBreps(Extractor* handler);
+    void readBreps(Extractor* handler);
     void find(IGESEntity id, DEList& outList);
     void getParameter(const Pointer& ptr, ParameterData& outParam);
     DirectoryEntry* getDirectoryEntry(const Pointer& ptr);

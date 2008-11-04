@@ -249,7 +249,8 @@ namespace brlcad {
 
   bool
   Record::_readLine() {
-    char buf[_reclen+1];
+    string buf;
+    buf.reserve(_reclen+1);
     for (int i = 0; i < _reclen; i++) buf[i] = fgetc(_fp);
     buf[_reclen] = 0;
     //char* str = fgets(buf, _reclen, _fp);
@@ -639,7 +640,7 @@ namespace brlcad {
 
 
 
-  bool
+  void
   IGES::readBreps(Extractor* handler)
   {
     DEList breps;

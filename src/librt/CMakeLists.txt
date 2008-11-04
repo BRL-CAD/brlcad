@@ -5,6 +5,7 @@ set(LIBRT_SOURCES
     bool.c
     bundle.c
     cmd.c
+    constraint.c
     cut.c
     db5_alloc.c
     db5_bin.c
@@ -107,8 +108,10 @@ set(LIBRT_SOURCES
     primitives/nmg/nmg_visit.c
     primitives/part/part.c
     primitives/pipe/pipe.c
+    primitives/pnts/pnts.c
     primitives/poly/poly.c
     primitives/rec/rec.c
+    primitives/revolve/revolve.c
     primitives/rhc/rhc.c
     primitives/rpc/rpc.c
     primitives/sketch/sketch.c

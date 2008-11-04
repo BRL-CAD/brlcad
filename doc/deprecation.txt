@@ -48,6 +48,19 @@ new names should be listed for reference.
 * DEPRECATED *
 **************
 
+7.14
+----
+src/other/jove
+	jove -> emacs [deprecated 7.14]
+include/raytrace.h
+	rt_fdiff -> NEAR_ZERO [deprecated 7.14]
+	rt_reldiff -> NEAR_ZERO [deprecated 7.14]
+	DIR_* -> RT_DIR_* [deprecated 7.14]
+include/bu.h
+	%S format specifier -> %V format specifier for bu_vls [deprecated 7.14]
+mged
+	-n option -> -c option [deprecated 7.14]
+
 7.12
 ----
 include/raytrace.h
@@ -56,8 +69,6 @@ include/vmath.h
 	ELEMENTS_PER_PT -> ELEMENTS_PER_POINT
 	HVECT_LEN -> ELEMENTS_PER_HVECT
 	HPT_LEN -> ELEMENTS_PER_HPOINT
-	M_SQRT2_DIV2 -> M_SQRT1_2
-	PI -> M_PI
 srt/librt/cmd.c
 	rt_split_cmd() -> bu_argv_from_string() [deprecated 7.12]
 src/rt/viewarea.c
@@ -89,6 +100,16 @@ include/raytrace.h
 ************
 * OBSOLETE *
 ************
+
+7.14.0
+------
+include/raytrace.h
+	GET_HITMISS -> NMG_GET_HITMISS
+mged
+	edcolor -> color -e
+include/vmath.h
+	PI -> M_PI
+	M_SQRT2_DIV2 -> M_SQRT1_2
 
 7.12.6
 ------

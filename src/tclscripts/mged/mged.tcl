@@ -91,6 +91,7 @@ proc ia_help { parent screen cmds } {
     place_near_mouse $w
 }
 
+
 proc handle_select { w y } {
     set curr_sel [$w curselection]
     if { $curr_sel != "" } {
@@ -106,6 +107,8 @@ proc mged_help { w1 screen } {
     catch { help [$w1 get [$w1 curselection]]} msg
     cad_dialog $::tk::Priv(cad_dialog) $screen Usage $msg info 0 OK
 }
+
+
 
 proc ia_apropos { parent screen } {
     set w $parent.apropos
@@ -165,6 +168,10 @@ proc ::tk::TextInsert {w s} {
 
 proc get_player_id_t { w } {
     global mged_players
+
+    if ![info exists mged_players] {
+	return
+    }
 
     foreach id $mged_players {
 	set _w .$id.t
@@ -411,12 +418,6 @@ of the BRL-CAD Open Source package.
 Note - html documentation can be found in
 $mged_default(html_dir)" \
 	    {} 0 OK
-}
-
-proc command_help { id } {
-    global mged_gui
-
-    ia_help .$id $mged_gui($id,screen) [concat [?]]
 }
 
 proc on_context_help { id } {

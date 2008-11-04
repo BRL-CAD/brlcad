@@ -149,6 +149,7 @@ static void	pkg_ck_debug(void);
 static void	pkg_timestamp(void);
 static void	pkg_checkin(register struct pkg_conn *pc, int nodelay);
 
+extern int errno;
 
 #define PKG_CK(p)	{if(p==PKC_NULL||p->pkc_magic!=PKG_MAGIC) {\
 			snprintf(errbuf, MAX_ERRBUF_SIZE, "%s: bad pointer x%lx line %d\n", __FILE__, (long)(p), __LINE__);\
@@ -395,13 +396,13 @@ pkg_open(const char *host, const char *service, const char *protocol, const char
  *  Returns PKC_ERROR or a pointer to a pkg_conn structure.
  */
 struct pkg_conn *
-pkg_transerver(const struct pkg_switch *switchp, void (*errlog) (/* ??? */))
+pkg_transerver(const struct pkg_switch *switchp, void (*errlog)(char *))
 {
     pkg_ck_debug();
     if ( pkg_debug )  {
 	pkg_timestamp();
 	fprintf( pkg_debug,
-		 "pkg_transerver(switchp=x%lx, errlog=x%lx)\n",
+		 "pkg_transerver(switchp=x%lx, errlog=0x%lx)\n",
 		 (long)switchp, (long)errlog );
 	fflush(pkg_debug);
     }
@@ -1954,7 +1955,6 @@ pkg_checkin(register struct pkg_conn *pc, int nodelay)
     struct timeval	tv;
     fd_set		bits;
     register int	i, j;
-    extern int	errno;
 
     /* Check socket for unexpected input */
     tv.tv_sec = 0;

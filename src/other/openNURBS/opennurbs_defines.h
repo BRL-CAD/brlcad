@@ -2,13 +2,13 @@
 /* $NoKeywords: $ */
 /*
 //
-// Copyright (c) 1993-2001 Robert McNeel & Associates. All rights reserved.
+// Copyright (c) 1993-2007 Robert McNeel & Associates. All rights reserved.
 // Rhinoceros is a registered trademark of Robert McNeel & Assoicates.
 //
 // THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY.
 // ALL IMPLIED WARRANTIES OF FITNESS FOR ANY PARTICULAR PURPOSE AND OF
 // MERCHANTABILITY ARE HEREBY DISCLAIMED.
-//
+//				
 // For complete openNURBS copyright information see <http://www.opennurbs.org>.
 //
 ////////////////////////////////////////////////////////////////
@@ -39,7 +39,7 @@
 
 #define ON_EXTERNC
 #define ON_BEGIN_EXTERNC
-#define ON_END_EXTERNC
+#define ON_END_EXTERNC  
 
 #endif
 
@@ -156,7 +156,7 @@ cannot be calculated or is not well defined.
 
 /*
 // In cases where lazy evaluation of a color value is
-// performed, this value is used to indicate the value
+// performed, this value is used to indicate the value 
 // has not been computed.
 */
 #define ON_UNSET_COLOR 0xFFFFFFFF
@@ -165,9 +165,9 @@ cannot be calculated or is not well defined.
 // In rare cases when an absolute "zero" tolerance is
 // required, ON_ZERO_TOLERANCE is used to compare
 // numbers.  This number should be no smaller than
-// ON_EPSILON and should be several orders of
+// ON_EPSILON and should be several orders of 
 // magnitude smaller than ON_SQRT_EPSILON
-//
+// 
 */
 #define ON_ZERO_TOLERANCE 1.0e-12
 
@@ -242,20 +242,20 @@ public:
 
   static
   FILE* OpenFile( // like fopen() - needed when OpenNURBS is used as a DLL
-          const char* filename,
-          const char* filemode
-          );
+	  const char* filename,
+	  const char* filemode
+	  );
 
   static
   FILE* OpenFile( // like fopen() - needed when OpenNURBS is used as a DLL
-          const wchar_t* filename,
-          const wchar_t* filemode
-          );
+	  const wchar_t* filename,
+	  const wchar_t* filemode
+	  );
 
   static
   int CloseFile( // like fclose() - needed when OpenNURBS is used as a DLL
-          FILE* // pointer returned by OpenFile()
-          );
+	  FILE* // pointer returned by OpenFile()
+	  );
 
   static
   int CloseAllFiles(); // like _fcloseall() - needed when OpenNURBS is used as a DLL
@@ -274,17 +274,17 @@ public:
   */
   static
   bool GetFileStats( const wchar_t* filename,
-                     size_t* filesize,
-                     time_t* create_time,
-                     time_t* lastmodify_time
-                    );
+		     size_t* filesize,
+		     time_t* create_time,
+		     time_t* lastmodify_time
+		    );
 
   static
   bool GetFileStats( FILE* fp,
-                     size_t* filesize,
-                     time_t* create_time,
-                     time_t* lastmodify_time
-                    );
+		     size_t* filesize,
+		     time_t* create_time,
+		     time_t* lastmodify_time
+		    );
 
   //// Dimension Types ///////////////////////////////////////////////////////////
   enum eAnnotationType
@@ -329,10 +329,10 @@ public:
   //// unit_system ///////////////////////////////////////////////////////////////
   enum unit_system
   {
-    // The constant enum values are saved in 3dm files
+    // The constant enum values are saved in 3dm files 
     // and must never be changed.  The values > 11 were
     // added 5 April 2006.
-    no_unit_system =  0,
+    no_unit_system =  0, 
 
     // atomic distances
     angstroms      = 12,  // 1.0e-10 meters
@@ -363,23 +363,23 @@ public:
     printer_pica   = 21,  // 1/6 inches  (computer picas)
 
     // terrestrial distances
-    nautical_mile  = 22, // 1852 meters
-                         //    Approximately 1 minute of arc on a terrestrial great circle.
-                         //    See http://en.wikipedia.org/wiki/Nautical_mile.
+    nautical_mile  = 22, // 1852 meters 
+			 //    Approximately 1 minute of arc on a terrestrial great circle.
+			 //    See http://en.wikipedia.org/wiki/Nautical_mile.
 
     // astronomical distances
     astronomical   = 23, // 1.4959787e+11 // http://en.wikipedia.org/wiki/Astronomical_unit
-                         // 1.495979e+11  // http://units.nist.gov/Pubs/SP811/appenB9.htm
-                         //    An astronomical unit (au) is the mean distance from the
-                         //    center of the earth to the center of the sun.
+			 // 1.495979e+11  // http://units.nist.gov/Pubs/SP811/appenB9.htm  
+			 //    An astronomical unit (au) is the mean distance from the 
+			 //    center of the earth to the center of the sun.
     lightyears     = 24, // 9.4607304725808e+15 // http://en.wikipedia.org/wiki/Light_year
-                         // 9.46073e+15 meters  // http://units.nist.gov/Pubs/SP811/appenB9.htm
-                         //    A light year is the distance light travels in one Julian year.
-                         //    The speed of light is exactly 299792458 meters/second.
-                         //    A Julian year is exactly 365.25 * 86400 seconds and is
-                         //    approximately the time it takes for one earth orbit.
+			 // 9.46073e+15 meters  // http://units.nist.gov/Pubs/SP811/appenB9.htm
+			 //    A light year is the distance light travels in one Julian year.
+			 //    The speed of light is exactly 299792458 meters/second.
+			 //    A Julian year is exactly 365.25 * 86400 seconds and is 
+			 //    approximately the time it takes for one earth orbit.
     parsecs        = 25, // 3.08567758e+16  // http://en.wikipedia.org/wiki/Parsec
-                         // 3.085678e+16    // http://units.nist.gov/Pubs/SP811/appenB9.htm
+			 // 3.085678e+16    // http://units.nist.gov/Pubs/SP811/appenB9.htm  
 
     // Custom unit systems
     custom_unit_system = 11 // x meters with x defined in ON_3dmUnitsAndTolerances.m_custom_unit_scale
@@ -392,16 +392,16 @@ public:
     Scale factor for changing unit "standard" systems.
   Parameters:
     us_from - [in]
-    us_to - [in]
+    us_to - [in] 
   For example:
 
-          100.0 = ON::UnitScale( ON::meters, ON::centimeters )
-          2.54  = ON::UnitScale( ON::inches, ON::centimeters )
-          12.0  = ON::UnitScale( ON::feet,   ON::inches )
+	  100.0 = ON::UnitScale( ON::meters, ON::centimeters ) 
+	  2.54  = ON::UnitScale( ON::inches, ON::centimeters ) 
+	  12.0  = ON::UnitScale( ON::feet,   ON::inches ) 
 
   Remarks:
     If you are using custom unit systems, use the version
-    that takes ON_UnitSystem or ON_3dmUnitsAndTolerances
+    that takes ON_UnitSystem or ON_3dmUnitsAndTolerances 
     parameters.
   */
   static double UnitScale(
@@ -409,7 +409,7 @@ public:
       ON::unit_system us_to
       );
   static double UnitScale(
-      const class ON_UnitSystem& us_from,
+      const class ON_UnitSystem& us_from, 
       const class ON_UnitSystem& us_to
       );
   static double UnitScale(
@@ -417,18 +417,18 @@ public:
       const class ON_UnitSystem& us_to
       );
   static double UnitScale(
-      const class ON_UnitSystem& us_from,
+      const class ON_UnitSystem& us_from, 
       ON::unit_system us_to
       );
   static double UnitScale(
-      const class ON_3dmUnitsAndTolerances& us_from,
+      const class ON_3dmUnitsAndTolerances& us_from, 
       const class ON_3dmUnitsAndTolerances& us_to
       );
 
   //// distance_display_mode ///////////////////////////////////
   enum distance_display_mode
   {
-    decimal     = 0,
+    decimal     = 0, 
     fractional  = 1,
     feet_inches = 2
   };
@@ -437,7 +437,7 @@ public:
 
 
   //// point_style ///////////////////////////////////////////////////////////////
-  enum point_style
+  enum point_style 
   {
     unknown_point_style   = 0,
     not_rational          = 1,
@@ -469,7 +469,7 @@ public:
     unknown_continuity = 0,
 
     // These test for parametric continuity.  In particular,
-    // all types of ON_Curves are considered infinitely
+    // all types of ON_Curves are considered infinitely 
     // continuous at the start/end of the evaluation domain.
     C0_continuous =  1, // continuous function
     C1_continuous =  2, // continuous first derivative
@@ -482,11 +482,11 @@ public:
     // Continuity tests using the following enum values
     // are identical to tests using the preceding enum values
     // on the INTERIOR of a curve's domain.  At the END of
-    // a curve a "locus" test is performed in place of a
+    // a curve a "locus" test is performed in place of a 
     // parametric test. In particular, at the END of a domain,
     // all open curves are locus discontinuous.  At the END of
     // a domain, all closed curves are at least C0_locus_continuous.
-    // By convention all ON_Curves are considered
+    // By convention all ON_Curves are considered 
     // locus continuous at the START of the evaluation domain.
     // This convention is not strictly correct, but is was
     // adopted to make iterative kink finding tools easier to
@@ -516,7 +516,7 @@ public:
   static continuity ParametricContinuity(int);
 
   //// curve_style ///////////////////////////////////////////////////////////////
-  enum curve_style
+  enum curve_style 
   {
     unknown_curve_style   =  0,
     line                  =  1,
@@ -534,7 +534,7 @@ public:
   static curve_style CurveStyle(int); // convert integer to curve_style enum
 
   //// surface_style ///////////////////////////////////////////////////////////////
-  enum surface_style
+  enum surface_style 
   {
     unknown_surface_style =  0,
     plane                 =  1,
@@ -586,7 +586,7 @@ public:
   //// view projections ///////////////////////////////////////////////////////////
 
   enum view_projection
-  {
+  { 
     unknown_view       = 0,
     parallel_view      = 1,
     perspective_view   = 2
@@ -597,23 +597,23 @@ public:
 
   //// view coordinates ///////////////////////////////////////////////////////////
 
-  enum coordinate_system
+  enum coordinate_system 
   {
-    world_cs  = 0,
-    camera_cs = 1,
-    clip_cs   = 2,
-    screen_cs = 3
+    world_cs  = 0, 
+    camera_cs = 1, 
+    clip_cs   = 2, 
+    screen_cs = 3 
   };
 
   static coordinate_system CoordinateSystem(int); // convert integer to coordinate_system enum
 
   //// exception types ///////////////////////////////////////////////////////////
-	enum exception_type
+	enum exception_type 
   {
     unknown_exception = 0,
-		out_of_memory,
+		out_of_memory,  
     corrupt_object,               // invalid object encountered - continuing would crash or
-                                  // result in corrupt object being saved in archive.
+				  // result in corrupt object being saved in archive.
 		unable_to_write_archive,      // write operation failed - out of file space/read only mode/...?
 		unable_to_read_archive,       // read operation failed - truncated archive/locked file/... ?
 		unable_to_seek_archive,       // seek operation failed - locked file/size out of bounds/... ?
@@ -623,8 +623,8 @@ public:
   static exception_type ExceptionType(int); // convert integer to exception_type enum
 
   //// layer mode ///////////////////////////////////////////////////////////
-  // OBSOLETE
-	enum layer_mode
+  // OBSOLETE 
+	enum layer_mode 
   {
     normal_layer       = 0, // visible, objects on layer can be selected and changed
     hidden_layer       = 1, // not visible, objects on layer cannot be selected or changed
@@ -634,14 +634,14 @@ public:
   static layer_mode LayerMode(int); // convert integer to layer_mode enum
 
   //// object mode ///////////////////////////////////////////////////////////
-	enum object_mode
+	enum object_mode 
   {
     normal_object    = 0, // object mode comes from layer
     hidden_object    = 1, // not visible, object cannot be selected or changed
     locked_object    = 2, // visible, object cannot be selected or changed
     idef_object      = 3, // object is part of an ON_InstanceDefinition.  The
-                          // ON_InstanceDefinition m_object_uuid[] array will
-                          // contain this object attribute's uuid.
+			  // ON_InstanceDefinition m_object_uuid[] array will
+			  // contain this object attribute's uuid.
     object_mode_count = 4
   };
   static object_mode ObjectMode(int); // convert integer to object_mode enum
@@ -653,7 +653,7 @@ public:
     color_from_object   = 1, // use color assigned to object
     color_from_material = 2, // use diffuse render material color
     color_from_parent   = 3  // for objects with parents (like objects in instance references, use parent linetype)
-                             // if no parent, treat as color_from_layer
+			     // if no parent, treat as color_from_layer
   };
   static object_color_source ObjectColorSource(int); // convert integer to object_color_source enum
 
@@ -664,7 +664,7 @@ public:
     plot_color_from_object  = 1, // use plot color assigned to object
     plot_color_from_display = 2, // use display color
     plot_color_from_parent  = 3  // for objects with parents (like objects in instance references, use parent plot color)
-                                 // if no parent, treat as plot_color_from_layer
+				 // if no parent, treat as plot_color_from_layer
   };
   static plot_color_source PlotColorSource(int); // convert integer to plot_color_source enum
 
@@ -674,7 +674,7 @@ public:
     plot_weight_from_layer   = 0, // use plot color assigned to layer
     plot_weight_from_object  = 1, // use plot color assigned to object
     plot_weight_from_parent  = 3  // for objects with parents (like objects in instance references, use parent plot color)
-                                  // if no parent, treat as plot_color_from_layer
+				  // if no parent, treat as plot_color_from_layer
   };
   static plot_weight_source PlotWeightSource(int); // convert integer to plot_color_source enum
 
@@ -684,7 +684,7 @@ public:
     linetype_from_layer  = 0, // use line style assigned to layer
     linetype_from_object = 1, // use line style assigned to object
     linetype_from_parent = 3  // for objects with parents (like objects in instance references, use parent linetype)
-                              // if not parent, treat as linetype_from_layer.
+			      // if not parent, treat as linetype_from_layer.
   };
   static object_linetype_source ObjectLinetypeSource(int); // convert integer to object_linetype_source enum
 
@@ -693,14 +693,14 @@ public:
   {
     material_from_layer  = 0, // use material assigned to layer
     material_from_object = 1, // use material assigned to object
-    material_from_parent = 3  // for objects with parents, like
-                              // definition geometry in instance
-                              // references and faces in polysurfaces,
-                              // this value indicates the material
-                              // definition should come from the parent.
-                              // If the object does not have an
-                              // obvious "parent", then treat
-                              // it the same as material_from_layer.
+    material_from_parent = 3  // for objects with parents, like 
+			      // definition geometry in instance
+			      // references and faces in polysurfaces,
+			      // this value indicates the material
+			      // definition should come from the parent.
+			      // If the object does not have an 
+			      // obvious "parent", then treat
+			      // it the same as material_from_layer.
   };
   static object_material_source ObjectMaterialSource(int); // convert integer to object_color_source enum
 
@@ -715,7 +715,7 @@ public:
     camera_point_light       = 5, //   +x points to right, +y points up, +z points towards camera
     camera_spot_light        = 6,
     world_directional_light  = 7, // light location and direction in world coordinates
-    world_point_light        = 8,
+    world_point_light        = 8, 
     world_spot_light         = 9,
     ambient_light            = 10, // pure ambient light
     world_linear_light       = 11,
@@ -751,29 +751,29 @@ public:
   {
     model_view_type  = 0, // standard model space 3d view
     page_view_type   = 1, // a.k.a "paper space", "plot view", etc.
-                          // A page view must be orthographic,
-                          // the camera frame x,y,z direction must be
-                          // world x,y,z (which means the camera direction
-                          // is always (0,0,-1)).
+			  // A page view must be orthographic,
+			  // the camera frame x,y,z direction must be
+			  // world x,y,z (which means the camera direction
+			  // is always (0,0,-1)).  
     nested_view_type = 2  // This view is a "model" view that is nested
-                          // in another view.  The nesting and parent
-                          // information is saved in ON_3dmView.
+			  // in another view.  The nesting and parent
+			  // information is saved in ON_3dmView.
   };
   static view_type ViewType(int); // convert integer to display_mode enum
 
 
   //// texture mapping mode ///////////////////////////////////////////////////
   //
-  // OBSOLETE
+  // OBSOLETE 
   enum texture_mode
   {
     no_texture = 0,        // texture disabled
     modulate_texture = 1,  // modulate with material diffuse color
     decal_texture = 2      // decal
   };
-  // OBSOLETE
+  // OBSOLETE 
   static texture_mode TextureMode(int); // convert integer to texture_mode enum
-  // OBSOLETE
+  // OBSOLETE 
   //
   /////////////////////////////////////////////////////////////////////////////
 
@@ -814,7 +814,7 @@ public:
     cage_object          = 0x08000000, // some type of ON_NurbsCage
     phantom_object       = 0x10000000,
     clipplane_object     = 0x20000000,
-
+    
     any_object           = 0xFFFFFFFF
 
     // Please discuss any changes with Dale Lear
@@ -852,8 +852,8 @@ public:
   static mesh_type MeshType(int); // convert integer to mesh_type enum
 
 
-  // Types of object snapping.
-  // In situations where more than one type of snap applies,
+  // Types of object snapping.  
+  // In situations where more than one type of snap applies, 
   // snaps with higher value take precedence.
   // enum values must be a power of 2.
   // ON_ObjRef saves these values in files.  Do not change
@@ -946,11 +946,11 @@ public:
   Parameters:
     i - [in] integer with value equal to one of the TYPE enums.
   Returns:
-    The TYPE enum with the same numeric value
+    The TYPE enum with the same numeric value 
     or ON_COMPONENT_INDEX::invalid_type if no corresponding enum
     exists.
   */
-  static
+  static 
   TYPE Type(int i);
 
   /*
@@ -1007,7 +1007,7 @@ public:
 
   /*
   Returns:
-    True if m_type is set to one of the
+    True if m_type is set to one of the 
     brep TYPE enum values and m_index >= 0.
   */
   bool IsBrepComponentIndex() const;
@@ -1100,12 +1100,12 @@ See Also:
   on_WideCharToMultiByte
   on_MultiByteToWideChar
   ON_wString::operator=(const char*)
-  ON_String::operator=(const wchar_t*)
+  ON_String::operator=(const wchar_t*)  
 */
 ON_DECL
-unsigned int ON_SetStringConversionWindowsCodePage(
-                unsigned int code_page
-                );
+unsigned int ON_SetStringConversionWindowsCodePage( 
+		unsigned int code_page 
+		);
 
 /*
 Description:
@@ -1129,7 +1129,7 @@ See Also:
   on_WideCharToMultiByte
   on_MultiByteToWideChar
   ON_wString::operator=(const char*)
-  ON_String::operator=(const wchar_t*)
+  ON_String::operator=(const wchar_t*)  
 */
 ON_DECL
 unsigned int ON_GetStringConversionWindowsCodePage();
@@ -1141,9 +1141,9 @@ Description:
   compares.
 Parameters:
   locale_id - [in] Windows locale id to use in case insensitive
-                 string compares.
+		 string compares.
   bWin9X - [in] True if OS is Windows 95/98/ME (which has
-                poor UNICODE support).
+		poor UNICODE support).
 Returns:
   Previous value of Windows locale id.
 Remarks:
@@ -1153,10 +1153,10 @@ See Also:
   on_wcsicmp
 */
 ON_DECL
-unsigned int ON_SetStringConversionWindowsLocaleID(
-                unsigned int locale_id,
-                BOOL bWin9X
-                );
+unsigned int ON_SetStringConversionWindowsLocaleID( 
+		unsigned int locale_id, 
+		BOOL bWin9X
+		);
 
 
 /*
@@ -1196,7 +1196,7 @@ wchar_t* on_wcsrev(wchar_t*);
 // and calls one of _stricmp(), stricmp(), or strcasecmp()
 // depending on OS.
 ON_DECL
-int on_stricmp(const char*, const char*);
+int on_stricmp(const char*, const char*); 
 
 // on_strupr() calls _strupr() or strupr() depending on OS
 ON_DECL
@@ -1212,12 +1212,12 @@ char* on_strrev(char*);
 
 /*
 Description:
-  Calls Windows ::WideCharToMultiByte() or does a hack
+  Calls Windows ::WideCharToMultiByte() or does a hack 
   UNICODE to ASCII conversion for other OSs
 See Also:
   ON_SetStringConversionWindowsCodePage
   ON_GetStringConversionWindowsCodePage
-  ON_String::operator=(const wchar_t*)
+  ON_String::operator=(const wchar_t*)  
 */
 ON_DECL
 int on_WideCharToMultiByte(
@@ -1229,7 +1229,7 @@ int on_WideCharToMultiByte(
 
 /*
 Description:
-  Calls Windows ::WideCharToMultiByte() or does a hack
+  Calls Windows ::WideCharToMultiByte() or does a hack 
   ASCII to UNICODE conversion for other OSs
 See Also:
   ON_SetStringConversionWindowsCodePage

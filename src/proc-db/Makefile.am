@@ -17,6 +17,7 @@ bin_PROGRAMS = \
 	globe \
 	kurt \
 	masonry \
+	metaball \
 	molecule \
 	nmgmodel \
 	picket_fence \
@@ -66,6 +67,7 @@ fence_SOURCES = fence.c
 globe_SOURCES = globe.c
 kurt_SOURCES = kurt.c
 masonry_SOURCES = masonry.c
+metaball_SOURCES = metaball.c
 molecule_SOURCES = molecule.c
 nmgmodel_SOURCES = nmgmodel.c
 picket_fence_SOURCES = picket_fence.c

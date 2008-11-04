@@ -649,6 +649,31 @@ mk_eto(
     return wdb_export( wdbp, name, (genptr_t)eto, ID_ETO, mk_conv2mm );
 }
 
+int
+mk_metaball(
+    struct rt_wdb *wdbp,
+    const char *name,
+    const int nctlpt, /* number of control points */
+    const int method,
+    const fastf_t threshold,
+    const fastf_t *verts[5] )
+{
+    struct rt_metaball_internal *mb;
+    int n = nctlpt;
+    BU_GETSTRUCT( mb, rt_metaball_internal );
+    mb->magic = RT_METABALL_INTERNAL_MAGIC;
+    mb->threshold = threshold > 0 ? threshold : 1.0;
+    mb->method = method >= 0 ? method : 2;	/* default to Blinn blob */
+
+    while(n)
+	if( rt_metaball_add_point (mb, (const point_t *)verts[n], verts[n][3], verts[n][4]) != 0 ) {
+	    bu_log("something is fishy here in mk_metaball");
+	    bu_bomb("AIIEEEEEEE");
+	}
+
+    return wdb_export( wdbp, name, (genptr_t)mb, ID_METABALL, mk_conv2mm );
+}
+
 /*
  *			M K _ B I N U N I F
  *

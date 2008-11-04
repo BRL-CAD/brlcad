@@ -38,4 +38,7 @@ directory (as well as a few other places).
 "Installation of Proe-BRL converter succeeded" in the Pro/Engineer
 message window when Pro/E starts.
 
-
+	The resource files (i.e. proe_brl.res, proe_brl_error.res and proe_brl_gen_error.res)
+also need to be installed where Pro/Engineer can find them. Pro/Engineer will look in its
+text/resource directory. It will also look in the resource directory that's in the text
+directory specified by text_dir in the protk.dat file (see line4:text_dir above).

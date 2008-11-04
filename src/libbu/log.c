@@ -21,21 +21,13 @@
 /** @{ */
 /** @file log.c
  *
- * @brief parallel safe version of fprintf for logging
+ * @brief
+ * parallel safe version of fprintf for logging
  *
  * BRL-CAD support library, error logging routine.  Note that the user
  * may provide his own logging routine, by replacing these functions.
  * That is why this is in file of it's own.  For example, LGT and
  * RTSRV take advantage of this.
- *
- * @par  Primary Functions (replacements MUST implement all these) -
- * @n	bu_log			Called to log library events.
- * @n	bu_log_indent_delta	Change global indentation level
- * @n	bu_log_indent_vls	Apply indentation level (used by librt/pr.c)
- *
- * @par Specialty Functions -
- *	bu_log_add_hook		Start catching log events (used by mged/cmd.c)
- * @n	bu_putchar
  *
  */
 
@@ -58,42 +50,42 @@ static int bu_log_indent_cur_level = 0;
 
 
 /**
- *			B U _ L O G _ I N D E N T _ D E L T A
+ * B U _ L O G _ I N D E N T _ D E L T A
  *
- *  Change indentation level by indicated number of characters.
- *  Call with a large negative number to cancel all indentation.
+ * Change global indentation level by indicated number of characters.
+ * Call with a large negative number to cancel all indentation.
  */
 void
 bu_log_indent_delta(int delta)
 {
-    if ( (bu_log_indent_cur_level += delta) < 0 )
+    if ((bu_log_indent_cur_level += delta) < 0)
 	bu_log_indent_cur_level = 0;
 }
 
 
 /**
- *			B U _ L O G _ I N D E N T _ V L S
+ * B U _ L O G _ I N D E N T _ V L S
  *
- *  For multi-line vls generators, honor logindent level like bu_log() does,
- *  and prefix the proper number of spaces.
- *  Should be called at the front of each new line.
+ * For multi-line vls generators, honor logindent level like bu_log() does,
+ * and prefix the proper number of spaces.
+ * Should be called at the front of each new line.
  */
 void
 bu_log_indent_vls(struct bu_vls *v)
 {
-    bu_vls_spaces( v, bu_log_indent_cur_level );
+    bu_vls_spaces(v, bu_log_indent_cur_level);
 }
 
 
 /**
- *			B U _ L O G _ A D D _ H O O K
+ * B U _ L O G _ A D D _ H O O K
  *
- *  Adds a hook to the list of bu_log hooks.  The top (newest) one of these
- *  will be called with its associated client data and a string to be
- *  processed.  Typcially, these hook functions will display the output
- *  (possibly in an X window) or record it.
+ * Adds a hook to the list of bu_log hooks.  The top (newest) one of these
+ * will be called with its associated client data and a string to be
+ * processed.  Typcially, these hook functions will display the output
+ * (possibly in an X window) or record it.
  *
- *  XXX The hook functions are all non-PARALLEL.
+ * XXX The hook functions are all non-PARALLEL.
  */
 
 void
@@ -110,7 +102,7 @@ bu_log_add_hook(bu_hook_t func, genptr_t clientdata)
     toadd->clientdata = clientdata;
     toadd->l.magic = BU_HOOK_LIST_MAGIC;
 
-    BU_LIST_APPEND( &(bu_log_hook_list.l), &(toadd->l) );
+    BU_LIST_APPEND(&(bu_log_hook_list.l), &(toadd->l));
 #else
     bu_add_hook(&bu_log_hook_list, func, clientdata);
 #endif
@@ -118,10 +110,10 @@ bu_log_add_hook(bu_hook_t func, genptr_t clientdata)
 
 
 /**
- *			B U _ L O G _ D E L E T E _ H O O K
+ * B U _ L O G _ D E L E T E _ H O O K
  *
- *  Removes the hook matching the function and clientdata parameters from
- *  the hook list.  Note that it is not necessarily the active (top) hook.
+ * Removes the hook matching the function and clientdata parameters from
+ * the hook list.  Note that it is not necessarily the active (top) hook.
  */
 void
 bu_log_delete_hook(bu_hook_t func, genptr_t clientdata)
@@ -129,10 +121,10 @@ bu_log_delete_hook(bu_hook_t func, genptr_t clientdata)
 #if 0
     struct bu_hook_list *cur = &bu_log_hook_list;
 
-    for ( BU_LIST_FOR( cur, bu_hook_list, &(bu_log_hook_list.l) ) ) {
-	if ( cur->hookfunc == func && cur->clientdata == clientdata) {
+    for (BU_LIST_FOR(cur, bu_hook_list, &(bu_log_hook_list.l))) {
+	if (cur->hookfunc == func && cur->clientdata == clientdata) {
 	    struct bu_hook_list *old = BU_LIST_PLAST(bu_hook_list, cur);
-	    BU_LIST_DEQUEUE( &(cur->l) );
+	    BU_LIST_DEQUEUE(&(cur->l));
 	    bu_free((genptr_t)cur, "bu_log hook");
 	    cur = old;
 	}
@@ -156,7 +148,7 @@ bu_log_call_hooks(genptr_t buf)
     hookfunc = BU_LIST_FIRST(bu_hook_list, &(bu_log_hook_list.l))->hookfunc;
     clientdata = BU_LIST_FIRST(bu_hook_list, &(bu_log_hook_list.l))->clientdata;
 
-    (hookfunc)( clientdata, buf);
+    (hookfunc)(clientdata, buf);
 #else
     bu_call_hook(&bu_log_hook_list, buf);
 #endif
@@ -166,34 +158,34 @@ bu_log_call_hooks(genptr_t buf)
 
 
 /**
- *			B U _ L O G _ D O _ I N D E N T _ L E V E L
+ * B U _ L O G _ D O _ I N D E N T _ L E V E L
  *
- *  This subroutine is used to append bu_log_indent_cur_level spaces
- *  into a printf() format specifier string, after each newline
- *  character is encountered.
- *  It exists primarily for bu_shootray() to affect the indentation
- *  level of all messages at that recursion level, even if the calls
- *  to bu_log come from non-librt routines.
+ * This subroutine is used to append bu_log_indent_cur_level spaces
+ * into a printf() format specifier string, after each newline
+ * character is encountered.
+ * It exists primarily for bu_shootray() to affect the indentation
+ * level of all messages at that recursion level, even if the calls
+ * to bu_log come from non-librt routines.
  */
 HIDDEN void
-bu_log_do_indent_level(struct bu_vls *new, register const char *old)
+bu_log_do_indent_level(struct bu_vls *new_vls, register const char *old_vls)
 {
     register int i;
 
-    while (*old) {
-	bu_vls_putc(new, (int)(*old));
-	if (*old == '\n') {
+    while (*old_vls) {
+	bu_vls_putc(new_vls, (int)(*old_vls));
+	if (*old_vls == '\n') {
 	    i = bu_log_indent_cur_level;
 	    while (i-- > 0)
-		bu_vls_putc(new, ' ');
+		bu_vls_putc(new_vls, ' ');
 	}
-	++old;
+	++old_vls;
     }
 }
 
 
 /**
- *			B U _ P U T C H A R
+ * B U _ P U T C H A R
  *
  * Log a single character with no flushing.
  */
@@ -202,7 +194,7 @@ bu_putchar(int c)
 {
     int ret = EOF;
 
-    if ( BU_LIST_IS_EMPTY( &(bu_log_hook_list.l) ) ) {
+    if (BU_LIST_IS_EMPTY(&(bu_log_hook_list.l))) {
 
 	if (stderr) {
 	    ret = fputc(c, stderr);
@@ -215,7 +207,7 @@ bu_putchar(int c)
 	if (ret == EOF) {
 	    bu_bomb("bu_putchar: write error");
 	}
-	    
+
     } else {
 	char buf[2];
 	buf[0] = (char)c;
@@ -235,9 +227,9 @@ bu_putchar(int c)
 
 
 /**
- *  			B U _ L O G
+ * B U _ L O G
  *
- *  Log a library event in the Standard way.
+ * The routine is primarily called to log library events.
  */
 void
 bu_log(const char *fmt, ...)
@@ -267,7 +259,7 @@ bu_log(const char *fmt, ...)
 
     va_end(ap);
 
-    if ( BU_LIST_IS_EMPTY(&(bu_log_hook_list.l)) || bu_log_hooks_called) {
+    if (BU_LIST_IS_EMPTY(&(bu_log_hook_list.l)) || bu_log_hooks_called) {
 	int ret = EOF;
 	size_t len;
 
@@ -283,7 +275,7 @@ bu_log(const char *fmt, ...)
 
 	if (stderr) {
 	    bu_semaphore_acquire(BU_SEM_SYSCALL);
-	    ret = fwrite( bu_vls_addr(&output), len, 1, stderr );
+	    ret = fwrite(bu_vls_addr(&output), len, 1, stderr);
 	    fflush(stderr);
 	    bu_semaphore_release(BU_SEM_SYSCALL);
 	}
@@ -291,13 +283,13 @@ bu_log(const char *fmt, ...)
 	if (!ret && stdout) {
 	    /* if stderr fails, try stdout instead */
 	    bu_semaphore_acquire(BU_SEM_SYSCALL);
-	    ret = fwrite(bu_vls_addr(&output), len, 1, stdout );
+	    ret = fwrite(bu_vls_addr(&output), len, 1, stdout);
 	    fflush(stdout);
 	    bu_semaphore_release(BU_SEM_SYSCALL);
 	}
 
 	if (ret != 1) {
- 	    bu_semaphore_acquire(BU_SEM_SYSCALL);
+	    bu_semaphore_acquire(BU_SEM_SYSCALL);
 	    perror("fwrite failed");
 	    bu_semaphore_release(BU_SEM_SYSCALL);
 	    bu_bomb("bu_log: write error");
@@ -314,7 +306,7 @@ bu_log(const char *fmt, ...)
 /**
  *  			B U _ F L O G
  *
- *  Log a library event in the Standard way, to a specified file.
+ * Log a library event in the Standard way, to a specified file.
  */
 void
 bu_flog(FILE *fp, const char *fmt, ...)
@@ -337,16 +329,16 @@ bu_flog(FILE *fp, const char *fmt, ...)
 	bu_vls_vprintf(&output, fmt, ap);
     }
 
-    if ( BU_LIST_IS_EMPTY( &(bu_log_hook_list.l) ) || bu_log_hooks_called) {
+    if (BU_LIST_IS_EMPTY(&(bu_log_hook_list.l)) || bu_log_hooks_called) {
 	int ret;
 	size_t len;
 
 	len = bu_vls_strlen(&output);
 	if (len) {
 	    bu_semaphore_acquire(BU_SEM_SYSCALL);
-	    ret = fwrite( bu_vls_addr(&output), len, 1, fp );
+	    ret = fwrite(bu_vls_addr(&output), len, 1, fp);
 	    bu_semaphore_release(BU_SEM_SYSCALL);
-	    if ( ret != 1 )  bu_bomb("bu_flog: write error");
+	    if (ret != 1)  bu_bomb("bu_flog: write error");
 	}
 
     } else {

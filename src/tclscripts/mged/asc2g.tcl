@@ -69,7 +69,8 @@ current database." } {} } OK Cancel]
 			}
 
 			# convert ascii database to binary
-			catch {exec asc2g $filename $db_name} msg
+			set asc2g [bu_brlcad_root "bin/asc2g"]
+			catch {exec $asc2g $filename $db_name} msg
 
 			# concat the binary
 			dbconcat $db_name $prefix

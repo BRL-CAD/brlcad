@@ -188,108 +188,12 @@ AC_CONFIG_SRCDIR([src/librt/bool.c])
 # prefix is set to NONE until AC_OUTPUT unless --prefix is used
 AC_PREFIX_DEFAULT([/usr/brlcad])
 
-# set up the BRLCAD_ROOT installation path
-AC_MSG_CHECKING([where BRL-CAD is to be installed])
-bc_prefix="$prefix"
-eval "bc_prefix=\"$bc_prefix\""
-eval "bc_prefix=\"$bc_prefix\""
-if test "x$bc_prefix" = "xNONE" ; then
-    bc_prefix="$ac_default_prefix"
-    # should be /usr/brlcad, but just in case
-    eval "bc_prefix=\"$bc_prefix\""
-    eval "bc_prefix=\"$bc_prefix\""
-fi
-AC_DEFINE_UNQUOTED([BRLCAD_ROOT], "$bc_prefix", "Location BRL-CAD will install to")
-AC_MSG_RESULT($bc_prefix)
-if test ! "x$BRLCAD_ROOT" = "x" ; then
-	AC_MSG_NOTICE([}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}])
-	AC_MSG_WARN([BRLCAD_ROOT should only be used to override an install directory at runtime])
-	AC_MSG_WARN([BRLCAD_ROOT is presently set to "${BRLCAD_ROOT}"])
-	AC_MSG_NOTICE([It is highly recommended that BRLCAD_ROOT be unset and not used])
-	if test "x$BRLCAD_ROOT" = "x$bc_prefix" ; then
-		AC_MSG_WARN([BRLCAD_ROOT is not necessary and may cause unexpected behavior])
-		AC_MSG_NOTICE([{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{])
-	else
-		AC_MSG_ERROR([*** Environment variable BRLCAD_ROOT conflicts with --prefix ***])
-	fi
-	sleep 1
-else
-	# compensate for autoconf inconsistencies
-	BRLCAD_ROOT="$bc_prefix"
-fi
-AC_SUBST(BRLCAD_ROOT)
+# set up the BRLCAD_ROOT installation path, sets bc_prefix
+BC_BRLCAD_ROOT
 
-# make sure the user doesn't try to set /usr as the prefix
-if test "x$BRLCAD_ROOT" = "x/usr" ; then
-    if test "x$BRLCAD_ROOT_OVERRIDE" = "x" ; then
-	AC_MSG_NOTICE([}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}])
-	AC_MSG_WARN([It is STRONGLY recommended that you DO NOT install BRL-CAD into /usr])
-	AC_MSG_WARN([as BRL-CAD provides several libraries that may conflict with other])
-	AC_MSG_WARN([libraries (e.g. librt, libbu, libbn) on certain system configurations.])
-	AC_MSG_WARN([])
-	AC_MSG_WARN([Since our libraries predate all those that we're known to conflict with])
-	AC_MSG_WARN([and are at the very core of our geometry services and project heritage,])
-	AC_MSG_WARN([we have no plans to change the names of our libraries at this time.])
-	AC_MSG_WARN([])
-	AC_MSG_WARN([If you choose to continue installing into /usr, you do so entirely at])
-	AC_MSG_WARN([your own risk.  You have been warned.])
-	AC_MSG_NOTICE([])
-	AC_MSG_NOTICE([Consider using a different --prefix value.])
-	while true ; do
-	    AC_MSG_NOTICE([])
-	    AC_MSG_NOTICE([Would you like to continue with /usr as the install prefix? [[yes/no]]])
-	    read bc_answer
-	    case "x$bc_answer" in
-		x*[[yY]][[eE]][[sS]]*)
-		    bc_answer=yes
-		    break ;;
-		x*[[nN]][[oO]]*)
-		    bc_answer=no
-		    break ;;
-		x*)
-		    AC_MSG_NOTICE([Please answer 'yes' or 'no'])
-		    ;;
-	    esac
-	done
-	if test "x$bc_answer" = "xno" ; then
-	    AC_MSG_ERROR([*** Aborting due to --prefix=/usr ***])
-	fi
-    fi
-fi
-
-# set up the BRLCAD_DATA install directory
+# set up the BRLCAD_DATA install directory, sets bc_data_dir
 #   e.g. /usr/local/share/brlcad/7.4.0
-AC_MSG_CHECKING([where BRL-CAD resources are to be installed])
-bc_data_dir="${datadir}"
-if test "x$bc_data_dir" = "xNONE/share" ; then
-	bc_data_dir="${bc_prefix}/share/brlcad/${BRLCAD_VERSION}"
-elif test "x$bc_data_dir" = "x\${prefix}/share" ; then
-	bc_data_dir="${bc_prefix}/share/brlcad/${BRLCAD_VERSION}"
-fi
-eval "bc_data_dir=\"$bc_data_dir\""
-eval "bc_data_dir=\"$bc_data_dir\""
-if test "x$bc_data_dir" = "xNONE/share" ; then
-	bc_data_dir="${bc_prefix}/share/brlcad/${BRLCAD_VERSION}"
-fi
-AC_DEFINE_UNQUOTED([BRLCAD_DATA], "$bc_data_dir", "Location BRL-CAD resources will install to")
-AC_MSG_RESULT($bc_data_dir)
-if test ! "x$BRLCAD_DATA" = "x" ; then
-	AC_MSG_NOTICE([}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}])
-	AC_MSG_WARN([BRLCAD_DATA should only be used to override an install directory at runtime])
-	AC_MSG_WARN([BRLCAD_DATA is presently set to "${BRLCAD_DATA}"])
-	AC_MSG_NOTICE([It is highly recommended that BRLCAD_DATA be unset and not used])
-	if test "x$BRLCAD_DATA" = "x$bc_data_dir" ; then
-		AC_MSG_WARN([BRLCAD_DATA is not necessary and may cause unexpected behavior])
-		AC_MSG_NOTICE([{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{])
-	else
-		AC_MSG_ERROR([*** Environment variable BRLCAD_DATA conflicts with --prefix or --datadir ***])
-	fi
-	sleep 1
-else
-	# compensate for autoconf inconsistencies
-	BRLCAD_DATA="$bc_data_dir"
-fi
-AC_SUBST(BRLCAD_DATA)
+BC_BRLCAD_DATA
 
 # if this is not a checkout, disable dependency tracking for a faster
 # build. it's not likely that the user is doing development from a
@@ -395,6 +299,9 @@ BC_ARG_ENABLE([build_iwidgets], [iwidgets-install], [Install the included iwidge
 # force enable/disable building of blt
 BC_ARG_ENABLE([build_blt], [blt-build], [Build the included BLT], [auto])
 
+# tkhtml3
+BC_ARG_ENABLE([build_tkhtml3], [tkhtml3-build], [Build the included tkhtml3], [yes])
+
 # tkimg
 BC_ARG_ENABLE([build_tkimg], [tkimg-build], [Build the included tkImg], [auto])
 
@@ -402,16 +309,19 @@ BC_ARG_ENABLE([build_tkimg], [tkimg-build], [Build the included tkImg], [auto])
 BC_ARG_ENABLE([build_tnt], [tnt-install], [Install the included Template Numerical Toolkit], [auto])
 
 # jove
-BC_ARG_ENABLE([build_jove], [jove-build], [Enable compilation of jove], [auto])
+BC_ARG_ENABLE([build_jove], [jove-build], [Enable compilation of jove (optional)], [auto])
 
 # endgame framework simulation module
-BC_ARG_ENABLE([build_ef], [ef-build], [Enable compilation of Endgame Framework module], [no])
+BC_ARG_ENABLE([build_ef], [ef-build], [Enable compilation of Endgame Framework module (optional)], [no])
 
 # unigraphics plugin
-BC_ARG_ENABLE([build_ug], [unigraphics-build], [Enable compilation of Unigraphics importer], [no])
+BC_ARG_ENABLE([build_ug], [unigraphics-build], [Enable compilation of Unigraphics importer (optional)], [no])
 
 # example geometry
 BC_ARG_ENABLE([install_geometry], [models-install], [Enable installation of example geometry models], [yes])
+
+# enable building Docbook documentation
+BC_ARG_ENABLE([build_docs], [documentation], [Enable compilation and installation of extra documentation], [auto])
 
 # optimized
 BC_ARG_ENABLE([use_optimized], [optimized], [Enable optimized compilation], [no])
@@ -445,19 +355,19 @@ dnl *** with options ***
 BC_WITH_FLAG_ARGS
 
 # use the jdk
-BC_ARG_WITH([with_java], [jdk], [Specify use of or path to the Java Development Kit], [auto])
+BC_ARG_WITH([with_java], [jdk], [Specify use of or path to the JDK for librtserver (optional)], [auto])
 
 # use x11
-BC_ARG_WITH([with_x11], [x11], [Specify use of or path to X11], [auto])
+BC_ARG_WITH([with_x11], [x11], [Specify use of or path to X11 (optional)], [auto])
 
 # use opengl
-BC_ARG_WITH([with_opengl], [ogl], [Specify use of or path to OpenGL], [auto])
+BC_ARG_WITH([with_opengl], [ogl], [Specify use of or path to OpenGL (optional)], [auto])
 
 # use wgl
 BC_ARG_WITH([with_wgl], [wgl], [Specify use of or path to WindowsGL], [auto])
 
 # use pro/engineer
-BC_ARG_WITH([with_proe], [proe], [Specify build of Pro/ENGINEER plugin or path to Pro/ENGINEER installation], [no])
+BC_ARG_WITH([with_proe], [proe], [Specify build of Pro/ENGINEER plugin or path to Pro/ENGINEER installation (optional)], [no])
 
 ###
 # argument aliases
@@ -494,6 +404,11 @@ BC_ARG_ALIAS([only_rts], [librtserver-only])
 BC_ARG_ALIAS([build_runtime_debug], [run-time-debug])
 BC_ARG_ALIAS([build_runtime_debug], [runtime-debugging])
 BC_ARG_ALIAS([build_runtime_debug], [run-time-debugging])
+
+# Docbook documentation (help uses documentation)
+BC_ARG_ALIAS([build_docs], [documentation-install])
+BC_ARG_ALIAS([build_docs], [docs])
+BC_ARG_ALIAS([build_docs], [docs-install])
 
 # 64-bit compilation (help uses 64bit-build)
 BC_ARG_ALIAS([build_64bit], [64bit])
@@ -572,6 +487,9 @@ BC_ARG_ALIAS([build_iwidgets], [iwidgets-build])
 BC_ARG_ALIAS([build_blt], [blt])
 BC_ARG_ALIAS([build_blt], [libblt])
 BC_ARG_ALIAS([build_blt], [libblt-build])
+
+# aliases to force building tkhtml3 (help uses tkhtml3-build)
+BC_ARG_ALIAS([build_tkhtml3], [tkhtml3])
 
 # aliases to force building tkimg (help uses tkimg-build)
 BC_ARG_ALIAS([build_tkimg], [tkimg])
@@ -733,6 +651,9 @@ if test "x$set_everything" != "x" ; then
 	if test "x$bc_build_blt_set" = "xno" ; then
 		bc_build_blt="$set_everything"
 	fi
+	if test "x$bc_build_tkhtml3" = "xno" ; then
+		bc_build_tkhtml3="$set_everything"
+	fi
 	if test "x$bc_build_tkimg_set" = "xno" ; then
 		bc_build_tkimg="$set_everything"
 	fi
@@ -818,6 +739,9 @@ AC_MSG_RESULT($bc_only_rts)
 AC_MSG_CHECKING(whether to use run-time debug checks)
 AC_MSG_RESULT($bc_build_runtime_debug)
 
+AC_MSG_CHECKING(whether to compile and install Docbook documentation)
+AC_MSG_RESULT($bc_build_docs)
+
 AC_MSG_CHECKING(whether to compile in 64-bit mode)
 AC_MSG_RESULT($bc_build_64bit)
 
@@ -853,6 +777,9 @@ AC_MSG_RESULT($bc_build_iwidgets)
 
 AC_MSG_CHECKING(whether to build the BLT library)
 AC_MSG_RESULT($bc_build_blt)
+
+AC_MSG_CHECKING(whether to build the tkhtml3 library)
+AC_MSG_RESULT($bc_build_tkhtml3)
 
 AC_MSG_CHECKING(whether to build the tkImg library)
 AC_MSG_RESULT($bc_build_tkimg)
@@ -948,11 +875,11 @@ AC_PROG_YACC
 # sanity check failure if a C++ compiler is not installed.  This makes
 # the sanity test pass regardless of whether there is a c++ compiler.
 if test "x$CXXCPP" = "x" ; then
-	if test "x$CPP" = "x" ; then
-		CXXCPP="cpp"
-	else
-		CXXCPP="$CPP"
-	fi
+    if test "x$CPP" = "x" ; then
+	CXXCPP="cpp"
+    else
+	CXXCPP="$CPP"
+    fi
 fi
 
 dnl disable unnecessary libtool test for fortran
@@ -966,13 +893,24 @@ AC_SUBST(LIBTOOL_DEPS)
 
 dnl verbose compilation progress
 if test "x$bc_build_progress" != "xyes" ; then
-	LIBTOOLFLAGS=--silent
-	AC_SUBST(LIBTOOLFLAGS)
-	# LIBTOOLFLAGS isn't often not enough;
-	# tack --silent onto the LIBTOOL command.
-	if test "x$LIBTOOL" != "x" ; then
-		LIBTOOL="$LIBTOOL --silent"
-	fi
+    LIBTOOLFLAGS=--silent
+    AC_SUBST(LIBTOOLFLAGS)
+    # LIBTOOLFLAGS isn't often not enough;
+    # tack --silent onto the LIBTOOL command.
+    if test "x$LIBTOOL" != "x" ; then
+	LIBTOOL="$LIBTOOL --silent"
+    fi
+fi
+
+# xsltproc is needed for docbook processing, fop is needed for pdf generation
+xsltproc_works=no
+fop_works=no
+if test "x$bc_build_docs" != "xno" ; then
+    AC_PATH_PROG(XSLTPROC, xsltproc)
+    AC_SUBST(XSLTPROC)
+
+    AC_PATH_PROG(APACHEFOP, fop)
+    AC_SUBST(APACHEFOP)
 fi
 
 # AN_MAKEVAR([AR], [BC_PROG_AR])
@@ -993,8 +931,8 @@ AC_PATH_PROG(MV, mv)
 AC_PATH_PROG(CP, cp)
 AC_PATH_PROG(RM, rm)
 
-if test "$bc_with_dtrace" == "yes" ; then
-	AC_PATH_PROG(DTRACE, dtrace, bc_with_dtrace=no, [$PATH:/usr/sbin])
+if test "x$bc_with_dtrace" = "xyes" ; then
+    AC_PATH_PROG(DTRACE, dtrace, bc_with_dtrace=no, [$PATH:/usr/sbin])
 fi
 
 dnl figure out which compiler is seems like we are using
@@ -1005,43 +943,41 @@ compiler=unknown
 
 dnl Determine whether we are using GCC
 if test "x$GCC" = "xyes" ; then
-	compiler=gnu
+    compiler=gnu
 fi
 
 dnl Determine whether we are using the MIPSpro compiler on SGI systems
 if test "x$build_vendor" = "xsgi" ; then
-	AC_MSG_CHECKING([whether we are using the MIPSpro compiler])
-	using_mipspro=no
-	AC_LINK_IFELSE([#if defined(sgi) && defined(_COMPILER_VERSION) && !defined(__GNUC__)
+    AC_MSG_CHECKING([whether we are using the MIPSpro compiler])
+    using_mipspro=no
+    AC_LINK_IFELSE([#if defined(sgi) && defined(_COMPILER_VERSION) && !defined(__GNUC__)
 If we get here, we are using the MIPSPro compiler (and the link should fail).
 #endif
 int main() { return 0; }
-	], [using_mipspro=no], [using_mipspro=yes])
-	AC_MSG_RESULT($using_mipspro)
-	if test "x$using_mipspro" = "xyes" ; then
-		compiler=sgi
-	fi
+    ], [using_mipspro=no], [using_mipspro=yes])
+    AC_MSG_RESULT($using_mipspro)
+    if test "x$using_mipspro" = "xyes" ; then
+	compiler=sgi
+    fi
 fi
 
 dnl Determine whether we are using the SUNWspro Sun Workshop compiler
 if test "x$build_vendor" = "xsun" ; then
-	AC_MSG_CHECKING([whether we are using the SUNWspro compiler])
-	using_sunpro=no
-	AC_LINK_IFELSE([#if defined(sun) && defined(__SUNPRO_C) && !defined(__GNUC__)
+    AC_MSG_CHECKING([whether we are using the SUNWspro compiler])
+    using_sunpro=no
+    AC_LINK_IFELSE([#if defined(sun) && defined(__SUNPRO_C) && !defined(__GNUC__)
 If we get here, we are using the SUNWspro compiler (and the link should fail).
 #endif
 int main() { return 0; }
-	], [using_sunpro=no], [using_sunpro=yes])
-	AC_MSG_RESULT($using_sunpro)
-	if test "x$using_sunpro" = "xyes" ; then
-		AR="CC -xar"
-		LD="CC -G"
-		export AR LD
-		compiler=sun
-	fi
+    ], [using_sunpro=no], [using_sunpro=yes])
+    AC_MSG_RESULT($using_sunpro)
+    if test "x$using_sunpro" = "xyes" ; then
+	AR="CC -xar"
+	LD="CC -G"
+	export AR LD
+	compiler=sun
+    fi
 fi
-
-AC_DEFINE(EXTERN_STDOUT,,[Stdout is extern])
 
 AC_FUNC_ALLOCA
 
@@ -1050,10 +986,10 @@ dnl disabled, see if there is either emacs or jove available.
 dnl i.e. auto for jove is dependant on what is installed
 BCEDITOR=""
 if test "x$bc_build_jove" = "xauto" ; then
-	AC_PATH_PROG(BCEDITOR, emacs, , $PATH)
-	if test "x$BCEDITOR" = "x" ; then
-		AC_PATH_PROG(BCEDITOR, jove, , $PATH)
-	fi
+    AC_PATH_PROG(BCEDITOR, emacs, , $PATH)
+    if test "x$BCEDITOR" = "x" ; then
+	AC_PATH_PROG(BCEDITOR, jove, , $PATH)
+    fi
 fi
 
 
@@ -1202,6 +1138,7 @@ if test "x$bc_with_x11" != "xno" ; then
     fi
 
     dnl find X11 libraries.  sets X_CFLAGS, X_LIBS, and X_EXTRA_LIBS
+    BC_SEARCH_DIRECTORY([/usr/X11], [X11])
     AC_PATH_XTRA
     if test "x$have_x" = "xyes" ; then
 	AC_DEFINE(HAVE_X11_XLIB_H, 1, Define to 1 if you have the <X11/Xlib.h> header file.)
@@ -1238,7 +1175,7 @@ if test "x$bc_with_x11" != "xno" ; then
 	AC_MSG_WARN([This will likely result in a build failure.])
 	AC_MSG_WARN([See config.log for details why (look for this comment)])
 	AC_MSG_NOTICE([{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{])
-	sleep 1
+	sleep 5
     fi
 
     CPPFLAGS="$PRECPPFLAGS"
@@ -1535,6 +1472,7 @@ AC_CHECK_HEADERS( \
 	memory.h \
 	ncurses.h \
 	netinet/in.h \
+	poll.h \
 	pthread.h \
 	pwd.h \
 	rle.h \
@@ -1712,7 +1650,7 @@ if test "x$bc_with_java " != "xno" ; then
 	    AC_MSG_WARN([Build will try to use what it found, but you should update])
 	    AC_MSG_NOTICE([See http://developer.apple.com/java/ for updates])
 	    AC_MSG_NOTICE([{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{])
-	    sleep 1
+	    sleep 5
 	fi
     fi # search_for_jni_h_more
     CPPFLAGS="$PRECPPFLAGS"
@@ -1817,18 +1755,23 @@ if test "xyes" = "xyes" ; then
     fi
 
     dnl dynamic SSE optimizations for NURBS processing
-    BC_COMPILER_AND_LINKER_RECOGNIZES([-msse], [msse], [nokeep])
-    MSSE=""
-    if test "x$bc_msse_works" = "xyes" ; then
-       MSSE="-msse"
-    fi
-    MSSE2=""
-    BC_COMPILER_AND_LINKER_RECOGNIZES([-msse2], [msse2], [nokeep])
-    if test "x$bc_msse2_works" = "xyes" ; then
-       MSSE2="-msse2"
-    fi
-    SSE="$MSSE $MSSE2"
-    AC_SUBST(SSE)
+dnl
+dnl XXX disable the SSE flags for now as they can cause illegal instructions.
+dnl     the test needs to also be tied to run-time functionality since gcc
+dnl     may still output SSE instructions (e.g., for cross-compiling).
+dnl
+dnl     BC_COMPILER_AND_LINKER_RECOGNIZES([-msse], [msse], [nokeep])
+dnl     MSSE=""
+dnl     if test "x$bc_msse_works" = "xyes" ; then
+dnl        MSSE="-msse"
+dnl     fi
+dnl     MSSE2=""
+dnl     BC_COMPILER_AND_LINKER_RECOGNIZES([-msse2], [msse2], [nokeep])
+dnl     if test "x$bc_msse2_works" = "xyes" ; then
+dnl        MSSE2="-msse2"
+dnl     fi
+dnl     SSE="$MSSE $MSSE2"
+dnl     AC_SUBST(SSE)
 
     dnl check for -search_paths_first linker flag.
     dnl prevent a false-positive where it can be treated as a -s and-e
@@ -1891,6 +1834,7 @@ if test "x$bc_use_profiling" != "xno" ; then
 	fi
 
 	if test "x$bc_profile_flag_works" = "xno" ; then
+		# no profiling
 		if test "x$bc_use_profiling" = "xyes" ; then
 			dnl profiling was requested, so abort
 			AC_MSG_NOTICE([}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}])
@@ -1900,8 +1844,11 @@ if test "x$bc_use_profiling" != "xno" ; then
 		AC_MSG_WARN([Don't know how to profile with this compiler])
 		sleep 1
 	else
-		# convert 'auto' to 'no' even though it works
-		bc_use_profiling=no
+		# profiling works
+		if test "x$bc_use_profiling" = "xauto" ; then
+			# convert 'auto' to 'no' even though it works
+			bc_use_profiling=no
+		fi
 	fi
 fi
 
@@ -1909,6 +1856,7 @@ dnl debug flags
 if test "x$bc_use_debug" != "xno" ; then
 	BC_COMPILER_AND_LINKER_RECOGNIZES([-g], [debug_flag])
 	if test "x$bc_debug_flag_works" = "xno" ; then
+		# no debug
 		if test "x$bc_use_debug" = "xyes" ; then
 			dnl debug was requested, so abort
 			AC_MSG_NOTICE([}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}])
@@ -1918,8 +1866,11 @@ if test "x$bc_use_debug" != "xno" ; then
 		AC_MSG_WARN([Do not know how to debug with this compiler])
 		sleep 1
 	else
-		# convert 'auto' to 'yes'
-		bc_use_debug="yes"
+		# debug works
+		if test "x$bc_use_debug" = "xauto" ; then
+			# convert 'auto' to 'yes'
+			bc_use_debug="yes"
+		fi
 	fi
 fi
 
@@ -1988,7 +1939,7 @@ if test "x$bc_compliant_float" = "xno" || test "x$bc_compliant_double" = "xno" ;
     AC_MSG_WARN([The floating point implementation does not seem to be IEEE 754])
     AC_MSG_WARN([compliant.  The behavior of htond and htonf may be incorrect.])
     AC_MSG_NOTICE([{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{])
-    sleep 1
+    sleep 5
 fi
 
 dnl AC_C_PROTOTYPES
@@ -2149,7 +2100,7 @@ if test "x$ac_cv_prog_LEX" != "x" ; then
 	AC_MSG_WARN([of the package (various MGED commands) will be disabled.])
 	AC_MSG_NOTICE([Installation of GNU Bison or Yacc before continuing is recommended.])
 	AC_MSG_NOTICE([{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{])
-	sleep 1
+	sleep 5
     fi
 else
     AC_MSG_NOTICE([}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}])
@@ -2163,7 +2114,7 @@ else
 	AC_MSG_NOTICE([Installation of Bison/Yacc and Flex/Lex before continuing is recommended.])
     fi
     AC_MSG_NOTICE([{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{])
-    sleep 1
+    sleep 5
 fi
 AC_MSG_CHECKING([whether we have the essentials to make parsers])
 if test "x$build_parsers" = "xyes" ; then
@@ -2976,6 +2927,22 @@ fi
 AC_SUBST(BLT)
 
 
+dnl *** tkhtml3 ***
+dnl figure out whether we need to build tkhtml3
+TKHTML3_VERSION="alpha16"
+AC_SUBST(TKHTML3_VERSION)
+AC_MSG_CHECKING(whether to build tkhtml3)
+if test ! "x$bc_build_tkhtml3" = "xno" ; then
+    build_brlcad_tkhtml3=yes
+    AC_MSG_RESULT(yes)
+else
+    build_brlcad_tkhtml3=no
+    TKHTML3=""
+    AC_MSG_RESULT(no)
+fi
+AC_SUBST(TKHTML3)
+
+
 dnl *** tkImg ***
 dnl figure out whether we need to build tkImg
 TKIMG_VERSION="1.3"
@@ -3153,7 +3120,7 @@ AC_SUBST(TERMLIB_CPPFLAGS)
 
 dnl *** Boost ***
 dnl Header only Library requiring no build
-BOOST_CPPFLAGS='-I${top_srcdir}/src/other/boost'
+BOOST_CPPFLAGS='-I${top_srcdir}/src/other'
 AC_SUBST(BOOST_CPPFLAGS)
 
 dnl *** libm ***
@@ -3279,7 +3246,7 @@ else
 	build_brlcad_64bit="no (8-bit)"
     else
 	AC_MSG_WARN([Unknown pointer size: $pointer_size])
-	sleep 1
+	sleep 5
     fi
 fi
 
@@ -3351,7 +3318,7 @@ if test "x$bc_with_proe" != "xno" ; then
 		AC_MSG_NOTICE([}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}])
 		AC_MSG_WARN([Unable to locate ProToolkit.h. Make sure your installation of Pro/E also has Pro/TOOLKIT])
 		AC_MSG_NOTICE([{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{])
-		sleep 1
+		sleep 5
 	    fi
 	    if test "x$bc_with_proe" = "xauto" ; then
 		AC_MSG_NOTICE([}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}])
@@ -3359,7 +3326,7 @@ if test "x$bc_with_proe" != "xno" ; then
 		AC_MSG_WARN([Try adding --with-proe=/path/to/proe to find the ProToolkit.h])
 		AC_MSG_WARN([Compilation of Pro/ENGINEER plugin will be disabled])
 		AC_MSG_NOTICE([{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{])
-		sleep 1
+		sleep 5
 	    fi
 	else
 	    if test "x$bc_with_proe" = "xauto" ; then
@@ -3482,6 +3449,33 @@ fi
 AC_MSG_RESULT($dials_and_buttons)
 
 
+dnl *** Docbook functionality ***
+docbook_processing=no
+docbook_pdf_processing=no
+if test "x$bc_build_docs" != "xno" ; then
+    if test "x$bc_build_docs" = "xyes" ; then
+	if test "x$XSLTPROC" = "x" ; then
+	    AC_MSG_NOTICE([}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}])
+	    AC_MSG_WARN([Extra documentation is enabled but xsltproc was not found])
+	    AC_MSG_ERROR([*** Don't know how to generate documentation without xsltproc ***])
+	fi
+    fi
+
+    if test "x$XSLTPROC" = "x" ; then
+        docbook_processing=no
+    fi
+    if test "x$APACHEFOP" != "x" ; then
+	docbook_pdf_processing=yes
+        docbook_processing="yes (man/html/pdf)"
+    else
+        docbook_processing="yes (man/html only)"
+    fi
+fi
+AC_MSG_CHECKING(for Docbook processing functionality)
+AC_MSG_RESULT($docbook_processing)
+AC_MSG_CHECKING(for Docbook pdf generation functionality)
+AC_MSG_RESULT($docbook_pdf_processing)
+
 # XXX nasty temp hack for backwards cake compatibility. code needs to be fixed.
 if test "x$host_os" = "xirix6.5" ; then
     # XXX the code that relies on this will be going away, but until then..
@@ -3524,6 +3518,7 @@ AM_CONDITIONAL(BUILD_TK, [test "x$build_brlcad_tk" = "xyes"])
 AM_CONDITIONAL(BUILD_ITCL, [test "x$build_brlcad_itcl" = "xyes"])
 AM_CONDITIONAL(BUILD_IWIDGETS, [test "x$build_brlcad_iwidgets" = "xyes"])
 AM_CONDITIONAL(BUILD_BLT, [test "x$build_brlcad_blt" = "xyes"])
+AM_CONDITIONAL(BUILD_TKHTML3, [test "x$build_brlcad_tkhtml3" = "xyes"])
 AM_CONDITIONAL(BUILD_TKIMG, [test "x$build_brlcad_tkimg" = "xyes"])
 AM_CONDITIONAL(BUILD_PNG, [test "x$build_brlcad_png" = "xyes"])
 AM_CONDITIONAL(BUILD_REGEX, [test "x$build_brlcad_regex" = "xyes"])
@@ -3548,6 +3543,8 @@ AM_CONDITIONAL(WITH_JAVA, [test "x$build_against_java" != "xno"])
 AM_CONDITIONAL(WITH_PROE, [test "x$build_against_proe" != "xno"])
 AM_CONDITIONAL(WITH_PARSERS, [test "x$build_parsers" != "xno"])
 
+AM_CONDITIONAL(BUILD_DOCS, [test "x$docbook_processing" != "xno"])
+AM_CONDITIONAL(BUILD_PDF_DOCS, [test "x$docbook_pdf_processing" != "xno"])
 AM_CONDITIONAL(INSTALL_MODELS, [test "x$bc_install_geometry" = "xyes"])
 AM_CONDITIONAL(ONLY_BENCHMARK, [test "x$bc_only_benchmark" != "xno"])
 AM_CONDITIONAL(ONLY_RTS, [test "x$bc_only_rts" != "xno"])
@@ -3583,7 +3580,7 @@ if test "x$bc_build_runtime_debug" = "xno" ; then
 	AC_MSG_WARN([in the inevitable event of a user encountering a bug.])
 	AC_MSG_WARN([You have been warned.  Proceed at your own risk.])
 	AC_MSG_NOTICE([{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{])
-	sleep 1
+	sleep 5
 	AC_DEFINE(NO_BOMBING_MACROS, 1, [Define to not do anything for macros that only bomb on a fatal error])
 	AC_DEFINE(NO_MAGIC_CHECKING, 1, [Define to not perform magic number checking])
 	AC_DEFINE(NO_BADRAY_CHECKING, 1, [Define to not check for divide by zero during ray shots])
@@ -3613,10 +3610,12 @@ CURSOR='${top_builddir}/src/libcursor/libcursor.la'
 DM='${top_builddir}/src/libdm/libdm.la'
 FB='${top_builddir}/src/libfb/libfb.la'
 FFT='${top_builddir}/src/libfft/libfft.la'
+GCV='${top_builddir}/src/libgcv/libgcv.la'
 GED='${top_builddir}/src/libged/libged.la'
 MULTISPECTRAL='${top_builddir}/src/libmultispectral/libmultispectral.la'
 OPTICAL='${top_builddir}/src/liboptical/liboptical.la'
 ORLE='${top_builddir}/src/liborle/liborle.la'
+PC='${top_builddir}/src/libpc/libpc.la'
 PKG='${top_builddir}/src/libpkg/libpkg.la'
 RT='${top_builddir}/src/librt/librt.la'
 SYSV='${top_builddir}/src/libsysv/libsysv.la'
@@ -3634,11 +3633,13 @@ FFT_LIBS="${LIBM}"
 BU_LIBS="${TCL} ${PNG} ${LIBM} ${LIBMALLOC} ${LIBTHREAD}"
 BN_LIBS="${BU} ${BU_LIBS} ${TCL} ${LIBM}"
 RT_LIBS="${BN} ${BN_LIBS} ${BU} ${BU_LIBS} ${REGEX} ${LIBM} ${SYSV} ${OPENNURBS}"
-GED_LIBS="${RT} ${RT_LIBS} ${BN} ${BN_LIBS} ${BU} ${BU_LIBS}"
+GCV_LIBS="${RT} ${RT_LIBS} ${BN} ${BN_LIBS} ${BU} ${BU_LIBS}"
+GED_LIBS="${WDB} ${RT} ${RT_LIBS} ${BN} ${BN_LIBS} ${BU} ${BU_LIBS} ${PNG} ${TCL} ${REGEX}"
 WDB_LIBS="${RT} ${RT_LIBS} ${BN} ${BN_LIBS} ${BU} ${BU_LIBS}"
 FB_LIBS="${BU} ${BU_LIBS} ${PKG} ${TCL} ${SOCKET} ${NSL}" # additional/optional FB_LIBS: ${TK} ${X_LIBS} ${LIBGL}
 OPTICAL_LIBS="${RT} ${RT_LIBS} ${BN} ${BN_LIBS} ${BU} ${BU_LIBS} ${TCL}"
 MULTISPECTRAL_LIBS="${OPTICAL} ${OPTICAL_LIBS} ${RT} ${RT_LIBS} ${BN} ${BN_LIBS} ${BU} ${BU_LIBS}"
+PC_LIBS="${LIBSTDCXX} ${BU} ${BU_LIBS}"
 DM_LIBS="${GED} ${GED_LIBS} ${RT} ${RT_LIBS} ${FB} ${FB_LIBS} ${PNG} ${TK} ${X_LIBS} ${FRAMEWORK_CARBON}"
 TCLCAD_LIBS="${GED} ${GED_LIBS} ${DM} ${DM_LIBS} ${FB} ${FB_LIBS} ${ITK} ${ITCL} ${TK} ${TCLSTUB} ${BLT} ${TCL}"
 BRLCAD_LIBS="${GED} ${GED_LIBS} ${WDB} ${WDB_LIBS} ${RT} ${RT_LIBS} ${BN} ${BN_LIBS} ${BU} ${BU_LIBS}"
@@ -3649,11 +3650,13 @@ AC_SUBST(CURSOR)
 AC_SUBST(DM)
 AC_SUBST(FB)
 AC_SUBST(FFT)
+AC_SUBST(GCV)
 AC_SUBST(GED)
 AC_SUBST(MULTISPECTRAL)
 AC_SUBST(OPTICAL)
 AC_SUBST(ORLE)
 AC_SUBST(PKG)
+AC_SUBST(PC)
 AC_SUBST(RT)
 AC_SUBST(SYSV)
 AC_SUBST(TCLCAD)
@@ -3667,10 +3670,12 @@ AC_SUBST(CURSOR_LIBS)
 AC_SUBST(DM_LIBS)
 AC_SUBST(FB_LIBS)
 AC_SUBST(FFT_LIBS)
+AC_SUBST(GCV_LIBS)
 AC_SUBST(GED_LIBS)
 AC_SUBST(MULTISPECTRAL_LIBS)
 AC_SUBST(OPTICAL_LIBS)
 AC_SUBST(ORLE_LIBS)
+AC_SUBST(PC_LIBS)
 AC_SUBST(PKG_LIBS)
 AC_SUBST(RT_LIBS)
 AC_SUBST(SYSV_LIBS)
@@ -3729,6 +3734,11 @@ AC_SUBST(TK_PATH)
 dnl configure enigma
 AC_CONFIG_SUBDIRS([misc/enigma])
 
+dnl configure tkhtml3
+if test "x$bc_build_tkhtml3" = "xyes" ; then
+    AC_CONFIG_SUBDIRS([src/other/tkhtml3])
+fi
+
 AC_CONFIG_FILES([
 	Makefile
 	bench/Makefile
@@ -3738,7 +3748,59 @@ AC_CONFIG_FILES([
 	doc/Makefile
 	doc/book/Makefile
 	doc/docbook/Makefile
-	doc/docbook/oed/Makefile
+        doc/docbook/articles/Makefile
+	doc/docbook/articles/build_pattern/Makefile
+	doc/docbook/articles/build_pattern/en/Makefile
+	doc/docbook/articles/build_pattern/build_pattern_images/Makefile
+	doc/docbook/articles/build_region/Makefile
+	doc/docbook/articles/build_region/en/Makefile
+	doc/docbook/articles/build_region/build_region_images/Makefile
+	doc/docbook/articles/ebm_primitive/Makefile
+	doc/docbook/articles/ebm_primitive/en/Makefile
+	doc/docbook/articles/ebm_primitive/ebm_primitive_images/Makefile
+	doc/docbook/articles/mgedrc/Makefile
+	doc/docbook/articles/mgedrc/en/Makefile
+	doc/docbook/articles/mgedrc/mgedrc_images/Makefile
+	doc/docbook/articles/nirt/Makefile
+	doc/docbook/articles/nirt/en/Makefile
+	doc/docbook/articles/nirt/nirt_images/Makefile
+	doc/docbook/articles/pipes/Makefile
+	doc/docbook/articles/pipes/en/Makefile
+	doc/docbook/articles/pipes/pipe_images/Makefile
+	doc/docbook/articles/projection_shader/Makefile
+	doc/docbook/articles/projection_shader/en/Makefile
+	doc/docbook/articles/projection_shader/projection_shader_images/Makefile
+	doc/docbook/articles/oed/Makefile
+	doc/docbook/articles/oed/en/Makefile
+	doc/docbook/articles/oed/oed_images/Makefile
+	doc/docbook/articles/tire/Makefile
+	doc/docbook/articles/tire/en/Makefile
+	doc/docbook/articles/tire/tire_images/Makefile
+	doc/docbook/books/Makefile
+	doc/docbook/books/tutorial_series/Makefile
+	doc/docbook/books/tutorial_series/en/Makefile
+	doc/docbook/books/tutorial_series/volumeIII_images/Makefile
+	doc/docbook/lessons/Makefile
+	doc/docbook/lessons/mged/Makefile
+	doc/docbook/lessons/mged/en/Makefile
+	doc/docbook/lessons/mged/L001_imgs/Makefile
+	doc/docbook/lessons/mged/L002_imgs/Makefile
+	doc/docbook/lessons/mged/L004_imgs/Makefile
+	doc/docbook/lessons/mged/L005_imgs/Makefile
+	doc/docbook/lessons/mged/L006_imgs/Makefile
+	doc/docbook/lessons/mged/L007_imgs/Makefile
+	doc/docbook/lessons/mged/L008_imgs/Makefile
+	doc/docbook/lessons/mged/L009_imgs/Makefile
+	doc/docbook/lessons/mged/L010_imgs/Makefile
+	doc/docbook/lessons/mged/L011_imgs/Makefile
+	doc/docbook/lessons/mged/L012_imgs/Makefile
+	doc/docbook/lessons/mged/L013_imgs/Makefile
+	doc/docbook/lessons/mged/L014_imgs/Makefile
+	doc/docbook/lessons/mged/L015_imgs/Makefile
+	doc/docbook/lessons/mged/L016_imgs/Makefile
+	doc/docbook/system/Makefile
+	doc/docbook/system/man1/Makefile
+	doc/docbook/system/man1/en/Makefile
 	doc/html/Makefile
 	doc/html/ReleaseNotes/Makefile
 	doc/html/ReleaseNotes/Rel5.0/Makefile
@@ -3777,14 +3839,18 @@ AC_CONFIG_FILES([
 	misc/pkgconfig/libdm.pc
 	misc/pkgconfig/libfb.pc
 	misc/pkgconfig/libfft.pc
+	misc/pkgconfig/libged.pc
+	misc/pkgconfig/libgcv.pc
 	misc/pkgconfig/libmultispectral.pc
 	misc/pkgconfig/liboptical.pc
+	misc/pkgconfig/libpc.pc
 	misc/pkgconfig/libpkg.pc
 	misc/pkgconfig/librt.pc
 	misc/pkgconfig/libwdb.pc
 	misc/win32-msvc/Dll/Makefile
 	misc/win32-msvc/Makefile
 	misc/win32-msvc8/Makefile
+	misc/win32-msvc9/Makefile
 	pix/Makefile
 	sh/Makefile
 	src/Makefile
@@ -3820,7 +3886,9 @@ AC_CONFIG_FILES([
 	src/canon/Makefile
 	src/conv/Makefile
 	src/conv/comgeom/Makefile
+	src/conv/dxf/Makefile
 	src/conv/iges/Makefile
+	src/conv/intaval/Makefile
 	src/conv/jack/Makefile
 	src/conv/off/Makefile
 	src/conv/patch/Makefile
@@ -3851,10 +3919,12 @@ AC_CONFIG_FILES([
 	src/libdm/Makefile
 	src/libfb/Makefile
 	src/libfft/Makefile
+	src/libgcv/Makefile
 	src/libged/Makefile
 	src/libmultispectral/Makefile
 	src/liboptical/Makefile
 	src/liborle/Makefile
+	src/libpc/Makefile
 	src/libpkg/Makefile
 	src/librt/Makefile
 	src/librtserver/Makefile
@@ -3901,7 +3971,6 @@ AC_CONFIG_FILES([
 	src/other/incrTcl/itk/library/Makefile
 	src/other/incrTcl/itk/pkgIndex.tcl
 	src/other/incrTcl/tools/Makefile
-	src/other/intaval/Makefile
 	src/other/iwidgets/Makefile
 	src/other/iwidgets/doc/Makefile
 	src/other/iwidgets/generic/Makefile
@@ -4048,6 +4117,7 @@ AC_MSG_RESULT([Build Tk .............................: $build_brlcad_tk])
 AC_MSG_RESULT([Build Itcl/Itk .......................: $build_brlcad_itcl])
 AC_MSG_RESULT([Build IWidgets .......................: $build_brlcad_iwidgets])
 AC_MSG_RESULT([Build BLT ............................: $build_brlcad_blt])
+AC_MSG_RESULT([Build tkhtml3 ........................: $build_brlcad_tkhtml3])
 AC_MSG_RESULT([Build tkImg ..........................: $build_brlcad_tkimg])
 AC_MSG_RESULT([Build libpng .........................: $build_brlcad_png])
 AC_MSG_RESULT([Build libregex .......................: $build_brlcad_regex])
@@ -4058,10 +4128,10 @@ AC_MSG_RESULT([Build Template Numerical Toolkit......: $build_brlcad_tnt])
 AC_MSG_RESULT([Build openNURBS.......................: $build_brlcad_opennurbs])
 AC_MSG_RESULT([Build jove ...........................: $build_brlcad_jove])
 AC_MSG_RESULT([])
-AC_MSG_RESULT([X11 support ..........................: $build_against_x11])
-AC_MSG_RESULT([OpenGL support .......................: $build_against_opengl])
-AC_MSG_RESULT([Java Developer Kit support ...........: $build_against_java])
-AC_MSG_RESULT([Enable run-time debugging ............: $bc_build_runtime_debug])
+AC_MSG_RESULT([X11 support (optional)................: $build_against_x11])
+AC_MSG_RESULT([OpenGL support (optional).............: $build_against_opengl])
+AC_MSG_RESULT([librtserver JDK support (optional)....: $build_against_java])
+AC_MSG_RESULT([Enable run-time debugging (optional)..: $bc_build_runtime_debug])
 AC_MSG_RESULT([])
 AC_MSG_RESULT([Build 64-bit release .................: $build_brlcad_64bit])
 AC_MSG_RESULT([Build optimized release ..............: $bc_use_optimized])
@@ -4076,6 +4146,7 @@ AC_MSG_RESULT([])
 AC_MSG_RESULT([Only build benchmark suite ...........: $bc_only_benchmark])
 AC_MSG_RESULT([Only build librtserver ...............: $bc_only_rts])
 AC_MSG_RESULT([Install example geometry models ......: $bc_install_geometry])
+AC_MSG_RESULT([Install extra docs ...................: $docbook_processing])
 AC_MSG_RESULT([])
 if test "x$time_elapsed" != "xunknown" ; then
 AC_MSG_RESULT([Elapsed configuration time ...........: $time_elapsed])

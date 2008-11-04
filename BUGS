@@ -15,6 +15,30 @@ on-going issues.
 Recent Bugs
 -----------
 
+* Mouse cursor turns into a huge yellow-translucent arrow when running
+  MGED through remote X11.
+
+  Running this fixes the bug: .id_0t config -cursor "xterm black"
+
+* mged (on debian) is reporting this when the user presses tab:
+  Error in bgerror: invalid command name "::swidgets::togglearrow"
+  the second time they press tab, they get:
+  Error in bgerror: window name "_secErrorDialog" already exists in parent
+
+  The problem was noticed on 7.12.4 and happens regardless of there
+  being a db opened or not.  The problem does not occur in classic
+  mode.
+
+* mged command window is showing up as an empty 0x0 dimensioned window
+  on freebsd using xfce and metacity (single display, 1680x1050 res).
+  dm shows up just fine.
+
+* wireframe is failing to draw when framebuffer is displayed (underlay
+  or overlay) in mged.  problem is specific to dm-ogl (dm-x is fine).
+
+* g2asc of a v4 is apparently writing out the wrong s_cgtypes and
+  otherwise parsing v4 .g files incorrectly
+
 * fast4-g skips lines while processing if there are DOS line endings
 
 * pipe primitive has a BU_GETSTRUCT malloc getting called during
@@ -129,8 +153,8 @@ Recent Bugs
   off-by-many on the edge of the middle ARB8 when using an optimized
   -O3 compile (-fno-unsafe-math-optimizations makes no difference)
 
-* tessellation of some pipe in toyjeep.g fails (rather reliably) on
-  some given bend
+* triangulation of some pipe in toyjeep.g fails (rather reliably) on
+  some given bend.  fails in nmg_triangulate model().
 
 * tgc reports one hit errors though hit point has 0,0,0 direction
   implying that maybe the point was supposedly deleted.

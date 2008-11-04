@@ -1106,6 +1106,7 @@ int db5_update_ident( struct db_i *dbip, const char *title, double local2mm )
 
     ret = db5_update_attributes( dp, &avs, dbip );
     bu_vls_free( &units );
+    bu_avs_free( &avs );
 
     /* protect from loosing memory and from freeing what we are
        about to dup */
@@ -1227,7 +1228,8 @@ rt_db_cvt_to_external5(
 {
     struct bu_external	attributes;
     struct bu_external	body;
-    int			minor;
+    int	minor;
+    int ret;
 
     RT_CK_DB_INTERNAL( ip );
     if (dbip) RT_CK_DBI(dbip);	/* may be null */
@@ -1237,7 +1239,11 @@ rt_db_cvt_to_external5(
     minor = ip->idb_type;	/* XXX not necessarily v5 numbers. */
 
     /* Scale change on export is 1.0 -- no change */
-    if ( ip->idb_meth->ft_export5( &body, ip, conv2mm, dbip, resp, minor ) < 0 )  {
+    ret = -1;
+    if (ip->idb_meth->ft_export5) {
+	ret = ip->idb_meth->ft_export5(&body, ip, conv2mm, dbip, resp, minor);
+    }
+    if (ret < 0) {
 	bu_log("rt_db_cvt_to_external5(%s):  ft_export5 failure\n",
 	       name);
 	bu_free_external( &body );
@@ -1362,7 +1368,7 @@ db_put_external5(struct bu_external *ep, struct directory *dp, struct db_i *dbip
     }
 
     /* Second, obtain storage for final object */
-    if ( ep->ext_nbytes != dp->d_len || dp->d_addr == -1L )  {
+    if ( ep->ext_nbytes != dp->d_len || dp->d_addr == RT_DIR_PHONY_ADDR )  {
 	if ( db5_realloc( dbip, dp, ep ) < 0 )  {
 	    bu_log("db_put_external(%s) db_realloc5() failed\n", dp->d_namep);
 	    return -5;
@@ -1421,7 +1427,7 @@ rt_db_put_internal5(
     }
     BU_CK_EXTERNAL( &ext );
 
-    if ( ext.ext_nbytes != dp->d_len || dp->d_addr == -1L )  {
+    if ( ext.ext_nbytes != dp->d_len || dp->d_addr == RT_DIR_PHONY_ADDR )  {
 	if ( db5_realloc( dbip, dp, &ext ) < 0 )  {
 	    bu_log("rt_db_put_internal5(%s) db_realloc5() failed\n", dp->d_namep);
 	    goto fail;
@@ -1467,8 +1473,9 @@ rt_db_external5_to_internal5(
     const mat_t			mat,
     struct resource			*resp)
 {
-    register int		id;
-    struct db5_raw_internal	raw;
+    register int id;
+    struct db5_raw_internal raw;
+    int ret;
 
     BU_CK_EXTERNAL(ep);
     RT_CK_DB_INTERNAL(ip);
@@ -1525,8 +1532,13 @@ rt_db_external5_to_internal5(
 	    bu_log("rt_db_external5_to_internal5(%s): don't yet handle major_type %d\n", name, raw.major_type);
 	    return -1;
     }
+
     /* ip has already been initialized, and should not be re-initted */
-    if ( rt_functab[id].ft_import5( ip, &raw.body, mat, dbip, resp, raw.minor_type ) < 0 )  {
+    ret = -1;
+    if (rt_functab[id].ft_import5) {
+	ret = rt_functab[id].ft_import5(ip, &raw.body, mat, dbip, resp, raw.minor_type);
+    }
+    if (ret < 0) {
 	bu_log("rt_db_external5_to_internal5(%s):  import failure\n",
 	       name );
 	rt_db_free_internal( ip, resp );

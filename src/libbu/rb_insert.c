@@ -21,7 +21,7 @@
 /** @{ */
 /** @file rb_insert.c
  *
- *		Routines to insert into a red-black tree
+ * Routines to insert into a red-black tree
  *
  */
 
@@ -35,14 +35,15 @@
 #include "./rb_internals.h"
 
 
-/**			_ R B _ I N S E R T ( )
+/**
+ * _ R B _ I N S E R T ()
  *
- *	    Insert a node into one linear order of a red-black tree
+ * Insert a node into one linear order of a red-black tree
  *
- *	This function has three parameters: the tree and linear order into
- *	which to insert the new node and the new node itself.  If the node
- *	is equal (modulo the linear order) to a node already in the tree,
- *	_rb_insert() returns 1.  Otherwise, it returns 0.
+ * This function has three parameters: the tree and linear order into
+ * which to insert the new node and the new node itself.  If the node
+ * is equal (modulo the linear order) to a node already in the tree,
+ * _rb_insert() returns 1.  Otherwise, it returns 0.
  */
 static int _rb_insert (bu_rb_tree *tree, int order, struct bu_rb_node *new_node)
 {
@@ -61,7 +62,7 @@ static int _rb_insert (bu_rb_tree *tree, int order, struct bu_rb_node *new_node)
     BU_CKMAG(new_node, BU_RB_NODE_MAGIC, "red-black node");
 
     /*
-     *	Initialize the new node
+     * Initialize the new node
      */
     bu_rb_parent(new_node, order) =
 	bu_rb_left_child(new_node, order) =
@@ -72,7 +73,7 @@ static int _rb_insert (bu_rb_tree *tree, int order, struct bu_rb_node *new_node)
 	       new_node, new_node, order, bu_rb_size(new_node, order));
 
     /*
-     *	Perform vanilla-flavored binary-tree insertion
+     * Perform vanilla-flavored binary-tree insertion
      */
     parent = bu_rb_null(tree);
     node = bu_rb_root(tree, order);
@@ -113,7 +114,7 @@ static int _rb_insert (bu_rb_tree *tree, int order, struct bu_rb_node *new_node)
 	bu_rb_right_child(parent, order) = new_node;
 
     /*
-     *	Reestablish the red-black properties, as necessary
+     * Reestablish the red-black properties, as necessary
      */
     bu_rb_set_color(new_node, order, BU_RB_RED);
     node = new_node;
@@ -160,17 +161,18 @@ static int _rb_insert (bu_rb_tree *tree, int order, struct bu_rb_node *new_node)
     return (result);
 }
 
-/**			B U _ R B _ I N S E R T ( )
+/**
+ * B U _ R B _ I N S E R T ()
  *
- *		Applications interface to _rb_insert()
+ * Applications interface to _rb_insert()
  *
- *	This function has two parameters: the tree into which to insert
- *	the new node and the contents of the node.  If a uniqueness
- *	requirement would be violated, bu_rb_insert() does nothing but return
- *	a number from the set {-1, -2, ..., -nm_orders} of which the
- *	absolute value is the first order for which a violation exists.
- *	Otherwise, it returns the number of orders for which the new node
- *	was equal to a node already in the tree.
+ * This function has two parameters: the tree into which to insert
+ * the new node and the contents of the node.  If a uniqueness
+ * requirement would be violated, bu_rb_insert() does nothing but return
+ * a number from the set {-1, -2, ..., -nm_orders} of which the
+ * absolute value is the first order for which a violation exists.
+ * Otherwise, it returns the number of orders for which the new node
+ * was equal to a node already in the tree.
  */
 int bu_rb_insert (bu_rb_tree *tree, void *data)
 {
@@ -186,12 +188,12 @@ int bu_rb_insert (bu_rb_tree *tree, void *data)
     nm_orders = tree -> rbt_nm_orders;
 
     /*
-     *	Enforce uniqueness
+     * Enforce uniqueness
      *
-     *	NOTE: The approach is that for each order that requires uniqueness,
-     *	    we look for a match.  This is not the most efficient way to do
-     *	    things, since _rb_insert() is just going to turn around and
-     *	    search the tree all over again.
+     * NOTE: The approach is that for each order that requires uniqueness,
+     * we look for a match.  This is not the most efficient way to do
+     * things, since _rb_insert() is just going to turn around and
+     * search the tree all over again.
      */
     for (order = 0; order < nm_orders; ++order)
 	if (bu_rb_get_uniqueness(tree, order) &&
@@ -204,8 +206,8 @@ int bu_rb_insert (bu_rb_tree *tree, void *data)
 	}
 
     /*
-     *	Make a new package
-     *	and add it to the list of all packages.
+     * Make a new package
+     * and add it to the list of all packages.
      */
     package = (struct bu_rb_package *)
 	bu_malloc(sizeof(struct bu_rb_package), "red-black package");
@@ -221,8 +223,8 @@ int bu_rb_insert (bu_rb_tree *tree, void *data)
     package -> rbp_list_pos = rblp;
 
     /*
-     *	Make a new node
-     *	and add it to the list of all nodes.
+     * Make a new node
+     * and add it to the list of all nodes.
      */
     node = (struct bu_rb_node *)
 	bu_malloc(sizeof(struct bu_rb_node), "red-black node");
@@ -253,7 +255,7 @@ int bu_rb_insert (bu_rb_tree *tree, void *data)
     node -> rbn_list_pos = rblp;
 
     /*
-     *	Fill in the package
+     * Fill in the package
      */
     package -> rbp_magic = BU_RB_PKG_MAGIC;
     package -> rbp_data = data;
@@ -261,7 +263,7 @@ int bu_rb_insert (bu_rb_tree *tree, void *data)
 	(package -> rbp_node)[order] = node;
 
     /*
-     *	Fill in the node
+     * Fill in the node
      */
     node -> rbn_magic = BU_RB_NODE_MAGIC;
     node -> rbn_tree = tree;
@@ -270,8 +272,8 @@ int bu_rb_insert (bu_rb_tree *tree, void *data)
     node -> rbn_pkg_refs = nm_orders;
 
     /*
-     *	If the tree was empty, install this node as the root
-     *	and give it a null parent and null children
+     * If the tree was empty, install this node as the root
+     * and give it a null parent and null children
      */
     if (bu_rb_root(tree, 0) == bu_rb_null(tree))
 	for (order = 0; order < nm_orders; ++order)
@@ -286,7 +288,7 @@ int bu_rb_insert (bu_rb_tree *tree, void *data)
 		bu_log("bu_rb_insert(<%x>, <%x>, <%x>): size(%x, %d)=%d\n",
 		       tree, data, node, node, order, bu_rb_size(node, order));
 	}
-    /*	Otherwise, insert the node into the tree */
+    /* Otherwise, insert the node into the tree */
     else
     {
 	for (order = 0; order < nm_orders; ++order)
@@ -301,15 +303,16 @@ int bu_rb_insert (bu_rb_tree *tree, void *data)
     return (result);
 }
 
-/**		        _ R B _ S E T _ U N I Q ( )
+/**
+ * _ R B _ S E T _ U N I Q ()
  *
- *	    Raise or lower the uniqueness flag for one linear order
- *			    of a red-black tree
+ * Raise or lower the uniqueness flag for one linear order
+ * of a red-black tree
  *
- *	This function has three parameters: the tree, the order for which
- *	to modify the flag, and the new value for the flag.  _rb_set_uniq()
- *	sets the specified flag to the specified value and returns the
- *	previous value of the flag.
+ * This function has three parameters: the tree, the order for which
+ * to modify the flag, and the new value for the flag.  _rb_set_uniq()
+ * sets the specified flag to the specified value and returns the
+ * previous value of the flag.
  */
 static int _rb_set_uniq (bu_rb_tree *tree, int order, int new_value)
 {
@@ -324,15 +327,15 @@ static int _rb_set_uniq (bu_rb_tree *tree, int order, int new_value)
     return (prev_value);
 }
 
-/*		         B U _ R B _ U N I Q _ O N ( )
- *		        B U _ R B _ U N I Q _ O F F ( )
+/* B U _ R B _ U N I Q _ O N ()
+ * B U _ R B _ U N I Q _ O F F ()
  *
- *		Applications interface to _rb_set_uniq()
+ * Applications interface to _rb_set_uniq()
  *
- *	These functions have two parameters: the tree and the order for
- *	which to require uniqueness/permit nonuniqueness.  Each sets the
- *	specified flag to the specified value and returns the previous
- *	value of the flag.
+ * These functions have two parameters: the tree and the order for
+ * which to require uniqueness/permit nonuniqueness.  Each sets the
+ * specified flag to the specified value and returns the previous
+ * value of the flag.
  */
 int bu_rb_uniq_on (bu_rb_tree *tree, int order)
 {
@@ -344,32 +347,34 @@ int bu_rb_uniq_off (bu_rb_tree *tree, int order)
     return (_rb_set_uniq(tree, order, 0));
 }
 
-/**		         B U _ R B _ I S _ U N I Q ( )
+/**
+ * B U _ R B _ I S _ U N I Q ()
  *
- *	  Query the uniqueness flag for one order of a red-black tree
+ * Query the uniqueness flag for one order of a red-black tree
  *
- *	This function has two parameters: the tree and the order for
- *	which to query uniqueness.
+ * This function has two parameters: the tree and the order for
+ * which to query uniqueness.
  */
 int bu_rb_is_uniq (bu_rb_tree *tree, int order)
 {
     BU_CKMAG(tree, BU_RB_TREE_MAGIC, "red-black tree");
     BU_RB_CKORDER(tree, order);
 
-    return(bu_rb_get_uniqueness(tree, order));
+    return (bu_rb_get_uniqueness(tree, order));
 }
 
-/**		        B U _ R B _ S E T _ U N I Q V ( )
+/**
+ * B U _ R B _ S E T _ U N I Q V ()
  *
- *	    Set the uniqueness flags for all the linear orders
- *			    of a red-black tree
+ * Set the uniqueness flags for all the linear orders
+ * of a red-black tree
  *
- *	This function has two parameters: the tree and a bitv_t
- *	encoding the flag values.  bu_rb_set_uniqv() sets the flags
- *	according to the bits in flag_rep.  For example, if
- *	flag_rep = 1011_2, then the first, second, and fourth
- *	orders are specified unique, and the third is specified
- *	not-necessarily unique.
+ * This function has two parameters: the tree and a bitv_t
+ * encoding the flag values.  bu_rb_set_uniqv() sets the flags
+ * according to the bits in flag_rep.  For example, if
+ * flag_rep = 1011_2, then the first, second, and fourth
+ * orders are specified unique, and the third is specified
+ * not-necessarily unique.
  */
 void bu_rb_set_uniqv (bu_rb_tree *tree, bitv_t flag_rep)
 {
@@ -392,13 +397,14 @@ void bu_rb_set_uniqv (bu_rb_tree *tree, bitv_t flag_rep)
 	       nm_orders);
 }
 
-/**		    _ R B _ S E T _ U N I Q _ A L L ( )
+/**
+ * _ R B _ S E T _ U N I Q _ A L L ()
  *
- *	    Raise or lower the uniqueness flags for all the linear orders
- *			    of a red-black tree
+ * Raise or lower the uniqueness flags for all the linear orders
+ * of a red-black tree
  *
- *	This function has two parameters: the tree, and the new value
- *	for all the flags.
+ * This function has two parameters: the tree, and the new value
+ * for all the flags.
  */
 static void _rb_set_uniq_all (bu_rb_tree *tree, int new_value)
 {
@@ -413,13 +419,14 @@ static void _rb_set_uniq_all (bu_rb_tree *tree, int new_value)
 	bu_rb_set_uniqueness(tree, order, new_value);
 }
 
-/**		     B U _ R B _ U N I Q _ A L L _ O N ( )
- *		    B U _ R B _ U N I Q _ A L L _ O F F ( )
+/**
+ * B U _ R B _ U N I Q _ A L L _ O N ()
+ * B U _ R B _ U N I Q _ A L L _ O F F ()
  *
- *	      Applications interface to _rb_set_uniq_all()
+ * Applications interface to _rb_set_uniq_all()
  *
- *	These functions have one parameter: the tree for which to
- *	require uniqueness/permit nonuniqueness.
+ * These functions have one parameter: the tree for which to
+ * require uniqueness/permit nonuniqueness.
  */
 void bu_rb_uniq_all_on (bu_rb_tree *tree)
 {

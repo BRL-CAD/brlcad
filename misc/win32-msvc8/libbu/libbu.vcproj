@@ -561,6 +561,10 @@
 				</FileConfiguration>
 			</File>
 			<File
+				RelativePath="..\..\..\src\libbu\fnmatch.c"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\src\libbu\fopen_uniq.c"
 				>
 				<FileConfiguration

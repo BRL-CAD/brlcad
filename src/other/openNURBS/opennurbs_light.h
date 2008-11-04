@@ -1,3 +1,19 @@
+/* $Header$ */
+/* $NoKeywords: $ */
+/*
+//
+// Copyright (c) 1993-2007 Robert McNeel & Associates. All rights reserved.
+// Rhinoceros is a registered trademark of Robert McNeel & Assoicates.
+//
+// THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY.
+// ALL IMPLIED WARRANTIES OF FITNESS FOR ANY PARTICULAR PURPOSE AND OF
+// MERCHANTABILITY ARE HEREBY DISCLAIMED.
+//				
+// For complete openNURBS copyright information see <http://www.opennurbs.org>.
+//
+////////////////////////////////////////////////////////////////
+*/
+
 #if !defined(OPENNURBS_LIGHT_INC_)
 #define OPENNURBS_LIGHT_INC_
 
@@ -14,7 +30,7 @@ public:
 
   /////////////////////////////////////////////////////////////////
   //
-  // ON_Object virtual functions
+  // ON_Object virtual functions 
   //
 
   /*
@@ -23,12 +39,12 @@ public:
     initialized.
   Parameters:
     text_log - [in] if the object is not valid and text_log
-        is not NULL, then a brief englis description of the
-        reason the object is not valid is appened to the log.
-        The information appended to text_log is suitable for
-        low-level debugging purposes by programmers and is
-        not intended to be useful as a high level user
-        interface tool.
+	is not NULL, then a brief englis description of the
+	reason the object is not valid is appened to the log.
+	The information appended to text_log is suitable for 
+	low-level debugging purposes by programmers and is 
+	not intended to be useful as a high level user 
+	interface tool.
   Returns:
     @untitled table
     TRUE     object is valid
@@ -43,14 +59,14 @@ public:
   // Use ON_BinaryArchive::WriteObject() and ON_BinaryArchive::ReadObject()
   // for top level serialization.  These Read()/Write() members should just
   // write/read specific definitions.  In particular, they should not write/
-  // read any chunk typecode or length information.  The default
+  // read any chunk typecode or length information.  The default 
   // implementations return FALSE and do nothing.
   BOOL Write(
-         ON_BinaryArchive&  // serialize definition to binary archive
+	 ON_BinaryArchive&  // serialize definition to binary archive
        ) const;
 
   BOOL Read(
-         ON_BinaryArchive&  // restore definition from binary archive
+	 ON_BinaryArchive&  // restore definition from binary archive
        );
 
   ON::object_type ObjectType() const;
@@ -61,20 +77,20 @@ public:
 
   /////////////////////////////////////////////////////////////////
   //
-  // ON_Geometry virtual functions
+  // ON_Geometry virtual functions 
   //
   int Dimension() const;
 
   BOOL GetBBox( // returns TRUE if successful
-         double*,    // boxmin[dim]
-         double*,    // boxmax[dim]
-         BOOL = FALSE  // TRUE means grow box
-         ) const;
+	 double*,    // boxmin[dim]
+	 double*,    // boxmax[dim]
+	 BOOL = FALSE  // TRUE means grow box
+	 ) const;
 
-  BOOL Transform(
-         const ON_Xform&
-         );
-
+  BOOL Transform( 
+	 const ON_Xform&
+	 );
+ 
   /////////////////////////////////////////////////////////
   //
   // Interface
@@ -88,7 +104,7 @@ public:
   //
   BOOL Enable( BOOL = TRUE ); // returns previous state
   BOOL IsEnabled() const;
-
+  
   /////////////////////////////////////////////////////////
   //
   // style, location, and direction
@@ -97,11 +113,11 @@ public:
   void SetStyle(ON::light_style);
   ON::light_style Style() const;
 
-  const BOOL IsPointLight() const;
-  const BOOL IsDirectionalLight() const;
-  const BOOL IsSpotLight() const;
-  const BOOL IsLinearLight() const;
-  const BOOL IsRectangularLight() const;
+  BOOL IsPointLight() const;
+  BOOL IsDirectionalLight() const;
+  BOOL IsSpotLight() const;
+  BOOL IsLinearLight() const;
+  BOOL IsRectangularLight() const;
 
   ON::coordinate_system CoordinateSystem() const; // determined by style
 
@@ -116,15 +132,15 @@ public:
     vp - [in] viewport where light is being used
     dest_cs - [in] destination coordinate system
     xform - [out] transformation from the light's intrinsic
-                  coordinate system to cs.
+		  coordinate system to cs.
   Returns:
     TRUE if successful.
   */
-  BOOL GetLightXform(
-           const ON_Viewport& vp,
-           ON::coordinate_system dest_cs,
-           ON_Xform& xform
-           ) const;
+  BOOL GetLightXform( 
+	   const ON_Viewport& vp,
+	   ON::coordinate_system dest_cs, 
+	   ON_Xform& xform 
+	   ) const;
 
   void SetLocation( const ON_3dPoint& );
   void SetDirection( const ON_3dVector& );
@@ -138,7 +154,7 @@ public:
   double PowerWatts() const;
   double PowerLumens() const;
   double PowerCandela() const;
-
+  
   void SetPowerWatts( double );
   void SetPowerLumens( double );
   void SetPowerCandela( double );
@@ -163,7 +179,7 @@ public:
   void SetAttenuation(const ON_3dVector&);
   ON_3dVector Attenuation() const;
   double Attenuation(double) const; // computes 1/(a[0] + d*a[1] + d^2*a[2]) where d = argument
-                                    // returns 0 if a[0] + d*a[1] + d^2*a[2] <= 0
+				    // returns 0 if a[0] + d*a[1] + d^2*a[2] <= 0
 
   /////////////////////////////////////////////////////////
   //
@@ -180,8 +196,8 @@ public:
 
   //////////
   // The spot exponent varies from 0.0 to 128.0 and provides
-  // an exponential interface for controling the focus or
-  // concentration of a spotlight (like the
+  // an exponential interface for controling the focus or 
+  // concentration of a spotlight (like the 
   // OpenGL GL_SPOT_EXPONENT parameter).  The spot exponent
   // and hot spot parameters are linked; changing one will
   // change the other.
@@ -192,7 +208,7 @@ public:
 
   //////////
   // The hot spot setting runs from 0.0 to 1.0 and is used to
-  // provides a linear interface for controling the focus or
+  // provides a linear interface for controling the focus or 
   // concentration of a spotlight.
   // A hot spot setting of 0.0 corresponds to a spot exponent of 128.
   // A hot spot setting of 1.0 corresponds to a spot exponent of 0.0.
@@ -219,7 +235,7 @@ public:
   //
   void SetShadowIntensity(double);
   double ShadowIntensity() const;
-
+				 
 
   /////////////////////////////////////////////////////////
   //
@@ -255,29 +271,29 @@ public:
   ON_Color m_ambient;
   ON_Color m_diffuse;
   ON_Color m_specular;
-
+  
   ON_3dVector m_direction; // ignored for "point" and "ambient" lights
   ON_3dPoint  m_location;  // ignored for "directional" and "ambient" lights
   ON_3dVector m_length;    // only for linear and rectangular lights
-                           // ends of linear lights are m_location and m_location+m_length
+			   // ends of linear lights are m_location and m_location+m_length
   ON_3dVector m_width;     // only for rectangular lights
-                           // corners of rectangular lights are m_location, m_location+m_length,
-                           // m_location+m_width, m_location+m_width+m_length
+			   // corners of rectangular lights are m_location, m_location+m_length,
+			   // m_location+m_width, m_location+m_width+m_length
 
-  double      m_intensity; // 0.0 = 0%, 1.0 = 100%
+  double      m_intensity; // 0.0 = 0%, 1.0 = 100% 
   double      m_watts;     // ignored if 0
 
   // spot settings - ignored for non-spot lights
   double       m_spot_angle;    // 0.0 to 90.0
   double       m_spot_exponent; // 0.0 to 128.0
-                                // 0.0 = uniform
-                                // 128.0 = high focus
+				// 0.0 = uniform
+				// 128.0 = high focus
   double       m_hotspot;       // 0.0 to 1.0 (See SetHotSpot() for details)
 
   // attenuation settings - ignored for "directional" and "ambient" lights
   ON_3dVector m_attenuation;    // each entry >= 0.0
-                                // att = 1/(a[0] + d*a[1] + d^2*a[2])
-                                // where d = distance to light
+				// att = 1/(a[0] + d*a[1] + d^2*a[2])
+				// where d = distance to light
 
   // shawdow casting
   double       m_shadow_intensity; // 0.0 = no shadow casting, 1.0 = full shadow casting

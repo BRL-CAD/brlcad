@@ -1,4 +1,4 @@
-/*                    G _ S U B M O D E L . C
+/*                      S U B M O D E L . C
  * BRL-CAD
  *
  * Copyright (c) 2000-2008 United States Government as represented by
@@ -17,9 +17,9 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @addtogroup g_  */
+/** @addtogroup primitives */
 /** @{ */
-/** @file g_submodel.c
+/** @file submodel.c
  *
  *	Intersect a ray with an entire subspace full of geometry,
  *	possibly included from another .g file, with a subordinate
@@ -52,8 +52,8 @@
 #define RT_SUBMODEL_O(m)	bu_offsetof(struct rt_submodel_internal, m)
 
 const struct bu_structparse rt_submodel_parse[] = {
-    {"%S",	1, "file",	RT_SUBMODEL_O(file),		BU_STRUCTPARSE_FUNC_NULL },
-    {"%S",	1, "treetop",	RT_SUBMODEL_O(treetop),		BU_STRUCTPARSE_FUNC_NULL },
+    {"%V",	1, "file",	RT_SUBMODEL_O(file),		BU_STRUCTPARSE_FUNC_NULL },
+    {"%V",	1, "treetop",	RT_SUBMODEL_O(treetop),		BU_STRUCTPARSE_FUNC_NULL },
     {"%d",	1, "meth",	RT_SUBMODEL_O(meth),		BU_STRUCTPARSE_FUNC_NULL },
     {"",	0, (char *)0, 0,			BU_STRUCTPARSE_FUNC_NULL }
 };
@@ -368,15 +368,10 @@ rt_submodel_a_hit(struct application *ap, struct partition *PartHeadp, struct se
 		up_segp->seg_out.hit_dist, up_ap->a_ray.r_dir );
 
 	/* RT_HIT_NORMAL */
-	inseg->seg_stp->st_meth->ft_norm(
-	    &inseg->seg_in,
-	    inseg->seg_stp,
-	    inseg->seg_in.hit_rayp );
-	outseg->seg_stp->st_meth->ft_norm(
-	    &outseg->seg_out,
-	    outseg->seg_stp,
-	    outseg->seg_out.hit_rayp );
-/* XXX error checking */
+	inseg->seg_stp->st_meth->ft_norm(&inseg->seg_in, inseg->seg_stp, inseg->seg_in.hit_rayp);
+	outseg->seg_stp->st_meth->ft_norm(&outseg->seg_out, outseg->seg_stp, outseg->seg_out.hit_rayp);
+
+	/* XXX error checking */
 	{
 	    fastf_t cosine = fabs(VDOT( ap->a_ray.r_dir, inseg->seg_in.hit_normal ));
 	    if ( cosine > 1.00001 )  {
@@ -659,8 +654,9 @@ struct goodies {
  */
 HIDDEN union tree *rt_submodel_wireframe_leaf(struct db_tree_state *tsp, struct db_full_path *pathp, struct rt_db_internal *ip, genptr_t client_data)
 {
-    union tree	*curtree;
-    struct goodies	*gp;
+    union tree *curtree;
+    struct goodies *gp;
+    int ret;
 
     RT_CK_TESS_TOL(tsp->ts_ttol);
     BN_CK_TOL(tsp->ts_tol);
@@ -681,9 +677,11 @@ HIDDEN union tree *rt_submodel_wireframe_leaf(struct db_tree_state *tsp, struct 
 	bu_free((genptr_t)sofar, "path string");
     }
 
-    if ( ip->idb_meth->ft_plot(
-	     gp->vheadp, ip,
-	     tsp->ts_ttol, tsp->ts_tol ) < 0 )  {
+    ret = -1;
+    if (ip->idb_meth->ft_plot) {
+	ret = ip->idb_meth->ft_plot(gp->vheadp, ip, tsp->ts_ttol, tsp->ts_tol);
+    }
+    if (ret < 0) {
 	bu_log("rt_submodel_wireframe_leaf(%s): %s plot failure\n",
 	       ip->idb_meth->ft_name,
 	       DB_FULL_PATH_CUR_DIR(pathp)->d_namep );
@@ -1028,6 +1026,16 @@ rt_submodel_ifree(struct rt_db_internal *ip)
 
     bu_free( (genptr_t)sip, "submodel ifree" );
     ip->idb_ptr = GENPTR_NULL;	/* sanity */
+}
+
+/**
+ * R T _ S U B M O D E L _ P A R A M S
+ *
+ */
+int
+rt_submodel_params(struct pc_pc_set * ps, const struct rt_db_internal *ip)
+{
+    return(0);			/* OK */
 }
 
 /*

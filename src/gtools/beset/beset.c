@@ -126,9 +126,6 @@ int main(int argc, char *argv[]) {
     struct beset_options opts = {DEFAULT_POP_SIZE, DEFAULT_GENS, DEFAULT_RES, 0, 0};
     struct individual *tmp = NULL;
     int  ac;
-    struct directory *dp;
-    int d_flags;
-    unsigned char d_minor_type;
     struct db_i *source_db;
 
 

@@ -26,18 +26,17 @@
 #include "common.h"
 
 #include <stdlib.h>
-#include <stdio.h>
 #include <math.h>
 #include <signal.h>
 #include <string.h>
-
 #include "bio.h"
+
 #include "tcl.h"
 #include "bu.h"
 #include "vmath.h"
 #include "raytrace.h"
+
 #include "./mged.h"
-#include "./mged_solid.h"
 #include "./mged_dm.h"
 
 
@@ -140,7 +139,7 @@ free_solid(struct sol_name_dist *sol, int free_name)
  *			P R I N T _ S O L I D
  */
 static void
-print_solid(void *vp, int depth)
+print_solid(void *vp)
 {
     struct sol_name_dist	*sol = vp;
     struct bu_vls tmp_vls;

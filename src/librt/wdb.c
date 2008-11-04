@@ -31,6 +31,7 @@
 
 #include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
 #include <math.h>
 #include "bio.h"
 
@@ -112,23 +113,7 @@ wdb_dbopen( struct db_i *dbip, int mode )
 	rt_init_resource( &rt_uniresource, 0, NULL );
 
     BU_GETSTRUCT(wdbp, rt_wdb);
-    wdbp->l.magic = RT_WDB_MAGIC;
-    wdbp->type = mode;
-    wdbp->dbip = dbip;
-    wdbp->dbip->dbi_wdbp = wdbp;
-
-    /* Provide the same default tolerance that librt/prep.c does */
-    wdbp->wdb_tol.magic = BN_TOL_MAGIC;
-    wdbp->wdb_tol.dist = 0.005;
-    wdbp->wdb_tol.dist_sq = wdbp->wdb_tol.dist * wdbp->wdb_tol.dist;
-    wdbp->wdb_tol.perp = 1e-6;
-    wdbp->wdb_tol.para = 1 - wdbp->wdb_tol.perp;
-
-    wdbp->wdb_ttol.magic = RT_TESS_TOL_MAGIC;
-    wdbp->wdb_ttol.abs = 0.0;
-    wdbp->wdb_ttol.rel = 0.01;
-    wdbp->wdb_ttol.norm = 0;
-    bu_vls_init( &wdbp->wdb_prestr );
+    wdb_init(wdbp, dbip, mode);
 
     return wdbp;
 
@@ -211,7 +196,11 @@ wdb_export_external(
 		    return -3;
 		}
 	    }
-	    dp->d_flags = (dp->d_flags & ~7) | flags;
+	    /* keep the caller's flags, except we don't want to
+	     * pretend a disk dp is an inmem dp.  the data is
+	     * read/written differently for both.
+	     */
+	    dp->d_flags = (dp->d_flags & ~7) | (flags & ~(RT_DIR_INMEM));
 	    if ( db_put_external( ep, dp, wdbp->dbip ) < 0 )  {
 		bu_log("wdb_export_external(%s): db_put_external error\n",
 		       name );
@@ -309,7 +298,11 @@ wdb_put_internal(
 
     if ( wdbp->dbip->dbi_version <= 4 )  {
 	BU_INIT_EXTERNAL( &ext );
-	ret = ip->idb_meth->ft_export( &ext, ip, local2mm, wdbp->dbip, &rt_uniresource );
+
+	ret = -1;
+	if (ip->idb_meth->ft_export) {
+	    ret = ip->idb_meth->ft_export(&ext, ip, local2mm, wdbp->dbip, &rt_uniresource);
+	}
 	if ( ret < 0 )  {
 	    bu_log("rt_db_put_internal(%s):  solid export failure\n",
 		   name);
@@ -383,27 +376,238 @@ wdb_export(
     return wdb_put_internal( wdbp, name, &intern, local2mm );
 }
 
+void
+wdb_init(struct rt_wdb *wdbp, struct db_i *dbip, int mode)
+{
+    wdbp->l.magic = RT_WDB_MAGIC;
+    wdbp->type = mode;
+    wdbp->dbip = dbip;
+    wdbp->dbip->dbi_wdbp = wdbp;
+
+    /* Provide the same default tolerance that librt/prep.c does */
+    wdbp->wdb_tol.magic = BN_TOL_MAGIC;
+    wdbp->wdb_tol.dist = 0.005;
+    wdbp->wdb_tol.dist_sq = wdbp->wdb_tol.dist * wdbp->wdb_tol.dist;
+    wdbp->wdb_tol.perp = 1e-6;
+    wdbp->wdb_tol.para = 1 - wdbp->wdb_tol.perp;
+
+    wdbp->wdb_ttol.magic = RT_TESS_TOL_MAGIC;
+    wdbp->wdb_ttol.abs = 0.0;
+    wdbp->wdb_ttol.rel = 0.01;
+    wdbp->wdb_ttol.norm = 0;
+    bu_vls_init(&wdbp->wdb_prestr);
+
+    /* initialize tree state */
+    wdbp->wdb_initial_tree_state = rt_initial_tree_state;  /* struct copy */
+    wdbp->wdb_initial_tree_state.ts_ttol = &wdbp->wdb_ttol;
+    wdbp->wdb_initial_tree_state.ts_tol = &wdbp->wdb_tol;
+
+    /* default region ident codes */
+    wdbp->wdb_item_default = 1000;
+    wdbp->wdb_air_default = 0;
+    wdbp->wdb_mat_default = 1;
+    wdbp->wdb_los_default = 100;
+
+    /* resource structure */
+    wdbp->wdb_resp = &rt_uniresource;
+}
+
+
 /**
- *			W D B _ C L O S E
+ * W D B _ C L O S E
  *
- *  Release from associated database "file", destroy dynamic data structure.
+ * Release from associated database "file", destroy dynamic data
+ * structure.
  */
 void
-wdb_close( struct rt_wdb *wdbp )
+wdb_close(struct rt_wdb *wdbp)
 {
 
     RT_CK_WDB(wdbp);
 
     /* XXX Flush any unwritten "struct matter" records here */
 
-    db_close( wdbp->dbip );
+    db_close(wdbp->dbip);
     wdbp->dbip = NULL;
 
-    bu_vls_free( &wdbp->wdb_prestr );
+    bu_vls_free(&wdbp->wdb_prestr);
 
-    bu_free( (genptr_t)wdbp, "struct rt_wdb");
+    bu_free((genptr_t)wdbp, "struct rt_wdb");
     wdbp = NULL;
 }
+
+
+/**
+ * W D B _ I M P O R T _ F R O M _ P A T H
+ *
+ * Given the name of a database object or a full path to a leaf
+ * object, obtain the internal form of that leaf.  Packaged separately
+ * mainly to make available nice Tcl error handling.
+ *
+ * Returns -
+ *	BRLCAD_OK
+ *	BRLCAD_ERROR
+ */
+int
+wdb_import_from_path(struct bu_vls *log, struct rt_db_internal *ip, const char *path, struct rt_wdb *wdb)
+{
+    struct db_i	*dbip;
+    int status;
+
+    /* Can't run RT_CK_DB_INTERNAL(ip), it hasn't been filled in yet */
+    RT_CK_WDB(wdb);
+    dbip = wdb->dbip;
+    RT_CK_DBI(dbip);
+
+    if (strchr(path, '/')) {
+	/* This is a path */
+	struct db_tree_state	ts;
+	struct db_full_path	old_path;
+	struct db_full_path	new_path;
+	struct directory	*dp_curr;
+	int			ret;
+
+	db_init_db_tree_state(&ts, dbip, &rt_uniresource);
+	db_full_path_init(&old_path);
+	db_full_path_init(&new_path);
+
+	if (db_string_to_path(&new_path, dbip, path) < 0) {
+	    bu_vls_printf(log, "wdb_import_from_path: '%s' contains unknown object names\n", path);
+	    return BRLCAD_ERROR;
+	}
+
+	dp_curr = DB_FULL_PATH_CUR_DIR(&new_path);
+	ret = db_follow_path(&ts, &old_path, &new_path, LOOKUP_NOISY, 0);
+	db_free_full_path(&old_path);
+	db_free_full_path(&new_path);
+
+	if (ret < 0) {
+	    bu_vls_printf(log, "wdb_import_from_path: '%s' is a bad path\n", path);
+	    return BRLCAD_ERROR;
+	}
+
+	status = wdb_import(wdb, ip, dp_curr->d_namep, ts.ts_mat);
+	if (status == -4) {
+	    bu_vls_printf(log, "%s not found in path %s\n", dp_curr->d_namep, path);
+	    return BRLCAD_ERROR;
+	}
+	if (status < 0) {
+	    bu_vls_printf(log, "wdb_import failure: %s", dp_curr->d_namep);
+	    return BRLCAD_ERROR;
+	}
+    } else {
+	status = wdb_import(wdb, ip, path, (matp_t)NULL);
+	if (status == -4) {
+	    bu_vls_printf(log, "%s: not found\n", path);
+	    return BRLCAD_ERROR;
+	}
+	if (status < 0) {
+	    bu_vls_printf(log, "wdb_import failure: %s", path);
+	    return BRLCAD_ERROR;
+	}
+    }
+
+    return BRLCAD_OK;
+}
+
+#if 0
+/*XXX Needs to be modified to NOT use Tcl */
+/**
+ * W D B _ T R E E _ D E S C R I B E
+ *
+ * Fills a Tcl_DString with a representation of the given tree
+ * appropriate for processing by Tcl scripts.  The reason we use
+ * Tcl_DStrings instead of bu_vlses is that Tcl_DStrings provide
+ * "start/end sublist" commands and automatic escaping of Tcl-special
+ * characters.
+ *
+ * A tree 't' is represented in the following manner:
+ *
+ *	t := { l dbobjname { mat } }
+ *	   | { l dbobjname }
+ *	   | { u t1 t2 }
+ * 	   | { n t1 t2 }
+ *	   | { - t1 t2 }
+ *	   | { ^ t1 t2 }
+ *         | { ! t1 }
+ *	   | { G t1 }
+ *	   | { X t1 }
+ *	   | { N }
+ *	   | {}
+ *
+ * where 'dbobjname' is a string containing the name of a database object,
+ *       'mat'       is the matrix preceeding a leaf,
+ *       't1', 't2'  are trees (recursively defined).
+ *
+ * Notice that in most cases, this tree will be grossly unbalanced.
+ */
+void
+wdb_tree_describe(struct bu_vls *log, const union tree *tp)
+{
+    if (!tp) return;
+
+    RT_CK_TREE(tp);
+    switch (tp->tr_op) {
+	case OP_DB_LEAF:
+	    Tcl_DStringAppendElement(dsp, "l");
+	    Tcl_DStringAppendElement(dsp, tp->tr_l.tl_name);
+	    if (tp->tr_l.tl_mat) {
+		struct bu_vls vls;
+		bu_vls_init(&vls);
+		bn_encode_mat(&vls, tp->tr_l.tl_mat);
+		Tcl_DStringAppendElement(dsp, bu_vls_addr(&vls));
+		bu_vls_free(&vls);
+	    }
+	    break;
+
+	    /* This node is known to be a binary op */
+	case OP_UNION:
+	    Tcl_DStringAppendElement(dsp, "u");
+	    goto bin;
+	case OP_INTERSECT:
+	    Tcl_DStringAppendElement(dsp, "n");
+	    goto bin;
+	case OP_SUBTRACT:
+	    Tcl_DStringAppendElement(dsp, "-");
+	    goto bin;
+	case OP_XOR:
+	    Tcl_DStringAppendElement(dsp, "^");
+    bin:
+	    Tcl_DStringStartSublist(dsp);
+	    db_tcl_tree_describe(dsp, tp->tr_b.tb_left);
+	    Tcl_DStringEndSublist(dsp);
+
+	    Tcl_DStringStartSublist(dsp);
+	    db_tcl_tree_describe(dsp, tp->tr_b.tb_right);
+	    Tcl_DStringEndSublist(dsp);
+
+	    break;
+
+	    /* This node is known to be a unary op */
+	case OP_NOT:
+	    Tcl_DStringAppendElement(dsp, "!");
+	    goto unary;
+	case OP_GUARD:
+	    Tcl_DStringAppendElement(dsp, "G");
+	    goto unary;
+	case OP_XNOP:
+	    Tcl_DStringAppendElement(dsp, "X");
+    unary:
+	    Tcl_DStringStartSublist(dsp);
+	    db_tcl_tree_describe(dsp, tp->tr_b.tb_left);
+	    Tcl_DStringEndSublist(dsp);
+	    break;
+
+	case OP_NOP:
+	    Tcl_DStringAppendElement(dsp, "N");
+	    break;
+
+	default:
+	    bu_log("db_tcl_tree_describe: bad op %d\n", tp->tr_op);
+	    bu_bomb("db_tcl_tree_describe\n");
+    }
+}
+#endif
 
 /*
  * Local Variables:

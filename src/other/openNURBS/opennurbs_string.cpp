@@ -2,13 +2,13 @@
 /* $NoKeywords: $ */
 /*
 //
-// Copyright (c) 1993-2001 Robert McNeel & Associates. All rights reserved.
+// Copyright (c) 1993-2007 Robert McNeel & Associates. All rights reserved.
 // Rhinoceros is a registered trademark of Robert McNeel & Assoicates.
 //
 // THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY.
 // ALL IMPLIED WARRANTIES OF FITNESS FOR ANY PARTICULAR PURPOSE AND OF
 // MERCHANTABILITY ARE HEREBY DISCLAIMED.
-//
+//				
 // For complete openNURBS copyright information see <http://www.opennurbs.org>.
 //
 ////////////////////////////////////////////////////////////////
@@ -22,8 +22,8 @@
 
 static struct {
   ON_aStringHeader header;
-  char           s;
-} empty_astring = { {-1, 0, 0}, 0 }; // ref_count=-1, length=0, capacity=0, s=0
+  char           s;  
+} empty_astring = { {-1, 0, 0}, 0 }; // ref_count=-1, length=0, capacity=0, s=0 
 static ON_aStringHeader* pEmptyStringHeader = &empty_astring.header;
 static const char* pEmptyaString = &empty_astring.s;
 
@@ -58,7 +58,7 @@ void ON_String::Empty()
     else if ( p->ref_count == 1 ) {
       // string memory is not shared - reuse it
       if (m_s && p->string_capacity>0)
-        *m_s = 0;
+	*m_s = 0;
       p->string_length = 0;
     }
     else {
@@ -118,22 +118,22 @@ void ON_String::ReserveArray( size_t array_capacity )
 {
   ON_aStringHeader* p = Header();
   const int capacity = (int) array_capacity;
-  if ( p == pEmptyStringHeader )
+  if ( p == pEmptyStringHeader ) 
   {
 		CreateArray(capacity);
   }
-  else if ( p->ref_count > 1 )
+  else if ( p->ref_count > 1 ) 
   {
 		CreateArray(capacity);
     ON_aStringHeader* p1 = Header();
     const int size = (capacity < p->string_length) ? capacity : p->string_length;
-    if ( size > 0 )
+    if ( size > 0 ) 
     {
       memcpy( p1->string_array(), p->string_array(), size*sizeof(*m_s) );
       p1->string_length = size;
     }
   }
-	else if ( capacity > p->string_capacity )
+	else if ( capacity > p->string_capacity ) 
   {
 		p = (ON_aStringHeader*)onrealloc( p, sizeof(ON_aStringHeader) + (capacity+1)*sizeof(*m_s) );
     m_s = p->string_array();
@@ -244,11 +244,13 @@ ON_String::~ON_String()
 
 ON_String::ON_String(const ON_String& src)
 {
-	if ( src.Header()->ref_count > 0 )	{
+	if ( src.Header()->ref_count > 0 )	
+  {
 		m_s = src.m_s;
     src.Header()->ref_count++;
 	}
-	else {
+	else 
+  {
 		Create();
 		*this = src.m_s; // use operator=(const char*) to copy
 	}
@@ -284,7 +286,7 @@ ON_String::ON_String( char c, int repeat_count )
 ON_String::ON_String( const unsigned char* s )
 {
 	Create();
-  if ( s && s[0] )
+  if ( s && s[0] ) 
   {
     CopyToArray( (int)strlen((const char*)s), (const char*)s ); // the (int) is for 64 bit size_t conversion
   }
@@ -378,17 +380,21 @@ bool ON_String::IsEmpty() const
 
 ON_String& ON_String::operator=(const ON_String& src)
 {
-	if (m_s != src.m_s)	{
-    if ( src.IsEmpty() ) {
+	if (m_s != src.m_s)	
+  {
+    if ( src.IsEmpty() ) 
+    {
       Destroy();
       Create();
     }
-    else if ( src.Header()->ref_count > 0 ) {
+    else if ( src.Header()->ref_count > 0 ) 
+    {
       Destroy();
       src.Header()->ref_count++;
       m_s = src.m_s;
     }
-    else {
+    else 
+    {
       ReserveArray(src.Length());
       memcpy( m_s, src.Array(), src.Length()*sizeof(*m_s));
       Header()->string_length = src.Length();
@@ -606,13 +612,13 @@ bool ON_WildCardMatch(const char* s, const char* pattern)
     pattern++;
     while ( *pattern == '*' )
       pattern++;
-
+    
     if ( !pattern[0] )
       return TRUE;
 
     while (*s) {
       if ( ON_WildCardMatch(s,pattern) )
-        return TRUE;
+	return TRUE;
       s++;
     }
 
@@ -623,20 +629,20 @@ bool ON_WildCardMatch(const char* s, const char* pattern)
   {
     if ( *pattern == '?' ) {
       if ( *s) {
-        pattern++;
-        s++;
-        continue;
+	pattern++;
+	s++;
+	continue;
       }
       return FALSE;
     }
-
+    
     if ( *pattern == '\\' ) {
       switch( pattern[1] )
       {
       case '*':
       case '?':
-        pattern++;
-        break;
+	pattern++;
+	break;
       }
     }
     if ( *pattern != *s ) {
@@ -649,7 +655,7 @@ bool ON_WildCardMatch(const char* s, const char* pattern)
     pattern++;
     s++;
   }
-
+  
   return ON_WildCardMatch(s,pattern);
 }
 
@@ -660,18 +666,18 @@ bool ON_WildCardMatchNoCase(const char* s, const char* pattern)
     return ( !s || !s[0] ) ? TRUE : FALSE;
   }
 
-  if ( *pattern == '*' )
+  if ( *pattern == '*' ) 
   {
     pattern++;
     while ( *pattern == '*' )
       pattern++;
-
+    
     if ( !pattern[0] )
       return TRUE;
 
     while (*s) {
       if ( ON_WildCardMatch(s,pattern) )
-        return TRUE;
+	return TRUE;
       s++;
     }
 
@@ -682,20 +688,20 @@ bool ON_WildCardMatchNoCase(const char* s, const char* pattern)
   {
     if ( *pattern == '?' ) {
       if ( *s) {
-        pattern++;
-        s++;
-        continue;
+	pattern++;
+	s++;
+	continue;
       }
       return FALSE;
     }
-
+    
     if ( *pattern == '\\' ) {
       switch( pattern[1] )
       {
       case '*':
       case '?':
-        pattern++;
-        break;
+	pattern++;
+	break;
       }
     }
     if ( toupper(*pattern) != toupper(*s) ) {
@@ -708,7 +714,7 @@ bool ON_WildCardMatchNoCase(const char* s, const char* pattern)
     pattern++;
     s++;
   }
-
+  
   return ON_WildCardMatch(s,pattern);
 }
 
@@ -747,89 +753,89 @@ int ON_String::Replace( const char* token1, const char* token2 )
       int len = Length();
       if ( len >= len1 )
       {
-        // in-place
-        ON_SimpleArray<int> n(32);
-        char* s = m_s;
-        int i;
-        for ( i = 0; i <= len-len1; /*empty*/ )
-        {
-          if ( strncmp(s,token1,len1) )
-          {
-            s++;
-            i++;
-          }
-          else
-          {
-            n.Append(i);
-            i += len1;
-            s += len1;
-          }
-        }
+	// in-place
+	ON_SimpleArray<int> n(32);
+	char* s = m_s;
+	int i;
+	for ( i = 0; i <= len-len1; /*empty*/ )
+	{
+	  if ( strncmp(s,token1,len1) )
+	  {
+	    s++;
+	    i++;
+	  }
+	  else
+	  {
+	    n.Append(i);
+	    i += len1;
+	    s += len1;
+	  }
+	}
 
-        count = n.Count();
+	count = n.Count();
 
-        // reserve array space - must be done even when len2 <= len1
-        // so that shared arrays are not corrupted.
-        const int newlen = len + (count*(len2-len1));
-        if ( 0 == newlen )
-        {
-          Destroy();
-          return count;
-        }
+	// reserve array space - must be done even when len2 <= len1
+	// so that shared arrays are not corrupted.
+	const int newlen = len + (count*(len2-len1));
+	if ( 0 == newlen )
+	{
+	  Destroy();
+	  return count;
+	}
 
-        // 24 August 2006 Dale Lear
-        //    This used to say
-        //       ReserveArray(newlen);
-        //    but when newlen < len and the string had multiple
-        //    references, the ReserveArray(newlen) call truncated
-        //    the input array.
-        ReserveArray( ((newlen<len) ? len : newlen) );
+	// 24 August 2006 Dale Lear
+	//    This used to say
+	//       ReserveArray(newlen);
+	//    but when newlen < len and the string had multiple
+	//    references, the ReserveArray(newlen) call truncated
+	//    the input array.  
+	ReserveArray( ((newlen<len) ? len : newlen) );
 
-        int i0, i1, ni, j;
+	int i0, i1, ni, j;
 
-        if ( len2 > len1 )
-        {
-          // copy from back to front
-          i1 = newlen;
-          i0 = len;
-          for ( ni =0; ni < count; ni++ )
-            n[ni] = n[ni] + len1;
-          for ( ni = count-1; ni >= 0; ni-- )
-          {
-            j = n[ni];
-            while ( i0 > j )
-            {
-              i0--;
-              i1--;
-              m_s[i1] = m_s[i0];
-            }
-            i1 -= len2;
-            i0 -= len1;
-            memcpy(&m_s[i1],token2,len2*sizeof(m_s[0]));
-          }
-        }
-        else
-        {
-          // copy from front to back
-          i0 = i1 = n[0];
-          n.Append(len);
-          for ( ni = 0; ni < count; ni++ )
-          {
-            if ( len2 > 0 )
-            {
-              memcpy(&m_s[i1],token2,len2*sizeof(m_s[0]));
-              i1 += len2;
-            }
-            i0 += len1;
-            j = n[ni+1];
-            while ( i0 < j )
-            {
-              m_s[i1++] = m_s[i0++];
-            }
-          }
-        }
-        Header()->string_length = newlen;
-        m_s[newlen] = 0;
+	if ( len2 > len1 )
+	{
+	  // copy from back to front
+	  i1 = newlen;
+	  i0 = len;
+	  for ( ni =0; ni < count; ni++ )
+	    n[ni] = n[ni] + len1;
+	  for ( ni = count-1; ni >= 0; ni-- )
+	  {
+	    j = n[ni];
+	    while ( i0 > j )
+	    {
+	      i0--;
+	      i1--;
+	      m_s[i1] = m_s[i0];
+	    }
+	    i1 -= len2;
+	    i0 -= len1;
+	    memcpy(&m_s[i1],token2,len2*sizeof(m_s[0]));
+	  }
+	}
+	else
+	{
+	  // copy from front to back
+	  i0 = i1 = n[0];
+	  n.Append(len);
+	  for ( ni = 0; ni < count; ni++ )
+	  {
+	    if ( len2 > 0 )
+	    {
+	      memcpy(&m_s[i1],token2,len2*sizeof(m_s[0]));
+	      i1 += len2;
+	    }
+	    i0 += len1;
+	    j = n[ni+1];
+	    while ( i0 < j )
+	    {
+	      m_s[i1++] = m_s[i0++];
+	    }
+	  }
+	}
+	Header()->string_length = newlen;
+	m_s[newlen] = 0;
       }
     }
   }
@@ -920,7 +926,7 @@ int ON_String::Find( const unsigned char* s ) const
 void ON_String::MakeUpper()
 {
   if ( !IsEmpty() ) {
-  	CopyArray();
+	CopyArray();
     on_strupr(m_s);
   }
 }
@@ -928,7 +934,7 @@ void ON_String::MakeUpper()
 void ON_String::MakeLower()
 {
   if ( !IsEmpty() ) {
-  	CopyArray();
+	CopyArray();
     on_strlwr(m_s);
   }
 }
@@ -936,7 +942,7 @@ void ON_String::MakeLower()
 void ON_String::MakeReverse()
 {
   if ( !IsEmpty() ) {
-  	CopyArray();
+	CopyArray();
     on_strrev(m_s);
   }
 }
@@ -953,22 +959,22 @@ void ON_String::TrimLeft(const char* s)
     for ( i = 0; (c=m_s[i]); i++ )
     {
       for (sc = s;*sc;sc++) {
-        if ( *sc == c )
-          break;
+	if ( *sc == c )
+	  break;
       }
       if (!(*sc))
-        break;
+	break;
     }
     if ( i > 0 ) {
       if ( m_s[i] ) {
-        CopyArray();
-        dc = m_s;
-        sc = m_s+i;
-        while( (*dc++ = *sc++) );
-        Header()->string_length -= i;
+	CopyArray();
+	dc = m_s;
+	sc = m_s+i;
+	while( (*dc++ = *sc++) );
+	Header()->string_length -= i;
       }
       else
-        Destroy();
+	Destroy();
     }
   }
 }
@@ -984,11 +990,11 @@ void ON_String::TrimRight(const char* s)
     for (i--; i >= 0 && (c=m_s[i]); i-- )
     {
       for (sc = s;*sc;sc++) {
-        if ( *sc == c )
-          break;
+	if ( *sc == c )
+	  break;
       }
       if (!(*sc))
-        break;
+	break;
     }
     if ( i < 0 )
       Destroy();
@@ -1024,7 +1030,7 @@ int ON_String::Remove( const char chRemove)
     pstrSource++;
   }
 
-  *pstrDest = '\0';
+  *pstrDest = 0;
   int nCount = (int)(pstrSource - pstrDest); // the (int) is for 64 bit size_t conversion
 
   Header()->string_length -= nCount;
@@ -1216,7 +1222,7 @@ void ON_CheckSum::Zero()
 {
   m_size = 0;
   m_time = 0;
-  for ( int i = 0; i < 8; i++ )
+  for ( int i = 0; i < 8; i++ ) 
     m_crc[i] = 0;
 }
 
@@ -1225,11 +1231,11 @@ bool ON_CheckSum::IsSet() const
   return ( m_size != 0 );
 }
 
-bool ON_CheckSum::SetBufferCheckSum(
-                size_t size,
-                const void* buffer,
-                time_t time
-               )
+bool ON_CheckSum::SetBufferCheckSum( 
+		size_t size, 
+		const void* buffer,
+		time_t time
+	       )
 {
   bool rc = false;
   Zero();
@@ -1244,11 +1250,11 @@ bool ON_CheckSum::SetBufferCheckSum(
     {
       if ( size > 0 )
       {
-        sz = (size > maxsize) ? maxsize : size;
-        crc = ON_CRC32(crc,sz,p);
-        p += sz;
-        size -= sz;
-        maxsize *= 2;
+	sz = (size > maxsize) ? maxsize : size;
+	crc = ON_CRC32(crc,sz,p);
+	p += sz;
+	size -= sz;
+	maxsize *= 2;
       }
       m_crc[i] = crc;
     }
@@ -1268,10 +1274,10 @@ bool ON_CheckSum::SetBufferCheckSum(
 }
 
 bool ON::GetFileStats( const wchar_t* filename,
-                       size_t* filesize,
-                       time_t* create_time,
-                       time_t* lastmodify_time
-                      )
+		       size_t* filesize,
+		       time_t* create_time,
+		       time_t* lastmodify_time
+		      )
 {
   bool rc = false;
 
@@ -1296,10 +1302,10 @@ bool ON::GetFileStats( const wchar_t* filename,
 }
 
 bool ON::GetFileStats( FILE* fp,
-                       size_t* filesize,
-                       time_t* create_time,
-                       time_t* lastmodify_time
-                      )
+		       size_t* filesize,
+		       time_t* create_time,
+		       time_t* lastmodify_time
+		      )
 {
   bool rc = false;
 
@@ -1316,10 +1322,10 @@ bool ON::GetFileStats( FILE* fp,
 #if defined(ON_COMPILER_MSC)
 
     // Microsoft compilers
-    int fd = _fileno(fp);
+    int fd = _fileno(fp);    
 #if (_MSC_VER >= 1400)
-    // VC 8 (2005)
-    // works for file sizes > 4GB
+    // VC 8 (2005) 
+    // works for file sizes > 4GB 
     // when size_t is a 64 bit integer
     struct _stat64 sb;
     memset(&sb,0,sizeof(sb));
@@ -1344,11 +1350,11 @@ bool ON::GetFileStats( FILE* fp,
     if (0 == fstat_rc)
     {
       if (filesize)
-        *filesize = (size_t)sb.st_size;
+	*filesize = (size_t)sb.st_size;
       if (create_time)
-        *create_time = (size_t)sb.st_ctime;
+	*create_time = (size_t)sb.st_ctime;
       if (lastmodify_time)
-        *lastmodify_time = (size_t)sb.st_mtime;
+	*lastmodify_time = (size_t)sb.st_mtime;
       rc = true;
     }
   }
@@ -1380,12 +1386,12 @@ bool ON_CheckSum::SetFileCheckSum( FILE* fp )
       sz0 += maxsize;
       while(1024 == count && m_size < sz0)
       {
-        count = (int)fread( buffer, 1, 1024, fp ); // the (int) is for 64 bit size_t conversion
-        if ( count > 0 )
-        {
-          m_size += count;
-          crc = ON_CRC32( crc, count, buffer );
-        }
+	count = (int)fread( buffer, 1, 1024, fp ); // the (int) is for 64 bit size_t conversion
+	if ( count > 0 )
+	{
+	  m_size += count;
+	  crc = ON_CRC32( crc, count, buffer );
+	}
       }
       maxsize *= 2;
       m_crc[i] = crc;
@@ -1396,8 +1402,8 @@ bool ON_CheckSum::SetFileCheckSum( FILE* fp )
       count = (int)fread( buffer, 1, 1024, fp ); // the (int) is for 64 bit size_t conversion
       if ( count > 0 )
       {
-        m_size += count;
-        crc = ON_CRC32( crc, count, buffer );
+	m_size += count;
+	crc = ON_CRC32( crc, count, buffer );
       }
     }
     m_crc[7] = crc;
@@ -1441,12 +1447,12 @@ bool ON_CheckSum::Read(ON_BinaryArchive& archive)
   if (rc)
     rc = archive.ReadInt(8,&m_crc[0]);
 
-  if (    archive.ArchiveOpenNURBSVersion() < 200603100
-       || archive.Archive3dmVersion() < 4
+  if (    archive.ArchiveOpenNURBSVersion() < 200603100 
+       || archive.Archive3dmVersion() < 4 
        )
   {
     // ON_CheckSums in V3 archives and V4 archives with
-    // version < 200603100 have the same size but an
+    // version < 200603100 have the same size but an 
     // incompatible format.  These were not used.
     Zero();
   }
@@ -1468,8 +1474,8 @@ bool ON_CheckSum::SetFileCheckSum( const wchar_t* filename )
   return rc;
 }
 
-bool ON_CheckSum::CheckBuffer(
-  size_t size,
+bool ON_CheckSum::CheckBuffer( 
+  size_t size, 
   const void* buffer
   ) const
 {
@@ -1506,7 +1512,7 @@ bool ON_CheckSum::CheckBuffer(
   return true;
 }
 
-bool ON_CheckSum::CheckFile(
+bool ON_CheckSum::CheckFile( 
   FILE* fp,
   bool bSkipTimeCheck
   ) const
@@ -1543,8 +1549,8 @@ bool ON_CheckSum::CheckFile(
       count = (int)fread( buffer, 1, 1024, fp ); // the (int) is for 64 bit size_t conversion
       if ( count > 0 )
       {
-        sz += count;
-        crc = ON_CRC32( crc, count, buffer );
+	sz += count;
+	crc = ON_CRC32( crc, count, buffer );
       }
     }
     maxsize *= 2;
@@ -1570,7 +1576,7 @@ bool ON_CheckSum::CheckFile(
   return true;
 }
 
-bool ON_CheckSum::CheckFile(
+bool ON_CheckSum::CheckFile( 
   const wchar_t* filename,
   bool bSkipTimeCheck
   ) const

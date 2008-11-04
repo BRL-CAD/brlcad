@@ -110,7 +110,12 @@ proc dump_mged_state {fd} {
     global mged_players
     global mged_gui
 
-    set id [lindex $mged_players 0]
+    if ![info exists mged_players] {
+	set id 0
+    } else {
+	set id [lindex $mged_players 0]
+    }
+
 
     puts $fd $MGEDRC_HEADER
     puts $fd "# You can modify the values below. However, if you want"

@@ -2,13 +2,13 @@
 /* $NoKeywords: $ */
 /*
 //
-// Copyright (c) 1993-2001 Robert McNeel & Associates. All rights reserved.
+// Copyright (c) 1993-2007 Robert McNeel & Associates. All rights reserved.
 // Rhinoceros is a registered trademark of Robert McNeel & Assoicates.
 //
 // THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY.
 // ALL IMPLIED WARRANTIES OF FITNESS FOR ANY PARTICULAR PURPOSE AND OF
 // MERCHANTABILITY ARE HEREBY DISCLAIMED.
-//
+//				
 // For complete openNURBS copyright information see <http://www.opennurbs.org>.
 //
 ////////////////////////////////////////////////////////////////
@@ -44,10 +44,10 @@ ON_Workspace::~ON_Workspace()
 void* ON_Workspace::GetMemory( size_t size )
 {
   void* p = NULL;
-  if ( size > 0 )
+  if ( size > 0 ) 
   {
     struct MBLK* pBlk = (struct MBLK*)onmalloc(sizeof(*pBlk));
-    if ( pBlk )
+    if ( pBlk ) 
     {
       pBlk->pMem = p = onmalloc(size);
       pBlk->pNext = m_pMemBlk;
@@ -67,14 +67,14 @@ void* ON_Workspace::GrowMemory( void* p, size_t size )
     struct MBLK* pBlk = m_pMemBlk;
     while ( pBlk ) {
       if ( pBlk->pMem == p ) {
-        if ( size > 0 ) {
-          newp = onrealloc(p,size);
-        }
-        else {
-          newp = p;
-        }
-        pBlk->pMem = newp;
-        break;
+	if ( size > 0 ) {
+	  newp = onrealloc(p,size);
+	}
+	else {
+	  newp = p;
+	}
+	pBlk->pMem = newp;
+	break;
       }
       pBlk = pBlk->pNext;
     }
@@ -90,19 +90,19 @@ int ON_Workspace::KeepMemory( void* p )
     struct MBLK* pBlk = m_pMemBlk;
     while ( pBlk ) {
       if ( pBlk->pMem == p ) {
-        // Remove pBlk from list so ~ON_Workspace() won't onfree() its memory
-        // and any future GrowMemory...() or KeepMemory() calls won't have
-        // to search past it.
-        pBlk->pMem = NULL;
-        if ( pPrevBlk ) {
-          pPrevBlk->pNext = pBlk->pNext;
-        }
-        else {
-          m_pMemBlk = pBlk->pNext;
-        }
-        onfree( pBlk );
-        rc = TRUE;
-        break;
+	// Remove pBlk from list so ~ON_Workspace() won't onfree() its memory
+	// and any future GrowMemory...() or KeepMemory() calls won't have
+	// to search past it.
+	pBlk->pMem = NULL;
+	if ( pPrevBlk ) {
+	  pPrevBlk->pNext = pBlk->pNext;
+	}
+	else {
+	  m_pMemBlk = pBlk->pNext;
+	}
+	onfree( pBlk );
+	rc = TRUE;
+	break;
       }
       pPrevBlk = pBlk;
       pBlk = pBlk->pNext;
@@ -147,7 +147,7 @@ int** ON_Workspace::GetIntMemory( size_t row_count, size_t col_count )
       p[0] = (int*)(p+row_count);
       for( i = 1; i < row_count; i++ )
       {
-        p[i] = p[i-1] + col_count;
+	p[i] = p[i-1] + col_count;
       }
     }
   }
@@ -170,7 +170,7 @@ double** ON_Workspace::GetDoubleMemory( size_t row_count, size_t col_count )
       p[0] = (double*)(p+i);
       for( i = 1; i < row_count; i++ )
       {
-        p[i] = p[i-1] + col_count;
+	p[i] = p[i-1] + col_count;
       }
     }
   }
@@ -203,10 +203,10 @@ ON_3dVector* ON_Workspace::GrowVectorMemory( ON_3dVector* p, size_t size )
 }
 
 
-FILE* ON_Workspace::OpenFile( const char* sFileName, const char* sMode )
+FILE* ON_Workspace::OpenFile( const char* sFileName, const char* sMode ) 
 {
   FILE* pFile = ON::OpenFile( sFileName, sMode );
-  if ( pFile )
+  if ( pFile ) 
   {
     struct FBLK* pFileBlk = (struct FBLK*)GetMemory( sizeof(*pFileBlk) );
     pFileBlk->pNext = m_pFileBlk;
@@ -216,10 +216,10 @@ FILE* ON_Workspace::OpenFile( const char* sFileName, const char* sMode )
   return pFile;
 }
 
-FILE* ON_Workspace::OpenFile( const wchar_t* sFileName, const wchar_t* sMode )
+FILE* ON_Workspace::OpenFile( const wchar_t* sFileName, const wchar_t* sMode ) 
 {
   FILE* pFile = ON::OpenFile( sFileName, sMode );
-  if ( pFile )
+  if ( pFile ) 
   {
     struct FBLK* pFileBlk = (struct FBLK*)GetMemory( sizeof(*pFileBlk) );
     pFileBlk->pNext = m_pFileBlk;
@@ -236,9 +236,9 @@ int ON_Workspace::KeepFile( FILE* pFile )
     struct FBLK* pFileBlk = m_pFileBlk;
     while ( pFileBlk ) {
       if ( pFileBlk->pFile == pFile ) {
-        pFileBlk->pFile = NULL;
-        rc = TRUE;
-        break;
+	pFileBlk->pFile = NULL;
+	rc = TRUE;
+	break;
       }
       pFileBlk = pFileBlk->pNext;
     }

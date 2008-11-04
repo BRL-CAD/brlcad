@@ -21,10 +21,10 @@
  *
  * Relatively simple example database transfer program that shows how
  * to open a database, extract a serialized version of specified
- * geometry objects, transfer those objects to a remove host, and
- * utiling standard librt routines on the remote objects while keeping
+ * geometry objects, transfer those objects to a remote host, and
+ * using standard librt routines on the remote objects while keeping
  * the remote geometry in memory only.  The transfer program interface
- * is designed in a simple ttcp fashion using libpkg.
+ * is designed in a simple 'ttcp' fashion using libpkg.
  *
  * To compile from an install:
  * gcc -I/usr/brlcad/include/brlcad -L/usr/brlcad/lib -o g_transfer g_transfer.c -lpkg -lrt -lbu
@@ -542,7 +542,7 @@ main(int argc, char *argv[]) {
 
     /* XXX fixed in latest db_open(), but call for now just in case
        until 7.8.0 release */
-    rt_init_resource( &rt_uniresource, 0, NULL );
+    rt_init_resource(&rt_uniresource, 0, NULL);
 
     /* make sure the geometry file is a geometry database, get a
      * database instance pointer.

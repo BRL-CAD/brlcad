@@ -2,13 +2,13 @@
 /* $NoKeywords: $ */
 /*
 //
-// Copyright (c) 1993-2001 Robert McNeel & Associates. All rights reserved.
+// Copyright (c) 1993-2007 Robert McNeel & Associates. All rights reserved.
 // Rhinoceros is a registered trademark of Robert McNeel & Assoicates.
 //
 // THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY.
 // ALL IMPLIED WARRANTIES OF FITNESS FOR ANY PARTICULAR PURPOSE AND OF
 // MERCHANTABILITY ARE HEREBY DISCLAIMED.
-//
+//				
 // For complete openNURBS copyright information see <http://www.opennurbs.org>.
 //
 ////////////////////////////////////////////////////////////////
@@ -19,15 +19,15 @@
 // wide char (unicode) <-> char (ascii) converter
 static int w2c_size( int, const wchar_t* ); // gets minimum "c_count" arg for w2c().
 static int w2c( int,            // w_count = number of wide chars to convert
-                const wchar_t*, // source wide char string
-                int,            // c_count,
-                char*           // array of at least c_count+1 characters
-                );
+		const wchar_t*, // source wide char string
+		int,            // c_count, 
+		char*           // array of at least c_count+1 characters
+		);
 static int c2w( int,           // c_count = number of chars to convert
-                const char*,   // source byte char string
-                int,           // w_count,
-                wchar_t*       // array of at least c_count+1 wide characters
-                );
+		const char*,   // source byte char string
+		int,           // w_count, 
+		wchar_t*       // array of at least c_count+1 wide characters
+		);
 static wchar_t c2w( char );
 
 static int w2c_size( int w_count, const wchar_t* w )
@@ -43,14 +43,14 @@ static int w2c_size( int w_count, const wchar_t* w )
   return rc;
 }
 
-static int w2c( int w_count,
-                const wchar_t* w,
-                int c_count,
-                char* c // array of at least c_count+1 characters
-                )
+static int w2c( int w_count, 
+		const wchar_t* w, 
+		int c_count, 
+		char* c // array of at least c_count+1 characters
+		)
 {
   int rc = 0;
-  if ( c )
+  if ( c ) 
     c[0] = 0;
   // returns length of converted c[]
   if ( c_count > 0 && c ) {
@@ -58,10 +58,10 @@ static int w2c( int w_count,
     if ( w ) {
 	    rc = on_WideCharToMultiByte(w, w_count, c, c_count);
       if ( rc > 0 && rc <= c_count )
-        c[rc] = 0;
+	c[rc] = 0;
       else {
-        c[c_count] = 0;
-        rc = 0;
+	c[c_count] = 0;
+	rc = 0;
       }
     }
   }
@@ -75,14 +75,14 @@ static wchar_t c2w( char c )
   return w[0];
 }
 
-static int c2w( int c_count,
-                const char* c,
-                int w_count,
-                wchar_t* w // array of at least c_count+1 wide characters
-                )
+static int c2w( int c_count, 
+		const char* c, 
+		int w_count, 
+		wchar_t* w // array of at least c_count+1 wide characters
+		)
 {
   int rc = 0;
-  if ( w )
+  if ( w ) 
     w[0] = 0;
   // returns length of converted c[]
   if ( w_count > 0 && w && c_count > 0 && c && c[0] ) {
@@ -90,10 +90,10 @@ static int c2w( int c_count,
     if ( c ) {
 	    rc = on_MultiByteToWideChar(c, c_count, w, w_count);
       if ( rc > 0 && rc <= w_count )
-        w[rc] = 0;
+	w[rc] = 0;
       else {
-        w[w_count] = 0;
-        rc = 0;
+	w[w_count] = 0;
+	rc = 0;
       }
     }
   }
@@ -120,8 +120,8 @@ void ON_String::CopyToArray( int w_count, const wchar_t* w )
 
 static struct {
   ON_wStringHeader header;
-  wchar_t           s;
-} empty_wstring = { {-1, 0, 0}, 0 }; // ref_count=-1, length=0, capacity=0, s=0
+  wchar_t           s;  
+} empty_wstring = { {-1, 0, 0}, 0 }; // ref_count=-1, length=0, capacity=0, s=0 
 static ON_wStringHeader* pEmptyStringHeader = &empty_wstring.header;
 static const wchar_t* pEmptywString = &empty_wstring.s;
 
@@ -180,7 +180,7 @@ void ON_wString::Empty()
     else if ( p->ref_count == 1 ) {
       // string memory is not shared - reuse it
       if (m_s && p->string_capacity>0)
-        *m_s = 0;
+	*m_s = 0;
       p->string_length = 0;
     }
     else {
@@ -217,22 +217,22 @@ void ON_wString::ReserveArray( size_t array_capacity )
 {
   ON_wStringHeader* p = Header();
   const int capacity = (int)array_capacity; // for 64 bit compiler
-  if ( p == pEmptyStringHeader )
+  if ( p == pEmptyStringHeader ) 
   {
 		CreateArray(capacity);
   }
-  else if ( p->ref_count > 1 )
+  else if ( p->ref_count > 1 ) 
   {
 		CreateArray(capacity);
     ON_wStringHeader* p1 = Header();
     const int size = (capacity < p->string_length) ? capacity : p->string_length;
-    if ( size > 0 )
+    if ( size > 0 ) 
     {
       memcpy( p1->string_array(), p->string_array(), size*sizeof(*m_s) );
       p1->string_length = size;
     }
   }
-	else if ( capacity > p->string_capacity )
+	else if ( capacity > p->string_capacity ) 
   {
 		p = (ON_wStringHeader*)onrealloc( p, sizeof(ON_wStringHeader) + (capacity+1)*sizeof(*m_s) );
     m_s = p->string_array();
@@ -377,11 +377,13 @@ ON_wString::~ON_wString()
 
 ON_wString::ON_wString(const ON_wString& src)
 {
-	if ( src.Header()->ref_count > 0 )	{
+	if ( src.Header()->ref_count > 0 )	
+  {
 		m_s = src.m_s;
     src.Header()->ref_count++;
 	}
-	else {
+	else 
+  {
 		Create();
 		*this = src.m_s; // use operator=(const wchar_t*) to copy
 	}
@@ -396,7 +398,7 @@ ON_wString::ON_wString(const ON_String& src)
 ON_wString::ON_wString( const char* s )
 {
 	Create();
-  if ( s && s[0] )
+  if ( s && s[0] ) 
   {
     CopyToArray( (int)strlen(s), s ); // the (int) is for 64 bit size_t conversion
   }
@@ -523,20 +525,20 @@ bool ON_wString::IsEmpty() const
 
 const ON_wString& ON_wString::operator=(const ON_wString& src)
 {
-	if (m_s != src.m_s)
+	if (m_s != src.m_s)	
   {
-    if ( src.IsEmpty() )
+    if ( src.IsEmpty() ) 
     {
       Destroy();
       Create();
     }
-    else if ( src.Header()->ref_count > 0 )
+    else if ( src.Header()->ref_count > 0 ) 
     {
       Destroy();
       src.Header()->ref_count++;
       m_s = src.m_s;
     }
-    else
+    else 
     {
       ReserveArray(src.Length());
       memcpy( m_s, src.Array(), src.Length()*sizeof(*m_s));
@@ -842,13 +844,13 @@ bool ON_WildCardMatch(const wchar_t* s, const wchar_t* pattern)
     pattern++;
     while ( *pattern == '*' )
       pattern++;
-
+    
     if ( !pattern[0] )
       return TRUE;
 
     while (*s) {
       if ( ON_WildCardMatch(s,pattern) )
-        return TRUE;
+	return TRUE;
       s++;
     }
 
@@ -859,20 +861,20 @@ bool ON_WildCardMatch(const wchar_t* s, const wchar_t* pattern)
   {
     if ( *pattern == '?' ) {
       if ( *s) {
-        pattern++;
-        s++;
-        continue;
+	pattern++;
+	s++;
+	continue;
       }
       return FALSE;
     }
-
+    
     if ( *pattern == '\\' ) {
       switch( pattern[1] )
       {
       case '*':
       case '?':
-        pattern++;
-        break;
+	pattern++;
+	break;
       }
     }
     if ( *pattern != *s ) {
@@ -885,7 +887,7 @@ bool ON_WildCardMatch(const wchar_t* s, const wchar_t* pattern)
     pattern++;
     s++;
   }
-
+  
   return ON_WildCardMatch(s,pattern);
 }
 
@@ -900,13 +902,13 @@ bool ON_WildCardMatchNoCase(const wchar_t* s, const wchar_t* pattern)
     pattern++;
     while ( *pattern == '*' )
       pattern++;
-
+    
     if ( !pattern[0] )
       return TRUE;
 
     while (*s) {
       if ( ON_WildCardMatch(s,pattern) )
-        return TRUE;
+	return TRUE;
       s++;
     }
 
@@ -917,20 +919,20 @@ bool ON_WildCardMatchNoCase(const wchar_t* s, const wchar_t* pattern)
   {
     if ( *pattern == '?' ) {
       if ( *s) {
-        pattern++;
-        s++;
-        continue;
+	pattern++;
+	s++;
+	continue;
       }
       return FALSE;
     }
-
+    
     if ( *pattern == '\\' ) {
       switch( pattern[1] )
       {
       case '*':
       case '?':
-        pattern++;
-        break;
+	pattern++;
+	break;
       }
     }
     if ( towupper(*pattern) != towupper(*s) ) {
@@ -943,7 +945,7 @@ bool ON_WildCardMatchNoCase(const wchar_t* s, const wchar_t* pattern)
     pattern++;
     s++;
   }
-
+  
   return ON_WildCardMatch(s,pattern);
 }
 
@@ -977,65 +979,65 @@ static TestReplace()
     for ( len1 = 1; len1 < len+1; len1++ )
     {
       if ( len1 > 0 )
-        token1[0] = '<';
+	token1[0] = '<';
       for ( i = 1; i < len1-1; i++ )
-        token1[i] = '-';
+	token1[i] = '-';
       if ( len1 > 1 )
-        token1[len1-1] = '>';
+	token1[len1-1] = '>';
       token1[len1] = 0;
 
       for ( len2 = 1; len2 < len1+5; len2++ )
       {
-        if ( len2 > 0 )
-          token2[0] = '+';
-        for ( i = 1; i < len2-1; i++ )
-          token2[i] = '=';
-        if ( len2 > 1 )
-          token2[len2-1] = '*';
-        token2[len2] = 0;
+	if ( len2 > 0 )
+	  token2[0] = '+';
+	for ( i = 1; i < len2-1; i++ )
+	  token2[i] = '=';
+	if ( len2 > 1 )
+	  token2[len2-1] = '*';
+	token2[len2] = 0;
 
-        for ( k = 1; k*len1 <= len+1; k++ )
-        {
-          gap = (len/k) - len1;
-          if (0 == len1 && gap < 1 )
-            gap = 1;
-          else if ( gap < 0 )
-            gap = 0;
-          bRepeat = false;
-          for ( i0 = 0; i0 < 2*len1 + gap; i0++ )
-          {
-            for ( i = 0; i < len; i++ )
-            {
-              s[i] = (wchar_t)('a' + (i%26));
-            }
-            s[len] = 0;
-            count = 0;
-            for ( i = i0; i+len1 <= len; i += (gap+len1) )
-            {
-              memcpy(&s[i],token1,len1*sizeof(s[0]));
-              count++;
-            }
-            str = s;
-            repcount = str.Replace(token1,token2);
-            replen = str.Length();
-            if ( repcount != count || replen != len + count*(len2-len1) )
-            {
-              RhinoApp().Print(L"%s -> %s failed\n",token1,token2);
-              RhinoApp().Print(L"%s (%d tokens, %d chars)\n",s,count,len);
-              RhinoApp().Print(L"%s (%d tokens, %d chars)\n",str.Array(),repcount,replen);
-              if ( bRepeat )
-              {
-                bRepeat = false;
-              }
-              else
-              {
-                bRepeat = true;
-                i0--;
-              }
-            }
-          }
-          bRepeat = false;
-        }
+	for ( k = 1; k*len1 <= len+1; k++ )
+	{
+	  gap = (len/k) - len1;
+	  if (0 == len1 && gap < 1 )
+	    gap = 1;
+	  else if ( gap < 0 )
+	    gap = 0;
+	  bRepeat = false;
+	  for ( i0 = 0; i0 < 2*len1 + gap; i0++ )
+	  {
+	    for ( i = 0; i < len; i++ )
+	    {
+	      s[i] = (wchar_t)('a' + (i%26));
+	    }
+	    s[len] = 0;
+	    count = 0;
+	    for ( i = i0; i+len1 <= len; i += (gap+len1) )
+	    {
+	      memcpy(&s[i],token1,len1*sizeof(s[0]));
+	      count++;
+	    }
+	    str = s;
+	    repcount = str.Replace(token1,token2);
+	    replen = str.Length();
+	    if ( repcount != count || replen != len + count*(len2-len1) )
+	    {
+	      RhinoApp().Print(L"%s -> %s failed\n",token1,token2);
+	      RhinoApp().Print(L"%s (%d tokens, %d chars)\n",s,count,len);
+	      RhinoApp().Print(L"%s (%d tokens, %d chars)\n",str.Array(),repcount,replen);
+	      if ( bRepeat )
+	      {
+		bRepeat = false;
+	      }
+	      else
+	      {
+		bRepeat = true;
+		i0--;
+	      }
+	    }
+	  }
+	  bRepeat = false;
+	}
       }
     }
   }
@@ -1057,89 +1059,89 @@ int ON_wString::Replace( const wchar_t* token1, const wchar_t* token2 )
       int len = Length();
       if ( len >= len1 )
       {
-        // in-place
-        ON_SimpleArray<int> n(32);
-        wchar_t* s = m_s;
-        int i;
-        for ( i = 0; i <= len-len1; /*empty*/ )
-        {
-          if ( wcsncmp(s,token1,len1) )
-          {
-            s++;
-            i++;
-          }
-          else
-          {
-            n.Append(i);
-            i += len1;
-            s += len1;
-          }
-        }
+	// in-place
+	ON_SimpleArray<int> n(32);
+	wchar_t* s = m_s;
+	int i;
+	for ( i = 0; i <= len-len1; /*empty*/ )
+	{
+	  if ( wcsncmp(s,token1,len1) )
+	  {
+	    s++;
+	    i++;
+	  }
+	  else
+	  {
+	    n.Append(i);
+	    i += len1;
+	    s += len1;
+	  }
+	}
 
-        count = n.Count();
+	count = n.Count();
 
-        // reserve array space - must be done even when len2 <= len1
-        // so that shared arrays are not corrupted.
-        const int newlen = len + (count*(len2-len1));
-        if ( 0 == newlen )
-        {
-          Destroy();
-          return count;
-        }
+	// reserve array space - must be done even when len2 <= len1
+	// so that shared arrays are not corrupted.
+	const int newlen = len + (count*(len2-len1));
+	if ( 0 == newlen )
+	{
+	  Destroy();
+	  return count;
+	}
 
-        // 24 August 2006 Dale Lear
-        //    This used to say
-        //       ReserveArray(newlen);
-        //    but when newlen < len and the string had multiple
-        //    references, the ReserveArray(newlen) call truncated
-        //    the input array.
-        ReserveArray( (newlen<len) ? len : newlen );
+	// 24 August 2006 Dale Lear
+	//    This used to say
+	//       ReserveArray(newlen);
+	//    but when newlen < len and the string had multiple
+	//    references, the ReserveArray(newlen) call truncated
+	//    the input array.  
+	ReserveArray( (newlen<len) ? len : newlen );
 
-        int i0, i1, ni, j;
+	int i0, i1, ni, j;
 
-        if ( len2 > len1 )
-        {
-          // copy from back to front
-          i1 = newlen;
-          i0 = len;
-          for ( ni =0; ni < count; ni++ )
-            n[ni] = n[ni] + len1;
-          for ( ni = count-1; ni >= 0; ni-- )
-          {
-            j = n[ni];
-            while ( i0 > j )
-            {
-              i0--;
-              i1--;
-              m_s[i1] = m_s[i0];
-            }
-            i1 -= len2;
-            i0 -= len1;
-            memcpy(&m_s[i1],token2,len2*sizeof(m_s[0]));
-          }
-        }
-        else
-        {
-          // copy from front to back
-          i0 = i1 = n[0];
-          n.Append(len);
-          for ( ni = 0; ni < count; ni++ )
-          {
-            if ( len2 > 0 )
-            {
-              memcpy(&m_s[i1],token2,len2*sizeof(m_s[0]));
-              i1 += len2;
-            }
-            i0 += len1;
-            j = n[ni+1];
-            while ( i0 < j )
-            {
-              m_s[i1++] = m_s[i0++];
-            }
-          }
-        }
-        Header()->string_length = newlen;
-        m_s[newlen] = 0;
+	if ( len2 > len1 )
+	{
+	  // copy from back to front
+	  i1 = newlen;
+	  i0 = len;
+	  for ( ni =0; ni < count; ni++ )
+	    n[ni] = n[ni] + len1;
+	  for ( ni = count-1; ni >= 0; ni-- )
+	  {
+	    j = n[ni];
+	    while ( i0 > j )
+	    {
+	      i0--;
+	      i1--;
+	      m_s[i1] = m_s[i0];
+	    }
+	    i1 -= len2;
+	    i0 -= len1;
+	    memcpy(&m_s[i1],token2,len2*sizeof(m_s[0]));
+	  }
+	}
+	else
+	{
+	  // copy from front to back
+	  i0 = i1 = n[0];
+	  n.Append(len);
+	  for ( ni = 0; ni < count; ni++ )
+	  {
+	    if ( len2 > 0 )
+	    {
+	      memcpy(&m_s[i1],token2,len2*sizeof(m_s[0]));
+	      i1 += len2;
+	    }
+	    i0 += len1;
+	    j = n[ni+1];
+	    while ( i0 < j )
+	    {
+	      m_s[i1++] = m_s[i0++];
+	    }
+	  }
+	}
+	Header()->string_length = newlen;
+	m_s[newlen] = 0;
       }
     }
   }
@@ -1188,22 +1190,22 @@ int ON_wString::ReplaceWhiteSpace( wchar_t token, const wchar_t* whitespace )
     {
       if (IsWhiteSpaceHelper(*s0++,whitespace))
       {
-        // need to modify this string
-        n = ((int)(s0 - m_s)); // keep win64 happy with (int) cast
-        CopyArray(); // may change m_s if string has multiple refs
-        s0 = m_s + n;
-        s1 = m_s + Length();
-        s0[-1] = token;
-        n = 1;
-        while ( s0 < s1 )
-        {
-          if ( IsWhiteSpaceHelper(*s0++,whitespace) )
-          {
-            s0[-1] = token;
-            n++;
-          }
-        }
-        return n;
+	// need to modify this string
+	n = ((int)(s0 - m_s)); // keep win64 happy with (int) cast
+	CopyArray(); // may change m_s if string has multiple refs
+	s0 = m_s + n;
+	s1 = m_s + Length();
+	s0[-1] = token;
+	n = 1;
+	while ( s0 < s1 )
+	{
+	  if ( IsWhiteSpaceHelper(*s0++,whitespace) )
+	  {
+	    s0[-1] = token;
+	    n++;
+	  }
+	}
+	return n;
       }
     }
   }
@@ -1214,23 +1216,23 @@ int ON_wString::ReplaceWhiteSpace( wchar_t token, const wchar_t* whitespace )
       c = *s0++;
       if ( (1 <= c && c <= 32) || 127 == c )
       {
-        // need to modify this string
-        n = ((int)(s0 - m_s)); // keep win64 happy with (int) cast
-        CopyArray(); // may change m_s if string has multiple refs
-        s0 = m_s + n;
-        s1 = m_s + Length();
-        s0[-1] = token;
-        n = 1;
-        while ( s0 < s1 )
-        {
-          c = *s0++;
-          if ( (1 <= c && c <= 32) || 127 == c )
-          {
-            s0[-1] = token;
-            n++;
-          }
-        }
-        return n;
+	// need to modify this string
+	n = ((int)(s0 - m_s)); // keep win64 happy with (int) cast
+	CopyArray(); // may change m_s if string has multiple refs
+	s0 = m_s + n;
+	s1 = m_s + Length();
+	s0[-1] = token;
+	n = 1;
+	while ( s0 < s1 )
+	{
+	  c = *s0++;
+	  if ( (1 <= c && c <= 32) || 127 == c )
+	  {
+	    s0[-1] = token;
+	    n++;
+	  }
+	}
+	return n;
       }
     }
   }
@@ -1254,24 +1256,24 @@ int ON_wString::RemoveWhiteSpace( const wchar_t* whitespace )
     {
       if (IsWhiteSpaceHelper(*s0++,whitespace))
       {
-        // need to modify this string
-        n = ((int)(s0 - m_s)); // keep win64 happy with (int) cast
-        CopyArray(); // may change m_s if string has multiple refs
-        s0 = m_s + n;
-        s = s0-1;
-        s1 = m_s + Length();
-        while ( s0 < s1 )
-        {
-          if ( !IsWhiteSpaceHelper(*s0,whitespace) )
-          {
-            *s++ = *s0;
-          }
-          s0++;
-        }
-        *s = 0;
-        n = ((int)(s1 - s)); // keep win64 happy with (int) cast
-        Header()->string_length -= n;
-        return n;
+	// need to modify this string
+	n = ((int)(s0 - m_s)); // keep win64 happy with (int) cast
+	CopyArray(); // may change m_s if string has multiple refs
+	s0 = m_s + n;
+	s = s0-1;
+	s1 = m_s + Length();
+	while ( s0 < s1 )
+	{
+	  if ( !IsWhiteSpaceHelper(*s0,whitespace) )
+	  {
+	    *s++ = *s0;
+	  }
+	  s0++;
+	}
+	*s = 0;
+	n = ((int)(s1 - s)); // keep win64 happy with (int) cast
+	Header()->string_length -= n;
+	return n;
       }
     }
   }
@@ -1282,25 +1284,25 @@ int ON_wString::RemoveWhiteSpace( const wchar_t* whitespace )
       c = *s0++;
       if ( (1 <= c && c <= 32) || 127 == c )
       {
-        // need to modify this string
-        n = ((int)(s0 - m_s)); // keep win64 happy with (int) cast
-        CopyArray(); // may change m_s if string has multiple refs
-        s0 = m_s + n;
-        s = s0-1;
-        s1 = m_s + Length();
-        while ( s0 < s1 )
-        {
-          c = *s0;
-          if ( c < 1 || (c > 32 && 127 != c) )
-          {
-            *s++ = *s0;
-          }
-          s0++;
-        }
-        *s = 0;
-        n = ((int)(s1 - s)); // keep win64 happy with (int) cast
-        Header()->string_length -= n;
-        return n;
+	// need to modify this string
+	n = ((int)(s0 - m_s)); // keep win64 happy with (int) cast
+	CopyArray(); // may change m_s if string has multiple refs
+	s0 = m_s + n;
+	s = s0-1;
+	s1 = m_s + Length();
+	while ( s0 < s1 )
+	{
+	  c = *s0;
+	  if ( c < 1 || (c > 32 && 127 != c) )
+	  {
+	    *s++ = *s0;
+	  }
+	  s0++;
+	}
+	*s = 0;
+	n = ((int)(s1 - s)); // keep win64 happy with (int) cast
+	Header()->string_length -= n;
+	return n;
       }
     }
   }
@@ -1410,7 +1412,7 @@ int ON_wString::Find( const wchar_t* s ) const
 void ON_wString::MakeReverse()
 {
   if ( !IsEmpty() ) {
-  	CopyArray();
+	CopyArray();
     on_wcsrev(m_s);
   }
 }
@@ -1427,22 +1429,22 @@ void ON_wString::TrimLeft(const wchar_t* s)
     for ( i = 0; 0 != (c=m_s[i]); i++ )
     {
       for (sc = s;*sc;sc++) {
-        if ( *sc == c )
-          break;
+	if ( *sc == c )
+	  break;
       }
       if (!(*sc))
-        break;
+	break;
     }
     if ( i > 0 ) {
       if ( m_s[i] ) {
-        CopyArray();
-        dc = m_s;
-        sc = m_s+i;
-        while( (*dc++ = *sc++) );
-        Header()->string_length -= i;
+	CopyArray();
+	dc = m_s;
+	sc = m_s+i;
+	while( (*dc++ = *sc++) );
+	Header()->string_length -= i;
       }
       else
-        Destroy();
+	Destroy();
     }
   }
 }
@@ -1458,11 +1460,11 @@ void ON_wString::TrimRight(const wchar_t* s)
     for (i--; i >= 0 && 0 != (c=m_s[i]); i-- )
     {
       for (sc = s;*sc;sc++) {
-        if ( *sc == c )
-          break;
+	if ( *sc == c )
+	  break;
       }
       if (!(*sc))
-        break;
+	break;
     }
     if ( i < 0 )
       Destroy();
@@ -1503,11 +1505,11 @@ int ON_wString::Remove( wchar_t c)
       s1 = m_s + Length();
       while ( s0 < s1 )
       {
-        if ( c != *s0 )
-        {
-          *s++ = *s0;
-        }
-        s0++;
+	if ( c != *s0 )
+	{
+	  *s++ = *s0;
+	}
+	s0++;
       }
       *s = 0;
       n = ((int)(s1 - s)); // keep win64 happy with (int) cast

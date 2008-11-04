@@ -58,10 +58,10 @@
 
 
 /**
- *			B U _ F I L E _ E X I S T S
+ * B U _ F I L E _ E X I S T S
  *
- *  @return	1	The given filename exists.
- *  @return	0	The given filename does not exist.
+ * @return	1	The given filename exists.
+ * @return	0	The given filename does not exist.
  */
 int
 bu_file_exists(const char *path)
@@ -81,7 +81,7 @@ bu_file_exists(const char *path)
     }
 
     /* does it exist as a filesystem entity? */
-    if ( stat( path, &sbuf ) == 0 ) {
+    if (stat(path, &sbuf) == 0) {
 	if (bu_debug & BU_DEBUG_PATHS) {
 	    bu_log("YES\n");
 	}

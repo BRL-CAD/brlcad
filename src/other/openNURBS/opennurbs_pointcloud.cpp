@@ -2,13 +2,13 @@
 /* $NoKeywords: $ */
 /*
 //
-// Copyright (c) 1993-2001 Robert McNeel & Associates. All rights reserved.
+// Copyright (c) 1993-2007 Robert McNeel & Associates. All rights reserved.
 // Rhinoceros is a registered trademark of Robert McNeel & Assoicates.
 //
 // THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY.
 // ALL IMPLIED WARRANTIES OF FITNESS FOR ANY PARTICULAR PURPOSE AND OF
 // MERCHANTABILITY ARE HEREBY DISCLAIMED.
-//
+//				
 // For complete openNURBS copyright information see <http://www.opennurbs.org>.
 //
 ////////////////////////////////////////////////////////////////
@@ -147,7 +147,7 @@ BOOL ON_PointCloud::Read( ON_BinaryArchive& file )
   int major_version = 0;
   int minor_version = 0;
   bool rc = file.Read3dmChunkVersion(&major_version,&minor_version);
-  if (rc && major_version == 1 )
+  if (rc && major_version == 1 ) 
   {
     if (rc) rc = file.ReadArray( m_P );
     if (rc) rc = file.ReadPlane( m_plane );
@@ -187,33 +187,33 @@ BOOL ON_PointCloud::GetBBox( // returns TRUE if successful
   if (rc) {
     if ( bGrowBox ) {
       if ( boxmin ) {
-        if ( boxmin[0] > m_bbox.m_min.x ) boxmin[0] = m_bbox.m_min.x;
-        if ( boxmin[1] > m_bbox.m_min.y ) boxmin[1] = m_bbox.m_min.y;
-        if ( boxmin[2] > m_bbox.m_min.z ) boxmin[2] = m_bbox.m_min.z;
+	if ( boxmin[0] > m_bbox.m_min.x ) boxmin[0] = m_bbox.m_min.x;
+	if ( boxmin[1] > m_bbox.m_min.y ) boxmin[1] = m_bbox.m_min.y;
+	if ( boxmin[2] > m_bbox.m_min.z ) boxmin[2] = m_bbox.m_min.z;
       }
       if ( boxmax ) {
-        if ( boxmax[0] < m_bbox.m_max.x ) boxmax[0] = m_bbox.m_max.x;
-        if ( boxmax[1] < m_bbox.m_max.y ) boxmax[1] = m_bbox.m_max.y;
-        if ( boxmax[2] < m_bbox.m_max.z ) boxmax[2] = m_bbox.m_max.z;
+	if ( boxmax[0] < m_bbox.m_max.x ) boxmax[0] = m_bbox.m_max.x;
+	if ( boxmax[1] < m_bbox.m_max.y ) boxmax[1] = m_bbox.m_max.y;
+	if ( boxmax[2] < m_bbox.m_max.z ) boxmax[2] = m_bbox.m_max.z;
       }
     }
     else {
       if ( boxmin ) {
-        boxmin[0] = m_bbox.m_min.x;
-        boxmin[1] = m_bbox.m_min.y;
-        boxmin[2] = m_bbox.m_min.z;
+	boxmin[0] = m_bbox.m_min.x;
+	boxmin[1] = m_bbox.m_min.y;
+	boxmin[2] = m_bbox.m_min.z;
       }
       if ( boxmax ) {
-        boxmax[0] = m_bbox.m_max.x;
-        boxmax[1] = m_bbox.m_max.y;
-        boxmax[2] = m_bbox.m_max.z;
+	boxmax[0] = m_bbox.m_max.x;
+	boxmax[1] = m_bbox.m_max.y;
+	boxmax[2] = m_bbox.m_max.z;
       }
     }
   }
   return rc;
 }
 
-BOOL ON_PointCloud::Transform(
+BOOL ON_PointCloud::Transform( 
        const ON_Xform& xform
        )
 {
@@ -309,12 +309,12 @@ double ON_PointCloud::Height(int i)
   return (m_P[i] - m_plane.origin)*m_plane.zaxis;
 }
 
-bool ON_GetClosestPointInPointList(
-          int point_count,
-          const ON_3dPoint* point_list,
-          ON_3dPoint P,
-          int* closest_point_index
-          )
+bool ON_GetClosestPointInPointList( 
+	  int point_count,
+	  const ON_3dPoint* point_list,
+	  ON_3dPoint P,
+	  int* closest_point_index
+	  )
 {
   bool rc = false;
   if ( point_count>0 && 0 != point_list && closest_point_index )
@@ -341,25 +341,25 @@ bool ON_GetClosestPointInPointList(
       e = P.DistanceTo(*point_list);
       if ( e < d )
       {
-        d = e;
-        best_i = point_count-i-1;
+	d = e;
+	best_i = point_count-i-1;
       }
     }
     if ( best_i >= 0 )
     {
       if ( closest_point_index )
-        *closest_point_index = best_i;
+	*closest_point_index = best_i;
       rc = true;
     }
   }
   return rc;
 }
 
-bool ON_3dPointArray::GetClosestPoint(
-          ON_3dPoint P,
-          int* closest_point_index,
-          double maximum_distance
-          ) const
+bool ON_3dPointArray::GetClosestPoint( 
+	  ON_3dPoint P,
+	  int* closest_point_index,
+	  double maximum_distance
+	  ) const
 {
   int i;
 
@@ -393,10 +393,10 @@ bool ON_PointCloud::HasPointNormals() const
 }
 
 bool ON_PointCloud::GetClosestPoint(
-                ON_3dPoint P,
-                int* closest_point_index,
-                double maximum_distance
-                ) const
+		ON_3dPoint P,
+		int* closest_point_index,
+		double maximum_distance 
+		) const
 {
   bool rc = false;
 
@@ -415,13 +415,13 @@ bool ON_PointCloud::GetClosestPoint(
 int ON_PointCloud::HiddenPointCount() const
 {
   int point_count;
-  return (    m_hidden_count > 0
-           && (point_count = m_P.Count()) > 0
-           && m_hidden_count < point_count
-           && m_H.Count() == point_count
-           )
-           ? m_hidden_count
-           : 0;
+  return (    m_hidden_count > 0 
+	   && (point_count = m_P.Count()) > 0
+	   && m_hidden_count < point_count 
+	   && m_H.Count() == point_count 
+	   )
+	   ? m_hidden_count
+	   : 0;
 }
 
 void ON_PointCloud::DestroyHiddenPointArray()
@@ -432,9 +432,9 @@ void ON_PointCloud::DestroyHiddenPointArray()
 
 const bool* ON_PointCloud::HiddenPointArray() const
 {
-  return (m_hidden_count > 0 && m_H.Count() == m_P.Count())
-         ? m_H.Array()
-         : 0;
+  return (m_hidden_count > 0 && m_H.Count() == m_P.Count()) 
+	 ? m_H.Array() 
+	 : 0;
 }
 
 void ON_PointCloud::SetHiddenPointFlag( int point_index, bool bHidden )
@@ -446,16 +446,16 @@ void ON_PointCloud::SetHiddenPointFlag( int point_index, bool bHidden )
     {
       if ( point_count != m_H.Count() )
       {
-        m_H.SetCapacity(point_count);
-        m_H.SetCount(point_count);
-        m_H.Zero();
-        m_H[point_index] = true;
-        m_hidden_count = 1;
+	m_H.SetCapacity(point_count);
+	m_H.SetCount(point_count);
+	m_H.Zero();
+	m_H[point_index] = true;
+	m_hidden_count = 1;
       }
       else if ( false == m_H[point_index] )
       {
-        m_H[point_index] = true;
-        m_hidden_count++;
+	m_H[point_index] = true;
+	m_hidden_count++;
       }
     }
     else
@@ -463,20 +463,20 @@ void ON_PointCloud::SetHiddenPointFlag( int point_index, bool bHidden )
       // show this vertex
       if ( m_hidden_count > 0 && point_count == m_H.Count() )
       {
-        if  ( m_H[point_index] )
-        {
-          m_H[point_index] = false;
-          m_hidden_count--;
-          if ( 0 == m_hidden_count )
-          {
-            DestroyHiddenPointArray();
-          }
-        }
+	if  ( m_H[point_index] )
+	{
+	  m_H[point_index] = false;
+	  m_hidden_count--;
+	  if ( 0 == m_hidden_count )
+	  {
+	    DestroyHiddenPointArray();
+	  }
+	}
       }
       else if ( m_hidden_count > 0 || m_H.Capacity() > 0 )
       {
-        // if m_H exists, it is bogus.
-        DestroyHiddenPointArray();
+	// if m_H exists, it is bogus.
+	DestroyHiddenPointArray();
       }
     }
   }
@@ -486,9 +486,9 @@ bool ON_PointCloud::PointIsHidden( int point_index ) const
 {
   int point_count;
   return (    point_index >= 0
-           && point_index < (point_count = m_P.Count())
-           && m_H.Count() == point_count )
-           ? m_H[point_index]
-           : false;
+	   && point_index < (point_count = m_P.Count())
+	   && m_H.Count() == point_count )
+	   ? m_H[point_index]
+	   : false;
 }
 

@@ -75,9 +75,10 @@ rt_mk_binunif(struct rt_wdb *wdbp, const char *obj_name, const char *file_name, 
     struct bu_external body;
     struct bu_external bin_ext;
     struct directory *dp;
+    int ret;
 
     if ( (item_length=db5_type_sizeof_h_binu( minor_type ) ) <= 0 ) {
-	bu_log( "Unrecognized minor type!!!\n" );
+	bu_log( "Unrecognized minor type!\n" );
 	return -1;
     }
 
@@ -126,8 +127,11 @@ rt_mk_binunif(struct rt_wdb *wdbp, const char *obj_name, const char *file_name, 
     intern.idb_meth = &rt_functab[ID_BINUNIF];
 
     /* create body portion of external form */
-    if ( intern.idb_meth->ft_export5( &body, &intern, 1.0, wdbp->dbip, wdbp->wdb_resp, intern.idb_minor_type ) ) {
-
+    ret = -1;
+    if (intern.idb_meth->ft_export5) {
+	ret = intern.idb_meth->ft_export5(&body, &intern, 1.0, wdbp->dbip, wdbp->wdb_resp, intern.idb_minor_type);
+    }
+    if (ret != 0) {
 	bu_log( "Error while attemptimg to export %s\n", obj_name );
 	rt_db_free_internal( &intern, wdbp->wdb_resp );
 	return -1;

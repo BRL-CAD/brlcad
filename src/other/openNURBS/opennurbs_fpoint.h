@@ -2,13 +2,13 @@
 /* $NoKeywords: $ */
 /*
 //
-// Copyright (c) 1993-2001 Robert McNeel & Associates. All rights reserved.
+// Copyright (c) 1993-2007 Robert McNeel & Associates. All rights reserved.
 // Rhinoceros is a registered trademark of Robert McNeel & Assoicates.
 //
 // THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY.
 // ALL IMPLIED WARRANTIES OF FITNESS FOR ANY PARTICULAR PURPOSE AND OF
 // MERCHANTABILITY ARE HEREBY DISCLAIMED.
-//
+//				
 // For complete openNURBS copyright information see <http://www.opennurbs.org>.
 //
 ////////////////////////////////////////////////////////////////
@@ -103,20 +103,20 @@ public:
 
   // These transform the point in place. The transformation matrix acts on
   // the left of the point; i.e., result = transformation*point
-  void Transform(
-        const ON_Xform&
-        );
+  void Transform( 
+	const ON_Xform&
+	);
 
   void Rotate( // rotatation in XY plane
-        double,              // angle in radians
-        const ON_2fPoint&   // center of rotation
-        );
+	double,              // angle in radians
+	const ON_2fPoint&   // center of rotation
+	);
 
   void Rotate( // rotatation in XY plane
-        double,              // sin(angle)
-        double,              // cos(angle)
-        const ON_2fPoint&   // center of rotation
-        );
+	double,              // sin(angle)
+	double,              // cos(angle)
+	const ON_2fPoint&   // center of rotation
+	);
 };
 
 ON_DECL
@@ -195,22 +195,22 @@ public:
 
   // These transform the point in place. The transformation matrix acts on
   // the left of the point; i.e., result = transformation*point
-  void Transform(
-        const ON_Xform&
-        );
+  void Transform( 
+	const ON_Xform&
+	);
 
-  void Rotate(
-        double,               // angle in radians
-        const ON_3fVector&, // axis of rotation
-        const ON_3fPoint&   // center of rotation
-        );
+  void Rotate( 
+	double,               // angle in radians
+	const ON_3fVector&, // axis of rotation
+	const ON_3fPoint&   // center of rotation
+	);
 
-  void Rotate(
-        double,               // sin(angle)
-        double,               // cos(angle)
-        const ON_3fVector&, // axis of rotation
-        const ON_3fPoint&   // center of rotation
-        );
+  void Rotate( 
+	double,               // sin(angle)
+	double,               // cos(angle)
+	const ON_3fVector&, // axis of rotation
+	const ON_3fPoint&   // center of rotation
+	);
 };
 
 ON_DECL
@@ -259,7 +259,7 @@ public:
 
   float operator*(const ON_4fPoint&) const;
 
-  // projective comparison
+  // projective comparison 
   // (i.e., [x,y,z,w] == [c*x,c*y,c*z,c*w] is true for nonzero c)
   bool operator==(ON_4fPoint) const;
   bool operator!=(const ON_4fPoint&) const;
@@ -279,9 +279,9 @@ public:
 
   // These transform the point in place. The transformation matrix acts on
   // the left of the point; i.e., result = transformation*point
-  void Transform(
-        const ON_Xform&
-        );
+  void Transform( 
+	const ON_Xform&
+	);
 };
 
 ON_DECL
@@ -365,34 +365,34 @@ public:
   double Length() const;
 
   bool Decompose( // Computes a, b such that this vector = a*X + b*Y
-         // Returns false if unable to solve for a,b.  This happens
-         // when X,Y is not really a basis.
-         //
-         // If X,Y is known to be an orthonormal frame,
-         // then a = V*X, b = V*Y will compute
-         // the same result more quickly.
-         const ON_2fVector&, // X
-         const ON_2fVector&, // Y
-         double*, // a
-         double*  // b
-         ) const;
+	 // Returns false if unable to solve for a,b.  This happens
+	 // when X,Y is not really a basis.
+	 //
+	 // If X,Y is known to be an orthonormal frame,
+	 // then a = V*X, b = V*Y will compute
+	 // the same result more quickly.
+	 const ON_2fVector&, // X
+	 const ON_2fVector&, // Y
+	 double*, // a
+	 double*  // b
+	 ) const;
 
-  int IsParallelTo(
-        // returns  1: this and other vectors are parallel
-        //         -1: this and other vectors are anti-parallel
-        //          0: this and other vectors are not parallel
-        //             or at least one of the vectors is zero
-        const ON_2fVector&,                 // other vector
-        double = ON_DEFAULT_ANGLE_TOLERANCE // optional angle tolerance (radians)
-        ) const;
+  int IsParallelTo( 
+	// returns  1: this and other vectors are parallel
+	//         -1: this and other vectors are anti-parallel
+	//          0: this and other vectors are not parallel
+	//             or at least one of the vectors is zero
+	const ON_2fVector&,                 // other vector     
+	double = ON_DEFAULT_ANGLE_TOLERANCE // optional angle tolerance (radians)
+	) const;
 
   bool IsPerpendicularTo(
-        // returns true:  this and other vectors are perpendicular
-        //         false: this and other vectors are not perpendicular
-        //                or at least one of the vectors is zero
-        const ON_2fVector&,                 // other vector
-        double = ON_DEFAULT_ANGLE_TOLERANCE // optional angle tolerance (radians)
-        ) const;
+	// returns true:  this and other vectors are perpendicular
+	//         false: this and other vectors are not perpendicular
+	//                or at least one of the vectors is zero
+	const ON_2fVector&,                 // other vector     
+	double = ON_DEFAULT_ANGLE_TOLERANCE // optional angle tolerance (radians)
+	) const;
 
   void Zero(); // set all coordinates to zero;
   void Reverse(); // negate all coordinates
@@ -409,24 +409,24 @@ public:
   //   ( fabs(x) <= tiny_tol && fabs(y) <= tiny_tol )
   //
   bool IsTiny(
-         double = ON_ZERO_TOLERANCE // tiny_tol
-         ) const;
+	 double = ON_ZERO_TOLERANCE // tiny_tol
+	 ) const;
 
   // Returns:
   //   true if vector is the zero vector.
   bool IsZero() const;
 
   // set this vector to be perpendicular to another vector
-  bool PerpendicularTo( // Result is not unitized.
-                        // returns false if input vector is zero
-        const ON_2fVector&
-        );
+  bool PerpendicularTo( // Result is not unitized. 
+			// returns false if input vector is zero
+	const ON_2fVector& 
+	);
 
   // set this vector to be perpendicular to a line defined by 2 points
-  bool PerpendicularTo(
-        const ON_2fPoint&,
-        const ON_2fPoint&
-        );
+  bool PerpendicularTo( 
+	const ON_2fPoint&, 
+	const ON_2fPoint& 
+	);
 };
 
 ON_DECL
@@ -438,35 +438,35 @@ ON_2fVector operator*(float, const ON_2fVector&);
 //
 
 ON_DECL
-float
-ON_DotProduct(
-    const ON_2fVector&,
-    const ON_2fVector&
+float 
+ON_DotProduct( 
+    const ON_2fVector&, 
+    const ON_2fVector& 
     );
 
 ON_DECL
-ON_3fVector
+ON_3fVector 
 ON_CrossProduct(
-    const ON_2fVector&,
-    const ON_2fVector&
+    const ON_2fVector&, 
+    const ON_2fVector& 
     );
 
 ON_DECL
-bool
+bool 
 ON_IsOrthogonalFrame( // true if X, Y are nonzero and mutually perpindicular
     const ON_2fVector&, // X
     const ON_2fVector&  // Y
     );
 
 ON_DECL
-bool
+bool 
 ON_IsOrthonormalFrame( // true if X, Y are orthogonal and unit length
     const ON_2fVector&, // X
     const ON_2fVector&  // Y
     );
 
 ON_DECL
-bool
+bool 
 ON_IsRightHandFrame( // true if X, Y are orthonormal and right handed
     const ON_2fVector&, // X
     const ON_2fVector&  // Y
@@ -509,7 +509,7 @@ public:
   ON_3fVector& operator=(const double*); // vector = double[3] support
   ON_3fVector& operator=(const ON_2fVector&);
   ON_3fVector& operator=(const ON_3fPoint&);
-
+  
   ON_3fVector  operator-() const;
 
   ON_3fVector& operator*=(float);
@@ -551,12 +551,12 @@ public:
   double Length() const;
 
   bool IsPerpendicularTo(
-        // returns true:  this and other vectors are perpendicular
-        //         false: this and other vectors are not perpendicular
-        //                or at least one of the vectors is zero
-        const ON_3fVector&,                 // other vector
-        double = ON_DEFAULT_ANGLE_TOLERANCE // optional angle tolerance (radians)
-        ) const;
+	// returns true:  this and other vectors are perpendicular
+	//         false: this and other vectors are not perpendicular
+	//                or at least one of the vectors is zero
+	const ON_3fVector&,                 // other vector     
+	double = ON_DEFAULT_ANGLE_TOLERANCE // optional angle tolerance (radians)
+	) const;
 
   double Fuzz( double = ON_ZERO_TOLERANCE ) const; // tolerance to use when comparing 3d vectors
 
@@ -575,35 +575,35 @@ public:
   //   ( fabs(x) <= tiny_tol && fabs(y) <= tiny_tol && fabs(z) <= tiny_tol )
   //
   bool IsTiny(
-         double = ON_ZERO_TOLERANCE // tiny_tol
-         ) const;
+	 double = ON_ZERO_TOLERANCE // tiny_tol
+	 ) const;
 
   // Returns:
   //   true if vector is the zero vector.
   bool IsZero() const;
 
   // set this vector to be perpendicular to another vector
-  bool PerpendicularTo( // Result is not unitized.
-                        // returns false if input vector is zero
-        const ON_3fVector&
-        );
+  bool PerpendicularTo( // Result is not unitized. 
+			// returns false if input vector is zero
+	const ON_3fVector& 
+	);
 
   // These transform the vector in place. The transformation matrix acts on
   // the left of the vector; i.e., result = transformation*vector
-  void Transform(
-        const ON_Xform& // can use ON_Xform here
-        );
+  void Transform( 
+	const ON_Xform& // can use ON_Xform here
+	);
 
-  void Rotate(
-        double,             // angle in radians
-        const ON_3fVector&  // axis of rotation
-        );
+  void Rotate( 
+	double,             // angle in radians
+	const ON_3fVector&  // axis of rotation
+	);
 
-  void Rotate(
-        double,             // sin(angle)
-        double,             // cos(angle)
-        const ON_3fVector&  // axis of rotation
-        );
+  void Rotate( 
+	double,             // sin(angle)
+	double,             // cos(angle)
+	const ON_3fVector&  // axis of rotation
+	);
 };
 
 ON_DECL
@@ -615,37 +615,37 @@ ON_3fVector operator*(float, const ON_3fVector&);
 //
 
 ON_DECL
-float
-ON_DotProduct(
-    const ON_3fVector&,
-    const ON_3fVector&
+float 
+ON_DotProduct( 
+    const ON_3fVector&, 
+    const ON_3fVector& 
     );
 
 
 ON_DECL
-ON_3fVector
+ON_3fVector 
 ON_CrossProduct(
-    const ON_3fVector&,
-    const ON_3fVector&
+    const ON_3fVector&, 
+    const ON_3fVector& 
     );
 
 ON_DECL
-ON_3fVector
+ON_3fVector 
 ON_CrossProduct( // 3d cross product for old fashioned arrays
     const float*, // array of 3d floats
     const float*  // array of 3d floats
     );
 
 ON_DECL
-float
-ON_TripleProduct(
+float 
+ON_TripleProduct( 
     const ON_3fVector&,
     const ON_3fVector&,
     const ON_3fVector&
     );
 
 ON_DECL
-float
+float 
 ON_TripleProduct(  // 3d triple product for old fashioned arrays
     const float*, // array of 3d floats
     const float*, // array of 3d floats
@@ -653,27 +653,27 @@ ON_TripleProduct(  // 3d triple product for old fashioned arrays
     );
 
 ON_DECL
-bool
+bool 
 ON_IsOrthogonalFrame( // true if X, Y, Z are nonzero and mutually perpindicular
     const ON_3fVector&, // X
     const ON_3fVector&, // Y
-    const ON_3fVector&  // Z
+    const ON_3fVector&  // Z 
     );
 
 ON_DECL
-bool
+bool 
 ON_IsOrthonormalFrame( // true if X, Y, Z are orthogonal and unit length
     const ON_3fVector&, // X
     const ON_3fVector&, // Y
-    const ON_3fVector&  // Z
+    const ON_3fVector&  // Z 
     );
 
 ON_DECL
-bool
+bool 
 ON_IsRightHandFrame( // true if X, Y, Z are orthonormal and right handed
     const ON_3fVector&, // X
     const ON_3fVector&, // Y
-    const ON_3fVector&  // Z
+    const ON_3fVector&  // Z 
     );
 
 ///////////////////////////////////////////////////////////////

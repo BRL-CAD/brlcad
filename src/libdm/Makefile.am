@@ -30,6 +30,7 @@ DM_TK_CFLAGS =
 endif
 
 libdm_la_SOURCES = \
+	adc.c \
 	axes.c \
 	clip.c \
 	color.c \
@@ -43,9 +44,11 @@ libdm_la_SOURCES = \
 	dm-wgl.c \
 	dm_obj.c \
 	focus.c \
+	grid.c \
 	knob.c \
 	options.c \
 	query.c \
+	rect.c \
 	tcl.c \
 	vers.c
 
@@ -66,10 +69,8 @@ libdm_la_LIBADD = \
 	${DM_OGL_LIBS}
 
 EXTRA_DIST = \
-	dm-glx.c \
-	dm-pex.c \
 	libdm.dsp
 
-DEPS=src/librt src/libfb
+DEPS=src/librt src/libfb src/libged
 
 include $(top_srcdir)/misc/Makefile.defs

@@ -52,9 +52,6 @@
 
 #define RTEDGE_DEBUG 1
 
-int	use_air = 0;			/* Handling of air in librt */
-int	using_mlib = 0;			/* Material routines NOT used */
-
 extern 	FBIO	*fbp;			/* Framebuffer handle */
 extern	fastf_t	viewsize;
 extern	int	lightmodel;
@@ -210,9 +207,9 @@ struct bu_structparse view_parse[] = {
     {"%d", 1, "region_color", bu_byteoffset(region_colors),
      BU_STRUCTPARSE_FUNC_NULL},
     {"%d", 1, "rc", bu_byteoffset(region_colors), BU_STRUCTPARSE_FUNC_NULL},
-    {"%S", 1, "occlusion_objects", bu_byteoffset(occlusion_objects),
+    {"%V", 1, "occlusion_objects", bu_byteoffset(occlusion_objects),
      BU_STRUCTPARSE_FUNC_NULL},
-    {"%S", 1, "oo", bu_byteoffset(occlusion_objects),
+    {"%V", 1, "oo", bu_byteoffset(occlusion_objects),
      BU_STRUCTPARSE_FUNC_NULL},
     {"%d", 1, "occlusion_mode", bu_byteoffset(occlusion_mode),
      BU_STRUCTPARSE_FUNC_NULL},
@@ -421,7 +418,7 @@ view_2init( struct application *ap )
 
     /*
      * Set the hit distance difference necessary to trigger an edge.
-     * This algorythm was stolen from lgt, I may make it settable later.
+     * This algorithm was stolen from lgt, I may make it settable later.
      */
     if (max_dist < .00001)
 	max_dist = (cell_width*ARCTAN_87)+2;

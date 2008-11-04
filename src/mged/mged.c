@@ -31,9 +31,34 @@
 #include <ctype.h>
 #include <signal.h>
 #include <time.h>
+#ifdef HAVE_SYS_TYPES_H
+   /* for select */
+#  include <sys/types.h>
+#endif
+#ifdef HAVE_SYS_TIME_H
+   /* for select */
+#  include <sys/time.h>
+#endif
+#ifdef HAVE_UNISTD_H
+   /* for select */
+#  include <unistd.h>
+#endif
 #ifdef HAVE_SYS_STAT_H
 #  include <sys/stat.h>
 #endif
+#ifdef HAVE_SYS_SELECT_H
+   /* for select */
+#  include <sys/select.h>
+#endif
+#ifdef HAVE_SYS_SOCKET_H
+   /* for recv */
+#  include <sys/socket.h>
+#endif
+
+#ifdef HAVE_POLL_H
+#  include <poll.h>
+#endif
+
 #include "bio.h"
 
 #include "tcl.h"
@@ -50,17 +75,14 @@
 /* private */
 #include "./mged.h"
 #include "./titles.h"
-#include "./mged_solid.h"
 #include "./sedit.h"
 #include "./mged_dm.h"
 #include "./cmd.h"
 #include "brlcad_version.h"
 
-char MGEDCopyRight_Notice[] = "@(#) \
-BRL-CAD is Open Source software. \
-This software is Copyright (c) 1985-2008 by the United States Government \
-as represented by the U.S. Army Research Laboratory.  All rights reserved.";
-
+#ifndef COMMAND_LINE_EDITING
+#  define COMMAND_LINE_EDITING 1
+#endif
 
 #ifdef DEBUG
 #  ifndef _WIN32
@@ -78,9 +100,7 @@ as represented by the U.S. Army Research Laboratory.  All rights reserved.";
 
 #define SPACES "                                                                                                                                                                                                                                                                                                           "
 
-extern void mged_setup(void); /* setup.c */
-extern void mged_global_variable_setup(Tcl_Interp *interp); /* cmd.c */
-
+extern void mged_global_variable_teardown(Tcl_Interp *interp); /* cmd.c */
 extern void view_ring_init(struct _view_state *vsp1, struct _view_state *vsp2); /* defined in chgview.c */
 
 extern void draw_e_axes(void);
@@ -134,7 +154,8 @@ int (*cmdline_hook)() = NULL;
 jmp_buf	jmp_env;		/* For non-local gotos */
 double frametime;		/* time needed to draw last frame */
 
-int             cmd_stuff_str(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
+struct solid   MGED_FreeSolid;      /* Head of freelist */
+
 void		(*cur_sigint)();	/* Current SIGINT status */
 void		sig2(int);
 void		sig3(int);
@@ -142,7 +163,7 @@ void		reset_input_strings(void);
 void		new_mats(void);
 void		usejoy(double xangle, double yangle, double zangle);
 void            slewview(fastf_t *view_pos);
-int		interactive = 0;	/* >0 means interactive */
+int		interactive = 1;	/* >0 means interactive */
 int             cbreak_mode = 0;        /* >0 means in cbreak_mode */
 #if defined(DM_X) || defined(DM_TK) || defined(DM_OGL) || defined(DM_WGL)
 int		classic_mged=0;
@@ -179,7 +200,6 @@ struct bn_tol		mged_tol;	/* calculation tolerance */
 struct rt_tess_tol	mged_ttol;	/* XXX needs to replace mged_abs_tol, et.al. */
 
 struct bu_vls mged_prompt;
-void pr_prompt(void), pr_beep(void);
 int mged_bomb_hook(genptr_t clientData, genptr_t str);
 
 void mged_view_obj_callback(genptr_t clientData, struct view_obj *vop);
@@ -212,13 +232,12 @@ notify_parent_done(int parent) {
 }
 
 
-#if defined(_WIN32) && !defined(__CYGWIN__)
 void
 mgedInvalidParameterHandler(const wchar_t* expression,
 			    const wchar_t* function, 
 			    const wchar_t* file, 
 			    unsigned int line, 
-			    uintptr_t pReserved)
+			    unsigned int *pReserved)
 {
 /*
  *   Windows, I think you're number one!
@@ -247,6 +266,28 @@ mgedInvalidParameterHandler(const wchar_t* expression,
  *           |                 |
  */
 }
+
+
+void
+pr_prompt(int show_prompt)
+{
+    if (show_prompt) {
+	bu_log("%V", &mged_prompt);
+    }
+}
+
+
+void
+pr_beep(void)
+{
+    bu_log("%c", 7);
+}
+
+
+/* so the Windows-specific calls blend in */
+#if !defined(_WIN32) || defined(__CYGWIN__)
+#  define setmode(a,b) /* poof */
+void _set_invalid_parameter_handler(void *callback) { return; }
 #endif
 
 /*
@@ -259,29 +300,41 @@ main(int argc, char **argv)
     int	c;
     int	read_only_flag=0;
 
-#if !defined(_WIN32) || defined(__CYGWIN__)
-    pid_t	pid;
-#endif
+    pid_t pid;
+
     int	parent_pipe[2];
     int	use_pipe = 0;
     int run_in_foreground=1;
 
     Tcl_Channel chan;
+    fd_set read_set, exception_set;
+    struct timeval timeout;
+    int result;
+    struct pollfd pfd;
+    FILE *out;
 
-#if defined(_WIN32) && !defined(__CYGWIN__)
     setmode(fileno(stdin), O_BINARY);
     setmode(fileno(stdout), O_BINARY);
     setmode(fileno(stderr), O_BINARY);
 
+    timeout.tv_sec = 0;
+    timeout.tv_usec = 1;
+
     (void)_set_invalid_parameter_handler(mgedInvalidParameterHandler);
-#endif
 
     bu_setprogname(argv[0]);
 
-    while ((c = bu_getopt(argc, argv, "d:hbicnrx:X:")) != EOF)
-    {
-	switch ( c )
-	{
+    /* If multiple processors might be used, initialize for it.
+     * Do not run any commands before here.
+     * Do not use bu_log() or bu_malloc() before here.
+     */
+    if ( bu_avail_cpus() > 1 )  {
+	rt_g.rtg_parallel = 1;
+	bu_semaphore_init( RT_SEM_LAST );
+    }
+
+    while ((c = bu_getopt(argc, argv, "d:hbicnrx:X:")) != EOF) {
+	switch ( c ) {
 	    case 'd':
 		dpy_string = bu_optarg;
 		break;
@@ -289,6 +342,8 @@ main(int argc, char **argv)
 		read_only_flag = 1;
 		break;
 	    case 'n':		/* "not new" == "classic" */
+		bu_log("WARNING: -n is deprecated.  used -c instead.\n");
+		/* fall through */
 	    case 'c':
 		classic_mged = 1;
 		break;
@@ -302,39 +357,76 @@ main(int argc, char **argv)
 		run_in_foreground = 0;  /* run in background */
 		break;
 	    default:
-		fprintf( stdout, "Unrecognized option (%c)\n", c );
+		bu_log("Unrecognized option (%c)\n", c );
 		/* Fall through to help */
 	    case 'h':
-		fprintf(stdout, "Usage:  %s [-b] [-c] [-d display] [-h] [-r] [-x#] [-X#] [database [command]]\n", argv[0]);
-		fflush(stdout);
-		return(1);
+		bu_exit(1, "Usage:  %s [-b] [-c] [-d display] [-h] [-r] [-x#] [-X#] [database [command]]\n", argv[0]);
 	}
     }
 
     argc -= (bu_optind - 1);
     argv += (bu_optind - 1);
+    argv[0][0] = '\0'; /* nullify the first arg string to avoid confusion */
 
-    /* Identify ourselves if interactive */
-    if ( argc <= 2 )  {
-	if (isatty(fileno(stdin)) && isatty(fileno(stdout)))
-	    interactive = 1;
+    if (bu_debug > 0)
+	out = fopen("/tmp/stdout", "w+"); /* I/O testing */
 
-	if (interactive && classic_mged) {
-	    fprintf(stdout, "%s\n", brlcad_ident("Geometry Editor (MGED)"));
-	    fflush(stdout);
+    if (argc > 2) {
+	/* if there is more than a file name remaining, mged is not interactive */
+	interactive = 0;
+    } else {
+	/* if argc is 1 or 2, then we may or may not be interactive */
+	int one = 1;
 
-	    if (isatty(fileno(stdin)) && isatty(fileno(stdout))) {
-#ifndef COMMAND_LINE_EDITING
-#  define COMMAND_LINE_EDITING 1
-#endif
-#if !defined(_WIN32) || defined(__CYGWIN__)
-		/* Set up for character-at-a-time terminal IO. */
-		cbreak_mode = COMMAND_LINE_EDITING;
-		save_Tty(fileno(stdin));
-#endif
+	/* check if there is data on stdin (better than checking if isatty()) */
+	FD_ZERO(&read_set);
+	FD_SET(fileno(stdin), &read_set);
+	result = select(fileno(stdin)+1, &read_set, NULL, NULL, &timeout);
+	if (bu_debug > 0)
+	    fprintf(out, "DEBUG: select result: %d, stdin read: %d\n", result, FD_ISSET(fileno(stdin), &read_set));
+    
+	if (result > 0 && FD_ISSET(fileno(stdin), &read_set)) {
+	    /* stdin pending, probably not interactive */
+	    interactive = 0;
+
+	    /* check if there is an out-of-bounds exception set on stdin */
+	    FD_ZERO(&exception_set);
+	    FD_SET(fileno(stdin), &exception_set);
+	    result = select(fileno(stdin)+1, NULL, NULL, &exception_set, &timeout);
+	    if (bu_debug > 0)
+		fprintf(out, "DEBUG: select result: %d, stdin exception: %d\n", result, FD_ISSET(fileno(stdin), &exception_set));
+	
+	    /* see if there's valid input waiting (more reliable than select) */
+	    if (result > 0 && FD_ISSET(fileno(stdin), &exception_set)) {
+		struct pollfd pfd;
+		pfd.fd = fileno(stdin);
+		pfd.events = POLLIN;
+		pfd.revents = 0;
+
+		result = poll(&pfd, 1, 100);
+		if (bu_debug > 0)
+		    fprintf(out, "DEBUG: poll result: %d, revents: %d\n", result, pfd.revents);
+
+		if (pfd.revents & POLLNVAL) {
+		    interactive = 1;
+		}
 	    }
+
+	    /* just in case we get input too quickly, see if it's coming from a tty */
+	    if (isatty(fileno(stdin))) {
+		interactive = 1;
+	    }
+	} /* read_set */
+
+	if (bu_debug && out != stdout) { 
+	    fflush(out);
+	    fclose(out);
 	}
-    }
+    } /* argc > 2 */
+
+    if (bu_debug > 0)
+	fprintf(out, "DEBUG: interactive=%d, classic_mged=%d\n", interactive, classic_mged);
+
 
 #if defined(SIGPIPE) && defined(SIGINT)
     (void)signal( SIGPIPE, SIG_IGN );
@@ -351,8 +443,8 @@ main(int argc, char **argv)
 
 #ifdef HAVE_PIPE
     if ( !classic_mged && !run_in_foreground ) {
-	fprintf( stdout, "Initializing and backgrounding, please wait..." );
-	fflush( stdout );
+	fprintf(stdout, "Initializing and backgrounding, please wait...");
+	fflush(stdout);
 
 	if (pipe(parent_pipe) == -1) {
 	    perror("pipe failed");
@@ -362,10 +454,6 @@ main(int argc, char **argv)
 
 	pid = fork();
 	if ( pid > 0 ) {
-	    fd_set set;
-	    struct timeval timeout;
-	    int read_result;
-
 	    /* just so it does not appear that MGED has died,
 	     * wait until the gui is up before exiting the
 	     * parent process (child sends us a byte after the
@@ -373,15 +461,15 @@ main(int argc, char **argv)
 	     */
 	    if (use_pipe) {
 
-		FD_ZERO(&set);
-		FD_SET(parent_pipe[0], &set);
+		FD_ZERO(&read_set);
+		FD_SET(parent_pipe[0], &read_set);
 		timeout.tv_sec = 90;
 		timeout.tv_usec = 0;
-		read_result = select(parent_pipe[0]+1, &set, NULL, NULL, &timeout);
+		result = select(parent_pipe[0]+1, &read_set, NULL, NULL, &timeout);
 
-		if (read_result == -1) {
+		if (result == -1) {
 		    perror("Unable to read from communication pipe");
-		} else if (read_result == 0) {
+		} else if (result == 0) {
 		    fprintf(stdout, "Detached\n");
 		} else {
 		    fprintf(stdout, "Done\n");
@@ -391,6 +479,7 @@ main(int argc, char **argv)
 		/* no pipe, so just wait a little while */
 		sleep(3);
 	    }
+
 	    /* exit instead of mged_finish as this is the
 	     * parent process.
 	     */
@@ -399,18 +488,8 @@ main(int argc, char **argv)
     }
 #endif /* HAVE_PIPE */
 
-    /* If multiple processors might be used, initialize for it.
-     * Do not run any commands before here.
-     * Do not use bu_log() or bu_malloc() before here.
-     */
-    if ( bu_avail_cpus() > 1 )  {
-	rt_g.rtg_parallel = 1;
-	bu_semaphore_init( RT_SEM_LAST );
-    }
-
     /* Set up linked lists */
-    BU_LIST_INIT(&HeadSolid.l);
-    BU_LIST_INIT(&FreeSolid.l);
+    BU_LIST_INIT(&MGED_FreeSolid.l);
     BU_LIST_INIT(&rt_g.rtg_vlfree);
     BU_LIST_INIT(&rt_g.rtg_headwdb.l);
     BU_LIST_INIT(&head_run_rt.l);
@@ -475,7 +554,6 @@ main(int argc, char **argv)
     owner = 1;
     frametime = 1;
 
-    MAT_IDN( identity );		/* Handy to have around */
     MAT_IDN( modelchanges );
     MAT_IDN( acc_rot_sol );
 
@@ -503,7 +581,7 @@ main(int argc, char **argv)
     bu_vls_init(&mged_prompt);
     input_str_index = 0;
 
-    /* Initialize mged, adjust our path, get set up to use Tcl */
+    /* prepare mged, adjust our path, get set up to use Tcl */
     mged_setup();
     new_mats();
 
@@ -511,60 +589,75 @@ main(int argc, char **argv)
     btn_head_menu(0, 0, 0);
     mged_link_vars(curr_dm_list);
 
-
-    {
-	struct bu_vls vls;
-
-	bu_vls_init(&vls);
-	bu_vls_printf(&vls, "set version \"%s\"", brlcad_ident("Geometry Editor (MGED)"));
-	(void)Tcl_Eval(interp, bu_vls_addr(&vls));
-	bu_vls_free(&vls);
-    }
+    bu_vls_printf(&input_str, "set version \"%s\"", brlcad_ident("Geometry Editor (MGED)"));
+    (void)Tcl_Eval(interp, bu_vls_addr(&input_str));
+    bu_vls_trunc(&input_str, 0);
 
     setview(0.0, 0.0, 0.0);
 
-    if (dpy_string == (char *)NULL)
+    if (dpy_string == (char *)NULL) {
 	dpy_string = getenv("DISPLAY");
-
-    if (interactive && !classic_mged) {
-	int status;
-	struct bu_vls vls;
-	struct bu_vls error;
-
-	bu_vls_init(&vls);
-	bu_vls_init(&error);
-	if (dpy_string != (char *)NULL)
-	    bu_vls_printf(&vls, "loadtk %s", dpy_string);
-	else
-	    bu_vls_strcpy(&vls, "loadtk");
-
-	status = Tcl_Eval(interp, bu_vls_addr(&vls));
-	bu_vls_strcpy(&error, Tcl_GetStringResult(interp));
-	bu_vls_free(&vls);
-
-	if (status != TCL_OK && !dpy_string) {
-	    /* failed to load tk, try localhost X11 if DISPLAY was not set */
-	    status = Tcl_Eval(interp, "loadtk :0");
-	}
-
-	if (status != TCL_OK) {
-	    if ( !run_in_foreground && use_pipe ) {
-		notify_parent_done(parent_pipe[1]);
-	    }
-	    bu_log("%s\nMGED Aborted.\n", bu_vls_addr(&error));
-	    mged_finish(1);
-	}
-	bu_vls_free(&error);
-
-#if !defined(_WIN32)
-	/* bring application to focus if needed (Mac OS X only) */
-	dm_applicationfocus();
-#endif
     }
 
+    /* show ourselves */
+    if (interactive) {
+	if (classic_mged) {
+	    /* identify */
+
+	    bu_log("%s\n", brlcad_ident("Geometry Editor (MGED)"));
+	    
+#if !defined(_WIN32) || defined(__CYGWIN__)
+	    if (isatty(fileno(stdin)) && isatty(fileno(stdout))) {
+		/* Set up for character-at-a-time terminal IO. */
+		cbreak_mode = COMMAND_LINE_EDITING;
+		save_Tty(fileno(stdin));
+	    }
+#endif
+
+	} else {
+	    /* start up the gui */
+
+	    int status;
+	    struct bu_vls vls;
+	    struct bu_vls error;
+	    
+	    bu_vls_init(&vls);
+	    bu_vls_init(&error);
+	    if (dpy_string != (char *)NULL)
+		bu_vls_printf(&vls, "loadtk %s", dpy_string);
+	    else
+		bu_vls_strcpy(&vls, "loadtk");
+
+	    status = Tcl_Eval(interp, bu_vls_addr(&vls));
+	    bu_vls_strcpy(&error, Tcl_GetStringResult(interp));
+	    bu_vls_free(&vls);
+
+	    if (status != TCL_OK && !dpy_string) {
+		/* failed to load tk, try localhost X11 if DISPLAY was not set */
+		status = Tcl_Eval(interp, "loadtk :0");
+	    }
+
+	    if (status != TCL_OK) {
+		if ( !run_in_foreground && use_pipe ) {
+		    notify_parent_done(parent_pipe[1]);
+		}
+		bu_log("%s\nMGED Aborted.\n", bu_vls_addr(&error));
+		mged_finish(1);
+	    }
+	    bu_vls_free(&error);
+
+#if !defined(_WIN32)
+	    /* bring application to focus if needed (Mac OS X only) */
+	    dm_applicationfocus();
+#endif
+	}
+    }
+
+    /* Open the database */
     if (argc >= 2) {
-	/* Open the database, attach a display manager */
-	/* Command line may have more than 2 args, opendb only wants 2 */
+	/* Command line may have more than 2 args, opendb only wants 2
+	 * expecting second to be the file name.
+	 */
 	if (f_opendb( (ClientData)NULL, interp, 2, argv ) == TCL_ERROR) {
 	    if ( !run_in_foreground && use_pipe ) {
 		notify_parent_done(parent_pipe[1]);
@@ -673,10 +766,9 @@ main(int argc, char **argv)
 	av[0] = "q";
 	av[1] = NULL;
 
-	/*
-	  Call cmdline instead of calling mged_cmd directly
-	  so that access to Tcl/Tk is possible.
-	*/
+	/* Call cmdline instead of calling mged_cmd directly so that
+	 * access to Tcl/Tk is possible.
+	 */
 	for (argc -= 2, argv += 2; argc; --argc, ++argv)
 	    bu_vls_printf(&input_str, "%s ", *argv);
 
@@ -704,7 +796,7 @@ main(int argc, char **argv)
 #endif
 
 	bu_vls_strcpy(&mged_prompt, MGED_PROMPT);
-	pr_prompt();
+	pr_prompt(interactive);
 
 #if !defined(_WIN32) || defined(__CYGWIN__)
 	if (cbreak_mode) {
@@ -788,18 +880,6 @@ main(int argc, char **argv)
     return(0);
 }
 
-void
-pr_prompt(void)
-{
-    if ( interactive )
-	bu_log("%S", &mged_prompt);
-}
-
-void
-pr_beep(void)
-{
-    bu_log("%c", 7);
-}
 
 /*
  * standard input handling
@@ -860,11 +940,11 @@ stdin_input(ClientData clientData, int mask)
 
 	/* If no input and a default is supplied then use it */
 	if (!bu_vls_strlen(&input_str) && bu_vls_strlen(&curr_cmd_list->cl_more_default))
-	    bu_vls_printf(&input_str_prefix, "%s%S\n",
+	    bu_vls_printf(&input_str_prefix, "%s%V\n",
 			  bu_vls_strlen(&input_str_prefix) > 0 ? " " : "",
 			  &curr_cmd_list->cl_more_default);
 	else
-	    bu_vls_printf(&input_str_prefix, "%s%S\n",
+	    bu_vls_printf(&input_str_prefix, "%s%V\n",
 			  bu_vls_strlen(&input_str_prefix) > 0 ? " " : "",
 			  &input_str);
 
@@ -878,7 +958,7 @@ stdin_input(ClientData clientData, int mask)
 		curr_dm_list = curr_cmd_list->cl_tie;
 	    if (cmdline_hook != NULL) {
 		if ((*cmdline_hook)(&input_str))
-		    pr_prompt();
+		    pr_prompt(interactive);
 		bu_vls_trunc(&input_str, 0);
 		bu_vls_trunc(&input_str_prefix, 0);
 		(void)signal( SIGINT, SIG_IGN );
@@ -895,7 +975,7 @@ stdin_input(ClientData clientData, int mask)
 		    bu_vls_trunc(&input_str, 0);
 		    (void)signal( SIGINT, SIG_IGN );
 		}
-		pr_prompt();
+		pr_prompt(interactive);
 	    }
 	    input_str_index = 0;
 	} else {
@@ -954,8 +1034,6 @@ static void
 do_tab_expansion()
 {
     int ret;
-    char *obj;
-    char *cmd;
     Tcl_Obj *result;
     Tcl_Obj *newCommand;
     Tcl_Obj *matches;
@@ -973,14 +1051,14 @@ do_tab_expansion()
         if ( numExpansions > 1 ) {
             /* show the possible matches */
             bu_log( "\n%s\n", Tcl_GetString(matches));
-            pr_prompt();
+            pr_prompt(interactive);
         }
 
 	/* display the expanded line */
         /* first clear the current line */
-        pr_prompt();
+        pr_prompt(interactive);
         bu_log("%*s", bu_vls_strlen(&input_str), SPACES);
-        pr_prompt();
+        pr_prompt(interactive);
         bu_vls_trunc(&input_str, 0);
         input_str_index = 0;
         bu_vls_trunc( &input_str, 0 );
@@ -1058,16 +1136,16 @@ mged_process_char(char ch)
 
 	    /* If no input and a default is supplied then use it */
 	    if (!bu_vls_strlen(&input_str) && bu_vls_strlen(&curr_cmd_list->cl_more_default))
-		bu_vls_printf(&input_str_prefix, "%s%S\n",
+		bu_vls_printf(&input_str_prefix, "%s%V\n",
 			      bu_vls_strlen(&input_str_prefix) > 0 ? " " : "",
 			      &curr_cmd_list->cl_more_default);
 	    else {
 		if (curr_cmd_list->cl_quote_string)
-		    bu_vls_printf(&input_str_prefix, "%s\"%S\"\n",
+		    bu_vls_printf(&input_str_prefix, "%s\"%V\"\n",
 				  bu_vls_strlen(&input_str_prefix) > 0 ? " " : "",
 				  &input_str);
 		else
-		    bu_vls_printf(&input_str_prefix, "%s%S\n",
+		    bu_vls_printf(&input_str_prefix, "%s%V\n",
 				  bu_vls_strlen(&input_str_prefix) > 0 ? " " : "",
 				  &input_str);
 	    }
@@ -1090,7 +1168,7 @@ mged_process_char(char ch)
 		    reset_Tty(fileno(stdin));
 
 		    if ((*cmdline_hook)(&input_str_prefix))
-			pr_prompt();
+			pr_prompt(interactive);
 
 		    set_Cbreak(fileno(stdin));
 		    clr_Echo(fileno(stdin));
@@ -1125,7 +1203,7 @@ mged_process_char(char ch)
 		(void)signal( SIGINT, sig2 );
 	    }
 #endif
-	    pr_prompt(); /* Print prompt for more input */
+	    pr_prompt(interactive); /* Print prompt for more input */
 	    input_str_index = 0;
 	    freshline = 1;
 	    escaped = bracketed = 0;
@@ -1144,9 +1222,9 @@ mged_process_char(char ch)
 		bu_vls_init(&temp);
 		bu_vls_strcat(&temp, bu_vls_addr(&input_str)+input_str_index);
 		bu_vls_trunc(&input_str, input_str_index-1);
-		bu_log("\b%S ", &temp);
-		pr_prompt();
-		bu_log("%S", &input_str);
+		bu_log("\b%V ", &temp);
+		pr_prompt(interactive);
+		bu_log("%V", &input_str);
 		bu_vls_vlscat(&input_str, &temp);
 		bu_vls_free(&temp);
 	    }
@@ -1157,7 +1235,7 @@ mged_process_char(char ch)
             do_tab_expansion();
             break;
 	case CTRL_A:                    /* Go to beginning of line */
-	    pr_prompt();
+	    pr_prompt(interactive);
 	    input_str_index = 0;
 	    escaped = bracketed = 0;
 	    break;
@@ -1181,17 +1259,17 @@ mged_process_char(char ch)
 	    bu_vls_init(&temp);
 	    bu_vls_strcat(&temp, bu_vls_addr(&input_str)+input_str_index+1);
 	    bu_vls_trunc(&input_str, input_str_index);
-	    bu_log("%S ", &temp);
-	    pr_prompt();
-	    bu_log("%S", &input_str);
+	    bu_log("%V ", &temp);
+	    pr_prompt(interactive);
+	    bu_log("%V", &input_str);
 	    bu_vls_vlscat(&input_str, &temp);
 	    bu_vls_free(&temp);
 	    escaped = bracketed = 0;
 	    break;
 	case CTRL_U:                   /* Delete whole line */
-	    pr_prompt();
+	    pr_prompt(interactive);
 	    bu_log("%*s", bu_vls_strlen(&input_str), SPACES);
-	    pr_prompt();
+	    pr_prompt(interactive);
 	    bu_vls_trunc(&input_str, 0);
 	    input_str_index = 0;
 	    escaped = bracketed = 0;
@@ -1199,17 +1277,17 @@ mged_process_char(char ch)
 	case CTRL_K:                    /* Delete to end of line */
 	    bu_log("%*s", bu_vls_strlen(&input_str)-input_str_index, SPACES);
 	    bu_vls_trunc(&input_str, input_str_index);
-	    pr_prompt();
-	    bu_log("%S", &input_str);
+	    pr_prompt(interactive);
+	    bu_log("%V", &input_str);
 	    escaped = bracketed = 0;
 	    break;
 	case CTRL_L:                   /* Redraw line */
 	    bu_log("\n");
-	    pr_prompt();
-	    bu_log("%S", &input_str);
+	    pr_prompt(interactive);
+	    bu_log("%V", &input_str);
 	    if (input_str_index == bu_vls_strlen(&input_str))
 		break;
-	    pr_prompt();
+	    pr_prompt(interactive);
 	    bu_log("%*S", input_str_index, &input_str);
 	    escaped = bracketed = 0;
 	    break;
@@ -1282,14 +1360,14 @@ mged_process_char(char ch)
 		    }
 		}
 	    }
-	    pr_prompt();
+	    pr_prompt(interactive);
 	    bu_log("%*s", bu_vls_strlen(&input_str), SPACES);
-	    pr_prompt();
+	    pr_prompt(interactive);
 	    bu_vls_trunc(&input_str, 0);
 	    bu_vls_vlscat(&input_str, vp);
 	    if (bu_vls_addr(&input_str)[bu_vls_strlen(&input_str)-1] == '\n')
 		bu_vls_trunc(&input_str, bu_vls_strlen(&input_str)-1); /* del \n */
-	    bu_log("%S", &input_str);
+	    bu_log("%V", &input_str);
 	    input_str_index = bu_vls_strlen(&input_str);
 	    escaped = bracketed = 0;
 	    break;
@@ -1320,10 +1398,10 @@ mged_process_char(char ch)
 
 	    len = bu_vls_strlen(&input_str);
 	    bu_vls_trunc(&input_str, input_str_index);
-	    pr_prompt();
-	    bu_log("%S%S%*s", &input_str, &temp, len - input_str_index, SPACES);
-	    pr_prompt();
-	    bu_log("%S", &input_str);
+	    pr_prompt(interactive);
+	    bu_log("%V%V%*s", &input_str, &temp, len - input_str_index, SPACES);
+	    pr_prompt(interactive);
+	    bu_log("%V", &input_str);
 	    bu_vls_vlscat(&input_str, &temp);
 	    bu_vls_free(&temp);
 	}
@@ -1352,10 +1430,10 @@ mged_process_char(char ch)
 		bu_vls_init(&temp);
 		bu_vls_strcat(&temp, curr);
 		bu_vls_trunc(&input_str, input_str_index);
-		pr_prompt();
-		bu_log("%S%S%*s", &input_str, &temp, i - input_str_index, SPACES);
-		pr_prompt();
-		bu_log("%S", &input_str);
+		pr_prompt(interactive);
+		bu_log("%V%V%*s", &input_str, &temp, i - input_str_index, SPACES);
+		pr_prompt(interactive);
+		bu_log("%V", &input_str);
 		bu_vls_vlscat(&input_str, &temp);
 		bu_vls_free(&temp);
 	    } else
@@ -1384,8 +1462,8 @@ mged_process_char(char ch)
 		bu_vls_init(&temp);
 		bu_vls_strcat(&temp, start+input_str_index);
 		bu_vls_trunc(&input_str, input_str_index);
-		pr_prompt();
-		bu_log("%S", &input_str);
+		pr_prompt(interactive);
+		bu_log("%V", &input_str);
 		bu_vls_vlscat(&input_str, &temp);
 		bu_vls_free(&temp);
 	    } else
@@ -1418,8 +1496,8 @@ mged_process_char(char ch)
 		bu_vls_init(&temp);
 		bu_vls_strcat(&temp, start+input_str_index);
 		bu_vls_trunc(&input_str, input_str_index);
-		pr_prompt();
-		bu_log("%S", &input_str);
+		pr_prompt(interactive);
+		bu_log("%V", &input_str);
 		bu_vls_vlscat(&input_str, &temp);
 		bu_vls_free(&temp);
 	    } else
@@ -1462,10 +1540,10 @@ mged_insert_char(char ch)
 	bu_vls_init(&temp);
 	bu_vls_strcat(&temp, bu_vls_addr(&input_str)+input_str_index);
 	bu_vls_trunc(&input_str, input_str_index);
-	bu_log("%c%S", (int)ch, &temp);
-	pr_prompt();
+	bu_log("%c%V", (int)ch, &temp);
+	pr_prompt(interactive);
 	bu_vls_putc(&input_str, (int)ch);
-	bu_log("%S", &input_str);
+	bu_log("%V", &input_str);
 	bu_vls_vlscat(&input_str, &temp);
 	++input_str_index;
 	bu_vls_free(&temp);
@@ -1473,7 +1551,10 @@ mged_insert_char(char ch)
 }
 
 
-/* Stuff a string to stdout while leaving the current command-line alone */
+/**
+ * Stuff a string to stdout while leaving the current command-line
+ * alone
+ */
 int
 cmd_stuff_str(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
@@ -1491,9 +1572,9 @@ cmd_stuff_str(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 
     if (classic_mged) {
 	bu_log("\r%s\n", argv[1]);
-	pr_prompt();
+	pr_prompt(interactive);
 	bu_log("%s", bu_vls_addr(&input_str));
-	pr_prompt();
+	pr_prompt(interactive);
 	for (i = 0; i < input_str_index; ++i)
 	    bu_log("%c", bu_vls_addr(&input_str)[i]);
     }
@@ -1547,15 +1628,14 @@ std_out_or_err(ClientData clientData, int mask)
     Tcl_DecrRefCount(save_result);
 }
 
-/*
- *			E V E N T _ C H E C K
+/**
+ * E V E N T _ C H E C K
  *
- *  Check for events, and dispatch them.
- *  Eventually, this will be done entirely by generating commands
+ * Check for events, and dispatch them.  Eventually, this will be done
+ * entirely by generating commands
  *
- *  Returns - recommended new value for non_blocking
+ * Returns - recommended new value for non_blocking
  */
-
 int
 event_check( int non_blocking )
 {
@@ -2179,8 +2259,9 @@ mged_finish(int exitcode)
     /* Tcl_DeleteInterp(interp); */
 
 #if !defined(_WIN32) || defined(__CYGWIN__)
-    if (cbreak_mode > 0)
+    if (cbreak_mode > 0) {
 	reset_Tty(fileno(stdin));
+    }
 #endif
 
     Tcl_Exit(exitcode);
@@ -2236,7 +2317,7 @@ reset_input_strings()
 	curr_cmd_list->cl_quote_string = 0;
 	bu_vls_strcpy(&mged_prompt, MGED_PROMPT);
 	bu_log("\n");
-	pr_prompt();
+	pr_prompt(interactive);
     } else {
 	struct bu_vls vls;
 
@@ -2753,9 +2834,10 @@ f_closedb(
 
 
 int
-mged_bomb_hook(genptr_t clientData, genptr_t str)
+mged_bomb_hook(genptr_t clientData, genptr_t data)
 {
     struct bu_vls vls;
+    char *str = (char *)data;
 
     bu_vls_init(&vls);
     bu_vls_printf(&vls, "set mbh_dialog [Dialog .#auto -modality application];");

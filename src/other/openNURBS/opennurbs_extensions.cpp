@@ -1,5 +1,202 @@
+/* $Header$ */
+/* $NoKeywords: $ */
+/*
+//
+// Copyright (c) 1993-2007 Robert McNeel & Associates. All rights reserved.
+// Rhinoceros is a registered trademark of Robert McNeel & Assoicates.
+//
+// THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY.
+// ALL IMPLIED WARRANTIES OF FITNESS FOR ANY PARTICULAR PURPOSE AND OF
+// MERCHANTABILITY ARE HEREBY DISCLAIMED.
+//				
+// For complete openNURBS copyright information see <http://www.opennurbs.org>.
+//
+////////////////////////////////////////////////////////////////
+*/
+
 #include "opennurbs.h"
 #include "opennurbs_extensions.h"
+
+#if defined(ON_DLL_EXPORTS)
+
+////////////////////////////////////////////////////////////////////////////////
+//
+// When openNURBS is used as a Microsoft Windows DLL, it is possible 
+// for new/delete to allocate memory in one executable and delete
+// it in another.  Because Microsoft Windows has incompatible memory 
+// managers in its plethora of C libraries and the choice of which
+// C library actually gets used depends on the code generation 
+// options you choose,  we get lots of support questions asking
+// about hard to trace crashes.
+//
+// If you are using openNURBS as a Windows DLL, you are sure you know
+// what you are doing, and you promise never to ask for support, then
+// feel free to delete these overrides.
+//
+//
+#pragma message( " --- OpenNURBS overriding ONX_Model new and delete" )
+
+// ONX_Model_UserData new/delete
+
+void* ONX_Model_UserData::operator new(size_t sz)
+{
+  // ONX_Model_UserData new
+  return onmalloc(sz);
+}
+
+void ONX_Model_UserData::operator delete(void* p)
+{
+  // ONX_Model_UserData delete
+  onfree(p);
+}
+
+void* ONX_Model_UserData::operator new[] (size_t sz)
+{
+  // ONX_Model_UserData array new
+  return onmalloc(sz);
+}
+
+void ONX_Model_UserData::operator delete[] (void* p)
+{
+  // ONX_Model_UserData array delete
+  onfree(p);
+}
+
+void* ONX_Model_UserData::operator new(size_t, void* p)
+{
+  // ONX_Model_UserData placement new
+  return p;
+}
+
+void ONX_Model_UserData::operator delete(void*, void*)
+{
+  // ONX_Model_UserData placement delete
+  return;
+}
+
+
+// ONX_Model_Object new/delete
+
+void* ONX_Model_Object::operator new(size_t sz)
+{
+  // ONX_Model_Object new
+  return onmalloc(sz);
+}
+
+void ONX_Model_Object::operator delete(void* p)
+{
+  // ONX_Model_Object delete
+  onfree(p);
+}
+
+void* ONX_Model_Object::operator new[] (size_t sz)
+{
+  // ONX_Model_Object array new
+  return onmalloc(sz);
+}
+
+void ONX_Model_Object::operator delete[] (void* p)
+{
+  // ONX_Model_Object array delete
+  onfree(p);
+}
+
+void* ONX_Model_Object::operator new(size_t, void* p)
+{
+  // ONX_Model_Object placement new
+  return p;
+}
+
+void ONX_Model_Object::operator delete(void*, void*)
+{
+  // ONX_Model_Object placement delete
+  return;
+}
+
+
+// ONX_Model_RenderLight new/delete
+
+void* ONX_Model_RenderLight::operator new(size_t sz)
+{
+  // ONX_Model_RenderLight new
+  return onmalloc(sz);
+}
+
+void ONX_Model_RenderLight::operator delete(void* p)
+{
+  // ONX_Model_RenderLight delete
+  onfree(p);
+}
+
+void* ONX_Model_RenderLight::operator new[] (size_t sz)
+{
+  // ONX_Model_RenderLight array new
+  return onmalloc(sz);
+}
+
+void ONX_Model_RenderLight::operator delete[] (void* p)
+{
+  // ONX_Model_RenderLight array delete
+  onfree(p);
+}
+
+void* ONX_Model_RenderLight::operator new(size_t, void* p)
+{
+  // ONX_Model_RenderLight placement new
+  return p;
+}
+
+void ONX_Model_RenderLight::operator delete(void*, void*)
+{
+  // ONX_Model_RenderLight placement delete
+  return;
+}
+
+
+// ONX_Model new/delete
+
+void* ONX_Model::operator new(size_t sz)
+{
+  // ONX_Model new
+  return onmalloc(sz);
+}
+
+void ONX_Model::operator delete(void* p)
+{
+  // ONX_Model delete
+  onfree(p);
+}
+
+void* ONX_Model::operator new[] (size_t sz)
+{
+  // ONX_Model array new
+  return onmalloc(sz);
+}
+
+void ONX_Model::operator delete[] (void* p)
+{
+  // ONX_Model array delete
+  onfree(p);
+}
+
+void* ONX_Model::operator new(size_t, void* p)
+{
+  // ONX_Model placement new
+  return p;
+}
+
+void ONX_Model::operator delete(void*, void*)
+{
+  // ONX_Model placement delete
+  return;
+}
+
+#endif
+
+//
+//
+////////////////////////////////////////////////////////////////////////////////
+
 
 static
 bool ONX_IsValidNameFirstChar( wchar_t c )
@@ -26,14 +223,14 @@ bool ONX_IsValidNameFirstChar( wchar_t c )
 static
 bool ONX_IsValidNameSecondChar( wchar_t c )
 {
-  // control characters, double quote, and DEL are
+  // control characters, double quote, and DEL are 
   // not permited in names
   return (c >= 32 && c != 34 && c != 127);
 }
 
-bool ONX_IsValidName(
-          const wchar_t* name
-          )
+bool ONX_IsValidName( 
+	  const wchar_t* name 
+	  )
 {
   bool is_valid = (0 != name && ONX_IsValidNameFirstChar(*name));
   if ( is_valid )
@@ -43,7 +240,7 @@ bool ONX_IsValidName(
     while ( ONX_IsValidNameSecondChar(*name) )
     {
       if ( *name < '0' || *name >= '9' )
-        is_integer = false;
+	is_integer = false;
       name++;
     }
     if ( *name || is_integer )
@@ -65,9 +262,9 @@ ONX_Model_RenderLight::~ONX_Model_RenderLight()
 {
 }
 
-ONX_Model_RenderLight::ONX_Model_RenderLight(const ONX_Model_RenderLight& src)
-             : m_light(src.m_light),
-               m_attributes(src.m_attributes)
+ONX_Model_RenderLight::ONX_Model_RenderLight(const ONX_Model_RenderLight& src) 
+	     : m_light(src.m_light), 
+	       m_attributes(src.m_attributes)
 {
 }
 
@@ -85,20 +282,20 @@ ONX_Model_RenderLight& ONX_Model_RenderLight::operator=(const ONX_Model_RenderLi
 ////////////////////////////////////////////////////////////////////////
 
 
-ONX_Model_Object::ONX_Model_Object()
-                 : m_bDeleteObject(0),
-                   m_object(0),
-                   m_ref_count(0)
+ONX_Model_Object::ONX_Model_Object() 
+		 : m_bDeleteObject(0),
+		   m_object(0), 
+		   m_ref_count(0)
 {
 }
 
 void ONX_Model_Object::Destroy()
 {
-  if ( m_ref_count )
+  if ( m_ref_count ) 
   {
     if ( *m_ref_count > 0 )
       (*m_ref_count)--;
-    if ( *m_ref_count <= 0 )
+    if ( *m_ref_count <= 0 ) 
     {
       delete m_ref_count;
       m_ref_count = 0;
@@ -117,10 +314,10 @@ ONX_Model_Object::~ONX_Model_Object()
   Destroy();
 }
 
-ONX_Model_Object::ONX_Model_Object(const ONX_Model_Object& src)
-             : m_bDeleteObject(0),
-               m_object(0),
-               m_ref_count(0)
+ONX_Model_Object::ONX_Model_Object(const ONX_Model_Object& src) 
+	     : m_bDeleteObject(0),
+	       m_object(0),
+	       m_ref_count(0)
 {
   *this = src;
 }
@@ -134,15 +331,15 @@ ONX_Model_Object& ONX_Model_Object::operator=(const ONX_Model_Object& src)
     m_object = src.m_object;
     m_attributes = src.m_attributes;
     m_ref_count = src.m_ref_count;
-    if ( 0 != m_object && m_bDeleteObject )
+    if ( 0 != m_object && m_bDeleteObject ) 
     {
       if ( 0 != m_ref_count )
-        (*m_ref_count)++;
-      else
+	(*m_ref_count)++;
+      else 
       {
-        m_ref_count = new unsigned int;
-        *m_ref_count = 2; // 2 because this and src reference same m_object
-        const_cast<ONX_Model_Object*>(&src)->m_ref_count = m_ref_count; // need to defeat const
+	m_ref_count = new unsigned int;
+	*m_ref_count = 2; // 2 because this and src reference same m_object
+	const_cast<ONX_Model_Object*>(&src)->m_ref_count = m_ref_count; // need to defeat const
       }
     }
   }
@@ -161,10 +358,10 @@ ONX_Model_UserData::~ONX_Model_UserData()
 {
 }
 
-ONX_Model_UserData::ONX_Model_UserData(const ONX_Model_UserData& src)
-             : m_uuid(src.m_uuid),
-               m_goo(m_goo)
-
+ONX_Model_UserData::ONX_Model_UserData(const ONX_Model_UserData& src) 
+	     : m_uuid(src.m_uuid),
+	       m_goo(m_goo)
+	       
 {
 }
 
@@ -181,11 +378,11 @@ ONX_Model_UserData& ONX_Model_UserData::operator=(const ONX_Model_UserData& src)
 ////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////
 
-ONX_Model::ONX_Model()
-          : m_3dm_file_version(0),
-            m_3dm_opennurbs_version(0),
-            m_file_length(0),
-            m_crc_error_count(0)
+ONX_Model::ONX_Model() 
+	  : m_3dm_file_version(0), 
+	    m_3dm_opennurbs_version(0),
+	    m_file_length(0),
+	    m_crc_error_count(0)
 {
   m_sStartSectionComments.Empty();
   m_properties.Default();
@@ -226,7 +423,7 @@ void ONX_Model::Destroy()
   m_hatch_pattern_table.SetCapacity(0);
   m_idef_table.SetCapacity(0);
   m_object_table.SetCapacity(0);
-  m_history_record_table.SetCapacity(0);
+  m_history_record_table.SetCapacity(0);  
   m_userdata_table.SetCapacity(0);
 
   m_file_length = 0;
@@ -256,7 +453,7 @@ ON_BoundingBox ONX_Model::BoundingBox() const
     {
       const ON_Geometry* geo = ON_Geometry::Cast(m_object_table[i].m_object);
       if ( geo )
-        bbox.Union(geo->BoundingBox());
+	bbox.Union(geo->BoundingBox());
       const_cast<ONX_Model*>(this)->m__object_table_bbox = bbox;
     }
   }
@@ -296,15 +493,15 @@ void ONX_Model::GetRenderMaterial( const ON_3dmObjectAttributes& attributes, ON_
   material.SetMaterialIndex(material_index);
 }
 
-void ONX_Model::GetRenderMaterial(
+void ONX_Model::GetRenderMaterial( 
       int object_index,
-      ON_Material& material
+      ON_Material& material 
       ) const
 {
   if ( object_index < 0 || object_index >= m_object_table.Count() )
   {
     material.Default();
-    material.SetMaterialIndex(-1);
+    material.SetMaterialIndex(-1);    
   }
   else
     GetRenderMaterial( m_object_table[object_index].m_attributes, material );
@@ -343,7 +540,7 @@ void ONX_Model::GetLinetype( const ON_3dmObjectAttributes& attributes, ON_Linety
   linetype.SetLinetypeIndex(linetype_index);
 }
 
-void ONX_Model::GetLinetype(
+void ONX_Model::GetLinetype( 
       int object_index,
       ON_Linetype& linetype
       ) const
@@ -351,7 +548,7 @@ void ONX_Model::GetLinetype(
   if ( object_index < 0 || object_index >= m_object_table.Count() )
   {
     linetype.Default();
-    linetype.SetLinetypeIndex(-1);
+    linetype.SetLinetypeIndex(-1);    
   }
   else
   {
@@ -423,7 +620,7 @@ void ONX_Model::DumpSummary( ON_TextLog& dump ) const
   if ( m_file_length > 0 )
     dump.Print("File length: %d bytes\n",m_file_length);
 
-  if ( m_sStartSectionComments.Length() > 0 )
+  if ( m_sStartSectionComments.Length() > 0 ) 
   {
     dump.Print("Start section comments:\n");
     dump.PushIndent();
@@ -431,7 +628,7 @@ void ONX_Model::DumpSummary( ON_TextLog& dump ) const
     dump.PopIndent();
     dump.Print("\n");
   }
-
+  
   m_properties.Dump(dump);
 
   dump.Print("\n");
@@ -612,15 +809,15 @@ void ONX_Model_Object::Dump( ON_TextLog& dump ) const
   // Use Cast() if you need to get at the details.
   /*
   const ON_Geometry* pGeometry = ON_Geometry::Cast(m_object);
-  if ( pGeometry )
+  if ( pGeometry ) 
   {
     // m_object is some type of geometric object
-    if ( ON_Brep::Cast(m_object) )
+    if ( ON_Brep::Cast(m_object) ) 
     {
       // m_object is derived from ON_Brep
       const ON_Brep* brep = ON_Brep::Cast(m_object);
     }
-    else if ( pGeometry->HasBrepForm() )
+    else if ( pGeometry->HasBrepForm() ) 
     {
       // m_object is note derived from ON_Brep but its geometry can
       // be represented by an ON_Brep.
@@ -628,60 +825,60 @@ void ONX_Model_Object::Dump( ON_TextLog& dump ) const
       // you manage the ON_Brep returned by pGeometry->BrepForm();
       delete brep;
     }
-    else if ( ON_Curve::Cast(m_object) )
+    else if ( ON_Curve::Cast(m_object) ) 
     {
       // curve objects
       if ( ON_NurbsCurve::Cast(m_object) ) {
-        const ON_NurbsCurve* pCurve = ON_NurbsCurve::Cast(m_object);
+	const ON_NurbsCurve* pCurve = ON_NurbsCurve::Cast(m_object);
       }
       else if ( ON_ArcCurve::Cast(m_object) ) {
-        const ON_ArcCurve* pCurve = ON_ArcCurve::Cast(m_object);
+	const ON_ArcCurve* pCurve = ON_ArcCurve::Cast(m_object);
       }
       else if ( ON_CurveOnSurface::Cast(m_object) ) {
-        const ON_CurveOnSurface* pCurve = ON_CurveOnSurface::Cast(m_object);
+	const ON_CurveOnSurface* pCurve = ON_CurveOnSurface::Cast(m_object);
       }
       else if ( ON_BrepEdge::Cast(m_object) ) {
-        const ON_BrepEdge* pCurve = ON_BrepEdge::Cast(m_object);
+	const ON_BrepEdge* pCurve = ON_BrepEdge::Cast(m_object);
       }
       else if ( ON_LineCurve::Cast(m_object) ) {
-        const ON_LineCurve* pCurve = ON_LineCurve::Cast(m_object);
+	const ON_LineCurve* pCurve = ON_LineCurve::Cast(m_object);
       }
       else if ( ON_PolyCurve::Cast(m_object) ) {
-        const ON_PolyCurve* pCurve = ON_PolyCurve::Cast(m_object);
+	const ON_PolyCurve* pCurve = ON_PolyCurve::Cast(m_object);
       }
       else if ( ON_PolylineCurve::Cast(m_object) ) {
-        const ON_PolylineCurve* pCurve = ON_PolylineCurve::Cast(m_object);
+	const ON_PolylineCurve* pCurve = ON_PolylineCurve::Cast(m_object);
       }
       else if ( ON_CurveProxy::Cast(m_object) ) {
-        const ON_CurveProxy* pCurve = ON_CurveProxy::Cast(m_object);
+	const ON_CurveProxy* pCurve = ON_CurveProxy::Cast(m_object);
       }
       else {
-        const ON_Curve* pCurve = ON_Curve::Cast(m_object);
+	const ON_Curve* pCurve = ON_Curve::Cast(m_object);
       }
     }
-    else if ( ON_Surface::Cast(m_object) )
+    else if ( ON_Surface::Cast(m_object) ) 
     {
       // surface objects
       if ( ON_NurbsSurface::Cast(m_object) ) {
-        const ON_NurbsSurface* pSurface = ON_NurbsSurface::Cast(m_object);
+	const ON_NurbsSurface* pSurface = ON_NurbsSurface::Cast(m_object);
       }
       else if ( ON_PlaneSurface::Cast(m_object) ) {
-        const ON_PlaneSurface* pSurface = ON_PlaneSurface::Cast(m_object);
+	const ON_PlaneSurface* pSurface = ON_PlaneSurface::Cast(m_object);
       }
       else if ( ON_RevSurface::Cast(m_object) ) {
-        const ON_RevSurface* pSurface = ON_RevSurface::Cast(m_object);
+	const ON_RevSurface* pSurface = ON_RevSurface::Cast(m_object);
       }
       else if ( ON_BrepFace::Cast(m_object) ) {
-        const ON_BrepFace* pSurface = ON_BrepFace::Cast(m_object);
+	const ON_BrepFace* pSurface = ON_BrepFace::Cast(m_object);
       }
       else if ( ON_SurfaceProxy::Cast(m_object) ) {
-        const ON_SurfaceProxy* pSurface = ON_SurfaceProxy::Cast(m_object);
+	const ON_SurfaceProxy* pSurface = ON_SurfaceProxy::Cast(m_object);
       }
       else {
-        const ON_Surface* pSurface = ON_Surface::Cast(m_object);
+	const ON_Surface* pSurface = ON_Surface::Cast(m_object);
       }
     }
-    else if ( ON_Mesh::Cast(m_object) )
+    else if ( ON_Mesh::Cast(m_object) ) 
     {
       const ON_Mesh* pMesh = ON_Mesh::Cast(m_object);
     }
@@ -738,7 +935,7 @@ void ONX_Model::DumpUserDataTable( ON_TextLog& dump) const
     dump.Print("User Data Table %d:\n",i);
     dump.PushIndent();
     dump.Print("uuid = "); dump.Print(ud.m_uuid); dump.Print("\n");
-    ud.m_goo.Dump(dump);
+    ud.m_goo.Dump(dump);    
     dump.PopIndent();
   }
 }
@@ -836,19 +1033,19 @@ void ONX_Model::Dump( ON_TextLog& dump ) const
   dump.Print("\n");
 }
 
-static
-bool CheckForCRCErrors(
-          ON_BinaryArchive& archive,
-          ONX_Model& model,
-          ON_TextLog* error_log,
-          const char* sSection
-          )
+static 
+bool CheckForCRCErrors( 
+	  ON_BinaryArchive& archive, 
+	  ONX_Model& model,
+	  ON_TextLog* error_log,
+	  const char* sSection
+	  )
 {
   // returns true if new CRC errors are found
   bool rc = false;
   int new_crc_count = archive.BadCRCCount();
-
-  if ( model.m_crc_error_count != new_crc_count )
+  
+  if ( model.m_crc_error_count != new_crc_count ) 
   {
     if ( error_log )
     {
@@ -887,10 +1084,10 @@ int CIndexPair::CompareOldAndNewIndex( const CIndexPair* a, const CIndexPair* b 
 class CIndexMaps
 {
 public:
-  CIndexMaps( ONX_Model& model )
+  CIndexMaps( ONX_Model& model ) 
     : m_model(model),
-      m_bRemapLayerIndex(0),
-      m_bRemapMaterialIndex(0),
+      m_bRemapLayerIndex(0), 
+      m_bRemapMaterialIndex(0), 
       m_bRemapLinetypeIndex(0),
       m_bRemapGroupIndex(0),
       m_bRemapFontIndex(0),
@@ -910,7 +1107,7 @@ public:
       m_default_font_index(0),
       m_default_dimstyle_index(0),
       m_default_hatch_pattern_index(-1)
-  {
+  { 
     CreateHelper();
   }
 
@@ -959,7 +1156,7 @@ public:
 
   /*
   Description:
-    Low level tool to convert old_layer_index into a valid
+    Low level tool to convert old_layer_index into a valid 
     m_layer_table[] index.
   Parameters:
     old_layer_index - [in]
@@ -970,8 +1167,8 @@ public:
 
   /*
   Description:
-    Low level tool to convert old_material_index into a valid
-    m_material_table[] index  or -1 if the default material
+    Low level tool to convert old_material_index into a valid 
+    m_material_table[] index  or -1 if the default material 
     should be used.
   Parameters:
     old_material_index - [in]
@@ -982,8 +1179,8 @@ public:
 
   /*
   Description:
-    Low level tool to convert old_linetype_index into a valid
-    m_linetype_table[] index or -1 if the default linetype
+    Low level tool to convert old_linetype_index into a valid 
+    m_linetype_table[] index or -1 if the default linetype 
     should be used.
   Parameters:
     old_linetype_index - [in]
@@ -994,7 +1191,7 @@ public:
 
   /*
   Description:
-    Low level tool to convert old_group_index into a valid
+    Low level tool to convert old_group_index into a valid 
     m_group_table[] index or -1 if no conversion is possible.
   Parameters:
     old_group_index - [in]
@@ -1005,7 +1202,7 @@ public:
 
   /*
   Description:
-    Low level tool to convert old_font_index into a valid
+    Low level tool to convert old_font_index into a valid 
     m_font_table[] index or -1 if no conversion is possible.
   Parameters:
     old_font_index - [in]
@@ -1016,7 +1213,7 @@ public:
 
   /*
   Description:
-    Low level tool to convert old_dimstyle_index into a valid
+    Low level tool to convert old_dimstyle_index into a valid 
     m_dimstyle_table[] index or -1 if no conversion is possible.
   Parameters:
     old_dimstyle_index - [in]
@@ -1027,7 +1224,7 @@ public:
 
   /*
   Description:
-    Low level tool to convert old_hatch_pattern_index into a valid
+    Low level tool to convert old_hatch_pattern_index into a valid 
     m_hatch_pattern_table[] index or -1 if no conversion is possible.
   Parameters:
     old_hatch_pattern_index - [in]
@@ -1114,7 +1311,7 @@ int CIndexMaps::CreateHelper()
     }
   }
 
-  // texture maps are not referenced  by index
+  // texture maps are not referenced  by index 
   // so just set texture map index to match table
   // index
   m_model.m_mapping_id_index.Empty();
@@ -1339,10 +1536,10 @@ int CIndexMaps::CreateHelper()
       // ids match - this is good
       if ( ON_nil_uuid == light.m_light.m_light_id )
       {
-        // ids not set
-        ON_CreateUuid(light.m_light.m_light_id);
-        light.m_attributes.m_uuid = light.m_light.m_light_id;
-        change_count++;
+	// ids not set
+	ON_CreateUuid(light.m_light.m_light_id);
+	light.m_attributes.m_uuid = light.m_light.m_light_id;
+	change_count++;
       }
     }
     else if ( ON_nil_uuid == light.m_light.m_light_id )
@@ -1357,7 +1554,7 @@ int CIndexMaps::CreateHelper()
       light.m_attributes.m_uuid = light.m_light.m_light_id;
       change_count++;
     }
-    else
+    else 
     {
       // id's are different - the one on the light object wins
       light.m_attributes.m_uuid = light.m_light.m_light_id;
@@ -1458,60 +1655,66 @@ int CIndexMaps::RemapGeometryAttributes( ON_Object* object )
 {
   int change_count = 0;
 
-  switch (object ? object->ObjectType() : ON::unknown_object_type) {
-    case ON::layer_object:
-      {
-	ON_Layer* layer = ON_Layer::Cast(object);
-	if ( layer )
-	  change_count += RemapLayerAttributes(*layer);
-      }
-      break;
+  // use int in switch statement that is intentionally not
+  // handling most value of the ON::object_type enum.  Using
+  // and int quiets gcc's warnings.
+  int object_type = object ? object->ObjectType() : ON::unknown_object_type;
 
-    case ON::annotation_object:
-      {
-	ON_Annotation2* ann = ON_Annotation2::Cast(object);
-	if ( ann )
-	  {
-	    if (ann->IsText() )
-	      {
-		// ann->m_index is a font index
-		int old_font_index = ann->m_index;
-		int new_font_index = RemapFontIndex(old_font_index);
-		if ( new_font_index != old_font_index )
-		  {
-		    ann->m_index = new_font_index;
-		    change_count++;
-		  }
-	      }
-	    else
-	      {
-		// ann->m_index is a dimstyle index
-		int old_dimstyle_index = ann->m_index;
-		int new_dimstyle_index = RemapDimstyleIndex(old_dimstyle_index);
-		{
-		  if ( old_dimstyle_index != new_dimstyle_index )
-		    {
-		      ann->m_index = new_dimstyle_index;
-		      change_count++;
-		    }
-		}
-	      }
-	  }
-      }
-      break;
+  switch(object_type)
+  {
+  case ON::layer_object:
+    {
+      ON_Layer* layer = ON_Layer::Cast(object);
+      if ( layer )
+	change_count += RemapLayerAttributes(*layer);
+    }
+    break;
 
-    case ON::hatch_object:
+  case ON::annotation_object:
+    {
+      ON_Annotation2* ann = ON_Annotation2::Cast(object);
+      if ( ann )
       {
-	ON_Hatch* hatch_object = ON_Hatch::Cast(object);
-	if ( hatch_object )
+	if (ann->IsText() )
+	{
+	  // ann->m_index is a font index
+	  int old_font_index = ann->m_index;
+	  int new_font_index = RemapFontIndex(old_font_index);
+	  if ( new_font_index != old_font_index )
 	  {
-	    int old_hatch_pattern_index = hatch_object->PatternIndex();
-	    int new_hatch_pattern_index = RemapHatchPatternIndex(old_hatch_pattern_index);
-	    if ( old_hatch_pattern_index != new_hatch_pattern_index )
-	      hatch_object->SetPatternIndex(new_hatch_pattern_index);
+	    ann->m_index = new_font_index;
+	    change_count++;
 	  }
+	}
+	else
+	{
+	  // ann->m_index is a dimstyle index
+	  int old_dimstyle_index = ann->m_index;
+	  int new_dimstyle_index = RemapDimstyleIndex(old_dimstyle_index);
+	  {
+	    if ( old_dimstyle_index != new_dimstyle_index )
+	    {
+	      ann->m_index = new_dimstyle_index;
+	      change_count++;
+	    }
+	  }
+	}
       }
-      break;
+    }
+    break;
+
+  case ON::hatch_object:
+    {
+      ON_Hatch* hatch_object = ON_Hatch::Cast(object);
+      if ( hatch_object )
+      {
+	int old_hatch_pattern_index = hatch_object->PatternIndex();
+	int new_hatch_pattern_index = RemapHatchPatternIndex(old_hatch_pattern_index);
+	if ( old_hatch_pattern_index != new_hatch_pattern_index )
+	  hatch_object->SetPatternIndex(new_hatch_pattern_index);
+      }
+    }
+    break;
 
     default:
       /* unsupported */
@@ -1580,13 +1783,13 @@ int CIndexMaps::RemapModel()
 
 
 
-static int RemapIndexHelper(
-                int old_index,
-                bool bRemapIndex,
-                int count,
-                int default_index,
-                const ON_SimpleArray<CIndexPair>& imap
-                )
+static int RemapIndexHelper( 
+		int old_index, 
+		bool bRemapIndex, 
+		int count, 
+		int default_index,
+		const ON_SimpleArray<CIndexPair>& imap
+		)
 {
   int new_index = old_index;
   if ( bRemapIndex )
@@ -1606,78 +1809,78 @@ static int RemapIndexHelper(
 int CIndexMaps::RemapLayerIndex( int old_layer_index ) const
 {
   return RemapIndexHelper(
-              old_layer_index,
-              m_bRemapLayerIndex,
-              m_layer_count,
-              m_default_layer_index,
-              m_layer_map
-              );
+	      old_layer_index,
+	      m_bRemapLayerIndex,
+	      m_layer_count,
+	      m_default_layer_index,
+	      m_layer_map
+	      );
 }
 
 int CIndexMaps::RemapMaterialIndex( int old_material_index ) const
 {
   return RemapIndexHelper(
-              old_material_index,
-              m_bRemapMaterialIndex,
-              m_material_count,
-              m_default_material_index,
-              m_material_map
-              );
+	      old_material_index,
+	      m_bRemapMaterialIndex,
+	      m_material_count,
+	      m_default_material_index,
+	      m_material_map
+	      );
 }
 
 int CIndexMaps::RemapLinetypeIndex( int old_linetype_index ) const
 {
   return RemapIndexHelper(
-              old_linetype_index,
-              m_bRemapLinetypeIndex,
-              m_linetype_count,
-              m_default_linetype_index,
-              m_linetype_map
-              );
+	      old_linetype_index,
+	      m_bRemapLinetypeIndex,
+	      m_linetype_count,
+	      m_default_linetype_index,
+	      m_linetype_map
+	      );
 }
 
 int CIndexMaps::RemapGroupIndex( int old_group_index ) const
 {
   return RemapIndexHelper(
-              old_group_index,
-              m_bRemapGroupIndex,
-              m_group_count,
-              m_default_group_index,
-              m_group_map
-              );
+	      old_group_index,
+	      m_bRemapGroupIndex,
+	      m_group_count,
+	      m_default_group_index,
+	      m_group_map
+	      );
 }
 
 int CIndexMaps::RemapFontIndex( int old_font_index ) const
 {
   return RemapIndexHelper(
-              old_font_index,
-              m_bRemapFontIndex,
-              m_font_count,
-              m_default_font_index,
-              m_font_map
-              );
+	      old_font_index,
+	      m_bRemapFontIndex,
+	      m_font_count,
+	      m_default_font_index,
+	      m_font_map
+	      );
 }
 
 int CIndexMaps::RemapDimstyleIndex( int old_dimstyle_index ) const
 {
   return RemapIndexHelper(
-              old_dimstyle_index,
-              m_bRemapDimstyleIndex,
-              m_dimstyle_count,
-              m_default_dimstyle_index,
-              m_dimstyle_map
-              );
+	      old_dimstyle_index,
+	      m_bRemapDimstyleIndex,
+	      m_dimstyle_count,
+	      m_default_dimstyle_index,
+	      m_dimstyle_map
+	      );
 }
 
 int CIndexMaps::RemapHatchPatternIndex( int old_hatch_pattern_index ) const
 {
   return RemapIndexHelper(
-              old_hatch_pattern_index,
-              m_bRemapHatchPatternIndex,
-              m_hatch_pattern_count,
-              m_default_hatch_pattern_index,
-              m_hatch_pattern_map
-              );
+	      old_hatch_pattern_index,
+	      m_bRemapHatchPatternIndex,
+	      m_hatch_pattern_count,
+	      m_default_hatch_pattern_index,
+	      m_hatch_pattern_map
+	      );
 }
 
 int CIndexMaps::RemapRenderingAttributes( ON_RenderingAttributes& ra )
@@ -1686,7 +1889,7 @@ int CIndexMaps::RemapRenderingAttributes( ON_RenderingAttributes& ra )
   int old_material_index, new_material_index, i;
   for ( i = ra.m_materials.Count()-1; i >= 0; i-- )
   {
-    ON_MaterialRef& mr = ra.m_materials[i];
+    ON_MaterialRef& mr = ra.m_materials[i]; 
 
     old_material_index = mr.m_material_index;
     if ( old_material_index >= 0 )
@@ -1694,8 +1897,8 @@ int CIndexMaps::RemapRenderingAttributes( ON_RenderingAttributes& ra )
       new_material_index = RemapMaterialIndex(old_material_index);
       if ( old_material_index != new_material_index )
       {
-        mr.m_material_index = new_material_index;
-        change_count++;
+	mr.m_material_index = new_material_index;
+	change_count++;
       }
     }
     else
@@ -1707,8 +1910,8 @@ int CIndexMaps::RemapRenderingAttributes( ON_RenderingAttributes& ra )
       new_material_index = RemapMaterialIndex(old_material_index);
       if ( old_material_index != new_material_index )
       {
-        mr.m_material_backface_index = new_material_index;
-        change_count++;
+	mr.m_material_backface_index = new_material_index;
+	change_count++;
       }
     }
     else
@@ -1717,48 +1920,48 @@ int CIndexMaps::RemapRenderingAttributes( ON_RenderingAttributes& ra )
     if ( -1 == mr.m_material_index || mr.m_material_index >= m_material_count )
     {
       if ( ON_nil_uuid == mr.m_material_id )
-        mr.m_material_index = -1;
+	mr.m_material_index = -1;
       else if ( !m_model.m_material_id_index.FindUuid(mr.m_material_id,&mr.m_material_index) )
-        mr.m_material_index = -1;
+	mr.m_material_index = -1;
     }
     else if ( m_model.m_material_table[mr.m_material_index].m_material_id != mr.m_material_id )
     {
       new_material_index = -1;
       if (    !ON_UuidIsNil(mr.m_material_id)
-           && m_model.m_material_id_index.FindUuid(mr.m_material_id,&new_material_index)
-           && new_material_index >= 0
-           && new_material_index < m_material_count
-         )
+	   && m_model.m_material_id_index.FindUuid(mr.m_material_id,&new_material_index) 
+	   && new_material_index >= 0 
+	   && new_material_index < m_material_count
+	 )
       {
-        mr.m_material_index = new_material_index;
+	mr.m_material_index = new_material_index;
       }
       else
       {
-        mr.m_material_id = m_model.m_material_table[mr.m_material_index].m_material_id;
+	mr.m_material_id = m_model.m_material_table[mr.m_material_index].m_material_id;
       }
     }
 
     if ( -1 == mr.m_material_backface_index || mr.m_material_backface_index >= m_material_count )
     {
       if ( ON_nil_uuid == mr.m_material_backface_id )
-        mr.m_material_backface_index = -1;
+	mr.m_material_backface_index = -1;
       else if ( !m_model.m_material_id_index.FindUuid(mr.m_material_backface_id,&mr.m_material_backface_index) )
-        mr.m_material_backface_index = -1;
+	mr.m_material_backface_index = -1;
     }
     else if ( m_model.m_material_table[mr.m_material_backface_index].m_material_id != mr.m_material_backface_id )
     {
       new_material_index = -1;
       if (   !ON_UuidIsNil(mr.m_material_backface_id)
-           && m_model.m_material_id_index.FindUuid(mr.m_material_backface_id,&new_material_index)
-           && new_material_index >= 0
-           && new_material_index < m_material_count
-          )
+	   && m_model.m_material_id_index.FindUuid(mr.m_material_backface_id,&new_material_index) 
+	   && new_material_index >= 0 
+	   && new_material_index < m_material_count
+	  )
       {
-        mr.m_material_backface_index = new_material_index;
+	mr.m_material_backface_index = new_material_index;
       }
       else
       {
-        mr.m_material_backface_id = m_model.m_material_table[mr.m_material_backface_index].m_material_id;
+	mr.m_material_backface_id = m_model.m_material_table[mr.m_material_backface_index].m_material_id;
       }
     }
 
@@ -1847,23 +2050,23 @@ int CIndexMaps::RemapObjectAttributes( ON_3dmObjectAttributes& a )
       int new_group_index = RemapGroupIndex(old_group_index);
       if ( new_group_index < 0 )
       {
-        group_list.Remove(i);
-        bUpdateGroupList = true;
-        change_count++;
+	group_list.Remove(i);
+	bUpdateGroupList = true;
+	change_count++;
       }
       else if ( old_group_index != new_group_index )
       {
-        group_list[i] = new_group_index;
-        bUpdateGroupList = true;
-        change_count++;
+	group_list[i] = new_group_index;
+	bUpdateGroupList = true;
+	change_count++;
       }
-    }
+    } 
 
     if ( bUpdateGroupList || group_list.Count() == 0 )
     {
       a.RemoveFromAllGroups();
       for( i = 0; i < group_list.Count(); i++ )
-        a.AddToGroup(group_list[i]);
+	a.AddToGroup(group_list[i]);
     }
   }
 
@@ -1887,7 +2090,7 @@ void ONX_Model::Polish()
   imaps.RemapModel();
 }
 
-bool ONX_Model::Read(
+bool ONX_Model::Read( 
        const char* filename,
        ON_TextLog* error_log
        )
@@ -1907,7 +2110,7 @@ bool ONX_Model::Read(
   return rc;
 }
 
-bool ONX_Model::Read(
+bool ONX_Model::Read( 
        const wchar_t* filename,
        ON_TextLog* error_log
        )
@@ -1927,7 +2130,7 @@ bool ONX_Model::Read(
   return rc;
 }
 
-bool ONX_Model::Read(
+bool ONX_Model::Read( 
        ON_BinaryArchive& archive,
        ON_TextLog* error_log
        )
@@ -1974,28 +2177,28 @@ bool ONX_Model::Read(
   {
     // At the moment no bitmaps are embedded so this table is empty
     ON_Bitmap* pBitmap = NULL;
-    for( count = 0; true; count++ )
+    for( count = 0; true; count++ ) 
     {
       pBitmap = NULL;
       rc = archive.Read3dmBitmap(&pBitmap);
       if ( rc==0 )
-        break; // end of bitmap table
-      if ( rc < 0 )
+	break; // end of bitmap table
+      if ( rc < 0 ) 
       {
-        if ( error_log)
-        {
-          error_log->Print("ERROR: Corrupt bitmap found. (ON_BinaryArchive::Read3dmBitmap() < 0.)\n");
-          error_count++;
-          if ( error_count > max_error_count )
-            return false;
-          error_log->Print("-- Attempting to continue.\n");
-        }
-        return_code = false;
+	if ( error_log) 
+	{
+	  error_log->Print("ERROR: Corrupt bitmap found. (ON_BinaryArchive::Read3dmBitmap() < 0.)\n");
+	  error_count++;
+	  if ( error_count > max_error_count )
+	    return false;
+	  error_log->Print("-- Attempting to continue.\n");
+	}
+	return_code = false;
       }
       m_bitmap_table.Append(pBitmap);
     }
 
-    // If BeginRead3dmBitmapTable() returns true,
+    // If BeginRead3dmBitmapTable() returns true, 
     // then you MUST call EndRead3dmBitmapTable().
     if ( !archive.EndRead3dmBitmapTable() )
     {
@@ -2005,9 +2208,9 @@ bool ONX_Model::Read(
     if ( CheckForCRCErrors( archive, *this, error_log, "bitmap table" ) )
       return_code = false;
   }
-  else
+  else     
   {
-    if ( error_log)
+    if ( error_log) 
     {
       error_log->Print("WARNING: Missing or corrupt bitmap table. (ON_BinaryArchive::BeginRead3dmBitmapTable() returned false.)\n");
       error_log->Print("-- Attempting to continue.\n");
@@ -2021,22 +2224,22 @@ bool ONX_Model::Read(
   if ( archive.BeginRead3dmTextureMappingTable() )
   {
     ON_TextureMapping* pTextureMapping = NULL;
-    for( count = 0; true; count++ )
+    for( count = 0; true; count++ ) 
     {
       rc = archive.Read3dmTextureMapping(&pTextureMapping);
       if ( rc==0 )
-        break; // end of texture_mapping table
-      if ( rc < 0 )
+	break; // end of texture_mapping table
+      if ( rc < 0 ) 
       {
-        if ( error_log)
-        {
-          error_log->Print("ERROR: Corrupt render texture_mapping found. (ON_BinaryArchive::Read3dmTextureMapping() < 0.)\n");
-          error_count++;
-          if ( error_count > max_error_count )
-            return false;
-          error_log->Print("-- Attempting to continue.\n");
-        }
-        continue;
+	if ( error_log) 
+	{
+	  error_log->Print("ERROR: Corrupt render texture_mapping found. (ON_BinaryArchive::Read3dmTextureMapping() < 0.)\n");
+	  error_count++;
+	  if ( error_count > max_error_count )
+	    return false;
+	  error_log->Print("-- Attempting to continue.\n");
+	}
+	continue;
       }
       ON_UserDataHolder ud;
       ud.MoveUserDataFrom(*pTextureMapping);
@@ -2046,8 +2249,8 @@ bool ONX_Model::Read(
       delete pTextureMapping;
       pTextureMapping = NULL;
     }
-
-    // If BeginRead3dmTextureMappingTable() returns true,
+    
+    // If BeginRead3dmTextureMappingTable() returns true, 
     // then you MUST call EndRead3dmTextureMappingTable().
     if ( !archive.EndRead3dmTextureMappingTable() )
     {
@@ -2057,7 +2260,7 @@ bool ONX_Model::Read(
     if ( CheckForCRCErrors( archive, *this, error_log, "render texture_mapping table" ) )
       return_code = false;
   }
-  else
+  else     
   {
     if ( error_log)
     {
@@ -2072,23 +2275,23 @@ bool ONX_Model::Read(
   if ( archive.BeginRead3dmMaterialTable() )
   {
     ON_Material* pMaterial = NULL;
-    for( count = 0; true; count++ )
+    for( count = 0; true; count++ ) 
     {
       rc = archive.Read3dmMaterial(&pMaterial);
       if ( rc==0 )
-        break; // end of material table
-      if ( rc < 0 )
+	break; // end of material table
+      if ( rc < 0 ) 
       {
-        if ( error_log)
-        {
-          error_log->Print("ERROR: Corrupt render material found. (ON_BinaryArchive::Read3dmMaterial() < 0.)\n");
-          error_count++;
-          if ( error_count > max_error_count )
-            return false;
-          error_log->Print("-- Attempting to continue.\n");
-        }
-        pMaterial = new ON_Material; // use default
-        pMaterial->m_material_index = count;
+	if ( error_log) 
+	{
+	  error_log->Print("ERROR: Corrupt render material found. (ON_BinaryArchive::Read3dmMaterial() < 0.)\n");
+	  error_count++;
+	  if ( error_count > max_error_count )
+	    return false;
+	  error_log->Print("-- Attempting to continue.\n");
+	}
+	pMaterial = new ON_Material; // use default
+	pMaterial->m_material_index = count;
       }
       ON_UserDataHolder ud;
       ud.MoveUserDataFrom(*pMaterial);
@@ -2097,8 +2300,8 @@ bool ONX_Model::Read(
       delete pMaterial;
       pMaterial = NULL;
     }
-
-    // If BeginRead3dmMaterialTable() returns true,
+    
+    // If BeginRead3dmMaterialTable() returns true, 
     // then you MUST call EndRead3dmMaterialTable().
     if ( !archive.EndRead3dmMaterialTable() )
     {
@@ -2108,7 +2311,7 @@ bool ONX_Model::Read(
     if ( CheckForCRCErrors( archive, *this, error_log, "render material table" ) )
       return_code = false;
   }
-  else
+  else     
   {
     if ( error_log)
     {
@@ -2123,23 +2326,23 @@ bool ONX_Model::Read(
   if ( archive.BeginRead3dmLinetypeTable() )
   {
     ON_Linetype* pLinetype = NULL;
-    for( count = 0; true; count++ )
+    for( count = 0; true; count++ ) 
     {
       rc = archive.Read3dmLinetype(&pLinetype);
       if ( rc==0 )
-        break; // end of linetype table
-      if ( rc < 0 )
+	break; // end of linetype table
+      if ( rc < 0 ) 
       {
-        if ( error_log)
-        {
-          error_log->Print("ERROR: Corrupt render linetype found. (ON_BinaryArchive::Read3dmLinetype() < 0.)\n");
-          error_count++;
-          if ( error_count > max_error_count )
-            return false;
-          error_log->Print("-- Attempting to continue.\n");
-        }
-        pLinetype = new ON_Linetype; // use default
-        pLinetype->m_linetype_index = count;
+	if ( error_log) 
+	{
+	  error_log->Print("ERROR: Corrupt render linetype found. (ON_BinaryArchive::Read3dmLinetype() < 0.)\n");
+	  error_count++;
+	  if ( error_count > max_error_count )
+	    return false;
+	  error_log->Print("-- Attempting to continue.\n");
+	}
+	pLinetype = new ON_Linetype; // use default
+	pLinetype->m_linetype_index = count;
       }
       ON_UserDataHolder ud;
       ud.MoveUserDataFrom(*pLinetype);
@@ -2148,8 +2351,8 @@ bool ONX_Model::Read(
       delete pLinetype;
       pLinetype = NULL;
     }
-
-    // If BeginRead3dmLinetypeTable() returns true,
+    
+    // If BeginRead3dmLinetypeTable() returns true, 
     // then you MUST call EndRead3dmLinetypeTable().
     if ( !archive.EndRead3dmLinetypeTable() )
     {
@@ -2159,7 +2362,7 @@ bool ONX_Model::Read(
     if ( CheckForCRCErrors( archive, *this, error_log, "render linetype table" ) )
       return_code = false;
   }
-  else
+  else     
   {
     if ( error_log)
     {
@@ -2173,24 +2376,24 @@ bool ONX_Model::Read(
   if ( archive.BeginRead3dmLayerTable() )
   {
     ON_Layer* pLayer = NULL;
-    for( count = 0; true; count++ )
+    for( count = 0; true; count++ ) 
     {
       pLayer = NULL;
       rc = archive.Read3dmLayer(&pLayer);
       if ( rc==0 )
-        break; // end of layer table
-      if ( rc < 0 )
+	break; // end of layer table
+      if ( rc < 0 ) 
       {
-        if ( error_log)
-        {
-          error_log->Print("ERROR: Corrupt layer found. (ON_BinaryArchive::Read3dmLayer() < 0.)\n");
-          error_count++;
-          if ( error_count > max_error_count )
-            return false;
-          error_log->Print("-- Attempting to continue.\n");
-        }
-        pLayer = new ON_Layer; // use default
-        pLayer->m_layer_index = count;
+	if ( error_log)
+	{
+	  error_log->Print("ERROR: Corrupt layer found. (ON_BinaryArchive::Read3dmLayer() < 0.)\n");
+	  error_count++;
+	  if ( error_count > max_error_count )
+	    return false;
+	  error_log->Print("-- Attempting to continue.\n");
+	}
+	pLayer = new ON_Layer; // use default
+	pLayer->m_layer_index = count;
       }
       ON_UserDataHolder ud;
       ud.MoveUserDataFrom(*pLayer);
@@ -2199,8 +2402,8 @@ bool ONX_Model::Read(
       delete pLayer;
       pLayer = NULL;
     }
-
-    // If BeginRead3dmLayerTable() returns true,
+    
+    // If BeginRead3dmLayerTable() returns true, 
     // then you MUST call EndRead3dmLayerTable().
     if ( !archive.EndRead3dmLayerTable() )
     {
@@ -2210,9 +2413,9 @@ bool ONX_Model::Read(
     if ( CheckForCRCErrors( archive, *this, error_log, "layer table" ) )
       return_code = false;
   }
-  else
+  else     
   {
-    if ( error_log)
+    if ( error_log) 
     {
       error_log->Print("WARNING: Missing or corrupt layer table. (ON_BinaryArchive::BeginRead3dmLayerTable() returned false.)\n");
       error_log->Print("-- Attempting to continue.\n");
@@ -2224,23 +2427,23 @@ bool ONX_Model::Read(
   if ( archive.BeginRead3dmGroupTable() )
   {
     ON_Group* pGroup = NULL;
-    for( count = 0; true; count++ )
+    for( count = 0; true; count++ ) 
     {
       rc = archive.Read3dmGroup(&pGroup);
       if ( rc==0 )
-        break; // end of group table
-      if ( rc < 0 )
+	break; // end of group table
+      if ( rc < 0 ) 
       {
-        if ( error_log)
-        {
-          error_log->Print("ERROR: Corrupt group found. (ON_BinaryArchive::Read3dmGroup() < 0.)\n");
-          error_count++;
-          if ( error_count > max_error_count )
-            return false;
-          error_log->Print("-- Attempting to continue.\n");
-        }
-        pGroup = new ON_Group; // use default
-        pGroup->m_group_index = -1;
+	if ( error_log)
+	{
+	  error_log->Print("ERROR: Corrupt group found. (ON_BinaryArchive::Read3dmGroup() < 0.)\n");
+	  error_count++;
+	  if ( error_count > max_error_count )
+	    return false;
+	  error_log->Print("-- Attempting to continue.\n");
+	}
+	pGroup = new ON_Group; // use default
+	pGroup->m_group_index = -1;
       }
       ON_UserDataHolder ud;
       ud.MoveUserDataFrom(*pGroup);
@@ -2249,8 +2452,8 @@ bool ONX_Model::Read(
       delete pGroup;
       pGroup = NULL;
     }
-
-    // If BeginRead3dmGroupTable() returns true,
+    
+    // If BeginRead3dmGroupTable() returns true, 
     // then you MUST call EndRead3dmGroupTable().
     if ( !archive.EndRead3dmGroupTable() )
     {
@@ -2260,9 +2463,9 @@ bool ONX_Model::Read(
     if ( CheckForCRCErrors( archive, *this, error_log, "group table" ) )
       return_code = false;
   }
-  else
+  else     
   {
-    if ( error_log)
+    if ( error_log) 
     {
       error_log->Print("WARNING: Missing or corrupt group table. (ON_BinaryArchive::BeginRead3dmGroupTable() returned false.)\n");
       error_log->Print("-- Attempting to continue.\n");
@@ -2274,23 +2477,23 @@ bool ONX_Model::Read(
   if ( archive.BeginRead3dmFontTable() )
   {
     ON_Font* pFont = NULL;
-    for( count = 0; true; count++ )
+    for( count = 0; true; count++ ) 
     {
       rc = archive.Read3dmFont(&pFont);
       if ( rc==0 )
-        break; // end of font table
-      if ( rc < 0 )
+	break; // end of font table
+      if ( rc < 0 ) 
       {
-        if ( error_log)
-        {
-          error_log->Print("ERROR: Corrupt font found. (ON_BinaryArchive::Read3dmFont() < 0.)\n");
-          error_count++;
-          if ( error_count > max_error_count )
-            return false;
-          error_log->Print("-- Attempting to continue.\n");
-        }
-        pFont = new ON_Font; // use default
-        pFont->m_font_index = -1;
+	if ( error_log)
+	{
+	  error_log->Print("ERROR: Corrupt font found. (ON_BinaryArchive::Read3dmFont() < 0.)\n");
+	  error_count++;
+	  if ( error_count > max_error_count )
+	    return false;
+	  error_log->Print("-- Attempting to continue.\n");
+	}
+	pFont = new ON_Font; // use default
+	pFont->m_font_index = -1;
       }
       ON_UserDataHolder ud;
       ud.MoveUserDataFrom(*pFont);
@@ -2299,8 +2502,8 @@ bool ONX_Model::Read(
       delete pFont;
       pFont = NULL;
     }
-
-    // If BeginRead3dmFontTable() returns true,
+    
+    // If BeginRead3dmFontTable() returns true, 
     // then you MUST call EndRead3dmFontTable().
     if ( !archive.EndRead3dmFontTable() )
     {
@@ -2310,7 +2513,7 @@ bool ONX_Model::Read(
     if ( CheckForCRCErrors( archive, *this, error_log, "font table" ) )
       return_code = false;
   }
-  else
+  else     
   {
     if ( error_log)
     {
@@ -2324,23 +2527,23 @@ bool ONX_Model::Read(
   if ( archive.BeginRead3dmDimStyleTable() )
   {
     ON_DimStyle* pDimStyle = NULL;
-    for( count = 0; true; count++ )
+    for( count = 0; true; count++ ) 
     {
       rc = archive.Read3dmDimStyle(&pDimStyle);
       if ( rc==0 )
-        break; // end of dimstyle table
-      if ( rc < 0 )
+	break; // end of dimstyle table
+      if ( rc < 0 ) 
       {
-        if ( error_log)
-        {
-          error_log->Print("ERROR: Corrupt dimstyle found. (ON_BinaryArchive::Read3dmDimStyle() < 0.)\n");
-          error_count++;
-          if ( error_count > max_error_count )
-            return false;
-          error_log->Print("-- Attempting to continue.\n");
-        }
-        pDimStyle = new ON_DimStyle; // use default
-        pDimStyle->m_dimstyle_index = count;
+	if ( error_log)
+	{
+	  error_log->Print("ERROR: Corrupt dimstyle found. (ON_BinaryArchive::Read3dmDimStyle() < 0.)\n");
+	  error_count++;
+	  if ( error_count > max_error_count )
+	    return false;
+	  error_log->Print("-- Attempting to continue.\n");
+	}
+	pDimStyle = new ON_DimStyle; // use default
+	pDimStyle->m_dimstyle_index = count;
       }
       ON_UserDataHolder ud;
       ud.MoveUserDataFrom(*pDimStyle);
@@ -2349,8 +2552,8 @@ bool ONX_Model::Read(
       delete pDimStyle;
       pDimStyle = NULL;
     }
-
-    // If BeginRead3dmDimStyleTable() returns true,
+    
+    // If BeginRead3dmDimStyleTable() returns true, 
     // then you MUST call EndRead3dmDimStyleTable().
     if ( !archive.EndRead3dmDimStyleTable() )
     {
@@ -2360,7 +2563,7 @@ bool ONX_Model::Read(
     if ( CheckForCRCErrors( archive, *this, error_log, "dimstyle table" ) )
       return_code = false;
   }
-  else
+  else     
   {
     if ( error_log)
     {
@@ -2375,23 +2578,23 @@ bool ONX_Model::Read(
   {
     ON_Light* pLight = NULL;
     ON_3dmObjectAttributes object_attributes;
-    for( count = 0; true; count++ )
+    for( count = 0; true; count++ ) 
     {
       object_attributes.Default();
       rc = archive.Read3dmLight(&pLight,&object_attributes);
       if ( rc==0 )
-        break; // end of light table
-      if ( rc < 0 )
+	break; // end of light table
+      if ( rc < 0 ) 
       {
-        if ( error_log)
-        {
-          error_log->Print("ERROR: Corrupt render light found. (ON_BinaryArchive::Read3dmLight() < 0.)\n");
-          error_count++;
-          if ( error_count > max_error_count )
-            return false;
-          error_log->Print("-- Attempting to continue.\n");
-        }
-        continue;
+	if ( error_log)
+	{
+	  error_log->Print("ERROR: Corrupt render light found. (ON_BinaryArchive::Read3dmLight() < 0.)\n");
+	  error_count++;
+	  if ( error_count > max_error_count )
+	    return false;
+	  error_log->Print("-- Attempting to continue.\n");
+	}
+	continue;
       }
       ONX_Model_RenderLight& light = m_light_table.AppendNew();
       ON_UserDataHolder ud;
@@ -2402,8 +2605,8 @@ bool ONX_Model::Read(
       delete pLight;
       pLight = NULL;
     }
-
-    // If BeginRead3dmLightTable() returns true,
+    
+    // If BeginRead3dmLightTable() returns true, 
     // then you MUST call EndRead3dmLightTable().
     if ( !archive.EndRead3dmLightTable() )
     {
@@ -2413,7 +2616,7 @@ bool ONX_Model::Read(
     if ( CheckForCRCErrors( archive, *this, error_log, "render light table" ) )
       return_code = false;
   }
-  else
+  else     
   {
     if ( error_log)
     {
@@ -2427,23 +2630,23 @@ bool ONX_Model::Read(
   if ( archive.BeginRead3dmHatchPatternTable() )
   {
     ON_HatchPattern* pHatchPattern = NULL;
-    for( count = 0; true; count++ )
+    for( count = 0; true; count++ ) 
     {
       rc = archive.Read3dmHatchPattern(&pHatchPattern);
       if ( rc==0 )
-        break; // end of hatchpattern table
-      if ( rc < 0 )
+	break; // end of hatchpattern table
+      if ( rc < 0 ) 
       {
-        if ( error_log)
-        {
-          error_log->Print("ERROR: Corrupt hatchpattern found. (ON_BinaryArchive::Read3dmHatchPattern() < 0.)\n");
-          error_count++;
-          if ( error_count > max_error_count )
-            return false;
-          error_log->Print("-- Attempting to continue.\n");
-        }
-        pHatchPattern = new ON_HatchPattern; // use default
-        pHatchPattern->m_hatchpattern_index = count;
+	if ( error_log)
+	{
+	  error_log->Print("ERROR: Corrupt hatchpattern found. (ON_BinaryArchive::Read3dmHatchPattern() < 0.)\n");
+	  error_count++;
+	  if ( error_count > max_error_count )
+	    return false;
+	  error_log->Print("-- Attempting to continue.\n");
+	}
+	pHatchPattern = new ON_HatchPattern; // use default
+	pHatchPattern->m_hatchpattern_index = count;
       }
       ON_UserDataHolder ud;
       ud.MoveUserDataFrom(*pHatchPattern);
@@ -2452,8 +2655,8 @@ bool ONX_Model::Read(
       delete pHatchPattern;
       pHatchPattern = NULL;
     }
-
-    // If BeginRead3dmHatchPatternTable() returns true,
+    
+    // If BeginRead3dmHatchPatternTable() returns true, 
     // then you MUST call EndRead3dmHatchPatternTable().
     if ( !archive.EndRead3dmHatchPatternTable() )
     {
@@ -2463,7 +2666,7 @@ bool ONX_Model::Read(
     if ( CheckForCRCErrors( archive, *this, error_log, "hatchpattern table" ) )
       return_code = false;
   }
-  else
+  else     
   {
     if ( error_log)
     {
@@ -2477,22 +2680,22 @@ bool ONX_Model::Read(
   if ( archive.BeginRead3dmInstanceDefinitionTable() )
   {
     ON_InstanceDefinition* pIDef = NULL;
-    for( count = 0; true; count++ )
+    for( count = 0; true; count++ ) 
     {
       rc = archive.Read3dmInstanceDefinition(&pIDef);
       if ( rc==0 )
-        break; // end of instance definition table
-      if ( rc < 0 )
+	break; // end of instance definition table
+      if ( rc < 0 ) 
       {
-        if ( error_log)
-        {
-          error_log->Print("ERROR: Corrupt instance definition found. (ON_BinaryArchive::Read3dmInstanceDefinition() < 0.)\n");
-          error_count++;
-          if ( error_count > max_error_count )
-            return false;
-          error_log->Print("-- Attempting to continue.\n");
-        }
-        continue;
+	if ( error_log)
+	{
+	  error_log->Print("ERROR: Corrupt instance definition found. (ON_BinaryArchive::Read3dmInstanceDefinition() < 0.)\n");
+	  error_count++;
+	  if ( error_count > max_error_count )
+	    return false;
+	  error_log->Print("-- Attempting to continue.\n");
+	}
+	continue;
       }
       ON_UserDataHolder ud;
       ud.MoveUserDataFrom(*pIDef);
@@ -2500,8 +2703,8 @@ bool ONX_Model::Read(
       ud.MoveUserDataTo(*m_idef_table.Last(),false);
       delete pIDef;
     }
-
-    // If BeginRead3dmInstanceDefinitionTable() returns true,
+    
+    // If BeginRead3dmInstanceDefinitionTable() returns true, 
     // then you MUST call EndRead3dmInstanceDefinitionTable().
     if ( !archive.EndRead3dmInstanceDefinitionTable() )
     {
@@ -2511,7 +2714,7 @@ bool ONX_Model::Read(
     if ( CheckForCRCErrors( archive, *this, error_log, "instance definition table" ) )
       return_code = false;
   }
-  else
+  else     
   {
     if ( error_log)
     {
@@ -2526,61 +2729,61 @@ bool ONX_Model::Read(
   // STEP 15: REQUIRED - Read object (geometry and annotation) table
   if ( archive.BeginRead3dmObjectTable() )
   {
-    // optional filter made by setting ON::object_type bits
+    // optional filter made by setting ON::object_type bits 
     // For example, if you just wanted to just read points and meshes, you would use
     // object_filter = ON::point_object | ON::mesh_object;
-    int object_filter = 0;
+    int object_filter = 0; 
 
-    for( count = 0; true; count++ )
+    for( count = 0; true; count++ ) 
     {
       ON_Object* pObject = NULL;
       ON_3dmObjectAttributes attributes;
       rc = archive.Read3dmObject(&pObject,&attributes,object_filter);
       if ( rc == 0 )
-        break; // end of object table
-      if ( rc < 0 )
+	break; // end of object table
+      if ( rc < 0 ) 
       {
-        if ( error_log)
-        {
-          error_log->Print("ERROR: Object table entry %d is corrupt. (ON_BinaryArchive::Read3dmObject() < 0.)\n",count);
-          error_count++;
-          if ( error_count > max_error_count )
-            return false;
-          error_log->Print("-- Attempting to continue.\n");
-        }
-        continue;
+	if ( error_log)
+	{
+	  error_log->Print("ERROR: Object table entry %d is corrupt. (ON_BinaryArchive::Read3dmObject() < 0.)\n",count);
+	  error_count++;
+	  if ( error_count > max_error_count )
+	    return false;
+	  error_log->Print("-- Attempting to continue.\n");
+	}
+	continue;
       }
-      if ( m_crc_error_count != archive.BadCRCCount() )
+      if ( m_crc_error_count != archive.BadCRCCount() ) 
       {
-        if ( error_log)
-        {
-          error_log->Print("ERROR: Object table entry %d is corrupt. (CRC errors).\n",count);
-          error_log->Print("-- Attempting to continue.\n");
-        }
-        m_crc_error_count = archive.BadCRCCount();
+	if ( error_log)
+	{
+	  error_log->Print("ERROR: Object table entry %d is corrupt. (CRC errors).\n",count);
+	  error_log->Print("-- Attempting to continue.\n");
+	}
+	m_crc_error_count = archive.BadCRCCount();
       }
-      if ( pObject )
+      if ( pObject ) 
       {
-        ONX_Model_Object& mo = m_object_table.AppendNew();
-        mo.m_object = pObject;
-        mo.m_bDeleteObject = true;
-        mo.m_attributes = attributes;
+	ONX_Model_Object& mo = m_object_table.AppendNew();
+	mo.m_object = pObject;
+	mo.m_bDeleteObject = true;
+	mo.m_attributes = attributes;
       }
       else
       {
-        if ( error_log)
-        {
-          if ( rc == 2 )
-            error_log->Print("WARNING: Skipping object table entry %d because it's filtered.\n",count);
-          else if ( rc == 3 )
-            error_log->Print("WARNING: Skipping object table entry %d because it's newer than this code.  Update your OpenNURBS toolkit.\n",count);
-          else
-            error_log->Print("WARNING: Skipping object table entry %d for unknown reason.\n",count);
-        }
+	if ( error_log)
+	{
+	  if ( rc == 2 )
+	    error_log->Print("WARNING: Skipping object table entry %d because it's filtered.\n",count);
+	  else if ( rc == 3 )
+	    error_log->Print("WARNING: Skipping object table entry %d because it's newer than this code.  Update your OpenNURBS toolkit.\n",count);
+	  else
+	    error_log->Print("WARNING: Skipping object table entry %d for unknown reason.\n",count);
+	}
       }
     }
-
-    // If BeginRead3dmObjectTable() returns true,
+    
+    // If BeginRead3dmObjectTable() returns true, 
     // then you MUST call EndRead3dmObjectTable().
     if ( !archive.EndRead3dmObjectTable() )
     {
@@ -2590,7 +2793,7 @@ bool ONX_Model::Read(
     if ( CheckForCRCErrors( archive, *this, error_log, "object table" ) )
       return_code = false;
   }
-  else
+  else     
   {
     if ( error_log)
     {
@@ -2603,47 +2806,47 @@ bool ONX_Model::Read(
   // STEP 16: Read history table
   if ( archive.BeginRead3dmHistoryRecordTable() )
   {
-    for( count = 0; true; count++ )
+    for( count = 0; true; count++ ) 
     {
       ON_HistoryRecord* pHistoryRecord = NULL;
       rc = archive.Read3dmHistoryRecord(pHistoryRecord);
       if ( rc == 0 )
-        break; // end of history record table
-      if ( rc < 0 )
+	break; // end of history record table
+      if ( rc < 0 ) 
       {
-        if ( error_log)
-        {
-          error_log->Print("ERROR: History record table entry %d is corrupt. (ON_BinaryArchive::Read3dmHistoryRecord() < 0.)\n",count);
-          error_count++;
-          if ( error_count > max_error_count )
-            return false;
-          error_log->Print("-- Attempting to continue.\n");
-        }
-        continue;
+	if ( error_log)
+	{
+	  error_log->Print("ERROR: History record table entry %d is corrupt. (ON_BinaryArchive::Read3dmHistoryRecord() < 0.)\n",count);
+	  error_count++;
+	  if ( error_count > max_error_count )
+	    return false;
+	  error_log->Print("-- Attempting to continue.\n");
+	}
+	continue;
       }
-      if ( m_crc_error_count != archive.BadCRCCount() )
+      if ( m_crc_error_count != archive.BadCRCCount() ) 
       {
-        if ( error_log)
-        {
-          error_log->Print("ERROR: History record table entry %d is corrupt. (CRC errors).\n",count);
-          error_log->Print("-- Attempting to continue.\n");
-        }
-        m_crc_error_count = archive.BadCRCCount();
+	if ( error_log)
+	{
+	  error_log->Print("ERROR: History record table entry %d is corrupt. (CRC errors).\n",count);
+	  error_log->Print("-- Attempting to continue.\n");
+	}
+	m_crc_error_count = archive.BadCRCCount();
       }
-      if ( pHistoryRecord )
+      if ( pHistoryRecord ) 
       {
-        m_history_record_table.Append(pHistoryRecord);
+	m_history_record_table.Append(pHistoryRecord);
       }
       else
       {
-        if ( error_log)
-        {
-          error_log->Print("WARNING: Skipping history record table entry %d for unknown reason.\n",count);
-        }
+	if ( error_log)
+	{
+	  error_log->Print("WARNING: Skipping history record table entry %d for unknown reason.\n",count);
+	}
       }
     }
-
-    // If BeginRead3dmHistoryRecordTable() returns true,
+    
+    // If BeginRead3dmHistoryRecordTable() returns true, 
     // then you MUST call EndRead3dmHistoryRecordTable().
     if ( !archive.EndRead3dmHistoryRecordTable() )
     {
@@ -2653,7 +2856,7 @@ bool ONX_Model::Read(
     if ( CheckForCRCErrors( archive, *this, error_log, "history record table" ) )
       return_code = false;
   }
-  else
+  else     
   {
     if ( error_log)
     {
@@ -2680,7 +2883,7 @@ bool ONX_Model::Read(
       break;
     }
 
-    // If BeginRead3dmObjectTable() returns true,
+    // If BeginRead3dmObjectTable() returns true, 
     // then you MUST call EndRead3dmUserTable().
     if ( !archive.EndRead3dmUserTable() )
     {
@@ -2692,21 +2895,21 @@ bool ONX_Model::Read(
   // STEP 18: OPTIONAL - check for end mark
   if ( !archive.Read3dmEndMark(&m_file_length) )
   {
-    if ( archive.Archive3dmVersion() != 1 )
+    if ( archive.Archive3dmVersion() != 1 ) 
     {
       // some v1 files are missing end-of-archive markers
       if ( error_log) error_log->Print("ERROR: ON_BinaryArchive::Read3dmEndMark(&m_file_length) returned false.\n");
     }
   }
 
-  // Remap layer, material, linetype, font, dimstyle, hatch pattern, etc.,
+  // Remap layer, material, linetype, font, dimstyle, hatch pattern, etc., 
   // indices so the correspond to the model's table array index.
   Polish();
 
   return return_code;
 }
 
-bool ONX_Model::Write(
+bool ONX_Model::Write( 
        const char* filename,
        int version,
        const char* sStartSectionComment,
@@ -2730,7 +2933,7 @@ bool ONX_Model::Write(
   return rc;
 }
 
-bool ONX_Model::Write(
+bool ONX_Model::Write( 
        const wchar_t* filename,
        int version,
        const char* sStartSectionComment,
@@ -2752,7 +2955,7 @@ bool ONX_Model::Write(
 }
 
 
-bool ONX_Model::Write(
+bool ONX_Model::Write( 
        ON_BinaryArchive& archive,
        int version,
        const char* sStartSectionComment,
@@ -2773,7 +2976,7 @@ bool ONX_Model::Write(
     // version must be 2, 3, or 4.
     version = 4;
     if ( error_log) error_log->Print("ONX_Model::Write version parameter = %d; it must be 2, 3, or 4.\n",
-                    version);
+		    version);
   }
 
   if ( !archive.WriteMode() )
@@ -2781,7 +2984,7 @@ bool ONX_Model::Write(
     // You passed in a bogus archive.  You must pass ON::write3dm to the
     // archive constructor.
     if ( error_log) error_log->Print("ONX_Model::Write archive.Mode() is not ON::write3dm.\n"
-                    "See ONX_Model::Write example in the header file.\n");
+		    "See ONX_Model::Write example in the header file.\n");
     return false;
   }
 
@@ -2793,9 +2996,9 @@ bool ONX_Model::Write(
   {
     // make sure your archive was created with ON::write3dm mode.
     if ( error_log) error_log->Print("ONX_Model::Write archive.Write3dmStartSection() failed.\n"
-                    "Your archive is not properly initialized\n"
-                    "(make sure you passed ON::write3dm to the constructor),\n"
-                    "a file is locked, a disk is locked, or something along those lines.\n");
+		    "Your archive is not properly initialized\n"
+		    "(make sure you passed ON::write3dm to the constructor),\n"
+		    "a file is locked, a disk is locked, or something along those lines.\n");
     return false;
   }
 
@@ -2805,8 +3008,8 @@ bool ONX_Model::Write(
   {
     // make sure m_properties is valid
     if ( error_log) error_log->Print("ONX_Model::Write archive.Write3dmProperties() failed.\n"
-                    "Your m_properties information is not valid or basic file writing failed.\n"
-                    );
+		    "Your m_properties information is not valid or basic file writing failed.\n"
+		    );
     return false;
   }
 
@@ -2816,7 +3019,7 @@ bool ONX_Model::Write(
   {
     // make sure m_settings is valid
     if ( error_log) error_log->Print("ONX_Model::Write archive.Write3dmSettings() failed.\n"
-                    "Your m_settings information is not valid or basic file writing failed.\n");
+		    "Your m_settings information is not valid or basic file writing failed.\n");
     return false;
   }
 
@@ -2857,7 +3060,7 @@ bool ONX_Model::Write(
       ok = archive.Write3dmTextureMapping(m_mapping_table[i]);
       if ( !ok )
       {
-        if ( error_log) error_log->Print("ONX_Model::Write archive.Write3dmTextureMapping(m_mapping_table[%d]) failed.\n",i);
+	if ( error_log) error_log->Print("ONX_Model::Write archive.Write3dmTextureMapping(m_mapping_table[%d]) failed.\n",i);
       }
     }
     if ( !archive.EndWrite3dmTextureMappingTable() )
@@ -2907,7 +3110,7 @@ bool ONX_Model::Write(
       ok = archive.Write3dmLinetype(m_linetype_table[i]);
       if ( !ok )
       {
-        if ( error_log) error_log->Print("ONX_Model::Write archive.Write3dmLinetype(m_linetype_table[%d]) failed.\n",i);
+	if ( error_log) error_log->Print("ONX_Model::Write archive.Write3dmLinetype(m_linetype_table[%d]) failed.\n",i);
       }
     }
     if ( !archive.EndWrite3dmLinetypeTable() )
@@ -2983,7 +3186,7 @@ bool ONX_Model::Write(
       ok = archive.Write3dmFont(m_font_table[i]);
       if ( !ok )
       {
-        if ( error_log) error_log->Print("ONX_Model::Write archive.Write3dmFont(m_font_table[%d]) failed.\n",i);
+	if ( error_log) error_log->Print("ONX_Model::Write archive.Write3dmFont(m_font_table[%d]) failed.\n",i);
       }
     }
     if ( !archive.EndWrite3dmFontTable() )
@@ -3011,7 +3214,7 @@ bool ONX_Model::Write(
       ok = archive.Write3dmDimStyle(m_dimstyle_table[i]);
       if ( !ok )
       {
-        if ( error_log) error_log->Print("ONX_Model::Write archive.Write3dmDimStyle(m_dimstyle_table[%d]) failed.\n",i);
+	if ( error_log) error_log->Print("ONX_Model::Write archive.Write3dmDimStyle(m_dimstyle_table[%d]) failed.\n",i);
       }
     }
     if ( !archive.EndWrite3dmDimStyleTable() )
@@ -3063,7 +3266,7 @@ bool ONX_Model::Write(
       ok = archive.Write3dmHatchPattern(m_hatch_pattern_table[i]);
       if ( !ok )
       {
-        if ( error_log) error_log->Print("ONX_Model::Write archive.Write3dmHatchPattern(m_hatch_pattern_table[%d]) failed.\n",i);
+	if ( error_log) error_log->Print("ONX_Model::Write archive.Write3dmHatchPattern(m_hatch_pattern_table[%d]) failed.\n",i);
       }
     }
     if ( !archive.EndWrite3dmHatchPatternTable() )
@@ -3091,7 +3294,7 @@ bool ONX_Model::Write(
       ok = archive.Write3dmInstanceDefinition(m_idef_table[i]);
       if ( !ok )
       {
-        if ( error_log) error_log->Print("ONX_Model::Write archive.Write3dmInstanceDefinition(m_IDef_table[%d]) failed.\n",i);
+	if ( error_log) error_log->Print("ONX_Model::Write archive.Write3dmInstanceDefinition(m_IDef_table[%d]) failed.\n",i);
       }
     }
     if ( !archive.EndWrite3dmInstanceDefinitionTable() )
@@ -3118,7 +3321,7 @@ bool ONX_Model::Write(
       ok = archive.Write3dmObject(*m_object_table[i].m_object,&m_object_table[i].m_attributes);
       if ( !ok )
       {
-        if ( error_log) error_log->Print("ONX_Model::Write archive.Write3dmObject(m_IDef_table[%d]) failed.\n",i);
+	if ( error_log) error_log->Print("ONX_Model::Write archive.Write3dmObject(m_IDef_table[%d]) failed.\n",i);
       }
     }
   }
@@ -3144,7 +3347,7 @@ bool ONX_Model::Write(
     {
       const ON_HistoryRecord* history_record = m_history_record_table[i];
       if( history_record)
-        ok = archive.Write3dmHistoryRecord( *history_record );
+	ok = archive.Write3dmHistoryRecord( *history_record );
     }
     if( !archive.EndWrite3dmHistoryRecordTable() )
     {
@@ -3164,19 +3367,19 @@ bool ONX_Model::Write(
       ok = archive.BeginWrite3dmUserTable(ud.m_uuid);
       if ( !ok )
       {
-        // make sure m_settings is valid
-        if ( error_log) error_log->Print("ONX_Model::Write archive.BeginWrite3dmUserTable(m_userdata_table[%d].m_uuid) failed.\n",i);
-        return false;
+	// make sure m_settings is valid
+	if ( error_log) error_log->Print("ONX_Model::Write archive.BeginWrite3dmUserTable(m_userdata_table[%d].m_uuid) failed.\n",i);
+	return false;
       }
       ok = archive.Write3dmAnonymousUserTable(ud.m_goo);
       if ( !ok )
       {
-        if ( error_log) error_log->Print("ONX_Model::Write archive.Write3dmAnonymousUserTable(m_userdata_table[%d].m_goo) failed.\n",i);
+	if ( error_log) error_log->Print("ONX_Model::Write archive.Write3dmAnonymousUserTable(m_userdata_table[%d].m_goo) failed.\n",i);
       }
       if ( !archive.EndWrite3dmUserTable() )
       {
-        if ( error_log) error_log->Print("ONX_Model::Write archive.EndWrite3dmUserTable() failed on m_userdata_table[&d].\n",i);
-        ok = false;
+	if ( error_log) error_log->Print("ONX_Model::Write archive.EndWrite3dmUserTable() failed on m_userdata_table[&d].\n",i);
+	ok = false;
       }
     }
   }
@@ -3211,31 +3414,31 @@ int ONX_Model::ObjectIndex( ON_UUID object_uuid ) const
     {
       if ( object_count != m_object_id_index.Count() )
       {
-        // rebuild m__object_uuid_index[]
-        ON_UuidIndexList* p = const_cast< ON_UuidIndexList* >(&m_object_id_index);
-        p->Empty();
-        p->Reserve(object_count);
-        for ( i = 0; i < object_count; i++ )
-        {
-          ON_UUID id = m_object_table[i].m_attributes.m_uuid;
-          if ( ON_UuidIsNil(id) )
-          {
-            ON_ERROR("Nil object ids in model");
-            ON_CreateUuid(id);
-            *(const_cast<ON_UUID*>(&m_object_table[i].m_attributes.m_uuid)) = id;
-          }
-          if ( !p->AddUuidIndex(id,i,true) )
-          {
-            ON_ERROR("Duplicate object ids in model");
-            ON_CreateUuid(id);
-            *(const_cast<ON_UUID*>(&m_object_table[i].m_attributes.m_uuid)) = id;
-            p->AddUuidIndex(id,i,false);
-          }
-        }
+	// rebuild m__object_uuid_index[]
+	ON_UuidIndexList* p = const_cast< ON_UuidIndexList* >(&m_object_id_index);
+	p->Empty();
+	p->Reserve(object_count);
+	for ( i = 0; i < object_count; i++ )
+	{
+	  ON_UUID id = m_object_table[i].m_attributes.m_uuid;
+	  if ( ON_UuidIsNil(id) )
+	  {
+	    ON_ERROR("Nil object ids in model");
+	    ON_CreateUuid(id);
+	    *(const_cast<ON_UUID*>(&m_object_table[i].m_attributes.m_uuid)) = id;
+	  }
+	  if ( !p->AddUuidIndex(id,i,true) )
+	  {
+	    ON_ERROR("Duplicate object ids in model");
+	    ON_CreateUuid(id);
+	    *(const_cast<ON_UUID*>(&m_object_table[i].m_attributes.m_uuid)) = id;
+	    p->AddUuidIndex(id,i,false);
+	  }
+	}
       }
 
       if ( !m_object_id_index.FindUuid(object_uuid,&object_index) )
-        object_index = -1;
+	object_index = -1;
     }
   }
 
@@ -3253,33 +3456,33 @@ int ONX_Model::IDefIndex( ON_UUID idef_uuid ) const
     int i, idef_count = m_idef_table.Count();
     if ( idef_count > 0 )
     {
-      if ( idef_count != m_idef_id_index.Count() )
+      if ( idef_count != m_idef_id_index.Count() )      
       {
-        // rebuild m__idef_uuid_index[]
-        ON_UuidIndexList* p = const_cast<ON_UuidIndexList*>(&m_idef_id_index);
-        p->Empty();
-        p->Reserve(idef_count);
-        for ( i = 0; i < idef_count; i++ )
-        {
-          ON_UUID id = m_idef_table[i].m_uuid;
-          if ( ON_UuidIsNil(id) )
-          {
-            ON_ERROR("Nil idef ids in model");
-            ON_CreateUuid(id);
-            (const_cast<ON_InstanceDefinition*>(&m_idef_table[i]))->m_uuid = id;
-          }
-          if ( !p->AddUuidIndex(id,i,true) )
-          {
-            ON_ERROR("Duplicate idef ids in model");
-            ON_CreateUuid(id);
-            (const_cast<ON_InstanceDefinition*>(&m_idef_table[i]))->m_uuid = id;
-            p->AddUuidIndex(id,i,false);
-          }
-        }
+	// rebuild m__idef_uuid_index[]
+	ON_UuidIndexList* p = const_cast<ON_UuidIndexList*>(&m_idef_id_index);
+	p->Empty();
+	p->Reserve(idef_count);
+	for ( i = 0; i < idef_count; i++ )
+	{
+	  ON_UUID id = m_idef_table[i].m_uuid;
+	  if ( ON_UuidIsNil(id) )
+	  {
+	    ON_ERROR("Nil idef ids in model");
+	    ON_CreateUuid(id);
+	    (const_cast<ON_InstanceDefinition*>(&m_idef_table[i]))->m_uuid = id;
+	  }
+	  if ( !p->AddUuidIndex(id,i,true) )
+	  {
+	    ON_ERROR("Duplicate idef ids in model");
+	    ON_CreateUuid(id);
+	    (const_cast<ON_InstanceDefinition*>(&m_idef_table[i]))->m_uuid = id;
+	    p->AddUuidIndex(id,i,false);
+	  }
+	}
       }
 
       if ( !m_idef_id_index.FindUuid(idef_uuid,&idef_index) )
-        idef_index = -1;
+	idef_index = -1;
     }
   }
 
@@ -3300,8 +3503,8 @@ int ONX_Model::IDefIndex( const wchar_t* idef_name ) const
     {
       if ( 0 == on_wcsicmp(idef_name, m_idef_table[i].Name() ) )
       {
-        idef_index = i;
-        break;
+	idef_index = i;
+	break;
       }
     }
   }
@@ -3322,9 +3525,9 @@ void ONX_Model::GetUnusedIDefName( ON_wString& idef_name ) const
 }
 
 int ONX_Model::UsesIDef(
-        const ON_InstanceRef& iref,
-        ON_UUID idef_uuid
-        ) const
+	const ON_InstanceRef& iref,
+	ON_UUID idef_uuid
+	) const
 {
   // get id of idef we are looking for
   if ( ON_UuidIsNil(idef_uuid) )
@@ -3361,9 +3564,9 @@ int ONX_Model::UsesIDef(
       pNestedIRef = ON_InstanceRef::Cast(obj.m_object);
       if ( 0 != pNestedIRef )
       {
-        if ( 0 == ON_UuidCompare( idef_uuid, pNestedIRef->m_instance_definition_uuid ) )
-          return 2;
-        iref_list.Append(pNestedIRef);
+	if ( 0 == ON_UuidCompare( idef_uuid, pNestedIRef->m_instance_definition_uuid ) )
+	  return 2;
+	iref_list.Append(pNestedIRef);
       }
     }
   }
@@ -3378,29 +3581,29 @@ int ONX_Model::UsesIDef(
     {
       pNestedIRef = iref_list[i];
       if ( 0 == pNestedIRef )
-        continue;
+	continue;
       k = IDefIndex( pNestedIRef->m_instance_definition_uuid );
       if ( k < 0 )
-        continue;
+	continue;
       const ON_InstanceDefinition& nested_idef = m_idef_table[k];
       for ( j = 0; j < nested_idef.m_object_uuid.Count(); j++ )
       {
-        obj_index = ObjectIndex(nested_idef.m_object_uuid[j]);
-        if ( obj_index < 0 )
-          continue;
-        const ONX_Model_Object& obj = m_object_table[obj_index];
-        if ( 0 == obj.m_object )
-          continue;
-        if ( obj.m_object->ObjectType() == ON::instance_reference )
-        {
-          pNestedIRef = ON_InstanceRef::Cast(obj.m_object);
-          if ( 0 != pNestedIRef )
-          {
-            if ( 0 == ON_UuidCompare( idef_uuid, pNestedIRef->m_instance_definition_uuid ) )
-              return depth;
-            iref_list.Append(pNestedIRef);
-          }
-        }
+	obj_index = ObjectIndex(nested_idef.m_object_uuid[j]);
+	if ( obj_index < 0 )
+	  continue;
+	const ONX_Model_Object& obj = m_object_table[obj_index];
+	if ( 0 == obj.m_object )
+	  continue;
+	if ( obj.m_object->ObjectType() == ON::instance_reference )
+	{
+	  pNestedIRef = ON_InstanceRef::Cast(obj.m_object);
+	  if ( 0 != pNestedIRef )
+	  {
+	    if ( 0 == ON_UuidCompare( idef_uuid, pNestedIRef->m_instance_definition_uuid ) )
+	      return depth;
+	    iref_list.Append(pNestedIRef);
+	  }
+	}
       }
     }
   }
@@ -3422,8 +3625,8 @@ int ONX_Model::LayerIndex( const wchar_t* layer_name ) const
     {
       if ( 0 == on_wcsicmp(layer_name, m_layer_table[i].LayerName() ) )
       {
-        layer_index = i;
-        break;
+	layer_index = i;
+	break;
       }
     }
   }
@@ -3444,14 +3647,14 @@ void ONX_Model::GetUnusedLayerName( ON_wString& layer_name ) const
   return;
 }
 
-static int AuditTextureMappingTableHelper(
+static int AuditTextureMappingTableHelper( 
       ONX_Model& model,
       bool bAttemptRepair,
       int* repair_count,
-      ON_TextLog* text_log
+      ON_TextLog* text_log 
       )
 {
-  if ( repair_count )
+  if ( repair_count ) 
     *repair_count = 0;
   int i, count = model.m_mapping_table.Count();
   for ( i = 0; i < count; i++ )
@@ -3461,21 +3664,24 @@ static int AuditTextureMappingTableHelper(
     {
       if ( text_log )
       {
-        text_log->Print("m_mapping_table[%d].m_mapping_index == %d (should be %d)\n",
-                        i,mapping.m_mapping_index,i);
+	text_log->Print("m_mapping_table[%d].m_mapping_index == %d (should be %d)\n",
+			i,mapping.m_mapping_index,i);
       }
       if ( bAttemptRepair )
       {
-        mapping.m_mapping_index = i;
-        text_log->PushIndent();
-        text_log->Print(L"Repaired.\n");
-        text_log->PopIndent();
-        if ( repair_count )
-          *repair_count += 1;
+	mapping.m_mapping_index = i;
+	if ( text_log )
+	{
+	  text_log->PushIndent();
+	  text_log->Print(L"Repaired.\n");
+	  text_log->PopIndent();
+	}
+	if ( repair_count )
+	  *repair_count += 1;
       }
       else
       {
-        return -1;
+	return -1;
       }
     }
     if ( !mapping.IsValid(text_log) )
@@ -3485,14 +3691,14 @@ static int AuditTextureMappingTableHelper(
 }
 
 
-static int AuditGroupTableHelper(
+static int AuditGroupTableHelper( 
       ONX_Model& model,
       bool bAttemptRepair,
       int* repair_count,
-      ON_TextLog* text_log
+      ON_TextLog* text_log 
       )
 {
-  if ( repair_count )
+  if ( repair_count ) 
     *repair_count = 0;
   int i, count = model.m_group_table.Count();
   for ( i = 0; i < count; i++ )
@@ -3502,21 +3708,24 @@ static int AuditGroupTableHelper(
     {
       if ( text_log )
       {
-        text_log->Print("m_group_table[%d].m_group_index == %d (should be %d)\n",
-                        i,group.m_group_index,i);
+	text_log->Print("m_group_table[%d].m_group_index == %d (should be %d)\n",
+			i,group.m_group_index,i);
       }
       if ( bAttemptRepair )
       {
-        group.m_group_index = i;
-        text_log->PushIndent();
-        text_log->Print(L"Repaired.\n");
-        text_log->PopIndent();
-        if ( repair_count )
-          *repair_count += 1;
+	group.m_group_index = i;
+	if ( text_log )
+	{
+	  text_log->PushIndent();
+	  text_log->Print(L"Repaired.\n");
+	  text_log->PopIndent();
+	}
+	if ( repair_count )
+	  *repair_count += 1;
       }
       else
       {
-        return -1;
+	return -1;
       }
     }
     if ( !group.IsValid(text_log) )
@@ -3526,14 +3735,14 @@ static int AuditGroupTableHelper(
 }
 
 
-static int AuditFontTableHelper(
+static int AuditFontTableHelper( 
       ONX_Model& model,
       bool bAttemptRepair,
       int* repair_count,
-      ON_TextLog* text_log
+      ON_TextLog* text_log 
       )
 {
-  if ( repair_count )
+  if ( repair_count ) 
     *repair_count = 0;
   int i, count = model.m_font_table.Count();
   for ( i = 0; i < count; i++ )
@@ -3543,21 +3752,24 @@ static int AuditFontTableHelper(
     {
       if ( text_log )
       {
-        text_log->Print("m_font_table[%d].m_font_index == %d (should be %d)\n",
-                        i,font.m_font_index,i);
+	text_log->Print("m_font_table[%d].m_font_index == %d (should be %d)\n",
+			i,font.m_font_index,i);
       }
       if ( bAttemptRepair )
       {
-        font.m_font_index = i;
-        text_log->PushIndent();
-        text_log->Print(L"Repaired.\n");
-        text_log->PopIndent();
-        if ( repair_count )
-          *repair_count += 1;
+	font.m_font_index = i;
+	if ( text_log )
+	{
+	  text_log->PushIndent();
+	  text_log->Print(L"Repaired.\n");
+	  text_log->PopIndent();
+	}
+	if ( repair_count )
+	  *repair_count += 1;
       }
       else
       {
-        return -1;
+	return -1;
       }
     }
     if ( !font.IsValid(text_log) )
@@ -3567,14 +3779,14 @@ static int AuditFontTableHelper(
 }
 
 
-static int AuditDimStyleTableHelper(
+static int AuditDimStyleTableHelper( 
       ONX_Model& model,
       bool bAttemptRepair,
       int* repair_count,
-      ON_TextLog* text_log
+      ON_TextLog* text_log 
       )
 {
-  if ( repair_count )
+  if ( repair_count ) 
     *repair_count = 0;
   int i, count = model.m_dimstyle_table.Count();
   for ( i = 0; i < count; i++ )
@@ -3584,21 +3796,24 @@ static int AuditDimStyleTableHelper(
     {
       if ( text_log )
       {
-        text_log->Print("m_dimstyle_table[%d].m_dimstyle_index == %d (should be %d)\n",
-                        i,dimstyle.m_dimstyle_index,i);
+	text_log->Print("m_dimstyle_table[%d].m_dimstyle_index == %d (should be %d)\n",
+			i,dimstyle.m_dimstyle_index,i);
       }
       if ( bAttemptRepair )
       {
-        dimstyle.m_dimstyle_index = i;
-        text_log->PushIndent();
-        text_log->Print(L"Repaired.\n");
-        text_log->PopIndent();
-        if ( repair_count )
-          *repair_count += 1;
+	dimstyle.m_dimstyle_index = i;
+	if ( text_log )
+	{
+	  text_log->PushIndent();
+	  text_log->Print(L"Repaired.\n");
+	  text_log->PopIndent();
+	}
+	if ( repair_count )
+	  *repair_count += 1;
       }
       else
       {
-        return -1;
+	return -1;
       }
     }
     if ( !dimstyle.IsValid(text_log) )
@@ -3608,14 +3823,14 @@ static int AuditDimStyleTableHelper(
 }
 
 
-static int AuditHatchPatternTableHelper(
+static int AuditHatchPatternTableHelper( 
       ONX_Model& model,
       bool bAttemptRepair,
       int* repair_count,
-      ON_TextLog* text_log
+      ON_TextLog* text_log 
       )
 {
-  if ( repair_count )
+  if ( repair_count ) 
     *repair_count = 0;
   int i, count = model.m_hatch_pattern_table.Count();
   for ( i = 0; i < count; i++ )
@@ -3625,21 +3840,24 @@ static int AuditHatchPatternTableHelper(
     {
       if ( text_log )
       {
-        text_log->Print("m_hatch_pattern_table[%d].m_hatchpattern_index == %d (should be %d)\n",
-                        i,hatchpattern.m_hatchpattern_index,i);
+	text_log->Print("m_hatch_pattern_table[%d].m_hatchpattern_index == %d (should be %d)\n",
+			i,hatchpattern.m_hatchpattern_index,i);
       }
       if ( bAttemptRepair )
       {
-        hatchpattern.m_hatchpattern_index = i;
-        text_log->PushIndent();
-        text_log->Print(L"Repaired.\n");
-        text_log->PopIndent();
-        if ( repair_count )
-          *repair_count += 1;
+	hatchpattern.m_hatchpattern_index = i;
+	if ( text_log )
+	{
+	  text_log->PushIndent();
+	  text_log->Print(L"Repaired.\n");
+	  text_log->PopIndent();
+	}
+	if ( repair_count )
+	  *repair_count += 1;
       }
       else
       {
-        return -1;
+	return -1;
       }
     }
     if ( !hatchpattern.IsValid(text_log) )
@@ -3656,7 +3874,7 @@ static int AuditObjectAttributesHelper(
       int parent_index,
       bool bAttemptRepair,
       int* repair_count,
-      ON_TextLog* text_log
+      ON_TextLog* text_log 
       )
 {
   int repcount = 0;
@@ -3676,17 +3894,17 @@ static int AuditObjectAttributesHelper(
     if ( bAttemptRepair )
     {
       layer_index = model.m_settings.m_current_layer_index;
-      if ( layer_index < 0 || layer_index >= model.m_layer_table.Count()
-         )
+      if ( layer_index < 0 || layer_index >= model.m_layer_table.Count() 
+	 )
       {
-        layer_index = 0;
+	layer_index = 0;
       }
       if ( layer_index >= 0 && layer_index < model.m_layer_table.Count() )
       {
-        repcount++;
-        attributes.m_layer_index = layer_index;
-        if ( text_log )
-          text_log->Print(" Repaired.");
+	repcount++;
+	attributes.m_layer_index = layer_index;
+	if ( text_log )
+	  text_log->Print(" Repaired.");
       }
     }
     if ( text_log )
@@ -3711,7 +3929,7 @@ static int AuditObjectAttributesHelper(
       repcount++;
       attributes.m_linetype_index = linetype_index;
       if ( text_log )
-        text_log->Print(" Repaired.");
+	text_log->Print(" Repaired.");
     }
     if ( text_log )
     {
@@ -3735,7 +3953,7 @@ static int AuditObjectAttributesHelper(
       repcount++;
       attributes.m_material_index = material_index;
       if ( text_log )
-        text_log->Print(" Repaired.");
+	text_log->Print(" Repaired.");
     }
     if ( text_log )
     {
@@ -3751,15 +3969,15 @@ static int AuditObjectAttributesHelper(
 
 
 
-static int AuditLightTableHelper(
+static int AuditLightTableHelper( 
       ONX_Model& model,
       bool bAttemptRepair,
       int* repair_count,
-      ON_TextLog* text_log
+      ON_TextLog* text_log 
       )
 {
   int rc = 0;
-  if ( repair_count )
+  if ( repair_count ) 
     *repair_count = 0;
   int i, count = model.m_light_table.Count();
   for ( i = 0; i < count; i++ )
@@ -3770,21 +3988,24 @@ static int AuditLightTableHelper(
     {
       if ( text_log )
       {
-        text_log->Print("m_light_table[%d].m_light_index == %d (should be %d)\n",
-                        i,light.m_light_index,i);
+	text_log->Print("m_light_table[%d].m_light_index == %d (should be %d)\n",
+			i,light.m_light_index,i);
       }
       if ( bAttemptRepair )
       {
-        light.m_light_index = i;
-        text_log->PushIndent();
-        text_log->Print(L"Repaired.\n");
-        text_log->PopIndent();
-        if ( repair_count )
-          *repair_count += 1;
+	light.m_light_index = i;
+	if ( text_log )
+	{
+	  text_log->PushIndent();
+	  text_log->Print(L"Repaired.\n");
+	  text_log->PopIndent();
+	}
+	if ( repair_count )
+	  *repair_count += 1;
       }
       else
       {
-        return -1;
+	return -1;
       }
     }
 
@@ -3794,7 +4015,7 @@ static int AuditLightTableHelper(
       i,
       bAttemptRepair,
       repair_count,
-      text_log
+      text_log 
       );
 
     if ( attrc && 0 == rc )
@@ -3803,21 +4024,21 @@ static int AuditLightTableHelper(
     if ( !light.IsValid(text_log) )
     {
       if ( 0 == rc )
-        rc = 1;
+	rc = 1;
     }
 
   }
   return rc;
 }
 
-static int AuditMaterialTableHelper(
+static int AuditMaterialTableHelper( 
       ONX_Model& model,
       bool bAttemptRepair,
       int* repair_count,
-      ON_TextLog* text_log
+      ON_TextLog* text_log 
       )
 {
-  if ( repair_count )
+  if ( repair_count ) 
     *repair_count = 0;
   int i, count = model.m_material_table.Count();
   for ( i = 0; i < count; i++ )
@@ -3827,21 +4048,24 @@ static int AuditMaterialTableHelper(
     {
       if ( text_log )
       {
-        text_log->Print("m_material_table[%d].MaterialIndex() == %d (should be %d)\n",
-                        i,mat.MaterialIndex(),i);
+	text_log->Print("m_material_table[%d].MaterialIndex() == %d (should be %d)\n",
+			i,mat.MaterialIndex(),i);
       }
       if ( bAttemptRepair )
       {
-        mat.SetMaterialIndex(i);
-        text_log->PushIndent();
-        text_log->Print(L"Repaired.\n");
-        text_log->PopIndent();
-        if ( repair_count )
-          *repair_count += 1;
+	mat.SetMaterialIndex(i);
+	if ( text_log )
+	{
+	  text_log->PushIndent();
+	  text_log->Print(L"Repaired.\n");
+	  text_log->PopIndent();
+	}
+	if ( repair_count )
+	  *repair_count += 1;
       }
       else
       {
-        return -1;
+	return -1;
       }
     }
     if ( !mat.IsValid(text_log) )
@@ -3850,14 +4074,14 @@ static int AuditMaterialTableHelper(
   return 0;
 }
 
-static int AuditLinetypeTableHelper(
+static int AuditLinetypeTableHelper( 
       ONX_Model& model,
       bool bAttemptRepair,
       int* repair_count,
-      ON_TextLog* text_log
+      ON_TextLog* text_log 
       )
 {
-  if ( repair_count )
+  if ( repair_count ) 
     *repair_count = 0;
   int i, count = model.m_linetype_table.Count();
   for ( i = 0; i < count; i++ )
@@ -3867,21 +4091,24 @@ static int AuditLinetypeTableHelper(
     {
       if ( text_log )
       {
-        text_log->Print("m_linetype_table[%d].LinetypeIndex() == %d (should be %d)\n",
-                        i,lt.LinetypeIndex(),i);
+	text_log->Print("m_linetype_table[%d].LinetypeIndex() == %d (should be %d)\n",
+			i,lt.LinetypeIndex(),i);
       }
       if ( bAttemptRepair )
       {
-        lt.SetLinetypeIndex(i);
-        text_log->PushIndent();
-        text_log->Print(L"Repaired.\n");
-        text_log->PopIndent();
-        if ( repair_count )
-          *repair_count += 1;
+	lt.SetLinetypeIndex(i);
+	if ( text_log )
+	{
+	  text_log->PushIndent();
+	  text_log->Print(L"Repaired.\n");
+	  text_log->PopIndent();
+	}
+	if ( repair_count )
+	  *repair_count += 1;
       }
       else
       {
-        return -1;
+	return -1;
       }
     }
     if ( !lt.IsValid(text_log) )
@@ -3890,15 +4117,15 @@ static int AuditLinetypeTableHelper(
   return 0;
 }
 
-static int AuditLayerTableHelper(
+static int AuditLayerTableHelper( 
       ONX_Model& model,
       bool bAttemptRepair,
       int* repair_count,
-      ON_TextLog* text_log
+      ON_TextLog* text_log 
       )
 {
   int rc = 0;
-  if ( repair_count )
+  if ( repair_count ) 
     *repair_count = 0;
   int i, count = model.m_layer_table.Count();
   if ( count == 0 && (model.m_object_table.Count()>0 || model.m_light_table.Count()>0))
@@ -3910,24 +4137,24 @@ static int AuditLayerTableHelper(
     {
       if ( text_log )
       {
-        text_log->Print("m_layer_table[%d].LayerIndex() == %d (should be %d)\n",
-                        i,layer.LayerIndex(),i);
+	text_log->Print("m_layer_table[%d].LayerIndex() == %d (should be %d)\n",
+			i,layer.LayerIndex(),i);
       }
       if ( bAttemptRepair )
       {
-        layer.SetLayerIndex(i);
-        if ( text_log )
-        {
-          text_log->PushIndent();
-          text_log->Print(L"Repaired.\n");
-          text_log->PopIndent();
-        }
-        if ( repair_count )
-          *repair_count += 1;
+	layer.SetLayerIndex(i);
+	if ( text_log )
+	{
+	  text_log->PushIndent();
+	  text_log->Print(L"Repaired.\n");
+	  text_log->PopIndent();
+	}
+	if ( repair_count )
+	  *repair_count += 1;
       }
       else
       {
-        rc = -1;
+	rc = -1;
       }
     }
 
@@ -3937,23 +4164,26 @@ static int AuditLayerTableHelper(
     {
       if ( text_log )
       {
-        text_log->Print("m_layer_table[%d].LayerName() is empty\n",i);
+	text_log->Print("m_layer_table[%d].LayerName() is empty\n",i);
       }
       if ( bAttemptRepair )
       {
-        ON_wString name;
-        model.GetUnusedLayerName( name );
-        layer.SetLayerName( name );
-        text_log->PushIndent();
-        text_log->Print(L"Repaired.\n");
-        text_log->PopIndent();
-        if ( repair_count )
-          *repair_count += 1;
-        layer_name = layer.LayerName();
+	ON_wString name;
+	model.GetUnusedLayerName( name );
+	layer.SetLayerName( name );
+	if ( text_log )
+	{
+	  text_log->PushIndent();
+	  text_log->Print(L"Repaired.\n");
+	  text_log->PopIndent();
+	}
+	if ( repair_count )
+	  *repair_count += 1;
+	layer_name = layer.LayerName();
       }
       else if ( rc == 0 )
       {
-        rc = 2;
+	rc = 2;
       }
     }
 
@@ -3961,23 +4191,26 @@ static int AuditLayerTableHelper(
     {
       if ( text_log )
       {
-        text_log->Print("m_layer_table[%d].LayerName() is not valid\n",i);
+	text_log->Print("m_layer_table[%d].LayerName() is not valid\n",i);
       }
       if ( bAttemptRepair )
       {
-        ON_wString name;
-        model.GetUnusedLayerName( name );
-        layer.SetLayerName( name );
-        text_log->PushIndent();
-        text_log->Print(L"Repaired.\n");
-        text_log->PopIndent();
-        if ( repair_count )
-          *repair_count += 1;
-        layer_name = layer.LayerName();
+	ON_wString name;
+	model.GetUnusedLayerName( name );
+	layer.SetLayerName( name );
+	if ( text_log )
+	{
+	  text_log->PushIndent();
+	  text_log->Print(L"Repaired.\n");
+	  text_log->PopIndent();
+	}
+	if ( repair_count )
+	  *repair_count += 1;
+	layer_name = layer.LayerName();
       }
       else if ( rc == 0 )
       {
-        rc = 2;
+	rc = 2;
       }
     }
 
@@ -3986,22 +4219,25 @@ static int AuditLayerTableHelper(
     {
       if ( text_log )
       {
-        text_log->Print("m_layer_table[%d] and m_layer_table[%d] have same layer name.\n",i,j);
+	text_log->Print("m_layer_table[%d] and m_layer_table[%d] have same layer name.\n",i,j);
       }
       if ( bAttemptRepair )
       {
-        ON_wString name;
-        model.GetUnusedLayerName( name );
-        layer.SetLayerName( name );
-        text_log->PushIndent();
-        text_log->Print(L"Repaired.\n");
-        text_log->PopIndent();
-        if ( repair_count )
-          *repair_count += 1;
+	ON_wString name;
+	model.GetUnusedLayerName( name );
+	layer.SetLayerName( name );
+	if ( text_log )
+	{
+	  text_log->PushIndent();
+	  text_log->Print(L"Repaired.\n");
+	  text_log->PopIndent();
+	}
+	if ( repair_count )
+	  *repair_count += 1;
       }
       else if ( rc == 0 )
       {
-        rc = 2;
+	rc = 2;
       }
     }
 
@@ -4039,23 +4275,23 @@ static int AuditIdsHelper(
       id_list[i].m_i = i;
       if ( ON_nil_uuid == id_list[i].m_id )
       {
-        nil_count++;
-        if ( text_log )
-          text_log->Print(nil_id_msg,i);
+	nil_count++;
+	if ( text_log )
+	  text_log->Print(nil_id_msg,i);
 
-        if ( bAttemptRepair )
-        {
-          id = ON_nil_uuid;
-          if ( ON_CreateUuid(id) && !ON_UuidIsNil(id) )
-          {
-            id_list[i].m_id = id;
-            rep_count++;
-            if ( text_log )
-              text_log->Print(L" Repaired.");
-          }
-        }
-        if ( text_log )
-          text_log->Print(L"\n");
+	if ( bAttemptRepair )
+	{
+	  id = ON_nil_uuid;
+	  if ( ON_CreateUuid(id) && !ON_UuidIsNil(id) )
+	  {
+	    id_list[i].m_id = id;
+	    rep_count++;
+	    if ( text_log )
+	      text_log->Print(L" Repaired.");
+	  }
+	}
+	if ( text_log )
+	  text_log->Print(L"\n");
       }
     }
 
@@ -4066,40 +4302,40 @@ static int AuditIdsHelper(
       ON_UuidIndex id0 = id_list[0];
       for ( i = 1; i < count; i++ )
       {
-        if ( ON_nil_uuid == id_list[i].m_id )
-        {
-          // nil ids were handled and counted above.
-          // Either repair is false or we are not running
-          // on Windows and the user supplied ON_CreateUuid
-          // is returning nil ids.
-          continue;
-        }
+	if ( ON_nil_uuid == id_list[i].m_id )
+	{
+	  // nil ids were handled and counted above.
+	  // Either repair is false or we are not running
+	  // on Windows and the user supplied ON_CreateUuid
+	  // is returning nil ids.
+	  continue;
+	}
 
-        if ( id_list[i].m_id == id0.m_id )
-        {
-          dup_count++;
-          if ( text_log )
-            text_log->Print(dup_id_msg,id0.m_i,id_list[i].m_i);
+	if ( id_list[i].m_id == id0.m_id )
+	{
+	  dup_count++;
+	  if ( text_log )
+	    text_log->Print(dup_id_msg,id0.m_i,id_list[i].m_i);
 
-          if ( bAttemptRepair )
-          {
-            // fix duplicate object id
-            id = ON_nil_uuid;
-            if ( ON_CreateUuid(id) && !ON_UuidIsNil(id) )
-            {
-              rep_count++;
-              id_list[i].m_id = id;
-              if ( text_log )
-                text_log->Print(L" Repaired.");
-            }
-          }
-          if ( text_log )
-            text_log->Print(L"\n");
-        }
-        else
-        {
-          id0 = id_list[i];
-        }
+	  if ( bAttemptRepair )
+	  {
+	    // fix duplicate object id
+	    id = ON_nil_uuid;
+	    if ( ON_CreateUuid(id) && !ON_UuidIsNil(id) )
+	    {
+	      rep_count++;
+	      id_list[i].m_id = id;
+	      if ( text_log )
+		text_log->Print(L" Repaired.");
+	    }
+	  }
+	  if ( text_log )
+	    text_log->Print(L"\n");
+	}
+	else
+	{
+	  id0 = id_list[i];
+	}
       }
     }
 
@@ -4109,7 +4345,7 @@ static int AuditIdsHelper(
       index_list->Reserve(count);
       for ( i = 0; i < count; i++ )
       {
-        index_list->AddUuidIndex(id_list[i].m_id,id_list[i].m_i,false);
+	index_list->AddUuidIndex(id_list[i].m_id,id_list[i].m_i,false);
       }
     }
   }
@@ -4121,10 +4357,10 @@ static int AuditIdsHelper(
 }
 
 static int AuditObjectIdsHelper(
-      ONX_Model& model,
+      ONX_Model& model, 
       bool bAttemptRepair,
       int* repair_count,
-      ON_TextLog* text_log
+      ON_TextLog* text_log 
       )
 {
   int rc = 0;
@@ -4139,19 +4375,19 @@ static int AuditObjectIdsHelper(
       id_list.AppendNew().m_id = model.m_object_table[i].m_attributes.m_uuid;
     }
     rc = AuditIdsHelper(
-              id_list,
-              &model.m_object_id_index,
-              bAttemptRepair,
-              repair_count,
-              text_log,
-              L"m_object_table[%d].m_attributes.m_uuid is nil.",
-              L"m_object_table[%d] and [%d] have the same id."
-              );
+	      id_list,
+	      &model.m_object_id_index,
+	      bAttemptRepair,
+	      repair_count,
+	      text_log,
+	      L"m_object_table[%d].m_attributes.m_uuid is nil.",
+	      L"m_object_table[%d] and [%d] have the same id."
+	      );
     if (rc && bAttemptRepair )
     {
       for ( i = 0; i < count; i++ )
       {
-        model.m_object_table[id_list[i].m_i].m_attributes.m_uuid = id_list[i].m_id;
+	model.m_object_table[id_list[i].m_i].m_attributes.m_uuid = id_list[i].m_id;
       }
     }
   }
@@ -4160,10 +4396,10 @@ static int AuditObjectIdsHelper(
 
 
 static int AuditLightIdsHelper(
-      ONX_Model& model,
+      ONX_Model& model, 
       bool bAttemptRepair,
       int* repair_count,
-      ON_TextLog* text_log
+      ON_TextLog* text_log 
       )
 {
   int rc = 0;
@@ -4178,45 +4414,45 @@ static int AuditLightIdsHelper(
       ONX_Model_RenderLight& light = model.m_light_table[i];
       if ( ON_UuidCompare(light.m_light.m_light_id,light.m_attributes.m_uuid) )
       {
-        mismatch_count++;
-        if ( text_log )
-        {
-          text_log->Print("m_light_table[%d] light id and attributes id differ.",i);
-        }
-        if ( bAttemptRepair )
-        {
-          if ( repair_count )
-            *repair_count = *repair_count + 1;
-          if ( ON_nil_uuid == light.m_light.m_light_id )
-            light.m_light.m_light_id = light.m_attributes.m_uuid;
-          else
-            light.m_attributes.m_uuid = light.m_light.m_light_id;
-          if ( text_log )
-            text_log->Print(" Repaired.");
-        }
-        if ( text_log )
-          text_log->Print("\n");
+	mismatch_count++;
+	if ( text_log )
+	{
+	  text_log->Print("m_light_table[%d] light id and attributes id differ.",i);
+	}
+	if ( bAttemptRepair )
+	{
+	  if ( repair_count )
+	    *repair_count = *repair_count + 1;
+	  if ( ON_nil_uuid == light.m_light.m_light_id )
+	    light.m_light.m_light_id = light.m_attributes.m_uuid;
+	  else
+	    light.m_attributes.m_uuid = light.m_light.m_light_id;
+	  if ( text_log )
+	    text_log->Print(" Repaired.");
+	}
+	if ( text_log )
+	  text_log->Print("\n");
       }
 
       if ( ON_nil_uuid == light.m_light.m_light_id )
       {
-        id_list.AppendNew().m_id = light.m_attributes.m_uuid;
+	id_list.AppendNew().m_id = light.m_attributes.m_uuid;
       }
-      else
+      else 
       {
-        id_list.AppendNew().m_id = light.m_light.m_light_id;
+	id_list.AppendNew().m_id = light.m_light.m_light_id;
       }
     }
 
     rc = AuditIdsHelper(
-              id_list,
-              0, // no ONX_Model id index for lights
-              bAttemptRepair,
-              repair_count,
-              text_log,
-              L"m_light_table[%d] light id is nil.",
-              L"m_light_table[%d] and[%d] have the same id."
-              );
+	      id_list,
+	      0, // no ONX_Model id index for lights
+	      bAttemptRepair,
+	      repair_count,
+	      text_log,
+	      L"m_light_table[%d] light id is nil.",
+	      L"m_light_table[%d] and[%d] have the same id."
+	      );
 
     rc += mismatch_count;
 
@@ -4224,9 +4460,9 @@ static int AuditLightIdsHelper(
     {
       for ( i = 0; i < count; i++ )
       {
-        ONX_Model_RenderLight& light = model.m_light_table[id_list[i].m_i];
-        light.m_light.m_light_id = id_list[i].m_id;
-        light.m_attributes.m_uuid = light.m_light.m_light_id;
+	ONX_Model_RenderLight& light = model.m_light_table[id_list[i].m_i];
+	light.m_light.m_light_id = id_list[i].m_id;
+	light.m_attributes.m_uuid = light.m_light.m_light_id;
       }
     }
 
@@ -4237,37 +4473,37 @@ static int AuditLightIdsHelper(
       int oi = -1;
       if ( model.m_object_id_index.FindUuid(light.m_light.m_light_id,&oi) )
       {
-        rc++;
-        if ( text_log )
-        {
-          text_log->Print(L"m_light_table[%d] and m_object_table[%d] have same id.",
-                          i,
-                          oi
-                          );
-        }
-        if ( bAttemptRepair )
-        {
-          ON_UuidIndex light_id;
-          memset(&light_id,0,sizeof(light_id));
-          light_id.m_id = ON_nil_uuid;
-          light_id.m_i = -1;
-          if ( ON_CreateUuid(light_id.m_id) && ON_nil_uuid != light_id.m_id )
-          {
-            if (    !model.m_object_id_index.FindUuid(light_id.m_id)
-                 && id_list.BinarySearch( &light_id, ON_UuidIndex::CompareId ) < 0
-               )
-            {
-              if ( repair_count )
-                *repair_count = *repair_count + 1;
-              light.m_light.m_light_id = light_id.m_id;
-              light.m_attributes.m_uuid = light.m_light.m_light_id;
-              if ( text_log )
-                text_log->Print(" Repaired.");
-            }
-          }
-        }
-        if ( text_log )
-          text_log->Print("\n");
+	rc++;
+	if ( text_log )
+	{
+	  text_log->Print(L"m_light_table[%d] and m_object_table[%d] have same id.",
+			  i,
+			  oi
+			  );
+	}
+	if ( bAttemptRepair )
+	{
+	  ON_UuidIndex light_id;
+	  memset(&light_id,0,sizeof(light_id));
+	  light_id.m_id = ON_nil_uuid;
+	  light_id.m_i = -1;
+	  if ( ON_CreateUuid(light_id.m_id) && ON_nil_uuid != light_id.m_id )
+	  {
+	    if (    !model.m_object_id_index.FindUuid(light_id.m_id) 
+		 && id_list.BinarySearch( &light_id, ON_UuidIndex::CompareId ) < 0 
+	       )
+	    {
+	      if ( repair_count )
+		*repair_count = *repair_count + 1;
+	      light.m_light.m_light_id = light_id.m_id;
+	      light.m_attributes.m_uuid = light.m_light.m_light_id;
+	      if ( text_log )
+		text_log->Print(" Repaired.");
+	    }
+	  }
+	}
+	if ( text_log )
+	  text_log->Print("\n");
       }
     }
   }
@@ -4276,10 +4512,10 @@ static int AuditLightIdsHelper(
 }
 
 static int AuditIDefIdsHelper(
-      ONX_Model& model,
+      ONX_Model& model, 
       bool bAttemptRepair,
       int* repair_count,
-      ON_TextLog* text_log
+      ON_TextLog* text_log 
       )
 {
   int rc = 0;
@@ -4294,19 +4530,19 @@ static int AuditIDefIdsHelper(
       id_list.AppendNew().m_id = model.m_idef_table[i].m_uuid;
     }
     rc = AuditIdsHelper(
-              id_list,
-              &model.m_idef_id_index,
-              bAttemptRepair,
-              repair_count,
-              text_log,
-              L"m_idef_table[%d].m_attributes.m_uuid is nil.",
-              L"m_idef_table[%d] and[%d] are the same."
-              );
+	      id_list,
+	      &model.m_idef_id_index,
+	      bAttemptRepair,
+	      repair_count,
+	      text_log,
+	      L"m_idef_table[%d].m_attributes.m_uuid is nil.",
+	      L"m_idef_table[%d] and[%d] are the same."
+	      );
     if (rc && bAttemptRepair )
     {
       for ( i = 0; i < count; i++ )
       {
-        model.m_idef_table[id_list[i].m_i].m_uuid = id_list[i].m_id;
+	model.m_idef_table[id_list[i].m_i].m_uuid = id_list[i].m_id;
       }
     }
   }
@@ -4314,10 +4550,10 @@ static int AuditIDefIdsHelper(
 }
 
 static int AuditMappingIdsHelper(
-      ONX_Model& model,
+      ONX_Model& model, 
       bool bAttemptRepair,
       int* repair_count,
-      ON_TextLog* text_log
+      ON_TextLog* text_log 
       )
 {
   int rc = 0;
@@ -4332,19 +4568,19 @@ static int AuditMappingIdsHelper(
       id_list.AppendNew().m_id = model.m_mapping_table[i].m_mapping_id;
     }
     rc = AuditIdsHelper(
-              id_list,
-              &model.m_mapping_id_index,
-              bAttemptRepair,
-              repair_count,
-              text_log,
-              L"m_mapping_table[%d].m_mapping_id is nil.",
-              L"m_mapping_table[%d] and[%d] are the same."
-              );
+	      id_list,
+	      &model.m_mapping_id_index,
+	      bAttemptRepair,
+	      repair_count,
+	      text_log,
+	      L"m_mapping_table[%d].m_mapping_id is nil.",
+	      L"m_mapping_table[%d] and[%d] are the same."
+	      );
     if (rc && bAttemptRepair )
     {
       for ( i = 0; i < count; i++ )
       {
-        model.m_mapping_table[id_list[i].m_i].m_mapping_id = id_list[i].m_id;
+	model.m_mapping_table[id_list[i].m_i].m_mapping_id = id_list[i].m_id;
       }
     }
   }
@@ -4353,10 +4589,10 @@ static int AuditMappingIdsHelper(
 
 
 static int AuditMaterialIdsHelper(
-      ONX_Model& model,
+      ONX_Model& model, 
       bool bAttemptRepair,
       int* repair_count,
-      ON_TextLog* text_log
+      ON_TextLog* text_log 
       )
 {
   int rc = 0;
@@ -4371,30 +4607,30 @@ static int AuditMaterialIdsHelper(
       id_list.AppendNew().m_id = model.m_material_table[i].m_material_id;
     }
     rc = AuditIdsHelper(
-              id_list,
-              &model.m_material_id_index,
-              bAttemptRepair,
-              repair_count,
-              text_log,
-              L"m_material_table[%d].m_material_id is nil.",
-              L"m_material_table[%d] and[%d] are the same."
-              );
+	      id_list,
+	      &model.m_material_id_index,
+	      bAttemptRepair,
+	      repair_count,
+	      text_log,
+	      L"m_material_table[%d].m_material_id is nil.",
+	      L"m_material_table[%d] and[%d] are the same."
+	      );
     if (rc && bAttemptRepair )
     {
       for ( i = 0; i < count; i++ )
       {
-        model.m_material_table[id_list[i].m_i].m_material_id = id_list[i].m_id;
+	model.m_material_table[id_list[i].m_i].m_material_id = id_list[i].m_id;
       }
     }
   }
   return rc;
 }
 
-static int AuditModelIdsHelper(
-      ONX_Model& model,
+static int AuditModelIdsHelper( 
+      ONX_Model& model, 
       bool bAttemptRepair,
       int* repair_count,
-      ON_TextLog* text_log,
+      ON_TextLog* text_log, 
       ON_SimpleArray<int>* warnings
       )
 {
@@ -4403,7 +4639,7 @@ static int AuditModelIdsHelper(
 
   // object ids
   i = AuditObjectIdsHelper(model,bAttemptRepair,repair_count,text_log);
-  if (i < 0 )
+  if (i < 0 ) 
     return i;
   if (i > 0 )
   {
@@ -4414,7 +4650,7 @@ static int AuditModelIdsHelper(
 
   // light ids
   i = AuditLightIdsHelper(model,bAttemptRepair,repair_count,text_log);
-  if (i < 0 )
+  if (i < 0 ) 
     return i;
   if (i > 0 )
   {
@@ -4425,7 +4661,7 @@ static int AuditModelIdsHelper(
 
   // idef ids
   i = AuditIDefIdsHelper(model,bAttemptRepair,repair_count,text_log);
-  if (i < 0 )
+  if (i < 0 ) 
     return i;
   if (i > 0 )
   {
@@ -4436,7 +4672,7 @@ static int AuditModelIdsHelper(
 
   // mapping ids
   i = AuditMappingIdsHelper(model,bAttemptRepair,repair_count,text_log);
-  if (i < 0 )
+  if (i < 0 ) 
     return i;
   if (i > 0 )
   {
@@ -4447,7 +4683,7 @@ static int AuditModelIdsHelper(
 
   // material ids
   i = AuditMaterialIdsHelper(model,bAttemptRepair,repair_count,text_log);
-  if (i < 0 )
+  if (i < 0 ) 
     return i;
   if (i > 0 )
   {
@@ -4459,11 +4695,11 @@ static int AuditModelIdsHelper(
   return warning_count;
 }
 
-static int AuditIDefTableHelper(
+static int AuditIDefTableHelper( 
       ONX_Model& model,
       bool bAttemptRepair,
       int* repair_count,
-      ON_TextLog* text_log
+      ON_TextLog* text_log 
       )
 {
   int rc = 0;
@@ -4483,7 +4719,7 @@ static int AuditIDefTableHelper(
     if ( !ONX_IsValidName(idef_name) )
     {
       if ( text_log )
-        text_log->Print("m_idef_table[%d].Name() = \"%S\" is not valid.\n",i,idef_name);
+	text_log->Print("m_idef_table[%d].Name() = \"%S\" is not valid.\n",i,idef_name);
       idef_ok = false;
     }
     else
@@ -4491,9 +4727,9 @@ static int AuditIDefTableHelper(
       j = model.IDefIndex( idef_name );
       if ( j != i )
       {
-        if ( text_log )
-          text_log->Print("m_idef_table[%d].Name() = m_idef_table[%d].Name().\n",i,j);
-        idef_ok = false;
+	if ( text_log )
+	  text_log->Print("m_idef_table[%d].Name() = m_idef_table[%d].Name().\n",i,j);
+	idef_ok = false;
       }
     }
     if ( bAttemptRepair )
@@ -4502,12 +4738,12 @@ static int AuditIDefTableHelper(
       model.GetUnusedIDefName(new_name);
       if ( ONX_IsValidName(new_name) && -1 == model.IDefIndex(new_name) )
       {
-        idef.SetName(new_name);
-        if ( repair_count )
-          *repair_count = *repair_count + 1;
-        if ( text_log )
-          text_log->Print("Repaired.\n");
-        idef_ok = true;
+	idef.SetName(new_name);
+	if ( repair_count )
+	  *repair_count = *repair_count + 1;
+	if ( text_log )
+	  text_log->Print("Repaired.\n");
+	idef_ok = true;
       }
     }
     if ( !idef_ok && rc == 0 )
@@ -4530,99 +4766,99 @@ static int AuditIDefTableHelper(
       int obj_index = model.ObjectIndex(obj_uuid);
       if ( obj_index < 0 )
       {
-        if ( text_log )
-          text_log->Print("m_idef_table[%d].m_object_uuid[%d] is not an object's uuid.\n",i,k);
-        if ( bAttemptRepair )
-        {
-          idef.m_object_uuid.Remove(j);
-          if ( repair_count )
-            *repair_count = *repair_count + 1;
-          if ( text_log )
-            text_log->Print("Repaired.\n");
-        }
-        else
-        {
-          j++;
-          idef_ok = false;
-        }
+	if ( text_log )
+	  text_log->Print("m_idef_table[%d].m_object_uuid[%d] is not an object's uuid.\n",i,k);
+	if ( bAttemptRepair )
+	{
+	  idef.m_object_uuid.Remove(j);
+	  if ( repair_count )
+	    *repair_count = *repair_count + 1;
+	  if ( text_log )
+	    text_log->Print("Repaired.\n");
+	}
+	else
+	{
+	  j++;
+	  idef_ok = false;
+	}
       }
       else
       {
-        ONX_Model_Object& obj = model.m_object_table[obj_index];
-        if ( ON::idef_object != obj.m_attributes.Mode() )
-        {
-          if ( text_log )
-            text_log->Print("Object with uuid m_idef_table[%d].m_object_uuid[%d] does not have m_attributes.Mode()=ON::idef_object.\n",i,k);
-          if ( bAttemptRepair )
-          {
-            idef.m_object_uuid.Remove(j);
-            if ( repair_count )
-              *repair_count = *repair_count + 1;
-            if ( text_log )
-              text_log->Print("Repaired.\n");
-          }
-          else
-          {
-            j++;
-            idef_ok = false;
-          }
-        }
-        else if ( 0 == obj.m_object )
-        {
-          if ( text_log )
-            text_log->Print("Object with uuid m_idef_table[%d].m_object_uuid[%d] has NULL m_object.\n",i,k);
-          if ( bAttemptRepair )
-          {
-            idef.m_object_uuid.Remove(j);
-            if ( repair_count )
-              *repair_count = *repair_count + 1;
-            if ( text_log )
-              text_log->Print("Repaired.\n");
-          }
-          else
-          {
-            j++;
-            idef_ok = false;
-          }
-        }
-        else if ( obj.m_object->ObjectType() == ON::instance_reference )
-        {
-          const ON_InstanceRef* pNestedRef = ON_InstanceRef::Cast(obj.m_object);
-          if ( pNestedRef )
-          {
-            if ( model.UsesIDef( *pNestedRef, idef.Uuid() ) )
-            {
-              if ( text_log )
-                text_log->Print("m_idef_table[%d].m_object_uuid[%d] is a circular reference.\n",i,k);
-              if ( bAttemptRepair )
-              {
-                idef.m_object_uuid.Remove(j);
-                if ( repair_count )
-                  *repair_count = *repair_count + 1;
-                if ( text_log )
-                  text_log->Print("Repaired.\n");
-              }
-              else
-              {
-                j++;
-                idef_ok = false;
-                rc = -1; // circular reference
-              }
-            }
-            else
-              j++;
-          }
-          else
-            j++;
-        }
-        else
-          j++;
+	ONX_Model_Object& obj = model.m_object_table[obj_index];
+	if ( ON::idef_object != obj.m_attributes.Mode() )
+	{
+	  if ( text_log )
+	    text_log->Print("Object with uuid m_idef_table[%d].m_object_uuid[%d] does not have m_attributes.Mode()=ON::idef_object.\n",i,k);
+	  if ( bAttemptRepair )
+	  {
+	    idef.m_object_uuid.Remove(j);
+	    if ( repair_count )
+	      *repair_count = *repair_count + 1;
+	    if ( text_log )
+	      text_log->Print("Repaired.\n");
+	  }
+	  else
+	  {
+	    j++;
+	    idef_ok = false;
+	  }
+	}
+	else if ( 0 == obj.m_object )
+	{
+	  if ( text_log )
+	    text_log->Print("Object with uuid m_idef_table[%d].m_object_uuid[%d] has NULL m_object.\n",i,k);
+	  if ( bAttemptRepair )
+	  {
+	    idef.m_object_uuid.Remove(j);
+	    if ( repair_count )
+	      *repair_count = *repair_count + 1;
+	    if ( text_log )
+	      text_log->Print("Repaired.\n");
+	  }
+	  else
+	  {
+	    j++;
+	    idef_ok = false;
+	  }
+	}
+	else if ( obj.m_object->ObjectType() == ON::instance_reference )
+	{
+	  const ON_InstanceRef* pNestedRef = ON_InstanceRef::Cast(obj.m_object);
+	  if ( pNestedRef )
+	  {
+	    if ( model.UsesIDef( *pNestedRef, idef.Uuid() ) )
+	    {
+	      if ( text_log )
+		text_log->Print("m_idef_table[%d].m_object_uuid[%d] is a circular reference.\n",i,k);
+	      if ( bAttemptRepair )
+	      {
+		idef.m_object_uuid.Remove(j);
+		if ( repair_count )
+		  *repair_count = *repair_count + 1;
+		if ( text_log )
+		  text_log->Print("Repaired.\n");
+	      }
+	      else
+	      {
+		j++;
+		idef_ok = false;
+		rc = -1; // circular reference
+	      }
+	    }
+	    else
+	      j++;
+	  }
+	  else
+	    j++;
+	}
+	else
+	  j++;
       }
     }
     if ( idef.m_object_uuid.Count() <= 0 )
     {
       if ( text_log )
-        text_log->Print("m_idef_table[%d].m_object_uuid.Count() = 0.\n",i);
+	text_log->Print("m_idef_table[%d].m_object_uuid.Count() = 0.\n",i);
       idef_ok = false;
     }
     if ( !idef_ok && rc == 0 )
@@ -4634,11 +4870,11 @@ static int AuditIDefTableHelper(
 }
 
 
-static int AuditObjectTableHelper(
+static int AuditObjectTableHelper( 
       ONX_Model& model,
       bool bAttemptRepair,
       int* repair_count,
-      ON_TextLog* text_log
+      ON_TextLog* text_log 
       )
 {
   // AuditObjectIds() are already validated/repaired object ids.
@@ -4653,30 +4889,30 @@ static int AuditObjectTableHelper(
     {
       rc = 7;
       if ( text_log )
-        text_log->Print("m_object_table[%d].m_object is NULL.\n",i);
+	text_log->Print("m_object_table[%d].m_object is NULL.\n",i);
     }
     else if ( false == obj.m_object->IsValid(NULL) )
     {
       rc = 8;
       if ( text_log )
       {
-        text_log->Print("m_object_table[%d].m_object->IsValid() = false.\n",i);
-        text_log->PushIndent();
-        text_log->PushIndent();
-        obj.m_object->IsValid(text_log);
-        text_log->PopIndent();
-        text_log->PopIndent();
+	text_log->Print("m_object_table[%d].m_object->IsValid() = false.\n",i);
+	text_log->PushIndent();
+	text_log->PushIndent();
+	obj.m_object->IsValid(text_log);
+	text_log->PopIndent();
+	text_log->PopIndent();
       }
     }
 
     int attrc = AuditObjectAttributesHelper(model,
-                                obj.m_attributes,
-                                L"m_object_table[%d].m_attributes",
-                                i,
-                                bAttemptRepair,
-                                repair_count,
-                                text_log
-                                );
+				obj.m_attributes,
+				L"m_object_table[%d].m_attributes",
+				i,
+				bAttemptRepair,
+				repair_count,
+				text_log
+				);
     if ( 0 == rc && attrc )
       rc = attrc;
   }
@@ -4684,18 +4920,18 @@ static int AuditObjectTableHelper(
   return rc;
 }
 
-static int AuditHistoryRecordTableHelper(
+static int AuditHistoryRecordTableHelper( 
       ONX_Model& model,
       bool bAttemptRepair,
       int* repair_count,
-      ON_TextLog* text_log
+      ON_TextLog* text_log 
       )
 {
   // TODO - make sure object id's exist
   return 0;
 }
 
-int ONX_Model::Audit(
+int ONX_Model::Audit( 
       bool bAttemptRepair,
       int* repair_count,
       ON_TextLog* text_log,
@@ -4705,12 +4941,12 @@ int ONX_Model::Audit(
   int warning_count = 0;
   int rc = 0, i;
   int repcnt;
-  if ( repair_count )
+  if ( repair_count ) 
     *repair_count = 0;
 
   repcnt = 0;
   i = AuditModelIdsHelper( *this, bAttemptRepair, &repcnt, text_log, warnings );
-  if ( repair_count )
+  if ( repair_count ) 
     *repair_count += repcnt;
   if ( i < 0 )
     return i;
@@ -4718,7 +4954,7 @@ int ONX_Model::Audit(
 
   repcnt = 0;
   i = AuditTextureMappingTableHelper( *this, bAttemptRepair, &repcnt, text_log );
-  if ( repair_count )
+  if ( repair_count ) 
     *repair_count += repcnt;
   if ( i < 0 )
     return i;
@@ -4727,7 +4963,7 @@ int ONX_Model::Audit(
 
   repcnt = 0;
   i = AuditMaterialTableHelper( *this, bAttemptRepair, &repcnt, text_log );
-  if ( repair_count )
+  if ( repair_count ) 
     *repair_count += repcnt;
   if ( i < 0 )
     return i;
@@ -4736,7 +4972,7 @@ int ONX_Model::Audit(
 
   repcnt = 0;
   i = AuditLinetypeTableHelper( *this, bAttemptRepair, &repcnt, text_log );
-  if ( repair_count )
+  if ( repair_count ) 
     *repair_count += repcnt;
   if ( i < 0 )
     return i;
@@ -4745,7 +4981,7 @@ int ONX_Model::Audit(
 
   repcnt = 0;
   i = AuditLayerTableHelper( *this, bAttemptRepair, &repcnt, text_log );
-  if ( repair_count )
+  if ( repair_count ) 
     *repair_count += repcnt;
   if ( i < 0 )
     return i;
@@ -4754,7 +4990,7 @@ int ONX_Model::Audit(
 
   repcnt = 0;
   i = AuditGroupTableHelper( *this, bAttemptRepair, &repcnt, text_log );
-  if ( repair_count )
+  if ( repair_count ) 
     *repair_count += repcnt;
   if ( i < 0 )
     return i;
@@ -4763,7 +4999,7 @@ int ONX_Model::Audit(
 
   repcnt = 0;
   i = AuditFontTableHelper( *this, bAttemptRepair, &repcnt, text_log );
-  if ( repair_count )
+  if ( repair_count ) 
     *repair_count += repcnt;
   if ( i < 0 )
     return i;
@@ -4772,7 +5008,7 @@ int ONX_Model::Audit(
 
   repcnt = 0;
   i = AuditDimStyleTableHelper( *this, bAttemptRepair, &repcnt, text_log );
-  if ( repair_count )
+  if ( repair_count ) 
     *repair_count += repcnt;
   if ( i < 0 )
     return i;
@@ -4781,7 +5017,7 @@ int ONX_Model::Audit(
 
   repcnt = 0;
   i = AuditLightTableHelper( *this, bAttemptRepair, &repcnt, text_log );
-  if ( repair_count )
+  if ( repair_count ) 
     *repair_count += repcnt;
   if ( i < 0 )
     return i;
@@ -4790,7 +5026,7 @@ int ONX_Model::Audit(
 
   repcnt = 0;
   i = AuditHatchPatternTableHelper( *this, bAttemptRepair, &repcnt, text_log );
-  if ( repair_count )
+  if ( repair_count ) 
     *repair_count += repcnt;
   if ( i < 0 )
     return i;
@@ -4799,7 +5035,7 @@ int ONX_Model::Audit(
 
   repcnt = 0;
   i = AuditIDefTableHelper( *this, bAttemptRepair, &repcnt, text_log );
-  if ( repair_count )
+  if ( repair_count ) 
     *repair_count += repcnt;
   if ( i < 0 )
     return i;
@@ -4808,7 +5044,7 @@ int ONX_Model::Audit(
 
   repcnt = 0;
   i = AuditObjectTableHelper( *this, bAttemptRepair, &repcnt, text_log );
-  if ( repair_count )
+  if ( repair_count ) 
     *repair_count += repcnt;
   if ( i < 0 )
     return i;
@@ -4817,7 +5053,7 @@ int ONX_Model::Audit(
 
   repcnt = 0;
   i = AuditHistoryRecordTableHelper( *this, bAttemptRepair, &repcnt, text_log );
-  if ( repair_count )
+  if ( repair_count ) 
     *repair_count += repcnt;
   if ( i < 0 )
     return i;
@@ -4826,5 +5062,4 @@ int ONX_Model::Audit(
 
   return warning_count;
 }
-
 

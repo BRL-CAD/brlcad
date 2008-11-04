@@ -268,7 +268,11 @@ proc transpose { w } {
     cursor_highlight $w
 }
 
-rename gets tcl_gets
+
+# hack to hide the standard tcl gets implementation so we can wrap it.
+if {[catch {info body gets}] == 1} {
+    rename gets tcl_gets
+}
 
 proc gets {channelId args} {
     global getsVal
@@ -279,28 +283,37 @@ proc gets {channelId args} {
     }
 
     if {$channelId != "stdin"} {
-	return [tcl_gets $channelId $args]
+	return [eval tcl_gets $channelId $args]
     }
+
+    # reading from stdin so we hack the text input widget to capture
+    # the entire input, then we strip off the gets line leaving just
+    # the line that was input.  total hack.  total fugly hack.
 
     rename execute_cmd execute_cmd_save
     rename gets_execute_cmd execute_cmd
 
     vwait getsVal
+    upvar $args vname
+
+    set lines [split $getsVal "\n"]
+    if {[lindex $lines end] == {}} {
+	set lines [lreplace $lines end end]
+    }
+    
+    if {[llength $lines] == 1} {
+	set vname [lindex $lines 0]
+    } else {
+	# first line is the gets line, skip it
+	set vname [lindex $lines 1]
+    }
+
+    # if a var is provided, return the length.  otherwise return the
+    # string itself.  this matches gets behavior.
     if {$len == 1} {
-	upvar $args vname
-	set lines [split $getsVal "\n"]
-	if {[lindex $lines end] == {}} {
-	    set lines [lreplace $lines end end]
-	}
-
-	if {[llength $lines] == 1} {
-	    set vname [lindex $lines 0]
-	} else {
-	    set vname [lindex $lines 1]
-	}
-
 	return [string length $vname]
     }
+    return $vname
 }
 
 proc gets_execute_cmd {w} {

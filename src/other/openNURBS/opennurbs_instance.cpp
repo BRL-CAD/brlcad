@@ -2,13 +2,13 @@
 /* $NoKeywords: $ */
 /*
 //
-// Copyright (c) 1993-2002 Robert McNeel & Associates. All rights reserved.
+// Copyright (c) 1993-2007 Robert McNeel & Associates. All rights reserved.
 // Rhinoceros is a registered trademark of Robert McNeel & Assoicates.
 //
 // THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY.
 // ALL IMPLIED WARRANTIES OF FITNESS FOR ANY PARTICULAR PURPOSE AND OF
 // MERCHANTABILITY ARE HEREBY DISCLAIMED.
-//
+//				
 // For complete openNURBS copyright information see <http://www.opennurbs.org>.
 //
 ////////////////////////////////////////////////////////////////
@@ -36,32 +36,38 @@ ON_InstanceDefinition::~ON_InstanceDefinition()
 
 BOOL ON_InstanceDefinition::IsValid( ON_TextLog* text_log ) const
 {
-  if (0 == ON_UuidCompare( m_uuid, ON_nil_uuid)) {
-    if (text_log) {
+  if ( 0 == ON_UuidCompare( m_uuid, ON_nil_uuid) )
+  {
+    if (text_log)
+    {
       text_log->Print("ON_InstanceDefinition has nil uuid.\n");
     }
     return false;
   }
-  if (!m_bbox.IsValid()) {
-    if (text_log) {
+  if ( !m_bbox.IsValid() )
+  {
+    if (text_log)
+    {
       text_log->Print("ON_InstanceDefinition has invalid bounding box.\n");
     }
     return false;
   }
-  switch( m_idef_update_type) {
+  switch( m_idef_update_type)
+  {
     case embedded_def:
     case linked_def:
     case linked_and_embedded_def:
-      if( m_source_archive.IsEmpty()) {
-        if (text_log) {
-          text_log->Print("ON_InstanceDefinition is linked or embedded but m_source_archive is empty.\n");
-        }
-        return false;
+      if( m_source_archive.IsEmpty())
+      {
+	if (text_log)
+	{
+	  text_log->Print("ON_InstanceDefinition is linked or embedded but m_source_archive is empty.\n");
+	}
+	return false;
       }
       break;
-
     default:
-      /* unsupported */
+      // do nothing on rest of cases
       break;
   }
 
@@ -81,7 +87,7 @@ BOOL ON_InstanceDefinition::Write(
   if ( rc )
   {
     if (    binary_archive.Archive3dmVersion() >= 4
-         && ON_InstanceDefinition::linked_def == m_idef_update_type )
+	 && ON_InstanceDefinition::linked_def == m_idef_update_type )
     {
       // linked instance definition geometry is never in the file
       ON_SimpleArray<ON_UUID> empty_uuid_list;
@@ -108,11 +114,11 @@ BOOL ON_InstanceDefinition::Write(
     rc = binary_archive.WriteInt( (unsigned int)m_idef_update_type );
   if ( rc )
     rc = binary_archive.WriteString( m_source_archive );
-
+  
   // version 1.1 fields
   if (rc)
     rc = m_source_archive_checksum.Write( binary_archive );
-
+  
   // version 1.2 fields
   if (rc)
     rc = binary_archive.WriteInt( m_us.m_unit_system );
@@ -208,7 +214,7 @@ BOOL ON_InstanceDefinition::Read(
     if ( minor_version >= 1 )
     {
       if ( rc )
-        rc = m_source_archive_checksum.Read( binary_archive );
+	rc = m_source_archive_checksum.Read( binary_archive );
     }
 
     // version 1.2 fields
@@ -216,33 +222,33 @@ BOOL ON_InstanceDefinition::Read(
     {
       int us = ON::no_unit_system;
       if ( rc )
-        rc = binary_archive.ReadInt( &us );
+	rc = binary_archive.ReadInt( &us );
       m_us.m_unit_system = ON::UnitSystem(us);
       if ( ON::custom_unit_system != m_us.m_unit_system && ON::no_unit_system != m_us.m_unit_system )
       {
-        m_us.m_custom_unit_scale = ON::UnitScale( m_us.m_unit_system, ON::meters );
+	m_us.m_custom_unit_scale = ON::UnitScale( m_us.m_unit_system, ON::meters );
       }
       else
       {
-        m_us.m_custom_unit_scale = 0.0;
+	m_us.m_custom_unit_scale = 0.0;
       }
 
       if ( minor_version >= 3 )
       {
-        // version 1.3 fields - added 6 March 2006
-        //int us = ON::no_unit_system;
-        if ( rc )
-          rc = binary_archive.ReadDouble( &m_us.m_custom_unit_scale );
-        if ( rc )
-          rc = binary_archive.ReadBool( &m_source_bRelativePath );
-        if ( rc && minor_version >= 4 )
-        {
-          rc = m_us.Read(binary_archive);
-          if (rc && minor_version >= 5 )
-          {
-            rc = binary_archive.ReadInt(&m_idef_update_depth);
-          }
-        }
+	// version 1.3 fields - added 6 March 2006
+	//int us = ON::no_unit_system;
+	if ( rc )
+	  rc = binary_archive.ReadDouble( &m_us.m_custom_unit_scale );
+	if ( rc )
+	  rc = binary_archive.ReadBool( &m_source_bRelativePath );
+	if ( rc && minor_version >= 4 )
+	{
+	  rc = m_us.Read(binary_archive);
+	  if (rc && minor_version >= 5 )
+	  {
+	    rc = binary_archive.ReadInt(&m_idef_update_depth);
+	  }
+	}
       }
     }
   }
@@ -282,7 +288,7 @@ BOOL ON_InstanceDefinition::GetBBox(
   return m_bbox.IsValid();
 }
 
-BOOL ON_InstanceDefinition::Transform(
+BOOL ON_InstanceDefinition::Transform( 
        const ON_Xform& xform
        )
 {
@@ -354,9 +360,9 @@ void ON_InstanceDefinition::SetBoundingBox( ON_BoundingBox bbox )
   m_bbox = bbox;
 }
 
-void ON_InstanceDefinition::SetSourceArchive( const wchar_t* source_archive,
-                                              ON_CheckSum checksum,
-                                              ON_InstanceDefinition::IDEF_UPDATE_TYPE idef_update_type)
+void ON_InstanceDefinition::SetSourceArchive( const wchar_t* source_archive, 
+					      ON_CheckSum checksum,
+					      ON_InstanceDefinition::IDEF_UPDATE_TYPE idef_update_type)
 {
   ON_wString s = source_archive;
   s.TrimLeftAndRight();
@@ -392,8 +398,8 @@ void ON_InstanceDefinition::SetUnitSystem( ON::unit_system us )
     if ( ON::custom_unit_system != m_us.m_unit_system )
     {
       m_us.m_custom_unit_scale = ( ON::no_unit_system == m_us.m_unit_system )
-                               ? 0.0
-                               : ON::UnitScale(ON::meters,m_us.m_unit_system);
+			       ? 0.0
+			       : ON::UnitScale(ON::meters,m_us.m_unit_system);
     }
   }
 }
@@ -407,8 +413,8 @@ void ON_InstanceDefinition::SetUnitSystem( const ON_UnitSystem& us )
     if ( ON::custom_unit_system != m_us.m_unit_system )
     {
       m_us.m_custom_unit_scale = ( ON::no_unit_system == m_us.m_unit_system )
-                               ? 0.0
-                               : ON::UnitScale(ON::meters,m_us.m_unit_system);
+			       ? 0.0
+			       : ON::UnitScale(ON::meters,m_us.m_unit_system);
     }
   }
 }
@@ -518,15 +524,15 @@ BOOL ON_InstanceRef::GetBBox(
     {
       if( boxmin )
       {
-        boxmin[0] = m_bbox.m_min.x;
-        boxmin[1] = m_bbox.m_min.y;
-        boxmin[2] = m_bbox.m_min.z;
+	boxmin[0] = m_bbox.m_min.x;
+	boxmin[1] = m_bbox.m_min.y;
+	boxmin[2] = m_bbox.m_min.z;
       }
       if( boxmax )
       {
-        boxmax[0] = m_bbox.m_max.x;
-        boxmax[1] = m_bbox.m_max.y;
-        boxmax[2] = m_bbox.m_max.z;
+	boxmax[0] = m_bbox.m_max.x;
+	boxmax[1] = m_bbox.m_max.y;
+	boxmax[2] = m_bbox.m_max.z;
       }
       bGrowBox = true;
     }
@@ -535,12 +541,13 @@ BOOL ON_InstanceRef::GetBBox(
   return bGrowBox;
 }
 
-BOOL ON_InstanceRef::Transform(
+BOOL ON_InstanceRef::Transform( 
        const ON_Xform& xform
        )
 {
   ON_Geometry::Transform(xform);
   m_xform = xform*m_xform;
+  m_bbox.Transform(xform);
   return true;
 }
 

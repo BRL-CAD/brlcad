@@ -102,7 +102,7 @@ main(int argc, char **argv)
     fastf_t *coss = NULL;
     fastf_t **curves = NULL;
     fastf_t *ptr = NULL;
-    
+
     if (argc != 3) {
 	bu_exit(1, "%s", usage);
     }
@@ -197,7 +197,7 @@ main(int argc, char **argv)
 	    bu_log("LTINCR=%d\n", ltincr);
 
 	} else if (strncasecmp("LGINCR=", line, 7) == 0) {
-	    /* longitude increment (in microradians) 
+	    /* longitude increment (in microradians)
 	     *
 	     * For a cylindrical scan, the longitude increment is the
 	     * angle between each of the profiles. With 512, this is
@@ -356,7 +356,7 @@ main(int argc, char **argv)
 		/* unknown/unsupported */
 
 		cptr = line+6;
-		filled = strncasecmp(cptr, "TRUE", 4) == 0 ? 1 : 0; 
+		filled = strncasecmp(cptr, "TRUE", 4) == 0 ? 1 : 0;
 		db5_update_attribute("_GLOBAL", "FILLED", cptr, outfp->dbip);
 		bu_log("FILLED=%d\n", filled);
 
@@ -364,7 +364,7 @@ main(int argc, char **argv)
 		/* unknown/unsupported */
 
 		cptr = line+9;
-		smoothed = strncasecmp(cptr, "TRUE", 4) == 0 ? 1 : 0; 
+		smoothed = strncasecmp(cptr, "TRUE", 4) == 0 ? 1 : 0;
 		db5_update_attribute("_GLOBAL", "SMOOTHED", cptr, outfp->dbip);
 		bu_log("SMOOTHED=%d\n", smoothed);
 
@@ -372,7 +372,7 @@ main(int argc, char **argv)
 		/* unsupported, presumably being scanned from the inside */
 
 		cptr = line+11;
-		inside_out = strncasecmp(cptr, "TRUE", 4) == 0 ? 1 : 0; 
+		inside_out = strncasecmp(cptr, "TRUE", 4) == 0 ? 1 : 0;
 		db5_update_attribute("_GLOBAL", "INSIDE_OUT", cptr, outfp->dbip);
 		bu_log("INSIDE_OUT=%d\n", inside_out);
 
@@ -380,7 +380,7 @@ main(int argc, char **argv)
 		/* unsupported */
 
 		cptr = line+16;
-		theta_righthand = strncasecmp(cptr, "TRUE", 4) == 0 ? 1 : 0; 
+		theta_righthand = strncasecmp(cptr, "TRUE", 4) == 0 ? 1 : 0;
 		db5_update_attribute("_GLOBAL", "THETA_RIGHTHAND", cptr, outfp->dbip);
 		bu_log("INSIDE_OUT=%d\n", theta_righthand);
 

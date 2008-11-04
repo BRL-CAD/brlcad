@@ -39,6 +39,8 @@
 #include "vmath.h"
 #include "bu.h"
 
+#include "brep.h"
+
 
 __BEGIN_DECLS
 
@@ -184,7 +186,6 @@ struct rt_nurb_internal {
 #define RT_NURB_GET_CONTROL_POINT(_s, _u, _v)	((_s)->ctl_points[ \
 	((_v)*(_s)->s_size[0]+(_u))*RT_NURB_EXTRACT_COORDS((_s)->pt_type)])
 
-#include "brep.h"
 /*
  * a b-rep solid consists of a
  */
@@ -366,10 +367,7 @@ struct rt_hyp_internal {
     fastf_t	hyp_r1;	/**< @brief  scalar semi-major axis length */
     fastf_t	hyp_r2;	/**< @brief  scalar semi-minor axis length */
     fastf_t	hyp_c;	/**< @brief  slope of asymptote cone */
-/* added because g_xxx.c uses rt_xxx_internal.v in functions I haven't implemented yet */
-    vect_t	v;	
 };
-#define RT_HYP_INTERNAL_MAGIC	0x68797065
 #define RT_HYP_CK_MAGIC(_p)	BU_CKMAG(_p, RT_HYP_INTERNAL_MAGIC, "rt_hyp_internal")
 
 
@@ -478,6 +476,24 @@ struct rt_extrude_internal
 #define RT_EXTRUDE_CK_MAGIC(_p)	BU_CKMAG(_p, RT_EXTRUDE_INTERNAL_MAGIC, "rt_extrude_internal")
 
 /*
+ *	ID_REVOLVE
+ */
+struct rt_revolve_internal {
+    unsigned long	magic;
+    point_t		v3d;	/**< @brief vertex in 3d space  */
+    vect_t		axis3d;	/**< @brief revolve axis in 3d space, y axis */
+
+    point2d_t		v2d;	/**< @brief vertex in 2d sketch */
+    vect2d_t		axis2d;	/**< @brief revolve axis in 2d sketch */
+
+    vect_t		r;	/**< @brief vector in start plane, x axis */
+    fastf_t		ang;	/**< @brief angle to revolve*/
+    struct bu_vls	sketch_name;	/**< @brief name of sketch */
+    struct rt_sketch_internal *sk;	/**< @brief pointer to sketch */
+};
+#define RT_REVOLVE_CK_MAGIC(_p)	BU_CKMAG(_p, RT_REVOLVE_INTERNAL_MAGIC, "rt_revolve_internal")
+
+/*
  *	ID_CLINE
  *
  *	Implementation of FASTGEN CLINE element
@@ -540,6 +556,77 @@ struct rt_bot_internal
 #define RT_BOT_USE_FLOATS	      0x4     /**< @brief  Use the single precision version of "tri_specific" during prep */
 
 #define RT_BOT_CK_MAGIC(_p)	BU_CKMAG(_p, RT_BOT_INTERNAL_MAGIC, "rt_bot_internal")
+
+/*
+ *      ID_PNTS
+ */
+
+typedef enum {
+    RT_PNT_TYPE_PNT = 0,
+    RT_PNT_TYPE_COL = 0+1,
+    RT_PNT_TYPE_SCA = 0+2,
+    RT_PNT_TYPE_NRM = 0+4,
+    RT_PNT_TYPE_COL_SCA = 0+1+2,
+    RT_PNT_TYPE_COL_NRM = 0+1+4,
+    RT_PNT_TYPE_SCA_NRM = 0+2+4,
+    RT_PNT_TYPE_COL_SCA_NRM = 0+1+2+4
+} rt_pnt_type;
+
+struct pnt {
+    struct bu_list l;
+    point_t v;
+};
+struct pnt_color {
+    struct bu_list l;
+    point_t v;
+    struct bu_color c;
+};
+struct pnt_scale {
+    struct bu_list l;
+    point_t v;
+    fastf_t s;
+};
+struct pnt_normal {
+    struct bu_list l;
+    point_t v;
+    vect_t n;
+};
+struct pnt_color_scale {
+    struct bu_list l;
+    point_t v;
+    struct bu_color c;
+    fastf_t s;
+};
+struct pnt_color_normal {
+    struct bu_list l;
+    point_t v;
+    struct bu_color c;
+    vect_t n;
+};
+struct pnt_scale_normal {
+    struct bu_list l;
+    point_t v;
+    fastf_t s;
+    vect_t n;
+};
+struct pnt_color_scale_normal {
+    struct bu_list l;
+    point_t v;
+    struct bu_color c;
+    fastf_t s;
+    vect_t n;
+};
+
+
+struct rt_pnts_internal {
+    long magic;
+    double scale;
+    rt_pnt_type type;
+    unsigned long count;
+    void *point;
+};
+#define RT_PNTS_CK_MAGIC(_p)     BU_CKMAG(_p, RT_PNTS_INTERNAL_MAGIC, "rt_pnts_internal")
+
 
 __END_DECLS
 

@@ -2,13 +2,13 @@
 /* $NoKeywords: $ */
 /*
 //
-// Copyright (c) 1993-2001 Robert McNeel & Associates. All rights reserved.
+// Copyright (c) 1993-2007 Robert McNeel & Associates. All rights reserved.
 // Rhinoceros is a registered trademark of Robert McNeel & Assoicates.
 //
 // THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY.
 // ALL IMPLIED WARRANTIES OF FITNESS FOR ANY PARTICULAR PURPOSE AND OF
 // MERCHANTABILITY ARE HEREBY DISCLAIMED.
-//
+//				
 // For complete openNURBS copyright information see <http://www.opennurbs.org>.
 //
 ////////////////////////////////////////////////////////////////
@@ -25,25 +25,25 @@ ON_NurbsCurve* ON_NurbsCurve::New()
 }
 
 ON_NurbsCurve* ON_NurbsCurve::New(
-          const ON_NurbsCurve& nurbs_curve
-          )
+	  const ON_NurbsCurve& nurbs_curve 
+	  )
 {
   return new ON_NurbsCurve(nurbs_curve);
 }
 
 ON_NurbsCurve* ON_NurbsCurve::New(
-          const ON_BezierCurve& bezier_curve
-          )
+	  const ON_BezierCurve& bezier_curve 
+	  )
 {
   return new ON_NurbsCurve(bezier_curve);
 }
 
 ON_NurbsCurve* ON_NurbsCurve::New(
-          int dimension,
-          BOOL bIsRational,
-          int order,
-          int cv_count
-          )
+	  int dimension,
+	  BOOL bIsRational,
+	  int order,
+	  int cv_count
+	  )
 {
   return new ON_NurbsCurve(dimension,bIsRational,order,cv_count);
 }
@@ -194,13 +194,13 @@ bool ON_NurbsCurve::MakeClampedUniformKnotVector( double delta )
   return ON_MakeClampedUniformKnotVector( m_order, m_cv_count, m_knot, delta );
 }
 
-bool ON_NurbsCurve::CreateClampedUniformNurbs(
-        int dimension,
-        int order,
-        int point_count,
-        const ON_3dPoint* point,
-        double knot_delta
-        )
+bool ON_NurbsCurve::CreateClampedUniformNurbs( 
+	int dimension,
+	int order,
+	int point_count,
+	const ON_3dPoint* point,
+	double knot_delta
+	)
 {
   bool rc = (dimension >= 1 && dimension<=3 && point!=NULL);
   if (rc)
@@ -216,13 +216,13 @@ bool ON_NurbsCurve::CreateClampedUniformNurbs(
   return rc;
 }
 
-bool ON_NurbsCurve::CreatePeriodicUniformNurbs(
-        int dimension,
-        int order,
-        int point_count,
-        const ON_3dPoint* point,
-        double knot_delta
-        )
+bool ON_NurbsCurve::CreatePeriodicUniformNurbs( 
+	int dimension,
+	int order,
+	int point_count,
+	const ON_3dPoint* point,
+	double knot_delta
+	)
 {
   bool rc = (dimension >= 1 && dimension<=3 && point!=NULL);
   if (rc)
@@ -241,11 +241,11 @@ bool ON_NurbsCurve::CreatePeriodicUniformNurbs(
 }
 
 bool ON_NurbsCurve::Create(
-        int dim,      // dimension (>= 1)
-        BOOL is_rat,  // true to make a rational NURBS
-        int order,    // order (>= 2)
-        int cv_count  // cv count (>= order)
-        )
+	int dim,      // dimension (>= 1)
+	BOOL is_rat,  // true to make a rational NURBS
+	int order,    // order (>= 2)
+	int cv_count  // cv count (>= order)
+	)
 {
   DestroyCurveTree();
   if ( dim < 1 )
@@ -298,48 +298,51 @@ void ON_NurbsCurve::Initialize()
   m_cached_bez = 0;
 }
 
+static void ON_NurbsCurveCopyHelper( const ON_NurbsCurve& src, ON_NurbsCurve& dest )
+{
+  dest.m_dim       = src.m_dim;
+  dest.m_is_rat    = src.m_is_rat;
+  dest.m_order     = src.m_order;
+  dest.m_cv_count  = src.m_cv_count;
+  dest.m_cv_stride = dest.m_is_rat ? dest.m_dim+1 : dest.m_dim;
+  if ( src.m_knot ) 
+  {
+    // copy knot array
+    dest.ReserveKnotCapacity( dest.KnotCount() );
+    memcpy( dest.m_knot, src.m_knot, dest.KnotCount()*sizeof(*dest.m_knot) );
+  }
+  if ( src.m_cv ) 
+  {
+    // copy cv array
+    dest.ReserveCVCapacity( dest.m_cv_stride*dest.m_cv_count );
+    const int dst_cv_size = dest.CVSize()*sizeof(*dest.m_cv);
+    const int src_stride = src.m_cv_stride;
+    const int dst_stride = dest.m_cv_stride;
+    const double *src_cv = src.CV(0);
+    double *dst_cv = dest.m_cv;
+    if ( src_stride == dst_stride ) 
+    {
+      memcpy( dst_cv, src_cv, dest.m_cv_count*dst_stride*sizeof(*dst_cv) );
+    }
+    else 
+    {
+      int i;
+      for ( i = 0; i < dest.m_cv_count; i++ )
+      {
+	memcpy( dst_cv, src_cv, dst_cv_size );
+	dst_cv += dst_stride;
+	src_cv += src_stride;
+      }
+    }
+  }
+}
 
 ON_NurbsCurve& ON_NurbsCurve::operator=( const ON_NurbsCurve& src )
 {
-  if ( this != &src )
+  if ( this != &src ) 
   {
     ON_Curve::operator=(src);
-
-    m_dim = src.m_dim;
-    m_is_rat = src.m_is_rat;
-    m_order = src.m_order;
-    m_cv_count = src.m_cv_count;
-    m_cv_stride = m_is_rat ? m_dim+1 : m_dim;
-    if ( src.m_knot )
-    {
-      // copy knot array
-      ReserveKnotCapacity( KnotCount() );
-      memcpy( m_knot, src.m_knot, KnotCount()*sizeof(*m_knot) );
-    }
-    if ( src.m_cv )
-    {
-      // copy cv array
-      ReserveCVCapacity( m_cv_stride*m_cv_count );
-      const int dst_cv_size = CVSize()*sizeof(*m_cv);
-      const int src_stride = src.m_cv_stride;
-      const int dst_stride = m_cv_stride;
-      const double *src_cv = src.CV(0);
-      double *dst_cv = m_cv;
-      if ( src_stride == dst_stride )
-      {
-        memcpy( dst_cv, src_cv, m_cv_count*dst_stride*sizeof(*dst_cv) );
-      }
-      else
-      {
-        int i;
-        for ( i = 0; i < m_cv_count; i++ )
-        {
-          memcpy( dst_cv, src_cv, dst_cv_size );
-          dst_cv += dst_stride;
-          src_cv += src_stride;
-        }
-      }
-    }
+    ON_NurbsCurveCopyHelper(src,*this);
   }
   return *this;
 }
@@ -364,22 +367,22 @@ ON_NurbsCurve& ON_NurbsCurve::operator=(const ON_BezierCurve& src)
 void ON_NurbsCurve::Dump( ON_TextLog& dump ) const
 {
   dump.Print( "ON_NurbsCurve dim = %d is_rat = %d\n"
-               "        order = %d cv_count = %d\n",
-               m_dim, m_is_rat, m_order, m_cv_count );
+	       "        order = %d cv_count = %d\n",
+	       m_dim, m_is_rat, m_order, m_cv_count );
   dump.Print( "Knot Vector ( %d knots )\n", KnotCount() );
   dump.PrintKnotVector( m_order, m_cv_count, m_knot );
   dump.Print( "Control Points  %d %s points\n"
-               "  index               value\n",
-               m_cv_count,
-               (m_is_rat) ? "rational" : "non-rational" );
+	       "  index               value\n",
+	       m_cv_count, 
+	       (m_is_rat) ? "rational" : "non-rational" );
   if ( !m_cv ) {
     dump.Print("  NULL cv array\n");
   }
   else {
-    dump.PrintPointList( m_dim, m_is_rat,
-                      m_cv_count, m_cv_stride,
-                      m_cv,
-                      "  CV" );
+    dump.PrintPointList( m_dim, m_is_rat, 
+		      m_cv_count, m_cv_stride,
+		      m_cv, 
+		      "  CV" );
   }
 }
 
@@ -430,76 +433,76 @@ BOOL ON_NurbsCurve::IsValid( ON_TextLog* text_log ) const
   }
   else
   {
-    if ( !ON_IsValidKnotVector( m_order, m_cv_count, m_knot, text_log ) )
+    if ( !ON_IsValidKnotVector( m_order, m_cv_count, m_knot, text_log ) ) 
     {
       if ( text_log )
       {
-        text_log->Print("ON_NurbsCurve.m_knot[] is not a valid knot vector.\n");
+	text_log->Print("ON_NurbsCurve.m_knot[] is not a valid knot vector.\n");
       }
     }
     else
     {
       rc = true;
       if ( m_is_rat ) {
-        // weights at fully multiple knots must be nonzero
-        // partial test for weight function being zero
-        double sign = 0.0;
-        const double* w = &m_cv[m_dim];
-        int zcount = 0;
-        int i;
-        for ( i = 0; i < m_cv_count && rc; i++, w += m_cv_stride ) {
-          if ( *w == 0.0 )
-            zcount++;
-          else
-            zcount = 0;
-          if ( zcount >= m_order )
-          {
-            if ( text_log )
-            {
-              text_log->Print("ON_NurbsCurve.m_cv has zero weights for CV[%d],...,CV[%d].\n",i-m_order+1,i);
-            }
-            rc = false; // denominator is zero for entire span
-          }
-          else if ( m_knot[i] == m_knot[i+m_order-2] )
-          {
-            if ( *w == 0.0 )
-            {
-              if ( text_log )
-              {
-                text_log->Print("ON_NurbsCurve.m_cv has zero weights for CV[%d].\n",i);
-              }
-              rc = false;
-            }
-            else if (sign == 0.0)
-            {
-              sign = (*w > 0.0) ? 1.0 : -1.0;
-            }
-            else if ( *w * sign <= 0.0 )
-            {
-              if ( text_log )
-              {
-                text_log->Print("ON_NurbsCurve.m_cv has a zero denominator in the parameter interval [%g,%g].\n",
-                                m_knot[i-1],m_knot[i]);
-              }
-              rc = false;
-            }
-          }
-        }
+	// weights at fully multiple knots must be nonzero
+	// partial test for weight function being zero
+	double sign = 0.0;
+	const double* w = &m_cv[m_dim];
+	int zcount = 0;
+	int i;
+	for ( i = 0; i < m_cv_count && rc; i++, w += m_cv_stride ) {
+	  if ( *w == 0.0 )
+	    zcount++;
+	  else
+	    zcount = 0;
+	  if ( zcount >= m_order )
+	  {
+	    if ( text_log )
+	    {
+	      text_log->Print("ON_NurbsCurve.m_cv has zero weights for CV[%d],...,CV[%d].\n",i-m_order+1,i);
+	    }
+	    rc = false; // denominator is zero for entire span
+	  }
+	  else if ( m_knot[i] == m_knot[i+m_order-2] ) 
+	  {
+	    if ( *w == 0.0 )
+	    {
+	      if ( text_log )
+	      {
+		text_log->Print("ON_NurbsCurve.m_cv has zero weights for CV[%d].\n",i);
+	      }
+	      rc = false;
+	    }
+	    else if (sign == 0.0) 
+	    {
+	      sign = (*w > 0.0) ? 1.0 : -1.0;
+	    }
+	    else if ( *w * sign <= 0.0 ) 
+	    {
+	      if ( text_log )
+	      {
+		text_log->Print("ON_NurbsCurve.m_cv has a zero denominator in the parameter interval [%g,%g].\n",
+				m_knot[i-1],m_knot[i]);
+	      }
+	      rc = false;
+	    }
+	  }
+	}
       }
 
       if ( rc && 2 == m_order && 2 == m_cv_count )
       {
-        // fix for RR 21239
-        ON_3dPoint P0 = PointAtStart();
-        ON_3dPoint P1 = PointAtEnd();
-        if ( P0 == P1 )
-        {
-          if ( text_log )
-          {
-            text_log->Print("ON_NurbsCurve is a line with no length.\n");
-          }
-          rc = false;
-        }
+	// fix for RR 21239
+	ON_3dPoint P0 = PointAtStart();
+	ON_3dPoint P1 = PointAtEnd();
+	if ( P0 == P1 )
+	{
+	  if ( text_log )
+	  {
+	    text_log->Print("ON_NurbsCurve is a line with no length.\n");
+	  }
+	  rc = false;
+	}
       }
     }
   }
@@ -512,11 +515,11 @@ BOOL ON_NurbsCurve::GetBBox( // returns true if successful
        BOOL bGrowBox  // true means grow box
        ) const
 {
-  return ON_GetPointListBoundingBox(
-                 m_dim, m_is_rat, m_cv_count,
-                 m_cv_stride, m_cv,
-                 boxmin, boxmax, bGrowBox?true:false
-                 );
+  return ON_GetPointListBoundingBox( 
+		 m_dim, m_is_rat, m_cv_count, 
+		 m_cv_stride, m_cv, 
+		 boxmin, boxmax, bGrowBox?true:false
+		 );
 }
 
 BOOL ON_NurbsCurve::Transform( const ON_Xform& xform )
@@ -566,8 +569,8 @@ BOOL ON_NurbsCurve::Write(
     if (rc) rc = file.WriteInt( m_order );
     if (rc) rc = file.WriteInt( m_cv_count );
     if (rc) rc = file.WriteInt( 0 ); // reserved - legacy flag values
-    if (rc) rc = file.WriteInt( 0 ); // reserved
-
+    if (rc) rc = file.WriteInt( 0 ); // reserved   
+    
     // write invalid bounding box - may be used in future
     if (rc) {
       ON_BoundingBox bbox;
@@ -581,14 +584,14 @@ BOOL ON_NurbsCurve::Write(
 
     // write cvs
     const int cv_size = CVSize();
-    count = ( m_cv && cv_size > 0 && m_cv_count > 0  && m_cv_stride >= cv_size )
-          ? m_cv_count
-          : 0;
+    count = ( m_cv && cv_size > 0 && m_cv_count > 0  && m_cv_stride >= cv_size ) 
+	  ? m_cv_count
+	  : 0;
     if (rc) rc = file.WriteInt(count);
     if (rc && count > 0 ) {
       int i;
       for ( i = 0; i < m_cv_count && rc; i++ ) {
-        rc = file.WriteDouble( cv_size, CV(i) );
+	rc = file.WriteDouble( cv_size, CV(i) );
       }
     }
 
@@ -614,7 +617,7 @@ BOOL ON_NurbsCurve::Read(
     if (rc) rc = file.ReadInt( &order );
     if (rc) rc = file.ReadInt( &cv_count );
     if (rc) rc = file.ReadInt( &reserved1 ); // reserved - legacy flag values
-    if (rc) rc = file.ReadInt( &reserved2 ); // reserved
+    if (rc) rc = file.ReadInt( &reserved2 ); // reserved    
 
     // bounding box
     if (rc) {
@@ -622,7 +625,7 @@ BOOL ON_NurbsCurve::Read(
       ON_BoundingBox bbox;
       rc = file.ReadBoundingBox( bbox );
     }
-
+    
     Create( dim, is_rat, order, cv_count );
 
     // read knots
@@ -639,7 +642,7 @@ BOOL ON_NurbsCurve::Read(
     if (count > 0 && cv_size > 0 && rc ) {
       int i;
       for ( i = 0; i < m_cv_count && rc; i++ ) {
-        rc = file.ReadDouble( cv_size, CV(i) );
+	rc = file.ReadDouble( cv_size, CV(i) );
       }
     }
   }
@@ -665,20 +668,20 @@ BOOL ON_NurbsCurve::SetDomain( double t0, double t1 )
     const double k1 = m_knot[m_cv_count-1];
     if ( k0 == t0 && k1 == t1 )
       rc = true;
-    else if ( k0 < k1 )
+    else if ( k0 < k1 ) 
     {
       const double d = (t1-t0)/(k1-k0);
       const double km = 0.5*(k0+k1);
       const int knot_count = KnotCount();
       int i;
-      for ( i = 0; i < knot_count; i++ )
+      for ( i = 0; i < knot_count; i++ ) 
       {
-        if ( m_knot[i] <= km ) {
-          m_knot[i] = (m_knot[i] - k0)*d + t0;
-        }
-        else {
-          m_knot[i] = (m_knot[i] - k1)*d + t1;
-        }
+	if ( m_knot[i] <= km ) {
+	  m_knot[i] = (m_knot[i] - k0)*d + t0;
+	}
+	else {
+	  m_knot[i] = (m_knot[i] - k1)*d + t1;
+	}
       }
       rc = true;
     }
@@ -699,7 +702,7 @@ BOOL ON_NurbsCurve::ChangeClosedCurveSeam( double t )
     {
       s = fmod( s, 1.0 );
       if ( s < 0.0 )
-        s += 1.0;
+	s += 1.0;
       k = old_dom.ParameterAt(s);
     }
     if ( old_dom.Includes(k,true) )
@@ -708,16 +711,16 @@ BOOL ON_NurbsCurve::ChangeClosedCurveSeam( double t )
       // TODO - if periodic - dont' put multi knot in middle
       //if ( IsPeriodic() ){} else
       {
-        ON_Curve* pleft = &left;
-        ON_Curve* pright = &right;
-        rc = Split( k, pleft, pright );
-        if ( rc )
-        {
-          //int a = left.IsValid();
-          //int b = right.IsValid();
-          right.Append(left);
-          *this = right;
-        }
+	ON_Curve* pleft = &left;
+	ON_Curve* pright = &right;
+	rc = Split( k, pleft, pright );
+	if ( rc )
+	{
+	  //int a = left.IsValid();
+	  //int b = right.IsValid();
+	  right.Append(left);
+	  *this = right;
+	}
       }
     }
     else
@@ -738,8 +741,8 @@ int ON_NurbsCurve::SpanCount() const
   return ON_KnotVectorSpanCount( m_order, m_cv_count, m_knot );
 }
 
-BOOL ON_NurbsCurve::GetSpanVector( // span "knots"
-       double* s // array of length SpanCount() + 1
+BOOL ON_NurbsCurve::GetSpanVector( // span "knots" 
+       double* s // array of length SpanCount() + 1 
        ) const
 {
   return ON_GetKnotVectorSpanVector( m_order, m_cv_count, m_knot, s );
@@ -779,16 +782,16 @@ ON_NurbsCurve::IsLinear(
       GetCV(i,P);
       rc = L.ClosestPointTo(P,&t);
       if (rc) {
-        if ( t < t0 )
-        {
-          // 14 Dec 2004 - Chuck-n-Dale added the extra test
-          if ( t < -0.01 || t > 1.01 || L.PointAt(t).DistanceTo(L.PointAt(t0)) > tolerance )
-            rc = false;
-        }
-        d = P.DistanceTo(L.PointAt(t));
-        if ( d > tolerance )
-          rc = false;
-        t0 = t;
+	if ( t < t0 )
+	{
+	  // 14 Dec 2004 - Chuck-n-Dale added the extra test
+	  if ( t < -0.01 || t > 1.01 || L.PointAt(t).DistanceTo(L.PointAt(t0)) > tolerance )
+	    rc = false;
+	}
+	d = P.DistanceTo(L.PointAt(t));
+	if ( d > tolerance )
+	  rc = false;
+	t0 = t;
       }
     }
   }
@@ -813,17 +816,17 @@ int ON_NurbsCurve::IsPolyline(
       rc = m_cv_count;
       if ( pline_points )
       {
-        pline_points->Reserve(m_cv_count);
-        for ( i = 0; i < m_cv_count; i++ )
-        {
-          GetCV(i,pline_points->AppendNew());
-        }
+	pline_points->Reserve(m_cv_count);
+	for ( i = 0; i < m_cv_count; i++ )
+	{
+	  GetCV(i,pline_points->AppendNew());
+	}
       }
       if ( pline_t )
       {
-        pline_t->Reserve(m_cv_count);
-        for ( i = 0; i < m_cv_count; i++ )
-          pline_t->Append(m_knot[i]);
+	pline_t->Reserve(m_cv_count);
+	for ( i = 0; i < m_cv_count; i++ )
+	  pline_t->Append(m_knot[i]);
       }
     }
     else if ( m_order > 2 && m_dim >= 2 && m_dim <= 3 )
@@ -839,89 +842,89 @@ int ON_NurbsCurve::IsPolyline(
       GetCV(0,line.to);
       for ( i = 0; i < span_count; i++, k++ )
       {
-        if ( k[m_order-2] < k[m_order-1] )
-        {
-          if ( k[0] != k[m_order-2] )
-          {
-            // not a bezier span
-            return 0;
-          }
-          if ( k[m_order-1] != k[2*m_order-3] )
-          {
-            // not a bezier span
-            return 0;
-          }
+	if ( k[m_order-2] < k[m_order-1] )
+	{
+	  if ( k[0] != k[m_order-2] )
+	  {
+	    // not a bezier span
+	    return 0;
+	  }
+	  if ( k[m_order-1] != k[2*m_order-3] )
+	  {
+	    // not a bezier span
+	    return 0;
+	  }
 
-          // see if this bezier segment is a line
-          // with (roughly) linear parameterization.
-          line.from = line.to;
-          GetCV(i+m_order-1,line.to);
-          for ( j = 1; j < m_order-1; j++ )
-          {
-            GetCV(i+j,P);
-            t = 0.0;
-            if ( !line.ClosestPointTo(P,&t) )
-              return 0;
-            if ( fabs( t*(m_order-1) - j ) > 0.01 )
-            {
-              // not linearly parameterized.
-              // Please check with Dale Lear before changing
-              // this test.
-              return 0;
-            }
-            Q = line.PointAt(t);
-            // Please check with Dale Lear before changing
-            // this test.
-            if ( fabs(P.x - Q.x) > (fabs(P.x) + fabs(Q.x))*0.00001 + ON_ZERO_TOLERANCE )
-              return 0;
-            if ( fabs(P.y - Q.y) > (fabs(P.y) + fabs(Q.y))*0.00001 + ON_ZERO_TOLERANCE )
-              return 0;
-            if ( fabs(P.z - Q.z) > (fabs(P.z) + fabs(Q.z))*0.00001 + ON_ZERO_TOLERANCE )
-              return 0;
-          }
-          rc++;
-        }
+	  // see if this bezier segment is a line
+	  // with (roughly) linear parameterization.
+	  line.from = line.to;
+	  GetCV(i+m_order-1,line.to);
+	  for ( j = 1; j < m_order-1; j++ )
+	  {
+	    GetCV(i+j,P);
+	    t = 0.0;
+	    if ( !line.ClosestPointTo(P,&t) )
+	      return 0;
+	    if ( fabs( t*(m_order-1) - j ) > 0.01 )
+	    {
+	      // not linearly parameterized.
+	      // Please check with Dale Lear before changing
+	      // this test.
+	      return 0;
+	    }
+	    Q = line.PointAt(t);
+	    // Please check with Dale Lear before changing
+	    // this test.
+	    if ( fabs(P.x - Q.x) > (fabs(P.x) + fabs(Q.x))*0.00001 + ON_ZERO_TOLERANCE )
+	      return 0;
+	    if ( fabs(P.y - Q.y) > (fabs(P.y) + fabs(Q.y))*0.00001 + ON_ZERO_TOLERANCE )
+	      return 0;
+	    if ( fabs(P.z - Q.z) > (fabs(P.z) + fabs(Q.z))*0.00001 + ON_ZERO_TOLERANCE )
+	      return 0;
+	  }
+	  rc++;
+	}
       }
 
       if (rc > 0 )
       {
-        rc++;
-        // it's a polyline
-        if ( 0 != pline_points || 0 != pline_t )
-        {
-          GetCV(0,P);
-          if ( 0 != pline_points )
-          {
-            pline_points->Reserve(rc);
-            GetCV(0,pline_points->AppendNew());
-          }
-          if ( 0 != pline_t )
-          {
-            pline_t->Reserve(rc);
-            pline_t->Append( m_knot[m_order-2] );
-          }
+	rc++;
+	// it's a polyline
+	if ( 0 != pline_points || 0 != pline_t )
+	{
+	  GetCV(0,P);
+	  if ( 0 != pline_points )
+	  {
+	    pline_points->Reserve(rc);
+	    GetCV(0,pline_points->AppendNew());
+	  }
+	  if ( 0 != pline_t )
+	  {
+	    pline_t->Reserve(rc);
+	    pline_t->Append( m_knot[m_order-2] );
+	  }
 
-          const double *k = m_knot;
-          for ( i = 0; i < span_count; i++, k++ )
-          {
-            if ( k[m_order-2] < k[m_order-1] )
-            {
-              // see if this bezier segment is a line
-              // with (roughly) linear parameterization.
-              if ( 0 != pline_points )
-                GetCV(i+m_order-1,pline_points->AppendNew());
-              if ( 0 != pline_t )
-                pline_t->Append(k[m_order-1]);
-            }
-          }
-        }
+	  const double *k = m_knot;
+	  for ( i = 0; i < span_count; i++, k++ )
+	  {
+	    if ( k[m_order-2] < k[m_order-1] )
+	    {
+	      // see if this bezier segment is a line
+	      // with (roughly) linear parameterization.
+	      if ( 0 != pline_points )
+		GetCV(i+m_order-1,pline_points->AppendNew());
+	      if ( 0 != pline_t )
+		pline_t->Append(k[m_order-1]);
+	    }
+	  }
+	}
       }
     }
 
     if( IsClosed() && rc >= 4 && 0 != pline_points )
     {
       // GBA 2/26/03
-      // Make polyline spot on closed.
+      // Make polyline spot on closed.	
       *pline_points->Last() = *pline_points->First();
     }
 
@@ -935,13 +938,13 @@ BOOL
 ON_NurbsCurve::IsArc( // true if curve locus in an arc or circle
       const ON_Plane* plane, // if not NULL, test is performed in this plane
       ON_Arc* arc,         // if not NULL and true is returned, then arc
-                              // arc parameters are filled in
+			      // arc parameters are filled in
       double tolerance // tolerance to use when checking linearity
       ) const
 {
   // If changes are made, verify that RR 8497 still works.
   // On 30 April 2003, Mikko changed the strict test to a sloppy
-  // test to fix RR 8497.  This change broke other things like
+  // test to fix RR 8497.  This change broke other things like 
   // IGES simple entity export tests that require a strict test.
   // So on 6 May 2003 Dale Lear added in the "bLooseTest" check.
   // If the tolerance > ON_ZERO_TOLERANCE a fuzzy fit to arc
@@ -962,11 +965,11 @@ ON_NurbsCurve::IsArc( // true if curve locus in an arc or circle
     {
       if ( !bLooseTest )
       {
-        for ( i = 0; i < m_cv_count; i += degree )
-        {
-          if ( m_knot[i] != m_knot[i+degree-1] )
-            return false;
-        }
+	for ( i = 0; i < m_cv_count; i += degree )
+	{
+	  if ( m_knot[i] != m_knot[i+degree-1] )
+	    return false;
+	}
       }
       rc = ON_Curve::IsArc( plane, arc, tolerance )?true:false;
     }
@@ -977,7 +980,7 @@ ON_NurbsCurve::IsArc( // true if curve locus in an arc or circle
 BOOL
 ON_NurbsCurve::IsPlanar(
       ON_Plane* plane, // if not NULL and true is returned, then plane parameters
-                         // are filled in
+			 // are filled in
       double tolerance // tolerance to use when checking linearity
       ) const
 {
@@ -992,11 +995,11 @@ ON_NurbsCurve::IsPlanar(
   EvTangent( Domain()[0], P, X );
   if ( IsLinear(tolerance) )
   {
-    if ( plane )
+    if ( plane ) 
     {
       ON_Line line( P, PointAtEnd() );
       if ( !line.InPlane( *plane, tolerance) )
-        line.InPlane( *plane, 0.0 );
+	line.InPlane( *plane, 0.0 );
     }
     rc = true;
   }
@@ -1018,14 +1021,14 @@ ON_NurbsCurve::IsPlanar(
       GetCV(i,A);
       for ( j = i+k; j < m_cv_count; j += k )
       {
-        GetCV(j,B);
-        d = ON_CrossProduct( A-P, B-P ).Length();
-        if ( d > maxd )
-        {
-          maxd = d;
-          Q = A;
-          R = B;
-        }
+	GetCV(j,B);
+	d = ON_CrossProduct( A-P, B-P ).Length();
+	if ( d > maxd )
+	{
+	  maxd = d;
+	  Q = A;
+	  R = B;
+	}
       }
     }
     if ( test_plane.CreateFromPoints(P,Q,R) )
@@ -1033,13 +1036,13 @@ ON_NurbsCurve::IsPlanar(
       ON_3dVector v( X*test_plane.xaxis, X*test_plane.yaxis, 0.0 );
       if ( v.Unitize() )
       {
-        test_plane.xaxis = v.x*test_plane.xaxis + v.y*test_plane.yaxis;
-        test_plane.yaxis = ON_CrossProduct( test_plane.zaxis, test_plane.xaxis );
-        test_plane.yaxis.Unitize();
+	test_plane.xaxis = v.x*test_plane.xaxis + v.y*test_plane.yaxis;
+	test_plane.yaxis = ON_CrossProduct( test_plane.zaxis, test_plane.xaxis );
+	test_plane.yaxis.Unitize();
       }
       rc = IsInPlane( test_plane, tolerance );
       if ( rc && plane )
-        *plane = test_plane;
+	*plane = test_plane;
     }
   }
   return rc;
@@ -1086,12 +1089,12 @@ ON_NurbsCurve::GetParameterTolerance( // returns tminus < tplus: parameters tmin
 }
 
 
-bool ON_NurbsCurve::GetClosestPoint(
-        const ON_3dPoint& P,
-        double* t,
-        double maximum_distance,
-        const ON_Interval* sub_domain
-        ) const
+bool ON_NurbsCurve::GetClosestPoint( 
+	const ON_3dPoint& P,
+	double* t,
+	double maximum_distance,
+	const ON_Interval* sub_domain
+	) const
 {
   if ( 2 == m_cv_count && 0 == m_is_rat && (m_dim >= 2 && m_dim <= 3) )
   {
@@ -1106,7 +1109,7 @@ bool ON_NurbsCurve::GetClosestPoint(
     P1.y = *cv1++ - m_cv[1];
     if ( 3 == m_dim )
     {
-      Q.z = P.z - m_cv[2];
+      Q.z = P.z - m_cv[2];    
       P1.z = *cv1 - m_cv[2];
     }
     else
@@ -1119,43 +1122,43 @@ bool ON_NurbsCurve::GetClosestPoint(
     if ( 0.0 != s )
     {
       s = (Q.x*P1.x + Q.y*P1.y + Q.z*P1.z)/s;
-      if ( s <= 0.0 )
-        s = 0.0;
+      if ( s <= 0.0 ) 
+	s = 0.0;
       else if ( s > 1.0 )
-        s = 1.0;
+	s = 1.0;
 
       k = (1.0-s)*m_knot[0] + s*m_knot[1];
 
       if ( sub_domain )
       {
-        if ( k < sub_domain->m_t[0]  )
-        {
-          if ( m_knot[1] < sub_domain->m_t[0] )
-            return false;
-          k = sub_domain->m_t[0];
-          s = (k - m_knot[0])/(m_knot[1] - m_knot[0]);
-        }
-        else if ( k > sub_domain->m_t[1] )
-        {
-          if ( m_knot[0] > sub_domain->m_t[1] )
-            return false;
-          k = sub_domain->m_t[1];
-          s = (k - m_knot[0])/(m_knot[1] - m_knot[0]);
-        }
+	if ( k < sub_domain->m_t[0]  )
+	{
+	  if ( m_knot[1] < sub_domain->m_t[0] )
+	    return false;
+	  k = sub_domain->m_t[0];
+	  s = (k - m_knot[0])/(m_knot[1] - m_knot[0]);
+	}
+	else if ( k > sub_domain->m_t[1] )
+	{
+	  if ( m_knot[0] > sub_domain->m_t[1] )
+	    return false;
+	  k = sub_domain->m_t[1];
+	  s = (k - m_knot[0])/(m_knot[1] - m_knot[0]);
+	}
       }
 
       if ( maximum_distance > 0.0 )
       {
-        cv1 = m_cv + m_cv_stride;
-        d = 1.0-s;
-        Q.x = d*m_cv[0] + s* *cv1++ - P.x;
-        Q.y = d*m_cv[1] + s* *cv1++ - P.y;
-        Q.z = (3 == m_dim ) ? (d*m_cv[2] + s* *cv1 - P.z) : 0.0;
-        d = Q.Length();
-        if ( d > maximum_distance )
-          return false;
+	cv1 = m_cv + m_cv_stride;
+	d = 1.0-s;
+	Q.x = d*m_cv[0] + s* *cv1++ - P.x;
+	Q.y = d*m_cv[1] + s* *cv1++ - P.y;
+	Q.z = (3 == m_dim ) ? (d*m_cv[2] + s* *cv1 - P.z) : 0.0;
+	d = Q.Length();
+	if ( d > maximum_distance )
+	  return false;
       }
-
+      
       *t = k;
       return true;
     }
@@ -1167,18 +1170,18 @@ bool ON_NurbsCurve::GetClosestPoint(
 
 
 
-BOOL
+BOOL 
 ON_NurbsCurve::Evaluate( // returns false if unable to evaluate
        double t,       // evaluation parameter
        int der_count,  // number of derivatives (>=0)
        int v_stride,   // v[] array stride (>=Dimension())
        double* v,      // v[] array of length stride*(ndir+1)
        int side,       // optional - determines which side to evaluate from
-                       //         0 = default
-                       //      <  0 to evaluate from below,
-                       //      >  0 to evaluate from above
+		       //         0 = default
+		       //      <  0 to evaluate from below, 
+		       //      >  0 to evaluate from above
        int* hint       // optional - evaluation hint (int) used to speed
-                       //            repeated evaluations
+		       //            repeated evaluations
        ) const
 {
   BOOL rc = false;
@@ -1188,24 +1191,24 @@ ON_NurbsCurve::Evaluate( // returns false if unable to evaluate
 
   const int span_index = ON_NurbsSpanIndex(m_order,m_cv_count,m_knot,t,side,(hint)?*hint:0);
   rc = ON_EvaluateNurbsSpan(
-     m_dim, m_is_rat, m_order,
-     m_knot + span_index,
+     m_dim, m_is_rat, m_order, 
+     m_knot + span_index, 
      m_cv_stride, m_cv + (m_cv_stride*span_index),
-     der_count,
+     der_count, 
      t,
-     v_stride, v
+     v_stride, v 
      );
-  if ( hint )
+  if ( hint ) 
     *hint = span_index;
   return rc;
 }
 
 
-BOOL
+BOOL 
 ON_NurbsCurve::IsClosed() const
 {
   BOOL bIsClosed = false;
-  if ( m_dim > 0 && m_cv_count >= 4 )
+  if ( m_dim > 0 && m_cv_count >= 4 ) 
   {
     if ( IsPeriodic() ) {
       bIsClosed = true;
@@ -1217,7 +1220,7 @@ ON_NurbsCurve::IsClosed() const
   return bIsClosed;
 }
 
-BOOL
+BOOL 
 ON_NurbsCurve::IsPeriodic() const
 {
   BOOL bIsPeriodic = ON_IsKnotVectorPeriodic( m_order, m_cv_count, m_knot );
@@ -1228,24 +1231,24 @@ ON_NurbsCurve::IsPeriodic() const
     const double* cv1 = m_cv + i1*m_cv_stride;
     for ( /*empty*/; i0 >= 0; i0--, i1-- ) {
       if ( ON_ComparePoint( m_dim, m_is_rat, cv0, cv1 ) )
-        return false;
+	return false;
       cv0 -= m_cv_stride;
-      cv1 -= m_cv_stride;
+      cv1 -= m_cv_stride;      
     }
   }
   return bIsPeriodic;
 }
 
-bool ON_NurbsCurve::GetNextDiscontinuity(
-                ON::continuity c,
-                double t0,
-                double t1,
-                double* t,
-                int* hint,
-                int* dtype,
-                double cos_angle_tolerance,
-                double curvature_tolerance
-                ) const
+bool ON_NurbsCurve::GetNextDiscontinuity( 
+		ON::continuity c,
+		double t0,
+		double t1,
+		double* t,
+		int* hint,
+		int* dtype,
+		double cos_angle_tolerance,
+		double curvature_tolerance
+		) const
 {
   int tmp_hint = 0, tmp_dtype=0;
   double d, tmp_t;
@@ -1258,7 +1261,7 @@ bool ON_NurbsCurve::GetNextDiscontinuity(
     dtype = &tmp_dtype;
   if ( !t )
     t = &tmp_t;
-
+  
   // 20 March 2003 Dale Lear:
   //     Make this work for locus style queries
   ON::continuity input_c = c;
@@ -1266,8 +1269,8 @@ bool ON_NurbsCurve::GetNextDiscontinuity(
     return false;
   if ( c == ON::C0_locus_continuous )
   {
-    return ON_Curve::GetNextDiscontinuity( input_c, t0, t1, t, hint, dtype,
-                                    cos_angle_tolerance, curvature_tolerance );
+    return ON_Curve::GetNextDiscontinuity( input_c, t0, t1, t, hint, dtype, 
+				    cos_angle_tolerance, curvature_tolerance );
   }
   if ( t0 == t1 )
     return false;
@@ -1277,7 +1280,7 @@ bool ON_NurbsCurve::GetNextDiscontinuity(
   c = ON::ParametricContinuity(c);
 
   BOOL bEv2ndDer = (    (c == ON::C2_continuous || c == ON::G2_continuous)
-                     && m_order > 2);
+		     && m_order > 2);
   BOOL bTestKappa = ( bEv2ndDer && c == ON::G2_continuous );
   BOOL bTestTangent = ( bTestKappa || c == ON::G1_continuous || c == ON::G2_continuous );
 
@@ -1300,15 +1303,15 @@ bool ON_NurbsCurve::GetNextDiscontinuity(
     }
     *hint = ki;
     ki += m_order-2;
-    while (ki < m_cv_count-1 && m_knot[ki] <= t0)
+    while (ki < m_cv_count-1 && m_knot[ki] <= t0) 
       ki += delta_ki;
-    if (ki >= m_cv_count-1)
+    if (ki >= m_cv_count-1) 
     {
       if ( input_c != c && t0 < m_knot[m_cv_count-1] && t1 >= m_knot[m_cv_count-1] )
       {
-        // have to do locus end test
-        return ON_Curve::GetNextDiscontinuity( input_c, t0, t1, t, hint, dtype,
-                                    cos_angle_tolerance, curvature_tolerance );
+	// have to do locus end test
+	return ON_Curve::GetNextDiscontinuity( input_c, t0, t1, t, hint, dtype, 
+				    cos_angle_tolerance, curvature_tolerance );
       }
       return false;
     }
@@ -1325,32 +1328,32 @@ bool ON_NurbsCurve::GetNextDiscontinuity(
 
     *hint = ki;
     ki += m_order-2;
-    while (ki < m_order-2 && m_knot[ki] >= t0)
+    while (ki < m_order-2 && m_knot[ki] >= t0) 
       ki--;
-    if (ki <= m_order-2)
+    if (ki <= m_order-2) 
     {
       if ( input_c != c && t0 > m_knot[m_order-2] && t1 < m_knot[m_order-2] )
       {
-        // have to do locus end test
-        return ON_Curve::GetNextDiscontinuity( input_c, t0, t1, t, hint, dtype,
-                                    cos_angle_tolerance, curvature_tolerance );
+	// have to do locus end test
+	return ON_Curve::GetNextDiscontinuity( input_c, t0, t1, t, hint, dtype, 
+				    cos_angle_tolerance, curvature_tolerance );
       }
       return false;
     }
     delta_ki = -1;
     delta = -delta;
   }
+  
 
-
-  while (m_knot[ki] < t1)
+  while (m_knot[ki] < t1) 
   {
     if ( delta_ki > 0 )
     {
       // t0 < t1 case
       while (ki < m_cv_count-1 && m_knot[ki] == m_knot[ki+1])
-        ki++;
-      if (ki >= m_cv_count-1)
-        break;
+	ki++;
+      if (ki >= m_cv_count-1) 
+	break;    
     }
     else
     {
@@ -1358,79 +1361,79 @@ bool ON_NurbsCurve::GetNextDiscontinuity(
       // 20 March 2003 Dale Lear:
       //     Added to make t0 > t1 case work
       while (ki > m_order-2 && m_knot[ki] == m_knot[ki-1])
-        ki--;
-      if (ki <= m_order-2)
-        break;
+	ki--;
+      if (ki <= m_order-2) 
+	break;    
     }
 
-    if (m_knot[ki] == m_knot[ki+delta])
-    {
+    if (m_knot[ki] == m_knot[ki+delta]) 
+    {  
       if ( ON::Cinfinity_continuous == c )
       {
-        // Cinfinity_continuous is treated as asking for the next knot
-        *dtype = 3;
-        *t = m_knot[ki];
-        return true;
+	// Cinfinity_continuous is treated as asking for the next knot
+	*dtype = 3;
+	*t = m_knot[ki];
+	return true;
       }
 
       if ( bEv2ndDer ) {
-        Ev2Der( m_knot[ki], Pm, D1m, D2m, -1, hint );
-        Ev2Der( m_knot[ki], Pp, D1p, D2p,  1, hint );
+	Ev2Der( m_knot[ki], Pm, D1m, D2m, -1, hint );
+	Ev2Der( m_knot[ki], Pp, D1p, D2p,  1, hint );
       }
       else {
-        Ev1Der( m_knot[ki], Pm, D1m, -1, hint );
-        Ev1Der( m_knot[ki], Pp, D1p,  1, hint );
+	Ev1Der( m_knot[ki], Pm, D1m, -1, hint );
+	Ev1Der( m_knot[ki], Pp, D1p,  1, hint );
       }
 
       if ( bTestTangent )
       {
-        if ( bTestKappa )
-        {
-          ON_EvCurvature( D1m, D2m, Tm, Km );
-          ON_EvCurvature( D1p, D2p, Tp, Kp );
-        }
-        else
-        {
-          Tm = D1m;
-          Tp = D1p;
-          Tm.Unitize();
-          Tp.Unitize();
-        }
-        d = Tm*Tp;
-        if ( d < cos_angle_tolerance )
-        {
-          *dtype = 1;
-          *t = m_knot[ki];
-          return true;
-        }
-        else if ( bTestKappa )
-        {
-          d = (Km-Kp).Length();
-          if ( d > curvature_tolerance )
-          {
-            *dtype = 2;
-            *t = m_knot[ki];
-            return true;
-          }
-        }
+	if ( bTestKappa )
+	{
+	  ON_EvCurvature( D1m, D2m, Tm, Km );
+	  ON_EvCurvature( D1p, D2p, Tp, Kp );
+	}
+	else
+	{
+	  Tm = D1m;
+	  Tp = D1p;
+	  Tm.Unitize();
+	  Tp.Unitize();
+	}
+	d = Tm*Tp;
+	if ( d < cos_angle_tolerance )
+	{
+	  *dtype = 1;
+	  *t = m_knot[ki];
+	  return true;
+	}
+	else if ( bTestKappa )
+	{
+	  d = (Km-Kp).Length();
+	  if ( d > curvature_tolerance )
+	  {
+	    *dtype = 2;
+	    *t = m_knot[ki];
+	    return true;
+	  }
+	}
       }
       else
       {
-        if ( !(D1m-D1p).IsTiny(D1m.MaximumCoordinate()*ON_SQRT_EPSILON) )
-        {
-          *dtype = 1;
-          *t = m_knot[ki];
-          return true;
-        }
-        else if ( bEv2ndDer )
-        {
-          if ( !(D2m-D2p).IsTiny(D2m.MaximumCoordinate()*ON_SQRT_EPSILON) )
-          {
-            *dtype = 2;
-            *t = m_knot[ki];
-            return true;
-          }
-        }
+	if ( !(D1m-D1p).IsTiny(D1m.MaximumCoordinate()*ON_SQRT_EPSILON) )
+	{
+	  *dtype = 1;
+	  *t = m_knot[ki];
+	  return true;
+	}
+	else if ( bEv2ndDer )
+	{
+	  if ( !(D2m-D2p).IsTiny(D2m.MaximumCoordinate()*ON_SQRT_EPSILON) )
+	  {
+	    *dtype = 2;
+	    *t = m_knot[ki];
+	    return true;
+	  }         
+	}
       }
     }
     ki += delta_ki;
@@ -1443,9 +1446,9 @@ bool ON_NurbsCurve::GetNextDiscontinuity(
 
   if ( input_c != c )
   {
-    // use base class for consistent start/end locus testing
-    rc = ON_Curve::GetNextDiscontinuity( input_c, t0, t1, t, hint, dtype,
-                                    cos_angle_tolerance, curvature_tolerance );
+    // use base class for consistent start/end locus testing 
+    rc = ON_Curve::GetNextDiscontinuity( input_c, t0, t1, t, hint, dtype, 
+				    cos_angle_tolerance, curvature_tolerance );
   }
 
   return rc;
@@ -1453,7 +1456,7 @@ bool ON_NurbsCurve::GetNextDiscontinuity(
 
 bool ON_NurbsCurve::IsContinuous(
     ON::continuity desired_continuity,
-    double t,
+    double t, 
     int* hint, // default = NULL,
     double point_tolerance, // default=ON_ZERO_TOLERANCE
     double d1_tolerance, // default==ON_ZERO_TOLERANCE
@@ -1468,12 +1471,12 @@ bool ON_NurbsCurve::IsContinuous(
   {
     // 20 March 2003 Dale Lear
     //     Consistently handles locus case and out of domain case.
-    rc = ON_Curve::IsContinuous(
-               desired_continuity, t, hint,
-               point_tolerance,
-               d1_tolerance, d2_tolerance,
-               cos_angle_tolerance,
-               curvature_tolerance );
+    rc = ON_Curve::IsContinuous( 
+	       desired_continuity, t, hint, 
+	       point_tolerance, 
+	       d1_tolerance, d2_tolerance, 
+	       cos_angle_tolerance, 
+	       curvature_tolerance );
     return rc;
   }
 
@@ -1493,7 +1496,7 @@ bool ON_NurbsCurve::IsContinuous(
     {
       // 20 March 2003 Dale Lear:
       //     If t is very near interior m_t[] value, see if it
-      //     should be set to that value.  A bit or two of
+      //     should be set to that value.  A bit or two of 
       //     precision sometimes gets lost in proxy
       //     domain to real curve domain conversions on the interior
       //     of a curve domain.
@@ -1501,15 +1504,15 @@ bool ON_NurbsCurve::IsContinuous(
       double segtol = (fabs(m_knot[ii]) + fabs(m_knot[ii+1]) + fabs(m_knot[ii+1]-m_knot[ii]))*ON_SQRT_EPSILON;
       if ( m_knot[ii]+segtol < m_knot[ii+1]-segtol )
       {
-        if ( fabs(t-m_knot[ii]) <= segtol && ii > m_order-2 )
-        {
-          t = m_knot[ii];
-        }
-        else if ( fabs(t-m_knot[ii+1]) <= segtol && ii+2 < m_cv_count )
-        {
-          t = m_knot[ii+1];
-          ki = ON_NurbsSpanIndex(m_order,m_cv_count,m_knot,t,1,*hint);
-        }
+	if ( fabs(t-m_knot[ii]) <= segtol && ii > m_order-2 )
+	{
+	  t = m_knot[ii];
+	}
+	else if ( fabs(t-m_knot[ii+1]) <= segtol && ii+2 < m_cv_count )
+	{
+	  t = m_knot[ii+1];
+	  ki = ON_NurbsSpanIndex(m_order,m_cv_count,m_knot,t,1,*hint);
+	}
       }
     }
 
@@ -1521,63 +1524,63 @@ bool ON_NurbsCurve::IsContinuous(
     {
       if ( ON::Cinfinity_continuous == desired_continuity )
       {
-        // Cinfinity_continuous is a euphanisim for "at a knot"
-        return false;
+	// Cinfinity_continuous is a euphanisim for "at a knot"
+	return false;
       }
 
       // t = interior knot value - check for discontinuity
       int knot_mult = ON_KnotMultiplicity( m_order, m_cv_count, m_knot, ki );
       if ( m_order == 2 )
       {
-        switch(desired_continuity)
-        {
-        case ON::C2_continuous:
-          desired_continuity = ON::C1_continuous;
-          break;
+	switch(desired_continuity)
+	{
+	case ON::C2_continuous: 
+	  desired_continuity = ON::C1_continuous; 
+	  break;
 
-        case ON::G2_continuous:
-          desired_continuity = ON::G1_continuous;
-          break;
-        default:
-          // intentionally ignoring other ON::continuity enum values
-          break;
-        }
+	case ON::G2_continuous: 
+	  desired_continuity = ON::G1_continuous; 
+	  break;
+	default:
+	  // intentionally ignoring other ON::continuity enum values
+	  break;
+	}
       }
 
       switch(desired_continuity)
       {
-      case ON::C2_continuous:
-        if ( m_order - knot_mult >= 3 )
-          return true;
-        break;
-      case ON::C1_continuous:
-        if ( m_order - knot_mult >= 2 )
-          return true;
-        break;
-      case ON::G2_continuous:
-        if ( m_order - knot_mult >= 3 )
-          return true;
-        break;
-      case ON::G1_continuous:
-        if ( m_order - knot_mult >= 2 )
-          return true;
-        break;
+      case ON::C2_continuous: 
+	if ( m_order - knot_mult >= 3 )
+	  return true;
+	break;
+      case ON::C1_continuous: 
+	if ( m_order - knot_mult >= 2 )
+	  return true;
+	break;
+      case ON::G2_continuous: 
+	if ( m_order - knot_mult >= 3 )
+	  return true;
+	break;
+      case ON::G1_continuous: 
+	if ( m_order - knot_mult >= 2 )
+	  return true;
+	break;
       default:
-        // intentionally ignoring other ON::continuity enum values
-        break;
+	// intentionally ignoring other ON::continuity enum values
+	break;
       }
-
+ 
       // need to evaluate at knot
-      rc = ON_Curve::IsContinuous( desired_continuity, t, hint,
-                           point_tolerance, d1_tolerance, d2_tolerance,
-                           cos_angle_tolerance, curvature_tolerance );
+      rc = ON_Curve::IsContinuous( desired_continuity, t, hint, 
+			   point_tolerance, d1_tolerance, d2_tolerance, 
+			   cos_angle_tolerance, curvature_tolerance );
     }
   }
   return rc;
 }
 
 
-BOOL
+BOOL 
 ON_NurbsCurve::SetWeight( int i, double w )
 {
   BOOL rc = false;
@@ -1595,7 +1598,7 @@ ON_NurbsCurve::SetWeight( int i, double w )
   return rc;
 }
 
-BOOL
+BOOL 
 ON_NurbsCurve::SetCV( int i, ON::point_style style, const double* Point )
 {
   BOOL rc = true;
@@ -1627,7 +1630,7 @@ ON_NurbsCurve::SetCV( int i, ON::point_style style, const double* Point )
       // NURBS curve is not rational
       w = (Point[m_dim] != 0.0) ? 1.0/Point[m_dim] : 1.0;
       for ( k = 0; k < m_dim; k++ ) {
-        cv[k] = w*Point[k];
+	cv[k] = w*Point[k];
       }
     }
     break;
@@ -1637,7 +1640,7 @@ ON_NurbsCurve::SetCV( int i, ON::point_style style, const double* Point )
       // NURBS curve is rational - convert euclean point to homogeneous form
       w = Point[m_dim];
       for ( k = 0; k < m_dim; k++ )
-        cv[k] = w*Point[k]; // 22 April 2003 - bug fix [i] to [k]
+	cv[k] = w*Point[k]; // 22 April 2003 - bug fix [i] to [k]
       cv[m_dim] = w;
     }
     else {
@@ -1649,7 +1652,7 @@ ON_NurbsCurve::SetCV( int i, ON::point_style style, const double* Point )
   case ON::intrinsic_point_style:
     memcpy( cv, Point, CVSize()*sizeof(*cv) );
     break;
-
+    
   default:
     rc = false;
     break;
@@ -1658,7 +1661,7 @@ ON_NurbsCurve::SetCV( int i, ON::point_style style, const double* Point )
   return rc;
 }
 
-BOOL
+BOOL 
 ON_NurbsCurve::SetCV( int i, const ON_3dPoint& point )
 {
   BOOL rc = false;
@@ -1668,9 +1671,9 @@ ON_NurbsCurve::SetCV( int i, const ON_3dPoint& point )
     if ( m_dim > 1 ) {
       cv[1] = point.y;
       if ( m_dim > 2 )
-        cv[2] = point.z;
+	cv[2] = point.z;
       if ( m_dim > 3 ) {
-        memset( &cv[3], 0, (m_dim-3)*sizeof(*cv) );
+	memset( &cv[3], 0, (m_dim-3)*sizeof(*cv) );
       }
     }
     if ( m_is_rat ) {
@@ -1682,7 +1685,7 @@ ON_NurbsCurve::SetCV( int i, const ON_3dPoint& point )
   return rc;
 }
 
-BOOL
+BOOL 
 ON_NurbsCurve::SetCV( int i, const ON_4dPoint& point )
 {
   BOOL rc = false;
@@ -1691,12 +1694,12 @@ ON_NurbsCurve::SetCV( int i, const ON_4dPoint& point )
     if ( m_is_rat ) {
       cv[0] = point.x;
       if ( m_dim > 1 ) {
-        cv[1] = point.y;
-        if ( m_dim > 2 )
-          cv[2] = point.z;
-        if ( m_dim > 3 ) {
-          memset( &cv[3], 0, (m_dim-3)*sizeof(*cv) );
-        }
+	cv[1] = point.y;
+	if ( m_dim > 2 )
+	  cv[2] = point.z;
+	if ( m_dim > 3 ) {
+	  memset( &cv[3], 0, (m_dim-3)*sizeof(*cv) );
+	}
       }
       cv[m_dim] = point.w;
       rc = true;
@@ -1704,21 +1707,21 @@ ON_NurbsCurve::SetCV( int i, const ON_4dPoint& point )
     else {
       double w;
       if ( point.w != 0.0 ) {
-        w = 1.0/point.w;
-        rc = true;
+	w = 1.0/point.w;
+	rc = true;
       }
       else {
-        w = 1.0;
+	w = 1.0;
       }
       cv[0] = w*point.x;
       if ( m_dim > 1 ) {
-        cv[1] = w*point.y;
-        if ( m_dim > 2 ) {
-          cv[2] = w*point.z;
-        }
-        if ( m_dim > 3 ) {
-          memset( &cv[3], 0, (m_dim-3)*sizeof(*cv) );
-        }
+	cv[1] = w*point.y;
+	if ( m_dim > 2 ) {
+	  cv[2] = w*point.z;
+	}
+	if ( m_dim > 3 ) {
+	  memset( &cv[3], 0, (m_dim-3)*sizeof(*cv) );
+	}
       }
     }
   }
@@ -1726,7 +1729,7 @@ ON_NurbsCurve::SetCV( int i, const ON_4dPoint& point )
   return rc;
 }
 
-BOOL
+BOOL 
 ON_NurbsCurve::GetCV( int i, ON::point_style style, double* Point ) const
 {
   const double* cv = CV(i);
@@ -1757,7 +1760,7 @@ ON_NurbsCurve::GetCV( int i, ON::point_style style, double* Point ) const
   return true;
 }
 
-BOOL
+BOOL 
 ON_NurbsCurve::GetCV( int i, ON_3dPoint& point ) const
 {
   BOOL rc = false;
@@ -1765,11 +1768,11 @@ ON_NurbsCurve::GetCV( int i, ON_3dPoint& point ) const
   if ( cv ) {
     if ( m_is_rat ) {
       if (cv[m_dim] != 0.0) {
-        const double w = 1.0/cv[m_dim];
-        point.x = cv[0]*w;
-        point.y = (m_dim>1)? cv[1]*w : 0.0;
-        point.z = (m_dim>2)? cv[2]*w : 0.0;
-        rc = true;
+	const double w = 1.0/cv[m_dim];
+	point.x = cv[0]*w;
+	point.y = (m_dim>1)? cv[1]*w : 0.0;
+	point.z = (m_dim>2)? cv[2]*w : 0.0;
+	rc = true;
       }
     }
     else {
@@ -1782,7 +1785,7 @@ ON_NurbsCurve::GetCV( int i, ON_3dPoint& point ) const
   return rc;
 }
 
-BOOL
+BOOL 
 ON_NurbsCurve::GetCV( int i, ON_4dPoint& point ) const
 {
   BOOL rc = false;
@@ -1807,8 +1810,8 @@ bool ON_NurbsCurve::SetKnot( int knot_index, double k )
 }
 
 BOOL ON_NurbsCurve::SetStartPoint(
-        ON_3dPoint start_point
-        )
+	ON_3dPoint start_point
+	)
 {
   BOOL rc = false;
   if ( IsValid() )
@@ -1823,17 +1826,17 @@ BOOL ON_NurbsCurve::SetStartPoint(
       double t;
       ON_Interval domain = Domain();
       if ( !GetLocalClosestPoint( start_point, domain[0], &t ) )
-        t = domain[0];
+	t = domain[0];
       Trim( ON_Interval( t, domain[1] ) );
       DestroyCurveTree();
       double w = 1.0;
       if (IsRational()) {
-        w = Weight(0);
-        start_point *= w;
+	w = Weight(0);
+	start_point *= w;
       }
       SetCV(0,start_point);
       if (IsRational())
-        SetWeight(0, w);
+	SetWeight(0, w);
       SetDomain(domain[0],domain[1]);
       DestroyCurveTree();
       rc = true;
@@ -1843,8 +1846,8 @@ BOOL ON_NurbsCurve::SetStartPoint(
 }
 
 BOOL ON_NurbsCurve::SetEndPoint(
-        ON_3dPoint end_point
-        )
+	ON_3dPoint end_point
+	)
 {
   bool rc = false;
   if ( IsValid() )
@@ -1859,19 +1862,19 @@ BOOL ON_NurbsCurve::SetEndPoint(
       double t;
       ON_Interval domain = Domain();
       if ( !GetLocalClosestPoint( end_point, domain[1], &t ) )
-        t = domain[1];
+	t = domain[1];
       Trim( ON_Interval( domain[0], t ) );
       DestroyCurveTree();
       double w = 1.0;
       if (IsRational()) {
-        w = Weight(m_cv_count-1);
-        end_point *= w;
+	w = Weight(m_cv_count-1);
+	end_point *= w;
       }
       SetCV(m_cv_count-1,end_point);
       if (IsRational())
-        SetWeight(m_cv_count-1, w);
+	SetWeight(m_cv_count-1, w);
       SetDomain(domain[0],domain[1]);
-    	DestroyCurveTree();
+	DestroyCurveTree();
       rc = true;
     }
   }
@@ -1896,15 +1899,15 @@ ON_NurbsCurve::SwapCoordinates( int i, int j )
 }
 
 double ON_NurbsCurve::GrevilleAbcissa(
-         int gindex  // index (0 <= index < CVCount(dir)
-         ) const
+	 int gindex  // index (0 <= index < CVCount(dir)
+	 ) const
 {
   return ON_GrevilleAbcissa( m_order, m_knot+gindex );
 }
 
 bool ON_NurbsCurve::GetGrevilleAbcissae( // see ON_GetGrevilleAbcissa() for details
-         double* g         // g[m_cv_count]
-         ) const
+	 double* g         // g[m_cv_count]
+	 ) const
 {
   return ON_GetGrevilleAbcissae( m_order, m_cv_count, m_knot, false, g );
 }
@@ -1918,9 +1921,9 @@ bool ON_NurbsCurve::ZeroCVs()
     if ( m_cv_capacity > 0 ) {
       memset( m_cv, 0, m_cv_capacity*sizeof(*m_cv) );
       if ( m_is_rat ) {
-        for ( i = 0; i < m_cv_count; i++ ) {
-          SetWeight( i, 1.0 );
-        }
+	for ( i = 0; i < m_cv_count; i++ ) {
+	  SetWeight( i, 1.0 );
+	}
       }
       rc = true;
     }
@@ -1928,10 +1931,10 @@ bool ON_NurbsCurve::ZeroCVs()
       double* cv;
       int s = CVSize()*sizeof(*cv);
       for ( i = 0; i < m_cv_count; i++ ) {
-        cv = CV(i);
-        memset(cv,0,s);
-        if ( m_is_rat )
-          cv[m_dim] = 1.0;
+	cv = CV(i);
+	memset(cv,0,s);
+	if ( m_is_rat )
+	  cv[m_dim] = 1.0;
       }
       rc = (i>0) ? true : false;
     }
@@ -1946,7 +1949,7 @@ bool ON_NurbsCurve::IsClamped( // determine if knot vector is clamped
 {
   return ON_IsKnotVectorClamped( m_order, m_cv_count, m_knot, end );
 }
-
+  
 
 bool ON_NurbsCurve::ReserveCVCapacity(int desired_capacity)
 {
@@ -1959,10 +1962,10 @@ bool ON_NurbsCurve::ReserveCVCapacity(int desired_capacity)
       // no cv array - allocate one
       m_cv = (double*)onmalloc(desired_capacity*sizeof(*m_cv));
       if ( !m_cv ) {
-        rc = false;
+	rc = false;
       }
       else {
-        m_cv_capacity = desired_capacity;
+	m_cv_capacity = desired_capacity;
       }
     }
     else if ( m_cv_capacity > 0 ) {
@@ -1972,11 +1975,11 @@ bool ON_NurbsCurve::ReserveCVCapacity(int desired_capacity)
       // the m_cv[] array.
       m_cv = (double*)onrealloc(m_cv,desired_capacity*sizeof(*m_cv));
       if ( !m_cv ) {
-        rc = false;
-        m_cv_capacity = 0;
+	rc = false;
+	m_cv_capacity = 0;
       }
       else {
-        m_cv_capacity = desired_capacity;
+	m_cv_capacity = desired_capacity;
       }
     }
   }
@@ -1994,11 +1997,11 @@ bool ON_NurbsCurve::ReserveKnotCapacity(int desired_capacity)
       // no knot array - allocate one
       m_knot = (double*)onmalloc(desired_capacity*sizeof(*m_knot));
       if ( !m_knot ) {
-        m_knot_capacity = 0;
-        rc = false;
+	m_knot_capacity = 0;
+	rc = false;
       }
       else {
-        m_knot_capacity = desired_capacity;
+	m_knot_capacity = desired_capacity;
       }
     }
     else if ( m_knot_capacity > 0 ) {
@@ -2008,11 +2011,11 @@ bool ON_NurbsCurve::ReserveKnotCapacity(int desired_capacity)
       // the m_knot[] array.
       m_knot = (double*)onrealloc(m_knot,desired_capacity*sizeof(*m_knot));
       if ( !m_knot ) {
-        rc = false;
-        m_knot_capacity = 0;
+	rc = false;
+	m_knot_capacity = 0;
       }
       else {
-        m_knot_capacity = desired_capacity;
+	m_knot_capacity = desired_capacity;
       }
     }
   }
@@ -2022,33 +2025,35 @@ bool ON_NurbsCurve::ReserveKnotCapacity(int desired_capacity)
 bool ON_NurbsCurve::ConvertSpanToBezier( int span_index, ON_BezierCurve& bez ) const
 {
   bool rc = false;
-  if ( span_index >= 0 && span_index <= m_cv_count-m_order && m_knot && m_cv )
-    {
-      const int cvdim = CVSize();
-      const int sizeof_cv = cvdim*sizeof(*bez.m_cv);
-      int i;
-      rc = bez.ReserveCVCapacity( cvdim*m_order );
-      if ( rc ) {
-	bez.m_dim = m_dim;
-	bez.m_is_rat = m_is_rat;
-	bez.m_order = m_order;
-	bez.m_cv_stride = cvdim;
-	if ( bez.m_cv_stride == m_cv_stride ) {
-	  memcpy( bez.m_cv, CV(span_index), bez.m_order*sizeof_cv );
-	}
-	else {
-	  for ( i = 0; i < m_order; i++ ) {
-	    memcpy( bez.CV(i), CV(span_index+i), sizeof_cv );
-	  }
-	}
-	const double* knot = m_knot + span_index;
-	if( knot[m_order-2] < knot[m_order-1] )
-	  ON_ConvertNurbSpanToBezier( cvdim, bez.m_order, bez.m_cv_stride, bez.m_cv,
-				      knot, knot[m_order-2], knot[m_order-1] );
-	else
-	  rc = false;
+  if ( span_index >= 0 && span_index <= m_cv_count-m_order && m_knot && m_cv ) 
+  {
+    const int cvdim = CVSize();
+    const int sizeof_cv = cvdim*sizeof(*bez.m_cv);
+    int i;
+    rc = bez.ReserveCVCapacity( cvdim*m_order );
+    if ( rc ) {
+      bez.m_dim = m_dim;
+      bez.m_is_rat = m_is_rat;
+      bez.m_order = m_order;
+      bez.m_cv_stride = cvdim;
+      if ( bez.m_cv_stride == m_cv_stride )
+      {
+	memcpy( bez.m_cv, CV(span_index), bez.m_order*sizeof_cv );
       }
+      else
+      {
+	for ( i = 0; i < m_order; i++ ) {
+	  memcpy( bez.CV(i), CV(span_index+i), sizeof_cv );
+	}
+      }
+      const double* knot = m_knot + span_index;
+			if( knot[m_order-2] < knot[m_order-1] )
+				ON_ConvertNurbSpanToBezier( cvdim, bez.m_order, bez.m_cv_stride, bez.m_cv,
+																		knot, knot[m_order-2], knot[m_order-1] );
+			else
+				rc = false;
     }
+  }
   return rc;
 }
 
@@ -2080,7 +2085,7 @@ const ON_BezierCurve* ON_NurbsCurve::BezierSpan(int span) const
 bool ON_NurbsCurve::MakePiecewiseBezier( bool bSetEndWeightsToOne )
 {
   bool rc = HasBezierSpans();
-  if ( !rc && IsValid() )
+  if ( !rc && IsValid() ) 
   {
     ON_Workspace ws;
     DestroyRuntimeCache();
@@ -2097,21 +2102,21 @@ bool ON_NurbsCurve::MakePiecewiseBezier( bool bSetEndWeightsToOne )
     int ki, spani, i;
     for ( ki = m_order-2, spani = 0; ki < m_cv_count-1 && spani < span_count; ki++ ) {
       if ( m_knot[ki] < m_knot[ki+1] ) {
-        bez[spani].Create(m_dim,m_is_rat,m_order);
-        for ( i = 0; i < m_order; i++ )
-          bez[spani].SetCV(  i, ON::intrinsic_point_style, CV( i + ki - m_order + 2 ) );
-        ON_ConvertNurbSpanToBezier( cvdim, bez[spani].m_order, bez[spani].m_cv_stride, bez[spani].m_cv,
-                                    m_knot+ki-m_order+2, m_knot[ki], m_knot[ki+1] );
-        spani++;
+	bez[spani].Create(m_dim,m_is_rat,m_order);
+	for ( i = 0; i < m_order; i++ )
+	  bez[spani].SetCV(  i, ON::intrinsic_point_style, CV( i + ki - m_order + 2 ) );
+	ON_ConvertNurbSpanToBezier( cvdim, bez[spani].m_order, bez[spani].m_cv_stride, bez[spani].m_cv,
+				    m_knot+ki-m_order+2, m_knot[ki], m_knot[ki+1] );
+	spani++;
       }
     }
     m_cv_count = span_count*(m_order-1) + 1;
     for ( spani = 0; spani < span_count; spani++ ) {
       for ( i = 0; i < m_order; i++ ) {
-        SetCV(  spani*(m_order-1) + i, ON::intrinsic_point_style, bez[spani].CV( i ) );
+	SetCV(  spani*(m_order-1) + i, ON::intrinsic_point_style, bez[spani].CV( i ) );
       }
       for ( ki = 0; ki < m_order-1; ki++ )
-        m_knot[ki+spani*(m_order-1)] = t[spani];
+	m_knot[ki+spani*(m_order-1)] = t[spani];
     }
     for ( ki = 0; ki < m_order-1; ki++ )
       m_knot[ki+span_count*(m_order-1)] = t[spani];
@@ -2136,7 +2141,7 @@ bool ON_NurbsCurve::MakePiecewiseBezier( bool bSetEndWeightsToOne )
       w1 = (m_order == m_cv_count) ? 1.0 : bez.Weight(m_order-1);
       bez.ChangeWeights(0,w0,m_order-1,w1);
     }
-
+ 
     bez.m_cv = CV(m_cv_count-m_order);
     if ( bez.Weight(m_order-1) != 1.0 )
     {
@@ -2165,12 +2170,12 @@ bool ON_NurbsCurve::MakePiecewiseBezier(ON_BezierCurve* cache, bool bSetEndWeigh
     int ki, spani, i;
     for ( ki = m_order-2, spani = 0; ki < m_cv_count-1 && spani < span_count; ki++ ) {
       if ( m_knot[ki] < m_knot[ki+1] ) {
-        bez[spani].Create(m_dim,m_is_rat,m_order);
-        for ( i = 0; i < m_order; i++ )
-          bez[spani].SetCV(  i, ON::intrinsic_point_style, CV( i + ki - m_order + 2 ) );
-        ON_ConvertNurbSpanToBezier( cvdim, bez[spani].m_order, bez[spani].m_cv_stride, bez[spani].m_cv,
-                                    m_knot+ki-m_order+2, m_knot[ki], m_knot[ki+1] );
-        spani++;
+	bez[spani].Create(m_dim,m_is_rat,m_order);
+	for ( i = 0; i < m_order; i++ )
+	  bez[spani].SetCV(  i, ON::intrinsic_point_style, CV( i + ki - m_order + 2 ) );
+	ON_ConvertNurbSpanToBezier( cvdim, bez[spani].m_order, bez[spani].m_cv_stride, bez[spani].m_cv,
+				    m_knot+ki-m_order+2, m_knot[ki], m_knot[ki+1] );
+	spani++;
       }
     }
     rc = true;
@@ -2220,8 +2225,8 @@ bool ON_NurbsCurve::InsertKnot( double knot_value, int knot_multiplicity )
     t0 = d[0];
     t1 = d[1];
   }
-
-  if ( knot_multiplicity < 1 || knot_multiplicity > degree )
+  
+  if ( knot_multiplicity < 1 || knot_multiplicity > degree ) 
   {
     ON_ERROR("ON_NurbsCurve::ON_InsertKnot(): knot_multiplicity < 1 or knot_multiplicity > degree.");
     return false;
@@ -2233,17 +2238,17 @@ bool ON_NurbsCurve::InsertKnot( double knot_value, int knot_multiplicity )
     return false;
   }
 
-  if ( knot_value == t0 )
+  if ( knot_value == t0 ) 
   {
-    if ( knot_multiplicity == degree )
+    if ( knot_multiplicity == degree ) 
     {
       rc = ClampEnd(0);
     }
-    else if ( knot_multiplicity == 1 )
+    else if ( knot_multiplicity == 1 ) 
     {
       rc = true;
     }
-    else
+    else 
     {
       ON_ERROR("ON_InsertKnot(): knot_value = t0 and 1 < knot_multiplicity < degree.");
       rc = false;
@@ -2251,17 +2256,17 @@ bool ON_NurbsCurve::InsertKnot( double knot_value, int knot_multiplicity )
     return rc;
   }
 
-  if ( knot_value == t1 )
+  if ( knot_value == t1 ) 
   {
-    if ( knot_multiplicity == degree )
+    if ( knot_multiplicity == degree ) 
     {
       rc = ClampEnd(1);
     }
-    else if ( knot_multiplicity == 1 )
+    else if ( knot_multiplicity == 1 ) 
     {
       rc = true;
     }
-    else
+    else 
     {
       ON_ERROR("ON_InsertKnot(): knot_value = t1 and 1 < knot_multiplicity < degree.");
       rc = false;
@@ -2284,10 +2289,10 @@ bool ON_NurbsCurve::InsertKnot( double knot_value, int knot_multiplicity )
 
   rc = true;
   int span_hint = span_index;
-  int new_knot_count = ON_InsertKnot( knot_value, knot_multiplicity,
-                                      CVSize(), m_order, m_cv_count,
-                                      m_cv_stride, m_cv, m_knot, &span_hint );
-  if ( new_knot_count > 0 )
+  int new_knot_count = ON_InsertKnot( knot_value, knot_multiplicity, 
+				      CVSize(), m_order, m_cv_count, 
+				      m_cv_stride, m_cv, m_knot, &span_hint );
+  if ( new_knot_count > 0 ) 
   {
     m_cv_count += new_knot_count;
   }
@@ -2297,10 +2302,10 @@ bool ON_NurbsCurve::InsertKnot( double knot_value, int knot_multiplicity )
     if ( ON_MakeKnotVectorPeriodic( m_order, m_cv_count, m_knot ) ) {
       int i0, i1;
       for ( i0 = 0, i1 = m_cv_count-degree; i0 < degree; i0++, i1++ ) {
-        if ( span_index < degree-1 )
-          SetCV( i1, ON::intrinsic_point_style, CV(i0) ); // cv[i1] = cv[i0]
-        else
-          SetCV( i0, ON::intrinsic_point_style, CV(i1) ); // cv[i0] = cv[i1]
+	if ( span_index < degree-1 )
+	  SetCV( i1, ON::intrinsic_point_style, CV(i0) ); // cv[i1] = cv[i0]
+	else
+	  SetCV( i0, ON::intrinsic_point_style, CV(i1) ); // cv[i0] = cv[i1]
       }
     }
     else {
@@ -2323,12 +2328,12 @@ bool ON_NurbsCurve::MakeRational()
       double* new_cv;
       int cvi, j;
       for ( cvi = cv_count-1; cvi>=0; cvi-- ) {
-        old_cv = CV(cvi);
-        new_cv = m_cv+(cvi*new_stride);
-        for ( j = dim-1; j >= 0; j-- ) {
-          new_cv[j] = old_cv[j];
-        }
-        new_cv[dim] = 1.0;
+	old_cv = CV(cvi);
+	new_cv = m_cv+(cvi*new_stride);
+	for ( j = dim-1; j >= 0; j-- ) {
+	  new_cv[j] = old_cv[j];
+	}
+	new_cv[dim] = 1.0;
       }
       m_cv_stride = new_stride;
       m_is_rat = 1;
@@ -2348,12 +2353,12 @@ bool ON_NurbsCurve::MakeNonRational()
       double* new_cv = m_cv;
       int cvi, j;
       for ( cvi = 0; cvi < cv_count; cvi++ ) {
-        old_cv = CV(cvi);
-        w = old_cv[dim];
-        w = ( w != 0.0 ) ? 1.0/w : 1.0;
-        for ( j = 0; j < dim; j++ ) {
-          *new_cv++ = w*(*old_cv++);
-        }
+	old_cv = CV(cvi);
+	w = old_cv[dim];
+	w = ( w != 0.0 ) ? 1.0/w : 1.0;
+	for ( j = 0; j < dim; j++ ) {
+	  *new_cv++ = w*(*old_cv++);
+	}
       }
       m_is_rat = 0;
       m_cv_stride = dim;
@@ -2363,15 +2368,15 @@ bool ON_NurbsCurve::MakeNonRational()
   return ( !IsRational() ) ? true : false;
 }
 
-static BOOL GetRaisedDegreeCV(int old_order,
-                              int cvdim,
-                              int old_cvstride,
-                              const double* oldCV, //old_cvstride*old_order
-                              const double* oldkn, //2*old_degree
-                              const double* newkn, //2*old_order
-                              int cv_id,     //0 <= cv_id <= old_order
-                              double* newCV  //cvdim
-                              )
+static BOOL GetRaisedDegreeCV(int old_order, 
+			      int cvdim,
+			      int old_cvstride,
+			      const double* oldCV, //old_cvstride*old_order
+			      const double* oldkn, //2*old_degree
+			      const double* newkn, //2*old_order
+			      int cv_id,     //0 <= cv_id <= old_order
+			      double* newCV  //cvdim
+			      )
 
 {
   int i,j,k;
@@ -2398,11 +2403,11 @@ static BOOL GetRaisedDegreeCV(int old_order,
     k=0;
     for (j=0; j<new_degree; j++){
       if (j != i) {
-        t[k] = kn[j];
-        k++;
+	t[k] = kn[j];
+	k++;
       }
     }
-    if (!ON_EvaluateNurbsBlossom(cvdim, old_order,
+    if (!ON_EvaluateNurbsBlossom(cvdim, old_order, 
       old_cvstride, oldCV, oldkn, t, P)){
       onfree((void*)t);
       onfree((void*)P);
@@ -2412,7 +2417,7 @@ static BOOL GetRaisedDegreeCV(int old_order,
   }
 
   double denom = (double)new_degree;
-  for (i=0; i<cvdim; i++)
+  for (i=0; i<cvdim; i++) 
     newCV[i] /= denom;
 
   onfree((void*)t);
@@ -2517,19 +2522,19 @@ bool ON_NurbsCurve::ChangeDimension( int desired_dimension )
 
   DestroyCurveTree();
 
-  if ( desired_dimension < m_dim )
+  if ( desired_dimension < m_dim ) 
   {
     if ( m_is_rat ) {
       double* cv;
       for ( i = 0; i < m_cv_count; i++ ) {
-        cv = CV(i);
-        cv[desired_dimension] = cv[m_dim];
+	cv = CV(i);
+	cv[desired_dimension] = cv[m_dim];
       }
     }
     m_dim = desired_dimension;
     rc = true;
   }
-  else
+  else 
   {
     const double* cv0;
     double* cv1;
@@ -2544,12 +2549,12 @@ bool ON_NurbsCurve::ChangeDimension( int desired_dimension )
       cv0 = CV(i);
       cv1 = m_cv + (i*cv_stride1);
       if ( m_is_rat )
-        cv1[desired_dimension] = cv0[m_dim];
+	cv1[desired_dimension] = cv0[m_dim];
       for ( j = desired_dimension-1; j >= m_dim; j-- ) {
-        cv1[j] = 0.0;
+	cv1[j] = 0.0;
       }
       for ( j = m_dim-1; j >= 0; j-- ) {
-        cv1[j] = cv0[j];
+	cv1[j] = cv0[j];
       }
     }
     m_dim = desired_dimension;
@@ -2560,10 +2565,10 @@ bool ON_NurbsCurve::ChangeDimension( int desired_dimension )
 }
 
 BOOL ON_NurbsCurve::GetLength(
-        double* length,
-        double fractional_tolerance,
-        const ON_Interval* sub_domain
-        ) const
+	double* length,
+	double fractional_tolerance,
+	const ON_Interval* sub_domain
+	) const
 {
   // 3rd party developers who want to enhance openNURBS
   // may provide a working GetLength here.
@@ -2594,10 +2599,10 @@ bool ON_NurbsCurve::Append( const ON_NurbsCurve& c )
       return false;
   }
 
-  if (    IsRational() && !c.IsRational()
-       || c.Degree() < Degree()
-       || !c.IsClamped(0)
-       || c.Dimension() < Dimension() )
+  if (    IsRational() && !c.IsRational() 
+       || c.Degree() < Degree() 
+       || !c.IsClamped(0) 
+       || c.Dimension() < Dimension() ) 
   {
     ON_NurbsCurve tmp(c);
     if ( !tmp.IncreaseDegree( Degree() ) )
@@ -2606,7 +2611,7 @@ bool ON_NurbsCurve::Append( const ON_NurbsCurve& c )
       return false;
     if ( IsRational() ) {
       if ( !tmp.MakeRational() )
-        return false;
+	return false;
     }
     if ( !tmp.ClampEnd(0) )
       return false;
@@ -2623,11 +2628,11 @@ bool ON_NurbsCurve::Append( const ON_NurbsCurve& c )
     return Append(tmp);
   }
 
-  if (    IsValid()
-       && c.IsValid()
-       && Degree() == c.Degree()
-       && IsRational() == c.IsRational()
-       && Dimension() == c.Dimension() )
+  if (    IsValid() 
+       && c.IsValid() 
+       && Degree() == c.Degree() 
+       && IsRational() == c.IsRational() 
+       && Dimension() == c.Dimension() ) 
   {
     if ( !ClampEnd(1) )
       return false;
@@ -2657,8 +2662,8 @@ bool ON_NurbsCurve::Append( const ON_NurbsCurve& c )
       cv += m_cv_stride;
       memcpy( cv, c.CV(i1), sizeof_cv );
       if ( w != 1.0 ) {
-        for ( j = 0; j < cv_dim; j++ )
-          cv[j] *= w;
+	for ( j = 0; j < cv_dim; j++ )
+	  cv[j] *= w;
       }
       m_cv_count++;
     }
@@ -2724,7 +2729,7 @@ BOOL ON_NurbsCurve::Trim( const ON_Interval& in )
     ki = ON_NurbsSpanIndex( order, m_cv_count, m_knot, split_t, side, ki );
 
   if ( !ON_EvaluateNurbsDeBoor( cv_dim, order, m_cv_stride, CV(ki),
-                                m_knot + ki, side, 0.0, t ) )
+				m_knot + ki, side, 0.0, t ) ) 
   {
     ON_ERROR("ON_NurbsCurve::Trim() - right end de Boor algorithm failed.");
     return false;
@@ -2745,7 +2750,7 @@ BOOL ON_NurbsCurve::Trim( const ON_Interval& in )
     ki = ON_NurbsSpanIndex( order, m_cv_count, m_knot, split_t, side, ki );
 
   if ( !ON_EvaluateNurbsDeBoor( cv_dim, order, m_cv_stride, CV(ki),
-                                m_knot + ki, side, 0.0, t ) )
+				m_knot + ki, side, 0.0, t ) ) 
   {
     ON_ERROR("ON_NurbsCurve::Trim() - right end de Boor algorithm failed.");
     return false;
@@ -2820,7 +2825,7 @@ BOOL ON_NurbsCurve::Split(
     return false;
   if ( right_crv && !ON_NurbsCurve::Cast(right_crv) )
     return false;
-  if ( IsValid() && t > m_knot[m_order-2] && t < m_knot[m_cv_count-1] )
+  if ( IsValid() && t > m_knot[m_order-2] && t < m_knot[m_cv_count-1] ) 
   {
     ON_NurbsCurve* left = (ON_NurbsCurve*)left_crv;
     ON_NurbsCurve* right = (ON_NurbsCurve*)right_crv;
@@ -2833,123 +2838,123 @@ BOOL ON_NurbsCurve::Split(
       right = new ON_NurbsCurve();
     left->DestroyCurveTree();
     right->DestroyCurveTree();
-
+    
     int span_index = ON_NurbsSpanIndex(m_order,m_cv_count,m_knot,t,1,0);
     // if t is very close to a knot value, then split at the knot
     double split_t = t;
     if ( TweakSplitTrimParameter( m_knot[span_index+m_order-2], m_knot[span_index+m_order-1], split_t ) )
     {
       if ( split_t <= m_knot[m_order-2] || split_t >= m_knot[m_cv_count-1] ){
-        // 22 October - greg added bailout code but didn't clean up???
-        //   chuck fixed leak.
-        if (!left_crv) delete left;
-        if (!right_crv) delete right;
-        return false;
+	// 22 October - greg added bailout code but didn't clean up???
+	//   chuck fixed leak.
+	if (!left_crv) delete left;
+	if (!right_crv) delete right;
+	return false;
       }
       span_index = ON_NurbsSpanIndex(m_order,m_cv_count,m_knot,split_t,1,span_index);
     }
 
-    if ( span_index >= 0 && span_index <= m_cv_count - m_order )
+    if ( span_index >= 0 && span_index <= m_cv_count - m_order ) 
     {
       const int cvdim = CVSize();
       const int sizeof_cv = cvdim*sizeof(double);
 
       int left_cv_count = m_order + span_index;
       if ( span_index > 0 && split_t == m_knot[span_index+m_order-2] )
-      {
-        // splitting exactly at a knot value
-        int k;
-        for ( k = 0; left_cv_count >= m_order && k <= span_index+m_order-2; k++ )
-        {
-          if ( split_t == m_knot[span_index+m_order-2-k] )
-            left_cv_count--;
-          else
-            break;
-        }
+      { 
+	// splitting exactly at a knot value
+	int k;
+	for ( k = 0; left_cv_count >= m_order && k <= span_index+m_order-2; k++ )
+	{
+	  if ( split_t == m_knot[span_index+m_order-2-k] )
+	    left_cv_count--;
+	  else
+	    break;
+	}
       }
       int right_cv_count = m_cv_count - span_index;
       if ( left_cv_count < m_order || right_cv_count < m_order ){
-        // 22 October - greg added bailout code but didn't clean up???
-        //   chuck fixed leak.
-        if (!left_crv) delete left;
-        if (!right_crv) delete right;
-        return false;
+	// 22 October - greg added bailout code but didn't clean up???
+	//   chuck fixed leak.
+	if (!left_crv) delete left;
+	if (!right_crv) delete right;
+	return false;
       }
 
       if ( left != this )
       {
-        left->m_dim = m_dim;
-        left->m_is_rat = m_is_rat;
-        left->m_order = m_order;
-        left->m_cv_count = left_cv_count;
-        left->m_cv_stride = cvdim;
+	left->m_dim = m_dim;
+	left->m_is_rat = m_is_rat;
+	left->m_order = m_order;
+	left->m_cv_count = left_cv_count;
+	left->m_cv_stride = cvdim;
       }
       if ( right != this )
       {
-        right->m_dim = m_dim;
-        right->m_is_rat = m_is_rat;
-        right->m_order = m_order;
-        right->m_cv_count = right_cv_count;
-        right->m_cv_stride = cvdim;
+	right->m_dim = m_dim;
+	right->m_is_rat = m_is_rat;
+	right->m_order = m_order;
+	right->m_cv_count = right_cv_count;
+	right->m_cv_stride = cvdim;
       }
 
       // fill in left allowing for possibility that left = this
-      if ( left->m_cv != m_cv )
+      if ( left->m_cv != m_cv ) 
       {
-        left->ReserveCVCapacity(cvdim*left_cv_count);
-        for( i = 0; i < left_cv_count; i++ ) {
-          memcpy( left->m_cv + i*cvdim, CV(i), sizeof_cv );
-        }
+	left->ReserveCVCapacity(cvdim*left_cv_count);
+	for( i = 0; i < left_cv_count; i++ ) {
+	  memcpy( left->m_cv + i*cvdim, CV(i), sizeof_cv );
+	}
       }
-      if ( left->m_knot != m_knot )
+      if ( left->m_knot != m_knot ) 
       {
-        i = ON_KnotCount( m_order, left_cv_count);
-        left->ReserveKnotCapacity( i );
-        memcpy( left->m_knot, m_knot, i*sizeof(left->m_knot[0]) );
+	i = ON_KnotCount( m_order, left_cv_count);
+	left->ReserveKnotCapacity( i );
+	memcpy( left->m_knot, m_knot, i*sizeof(left->m_knot[0]) );
       }
-
+      
       // fill in right allowing for possibility that right = this
       if ( right->m_cv != m_cv || span_index > 0 )
       {
-        right->ReserveCVCapacity(cvdim*right_cv_count);
-        for( i = 0; i < right_cv_count; i++ ) {
-          memmove( right->m_cv + i*cvdim, CV(i+span_index), sizeof_cv );
-        }
+	right->ReserveCVCapacity(cvdim*right_cv_count);
+	for( i = 0; i < right_cv_count; i++ ) {
+	  memmove( right->m_cv + i*cvdim, CV(i+span_index), sizeof_cv );
+	}
       }
-      if ( right->m_knot != m_knot || span_index > 0 )
+      if ( right->m_knot != m_knot || span_index > 0 ) 
       {
-        i = ON_KnotCount(m_order, right_cv_count);
-        right->ReserveKnotCapacity( i );
-        memmove( right->m_knot, m_knot + span_index, i*sizeof(right->m_knot[0]) );
+	i = ON_KnotCount(m_order, right_cv_count);
+	right->ReserveKnotCapacity( i );
+	memmove( right->m_knot, m_knot + span_index, i*sizeof(right->m_knot[0]) );
       }
 
       if ( right == this ) {
-        right->m_cv_count = right_cv_count;
-        right->m_cv_stride = cvdim;
+	right->m_cv_count = right_cv_count;
+	right->m_cv_stride = cvdim;
       }
 
       if ( left == this ) {
-        left->m_cv_count = left_cv_count;
-        left->m_cv_stride = cvdim;
+	left->m_cv_count = left_cv_count;
+	left->m_cv_stride = cvdim;
       }
 
       // trim right end of left NURBS
       i = left->m_cv_count - left->m_order;
       ON_EvaluateNurbsDeBoor( cvdim, m_order, cvdim, left->CV(i), left->m_knot + i, -1, 0.0, t );
       for ( i = left->m_cv_count-1; i < ON_KnotCount(left->m_order,left->m_cv_count); i++ )
-        left->m_knot[i] = t;
+	left->m_knot[i] = t;
       left->ClampEnd(2); // 26 June 2003 Dale Lear
 
       // trim left end of right NURBS
       ON_EvaluateNurbsDeBoor( cvdim, m_order, cvdim, right->m_cv, right->m_knot, +1, 0.0, t );
       for ( i = 0; i <= right->m_order-2; i++ )
-        right->m_knot[i] = t;
+	right->m_knot[i] = t;
       right->ClampEnd(2); // 26 June 2003 Dale Lear
 
       if ( 0 == left_crv )
-        left_crv = left;
+	left_crv = left;
       if ( 0 == right_crv )
-        right_crv = right;
+	right_crv = right;
       rc = true;
     }
   }
@@ -2957,14 +2962,27 @@ BOOL ON_NurbsCurve::Split(
 }
 
 
-int ON_NurbsCurve::GetNurbForm( ON_NurbsCurve& curve,
-                                double tolerance,
-                                const ON_Interval* subdomain  // OPTIONAL subdomain of ON::ProxyCurve::Domain()
-                                ) const
+int ON_NurbsCurve::GetNurbForm( ON_NurbsCurve& curve, 
+				double tolerance,
+				const ON_Interval* subdomain  // OPTIONAL subdomain of ON::ProxyCurve::Domain()
+				) const
 {
   int rc = 1;
-  curve = *this;
-  if ( subdomain ) {
+
+  // 4 May 2007 Dale Lear
+  //   I'm replacing the call to operator= with a call to
+  //   ON_NurbsCurveCopyHelper().  The operator= call
+  //   was copying userdata and that does not happen for
+  //   any other GetNurbForm overrides.  Copying userdata
+  //   in GetNurbForm is causing trouble in Make2D and 
+  //   other places that are creating NURBS copies in
+  //   worker memory pools.
+
+  // curve = *this; // copied user data
+  ON_NurbsCurveCopyHelper(*this,curve); // does not copy user data
+
+  if ( subdomain ) 
+  {
     if ( !curve.Trim(*subdomain) )
       rc = 0;
   }
@@ -2995,46 +3013,46 @@ BOOL ON_NurbsCurve::GetNurbFormParameterFromCurveParameter(
   return true;
 }
 
-bool ON_NurbsCurve::ClampEnd(
-        int end // 0 = clamp start, 1 = clamp end, 2 = clamp start and end
-        )
+bool ON_NurbsCurve::ClampEnd( 
+	int end // 0 = clamp start, 1 = clamp end, 2 = clamp start and end 
+	)
 {
   // Curve tree doesn't change when you clamp // DestroyCurveTree();
-  return ON_ClampKnotVector( CVSize(), m_order,
-                             m_cv_count, m_cv_stride, m_cv,
-                             m_knot, end );
+  return ON_ClampKnotVector( CVSize(), m_order, 
+			     m_cv_count, m_cv_stride, m_cv, 
+			     m_knot, end );
 }
 
 
 /*
-static
+static 
 bool ON_DuplicateKnots( int order, int cv_count, bool bRevKnot1,
-                        double* knot0,
-                        double* knot1
-                        )
+			double* knot0, 
+			double* knot1
+			)
 {
   return false;
 }
 
-static
-bool ON_DuplicateContolPoints( int dim, int is_rat, int cv_count,
-                               bool bRevCV1,
-                               int stride0, double* cv0,
-                               int stride1, double* cv1
-                              )
+static 
+bool ON_DuplicateContolPoints( int dim, int is_rat, int cv_count, 
+			       bool bRevCV1,
+			       int stride0, double* cv0, 
+			       int stride1, double* cv1
+			      )
 {
   return false;
 }
 */
 
-static bool ON_IsDuplicateKnotVector( int order, int cv_count,
-               const double* knot, const double* other_knot,
-               bool bIgnoreParameterization )
+static bool ON_IsDuplicateKnotVector( int order, int cv_count, 
+	       const double* knot, const double* other_knot,
+	       bool bIgnoreParameterization )
 {
-  bool rc = (    0 != knot
-              && 0 != other_knot
-              && order >= 2
-              && cv_count >= order);
+  bool rc = (    0 != knot 
+	      && 0 != other_knot 
+	      && order >= 2 
+	      && cv_count >= order);
 
   if (rc)
   {
@@ -3047,16 +3065,16 @@ static bool ON_IsDuplicateKnotVector( int order, int cv_count,
       double k, other_k;
       for ( i = 0; i < knot_count && rc; i++ )
       {
-        k = dom.NormalizedParameterAt(knot[i]);
-        other_k = dom.NormalizedParameterAt(other_knot[i]);
-        rc = (fabs(k-other_k) <= ON_ZERO_TOLERANCE);
+	k = dom.NormalizedParameterAt(knot[i]);
+	other_k = dom.NormalizedParameterAt(other_knot[i]);
+	rc = (fabs(k-other_k) <= ON_ZERO_TOLERANCE);
       }
     }
     else
     {
       for ( i = 0; i < knot_count && rc; i++ )
       {
-        rc = (knot[i] == other_knot[i]);
+	rc = (knot[i] == other_knot[i]);
       }
     }
   }
@@ -3064,17 +3082,17 @@ static bool ON_IsDuplicateKnotVector( int order, int cv_count,
 }
 
 static bool ON_IsDuplicatePointList( int dim, int is_rat,
-                                     int count,
-                                     int stride,
-                                     const double* cv,
-                                     int other_stride,
-                                     const double* other_cv,
-                                     double tolerance
-                                     )
+				     int count, 
+				     int stride, 
+				     const double* cv,
+				     int other_stride,
+				     const double* other_cv,
+				     double tolerance
+				     )
 {
   bool rc = (dim > 0 || is_rat >= 0 && is_rat <= 1 && count > 0
-             && abs(stride) >= dim+is_rat && abs(other_stride) >= (dim+is_rat)
-             && 0 != cv && 0 != other_cv);
+	     && abs(stride) >= dim+is_rat && abs(other_stride) >= (dim+is_rat)
+	     && 0 != cv && 0 != other_cv);
   if (rc)
   {
     if ( tolerance < 0.0 )
@@ -3087,15 +3105,15 @@ static bool ON_IsDuplicatePointList( int dim, int is_rat,
     {
       if ( is_rat )
       {
-        w = cv[dim];
-        other_w = other_cv[dim];
-        cv_tol = fabs(w*tolerance);
-        rc = ( w == other_w );
+	w = cv[dim];
+	other_w = other_cv[dim];
+	cv_tol = fabs(w*tolerance);
+	rc = ( w == other_w );
       }
 
       for ( j = 0; j < dim && rc; j++ )
       {
-        rc = (fabs(cv[j] - other_cv[j]) <= cv_tol);
+	rc = (fabs(cv[j] - other_cv[j]) <= cv_tol);
       }
       cv += stride;
       other_cv += other_stride;
@@ -3103,13 +3121,13 @@ static bool ON_IsDuplicatePointList( int dim, int is_rat,
   }
   return rc;
 }
+				   
 
-
-bool ON_NurbsCurve::IsDuplicate(
-        const ON_NurbsCurve& other,
-        bool bIgnoreParameterization,
-        double tolerance
-        ) const
+bool ON_NurbsCurve::IsDuplicate( 
+	const ON_NurbsCurve& other, 
+	bool bIgnoreParameterization,
+	double tolerance 
+	) const
 {
   bool rc = (this == &other);
   if ( !rc
@@ -3125,18 +3143,18 @@ bool ON_NurbsCurve::IsDuplicate(
     // compare control points
     if (rc)
       rc = ON_IsDuplicatePointList( m_dim, m_is_rat?1:0, m_cv_count,
-                                    m_cv_stride, m_cv,
-                                    other.m_cv_stride, other.m_cv,
-                                    tolerance );
+				    m_cv_stride, m_cv,
+				    other.m_cv_stride, other.m_cv,
+				    tolerance );
   }
   return rc;
 }
 
-bool ON_NurbsSurface::IsDuplicate(
-        const ON_NurbsSurface& other,
-        bool bIgnoreParameterization,
-        double tolerance
-        ) const
+bool ON_NurbsSurface::IsDuplicate( 
+	const ON_NurbsSurface& other, 
+	bool bIgnoreParameterization,
+	double tolerance 
+	) const
 {
   bool rc = (this == &other);
   if ( !rc
@@ -3158,21 +3176,20 @@ bool ON_NurbsSurface::IsDuplicate(
     for ( i = 0; i < m_cv_count[0] && rc; i++ )
     {
       rc = ON_IsDuplicatePointList( m_dim, m_is_rat?1:0, m_cv_count[1],
-                                    m_cv_stride[1], CV(i,0),
-                                    other.m_cv_stride[1], other.CV(i,0),
-                                    tolerance );
+				    m_cv_stride[1], CV(i,0),
+				    other.m_cv_stride[1], other.CV(i,0),
+				    tolerance );
     }
   }
   return rc;
 }
 
 
-bool ON_Brep::IsDuplicate(
-        const ON_Brep& other,
-        double tolerance
-        ) const
+bool ON_Brep::IsDuplicate( 
+	const ON_Brep& other, 
+	double tolerance 
+	) const
 {
   // OBSOLETE FUNCTION - REMOVE
   return false;
 }
-

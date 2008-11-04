@@ -66,6 +66,16 @@ else !BUILD_TERMLIB
 TERMLIBDIR=
 endif
 
+if BUILD_TKHTML3
+if WITH_X11
+TKHTML3DIR=tkhtml3
+else !WITH_X11
+TKHTML3DIR=
+endif
+else !BUILD_TKHTML3
+TKHTML3DIR=
+endif
+
 if BUILD_TKIMG
 if WITH_X11
 TKIMGDIR=tkimg
@@ -133,12 +143,12 @@ SUBDIRS = \
 	${IWIDGETSDIR} \
 	${TERMLIBDIR} \
 	${JOVEDIR} \
+	${TKHTML3DIR} \
 	${TKIMGDIR} \
 	${BLTDIR} \
 	${OPENNURBSDIR} \
 	${TNTDIR} \
-	awf \
-	intaval
+	awf
 
 endif
 # end ONLY_RTS
@@ -146,12 +156,14 @@ endif
 endif
 # end ONLY_BENCHMARK
 
+EXTRA_DIST = \
+	boost 
+
 DIST_SUBDIRS = \
 	URToolkit \
 	awf \
 	blt \
 	incrTcl \
-	intaval \
 	iwidgets \
 	jove \
 	libpng \
@@ -162,6 +174,7 @@ DIST_SUBDIRS = \
 	openNURBS \
 	tcl \
 	tk \
+	tkhtml3 \
 	tkimg \
 	tnt
 

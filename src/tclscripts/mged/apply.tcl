@@ -103,6 +103,10 @@ proc mged_shaded_mode_helper {val} {
     global mged_gui
     global mged_players
 
+    if ![info exists mged_players] {
+	return
+    }
+
     if {$val < 0 || 2 < $val} {
 	# do nothing
 	return

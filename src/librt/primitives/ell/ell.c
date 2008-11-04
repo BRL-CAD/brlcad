@@ -1,4 +1,4 @@
-/*                         G _ E L L . C
+/*                           E L L . C
  * BRL-CAD
  *
  * Copyright (c) 1985-2008 United States Government as represented by
@@ -17,9 +17,9 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @addtogroup g_  */
+/** @addtogroup primitives */
 /** @{ */
-/** @file g_ell.c
+/** @file ell.c
  *
  * Intersect a ray with a Generalized Ellipsoid.
  *
@@ -716,8 +716,8 @@ struct ell_vert_strip {
  *	  1
  *	  B
  *	 /\
- *    3 /  \ 4
- *    D/____\E
+ *   3  /  \  4
+ *   D /____\ E
  *    /\    /\
  *   /	\  /  \
  *  /____\/____\
@@ -1628,6 +1628,47 @@ nmg_sphere_face_snurb(struct faceuse *fu, const matp_t m)
     M( 1.0     ,   0     ,   0     , 1.0     );
     M( root2_2 ,   0     , root2_2 , root2_2 );
     M(   0     ,   0     , 1.0     , 1.0     );
+}
+
+/**
+ *			R T _ E L L _ P A R A M S
+ *
+ *  @brief
+ *  Method for declaration of parameters so that it can be used
+ *  by Parametrics and Constraints library.
+ *
+ *  allocates space for PC set , User is expect to free after use
+ *
+ *  @return 0 on success
+ *  @return -1 on failure
+ */
+
+int
+rt_ell_params(struct pc_pc_set * pcs, const struct rt_db_internal *ip)
+{
+    struct rt_ell_internal *eip;
+    eip = (struct rt_ell_internal *)ip->idb_ptr;
+/*
+    pcs->ps = bu_calloc(pcs->n_params, sizeof ( struct pc_param),"pc_param");
+    pcs->cs = bu_calloc(pcs->n_constraints, sizeof ( struct pc_constrnt),"pc_constrnt");
+    
+    strcpy(pcs->ps[0].pname,"V");
+    pcs->ps[0].ptype = pc_point;
+    pcs->ps[0].pval.pointp = (pointp_t) &(eip->v);
+    
+    strcpy(pcs->ps[1].pname,"A");
+    pcs->ps[1].ptype = pc_vector;
+    pcs->ps[1].pval.vectorp = (vectp_t) &(eip->a);
+
+    strcpy(pcs->ps[2].pname,"B");
+    pcs->ps[2].ptype = pc_vector;
+    pcs->ps[2].pval.vectorp = (vectp_t)  &(eip->b);
+
+    strcpy(pcs->ps[3].pname,"C");
+    pcs->ps[3].ptype = pc_value;
+    pcs->ps[3].pval.vectorp = (vectp_t) &(eip->c);
+*/
+    return(0);			/* OK */
 }
 
 /** @} */

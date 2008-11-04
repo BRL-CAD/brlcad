@@ -32,6 +32,7 @@
 #include "bu.h"
 #include "vmath.h"
 #include "raytrace.h"
+#include "dg.h"
 #include "./mged.h"
 #include "./mged_dm.h"
 #include "./qray.h"
@@ -42,13 +43,25 @@
 int
 f_qray(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
+#if 0
+    struct ged ged;
+    ged.ged_wdbp = wdbp;
+    return ged_qray(&ged, argc, argv);
+#else
     return dgo_qray_cmd(dgop, interp, argc, argv);
+#endif
 }
 
 void
 init_qray(void)
 {
+#if 0
+    struct ged ged;
+    ged.ged_wdbp = wdbp;
+    ged_init_qray(ged.ged_gdp);
+#else
     dgo_init_qray(dgop);
+#endif
 }
 
 #else

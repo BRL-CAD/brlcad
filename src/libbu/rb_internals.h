@@ -21,8 +21,8 @@
 /** @{ */
 /** @file rb_internals.h
  *
- *	The constants, macro functions, etc. need within LIBBU(3)
- *	to handle the red-black tree utilities.
+ * The constants, macro functions, etc. need within LIBBU(3) to handle
+ * the red-black tree utilities.
  *
  */
 
@@ -33,8 +33,9 @@
 #ifndef BU_RB_INTERNALS_H
 #define BU_RB_INTERNALS_H seen
 
+
 /**
- * B U _ R B _ C K M A G ( )
+ * B U _ R B _ C K M A G
  *
  * Check and validate a structure pointer
  *
@@ -48,7 +49,7 @@
 
 
 /**
- * B U _ R B _ C K O R D E R ( )
+ * B U _ R B _ C K O R D E R
  *
  * This macro has two parameters: a tree and an order number.  It
  * ensures that the order number is valid for the tree.
@@ -114,14 +115,14 @@
 #define	bu_rb_data(n, o)	(((n) -> rbn_package)[o] -> rbp_data)
 
 /**
- *	Interface to _rb_walk()
- *	(Valid values for the parameter what_to_walk)
+ * Interface to _rb_walk()
+ * (Valid values for the parameter what_to_walk)
  */
 #define	WALK_NODES		0
 #define	WALK_DATA		1
 
 /**
- * B U _ R B _ R O T A T E ( )
+ * B U _ R B _ R O T A T E
  *
  * This macro has three parameters: the node about which to rotate,
  * the order to be rotated, and the direction of rotation.  They allow
@@ -132,7 +133,7 @@
 				    _rb_rot_right((n), (o)))
 
 /**
- * B U _ R B _ O T H E R _ R O T A T E ( )
+ * B U _ R B _ O T H E R _ R O T A T E
  *
  * This macro has three parameters: the node about which to rotate,
  * the order to be rotated, and the direction of rotation.  They allow

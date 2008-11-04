@@ -45,14 +45,15 @@
 #include "./cmd.h"
 
 extern void init_qray(void);
-
+extern void mged_global_variable_setup(Tcl_Interp *interp);
 
 struct gedtab {
     char *name;
-    int (*func)(int, const char *[]);
+    int (*func)(struct ged *gedp, int argc, const char *[]);
 };
 static struct gedtab newtab[] = {
     {"edmater", ged_edmater},
+    {"color", ged_color},
     {NULL, NULL}
 };
 
@@ -111,6 +112,7 @@ static struct cmdtab cmdtab[] = {
     {"cpi", f_copy_inv},
     {"d", cmd_erase},
     {"dall", cmd_erase_all},
+    {"db", cmd_stub},
     {"db_glob", cmd_mged_glob},
     {"dbconcat", cmd_concat},
     {"dbfind", cmd_find},
@@ -133,7 +135,7 @@ static struct cmdtab cmdtab[] = {
     {"eac", f_eac},
     {"echo", cmd_echo},
     {"edcodes", f_edcodes},
-    {"edcolor", f_edcolor},
+    {"edcolor", f_edcolor}, /* XXX kill this */
     {"edcomb", f_edcomb},
     {"edgedir", f_edgedir},
     {"edmater", f_edmater},
@@ -149,11 +151,11 @@ static struct cmdtab cmdtab[] = {
     {"eye_pt", cmd_eye_pt},
     {"facedef", f_facedef},
     {"facetize", f_facetize},
-    {"form",	cmd_form},
+    {"form", cmd_form},
     {"fracture", f_fracture},
-    {"front",	bv_front},
+    {"front", bv_front},
     {"g", cmd_group},
-    {"get",		cmd_get},
+    {"get", cmd_get},
     {"get_autoview", cmd_get_autoview},
     {"get_comb", cmd_get_comb},
     {"get_dbip", cmd_get_ptr},
@@ -183,6 +185,7 @@ static struct cmdtab cmdtab[] = {
     {"keypoint", f_keypoint},
     {"kill", cmd_kill},
     {"killall", cmd_killall},
+    {"killrefs", cmd_killrefs},
     {"killtree", cmd_killtree},
     {"knob", f_knob},
     {"l", cmd_list},
@@ -252,7 +255,7 @@ static struct cmdtab cmdtab[] = {
     {"preview", f_preview},
     {"ps", f_ps},
     {"push", cmd_push},
-    {"put",		cmd_put},
+    {"put", cmd_put},
     {"put_comb", cmd_put_comb},
     {"put_sed", f_put_sedit},
     {"putmat", f_putmat},
@@ -298,6 +301,7 @@ static struct cmdtab cmdtab[] = {
     {"savekey", f_savekey},
     {"saveview", f_saveview},
     {"sca", cmd_sca},
+    {"search", cmd_search},
     {"sed", f_sed},
     {"sed_apply", f_sedit_apply},
     {"sed_reset", f_sedit_reset},
@@ -382,7 +386,7 @@ static struct cmdtab cmdtab[] = {
 void
 mged_rtCmdNotify()
 {
-    pr_prompt();
+    pr_prompt(interactive);
 }
 
 /**
@@ -446,7 +450,7 @@ cmd_setup(void)
     Bu_Init(interp);
     Bn_Init(interp);
     Rt_Init(interp);
-    Ged_Init(interp);
+    Go_Init(interp);
 
     tkwin = NULL;
 
@@ -556,7 +560,7 @@ mged_setup(void)
     }
 
     /* Initialize libged */
-    if (Ged_Init(interp) == TCL_ERROR) {
+    if (Go_Init(interp) == TCL_ERROR) {
 	bu_log("Ged_Init ERROR:\n%s\n", Tcl_GetStringResult(interp));
 	Tcl_ResetResult(interp);
     }
@@ -587,8 +591,10 @@ mged_setup(void)
     bu_vls_printf( &str, "%s(state)", MGED_DISPLAY_VAR );
     Tcl_SetVar(interp, bu_vls_addr(&str), state_str[state], TCL_GLOBAL_ONLY);
 
+#if 0
     /* initialize "Query Ray" variables */
     init_qray();
+#endif
 
     Tcl_ResetResult(interp);
 

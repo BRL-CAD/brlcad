@@ -1,6 +1,25 @@
 BRL-CAD Concurrent Versions System Policy and Guidelines
 ========================================================
 
+
+
+
+
+
+
+**********************************************************************
+NOTE: THESE INSTRUCTIONS ARE OUT-OF-DATE AS BRL-CAD NOW USES
+SUBVERSION INSTEAD OF CVS.  CONSULT WITH CAUTION AS SOME PORTIONS ARE
+STILL RELEVANT BUT OTHERS THAT ARE CVS-SPECIFIC ARE NOT.
+**********************************************************************
+
+
+
+
+
+
+
+
 The document includes a set of requirements and recommended procedures
 for how to effectively use CVS with this project.  Included are
 details on checking code in and out, effective use of commit messages,

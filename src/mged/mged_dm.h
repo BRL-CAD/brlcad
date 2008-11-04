@@ -45,10 +45,6 @@
 #define DO_SINGLE_DISPLAY_LIST
 #endif
 
-#if !defined(PI)      /* sometimes found in math.h */
-#define PI 3.14159265358979323846264338327950288419716939937511
-#endif
-
 #define MGED_DISPLAY_VAR "mged_display"
 
 /* +-2048 to +-1 */
@@ -130,7 +126,7 @@ struct _mged_variables {
     int		mv_faceplate;
     int		mv_orig_gui;
     int		mv_linewidth;
-    char		mv_linestyle;
+    char	mv_linestyle;
     int		mv_hot_key;
     int		mv_context;
     int		mv_dlist;
@@ -141,10 +137,10 @@ struct _mged_variables {
     int		mv_fb_all;			/* 0 - use part of image as defined by the rectangle
 						   1 - use the entire image */
     int		mv_fb_overlay;			/* 0 - underlay    1 - interlay    2 - overlay */
-    char		mv_mouse_behavior;
-    char		mv_coords;
-    char		mv_rotate_about;
-    char		mv_transform;
+    char	mv_mouse_behavior;
+    char	mv_coords;
+    char	mv_rotate_about;
+    char	mv_transform;
     int		mv_predictor;
     double	mv_predictor_advance;
     double	mv_predictor_length;
@@ -153,9 +149,9 @@ struct _mged_variables {
     int		mv_toggle_perspective;		/* used to toggle through values in perspective_table[] */
     double	mv_nmg_eu_dist;
     double	mv_eye_sep_dist;		/* >0 implies stereo.  units = "room" mm */
-    char		mv_union_lexeme[1024];
-    char		mv_intersection_lexeme[1024];
-    char		mv_difference_lexeme[1024];
+    char	mv_union_lexeme[1024];
+    char	mv_intersection_lexeme[1024];
+    char	mv_difference_lexeme[1024];
 };
 
 struct _axes_state {
@@ -220,7 +216,7 @@ struct _rubber_band {
     int		rb_active;	/* 1 - actively drawing a rubber band */
     int		rb_draw;	/* draw rubber band rectangle */
     int		rb_linewidth;
-    char		rb_linestyle;
+    char	rb_linestyle;
     int		rb_pos[2];	/* Position in image coordinates */
     int		rb_dim[2];	/* Rectangle dimension in image coordinates */
     fastf_t	rb_x;		/* Corner of rectangle in normalized     */
@@ -235,9 +231,9 @@ struct _view_state {
 
     struct view_obj	*vs_vop;
     fastf_t	vs_i_Viewscale;
-    mat_t		vs_model2objview;
-    mat_t		vs_objview2model;
-    mat_t		vs_ModelDelta;		/* changes to Viewrot this frame */
+    mat_t	vs_model2objview;
+    mat_t	vs_objview2model;
+    mat_t	vs_ModelDelta;		/* changes to Viewrot this frame */
 
     struct view_ring	vs_headView;
     struct view_ring	*vs_current_view;
@@ -249,14 +245,14 @@ struct _view_state {
 
     int		vs_rateflag_model_rotate;
     vect_t	vs_rate_model_rotate;
-    char		vs_rate_model_origin;
+    char	vs_rate_model_origin;
 
     int		vs_rateflag_tran;
     vect_t	vs_rate_tran;
 
     int		vs_rateflag_rotate;
     vect_t	vs_rate_rotate;
-    char		vs_rate_origin;
+    char	vs_rate_origin;
 
     int		vs_rateflag_scale;
     fastf_t	vs_rate_scale;
@@ -394,7 +390,7 @@ struct dm_list {
 #if defined(_WIN32) && !defined(__CYGWIN__)
     Tcl_Channel		dml_netchan;
 #endif
-    struct client		dml_clients[MAX_CLIENTS];
+    struct client	dml_clients[MAX_CLIENTS];
     int			dml_dirty;			/* true if received an expose or configuration event */
     int			dml_mapped;
     int			dml_owner;			/* true if owner of the view info */
@@ -403,7 +399,7 @@ struct dm_list {
     int			dml_perspective_angle;
     int			*dml_zclip_ptr;
     struct bu_list	dml_p_vlist;			/* predictor vlist */
-    struct trail		dml_trails[NUM_TRAILS];
+    struct trail	dml_trails[NUM_TRAILS];
     struct cmd_list	*dml_tie;
 
     int			dml_adc_auto;
@@ -416,12 +412,12 @@ struct dm_list {
     point_t		_dml_work_pt;
 
     /* Tcl variable names for display info */
-    struct bu_vls		dml_fps_name;
-    struct bu_vls		dml_aet_name;
-    struct bu_vls		dml_ang_name;
-    struct bu_vls		dml_center_name;
-    struct bu_vls		dml_size_name;
-    struct bu_vls		dml_adc_name;
+    struct bu_vls	dml_fps_name;
+    struct bu_vls	dml_aet_name;
+    struct bu_vls	dml_ang_name;
+    struct bu_vls	dml_center_name;
+    struct bu_vls	dml_size_name;
+    struct bu_vls	dml_adc_name;
 
     /* Slider stuff */
     int			dml_scroll_top;
@@ -496,9 +492,8 @@ struct dm_list {
 #define scroll_y curr_dm_list->dml_scroll_y
 #define scroll_array curr_dm_list->dml_scroll_array
 
-#define MINVIEW		0.001
-#define VIEWSIZE	(2.0*view_state->vs_Viewscale)	/* Width of viewing cube */
-#define VIEWFACTOR	(1/view_state->vs_Viewscale)	/* 2.0 / VIEWSIZE */
+#define VIEWSIZE	(2.0*view_state->vs_vop->vo_scale)	/* Width of viewing cube */
+#define VIEWFACTOR	(1/view_state->vs_vop->vo_scale)	/* 2.0 / VIEWSIZE */
 
 #define RATE_ROT_FACTOR 6.0
 #define ABS_ROT_FACTOR 180.0

@@ -32,7 +32,6 @@
 #include "dg.h"
 
 #include "./mged.h"
-#include "./mged_solid.h"
 #include "./sedit.h"
 #include "./mged_dm.h"
 
@@ -51,8 +50,6 @@ extern unsigned char geometry_default_color[];		/* defined in dodraw.c */
 point_t	eye_pos_scr = { 0, 0, 1 };
 #endif
 
-struct solid	FreeSolid;	/* Head of freelist */
-struct solid	HeadSolid;	/* Head of solid table */
 
 /*
  *			P E R S P _ M A T

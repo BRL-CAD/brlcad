@@ -1,4 +1,4 @@
-/*                         G _ R H C . C
+/*                           R H C . C
  * BRL-CAD
  *
  * Copyright (c) 1990-2008 United States Government as represented by
@@ -17,9 +17,9 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @addtogroup g_ */
+/** @addtogroup primitives */
 /** @{ */
-/** @file g_rhc.c
+/** @file rhc.c
  *
  * Intersect a ray with a Right Hyperbolic Cylinder.
  *
@@ -822,6 +822,11 @@ rt_rhc_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
 /**
  *	R T _ M K _ H Y P E R B O L A
  */
+/*
+	r: rectangular halfwidth
+	b: breadth
+	c: distance to asymptote origin
+*/
 int
 rt_mk_hyperbola(struct rt_pt_node *pts, fastf_t r, fastf_t b, fastf_t c, fastf_t dtol, fastf_t ntol)
 {
@@ -1427,6 +1432,16 @@ rt_rhc_ifree(struct rt_db_internal *ip)
 
     bu_free( (char *)xip, "rhc ifree" );
     ip->idb_ptr = GENPTR_NULL;	/* sanity */
+}
+
+/**
+ * R T _ R H C _ P A R A M S
+ *
+ */
+int
+rt_rhc_params(struct pc_pc_set * ps, const struct rt_db_internal *ip)
+{
+    return(0);			/* OK */
 }
 
 /*

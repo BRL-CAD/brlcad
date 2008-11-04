@@ -2,13 +2,13 @@
 /* $NoKeywords: $ */
 /*
 //
-// Copyright (c) 1993-2001 Robert McNeel & Associates. All rights reserved.
+// Copyright (c) 1993-2007 Robert McNeel & Associates. All rights reserved.
 // Rhinoceros is a registered trademark of Robert McNeel & Assoicates.
 //
 // THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY.
 // ALL IMPLIED WARRANTIES OF FITNESS FOR ANY PARTICULAR PURPOSE AND OF
 // MERCHANTABILITY ARE HEREBY DISCLAIMED.
-//
+//				
 // For complete openNURBS copyright information see <http://www.opennurbs.org>.
 //
 ////////////////////////////////////////////////////////////////
@@ -58,7 +58,7 @@ int ON_3dmRevisionHistory::NewRevision()
   }
   m_last_edit_time = current_time;
 
-#if defined(ON_OS_WINDOWS)
+#if defined(ON_OS_WINDOWS)  
   // use Windows ::GetUserNameW() to get current user name
   wchar_t current_user[512];
   memset( current_user, 0, sizeof(current_user) );
@@ -111,7 +111,7 @@ void ON_3dmRevisionHistory::Dump( ON_TextLog& dump ) const
   dump.Print("Created by: %S\n", s );
   dump.Print("Created on: "); dump.PrintTime(m_create_time); dump.Print("\n");
 
-
+  
   s = m_sLastEditedBy;
   if ( !s ) s = L"";
   dump.Print("Last edited by: %S\n", s );
@@ -126,21 +126,21 @@ void ON_3dmRevisionHistory::Dump( ON_TextLog& dump ) const
 //
 
 ON_3dmNotes::ON_3dmNotes()
-            : m_bVisible(0),
-              m_bHTML(0),
-              m_window_left(0),
-              m_window_top(0),
-              m_window_right(0),
-              m_window_bottom(0)
+	    : m_bVisible(0), 
+	      m_bHTML(0),
+	      m_window_left(0),
+	      m_window_top(0),
+	      m_window_right(0),
+	      m_window_bottom(0)
 {}
 
 ON_3dmNotes::ON_3dmNotes( const ON_3dmNotes& src )
-            : m_bVisible(0),
-              m_bHTML(0),
-              m_window_left(0),
-              m_window_top(0),
-              m_window_right(0),
-              m_window_bottom(0)
+	    : m_bVisible(0), 
+	      m_bHTML(0),
+	      m_window_left(0),
+	      m_window_top(0),
+	      m_window_right(0),
+	      m_window_bottom(0)
 {
   *this = src;
 }
@@ -368,27 +368,27 @@ BOOL ON_3dmProperties::Read(ON_BinaryArchive& file )
     case TCODE_PROPERTIES_OPENNURBS_VERSION:
       ON_SetBinaryArchiveOpenNURBSVersion(file,value);
       break;
-
+      
     case TCODE_PROPERTIES_REVISIONHISTORY: // file creation/revision information
       m_RevisionHistory.Read(file);
       break;
-
+      
     case TCODE_PROPERTIES_NOTES: // file notes
       m_Notes.Read(file);
       break;
-
+      
     case TCODE_PROPERTIES_PREVIEWIMAGE: // uncompressed preview image
       m_PreviewImage.ReadUncompressed(file);
       break;
-
+      
     case TCODE_PROPERTIES_COMPRESSED_PREVIEWIMAGE: // compressed preview image
       m_PreviewImage.ReadCompressed(file);
       break;
-
+      
     case TCODE_PROPERTIES_APPLICATION: // application that created 3dm file
       m_Application.Read(file);
       break;
-
+      
     default:
       // information added in future will be skipped by file.EndRead3dmChunk()
       break;
@@ -420,7 +420,7 @@ BOOL ON_3dmProperties::Write(ON_BinaryArchive& file) const
     if ( rc ) {
       rc = m_RevisionHistory.Write(file);
       if ( !file.EndWrite3dmChunk() )
-        rc = FALSE;
+	rc = FALSE;
     }
   }
 
@@ -430,7 +430,7 @@ BOOL ON_3dmProperties::Write(ON_BinaryArchive& file) const
     if ( rc ) {
       rc = m_Notes.Write(file);
       if ( !file.EndWrite3dmChunk() )
-        rc = FALSE;
+	rc = FALSE;
     }
   }
 
@@ -450,7 +450,7 @@ BOOL ON_3dmProperties::Write(ON_BinaryArchive& file) const
     if ( rc ) {
       rc = m_PreviewImage.WriteCompressed(file);
       if ( !file.EndWrite3dmChunk() )
-        rc = FALSE;
+	rc = FALSE;
     }
   }
 
@@ -460,7 +460,7 @@ BOOL ON_3dmProperties::Write(ON_BinaryArchive& file) const
     if ( rc ) {
       rc = m_Application.Write(file);
       if ( !file.EndWrite3dmChunk() )
-        rc = FALSE;
+	rc = FALSE;
     }
   }
 
@@ -469,7 +469,7 @@ BOOL ON_3dmProperties::Write(ON_BinaryArchive& file) const
     rc = file.BeginWrite3dmChunk( TCODE_ENDOFTABLE, 0 );
     if ( rc ) {
       if ( !file.EndWrite3dmChunk() )
-        rc = FALSE;
+	rc = FALSE;
     }
   }
 

@@ -2,13 +2,13 @@
 /* $NoKeywords: $ */
 /*
 //
-// Copyright (c) 1993-2001 Robert McNeel & Associates. All rights reserved.
+// Copyright (c) 1993-2007 Robert McNeel & Associates. All rights reserved.
 // Rhinoceros is a registered trademark of Robert McNeel & Assoicates.
 //
 // THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY.
 // ALL IMPLIED WARRANTIES OF FITNESS FOR ANY PARTICULAR PURPOSE AND OF
 // MERCHANTABILITY ARE HEREBY DISCLAIMED.
-//
+//				
 // For complete openNURBS copyright information see <http://www.opennurbs.org>.
 //
 ////////////////////////////////////////////////////////////////
@@ -32,22 +32,22 @@
    |        |
    |        +-- category:_000 0000 0000 0001  Legacy geometry    TCODE_LEGACY_GEOMETRY
    |                     _000 0000 0000 0010  openNURBS object   TCODE_OPENNURBS_OBJECT
-   |                     _000 0000 0000 0100  -- RESERVED - DO NOT USE (should be 0 in any typecode) --
-   |                     _000 0000 0000 1000  -- RESERVED - DO NOT USE (should be 0 in any typecode) --
+   |                     _000 0000 0000 0100  -- RESERVED - DO NOT USE (should be 0 in any typecode) -- 
+   |                     _000 0000 0000 1000  -- RESERVED - DO NOT USE (should be 0 in any typecode) --                     
    |                     _000 0000 0001 0000  Geometry           TCODE_GEOMETRY
    |                     _000 0000 0010 0000  Annotation
    |                     _000 0000 0100 0000  Display Attributes TCODE_DISPLAY
-   |                     _000 0000 1000 0000  Rendering          TCODE_RENDER
-   |                     _000 0001 0000 0000
-   |                     _000 0010 0000 0000  Interface          TCODE_INTERFACE
+   |                     _000 0000 1000 0000  Rendering          TCODE_RENDER     
+   |                     _000 0001 0000 0000                         
+   |                     _000 0010 0000 0000  Interface          TCODE_INTERFACE 
    |                     _000 0100 0000 0000  -- RESERVED - DO NOT USE (should be 0 in any typecode) --
    |                     _000 1000 0000 0000  Tolerances         TCODE_TOLERANCE
-   |                     _001 0000 0000 0000  Tables             TCODE_TABLE
+   |                     _001 0000 0000 0000  Tables             TCODE_TABLE    
    |                     _010 0000 0000 0000  Table record       TCODE_TABLEREC
    |                     _100 0000 0000 0000  User information   TCODE_USER
-   |
+   | 
    +-- format: 0 - data size in header  - data block follows    TCODE_SHORT
-               1 - data in header - no data block follows
+	       1 - data in header - no data block follows
 
 */
 
@@ -66,12 +66,12 @@
 #define TCODE_COMMENTBLOCK        0x00000001
 #define TCODE_ENDOFFILE           0x00007FFF
 #define TCODE_ENDOFFILE_GOO       0x00007FFE /*
-                                             // this typecode is returned when
-                                             // a rogue eof marker is found
-                                             // Some v1 3dm file writers put
-                                             // these markers in a "goo".
-                                             // Simply skip these chunks and continue.
-                                             */
+					     // this typecode is returned when
+					     // a rogue eof marker is found
+					     // Some v1 3dm file writers put
+					     // these markers in a "goo". 
+					     // Simply skip these chunks and continue.
+					     */
 #define TCODE_LEGACY_GEOMETRY     0x00010000
 #define TCODE_OPENNURBS_OBJECT    0x00020000
 #define TCODE_GEOMETRY            0x00100000
@@ -101,21 +101,21 @@
 #define TCODE_LIGHT_TABLE      (TCODE_TABLE | 0x0012) /* rendering lights */
 #define TCODE_OBJECT_TABLE     (TCODE_TABLE | 0x0013) /* geometry and annotation */
 #define TCODE_PROPERTIES_TABLE (TCODE_TABLE | 0x0014) /* model properties:
-                                                      //   revision history
-                                                      //   notes
-                                                      //   preview image
-                                                      */
+						      //   revision history
+						      //   notes
+						      //   preview image
+						      */
 #define TCODE_SETTINGS_TABLE   (TCODE_TABLE | 0x0015) /* file properties including,
-                                                      // units, tolerancess,
-                                                      // annotation defaults,
-                                                      // render mesh defaults,
-                                                      // current layer,
-                                                      // current material,
-                                                      // current color,
-                                                      // named construction planes,
-                                                      // named viewports,
-                                                      // current viewports,
-                                                      */
+						      // units, tolerancess, 
+						      // annotation defaults, 
+						      // render mesh defaults, 
+						      // current layer, 
+						      // current material,
+						      // current color,
+						      // named construction planes,
+						      // named viewports,
+						      // current viewports,
+						      */
 #define TCODE_BITMAP_TABLE    (TCODE_TABLE | 0x0016) /* embedded bitmaps */
 #define TCODE_USER_TABLE      (TCODE_TABLE | 0x0017) /* user table */
 
@@ -259,7 +259,7 @@
 //       value of ON_ClassId::m_uuid for this class
 //       4 byte CRC
 //     TCODE_OPENNURBS_CLASS_DATA
-//       4 byte length
+//       4 byte length 
 //       class specific data for geometry or annotation object
 //       4 byte CRC
 //     TCODE_OPENNURBS_CLASS_USERDATA (1 chunk per piece of user data)
@@ -303,12 +303,12 @@
 //     2 byte chunk version
 //     TCODE_OBJECT_RECORD_HISTORY_HEADER
 //       4 byte length
-//       2 byte chunk version
+//       2 byte chunk version 
 //       ...
 //       4 byte crc
 //     TCODE_OBJECT_RECORD_HISTORY_DATA
 //       4 byte length
-//       2 byte chunk version
+//       2 byte chunk version 
 //       ...
 //       4 byte crc
 //

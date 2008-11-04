@@ -759,7 +759,7 @@ f_decompose(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 }
 
 static int
-sol_number(matp_t matrix, char *name, int *old)
+sol_number(const matp_t matrix, char *name, int *old)
 {
     int i;
     struct identt idbuf1, idbuf2;
@@ -795,7 +795,7 @@ sol_number(matp_t matrix, char *name, int *old)
 }
 
 static void
-new_tables(struct directory *dp, struct bu_ptbl *cur_path, fastf_t *old_mat, int flag)
+new_tables(struct directory *dp, struct bu_ptbl *cur_path, const matp_t old_mat, int flag)
 {
     struct rt_db_internal intern;
     struct rt_comb_internal *comb;
@@ -1082,7 +1082,7 @@ f_tables(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 
 	bu_ptbl_reset( &cur_path );
 	if ( (dp = db_lookup( dbip, argv[i], LOOKUP_NOISY)) != DIR_NULL )
-	    new_tables( dp, &cur_path, identity, flag);
+	    new_tables( dp, &cur_path, (const matp_t)bn_mat_identity, flag);
 	else
 	    Tcl_AppendResult(interp, " skip this object\n", (char *)NULL);
     }

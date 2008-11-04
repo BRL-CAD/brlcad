@@ -28,7 +28,7 @@
 
 
 int
-ged_mirror(struct rt_wdb *wdbp, int argc, const char *argv[])
+ged_mirror(struct ged *gedp, int argc, const char *argv[])
 {
     register int k;
     point_t mirror_origin = {0.0, 0.0, 0.0};
@@ -43,19 +43,17 @@ ged_mirror(struct rt_wdb *wdbp, int argc, const char *argv[])
     struct bu_vls vlsargv;
 #endif
 
-    GED_CHECK_DATABASE_OPEN(wdbp, GED_ERROR);
-    GED_CHECK_READ_ONLY(wdbp, GED_ERROR);
+    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
+    GED_CHECK_READ_ONLY(gedp, BRLCAD_ERROR);
+    GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
 
     /* initialize result */
-    bu_vls_trunc(&wdbp->wdb_result_str, 0);
-    wdbp->wdb_result = GED_RESULT_NULL;
-    wdbp->wdb_result_flags = 0;
+    bu_vls_trunc(&gedp->ged_result_str, 0);
 
     /* must be wanting help */
     if (argc == 1) {
-	wdbp->wdb_result_flags |= GED_RESULT_FLAGS_HELP_BIT;
-	bu_vls_printf(&wdbp->wdb_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_OK;
+	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	return BRLCAD_HELP;
     }
 
 #if 1
@@ -73,59 +71,61 @@ ged_mirror(struct rt_wdb *wdbp, int argc, const char *argv[])
 	/* Process arguments */
 	while ((k = bu_getopt(argc, nargv, "d:D:hHo:O:p:P:xXyYzZ")) != EOF) {
 #endif
-	switch (k) {
-	case 'd':
-	case 'D':
-	    if (sscanf(bu_optarg, "%lf %lf %lf",
-		       &mirror_dir[X],
-		       &mirror_dir[Y],
-		       &mirror_dir[Z]) != 3) {
-		bu_vls_printf(&wdbp->wdb_result_str, "Usage: %s %s", argv[0], usage);
-		early_out = 1;
-	    }
-	    break;
-	case 'p':
-	case 'P':
-	    mirror_pt = atof(bu_optarg);
-	    break;
-	case 'o':
-	case 'O':
-	    if (sscanf(bu_optarg, "%lf %lf %lf",
-		       &mirror_origin[X],
-		       &mirror_origin[Y],
-		       &mirror_origin[Z]) != 3) {
-		bu_vls_printf(&wdbp->wdb_result_str, "Usage: %s %s", argv[0], usage);
-		early_out = 1;
-	    }
-	    break;
-	case 'x':
-	case 'X':
-	    VSET(mirror_dir, 1.0, 0.0, 0.0);
-	    break;
-	case 'y':
-	case 'Y':
-	    VSET(mirror_dir, 0.0, 1.0, 0.0);
-	    break;
-	case 'z':
-	case 'Z':
-	    VSET(mirror_dir, 0.0, 0.0, 1.0);
-	    break;
-	case 'h':
-	case 'H':
-	    wdbp->wdb_result_flags |= GED_RESULT_FLAGS_HELP_BIT;
-	    bu_vls_printf(&wdbp->wdb_result_str, "Usage: %s %s", argv[0], usage);
+	    switch (k) {
+		case 'd':
+		case 'D':
+		    if (sscanf(bu_optarg, "%lf %lf %lf",
+			       &mirror_dir[X],
+			       &mirror_dir[Y],
+			       &mirror_dir[Z]) != 3) {
+			bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+			early_out = 1;
+		    }
+		    break;
+		case 'p':
+		case 'P':
+		    if (sscanf(bu_optarg, "%lf", &mirror_pt) != 1) {
+			bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+			early_out = 1;
+		    }
+		    break;
+		case 'o':
+		case 'O':
+		    if (sscanf(bu_optarg, "%lf %lf %lf",
+			       &mirror_origin[X],
+			       &mirror_origin[Y],
+			       &mirror_origin[Z]) != 3) {
+			bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+			early_out = 1;
+		    }
+		    break;
+		case 'x':
+		case 'X':
+		    VSET(mirror_dir, 1.0, 0.0, 0.0);
+		    break;
+		case 'y':
+		case 'Y':
+		    VSET(mirror_dir, 0.0, 1.0, 0.0);
+		    break;
+		case 'z':
+		case 'Z':
+		    VSET(mirror_dir, 0.0, 0.0, 1.0);
+		    break;
+		case 'h':
+		case 'H':
+		    bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 
 #if 0
 		    bu_free(nargv, "free f_ill nargv");
 		    bu_vls_free(&vlsargv);
 #endif
 
-	    return GED_OK;
-	default:
-	    bu_vls_printf(&wdbp->wdb_result_str, "Usage: %s %s", argv[0], usage);
-	    early_out = 1;
-	    break;
-	}
+		    return BRLCAD_HELP;
+		default:
+		    bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+		    early_out = 1;
+		    break;
+	    }
 	}
 
 #if 0
@@ -133,33 +133,33 @@ ged_mirror(struct rt_wdb *wdbp, int argc, const char *argv[])
 	bu_vls_free(&vlsargv);
 #endif
 
-    if (early_out) {
-	return GED_ERROR;
+	if (early_out) {
+	    return BRLCAD_ERROR;
+	}
+
+	argc -= bu_optind;
+
+	if (argc == 1) {
+	    bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	    return BRLCAD_ERROR;
+	}
+
+	/* mirror the object */
+	VUNITIZE(mirror_dir);
+
+	if (rt_mirror(gedp->ged_wdbp->dbip,
+		      argv[bu_optind],
+		      argv[bu_optind+1],
+		      mirror_origin,
+		      mirror_dir,
+		      mirror_pt,
+		      &rt_uniresource) == DIR_NULL) {
+	    bu_vls_printf(&gedp->ged_result_str, "%s: not able to perform the mirror", argv[0]);
+	    return BRLCAD_ERROR;
+	}
+
+	return BRLCAD_OK;
     }
-
-    argc -= bu_optind;
-
-    if (argc < 2) {
-	bu_vls_printf(&wdbp->wdb_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_ERROR;
-    }
-
-    /* mirror the object */
-    VUNITIZE(mirror_dir);
-
-    if (rt_mirror(wdbp->dbip,
-		  argv[bu_optind],
-		  argv[bu_optind+1],
-		  mirror_origin,
-		  mirror_dir,
-		  mirror_pt,
-		  &rt_uniresource) == DIR_NULL) {
-	bu_vls_printf(&wdbp->wdb_result_str, "%s: not able to perform the mirror", argv[0]);
-	return GED_ERROR;
-    }
-
-    return GED_OK;
-}
 
 
 /*

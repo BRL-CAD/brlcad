@@ -60,6 +60,7 @@ struct fbserv_obj {
     struct fbserv_client	fbs_clients[MAX_CLIENTS];	/**< @brief connected clients */
     void			(*fbs_callback)();		/**< @brief callback function */
     genptr_t			fbs_clientData;
+    int				fbs_mode;			/**< @brief 0-off, 1-underlay, 2-interlay, 3-overlay */
 };
 
 FB_EXPORT extern int fbs_open();

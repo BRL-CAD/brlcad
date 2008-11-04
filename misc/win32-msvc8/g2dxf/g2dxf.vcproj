@@ -71,7 +71,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="libbu.lib libbn.lib libsysv.lib librt.lib libwdb.lib tcl85.lib"
+				AdditionalDependencies="libbu.lib libbn.lib libsysv.lib librt.lib libwdb.lib tcl85.lib libgcv.lib"
 				OutputFile="$(PlatformName)\$(ConfigurationName)/g-dxf.exe"
 				LinkIncremental="1"
 				SuppressStartupBanner="true"
@@ -212,7 +212,7 @@
 			UniqueIdentifier="{4FC737F1-C7A5-4376-A066-2A32D752A2FF}"
 			>
 			<File
-				RelativePath="..\..\..\src\conv\g-dxf.c"
+				RelativePath="..\..\..\src\conv\dxf\g-dxf.c"
 				>
 			</File>
 		</Filter>

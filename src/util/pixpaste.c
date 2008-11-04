@@ -1,5 +1,23 @@
-/*
- *		P I X P A S T E . C
+/*                      P I X P A S T E . C
+ * BRL-CAD
+ *
+ * Copyright (c) 2004-2008 United States Government as represented by
+ * the U.S. Army Research Laboratory.
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public License
+ * version 2.1 as published by the Free Software Foundation.
+ *
+ * This library is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this file; see the file named COPYING for more
+ * information.
+ */
+/** @file pixpaste.c
  *
  * pixpaste will insert an arbitrary pix file into another pixfile.
  * If the image being pasted does not fit within the destination file
@@ -9,14 +27,8 @@
  *	Christopher T. Johnson
  *	September 12, 1992
  *
- *  Source -
- *	Paladin Software
- *	P.O. Box 187
- *	Aberdeen, MD	21001-0187
- *
- *  Copyright Notice -
- *	This software is Copyright (C) 1992 by Paladin Software
- *	All rights reserved.
+ * This software is Copyright (C) 1992 by Paladin Software.
+ * All rights reserved.
  */
 
 #include "common.h"

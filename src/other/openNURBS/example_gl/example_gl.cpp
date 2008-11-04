@@ -7,13 +7,44 @@
 // THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY.
 // ALL IMPLIED WARRANTIES OF FITNESS FOR ANY PARTICULAR PURPOSE AND OF
 // MERCHANTABILITY ARE HEREBY DISCLAIMED.
-//
+//				
 ////////////////////////////////////////////////////////////////
 
 #include "../opennurbs.h"
 #include "../opennurbs_gl.h"
 
+#if defined(ON_COMPILER_MSC)
+
+// Tested compilers:
+//   Microsoft Developer Studio 6.0
+//   Microsoft Visual Studio 2005
+//   Support for other Windows compilers is not available.
+
 #include <GL/GLaux.h>   // Open GL auxillary functions
+#define ON_EXAMPLE_GL_USE_GLAUX
+
+#elif defined(ON_COMPILER_XCODE)
+
+// Tested compilers:
+//   Apple XCode 2.4.1
+//   Support for other Apple compilers is not available.
+#include <GLUT/glut.h>   // Open GL auxillary functions
+#define ON_EXAMPLE_GL_USE_GLUT
+
+#else
+
+// Unsupported compiler:
+//   Support for other compilers is not available
+#error Choose between OpenGL AUX or OpenGL GLUT.
+
+//#include <GLaux.h>   // Open GL auxillary functions
+//#define ON_EXAMPLE_GL_USE_GLAUX
+
+//#include <glut.h>   // Open GL auxillary functions
+//#define ON_EXAMPLE_GL_USE_GLUT
+
+#endif
+
 
 #if defined(_WINDOWS) || defined(WIN32) || defined(_WIN32) || defined(WIN64) || defined(_WIN64)
 #define MY_GL_CALLBACK CALLBACK
@@ -22,8 +53,8 @@
 #define MY_GL_CALLBACK
 #endif
 
-// Before working on this file, be sure to study the OpenNURBS toolkit
-// file example_read.cpp and to read chapters 1 through 11 of the
+// Before working on this file, be sure to study the OpenNURBS toolkit 
+// file example_read.cpp and to read chapters 1 through 11 of the 
 // _Open_GL_Programming_Guide_.
 //
 // This file contains simple example in modeled after those found in
@@ -43,13 +74,13 @@ public:
   ON_BoundingBox m_bbox;
 };
 
-void CModel::GetObjectMaterial(
-          int object_index,
-          ON_Material& material
-          ) const
+void CModel::GetObjectMaterial( 
+	  int object_index,
+	  ON_Material& material 
+	  ) const
 {
   material.Default();
-  const ON_Geometry* geo = 0;
+  //const ON_Geometry* geo = 0;
 
   if ( object_index >= 0 && object_index <= m_object_table.Count() )
   {
@@ -62,20 +93,20 @@ void CModel::GetObjectMaterial(
       case ON::brep_object:
       case ON::mesh_object:
       case ON::instance_reference:
-        GetRenderMaterial( mo.m_attributes, material );
-        break;
+	GetRenderMaterial( mo.m_attributes, material );
+	break;
       default:
-        {
-          // use emmissive object color for curve objects
-          ON_Color c = WireframeColor( mo.m_attributes );
-          ON_Color black(0,0,0);
-          material.Default();
-          material.SetAmbient(black);
-          material.SetDiffuse(black);
-          material.SetSpecular(black);
-          material.SetEmission(c);
-        }
-        break;
+	{
+	  // use emmissive object color for curve objects
+	  ON_Color c = WireframeColor( mo.m_attributes );
+	  ON_Color black(0,0,0);
+	  material.Default();
+	  material.SetAmbient(black);
+	  material.SetDiffuse(black);
+	  material.SetSpecular(black);
+	  material.SetEmission(c);
+	}
+	break;
       }
     }
   }
@@ -143,7 +174,7 @@ CModel* glb_model = 0;
 
 BOOL myInitGL( const ON_Viewport&, GLUnurbsObj*& );
 
-void myBuildDisplayList(
+void myBuildDisplayList( 
       GLuint,                  // display_list_number,
       GLUnurbsObj*,            // pointer to GL nurbs render
       const CModel&            // geometry to render
@@ -154,11 +185,6 @@ void MY_GL_CALLBACK myNurbsErrorCallback( GLenum ); // for gluNurbsCallback()
 
 void MY_GL_CALLBACK myDisplay( void );              // for auxMainLoop()
 
-void MY_GL_CALLBACK myReshape( GLsizei, GLsizei );  // for auxReshapeFunc()
-
-void MY_GL_CALLBACK myMouseLeftEvent( AUX_EVENTREC* );   // for auxMouseFunc();
-void MY_GL_CALLBACK myMouseMiddleEvent( AUX_EVENTREC* ); // for auxMouseFunc();
-void MY_GL_CALLBACK myMouseRightEvent( AUX_EVENTREC* );  // for auxMouseFunc();
 
 void MY_GL_CALLBACK myKeyLeftArrowEvent( void );    // for auxKeyFunc();
 void MY_GL_CALLBACK myKeyRightArrowEvent( void );   // for auxKeyFunc();
@@ -166,7 +192,26 @@ void MY_GL_CALLBACK myKeyUpArrowEvent( void );      // for auxKeyFunc();
 void MY_GL_CALLBACK myKeyDownArrowEvent( void );    // for auxKeyFunc();
 void MY_GL_CALLBACK myKeyViewExtents( void );       // for auxKeyFunc();
 
+#if defined(ON_EXAMPLE_GL_USE_GLAUX)
+void MY_GL_CALLBACK myGLAUX_Reshape( GLsizei, GLsizei );  // for auxReshapeFunc()
+
+void MY_GL_CALLBACK myGLAUX_MouseLeftEvent( AUX_EVENTREC* );   // for auxMouseFunc();
+void MY_GL_CALLBACK myGLAUX_MouseMiddleEvent( AUX_EVENTREC* ); // for auxMouseFunc();
+void MY_GL_CALLBACK myGLAUX_MouseRightEvent( AUX_EVENTREC* );  // for auxMouseFunc();
+
 typedef void (CALLBACK* RHINO_GL_NURBS_ERROR)();
+#endif
+
+#if defined(ON_EXAMPLE_GL_USE_GLUT)
+void MY_GL_CALLBACK myGLUT_Reshape( int, int );  // for glutReshapeFunc()
+
+void MY_GL_CALLBACK myGLUT_MouseEvent( int button, int state, int x, int y );
+void MY_GL_CALLBACK myGLUT_KeyboardEvent( unsigned char ch, int x, int y );
+void MY_GL_CALLBACK myGLUT_SpecialKeyEvent( int ch, int x, int y );    // for auxKeyFunc();
+
+typedef void (CALLBACK* RHINO_GL_NURBS_ERROR)(...);
+#endif
+
 }
 
 ///////////////////////////////////////////////////////////////////////
@@ -226,7 +271,7 @@ int main( int argc, const char *argv[] )
     model.m_view.m_vp.GetCameraAngle( &angle );
     model.m_view.m_vp.Extents( angle, model.m_bbox );
   }
-  else
+  else 
   {
     GetDefaultView( model.m_bbox, model.m_view );
   }
@@ -237,36 +282,42 @@ int main( int argc, const char *argv[] )
   // value set by inspecting the bounding box of the geometry to be
   // displayed.
 
-
+  
   ///////////////////////////////////////////////////////////////////
   //
   // GL stuff starts here
   //
-  for(;;) {
-
+  for(;;) {  
+    
+#if defined(ON_EXAMPLE_GL_USE_GLAUX)
     wchar_t sWindowTitleString[256];
+#endif
+#if defined(ON_EXAMPLE_GL_USE_GLUT)
+    char sWindowTitleString[256];
+#endif
     sWindowTitleString[255] = 0;
     if ( argv[0] && argv[0][0] )
     {
       int i;
       for ( i = 0; i < 254 && argv[0][i]; i++ )
-        sWindowTitleString[i] = argv[0][i];
+	sWindowTitleString[i] = argv[0][i];
       sWindowTitleString[i] = 0;
     }
 
+#if defined(ON_EXAMPLE_GL_USE_GLAUX)
     auxInitPosition( 0, 0, window_width, window_height );
     auxInitDisplayMode( AUX_SINGLE | AUX_RGB | AUX_DEPTH );
     auxInitWindow( sWindowTitleString );
 
     // register event handler functions
     auxIdleFunc( 0 );
-    auxReshapeFunc( myReshape );
-    auxMouseFunc( AUX_LEFTBUTTON,   AUX_MOUSEDOWN, myMouseLeftEvent );
-    auxMouseFunc( AUX_LEFTBUTTON,   AUX_MOUSEUP,   myMouseLeftEvent );
-    auxMouseFunc( AUX_MIDDLEBUTTON, AUX_MOUSEDOWN, myMouseMiddleEvent );
-    auxMouseFunc( AUX_MIDDLEBUTTON, AUX_MOUSEUP,   myMouseMiddleEvent );
-    auxMouseFunc( AUX_RIGHTBUTTON,  AUX_MOUSEDOWN, myMouseRightEvent );
-    auxMouseFunc( AUX_RIGHTBUTTON,  AUX_MOUSEUP,   myMouseRightEvent );
+    auxReshapeFunc( myGLAUX_Reshape );
+    auxMouseFunc( AUX_LEFTBUTTON,   AUX_MOUSEDOWN, myGLAUX_MouseLeftEvent );
+    auxMouseFunc( AUX_LEFTBUTTON,   AUX_MOUSEUP,   myGLAUX_MouseLeftEvent );
+    auxMouseFunc( AUX_MIDDLEBUTTON, AUX_MOUSEDOWN, myGLAUX_MouseMiddleEvent );
+    auxMouseFunc( AUX_MIDDLEBUTTON, AUX_MOUSEUP,   myGLAUX_MouseMiddleEvent );
+    auxMouseFunc( AUX_RIGHTBUTTON,  AUX_MOUSEDOWN, myGLAUX_MouseRightEvent );
+    auxMouseFunc( AUX_RIGHTBUTTON,  AUX_MOUSEUP,   myGLAUX_MouseRightEvent );
     auxKeyFunc( AUX_LEFT,  myKeyLeftArrowEvent );
     auxKeyFunc( AUX_RIGHT, myKeyRightArrowEvent );
     auxKeyFunc( AUX_UP,    myKeyUpArrowEvent );
@@ -275,6 +326,24 @@ int main( int argc, const char *argv[] )
     auxKeyFunc( AUX_e,  myKeyViewExtents );
     auxKeyFunc( AUX_Z,  myKeyViewExtents );
     auxKeyFunc( AUX_z,  myKeyViewExtents );
+#endif
+
+#if defined(ON_EXAMPLE_GL_USE_GLUT)
+    glutInit(&argc,(char**)argv);
+    glutInitWindowPosition( 0, 0);
+    glutInitWindowSize( window_width, window_height );
+    glutInitDisplayMode( GLUT_SINGLE | GLUT_RGB | GLUT_DEPTH );
+    glutCreateWindow( sWindowTitleString );
+
+    // register event handler functions
+    glutIdleFunc( 0 );
+    glutReshapeFunc( myGLUT_Reshape );
+    glutMouseFunc( myGLUT_MouseEvent );
+    glutKeyboardFunc( myGLUT_KeyboardEvent );
+    glutSpecialFunc( myGLUT_SpecialKeyEvent );
+    glutDisplayFunc( myDisplay );
+#endif
+
     // setup model view matrix, GL defaults, and the GL NURBS renderer
     GLUnurbsObj* pTheGLNURBSRender = NULL; // OpenGL NURBS rendering context
     bOK = myInitGL( model.m_view.m_vp, pTheGLNURBSRender );
@@ -282,11 +351,18 @@ int main( int argc, const char *argv[] )
     if ( bOK ) {
       // build display list
       myBuildDisplayList( glb_display_list_number,
-                          pTheGLNURBSRender,
-                          model );
+			  pTheGLNURBSRender,
+			  model );
 
       // look at it
+#if defined(ON_EXAMPLE_GL_USE_GLAUX)
       auxMainLoop( myDisplay );
+#endif
+
+#if defined(ON_EXAMPLE_GL_USE_GLUT)
+      glutMainLoop(  );
+#endif
+
     }
 
     gluDeleteNurbsRenderer( pTheGLNURBSRender );
@@ -327,15 +403,15 @@ BOOL myInitGL( const ON_Viewport& viewport, GLUnurbsObj*& nobj )
   //ON_Color background_color(0,128,128);
   ON_Color background_color(0,63,127);
   //background_color = glb_model->m_settings.m_RenderSettings.m_background_color;
-  glClearColor( (float)background_color.FractionRed(),
-                (float)background_color.FractionGreen(),
-                (float)background_color.FractionBlue(),
-                1.0f
-                );
+  glClearColor( (float)background_color.FractionRed(), 
+		(float)background_color.FractionGreen(), 
+		(float)background_color.FractionBlue(), 
+		1.0f
+		);
 
   glLightModeli( GL_LIGHT_MODEL_TWO_SIDE, GL_TRUE );
   glDisable( GL_CULL_FACE );
-
+  
   // Rhino viewports have camera "Z" pointing at the camera in a right
   // handed coordinate system.
   glClearDepth( 0.0f );
@@ -355,7 +431,7 @@ BOOL myInitGL( const ON_Viewport& viewport, GLUnurbsObj*& nobj )
   nobj = gluNewNurbsRenderer();
   if ( !nobj )
     return false;
-
+  
   gluNurbsProperty( nobj, GLU_SAMPLING_TOLERANCE,   20.0f );
   gluNurbsProperty( nobj, GLU_PARAMETRIC_TOLERANCE, 0.5f );
   gluNurbsProperty( nobj, GLU_DISPLAY_MODE,         (GLfloat)GLU_FILL );
@@ -379,7 +455,8 @@ BOOL myInitGL( const ON_Viewport& viewport, GLUnurbsObj*& nobj )
 
 ///////////////////////////////////////////////////////////////////////
 
-void MY_GL_CALLBACK myReshape( GLsizei w, GLsizei h )
+#if defined(ON_EXAMPLE_GL_USE_GLAUX)
+void MY_GL_CALLBACK myGLAUX_Reshape( GLsizei w, GLsizei h )
 {
   static GLsizei w0 = 0;
   static GLsizei h0 = 0;
@@ -390,12 +467,28 @@ void MY_GL_CALLBACK myReshape( GLsizei w, GLsizei h )
   }
   glViewport( 0, 0, w, h );
 }
+#endif
+
+#if defined(ON_EXAMPLE_GL_USE_GLUT)
+void MY_GL_CALLBACK myGLUT_Reshape( int w, int h )
+{
+  static int w0 = 0;
+  static int h0 = 0;
+  if ( w != w0 || h != h0 ) {
+    h0 = h;
+    w0 = w;
+    ON_GL( glb_model->m_view.m_vp, 0, w-1, h-1, 0 ); // set projection transform
+  }
+  glViewport( 0, 0, w, h );
+}
+#endif
+
 
 ///////////////////////////////////////////////////////////////////////
 static void myRotateView( ON_Viewport& viewport,
-                          const ON_3dVector& axis,
-                          const ON_3dPoint& center,
-                          double angle )
+			  const ON_3dVector& axis,
+			  const ON_3dPoint& center,
+			  double angle )
 {
   ON_Xform rot;
   ON_3dPoint camLoc;
@@ -421,7 +514,7 @@ static void myRotateLeftRight( ON_Viewport& viewport, double angle )
 {
   // ON_3dVector axis = ON_zaxis; // rotate camera about world z axis (z up feel)
   ON_3dVector axis = ON_zaxis; // rotate camera about world y axis (u up feel)
-
+  
   ON_3dPoint center;
   if ( glb_model )
     center = glb_model->m_view.m_target;
@@ -444,6 +537,7 @@ static void myRotateUpDown( ON_Viewport& viewport, double angle )
 }
 
 ///////////////////////////////////////////////////////////////////////
+
 
 void MY_GL_CALLBACK myKeyLeftArrowEvent( void )
 {
@@ -473,12 +567,14 @@ void MY_GL_CALLBACK myKeyViewExtents( void )
   SetGLProjectionMatrix( glb_model->m_view.m_vp );
 }
 
+#if defined(ON_EXAMPLE_GL_USE_GLAUX)
+
 ///////////////////////////////////////////////////////////////////////
 //
 // Mouse event handling
 //
 
-static void myMouseEvent( GLint button, const AUX_EVENTREC* event )
+static void myGLAUX_MouseEvent( GLint button, const AUX_EVENTREC* event )
 {
   static BOOL bMouseActive = false;
   static int mx0, my0;
@@ -523,7 +619,7 @@ static void myMouseEvent( GLint button, const AUX_EVENTREC* event )
       glb_model->m_view.m_vp.GetCameraFrame( camLoc, NULL, NULL, camZ );
       d = (camLoc-glb_model->m_view.m_target)*camZ;
       if ( glb_model->m_view.m_vp.GetDollyCameraVector(mx0,my0,mx,my,d,dolly_vector) ) {
-        glb_model->m_view.m_vp.DollyCamera( dolly_vector );
+	glb_model->m_view.m_vp.DollyCamera( dolly_vector );
       }
     }
     break;
@@ -536,20 +632,99 @@ static void myMouseEvent( GLint button, const AUX_EVENTREC* event )
   bMouseActive = false;
 }
 
-void MY_GL_CALLBACK myMouseLeftEvent( AUX_EVENTREC* event )
+void MY_GL_CALLBACK myGLAUX_MouseLeftEvent( AUX_EVENTREC* event )
 {
-  myMouseEvent( AUX_LEFTBUTTON, event );
+  myGLAUX_MouseEvent( AUX_LEFTBUTTON, event );
 }
 
-void MY_GL_CALLBACK myMouseMiddleEvent( AUX_EVENTREC* event )
+void MY_GL_CALLBACK myGLAUX_MouseMiddleEvent( AUX_EVENTREC* event )
 {
-  myMouseEvent( AUX_MIDDLEBUTTON, event );
+  myGLAUX_MouseEvent( AUX_MIDDLEBUTTON, event );
 }
 
-void MY_GL_CALLBACK myMouseRightEvent( AUX_EVENTREC* event )
+void MY_GL_CALLBACK myGLAUX_MouseRightEvent( AUX_EVENTREC* event )
 {
-  myMouseEvent( AUX_RIGHTBUTTON, event );
+  myGLAUX_MouseEvent( AUX_RIGHTBUTTON, event );
 }
+#endif
+
+#if defined(ON_EXAMPLE_GL_USE_GLUT)
+
+void MY_GL_CALLBACK myGLUT_KeyboardEvent( unsigned char ch, int x, int y )
+{
+	int m = glutGetModifiers();
+	if (m != GLUT_ACTIVE_ALT)
+		return;
+	if (ch == 'e' || ch == 'z') {
+		myKeyViewExtents();
+		glutPostRedisplay();
+	}
+}
+
+
+void MY_GL_CALLBACK myGLUT_SpecialKeyEvent( int ch, int x, int y )
+{
+	if (ch == GLUT_KEY_LEFT)
+		myKeyLeftArrowEvent();
+	if (ch == GLUT_KEY_UP)
+		myKeyUpArrowEvent();
+	if (ch == GLUT_KEY_RIGHT)
+		myKeyRightArrowEvent();
+	if (ch == GLUT_KEY_DOWN)
+		myKeyDownArrowEvent();
+	glutPostRedisplay();
+}
+
+void myGLUT_MouseEvent( int button, int state, int x, int y )
+{
+	static int mx0, my0;
+	static int mButton;
+
+	if ( state == GLUT_DOWN ) {
+		switch (button) {
+		case GLUT_LEFT_BUTTON:
+		case GLUT_MIDDLE_BUTTON:
+		case GLUT_RIGHT_BUTTON:
+			mButton = button;
+			mx0 = x;
+			my0 = y;
+			break;
+		}
+	}
+
+	if ( state == GLUT_UP && button == mButton ) {
+		switch (mButton) {
+		case GLUT_LEFT_BUTTON:
+			// zoom
+			glb_model->m_view.m_vp.ZoomToScreenRect( mx0, my0, x, y );
+			break;
+		case GLUT_MIDDLE_BUTTON:
+			break;
+		case GLUT_RIGHT_BUTTON:
+			// dolly
+			{
+				ON_3dVector dolly_vector;
+				double d;
+				ON_3dPoint camLoc;
+				ON_3dVector camZ;
+				glb_model->m_view.m_vp.GetCameraFrame( camLoc, NULL, NULL, camZ );
+				d = (camLoc-glb_model->m_view.m_target)*camZ;
+				if ( glb_model->m_view.m_vp.GetDollyCameraVector(mx0,my0,x,y,d,dolly_vector) ) {
+					glb_model->m_view.m_vp.DollyCamera( dolly_vector );
+				}
+			}
+			break;
+		}
+
+		// update GL model view and projection matrices to match viewport changes
+		SetGLModelViewMatrix( glb_model->m_view.m_vp );
+		SetGLProjectionMatrix( glb_model->m_view.m_vp );
+		glutPostRedisplay();
+	}
+}
+
+#endif
+
 
 ///////////////////////////////////////////////////////////////////////
 
@@ -568,28 +743,28 @@ void myDisplayObject( const ON_Object& geometry, const ON_Material& material, GL
   ON_GL( material );
 
   brep = ON_Brep::Cast(&geometry);
-  if ( brep )
+  if ( brep ) 
   {
     ON_GL(*brep, nobj);
     return;
   }
 
   mesh = ON_Mesh::Cast(&geometry);
-  if ( mesh )
+  if ( mesh ) 
   {
     ON_GL(*mesh);
     return;
   }
 
   curve = ON_Curve::Cast(&geometry);
-  if ( curve )
+  if ( curve ) 
   {
     ON_GL( *curve, nobj );
     return;
   }
 
   surface = ON_Surface::Cast(&geometry);
-  if ( surface )
+  if ( surface ) 
   {
     gluBeginSurface( nobj );
     ON_GL( *surface, nobj );
@@ -598,14 +773,14 @@ void myDisplayObject( const ON_Object& geometry, const ON_Material& material, GL
   }
 
   point = ON_Point::Cast(&geometry);
-  if ( point )
+  if ( point ) 
   {
     ON_GL(*point);
     return;
   }
 
   cloud = ON_PointCloud::Cast(&geometry);
-  if ( cloud )
+  if ( cloud ) 
   {
     ON_GL(*cloud);
     return;
@@ -616,8 +791,8 @@ void myDisplayObject( const ON_Object& geometry, const ON_Material& material, GL
 ///////////////////////////////////////////////////////////////////////
 
 void MY_GL_CALLBACK myDisplayLighting( const ON_Viewport& viewport,
-                                       const CModel& model
-                                     )
+				       const CModel& model
+				     )
 {
   int light_count = model.m_light_table.Count();
   if ( light_count > 0 ) {
@@ -751,9 +926,9 @@ static void myDrawAxesSprite( const ON_Viewport& viewport, HDC hdc )
 ///////////////////////////////////////////////////////////////////////
 
 void myBuildDisplayList( GLuint display_list_number,
-                         GLUnurbsObj* pTheGLNurbsRender,
-                         const CModel& model
-                         )
+			 GLUnurbsObj* pTheGLNurbsRender,
+			 const CModel& model
+			 )
 {
   ON_Material material;
   glNewList( display_list_number, GL_COMPILE );
@@ -761,7 +936,7 @@ void myBuildDisplayList( GLuint display_list_number,
   // display Rhino geometry using ON_GL() functions found in rhinoio_gl.cpp
   int i;
   const int object_count = model.m_object_table.Count();
-  for ( i = 0; i < object_count; i++ )
+  for ( i = 0; i < object_count; i++ ) 
   {
     const ONX_Model_Object& mo = model.m_object_table[i];
     if ( 0 != mo.m_object )
@@ -781,7 +956,7 @@ void MY_GL_CALLBACK myDisplay( void )
   // Uses globals glb_* because the GL aux tools don't provide an
   // easy way to pass information into this callback.
   int bUseRhinoSpotlights = false; // I like to use a simple headlight
-                                   // for a basic preview.
+				   // for a basic preview.
 
   glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
 
@@ -807,7 +982,7 @@ void MY_GL_CALLBACK myDisplay( void )
   }
 
   // display list built with myBuildDisplayList()
-  glCallList( glb_display_list_number );
+  glCallList( glb_display_list_number ); 
 
   glFlush();
 

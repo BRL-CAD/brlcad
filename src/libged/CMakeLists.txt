@@ -1,34 +1,218 @@
 set(LIBGED_SOURCES
+    3ptarb.c
+    adc.c
+    adjust.c
+    ae2dir.c
+    aet.c
+    analyze.c
+    arb.c
     arced.c
+    arot.c
+    attr.c
+    autoview.c
+    bev.c
     bigE.c
+    binary.c
+    blast.c
+    bot_condense.c
+    bot_decimate.c
+    bot_dump.c
+    bot_face_fuse.c
+    bot_face_sort.c
+    bot_merge.c
+    bot_smooth.c
+    bot_split.c
+    bot_vertex_fuse.c
+    cat.c
+    center.c
+    clip.c
+    clone.c
+    color.c
+    comb.c
     comb_color.c
+    comb_std.c
+    concat.c
+    copy.c
+    copymat.c
+    copyeval.c
+    cpi.c
+    dbip.c
+    decompose.c
+    delay.c
     dg_obj.c
-    editit.c
+    dir2ae.c
+    draw.c
+    dump.c
+    dup.c
+    eac.c
+    echo.c
+    edcodes.c
     edcomb.c
+    editit.c
     edmater.c
+    erase.c
+    erase_all.c
+    expand.c
+    eye.c
+    eye_pos.c
+    facetize.c
+    find.c
+    form.c
+    fracture.c
+    ged.c
+    get.c
+    get_autoview.c
+    get_comb.c
+    get_eyemodel.c
+    get_obj_bounds.c
+    get_type.c
+    glob.c
     globals.c
+    grid.c
+    group.c
+    hide.c
+    how.c
+    illum.c
     importFg4Section.c
+    inside.c
+    instance.c
+    isize.c
     item.c
+    keep.c
+    keypoint.c
+    kill.c
+    killall.c
+    killrefs.c
+    killtree.c
+    label.c
+    list.c
+    loadview.c
     log.c
+    lookat.c
+    ls.c
+    lt.c
+    m2v_point.c
     make.c
+    make_bb.c
     make_name.c
+    match.c
     mater.c
     mirror.c
+    model2view.c
+    move.c
+    move_all.c
+    move_arb_edge.c
+    move_arb_face.c
+    mrot.c
     nirt.c
+    nmg_collapse.c
+    nmg_simplify.c
+    ocenter.c
+    open.c
+    orient.c
+    orotate.c
+    oscale.c
+    otranslate.c
+    overlay.c
+    pathlist.c
+    pathsum.c
+    perspective.c
+    plot.c
+    pmat.c
+    pmodel2view.c
+    png.c
+    pov.c
+    prcolor.c
+    prefix.c
+    preview.c
+    ps.c
+    push.c
+    put.c
+    put_comb.c
+    putmat.c
     qray.c
+    quat.c
+    qvrot.c
+    rcodes.c
+    rect.c
+    red.c
+    regdef.c
+    region.c
+    remove.c
+    report.c
+    rfarb.c
+    rmap.c
+    rmat.c
     rmater.c
+    rot.c
+    rot_point.c
+    rotate_about.c
+    rotate_arb_face.c
+    rrt.c
+    rt.c
+    rtabort.c
+    rtcheck.c
+    savekey.c
+    saveview.c
+    scale.c
+    search.c
+    set_output_script.c
+    set_transparency.c
+    set_uplotOutputMode.c
+    setview.c
+    shaded_mode.c
     shader.c
-    tcl.c
+    shells.c
+    showmats.c
+    size.c
+    slew.c
+    solids_on_ray.c
+    summary.c
+    sync.c
+    tables.c
+    title.c
+    tol.c
+    tops.c
+    tra.c
+    trace.c
     track.c
+    tree.c
+    typein.c
+    unhide.c
+    units.c
+    v2m_point.c
     vdraw.c
+    version.c
+    view.c
+    view2model.c
     view_obj.c
+    viewdir.c
+    vrot.c
+    vutil.c
+    wcodes.c
+    wdb_bigE.c
     wdb_comb_std.c
+    wdb_importFg4Section.c
+    wdb_nirt.c
     wdb_obj.c
+    wdb_qray.c
+    wdb_track.c
+    wdb_vdraw.c
+    whatid.c
+    which.c
+    which_shader.c
+    who.c
     wmater.c
+    xpush.c
+    ypr.c
+    zap.c
+    zoom.c
 )
 
 include_directories(
     ../../include
+    ../other/libpng
+    ../other/libz
     ../other/tcl/generic
 )
 

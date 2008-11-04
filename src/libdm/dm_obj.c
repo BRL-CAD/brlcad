@@ -197,7 +197,7 @@ static struct bu_cmdtab dmo_cmds[] = {
 static int
 dmo_cmd(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
-    return bu_cmd(clientData, interp, argc, argv, dmo_cmds, 1);
+    return bu_cmd(clientData, interp, argc, (const char **)argv, dmo_cmds, 1);
 }
 
 int
@@ -3829,7 +3829,7 @@ dmo_observer_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **arg
 	return TCL_ERROR;
     }
 
-    return bu_observer_cmd((ClientData)&dmop->dmo_observers, interp, argc-2, argv+2);
+    return bu_observer_cmd((ClientData)&dmop->dmo_observers, interp, argc-2, (const char **)argv+2);
 }
 
 #ifdef USE_FBSERV

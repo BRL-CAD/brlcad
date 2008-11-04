@@ -38,6 +38,15 @@
 .\" SUCH DAMAGE.
 .\"
 .\".\".\"
+.\"
+.\" File name macro to make listing files easier
+.\"
+.de FN
+\fI\|\\$1\|\fP
+..
+.\"
+.\" Begin actual content
+.\"
 .SH NAME
 vas4 \- control Lyon Lamb Video Animation System VAS4 to record videotape
 .SH SYNOPSIS
@@ -245,9 +254,9 @@ simultaneously press
 the 'RECORD' & 'PLAY' buttons on the VTR and wait until the entire tape
 has been recorded with the black signal.
 .SH FILES
-.nf
-/dev/vas	tty port connected to the VAS IV
-.fi
+.TP
+.FN /dev/vas
+tty port connected to the VAS IV
 .SH SEE ALSO
 brlcad(1), fbcbars(1), rle-fb(1), pix-fb(1), rle-ik(1)
 .br

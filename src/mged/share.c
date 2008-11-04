@@ -29,14 +29,14 @@
 #include <math.h>
 #include <stdio.h>
 #include <string.h>
-
 #include "bio.h"
+
 #include "bu.h"
 #include "vmath.h"
 #include "bn.h"
 #include "dg.h"
+
 #include "./mged.h"
-#include "./mged_solid.h"
 #include "./mged_dm.h"
 
 #define RESOURCE_TYPE_ADC		0

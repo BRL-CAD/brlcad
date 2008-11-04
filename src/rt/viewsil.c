@@ -38,14 +38,6 @@
 #include "rtprivate.h"
 
 
-/*
- *  If this variable is set to zero, then "air" solids in the model
- *  will be entirely discarded.
- *  If this variable is set non-zero, then "air" solids will be
- *  retained, and can be expected to show up in the partition lists.
- */
-int	use_air = 0;		/* Handling of air in librt */
-
 extern	FILE	*outfp;
 extern	int	width, height;
 static	unsigned char *scanbuf;

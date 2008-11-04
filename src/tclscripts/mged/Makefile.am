@@ -37,6 +37,7 @@ scripties = \
 	font.tcl \
 	g2asc.tcl \
 	garbage_collect.tcl \
+	get_regions.tcl \
 	grid.tcl \
 	help.tcl \
 	helpdevel.tcl \
@@ -45,6 +46,7 @@ scripties = \
 	lgt_mat.tcl \
 	list.tcl \
 	make_solid.tcl \
+	man.tcl \
 	menu.tcl \
 	mged.tcl \
 	mgedrc.tcl \

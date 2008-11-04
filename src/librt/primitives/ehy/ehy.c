@@ -1,4 +1,4 @@
-/*                         G _ E H Y . C
+/*                           E H Y . C
  * BRL-CAD
  *
  * Copyright (c) 1990-2008 United States Government as represented by
@@ -17,9 +17,9 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @addtogroup g_  */
+/** @addtogroup primitives */
 /** @{ */
-/** @file g_ehy.c
+/** @file ehy.c
  *
  * Intersect a ray with an Elliptical Hyperboloid.
  *
@@ -557,10 +557,6 @@ rt_ehy_curve(register struct curvature *cvp, register struct hit *hitp, struct s
 	    break;
     }
 
-    cvp->crv_c1 = cvp->crv_c2 = 0;
-
-    /* any tangent direction */
-    bn_vec_ortho( cvp->crv_pdir, hitp->hit_normal );
 }
 
 /**
@@ -1671,6 +1667,16 @@ rt_ehy_ifree(struct rt_db_internal *ip)
 
     bu_free( (char *)xip, "ehy ifree" );
     ip->idb_ptr = GENPTR_NULL;	/* sanity */
+}
+
+/**
+ * R T _ E H Y _ P A R A M S
+ *
+ */
+int
+rt_ehy_params(struct pc_pc_set * ps, const struct rt_db_internal *ip)
+{
+    return(0);			/* OK */
 }
 
 /** @} */

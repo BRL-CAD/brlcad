@@ -21,7 +21,7 @@
 /** @{ */
 /** @file rb_delete.c
  *
- *	    Routines to delete a node from a red-black tree
+ * Routines to delete a node from a red-black tree
  *
  */
 /** @} */
@@ -36,15 +36,16 @@
 #include "./rb_internals.h"
 
 
-/**			B U _ R B _ F I X U P ( )
+/**
+ * B U _ R B _ F I X U P ()
  *
- *	    Restore the red-black properties of a red-black tree
- *		    after the splicing out of a node
+ * Restore the red-black properties of a red-black tree
+ * after the splicing out of a node
  *
- *	This function has three parameters: the tree to be fixed up,
- *	the node where the trouble occurs, and the order.  bu_rb_fixup()
- *	is an implementation of the routine RB-DELETE-FIXUP on p. 274
- *	of Cormen et al.
+ * This function has three parameters: the tree to be fixed up,
+ * the node where the trouble occurs, and the order.  bu_rb_fixup()
+ * is an implementation of the routine RB-DELETE-FIXUP on p. 274
+ * of Cormen et al.
  */
 static void bu_rb_fixup (bu_rb_tree *tree, struct bu_rb_node *node, int order)
 {
@@ -104,13 +105,14 @@ static void bu_rb_fixup (bu_rb_tree *tree, struct bu_rb_node *node, int order)
     bu_rb_set_color(node, order, BU_RB_BLACK);
 }
 
-/**		        _ R B _ D E L E T E ( )
+/**
+ * _ R B _ D E L E T E ()
  *
- *	        Delete a node from one order of a red-black tree
+ * Delete a node from one order of a red-black tree
  *
- *	This function has three parameters: a tree, the node to delete,
- *	and the order from which to delete it.  _rb_delete() is an
- *	implementation of the routine RB-DELETE on p. 273 of Cormen et al.
+ * This function has three parameters: a tree, the node to delete,
+ * and the order from which to delete it.  _rb_delete() is an
+ * implementation of the routine RB-DELETE on p. 273 of Cormen et al.
  */
 static void _rb_delete (bu_rb_tree *tree, struct bu_rb_node *node, int order)
 {
@@ -146,7 +148,7 @@ static void _rb_delete (bu_rb_tree *tree, struct bu_rb_node *node, int order)
 	bu_rb_right_child(parent, order) = only_child;
 
     /*
-     *	Splice y out if it's not node
+     * Splice y out if it's not node
      */
     if (y != node)
     {
@@ -161,14 +163,15 @@ static void _rb_delete (bu_rb_tree *tree, struct bu_rb_node *node, int order)
 	bu_rb_free_node(y);
 }
 
-/**		        B U _ R B _ D E L E T E ( )
+/**
+ * B U _ R B _ D E L E T E ()
  *
- *	        Applications interface to _rb_delete()
+ * Applications interface to _rb_delete()
  *
- *	This function has two parameters: the tree and order from which
- *	to do the deleting.  bu_rb_delete() removes the data block stored
- *	in the current node (in the position of the specified order)
- *	from every order in the tree.
+ * This function has two parameters: the tree and order from which
+ * to do the deleting.  bu_rb_delete() removes the data block stored
+ * in the current node (in the position of the specified order)
+ * from every order in the tree.
  */
 void bu_rb_delete (bu_rb_tree *tree, int order)
 {
@@ -201,7 +204,7 @@ void bu_rb_delete (bu_rb_tree *tree, int order)
 	node[order] = (package -> rbp_node)[order];
 
     /*
-     *	Do the deletion from each order
+     * Do the deletion from each order
      */
     for (order = 0; order < nm_orders; ++order)
 	_rb_delete(tree, node[order], order);

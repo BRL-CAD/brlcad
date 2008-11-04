@@ -50,7 +50,7 @@ proc garbage_collect {} {
 
     # create a temporary file
     set tmp_file /usr/tmp/[pid]_$cur_tail
-    exec /bin/rm -f $tmp_file
+    exec rm -f $tmp_file
 
     # massage list of top level objects to eliminate suffixes ("/" and "/R")
     set fixed_tops {}
@@ -72,7 +72,8 @@ proc garbage_collect {} {
     # make sure the new copy is correct (first make sure we have the same number
     # of top level ovjects
     puts "verifying $tmp_file"
-    catch {[exec mged -c $tmp_file tops]} new_tops
+    set mged [bu_brlcad_root "bin/mged"]
+    catch {[exec $mged -c $tmp_file tops]} new_tops
     if { [regexp "\(NOTICE:.*is BRL-CAD v5 format.\)\(.*\)" $new_tops matchvar notice real_tops] } {
 	set new_tops $real_tops
     }
@@ -81,7 +82,7 @@ proc garbage_collect {} {
 	puts "$tmp_file is corrupt, garbage collection aborted!!!!!"
 	puts "Result of 'tops' was:\n$new_tops"
 	puts "\n\n'tops' should have produced:\n$top_list"
-	exec /bin/rm -f $tmp_file
+	exec rm -f $tmp_file
 	return
     }
     # now compare the name of each top level object
@@ -90,7 +91,7 @@ proc garbage_collect {} {
 	    puts "$tmp_file is corrupt, garbage collection aborted!!!!"
 	    puts "Result of 'tops' was:\n$new_tops"
 	    puts "\n\n'tops' should have produced:\n$top_list"
-	    exec /bin/rm -f $tmp_file
+	    exec rm -f $tmp_file
 	    return
 	}
     }
@@ -103,7 +104,7 @@ proc garbage_collect {} {
     exec cp $tmp_file  $cur_file
 
     # delete the temporary file
-    exec /bin/rm -f $tmp_file
+    exec rm -f $tmp_file
 
     # reopen the overwritten database
     opendb $cur_file

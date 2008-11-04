@@ -21,33 +21,33 @@
 /** @{ */
 /** @file color.c
  *
- *		Convert between RGB and HSV color models
+ * Convert between RGB and HSV color models
  *
- *	R, G, and B are in {0, 1, ..., 255},
+ * R, G, and B are in {0, 1, ..., 255},
  *
- *	H is in [0.0, 360.0), and S and V are in [0.0, 1.0],
+ * H is in [0.0, 360.0), and S and V are in [0.0, 1.0],
  *
- *	unless S = 0.0, in which case H = ACHROMATIC.
+ * unless S = 0.0, in which case H = ACHROMATIC.
  *
- *	These two routines are adapted from:
- *	pp. 592-3 of J.D. Foley, A. van Dam, S.K. Feiner, and J.F. Hughes,
- *	_Computer graphics: principles and practice_, 2nd ed., Addison-Wesley,
- *	Reading, MA, 1990.
+ * These two routines are adapted from:
+ * pp. 592-3 of J.D. Foley, A. van Dam, S.K. Feiner, and J.F. Hughes,
+ * _Computer graphics: principles and practice_, 2nd ed., Addison-Wesley,
+ * Reading, MA, 1990.
  */
 
 #include "common.h"
 
 #include <stdlib.h>
-#include <stdio.h>
 #include <math.h>
 #include <ctype.h>
 #include <string.h>
 #include <stdarg.h>
+#include "bio.h"
 
 #include "bu.h"
-#include "vmath.h"
 
 
+/* libfb defines replicated here to avoid a libfb dependency */
 #define	ACHROMATIC	-1.0
 
 #define	HUE	0
@@ -59,8 +59,18 @@
 #define	BLU	2
 
 
+/* vmath/libbu routines replicated here to avoid a libbu dependency */
+#define X 0
+#define Y 1
+#define Z 2
+#define VSET(a, b, c, d) { (a)[X] = (b); (a)[Y] = (c); (a)[Z] = (d); }
+#define VSETALL(a, s) { (a)[X] = (a)[Y] = (a)[Z] = (s); }
+#define NEAR_ZERO(val, epsilon)	(((val) > -epsilon) && ((val) < epsilon))
+#define V3ARGS(a) (a)[X], (a)[Y], (a)[Z]
+
+
 /**
- *			B U _ R G B _ T O _ H S V
+ * B U _ R G B _ T O _ H S V
  *
  */
 void bu_rgb_to_hsv (unsigned char *rgb, fastf_t *hsv)
@@ -73,7 +83,7 @@ void bu_rgb_to_hsv (unsigned char *rgb, fastf_t *hsv)
     fastf_t	delta;
 
     /*
-     *	Compute value
+     * Compute value
      */
     max = min = red = ((fastf_t) rgb[RED]) / 255.0;
 
@@ -92,7 +102,7 @@ void bu_rgb_to_hsv (unsigned char *rgb, fastf_t *hsv)
     *val = max;
 
     /*
-     *	Compute saturation
+     * Compute saturation
      */
     delta = max - min;
     if (max > 0.0)
@@ -101,12 +111,11 @@ void bu_rgb_to_hsv (unsigned char *rgb, fastf_t *hsv)
 	*sat = 0.0;
 
     /*
-     *	Compute hue
+     * Compute hue
      */
-    if (NEAR_ZERO(*sat, SMALL_FASTF))
+    if (NEAR_ZERO(*sat, SMALL_FASTF)) {
 	*hue = ACHROMATIC;
-    else
-    {
+    } else {
 	if (NEAR_ZERO(red - max, SMALL_FASTF)) /* red == max */
 	    *hue = (grn - blu) / delta;
 	else if (NEAR_ZERO(grn - max, SMALL_FASTF)) /* grn == max */
@@ -115,7 +124,7 @@ void bu_rgb_to_hsv (unsigned char *rgb, fastf_t *hsv)
 	    *hue = 4.0 + (red - grn) / delta;
 
 	/*
-	 *	Convert hue to degrees
+	 * Convert hue to degrees
 	 */
 	*hue *= 60.0;
 	if (*hue < 0.0)
@@ -124,7 +133,7 @@ void bu_rgb_to_hsv (unsigned char *rgb, fastf_t *hsv)
 }
 
 /**
- *			B U _ H S V _ T O _ R G B
+ * B U _ H S V _ T O _ R G B
  *
  */
 int bu_hsv_to_rgb (fastf_t *hsv, unsigned char *rgb)
@@ -151,29 +160,29 @@ int bu_hsv_to_rgb (fastf_t *hsv, unsigned char *rgb)
 
     /* so hue == ACHROMATIC (or is ignored)	*/
     if (NEAR_ZERO(sat, SMALL_FASTF)) {
-	VSETALL(float_rgb, val)
-	    } else {
-		if (NEAR_ZERO(hue - 360.0, SMALL_FASTF))
-		    hue = 0.0;
-		hue /= 60.0;
-		hue_int = floor((double) hue);
-		hue_frac = hue - hue_int;
-		p = val * (1.0 - sat);
-		q = val * (1.0 - (sat * hue_frac));
-		t = val * (1.0 - (sat * (1.0 - hue_frac)));
-		switch (hue_int) {
-		    case 0: VSET(float_rgb, val, t, p); break;
-		    case 1: VSET(float_rgb, q, val, p); break;
-		    case 2: VSET(float_rgb, p, val, t); break;
-		    case 3: VSET(float_rgb, p, q, val); break;
-		    case 4: VSET(float_rgb, t, p, val); break;
-		    case 5: VSET(float_rgb, val, p, q); break;
-		    default:
-			bu_log("%s:%d: This shouldn't happen\n",
-			       __FILE__, __LINE__);
-			bu_bomb("unexpected condition encountered in bu_hsv_to_rgb\n");
-		}
-	    }
+	VSETALL(float_rgb, val);
+    } else {
+	if (NEAR_ZERO(hue - 360.0, SMALL_FASTF))
+	    hue = 0.0;
+	hue /= 60.0;
+	hue_int = floor((double) hue);
+	hue_frac = hue - hue_int;
+	p = val * (1.0 - sat);
+	q = val * (1.0 - (sat * hue_frac));
+	t = val * (1.0 - (sat * (1.0 - hue_frac)));
+	switch (hue_int) {
+	    case 0: VSET(float_rgb, val, t, p); break;
+	    case 1: VSET(float_rgb, q, val, p); break;
+	    case 2: VSET(float_rgb, p, val, t); break;
+	    case 3: VSET(float_rgb, p, q, val); break;
+	    case 4: VSET(float_rgb, t, p, val); break;
+	    case 5: VSET(float_rgb, val, p, q); break;
+	    default:
+		bu_log("%s:%d: This shouldn't happen\n",
+		       __FILE__, __LINE__);
+		bu_bomb("unexpected condition encountered in bu_hsv_to_rgb\n");
+	}
+    }
 
     rgb[RED] = float_rgb[RED] * 255;
     rgb[GRN] = float_rgb[GRN] * 255;
@@ -183,7 +192,7 @@ int bu_hsv_to_rgb (fastf_t *hsv, unsigned char *rgb)
 }
 
 /**
- *			B U _ S T R _ T O _ R G B
+ * B U _ S T R _ T O _ R G B
  *
  */
 int bu_str_to_rgb (char *str, unsigned char *rgb)
@@ -195,23 +204,19 @@ int bu_str_to_rgb (char *str, unsigned char *rgb)
     while (isspace(*str))
 	++str;
 
-    if (*str == '#')
-    {
+    if (*str == '#') {
 	if (strlen(++str) != 6)
 	    return 0;
 	num = sscanf(str, "%02x%02x%02x", (unsigned int *)&r, (unsigned int *)&g, (unsigned int *)&b);
 #if 0
 	bu_log("# notation: I read %d of %d, %d, %d\n", num, r, g, b);
 #endif
-    }
-    else if (isdigit(*str))
-    {
+    } else if (isdigit(*str)) {
 	num = sscanf(str, "%d/%d/%d", &r, &g, &b);
 #if 0
 	bu_log("slash separation: I read %d of %d, %d, %d\n", num, r, g, b);
 #endif
-	if (num == 1)
-	{
+	if (num == 1) {
 	    num = sscanf(str, "%d %d %d", &r, &g, &b);
 #if 0
 	    bu_log("blank separation: I read %d of %d, %d, %d\n", num, r, g, b);
@@ -220,15 +225,17 @@ int bu_str_to_rgb (char *str, unsigned char *rgb)
 	VSET(rgb, r, g, b);
 	if ((r < 0) || (r > 255)
 	    || (g < 0) || (g > 255)
-	    || (b < 0) || (b > 255))
+	    || (b < 0) || (b > 255)) {
 	    return 0;
-    }
-    else
+	}
+    } else {
 	return 0;
+    }
 
     VSET(rgb, r, g, b);
     return 1;
 }
+
 /** @} */
 /*
  * Local Variables:

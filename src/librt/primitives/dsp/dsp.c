@@ -60,10 +60,9 @@
 #include "bio.h"
 
 #include "vmath.h"
-#include "db.h"
-#include "nmg.h"
-#include "rtgeom.h"
 #include "raytrace.h"
+#include "rtgeom.h"
+#include "db.h"
 #include "plot3.h"
 
 
@@ -255,7 +254,7 @@ hook_file(
  *	These are only used when editing a v4 database
  */
 const struct bu_structparse rt_dsp_parse[] = {
-    {"%S",	1, "file", DSP_O(dsp_name), hook_file },
+    {"%V",	1, "file", DSP_O(dsp_name), hook_file },
     {"%i",	1, "sm", DSP_O(dsp_smooth), BU_STRUCTPARSE_FUNC_NULL },
     {"%d",	1, "w", DSP_O(dsp_xcnt), BU_STRUCTPARSE_FUNC_NULL },
     {"%d",	1, "n", DSP_O(dsp_ycnt), BU_STRUCTPARSE_FUNC_NULL },
@@ -264,7 +263,7 @@ const struct bu_structparse rt_dsp_parse[] = {
 };
 
 const struct bu_structparse rt_dsp_ptab[] = {
-    {"%S",	1, "file", DSP_O(dsp_name), BU_STRUCTPARSE_FUNC_NULL },
+    {"%V",	1, "file", DSP_O(dsp_name), BU_STRUCTPARSE_FUNC_NULL },
     {"%i",	1, "sm", DSP_O(dsp_smooth), BU_STRUCTPARSE_FUNC_NULL },
     {"%d",	1, "w", DSP_O(dsp_xcnt), BU_STRUCTPARSE_FUNC_NULL },
     {"%d",	1, "n", DSP_O(dsp_ycnt), BU_STRUCTPARSE_FUNC_NULL },
@@ -3366,6 +3365,110 @@ rt_dsp_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
     return(0);
 }
 
+/*
+ *          G E T _ C U T _ D I R
+ *
+ * Determine the cut direction for a DSP cell. This routine is used by
+ * rt_dsp_tess(). It somewhat duplicates code from permute_cell(), which
+ * is a bad thing, but permute_cell() had other side effects not desired here.
+ *
+ * inputs:
+ *    dsp_ip - pointer to the rt_dsp_internal struct fro thi DSP
+ *    x - the DSP cell x-coord of the lower left corner of the cell
+ *    y - the DSP cell y-coord of the lower left corner of the cell
+ *    xlim - the maximum value of the DSP x coordinates
+ *    ylim - the maximum value of the DSP y coordinates
+ * return:
+ *    the direction for cutting this cell.
+ *           DSP_CUT_DIR_llUR - lower left to upper right
+ *           DSP_CUT_DIR_ULlr - upper right to lower left
+ */
+static int
+get_cut_dir(struct rt_dsp_internal *dsp_ip, int x, int y, int xlim, int ylim)
+{
+/*
+ * height array contains DSP values:
+ *  height[0] is at (x,y)
+ *  height[1] is at (x+1,y)
+ *  height[2] is at (x+1,y+1)
+ *  height[3] is at (x,y+1)
+ *  height[4] is at (x-1,y-1)
+ *  height[5] is at (x+2,y-1)
+ *  height[6] is at (x+2,y+2)
+ *  height[7] is at (x-1,y+2)
+ *
+ * 7         6
+ *  \       /
+ *   \     /
+ *    3---2
+ *    |   |
+ *    |   |
+ *    0---1
+ *   /     \
+ *  /       \
+ * 4         5
+ *
+ * (0,1,2,3) is the cell of interest.
+ */
+    int height[8];
+    int xx, yy;
+    double h1, h2, h3, h4;
+    double c02, c13;  /* curvature in direction 0<->2, and 1<->3 */
+
+    if( dsp_ip->dsp_cuttype != DSP_CUT_DIR_ADAPT) {
+	/* not using adpative cut type, so just return the cut type */
+	return dsp_ip->dsp_cuttype;
+    }
+    
+    /* fill in the height array */
+    xx = x;
+    yy = y;
+    height[0] = DSP(dsp_ip, xx, yy);
+    xx = x+1;
+    if(xx > xlim) xx = xlim;
+    height[1] = DSP(dsp_ip, xx, yy);
+    yy = y+1;
+    if(yy > ylim) yy = ylim;
+    height[2] = DSP(dsp_ip, xx, yy);
+    xx = x;
+    height[3] = DSP(dsp_ip, xx, yy);
+    xx = x-1;
+    if(xx < 0) xx = 0;
+    yy = y-1;
+    if(yy < 0) yy = 0;
+    height[4] = DSP(dsp_ip, xx, yy);
+    xx = x+2;
+    if(xx > xlim) xx = xlim;
+    height[5] = DSP(dsp_ip, xx, yy);
+    yy = y+2;
+    if(yy > ylim) yy = ylim;
+    height[6] = DSP(dsp_ip, xx, yy);
+    xx = x-1;
+    if(xx < 0) xx = 0;
+    height[7] = DSP(dsp_ip, xx, yy);
+    
+    /* compute curvature along the 0<->2 direction */
+    c02 = fabs(height[2] + height[4] - 2*height[0]) + fabs(height[6] + height[0] - 2*height[2]);
+
+
+    /* compute curvature along the 1<->3 direction */
+    c13 = fabs(height[3] + height[5] - 2*height[1]) + fabs(height[7] + height[1] - 2*height[3]);
+
+    if(c02 < c13) {
+	/* choose the 0<->2 direction */
+	return DSP_CUT_DIR_llUR;
+    } else {
+	/* choose the other direction */
+	return DSP_CUT_DIR_ULlr;
+    }
+}
+
+/* a macro to check if these vertices can produce a valid face */
+#define CHECK_VERTS(_v) \
+     ((*_v[0] != *_v[1]) || (*_v[0] == NULL)) && \
+     ((*_v[0] != *_v[2]) || (*_v[2] == NULL)) && \
+     ((*_v[1] != *_v[2]) || (*_v[1] == NULL))
+
 /**
  *			R T _ D S P _ T E S S
  *
@@ -3376,16 +3479,485 @@ rt_dsp_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
 int
 rt_dsp_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol)
 {
-    struct rt_dsp_internal	*dsp_ip;
+    struct rt_dsp_internal *dsp_ip;
+    struct shell *s;
+    int xlim;
+    int ylim;
+    int x, y;
+    point_t pt[4];
+    point_t tmp_pt;
+    int base_vert_count;
+    struct vertex **base_verts;
+    struct vertex **verts[3];
+    struct vertex *hole_verts[3];
+    struct faceuse *fu;
+    struct faceuse *base_fu;
+    struct vertex **strip1Verts;
+    struct vertex **strip2Verts;
+    int base_vert_no1;
+    int base_vert_no2;
+    int has_holes=0;
 
     if (RT_G_DEBUG & DEBUG_HF)
 	bu_log("rt_dsp_tess()\n");
+
+    /* do a bunch of checks to make sure all is well */
 
     RT_CK_DB_INTERNAL(ip);
     dsp_ip = (struct rt_dsp_internal *)ip->idb_ptr;
     RT_DSP_CK_MAGIC(dsp_ip);
 
-    return(-1);
+    switch( dsp_ip->dsp_datasrc ) {
+        case RT_DSP_SRC_FILE:
+        case RT_DSP_SRC_V4_FILE:
+	    if (!dsp_ip->dsp_mp) {
+		bu_log("WARNING: Cannot find data file for displacement map (DSP)\n");
+		if (bu_vls_addr(&dsp_ip->dsp_name)) {
+		    bu_log("         DSP data file [%s] not found or empty\n", bu_vls_addr(&dsp_ip->dsp_name)); 
+		} else {
+		    bu_log("         DSP data file not found or not specified\n");
+		} 
+		return -1;
+	    }
+	    BU_CK_MAPPED_FILE(dsp_ip->dsp_mp);
+            break;
+        case RT_DSP_SRC_OBJ:
+	    if (!dsp_ip->dsp_bip) {
+		bu_log("WARNING: Cannot find data object for displacement map (DSP)\n");
+		if (bu_vls_addr(&dsp_ip->dsp_name)) {
+		    bu_log("         DSP data object [%s] not found or empty\n", bu_vls_addr(&dsp_ip->dsp_name));
+		} else {
+		    bu_log("         DSP data object not found or not specified\n");
+		}
+		return -1;
+	    }
+	    RT_CK_DB_INTERNAL(dsp_ip->dsp_bip);
+	    RT_CK_BINUNIF(dsp_ip->dsp_bip->idb_ptr);
+            break;
+    }
+    
+    
+    xlim = dsp_ip->dsp_xcnt - 1;
+    ylim = dsp_ip->dsp_ycnt - 1;
+
+    /* Base_verts will contain the vertices for the base face ordered
+     * correctly to create the base face.
+     * Cannot simply use the four corners, because that would not
+     * create a valid NMG.
+     * base_verts[0] is at (0,0)
+     * base_verts[ylim] is at (0,ylim)
+     * base_verts[ylim+xlim] is at (xlim,ylim)
+     * base_verts[2*ylim+xlim] is at (xlim,0)
+     * base_verts[2*ylim+2*xlim-x] is at (x,0)
+     *
+     * strip1Verts and strip2Verts are temporary storage for vertices
+     * along the top of the dsp. For each strip of triangles at a given
+     * x value, strip1Verts[y] is the vertex at (x,y,h) and strip2Verts[y]
+     * is the vertex at (x+1,y,h), where h is the DSP value at that point.
+     * After each strip of faces is created, strip2Verts is copied to strip1Verts
+     * and strip2Verts is set to all NULLs.
+     */
+    
+    /* malloc space for the vertices */
+    base_vert_count = 2*xlim + 2*ylim;
+    base_verts = bu_calloc(base_vert_count, sizeof( struct vertex *), "base verts");
+    strip1Verts = bu_calloc(ylim+1, sizeof( struct vertex *), "strip1Verts");
+    strip2Verts = bu_calloc(ylim+1, sizeof( struct vertex *), "strip2Verts");
+
+    /* Make region, empty shell, vertex */
+    *r = nmg_mrsv( m );
+    s = BU_LIST_FIRST(shell, &(*r)->s_hd);
+
+    /* make the base face */
+    base_fu = nmg_cface(s, base_verts, base_vert_count);
+
+    /* assign geometry to the base_verts */
+    /* start with x=0 edge */
+    for(y=0 ; y<=ylim ; y++) {
+	VSET(tmp_pt, 0, y, 0);
+	MAT4X3PNT(pt[0], dsp_ip->dsp_stom, tmp_pt);
+	nmg_vertex_gv(base_verts[y], pt[0]);
+    }
+    /* now do y=ylim edge */
+    for(x=1 ; x<=xlim ; x++) {
+	VSET(tmp_pt, x, ylim, 0);
+	MAT4X3PNT(pt[0], dsp_ip->dsp_stom, tmp_pt);
+	nmg_vertex_gv(base_verts[ylim+x], pt[0]);
+    }
+    /* now do x=xlim edge */
+    for(y=0 ; y<ylim ; y++) {
+	VSET(tmp_pt, xlim, y, 0);
+	MAT4X3PNT(pt[0], dsp_ip->dsp_stom, tmp_pt);
+	nmg_vertex_gv(base_verts[2*ylim+xlim-y], pt[0]);
+    }
+    /* now do y=0 edge */
+    for(x=1 ; x<xlim ; x++) {
+	VSET(tmp_pt, x, 0, 0);
+	MAT4X3PNT(pt[0], dsp_ip->dsp_stom, tmp_pt);
+	nmg_vertex_gv(base_verts[2*(xlim+ylim)-x], pt[0]);
+    }
+    if (nmg_fu_planeeqn(base_fu, tol) < 0) {
+	bu_log("Failed to make base face\n");
+	bu_free(base_verts, "base verts");
+	bu_free(strip1Verts, "strip 1 verts");
+	bu_free(strip2Verts, "strip 2 verts");
+	return -1; /* FAIL */
+    }
+
+    /* if a displacement on the edge (x=0) is zero
+     * then strip1Verts at that point is the corresponding
+     * base_vert
+     */
+    for(y=0 ; y<=ylim ; y++) {
+	if(DSP(dsp_ip, 0, y) == 0) {
+	    strip1Verts[y] = base_verts[y];
+	}
+    }
+
+    /* make faces along x=0 plane */
+    for(y=1 ; y<=ylim ; y++) {
+	verts[0] = &base_verts[y-1];
+	verts[1] = &strip1Verts[y-1];
+	verts[2] = &strip1Verts[y];
+	if(CHECK_VERTS( verts )) {
+	    fu = nmg_cmface(s, verts, 3);
+	    if (y == 1 && strip1Verts[0]->vg_p == NULL) {
+		VSET(tmp_pt, 0, 0, DSP(dsp_ip, 0, 0));
+		MAT4X3PNT(pt[0], dsp_ip->dsp_stom, tmp_pt);
+		nmg_vertex_gv(strip1Verts[0], pt[0]);
+	    }
+	    if(strip1Verts[y]->vg_p == NULL) {
+		VSET(tmp_pt, 0, y, DSP(dsp_ip, 0, y));
+		MAT4X3PNT(pt[0], dsp_ip->dsp_stom, tmp_pt);
+		nmg_vertex_gv(strip1Verts[y], pt[0]);
+	    }
+	    if (nmg_fu_planeeqn(fu, tol) < 0) {
+		bu_log( "Failed to make x=0 face at y=%d\n", y );
+		bu_free(base_verts, "base verts");
+		bu_free(strip1Verts, "strip 1 verts");
+		bu_free(strip2Verts, "strip 2 verts");
+		return -1; /* FAIL */
+	    }
+	}
+	verts[0] = &base_verts[y-1];
+	verts[1] = &strip1Verts[y];
+	verts[2] = &base_verts[y];
+	if(CHECK_VERTS( verts )) {
+	    fu = nmg_cmface(s, verts, 3);
+	    if(strip1Verts[y]->vg_p == NULL) {
+		VSET(tmp_pt, 0, y, DSP(dsp_ip, 0, y));
+		MAT4X3PNT(pt[0], dsp_ip->dsp_stom, tmp_pt);
+		nmg_vertex_gv(strip1Verts[y], pt[0]);
+	    }
+	    if (nmg_fu_planeeqn(fu, tol) < 0) {
+		bu_log( "Failed to make x=0 face at y=%d\n", y );
+		bu_free(base_verts, "base verts");
+		bu_free(strip1Verts, "strip 1 verts");
+		bu_free(strip2Verts, "strip 2 verts");
+		return -1; /* FAIL */
+	    }
+	}
+    }
+
+    /* make each strip of triangles. Make two triangles for each
+     * cell (x,y)<->(x+1,y+1). Also make the vertical faces at y=0 and y=ylim.
+     */
+    for(x=0 ; x<xlim ; x++) {
+	/*
+	 * set strip2Verts to base_verts values where the strip2Vert
+         * is above a base_vert and DSP value is 0
+	 */
+	if((x+1) == xlim) {
+	    for(y=0 ; y<=ylim ; y++) {
+		if(DSP(dsp_ip, xlim, y) == 0) {
+		    strip2Verts[y] = base_verts[2*ylim + xlim - y];
+		}
+	    }
+	} else {
+	    if(DSP(dsp_ip, x+1, 0) == 0 ) {
+		strip2Verts[0] = base_verts[2*(ylim+xlim)-(x+1)];
+	    }
+	    if(DSP(dsp_ip, x+1, ylim) == 0 ) {
+		strip2Verts[ylim] = base_verts[ylim+x+1];
+	    }
+	}
+
+        /* make the faces at y=0 for this strip */
+	if(x == 0) {
+	    base_vert_no1 = 0;
+	    base_vert_no2 = 2*(ylim+xlim)-1;
+	} else {
+	    base_vert_no1 = 2*(ylim + xlim) - x;
+	    base_vert_no2 = base_vert_no1 - 1;
+	}
+
+	verts[0] = &base_verts[base_vert_no1];
+	verts[1] = &strip2Verts[0];
+	verts[2] = &strip1Verts[0];
+	if(CHECK_VERTS( verts )) {
+	    fu = nmg_cmface(s, verts, 3);
+	    VSET(tmp_pt, x+1, 0, DSP(dsp_ip, x+1, 0));
+	    MAT4X3PNT(pt[0], dsp_ip->dsp_stom, tmp_pt);
+	    nmg_vertex_gv(strip2Verts[0], pt[0]);
+	    if (nmg_fu_planeeqn(fu, tol) < 0) {
+		bu_log( "Failed to make first face at x=%d, y=%d\n", x, 0 );
+		bu_free(base_verts, "base verts");
+		bu_free(strip1Verts, "strip 1 verts");
+		bu_free(strip2Verts, "strip 2 verts");
+		return -1; /* FAIL */
+	    }
+	}
+
+	verts[0] = &base_verts[base_vert_no1];
+	verts[1] = &base_verts[base_vert_no2];
+	verts[2] = &strip2Verts[0];
+	if(CHECK_VERTS( verts )) {
+	    fu = nmg_cmface(s, verts, 3);
+	    if (nmg_fu_planeeqn(fu, tol) < 0) {
+		bu_log( "Failed to make second face at x=%d, y=%d\n", x, 0 );
+		bu_free(base_verts, "base verts");
+		bu_free(strip1Verts, "strip 1 verts");
+		bu_free(strip2Verts, "strip 2 verts");
+		return -1; /* FAIL */
+	    }
+	    if(strip2Verts[0]->vg_p == NULL) {
+		VSET(tmp_pt, x+1, 0, DSP(dsp_ip, x+1, 0));
+		MAT4X3PNT(pt[0], dsp_ip->dsp_stom, tmp_pt);
+		nmg_vertex_gv(strip2Verts[0], pt[0]);
+	    }
+	}
+        
+        /* make the top faces for this strip */
+        for(y=0 ; y<ylim ; y++) {
+	    int dir;
+	    /* get the cut direction for this cell */
+	    dir = get_cut_dir(dsp_ip, x, y, xlim, ylim);
+
+	    if(dir == DSP_CUT_DIR_llUR) {
+		verts[0] = &strip1Verts[y];
+		verts[1] = &strip2Verts[y];
+		verts[2] = &strip2Verts[y+1];
+		if(CHECK_VERTS( verts )) {
+		    if(DSP(dsp_ip,x,y) == 0 && DSP(dsp_ip,x+1,y) == 0 && DSP(dsp_ip,x+1,y+1) == 0) {
+			/* make a hole, instead of a face */
+			hole_verts[0] = strip1Verts[y];
+			hole_verts[1] = strip2Verts[y];
+			hole_verts[2] = strip2Verts[y+1];
+			nmg_add_loop_to_face(s, base_fu, hole_verts, 3, OT_OPPOSITE);
+			has_holes = 1;
+			VSET(tmp_pt, x+1, y+1, DSP(dsp_ip, x+1, y+1));
+			MAT4X3PNT(pt[0], dsp_ip->dsp_stom, tmp_pt);
+			nmg_vertex_gv(hole_verts[2], pt[0]);
+			strip2Verts[y+1] = hole_verts[2];
+		    } else {
+			fu = nmg_cmface(s, verts, 3);
+			VSET(tmp_pt, x+1, y+1, DSP(dsp_ip, x+1, y+1));
+			MAT4X3PNT(pt[0], dsp_ip->dsp_stom, tmp_pt);
+			nmg_vertex_gv(strip2Verts[y+1], pt[0]);
+			if (nmg_fu_planeeqn(fu, tol) < 0) {
+			    bu_log( "Failed to make first top face at x=%d, y=%d\n", x, y );
+			    bu_free(base_verts, "base verts");
+			    bu_free(strip1Verts, "strip 1 verts");
+			    bu_free(strip2Verts, "strip 2 verts");
+			    return -1; /* FAIL */
+			}
+		    }
+		}
+	    } else {
+		verts[0] = &strip1Verts[y+1];
+		verts[1] = &strip1Verts[y];
+		verts[2] = &strip2Verts[y];
+		if(CHECK_VERTS( verts )) {
+		    if(DSP(dsp_ip,x,y+1) == 0 && DSP(dsp_ip,x,y) == 0 && DSP(dsp_ip,x+1,y) == 0) {
+			/* make a hole, instead of a face */
+			hole_verts[0] = strip1Verts[y+1];
+			hole_verts[1] = strip1Verts[y];
+			hole_verts[2] = strip2Verts[y];
+			nmg_add_loop_to_face(s, base_fu, hole_verts, 3, OT_OPPOSITE);
+			has_holes = 1;
+		    } else {
+			fu = nmg_cmface(s, verts, 3);
+			if (nmg_fu_planeeqn(fu, tol) < 0) {
+			    bu_log( "Failed to make first top face at x=%d, y=%d\n", x, y );
+			    bu_free(base_verts, "base verts");
+			    bu_free(strip1Verts, "strip 1 verts");
+			    bu_free(strip2Verts, "strip 2 verts");
+			    return -1; /* FAIL */
+			}
+		    }
+		}
+	    }
+
+            
+	    if(dir == DSP_CUT_DIR_llUR) {
+		verts[0] = &strip1Verts[y];
+		verts[1] = &strip2Verts[y+1];
+		verts[2] = &strip1Verts[y+1];
+		if(CHECK_VERTS( verts )) {
+		    if(DSP(dsp_ip,x,y) == 0 && DSP(dsp_ip,x+1,y+1) == 0 && DSP(dsp_ip,x,y+1) == 0) {
+			/* make a hole, instead of a face */
+			hole_verts[0] = strip1Verts[y];
+			hole_verts[1] = strip2Verts[y+1];
+			hole_verts[2] = strip1Verts[y+1];
+			nmg_add_loop_to_face(s, base_fu, hole_verts, 3, OT_OPPOSITE);
+			has_holes = 1;
+			VSET(tmp_pt, x+1, y+1, DSP(dsp_ip, x+1, y+1));
+			MAT4X3PNT(pt[0], dsp_ip->dsp_stom, tmp_pt);
+			nmg_vertex_gv(hole_verts[1], pt[0]);
+			strip2Verts[y+1] = hole_verts[1];
+		    } else {
+			fu = nmg_cmface(s, verts, 3);
+			VSET(tmp_pt, x+1, y+1, DSP(dsp_ip, x+1, y+1));
+			MAT4X3PNT(pt[0], dsp_ip->dsp_stom, tmp_pt);
+			nmg_vertex_gv(strip2Verts[y+1], pt[0]);
+			if (nmg_fu_planeeqn(fu, tol) < 0) {
+			    bu_log( "Failed to make second top face at x=%d, y=%d\n", x, y );
+			    bu_free(base_verts, "base verts");
+			    bu_free(strip1Verts, "strip 1 verts");
+			    bu_free(strip2Verts, "strip 2 verts");
+			    return -1; /* FAIL */
+			}
+		    }
+		}
+	    } else {
+		verts[0] = &strip2Verts[y];
+		verts[1] = &strip2Verts[y+1];
+		verts[2] = &strip1Verts[y+1];
+		if(CHECK_VERTS( verts )) {
+		    if(DSP(dsp_ip,x+1,y) == 0 && DSP(dsp_ip,x+1,y+1) == 0 && DSP(dsp_ip,x,y+1) == 0) {
+			/* make a hole, instead of a face */
+			hole_verts[0] = strip2Verts[y];
+			hole_verts[1] = strip2Verts[y+1];
+			hole_verts[2] = strip1Verts[y+1];
+			nmg_add_loop_to_face(s, base_fu, hole_verts, 3, OT_OPPOSITE);
+			has_holes = 1;
+			VSET(tmp_pt, x+1, y+1, DSP(dsp_ip, x+1, y+1));
+			MAT4X3PNT(pt[0], dsp_ip->dsp_stom, tmp_pt);
+			nmg_vertex_gv(hole_verts[1], pt[0]);
+			strip2Verts[y+1] = hole_verts[1];
+		    } else {
+			fu = nmg_cmface(s, verts, 3);
+			VSET(tmp_pt, x+1, y+1, DSP(dsp_ip, x+1, y+1));
+			MAT4X3PNT(pt[0], dsp_ip->dsp_stom, tmp_pt);
+			nmg_vertex_gv(strip2Verts[y+1], pt[0]);
+			if (nmg_fu_planeeqn(fu, tol) < 0) {
+			    bu_log( "Failed to make second top face at x=%d, y=%d\n", x, y );
+			    bu_free(base_verts, "base verts");
+			    bu_free(strip1Verts, "strip 1 verts");
+			    bu_free(strip2Verts, "strip 2 verts");
+			    return -1; /* FAIL */
+			}
+		    }
+		}
+	    }
+	}
+
+        /* make the faces at the y=ylim plane for this strip */
+	verts[0] = &strip1Verts[ylim];
+	verts[1] = &strip2Verts[ylim];
+	verts[2] = &base_verts[ylim+x+1];
+	if(CHECK_VERTS( verts )) {
+	    fu = nmg_cmface(s, verts, 3);
+	    if (nmg_fu_planeeqn(fu, tol) < 0) {
+		bu_log( "Failed to make first face at x=%d, y=ylim\n", x );
+		bu_free(base_verts, "base verts");
+		bu_free(strip1Verts, "strip 1 verts");
+		bu_free(strip2Verts, "strip 2 verts");
+		return -1; /* FAIL */
+	    }
+	}
+
+	verts[0] = &base_verts[ylim+x+1];
+	verts[1] = &base_verts[ylim+x];
+	verts[2] = &strip1Verts[ylim];
+	if(CHECK_VERTS( verts )) {
+	    fu = nmg_cmface(s, verts, 3);
+	    if (nmg_fu_planeeqn(fu, tol) < 0) {
+		bu_log( "Failed to make second face at x=%d, y=ylim\n", x );
+		bu_free(base_verts, "base verts");
+		bu_free(strip1Verts, "strip 1 verts");
+		bu_free(strip2Verts, "strip 2 verts");
+		return -1; /* FAIL */
+	    }
+	}
+        
+        /* copy strip2 to strip1, set strip2 to all NULLs */
+        for(y=0 ; y<=ylim ; y++) {
+            strip1Verts[y] = strip2Verts[y];
+            strip2Verts[y] = (struct vertex *)NULL;
+        }
+    }
+    
+    /* make faces at x=xlim plane */
+    for(y=0 ; y<ylim ; y++) {
+	base_vert_no1 = 2*ylim+xlim-y;
+	verts[0] = &base_verts[base_vert_no1];
+	verts[1] = &base_verts[base_vert_no1-1];
+	verts[2] = &strip1Verts[y];
+	if(CHECK_VERTS( verts )) {
+	    fu = nmg_cmface(s, verts, 3);
+	    if (nmg_fu_planeeqn(fu, tol) < 0) {
+		bu_log( "Failed to make first face at x=xlim, y=%d\n", y );
+		bu_free(base_verts, "base verts");
+		bu_free(strip1Verts, "strip 1 verts");
+		bu_free(strip2Verts, "strip 2 verts");
+		return -1; /* FAIL */
+	    }
+	}
+
+	verts[0] = &strip1Verts[y];
+	verts[1] = &base_verts[base_vert_no1-1];
+	verts[2] = &strip1Verts[y+1];
+	if(CHECK_VERTS( verts )) {
+	    fu = nmg_cmface(s, verts, 3);
+	    if (nmg_fu_planeeqn(fu, tol) < 0) {
+		bu_log( "Failed to make second face at x=xlim, y=%d\n", y );
+		bu_free(base_verts, "base verts");
+		bu_free(strip1Verts, "strip 1 verts");
+		bu_free(strip2Verts, "strip 2 verts");
+		return -1; /* FAIL */
+	    }
+	}
+    }
+
+
+    bu_free(base_verts, "base verts");
+    bu_free(strip1Verts, "strip 1 verts");
+    bu_free(strip2Verts, "strip 2 verts");
+
+    if(has_holes) {
+	/* do a bunch of joining and splitting of touching loops
+	 * to get the base face in a state that the triangulator
+	 * can handle
+	 */
+	struct loopuse *lu;
+	for ( BU_LIST_FOR( lu, loopuse, &base_fu->lu_hd ) )  {
+	    nmg_join_touchingloops( lu );
+	}
+	for ( BU_LIST_FOR( lu, loopuse, &base_fu->lu_hd ) )  {
+	    if ( lu->orientation != OT_UNSPEC )  continue;
+	    nmg_lu_reorient( lu );
+	}
+	nmg_kill_cracks(s);
+	for ( BU_LIST_FOR( lu, loopuse, &base_fu->lu_hd ) )  {
+	    nmg_split_touchingloops( lu, tol );
+	}
+	for ( BU_LIST_FOR( lu, loopuse, &base_fu->lu_hd ) )  {
+	    if ( lu->orientation != OT_UNSPEC )  continue;
+	    nmg_lu_reorient( lu );
+	}
+	nmg_kill_cracks(s);
+	for ( BU_LIST_FOR( lu, loopuse, &base_fu->lu_hd ) )  {
+	    nmg_join_touchingloops( lu );
+	}
+	for ( BU_LIST_FOR( lu, loopuse, &base_fu->lu_hd ) )  {
+	    if ( lu->orientation != OT_UNSPEC )  continue;
+	    nmg_lu_reorient( lu );
+	}
+	nmg_kill_cracks(s);
+    }
+
+    return(0);
 }
 
 
@@ -4052,7 +4624,7 @@ hook_verify(const struct bu_structparse	*ip,
 
 const struct bu_structparse fake_dsp_printab[] = {
     {"%c",  1, "src", DSP_O(dsp_datasrc), hook_verify },
-    {"%S",  1, "name", DSP_O(dsp_name), BU_STRUCTPARSE_FUNC_NULL },
+    {"%V",  1, "name", DSP_O(dsp_name), BU_STRUCTPARSE_FUNC_NULL },
     {"%d",  1, "w",  DSP_O(dsp_xcnt),	 hook_verify },
     {"%d",  1, "n",  DSP_O(dsp_ycnt),	 hook_verify },
     {"%i",  1, "sm", DSP_O(dsp_smooth), BU_STRUCTPARSE_FUNC_NULL },
@@ -4063,9 +4635,9 @@ const struct bu_structparse fake_dsp_printab[] = {
 
 
 /**
- *			R T _ P A R S E T A B _ T C L G E T
+ *			R T _ D S P _ G E T
  *
- *  This is the generic routine to be listed in rt_functab[].ft_tclget
+ *  This is the generic routine to be listed in rt_functab[].ft_get
  *  for those solid types which are fully described by their ft_parsetab
  *  entry.
  *
@@ -4073,14 +4645,10 @@ const struct bu_structparse fake_dsp_printab[] = {
  *  Example:  "db get ell.s B" to get only the B vector.
  */
 int
-rt_dsp_tclget(Tcl_Interp *interp, const struct rt_db_internal *intern, const char *attr)
+rt_dsp_get(struct bu_vls *log, const struct rt_db_internal *intern, const char *attr)
 {
     register const struct bu_structparse	*sp = NULL;
     const struct rt_dsp_internal *dsp_ip;
-    int                     status;
-    Tcl_DString             ds;
-    struct bu_vls           str;
-
 
     /* XXX if dsp_datasrc == RT_DSP_SRC_V4_FILE we have a V4 dsp
      * otherwise, a V5 dsp.  Take advantage of this.
@@ -4089,14 +4657,10 @@ rt_dsp_tclget(Tcl_Interp *interp, const struct rt_db_internal *intern, const cha
     RT_CK_DB_INTERNAL( intern );
     dsp_ip = (struct rt_dsp_internal *)intern->idb_ptr;
 
-    bu_vls_init( &str );
-    Tcl_DStringInit( &ds );
-
-    if ( attr == (char *)0 ) {
+    if (attr == (char *)0) {
 	/* Print out solid type and all attributes */
 
-	Tcl_DStringAppendElement( &ds, "dsp" );
-
+	bu_vls_printf(log, "dsp");
 
 	switch (dsp_ip->dsp_datasrc) {
 	    case RT_DSP_SRC_V4_FILE:
@@ -4108,15 +4672,13 @@ rt_dsp_tclget(Tcl_Interp *interp, const struct rt_db_internal *intern, const cha
 		break;
 	}
 
-	while ( sp && sp->sp_name != NULL ) {
-	    Tcl_DStringAppendElement( &ds, sp->sp_name );
-	    bu_vls_trunc( &str, 0 );
-	    bu_vls_struct_item(&str, sp, (char *)dsp_ip, ' ');
-	    Tcl_DStringAppendElement( &ds, bu_vls_addr(&str) );
+	while (sp && sp->sp_name != NULL) {
+	    bu_vls_printf(log, " %s ", sp->sp_name);
+	    bu_vls_struct_item(log, sp, (char *)dsp_ip, ' ');
 	    ++sp;
 	}
-	status = TCL_OK;
 
+	return BRLCAD_OK;
     } else {
 	switch (dsp_ip->dsp_datasrc) {
 	    case RT_DSP_SRC_V4_FILE:
@@ -4127,37 +4689,31 @@ rt_dsp_tclget(Tcl_Interp *interp, const struct rt_db_internal *intern, const cha
 		break;
 	}
 
-	if ( bu_vls_struct_item_named( &str, sp, attr,
-				       (char *)dsp_ip, ' ') < 0 ) {
-	    bu_vls_printf(&str,
+	if (bu_vls_struct_item_named(log, sp, attr,
+				     (char *)dsp_ip, ' ') < 0) {
+	    bu_vls_printf(log,
 			  "Objects of type %s do not have a %s attribute.",
 			  "dsp", attr);
-	    status = TCL_ERROR;
+	    return BRLCAD_ERROR;
 	} else {
-	    status = TCL_OK;
+	    return BRLCAD_OK;
 	}
-	Tcl_DStringAppendElement( &ds, bu_vls_addr(&str) );
     }
 
-    Tcl_DStringResult( interp, &ds );
-    Tcl_DStringFree( &ds );
-    bu_vls_free( &str );
-
-    return status;
+    return BRLCAD_OK;
 }
 
 /**
  *			R T _ P A R S E T A B _ T C L A D J U S T
  *
  *  For those solids entirely defined by their parsetab.
- *  Invoked via rt_functab[].ft_tcladjust()
+ *  Invoked via rt_functab[].ft_adjust()
  */
 int
-rt_dsp_tcladjust(Tcl_Interp *interp, struct rt_db_internal *intern, int argc, char **argv)
+rt_dsp_adjust(struct bu_vls *log, struct rt_db_internal *intern, int argc, char **argv)
 {
     register const struct bu_structparse	*sp = NULL;
     const struct rt_dsp_internal *dsp_ip;
-
 
     RT_CK_DB_INTERNAL(intern);
     dsp_ip = (struct rt_dsp_internal *)intern->idb_ptr;
@@ -4173,10 +4729,10 @@ rt_dsp_tcladjust(Tcl_Interp *interp, struct rt_db_internal *intern, int argc, ch
 	    break;
     }
 
-    if (! sp) return TCL_ERROR;
+    if (! sp) return BRLCAD_ERROR;
 
-    return bu_structparse_argv(interp, argc, argv, sp,
-			       (char *)intern->idb_ptr );
+    return bu_structparse_argv(log, argc, argv, sp,
+			       (char *)intern->idb_ptr);
 }
 
 void
@@ -4201,6 +4757,16 @@ rt_dsp_make(const struct rt_functab *ftp, struct rt_db_internal *intern, double 
     MAT_IDN( dsp->dsp_stom );
     dsp->dsp_datasrc = RT_DSP_SRC_FILE;
 
+}
+
+/**
+ * R T _ D S P _ P A R A M S
+ *
+ */
+int
+rt_dsp_params(struct pc_pc_set * ps, const struct rt_db_internal *ip)
+{
+    return(0);			/* OK */
 }
 
 /**	S W A P _ C E L L _ P T S

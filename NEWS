@@ -11,7 +11,68 @@ changes made.  See document footer for additional details.
 
 
 ----------------------------------------------------------------------
---- 2008-06-XX  Release 7.12.6                                     ---
+--- 2008-09-XX  Release 7.13.0                                     ---
+----------------------------------------------------------------------
+
+Of the many enhancements included in this release, MGED gets a
+powerful new command called 'search' that is very similar to the UNIX
+'find' command but for geometry hierarchies.  Included in the
+implementation of 'search' is the ability to list geometry that
+matches a specified name using globbing patterns or regular
+expressions.  You can also search for objects that have attributes
+set, that are referenced in combinations, are at a particular depth in
+the geometry hierarchy, and much more.  You can combine search
+expressions together using boolean logic as well for even more
+powerful operations.
+
+* add nnodes option to search, remove empty opt. - Cliff Yapp
+* upgraded libpng to 1.2.32 - Erik Greenwald
+* fixed memory leak with in-memory geometry databases - Daniel Roßberg
+* mged help menu is restructured for improved usability - Cliff Yapp
+* update openNURBS to version 4.0.2007.0718 - Cliff Yapp
+* handle (i.e., ignore) comments in asc2g conversions - Erik Greenwald
+* fix crash in iges-g when run with -n option - John Anderson
+* enhanced documentation management system within mged - Cliff Yapp
+* conversion of documentation to Docbook format, editing, and review
+	- Cliff Yapp, Janine Gettier
+* improved benchmark suite usage and instructions - Sean Morrison
+* improved mesh normals from Pro/E exporter - Bob Parker
+* fixed 'bspline' surface primitive wireframe plot bug - John Anderson
+* removed bot-raw, functionality replaced by bot_dump - Sean Morrison
+* abort during non-planar collapse or simplify of NMG  - John Anderson
+* jove is deprecated and will no longer be maintained - Sean Morrison
+* plugged attribute memory leak in all database tools - Daniel Roßberg
+* DSP tessellation honors cut type and handles zeros - John Anderson
+* fixed 'gets' command input bug in mged - Sean Morrison, Bob Parker
+* improved fast4-g DOS file line-ending support - Sean Morrison
+* numerous documentation fixes to manual pages - Cliff Yapp
+* bot_dump exporter for extracting BoT meshes unevaluated - Bob Parker
+* fixed bug parsing long command lines in mged - Sean Morrison
+* tessellation support for the DSP primitive - John Anderson
+* additional logging options in Pro/E exporter - Bob Parker
+* Pro/E exporter enhancements for dynamic tess tolerance - Bob Parker
+* new search command enabling Unix find style searches - C. Yapp
+* mged no longer requires PATH for internal commands - Sean Morrison
+* mged 'edcolor' command turns into 'color -e' - Sean Morrison
+* nirt dest command now avoids overwriting existing files - Cliff Yapp
+* fixed mged_players error on tra in classic mode mged  - Bob Parker
+* fix attr behavior when setting the region attribute - C. Yapp
+* identified fix for "Illegal instruction" bug in rt - Simon Clubley
+* mged get_regions and reid ignore duplicate regions - Sean Morrison
+* added procedural geometry tools to the Windows port
+	- Bob Parker, Andre Castelo
+* integrated tgf-g with the default compile/install - Daniel Roßberg
+* deprecated the mged '-n' option, use '-c' instead - Sean Morrison
+* added the ability to invoke mged through icons/menus - Sean Morrison
+* new -a option to mged 'killtree' for killing references - Bob Parker
+* added new 'killrefs' command to mged - Bob Parker
+* added -C color option to the mged 'E' command - Bob Parker
+* fixed curvature calc bug in ehy primitive - Timothy Van Ruitenbeek
+* added compilation support for MSVC 9 - André Castelo
+
+
+----------------------------------------------------------------------
+--- 2008-08-19  Release 7.12.6                                     ---
 ----------------------------------------------------------------------
 
 This release enhances the formatting options available "out of the
@@ -36,7 +97,7 @@ allocations, are now fixed.  The extrude primitive's handling of
 invalid geometry is now more robust.
 
 * renamed mged binary command to bo for binary objects - Sean Morrison
-* fixed error in parsing remotefb location specification - S. Morrison
+* fixed bug that caused remote framebuffers to fail - Sean Morrison
 * add w option to tire to allow disabling wheel generation - C. Yapp
 * tweak tread 2 in tire tool; avoid artifacts on tread wall - C. Yapp
 * fixed mged 'dbconcat' hang when not specifying an affix - Bob Parker
@@ -45,12 +106,14 @@ invalid geometry is now more robust.
 * increased raytrace performace of pipe primitive - John Anderson
 * fixed bugs handling invalid extrude objects - Sean Morrison
 * fixed dependency bug in library pkg-config files - Sean Morrison
-* platform installers use consistent naming conventions- Sean Morrison
+* platform installers now use a more consistent naming convention
+	- Sean Morrison, Bob Parker
 * added new -c character option to the loop command - Dawn Thomas
 * tire now checks for files instead of overwriting - Cliff Yapp
 * add new nirt formatting options, -L listing option - C. Yapp
 * fixed nirt's dest cmd's handling of file name string - Cliff Yapp
 * modified mged nirt command to include air in results - Bob Parker
+
 
 ----------------------------------------------------------------------
 --- 2008-05-29  Release 7.12.4                                     ---

@@ -17,20 +17,21 @@ http://sf.net/pm/?group_id=105292
 THESE SHOULD HAPPEN BEFORE THE NEXT RELEASE
 -------------------------------------------
 
-* fix primitive selection gui in mged (see BUGS)
-
-* stabilize and test mged
-  (massive command restructuring in progress with libged)
-
-* change rtarea output to have new cpa values in their own section
-
-* refactor all of the nmg processing (back) into its own library so
-  that external users can manage mesh geometry without needing to pull
-  in everything else in librt
+* test and ship it!
 
 
 THESE SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 -------------------------------------------------
+
+* make Mac OS X universal binaries actually work.
+
+* make color and vectors on pnts work
+
+* optimize bitv counting
+
+* implement make, ted, edsol, mirror, and analyze for hyp primitive
+
+* implement make, ted, edsol, mirror, and analyze for revolve primitive
 
 * fix incrTcl pathing issues when only using system tcl/tk
   (get incrTcl subconfigure to work like was done for Tcl)
@@ -40,35 +41,70 @@ THESE SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
   context.  presumably that is triggering other code that is failing
   to redraw.
 
-* verify/finish clone mirror support
+* convert the documentation to docbook
 
-* address the TODO items in src/mged/clone.c
 
-* (re)verify rtarea results, fix naming convention
+THESE ARE LOWER PRIORITY OR FOR FUTURE RELEASES
+-----------------------------------------------
+
+* (re)verify rtarea CPA results (see diff history for patch, fix
+  naming convention for presented/exposed area
 
 * ADRT: remove MySQL code, fix ISST callbacks, re-enable RISE, cleanup
-
-* fix metaball "shelling" issue
-
-* extend metaball control info beyond simple points
 
 * test homovulgaris' root solver patch that puts coefficients in the
   right order
 
 * review librt polynomial root solver (cubic and quadratic case)
 
-* integrate July 2007 openNURBS updates
+* give bot-bldxf the axe (reconcile and merge with bot_dump)
 
+* refactor all of the nmg processing (back) into its own library so
+  that external users can manage mesh geometry without needing to pull
+  in everything else in librt
 
-THESE ARE LOWER PRIORITY OR FOR FUTURE RELEASES
------------------------------------------------
+* implement support for exporting sketch objects via g-iges
+
+* implement mged object name globbing similar to tclsh's globbing
+  (i.e. via a globbing command and quoting globs that use []).  testing
+  shows db_glob doesn't seem to behave correctly, at least not like
+  glob.  hook globbing into all commands so glob_compat_mode
+  statefulness can go away.
+
+* Explore possibility of "level of detail" wireframe renderings,
+  possibly using the previous "smooth" wireframe work as a start,
+  to provide better visualization of models.
+
+* come up with a new tool that automatically generates "inside"
+  regions for a given model as a way to automatically model air.
+  particularly useful for bot models where the inside air compartment
+  is predominantly (but not entirely) a complex bot structure in
+  itself.  idea is to use some sort of marching cubes/tets to find
+  those volumes, perhaps use a libified g_qa.
+
+* include tcl and zlib headers in the Windows install
+
+* make including the main headers work for 3rd party apps including
+  for C++ projects, working out of the box
+
+* fix metaball "shelling" but that causes the primitive to invert and
+  just give paper thin surface (something wrong in the intersection).
+
+* extend metaball control info beyond simple points (e.g., line
+  segments)
+
+* address the TODO items in src/mged/clone.c
+
+* investigate why solids.sh fails on three pixels on some 64-bit
+  platforms. it grazingly hits/misses a tgc causing a regression
+  failure.
 
 * develop a low-level tool for investigating, reporting statistics on,
   and repairing geometry database files.  the tool should nominally
   perform big/little endian conversions, report number and types of
   objects, allow deletion/undeletion/hiding/unhiding, provide some
   general means to manipulate the packed and unpacked .g file data for
-  performing low-level modifications.
+  performing low-level modifications
 
 * fix the "(type)(size_t)val" hacks (using ints like ptrs, etc)
 
@@ -81,16 +117,12 @@ THESE ARE LOWER PRIORITY OR FOR FUTURE RELEASES
 * make closing both the command window and graphics window shut down
   mged (i.e., fix unintentional behavior)
 
-* convert the documentation to docbook
-
-* autogenerate docbook documentation in the build system
-
 * remove hit_normal and hit_point from struct hit.  add RT_HIT_POINT
   macro.  refactor all callers as needed.
 
-* implement graphical crash reporter tool (bombardier)
+* make bombardier actually send the report somewhere
 
-* test mged text flood hang (e.g. large rtarea report) on slow machine
+* hook bombardier in for crash reporting
 
 * windows smp support
 
@@ -104,13 +136,12 @@ THESE ARE LOWER PRIORITY OR FOR FUTURE RELEASES
 
 * remote framebuffer timeout support (perhaps as ::key=val;key=val)
 
-* make byteoffset and run-time byteorder detections necessary in order
-  for Mac OS X universal binaries to actually work.
-
 * review and integrate David Loman's bot-processing and object label
   scripts, add libdm interface for textual overlay support
 
-* eliminate vararg.h and non-ansi cray-specific support code
+* develop a tool that applies a text overlay to a given rendered image
+  (e.g., as an rt option) for things like adding an image title, the
+  az/el, and objects displayed.
 
 * implement a lighting model for rt that visualizes how expensive each
   individual pixel is to compute with an intensity (heat graph)
@@ -166,14 +197,10 @@ THESE ARE LOWER PRIORITY OR FOR FUTURE RELEASES
   information, possibly including checking for consistency, to
   facilitate release process.
 
-* add the automated rtarea spreadsheet-producing script to repository
-
 * display the current mode in mged graphics window
 
 * Optional compile-time support for using GMP or CLN for arbitrary
   exact precision arithmetic computation support
-
-* c++ geometry engine/api using librt/libbn/libbu
 
 * inside/outside point and voxel testing capability in librt
 
@@ -185,7 +212,7 @@ THESE ARE LOWER PRIORITY OR FOR FUTURE RELEASES
   computing surface area and weight/mass.
 
 * add verification and validation tests confirming behavior of the
-  ray-tracer and computations of area, mass, volume, etc.
+  ray-tracer and computations of area, mass, volume, etc
 
 * testing suite for all binaries: for cmd2 in $(for cmd in `find . -name Makefile.am | xargs cat | perl -pi -e 's/\\\\\n//g'| grep -E "PROGRAMS ?=" | sed 's/.*=//g'` ; do echo $cmd ; done | sort | uniq ) ; do echo command: $cmd2 ; done
 
@@ -213,9 +240,6 @@ THESE ARE LOWER PRIORITY OR FOR FUTURE RELEASES
   of memory requirements for a geometry database can be computed on
   the fly via a pre-prep phase.
 
-* short introductory documentation on using mged, covering a majority
-  of the various commands.
-
 * support to the raytracers for multiple image file formats,
   recognizing an option and/or the file suffix of the -o filename.
 
@@ -228,8 +252,6 @@ THESE ARE LOWER PRIORITY OR FOR FUTURE RELEASES
   separate out into new file.
 
 * geometry viewing commands/visualizations of exploded levels
-
-* add command line help options to 'benchmark' tool
 
 * librt-based path tracer
 
@@ -260,9 +282,6 @@ THESE ARE LOWER PRIORITY OR FOR FUTURE RELEASES
 * investigate why g-iges followed by iges-g on a single box results in
   permuted vertex lists
 
-* fix reference to a "Create Solid" submenu on pdf page 18 (page 6) of
-  volume II
-
 * obliterate verbose compilation warnings
 
 * add support for subgeometry support to the geometry syndicator
@@ -271,12 +290,41 @@ THESE ARE LOWER PRIORITY OR FOR FUTURE RELEASES
 
 * add support for filesystem-based geometry collections
 
-* add support for levels of detail
-
 * modify the raytracers to use common fb and file output code
 
 * add missing manual pages (jra generated list on 04.2007):
-	a-d archer asc2g asc2pix binfo bot-bldxf bot-raw bottest brep_cube brep_simple brickwall btclsh burst bw-a bw-d bwish c-d chan_add clutter contours d-a damdf dauto dauto2 d-bw dconv ddisp d-f dfft d-i dmod double-asc dpeak dsel dsp_add dstat d-u dwin euclid_format euclid_unformat fbgammamod f-d fence fhor f-i files-tape g-adrt g-euclid1 g-jack globe g-off i-a i-d i-f ihist imod ipuscan ipustat istat jack-g kurt lowp molecule msrandom mst nmgmodel nmg-sgp off-g pipe pipetest pix2g pix3filter pixcount pixelswap pixembed pixfields pixfieldsep pixflip-fb pix-ipu pixpaste pix-ppm pix-spm pix-yuv plstat png-ipu pyramid rawbot remapid rlesortmap rletovcr room rtcell rtfrac rtrad rtsil rt_simple rtsrv rtwizard script-tab sgi-pix sketch solshoot sphflake spltest spm-fb ssampview syn tea tea_nmg testfree texturescale torii ttcp tube txyz-pl u-a u-bw u-d u-f umod ustat vcrtorle vegitation wall wdb_example xbmtorle xyz-pl yuv-pix
+	a-d archer asc2g asc2pix binfo bot-bldxf bottest brep_cube brep_simple brickwall btclsh burst bw-a bw-d bwish c-d chan_add clutter contours d-a damdf dauto dauto2 d-bw dconv ddisp d-f dfft d-i dmod double-asc dpeak dsel dsp_add dstat d-u dwin euclid_format euclid_unformat fbgammamod f-d fence fhor f-i files-tape g-adrt g-euclid1 g-jack globe g-off i-a i-d i-f ihist imod ipuscan ipustat istat jack-g kurt lowp molecule msrandom mst nmgmodel nmg-sgp off-g pipe pipetest pix2g pix3filter pixcount pixelswap pixembed pixfields pixfieldsep pixflip-fb pix-ipu pixpaste pix-ppm pix-spm pix-yuv plstat png-ipu pyramid rawbot remapid rlesortmap rletovcr room rtcell rtexample rtfrac rtrad rtsil rtsrv rtwizard script-tab sgi-pix sketch solshoot sphflake spltest spm-fb ssampview syn tea tea_nmg testfree texturescale torii ttcp tube txyz-pl u-a u-bw u-d u-f umod ustat vcrtorle vegitation wall wdb_example xbmtorle xyz-pl yuv-pix
+
+* design plugin system to allow domain specific tools (say, for example,
+  a tool to create propeller parts) to identify themselves and their
+  features to BRL-CAD, and to allow BRL-CAD to incorporate those features
+  as an integrated part of interaction environments.  
+
+
+LIBPC
+-----
+
+* BNF Parser for generation of constraint objects from expressions
+
+* Make better pc_pc_set, pc_param and pc_constraint structures
+instead of the current ugly ones.
+
+* Test constraint solution via Read->Generate->Solve->Update routine 
+
+* Implement Non-deterministic solution techniques:  Backjumping,
+Backmarking
+
+* Implement Deterministic propagators: NC, AC1-7, PC1-5
+
+* Check STL structures in public API ; wrapping with bu_list
+
+* Boost constrained_value based functor integration for 'compiled' 
+constraints
+
+* Implement Hypergraph representation system
+
+* Explore analytic and symbolic solution system
+
 
 ODDITIES
 --------
@@ -300,9 +348,27 @@ THESE BREAK PROTOCOL OR ARE BACKWARDS-INCOMPATIBLE
   values, construction history, and timestamping.
 
 * see doc/deprecation.txt for items that have been marked as
-  deprecated or are available for deprecation.
+  deprecated or available to be removed as obsolete items.
 
 * make struct rt_functab's ft_label bigger and/or dynamic (e.g. vls)
+
+
+FUNCTIONALITY NEEDED TO SPEED UP RAYTRACING
+-------------------------------------------
+
+* merge shot and vshot
+
+* implement bundles shot - array of rays
+
+* separate ray structs - make fit in cache line
+
+* refactor primitive data -  make fit in cache line
+
+* implement SIMD shots
+
+* implement SAH for all primitives
+
+* write and use kdtree - make traversal cache coherent
 
 
 DOCUMENTATION

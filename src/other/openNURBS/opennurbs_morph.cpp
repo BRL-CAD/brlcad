@@ -2,13 +2,13 @@
 /* $NoKeywords: $ */
 /*
 //
-// Copyright (c) 1993-2002 Robert McNeel & Associates. All rights reserved.
+// Copyright (c) 1993-2007 Robert McNeel & Associates. All rights reserved.
 // Rhinoceros is a registered trademark of Robert McNeel & Assoicates.
 //
 // THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY.
 // ALL IMPLIED WARRANTIES OF FITNESS FOR ANY PARTICULAR PURPOSE AND OF
 // MERCHANTABILITY ARE HEREBY DISCLAIMED.
-//
+//				
 // For complete openNURBS copyright information see <http://www.opennurbs.org>.
 //
 ////////////////////////////////////////////////////////////////
@@ -110,7 +110,7 @@ bool ON_Localizer::Write(ON_BinaryArchive& archive) const
 
     break;
   }
-
+  
   if ( !archive.EndWrite3dmChunk() )
     rc = false;
 
@@ -185,7 +185,7 @@ bool ON_Localizer::Read(ON_BinaryArchive& archive)
 
     break;
   }
-
+  
   if ( !archive.EndRead3dmChunk() )
     rc = false;
 
@@ -196,11 +196,11 @@ bool ON_Localizer::Read(ON_BinaryArchive& archive)
 bool ON_Localizer::CreateCylinderLocalizer( ON_3dPoint P, ON_3dVector V, double r0, double r1 )
 {
   Destroy();
-  if (    P.IsValid()
-       && V.IsValid()
-       && V.Length() > 0.0
-       && ON_IsValid(r0)
-       && ON_IsValid(r1)
+  if (    P.IsValid() 
+       && V.IsValid() 
+       && V.Length() > 0.0 
+       && ON_IsValid(r0) 
+       && ON_IsValid(r1) 
        && r0 > 0.0
        && r1 > 0.0
        && r0 != r1 )
@@ -333,26 +333,26 @@ bool ON_Localizer::IsZero( const ON_BoundingBox& bbox ) const
       t0 = t1 = (corners[0]-m_P)*m_V;
       for ( i = 1; i < 8; i++ )
       {
-        d = (corners[i]-m_P)*m_V;
-        if ( d < t0 )
-          t0 = d;
-        else if (d > t1 )
-          t1 = d;
+	d = (corners[i]-m_P)*m_V;
+	if ( d < t0 )
+	  t0 = d;
+	else if (d > t1 )
+	  t1 = d;
       }
       ON_Line L(m_P+t0*m_V,m_P+t1*m_V);
       if ( m_d[0] > m_d[1] )
       {
-        // function is supported along the line
-        d = bbox.MinimumDistanceTo(L);
-        if ( d >= m_d[0] )
-          rc = true;
+	// function is supported along the line
+	d = bbox.MinimumDistanceTo(L);
+	if ( d >= m_d[0] )
+	  rc = true;
       }
       else
       {
-        // function is supported outside cylinder
-        d = bbox.MaximumDistanceTo(L);
-        if ( d <= m_d[0] )
-          rc = true;
+	// function is supported outside cylinder
+	d = bbox.MaximumDistanceTo(L);
+	if ( d <= m_d[0] )
+	  rc = true;
       }
     }
     break;
@@ -364,10 +364,10 @@ bool ON_Localizer::IsZero( const ON_BoundingBox& bbox ) const
       e.d -= m_d[0];
       if ( m_d[0] > m_d[1] )
       {
-        e.x = -e.x; e.y = -e.y; e.z = -e.z; e.d = -e.d;
+	e.x = -e.x; e.y = -e.y; e.z = -e.z; e.d = -e.d;
       }
       if ( e.MaximumValueAt(bbox) <= 0.0 )
-        rc = true;
+	rc = true;
     }
     break;
 
@@ -408,7 +408,7 @@ bool ON_Localizer::IsZero( const ON_BoundingBox& bbox ) const
       // function is zero outside loc_bbox + m_d[0]
       double d = loc_bbox.MinimumDistanceTo(bbox);
       if ( d > m_d[0] )
-        rc = true;
+	rc = true;
     }
     else if ( m_d[0] > 0.0 )
     {
@@ -420,7 +420,7 @@ bool ON_Localizer::IsZero( const ON_BoundingBox& bbox ) const
       loc_bbox.m_max.y -= m_d[0];
       loc_bbox.m_max.z -= m_d[0];
       if ( loc_bbox.IsValid() && loc_bbox.Includes(bbox) )
-        rc = true;
+	rc = true;
     }
   }
   return rc;
@@ -437,17 +437,17 @@ ON_SpaceMorph::~ON_SpaceMorph()
 {
 }
 
-ON_3dVector ON_SpaceMorph::MorphVector(
-          ON_3dPoint tail_point,
-          ON_3dVector vector
-          ) const
+ON_3dVector ON_SpaceMorph::MorphVector( 
+	  ON_3dPoint tail_point, 
+	  ON_3dVector vector 
+	  ) const
 {
   return (MorphPoint(tail_point+vector) - MorphPoint(tail_point));
 }
 
-ON_4dPoint ON_SpaceMorph::MorphPoint(
-          ON_4dPoint point
-          ) const
+ON_4dPoint ON_SpaceMorph::MorphPoint( 
+	  ON_4dPoint point
+	  ) const
 {
   ON_4dPoint q = MorphPoint(ON_3dPoint(point));
   q.w = point.w;
@@ -458,12 +458,12 @@ ON_4dPoint ON_SpaceMorph::MorphPoint(
 }
 
 bool ON_SpaceMorph::Ev1Der(
-          ON_3dPoint rst,
-          ON_3dPoint& xyz,
-          ON_3dVector& Dr,
-          ON_3dVector& Ds,
-          ON_3dVector& Dt
-          ) const
+	  ON_3dPoint rst,
+	  ON_3dPoint& xyz,
+	  ON_3dVector& Dr,
+	  ON_3dVector& Ds,
+	  ON_3dVector& Dt
+	  ) const
 {
   // This is a quick estimate of the derivative.
   // Space morphs that are used to deform smooth breps
@@ -488,9 +488,9 @@ double ON_SpaceMorph::Tolerance() const
 
 void ON_SpaceMorph::SetTolerance(double tolerance)
 {
-  m_tolerance = (ON_IsValid(tolerance) && tolerance > 0.0 )
-              ? tolerance
-              : 0.0;
+  m_tolerance = (ON_IsValid(tolerance) && tolerance > 0.0 ) 
+	      ? tolerance
+	      : 0.0;
 }
 
 bool ON_SpaceMorph::QuickPreview() const
@@ -519,12 +519,12 @@ void ON_SpaceMorph::SetPreserveStructure( bool bPreserveStructure )
 }
 
 void ON_SpaceMorph::MorphPointList(
-        int dim,
-        int is_rat,
-        int count,
-        int stride,
-        double* point
-        ) const
+	int dim, 
+	int is_rat,
+	int count, 
+	int stride,
+	double* point
+	) const
 {
   if ( dim > 0 && stride >= (dim+(is_rat)?1:0) && count > 0 && point != 0 )
   {
@@ -534,20 +534,20 @@ void ON_SpaceMorph::MorphPointList(
       ON_4dPoint p(0.0,0.0,0.0,1.0), q;
       for ( i = 0; i < count; i++ )
       {
-        p.x = point[0];
-        if ( dim > 1 )
-          p.y = point[1];
-        if ( dim > 2 )
-          p.z = point[2];
-        p.w = point[dim];
-        q = MorphPoint(p);
-        point[0] = q.x;
-        if ( dim > 1 )
-          point[1] = q.y;
-        if ( dim > 2 )
-          point[2] = q.z;
-        point[dim] = q.w;
-        point += stride;
+	p.x = point[0];
+	if ( dim > 1 )
+	  p.y = point[1];
+	if ( dim > 2 )
+	  p.z = point[2];
+	p.w = point[dim];
+	q = MorphPoint(p);
+	point[0] = q.x;
+	if ( dim > 1 )
+	  point[1] = q.y;
+	if ( dim > 2 )
+	  point[2] = q.z;
+	point[dim] = q.w;
+	point += stride;
       }
     }
     else
@@ -555,30 +555,30 @@ void ON_SpaceMorph::MorphPointList(
       ON_3dPoint p(0.0,0.0,0.0), q;
       for ( i = 0; i < count; i++ )
       {
-        p.x = point[0];
-        if ( dim > 1 )
-          p.y = point[1];
-        if ( dim > 2 )
-          p.z = point[2];
-        q = MorphPoint(p);
-        point[0] = q.x;
-        if ( dim > 1 )
-          point[1] = q.y;
-        if ( dim > 2 )
-          point[2] = q.z;
-        point += stride;
+	p.x = point[0];
+	if ( dim > 1 )
+	  p.y = point[1];
+	if ( dim > 2 )
+	  p.z = point[2];
+	q = MorphPoint(p);
+	point[0] = q.x;
+	if ( dim > 1 )
+	  point[1] = q.y;
+	if ( dim > 2 )
+	  point[2] = q.z;
+	point += stride;
       }
     }
   }
 }
 
 void ON_SpaceMorph::MorphPointList(
-        int dim,
-        int is_rat,
-        int count,
-        int stride,
-        float* point
-        ) const
+	int dim, 
+	int is_rat,
+	int count, 
+	int stride,
+	float* point
+	) const
 {
   if ( dim > 0 && stride >= (dim+(is_rat)?1:0) && count > 0 && point != 0 )
   {
@@ -588,20 +588,20 @@ void ON_SpaceMorph::MorphPointList(
       ON_4dPoint p(0.0,0.0,0.0,1.0), q;
       for ( i = 0; i < count; i++ )
       {
-        p.x = point[0];
-        if ( dim > 1 )
-          p.y = point[1];
-        if ( dim > 2 )
-          p.z = point[2];
-        p.w = point[dim];
-        q = MorphPoint(p);
-        point[0] = (float)q.x;
-        if ( dim > 1 )
-          point[1] = (float)q.y;
-        if ( dim > 2 )
-          point[2] = (float)q.z;
-        point[dim] = (float)q.w;
-        point += stride;
+	p.x = point[0];
+	if ( dim > 1 )
+	  p.y = point[1];
+	if ( dim > 2 )
+	  p.z = point[2];
+	p.w = point[dim];
+	q = MorphPoint(p);
+	point[0] = (float)q.x;
+	if ( dim > 1 )
+	  point[1] = (float)q.y;
+	if ( dim > 2 )
+	  point[2] = (float)q.z;
+	point[dim] = (float)q.w;
+	point += stride;
       }
     }
     else
@@ -609,18 +609,18 @@ void ON_SpaceMorph::MorphPointList(
       ON_3dPoint p(0.0,0.0,0.0), q;
       for ( i = 0; i < count; i++ )
       {
-        p.x = point[0];
-        if ( dim > 1 )
-          p.y = point[1];
-        if ( dim > 2 )
-          p.z = point[2];
-        q = MorphPoint(p);
-        point[0] = (float)q.x;
-        if ( dim > 1 )
-          point[1] = (float)q.y;
-        if ( dim > 2 )
-          point[2] = (float)q.z;
-        point += stride;
+	p.x = point[0];
+	if ( dim > 1 )
+	  p.y = point[1];
+	if ( dim > 2 )
+	  p.z = point[2];
+	q = MorphPoint(p);
+	point[0] = (float)q.x;
+	if ( dim > 1 )
+	  point[1] = (float)q.y;
+	if ( dim > 2 )
+	  point[2] = (float)q.z;
+	point += stride;
       }
     }
   }
@@ -649,61 +649,66 @@ bool ON_Mesh::EvaluatePoint( const class ON_ObjRef& objref, ON_3dPoint& P ) cons
   P = ON_UNSET_POINT;
   ON_COMPONENT_INDEX ci = objref.m_component_index;
 
-  switch (ci.m_type) {
-    case ON_COMPONENT_INDEX::mesh_vertex:
-      if (ci.m_index >= 0 && ci.m_index < m_V.Count())
-	P = m_V[ci.m_index];
-      break;
+  switch ( ci.m_type )
+  {
+  case ON_COMPONENT_INDEX::mesh_vertex:
+    if ( ci.m_index >= 0 && ci.m_index < m_V.Count() )
+      P = m_V[ci.m_index];
+    break;
 
-    case ON_COMPONENT_INDEX::meshtop_vertex:
-      if (ci.m_index >= 0 && ci.m_index < m_top.m_topv.Count()) {
+  case ON_COMPONENT_INDEX::meshtop_vertex:
+    if ( ci.m_index >= 0 && ci.m_index < m_top.m_topv.Count() )
+    {
       const ON_MeshTopologyVertex& topv = m_top.m_topv[ci.m_index];
-      if (topv.m_v_count > 0 && topv.m_vi) {
-        int vi = topv.m_vi[0];
-        if ( vi >= 0 && vi < m_V.Count() )
-          P = m_V[vi];
+      if ( topv.m_v_count > 0 && topv.m_vi )
+      {
+	int vi = topv.m_vi[0];
+	if ( vi >= 0 && vi < m_V.Count() )
+	  P = m_V[vi];
       }
+    }
+    break;
+
+  case ON_COMPONENT_INDEX::meshtop_edge:
+    if ( 5 == objref.m_evp.m_t_type 
+	 && fabs(objref.m_evp.m_t[0] + objref.m_evp.m_t[1] - 1.0) <= ON_SQRT_EPSILON )
+    {
+      ON_Line L = m_top.TopEdgeLine(ci.m_index);
+      if ( L.IsValid() )
+      {
+	P = L.PointAt(objref.m_evp.m_t[0]);
       }
-      break;
+    }
+    break;
 
-    case ON_COMPONENT_INDEX::meshtop_edge:
-      if ( 5 == objref.m_evp.m_t_type
-	   && fabs(objref.m_evp.m_t[0] + objref.m_evp.m_t[1] - 1.0) <= ON_SQRT_EPSILON )
-	{
-	  ON_Line L = m_top.TopEdgeLine(ci.m_index);
-	  if (L.IsValid()) {
-	    P = L.PointAt(objref.m_evp.m_t[0]);
-	  }
-	}
-      break;
+  case ON_COMPONENT_INDEX::mesh_face:
+    if ( 4 == objref.m_evp.m_t_type 
+	 && fabs(objref.m_evp.m_t[0] + objref.m_evp.m_t[1] + objref.m_evp.m_t[2] + objref.m_evp.m_t[3] - 1.0) <= ON_SQRT_EPSILON )
+    {
+      if ( ci.m_index >= 0 && ci.m_index < m_F.Count() )
+      {
+	const int* fvi = m_F[ci.m_index].vi;
+	if ( fvi[0] < 0 || fvi[0] >= m_V.Count() )
+	  break;
+	if ( fvi[1] < 0 || fvi[1] >= m_V.Count() )
+	  break;
+	if ( fvi[2] < 0 || fvi[2] >= m_V.Count() )
+	  break;
+	if ( fvi[3] < 0 || fvi[3] >= m_V.Count() )
+	  break;
+	ON_3dPoint V[4];
+	V[0] = m_V[fvi[0]];
+	V[1] = m_V[fvi[1]];
+	V[2] = m_V[fvi[2]];
+	V[3] = m_V[fvi[3]];
+	P = objref.m_evp.m_t[0]*V[0] + objref.m_evp.m_t[1]*V[1] + objref.m_evp.m_t[2]*V[2] + objref.m_evp.m_t[3]*V[3];
+      }
+    }
+    break;
 
-    case ON_COMPONENT_INDEX::mesh_face:
-      if ( 4 == objref.m_evp.m_t_type
-	   && fabs(objref.m_evp.m_t[0] + objref.m_evp.m_t[1] + objref.m_evp.m_t[2] + objref.m_evp.m_t[3] - 1.0) <= ON_SQRT_EPSILON )
-	{
-	  if (ci.m_index >= 0 && ci.m_index < m_F.Count()) {
-	    const int* fvi = m_F[ci.m_index].vi;
-	    if ( fvi[0] < 0 || fvi[0] >= m_V.Count() )
-	      break;
-	    if ( fvi[1] < 0 || fvi[1] >= m_V.Count() )
-	      break;
-	    if ( fvi[2] < 0 || fvi[2] >= m_V.Count() )
-	      break;
-	    if ( fvi[3] < 0 || fvi[3] >= m_V.Count() )
-	      break;
-	    ON_3dPoint V[4];
-	    V[0] = m_V[fvi[0]];
-	    V[1] = m_V[fvi[1]];
-	    V[2] = m_V[fvi[2]];
-	    V[3] = m_V[fvi[3]];
-	    P = objref.m_evp.m_t[0]*V[0] + objref.m_evp.m_t[1]*V[1] + objref.m_evp.m_t[2]*V[2] + objref.m_evp.m_t[3]*V[3];
-	  }
-	}
-      break;
-
-    default:
-      /* unsupported */
-      break;
+  default:
+    // intentionally skipping other ON_COMPONENT_INDEX::TYPE enum values
+    break;
   }
 
   return P.IsValid();
@@ -769,7 +774,7 @@ bool ON_Mesh::Morph( const ON_SpaceMorph& morph )
     {
       for ( i = 0; i < count; i++ )
       {
-        m_N[i] = m_V[i] + 0.0009765625*m_N[i];
+	m_N[i] = m_V[i] + 0.0009765625*m_N[i];
       }
       morph.MorphPointList( 3, 0, count, 3, &m_N[0].x );
     }
@@ -780,8 +785,8 @@ bool ON_Mesh::Morph( const ON_SpaceMorph& morph )
     {
       for ( i = 0; i < count; i++ )
       {
-        m_N[i] -= m_V[i];
-        m_N[i].Unitize();
+	m_N[i] -= m_V[i];
+	m_N[i].Unitize();
       }
     }
 
@@ -839,9 +844,9 @@ bool ON_NurbsSurface::Morph( const ON_SpaceMorph& morph )
 
   for ( i = 0; i < m_cv_count[0]; i++ )
   {
-    morph.MorphPointList( m_dim, m_is_rat,
-                          m_cv_count[1], m_cv_stride[1],
-                          CV(i,0) );
+    morph.MorphPointList( m_dim, m_is_rat, 
+			  m_cv_count[1], m_cv_stride[1], 
+			  CV(i,0) );
   }
 
   for ( i = 0; i < 4; i++ )
@@ -877,9 +882,9 @@ bool ON_BezierSurface::Morph( const ON_SpaceMorph& morph )
   int i;
   for ( i = 0; i < m_order[0]; i++ )
   {
-    morph.MorphPointList( m_dim, m_is_rat,
-                          m_order[1], m_cv_stride[1],
-                          CV(i,0) );
+    morph.MorphPointList( m_dim, m_is_rat, 
+			  m_order[1], m_cv_stride[1], 
+			  CV(i,0) );
   }
   return true;
 }
@@ -890,7 +895,7 @@ bool ON_Brep::Morph( const ON_SpaceMorph& morph )
   if ( rc )
   {
     ON_Surface* srf = const_cast<ON_Surface*>(m_F[0].SurfaceOf());
-
+    
     if ( srf->IsMorphable() )
     {
       rc = srf->Morph(morph);
@@ -899,34 +904,34 @@ bool ON_Brep::Morph( const ON_SpaceMorph& morph )
     {
       ON_NurbsSurface* new_srf = srf->NurbsSurface();
       if ( !new_srf )
-        return false;
+	return false;
       rc = new_srf->Morph(morph);
       if (rc)
       {
-        int si = m_F[0].m_si;
-        m_F[0].SetProxySurface(new_srf);
-        delete srf;
-        srf = new_srf;
-        m_S[si] = srf;
-        DestroyMesh(ON::any_mesh,true);
+	int si = m_F[0].m_si;
+	m_F[0].SetProxySurface(new_srf);
+	delete srf;
+	srf = new_srf;
+	m_S[si] = srf;
+	DestroyMesh(ON::any_mesh,true);
       }
       else
       {
-        delete new_srf;
-        new_srf = 0;
+	delete new_srf;
+	new_srf = 0;
       }
     }
-
+    
     if ( rc )
     {
-      double tol = 0.01;
+      double tol = 0.01; 
       rc = RebuildEdges( m_F[0], tol, true, true );
 
       DestroyMesh(ON::analysis_mesh);
       DestroyMesh(ON::preview_mesh);
       ON_Mesh* mesh = const_cast<ON_Mesh*>(m_F[0].Mesh(ON::render_mesh));
       if ( mesh )
-        mesh->EvaluateMeshGeometry( *srf );
+	mesh->EvaluateMeshGeometry( *srf );
     }
   }
   return rc;
@@ -945,21 +950,21 @@ bool ON_PolyCurve::Morph( const ON_SpaceMorph& morph )
     for ( i = 0; i < segment_count && rc; i++ )
     {
       if ( 0 == m_segment[i] )
-        continue;
+	continue;
       this_seg = ON_NurbsCurve::Cast(m_segment[i]);
       if ( 0 == this_seg )
       {
-        this_seg = m_segment[i]->NurbsCurve();
-        if ( 0 != this_seg )
-        {
-          delete m_segment[i];
-          m_segment[i] = this_seg;
-        }
+	this_seg = m_segment[i]->NurbsCurve();
+	if ( 0 != this_seg )
+	{
+	  delete m_segment[i];
+	  m_segment[i] = this_seg;
+	}
       }
       if ( 0 == this_seg )
-        rc = false;
+	rc = false;
       else
-        rc = this_seg->Morph(morph);
+	rc = this_seg->Morph(morph);
     }
   }
   return rc;

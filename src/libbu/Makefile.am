@@ -27,6 +27,7 @@ libbu_nil_la_SOURCES = \
 	endian.c \
 	fchmod.c \
 	fgets.c \
+	fnmatch.c \
 	fopen_uniq.c \
 	getopt.c \
 	globals.c \
@@ -125,5 +126,7 @@ include $(top_srcdir)/misc/Makefile.defs
 FAST_OBJECTS = \
 	$(libbu_nil_la_OBJECTS) \
 	$(libbu_la_OBJECTS) \
+	$(lib_LTLIBRARIES) \
+	$(noinst_LTLIBRARIES) \
 	$(htester_OBJECTS) \
 	$(noinst_PROGRAMS)

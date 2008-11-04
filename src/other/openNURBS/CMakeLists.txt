@@ -12,6 +12,7 @@ set(OPENNURBS_SOURCES
     opennurbs_bezier.cpp
     opennurbs_beziervolume.cpp
     opennurbs_bitmap.cpp
+    opennurbs_box.cpp
     opennurbs_bounding_box.cpp
     opennurbs_brep.cpp
     opennurbs_brep_changesrf.cpp

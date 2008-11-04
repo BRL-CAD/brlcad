@@ -7,7 +7,7 @@
 // THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY.
 // ALL IMPLIED WARRANTIES OF FITNESS FOR ANY PARTICULAR PURPOSE AND OF
 // MERCHANTABILITY ARE HEREBY DISCLAIMED.
-//
+//				
 ////////////////////////////////////////////////////////////////
 
 #include "../opennurbs.h"
@@ -20,13 +20,13 @@
 //
 // 2) How to write an OpenNURBS B-rep.  See MakeTwistedCube() for details.
 
-void TraverseBrepFace(
+void TraverseBrepFace( 
        const ON_Brep& brep,
        int fi,                  // brep face index
        ON_TextLog& error_log
        )
 {
-  if ( fi < 0 || fi >= brep.m_F.Count() )
+  if ( fi < 0 || fi >= brep.m_F.Count() ) 
   {
     error_log.Print("Invalid face index\n");
     return;
@@ -48,14 +48,14 @@ void TraverseBrepFace(
   //
   // All the 2d trimming curves are oriented so that the
   // active region of the trimmed surface lies to the left
-  // of the 2d trimming curve.
+  // of the 2d trimming curve.  
   //
   // If face.m_bRev is TRUE, the orientations of the face in
   // the b-rep is opposited the natural parameteric orientation
   // of the surface.
 
   // loop_count = number of trimming loops on this face (>=1)
-  const int loop_count = face.m_li.Count();
+  const int loop_count = face.m_li.Count(); 
 
   int fli; // face's loop index
   for ( fli = 0; fli < loop_count; fli++ ) {
@@ -77,12 +77,12 @@ void TraverseBrepFace(
       const ON_Curve* p2dCurve = NULL;
       const int c2i = trim.m_c2i; // c2i = brep 2d curve index
       if ( c2i < 0 || c2i >= brep.m_C2.Count() ) {
-        error_log.Print("ERROR: invalid brep.m_T[%d].m_c2i\n", ti );
+	error_log.Print("ERROR: invalid brep.m_T[%d].m_c2i\n", ti );
       }
       else {
-        p2dCurve = brep.m_C2[c2i];
-        if ( !p2dCurve )
-          error_log.Print("ERROR: invalid brep.m_C2[%d] is NULL\n", c2i );
+	p2dCurve = brep.m_C2[c2i];
+	if ( !p2dCurve )
+	  error_log.Print("ERROR: invalid brep.m_C2[%d] is NULL\n", c2i );
       }
 
 
@@ -99,42 +99,42 @@ void TraverseBrepFace(
       //const ON_BrepVertex& v1 = brep.m_V[v1i];
       // The vX.m_ei[] array contains the brep.m_E[] indices of
       // the edges that begin or end at vX.
-
+      
       const int ei = trim.m_ei;
       if ( ei == -1 ) {
-        // This trim lies on a portion of a singular surface side.
-        // The vertex indices are still valid and will be equal.
+	// This trim lies on a portion of a singular surface side.
+	// The vertex indices are still valid and will be equal.
       }
       else {
-        // If trim.m_bRev3d is FALSE, the orientations of the 3d edge
-        // and the 3d curve obtained by composing the surface and 2d
-        // curve agree.
-        //
-        // If trim.m_bRev3d is TRUE, the orientations of the 3d edge
-        // and the 3d curve obtained by composing the surface and 2d
-        // curve are opposite.
-        const ON_BrepEdge& edge = brep.m_E[ei];
-        const int c3i = edge.m_c3i;
-        const ON_Curve* p3dCurve = NULL;
+	// If trim.m_bRev3d is FALSE, the orientations of the 3d edge
+	// and the 3d curve obtained by composing the surface and 2d
+	// curve agree.
+	//
+	// If trim.m_bRev3d is TRUE, the orientations of the 3d edge
+	// and the 3d curve obtained by composing the surface and 2d
+	// curve are opposite.
+	const ON_BrepEdge& edge = brep.m_E[ei];
+	const int c3i = edge.m_c3i;
+	const ON_Curve* p3dCurve = NULL;
 
-        if ( c3i < 0 || c3i >= brep.m_C3.Count() ) {
-          error_log.Print("ERROR: invalid brep.m_E[%d].m_c3i\n", ei );
-        }
-        else {
-          p3dCurve = brep.m_C3[c3i];
-          if ( !p3dCurve )
-            error_log.Print("ERROR: invalid brep.m_C3[%d] is NULL\n", c3i );
-        }
+	if ( c3i < 0 || c3i >= brep.m_C3.Count() ) {
+	  error_log.Print("ERROR: invalid brep.m_E[%d].m_c3i\n", ei );
+	}
+	else {
+	  p3dCurve = brep.m_C3[c3i];
+	  if ( !p3dCurve )
+	    error_log.Print("ERROR: invalid brep.m_C3[%d] is NULL\n", c3i );
+	}
 
-        // The edge.m_ti[] array contains the brep.m_T[] indices
-        // for the other trims that are joined to this edge.
+	// The edge.m_ti[] array contains the brep.m_T[] indices
+	// for the other trims that are joined to this edge.
       }
     }
   }
 }
 
 // symbolic vertex index constants to make code more readable
-static const int
+static const int 
   A = 0,
   B = 1,
   C = 2,
@@ -169,16 +169,16 @@ static const int
   EFGH =  5;
 
 static ON_Curve* TwistedCubeTrimmingCurve(
-              const ON_Surface& s,
-              int side // 0 = SW to SE
-                       // 1 = SE to NE
-                       // 2 = NE to NW
-                       // 3 = NW to SW
-              )
+	      const ON_Surface& s,
+	      int side // 0 = SW to SE
+		       // 1 = SE to NE
+		       // 2 = NE to NW
+		       // 3 = NW to SW
+	      )
 {
   // A trimming curve is a 2d curve whose image lies in the surface's domain.
   // The "active" portion of the surface is to the left of the trimming curve.
-  // An outer trimming loop consists of a simple closed curve running
+  // An outer trimming loop consists of a simple closed curve running 
   // counter-clockwise around the region it trims.
 
   ON_2dPoint from, to;
@@ -223,19 +223,19 @@ static ON_Curve* TwistedCubeEdgeCurve( const ON_3dPoint& from, const ON_3dPoint&
   return c3d;
 }
 
-static ON_Surface* TwistedCubeSideSurface(
-                             const ON_3dPoint& SW, const ON_3dPoint& SE,
-                             const ON_3dPoint& NE, const ON_3dPoint& NW
-                             )
+static ON_Surface* TwistedCubeSideSurface( 
+			     const ON_3dPoint& SW, const ON_3dPoint& SE,
+			     const ON_3dPoint& NE, const ON_3dPoint& NW
+			     )
 {
   ON_NurbsSurface* pNurbsSurface = new ON_NurbsSurface(
-                                        3,     // dimension
-                                        FALSE, // not rational
-                                        2,     // "u" order
-                                        2,     // "v" order
-                                        2,     // number of control vertices in "u" dir
-                                        2      // number of control vertices in "v" dir
-                                        );
+					3,     // dimension
+					FALSE, // not rational
+					2,     // "u" order
+					2,     // "v" order
+					2,     // number of control vertices in "u" dir
+					2      // number of control vertices in "v" dir
+					);
   // corner CVs in counter clockwise order starting in the south west
   pNurbsSurface->SetCV( 0,0, SW );
   pNurbsSurface->SetCV( 1,0, SE );
@@ -252,17 +252,17 @@ static ON_Surface* TwistedCubeSideSurface(
 }
 
 static void MakeTwistedCubeEdge( ON_Brep& brep,
-                                 int vi0, // index of start vertex
-                                 int vi1, // index of end vertex
-                                 int c3i  // index of 3d curve
-                                 )
+				 int vi0, // index of start vertex
+				 int vi1, // index of end vertex
+				 int c3i  // index of 3d curve
+				 )
 {
   ON_BrepVertex& v0 = brep.m_V[vi0];
   ON_BrepVertex& v1 = brep.m_V[vi1];
   ON_BrepEdge& edge = brep.NewEdge(v0,v1,c3i);
   edge.m_tolerance = 0.0;  // this simple example is exact - for models with
-                           // non-exact data, set tolerance as explained in
-                           // definition of ON_BrepEdge.
+			   // non-exact data, set tolerance as explained in
+			   // definition of ON_BrepEdge.
 }
 
 static void MakeTwistedCubeEdges( ON_Brep& brep )
@@ -271,13 +271,13 @@ static void MakeTwistedCubeEdges( ON_Brep& brep )
   // In this simple example, the edge indices exactly match the 3d
   // curve indices.  In general,the correspondence between edge and
   // curve indices can be arbitrary.  It is permitted for multiple
-  // edges to use different portions of the same 3d curve.  The
-  // orientation of the edge always agrees with the natural
+  // edges to use different portions of the same 3d curve.  The 
+  // orientation of the edge always agrees with the natural 
   // parametric orientation of the curve.
-
+  
   // edge that runs from A to B
   MakeTwistedCubeEdge( brep, A, B, AB );
-
+  
   // edge that runs from B to C
   MakeTwistedCubeEdge( brep, B, C, BC );
 
@@ -323,7 +323,7 @@ static int MakeTwistedCubeTrimmingLoop(  ON_Brep& brep, // returns index of loop
      int eN_dir,  // orientation of edge with respect to surface trim
      int eWi,     // index of edge on south side of surface
      int eW_dir   // orientation of edge with respect to surface trim
-                                )
+				)
 {
   const ON_Surface& srf = *brep.m_S[face.m_si];
 
@@ -338,7 +338,7 @@ static int MakeTwistedCubeTrimmingLoop(  ON_Brep& brep, // returns index of loop
 
   for ( int side = 0; side < 4; side++ ) {
     // side: 0=south, 1=east, 2=north, 3=west
-
+    
     c2 = TwistedCubeTrimmingCurve( srf, side );
     c2i = brep.m_C2.Count();
     brep.m_C2.Append(c2);
@@ -373,10 +373,10 @@ static int MakeTwistedCubeTrimmingLoop(  ON_Brep& brep, // returns index of loop
     //trim.m_P[1] = srf.PointAt( q.x, q.y );
     trim.m_iso = iso;
     trim.m_type = ON_BrepTrim::mated; // This b-rep is closed, so all trims
-                                         // have mates.
+					 // have mates.
     trim.m_tolerance[0] = 0.0; // This simple example is exact - for models with
     trim.m_tolerance[1] = 0.0; // non-exact data, set tolerance as explained in
-                               // definition of ON_BrepTrim.
+			       // definition of ON_BrepTrim.
   }
 
   return loop.m_loop_index;
@@ -394,17 +394,17 @@ static void MakeTwistedCubeFace( ON_Brep& brep,
      int eN_dir,  // orientation of edge with respect to surface trim
      int eWi,     // index of edge on south side of surface
      int eW_dir   // orientation of edge with respect to surface trim
-                                )
+				)
 {
   ON_BrepFace& face = brep.NewFace(si);
 
   MakeTwistedCubeTrimmingLoop( brep, face,
-                vSWi, vSEi, vNEi, vNWi,
-                eSi, eS_dir,
-                eEi, eE_dir,
-                eNi, eN_dir,
-                eWi, eW_dir
-                );
+		vSWi, vSEi, vNEi, vNWi, 
+		eSi, eS_dir, 
+		eEi, eE_dir, 
+		eNi, eN_dir, 
+		eWi, eW_dir 
+		);
 
   face.m_bRev = (s_dir == -1);
 }
@@ -417,13 +417,13 @@ static void MakeTwistedCubeFaces( ON_Brep& brep )
     +1,         // orientation of surface with respect to brep
     A, B, C, D, // Indices of vertices listed in SW,SE,NW,NE order
     AB,+1,      // South side edge and its orientation with respect to
-                // to the trimming curve.  (AB)
+		// to the trimming curve.  (AB)
     BC,+1,      // South side edge and its orientation with respect to
-                // to the trimming curve.  (BC)
+		// to the trimming curve.  (BC)
     CD,+1,      // South side edge and its orientation with respect to
-                // to the trimming curve   (CD)
+		// to the trimming curve   (CD)
     AD,-1       // South side edge and its orientation with respect to
-                // to the trimming curve   (AD)
+		// to the trimming curve   (AD)
     );
 
   MakeTwistedCubeFace( brep,
@@ -431,13 +431,13 @@ static void MakeTwistedCubeFaces( ON_Brep& brep )
     -1,         // orientation of surface with respect to brep
     B, C, G, F, // Indices of vertices listed in SW,SE,NW,NE order
     BC,+1,      // South side edge and its orientation with respect to
-                // to the trimming curve.  (BC)
+		// to the trimming curve.  (BC)
     CG,+1,      // South side edge and its orientation with respect to
-                // to the trimming curve.  (CG)
+		// to the trimming curve.  (CG)
     FG,-1,      // South side edge and its orientation with respect to
-                // to the trimming curve   (FG)
+		// to the trimming curve   (FG)
     BF,-1       // South side edge and its orientation with respect to
-                // to the trimming curve   (BF)
+		// to the trimming curve   (BF)
     );
 
   MakeTwistedCubeFace( brep,
@@ -445,13 +445,13 @@ static void MakeTwistedCubeFaces( ON_Brep& brep )
     -1,         // orientation of surface with respect to brep
     C, D, H, G, // Indices of vertices listed in SW,SE,NW,NE order
     CD,+1,      // South side edge and its orientation with respect to
-                // to the trimming curve.  (CD)
+		// to the trimming curve.  (CD)
     DH,+1,      // South side edge and its orientation with respect to
-                // to the trimming curve.  (DH)
+		// to the trimming curve.  (DH)
     GH,-1,      // South side edge and its orientation with respect to
-                // to the trimming curve   (GH)
+		// to the trimming curve   (GH)
     CG,-1       // South side edge and its orientation with respect to
-                // to the trimming curve   (CG)
+		// to the trimming curve   (CG)
     );
 
   MakeTwistedCubeFace( brep,
@@ -459,13 +459,13 @@ static void MakeTwistedCubeFaces( ON_Brep& brep )
     +1,         // orientation of surface with respect to brep
     A, D, H, E, // Indices of vertices listed in SW,SE,NW,NE order
     AD,+1,      // South side edge and its orientation with respect to
-                // to the trimming curve.  (AD)
+		// to the trimming curve.  (AD)
     DH,+1,      // South side edge and its orientation with respect to
-                // to the trimming curve.  (DH)
+		// to the trimming curve.  (DH)
     EH,-1,      // South side edge and its orientation with respect to
-                // to the trimming curve   (EH)
+		// to the trimming curve   (EH)
     AE,-1       // South side edge and its orientation with respect to
-                // to the trimming curve   (AE)
+		// to the trimming curve   (AE)
     );
 
   MakeTwistedCubeFace( brep,
@@ -473,13 +473,13 @@ static void MakeTwistedCubeFaces( ON_Brep& brep )
     -1,         // orientation of surface with respect to brep
     A, B, F, E, // Indices of vertices listed in SW,SE,NW,NE order
     AB,+1,      // South side edge and its orientation with respect to
-                // to the trimming curve.  (AB)
+		// to the trimming curve.  (AB)
     BF,+1,      // South side edge and its orientation with respect to
-                // to the trimming curve.  (BF)
+		// to the trimming curve.  (BF)
     EF,-1,      // South side edge and its orientation with respect to
-                // to the trimming curve   (EF)
+		// to the trimming curve   (EF)
     AE,-1       // South side edge and its orientation with respect to
-                // to the trimming curve   (AE)
+		// to the trimming curve   (AE)
     );
 
   MakeTwistedCubeFace( brep,
@@ -487,13 +487,13 @@ static void MakeTwistedCubeFaces( ON_Brep& brep )
     -1,         // orientation of surface with respect to brep
     E, F, G, H, // Indices of vertices listed in SW,SE,NW,NE order
     EF,+1,      // South side edge and its orientation with respect to
-                // to the trimming curve.  (EF)
+		// to the trimming curve.  (EF)
     FG,+1,      // South side edge and its orientation with respect to
-                // to the trimming curve.  (FG)
+		// to the trimming curve.  (FG)
     GH,+1,      // South side edge and its orientation with respect to
-                // to the trimming curve   (GH)
+		// to the trimming curve   (GH)
     EH,-1       // South side edge and its orientation with respect to
-                // to the trimming curve   (EH)
+		// to the trimming curve   (EH)
     );
 }
 
@@ -543,8 +543,8 @@ static ON_Brep* MakeTwistedCube( ON_TextLog& error_log )
   for ( vi = 0; vi < 8; vi++ ) {
     ON_BrepVertex& v = brep->NewVertex(point[vi]);
     v.m_tolerance = 0.0; // this simple example is exact - for models with
-                         // non-exact data, set tolerance as explained in
-                         // definition of ON_BrepVertex.
+			 // non-exact data, set tolerance as explained in
+			 // definition of ON_BrepVertex.
   }
 
   // Create 3d curve geometry - the orientations are arbitrarily chosen
@@ -578,7 +578,7 @@ static ON_Brep* MakeTwistedCube( ON_TextLog& error_log )
   // Create the CRhinoBrepFaces
   MakeTwistedCubeFaces( *brep );
 
-  if ( !brep->IsValid() )
+  if ( !brep->IsValid() ) 
   {
     error_log.Print("Twisted cube b-rep is not valid.\n");
     delete brep;
@@ -617,21 +617,29 @@ int main( int argc, const char *argv[] )
   model.m_properties.m_Notes.m_notes = "File created by OpenNURBS example_brep.cpp";
   model.m_properties.m_Notes.m_bVisible = TRUE;
 
-  model.m_properties.m_Application.m_application_name
+  model.m_properties.m_Application.m_application_name 
     = "OpenNURBS example_brep.cpp";
-  model.m_properties.m_Application.m_application_URL
+  model.m_properties.m_Application.m_application_URL 
     = "http://www.opennurbs.org";
-  model.m_properties.m_Application.m_application_details
+  model.m_properties.m_Application.m_application_details 
     = "OpenNURBS example showing how to create and write a simple b-rep";
 
 
   int version = 4;
   model.Polish();
-  model.Write( "my_brep.3dm",
-               version,
-               __FILE__ " example_brep.cpp " __DATE__,
-               &error_log
-               );
+  const char* filename = "my_brep.3dm";
+  bool rc = model.Write( filename, 
+	       version,
+	       __FILE__ " example_brep.cpp " __DATE__,
+	       &error_log
+	       );
+
+  if (rc)
+    printf("Wrote %s.\n",filename);
+  else
+    printf("Errors writing %s.\n",filename);
+
+  ON::End();
 
   return 0;
 }

@@ -341,7 +341,8 @@ rt_shootray_bundle(register struct application *ap, struct xray *rays, int nrays
 	    BU_BITSET( solidbits, stp->st_bit );
 
 	    for ( ray=0; ray < nrays; ray++ )  {
-		struct xray	ss2_newray;
+		struct xray ss2_newray;
+		int ret;
 
 		/* Be compatible with the ss backing distance stuff */
 		VMOVE( ss2_newray.r_dir, rays[ray].r_dir );
@@ -364,9 +365,14 @@ rt_shootray_bundle(register struct application *ap, struct xray *rays, int nrays
 
 		if (debug_shoot)bu_log("shooting %s with ray %d\n", stp->st_name, ray);
 		resp->re_shots++;
+
 		BU_LIST_INIT( &(new_segs.l) );
-		if ( rt_functab[stp->st_id].ft_shot(
-			 stp, &ss2_newray, ap, &new_segs ) <= 0 )  {
+
+		ret = -1;
+		if (rt_functab[stp->st_id].ft_shot) {
+		    ret = rt_functab[stp->st_id].ft_shot(stp, &ss2_newray, ap, &new_segs);
+		}
+		if (ret <= 0 )  {
 		    resp->re_shot_miss++;
 		    continue;	/* MISS */
 		}

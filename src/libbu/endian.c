@@ -35,7 +35,7 @@ bu_byteorder()
 	unsigned long i;
 	unsigned char c[sizeof(unsigned long)];
     } b = {1};
-    
+
 /* give run-time test preference to compile-time endian, tested much
  * faster than stashing in a static.
  */
@@ -52,7 +52,7 @@ bu_byteorder()
 #endif
     if (b.c[1])
 	return BU_PDP_ENDIAN;
-    
+
     return (bu_endian_t)0;
 }
 

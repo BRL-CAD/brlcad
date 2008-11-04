@@ -43,9 +43,6 @@
 #include "./usrfmt.h"
 
 
-/* fmax() is c99 but several of the BSDs don't provide it, so macrofy */
-#define FMAX(a,b) ((((double)(a))>((double)(b)))?((double)(a)):((double)(b)))
-
 extern int		nirt_debug;
 extern com_table	ComTab[];
 extern int		silent_flag;

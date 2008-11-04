@@ -1,5 +1,5 @@
 # makefile for libpng on Darwin / Mac OS X
-# Copyright (C) 2002, 2004, 2006 Glenn Randers-Pehrson
+# Copyright (C) 2002, 2004, 2006, 2008 Glenn Randers-Pehrson
 # Copyright (C) 2001 Christoph Pfisterer
 # derived from makefile.linux:
 #  Copyright (C) 1998, 1999 Greg Roelofs
@@ -18,8 +18,8 @@ ZLIBINC=../zlib
 
 # Library name:
 LIBNAME = libpng12
-PNGMAJ = 0
-PNGMIN = 1.2.25
+PNGMAJ = 12
+PNGMIN = 1.2.32
 PNGVER = $(PNGMAJ).$(PNGMIN)
 
 # Shared library names:
@@ -38,8 +38,8 @@ LN_SF=ln -sf
 RANLIB=ranlib
 RM_F=/bin/rm -f
 
-# CFLAGS=-I$(ZLIBINC) -Wall -O3 -funroll-loops -DPNG_NO_MMX_CODE
-CFLAGS=-I$(ZLIBINC) -Wall -O -funroll-loops
+# CFLAGS=-I$(ZLIBINC) -W -Wall -O3 -funroll-loops -DPNG_NO_MMX_CODE
+CFLAGS=-I$(ZLIBINC) -W -Wall -O -funroll-loops
 LDFLAGS=-L. -L$(ZLIBLIB) -lpng12 -lz
 
 INCPATH=$(prefix)/include
@@ -104,14 +104,14 @@ $(LIBSOMAJ): $(LIBSOVER)
 $(LIBSOVER): $(OBJSDLL)
 	$(CC) -dynamiclib \
 	 -install_name $(LIBPATH)/$(LIBSOMAJ) \
-	 -current_version $(PNGVER) -compatibility_version $(PNGVER) \
+	 -current_version $(SONUM) -compatibility_version $(SONUM) \
 	 -o $(LIBSOVER) \
 	 $(OBJSDLL) -L$(ZLIBLIB) -lz
 
 $(OLDSOVER): $(OBJSDLL)
 	$(CC) -dynamiclib \
 	 -install_name $(LIBPATH)/$(OLDSOMAJ) \
-	 -current_version 3 -compatibility_version 3 \
+	 -current_version %OLDSONUM% -compatibility_version %OLDSONUM% \
 	 -o $(OLDSOVER) \
 	 $(OBJSDLL) -L$(ZLIBLIB) -lz
 

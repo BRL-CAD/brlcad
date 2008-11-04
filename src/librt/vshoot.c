@@ -194,9 +194,8 @@ rt_shootray( struct application *ap )
 	/* bit vector per ray check */
 	/* mark elements to be skipped with ary_stp[] = SOLTAB_NULL */
 	ap->a_rt_i->nshots += nsol;	/* later: skipped ones */
-	rt_functab[id].ft_vshot(
-	    ary_stp, ary_rp, ary_seg,
-	    nsol, ap->a_resource );
+	if (rt_functab[id].ft_vshot)
+	    rt_functab[id].ft_vshot(ary_stp, ary_rp, ary_seg, nsol, ap->a_resource);
 
 	/* set bits for all solids shot at for each ray */
 
@@ -356,14 +355,16 @@ rt_vstub(struct soltab *stp[],	/* An array of solid pointers */
 	if (stp[i] != 0) {
 	    /* skip call if solid table pointer is NULL */
 	    /* do scalar call */
-	    tmp_seg = rt_functab[stp[i]->st_id].ft_shot(
-		stp[i], rp[i], resp);
+	    if (rt_functab[stp[i]->st_id].ft_shot) {
+		tmp_seg = rt_functab[stp[i]->st_id].ft_shot(stp[i], rp[i], resp);
+	    } else {
+		tmp_seg = 0;
+	    }
 
 	    /* place results in segp array */
-	    if ( tmp_seg == 0) {
+	    if ( tmp_seg <= 0) {
 		SEG_MISS(segp[i]);
-	    }
-	    else {
+	    }else {
 		segp[i] = *tmp_seg; /* structure copy */
 		FREE_SEG(tmp_seg, resp);
 	    }

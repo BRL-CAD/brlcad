@@ -74,7 +74,13 @@
  * @defgroup vls Variable Length Strings
  * @ingroup libbu
  *
+ * @defgroup vlb Variable Length Buffer
+ * @ingroup libbu
+ *
  * @defgroup vfont vector fonts
+ * @ingroup libbu
+ * 
+ * @defgroup image Image Routines
  * @ingroup libbu
  */
 
@@ -169,4 +175,16 @@
  *
  * @defgroup wdb WriteDatabase
  * @ingroup dbio
+ */
+/** @defgroup libpc libpc (Parametrics and Constraints)
+ *
+ * @defgroup pcsolver Constraint Solution
+ * @ingroup libpc
+ *
+ * @defgroup pcparser EBNF Parser
+ * @ingroup libpc
+ *
+ * @defgroup pcdbio Database Input/Output/Updation
+ * @ingroup libpc
+ *
  */

@@ -38,10 +38,10 @@
 
 #include "tcl.h"
 #include "cmd.h"		/* this includes bu.h */
-#include "vmath.h"
-#include "bn.h"
 #include "bu.h"
 
+/*XXX Temporary global interp */
+Tcl_Interp *brlcad_interp = (Tcl_Interp *)0;
 
 #define TINYBUFSIZ	32
 #define SMALLBUFSIZ	256
@@ -58,15 +58,15 @@ static struct bu_cmdtab bu_cmds[] = {
     {"bu_malloc_len_roundup",		bu_tcl_malloc_len_roundup},
     {"bu_prmem",			bu_tcl_prmem},
     {"bu_printb",			bu_tcl_printb},
-    {"bu_get_all_keyword_values",	bu_get_all_keyword_values},
-    {"bu_get_value_by_keyword",		bu_get_value_by_keyword},
+    {"bu_get_all_keyword_values",	bu_tcl_get_all_keyword_values},
+    {"bu_get_value_by_keyword",		bu_tcl_get_value_by_keyword},
     {"bu_rgb_to_hsv",			bu_tcl_rgb_to_hsv},
     {"bu_hsv_to_rgb",			bu_tcl_hsv_to_rgb},
     {"bu_key_eq_to_key_val",		bu_tcl_key_eq_to_key_val},
     {"bu_shader_to_tcl_list",		bu_tcl_shader_to_key_val},
     {"bu_key_val_to_key_eq",		bu_tcl_key_val_to_key_eq},
     {"bu_shader_to_key_eq",		bu_tcl_shader_to_key_eq},
-    {(char *)NULL,			(int (*)())0 }
+    {(char *)NULL,			NULL }
 };
 
 
@@ -86,7 +86,7 @@ static struct bu_cmdtab bu_cmds[] = {
  * @param line	- line number in the above file
  *
  * @return
- *	void
+ * void
  */
 void
 bu_badmagic_tcl(Tcl_Interp	*interp,
@@ -108,7 +108,7 @@ bu_badmagic_tcl(Tcl_Interp	*interp,
 	snprintf(buf, SMALLBUFSIZ, "ERROR: bad pointer in TCL interface x%lx: s/b %s(x%lx), was %s(x%lx), file %s, line %d\n",
 		 (unsigned long)ptr,
 		 str, magic,
-		 bu_identify_magic( (unsigned long)*(ptr) ), *(ptr),
+		 bu_identify_magic((unsigned long)*(ptr)), *(ptr),
 		 file, line);
 	Tcl_AppendResult(interp, buf, NULL);
 	return;
@@ -118,7 +118,7 @@ bu_badmagic_tcl(Tcl_Interp	*interp,
 
 
 /**
- * b u _ s t r u c t p a r s e _ g e t _ t e r s e _ f o r m
+ * b u _ t c l _ s t r u c t p a r s e _ g e t _ t e r s e _ f o r m
  *
  * Convert the "form" of a bu_structparse table into a TCL result string,
  * with parameter-name data-type pairs:
@@ -135,9 +135,17 @@ bu_badmagic_tcl(Tcl_Interp	*interp,
  * 	void
  */
 void
-bu_structparse_get_terse_form(Tcl_Interp			*interp,
-			      const struct bu_structparse	*sp)
+bu_tcl_structparse_get_terse_form(Tcl_Interp			*interp,
+				  const struct bu_structparse	*sp)
 {
+#if 1
+    struct bu_vls log;
+
+    bu_vls_init(&log);
+    bu_structparse_get_terse_form(&log, sp);
+    Tcl_AppendResult(interp, bu_vls_addr(&log), (char *)NULL);
+    bu_vls_free(&log);
+#else
     struct bu_vls	str;
     int		i;
 
@@ -149,7 +157,8 @@ bu_structparse_get_terse_form(Tcl_Interp			*interp,
 	/* These types are specified by lengths, e.g. %80s */
 	if (strcmp(sp->sp_fmt, "%c") == 0 ||
 	    strcmp(sp->sp_fmt, "%s") == 0 ||
-	    strcmp(sp->sp_fmt, "%S") == 0) {
+	    strcmp(sp->sp_fmt, "%S") == 0 || /* XXX - DEPRECATED [7.14] */
+	    strcmp(sp->sp_fmt, "%V") == 0) {
 	    if (sp->sp_count > 1) {
 		/* Make them all look like %###s */
 		bu_vls_printf(&str, "%%%lds", sp->sp_count);
@@ -167,8 +176,10 @@ bu_structparse_get_terse_form(Tcl_Interp			*interp,
 	++sp;
     }
     bu_vls_free(&str);
+#endif
 }
 
+#if 0
 /**
  * b u _ s p _ s k i p _ s e p
  *
@@ -177,12 +188,13 @@ bu_structparse_get_terse_form(Tcl_Interp			*interp,
  * @param _cp	- character pointer
  */
 #define BU_SP_SKIP_SEP(_cp)	\
-	{ while ( *(_cp) && (*(_cp) == ' ' || *(_cp) == '\n' || \
-		*(_cp) == '\t' || *(_cp) == '{' ) )  ++(_cp); }
+	{ while (*(_cp) && (*(_cp) == ' ' || *(_cp) == '\n' || \
+		*(_cp) == '\t' || *(_cp) == '{'))  ++(_cp); }
+#endif
 
 
 /**
- * b u _ s t r u c t p a r s e _ a r g v
+ * b u _ t c l _ s t r u c t p a r s e _ a r g v
  *
  * Support routine for db adjust and db put.  Much like the bu_struct_parse routine
  * which takes its input as a bu_vls. This routine, however, takes the arguments
@@ -202,12 +214,27 @@ bu_structparse_get_terse_form(Tcl_Interp			*interp,
  * @retval TCL_ERROR on failure
  */
 int
-bu_structparse_argv(Tcl_Interp			*interp,
-		    int				argc,
-		    char			**argv,
-		    const struct bu_structparse	*desc,
-		    char			*base)
+bu_tcl_structparse_argv(Tcl_Interp			*interp,
+			int				argc,
+			char				**argv,
+			const struct bu_structparse	*desc,
+			char				*base)
 {
+#if 1
+    struct bu_vls log;
+    int ret;
+
+    bu_vls_init(&log);
+    ret = bu_structparse_argv(&log, argc, argv, desc, base);
+    Tcl_AppendResult(interp, bu_vls_addr(&log), (char *)NULL);
+    bu_vls_free(&log);
+
+    /* Convert to a Tcl return code */
+    if (ret != BRLCAD_OK)
+	return TCL_ERROR;
+
+    return TCL_OK;
+#else
     register char				*cp, *loc;
     register const struct bu_structparse	*sdp;
     register int				 j;
@@ -283,103 +310,106 @@ bu_structparse_argv(Tcl_Interp			*interp,
 					 (char *)NULL);
 		    }
 		    break;
-		case 'S': {
+		case 'S': /* XXX - DEPRECATED [7.14] */
+		    printf("DEVELOPER DEPRECATION NOTICE: Using %%S for string printing is deprecated, use %%V instead\n");
+		    /* fall through */
+		case 'V': {
 		    struct bu_vls *vls = (struct bu_vls *)loc;
-		    bu_vls_init_if_uninit( vls );
+		    bu_vls_init_if_uninit(vls);
 		    bu_vls_strcpy(vls, *argv);
 		    break;
 		}
 		case 'i':
 #if 0
 		    bu_log(
-			"Error: %%i not implemented. Contact developers.\n" );
-		    Tcl_AppendResult( interp,
-				      "%%i not implemented yet",
-				      (char *)NULL );
-		    bu_vls_free( &str );
+			"Error: %%i not implemented. Contact developers.\n");
+		    Tcl_AppendResult(interp,
+				     "%%i not implemented yet",
+				     (char *)NULL);
+		    bu_vls_free(&str);
 		    return TCL_ERROR;
 #else
 		    {
 			register short *sh = (short *)loc;
 			register int tmpi;
 
-			if ( argc < 1 ) {
+			if (argc < 1) {
 			    /* XXX - when was ii defined */
-			    bu_vls_trunc( &str, 0 );
-			    bu_vls_printf( &str,
-					   "not enough values for \"%s\" argument: should have %ld",
-					   sdp->sp_name,
-					   sdp->sp_count);
-			    Tcl_AppendResult( interp,
-					      bu_vls_addr(&str),
-					      (char *)NULL );
-			    bu_vls_free( &str );
+			    bu_vls_trunc(&str, 0);
+			    bu_vls_printf(&str,
+					  "not enough values for \"%s\" argument: should have %ld",
+					  sdp->sp_name,
+					  sdp->sp_count);
+			    Tcl_AppendResult(interp,
+					     bu_vls_addr(&str),
+					     (char *)NULL);
+			    bu_vls_free(&str);
 			    return TCL_ERROR;
 			}
 
-			Tcl_AppendResult( interp, sdp->sp_name, " ",
-					  (char *)NULL );
+			Tcl_AppendResult(interp, sdp->sp_name, " ",
+					 (char *)NULL);
 
 			/* Special case:  '=!' toggles a boolean */
-			if ( argv[0][0] == '!' ) {
+			if (argv[0][0] == '!') {
 			    *sh = *sh ? 0 : 1;
-			    bu_vls_trunc( &str, 0 );
-			    bu_vls_printf( &str, "%hd ", *sh );
-			    Tcl_AppendResult( interp,
-					      bu_vls_addr(&str),
-					      (char *)NULL );
+			    bu_vls_trunc(&str, 0);
+			    bu_vls_printf(&str, "%hd ", *sh);
+			    Tcl_AppendResult(interp,
+					     bu_vls_addr(&str),
+					     (char *)NULL);
 			    break;
 			}
 			/* Normal case: an integer */
 			cp = *argv;
-			for ( ii = 0; ii < sdp->sp_count; ++ii ) {
-			    if ( *cp == '\0' ) {
-				bu_vls_trunc( &str, 0 );
-				bu_vls_printf( &str,
-					       "not enough values for \"%s\" argument: should have %ld",
-					       sdp->sp_name,
-					       sdp->sp_count );
-				Tcl_AppendResult( interp,
-						  bu_vls_addr(&str),
-						  (char *)NULL );
-				bu_vls_free( &str );
+			for (ii = 0; ii < sdp->sp_count; ++ii) {
+			    if (*cp == '\0') {
+				bu_vls_trunc(&str, 0);
+				bu_vls_printf(&str,
+					      "not enough values for \"%s\" argument: should have %ld",
+					      sdp->sp_name,
+					      sdp->sp_count);
+				Tcl_AppendResult(interp,
+						 bu_vls_addr(&str),
+						 (char *)NULL);
+				bu_vls_free(&str);
 				return TCL_ERROR;
 			    }
 
 			    BU_SP_SKIP_SEP(cp);
-			    tmpi = atoi( cp );
-			    if ( *cp && (*cp == '+' || *cp == '-') )
+			    tmpi = atoi(cp);
+			    if (*cp && (*cp == '+' || *cp == '-'))
 				cp++;
-			    while ( *cp && isdigit(*cp) )
+			    while (*cp && isdigit(*cp))
 				cp++;
 			    /* make sure we actually had an
 			     * integer out there
 			     */
 
-			    if ( cp == *argv ||
-				 (cp == *argv+1 &&
-				  (argv[0][0] == '+' ||
-				   argv[0][0] == '-')) ) {
-				bu_vls_trunc( &str, 0 );
-				bu_vls_printf( &str,
-					       "value \"%s\" to argument %s isn't an integer",
-					       argv[0],
-					       sdp->sp_name );
-				Tcl_AppendResult( interp,
-						  bu_vls_addr(&str),
-						  (char *)NULL );
-				bu_vls_free( &str );
+			    if (cp == *argv ||
+				(cp == *argv+1 &&
+				 (argv[0][0] == '+' ||
+				  argv[0][0] == '-'))) {
+				bu_vls_trunc(&str, 0);
+				bu_vls_printf(&str,
+					      "value \"%s\" to argument %s isn't an integer",
+					      argv[0],
+					      sdp->sp_name);
+				Tcl_AppendResult(interp,
+						 bu_vls_addr(&str),
+						 (char *)NULL);
+				bu_vls_free(&str);
 				return TCL_ERROR;
 			    } else {
 				*(sh++) = tmpi;
 			    }
 			    BU_SP_SKIP_SEP(cp);
 			}
-			Tcl_AppendResult( interp,
-					  sdp->sp_count > 1 ? "{" : "",
-					  argv[0],
-					  sdp->sp_count > 1 ? "}" : "",
-					  " ", (char *)NULL);
+			Tcl_AppendResult(interp,
+					 sdp->sp_count > 1 ? "{" : "",
+					 argv[0],
+					 sdp->sp_count > 1 ? "}" : "",
+					 " ", (char *)NULL);
 			break; }
 
 #endif
@@ -387,83 +417,83 @@ bu_structparse_argv(Tcl_Interp			*interp,
 		    register int *ip = (int *)loc;
 		    register int tmpi;
 
-		    if ( argc < 1 ) {
+		    if (argc < 1) {
 			/* XXX - when was ii defined */
-			bu_vls_trunc( &str, 0 );
-			bu_vls_printf( &str,
-				       "not enough values for \"%s\" argument: should have %ld",
-				       sdp->sp_name,
-				       sdp->sp_count);
-			Tcl_AppendResult( interp,
-					  bu_vls_addr(&str),
-					  (char *)NULL );
-			bu_vls_free( &str );
+			bu_vls_trunc(&str, 0);
+			bu_vls_printf(&str,
+				      "not enough values for \"%s\" argument: should have %ld",
+				      sdp->sp_name,
+				      sdp->sp_count);
+			Tcl_AppendResult(interp,
+					 bu_vls_addr(&str),
+					 (char *)NULL);
+			bu_vls_free(&str);
 			return TCL_ERROR;
 		    }
 
-		    Tcl_AppendResult( interp, sdp->sp_name, " ",
-				      (char *)NULL );
+		    Tcl_AppendResult(interp, sdp->sp_name, " ",
+				     (char *)NULL);
 
 		    /* Special case:  '=!' toggles a boolean */
-		    if ( argv[0][0] == '!' ) {
+		    if (argv[0][0] == '!') {
 			*ip = *ip ? 0 : 1;
-			bu_vls_trunc( &str, 0 );
-			bu_vls_printf( &str, "%d ", *ip );
-			Tcl_AppendResult( interp,
-					  bu_vls_addr(&str),
-					  (char *)NULL );
+			bu_vls_trunc(&str, 0);
+			bu_vls_printf(&str, "%d ", *ip);
+			Tcl_AppendResult(interp,
+					 bu_vls_addr(&str),
+					 (char *)NULL);
 			break;
 		    }
 		    /* Normal case: an integer */
 		    cp = *argv;
-		    for ( ii = 0; ii < sdp->sp_count; ++ii ) {
-			if ( *cp == '\0' ) {
-			    bu_vls_trunc( &str, 0 );
-			    bu_vls_printf( &str,
-					   "not enough values for \"%s\" argument: should have %ld",
-					   sdp->sp_name,
-					   sdp->sp_count );
-			    Tcl_AppendResult( interp,
-					      bu_vls_addr(&str),
-					      (char *)NULL );
-			    bu_vls_free( &str );
+		    for (ii = 0; ii < sdp->sp_count; ++ii) {
+			if (*cp == '\0') {
+			    bu_vls_trunc(&str, 0);
+			    bu_vls_printf(&str,
+					  "not enough values for \"%s\" argument: should have %ld",
+					  sdp->sp_name,
+					  sdp->sp_count);
+			    Tcl_AppendResult(interp,
+					     bu_vls_addr(&str),
+					     (char *)NULL);
+			    bu_vls_free(&str);
 			    return TCL_ERROR;
 			}
 
 			BU_SP_SKIP_SEP(cp);
-			tmpi = atoi( cp );
-			if ( *cp && (*cp == '+' || *cp == '-') )
+			tmpi = atoi(cp);
+			if (*cp && (*cp == '+' || *cp == '-'))
 			    cp++;
-			while ( *cp && isdigit(*cp) )
+			while (*cp && isdigit(*cp))
 			    cp++;
 			/* make sure we actually had an
 			 * integer out there
 			 */
 
-			if ( cp == *argv ||
-			     (cp == *argv+1 &&
-			      (argv[0][0] == '+' ||
-			       argv[0][0] == '-')) ) {
-			    bu_vls_trunc( &str, 0 );
-			    bu_vls_printf( &str,
-					   "value \"%s\" to argument %s isn't an integer",
-					   argv[0],
-					   sdp->sp_name );
-			    Tcl_AppendResult( interp,
-					      bu_vls_addr(&str),
-					      (char *)NULL );
-			    bu_vls_free( &str );
+			if (cp == *argv ||
+			    (cp == *argv+1 &&
+			     (argv[0][0] == '+' ||
+			      argv[0][0] == '-'))) {
+			    bu_vls_trunc(&str, 0);
+			    bu_vls_printf(&str,
+					  "value \"%s\" to argument %s isn't an integer",
+					  argv[0],
+					  sdp->sp_name);
+			    Tcl_AppendResult(interp,
+					     bu_vls_addr(&str),
+					     (char *)NULL);
+			    bu_vls_free(&str);
 			    return TCL_ERROR;
 			} else {
 			    *(ip++) = tmpi;
 			}
 			BU_SP_SKIP_SEP(cp);
 		    }
-		    Tcl_AppendResult( interp,
-				      sdp->sp_count > 1 ? "{" : "",
-				      argv[0],
-				      sdp->sp_count > 1 ? "}" : "",
-				      " ", (char *)NULL);
+		    Tcl_AppendResult(interp,
+				     sdp->sp_count > 1 ? "{" : "",
+				     argv[0],
+				     sdp->sp_count > 1 ? "}" : "",
+				     " ", (char *)NULL);
 		    break; }
 		case 'f': {
 		    int		dot_seen;
@@ -473,94 +503,94 @@ bu_structparse_argv(Tcl_Interp			*interp,
 
 		    dp = (double *)loc;
 
-		    if ( argc < 1 ) {
-			bu_vls_trunc( &str, 0 );
-			bu_vls_printf( &str,
-				       "not enough values for \"%s\" argument: should have %ld, only %d given",
-				       sdp->sp_name,
-				       sdp->sp_count, argc );
-			Tcl_AppendResult( interp,
-					  bu_vls_addr(&str),
-					  (char *)NULL );
-			bu_vls_free( &str );
+		    if (argc < 1) {
+			bu_vls_trunc(&str, 0);
+			bu_vls_printf(&str,
+				      "not enough values for \"%s\" argument: should have %ld, only %d given",
+				      sdp->sp_name,
+				      sdp->sp_count, argc);
+			Tcl_AppendResult(interp,
+					 bu_vls_addr(&str),
+					 (char *)NULL);
+			bu_vls_free(&str);
 			return TCL_ERROR;
 		    }
 
-		    Tcl_AppendResult( interp, sdp->sp_name, " ",
-				      (char *)NULL );
+		    Tcl_AppendResult(interp, sdp->sp_name, " ",
+				     (char *)NULL);
 
 		    cp = *argv;
-		    for ( ii = 0; ii < sdp->sp_count; ii++ ) {
-			if ( *cp == '\0' ) {
-			    bu_vls_trunc( &str, 0 );
-			    bu_vls_printf( &str,
-					   "not enough values for \"%s\" argument: should have %ld, only %d given",
-					   sdp->sp_name,
-					   sdp->sp_count,
-					   ii );
-			    Tcl_AppendResult( interp,
-					      bu_vls_addr(&str),
-					      (char *)NULL );
-			    bu_vls_free( &str );
+		    for (ii = 0; ii < sdp->sp_count; ii++) {
+			if (*cp == '\0') {
+			    bu_vls_trunc(&str, 0);
+			    bu_vls_printf(&str,
+					  "not enough values for \"%s\" argument: should have %ld, only %d given",
+					  sdp->sp_name,
+					  sdp->sp_count,
+					  ii);
+			    Tcl_AppendResult(interp,
+					     bu_vls_addr(&str),
+					     (char *)NULL);
+			    bu_vls_free(&str);
 			    return TCL_ERROR;
 			}
 
 			BU_SP_SKIP_SEP(cp);
 			numstart = cp;
-			if ( *cp == '-' || *cp == '+' ) cp++;
+			if (*cp == '-' || *cp == '+') cp++;
 
 			/* skip matissa */
 			dot_seen = 0;
-			for (; *cp; cp++ ) {
-			    if ( *cp == '.' && !dot_seen ) {
+			for (; *cp; cp++) {
+			    if (*cp == '.' && !dot_seen) {
 				dot_seen = 1;
 				continue;
 			    }
-			    if ( !isdigit(*cp) )
+			    if (!isdigit(*cp))
 				break;
 			}
 
 			/* If no mantissa seen,
 			   then there is no float here */
-			if ( cp == (numstart + dot_seen) ) {
-			    bu_vls_trunc( &str, 0 );
-			    bu_vls_printf( &str,
-					   "value \"%s\" to argument %s isn't a float",
-					   argv[0],
-					   sdp->sp_name );
-			    Tcl_AppendResult( interp,
-					      bu_vls_addr(&str),
-					      (char *)NULL );
-			    bu_vls_free( &str );
+			if (cp == (numstart + dot_seen)) {
+			    bu_vls_trunc(&str, 0);
+			    bu_vls_printf(&str,
+					  "value \"%s\" to argument %s isn't a float",
+					  argv[0],
+					  sdp->sp_name);
+			    Tcl_AppendResult(interp,
+					     bu_vls_addr(&str),
+					     (char *)NULL);
+			    bu_vls_free(&str);
 			    return TCL_ERROR;
 			}
 
 			/* there was a mantissa,
 			   so we may have an exponent */
-			if ( *cp == 'E' || *cp == 'e' ) {
+			if (*cp == 'E' || *cp == 'e') {
 			    cp++;
 
 			    /* skip exponent sign */
 			    if (*cp == '+' || *cp == '-')
 				cp++;
-			    while ( isdigit(*cp) )
+			    while (isdigit(*cp))
 				cp++;
 			}
 
-			bu_vls_trunc( &str, 0 );
-			bu_vls_strcpy( &str, numstart );
-			bu_vls_trunc( &str, cp-numstart );
-			if ( sscanf(bu_vls_addr(&str),
-				    "%lf", &tmp_double) != 1 ) {
-			    bu_vls_trunc( &str, 0 );
-			    bu_vls_printf( &str,
-					   "value \"%s\" to argument %s isn't a float",
-					   numstart,
-					   sdp->sp_name );
-			    Tcl_AppendResult( interp,
-					      bu_vls_addr(&str),
-					      (char *)NULL );
-			    bu_vls_free( &str );
+			bu_vls_trunc(&str, 0);
+			bu_vls_strcpy(&str, numstart);
+			bu_vls_trunc(&str, cp-numstart);
+			if (sscanf(bu_vls_addr(&str),
+				   "%lf", &tmp_double) != 1) {
+			    bu_vls_trunc(&str, 0);
+			    bu_vls_printf(&str,
+					  "value \"%s\" to argument %s isn't a float",
+					  numstart,
+					  sdp->sp_name);
+			    Tcl_AppendResult(interp,
+					     bu_vls_addr(&str),
+					     (char *)NULL);
+			    bu_vls_free(&str);
 			    return TCL_ERROR;
 			}
 
@@ -568,11 +598,11 @@ bu_structparse_argv(Tcl_Interp			*interp,
 
 			BU_SP_SKIP_SEP(cp);
 		    }
-		    Tcl_AppendResult( interp,
-				      sdp->sp_count > 1 ? "{" : "",
-				      argv[0],
-				      sdp->sp_count > 1 ? "}" : "",
-				      " ", (char *)NULL );
+		    Tcl_AppendResult(interp,
+				     sdp->sp_count > 1 ? "{" : "",
+				     argv[0],
+				     sdp->sp_count > 1 ? "}" : "",
+				     " ", (char *)NULL);
 		    break; }
 		default: {
 		    struct bu_vls vls;
@@ -583,16 +613,16 @@ bu_structparse_argv(Tcl_Interp			*interp,
 				  __FILE__, __LINE__, sdp->sp_fmt,
 				  sdp->sp_name);
 
-		    Tcl_AppendResult( interp, bu_vls_addr(&vls),
-				      (char *)NULL );
+		    Tcl_AppendResult(interp, bu_vls_addr(&vls),
+				     (char *)NULL);
 
-		    bu_vls_free( &vls );
+		    bu_vls_free(&vls);
 		    return TCL_ERROR;
 		}
 	    }
 
-	    if ( sdp->sp_hook )  {
-		sdp->sp_hook( sdp, sdp->sp_name, base, *argv);
+	    if (sdp->sp_hook) {
+		sdp->sp_hook(sdp, sdp->sp_name, base, *argv);
 
 	    }
 	    --argc;
@@ -603,16 +633,17 @@ bu_structparse_argv(Tcl_Interp			*interp,
 	}
 
 
-	if ( sdp->sp_name == NULL ) {
-	    bu_vls_trunc( &str, 0 );
-	    bu_vls_printf( &str, "invalid attribute %s\n", argv[0] );
-	    Tcl_AppendResult( interp, bu_vls_addr(&str),
-			      (char *)NULL );
-	    bu_vls_free( &str );
+	if (sdp->sp_name == NULL) {
+	    bu_vls_trunc(&str, 0);
+	    bu_vls_printf(&str, "invalid attribute %s\n", argv[0]);
+	    Tcl_AppendResult(interp, bu_vls_addr(&str),
+			     (char *)NULL);
+	    bu_vls_free(&str);
 	    return TCL_ERROR;
 	}
     }
     return TCL_OK;
+#endif
 }
 
 
@@ -632,15 +663,15 @@ int
 bu_tcl_mem_barriercheck(ClientData	clientData,
 			Tcl_Interp	*interp,
 			int		argc,
-			char		**argv)
+			const char	**argv)
 {
     int	ret;
 
     /* quell usage warning */
     clientData = clientData;
 
-    if ( argc > 1 )  {
-	Tcl_AppendResult( interp, "Usage: ", argv[0], "\n", (char *)NULL);
+    if (argc > 1) {
+	Tcl_AppendResult(interp, "Usage: ", argv[0], "\n", (char *)NULL);
 	return TCL_ERROR;
     }
 
@@ -669,16 +700,16 @@ int
 bu_tcl_ck_malloc_ptr(ClientData		clientData,
 		     Tcl_Interp		*interp,
 		     int		argc,
-		     char		**argv)
+		     const char		**argv)
 {
     /* quell usage warning */
     clientData = clientData;
 
-    if ( argc != 3 )  {
-	Tcl_AppendResult( interp, "Usage: bu_ck_malloc_ptr ascii-ptr description\n");
+    if (argc != 3) {
+	Tcl_AppendResult(interp, "Usage: bu_ck_malloc_ptr ascii-ptr description\n");
 	return TCL_ERROR;
     }
-    bu_ck_malloc_ptr( (genptr_t)atol(argv[1]), argv[2] );
+    bu_ck_malloc_ptr((genptr_t)atol(argv[1]), argv[2]);
     return TCL_OK;
 }
 
@@ -693,25 +724,25 @@ bu_tcl_ck_malloc_ptr(ClientData		clientData,
  * @param argc		- number of elements in argv
  * @param argv		- command name and arguments
  *
- * @Return TCL_OK if successful, otherwise, TCL_ERROR.
+ * @return TCL_OK if successful, otherwise, TCL_ERROR.
  */
 int
 bu_tcl_malloc_len_roundup(ClientData	clientData,
 			  Tcl_Interp	*interp,
 			  int		argc,
-			  char		**argv)
+			  const char	**argv)
 {
     int	val;
 
     /* quell usage warning */
     clientData = clientData;
 
-    if ( argc != 2 )  {
+    if (argc != 2) {
 	Tcl_AppendResult(interp, "Usage: bu_malloc_len_roundup nbytes\n", NULL);
 	return TCL_ERROR;
     }
     val = bu_malloc_len_roundup(atoi(argv[1]));
-    Tcl_SetObjResult( interp, Tcl_NewIntObj(val) );
+    Tcl_SetObjResult(interp, Tcl_NewIntObj(val));
     return TCL_OK;
 }
 
@@ -733,7 +764,7 @@ int
 bu_tcl_prmem(ClientData	clientData,
 	     Tcl_Interp	*interp,
 	     int	argc,
-	     char	**argv)
+	     const char	**argv)
 {
     /* quell usage warning */
     clientData = clientData;
@@ -764,7 +795,7 @@ int
 bu_tcl_printb(ClientData	clientData,
 	      Tcl_Interp	*interp,
 	      int		argc,
-	      char		**argv)
+	      const char	**argv)
 {
     struct bu_vls	str;
 
@@ -784,7 +815,7 @@ bu_tcl_printb(ClientData	clientData,
 
 
 /**
- * b u _ g e t _ v a l u e _ b y _ k e y w o r d
+ * b u _ t c l _ g e t _ v a l u e _ b y _ k e y w o r d
  *
  * Given arguments of alternating keywords and values
  * and a specific keyword ("Iwant"),
@@ -810,39 +841,39 @@ bu_tcl_printb(ClientData	clientData,
  * @return TCL_OK if successful, otherwise, TCL_ERROR.
  */
 int
-bu_get_value_by_keyword(ClientData	clientData,
-			Tcl_Interp	*interp,
-			int		argc,
-			char		**argv)
+bu_tcl_get_value_by_keyword(ClientData	clientData,
+			    Tcl_Interp	*interp,
+			    int		argc,
+			    const char	**argv)
 {
     int	listc;
-    char	**listv;
-    register char	*iwant;
-    char	**tofree = (char **)NULL;
+    const char	**listv;
+    const char	*iwant;
+    const char	**tofree = (const char **)NULL;
     int	i;
 
     /* quell usage warning */
     clientData = clientData;
 
-    if ( argc < 3 )  {
+    if (argc < 3) {
 	char	buf[TINYBUFSIZ];
 	snprintf(buf, TINYBUFSIZ, "%d", argc);
-	Tcl_AppendResult( interp,
-			  "bu_get_value_by_keyword: wrong # of args (", buf, ").\n",
-			  "Usage: bu_get_value_by_keyword iwant {list}\n",
-			  "Usage: bu_get_value_by_keyword iwant key1 val1 key2 val2 ... keyN valN\n",
-			  (char *)NULL );
+	Tcl_AppendResult(interp,
+			 "bu_get_value_by_keyword: wrong # of args (", buf, ").\n",
+			 "Usage: bu_get_value_by_keyword iwant {list}\n",
+			 "Usage: bu_get_value_by_keyword iwant key1 val1 key2 val2 ... keyN valN\n",
+			 (char *)NULL);
 	return TCL_ERROR;
     }
 
     iwant = argv[1];
 
-    if ( argc == 3 )  {
-	if ( Tcl_SplitList( interp, argv[2], &listc, (const char ***)&listv ) != TCL_OK )  {
-	    Tcl_AppendResult( interp,
-			      "bu_get_value_by_keyword: iwant='", iwant,
-			      "', unable to split '",
-			      argv[2], "'\n", (char *)NULL );
+    if (argc == 3) {
+	if (Tcl_SplitList(interp, argv[2], &listc, (const char ***)&listv) != TCL_OK) {
+	    Tcl_AppendResult(interp,
+			     "bu_get_value_by_keyword: iwant='", iwant,
+			     "', unable to split '",
+			     argv[2], "'\n", (char *)NULL);
 	    return TCL_ERROR;
 	}
 	tofree = listv;
@@ -852,47 +883,47 @@ bu_get_value_by_keyword(ClientData	clientData,
 	listv = argv + 2;
     }
 
-    if ( (listc & 1) != 0 )  {
+    if ((listc & 1) != 0) {
 	char	buf[TINYBUFSIZ];
 	snprintf(buf, TINYBUFSIZ, "%d", listc);
-	Tcl_AppendResult( interp,
-			  "bu_get_value_by_keyword: odd # of items in list (", buf, ").\n",
-			  (char *)NULL );
-	if (tofree) free( (char *)tofree );	/* not bu_free() */
+	Tcl_AppendResult(interp,
+			 "bu_get_value_by_keyword: odd # of items in list (", buf, ").\n",
+			 (char *)NULL);
+	if (tofree) free((char *)tofree);	/* not bu_free() */
 	return TCL_ERROR;
     }
 
-    for ( i=0; i < listc; i += 2 )  {
-	if ( strcmp( iwant, listv[i] ) == 0 )  {
+    for (i=0; i < listc; i += 2) {
+	if (strcmp(iwant, listv[i]) == 0) {
 	    /* If value is a list, don't nest it in another list */
-	    if ( listv[i+1][0] == '{' )  {
+	    if (listv[i+1][0] == '{') {
 		struct bu_vls	str;
-		bu_vls_init( &str );
+		bu_vls_init(&str);
 		/* Skip leading { */
-		bu_vls_strcat( &str, &listv[i+1][1] );
+		bu_vls_strcat(&str, &listv[i+1][1]);
 		/* Trim trailing } */
-		bu_vls_trunc( &str, -1 );
-		Tcl_AppendResult( interp,
-				  bu_vls_addr(&str), (char *)NULL );
-		bu_vls_free( &str );
+		bu_vls_trunc(&str, -1);
+		Tcl_AppendResult(interp,
+				 bu_vls_addr(&str), (char *)NULL);
+		bu_vls_free(&str);
 	    } else {
-		Tcl_AppendResult( interp, listv[i+1], (char *)NULL );
+		Tcl_AppendResult(interp, listv[i+1], (char *)NULL);
 	    }
-	    if (tofree) free( (char *)tofree );	/* not bu_free() */
+	    if (tofree) free((char *)tofree);	/* not bu_free() */
 	    return TCL_OK;
 	}
     }
 
     /* Not found */
-    Tcl_AppendResult( interp, "bu_get_value_by_keyword: keyword '",
-		      iwant, "' not found in list\n", (char *)NULL );
-    if (tofree) free( (char *)tofree );	/* not bu_free() */
+    Tcl_AppendResult(interp, "bu_get_value_by_keyword: keyword '",
+		     iwant, "' not found in list\n", (char *)NULL);
+    if (tofree) free((char *)tofree);	/* not bu_free() */
     return TCL_ERROR;
 }
 
 
 /**
- * b u _ g e t _ a l l _ k e y w o r d _ v a l u e s
+ * b u _ t c l _ g e t _ a l l _ k e y w o r d _ v a l u e s
  *
  * Given arguments of alternating keywords and values,
  * establish local variables named after the keywords, with the
@@ -934,36 +965,36 @@ bu_get_value_by_keyword(ClientData	clientData,
  * @return TCL_OK if successful, otherwise, TCL_ERROR.
  */
 int
-bu_get_all_keyword_values(ClientData	clientData,
-			  Tcl_Interp	*interp,
-			  int		argc,
-			  char		**argv)
+bu_tcl_get_all_keyword_values(ClientData	clientData,
+			      Tcl_Interp	*interp,
+			      int		argc,
+			      const char	**argv)
 {
     struct bu_vls	variable;
     int	listc;
-    char	**listv;
-    char	**tofree = (char **)NULL;
+    const char	**listv;
+    const char	**tofree = (const char **)NULL;
     int	i;
 
     /* quell usage warning */
     clientData = clientData;
 
-    if ( argc < 2 )  {
+    if (argc < 2) {
 	char	buf[TINYBUFSIZ];
 	snprintf(buf, TINYBUFSIZ, "%d", argc);
-	Tcl_AppendResult( interp,
-			  "bu_get_all_keyword_values: wrong # of args (", buf, ").\n",
-			  "Usage: bu_get_all_keyword_values {list}\n",
-			  "Usage: bu_get_all_keyword_values key1 val1 key2 val2 ... keyN valN\n",
-			  (char *)NULL );
+	Tcl_AppendResult(interp,
+			 "bu_get_all_keyword_values: wrong # of args (", buf, ").\n",
+			 "Usage: bu_get_all_keyword_values {list}\n",
+			 "Usage: bu_get_all_keyword_values key1 val1 key2 val2 ... keyN valN\n",
+			 (char *)NULL);
 	return TCL_ERROR;
     }
 
-    if ( argc == 2 )  {
-	if ( Tcl_SplitList( interp, argv[1], &listc, (const char ***)&listv ) != TCL_OK )  {
-	    Tcl_AppendResult( interp,
-			      "bu_get_all_keyword_values: unable to split '",
-			      argv[1], "'\n", (char *)NULL );
+    if (argc == 2) {
+	if (Tcl_SplitList(interp, argv[1], &listc, (const char ***)&listv) != TCL_OK) {
+	    Tcl_AppendResult(interp,
+			     "bu_get_all_keyword_values: unable to split '",
+			     argv[1], "'\n", (char *)NULL);
 	    return TCL_ERROR;
 	}
 	tofree = listv;
@@ -973,46 +1004,46 @@ bu_get_all_keyword_values(ClientData	clientData,
 	listv = argv + 1;
     }
 
-    if ( (listc & 1) != 0 )  {
+    if ((listc & 1) != 0) {
 	char	buf[TINYBUFSIZ];
 	snprintf(buf, TINYBUFSIZ, "%d", listc);
-	Tcl_AppendResult( interp,
-			  "bu_get_all_keyword_values: odd # of items in list (",
-			  buf, "), aborting.\n",
-			  (char *)NULL );
-	if (tofree) free( (char *)tofree );	/* not bu_free() */
+	Tcl_AppendResult(interp,
+			 "bu_get_all_keyword_values: odd # of items in list (",
+			 buf, "), aborting.\n",
+			 (char *)NULL);
+	if (tofree) free((char *)tofree);	/* not bu_free() */
 	return TCL_ERROR;
     }
 
 
     /* Process all the pairs */
-    bu_vls_init( &variable );
-    for ( i=0; i < listc; i += 2 )  {
-	bu_vls_strcpy( &variable, "key_" );
-	bu_vls_strcat( &variable, listv[i] );
+    bu_vls_init(&variable);
+    for (i=0; i < listc; i += 2) {
+	bu_vls_strcpy(&variable, "key_");
+	bu_vls_strcat(&variable, listv[i]);
 	/* If value is a list, don't nest it in another list */
-	if ( listv[i+1][0] == '{' )  {
+	if (listv[i+1][0] == '{') {
 	    struct bu_vls	str;
-	    bu_vls_init( &str );
+	    bu_vls_init(&str);
 	    /* Skip leading { */
-	    bu_vls_strcat( &str, &listv[i+1][1] );
+	    bu_vls_strcat(&str, &listv[i+1][1]);
 	    /* Trim trailing } */
-	    bu_vls_trunc( &str, -1 );
-	    Tcl_SetVar( interp, bu_vls_addr(&variable),
-			bu_vls_addr(&str), 0);
-	    bu_vls_free( &str );
+	    bu_vls_trunc(&str, -1);
+	    Tcl_SetVar(interp, bu_vls_addr(&variable),
+		       bu_vls_addr(&str), 0);
+	    bu_vls_free(&str);
 	} else {
-	    Tcl_SetVar( interp, bu_vls_addr(&variable),
-			listv[i+1], 0 );
+	    Tcl_SetVar(interp, bu_vls_addr(&variable),
+		       listv[i+1], 0);
 	}
-	Tcl_AppendResult( interp, bu_vls_addr(&variable),
-			  " ", (char *)NULL );
-	bu_vls_trunc( &variable, 0 );
+	Tcl_AppendResult(interp, bu_vls_addr(&variable),
+			 " ", (char *)NULL);
+	bu_vls_trunc(&variable, 0);
     }
 
     /* All done */
-    bu_vls_free( &variable );
-    if (tofree) free( (char *)tofree );	/* not bu_free() */
+    bu_vls_free(&variable);
+    if (tofree) free((char *)tofree);	/* not bu_free() */
     return TCL_OK;
 }
 
@@ -1033,7 +1064,7 @@ int
 bu_tcl_rgb_to_hsv(ClientData	clientData,
 		  Tcl_Interp	*interp,
 		  int		argc,
-		  char		**argv)
+		  const char	**argv)
 {
     int		rgb_int[3];
     unsigned char	rgb[3];
@@ -1044,17 +1075,17 @@ bu_tcl_rgb_to_hsv(ClientData	clientData,
     clientData = clientData;
 
     bu_vls_init(&result);
-    if ( argc != 4 )  {
-	Tcl_AppendResult( interp, "Usage: bu_rgb_to_hsv R G B\n",
-			  (char *)NULL );
+    if (argc != 4) {
+	Tcl_AppendResult(interp, "Usage: bu_rgb_to_hsv R G B\n",
+			 (char *)NULL);
 	return TCL_ERROR;
     }
-    if (( Tcl_GetInt( interp, argv[1], &rgb_int[0] ) != TCL_OK )
-	|| ( Tcl_GetInt( interp, argv[2], &rgb_int[1] ) != TCL_OK )
-	|| ( Tcl_GetInt( interp, argv[3], &rgb_int[2] ) != TCL_OK )
-	|| ( rgb_int[0] < 0 ) || ( rgb_int[0] > 255 )
-	|| ( rgb_int[1] < 0 ) || ( rgb_int[1] > 255 )
-	|| ( rgb_int[2] < 0 ) || ( rgb_int[2] > 255 )) {
+    if ((Tcl_GetInt(interp, argv[1], &rgb_int[0]) != TCL_OK)
+	|| (Tcl_GetInt(interp, argv[2], &rgb_int[1]) != TCL_OK)
+	|| (Tcl_GetInt(interp, argv[3], &rgb_int[2]) != TCL_OK)
+	|| (rgb_int[0] < 0) || (rgb_int[0] > 255)
+	|| (rgb_int[1] < 0) || (rgb_int[1] > 255)
+	|| (rgb_int[2] < 0) || (rgb_int[2] > 255)) {
 	bu_vls_printf(&result, "bu_rgb_to_hsv: Bad RGB (%s, %s, %s)\n",
 		      argv[1], argv[2], argv[3]);
 	Tcl_AppendResult(interp, bu_vls_addr(&result), (char *)NULL);
@@ -1065,8 +1096,8 @@ bu_tcl_rgb_to_hsv(ClientData	clientData,
     rgb[1] = rgb_int[1];
     rgb[2] = rgb_int[2];
 
-    bu_rgb_to_hsv( rgb, hsv );
-    bu_vls_printf(&result, "%g %g %g", V3ARGS(hsv));
+    bu_rgb_to_hsv(rgb, hsv);
+    bu_vls_printf(&result, "%g %g %g", hsv[0], hsv[1], hsv[2]);
     Tcl_AppendResult(interp, bu_vls_addr(&result), (char *)NULL);
     bu_vls_free(&result);
     return TCL_OK;
@@ -1090,7 +1121,7 @@ int
 bu_tcl_hsv_to_rgb(ClientData	clientData,
 		  Tcl_Interp	*interp,
 		  int		argc,
-		  char		**argv)
+		  const char	**argv)
 {
     fastf_t		hsv[3];
     unsigned char	rgb[3];
@@ -1099,16 +1130,16 @@ bu_tcl_hsv_to_rgb(ClientData	clientData,
     /* quell usage warning */
     clientData = clientData;
 
-    if ( argc != 4 )  {
-	Tcl_AppendResult( interp, "Usage: bu_hsv_to_rgb H S V\n",
-			  (char *)NULL );
+    if (argc != 4) {
+	Tcl_AppendResult(interp, "Usage: bu_hsv_to_rgb H S V\n",
+			 (char *)NULL);
 	return TCL_ERROR;
     }
     bu_vls_init(&result);
-    if (( Tcl_GetDouble( interp, argv[1], &hsv[0] ) != TCL_OK )
-	|| ( Tcl_GetDouble( interp, argv[2], &hsv[1] ) != TCL_OK )
-	|| ( Tcl_GetDouble( interp, argv[3], &hsv[2] ) != TCL_OK )
-	|| ( bu_hsv_to_rgb( hsv, rgb ) == 0) ) {
+    if ((Tcl_GetDouble(interp, argv[1], &hsv[0]) != TCL_OK)
+	|| (Tcl_GetDouble(interp, argv[2], &hsv[1]) != TCL_OK)
+	|| (Tcl_GetDouble(interp, argv[3], &hsv[2]) != TCL_OK)
+	|| (bu_hsv_to_rgb(hsv, rgb) == 0)) {
 	bu_vls_printf(&result, "bu_hsv_to_rgb: Bad HSV (%s, %s, %s)\n",
 		      argv[1], argv[2], argv[3]);
 	Tcl_AppendResult(interp, bu_vls_addr(&result), (char *)NULL);
@@ -1116,7 +1147,7 @@ bu_tcl_hsv_to_rgb(ClientData	clientData,
 	return TCL_ERROR;
     }
 
-    bu_vls_printf(&result, "%d %d %d", V3ARGS(rgb));
+    bu_vls_printf(&result, "%d %d %d", rgb[0], rgb[1], rgb[2]);
     Tcl_AppendResult(interp, bu_vls_addr(&result), (char *)NULL);
     bu_vls_free(&result);
     return TCL_OK;
@@ -1140,7 +1171,7 @@ int
 bu_tcl_key_eq_to_key_val(ClientData	clientData,
 			 Tcl_Interp	*interp,
 			 int		argc,
-			 char		**argv)
+			 const char	**argv)
 {
     struct bu_vls vls;
     char *next;
@@ -1149,25 +1180,23 @@ bu_tcl_key_eq_to_key_val(ClientData	clientData,
     /* quell usage warning */
     clientData = clientData;
 
-    bu_vls_init( &vls );
+    bu_vls_init(&vls);
 
-    while ( ++i < argc )
-    {
-	if ( bu_key_eq_to_key_val( argv[i], &next, &vls ) )
-	{
-	    bu_vls_free( &vls );
+    while (++i < argc) {
+	if (bu_key_eq_to_key_val(argv[i], (const char **)&next, &vls)) {
+	    bu_vls_free(&vls);
 	    return TCL_ERROR;
 	}
 
-	if ( i < argc - 1 )
-	    Tcl_AppendResult(interp, bu_vls_addr( &vls ), " ", NULL );
+	if (i < argc - 1)
+	    Tcl_AppendResult(interp, bu_vls_addr(&vls), " ", NULL);
 	else
-	    Tcl_AppendResult(interp, bu_vls_addr( &vls ), NULL );
+	    Tcl_AppendResult(interp, bu_vls_addr(&vls), NULL);
 
-	bu_vls_trunc( &vls, 0 );
+	bu_vls_trunc(&vls, 0);
     }
 
-    bu_vls_free( &vls );
+    bu_vls_free(&vls);
     return TCL_OK;
 
 }
@@ -1189,29 +1218,28 @@ int
 bu_tcl_shader_to_key_val(ClientData	clientData,
 			 Tcl_Interp	*interp,
 			 int		argc,
-			 char		**argv)
+			 const char	**argv)
 {
     struct bu_vls vls;
 
     /* quell usage warning */
     clientData = clientData;
 
-    if ( argc < 2 )  {
-	Tcl_AppendResult( interp, "Usage: ", argv[0], " shader [key1=value ...]\n", (char *)NULL );
+    if (argc < 2) {
+	Tcl_AppendResult(interp, "Usage: ", argv[0], " shader [key1=value ...]\n", (char *)NULL);
 	return TCL_ERROR;
     }
 
-    bu_vls_init( &vls );
+    bu_vls_init(&vls);
 
-    if ( bu_shader_to_tcl_list( argv[1], &vls ) )
-    {
-	bu_vls_free( &vls );
-	return( TCL_ERROR );
+    if (bu_shader_to_tcl_list(argv[1], &vls)) {
+	bu_vls_free(&vls);
+	return (TCL_ERROR);
     }
 
-    Tcl_AppendResult(interp, bu_vls_addr( &vls ), NULL );
+    Tcl_AppendResult(interp, bu_vls_addr(&vls), NULL);
 
-    bu_vls_free( &vls );
+    bu_vls_free(&vls);
 
     return TCL_OK;
 
@@ -1234,19 +1262,18 @@ int
 bu_tcl_key_val_to_key_eq(ClientData	clientData,
 			 Tcl_Interp	*interp,
 			 int		argc,
-			 char		**argv)
+			 const char	**argv)
 {
     int i=0;
 
     /* quell usage warning */
     clientData = clientData;
 
-    for ( i=1; i<argc; i += 2 )
-    {
-	if ( i+1 < argc-1 )
-	    Tcl_AppendResult(interp, argv[i], "=", argv[i+1], " ", NULL );
+    for (i=1; i<argc; i += 2) {
+	if (i+1 < argc-1)
+	    Tcl_AppendResult(interp, argv[i], "=", argv[i+1], " ", NULL);
 	else
-	    Tcl_AppendResult(interp, argv[i], "=", argv[i+1], NULL );
+	    Tcl_AppendResult(interp, argv[i], "=", argv[i+1], NULL);
 
     }
     return TCL_OK;
@@ -1270,28 +1297,28 @@ int
 bu_tcl_shader_to_key_eq(ClientData	clientData,
 			Tcl_Interp	*interp,
 			int		argc,
-			char		**argv)
+			const char	**argv)
 {
     struct bu_vls vls;
 
     /* quell usage warning */
     clientData = clientData;
 
-    if ( argc < 2 )  {
-	Tcl_AppendResult( interp, "Usage: ", argv[0], " shader { tcl list }\n", (char *)NULL );
+    if (argc < 2) {
+	Tcl_AppendResult(interp, "Usage: ", argv[0], " shader { tcl list }\n", (char *)NULL);
 	return TCL_ERROR;
     }
 
-    bu_vls_init( &vls );
+    bu_vls_init(&vls);
 
-    if ( bu_shader_to_key_eq( argv[1], &vls ) ) {
-	bu_vls_free( &vls );
+    if (bu_shader_to_key_eq(argv[1], &vls)) {
+	bu_vls_free(&vls);
 	return TCL_ERROR;
     }
 
-    Tcl_AppendResult(interp, bu_vls_addr( &vls ), NULL );
+    Tcl_AppendResult(interp, bu_vls_addr(&vls), NULL);
 
-    bu_vls_free( &vls );
+    bu_vls_free(&vls);
 
     return TCL_OK;
 }
@@ -1313,7 +1340,7 @@ int
 bu_tcl_brlcad_root(ClientData	clientData,
 		   Tcl_Interp	*interp,
 		   int		 argc,
-		   char		**argv)
+		   const char	**argv)
 {
     /* quell usage warning */
     clientData = clientData;
@@ -1344,7 +1371,7 @@ int
 bu_tcl_brlcad_data(ClientData	clientData,
 		   Tcl_Interp	*interp,
 		   int		 argc,
-		   char		**argv)
+		   const char	**argv)
 {
     /* quell usage warning */
     clientData = clientData;
@@ -1375,7 +1402,7 @@ int
 bu_tcl_units_conversion(ClientData	clientData,
 			Tcl_Interp	*interp,
 			int		argc,
-			char		**argv)
+			const char	**argv)
 {
     double conv_factor;
     struct bu_vls result;
@@ -1390,7 +1417,7 @@ bu_tcl_units_conversion(ClientData	clientData,
     }
 
     conv_factor = bu_units_conversion(argv[1]);
-    if (NEAR_ZERO(conv_factor, SMALL_FASTF)) {
+    if (conv_factor <= 0.0) {
 	Tcl_AppendResult(interp, "ERROR: bu_units_conversion: Unrecognized units string: ",
 			 argv[1], "\n", (char *)NULL);
 	return TCL_ERROR;
@@ -1416,10 +1443,12 @@ bu_tcl_units_conversion(ClientData	clientData,
 void
 bu_tcl_setup(Tcl_Interp *interp)
 {
+    /*XXX Use of brlcad_interp is temporary */
+    brlcad_interp = interp;
     bu_register_cmds(interp, bu_cmds);
 
     Tcl_SetVar(interp, "BU_DEBUG_FORMAT", BU_DEBUG_FORMAT, TCL_GLOBAL_ONLY);
-    Tcl_LinkVar(interp, "bu_debug", (char *)&bu_debug, TCL_LINK_INT );
+    Tcl_LinkVar(interp, "bu_debug", (char *)&bu_debug, TCL_LINK_INT);
 
     /* initialize command history objects */
     Cho_Init(interp);

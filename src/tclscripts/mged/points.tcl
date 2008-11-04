@@ -391,7 +391,8 @@ proc pipe {pts} {
     eval "$cmd"
 
     close $fd
-    exec "asc-pl < pipe$pipe_number.plasc > pipe$pipe_nubmer.pl"
+    set asc2pl [bu_brlcad_root "bin/asc-pl"]
+    exec "$asc2pl < pipe$pipe_number.plasc > pipe$pipe_nubmer.pl"
 
     incr pipe_number
 
@@ -696,7 +697,8 @@ if { 1 == 0 } {
 	set c "Q"
     }
     close $fd
-    exec asc-pl < pipe.asc > pipe.pl
+    set asc2pl [bu_brlcad_root "bin/asc-pl"]
+    exec "$asc2pl < pipe.asc > pipe.pl"
     overlay pipe.pl
     file delete pipe.asc
 

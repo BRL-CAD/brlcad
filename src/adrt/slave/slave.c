@@ -40,8 +40,7 @@
 #include "tienet.h"
 #include "render_util.h"
 
-typedef struct adrt_slave_project_s
-{
+typedef struct adrt_slave_project_s {
     tie_t tie;
     render_camera_t camera;
     uint16_t last_frame;
@@ -57,9 +56,8 @@ adrt_slave_free()
     uint16_t i;
 
     for (i = 0; i < ADRT_MAX_WORKSPACE_NUM; i++)
-	if (adrt_workspace_list[i].active)
-	{
-//      render_camera_free (&camera);
+	if (adrt_workspace_list[i].active) {
+/*      render_camera_free (&camera); */
 	}
 }
 
@@ -130,8 +128,7 @@ adrt_slave_work(tienet_buffer_t *work, tienet_buffer_t *result)
 	    TCOPY(uint32_t, work->data, ind, &num, 0);
 	    ind += 4;
 
-	    for (i = 0; i < num; i++)
-	    {
+	    for (i = 0; i < num; i++) {
 		/* string length */
 		TCOPY(uint8_t, work->data, ind, &c, 0);
 		ind += 1;
@@ -270,8 +267,7 @@ adrt_slave_work(tienet_buffer_t *work, tienet_buffer_t *result)
 	    rm = work->data[ind];
 	    ind += 1;
 
-	    if (rm != adrt_workspace_list[wid].camera.rm || rm & 1<<7)
-	    {
+	    if (rm != adrt_workspace_list[wid].camera.rm || rm & 1<<7) {
 		rm = rm & ((1<<7)-1);
 
 		adrt_workspace_list[wid].camera.render.free (&adrt_workspace_list[wid].camera.render);
@@ -359,8 +355,7 @@ adrt_slave_work(tienet_buffer_t *work, tienet_buffer_t *result)
 	    ind += sizeof (camera_tile_t);
 
 	    /* Update camera if different frame */
-	    if (tile.frame != adrt_workspace_list[wid].last_frame)
-	    {
+	    if (tile.frame != adrt_workspace_list[wid].last_frame) {
 		adrt_workspace_list[wid].camera.type = type;
 		adrt_workspace_list[wid].camera.fov = fov;
 		adrt_workspace_list[wid].camera.pos = pos;
@@ -433,8 +428,7 @@ void adrt_slave_mesg(void *mesg, unsigned int mesg_len)
 
 	    ind += sizeof(int);
 
-	    for (i = 0; i < num; i++) 
-	    {
+	    for (i = 0; i < num; i++) {
 		memcpy(&c, &((unsigned char *)mesg)[ind], 1);
 		ind += 1;
 

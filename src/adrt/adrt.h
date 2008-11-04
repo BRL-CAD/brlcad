@@ -67,6 +67,11 @@ enum
 
 #define ADRT_NAME_SIZE 256
 
+#define ADRT_LOAD_FORMAT_MYSQL_F 0x64
+#define ADRT_LOAD_FORMAT_G 42
+#define ADRT_LOAD_FORMAT_REG 43
+#define ADRT_LOAD_FORMAT_KDTREE 44
+
 #endif
 
 /*

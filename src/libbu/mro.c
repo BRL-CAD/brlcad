@@ -39,11 +39,11 @@
  *
  */
 void
-bu_mro_init( struct bu_mro *mrop )
+bu_mro_init(struct bu_mro *mrop)
 {
     mrop->magic = BU_MRO_MAGIC;
-    bu_vls_init( &mrop->string_rep );
-    BU_MRO_INVALIDATE( mrop );
+    bu_vls_init(&mrop->string_rep);
+    BU_MRO_INVALIDATE(mrop);
 }
 
 
@@ -51,12 +51,12 @@ bu_mro_init( struct bu_mro *mrop )
  *
  */
 void
-bu_mro_free( struct bu_mro *mrop )
+bu_mro_free(struct bu_mro *mrop)
 {
-    BU_CK_MRO( mrop );
+    BU_CK_MRO(mrop);
 
-    bu_vls_free( &mrop->string_rep );
-    BU_MRO_INVALIDATE( mrop );
+    bu_vls_free(&mrop->string_rep);
+    BU_MRO_INVALIDATE(mrop);
 }
 
 
@@ -64,13 +64,13 @@ bu_mro_free( struct bu_mro *mrop )
  *
  */
 void
-bu_mro_set( struct bu_mro *mrop, const char *string )
+bu_mro_set(struct bu_mro *mrop, const char *string)
 {
-    BU_CK_MRO( mrop );
+    BU_CK_MRO(mrop);
 
-    bu_vls_trunc( &mrop->string_rep, 0 );
-    bu_vls_strcpy( &mrop->string_rep, string );
-    BU_MRO_INVALIDATE( mrop );
+    bu_vls_trunc(&mrop->string_rep, 0);
+    bu_vls_strcpy(&mrop->string_rep, string);
+    BU_MRO_INVALIDATE(mrop);
 }
 
 
@@ -78,12 +78,12 @@ bu_mro_set( struct bu_mro *mrop, const char *string )
  *
  */
 void
-bu_mro_init_with_string( struct bu_mro *mrop, const char *string )
+bu_mro_init_with_string(struct bu_mro *mrop, const char *string)
 {
     mrop->magic = BU_MRO_MAGIC;
-    bu_vls_init( &mrop->string_rep );
-    bu_vls_strcpy( &mrop->string_rep, string );
-    BU_MRO_INVALIDATE( mrop );
+    bu_vls_init(&mrop->string_rep);
+    bu_vls_strcpy(&mrop->string_rep, string);
+    BU_MRO_INVALIDATE(mrop);
 }
 
 /** @} */

@@ -26,6 +26,7 @@
  */
 
 #include "common.h"
+#include "bio.h"
 
 #include <stdio.h>
 #include <math.h>
@@ -50,7 +51,6 @@ dmo_drawDataAxes_cmd(struct dm *dmp,
     point_t rxv1, rxv2;
     point_t ryv1, ryv2;
     point_t rzv1, rzv2;
-    point_t o_rv2;
     /* Save the line attributes */
     int saveLineWidth = dmp->dm_lineWidth;
     int saveLineStyle = dmp->dm_lineStyle;

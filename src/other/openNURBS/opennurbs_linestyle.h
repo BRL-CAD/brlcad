@@ -2,13 +2,13 @@
 /* $NoKeywords: $ */
 /*
 //
-// Copyright (c) 1993-2001 Robert McNeel & Associates. All rights reserved.
+// Copyright (c) 1993-2007 Robert McNeel & Associates. All rights reserved.
 // Rhinoceros is a registered trademark of Robert McNeel & Assoicates.
 //
 // THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY.
 // ALL IMPLIED WARRANTIES OF FITNESS FOR ANY PARTICULAR PURPOSE AND OF
 // MERCHANTABILITY ARE HEREBY DISCLAIMED.
-//
+//				
 // For complete openNURBS copyright information see <http://www.opennurbs.org>.
 //
 ////////////////////////////////////////////////////////////////
@@ -21,16 +21,16 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
 // Class ON_DisplayMaterialRef
-//
+// 
 
 /*
 Description:
   Objects can have per viewport display properties
   that override a viewport's default display
-  properties.  These overrides are stored on
-  ON_3dmObjectAttributes as a list of
+  properties.  These overrides are stored on 
+  ON_3dmObjectAttributes as a list of 
   ON_DisplayMaterialRefs.
-
+  
 Example:
   For example, by default a viewport
   might display objects using a wireframe, but
@@ -60,10 +60,10 @@ public:
   // work fine.
 
   ON_UUID m_viewport_id;          // identifies the ON_Viewport
-                                  //   If nil, then the display material
-                                  //   will be used in all viewports
-                                  //   that are not explictly referenced
-                                  //   in other ON_DisplayMaterialRefs.
+				  //   If nil, then the display material
+				  //   will be used in all viewports
+				  //   that are not explictly referenced
+				  //   in other ON_DisplayMaterialRefs.
 
   ON_UUID m_display_material_id;  // id used to find display attributes
 

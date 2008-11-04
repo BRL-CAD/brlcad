@@ -18,7 +18,7 @@ endif
 	${OPENNURBS}
 
 EXTRA_DIST = \
-        CMakeLists.txt
+	CMakeLists.txt
 
 include $(top_srcdir)/misc/Makefile.defs
 

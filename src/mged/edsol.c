@@ -43,7 +43,6 @@
 #include "db.h"
 
 #include "./mged.h"
-#include "./mged_solid.h"
 #include "./sedit.h"
 #include "./mged_dm.h"
 
@@ -72,10 +71,10 @@ point_t e_axes_pos;
 point_t curr_e_axes_pos;
 short int fixv;		/* used in ECMD_ARB_ROTATE_FACE,f_eqn(): fixed vertex */
 
-MGED_EXTERN( struct wdb_pipept *find_pipept_nearest_pt, (const struct bu_list *pipe_hd, const point_t pt ) );
-MGED_EXTERN( void split_pipept, (struct bu_list *pipe_hd, struct wdb_pipept *ps, point_t pt ) );
-MGED_EXTERN( struct wdb_pipept *del_pipept, (struct wdb_pipept *ps ) );
-MGED_EXTERN( struct wdb_pipept *add_pipept, (struct rt_pipe_internal *pipe, struct wdb_pipept *pp, const point_t new_pt ) );
+extern struct wdb_pipept *find_pipept_nearest_pt(const struct bu_list *pipe_hd, const point_t pt);
+extern void split_pipept(struct bu_list *pipe_hd, struct wdb_pipept *ps, point_t pt);
+extern struct wdb_pipept *del_pipept(struct wdb_pipept *ps);
+extern struct wdb_pipept *add_pipept(struct rt_pipe_internal *pipe, struct wdb_pipept *pp, const point_t new_pt);
 
 /* data for solid editing */
 int			sedraw;	/* apply solid editing changes */
@@ -2462,6 +2461,7 @@ init_sedit(void)
     if ( id == ID_ARB8 )
     {
 	struct rt_arb_internal *arb;
+	struct bu_vls error_msg;
 
 	arb = (struct rt_arb_internal *)es_int.idb_ptr;
 	RT_ARB_CK_MAGIC( arb );
@@ -2469,13 +2469,17 @@ init_sedit(void)
 	type = rt_arb_std_type( &es_int, &mged_tol );
 	es_type = type;
 
-	if (rt_arb_calc_planes(interp, arb, es_type, es_peqn, &mged_tol))
+	bu_vls_init(&error_msg);
+	if (rt_arb_calc_planes(&error_msg, arb, es_type, es_peqn, &mged_tol))
 	{
-	    Tcl_AppendResult(interp, "Cannot calculate plane equations for ARB8\n",
+	    Tcl_AppendResult(interp, bu_vls_addr(&error_msg),
+			     "\nCannot calculate plane equations for ARB8\n",
 			     (char *)NULL);
 	    rt_db_free_internal( &es_int, &rt_uniresource );
+	    bu_vls_free(&error_msg);
 	    return;
 	}
+	bu_vls_free(&error_msg);
     }
     else if ( id == ID_BSPLINE )
     {
@@ -2710,7 +2714,7 @@ get_rotation_vertex(void)
     }
     bu_vls_printf(&str, ") [%d]: ",arb_vertices[type][loc]);
 
-    bu_vls_printf(&cmd, "cad_input_dialog .get_vertex %S {Need vertex for solid rotate}\
+    bu_vls_printf(&cmd, "cad_input_dialog .get_vertex %V {Need vertex for solid rotate}\
  {%s} vertex_num %d 0 {{ summary \"Enter a vertex number to rotate about.\"}} OK",
 		  &dName, bu_vls_addr(&str), arb_vertices[type][loc]);
 
@@ -3726,7 +3730,7 @@ sedit(void)
 #endif
 	    }
 
-	    pr_prompt();
+	    pr_prompt(interactive);
 	    fixv--;
 	    es_edflag = ECMD_ARB_ROTATE_FACE;
 	    view_state->vs_flag = 1;	/* draw arrow, etc */
@@ -5866,10 +5870,15 @@ sedit(void)
     /* must re-calculate the face plane equations for arbs */
     if ( es_int.idb_type == ID_ARB8 )
     {
+	struct bu_vls error_msg;
+
 	arb = (struct rt_arb_internal *)es_int.idb_ptr;
 	RT_ARB_CK_MAGIC( arb );
 
-	(void)rt_arb_calc_planes(interp, arb, es_type, es_peqn, &mged_tol);
+	bu_vls_init(&error_msg);
+	if (rt_arb_calc_planes(&error_msg, arb, es_type, es_peqn, &mged_tol) < 0)
+	    Tcl_AppendResult( interp, bu_vls_addr(&error_msg), (char *)0);
+	bu_vls_free(&error_msg);
     }
 
     /* If the keypoint changed location, find about it here */
@@ -7973,7 +7982,7 @@ oedit_accept(void)
 	    sp->s_iflag = DOWN;
 	}
 	bu_log("Sorry, this database is READ-ONLY\n");
-	pr_prompt();
+	pr_prompt(interactive);
 
 	return;
     }
@@ -8164,7 +8173,7 @@ sedit_accept(void)
     if (dbip->dbi_read_only) {
 	sedit_reject();
 	bu_log( "Sorry, this database is READ-ONLY\n" );
-	pr_prompt();
+	pr_prompt(interactive);
 	return;
     }
 
@@ -9003,56 +9012,6 @@ label_edited_solid(
     pl[npl].str[0] = '\0';	/* Mark ending */
 }
 
-#if 0
-#ifndef HIDE_MGEDS_ARB_ROUTINES
-/* -------------------------------- */
-/*
- *			R T _ A R B _ C A L C _ P L A N E S
- *
- *	Calculate the plane (face) equations for an arb
- *	output previously went to es_peqn[i].
- *
- *  Returns -
- *	-1	Failure
- *	 0	OK
- */
-int
-rt_arb_calc_planes(
-    plane_t			planes[6],
-    struct rt_arb_internal	*arb,
-    int			type,
-    const struct bn_tol	*tol)
-{
-    register int i, p1, p2, p3;
-
-    RT_ARB_CK_MAGIC( arb);
-    BN_CK_TOL( tol );
-
-    type -= 4;	/* ARB4 at location 0, ARB5 at 1, etc */
-
-    for (i=0; i<6; i++) {
-	if (rt_arb_faces[type][i*4] == -1)
-	    break;	/* faces are done */
-	p1 = rt_arb_faces[type][i*4];
-	p2 = rt_arb_faces[type][i*4+1];
-	p3 = rt_arb_faces[type][i*4+2];
-
-	if ( bn_mk_plane_3pts( planes[i],
-			       arb->pt[p1], arb->pt[p2], arb->pt[p3], tol ) < 0 )  {
-	    struct bu_vls tmp_vls;
-
-	    bu_vls_init(&tmp_vls);
-	    bu_vls_printf(&tmp_vls, "rt_arb_calc_planes: No eqn for face %d%d%d%d\n",
-			  p1+1, p2+1, p3+1, rt_arb_faces[type][i*4+3]+1);
-	    Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
-	    bu_vls_free(&tmp_vls);
-	    return -1;
-	}
-    }
-    return 0;
-}
-#endif
-#endif
 
 /* -------------------------------- */
 void
@@ -9540,11 +9499,18 @@ f_get_sedit(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
     }
 
     if (argc == 1) {
+	struct bu_vls log;
+
+	bu_vls_init(&log);
+
 	/* get solid type and parameters */
 	RT_CK_DB_INTERNAL(&es_int);
 	RT_CK_FUNCTAB(es_int.idb_meth);
-	status = es_int.idb_meth->ft_tclget(interp, &es_int, (char *)0);
+	status = es_int.idb_meth->ft_get(&log, &es_int, (char *)0);
+	Tcl_AppendResult(interp, bu_vls_addr(&log), (char *)0);
 	pto = Tcl_GetObjResult(interp);
+
+	bu_vls_free(&log);
 
 	pnto = Tcl_NewObj();
 	/* insert solid name, type and parameters */
@@ -9567,7 +9533,14 @@ f_get_sedit(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
     /* get solid type and parameters */
     RT_CK_DB_INTERNAL(&ces_int);
     RT_CK_FUNCTAB(ces_int.idb_meth);
-    status = ces_int.idb_meth->ft_tclget(interp, &ces_int, (char *)0);
+    {
+	struct bu_vls log;
+
+	bu_vls_init(&log);
+	status = ces_int.idb_meth->ft_get(&log, &ces_int, (char *)0);
+	Tcl_AppendResult(interp, bu_vls_addr(&log), (char *)0);
+	bu_vls_free(&log);
+    }
     pto = Tcl_GetObjResult(interp);
 
     pnto = Tcl_NewObj();
@@ -9639,8 +9612,8 @@ f_put_sedit(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 
     save_magic = *((long *)es_int.idb_ptr);
     *((long *)es_int.idb_ptr) = ftp->ft_internal_magic;
-    if ( bu_structparse_argv(interp, argc-2, argv+2, ftp->ft_parsetab,
-			     (char *)es_int.idb_ptr )==TCL_ERROR ) {
+    if ( bu_tcl_structparse_argv(interp, argc-2, argv+2, ftp->ft_parsetab,
+				 (char *)es_int.idb_ptr )==TCL_ERROR ) {
 	return TCL_ERROR;
     }
     *((long *)es_int.idb_ptr) = save_magic;
@@ -9651,11 +9624,15 @@ f_put_sedit(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
     /* must re-calculate the face plane equations for arbs */
     if ( es_int.idb_type == ID_ARB8 ) {
 	struct rt_arb_internal *arb;
+	struct bu_vls error_msg;
 
 	arb = (struct rt_arb_internal *)es_int.idb_ptr;
 	RT_ARB_CK_MAGIC( arb );
 
-	(void)rt_arb_calc_planes(interp, arb, es_type, es_peqn, &mged_tol);
+	bu_vls_init(&error_msg);
+	if (rt_arb_calc_planes(&error_msg, arb, es_type, es_peqn, &mged_tol) < 0)
+	    Tcl_AppendResult(interp, bu_vls_addr(&error_msg), (char *)0);
+	bu_vls_free(&error_msg);
     }
 
     if (!es_keyfixed)

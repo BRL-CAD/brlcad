@@ -229,6 +229,10 @@
 			Filter="cpp;c;cxx;rc;def;r;odl;idl;hpj;bat"
 			>
 			<File
+				RelativePath="..\..\..\src\libdm\adc.c"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\src\libdm\axes.c"
 				>
 				<FileConfiguration
@@ -373,6 +377,10 @@
 				</FileConfiguration>
 			</File>
 			<File
+				RelativePath="..\..\..\src\libdm\grid.c"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\src\libdm\knob.c"
 				>
 				<FileConfiguration
@@ -431,6 +439,10 @@
 						AdditionalIncludeDirectories=""
 					/>
 				</FileConfiguration>
+			</File>
+			<File
+				RelativePath="..\..\..\src\libdm\rect.c"
+				>
 			</File>
 			<File
 				RelativePath="..\..\..\src\libdm\tcl.c"

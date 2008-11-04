@@ -1,4 +1,4 @@
-/*                          G _ P G . C
+/*                            P O L Y . C
  * BRL-CAD
  *
  * Copyright (c) 1985-2008 United States Government as represented by
@@ -17,9 +17,9 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @addtogroup g_  */
+/** @addtogroup primitives */
 /** @{ */
-/** @file g_pg.c
+/** @file poly/poly.c
  *
  * Intersect a ray with a Polygonal Object that has no explicit
  * topology.  It is assumed that the solid has no holes.
@@ -854,6 +854,15 @@ rt_pg_ifree(struct rt_db_internal *ip)
     pgp->npoly = 0;
     bu_free( (char *)pgp, "pg ifree" );
     ip->idb_ptr = GENPTR_NULL;	/* sanity */
+}
+/**
+ *			R T _ P G _ P A R A M S
+ *
+ */
+int
+rt_pg_params(struct pc_pc_set * ps, const struct rt_db_internal *ip)
+{
+    return(0);			/* OK */
 }
 
 /**

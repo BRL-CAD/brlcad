@@ -21,11 +21,11 @@
 /** @{ */
 /** @file lex.c
  *
- *  @author
- *	Christopher T. Johnson
+ * @author
+ * Christopher T. Johnson
  *
- *  @par Source
- *	Geometric Solutions, Inc.
+ * @par Source
+ * Geometric Solutions, Inc.
  */
 /** @} */
 
@@ -39,7 +39,7 @@
 static int bu_lex_reading_comment = 0;
 
 /**
- *			B U _ L E X _ G E T O N E
+ * B U _ L E X _ G E T O N E
  */
 static char *
 bu_lex_getone(int *used, struct bu_vls *rtstr)
@@ -98,9 +98,9 @@ bu_lex_getone(int *used, struct bu_vls *rtstr)
 	tc = *cp; cp++;
 	/*
 	 * Numbers come in the following forms
-	 *	[0-9]*
-	 *	[0-9]*.[0-9][0-9]*
-	 *	[0-9]*.[0-9][0-9]*{e|E}{+|-}[0-9][0-9]*
+	 * [0-9]*
+	 * [0-9]*.[0-9][0-9]*
+	 * [0-9]*.[0-9][0-9]*{e|E}{+|-}[0-9][0-9]*
 	 */
 	if (number) {
 	    /*
@@ -160,7 +160,7 @@ bu_lex_getone(int *used, struct bu_vls *rtstr)
 }
 
 /**
- *			B U _ L E X
+ * B U _ L E X
  */
 int
 bu_lex(
@@ -194,9 +194,9 @@ bu_lex(
 	/*
 	 * Humm, this could be a number.
 	 * 	octal -- 0[0-7]*
-	 *	hex   -- 0x[0-9a-f]*
-	 *	dec   -- [0-9][0-9]*
-	 *	dbl   -- [0-9][0-9]*.[0-9]*{{E|e}{+|-}[0-9][0-9]*}
+	 * hex   -- 0x[0-9a-f]*
+	 * dec   -- [0-9][0-9]*
+	 * dbl   -- [0-9][0-9]*.[0-9]*{{E|e}{+|-}[0-9][0-9]*}
 	 */
 	if (*unit == '0') {
 	    /* any of the above */
@@ -214,7 +214,7 @@ bu_lex(
 	    /*
 	     * if it is not an octal number, maybe it is
 	     * a hex number?"
-	     *	hex   -- 0x[0-9a-f]*
+	     * hex   -- 0x[0-9a-f]*
 	     */
 	    cp=unit+1;
 	    if (*cp == 'x' || *cp == 'X') {
@@ -229,7 +229,7 @@ bu_lex(
 	}
 	/*
 	 * This could be a decimal number, a double or an identifier.
-	 *	dec   -- [0-9][0-9]*
+	 * dec   -- [0-9][0-9]*
 	 */
 	for (cp=unit; *cp && isdigit(*cp); cp++);
 	if (!*cp) {
@@ -241,7 +241,7 @@ bu_lex(
 	/*
 	 * if we are here, then this is either a double or
 	 * an identifier.
-	 *	dbl   -- [0-9][0-9]*.[0-9]*{{E|e}{+|-}[0-9][0-9]*}
+	 * dbl   -- [0-9][0-9]*.[0-9]*{{E|e}{+|-}[0-9][0-9]*}
 	 *
 	 * *cp should be a '.'
 	 */
@@ -266,7 +266,7 @@ bu_lex(
      * We either have an identifier, keyword, or symbol.
      */
     if (symbols) {
-	if (!*(unit+1) ) {
+	if (!*(unit+1)) {
 	    /* single character, good choice for a symbol. */
 	    register struct bu_lex_key *sp;
 	    for (sp=symbols;sp->tok_val;sp++) {

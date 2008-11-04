@@ -51,10 +51,10 @@
 
 #include "common.h"
 
+#include "bio.h"
+
 /* without OBJ_BREP, this entire procedural example is disabled */
 #ifdef OBJ_BREP
-
-#include "bio.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -66,6 +66,16 @@ extern "C" {
 #ifdef __cplusplus
 }
 #endif
+
+#undef A
+#undef B
+#undef C
+#undef D
+#undef E
+#undef F
+#undef G
+#undef H
+
 
 enum {
     A, B, C, D, E, F, G, H

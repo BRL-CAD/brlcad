@@ -21,12 +21,6 @@
  *
  * Routine(s) to mirror objects.
  *
- * Authors -
- *   Christopher Sean Morrison
- *   Michael John Muuss
- *
- * Source -
- *   BRL-CAD Open Source
  */
 
 #include "common.h"
@@ -41,8 +35,6 @@
 #include "bu.h"
 #include "vmath.h"
 #include "nurb.h"
-
-extern int wdb_get_obj_bounds();
 
 
 /**
@@ -936,12 +928,6 @@ rt_mirror(struct db_i		*dbip,
 		mat_t mat;
 
 		VMOVE(n1, np);
-
-#if 0
-		/*XXX should already be normalized */
-		VUNITIZE(n1);
-#endif
-
 		VCROSS(n2, mirror_dir, n1);
 		VUNITIZE(n2);
 		ang = M_PI_2 - acos(VDOT(n1,mirror_dir));
@@ -973,40 +959,6 @@ rt_mirror(struct db_i		*dbip,
     return dp;
 }
 
-#if 0
-/**
- * Call rt_mirror using the specified object's center as the mirror_origin.
- *
- **/
-struct directory *
-rt_mirror2(struct rt_wdb	*wdbp,
-	   Tcl_Interp		*interp,
-	   const char 		*from,
-	   const char 		*to,
-	   vect_t		mirror_dir,
-	   fastf_t 		mirror_pt,
-	   struct resource 	*resp)
-{
-    point_t center;
-    point_t rpp_min, rpp_max;
-    char *av[2];
-    int use_air = 1;
-
-    av[0] = (char *)from;
-    av[1] = (char *)0;
-
-    /*XXX This is known to fail on grips and half spaces. */
-    if (wdb_get_obj_bounds(wdbp, interp, 1, av, use_air, rpp_min, rpp_max) == TCL_ERROR) {
-	bu_log("rt_mirror1: unable to acquire bounds for %s\n", from);
-	return DIR_NULL;
-    }
-
-    VADD2(center, rpp_min, rpp_max);
-    VSCALE(center, center, 0.5);
-
-    return rt_mirror(wdbp->dbip, from, to, center, mirror_dir, mirror_pt, resp);
-}
-#endif
 
 /*
  * Local Variables:

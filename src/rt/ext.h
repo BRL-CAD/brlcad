@@ -27,10 +27,6 @@
  *
  */
 
-/***** Variables declared in viewXXX.c */
-extern int		use_air;		/* Handling of air in librt */
-/***** end of sharing with viewing model *****/
-
 /***** Variables declared in liboptical or multispectral *****/
 #ifdef RT_MULTISPECTRAL
 extern const struct bn_table		*spectrum;
@@ -51,6 +47,7 @@ extern int		sub_ymin;
 extern int		sub_xmax;		/* upper right of sub rectangle */
 extern int		sub_ymax;
 extern int              transpose_grid;         /* reverse the order of grid traversal */
+extern int		use_air;		/* Handling of air in librt */
 
 /***** variables from main.c *****/
 extern FILE		*outfp;			/* optional output file */

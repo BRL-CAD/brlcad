@@ -43,6 +43,7 @@ brlcadinclude_wanted = \
 	fb.h \
 	fbio.h \
 	fbserv_obj.h \
+	gcv.h \
 	libtermio.h \
 	light.h \
 	mater.h \
@@ -52,6 +53,7 @@ brlcadinclude_wanted = \
 	optical.h \
 	orle.h \
 	photonmap.h \
+	pc.h \
 	pkg.h \
 	plastic.h \
 	plot3.h \

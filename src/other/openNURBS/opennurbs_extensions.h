@@ -2,13 +2,13 @@
 /* $NoKeywords: $ */
 /*
 //
-// Copyright (c) 1993-2006 Robert McNeel & Associates. All rights reserved.
+// Copyright (c) 1993-2007 Robert McNeel & Associates. All rights reserved.
 // Rhinoceros is a registered trademark of Robert McNeel & Assoicates.
 //
 // THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY.
 // ALL IMPLIED WARRANTIES OF FITNESS FOR ANY PARTICULAR PURPOSE AND OF
 // MERCHANTABILITY ARE HEREBY DISCLAIMED.
-//
+//				
 // For complete openNURBS copyright information see <http://www.opennurbs.org>.
 //
 ////////////////////////////////////////////////////////////////
@@ -25,6 +25,22 @@ Description:
 class ON_CLASS ONX_Model_UserData
 {
 public:
+#if defined(ON_DLL_EXPORTS) || defined(ON_DLL_IMPORTS)
+  // See comments at the top of opennurbs_extensions.cpp for details.
+
+  // new/delete
+  void* operator new(size_t);
+  void  operator delete(void*);
+
+  // array new/delete
+  void* operator new[] (size_t);
+  void  operator delete[] (void*);
+
+  // in place new/delete
+  void* operator new(size_t,void*);
+  void  operator delete(void*,void*);
+#endif
+
   ONX_Model_UserData();
   ~ONX_Model_UserData();
   ONX_Model_UserData(const ONX_Model_UserData&);
@@ -47,6 +63,22 @@ Description:
 class ON_CLASS ONX_Model_Object
 {
 public:
+#if defined(ON_DLL_EXPORTS) || defined(ON_DLL_IMPORTS)
+  // See comments at the top of opennurbs_extensions.cpp for details.
+
+  // new/delete
+  void* operator new(size_t);
+  void  operator delete(void*);
+
+  // array new/delete
+  void* operator new[] (size_t);
+  void  operator delete[] (void*);
+
+  // in place new/delete
+  void* operator new(size_t,void*);
+  void  operator delete(void*,void*);
+#endif
+
   ONX_Model_Object();
   ~ONX_Model_Object();
   ONX_Model_Object(const ONX_Model_Object&);
@@ -73,6 +105,22 @@ Description:
 class ON_CLASS ONX_Model_RenderLight
 {
 public:
+#if defined(ON_DLL_EXPORTS) || defined(ON_DLL_IMPORTS)
+  // See comments at the top of opennurbs_extensions.cpp for details.
+
+  // new/delete
+  void* operator new(size_t);
+  void  operator delete(void*);
+
+  // array new/delete
+  void* operator new[] (size_t);
+  void  operator delete[] (void*);
+
+  // in place new/delete
+  void* operator new(size_t,void*);
+  void  operator delete(void*,void*);
+#endif
+
   ONX_Model_RenderLight();
   ~ONX_Model_RenderLight();
   ONX_Model_RenderLight(const ONX_Model_RenderLight&);
@@ -84,7 +132,7 @@ public:
 
 #if defined(ON_DLL_TEMPLATE)
 // This stuff is here because of a limitation in the way Microsoft
-// handles templates and DLLs.  See Microsoft's knowledge base
+// handles templates and DLLs.  See Microsoft's knowledge base 
 // article ID Q168958 for details.
 #pragma warning( push )
 #pragma warning( disable : 4231 )
@@ -123,6 +171,22 @@ Description:
 class ON_CLASS ONX_Model
 {
 public:
+#if defined(ON_DLL_EXPORTS) || defined(ON_DLL_IMPORTS)
+  // See comments at the top of opennurbs_extensions.cpp for details.
+
+  // new/delete
+  void* operator new(size_t);
+  void  operator delete(void*);
+
+  // array new/delete
+  void* operator new[] (size_t);
+  void  operator delete[] (void*);
+
+  // in place new/delete
+  void* operator new(size_t,void*);
+  void  operator delete(void*,void*);
+#endif
+
   ONX_Model();
   virtual ~ONX_Model();
 
@@ -145,146 +209,146 @@ public:
     errors.
   Example:
 
-            // for ASCII file names
-            const char* sFileName = ....;
-            FILE* fp = ON::OpenFile( sFileName, "rb");
+	    // for ASCII file names
+	    const char* sFileName = ....;
+	    FILE* fp = ON::OpenFile( sFileName, "rb");
 
-            // for UNICODE file names
-            const wchar* sFileName = ....;
-            FILE* fp = ON::OpenFile( sFileName, L"rb");
+	    // for UNICODE file names
+	    const wchar* sFileName = ....;
+	    FILE* fp = ON::OpenFile( sFileName, L"rb");
 
-            bool bModelRead = false;
-            bool bModelIsValid = false;
+	    bool bModelRead = false;
+	    bool bModelIsValid = false;
 
-            ON_TextLog error_log;
-            ONX_Model model;
+	    ON_TextLog error_log;
+	    ONX_Model model;
 
-            if ( 0 != fp )
-            {
-              ON_BinaryFile archive( ON::read3dm, fp );
-              bModelRead = model.read( archive, error_log );
-              ON::CloseFile( fp );
-            }
+	    if ( 0 != fp )
+	    {
+	      ON_BinaryFile archive( ON::read3dm, fp );
+	      bModelRead = model.read( archive, error_log );
+	      ON::CloseFile( fp );
+	    }
 
-            if ( bModelRead )
-            {
-              bModelIsValid = model.Validate(error_log);
-            }
+	    if ( bModelRead )
+	    {
+	      bModelIsValid = model.Validate(error_log);
+	    }
 
   See Also:
     ONX_Model::IsValid
     ONX_Model::Write
     ONX_Model::m_crc_error_count
   */
-  bool Read(
-         ON_BinaryArchive& archive,
-         ON_TextLog* error_log = NULL
-         );
+  bool Read( 
+	 ON_BinaryArchive& archive,
+	 ON_TextLog* error_log = NULL
+	 );
 
-  bool Read(
-         const char* filename,
-         ON_TextLog* error_log = NULL
-         );
+  bool Read( 
+	 const char* filename,
+	 ON_TextLog* error_log = NULL
+	 );
 
-  bool Read(
-         const wchar_t* filename,
-         ON_TextLog* error_log = NULL
-         );
+  bool Read( 
+	 const wchar_t* filename,
+	 ON_TextLog* error_log = NULL
+	 );
 
   /*
   Description:
     Writes contents of this model to an openNURBS archive.
-    I STRONGLY suggested that you call Polish() before calling
+    I STRONGLY suggested that you call Polish() before calling 
     Write so that your file has all the "fluff" that makes it
     complete.  If the model is not valid, then Write will refuse
     to write it.
   Parameters:
     archive - [in] archive to write to
     version - [in] Version of the openNURBS archive to write.
-                   Must be 2, 3 or 4.
-                   Rhino 2.x can read version 2 files.
-                   Rhino 3.x can read version 2 and 3 files.
-                   Rhino 4.x can read version 2, 3 and 4 files.
-                   Use version 4 when possible.
-    sStartSectionComment - [in]
-                   Brief ASCII desciption of your app, today's date,
-                   etc.
+		   Must be 2, 3 or 4.  
+		   Rhino 2.x can read version 2 files.
+		   Rhino 3.x can read version 2 and 3 files.
+		   Rhino 4.x can read version 2, 3 and 4 files.
+		   Use version 4 when possible.
+    sStartSectionComment - [in] 
+		   Brief ASCII desciption of your app, today's date,
+		   etc.
     error_log - [out] any archive writing errors are logged here.
   Returns:
-    True if archive is written with no error.
+    True if archive is written with no error. 
     False if errors occur.
     Error details are logged in error_log.
   Example:
 
-            model = ...;
+	    model = ...;
 
-            model.Polish(); // fill in defaults as needed.
+	    model.Polish(); // fill in defaults as needed.
 
-            ON_TextLog error_log;
-            if ( !model.IsValid( error_log ) )
-            {
-              // try to repair the model
-              model.Audit(true);
-            }
+	    ON_TextLog error_log;
+	    if ( !model.IsValid( error_log ) )
+	    {
+	      // try to repair the model
+	      model.Audit(true);
+	    }
 
-            if ( model.IsValid( error_log ) )
-            {
+	    if ( model.IsValid( error_log ) )
+	    {
 
-              // for ASCII file names
-              const char* sFileName = ....;
-              FILE* fp = ON::OpenFile( sFileName, "wb");
+	      // for ASCII file names
+	      const char* sFileName = ....;
+	      FILE* fp = ON::OpenFile( sFileName, "wb");
 
-              // for UNICODE file names
-              const wchar* sFileName = ....;
-              FILE* fp = ON::OpenFile( sFileName, L"wb");
+	      // for UNICODE file names
+	      const wchar* sFileName = ....;
+	      FILE* fp = ON::OpenFile( sFileName, L"wb");
 
-              bool ok = false;
-              if ( 0 != fp )
-              {
-                const char* sStartSectionComment = "...";
-                int version = 4; // 2, 3, or 4 are valid
-                ON_BinaryFile archive( ON::write3dm, fp );
-                ok = model.write( archive,
-                                  version,
-                                  sStartSectionComment,
-                                  error_log );
-                ON::CloseFile( fp );
-              }
-           }
+	      bool ok = false;
+	      if ( 0 != fp )
+	      {
+		const char* sStartSectionComment = "...";
+		int version = 4; // 2, 3, or 4 are valid
+		ON_BinaryFile archive( ON::write3dm, fp );
+		ok = model.write( archive, 
+				  version, 
+				  sStartSectionComment, 
+				  error_log );
+		ON::CloseFile( fp );
+	      }
+	   }
 
   See Also:
     ONX_Model::Polish
     ONX_Model::IsValid
     ONX_Model::Read
   */
-  bool Write(
-         ON_BinaryArchive& archive,
-         int version = 4,
-         const char* sStartSectionComment = NULL,
-         ON_TextLog* error_log = NULL
-         );
+  bool Write( 
+	 ON_BinaryArchive& archive,
+	 int version = 4,
+	 const char* sStartSectionComment = NULL,
+	 ON_TextLog* error_log = NULL
+	 );
 
-  bool Write(
-         const char* filename,
-         int version = 4,
-         const char* sStartSectionComment = NULL,
-         ON_TextLog* error_log = NULL
-         );
+  bool Write( 
+	 const char* filename,
+	 int version = 4,
+	 const char* sStartSectionComment = NULL,
+	 ON_TextLog* error_log = NULL
+	 );
 
-  bool Write(
-         const wchar_t* filename,
-         int version = 4,
-         const char* sStartSectionComment = NULL,
-         ON_TextLog* error_log = NULL
-         );
+  bool Write( 
+	 const wchar_t* filename,
+	 int version = 4,
+	 const char* sStartSectionComment = NULL,
+	 ON_TextLog* error_log = NULL
+	 );
 
   /*
   Description:
     Check a model to make sure it is valid.
   Parameters:
     text_log - [in] if not NULL and errors are found,
-                    a description of the problem is put in
-                    this text_log.
+		    a description of the problem is put in
+		    this text_log.
   Returns:
     True if the model is valid.
   */
@@ -292,8 +356,8 @@ public:
 
   /*
   Description:
-    Quickly fills in the little details, like making sure there is
-    at least one layer and table indices make sense.
+    Quickly fills in the little details, like making sure there is 
+    at least one layer and table indices make sense.  
     For a full blown check and repair, call Audit(true).
   See Also:
     ONX_Model::Audit
@@ -307,43 +371,43 @@ public:
     and requrested, attempt to repair.
   Parameters:
     bAttemptRepair - [in] if true and a problem is found,
-         the problem is repaired.
+	 the problem is repaired.
     repair_count - [out] number of successful repairs.
     text_log - [in] if not NULL and errors are found,
-                    a description of the problem is put in
-                    this text_log.
+		    a description of the problem is put in
+		    this text_log.
     warnings - [out]
-        If problems were found, warning ids are appended to this list.
-          @untitled table
-           1      m_material_table[] flaws
-           2      layer table is not perfect.
-           3      some m_object_table[].m_attributes.m_uuid was nil or not unique.
-           4      some m_object_table[].IsValid() is false
-           5      some m_idef_table[] has an invalid or duplicate name
-           6      warning some m_idef_table[].m_object_uuid[] is not valid
-           7      warning some m_object_table[].m_object is null
-           8      warning some m_object_table[].m_object->IsValid() is false
-           9      warning some m_object_table[].m_attributes is not valid
-          10      linetype table is not perfect.
-          11      lineset table is not perfect.
-          12      some m_idef_table[].m_uuid was nil or not unique.
-          13      some m_texture_mapping_table[i].m_mapping_id was nil or not unique.
-          14      some m_material_table[i].m_material_id was nil or not unique.
-          15      some m_light_table[i].m_light_id was nil or not unique.
+	If problems were found, warning ids are appended to this list.
+	  @untitled table
+	   1      m_material_table[] flaws
+	   2      layer table is not perfect.
+	   3      some m_object_table[].m_attributes.m_uuid was nil or not unique.
+	   4      some m_object_table[].IsValid() is false
+	   5      some m_idef_table[] has an invalid or duplicate name
+	   6      warning some m_idef_table[].m_object_uuid[] is not valid
+	   7      warning some m_object_table[].m_object is null
+	   8      warning some m_object_table[].m_object->IsValid() is false
+	   9      warning some m_object_table[].m_attributes is not valid
+	  10      linetype table is not perfect.
+	  11      lineset table is not perfect.
+	  12      some m_idef_table[].m_uuid was nil or not unique.
+	  13      some m_texture_mapping_table[i].m_mapping_id was nil or not unique.
+	  14      some m_material_table[i].m_material_id was nil or not unique.
+	  15      some m_light_table[i].m_light_id was nil or not unique.
   Returns:
-    True if model is valid and false if the model has serious
+    True if model is valid and false if the model has serious 
     @untitled table
     <0      model has serious errors
     =0      model is ok
     >0      number of problems that were found.
   */
   virtual
-  int Audit(
-        bool bAttemptRepair,
-        int* repair_count,
-        ON_TextLog* text_log,
-        ON_SimpleArray<int>* warnings
-        );
+  int Audit( 
+	bool bAttemptRepair,
+	int* repair_count,
+	ON_TextLog* text_log,
+	ON_SimpleArray<int>* warnings
+	);
 
   /////////////////////////////////////////////////////////////////////
   //
@@ -410,10 +474,10 @@ public:
     attributes - [in] object attributes.
     material - [out] render material
   */
-  void GetRenderMaterial(
-        const ON_3dmObjectAttributes& attributes,
-        ON_Material& material
-        ) const;
+  void GetRenderMaterial( 
+	const ON_3dmObjectAttributes& attributes,
+	ON_Material& material 
+	) const;
 
   /*
   Description:
@@ -422,10 +486,10 @@ public:
     object_index - [in] m_object_table[] index
     material - [out] render material
   */
-  void GetRenderMaterial(
-        int object_index,
-        ON_Material& material
-        ) const;
+  void GetRenderMaterial( 
+	int object_index,
+	ON_Material& material 
+	) const;
 
   /*
   Description:
@@ -434,10 +498,10 @@ public:
     attributes - [in] object attributes.
     linetype - [out] linetype
   */
-  void GetLinetype(
-        const ON_3dmObjectAttributes& attributes,
-        ON_Linetype& linetype
-        ) const;
+  void GetLinetype( 
+	const ON_3dmObjectAttributes& attributes,
+	ON_Linetype& linetype 
+	) const;
 
   /*
   Description:
@@ -447,9 +511,9 @@ public:
     linetype - [out] linetype
   */
   void GetLinetype(
-        int object_index,
-        ON_Linetype& linetype
-        ) const;
+	int object_index,
+	ON_Linetype& linetype 
+	) const;
 
   /*
   Description:
@@ -471,7 +535,7 @@ public:
   */
   ON_Color WireframeColor(int object_index) const;
 
-  /*
+  /* 
   Description:
     Get index of object in m_object_table from object_uuid.
   Parameters:
@@ -480,37 +544,37 @@ public:
     Index of the object or -1 if it is not found.
   */
   virtual
-  int ObjectIndex(
-    ON_UUID object_uuid
+  int ObjectIndex( 
+    ON_UUID object_uuid 
     ) const;
 
-  /*
+  /* 
   Description:
     Get instance definition from instance definition table.
   Parameters:
     idef_uuid - [in] instance definition uuid.
   Example:
 
-          ON_XModel model = ...;
-          ..
-          ON_InstanceRef* pIRef = ..;
-          ON_UUID idef_uuid = pIRef->m_instance_definition_uuid;
-          int idef_index = model.IDefIndex( idef_uuid );
-          if ( idef_index >= 0 )
-          {
-            const ON_InstanceDefinition& idef = model.m_idef_table[idef_index];
-            ...
-          }
+	  ON_XModel model = ...;
+	  ..
+	  ON_InstanceRef* pIRef = ..;
+	  ON_UUID idef_uuid = pIRef->m_instance_definition_uuid;
+	  int idef_index = model.IDefIndex( idef_uuid );
+	  if ( idef_index >= 0 )
+	  {
+	    const ON_InstanceDefinition& idef = model.m_idef_table[idef_index];
+	    ...
+	  }
 
   Returns:
     Index of the instance definition or -1 if it is not found.
   */
   virtual
-  int IDefIndex(
-    ON_UUID idef_uuid
+  int IDefIndex( 
+    ON_UUID idef_uuid 
     ) const;
 
-  /*
+  /* 
   Description:
     Get instance definition index from instance definition name.
   Parameters:
@@ -519,18 +583,18 @@ public:
     Index of the instance definition or -1 if it is not found.
   */
   virtual
-  int IDefIndex(
+  int IDefIndex( 
     const wchar_t* idef_name
     ) const;
 
-  /*
+  /* 
   Description:
     Get instance definition name that is not currently in use.
   */
   virtual
   void GetUnusedIDefName( ON_wString& idef_name ) const;
 
-  /*
+  /* 
   Description:
     See if the instance reference iref refers to an instance
     definition.
@@ -546,38 +610,38 @@ public:
     -2         invalid idef found
   */
   virtual
-  int UsesIDef(
-        const ON_InstanceRef& iref,
-        ON_UUID idef_uuid
-        ) const;
+  int UsesIDef( 
+	const ON_InstanceRef& iref,
+	ON_UUID idef_uuid
+	) const;
 
-  /*
+  /* 
   Description:
     Get layer definition from layer table.
   Parameters:
     layer_name - [in] name to search for
   Example:
 
-          ON_XModel model = ...;
-          ..
-          ON_InstanceRef* pIRef = ..;
-          ON_UUID idef_uuid = pIRef->m_instance_definition_uuid;
-          int layer_index = model.IDefIndex( idef_uuid );
-          if ( idef_index >= 0 )
-          {
-            const ON_InstanceDefinition& idef = model.m_idef_table[idef_index];
-            ...
-          }
+	  ON_XModel model = ...;
+	  ..
+	  ON_InstanceRef* pIRef = ..;
+	  ON_UUID idef_uuid = pIRef->m_instance_definition_uuid;
+	  int layer_index = model.IDefIndex( idef_uuid );
+	  if ( idef_index >= 0 )
+	  {
+	    const ON_InstanceDefinition& idef = model.m_idef_table[idef_index];
+	    ...
+	  }
 
   Returns:
     Index of the layer or -1 if it is not found.
   */
   virtual
-  int LayerIndex(
+  int LayerIndex( 
     const wchar_t* layer_name
     ) const;
 
-  /*
+  /* 
   Description:
     Get layer name that is not currently in use.
   */
@@ -592,21 +656,21 @@ public:
 
   // text dump of entire model
   void Dump( ON_TextLog& ) const;
-
+  
   // text dump of model properties and settings
   void DumpSummary( ON_TextLog& ) const;
 
   // text dump of bitmap table
-  void DumpBitmapTable( ON_TextLog& ) const;
+  void DumpBitmapTable( ON_TextLog& ) const; 
 
   // text dump of texture mapping table
-  void DumpTextureMappingTable( ON_TextLog& ) const;
+  void DumpTextureMappingTable( ON_TextLog& ) const; 
 
   // text dump of render material table
-  void DumpMaterialTable( ON_TextLog& ) const;
+  void DumpMaterialTable( ON_TextLog& ) const; 
 
   // text dump of line type table
-  void DumpLinetypeTable( ON_TextLog& ) const;
+  void DumpLinetypeTable( ON_TextLog& ) const; 
 
   // text dump of layer table
   void DumpLayerTable( ON_TextLog& ) const;
@@ -671,8 +735,8 @@ Returns:
   True if the string is a valid name.
 */
 ON_DECL
-bool ONX_IsValidName(
-          const wchar_t* name
-          );
+bool ONX_IsValidName( 
+	  const wchar_t* name 
+	  );
 
 #endif

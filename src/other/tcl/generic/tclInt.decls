@@ -572,7 +572,7 @@ declare 143 generic {
 }
 declare 144 generic {
     void TclHideLiteral(Tcl_Interp *interp, struct CompileEnv *envPtr,
-	    int index)
+	    int localIndex)
 }
 declare 145 generic {
     struct AuxDataType *TclGetAuxDataType(char *typeName)
@@ -596,7 +596,7 @@ declare 150 generic {
     int TclRegAbout(Tcl_Interp *interp, Tcl_RegExp re)
 }
 declare 151 generic {
-    void TclRegExpRangeUniChar(Tcl_RegExp re, int index, int *startPtr,
+    void TclRegExpRangeUniChar(Tcl_RegExp re, int localIndex, int *startPtr,
 	    int *endPtr)
 }
 declare 152 generic {
@@ -669,7 +669,7 @@ declare 165 generic {
 # New function due to TIP #33
 declare 166 generic {
     int TclListObjSetElement(Tcl_Interp *interp, Tcl_Obj *listPtr,
-	    int index, Tcl_Obj *valuePtr)
+	    int localIndex, Tcl_Obj *valuePtr)
 }
 
 # VFS-aware versions of Tcl*StartupScriptFileName (158 and 159 above)
@@ -899,7 +899,7 @@ declare 228 generic {
 }
 declare 229 generic {
     int	TclPtrMakeUpvar(Tcl_Interp *interp, Var *otherP1Ptr,
-	    CONST char *myName, int myFlags, int index)
+	    CONST char *myName, int myFlags, int localIndex)
 }
 declare 230 generic {
     Var *TclObjLookupVar(Tcl_Interp *interp, Tcl_Obj *part1Ptr,
@@ -1055,7 +1055,7 @@ declare 28 win {
     void TclWinResetInterfaces(void)
 }
 declare 29 win {
-    int TclWinCPUID( unsigned int index, unsigned int *regs )
+    int TclWinCPUID( unsigned int localIndex, unsigned int *regs )
 }
 
 ################################

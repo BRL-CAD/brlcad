@@ -5,6 +5,7 @@ EXTRA_DIST = \
 	brlcad.nsi \
 	header.bmp \
 	side.bmp \
-	uninstall.ico
+	uninstall.ico \
+	updateVersion.tcl
 
 include $(top_srcdir)/misc/Makefile.defs

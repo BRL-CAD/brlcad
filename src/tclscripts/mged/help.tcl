@@ -54,7 +54,7 @@ set mged_help_data(attr)        $helplib_data(wdb_attr)
 set mged_help_data(autoview)	{{}	{set view size and center so that all displayed solids are in view}}
 set mged_help_data(B)		$helplib_data(dgo_blast)
 set mged_help_data(bev)		{{"[-t] [-P#] new_obj obj1 op obj2 op obj3 op ..."}	{boolean evaluation of objects via NMG's}}
-set mged_help_data(binary)	{{{-i major_type minor_type | -o} dest source}
+set mged_help_data(bo)	{{{-i major_type minor_type | -o} dest source}
     {manipulate opaque objects.
 	Must specify one of -i (for creating or adjusting objects (input))
 	or -o for extracting objects (output).
@@ -116,7 +116,6 @@ set mged_help_data(em)          {{"[-C#/#/#] value [value value...]"} {display a
 set mged_help_data(eac)		{{air_code(s)}	{display all regions with given air code}}
 set mged_help_data(echo)	{{[text]}	{echo arguments back}}
 set mged_help_data(edcodes)	{{object(s)}	{edit region ident codes}}
-set mged_help_data(edcolor)	{{}	{text edit color table}}
 set mged_help_data(edcomb)	{{combname Regionflag regionid air los [material]}	{edit combination record info}}
 set mged_help_data(edgedir)	{{[delta_x delta_y delta_z]|[rot fb]}	{define direction of ARB edge being moved}}
 set mged_help_data(edmater)	{{comb(s)}	{edit combination materials}}
@@ -136,7 +135,6 @@ set mged_help_data(fracture)	{{NMGsolid [prefix]}	{fracture an NMG solid into ma
 set mged_help_data(g)		$helplib_data(wdb_group)
 set mged_help_data(garbage_collect)	{{}	{eliminate unused space in database file}}
 set mged_help_data(get)		$helplib_data(wdb_get)
-set mged_help_data(get_regions)	{{combination}	{returns the names of all regions under a given combination/assembly}}
 set mged_help_data(gui)	{{[-config b|c|g] [-d display_string]
     [-gd graphics_display_string] [-dt graphics_type]
     [-id name] [-c -h -j -s]}	{create display/command window pair}}
@@ -229,9 +227,9 @@ set mged_help_data(refresh)	{{}	{send new control list}}
 set mged_help_data(regdebug)	{{[number]}	{toggle display manager debugging or set debug level}}
 set mged_help_data(regdef)	{{ident [air [los [material]]]}	{change next region default codes}}
 set mged_help_data(regions)	{{file object(s)}	{make ascii summary of regions}}
-set mged_help_data(reid)	{{assembly regionID}	{assign region IDs to all regions under some assembly/combination starting with the given region ID number}}
+set mged_help_data(reid)	{{assembly regionID}	{incrementally assign region IDs to all regions under a given assembly starting with the given region ID number}}
 set mged_help_data(release)	{{[name]}	{release display processor}}
-set mged_help_data(remat)	{{assembly GIFTmater}	{assign a given material ID number to all regions under some assembly/combination}}
+set mged_help_data(remat)	{{assembly materialID}	{assign the same material ID number to all regions under some given assembly}}
 set mged_help_data(reset)	{{}	{Reset view such that all solids can be seen}}
 set mged_help_data(rfarb)	{{}	{makes arb given point, 2 coord of 3 pts, rot, fb, thickness}}
 set mged_help_data(rm)		$helplib_data(wdb_remove)
@@ -259,6 +257,7 @@ Save the current view to specified 'file' as an rt render script
       -i inputfile   specify input data file (default is opendb filepath)
 }}
 set mged_help_data(sca)		$helplib_data(vo_sca)
+set mged_help_data(search)	$helplib_data(wdb_search)
 set mged_help_data(sed)		{{<path>}	{solid-edit named solid}}
 set mged_help_data(setview)	$helplib_data(vo_setview)
 set mged_help_data(shader)	{{comb {shader_name {keyword value keyword value ...}}}	{assign shader using Tcl list format}}

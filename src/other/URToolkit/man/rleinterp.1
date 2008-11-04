@@ -1,9 +1,9 @@
-.TH RLEINTRP 1 "July 1991" 1
+.TH RLEINTERP 1 "July 1991" 1
 .UC 4
 .SH NAME
-rleintrp \- Interpolate between 2 RLE images .
+rleinterp \- Interpolate between 2 RLE images .
 .SH SYNOPSIS
-.B rleintrp
+.B rleinterp
 [
 .B \-o
 .I prefixe-out
@@ -50,13 +50,13 @@ Specify The number of images to create. By default nbimages = 1. The value is li
 .SH EXAMPLES
 .TP
 'Fondu au noir' of image1 on 5 images named fondu_XXX.rle.
-rleintrp \-1 image1 \-o fondu.rle \-n 5
+rleinterp \-1 image1 \-o fondu.rle \-n 5
 .TP
 Interpolate 1 image between image1 and image2.
-rleintrp \-1 image1 \-2 image2
+rleinterp \-1 image1 \-2 image2
 .TP
 Interpolate 3 images with names of files inter_XXX.rle :
-rleintrp \-1 image1 \-2 image2 -o inter.rle \-n 3
+rleinterp \-1 image1 \-2 image2 -o inter.rle \-n 3
 .SH SEE ALSO
 .IR urt (1),
 .IR RLE (5).

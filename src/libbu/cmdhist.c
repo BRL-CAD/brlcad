@@ -39,10 +39,10 @@
 #include "cmd.h"
 
 /*
- *	H I S T O R Y _ R E C O R D
+ * H I S T O R Y _ R E C O R D
  *
- *	Stores the given command with start and finish times in the
- *	history vls'es.
+ * Stores the given command with start and finish times in the
+ * history vls'es.
  */
 static void
 history_record(struct bu_cmdhist_obj *chop, struct bu_vls *cmdp, struct timeval *start, struct timeval *finish, int status)
@@ -93,7 +93,7 @@ timediff(struct timeval *tvdiff, struct timeval *start, struct timeval *finish)
  *        procname history [-delays] [-outfile filename]
  */
 int
-bu_cmdhist_history(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
+bu_cmdhist_history(ClientData clientData, Tcl_Interp *interp, int argc, const char **argv)
 {
     struct bu_cmdhist_obj *chop = (struct  bu_cmdhist_obj *)clientData;
     FILE *fp;
@@ -113,10 +113,10 @@ bu_cmdhist_history(ClientData clientData, Tcl_Interp *interp, int argc, char **a
     }
 
     fp = NULL;
-    while (argc >= 3)  {
+    while (argc >= 3) {
 	if (strcmp(argv[2], "-delays") == 0)
 	    with_delays = 1;
-	else if ( strcmp(argv[2], "-outfile") == 0 ) {
+	else if (strcmp(argv[2], "-outfile") == 0) {
 	    if (fp != NULL) {
 		fclose(fp);
 		Tcl_AppendResult(interp, "history: -outfile option given more than once\n",
@@ -126,7 +126,7 @@ bu_cmdhist_history(ClientData clientData, Tcl_Interp *interp, int argc, char **a
 		Tcl_AppendResult(interp, "history: I need a file name\n", (char *)NULL);
 		return TCL_ERROR;
 	    } else {
-		fp = fopen( argv[3], "ab+" );
+		fp = fopen(argv[3], "ab+");
 		if (fp == NULL) {
 		    Tcl_AppendResult(interp, "history: error opening file", (char *)NULL);
 		    return TCL_ERROR;
@@ -176,7 +176,7 @@ bu_cmdhist_history(ClientData clientData, Tcl_Interp *interp, int argc, char **a
  *        procname add cmd
  */
 int
-bu_cmdhist_add(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
+bu_cmdhist_add(ClientData clientData, Tcl_Interp *interp, int argc, const char **argv)
 {
     struct bu_cmdhist_obj *chop = (struct  bu_cmdhist_obj *)clientData;
     struct bu_vls vls;
@@ -212,7 +212,7 @@ bu_cmdhist_add(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
  *        procname prev
  */
 int
-bu_cmdhist_prev(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
+bu_cmdhist_prev(ClientData clientData, Tcl_Interp *interp, int argc, const char **argv)
 {
     struct bu_cmdhist_obj *chop = (struct  bu_cmdhist_obj *)clientData;
     struct bu_cmdhist *hp;
@@ -242,7 +242,7 @@ bu_cmdhist_prev(ClientData clientData, Tcl_Interp *interp, int argc, char **argv
  *        procname curr
  */
 int
-bu_cmdhist_curr(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
+bu_cmdhist_curr(ClientData clientData, Tcl_Interp *interp, int argc, const char **argv)
 {
     struct bu_cmdhist_obj *chop = (struct  bu_cmdhist_obj *)clientData;
 
@@ -269,7 +269,7 @@ bu_cmdhist_curr(ClientData clientData, Tcl_Interp *interp, int argc, char **argv
  *        procname next
  */
 int
-bu_cmdhist_next(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
+bu_cmdhist_next(ClientData clientData, Tcl_Interp *interp, int argc, const char **argv)
 {
     struct bu_cmdhist_obj *chop = (struct  bu_cmdhist_obj *)clientData;
 
@@ -296,10 +296,10 @@ bu_cmdhist_next(ClientData clientData, Tcl_Interp *interp, int argc, char **argv
 
 #if 0
 /**
- *	F _ D E L A Y
+ * F _ D E L A Y
  *
  * 	Uses select to delay for the specified amount of seconds and
- *	  microseconds.
+ * microseconds.
  */
 
 int

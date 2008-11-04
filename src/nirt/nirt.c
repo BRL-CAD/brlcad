@@ -147,7 +147,7 @@ void printusage(void)
  */
 void listformats(void)
 {
-    int files,i;
+    int files, i;
     char **filearray;
     struct bu_vls nirtfilespath, nirtpathtofile, vlsfileline;
     char suffix[5]=".nrt";
@@ -157,31 +157,31 @@ void listformats(void)
     bu_vls_init(&vlsfileline);
     bu_vls_init(&nirtfilespath);
     bu_vls_init(&nirtpathtofile);
-    bu_vls_printf(&nirtfilespath,"%s",bu_brlcad_data("nirt",0));
+    bu_vls_printf(&nirtfilespath, "%s", bu_brlcad_data("nirt", 0));
 
-    files = bu_count_path(bu_vls_addr(&nirtfilespath),suffix);
+    files = bu_count_path(bu_vls_addr(&nirtfilespath), suffix);
 
-    filearray = (char **)bu_malloc(files*sizeof(char *),"filelist");
+    filearray = (char **)bu_malloc(files*sizeof(char *), "filelist");
 
-    bu_list_path(bu_vls_addr(&nirtfilespath),suffix,filearray);
+    bu_list_path(bu_vls_addr(&nirtfilespath), suffix, filearray);
 
     for (i = 0; i < files; i++) {
-	bu_vls_trunc(&nirtpathtofile,0);
-	bu_vls_trunc(&vlsfileline,0);
-	bu_vls_printf(&nirtpathtofile,"%s/%s",bu_vls_addr(&nirtfilespath),filearray[i]);
+	bu_vls_trunc(&nirtpathtofile, 0);
+	bu_vls_trunc(&vlsfileline, 0);
+	bu_vls_printf(&nirtpathtofile, "%s/%s", bu_vls_addr(&nirtfilespath), filearray[i]);
 	cfPtr = fopen(bu_vls_addr(&nirtpathtofile), "rb");
 	fnddesc = 0;
-	while ( bu_vls_gets(&vlsfileline, cfPtr) && fnddesc == 0) {
+	while (bu_vls_gets(&vlsfileline, cfPtr) && fnddesc == 0) {
 	   if (strncmp(bu_vls_addr(&vlsfileline), "# Description: ", 15) == 0) {
 	       fnddesc = 1;
-	       bu_log("%s\n",bu_vls_addr(&vlsfileline)+15);
+	       bu_log("%s\n", bu_vls_addr(&vlsfileline)+15);
 	   }
-	   bu_vls_trunc(&vlsfileline,0);
+	   bu_vls_trunc(&vlsfileline, 0);
 	}
 	fclose(cfPtr);
     }
 
-    bu_free(filearray,"filelist");
+    bu_free(filearray, "filelist");
     bu_vls_free(&vlsfileline);
     bu_vls_free(&nirtfilespath);
     bu_vls_free(&nirtpathtofile);
@@ -207,7 +207,7 @@ attrib_flush(void)
     int i;
 
     a_tab.attrib_use = 0;
-    for (i=0; i < a_tab.attrib_use; i++ )
+    for (i=0; i < a_tab.attrib_use; i++)
 	bu_free(a_tab.attrib[i], "strdup");
 }
 
@@ -264,25 +264,25 @@ static void enqueue_script (struct bu_list *qp, int type, char *string)
 
     /*Check if supplied file name is local or in brlcad's nirt data dir*/
     if (type == READING_FILE) {
-	bu_vls_trunc(&str,0);
-	bu_vls_printf(&str,"%s",string);
-	cfPtr = fopen(bu_vls_addr(&str),"rb");
+	bu_vls_trunc(&str, 0);
+	bu_vls_printf(&str, "%s", string);
+	cfPtr = fopen(bu_vls_addr(&str), "rb");
 	if (cfPtr == NULL) {
-	   bu_vls_trunc(&str,0);
-	   bu_vls_printf(&str,"%s/%s.nrt",bu_brlcad_data("nirt",0),string);
+	   bu_vls_trunc(&str, 0);
+	   bu_vls_printf(&str, "%s/%s.nrt", bu_brlcad_data("nirt", 0), string);
 	   cfPtr = fopen(bu_vls_addr(&str), "rb");
 	   if (cfPtr != NULL) {
 	       fclose(cfPtr);
 	   } else {
-	       bu_vls_trunc(&str,0);
-	       bu_vls_printf(&str,"%s",string);
+	       bu_vls_trunc(&str, 0);
+	       bu_vls_printf(&str, "%s", string);
 	   }
 	} else {
 	   fclose(cfPtr);
 	}
-	bu_vls_printf(&(srp->sr_script),"%s",bu_vls_addr(&str));
+	bu_vls_printf(&(srp->sr_script), "%s", bu_vls_addr(&str));
     } else {
-	bu_vls_strcat(&(srp->sr_script),string);
+	bu_vls_strcat(&(srp->sr_script), string);
     }
     BU_LIST_INSERT(qp, &(srp->l));
     bu_vls_free(&str);
@@ -431,7 +431,7 @@ main (int argc, char **argv)
 		attrib_add(bu_optarg);
 		break;
 	    case 'B':
-		rt_bot_minpieces = atoi( bu_optarg );
+		rt_bot_minpieces = atoi(bu_optarg);
 		break;
 	    case 'b':
 		do_backout = 1;
@@ -458,7 +458,7 @@ main (int argc, char **argv)
 		break;
 	    case 'L':
 		listformats();
-		bu_exit(EXIT_SUCCESS,NULL);
+		bu_exit(EXIT_SUCCESS, NULL);
 	    case 'M':
 		mat_flag = 1;
 		break;
@@ -472,10 +472,10 @@ main (int argc, char **argv)
 		silent_flag = SILENT_NO;	/* Positively no */
 		break;
 	    case 'x':
-		sscanf( bu_optarg, "%x", (unsigned int *)&rt_g.debug );
+		sscanf(bu_optarg, "%x", (unsigned int *)&rt_g.debug);
 		break;
 	    case 'X':
-		sscanf( bu_optarg, "%x", (unsigned int *)&nirt_debug );
+		sscanf(bu_optarg, "%x", (unsigned int *)&nirt_debug);
 		break;
 	    case 'u':
 		if (sscanf(bu_optarg, "%d", &use_of_air) != 1) {
@@ -557,7 +557,7 @@ main (int argc, char **argv)
 	printf("Database file:  '%s'\n", db_name);
 	printf("Building the directory...");
     }
-    if ((rtip = rt_dirbuild( db_name, db_title, TITLE_LEN )) == RTI_NULL) {
+    if ((rtip = rt_dirbuild(db_name, db_title, TITLE_LEN)) == RTI_NULL) {
 	fflush(stdout);
 	fprintf(stderr, "Could not load file %s\n", db_name);
 	return 1;
@@ -572,7 +572,7 @@ main (int argc, char **argv)
     do_rt_gettrees (rtip, argv + bu_optind, argc - bu_optind);
 
     /* Initialize the table of resource structures */
-    rt_init_resource( &res_tab, 0, rtip );
+    rt_init_resource(&res_tab, 0, rtip);
 
     /* initialization of the application structure */
     RT_APPLICATION_INIT(&ap);
@@ -607,10 +607,10 @@ main (int argc, char **argv)
     base2local = rtip->rti_dbip->dbi_base2local;
     local2base = rtip->rti_dbip->dbi_local2base;
     tmp_str = bu_units_string(local2base);
-    if ( tmp_str ) {
+    if (tmp_str) {
 	bu_strlcpy(local_u_name, bu_units_string(local2base), sizeof(local_u_name));
     } else {
-	strcpy( local_u_name, "Unknown units" );
+	strcpy(local_u_name, "Unknown units");
     }
 
     if (silent_flag != SILENT_YES) {
@@ -675,12 +675,12 @@ do_rt_gettrees (struct rt_i *rtip, char **object_name, int nm_objects)
 	bu_exit (1, "rt_gettrees() failed\n");
     }
 
-    if ( need_prep ) {
+    if (need_prep) {
 	if (silent_flag != SILENT_YES) {
 	    printf("\nPrepping the geometry...");
 	    fflush(stdout);
 	}
-	rt_prep( rtip );
+	rt_prep(rtip);
 	need_prep = 0;
     }
 

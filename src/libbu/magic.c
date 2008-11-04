@@ -40,7 +40,7 @@
 const char *
 bu_identify_magic(register unsigned long magic)
 {
-    switch (magic)  {
+    switch (magic) {
 	case 0:
 	    return "Zero_Magic_Number";
 
@@ -63,7 +63,7 @@ bu_identify_magic(register unsigned long magic)
 	    return "bu_mapped_file";
 	case BU_PTBL_MAGIC:
 	    return "bu_ptbl";
-        case BU_RB_LIST_MAGIC:
+	case BU_RB_LIST_MAGIC:
 	    return "red-black list";
 	case BU_RB_NODE_MAGIC:
 	    return "red-black node";
@@ -71,8 +71,8 @@ bu_identify_magic(register unsigned long magic)
 	    return "red-black package";
 	case BU_RB_TREE_MAGIC:
 	    return "red-black tree";
-        case BU_VLB_MAGIC:
-            return "bu_vlb";
+	case BU_VLB_MAGIC:
+	    return "bu_vlb";
 	case BU_VLS_MAGIC:
 	    return "bu_vls";
 
@@ -92,101 +92,105 @@ bu_identify_magic(register unsigned long magic)
 	case BN_UNIF_MAGIC:
 	    return "bn_unif";
 	case BN_VLBLOCK_MAGIC:
-	    return("bn_vlblock");
+	    return ("bn_vlblock");
 	case BN_VLIST_MAGIC:
-	    return("bn_vlist");
+	    return ("bn_vlist");
 
 	    /*
 	     * Primitives
 	     */
 	case RT_ARBN_INTERNAL_MAGIC:
-	    return("rt_arbn_internal");
+	    return ("rt_arbn_internal");
 	case RT_ARB_INTERNAL_MAGIC:
-	    return("rt_arb_internal");
+	    return ("rt_arb_internal");
 	case RT_ARS_INTERNAL_MAGIC:
-	    return("rt_ars_internal");
+	    return ("rt_ars_internal");
 	case RT_BOT_INTERNAL_MAGIC:
-	    return("rt_bot_internal");
+	    return ("rt_bot_internal");
 	case RT_BREP_INTERNAL_MAGIC:
-	    return("rt_brep_internal");
+	    return ("rt_brep_internal");
 	case RT_EBM_INTERNAL_MAGIC:
-	    return("rt_ebm_internal");
+	    return ("rt_ebm_internal");
 	case RT_ELL_INTERNAL_MAGIC:
-	    return("rt_ell_internal");
+	    return ("rt_ell_internal");
 	case RT_HALF_INTERNAL_MAGIC:
-	    return("rt_half_internal");
+	    return ("rt_half_internal");
 	case RT_PART_INTERNAL_MAGIC:
-	    return("rt_part_internal");
+	    return ("rt_part_internal");
 	case RT_PG_INTERNAL_MAGIC:
-	    return("rt_pg_internal");
+	    return ("rt_pg_internal");
 	case RT_PIPE_INTERNAL_MAGIC:
-	    return("rt_pipe_internal");
+	    return ("rt_pipe_internal");
 	case RT_TGC_INTERNAL_MAGIC:
-	    return("rt_tgc_internal");
+	    return ("rt_tgc_internal");
 	case RT_TOR_INTERNAL_MAGIC:
-	    return("rt_tor_internal");
+	    return ("rt_tor_internal");
 	case RT_VOL_INTERNAL_MAGIC:
-	    return("rt_vol_internal");
+	    return ("rt_vol_internal");
 
 	    /*
 	     * N-manifold geometry
 	     */
 	case NMG_EDGEUSE2_MAGIC:
-	    return("edgeuse2 [midway into edgeuse]");
+	    return ("edgeuse2 [midway into edgeuse]");
 	case NMG_EDGEUSE_MAGIC:
-	    return("edgeuse");
+	    return ("edgeuse");
 	case NMG_EDGE_G_CNURB_MAGIC:
-	    return("edge_g_cnurb");
+	    return ("edge_g_cnurb");
 	case NMG_EDGE_G_LSEG_MAGIC:
-	    return("edge_g_lseg");
+	    return ("edge_g_lseg");
 	case NMG_EDGE_MAGIC:
-	    return("edge");
+	    return ("edge");
 	case NMG_FACEUSE_MAGIC:
-	    return("faceuse");
+	    return ("faceuse");
 	case NMG_FACE_G_PLANE_MAGIC:
-	    return("face_g_plane");
+	    return ("face_g_plane");
 	case NMG_FACE_G_SNURB_MAGIC:
-	    return("face_g_snurb");
+	    return ("face_g_snurb");
 	case NMG_FACE_MAGIC:
-	    return("face");
+	    return ("face");
 	case NMG_KNOT_VECTOR_MAGIC:
-	    return("knot_vector");
+	    return ("knot_vector");
 	case NMG_LOOPUSE_MAGIC:
-	    return("loopuse");
+	    return ("loopuse");
 	case NMG_LOOP_G_MAGIC:
-	    return("loop_g");
+	    return ("loop_g");
 	case NMG_LOOP_MAGIC:
-	    return("loop");
+	    return ("loop");
 	case NMG_MODEL_MAGIC:
-	    return("model");
+	    return ("model");
 	case NMG_REGION_A_MAGIC:
-	    return("region_a");
+	    return ("region_a");
 	case NMG_REGION_MAGIC:
-	    return("region");
+	    return ("region");
 	case NMG_SHELL_A_MAGIC:
-	    return("shell_a");
+	    return ("shell_a");
 	case NMG_SHELL_MAGIC:
-	    return("shell");
+	    return ("shell");
 	case NMG_VERTEXUSE_A_CNURB_MAGIC:
-	    return("vertexuse_a_cnurb");
+	    return ("vertexuse_a_cnurb");
 	case NMG_VERTEXUSE_A_PLANE_MAGIC:
-	    return("vertexuse_a_plane");
+	    return ("vertexuse_a_plane");
 	case NMG_VERTEXUSE_MAGIC:
-	    return("vertexuse");
+	    return ("vertexuse");
 	case NMG_VERTEX_G_MAGIC:
-	    return("vertex_g");
+	    return ("vertex_g");
 	case NMG_VERTEX_MAGIC:
-	    return("vertex");
+	    return ("vertex");
 
 	    /*
 	     * Raytracing
 	     */
 	case RT_AP_MAGIC:
 	    return "librt application";
+	case RT_COMB_MAGIC:
+	    return "librt rt_comb_internal";
+	case RT_CONSTRAINT_MAGIC:
+	    return "librt rt_constraint_internal";
 	case RT_CTS_MAGIC:
 	    return "librt combined_tree_state";
 	case RT_DB_INTERNAL_MAGIC:
-	    return("rt_db_internal");
+	    return ("rt_db_internal");
 	case RT_DIR_MAGIC:
 	    return "librt directory";
 	case RT_FUNCTAB_MAGIC:
@@ -198,13 +202,13 @@ bu_identify_magic(register unsigned long magic)
 	case RT_RAY_MAGIC:
 	    return "librt xray";
 	case RT_REGION_MAGIC:
-	    return("librt region");
+	    return ("librt region");
 	case RT_SEG_MAGIC:
-	    return("librt seg");
+	    return ("librt seg");
 	case RT_SOLTAB_MAGIC:
-	    return("librt soltab");
+	    return ("librt soltab");
 	case RT_TESS_TOL_MAGIC:
-	    return("rt_tess_tol");
+	    return ("rt_tess_tol");
 	case RT_TREE_MAGIC:
 	    return "librt union tree";
 	case RT_WDB_MAGIC:
@@ -214,27 +218,27 @@ bu_identify_magic(register unsigned long magic)
 	     * Misc
 	     */
 	case ANIMATE_MAGIC:
-	    return("librt animate");
+	    return ("librt animate");
 	case DBI_MAGIC:
-	    return("librt db_i");
+	    return ("librt db_i");
 	case DB_FULL_PATH_MAGIC:
 	    return "librt db_full_path";
 	case FB_MAGIC:
-	    return("fb.h fb_magic");
+	    return ("fb.h fb_magic");
 	case PIXEL_EXT_MAGIC:
 	    return "librt pixel_ext";
 	case PT_MAGIC:
-	    return("librt partition");
+	    return ("librt partition");
 	case RESOURCE_MAGIC:
-	    return("librt resource");
+	    return ("librt resource");
 	case RTI_MAGIC:
-	    return("rt_i");
+	    return ("rt_i");
 	case SPM_MAGIC:
 	    return "spm.h spm_map_t";
 	case WDB_PIPESEG_MAGIC:
-	    return("wdb.h wdb_pipeseg_magic");
+	    return ("wdb.h wdb_pipeseg_magic");
 	case WMEMBER_MAGIC:
-	    return("wdb.h wmember_magic");
+	    return ("wdb.h wmember_magic");
 
     }
 

@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file vers.c
+/** @file librt/vers.c
  *
  * version information about LIBRT
  *

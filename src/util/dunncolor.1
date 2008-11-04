@@ -38,6 +38,15 @@
 .\" SUCH DAMAGE.
 .\"
 .\".\".\"
+.\"
+.\" File name macro to make listing files easier
+.\"
+.de FN
+\fI\|\\$1\|\fP
+..
+.\"
+.\" Begin actual content
+.\"
 .SH NAME
 dunncolor \- set exposure values for a Dunn Model 631 camera
 .SH SYNOPSIS
@@ -92,7 +101,9 @@ Typically, red is 4X green and blue.
 .SH DIAGNOSTICS
 Diagnostics are intended to be self-explanatory.
 .SH FILES
-/dev/camera
+.TP
+.FN /dev/camera
+camera device supported by the operating system
 .SH "SEE ALSO"
 brlcad(1), dunnsnap(1)
 .SH "BUG REPORTS"

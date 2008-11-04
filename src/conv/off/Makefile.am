@@ -16,6 +16,8 @@ off_g_LDADD = \
 	${WDB} \
 	${WDB_LIBS}
 
+EXTRA_DIST = CMakeLists.txt
+
 include $(top_srcdir)/misc/Makefile.defs
 
 FAST_OBJECTS = \

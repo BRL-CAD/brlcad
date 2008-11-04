@@ -5,11 +5,11 @@ SUBDIRS = \
 	doc \
 	isst \
 	libcommon \
-	librender \
 	libtexture \
 	libtie \
 	libtienet \
 	libutil \
+	librender \
 	master \
 	misc \
 	rise \

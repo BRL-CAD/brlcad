@@ -246,6 +246,229 @@ rt_sketch_class(void)
 }
 
 
+/*
+determine whether the 2D point 'pt' is within the bounds of the sketch
+by counting the number of intersections between the curve and a line
+starting at the given point pointing horizontally away from the y-axis.
+
+if the number of intersections is odd, the point is within the sketch,
+and if it's even, the point is outside the sketch.
+
+return 1 if point 'pt' is within the sketch, 0 if not.
+*/
+int
+rt_sketch_contains( struct rt_sketch_internal *sk, point2d_t pt )
+{
+    fastf_t		nseg, radius;
+    int			i, j, hits;
+
+    long		*lng;
+    struct line_seg	*lsg;
+    struct carc_seg	*csg;
+    struct nurb_seg	*nsg;
+    struct bezier_seg	*bsg;
+
+    point2d_t		pt1, pt2, isec;
+    vect2d_t		one, two;
+
+    nseg = sk->skt_curve.seg_count;
+    hits = 0;
+    isec[Y] = pt[Y];
+
+    for ( i=0; i<nseg; i++ ) {
+	lng = (long *)sk->skt_curve.segments[i];
+
+	switch ( *lng ) {
+	    case CURVE_LSEG_MAGIC:
+		lsg = (struct line_seg *)lng;
+		V2MOVE( pt1, sk->verts[lsg->start] );
+		V2MOVE( pt2, sk->verts[lsg->end] );
+		if ( pt[Y] > FMAX( pt1[Y], pt2[Y] ) || pt[Y] < FMIN( pt1[Y], pt2[Y] ) ) {
+		    continue;
+		}
+		isec[X] = pt1[X] + (isec[Y] - pt1[Y]) * ( (pt1[X] - pt2[X]) / (pt1[Y] - pt2[Y]) );
+		if ( (pt[X] >= 0 && pt[X] < isec[X]) || (pt[X] < 0 && pt[X] > isec[X] ) ) {
+		    hits++;
+		}
+		break;
+	    case CURVE_CARC_MAGIC:
+		csg = (struct carc_seg *)lng;
+		V2MOVE( pt1, sk->verts[csg->start] );
+		V2MOVE( pt2, sk->verts[csg->end] );
+		if ( csg->radius <=0.0 ) {
+		    vect2d_t	r, dist;
+		    V2SUB2( r, pt2, pt1 );
+		    V2SUB2( dist, r, pt );
+		    if ( MAG2SQ(dist) < MAG2SQ(r) ) hits++;
+		} else {
+		    vect2d_t	r, dist, center;
+		    V2SUB2( dist, pt2, pt1 );
+		    if ( csg->center_is_left ) {
+			r[X] = -dist[Y];
+			r[Y] = dist[X];
+		    } else {
+			r[X] = dist[Y];
+			r[Y] = -dist[X];
+		    }
+		    V2SCALE( dist, dist, 0.5 );
+		    V2SCALE( r, r, sqrt( (csg->radius*csg->radius - MAG2SQ(dist) )/( MAG2SQ(r)) ) );
+		    V2ADD3( center, sk->verts[csg->start], dist, r );
+		    V2SUB2( dist, center, pt );
+		    if ( MAG2SQ(dist) > (csg->radius*csg->radius) ) {
+			/* outside the circle - if it passes between the endpoints, count it as a hit */
+			/* otherwise, it will hit either twice or not at all, and can be ignored */
+			if ( pt[Y] > FMIN(pt1[Y], pt2[Y]) && pt[Y] <= FMAX(pt1[Y], pt2[Y]) ) {
+			    if ( (pt[X] >= 0 && pt[X] < FMIN(pt1[X], pt2[X])) 
+			    	|| (pt[X] < 0 && pt[X] > FMAX(pt1[X], pt2[X]) ) ) hits++;
+			}
+		    } else {
+			fastf_t angMin, angMax, angle;
+			V2SUB2( one, pt1, center );
+			V2SUB2( two, pt2, center );
+			if ( csg->orientation == 0 ) {	/* ccw arc */
+			    angMin = atan2( one[Y], one[X] );
+			    angMax = atan2( two[Y], two[X] );
+			} else {
+			    angMax = atan2( one[Y], one[X] );
+			    angMin = atan2( two[Y], two[X] );
+			}
+			if ( pt[X] >= 0 ) {
+			    angle = atan2( dist[Y], sqrt( csg->radius*csg->radius - dist[Y]*dist[Y] ) );
+			} else {
+			    angle = atan2( dist[Y], -sqrt( csg->radius*csg->radius - dist[Y]*dist[Y] ) );
+			}
+			angMax -= angMin;
+			angle -= angMin;
+			if ( angMax < 0 ) angMax += 2*M_PI;
+			if ( angle < 0 ) angle += 2*M_PI;
+			if ( angle < angMax ) hits++;
+		    }
+		}
+		break;
+	    case CURVE_BEZIER_MAGIC:
+		break;
+	    case CURVE_NURB_MAGIC:
+		break;
+	    default:
+		bu_log( "rt_revolve_prep: ERROR: unrecognized segment type!\n" );
+		break;
+	}
+    }
+    return (hits%2);
+}
+
+/* sets bounds to { XMIN, XMAX, YMIN, YMAX } */
+void
+rt_sketch_bounds( struct rt_sketch_internal *sk, fastf_t *bounds )
+{
+    fastf_t		nseg, radius;
+    fastf_t		xmin, xmax, ymin, ymax;
+    int			i, j;
+
+    long		*lng;
+    struct line_seg	*lsg;
+    struct carc_seg	*csg;
+    struct nurb_seg	*nsg;
+    struct bezier_seg	*bsg;
+
+    nseg = sk->skt_curve.seg_count;
+    bounds[0] = bounds[2] = FLT_MAX;
+    bounds[1] = bounds[3] = -FLT_MAX;
+
+    for ( i=0; i<nseg; i++ ) {
+	lng = (long *)sk->skt_curve.segments[i];
+
+	switch ( *lng ) {
+	    case CURVE_LSEG_MAGIC:
+		lsg = (struct line_seg *)lng;
+		V_MIN( bounds[0], FMIN( sk->verts[lsg->start][X], sk->verts[lsg->end][X] ) );
+		V_MAX( bounds[1], FMAX( sk->verts[lsg->start][X], sk->verts[lsg->end][X] ) );
+		V_MIN( bounds[2], FMIN( sk->verts[lsg->start][Y], sk->verts[lsg->end][Y] ) );
+		V_MAX( bounds[3], FMAX( sk->verts[lsg->start][Y], sk->verts[lsg->end][Y] ) );
+		break;
+	    case CURVE_CARC_MAGIC:
+		csg = (struct carc_seg *)lng;
+		if ( csg->radius <= 0.0 ) {	/* full circle, use center +- radius */
+		    vect2d_t	r;
+		    V2SUB2( r, sk->verts[csg->end], sk->verts[csg->start] );
+		    radius = sqrt( MAG2SQ( r ) );
+		    V_MIN( bounds[0], sk->verts[csg->end][X] - radius );
+		    V_MAX( bounds[1], sk->verts[csg->end][X] + radius );
+		    V_MIN( bounds[2], sk->verts[csg->end][Y] - radius );
+		    V_MAX( bounds[3], sk->verts[csg->end][Y] + radius );
+		} else {	/* TODO: actually calculate values from carc center */
+		    V_MIN( bounds[0], FMIN( sk->verts[csg->start][X], sk->verts[csg->end][X] ) - 2*csg->radius );
+		    V_MAX( bounds[1], FMAX( sk->verts[csg->start][X], sk->verts[csg->end][X] ) + 2*csg->radius );
+		    V_MIN( bounds[2], FMIN( sk->verts[csg->start][Y], sk->verts[csg->end][Y] ) - 2*csg->radius );
+		    V_MAX( bounds[3], FMAX( sk->verts[csg->start][Y], sk->verts[csg->end][Y] ) + 2*csg->radius );
+		}
+		break;
+	    case CURVE_BEZIER_MAGIC:
+		bsg = (struct bezier_seg *)lng;
+		for ( j=0; j<=bsg->degree; j++ ) {
+		    V_MIN( bounds[0], sk->verts[bsg->ctl_points[j]][X] );
+		    V_MAX( bounds[1], sk->verts[bsg->ctl_points[j]][X] );
+		    V_MIN( bounds[2], sk->verts[bsg->ctl_points[j]][Y] );
+		    V_MAX( bounds[3], sk->verts[bsg->ctl_points[j]][Y] );
+		}
+		break;
+	    case CURVE_NURB_MAGIC:
+		nsg = (struct nurb_seg *)lng;
+		for ( j=0; j < nsg->c_size; j++ ) {
+		    V_MIN( bounds[0], sk->verts[nsg->ctl_points[j]][X] );
+		    V_MAX( bounds[1], sk->verts[nsg->ctl_points[j]][X] );
+		    V_MIN( bounds[2], sk->verts[nsg->ctl_points[j]][Y] );
+		    V_MAX( bounds[3], sk->verts[nsg->ctl_points[j]][Y] );
+		}
+		break;
+	    default:
+		bu_log( "rt_revolve_prep: ERROR: unrecognized segment type!\n" );
+		break;
+	}
+    }
+
+}
+
+int
+rt_sketch_degree( struct rt_sketch_internal *sk )
+{
+
+    long		*lng;
+    struct nurb_seg	*nsg;
+    struct bezier_seg	*bsg;
+    int 		nseg;
+    int 		degree;
+    int 		i;
+
+    degree = 0;
+    nseg = sk->skt_curve.seg_count;
+
+    for ( i=0; i<nseg; i++ ) {
+	lng = (long *)sk->skt_curve.segments[i];
+
+	switch ( *lng ) {
+	    case CURVE_LSEG_MAGIC:
+		if ( degree < 1 ) degree = 1;
+		break;
+	    case CURVE_CARC_MAGIC:
+		if ( degree < 2 ) degree = 2;
+		break;
+	    case CURVE_BEZIER_MAGIC:
+		bsg = (struct bezier_seg *)lng;
+		if ( degree < bsg->degree ) degree = bsg->degree;
+		break;
+	    case CURVE_NURB_MAGIC:
+		nsg = (struct nurb_seg *)lng;
+		if ( degree < nsg->order+1 ) degree = nsg->order+1;
+		break;
+	    default:
+		bu_log( "rt_revolve_prep: ERROR: unrecognized segment type!\n" );
+		break;
+	}
+    }
+    return degree;
+}
+
 int
 seg_to_vlist(struct bu_list *vhead, const struct rt_tess_tol *ttol, fastf_t *V, fastf_t *u_vec, fastf_t *v_vec, struct rt_sketch_internal *sketch_ip, genptr_t seg)
 {
@@ -1826,84 +2049,70 @@ curve_to_tcl_list(struct bu_vls *vls, struct curve *crv)
 }
 
 
-int rt_sketch_tclform( const struct rt_functab *ftp, Tcl_Interp *interp)
+int rt_sketch_form(struct bu_vls *log, const struct rt_functab *ftp)
 {
+    BU_CK_VLS(log);
     RT_CK_FUNCTAB(ftp);
 
-    Tcl_AppendResult(interp,
-		     "V {%f %f %f} A {%f %f %f} B {%f %f %f} VL {{%f %f} {%f %f} ...} SL {{segment_data} {segment_data}}",
-		     (char *)0);
+    bu_vls_printf(log, "V {%%f %%f %%f} A {%%f %%f %%f} B {%%f %%f %%f} VL {{%%f %%f} {%%f %%f} ...} SL {{segment_data} {segment_data}}");
 
-    return TCL_OK;
+    return BRLCAD_OK;
 }
 
 
 int
-rt_sketch_tclget(Tcl_Interp *interp, const struct rt_db_internal *intern, const char *attr)
+rt_sketch_get(struct bu_vls *log, const struct rt_db_internal *intern, const char *attr)
 {
     register struct rt_sketch_internal *skt=(struct rt_sketch_internal *)intern->idb_ptr;
-    Tcl_DString     ds;
-    struct bu_vls   vls;
     int i;
-    struct curve	*crv;
+    struct curve *crv;
 
-    RT_SKETCH_CK_MAGIC( skt );
+    BU_CK_VLS(log);
+    RT_SKETCH_CK_MAGIC(skt);
 
-    Tcl_DStringInit( &ds );
-    bu_vls_init( &vls );
-
-    if ( attr == (char *)NULL ) {
-	bu_vls_strcpy( &vls, "sketch" );
-	bu_vls_printf( &vls, " V {%.25g %.25g %.25g}", V3ARGS( skt->V ) );
-	bu_vls_printf( &vls, " A {%.25g %.25g %.25g}", V3ARGS( skt->u_vec ) );
-	bu_vls_printf( &vls, " B {%.25g %.25g %.25g}", V3ARGS( skt->v_vec ) );
-	bu_vls_strcat( &vls, " VL {" );
+    if (attr == (char *)NULL) {
+	bu_vls_strcpy( log, "sketch" );
+	bu_vls_printf( log, " V {%.25g %.25g %.25g}", V3ARGS( skt->V ) );
+	bu_vls_printf( log, " A {%.25g %.25g %.25g}", V3ARGS( skt->u_vec ) );
+	bu_vls_printf( log, " B {%.25g %.25g %.25g}", V3ARGS( skt->v_vec ) );
+	bu_vls_strcat( log, " VL {" );
 	for ( i=0; i<skt->vert_count; i++ )
-	    bu_vls_printf( &vls, " {%.25g %.25g}", V2ARGS( skt->verts[i] ) );
-	bu_vls_strcat( &vls, " }" );
+	    bu_vls_printf( log, " {%.25g %.25g}", V2ARGS( skt->verts[i] ) );
+	bu_vls_strcat( log, " }" );
 
 	crv = &skt->skt_curve;
-	if ( curve_to_tcl_list( &vls, crv ) ) {
-	    bu_vls_free( &vls );
-	    return( TCL_ERROR );
+	if (curve_to_tcl_list(log, crv)) {
+	    return BRLCAD_ERROR;
 	}
-    }
-    else if ( !strcmp( attr, "V" ) )
-	bu_vls_printf( &vls, "%.25g %.25g %.25g", V3ARGS( skt->V ) );
-    else if ( !strcmp( attr, "A" ) )
-	bu_vls_printf( &vls, "%.25g %.25g %.25g", V3ARGS( skt->u_vec ) );
-    else if ( !strcmp( attr, "B" ) )
-	bu_vls_printf( &vls, "%.25g %.25g %.25g", V3ARGS( skt->v_vec ) );
-    else if ( !strcmp( attr, "VL" ) ) {
+    } else if ( !strcmp( attr, "V" ) ) {
+	bu_vls_printf( log, "%.25g %.25g %.25g", V3ARGS( skt->V ) );
+    } else if ( !strcmp( attr, "A" ) ) {
+	bu_vls_printf( log, "%.25g %.25g %.25g", V3ARGS( skt->u_vec ) );
+    } else if ( !strcmp( attr, "B" ) ) {
+	bu_vls_printf( log, "%.25g %.25g %.25g", V3ARGS( skt->v_vec ) );
+    } else if ( !strcmp( attr, "VL" ) ) {
 	for ( i=0; i<skt->vert_count; i++ )
-	    bu_vls_printf( &vls, " {%.25g %.25g}", V2ARGS( skt->verts[i] ) );
+	    bu_vls_printf( log, " {%.25g %.25g}", V2ARGS( skt->verts[i] ) );
     } else if ( !strcmp( attr, "SL" ) ) {
 	crv = &skt->skt_curve;
-	if ( curve_to_tcl_list( &vls, crv ) ) {
-	    bu_vls_free( &vls );
-	    return( TCL_ERROR );
+	if (curve_to_tcl_list(log, crv)) {
+	    return BRLCAD_ERROR;
 	}
     } else if ( *attr == 'V' ) {
 	i = atoi( (attr+1) );
 	if ( i < 0 || i >= skt->vert_count ) {
-	    Tcl_SetResult( interp, "ERROR: Illegal vertex number\n", TCL_STATIC );
-	    bu_vls_free( &vls );
-	    return( TCL_ERROR );
+	    bu_vls_printf( log, "ERROR: Illegal vertex number\n");
+	    return BRLCAD_ERROR;
 	}
 
-	bu_vls_printf( &vls, "%.25g %.25g", V2ARGS( skt->verts[i] ) );
+	bu_vls_printf( log, "%.25g %.25g", V2ARGS( skt->verts[i] ) );
     } else {
 	/* unrecognized attribute */
-	Tcl_SetResult( interp, "ERROR: Unknown attribute, choices are V, A, B, VL, SL, or V#\n", TCL_STATIC );
-	bu_vls_free( &vls );
-	return( TCL_ERROR );
+	bu_vls_printf( log, "ERROR: Unknown attribute, choices are V, A, B, VL, SL, or V#\n");
+	return BRLCAD_ERROR;
     }
 
-    Tcl_DStringAppend( &ds, bu_vls_addr( &vls ), -1 );
-    Tcl_DStringResult( interp, &ds );
-    Tcl_DStringFree( &ds );
-    bu_vls_free( &vls );
-    return( TCL_OK );
+    return BRLCAD_OK;
 }
 
 
@@ -2079,7 +2288,7 @@ get_tcl_curve(Tcl_Interp *interp, struct curve *crv, Tcl_Obj *seg_list)
 
 
 int
-rt_sketch_tcladjust(Tcl_Interp *interp, struct rt_db_internal *intern, int argc, char **argv)
+rt_sketch_adjust(struct bu_vls *log, struct rt_db_internal *intern, int argc, char **argv)
 {
     struct rt_sketch_internal *skt;
     int ret, array_len;
@@ -2093,32 +2302,26 @@ rt_sketch_tcladjust(Tcl_Interp *interp, struct rt_db_internal *intern, int argc,
 	if ( !strcmp( argv[0], "V" ) ) {
 	    new = skt->V;
 	    array_len = 3;
-	    if ( tcl_list_to_fastf_array( interp, argv[1], &new, &array_len) !=
+	    if ( tcl_list_to_fastf_array( brlcad_interp, argv[1], &new, &array_len) !=
 		 array_len ) {
-		Tcl_SetResult( interp,
-			       "ERROR: Incorrect number of coordinates for vertex\n",
-			       TCL_STATIC );
-		return( TCL_ERROR );
+		bu_vls_printf(log, "ERROR: Incorrect number of coordinates for vertex\n");
+		return BRLCAD_ERROR;
 	    }
 	} else if ( !strcmp( argv[0], "A" ) ) {
 	    new = skt->u_vec;
 	    array_len = 3;
-	    if ( tcl_list_to_fastf_array( interp, argv[1], &new, &array_len) !=
+	    if ( tcl_list_to_fastf_array( brlcad_interp, argv[1], &new, &array_len) !=
 		 array_len ) {
-		Tcl_SetResult( interp,
-			       "ERROR: Incorrect number of coordinates for vertex\n",
-			       TCL_STATIC );
-		return( TCL_ERROR );
+		bu_vls_printf(log, "ERROR: Incorrect number of coordinates for vertex\n");
+		return BRLCAD_ERROR;
 	    }
 	} else if ( !strcmp( argv[0], "B" ) ) {
 	    new = skt->v_vec;
 	    array_len = 3;
-	    if ( tcl_list_to_fastf_array( interp, argv[1], &new, &array_len) !=
+	    if ( tcl_list_to_fastf_array( brlcad_interp, argv[1], &new, &array_len) !=
 		 array_len ) {
-		Tcl_SetResult( interp,
-			       "ERROR: Incorrect number of coordinates for vertex\n",
-			       TCL_STATIC );
-		return( TCL_ERROR );
+		bu_vls_printf(log, "ERROR: Incorrect number of coordinates for vertex\n");
+		return BRLCAD_ERROR;
 	    }
 	} else if ( !strcmp( argv[0], "VL" ) ) {
 	    fastf_t *new_verts=(fastf_t *)NULL;
@@ -2136,12 +2339,10 @@ rt_sketch_tcladjust(Tcl_Interp *interp, struct rt_db_internal *intern, int argc,
 	    }
 
 	    len = 0;
-	    (void)tcl_list_to_fastf_array( interp, argv[1], &new_verts, &len );
+	    (void)tcl_list_to_fastf_array( brlcad_interp, argv[1], &new_verts, &len );
 	    if ( len%2 ) {
-		Tcl_SetResult( interp,
-			       "ERROR: Incorrect number of coordinates for vertices\n",
-			       TCL_STATIC );
-		return( TCL_ERROR );
+		bu_vls_printf(log, "ERROR: Incorrect number of coordinates for vertices\n");
+		return BRLCAD_ERROR;
 	    }
 
 	    if ( skt->verts )
@@ -2161,7 +2362,7 @@ rt_sketch_tcladjust(Tcl_Interp *interp, struct rt_db_internal *intern, int argc,
 	    crv->reverse = (int *)NULL;
 	    crv->segments = (genptr_t)NULL;
 
-	    if ( (ret=get_tcl_curve( interp, crv, tmp )) != TCL_OK )
+	    if ( (ret=get_tcl_curve( brlcad_interp, crv, tmp )) != TCL_OK )
 		return( ret );
 	} else if ( *argv[0] == 'V' && isdigit( *(argv[0]+1) ) ) {
 	    /* changing a specific vertex */
@@ -2171,16 +2372,13 @@ rt_sketch_tcladjust(Tcl_Interp *interp, struct rt_db_internal *intern, int argc,
 	    vert_no = atoi( argv[0] + 1 );
 	    new_vert = skt->verts[vert_no];
 	    if ( vert_no < 0 || vert_no > skt->vert_count ) {
-		Tcl_SetResult( interp, "ERROR: Illegal vertex number\n",
-			       TCL_STATIC );
-		return( TCL_ERROR );
+		bu_vls_printf(log, "ERROR: Illegal vertex number\n");
+		return BRLCAD_ERROR;
 	    }
 	    array_len = 2;
-	    if (tcl_list_to_fastf_array( interp, argv[1], &new_vert, &array_len) != array_len ) {
-		Tcl_SetResult( interp,
-			       "ERROR: Incorrect number of coordinates for vertex\n",
-			       TCL_STATIC );
-		return( TCL_ERROR );
+	    if (tcl_list_to_fastf_array( brlcad_interp, argv[1], &new_vert, &array_len) != array_len ) {
+		bu_vls_printf(log, "ERROR: Incorrect number of coordinates for vertex\n");
+		return BRLCAD_ERROR;
 	    }
 	}
 
@@ -2188,9 +2386,18 @@ rt_sketch_tcladjust(Tcl_Interp *interp, struct rt_db_internal *intern, int argc,
 	argv += 2;
     }
 
-    return( TCL_OK );
+    return BRLCAD_OK;
 }
 
+/**
+ * R T _ S K E T C H _ P A R A M S
+ *
+ */
+int
+rt_sketch_params(struct pc_pc_set * ps, const struct rt_db_internal *ip)
+{
+    return(0);			/* OK */
+}
 
 void
 rt_curve_reverse_segment( long *lng )

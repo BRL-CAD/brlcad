@@ -1,4 +1,4 @@
-/*                        G _ P A R T . C
+/*                          P A R T . C
  * BRL-CAD
  *
  * Copyright (c) 1990-2008 United States Government as represented by
@@ -17,9 +17,9 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @addtogroup g_  */
+/** @addtogroup primitives */
 /** @{ */
-/** @file g_part.c
+/** @file part.c
  *
  * Intersect a ray with a "particle" solid, which can have three main
  * forms: sphere, hemisphere-tipped cylinder (lozenge), and
@@ -1773,6 +1773,16 @@ rt_part_ifree(struct rt_db_internal *ip)
     RT_CK_DB_INTERNAL(ip);
     bu_free( ip->idb_ptr, "particle ifree" );
     ip->idb_ptr = GENPTR_NULL;
+}
+
+/**
+ *			R T _ P A R T _ P A R A M S
+ *
+ */
+int
+rt_part_params(struct pc_pc_set * ps, const struct rt_db_internal *ip)
+{
+    return(0);			/* OK */
 }
 
 /*

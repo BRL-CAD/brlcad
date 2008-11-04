@@ -7,7 +7,7 @@ noinst_LTLIBRARIES = \
 	librt_xxx.la
 
 BREP_TEST = brep_test
-BREP_CPPFLAGS = @SSE@ -DOBJ_BREP=1 ${TNT_CPPFLAGS} ${OPENNURBS_CPPFLAGS}
+BREP_CPPFLAGS = ${SSE} -DOBJ_BREP=1 ${TNT_CPPFLAGS} ${OPENNURBS_CPPFLAGS}
 BREP_LIBADD = ${OPENNURBS}
 
 brep_test_SOURCES = brep_test.cpp
@@ -38,6 +38,7 @@ librt_nil_la_SOURCES = \
 	bool.c \
 	bundle.c \
 	cmd.c \
+	constraint.c \
 	cut.c \
 	db5_alloc.c \
 	db5_bin.c \
@@ -140,8 +141,10 @@ librt_nil_la_SOURCES = \
 	primitives/nmg/nmg_visit.c \
 	primitives/part/part.c \
 	primitives/pipe/pipe.c \
+	primitives/pnts/pnts.c \
 	primitives/poly/poly.c \
 	primitives/rec/rec.c \
+	primitives/revolve/revolve.c \
 	primitives/rhc/rhc.c \
 	primitives/rpc/rpc.c \
 	primitives/sketch/sketch.c \
@@ -185,6 +188,7 @@ nurb_example_LDADD = \
 
 noinst_HEADERS = \
 	primitives/fixpt.h \
+	primitives/revolve/revolve.h \
 	primitives/xxx/xxx.h
 
 dist_man_MANS = librt.3
@@ -200,10 +204,15 @@ EXTRA_DIST = \
 	$(sample_applications_DATA) \
         CMakeLists.txt \
 	brep_test.cpp \
+	namegen.c \
 	parse.c \
 	pmalloc.c \
 	primitives/bot/g_bot_include.c \
+	primitives/ell/ell_brep.cpp \
+	primitives/nmg/nmg_brep.cpp \
 	primitives/nmg/nmg_junk.c \
+	primitives/sph/sph_brep.cpp \
+	primitives/tor/tor_brep.cpp \
 	timer-nt.c \
 	timer52brl.c \
 	timerhep.c \
@@ -222,6 +231,7 @@ FAST_OBJECTS = \
 	$(librt_nil_la_OBJECTS) \
 	$(librt_la_OBJECTS) \
 	$(lib_LTLIBRARIES) \
+	$(noinst_LTLIBRARIES) \
 	$(comb_OBJECTS) \
 	$(nurb_example_OBJECTS) \
 	$(noinst_PROGRAMS)

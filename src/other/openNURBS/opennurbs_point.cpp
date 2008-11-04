@@ -2,13 +2,13 @@
 /* $NoKeywords: $ */
 /*
 //
-// Copyright (c) 1993-2001 Robert McNeel & Associates. All rights reserved.
+// Copyright (c) 1993-2007 Robert McNeel & Associates. All rights reserved.
 // Rhinoceros is a registered trademark of Robert McNeel & Assoicates.
 //
 // THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY.
 // ALL IMPLIED WARRANTIES OF FITNESS FOR ANY PARTICULAR PURPOSE AND OF
 // MERCHANTABILITY ARE HEREBY DISCLAIMED.
-//
+//				
 // For complete openNURBS copyright information see <http://www.opennurbs.org>.
 //
 ////////////////////////////////////////////////////////////////
@@ -31,7 +31,7 @@ bool ON_IsFinite(double x)
 {
   // Returns true if x is a finite double.  Specifically,
   // _finite returns a nonzero value (true) if its argument x
-  // is not infinite, that is, if -INF < x < +INF.
+  // is not infinite, that is, if -INF < x < +INF. 
   // It returns 0 (false) if the argument is infinite or a NaN.
   //
   // If you are trying to compile opennurbs on a platform
@@ -54,7 +54,7 @@ bool ON_IsValid(double x)
 
 ON_Interval::ON_Interval()
 {
-  m_t[0] = m_t[1] = ON_UNSET_VALUE;
+  m_t[0] = m_t[1] = ON_UNSET_VALUE; 
 }
 
 ON_Interval::ON_Interval(double t0, double t1)
@@ -122,7 +122,7 @@ ON_Interval ON_Interval::NormalizedParameterAt( // returns x so that min*(1.0-x)
   ON_Interval t
   ) const
 {
-	return  ON_Interval(	NormalizedParameterAt(t[0]) ,
+	return  ON_Interval(	NormalizedParameterAt(t[0]) , 
 												NormalizedParameterAt(t[1]) );
 }
 
@@ -178,26 +178,27 @@ ON_Interval::IsEmptySet() const
 bool
 ON_Interval::IsValid() const
 {
-  return ( ON_IsValid(m_t[0]) && ON_IsValid(m_t[0]) );
+  // 05/29/2007 TimH. Changed 0 to 1.
+  return ( ON_IsValid(m_t[0]) && ON_IsValid(m_t[1]) );
 }
 
-bool
-ON_Interval::MakeIncreasing()		// returns true if resulting interval IsIncreasing()
+bool 
+ON_Interval::MakeIncreasing()		// returns true if resulting interval IsIncreasing() 
 {
-	if( IsDecreasing()){
+	if( IsDecreasing()){ 
 		Swap();
 		return true;
 	}
 	return IsIncreasing();
 }
 
-bool
+bool 
 ON_Interval::operator!=(const ON_Interval& other) const
 {
   return Compare(other) ? true : false;
 }
 
-bool
+bool 
 ON_Interval::operator==(const ON_Interval& other) const
 {
   return Compare(other) ? false : true;
@@ -268,7 +269,7 @@ ON_Interval::Swap()
 }
 
 //////////
-// If the intersection is not empty, then
+// If the intersection is not empty, then 
 // intersection = [max(this.Min(),arg.Min()), min(this.Max(),arg.Max())]
 // Intersection() returns true if the intersection is not empty.
 // The interval [ON_UNSET_VALUE,ON_UNSET_VALUE] is considered to be
@@ -300,14 +301,14 @@ bool ON_Interval::Intersection( // this = this intersect arg
 }
 
 //////////
-// If the intersection is not empty, then
+// If the intersection is not empty, then 
 // intersection = [max(argA.Min(),argB.Min()), min(argA.Max(),argB.Max())]
 // Intersection() returns true if the intersection is not empty.
 // The interval [ON_UNSET_VALUE,ON_UNSET_VALUE] is considered to be
 // the empty set interval.  The result of any intersection involving an
 // empty set interval or disjoint intervals is the empty set interval.
 bool ON_Interval::Intersection( // this = intersection of two args
-       const ON_Interval& ain,
+       const ON_Interval& ain, 
        const ON_Interval& bin
        )
 {
@@ -380,7 +381,7 @@ bool ON_Interval::Union( // this = this union arg
 // union = [min(argA.Min(),argB.Min()), max(argA.Max(),argB.Max()),]
 // Union() returns true if the union is not empty.
 bool ON_Interval::Union( // this = union of two args
-       const ON_Interval& ain,
+       const ON_Interval& ain, 
        const ON_Interval& bin
        )
 {
@@ -440,13 +441,13 @@ bool ON_3dVector::Decompose( // Computes a, b, c such that this vector = a*X + b
   row0[0] = X*X;   row0[1] = X*Y;   row0[2] = X*Z;
   row1[0] = row0[1]; row1[1] = Y*Y;   row1[2] = Y*Z;
   row2[0] = row0[2]; row2[1] = row1[2]; row2[2] = Z*Z;
-  rank = ON_Solve3x3( row0, row1, row2,
-                    (*this)*X, (*this)*Y, (*this)*Z,
-                    a, b, c, &pivot_ratio );
+  rank = ON_Solve3x3( row0, row1, row2, 
+		    (*this)*X, (*this)*Y, (*this)*Z,
+		    a, b, c, &pivot_ratio );
   return (rank == 3) ? true : false;
 }
 
-int ON_3dVector::IsParallelTo(
+int ON_3dVector::IsParallelTo( 
       // returns  1: this and other vectors are and parallel
       //         -1: this and other vectors are anti-parallel
       //          0: this and other vectors are not parallel
@@ -506,7 +507,7 @@ bool ON_3fVector::PerpendicularTo( const ON_3fVector& v )
 bool ON_3dVector::PerpendicularTo( const ON_3dVector& v )
 {
   //bool rc = false;
-  int i, j, k;
+  int i, j, k; 
   double a, b;
   k = 2;
   if ( fabs(v.y) > fabs(v.x) ) {
@@ -567,7 +568,7 @@ bool ON_3dVector::PerpendicularTo( const ON_3dVector& v )
 }
 
 bool
-ON_3dVector::PerpendicularTo(
+ON_3dVector::PerpendicularTo( 
       const ON_3dPoint& P0, const ON_3dPoint& P1, const ON_3dPoint& P2
       )
 {
@@ -613,7 +614,7 @@ ON_3dVector::PerpendicularTo(
   else {
     *this = N2;
   }
-
+  
   return true;
 }
 
@@ -676,7 +677,7 @@ void ON_2fPoint::Transform( const ON_Xform& xform )
   }
 }
 
-void ON_2fPoint::Rotate(
+void ON_2fPoint::Rotate( 
       double angle,               // angle in radians
       const ON_2fPoint& center  // center of rotation
       )
@@ -684,7 +685,7 @@ void ON_2fPoint::Rotate(
   Rotate( sin(angle), cos(angle), center );
 }
 
-void ON_2fPoint::Rotate(
+void ON_2fPoint::Rotate( 
       double sin_angle,           // sin(angle)
       double cos_angle,           // cos(angle)
       const ON_2fPoint& center  // center of rotation
@@ -695,7 +696,7 @@ void ON_2fPoint::Rotate(
   Transform(rot);
 }
 
-void ON_3fPoint::Rotate(
+void ON_3fPoint::Rotate( 
       double angle,               // angle in radians
       const ON_3fVector& axis,  // axis of rotation
       const ON_3fPoint& center  // center of rotation
@@ -704,7 +705,7 @@ void ON_3fPoint::Rotate(
   Rotate( sin(angle), cos(angle), axis, center );
 }
 
-void ON_3fPoint::Rotate(
+void ON_3fPoint::Rotate( 
       double sin_angle,           // sin(angle)
       double cos_angle,           // cos(angle)
       const ON_3fVector& axis,  // axis of rotation
@@ -747,9 +748,9 @@ void ON_4fPoint::Transform( const ON_Xform& xform )
   }
 }
 
-double ON_3fPoint::Fuzz(
-          double absolute_tolerance // (default =  ON_ZERO_TOLERANCE)
-          ) const
+double ON_3fPoint::Fuzz( 
+	  double absolute_tolerance // (default =  ON_ZERO_TOLERANCE) 
+	  ) const
 {
   double t = MaximumCoordinate()* ON_SQRT_EPSILON;
   return(t > absolute_tolerance) ? t : absolute_tolerance;
@@ -842,13 +843,13 @@ bool ON_2dVector::Decompose( // Computes a, b such that this vector = a*X + b*Y
   double pivot_ratio = 0.0;
   double XoY = X*Y;
   rank = ON_Solve2x2( X*X, XoY, Y*Y, XoY,
-                    (*this)*X, (*this)*Y,
-                    a, b, &pivot_ratio );
+		    (*this)*X, (*this)*Y, 
+		    a, b, &pivot_ratio );
   return (rank == 2) ? true : false;
 }
 
 
-int ON_2fVector::IsParallelTo(
+int ON_2fVector::IsParallelTo( 
       // returns  1: this and other vectors are and parallel
       //         -1: this and other vectors are anti-parallel
       //          0: this and other vectors are not parallel
@@ -861,7 +862,7 @@ int ON_2fVector::IsParallelTo(
   return V.IsParallelTo(ON_2dVector(v),angle_tolerance);
 }
 
-int ON_2dVector::IsParallelTo(
+int ON_2dVector::IsParallelTo( 
       // returns  1: this and other vectors are and parallel
       //         -1: this and other vectors are anti-parallel
       //          0: this and other vectors are not parallel
@@ -946,7 +947,7 @@ void ON_3dVector::Transform( const ON_Xform& xform )
   z = zz;
 }
 
-void ON_3dPoint::Rotate(
+void ON_3dPoint::Rotate( 
       double angle,               // angle in radians
       const ON_3dVector& axis,  // axis of rotation
       const ON_3dPoint& center  // center of rotation
@@ -955,7 +956,7 @@ void ON_3dPoint::Rotate(
   Rotate( sin(angle), cos(angle), axis, center );
 }
 
-void ON_3dPoint::Rotate(
+void ON_3dPoint::Rotate( 
       double sin_angle,           // sin(angle)
       double cos_angle,           // cos(angle)
       const ON_3dVector& axis,  // axis of rotation
@@ -967,7 +968,7 @@ void ON_3dPoint::Rotate(
   Transform(rot);
 }
 
-void ON_2dPoint::Rotate(
+void ON_2dPoint::Rotate( 
       double angle,               // angle in radians
       const ON_2dPoint& center  // center of rotation
       )
@@ -975,7 +976,7 @@ void ON_2dPoint::Rotate(
   Rotate( sin(angle), cos(angle), center );
 }
 
-void ON_2dPoint::Rotate(
+void ON_2dPoint::Rotate( 
       double sin_angle,           // sin(angle)
       double cos_angle,           // cos(angle)
       const ON_2dPoint& center  // center of rotation
@@ -986,14 +987,14 @@ void ON_2dPoint::Rotate(
   Transform(rot);
 }
 
-void ON_2dVector::Rotate(
+void ON_2dVector::Rotate( 
       double angle // angle in radians
       )
 {
   Rotate( sin(angle), cos(angle) );
 }
 
-void ON_2dVector::Rotate(
+void ON_2dVector::Rotate( 
       double sin_angle, // sin(angle)
       double cos_angle  // cos(angle)
       )
@@ -1045,7 +1046,7 @@ bool ON_IsRightHandFrame( const ON_2dVector& X,  const ON_2dVector& Y )
     return false;
   return true;
 }
-void ON_3fVector::Rotate(
+void ON_3fVector::Rotate( 
       double angle,              // angle in radians
       const ON_3fVector& axis   // axis of rotation
       )
@@ -1053,7 +1054,7 @@ void ON_3fVector::Rotate(
   Rotate( sin(angle), cos(angle), axis );
 }
 
-void ON_3fVector::Rotate(
+void ON_3fVector::Rotate( 
       double sin_angle,        // sin(angle)
       double cos_angle,        // cos(angle)
       const ON_3fVector& axis  // axis of rotation
@@ -1065,7 +1066,7 @@ void ON_3fVector::Rotate(
   Transform(rot);
 }
 
-void ON_3dVector::Rotate(
+void ON_3dVector::Rotate( 
       double angle,              // angle in radians
       const ON_3dVector& axis   // axis of rotation
       )
@@ -1073,7 +1074,7 @@ void ON_3dVector::Rotate(
   Rotate( sin(angle), cos(angle), axis );
 }
 
-void ON_3dVector::Rotate(
+void ON_3dVector::Rotate( 
       double sin_angle,        // sin(angle)
       double cos_angle,        // cos(angle)
       const ON_3dVector& axis  // axis of rotation
@@ -1106,7 +1107,7 @@ bool ON_IsOrthogonalFrame( const ON_3dVector& X,  const ON_3dVector& Y,  const O
   double xy = (X.x*Y.x + X.y*Y.y + X.z*Y.z)*lx*ly;
   double yz = (Y.x*Z.x + Y.y*Z.y + Y.z*Z.z)*ly*lz;
   double zx = (Z.x*X.x + Z.y*X.y + Z.z*X.z)*lz*lx;
-  if (    fabs(xy) > ON_SQRT_EPSILON
+  if (    fabs(xy) > ON_SQRT_EPSILON 
        || fabs(yz) > ON_SQRT_EPSILON
        || fabs(zx) > ON_SQRT_EPSILON
      )
@@ -1181,9 +1182,9 @@ ON_3dPoint ON_3dPoint::operator*( const ON_Xform& xform ) const
   return ON_3dPoint( w*hx[0], w*hx[1], w*hx[2] );
 }
 
-double ON_3dPoint::Fuzz(
-          double absolute_tolerance // (default =  ON_ZERO_TOLERANCE)
-          ) const
+double ON_3dPoint::Fuzz( 
+	  double absolute_tolerance // (default =  ON_ZERO_TOLERANCE) 
+	  ) const
 {
   double t = MaximumCoordinate()* ON_SQRT_EPSILON;
   return(t > absolute_tolerance) ? t : absolute_tolerance;
@@ -1211,8 +1212,8 @@ ON_3dVector ON_3dVector::operator*( const ON_Xform& xform ) const
 }
 
 double ON_3fVector::Fuzz(
-          double absolute_tolerance // (default =  ON_ZERO_TOLERANCE)
-          ) const
+	  double absolute_tolerance // (default =  ON_ZERO_TOLERANCE) 
+	  ) const
 {
   double t = MaximumCoordinate()* ON_SQRT_EPSILON;
   return(t > absolute_tolerance) ? t : absolute_tolerance;
@@ -1220,8 +1221,8 @@ double ON_3fVector::Fuzz(
 
 
 double ON_3dVector::Fuzz(
-          double absolute_tolerance // (default =  ON_ZERO_TOLERANCE)
-          ) const
+	  double absolute_tolerance // (default =  ON_ZERO_TOLERANCE) 
+	  ) const
 {
   double t = MaximumCoordinate()* ON_SQRT_EPSILON;
   return(t > absolute_tolerance) ? t : absolute_tolerance;
@@ -2352,7 +2353,7 @@ bool ON_2fVector::Unitize()
   // Since x,y are floats, d will not be denormalized and the
   // ON_DBL_MIN tests in ON_2dVector::Unitize() are not needed.
   double d = Length();
-  if ( d > 0.0 )
+  if ( d > 0.0 ) 
   {
     d = 1.0/d;
     double dx = (double)x;
@@ -2377,8 +2378,8 @@ bool ON_2fVector::IsZero() const
 
 
 // set this vector to be perpendicular to another vector
-bool ON_2fVector::PerpendicularTo( // Result is not unitized.
-                      // returns false if input vector is zero
+bool ON_2fVector::PerpendicularTo( // Result is not unitized. 
+		      // returns false if input vector is zero
       const ON_2fVector& v
       )
 {
@@ -2388,8 +2389,8 @@ bool ON_2fVector::PerpendicularTo( // Result is not unitized.
 }
 
 // set this vector to be perpendicular to a line defined by 2 points
-bool ON_2fVector::PerpendicularTo(
-      const ON_2fPoint& p,
+bool ON_2fVector::PerpendicularTo( 
+      const ON_2fPoint& p, 
       const ON_2fPoint& q
       )
 {
@@ -2718,7 +2719,7 @@ bool ON_3fVector::Unitize()
   // Since x,y,z are floats, d will not be denormalized and the
   // ON_DBL_MIN tests in ON_2dVector::Unitize() are not needed.
   double d = Length();
-  if ( d > 0.0 )
+  if ( d > 0.0 ) 
   {
     d = 1.0/d;
     double dx = x;
@@ -3933,7 +3934,7 @@ double ON_2dVector::Length() const
   if ( fy > fx ) {
     len = fx; fx = fy; fy = len;
   }
-
+ 
   // 15 September 2003 Dale Lear
   //     For small denormalized doubles (positive but smaller
   //     than DBL_MIN), some compilers/FPUs set 1.0/fx to +INF.
@@ -3978,7 +3979,7 @@ bool ON_2dVector::Unitize()
   //     for details.
   bool rc = false;
   double d = Length();
-  if ( d > ON_DBL_MIN )
+  if ( d > ON_DBL_MIN ) 
   {
     d = 1.0/d;
     x *= d;
@@ -3988,7 +3989,7 @@ bool ON_2dVector::Unitize()
   else if ( d > 0.0 && ON_IsFinite(d) )
   {
     // This code is rarely used and can be slow.
-    // It multiplies by 2^1023 in an attempt to
+    // It multiplies by 2^1023 in an attempt to 
     // normalize the coordinates.
     // If the renormalization works, then we're
     // ok.  If the renormalization fails, we
@@ -4030,8 +4031,8 @@ bool ON_2dVector::IsZero() const
 }
 
 // set this vector to be perpendicular to another vector
-bool ON_2dVector::PerpendicularTo( // Result is not unitized.
-                      // returns false if input vector is zero
+bool ON_2dVector::PerpendicularTo( // Result is not unitized. 
+		      // returns false if input vector is zero
       const ON_2dVector& v
       )
 {
@@ -4041,8 +4042,8 @@ bool ON_2dVector::PerpendicularTo( // Result is not unitized.
 }
 
 // set this vector to be perpendicular to a line defined by 2 points
-bool ON_2dVector::PerpendicularTo(
-      const ON_2dPoint& p,
+bool ON_2dVector::PerpendicularTo( 
+      const ON_2dPoint& p, 
       const ON_2dPoint& q
       )
 {
@@ -4356,7 +4357,7 @@ double ON_3dVector::Length() const
   //
   //     This code is absolutely necessary.  It is a critical
   //     part of the bug fix for RR 11217.
-  if ( fx > ON_DBL_MIN )
+  if ( fx > ON_DBL_MIN ) 
   {
     len = 1.0/fx;
     fy *= len;
@@ -4401,7 +4402,7 @@ bool ON_3dVector::Unitize()
   else if ( d > 0.0 && ON_IsFinite(d) )
   {
     // This code is rarely used and can be slow.
-    // It multiplies by 2^1023 in an attempt to
+    // It multiplies by 2^1023 in an attempt to 
     // normalize the coordinates.
     // If the renormalization works, then we're
     // ok.  If the renormalization fails, we
@@ -4659,16 +4660,16 @@ double ON_PlaneEquation::MaximumValueAt(const ON_BoundingBox& bbox) const
   return (xx + yy + zz + d);
 }
 
-bool ON_PlaneEquation::IsNearerThan(
-        const ON_BezierCurve& bezcrv,
-        double s0,
-        double s1,
-        int sample_count,
-        double endpoint_tolerance,
-        double interior_tolerance,
-        double* smin,
-        double* smax
-        ) const
+bool ON_PlaneEquation::IsNearerThan( 
+	const ON_BezierCurve& bezcrv,
+	double s0,
+	double s1,
+	int sample_count,
+	double endpoint_tolerance,
+	double interior_tolerance,
+	double* smin,
+	double* smax
+	) const
 {
   int i, n;
   double smn, smx, vmn, vmx, s, v, w;
@@ -4696,9 +4697,9 @@ bool ON_PlaneEquation::IsNearerThan(
     if (v > endpoint_tolerance )
     {
       if ( smin )
-        *smin = smn;
+	*smin = smn;
       if ( smax )
-        *smax = s0;
+	*smax = s0;
       return false;
     }
     if ( v < vmn ) { vmn = v; smn = s0; } else if (v > vmx) { vmx = v; smx = s0; }
@@ -4708,9 +4709,9 @@ bool ON_PlaneEquation::IsNearerThan(
     if (v > endpoint_tolerance )
     {
       if ( smin )
-        *smin = smn;
+	*smin = smn;
       if ( smax )
-        *smax = s1;
+	*smax = s1;
       return false;
     }
     if ( v < vmn ) { vmn = v; smn = s1; } else if (v > vmx) { vmx = v; smx = s1; }
@@ -4727,23 +4728,23 @@ bool ON_PlaneEquation::IsNearerThan(
       bezcrv.Evaluate(s,0,3,&P.x);
       v = x*P.x + y*P.y + z*P.z + d;
 
-      if ( v < vmn )
-      {
-        vmn = v;
-        smn = s;
-      }
-      else if (v > vmx)
-      {
-        vmx = v;
-        smx = s;
-        if ( vmx > interior_tolerance )
-        {
-          if ( smin )
-            *smin = smn;
-          if ( smax )
-            *smax = s;
-          return false;
-        }
+      if ( v < vmn ) 
+      { 
+	vmn = v; 
+	smn = s; 
+      } 
+      else if (v > vmx) 
+      { 
+	vmx = v; 
+	smx = s; 
+	if ( vmx > interior_tolerance )
+	{
+	  if ( smin )
+	    *smin = smn;
+	  if ( smax )
+	    *smax = s;
+	  return false;
+	}
       }
 
       sample_count--;
@@ -4760,10 +4761,10 @@ bool ON_PlaneEquation::IsNearerThan(
 
 
 
-int ON_Get3dConvexHull(
-          const ON_SimpleArray<ON_3dPoint>& points,
-          ON_SimpleArray<ON_PlaneEquation>& hull
-          )
+int ON_Get3dConvexHull( 
+	  const ON_SimpleArray<ON_3dPoint>& points, 
+	  ON_SimpleArray<ON_PlaneEquation>& hull 
+	  )
 {
   // This is a slow and stupid way to get the convex hull.
   // It works for small point sets.  If you need something
@@ -4789,73 +4790,73 @@ int ON_Get3dConvexHull(
       B = points[j];
       for (k = j+1; k < point_count; k++ )
       {
-        C = points[k];
-        e.ON_3dVector::operator=(ON_CrossProduct(B-A,C-A));
-        if ( !e.ON_3dVector::Unitize() )
-          continue;
-        e.d = -(A.x*e.x + A.y*e.y + A.z*e.z);
-        d0 = d1 = e.ValueAt(A);
-        d = e.ValueAt(B); if ( d < d0 ) d0 = d; else if (d > d1) d1 = d;
-        d = e.ValueAt(C); if ( d < d0 ) d0 = d; else if (d > d1) d1 = d;
-        if ( d0 > -ON_ZERO_TOLERANCE )
-          d0 = -ON_ZERO_TOLERANCE;
-        if ( d1 < ON_ZERO_TOLERANCE )
-          d1 = ON_ZERO_TOLERANCE;
+	C = points[k];
+	e.ON_3dVector::operator=(ON_CrossProduct(B-A,C-A));
+	if ( !e.ON_3dVector::Unitize() )
+	  continue;
+	e.d = -(A.x*e.x + A.y*e.y + A.z*e.z);
+	d0 = d1 = e.ValueAt(A);
+	d = e.ValueAt(B); if ( d < d0 ) d0 = d; else if (d > d1) d1 = d;
+	d = e.ValueAt(C); if ( d < d0 ) d0 = d; else if (d > d1) d1 = d;
+	if ( d0 > -ON_ZERO_TOLERANCE )
+	  d0 = -ON_ZERO_TOLERANCE;
+	if ( d1 < ON_ZERO_TOLERANCE )
+	  d1 = ON_ZERO_TOLERANCE;
 
-        h0 = 0.0; h1 = 0.0;
+	h0 = 0.0; h1 = 0.0;
 
-        bGoodSide = true;
-        for ( n = 0; n < point_count && bGoodSide; n++ )
-        {
-          d = e.ValueAt(points[n]);
-          if ( d < h0 )
-          {
-            h0 = d;
-            bGoodSide = (d0 <= h0 || h1 <= d1);
-          }
-          else if ( d > h1 )
-          {
-            h1 = d;
-            bGoodSide = (d0 <= h0 || h1 <= d1);
-          }
-        }
+	bGoodSide = true;
+	for ( n = 0; n < point_count && bGoodSide; n++ )
+	{
+	  d = e.ValueAt(points[n]);
+	  if ( d < h0 )
+	  {
+	    h0 = d;
+	    bGoodSide = (d0 <= h0 || h1 <= d1);
+	  }
+	  else if ( d > h1 )
+	  {
+	    h1 = d;
+	    bGoodSide = (d0 <= h0 || h1 <= d1);
+	  }
+	}
 
-        if ( bGoodSide )
-        {
-          if ( h1 <= d1 )
-          {
-            // all points are "below" the plane
-            if ( d0 <= h0  )
-            {
-              // all points are also "above" the plane,
-              hull.SetCount(count0);
-              ON_PlaneEquation& e0 = hull.AppendNew();
-              e0.x = -e.x;
-              e0.y = -e.y;
-              e0.z = -e.z;
-              e0.d = -(e.d-h0);
-            }
-            ON_PlaneEquation& e1 = hull.AppendNew();
-            e1.x = e.x;
-            e1.y = e.y;
-            e1.z = e.z;
-            e1.d = (e.d-h1);
-            if ( d0 <= h0  )
-            {
-              // points are (nearly) planar
-              return 2;
-            }
-          }
-          else if ( d0 <= h0  )
-          {
-            // all points are "above" the plane
-            ON_PlaneEquation& e0 = hull.AppendNew();
-            e0.x = -e.x;
-            e0.y = -e.y;
-            e0.z = -e.z;
-            e0.d = -(e.d-h0);
-          }
-        }
+	if ( bGoodSide )
+	{
+	  if ( h1 <= d1 )
+	  {
+	    // all points are "below" the plane
+	    if ( d0 <= h0  )
+	    {
+	      // all points are also "above" the plane,
+	      hull.SetCount(count0);
+	      ON_PlaneEquation& e0 = hull.AppendNew();
+	      e0.x = -e.x;
+	      e0.y = -e.y;
+	      e0.z = -e.z;
+	      e0.d = -(e.d-h0);
+	    }
+	    ON_PlaneEquation& e1 = hull.AppendNew();
+	    e1.x = e.x;
+	    e1.y = e.y;
+	    e1.z = e.z;
+	    e1.d = (e.d-h1);
+	    if ( d0 <= h0  )
+	    {
+	      // points are (nearly) planar
+	      return 2;
+	    }
+	  }
+	  else if ( d0 <= h0  )
+	  {
+	    // all points are "above" the plane
+	    ON_PlaneEquation& e0 = hull.AppendNew();
+	    e0.x = -e.x;
+	    e0.y = -e.y;
+	    e0.z = -e.z;
+	    e0.d = -(e.d-h0);
+	  }
+	}
       }
     }
   }

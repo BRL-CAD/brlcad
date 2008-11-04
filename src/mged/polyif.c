@@ -27,17 +27,16 @@
 
 #include "common.h"
 
-#include <stdio.h>
 #include <string.h>
 #include <math.h>
 #include <signal.h>
-
 #include "bio.h"
+
 #include "vmath.h"
 #include "mater.h"
 #include "dg.h"
+
 #include "./mged.h"
-#include "./mged_solid.h"
 #include "./mged_dm.h"
 
 /* XXX When finalized, this stuff belongs in a header file of it's own */

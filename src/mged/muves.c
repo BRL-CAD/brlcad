@@ -41,6 +41,8 @@
 #include "./mged.h"
 #include "./sedit.h"
 
+/* defined in chgview.c */
+extern int edit_com(int argc, const char *argv[], int kind, int catch_sigint);
 
 /* Maximum line length allowed for MUVES input files */
 #define MUVES_LINE_LEN		256
@@ -642,7 +644,7 @@ f_e_muves(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
     }
 
     if ( e_argc > 1 )
-	return( edit_com( e_argc, e_argv, 1, 0 ) );
+	return( edit_com( e_argc, (const char **)e_argv, 1, 0 ) );
 
     bu_free( (char *)e_argv, "e_argv" );
 

@@ -64,8 +64,6 @@ extern point_t	viewbase_model;
 
 extern int	npsw;			/* number of worker PSWs to run */
 
-int		use_air = 1;		/* Handling of air in librt */
-
 extern int 	 rpt_overlap;
 
 extern fastf_t  rt_cline_radius;        /* from g_cline.c */
@@ -122,6 +120,9 @@ static char * save_obj;
 int
 view_init(register struct application *ap, char *file, char *obj, int minus_o)
 {
+    /* Handling of air in librt */
+    use_air = 1;
+
     line_num = 1;
 
     if ( !minus_o )

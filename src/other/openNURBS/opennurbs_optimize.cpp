@@ -2,13 +2,13 @@
 /* $NoKeywords: $ */
 /*
 //
-// Copyright (c) 1993-2001 Robert McNeel & Associates. All rights reserved.
+// Copyright (c) 1993-2007 Robert McNeel & Associates. All rights reserved.
 // Rhinoceros is a registered trademark of Robert McNeel & Assoicates.
 //
 // THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY.
 // ALL IMPLIED WARRANTIES OF FITNESS FOR ANY PARTICULAR PURPOSE AND OF
 // MERCHANTABILITY ARE HEREBY DISCLAIMED.
-//
+//				
 // For complete openNURBS copyright information see <http://www.opennurbs.org>.
 //
 ////////////////////////////////////////////////////////////////
@@ -19,11 +19,11 @@
 
 
 int ON_FindLocalMinimum(
-                int (*f)(void*,double,double*,double*), void* farg,
-                double ax, double bx, double cx,
-                double rel_stepsize_tol, double abs_stepsize_tol, int max_it,
-                double *t_addr
-                )
+		int (*f)(void*,double,double*,double*), void* farg,
+		double ax, double bx, double cx,
+		double rel_stepsize_tol, double abs_stepsize_tol, int max_it, 
+		double *t_addr
+		)
 /* Use Brent's algorithm (with derivative) to Find a (local) minimum of a function
  *
  * INPUT:
@@ -45,8 +45,8 @@ int ON_FindLocalMinimum(
  *      rel_stepsize_tol is a fractional tolerance and abs_stepsize_tol is an absolute tolerance
  *      that determine the minimum step size for a given iteration.
  *        minimum delta t = rel_stepsize_tol*|t| + abs_stepsize_tol.
- *      When in doubt, use
- *         rel_stepsize_tol = ON_EPSILON
+ *      When in doubt, use 
+ *         rel_stepsize_tol = ON_EPSILON 
  *         abs_stepsize_tol = 1/2*(desired absolute precision for *t_addr).
  *   max_it ( >= 2)
  *      maximum number of iterations to permit (when in doubt use 100)
@@ -110,21 +110,21 @@ int ON_FindLocalMinimum(
       olde=e;
       e=d;
       if (ok1 || ok2) {
-        if (ok1 && ok2)
-          d=(fabs(d1) < fabs(d2) ? d1 : d2);
-        else if (ok1)
-          d=d1;
-        else
-          d=d2;
-        if (fabs(d) <= fabs(0.5*olde)) {
-          u=x+d;
-          if (u-a < tol2 || b-u < tol2)
-            {d = (xm >= x) ? tol1 : -tol1;}
-        } else {
-          d=0.5*(e=(dx >= 0.0 ? a-x : b-x));
-        }
+	if (ok1 && ok2)
+	  d=(fabs(d1) < fabs(d2) ? d1 : d2);
+	else if (ok1)
+	  d=d1;
+	else
+	  d=d2;
+	if (fabs(d) <= fabs(0.5*olde)) {
+	  u=x+d;
+	  if (u-a < tol2 || b-u < tol2)
+	    {d = (xm >= x) ? tol1 : -tol1;}
+	} else {
+	  d=0.5*(e=(dx >= 0.0 ? a-x : b-x));
+	}
       } else {
-        d=0.5*(e=(dx >= 0.0 ? a-x : b-x));
+	d=0.5*(e=(dx >= 0.0 ? a-x : b-x));
       }
     } else {
       d=0.5*(e=(dx >= 0.0 ? a-x : b-x));
@@ -137,18 +137,18 @@ int ON_FindLocalMinimum(
       u = (d >= 0.0) ? x+tol1 : x-tol1;
       rc = f(farg,u,&fu,&du);
       if (rc >= 0 && fu > fx) {
-        // tweaking x any more increases function value - x is a numerical minimum
-        *t_addr=x;
-        return 1;
+	// tweaking x any more increases function value - x is a numerical minimum
+	*t_addr=x;
+	return 1;
       }
     }
     if (rc) {
       // f() returned nonzero return code which means we need to bailout
       if ( rc < 0 ) {
-        ON_ERROR("ON_FindLocalMinimum() f() failed to evaluate.");
+	ON_ERROR("ON_FindLocalMinimum() f() failed to evaluate.");
       }
       else {
-        *t_addr = (fu < fx) ? u : x;
+	*t_addr = (fu < fx) ? u : x;
       }
       return rc>0 ? 1 : 0;
     }
@@ -160,10 +160,10 @@ int ON_FindLocalMinimum(
     } else {
       if (u < x) a=u; else b=u;
       if (fu <= fw || w == x) {
-        v=w;fv=fw;dv=dw;
-        w=u;fw=fu;dw=du;
+	v=w;fv=fw;dv=dw;
+	w=u;fw=fu;dw=du;
       } else if (fu < fv || v == x || v == w) {
-        v=u;fv=fu;dv=du;
+	v=u;fv=fu;dv=du;
       }
     }
   }
@@ -173,19 +173,19 @@ int ON_FindLocalMinimum(
 }
 
 
-ON_LocalZero1::ON_LocalZero1()
-               : m_t0(ON_UNSET_VALUE), m_t1(ON_UNSET_VALUE),
-                 m_f_tolerance(0.0), m_t_tolerance(0.0),
-                 m_k(NULL), m_k_count(0)
+ON_LocalZero1::ON_LocalZero1() 
+	       : m_t0(ON_UNSET_VALUE), m_t1(ON_UNSET_VALUE),
+		 m_f_tolerance(0.0), m_t_tolerance(0.0),
+		 m_k(NULL), m_k_count(0)
 {}
 
 ON_LocalZero1::~ON_LocalZero1()
 {}
 
 BOOL
-ON_LocalZero1::BracketZero( double s0, double f0,
-                             double s1, double f1,
-                             int level )
+ON_LocalZero1::BracketZero( double s0, double f0, 
+			     double s1, double f1,
+			     int level )
 {
   double s, f, d;
 
@@ -201,38 +201,38 @@ ON_LocalZero1::BracketZero( double s0, double f0,
     s = 0.5*s0+s1;
     if ( s0 < s && s < s1 && Evaluate(s,&f,&d,0) ) {
       if ( f*d >= 0.0 ) {
-        // search left side first
-        if ( BracketZero(s0,f0,s,f,level ) ) {
-          m_s0 = s0;
-          m_f0 = f0;
-          m_s1 = s;
-          m_f1 = f;
-          return TRUE;
-        }
-        if ( BracketZero(s,f,s1,f1,level ) ) {
-          m_s0 = s;
-          m_f0 = f;
-          m_s1 = s1;
-          m_f1 = f1;
-          return TRUE;
-        }
+	// search left side first
+	if ( BracketZero(s0,f0,s,f,level ) ) {
+	  m_s0 = s0;
+	  m_f0 = f0;
+	  m_s1 = s;
+	  m_f1 = f;
+	  return TRUE;
+	}
+	if ( BracketZero(s,f,s1,f1,level ) ) {
+	  m_s0 = s;
+	  m_f0 = f;
+	  m_s1 = s1;
+	  m_f1 = f1;
+	  return TRUE;
+	}
       }
       else {
-        // search right side first
-        if ( BracketZero(s,f,s1,f1,level ) ) {
-          m_s0 = s;
-          m_f0 = f;
-          m_s1 = s1;
-          m_f1 = f1;
-          return TRUE;
-        }
-        if ( BracketZero(s0,f0,s,f,level ) ) {
-          m_s0 = s0;
-          m_f0 = f0;
-          m_s1 = s;
-          m_f1 = f;
-          return TRUE;
-        }
+	// search right side first
+	if ( BracketZero(s,f,s1,f1,level ) ) {
+	  m_s0 = s;
+	  m_f0 = f;
+	  m_s1 = s1;
+	  m_f1 = f1;
+	  return TRUE;
+	}
+	if ( BracketZero(s0,f0,s,f,level ) ) {
+	  m_s0 = s0;
+	  m_f0 = f0;
+	  m_s1 = s;
+	  m_f1 = f;
+	  return TRUE;
+	}
       }
     }
   }
@@ -263,60 +263,60 @@ ON_LocalZero1::BracketSpan( double s0, double f0, double s1, double f1 )
       Evaluate( m_k[i0], &fm, NULL,-1 ); // gaurd against C0 discontinuities
       Evaluate( m_k[i0], &fp, NULL, 1 );
       if ( (f0 <= 0.0 && fm >= 0.0) || (f0 >= 0.0 && fm <= 0.0) ) {
-        m_s1 = m_k[i0];
-        m_f1 = fm;
+	m_s1 = m_k[i0];
+	m_f1 = fm;
       }
       else if ( (f1 <= 0.0 && fp >= 0.0) || (f1 >= 0.0 && fp <= 0.0) ) {
-        m_s0 = m_k[i0];
-        m_f0 = fp;
-        if ( i0 < i1 ) {
-          Evaluate( m_k[i1], &fm, NULL, -1 );
-          Evaluate( m_k[i1], &fp, NULL,  1 );
-          if ( (f1 <= 0.0 && fp >= 0.0) || (f1 >= 0.0 && fp <= 0.0) ) {
-            m_s0 = m_k[i1];
-            m_f0 = fp;
-          }
-          else if ( (f0 <= 0.0 && fm >= 0.0) || (f0 >= 0.0 && fm <= 0.0) ) {
-            m_s1 = m_k[i1];
-            m_f1 = fm;
-            // we have s0 = m_k[i0] < m_k[i1] = s1 and a bonafide sign change
-            while (i0+1 < i1) {
-              // bisect m_k[i0],...,m_k[i1] until we get a sign change between
-              // m_k[i],m_k[i+1].  We need to do this in order to make sure
-              // we are passing a C2 function to the repeated zero finders.
-              i = (i0+i1)>>1;
-              Evaluate( m_k[i], &fm, NULL, -1 );
-              Evaluate( m_k[i], &fp, NULL,  1 );
-              if ( (f0 <= 0.0 && fm >= 0.0) || (f0 >= 0.0 && fm <= 0.0) ) {
-                m_s1 = m_k[i];
-                m_f1 = fm;
-                i1 = i;
-                while ( i1>0 && m_k[i1-1]==m_k[i1])
-                  i1--;
-              }
-              else if ( (f1 <= 0.0 && fp >= 0.0) || (f1 >= 0.0 && fp <= 0.0) ) {
-                m_s0 = m_k[i];
-                m_f0 = fp;
-                i0 = i;
-                while ( i0 < m_k_count-2 && m_k[i0] == m_k[i0+1] )
-                  i0++;
-              }
-              else {
-                // discontinuous sign change across m_k[i]
-                rc = FALSE;
-                break;
-              }
-            }
-          }
-          else {
-            // discontinuous sign change across m_k[i1]
-            rc = FALSE;
-          }
-        }
+	m_s0 = m_k[i0];
+	m_f0 = fp;
+	if ( i0 < i1 ) {
+	  Evaluate( m_k[i1], &fm, NULL, -1 );
+	  Evaluate( m_k[i1], &fp, NULL,  1 );
+	  if ( (f1 <= 0.0 && fp >= 0.0) || (f1 >= 0.0 && fp <= 0.0) ) {
+	    m_s0 = m_k[i1];
+	    m_f0 = fp;
+	  }
+	  else if ( (f0 <= 0.0 && fm >= 0.0) || (f0 >= 0.0 && fm <= 0.0) ) {
+	    m_s1 = m_k[i1];
+	    m_f1 = fm;
+	    // we have s0 = m_k[i0] < m_k[i1] = s1 and a bonafide sign change
+	    while (i0+1 < i1) {
+	      // bisect m_k[i0],...,m_k[i1] until we get a sign change between
+	      // m_k[i],m_k[i+1].  We need to do this in order to make sure
+	      // we are passing a C2 function to the repeated zero finders.
+	      i = (i0+i1)>>1;
+	      Evaluate( m_k[i], &fm, NULL, -1 );
+	      Evaluate( m_k[i], &fp, NULL,  1 );
+	      if ( (f0 <= 0.0 && fm >= 0.0) || (f0 >= 0.0 && fm <= 0.0) ) {
+		m_s1 = m_k[i];
+		m_f1 = fm;
+		i1 = i;
+		while ( i1>0 && m_k[i1-1]==m_k[i1])
+		  i1--;
+	      }
+	      else if ( (f1 <= 0.0 && fp >= 0.0) || (f1 >= 0.0 && fp <= 0.0) ) {
+		m_s0 = m_k[i];
+		m_f0 = fp;
+		i0 = i;
+		while ( i0 < m_k_count-2 && m_k[i0] == m_k[i0+1] )
+		  i0++;
+	      }
+	      else {
+		// discontinuous sign change across m_k[i]
+		rc = FALSE;
+		break;
+	      }
+	    }
+	  }
+	  else {
+	    // discontinuous sign change across m_k[i1]
+	    rc = FALSE;
+	  }
+	}
       }
       else {
-        // discontinuous sign change across m_k[i0]
-        rc = FALSE;
+	// discontinuous sign change across m_k[i0]
+	rc = FALSE;
       }
     }
   }
@@ -338,15 +338,15 @@ BOOL ON_LocalZero1::FindZero( double* t )
       m_s0 = m_t1;
       m_s1 = m_t0;
       if ( m_t0 == m_t1 ) {
-        if ( Evaluate( m_t0, &m_f0, NULL, 1 ) ) {
-          m_f1 = m_f0;
-          if ( fabs(m_f0) <= m_f_tolerance ) {
-            *t = m_t0;
-            return TRUE;
-          }
-        }
-        ON_ERROR("Illegal input");
-        return FALSE;
+	if ( Evaluate( m_t0, &m_f0, NULL, 1 ) ) {
+	  m_f1 = m_f0;
+	  if ( fabs(m_f0) <= m_f_tolerance ) {
+	    *t = m_t0;
+	    return TRUE;
+	  }
+	}
+	ON_ERROR("Illegal input");
+	return FALSE;
       }
     }
   }
@@ -369,9 +369,9 @@ BOOL ON_LocalZero1::FindZero( double* t )
     }
     else {
       if (rc)
-        rc = BracketSpan( m_s0, m_f0, m_s1, m_f1 );
+	rc = BracketSpan( m_s0, m_f0, m_s1, m_f1 );
       if (rc)
-        rc = NewtonRaphson( m_s0, m_f0, m_s1, m_f1, 128, t );
+	rc = NewtonRaphson( m_s0, m_f0, m_s1, m_f1, 128, t );
     }
   }
   if (!rc) {
@@ -382,8 +382,8 @@ BOOL ON_LocalZero1::FindZero( double* t )
 }
 
 BOOL ON_LocalZero1::NewtonRaphson( double s0, double f0,
-                                    double s1, double f1,
-                                    int maxit, double* t )
+				    double s1, double f1,
+				    int maxit, double* t )
 {
   // private function - input must satisfy
   //
@@ -391,9 +391,9 @@ BOOL ON_LocalZero1::NewtonRaphson( double s0, double f0,
   //
   // 2) maxit >= 2
   //
-  // 3) s0 != s1,
+  // 3) s0 != s1, 
   //
-  // 4) f0 = f(s0), f1 = f(s1),
+  // 4) f0 = f(s0), f1 = f(s1), 
   //
   // 5) either f0 < 0.0 and f1 > 0.0, or f0 > 0.0 and f1 < 0.0
   //
@@ -446,20 +446,20 @@ BOOL ON_LocalZero1::NewtonRaphson( double s0, double f0,
 
   while (maxit--) {
     if ( (f+(s0-s)*d)*(f+(s1-s)*d) > 0.0  // TRUE if NR's line segment doesn't cross zero inside interval
-         || fabs(2.0*f) > fabs(prevds*d)  // TRUE if expected decrease in function value from previous step didn't happen
-         ) {
+	 || fabs(2.0*f) > fabs(prevds*d)  // TRUE if expected decrease in function value from previous step didn't happen
+	 ) {
       // bisect
       prevds = ds;
       ds = 0.5*(s1-s0);
       s = s0+ds;
       if ( s == s0 ) {
-        // interval is too small to be divided using double division
-        if ( fabs(f1) < fabs(f0) ) {
-          s = s1;
-        }
-        *t = s;
-        return TRUE;
-      }
+	// interval is too small to be divided using double division
+	if ( fabs(f1) < fabs(f0) ) {
+	  s = s1;
+	}
+	*t = s;
+	return TRUE;
+      }      
     }
     else {
       // Newton iterate
@@ -468,17 +468,17 @@ BOOL ON_LocalZero1::NewtonRaphson( double s0, double f0,
       x = s;
       s += ds;
       if ( s == x ) {
-        // Newton step size < smallest double than can be added to s
-        if ( fabs(f0) < fabs(f) ) {
-          f = f0;
-          s = s0;
-        }
-        if ( fabs(f1) < fabs(f) ) {
-          s = s1;
-        }
-        *t = s;
-        return TRUE;
-      }
+	// Newton step size < smallest double than can be added to s
+	if ( fabs(f0) < fabs(f) ) {
+	  f = f0;
+	  s = s0;
+	}
+	if ( fabs(f1) < fabs(f) ) {
+	  s = s1;
+	}
+	*t = s;
+	return TRUE;
+      } 
     }
 
     if ( !Evaluate( s, &f, &d, 0 ) ) {
@@ -489,11 +489,11 @@ BOOL ON_LocalZero1::NewtonRaphson( double s0, double f0,
     if ( fabs(f) <= m_f_tolerance ) {
       // |f(s)| <= user specified stopping tolerance
       if ( fabs(f0) < fabs(f) ) {
-        f = f0;
-        *t = s0;
+	f = f0;
+	*t = s0;
       }
       if ( fabs(f1) < fabs(f) ) {
-        *t = s1;
+	*t = s1;
       }
       return TRUE;
     }

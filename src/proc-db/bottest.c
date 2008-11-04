@@ -27,32 +27,33 @@
 
 #include <stdio.h>
 #include <math.h>
+
 #include "bu.h"
 #include "vmath.h"
 #include "raytrace.h"
 #include "wdb.h"
 #include "rtgeom.h"
 
-struct rt_wdb *outfp;
 
 int
 main(int argc, char **argv)
 {
-    fastf_t vertices[36];
     int faces[15];
-    struct bu_bitv *face_mode;
+    fastf_t vertices[36];
     fastf_t thickness[4];
+    struct rt_wdb *outfp = NULL;
+    struct bu_bitv *face_mode = NULL;
 
     outfp = wdb_fopen( "bot-test.g" );
     mk_id( outfp, "BOT test" );
 
-    VSET( vertices, 0.0, 0.0, 0.0 )
-	VSET( &vertices[3], 0.0, 100.0, 0.0 )
-	VSET( &vertices[6], 0.0, 100.0, 50.0 )
-	VSET( &vertices[9], 200.0, 0.0, 0.0 )
+    VSET( vertices, 0.0, 0.0, 0.0 );
+    VSET( &vertices[3], 0.0, 100.0, 0.0 );
+    VSET( &vertices[6], 0.0, 100.0, 50.0 );
+    VSET( &vertices[9], 200.0, 0.0, 0.0 );
 
-	/* face #1 */
-	faces[0] = 0;
+    /* face #1 */
+    faces[0] = 0;
     faces[1] = 1;
     faces[2] = 2;
 

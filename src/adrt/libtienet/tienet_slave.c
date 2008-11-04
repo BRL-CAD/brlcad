@@ -80,7 +80,8 @@ void tienet_slave_init(int port, char *host,
 }
 
 
-void tienet_slave_free() {
+void tienet_slave_free()
+{
 }
 
 
@@ -152,8 +153,10 @@ void tienet_slave_worker(int port, char *host) {
 	return;
 
     /* Request Work Unit */
-//  op = TN_OP_REQWORK;
-//  tienet_send(slave_socket, &op, sizeof(short));
+    /*
+    op = TN_OP_REQWORK;
+    tienet_send(slave_socket, &op, sizeof(short));
+    */
 
     while (1) {
 	tienet_recv(slave_socket, &op, sizeof(short));

@@ -1,4 +1,4 @@
-/*                          G _ H F . C
+/*                            H F . C
  * BRL-CAD
  *
  * Copyright (c) 1994-2008 United States Government as represented by
@@ -17,9 +17,9 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @addtogroup g_  */
+/** @addtogroup primitives */
 /** @{ */
-/** @file g_hf.c
+/** @file hf.c
  *
  * Intersect a ray with a height field, where the heights are imported
  * from an external data file, and where some (or all) of the
@@ -2199,6 +2199,15 @@ rt_hf_shot(struct soltab *stp, register struct xray *rp, struct application *ap,
 			bu_free( (char *)xip, "hf ifree" );
 			ip->idb_ptr = GENPTR_NULL;	/* sanity */
 		    }
+/**
+ * R T _ H F _ P A R A M S
+ *
+ */
+int
+rt_hf_params(struct pc_pc_set * ps, const struct rt_db_internal *ip)
+{
+    return(0);			/* OK */
+}
 
 /** @} */
 /*

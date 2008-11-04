@@ -2,13 +2,13 @@
 /* $NoKeywords: $ */
 /*
 //
-// Copyright (c) 1993-2005 Robert McNeel & Associates. All rights reserved.
+// Copyright (c) 1993-2007 Robert McNeel & Associates. All rights reserved.
 // Rhinoceros is a registered trademark of Robert McNeel & Assoicates.
 //
 // THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY.
 // ALL IMPLIED WARRANTIES OF FITNESS FOR ANY PARTICULAR PURPOSE AND OF
 // MERCHANTABILITY ARE HEREBY DISCLAIMED.
-//
+//				
 // For complete openNURBS copyright information see <http://www.opennurbs.org>.
 //
 ////////////////////////////////////////////////////////////////
@@ -54,7 +54,7 @@ bool ON_PlugInRef::Write( ON_BinaryArchive& file ) const
     if (rc) rc = file.WriteString(m_plugin_version);
     if (rc) rc = file.WriteString(m_plugin_filename);
 
-    // version 1.1 fields
+    // version 1.1 fields 
     if (rc) rc = file.WriteString(m_developer_organization);
     if (rc) rc = file.WriteString(m_developer_address);
     if (rc) rc = file.WriteString(m_developer_country);
@@ -111,9 +111,9 @@ bool ON_PlugInRef::Read( ON_BinaryArchive& file )
   int minor_version = 0;
 
   bool rc = file.BeginRead3dmChunk(
-                  TCODE_ANONYMOUS_CHUNK,
-                  &major_version,
-                  &minor_version);
+		  TCODE_ANONYMOUS_CHUNK,
+		  &major_version,
+		  &minor_version);
 
   if (rc)
   {
@@ -128,22 +128,22 @@ bool ON_PlugInRef::Read( ON_BinaryArchive& file )
 
       if ( minor_version >= 1)
       {
-        // version 1.1 fields
-        if (rc) rc = file.ReadString(m_developer_organization);
-        if (rc) rc = file.ReadString(m_developer_address);
-        if (rc) rc = file.ReadString(m_developer_country);
-        if (rc) rc = file.ReadString(m_developer_phone);
-        if (rc) rc = file.ReadString(m_developer_email);
-        if (rc) rc = file.ReadString(m_developer_website);
-        if (rc) rc = file.ReadString(m_developer_updateurl);
-        if (rc) rc = file.ReadString(m_developer_fax);
+	// version 1.1 fields
+	if (rc) rc = file.ReadString(m_developer_organization);
+	if (rc) rc = file.ReadString(m_developer_address);
+	if (rc) rc = file.ReadString(m_developer_country);
+	if (rc) rc = file.ReadString(m_developer_phone);
+	if (rc) rc = file.ReadString(m_developer_email);
+	if (rc) rc = file.ReadString(m_developer_website);
+	if (rc) rc = file.ReadString(m_developer_updateurl);
+	if (rc) rc = file.ReadString(m_developer_fax);
 
-        if ( minor_version >= 2 )
-        {
-          if (rc) rc = file.ReadInt(&m_plugin_platform);
-          if (rc) rc = file.ReadInt(&m_plugin_sdk_version);
-          if (rc) rc = file.ReadInt(&m_plugin_sdk_service_release);
-        }
+	if ( minor_version >= 2 )
+	{
+	  if (rc) rc = file.ReadInt(&m_plugin_platform);
+	  if (rc) rc = file.ReadInt(&m_plugin_sdk_version);
+	  if (rc) rc = file.ReadInt(&m_plugin_sdk_service_release);
+	}
       }
     }
     else

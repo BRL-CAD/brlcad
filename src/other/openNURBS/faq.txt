@@ -27,7 +27,7 @@ Support:
   <news://news.mcneel.com/opennurbs>, then you can use the web
   version of the newsgroup at
   <http://news2.mcneel.com/scripts/dnewsweb.exe?cmd=xover&group=opennurbs>
-
+  
   You can search archived newsgroup messages at
   <http://news2.mcneel.com/scripts/dnewsweb.exe?cmd=f_search&utag=>
 
@@ -37,7 +37,7 @@ Versions of 3DM files.
 
 Version 1 3DM files:
   The openNURBS toolkit will read version 1 files.
-  Rhino 1 and other applications using the old Rhino I/O toolkit
+  Rhino 1 and other applications using the old Rhino I/O toolkit 
   create version 1 files.
 
 Version 2 3DM files:
@@ -55,7 +55,7 @@ Version 3 3DM files:
 Version 4 3DM files:
   The openNURBS toolkit will read and write version 4 files.
   Rhino 4 and applications using an openNURBS toolkit released on
-  or after September 2006 create version 4 files.  (Rhino 1,
+  or after September 2006 create version 4 files.  (Rhino 1, 
   Rhino 2, and Rhino 3 will not read version 4 files.)
 
 ====================================================================
@@ -77,6 +77,9 @@ The openNURBS toolkit has been successfully used with
   Microsoft Visual C++ 2005 (VC 8.0) (Windows XP and x64)
 
   gcc version 3.2.2 20030222 (Red Hat Linux 3.2.2-5)
+  gcc version 4.1.2 20061115 (SUSE Linux)
+  
+  Apple XCode (MaxBook Pro + OSX)
 
 The openNURBS C++ source code is clean and fairly simple.  You
 should be able to use any good C++ compiler that has 32-bit
@@ -99,10 +102,20 @@ compiler.
 ====================================================================
 
 Microsoft Visual C++ 6.0 Users:
-  If you get a compile bug error c2676 binary != not defined
+  If you get a compile bug error c2676 binary != not defined 
   for stuct _GUID, then you are not using the November 2001
   Platform SDK or the platform SDK is not first in your includes
   list.
+
+====================================================================
+
+Microsoft Visual Studio 2003 users:
+  You will have to modify the opennurbs source code to get
+  it to compile with VS 2003. It tedius, but not hard, to 
+  get opennurbs to compile with VS 2003.  If you need to use
+  a Microsoft Windows compiler, we strongly suggest you 
+  avoid VS 2003 and use either VC 6.0 or VS 2005.  We will
+  NOT provide support for using Microsoft Visual Studio 2003.
 
 ====================================================================
 
@@ -190,7 +203,7 @@ If ON_Brep::IsSurface() returns TRUE, then the b-rep geometry
 is the same as the surface ON_Brep::m_S[0].
 
 To see of a particular face in a b-rep is really just a surface,
-use
+use 
 
 BOOL ON_Brep::FaceIsSurface( face_index ).
 

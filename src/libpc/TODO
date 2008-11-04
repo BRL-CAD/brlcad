@@ -1,0 +1,36 @@
+Minor libpc Tasks
+-----------------
+
+For Major TODO please see the LIBPC section in the TODO in root folder.
+
+FIXING REQUIRED
+
+1. STL Modifications
+	a. convert std::string arguments to const char *
+	b. clean up stl::list<T> passing in the interface / public API
+
+2. Write ostream<< overloading for display of objects
+
+3. Memory Leaks
+	a. 504 bytes in 11 blocks in solver_test
+
+CODING PLAN
+
+*  ahead
+-  in progress
+** done
+
+** Add Variables to PCSet
+** Add Constraints to PCSet
+** Add BinaryNetowrk(PCSet &) constructor
+** Test BinaryNetwork generation from PCSet
+** Rename "funct" functor in Constraint to more meaningful eval()
+**  Using PCSet methods make the above functor argumentless
+-  Create a math_expression_eval functor for the constraints
+	 ** Defining custom stack with polymorphic nodes
+	 -  Use spirit/phoenix for populating the stack
+*  Create a math_expression_eval_generate functor for the Parser
+*  Generate math expressions and the *_eval/*_eval_generate from strings via parser
+*  Test Constraint Evaluation
+*  Test Network Solution
+

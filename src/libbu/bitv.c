@@ -94,10 +94,10 @@ bu_bitv_shift()
 
 
 /**
- *			B U _ B I T V _ N E W
+ * B U _ B I T V _ N E W
  * @brief
- *  Allocate storage for a new bit vector of at least 'nbits' in length.
- *  For efficiency, the bit vector itself is not initialized.
+ * Allocate storage for a new bit vector of at least 'nbits' in length.
+ * For efficiency, the bit vector itself is not initialized.
  */
 struct bu_bitv *
 bu_bitv_new(unsigned int nbits)
@@ -109,20 +109,20 @@ bu_bitv_new(unsigned int nbits)
     bv_bytes = BU_BITS2BYTES(nbits);
     total_bytes = sizeof(struct bu_bitv) - 2*sizeof(bitv_t) + bv_bytes;
 
-    bv = (struct bu_bitv *)bu_malloc( (size_t)total_bytes, "struct bu_bitv" );
-    BU_LIST_INIT( &bv->l );
+    bv = (struct bu_bitv *)bu_malloc((size_t)total_bytes, "struct bu_bitv");
+    BU_LIST_INIT(&bv->l);
     bv->l.magic = BU_BITV_MAGIC;
     bv->nbits = bv_bytes * 8;
     return bv;
 }
 
 /**
- *			B U _ B I T V _ F R E E
+ * B U _ B I T V _ F R E E
  * @brief
- *  Release all internal storage for this bit vector.
+ * Release all internal storage for this bit vector.
  *
- *  It is the caller's responsibility to not use the pointer 'bv' any longer.
- *  It is the caller's responsibility to dequeue from any linked list first.
+ * It is the caller's responsibility to not use the pointer 'bv' any longer.
+ * It is the caller's responsibility to dequeue from any linked list first.
  */
 void
 bu_bitv_free(struct bu_bitv *bv)
@@ -130,15 +130,15 @@ bu_bitv_free(struct bu_bitv *bv)
     BU_CK_BITV(bv);
 
     bv->l.forw = bv->l.back = BU_LIST_NULL;	/* sanity */
-    bu_free( (char *)bv, "struct bu_bitv" );
+    bu_free((char *)bv, "struct bu_bitv");
 }
 
 /**
- *			B U _ B I T V _ C L E A R
+ * B U _ B I T V _ C L E A R
  * @brief
- *  Set all the bits in the bit vector to zero.
+ * Set all the bits in the bit vector to zero.
  *
- *  Also available as a macro if you don't desire the pointer checking.
+ * Also available as a macro if you don't desire the pointer checking.
  */
 void
 bu_bitv_clear(struct bu_bitv *bv)
@@ -149,7 +149,7 @@ bu_bitv_clear(struct bu_bitv *bv)
 }
 
 /**
- *			B U _ B I T V _ O R
+ * B U _ B I T V _ O R
  */
 void
 bu_bitv_or(struct bu_bitv *ov, const struct bu_bitv *iv)
@@ -158,21 +158,21 @@ bu_bitv_or(struct bu_bitv *ov, const struct bu_bitv *iv)
     register const bitv_t	*in;
     register int		words;
 
-    if ( ov->nbits != iv->nbits )  bu_bomb("bu_bitv_or: length mis-match");
+    if (ov->nbits != iv->nbits)  bu_bomb("bu_bitv_or: length mis-match");
     out = ov->bits;
     in = iv->bits;
     words = BU_BITS2WORDS(iv->nbits);
 #ifdef VECTORIZE
-    for ( --words; words >= 0; words-- )
+    for (--words; words >= 0; words--)
 	out[words] |= in[words];
 #else
-    while ( words-- > 0 )
+    while (words-- > 0)
 	*out++ |= *in++;
 #endif
 }
 
 /*
- *			B U _ B I T V _ A N D
+ * B U _ B I T V _ A N D
  */
 void
 bu_bitv_and(struct bu_bitv *ov, const struct bu_bitv *iv)
@@ -181,23 +181,23 @@ bu_bitv_and(struct bu_bitv *ov, const struct bu_bitv *iv)
     register const bitv_t	*in;
     register int		words;
 
-    if ( ov->nbits != iv->nbits )  bu_bomb("bu_bitv_and: length mis-match");
+    if (ov->nbits != iv->nbits)  bu_bomb("bu_bitv_and: length mis-match");
     out = ov->bits;
     in = iv->bits;
     words = BU_BITS2WORDS(iv->nbits);
 #ifdef VECTORIZE
-    for ( --words; words >= 0; words-- )
+    for (--words; words >= 0; words--)
 	out[words] &= in[words];
 #else
-    while ( words-- > 0 )
+    while (words-- > 0)
 	*out++ &= *in++;
 #endif
 }
 
 /**
- *			B U _ B I T V _ V L S
+ * B U _ B I T V _ V L S
  * @brief
- *  Print the bits set in a bit vector.
+ * Print the bits set in a bit vector.
  */
 void
 bu_bitv_vls(struct bu_vls *v, register const struct bu_bitv *bv)
@@ -206,28 +206,28 @@ bu_bitv_vls(struct bu_vls *v, register const struct bu_bitv *bv)
     register int	i;
     int		len;
 
-    BU_CK_VLS( v );
-    BU_CK_BITV( bv );
+    BU_CK_VLS(v);
+    BU_CK_BITV(bv);
 
     len = bv->nbits;
 
-    bu_vls_strcat( v, "(" );
+    bu_vls_strcat(v, "(");
 
     /* Visit all the bits in ascending order */
-    for ( i=0; i<len; i++ )  {
-	if ( BU_BITTEST(bv, i) == 0 )  continue;
-	if ( seen )  bu_vls_strcat( v, ", " );
-	bu_vls_printf( v, "%d", i );
+    for (i=0; i<len; i++) {
+	if (BU_BITTEST(bv, i) == 0)  continue;
+	if (seen)  bu_vls_strcat(v, ", ");
+	bu_vls_printf(v, "%d", i);
 	seen = 1;
     }
-    bu_vls_strcat( v, ") " );
+    bu_vls_strcat(v, ") ");
 }
 
 /**
- *			B U _ P R _ B I T V
+ * B U _ P R _ B I T V
  * @brief
- *  Print the bits set in a bit vector.
- *  Use bu_vls stuff, to make only a single call to bu_log().
+ * Print the bits set in a bit vector.
+ * Use bu_vls stuff, to make only a single call to bu_log().
  */
 void
 bu_pr_bitv(const char *str, register const struct bu_bitv *bv)
@@ -235,47 +235,47 @@ bu_pr_bitv(const char *str, register const struct bu_bitv *bv)
     struct bu_vls	v;
 
     BU_CK_BITV(bv)
-	bu_vls_init( &v );
-    bu_vls_strcat( &v, str );
-    bu_vls_strcat( &v, ": " );
-    bu_bitv_vls( &v, bv );
-    bu_log("%s", bu_vls_addr( &v ) );
-    bu_vls_free( &v );
+	bu_vls_init(&v);
+    bu_vls_strcat(&v, str);
+    bu_vls_strcat(&v, ": ");
+    bu_bitv_vls(&v, bv);
+    bu_log("%s", bu_vls_addr(&v));
+    bu_vls_free(&v);
 }
 
 /**
- *			B U _ B I T V _ T O _ H E X
+ * B U _ B I T V _ T O _ H E X
  * @brief
- *	Convert a bit vector to an ascii string of hex digits.
- *	The string is from MSB to LSB (bytes and bits).
+ * Convert a bit vector to an ascii string of hex digits.
+ * The string is from MSB to LSB (bytes and bits).
  */
 void
 bu_bitv_to_hex(struct bu_vls *v, register const struct bu_bitv *bv)
 {
     unsigned int word_count, byte_no;
 
-    BU_CK_VLS( v );
-    BU_CK_BITV( bv );
+    BU_CK_VLS(v);
+    BU_CK_BITV(bv);
 
-    word_count = bv->nbits/8/sizeof( bitv_t );
-    byte_no = sizeof( bitv_t );
+    word_count = bv->nbits/8/sizeof(bitv_t);
+    byte_no = sizeof(bitv_t);
 
-    bu_vls_extend( v, word_count * (unsigned int)sizeof( bitv_t ) * 2 + 1 );
-    while ( word_count-- )
+    bu_vls_extend(v, word_count * (unsigned int)sizeof(bitv_t) * 2 + 1);
+    while (word_count--)
     {
-	while ( byte_no-- )
+	while (byte_no--)
 	{
-	    bu_vls_printf( v, "%02lx",
-			   ((bv->bits[word_count] & (((bitv_t)0xff)<<(byte_no*8))) >> (byte_no*8)) & (bitv_t)0xff );
+	    bu_vls_printf(v, "%02lx",
+			  ((bv->bits[word_count] & (((bitv_t)0xff)<<(byte_no*8))) >> (byte_no*8)) & (bitv_t)0xff);
 	}
-	byte_no = sizeof( bitv_t );
+	byte_no = sizeof(bitv_t);
     }
 }
 
 /**
- *			B U _ H E X _ T O _ B I T V
+ * B U _ H E X _ T O _ B I T V
  * @brief
- *	Convert a string of HEX digits (as produces by bu_bitv_to_hex) into a bit vector.
+ * Convert a string of HEX digits (as produces by bu_bitv_to_hex) into a bit vector.
  */
 struct bu_bitv *
 bu_hex_to_bitv(const char *str)
@@ -291,69 +291,69 @@ bu_hex_to_bitv(const char *str)
     abyte[2] = '\0';
 
     /* skip over any initial white space */
-    while ( isspace( *str ) )
+    while (isspace(*str))
 	str++;
 
     str_start = str;
     /* count hex digits */
-    while ( isxdigit( *str ) )
+    while (isxdigit(*str))
 	str++;
 
     len = str - str_start;
 
-    if ( len < 2 || len%2 )
+    if (len < 2 || len%2)
     {
 	/* Must be two digits per byte */
-	bu_log( "bu_hex_to_bitv: illegal hex bitv (%s)\n", str_start );
-	return( (struct bu_bitv *)NULL );
+	bu_log("bu_hex_to_bitv: illegal hex bitv (%s)\n", str_start);
+	return ((struct bu_bitv *)NULL);
     }
 
     bytes = len / 2; /* two hex digits per byte */
-    bv = bu_bitv_new( len * 4 ); /* 4 bits per hex digit */
-    bu_bitv_clear( bv );
-    word_count = bytes/sizeof( bitv_t );
-    byte_no = bytes % sizeof( bitv_t );
-    if ( !byte_no )
-	byte_no = sizeof( bitv_t );
+    bv = bu_bitv_new(len * 4); /* 4 bits per hex digit */
+    bu_bitv_clear(bv);
+    word_count = bytes/sizeof(bitv_t);
+    byte_no = bytes % sizeof(bitv_t);
+    if (!byte_no)
+	byte_no = sizeof(bitv_t);
     else
 	word_count++;
 
     str = str_start;
-    while ( word_count-- )
+    while (word_count--)
     {
-	while ( byte_no-- )
+	while (byte_no--)
 	{
 	    /* get next two hex digits from string */
 	    abyte[0] = *str++;
 	    abyte[1] = *str++;
 
 	    /* convert into an unsigned long */
-	    c = strtoul( abyte, (char **)NULL, 16 );
+	    c = strtoul(abyte, (char **)NULL, 16);
 
 	    /* set the appropriate bits in the bit vector */
 	    bv->bits[word_count] |= (bitv_t)c<<(byte_no*8);
 	}
-	byte_no = sizeof( bitv_t );
+	byte_no = sizeof(bitv_t);
     }
 
-    return( bv );
+    return (bv);
 }
 
 /**
- *			B U _ B I T V _ D U P
+ * B U _ B I T V _ D U P
  * @brief
- *	Make a copy of a bit vector
+ * Make a copy of a bit vector
  */
 struct bu_bitv *
 bu_bitv_dup(register const struct bu_bitv *bv)
 {
     struct bu_bitv *bv2;
 
-    bv2 = bu_bitv_new( bv->nbits );
-    bu_bitv_clear( bv2 );
-    bu_bitv_or( bv2, bv );
+    bv2 = bu_bitv_new(bv->nbits);
+    bu_bitv_clear(bv2);
+    bu_bitv_or(bv2, bv);
 
-    return( bv2 );
+    return (bv2);
 }
 /** @} */
 /*

@@ -687,6 +687,10 @@ direct_output(const char *buffer, com_table *ctp)
 	new_dest = bu_malloc(strlen(buffer + i)+1, "new_dest");
 
 	snprintf(new_dest, j-i+1, "%s", buffer + i);
+	if (bu_file_exists(new_dest)){
+	    fprintf(stderr, "File %s already exists.\n", new_dest);
+	    return;
+	}
 	if ((newf = (*openfunc)(new_dest, "w")) == NULL) {
 	    fprintf(stderr, "Cannot open %s '%s'\n",
 		    (openfunc == popen) ? "pipe" : "file", new_dest);

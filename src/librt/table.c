@@ -115,6 +115,8 @@ const struct bu_structparse rt_nul_parse[] = {
 			const mat_t mat, struct rt_db_internal *ip, \
 			int free, struct db_i *dbip, \
 			struct resource *resp)); \
+	BU_EXTERN(int rt_##name##_params, (struct pc_pc_set *ps, \
+			const struct rt_db_internal *ip)); \
 	extern const struct bu_structparse rt_##name##_parse[];
 
 
@@ -211,7 +213,24 @@ RT_DECLARE_INTERFACE(superell);
 RT_DECLARE_INTERFACE(metaball);
 
 #define rt_hyp_xform rt_generic_xform
-    RT_DECLARE_INTERFACE(hyp)
+RT_DECLARE_INTERFACE(hyp);
+
+#define rt_revolve_xform rt_generic_xform
+RT_DECLARE_INTERFACE(revolve);
+
+#define rt_constraint_xform rt_generic_xform
+RT_DECLARE_INTERFACE(constraint);
+
+/*
+#define rt_binunif_xform rt_generic_xform
+RT_DECLARE_INTERFACE(binunif);
+
+#define rt_binexpm_xform rt_generic_xform
+RT_DECLARE_INTERFACE(binexpm);
+*/
+
+#define rt_pnts_xform rt_generic_xform
+RT_DECLARE_INTERFACE(pnts);
 
 #if OBJ_BREP
 #define rt_brep_xform rt_generic_xform
@@ -276,129 +295,128 @@ BU_EXTERN(int rt_binunif_describe, (struct bu_vls *str,
 BU_EXTERN( void rt_binunif_make, (const struct rt_functab *ftp,
 				  struct rt_db_internal	*intern,
 				  double diameter ) );
-BU_EXTERN( int rt_binunif_tclget, (Tcl_Interp *interp,
+BU_EXTERN( int rt_binunif_get, (struct bu_vls *log,
 				   const struct rt_db_internal *intern,
 				   const char *attr ) );
-BU_EXTERN(int rt_binunif_tcladjust, (Tcl_Interp *interp,
+BU_EXTERN(int rt_binunif_adjust, (struct bu_vls *log,
 				     struct rt_db_internal *intern,
 				     int argc,
 				     char **argv,
 				     struct resource *resp ) );
 
 /* from tcl.c */
-BU_EXTERN(int rt_comb_tclget, (Tcl_Interp *interp,
-			       const struct rt_db_internal *intern, const char	*item));
-BU_EXTERN(int rt_comb_tcladjust, (Tcl_Interp *interp,
-				  struct rt_db_internal *intern, int argc, char **argv,
-				  struct resource *resp));
-BU_EXTERN(int rt_comb_tclform, (const struct rt_functab *ftp,
-				Tcl_Interp *interp));
+BU_EXTERN(int rt_comb_get, (struct bu_vls *log,
+			    const struct rt_db_internal *intern, const char *item));
+BU_EXTERN(int rt_comb_adjust, (struct bu_vls *log,
+			       struct rt_db_internal *intern, int argc, char **argv,
+			       struct resource *resp));
+BU_EXTERN(int rt_comb_form, (struct bu_vls *log, const struct rt_functab *ftp));
 BU_EXTERN(void rt_comb_make, (const struct rt_functab *ftp,
 			      struct rt_db_internal *intern, double diameter));
 
 /* generics for solid */
-BU_EXTERN(int rt_parsetab_tclget, (Tcl_Interp *interp,
-				   const struct rt_db_internal *intern, const char *attr));
-BU_EXTERN(int rt_parsetab_tcladjust, (Tcl_Interp *interp,
-				      struct rt_db_internal *intern, int argc, char **argv,
-				      struct resource *));
-BU_EXTERN(int rt_parsetab_tclform, (const struct rt_functab *ftp,
-				    Tcl_Interp *interp));
+BU_EXTERN(int rt_parsetab_get, (struct bu_vls *log,
+				const struct rt_db_internal *intern, const char *attr));
+BU_EXTERN(int rt_parsetab_adjust, (struct bu_vls *log,
+				   struct rt_db_internal *intern, int argc, char **argv,
+				   struct resource *));
+BU_EXTERN(int rt_parsetab_form, (struct bu_vls *log, const struct rt_functab *ftp));
 BU_EXTERN(void rt_generic_make, (const struct rt_functab *ftp,
 				 struct rt_db_internal *intern, double diameter));
 
 /* EBM solid */
-BU_EXTERN(int rt_ebm_tclget, (Tcl_Interp *interp,
-			      const struct rt_db_internal *intern, const char *attr));
-BU_EXTERN(int rt_ebm_tcladjust, (Tcl_Interp *interp,
-				 struct rt_db_internal *intern, int argc, char **argv,
-				 struct resource *resp));
-BU_EXTERN(int rt_ebm_tclform, (const struct rt_functab *ftp,
-			       Tcl_Interp *interp));
+BU_EXTERN(int rt_ebm_get, (struct bu_vls *log,
+			   const struct rt_db_internal *intern, const char *attr));
+BU_EXTERN(int rt_ebm_adjust, (struct bu_vls *log,
+			      struct rt_db_internal *intern, int argc, char **argv,
+			      struct resource *resp));
+BU_EXTERN(int rt_ebm_form, (struct bu_vls *log, const struct rt_functab *ftp));
 BU_EXTERN(void rt_ebm_make, (const struct rt_functab *,	struct rt_db_internal *,
 			     double /*diameter*/));
 
 /* ARBN solid */
-BU_EXTERN(int rt_arbn_tclget, (Tcl_Interp *interp,
-			       const struct rt_db_internal *intern, const char *attr));
-BU_EXTERN(int rt_arbn_tcladjust, (Tcl_Interp *interp,
-				  struct rt_db_internal *intern, int argc, char **argv,
-				  struct resource *resp));
+BU_EXTERN(int rt_arbn_get, (struct bu_vls *log,
+			    const struct rt_db_internal *intern, const char *attr));
+BU_EXTERN(int rt_arbn_adjust, (struct bu_vls *log,
+			       struct rt_db_internal *intern, int argc, char **argv,
+			       struct resource *resp));
 
 /* ARS solid */
-BU_EXTERN(int rt_ars_tclget, (Tcl_Interp *interp,
-			      const struct rt_db_internal *intern, const char *attr));
-BU_EXTERN(int rt_ars_tcladjust, (Tcl_Interp *interp,
-				 struct rt_db_internal *intern, int argc, char **argv,
-				 struct resource *resp));
+BU_EXTERN(int rt_ars_get, (struct bu_vls *log,
+			   const struct rt_db_internal *intern, const char *attr));
+BU_EXTERN(int rt_ars_adjust, (struct bu_vls *log,
+			      struct rt_db_internal *intern, int argc, char **argv,
+			      struct resource *resp));
 
 /* DSP solid */
-extern int rt_dsp_tclget(Tcl_Interp *interp,
-			 const struct rt_db_internal *intern,
-			 const char		     *attr);
+extern int rt_dsp_get(struct bu_vls *log,
+		      const struct rt_db_internal *intern,
+		      const char		     *attr);
 
-extern int rt_dsp_tcladjust(Tcl_Interp *interp,
-			    struct rt_db_internal *intern,
-			    int		argc,
-			    char	**argv,
-			    struct resource *resp);
+extern int rt_dsp_adjust(struct bu_vls *log,
+			 struct rt_db_internal *intern,
+			 int		argc,
+			 char	**argv,
+			 struct resource *resp);
 BU_EXTERN(void rt_dsp_make, (const struct rt_functab *,	struct rt_db_internal *,
 			     double /*diameter*/));
 
 /* PIPE solid */
-BU_EXTERN(int rt_pipe_tclget, (Tcl_Interp *interp,
-			       const struct rt_db_internal *intern, const char *attr));
-BU_EXTERN(int rt_pipe_tcladjust, (Tcl_Interp *interp,
-				  struct rt_db_internal *intern, int argc, char **argv,
-				  struct resource *resp));
+BU_EXTERN(int rt_pipe_get, (struct bu_vls *log,
+			    const struct rt_db_internal *intern, const char *attr));
+BU_EXTERN(int rt_pipe_adjust, (struct bu_vls *log,
+			       struct rt_db_internal *intern, int argc, char **argv,
+			       struct resource *resp));
 
 /* BSPLINE solid */
-BU_EXTERN(int rt_nurb_tclget, (Tcl_Interp *interp,
-			       const struct rt_db_internal *intern, const char *attr));
-BU_EXTERN(int rt_nurb_tcladjust, (Tcl_Interp *interp,
-				  struct rt_db_internal *intern, int argc, char **argv,
-				  struct resource *resp));
+BU_EXTERN(int rt_nurb_get, (struct bu_vls *log,
+			    const struct rt_db_internal *intern, const char *attr));
+BU_EXTERN(int rt_nurb_adjust, (struct bu_vls *log,
+			       struct rt_db_internal *intern, int argc, char **argv,
+			       struct resource *resp));
 
 /* NMG solid */
-BU_EXTERN(int rt_nmg_tclget, (Tcl_Interp *interp,
-			      const struct rt_db_internal *intern, const char *attr));
-BU_EXTERN(int rt_nmg_tcladjust, (Tcl_Interp *interp,
-				 struct rt_db_internal *intern, int argc, char **argv,
-				 struct resource *resp));
+BU_EXTERN(int rt_nmg_get, (struct bu_vls *log,
+			   const struct rt_db_internal *intern, const char *attr));
+BU_EXTERN(int rt_nmg_adjust, (struct bu_vls *log,
+			      struct rt_db_internal *intern, int argc, char **argv,
+			      struct resource *resp));
 BU_EXTERN(void rt_nmg_make, (const struct rt_functab *,	struct rt_db_internal *,
 			     double /*diameter*/));
 
 /* BOT solid */
-BU_EXTERN(int rt_bot_tclget, (Tcl_Interp *interp,
-			      const struct rt_db_internal *intern, const char *attr));
-BU_EXTERN(int rt_bot_tcladjust, (Tcl_Interp *interp,
-				 struct rt_db_internal *intern, int argc, char **argv,
-				 struct resource *resp));
-BU_EXTERN(int rt_bot_tclform, (const struct rt_functab *ftp, Tcl_Interp *interp));
+BU_EXTERN(int rt_bot_get, (struct bu_vls *log,
+			   const struct rt_db_internal *intern, const char *attr));
+BU_EXTERN(int rt_bot_adjust, (struct bu_vls *log,
+			      struct rt_db_internal *intern, int argc, char **argv,
+			      struct resource *resp));
+BU_EXTERN(int rt_bot_form, (struct bu_vls *log, const struct rt_functab *ftp));
 
 /* SKETCH */
-BU_EXTERN(int rt_sketch_tclget, (Tcl_Interp *interp,
-				 const struct rt_db_internal *intern, const char *attr));
-BU_EXTERN(int rt_sketch_tcladjust, (Tcl_Interp *interp,
-				    struct rt_db_internal *intern, int argc, char **argv,
-				    struct resource *resp));
-BU_EXTERN(int rt_sketch_tclform, (const struct rt_functab *ftp, Tcl_Interp *interp));
+BU_EXTERN(int rt_sketch_get, (struct bu_vls *log,
+			      const struct rt_db_internal *intern, const char *attr));
+BU_EXTERN(int rt_sketch_adjust, (struct bu_vls *log,
+				 struct rt_db_internal *intern, int argc, char **argv,
+				 struct resource *resp));
+BU_EXTERN(int rt_sketch_form, (struct bu_vls *log, const struct rt_functab *ftp));
 
 /* CLINE */
-BU_EXTERN(int rt_cline_tclget, (Tcl_Interp *interp,
-				const struct rt_db_internal *intern, const char *attr));
-BU_EXTERN(int rt_cline_tcladjust, (Tcl_Interp *interp,
-				   struct rt_db_internal *intern, int argc, char **argv,
-				   struct resource *resp));
-BU_EXTERN(int rt_cline_tclform, (const struct rt_functab *ftp, Tcl_Interp *interp));
+BU_EXTERN(int rt_cline_get, (struct bu_vls *log,
+			     const struct rt_db_internal *intern, const char *attr));
+BU_EXTERN(int rt_cline_adjust, (struct bu_vls *log,
+				struct rt_db_internal *intern, int argc, char **argv,
+				struct resource *resp));
+BU_EXTERN(int rt_cline_form, (struct bu_vls *log, const struct rt_functab *ftp));
 
 /* EXTRUSION */
-BU_EXTERN(int rt_extrude_tclget, (Tcl_Interp *interp,
-				  const struct rt_db_internal *intern, const char *attr));
-BU_EXTERN(int rt_extrude_tcladjust, (Tcl_Interp *interp,
-				     struct rt_db_internal *intern, int argc, char **argv,
-				     struct resource *resp));
-BU_EXTERN(int rt_extrude_tclform, (const struct rt_functab *ftp, Tcl_Interp *interp));
+BU_EXTERN(int rt_extrude_get, (struct bu_vls *log,
+			       const struct rt_db_internal *intern, const char *attr));
+BU_EXTERN(int rt_extrude_adjust, (struct bu_vls *log,
+				  struct rt_db_internal *intern, int argc, char **argv,
+				  struct resource *resp));
+BU_EXTERN(int rt_extrude_form, (struct bu_vls *log, const struct rt_functab *ftp));
+
+/* PNTS */
 
 /* XXX from shoot.c / vshoot.c */
 BU_EXTERN(void rt_vstub, (struct soltab *stp[], struct xray *rp[],
@@ -410,18 +428,18 @@ BU_EXTERN(int rt_generic_xform, (struct rt_db_internal *op,
 				 int free, struct db_i *dbip, struct resource *resp));
 
 /* Stub Tcl interfaces */
-int rt_nul_tclget(Tcl_Interp *interp, const struct rt_db_internal *intern, const char *attr)  {
-    Tcl_AppendResult(interp, "rt_nul_tclget", (char *)NULL);
-    return TCL_ERROR;
+int rt_nul_get(struct bu_vls *log, const struct rt_db_internal *intern, const char *attr)  {
+    bu_vls_printf(log, "rt_nul_get");
+    return BRLCAD_ERROR;
 }
-int rt_nul_tcladjust(Tcl_Interp *interp, struct rt_db_internal *intern, int argc, char **argv, struct resource *resp)  {
+int rt_nul_adjust(struct bu_vls *log, struct rt_db_internal *intern, int argc, char **argv, struct resource *resp)  {
     RT_CK_RESOURCE(resp);
-    Tcl_AppendResult(interp, "rt_nul_tcladjust", (char *)NULL);
-    return TCL_ERROR;
+    bu_vls_printf(log, "rt_nul_adjust");
+    return BRLCAD_ERROR;
 }
-int rt_nul_tclform(const struct rt_functab *ftp, Tcl_Interp *interp) {
-    Tcl_AppendResult(interp, "rt_nul_tclform", (char *)NULL);
-    return TCL_ERROR;
+int rt_nul_form(struct bu_vls *log, const struct rt_functab *ftp) {
+    bu_vls_printf(log, "rt_nul_form");
+    return BRLCAD_ERROR;
 }
 void rt_nul_make(const struct rt_functab *ftp, struct rt_db_internal *intern, double diameter) {
     bu_bomb("rt_nul_make invoked\n");
@@ -438,8 +456,8 @@ const struct rt_functab rt_functab[] = {
      rt_nul_import,	rt_nul_export,	rt_nul_ifree,
      rt_nul_describe, rt_nul_xform,	rt_nul_parse,
      0,				0,
-     rt_nul_tclget,	rt_nul_tcladjust, rt_nul_tclform,
-     rt_nul_make,
+     rt_nul_get,	rt_nul_adjust, rt_nul_form,
+     rt_nul_make, rt_nul_params,
     },
 
     {RT_FUNCTAB_MAGIC, "ID_TOR", "tor",
@@ -452,8 +470,8 @@ const struct rt_functab rt_functab[] = {
      rt_tor_import,	rt_tor_export,	rt_tor_ifree,
      rt_tor_describe, rt_tor_xform,	rt_tor_parse,
      sizeof(struct rt_tor_internal),	RT_TOR_INTERNAL_MAGIC,
-     rt_parsetab_tclget, rt_parsetab_tcladjust, rt_parsetab_tclform,
-     NULL,
+     rt_parsetab_get, rt_parsetab_adjust, rt_parsetab_form,
+     NULL, rt_tor_params,
     },
 
     {RT_FUNCTAB_MAGIC, "ID_TGC", "tgc",
@@ -466,8 +484,8 @@ const struct rt_functab rt_functab[] = {
      rt_tgc_import,	rt_tgc_export,	rt_tgc_ifree,
      rt_tgc_describe, rt_tgc_xform,	rt_tgc_parse,
      sizeof(struct rt_tgc_internal), RT_TGC_INTERNAL_MAGIC,
-     rt_parsetab_tclget, rt_parsetab_tcladjust, rt_parsetab_tclform,
-     NULL,
+     rt_parsetab_get, rt_parsetab_adjust, rt_parsetab_form,
+     NULL, rt_tgc_params,
     },
 
     {RT_FUNCTAB_MAGIC, "ID_ELL", "ell",
@@ -480,8 +498,8 @@ const struct rt_functab rt_functab[] = {
      rt_ell_import,	rt_ell_export,	rt_ell_ifree,
      rt_ell_describe, rt_ell_xform,	rt_ell_parse,
      sizeof(struct rt_ell_internal), RT_ELL_INTERNAL_MAGIC,
-     rt_parsetab_tclget, rt_parsetab_tcladjust, rt_parsetab_tclform,
-     NULL,
+     rt_parsetab_get, rt_parsetab_adjust, rt_parsetab_form,
+     NULL, rt_ell_params
     },
 
     {RT_FUNCTAB_MAGIC, "ID_ARB8", "arb8",
@@ -494,8 +512,8 @@ const struct rt_functab rt_functab[] = {
      rt_arb_import,	rt_arb_export,	rt_arb_ifree,
      rt_arb_describe, rt_arb_xform,	rt_arb_parse,
      sizeof(struct rt_arb_internal), RT_ARB_INTERNAL_MAGIC,
-     rt_parsetab_tclget, rt_parsetab_tcladjust, rt_parsetab_tclform,
-     NULL,
+     rt_parsetab_get, rt_parsetab_adjust, rt_parsetab_form,
+     NULL, rt_arb_params,
     },
 
     {RT_FUNCTAB_MAGIC, "ID_ARS", "ars",
@@ -508,8 +526,8 @@ const struct rt_functab rt_functab[] = {
      rt_ars_import,	rt_ars_export,	rt_ars_ifree,
      rt_ars_describe, rt_ars_xform,	NULL,
      sizeof(struct rt_ars_internal), RT_ARS_INTERNAL_MAGIC,
-     rt_ars_tclget, rt_ars_tcladjust, rt_parsetab_tclform,
-     NULL,
+     rt_ars_get, rt_ars_adjust, rt_parsetab_form,
+     NULL, rt_ars_params,
     },
 
     {RT_FUNCTAB_MAGIC, "ID_HALF", "half",
@@ -522,8 +540,8 @@ const struct rt_functab rt_functab[] = {
      rt_hlf_import,	rt_hlf_export,	rt_hlf_ifree,
      rt_hlf_describe, rt_generic_xform, rt_hlf_parse,
      sizeof(struct rt_half_internal), RT_HALF_INTERNAL_MAGIC,
-     rt_parsetab_tclget, rt_parsetab_tcladjust, rt_parsetab_tclform,
-     NULL,
+     rt_parsetab_get, rt_parsetab_adjust, rt_parsetab_form,
+     NULL, rt_hlf_params,
     },
 
     {RT_FUNCTAB_MAGIC, "ID_REC", "rec",
@@ -536,8 +554,8 @@ const struct rt_functab rt_functab[] = {
      rt_tgc_import,	rt_tgc_export,	rt_tgc_ifree,
      rt_tgc_describe, rt_rec_xform,	rt_tgc_parse,
      sizeof(struct rt_tgc_internal), RT_TGC_INTERNAL_MAGIC,
-     rt_parsetab_tclget, rt_parsetab_tcladjust, rt_parsetab_tclform,
-     NULL,
+     rt_parsetab_get, rt_parsetab_adjust, rt_parsetab_form,
+     NULL, rt_rec_params,
     },
 
     {RT_FUNCTAB_MAGIC, "ID_POLY", "poly",
@@ -550,8 +568,8 @@ const struct rt_functab rt_functab[] = {
      rt_pg_import,	rt_pg_export,	rt_pg_ifree,
      rt_pg_describe, rt_pg_xform,	NULL,
      sizeof(struct rt_pg_internal), RT_PG_INTERNAL_MAGIC,
-     rt_parsetab_tclget, rt_parsetab_tcladjust, rt_parsetab_tclform,
-     NULL,
+     rt_parsetab_get, rt_parsetab_adjust, rt_parsetab_form,
+     NULL, rt_pg_params,
     },
 
     {RT_FUNCTAB_MAGIC, "ID_BSPLINE", "bspline",
@@ -564,8 +582,8 @@ const struct rt_functab rt_functab[] = {
      rt_nurb_import,	rt_nurb_export,	rt_nurb_ifree,
      rt_nurb_describe, rt_nurb_xform,	NULL,
      sizeof(struct rt_nurb_internal), RT_NURB_INTERNAL_MAGIC,
-     rt_nurb_tclget, rt_nurb_tcladjust, rt_parsetab_tclform,
-     NULL,
+     rt_nurb_get, rt_nurb_adjust, rt_parsetab_form,
+     NULL, rt_nurb_params,
     },
 
     {RT_FUNCTAB_MAGIC, "ID_SPH", "sph",
@@ -578,8 +596,8 @@ const struct rt_functab rt_functab[] = {
      rt_ell_import,	rt_ell_export,	rt_ell_ifree,
      rt_ell_describe, rt_sph_xform,	rt_ell_parse,
      sizeof(struct rt_ell_internal), RT_ELL_INTERNAL_MAGIC,
-     rt_parsetab_tclget, rt_parsetab_tcladjust, rt_parsetab_tclform,
-     NULL,
+     rt_parsetab_get, rt_parsetab_adjust, rt_parsetab_form,
+     NULL, rt_sph_params
     },
 
     {RT_FUNCTAB_MAGIC, "ID_NMG", "nmg",
@@ -592,8 +610,8 @@ const struct rt_functab rt_functab[] = {
      rt_nmg_import,	rt_nmg_export,	rt_nmg_ifree,
      rt_nmg_describe, rt_nmg_xform,	NULL,
      sizeof(struct model), NMG_MODEL_MAGIC,
-     rt_nmg_tclget, rt_nmg_tcladjust, rt_parsetab_tclform,
-     rt_nmg_make,
+     rt_nmg_get, rt_nmg_adjust, rt_parsetab_form,
+     rt_nmg_make, rt_nmg_params,
     },
 
     {RT_FUNCTAB_MAGIC, "ID_EBM", "ebm",
@@ -606,8 +624,8 @@ const struct rt_functab rt_functab[] = {
      rt_ebm_import,	rt_ebm_export,	rt_ebm_ifree,
      rt_ebm_describe, rt_ebm_xform,	rt_ebm_parse,
      sizeof(struct rt_ebm_internal), RT_EBM_INTERNAL_MAGIC,
-     rt_ebm_tclget, rt_ebm_tcladjust, rt_ebm_tclform,
-     rt_ebm_make,
+     rt_ebm_get, rt_ebm_adjust, rt_ebm_form,
+     rt_ebm_make, rt_ebm_params,
     },
 
     {RT_FUNCTAB_MAGIC, "ID_VOL", "vol",
@@ -620,8 +638,8 @@ const struct rt_functab rt_functab[] = {
      rt_vol_import,	rt_vol_export,	rt_vol_ifree,
      rt_vol_describe, rt_vol_xform,	rt_vol_parse,
      sizeof(struct rt_vol_internal), RT_VOL_INTERNAL_MAGIC,
-     rt_parsetab_tclget, rt_parsetab_tcladjust, rt_parsetab_tclform,
-     NULL,
+     rt_parsetab_get, rt_parsetab_adjust, rt_parsetab_form,
+     NULL, rt_vol_params,
     },
 
     {RT_FUNCTAB_MAGIC, "ID_ARBN", "arbn",
@@ -634,8 +652,8 @@ const struct rt_functab rt_functab[] = {
      rt_arbn_import,	rt_arbn_export,	rt_arbn_ifree,
      rt_arbn_describe, rt_arbn_xform,	NULL,
      sizeof(struct rt_arbn_internal), RT_ARBN_INTERNAL_MAGIC,
-     rt_arbn_tclget, rt_arbn_tcladjust, rt_parsetab_tclform,
-     NULL,
+     rt_arbn_get, rt_arbn_adjust, rt_parsetab_form,
+     NULL, rt_arbn_params,
     },
 
     {RT_FUNCTAB_MAGIC, "ID_PIPE", "pipe",
@@ -648,10 +666,10 @@ const struct rt_functab rt_functab[] = {
      rt_pipe_import,	rt_pipe_export,	rt_pipe_ifree,
      rt_pipe_describe, rt_pipe_xform,	NULL,
      sizeof(struct rt_pipe_internal), RT_PIPE_INTERNAL_MAGIC,
-     rt_pipe_tclget,
-     rt_pipe_tcladjust,
-     rt_parsetab_tclform,
-     NULL,
+     rt_pipe_get,
+     rt_pipe_adjust,
+     rt_parsetab_form,
+     NULL, rt_pipe_params,
     },
 
     {RT_FUNCTAB_MAGIC, "ID_PARTICLE", "part",
@@ -664,8 +682,8 @@ const struct rt_functab rt_functab[] = {
      rt_part_import,	rt_part_export,	rt_part_ifree,
      rt_part_describe, rt_part_xform,	rt_part_parse,
      sizeof(struct rt_part_internal), RT_PART_INTERNAL_MAGIC,
-     rt_parsetab_tclget, rt_parsetab_tcladjust, rt_parsetab_tclform,
-     NULL,
+     rt_parsetab_get, rt_parsetab_adjust, rt_parsetab_form,
+     NULL, rt_part_params,
     },
 
     {RT_FUNCTAB_MAGIC, "ID_RPC", "rpc",
@@ -678,8 +696,8 @@ const struct rt_functab rt_functab[] = {
      rt_rpc_import,	rt_rpc_export,	rt_rpc_ifree,
      rt_rpc_describe, rt_rpc_xform,	rt_rpc_parse,
      sizeof(struct rt_rpc_internal), RT_RPC_INTERNAL_MAGIC,
-     rt_parsetab_tclget, rt_parsetab_tcladjust, rt_parsetab_tclform,
-     NULL,
+     rt_parsetab_get, rt_parsetab_adjust, rt_parsetab_form,
+     NULL, rt_rpc_params,
     },
 
     {RT_FUNCTAB_MAGIC, "ID_RHC", "rhc",
@@ -692,8 +710,8 @@ const struct rt_functab rt_functab[] = {
      rt_rhc_import,	rt_rhc_export,	rt_rhc_ifree,
      rt_rhc_describe, rt_rhc_xform,	rt_rhc_parse,
      sizeof(struct rt_rhc_internal), RT_RHC_INTERNAL_MAGIC,
-     rt_parsetab_tclget, rt_parsetab_tcladjust, rt_parsetab_tclform,
-     NULL,
+     rt_parsetab_get, rt_parsetab_adjust, rt_parsetab_form,
+     NULL, rt_rhc_params,
     },
 
     {RT_FUNCTAB_MAGIC, "ID_EPA", "epa",
@@ -706,8 +724,8 @@ const struct rt_functab rt_functab[] = {
      rt_epa_import,	rt_epa_export,	rt_epa_ifree,
      rt_epa_describe, rt_epa_xform,	rt_epa_parse,
      sizeof(struct rt_epa_internal), RT_EPA_INTERNAL_MAGIC,
-     rt_parsetab_tclget, rt_parsetab_tcladjust, rt_parsetab_tclform,
-     NULL,
+     rt_parsetab_get, rt_parsetab_adjust, rt_parsetab_form,
+     NULL, rt_epa_params,
     },
 
     {RT_FUNCTAB_MAGIC, "ID_EHY", "ehy",
@@ -720,8 +738,8 @@ const struct rt_functab rt_functab[] = {
      rt_ehy_import,	rt_ehy_export,	rt_ehy_ifree,
      rt_ehy_describe, rt_ehy_xform,	rt_ehy_parse,
      sizeof(struct rt_ehy_internal), RT_EHY_INTERNAL_MAGIC,
-     rt_parsetab_tclget, rt_parsetab_tcladjust, rt_parsetab_tclform,
-     NULL,
+     rt_parsetab_get, rt_parsetab_adjust, rt_parsetab_form,
+     NULL, rt_ehy_params,
     },
 
     {RT_FUNCTAB_MAGIC, "ID_ETO", "eto",
@@ -734,8 +752,8 @@ const struct rt_functab rt_functab[] = {
      rt_eto_import,	rt_eto_export,	rt_eto_ifree,
      rt_eto_describe, rt_eto_xform,	rt_eto_parse,
      sizeof(struct rt_eto_internal), RT_ETO_INTERNAL_MAGIC,
-     rt_parsetab_tclget, rt_parsetab_tcladjust, rt_parsetab_tclform,
-     NULL,
+     rt_parsetab_get, rt_parsetab_adjust, rt_parsetab_form,
+     NULL, rt_eto_params,
     },
 
     {RT_FUNCTAB_MAGIC, "ID_GRIP", "grip",
@@ -748,8 +766,8 @@ const struct rt_functab rt_functab[] = {
      rt_grp_import,	rt_grp_export,	rt_grp_ifree,
      rt_grp_describe, rt_grp_xform,	rt_grp_parse,
      sizeof(struct rt_grip_internal), RT_GRIP_INTERNAL_MAGIC,
-     rt_parsetab_tclget, rt_parsetab_tcladjust, rt_parsetab_tclform,
-     NULL,
+     rt_parsetab_get, rt_parsetab_adjust, rt_parsetab_form,
+     NULL, rt_grp_params,
     },
 
     {RT_FUNCTAB_MAGIC, "ID_JOINT", "joint",
@@ -762,8 +780,8 @@ const struct rt_functab rt_functab[] = {
      rt_nul_import,	rt_nul_export,	rt_nul_ifree,
      rt_nul_describe, rt_nul_xform,	NULL,
      0,				0,
-     rt_nul_tclget,	rt_nul_tcladjust, rt_nul_tclform,
-     rt_nul_make,
+     rt_nul_get,	rt_nul_adjust, rt_nul_form,
+     rt_nul_make, rt_nul_params,
     },
 
     {RT_FUNCTAB_MAGIC, "ID_HF", "hf",
@@ -776,8 +794,8 @@ const struct rt_functab rt_functab[] = {
      rt_hf_import,	rt_hf_export,	rt_hf_ifree,
      rt_hf_describe, rt_hf_xform,	rt_hf_parse,
      sizeof(struct rt_hf_internal), RT_HF_INTERNAL_MAGIC,
-     rt_parsetab_tclget, rt_parsetab_tcladjust, rt_parsetab_tclform,
-     NULL,
+     rt_parsetab_get, rt_parsetab_adjust, rt_parsetab_form,
+     NULL, rt_hf_params,
     },
 
     {RT_FUNCTAB_MAGIC, "ID_DSP", "dsp",
@@ -785,13 +803,13 @@ const struct rt_functab rt_functab[] = {
      rt_dsp_prep,	rt_dsp_shot,	rt_dsp_print,	rt_dsp_norm,
      rt_nul_piece_shot, rt_nul_piece_hitsegs,
      rt_dsp_uv,	rt_dsp_curve,	rt_dsp_class,	rt_dsp_free,
-     rt_dsp_plot,	rt_vstub,	rt_nul_tess,	rt_nul_tnurb,
+     rt_dsp_plot,	rt_vstub,	rt_dsp_tess,	rt_nul_tnurb,
      rt_dsp_import5, rt_dsp_export5,
      rt_dsp_import,	rt_dsp_export,	rt_dsp_ifree,
      rt_dsp_describe, rt_dsp_xform,	rt_dsp_parse,
      sizeof(struct rt_dsp_internal), RT_DSP_INTERNAL_MAGIC,
-     rt_dsp_tclget,  rt_dsp_tcladjust, rt_nul_tclform,
-     rt_dsp_make,
+     rt_dsp_get,  rt_dsp_adjust, rt_nul_form,
+     rt_dsp_make, rt_dsp_params,
     },
 
     {RT_FUNCTAB_MAGIC, "ID_SKETCH", "sketch",
@@ -804,8 +822,8 @@ const struct rt_functab rt_functab[] = {
      rt_sketch_import, rt_sketch_export, rt_sketch_ifree,
      rt_sketch_describe, rt_sketch_xform, NULL,
      sizeof(struct rt_sketch_internal), RT_SKETCH_INTERNAL_MAGIC,
-     rt_sketch_tclget, rt_sketch_tcladjust, rt_sketch_tclform,
-     NULL,
+     rt_sketch_get, rt_sketch_adjust, rt_sketch_form,
+     NULL, rt_sketch_params,
     },
 
     {RT_FUNCTAB_MAGIC, "ID_EXTRUDE", "extrude",
@@ -818,8 +836,8 @@ const struct rt_functab rt_functab[] = {
      rt_extrude_import,	rt_extrude_export,	rt_extrude_ifree,
      rt_extrude_describe, rt_extrude_xform, NULL,
      sizeof(struct rt_extrude_internal), RT_EXTRUDE_INTERNAL_MAGIC,
-     rt_extrude_tclget, rt_extrude_tcladjust, rt_extrude_tclform,
-     NULL,
+     rt_extrude_get, rt_extrude_adjust, rt_extrude_form,
+     NULL, rt_extrude_params,
     },
 
     {RT_FUNCTAB_MAGIC, "ID_SUBMODEL", "submodel",
@@ -832,8 +850,8 @@ const struct rt_functab rt_functab[] = {
      rt_submodel_import,	rt_submodel_export,	rt_submodel_ifree,
      rt_submodel_describe,	rt_submodel_xform,	rt_submodel_parse,
      sizeof(struct rt_submodel_internal), RT_SUBMODEL_INTERNAL_MAGIC,
-     rt_parsetab_tclget, rt_parsetab_tcladjust, rt_parsetab_tclform,
-     NULL,
+     rt_parsetab_get, rt_parsetab_adjust, rt_parsetab_form,
+     NULL, rt_submodel_params,
     },
 
     {RT_FUNCTAB_MAGIC, "ID_CLINE", "cline",
@@ -846,8 +864,8 @@ const struct rt_functab rt_functab[] = {
      rt_cline_import,	rt_cline_export,	rt_cline_ifree,
      rt_cline_describe, rt_cline_xform,	rt_cline_parse,
      sizeof(struct rt_cline_internal), RT_CLINE_INTERNAL_MAGIC,
-     rt_cline_tclget, rt_cline_tcladjust, rt_cline_tclform,
-     NULL,
+     rt_cline_get, rt_cline_adjust, rt_cline_form,
+     NULL, rt_cline_params,
     },
 
     {RT_FUNCTAB_MAGIC, "ID_BOT", "bot",
@@ -860,8 +878,8 @@ const struct rt_functab rt_functab[] = {
      rt_bot_import,	rt_bot_export,	rt_bot_ifree,
      rt_bot_describe, rt_bot_xform,	NULL,
      sizeof(struct rt_bot_internal), RT_BOT_INTERNAL_MAGIC,
-     rt_bot_tclget, rt_bot_tcladjust, rt_bot_tclform,
-     NULL,
+     rt_bot_get, rt_bot_adjust, rt_bot_form,
+     NULL, rt_bot_params,
     },
 
     /* ID_MAX_SOLID.  Add new solids _above_ this point */
@@ -876,8 +894,8 @@ const struct rt_functab rt_functab[] = {
      rt_comb_import4, rt_comb_export4, rt_comb_ifree,
      rt_comb_describe, rt_generic_xform, NULL,
      0,				0,
-     rt_comb_tclget,	rt_comb_tcladjust, rt_comb_tclform,
-     rt_comb_make,
+     rt_comb_get,	rt_comb_adjust, rt_comb_form,
+     rt_comb_make, NULL
     },
 
     {RT_FUNCTAB_MAGIC, "ID_BINEXPM", "binexpm",
@@ -891,8 +909,8 @@ const struct rt_functab rt_functab[] = {
      rt_nul_import,	rt_nul_export,	rt_nul_ifree,
      rt_nul_describe, rt_generic_xform, NULL,
      0,				0,
-     rt_nul_tclget,	rt_nul_tcladjust, rt_nul_tclform,
-     rt_nul_make,
+     rt_nul_get,	rt_nul_adjust, rt_nul_form,
+     rt_nul_make, NULL
     },
 
     {RT_FUNCTAB_MAGIC, "ID_BINUNIF", "binunif",
@@ -906,8 +924,8 @@ const struct rt_functab rt_functab[] = {
      rt_nul_import,	rt_nul_export,	rt_binunif_ifree,
      rt_binunif_describe, rt_generic_xform, NULL,
      0,				0,
-     rt_binunif_tclget,	rt_binunif_tcladjust, rt_nul_tclform,
-     rt_binunif_make,
+     rt_binunif_get,	rt_binunif_adjust, rt_nul_form,
+     rt_binunif_make, NULL
     },
 
     {RT_FUNCTAB_MAGIC, "ID_BINMIME", "binmime",
@@ -920,8 +938,8 @@ const struct rt_functab rt_functab[] = {
      rt_nul_import,	rt_nul_export,	rt_nul_ifree,
      rt_nul_describe, rt_generic_xform, NULL,
      0,				0,
-     rt_nul_tclget,	rt_nul_tcladjust, rt_nul_tclform,
-     rt_nul_make,
+     rt_nul_get,	rt_nul_adjust, rt_nul_form,
+     rt_nul_make, NULL
     },
 
     {RT_FUNCTAB_MAGIC, "ID_SUPERELL", "superell",
@@ -934,8 +952,8 @@ const struct rt_functab rt_functab[] = {
      rt_superell_import,	rt_superell_export,	rt_superell_ifree,
      rt_superell_describe, rt_superell_xform,	rt_superell_parse,
      sizeof(struct rt_superell_internal), RT_SUPERELL_INTERNAL_MAGIC,
-     rt_parsetab_tclget, rt_parsetab_tcladjust, rt_parsetab_tclform,
-     NULL,
+     rt_parsetab_get, rt_parsetab_adjust, rt_parsetab_form,
+     NULL, rt_superell_params,
     },
 
     {RT_FUNCTAB_MAGIC, "ID_METABALL", "metaball",
@@ -948,8 +966,8 @@ const struct rt_functab rt_functab[] = {
      rt_nul_import,		rt_nul_export,	rt_metaball_ifree,
      rt_metaball_describe,	rt_metaball_xform,	rt_nul_parse,
      sizeof(struct rt_metaball_internal),		RT_METABALL_INTERNAL_MAGIC,
-     rt_parsetab_tclget,	rt_parsetab_tcladjust,	rt_parsetab_tclform,
-     NULL,
+     rt_parsetab_get,	rt_parsetab_adjust,	rt_parsetab_form,
+     NULL, rt_metaball_params,
     },
 
 #if OBJ_BREP
@@ -963,8 +981,8 @@ const struct rt_functab rt_functab[] = {
      rt_nul_import,		rt_nul_export,	        rt_brep_ifree,
      rt_brep_describe,	rt_brep_xform,	        rt_nul_parse,
      sizeof(struct rt_brep_internal),		RT_BREP_INTERNAL_MAGIC,
-     rt_parsetab_tclget,	rt_parsetab_tcladjust,	rt_parsetab_tclform,
-     NULL,
+     rt_parsetab_get,	rt_parsetab_adjust,	rt_parsetab_form,
+     NULL, rt_brep_params,
     },
 #else
     {RT_FUNCTAB_MAGIC, "ID_BREP_PLCHLDR", "brep",
@@ -977,12 +995,12 @@ const struct rt_functab rt_functab[] = {
      rt_nul_import,	rt_nul_export,	rt_nul_ifree,
      rt_nul_describe, rt_nul_xform,	NULL,
      0,				0,
-     rt_nul_tclget,	rt_nul_tcladjust, rt_nul_tclform,
-     rt_nul_make,
+     rt_nul_get,	rt_nul_adjust, rt_nul_form,
+     rt_nul_make, NULL,
     },
 #endif
 
-    {RT_FUNCTAB_MAGIC, "ID_HYP", "hyperboloid",
+    {RT_FUNCTAB_MAGIC, "ID_HYP", "hyp",
      1,		/* 38 but "should" be 34 Hyperboloid  */
      rt_hyp_prep,	rt_hyp_shot,	rt_hyp_print,	rt_hyp_norm,
      rt_nul_piece_shot,	rt_nul_piece_hitsegs,
@@ -990,10 +1008,52 @@ const struct rt_functab rt_functab[] = {
      rt_hyp_plot,	rt_nul_vshot,	rt_hyp_tess,	rt_nul_tnurb,
      rt_hyp_import5,	rt_hyp_export5,
      rt_nul_import,	rt_nul_export,	rt_hyp_ifree,
-     rt_hyp_describe,	rt_nul_xform,	rt_nul_parse,
+     rt_hyp_describe,	rt_nul_xform,	rt_hyp_parse,
      sizeof(struct rt_hyp_internal),		RT_HYP_INTERNAL_MAGIC,
-     rt_parsetab_tclget,	rt_parsetab_tcladjust,	rt_parsetab_tclform,
-     NULL,
+     rt_parsetab_get,	rt_parsetab_adjust,	rt_parsetab_form,
+     NULL, rt_hyp_params,
+    },
+
+    {RT_FUNCTAB_MAGIC, "ID_CONSTRAINT", "constrnt",
+     0,
+     rt_nul_prep,	rt_nul_shot,	rt_nul_print,	rt_nul_norm,
+     rt_nul_piece_shot,	rt_nul_piece_hitsegs,
+     rt_nul_uv,		rt_nul_curve,	rt_nul_class,	rt_nul_free,
+     rt_nul_plot,	rt_nul_vshot,	rt_nul_tess,	rt_nul_tnurb,
+     rt_constraint_import5,	rt_constraint_export5,
+     rt_nul_import,	rt_nul_export, rt_constraint_ifree,
+     rt_nul_describe,	rt_nul_xform,	rt_nul_parse,
+     0,		0,
+     rt_nul_get,	rt_nul_adjust,	rt_nul_form,
+     NULL, NULL
+    },
+
+    {RT_FUNCTAB_MAGIC, "ID_REVOLVE", "revolve",
+     1,
+     rt_revolve_prep,	rt_revolve_shot,	rt_revolve_print,	rt_revolve_norm,
+     rt_nul_piece_shot,	rt_nul_piece_hitsegs,
+     rt_revolve_uv,	rt_revolve_curve,	rt_revolve_class,	rt_revolve_free,
+     rt_revolve_plot,	rt_nul_vshot,	rt_revolve_tess,	rt_nul_tnurb,
+     rt_revolve_import5,	rt_revolve_export5,
+     rt_nul_import,	rt_nul_export,	rt_revolve_ifree,
+     rt_revolve_describe,	rt_nul_xform,	rt_revolve_parse,
+     sizeof(struct rt_revolve_internal),	RT_REVOLVE_INTERNAL_MAGIC,
+     rt_parsetab_get,	rt_parsetab_adjust,	rt_parsetab_form,
+     NULL, rt_nul_params
+    },
+
+    {RT_FUNCTAB_MAGIC, "ID_PNTS", "pnts",
+     0,
+     NULL,	NULL,	rt_pnts_print,	NULL,
+     NULL,	NULL,
+     NULL,	NULL,	NULL,	NULL,
+     rt_pnts_plot,	NULL,	NULL,	NULL,
+     rt_pnts_import5,	rt_pnts_export5,
+     NULL,	NULL,	rt_pnts_ifree,
+     NULL,	rt_pnts_xform,	NULL,
+     sizeof(struct rt_pnts_internal),	RT_PNTS_INTERNAL_MAGIC,
+     NULL,	NULL,	NULL,
+     NULL, NULL
     },
 
     {0L, ">ID_MAXIMUM", ">id_max",
@@ -1006,8 +1066,8 @@ const struct rt_functab rt_functab[] = {
      rt_nul_import,	rt_nul_export,	rt_nul_ifree,
      rt_nul_describe, rt_nul_xform,	NULL,
      0,				0,
-     rt_nul_tclget,	rt_nul_tcladjust, rt_nul_tclform,
-     rt_nul_make,
+     rt_nul_get,	rt_nul_adjust, rt_nul_form,
+     rt_nul_make, NULL
     }
 };
 
@@ -1094,6 +1154,7 @@ int NDEF(rt_nul_describe, (struct bu_vls *str,
 int NDEF(rt_nul_xform, (struct rt_db_internal *op,
 			const mat_t mat, struct rt_db_internal *ip,
 			int free, struct db_i *dbip, struct resource *resp));
+int NDEF(rt_nul_params, (struct pc_pc_set * ps, const struct rt_db_internal *op));
 
 /* Map for database solidrec objects to internal objects */
 static char idmap[] = {

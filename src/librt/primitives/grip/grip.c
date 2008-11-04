@@ -1,4 +1,4 @@
-/*                        G _ G R I P . C
+/*                          G R I P . C
  * BRL-CAD
  *
  * Copyright (c) 1993-2008 United States Government as represented by
@@ -17,9 +17,9 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @addtogroup g_  */
+/** @addtogroup primitives */
 /** @{ */
-/** @file g_grip.c
+/** @file grip.c
  *
  * Intersect a ray with a "grip" and return nothing.
  *
@@ -501,6 +501,16 @@ rt_grp_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 
     /* XXX tess routine needed */
     return(-1);
+}
+
+/**
+ * R T _ G R P _ P A R A M S
+ *
+ */
+int
+rt_grp_params(struct pc_pc_set * ps, const struct rt_db_internal *ip)
+{
+    return(0);			/* OK */
 }
 
 /** @} */

@@ -59,7 +59,8 @@ rt_pr_soltab(register const struct soltab *stp)
     VPRINT("Bound RPP min", stp->st_min);
     VPRINT("Bound RPP max", stp->st_max);
     bu_pr_ptbl( "st_regions", &stp->st_regions, 1 );
-    rt_functab[id].ft_print( stp );
+    if (rt_functab[id].ft_print)
+	rt_functab[id].ft_print(stp);
 }
 
 /**

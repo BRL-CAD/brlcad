@@ -2,13 +2,13 @@
 /* $NoKeywords: $ */
 /*
 //
-// Copyright (c) 1993-2001 Robert McNeel & Associates. All rights reserved.
+// Copyright (c) 1993-2007 Robert McNeel & Associates. All rights reserved.
 // Rhinoceros is a registered trademark of Robert McNeel & Assoicates.
 //
 // THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY.
 // ALL IMPLIED WARRANTIES OF FITNESS FOR ANY PARTICULAR PURPOSE AND OF
 // MERCHANTABILITY ARE HEREBY DISCLAIMED.
-//
+//				
 // For complete openNURBS copyright information see <http://www.opennurbs.org>.
 //
 ////////////////////////////////////////////////////////////////
@@ -111,32 +111,32 @@ void ON_TextLog::Print( const char* format, ... )
   va_list args;
 
   s[0] = 0;
-  if (format)
+  if (format) 
   {
     va_start(args, format);
     on_vsnprintf( s, MAX_MSG_LENGTH-1, format, args);
     va_end(args);
     s[MAX_MSG_LENGTH] = 0;
   }
-  if ( *s )
+  if ( *s ) 
   {
     char* s0 = s;
     char* s1 = s;
     for ( s1 = s0; *s1; s1++) {
       if ( *s1 == '\n' ) {
-        *s1 = 0;
-        if ( m_beginning_of_line && m_indent && m_indent[0] )
-          AppendText( m_indent );
-        if (*s0)
-          AppendText(s0);
-        AppendText("\n");
-        m_beginning_of_line = 1;
-        s0 = s1+1;
+	*s1 = 0;
+	if ( m_beginning_of_line && m_indent && m_indent[0] )
+	  AppendText( m_indent );
+	if (*s0) 
+	  AppendText(s0);
+	AppendText("\n");
+	m_beginning_of_line = 1;
+	s0 = s1+1;
       }
     }
     if (*s0) {
       if ( m_beginning_of_line && m_indent && m_indent[0] )
-        AppendText( m_indent );
+	AppendText( m_indent );
       AppendText(s0);
       m_beginning_of_line = 0;
     }
@@ -151,32 +151,32 @@ void ON_TextLog::Print( const wchar_t* wformat, ... )
   va_list args;
 
   s[0] = 0;
-  if (wformat)
+  if (wformat) 
   {
     va_start(args, wformat);
     on_vsnwprintf( s, MAX_MSG_LENGTH-1, wformat, args);
     va_end(args);
     s[MAX_MSG_LENGTH] = 0;
   }
-  if ( *s )
+  if ( *s ) 
   {
     wchar_t* s0 = s;
     wchar_t* s1 = s;
     for ( s1 = s0; *s1; s1++) {
       if ( *s1 == '\n' ) {
-        *s1 = 0;
-        if ( m_beginning_of_line && m_indent && m_indent[0] )
-          AppendText( m_indent );
-        if (*s0)
-          AppendText(s0);
-        AppendText("\n");
-        m_beginning_of_line = 1;
-        s0 = s1+1;
+	*s1 = 0;
+	if ( m_beginning_of_line && m_indent && m_indent[0] )
+	  AppendText( m_indent );
+	if (*s0) 
+	  AppendText(s0);
+	AppendText("\n");
+	m_beginning_of_line = 1;
+	s0 = s1+1;
       }
     }
     if (*s0) {
       if ( m_beginning_of_line && m_indent && m_indent[0] )
-        AppendText( m_indent );
+	AppendText( m_indent );
       AppendText(s0);
       m_beginning_of_line = 0;
     }
@@ -186,14 +186,14 @@ void ON_TextLog::Print( const wchar_t* wformat, ... )
 
 void ON_TextLog::AppendText( const char* s )
 {
-  // This is a virtual function
-  if ( s && *s )
+  // This is a virtual function 
+  if ( s && *s ) 
   {
     if ( m_pString )
     {
       (*m_pString) += s;
     }
-    else if ( m_pFile )
+    else if ( m_pFile ) 
     {
       fputs( s, m_pFile );
     }
@@ -210,15 +210,15 @@ void ON_TextLog::AppendText( const char* s )
 
 void ON_TextLog::AppendText( const wchar_t* s )
 {
-  // This is a virtual function
+  // This is a virtual function 
   if ( m_pString )
   {
     (*m_pString) += s;
   }
   else
   {
-    // To properly handle conversion of UNICODE values > 255,
-    // you will probably have to derive a class from ON_TextLog,
+    // To properly handle conversion of UNICODE values > 255, 
+    // you will probably have to derive a class from ON_TextLog, 
     // override ON_TextLog::AppendText(const wchar_t* s ),
     // and do whatever is appropriate for your OS and compiler.
     ON_String str = s;
@@ -296,11 +296,11 @@ void ON_TextLog::Print( const ON_Xform& xform )
 
 void ON_TextLog::Print( const ON_UUID& uuid )
 {
-  Print("%08X-%04X-%04x-%02X%02X-%02X%02X%02X%02X%02X%02X",
-        uuid.Data1, uuid.Data2, uuid.Data3,
-        uuid.Data4[0], uuid.Data4[1], uuid.Data4[2], uuid.Data4[3],
-        uuid.Data4[4], uuid.Data4[5], uuid.Data4[6], uuid.Data4[7]
-        );
+  Print("%08X-%04X-%04x-%02X%02X-%02X%02X%02X%02X%02X%02X", 
+	uuid.Data1, uuid.Data2, uuid.Data3,
+	uuid.Data4[0], uuid.Data4[1], uuid.Data4[2], uuid.Data4[3],
+	uuid.Data4[4], uuid.Data4[5], uuid.Data4[6], uuid.Data4[7]
+	);
 }
 
 void ON_TextLog::Print( const ON_COMPONENT_INDEX& ci )
@@ -396,7 +396,7 @@ void ON_TextLog::PrintTime( const struct tm& t )
 {
   const char* sDayName[8] = {"Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday",""};
   const char* sMonName[13] = {"January","February","March","April","May","June",
-                              "July","August","September","October","November","December",""};
+			      "July","August","September","October","November","December",""};
   int wday = t.tm_wday;
   if ( wday < 0 || wday > 6 )
     wday = 7;
@@ -405,18 +405,18 @@ void ON_TextLog::PrintTime( const struct tm& t )
     mon = 12;
 
   Print("%s %s %02d %02d:%02d:%02d %4d",
-              sDayName[wday],
-              sMonName[mon],
-              t.tm_mday,
-              t.tm_hour,
-              t.tm_min,
-              t.tm_sec,
-              t.tm_year+1900);
+	      sDayName[wday],
+	      sMonName[mon],
+	      t.tm_mday,
+	      t.tm_hour,
+	      t.tm_min,
+	      t.tm_sec,
+	      t.tm_year+1900);
 }
 
 
 void ON_TextLog::PrintPointList( int dim, int is_rat, int count, int stride, const double* P,
-                                const char* sPreamble )
+				const char* sPreamble )
 {
   double w, x;
   int i, j, cvdim;
@@ -441,23 +441,23 @@ void ON_TextLog::PrintPointList( int dim, int is_rat, int count, int stride, con
       Print(m_double_format, P[j] );
     }
     Print("%c", (is_rat) ? ']' : ')' );
-    if ( is_rat )
+    if ( is_rat ) 
     {
       w = P[dim];
-      if ( w != 0.0 )
+      if ( w != 0.0 ) 
       {
-        // print euclidean coordinates
-        w = 1.0/w;
-        x = w*P[0];
-        Print( " = (");
-        Print( m_double_format, x );
-        for ( j = 1; j < dim; j++ )
-        {
-          x = w*P[j];
-          Print( ", ");
-          Print( m_double_format, x );
-        }
-        Print(")");
+	// print euclidean coordinates
+	w = 1.0/w;
+	x = w*P[0];
+	Print( " = (");
+	Print( m_double_format, x );
+	for ( j = 1; j < dim; j++ ) 
+	{
+	  x = w*P[j];
+	  Print( ", ");
+	  Print( m_double_format, x );
+	}
+	Print(")");
       }
     }
     Print("\n");
@@ -465,11 +465,11 @@ void ON_TextLog::PrintPointList( int dim, int is_rat, int count, int stride, con
   }
 }
 
-void ON_TextLog::PrintPointGrid( int dim, int is_rat,
-                                int point_count0, int point_count1,
-                                int point_stride0, int point_stride1,
-                                const double* P,
-                                const char* sPreamble )
+void ON_TextLog::PrintPointGrid( int dim, int is_rat, 
+				int point_count0, int point_count1, 
+				int point_stride0, int point_stride1,
+				const double* P,
+				const char* sPreamble )
 {
   char s[1024];
   int i;
@@ -497,12 +497,12 @@ void ON_TextLog::PrintKnotVector( int order, int cv_count, const double* knot )
     while ( i < knot_count ) {
       mult = 1;
       while ( i+mult < knot_count && knot[i] == knot[i+mult] )
-        mult++;
+	mult++;
       if ( i == 0 ) {
-        Print( "%5d  %23.20g  %4d\n", i, knot[i], mult );
+	Print( "%5d  %23.20g  %4d\n", i, knot[i], mult );
       }
       else {
-        Print( "%5d  %23.20g  %4d  %10.4g\n", i, knot[i], mult, knot[i]-knot[i0] );
+	Print( "%5d  %23.20g  %4d  %10.4g\n", i, knot[i], mult, knot[i]-knot[i0] );
       }
       i0 = i;
       i += mult;
@@ -523,7 +523,7 @@ void ON_TextLog::Print( const ON_Matrix& M, const char* sPreamble, int precision
   char* sRow;
   char* sIJ;
   int xi, row_count, column_count, row_index, column_index;
-
+  
   row_count = M.RowCount();
   column_count = M.ColCount();
 
@@ -538,64 +538,64 @@ void ON_TextLog::Print( const ON_Matrix& M, const char* sPreamble, int precision
     Print("%5d:",row_index);
     if ( precision > 3 ) {
       for ( column_index = 0; column_index < column_count; column_index++ ) {
-        x = M.m[row_index][column_index];
-        Print( " %8f",x);
+	x = M.m[row_index][column_index];
+	Print( " %8f",x);
       }
       Print("\n");
     }
     else {
       for ( column_index = 0; column_index < column_count; column_index++ ) {
-        x = M.m[row_index][column_index];
-        if ( x == 0.0 ) {
-          strcpy( sIJ, "  0   " );
-          sIJ += 4;
-        }
-        else {
-          *sIJ++ = ' ';
-          *sIJ++ = ( x >0.0 ) ? '+' : '-';
-          x = fabs( x );
-          if      ( x >= 10.0 ) {
-            *sIJ++ = '*';
-            *sIJ++ = ' ';
-            *sIJ++ = ' ';
-          }
-          else if ( x <= ON_SQRT_EPSILON) {
-            *sIJ++ = '0';
-            *sIJ++ = ' ';
-            *sIJ++ = ' ';
-          }
-          else if ( x < 0.1) {
-            *sIJ++ = '~';
-            *sIJ++ = ' ';
-            *sIJ++ = ' ';
-          }
-          else if ( x < .95 ) {
-            *sIJ++ = '.';
-            xi = (int)floor(x*10.0);
-            if ( xi > 9 )
-              xi = 9;
-            else if (xi < 1)
-              xi = 1;
-            *sIJ++ = digit[xi];
-            *sIJ++ = '~';
-          }
-          else {
-            xi = (int)floor(x);
-            if ( xi < 1 )
-              xi = 1;
-            else if (xi > 9)
-              xi = 9;
-            *sIJ++ = digit[xi];
-            if ( x == floor(x) ) {
-              *sIJ++ = ' ';
-              *sIJ++ = ' ';
-            }
-            else {
-              *sIJ++ = '.';
-              *sIJ++ = '~';
-            }
-          }
-        }
+	x = M.m[row_index][column_index];
+	if ( x == 0.0 ) {
+	  strcpy( sIJ, "  0   " );
+	  sIJ += 4;
+	}
+	else {
+	  *sIJ++ = ' ';
+	  *sIJ++ = ( x >0.0 ) ? '+' : '-';
+	  x = fabs( x );
+	  if      ( x >= 10.0 ) {
+	    *sIJ++ = '*';
+	    *sIJ++ = ' ';
+	    *sIJ++ = ' ';
+	  }
+	  else if ( x <= ON_SQRT_EPSILON) {
+	    *sIJ++ = '0';
+	    *sIJ++ = ' ';
+	    *sIJ++ = ' ';
+	  }
+	  else if ( x < 0.1) {
+	    *sIJ++ = '~';
+	    *sIJ++ = ' ';
+	    *sIJ++ = ' ';
+	  }
+	  else if ( x < .95 ) {
+	    *sIJ++ = '.';
+	    xi = (int)floor(x*10.0);
+	    if ( xi > 9 )
+	      xi = 9;
+	    else if (xi < 1)
+	      xi = 1;
+	    *sIJ++ = digit[xi];
+	    *sIJ++ = '~';
+	  }
+	  else {
+	    xi = (int)floor(x);
+	    if ( xi < 1 )
+	      xi = 1;
+	    else if (xi > 9)
+	      xi = 9;
+	    *sIJ++ = digit[xi];
+	    if ( x == floor(x) ) {
+	      *sIJ++ = ' ';
+	      *sIJ++ = ' ';
+	    }
+	    else {
+	      *sIJ++ = '.';
+	      *sIJ++ = '~';
+	    }
+	  }
+	}
       }
       *sIJ = 0;
       Print("%s\n",sRow);
@@ -634,7 +634,7 @@ ON_TextLog& ON_TextLog::operator<<(float x)
   return *this;
 }
 
-ON_TextLog& ON_TextLog::operator<<(double x)
+ON_TextLog& ON_TextLog::operator<<(double x)  
 {
   Print(m_double_format,x);
   return *this;
@@ -709,51 +709,51 @@ void ON_TextLog::PrintWrappedText( const wchar_t* s, int line_length )
     while ( s[i] ) {
       i1 = i;
       if ( s[i] == 10 || s[i] == 13 ) {
-        // hard break at CR or LF
-        i++;
-        if ( s[i] == 10 && s[i-1] == 13 ) {
-          // it's a CR+LF hard end of line - skip LF too
-          i++;
-        }
-        bPrintLine = TRUE;
+	// hard break at CR or LF
+	i++;
+	if ( s[i] == 10 && s[i-1] == 13 ) {
+	  // it's a CR+LF hard end of line - skip LF too
+	  i++;
+	}      
+	bPrintLine = TRUE;
       }
       else if ( i && s[i] == 32 ) {
-        if ( !isp ) {
-          isp = i++;
-        }
-        if ( i < wrap_length ) {
-          isp = i++;
-        }
-        else {
-          bPrintLine = TRUE;
-          if ( isp ) {
-            i1 = i = isp;
-            while ( s[i] == 32 )
-              i++;
-          }
-          else {
-            i++;
-          }
-        }
+	if ( !isp ) {
+	  isp = i++;
+	}
+	if ( i < wrap_length ) {
+	  isp = i++;
+	}
+	else {
+	  bPrintLine = TRUE;
+	  if ( isp ) {
+	    i1 = i = isp;
+	    while ( s[i] == 32 )
+	      i++;
+	  }
+	  else {
+	    i++;
+	  }
+	}
       }
       else {
-        i++;
+	i++;
       }
       if ( bPrintLine ) {
-        if ( i1 >= max_line_length )
-          i1 = max_line_length-1;
-        if ( i1 > 0 ) {
-          wsncpy( sLine, s, i1 );
-          sLine[i1] = 0;
-          Print( "%S\n", sLine );
-        }
-        else {
-          Print("\n");
-        }
+	if ( i1 >= max_line_length )
+	  i1 = max_line_length-1;
+	if ( i1 > 0 ) {
+	  wsncpy( sLine, s, i1 );
+	  sLine[i1] = 0;
+	  Print( "%S\n", sLine );
+	}
+	else {
+	  Print("\n");
+	}
 
-        s += i;
-        i = i1 = isp = 0;
-        bPrintLine = FALSE;
+	s += i;
+	i = i1 = isp = 0;
+	bPrintLine = FALSE;
       }
     }
     if ( s[0] ) {

@@ -1,4 +1,4 @@
-/*                         G _ R E C . C
+/*                           R E C . C
  * BRL-CAD
  *
  * Copyright (c) 1985-2008 United States Government as represented by
@@ -17,9 +17,9 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @addtogroup g_  */
+/** @addtogroup primitives */
 /** @{ */
-/** @file g_rec.c
+/** @file rec.c
  *
  * Intersect a ray with a Right Eliptical Cylinder.  This is a special
  * (but common) case of the TGC, which is handled separately.
@@ -821,6 +821,16 @@ rt_rec_uv(struct application *ap, struct soltab *stp, register struct hit *hitp,
 
     /* XXX uv_du should be relative to rotation, uv_dv relative to height */
     uvp->uv_du = uvp->uv_dv = 0;
+}
+
+/**
+ * R T _ R E C _ P A R A M S
+ *
+ */
+int
+rt_rec_params(struct pc_pc_set * ps, const struct rt_db_internal *ip)
+{
+    return(0);			/* OK */
 }
 
 /**

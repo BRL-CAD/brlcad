@@ -502,8 +502,6 @@ if {$tcl_platform(os) != "Windows NT"} {
     $itk_component(dm) get_aspect
 }
 
-if {$tcl_platform(os) != "Windows NT"} {
-}
 ::itcl::body Dm::fb_active {args} {
     if {$args == ""} {
 	return $itk_option(-fb_active)
@@ -630,8 +628,6 @@ if {$tcl_platform(os) != "Windows NT"} {
     global tcl_platform
 
     eval Dm::dmsize $itk_option(-dmsize)
-    if {$tcl_platform(os) != "Windows NT"} {
-    }
     Dm::fb_active $itk_option(-fb_active)
     Dm::fb_observe $itk_option(-fb_observe)
     Dm::listen $itk_option(-listen)

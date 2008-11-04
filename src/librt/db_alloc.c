@@ -158,7 +158,7 @@ db_delete(struct db_i *dbip, struct directory *dp)
     }
 
     dp->d_len = 0;
-    dp->d_addr = -1;
+    dp->d_addr = RT_DIR_PHONY_ADDR;
     return i;
 }
 

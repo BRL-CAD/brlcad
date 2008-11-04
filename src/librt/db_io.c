@@ -380,7 +380,7 @@ db_put_external(struct bu_external *ep, struct directory *dp, struct db_i *dbip)
 
 	ngran = (ep->ext_nbytes+sizeof(union record)-1)/sizeof(union record);
 	if ( ngran != dp->d_len )  {
-	    if ( dp->d_addr != -1L )  {
+	    if ( dp->d_addr != RT_DIR_PHONY_ADDR )  {
 		if ( db_delete( dbip, dp ) < 0 )
 		    return -2;
 	    }

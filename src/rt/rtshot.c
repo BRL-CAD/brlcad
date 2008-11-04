@@ -54,7 +54,7 @@ extern int rt_shootray_bundle( struct application *ap,
 
 char	usage[] = "\
 Usage:  rtshot [options] model.g objects...\n\
- -U #		Set use_air flag\n\
+ -U #		Set reporting of air regions (default=1)\n\
  -u #		Set libbu debug flag\n\
  -x #		Set librt debug flags\n\
  -X #		Set rt program debug flags\n\
@@ -78,10 +78,10 @@ int		set_dir = 0;
 int		set_pt = 0;
 int		set_at = 0;
 int		set_onehit = 0;
+int		set_air = 1;
 fastf_t		set_ray_length = 0.0;
 vect_t		at_vect;
 int		overlap_claimant_handling = 0;
-int		use_air = 0;		/* Handling of air */
 int		rays_per_ring = 0;
 int		num_rings = 0;
 fastf_t		bundle_radius = 0.0;
@@ -187,7 +187,7 @@ main(int argc, char **argv)
 	argv += 2;
 	break;
 	case 'U':
-	    sscanf( argv[1], "%d", &use_air );
+	    sscanf( argv[1], "%d", &set_air );
 	    argc -= 2;
 	    argv += 2;
 	    break;
@@ -300,7 +300,7 @@ main(int argc, char **argv)
 
     ap.a_rt_i = rtip;
     fprintf(stderr, "db title:  %s\n", idbuf);
-    rtip->useair = use_air;
+    rtip->useair = set_air;
 
     /* Walk trees */
     if ( rt_gettrees_and_attrs( rtip, (const char **)attrs, argc, (const char **)argv, 1 ) ) {

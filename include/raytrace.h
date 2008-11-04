@@ -43,6 +43,7 @@
 #include "bn.h"
 #include "db5.h"
 #include "nmg.h"
+#include "pc.h"
 
 __BEGIN_DECLS
 
@@ -202,9 +203,14 @@ struct rt_db_internal  {
     struct bu_attribute_value_set idb_avs;
 };
 #define idb_type		idb_minor_type
-#define RT_INIT_DB_INTERNAL(_p)	{(_p)->idb_magic = RT_DB_INTERNAL_MAGIC; \
-	(_p)->idb_type = -1; (_p)->idb_ptr = GENPTR_NULL;\
-	(_p)->idb_avs.magic = -1;}
+#define RT_INIT_DB_INTERNAL(_p)	{ \
+	(_p)->idb_magic = RT_DB_INTERNAL_MAGIC; \
+	(_p)->idb_major_type = -1; \
+	(_p)->idb_minor_type = -1; \
+	(_p)->idb_meth = GENPTR_NULL; \
+	(_p)->idb_ptr = GENPTR_NULL; \
+	bu_avs_init_empty(&(_p)->idb_avs); \
+}
 #define RT_CK_DB_INTERNAL(_p)	BU_CKMAG(_p, RT_DB_INTERNAL_MAGIC, "rt_db_internal")
 
 /**
@@ -270,7 +276,7 @@ struct hit {
  *
  * Only the hit_dist field of pt_inhit and pt_outhit are valid when
  * a_hit() is called; to compute both hit_point and hit_normal, use
- * RT_HIT_NORM() macro; to compute just hit_point, use 
+ * RT_HIT_NORM() macro; to compute just hit_point, use
  * VJOIN1( hitp->hit_point, rp->r_pt, hitp->hit_dist, rp->r_dir );
  */
 #define RT_HIT_NORM( _hitp, _stp, _unused )  { \
@@ -493,7 +499,7 @@ struct soltab {
 /* Add a new primitive id above here (this is will break v5 format)
  * XXX must update the non-geometric object id's below XXX
  */
-#define	ID_MAX_SOLID	39	/**< @brief Maximum defined ID_xxx for solids */
+#define	ID_MAX_SOLID	42	/**< @brief Maximum defined ID_xxx for solids */
 
 /*
  * Non-geometric objects
@@ -502,14 +508,17 @@ struct soltab {
 #define ID_BINEXPM	32	/**< @brief Experimental binary */
 #define ID_BINUNIF	33	/**< @brief Uniform-array binary */
 #define ID_BINMIME	34	/**< @brief MIME-typed binary */
+#define ID_CONSTRAINT   39      /**< @brief Constraint object */
 
 /* XXX - superellipsoid should be 31, but is not v5 compatible */
 #define ID_SUPERELL	35	/**< @brief Superquadratic ellipsoid */
 #define ID_METABALL	36	/**< @brief Metaball */
 #define ID_BREP         37      /**< @brief B-rep object */
 #define ID_HYP		38	/**< @brief Hyperboloid of one sheet */
+#define ID_REVOLVE	40	/**< @brief Solid of Revolutin */
+#define ID_PNTS         41      /**< @brief Collection of Points */
 
-#define ID_MAXIMUM	39	/**< @brief Maximum defined ID_xxx value */
+#define ID_MAXIMUM	42	/**< @brief Maximum defined ID_xxx value */
 
 /**
  * M A T E R _ I N F O
@@ -808,20 +817,30 @@ struct directory  {
     struct bu_list	d_use_hd;		/**< @brief heads list of uses (struct soltab l2) */
     char		d_shortname[16];	/**< @brief Stash short names locally */
 };
-#define DIR_NULL	((struct directory *)0)
+#define RT_DIR_NULL	((struct directory *)0)
 #define RT_CK_DIR(_dp)	BU_CKMAG(_dp, RT_DIR_MAGIC, "(librt)directory")
 
 #define d_addr	d_un.file_offset
 #define RT_DIR_PHONY_ADDR	(-1L)	/**< @brief Special marker for d_addr field */
 
 /* flags for db_diradd() and friends */
-#define DIR_SOLID	0x1	/**< @brief this name is a solid */
-#define DIR_COMB	0x2	/**< @brief combination */
-#define DIR_REGION	0x4	/**< @brief region */
-#define DIR_HIDDEN	0x8	/**< @brief object name is hidden */
-#define	DIR_NON_GEOM	0x10	/**< @brief object is not geometry (e.g. binary object) */
-#define DIR_USED	0x80	/**< @brief One bit, used similar to d_nref */
-#define RT_DIR_INMEM	0x100	/**< @brief object is in memory (only) */
+#define RT_DIR_SOLID    0x1   /**< @brief this name is a solid */
+#define RT_DIR_COMB     0x2   /**< @brief combination */
+#define RT_DIR_REGION   0x4   /**< @brief region */
+#define RT_DIR_HIDDEN   0x8   /**< @brief object name is hidden */
+#define RT_DIR_NON_GEOM 0x10  /**< @brief object is not geometry (e.g. binary object) */
+#define RT_DIR_USED     0x80  /**< @brief One bit, used similar to d_nref */
+#define RT_DIR_INMEM    0x100 /**< @brief object is in memory (only) */
+
+
+#define DIR_NULL     RT_DIR_NULL     /* DEPRECATED */
+#define DIR_SOLID    RT_DIR_SOLID    /* DEPRECATED */
+#define DIR_COMB     RT_DIR_COMB     /* DEPRECATED */
+#define DIR_REGION   RT_DIR_REGION   /* DEPRECATED */
+#define DIR_HIDDEN   RT_DIR_HIDDEN   /* DEPRECATED */
+#define DIR_NON_GEOM RT_DIR_NON_GEOM /* DEPRECATED */
+#define DIR_USED     RT_DIR_USED     /* DEPRECATED */
+
 
 /**< @brief Args to db_lookup() */
 #define LOOKUP_NOISY	1
@@ -841,7 +860,9 @@ struct directory  {
 		(_dp)->d_namep = bu_strdup(_name); /* Calls bu_malloc() */ \
 	} }
 
-/** Use this macro to free the d_namep member, which is sometimes not
+
+/**
+ * Use this macro to free the d_namep member, which is sometimes not
  * dynamic.
  */
 #define RT_DIR_FREE_NAMEP(_dp)	{ \
@@ -874,10 +895,10 @@ struct rt_comb_internal  {
     char		region_flag;	/**< @brief !0 ==> this COMB is a REGION */
     char		is_fastgen;	/**< @brief REGION_NON_FASTGEN/_PLATE/_VOLUME */
     /* Begin GIFT compatability */
-    int			region_id;
-    int			aircode;
-    int			GIFTmater;
-    int			los;
+    long		region_id;
+    long		aircode;
+    long		GIFTmater;
+    long		los;
     /* End GIFT compatability */
     char		rgb_valid;	/**< @brief !0 ==> rgb[] has valid color */
     unsigned char	rgb[3];
@@ -890,6 +911,7 @@ struct rt_comb_internal  {
 #define RT_CK_COMB(_p)			RT_CHECK_COMB(_p)
 #define RT_CHECK_COMB_TCL(_interp, _p)	BU_CKMAG_TCL(interp, _p, RT_COMB_MAGIC, "rt_comb_internal" )
 #define RT_CK_COMB_TCL(_interp, _p)	RT_CHECK_COMB_TCL(_interp, _p)
+
 
 /**
  * R T _ B I N U N I F _ I N T E R N A L
@@ -918,6 +940,22 @@ struct rt_binunif_internal {
 #define RT_CK_BINUNIF(_p)		RT_CHECK_BINUNIF(_p)
 #define RT_CHECK_BINUNIF_TCL(_interp, _p)	BU_CKMAG_TCL(interp, _p, RT_BINUNIF_MAGIC, "rt_binunif_internal" )
 #define RT_CK_BINUNIF_TCL(_interp, _p)	RT_CHECK_BINUNIF_TCL(_interp, _p)
+
+
+/**
+ * P C _ C O N S T R A I N T
+ *
+ * In-memory format for database "constraint" record
+ */
+struct rt_constraint_internal {
+    unsigned long magic;
+    int id;
+    int type;
+};
+
+#define RT_CHECK_CONSTRAINT(_p)		BU_CKMAG( _p, PC_CONSTRAINT_MAGIC, "pc_constraint_internal" )
+#define RT_CK_CONSTRAINT(_p)		PC_CHECK_CONSTRAINT(_p)
+
 
 /**
  * D B _ T R E E _ S T A T E
@@ -1104,18 +1142,10 @@ struct rt_wdb  {
     struct bu_list	l;
     int			type;
     struct db_i	*	dbip;
-    struct bu_vls	wdb_name;	/**< @brief  database object name */
     struct db_tree_state	wdb_initial_tree_state;
     struct rt_tess_tol	wdb_ttol;
     struct bn_tol	wdb_tol;
     struct resource*	wdb_resp;
-
-    /* for catching log messages */
-    struct bu_vls	wdb_log;
-
-    void		*wdb_result;
-    struct bu_vls	wdb_result_str;
-    unsigned int	wdb_result_flags;
 
     /* variables for name prefixing */
     struct bu_vls	wdb_prestr;
@@ -1127,8 +1157,12 @@ struct rt_wdb  {
     int			wdb_air_default;
     int			wdb_mat_default;/**< @brief  GIFT material code */
     int			wdb_los_default;/**< @brief  Line-of-sight estimate */
+
+    /* These members are marked for removal */
+    struct bu_vls	wdb_name;	/**< @brief  database object name */
     struct bu_observer	wdb_observers;
     Tcl_Interp *	wdb_interp;
+
 };
 
 #define RT_CHECK_WDB(_p)		BU_CKMAG(_p, RT_WDB_MAGIC, "rt_wdb")
@@ -1896,27 +1930,18 @@ struct rt_functab {
     const struct bu_structparse *ft_parsetab;	/**< @brief  rt_xxx_parse */
     size_t ft_internal_size;	/**< @brief  sizeof(struct rt_xxx_internal) */
     unsigned long ft_internal_magic;	/**< @brief  RT_XXX_INTERNAL_MAGIC */
-#if defined(TCL_OK)
-    int	(*ft_tclget) BU_ARGS((Tcl_Interp *,
-			      const struct rt_db_internal *, const char *item));
-    int	(*ft_tcladjust) BU_ARGS((Tcl_Interp *,
-				 struct rt_db_internal *,
-				 int /*argc*/, char ** /*argv*/,
-				 struct resource * /*resp*/));
-    int	(*ft_tclform) BU_ARGS((const struct rt_functab *,
-			       Tcl_Interp *));
-#else
-    int	(*ft_tclget) BU_ARGS((genptr_t /*interp*/,
-			      const struct rt_db_internal *, const char *item));
-    int	(*ft_tcladjust) BU_ARGS((genptr_t /*interp*/,
-				 struct rt_db_internal *,
-				 int /*argc*/, char ** /*argv*/,
-				 struct resource * /*resp*/));
-    int	(*ft_tclform) BU_ARGS((const struct rt_functab *,
-			       genptr_t /*interp*/));
-#endif
+    int	(*ft_get) BU_ARGS((struct bu_vls *,
+			   const struct rt_db_internal *, const char *item));
+    int	(*ft_adjust) BU_ARGS((struct bu_vls *,
+			      struct rt_db_internal *,
+			      int /*argc*/, char ** /*argv*/,
+			      struct resource * /*resp*/));
+    int	(*ft_form) BU_ARGS((struct bu_vls *,
+			    const struct rt_functab *));
+
     void (*ft_make) BU_ARGS((const struct rt_functab *,
 			     struct rt_db_internal *, double /*diameter*/));
+    int (*ft_params) BU_ARGS((struct pc_pc_set *,const struct rt_db_internal */*ip*/));
 };
 
 RT_EXPORT extern const struct rt_functab rt_functab[];
@@ -1979,7 +2004,7 @@ struct rt_shootray_status {
 
 /*********************************************************************************
  *	The following section is an exact copy of what was previously "nmg_rt.h" *
- *      (with minor changes to GET_HITMISS and NMG_FREE_HITLIST                  *
+ *      (with minor changes to NMG_GET_HITMISS and NMG_FREE_HITLIST              *
  *	moved here to use rt_g.rtg_nmgfree freelist for hitmiss structs.         *
  ******************************************************************************* */
 
@@ -2147,7 +2172,7 @@ struct ray_data {
 #define NMG_CK_RD(_rd) NMG_CKMAG(_rd, NMG_RAY_DATA_MAGIC, "ray data");
 
 
-#define GET_HITMISS(_p, _ap) { \
+#define NMG_GET_HITMISS(_p, _ap) { \
 	(_p) = BU_LIST_FIRST( hitmiss, &((_ap)->a_resource->re_nmgfree) ); \
 	if ( BU_LIST_IS_HEAD( (_p), &((_ap)->a_resource->re_nmgfree ) ) ) \
 		(_p) = (struct hitmiss *)bu_calloc(1, sizeof( struct hitmiss ), "hitmiss "BU_FLSTR ); \
@@ -2349,12 +2374,14 @@ RT_EXPORT BU_EXTERN(int rt_boolfinal,
 
 RT_EXPORT BU_EXTERN(void rt_grow_boolstack,
 		    (struct resource *res));
-/* Approx Floating compare */
+
+/* DEPRECATED: Approx Floating compare (use NEAR_ZERO) */
 RT_EXPORT BU_EXTERN(int rt_fdiff,
 		    (double a, double b));
-/* Relative Difference */
+/* DEPRECATED: Relative Difference (use NEAR_ZERO) */
 RT_EXPORT BU_EXTERN(double rt_reldiff,
 		    (double a, double b));
+
 /* Print a soltab */
 RT_EXPORT BU_EXTERN(void rt_pr_soltab,
 		    (const struct soltab *stp));
@@ -2499,8 +2526,20 @@ RT_EXPORT BU_EXTERN(int wdb_export,
 		     genptr_t gp,
 		     int id,
 		     double local2mm));
+RT_EXPORT BU_EXTERN(void wdb_init,
+		    (struct rt_wdb *wdbp,
+		     struct db_i   *dbip,
+		     int           mode));
+RT_EXPORT BU_EXTERN(int wdb_fflush,
+		    (struct rt_wdb *wdbp));
 RT_EXPORT BU_EXTERN(void wdb_close,
 		    (struct rt_wdb *wdbp));
+RT_EXPORT BU_EXTERN(int wdb_import_from_path,
+		    (struct bu_vls *log,
+		     struct rt_db_internal *ip,
+		     const char *path,
+		     struct rt_wdb *wdb));
+
 
 /* db_anim.c */
 RT_EXPORT BU_EXTERN(struct animate *db_parse_1anim,
@@ -3264,13 +3303,13 @@ RT_EXPORT BU_EXTERN(int rt_arb_3face_intersect,
 		     int			loc));
 #ifdef __RTGEOM_H__
 RT_EXPORT BU_EXTERN(int rt_arb_calc_planes,
-		    (Tcl_Interp			*interp,
+		    (struct bu_vls		*error_msg_ret,
 		     struct rt_arb_internal	*arb,
 		     int			type,
 		     plane_t			planes[6],
 		     const struct bn_tol	*tol));
 RT_EXPORT BU_EXTERN(int rt_arb_move_edge,
-		    (Tcl_Interp		*interp,
+		    (struct bu_vls		*error_msg_ret,
 		     struct rt_arb_internal	*arb,
 		     vect_t			thru,
 		     int			bp1,
@@ -3281,7 +3320,7 @@ RT_EXPORT BU_EXTERN(int rt_arb_move_edge,
 		     plane_t			planes[6],
 		     const struct bn_tol	*tol));
 RT_EXPORT BU_EXTERN(int rt_arb_edit,
-		    (Tcl_Interp			*interp,
+		    (struct bu_vls		*error_msg_ret,
 		     struct rt_arb_internal	*arb,
 		     int			arb_type,
 		     int			edit_type,
@@ -3320,20 +3359,25 @@ RT_EXPORT BU_EXTERN(int rt_pipe_ck,
 struct rt_metaball_internal;
 RT_EXPORT BU_EXTERN(void rt_vls_metaballpt,
 		    (struct bu_vls *vp,
-		     int pt_no,
+		     const int pt_no,
 		     const struct rt_db_internal *ip,
-		     double mm2local));
+		     const double mm2local));
 RT_EXPORT BU_EXTERN(void rt_metaballpt_print,
 		    ());		/* needs wdb_metaballpt for arg */
 RT_EXPORT BU_EXTERN(int rt_metaball_ck,
 		    (const struct bu_list *headp));
 RT_EXPORT BU_EXTERN(fastf_t rt_metaball_point_value,
-		    (point_t *p,
-		     struct rt_metaball_internal *mb));
+		    (const point_t *p,
+		     const struct rt_metaball_internal *mb));
 RT_EXPORT BU_EXTERN(int rt_metaball_lookup_type_id,
 		    (const char *name));
 RT_EXPORT BU_EXTERN(const char *rt_metaball_lookup_type_name,
 		    (const int id));
+RT_EXPORT BU_EXTERN(int rt_metaball_add_point,
+		    (struct rt_metaball_internal *,
+		     const point_t *loc,
+		     const fastf_t fldstr,
+		     const fastf_t goo));
 
 /* rpc.c */
 RT_EXPORT BU_EXTERN(int rt_mk_parabola,
@@ -3500,6 +3544,9 @@ RT_EXPORT BU_EXTERN(void rt_init_resource,
 		     int		cpu_num,
 		     struct rt_i	*rtip));
 RT_EXPORT BU_EXTERN(void rt_clean_resource,
+		    (struct rt_i *rtip,
+		     struct resource *resp));
+RT_EXPORT BU_EXTERN(void rt_clean_resource_complete,
 		    (struct rt_i *rtip,
 		     struct resource *resp));
 RT_EXPORT BU_EXTERN(int rt_unprep,

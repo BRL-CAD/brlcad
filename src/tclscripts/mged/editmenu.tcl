@@ -51,6 +51,10 @@ proc build_edit_menu_all { type } {
     global mouse_behavior
     global ::tk::Priv
 
+    if ![info exists mged_players] {
+	return
+    }
+
     set win [winset]
     set id [get_player_id_dm $win]
 
@@ -88,6 +92,10 @@ proc ray_build_edit_menu { type x y } {
     global mged_gui
     global mouse_behavior
     global ::tk::Priv
+
+    if ![info exists mged_players] {
+	return
+    }
 
     set win [winset]
     set id [get_player_id_dm $win]

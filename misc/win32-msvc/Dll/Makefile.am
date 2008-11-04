@@ -1,6 +1,7 @@
 # $Id$
 
 EXTRA_DIST = \
+	BrlcadCore.def \
 	BrlcadCore.rc \
         CMakeLists.txt \
 	brlcad.def \

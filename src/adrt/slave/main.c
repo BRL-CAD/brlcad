@@ -51,16 +51,19 @@ static struct option longopts[] =
 static char shortopts[] = "Xdhp:t:v";
 
 
-static void finish(int sig) {
+static void finish(int sig)
+{
     bu_exit(EXIT_FAILURE, "Collected signal %d, aborting!\n", sig);
 }
 
-static void info(int sig) {
+static void info(int sig)
+{
 	/* something to display info about clients, threads and port. */
     return;
 }
 
-static void help() {
+static void help()
+{
     printf("%s\n", ADRT_VER_DETAIL);
     printf("%s", "usage: adrt_slave [options] [host]\n\
   -v\t\tdisplay version\n\
@@ -70,7 +73,8 @@ static void help() {
 }
 
 
-int main(int argc, char **argv) {
+int main(int argc, char **argv)
+{
     int		port = 0, c = 0, threads = 0;
     char		host[64], temp[64];
 
@@ -97,8 +101,7 @@ int main(int argc, char **argv) {
 #else
 	    getopt(argc, argv, shortopts)
 #endif
-	       )!= -1)
-    {
+	       )!= -1) {
 	switch (c) {
 	    case 'h':
 		help();

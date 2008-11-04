@@ -22,6 +22,7 @@
  */
 
 #include "common.h"
+#include "bio.h"
 
 #define PLOTBOUND       1000.0  /* Max magnification in Rot matrix */
 #include <stdio.h>

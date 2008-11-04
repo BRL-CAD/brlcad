@@ -144,11 +144,11 @@ db5_realloc( struct db_i *dbip, struct directory *dp, struct bu_external *ep )
 
     BU_ASSERT_LONG( ep->ext_nbytes&7, ==, 0 );
 
-    if ( dp->d_addr != -1L && ep->ext_nbytes == dp->d_len )  {
+    if ( dp->d_addr != RT_DIR_PHONY_ADDR && ep->ext_nbytes == dp->d_len )  {
 	if (RT_G_DEBUG&DEBUG_DB) bu_log("db5_realloc(%s) current allocation is exactly right.\n", dp->d_namep);
 	return 0;
     }
-    if ( dp->d_addr == -1L )  BU_ASSERT_LONG( dp->d_len, ==, 0 );
+    if ( dp->d_addr == RT_DIR_PHONY_ADDR )  BU_ASSERT_LONG( dp->d_len, ==, 0 );
 
     baseaddr = dp->d_addr;
     baselen = dp->d_len;
@@ -194,12 +194,12 @@ db5_realloc( struct db_i *dbip, struct directory *dp, struct bu_external *ep )
     /* The object is getting larger... */
 
     /* Start by zapping existing database object into a free object */
-    if ( dp->d_addr != -1L )  {
+    if ( dp->d_addr != RT_DIR_PHONY_ADDR )  {
 	if (RT_G_DEBUG&DEBUG_DB) bu_log("db5_realloc(%s) releasing storage at x%x, len=%d\n", dp->d_namep, dp->d_addr, dp->d_len);
 
 	rt_memfree( &(dbip->dbi_freep), dp->d_len, dp->d_addr );
 	if ( db5_write_free( dbip, dp, dp->d_len ) < 0 )  return -1;
-	baseaddr = dp->d_addr = -1L;	/* sanity */
+	baseaddr = dp->d_addr = RT_DIR_PHONY_ADDR;	/* sanity */
     }
 
     /*

@@ -32,14 +32,6 @@
  *   2) call db_diradd() and mark the directory entry as in-memory via
  *   a call to db_inmem() providing an external representation.
  *
- * Functions -
- *      db_open_inmem	open a database marking it as in-memory-only
- *      db_create_inmem	create an in-memory-only database instance
- *	db_inmem	convert existing dir entry to in-memory-only
- *
- *  Authors -
- *      Christopher Sean Morrison
- *
  */
 
 #include "common.h"
@@ -66,14 +58,20 @@ db_open_inmem(void)
     register struct db_i *dbip = DBI_NULL;
     register int i;
 
-    BU_GETSTRUCT( dbip, db_i );
+    BU_GETSTRUCT(dbip, db_i);
     dbip->dbi_eof = -1L;
     dbip->dbi_fp = NULL;
     dbip->dbi_mf = NULL;
-    dbip->dbi_read_only = 1;
+
+   /* XXX it "should" be safe and recommended to set this to 1 as it
+    * merely toggles whether the data can be written to _disk_.  the
+    * various uses, however, haven't been exhaustively checked so
+    * leave it off for now.
+    */
+    dbip->dbi_read_only = 0;
 
     /* Initialize fields */
-    for ( i=0; i<RT_DBNHASH; i++ ) {
+    for (i=0; i<RT_DBNHASH; i++) {
 	dbip->dbi_Head[i] = DIR_NULL;
     }
 
@@ -89,7 +87,7 @@ db_open_inmem(void)
      * see db_fwrite_ident();
      */
 
-    bu_ptbl_init( &dbip->dbi_clients, 128, "dbi_clients[]" );
+    bu_ptbl_init(&dbip->dbi_clients, 128, "dbi_clients[]");
     dbip->dbi_magic = DBI_MAGIC;		/* Now it's valid */
 
     /* mark the wdb structure as in-memory. */
@@ -120,44 +118,36 @@ db_create_inmem(void) {
     RT_CK_DBI(dbip);
     RT_CK_WDB(dbip->dbi_wdbp);
 
-#if 0
-    /* create the header record? */
-    db5_export_object3( &out, DB5HDR_HFLAGS_DLI_HEADER_OBJECT,
-			NULL, 0, NULL, NULL,
-			DB5_MAJORTYPE_RESERVED, 0,
-			DB5_ZZZ_UNCOMPRESSED, DB5_ZZZ_UNCOMPRESSED );
-#endif
-
     /* Second, create the attribute-only _GLOBAL object */
-    bu_vls_init( &units );
-    bu_vls_printf( &units, "%.25e", dbip->dbi_local2base );
+    bu_vls_init(&units);
+    bu_vls_printf(&units, "%.25e", dbip->dbi_local2base);
 
-    bu_avs_init( &avs, 4, "db_create_inmem" );
-    bu_avs_add( &avs, "title", dbip->dbi_title );
-    bu_avs_add( &avs, "units", bu_vls_addr(&units) );
+    bu_avs_init(&avs, 4, "db_create_inmem");
+    bu_avs_add(&avs, "title", dbip->dbi_title);
+    bu_avs_add(&avs, "units", bu_vls_addr(&units));
 
-    db5_export_attributes( &attr, &avs );
+    db5_export_attributes(&attr, &avs);
     db5_export_object3(&obj, DB5HDR_HFLAGS_DLI_APPLICATION_DATA_OBJECT,
 		       DB5_GLOBAL_OBJECT_NAME, DB5HDR_HFLAGS_HIDDEN_OBJECT, &attr, NULL,
 		       DB5_MAJORTYPE_ATTRIBUTE_ONLY, 0,
-		       DB5_ZZZ_UNCOMPRESSED, DB5_ZZZ_UNCOMPRESSED );
+		       DB5_ZZZ_UNCOMPRESSED, DB5_ZZZ_UNCOMPRESSED);
     flags = DIR_HIDDEN | DIR_NON_GEOM | RT_DIR_INMEM;
     wdb_export_external(dbip->dbi_wdbp, &obj, DB5_GLOBAL_OBJECT_NAME, flags, 0);
 
-    bu_free_external( &obj );
-    bu_free_external( &attr );
-    bu_avs_free( &avs );
-    bu_vls_free( &units );
+    bu_free_external(&obj);
+    bu_free_external(&attr);
+    bu_avs_free(&avs);
+    bu_vls_free(&units);
 
     return dbip;
 }
 
 
 /**
- *			D B _ I N M E M
+ * d b _ i n m e m
  *
- *  Transmogrify an existing directory entry to be an in-memory-only
- *  one, stealing the external representation from 'ext'.
+ * Transmogrify an existing directory entry to be an in-memory-only
+ * one, stealing the external representation from 'ext'.
  */
 void
 db_inmem(struct directory *dp, struct bu_external *ext, int flags, struct db_i *dbip)
@@ -165,11 +155,12 @@ db_inmem(struct directory *dp, struct bu_external *ext, int flags, struct db_i *
     BU_CK_EXTERNAL(ext);
     RT_CK_DIR(dp);
 
-    if ( dp->d_flags & RT_DIR_INMEM )
-	bu_free( dp->d_un.ptr, "db_inmem() ext ptr" );
+    if (dp->d_flags & RT_DIR_INMEM)
+	bu_free(dp->d_un.ptr, "db_inmem() ext ptr");
     dp->d_un.ptr = ext->ext_buf;
-    if ( dbip->dbi_version < 5 ) {
-	dp->d_len = ext->ext_nbytes / 128;	/* DB_MINREC granule size */
+    if (dbip->dbi_version < 5) {
+	/* DB_MINREC granule size */
+	dp->d_len = ext->ext_nbytes / 128;
     } else {
 	dp->d_len = ext->ext_nbytes;
     }
@@ -181,6 +172,7 @@ db_inmem(struct directory *dp, struct bu_external *ext, int flags, struct db_i *
 }
 
 /** @} */
+
 /*
  * Local Variables:
  * mode: C

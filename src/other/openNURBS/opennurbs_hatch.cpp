@@ -1,4 +1,22 @@
+/* $Header$ */
+/* $NoKeywords: $ */
+/*
+//
+// Copyright (c) 1993-2007 Robert McNeel & Associates. All rights reserved.
+// Rhinoceros is a registered trademark of Robert McNeel & Assoicates.
+//
+// THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY.
+// ALL IMPLIED WARRANTIES OF FITNESS FOR ANY PARTICULAR PURPOSE AND OF
+// MERCHANTABILITY ARE HEREBY DISCLAIMED.
+//				
+// For complete openNURBS copyright information see <http://www.opennurbs.org>.
+//
+////////////////////////////////////////////////////////////////
+*/
+
 #include "opennurbs.h"
+
+/////////////////////////////////////////////////////////////////
 //  class ON_HatchLine
 /////////////////////////////////////////////////////////////////
 
@@ -7,20 +25,20 @@ ON_HatchLine::ON_HatchLine()
 {
 }
 
-ON_HatchLine::ON_HatchLine(double angle,
-                           const ON_2dPoint& base,
-                           const ON_2dVector& offset,
-                           const ON_SimpleArray<double> dashes)
+ON_HatchLine::ON_HatchLine(double angle, 
+			   const ON_2dPoint& base, 
+			   const ON_2dVector& offset,
+			   const ON_SimpleArray<double> dashes)
 : m_angle( angle), m_base( base), m_offset( offset), m_dashes( dashes)
 {
 }
 
 bool ON_HatchLine::operator==(const ON_HatchLine& src) const
 {
-  return( m_angle == src.m_angle &&
-          m_base == src.m_base &&
-          m_offset == src.m_offset &&
-          m_dashes == src.m_dashes);
+  return( m_angle == src.m_angle && 
+	  m_base == src.m_base &&
+	  m_offset == src.m_offset && 
+	  m_dashes == src.m_dashes);
 }
 
 bool ON_HatchLine::operator!=(const ON_HatchLine& src) const
@@ -70,7 +88,7 @@ BOOL ON_HatchLine::IsValid( ON_TextLog* text_log) const
 
 void ON_HatchLine::Dump( ON_TextLog& dump) const
 {
-  dump.Print( "ON_HatchLine: angle = %lf radians ( %lf degrees) ",
+  dump.Print( "ON_HatchLine: angle = %lf radians ( %lf degrees) ", 
     Angle(), ON_RADIANS_TO_DEGREES * Angle());
   dump.Print( " base = ");
   dump.Print( m_base);
@@ -108,7 +126,7 @@ BOOL ON_HatchLine::Read( ON_BinaryArchive& ar)
   int major_version = 0;
   int minor_version = 0;
   BOOL rc = ar.Read3dmChunkVersion( &major_version, &minor_version);
-  if ( major_version == 1 )
+  if ( major_version == 1 ) 
   {
     if ( rc) rc = ar.ReadDouble( &m_angle);
     if ( rc) rc = ar.ReadPoint( m_base);
@@ -179,10 +197,10 @@ void ON_HatchLine::SetPattern( const ON_SimpleArray<double>& dashes)
   m_dashes = dashes;
 }
 
-void ON_HatchLine::GetLineData( double& angle,
-                                ON_2dPoint& base,
-                                ON_2dVector& offset,
-                                ON_SimpleArray<double>& dashes) const
+void ON_HatchLine::GetLineData( double& angle, 
+				ON_2dPoint& base, 
+				ON_2dVector& offset, 
+				ON_SimpleArray<double>& dashes) const
 {
   angle = m_angle;
   base = m_base;
@@ -230,16 +248,16 @@ BOOL ON_HatchPattern::IsValid( ON_TextLog* text_log) const
     if( count < 1)
     {
       if( text_log)
-        text_log->Print( "Line type patetern with no lines.\n");
+	text_log->Print( "Line type patetern with no lines.\n");
       return false;
     }
     for( int i = 0; i < count; i++)
     {
       if( !m_lines[i].IsValid())
       {
-        if( text_log)
-          text_log->Print( "Line[%d] is not valid.\n", i);
-        return false;
+	if( text_log)
+	  text_log->Print( "Line[%d] is not valid.\n", i);
+	return false;
       }
     }
     return true;
@@ -303,10 +321,10 @@ BOOL ON_HatchPattern::Write( ON_BinaryArchive& ar) const
     {
       int i, count = m_lines.Count();
       if ( count < 0 )
-        count = 0;
+	count = 0;
       rc = ar.WriteInt( count );
       for( i = 0; i < count && rc; i++)
-        rc = m_lines[i].Write( ar);
+	rc = m_lines[i].Write( ar);
     }
   }
   // version 1.2 field
@@ -328,11 +346,11 @@ BOOL ON_HatchPattern::Read( ON_BinaryArchive& ar)
   int major_version = 0;
   int minor_version = 0;
   BOOL rc = ar.Read3dmChunkVersion( &major_version, &minor_version);
-  if ( major_version == 1 )
+  if ( major_version == 1 ) 
   {
     if( rc) rc = ar.ReadInt( &m_hatchpattern_index);
     if( rc) rc = ar.ReadInt( &i);
-    if( rc)
+    if( rc) 
     {
       switch( i)
       {
@@ -348,19 +366,19 @@ BOOL ON_HatchPattern::Read( ON_BinaryArchive& ar)
     {
       if( m_type == ftLines)
       {
-        m_lines.Empty();
-        int count = 0;
-        rc = ar.ReadInt( &count);
-        if( rc && count > 0 )
-        {
-          m_lines.SetCapacity( count);
-          int i;
-          for( i = 0; rc && i < count; i++)
-          {
-            ON_HatchLine& line = m_lines.AppendNew();
-            rc = line.Read( ar);
-          }
-        }
+	m_lines.Empty();
+	int count = 0;
+	rc = ar.ReadInt( &count);
+	if( rc && count > 0 ) 
+	{
+	  m_lines.SetCapacity( count);
+	  int i;
+	  for( i = 0; rc && i < count; i++)
+	  {
+	    ON_HatchLine& line = m_lines.AppendNew();
+	    rc = line.Read( ar);
+	  }
+	}
       }
     }
     if ( minor_version >= 2 )
@@ -546,7 +564,7 @@ ON_HatchLoop::ON_HatchLoop( ON_Curve* pCurve2d, eLoopType type)
 
 ON_HatchLoop::ON_HatchLoop( const ON_HatchLoop& src)
 : m_type( src.m_type), m_p2dCurve( NULL)
-{
+{ 
   if( src.m_p2dCurve)
     m_p2dCurve = src.m_p2dCurve->DuplicateCurve();
 }
@@ -583,7 +601,7 @@ BOOL ON_HatchLoop::IsValid( ON_TextLog* text_log) const
     if( !rc)
     {
       if( text_log)
-        text_log->Print( "Loop curve is not valid\n");
+	text_log->Print( "Loop curve is not valid\n");
     }
   }
 
@@ -595,7 +613,7 @@ BOOL ON_HatchLoop::IsValid( ON_TextLog* text_log) const
     if( !rc)
     {
       if( text_log)
-        text_log->Print( "2d loop curve has non-zero z coordinates\n");
+	text_log->Print( "2d loop curve has non-zero z coordinates\n");
     }
   }
 
@@ -612,10 +630,15 @@ BOOL ON_HatchLoop::IsValid( ON_TextLog* text_log) const
 void ON_HatchLoop::Dump( ON_TextLog& dump) const
 {
   if( m_type == ltOuter)
-    dump.Print( "Loop type: Outer\n");
+    dump.Print( "Outer hatch loop\n");
   if( m_type == ltInner)
-    dump.Print( "Loop type: Inner\n");
-  dump.Print( "2d curve: %p\n", m_p2dCurve);
+    dump.Print( "Inner hatch loop\n");
+
+  //if( m_type == ltOuter)
+  //  dump.Print( "Loop type: Outer\n");
+  //if( m_type == ltInner)
+  //  dump.Print( "Loop type: Inner\n");
+  //dump.Print( "2d curve: %p\n", m_p2dCurve);
 }
 
 BOOL ON_HatchLoop::Write( ON_BinaryArchive& ar) const
@@ -634,11 +657,11 @@ BOOL ON_HatchLoop::Read( ON_BinaryArchive& ar)
   int major_version = 0;
   int minor_version = 0;
   BOOL rc = ar.Read3dmChunkVersion( &major_version, &minor_version);
-  if ( major_version == 1 )
+  if ( major_version == 1 ) 
   {
     int type;
     if( rc) rc = ar.ReadInt( &type);
-    if( rc)
+    if( rc) 
     {
       switch( type)
       {
@@ -653,12 +676,12 @@ BOOL ON_HatchLoop::Read( ON_BinaryArchive& ar)
       rc = ar.ReadObject( &pObj);
       if( pObj)
       {
-        m_p2dCurve = ON_Curve::Cast( pObj);
-        if( !m_p2dCurve) // read something, but it wasn't right
-        {
-          rc = false;
-          delete pObj;
-        }
+	m_p2dCurve = ON_Curve::Cast( pObj);
+	if( !m_p2dCurve) // read something, but it wasn't right
+	{
+	  rc = false;
+	  delete pObj;
+	}
       }
     }
   }
@@ -705,7 +728,7 @@ ON_Hatch::ON_Hatch()
 
 ON_Hatch::ON_Hatch( const ON_Hatch& src)
 :  ON_Geometry(src),
-   m_plane( src.m_plane),
+   m_plane( src.m_plane), 
    m_pattern_scale( src.m_pattern_scale),
    m_pattern_rotation( src.m_pattern_rotation),
    m_pattern_index( src.m_pattern_index)
@@ -730,8 +753,8 @@ ON_Hatch& ON_Hatch::operator=( const ON_Hatch& src)
       ON_HatchLoop* pL = m_loops[i];
       if ( pL )
       {
-        m_loops[i] = 0;
-        delete pL;
+	m_loops[i] = 0;
+	delete pL;
       }
     }
     m_loops.SetCount(0);
@@ -789,7 +812,7 @@ BOOL ON_Hatch::IsValid( ON_TextLog* text_log) const
     if( !rc)
     {
       if( text_log)
-        text_log->Print( "Loop[%d] is not valid\n", i);
+	text_log->Print( "Loop[%d] is not valid\n", i);
       return false;
     }
   }
@@ -834,7 +857,7 @@ BOOL ON_Hatch::Read( ON_BinaryArchive& ar)
   int major_version = 0;
   int minor_version = 0;
   BOOL rc = ar.Read3dmChunkVersion( &major_version, &minor_version);
-  if ( major_version == 1 )
+  if ( major_version == 1 ) 
   {
     if( rc) rc = ar.ReadPlane( m_plane);
     if( rc) rc = ar.ReadDouble( &m_pattern_scale);
@@ -847,16 +870,16 @@ BOOL ON_Hatch::Read( ON_BinaryArchive& ar)
       rc = ar.ReadInt( &count);
       if( rc && count > 0)
       {
-        m_loops.SetCapacity( count );
-        for( i = 0; rc && i < count; i++)
-        {
-          ON_HatchLoop*& pLoop = m_loops.AppendNew();
-          pLoop = new ON_HatchLoop;
-          if( pLoop)
-            rc = pLoop->Read( ar);
-          else
-            rc = false;
-        }
+	m_loops.SetCapacity( count );
+	for( i = 0; rc && i < count; i++)
+	{
+	  ON_HatchLoop*& pLoop = m_loops.AppendNew();
+	  pLoop = new ON_HatchLoop;
+	  if( pLoop)
+	    rc = pLoop->Read( ar);
+	  else
+	    rc = false;
+	}
       }
     }
   }
@@ -873,7 +896,7 @@ int ON_Hatch::Dimension() const
   return 3;
 }
 
-// Copy the 2d curve, make it 3d, and transform it
+// Copy the 2d curve, make it 3d, and transform it 
 // to the 3d plane position
 ON_Curve* ON_Hatch::LoopCurve3d( int index) const
 {
@@ -887,12 +910,12 @@ ON_Curve* ON_Hatch::LoopCurve3d( int index) const
       pC = m_loops[index]->Curve()->DuplicateCurve();
       if( pC)
       {
-        pC->ChangeDimension( 3);
+	pC->ChangeDimension( 3);
 
-        ON_Xform xf;
-        xf.Rotation( ON_xy_plane, m_plane);
+	ON_Xform xf;
+	xf.Rotation( ON_xy_plane, m_plane);
 
-        pC->Transform( xf);
+	pC->Transform( xf);
       }
     }
   }
@@ -956,7 +979,7 @@ BOOL ON_Hatch::Transform( const ON_Xform& xform)
     // kill translation and z-scaling
     T[0][2] = T[0][3] = 0.0;
     T[1][2] = T[1][3] = 0.0;
-    T[2][0] = T[2][1] = 0.0; T[2][2] = 1.0; T[2][3] = 0.0;
+    T[2][0] = T[2][1] = 0.0; T[2][2] = 1.0; T[2][3] = 0.0; 
     T[3][0] = T[3][1] = T[3][2] = 0.0; T[3][3] = 1.0;
 
     for( int i = 0; i < LoopCount(); i++)
@@ -968,10 +991,10 @@ BOOL ON_Hatch::Transform( const ON_Xform& xform)
 }
 
 bool ON_Hatch::Create( const ON_Plane& plane,
-                       const ON_SimpleArray<const ON_Curve*> loops,
-                       int pattern_index,
-                       double pattern_rotation,
-                       double pattern_scale)
+		       const ON_SimpleArray<const ON_Curve*> loops, 
+		       int pattern_index, 
+		       double pattern_rotation, 
+		       double pattern_scale)
 {
   if( loops.Count() < 1)
     return false;
@@ -1051,7 +1074,7 @@ bool ON_Hatch::RemoveLoop( int index)
     m_loops.Remove(index);
     return true;
   }
-
+  
   return false;
 }
 
@@ -1059,7 +1082,7 @@ const ON_HatchLoop* ON_Hatch::Loop( int index) const
 {
   if( index >= 0 && index < m_loops.Count())
     return m_loops[index];
-
+  
   return NULL;
 }
 

@@ -2,13 +2,13 @@
 /* $NoKeywords: $ */
 /*
 //
-// Copyright (c) 1993-2001 Robert McNeel & Associates. All rights reserved.
+// Copyright (c) 1993-2007 Robert McNeel & Associates. All rights reserved.
 // Rhinoceros is a registered trademark of Robert McNeel & Assoicates.
 //
 // THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY.
 // ALL IMPLIED WARRANTIES OF FITNESS FOR ANY PARTICULAR PURPOSE AND OF
 // MERCHANTABILITY ARE HEREBY DISCLAIMED.
-//
+//				
 // For complete openNURBS copyright information see <http://www.opennurbs.org>.
 //
 ////////////////////////////////////////////////////////////////
@@ -89,7 +89,7 @@ public:
   Parameteters:
     major_angle_radians - [in]
   Returns:
-    A circle with radius = minor_radis,
+    A circle with radius = minor_radis, 
     center = major_circle.PointAt(major_angle_radians), and
     starting point PointAt( major_angle_radians, 0.0 ).
   See Also:
@@ -107,7 +107,7 @@ public:
   Parameteters:
     major_angle_degrees - [in]
   Returns:
-    A circle with radius = minor_radis,
+    A circle with radius = minor_radis, 
     center = major_circle.PointAt(major_angle_degrees*ON_PI/180.0), and
     starting point PointAt( major_angle_degrees*ON_PI/180.0, 0.0 ).
   See Also:
@@ -124,56 +124,56 @@ public:
   double MinorRadius() const;
 
   ON_3dPoint PointAt(
-    double major_angle_radians,
+    double major_angle_radians, 
     double minor_angle_radians
     ) const;
 
   ON_3dVector NormalAt(
-    double major_angle_radians,
+    double major_angle_radians, 
     double minor_angle_radians
     ) const;
 
   // returns parameters of point on torus that is closest to test_point.
-  BOOL ClosestPointTo(
-         ON_3dPoint test_point,
-         double* major_angle_radians,
-         double* minor_angle_radians
-         ) const;
+  BOOL ClosestPointTo( 
+	 ON_3dPoint test_point, 
+	 double* major_angle_radians, 
+	 double* minor_angle_radians
+	 ) const;
 
   // returns point on torus that is closest to test_point
-  ON_3dPoint ClosestPointTo(
-         ON_3dPoint test_point
-         ) const;
+  ON_3dPoint ClosestPointTo( 
+	 ON_3dPoint test_point
+	 ) const;
 
   // rotate torus about its origin
   BOOL Rotate(
-        double sin_angle,               // sin(angle)
-        double cos_angle,               // cos(angle)
-        const ON_3dVector& axis_of_rotation // axis of rotation
-        );
+	double sin_angle,               // sin(angle)
+	double cos_angle,               // cos(angle)
+	const ON_3dVector& axis_of_rotation // axis of rotation
+	);
 
   BOOL Rotate(
-        double angle_radians,               // angle in radians
-        const ON_3dVector& axis_of_rotation // axis of rotation
-        );
+	double angle_radians,               // angle in radians
+	const ON_3dVector& axis_of_rotation // axis of rotation
+	);
 
   // rotate torus about a point and axis
   BOOL Rotate(
-        double sin_angle,               // sin(angle)
-        double cos_angle,               // cos(angle)
-        const ON_3dVector& axis_of_rotation, // axis of rotation
-        const ON_3dPoint& center_of_rotation  // center of rotation
-        );
+	double sin_angle,               // sin(angle)
+	double cos_angle,               // cos(angle)
+	const ON_3dVector& axis_of_rotation, // axis of rotation
+	const ON_3dPoint& center_of_rotation  // center of rotation
+	);
 
   BOOL Rotate(
-        double angle_radians,               // angle in radians
-        const ON_3dVector& axis_of_rotation, // axis of rotation
-        const ON_3dPoint& center_of_rotation  // center of rotation
-        );
+	double angle_radians,               // angle in radians
+	const ON_3dVector& axis_of_rotation, // axis of rotation
+	const ON_3dPoint& center_of_rotation  // center of rotation
+	);
 
   BOOL Translate(
-        const ON_3dVector&
-        );
+	const ON_3dVector&
+	);
 
   BOOL Transform( const ON_Xform& );
 

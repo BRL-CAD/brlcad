@@ -197,7 +197,7 @@ if_hit(struct application *ap, struct partition *part_head, struct seg *finished
 
 	    if (bu_vls_strlen(vls) > 0) {
 		/* XXX only print attributes that actually were set */
-		bu_vls_printf(&attr_vls, "%s=%S ", a_tab.attrib[i], vls);
+		bu_vls_printf(&attr_vls, "%s=%V ", a_tab.attrib[i], vls);
 	    }
 	}
 

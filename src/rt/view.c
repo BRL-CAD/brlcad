@@ -54,6 +54,7 @@
 #include "./ext.h"
 #include "plot3.h"
 #include "photonmap.h"
+#include "scanline.h"
 
 const char title[] = "The BRL-CAD Raytracer RT";
 const char usage[] = "\
@@ -75,9 +76,9 @@ Options:\n\
  -r		Report overlaps\n\
  -R		Do not report overlaps\n\
  -l #		Set the light model\n\
+ -U #		Use air if # is greater than 0\n\
 ";
 
-int		use_air = 0;		/* Handling of air in librt */
 
 extern FBIO	*fbp;			/* Framebuffer handle */
 
@@ -104,7 +105,8 @@ extern int	srv_scanlen;		/* BUFMODE_RTSRV buffer length */
 extern char	*scanbuf;		/* scanline(s) buffer */
 #endif
 
-void		free_scanlines(void);
+void		        free_scanlines(int, struct scanline *);
+struct scanline*    alloc_scanlines(int);
 
 static int	buf_mode=0;
 #define BUFMODE_UNBUF	1		/* No output buffering */
@@ -114,10 +116,7 @@ static int	buf_mode=0;
 #define BUFMODE_FULLFLOAT 5		/* buffer entire frame as floats */
 #define BUFMODE_SCANLINE 6		/* Like _DYNAMIC, one scanline/cpu */
 
-static struct scanline {
-    int	sl_left;		/* # pixels left on this scanline */
-    char	*sl_buf;		/* ptr to buffer for scanline */
-} *scanline;
+static struct scanline* scanline;
 
 static short int	pwidth;			/* Width of each pixel (in bytes) */
 
@@ -538,7 +537,7 @@ view_end(struct application *ap)
 	}
     }
 
-    if ( scanline )  free_scanlines();
+    if ( scanline )  free_scanlines(height, scanline);
 }
 
 /*
@@ -1140,21 +1139,6 @@ int viewit(register struct application *ap,
 }
 
 void
-free_scanlines(void)
-{
-    register int	y;
-
-    for ( y=0; y<height; y++ )  {
-	if ( scanline[y].sl_buf )  {
-	    bu_free( scanline[y].sl_buf, "sl_buf scanline buffer" );
-	    scanline[y].sl_buf = (char *)0;
-	}
-    }
-    bu_free( (char *)scanline, "struct scanline[height]" );
-    scanline = (struct scanline *)0;
-}
-
-void
 kut_ft_norm( struct hit *hitp, struct soltab *stp, struct xray *ray )
 {
     VMOVE( hitp->hit_normal, kut_norm );
@@ -1181,7 +1165,6 @@ view_init(register struct application *ap, char *file, char *obj, int minus_o, i
     if( do_kut_plane ) {
 	struct rt_functab *functab;
 	struct directory *dp;
-	char *name;
 
 	kut_soltab = bu_calloc( 1, sizeof( struct soltab ), "kut_soltab" );
 	kut_soltab->l.magic = RT_SOLTAB_MAGIC;
@@ -1379,12 +1362,10 @@ view_2init(register struct application *ap, char *framename)
     /* Always allocate the scanline[] array
      * (unless we already have one in incremental mode)
      */
-    if ( (!incr_mode || !scanline) && !fullfloat_mode )
-    {
-	if ( scanline )  free_scanlines();
-	scanline = (struct scanline *)bu_calloc(
-	    height, sizeof(struct scanline),
-	    "struct scanline[height]" );
+    if ( (!incr_mode || !scanline) && !fullfloat_mode ) {
+        if (scanline)
+            free_scanlines(height, scanline);
+        scanline = alloc_scanlines(height);
     }
 
 #ifdef RTSRV
@@ -1644,6 +1625,8 @@ void application_init (void)
     view_parse[5].sp_offset = bu_byteoffset(overlay);
     view_parse[6].sp_offset = bu_byteoffset(overlay);
 }
+
+
 
 /*
  * Local Variables:

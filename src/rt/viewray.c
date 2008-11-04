@@ -40,12 +40,10 @@
 #include "vmath.h"
 #include "raytrace.h"
 
-/* private */
 #include "rtprivate.h"
 
-int		use_air = 1;		/* Handling of air in librt */
+#include "./ext.h"
 
-int		using_mlib = 0;		/* Material routines NOT used */
 
 /* Viewing module specific "set" variables */
 struct bu_structparse view_parse[] = {
@@ -63,7 +61,7 @@ Options:\n\
  -e Elev	Elevation in degrees	(conflicts with -M)\n\
  -M		Read model2view matrix on stdin (conflicts with -a, -e)\n\
  -o model.ray	Specify output file, ray(5V) format (default=stdout)\n\
- -U #		Set use_air boolean to #\n\
+ -U #		Set use_air boolean to # (default=1)\n\
  -x #		Set librt debug flags\n\
 ";
 
@@ -195,6 +193,9 @@ rayhit(struct application *ap, register struct partition *PartHeadp, struct seg 
 int
 view_init(register struct application *ap, char *file, char *obj, int minus_o)
 {
+    /* Handling of air in librt */
+    use_air = 1;
+
     ap->a_hit = rayhit;
     ap->a_miss = raymiss;
     ap->a_onehit = 0;

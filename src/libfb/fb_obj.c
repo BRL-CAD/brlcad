@@ -97,7 +97,7 @@ static struct bu_cmdtab fbo_cmds[] = {
  * Returns: result of FB command.
  */
 HIDDEN int
-fbo_cmd(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
+fbo_cmd(ClientData clientData, Tcl_Interp *interp, int argc, const char **argv)
 {
     return bu_cmd(clientData, interp, argc, argv, fbo_cmds, 1);
 }

@@ -88,7 +88,7 @@ dnl)
 bc_[$1]=[$4]
 bc_[$1]_default=[$4]
 bc_[$1]_set=no
-AC_ARG_ENABLE([$2], AC_HELP_STRING([--enable-$2], [$3 (default=$4)]),
+AC_ARG_ENABLE([$2], AC_HELP_STRING([--enable-$2], [$3 [[default=$4]]]),
 	[
 	bc_[$1]_set=yes
 	case "x$enableval" in

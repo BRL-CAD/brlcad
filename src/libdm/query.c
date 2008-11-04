@@ -22,6 +22,7 @@
  */
 
 #include "common.h"
+#include "bio.h"
 
 #include <string.h>
 

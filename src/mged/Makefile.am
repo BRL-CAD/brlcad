@@ -90,6 +90,7 @@ mged_SOURCES = \
 	facedef.c \
 	fbserv.c \
 	grid.c \
+	hideline.c \
 	history.c \
 	inside.c \
 	mater.c \
@@ -165,26 +166,18 @@ cad_parea_LDADD = ${BU}
 noinst_HEADERS = \
 	cmd.h \
 	comb_bool.h \
-	editobjGui.h \
 	fbserv.h \
 	htmlLibraryUi.h \
-	icreateGui.h \
 	joints.h \
 	menu.h \
 	mgdev.h \
 	mged.h \
 	mged_dm.h \
-	mged_solid.h \
 	mgedtcl.h \
-	objdir.h \
 	qray.h \
 	scroll.h \
 	sedit.h \
-	sunicon.h \
-	titles.h \
-	vgdev.h \
-	vld_std.h \
-	vmathUi.h
+	titles.h
 
 man_MANS = \
 	cad_boundp.1 \
@@ -197,7 +190,6 @@ INCLUDES = \
 
 EXTRA_DIST = \
 	$(man_MANS) \
-	arb.c \
 	bool_rewrite.c \
 	comb_bool_parse.y \
 	comb_bool_scan.l \
@@ -206,8 +198,6 @@ EXTRA_DIST = \
 	dm-X.c \
 	dm-tk.c \
 	fbserv_win32.c \
-	hideline.c \
-	memalloc.c \
 	mged.bat \
 	mged.dsp
 

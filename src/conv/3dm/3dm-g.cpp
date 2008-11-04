@@ -19,7 +19,7 @@
  */
 /** @file 3dm-g.cpp
  *
- *  Program to convert a Rhino model (in a .3dm file) to a BRL-CAD .g 
+ *  Program to convert a Rhino model (in a .3dm file) to a BRL-CAD .g
  *  file.
  *
  */
@@ -33,27 +33,26 @@
 
 #include "vmath.h"		/* BRL-CAD Vector macros */
 #include "wdb.h"
-using namespace std;
 
 
 char * itoa(int num) {
-	static char	line[10];
+    static char	line[10];
 
-	sprintf(line, "%d", num);
-	return line;
+    sprintf(line, "%d", num);
+    return line;
 }
 
 void printPoints(struct rt_brep_internal* bi, ON_TextLog* dump) {
-  ON_Brep* brep = bi->brep;
-  if (brep) {
-    const int count = brep->m_V.Count();
-    for (int i = 0; i < count; i++) {
-      ON_BrepVertex& bv = brep->m_V[i];
-      bv.Dump(*dump);
+    ON_Brep* brep = bi->brep;
+    if (brep) {
+	const int count = brep->m_V.Count();
+	for (int i = 0; i < count; i++) {
+	    ON_BrepVertex& bv = brep->m_V[i];
+	    bv.Dump(*dump);
+	}
+    } else {
+	dump->Print("brep was NULL!\n");
     }
-  } else {
-    dump->Print("brep was NULL!\n");
-  }
 }
 
 int main(int argc, char** argv) {
@@ -64,37 +63,37 @@ int main(int argc, char** argv) {
     char* outFileName = NULL;
     const char* inputFileName;
     ONX_Model model;
-    
+
     ON::Begin();
     ON_TextLog dump_to_stdout;
     ON_TextLog* dump = &dump_to_stdout;
 
-  int c;
-	while ((c = bu_getopt(argc, argv, "o:dvt:s:")) != EOF) {
-		switch ( c ) {
-			case 's':	/* scale factor */
-				break;
-			case 'o':	/* ignore colors */
-        outFileName = bu_optarg;
-				break;
-			case 'd':	/* debug */
-				break;
-			case 't':	/* tolerance */
-				break;
-			case 'v':	/* verbose */
-				break;
-			default:
-				break;
-		}
+    int c;
+    while ((c = bu_getopt(argc, argv, "o:dvt:s:")) != EOF) {
+	switch ( c ) {
+	    case 's':	/* scale factor */
+		break;
+	    case 'o':	/* ignore colors */
+		outFileName = bu_optarg;
+		break;
+	    case 'd':	/* debug */
+		break;
+	    case 't':	/* tolerance */
+		break;
+	    case 'v':	/* verbose */
+		break;
+	    default:
+		break;
 	}
+    }
     argc -= bu_optind;
     argv += bu_optind;
     inputFileName  = argv[0];
     if (outFileName == NULL) {
-      dump->Print("\n** Error **\n Need an output file to continue. Syntax: \n");
-      dump->Print(" ./3dm-g  -o <output file>.g <input file>.3dm \n** Error **\n\n");
-      return 1;
-// strip file suffix and add .g      
+	dump->Print("\n** Error **\n Need an output file to continue. Syntax: \n");
+	dump->Print(" ./3dm-g  -o <output file>.g <input file>.3dm \n** Error **\n\n");
+	return 1;
+	// strip file suffix and add .g
     }
 
     dump->Print("\n");
@@ -103,7 +102,7 @@ int main(int argc, char** argv) {
 
     FILE* archive_fp = ON::OpenFile(inputFileName, "rb");
     if ( !archive_fp ) {
-      dump->Print("  Unable to open file.\n" );
+	dump->Print("  Unable to open file.\n" );
     }
 
     // create achive object from file pointer
@@ -113,73 +112,73 @@ int main(int argc, char** argv) {
     bool rc = model.Read( archive, dump );
 
     ON::CloseFile( archive_fp );
-    
+
     outfp = wdb_fopen(outFileName);
     // print diagnostic
     if ( rc )
-      dump->Print("Input 3dm file successfully read.\n");
+	dump->Print("Input 3dm file successfully read.\n");
     else
-      dump->Print("Errors during reading 3dm file.\n");
+	dump->Print("Errors during reading 3dm file.\n");
 
     // see if everything is in good shape
     if ( model.IsValid(dump) )
-      dump->Print("Model is valid.\n");
+	dump->Print("Model is valid.\n");
     else
-      dump->Print("Model is not valid.\n");
+	dump->Print("Model is not valid.\n");
 
     dump->Print("Number of NURBS objects read wass %d\n.", model.m_object_table.Count());
     for (int i = 0; i < model.m_object_table.Count(); i++ ) {
-      dump->PushIndent();
+	dump->PushIndent();
 
-    // object's attibutes
-      ON_3dmObjectAttributes myAttributes = model.m_object_table[i].m_attributes;
-      ON_String constr(myAttributes.m_name);
-      myAttributes.Dump(*dump); // On debug print
-      dump->Print("\n");
+	// object's attibutes
+	ON_3dmObjectAttributes myAttributes = model.m_object_table[i].m_attributes;
+	ON_String constr(myAttributes.m_name);
+	myAttributes.Dump(*dump); // On debug print
+	dump->Print("\n");
 
-      string geom_base;
-      if (constr == NULL) {
-        string genName("rhino");
-        genName+=itoa(mcount++);
-        geom_base = genName.c_str();
-        dump->Print("Object has no name - creating one %s.\n", geom_base.c_str());
-      } else {
-        const char* cstr = constr;
-        geom_base = cstr;
-      }
+	std::string geom_base;
+	if (constr == NULL) {
+	    std::string genName("rhino");
+	    genName+=itoa(mcount++);
+	    geom_base = genName.c_str();
+	    dump->Print("Object has no name - creating one %s.\n", geom_base.c_str());
+	} else {
+	    const char* cstr = constr;
+	    geom_base = cstr;
+	}
 
-      string geom_name(geom_base+".s");
-      string region_name(geom_base+".r");
+	std::string geom_name(geom_base+".s");
+	std::string region_name(geom_base+".r");
 
-      dump->Print("primitive is %s.\n", geom_name.c_str());
-      dump->Print("region created is %s.\n", region_name.c_str());
+	dump->Print("primitive is %s.\n", geom_name.c_str());
+	dump->Print("region created is %s.\n", region_name.c_str());
 
-    // object definition
-      const ON_Geometry* pGeometry = ON_Geometry::Cast(model.m_object_table[i].m_object);
-      if ( pGeometry ) {
-        ON_Brep *brep;
-        ON_Curve *curve;
-        ON_Surface *surface;
-        ON_Mesh *mesh;
-        if ((brep = const_cast<ON_Brep * >(ON_Brep::Cast(pGeometry)))) {
-          mk_id(outfp, id_name);
-          mk_brep(outfp, geom_name.c_str(), brep);
-          unsigned char rgb[] = {255,0,0};
-          mk_region1(outfp, region_name.c_str(), geom_name.c_str(), "plastic", "", rgb);
-//          brep->Dump(*dump);  // on if debug or verbose
-          dump->PopIndent();
-        } else if (pGeometry->HasBrepForm()) {
-          dump->Print("\n\n ***** HasBrepForm. ***** \n\n");
-        } else if ((curve = const_cast<ON_Curve * >(ON_Curve::Cast(pGeometry)))) {
-          dump->Print("\n\n ***** ON_Curve. ***** \n\n");
-        } else if ((surface = const_cast<ON_Surface * >(ON_Surface::Cast(pGeometry)))) {
-          dump->Print("\n\n ***** ON_Surface. ***** \n\n");
-        } else if ((mesh = const_cast<ON_Mesh * >(ON_Mesh::Cast(pGeometry)))) {
-          dump->Print("\n\n ***** ON_Mesh. ***** \n\n");
-        } else {
-          dump->Print("\n\n ***** Got a different kind of object than geometry - investigate. ***** \n\n");
-        }
-      }
+	// object definition
+	const ON_Geometry* pGeometry = ON_Geometry::Cast(model.m_object_table[i].m_object);
+	if ( pGeometry ) {
+	    ON_Brep *brep;
+	    ON_Curve *curve;
+	    ON_Surface *surface;
+	    ON_Mesh *mesh;
+	    if ((brep = const_cast<ON_Brep * >(ON_Brep::Cast(pGeometry)))) {
+		mk_id(outfp, id_name);
+		mk_brep(outfp, geom_name.c_str(), brep);
+		unsigned char rgb[] = {255,0,0};
+		mk_region1(outfp, region_name.c_str(), geom_name.c_str(), "plastic", "", rgb);
+		//          brep->Dump(*dump);  // on if debug or verbose
+		dump->PopIndent();
+	    } else if (pGeometry->HasBrepForm()) {
+		dump->Print("\n\n ***** HasBrepForm. ***** \n\n");
+	    } else if ((curve = const_cast<ON_Curve * >(ON_Curve::Cast(pGeometry)))) {
+		dump->Print("\n\n ***** ON_Curve. ***** \n\n");
+	    } else if ((surface = const_cast<ON_Surface * >(ON_Surface::Cast(pGeometry)))) {
+		dump->Print("\n\n ***** ON_Surface. ***** \n\n");
+	    } else if ((mesh = const_cast<ON_Mesh * >(ON_Mesh::Cast(pGeometry)))) {
+		dump->Print("\n\n ***** ON_Mesh. ***** \n\n");
+	    } else {
+		dump->Print("\n\n ***** Got a different kind of object than geometry - investigate. ***** \n\n");
+	    }
+	}
     }
 
     wdb_close(outfp);

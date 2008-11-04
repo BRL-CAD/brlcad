@@ -45,9 +45,6 @@
 
 extern struct resource resource[];
 
-int	use_air = 0;		/* Handling of air in librt */
-int	using_mlib = 0;		/* Material routines NOT used */
-
 /* Viewing module specific "set" variables */
 struct bu_structparse view_parse[] = {
     {"",	0, (char *)0,	0,	BU_STRUCTPARSE_FUNC_NULL}

@@ -334,7 +334,7 @@ namespace brlcad {
     debug("a = " << a);
     debug("b = " << b);
     if (b < a) {
-      b = 2*PI+b;
+      b = 2*M_PI+b;
     }
     ON_Arc arc(circle, ON_Interval(a, b));
 

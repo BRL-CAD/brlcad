@@ -50,7 +50,7 @@ struct on_nurbs_hbv {
 };
 
 #endif  /* ON_NURB_H */
-
+/** @} */
 /*
  * Local Variables:
  * mode: C

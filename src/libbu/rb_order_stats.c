@@ -21,7 +21,7 @@
 /** @{ */
 /** @file rb_order_stats.c
  *
- *	Routines to support order-statistic operations for a red-black tree
+ * Routines to support order-statistic operations for a red-black tree
  *
  */
 /** @} */
@@ -37,14 +37,15 @@
 #include "./rb_internals.h"
 
 
-/**		        _ R B _ S E L E C T ( )
+/**
+ * _ R B _ S E L E C T ()
  *
- *	Retrieve the element of rank k in one order of a red-black tree
+ * Retrieve the element of rank k in one order of a red-black tree
  *
- *	This function has three parameters: the root of the tree to search,
- *	the order on which to do the searching, and the rank of interest.
- *	_rb_select() returns the discovered node.  It is an implemenation
- *	of the routine OS-SELECT on p. 282 of Cormen et al.
+ * This function has three parameters: the root of the tree to search,
+ * the order on which to do the searching, and the rank of interest.
+ * _rb_select() returns the discovered node.  It is an implemenation
+ * of the routine OS-SELECT on p. 282 of Cormen et al.
  */
 static struct bu_rb_node *_rb_select (struct bu_rb_node *root, int order, int k)
 {
@@ -65,14 +66,15 @@ static struct bu_rb_node *_rb_select (struct bu_rb_node *root, int order, int k)
 	return (_rb_select(bu_rb_right_child(root, order), order, k - rank));
 }
 
-/**		        B U _ R B _ S E L E C T ( )
+/**
+ * B U _ R B _ S E L E C T ()
  *
- *		Applications interface to _rb_select()
+ * Applications interface to _rb_select()
  *
- *	This function has three parameters: the tree in which to search,
- *	the order on which to do the searching, and the rank of interest.
- *	On success, bu_rb_select() returns a pointer to the data block in
- *	the discovered node.  Otherwise, it returns NULL.
+ * This function has three parameters: the tree in which to search,
+ * the order on which to do the searching, and the rank of interest.
+ * On success, bu_rb_select() returns a pointer to the data block in
+ * the discovered node.  Otherwise, it returns NULL.
  */
 void *bu_rb_select (bu_rb_tree *tree, int order, int k)
 {
@@ -98,15 +100,16 @@ void *bu_rb_select (bu_rb_tree *tree, int order, int k)
     return (bu_rb_data(node, order));
 }
 
-/**		        B U _ R B _ R A N K ( )
+/**
+ * B U _ R B _ R A N K ()
  *
- *	Determines the rank of a node in one order of a red-black tree
+ * Determines the rank of a node in one order of a red-black tree
  *
- *	This function has two parameters: the tree in which to search
- *	and the order on which to do the searching.  If the current node
- *	is null, bu_rb_rank() returns 0.  Otherwise, it returns the rank
- *	of the current node in the specified order.  bu_rb_rank() is an
- *	implementation of the routine OS-RANK on p. 283 of Cormen et al.
+ * This function has two parameters: the tree in which to search
+ * and the order on which to do the searching.  If the current node
+ * is null, bu_rb_rank() returns 0.  Otherwise, it returns the rank
+ * of the current node in the specified order.  bu_rb_rank() is an
+ * implementation of the routine OS-RANK on p. 283 of Cormen et al.
  */
 int bu_rb_rank (bu_rb_tree *tree, int order)
 {

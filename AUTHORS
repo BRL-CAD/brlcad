@@ -1,4 +1,4 @@
-﻿						 -*- coding: utf-8 -*-
+						 -*- coding: utf-8 -*-
 BRL-CAD Contributors
 ====================
 
@@ -185,6 +185,17 @@ nicknames erikg, erikgreenwald
 U.S. Army Research Laboratory
 Open Source
 
+Roßberg, Daniel  **
+nicknames d_rossberg
+2005 June
+Industrieanlagen-Betriebsgesellschaft mbH (IABG)
+
+Yapp, Cliff  **
+nicknames starseeker
+2007 September
+Open Source
+Quantum Research International, Inc.
+
 
 MATHEMATICAL, ALGORITHMIC, AND GEOMETRIC SUPPORT
 ------------------------------------------------
@@ -220,12 +231,14 @@ U.S. Army Ballistic Research Laboratory
 Schueler, Betty J.
 
 Edwards, Eric
-Survice Engineering, Inc.
+SURVICE Engineering, Inc.
 
 Kregel, Dwayne
 SURVICE Engineering, Inc.
 
 Yapp, Cliff  **
+nicknames starseeker
+2007 September
 Open Source
 Quantum Research International, Inc.
 
@@ -233,6 +246,10 @@ Harder, Brad  **
 nicknames yukonbob, bharder, bch
 2007 September
 Method Digital Logic
+
+Gettier, Janine  **
+2008 October
+SURVICE Engineering, Inc.
 
 
 CODE CONTRIBUTIONS
@@ -364,11 +381,6 @@ nicknames mjgillich mgillich
 2002 December
 U.S. Army Research Laboratory
 
-Roßberg, Daniel
-nicknames d_rossberg
-2005 June
-Industrieanlagen-Betriebsgesellschaft mbH (IABG)
-
 Howard, Doug
 SURVICE Engineering, Inc.
 
@@ -393,21 +405,35 @@ nicknames poolio
 2007 June
 ARL Student Hire / Carnegie Mellon University
 
-Yapp, Cliff
-nicknames starseeker
-2007 September
-Open Source
-Quantum Research International, Inc.
-
 Godbey, David
 nicknames dgodbey
 2008 March
 Altus Engineering, Inc.
 
+Montecelo, Manuel A. Fernandez
+nicknames mafm
+2008 April
+Open Source (GSoC)
+
 Castelo, André
 nicknames andrecastelo
 2008 May
-Open Source
+Open Source (GSoC)
+
+Van Ruitenbeek, Timothy
+nicknames pacman87
+2008 May
+Open Source (GSoC)
+
+Thomas, Dawn
+nicknames homovulgaris
+2008 June
+Open Source (GSoC)
+
+Reed, Nicholas
+nicknames n_reed
+2008 July
+ARL Student Hire / University of Maryland, Baltimore County
 
 
 SPECIAL THANKS
@@ -578,14 +604,29 @@ Ed Schouten
 2007
 Open Source
 
-Montecelo, Manuel A. Fernandez
-nicknames mafm
-2008 April
-Open Source
-
 Bautu, Elena
 nicknames ebautu
 2008 April
+Open Source
+
+Browder, Jr., Thomas M.
+nicknames tbrowder2
+2008 June
+ManTech SRS Technologies, Inc.
+Open Source
+
+Hocevar, Samuel
+nicknames sam, sammy
+2008 July
+Open Source
+
+Clubley, Simon
+2008 August
+Open Source
+
+Iuculano, Giuseppe
+nicknames devrevko
+2008 September
 Open Source
 
 

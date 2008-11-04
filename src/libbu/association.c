@@ -37,18 +37,18 @@
 
 
 /**
- *			 B U _ A S S O C I A T I O N
+ * B U _ A S S O C I A T I O N
  *
- *	    Look up the association for a specified value
+ * Look up the association for a specified value
  *
- *	This function reads the specified file, searches for the
- *	first line of the form
+ * This function reads the specified file, searches for the
+ * first line of the form
  *
  @code
  <value><field_sep>...
  @endcode
  *
- *	and returns the rest of the line beyond the field separator.
+ * and returns the rest of the line beyond the field separator.
  */
 struct bu_vls *
 bu_association (const char *fname,
@@ -64,12 +64,12 @@ bu_association (const char *fname,
     /* XXX NONPARALLEL */
     /* I'd prefer using "bu_open_mapped_file()" here instead, I think  -Mike */
     if ((fp = fopen(fname, "rb")) == NULL) {
-	/*	XXX
-	 *	Should we be exiting here?
-	 *	I don't want to just return 0,
-	 *	because the application probably needs to distinguish
-	 *	between ERROR_PERFORMING_THE_LOOKUP
-	 *	and VALUE_NOT_FOUND.
+	/* XXX
+	 * Should we be exiting here?
+	 * I don't want to just return 0,
+	 * because the application probably needs to distinguish
+	 * between ERROR_PERFORMING_THE_LOOKUP
+	 * and VALUE_NOT_FOUND.
 	 */
 	bu_exit(1, "bu_association:  Cannot open association file '%s'\n", fname);
     }

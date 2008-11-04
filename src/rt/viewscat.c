@@ -52,9 +52,6 @@
 #define	MAXREFLECT	16
 #define	DEFAULTREFLECT	16
 
-int		use_air = 0;		/* Handling of air in librt */
-int		using_mlib = 0;		/* Material routines NOT used */
-
 extern	FILE	*outfp;
 extern	point_t	viewbase_model;		/* lower_left of viewing plane */
 extern	mat_t	view2model;

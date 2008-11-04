@@ -17,11 +17,11 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file vers.c
+/** @file libbn/vers.c
  *
  * version information about LIBBN
  *
- * Author -
+ *@author
  *   Christopher Sean Morrison
  */
 

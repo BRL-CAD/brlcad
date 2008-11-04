@@ -25,6 +25,10 @@
  *
  */
 
+#if defined(_WIN32) && !defined(__CYGWIN__)
+#define _CRT_RAND_S
+#endif
+
 #include "common.h"
 
 #include <stdlib.h>
@@ -50,11 +54,22 @@ int nsurf = 0;
 struct rt_wdb *outfp;
 
 #ifndef HAVE_DRAND48
+#  if !defined(_WIN32) || defined(__CYGWIN__)
 /* simulate drand48() --  using 31-bit random() -- assumed to exist */
 double drand48() {
     extern long random();
     return (double)random() / 2147483648.0; /* range [0, 1) */
 }
+#  else
+double drand48() {
+    unsigned int randVal;
+
+    if (rand_s(&randVal))
+	randVal = 0;
+
+    return (double)randVal/(double)UINT_MAX;
+}
+#  endif
 #endif
 
 int

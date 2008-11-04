@@ -41,22 +41,22 @@ bu_badmagic(const unsigned long *ptr, unsigned long magic, const char *str, cons
 {
     char buf[MAGICBUFSIZ];
 
-    if ( !(ptr) )  {
+    if (!(ptr)) {
 	snprintf(buf, MAGICBUFSIZ, "ERROR: NULL %s pointer, file %s, line %d\n",
-		 str, file, line );
+		 str, file, line);
 	bu_bomb(buf);
     }
-    if ( ((size_t)(ptr)) & (sizeof(unsigned long)-1) )  {
+    if (((size_t)(ptr)) & (sizeof(unsigned long)-1)) {
 	snprintf(buf, MAGICBUFSIZ, "ERROR: x%lx mis-aligned %s pointer, file %s, line %d\n",
-		 (unsigned long)ptr, str, file, line );
+		 (unsigned long)ptr, str, file, line);
 	bu_bomb(buf);
     }
-    if ( *(ptr) != (unsigned long)(magic) )  {
+    if (*(ptr) != (unsigned long)(magic)) {
 	snprintf(buf, MAGICBUFSIZ, "ERROR: bad pointer x%lx: s/b %s(x%lx), was %s(x%lx), file %s, line %d\n",
 		 (unsigned long)ptr,
 		 str, magic,
-		 bu_identify_magic( (unsigned long)*(ptr) ), *(ptr),
-		 file, line );
+		 bu_identify_magic((unsigned long)*(ptr)), *(ptr),
+		 file, line);
 	bu_bomb(buf);
     }
 }

@@ -2,13 +2,13 @@
 /* $NoKeywords: $ */
 /*
 //
-// Copyright (c) 1993-2001 Robert McNeel & Associates. All rights reserved.
+// Copyright (c) 1993-2007 Robert McNeel & Associates. All rights reserved.
 // Rhinoceros is a registered trademark of Robert McNeel & Assoicates.
 //
 // THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY.
 // ALL IMPLIED WARRANTIES OF FITNESS FOR ANY PARTICULAR PURPOSE AND OF
 // MERCHANTABILITY ARE HEREBY DISCLAIMED.
-//
+//				
 // For complete openNURBS copyright information see <http://www.opennurbs.org>.
 //
 ////////////////////////////////////////////////////////////////
@@ -123,12 +123,12 @@ int ON_ArcCurve::Dimension() const
   return m_dim;
 }
 
-BOOL
+BOOL 
 ON_ArcCurve::GetBBox( // returns true if successful
-         double* boxmin,    // minimum
-         double* boxmax,    // maximum
-         BOOL bGrowBox
-         ) const
+	 double* boxmin,    // minimum
+	 double* boxmax,    // maximum
+	 BOOL bGrowBox
+	 ) const
 {
   BOOL rc = m_arc.IsValid();
   if (rc) {
@@ -139,8 +139,8 @@ ON_ArcCurve::GetBBox( // returns true if successful
       if ( boxmax[0] < bbox.m_max.x ) boxmax[0] = bbox.m_max.x;
       if ( boxmax[1] < bbox.m_max.y ) boxmax[1] = bbox.m_max.y;
       if ( m_dim > 2 ) {
-        if ( boxmin[2] > bbox.m_min.z ) boxmin[2] = bbox.m_min.z;
-        if ( boxmax[2] < bbox.m_max.z ) boxmax[2] = bbox.m_max.z;
+	if ( boxmin[2] > bbox.m_min.z ) boxmin[2] = bbox.m_min.z;
+	if ( boxmax[2] < bbox.m_max.z ) boxmax[2] = bbox.m_max.z;
       }
     }
     else {
@@ -149,8 +149,8 @@ ON_ArcCurve::GetBBox( // returns true if successful
       boxmax[0] = bbox.m_max.x;
       boxmax[1] = bbox.m_max.y;
       if ( m_dim > 2 ) {
-        boxmin[2] = bbox.m_min.z;
-        boxmax[2] = bbox.m_max.z;
+	boxmin[2] = bbox.m_min.z;
+	boxmax[2] = bbox.m_max.z;
       }
     }
   }
@@ -200,7 +200,7 @@ BOOL ON_ArcCurve::Write(
      ) const
 {
   BOOL rc = file.Write3dmChunkVersion(1,0);
-  if (rc)
+  if (rc) 
   {
     rc = file.WriteArc( m_arc );
     if (rc) rc = file.WriteInterval( m_t );
@@ -218,16 +218,16 @@ BOOL ON_ArcCurve::Read(
   BOOL rc = file.Read3dmChunkVersion(&major_version,&minor_version);
   if (rc)
   {
-    if (major_version==1)
+    if (major_version==1) 
     {
       // common to all 1.x  versions
       rc = file.ReadArc( m_arc );
-      if (rc)
-        rc = file.ReadInterval( m_t );
-      if (rc)
-        rc = file.ReadInt(&m_dim);
+      if (rc) 
+	rc = file.ReadInterval( m_t );
+      if (rc) 
+	rc = file.ReadInt(&m_dim);
       if ( m_dim != 2 && m_dim != 3 )
-        m_dim = 3;
+	m_dim = 3;
     }
     else
       rc = 0;
@@ -254,7 +254,7 @@ bool ON_ArcCurve::ChangeDimension( int desired_dimension )
   bool rc = (desired_dimension>=2 && desired_dimension<=3);
   if ( rc && m_dim != desired_dimension )
   {
-  	DestroyCurveTree();
+	DestroyCurveTree();
     if ( desired_dimension == 2 )
       m_dim = 2;
     else
@@ -269,13 +269,13 @@ ON_Interval ON_ArcCurve::Domain() const
   return m_t;
 }
 
-BOOL ON_ArcCurve::ChangeClosedCurveSeam(
-            double t ){
+BOOL ON_ArcCurve::ChangeClosedCurveSeam( 
+	    double t ){
 	bool rc = false;
 	if( IsCircle() ){
 		double angle_delta = m_t.NormalizedParameterAt(t);
 		angle_delta*= 2*ON_PI;
-
+		
 		m_arc.Rotate(angle_delta, m_arc.plane.Normal());
 		m_t = ON_Interval( t, m_t[1] + t - m_t[0]);
 		rc = true;
@@ -314,12 +314,12 @@ BOOL
 ON_ArcCurve::IsArc( // true if curve locus in an arc or circle
       const ON_Plane* plane, // if not NULL, test is performed in this plane
       ON_Arc* arc,         // if not NULL and true is returned, then arc
-                              // arc parameters are filled in
+			      // arc parameters are filled in
       double tolerance // tolerance to use when checking linearity
       ) const
 {
   BOOL rc = (plane) ? IsInPlane(*plane,tolerance) : true;
-  if (arc)
+  if (arc) 
     *arc = m_arc;
   if (rc)
     rc = IsValid();
@@ -329,7 +329,7 @@ ON_ArcCurve::IsArc( // true if curve locus in an arc or circle
 BOOL
 ON_ArcCurve::IsPlanar(
       ON_Plane* plane, // if not NULL and true is returned, then plane parameters
-                         // are filled in
+			 // are filled in
       double tolerance // tolerance to use when checking linearity
       ) const
 {
@@ -337,8 +337,8 @@ ON_ArcCurve::IsPlanar(
   {
     return ON_Curve::IsPlanar(plane,tolerance);
   }
-
-  if ( plane )
+  
+  if ( plane ) 
     *plane = m_arc.plane;
 
   return true;
@@ -353,13 +353,13 @@ ON_ArcCurve::IsInPlane(
   return m_arc.IsInPlane( plane, tolerance );
 }
 
-BOOL
+BOOL 
 ON_ArcCurve::IsClosed() const
 {
   return m_arc.IsCircle();
 }
 
-BOOL
+BOOL 
 ON_ArcCurve::IsPeriodic() const
 {
   return m_arc.IsCircle();
@@ -373,7 +373,7 @@ ON_ArcCurve::Reverse()
 	{
     m_t.Reverse();
 		DestroyCurveTree();
-	}
+	}	
   return true;
 }
 
@@ -400,18 +400,18 @@ BOOL ON_ArcCurve::SetStartPoint(ON_3dPoint start_point)
     else {
       ON_3dPoint end_point = PointAt(Domain()[1]);
       if (end_point.DistanceTo(start_point) < ON_ZERO_TOLERANCE*m_arc.Radius()){
-        //make arc into circle
-        m_arc.plane.xaxis = end_point - m_arc.Center();
-        m_arc.plane.xaxis.Unitize();
-        m_arc.plane.yaxis = ON_CrossProduct(m_arc.Normal(), m_arc.plane.xaxis);
-        m_arc.plane.yaxis.Unitize();
-        m_arc.SetAngleRadians(2.0*ON_PI);
-        rc = true;
+	//make arc into circle
+	m_arc.plane.xaxis = end_point - m_arc.Center();
+	m_arc.plane.xaxis.Unitize();
+	m_arc.plane.yaxis = ON_CrossProduct(m_arc.Normal(), m_arc.plane.xaxis);
+	m_arc.plane.yaxis.Unitize();
+	m_arc.SetAngleRadians(2.0*ON_PI);
+	rc = true;
       }
     }
   }
 	DestroyCurveTree();
-  return rc;
+  return rc;  
 }
 
 
@@ -435,18 +435,18 @@ BOOL ON_ArcCurve::SetEndPoint(ON_3dPoint end_point)
     else {
       ON_3dPoint start_point = PointAt(Domain()[0]);
       if (end_point.DistanceTo(start_point) < ON_ZERO_TOLERANCE*m_arc.Radius()){
-        //make arc into circle
-        m_arc.plane.xaxis = start_point - m_arc.Center();
-        m_arc.plane.xaxis.Unitize();
-        m_arc.plane.yaxis = ON_CrossProduct(m_arc.Normal(), m_arc.plane.xaxis);
-        m_arc.plane.yaxis.Unitize();
-        m_arc.SetAngleRadians(2.0*ON_PI);
-        rc = true;
+	//make arc into circle
+	m_arc.plane.xaxis = start_point - m_arc.Center();
+	m_arc.plane.xaxis.Unitize();
+	m_arc.plane.yaxis = ON_CrossProduct(m_arc.Normal(), m_arc.plane.xaxis);
+	m_arc.plane.yaxis.Unitize();
+	m_arc.SetAngleRadians(2.0*ON_PI);
+	rc = true;
       }
     }
   }
 	DestroyCurveTree();
-  return rc;
+  return rc;  
 }
 
 BOOL ON_ArcCurve::Evaluate( // returns false if unable to evaluate
@@ -460,7 +460,7 @@ BOOL ON_ArcCurve::Evaluate( // returns false if unable to evaluate
 {
   ON_3dVector d;
   BOOL rc = false;
-  if ( m_t[0] < m_t[1] )
+  if ( m_t[0] < m_t[1] ) 
   {
     double rat = m_arc.DomainRadians().Length()/m_t.Length();
     double scale = 1.0;
@@ -482,7 +482,7 @@ BOOL ON_ArcCurve::Evaluate( // returns false if unable to evaluate
       v[0] = d.x*scale;
       v[1] = d.y*scale;
       if ( m_dim == 3 )
-        v[2] = d.z*scale;
+	v[2] = d.z*scale;
     }
     rc = true;
   }
@@ -492,20 +492,22 @@ BOOL ON_ArcCurve::Evaluate( // returns false if unable to evaluate
 BOOL ON_ArcCurve::Trim( const ON_Interval& in )
 {
   BOOL rc = in.IsIncreasing();
-  if (rc) {
-    double a = m_arc.AngleRadians();
+  if (rc) 
+  {
     double t0 = m_t.NormalizedParameterAt(in.m_t[0]);
     double t1 = m_t.NormalizedParameterAt(in.m_t[1]);
-    double a0 = t0*a;
-    double a1 = t1*a;
+    const ON_Interval arc_angle0 = m_arc.DomainRadians();
+    double a0 = arc_angle0.ParameterAt(t0);
+    double a1 = arc_angle0.ParameterAt(t1);
 		// Resulting ON_Arc must pass IsValid()
-    if ( a1 - a0 > ON_ZERO_TOLERANCE && m_arc.SetAngleRadians(a1-a0) ) {
-      if ( a0 != 0 )
-        m_arc.Rotate( sin(a0), cos(a0), m_arc.plane.zaxis );
+    if ( a1 - a0 > ON_ZERO_TOLERANCE && m_arc.SetAngleIntervalRadians(ON_Interval(a0,a1)) ) 
+    {
       m_t = in;
     }
     else
+    {
       rc = false;
+    }
     DestroyCurveTree();
   }
   return rc;
@@ -556,8 +558,8 @@ BOOL ON_ArcCurve::Split(
   if ( !arc_domain.Includes(t) )
     return false;
   double a = (arc_domain == arc_angles)
-           ? t
-           : arc_angles.ParameterAt(arc_domain.NormalizedParameterAt(t));
+	   ? t
+	   : arc_angles.ParameterAt(arc_domain.NormalizedParameterAt(t));
   if ( !arc_angles.Includes(a) )
     return false;
 
@@ -653,12 +655,12 @@ static double ArcDeFuzz( double d )
   f = modf( d*128.0, &i );
   if ( f != 0.0 && fabs(f) <= 1024.0*ON_EPSILON ) {
     d = i*0.0078125;
-  }
+  }  
   return d;
 }
 
 static BOOL NurbsCurveArc ( const ON_Arc& arc, int dim, ON_NurbsCurve& nurb )
-{
+{ 
   if ( !arc.IsValid() )
     return false;
   // makes a quadratic nurbs arc
@@ -690,7 +692,7 @@ static BOOL NurbsCurveArc ( const ON_Arc& arc, int dim, ON_NurbsCurve& nurb )
 		span_count = 4;
 
 	cv_count = 2*span_count + 1;
-
+	
 	switch(span_count) {
 	case 1:
     CV[0] = start_point;
@@ -800,10 +802,10 @@ bool ON_Arc::GetRadianFromNurbFormParameter(double NurbParameter, double* Radian
     ON_3dPoint p = nurbscurve.PointAt(NurbParameter);
     rc = ClosestPointTo(p,RadianParameter);
     if (IsCircle()){
-      if (NurbParameter - DomainRadians()[0] < ON_ZERO_TOLERANCE &&
-        DomainRadians()[1] - *RadianParameter < ON_ZERO_TOLERANCE) *RadianParameter = DomainRadians()[0];
-      else if (DomainRadians()[1] - NurbParameter < ON_ZERO_TOLERANCE &&
-        *RadianParameter - DomainRadians()[0] < ON_ZERO_TOLERANCE) *RadianParameter = DomainRadians()[1];
+      if (NurbParameter - DomainRadians()[0] < ON_ZERO_TOLERANCE && 
+	DomainRadians()[1] - *RadianParameter < ON_ZERO_TOLERANCE) *RadianParameter = DomainRadians()[0];
+      else if (DomainRadians()[1] - NurbParameter < ON_ZERO_TOLERANCE && 
+	*RadianParameter - DomainRadians()[0] < ON_ZERO_TOLERANCE) *RadianParameter = DomainRadians()[1];
     }
   }
   return rc;
@@ -813,8 +815,8 @@ bool ON_Arc::GetRadianFromNurbFormParameter(double NurbParameter, double* Radian
 //returns false unless
 //   0<= NurbParameter,  <= AngleRadians()*Radius()
 	ON_NurbsCurve crv;
-
-	if( !IsValid()|| RadianParameter==NULL)
+	
+	if( !IsValid()|| RadianParameter==NULL) 
 		return false;
 
 	ON_Interval NDomain(0, 0);	//nurb domain
@@ -835,7 +837,7 @@ bool ON_Arc::GetRadianFromNurbFormParameter(double NurbParameter, double* Radian
 
 	if( !GetNurbForm(crv))
 		return false;
-
+		
 	ON_3dPoint cp;
 	cp = crv.PointAt(NurbParameter);
 	cp -= Center();
@@ -849,7 +851,7 @@ bool ON_Arc::GetRadianFromNurbFormParameter(double NurbParameter, double* Radian
 #if defined(ON_DEBUG)
 	double np2;
 	GetNurbFormParameterFromRadian( *RadianParameter, &np2);
-	ON_ASSERT(fabs(np2-NurbParameter)<=ON_EPSILON*( NurbParameter + 1.0) );
+	ON_ASSERT(fabs(np2-NurbParameter)<=ON_EPSILON*( NurbParameter + 1.0) ); 
 #endif
 
 	return true;
@@ -859,7 +861,7 @@ bool ON_Arc::GetRadianFromNurbFormParameter(double NurbParameter, double* Radian
 
 bool ON_Arc::GetNurbFormParameterFromRadian(double RadianParameter, double* NurbParameter ) const
 {
-	if(!IsValid() || NurbParameter==NULL)
+	if(!IsValid() || NurbParameter==NULL) 
 		return false;
 
   ON_Interval ADomain = DomainRadians();
@@ -871,7 +873,7 @@ bool ON_Arc::GetNurbFormParameterFromRadian(double RadianParameter, double* Nurb
   {
 		*NurbParameter=ADomain[0];
 		return true;
-	}
+	} 
   else {
     del = ADomain[1] - RadianParameter;
     if(del <= endtol && del >= -ON_SQRT_EPSILON){
@@ -890,7 +892,7 @@ bool ON_Arc::GetNurbFormParameterFromRadian(double RadianParameter, double* Nurb
 		return false;
 
 	//Isolate a bezier that contains the solution
-	int cnt = crv.SpanCount();
+	int cnt = crv.SpanCount();	
 	int si =0;	//get span index
 	int ki=0;		//knot index
 	double ang = ADomain[0];
@@ -912,18 +914,18 @@ bool ON_Arc::GetNurbFormParameterFromRadian(double RadianParameter, double* Nurb
 		at = at2;
 		if( ang>RadianParameter)
 			break;
-	}
-
+	} 
+	
 	ON_Interval BezDomain(crv.Knot(ki), crv.Knot(ki+2));
 
 	ON_BezierCurve bez;
 	if(!crv.ConvertSpanToBezier(ki,bez))
 		return false;
 
- 	ON_Xform COC;
-	COC.ChangeBasis( ON_Plane(),Plane());
+	ON_Xform COC;
+	COC.ChangeBasis( ON_Plane(),Plane());   
 
-
+	
 	bez.Transform(COC);	// change coordinates to circles local frame
 	double a[3];							// Bez coefficients of a quadratic to solve
 	for(int i=0; i<3; i++)
@@ -950,7 +952,7 @@ bool ON_Arc::GetNurbFormParameterFromRadian(double RadianParameter, double* Nurb
 		tbez = 1.0;
 		if(a[0]-a[2])
 			tbez = a[0]/(a[0]-a[2]);
-	}
+	}	
 	if(tbez<0)
 		tbez=0.0;
 	else if(tbez>1.0)
@@ -971,10 +973,10 @@ bool ON_Arc::GetNurbFormParameterFromRadian(double RadianParameter, double* Nurb
 }
 
 bool ON_ArcCurve::GetClosestPoint( const ON_3dPoint& test_point,
-        double* t,       // parameter of local closest point returned here
-        double maximum_distance,
-        const ON_Interval* sub_domain
-        ) const
+	double* t,       // parameter of local closest point returned here
+	double maximum_distance,
+	const ON_Interval* sub_domain
+	) const
 {
   double a, s, d;
   ON_Interval domain = Domain();
@@ -989,23 +991,23 @@ bool ON_ArcCurve::GetClosestPoint( const ON_3dPoint& test_point,
 
 
   bool rc = m_arc.ClosestPointTo( test_point, &a );
-  if ( rc )
+  if ( rc ) 
   {
     s = m_t.ParameterAt( m_arc.DomainRadians().NormalizedParameterAt(a) );
-    if ( sub_domain )
+    if ( sub_domain ) 
     {
       if ( s < sub_domain->Min() || s > sub_domain->Max())
       {
-        double dist0 = test_point.DistanceTo(PointAt(domain[0]));
-        double dist1 = test_point.DistanceTo(PointAt(domain[1]));
-        s = domain[(dist0 <= dist1)?0:1];
+	double dist0 = test_point.DistanceTo(PointAt(domain[0]));
+	double dist1 = test_point.DistanceTo(PointAt(domain[1]));
+	s = domain[(dist0 <= dist1)?0:1];
       }
     }
-    if ( maximum_distance > 0.0 )
+    if ( maximum_distance > 0.0 ) 
     {
       d = test_point.DistanceTo(PointAt(s));
       if ( d > maximum_distance )
-        rc = false;
+	rc = false;
     }
     if (rc && t)
       *t = s;
@@ -1014,12 +1016,12 @@ bool ON_ArcCurve::GetClosestPoint( const ON_3dPoint& test_point,
 }
 
 BOOL ON_ArcCurve::GetLength(
-        double* length,               // length returned here
-        double, // fractional_tolerance - formal parameter intentionally ignored in this virtual function
-        const ON_Interval* sub_domain // default = NULL
-        ) const
+	double* length,               // length returned here
+	double, // fractional_tolerance - formal parameter intentionally ignored in this virtual function
+	const ON_Interval* sub_domain // default = NULL
+	) const
 {
-	if( sub_domain && sub_domain->IsDecreasing() )
+	if( sub_domain && sub_domain->IsDecreasing() ) 
 		return false;
   else if ( sub_domain ) {
 		ON_Interval scratch_domain = m_t;
@@ -1038,11 +1040,11 @@ BOOL ON_ArcCurve::GetLength(
 }
 
 BOOL ON_ArcCurve::GetNormalizedArcLengthPoint(
-        double s,
-        double* t,
-        double, // fractional_tolerance - formal parameter intentionally ignored in this virtual function
-        const ON_Interval* sub_domain
-        ) const
+	double s,
+	double* t,
+	double, // fractional_tolerance - formal parameter intentionally ignored in this virtual function
+	const ON_Interval* sub_domain
+	) const
 {
   ON_Interval domain = (sub_domain) ? *sub_domain : Domain();
   *t = domain.ParameterAt(s);
@@ -1050,13 +1052,13 @@ BOOL ON_ArcCurve::GetNormalizedArcLengthPoint(
 }
 
 BOOL ON_ArcCurve::GetNormalizedArcLengthPoints(
-        int count,
-        const double* s,
-        double* t,
-        double, // absolute_tolerance   - formal parameter intentionally ignored in this virtual function
-        double, // fractional_tolerance - formal parameter intentionally ignored in this virtual function
-        const ON_Interval* sub_domain
-        ) const
+	int count,
+	const double* s,
+	double* t,
+	double, // absolute_tolerance   - formal parameter intentionally ignored in this virtual function
+	double, // fractional_tolerance - formal parameter intentionally ignored in this virtual function
+	const ON_Interval* sub_domain
+	) const
 {
   if ( count > 0 || s != NULL && t != NULL )
   {
@@ -1072,10 +1074,10 @@ BOOL ON_ArcCurve::GetNormalizedArcLengthPoints(
 }
 
 BOOL ON_ArcCurve::GetLocalClosestPoint( const ON_3dPoint& test_point,
-        double seed_parameter,
-        double* t,
-        const ON_Interval* sub_domain
-        ) const
+	double seed_parameter,
+	double* t,
+	const ON_Interval* sub_domain
+	) const
 {
   if (!GetClosestPoint( test_point, t, 0.0, sub_domain ))
     return false;
@@ -1094,30 +1096,30 @@ BOOL ON_ArcCurve::GetLocalClosestPoint( const ON_3dPoint& test_point,
 
 
 int ON_ArcCurve::GetNurbForm( // returns 0: unable to create NURBS representation
-                 //            with desired accuracy.
-                 //         1: success - returned NURBS parameterization
-                 //            matches the curve's to wthe desired accuracy
-                 //         2: success - returned NURBS point locus matches
-                 //            the curve's to the desired accuracy but, on
-                 //            the interior of the curve's domain, the
-                 //            curve's parameterization and the NURBS
-                 //            parameterization may not match to the
-                 //            desired accuracy.
+		 //            with desired accuracy.
+		 //         1: success - returned NURBS parameterization
+		 //            matches the curve's to wthe desired accuracy
+		 //         2: success - returned NURBS point locus matches
+		 //            the curve's to the desired accuracy but, on
+		 //            the interior of the curve's domain, the 
+		 //            curve's parameterization and the NURBS
+		 //            parameterization may not match to the 
+		 //            desired accuracy.
       ON_NurbsCurve& c,
       double tolerance,
       const ON_Interval* subdomain  // OPTIONAL subdomain of arc
       ) const
 {
   int rc = 0;
-  if ( subdomain )
+  if ( subdomain ) 
   {
     ON_ArcCurve trimmed_arc(*this);
-    if ( trimmed_arc.Trim(*subdomain) )
+    if ( trimmed_arc.Trim(*subdomain) ) 
     {
       rc = trimmed_arc.GetNurbForm( c, tolerance, NULL );
     }
   }
-  else if ( m_t.IsIncreasing() && m_arc.IsValid() )
+  else if ( m_t.IsIncreasing() && m_arc.IsValid() ) 
   {
     if ( NurbsCurveArc( m_arc, m_dim, c ) )
     {
@@ -1129,16 +1131,16 @@ int ON_ArcCurve::GetNurbForm( // returns 0: unable to create NURBS representatio
 }
 
 int ON_ArcCurve::HasNurbForm( // returns 0: unable to create NURBS representation
-                 //            with desired accuracy.
-                 //         1: success - returned NURBS parameterization
-                 //            matches the curve's to wthe desired accuracy
-                 //         2: success - returned NURBS point locus matches
-                 //            the curve's to the desired accuracy but, on
-                 //            the interior of the curve's domain, the
-                 //            curve's parameterization and the NURBS
-                 //            parameterization may not match to the
-                 //            desired accuracy.
-                 ) const
+		 //            with desired accuracy.
+		 //         1: success - returned NURBS parameterization
+		 //            matches the curve's to wthe desired accuracy
+		 //         2: success - returned NURBS point locus matches
+		 //            the curve's to the desired accuracy but, on
+		 //            the interior of the curve's domain, the 
+		 //            curve's parameterization and the NURBS
+		 //            parameterization may not match to the 
+		 //            desired accuracy.
+		 ) const
 
 {
   if (!IsValid())
@@ -1157,7 +1159,7 @@ BOOL ON_ArcCurve::GetCurveParameterFromNurbFormParameter(
 
   BOOL rc = m_arc.GetRadianFromNurbFormParameter(arcnurb_t,&radians);
   *curve_t = m_t.ParameterAt( m_arc.DomainRadians().NormalizedParameterAt(radians) );
-
+  
   return rc;
 }
 
@@ -1182,7 +1184,7 @@ double ON_ArcCurve::Radius() const
 {
 	return m_arc.Radius();
 }
-
+  
 double ON_ArcCurve::AngleRadians() const
 {
 	return m_arc.AngleRadians();
@@ -1195,34 +1197,34 @@ double ON_ArcCurve::AngleDegrees() const
 
 /*
 Description:
-  ON_CircleCurve is obsolete.
+  ON_CircleCurve is obsolete.  
   This code exists so v2 files can be read.
 */
 class ON__OBSOLETE__CircleCurve : public ON_ArcCurve
 {
-public:
+public: 
   static const ON_ClassId m_ON_CircleCurve_class_id;
   const ON_ClassId* ClassId() const;
   BOOL Read(
-         ON_BinaryArchive&  // open binary file
+	 ON_BinaryArchive&  // open binary file
        );
 };
 
-static ON_Object* CreateNewON_CircleCurve()
+static ON_Object* CreateNewON_CircleCurve() 
 {
 
-  // must create an ON_CircleCurve so virtual
+  // must create an ON_CircleCurve so virtual 
   // ON_CircleCurve::Read will be used to read
   // archive objects with uuid CF33BE29-09B4-11d4-BFFB-0010830122F0
   return new ON__OBSOLETE__CircleCurve();
-}
+} 
 
 const ON_ClassId ON__OBSOLETE__CircleCurve::m_ON_CircleCurve_class_id("ON__OBSOLETE__CircleCurve",
-                                                           "ON_ArcCurve",
-                                                           CreateNewON_CircleCurve,
-                                                           "CF33BE29-09B4-11d4-BFFB-0010830122F0");
+							   "ON_ArcCurve",
+							   CreateNewON_CircleCurve,0,
+							   "CF33BE29-09B4-11d4-BFFB-0010830122F0");
 
-const ON_ClassId* ON__OBSOLETE__CircleCurve::ClassId() const
+const ON_ClassId* ON__OBSOLETE__CircleCurve::ClassId() const 
 {
   // so write will save ON_ArcCurve uuid
   return &ON_ArcCurve::m_ON_ArcCurve_class_id;
@@ -1237,18 +1239,18 @@ BOOL ON__OBSOLETE__CircleCurve::Read(
   BOOL rc = file.Read3dmChunkVersion(&major_version,&minor_version);
   if (rc)
   {
-    if (major_version==1)
+    if (major_version==1) 
     {
       // common to all 1.x versions
       ON_Circle circle;
       rc = file.ReadCircle( circle );
       m_arc = circle;
-      if (rc)
-        rc = file.ReadInterval( m_t );
-      if (rc)
-        rc = file.ReadInt(&m_dim);
+      if (rc) 
+	rc = file.ReadInterval( m_t );
+      if (rc) 
+	rc = file.ReadInt(&m_dim);
       if ( m_dim != 2 && m_dim != 3 )
-        m_dim = 3;
+	m_dim = 3;
     }
   }
 

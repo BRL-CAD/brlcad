@@ -2,13 +2,45 @@
 
 lib_LTLIBRARIES = libtclcad.la
 
+if WITH_WGL
+DM_WGL_CFLAGS = -DDM_WGL -DIF_WGL
+else
+DM_WGL_CFLAGS =
+endif
+
+if WITH_X11
+DM_X_CFLAGS = -DDM_X -DIF_X \
+	${X_CFLAGS}
+else
+DM_X_CFLAGS =
+endif
+
+if WITH_OPENGL
+DM_OGL_CFLAGS = -DDM_OGL -DIF_OGL $(GL_CFLAGS)
+DM_OGL_LIBS = ${LIBGL}
+else
+DM_OGL_CFLAGS =
+DM_OGL_LIBS =
+endif
+
+if WITH_TK
+DM_TK_CFLAGS = -DDM_TK -DIF_TK
+else
+DM_TK_CFLAGS =
+endif
+
 libtclcad_la_SOURCES = \
 	tclcad.c \
 	tclcadAutoPath.c \
 	tclcadTkSetup.c \
-	tkImgFmtPIX.c
+	tkImgFmtPIX.c \
+	ged_obj.c
 
 libtclcad_la_CFLAGS = \
+	${DM_X_CFLAGS} \
+	${DM_TK_CFLAGS} \
+	${DM_WGL_CFLAGS} \
+	${DM_OGL_CFLAGS} \
 	${X_CFLAGS} \
 	${ITK_CPPFLAGS} \
 	${ITCL_CPPFLAGS} \
@@ -24,6 +56,6 @@ libtclcad_la_LIBADD = ${TCLCAD_LIBS}
 
 EXTRA_DIST = libtclcad.dsp
 
-DEPS=src/libfb src/other/blt
+DEPENDS = src/libdm src/other/blt src/libged src/other/incrTcl
 
 include $(top_srcdir)/misc/Makefile.defs

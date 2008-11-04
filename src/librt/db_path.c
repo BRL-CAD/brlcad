@@ -37,7 +37,7 @@
 
 
 /**
- *			D B _ F U L L _ P A T H _ I N I T
+ * D B _ F U L L _ P A T H _ I N I T
  */
 void
 db_full_path_init( struct db_full_path *pathp )
@@ -48,8 +48,9 @@ db_full_path_init( struct db_full_path *pathp )
     pathp->magic = DB_FULL_PATH_MAGIC;
 }
 
+
 /**
- *			D B _ A D D _ N O D E _ T O _ F U L L _ P A T H
+ * D B _ A D D _ N O D E _ T O _ F U L L _ P A T H
  */
 void
 db_add_node_to_full_path( struct db_full_path *pp, struct directory *dp )
@@ -71,8 +72,9 @@ db_add_node_to_full_path( struct db_full_path *pp, struct directory *dp )
     pp->fp_names[pp->fp_len++] = dp;
 }
 
+
 /**
- *			D B _ D U P _ F U L L _ P A T H
+ * D B _ D U P _ F U L L _ P A T H
  */
 void
 db_dup_full_path(register struct db_full_path *newp, register const struct db_full_path *oldp)
@@ -89,20 +91,21 @@ db_dup_full_path(register struct db_full_path *newp, register const struct db_fu
     newp->fp_names = (struct directory **)bu_malloc(
 	newp->fp_maxlen * sizeof(struct directory *),
 	"db_full_path array (duplicate)" );
-    memcpy((char *)newp->fp_names, (char *)oldp->fp_names,	newp->fp_len * sizeof(struct directory *));
+    memcpy((char *)newp->fp_names, (char *)oldp->fp_names, newp->fp_len * sizeof(struct directory *));
 }
 
+
 /**
- *			D B _ E X T E N D _ F U L L _ P A T H
+ * D B _ E X T E N D _ F U L L _ P A T H
  *
- *  Extend "pathp" so that it can grow from current fp_len by incr more names.
+ * Extend "pathp" so that it can grow from current fp_len by incr more names.
  *
- *  This is intended primarily as an internal method.
+ * This is intended primarily as an internal method.
  */
 void
 db_extend_full_path( struct db_full_path *pathp, int incr )
 {
-    int		newlen;
+    int	newlen;
 
     RT_CK_FULL_PATH(pathp);
 
@@ -125,8 +128,9 @@ db_extend_full_path( struct db_full_path *pathp, int incr )
     }
 }
 
+
 /**
- *			D B _ A P P E N D _ F U L L _ P A T H
+ * D B _ A P P E N D _ F U L L _ P A T H
  */
 void
 db_append_full_path( struct db_full_path *dest, const struct db_full_path *src )
@@ -141,10 +145,11 @@ db_append_full_path( struct db_full_path *dest, const struct db_full_path *src )
     dest->fp_len += src->fp_len;
 }
 
+
 /**
- *			D B _ D U P _ P A T H _ T A I L
+ * D B _ D U P _ P A T H _ T A I L
  *
- *  Dup old path from starting index to end.
+ * Dup old path from starting index to end.
  */
 void
 db_dup_path_tail(register struct db_full_path *newp, register const struct db_full_path *oldp, int start)
@@ -165,24 +170,25 @@ db_dup_path_tail(register struct db_full_path *newp, register const struct db_fu
     memcpy((char *)newp->fp_names, (char *)&oldp->fp_names[start], newp->fp_len * sizeof(struct directory *));
 }
 
+
 /**
- *			D B _ P A T H _ T O _ S T R I N G
+ * D B _ P A T H _ T O _ S T R I N G
  *
- *  Unlike rt_path_str(), this version can be used in parallel.
- *  Caller is responsible for freeing the returned buffer.
+ * Unlike rt_path_str(), this version can be used in parallel.
+ * Caller is responsible for freeing the returned buffer.
  */
 char *
 db_path_to_string( const struct db_full_path *pp )
 {
-    register char	*cp;
-    char	*buf;
+    register char *cp;
+    char *buf;
     int len;
     int rem;
     int i;
 
     RT_CK_FULL_PATH( pp );
 
-    len = 3;	/* leading slash, trailing null, spare */
+    len = 3; /* leading slash, trailing null, spare */
     for ( i=pp->fp_len-1; i >= 0; i-- )  {
 	if ( pp->fp_names[i] )
 	    len += strlen( pp->fp_names[i]->d_namep ) + 1;
@@ -210,12 +216,12 @@ db_path_to_string( const struct db_full_path *pp )
     return buf;
 }
 
+
 /**
- *			D B _ P A T H _ T O _ V L S
+ * D B _ P A T H _ T O _ V L S
  *
- *  Append a string representation of the path onto the vls.
- *  Must have exactly the same formattting conventions as
- *  db_path_to_string().
+ * Append a string representation of the path onto the vls.  Must have
+ * exactly the same formattting conventions as db_path_to_string().
  */
 void
 db_path_to_vls( struct bu_vls *str, const struct db_full_path *pp )
@@ -234,37 +240,39 @@ db_path_to_vls( struct bu_vls *str, const struct db_full_path *pp )
     }
 }
 
+
 /**
- *			D B _ P R _ F U L L _ P A T H
+ * D B _ P R _ F U L L _ P A T H
  */
 void
 db_pr_full_path( const char *msg, const struct db_full_path *pathp )
 {
-    char	*sofar = db_path_to_string(pathp);
+    char *sofar = db_path_to_string(pathp);
 
     bu_log("%s %s\n", msg, sofar );
     bu_free(sofar, "path string");
 }
 
+
 /**
- *			D B _ S T R I N G _ T O _ P A T H
+ * D B _ S T R I N G _ T O _ P A T H
  *
- *  Reverse the effects of db_path_to_string().
+ * Reverse the effects of db_path_to_string().
  *
- *  The db_full_path structure will be initialized.  If it was already in use,
- *  user should call db_free_full_path() first.
+ * The db_full_path structure will be initialized.  If it was already
+ * in use, user should call db_free_full_path() first.
  *
- *  Returns -
+ * Returns -
  *	-1	One or more components of path did not exist in the directory.
  *	 0	OK
  */
 int
 db_string_to_path(struct db_full_path *pp, const struct db_i *dbip, const char *str)
 {
-    register char		*cp;
-    register char		*slashp;
+    register char	*cp;
+    register char	*slashp;
     struct directory	*dp;
-    char			*copy;
+    char		*copy;
     int			nslash = 0;
     int			ret = 0;
     int			len;
@@ -272,7 +280,7 @@ db_string_to_path(struct db_full_path *pp, const struct db_i *dbip, const char *
     RT_CK_DBI(dbip);
 
     /* Count slashes */
-    while ( *str == '/' )  str++;	/* strip off leading slashes */
+    while ( *str == '/' )  str++; /* strip off leading slashes */
     if ( *str == '\0' )  {
 	/* Path of a lone slash */
 	db_full_path_init( pp );
@@ -314,8 +322,8 @@ db_string_to_path(struct db_full_path *pp, const struct db_i *dbip, const char *
 	if ( (dp = db_lookup( dbip, cp, LOOKUP_NOISY )) == DIR_NULL )  {
 	    bu_log("db_string_to_path() of '%s' failed on '%s'\n",
 		   str, cp );
-	    ret = -1;	/* FAILED */
-			/* Fall through, storing null dp in this location */
+	    ret = -1; /* FAILED */
+	    /* Fall through, storing null dp in this location */
 	}
 	pp->fp_names[nslash++] = dp;
 	cp = slashp+1;
@@ -325,24 +333,25 @@ db_string_to_path(struct db_full_path *pp, const struct db_i *dbip, const char *
     return ret;
 }
 
+
 /**
- *			D B _ A R G V _ T O _ P A T H
+ * D B _ A R G V _ T O _ P A T H
  *
- *  Treat elements from argv[0] to argv[argc-1] as a path specification.
+ * Treat elements from argv[0] to argv[argc-1] as a path specification.
  *
- *  The path structure will be fully initialized.  If it was already in use,
- *  user should call db_free_full_path() first.
+ * The path structure will be fully initialized.  If it was already in
+ * use, user should call db_free_full_path() first.
  *
- *  Returns -
+ * Returns -
  *	-1	One or more components of path did not exist in the directory.
  *	 0	OK
  */
 int
 db_argv_to_path(register struct db_full_path *pp, struct db_i *dbip, int argc, const char *const *argv)
 {
-    struct directory	*dp;
-    int			ret = 0;
-    int			i;
+    struct directory *dp;
+    int ret = 0;
+    int i;
 
     RT_CK_DBI(dbip);
 
@@ -357,19 +366,20 @@ db_argv_to_path(register struct db_full_path *pp, struct db_i *dbip, int argc, c
 	if ( (dp = db_lookup( dbip, argv[i], LOOKUP_NOISY )) == DIR_NULL )  {
 	    bu_log("db_argv_to_path() failed on element %d='%s'\n",
 		   i, argv[i] );
-	    ret = -1;	/* FAILED */
-			/* Fall through, storing null dp in this location */
+	    ret = -1; /* FAILED */
+	    /* Fall through, storing null dp in this location */
 	}
 	pp->fp_names[i] = dp;
     }
     return ret;
 }
 
+
 /**
- *			D B _ F R E E _ F U L L _ P A T H
+ * D B _ F R E E _ F U L L _ P A T H
  *
- *  Free the contents of the db_full_path structure, but not the structure
- *  itself, which might be automatic.
+ * Free the contents of the db_full_path structure, but not the
+ * structure itself, which might be automatic.
  */
 void
 db_free_full_path(register struct db_full_path *pp)
@@ -383,10 +393,11 @@ db_free_full_path(register struct db_full_path *pp)
     }
 }
 
+
 /**
- *			D B _ I D E N T I C A L _ F U L L _ P A T H S
+ * D B _ I D E N T I C A L _ F U L L _ P A T H S
  *
- *  Returns -
+ * Returns -
  *	1	match
  *	0	different
  */
@@ -408,10 +419,11 @@ db_identical_full_paths(
     return 1;
 }
 
+
 /**
- *			D B _ F U L L _ P A T H _ S U B S E T
+ * D B _ F U L L _ P A T H _ S U B S E T
  *
- *  Returns -
+ * Returns -
  *	1	if 'b' is a proper subset of 'a'
  *	0	if not.
  */
@@ -442,15 +454,17 @@ db_full_path_subset(
 	/* 'b' is a proper subset */
 	return 1;
 
-    step:		;
+    step:
+	;
     }
     return 0;
 }
 
+
 /**
- *			D B _ F U L L _ P A T H _ S E A R C H
+ * D B _ F U L L _ P A T H _ S E A R C H
  *
- *  Returns -
+ * Returns -
  *	1	'dp' is found on this path
  *	0	not found
  */

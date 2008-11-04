@@ -256,6 +256,10 @@ proc mouse_solid_edit_select { x y } {
     global mged_players
     global mged_gui
 
+    if ![info exists mged_players] {
+	return
+    }
+
     if {[opendb] == ""} {
 	return
     }
@@ -277,6 +281,10 @@ proc mouse_matrix_edit_select { x y } {
     global mged_players
     global mged_gui
 
+    if ![info exists mged_players] {
+	return
+    }
+
     if {[opendb] == ""} {
 	return
     }
@@ -297,7 +305,6 @@ proc mouse_matrix_edit_select { x y } {
 }
 
 proc mouse_rt_obj_select { x y } {
-    global mged_players
     global mged_gui
     global rt_control
     global port
@@ -356,6 +363,10 @@ proc mouse_comb_edit_select { x y } {
     global mged_players
     global mged_gui
     global comb_control
+
+    if ![info exists mged_players] {
+	return
+    }
 
     if {[opendb] == ""} {
 	return

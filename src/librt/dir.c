@@ -90,10 +90,11 @@ rt_db_get_internal(
     const struct directory	*dp,
     const struct db_i	*dbip,
     const mat_t		mat,
-    struct resource		*resp)
+    struct resource	*resp)
 {
     struct bu_external	ext;
-    register int		id;
+    int id;
+    int ret;
 
     BU_INIT_EXTERNAL(&ext);
     RT_INIT_DB_INTERNAL(ip);
@@ -113,7 +114,11 @@ rt_db_get_internal(
     }
 
     /* ip is already initialized and should not be re-initialized */
-    if ( rt_functab[id].ft_import( ip, &ext, mat, dbip, resp ) < 0 )  {
+    ret = -1;
+    if (rt_functab[id].ft_import) {
+	ret = rt_functab[id].ft_import(ip, &ext, mat, dbip, resp);
+    }
+    if (ret < 0) {
 	bu_log("rt_db_get_internal(%s):  import failure\n",
 	       dp->d_namep );
 	rt_db_free_internal( ip, resp );
@@ -159,7 +164,10 @@ rt_db_put_internal(
 				     DB5_MAJORTYPE_BRLCAD );
 
     /* Scale change on export is 1.0 -- no change */
-    ret = ip->idb_meth->ft_export( &ext, ip, 1.0, dbip, resp );
+    ret = -1;
+    if (ip->idb_meth->ft_export) {
+	ret = ip->idb_meth->ft_export( &ext, ip, 1.0, dbip, resp );
+    }
     if ( ret < 0 )  {
 	bu_log("rt_db_put_internal(%s):  solid export failure\n",
 	       dp->d_namep);
@@ -198,12 +206,17 @@ rt_fwrite_internal(
     double conv2mm )
 {
     struct bu_external	ext;
+    int ret;
 
     RT_CK_DB_INTERNAL(ip);
     RT_CK_FUNCTAB( ip->idb_meth );
     BU_INIT_EXTERNAL( &ext );
 
-    if ( ip->idb_meth->ft_export( &ext, ip, conv2mm, NULL /*dbip*/, &rt_uniresource ) < 0 )  {
+    ret = -1;
+    if (ip->idb_meth->ft_export) {
+	ret = ip->idb_meth->ft_export(&ext, ip, conv2mm, NULL /*dbip*/, &rt_uniresource);
+    }
+    if (ret < 0) {
 	bu_log("rt_file_put_internal(%s): solid export failure\n",
 	       name );
 	bu_free_external( &ext );
@@ -235,7 +248,7 @@ rt_db_free_internal( struct rt_db_internal *ip, struct resource *resp )
      */
     if (ip->idb_meth) {
 	RT_CK_FUNCTAB(ip->idb_meth);
-	if (ip->idb_ptr) {
+	if (ip->idb_ptr && ip->idb_meth->ft_ifree) {
 	    ip->idb_meth->ft_ifree(ip, resp);
 	}
     }

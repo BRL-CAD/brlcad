@@ -47,8 +47,7 @@
 #include <stdarg.h>
 
 #include "bu.h"
-
-#include "./vld_std.h"
+#include "vmath.h"
 
 
 typedef struct
@@ -80,16 +79,16 @@ typedef struct queue
     point		*endpoint;	/* -> endpt of ray from point */
 }	queue;			/* entry in list of endpoints */
 
-static bool_t	Build(void), Chop(void), EndPoint(register coords *p, register segment *segp), GetArgs(int argc, char **argv), Input(register segment *inp),
+static int	Build(void), Chop(void), EndPoint(register coords *p, register segment *segp), GetArgs(int argc, char **argv), Input(register segment *inp),
     Near(register coords *ap, register coords *bp), Search(void), Split(coords *p, register segment *oldp, register segment *listh), Usage(void);
 static coords	*Intersect(register segment *a, register segment *b);
 static point	*LookUp(register coords *coop), *NewPoint(register coords *coop), *PutList(register coords *coop);
-static pointer	Alloc(unsigned int size);
+static void *	Alloc(unsigned int size);
 static queue	*Enqueue(register point *addp, register point *startp);
-static void	Output(register coords *coop), Toss(register pointer ptr);
+static void	Output(register coords *coop), Toss(register void * ptr);
 
-static bool_t	initial = true; 	/* false after first Output */
-static bool_t	vflag = false;		/* set if "-v" option found */
+static int	initial = 1; 	/* false after first Output */
+static int	vflag = 0;		/* set if "-v" option found */
 static double	tolerance = 0.0;	/* point matching slop */
 static double	tolsq = 0.0;		/* `tolerance' ^ 2 */
 static point	*headp = NULL;		/* head of list of points */
@@ -97,7 +96,7 @@ static segment	seghead = {
     &seghead };	/* segment list head */
 
 
-static bool_t
+static int
 Usage(void) 				/* print usage message */
 {
     return
@@ -126,14 +125,14 @@ main(int argc, char **argv)			/* "cad_boundp" entry point */
 }
 
 
-static bool_t
+static int
 GetArgs(int argc, char **argv)			/* process command arguments */
     /* argument count */
     /* argument strings */
 {
-    static bool_t	iflag = false;	/* set if "-i" option found */
-    static bool_t	oflag = false;	/* set if "-o" option found */
-    static bool_t	tflag = false;	/* set if "-t" option found */
+    static int	iflag = 0;	/* set if "-i" option found */
+    static int	oflag = 0;	/* set if "-o" option found */
+    static int	tflag = 0;	/* set if "-t" option found */
     int		c;		/* option letter */
 
 #ifdef	DEBUG
@@ -146,7 +145,7 @@ GetArgs(int argc, char **argv)			/* process command arguments */
 		if ( iflag )
 		    return
 			fprintf(stderr, "too many -i options" );
-		iflag = true;
+		iflag = 1;
 
 		if ( strcmp( bu_optarg, "-" ) != 0
 		     && freopen( bu_optarg, "r", stdin ) == NULL
@@ -159,7 +158,7 @@ GetArgs(int argc, char **argv)			/* process command arguments */
 		if ( oflag )
 		    return
 			fprintf(stderr, "too many -o options" );
-		oflag = true;
+		oflag = 1;
 
 		if ( strcmp( bu_optarg, "-" ) != 0
 		     && freopen( bu_optarg, "w", stdout ) == NULL
@@ -172,7 +171,7 @@ GetArgs(int argc, char **argv)			/* process command arguments */
 		if ( tflag )
 		    return
 			fprintf(stderr, "too many -t options" );
-		tflag = true;
+		tflag = 1;
 
 		if ( sscanf( bu_optarg, "%le", &tolerance ) != 1 )
 		    return
@@ -181,14 +180,14 @@ GetArgs(int argc, char **argv)			/* process command arguments */
 		break;
 
 	    case 'v':
-		vflag = true;
+		vflag = 1;
 		break;
 
 	    case '?':
 		return Usage(); /* print usage message */
 	}
 
-    return true;
+    return 1;
 }
 
 
@@ -199,7 +198,7 @@ GetArgs(int argc, char **argv)			/* process command arguments */
   process.  It is also hard to do right; thus the elaborateness.
 */
 
-static bool_t
+static int
 Chop(void)					/* chop vectors into segments */
 {
     segment *inp;			/* -> input whole segment */
@@ -260,7 +259,7 @@ Chop(void)					/* chop vectors into segments */
 			 || ( !EndPoint( i, segp )
 			      && !Split( i, segp, &seghead ) )
 			)	/* out of memory */
-			return false;
+			return 0;
 
 		    break;	/* next `segp' */
 		}
@@ -299,13 +298,13 @@ Chop(void)					/* chop vectors into segments */
 	pp->links = seghead.links;	/* last-piece link */
 	seghead.links = piecehead.links;	/* add pieces */
     }
-    Toss( (pointer)inp );		/* unused segment at EOF */
+    Toss( (void *)inp );		/* unused segment at EOF */
 
     return inp != NULL;
 }
 
 
-static bool_t
+static int
 Split(coords *p, register segment *oldp, register segment *listh) 		/* split segment in two */
     /* -> break point */
     /* -> segment to be split */
@@ -321,18 +320,18 @@ Split(coords *p, register segment *oldp, register segment *listh) 		/* split seg
 	);
 #endif
     if ( (newp = (segment *)Alloc( (unsigned)sizeof(segment) )) == NULL )
-	return false;		/* out of heap space */
+	return 0;		/* out of heap space */
     newp->links = listh->links;
     newp->sxy = *p;
     newp->exy = oldp->exy;
     oldp->exy = *p; 		/* old entry, new endpoint */
     listh->links = newp;		/* attach to list head */
 
-    return true;
+    return 1;
 }
 
 
-static bool_t
+static int
 Build(void) 				/* build linked lists */
 {
     register segment	*listp; /* -> segment list entry */
@@ -343,7 +342,7 @@ Build(void) 				/* build linked lists */
 #endif
     /* When we are finished, `seghead' will become invalid. */
     for ( listp = seghead.links; listp != &seghead;
-	  deadp = listp, listp = listp->links, Toss( (pointer)deadp )
+	  deadp = listp, listp = listp->links, Toss( (void *)deadp )
 	)	{
 	register point	*startp, *endp; /* -> segment endpts */
 
@@ -352,14 +351,14 @@ Build(void) 				/* build linked lists */
 	     || Enqueue( startp, endp ) == NULL
 	     || Enqueue( endp, startp ) == NULL
 	    )
-	    return false;	/* out of heap space */
+	    return 0;	/* out of heap space */
     }
 
-    return	true;
+    return	1;
 }
 
 
-static bool_t
+static int
 Search(void)				/* output bounding polygon */
 {
     double		from;		/* backward edge direction */
@@ -370,7 +369,7 @@ Search(void)				/* output bounding polygon */
     fprintf(stderr, "\n\t\tSearch\n" );
 #endif
     if ( headp == NULL )
-	return true;		/* trivial case */
+	return 1;		/* trivial case */
 
     /* Locate the lowest point; this is the first polygon vertex. */
     {
@@ -407,13 +406,13 @@ Search(void)				/* output bounding polygon */
 	    if ( vflag && !initial )
 		Output( &first );	/* closure */
 
-	    return true;	/* been here before => done */
+	    return 1;	/* been here before => done */
 	}
 
 	Output( &currentp->xy );	/* found vertex */
 	if ( vflag && initial )
 	{
-	    initial = false;
+	    initial = 0;
 	    first = currentp->xy;	/* save for closure */
 	}
 
@@ -442,7 +441,7 @@ Search(void)				/* output bounding polygon */
 			    (endp->xy.y - currentp->xy.y),
 			    (double)
 			    (endp->xy.x - currentp->xy.x)
-		    ) * DEGRAD;
+		    ) * DEG2RAD;
 #ifdef	DEBUG
 	    fprintf(stderr, "to %g", to );
 #endif
@@ -584,10 +583,10 @@ Intersect(register segment *a, register segment *b)			/* determine intersection 
 	 b->exy.x + tolerance	/* b right */
 	 || a->exy.x < 		/* a right */
 	 b->sxy.x - tolerance	/* b left */
-	 || Min( a->sxy.y, a->exy.y ) >		/* a bottom */
-	 Max( b->sxy.y, b->exy.y ) + tolerance	/* b top */
-	 || Max( a->sxy.y, a->exy.y ) <		/* a top */
-	 Min( b->sxy.y, b->exy.y ) - tolerance	/* b bottom */
+	 || FMIN( a->sxy.y, a->exy.y ) >		/* a bottom */
+	 FMAX( b->sxy.y, b->exy.y ) + tolerance	/* b top */
+	 || FMAX( a->sxy.y, a->exy.y ) <		/* a top */
+	 FMIN( b->sxy.y, b->exy.y ) - tolerance	/* b bottom */
 	)	{
 #ifdef	DEBUG
 	fprintf(stderr, "ranges don't intersect");
@@ -609,17 +608,17 @@ Intersect(register segment *a, register segment *b)			/* determine intersection 
 	double	t;			/* test value for norm */
 
 	norm = 0.0;
-	if ( (t = Abs( xaeas )) > norm )
+	if ( (t = fabs( xaeas )) > norm )
 	    norm = t;
-	if ( (t = Abs( xbebs )) > norm )
+	if ( (t = fabs( xbebs )) > norm )
 	    norm = t;
-	if ( (t = Abs( yaeas )) > norm )
+	if ( (t = fabs( yaeas )) > norm )
 	    norm = t;
-	if ( (t = Abs( ybebs )) > norm )
+	if ( (t = fabs( ybebs )) > norm )
 	    norm = t;
 
 #define EPSILON 1.0e-06 		/* relative `det' size thresh */
-	if ( Abs( det ) <= EPSILON * norm * norm )
+	if ( fabs( det ) <= EPSILON * norm * norm )
 	{
 #ifdef	DEBUG
 	    fprintf(stderr, "parallel: det=%g, norm=%g", det, norm );
@@ -629,7 +628,7 @@ Intersect(register segment *a, register segment *b)			/* determine intersection 
 #undef	EPSILON
     }
     {
-	/* `p' must be static; Intersect returns a pointer to it! */
+	/* `p' must be static; Intersect returns a void * to it! */
 	static coords	p;		/* point of intersection */
 	double		lambda, mu;	/* segment parameters */
 	double		onemmu; 	/* 1.0 - mu, for efficiency */
@@ -677,7 +676,7 @@ Intersect(register segment *a, register segment *b)			/* determine intersection 
 }
 
 
-static bool_t
+static int
 EndPoint(register coords *p, register segment *segp)			/* check for segment endpoint */
     /* -> point being tested */
     /* -> segment */
@@ -694,7 +693,7 @@ EndPoint(register coords *p, register segment *segp)			/* check for segment endp
 }
 
 
-static bool_t
+static int
 Near(register coords *ap, register coords *bp)				/* check if within tolerance */
     /* -> points being checked */
 {
@@ -718,11 +717,11 @@ Near(register coords *ap, register coords *bp)				/* check if within tolerance *
 }
 
 
-static pointer
+static void *
 Alloc(unsigned int size)				/* allocate storage from heap */
     /* # bytes required */
 {
-    register pointer	ptr;	/* -> allocated storage */
+    register void *	ptr;	/* -> allocated storage */
 
     if ( (ptr = malloc( size * sizeof(char) )) == NULL )
 	fprintf(stderr, "out of memory");
@@ -732,7 +731,7 @@ Alloc(unsigned int size)				/* allocate storage from heap */
 
 
 static void
-Toss(register pointer ptr)				/* return storage to heap */
+Toss(register void * ptr)				/* return storage to heap */
     /* -> allocated storage */
 {
     if ( ptr != NULL )
@@ -740,7 +739,7 @@ Toss(register pointer ptr)				/* return storage to heap */
 }
 
 
-static bool_t
+static int
 Input(register segment *inp)				/* input stroke record */
     /* -> input segment */
 {
@@ -763,13 +762,13 @@ Input(register segment *inp)				/* input stroke record */
 	    continue;	/* skip color, comment, etc. */
 
 	if ( cvt == 4 )
-	    return true;	/* successfully converted */
+	    return 1;	/* successfully converted */
 
 	fprintf(stderr, "bad input: %s", inbuf);
 	bu_exit( 5, NULL );		/* return false insufficient */
     }
 
-    return false;			/* EOF */
+    return 0;			/* EOF */
 }
 
 

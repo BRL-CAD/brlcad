@@ -327,7 +327,7 @@ ray_miss_vertex(struct ray_data *rd, struct vertexuse *vu_p)
 	return(myhit);
     }
 
-    GET_HITMISS(myhit, rd->ap);
+    NMG_GET_HITMISS(myhit, rd->ap);
     NMG_INDEX_ASSIGN(rd->hitmiss, vu_p->v_p, myhit);
     myhit->outbound_use = (long *)vu_p;
     myhit->inbound_use = (long *)vu_p;
@@ -971,7 +971,7 @@ ray_hit_vertex(struct ray_data *rd, struct vertexuse *vu_p, int status)
 	/* oops, we have to change a MISS into a HIT */
 	BU_LIST_DEQUEUE(&myhit->l);
     } else {
-	GET_HITMISS(myhit, rd->ap);
+	NMG_GET_HITMISS(myhit, rd->ap);
 	NMG_INDEX_ASSIGN(rd->hitmiss, vu_p->v_p, myhit);
 	myhit->outbound_use = (long *)vu_p;
 	myhit->inbound_use = (long *)vu_p;
@@ -1116,7 +1116,7 @@ colinear_edge_ray(struct ray_data *rd, struct edgeuse *eu_p)
     vhit1->other = vhit2;
     vhit2->other = vhit1;
 
-    GET_HITMISS(myhit, rd->ap);
+    NMG_GET_HITMISS(myhit, rd->ap);
     NMG_INDEX_ASSIGN(rd->hitmiss, eu_p->e_p, myhit);
     myhit->hit.hit_private = (genptr_t)eu_p->e_p;
 
@@ -1140,7 +1140,7 @@ colinear_edge_ray(struct ray_data *rd, struct edgeuse *eu_p)
 		ray_hit_vertex(rd, vu_p, NMG_VERT_ENTER_LEAVE); \
 	else \
 		ray_hit_vertex(rd, vu_p, NMG_VERT_UNKNOWN); \
-	GET_HITMISS(myhit, rd->ap); \
+	NMG_GET_HITMISS(myhit, rd->ap); \
 	NMG_INDEX_ASSIGN(rd->hitmiss, eu_p->e_p, myhit); \
 	myhit->hit.hit_private = (genptr_t)eu_p->e_p; \
 	\
@@ -1410,7 +1410,7 @@ ray_hit_edge(struct ray_data *rd, struct edgeuse *eu_p, double dist_along_ray, f
 		break;
 	}
     } else {
-	GET_HITMISS(myhit, rd->ap);
+	NMG_GET_HITMISS(myhit, rd->ap);
     }
 
     /* create hit structure for this edge */
@@ -1469,7 +1469,7 @@ isect_ray_lseg(struct ray_data *rd, struct edgeuse *eu_p)
 	    vhit1 = isect_ray_vertexuse(rd, eu_p->vu_p);
 	    vhit2 = isect_ray_vertexuse(rd, eu_p->eumate_p->vu_p);
 
-	    GET_HITMISS(myhit, rd->ap);
+	    NMG_GET_HITMISS(myhit, rd->ap);
 	    NMG_INDEX_ASSIGN(rd->hitmiss, eu_p->e_p, myhit);
 
 	    myhit->hit.hit_private = (genptr_t)eu_p->e_p;
@@ -1498,7 +1498,7 @@ isect_ray_lseg(struct ray_data *rd, struct edgeuse *eu_p)
 	    (void)ray_miss_vertex(rd, eu_p->eumate_p->vu_p);
 
 	    /* record the fact that we missed the edge */
-	    GET_HITMISS(myhit, rd->ap);
+	    NMG_GET_HITMISS(myhit, rd->ap);
 	    NMG_INDEX_ASSIGN(rd->hitmiss, eu_p->e_p, myhit);
 	    myhit->hit.hit_private = (genptr_t)eu_p->e_p;
 
@@ -1513,7 +1513,7 @@ isect_ray_lseg(struct ray_data *rd, struct edgeuse *eu_p)
 	    ray_miss_vertex(rd, eu_p->vu_p);
 	    ray_miss_vertex(rd, eu_p->eumate_p->vu_p);
 
-	    GET_HITMISS(myhit, rd->ap);
+	    NMG_GET_HITMISS(myhit, rd->ap);
 	    NMG_INDEX_ASSIGN(rd->hitmiss, eu_p->e_p, myhit);
 	    myhit->hit.hit_private = (genptr_t)eu_p->e_p;
 
@@ -1985,7 +1985,7 @@ isect_ray_snurb_face(struct ray_data *rd, struct faceuse *fu, struct face_g_snur
 		continue;
 	    }
 
-	    GET_HITMISS(myhit, rd->ap);
+	    NMG_GET_HITMISS(myhit, rd->ap);
 	    NMG_INDEX_ASSIGN(rd->hitmiss, fu->f_p, myhit);
 	    myhit->hit.hit_private = (genptr_t)fu->f_p;
 	    myhit->inbound_use = myhit->outbound_use = (long *)&fu->l.magic;
@@ -2165,7 +2165,7 @@ isect_ray_planar_face(struct ray_data *rd, struct faceuse *fu_p, struct face_g_p
 					  rd->tol);
 
 
-    GET_HITMISS(myhit, rd->ap);
+    NMG_GET_HITMISS(myhit, rd->ap);
     NMG_INDEX_ASSIGN(rd->hitmiss, fu_p->f_p, myhit);
     myhit->hit.hit_private = (genptr_t)fu_p->f_p;
     myhit->hit.hit_surfno = fu_p->f_p->index;
@@ -2281,7 +2281,7 @@ isect_ray_faceuse(struct ray_data *rd, struct faceuse *fu_p)
 	code = bn_isect_line3_plane( &dist, rd->rp->r_pt, rd->rp->r_dir, fgp->N, rd->tol );
 	if ( code < 1 )
 	{
-	    GET_HITMISS(myhit, rd->ap);
+	    NMG_GET_HITMISS(myhit, rd->ap);
 	    NMG_INDEX_ASSIGN(rd->hitmiss, fu_p->f_p, myhit);
 	    myhit->hit.hit_private = (genptr_t)fu_p->f_p;
 	    myhit->hit.hit_surfno = fu_p->f_p->index;
@@ -2295,7 +2295,7 @@ isect_ray_faceuse(struct ray_data *rd, struct faceuse *fu_p)
 	VJOIN1( hit_pt, rd->rp->r_pt, dist, rd->rp->r_dir )
 	    if ( !V3PT_IN_RPP( hit_pt, fp->min_pt, fp->max_pt ) )
 	    {
-		GET_HITMISS(myhit, rd->ap);
+		NMG_GET_HITMISS(myhit, rd->ap);
 		NMG_INDEX_ASSIGN(rd->hitmiss, fu_p->f_p, myhit);
 		myhit->hit.hit_private = (genptr_t)fu_p->f_p;
 		myhit->hit.hit_surfno = fu_p->f_p->index;
@@ -2312,7 +2312,7 @@ isect_ray_faceuse(struct ray_data *rd, struct faceuse *fu_p)
     }
     else if (!rt_in_rpp(rd->rp, rd->rd_invdir,
 			fu_p->f_p->min_pt, fu_p->f_p->max_pt) ) {
-	GET_HITMISS(myhit, rd->ap);
+	NMG_GET_HITMISS(myhit, rd->ap);
 	NMG_INDEX_ASSIGN(rd->hitmiss, fu_p->f_p, myhit);
 	myhit->hit.hit_private = (genptr_t)fu_p->f_p;
 	myhit->hit.hit_surfno = fu_p->f_p->index;

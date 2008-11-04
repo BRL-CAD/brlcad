@@ -144,7 +144,7 @@ struct dm dm_wgl = {
     1,				/* depth buffer is writable */
     1,				/* zbuffer */
     0,				/* no zclipping */
-    0,                            /* clear back buffer after drawing and swap */
+    0,                          /* clear back buffer after drawing and swap */
     0				/* Tcl interpreter */
 };
 
@@ -348,7 +348,7 @@ wgl_open(Tcl_Interp *interp, int argc, char *argv[])
 		  (char *)Tk_Name(((struct dm_xvars *)dmp->dm_vars.pub_vars)->xtkwin));
 
     bu_vls_init(&str);
-    bu_vls_printf(&str, "_init_dm %S %S\n",
+    bu_vls_printf(&str, "_init_dm %V %V\n",
 		  &init_proc_vls,
 		  &dmp->dm_pathName);
 

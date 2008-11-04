@@ -2,13 +2,13 @@
 /* $NoKeywords: $ */
 /*
 //
-// Copyright (c) 1993-2001 Robert McNeel & Associates. All rights reserved.
+// Copyright (c) 1993-2007 Robert McNeel & Associates. All rights reserved.
 // Rhinoceros is a registered trademark of Robert McNeel & Assoicates.
 //
 // THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY.
 // ALL IMPLIED WARRANTIES OF FITNESS FOR ANY PARTICULAR PURPOSE AND OF
 // MERCHANTABILITY ARE HEREBY DISCLAIMED.
-//
+//				
 // For complete openNURBS copyright information see <http://www.opennurbs.org>.
 //
 ////////////////////////////////////////////////////////////////
@@ -17,10 +17,10 @@
 #include "opennurbs.h"
 
 
-bool ON_Brep::SplitKinkyFaces(
-        double kink_tol_radians,
-        bool bCompactIfNeeded
-        )
+bool ON_Brep::SplitKinkyFaces( 
+	double kink_tol_radians,
+	bool bCompactIfNeeded
+	)
 {
   bool rc = true;
   // see if splitting is required
@@ -39,7 +39,7 @@ bool ON_Brep::SplitKinkyFaces(
 }
 
 
-bool ON_Brep::SplitKinkyFace(
+bool ON_Brep::SplitKinkyFace( 
   int,   // face_index - formal parameter intentionally ignored in this virtual function
   double // kink_tol_radians - formal parameter intentionally ignored in this virtual function
   )
@@ -48,20 +48,20 @@ bool ON_Brep::SplitKinkyFace(
   return false;
 }
 
-bool ON_Brep::SplitKinkyEdge(
-  int edge_index,
+bool ON_Brep::SplitKinkyEdge( 
+  int edge_index, 
   double kink_tol_radians
   )
 {
   // Default kink_tol_radians MUST BE ON_PI/180.0.
   //
-  // The default kink tol must be kept in sync with the default for
+  // The default kink tol must be kept in sync with the default for 
   // TL_Brep::SplitKinkyFace() and ON_Brep::SplitKinkyFace().
   // See comments in TL_Brep::SplitKinkyFace() for more details.
 
   bool rc = true;
   if (kink_tol_radians < ON_ZERO_TOLERANCE) kink_tol_radians = ON_ZERO_TOLERANCE;
-  else if (kink_tol_radians > ON_PI - ON_ZERO_TOLERANCE)
+  else if (kink_tol_radians > ON_PI - ON_ZERO_TOLERANCE) 
     kink_tol_radians = ON_PI - ON_ZERO_TOLERANCE;
   double atol = cos(kink_tol_radians);
   if (edge_index < 0 || edge_index >= m_E.Count()) return false;
@@ -75,7 +75,7 @@ bool ON_Brep::SplitKinkyEdge(
   int scount = curve->SpanCount();
   while (split_t.Count() < scount){
     double t;
-    if (!E.GetNextDiscontinuity(ON::G1_continuous, t0, E.Domain()[1],
+    if (!E.GetNextDiscontinuity(ON::G1_continuous, t0, E.Domain()[1], 
       &t, &hint, NULL, atol)) break;
     split_t.Append(t);
     t0 = t;
@@ -96,7 +96,7 @@ bool ON_Brep::SplitKinkyEdge(
     //   attempts to trim a nano-gnats-wisker of the end of a trim.
 
     // set to true if edge should be trimmed instead of split.
-    bool bTrimEdgeEnd = false;
+    bool bTrimEdgeEnd = false; 
 
     double edge_split_s = ON_Interval(t0,t1).NormalizedParameterAt(split_t[i]);
     double trim_split_s = 0.5;
@@ -105,7 +105,7 @@ bool ON_Brep::SplitKinkyEdge(
     {
       //m_E[edge_index].ON_CurveProxy::Trim(ON_Interval(split_t[i], t1));
       if ( split_t[i] - t0 <= ON_ZERO_TOLERANCE )
-        edge_split_s = 0.0;  // just in case edge_split_s is too large for later test
+	edge_split_s = 0.0;  // just in case edge_split_s is too large for later test
       bTrimEdgeEnd = true;
       continue;
     }
@@ -113,7 +113,7 @@ bool ON_Brep::SplitKinkyEdge(
     {
       //m_E[edge_index].ON_CurveProxy::Trim(ON_Interval(t0, split_t[i]));
       if ( t1 - split_t[i] <= ON_ZERO_TOLERANCE )
-        edge_split_s = 1.0; // just in case edge_split_s is too small for later test
+	edge_split_s = 1.0; // just in case edge_split_s is too small for later test
       bTrimEdgeEnd = true;
       continue;
     }
@@ -126,25 +126,25 @@ bool ON_Brep::SplitKinkyEdge(
     {
       for (int j=0; j<m_E[edge_index].m_ti.Count(); j++)
       {
-        double t;
-        if (!GetTrimParameter(m_E[edge_index].m_ti[j], split_t[i], &t)){
-          rc = false;
-          continue;
-        }
-        trim_t.Append(t);
-        const ON_BrepTrim& trim = m_T[m_E[edge_index].m_ti[j]];
-        ON_Interval trim_domain = trim.Domain();
-        trim_split_s = trim_domain.NormalizedParameterAt(t);
-        if ( trim_split_s <= ON_SQRT_EPSILON || t - trim_domain[0] <= ON_ZERO_TOLERANCE )
-        {
-          bTrimEdgeEnd = true;
-          break;
-        }
-        if ( trim_split_s >= 1.0-ON_SQRT_EPSILON || trim_domain[1] - t <= ON_ZERO_TOLERANCE )
-        {
-          bTrimEdgeEnd = true;
-          break;
-        }
+	double t;
+	if (!GetTrimParameter(m_E[edge_index].m_ti[j], split_t[i], &t)){
+	  rc = false;
+	  continue;
+	}
+	trim_t.Append(t);
+	const ON_BrepTrim& trim = m_T[m_E[edge_index].m_ti[j]];
+	ON_Interval trim_domain = trim.Domain();
+	trim_split_s = trim_domain.NormalizedParameterAt(t);
+	if ( trim_split_s <= ON_SQRT_EPSILON || t - trim_domain[0] <= ON_ZERO_TOLERANCE )
+	{
+	  bTrimEdgeEnd = true;
+	  break;
+	}
+	if ( trim_split_s >= 1.0-ON_SQRT_EPSILON || trim_domain[1] - t <= ON_ZERO_TOLERANCE )
+	{
+	  bTrimEdgeEnd = true;
+	  break;
+	}
       }
     }
 
@@ -154,20 +154,20 @@ bool ON_Brep::SplitKinkyEdge(
       // the end of the edge or a trim for us to split it.
       if ( edge_split_s <= 0.01 )
       {
-        if ( t0 < split_t[i] )
-          m_E[edge_index].ON_CurveProxy::Trim(ON_Interval(split_t[i], t1));
+	if ( t0 < split_t[i] )
+	  m_E[edge_index].ON_CurveProxy::Trim(ON_Interval(split_t[i], t1));
       }
       else if ( edge_split_s >= 0.99 )
       {
-        if ( split_t[i] < t1 )
-          m_E[edge_index].ON_CurveProxy::Trim(ON_Interval(t0, split_t[i]));
+	if ( split_t[i] < t1 )
+	  m_E[edge_index].ON_CurveProxy::Trim(ON_Interval(t0, split_t[i]));
       }
       else
       {
-        // no decent agreement between trims and edges - continue
-        // with other parameters but this is basically the same
-        // thing as having SplitEdge() fail.
-        rc = false;
+	// no decent agreement between trims and edges - continue
+	// with other parameters but this is basically the same
+	// thing as having SplitEdge() fail.
+	rc = false;
       }
 
       continue;
