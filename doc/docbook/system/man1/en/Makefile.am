@@ -26,8 +26,10 @@ man1DOCBOOK = \
 	M.xml \
 	Z.xml \
 	adc.xml \
+	ae.xml \
 	alias-pix.xml \
 	all_sf.xml \
+	analyze.xml \
 	anim_cascade.xml \
 	anim_fly.xml \
 	anim_hardtrack.xml \
@@ -35,6 +37,15 @@ man1DOCBOOK = \
 	anim_lookat.xml \
 	anim_offset.xml \
 	anim_orient.xml \
+	animmate.xml \
+	apropos.xml \
+	aproposdevel.xml \
+	aproposlib.xml \
+	arb.xml \
+	arced.xml \
+	area.xml \
+	arot.xml \
+	attach.xml \
 	bwscale.xml \
 	g_qa.xml \
 	mged.xml \
