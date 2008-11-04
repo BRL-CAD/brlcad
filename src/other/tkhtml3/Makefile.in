@@ -184,6 +184,8 @@ all: binaries libraries # doc
 
 binaries: $(BINARIES) pkgIndex.tcl
 
+libraries:
+
 
 #========================================================================
 # Your doc target should differentiate from doc builds (by the developer)
@@ -281,7 +283,7 @@ HEADERS = html.h cssInt.h css.h cssprop.h htmltokens.h htmldefaultstyle.c
 
 HDR = $(GENHDR) $(SRCHDR)
 
-%.@OBJEXT@: %.c $(HEADERS)
+.c.@OBJEXT@: $(HEADERS)
 	$(COMPILE) -c -I. -I$(srcdir)/src `@CYGPATH@ $<` -o $@
 
 #========================================================================
