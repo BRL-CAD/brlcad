@@ -11,7 +11,7 @@ changes made.  See document footer for additional details.
 
 
 ----------------------------------------------------------------------
---- 2008-09-XX  Release 7.13.0                                     ---
+--- 2008-11-04  Release 7.14.0                                     ---
 ----------------------------------------------------------------------
 
 Of the many enhancements included in this release, MGED gets a
@@ -25,7 +25,8 @@ the geometry hierarchy, and much more.  You can combine search
 expressions together using boolean logic as well for even more
 powerful operations.
 
-* add nnodes option to search, remove empty opt. - Cliff Yapp
+* remove -empty option from mged "search" command - Cliff Yapp
+* add -nnodes node count option to mged "search" command - Cliff Yapp
 * upgraded libpng to 1.2.32 - Erik Greenwald
 * fixed memory leak with in-memory geometry databases - Daniel Roßberg
 * mged help menu is restructured for improved usability - Cliff Yapp
