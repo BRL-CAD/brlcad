@@ -36,7 +36,7 @@
 #========================================================================
 
 PKG_SOURCES	= @PKG_SOURCES@
-PKG_OBJECTS	= @PKG_OBJECTS@ cssprop.$(OBJEXT)
+PKG_OBJECTS	= @PKG_OBJECTS@ # cssprop.$(OBJEXT)
 
 PKG_STUB_SOURCES = @PKG_STUB_SOURCES@
 PKG_STUB_OBJECTS = @PKG_STUB_OBJECTS@
@@ -283,8 +283,76 @@ HEADERS = html.h cssInt.h css.h cssprop.h htmltokens.h htmldefaultstyle.c
 
 HDR = $(GENHDR) $(SRCHDR)
 
-.c.@OBJEXT@: $(HEADERS)
-	$(COMPILE) -c -I. -I$(srcdir)/src `@CYGPATH@ $<` -o $@
+css.o: cssprop.h htmltokens.h
+	$(COMPILE) -c -I. -I$(srcdir)/src $(srcdir)/src/css.c -o $@
+
+cssdynamic.o:
+	$(COMPILE) -c -I. -I$(srcdir)/src $(srcdir)/src/cssdynamic.c -o $@
+
+cssparser.o:
+	$(COMPILE) -c -I. -I$(srcdir)/src $(srcdir)/src/cssparser.c -o $@
+
+csssearch.o:
+	$(COMPILE) -c -I. -I$(srcdir)/src $(srcdir)/src/csssearch.c -o $@
+
+htmldraw.o:
+	$(COMPILE) -c -I. -I$(srcdir)/src $(srcdir)/src/htmldraw.c -o $@
+
+htmlfloat.o:
+	$(COMPILE) -c -I. -I$(srcdir)/src $(srcdir)/src/htmlfloat.c -o $@
+
+htmlhash.o:
+	$(COMPILE) -c -I. -I$(srcdir)/src $(srcdir)/src/htmlhash.c -o $@
+
+htmlw.o:
+	$(COMPILE) -c -I. -I$(srcdir)/src $(srcdir)/src/htmlw.c -o $@
+
+htmlimage.o:
+	$(COMPILE) -c -I. -I$(srcdir)/src $(srcdir)/src/htmlimage.c -o $@
+
+htmlinline.o:
+	$(COMPILE) -c -I. -I$(srcdir)/src $(srcdir)/src/htmlinline.c -o $@
+
+htmllayout.o:
+	$(COMPILE) -c -I. -I$(srcdir)/src $(srcdir)/src/htmllayout.c -o $@
+
+htmlparse.o:
+	$(COMPILE) -c -I. -I$(srcdir)/src $(srcdir)/src/htmlparse.c -o $@
+
+htmlprop.o:
+	$(COMPILE) -c -I. -I$(srcdir)/src $(srcdir)/src/htmlprop.c -o $@
+
+htmlstyle.o:
+	$(COMPILE) -c -I. -I$(srcdir)/src $(srcdir)/src/htmlstyle.c -o $@
+
+htmltagdb.o:
+	$(COMPILE) -c -I. -I$(srcdir)/src $(srcdir)/src/htmltagdb.c -o $@
+
+htmltable.o:
+	$(COMPILE) -c -I. -I$(srcdir)/src $(srcdir)/src/htmltable.c -o $@
+
+htmltcl.o: htmldefaultstyle.c
+	$(COMPILE) -c -I. -I$(srcdir)/src $(srcdir)/src/htmltcl.c -o $@
+
+htmltree.o:
+	$(COMPILE) -c -I. -I$(srcdir)/src $(srcdir)/src/htmltree.c -o $@
+
+swproc.o:
+	$(COMPILE) -c -I. -I$(srcdir)/src $(srcdir)/src/swproc.c -o $@
+
+restrack.o:
+	$(COMPILE) -c -I. -I$(srcdir)/src $(srcdir)/src/restrack.c -o $@
+
+htmldecode.o:
+	$(COMPILE) -c -I. -I$(srcdir)/src $(srcdir)/src/htmldecode.c -o $@
+
+htmltext.o:
+	$(COMPILE) -c -I. -I$(srcdir)/src $(srcdir)/src/htmltext.c -o $@
+
+htmlutil.o:
+	$(COMPILE) -c -I. -I$(srcdir)/src $(srcdir)/src/htmlutil.c -o $@
+
+html.h:
 
 #========================================================================
 # The special targets to generate C code from tcl and lemon files are 
@@ -299,10 +367,13 @@ htmldefaultstyle.c: $(srcdir)/src/tkhtml.tcl  $(srcdir)/src/html.css \
 
 htmltokens.h: htmltokens.c
 
-cssprop.h: cssprop.tcl
+cssprop.h: $(srcdir)/src/cssprop.tcl
 	$(TCLSH) $?
 
 cssprop.c: cssprop.h
+
+cssprop.tcl:
+
 
 #========================================================================
 # Create the pkgIndex.tcl file.
@@ -444,7 +515,8 @@ install-bin-binaries: binaries
 	  fi; \
 	done
 
-.SUFFIXES: .c .$(OBJEXT)
+.SUFFIXES:
+# .c .$(OBJEXT)
 
 Makefile: $(srcdir)/Makefile.in  $(top_builddir)/config.status
 	cd $(top_builddir) \
