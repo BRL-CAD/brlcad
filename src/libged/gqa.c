@@ -2106,6 +2106,8 @@ ged_gqa(struct ged *gedp, int argc, const char *argv[])
 	return BRLCAD_ERROR;
     }
 
+    bu_semaphore_reinit(GED_SEM_LAST);
+
     rtip = rt_new_rti(gedp->ged_wdbp->dbip);
     rtip->useair = use_air;
 
