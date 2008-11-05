@@ -907,9 +907,15 @@ xsltproc_works=no
 fop_works=no
 if test "x$bc_build_docs" != "xno" ; then
     AC_PATH_PROG(XSLTPROC, xsltproc)
+    if test "x$XSLTPROC" = "x" ; then
+	XSLTPROC=:
+    fi
     AC_SUBST(XSLTPROC)
 
     AC_PATH_PROG(APACHEFOP, fop)
+    if test "x$APACHEFOP" = "x" ; then
+	APACHEFOP=:
+    fi
     AC_SUBST(APACHEFOP)
 fi
 
