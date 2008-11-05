@@ -51,6 +51,7 @@ ged_make(struct ged *gedp, int argc, const char *argv[])
     struct rt_tor_internal	*tor_ip;
     struct rt_grip_internal	*grp_ip;
     struct rt_half_internal *half_ip;
+    struct rt_hyp_internal *hyp_ip;
     struct rt_rpc_internal *rpc_ip;
     struct rt_rhc_internal *rhc_ip;
     struct rt_epa_internal *epa_ip;
@@ -65,7 +66,7 @@ ged_make(struct ged *gedp, int argc, const char *argv[])
     struct rt_superell_internal	*superell_ip;
     struct rt_metaball_internal	*metaball_ip;
     struct rt_pnts_internal *pnts_ip;
-    static const char *usage = "-h | -t | -o origin -s sf name <arb8|arb7|arb6|arb5|arb4|arbn|ars|bot|ehy|ell|ell1|epa|eto|extrude|grip|half|nmg|part|pipe|pnts|rcc|rec|rhc|rpc|rpp|sketch|sph|tec|tgc|tor|trc>";
+    static const char *usage = "-h | -t | -o origin -s sf name <arb8|arb7|arb6|arb5|arb4|arbn|ars|bot|ehy|ell|ell1|epa|eto|extrude|grip|half|hyp|nmg|part|pipe|pnts|rcc|rec|rhc|rpc|rpp|sketch|sph|tec|tgc|tor|trc>";
 
     GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
     GED_CHECK_READ_ONLY(gedp, BRLCAD_ERROR);
@@ -533,6 +534,12 @@ ged_make(struct ged *gedp, int argc, const char *argv[])
 	/* Close enough for now.*/
 	eto_ip->eto_r = scale*0.5 - mag*cos(M_PI_4);
 	eto_ip->eto_rd = scale*0.05;
+    } else if (strcmp(argv[bu_optind+1], "hyp") == 0) {
+	vect_t vertex, height, vectA;
+	VSET(vertex, origin[X], origin[Y], origin[Z]);
+	VSET(height, 0.0, 0.0, scale);
+	VSET(vectA, 0.0, scale*0.5, 0.0);
+	return mk_hyp(gedp->ged_wdbp, argv[save_bu_optind], vertex, height, vectA, scale*0.25, 0.4);
     } else if (strcmp(argv[bu_optind+1], "part") == 0) {
 	internal.idb_major_type = DB5_MAJORTYPE_BRLCAD;
 	internal.idb_type = ID_PARTICLE;
