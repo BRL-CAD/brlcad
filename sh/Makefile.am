@@ -1,4 +1,3 @@
-# $Id$
 
 bin_SCRIPTS = \
 	elapsed.sh \

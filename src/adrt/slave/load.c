@@ -19,7 +19,6 @@
  */
 /** @file load.c
  *
- * $Id$
  */
 
 #ifndef TIE_PRECISION

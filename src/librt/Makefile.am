@@ -1,5 +1,3 @@
-# $Id$
-
 
 lib_LTLIBRARIES = librt.la
 noinst_LTLIBRARIES = \

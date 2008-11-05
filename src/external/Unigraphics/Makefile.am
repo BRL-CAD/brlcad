@@ -1,4 +1,3 @@
-# $Id$
 
 # XXX need to build unigraphics conditionally if the dev libs are available
 # XXX perhaps make it a special unbuilt-until-requested target

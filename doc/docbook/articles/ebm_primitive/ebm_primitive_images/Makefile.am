@@ -1,4 +1,3 @@
-# $Id$
 
 ebm_primitivedir = $(BRLCAD_DATA)/html/articles/ebm_primitive/ebm_primitive_images
 

@@ -1,4 +1,3 @@
-# $Id$
 
 lib_LTLIBRARIES = liborle.la
 man_MANS = liborle.3

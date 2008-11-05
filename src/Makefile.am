@@ -1,4 +1,3 @@
-# $Id$
 
 lib_LTLIBRARIES = libbrlcad.la
 noinst_LTLIBRARIES = libbrlcad_nil.la

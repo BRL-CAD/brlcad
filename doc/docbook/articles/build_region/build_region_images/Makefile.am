@@ -1,4 +1,3 @@
-# $Id$
 
 build_regiondir = $(BRLCAD_DATA)/html/articles/build_region/build_region_images
 

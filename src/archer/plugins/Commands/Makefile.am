@@ -1,4 +1,3 @@
-# $Id$
 
 pluginsdir = $(BRLCAD_DATA)/plugins/archer/Command
 

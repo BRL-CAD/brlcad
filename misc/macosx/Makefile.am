@@ -1,4 +1,3 @@
-# $Id$
 
 openUp_SOURCES = \
 	openUp.c

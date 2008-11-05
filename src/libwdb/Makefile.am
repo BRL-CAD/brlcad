@@ -1,4 +1,3 @@
-# $Id$
 
 lib_LTLIBRARIES = libwdb.la
 noinst_LTLIBRARIES = libwdb_nil.la

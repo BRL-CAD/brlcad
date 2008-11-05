@@ -1,4 +1,3 @@
-# $Id$
 
 include_HEADERS = \
 	jama_cholesky.h \

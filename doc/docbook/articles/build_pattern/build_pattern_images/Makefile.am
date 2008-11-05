@@ -1,4 +1,3 @@
-# $Id$
 
 build_patterndir = $(BRLCAD_DATA)/html/articles/build_pattern/build_pattern_images
 

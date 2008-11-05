@@ -1,4 +1,3 @@
-# $Id$
 
 volIIIimagesdir = $(BRLCAD_DATA)/html/books/tutorial_series/volumeIII_images
 

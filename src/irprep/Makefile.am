@@ -1,4 +1,3 @@
-# $Id$
 
 if WITH_X11
 IR_X_BIN=ir-X

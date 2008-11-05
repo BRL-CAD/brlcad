@@ -1,4 +1,3 @@
-# $Id$
 
 sysconfdir = $(BRLCAD_DATA)/awf
 dist_sysconf_DATA = \

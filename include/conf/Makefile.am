@@ -1,4 +1,3 @@
-# $Id$
 
 COUNT: DATE HOST PATH USER
 	test -f $@ && expr `cat COUNT` + 1 > $@ || $(ECHO) "1" > $@

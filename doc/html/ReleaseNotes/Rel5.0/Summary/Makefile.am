@@ -1,4 +1,3 @@
-# $Id$
 
 htmldocsdir = $(BRLCAD_DATA)/html/ReleaseNotes/Rel5.0/Summary
 

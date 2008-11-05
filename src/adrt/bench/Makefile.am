@@ -1,4 +1,3 @@
-# $Id$
 
 ### bin_PROGRAMS = adrt_bench
 ### 

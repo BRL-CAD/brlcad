@@ -1,4 +1,3 @@
-# $Id$
 
 lib_LTLIBRARIES = libbn.la
 noinst_LTLIBRARIES = libbn_nil.la

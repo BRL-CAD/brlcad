@@ -1,4 +1,3 @@
-# $Id$
 
 if BUILD_REGEX
 REGEXDIR=libregex

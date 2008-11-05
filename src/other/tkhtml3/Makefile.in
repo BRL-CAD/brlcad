@@ -36,7 +36,7 @@
 #========================================================================
 
 PKG_SOURCES	= @PKG_SOURCES@
-PKG_OBJECTS	= @PKG_OBJECTS@ # cssprop.$(OBJEXT)
+PKG_OBJECTS	= @PKG_OBJECTS@ cssprop.$(OBJEXT)
 
 PKG_STUB_SOURCES = @PKG_STUB_SOURCES@
 PKG_STUB_OBJECTS = @PKG_STUB_OBJECTS@
@@ -366,6 +366,9 @@ htmldefaultstyle.c: $(srcdir)/src/tkhtml.tcl  $(srcdir)/src/html.css \
 	$(TCLSH) $(srcdir)/src/mkdefaultstyle.tcl > htmldefaultstyle.c
 
 htmltokens.h: htmltokens.c
+
+cssprop.o: cssprop.h htmltokens.h
+	$(COMPILE) -c -I. -I$(srcdir)/src cssprop.c -o $@
 
 cssprop.h: $(srcdir)/src/cssprop.tcl
 	$(TCLSH) $?
