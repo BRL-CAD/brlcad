@@ -1,4 +1,3 @@
-# $Id$
 
 EXTRA_DIST = \
 	config.guess \

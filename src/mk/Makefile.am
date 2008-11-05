@@ -1,4 +1,3 @@
-# $Id$
 
 #define SRCDIR	mk
 

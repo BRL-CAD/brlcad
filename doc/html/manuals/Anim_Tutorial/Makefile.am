@@ -1,4 +1,3 @@
-# $Id$
 
 htmldocsdir = $(BRLCAD_DATA)/html/manuals/Anim_Tutorial
 

@@ -1,4 +1,3 @@
-# $Id$
 
 man_MANS = \
 	aliastorle.1 \

@@ -1,4 +1,3 @@
-# $Id$
 
 brlcad_m4 = \
 	args.m4 \

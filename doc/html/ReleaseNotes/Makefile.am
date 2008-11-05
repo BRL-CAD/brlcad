@@ -1,4 +1,3 @@
-# $Id$
 
 SUBDIRS = Rel5.0 Rel6.0
 

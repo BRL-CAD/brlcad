@@ -1,4 +1,3 @@
-# $Id$
 
 include_HEADERS = \
 	exit_status.h \

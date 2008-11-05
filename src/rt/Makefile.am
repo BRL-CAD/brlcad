@@ -1,4 +1,3 @@
-# $Id$
 
 AM_CPPFLAGS = ${TCL_CPPFLAGS}
 AM_LDFLAGS = \

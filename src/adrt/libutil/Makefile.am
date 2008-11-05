@@ -1,4 +1,3 @@
-# $Id$
 
 lib_LTLIBRARIES = libtieutil.la
 libtieutil_la_SOURCES = rand.c umath.c

@@ -1,4 +1,3 @@
-# $Id$
 
 mgedrcdir = $(BRLCAD_DATA)/html/articles/mgedrc/mgedrc_images
 

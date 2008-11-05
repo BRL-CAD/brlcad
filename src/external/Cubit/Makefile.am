@@ -1,4 +1,3 @@
-# $Id$
 
 #variables defined
 #HOME = /d/mgillich

@@ -1,4 +1,3 @@
-# $Id$
 
 ### lib_LTLIBRARIES = libcommon.la
 ### 

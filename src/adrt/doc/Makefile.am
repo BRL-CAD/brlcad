@@ -1,4 +1,3 @@
-# $Id$
 
 EXTRA_DIST = \
 	binary_spec.txt \

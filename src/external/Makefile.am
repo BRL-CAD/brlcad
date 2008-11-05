@@ -1,4 +1,3 @@
-# $Id$
 
 if BUILD_CUBIT
 CUBIT_DIR = Cubit

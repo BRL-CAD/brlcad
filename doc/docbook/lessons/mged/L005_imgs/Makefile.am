@@ -1,4 +1,3 @@
-# $Id$
 
 L005_imgsdir = $(BRLCAD_DATA)/html/lessons/mged/L005_imgs
 
@@ -12,7 +11,6 @@ L005_imgs_DATA = \
 	subtractionspheres.png \
 	twoprimitivespheres.png \
 	unionspheres.png
-	 
 
 EXTRA_DIST = $(L005_imgs_DATA)
 

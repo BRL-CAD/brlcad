@@ -1,4 +1,3 @@
-# $Id$
 
 L006_imgsdir = $(BRLCAD_DATA)/html/lessons/mged/L006_imgs
 

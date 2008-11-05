@@ -1,4 +1,3 @@
-# $Id$
 
 bin_PROGRAMS = \
 	g-off \

@@ -1,4 +1,3 @@
-# $Id$
 
 # pixtest removed, looks like an outdated sample_application
 bin_PROGRAMS = \

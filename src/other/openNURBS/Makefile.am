@@ -1,4 +1,3 @@
-# $Id$
 
 lib_LTLIBRARIES = libopenNURBS.la
 noinst_LTLIBRARIES = libopenNURBS_nil.la

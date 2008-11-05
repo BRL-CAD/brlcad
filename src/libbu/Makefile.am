@@ -1,4 +1,3 @@
-# $Id$
 
 lib_LTLIBRARIES = libbu.la
 noinst_LTLIBRARIES = libbu_nil.la

@@ -1,4 +1,3 @@
-# $Id$
 
 if WITH_JAVA
 lib_LTLIBRARIES = librtserver.la

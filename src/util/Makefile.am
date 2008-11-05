@@ -1,4 +1,3 @@
-# $Id$
 
 if WITH_X11
 

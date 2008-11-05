@@ -1,4 +1,3 @@
-# $Id$
 
 man3_MANS = \
 	RegisterC.3 \
