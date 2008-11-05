@@ -156,7 +156,7 @@ DEFS		= @DEFS@ $(PKG_CFLAGS)
 CONFIG_CLEAN_FILES = Makefile
 
 CPPFLAGS	= @CPPFLAGS@
-LIBS		= @PKG_LIBS@ @LIBS@
+LIBS		= -L/usr/lib -L/usr/local/lib @PKG_LIBS@ @LIBS@
 AR		= @AR@
 CFLAGS		= @CFLAGS@
 COMPILE		= $(CC) $(DEFS) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS)
@@ -286,55 +286,55 @@ HDR = $(GENHDR) $(SRCHDR)
 css.o: cssprop.h htmltokens.h
 	$(COMPILE) -c -I. -I$(srcdir)/src $(srcdir)/src/css.c -o $@
 
-cssdynamic.o:
+cssdynamic.o: cssprop.h htmltokens.h
 	$(COMPILE) -c -I. -I$(srcdir)/src $(srcdir)/src/cssdynamic.c -o $@
 
-cssparser.o:
+cssparser.o: cssprop.h htmltokens.h
 	$(COMPILE) -c -I. -I$(srcdir)/src $(srcdir)/src/cssparser.c -o $@
 
-csssearch.o:
+csssearch.o: cssprop.h htmltokens.h
 	$(COMPILE) -c -I. -I$(srcdir)/src $(srcdir)/src/csssearch.c -o $@
 
-htmldraw.o:
+htmldraw.o: htmltokens.h htmldefaultstyle.c
 	$(COMPILE) -c -I. -I$(srcdir)/src $(srcdir)/src/htmldraw.c -o $@
 
-htmlfloat.o:
+htmlfloat.o: htmltokens.h htmldefaultstyle.c
 	$(COMPILE) -c -I. -I$(srcdir)/src $(srcdir)/src/htmlfloat.c -o $@
 
-htmlhash.o:
+htmlhash.o: htmltokens.h htmldefaultstyle.c
 	$(COMPILE) -c -I. -I$(srcdir)/src $(srcdir)/src/htmlhash.c -o $@
 
-htmlw.o:
+htmlw.o: htmltokens.h htmldefaultstyle.c
 	$(COMPILE) -c -I. -I$(srcdir)/src $(srcdir)/src/htmlw.c -o $@
 
-htmlimage.o:
+htmlimage.o: htmltokens.h htmldefaultstyle.c
 	$(COMPILE) -c -I. -I$(srcdir)/src $(srcdir)/src/htmlimage.c -o $@
 
-htmlinline.o:
+htmlinline.o: htmltokens.h htmldefaultstyle.c
 	$(COMPILE) -c -I. -I$(srcdir)/src $(srcdir)/src/htmlinline.c -o $@
 
-htmllayout.o:
+htmllayout.o: htmltokens.h htmldefaultstyle.c
 	$(COMPILE) -c -I. -I$(srcdir)/src $(srcdir)/src/htmllayout.c -o $@
 
-htmlparse.o:
+htmlparse.o: htmltokens.h htmldefaultstyle.c
 	$(COMPILE) -c -I. -I$(srcdir)/src $(srcdir)/src/htmlparse.c -o $@
 
-htmlprop.o:
+htmlprop.o: htmltokens.h htmldefaultstyle.c
 	$(COMPILE) -c -I. -I$(srcdir)/src $(srcdir)/src/htmlprop.c -o $@
 
-htmlstyle.o:
+htmlstyle.o: htmltokens.h htmldefaultstyle.c
 	$(COMPILE) -c -I. -I$(srcdir)/src $(srcdir)/src/htmlstyle.c -o $@
 
-htmltagdb.o:
+htmltagdb.o: htmltokens.h htmldefaultstyle.c
 	$(COMPILE) -c -I. -I$(srcdir)/src $(srcdir)/src/htmltagdb.c -o $@
 
-htmltable.o:
+htmltable.o: htmltokens.h htmldefaultstyle.c
 	$(COMPILE) -c -I. -I$(srcdir)/src $(srcdir)/src/htmltable.c -o $@
 
-htmltcl.o: htmldefaultstyle.c
+htmltcl.o: htmltokens.h htmldefaultstyle.c
 	$(COMPILE) -c -I. -I$(srcdir)/src $(srcdir)/src/htmltcl.c -o $@
 
-htmltree.o:
+htmltree.o: htmltokens.h htmldefaultstyle.c
 	$(COMPILE) -c -I. -I$(srcdir)/src $(srcdir)/src/htmltree.c -o $@
 
 swproc.o:
@@ -343,13 +343,13 @@ swproc.o:
 restrack.o:
 	$(COMPILE) -c -I. -I$(srcdir)/src $(srcdir)/src/restrack.c -o $@
 
-htmldecode.o:
+htmldecode.o: htmltokens.h htmldefaultstyle.c
 	$(COMPILE) -c -I. -I$(srcdir)/src $(srcdir)/src/htmldecode.c -o $@
 
-htmltext.o:
+htmltext.o: htmltokens.h htmldefaultstyle.c
 	$(COMPILE) -c -I. -I$(srcdir)/src $(srcdir)/src/htmltext.c -o $@
 
-htmlutil.o:
+htmlutil.o: htmltokens.h htmldefaultstyle.c
 	$(COMPILE) -c -I. -I$(srcdir)/src $(srcdir)/src/htmlutil.c -o $@
 
 html.h:
