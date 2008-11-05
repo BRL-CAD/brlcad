@@ -39,7 +39,7 @@ static const int unused = 0;
  *  don't have their own.
  */
 #ifndef HAVE_STRSEP
-
+#include "sysv.h"
 #include <stdlib.h>
 
 /*

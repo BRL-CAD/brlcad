@@ -20,7 +20,7 @@ g_lint_SOURCES = g_lint.c
 g_lint_LDADD = ${RT}
 
 g_qa_SOURCES = g_qa.c
-g_qa_LDADD = ${RT}
+g_qa_LDADD = ${RT} ${GED}
 
 man_MANS = \
 	g_diff.1 \

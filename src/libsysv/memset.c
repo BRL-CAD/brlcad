@@ -33,6 +33,7 @@ static const int unused = 0;
  * defined for the folks that don't seem to have a system memset()
  */
 #ifndef HAVE_MEMSET
+#include "sysv.h"
 
 char *
 memset(char *s, register char c, register int n)
