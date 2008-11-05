@@ -1,4 +1,4 @@
-# $Id$
+
 SUBDIRS = ReleaseNotes manuals
 
 htmldocsdir = $(BRLCAD_DATA)/html

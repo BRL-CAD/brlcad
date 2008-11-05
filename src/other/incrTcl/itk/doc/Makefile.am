@@ -1,4 +1,3 @@
-# $Id$
 
 mann_MANS = \
 	Archetype.n \

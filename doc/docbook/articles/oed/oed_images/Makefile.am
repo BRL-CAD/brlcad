@@ -1,4 +1,3 @@
-# $Id$
 
 oeddir = $(BRLCAD_DATA)/html/articles/oed/oed_images
 

@@ -1,4 +1,3 @@
-# $Id$
 
 documentationdir = $(BRLCAD_DATA)/doc/book
 

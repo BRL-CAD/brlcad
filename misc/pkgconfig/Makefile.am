@@ -1,4 +1,3 @@
-# $Id$
 
 pkgconfigdir = $(libdir)/pkgconfig
 pkgconfig_DATA = \

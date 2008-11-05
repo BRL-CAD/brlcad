@@ -1,4 +1,3 @@
-# $Id$
 
 .PHONY : clean clobber run bench
 

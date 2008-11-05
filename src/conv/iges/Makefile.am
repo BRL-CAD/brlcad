@@ -1,4 +1,3 @@
-# $Id$
 
 ON_IGES = iges
 IGES_FLAGS = -g $(OPENNURBS_CPPFLAGS) $(TNT_CPPFLAGS)

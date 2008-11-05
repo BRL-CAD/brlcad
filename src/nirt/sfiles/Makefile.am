@@ -1,10 +1,9 @@
-# $Id$
 
 SFILES = \
 	csv.nrt \
 	csv-gap.nrt \
 	default.nrt \
-  	entryexit.nrt \
+	entryexit.nrt \
 	gap1.nrt \
 	gap2.nrt
 

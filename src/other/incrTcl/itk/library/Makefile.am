@@ -1,4 +1,3 @@
-# $Id$
 
 brlcadscriptdir = $(libdir)/itk@ITCL_VERSION@
 

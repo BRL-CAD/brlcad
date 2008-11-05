@@ -1,4 +1,3 @@
-# $Id$
 
 EXTRA_DIST= \
 	asc2g/asc2g.vcproj \

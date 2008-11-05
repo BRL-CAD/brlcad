@@ -1,4 +1,3 @@
-# $Id$
 
 proc_db_libs = ${WDB} ${WDB_LIBS}
 

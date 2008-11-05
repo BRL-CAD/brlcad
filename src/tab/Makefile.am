@@ -1,4 +1,3 @@
-# $Id$
 
 if WITH_PARSERS
 SS_BIN = scriptsort

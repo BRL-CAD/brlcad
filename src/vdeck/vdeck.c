@@ -99,7 +99,7 @@ char	*cmd[] = {
 
 char	*usage[] = {
     "",
-    "v d e c k ($Revision$)",
+    "v d e c k",
     "Make COMGEOM decks of objects from a \"mged\" file suitable as",
     "input to GIFT5 or gift(1V).",
     "",

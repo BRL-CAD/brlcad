@@ -1,4 +1,3 @@
-# $Id$
 
 L013_imgsdir = $(BRLCAD_DATA)/html/lessons/mged/L013_imgs
 
@@ -12,7 +11,6 @@ L013_imgs_DATA = \
 	candle_tabletop_eto1_rcc_wireframe_front.png \
 	candle_tabletop_eto1_wireframe_front.png \
 	candle_tabletop_wireframe_front.png
-	 
 
 EXTRA_DIST = $(L013_imgs_DATA)
 

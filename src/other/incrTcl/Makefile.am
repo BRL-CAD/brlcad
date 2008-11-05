@@ -1,4 +1,3 @@
-# $Id$
 
 ITCLLIB = \
 	libitcl.la \

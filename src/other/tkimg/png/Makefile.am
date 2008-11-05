@@ -1,4 +1,3 @@
-# $Id$
 
 noinst_LTLIBRARIES = tkimgp.la
 

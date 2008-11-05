@@ -21,11 +21,7 @@
  *
  */
 
-/*
- * $Id$
- */
-
-/* compnet is first as it includes $(top_srcdir)/include/common.h */
+/* interface header */
 #include "compnet.h"
 
 #include <stdio.h>

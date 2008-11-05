@@ -1,4 +1,3 @@
-# $Id$
 
 projection_shaderdir = $(BRLCAD_DATA)/html/articles/projection_shader/projection_shader_images
 

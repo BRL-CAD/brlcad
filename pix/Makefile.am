@@ -1,4 +1,3 @@
-# $Id$
 
 BENCHMARK_PIX = \
 	bldg391.pix \

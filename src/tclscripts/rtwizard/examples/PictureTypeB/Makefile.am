@@ -1,4 +1,3 @@
-# $Id$
 
 tcldir = $(BRLCAD_DATA)/tclscripts/rtwizard/examples/PictureTypeB
 

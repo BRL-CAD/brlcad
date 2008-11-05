@@ -1,4 +1,3 @@
-# $Id$
 
 this_dir = tclscripts/mged
 tcldir = $(BRLCAD_DATA)/$(this_dir)

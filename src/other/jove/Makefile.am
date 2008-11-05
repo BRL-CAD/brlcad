@@ -1,4 +1,3 @@
-# $Id$
 
 bin_PROGRAMS = jove findcom
 bin_SCRIPTS = teach-jove

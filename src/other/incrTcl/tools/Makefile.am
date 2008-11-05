@@ -1,4 +1,3 @@
-# $Id$
 
 EXTRA_DIST = genStubs.tcl
 

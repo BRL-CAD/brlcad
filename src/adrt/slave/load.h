@@ -19,7 +19,6 @@
  */
 /** @file load.h
  *
- * $Id$
  */
 
 #ifndef _SLAVE_LOAD_H

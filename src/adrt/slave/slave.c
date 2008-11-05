@@ -19,7 +19,6 @@
  */
 /** @file slave.c
  *
- * $Id$
  */
 
 #ifndef TIE_PRECISION

@@ -1,4 +1,4 @@
-# $Id$
+
 SUBDIRS = beset
 bin_PROGRAMS = \
 	g_diff \
