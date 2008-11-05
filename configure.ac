@@ -907,16 +907,7 @@ xsltproc_works=no
 fop_works=no
 if test "x$bc_build_docs" != "xno" ; then
     AC_PATH_PROG(XSLTPROC, xsltproc)
-    if test "x$XSLTPROC" = "x" ; then
-	XSLTPROC=:
-    fi
-    AC_SUBST(XSLTPROC)
-
     AC_PATH_PROG(APACHEFOP, fop)
-    if test "x$APACHEFOP" = "x" ; then
-	APACHEFOP=:
-    fi
-    AC_SUBST(APACHEFOP)
 fi
 
 # AN_MAKEVAR([AR], [BC_PROG_AR])
@@ -3469,14 +3460,18 @@ if test "x$bc_build_docs" != "xno" ; then
 
     if test "x$XSLTPROC" = "x" ; then
         docbook_processing=no
+	XSLTPROC=:
     fi
     if test "x$APACHEFOP" != "x" ; then
 	docbook_pdf_processing=yes
         docbook_processing="yes (man/html/pdf)"
     else
         docbook_processing="yes (man/html only)"
+	APACHEFOP=:
     fi
 fi
+AC_SUBST(XSLTPROC)
+AC_SUBST(APACHEFOP)
 AC_MSG_CHECKING(for Docbook processing functionality)
 AC_MSG_RESULT($docbook_processing)
 AC_MSG_CHECKING(for Docbook pdf generation functionality)
