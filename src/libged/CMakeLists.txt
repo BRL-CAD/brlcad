@@ -68,6 +68,7 @@ set(LIBGED_SOURCES
     get_type.c
     glob.c
     globals.c
+    gqa.c
     grid.c
     group.c
     hide.c
