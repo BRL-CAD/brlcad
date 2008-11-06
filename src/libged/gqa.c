@@ -84,22 +84,22 @@ static int multiple_analyses = 1;
 static double azimuth_deg;
 static double elevation_deg;
 static char *densityFileName;
-static double gridSpacing = 50.0;
-static double gridSpacingLimit = 0.25; /* limit to 1/4 mm */
+static double gridSpacing;
+static double gridSpacingLimit;
 static char makeOverlapAssemblies;
-static int require_num_hits = 1;
-static int ncpu = 1;
-static double Samples_per_model_axis = 2.0;
+static int require_num_hits;
+static int ncpu;
+static double Samples_per_model_axis;
 static double overlap_tolerance;
-static double volume_tolerance = -1.0;
-static double weight_tolerance = -1.0;
+static double volume_tolerance;
+static double weight_tolerance;
 
 static int print_per_region_stats;
 static int max_region_name_len;
-static int use_air = 1;
+static int use_air;
 static int num_objects; /* number of objects specified on command line */
 static int max_cpus;
-static int num_views = 3;
+static int num_views;
 static int verbose;
 
 static int plot_files;	/* Boolean: Should we produce plot files? */
@@ -115,7 +115,7 @@ static int gap_color[3] = { 128, 192, 255 };    /* cyan */
 static int adjAir_color[3] = { 128, 255, 192 }; /* pale green */
 static int expAir_color[3] = { 255, 128, 255 }; /* magenta */
 
-static int debug = 0;
+static int debug;
 #define DLOG if (debug) bu_vls_printf
 
 /* Some defines for re-using the values from the application structure
@@ -447,6 +447,7 @@ parse_args(int ac, char *av[])
 
     /* Turn off getopt's error messages */
     bu_opterr = 0;
+    bu_optind = 1;
 
     /* get all the option flags from the command line */
     while ((c=bu_getopt(ac, av, options)) != EOF) {
@@ -2087,15 +2088,31 @@ ged_gqa(struct ged *gedp, int argc, const char *argv[])
     analysis_flags = ANALYSIS_VOLUME | ANALYSIS_OVERLAPS | ANALYSIS_WEIGHT |
 	ANALYSIS_EXP_AIR | ANALYSIS_ADJ_AIR | ANALYSIS_GAP;
     multiple_analyses = 1;
+    azimuth_deg = 0.0;
+    elevation_deg = 0.0;
+    densityFileName = (char *)0;
     gridSpacing = 50.0;
     gridSpacingLimit = 0.25;
+    makeOverlapAssemblies = 0;
     require_num_hits = 1;
     max_cpus = ncpu = bu_avail_cpus();
     Samples_per_model_axis = 2.0;
+    overlap_tolerance = 0.0;
     volume_tolerance = -1.0;
     weight_tolerance = -1.0;
+    print_per_region_stats = 0;
+    max_region_name_len = 0;
     use_air = 1;
+    num_objects = 0;
     num_views = 3;
+    verbose = 0;
+    plot_files = 0;
+    plot_weight = (FILE *)0;
+    plot_volume = (FILE *)0;
+    plot_overlaps = (FILE *)0;
+    plot_adjair = (FILE *)0;
+    plot_gaps = (FILE *)0;
+    plot_expair = (FILE *)0;
     debug = 0;
 
     /* parse command line arguments */
