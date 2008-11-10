@@ -15,6 +15,7 @@ bin_PROGRAMS = \
 	fence \
 	globe \
 	kurt \
+	lens \
 	masonry \
 	metaball \
 	molecule \
@@ -65,6 +66,7 @@ contours_SOURCES = contours.c
 fence_SOURCES = fence.c
 globe_SOURCES = globe.c
 kurt_SOURCES = kurt.c
+lens_SOURCES = lens.c
 masonry_SOURCES = masonry.c
 metaball_SOURCES = metaball.c
 molecule_SOURCES = molecule.c
@@ -118,6 +120,7 @@ FAST_OBJECTS = \
 	$(fence_OBJECTS) \
 	$(globe_OBJECTS) \
 	$(kurt_OBJECTS) \
+	$(lens_OBJECTS) \
 	$(masonry_OBJECTS) \
 	$(molecule_OBJECTS) \
 	$(nmgmodel_OBJECTS) \
