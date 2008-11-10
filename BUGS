@@ -15,6 +15,9 @@ on-going issues.
 Recent Bugs
 -----------
 
+* Mac OS X installer doesn't include the symbolic links, only
+  including the versioned installation directory.
+
 * 'who' command displays the top-level object if you e up an entire
   path in mged.
 
