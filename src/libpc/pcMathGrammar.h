@@ -80,6 +80,31 @@ public:
     };
 };
 
+boost::spirit::symbols<char> NameGrammar::reserved_keywords;
+/** Different types of closures */
+
+struct FuncExprClosure : boost spirit::closure<FuncExprClosure, Stack, std::string, int, boost::shared_ptr<MathFunction>
+{
+    member1 stack;
+    member2 name;
+    member3 arity;
+    member4 function_ptr;
+};
+
+struct LogicalClosure : boost::spirit::closure<LogicalClosure, Stack, bool>
+{
+    member1 stack;
+    member2 or_op;
+};
+
+
+struct ConditionalClosure : boost::spirit::closure<ConditionalClosure, Stack, Stack, Stack>
+{
+    member1 stack;
+    member2 stack1;
+    member3 stack2;
+};
+
 /**
  * ExpressionGrammar implementation
  * Stack closure is attached to the grammar itself
