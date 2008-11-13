@@ -31,68 +31,116 @@
 #include "rtgeom.h"
 #include "vmath.h"
 
+
 /* length of axes segments plotted for points with zero scale */
 #define SEG_LENGTH .1
 
+
 /**
- *                      R T _ P N T S _ E X P O R T 5
+ * R T _ P N T S _ E X P O R T 5
  *
  * Export a pnts collection from the internal structure
- * to the database format: numPoints, scale, points
+ * to the database format
  */
 int
 rt_pnts_export5(struct bu_external *external, const struct rt_db_internal *internal,
 		double local2mm, const struct db_i *db)
 {
-    int i, numPointsBytes, scaleBytes, pointBytes;
-    unsigned long numPoints;
-    struct rt_pnts_internal *pnts;
-    register struct pnt *point;
-    struct bu_list *head;
-    fastf_t *points;
+    struct rt_pnts_internal *pnts = NULL;
+    struct bu_list *head = NULL;
+    unsigned long pointDataSize;
+    unsigned char *buf = NULL;
+    int i;
 
     /* acquire internal pnts structure */
     RT_CK_DB_INTERNAL(internal);
     BU_CK_EXTERNAL(external);
+    external->ext_nbytes = 0;
 
     pnts = (struct rt_pnts_internal *) internal->idb_ptr;
     RT_PNTS_CK_MAGIC(pnts);
-   
-    numPoints = pnts->count;
 
+    /* allocate enough for the header (magic + scale + type + count) */
+    external->ext_nbytes = sizeof(long) + SIZEOF_NETWORK_DOUBLE + sizeof(unsigned short) + sizeof (unsigned long);
+    external->ext_buf = (genptr_t) bu_calloc(sizeof(unsigned char), external->ext_nbytes, "pnts external");
+    buf = (unsigned char *)external->ext_buf;
 
-    /* allocate enough space in buffer for the external format:
-     * unsigned long numPoints, double scale, point doubles
-     */
-    numPointsBytes = sizeof(long);
-    scaleBytes = SIZEOF_NETWORK_DOUBLE;
-    pointBytes = pnts->count * ELEMENTS_PER_PT * SIZEOF_NETWORK_DOUBLE;
+    buf = bu_plong(buf, pnts->magic);
+    htond(buf, (unsigned char *)&pnts->scale, 1);
+    buf += SIZEOF_NETWORK_DOUBLE;
+    buf = bu_pshort(buf, (unsigned short)pnts->type);
+    buf = bu_plong(buf, pnts->count);
 
-    external->ext_nbytes = numPointsBytes + scaleBytes + pointBytes;
-    external->ext_buf = (genptr_t) bu_malloc(external->ext_nbytes, "pnts external");
+    if (pnts->count <= 0) {
+	/* no points to stash, we're done */
+	return 0;
+    }
 
-    /* place numPoints and scale at beginning of buffer */
-    (void) bu_plong((unsigned char *) external->ext_buf, numPoints);
+    /* figure out how much data there is for each point */
+    pointDataSize = ELEMENTS_PER_POINT * SIZEOF_NETWORK_DOUBLE;
+    if (pnts->type & RT_PNT_TYPE_COL)
+	pointDataSize += 3 * SIZEOF_NETWORK_DOUBLE;
+    if (pnts->type & RT_PNT_TYPE_SCA)
+	pointDataSize += 1 * SIZEOF_NETWORK_DOUBLE;
+    if (pnts->type & RT_PNT_TYPE_NRM)
+	pointDataSize += ELEMENTS_PER_VECT;
 
-    htond((unsigned char *)external->ext_buf + numPointsBytes, (unsigned char *)&pnts->scale, 1);
+    external->ext_buf = (genptr_t)bu_realloc(external->ext_buf, external->ext_nbytes + (pnts->count * pointDataSize), "pnts external realloc");
+    buf = external->ext_buf + external->ext_nbytes;
 
+    switch (pnts->type) {
+	case RT_PNT_TYPE_PNT: {
+	    register struct pnt *point = (struct pnt *)pnts->point;
+	    head = &point->l;
+    
+	    for (i = 0, BU_LIST_FOR(point, pnt, head), i += ELEMENTS_PER_POINT) {
+		point_t p;
+		VSCALE(p, point->v, local2mm);
+		htond((unsigned char *)buf, (unsigned char *)p, ELEMENTS_PER_POINT);
+		buf += ELEMENTS_PER_POINT;
+	    }
 
-    if (numPoints > 0) {
-	struct pnt *point = (struct pnt *)&pnts->point;
-	head = &point->l;
-
-	points = (fastf_t *) bu_malloc(pointBytes, "rt_pnts_export5: points");
-
-	/* scale points and store in memory */
-	for (i = 0, BU_LIST_FOR(point, pnt, head), i += 3) {
-	    VSCALE(&points[i], point->v, local2mm);
+	    break;
 	}
+	case RT_PNT_TYPE_COL: {
+	    register struct pnt_color *point = (struct pnt_color *)pnts->point;
+	    head = &point->l;
+    
+	    for (i = 0, BU_LIST_FOR(point, pnt_color, head), i += ELEMENTS_PER_POINT) {
+		point_t p;
+		fastf_t c[3];
+		VSCALE(p, point->v, local2mm);
+		htond((unsigned char *)buf, (unsigned char *)p, ELEMENTS_PER_POINT);
+		buf += ELEMENTS_PER_POINT * SIZEOF_NETWORK_DOUBLE;
+		
+		bu_color_to_rgb_floats(&point->c, c); /* !!! left off here, need to implement */
+		htond((unsigned char *)buf, (unsigned char *)c, 3);
+		buf += 3 * SIZEOF_NETWORK_DOUBLE;
+	    }
 
-	/* place scaled points after numPoints and scale in the buffer */
-	htond((unsigned char *) external->ext_buf + numPointsBytes + scaleBytes,
-	      (unsigned char *) points, ELEMENTS_PER_PT * numPoints);
-
-	bu_free((genptr_t) points, "rt_pnts_export5: points");
+	    break;
+	}
+	case RT_PNT_TYPE_SCA: {
+	    external->ext_nbytes += pnts->count * ELEMENTS_PER_POINT * SIZEOF_NETWORK_DOUBLE;
+	}
+	case RT_PNT_TYPE_NRM: {
+	    external->ext_nbytes += pnts->count * ELEMENTS_PER_POINT * SIZEOF_NETWORK_DOUBLE;
+	}
+	case RT_PNT_TYPE_COL_SCA: {
+	    external->ext_nbytes += pnts->count * ELEMENTS_PER_POINT * SIZEOF_NETWORK_DOUBLE;
+	}
+	case RT_PNT_TYPE_COL_NRM: {
+	    external->ext_nbytes += pnts->count * ELEMENTS_PER_POINT * SIZEOF_NETWORK_DOUBLE;
+	}
+	case RT_PNT_TYPE_SCA_NRM: {
+	    external->ext_nbytes += pnts->count * ELEMENTS_PER_POINT * SIZEOF_NETWORK_DOUBLE;
+	}
+	case RT_PNT_TYPE_COL_SCA_NRM: {
+	    external->ext_nbytes += pnts->count * ELEMENTS_PER_POINT * SIZEOF_NETWORK_DOUBLE;
+	}
+	default:
+	    bu_log("ERROR: unknown points primitive type\n");
+	    return 0;
     }
 
     return 0;
@@ -136,7 +184,7 @@ rt_pnts_import5(struct rt_db_internal *internal, const struct bu_external *exter
     scaleBytes = SIZEOF_NETWORK_DOUBLE;
 
     numPoints = pnts->count = bu_glong((unsigned char *) external->ext_buf);
-    pointBytes = numPoints * ELEMENTS_PER_PT * SIZEOF_NETWORK_DOUBLE;
+    pointBytes = numPoints * ELEMENTS_PER_POINT * SIZEOF_NETWORK_DOUBLE;
 
     ntohd((unsigned char *)&pnts->scale, (unsigned char *)external->ext_buf + numPointsBytes, 1);
 
@@ -146,7 +194,7 @@ rt_pnts_import5(struct rt_db_internal *internal, const struct bu_external *exter
 
 	/* pull points from buffer */
 	ntohd((unsigned char *) pt, (unsigned char *) external->ext_buf + numPointsBytes +
-	      scaleBytes, ELEMENTS_PER_PT * numPoints);
+	      scaleBytes, ELEMENTS_PER_POINT * numPoints);
 
 
 	if (mat == NULL) {
@@ -154,7 +202,7 @@ rt_pnts_import5(struct rt_db_internal *internal, const struct bu_external *exter
 	}
 
 	/* make point_t's from doubles and place in bu_list */
-	for (i = 0; i < numPoints * ELEMENTS_PER_PT; i += 3) {
+	for (i = 0; i < numPoints * ELEMENTS_PER_POINT; i += 3) {
 
 	    BU_GETSTRUCT(point, pnt);
 	    
