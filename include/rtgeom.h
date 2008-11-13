@@ -619,7 +619,7 @@ struct pnt_color_scale_normal {
 
 
 struct rt_pnts_internal {
-    long magic;
+    unsigned long magic;
     double scale;
     rt_pnt_type type;
     unsigned long count;
