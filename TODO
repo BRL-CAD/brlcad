@@ -17,6 +17,8 @@ http://sf.net/pm/?group_id=105292
 THESE SHOULD HAPPEN BEFORE THE NEXT RELEASE
 -------------------------------------------
 
+* rewrite the tables command to not suck
+
 * don't leave pnts in a busted state.  finish export, import, and file
   input support.
 
