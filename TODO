@@ -17,7 +17,8 @@ http://sf.net/pm/?group_id=105292
 THESE SHOULD HAPPEN BEFORE THE NEXT RELEASE
 -------------------------------------------
 
-* test and ship it!
+* don't leave pnts in a busted state.  finish export, import, and file
+  input support.
 
 
 THESE SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
