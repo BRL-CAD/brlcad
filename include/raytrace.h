@@ -2530,8 +2530,6 @@ RT_EXPORT BU_EXTERN(void wdb_init,
 		    (struct rt_wdb *wdbp,
 		     struct db_i   *dbip,
 		     int           mode));
-RT_EXPORT BU_EXTERN(int wdb_fflush,
-		    (struct rt_wdb *wdbp));
 RT_EXPORT BU_EXTERN(void wdb_close,
 		    (struct rt_wdb *wdbp));
 RT_EXPORT BU_EXTERN(int wdb_import_from_path,
