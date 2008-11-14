@@ -74,6 +74,11 @@ ged_grid(struct ged	*gedp,
     /* initialize result */
     bu_vls_trunc(&gedp->ged_result_str, 0);
 
+    if (argc == 1) {
+	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	return BRLCAD_OK;
+    }
+
     if (argc < 2 || 5 < argc) {
 	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return BRLCAD_ERROR;
