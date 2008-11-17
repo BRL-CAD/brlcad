@@ -36,6 +36,15 @@
 #define SEG_LENGTH .1
 
 
+static unsigned char *
+pnts_pack_double(unsigned char *buf, unsigned char *data, unsigned int count)
+{
+    htond(buf, data, count);
+    buf += count * SIZEOF_NETWORK_DOUBLE;
+    return buf;
+}
+
+
 /**
  * R T _ P N T S _ E X P O R T 5
  *
@@ -98,8 +107,7 @@ rt_pnts_export5(struct bu_external *external, const struct rt_db_internal *inter
 
 		/* pack v */
 		VSCALE(v, point->v, local2mm);
-		htond((unsigned char *)buf, (unsigned char *)v, ELEMENTS_PER_POINT);
-		buf += ELEMENTS_PER_POINT;
+		buf = pnts_pack_double(buf, (unsigned char *)v, ELEMENTS_PER_POINT);
 	    }
 
 	    break;
@@ -114,13 +122,11 @@ rt_pnts_export5(struct bu_external *external, const struct rt_db_internal *inter
 
 		/* pack v */
 		VSCALE(v, point->v, local2mm);
-		htond((unsigned char *)buf, (unsigned char *)v, ELEMENTS_PER_POINT);
-		buf += ELEMENTS_PER_POINT * SIZEOF_NETWORK_DOUBLE;
+		buf = pnts_pack_double(buf, (unsigned char *)v, ELEMENTS_PER_POINT);
 		
 		/* pack c */
 		bu_color_to_rgb_floats(&point->c, c);
-		htond((unsigned char *)buf, (unsigned char *)c, 3);
-		buf += 3 * SIZEOF_NETWORK_DOUBLE;
+		buf = pnts_pack_double(buf, (unsigned char *)c, 3);
 	    }
 
 	    break;
@@ -135,13 +141,11 @@ rt_pnts_export5(struct bu_external *external, const struct rt_db_internal *inter
 
 		/* pack v */
 		VSCALE(v, point->v, local2mm);
-		htond((unsigned char *)buf, (unsigned char *)v, ELEMENTS_PER_POINT);
-		buf += ELEMENTS_PER_POINT * SIZEOF_NETWORK_DOUBLE;
+		buf = pnts_pack_double(buf, (unsigned char *)v, ELEMENTS_PER_POINT);
 		
 		/* pack s */
 		s[0] = point->s * local2mm;
-		htond((unsigned char *)buf, (unsigned char *)s, SIZEOF_NETWORK_DOUBLE);
-		buf += 1 * SIZEOF_NETWORK_DOUBLE;
+		buf = pnts_pack_double(buf, (unsigned char *)s, 1);
 	    }
 
 	    break;
@@ -156,13 +160,11 @@ rt_pnts_export5(struct bu_external *external, const struct rt_db_internal *inter
 
 		/* pack v */
 		VSCALE(v, point->v, local2mm);
-		htond((unsigned char *)buf, (unsigned char *)v, ELEMENTS_PER_POINT);
-		buf += ELEMENTS_PER_POINT * SIZEOF_NETWORK_DOUBLE;
+		buf = pnts_pack_double(buf, (unsigned char *)v, ELEMENTS_PER_POINT);
 		
 		/* pack n */
 		VSCALE(n, point->n, local2mm);
-		htond((unsigned char *)buf, (unsigned char *)n, ELEMENTS_PER_VECT);
-		buf += ELEMENTS_PER_VECT * SIZEOF_NETWORK_DOUBLE;
+		buf = pnts_pack_double(buf, (unsigned char *)n, ELEMENTS_PER_VECT);
 	    }
 
 	    break;
@@ -178,18 +180,15 @@ rt_pnts_export5(struct bu_external *external, const struct rt_db_internal *inter
 
 		/* pack v */
 		VSCALE(v, point->v, local2mm);
-		htond((unsigned char *)buf, (unsigned char *)v, ELEMENTS_PER_POINT);
-		buf += ELEMENTS_PER_POINT * SIZEOF_NETWORK_DOUBLE;
+		buf = pnts_pack_double(buf, (unsigned char *)v, ELEMENTS_PER_POINT);
 		
 		/* pack c */
 		bu_color_to_rgb_floats(&point->c, c);
-		htond((unsigned char *)buf, (unsigned char *)c, 3);
-		buf += 3 * SIZEOF_NETWORK_DOUBLE;
+		buf = pnts_pack_double(buf, (unsigned char *)c, 3);
 
 		/* pack s */
 		s[0] = point->s * local2mm;
-		htond((unsigned char *)buf, (unsigned char *)s, SIZEOF_NETWORK_DOUBLE);
-		buf += 1 * SIZEOF_NETWORK_DOUBLE;
+		buf = pnts_pack_double(buf, (unsigned char *)s, 1);
 	    }
 
 	    break;
@@ -205,18 +204,15 @@ rt_pnts_export5(struct bu_external *external, const struct rt_db_internal *inter
 
 		/* pack v */
 		VSCALE(v, point->v, local2mm);
-		htond((unsigned char *)buf, (unsigned char *)v, ELEMENTS_PER_POINT);
-		buf += ELEMENTS_PER_POINT * SIZEOF_NETWORK_DOUBLE;
+		buf = pnts_pack_double(buf, (unsigned char *)v, ELEMENTS_PER_POINT);
 		
 		/* pack c */
 		bu_color_to_rgb_floats(&point->c, c);
-		htond((unsigned char *)buf, (unsigned char *)c, 3);
-		buf += 3 * SIZEOF_NETWORK_DOUBLE;
+		buf = pnts_pack_double(buf, (unsigned char *)c, 3);
 
 		/* pack n */
 		VSCALE(n, point->n, local2mm);
-		htond((unsigned char *)buf, (unsigned char *)n, ELEMENTS_PER_VECT);
-		buf += ELEMENTS_PER_VECT * SIZEOF_NETWORK_DOUBLE;
+		buf = pnts_pack_double(buf, (unsigned char *)n, ELEMENTS_PER_VECT);
 	    }
 
 	    break;
@@ -232,18 +228,15 @@ rt_pnts_export5(struct bu_external *external, const struct rt_db_internal *inter
 
 		/* pack v */
 		VSCALE(v, point->v, local2mm);
-		htond((unsigned char *)buf, (unsigned char *)v, ELEMENTS_PER_POINT);
-		buf += ELEMENTS_PER_POINT * SIZEOF_NETWORK_DOUBLE;
+		buf = pnts_pack_double(buf, (unsigned char *)v, ELEMENTS_PER_POINT);
 		
 		/* pack s */
 		s[0] = point->s * local2mm;
-		htond((unsigned char *)buf, (unsigned char *)s, SIZEOF_NETWORK_DOUBLE);
-		buf += 1 * SIZEOF_NETWORK_DOUBLE;
+		buf = pnts_pack_double(buf, (unsigned char *)s, 1);
 
 		/* pack n */
 		VSCALE(n, point->n, local2mm);
-		htond((unsigned char *)buf, (unsigned char *)n, ELEMENTS_PER_VECT);
-		buf += ELEMENTS_PER_VECT * SIZEOF_NETWORK_DOUBLE;
+		buf = pnts_pack_double(buf, (unsigned char *)n, ELEMENTS_PER_VECT);
 	    }
 
 	    break;
@@ -260,23 +253,19 @@ rt_pnts_export5(struct bu_external *external, const struct rt_db_internal *inter
 
 		/* pack v */
 		VSCALE(v, point->v, local2mm);
-		htond((unsigned char *)buf, (unsigned char *)v, ELEMENTS_PER_POINT);
-		buf += ELEMENTS_PER_POINT * SIZEOF_NETWORK_DOUBLE;
+		buf = pnts_pack_double(buf, (unsigned char *)v, ELEMENTS_PER_POINT);
 		
 		/* pack c */
 		bu_color_to_rgb_floats(&point->c, c);
-		htond((unsigned char *)buf, (unsigned char *)c, 3);
-		buf += 3 * SIZEOF_NETWORK_DOUBLE;
+		buf = pnts_pack_double(buf, (unsigned char *)c, 3);
 
 		/* pack s */
 		s[0] = point->s * local2mm;
-		htond((unsigned char *)buf, (unsigned char *)s, SIZEOF_NETWORK_DOUBLE);
-		buf += 1 * SIZEOF_NETWORK_DOUBLE;
+		buf = pnts_pack_double(buf, (unsigned char *)s, 1);
 
 		/* pack n */
 		VSCALE(n, point->n, local2mm);
-		htond((unsigned char *)buf, (unsigned char *)n, ELEMENTS_PER_VECT);
-		buf += ELEMENTS_PER_VECT * SIZEOF_NETWORK_DOUBLE;
+		buf = pnts_pack_double(buf, (unsigned char *)n, ELEMENTS_PER_VECT);
 	    }
 
 	    break;
