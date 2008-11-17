@@ -93,10 +93,12 @@ rt_pnts_export5(struct bu_external *external, const struct rt_db_internal *inter
 	    register struct pnt *point = (struct pnt *)pnts->point;
 	    head = &point->l;
     
-	    for (i = 0, BU_LIST_FOR(point, pnt, head), i += ELEMENTS_PER_POINT) {
-		point_t p;
-		VSCALE(p, point->v, local2mm);
-		htond((unsigned char *)buf, (unsigned char *)p, ELEMENTS_PER_POINT);
+	    for (BU_LIST_FOR(point, pnt, head)) {
+		point_t v;
+
+		/* pack v */
+		VSCALE(v, point->v, local2mm);
+		htond((unsigned char *)buf, (unsigned char *)v, ELEMENTS_PER_POINT);
 		buf += ELEMENTS_PER_POINT;
 	    }
 
@@ -106,14 +108,17 @@ rt_pnts_export5(struct bu_external *external, const struct rt_db_internal *inter
 	    register struct pnt_color *point = (struct pnt_color *)pnts->point;
 	    head = &point->l;
     
-	    for (i = 0, BU_LIST_FOR(point, pnt_color, head), i += ELEMENTS_PER_POINT) {
-		point_t p;
-		fastf_t c[3];
-		VSCALE(p, point->v, local2mm);
-		htond((unsigned char *)buf, (unsigned char *)p, ELEMENTS_PER_POINT);
+	    for (BU_LIST_FOR(point, pnt_color, head)) {
+		point_t v;
+		double c[3];
+
+		/* pack v */
+		VSCALE(v, point->v, local2mm);
+		htond((unsigned char *)buf, (unsigned char *)v, ELEMENTS_PER_POINT);
 		buf += ELEMENTS_PER_POINT * SIZEOF_NETWORK_DOUBLE;
 		
-		bu_color_to_rgb_floats(&point->c, c); /* !!! left off here, need to implement */
+		/* pack c */
+		bu_color_to_rgb_floats(&point->c, c);
 		htond((unsigned char *)buf, (unsigned char *)c, 3);
 		buf += 3 * SIZEOF_NETWORK_DOUBLE;
 	    }
@@ -121,22 +126,160 @@ rt_pnts_export5(struct bu_external *external, const struct rt_db_internal *inter
 	    break;
 	}
 	case RT_PNT_TYPE_SCA: {
-	    external->ext_nbytes += pnts->count * ELEMENTS_PER_POINT * SIZEOF_NETWORK_DOUBLE;
+	    register struct pnt_scale *point = (struct pnt_scale *)pnts->point;
+	    head = &point->l;
+    
+	    for (BU_LIST_FOR(point, pnt_scale, head)) {
+		point_t v;
+		double s[1];
+
+		/* pack v */
+		VSCALE(v, point->v, local2mm);
+		htond((unsigned char *)buf, (unsigned char *)v, ELEMENTS_PER_POINT);
+		buf += ELEMENTS_PER_POINT * SIZEOF_NETWORK_DOUBLE;
+		
+		/* pack s */
+		s[0] = point->s * local2mm;
+		htond((unsigned char *)buf, (unsigned char *)s, SIZEOF_NETWORK_DOUBLE);
+		buf += 1 * SIZEOF_NETWORK_DOUBLE;
+	    }
+
+	    break;
 	}
 	case RT_PNT_TYPE_NRM: {
-	    external->ext_nbytes += pnts->count * ELEMENTS_PER_POINT * SIZEOF_NETWORK_DOUBLE;
+	    register struct pnt_normal *point = (struct pnt_normal *)pnts->point;
+	    head = &point->l;
+    
+	    for (BU_LIST_FOR(point, pnt_normal, head)) {
+		point_t v;
+		vect_t n;
+
+		/* pack v */
+		VSCALE(v, point->v, local2mm);
+		htond((unsigned char *)buf, (unsigned char *)v, ELEMENTS_PER_POINT);
+		buf += ELEMENTS_PER_POINT * SIZEOF_NETWORK_DOUBLE;
+		
+		/* pack n */
+		VSCALE(n, point->n, local2mm);
+		htond((unsigned char *)buf, (unsigned char *)n, ELEMENTS_PER_VECT);
+		buf += ELEMENTS_PER_VECT * SIZEOF_NETWORK_DOUBLE;
+	    }
+
+	    break;
 	}
 	case RT_PNT_TYPE_COL_SCA: {
-	    external->ext_nbytes += pnts->count * ELEMENTS_PER_POINT * SIZEOF_NETWORK_DOUBLE;
+	    register struct pnt_color_scale *point = (struct pnt_color_scale *)pnts->point;
+	    head = &point->l;
+    
+	    for (BU_LIST_FOR(point, pnt_color_scale, head)) {
+		point_t v;
+		double c[3];
+		double s[1];
+
+		/* pack v */
+		VSCALE(v, point->v, local2mm);
+		htond((unsigned char *)buf, (unsigned char *)v, ELEMENTS_PER_POINT);
+		buf += ELEMENTS_PER_POINT * SIZEOF_NETWORK_DOUBLE;
+		
+		/* pack c */
+		bu_color_to_rgb_floats(&point->c, c);
+		htond((unsigned char *)buf, (unsigned char *)c, 3);
+		buf += 3 * SIZEOF_NETWORK_DOUBLE;
+
+		/* pack s */
+		s[0] = point->s * local2mm;
+		htond((unsigned char *)buf, (unsigned char *)s, SIZEOF_NETWORK_DOUBLE);
+		buf += 1 * SIZEOF_NETWORK_DOUBLE;
+	    }
+
+	    break;
 	}
 	case RT_PNT_TYPE_COL_NRM: {
-	    external->ext_nbytes += pnts->count * ELEMENTS_PER_POINT * SIZEOF_NETWORK_DOUBLE;
+	    register struct pnt_color_normal *point = (struct pnt_color_normal *)pnts->point;
+	    head = &point->l;
+    
+	    for (BU_LIST_FOR(point, pnt_color_normal, head)) {
+		point_t v;
+		double c[3];
+		vect_t n;
+
+		/* pack v */
+		VSCALE(v, point->v, local2mm);
+		htond((unsigned char *)buf, (unsigned char *)v, ELEMENTS_PER_POINT);
+		buf += ELEMENTS_PER_POINT * SIZEOF_NETWORK_DOUBLE;
+		
+		/* pack c */
+		bu_color_to_rgb_floats(&point->c, c);
+		htond((unsigned char *)buf, (unsigned char *)c, 3);
+		buf += 3 * SIZEOF_NETWORK_DOUBLE;
+
+		/* pack n */
+		VSCALE(n, point->n, local2mm);
+		htond((unsigned char *)buf, (unsigned char *)n, ELEMENTS_PER_VECT);
+		buf += ELEMENTS_PER_VECT * SIZEOF_NETWORK_DOUBLE;
+	    }
+
+	    break;
 	}
 	case RT_PNT_TYPE_SCA_NRM: {
-	    external->ext_nbytes += pnts->count * ELEMENTS_PER_POINT * SIZEOF_NETWORK_DOUBLE;
+	    register struct pnt_scale_normal *point = (struct pnt_scale_normal *)pnts->point;
+	    head = &point->l;
+    
+	    for (BU_LIST_FOR(point, pnt_scale_normal, head)) {
+		point_t v;
+		double s[1];
+		vect_t n;
+
+		/* pack v */
+		VSCALE(v, point->v, local2mm);
+		htond((unsigned char *)buf, (unsigned char *)v, ELEMENTS_PER_POINT);
+		buf += ELEMENTS_PER_POINT * SIZEOF_NETWORK_DOUBLE;
+		
+		/* pack s */
+		s[0] = point->s * local2mm;
+		htond((unsigned char *)buf, (unsigned char *)s, SIZEOF_NETWORK_DOUBLE);
+		buf += 1 * SIZEOF_NETWORK_DOUBLE;
+
+		/* pack n */
+		VSCALE(n, point->n, local2mm);
+		htond((unsigned char *)buf, (unsigned char *)n, ELEMENTS_PER_VECT);
+		buf += ELEMENTS_PER_VECT * SIZEOF_NETWORK_DOUBLE;
+	    }
+
+	    break;
 	}
 	case RT_PNT_TYPE_COL_SCA_NRM: {
-	    external->ext_nbytes += pnts->count * ELEMENTS_PER_POINT * SIZEOF_NETWORK_DOUBLE;
+	    register struct pnt_color_scale_normal *point = (struct pnt_color_scale_normal *)pnts->point;
+	    head = &point->l;
+    
+	    for (BU_LIST_FOR(point, pnt_color_scale_normal, head)) {
+		point_t v;
+		double c[3];
+		double s[1];
+		vect_t n;
+
+		/* pack v */
+		VSCALE(v, point->v, local2mm);
+		htond((unsigned char *)buf, (unsigned char *)v, ELEMENTS_PER_POINT);
+		buf += ELEMENTS_PER_POINT * SIZEOF_NETWORK_DOUBLE;
+		
+		/* pack c */
+		bu_color_to_rgb_floats(&point->c, c);
+		htond((unsigned char *)buf, (unsigned char *)c, 3);
+		buf += 3 * SIZEOF_NETWORK_DOUBLE;
+
+		/* pack s */
+		s[0] = point->s * local2mm;
+		htond((unsigned char *)buf, (unsigned char *)s, SIZEOF_NETWORK_DOUBLE);
+		buf += 1 * SIZEOF_NETWORK_DOUBLE;
+
+		/* pack n */
+		VSCALE(n, point->n, local2mm);
+		htond((unsigned char *)buf, (unsigned char *)n, ELEMENTS_PER_VECT);
+		buf += ELEMENTS_PER_VECT * SIZEOF_NETWORK_DOUBLE;
+	    }
+
+	    break;
 	}
 	default:
 	    bu_log("ERROR: unknown points primitive type\n");
