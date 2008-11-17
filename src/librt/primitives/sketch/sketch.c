@@ -2453,57 +2453,58 @@ rt_curve_order_segments(struct curve *crv)
     }
 
     for (j=1; j<seg_count; j++) {
+	int tmp_reverse;
+	genptr_t tmp_seg;
+	int fixed=0;
+
 	i = j - 1;
 
 	get_indices(crv->segments[i], &start1, &end1);
 	get_indices(crv->segments[j], &start2, &end2);
 
-	if (end1 != start2) {
-	    int fixed=0;
+	if (end1 == start2)
+	    continue;
 
-	    for (k=j+1; k<seg_count; k++) {
-		get_indices(crv->segments[k], &start3, &end3);
-		if (start3 == end1) {
-		    int tmp_reverse;
-		    genptr_t tmp_seg;
+	for (k=j+1; k<seg_count; k++) {
+	    get_indices(crv->segments[k], &start3, &end3);
+	    if (start3 != end1)
+		continue;
 
-		    /* exchange j and k segments */
-		    tmp_seg = crv->segments[j];
-		    crv->segments[j] = crv->segments[k];
-		    crv->segments[k] = tmp_seg;
+	    /* exchange j and k segments */
+	    tmp_seg = crv->segments[j];
+	    crv->segments[j] = crv->segments[k];
+	    crv->segments[k] = tmp_seg;
+	    
+	    tmp_reverse = crv->reverse[j];
+	    crv->reverse[j] = crv->reverse[k];
+	    crv->reverse[k] = tmp_reverse;
+	    fixed = 1;
+	    break;
+	}
 
-		    tmp_reverse = crv->reverse[j];
-		    crv->reverse[j] = crv->reverse[k];
-		    crv->reverse[k] = tmp_reverse;
-		    fixed = 1;
-		    break;
-		}
+	if (fixed)
+	    continue;
+
+	/* try reversing a segment */
+	for (k=j; k<seg_count; k++) {
+	    get_indices(crv->segments[k], &start3, &end3);
+	    if (end3 != end1)
+		continue;
+
+	    rt_curve_reverse_segment(crv->segments[k]);
+		
+	    if (k != j) {
+		/* exchange j and k segments */
+		tmp_seg = crv->segments[j];
+		crv->segments[j] = crv->segments[k];
+		crv->segments[k] = tmp_seg;
+		
+		tmp_reverse = crv->reverse[j];
+		crv->reverse[j] = crv->reverse[k];
+		crv->reverse[k] = tmp_reverse;
 	    }
-	    if (!fixed) {
-		/* try reversing a segment */
-		for (k=j; k<seg_count; k++) {
-		    get_indices(crv->segments[k], &start3, &end3);
-		    if (end3 == end1) {
-			int tmp_reverse;
-			genptr_t tmp_seg;
-
-			rt_curve_reverse_segment(crv->segments[k]);
-
-			if (k != j) {
-			    /* exchange j and k segments */
-			    tmp_seg = crv->segments[j];
-			    crv->segments[j] = crv->segments[k];
-			    crv->segments[k] = tmp_seg;
-
-			    tmp_reverse = crv->reverse[j];
-			    crv->reverse[j] = crv->reverse[k];
-			    crv->reverse[k] = tmp_reverse;
-			}
-			fixed = 1;
-			break;
-		    }
-		}
-	    }
+	    fixed = 1;
+	    break;
 	}
     }
 }
