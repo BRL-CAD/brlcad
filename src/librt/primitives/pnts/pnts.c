@@ -86,7 +86,7 @@ rt_pnts_export5(struct bu_external *external, const struct rt_db_internal *inter
 	pointDataSize += ELEMENTS_PER_VECT;
 
     external->ext_buf = (genptr_t)bu_realloc(external->ext_buf, external->ext_nbytes + (pnts->count * pointDataSize), "pnts external realloc");
-    buf = external->ext_buf + external->ext_nbytes;
+    buf = (unsigned char *)external->ext_buf + external->ext_nbytes;
 
     switch (pnts->type) {
 	case RT_PNT_TYPE_PNT: {
