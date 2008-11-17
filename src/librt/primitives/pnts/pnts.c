@@ -32,10 +32,6 @@
 #include "vmath.h"
 
 
-/* length of axes segments plotted for points with zero scale */
-#define SEG_LENGTH .1
-
-
 static unsigned char *
 pnts_pack_double(unsigned char *buf, unsigned char *data, unsigned int count)
 {
@@ -387,7 +383,7 @@ rt_pnts_plot(struct bu_list *vhead, struct rt_db_internal *internal,
     struct rt_db_internal db;
     struct rt_ell_internal ell;
     struct pnt *point;
-    double scale, vCoord, hCoord;
+    double scale;
     point_t a, b;
 
     RT_CK_DB_INTERNAL(internal);
@@ -422,7 +418,8 @@ rt_pnts_plot(struct bu_list *vhead, struct rt_db_internal *internal,
 	    rt_ell_plot(vhead, &db, ttol, tol);
 	}
     } else {
-	vCoord = hCoord = SEG_LENGTH / 2;
+	double vCoord, hCoord;
+	vCoord = hCoord = 1;
 
 	for (BU_LIST_FOR(point, pnt, head)) {
 	    /* draw first horizontal segment for this point */
