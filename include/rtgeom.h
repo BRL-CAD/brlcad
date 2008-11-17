@@ -557,8 +557,22 @@ struct rt_bot_internal
 
 #define RT_BOT_CK_MAGIC(_p)	BU_CKMAG(_p, RT_BOT_INTERNAL_MAGIC, "rt_bot_internal")
 
-/*
- *      ID_PNTS
+
+/**
+ * ID_PNTS
+ *
+ * Points are represented to a structure that contains exactly the
+ * data that it needs for that 'type' of point.  The reason this was
+ * done over using something like a union was to fully optimize memory
+ * usage so that the maximum number of points could be stored without
+ * resorting to out-of-core techniques.  A union is at least the size
+ * of the largest type and would have wasted memory.
+ *
+ * By using this data-driven approach of type identification, it does
+ * result in needing to have a switching table for all supported types
+ * in order to access data.  This could be avoided by storing them as
+ * multiple lists (wasting a few bytes for unused pointers) but is
+ * left as an exercise to the reader.
  */
 
 typedef enum {
