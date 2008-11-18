@@ -247,7 +247,7 @@ bu_color_to_rgb_floats(struct bu_color *cp, fastf_t *rgb)
 
 
 int
-bu_color_of_rgb_floats(struct bu_color *cp, fastf_t *rgb)
+bu_color_from_rgb_floats(struct bu_color *cp, fastf_t *rgb)
 {
     if (!cp || !rgb) {
 	return 0;
