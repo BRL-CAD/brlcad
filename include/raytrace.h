@@ -207,7 +207,7 @@ struct rt_db_internal  {
 	(_p)->idb_magic = RT_DB_INTERNAL_MAGIC; \
 	(_p)->idb_major_type = -1; \
 	(_p)->idb_minor_type = -1; \
-	(_p)->idb_meth = GENPTR_NULL; \
+	(_p)->idb_meth = (const struct rt_functab *) GENPTR_NULL; \
 	(_p)->idb_ptr = GENPTR_NULL; \
 	bu_avs_init_empty(&(_p)->idb_avs); \
 }
