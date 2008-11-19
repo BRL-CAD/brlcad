@@ -2246,9 +2246,6 @@ set_e_axes_pos(int both)
     register struct dm_list *dmlp;
 
     update_views = 1;
-#if 0
-    VMOVE(curr_e_axes_pos, es_keypoint);
-#else
     switch (es_int.idb_type) {
 	case	ID_ARB8:
 	    if (state == ST_O_EDIT)
@@ -2376,7 +2373,6 @@ set_e_axes_pos(int both)
 	    VMOVE(curr_e_axes_pos, es_keypoint);
 	    break;
     }
-#endif
 
     if (both) {
 	VMOVE(e_axes_pos, curr_e_axes_pos);
@@ -2405,9 +2401,7 @@ set_e_axes_pos(int both)
 	} else
 	    es_edclass = EDIT_CLASS_NULL;
 
-#if 1
 	MAT_IDN(acc_rot_sol);
-#endif
 
 	FOR_ALL_DISPLAYS(dmlp, &head_dm_list.l)
 	    dmlp->dml_mged_variables->mv_transform = 'e';
@@ -3673,44 +3667,7 @@ sedit(void)
 		fixv = 5;
 	    }
 	    else {
-#if 1
 		fixv = get_rotation_vertex();
-#else
-		/* find fixed vertex for ECMD_ARB_ROTATE_FACE */
-		fixv=0;
-		do  {
-		    int	type,loc,valid;
-		    char	line[128];
-
-		    type = es_type - 4;
-		    bu_log("\nEnter fixed vertex number( ");
-		    loc = es_menu*4;
-		    for (i=0; i<4; i++) {
-			if ( arb_vertices[type][loc+i] )
-			    bu_log("%d ",
-				   arb_vertices[type][loc+i]);
-		    }
-		    bu_log(") [%d]: ",arb_vertices[type][loc]);
-
-		    (void)bu_fgets( line, sizeof(line), stdin );
-		    line[strlen(line)-1] = '\0';		/* remove newline */
-
-		    if ( feof(stdin) )  quit();
-		    if ( line[0] == '\0' )
-			fixv = arb_vertices[type][loc]; 	/* default */
-		    else
-			fixv = atoi( line );
-
-		    /* check whether nimble fingers entered valid vertex */
-		    valid = 0;
-		    for (j=0; j<4; j++)  {
-			if ( fixv==arb_vertices[type][loc+j] )
-			    valid=1;
-		    }
-		    if ( !valid )
-			fixv=0;
-		} while ( fixv <= 0 || fixv > es_type );
-#endif
 	    }
 
 	    pr_prompt(interactive);
@@ -6487,11 +6444,7 @@ objedit_mouse( const vect_t mousevec )
 	/* Have scaling take place with respect to keypoint,
 	 * NOT the view center.
 	 */
-#if 0
-	MAT4X3PNT(temp, es_mat, es_keypoint);
-#else
 	VMOVE(temp, es_keypoint);
-#endif
 	MAT4X3PNT(pos_model, modelchanges, temp);
 	wrt_point(modelchanges, incr_change, modelchanges, pos_model);
 
@@ -6501,11 +6454,7 @@ objedit_mouse( const vect_t mousevec )
 	mat_t oldchanges;	/* temporary matrix */
 
 	/* Vector from object keypoint to cursor */
-#if 0
-	MAT4X3PNT( temp, es_mat, es_keypoint );
-#else
 	VMOVE(temp, es_keypoint);
-#endif
 	MAT4X3PNT( pos_view, view_state->vs_model2objview, temp );
 
 	if ( movedir & RARROW )
@@ -6541,11 +6490,7 @@ oedit_trans(fastf_t *tvec)
     mat_t oldchanges;	/* temporary matrix */
 
     MAT_IDN( incr_mat );
-#if 0
-    MAT4X3PNT( temp, es_mat, es_keypoint );
-#else
     VMOVE(temp, es_keypoint);
-#endif
     MAT4X3PNT( pos_model, view_state->vs_vop->vo_view2model, tvec );/* NOT objview */
     MAT4X3PNT( tr_temp, modelchanges, temp );
     VSUB2( tr_temp, pos_model, tr_temp );
@@ -6612,11 +6557,7 @@ oedit_abs_scale(void)
     /* Have scaling take place with respect to keypoint,
      * NOT the view center.
      */
-#if 0
-    MAT4X3PNT(temp, es_mat, es_keypoint);
-#else
     VMOVE(temp, es_keypoint);
-#endif
     MAT4X3PNT(pos_model, modelchanges, temp);
     wrt_point(modelchanges, incr_mat, modelchanges, pos_model);
 
@@ -8098,17 +8039,6 @@ mged_param(Tcl_Interp *interp, int argc, fastf_t *argvect)
 	return TCL_ERROR;
     }
 
-#if 0
-    if ( es_edflag == ECMD_TGC_ROT_H
-	 || es_edflag == ECMD_TGC_ROT_AB
-	 || es_edflag == ECMD_ETO_ROT_C ) {
-	Tcl_AppendResult(interp,
-			 "\"p\" command not defined for this option\n",
-			 (char *)NULL);
-	return TCL_ERROR;
-    }
-#endif
-
     inpara = 0;
     for ( i = 0; i < argc; i++ )  {
 	es_para[ inpara++ ] = argvect[i];
@@ -8198,7 +8128,6 @@ mged_param(Tcl_Interp *interp, int argc, fastf_t *argvect)
 	    break;
     }
 
-#if 1
     sedit();
 
     if (SEDIT_TRAN) {
@@ -8215,7 +8144,6 @@ mged_param(Tcl_Interp *interp, int argc, fastf_t *argvect)
 	if (edit_absolute_scale > 0)
 	    edit_absolute_scale /= 3.0;
     }
-#endif
     return TCL_OK;
 }
 
@@ -8246,66 +8174,6 @@ f_param(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 
     return mged_param(interp, argc-1, argvect);
 }
-
-#if 0
-/*
- *  Returns -
- *	1	solid edit claimes the rotate event
- *	0	rotate event can be used some other way.
- */
-int
-sedit_rotate( xangle, yangle, zangle )
-    double	xangle, yangle, zangle;
-{
-    mat_t	tempp;
-
-    if (!SEDIT_ROTATE)
-	return 0;
-
-    MAT_IDN( incr_change );
-    bn_mat_angles_rad(incr_change, xangle, yangle, zangle);
-
-    /* accumulate the translations */
-    bn_mat_mul(tempp, incr_change, acc_rot_sol);
-    MAT_COPY(acc_rot_sol, tempp);
-
-    /* sedit() will use incr_change or acc_rot_sol ?? */
-    sedit();	/* change es_int only, NOW */
-
-    return 1;
-}
-
-/*
- *  Returns -
- *	1	object edit claimes the rotate event
- *	0	rotate event can be used some other way.
- */
-int
-objedit_rotate( xangle, yangle, zangle )
-    double	xangle, yangle, zangle;
-{
-    mat_t	tempp;
-    vect_t	point;
-
-    if ( movedir != ROTARROW )  return 0;
-
-    MAT_IDN( incr_change );
-    bn_mat_angles_rad(incr_change, xangle, yangle, zangle);
-
-    /* accumulate change matrix - do it wrt a point NOT view center */
-#if 0
-    MAT4X3PNT(point, modelchanges, es_keypoint);
-#else
-    bn_mat_mul(tempp, modelchanges, es_mat);
-    MAT4X3PNT(point, tempp, es_keypoint);
-#endif
-    wrt_point(modelchanges, incr_change, modelchanges, point);
-
-    new_edit_mats();
-
-    return 1;
-}
-#endif
 
 /*
  *			L A B E L _ E D I T E D _ S O L I D
