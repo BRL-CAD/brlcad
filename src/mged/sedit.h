@@ -138,6 +138,9 @@
 #define ECMD_METABALL_PT_ADD	89	/* add a metaball control point */
 #define ECMD_METABALL_RMET	90	/* set the metaball render method */
 
+#define ECMD_HYP_ROT_H		91
+#define ECMD_HYP_ROT_A		92
+
 #define SEDIT_ROTATE (state == ST_S_EDIT && \
 		      (es_edflag == SROT || \
 		       es_edflag == ECMD_TGC_ROT_H || \

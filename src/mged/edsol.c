@@ -51,7 +51,7 @@ extern struct bn_tol mged_tol;
 
 static void	arb8_edge(int arg), ars_ed(int arg), ell_ed(int arg), tgc_ed(int arg), tor_ed(int arg), spline_ed(int arg);
 static void	nmg_ed(int arg), pipe_ed(int arg), vol_ed(int arg), ebm_ed(int arg), dsp_ed(int arg), cline_ed(int arg), bot_ed(int arg), extr_ed(int arg);
-static void	rpc_ed(int arg), rhc_ed(int arg), part_ed(int arg), epa_ed(int arg), ehy_ed(int arg), eto_ed(int arg);
+static void	rpc_ed(int arg), rhc_ed(int arg), part_ed(int arg), epa_ed(int arg), ehy_ed(int arg), eto_ed(int arg), hyp_ed(int arg);
 static void	superell_ed(int arg), metaball_ed(int arg);
 
 static void	arb7_edge(int arg), arb6_edge(int arg), arb5_edge(int arg), arb4_point(int arg);
@@ -223,6 +223,12 @@ int	es_menu;		/* item selected from menu */
 #define MENU_METABALL_PT_FLDSTR	124
 #define MENU_METABALL_DEL_PT	125
 #define MENU_METABALL_ADD_PT	126
+#define MENU_HYP_H              127
+#define MENU_HYP_SCALE_A        128
+#define MENU_HYP_SCALE_B	129
+#define MENU_HYP_C		130
+#define MENU_HYP_ROT_H		131
+#define MENU_HYP_ROT_A		132
 
 struct menu_item cline_menu[] = {
     { "CLINE MENU",		(void (*)())NULL, 0 },
@@ -563,6 +569,17 @@ struct menu_item  ehy_menu[] = {
     { "Set A", ehy_ed, MENU_EHY_R1 },
     { "Set B", ehy_ed, MENU_EHY_R2 },
     { "Set c", ehy_ed, MENU_EHY_C },
+    { "", (void (*)())NULL, 0 }
+};
+
+struct menu_item  hyp_menu[] = { 
+    { "HYPERBOLID MENU", (void (*)())NULL, 0 },
+    { "Set H", hyp_ed, MENU_HYP_H },
+    { "Set A", hyp_ed, MENU_HYP_SCALE_A },
+    { "Set B", hyp_ed, MENU_HYP_SCALE_B },
+    { "Set c", hyp_ed, MENU_HYP_C },
+    { "Rotate H", hyp_ed, MENU_HYP_ROT_H },
+    { "Rotate A", hyp_ed, MENU_HYP_ROT_A },
     { "", (void (*)())NULL, 0 }
 };
 
@@ -1035,6 +1052,25 @@ ehy_ed(int arg)
     es_edflag = PSCALE;
 
     set_e_axes_pos(1);
+}
+
+static void
+hyp_ed(int arg)
+{
+    es_menu = arg;
+    switch ( arg ) {
+        case MENU_HYP_ROT_H:
+            es_edflag = ECMD_HYP_ROT_H;
+            break;
+        case MENU_HYP_ROT_A:
+            es_edflag = ECMD_HYP_ROT_A;
+            break;
+        default:
+            es_edflag = PSCALE;
+            break;
+    }
+    set_e_axes_pos(1);
+    return;
 }
 
 static void
@@ -2043,6 +2079,16 @@ get_solid_keypoint(fastf_t *pt, char **strp, struct rt_db_internal *ip, fastf_t 
 	    *strp = "V";
 	    break;
 	}
+	case ID_HYP:
+	{
+	    struct rt_hyp_internal *hyp =
+		(struct rt_hyp_internal *)ip->idb_ptr;
+	    RT_HYP_CK_MAGIC( hyp );
+
+	    VMOVE( mpt, hyp->hyp_V );
+	    *strp = "V";
+	    break;
+	}
 	case ID_ETO:
 	{
 	    struct rt_eto_internal *eto =
@@ -2640,6 +2686,9 @@ sedit_menu(void) {
 	    break;
 	case ID_EHY:
 	    mmenu_set_all( MENU_L1, ehy_menu );
+	    break;
+	case ID_HYP:
+	    mmenu_set_all( MENU_L1, hyp_menu );
 	    break;
 	case ID_ETO:
 	    mmenu_set_all( MENU_L1, eto_menu );
@@ -4316,6 +4365,113 @@ sedit(void)
 	}
 	break;
 
+       case ECMD_HYP_ROT_H:
+            /* rotate hyperolid height vector */
+        {
+            struct rt_hyp_internal      *hyp =
+                (struct rt_hyp_internal *)es_int.idb_ptr;
+
+            RT_HYP_CK_MAGIC(hyp);
+            if (inpara) {
+                static mat_t invsolr;
+                /*
+                 * Keyboard parameters:  absolute x,y,z rotations,
+                 * in degrees.  First, cancel any existing rotations,
+                 * then perform new rotation
+                 */
+                bn_mat_inv( invsolr, acc_rot_sol );
+
+                /* Build completely new rotation change */
+                MAT_IDN( modelchanges );
+                bn_mat_angles(modelchanges,
+                              es_para[0],
+                              es_para[1],
+                              es_para[2]);
+                /* Borrow incr_change matrix here */
+                bn_mat_mul( incr_change, modelchanges, invsolr );
+                MAT_COPY(acc_rot_sol, modelchanges);
+
+                /* Apply new rotation to solid */
+                /*  Clear out solid rotation */
+                MAT_IDN( modelchanges );
+            }  else  {
+                /* Apply incremental changes already in incr_change */
+            }
+
+            if (mged_variables->mv_context) {
+                /* calculate rotations about keypoint */
+                bn_mat_xform_about_pt( edit, incr_change, es_keypoint );
+
+                /* We want our final matrix (mat) to xform the original solid
+                 * to the position of this instance of the solid, perform the
+                 * current edit operations, then xform back.
+                 *      mat = es_invmat * edit * es_mat
+                 */
+                bn_mat_mul( mat1, edit, es_mat );
+                bn_mat_mul( mat, es_invmat, mat1 );
+
+                MAT4X3VEC(hyp->hyp_H, mat, hyp->hyp_H);
+            } else {
+                MAT4X3VEC(hyp->hyp_H, incr_change, hyp->hyp_H);
+            }
+        }
+        MAT_IDN( incr_change );
+        break;
+
+       case ECMD_HYP_ROT_A:
+            /* rotate hyperolid height vector */
+        {
+            struct rt_hyp_internal      *hyp =
+                (struct rt_hyp_internal *)es_int.idb_ptr;
+
+            RT_HYP_CK_MAGIC(hyp);
+            if (inpara) {
+                static mat_t invsolr;
+                /*
+                 * Keyboard parameters:  absolute x,y,z rotations,
+                 * in degrees.  First, cancel any existing rotations,
+                 * then perform new rotation
+                 */
+                bn_mat_inv( invsolr, acc_rot_sol );
+
+                /* Build completely new rotation change */
+                MAT_IDN( modelchanges );
+                bn_mat_angles(modelchanges,
+                              es_para[0],
+                              es_para[1],
+                              es_para[2]);
+                /* Borrow incr_change matrix here */
+                bn_mat_mul( incr_change, modelchanges, invsolr );
+                MAT_COPY(acc_rot_sol, modelchanges);
+
+                /* Apply new rotation to solid */
+                /*  Clear out solid rotation */
+                MAT_IDN( modelchanges );
+            }  else  {
+                /* Apply incremental changes already in incr_change */
+            }
+
+            if (mged_variables->mv_context) {
+                /* calculate rotations about keypoint */
+                bn_mat_xform_about_pt( edit, incr_change, es_keypoint );
+
+                /* We want our final matrix (mat) to xform the original solid
+                 * to the position of this instance of the solid, perform the
+                 * current edit operations, then xform back.
+                 *      mat = es_invmat * edit * es_mat
+                 */
+                bn_mat_mul( mat1, edit, es_mat );
+                bn_mat_mul( mat, es_invmat, mat1 );
+
+/*                MAT4X3VEC(hyp->hyp_A, mat, hyp->hyp_A);*/
+            } else {
+/*                MAT4X3VEC(hyp->hyp_A, incr_change, hyp->hyp_A);*/
+            }
+        }
+        MAT_IDN( incr_change );
+        break;
+
+	
 	case ECMD_ETO_ROT_C:
 	    /* rotate ellipse semi-major axis vector */
 	{
@@ -8518,6 +8674,20 @@ label_edited_solid(
 	}
 	break;
 
+	case ID_HYP:
+	{
+	    struct rt_hyp_internal	*hyp =
+		(struct rt_hyp_internal *)es_int.idb_ptr;
+	    fastf_t	ch, cv, dh, dv, cmag, phi;
+	    vect_t	Au, Nu;
+
+	    RT_HYP_CK_MAGIC(hyp);
+
+	    MAT4X3PNT( pos_view, xform, hyp->hyp_V );
+	    POINT_LABEL( pos_view, 'V' );
+	}
+	break;
+	
 	case ID_ETO:
 	{
 	    struct rt_eto_internal	*eto =
@@ -9144,6 +9314,9 @@ f_get_sedit_menus(ClientData clientData, Tcl_Interp *interp, int argc, char **ar
 		    break;
 		case ID_EHY:
 		    mip = ehy_menu;
+		    break;
+		case ID_HYP:
+		    mip = hyp_menu;
 		    break;
 		case ID_ETO:
 		    mip = eto_menu;
