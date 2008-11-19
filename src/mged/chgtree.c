@@ -383,11 +383,6 @@ cmd_oed(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
     db_full_path_init( &both );
     db_dup_full_path( &both, &lhs );
     db_append_full_path( &both, &rhs );
-#if 0
-    db_pr_full_path( "lhs ", &lhs );
-    db_pr_full_path( "rhs ", &rhs );
-    db_pr_full_path( "both", &both);
-#endif
 
     /* Patterned after  ill_common() ... */
     illump = BU_LIST_NEXT(solid, &dgop->dgo_headSolid);/* any valid solid would do */
@@ -413,9 +408,6 @@ cmd_oed(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
     (void)chg_state( ST_O_PICK, ST_O_PATH, "internal change of state");
 
     /* Select the matrix */
-#if 0
-    bu_log("matpick %d\n", lhs.fp_len);
-#endif
     sprintf( number, "%d", lhs.fp_len );
     new_argv[0] = "matpick";
     new_argv[1] = number;

@@ -837,30 +837,7 @@ chg_state(int from, int to, char *str)
     FOR_ALL_DISPLAYS(p, &head_dm_list.l) {
 	curr_dm_list = p;
 
-#if 0
-	if (to == ST_VIEW) {
-	    mat_t o_toViewcenter;
-	    fastf_t o_Viewscale;
-
-	    /* save toViewcenter and Viewscale */
-	    MAT_COPY(o_toViewcenter, view_state->vs_toViewcenter);
-	    o_Viewscale = view_state->vs_Viewscale;
-
-	    /* get new orig_pos */
-	    size_reset();
-	    MAT_DELTAS_GET_NEG(view_state->vs_orig_pos, view_state->vs_toViewcenter);
-
-	    /* restore old toViewcenter and Viewscale */
-	    MAT_COPY(view_state->vs_toViewcenter, o_toViewcenter);
-	    view_state->vs_Viewscale = o_Viewscale;
-	}
-#endif
 	new_mats();
-
-#if 0
-	/* recompute absolute_tran */
-	set_absolute_tran();
-#endif
     }
 
     curr_dm_list = save_dm_list;
