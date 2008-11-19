@@ -556,13 +556,7 @@ ell_anal(struct bu_vls *vp, const struct rt_db_internal *ip)
 {
     struct rt_ell_internal	*ell = (struct rt_ell_internal *)ip->idb_ptr;
     fastf_t ma, mb, mc;
-#ifdef major		/* Some systems have these defined as macros!!! */
-#undef major
-#endif
-#ifdef minor
-#undef minor
-#endif
-    fastf_t ecc, major, minor;
+    fastf_t ecc, maj, min;
     fastf_t vol, sur_area;
     int	type;
 
@@ -594,14 +588,14 @@ ell_anal(struct bu_vls *vp, const struct rt_db_internal *ip)
 	if ( mc > ma ) {
 	    /* oblate spheroid */
 	    type = OBLATE;
-	    major = mc;
-	    minor = ma;
+	    maj = mc;
+	    min = ma;
 	}
 	else {
 	    /* prolate spheroid */
 	    type = PROLATE;
-	    major = ma;
-	    minor = mc;
+	    maj = ma;
+	    min = mc;
 	}
     }
     else
@@ -610,14 +604,14 @@ ell_anal(struct bu_vls *vp, const struct rt_db_internal *ip)
 	    if ( mb > ma ) {
 		/* oblate spheroid */
 		type = OBLATE;
-		major = mb;
-		minor = ma;
+		maj = mb;
+		min = ma;
 	    }
 	    else {
 		/* prolate spheroid */
 		type = PROLATE;
-		major = ma;
-		minor = mb;
+		maj = ma;
+		min = mb;
 	    }
 	}
 	else
@@ -626,27 +620,27 @@ ell_anal(struct bu_vls *vp, const struct rt_db_internal *ip)
 		if ( ma > mb ) {
 		    /* oblate spheroid */
 		    type = OBLATE;
-		    major = ma;
-		    minor = mb;
+		    maj = ma;
+		    min = mb;
 		}
 		else {
 		    /* prolate spheroid */
 		    type = PROLATE;
-		    major = mb;
-		    minor = ma;
+		    maj = mb;
+		    min = ma;
 		}
 	    }
 	    else {
 		bu_vls_printf(vp, "   Cannot find surface area\n");
 		return;
 	    }
-    ecc = sqrt(major*major - minor*minor) / major;
+    ecc = sqrt(maj*maj - min*min) / maj;
     if ( type == PROLATE ) {
-	sur_area = 2.0 * pi * minor * minor +
-	    (2.0 * pi * (major*minor/ecc) * asin(ecc));
+	sur_area = 2.0 * pi * min * min +
+	    (2.0 * pi * (maj*min/ecc) * asin(ecc));
     } else if ( type == OBLATE ) {
-	sur_area = 2.0 * pi * major * major +
-	    (pi * (minor*minor/ecc) * log( (1.0+ecc)/(1.0-ecc) ));
+	sur_area = 2.0 * pi * maj * maj +
+	    (pi * (min*min/ecc) * log( (1.0+ecc)/(1.0-ecc) ));
     } else {
 	sur_area = 0.0;
     }
@@ -662,13 +656,7 @@ superell_anal(struct bu_vls *vp, const struct rt_db_internal *ip)
 {
     struct rt_superell_internal	*superell = (struct rt_superell_internal *)ip->idb_ptr;
     fastf_t ma, mb, mc;
-#ifdef major		/* Some systems have these defined as macros!!! */
-#undef major
-#endif
-#ifdef minor
-#undef minor
-#endif
-    fastf_t ecc, major, minor;
+    fastf_t ecc, maj, min;
     fastf_t vol, sur_area;
     int	type;
 
@@ -700,14 +688,14 @@ superell_anal(struct bu_vls *vp, const struct rt_db_internal *ip)
 	if ( mc > ma ) {
 	    /* oblate spheroid */
 	    type = OBLATE;
-	    major = mc;
-	    minor = ma;
+	    maj = mc;
+	    min = ma;
 	}
 	else {
 	    /* prolate spheroid */
 	    type = PROLATE;
-	    major = ma;
-	    minor = mc;
+	    maj = ma;
+	    min = mc;
 	}
     }
     else
@@ -716,14 +704,14 @@ superell_anal(struct bu_vls *vp, const struct rt_db_internal *ip)
 	    if ( mb > ma ) {
 		/* oblate spheroid */
 		type = OBLATE;
-		major = mb;
-		minor = ma;
+		maj = mb;
+		min = ma;
 	    }
 	    else {
 		/* prolate spheroid */
 		type = PROLATE;
-		major = ma;
-		minor = mb;
+		maj = ma;
+		min = mb;
 	    }
 	}
 	else
@@ -732,27 +720,27 @@ superell_anal(struct bu_vls *vp, const struct rt_db_internal *ip)
 		if ( ma > mb ) {
 		    /* oblate spheroid */
 		    type = OBLATE;
-		    major = ma;
-		    minor = mb;
+		    maj = ma;
+		    min = mb;
 		}
 		else {
 		    /* prolate spheroid */
 		    type = PROLATE;
-		    major = mb;
-		    minor = ma;
+		    maj = mb;
+		    min = ma;
 		}
 	    }
 	    else {
 		bu_vls_printf(vp, "   Cannot find surface area\n");
 		return;
 	    }
-    ecc = sqrt(major*major - minor*minor) / major;
+    ecc = sqrt(maj*maj - min*min) / maj;
     if ( type == PROLATE ) {
-	sur_area = 2.0 * pi * minor * minor +
-	    (2.0 * pi * (major*minor/ecc) * asin(ecc));
+	sur_area = 2.0 * pi * min * min +
+	    (2.0 * pi * (maj*min/ecc) * asin(ecc));
     } else if ( type == OBLATE ) {
-	sur_area = 2.0 * pi * major * major +
-	    (pi * (minor*minor/ecc) * log( (1.0+ecc)/(1.0-ecc) ));
+	sur_area = 2.0 * pi * maj * maj +
+	    (pi * (min*min/ecc) * log( (1.0+ecc)/(1.0-ecc) ));
     } else {
 	sur_area = 0.0;
     }
