@@ -265,7 +265,8 @@ ged_get_obj_bounds2(struct ged			*gedp,
     /* Get bounds from internal object */
     VMOVE(stp->st_min, rpp_min);
     VMOVE(stp->st_max, rpp_max);
-    intern.idb_meth->ft_prep(stp, &intern, rtip);
+    if (intern.idb_meth->ft_prep)
+	intern.idb_meth->ft_prep(stp, &intern, rtip);
     VMOVE(rpp_min, stp->st_min);
     VMOVE(rpp_max, stp->st_max);
 

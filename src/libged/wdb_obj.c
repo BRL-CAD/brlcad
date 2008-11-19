@@ -843,6 +843,10 @@ wdb_get_cmd(struct rt_wdb *wdbp,
 	struct bu_vls log;
 
 	bu_vls_init(&log);
+
+	if (!intern.idb_meth->ft_get)
+	    return TCL_ERROR;
+
 	status = intern.idb_meth->ft_get(&log, &intern, argv[2]);
 	Tcl_AppendResult(interp, bu_vls_addr(&log), (char *)NULL);
 	bu_vls_free(&log);
@@ -1131,7 +1135,7 @@ wdb_put_cmd(struct rt_wdb *wdbp,
 
 	bu_vls_init(&log);
 
-	if (ftp->ft_adjust(&log, &intern, argc-3, argv+3, &rt_uniresource) == BRLCAD_ERROR) {
+	if (!ftp->ft_adjust || ftp->ft_adjust(&log, &intern, argc-3, argv+3, &rt_uniresource) == BRLCAD_ERROR) {
 	    Tcl_AppendResult(interp, bu_vls_addr(&log), (char *)NULL);
 	    bu_vls_free(&log);
 	    rt_db_free_internal(&intern, &rt_uniresource);
@@ -1223,6 +1227,10 @@ wdb_adjust_cmd(struct rt_wdb *wdbp,
 	struct bu_vls log;
 
 	bu_vls_init(&log);
+
+	if (!intern.idb_meth->ft_adjust)
+	    return TCL_ERROR;
+
 	status = intern.idb_meth->ft_adjust(&log, &intern, argc-2, argv+2, &rt_uniresource);
 
 	if (status == BRLCAD_OK && wdb_put_internal(wdbp, name, &intern, 1.0) < 0) {
@@ -1303,7 +1311,11 @@ wdb_form_cmd(struct rt_wdb *wdbp,
 	struct bu_vls log;
 
 	bu_vls_init(&log);
-	ret =  ftp->ft_form(&log, ftp);
+	
+	if (!ftp->ft_form)
+	    return TCL_ERROR;
+
+	ret = ftp->ft_form(&log, ftp);
 	Tcl_AppendResult(interp, bu_vls_addr(&log), (char *)NULL);
 	bu_vls_free(&log);
 
@@ -2267,7 +2279,7 @@ wdb_list_cmd(struct rt_wdb *wdbp,
 
 	    bu_vls_printf(&str, "%s:  ", argv[arg]);
 
-	    if (rt_functab[id].ft_describe(&str, &intern, 99, wdbp->dbip->dbi_base2local, &rt_uniresource, wdbp->dbip) < 0)
+	    if (!rt_functab[id].ft_describe || rt_functab[id].ft_describe(&str, &intern, 99, wdbp->dbip->dbi_base2local, &rt_uniresource, wdbp->dbip) < 0)
 		Tcl_AppendResult(interp, dp->d_namep, ": describe error", (char *)NULL);
 
 	    rt_db_free_internal(&intern, &rt_uniresource);

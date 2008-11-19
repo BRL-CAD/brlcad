@@ -60,6 +60,10 @@ ged_form(struct ged *gedp, int argc, const char *argv[])
 	return BRLCAD_ERROR;
     }
 
+    if (!ftp->ft_form) {
+	return BRLCAD_ERROR;
+    }
+
     return ftp->ft_form(&gedp->ged_result_str, ftp);
 }
 

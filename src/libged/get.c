@@ -66,6 +66,10 @@ ged_get(struct ged *gedp, int argc, const char *argv[])
     if (wdb_import_from_path(&gedp->ged_result_str, &intern, argv[1], gedp->ged_wdbp) == BRLCAD_ERROR)
 	return BRLCAD_ERROR;
 
+    if (!intern.idb_meth->ft_get) {
+	return BRLCAD_ERROR;
+    }
+
     status = intern.idb_meth->ft_get(&gedp->ged_result_str, &intern, argv[2]);
     rt_db_free_internal(&intern, &rt_uniresource);
 

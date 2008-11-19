@@ -278,7 +278,7 @@ arbin(struct ged		*gedp,
 	m = nmg_mm();
 
 	/* get an NMG version of this arb7 */
-	if ( rt_functab[ip->idb_type].ft_tessellate( &r, m, ip, &ttol, &gedp->ged_wdbp->wdb_tol ) )
+	if (!rt_functab[ip->idb_type].ft_tessellate || rt_functab[ip->idb_type].ft_tessellate( &r, m, ip, &ttol, &gedp->ged_wdbp->wdb_tol ) )
 	{
 	    bu_vls_printf(&gedp->ged_result_str, "Cannot tessellate arb7\n");
 	    rt_db_free_internal( ip, &rt_uniresource );
