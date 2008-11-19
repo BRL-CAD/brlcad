@@ -1687,7 +1687,6 @@ get_solid_keypoint(fastf_t *pt, char **strp, struct rt_db_internal *ip, fastf_t 
 	case ID_METABALL:
 	{
 	    struct rt_metaball_internal *metaball = (struct rt_metaball_internal *)ip->idb_ptr;
-	    struct wdb_metaballpt *metaball_pt;
 	    static char buf[BUFSIZ];
 
 	    RT_METABALL_CK_MAGIC(metaball);
@@ -2708,8 +2707,8 @@ get_rotation_vertex(void)
     bu_vls_printf(&str, ") [%d]: ", arb_vertices[type][loc]);
 
     bu_vls_printf(&cmd, "cad_input_dialog .get_vertex %V {Need vertex for solid rotate}\
- {%s} vertex_num %d 0 {{ summary \"Enter a vertex number to rotate about.\"}} OK",
-		  &dName, bu_vls_addr(&str), arb_vertices[type][loc]);
+ {%V} vertex_num %d 0 {{ summary \"Enter a vertex number to rotate about.\"}} OK",
+		  &dName, &str, arb_vertices[type][loc]);
 
     while (!valid) {
 	if (Tcl_Eval(interp, bu_vls_addr(&cmd)) != TCL_OK) {
@@ -5990,7 +5989,7 @@ sedit_mouse(const vect_t mousevec)
 
 		bu_vls_init(&tmp_vls);
 		bu_vls_printf(&tmp_vls,
-			      "edgeuse selected = x%x (%g %g %g) <-> (%g %g %g)\n",
+			      "edgeuse selected = 0x%p (%g %g %g) <-> (%g %g %g)\n",
 			      es_eu, V3ARGS(es_eu->vu_p->v_p->vg_p->coord),
 			      V3ARGS(es_eu->eumate_p->vu_p->v_p->vg_p->coord));
 		Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
@@ -6228,7 +6227,7 @@ sedit_trans(fastf_t *tvec)
 
 		bu_vls_init(&tmp_vls);
 		bu_vls_printf(&tmp_vls,
-			      "edgeuse selected = x%x (%g %g %g) <-> (%g %g %g)\n",
+			      "edgeuse selected = 0x%p (%g %g %g) <-> (%g %g %g)\n",
 			      es_eu, V3ARGS(es_eu->vu_p->v_p->vg_p->coord),
 			      V3ARGS(es_eu->eumate_p->vu_p->v_p->vg_p->coord));
 		Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
@@ -8416,8 +8415,6 @@ label_edited_solid(
 	{
 	    struct rt_hyp_internal	*hyp =
 		(struct rt_hyp_internal *)es_int.idb_ptr;
-	    fastf_t	ch, cv, dh, dv, cmag, phi;
-	    vect_t	Au, Nu;
 
 	    RT_HYP_CK_MAGIC(hyp);
 
