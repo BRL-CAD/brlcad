@@ -581,10 +581,29 @@ rt_pnts_import5(struct rt_db_internal *internal, const struct bu_external *exter
 int
 rt_pnts_ifree(struct rt_db_internal *internal)
 {
+    int i;
+    struct bu_list *head;
+    struct bu_list *curr;
+
     RT_CK_DB_INTERNAL(internal);
 
+    head = ((struct bu_list *)(((struct rt_pnts_internal *)(internal->idb_ptr))->point));
+
+    /* free the points */
+    while (BU_LIST_WHILE(curr, bu_list, head)) {
+	BU_LIST_DEQUEUE(curr);
+	if (curr) {
+	    bu_free(curr, "free pnts");
+	}
+    }
+    
+    /* free the head */
+    bu_free(head, "free pnts head");
+
+    /* free the internal container */
     bu_free(internal->idb_ptr, "pnts ifree");
 
+    /* sanity */
     internal->idb_ptr = GENPTR_NULL;
 }
 
