@@ -47,10 +47,6 @@
 #include "./mged_dm.h"
 
 
-#if 1
-#define TRY_EDIT_NEW_WAY
-#endif
-
 extern struct bn_tol mged_tol;
 
 static void	arb8_edge(int arg), ars_ed(int arg), ell_ed(int arg), tgc_ed(int arg), tor_ed(int arg), spline_ed(int arg);
@@ -2112,7 +2108,6 @@ get_solid_keypoint(fastf_t *pt, char **strp, struct rt_db_internal *ip, fastf_t 
 	    VSETALL( mpt, 0.0 );
 	    *strp = "(origin)";
 
-#if 1
 	    /* XXX Try to use the first point of the selected edge */
 	    if (es_eu != (struct edgeuse *)NULL &&
 		es_eu->vu_p != (struct vertexuse *)NULL &&
@@ -2121,7 +2116,6 @@ get_solid_keypoint(fastf_t *pt, char **strp, struct rt_db_internal *ip, fastf_t 
 		VMOVE(mpt, es_eu->vu_p->v_p->vg_p->coord);
 		break;
 	    }
-#endif
 
 	    if ( BU_LIST_IS_EMPTY( &m->r_hd ) )
 		break;
@@ -3576,7 +3570,6 @@ sedit(void)
 
 	    RT_EXTRUDE_CK_MAGIC( extr );
 	    if ( inpara ) {
-#ifdef TRY_EDIT_NEW_WAY
 		if (mged_variables->mv_context) {
 		    /* apply es_invmat to convert to real model coordinates */
 		    MAT4X3PNT( work, es_invmat, es_para );
@@ -3584,11 +3577,6 @@ sedit(void)
 		} else {
 		    VSUB2(extr->h, es_para, extr->V);
 		}
-#else
-		/* apply es_invmat to convert to real model coordinates */
-		MAT4X3PNT( work, es_invmat, es_para );
-		VSUB2(extr->h, work, extr->V);
-#endif
 	    }
 
 	    /* check for zero H vector */
@@ -3655,17 +3643,12 @@ sedit(void)
 		arb = (struct rt_arb_internal *)es_int.idb_ptr;
 		RT_ARB_CK_MAGIC( arb );
 
-#ifdef TRY_EDIT_NEW_WAY
 		if (mged_variables->mv_context) {
 		    /* apply es_invmat to convert to real model space */
 		    MAT4X3PNT(work,es_invmat,es_para);
 		} else {
 		    VMOVE(work, es_para);
 		}
-#else
-		/* apply es_invmat to convert to real model space */
-		MAT4X3PNT(work,es_invmat,es_para);
-#endif
 		/* change D of planar equation */
 		es_peqn[es_menu][3]=VDOT(&es_peqn[es_menu][0], work);
 		/* find new vertices, put in record in vector notation */
@@ -3768,7 +3751,6 @@ sedit(void)
 				  es_para[2]);
 		    MAT_COPY(acc_rot_sol, modelchanges);
 
-#ifdef TRY_EDIT_NEW_WAY
 		    /* Borrow incr_change matrix here */
 		    bn_mat_mul( incr_change, modelchanges, invsolr );
 		    if (mged_variables->mv_context) {
@@ -3789,13 +3771,6 @@ sedit(void)
 			VMOVE( work, eqp );
 			MAT4X3VEC( eqp, modelchanges, work );
 		    }
-#else
-		    /* Apply new rotation to face */
-		    eqp = &es_peqn[es_menu][0];
-
-		    VMOVE( work, eqp );
-		    MAT4X3VEC( eqp, modelchanges, work );
-#endif
 		}
 		else if ( inpara == 2 ) {
 		    /* 2 parameters:  rot,fb were given */
@@ -3893,7 +3868,6 @@ sedit(void)
 		/* Need vector from current vertex/keypoint
 		 * to desired new location.
 		 */
-#ifdef TRY_EDIT_NEW_WAY
 		if (mged_variables->mv_context) {
 		    /* move solid so that es_keypoint is at position es_para */
 		    vect_t raw_para;
@@ -3911,11 +3885,6 @@ sedit(void)
 		    MAT_IDN( xlatemat );
 		    MAT_DELTAS_VEC_NEG( xlatemat, delta );
 		}
-#else
-		VSUB2( delta, es_para, es_keypoint );
-		MAT_IDN( xlatemat );
-		MAT_DELTAS_VEC( xlatemat, delta );
-#endif
 		transform_editing_solid(&es_int, xlatemat, &es_int, 1);
 	    }
 	}
@@ -3947,16 +3916,12 @@ sedit(void)
 		surf = sip->srfs[spl_surfno];
 		NMG_CK_SNURB(surf);
 		fp = &RT_NURB_GET_CONTROL_POINT( surf, spl_ui, spl_vi );
-#ifdef TRY_EDIT_NEW_WAY
 		if (mged_variables->mv_context) {
 		    /* apply es_invmat to convert to real model space */
 		    MAT4X3PNT( fp, es_invmat, es_para );
 		} else {
 		    VMOVE( fp, es_para );
 		}
-#else
-		VMOVE( fp, es_para );
-#endif
 	    }
 	    break;
 
@@ -4036,7 +4001,6 @@ sedit(void)
 
 	    if ( inpara )
 	    {
-#ifdef TRY_EDIT_NEW_WAY
 		if ( mged_variables->mv_context )
 		{
 		    MAT4X3PNT( work, es_invmat, es_para );
@@ -4044,10 +4008,6 @@ sedit(void)
 		}
 		else
 		    VSUB2( cli->h, es_para, cli->v )
-#else
-			MAT4X3PNT( work, es_invmat, es_para );
-		VSUB2( cli->h, work, cli->v );
-#endif
 	    }
 	    /* check for zero H vector */
 	    if ( MAGNITUDE( cli->h ) <= SQRT_SMALL_FASTF ) {
@@ -4071,7 +4031,6 @@ sedit(void)
 
 	    RT_TGC_CK_MAGIC(tgc);
 	    if ( inpara ) {
-#ifdef TRY_EDIT_NEW_WAY
 		if (mged_variables->mv_context) {
 		    /* apply es_invmat to convert to real model coordinates */
 		    MAT4X3PNT( work, es_invmat, es_para );
@@ -4079,11 +4038,6 @@ sedit(void)
 		} else {
 		    VSUB2(tgc->h, es_para, tgc->v);
 		}
-#else
-		/* apply es_invmat to convert to real model coordinates */
-		MAT4X3PNT( work, es_invmat, es_para );
-		VSUB2(tgc->h, work, tgc->v);
-#endif
 	    }
 
 	    /* check for zero H vector */
@@ -4125,7 +4079,6 @@ sedit(void)
 
 	    RT_TGC_CK_MAGIC(tgc);
 	    if ( inpara ) {
-#ifdef TRY_EDIT_NEW_WAY
 		if (mged_variables->mv_context) {
 		    /* apply es_invmat to convert to real model coordinates */
 		    MAT4X3PNT( work, es_invmat, es_para );
@@ -4133,11 +4086,6 @@ sedit(void)
 		} else {
 		    VSUB2(tgc->h, es_para, tgc->v);
 		}
-#else
-		/* apply es_invmat to convert to real model coordinates */
-		MAT4X3PNT( work, es_invmat, es_para );
-		VSUB2(tgc->h, work, tgc->v);
-#endif
 	    }
 
 	    /* check for zero H vector */
@@ -4162,17 +4110,12 @@ sedit(void)
 	case PTARB:	/* move an ARB point */
 	case EARB:   /* edit an ARB edge */
 	    if ( inpara ) {
-#ifdef TRY_EDIT_NEW_WAY
 		if (mged_variables->mv_context) {
 		    /* apply es_invmat to convert to real model space */
 		    MAT4X3PNT( work, es_invmat, es_para );
 		} else {
 		    VMOVE( work, es_para );
 		}
-#else
-		/* apply es_invmat to convert to real model space */
-		MAT4X3PNT( work, es_invmat, es_para );
-#endif
 		editarb( work );
 	    }
 	    break;
@@ -4213,7 +4156,6 @@ sedit(void)
 	    }
 	    /* Apply changes to solid */
 	    /* xlate keypoint to origin, rotate, then put back. */
-#ifdef TRY_EDIT_NEW_WAY
 	    switch (mged_variables->mv_rotate_about) {
 		case 'v':       /* View Center */
 		    VSET(work, 0.0, 0.0, 0.0);
@@ -4247,9 +4189,6 @@ sedit(void)
 		MAT4X3PNT(work, es_invmat, rot_point);
 		bn_mat_xform_about_pt( mat, incr_change, work );
 	    }
-#else
-	    bn_mat_xform_about_pt( mat, incr_change, es_keypoint);
-#endif
 	    transform_editing_solid(&es_int, mat, &es_int, 1);
 
 	    MAT_IDN( incr_change );
@@ -4263,7 +4202,6 @@ sedit(void)
 		(struct rt_extrude_internal *)es_int.idb_ptr;
 
 	    RT_EXTRUDE_CK_MAGIC(extr);
-#ifdef TRY_EDIT_NEW_WAY
 	    if (inpara) {
 		static mat_t invsolr;
 		/*
@@ -4305,9 +4243,6 @@ sedit(void)
 	    } else {
 		MAT4X3VEC(extr->h, incr_change, extr->h);
 	    }
-#else
-	    MAT4X3VEC(extr->h, incr_change, extr->h);
-#endif
 
 	    MAT_IDN( incr_change );
 	}
@@ -4320,7 +4255,6 @@ sedit(void)
 		(struct rt_tgc_internal *)es_int.idb_ptr;
 
 	    RT_TGC_CK_MAGIC(tgc);
-#ifdef TRY_EDIT_NEW_WAY
 	    if (inpara) {
 		static mat_t invsolr;
 		/*
@@ -4362,9 +4296,6 @@ sedit(void)
 	    } else {
 		MAT4X3VEC(tgc->h, incr_change, tgc->h);
 	    }
-#else
-	    MAT4X3VEC(tgc->h, incr_change, tgc->h);
-#endif
 
 	    MAT_IDN( incr_change );
 	}
@@ -4377,7 +4308,6 @@ sedit(void)
 		(struct rt_tgc_internal *)es_int.idb_ptr;
 
 	    RT_TGC_CK_MAGIC(tgc);
-#ifdef TRY_EDIT_NEW_WAY
 	    if (inpara) {
 		static mat_t invsolr;
 		/*
@@ -4425,16 +4355,6 @@ sedit(void)
 		MAT4X3VEC(tgc->c, incr_change, tgc->c);
 		MAT4X3VEC(tgc->d, incr_change, tgc->d);
 	    }
-#else
-	    MAT4X3VEC(work, incr_change, tgc->a);
-	    VMOVE(tgc->a, work);
-	    MAT4X3VEC(work, incr_change, tgc->b);
-	    VMOVE(tgc->b, work);
-	    MAT4X3VEC(work, incr_change, tgc->c);
-	    VMOVE(tgc->c, work);
-	    MAT4X3VEC(work, incr_change, tgc->d);
-	    VMOVE(tgc->d, work);
-#endif
 	    MAT_IDN( incr_change );
 	}
 	break;
@@ -4446,7 +4366,6 @@ sedit(void)
 		(struct rt_eto_internal *)es_int.idb_ptr;
 
 	    RT_ETO_CK_MAGIC(eto);
-#ifdef TRY_EDIT_NEW_WAY
 	    if (inpara) {
 		static mat_t invsolr;
 		/*
@@ -4489,10 +4408,6 @@ sedit(void)
 	    } else {
 		MAT4X3VEC(eto->eto_C, incr_change, eto->eto_C);
 	    }
-#else
-	    MAT4X3VEC(work, incr_change, eto->eto_C);
-	    VMOVE(eto->eto_C, work);
-#endif
 	}
 	MAT_IDN( incr_change );
 	break;
@@ -4515,16 +4430,12 @@ sedit(void)
 	    if ( es_mvalid )
 		VMOVE( new_pt, es_mparam )
 		    else if ( inpara == 3 ) {
-#ifdef TRY_EDIT_NEW_WAY
 			if (mged_variables->mv_context) {
 			    /* apply es_invmat to convert to real model space */
 			    MAT4X3PNT( new_pt, es_invmat, es_para);
 			} else {
 			    VMOVE( new_pt, es_para );
 			}
-#else
-			VMOVE( new_pt, es_para );
-#endif
 		    } else if ( inpara && inpara != 3 )
 		    {
 			Tcl_AppendResult(interp, "x y z coordinates required for edge move\n",
@@ -4681,16 +4592,12 @@ sedit(void)
 	    if ( es_mvalid )
 		VMOVE( new_pt, es_mparam )
 		    else if ( inpara == 3 ) {
-#ifdef TRY_EDIT_NEW_WAY
 			if (mged_variables->mv_context) {
 			    /* apply es_invmat to convert to real model space */
 			    MAT4X3PNT( new_pt, es_invmat, es_para);
 			} else {
 			    VMOVE( new_pt, es_para );
 			}
-#else
-			VMOVE( new_pt, es_para );
-#endif
 		    } else if ( inpara && inpara != 3 )
 		    {
 			Tcl_AppendResult(interp, "x y z coordinates required for edge split\n",
@@ -4763,16 +4670,12 @@ sedit(void)
 	    if ( es_mvalid )
 		VMOVE( to_pt, es_mparam )
 		    else if ( inpara == 3 ) {
-#ifdef TRY_EDIT_NEW_WAY
 			if (mged_variables->mv_context) {
 			    /* apply es_invmat to convert to real model space */
 			    MAT4X3PNT( to_pt, es_invmat, es_para);
 			} else {
 			    VMOVE( to_pt, es_para );
 			}
-#else
-			VMOVE( to_pt, es_para )
-#endif
 			    }
 	    else if ( inpara == 1 )
 		VJOIN1( to_pt, lu_keypoint, es_para[0], lu_pl )
@@ -4853,16 +4756,12 @@ sedit(void)
 	    if ( es_mvalid )
 		VMOVE( new_pt, es_mparam )
 		    else if ( inpara == 3 ) {
-#ifdef TRY_EDIT_NEW_WAY
 			if (mged_variables->mv_context) {
 			    /* apply es_invmat to convert to real model space */
 			    MAT4X3PNT( new_pt, es_invmat, es_para);
 			} else {
 			    VMOVE( new_pt, es_para );
 			}
-#else
-			VMOVE( new_pt, es_para )
-#endif
 			    }
 	    else if ( inpara && inpara != 3 )
 	    {
@@ -4894,16 +4793,12 @@ sedit(void)
 	    if ( es_mvalid )
 		VMOVE( new_pt, es_mparam )
 		    else if ( inpara == 3 ) {
-#ifdef TRY_EDIT_NEW_WAY
 			if (mged_variables->mv_context) {
 			    /* apply es_invmat to convert to real model space */
 			    MAT4X3PNT( new_pt, es_invmat, es_para);
 			} else {
 			    VMOVE( new_pt, es_para );
 			}
-#else
-			VMOVE( new_pt, es_para )
-#endif
 			    }
 	    else if ( inpara && inpara != 3 )
 	    {
@@ -4935,16 +4830,12 @@ sedit(void)
 	    if ( es_mvalid )
 		VMOVE( new_pt, es_mparam )
 		    else if ( inpara == 3 ) {
-#ifdef TRY_EDIT_NEW_WAY
 			if (mged_variables->mv_context) {
 			    /* apply es_invmat to convert to real model space */
 			    MAT4X3PNT( new_pt, es_invmat, es_para);
 			} else {
 			    VMOVE( new_pt, es_para );
 			}
-#else
-			VMOVE( new_pt, es_para )
-#endif
 			    }
 	    else if ( inpara && inpara != 3 )
 	    {
@@ -4976,16 +4867,12 @@ sedit(void)
 	    if ( es_mvalid )
 		VMOVE( new_pt, es_mparam )
 		    else if ( inpara == 3 ) {
-#ifdef TRY_EDIT_NEW_WAY
 			if (mged_variables->mv_context) {
 			    /* apply es_invmat to convert to real model space */
 			    MAT4X3PNT( new_pt, es_invmat, es_para);
 			} else {
 			    VMOVE( new_pt, es_para );
 			}
-#else
-			VMOVE( new_pt, es_para )
-#endif
 			    }
 	    else if ( inpara && inpara != 3 )
 	    {
@@ -5010,16 +4897,12 @@ sedit(void)
 	    if ( es_mvalid )
 		VMOVE( new_pt, es_mparam )
 		    else if ( inpara == 3 ) {
-#ifdef TRY_EDIT_NEW_WAY
 			if (mged_variables->mv_context) {
 			    /* apply es_invmat to convert to real model space */
 			    MAT4X3PNT( new_pt, es_invmat, es_para);
 			} else {
 			    VMOVE( new_pt, es_para );
 			}
-#else
-			VMOVE( new_pt, es_para )
-#endif
 			    }
 	    else if ( inpara && inpara != 3 )
 	    {
@@ -5071,16 +4954,12 @@ sedit(void)
 	    if ( es_mvalid )
 		VMOVE( pick_pt, es_mparam )
 		    else if ( inpara == 3 ) {
-#ifdef TRY_EDIT_NEW_WAY
 			if (mged_variables->mv_context) {
 			    /* apply es_invmat to convert to real model space */
 			    MAT4X3PNT( pick_pt, es_invmat, es_para);
 			} else {
 			    VMOVE( pick_pt, es_para );
 			}
-#else
-			VMOVE( pick_pt, es_para )
-#endif
 			    }
 	    else if ( inpara && inpara != 3 )
 	    {
@@ -5443,16 +5322,12 @@ sedit(void)
 		VJOIN1( new_pt, es_mparam, -dist, view_pl );
 	    }
 	    else if ( inpara == 3 ) {
-#ifdef TRY_EDIT_NEW_WAY
 		if (mged_variables->mv_context) {
 		    /* apply es_invmat to convert to real model space */
 		    MAT4X3PNT( new_pt, es_invmat, es_para);
 		} else {
 		    VMOVE( new_pt, es_para );
 		}
-#else
-		VMOVE( new_pt, es_para )
-#endif
 		    }
 	    else if ( inpara && inpara != 3 )
 	    {
@@ -5505,16 +5380,12 @@ sedit(void)
 		VJOIN1( new_pt, es_mparam, -dist, view_pl );
 	    }
 	    else if ( inpara == 3 ) {
-#ifdef TRY_EDIT_NEW_WAY
 		if (mged_variables->mv_context) {
 		    /* apply es_invmat to convert to real model space */
 		    MAT4X3PNT( new_pt, es_invmat, es_para);
 		} else {
 		    VMOVE( new_pt, es_para );
 		}
-#else
-		VMOVE( new_pt, es_para )
-#endif
 		    }
 	    else if ( inpara && inpara != 3 )
 	    {
@@ -5566,16 +5437,12 @@ sedit(void)
 		VJOIN1( new_pt, es_mparam, -dist, view_pl );
 	    }
 	    else if ( inpara == 3 ) {
-#ifdef TRY_EDIT_NEW_WAY
 		if (mged_variables->mv_context) {
 		    /* apply es_invmat to convert to real model space */
 		    MAT4X3PNT( new_pt, es_invmat, es_para);
 		} else {
 		    VMOVE( new_pt, es_para );
 		}
-#else
-		VMOVE( new_pt, es_para )
-#endif
 		    }
 	    else if ( inpara && inpara != 3 )
 	    {
@@ -5619,16 +5486,12 @@ sedit(void)
 	    if ( es_mvalid )
 		VMOVE( new_pt, es_mparam )
 		    else if ( inpara == 3 ) {
-#ifdef TRY_EDIT_NEW_WAY
 			if (mged_variables->mv_context) {
 			    /* apply es_invmat to convert to real model space */
 			    MAT4X3PNT( new_pt, es_invmat, es_para);
 			} else {
 			    VMOVE( new_pt, es_para );
 			}
-#else
-			VMOVE( new_pt, es_para )
-#endif
 			    }
 	    else if ( inpara && inpara != 3 )
 	    {
@@ -5668,16 +5531,12 @@ sedit(void)
 	    if ( es_mvalid )
 		VMOVE( new_pt, es_mparam )
 		    else if ( inpara == 3 ) {
-#ifdef TRY_EDIT_NEW_WAY
 			if (mged_variables->mv_context) {
 			    /* apply es_invmat to convert to real model space */
 			    MAT4X3PNT( new_pt, es_invmat, es_para);
 			} else {
 			    VMOVE( new_pt, es_para );
 			}
-#else
-			VMOVE( new_pt, es_para )
-#endif
 			    }
 	    else if ( inpara && inpara != 3 )
 	    {
@@ -5718,16 +5577,12 @@ sedit(void)
 	    if ( es_mvalid )
 		VMOVE( new_pt, es_mparam )
 		    else if ( inpara == 3 ) {
-#ifdef TRY_EDIT_NEW_WAY
 			if (mged_variables->mv_context) {
 			    /* apply es_invmat to convert to real model space */
 			    MAT4X3PNT( new_pt, es_invmat, es_para);
 			} else {
 			    VMOVE( new_pt, es_para );
 			}
-#else
-			VMOVE( new_pt, es_para )
-#endif
 			    }
 	    else if ( inpara && inpara != 3 )
 	    {
