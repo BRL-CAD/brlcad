@@ -2341,7 +2341,7 @@ new_mats(void)
     vo_update(view_state->vs_vop, interp, 0);
 }
 
-#ifdef DO_NEW_EDIT_MATS
+
 void
 new_edit_mats(void)
 {
@@ -2361,7 +2361,6 @@ new_edit_mats(void)
 
     curr_dm_list = save_dm_list;
 }
-#endif
 
 void
 mged_view_obj_callback(genptr_t		clientData,

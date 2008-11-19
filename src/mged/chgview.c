@@ -859,11 +859,9 @@ cmd_zap(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
     if (state != ST_VIEW)
 	button(BE_REJECT);
 
-#ifdef DO_DISPLAY_LISTS
     freeDListsAll(BU_LIST_FIRST(solid, &dgop->dgo_headSolid)->s_dlist,
 		  BU_LIST_LAST(solid, &dgop->dgo_headSolid)->s_dlist -
 		  BU_LIST_FIRST(solid, &dgop->dgo_headSolid)->s_dlist + 1);
-#endif
 
     dgo_zap_cmd(dgop, interp);
 
@@ -1437,9 +1435,7 @@ eraseobjall(register struct directory **dpp)
 	nsp = BU_LIST_PNEXT(solid, sp);
 
 	if ( db_full_path_subset( &sp->s_fullpath, &subpath ) )  {
-#ifdef DO_DISPLAY_LISTS
 	    freeDListsAll(sp->s_dlist, 1);
-#endif
 
 	    if (state != ST_VIEW && illump == sp)
 		button(BE_REJECT);
@@ -1495,10 +1491,7 @@ eraseobj(register struct directory **dpp)
 	nsp = BU_LIST_PNEXT(solid, sp);
 
 	if ( db_full_path_subset( &sp->s_fullpath, &subpath ) )  {
-
-#ifdef DO_DISPLAY_LISTS
 	    freeDListsAll(sp->s_dlist, 1);
-#endif
 
 	    if (state != ST_VIEW && illump == sp)
 		button( BE_REJECT );

@@ -38,12 +38,6 @@
  */
 #include "./mgedtcl.h"
 
-#define DO_NEW_EDIT_MATS
-
-#define DO_DISPLAY_LISTS
-#if 0
-#define DO_SINGLE_DISPLAY_LIST
-#endif
 
 #define MGED_DISPLAY_VAR "mged_display"
 

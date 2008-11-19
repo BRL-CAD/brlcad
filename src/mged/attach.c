@@ -501,14 +501,12 @@ mged_attach(
     Tcl_AppendResult(interp, "ATTACHING ", dmp->dm_name, " (", dmp->dm_lname,
 		     ")\n", (char *)NULL);
 
-#ifdef DO_DISPLAY_LISTS
     share_dlist(curr_dm_list);
 
     if (displaylist && mged_variables->mv_dlist && !dlist_state->dl_active) {
 	createDLists(&dgop->dgo_headSolid);
 	dlist_state->dl_active = 1;
     }
-#endif
 
     DM_SET_WIN_BOUNDS(dmp, windowbounds);
     mged_fb_open();

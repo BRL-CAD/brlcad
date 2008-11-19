@@ -282,8 +282,6 @@ drawSolid(register struct solid *sp,
 	}
     }
 
-
-#ifdef DO_DISPLAY_LISTS
     if (displaylist && mged_variables->mv_dlist) {
 	DM_DRAWDLIST(dmp, sp->s_dlist);
 	sp->s_flag = UP;
@@ -294,12 +292,6 @@ drawSolid(register struct solid *sp,
 	    ndrawn++;
 	}
     }
-#else
-    if (DM_DRAW_VLIST(dmp, (struct bn_vlist *)&sp->s_vlist) == TCL_OK) {
-	sp->s_flag = UP;
-	ndrawn++;
-    }
-#endif
 }
 
 /*
@@ -594,7 +586,6 @@ dozoom(int which_eye)
 		DM_SET_LINE_ATTR(dmp, mged_variables->mv_linewidth, linestyle);
 	    }
 
-#ifdef DO_DISPLAY_LISTS
 	    if (displaylist && mged_variables->mv_dlist) {
 		DM_DRAWDLIST(dmp, sp->s_dlist);
 		sp->s_flag = UP;
@@ -606,12 +597,6 @@ dozoom(int which_eye)
 		    ndrawn++;
 		}
 	    }
-#else
-	    if (DM_DRAW_VLIST(dmp, (struct bn_vlist *)&sp->s_vlist) == TCL_OK) {
-		sp->s_flag = UP;
-		ndrawn++;
-	    }
-#endif
 	}
 
 	/*
@@ -622,7 +607,6 @@ dozoom(int which_eye)
 	    curr_dm_list = save_dm_list;
     }
 
-#ifdef DO_DISPLAY_LISTS
 /*
  * Create Display List
  */
@@ -719,7 +703,6 @@ dozoom(int which_eye)
 		dlp->dml_dlist_state->dl_flag = 0;
 	    }
 	}
-#endif
 
 /*
  * Local Variables:

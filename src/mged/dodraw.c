@@ -900,9 +900,7 @@ drawH_part2(
 	sp->s_regionid = tsp->ts_regionid;
     }
 
-#ifdef DO_DISPLAY_LISTS
     createDListALL(sp);
-#endif
 
     /* Solid is successfully drawn */
     if ( !existing_sp )  {
@@ -1184,15 +1182,6 @@ invent_solid(
     /* Need to enter phony name in directory structure */
     dp = db_diradd( dbip,  name, RT_DIR_PHONY_ADDR, 0, DIR_SOLID, &type );
 
-#if 0
-    /* XXX need to get this going. */
-    path.fp_names[0] = dp;
-    state.ts_mater.ma_color[0] = ((rgb>>16) & 0xFF) / 255.0
-	state.ts_mater.ma_color[1] = ((rgb>> 8) & 0xFF) / 255.0
-	state.ts_mater.ma_color[2] = ((rgb    ) & 0xFF) / 255.0
-	drawH_part2( 0, vhead, path, &state, SOLID_NULL );
-#else
-
     /* Obtain a fresh solid structure, and fill it in */
     GET_SOLID(sp, &MGED_FreeSolid.l);
 
@@ -1221,10 +1210,8 @@ invent_solid(
     /* Solid successfully drawn, add to linked list of solid structs */
     BU_LIST_APPEND(dgop->dgo_headSolid.back, &sp->l);
 
-#ifdef DO_DISPLAY_LISTS
     createDListALL(sp);
-#endif
-#endif
+
     return(0);		/* OK */
 }
 

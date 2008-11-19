@@ -620,11 +620,7 @@ mged_rot_obj(Tcl_Interp *interp, int iflag, fastf_t *argvect)
      */
     wrt_point(modelchanges, temp, modelchanges, point);
 
-#ifdef DO_NEW_EDIT_MATS
     new_edit_mats();
-#else
-    new_mats();
-#endif
 
     return TCL_OK;
 }
@@ -744,11 +740,7 @@ f_sc_obj(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
     MAT4X3PNT(point, modelchanges, temp);
 
     wrt_point(modelchanges, incr, modelchanges, point);
-#ifdef DO_NEW_EDIT_MATS
     new_edit_mats();
-#else
-    new_mats();
-#endif
 
     return TCL_OK;
 }
@@ -817,11 +809,7 @@ f_tr_obj(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
     MAT_DELTAS_VEC(incr, model_incr);
     MAT_COPY(old, modelchanges);
     bn_mat_mul(modelchanges, incr, old);
-#ifdef DO_NEW_EDIT_MATS
     new_edit_mats();
-#else
-    new_mats();
-#endif
 
     return TCL_OK;
 }
@@ -1164,11 +1152,7 @@ f_qorot(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
      */
     wrt_point_direc(modelchanges, temp, modelchanges, point, direc);
 
-#ifdef DO_NEW_EDIT_MATS
     new_edit_mats();
-#else
-    new_mats();
-#endif
 
     return TCL_OK;
 }
