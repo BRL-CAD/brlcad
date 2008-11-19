@@ -55,8 +55,6 @@
 #include "./cmd.h"
 
 
-extern struct bn_tol mged_tol;
-
 int readcodes(), writecodes();
 int loadcodes(), printcodes(FILE *fp, struct directory *dp, int pathpos);
 void		tables(), edcodes(), changes(), prfield();

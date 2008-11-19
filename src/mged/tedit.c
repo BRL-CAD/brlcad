@@ -61,7 +61,6 @@
 
 extern struct rt_db_internal	es_int;
 extern struct rt_db_internal	es_int_orig;
-extern struct bn_tol		mged_tol;
 
 static char	tmpfil[MAXPATHLEN] = {0};
 

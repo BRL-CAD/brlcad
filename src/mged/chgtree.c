@@ -49,8 +49,6 @@
 
 
 extern struct db_tree_state	mged_initial_tree_state;
-extern struct bn_tol		mged_tol;
-extern struct rt_tess_tol	mged_ttol;
 extern int			classic_mged;
 
 static char *really_delete="tk_messageBox -icon question -title {Are you sure?}\

@@ -47,8 +47,6 @@
 #include "./cmd.h"
 
 extern struct rt_db_internal es_int;
-extern struct bn_tol mged_tol;
-
 extern char	**promp;	/* pointer to a pointer to a char */
 
 static char *p_arb4[] = {

@@ -47,9 +47,6 @@
 #include "./mged_dm.h"
 
 
-extern struct bn_tol mged_tol;
-
-
 static void arb8_edge(int arg), ars_ed(int arg), ell_ed(int arg), tgc_ed(int arg), tor_ed(int arg), spline_ed(int arg);
 static void nmg_ed(int arg), pipe_ed(int arg), vol_ed(int arg), ebm_ed(int arg), dsp_ed(int arg), cline_ed(int arg), bot_ed(int arg), extr_ed(int arg);
 static void rpc_ed(int arg), rhc_ed(int arg), part_ed(int arg), epa_ed(int arg), ehy_ed(int arg), eto_ed(int arg), hyp_ed(int arg);

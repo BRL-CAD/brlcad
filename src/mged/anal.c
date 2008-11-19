@@ -41,7 +41,6 @@
 #define GALLONS_TO_MM3 3785411.784
 
 extern struct rt_db_internal es_int;
-extern struct bn_tol mged_tol;
 
 static void	do_anal(struct bu_vls *vp, const struct rt_db_internal *ip);
 static void	arb_anal(struct bu_vls *vp, const struct rt_db_internal *ip);

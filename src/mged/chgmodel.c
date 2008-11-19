@@ -48,8 +48,6 @@
 #include "./cmd.h"
 
 
-extern struct bn_tol mged_tol;
-
 void set_tran();
 void aexists(char *name);
 

@@ -114,6 +114,10 @@ extern double mged_abs_tol; /* abs surface tolerance */
 extern double mged_rel_tol; /* rel surface tolerance */
 extern double mged_nrm_tol; /* surface normal tolerance */
 
+extern struct bn_tol      mged_tol;  /* calculation tolerance */
+extern struct rt_tess_tol mged_ttol; /* XXX needs to replace mged_abs_tol, et.al. */
+
+
 /* default region codes defined in mover.c */
 extern int item_default;
 extern int air_default;

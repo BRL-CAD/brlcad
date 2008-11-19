@@ -70,7 +70,6 @@ int mged_tran(fastf_t *tvec);
 extern vect_t curr_e_axes_pos;
 extern long	nvectors;
 
-extern struct bn_tol mged_tol;
 extern vect_t e_axes_pos;
 
 fastf_t ar_scale_factor = GED_MAX / ABS_ROT_FACTOR;

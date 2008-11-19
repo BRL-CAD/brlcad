@@ -73,9 +73,6 @@ extern int db_warn;
 extern int db_upgrade;
 extern int db_version;
 
-extern struct rt_tess_tol     mged_ttol;
-extern struct bn_tol	      mged_tol;
-
 int glob_compat_mode = 1;
 int output_as_return = 1;
 Tk_Window tkwin = NULL;

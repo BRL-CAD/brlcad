@@ -45,7 +45,6 @@ void	ext4to6(int pt1, int pt2, int pt3, register struct rt_arb_internal *arb), o
 
 extern struct rt_db_internal	es_int;
 extern struct rt_db_internal	es_int_orig;
-extern struct bn_tol		mged_tol;
 
 /*
  *  			E D I T A R B

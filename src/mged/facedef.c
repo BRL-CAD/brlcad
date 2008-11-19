@@ -38,9 +38,8 @@
 #include "./mged.h"
 #include "./sedit.h"
 
-extern struct rt_db_internal es_int;
-extern struct bn_tol mged_tol;
 
+extern struct rt_db_internal es_int;
 
 char *p_rotfb[] = {
     "Enter rot, fb angles: ",
