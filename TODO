@@ -47,6 +47,10 @@ THESE SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 THESE ARE LOWER PRIORITY OR FOR FUTURE RELEASES
 -----------------------------------------------
 
+* readd support for vrml v1 to g-vrml so that users can select whether
+  they want v2 (default) or previous v1 output format via a
+  command-line switch.  see http://brlcad.svn.sf.net/viewvc/brlcad/brlcad/trunk/conv/g-vrml.c?view=diff&pathrev=22798&r1=16900&r2=16901 
+
 * make Mac OS X universal binaries actually work.
 
 * implement make, ted, edsol, mirror, and analyze for revolve primitive
