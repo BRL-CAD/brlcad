@@ -360,24 +360,21 @@ mk_hyp(struct rt_wdb *wdbp, const char *name, const point_t vertex, const vect_t
     if (( MAGNITUDE(vectA) <= SQRT_SMALL_FASTF ) || (magB <= SQRT_SMALL_FASTF))
 	return -2;
     
-    hyp->hyp_r1 = base_neck_ratio * MAGNITUDE(vectA);
-    hyp->hyp_r2 = base_neck_ratio * magB;
-    hyp->hyp_c = sqrt(4 * MAGSQ( vectA ) / MAGSQ( height_vector ) * ( 1 - base_neck_ratio*base_neck_ratio ));
-    
-    VSCALE(hyp->hyp_H, height_vector, 0.5);
-    VADD2(hyp->hyp_V, vertex, hyp->hyp_H);
-    VMOVE(hyp->hyp_Au, vectA);
-    VUNITIZE(hyp->hyp_Au);
+    hyp->hyp_bnr = base_neck_ratio;
+    hyp->hyp_b = magB;
+    VMOVE(hyp->hyp_Hi, height_vector);
+    VMOVE(hyp->hyp_Vi, vertex);
+    VMOVE(hyp->hyp_A, vectA);
 
-    if (MAGNITUDE(hyp->hyp_H) < RT_LEN_TOL
-	|| hyp->hyp_r1 < RT_LEN_TOL
-        || hyp->hyp_r2 < RT_LEN_TOL
-        || hyp->hyp_c < RT_LEN_TOL) {
+    if (MAGNITUDE(hyp->hyp_Hi) < RT_LEN_TOL
+	|| MAGNITUDE( hyp->hyp_A ) < RT_LEN_TOL
+        || hyp->hyp_b < RT_LEN_TOL
+        || hyp->hyp_bnr < RT_LEN_TOL) {
 	bu_log("ERROR, height, axes, and distance to asymptotes must be greater than zero!\n");
 	return  -1;
     }
 	
-    if (!NEAR_ZERO (VDOT(hyp->hyp_H, hyp->hyp_Au), RT_DOT_TOL )) {
+    if (!NEAR_ZERO (VDOT(hyp->hyp_Hi, hyp->hyp_A), RT_DOT_TOL )) {
     	bu_log("ERROR, major axis must be perpendicular to height vector!\n");
 	return -1;
     }
@@ -387,16 +384,14 @@ mk_hyp(struct rt_wdb *wdbp, const char *name, const point_t vertex, const vect_t
     	return -1;
     }
 
-    if (hyp->hyp_r2 > hyp->hyp_r1) {
-    	vect_t  majorAxis;
-	fastf_t majorLen;
-	
-	VCROSS( majorAxis, hyp->hyp_H, hyp->hyp_Au );
- 	VUNITIZE( majorAxis );
-	VMOVE( hyp->hyp_Au, majorAxis );
-	majorLen = hyp->hyp_r2;
-	hyp->hyp_r2 = hyp->hyp_r1;
-	hyp->hyp_r1 = majorLen;
+    if (hyp->hyp_b > MAGNITUDE( hyp->hyp_A )) {
+	vect_t	majorAxis;
+	fastf_t	minorLen;
+
+	minorLen = MAGNITUDE(hyp->hyp_A);
+	VCROSS( majorAxis, hyp->hyp_Hi, hyp->hyp_A );
+	VSCALE( hyp->hyp_A, majorAxis, hyp->hyp_b );
+	hyp->hyp_b = minorLen;
     }
 
     return wdb_export( wdbp, name, (genptr_t)hyp, ID_HYP, mk_conv2mm );

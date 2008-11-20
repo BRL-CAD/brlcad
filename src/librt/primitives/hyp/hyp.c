@@ -79,15 +79,18 @@
 
 /* ray tracing form of solid, including precomputed terms */
 struct hyp_specific {
-    point_t	hyp_V;		/* vector to hyp origin */
+
+    point_t	hyp_V;		/* scaled vector to hyp origin */
+    vect_t	hyp_H;          /* scaled height vector */
+    vect_t	hyp_Au;		/* unit vector along semi-major axis */
+    fastf_t	hyp_r1;		/* scalar semi-major axis length */
+    fastf_t	hyp_r2;         /* scalar semi-minor axis length */
+    fastf_t	hyp_c;		/* slope of asymptote cone */
+    
     vect_t	hyp_Hunit;	/* unit H vector */
     vect_t	hyp_Aunit;	/* unit vector along semi-major axis */
     vect_t	hyp_Bunit;	/* unit vector, H x A, semi-minor axis */
     fastf_t	hyp_Hmag;	/* scaled height of hyperboloid */
-
-    fastf_t	hyp_r1;
-    fastf_t	hyp_r2;
-    fastf_t	hyp_c;
 
     fastf_t	hyp_rx;
     fastf_t	hyp_ry;		/* hyp_r* store coeffs */
@@ -96,13 +99,46 @@ struct hyp_specific {
     fastf_t	hyp_bounds;	/* const used to check if a ray hits the top/bottom surfaces */
 };
 
+struct hyp_specific * 
+hyp_internal_to_specific( struct rt_hyp_internal *hyp_in ) {
+    struct hyp_specific		*hyp;
+    BU_GETSTRUCT( hyp, hyp_specific );
+    
+    hyp->hyp_r1 = hyp_in->hyp_bnr * MAGNITUDE( hyp_in->hyp_A );
+    hyp->hyp_r2 = hyp_in->hyp_bnr * hyp_in->hyp_b;
+    hyp->hyp_c = sqrt( 4 * MAGSQ( hyp_in->hyp_A ) / MAGSQ( hyp_in->hyp_Hi ) * ( 1 - hyp_in->hyp_bnr * hyp_in->hyp_bnr ) );
+
+    VSCALE( hyp->hyp_H, hyp_in->hyp_Hi, 0.5 );
+    VADD2( hyp->hyp_V, hyp_in->hyp_Vi, hyp->hyp_H );
+    VMOVE( hyp->hyp_Au, hyp_in->hyp_A );
+    VUNITIZE( hyp->hyp_Au );
+
+    hyp->hyp_rx = 1.0 / (hyp->hyp_r1 * hyp->hyp_r1);
+    hyp->hyp_ry = 1.0 / (hyp->hyp_r2 * hyp->hyp_r2);
+    hyp->hyp_rz = (hyp->hyp_c * hyp->hyp_c) / (hyp->hyp_r1 * hyp->hyp_r1);
+
+    /* calculate height to use for top/bottom intersection planes */
+    hyp->hyp_Hmag = MAGNITUDE( hyp->hyp_H );
+    hyp->hyp_bounds = hyp->hyp_rz*hyp->hyp_Hmag*hyp->hyp_Hmag + 1.0;
+
+    /* setup unit vectors for hyp_specific */
+    VMOVE( hyp->hyp_Hunit, hyp->hyp_H );
+    VMOVE( hyp->hyp_Aunit, hyp->hyp_Au );
+    VCROSS( hyp->hyp_Bunit, hyp->hyp_Hunit, hyp->hyp_Aunit );
+
+    VUNITIZE( hyp->hyp_Aunit );
+    VUNITIZE( hyp->hyp_Bunit );
+    VUNITIZE( hyp->hyp_Hunit );
+
+    return hyp; 
+}
+
 const struct bu_structparse rt_hyp_parse[] = {
-    { "%f", 3, "V",   bu_offsetof(struct rt_hyp_internal, hyp_V[X]),  BU_STRUCTPARSE_FUNC_NULL },
-    { "%f", 3, "H",   bu_offsetof(struct rt_hyp_internal, hyp_H[X]),  BU_STRUCTPARSE_FUNC_NULL },
-    { "%f", 3, "A",   bu_offsetof(struct rt_hyp_internal, hyp_Au[X]), BU_STRUCTPARSE_FUNC_NULL },
-    { "%f", 1, "r_1", bu_offsetof(struct rt_hyp_internal, hyp_r1),    BU_STRUCTPARSE_FUNC_NULL },
-    { "%f", 1, "r_2", bu_offsetof(struct rt_hyp_internal, hyp_r2),    BU_STRUCTPARSE_FUNC_NULL },
-    { "%f", 1, "c",   bu_offsetof(struct rt_hyp_internal, hyp_c),     BU_STRUCTPARSE_FUNC_NULL },
+    { "%f", 3, "V",   bu_offsetof(struct rt_hyp_internal, hyp_Vi[X]),  BU_STRUCTPARSE_FUNC_NULL },
+    { "%f", 3, "H",   bu_offsetof(struct rt_hyp_internal, hyp_Hi[X]),  BU_STRUCTPARSE_FUNC_NULL },
+    { "%f", 3, "A",   bu_offsetof(struct rt_hyp_internal, hyp_A[X]), BU_STRUCTPARSE_FUNC_NULL },
+    { "%f", 1, "b", bu_offsetof(struct rt_hyp_internal, hyp_b),    BU_STRUCTPARSE_FUNC_NULL },
+    { "%f", 1, "bnr",   bu_offsetof(struct rt_hyp_internal, hyp_bnr),     BU_STRUCTPARSE_FUNC_NULL },
     { {'\0', '\0', '\0', '\0'}, 0, (char *)NULL, 0, BU_STRUCTPARSE_FUNC_NULL }
 };
 
@@ -143,36 +179,13 @@ rt_hyp_prep( struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip )
     stp->st_id = ID_HYP;
     stp->st_meth = &rt_functab[ID_HYP];
 
-    BU_GETSTRUCT( hyp, hyp_specific );
+    hyp =  hyp_internal_to_specific( hyp_ip );
     stp->st_specific = (genptr_t)hyp;
-
-    hyp->hyp_r1 = hyp_ip->hyp_r1;
-    hyp->hyp_r2 = hyp_ip->hyp_r2;
-    hyp->hyp_c = hyp_ip->hyp_c;
-
-    hyp->hyp_rx = 1.0 / (hyp_ip->hyp_r1 * hyp_ip->hyp_r1);
-    hyp->hyp_ry = 1.0 / (hyp_ip->hyp_r2 * hyp_ip->hyp_r2);
-    hyp->hyp_rz = (hyp_ip->hyp_c * hyp_ip->hyp_c) / (hyp_ip->hyp_r1 * hyp_ip->hyp_r1);
-
-    /* calculate height to use for top/bottom intersection planes */
-    hyp->hyp_Hmag = MAGNITUDE( hyp_ip->hyp_H );
-    hyp->hyp_bounds = hyp->hyp_rz*hyp->hyp_Hmag*hyp->hyp_Hmag + 1.0;
-
-    /* setup unit vectors for hyp_specific */
-    VMOVE( hyp->hyp_V, hyp_ip->hyp_V );
-
-    VMOVE( hyp->hyp_Hunit, hyp_ip->hyp_H );
-    VMOVE( hyp->hyp_Aunit, hyp_ip->hyp_Au );
-    VCROSS( hyp->hyp_Bunit, hyp->hyp_Hunit, hyp->hyp_Aunit );
-
-    VUNITIZE( hyp->hyp_Aunit );
-    VUNITIZE( hyp->hyp_Bunit );
-    VUNITIZE( hyp->hyp_Hunit );
 
     /* calculate bounding sphere */
     VMOVE( stp->st_center, hyp->hyp_V );
-    stp->st_aradius = sqrt( (hyp_ip->hyp_c*hyp_ip->hyp_c + 1)*MAGSQ( hyp_ip->hyp_H ) 
-			    + (hyp_ip->hyp_r1*hyp_ip->hyp_r1) );
+    stp->st_aradius = sqrt( (hyp->hyp_c*hyp->hyp_c + 1)*MAGSQ( hyp->hyp_H ) 
+			    + (hyp->hyp_r1*hyp->hyp_r1) );
     stp->st_bradius = stp->st_aradius;
 
     /* cheat, make bounding RPP by enclosing bounding sphere (copied from g_ehy.c) */
@@ -602,10 +615,11 @@ rt_hyp_class( const struct soltab *stp, const vect_t min, const vect_t max, cons
  *			R T _ H Y P _ P L O T
  */
 int
-rt_hyp_plot( struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol )
+rt_hyp_plot( struct bu_list *vhead, struct rt_db_internal *incoming, const struct rt_tess_tol *ttol, const struct bn_tol *tol )
 {
     register int		i,j;	/* loop indices */
-    struct rt_hyp_internal	*hyp_ip;
+    struct rt_hyp_internal	*hyp_in;
+    struct hyp_specific		*hyp_ip;
     vect_t 	majorAxis[8],		/* vector offsets along major axis */
 		minorAxis[8],		/* vector offsets along minor axis */
 		heightAxis[7],		/* vector offsets for layers */
@@ -616,9 +630,11 @@ rt_hyp_plot( struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_t
     fastf_t	cos22_5 = 0.9238795325112867385,
 		cos67_5 = 0.3826834323650898373;
 
-    RT_CK_DB_INTERNAL(ip);
-    hyp_ip = (struct rt_hyp_internal *)ip->idb_ptr;
-    RT_HYP_CK_MAGIC(hyp_ip);
+    RT_CK_DB_INTERNAL(incoming);
+    hyp_in = (struct rt_hyp_internal *)incoming->idb_ptr;
+    RT_HYP_CK_MAGIC(hyp_in);
+
+    hyp_ip = hyp_internal_to_specific( hyp_in );
 
     VCROSS( Bunit, hyp_ip->hyp_H, hyp_ip->hyp_Au );
     VUNITIZE( Bunit );
@@ -716,7 +732,8 @@ rt_hyp_tess( struct nmgregion **r, struct model *m, struct rt_db_internal *ip, c
     mat_t	invRoS;
     mat_t	S;
     mat_t	SoR;
-    struct rt_hyp_internal	*xip;
+    struct rt_hyp_internal	*iip;
+    struct hyp_specific		*xip;
     point_t		p1;
     struct rt_pt_node	*pos_a, *pos_b, *pts_a, *pts_b, *rt_ptalloc(void);
     struct shell	*s;
@@ -730,8 +747,10 @@ rt_hyp_tess( struct nmgregion **r, struct model *m, struct rt_db_internal *ip, c
     struct bu_ptbl	vert_tab;
 
     RT_CK_DB_INTERNAL(ip);
-    xip = (struct rt_hyp_internal *)ip->idb_ptr;
-    RT_HYP_CK_MAGIC(xip);
+    iip = (struct rt_hyp_internal *)ip->idb_ptr;
+    RT_HYP_CK_MAGIC(iip);
+
+    xip = hyp_internal_to_specific( iip );
 
     /*
      *	make sure hyp description is valid
@@ -1239,14 +1258,12 @@ rt_hyp_import5( struct rt_db_internal  *ip, const struct bu_external *ep, const 
 
     /* Apply the modeling transformation */
     if (mat == NULL) mat = bn_mat_identity;
-    MAT4X3PNT( hyp_ip->hyp_V, mat, &vec[0*3] );
-    MAT4X3PNT( hyp_ip->hyp_H, mat, &vec[1*3] );
-    MAT4X3PNT( hyp_ip->hyp_Au, mat, &vec[2*3] );
-    VUNITIZE( hyp_ip->hyp_Au );
+    MAT4X3PNT( hyp_ip->hyp_Vi, mat, &vec[0*3] );
+    MAT4X3PNT( hyp_ip->hyp_Hi, mat, &vec[1*3] );
+    MAT4X3PNT( hyp_ip->hyp_A, mat, &vec[2*3] );
 
-    hyp_ip->hyp_r1 = vec[ 9] / mat[15];
-    hyp_ip->hyp_r2 = vec[10] / mat[15];
-    hyp_ip->hyp_c  = vec[11] / mat[15];
+    hyp_ip->hyp_b = vec[ 9] / mat[15];
+    hyp_ip->hyp_bnr = vec[10] / mat[15];
 
     return(0);			/* OK */
 }
@@ -1280,12 +1297,11 @@ rt_hyp_export5( struct bu_external *ep, const struct rt_db_internal *ip, double 
      * than mm, we offer the opportunity to scale the solid
      * (to get it into mm) on the way out.
      */
-    VSCALE( &vec[0*3], hyp_ip->hyp_V, local2mm );
-    VSCALE( &vec[1*3], hyp_ip->hyp_H, local2mm );
-    VMOVE( &vec[2*3], hyp_ip->hyp_Au );
-    vec[ 9] = hyp_ip->hyp_r1 * local2mm;
-    vec[10] = hyp_ip->hyp_r2 * local2mm;
-    vec[11] = hyp_ip->hyp_c * local2mm;
+    VSCALE( &vec[0*3], hyp_ip->hyp_Vi, local2mm );
+    VSCALE( &vec[1*3], hyp_ip->hyp_Hi, local2mm );
+    VSCALE( &vec[2*3], hyp_ip->hyp_A, local2mm );
+    vec[ 9] = hyp_ip->hyp_b * local2mm;
+    vec[10] = hyp_ip->hyp_bnr * local2mm;
 
     /* Convert from internal (host) to database (network) format */
     htond( ep->ext_buf, (unsigned char *)vec, ELEMENTS_PER_VECT*4 );
@@ -1307,66 +1323,32 @@ rt_hyp_describe( struct bu_vls *str, const struct rt_db_internal *ip, int verbos
 	(struct rt_hyp_internal *)ip->idb_ptr;
     char	buf[256];
 
-    vect_t	unitH;	/* unit vector along axis of revolution */
-    vect_t	unitA;	/* unit vector along semi-major axis of elliptical cross section */
-    vect_t	unitB;	/* unit vector along semi-minor axis of elliptical cross section */
-
-    VMOVE( unitH, hyp_ip->hyp_H );
-    VMOVE( unitA, hyp_ip->hyp_Au );
-    VCROSS( unitB, unitH, unitA );
-
-    VUNITIZE( unitA );
-    VUNITIZE( unitB );
-    VUNITIZE( unitH );
-
-
     RT_HYP_CK_MAGIC(hyp_ip);
     bu_vls_strcat( str, "truncated general hyp (HYP)\n");
 
     sprintf(buf, "\tV (%g, %g, %g)\n",
-	    INTCLAMP(hyp_ip->hyp_V[X] * mm2local),
-	    INTCLAMP(hyp_ip->hyp_V[Y] * mm2local),
-	    INTCLAMP(hyp_ip->hyp_V[Z] * mm2local) );
+	    INTCLAMP(hyp_ip->hyp_Vi[X] * mm2local),
+	    INTCLAMP(hyp_ip->hyp_Vi[Y] * mm2local),
+	    INTCLAMP(hyp_ip->hyp_Vi[Z] * mm2local) );
     bu_vls_strcat( str, buf );
 
     sprintf(buf, "\tH (%g, %g, %g) mag=%g\n",
-	    INTCLAMP(hyp_ip->hyp_H[X] * mm2local),
-	    INTCLAMP(hyp_ip->hyp_H[Y] * mm2local),
-	    INTCLAMP(hyp_ip->hyp_H[Z] * mm2local),
-	    INTCLAMP(MAGNITUDE(hyp_ip->hyp_H) * mm2local) );
+	    INTCLAMP(hyp_ip->hyp_Hi[X] * mm2local),
+	    INTCLAMP(hyp_ip->hyp_Hi[Y] * mm2local),
+	    INTCLAMP(hyp_ip->hyp_Hi[Z] * mm2local),
+	    INTCLAMP(MAGNITUDE(hyp_ip->hyp_Hi) * mm2local) );
     bu_vls_strcat( str, buf );
 
-    sprintf(buf, "\tAu (%g, %g, %g)\n",
-	    INTCLAMP(hyp_ip->hyp_Au[X] * mm2local),
-	    INTCLAMP(hyp_ip->hyp_Au[Y] * mm2local),
-	    INTCLAMP(hyp_ip->hyp_Au[Z] * mm2local) );
+    sprintf(buf, "\tA (%g, %g, %g)\n",
+	    INTCLAMP(hyp_ip->hyp_A[X] * mm2local),
+	    INTCLAMP(hyp_ip->hyp_A[Y] * mm2local),
+	    INTCLAMP(hyp_ip->hyp_A[Z] * mm2local) );
     bu_vls_strcat( str, buf );
 
-    sprintf(buf, "\tA=%g\n", INTCLAMP(hyp_ip->hyp_r1 * mm2local));
+    sprintf(buf, "\tMag B=%g\n", INTCLAMP(hyp_ip->hyp_b * mm2local));
     bu_vls_strcat( str, buf );
 
-    sprintf(buf, "\tB=%g\n", INTCLAMP(hyp_ip->hyp_r2 * mm2local));
-    bu_vls_strcat( str, buf );
-
-    sprintf(buf, "\tc=%g\n", INTCLAMP(hyp_ip->hyp_c * mm2local));
-    bu_vls_strcat( str, buf );
-
-    sprintf(buf, "\tunitA (%g, %g, %g)\n",
-	    INTCLAMP(unitA[X] * mm2local),
-	    INTCLAMP(unitA[Y] * mm2local),
-	    INTCLAMP(unitA[Z] * mm2local) );
-    bu_vls_strcat( str, buf );
-
-    sprintf(buf, "\tunitB (%g, %g, %g)\n",
-	    INTCLAMP(unitB[X] * mm2local),
-	    INTCLAMP(unitB[Y] * mm2local),
-	    INTCLAMP(unitB[Z] * mm2local) );
-    bu_vls_strcat( str, buf );
-
-    sprintf(buf, "\tunitH (%g, %g, %g)\n",
-	    INTCLAMP(unitH[X] * mm2local),
-	    INTCLAMP(unitH[Y] * mm2local),
-	    INTCLAMP(unitH[Z] * mm2local) );
+    sprintf(buf, "\tNeck to Base Ratio=%g\n", INTCLAMP(hyp_ip->hyp_bnr * mm2local));
     bu_vls_strcat( str, buf );
 
     return(0);

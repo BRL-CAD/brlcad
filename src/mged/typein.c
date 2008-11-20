@@ -2605,23 +2605,31 @@ hyp_in(char **cmd_argvs, struct rt_db_internal *intern)
     inB = atof(cmd_argvs[12]) * local2base;
     inC = atof(cmd_argvs[13]) * local2base;
 
-    rip->hyp_r1 = inC * MAGNITUDE(inAu);
-    rip->hyp_r2 = inC * inB;
-    rip->hyp_c = sqrt( 4 * MAGSQ( inAu ) / MAGSQ( inH ) * ( 1 - inC*inC )  );
+    rip->hyp_b = inB;
+    rip->hyp_bnr = inC;
+    VMOVE( rip->hyp_Hi, inH );
+    VMOVE( rip->hyp_Vi, inV );
+    VMOVE( rip->hyp_A, inAu );
 
-    VSCALE( rip->hyp_H, inH, 0.5 );
-    VADD2( rip->hyp_V, inV, rip->hyp_H );
-    VMOVE( rip->hyp_Au, inAu );
-    VUNITIZE(rip->hyp_Au);
+    if (rip->hyp_b > MAGNITUDE( rip->hyp_A )) {
+	vect_t	majorAxis;
+	fastf_t	minorLen;
 
-    if (MAGNITUDE(rip->hyp_H) < RT_LEN_TOL
-	|| rip->hyp_r1 <= RT_LEN_TOL || rip->hyp_r2 <= RT_LEN_TOL
-	|| rip->hyp_c <= RT_LEN_TOL) {
+	minorLen = MAGNITUDE(rip->hyp_A);
+	VCROSS( majorAxis, rip->hyp_Hi, rip->hyp_A );
+	VSCALE( rip->hyp_A, majorAxis, rip->hyp_b );
+	rip->hyp_b = minorLen;
+    }
+
+
+    if (MAGNITUDE(rip->hyp_Hi)*0.5 < RT_LEN_TOL
+	|| MAGNITUDE( rip->hyp_A ) * rip->hyp_bnr <= RT_LEN_TOL 
+	|| rip->hyp_b <= RT_LEN_TOL) {
 	Tcl_AppendResult(interp, "ERROR, height, axes, and distance to asymptotes must be greater than zero!\n", (char *)NULL);
 	return(1);	/* failure */
     }
 
-    if ( !NEAR_ZERO( VDOT( rip->hyp_H, rip->hyp_Au ), RT_DOT_TOL ) ) {
+    if ( !NEAR_ZERO( VDOT( rip->hyp_Hi, rip->hyp_A ), RT_DOT_TOL ) ) {
 	Tcl_AppendResult(interp, "ERROR, major axis must be perpendicular to height vector!\n", (char *)NULL);
 	return(1);	/* failure */
     }
@@ -2629,18 +2637,6 @@ hyp_in(char **cmd_argvs, struct rt_db_internal *intern)
     if ( inC >= 1 || inC <=0 ) {
 	Tcl_AppendResult(interp, "ERROR, neck to base ratio must be between 0 and 1!\n", (char *)NULL);
 	return(1);	/* failure */
-    }
-
-    if (rip->hyp_r2 > rip->hyp_r1) {
-	vect_t	majorAxis;
-	fastf_t	majorLen;
-
-	VCROSS( majorAxis, rip->hyp_H, rip->hyp_Au );
-	VUNITIZE( majorAxis );
-	VMOVE( rip->hyp_Au, majorAxis );
-	majorLen = rip->hyp_r2;
-	rip->hyp_r2 = rip->hyp_r1;
-	rip->hyp_r1 = majorLen;
     }
 
     return(0);	/* success */

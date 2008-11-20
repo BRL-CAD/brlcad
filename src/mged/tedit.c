@@ -778,8 +778,8 @@ readsolid(void)
 		break;
 	    }
 	    (void)sscanf( str, "%lf %lf %lf", &a, &b, &c );
-	    VSET( hyp->hyp_V, a, b, c );
-	    VSCALE( hyp->hyp_V, hyp->hyp_V, local2base );
+	    VSET( hyp->hyp_Vi, a, b, c );
+	    VSCALE( hyp->hyp_Vi, hyp->hyp_Vi, local2base );
 
 	    if ( (str=Get_next_line( fp )) == NULL )
 	    {
@@ -787,8 +787,8 @@ readsolid(void)
 		break;
 	    }
 	    (void)sscanf( str, "%lf %lf %lf", &a, &b, &c );
-	    VSET( hyp->hyp_H, a, b, c );
-	    VSCALE( hyp->hyp_H, hyp->hyp_H, local2base );
+	    VSET( hyp->hyp_Hi, a, b, c );
+	    VSCALE( hyp->hyp_Hi, hyp->hyp_Hi, local2base );
 
 	    if ( (str=Get_next_line( fp )) == NULL )
 	    {

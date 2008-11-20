@@ -361,12 +361,11 @@ struct rt_ehy_internal {
  */
 struct rt_hyp_internal {
     unsigned long hyp_magic;
-    point_t	hyp_V;	/**< @brief  hyp vertex */
-    vect_t	hyp_H;	/**< @brief  height vector */
-    vect_t	hyp_Au;	/**< @brief  unit vector along semi-major axis */
-    fastf_t	hyp_r1;	/**< @brief  scalar semi-major axis length */
-    fastf_t	hyp_r2;	/**< @brief  scalar semi-minor axis length */
-    fastf_t	hyp_c;	/**< @brief  slope of asymptote cone */
+    point_t	hyp_Vi;	/**< @brief  hyp vertex */
+    vect_t	hyp_Hi;	/**< @brief  full height vector */
+    vect_t	hyp_A;	/**< @brief  semi-major axis */
+    fastf_t	hyp_b;	/**< @brief  scalar semi-minor axis length */
+    fastf_t	hyp_bnr;/**< @brief  ratio of minimum neck width to base width */
 };
 #define RT_HYP_CK_MAGIC(_p)	BU_CKMAG(_p, RT_HYP_INTERNAL_MAGIC, "rt_hyp_internal")
 

@@ -2049,7 +2049,7 @@ get_solid_keypoint(fastf_t *pt, char **strp, struct rt_db_internal *ip, fastf_t 
 		(struct rt_hyp_internal *)ip->idb_ptr;
 	    RT_HYP_CK_MAGIC( hyp );
 
-	    VMOVE( mpt, hyp->hyp_V );
+	    VMOVE( mpt, hyp->hyp_Vi );
 	    *strp = "V";
 	    break;
 	}
@@ -4285,9 +4285,9 @@ sedit(void)
 		bn_mat_mul( mat1, edit, es_mat );
 		bn_mat_mul( mat, es_invmat, mat1 );
 
-		MAT4X3VEC(hyp->hyp_H, mat, hyp->hyp_H);
+		MAT4X3VEC(hyp->hyp_Hi, mat, hyp->hyp_Hi);
 	    } else {
-		MAT4X3VEC(hyp->hyp_H, incr_change, hyp->hyp_H);
+		MAT4X3VEC(hyp->hyp_Hi, incr_change, hyp->hyp_Hi);
 	    }
 	}
 	MAT_IDN( incr_change );
@@ -8418,7 +8418,7 @@ label_edited_solid(
 
 	    RT_HYP_CK_MAGIC(hyp);
 
-	    MAT4X3PNT( pos_view, xform, hyp->hyp_V );
+	    MAT4X3PNT( pos_view, xform, hyp->hyp_Vi );
 	    POINT_LABEL( pos_view, 'V' );
 	}
 	break;
