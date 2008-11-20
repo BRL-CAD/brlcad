@@ -257,6 +257,9 @@ regress: regression
 
 test: regression
 
+check: regression
+	@TIMEFRAME=1 make benchmark
+
 pkg: $(PACKAGE_NAME)_$(BRLCAD_VERSION).pkg
 	@$(ECHO) "Done."
 
@@ -320,6 +323,11 @@ dist-hook:
 	find $(distdir) -type f \( -name '.cvsignore' -or -name 'brlcad_config.h' \) -exec rm -f {} \;
 	find $(distdir) -type d \( -name 'CVS' -or -name '.svn' \) -prune -exec rm -rf {} \;
 	dir="`pwd`" ; cd $(top_srcdir) && ${SH} $(top_srcdir)/sh/cmakecheck.sh ; cd "$$dir"
+
+# don't complain about the benchmark 'summary', we don't want to delete it
+distcleancheck_listfiles = \
+	find . -type f -not -name summary -print
+
 
 
 ##########################
