@@ -512,12 +512,71 @@ static char *p_revolve[] = {
 };
 
 static char *p_pnts[] = {
-    "Enter number of points: ",
-    "Enter point weight: ",
-    "Enter X, Y, Z",
-    "Enter Y",
-    "Enter Z"
+    "Enter number of points (-1 for auto): ",
+    "Are the points orientated (yes/no)? ",
+    "Do the points have color values (yes/no)? ",
+    "Do the points differ in size (yes/no)? ",
+    "Enter default point size (>= 0.0): ",
+    "Enter X, Y, Z position",
+    "Enter Y position component",
+    "Enter Z position component",
+    "Enter X, Y, Z orientation vector",
+    "Enter Y orientation vector component",
+    "Enter Z orientation vector component",
+    "Enter R, G, B color values (0 to 255)",
+    "Enter G component color value",
+    "Enter B component color value",
+    "Enter point size (>= 0.0, -1 for default)"
 };
+
+
+/**
+ * helper function that infers a boolean value from a given string
+ * returning 0 or 1 for false and true respectively.
+ *
+ * False values are any answers that are case-insensitive variants of
+ * 0, "no", "false", and whitespace-only, NULL, or empty strings.
+ *
+ * True values are any answers that are not false.
+ */
+static int
+booleanize(const char *answer)
+{
+    int index = 0;
+    const char *ap;
+    static const char *noes[] = {
+	"0",
+	"n",
+	"no",
+	"false",
+	NULL
+    };
+	
+    if (!answer || (strlen(answer) <= 0)) {
+	return 0;
+    }
+
+    ap = answer;
+    while (ap[0] != '\0' && isspace(ap[0])) {
+	ap++;
+    }
+    if (ap[0] == '\0') {
+	return 0;
+    }
+
+    ap = noes[index];
+    while (ap && ap[0] != '\0') {
+	if ((strcasecmp(ap, answer) == 0)) {
+	    return 0;
+	}
+	index++;
+	ap = noes[index];
+    }
+
+    /* true! */
+    return 1;
+}
+
 
 static int
 binunif_in(struct ged *gedp, const char **cmd_argvs, struct rt_db_internal *intern, const char *name)
@@ -2325,77 +2384,304 @@ metaball_in(struct ged *gedp, int argc, const char **argv, struct rt_db_internal
 /*   P N T S _ I N */
 static int
 pnts_in(struct ged *gedp, int argc, const char **argv, struct rt_db_internal *intern, char **prompt) {
-    int i;
-    double scale;
+    int i, j;
     unsigned long numPoints;
     struct rt_pnts_internal *pnts;
-    struct pnt *point;
-    struct pnt *headPoint;
+    void *headPoint;
 
+    rt_pnt_type type;
+
+    int oriented = 0;
+    int hasColor = 0;
+    int hasScale = 0;
+    double defaultSize = 0.0;
+
+    int valuesPerPoint;
+    int nextPrompt;
+
+    double local2base = gedp->ged_wdbp->dbip->dbi_local2base;
+    
     /* prompt for numPoints if not entered */
     if (argc < 4) {
 	bu_vls_printf(&gedp->ged_result_str, "%s", prompt[0]);
 	return BRLCAD_MORE_ARGS;
     }
-
-    /* validate numPoints */
-    if (atol(argv[3]) <= 0) {
-	bu_vls_printf(&gedp->ged_result_str, "Number of points must be positive!\n");
-	return BRLCAD_ERROR;
+    numPoints = atol(argv[3]);
+    if (numPoints < 0) {
+	/* negative means automatically figure out how many points */
+	numPoints = -1;
     }
 
-    numPoints = atol(argv[3]);
-
-    /* prompt for scale of points if not entered */
+    /* prompt for orientation */
     if (argc < 5) {
 	bu_vls_printf(&gedp->ged_result_str, "%s", prompt[1]);
 	return BRLCAD_MORE_ARGS;
     }
+    oriented = booleanize(argv[4]);
 
-    /* validate scale */
-    if (atof(argv[4]) < 0) {
-	bu_vls_printf(&gedp->ged_result_str, "Scale must be nonnegative!\n");
-	return BRLCAD_ERROR;
+    /* prompt for color */
+    if (argc < 6) {
+	bu_vls_printf(&gedp->ged_result_str, "%s", prompt[2]);
+	return BRLCAD_MORE_ARGS;
+    }
+    hasColor = booleanize(argv[5]);
+
+    /* prompt for uniform scale */
+    if (argc < 7) {
+	bu_vls_printf(&gedp->ged_result_str, "%s", prompt[3]);
+	return BRLCAD_MORE_ARGS;
+    }
+    hasScale = booleanize(argv[6]); /* has scale if not uniform */
+
+    /* prompt for size of points if not entered */
+    if (argc < 8) {
+	bu_vls_printf(&gedp->ged_result_str, "%s", prompt[4]);
+	return BRLCAD_MORE_ARGS;
+    }
+    defaultSize = atof(argv[7]);
+    if (defaultSize < 0.0) {
+	defaultSize = 0.0;
+	bu_log("WARNING: default point size must be non-negative, using zero\n");
     }
 
-    scale = atof(argv[4]);
+    /* how many values are we expecting per point */
+    valuesPerPoint = ELEMENTS_PER_POINT;
+    type = RT_PNT_TYPE_PNT;
+    if (hasColor) {
+	/* R G B */
+	type |= RT_PNT_TYPE_COL;
+	valuesPerPoint += 3;
+    }
+    if (hasScale) {
+	/* scale value */
+	type |= RT_PNT_TYPE_SCA;
+	valuesPerPoint += 1;
+    }
+    if (oriented) {
+	/* vector */
+	valuesPerPoint += ELEMENTS_PER_VECT;
+	type |= RT_PNT_TYPE_NRM;
+    }
 
-    /* set database structure */
+    /* reset argc/argv to be just point data */
+    argc -= 8;
+    argv += 8;
+    nextPrompt = argc % valuesPerPoint;
+
+    if (numPoints < 0) {
+	/* determine count from argc */
+	if (nextPrompt != 0) {
+	    bu_log("WARNING: Data mismatch.\n"
+		   "\tFound %d extra values after reading %d points.\n"
+		   "\tExpecting %d values per point.\n"
+		   "\tOnly using %d points.\n",
+		   nextPrompt,
+		   argc / valuesPerPoint,
+		   valuesPerPoint,
+		   argc / valuesPerPoint);
+	}
+	numPoints = argc / valuesPerPoint;
+    }
+    
+    /* prompt for X, Y, Z of points */
+    if (argc < numPoints * valuesPerPoint) {
+	struct bu_vls vls;
+        bu_vls_init(&vls);
+	int nextAsk = nextPrompt + 5;
+
+	switch (type) {
+	    case RT_PNT_TYPE_PNT:
+		/* do nothing, they're in order */
+		break;
+	    case RT_PNT_TYPE_COL:
+		if (nextPrompt > 2) {
+		    nextAsk += 3;
+		}
+		break;
+	    case RT_PNT_TYPE_SCA:
+		if (nextPrompt > 2) {
+		    nextAsk += 6;
+		}
+		break;
+	    case RT_PNT_TYPE_NRM:
+		/* do nothing, they're in order */
+		break;
+	    case RT_PNT_TYPE_COL_SCA:
+		if (nextPrompt > 2) {
+		    nextAsk += 3;
+		}
+		break;
+	    case RT_PNT_TYPE_COL_NRM:
+		/* do nothing, they're in order */
+		break;
+	    case RT_PNT_TYPE_SCA_NRM:
+		if (nextPrompt > 5) {
+		    nextAsk += 3;
+		}
+		break;
+	    case RT_PNT_TYPE_COL_SCA_NRM:
+		/* do nothing, they're in order */
+		break;
+	}
+
+	bu_vls_printf(&vls, "%s for point %d: ",
+		      prompt[nextAsk],
+		      (argc + valuesPerPoint) / valuesPerPoint);
+
+	bu_vls_printf(&gedp->ged_result_str, "%s", bu_vls_addr(&vls));
+
+        bu_vls_free(&vls);
+        return BRLCAD_MORE_ARGS;
+    }
+
+    /* now we have everything we need to allocate an internal */
+
+    /* init database structure */
     intern->idb_major_type = DB5_MAJORTYPE_BRLCAD;
     intern->idb_type = ID_PNTS;
     intern->idb_meth = &rt_functab[ID_PNTS];
     intern->idb_ptr = (genptr_t) bu_malloc(sizeof(struct rt_pnts_internal), "rt_pnts_internal");
 
-    /* set internal structure */
+    /* init internal structure */
     pnts = (struct rt_pnts_internal *) intern->idb_ptr;
     pnts->magic = RT_PNTS_INTERNAL_MAGIC;
-    pnts->scale = scale;
-    pnts->type = RT_PNT_TYPE_PNT;
+    pnts->scale = defaultSize;
+    pnts->type = type;
     pnts->count = numPoints;
-    headPoint = pnts->point;
-    BU_GETSTRUCT(headPoint, pnt); /* empty list head */
-    BU_LIST_INIT(&(headPoint->l));
+    pnts->point = NULL;
 
-    /* prompt for X, Y, Z of points */
-    if (argc < 5 + (numPoints * ELEMENTS_PER_PT)) {
-	bu_vls_printf(&gedp->ged_result_str, "%s for point %d : ",
-		      
-		      prompt[(argc - 2) % ELEMENTS_PER_PT + 2],
-		      1 + (argc - 5) / ELEMENTS_PER_PT);
-        return BRLCAD_MORE_ARGS;
-    }
+    /* empty list head */
+    switch (type) {
+	case RT_PNT_TYPE_PNT:
+	    BU_GETSTRUCT(headPoint, pnt);
+	    BU_LIST_INIT(&(((struct pnt *)headPoint)->l));
+	    break;
+	case RT_PNT_TYPE_COL:
+	    BU_GETSTRUCT(headPoint, pnt_color);
+	    BU_LIST_INIT(&(((struct pnt_color *)headPoint)->l));
+	    break;
+	case RT_PNT_TYPE_SCA:
+	    BU_GETSTRUCT(headPoint, pnt_scale);
+	    BU_LIST_INIT(&(((struct pnt_scale *)headPoint)->l));
+	    break;
+	case RT_PNT_TYPE_NRM:
+	    BU_GETSTRUCT(headPoint, pnt_normal);
+	    BU_LIST_INIT(&(((struct pnt_normal *)headPoint)->l));
+	    break;
+	case RT_PNT_TYPE_COL_SCA:
+	    BU_GETSTRUCT(headPoint, pnt_color_scale);
+	    BU_LIST_INIT(&(((struct pnt_color_scale *)headPoint)->l));
+	    break;
+	case RT_PNT_TYPE_COL_NRM:
+	    BU_GETSTRUCT(headPoint, pnt_color_normal);
+	    BU_LIST_INIT(&(((struct pnt_color_normal *)headPoint)->l));
+	    break;
+	case RT_PNT_TYPE_SCA_NRM:
+	    BU_GETSTRUCT(headPoint, pnt_scale_normal);
+	    BU_LIST_INIT(&(((struct pnt_scale_normal *)headPoint)->l));
+	    break;
+	case RT_PNT_TYPE_COL_SCA_NRM:
+	    BU_GETSTRUCT(headPoint, pnt_color_scale_normal);
+	    BU_LIST_INIT(&(((struct pnt_color_scale_normal *)headPoint)->l));
+	    break;
+    }    
+    pnts->point = headPoint;
 
     /* store points in list */
-    for (i = 5; i < 5 + (numPoints * ELEMENTS_PER_PT); i += 3) {
-        BU_GETSTRUCT(point, pnt);
+    for (i = 0; i < numPoints * valuesPerPoint; i += valuesPerPoint) {
+	void *point;
 
 	/* bu_log("%d: [%s, %s, %s]\n", ((i-5)/3)+1, argv[i], argv[i+1], argv[i+2]); */
-
-        point->v[X] = strtod(argv[i], NULL) * gedp->ged_wdbp->dbip->dbi_local2base;
-        point->v[Y] = strtod(argv[i + 1], NULL) * gedp->ged_wdbp->dbip->dbi_local2base;
-        point->v[Z] = strtod(argv[i + 2], NULL) * gedp->ged_wdbp->dbip->dbi_local2base;
-
-        BU_LIST_PUSH(&(headPoint->l), &(point->l));
+	switch (type) {
+	    case RT_PNT_TYPE_PNT:
+		BU_GETSTRUCT(point, pnt);
+		((struct pnt *)point)->v[X] = strtod(argv[i + 0], NULL) * local2base;
+		((struct pnt *)point)->v[Y] = strtod(argv[i + 1], NULL) * local2base;
+		((struct pnt *)point)->v[Z] = strtod(argv[i + 2], NULL) * local2base;
+		BU_LIST_PUSH(&(((struct pnt *)headPoint)->l), &((struct pnt *)point)->l);
+		break;
+	    case RT_PNT_TYPE_COL:
+		BU_GETSTRUCT(point, pnt_color);
+		((struct pnt_color *)point)->v[X] = strtod(argv[i + 0], NULL) * local2base;
+		((struct pnt_color *)point)->v[Y] = strtod(argv[i + 1], NULL) * local2base;
+		((struct pnt_color *)point)->v[Z] = strtod(argv[i + 2], NULL) * local2base;
+		((struct pnt_color *)point)->c.buc_magic = BU_COLOR_MAGIC;
+		((struct pnt_color *)point)->c.buc_rgb[0 /* RED */] = strtod(argv[i + 3], NULL);
+		((struct pnt_color *)point)->c.buc_rgb[1 /* GRN */] = strtod(argv[i + 4], NULL);
+		((struct pnt_color *)point)->c.buc_rgb[2 /* BLU */] = strtod(argv[i + 5], NULL);
+		BU_LIST_PUSH(&(((struct pnt_color *)headPoint)->l), &((struct pnt_color *)point)->l);
+		break;
+	    case RT_PNT_TYPE_SCA:
+		BU_GETSTRUCT(point, pnt_scale);
+		((struct pnt_scale *)point)->v[X] = strtod(argv[i + 0], NULL) * local2base;
+		((struct pnt_scale *)point)->v[Y] = strtod(argv[i + 1], NULL) * local2base;
+		((struct pnt_scale *)point)->v[Z] = strtod(argv[i + 2], NULL) * local2base;
+		((struct pnt_scale *)point)->s = strtod(argv[i + 3], NULL) * local2base;
+		BU_LIST_PUSH(&(((struct pnt_scale *)headPoint)->l), &((struct pnt_scale *)point)->l);
+		break;
+	    case RT_PNT_TYPE_NRM:
+		BU_GETSTRUCT(point, pnt_normal);
+		((struct pnt_normal *)point)->v[X] = strtod(argv[i + 0], NULL) * local2base;
+		((struct pnt_normal *)point)->v[Y] = strtod(argv[i + 1], NULL) * local2base;
+		((struct pnt_normal *)point)->v[Z] = strtod(argv[i + 2], NULL) * local2base;
+		((struct pnt_normal *)point)->n[X] = strtod(argv[i + 3], NULL) * local2base;
+		((struct pnt_normal *)point)->n[Y] = strtod(argv[i + 4], NULL) * local2base;
+		((struct pnt_normal *)point)->n[Z] = strtod(argv[i + 5], NULL) * local2base;
+		BU_LIST_PUSH(&(((struct pnt_normal *)headPoint)->l), &((struct pnt_normal *)point)->l);
+		break;
+	    case RT_PNT_TYPE_COL_SCA:
+		BU_GETSTRUCT(point, pnt_color_scale);
+		((struct pnt_color_scale *)point)->v[X] = strtod(argv[i + 0], NULL) * local2base;
+		((struct pnt_color_scale *)point)->v[Y] = strtod(argv[i + 1], NULL) * local2base;
+		((struct pnt_color_scale *)point)->v[Z] = strtod(argv[i + 2], NULL) * local2base;
+		((struct pnt_color_scale *)point)->c.buc_magic = BU_COLOR_MAGIC;
+		((struct pnt_color_scale *)point)->c.buc_rgb[0 /* RED */] = strtod(argv[i + 3], NULL);
+		((struct pnt_color_scale *)point)->c.buc_rgb[1 /* GRN */] = strtod(argv[i + 4], NULL);
+		((struct pnt_color_scale *)point)->c.buc_rgb[2 /* BLU */] = strtod(argv[i + 5], NULL);
+		((struct pnt_color_scale *)point)->s = strtod(argv[i + 6], NULL) * local2base;
+		BU_LIST_PUSH(&(((struct pnt_color_scale *)headPoint)->l), &((struct pnt_color_scale *)point)->l);
+		break;
+	    case RT_PNT_TYPE_COL_NRM:
+		BU_GETSTRUCT(point, pnt_color_normal);
+		((struct pnt_color_normal *)point)->v[X] = strtod(argv[i + 0], NULL) * local2base;
+		((struct pnt_color_normal *)point)->v[Y] = strtod(argv[i + 1], NULL) * local2base;
+		((struct pnt_color_normal *)point)->v[Z] = strtod(argv[i + 2], NULL) * local2base;
+		((struct pnt_color_normal *)point)->n[X] = strtod(argv[i + 3], NULL) * local2base;
+		((struct pnt_color_normal *)point)->n[Y] = strtod(argv[i + 4], NULL) * local2base;
+		((struct pnt_color_normal *)point)->n[Z] = strtod(argv[i + 5], NULL) * local2base;
+		((struct pnt_color_normal *)point)->c.buc_magic = BU_COLOR_MAGIC;
+		((struct pnt_color_normal *)point)->c.buc_rgb[0 /* RED */] = strtod(argv[i + 6], NULL);
+		((struct pnt_color_normal *)point)->c.buc_rgb[1 /* GRN */] = strtod(argv[i + 7], NULL);
+		((struct pnt_color_normal *)point)->c.buc_rgb[2 /* BLU */] = strtod(argv[i + 8], NULL);
+		BU_LIST_PUSH(&(((struct pnt_color_normal *)headPoint)->l), &((struct pnt_color_normal *)point)->l);
+		break;
+	    case RT_PNT_TYPE_SCA_NRM:
+		BU_GETSTRUCT(point, pnt_scale_normal);
+		((struct pnt_scale_normal *)point)->v[X] = strtod(argv[i + 0], NULL) * local2base;
+		((struct pnt_scale_normal *)point)->v[Y] = strtod(argv[i + 1], NULL) * local2base;
+		((struct pnt_scale_normal *)point)->v[Z] = strtod(argv[i + 2], NULL) * local2base;
+		((struct pnt_scale_normal *)point)->n[X] = strtod(argv[i + 3], NULL) * local2base;
+		((struct pnt_scale_normal *)point)->n[Y] = strtod(argv[i + 4], NULL) * local2base;
+		((struct pnt_scale_normal *)point)->n[Z] = strtod(argv[i + 5], NULL) * local2base;
+		((struct pnt_scale_normal *)point)->s = strtod(argv[i + 6], NULL) * local2base;
+		BU_LIST_PUSH(&(((struct pnt_scale_normal *)headPoint)->l), &((struct pnt_scale_normal *)point)->l);
+		break;
+	    case RT_PNT_TYPE_COL_SCA_NRM:
+		BU_GETSTRUCT(point, pnt_color_scale_normal);
+		((struct pnt_color_scale_normal *)point)->v[X] = strtod(argv[i + 0], NULL) * local2base;
+		((struct pnt_color_scale_normal *)point)->v[Y] = strtod(argv[i + 1], NULL) * local2base;
+		((struct pnt_color_scale_normal *)point)->v[Z] = strtod(argv[i + 2], NULL) * local2base;
+		((struct pnt_color_scale_normal *)point)->n[X] = strtod(argv[i + 3], NULL) * local2base;
+		((struct pnt_color_scale_normal *)point)->n[Y] = strtod(argv[i + 4], NULL) * local2base;
+		((struct pnt_color_scale_normal *)point)->n[Z] = strtod(argv[i + 5], NULL) * local2base;
+		((struct pnt_color_scale_normal *)point)->c.buc_magic = BU_COLOR_MAGIC;
+		((struct pnt_color_scale_normal *)point)->c.buc_rgb[0 /* RED */] = strtod(argv[i + 6], NULL);
+		((struct pnt_color_scale_normal *)point)->c.buc_rgb[1 /* GRN */] = strtod(argv[i + 7], NULL);
+		((struct pnt_color_scale_normal *)point)->c.buc_rgb[2 /* BLU */] = strtod(argv[i + 8], NULL);
+		((struct pnt_color_scale_normal *)point)->s = strtod(argv[i + 9], NULL) * local2base;
+		BU_LIST_PUSH(&(((struct pnt_color_scale_normal *)headPoint)->l), &((struct pnt_color_scale_normal *)point)->l);
+		break;
+	}
     }
 
     return BRLCAD_OK;
