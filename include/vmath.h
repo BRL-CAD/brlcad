@@ -272,11 +272,13 @@ typedef fastf_t	plane_t[ELEMENTS_PER_PLANE];
 	((a)[Z]-(b)[Z])*((a)[Z]-(b)[Z]) )
 
 /* Element names in homogeneous vector (4-tuple) */
-#define	X	0
-#define	Y	1
-#define Z	2
-#define H	3
-#define W	H
+enum axis {
+    X = 0,
+    Y = 1,
+    Z = 2,
+    H = 3,
+    W = H
+};
 
 /* Locations of deltas in 4x4 Homogenous Transform matrix */
 #define MDX	3

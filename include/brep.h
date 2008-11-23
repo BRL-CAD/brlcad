@@ -34,24 +34,10 @@
 
 #ifdef __cplusplus
 extern "C++" {
-/* XXX ack. a hack. */
-#undef X
-#undef Y
-#undef Z
-#undef W
-#undef H
 #include "opennurbs.h"
 #include "opennurbs_ext.h"
 #include <iostream>
 #include <fstream>
-/* XXX ack. fix the hack. */
-#ifdef __VMATH_H__
-#define X 0
-#define Y 1
-#define Z 2
-#define W 3
-#define H W
-#endif
 }
 
 __BEGIN_DECLS

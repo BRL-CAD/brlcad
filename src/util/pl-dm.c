@@ -103,9 +103,6 @@ static struct cmdtab cmdtab[] = {
 #define MOUSE_MODE_ROTATE 1
 #define MOUSE_MODE_TRANSLATE 3
 #define MOUSE_MODE_ZOOM 4
-#define X 0
-#define Y 1
-#define Z 2
 
 Tcl_Interp *interp;
 Tk_Window tkwin;

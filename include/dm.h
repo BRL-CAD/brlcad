@@ -54,9 +54,6 @@
 #define DM_NULL (struct dm *)NULL
 #define DM_MIN (-2048)
 #define DM_MAX (2047)
-#define X	0
-#define Y	1
-#define Z	2
 
 #define DM_O(_m) offsetof(struct dm, _m)
 

@@ -106,11 +106,6 @@
 
 #define V_Print(a, b, func) \
 		func( "%s\t<%12.6f,%12.6f,%12.6f>\n", a, (b)[0], (b)[1], (b)[2] )
-#ifndef X
-#define X		0
-#define Y		1
-#define Z		2
-#endif
 
 /*
  * Local Variables:

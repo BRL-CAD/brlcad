@@ -60,9 +60,11 @@
 
 
 /* vmath/libbu routines replicated here to avoid a libbu dependency */
-#define X 0
-#define Y 1
-#define Z 2
+enum axis {
+    X = 0,
+    Y = 1,
+    Z = 2
+};
 #define VSET(a, b, c, d) { (a)[X] = (b); (a)[Y] = (c); (a)[Z] = (d); }
 #define VSETALL(a, s) { (a)[X] = (a)[Y] = (a)[Z] = (s); }
 #define NEAR_ZERO(val, epsilon)	(((val) > -epsilon) && ((val) < epsilon))

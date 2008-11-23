@@ -31,11 +31,6 @@
 #include "rtgeom.h"
 #include "write_brl.h"
 
-// redefinition from vmath.h (undef is in brep.h)
-#define	X 0
-#define	Y 1
-#define Z 2
-
 
 double IntavalUnitInMm = 0.1;
 
