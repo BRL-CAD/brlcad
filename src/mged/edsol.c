@@ -4338,9 +4338,9 @@ sedit(void)
 		bn_mat_mul( mat1, edit, es_mat );
 		bn_mat_mul( mat, es_invmat, mat1 );
 
-/*                MAT4X3VEC(hyp->hyp_A, mat, hyp->hyp_A);*/
+                MAT4X3VEC(hyp->hyp_A, mat, hyp->hyp_A);
 	    } else {
-/*                MAT4X3VEC(hyp->hyp_A, incr_change, hyp->hyp_A);*/
+                MAT4X3VEC(hyp->hyp_A, incr_change, hyp->hyp_A);
 	    }
 	}
 	MAT_IDN( incr_change );
@@ -8415,11 +8415,27 @@ label_edited_solid(
 	{
 	    struct rt_hyp_internal	*hyp =
 		(struct rt_hyp_internal *)es_int.idb_ptr;
-
+            vect_t vB;
+	    
 	    RT_HYP_CK_MAGIC(hyp);
 
 	    MAT4X3PNT( pos_view, xform, hyp->hyp_Vi );
 	    POINT_LABEL( pos_view, 'V' );
+	    
+	    VADD2(work, hyp->hyp_Vi, hyp->hyp_Hi);
+	    MAT4X3PNT( pos_view, xform, work);
+	    POINT_LABEL( pos_view, 'H' );
+
+	    VADD2(work, hyp->hyp_Vi, hyp->hyp_A);
+	    MAT4X3PNT( pos_view, xform, work );
+	    POINT_LABEL( pos_view, 'A' );
+
+	    VCROSS(vB, hyp->hyp_A, hyp->hyp_Hi);
+	    VUNITIZE(vB);
+	    VSCALE(vB, vB, hyp->hyp_b);
+	    VADD2( work, hyp->hyp_Vi, vB);
+	    MAT4X3PNT( pos_view, xform, work );
+	    POINT_LABEL( pos_view, 'B' );
 	}
 	break;
 
