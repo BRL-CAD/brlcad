@@ -7023,6 +7023,75 @@ pscale(void)
 	}
 	break;
 
+	case MENU_HYP_H:
+	    /* scale height of HYP */
+	{
+	    struct rt_hyp_internal	*hyp =
+		(struct rt_hyp_internal *)es_int.idb_ptr;
+
+	    RT_HYP_CK_MAGIC(hyp);
+	    if (inpara) {
+		/* take es_mat[15] (path scaling) into account */
+		es_para[0] *= es_mat[15];
+		es_scale = es_para[0];
+	    } 
+	    VSCALE(hyp->hyp_Hi, hyp->hyp_Hi, es_scale);    
+	}
+	break;
+
+	case MENU_HYP_SCALE_A:
+	    /* scale A vector of HYP */
+	{
+	    struct rt_hyp_internal	*hyp =
+		(struct rt_hyp_internal *)es_int.idb_ptr;
+
+	    RT_HYP_CK_MAGIC(hyp);
+	    if (inpara) {
+		/* take es_mat[15] (path scaling) into account */
+		es_para[0] *= es_mat[15];
+		es_scale = es_para[0];
+	    } 
+	    VSCALE(hyp->hyp_A, hyp->hyp_A, es_scale);    
+	}
+	break;
+
+	case MENU_HYP_SCALE_B:
+	    /* scale B vector of HYP */
+	{
+	    struct rt_hyp_internal	*hyp =
+		(struct rt_hyp_internal *)es_int.idb_ptr;
+
+	    RT_HYP_CK_MAGIC(hyp);
+	    if (inpara) {
+		/* take es_mat[15] (path scaling) into account */
+		es_para[0] *= es_mat[15];
+		es_scale = es_para[0];
+	    } 
+	    hyp->hyp_b = hyp->hyp_b * es_scale;    
+	}
+	break;
+
+
+	case MENU_HYP_C:
+	    /* scale Neck to Base ratio of HYP */
+	{
+	    struct rt_hyp_internal	*hyp =
+		(struct rt_hyp_internal *)es_int.idb_ptr;
+
+	    RT_HYP_CK_MAGIC(hyp);
+	    if (inpara) {
+		/* take es_mat[15] (path scaling) into account */
+		es_para[0] *= es_mat[15];
+		es_scale = es_para[0];
+	    }
+	   if (hyp->hyp_bnr * es_scale <= 1.0 ) { 
+	    hyp->hyp_bnr = hyp->hyp_bnr * es_scale;
+	   }    
+	}
+	break;
+
+
+	
 	case MENU_TGC_SCALE_A:
 	    /* scale vector A */
 	{
