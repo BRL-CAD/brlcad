@@ -270,7 +270,12 @@ writesolid(void)
 	    break;
 	case ID_HYP:
 	    hyp = (struct rt_hyp_internal *)es_int.idb_ptr;
-	    break;
+	    (void)fprintf( fp, "Vertex: %.9f %.9f %.9f%s", V3BASE2LOCAL( hyp->hyp_Vi ), eol);
+	    (void)fprintf( fp, "Height: %.9f %.9f %.9f%s", V3BASE2LOCAL( hyp->hyp_Hi ), eol);
+	    (void)fprintf( fp, "Semi-major axis: %.9f %.9f %.9f%s", V3BASE2LOCAL( hyp->hyp_A ), eol);
+	    (void)fprintf( fp, "Semi-minor length: %.9f%s", hyp->hyp_b * base2local, eol);
+	    (void)fprintf( fp, "Ratio of Neck to Base: %.9f%s", hyp->hyp_bnr, eol);
+	   break;
 	case ID_ETO:
 	    eto = (struct rt_eto_internal *)es_int.idb_ptr;
 	    (void)fprintf( fp, "Vertex: %.9f %.9f %.9f%s", V3BASE2LOCAL( eto->eto_V ), eol);
@@ -795,6 +800,26 @@ readsolid(void)
 		ret_val = 1;
 		break;
 	    }
+	    (void)sscanf( str, "%lf %lf %lf", &a, &b, &c );
+	    VSET( hyp->hyp_A, a, b, c );
+	    VSCALE( hyp->hyp_A, hyp->hyp_A, local2base );
+
+	    if ( (str=Get_next_line( fp )) == NULL )
+	    {
+		ret_val = 1;
+		break;
+	    }
+	    (void)sscanf( str, "%lf", &a );
+	    hyp->hyp_b = a * local2base;
+
+	    if ( (str=Get_next_line( fp )) == NULL )
+	    {
+		ret_val = 1;
+		break;
+	    }
+	    (void)sscanf( str, "%lf", &a );
+	    hyp->hyp_bnr = a;
+
 	    break;
 	case ID_ETO:
 	    eto = (struct rt_eto_internal *)es_int.idb_ptr;
