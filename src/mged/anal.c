@@ -48,6 +48,7 @@ static double	anal_face(struct bu_vls *vp, int face, fastf_t *center_pt, const s
 static void	anal_edge(struct bu_vls *vp, int edge, const struct rt_arb_internal *arb, int type);
 static double	find_vol(int loc, struct rt_arb_internal *arb, struct bn_tol *tol);
 static void	tgc_anal(struct bu_vls *vp, const struct rt_db_internal *ip);
+static void	hyp_anal(struct bu_vls *vp, const struct rt_db_internal *ip);
 static void	ell_anal(struct bu_vls *vp, const struct rt_db_internal *ip);
 static void	tor_anal(struct bu_vls *vp, const struct rt_db_internal *ip);
 static void	ars_anal(struct bu_vls *vp, const struct rt_db_internal *ip);
@@ -172,6 +173,10 @@ do_anal(struct bu_vls *vp, const struct rt_db_internal *ip)
 
 	case ID_TGC:
 	    tgc_anal(vp, ip);
+	    break;
+
+	case ID_HYP:
+	    hyp_anal(vp, ip);
 	    break;
 
 	case ID_ELL:
@@ -840,6 +845,27 @@ tgc_anal(struct bu_vls *vp, const struct rt_db_internal *ip)
     return;
 
 }
+
+/*	analyze hyp */
+static void
+hyp_anal(struct bu_vls *vp, const struct rt_db_internal *ip)
+{
+    struct rt_hyp_internal	*hyp = (struct rt_hyp_internal *)ip->idb_ptr;
+    fastf_t maxb, ma, mb, mc, md, mh;
+    fastf_t area_base, area_top, area_side, vol;
+    vect_t axb;
+    int cgtype = 0;
+
+    if (dbip == DBI_NULL)
+	return;
+
+    RT_HYP_CK_MAGIC( hyp );
+
+    bu_vls_printf(vp, "Need to implement analysis routines for hyperboloid\n");
+    return;
+
+}
+
 
 
 /*	analyze ars */
