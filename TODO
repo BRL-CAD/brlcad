@@ -27,7 +27,6 @@ THESE SHOULD HAPPEN BEFORE THE NEXT RELEASE
 * fix incrTcl pathing issues when only using system tcl/tk
   (get incrTcl subconfigure to work like was done for Tcl)
 
-* implement make, ted, edsol, mirror, and analyze for hyp primitive
 
 THESE SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 -------------------------------------------------
@@ -57,6 +56,11 @@ THESE ARE LOWER PRIORITY OR FOR FUTURE RELEASES
   command-line switch.  see http://brlcad.svn.sf.net/viewvc/brlcad/brlcad/trunk/conv/g-vrml.c?view=diff&pathrev=22798&r1=16900&r2=16901 
 
 * make Mac OS X universal binaries actually work.
+
+* take a look at MGED's analyze - check for missing routines and what
+  should be done for primitives where values like surface area are very
+  difficult to calculate.  Should the math logic be separated so as to
+  be available for other commands?
 
 * implement make, ted, edsol, mirror, and analyze for revolve primitive
 
