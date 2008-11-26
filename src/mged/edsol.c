@@ -226,7 +226,6 @@ int es_menu;		/* item selected from menu */
 #define MENU_HYP_SCALE_B	129
 #define MENU_HYP_C		130
 #define MENU_HYP_ROT_H		131
-#define MENU_HYP_ROT_A		132
 
 struct menu_item cline_menu[] = {
     { "CLINE MENU",		(void (*)())NULL, 0 },
@@ -577,7 +576,6 @@ struct menu_item  hyp_menu[] = {
     { "Set B", hyp_ed, MENU_HYP_SCALE_B },
     { "Set c", hyp_ed, MENU_HYP_C },
     { "Rotate H", hyp_ed, MENU_HYP_ROT_H },
-    { "Rotate A", hyp_ed, MENU_HYP_ROT_A },
     { "", (void (*)())NULL, 0 }
 };
 
@@ -1053,9 +1051,6 @@ hyp_ed(int arg)
     switch ( arg ) {
 	case MENU_HYP_ROT_H:
 	    es_edflag = ECMD_HYP_ROT_H;
-	    break;
-	case MENU_HYP_ROT_A:
-	    es_edflag = ECMD_HYP_ROT_A;
 	    break;
 	default:
 	    es_edflag = PSCALE;
@@ -4292,60 +4287,6 @@ sedit(void)
 	}
 	MAT_IDN( incr_change );
 	break;
-
-	case ECMD_HYP_ROT_A:
-	    /* rotate hyperolid height vector */
-	{
-	    struct rt_hyp_internal      *hyp =
-		(struct rt_hyp_internal *)es_int.idb_ptr;
-
-	    RT_HYP_CK_MAGIC(hyp);
-	    if (inpara) {
-		static mat_t invsolr;
-		/*
-		 * Keyboard parameters:  absolute x, y, z rotations,
-		 * in degrees.  First, cancel any existing rotations,
-		 * then perform new rotation
-		 */
-		bn_mat_inv( invsolr, acc_rot_sol );
-
-		/* Build completely new rotation change */
-		MAT_IDN( modelchanges );
-		bn_mat_angles(modelchanges,
-			      es_para[0],
-			      es_para[1],
-			      es_para[2]);
-		/* Borrow incr_change matrix here */
-		bn_mat_mul( incr_change, modelchanges, invsolr );
-		MAT_COPY(acc_rot_sol, modelchanges);
-
-		/* Apply new rotation to solid */
-		/*  Clear out solid rotation */
-		MAT_IDN( modelchanges );
-	    }  else  {
-		/* Apply incremental changes already in incr_change */
-	    }
-
-	    if (mged_variables->mv_context) {
-		/* calculate rotations about keypoint */
-		bn_mat_xform_about_pt( edit, incr_change, es_keypoint );
-
-		/* We want our final matrix (mat) to xform the original solid
-		 * to the position of this instance of the solid, perform the
-		 * current edit operations, then xform back.
-		 *      mat = es_invmat * edit * es_mat
-		 */
-		bn_mat_mul( mat1, edit, es_mat );
-		bn_mat_mul( mat, es_invmat, mat1 );
-
-                MAT4X3VEC(hyp->hyp_A, mat, hyp->hyp_A);
-	    } else {
-                MAT4X3VEC(hyp->hyp_A, incr_change, hyp->hyp_A);
-	    }
-	}
-	MAT_IDN( incr_change );
-	break;
-
 
 	case ECMD_ETO_ROT_C:
 	    /* rotate ellipse semi-major axis vector */
