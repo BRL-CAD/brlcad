@@ -3,6 +3,7 @@ bin_PROGRAMS = adrt_slave
 
 adrt_slave_SOURCES = \
 	load.c \
+	load_MySQL.c \
 	main.c \
 	slave.c
 
