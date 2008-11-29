@@ -115,6 +115,8 @@ public:
     int getType() const { return type; }
     std::string getID() const { return id; }
     virtual void display();
+    virtual void store();
+    virtual void restore();
     void setConst() { const_ = true; }
     void setVar() { const_ = false; }
     bool isConst() { return const_; }

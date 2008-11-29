@@ -136,6 +136,26 @@ VariableAbstract * VCSet::getVariablebyID(std::string vid)
     return NULL;
 }
 
+void VCSet::store()
+{
+    std::list<VariableAbstract *>::iterator i = Vars.begin();
+    std::list<VariableAbstract *>::iterator end = Vars.end();
+    
+    for (; i != end; i++) {
+	(**i).store();
+    }
+}
+
+void VCSet::restore()
+{
+    std::list<VariableAbstract *>::iterator i = Vars.begin();
+    std::list<VariableAbstract *>::iterator end = Vars.end();
+    
+    for (; i != end; i++) {
+	(**i).restore();
+    }
+}
+
 Parameter * VCSet::getParameter(std::string pname)
 {
     std::list<Parameter *>::iterator i;

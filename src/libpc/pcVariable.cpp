@@ -41,6 +41,14 @@ VariableAbstract::VariableAbstract(std::string vid) :
 void VariableAbstract::display()
 {
 }
+
+void VariableAbstract::store()
+{
+}
+
+void VariableAbstract::restore()
+{
+}
 /* Constructor specialization for specific variable types */
 template<>
 Variable<int>::Variable(std::string vid, int vvalue) :

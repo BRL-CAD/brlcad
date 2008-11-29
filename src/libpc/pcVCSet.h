@@ -77,6 +77,8 @@ public:
     
     /** Variable access method */
     VariableAbstract * getVariablebyID(std::string vid);
+    void store();
+    void restore();
     
     /** Parameter table data access */
     Parameter * getParameter(std::string pid);
