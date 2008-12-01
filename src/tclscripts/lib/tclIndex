@@ -904,6 +904,7 @@ set auto_index(::cadwidgets::ComboBox::menuEntryConfigure) [list source [file jo
 set auto_index(::cadwidgets::ComboBox::setText) [list source [file join $dir ComboBox.tcl]]
 set auto_index(::cadwidgets::ComboBox::text) [list source [file join $dir ComboBox.tcl]]
 set auto_index(::cadwidgets::ComboBox::type) [list source [file join $dir ComboBox.tcl]]
+set auto_index(::cadwidgets::Ged) [list source [file join $dir Ged.tcl]]
 set auto_index(::cadwidgets::Help) [list source [file join $dir Help.tcl]]
 set auto_index(::cadwidgets::Help::?) [list source [file join $dir Help.tcl]]
 set auto_index(::cadwidgets::Help::add) [list source [file join $dir Help.tcl]]
