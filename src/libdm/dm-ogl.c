@@ -224,6 +224,7 @@ ogl_open(Tcl_Interp *interp, int argc, char **argv)
 
     *dmp = dm_ogl; /* struct copy */
     dmp->dm_interp = interp;
+    dmp->dm_lineWidth = 1;
 
     dmp->dm_vars.pub_vars = (genptr_t)bu_calloc(1, sizeof(struct dm_xvars), "ogl_open: dm_xvars");
     if (dmp->dm_vars.pub_vars == (genptr_t)NULL) {

@@ -19,10 +19,6 @@
 #
 ###
 #
-# Author(s):
-#    Bob Parker
-#    Doug Howard
-#
 # Description:
 #    This is a BRL-CAD Application Core mega-widget.
 #
@@ -91,7 +87,7 @@ namespace eval ArcherCore {
 	# public database commands
 	method dbCmd               {args}
 	method cmd                 {args}
-	method png                 {_filename}
+#	method png                 {_filename}
 
 	# general
 	method UpdateTheme         {_theme} {set mTheme $_theme; updateTheme}
@@ -273,7 +269,7 @@ namespace eval ArcherCore {
 	variable mVPaneToggle3 20
 	variable mVPaneToggle5 20
 
-	variable mShowViewAxes 1
+	variable mShowViewAxes 0
 	variable mShowModelAxes 0
 	variable mShowModelAxesTicks 1
 	variable mShowGroundPlane 0
@@ -375,11 +371,7 @@ namespace eval ArcherCore {
 	variable mDbSpecificCommands {}
 	variable mUnwrappedDbCommands {}
 	variable mBannedDbCommands {
-	    dbip nmg_collapse nmb_simplify
-	    open move_arb_edge move_arb_face
-	    shells xpush illum label qray
-	    rotate_arb_face rtabort
-	    shaded_mode png
+	    dbip open rtabort shaded_mode
 	}
 
 	variable mMouseOverrideInfo "
@@ -498,9 +490,6 @@ Popup Menu    Right or Ctrl-Left
 	method showViewAxes     {}
 	method showModelAxes    {}
 	method showModelAxesTicks {}
-	method toggleModelAxes  {_pane}
-	method toggleModelAxesTicks {_pane}
-	method toggleViewAxes   {_pane}
 
 	# private mged commands
 	method alterObj          {_operation _obj}
@@ -510,13 +499,13 @@ Popup Menu    Right or Ctrl-Left
 	method buildViewToolbar {}
 
 	method beginViewRotate {}
-	method endViewRotate {_dm}
+	method endViewRotate {_pane}
 
 	method beginViewScale {}
-	method endViewScale {_dm}
+	method endViewScale {_pane}
 
 	method beginViewTranslate {}
-	method endViewTranslate {_dm}
+	method endViewTranslate {_pane}
 
 	method initCenterMode {}
 
@@ -550,6 +539,8 @@ Popup Menu    Right or Ctrl-Left
 
 	# Helper Section
 	method buildComboBox {_parent _name1 _name2 _varName _text _listOfChoices}
+
+	method watchVar {_name1 _name2 _op}
     }
 }
 
@@ -918,6 +909,19 @@ Popup Menu    Right or Ctrl-Left
     }
 
     buildViewToolbar
+    trace add variable [::itcl::scope mMeasuringStickColor] write watchVar
+    trace add variable [::itcl::scope mMeasuringStickMode] write watchVar
+    trace add variable [::itcl::scope mPrimitiveLabelColor] write watchVar
+    trace add variable [::itcl::scope mScaleColor] write watchVar
+
+    trace add variable [::itcl::scope mModelAxesColor] write watchVar
+    trace add variable [::itcl::scope mModelAxesLabelColor] write watchVar
+    trace add variable [::itcl::scope mModelAxesTickColor] write watchVar
+    trace add variable [::itcl::scope mModelAxesTickMajorColor] write watchVar
+
+    trace add variable [::itcl::scope mViewingParamsColor] write watchVar
+    trace add variable [::itcl::scope mViewAxesColor] write watchVar
+    trace add variable [::itcl::scope mViewAxesLabelColor] write watchVar
 
     eval itk_initialize $args
 
@@ -1306,12 +1310,13 @@ Popup Menu    Right or Ctrl-Left
 	    set _target $mTargetCopy
 	}
 
-	Mged $itk_component(canvasF).mged $_target \
+	cadwidgets::Ged $itk_component(canvasF).mged $_target \
 	    -type $mDisplayType \
 	    -showhandle 0 \
 	    -sashcursor sb_v_double_arrow \
 	    -hsashcursor sb_h_double_arrow \
-	    -showViewingParams $mShowViewingParams
+	    -showViewingParams $mShowViewingParams \
+	    -multi_pane $mMultiPane
     } {
 	keep -sashwidth -sashheight -sashborderwidth
 	keep -sashindent -thickness
@@ -1330,8 +1335,11 @@ Popup Menu    Right or Ctrl-Left
     if {!$mViewOnly} {
 	$itk_component(mged) set_outputHandler "$itk_component(cmd) putstring"
     }
-    $itk_component(mged) transparencyAll 1
-    $itk_component(mged) bounds "-4096 4095 -4096 4095 -4096 4095"
+    $itk_component(mged) transparency_all 1
+    $itk_component(mged) bounds_all "-4096 4095 -4096 4095 -4096 4095"
+    $itk_component(mged) more_args_callback "$itk_component(cmd) putstring"
+    $itk_component(mged) history_callback [::itcl::code $this addHistory]
+
 
     # RT Control Panel
     itk_component add rtcntrl {
@@ -1364,21 +1372,6 @@ Popup Menu    Right or Ctrl-Left
 
     #    $itk_component(mged) configure -unitsCallback "$itk_component(mac) updateControlPanel"
     $itk_component(mged) configure -paneCallback [::itcl::code $this updateActivePane]
-
-    # Override axes hot keys in the Mged widget
-    #    bind [$itk_component(mged) component ul component dm] m [::itcl::code $this toggleModelAxes ul]
-    #    bind [$itk_component(mged) component ur component dm] m [::itcl::code $this toggleModelAxes ur]
-    #    bind [$itk_component(mged) component ll component dm] m [::itcl::code $this toggleModelAxes ll]
-    #    bind [$itk_component(mged) component lr component dm] m [::itcl::code $this toggleModelAxes lr]
-    #    bind [$itk_component(mged) component ul component dm] T [::itcl::code $this toggleModelAxesTicks ul]
-    #    bind [$itk_component(mged) component ur component dm] T [::itcl::code $this toggleModelAxesTicks ur]
-    #    bind [$itk_component(mged) component ll component dm] T [::itcl::code $this toggleModelAxesTicks ll]
-    #    bind [$itk_component(mged) component lr component dm] T [::itcl::code $this toggleModelAxesTicks lr]
-    #    bind [$itk_component(mged) component ul component dm] v [::itcl::code $this toggleViewAxes ul]
-    #    bind [$itk_component(mged) component ur component dm] v [::itcl::code $this toggleViewAxes ur]
-    #    bind [$itk_component(mged) component ll component dm] v [::itcl::code $this toggleViewAxes ll]
-    #    bind [$itk_component(mged) component lr component dm] v [::itcl::code $this toggleViewAxes lr]
-
 
     # Other bindings for mged
     #bind $itk_component(mged) <Enter> {focus %W}
@@ -1749,22 +1742,17 @@ Popup Menu    Right or Ctrl-Left
 	return
     }
 
-    foreach dname {ul ur ll lr} {
-	set dm [$itk_component(mged) component $dname]
-	set win [$dm component dm]
-	bind $win <1> "$dm rotate_mode %x %y; break"
-	bind $win <ButtonRelease-1> "[::itcl::code $this endViewRotate $dm]; break"
-    }
+    $itk_component(mged) init_view_rotate
 }
 
-::itcl::body ArcherCore::endViewRotate {dsp} {
-    $dsp idle_mode
-
+::itcl::body ArcherCore::endViewRotate {_pane} {
     if {![info exists itk_component(mged)]} {
 	return
     }
 
-    set ae [$itk_component(mged) ae]
+    $itk_component(mged) end_view_rotate $_pane
+
+    set ae [$itk_component(mged) pane_aet $_pane]
     addHistory "ae $ae"
 }
 
@@ -1773,22 +1761,17 @@ Popup Menu    Right or Ctrl-Left
 	return
     }
 
-    foreach dname {ul ur ll lr} {
-	set dm [$itk_component(mged) component $dname]
-	set win [$dm component dm]
-	bind $win <1> "$dm scale_mode %x %y; break"
-	bind $win <ButtonRelease-1> "[::itcl::code $this endViewScale $dm]; break"
-    }
+    $itk_component(mged) init_view_scale
 }
 
-::itcl::body ArcherCore::endViewScale {dsp} {
-    $dsp idle_mode
-
+::itcl::body ArcherCore::endViewScale {_pane} {
     if {![info exists itk_component(mged)]} {
 	return
     }
 
-    set size [$itk_component(mged) size]
+    $itk_component(mged) end_view_scale $_pane
+
+    set size [$itk_component(mged) pane_size $_pane]
     addHistory "size $size"
 }
 
@@ -1797,22 +1780,17 @@ Popup Menu    Right or Ctrl-Left
 	return
     }
 
-    foreach dname {ul ur ll lr} {
-	set dm [$itk_component(mged) component $dname]
-	set win [$dm component dm]
-	bind $win <1> "$dm translate_mode %x %y; break"
-	bind $win <ButtonRelease-1> "[::itcl::code $this endViewTranslate $dm]; break"
-    }
+    $itk_component(mged) init_view_translate
 }
 
-::itcl::body ArcherCore::endViewTranslate {dsp} {
-    $dsp idle_mode
-
+::itcl::body ArcherCore::endViewTranslate {_pane} {
     if {![info exists itk_component(mged)]} {
 	return
     }
 
-    set center [$itk_component(mged) center]
+    $itk_component(mged) end_view_translate $_pane
+
+    set center [$itk_component(mged) pane_center $_pane]
     addHistory "center $center"
 }
 
@@ -1821,12 +1799,7 @@ Popup Menu    Right or Ctrl-Left
 	return
     }
 
-    foreach dname {ul ur ll lr} {
-	set dm [$itk_component(mged) component $dname]
-	set win [$dm component dm]
-	bind $win <1> "$dm slew %x %y; break"
-	bind $win <ButtonRelease-1> "[::itcl::code $this endViewTranslate $dm]; break"
-    }
+    $itk_component(mged) init_view_center
 }
 
 ::itcl::body ArcherCore::initCompPick {} {
@@ -1834,12 +1807,7 @@ Popup Menu    Right or Ctrl-Left
 	return
     }
 
-    foreach dname {ul ur ll lr} {
-	set dm [$itk_component(mged) component $dname]
-	set win [$dm component dm]
-	bind $win <1> "[::itcl::code $this mouseRay $dm %x %y]; break"
-	bind $win <ButtonRelease-1> ""
-    }
+    $itk_component(mged) init_comp_pick
 }
 
 ::itcl::body ArcherCore::initMeasure {} {
@@ -1847,12 +1815,7 @@ Popup Menu    Right or Ctrl-Left
 	return
     }
 
-    foreach dname {ul ur ll lr} {
-	set dm [$itk_component(mged) component $dname]
-	set win [$dm component dm]
-	bind $win <1> "[::itcl::code $this beginMeasure $dm %x %y]; break"
-	bind $win <ButtonRelease-1> "[::itcl::code $this endMeasure $dm]; break"
-    }
+    $itk_component(mged) init_view_measure
 }
 
 ::itcl::body ArcherCore::beginMeasure {_dm _x _y} {
@@ -1916,75 +1879,7 @@ Popup Menu    Right or Ctrl-Left
 	return
     }
 
-    foreach dname {ul ur ll lr} {
-	set dm [$_comp component $dname]
-	set win [$dm component dm]
-
-	# Turn off mouse bindings
-	bind $win <1> {}
-	bind $win <2> {}
-	bind $win <3> {}
-	bind $win <ButtonRelease-1> {}
-
-	# Turn off rotate mode
-	bind $win <Control-ButtonPress-1> {}
-	bind $win <Control-ButtonPress-2> {}
-	bind $win <Control-ButtonPress-3> {}
-
-	# Turn off translate mode
-	bind $win <Shift-ButtonPress-1> {}
-	bind $win <Shift-ButtonPress-2> {}
-	bind $win <Shift-ButtonPress-3> {}
-
-	# Turn off scale mode
-	bind $win <Control-Shift-ButtonPress-1> {}
-	bind $win <Control-Shift-ButtonPress-2> {}
-	bind $win <Control-Shift-ButtonPress-3> {}
-
-	# Turn off constrained rotate mode
-	bind $win <Alt-Control-ButtonPress-1> {}
-	bind $win <Alt-Control-ButtonPress-2> {}
-	bind $win <Alt-Control-ButtonPress-3> {}
-
-	# Turn off constrained translate mode
-	bind $win <Alt-Shift-ButtonPress-1> {}
-	bind $win <Alt-Shift-ButtonPress-2> {}
-	bind $win <Alt-Shift-ButtonPress-3> {}
-
-	# Turn off constrained scale mode
-	bind $win <Alt-Control-Shift-ButtonPress-1> {}
-	bind $win <Alt-Control-Shift-ButtonPress-2> {}
-	bind $win <Alt-Control-Shift-ButtonPress-3> {}
-
-	# Turn off key bindings
-	bind $win 3 {}
-	bind $win 4 {}
-	bind $win f {}
-	bind $win R {}
-	bind $win r {}
-	bind $win l {}
-	bind $win t {}
-	bind $win b {}
-	bind $win m {}
-	bind $win T {}
-	bind $win v {}
-	bind $win <F2> {}
-	bind $win <F3> {}
-	bind $win <F4> {}
-	bind $win <F5> {}
-	bind $win <F10> {}
-
-	# overrides
-	bind $win <Shift-ButtonPress-1> "$_comp rotate_mode %x %y; break"
-	bind $win <Shift-ButtonPress-2> "$_comp scale_mode %x %y; break"
-	bind $win <Shift-ButtonPress-3> "$_comp translate_mode %x %y; break"
-	bind $win <Control-Shift-ButtonPress-3> "$_comp slew %x %y; break"
-
-	bind $win <Shift-ButtonRelease-1> "[::itcl::code $this endViewRotate $dm]; break"
-	bind $win <Shift-ButtonRelease-2> "[::itcl::code $this endViewScale $dm]; break"
-	bind $win <Shift-ButtonRelease-3> "[::itcl::code $this endViewTranslate $dm]; break"
-    }
-
+    $itk_component(mged) init_view_bindings
     $itk_component(viewToolbar) configure -state normal
     $itk_component(viewToolbar) itemconfigure cpick \
 	-state normal
@@ -1997,8 +1892,8 @@ Popup Menu    Right or Ctrl-Left
 	return
     }
 
+    $itk_component(mged) init_view_bindings brlcad
     $itk_component(viewToolbar) configure -state disabled
-    $itk_component(mged) resetBindingsAll
 }
 
 
@@ -2061,7 +1956,7 @@ Popup Menu    Right or Ctrl-Left
 		       [lindex $mBackground 2]]
 	$itk_component(canvas) configure -background $color
     } else {
-	eval dbCmd bgAll $mBackground
+	eval dbCmd bg_all $mBackground
     }
 }
 
@@ -2208,19 +2103,19 @@ Popup Menu    Right or Ctrl-Left
 	}
     }
 
-    set i [lsearch $mCadCommands $cmd]
+    set i [lsearch -exact $mCadCommands $cmd]
     if {$i != -1} {
 	addHistory $args
 	return [eval $args]
     }
 
-    set i [lsearch $mDbSpecificCommands $cmd]
+    set i [lsearch -exact $mDbSpecificCommands $cmd]
     if {$i != -1} {
 	addHistory $args
 	return [eval $args]
     }
 
-    set i [lsearch $mUnwrappedDbCommands $cmd]
+    set i [lsearch -exact $mUnwrappedDbCommands $cmd]
     if {$i != -1} {
 	addHistory $args
 	return [eval dbCmd $args]
@@ -2229,12 +2124,12 @@ Popup Menu    Right or Ctrl-Left
     error "ArcherCore::cmd: unrecognized command - $args, check source code"
 }
 
-::itcl::body ArcherCore::png {filename} {
-    SetWaitCursor
-    dbCmd sync
-    dbCmd png $filename
-    SetNormalCursor
-}
+#::itcl::body ArcherCore::png {filename} {
+#    SetWaitCursor
+#    dbCmd sync
+#    dbCmd png $filename
+#    SetNormalCursor
+#}
 
 # ------------------------------------------------------------
 #                  DB/DISPLAY COMMANDS
@@ -2454,9 +2349,13 @@ Popup Menu    Right or Ctrl-Left
 	lr {set mActivePane 3}
     }
 
-    set mShowModelAxes [dbCmd setModelAxesEnable]
-    set mShowModelAxesTicks [dbCmd setModelAxesTickEnable]
-    set mShowViewAxes [dbCmd setViewAxesEnable]
+    set mShowModelAxes [dbCmd cget -modelAxesEnable]
+    set mShowModelAxesTicks [dbCmd cget -modelAxesTickEnabled]
+    set mShowViewAxes [dbCmd cget -viewAxesEnable]
+
+#    set mShowModelAxes [dbCmd setModelAxesEnable]
+#    set mShowModelAxesTicks [dbCmd setModelAxesTickEnable]
+#    set mShowViewAxes [dbCmd setViewAxesEnable]
 }
 
 ::itcl::body ArcherCore::doMultiPane {} {
@@ -2467,11 +2366,11 @@ Popup Menu    Right or Ctrl-Left
     SetWaitCursor
 
     if {$mZClipMode != $ZCLIP_NONE} {
-	dbCmd zclipAll $mLighting
+	dbCmd zclip_all $mLighting
     }
 
-    dbCmd zbufferAll $mLighting
-    dbCmd lightAll $mLighting
+    dbCmd zbuffer_all $mLighting
+    dbCmd light_all $mLighting
 
     SetNormalCursor
 }
@@ -2481,7 +2380,7 @@ Popup Menu    Right or Ctrl-Left
 	return
     }
 
-    dbCmd autoviewAll
+    dbCmd autoview_all
     dbCmd default_views
 }
 
@@ -2490,7 +2389,7 @@ Popup Menu    Right or Ctrl-Left
 	return
     }
 
-    dbCmd autoviewAll
+    dbCmd autoview_all
 }
 
 ::itcl::body ArcherCore::doViewCenter {} {
@@ -2527,45 +2426,15 @@ Popup Menu    Right or Ctrl-Left
 }
 
 ::itcl::body ArcherCore::showViewAxes {} {
-    catch {dbCmd setViewAxesEnable $mShowViewAxes}
+    catch {dbCmd configure -viewAxesEnable $mShowViewAxes}
 }
 
 ::itcl::body ArcherCore::showModelAxes {} {
-    catch {dbCmd setModelAxesEnable $mShowModelAxes}
+    catch {dbCmd configure -modelAxesEnable $mShowModelAxes}
 }
 
 ::itcl::body ArcherCore::showModelAxesTicks {} {
-    catch {dbCmd setModelAxesTickEnable $mShowModelAxesTicks}
-}
-
-::itcl::body ArcherCore::toggleModelAxes {pane} {
-    set currPane [dbCmd pane]
-    if {$currPane == $pane} {
-	# update menu checkbutton
-	set mShowModelAxes [expr !$mShowModelAxes]
-    }
-
-    dbCmd toggle_modelAxesEnable $pane
-}
-
-::itcl::body ArcherCore::toggleModelAxesTicks {pane} {
-    set currPane [dbCmd pane]
-    if {$currPane == $pane} {
-	# update menu checkbutton
-	set mShowModelAxesTicks [expr !$mShowModelAxesTicks]
-    }
-
-    dbCmd toggle_modelAxesTickEnable $pane
-}
-
-::itcl::body ArcherCore::toggleViewAxes {pane} {
-    set currPane [dbCmd pane]
-    if {$currPane == $pane} {
-	# update menu checkbutton
-	set mShowViewAxes [expr !$mShowViewAxes]
-    }
-
-    dbCmd toggle_viewAxesEnable $pane
+    catch {dbCmd configure -modelAxesTickEnabled $mShowModelAxesTicks}
 }
 
 
@@ -2999,11 +2868,11 @@ Popup Menu    Right or Ctrl-Left
     # Load MGED database
     if {[info exists itk_component(mged)]} {
 	if {$mDbShared} {
-	    $itk_component(mged) sharedDb $mTarget
+	    $itk_component(mged) sharedGed $mTarget
 	} elseif {$mDbNoCopy || $mDbReadOnly} {
-	    $itk_component(mged) opendb $mTarget
+	    $itk_component(mged) open $mTarget
 	} else {
-	    $itk_component(mged) opendb $mTargetCopy
+	    $itk_component(mged) open $mTargetCopy
 	}
     } else {
 	initMged
@@ -3034,9 +2903,9 @@ Popup Menu    Right or Ctrl-Left
 	showGroundPlane
     }
 
-    setColorOption dbCmd -primitiveLabelColor $mPrimitiveLabelColor
-    setColorOption dbCmd -scaleColor $mScaleColor
-    setColorOption dbCmd -viewingParamsColor $mViewingParamsColor
+#    setColorOption dbCmd -primitiveLabelColor $mPrimitiveLabelColor
+#    setColorOption dbCmd -scaleColor $mScaleColor
+#    setColorOption dbCmd -viewingParamsColor $mViewingParamsColor
 
     if {!$mViewOnly} {
 	doLighting
@@ -3312,6 +3181,7 @@ Popup Menu    Right or Ctrl-Left
     }
 }
 
+#XXXX Needs more flexibility (i.e. position and orientation)
 ::itcl::body ArcherCore::buildGroundPlane {} {
     if {![info exists itk_component(mged)]} {
 	return
@@ -4227,19 +4097,19 @@ Popup Menu    Right or Ctrl-Left
 
     switch -- $mZClipMode \
 	$ZCLIP_SMALL_CUBE { \
-				$itk_component(mged) zclipAll 1; \
-				$itk_component(mged) boundsAll {-4096 4095 -4096 4095 -4096 4095}; \
+				$itk_component(mged) zclip_all 1; \
+				$itk_component(mged) bounds_all {-4096 4095 -4096 4095 -4096 4095}; \
 			    } \
 	$ZCLIP_MEDIUM_CUBE { \
-				 $itk_component(mged) zclipAll 1; \
-				 $itk_component(mged) boundsAll {-8192 8191 -8192 8191 -8192 8191}; \
+				 $itk_component(mged) zclip_all 1; \
+				 $itk_component(mged) bounds_all {-8192 8191 -8192 8191 -8192 8191}; \
 			     } \
 	$ZCLIP_LARGE_CUBE { \
-				$itk_component(mged) zclipAll 1; \
-				$itk_component(mged) boundsAll {-16384 16363 -16384 16363 -16384 16363}; \
+				$itk_component(mged) zclip_all 1; \
+				$itk_component(mged) bounds_all {-16384 16363 -16384 16363 -16384 16363}; \
 			    } \
 	$ZCLIP_NONE { \
-			  $itk_component(mged) zclipAll 0; \
+			  $itk_component(mged) zclip_all 0; \
 		      }
 }
 
@@ -4464,6 +4334,57 @@ Popup Menu    Right or Ctrl-Left
     pack $itk_component($name1\CB) -expand yes -fill both
 }
 
+::itcl::body ArcherCore::watchVar {_name1 _name2 _op} {
+    if {![info exists itk_component(mged)]} {
+	return
+    }
+
+    switch -- $_name1 {
+	mMeasuringStickColor {
+	    $itk_component(mged) configure -measuringStickColor $mMeasuringStickColor
+	}
+	mMeasuringStickMode {
+	    $itk_component(mged) configure -measuringStickMode $mMeasuringStickMode 
+	}
+	mModelAxesColor {
+	    if {$mModelAxesColor == "Triple"} {
+		$itk_component(mged) configure -modelAxesTripleColor 1
+	    } else {
+		$itk_component(mged) configure -modelAxesTripleColor 0
+		$itk_component(mged) configure -modelAxesColor $mModelAxesColor
+	    }
+	}
+	mModelAxesLabelColor {
+	    $itk_component(mged) configure -modelAxesLabelColor $mModelAxesLabelColor
+	}
+	mModelAxesTickColor {
+	    $itk_component(mged) configure -modelAxesTickColor $mModelAxesTickColor
+	}
+	mModelAxesTickMajorColor {
+	    $itk_component(mged) configure -modelAxesTickMajorColor $mModelAxesTickMajorColor
+	}
+	mPrimitveLabelColor {
+	    $itk_component(mged) configure -primitiveLabelColor $mPrimitiveLabelColor
+	}
+	mScaleColor {
+	    $itk_component(mged) configure -scaleColor $mScaleColor
+	}
+	mViewAxesColor {
+	    if {$mViewAxesColor == "Triple"} {
+		$itk_component(mged) configure -viewAxesTripleColor 1
+	    } else {
+		$itk_component(mged) configure -viewAxesTripleColor 0
+		$itk_component(mged) configure -viewAxesColor $mViewAxesColor
+	    }
+	}
+	mViewAxesLabelColor {
+	    $itk_component(mged) configure -viewAxesLabelColor $mViewAxesLabelColor
+	}
+	mViewingParamsColor {
+	    $itk_component(mged) configure -viewingParamsColor $mViewingParamsColor
+	}
+    }
+}
 
 # Local Variables:
 # mode: Tcl

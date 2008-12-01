@@ -401,6 +401,10 @@
 				</FileConfiguration>
 			</File>
 			<File
+				RelativePath="..\..\..\src\libdm\labels.c"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\src\libdm\options.c"
 				>
 				<FileConfiguration
@@ -442,6 +446,10 @@
 			</File>
 			<File
 				RelativePath="..\..\..\src\libdm\rect.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\src\libdm\scale.c"
 				>
 			</File>
 			<File

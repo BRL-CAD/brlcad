@@ -46,7 +46,7 @@ ged_prefix(struct ged *gedp, int argc, const char *argv[])
     struct bu_vls tempstring_v5;
     char *tempstring;
     int len = NAMESIZE+1;
-    static const char *usage = "quat|ypr|aet|center|eye|size [args]";
+    static const char *usage = "new_prefix object(s)";
 
     GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
     GED_CHECK_READ_ONLY(gedp, BRLCAD_ERROR);

@@ -205,7 +205,26 @@ struct ged_adc_state {
     fastf_t	gas_anchor_pt_dst[3];
     int		gas_line_color[3];
     int		gas_tick_color[3];
-    int		gas_linewidth;
+    int		gas_line_width;
+};
+
+struct ged_axes_state {
+    int       gas_draw;
+    point_t   gas_axes_pos;		/* in view coordinates */
+    fastf_t   gas_axes_size; 		/* in view coordinates */
+    int	      gas_line_width;    	/* in pixels */
+    int	      gas_pos_only;
+    int	      gas_axes_color[3];
+    int	      gas_label_color[3];
+    int	      gas_triple_color;
+    int	      gas_tick_enabled;
+    int	      gas_tick_length;		/* in pixels */
+    int	      gas_tick_major_length; 	/* in pixels */
+    fastf_t   gas_tick_interval; 	/* in mm */
+    int	      gas_ticks_per_major;
+    int	      gas_tick_threshold;
+    int	      gas_tick_color[3];
+    int	      gas_tick_major_color[3];
 };
 
 struct ged_grid_state {
@@ -219,11 +238,17 @@ struct ged_grid_state {
     int		ggs_color[3];
 };
 
+struct ged_other_state {
+    int gos_draw;
+    int	gos_line_color[3];
+    int	gos_text_color[3];
+};
+
 struct ged_rect_state {
     int		grs_active;	/* 1 - actively drawing a rectangle */
     int		grs_draw;	/* draw rubber band rectangle */
-    int		grs_linewidth;
-    int		grs_linestyle;  /* 0 - solid, 1 - dashed */
+    int		grs_line_width;
+    int		grs_line_style;  /* 0 - solid, 1 - dashed */
     int		grs_pos[2];	/* Position in image coordinates */
     int		grs_dim[2];	/* Rectangle dimension in image coordinates */
     fastf_t	grs_x;		/* Corner of rectangle in normalized     */
@@ -235,6 +260,8 @@ struct ged_rect_state {
     int		grs_cdim[2];	/* Canvas dimension in pixels */
     fastf_t	grs_aspect;	/* Canvas aspect ratio */
 };
+
+
 
 struct ged_run_rt {
     struct bu_list l;
@@ -320,7 +347,6 @@ struct ged_view {
     void 			(*gv_callback)();	/**< @brief  called in vo_update with gv_clientData and gvp */
     genptr_t			gv_clientData;		/**< @brief  passed to gv_callback */
 #endif
-    int				gv_zclip;
     fastf_t			gv_prevMouseX;
     fastf_t			gv_prevMouseY;
     fastf_t			gv_minMouseDelta;
@@ -328,9 +354,16 @@ struct ged_view {
     fastf_t			gv_rscale;
     fastf_t			gv_sscale;
     int				gv_mode;
+    int				gv_zclip;
     struct ged_adc_state 	gv_adc;
+    struct ged_axes_state 	gv_model_axes;
+    struct ged_axes_state 	gv_view_axes;
     struct ged_grid_state 	gv_grid;
     struct ged_rect_state 	gv_rect;
+    struct ged_other_state 	gv_center_dot;
+    struct ged_other_state 	gv_prim_labels;
+    struct ged_other_state 	gv_view_params;
+    struct ged_other_state 	gv_view_scale;
 };
 
 
@@ -347,7 +380,7 @@ struct ged {
     struct ged_drawable		*ged_gdp;
     struct ged_view		*ged_gvp;
 
-    void			*ged_refresh_clientdata;	/**< @brief  function for handling refresh requests */
+    void			*ged_refresh_clientdata;	/**< @brief  client data passed to refresh handler */
     void			(*ged_refresh_handler)();	/**< @brief  function for handling refresh requests */
     void			(*ged_output_handler)();	/**< @brief  function for handling output */
     char			*ged_output_script;		/**< @brief  script for use by the outputHandler */

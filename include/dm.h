@@ -331,8 +331,23 @@ DM_EXPORT BU_EXTERN(int Nu_int0,
 DM_EXPORT BU_EXTERN(unsigned Nu_unsign,
 		    ());
 
-/* vers.c */
-DM_EXPORT BU_EXTERN(const char *dm_version, (void));
+/* adc.c */
+DM_EXPORT BU_EXTERN(void dm_draw_adc,
+		    (struct dm *dmp,
+		     struct ged_view *gvp));
+
+/* axes.c */
+DM_EXPORT BU_EXTERN(void dm_draw_data_axes,
+		    (struct dm *dmp,
+		     fastf_t viewSize,
+		     mat_t rmat,
+		     struct ged_axes_state *gasp));
+
+DM_EXPORT BU_EXTERN(void dm_draw_axes,
+		    (struct dm *dmp,
+		     fastf_t viewSize,
+		     mat_t rmat,
+		     struct ged_axes_state *gasp));
 
 /* clip.c */
 DM_EXPORT BU_EXTERN(int clip,
@@ -345,41 +360,6 @@ DM_EXPORT BU_EXTERN(int vclip,
 		     fastf_t *,
 		     register fastf_t *,
 		     register fastf_t *));
-
-/* adc.c */
-DM_EXPORT BU_EXTERN(void dm_draw_adc,
-		    (struct dm *dmp,
-		     struct ged_view *gvp));
-
-/* axes.c */
-DM_EXPORT BU_EXTERN(void dmo_drawDataAxes_cmd,
-		    (struct dm *dmp,
-		     fastf_t viewSize,
-		     mat_t rmat,
-		     point_t axesPos,
-		     fastf_t axesSize,
-		     int *axesColor,
-		     int lineWidth));
-
-DM_EXPORT BU_EXTERN(void dmo_drawAxes_cmd,
-		    (struct dm *dmp,
-		     fastf_t viewSize,
-		     mat_t rmat,
-		     point_t axesPos,
-		     fastf_t axesSize,
-		     int *axesColor,
-		     int *labelColor,
-		     int lineWidth,
-		     int posOnly,
-		     int threeColor,
-		     int tickEnable,
-		     int tickLen,
-		     int majorTickLen,
-		     fastf_t tickInterval,
-		     int ticksPerMajor,
-		     int *tickColor,
-		     int *majorTickColor,
-		     int tickThreshold));
 
 /* focus.c */
 DM_EXPORT BU_EXTERN(void dm_applicationfocus, (void));
@@ -396,6 +376,17 @@ DM_EXPORT BU_EXTERN(void dm_draw_rect,
 		    (struct dm *dmp,
 		     struct ged_rect_state *grsp,
 		     struct ged_view *gvp));
+
+/* scale.c */
+DM_EXPORT BU_EXTERN(void dm_draw_scale,
+		    (struct dm *dmp,
+		     fastf_t   viewSize,
+		     int       *lineColor,
+		     int       *textColor));
+
+/* vers.c */
+DM_EXPORT BU_EXTERN(const char *dm_version, (void));
+
 
 
 

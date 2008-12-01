@@ -92,12 +92,30 @@ static int go_autoview(struct ged	*gedp,
 		       ged_func_ptr	func,
 		       const char	*usage,
 		       int		maxargs);
+static int go_base2local(struct ged	*gedp,
+			 int		argc,
+			 const char	*argv[],
+			 ged_func_ptr	func,
+			 const char	*usage,
+			 int		maxargs);
+static int go_bg(struct ged	*gedp,
+		 int		argc,
+		 const char	*argv[],
+		 ged_func_ptr	func,
+		 const char	*usage,
+		 int		maxargs);
 static int go_blast(struct ged		*gedp,
 		    int			argc,
 		    const char		*argv[],
 		    ged_func_ptr	func,
 		    const char		*usage,
 		    int			maxargs);
+static int go_bounds(struct ged		*gedp,
+		     int		argc,
+		     const char		*argv[],
+		     ged_func_ptr	func,
+		     const char		*usage,
+		     int		maxargs);
 static int go_configure(struct ged	*gedp,
 			int		argc,
 			const char	*argv[],
@@ -116,12 +134,24 @@ static int go_constrain_tmode(struct ged	*gedp,
 			      ged_func_ptr	func,
 			      const char	*usage,
 			      int		maxargs);
+static int go_init_view_bindings(struct ged	*gedp,
+				 int		argc,
+				 const char	*argv[],
+				 ged_func_ptr	func,
+				 const char	*usage,
+				 int		maxargs);
 static int go_delete_view(struct ged	*gedp,
 			  int		argc,
 			  const char	*argv[],
 			  ged_func_ptr	func,
 			  const char	*usage,
 			  int		maxargs);
+static int go_faceplate(struct ged	*gedp,
+			int		argc,
+			const char	*argv[],
+			ged_func_ptr	func,
+			const char	*usage,
+			int		maxargs);
 static int go_idle_mode(struct ged	*gedp,
 			int		argc,
 			const char	*argv[],
@@ -140,14 +170,12 @@ static int go_list_views(struct ged	*gedp,
 			 ged_func_ptr	func,
 			 const char	*usage,
 			 int		maxargs);
-
 static int go_listen(struct ged		*gedp,
 		     int		argc,
 		     const char		*argv[],
 		     ged_func_ptr	func,
 		     const char		*usage,
 		     int		maxargs);
-
 static int go_make(struct ged	*gedp,
 		   int		argc,
 		   const char	*argv[],
@@ -160,6 +188,12 @@ static int go_mirror(struct ged		*gedp,
 		     ged_func_ptr	func,
 		     const char		*usage,
 		     int		maxargs);
+static int go_model_axes(struct ged	*gedp,
+			 int		argc,
+			 const char	*argv[],
+			 ged_func_ptr	func,
+			 const char	*usage,
+			 int		maxargs);
 static int go_more_args_callback(struct ged	*gedp,
 				 int		argc,
 				 const char	*argv[],
@@ -178,6 +212,12 @@ static int go_mouse_constrain_trans(struct ged		*gedp,
 				    ged_func_ptr	func,
 				    const char		*usage,
 				    int			maxargs);
+static int go_mouse_ray(struct ged	*gedp,
+			int		argc,
+			const char	*argv[],
+			ged_func_ptr	func,
+			const char	*usage,
+			int		maxargs);
 static int go_mouse_rot(struct ged	*gedp,
 			int		argc,
 			const char	*argv[],
@@ -208,6 +248,12 @@ static int go_paint_rect_area(struct ged	*gedp,
 			      ged_func_ptr	func,
 			      const char	*usage,
 			      int		maxargs);
+static int go_prim_label(struct ged	*gedp,
+			 int		argc,
+			 const char	*argv[],
+			 ged_func_ptr	func,
+			 const char	*usage,
+			 int		maxargs);
 static int go_refresh(struct ged	*gedp,
 		      int		argc,
 		      const char	*argv[],
@@ -238,6 +284,18 @@ static int go_scale_mode(struct ged	*gedp,
 			 ged_func_ptr	func,
 			 const char	*usage,
 			 int		maxargs);
+static int go_screen2model(struct ged	*gedp,
+			   int		argc,
+			   const char	*argv[],
+			   ged_func_ptr	func,
+			   const char	*usage,
+			   int		maxargs);
+static int go_screen2view(struct ged	*gedp,
+			  int		argc,
+			  const char	*argv[],
+			  ged_func_ptr	func,
+			  const char	*usage,
+			  int		maxargs);
 static int go_set_coord(struct ged	*gedp,
 			int		argc,
 			const char	*argv[],
@@ -256,6 +314,24 @@ static int go_translate_mode(struct ged		*gedp,
 			     ged_func_ptr	func,
 			     const char		*usage,
 			     int		maxargs);
+static int go_transparency(struct ged	*gedp,
+			   int		argc,
+			   const char	*argv[],
+			   ged_func_ptr	func,
+			   const char	*usage,
+			     int	maxargs);
+static int go_view_axes(struct ged	*gedp,
+			int		argc,
+			const char	*argv[],
+			ged_func_ptr	func,
+			const char	*usage,
+			int		maxargs);
+static int go_view_win_size(struct ged		*gedp,
+			    int			argc,
+			    const char		*argv[],
+			    ged_func_ptr	func,
+			    const char		*usage,
+			    int		maxargs);
 static int go_vmake(struct ged		*gedp,
 		    int			argc,
 		    const char		*argv[],
@@ -360,6 +436,8 @@ static struct go_cmdtab go_cmds[] = {
     {"attr",	(char *)0, MAXARGS, go_pass_through_func, ged_attr},
     {"autoview",	"vname", MAXARGS, go_autoview, GED_FUNC_PTR_NULL},
     {"bev",	(char *)0, MAXARGS, go_pass_through_func, ged_bev},
+    {"base2local",	(char *)0, MAXARGS, go_base2local, GED_FUNC_PTR_NULL},
+    {"bg",	"vname [r g b]", MAXARGS, go_bg, GED_FUNC_PTR_NULL},
     {"blast",	(char *)0, MAXARGS, go_blast, GED_FUNC_PTR_NULL},
     {"bo",	(char *)0, MAXARGS, go_pass_through_func, ged_binary},
     {"bot_condense",	(char *)0, MAXARGS, go_pass_through_func, ged_bot_condense},
@@ -371,6 +449,7 @@ static struct go_cmdtab go_cmds[] = {
     {"bot_smooth",	(char *)0, MAXARGS, go_pass_through_func, ged_bot_smooth},
     {"bot_split",	(char *)0, MAXARGS, go_pass_through_func, ged_bot_split},
     {"bot_vertex_fuse",	(char *)0, MAXARGS, go_pass_through_func, ged_bot_vertex_fuse},
+    {"bounds",	"vname [\"minX maxX minY maxY minZ maxZ\"]", MAXARGS, go_bounds, GED_FUNC_PTR_NULL},
     {"c",	(char *)0, MAXARGS, go_pass_through_func, ged_comb_std},
     {"cat",	(char *)0, MAXARGS, go_pass_through_func, ged_cat},
     {"center",	"vname [x y z]", 5, go_view_func, ged_center},
@@ -410,6 +489,7 @@ static struct go_cmdtab go_cmds[] = {
     {"expand",	(char *)0, MAXARGS, go_pass_through_func, ged_expand},
     {"eye",	"vname [x y z]", 5, go_view_func, ged_eye},
     {"eye_pos",	"vname [x y z]", 5, go_view_func, ged_eye_pos},
+    {"faceplate",	"vname center_dot|prim_labels|view_params|view_scale color|draw [val(s)]", MAXARGS, go_faceplate, GED_FUNC_PTR_NULL},
     {"facetize",	(char *)0, MAXARGS, go_pass_through_func, ged_facetize},
     {"find",	(char *)0, MAXARGS, go_pass_through_func, ged_find},
     {"form",	(char *)0, MAXARGS, go_pass_through_func, ged_form},
@@ -431,6 +511,7 @@ static struct go_cmdtab go_cmds[] = {
     {"illum",	(char *)0, MAXARGS, go_pass_through_and_refresh_func, ged_illum},
     {"importFg4Section",	(char *)0, MAXARGS, go_pass_through_func, ged_importFg4Section},
     {"in",	(char *)0, MAXARGS, go_more_args_func, ged_in},
+    {"init_view_bindings",	"vname", MAXARGS, go_init_view_bindings, GED_FUNC_PTR_NULL},
     {"inside",	(char *)0, MAXARGS, go_more_args_func, ged_inside},
     {"isize",	"vname", 2, go_view_func, ged_isize},
     {"item",	(char *)0, MAXARGS, go_pass_through_func, ged_item},
@@ -458,11 +539,13 @@ static struct go_cmdtab go_cmds[] = {
     {"mater",	(char *)0, MAXARGS, go_pass_through_func, ged_mater},
     {"mirror",	(char *)0, MAXARGS, go_mirror, GED_FUNC_PTR_NULL},
     {"model2view",	"vname", 2, go_view_func, ged_model2view},
+    {"model_axes",	"vname ???", MAXARGS, go_model_axes, GED_FUNC_PTR_NULL},
     {"more_args_callback",	"set/get the \"more args\" callback", MAXARGS, go_more_args_callback, GED_FUNC_PTR_NULL},
     {"move_arb_edge",	(char *)0, MAXARGS, go_pass_through_func, ged_move_arb_edge},
     {"move_arb_face",	(char *)0, MAXARGS, go_pass_through_func, ged_move_arb_face},
     {"mouse_constrain_rot",	"vname coord x y", MAXARGS, go_mouse_constrain_rot, GED_FUNC_PTR_NULL},
     {"mouse_constrain_trans",	"vname coord x y", MAXARGS, go_mouse_constrain_trans, GED_FUNC_PTR_NULL},
+    {"mouse_ray",	"vname x y", MAXARGS, go_mouse_ray, GED_FUNC_PTR_NULL},
     {"mouse_rot",	"vname x y", MAXARGS, go_mouse_rot, GED_FUNC_PTR_NULL},
     {"mouse_scale",	"vname x y", MAXARGS, go_mouse_scale, GED_FUNC_PTR_NULL},
     {"mouse_trans",	"vname x y", MAXARGS, go_mouse_trans, GED_FUNC_PTR_NULL},
@@ -491,6 +574,7 @@ static struct go_cmdtab go_cmds[] = {
     {"prcolor",	(char *)0, MAXARGS, go_pass_through_func, ged_prcolor},
     {"prefix",	(char *)0, MAXARGS, go_pass_through_func, ged_prefix},
     {"preview",	"vname [options] script", MAXARGS, go_view_func, ged_preview},
+    {"prim_label",	"[prim_1 prim_2 ... prim_N]", MAXARGS, go_prim_label, GED_FUNC_PTR_NULL},
     {"ps",	"vname [options] file.ps", 16, go_view_func, ged_ps},
     {"push",	(char *)0, MAXARGS, go_pass_through_func, ged_push},
     {"put",	(char *)0, MAXARGS, go_pass_through_func, ged_put},
@@ -521,15 +605,17 @@ static struct go_cmdtab go_cmds[] = {
     {"rrt",	"vname [args]", GO_MAX_RT_ARGS, go_view_func, ged_rrt},
     {"rt",	"vname [args]", GO_MAX_RT_ARGS, go_view_func, ged_rt},
     {"rt_gettrees",	"[-i] [-u] pname object", MAXARGS, go_rt_gettrees, GED_FUNC_PTR_NULL},
-    {"rtarea",	"vname [args]", GO_MAX_RT_ARGS, go_view_func, ged_rt},
     {"rtabort",	(char *)0, GO_MAX_RT_ARGS, go_pass_through_func, ged_rtabort},
-    {"rtedge",	"vname [args]", GO_MAX_RT_ARGS, go_view_func, ged_rt},
+    {"rtarea",	"vname [args]", GO_MAX_RT_ARGS, go_view_func, ged_rt},
     {"rtcheck",	"vname [args]", GO_MAX_RT_ARGS, go_view_func, ged_rtcheck},
+    {"rtedge",	"vname [args]", GO_MAX_RT_ARGS, go_view_func, ged_rt},
     {"rtweight",	"vname [args]", GO_MAX_RT_ARGS, go_view_func, ged_rt},
     {"savekey",	"vname filename", 3, go_view_func, ged_savekey},
     {"saveview",	"vname filename", 3, go_view_func, ged_saveview},
     {"sca",	"vname sf", 3, go_view_func, ged_scale},
     {"scale_mode",	"vname x y", MAXARGS, go_scale_mode, GED_FUNC_PTR_NULL},
+    {"screen2model",	"vname x y", MAXARGS, go_screen2model, GED_FUNC_PTR_NULL},
+    {"screen2view",	"vname x y", MAXARGS, go_screen2view, GED_FUNC_PTR_NULL},
     {"set_coord",	"vname [m|v]", MAXARGS, go_set_coord, GED_FUNC_PTR_NULL},
     {"set_fb_mode",	"vname [mode]", MAXARGS, go_set_fb_mode, GED_FUNC_PTR_NULL},
     {"set_output_script",	"[script]", MAXARGS, go_pass_through_func, ged_set_output_script},
@@ -552,13 +638,16 @@ static struct go_cmdtab go_cmds[] = {
     {"tra",	"vname [-m|-v] x y z", 6, go_view_func, ged_tra},
     {"track",	(char *)0, MAXARGS, go_pass_through_func, ged_track},
     {"translate_mode",	"vname x y", MAXARGS, go_translate_mode, GED_FUNC_PTR_NULL},
+    {"transparency",	"vname [val]", MAXARGS, go_transparency, GED_FUNC_PTR_NULL},
     {"tree",	(char *)0, MAXARGS, go_pass_through_func, ged_tree},
     {"unhide",	(char *)0, MAXARGS, go_pass_through_func, ged_unhide},
     {"units",	(char *)0, MAXARGS, go_pass_through_func, ged_units},
     {"v2m_point",	"vname x y z", 5, go_view_func, ged_v2m_point},
-    {"vdraw",	(char *)0, MAXARGS, go_autoview_func, ged_vdraw},
+    {"vdraw",	(char *)0, MAXARGS, go_pass_through_and_refresh_func, ged_vdraw},
     {"version",	(char *)0, MAXARGS, go_pass_through_func, ged_version},
     {"view",	"vname quat|ypr|aet|center|eye|size [args]", 3, go_view_func, ged_view},
+    {"view_axes",	"vname ???", MAXARGS, go_view_axes, GED_FUNC_PTR_NULL},
+    {"view_win_size",	"vname [s] | [x y]", 4, go_view_win_size, GED_FUNC_PTR_NULL},
     {"view2model",	"vname", 2, go_view_func, ged_view2model},
     {"viewdir",	"vname [-i]", 3, go_view_func, ged_viewdir},
     {"vmake",	"vname pname ptype", MAXARGS, go_vmake, GED_FUNC_PTR_NULL},
@@ -903,6 +992,94 @@ go_autoview(struct ged		*gedp,
 }
 
 static int
+go_base2local(struct ged	*gedp,
+	      int		argc,
+	      const char	*argv[],
+	      ged_func_ptr	func,
+	      const char	*usage,
+	      int		maxargs)
+{
+    struct ged_dm_view *gdvp;
+
+    /* initialize result */
+    bu_vls_trunc(&gedp->ged_result_str, 0);
+
+    bu_vls_printf(&gedp->ged_result_str, "%lf", go_current_gop->go_gedp->ged_wdbp->dbip->dbi_base2local);
+
+    return BRLCAD_OK;
+}
+
+static int
+go_bg(struct ged	*gedp,
+      int		argc,
+      const char	*argv[],
+      ged_func_ptr	func,
+      const char	*usage,
+      int		maxargs)
+{
+    int r, g, b;
+    struct ged_dm_view *gdvp;
+
+    /* initialize result */
+    bu_vls_trunc(&gedp->ged_result_str, 0);
+
+    /* must be wanting help */
+    if (argc == 1) {
+	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	return BRLCAD_HELP;
+    }
+
+    if (argc != 2 && argc != 5) {
+	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	return BRLCAD_ERROR;
+    }
+
+    for (BU_LIST_FOR(gdvp, ged_dm_view, &go_current_gop->go_head_views.l)) {
+	if (!strcmp(bu_vls_addr(&gdvp->gdv_name), argv[1]))
+	    break;
+    }
+
+    if (BU_LIST_IS_HEAD(&gdvp->l, &go_current_gop->go_head_views.l)) {
+	bu_vls_printf(&gedp->ged_result_str, "View not found - %s", argv[1]);
+	return BRLCAD_ERROR;
+    }
+
+    /* get background color */
+    if (argc == 2) {
+	bu_vls_printf(&gedp->ged_result_str, "%d %d %d",
+		      gdvp->gdv_dmp->dm_bg[0],
+		      gdvp->gdv_dmp->dm_bg[1],
+		      gdvp->gdv_dmp->dm_bg[2]);
+	return BRLCAD_OK;
+    }
+
+    /* set background color */
+    if (sscanf(argv[2], "%d", &r) != 1 ||
+	sscanf(argv[3], "%d", &g) != 1 ||
+	sscanf(argv[4], "%d", &b) != 1)
+	goto bad_color;
+
+    /* validate color */
+    if (r < 0 || 255 < r ||
+	g < 0 || 255 < g ||
+	b < 0 || 255 < b)
+	goto bad_color;
+
+    DM_SET_BGCOLOR(gdvp->gdv_dmp,
+		   (unsigned char)r,
+		   (unsigned char)g,
+		   (unsigned char)b);
+
+    go_refresh_view(gdvp);
+
+    return BRLCAD_OK;
+
+bad_color:
+    bu_vls_printf(&gedp->ged_result_str, "%s: %s %s %s", argv[0], argv[2], argv[3], argv[4]);
+    return BRLCAD_ERROR;
+}
+
+static int
 go_blast(struct ged	*gedp,
 	 int		argc,
 	 const char	*argv[],
@@ -920,6 +1097,80 @@ go_blast(struct ged	*gedp,
     go_autoview_all_views(go_current_gop);
 
     return ret;
+}
+
+static int
+go_bounds(struct ged	*gedp,
+	  int		argc,
+	  const char	*argv[],
+	  ged_func_ptr	func,
+	  const char	*usage,
+	  int		maxargs)
+{
+    vect_t clipmin;
+    vect_t clipmax;
+    struct ged_dm_view *gdvp;
+
+    /* initialize result */
+    bu_vls_trunc(&gedp->ged_result_str, 0);
+
+    /* must be wanting help */
+    if (argc == 1) {
+	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	return BRLCAD_HELP;
+    }
+
+    if (argc != 2 && argc != 3) {
+	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	return BRLCAD_ERROR;
+    }
+
+    for (BU_LIST_FOR(gdvp, ged_dm_view, &go_current_gop->go_head_views.l)) {
+	if (!strcmp(bu_vls_addr(&gdvp->gdv_name), argv[1]))
+	    break;
+    }
+
+    if (BU_LIST_IS_HEAD(&gdvp->l, &go_current_gop->go_head_views.l)) {
+	bu_vls_printf(&gedp->ged_result_str, "View not found - %s", argv[1]);
+	return BRLCAD_ERROR;
+    }
+
+    /* get window bounds */
+    if (argc == 2) {
+	bu_vls_printf(&gedp->ged_result_str, "%g %g %g %g %g %g",
+		      gdvp->gdv_dmp->dm_clipmin[X],
+		      gdvp->gdv_dmp->dm_clipmax[X],
+		      gdvp->gdv_dmp->dm_clipmin[Y],
+		      gdvp->gdv_dmp->dm_clipmax[Y],
+		      gdvp->gdv_dmp->dm_clipmin[Z],
+		      gdvp->gdv_dmp->dm_clipmax[Z]);
+	return BRLCAD_OK;
+    }
+
+    /* set window bounds */
+    if (sscanf(argv[2], "%lf %lf %lf %lf %lf %lf",
+	       &clipmin[X], &clipmax[X],
+	       &clipmin[Y], &clipmax[Y],
+	       &clipmin[Z], &clipmax[Z]) != 6) {
+	bu_vls_printf(&gedp->ged_result_str, "%s: invalid bounds - %s", argv[0], argv[2]);
+	return BRLCAD_ERROR;
+    }
+
+    VMOVE(gdvp->gdv_dmp->dm_clipmin, clipmin);
+    VMOVE(gdvp->gdv_dmp->dm_clipmax, clipmax);
+
+    /*
+     * Since dm_bound doesn't appear to be used anywhere,
+     * I'm going to use it for controlling the location
+     * of the zclipping plane in dm-ogl.c. dm-X.c uses
+     * dm_clipmin and dm_clipmax.
+     */
+    if (gdvp->gdv_dmp->dm_clipmax[2] <= GED_MAX)
+	gdvp->gdv_dmp->dm_bound = 1.0;
+    else
+	gdvp->gdv_dmp->dm_bound = GED_MAX / gdvp->gdv_dmp->dm_clipmax[2];
+
+    return BRLCAD_OK;
 }
 
 static int
@@ -1116,6 +1367,240 @@ go_constrain_tmode(struct ged	*gedp,
     return BRLCAD_OK;
 }
 
+static void
+go_deleteViewProc(ClientData clientData)
+{
+    struct ged_dm_view *gdvp = (struct ged_dm_view *)clientData;
+
+    BU_LIST_DEQUEUE(&(gdvp->l));
+    bu_vls_free(&gdvp->gdv_name);
+    DM_CLOSE(gdvp->gdv_dmp);
+    bu_free((genptr_t)gdvp->gdv_view, "ged_view");
+    bu_free((genptr_t)gdvp, "ged_dm_view");
+}
+
+static void
+go_init_default_bindings(struct ged_dm_view *gdvp)
+{
+    struct bu_vls bindings;
+
+    bu_vls_init(&bindings);
+    bu_vls_printf(&bindings, "bind %V <Configure> {%V configure %V; break}; ",
+		  &gdvp->gdv_dmp->dm_pathName,
+		  &go_current_gop->go_name,
+		  &gdvp->gdv_name);
+    bu_vls_printf(&bindings, "bind %V <Expose> {%V refresh %V; break}; ",
+		  &gdvp->gdv_dmp->dm_pathName,
+		  &go_current_gop->go_name,
+		  &gdvp->gdv_name);
+    bu_vls_printf(&bindings, "catch {wm protocol %V WM_DELETE_WINDOW {%V delete_view %V; break}}; ",
+		  &gdvp->gdv_dmp->dm_pathName,
+		  &go_current_gop->go_name,
+		  &gdvp->gdv_name);
+
+    /* Mouse Bindings */
+    bu_vls_printf(&bindings, "bind %V <2> {%V vslew %V %%x %%y; break}; ",
+		  &gdvp->gdv_dmp->dm_pathName,
+		  &go_current_gop->go_name,
+		  &gdvp->gdv_name);
+    bu_vls_printf(&bindings, "bind %V <1> {%V zoom %V 0.5; break}; ",
+		  &gdvp->gdv_dmp->dm_pathName,
+		  &go_current_gop->go_name,
+		  &gdvp->gdv_name);
+    bu_vls_printf(&bindings, "bind %V <3> {%V zoom %V 2.0; break}; ",
+		  &gdvp->gdv_dmp->dm_pathName,
+		  &go_current_gop->go_name,
+		  &gdvp->gdv_name);
+
+    /* Idle Mode */
+    bu_vls_printf(&bindings, "bind %V <ButtonRelease> {%V idle_mode %V; break}; ",
+		  &gdvp->gdv_dmp->dm_pathName,
+		  &go_current_gop->go_name,
+		  &gdvp->gdv_name);
+    bu_vls_printf(&bindings, "bind %V <KeyRelease-Control_L> {%V idle_mode %V; break}; ",
+		  &gdvp->gdv_dmp->dm_pathName,
+		  &go_current_gop->go_name,
+		  &gdvp->gdv_name);
+    bu_vls_printf(&bindings, "bind %V <KeyRelease-Control_R> {%V idle_mode %V; break}; ",
+		  &gdvp->gdv_dmp->dm_pathName,
+		  &go_current_gop->go_name,
+		  &gdvp->gdv_name);
+    bu_vls_printf(&bindings, "bind %V <KeyRelease-Shift_L> {%V idle_mode %V; break}; ",
+		  &gdvp->gdv_dmp->dm_pathName,
+		  &go_current_gop->go_name,
+		  &gdvp->gdv_name);
+    bu_vls_printf(&bindings, "bind %V <KeyRelease-Shift_R> {%V idle_mode %V; break}; ",
+		  &gdvp->gdv_dmp->dm_pathName,
+		  &go_current_gop->go_name,
+		  &gdvp->gdv_name);
+    bu_vls_printf(&bindings, "bind %V <KeyRelease-Alt_L> {%V idle_mode %V; break}; ",
+		  &gdvp->gdv_dmp->dm_pathName,
+		  &go_current_gop->go_name,
+		  &gdvp->gdv_name);
+    bu_vls_printf(&bindings, "bind %V <KeyRelease-Alt_R> {%V idle_mode %V; break}; ",
+		  &gdvp->gdv_dmp->dm_pathName,
+		  &go_current_gop->go_name,
+		  &gdvp->gdv_name);
+
+    /* Rotate Mode */
+    bu_vls_printf(&bindings, "bind %V <Control-ButtonPress-1> {%V rotate_mode %V %%x %%y; break}; ",
+		  &gdvp->gdv_dmp->dm_pathName,
+		  &go_current_gop->go_name,
+		  &gdvp->gdv_name);
+    bu_vls_printf(&bindings, "bind %V <Control-ButtonPress-2> {%V rotate_mode %V %%x %%y; break}; ",
+		  &gdvp->gdv_dmp->dm_pathName,
+		  &go_current_gop->go_name,
+		  &gdvp->gdv_name);
+    bu_vls_printf(&bindings, "bind %V <Control-ButtonPress-3> {%V rotate_mode %V %%x %%y; break}; ",
+		  &gdvp->gdv_dmp->dm_pathName,
+		  &go_current_gop->go_name,
+		  &gdvp->gdv_name);
+
+    /* Translate Mode */
+    bu_vls_printf(&bindings, "bind %V <Shift-ButtonPress-1> {%V translate_mode %V %%x %%y; break}; ",
+		  &gdvp->gdv_dmp->dm_pathName,
+		  &go_current_gop->go_name,
+		  &gdvp->gdv_name);
+    bu_vls_printf(&bindings, "bind %V <Shift-ButtonPress-2> {%V translate_mode %V %%x %%y; break}; ",
+		  &gdvp->gdv_dmp->dm_pathName,
+		  &go_current_gop->go_name,
+		  &gdvp->gdv_name);
+    bu_vls_printf(&bindings, "bind %V <Shift-ButtonPress-3> {%V translate_mode %V %%x %%y; break}; ",
+		  &gdvp->gdv_dmp->dm_pathName,
+		  &go_current_gop->go_name,
+		  &gdvp->gdv_name);
+
+    /* Scale Mode */
+    bu_vls_printf(&bindings, "bind %V <Control-Shift-ButtonPress-1> {%V scale_mode %V %%x %%y; break}; ",
+		  &gdvp->gdv_dmp->dm_pathName,
+		  &go_current_gop->go_name,
+		  &gdvp->gdv_name);
+    bu_vls_printf(&bindings, "bind %V <Control-Shift-ButtonPress-2> {%V scale_mode %V %%x %%y; break}; ",
+		  &gdvp->gdv_dmp->dm_pathName,
+		  &go_current_gop->go_name,
+		  &gdvp->gdv_name);
+    bu_vls_printf(&bindings, "bind %V <Control-Shift-ButtonPress-3> {%V scale_mode %V %%x %%y; break}; ",
+		  &gdvp->gdv_dmp->dm_pathName,
+		  &go_current_gop->go_name,
+		  &gdvp->gdv_name);
+    bu_vls_printf(&bindings, "bind %V <Alt-Control-Shift-ButtonPress-1> {%V scale_mode %V %%x %%y; break}; ",
+		  &gdvp->gdv_dmp->dm_pathName,
+		  &go_current_gop->go_name,
+		  &gdvp->gdv_name);
+    bu_vls_printf(&bindings, "bind %V <Alt-Control-Shift-ButtonPress-2> {%V scale_mode %V %%x %%y; break}; ",
+		  &gdvp->gdv_dmp->dm_pathName,
+		  &go_current_gop->go_name,
+		  &gdvp->gdv_name);
+    bu_vls_printf(&bindings, "bind %V <Alt-Control-Shift-ButtonPress-3> {%V scale_mode %V %%x %%y; break}; ",
+		  &gdvp->gdv_dmp->dm_pathName,
+		  &go_current_gop->go_name,
+		  &gdvp->gdv_name);
+
+    /* Constrained Rotate Mode */
+    bu_vls_printf(&bindings, "bind %V <Alt-Control-ButtonPress-1> {%V constrain_rmode %V x %%x %%y; break}; ",
+		  &gdvp->gdv_dmp->dm_pathName,
+		  &go_current_gop->go_name,
+		  &gdvp->gdv_name);
+    bu_vls_printf(&bindings, "bind %V <Alt-Control-ButtonPress-2> {%V constrain_rmode %V y %%x %%y; break}; ",
+		  &gdvp->gdv_dmp->dm_pathName,
+		  &go_current_gop->go_name,
+		  &gdvp->gdv_name);
+    bu_vls_printf(&bindings, "bind %V <Alt-Control-ButtonPress-3> {%V constrain_rmode %V z %%x %%y; break}; ",
+		  &gdvp->gdv_dmp->dm_pathName,
+		  &go_current_gop->go_name,
+		  &gdvp->gdv_name);
+
+    /* Constrained Translate Mode */
+    bu_vls_printf(&bindings, "bind %V <Alt-Shift-ButtonPress-1> {%V constrain_tmode %V x %%x %%y; break}; ",
+		  &gdvp->gdv_dmp->dm_pathName,
+		  &go_current_gop->go_name,
+		  &gdvp->gdv_name);
+    bu_vls_printf(&bindings, "bind %V <Alt-Shift-ButtonPress-2> {%V constrain_tmode %V y %%x %%y; break}; ",
+		  &gdvp->gdv_dmp->dm_pathName,
+		  &go_current_gop->go_name,
+		  &gdvp->gdv_name);
+    bu_vls_printf(&bindings, "bind %V <Alt-Shift-ButtonPress-3> {%V constrain_tmode %V z %%x %%y; break}; ",
+		  &gdvp->gdv_dmp->dm_pathName,
+		  &go_current_gop->go_name,
+		  &gdvp->gdv_name);
+
+    /* Key Bindings */
+    bu_vls_printf(&bindings, "bind %V 3 {%V aet %V 35 25; break}; ",
+		  &gdvp->gdv_dmp->dm_pathName,
+		  &go_current_gop->go_name,
+		  &gdvp->gdv_name);
+    bu_vls_printf(&bindings, "bind %V 4 {%V aet %V 45 45; break}; ",
+		  &gdvp->gdv_dmp->dm_pathName,
+		  &go_current_gop->go_name,
+		  &gdvp->gdv_name);
+    bu_vls_printf(&bindings, "bind %V f {%V aet %V 0 0; break}; ",
+		  &gdvp->gdv_dmp->dm_pathName,
+		  &go_current_gop->go_name,
+		  &gdvp->gdv_name);
+    bu_vls_printf(&bindings, "bind %V R {%V aet %V 180 0; break}; ",
+		  &gdvp->gdv_dmp->dm_pathName,
+		  &go_current_gop->go_name,
+		  &gdvp->gdv_name);
+    bu_vls_printf(&bindings, "bind %V r {%V aet %V 270 0; break}; ",
+		  &gdvp->gdv_dmp->dm_pathName,
+		  &go_current_gop->go_name,
+		  &gdvp->gdv_name);
+    bu_vls_printf(&bindings, "bind %V l {%V aet %V 90 0; break}; ",
+		  &gdvp->gdv_dmp->dm_pathName,
+		  &go_current_gop->go_name,
+		  &gdvp->gdv_name);
+    bu_vls_printf(&bindings, "bind %V t {%V aet %V 0 90; break}; ",
+		  &gdvp->gdv_dmp->dm_pathName,
+		  &go_current_gop->go_name,
+		  &gdvp->gdv_name);
+    bu_vls_printf(&bindings, "bind %V b {%V aet %V 0 270; break}; ",
+		  &gdvp->gdv_dmp->dm_pathName,
+		  &go_current_gop->go_name,
+		  &gdvp->gdv_name);
+
+    Tcl_Eval(go_current_gop->go_interp, bu_vls_addr(&bindings));
+    bu_vls_free(&bindings);
+}
+
+static int
+go_init_view_bindings(struct ged	*gedp,
+		      int		argc,
+		      const char	*argv[],
+		      ged_func_ptr	func,
+		      const char	*usage,
+		      int		maxargs)
+{
+    struct ged_dm_view *gdvp;
+
+    /* initialize result */
+    bu_vls_trunc(&gedp->ged_result_str, 0);
+
+    /* must be wanting help */
+    if (argc == 1) {
+	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	return BRLCAD_HELP;
+    }
+
+    if (argc != 2) {
+	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	return BRLCAD_ERROR;
+    }
+
+    for (BU_LIST_FOR(gdvp, ged_dm_view, &go_current_gop->go_head_views.l)) {
+	if (!strcmp(bu_vls_addr(&gdvp->gdv_name), argv[1]))
+	    break;
+    }
+
+    if (BU_LIST_IS_HEAD(&gdvp->l, &go_current_gop->go_head_views.l)) {
+	bu_vls_printf(&gedp->ged_result_str, "View not found - %s", argv[1]);
+	return BRLCAD_ERROR;
+    }
+
+    go_init_default_bindings(gdvp);
+
+    return BRLCAD_OK;
+}
+
 static int
 go_delete_view(struct ged	*gedp,
 	       int		argc,
@@ -1150,13 +1635,207 @@ go_delete_view(struct ged	*gedp,
 	return BRLCAD_ERROR;
     }
 
-    BU_LIST_DEQUEUE(&(gdvp->l));
-    bu_vls_free(&gdvp->gdv_name);
-    DM_CLOSE(gdvp->gdv_dmp);
-    bu_free((genptr_t)gdvp->gdv_view, "ged_view");
-    bu_free((genptr_t)gdvp, "ged_dm_view");
+    go_deleteViewProc(gdvp);
 
     return BRLCAD_OK;
+}
+
+static int
+go_faceplate(struct ged		*gedp,
+	     int		argc,
+	     const char		*argv[],
+	     ged_func_ptr	func,
+	     const char		*usage,
+	     int		maxargs)
+{
+    int i;
+    struct ged_dm_view *gdvp;
+
+    /* initialize result */
+    bu_vls_trunc(&gedp->ged_result_str, 0);
+
+    /* must be wanting help */
+    if (argc == 1) {
+	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	return BRLCAD_HELP;
+    }
+
+    if (argc < 4 || 7 < argc)
+	goto bad;
+
+    for (BU_LIST_FOR(gdvp, ged_dm_view, &go_current_gop->go_head_views.l)) {
+	if (!strcmp(bu_vls_addr(&gdvp->gdv_name), argv[1]))
+	    break;
+    }
+
+    if (BU_LIST_IS_HEAD(&gdvp->l, &go_current_gop->go_head_views.l)) {
+	bu_vls_printf(&gedp->ged_result_str, "View not found - %s", argv[1]);
+	return BRLCAD_ERROR;
+    }
+
+    if (strcmp(argv[2], "center_dot") == 0) {
+	if (strcmp(argv[3], "draw") == 0) {
+	    if (argc == 4) {
+		bu_vls_printf(&gedp->ged_result_str, "%d", gdvp->gdv_view->gv_center_dot.gos_draw);
+		return BRLCAD_OK;
+	    } else if (argc == 5) {
+		if (sscanf(argv[4], "%d", &i) != 1)
+		    goto bad;
+
+		if (i)
+		    gdvp->gdv_view->gv_center_dot.gos_draw = 1;
+		else
+		    gdvp->gdv_view->gv_center_dot.gos_draw = 0;
+
+		go_refresh_view(gdvp);
+		return BRLCAD_OK;
+	    }
+	}
+
+	if (strcmp(argv[3], "color") == 0) {
+	    if (argc == 4) {
+		bu_vls_printf(&gedp->ged_result_str, "%d %d %d", V3ARGS(gdvp->gdv_view->gv_center_dot.gos_line_color));
+		return BRLCAD_OK;
+	    } else if (argc == 7) {
+		int r, g, b;
+
+		if (sscanf(argv[4], "%d", &r) != 1 ||
+		    sscanf(argv[5], "%d", &g) != 1 ||
+		    sscanf(argv[6], "%d", &b) != 1)
+		    goto bad;
+
+		VSET(gdvp->gdv_view->gv_center_dot.gos_line_color, r, g, b);
+		go_refresh_view(gdvp);
+		return BRLCAD_OK;
+	    }
+	}
+
+	goto bad;
+    }
+
+    if (strcmp(argv[2], "prim_labels") == 0) {
+	if (strcmp(argv[3], "draw") == 0) {
+	    if (argc == 4) {
+		bu_vls_printf(&gedp->ged_result_str, "%d", gdvp->gdv_view->gv_prim_labels.gos_draw);
+		return BRLCAD_OK;
+	    } else if (argc == 5) {
+		if (sscanf(argv[4], "%d", &i) != 1)
+		    goto bad;
+
+		if (i)
+		    gdvp->gdv_view->gv_prim_labels.gos_draw = 1;
+		else
+		    gdvp->gdv_view->gv_prim_labels.gos_draw = 0;
+
+		go_refresh_view(gdvp);
+		return BRLCAD_OK;
+	    }
+	}
+
+	if (strcmp(argv[3], "color") == 0) {
+	    if (argc == 4) {
+		bu_vls_printf(&gedp->ged_result_str, "%d %d %d", V3ARGS(gdvp->gdv_view->gv_prim_labels.gos_line_color));
+		return BRLCAD_OK;
+	    } else if (argc == 7) {
+		int r, g, b;
+
+		if (sscanf(argv[4], "%d", &r) != 1 ||
+		    sscanf(argv[5], "%d", &g) != 1 ||
+		    sscanf(argv[6], "%d", &b) != 1)
+		    goto bad;
+
+		VSET(gdvp->gdv_view->gv_prim_labels.gos_line_color, r, g, b);
+		go_refresh_view(gdvp);
+		return BRLCAD_OK;
+	    }
+	}
+
+	goto bad;
+    }
+
+    if (strcmp(argv[2], "view_params") == 0) {
+	if (strcmp(argv[3], "draw") == 0) {
+	    if (argc == 4) {
+		bu_vls_printf(&gedp->ged_result_str, "%d", gdvp->gdv_view->gv_view_params.gos_draw);
+		return BRLCAD_OK;
+	    } else if (argc == 5) {
+		if (sscanf(argv[4], "%d", &i) != 1)
+		    goto bad;
+
+		if (i)
+		    gdvp->gdv_view->gv_view_params.gos_draw = 1;
+		else
+		    gdvp->gdv_view->gv_view_params.gos_draw = 0;
+
+		go_refresh_view(gdvp);
+		return BRLCAD_OK;
+	    }
+	}
+
+	if (strcmp(argv[3], "color") == 0) {
+	    if (argc == 4) {
+		bu_vls_printf(&gedp->ged_result_str, "%d %d %d", V3ARGS(gdvp->gdv_view->gv_view_params.gos_text_color));
+		return BRLCAD_OK;
+	    } else if (argc == 7) {
+		int r, g, b;
+
+		if (sscanf(argv[4], "%d", &r) != 1 ||
+		    sscanf(argv[5], "%d", &g) != 1 ||
+		    sscanf(argv[6], "%d", &b) != 1)
+		    goto bad;
+
+		VSET(gdvp->gdv_view->gv_view_params.gos_text_color, r, g, b);
+		go_refresh_view(gdvp);
+		return BRLCAD_OK;
+	    }
+	}
+
+	goto bad;
+    }
+
+    if (strcmp(argv[2], "view_scale") == 0) {
+	if (strcmp(argv[3], "draw") == 0) {
+	    if (argc == 4) {
+		bu_vls_printf(&gedp->ged_result_str, "%d", gdvp->gdv_view->gv_view_scale.gos_draw);
+		return BRLCAD_OK;
+	    } else if (argc == 5) {
+		if (sscanf(argv[4], "%d", &i) != 1)
+		    goto bad;
+
+		if (i)
+		    gdvp->gdv_view->gv_view_scale.gos_draw = 1;
+		else
+		    gdvp->gdv_view->gv_view_scale.gos_draw = 0;
+
+		go_refresh_view(gdvp);
+		return BRLCAD_OK;
+	    }
+	}
+
+	if (strcmp(argv[3], "color") == 0) {
+	    if (argc == 4) {
+		bu_vls_printf(&gedp->ged_result_str, "%d %d %d", V3ARGS(gdvp->gdv_view->gv_view_scale.gos_line_color));
+		return BRLCAD_OK;
+	    } else if (argc == 7) {
+		int r, g, b;
+
+		if (sscanf(argv[4], "%d", &r) != 1 ||
+		    sscanf(argv[5], "%d", &g) != 1 ||
+		    sscanf(argv[6], "%d", &b) != 1)
+		    goto bad;
+
+		VSET(gdvp->gdv_view->gv_view_scale.gos_line_color, r, g, b);
+		go_refresh_view(gdvp);
+		return BRLCAD_OK;
+	    }
+	}
+
+	goto bad;
+    }
+
+  bad:
+    bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+    return BRLCAD_ERROR;
 }
 
 static int
@@ -1413,6 +2092,452 @@ go_mirror(struct ged	*gedp,
 }
 
 static int
+go_axes(struct ged		*gedp,
+	struct ged_dm_view 	*gdvp,
+	struct ged_axes_state 	*gasp,
+	int			argc,
+	const char		*argv[],
+	const char		*usage)
+{
+
+    if (strcmp(argv[2], "draw") == 0) {
+	if (argc == 3) {
+	    bu_vls_printf(&gedp->ged_result_str, "%d", gasp->gas_draw);
+	    return BRLCAD_OK;
+	}
+
+	if (argc == 4) {
+	    int i;
+
+	    if (sscanf(argv[3], "%d", &i) != 1)
+		goto bad;
+
+	    if (i)
+		gasp->gas_draw = 1;
+	    else
+		gasp->gas_draw = 0;
+
+	    go_refresh_view(gdvp);
+	    return BRLCAD_OK;
+	}
+
+	goto bad;
+    }
+
+    if (strcmp(argv[2], "axes_size") == 0) {
+	if (argc == 3) {
+	    bu_vls_printf(&gedp->ged_result_str, "%lf", gasp->gas_axes_size);
+	    return BRLCAD_OK;
+	}
+
+	if (argc == 4) {
+	    fastf_t size;
+
+	    if (sscanf(argv[3], "%lf", &size) != 1)
+		goto bad;
+
+	    gasp->gas_axes_size = size;
+
+	    go_refresh_view(gdvp);
+	    return BRLCAD_OK;
+	}
+
+	goto bad;
+    }
+
+    if (strcmp(argv[2], "axes_pos") == 0) {
+	if (argc == 3) {
+	    bu_vls_printf(&gedp->ged_result_str, "%lf %lf %lf",
+			  V3ARGS(gasp->gas_axes_pos));
+	    return BRLCAD_OK;
+	}
+
+	if (argc == 6) {
+	    fastf_t x, y, z;
+
+	    if (sscanf(argv[3], "%lf", &x) != 1 ||
+		sscanf(argv[4], "%lf", &y) != 1 ||
+		sscanf(argv[5], "%lf", &z) != 1)
+		goto bad;
+
+	    VSET(gasp->gas_axes_pos, x, y, z);
+
+	    go_refresh_view(gdvp);
+	    return BRLCAD_OK;
+	}
+
+	goto bad;
+    }
+
+    if (strcmp(argv[2], "axes_color") == 0) {
+	if (argc == 3) {
+	    bu_vls_printf(&gedp->ged_result_str, "%d %d %d",
+			  V3ARGS(gasp->gas_axes_color));
+	    return BRLCAD_OK;
+	}
+
+	if (argc == 6) {
+	    int r, g, b;
+
+	    /* set background color */
+	    if (sscanf(argv[3], "%d", &r) != 1 ||
+		sscanf(argv[4], "%d", &g) != 1 ||
+		sscanf(argv[5], "%d", &b) != 1)
+		goto bad;
+
+	    /* validate color */
+	    if (r < 0 || 255 < r ||
+		g < 0 || 255 < g ||
+		b < 0 || 255 < b)
+		goto bad;
+
+	    VSET(gasp->gas_axes_color, r, g, b);
+
+	    go_refresh_view(gdvp);
+	    return BRLCAD_OK;
+	}
+
+	goto bad;
+    }
+
+    if (strcmp(argv[2], "label_color") == 0) {
+	if (argc == 3) {
+	    bu_vls_printf(&gedp->ged_result_str, "%d %d %d",
+			  V3ARGS(gasp->gas_label_color));
+	    return BRLCAD_OK;
+	}
+
+	if (argc == 6) {
+	    int r, g, b;
+
+	    /* set background color */
+	    if (sscanf(argv[3], "%d", &r) != 1 ||
+		sscanf(argv[4], "%d", &g) != 1 ||
+		sscanf(argv[5], "%d", &b) != 1)
+		goto bad;
+
+	    /* validate color */
+	    if (r < 0 || 255 < r ||
+		g < 0 || 255 < g ||
+		b < 0 || 255 < b)
+		goto bad;
+
+	    VSET(gasp->gas_label_color, r, g, b);
+
+	    go_refresh_view(gdvp);
+	    return BRLCAD_OK;
+	}
+
+	goto bad;
+    }
+
+    if (strcmp(argv[2], "line_width") == 0) {
+	if (argc == 3) {
+	    bu_vls_printf(&gedp->ged_result_str, "%d", gasp->gas_line_width);
+	    return BRLCAD_OK;
+	}
+
+	if (argc == 4) {
+	    int line_width;
+
+	    if (sscanf(argv[3], "%d", &line_width) != 1)
+		goto bad;
+
+	    gasp->gas_line_width = line_width;
+
+	    go_refresh_view(gdvp);
+	    return BRLCAD_OK;
+	}
+
+	goto bad;
+    }
+
+    if (strcmp(argv[2], "pos_only") == 0) {
+	if (argc == 3) {
+	    bu_vls_printf(&gedp->ged_result_str, "%d", gasp->gas_pos_only);
+	    return BRLCAD_OK;
+	}
+
+	if (argc == 4) {
+	    int i;
+
+	    if (sscanf(argv[3], "%d", &i) != 1)
+		goto bad;
+
+	    if (i)
+		gasp->gas_pos_only = 1;
+	    else
+		gasp->gas_pos_only = 0;
+
+	    go_refresh_view(gdvp);
+	    return BRLCAD_OK;
+	}
+
+	goto bad;
+    }
+
+    if (strcmp(argv[2], "tick_color") == 0) {
+	if (argc == 3) {
+	    bu_vls_printf(&gedp->ged_result_str, "%d %d %d",
+			  V3ARGS(gasp->gas_tick_color));
+	    return BRLCAD_OK;
+	}
+
+	if (argc == 6) {
+	    int r, g, b;
+
+	    /* set background color */
+	    if (sscanf(argv[3], "%d", &r) != 1 ||
+		sscanf(argv[4], "%d", &g) != 1 ||
+		sscanf(argv[5], "%d", &b) != 1)
+		goto bad;
+
+	    /* validate color */
+	    if (r < 0 || 255 < r ||
+		g < 0 || 255 < g ||
+		b < 0 || 255 < b)
+		goto bad;
+
+	    VSET(gasp->gas_tick_color, r, g, b);
+
+	    go_refresh_view(gdvp);
+	    return BRLCAD_OK;
+	}
+
+	goto bad;
+    }
+
+    if (strcmp(argv[2], "tick_enabled") == 0) {
+	if (argc == 3) {
+	    bu_vls_printf(&gedp->ged_result_str, "%d", gasp->gas_tick_enabled);
+	    return BRLCAD_OK;
+	}
+
+	if (argc == 4) {
+	    int i;
+
+	    if (sscanf(argv[3], "%d", &i) != 1)
+		goto bad;
+
+	    if (i)
+		gasp->gas_tick_enabled = 1;
+	    else
+		gasp->gas_tick_enabled = 0;
+
+	    go_refresh_view(gdvp);
+	    return BRLCAD_OK;
+	}
+
+	goto bad;
+    }
+
+    if (strcmp(argv[2], "tick_interval") == 0) {
+	if (argc == 3) {
+	    bu_vls_printf(&gedp->ged_result_str, "%d", gasp->gas_tick_interval);
+	    return BRLCAD_OK;
+	}
+
+	if (argc == 4) {
+	    int tick_interval;
+
+	    if (sscanf(argv[3], "%d", &tick_interval) != 1)
+		goto bad;
+
+	    gasp->gas_tick_interval = tick_interval;
+
+	    go_refresh_view(gdvp);
+	    return BRLCAD_OK;
+	}
+
+	goto bad;
+    }
+
+    if (strcmp(argv[2], "tick_length") == 0) {
+	if (argc == 3) {
+	    bu_vls_printf(&gedp->ged_result_str, "%d", gasp->gas_tick_length);
+	    return BRLCAD_OK;
+	}
+
+	if (argc == 4) {
+	    int tick_length;
+
+	    if (sscanf(argv[3], "%d", &tick_length) != 1)
+		goto bad;
+
+	    gasp->gas_tick_length = tick_length;
+
+	    go_refresh_view(gdvp);
+	    return BRLCAD_OK;
+	}
+
+	goto bad;
+    }
+
+    if (strcmp(argv[2], "tick_major_color") == 0) {
+	if (argc == 3) {
+	    bu_vls_printf(&gedp->ged_result_str, "%d %d %d",
+			  V3ARGS(gasp->gas_tick_major_color));
+	    return BRLCAD_OK;
+	}
+
+	if (argc == 6) {
+	    int r, g, b;
+
+	    /* set background color */
+	    if (sscanf(argv[3], "%d", &r) != 1 ||
+		sscanf(argv[4], "%d", &g) != 1 ||
+		sscanf(argv[5], "%d", &b) != 1)
+		goto bad;
+
+	    /* validate color */
+	    if (r < 0 || 255 < r ||
+		g < 0 || 255 < g ||
+		b < 0 || 255 < b)
+		goto bad;
+
+	    VSET(gasp->gas_tick_major_color, r, g, b);
+
+	    go_refresh_view(gdvp);
+	    return BRLCAD_OK;
+	}
+
+	goto bad;
+    }
+
+    if (strcmp(argv[2], "tick_major_length") == 0) {
+	if (argc == 3) {
+	    bu_vls_printf(&gedp->ged_result_str, "%d", gasp->gas_tick_major_length);
+	    return BRLCAD_OK;
+	}
+
+	if (argc == 4) {
+	    int tick_major_length;
+
+	    if (sscanf(argv[3], "%d", &tick_major_length) != 1)
+		goto bad;
+
+	    gasp->gas_tick_major_length = tick_major_length;
+
+	    go_refresh_view(gdvp);
+	    return BRLCAD_OK;
+	}
+
+	goto bad;
+    }
+
+    if (strcmp(argv[2], "ticks_per_major") == 0) {
+	if (argc == 3) {
+	    bu_vls_printf(&gedp->ged_result_str, "%d", gasp->gas_ticks_per_major);
+	    return BRLCAD_OK;
+	}
+
+	if (argc == 4) {
+	    int ticks_per_major;
+
+	    if (sscanf(argv[3], "%d", &ticks_per_major) != 1)
+		goto bad;
+
+	    gasp->gas_ticks_per_major = ticks_per_major;
+
+	    go_refresh_view(gdvp);
+	    return BRLCAD_OK;
+	}
+
+	goto bad;
+    }
+
+    if (strcmp(argv[2], "tick_threshold") == 0) {
+	if (argc == 3) {
+	    bu_vls_printf(&gedp->ged_result_str, "%d", gasp->gas_tick_threshold);
+	    return BRLCAD_OK;
+	}
+
+	if (argc == 4) {
+	    int tick_threshold;
+
+	    if (sscanf(argv[3], "%d", &tick_threshold) != 1)
+		goto bad;
+
+	    if (tick_threshold < 1)
+		tick_threshold = 1;
+
+	    gasp->gas_tick_threshold = tick_threshold;
+
+	    go_refresh_view(gdvp);
+	    return BRLCAD_OK;
+	}
+
+	goto bad;
+    }
+
+    if (strcmp(argv[2], "triple_color") == 0) {
+	if (argc == 3) {
+	    bu_vls_printf(&gedp->ged_result_str, "%d", gasp->gas_triple_color);
+	    return BRLCAD_OK;
+	}
+
+	if (argc == 4) {
+	    int i;
+
+	    if (sscanf(argv[3], "%d", &i) != 1)
+		goto bad;
+
+	    if (i)
+		gasp->gas_triple_color = 1;
+	    else
+		gasp->gas_triple_color = 0;
+
+	    go_refresh_view(gdvp);
+	    return BRLCAD_OK;
+	}
+
+	goto bad;
+    }
+
+  bad:
+    bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+    return BRLCAD_ERROR;
+}
+
+static int
+go_model_axes(struct ged	*gedp,
+	      int		argc,
+	      const char	*argv[],
+	      ged_func_ptr	func,
+	      const char	*usage,
+	      int		maxargs)
+{
+    int i;
+    struct ged_dm_view *gdvp;
+
+    /* initialize result */
+    bu_vls_trunc(&gedp->ged_result_str, 0);
+
+    /* must be wanting help */
+    if (argc == 1) {
+	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	return BRLCAD_HELP;
+    }
+
+    if (argc < 3 || 6 < argc) {
+	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	return BRLCAD_ERROR;
+    }
+
+    for (BU_LIST_FOR(gdvp, ged_dm_view, &go_current_gop->go_head_views.l)) {
+	if (!strcmp(bu_vls_addr(&gdvp->gdv_name), argv[1]))
+	    break;
+    }
+
+    if (BU_LIST_IS_HEAD(&gdvp->l, &go_current_gop->go_head_views.l)) {
+	bu_vls_printf(&gedp->ged_result_str, "View not found - %s", argv[1]);
+	return BRLCAD_ERROR;
+    }
+
+    return go_axes(gedp, gdvp, &gdvp->gdv_view->gv_model_axes, argc, argv, usage);
+}
+
+static int
 go_more_args_callback(struct ged	*gedp,
 		      int		argc,
 		      const char	*argv[],
@@ -1641,6 +2766,88 @@ go_mouse_constrain_trans(struct ged	*gedp,
     if (ret == BRLCAD_OK)
 	go_refresh_view(gdvp);
 
+    return BRLCAD_OK;
+}
+
+static int
+go_mouse_ray(struct ged		*gedp,
+	     int		argc,
+	     const char		*argv[],
+	     ged_func_ptr	func,
+	     const char		*usage,
+	     int		maxargs)
+{
+    int ret;
+    int ac;
+    char *av[4];
+    fastf_t x, y;
+    fastf_t dx, dy;
+    fastf_t inv_width;
+    point_t start;
+    point_t target;
+    point_t view;
+    struct bu_vls mouse_vls;
+    struct ged_dm_view *gdvp;
+
+#if 0
+
+    /* initialize result */
+    bu_vls_trunc(&gedp->ged_result_str, 0);
+
+    /* must be wanting help */
+    if (argc == 1) {
+	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	return BRLCAD_HELP;
+    }
+
+    if (argc != 4) {
+	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	return BRLCAD_ERROR;
+    }
+
+    for (BU_LIST_FOR(gdvp, ged_dm_view, &go_current_gop->go_head_views.l)) {
+	if (!strcmp(bu_vls_addr(&gdvp->gdv_name), argv[1]))
+	    break;
+    }
+
+    if (BU_LIST_IS_HEAD(&gdvp->l, &go_current_gop->go_head_views.l)) {
+	bu_vls_printf(&gedp->ged_result_str, "View not found - %s", argv[1]);
+	return BRLCAD_ERROR;
+    }
+
+    if (sscanf(argv[2], "%lf", &x) != 1 ||
+	sscanf(argv[3], "%lf", &y) != 1) {
+	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	return BRLCAD_ERROR;
+    }
+
+    inv_width = 1.0 / gdvp->gdv_dmp->dm_width;
+    x *= inv_width * 2.0 - 1.0;
+    y *= inv_width * -2.0 + 1.0;
+    VSET(view, x, y, -1.0);
+    MAT4X3PNT(start, gdvp->ged_view->gv_view2model, view);
+    VSET(view, x, y, 0.0);
+    MAT4X3PNT(target, gdvp->ged_view->gv_view2model, view);
+
+#if 0
+    {
+	char *av[];
+
+	av[0] = "rt_gettrees";
+	av[1] = argv[1];
+	av[2] = "-i";
+	av[3] = "-u";
+
+	   ...
+
+        av[n] = (char *)0;
+    }
+#endif
+
+    if (ret == BRLCAD_OK)
+	go_refresh_view(gdvp);
+
+#endif
     return BRLCAD_OK;
 }
 
@@ -1906,6 +3113,15 @@ go_mouse_trans(struct ged	*gedp,
 }
 
 static int
+go_view_cmd(ClientData	clientData,
+	    Tcl_Interp	*interp,
+	    int		argc,
+	    char	**argv)
+{
+    return TCL_OK;
+}
+
+static int
 go_new_view(struct ged		*gedp,
 	    int			argc,
 	    const char		*argv[],
@@ -1916,6 +3132,7 @@ go_new_view(struct ged		*gedp,
     struct ged_dm_view *new_gdvp = BU_LIST_LAST(ged_dm_view, &go_current_gop->go_head_views.l);
     static const int name_index = 1;
     int type = DM_TYPE_BAD;
+    struct bu_vls event_vls;
 
     GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
 
@@ -2003,8 +3220,6 @@ go_new_view(struct ged		*gedp,
     ged_view_init(new_gdvp->gdv_view);
     BU_LIST_INSERT(&go_current_gop->go_head_views.l, &new_gdvp->l);
 
-    bu_vls_printf(&gedp->ged_result_str, "%s", argv[name_index]);
-
     new_gdvp->gdv_fbs.fbs_listener.fbsl_fbsp = &new_gdvp->gdv_fbs;
     new_gdvp->gdv_fbs.fbs_listener.fbsl_fd = -1;
     new_gdvp->gdv_fbs.fbs_listener.fbsl_port = -1;
@@ -2015,220 +3230,84 @@ go_new_view(struct ged		*gedp,
 
     new_gdvp->gdv_view->gv_adc.gas_a1 = 45.0;
     new_gdvp->gdv_view->gv_adc.gas_a2 = 45.0;
-    new_gdvp->gdv_view->gv_adc.gas_line_color[0] = 255;
-    new_gdvp->gdv_view->gv_adc.gas_line_color[1] = 255;
-    new_gdvp->gdv_view->gv_adc.gas_line_color[2] = 0;
-    new_gdvp->gdv_view->gv_adc.gas_tick_color[0] = 255;
-    new_gdvp->gdv_view->gv_adc.gas_tick_color[1] = 255;
-    new_gdvp->gdv_view->gv_adc.gas_tick_color[2] = 255;
+    VSET(new_gdvp->gdv_view->gv_adc.gas_line_color, 255, 255, 0);
+    VSET(new_gdvp->gdv_view->gv_adc.gas_tick_color, 255, 255, 255);
 
-    new_gdvp->gdv_view->gv_grid.ggs_anchor[0] = 0.0;
-    new_gdvp->gdv_view->gv_grid.ggs_anchor[1] = 0.0;
-    new_gdvp->gdv_view->gv_grid.ggs_anchor[2] = 0.0;
+    VSET(new_gdvp->gdv_view->gv_grid.ggs_anchor, 0.0, 0.0, 0.0);
     new_gdvp->gdv_view->gv_grid.ggs_res_h = 1.0;
     new_gdvp->gdv_view->gv_grid.ggs_res_v = 1.0;
     new_gdvp->gdv_view->gv_grid.ggs_res_major_h = 5;
     new_gdvp->gdv_view->gv_grid.ggs_res_major_v = 5;
-    new_gdvp->gdv_view->gv_grid.ggs_color[0] = 255;
-    new_gdvp->gdv_view->gv_grid.ggs_color[1] = 255;
-    new_gdvp->gdv_view->gv_grid.ggs_color[2] = 255;
+    VSET(new_gdvp->gdv_view->gv_grid.ggs_color, 255, 255, 255);
 
     new_gdvp->gdv_view->gv_rect.grs_draw = 0;
     new_gdvp->gdv_view->gv_rect.grs_pos[0] = 128;
     new_gdvp->gdv_view->gv_rect.grs_pos[1] = 128;
     new_gdvp->gdv_view->gv_rect.grs_dim[0] = 256;
     new_gdvp->gdv_view->gv_rect.grs_dim[1] = 256;
-    new_gdvp->gdv_view->gv_rect.grs_color[0] = 255;
-    new_gdvp->gdv_view->gv_rect.grs_color[1] = 255;
-    new_gdvp->gdv_view->gv_rect.grs_color[2] = 255;
+    VSET(new_gdvp->gdv_view->gv_rect.grs_color, 255, 255, 255);
+
+    new_gdvp->gdv_view->gv_view_axes.gas_draw = 0;
+    VSET(new_gdvp->gdv_view->gv_view_axes.gas_axes_pos, 0.85, -0.85, 0.0);
+    new_gdvp->gdv_view->gv_view_axes.gas_axes_size = 0.2;
+    new_gdvp->gdv_view->gv_view_axes.gas_line_width = 0;
+    new_gdvp->gdv_view->gv_view_axes.gas_pos_only = 1;
+    VSET(new_gdvp->gdv_view->gv_view_axes.gas_axes_color, 255, 255, 255);
+    VSET(new_gdvp->gdv_view->gv_view_axes.gas_label_color, 255, 255, 0);
+    new_gdvp->gdv_view->gv_view_axes.gas_triple_color = 1;
+
+    new_gdvp->gdv_view->gv_model_axes.gas_draw = 0;
+    VSET(new_gdvp->gdv_view->gv_model_axes.gas_axes_pos, 0.0, 0.0, 0.0);
+    new_gdvp->gdv_view->gv_model_axes.gas_axes_size = 2.0;
+    new_gdvp->gdv_view->gv_model_axes.gas_line_width = 0;
+    new_gdvp->gdv_view->gv_model_axes.gas_pos_only = 0;
+    VSET(new_gdvp->gdv_view->gv_model_axes.gas_axes_color, 255, 255, 255);
+    VSET(new_gdvp->gdv_view->gv_model_axes.gas_label_color, 255, 255, 0);
+    new_gdvp->gdv_view->gv_model_axes.gas_triple_color = 0;
+    new_gdvp->gdv_view->gv_model_axes.gas_tick_enabled = 1;
+    new_gdvp->gdv_view->gv_model_axes.gas_tick_length = 4;
+    new_gdvp->gdv_view->gv_model_axes.gas_tick_major_length = 8;
+    new_gdvp->gdv_view->gv_model_axes.gas_tick_interval = 100;
+    new_gdvp->gdv_view->gv_model_axes.gas_ticks_per_major = 10;
+    new_gdvp->gdv_view->gv_model_axes.gas_tick_threshold = 8;
+    VSET(new_gdvp->gdv_view->gv_model_axes.gas_tick_color, 255, 255, 0);
+    VSET(new_gdvp->gdv_view->gv_model_axes.gas_tick_major_color, 255, 0, 0);
+
+    new_gdvp->gdv_view->gv_center_dot.gos_draw = 0;
+    VSET(new_gdvp->gdv_view->gv_center_dot.gos_line_color, 255, 255, 0);
+
+    new_gdvp->gdv_view->gv_prim_labels.gos_draw = 0;
+    VSET(new_gdvp->gdv_view->gv_prim_labels.gos_text_color, 255, 255, 0);
+
+    new_gdvp->gdv_view->gv_view_params.gos_draw = 0;
+    VSET(new_gdvp->gdv_view->gv_view_params.gos_text_color, 255, 255, 0);
+
+    new_gdvp->gdv_view->gv_view_scale.gos_draw = 0;
+    VSET(new_gdvp->gdv_view->gv_view_scale.gos_line_color, 255, 255, 0);
+    VSET(new_gdvp->gdv_view->gv_view_scale.gos_text_color, 255, 255, 255);
+
 
     /* open the framebuffer */
     go_open_fbs(new_gdvp, go_current_gop->go_interp);
 
     /* Set default bindings */
-    {
-	struct bu_vls bindings;
+    go_init_default_bindings(new_gdvp);
 
-	bu_vls_init(&bindings);
-	bu_vls_printf(&bindings, "bind %V <Configure> {%V configure %V; break}; ",
-		      &new_gdvp->gdv_dmp->dm_pathName,
-		      &go_current_gop->go_name,
-		      &new_gdvp->gdv_name);
-	bu_vls_printf(&bindings, "bind %V <Expose> {%V refresh %V; break}; ",
-		      &new_gdvp->gdv_dmp->dm_pathName,
-		      &go_current_gop->go_name,
-		      &new_gdvp->gdv_name);
-	bu_vls_printf(&bindings, "wm protocol %V WM_DELETE_WINDOW {%V delete_view %V; break}; ",
-		      &new_gdvp->gdv_dmp->dm_pathName,
-		      &go_current_gop->go_name,
-		      &new_gdvp->gdv_name);
-	bu_vls_printf(&bindings, "bind %V <2> {%V vslew %V %%x %%y; break}; ",
-		      &new_gdvp->gdv_dmp->dm_pathName,
-		      &go_current_gop->go_name,
-		      &new_gdvp->gdv_name);
-	bu_vls_printf(&bindings, "bind %V <1> {%V zoom %V 0.5; break}; ",
-		      &new_gdvp->gdv_dmp->dm_pathName,
-		      &go_current_gop->go_name,
-		      &new_gdvp->gdv_name);
-	bu_vls_printf(&bindings, "bind %V <3> {%V zoom %V 2.0; break}; ",
-		      &new_gdvp->gdv_dmp->dm_pathName,
-		      &go_current_gop->go_name,
-		      &new_gdvp->gdv_name);
+    bu_vls_init(&event_vls);
+    bu_vls_printf(&event_vls, "event generate %V <Configure>; %V autoview %V",
+		  &new_gdvp->gdv_dmp->dm_pathName,
+		  &go_current_gop->go_name,
+		  &new_gdvp->gdv_name);
+    Tcl_Eval(go_current_gop->go_interp, bu_vls_addr(&event_vls));
+    bu_vls_free(&event_vls);
 
-	/* Idle Mode */
-	bu_vls_printf(&bindings, "bind %V <ButtonRelease> {%V idle_mode %V; break}; ",
-		      &new_gdvp->gdv_dmp->dm_pathName,
-		      &go_current_gop->go_name,
-		      &new_gdvp->gdv_name);
-	bu_vls_printf(&bindings, "bind %V <KeyRelease-Control_L> {%V idle_mode %V; break}; ",
-		      &new_gdvp->gdv_dmp->dm_pathName,
-		      &go_current_gop->go_name,
-		      &new_gdvp->gdv_name);
-	bu_vls_printf(&bindings, "bind %V <KeyRelease-Control_R> {%V idle_mode %V; break}; ",
-		      &new_gdvp->gdv_dmp->dm_pathName,
-		      &go_current_gop->go_name,
-		      &new_gdvp->gdv_name);
-	bu_vls_printf(&bindings, "bind %V <KeyRelease-Shift_L> {%V idle_mode %V; break}; ",
-		      &new_gdvp->gdv_dmp->dm_pathName,
-		      &go_current_gop->go_name,
-		      &new_gdvp->gdv_name);
-	bu_vls_printf(&bindings, "bind %V <KeyRelease-Shift_R> {%V idle_mode %V; break}; ",
-		      &new_gdvp->gdv_dmp->dm_pathName,
-		      &go_current_gop->go_name,
-		      &new_gdvp->gdv_name);
-	bu_vls_printf(&bindings, "bind %V <KeyRelease-Alt_L> {%V idle_mode %V; break}; ",
-		      &new_gdvp->gdv_dmp->dm_pathName,
-		      &go_current_gop->go_name,
-		      &new_gdvp->gdv_name);
-	bu_vls_printf(&bindings, "bind %V <KeyRelease-Alt_R> {%V idle_mode %V; break}; ",
-		      &new_gdvp->gdv_dmp->dm_pathName,
-		      &go_current_gop->go_name,
-		      &new_gdvp->gdv_name);
+    (void)Tcl_CreateCommand(go_current_gop->go_interp,
+			    bu_vls_addr(&new_gdvp->gdv_dmp->dm_pathName),
+			    (Tcl_CmdProc *)go_view_cmd,
+			    (ClientData)new_gdvp,
+			    go_deleteViewProc);
 
-	/* Rotate Mode */
-	bu_vls_printf(&bindings, "bind %V <Control-ButtonPress-1> {%V rotate_mode %V %%x %%y; break}; ",
-		      &new_gdvp->gdv_dmp->dm_pathName,
-		      &go_current_gop->go_name,
-		      &new_gdvp->gdv_name);
-	bu_vls_printf(&bindings, "bind %V <Control-ButtonPress-2> {%V rotate_mode %V %%x %%y; break}; ",
-		      &new_gdvp->gdv_dmp->dm_pathName,
-		      &go_current_gop->go_name,
-		      &new_gdvp->gdv_name);
-	bu_vls_printf(&bindings, "bind %V <Control-ButtonPress-3> {%V rotate_mode %V %%x %%y; break}; ",
-		      &new_gdvp->gdv_dmp->dm_pathName,
-		      &go_current_gop->go_name,
-		      &new_gdvp->gdv_name);
-
-	/* Translate Mode */
-	bu_vls_printf(&bindings, "bind %V <Shift-ButtonPress-1> {%V translate_mode %V %%x %%y; break}; ",
-		      &new_gdvp->gdv_dmp->dm_pathName,
-		      &go_current_gop->go_name,
-		      &new_gdvp->gdv_name);
-	bu_vls_printf(&bindings, "bind %V <Shift-ButtonPress-2> {%V translate_mode %V %%x %%y; break}; ",
-		      &new_gdvp->gdv_dmp->dm_pathName,
-		      &go_current_gop->go_name,
-		      &new_gdvp->gdv_name);
-	bu_vls_printf(&bindings, "bind %V <Shift-ButtonPress-3> {%V translate_mode %V %%x %%y; break}; ",
-		      &new_gdvp->gdv_dmp->dm_pathName,
-		      &go_current_gop->go_name,
-		      &new_gdvp->gdv_name);
-
-	/* Scale Mode */
-	bu_vls_printf(&bindings, "bind %V <Control-Shift-ButtonPress-1> {%V scale_mode %V %%x %%y; break}; ",
-		      &new_gdvp->gdv_dmp->dm_pathName,
-		      &go_current_gop->go_name,
-		      &new_gdvp->gdv_name);
-	bu_vls_printf(&bindings, "bind %V <Control-Shift-ButtonPress-2> {%V scale_mode %V %%x %%y; break}; ",
-		      &new_gdvp->gdv_dmp->dm_pathName,
-		      &go_current_gop->go_name,
-		      &new_gdvp->gdv_name);
-	bu_vls_printf(&bindings, "bind %V <Control-Shift-ButtonPress-3> {%V scale_mode %V %%x %%y; break}; ",
-		      &new_gdvp->gdv_dmp->dm_pathName,
-		      &go_current_gop->go_name,
-		      &new_gdvp->gdv_name);
-	bu_vls_printf(&bindings, "bind %V <Alt-Control-Shift-ButtonPress-1> {%V scale_mode %V %%x %%y; break}; ",
-		      &new_gdvp->gdv_dmp->dm_pathName,
-		      &go_current_gop->go_name,
-		      &new_gdvp->gdv_name);
-	bu_vls_printf(&bindings, "bind %V <Alt-Control-Shift-ButtonPress-2> {%V scale_mode %V %%x %%y; break}; ",
-		      &new_gdvp->gdv_dmp->dm_pathName,
-		      &go_current_gop->go_name,
-		      &new_gdvp->gdv_name);
-	bu_vls_printf(&bindings, "bind %V <Alt-Control-Shift-ButtonPress-3> {%V scale_mode %V %%x %%y; break}; ",
-		      &new_gdvp->gdv_dmp->dm_pathName,
-		      &go_current_gop->go_name,
-		      &new_gdvp->gdv_name);
-
-	/* Constrained Rotate Mode */
-	bu_vls_printf(&bindings, "bind %V <Alt-Control-ButtonPress-1> {%V constrain_rmode %V x %%x %%y; break}; ",
-		      &new_gdvp->gdv_dmp->dm_pathName,
-		      &go_current_gop->go_name,
-		      &new_gdvp->gdv_name);
-	bu_vls_printf(&bindings, "bind %V <Alt-Control-ButtonPress-2> {%V constrain_rmode %V y %%x %%y; break}; ",
-		      &new_gdvp->gdv_dmp->dm_pathName,
-		      &go_current_gop->go_name,
-		      &new_gdvp->gdv_name);
-	bu_vls_printf(&bindings, "bind %V <Alt-Control-ButtonPress-3> {%V constrain_rmode %V z %%x %%y; break}; ",
-		      &new_gdvp->gdv_dmp->dm_pathName,
-		      &go_current_gop->go_name,
-		      &new_gdvp->gdv_name);
-
-	/* Constrained Translate Mode */
-	bu_vls_printf(&bindings, "bind %V <Alt-Shift-ButtonPress-1> {%V constrain_tmode %V x %%x %%y; break}; ",
-		      &new_gdvp->gdv_dmp->dm_pathName,
-		      &go_current_gop->go_name,
-		      &new_gdvp->gdv_name);
-	bu_vls_printf(&bindings, "bind %V <Alt-Shift-ButtonPress-2> {%V constrain_tmode %V y %%x %%y; break}; ",
-		      &new_gdvp->gdv_dmp->dm_pathName,
-		      &go_current_gop->go_name,
-		      &new_gdvp->gdv_name);
-	bu_vls_printf(&bindings, "bind %V <Alt-Shift-ButtonPress-3> {%V constrain_tmode %V z %%x %%y; break}; ",
-		      &new_gdvp->gdv_dmp->dm_pathName,
-		      &go_current_gop->go_name,
-		      &new_gdvp->gdv_name);
-
-	/* Key Bindings */
-	bu_vls_printf(&bindings, "bind %V 3 {%V aet %V 35 25; break}; ",
-		      &new_gdvp->gdv_dmp->dm_pathName,
-		      &go_current_gop->go_name,
-		      &new_gdvp->gdv_name);
-	bu_vls_printf(&bindings, "bind %V 4 {%V aet %V 45 45; break}; ",
-		      &new_gdvp->gdv_dmp->dm_pathName,
-		      &go_current_gop->go_name,
-		      &new_gdvp->gdv_name);
-	bu_vls_printf(&bindings, "bind %V f {%V aet %V 0 0; break}; ",
-		      &new_gdvp->gdv_dmp->dm_pathName,
-		      &go_current_gop->go_name,
-		      &new_gdvp->gdv_name);
-	bu_vls_printf(&bindings, "bind %V R {%V aet %V 180 0; break}; ",
-		      &new_gdvp->gdv_dmp->dm_pathName,
-		      &go_current_gop->go_name,
-		      &new_gdvp->gdv_name);
-	bu_vls_printf(&bindings, "bind %V r {%V aet %V 270 0; break}; ",
-		      &new_gdvp->gdv_dmp->dm_pathName,
-		      &go_current_gop->go_name,
-		      &new_gdvp->gdv_name);
-	bu_vls_printf(&bindings, "bind %V l {%V aet %V 90 0; break}; ",
-		      &new_gdvp->gdv_dmp->dm_pathName,
-		      &go_current_gop->go_name,
-		      &new_gdvp->gdv_name);
-	bu_vls_printf(&bindings, "bind %V t {%V aet %V 0 90; break}; ",
-		      &new_gdvp->gdv_dmp->dm_pathName,
-		      &go_current_gop->go_name,
-		      &new_gdvp->gdv_name);
-	bu_vls_printf(&bindings, "bind %V b {%V aet %V 0 270; break}; ",
-		      &new_gdvp->gdv_dmp->dm_pathName,
-		      &go_current_gop->go_name,
-		      &new_gdvp->gdv_name);
-	bu_vls_printf(&bindings, "event generate %V <Configure>; %V autoview %V",
-		      &new_gdvp->gdv_dmp->dm_pathName,
-		      &go_current_gop->go_name,
-		      &new_gdvp->gdv_name);
-
-	Tcl_Eval(go_current_gop->go_interp, bu_vls_addr(&bindings));
-	bu_vls_free(&bindings);
-    }
-
+    bu_vls_printf(&gedp->ged_result_str, bu_vls_addr(&new_gdvp->gdv_name));
     return BRLCAD_OK;
 }
 
@@ -2267,6 +3346,52 @@ go_paint_rect_area(struct ged	*gedp,
 
     (void)fb_refresh(gdvp->gdv_fbs.fbs_fbp, gdvp->gdv_view->gv_rect.grs_pos[X], gdvp->gdv_view->gv_rect.grs_pos[Y],
 		     gdvp->gdv_view->gv_rect.grs_dim[X], gdvp->gdv_view->gv_rect.grs_dim[Y]);
+
+    return BRLCAD_OK;
+}
+
+static int
+go_prim_label(struct ged	*gedp,
+	      int		argc,
+	      const char	*argv[],
+	      ged_func_ptr	func,
+	      const char	*usage,
+	      int		maxargs)
+{
+    register int i;
+
+    /* initialize result */
+    bu_vls_trunc(&gedp->ged_result_str, 0);
+
+#if 0
+    /* Get the list of primitives scheduled for labeling */
+    if (argc == 1) {
+	for (i = 0; i < go_current_gop->go_prim_label_list_size; ++i)
+	    bu_vls_printf(&gedp->ged_result_str, "%s ", bu_vls_addr(&go_current_gop->go_prim_label_list[i]));
+
+	return BRLCAD_OK;
+    }
+#endif
+    
+    /* Free the previous list of primitives scheduled for labeling */
+    if (go_current_gop->go_prim_label_list_size) {
+	for (i = 0; i < go_current_gop->go_prim_label_list_size; ++i)
+	    bu_vls_free(&go_current_gop->go_prim_label_list[i]);
+	bu_free((void *)go_current_gop->go_prim_label_list, "prim_label");
+	go_current_gop->go_prim_label_list = (struct bu_vls *)0;
+    }
+
+    /* Set the list of primitives scheduled for labeling */
+    go_current_gop->go_prim_label_list_size = argc - 1;
+    if (go_current_gop->go_prim_label_list_size < 1)
+	return BRLCAD_OK;
+
+    go_current_gop->go_prim_label_list = bu_calloc(go_current_gop->go_prim_label_list_size,
+						   sizeof(struct bu_vls), "prim_label");
+    for (i = 0; i < go_current_gop->go_prim_label_list_size; ++i) {
+	bu_vls_init(&go_current_gop->go_prim_label_list[i]);
+	bu_vls_printf(&go_current_gop->go_prim_label_list[i], "%s", argv[i+1]);
+    }
 
     return BRLCAD_OK;
 }
@@ -2570,6 +3695,122 @@ go_scale_mode(struct ged	*gedp,
 }
 
 static int
+go_screen2model(struct ged	*gedp,
+		int		argc,
+		const char	*argv[],
+		ged_func_ptr	func,
+		const char	*usage,
+		int		maxargs)
+{
+    fastf_t x, y;
+    fastf_t inv_width;
+    fastf_t inv_height;
+    fastf_t inv_aspect;
+    point_t view;
+    point_t model;
+    struct ged_dm_view *gdvp;
+
+    /* initialize result */
+    bu_vls_trunc(&gedp->ged_result_str, 0);
+
+    /* must be wanting help */
+    if (argc == 1) {
+	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	return BRLCAD_HELP;
+    }
+
+    if (argc != 4) {
+	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	return BRLCAD_ERROR;
+    }
+
+    for (BU_LIST_FOR(gdvp, ged_dm_view, &go_current_gop->go_head_views.l)) {
+	if (!strcmp(bu_vls_addr(&gdvp->gdv_name), argv[1]))
+	    break;
+    }
+
+    if (BU_LIST_IS_HEAD(&gdvp->l, &go_current_gop->go_head_views.l)) {
+	bu_vls_printf(&gedp->ged_result_str, "View not found - %s", argv[1]);
+	return BRLCAD_ERROR;
+    }
+
+    if (sscanf(argv[2], "%lf", &x) != 1 ||
+	sscanf(argv[3], "%lf", &y) != 1) {
+	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	return BRLCAD_ERROR;
+    }
+
+    inv_width = 1.0 / (fastf_t)gdvp->gdv_dmp->dm_width;
+    inv_height = 1.0 / (fastf_t)gdvp->gdv_dmp->dm_height;
+    inv_aspect = (fastf_t)gdvp->gdv_dmp->dm_height / (fastf_t)gdvp->gdv_dmp->dm_width;
+    x = x * inv_width * 2.0 - 1.0;
+    y = (y * inv_height * -2.0 + 1.0) * inv_aspect;
+    VSET(view, x, y, 0.0);
+    MAT4X3PNT(model, gdvp->gdv_view->gv_view2model, view);
+
+    bu_vls_printf(&gedp->ged_result_str, "%lf %lf %lf", V3ARGS(model));
+
+    return BRLCAD_OK;
+}
+
+static int
+go_screen2view(struct ged	*gedp,
+	       int		argc,
+	       const char	*argv[],
+	       ged_func_ptr	func,
+	       const char	*usage,
+	       int		maxargs)
+{
+    fastf_t x, y;
+    fastf_t inv_width;
+    fastf_t inv_height;
+    fastf_t inv_aspect;
+    point_t view;
+    struct ged_dm_view *gdvp;
+
+    /* initialize result */
+    bu_vls_trunc(&gedp->ged_result_str, 0);
+
+    /* must be wanting help */
+    if (argc == 1) {
+	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	return BRLCAD_HELP;
+    }
+
+    if (argc != 4) {
+	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	return BRLCAD_ERROR;
+    }
+
+    for (BU_LIST_FOR(gdvp, ged_dm_view, &go_current_gop->go_head_views.l)) {
+	if (!strcmp(bu_vls_addr(&gdvp->gdv_name), argv[1]))
+	    break;
+    }
+
+    if (BU_LIST_IS_HEAD(&gdvp->l, &go_current_gop->go_head_views.l)) {
+	bu_vls_printf(&gedp->ged_result_str, "View not found - %s", argv[1]);
+	return BRLCAD_ERROR;
+    }
+
+    if (sscanf(argv[2], "%lf", &x) != 1 ||
+	sscanf(argv[3], "%lf", &y) != 1) {
+	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	return BRLCAD_ERROR;
+    }
+
+    inv_width = 1.0 / (fastf_t)gdvp->gdv_dmp->dm_width;
+    inv_height = 1.0 / (fastf_t)gdvp->gdv_dmp->dm_height;
+    inv_aspect = (fastf_t)gdvp->gdv_dmp->dm_height / (fastf_t)gdvp->gdv_dmp->dm_width;
+    x = x * inv_width * 2.0 - 1.0;
+    y = (y * inv_height * -2.0 + 1.0) * inv_aspect;
+    VSET(view, x, y, 0.0);
+
+    bu_vls_printf(&gedp->ged_result_str, "%lf %lf %lf", V3ARGS(view));
+
+    return BRLCAD_OK;
+}
+
+static int
 go_set_coord(struct ged		*gedp,
 	     int		argc,
 	     const char		*argv[],
@@ -2731,6 +3972,163 @@ go_translate_mode(struct ged	*gedp,
 		  &gdvp->gdv_name);
     Tcl_Eval(go_current_gop->go_interp, bu_vls_addr(&bindings));
     bu_vls_free(&bindings);
+
+    return BRLCAD_OK;
+}
+
+static int
+go_transparency(struct ged	*gedp,
+		int		argc,
+		const char	*argv[],
+		ged_func_ptr	func,
+		const char	*usage,
+		int		maxargs)
+{
+    int transparency;
+    struct ged_dm_view *gdvp;
+
+    /* initialize result */
+    bu_vls_trunc(&gedp->ged_result_str, 0);
+
+    /* must be wanting help */
+    if (argc == 1) {
+	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	return BRLCAD_HELP;
+    }
+
+    if (argc != 2 && argc != 3) {
+	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	return BRLCAD_ERROR;
+    }
+
+    for (BU_LIST_FOR(gdvp, ged_dm_view, &go_current_gop->go_head_views.l)) {
+	if (!strcmp(bu_vls_addr(&gdvp->gdv_name), argv[1]))
+	    break;
+    }
+
+    if (BU_LIST_IS_HEAD(&gdvp->l, &go_current_gop->go_head_views.l)) {
+	bu_vls_printf(&gedp->ged_result_str, "View not found - %s", argv[1]);
+	return BRLCAD_ERROR;
+    }
+
+    /* get transparency flag */
+    if (argc == 2) {
+	bu_vls_printf(&gedp->ged_result_str, "%d", gdvp->gdv_dmp->dm_transparency);
+	return BRLCAD_OK;
+    }
+
+    /* set transparency flag */
+    if (argc == 3) {
+	if (sscanf(argv[2], "%d", &transparency) != 1) {
+	    bu_vls_printf(&gedp->ged_result_str, "%s: invalid transparency value - %s", argv[2]);
+	    return BRLCAD_ERROR;
+	}
+
+	DM_SET_TRANSPARENCY(gdvp->gdv_dmp, transparency);
+	return BRLCAD_OK;
+    }
+
+    return BRLCAD_OK;
+}
+
+static int
+go_view_axes(struct ged		*gedp,
+	     int		argc,
+	     const char		*argv[],
+	     ged_func_ptr	func,
+	     const char		*usage,
+	     int		maxargs)
+{
+    struct ged_dm_view *gdvp;
+
+    /* initialize result */
+    bu_vls_trunc(&gedp->ged_result_str, 0);
+
+    /* must be wanting help */
+    if (argc == 1) {
+	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	return BRLCAD_HELP;
+    }
+
+    if (argc < 3 || 6 < argc) {
+	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	return BRLCAD_ERROR;
+    }
+
+    for (BU_LIST_FOR(gdvp, ged_dm_view, &go_current_gop->go_head_views.l)) {
+	if (!strcmp(bu_vls_addr(&gdvp->gdv_name), argv[1]))
+	    break;
+    }
+
+    if (BU_LIST_IS_HEAD(&gdvp->l, &go_current_gop->go_head_views.l)) {
+	bu_vls_printf(&gedp->ged_result_str, "View not found - %s", argv[1]);
+	return BRLCAD_ERROR;
+    }
+
+    return go_axes(gedp, gdvp, &gdvp->gdv_view->gv_view_axes, argc, argv, usage);
+}
+
+static int
+go_view_win_size(struct ged	*gedp,
+		 int		argc,
+		 const char	*argv[],
+		 ged_func_ptr	func,
+		 const char	*usage,
+		 int		maxargs)
+{
+    struct ged_dm_view *gdvp;
+    int width, height;
+
+    /* initialize result */
+    bu_vls_trunc(&gedp->ged_result_str, 0);
+
+    /* must be wanting help */
+    if (argc < 2) {
+	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	return BRLCAD_HELP;
+    }
+
+    if (argc > 4) {
+	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	return BRLCAD_ERROR;
+    }
+
+    for (BU_LIST_FOR(gdvp, ged_dm_view, &go_current_gop->go_head_views.l)) {
+	if (!strcmp(bu_vls_addr(&gdvp->gdv_name), argv[1]))
+	    break;
+    }
+
+    if (BU_LIST_IS_HEAD(&gdvp->l, &go_current_gop->go_head_views.l)) {
+	bu_vls_printf(&gedp->ged_result_str, "View not found - %s", argv[1]);
+	return BRLCAD_ERROR;
+    }
+
+    if (argc == 2) {
+	bu_vls_printf(&gedp->ged_result_str, "%d %d", gdvp->gdv_dmp->dm_width, gdvp->gdv_dmp->dm_height);
+	return BRLCAD_OK;
+    }
+
+    if (argc == 3) {
+	if (sscanf(argv[2], "%d", &width) != 1) {
+	    bu_vls_printf(&gedp->ged_result_str, "%s: bad size %s", argv[0], argv[2]);
+	    return BRLCAD_ERROR;
+	}
+
+	height = width;
+    } else {
+	if (sscanf(argv[2], "%d", &width) != 1) {
+	    bu_vls_printf(&gedp->ged_result_str, "%s: bad width %s", argv[0], argv[2]);
+	    return BRLCAD_ERROR;
+	}
+
+	if (sscanf(argv[3], "%d", &height) != 1) {
+	    bu_vls_printf(&gedp->ged_result_str, "%s: bad height %s", argv[0], argv[3]);
+	    return BRLCAD_ERROR;
+	}
+    }
+
+    Tk_GeometryRequest(((struct dm_xvars *)gdvp->gdv_dmp->dm_vars.pub_vars)->xtkwin,
+		       width, height);
 
     return BRLCAD_OK;
 }
@@ -2977,7 +4375,7 @@ go_zclip(struct ged	*gedp,
 
     /* get zclip flag */
     if (argc == 2) {
-	bu_vls_printf(&gedp->ged_result_str, "%d", gdvp->gdv_dmp->dm_zclip);
+	bu_vls_printf(&gedp->ged_result_str, "%d", gdvp->gdv_view->gv_zclip);
 	return BRLCAD_OK;
     }
 
@@ -2992,6 +4390,7 @@ go_zclip(struct ged	*gedp,
     else if (1 < zclip)
 	zclip = 1;
 
+    gdvp->gdv_view->gv_zclip = zclip;
     gdvp->gdv_dmp->dm_zclip = zclip;
     go_refresh_view(gdvp);
 
@@ -3228,7 +4627,7 @@ static int
 go_drawSList(struct dm *dmp, struct bu_list *hsp)
 {
     struct solid *sp;
-    int linestyle = -1;
+    int line_style = -1;
 
     if (dmp->dm_transparency) {
 	/* First, draw opaque stuff */
@@ -3236,9 +4635,9 @@ go_drawSList(struct dm *dmp, struct bu_list *hsp)
 	    if (sp->s_transparency < 1.0)
 		continue;
 
-	    if (linestyle != sp->s_soldash) {
-		linestyle = sp->s_soldash;
-		DM_SET_LINE_ATTR(dmp, dmp->dm_lineWidth, linestyle);
+	    if (line_style != sp->s_soldash) {
+		line_style = sp->s_soldash;
+		DM_SET_LINE_ATTR(dmp, dmp->dm_lineWidth, line_style);
 	    }
 
 	    go_drawSolid(dmp, sp);
@@ -3253,9 +4652,9 @@ go_drawSList(struct dm *dmp, struct bu_list *hsp)
 	    if (sp->s_transparency == 1.0)
 		continue;
 
-	    if (linestyle != sp->s_soldash) {
-		linestyle = sp->s_soldash;
-		DM_SET_LINE_ATTR(dmp, dmp->dm_lineWidth, linestyle);
+	    if (line_style != sp->s_soldash) {
+		line_style = sp->s_soldash;
+		DM_SET_LINE_ATTR(dmp, dmp->dm_lineWidth, line_style);
 	    }
 
 	    go_drawSolid(dmp, sp);
@@ -3264,11 +4663,10 @@ go_drawSList(struct dm *dmp, struct bu_list *hsp)
 	/* re-enable write to depth buffer */
 	DM_SET_DEPTH_MASK(dmp, 1);
     } else {
-
 	FOR_ALL_SOLIDS(sp, hsp) {
-	    if (linestyle != sp->s_soldash) {
-		linestyle = sp->s_soldash;
-		DM_SET_LINE_ATTR(dmp, dmp->dm_lineWidth, linestyle);
+	    if (line_style != sp->s_soldash) {
+		line_style = sp->s_soldash;
+		DM_SET_LINE_ATTR(dmp, dmp->dm_lineWidth, line_style);
 	    }
 
 	    go_drawSolid(dmp, sp);
@@ -3512,38 +4910,80 @@ go_draw(struct ged_dm_view *gdvp)
 static void
 go_draw_faceplate(struct ged_dm_view *gdvp)
 {
-    /* Draw center dot */
-    DM_SET_FGCOLOR(gdvp->gdv_dmp,
-		   255, 255, 0, 1, 1.0);
-    DM_DRAW_POINT_2D(gdvp->gdv_dmp, 0.0, 0.0);
+    /* Center dot */
+    if (gdvp->gdv_view->gv_center_dot.gos_draw) {
+	DM_SET_FGCOLOR(gdvp->gdv_dmp,
+		       gdvp->gdv_view->gv_center_dot.gos_line_color[0],
+		       gdvp->gdv_view->gv_center_dot.gos_line_color[1],
+		       gdvp->gdv_view->gv_center_dot.gos_line_color[2],
+		       1, 1.0);
+	DM_DRAW_POINT_2D(gdvp->gdv_dmp, 0.0, 0.0);
+    }
 
-    /*XXX Whether or not and how things are drawn needs to be application settable.
-     *    For the moment, things are hardwired.
-     */
-    /* Draw view axes */
-    {
-	point_t origin = {0.0, 0.0, 0.0};
-	int axes_color[3] = {100, 100, 255};
-	int axes_label_color[3] = {255, 255, 0};
+    /* Model axes */
+    if (gdvp->gdv_view->gv_model_axes.gas_draw) {
+	point_t map;
+	point_t save_map;
 
-	dmo_drawAxes_cmd(gdvp->gdv_dmp,
-			 gdvp->gdv_view->gv_size,
-			 gdvp->gdv_view->gv_rotation,
-			 origin,
-			 0.25,
-			 axes_color,
-			 axes_label_color,
-			 0, /* line width */
-			 0, /* positive direction only */
-			 0, /* three colors (i.e. X-red, Y-green, Z-blue) */
-			 0, /* no ticks */
-			 0, /* tick len */
-			 0, /* major tick len */
-			 0, /* tick interval */
-			 0, /* ticks per major */
-			 NULL, /* tick color */
-			 NULL, /* major tick color */
-			 0 /* tick threshold */);
+	VMOVE(save_map, gdvp->gdv_view->gv_model_axes.gas_axes_pos);
+	VSCALE(map, gdvp->gdv_view->gv_model_axes.gas_axes_pos, go_current_gop->go_gedp->ged_wdbp->dbip->dbi_local2base);
+	MAT4X3PNT(gdvp->gdv_view->gv_model_axes.gas_axes_pos, gdvp->gdv_view->gv_model2view, map);
+
+	dm_draw_axes(gdvp->gdv_dmp,
+		     gdvp->gdv_view->gv_size,
+		     gdvp->gdv_view->gv_rotation,
+		     &gdvp->gdv_view->gv_model_axes);
+
+	VMOVE(gdvp->gdv_view->gv_model_axes.gas_axes_pos, save_map);
+    }
+
+    /* View axes */
+    if (gdvp->gdv_view->gv_view_axes.gas_draw) {
+	fastf_t inv_aspect;
+	fastf_t save_ypos;
+
+	save_ypos = gdvp->gdv_view->gv_view_axes.gas_axes_pos[Y];
+	inv_aspect = (fastf_t)gdvp->gdv_dmp->dm_height / (fastf_t)gdvp->gdv_dmp->dm_width;
+	gdvp->gdv_view->gv_view_axes.gas_axes_pos[Y] = save_ypos * inv_aspect;
+	
+	dm_draw_axes(gdvp->gdv_dmp,
+		     gdvp->gdv_view->gv_size,
+		     gdvp->gdv_view->gv_rotation,
+		     &gdvp->gdv_view->gv_view_axes);
+
+	gdvp->gdv_view->gv_view_axes.gas_axes_pos[Y] = save_ypos;
+    }
+
+    /* View scale */
+    if (gdvp->gdv_view->gv_view_scale.gos_draw)
+	dm_draw_scale(gdvp->gdv_dmp,
+		      gdvp->gdv_view->gv_size,
+		      gdvp->gdv_view->gv_view_scale.gos_line_color,
+		      gdvp->gdv_view->gv_view_scale.gos_text_color);
+
+    /* View parameters */
+    if (gdvp->gdv_view->gv_view_params.gos_draw) {
+	struct bu_vls vls;
+	point_t center;
+	char *ustr;
+
+	MAT_DELTAS_GET_NEG(center, gdvp->gdv_view->gv_center);
+	VSCALE(center, center, go_current_gop->go_gedp->ged_wdbp->dbip->dbi_base2local);
+
+	bu_vls_init(&vls);
+	ustr = (char *)bu_units_string(go_current_gop->go_gedp->ged_wdbp->dbip->dbi_local2base);
+	bu_vls_printf(&vls, "units:%s  size:%.2f  center:(%.2f, %.2f, %.2f)  az:%.2f  el:%.2f  tw::%.2f",
+		      ustr,
+		      gdvp->gdv_view->gv_size * go_current_gop->go_gedp->ged_wdbp->dbip->dbi_base2local,
+		      V3ARGS(center),
+		      V3ARGS(gdvp->gdv_view->gv_aet));
+	DM_SET_FGCOLOR(gdvp->gdv_dmp,
+		       gdvp->gdv_view->gv_view_params.gos_text_color[0],
+		       gdvp->gdv_view->gv_view_params.gos_text_color[1],
+		       gdvp->gdv_view->gv_view_params.gos_text_color[2],
+		       1, 1.0);
+	DM_DRAW_STRING_2D(gdvp->gdv_dmp, bu_vls_addr(&vls), -0.98, -0.965, 10, 0);
+	bu_vls_free(&vls);
     }
 
     /* Draw the angle distance cursor */
@@ -3610,55 +5050,21 @@ go_refresh_view(struct ged_dm_view *gdvp)
 
     /* Restore to non-rotated, full brightness */
     DM_NORMAL(gdvp->gdv_dmp);
-#if 1
     go_draw_faceplate(gdvp);
-#else
-    /* Draw center dot */
-    DM_SET_FGCOLOR(gdvp->gdv_dmp,
-		   255, 255, 0, 1, 1.0);
-    DM_DRAW_POINT_2D(gdvp->gdv_dmp, 0.0, 0.0);
 
-    /*XXX Whether or not and how things are drawn needs to be application settable.
-     *    For the moment, things are hardwired.
-     */
-    /* Draw view axes */
-    {
-	point_t origin = {0.0, 0.0, 0.0};
-	int axes_color[3] = {100, 100, 255};
-	int axes_label_color[3] = {255, 255, 0};
+    /* Draw labels */
+    if (gdvp->gdv_view->gv_prim_labels.gos_draw) {
+	register int i;
 
-	dmo_drawAxes_cmd(gdvp->gdv_dmp,
-			 gdvp->gdv_view->gv_size,
-			 gdvp->gdv_view->gv_rotation,
-			 origin,
-			 0.25,
-			 axes_color,
-			 axes_label_color,
-			 0, /* line width */
-			 0, /* positive direction only */
-			 0, /* three colors (i.e. X-red, Y-green, Z-blue) */
-			 0, /* no ticks */
-			 0, /* tick len */
-			 0, /* major tick len */
-			 0, /* tick interval */
-			 0, /* ticks per major */
-			 NULL, /* tick color */
-			 NULL, /* major tick color */
-			 0 /* tick threshold */);
+	for (i = 0; i < go_current_gop->go_prim_label_list_size; ++i) {
+	    dm_draw_labels(gdvp->gdv_dmp,
+			   go_current_gop->go_gedp->ged_wdbp,
+			   bu_vls_addr(&go_current_gop->go_prim_label_list[i]),
+			   gdvp->gdv_view->gv_model2view,
+			   gdvp->gdv_view->gv_prim_labels.gos_text_color,
+			   NULL, NULL);
+	}
     }
-
-    /* Draw the angle distance cursor */
-    if (gdvp->gdv_view->gv_adc.gas_draw)
-	dm_draw_adc(gdvp->gdv_dmp, gdvp->gdv_view);
-
-    /* Draw grid */
-    if (gdvp->gdv_view->gv_grid.ggs_draw)
-	dm_draw_grid(gdvp->gdv_dmp, &gdvp->gdv_view->gv_grid, gdvp->gdv_view, gdvp->gdv_gop->go_gedp->ged_wdbp->dbip->dbi_base2local);
-
-    /* Draw rect */
-    if (gdvp->gdv_view->gv_rect.grs_draw)
-	dm_draw_rect(gdvp->gdv_dmp, &gdvp->gdv_view->gv_rect, gdvp->gdv_view);
-#endif
 
     DM_DRAW_END(gdvp->gdv_dmp);
 }

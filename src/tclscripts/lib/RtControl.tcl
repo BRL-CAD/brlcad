@@ -107,6 +107,8 @@ option add *RtControl*tearoff 0 widgetDefault
     private variable colorE
     private variable jitterM
     private variable lmodelM
+    private variable isaMged 0
+    private variable isaGed 0
 
     constructor {args} {}
 }
@@ -640,11 +642,16 @@ option add *RtControl*tearoff 0 widgetDefault
 
 ::itcl::body RtControl::update_fb_mode {} {
     # update the Inactive/Underlay/Overlay radiobutton
-    set fb_mode [$itk_option(-mged) component $itk_option(-dest) fb_active]
+    if {$isaMged} {
+	set fb_mode [$itk_option(-mged) component $itk_option(-dest) fb_active]
+    } else {
+	set fb_mode [$itk_option(-mged) pane_set_fb_mode $itk_option(-dest)]
+    }
 }
 
 ::itcl::body RtControl::set_src {pane} {
-    if {[catch {$itk_option(-mged) isa Mged} result]} {
+    
+    if {!$isaMged && !$isaGed} {
 	error "Raytrace Control Panel($this) is not associated with an Mged object"
     }
 
@@ -656,7 +663,7 @@ option add *RtControl*tearoff 0 widgetDefault
 }
 
 ::itcl::body RtControl::set_dest {pane} {
-    if {[catch {$itk_option(-mged) isa Mged} result]} {
+    if {!$isaMged && !$isaGed} {
 	error "Raytrace Control Panel($this) is not associated with an Mged object"
     }
 
@@ -668,11 +675,15 @@ option add *RtControl*tearoff 0 widgetDefault
     set itk_option(-dest) $pane
 
     # update the Inactive/Underlay/Overlay radiobutton
-    set fb_mode [$itk_option(-mged) component $itk_option(-dest) fb_active]
+    if {$isaMged} {
+	set fb_mode [$itk_option(-mged) component $itk_option(-dest) fb_active]
+    } else {
+	set fb_mode [$itk_option(-mged) pane_set_fb_mode $itk_option(-dest)]
+    }
 }
 
 ::itcl::body RtControl::set_size {size} {
-    if {[catch {$itk_option(-mged) isa Mged} result]} {
+    if {!$isaMged && !$isaGed} {
 	error "Raytrace Control Panel($this) is not associated with an Mged object"
     }
 
@@ -754,13 +765,23 @@ option add *RtControl*tearoff 0 widgetDefault
 	ur -
 	ll -
 	lr {
-	    if {![$itk_option(-mged) component $dest fb_active]} {
-		$itk_option(-mged) component $dest fb_active 1
+	    if {$isaMged} {
+		if {![$itk_option(-mged) component $dest fb_active]} {
+		    $itk_option(-mged) component $dest fb_active 1
 
-		# update the Inactive/Underlay/Overlay radiobutton
-		set fb_mode 1
+		    # update the Inactive/Underlay/Overlay radiobutton
+		    set fb_mode 1
+		}
+		return [$itk_option(-mged) component $dest listen]
+	    } else {
+		if {![$itk_option(-mged) pane_set_fb_mode $dest]} {
+		    $itk_option(-mged) component $dest fb_active 1
+
+		    # update the Inactive/Underlay/Overlay radiobutton
+		    set fb_mode 1
+		}
+		return [$itk_option(-mged) pane_listen $dest]
 	    }
-	    return [$itk_option(-mged) component $dest listen]
 	}
 	default {
 	    # Already cooked.
@@ -771,11 +792,16 @@ option add *RtControl*tearoff 0 widgetDefault
 
 ::itcl::body RtControl::fb_mode {} {
     set pane [getPane]
-    $itk_option(-mged) component $pane fb_active $fb_mode
+
+    if {$isaMged} {
+	$itk_option(-mged) component $pane fb_active $fb_mode
+    } else {
+	$itk_option(-mged) pane_set_fb_mode $pane $fb_mode
+    }
 }
 
 ::itcl::body RtControl::ok {} {
-    if {[catch {$itk_option(-mged) isa Mged} result]} {
+    if {!$isaMged && !$isaGed} {
 	error "Raytrace Control Panel($this) is not associated with an Mged object"
     }
 
@@ -784,12 +810,15 @@ option add *RtControl*tearoff 0 widgetDefault
 }
 
 ::itcl::body RtControl::raytrace {} {
-    if {[catch {$itk_option(-mged) isa Mged} result]} {
+    if {!$isaMged && !$isaGed} {
 	error "Raytrace Control Panel($this) is not associated with an Mged object"
     }
 
-    set rt_cmd "$itk_option(-mged) component [$itk_component(srcCB) getText] \
-	    rt -F [get_cooked_dest]"
+    if {$isaMged} {
+	set rt_cmd "$itk_option(-mged) component [$itk_component(srcCB) getText] rt -F [get_cooked_dest]"
+    } else {
+	set rt_cmd "$itk_option(-mged) pane_rt [$itk_component(srcCB) getText] -F [get_cooked_dest]"
+    }
 
     if {$itk_option(-size) != ""} {
 	set result [regexp "^(\[ \]*\[0-9\]+)((\[ \]*\[xX\]?\[ \]*)|(\[ \]+))(\[0-9\]*\[ \]*)$"\
@@ -839,15 +868,19 @@ option add *RtControl*tearoff 0 widgetDefault
 }
 
 ::itcl::body RtControl::abort {} {
-    if {[catch {$itk_option(-mged) isa Mged} result]} {
+    if {!$isaMged && !$isaGed} {
 	error "Raytrace Control Panel($this) is not associated with an Mged object"
     }
 
-    $itk_option(-mged) component [$itk_component(srcCB) getText] rtabort
+    if {$isaMged} {
+	$itk_option(-mged) component [$itk_component(srcCB) getText] rtabort
+    } else {
+	$itk_option(-mged) rtabort
+    }
 }
 
 ::itcl::body RtControl::clear {} {
-    if {[catch {$itk_option(-mged) isa Mged} result]} {
+    if {!$isaMged && !$isaGed} {
 	error "Raytrace Control Panel($this) is not associated with an Mged object"
     }
 
@@ -905,7 +938,11 @@ option add *RtControl*tearoff 0 widgetDefault
 		# Cause the framebuffer to listen for clients on port 0.
 		# If port 0 isn't available, the next available port will
 		# be returned.
-		set cooked_dest [$itk_option(-mged) component $dest listen 0]
+		if {$isaMged} {
+		    set cooked_dest [$itk_option(-mged) component $dest listen 0]
+		} else {
+		    set cooked_dest [$itk_option(-mged) pane_listen $dest 0]
+		}
 	    }
 	    default {
 		# We should only get here if $dest is -1,
@@ -919,8 +956,10 @@ option add *RtControl*tearoff 0 widgetDefault
 }
 
 ::itcl::body RtControl::update_control_panel {} {
-    if {[catch {$itk_option(-mged) isa Mged} result]} {
-	error "Raytrace Control Panel($this) is not associated with an Mged object"
+    if {[catch {$itk_option(-mged) isa Mged} isaMged] ||
+	[catch {$itk_option(-mged) isa cadwidgets::Ged} isaGed] ||
+	(!$isaMged && !$isaGed)} {
+	error "Raytrace Control Panel($this) is not associated with an Mged object, itk_option(-mged) - $itk_option(-mged)"
     }
 
     #    if {![$itk_option(-mged) fb_active]} {
@@ -1066,7 +1105,7 @@ option add *RtControl*tearoff 0 widgetDefault
 }
 
 ::itcl::body RtControl::enterOkCB {} {
-    if {[catch {$itk_option(-mged) isa Mged} result]} {
+    if {!$isaMged && !$isaGed} {
 	set msg "Not associated with an Mged object"
     } else {
 	set msg "Raytrace [$itk_component(srcCB) getText]'s view into $itk_option(-dest) and dismiss"
@@ -1074,7 +1113,7 @@ option add *RtControl*tearoff 0 widgetDefault
 }
 
 ::itcl::body RtControl::enterRaytraceCB {} {
-    if {[catch {$itk_option(-mged) isa Mged} result]} {
+    if {!$isaMged && !$isaGed} {
 	set msg "Not associated with an Mged object"
     } else {
 	set msg "Raytrace [$itk_component(srcCB) getText]'s view into $itk_option(-dest)"
@@ -1082,7 +1121,7 @@ option add *RtControl*tearoff 0 widgetDefault
 }
 
 ::itcl::body RtControl::enterAbortCB {} {
-    if {[catch {$itk_option(-mged) isa Mged} result]} {
+    if {!$isaMged && !$isaGed} {
 	set msg "Not associated with an Mged object"
     } else {
 	set msg "Abort all raytraces started from [$itk_component(srcCB) getText]"
@@ -1090,7 +1129,7 @@ option add *RtControl*tearoff 0 widgetDefault
 }
 
 ::itcl::body RtControl::enterClearCB {} {
-    if {[catch {$itk_option(-mged) isa Mged} result]} {
+    if {!$isaMged && !$isaGed} {
 	set msg "Not associated with an Mged object"
     } else {
 	set msg "Clear $itk_option(-dest) with the following color - $itk_option(-color)"
@@ -1123,7 +1162,7 @@ option add *RtControl*tearoff 0 widgetDefault
 #        pane is returned.
 #
 ::itcl::body RtControl::getPane {} {
-    if {[catch {$itk_option(-mged) isa Mged}]} {
+    if {!$isaMged && !$isaGed} {
 	error "Not associated with an Mged object"
     }
 
@@ -1167,7 +1206,7 @@ option add *RtControl*tearoff 0 widgetDefault
 #
 #
 ::itcl::body RtControl::getSize {} {
-    if {[catch {$itk_option(-mged) isa Mged} result]} {
+    if {!$isaMged && !$isaGed} {
 	error "Not associated with an Mged object"
     }
 
@@ -1177,7 +1216,11 @@ option add *RtControl*tearoff 0 widgetDefault
 	ur -
 	ll -
 	lr {
-	    set size [$itk_option(-mged) component $itk_option(-dest) cget -dmsize]
+	    if {$isaMged} {
+		set size [$itk_option(-mged) component $itk_option(-dest) cget -dmsize]
+	    } else {
+		set size [$itk_option(-mged) pane_win_size $itk_option(-dest)]
+	    }
 	    return "[lindex $size 0]x[lindex $size 1]"
 	}
     }
@@ -1191,14 +1234,22 @@ option add *RtControl*tearoff 0 widgetDefault
 	ur -
 	ll -
 	lr {
-	    set size [$itk_option(-mged) component $pane cget -dmsize]
+	    if {$isaMged} {
+		set size [$itk_option(-mged) component $pane cget -dmsize]
+	    } else {
+		set size [$itk_option(-mged) pane_win_size $pane]
+	    }
 	    return "[lindex $size 0]x[lindex $size 1]"
 	}
     }
 
     # We failed to get the size using the destination and source panes.
     # So, we use the active pane for obtaining the size.
-    set size [$itk_option(-mged) component [$itk_option(-mged) pane] cget -dmsize]
+    if {$isaMged} {
+	set size [$itk_option(-mged) component [$itk_option(-mged) pane] cget -dmsize]
+    } else {
+	set size [$itk_option(-mged) pane_win_size [$itk_option(-mged) pane]]
+    }
     return "[lindex $size 0]x[lindex $size 1]"
 }
 

@@ -19,12 +19,8 @@
 #
 ###
 #
-# Author(s):
-#    Bob Parker
-#    Doug Howard
-#
 # Description:
-#    Archer megawidget.
+#    Archer mega-widget.
 #
 
 namespace eval Archer {
@@ -1172,11 +1168,11 @@ package provide Archer 1.0
     # Load MGED database
     if {[info exists itk_component(mged)]} {
 	if {$mDbShared} {
-	    $itk_component(mged) sharedDb $mTarget
+	    $itk_component(mged) sharedGed $mTarget
 	} elseif {$mDbNoCopy || $mDbReadOnly} {
-	    $itk_component(mged) opendb $mTarget
+	    $itk_component(mged) open $mTarget
 	} else {
-	    $itk_component(mged) opendb $mTargetCopy
+	    $itk_component(mged) open $mTargetCopy
 	}
     } else {
 	initMged
@@ -1190,9 +1186,9 @@ package provide Archer 1.0
 	}
     }
 
-    setColorOption dbCmd -primitiveLabelColor $mPrimitiveLabelColor
-    setColorOption dbCmd -scaleColor $mScaleColor
-    setColorOption dbCmd -viewingParamsColor $mViewingParamsColor
+#    setColorOption dbCmd -primitiveLabelColor $mPrimitiveLabelColor
+#    setColorOption dbCmd -scaleColor $mScaleColor
+#    setColorOption dbCmd -viewingParamsColor $mViewingParamsColor
 
     set mDbTitle [$itk_component(mged) title]
     set mDbUnits [$itk_component(mged) units]
@@ -1202,9 +1198,14 @@ package provide Archer 1.0
 	applyPreferences
 	doLighting
 	updateModesMenu
-	updateWizardMenu
+#	updateWizardMenu
 	updateUtilityMenu
 	deleteTargetOldCopy
+
+#	updateCreationButtons 1
+
+	buildGroundPlane
+	showGroundPlane
 
 	# refresh tree contents
 	SetWaitCursor
@@ -3796,8 +3797,8 @@ package provide Archer 1.0
 	updateUtilityMenu
     }
 
-    updateWizardMenu
-    updateViewToolbarForEdit
+#    updateWizardMenu
+#    updateViewToolbarForEdit
 
     if {$mTarget != "" &&
 	$mBindingMode == 0} {
@@ -3913,8 +3914,8 @@ package provide Archer 1.0
 	updateUtilityMenu
     }
 
-    updateWizardMenu
-    updateViewToolbarForEdit
+#    updateWizardMenu
+#    updateViewToolbarForEdit
 
     if {$mTarget != "" &&
 	$mBindingMode == 0} {
@@ -6300,9 +6301,11 @@ package provide Archer 1.0
     backgroundColor [lindex $mBackground 0] \
 	[lindex $mBackground 1] \
 	[lindex $mBackground 2]
-    setColorOption dbCmd -primitiveLabelColor $mPrimitiveLabelColor
-    setColorOption dbCmd -scaleColor $mScaleColor
-    setColorOption dbCmd -viewingParamsColor $mViewingParamsColor
+    dbCmd configure -measuringStickColor $mMeasuringStickColor
+    dbCmd configure -measuringStickMode $mMeasuringStickMode
+    dbCmd configure -primitiveLabelColor $mPrimitiveLabelColor
+    dbCmd configure -scaleColor $mScaleColor
+    dbCmd configure -viewingParamsColor $mViewingParamsColor
 }
 
 
@@ -6345,17 +6348,17 @@ package provide Archer 1.0
 
     if {$mPrimitiveLabelColor != $mPrimitiveLabelColorPref} {
 	set mPrimitiveLabelColor $mPrimitiveLabelColorPref
-	setColorOption dbCmd -primitiveLabelColor $mPrimitiveLabelColor
+#	setColorOption dbCmd -primitiveLabelColor $mPrimitiveLabelColor
     }
 
     if {$mViewingParamsColor != $mViewingParamsColorPref} {
 	set mViewingParamsColor $mViewingParamsColorPref
-	setColorOption dbCmd -viewingParamsColor $mViewingParamsColor
+#	setColorOption dbCmd -viewingParamsColor $mViewingParamsColor
     }
 
     if {$mScaleColor != $mScaleColorPref} {
 	set mScaleColor $mScaleColorPref
-	setColorOption dbCmd -scaleColor $mScaleColor
+#	setColorOption dbCmd -scaleColor $mScaleColor
     }
 
     if {$mMeasuringStickColor != $mMeasuringStickColorPref} {
@@ -6420,18 +6423,16 @@ package provide Archer 1.0
 
     dbCmd configure -modelAxesPosition $mModelAxesPosition
     dbCmd configure -modelAxesLineWidth $mModelAxesLineWidth
-
-    setColorOption dbCmd -modelAxesColor $mModelAxesColor -modelAxesTripleColor
-    setColorOption dbCmd -modelAxesLabelColor $mModelAxesLabelColor
+    dbCmd configure -modelAxesColor $mModelAxesColor
+    dbCmd configure -modelAxesLabelColor $mModelAxesLabelColor
 
     dbCmd configure -modelAxesTickInterval $mModelAxesTickInterval
     dbCmd configure -modelAxesTicksPerMajor $mModelAxesTicksPerMajor
     dbCmd configure -modelAxesTickThreshold $mModelAxesTickThreshold
     dbCmd configure -modelAxesTickLength $mModelAxesTickLength
     dbCmd configure -modelAxesTickMajorLength $mModelAxesTickMajorLength
-
-    setColorOption dbCmd -modelAxesTickColor $mModelAxesTickColor
-    setColorOption dbCmd -modelAxesTickMajorColor $mModelAxesTickMajorColor
+    dbCmd configure -modelAxesTickColor $mModelAxesTickColor
+    dbCmd configure -modelAxesTickMajorColor $mModelAxesTickMajorColor
 }
 
 
@@ -6494,17 +6495,17 @@ package provide Archer 1.0
     if {$mModelAxesColorPref != $mModelAxesColor} {
 	set mModelAxesColor $mModelAxesColorPref
 
-	if {[info exists itk_component(mged)]} {
-	    setColorOption dbCmd -modelAxesColor $mModelAxesColor -modelAxesTripleColor
-	}
+#	if {[info exists itk_component(mged)]} {
+#	    setColorOption dbCmd -modelAxesColor $mModelAxesColor -modelAxesTripleColor
+#	}
     }
 
     if {$mModelAxesLabelColorPref != $mModelAxesLabelColor} {
 	set mModelAxesLabelColor $mModelAxesLabelColorPref
 
-	if {[info exists itk_component(mged)]} {
-	    setColorOption dbCmd -modelAxesLabelColor $mModelAxesLabelColor
-	}
+#	if {[info exists itk_component(mged)]} {
+#	    setColorOption dbCmd -modelAxesLabelColor $mModelAxesLabelColor
+#	}
     }
 
     if {$mModelAxesTickIntervalPref != $mModelAxesTickInterval} {
@@ -6550,17 +6551,17 @@ package provide Archer 1.0
     if {$mModelAxesTickColorPref != $mModelAxesTickColor} {
 	set mModelAxesTickColor $mModelAxesTickColorPref
 
-	if {[info exists itk_component(mged)]} {
-	    setColorOption dbCmd -modelAxesTickColor $mModelAxesTickColor
-	}
+#	if {[info exists itk_component(mged)]} {
+#	    setColorOption dbCmd -modelAxesTickColor $mModelAxesTickColor
+#	}
     }
 
     if {$mModelAxesTickMajorColorPref != $mModelAxesTickMajorColor} {
 	set mModelAxesTickMajorColor $mModelAxesTickMajorColorPref
 
-	if {[info exists itk_component(mged)]} {
-	    setColorOption dbCmd -modelAxesTickMajorColor $mModelAxesTickMajorColor
-	}
+#	if {[info exists itk_component(mged)]} {
+#	    setColorOption dbCmd -modelAxesTickMajorColor $mModelAxesTickMajorColor
+#	}
     }
 }
 
@@ -6624,10 +6625,15 @@ package provide Archer 1.0
 	}
     }
 
-    dbCmd configure -viewAxesLineWidth $mViewAxesLineWidth
+    if {$mViewAxesColor == "Triple"} {
+	dbCmd configure -viewAxesTripleColor 1
+    } else {
+	dbCmd configure -viewAxesTripleColor 0
+	dbCmd configure -viewAxesColor $mViewAxesColor
+    }
 
-    setColorOption dbCmd -viewAxesColor $mViewAxesColor -viewAxesTripleColor
-    setColorOption dbCmd -viewAxesLabelColor $mViewAxesLabelColor
+    dbCmd configure -viewAxesLineWidth $mViewAxesLineWidth
+    dbCmd configure -viewAxesLabelColor $mViewAxesLabelColor
 }
 
 
@@ -6739,17 +6745,17 @@ package provide Archer 1.0
     if {$mViewAxesColorPref != $mViewAxesColor} {
 	set mViewAxesColor $mViewAxesColorPref
 
-	if {[info exists itk_component(mged)]} {
-	    setColorOption dbCmd -viewAxesColor $mViewAxesColor -viewAxesTripleColor
-	}
+#	if {[info exists itk_component(mged)]} {
+#	    setColorOption dbCmd -viewAxesColor $mViewAxesColor -viewAxesTripleColor
+#	}
     }
 
     if {$mViewAxesLabelColorPref != $mViewAxesLabelColor} {
 	set mViewAxesLabelColor $mViewAxesLabelColorPref
 
-	if {[info exists itk_component(mged)]} {
-	    setColorOption dbCmd -viewAxesLabelColor $mViewAxesLabelColor
-	}
+#	if {[info exists itk_component(mged)]} {
+#	    setColorOption dbCmd -viewAxesLabelColor $mViewAxesLabelColor
+#	}
     }
 }
 
@@ -6757,17 +6763,17 @@ package provide Archer 1.0
     # update preference variables
     set mZClipModePref $mZClipMode
 
-    set mBindingModePref $mBindingMode
-    set mMeasuringStickModePref $mMeasuringStickMode
     set mBackgroundRedPref [lindex $mBackground 0]
     set mBackgroundGreenPref [lindex $mBackground 1]
     set mBackgroundBluePref [lindex $mBackground 2]
+    set mBindingModePref $mBindingMode
+    set mEnableBigEPref $mEnableBigE
+    set mMeasuringStickColorPref $mMeasuringStickColor
+    set mMeasuringStickModePref $mMeasuringStickMode
     set mPrimitiveLabelColorPref $mPrimitiveLabelColor
     set mScaleColorPref $mScaleColor
-    set mMeasuringStickColorPref $mMeasuringStickColor
     set mViewingParamsColorPref $mViewingParamsColor
     set mThemePref $mTheme
-    set mEnableBigEPref $mEnableBigE
 
     set mGroundPlaneSizePref $mGroundPlaneSize
     set mGroundPlaneIntervalPref $mGroundPlaneInterval
@@ -6834,9 +6840,9 @@ package provide Archer 1.0
     backgroundColor [lindex $mBackground 0] \
 	[lindex $mBackground 1] \
 	[lindex $mBackground 2]
-    setColorOption dbCmd -primitiveLabelColor $mPrimitiveLabelColor
-    setColorOption dbCmd -viewingParamsColor $mViewingParamsColor
-    setColorOption dbCmd -scaleColor $mScaleColor
+#    setColorOption dbCmd -primitiveLabelColor $mPrimitiveLabelColor
+#    setColorOption dbCmd -viewingParamsColor $mViewingParamsColor
+#    setColorOption dbCmd -scaleColor $mScaleColor
 
     update
     setMode
@@ -6870,26 +6876,33 @@ package provide Archer 1.0
 	puts $pfile "#"
 	puts $pfile "# This file is created and updated by Archer."
 	puts $pfile "#"
-	puts $pfile "set mLastSelectedDir \"$mLastSelectedDir\""
-	puts $pfile "set mBindingMode $mBindingMode"
-	puts $pfile "set mMeasuringStickMode $mMeasuringStickMode"
 	puts $pfile "set mBackground \"$mBackground\""
+	puts $pfile "set mBindingMode $mBindingMode"
+	puts $pfile "set mEnableBigE $mEnableBigE"
+	puts $pfile "set mMeasuringStickColor \"$mMeasuringStickColor\""
+	puts $pfile "set mMeasuringStickMode $mMeasuringStickMode"
 	puts $pfile "set mPrimitiveLabelColor \"$mPrimitiveLabelColor\""
 	puts $pfile "set mScaleColor \"$mScaleColor\""
-	puts $pfile "set mMeasuringStickColor \"$mMeasuringStickColor\""
 	puts $pfile "set mViewingParamsColor \"$mViewingParamsColor\""
 	puts $pfile "set mTheme \"$mTheme\""
-	puts $pfile "set mEnableBigE $mEnableBigE"
+
+	puts $pfile "set mGroundPlaneMajorColor \"$mGroundPlaneMajorColor\""
+	puts $pfile "set mGroundPlaneMinorColor \"$mGroundPlaneMinorColor\""
+	puts $pfile "set mGroundPlaneInterval \"$mGroundPlaneInterval\""
+	puts $pfile "set mGroundPlaneSize \"$mGroundPlaneSize\""
+
 	puts $pfile "set mViewAxesSize \"$mViewAxesSize\""
 	puts $pfile "set mViewAxesPosition \"$mViewAxesPosition\""
 	puts $pfile "set mViewAxesLineWidth $mViewAxesLineWidth"
 	puts $pfile "set mViewAxesColor \"$mViewAxesColor\""
 	puts $pfile "set mViewAxesLabelColor \"$mViewAxesLabelColor\""
+
 	puts $pfile "set mModelAxesSize \"$mModelAxesSize\""
 	puts $pfile "set mModelAxesPosition \"$mModelAxesPosition\""
 	puts $pfile "set mModelAxesLineWidth $mModelAxesLineWidth"
 	puts $pfile "set mModelAxesColor \"$mModelAxesColor\""
 	puts $pfile "set mModelAxesLabelColor \"$mModelAxesLabelColor\""
+
 	puts $pfile "set mModelAxesTickInterval $mModelAxesTickInterval"
 	puts $pfile "set mModelAxesTicksPerMajor $mModelAxesTicksPerMajor"
 	puts $pfile "set mModelAxesTickThreshold $mModelAxesTickThreshold"
@@ -6897,8 +6910,11 @@ package provide Archer 1.0
 	puts $pfile "set mModelAxesTickMajorLength $mModelAxesTickMajorLength"
 	puts $pfile "set mModelAxesTickColor \"$mModelAxesTickColor\""
 	puts $pfile "set mModelAxesTickMajorColor \"$mModelAxesTickMajorColor\""
+
+	puts $pfile "set mLastSelectedDir \"$mLastSelectedDir\""
 	puts $pfile "set mMode $mMode"
 	puts $pfile "set mZClipMode $mZClipMode"
+
 	puts $pfile "set mHPaneFraction1 $mHPaneFraction1"
 	puts $pfile "set mHPaneFraction2 $mHPaneFraction2"
 	puts $pfile "set mVPaneFraction1 $mVPaneFraction1"

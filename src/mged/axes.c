@@ -94,6 +94,7 @@ draw_e_axes()
     point_t v_ap1;                 /* axes position in view coordinates */
     point_t v_ap2;                 /* axes position in view coordinates */
     mat_t rot_mat;
+    struct ged_axes_state gas;
 
     if (state == ST_S_EDIT) {
 	MAT4X3PNT(v_ap1, view_state->vs_vop->vo_model2view, e_axes_pos);
@@ -107,44 +108,24 @@ draw_e_axes()
     } else
 	return;
 
-    dmo_drawAxes_cmd(dmp,
-		     view_state->vs_vop->vo_size,
-		     view_state->vs_vop->vo_rotation,
-		     v_ap1,
-		     axes_state->ax_edit_size1 * INV_GED,
-		     color_scheme->cs_edit_axes1,
-		     color_scheme->cs_edit_axes_label1,
-		     axes_state->ax_edit_linewidth1,
-		     0, /* positive direction only */
-		     0, /* three colors (i.e. X-red, Y-green, Z-blue) */
-		     0, /* no ticks */
-		     0, /* tick len */
-		     0, /* major tick len */
-		     0, /* tick interval */
-		     0, /* ticks per major */
-		     NULL, /* tick color */
-		     NULL, /* major tick color */
-		     0 /* tick threshold */);
+    memset(&gas, 0, sizeof(struct ged_axes_state));
+    VMOVE(gas.gas_axes_pos, v_ap1);
+    gas.gas_axes_size = axes_state->ax_edit_size1 * INV_GED;
+    VMOVE(gas.gas_axes_color, color_scheme->cs_edit_axes1);
+    VMOVE(gas.gas_label_color, color_scheme->cs_edit_axes_label1);
+    gas.gas_line_width = axes_state->ax_edit_linewidth1;
+
+    dm_draw_axes(dmp, view_state->vs_vop->vo_size, view_state->vs_vop->vo_rotation, &gas);
+
+    memset(&gas, 0, sizeof(struct ged_axes_state));
+    VMOVE(gas.gas_axes_pos, v_ap2);
+    gas.gas_axes_size = axes_state->ax_edit_size2 * INV_GED;
+    VMOVE(gas.gas_axes_color, color_scheme->cs_edit_axes2);
+    VMOVE(gas.gas_label_color, color_scheme->cs_edit_axes_label2);
+    gas.gas_line_width = axes_state->ax_edit_linewidth2;
 
     bn_mat_mul(rot_mat, view_state->vs_vop->vo_rotation, acc_rot_sol);
-    dmo_drawAxes_cmd(dmp,
-		     view_state->vs_vop->vo_size,
-		     rot_mat,
-		     v_ap2,
-		     axes_state->ax_edit_size2 * INV_GED,
-		     color_scheme->cs_edit_axes2,
-		     color_scheme->cs_edit_axes_label2,
-		     axes_state->ax_edit_linewidth2,
-		     0, /* positive direction only */
-		     0, /* three colors (i.e. X-red, Y-green, Z-blue) */
-		     0, /* no ticks */
-		     0, /* tick len */
-		     0, /* major tick len */
-		     0, /* tick interval */
-		     0, /* ticks per major */
-		     NULL, /* tick color */
-		     NULL, /* major tick color */
-		     0 /* tick threshold */);
+    dm_draw_axes(dmp, view_state->vs_vop->vo_size, rot_mat, &gas);
 }
 
 void
@@ -152,57 +133,40 @@ draw_m_axes()
 {
     point_t m_ap;			/* axes position in model coordinates, mm */
     point_t v_ap;			/* axes position in view coordinates */
+    struct ged_axes_state gas;
 
     VSCALE(m_ap, axes_state->ax_model_pos, local2base);
     MAT4X3PNT(v_ap, view_state->vs_vop->vo_model2view, m_ap);
-    dmo_drawAxes_cmd(dmp,
-		     view_state->vs_vop->vo_size,
-		     view_state->vs_vop->vo_rotation,
-		     v_ap,
-		     axes_state->ax_model_size * INV_GED,
-		     color_scheme->cs_model_axes,
-		     color_scheme->cs_model_axes_label,
-		     axes_state->ax_model_linewidth,
-		     0, /* positive direction only */
-		     0, /* three colors (i.e. X-red, Y-green, Z-blue) */
-		     0, /* no ticks */
-		     0, /* tick len */
-		     0, /* major tick len */
-		     0, /* tick interval */
-		     0, /* ticks per major */
-		     NULL, /* tick color */
-		     NULL, /* major tick color */
-		     0 /* tick threshold */);
+
+    memset(&gas, 0, sizeof(struct ged_axes_state));
+    VMOVE(gas.gas_axes_pos, v_ap);
+    gas.gas_axes_size = axes_state->ax_model_size * INV_GED;
+    VMOVE(gas.gas_axes_color, color_scheme->cs_model_axes);
+    VMOVE(gas.gas_label_color, color_scheme->cs_model_axes_label);
+    gas.gas_line_width = axes_state->ax_model_linewidth;
+
+    dm_draw_axes(dmp, view_state->vs_vop->vo_size, view_state->vs_vop->vo_rotation, &gas);
 }
 
 void
 draw_v_axes()
 {
     point_t v_ap;			/* axes position in view coordinates */
+    struct ged_axes_state gas;
 
     VSET(v_ap,
 	 axes_state->ax_view_pos[X] * INV_GED,
 	 axes_state->ax_view_pos[Y] * INV_GED / dmp->dm_aspect,
 	 0.0);
 
-    dmo_drawAxes_cmd(dmp,
-		     view_state->vs_vop->vo_size,
-		     view_state->vs_vop->vo_rotation,
-		     v_ap,
-		     axes_state->ax_view_size * INV_GED,
-		     color_scheme->cs_view_axes,
-		     color_scheme->cs_view_axes_label,
-		     axes_state->ax_view_linewidth,
-		     0, /* positive direction only */
-		     0, /* three colors (i.e. X-red, Y-green, Z-blue) */
-		     0, /* no ticks */
-		     0, /* tick len */
-		     0, /* major tick len */
-		     0, /* tick interval */
-		     0, /* ticks per major */
-		     NULL, /* tick color */
-		     NULL, /* major tick color */
-		     0 /* tick threshold */);
+    memset(&gas, 0, sizeof(struct ged_axes_state));
+    VMOVE(gas.gas_axes_pos, v_ap);
+    gas.gas_axes_size = axes_state->ax_view_size * INV_GED;
+    VMOVE(gas.gas_axes_color, color_scheme->cs_view_axes);
+    VMOVE(gas.gas_label_color, color_scheme->cs_view_axes_label);
+    gas.gas_line_width = axes_state->ax_view_linewidth;
+
+    dm_draw_axes(dmp, view_state->vs_vop->vo_size, view_state->vs_vop->vo_rotation, &gas);
 }
 
 /*

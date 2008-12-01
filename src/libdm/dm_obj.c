@@ -446,7 +446,7 @@ dmo_parseAxesArgs(Tcl_Interp *interp,
 		  int *labelColor,
 		  int *lineWidth,
 		  int *posOnly,
-		  int *threeColor,
+		  int *tripleColor,
 		  struct bu_vls *vlsp)
 {
     if (sscanf(argv[2], "%lf", viewSize) != 1) {
@@ -529,13 +529,13 @@ dmo_parseAxesArgs(Tcl_Interp *interp,
     }
 
     /* parse three color flag */
-    if (sscanf(argv[10], "%d", threeColor) != 1) {
+    if (sscanf(argv[10], "%d", tripleColor) != 1) {
 	bu_vls_printf(vlsp, "parseAxesArgs: bad three color flag - %s\n", argv[10]);
 	return TCL_ERROR;
     }
 
     /* validate tick enable flag */
-    if (*threeColor < 0) {
+    if (*tripleColor < 0) {
 	bu_vls_printf(vlsp, "parseAxesArgs: three color flag must be >= 0\n");
 	return TCL_ERROR;
     }
@@ -564,7 +564,8 @@ dmo_drawViewAxes_tcl(ClientData	clientData,
     int labelColor[3];
     int lineWidth;
     int posOnly;
-    int threeColor;
+    int tripleColor;
+    struct ged_axes_state gas;
     struct bu_vls vls;
     struct dm_obj *dmop = (struct dm_obj *)clientData;
 
@@ -578,27 +579,25 @@ dmo_drawViewAxes_tcl(ClientData	clientData,
 	return TCL_ERROR;
     }
 
+    memset(&gas, 0, sizeof(struct ged_axes_state));
+
     if (dmo_parseAxesArgs(interp, argc, argv, &viewSize, rmat, axesPos, &axesSize,
 			  axesColor, labelColor, &lineWidth,
-			  &posOnly, &threeColor, &vls) == TCL_ERROR) {
+			  &posOnly, &tripleColor, &vls) == TCL_ERROR) {
 	Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
 	bu_vls_free(&vls);
 	return TCL_ERROR;
     }
 
-    dmo_drawAxes_cmd(dmop->dmo_dmp, viewSize, rmat,
-		     axesPos, axesSize, axesColor,
-		     labelColor, lineWidth,
-		     posOnly, /* positive direction only */
-		     threeColor, /* three colors (i.e. X-red, Y-green, Z-blue) */
-		     0, /* no ticks */
-		     0, /* tick len */
-		     0, /* major tick len */
-		     0, /* tick interval */
-		     0, /* ticks per major */
-		     NULL, /* tick color */
-		     NULL, /* major tick color */
-		     0 /* tick threshold */);
+    VMOVE(gas.gas_axes_pos, axesPos);
+    gas.gas_axes_size = axesSize;
+    VMOVE(gas.gas_axes_color, axesColor);
+    VMOVE(gas.gas_label_color, labelColor);
+    gas.gas_line_width = lineWidth;
+    gas.gas_pos_only = posOnly;
+    gas.gas_triple_color = tripleColor;
+
+    dm_draw_axes(dmop->dmo_dmp, viewSize, rmat, &gas);
 
     bu_vls_free(&vls);
     return TCL_OK;
@@ -777,6 +776,7 @@ dmo_drawDataAxes_tcl(ClientData	clientData,
     fastf_t axesSize;
     int axesColor[3];
     int lineWidth;
+    struct ged_axes_state gas;
     struct bu_vls vls;
     struct dm_obj *dmop = (struct dm_obj *)clientData;
 
@@ -808,13 +808,23 @@ dmo_drawDataAxes_tcl(ClientData	clientData,
 
     MAT4X3PNT(viewAxesPos, model2view, modelAxesPos);
 
-    dmo_drawDataAxes_cmd(dmop->dmo_dmp,
-			 viewSize,
-			 rmat,
-			 viewAxesPos,
-			 axesSize,
-			 axesColor,
-			 lineWidth);
+    memset(&gas, 0, sizeof(struct ged_axes_state));
+    VMOVE(gas.gas_axes_pos, viewAxesPos);
+    gas.gas_axes_size = axesSize;
+    VMOVE(gas.gas_axes_color, axesColor);
+    gas.gas_line_width = lineWidth;
+
+    dm_draw_data_axes(dmop->dmo_dmp,
+		      viewSize,
+		      rmat,
+#if 1
+		      &gas);
+#else
+		      viewAxesPos,
+		      axesSize,
+		      axesColor,
+		      lineWidth);
+#endif
 
     bu_vls_free(&vls);
     return TCL_OK;
@@ -832,7 +842,7 @@ dmo_parseModelAxesArgs(Tcl_Interp *interp,
 		       int *labelColor,
 		       int *lineWidth,
 		       int *posOnly,
-		       int *threeColor,
+		       int *tripleColor,
 		       mat_t model2view,
 		       int *tickEnable,
 		       int *tickLength,
@@ -846,7 +856,7 @@ dmo_parseModelAxesArgs(Tcl_Interp *interp,
 {
     if (dmo_parseAxesArgs(interp, argc, argv, viewSize, rmat, axesPos, axesSize,
 			  axesColor, labelColor, lineWidth,
-			  posOnly, threeColor, vlsp) == TCL_ERROR)
+			  posOnly, tripleColor, vlsp) == TCL_ERROR)
 	return TCL_ERROR;
 
     /* parse model to view matrix */
@@ -991,7 +1001,7 @@ dmo_drawModelAxes_tcl(ClientData	clientData,
     int labelColor[3];
     int lineWidth;
     int posOnly;
-    int threeColor;
+    int tripleColor;
     int tickEnable;
     int tickLength;
     int majorTickLength;
@@ -1000,6 +1010,7 @@ dmo_drawModelAxes_tcl(ClientData	clientData,
     int tickColor[3];
     int majorTickColor[3];
     int tickThreshold;
+    struct ged_axes_state gas;
     struct bu_vls vls;
     struct dm_obj *dmop = (struct dm_obj *)clientData;
 
@@ -1017,7 +1028,7 @@ dmo_drawModelAxes_tcl(ClientData	clientData,
 			       &viewSize, rmat, modelAxesPos,
 			       &axesSize, axesColor,
 			       labelColor, &lineWidth,
-			       &posOnly, &threeColor,
+			       &posOnly, &tripleColor,
 			       model2view, &tickEnable,
 			       &tickLength, &majorTickLength,
 			       &tickInterval, &ticksPerMajor,
@@ -1030,15 +1041,24 @@ dmo_drawModelAxes_tcl(ClientData	clientData,
 
     MAT4X3PNT(viewAxesPos, model2view, modelAxesPos);
 
-    dmo_drawAxes_cmd(dmop->dmo_dmp, viewSize, rmat,
-		     viewAxesPos, axesSize, axesColor,
-		     labelColor, lineWidth,
-		     posOnly, threeColor,
-		     tickEnable,
-		     tickLength, majorTickLength,
-		     tickInterval, ticksPerMajor,
-		     tickColor, majorTickColor,
-		     tickThreshold);
+    memset(&gas, 0, sizeof(struct ged_axes_state));
+    VMOVE(gas.gas_axes_pos, viewAxesPos);
+    gas.gas_axes_size = axesSize;
+    VMOVE(gas.gas_axes_color, axesColor);
+    VMOVE(gas.gas_label_color, labelColor);
+    gas.gas_line_width = lineWidth;
+    gas.gas_pos_only = posOnly;
+    gas.gas_triple_color = tripleColor;
+    gas.gas_tick_enabled = tickEnable;
+    gas.gas_tick_length = tickLength;
+    gas.gas_tick_major_length = majorTickLength;
+    gas.gas_tick_interval = tickInterval;
+    gas.gas_ticks_per_major = ticksPerMajor;
+    VMOVE(gas.gas_tick_color, tickColor);
+    VMOVE(gas.gas_tick_major_color, majorTickColor);
+    gas.gas_tick_threshold = tickThreshold;
+
+    dm_draw_axes(dmop->dmo_dmp, viewSize, rmat, &gas);
 
     bu_vls_free(&vls);
     return TCL_OK;
@@ -1353,29 +1373,7 @@ dmo_drawScale_cmd(struct dm_obj	*dmop,
 	return TCL_ERROR;
     }
 
-    DM_SET_FGCOLOR(dmop->dmo_dmp,
-		   (unsigned char)color[0],
-		   (unsigned char)color[1],
-		   (unsigned char)color[2], 1, 1.0);
-
-
-    bu_vls_init(&vls);
-    bu_vls_printf(&vls, "%g", viewSize*0.5);
-    soffset = (int)(strlen(bu_vls_addr(&vls)) * 0.5);
-
-    x1 = -0.5;
-    x2 = 0.5;
-    y1 = -0.8;
-    y2 = -0.8;
-    DM_DRAW_LINE_2D(dmop->dmo_dmp, x1, y1, x2, y2);
-    DM_DRAW_LINE_2D(dmop->dmo_dmp, x1, y1+0.01, x1, y1-0.01);
-    DM_DRAW_LINE_2D(dmop->dmo_dmp, x2, y1+0.01, x2, y1-0.01);
-    DM_DRAW_STRING_2D(dmop->dmo_dmp, "0", x1-0.005, y1 + 0.02, 1, 0);
-    DM_DRAW_STRING_2D(dmop->dmo_dmp, bu_vls_addr(&vls),
-		      x2-(soffset * 0.015),
-		      y1 + 0.02, 1, 0);
-
-    bu_vls_free(&vls);
+    dm_draw_scale(dmop->dmo_dmp, viewSize, color, color);
 
     return TCL_OK;
 }
@@ -2222,7 +2220,12 @@ dmo_drawLabels_tcl(ClientData	clientData,
 	if (strcmp(bu_vls_addr(&dgop->dgo_name), argv[2]) == 0) {
 	    /* for each primitive */
 	    for (i = 4; i < argc; ++i)
+#if 1
+		dm_draw_labels(dmop->dmo_dmp, dgop->dgo_wdbp, argv[i], dmop->viewMat,
+			       labelColor, dmop->dmo_drawLabelsHook, dmop->dmo_drawLabelsHookClientData);
+#else
 		dmo_drawLabels_cmd(dmop, dgop, interp, labelColor, argv[i]);
+#endif
 
 	    break;
 	}
