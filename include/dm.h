@@ -371,6 +371,16 @@ DM_EXPORT BU_EXTERN(void dm_draw_grid,
 		     struct ged_view *gvp,
 		     fastf_t base2local));
 
+/* labels.c */
+DM_EXPORT BU_EXTERN(int dm_draw_labels,
+		    (struct dm	*dmp,
+		     struct rt_wdb *wdbp,
+		     char *name,
+		     mat_t viewmat,
+		     int *labelsColor,
+		     int (*labelsHook)(),
+		     ClientData labelsHookClientdata));
+
 /* rect.c */
 DM_EXPORT BU_EXTERN(void dm_draw_rect,
 		    (struct dm *dmp,

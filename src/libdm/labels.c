@@ -610,7 +610,7 @@ dm_label_primitive(struct rt_wdb		*wdbp,
     pl[npl].str[0] = '\0';	/* Mark ending */
 }
 
-void
+int
 dm_draw_labels(struct dm	*dmp,
 	       struct rt_wdb	*wdbp,
 	       char      	*name,
@@ -631,12 +631,12 @@ dm_draw_labels(struct dm	*dmp,
 
     if (labelsHook != (int (*)())0)
 	return labelsHook(dmp, wdbp, name,
-			 viewmat, labelsColor,
-			 labelsHookClientdata);
+			  viewmat, labelsColor,
+			  labelsHookClientdata);
 
     if (wdbp == (struct rt_wdb *)NULL ||
 	name == (char *)NULL)
-	return;
+	return BRLCAD_ERROR;
 
     db_full_path_init( &path );
     ts = wdbp->wdb_initial_tree_state;     /* struct copy */
@@ -645,7 +645,7 @@ dm_draw_labels(struct dm	*dmp,
     MAT_IDN(ts.ts_mat);
 
     if (db_follow_path_for_state(&ts, &path, name, 1))
-	return;
+	return BRLCAD_OK;
 
     dp = DB_FULL_PATH_CUR_DIR(&path);
 
@@ -682,6 +682,8 @@ dm_draw_labels(struct dm	*dmp,
 
     db_free_full_path(&path);
     rt_db_free_internal(&intern, &rt_uniresource);
+
+    return BRLCAD_OK;
 }
 
 
