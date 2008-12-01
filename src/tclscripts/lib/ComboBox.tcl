@@ -138,17 +138,15 @@
 }
 
 ::itcl::body cadwidgets::ComboBox::getText {} {
-    #    set ev [cget -entryvariable]
+    set ev [cget -entryvariable]
 
     # $-substitution should work, but doesn't
-    #    return [set $ev]
-    return $entrytext
+    return [set $ev]
 }
 
 ::itcl::body cadwidgets::ComboBox::setText {val} {
-    #    set ev [cget -entryvariable]
-    #    set $ev $val
-    set entrytext $val
+    set ev [cget -entryvariable]
+    set $ev $val
 }
 
 ::itcl::body cadwidgets::ComboBox::type {index} {
