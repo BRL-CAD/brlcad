@@ -962,7 +962,7 @@ package provide Archer 1.0
 
     if {[info exists itk_component(mged)]} {
 	SetWaitCursor
-	set savedUnits [$itk_component(mged) units]
+	set savedUnits [$itk_component(mged) units -s]
 	$itk_component(mged) units in
 	$itk_component(mged) configure -autoViewEnable 0
 	$itk_component(mged) detachObservers
@@ -1198,11 +1198,11 @@ package provide Archer 1.0
 	applyPreferences
 	doLighting
 	updateModesMenu
-#	updateWizardMenu
+	updateWizardMenu
 	updateUtilityMenu
 	deleteTargetOldCopy
 
-#	updateCreationButtons 1
+	updateCreationButtons 1
 
 	buildGroundPlane
 	showGroundPlane
@@ -5688,7 +5688,7 @@ package provide Archer 1.0
     } else {
 	if {[catch {$itk_component(mged) attr get $mWizardTop WizardOrigin} wizOrigin]} {
 	    set wizOrigin [dbCmd center]
-	    set wizUnits [dbCmd units]
+	    set wizUnits [dbCmd units -s]
 	} elseif {[catch {$itk_component(mged) attr get $mWizardTop WizardUnits} wizUnits]} {
 	    set wizUnits mm
 	}
@@ -6027,7 +6027,7 @@ package provide Archer 1.0
     set name [dbCmd make_name $name]
     set oname $name
     set origin [dbCmd center]
-    set units [dbCmd units]
+    set units [dbCmd units -s]
 
     set dialog $itk_interior.wizardDialog
     ::iwidgets::dialog $dialog \

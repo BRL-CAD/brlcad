@@ -490,7 +490,7 @@
     set wizardXmlAction buildTankXML
     set wizardUnits in
 
-    set savedUnits [$archersMged units]
+    set savedUnits [$archersMged units -s]
     $archersMged units $_originUnits
     set sf1 [$archersMged local2base]
     $archersMged units $wizardUnits
@@ -1274,7 +1274,7 @@
 	$archersMged attachObservers
     }
 
-    $archersMged refreshAll
+    $archersMged refresh_all
     $archersMged configure -autoViewEnable 1
 }
 
@@ -1283,7 +1283,7 @@
 
     initRegionIds
     $archer pluginUpdateStatusBar "Building Tank..."
-    set savedUnits [$archersMged units]
+    set savedUnits [$archersMged units -s]
     $archersMged units $wizardUnits
     set local2base [$archersMged local2base]
 

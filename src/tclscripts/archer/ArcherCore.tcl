@@ -1870,7 +1870,7 @@ Popup Menu    Right or Ctrl-Left
     set delta [expr {[magnitude $diff] * [dbCmd base2local]}]
     tk_messageBox -title "Measured Distance" \
 	-icon info \
-	-message "Measured distance:  $delta [dbCmd units]"
+	-message "Measured distance:  $delta [dbCmd units -s]"
 }
 
 
@@ -2408,7 +2408,7 @@ Popup Menu    Right or Ctrl-Left
     set mCenterY [lindex $center 1]
     set mCenterZ [lindex $center 2]
 
-    set mDbUnits [dbCmd units]
+    set mDbUnits [dbCmd units -s]
     $itk_component(centerDialog) center [namespace tail $this]
     if {[$itk_component(centerDialog) activate]} {
 	$dm center $mCenterX $mCenterY $mCenterZ
@@ -2887,7 +2887,7 @@ Popup Menu    Right or Ctrl-Left
     }
 
     set mDbTitle [$itk_component(mged) title]
-    set mDbUnits [$itk_component(mged) units]
+    set mDbUnits [$itk_component(mged) units -s]
     set mPrevObjViewMode $OBJ_ATTR_VIEW_MODE
     set mPrevSelectedObjPath ""
     set mPrevSelectedObj ""
