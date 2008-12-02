@@ -112,6 +112,7 @@ package provide cadwidgets::Ged 1.0
 	method attr {args}
 	method autoview {args}
 	method autoview_all {args}
+	method base2local {}
 	method bev {args}
 	method bg {args}
 	method bg_all {args}
@@ -201,6 +202,7 @@ package provide cadwidgets::Ged 1.0
 	method listen {args}
 	method listeval {args}
 	method loadview {args}
+	method local2base {}
 	method log {args}
 	method lookat {args}
 	method ls {args}
@@ -747,6 +749,10 @@ package provide cadwidgets::Ged 1.0
     eval $mGed autoview $itk_component(lr) $args
 }
 
+::itcl::body cadwidgets::Ged::base2local {} {
+    eval $mGed base2local
+}
+
 ::itcl::body cadwidgets::Ged::bev {args} {
     eval $mGed bev $args
 }
@@ -1113,6 +1119,10 @@ package provide cadwidgets::Ged 1.0
 
 ::itcl::body cadwidgets::Ged::loadview {args} {
     eval $mGed loadview $itk_component($itk_option(-pane)) $args
+}
+
+::itcl::body cadwidgets::Ged::local2base {} {
+    eval $mGed local2base
 }
 
 ::itcl::body cadwidgets::Ged::log {args} {

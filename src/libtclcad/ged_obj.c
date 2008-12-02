@@ -176,6 +176,12 @@ static int go_listen(struct ged		*gedp,
 		     ged_func_ptr	func,
 		     const char		*usage,
 		     int		maxargs);
+static int go_local2base(struct ged	*gedp,
+			 int		argc,
+			 const char	*argv[],
+			 ged_func_ptr	func,
+			 const char	*usage,
+			 int		maxargs);
 static int go_make(struct ged	*gedp,
 		   int		argc,
 		   const char	*argv[],
@@ -527,6 +533,7 @@ static struct go_cmdtab go_cmds[] = {
     {"listen",	"vname [port]", MAXARGS, go_listen, GED_FUNC_PTR_NULL},
     {"listeval",	(char *)0, MAXARGS, go_pass_through_func, ged_pathsum},
     {"loadview",	"vname filename", 3, go_view_func, ged_loadview},
+    {"local2base",	(char *)0, MAXARGS, go_local2base, GED_FUNC_PTR_NULL},
     {"log",	(char *)0, MAXARGS, go_pass_through_func, ged_log},
     {"lookat",	"vname x y z", 5, go_view_func, ged_lookat},
     {"ls",	(char *)0, MAXARGS, go_pass_through_func, ged_ls},
@@ -2043,6 +2050,24 @@ go_listen(struct ged	*gedp,
 
     bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
     return BRLCAD_ERROR;
+}
+
+static int
+go_local2base(struct ged	*gedp,
+	      int		argc,
+	      const char	*argv[],
+	      ged_func_ptr	func,
+	      const char	*usage,
+	      int		maxargs)
+{
+    struct ged_dm_view *gdvp;
+
+    /* initialize result */
+    bu_vls_trunc(&gedp->ged_result_str, 0);
+
+    bu_vls_printf(&gedp->ged_result_str, "%lf", go_current_gop->go_gedp->ged_wdbp->dbip->dbi_local2base);
+
+    return BRLCAD_OK;
 }
 
 static int
