@@ -137,6 +137,7 @@ mk_extrusion
 mk_freemembers
 mk_grip
 mk_half
+mk_hyp
 mk_id
 mk_id_editunits
 mk_id_units
