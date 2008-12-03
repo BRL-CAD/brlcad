@@ -3797,8 +3797,8 @@ package provide Archer 1.0
 	updateUtilityMenu
     }
 
-#    updateWizardMenu
-#    updateViewToolbarForEdit
+    updateWizardMenu
+    updateViewToolbarForEdit
 
     if {$mTarget != "" &&
 	$mBindingMode == 0} {
@@ -3914,8 +3914,8 @@ package provide Archer 1.0
 	updateUtilityMenu
     }
 
-#    updateWizardMenu
-#    updateViewToolbarForEdit
+    updateWizardMenu
+    updateViewToolbarForEdit
 
     if {$mTarget != "" &&
 	$mBindingMode == 0} {
@@ -4658,16 +4658,10 @@ package provide Archer 1.0
 	return
     }
 
-    # These values are insignificant (i.e. they will be ignored by the callback)
-    set x 0
-    set y 0
-    set z 0
-
     foreach dname {ul ur ll lr} {
-	set dm [$itk_component(mged) component $dname]
-	set win [$dm component dm]
-	bind $win <1> "$dm orotate_mode %x %y [list [::itcl::code $this handleObjRotate]] $obj $x $y $z; break"
-	bind $win <ButtonRelease-1> "[::itcl::code $this endObjRotate $dm $obj]; break"
+	set win [$itk_component(mged) component $dname]
+	bind $win <1> "$itk_component(mged) pane_orotate_mode $dname $obj %x %y; break"
+	bind $win <ButtonRelease-1> "[::itcl::code $this endObjRotate $dname $obj]; break"
     }
 }
 
@@ -4684,16 +4678,10 @@ package provide Archer 1.0
 	return
     }
 
-    # These values are insignificant (i.e. they will be ignored by the callback)
-    set x 0
-    set y 0
-    set z 0
-
     foreach dname {ul ur ll lr} {
-	set dm [$itk_component(mged) component $dname]
-	set win [$dm component dm]
-	bind $win <1> "$dm oscale_mode %x %y [list [::itcl::code $this handleObjScale]] $obj $x $y $z; break"
-	bind $win <ButtonRelease-1> "[::itcl::code $this endObjScale $dm $obj]; break"
+	set win [$itk_component(mged) component $dname]
+	bind $win <1> "$itk_component(mged) pane_oscale_mode $dname $obj %x %y; break"
+	bind $win <ButtonRelease-1> "[::itcl::code $this endObjScale $dname $obj]; break"
     }
 }
 
@@ -4711,10 +4699,9 @@ package provide Archer 1.0
     }
 
     foreach dname {ul ur ll lr} {
-	set dm [$itk_component(mged) component $dname]
-	set win [$dm component dm]
-	bind $win <1> "$dm otranslate_mode %x %y [list [::itcl::code $this handleObjTranslate]] $obj; break"
-	bind $win <ButtonRelease-1> "[::itcl::code $this endObjTranslate $dm $obj]; break"
+	set win [$itk_component(mged) component $dname]
+	bind $win <1> "$itk_component(mged) pane_otranslate_mode $dname $obj %x %y; break"
+	bind $win <ButtonRelease-1> "[::itcl::code $this endObjTranslate $dname $obj]; break"
     }
 }
 
@@ -4732,26 +4719,33 @@ package provide Archer 1.0
     }
 
     foreach dname {ul ur ll lr} {
-	set dm [$itk_component(mged) component $dname]
-	set win [$dm component dm]
+	set win [$itk_component(mged) component $dname]
 	bind $win <1> "[::itcl::code $this handleObjCenter $obj %x %y]; break"
-	bind $win <ButtonRelease-1> "[::itcl::code $this endObjCenter $dm $obj]; break"
+	bind $win <ButtonRelease-1> "[::itcl::code $this endObjCenter $dname $obj]; break"
     }
 }
 
-::itcl::body Archer::endObjCenter {dsp obj} {
-    $dsp idle_mode
-
+::itcl::body Archer::endObjCenter {dname obj} {
     if {![info exists itk_component(mged)]} {
 	return
     }
+
+    $itk_component(mged) pane_idle_mode $dname
+    set mNeedSave 1
+    updateSaveMode
 
     set center [$itk_component(mged) ocenter $obj]
     addHistory "ocenter $center"
 }
 
-::itcl::body Archer::endObjRotate {dsp obj} {
-    $dsp idle_mode
+::itcl::body Archer::endObjRotate {dname obj} {
+    if {![info exists itk_component(mged)]} {
+	return
+    }
+
+    $itk_component(mged) pane_idle_mode $dname
+    set mNeedSave 1
+    updateSaveMode
 
     #XXX Need code to track overall transformation
     if {[info exists itk_component(mged)]} {
@@ -4759,8 +4753,14 @@ package provide Archer 1.0
     }
 }
 
-::itcl::body Archer::endObjScale {dsp obj} {
-    $dsp idle_mode
+::itcl::body Archer::endObjScale {dname obj} {
+    if {![info exists itk_component(mged)]} {
+	return
+    }
+
+    $itk_component(mged) pane_idle_mode $dname
+    set mNeedSave 1
+    updateSaveMode
 
     #XXX Need code to track overall transformation
     if {[info exists itk_component(mged)]} {
@@ -4768,8 +4768,14 @@ package provide Archer 1.0
     }
 }
 
-::itcl::body Archer::endObjTranslate {dsp obj} {
-    $dsp idle_mode
+::itcl::body Archer::endObjTranslate {dname obj} {
+    if {![info exists itk_component(mged)]} {
+	return
+    }
+
+    $itk_component(mged) pane_idle_mode $dname
+    set mNeedSave 1
+    updateSaveMode
 
     #XXX Need code to track overall transformation
     if {[info exists itk_component(mged)]} {
@@ -4787,18 +4793,18 @@ package provide Archer 1.0
     }
 
     set ocenter [vscale $ocenter [dbCmd local2base]]
-    set ovcenter [eval dbCmd m2vPoint $ocenter]
+    set ovcenter [eval dbCmd m2v_point $ocenter]
 
     # This is the updated view center (i.e. we keep the original view Z)
     set vcenter [dbCmd screen2view $x $y]
     set vcenter [list [lindex $vcenter 0] [lindex $vcenter 1] [lindex $ovcenter 2]]
 
-    set ocenter [vscale [eval dbCmd v2mPoint $vcenter] [dbCmd base2local]]
+    set ocenter [vscale [eval dbCmd v2m_point $vcenter] [dbCmd base2local]]
 
     if {[info exists itk_component(mged)]} {
-	eval archerWrapper ocenter 0 0 1 0 $obj $ocenter
+	eval archerWrapper ocenter 0 0 0 0 $obj $ocenter
     } else {
-	eval archerWrapper ocenter 0 0 1 0 $obj $ocenter
+	eval archerWrapper ocenter 0 0 0 0 $obj $ocenter
 	cd $savePwd
     }
 

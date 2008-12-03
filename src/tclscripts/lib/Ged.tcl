@@ -219,6 +219,9 @@ package provide cadwidgets::Ged 1.0
 	method more_args_callback {args}
 	method mouse_constrain_rot {args}
 	method mouse_constrain_trans {args}
+	method mouse_orotate {args}
+	method mouse_oscale {args}
+	method mouse_otranslate {args}
 	method mouse_rot {args}
 	method mouse_scale {args}
 	method mouse_trans {args}
@@ -233,8 +236,11 @@ package provide cadwidgets::Ged 1.0
 	method open {args}
 	method orient {args}
 	method orotate {args}
+	method orotate_mode {args}
 	method oscale {args}
+	method oscale_mode {args}
 	method otranslate {args}
+	method otranslate_mode {args}
 	method overlay {args}
 	method paint_rect_area {args}
 	method pane_adc {_pane args}
@@ -260,11 +266,17 @@ package provide cadwidgets::Ged 1.0
 	method pane_model2view {_pane args}
 	method pane_mouse_constrain_rot {_pane args}
 	method pane_mouse_constrain_trans {_pane args}
+	method pane_mouse_orotate {_pane args}
+	method pane_mouse_oscale {_pane args}
+	method pane_mouse_otranslate {_pane args}
 	method pane_mouse_rot {_pane args}
 	method pane_mouse_scale {_pane args}
 	method pane_mouse_trans {_pane args}
 	method pane_nirt {_pane args}
 	method pane_orient {_pane args}
+	method pane_orotate_mode {_pane args}
+	method pane_oscale_mode {_pane args}
+	method pane_otranslate_mode {_pane args}
 	method pane_paint_rect_area {_pane args}
 	method pane_perspective {_pane args}
 	method pane_plot {_pane args}
@@ -363,6 +375,7 @@ package provide cadwidgets::Ged 1.0
 	method saveview {args}
 	method sca {args}
 	method scale_mode {args}
+	method screen2view {args}
 	method set_coord {args}
 	method set_fb_mode {args}
 	method set_output_script {args}
@@ -1192,6 +1205,18 @@ package provide cadwidgets::Ged 1.0
     eval $mGed mouse_constrain_trans $itk_component($itk_option(-pane)) $args
 }
 
+::itcl::body cadwidgets::Ged::mouse_orotate {args} {
+    eval $mGed mouse_orotate $itk_component($itk_option(-pane)) $args
+}
+
+::itcl::body cadwidgets::Ged::mouse_oscale {args} {
+    eval $mGed mouse_oscale $itk_component($itk_option(-pane)) $args
+}
+
+::itcl::body cadwidgets::Ged::mouse_otranslate {args} {
+    eval $mGed mouse_otranslate $itk_component($itk_option(-pane)) $args
+}
+
 ::itcl::body cadwidgets::Ged::mouse_rot {args} {
     eval $mGed mouse_rot $itk_component($itk_option(-pane)) $args
 }
@@ -1248,12 +1273,24 @@ package provide cadwidgets::Ged 1.0
     eval $mGed orotate $args
 }
 
+::itcl::body cadwidgets::Ged::orotate_mode {args} {
+    eval $mGed orotate_mode $itk_component($itk_option(-pane)) $args
+}
+
 ::itcl::body cadwidgets::Ged::oscale {args} {
     eval $mGed oscale $args
 }
 
+::itcl::body cadwidgets::Ged::oscale_mode {args} {
+    eval $mGed oscale_mode $itk_component($itk_option(-pane)) $args
+}
+
 ::itcl::body cadwidgets::Ged::otranslate {args} {
     eval $mGed otranslate $args
+}
+
+::itcl::body cadwidgets::Ged::otranslate_mode {args} {
+    eval $mGed otranslate_mode $itk_component($itk_option(-pane)) $args
 }
 
 ::itcl::body cadwidgets::Ged::overlay {args} {
@@ -1356,12 +1393,24 @@ package provide cadwidgets::Ged 1.0
     eval $mGed mouse_constrain_trans $itk_component($_pane) $args
 }
 
+::itcl::body cadwidgets::Ged::pane_mouse_orotate {_pane args} {
+    eval $mGed mouse_orotate $itk_component($_pane) $args
+}
+
+::itcl::body cadwidgets::Ged::pane_mouse_oscale {_pane args} {
+    eval $mGed mouse_oscale $itk_component($_pane) $args
+}
+
+::itcl::body cadwidgets::Ged::pane_mouse_otranslate {_pane args} {
+    eval $mGed mouse_otranslate $itk_component($_pane) $args
+}
+
 ::itcl::body cadwidgets::Ged::pane_mouse_rot {_pane args} {
-    eval $mGed mouse_rot  $itk_component($_pane) $args
+    eval $mGed mouse_rot $itk_component($_pane) $args
 }
 
 ::itcl::body cadwidgets::Ged::pane_mouse_scale {_pane args} {
-    eval $mGed mouse_scale  $itk_component($_pane) $args
+    eval $mGed mouse_scale $itk_component($_pane) $args
 }
 
 ::itcl::body cadwidgets::Ged::pane_mouse_trans {_pane args} {
@@ -1374,6 +1423,18 @@ package provide cadwidgets::Ged 1.0
 
 ::itcl::body cadwidgets::Ged::pane_orient {_pane args} {
     eval $mGed orient $itk_component($_pane) $args
+}
+
+::itcl::body cadwidgets::Ged::pane_orotate_mode {_pane args} {
+    eval $mGed orotate_mode $itk_component($_pane) $args
+}
+
+::itcl::body cadwidgets::Ged::pane_oscale_mode {_pane args} {
+    eval $mGed oscale_mode $itk_component($_pane) $args
+}
+
+::itcl::body cadwidgets::Ged::pane_otranslate_mode {_pane args} {
+    eval $mGed otranslate_mode $itk_component($_pane) $args
 }
 
 ::itcl::body cadwidgets::Ged::pane_paint_rect_area {_pane args} {
@@ -1785,6 +1846,10 @@ package provide cadwidgets::Ged 1.0
 
 ::itcl::body cadwidgets::Ged::sca {args} {
     eval $mGed sca $itk_component($itk_option(-pane)) $args
+}
+
+::itcl::body cadwidgets::Ged::screen2view {args} {
+    eval $mGed screen2view $itk_component($itk_option(-pane)) $args
 }
 
 ::itcl::body cadwidgets::Ged::scale_mode {args} {
