@@ -16,7 +16,7 @@ changes made.  See document footer for additional details.
 
 * new initial manual page for bot_dump - Sean Morrison
 * added editing support for hyperboloid primitive to mged - Cliff Yapp
-* Add new proc-db for creation of optical lenses - Cliff Yapp
+* new 'lens' procedural tool for making optical lenses - Cliff Yapp
 
 ----------------------------------------------------------------------
 --- 2008-11-04  Release 7.14.0                                     ---
