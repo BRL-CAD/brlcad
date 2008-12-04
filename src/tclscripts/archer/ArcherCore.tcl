@@ -133,6 +133,8 @@ namespace eval ArcherCore {
 	method get                 {args}
 	method group               {args}
 	method i                   {args}
+	method in                  {args}
+	method inside              {args}
 	method item                {args}
 	method kill                {args}
 	method killall             {args}
@@ -362,9 +364,8 @@ namespace eval ArcherCore {
 				    whichid who unpackTree Z zap
 	}
 	variable mMgedCommands { \
-				     bot2pipe \
-				     adjust arced attr blast c comb comb_color concat copyeval E edcomb \
-				     edmater erase_all ev find hide item killall killtree make \
+				     adjust arced attr blast bot2pipe c comb comb_color concat copyeval E edcomb \
+				     edmater erase_all ev find hide in inside item killall killtree make \
 				     make_bb make_name mater mirror mvall push put r rmater report \
 				     shader track unhide vdraw wmater
 	}
@@ -3832,6 +3833,14 @@ Popup Menu    Right or Ctrl-Left
     eval mgedWrapper hide 0 0 1 1 $args
 }
 
+
+::itcl::body ArcherCore::in {args} {
+    eval mgedWrapper in 0 0 1 1 $args
+}
+
+::itcl::body ArcherCore::inside {args} {
+    eval mgedWrapper inside 0 0 1 1 $args
+}
 
 ::itcl::body ArcherCore::item {args} {
     eval mgedWrapper item 0 0 1 1 $args

@@ -116,6 +116,7 @@
     private variable search_char ""
     private variable search_dir ""
 
+    private variable more_args_list {}
     private variable more_args_var ""
     private variable more_args_begin_index ""
     private variable more_args_end_index ""
@@ -262,6 +263,7 @@
     bind $w <Return> "[::itcl::code $this doReturn]; break"
     bind $w <KP_Enter> "[::itcl::code $this doReturn]; break"
 
+    eval lappend more_args_list $more_args_var
     return $more_args_var
 }
 
@@ -302,6 +304,7 @@
     set w $itk_component(text)
 
     set cmd [$w get promptEnd insert]
+    set more_args_list {}
 
     # remove any instances of prompt2 from the beginning of each secondary line
     regsub -all "\n$itk_option(-prompt2)" $cmd "" cmd
@@ -328,6 +331,7 @@
 	}
 
 	if {$do_history} {
+	    eval lappend cmd $more_args_list
 	    $hist add $cmd
 	}
 	print_prompt

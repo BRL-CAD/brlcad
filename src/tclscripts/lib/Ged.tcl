@@ -2772,7 +2772,6 @@ package provide cadwidgets::Ged 1.0
     $help add idents		{{file object(s)} {dump the idents for the specified objects to file}}
     $help add illum		{{name} {illuminate object}}
     $help add importFg4Section	{{obj section} {create an object by importing the specified section}}
-#XXX Temporarily disabled (i.e. doesn't work properly)
     $help add in		{{args} {creates a primitive by prompting the user for input}}
     $help add inside		{{out_prim in_prim th(s)} {Creates in_prim as the inside of out_prim}}
     $help add isize		{{} {returns the inverse of view size}}
