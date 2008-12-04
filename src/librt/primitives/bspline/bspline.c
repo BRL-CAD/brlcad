@@ -1097,12 +1097,14 @@ rt_nurb_ifree(struct rt_db_internal *ip)
 
     /* Free up storage for the nurb surfaces */
     for ( i = 0; i < sip->nsrf; i++) {
-	rt_nurb_free_snurb( sip->srfs[i], (struct resource *)NULL );
+	rt_nurb_free_snurb(sip->srfs[i], (struct resource *)NULL);
     }
-    bu_free( (char *)sip->srfs, "nurb surfs[]" );
     sip->magic = 0;
     sip->nsrf = 0;
-    bu_free( (char *)sip, "sip ifree");
+    bu_free(sip->srfs, "nurb surfs[]");
+    sip->srfs = GENPTR_NULL;
+
+    bu_free(ip->idb_ptr, "sip ifree");
     ip->idb_ptr = GENPTR_NULL;
 }
 
