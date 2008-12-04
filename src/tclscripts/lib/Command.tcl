@@ -42,6 +42,8 @@
 
     public method history {}
     public method edit_style {args}
+    private method do_get_more_args {}
+    public method get_more_args {}
     public method putstring {str}
     public method reinitialize {} 
 
@@ -82,6 +84,7 @@
     private method select_line {x y}
     private method selection_modify {x y}
     private method print {str}
+    public method print_more_args_prompt {_prompt}
     private method print_prompt {}
     private method print_prompt2 {}
     private method print_tag {str tag}
@@ -112,6 +115,10 @@
     private variable search_flag 0
     private variable search_char ""
     private variable search_dir ""
+
+    private variable more_args_var ""
+    private variable more_args_begin_index ""
+    private variable more_args_end_index ""
 }
 
 ::itcl::configbody Command::edit_style {
@@ -199,6 +206,8 @@
     $itk_component(text) tag configure cmd -foreground $itk_option(-cmd_color)
     $itk_component(text) tag configure oldcmd -foreground $itk_option(-oldcmd_color)
     $itk_component(text) tag configure result -foreground $itk_option(-result_color)
+
+    rename ::gets ::tcl_gets
 }
 
 ::itcl::body Command::destructor {} {
@@ -229,6 +238,31 @@
 	    error "Bad edit_style - $args"
 	}
     }
+}
+
+::itcl::body Command::do_get_more_args {} {
+    set w $itk_component(text)
+    set more_args_end_index [$itk_component(text) index insert]
+    $w mark set insert {end - 2c}
+    $w insert insert \n
+
+    $w see insert
+    update
+
+    set more_args_var [$w get $more_args_begin_index $more_args_end_index]
+}
+
+::itcl::body Command::get_more_args {} {
+    set more_args_var ""
+    set more_args_begin_index [$itk_component(text) index insert]
+    set w $itk_component(text)
+    bind $w <Return> "[::itcl::code $this do_get_more_args]; break"
+    bind $w <KP_Enter> "[::itcl::code $this do_get_more_args]; break"
+    vwait [::itcl::scope more_args_var]
+    bind $w <Return> "[::itcl::code $this doReturn]; break"
+    bind $w <KP_Enter> "[::itcl::code $this doReturn]; break"
+
+    return $more_args_var
 }
 
 ::itcl::body Command::putstring {str} {
@@ -1056,6 +1090,10 @@
 ::itcl::body Command::print {str} {
     set w $itk_component(text)
     $w insert insert $str
+}
+
+::itcl::body Command::print_more_args_prompt {_prompt} {
+    $itk_component(text) insert insert $_prompt
 }
 
 ::itcl::body Command::print_prompt {} {

@@ -5009,6 +5009,7 @@ go_more_args_func(struct ged	*gedp,
 	const char **av_more = NULL;
 
 	if (0 < bu_vls_strlen(&go_current_gop->go_more_args_callback)) {
+	    bu_vls_trunc(&callback_cmd, 0);
 	    bu_vls_printf(&callback_cmd, "%s \"%s\"",
 			  bu_vls_addr(&go_current_gop->go_more_args_callback),
 			  bu_vls_addr(&gedp->ged_result_str));
@@ -5019,6 +5020,7 @@ go_more_args_func(struct ged	*gedp,
 		return BRLCAD_ERROR;
 	    }
 
+	    bu_vls_trunc(&temp, 0);
 	    bu_vls_printf(&temp, Tcl_GetStringResult(go_current_gop->go_interp));
 	    Tcl_ResetResult(go_current_gop->go_interp);
 	} else {

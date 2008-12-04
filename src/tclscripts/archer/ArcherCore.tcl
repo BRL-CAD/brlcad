@@ -395,6 +395,8 @@ Popup Menu    Right or Ctrl-Left
 
 	variable mMouseRayCallbacks ""
 
+	method handleMoreArgs {args}
+
 	method cadWrapper {_cmd _eflag _hflag _sflag _tflag args}
 	method mgedWrapper {_cmd _eflag _hflag _sflag _tflag args}
 
@@ -1000,6 +1002,11 @@ Popup Menu    Right or Ctrl-Left
     }
 }
 
+::itcl::body ArcherCore::handleMoreArgs {args} {
+    eval $itk_component(cmd) print_more_args_prompt $args
+    return [$itk_component(cmd) get_more_args]
+}
+
 ::itcl::body ArcherCore::cadWrapper {cmd eflag hflag sflag tflag args} {
     SetWaitCursor
 
@@ -1337,7 +1344,7 @@ Popup Menu    Right or Ctrl-Left
     }
     $itk_component(mged) transparency_all 1
     $itk_component(mged) bounds_all "-4096 4095 -4096 4095 -4096 4095"
-    $itk_component(mged) more_args_callback "$itk_component(cmd) putstring"
+    $itk_component(mged) more_args_callback [::itcl::code $this handleMoreArgs]
     $itk_component(mged) history_callback [::itcl::code $this addHistory]
 
 
