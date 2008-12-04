@@ -96,7 +96,7 @@ main(int argc, char **argv)
 {
     point_t a, b, c, d;
     struct rt_wdb *fp;
-    struct rt_nurb_internal si;
+    struct rt_nurb_internal *si;
     char *filename;
 
     if (argc < 1 || argc > 2) {
@@ -121,14 +121,15 @@ main(int argc, char **argv)
     VSET(c, 10, 10,  0);
     VSET(d,  0, 10,  0);
 
-    si.magic = RT_NURB_INTERNAL_MAGIC;
-    si.nsrf = 0;
-    si.srfs = (struct face_g_snurb **)bu_malloc(sizeof(struct face_g_snurb *)*100, "allocate snurb ptrs");
+    si = (struct rt_nurb_internal *)bu_malloc(sizeof(struct rt_nurb_internal), "spltest rt_nurb_internal");
+    si->magic = RT_NURB_INTERNAL_MAGIC;
+    si->nsrf = 0;
+    si->srfs = (struct face_g_snurb **)bu_malloc(sizeof(struct face_g_snurb *)*100, "allocate snurb ptrs");
 
-    make_face(&si, a, b, c, d, 2);
+    make_face(si, a, b, c, d, 2);
     
     /* wdb_export */
-    mk_export_fwrite(fp, "spltest", (genptr_t)&si, ID_BSPLINE);
+    mk_export_fwrite(fp, "spltest", (genptr_t)si, ID_BSPLINE);
 
     return 0;
 }
