@@ -15,7 +15,7 @@ changes made.  See document footer for additional details.
 ----------------------------------------------------------------------
 
 * new initial manual page for bot_dump - Sean Morrison
-* Add editing support for hyp primitive to MGED - Cliff Yapp
+* added editing support for hyperboloid primitive to mged - Cliff Yapp
 * Add new proc-db for creation of optical lenses - Cliff Yapp
 
 ----------------------------------------------------------------------
