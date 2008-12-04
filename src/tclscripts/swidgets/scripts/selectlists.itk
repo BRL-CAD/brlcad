@@ -1,12 +1,13 @@
 #                 S E L E C T L I S T S . I T K
 # BRL-CAD
 #
-# Copyright (c) 2006-2008 United States Government as represented by
+# Copyright (c) 2006 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # This library is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public License
-# version 2.1 as published by the Free Software Foundation.
+# as published by the Free Software Foundation; either version 2 of
+# the License, or (at your option) any later version.
 #
 # This library is distributed in the hope that it will be useful, but
 # WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -33,7 +34,6 @@
 # Usual options.
 #
 
-
 # ------------------------------------------------------------
 #                     SELECTLISTS
 # ------------------------------------------------------------
@@ -47,9 +47,9 @@ itcl::class swidgets::Selectlists {
     itk_option define -sortlist2 sortList2 SortList2 true
     itk_option define -numlines numlines Height 10
     itk_option define -lbwidth lbwidth Width 20
-    itk_option define -state state State normal
     itk_option define -unique unique Unique false
     itk_option define -command command Command {}
+    itk_option define -state state State normal
 
     public {
 	method component {name}
@@ -80,29 +80,35 @@ proc ::swidgets::selectlists {args} {
 #                      CONSTRUCTOR
 # ------------------------------------------------------------
 ::itcl::body swidgets::Selectlists::constructor {args} {
-
+    
     set frame [frame $itk_interior.frame]
 
     # LISTBOX 1
     itk_component add listbox1 {
 	iwidgets::scrolledlistbox $frame.lstbox1 -vscrollmode static \
-	    -hscrollmode dynamic -selectmode single \
-	    -dblclickcommand [::itcl::code $this _dblclick "listbox1"]
+		-hscrollmode dynamic -selectmode single \
+		-dblclickcommand [::itcl::code $this _dblclick "listbox1"]
     } {
 	keep -textbackground
 	rename -labelpos -labelpos1 labelPos1 Position
 	rename -labeltext -labeltext1 labeltext1 Text
+	rename -borderwidth -borderwidth1 borderWidth1 BorderWidth
+	rename -relief -relief1 relief1 Relief
+	rename -selectmode -selectmode1 selectMode1 SelectMode
     }
 
     # LISTBOX 2
     itk_component add listbox2 {
 	iwidgets::scrolledlistbox $frame.lstbox2 -vscrollmode static \
-	    -hscrollmode dynamic -selectmode single \
-	    -dblclickcommand [::itcl::code $this _dblclick "listbox2"]
+		-hscrollmode dynamic \
+		-dblclickcommand [::itcl::code $this _dblclick "listbox2"]
     } {
-	keep -textbackground
+	keep -textbackground 
 	rename -labelpos -labelpos2 labelPos2 Position
 	rename -labeltext -labeltext2 labelText2 Text
+	rename -borderwidth -borderwidth2 borderWidth2 BorderWidth
+	rename -relief -relief2 relief2 Relief
+	rename -selectmode -selectmode2 selectMode2 SelectMode
     }
 
     set bbox [frame $frame.bbox]
@@ -122,12 +128,12 @@ proc ::swidgets::selectlists {args} {
     grid $itk_component(btn_del) -column 0 -row 2 -padx 2 -pady 2 -sticky ew
 
     grid $itk_component(listbox1) -column 0 -row 0 -padx 2 -pady 2 -sticky nsew
-    grid $bbox -column 1 -row 0 -sticky ns
+    grid $bbox -column 1 -row 0;# -sticky ns
     grid $itk_component(listbox2) -column 2 -row 0 -padx 2 -pady 2 -sticky nsew
     grid columnconfigure $frame {0 2} -weight 1
     grid rowconfigure $frame 0 -weight 1
     pack $frame -fill both -expand yes
-
+    
 
     #
     # Initialize the widget based on the command line options
@@ -139,7 +145,7 @@ proc ::swidgets::selectlists {args} {
 }
 
 # ------------------------------------------------------------
-#                        OPTIONS
+#                        OPTIONS 
 # ------------------------------------------------------------
 ::itcl::configbody swidgets::Selectlists::sortlist1 {
     switch $itk_option(-sortlist1) {
@@ -205,7 +211,7 @@ proc ::swidgets::selectlists {args} {
 }
 
 # ------------------------------------------------------------
-#                        METHODS
+#                        METHODS 
 # ------------------------------------------------------------
 ::itcl::body swidgets::Selectlists::_dblclick {list} {
     switch $list {
@@ -220,18 +226,18 @@ proc ::swidgets::selectlists {args} {
     foreach item $selected {
 	$itk_component(listbox2) insert end [$itk_component(listbox1) get $item]
     }
-
-    foreach item [lsort -decreasing $selected] {
+    
+    foreach item [lsort -integer -decreasing $selected] {
 	$itk_component(listbox1) delete $item
     }
 
     # check for empty listbox1
     if {[$itk_component(listbox1) get 0] == ""} {
 	$itk_component(btn_all) configure -text "Remove All" \
-	    -command [::itcl::code $this _removeall]
+		-command [::itcl::code $this _removeall]
     } else {
 	$itk_component(btn_all) configure -text "Select All" \
-	    -command [::itcl::code $this _addall]
+		-command [::itcl::code $this _addall]
     }
 
     if {$itk_option(-sortlist2) == "true"} {
@@ -250,18 +256,18 @@ proc ::swidgets::selectlists {args} {
     foreach item $selected {
 	$itk_component(listbox1) insert end [$itk_component(listbox2) get $item]
     }
-
-    foreach item [lsort -decreasing $selected] {
+    
+    foreach item [lsort -integer -decreasing $selected] {
 	$itk_component(listbox2) delete $item
-    }
+    }	
 
     # check for empty listbox1
     if {[$itk_component(listbox1) get 0] == ""} {
 	$itk_component(btn_all) configure -text "Remove All" \
-	    -command [::itcl::code $this _removeall]
+		-command [::itcl::code $this _removeall]
     } else {
 	$itk_component(btn_all) configure -text "Select All" \
-	    -command [::itcl::code $this _addall]
+		-command [::itcl::code $this _addall]
     }
 
     if {$itk_option(-sortlist1) == "true"} {
@@ -282,7 +288,7 @@ proc ::swidgets::selectlists {args} {
     }
 
     $itk_component(btn_all) configure -text "Remove All" \
-	-command [::itcl::code $this _removeall]
+	    -command [::itcl::code $this _removeall]
 
     if {$itk_option(-sortlist2) == "true"} {
 	$itk_component(listbox2) sort ascending
@@ -294,7 +300,7 @@ proc ::swidgets::selectlists {args} {
     }
 }
 
-::itcl::body swidgets::Selectlists::_removeall {} {
+::itcl::body swidgets::Selectlists::_removeall {} { 
     if {[$itk_component(listbox2) get 0] == ""} {return}
     while {[$itk_component(listbox2) get 0] != ""} {
 	$itk_component(listbox1) insert end [$itk_component(listbox2) get 0]
@@ -302,7 +308,7 @@ proc ::swidgets::selectlists {args} {
     }
 
     $itk_component(btn_all) configure -text "Select All" \
-	-command [::itcl::code $this _addall]
+	    -command [::itcl::code $this _addall]
 
     if {$itk_option(-sortlist1) == "true"} {
 	$itk_component(listbox1) sort ascending
@@ -339,7 +345,7 @@ proc ::swidgets::selectlists {args} {
 		# eliminate non-unique items if necessary
 		if {$itk_option(-unique) == "true"} {
 		    if {[lsearch [$itk_component(listbox1) get 0 end] $item] != -1 ||
-			[lsearch [$itk_component(listbox2) get 0 end] $item] != -1} {
+		    [lsearch [$itk_component(listbox2) get 0 end] $item] != -1} {
 			continue
 		    }
 		}
@@ -354,7 +360,7 @@ proc ::swidgets::selectlists {args} {
 		# eliminate non-unique items if necessary
 		if {$itk_option(-unique) == "true"} {
 		    if {[lsearch [$itk_component(listbox1) get 0 end] $item] != -1 ||
-			[lsearch [$itk_component(listbox2) get 0 end] $item] != -1} {
+		    [lsearch [$itk_component(listbox2) get 0 end] $item] != -1} {
 			continue
 		    }
 		}
