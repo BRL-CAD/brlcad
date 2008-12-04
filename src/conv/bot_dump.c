@@ -29,7 +29,7 @@
 #include "ged.h"
 
 static char usage[] = "\
-Usage: %s [-b] [-m directory] [-o file] [-t dxf|obj|sat|stl] [-u units] [-v] geom.g [bot1 bot2 ...]\n";
+Usage: %s [-b] [-m directory] [-o file] [-t dxf|obj|sat|stl] [-u units] geom.g [bot1 bot2 ...]\n";
 
 
 /*
