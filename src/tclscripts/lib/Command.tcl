@@ -116,6 +116,7 @@
     private variable search_char ""
     private variable search_dir ""
 
+    private variable more_args_interrupted 0
     private variable more_args_list {}
     private variable more_args_var ""
     private variable more_args_begin_index ""
@@ -254,6 +255,7 @@
 }
 
 ::itcl::body Command::get_more_args {} {
+    set more_args_interrupted 0
     set more_args_var ""
     set more_args_begin_index [$itk_component(text) index insert]
     set w $itk_component(text)
@@ -263,8 +265,12 @@
     bind $w <Return> "[::itcl::code $this doReturn]; break"
     bind $w <KP_Enter> "[::itcl::code $this doReturn]; break"
 
-    eval lappend more_args_list $more_args_var
-    return $more_args_var
+    if {$more_args_interrupted} {
+	error ""
+    } else {
+	eval lappend more_args_list $more_args_var
+	return $more_args_var
+    }
 }
 
 ::itcl::body Command::putstring {str} {
@@ -334,7 +340,12 @@
 	    eval lappend cmd $more_args_list
 	    $hist add $cmd
 	}
-	print_prompt
+
+	if {$more_args_interrupted} {
+	    set more_args_interrupted 0
+	} else {
+	    print_prompt
+	}
 
 	# get rid of oldest output
 	set nlines [expr int([$w index end])]
@@ -1237,6 +1248,9 @@
     if {$itk_option(-edit_style) == "vi"} {
 	vi_insert_mode
     }
+
+    set more_args_interrupted 1
+    set more_args_var ""
 }
 
 ::itcl::body Command::doMeta_d {} {

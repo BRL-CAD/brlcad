@@ -5015,6 +5015,7 @@ go_more_args_func(struct ged	*gedp,
 			  bu_vls_addr(&gedp->ged_result_str));
 
 	    if (Tcl_Eval(go_current_gop->go_interp, bu_vls_addr(&callback_cmd)) != TCL_OK) {
+		bu_vls_trunc(&gedp->ged_result_str, 0);
 		bu_vls_printf(&gedp->ged_result_str, "%s", Tcl_GetStringResult(go_current_gop->go_interp));
 		Tcl_ResetResult(go_current_gop->go_interp);
 		return BRLCAD_ERROR;
