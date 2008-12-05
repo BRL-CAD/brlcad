@@ -104,69 +104,100 @@ namespace eval ArcherCore {
 
 	# Commands exposed to the user via the command line.
 	# More to be added later...
+	method 3ptarb              {args}
 	method adjust              {args}
 	method arced               {args}
 	method attr                {args}
+	method bev                 {args}
 	method blast               {args}
+	method bo                  {args}
+	method bot_condense        {args}
+	method bot_decimate        {args}
+	method bot_face_fuse       {args}
+	method bot_face_sort       {args}
+	method bot_merge           {args}
+	method bot_smooth          {args}
+	method bot_split           {args}
+	method bot_vertex_fuse     {args}
 	method c                   {args}
 	method cd                  {args}
 	method clear               {args}
+	method clone               {args}
+	method color               {args}
 	method comb                {args}
 	method comb_color          {args}
 	method concat              {args}
 	method copy                {args}
 	method copyeval            {args}
+	method copymat             {args}
 	method cp                  {args}
+	method cpi                 {args}
 	method dbExpand	           {args}
+	method decompose           {args}
 	method delete              {args}
 	method draw                {args}
 	method E                   {args}
+	method edcodes             {args}
 	method edcomb              {args}
 	method edmater             {args}
 	method erase               {args}
 	method erase_all           {args}
 	method ev                  {args}
 	method exit                {args}
-	method find                {args}
+	method facetize            {args}
+	method fracture            {args}
 	method hide                {args}
 	method g                   {args}
-	method get                 {args}
 	method group               {args}
 	method i                   {args}
+	method importFg4Section    {args}
 	method in                  {args}
 	method inside              {args}
 	method item                {args}
 	method kill                {args}
 	method killall             {args}
+	method killrefs            {args}
 	method killtree            {args}
 	method ls                  {args}
 	method make		   {args}
 	method make_bb             {args}
-	method make_name           {args}
 	method mater               {args}
 	method mirror              {args}
 	method move                {args}
+	method move_arb_edge       {args}
+	method move_arb_face       {args}
 	method mv                  {args}
 	method mvall               {args}
+	method nmg_collapse        {args}
+	method nmg_simplify        {args}
 	method ocenter		   {args}
 	method orotate		   {args}
 	method oscale		   {args}
 	method otranslate	   {args}
+	method prefix              {args}
 	method push                {args}
 	method put                 {args}
+	method put_comb            {args}
+	method putmat              {args}
 	method pwd                 {}
 	method r                   {args}
-	method report              {args}
+	method rcodes              {args}
+	method red                 {args}
+	method rfarb               {args}
 	method rm                  {args}
 	method rmater              {args}
+	method rotate_arb_face     {args}
 	method shader              {args}
+	method shells              {args}
+	method title               {args}
 	method track               {args}
 	method unhide              {args}
 	method units               {args}
-	method vdraw               {args}
+	method vmake               {args}
 	method whichid             {args}
 	method who                 {args}
 	method wmater              {args}
+	method xpush               {args}
 	method Z                   {args}
 	method zap                 {args}
 
@@ -359,15 +390,23 @@ namespace eval ArcherCore {
 
 	variable mCadCommands { \
 				    cd clear copy cp dbExpand delete draw exit \
-				    g get group kill ls move mv ocenter orotate \
+				    g group kill ls move mv ocenter orotate \
 				    oscale otranslate packTree pwd rm units \
 				    whichid who unpackTree Z zap
 	}
 	variable mMgedCommands { \
-				     adjust arced attr blast bot2pipe c comb comb_color concat copyeval E edcomb \
-				     edmater erase_all ev find hide in inside item killall killtree make \
-				     make_bb make_name mater mirror mvall push put r rmater report \
-				     shader track unhide vdraw wmater
+				     3ptarb adjust arced attr bev blast bo \
+				     bot2pipe bot_condense bot_decimate bot_face_fuse \
+				     bot_face_sort bot_merge bot_smooth bot_split bot_vertex_fuse \
+				     c clone color comb comb_color concat copyeval copymat cpi \
+				     decompose E edcodes edcomb \
+				     edmater erase_all ev facetize fracture hide i importFg4Section \
+				     in inside item killall killrefs killtree make \
+				     make_bb mater mirror move_arb_edge move_arb_face \
+				     mvall nmg_collapse nmg_simplify prefix push \
+				     put put_comb putmat r rcodes red rfarb rmater \
+				     rotate_arb_face shader shells title track unhide \
+				     vmake wmater xpush
 	}
 	variable mDbSpecificCommands {}
 	variable mUnwrappedDbCommands {}
@@ -3582,6 +3621,10 @@ Popup Menu    Right or Ctrl-Left
 }
 
 ##################################### ArcherCore Commands #####################################
+::itcl::body ArcherCore::3ptarb {args} {
+    eval mgedWrapper 3ptarb 0 1 1 1 $args
+}
+
 ::itcl::body ArcherCore::adjust {args} {
     eval mgedWrapper adjust 0 1 1 1 $args
 }
@@ -3594,8 +3637,48 @@ Popup Menu    Right or Ctrl-Left
     eval mgedWrapper attr 0 0 1 0 $args
 }
 
+::itcl::body ArcherCore::bev {args} {
+    eval mgedWrapper bev 0 0 1 1 $args
+}
+
 ::itcl::body ArcherCore::blast {args} {
     eval mgedWrapper blast 0 0 0 1 $args
+}
+
+::itcl::body ArcherCore::bo {args} {
+    eval mgedWrapper bo 0 0 1 1 $args
+}
+
+::itcl::body ArcherCore::bot_condense {args} {
+    eval mgedWrapper bot_condense 0 0 1 1 $args
+}
+
+::itcl::body ArcherCore::bot_decimate {args} {
+    eval mgedWrapper bot_decimate 0 0 1 1 $args
+}
+
+::itcl::body ArcherCore::bot_face_fuse {args} {
+    eval mgedWrapper bot_face_fuse 0 0 1 1 $args
+}
+
+::itcl::body ArcherCore::bot_face_sort {args} {
+    eval mgedWrapper bot_face_sort 1 0 1 1 $args
+}
+
+::itcl::body ArcherCore::bot_merge {args} {
+    eval mgedWrapper bot_merge 1 0 1 1 $args
+}
+
+::itcl::body ArcherCore::bot_smooth {args} {
+    eval mgedWrapper bot_smooth 0 0 1 1 $args
+}
+
+::itcl::body ArcherCore::bot_split {args} {
+    eval mgedWrapper bot_split 0 0 1 1 $args
+}
+
+::itcl::body ArcherCore::bot_vertex_fuse {args} {
+    eval mgedWrapper bot_vertex_fuse 0 0 1 1 $args
 }
 
 ::itcl::body ArcherCore::c {args} {
@@ -3612,6 +3695,14 @@ Popup Menu    Right or Ctrl-Left
     if {$mShowGroundPlane} {
 	showGroundPlane
     }
+}
+
+::itcl::body ArcherCore::clone {args} {
+    eval mgedWrapper clone 0 0 1 1 $args
+}
+
+::itcl::body ArcherCore::color {args} {
+    eval mgedWrapper color 0 0 1 0 $args
 }
 
 ::itcl::body ArcherCore::comb {args} {
@@ -3634,8 +3725,16 @@ Popup Menu    Right or Ctrl-Left
     eval mgedWrapper copyeval 0 0 1 1 $args
 }
 
+::itcl::body ArcherCore::copymat {args} {
+    eval mgedWrapper copymat 0 0 1 0 $args
+}
+
 ::itcl::body ArcherCore::cp {args} {
     eval cadWrapper cp 0 0 1 1 $args
+}
+
+::itcl::body ArcherCore::cpi {args} {
+    eval mgedWrapper cpi 0 0 1 1 $args
 }
 
 ::itcl::body ArcherCore::dbExpand {args} {
@@ -3704,6 +3803,10 @@ Popup Menu    Right or Ctrl-Left
     return [list $options $objects]
 }
 
+::itcl::body ArcherCore::decompose {args} {
+    eval mgedWrapper decompose 0 1 1 0 $args
+}
+
 ::itcl::body ArcherCore::delete {args} {
     eval cadWrapper kill 1 0 1 1 $args
 }
@@ -3756,12 +3859,16 @@ Popup Menu    Right or Ctrl-Left
     eval mgedWrapper E 1 0 0 1 $args
 }
 
+::itcl::body ArcherCore::edcodes {args} {
+    eval mgedWrapper edcodes 0 0 1 0 $args
+}
+
 ::itcl::body ArcherCore::edcomb {args} {
     eval mgedWrapper edcomb 0 0 1 1 $args
 }
 
 ::itcl::body ArcherCore::edmater {args} {
-    eval mgedWrapper edmater 0 0 1 1 $args
+    eval mgedWrapper edmater 0 0 1 0 $args
 }
 
 ::itcl::body ArcherCore::erase {args} {
@@ -3805,24 +3912,16 @@ Popup Menu    Right or Ctrl-Left
     Close
 }
 
-::itcl::body ArcherCore::find {args} {
-    if {![info exists itk_component(mged)]} {
-	return
-    }
+::itcl::body ArcherCore::facetize {args} {
+    eval mgedWrapper facetize 0 0 1 1 $args
+}
 
-    eval $itk_component(mged) find $args
+::itcl::body ArcherCore::fracture {args} {
+    eval mgedWrapper fracture 0 1 1 1 $args
 }
 
 ::itcl::body ArcherCore::g {args} {
     eval group $args
-}
-
-::itcl::body ArcherCore::get {args} {
-    if {[info exists itk_component(mged)]} {
-	return [eval $itk_component(mged) get $args]
-    }
-
-    return ""
 }
 
 ::itcl::body ArcherCore::group {args} {
@@ -3834,6 +3933,14 @@ Popup Menu    Right or Ctrl-Left
 }
 
 
+::itcl::body ArcherCore::i {args} {
+    eval mgedWrapper i 0 1 1 1 $args
+}
+
+::itcl::body ArcherCore::importFg4Section {args} {
+    eval mgedWrapper importFg4Section 0 0 1 1 $args
+}
+
 ::itcl::body ArcherCore::in {args} {
     eval mgedWrapper in 0 0 1 1 $args
 }
@@ -3843,7 +3950,7 @@ Popup Menu    Right or Ctrl-Left
 }
 
 ::itcl::body ArcherCore::item {args} {
-    eval mgedWrapper item 0 0 1 1 $args
+    eval mgedWrapper item 0 0 1 0 $args
 }
 
 ::itcl::body ArcherCore::kill {args} {
@@ -3854,13 +3961,18 @@ Popup Menu    Right or Ctrl-Left
     eval mgedWrapper killall 1 0 1 1 $args
 }
 
+::itcl::body ArcherCore::killrefs {args} {
+    eval mgedWrapper killrefs 1 0 1 1 $args
+}
+
 ::itcl::body ArcherCore::killtree {args} {
     eval mgedWrapper killtree 1 0 1 1 $args
 }
 
 ::itcl::body ArcherCore::ls {args} {
     if {$args == {}} {
-	eval cadWrapper ls 0 0 0 0 $args
+	return [dbCmd ls]
+#	eval cadWrapper ls 0 0 0 0 $args
     } else {
 	set optionsAndArgs [eval dbExpand $args]
 	set options [lindex $optionsAndArgs 0]
@@ -3869,7 +3981,8 @@ Popup Menu    Right or Ctrl-Left
 	if {$options == {}} {
 	    return $expandedArgs
 	} else {
-	    return [eval cadWrapper ls 0 0 0 0 $args]
+	    return [eval dbCmd ls $args]
+#	    return [eval cadWrapper ls 0 0 0 0 $args]
 	}
     }
 }
@@ -3882,12 +3995,8 @@ Popup Menu    Right or Ctrl-Left
     eval mgedWrapper make_bb 0 0 1 1 $args
 }
 
-::itcl::body ArcherCore::make_name {args} {
-    eval mgedWrapper make_name 0 0 0 0 $args
-}
-
 ::itcl::body ArcherCore::mater {args} {
-    eval mgedWrapper mater 0 0 1 1 $args
+    eval mgedWrapper mater 0 1 1 1 $args
 }
 
 ::itcl::body ArcherCore::mirror {args} {
@@ -3898,12 +4007,28 @@ Popup Menu    Right or Ctrl-Left
     eval cadWrapper mv 0 0 1 1 $args
 }
 
+::itcl::body ArcherCore::move_arb_edge {args} {
+    eval cadWrapper move_arb_edge 0 0 1 0 $args
+}
+
+::itcl::body ArcherCore::move_arb_face {args} {
+    eval cadWrapper move_arb_face 0 0 1 0 $args
+}
+
 ::itcl::body ArcherCore::mv {args} {
     eval cadWrapper mv 0 0 1 1 $args
 }
 
 ::itcl::body ArcherCore::mvall {args} {
     eval mgedWrapper mvall 0 0 1 1 $args
+}
+
+::itcl::body ArcherCore::nmg_collapse {args} {
+    eval cadWrapper nmg_collapse 0 0 1 1 $args
+}
+
+::itcl::body ArcherCore::nmg_simplify {args} {
+    eval cadWrapper nmg_simplify 0 0 1 1 $args
 }
 
 ::itcl::body ArcherCore::ocenter {args} {
@@ -3913,7 +4038,8 @@ Popup Menu    Right or Ctrl-Left
 	eval cadWrapper ocenter 0 0 1 0 $args
 	redrawObj $obj 0
     } else {
-	eval cadWrapper ocenter 0 0 0 0 $args
+	eval dbCmd ocenter $args
+#	eval cadWrapper ocenter 0 0 0 0 $args
     }
 }
 
@@ -3948,12 +4074,24 @@ Popup Menu    Right or Ctrl-Left
     return $result
 }
 
+::itcl::body ArcherCore::prefix {args} {
+    eval mgedWrapper prefix 0 0 1 1 $args
+}
+
 ::itcl::body ArcherCore::push {args} {
     eval mgedWrapper push 0 1 1 0 $args
 }
 
 ::itcl::body ArcherCore::put {args} {
     eval mgedWrapper put 0 0 1 1 $args
+}
+
+::itcl::body ArcherCore::put_comb {args} {
+    eval mgedWrapper put_comb 0 0 1 1 $args
+}
+
+::itcl::body ArcherCore::putmat {args} {
+    eval mgedWrapper putmat 0 0 1 0 $args
 }
 
 ::itcl::body ArcherCore::pwd {} {
@@ -3964,20 +4102,44 @@ Popup Menu    Right or Ctrl-Left
     eval mgedWrapper r 0 1 1 1 $args
 }
 
-::itcl::body ArcherCore::report {args} {
-    eval mgedWrapper report 0 0 0 0 $args
+::itcl::body ArcherCore::rcodes {args} {
+    eval mgedWrapper rcodes 0 0 1 0 $args
+}
+
+::itcl::body ArcherCore::red {args} {
+    eval mgedWrapper red 0 0 1 1 $args
+}
+
+::itcl::body ArcherCore::rfarb {args} {
+    eval mgedWrapper rfarb 0 0 1 1 $args
 }
 
 ::itcl::body ArcherCore::rm {args} {
-    eval cadWrapper rm 1 0 1 1 $args
+    eval cadWrapper rm 0 0 1 1 $args
 }
 
 ::itcl::body ArcherCore::rmater {args} {
     eval mgedWrapper rmater 0 0 1 1 $args
 }
 
+::itcl::body ArcherCore::rotate_arb_face {args} {
+    eval mgedWrapper rotate_arb_face 0 0 1 0 $args
+}
+
 ::itcl::body ArcherCore::shader {args} {
-    eval mgedWrapper shader 0 0 1 1 $args
+    eval mgedWrapper shader 0 0 1 0 $args
+}
+
+::itcl::body ArcherCore::shells {args} {
+    eval mgedWrapper shells 0 0 1 0 $args
+}
+
+::itcl::body ArcherCore::title {args} {
+    if {$args == {}} {
+	return [dbCmd title]
+    }
+
+    eval mgedWrapper title 0 0 1 0 $args
 }
 
 ::itcl::body ArcherCore::track {args} {
@@ -3989,11 +4151,23 @@ Popup Menu    Right or Ctrl-Left
 }
 
 ::itcl::body ArcherCore::units {args} {
+    if {$args == {}} {
+	return [dbCmd units]
+    }
+
     eval mgedWrapper units 0 0 1 0 $args
+}
+
+::itcl::body ArcherCore::vmake {args} {
+    eval mgedWrapper vmake 0 0 1 1 $args
 }
 
 ::itcl::body ArcherCore::wmater {args} {
     eval mgedWrapper wmater 0 0 1 1 $args
+}
+
+::itcl::body ArcherCore::xpush {args} {
+    eval mgedWrapper wmater 0 1 1 0 $args
 }
 
 ::itcl::body ArcherCore::packTree {data} {
@@ -4084,10 +4258,6 @@ Popup Menu    Right or Ctrl-Left
 	return "$partA
  $op $partB"
     }
-}
-
-::itcl::body ArcherCore::vdraw {args} {
-    eval mgedWrapper vdraw 0 0 0 0 $args
 }
 
 ::itcl::body ArcherCore::whichid {args} {

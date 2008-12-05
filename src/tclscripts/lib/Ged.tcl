@@ -2821,7 +2821,7 @@ package provide cadwidgets::Ged 1.0
     $help add pmodel2view	{{} {get the pmodel2view matrix}}
     $help add png		{{[-c r/g/b] [-s size] file} {creates a png file of the current view (wirefram only)}}
     $help add pov		{{args}	{experimental:  set point-of-view}}
-    $help add prcolor		{{} {print color&material table}}
+    $help add prcolor		{{} {print color and material table}}
     $help add prefix		{{new_prefix object(s)} {prefix each occurrence of object name(s)}}
     $help add preview		{{[-v] [-d sec_delay] [-D start frame] [-K last frame] rt_script_file} {preview new style RT animation script}}
     $help add ps		{{[-f font] [-t title] [-c creator] [-s size in inches] [-l linewidth] file} {creates a postscript file of the current view}}

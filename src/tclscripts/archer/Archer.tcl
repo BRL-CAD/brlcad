@@ -1020,7 +1020,7 @@ package provide Archer 1.0
 		if {[catch {$itk_component(mged) get_type $gname} ret]} {
 		    $itk_component(mged) g $gname $gmember
 		} else {
-		    if {[catch {$itk_component(mged) get $gname tree} tree]} {
+		    if {[catch {dbCmd get $gname tree} tree]} {
 			#$itk_component(mged) attachObservers
 			$itk_component(mged) units $savedUnits
 			error "importFg4Sections: $gname is not a group!"
