@@ -40,6 +40,23 @@ THESE SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 THESE ARE LOWER PRIORITY OR FOR FUTURE RELEASES
 -----------------------------------------------
 
+* add support to 'search' to find objects with a given range of
+  numeric attributes (like finding objects with region_id within a
+  given range or that equal various values)
+
+* add a -color option to all mged commands that draw geometry (B, eid,
+  and E come to mind)
+
+* have mged record a timestamped command history by default
+
+* implement -exec support for 'search' command
+
+* make ged command names aware of object arguments for automatic
+  globbing and regular expression expansion:
+	attr set t 1 [regex .*\.r]
+	attr set t 1 [glob *.r]
+	attr set t 1 *.r
+
 * fix incrTcl pathing issues when only using system tcl/tk
   (get incrTcl subconfigure to work like was done for Tcl)
 
