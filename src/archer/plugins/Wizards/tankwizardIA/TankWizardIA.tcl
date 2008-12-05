@@ -476,7 +476,7 @@
     grid columnconfigure $itk_interior 0 -weight 1
 
     set archer $_archer
-    set archersMged [Archer::pluginMged $archer]
+    set archersMged [Archer::pluginGed $archer]
 
     # process options
     eval itk_initialize $args

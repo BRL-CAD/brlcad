@@ -85,9 +85,8 @@ namespace eval ArcherCore {
 	method deleteMouseRayCallback {_callback}
 
 	# public database commands
-	method dbCmd               {args}
+	method gedCmd               {args}
 	method cmd                 {args}
-#	method png                 {_filename}
 
 	# general
 	method UpdateTheme         {_theme} {set mTheme $_theme; updateTheme}
@@ -194,8 +193,6 @@ namespace eval ArcherCore {
 	method unhide              {args}
 	method units               {args}
 	method vmake               {args}
-	method whichid             {args}
-	method who                 {args}
 	method wmater              {args}
 	method xpush               {args}
 	method Z                   {args}
@@ -388,27 +385,24 @@ namespace eval ArcherCore {
 	variable mPrevObjViewMode 0
 	variable mObjViewMode 0
 
-	variable mCadCommands { \
-				    cd clear copy cp dbExpand delete draw exit \
-				    g group kill ls move mv ocenter orotate \
-				    oscale otranslate packTree pwd rm units \
-				    whichid who unpackTree Z zap
+	# This is mostly a list of wrapped Ged commands. However, it also contains
+	# a few commands that are implemented here in ArcherCore.
+	variable mArcherCoreCommands { \
+					   3ptarb adjust arced attr bev blast bo \
+					   bot2pipe bot_condense bot_decimate bot_face_fuse \
+					   bot_face_sort bot_merge bot_smooth bot_split bot_vertex_fuse \
+					   c cd clear clone color comb comb_color concat copy copyeval copymat \
+					   cp cpi dbExpand decompose delete draw E edcodes edcomb \
+					   edmater erase_all ev exit facetize fracture \
+					   g group hide i importFg4Section \
+					   in inside item kill killall killrefs killtree ls \
+					   make make_bb mater mirror move move_arb_edge move_arb_face \
+					   mv mvall nmg_collapse nmg_simplify \
+					   ocenter orotate oscale otranslate packTree prefix push \
+					   put put_comb putmat pwd r rcodes red rfarb rm rmater \
+					   rotate_arb_face shader shells title track unhide units unpackTree \
+					   vmake wmater xpush Z zap
 	}
-	variable mMgedCommands { \
-				     3ptarb adjust arced attr bev blast bo \
-				     bot2pipe bot_condense bot_decimate bot_face_fuse \
-				     bot_face_sort bot_merge bot_smooth bot_split bot_vertex_fuse \
-				     c clone color comb comb_color concat copyeval copymat cpi \
-				     decompose E edcodes edcomb \
-				     edmater erase_all ev facetize fracture hide i importFg4Section \
-				     in inside item killall killrefs killtree make \
-				     make_bb mater mirror move_arb_edge move_arb_face \
-				     mvall nmg_collapse nmg_simplify prefix push \
-				     put put_comb putmat r rcodes red rfarb rmater \
-				     rotate_arb_face shader shells title track unhide \
-				     vmake wmater xpush
-	}
-	variable mDbSpecificCommands {}
 	variable mUnwrappedDbCommands {}
 	variable mBannedDbCommands {
 	    dbip open rtabort shaded_mode
@@ -437,8 +431,7 @@ Popup Menu    Right or Ctrl-Left
 
 	method handleMoreArgs {args}
 
-	method cadWrapper {_cmd _eflag _hflag _sflag _tflag args}
-	method mgedWrapper {_cmd _eflag _hflag _sflag _tflag args}
+	method gedWrapper {_cmd _eflag _hflag _sflag _tflag args}
 
 	method buildCanvasMenubar {}
 
@@ -483,7 +476,7 @@ Popup Menu    Right or Ctrl-Left
 
 	# init functions
 	method initTree          {}
-	method initMged          {}
+	method initGed          {}
 	method closeMged         {}
 	method updateRtControl   {}
 
@@ -999,7 +992,7 @@ Popup Menu    Right or Ctrl-Left
     # to $mTargetCopy now. Once this reference is
     # gone, we can successfully delete the temporary
     # file here in the destructor.
-    catch {::itcl::delete object $itk_component(mged)}
+    catch {::itcl::delete object $itk_component(ged)}
 
     set mTargetOldCopy $mTargetCopy
     deleteTargetOldCopy
@@ -1047,7 +1040,11 @@ Popup Menu    Right or Ctrl-Left
     return [$itk_component(cmd) get_more_args]
 }
 
-::itcl::body ArcherCore::cadWrapper {cmd eflag hflag sflag tflag args} {
+::itcl::body ArcherCore::gedWrapper {cmd eflag hflag sflag tflag args} {
+    if {![info exists itk_component(ged)]} {
+	return
+    }
+
     SetWaitCursor
 
     if {$eflag} {
@@ -1065,15 +1062,15 @@ Popup Menu    Right or Ctrl-Left
 	    # First, apply the command to hobj if necessary.
 	    # Note - we're making the (ass)umption that the object
 	    #        name is the first item in the "expandedArgs" list.
-	    if {![catch {dbCmd attr get $obj history} hobj] &&
+	    if {![catch {gedCmd attr get $obj history} hobj] &&
 		$obj != $hobj} {
 		set tmpArgs [lreplace $expandedArgs 0 0 $hobj]
-		catch {eval dbCmd $cmd $options $tmpArgs}
+		catch {eval gedCmd $cmd $options $tmpArgs}
 	    }
 	}
     }
 
-    if {[catch {eval dbCmd $cmd $options $expandedArgs} ret]} {
+    if {[catch {eval gedCmd $cmd $options $expandedArgs} ret]} {
 	SetNormalCursor
 	return $ret
     }
@@ -1083,21 +1080,13 @@ Popup Menu    Right or Ctrl-Left
 	updateSaveMode
     }
 
-    dbCmd configure -primitiveLabels {}
+    gedCmd configure -primitiveLabels {}
     if {$tflag} {
 	catch {refreshTree}
     }
     SetNormalCursor
 
     return $ret
-}
-
-::itcl::body ArcherCore::mgedWrapper {cmd eflag hflag sflag tflag args} {
-    if {![info exists itk_component(mged)]} {
-	return
-    }
-
-    eval cadWrapper $cmd $eflag $hflag $sflag $tflag $args
 }
 
 ::itcl::body ArcherCore::buildCanvasMenubar {}  {
@@ -1275,7 +1264,7 @@ Popup Menu    Right or Ctrl-Left
 }
 
 ::itcl::body ArcherCore::redrawObj {obj {wflag 1}} {
-    if {![info exists itk_component(mged)]} {
+    if {![info exists itk_component(ged)]} {
 	return
     }
 
@@ -1283,7 +1272,7 @@ Popup Menu    Right or Ctrl-Left
 	return
     }
 
-    set renderData [dbCmd how -b $obj]
+    set renderData [gedCmd how -b $obj]
 
     set renderMode [lindex $renderData 0]
     set renderTrans [lindex $renderData 1]
@@ -1349,8 +1338,8 @@ Popup Menu    Right or Ctrl-Left
     grid columnconfigure $itk_component(tree_frm) 0 -weight 1
 }
 
-::itcl::body ArcherCore::initMged {} {
-    itk_component add mged {
+::itcl::body ArcherCore::initGed {} {
+    itk_component add ged {
 	if {$mDbNoCopy || $mDbReadOnly} {
 	    set _target $mTarget
 	} else {
@@ -1368,33 +1357,31 @@ Popup Menu    Right or Ctrl-Left
 	keep -sashwidth -sashheight -sashborderwidth
 	keep -sashindent -thickness
     }
-    set tmp_dbCommands [$itk_component(mged) getUserCmds]
+    set tmp_dbCommands [$itk_component(ged) getUserCmds]
     set mUnwrappedDbCommands {}
     foreach cmd $tmp_dbCommands {
-	if {[lsearch $mBannedDbCommands $cmd] == -1} {
+	if {[lsearch $mArcherCoreCommands $cmd] == -1 &&
+	    [lsearch $mBannedDbCommands $cmd] == -1} {
 	    lappend mUnwrappedDbCommands $cmd
 	}
     }
 
-    set mDbSpecificCommands $mMgedCommands
-
-
     if {!$mViewOnly} {
-	$itk_component(mged) set_outputHandler "$itk_component(cmd) putstring"
+	$itk_component(ged) set_outputHandler "$itk_component(cmd) putstring"
     }
-    $itk_component(mged) transparency_all 1
-    $itk_component(mged) bounds_all "-4096 4095 -4096 4095 -4096 4095"
-    $itk_component(mged) more_args_callback [::itcl::code $this handleMoreArgs]
-    $itk_component(mged) history_callback [::itcl::code $this addHistory]
+    $itk_component(ged) transparency_all 1
+    $itk_component(ged) bounds_all "-4096 4095 -4096 4095 -4096 4095"
+    $itk_component(ged) more_args_callback [::itcl::code $this handleMoreArgs]
+    $itk_component(ged) history_callback [::itcl::code $this addHistory]
 
 
     # RT Control Panel
     itk_component add rtcntrl {
-	RtControl $itk_interior.rtcp -mged $itk_component(mged)
+	RtControl $itk_interior.rtcp -mged $itk_component(ged)
     } {
 	usual
     }
-    $itk_component(mged) fb_active 0
+    $itk_component(ged) fb_active 0
     $itk_component(rtcntrl) update_fb_mode
     bind $itk_component(rtcntrl) <Visibility> "raise $itk_component(rtcntrl)"
     bind $itk_component(rtcntrl) <FocusOut> "raise $itk_component(rtcntrl)"
@@ -1402,14 +1389,14 @@ Popup Menu    Right or Ctrl-Left
 
     # create view axes control panel
     #    itk_component add vac {
-    #	ViewAxesControl $itk_interior.vac -mged $itk_component(mged)
+    #	ViewAxesControl $itk_interior.vac -mged $itk_component(ged)
     #    } {
     #	usual
     #    }
 
     # create model axes control panel
     #    itk_component add mac {
-    #	ModelAxesControl $itk_interior.mac -mged $itk_component(mged)
+    #	ModelAxesControl $itk_interior.mac -mged $itk_component(ged)
     #    } {
     #	usual
     #    }
@@ -1417,11 +1404,11 @@ Popup Menu    Right or Ctrl-Left
     #    wm protocol $itk_component(vac) WM_DELETE_WINDOW "$itk_component(vac) hide"
     #    wm protocol $itk_component(mac) WM_DELETE_WINDOW "$itk_component(mac) hide"
 
-    #    $itk_component(mged) configure -unitsCallback "$itk_component(mac) updateControlPanel"
-    $itk_component(mged) configure -paneCallback [::itcl::code $this updateActivePane]
+    #    $itk_component(ged) configure -unitsCallback "$itk_component(mac) updateControlPanel"
+    $itk_component(ged) configure -paneCallback [::itcl::code $this updateActivePane]
 
     # Other bindings for mged
-    #bind $itk_component(mged) <Enter> {focus %W}
+    #bind $itk_component(ged) <Enter> {focus %W}
 
     if {!$mViewOnly} {
 	$itk_component(canvas_menu) menuconfigure .raytrace.rt \
@@ -1478,7 +1465,7 @@ Popup Menu    Right or Ctrl-Left
     catch {delete object $itk_component(rtcntrl)}
     #    catch {delete object $itk_component(vac)}
     #    catch {delete object $itk_component(mac)}
-    catch {delete object $itk_component(mged)}
+    catch {delete object $itk_component(ged)}
 }
 
 ::itcl::body ArcherCore::updateRtControl {} {
@@ -1492,7 +1479,7 @@ Popup Menu    Right or Ctrl-Left
 #                 INTERFACE OPERATIONS
 # ------------------------------------------------------------
 ::itcl::body ArcherCore::closeDb {} {
-    pack forget $itk_component(mged)
+    pack forget $itk_component(ged)
     closeMged
 
     grid $itk_component(canvas) -row 1 -column 0 -columnspan 3 -sticky news
@@ -1686,7 +1673,7 @@ Popup Menu    Right or Ctrl-Left
     set mNeedSave 1
     updateSaveMode
     SetWaitCursor
-    dbCmd kill $comp
+    gedCmd kill $comp
 
     set select [$itk_component(tree) selection get]
     #set element [lindex [split $select ":"] 1]
@@ -1707,7 +1694,7 @@ Popup Menu    Right or Ctrl-Left
     set flist [file split $node]
     if {[llength $flist] > 1} {
 	set grp [lindex $flist [expr [llength $flist] -2]]
-	dbCmd rm $grp $comp
+	gedCmd rm $grp $comp
     }
 
     # remove from tree
@@ -1723,7 +1710,7 @@ Popup Menu    Right or Ctrl-Left
     SetWaitCursor
     set comp2 [string trim [$top.entry get]]
     wm withdraw $top
-    dbCmd $cmd $comp
+    gedCmd $cmd $comp
     refreshTree
     SetNormalCursor
     destroy $top
@@ -1785,84 +1772,84 @@ Popup Menu    Right or Ctrl-Left
 }
 
 ::itcl::body ArcherCore::beginViewRotate {} {
-    if {![info exists itk_component(mged)]} {
+    if {![info exists itk_component(ged)]} {
 	return
     }
 
-    $itk_component(mged) init_view_rotate
+    $itk_component(ged) init_view_rotate
 }
 
 ::itcl::body ArcherCore::endViewRotate {_pane} {
-    if {![info exists itk_component(mged)]} {
+    if {![info exists itk_component(ged)]} {
 	return
     }
 
-    $itk_component(mged) end_view_rotate $_pane
+    $itk_component(ged) end_view_rotate $_pane
 
-    set ae [$itk_component(mged) pane_aet $_pane]
+    set ae [$itk_component(ged) pane_aet $_pane]
     addHistory "ae $ae"
 }
 
 ::itcl::body ArcherCore::beginViewScale {} {
-    if {![info exists itk_component(mged)]} {
+    if {![info exists itk_component(ged)]} {
 	return
     }
 
-    $itk_component(mged) init_view_scale
+    $itk_component(ged) init_view_scale
 }
 
 ::itcl::body ArcherCore::endViewScale {_pane} {
-    if {![info exists itk_component(mged)]} {
+    if {![info exists itk_component(ged)]} {
 	return
     }
 
-    $itk_component(mged) end_view_scale $_pane
+    $itk_component(ged) end_view_scale $_pane
 
-    set size [$itk_component(mged) pane_size $_pane]
+    set size [$itk_component(ged) pane_size $_pane]
     addHistory "size $size"
 }
 
 ::itcl::body ArcherCore::beginViewTranslate {} {
-    if {![info exists itk_component(mged)]} {
+    if {![info exists itk_component(ged)]} {
 	return
     }
 
-    $itk_component(mged) init_view_translate
+    $itk_component(ged) init_view_translate
 }
 
 ::itcl::body ArcherCore::endViewTranslate {_pane} {
-    if {![info exists itk_component(mged)]} {
+    if {![info exists itk_component(ged)]} {
 	return
     }
 
-    $itk_component(mged) end_view_translate $_pane
+    $itk_component(ged) end_view_translate $_pane
 
-    set center [$itk_component(mged) pane_center $_pane]
+    set center [$itk_component(ged) pane_center $_pane]
     addHistory "center $center"
 }
 
 ::itcl::body ArcherCore::initCenterMode {} {
-    if {![info exists itk_component(mged)]} {
+    if {![info exists itk_component(ged)]} {
 	return
     }
 
-    $itk_component(mged) init_view_center
+    $itk_component(ged) init_view_center
 }
 
 ::itcl::body ArcherCore::initCompPick {} {
-    if {![info exists itk_component(mged)]} {
+    if {![info exists itk_component(ged)]} {
 	return
     }
 
-    $itk_component(mged) init_comp_pick
+    $itk_component(ged) init_comp_pick
 }
 
 ::itcl::body ArcherCore::initMeasure {} {
-    if {![info exists itk_component(mged)]} {
+    if {![info exists itk_component(ged)]} {
 	return
     }
 
-    $itk_component(mged) init_view_measure
+    $itk_component(ged) init_view_measure
 }
 
 ::itcl::body ArcherCore::beginMeasure {_dm _x _y} {
@@ -1885,7 +1872,7 @@ Popup Menu    Right or Ctrl-Left
 }
 
 ::itcl::body ArcherCore::handleMeasure {_dm _x _y} {
-    catch {dbCmd vdraw vlist delete $MEASURING_STICK}
+    catch {gedCmd vdraw vlist delete $MEASURING_STICK}
 
     if {$mMeasuringStickMode == 0} {
 	# Draw on the front face of the viewing cube
@@ -1900,24 +1887,24 @@ Popup Menu    Right or Ctrl-Left
 
     set move 0
     set draw 1
-    dbCmd vdraw open $MEASURING_STICK
-    dbCmd vdraw params color $mMeasuringStickColorVDraw
-    eval dbCmd vdraw write next $move $mMeasureStart
-    eval dbCmd vdraw write next $draw $mMeasureEnd
-    dbCmd vdraw send
+    gedCmd vdraw open $MEASURING_STICK
+    gedCmd vdraw params color $mMeasuringStickColorVDraw
+    eval gedCmd vdraw write next $move $mMeasureStart
+    eval gedCmd vdraw write next $draw $mMeasureEnd
+    gedCmd vdraw send
 }
 
 ::itcl::body ArcherCore::endMeasure {_dm} {
     $_dm idle_mode
 
-    catch {dbCmd vdraw vlist delete $MEASURING_STICK}
-    dbCmd erase _VDRW$MEASURING_STICK
+    catch {gedCmd vdraw vlist delete $MEASURING_STICK}
+    gedCmd erase _VDRW$MEASURING_STICK
 
     set diff [vsub2 $mMeasureEnd $mMeasureStart]
-    set delta [expr {[magnitude $diff] * [dbCmd base2local]}]
+    set delta [expr {[magnitude $diff] * [gedCmd base2local]}]
     tk_messageBox -title "Measured Distance" \
 	-icon info \
-	-message "Measured distance:  $delta [dbCmd units -s]"
+	-message "Measured distance:  $delta [gedCmd units -s]"
 }
 
 
@@ -1926,7 +1913,7 @@ Popup Menu    Right or Ctrl-Left
 	return
     }
 
-    $itk_component(mged) init_view_bindings
+    $itk_component(ged) init_view_bindings
     $itk_component(viewToolbar) configure -state normal
     $itk_component(viewToolbar) itemconfigure cpick \
 	-state normal
@@ -1935,11 +1922,11 @@ Popup Menu    Right or Ctrl-Left
 }
 
 ::itcl::body ArcherCore::initBrlcadBindings {} {
-    if {![info exists itk_component(mged)]} {
+    if {![info exists itk_component(ged)]} {
 	return
     }
 
-    $itk_component(mged) init_view_bindings brlcad
+    $itk_component(ged) init_view_bindings brlcad
     $itk_component(viewToolbar) configure -state disabled
 }
 
@@ -1996,14 +1983,14 @@ Popup Menu    Right or Ctrl-Left
 ::itcl::body ArcherCore::backgroundColor {r g b} {
     set mBackground [list $r $g $b]
 
-    if {![info exists itk_component(mged)]} {
+    if {![info exists itk_component(ged)]} {
 	set color [getTkColor \
 		       [lindex $mBackground 0] \
 		       [lindex $mBackground 1] \
 		       [lindex $mBackground 2]]
 	$itk_component(canvas) configure -background $color
     } else {
-	eval dbCmd bg_all $mBackground
+	eval gedCmd bg_all $mBackground
     }
 }
 
@@ -2110,12 +2097,12 @@ Popup Menu    Right or Ctrl-Left
     update idletasks
 }
 
-::itcl::body ArcherCore::dbCmd {args} {
-    if {![info exists itk_component(mged)]} {
+::itcl::body ArcherCore::gedCmd {args} {
+    if {![info exists itk_component(ged)]} {
 	return
     }
 
-    return [eval $itk_component(mged) $args]
+    return [eval $itk_component(ged) $args]
 }
 
 ::itcl::body ArcherCore::cmd {args} {
@@ -2130,15 +2117,14 @@ Popup Menu    Right or Ctrl-Left
 	    function {
 		if {[llength $args] == 3} {
 		    set subcmd [lindex $args 2]
-		    if {[lsearch $subcmd $mUnwrappedDbCommands] == -1 &&
-			[lsearch $subcmd $mDbSpecificCommands] == -1 &&
-			[lsearch $subcmd $mCadCommands] == -1} {
+		    if {[lsearch $subcmd $mArcherCoreCommands] == -1 &&
+			[lsearch $subcmd $mUnwrappedDbCommands] == -1} {
 			error "ArcherCore::cmd: unrecognized command - $subcmd"
 		    } else {
 			return
 		    }
 		} else {
-		    return [eval list $mCadCommands $mDbSpecificCommands $mUnwrappedDbCommands]
+		    return [eval list $mArcherCoreCommands $mUnwrappedDbCommands]
 		}
 	    }
 	    class {
@@ -2150,13 +2136,7 @@ Popup Menu    Right or Ctrl-Left
 	}
     }
 
-    set i [lsearch -exact $mCadCommands $cmd]
-    if {$i != -1} {
-	addHistory $args
-	return [eval $args]
-    }
-
-    set i [lsearch -exact $mDbSpecificCommands $cmd]
+    set i [lsearch -exact $mArcherCoreCommands $cmd]
     if {$i != -1} {
 	addHistory $args
 	return [eval $args]
@@ -2165,18 +2145,11 @@ Popup Menu    Right or Ctrl-Left
     set i [lsearch -exact $mUnwrappedDbCommands $cmd]
     if {$i != -1} {
 	addHistory $args
-	return [eval dbCmd $args]
+	return [eval gedCmd $args]
     }
 
     error "ArcherCore::cmd: unrecognized command - $args, check source code"
 }
-
-#::itcl::body ArcherCore::png {filename} {
-#    SetWaitCursor
-#    dbCmd sync
-#    dbCmd png $filename
-#    SetNormalCursor
-#}
 
 # ------------------------------------------------------------
 #                  DB/DISPLAY COMMANDS
@@ -2186,7 +2159,7 @@ Popup Menu    Right or Ctrl-Left
 	return {}
     }
 
-    if {[catch {dbCmd get $node tree} tlist]} {
+    if {[catch {gedCmd get $node tree} tlist]} {
 	return {}
     }
 
@@ -2209,7 +2182,7 @@ Popup Menu    Right or Ctrl-Left
 
 
 ::itcl::body ArcherCore::renderComp {_node} {
-    set renderMode [dbCmd how $_node]
+    set renderMode [gedCmd how $_node]
     if {$renderMode < 0} {
 	render $_node 0 1 1
     } else {
@@ -2233,54 +2206,54 @@ Popup Menu    Right or Ctrl-Left
 	set plnode {}
     }
 
-    if {[catch {dbCmd attr get \
+    if {[catch {gedCmd attr get \
 		    $tnode displayColor} displayColor]} {
 	switch -exact -- $state {
 	    "0" {
-		dbCmd configure -primitiveLabels $plnode
-		dbCmd draw -m0 -x$trans $node
+		gedCmd configure -primitiveLabels $plnode
+		gedCmd draw -m0 -x$trans $node
 	    }
 	    "1" {
-		dbCmd configure -primitiveLabels $plnode
-		dbCmd draw -m1 -x$trans $node
+		gedCmd configure -primitiveLabels $plnode
+		gedCmd draw -m1 -x$trans $node
 	    }
 	    "2" {
-		dbCmd configure -primitiveLabels $plnode
-		dbCmd draw -m2 -x$trans $node
+		gedCmd configure -primitiveLabels $plnode
+		gedCmd draw -m2 -x$trans $node
 	    }
 	    "3" {
-		dbCmd configure -primitiveLabels $plnode
-		dbCmd E $node
+		gedCmd configure -primitiveLabels $plnode
+		gedCmd E $node
 	    }
 	    "-1" {
-		dbCmd configure -primitiveLabels {}
-		dbCmd erase $node
+		gedCmd configure -primitiveLabels {}
+		gedCmd erase $node
 	    }
 	}
     } else {
 	switch -exact -- $state {
 	    "0" {
-		dbCmd configure -primitiveLabels $plnode
-		dbCmd draw -m0 -x$trans \
+		gedCmd configure -primitiveLabels $plnode
+		gedCmd draw -m0 -x$trans \
 		    -C$displayColor $node
 	    }
 	    "1" {
-		dbCmd configure -primitiveLabels $plnode
-		dbCmd draw -m1 -x$trans \
+		gedCmd configure -primitiveLabels $plnode
+		gedCmd draw -m1 -x$trans \
 		    -C$displayColor $node
 	    }
 	    "2" {
-		dbCmd configure -primitiveLabels $plnode
-		dbCmd draw -m2 -x$trans \
+		gedCmd configure -primitiveLabels $plnode
+		gedCmd draw -m2 -x$trans \
 		    -C$displayColor $node
 	    }
 	    "3" {
-		dbCmd configure -primitiveLabels $plnode
-		dbCmd E -C$displayColor $node
+		gedCmd configure -primitiveLabels $plnode
+		gedCmd E -C$displayColor $node
 	    }
 	    "-1" {
-		dbCmd configure -primitiveLabels {}
-		dbCmd erase $node
+		gedCmd configure -primitiveLabels {}
+		gedCmd erase $node
 	    }
 	}
     }
@@ -2308,9 +2281,9 @@ Popup Menu    Right or Ctrl-Left
 ::itcl::body ArcherCore::selectDisplayColor {node} {
     set tnode [file tail $node]
 
-    if {[catch {dbCmd attr get \
+    if {[catch {gedCmd attr get \
 		    $tnode displayColor} displayColor] &&
-	[catch {dbCmd attr get \
+	[catch {gedCmd attr get \
 		    $tnode rgb} displayColor]} {
 	set displayColor [eval format "%d/%d/%d" $mDefaultNodeColor]
     }
@@ -2331,13 +2304,13 @@ Popup Menu    Right or Ctrl-Left
     set savePwd ""
 
     if {$rgb == {}} {
-	dbCmd attr rm $tnode displayColor
+	gedCmd attr rm $tnode displayColor
     } else {
-	dbCmd attr set $tnode \
+	gedCmd attr set $tnode \
 	    displayColor "[lindex $rgb 0]/[lindex $rgb 1]/[lindex $rgb 2]"
     }
 
-    set drawState [dbCmd how -b $node]
+    set drawState [gedCmd how -b $node]
 
     if {$savePwd != ""} {
 	cd $savePwd
@@ -2354,7 +2327,7 @@ Popup Menu    Right or Ctrl-Left
 }
 
 ::itcl::body ArcherCore::setTransparency {node alpha} {
-    dbCmd set_transparency $node $alpha
+    gedCmd set_transparency $node $alpha
 }
 
 ::itcl::body ArcherCore::raytracePanel {} {
@@ -2383,7 +2356,7 @@ Popup Menu    Right or Ctrl-Left
 }
 
 ::itcl::body ArcherCore::setActivePane {pane} {
-    $itk_component(mged) pane $pane
+    $itk_component(ged) pane $pane
     updateActivePane $pane
 }
 
@@ -2396,56 +2369,56 @@ Popup Menu    Right or Ctrl-Left
 	lr {set mActivePane 3}
     }
 
-    set mShowModelAxes [dbCmd cget -modelAxesEnable]
-    set mShowModelAxesTicks [dbCmd cget -modelAxesTickEnabled]
-    set mShowViewAxes [dbCmd cget -viewAxesEnable]
+    set mShowModelAxes [gedCmd cget -modelAxesEnable]
+    set mShowModelAxesTicks [gedCmd cget -modelAxesTickEnabled]
+    set mShowViewAxes [gedCmd cget -viewAxesEnable]
 
-#    set mShowModelAxes [dbCmd setModelAxesEnable]
-#    set mShowModelAxesTicks [dbCmd setModelAxesTickEnable]
-#    set mShowViewAxes [dbCmd setViewAxesEnable]
+#    set mShowModelAxes [gedCmd setModelAxesEnable]
+#    set mShowModelAxesTicks [gedCmd setModelAxesTickEnable]
+#    set mShowViewAxes [gedCmd setViewAxesEnable]
 }
 
 ::itcl::body ArcherCore::doMultiPane {} {
-    dbCmd configure -multi_pane $mMultiPane
+    gedCmd configure -multi_pane $mMultiPane
 }
 
 ::itcl::body ArcherCore::doLighting {} {
     SetWaitCursor
 
     if {$mZClipMode != $ZCLIP_NONE} {
-	dbCmd zclip_all $mLighting
+	gedCmd zclip_all $mLighting
     }
 
-    dbCmd zbuffer_all $mLighting
-    dbCmd light_all $mLighting
+    gedCmd zbuffer_all $mLighting
+    gedCmd light_all $mLighting
 
     SetNormalCursor
 }
 
 ::itcl::body ArcherCore::doViewReset {} {
-    if {![info exists itk_component(mged)]} {
+    if {![info exists itk_component(ged)]} {
 	return
     }
 
-    dbCmd autoview_all
-    dbCmd default_views
+    gedCmd autoview_all
+    gedCmd default_views
 }
 
 ::itcl::body ArcherCore::doAutoview {} {
-    if {![info exists itk_component(mged)]} {
+    if {![info exists itk_component(ged)]} {
 	return
     }
 
-    dbCmd autoview_all
+    gedCmd autoview_all
 }
 
 ::itcl::body ArcherCore::doViewCenter {} {
-    if {![info exists itk_component(mged)]} {
+    if {![info exists itk_component(ged)]} {
 	return
     }
 
     if {$mCurrentDisplay == ""} {
-	set dm dbCmd
+	set dm gedCmd
     } else {
 	set dm $mCurrentDisplay
     }
@@ -2455,7 +2428,7 @@ Popup Menu    Right or Ctrl-Left
     set mCenterY [lindex $center 1]
     set mCenterZ [lindex $center 2]
 
-    set mDbUnits [dbCmd units -s]
+    set mDbUnits [gedCmd units -s]
     $itk_component(centerDialog) center [namespace tail $this]
     if {[$itk_component(centerDialog) activate]} {
 	$dm center $mCenterX $mCenterY $mCenterZ
@@ -2464,7 +2437,7 @@ Popup Menu    Right or Ctrl-Left
 
 ::itcl::body ArcherCore::doAe {az el} {
     if {$mCurrentDisplay == ""} {
-	dbCmd ae $az $el
+	gedCmd ae $az $el
     } else {
 	$mCurrentDisplay ae $az $el
     }
@@ -2473,15 +2446,15 @@ Popup Menu    Right or Ctrl-Left
 }
 
 ::itcl::body ArcherCore::showViewAxes {} {
-    catch {dbCmd configure -viewAxesEnable $mShowViewAxes}
+    catch {gedCmd configure -viewAxesEnable $mShowViewAxes}
 }
 
 ::itcl::body ArcherCore::showModelAxes {} {
-    catch {dbCmd configure -modelAxesEnable $mShowModelAxes}
+    catch {gedCmd configure -modelAxesEnable $mShowModelAxes}
 }
 
 ::itcl::body ArcherCore::showModelAxesTicks {} {
-    catch {dbCmd configure -modelAxesTickEnabled $mShowModelAxesTicks}
+    catch {gedCmd configure -modelAxesTickEnabled $mShowModelAxesTicks}
 }
 
 
@@ -2572,7 +2545,7 @@ Popup Menu    Right or Ctrl-Left
     foreach name [file split $path] {
 	set node [$itk_component(tree) find $name $parent]
 	set nname [$itk_component(tree) query -path $node]
-	if {0 <= [dbCmd how $nname]} {
+	if {0 <= [gedCmd how $nname]} {
 	    $itk_component(tree) alternode $node -color blue
 	} else {
 	    $itk_component(tree) alternode $node -color black
@@ -2590,7 +2563,7 @@ Popup Menu    Right or Ctrl-Left
 	set node "root"
 
 	# get toplevel objects
-	set tops [dbCmd tops]
+	set tops [gedCmd tops]
     } else {
 	set nname [$itk_component(tree) query -text $node]
 
@@ -2611,14 +2584,14 @@ Popup Menu    Right or Ctrl-Left
 
 	# need to add whether its a "leaf" or "branch" ... this seems to work,
 	# as long as they don't change BRL-CAD
-	set l [lindex [split [dbCmd l $cname] "\n"] 0]
+	set l [lindex [split [gedCmd l $cname] "\n"] 0]
 	if {[lindex $l [expr [llength $l] -1]] == "--"} {set stem "branch"}
 
 	# add to tree
 	set cnode [$itk_component(tree) insert end $node $cname $stem]
 	set cpath [$itk_component(tree) query -path $cnode]
 
-	if {0 <= [dbCmd how $cpath]} {
+	if {0 <= [gedCmd how $cpath]} {
 	    $itk_component(tree) alternode $cnode -color blue
 	} else {
 	    $itk_component(tree) alternode $cnode -color black
@@ -2655,7 +2628,7 @@ Popup Menu    Right or Ctrl-Left
     #    tag refers to a node in the previous database.
     set savePwd ""
 
-    if {[catch {dbCmd get_type $node} ret]} {
+    if {[catch {gedCmd get_type $node} ret]} {
 	if {$savePwd != ""} {
 	    cd $savePwd
 	}
@@ -2664,16 +2637,16 @@ Popup Menu    Right or Ctrl-Left
     }
 
     # label the object if it's being drawn
-    set mRenderMode [dbCmd how $node]
+    set mRenderMode [gedCmd how $node]
 
     if {$mShowPrimitiveLabels && 0 <= $mRenderMode} {
-	dbCmd configure -primitiveLabels $node
+	gedCmd configure -primitiveLabels $node
     } else {
-	dbCmd configure -primitiveLabels {}
+	gedCmd configure -primitiveLabels {}
     }
 
     if {$rflag} {
-	dbCmd refresh
+	gedCmd refresh
     }
 
     set mPrevSelectedObjPath $mSelectedObjPath
@@ -2736,7 +2709,7 @@ Popup Menu    Right or Ctrl-Left
     set node [$itk_component(tree) query -path $element]
     set nodeType [$itk_component(tree) query -nodetype $element]
 
-    set mRenderMode [dbCmd how $node]
+    set mRenderMode [gedCmd how $node]
     # do this in case "ev" was used from the command line
     if {2 < $mRenderMode} {
 	set mRenderMode 2
@@ -2913,28 +2886,28 @@ Popup Menu    Right or Ctrl-Left
     }
 
     # Load MGED database
-    if {[info exists itk_component(mged)]} {
+    if {[info exists itk_component(ged)]} {
 	if {$mDbShared} {
-	    $itk_component(mged) sharedGed $mTarget
+	    $itk_component(ged) sharedGed $mTarget
 	} elseif {$mDbNoCopy || $mDbReadOnly} {
-	    $itk_component(mged) open $mTarget
+	    $itk_component(ged) open $mTarget
 	} else {
-	    $itk_component(mged) open $mTargetCopy
+	    $itk_component(ged) open $mTargetCopy
 	}
     } else {
-	initMged
+	initGed
 
 	grid forget $itk_component(canvas)
 	if {!$mViewOnly} {
-	    grid $itk_component(mged) -row 1 -column 0 -columnspan 3 -sticky news
+	    grid $itk_component(ged) -row 1 -column 0 -columnspan 3 -sticky news
 	    after idle "$this component cmd configure -cmd_prefix \"[namespace tail $this] cmd\""
 	} else {
-	    grid $itk_component(mged) -row 1 -column 0 -sticky news
+	    grid $itk_component(ged) -row 1 -column 0 -sticky news
 	}
     }
 
-    set mDbTitle [$itk_component(mged) title]
-    set mDbUnits [$itk_component(mged) units -s]
+    set mDbTitle [$itk_component(ged) title]
+    set mDbUnits [$itk_component(ged) units -s]
     set mPrevObjViewMode $OBJ_ATTR_VIEW_MODE
     set mPrevSelectedObjPath ""
     set mPrevSelectedObj ""
@@ -2945,14 +2918,14 @@ Popup Menu    Right or Ctrl-Left
     set mPendingEdits 0
 
     if {!$mViewOnly} {
-	dbCmd size [expr {$mGroundPlaneSize * 1.5 * [dbCmd base2local]}]
+	gedCmd size [expr {$mGroundPlaneSize * 1.5 * [gedCmd base2local]}]
 	buildGroundPlane
 	showGroundPlane
     }
 
-#    setColorOption dbCmd -primitiveLabelColor $mPrimitiveLabelColor
-#    setColorOption dbCmd -scaleColor $mScaleColor
-#    setColorOption dbCmd -viewingParamsColor $mViewingParamsColor
+#    setColorOption gedCmd -primitiveLabelColor $mPrimitiveLabelColor
+#    setColorOption gedCmd -scaleColor $mScaleColor
+#    setColorOption gedCmd -viewingParamsColor $mViewingParamsColor
 
     if {!$mViewOnly} {
 	doLighting
@@ -2967,7 +2940,7 @@ Popup Menu    Right or Ctrl-Left
     }
 
     if {$mBindingMode == 0} {
-	initDefaultBindings $itk_component(mged)
+	initDefaultBindings $itk_component(ged)
 	set mDefaultBindingMode $ROTATE_MODE
 	beginViewRotate
     }
@@ -3230,12 +3203,12 @@ Popup Menu    Right or Ctrl-Left
 
 #XXXX Needs more flexibility (i.e. position and orientation)
 ::itcl::body ArcherCore::buildGroundPlane {} {
-    if {![info exists itk_component(mged)]} {
+    if {![info exists itk_component(ged)]} {
 	return
     }
 
-    catch {dbCmd vdraw vlist delete groundPlaneMajor}
-    catch {dbCmd vdraw vlist delete groundPlaneMinor}
+    catch {gedCmd vdraw vlist delete groundPlaneMajor}
+    catch {gedCmd vdraw vlist delete groundPlaneMinor}
 
     set majorColor [getVDrawColor $mGroundPlaneMajorColor]
     set minorColor [getVDrawColor $mGroundPlaneMinorColor]
@@ -3248,57 +3221,57 @@ Popup Menu    Right or Ctrl-Left
 
 
     # build minor lines
-    dbCmd vdraw open groundPlaneMinor
-    dbCmd vdraw params color $minorColor
+    gedCmd vdraw open groundPlaneMinor
+    gedCmd vdraw params color $minorColor
 
     # build minor X lines
     for {set y -$mGroundPlaneInterval} {$Ymin <= $y} {set y [expr {$y - $mGroundPlaneInterval}]} {
-	dbCmd vdraw write next $move $Xmin $y 0
-	dbCmd vdraw write next $draw $Xmax $y 0
+	gedCmd vdraw write next $move $Xmin $y 0
+	gedCmd vdraw write next $draw $Xmax $y 0
     }
 
     for {set y $mGroundPlaneInterval} {$y <= $Ymax} {set y [expr {$y + $mGroundPlaneInterval}]} {
-	dbCmd vdraw write next $move $Xmin $y 0
-	dbCmd vdraw write next $draw $Xmax $y 0
+	gedCmd vdraw write next $move $Xmin $y 0
+	gedCmd vdraw write next $draw $Xmax $y 0
     }
 
     # build minor Y lines
     for {set x -$mGroundPlaneInterval} {$Xmin <= $x} {set x [expr {$x - $mGroundPlaneInterval}]} {
-	dbCmd vdraw write next $move $x $Ymin 0
-	dbCmd vdraw write next $draw $x $Ymax 0
+	gedCmd vdraw write next $move $x $Ymin 0
+	gedCmd vdraw write next $draw $x $Ymax 0
     }
 
     for {set x $mGroundPlaneInterval} {$x <= $Xmax} {set x [expr {$x + $mGroundPlaneInterval}]} {
-	dbCmd vdraw write next $move $x $Ymin 0
-	dbCmd vdraw write next $draw $x $Ymax 0
+	gedCmd vdraw write next $move $x $Ymin 0
+	gedCmd vdraw write next $draw $x $Ymax 0
     }
 
 
     # build major lines
-    dbCmd vdraw open groundPlaneMajor
-    dbCmd vdraw params color $majorColor
-    dbCmd vdraw write 0 $move $Xmin 0 0
-    dbCmd vdraw write next $draw $Xmax 0 0
-    dbCmd vdraw write next $move 0 $Ymin 0
-    dbCmd vdraw write next $draw 0 $Ymax 0
+    gedCmd vdraw open groundPlaneMajor
+    gedCmd vdraw params color $majorColor
+    gedCmd vdraw write 0 $move $Xmin 0 0
+    gedCmd vdraw write next $draw $Xmax 0 0
+    gedCmd vdraw write next $move 0 $Ymin 0
+    gedCmd vdraw write next $draw 0 $Ymax 0
 }
 
 ::itcl::body ArcherCore::showGroundPlane {} {
-    if {![info exists itk_component(mged)]} {
+    if {![info exists itk_component(ged)]} {
 	return
     }
 
     set savePwd ""
 
     if {$mShowGroundPlane} {
-	dbCmd vdraw open groundPlaneMajor
-	dbCmd vdraw send
-	dbCmd vdraw open groundPlaneMinor
-	dbCmd vdraw send
+	gedCmd vdraw open groundPlaneMajor
+	gedCmd vdraw send
+	gedCmd vdraw open groundPlaneMinor
+	gedCmd vdraw send
     } else {
-	set phonyList [dbCmd who p]
+	set phonyList [gedCmd who p]
 	if {[lsearch $phonyList _VDRWgroundPlaneMajor] != -1} {
-	    dbCmd erase _VDRWgroundPlaneMajor _VDRWgroundPlaneMinor
+	    gedCmd erase _VDRWgroundPlaneMajor _VDRWgroundPlaneMinor
 	}
     }
 
@@ -3308,7 +3281,7 @@ Popup Menu    Right or Ctrl-Left
 }
 
 ::itcl::body ArcherCore::showPrimitiveLabels {} {
-    if {![info exists itk_component(mged)]} {
+    if {![info exists itk_component(ged)]} {
 	return
     }
 
@@ -3316,8 +3289,8 @@ Popup Menu    Right or Ctrl-Left
 }
 
 ::itcl::body ArcherCore::showViewParams {} {
-    if {[info exists itk_component(mged)]} {
-	$itk_component(mged) configure -showViewingParams $mShowViewingParams
+    if {[info exists itk_component(ged)]} {
+	$itk_component(ged) configure -showViewingParams $mShowViewingParams
     } else {
 	return
     }
@@ -3326,8 +3299,8 @@ Popup Menu    Right or Ctrl-Left
 }
 
 ::itcl::body ArcherCore::showScale {} {
-    if {[info exists itk_component(mged)]} {
-	$itk_component(mged) configure -scaleEnable $mShowScale
+    if {[info exists itk_component(ged)]} {
+	$itk_component(ged) configure -scaleEnable $mShowScale
     } else {
 	return
     }
@@ -3516,35 +3489,35 @@ Popup Menu    Right or Ctrl-Left
 
 
 ::itcl::body ArcherCore::launchNirt {} {
-    if {![info exists itk_component(mged)] || $mViewOnly} {
+    if {![info exists itk_component(ged)] || $mViewOnly} {
 	return
     }
 
     $itk_component(cmd) putstring "nirt -b"
-    $itk_component(cmd) putstring [$itk_component(mged) nirt -b]
+    $itk_component(cmd) putstring [$itk_component(ged) nirt -b]
 }
 
 ::itcl::body ArcherCore::launchRtApp {app size} {
     global tcl_platform
 
-    if {![info exists itk_component(mged)] || $mViewOnly} {
+    if {![info exists itk_component(ged)] || $mViewOnly} {
 	return
     }
 
     if {![string is digit $size]} {
-	set size [winfo width $itk_component(mged)]
+	set size [winfo width $itk_component(ged)]
     }
 
     if {$tcl_platform(platform) == "windows"} {
-	$itk_component(mged) $app -s $size -F /dev/wgll
+	$itk_component(ged) $app -s $size -F /dev/wgll
     } {
-	$itk_component(mged) $app -s $size -F /dev/ogll
+	$itk_component(ged) $app -s $size -F /dev/ogll
     }
 }
 
 ::itcl::body ArcherCore::refreshDisplay {} {
     if {$mCurrentDisplay == ""} {
-	dbCmd refresh
+	gedCmd refresh
     } else {
 	$mCurrentDisplay refresh
     }
@@ -3566,7 +3539,7 @@ Popup Menu    Right or Ctrl-Left
 	    tk_messageBox -message "Nothing hit"
 	} else {
 	    set region [bu_get_value_by_keyword "region" $partition]
-	    tk_messageBox -message [dbCmd l $region]
+	    tk_messageBox -message [gedCmd l $region]
 	}
     } else {
 	foreach callback $mMouseRayCallbacks {
@@ -3576,7 +3549,7 @@ Popup Menu    Right or Ctrl-Left
 }
 
 ::itcl::body ArcherCore::shootRay {_start _op _target _prep _no_bool _onehit} {
-    eval $itk_component(mged) rt_gettrees ray -i -u [$itk_component(mged) who]
+    eval $itk_component(ged) rt_gettrees ray -i -u [gedCmd who]
     ray prep $_prep
     ray no_bool $_no_bool
     ray onehit $_onehit
@@ -3622,67 +3595,67 @@ Popup Menu    Right or Ctrl-Left
 
 ##################################### ArcherCore Commands #####################################
 ::itcl::body ArcherCore::3ptarb {args} {
-    eval mgedWrapper 3ptarb 0 1 1 1 $args
+    eval gedWrapper 3ptarb 0 1 1 1 $args
 }
 
 ::itcl::body ArcherCore::adjust {args} {
-    eval mgedWrapper adjust 0 1 1 1 $args
+    eval gedWrapper adjust 0 1 1 1 $args
 }
 
 ::itcl::body ArcherCore::arced {args} {
-    eval mgedWrapper arced 0 0 1 0 $args
+    eval gedWrapper arced 0 0 1 0 $args
 }
 
 ::itcl::body ArcherCore::attr {args} {
-    eval mgedWrapper attr 0 0 1 0 $args
+    eval gedWrapper attr 0 0 1 0 $args
 }
 
 ::itcl::body ArcherCore::bev {args} {
-    eval mgedWrapper bev 0 0 1 1 $args
+    eval gedWrapper bev 0 0 1 1 $args
 }
 
 ::itcl::body ArcherCore::blast {args} {
-    eval mgedWrapper blast 0 0 0 1 $args
+    eval gedWrapper blast 0 0 0 1 $args
 }
 
 ::itcl::body ArcherCore::bo {args} {
-    eval mgedWrapper bo 0 0 1 1 $args
+    eval gedWrapper bo 0 0 1 1 $args
 }
 
 ::itcl::body ArcherCore::bot_condense {args} {
-    eval mgedWrapper bot_condense 0 0 1 1 $args
+    eval gedWrapper bot_condense 0 0 1 1 $args
 }
 
 ::itcl::body ArcherCore::bot_decimate {args} {
-    eval mgedWrapper bot_decimate 0 0 1 1 $args
+    eval gedWrapper bot_decimate 0 0 1 1 $args
 }
 
 ::itcl::body ArcherCore::bot_face_fuse {args} {
-    eval mgedWrapper bot_face_fuse 0 0 1 1 $args
+    eval gedWrapper bot_face_fuse 0 0 1 1 $args
 }
 
 ::itcl::body ArcherCore::bot_face_sort {args} {
-    eval mgedWrapper bot_face_sort 1 0 1 1 $args
+    eval gedWrapper bot_face_sort 1 0 1 1 $args
 }
 
 ::itcl::body ArcherCore::bot_merge {args} {
-    eval mgedWrapper bot_merge 1 0 1 1 $args
+    eval gedWrapper bot_merge 1 0 1 1 $args
 }
 
 ::itcl::body ArcherCore::bot_smooth {args} {
-    eval mgedWrapper bot_smooth 0 0 1 1 $args
+    eval gedWrapper bot_smooth 0 0 1 1 $args
 }
 
 ::itcl::body ArcherCore::bot_split {args} {
-    eval mgedWrapper bot_split 0 0 1 1 $args
+    eval gedWrapper bot_split 0 0 1 1 $args
 }
 
 ::itcl::body ArcherCore::bot_vertex_fuse {args} {
-    eval mgedWrapper bot_vertex_fuse 0 0 1 1 $args
+    eval gedWrapper bot_vertex_fuse 0 0 1 1 $args
 }
 
 ::itcl::body ArcherCore::c {args} {
-    eval mgedWrapper c 0 1 1 1 $args
+    eval gedWrapper c 0 1 1 1 $args
 }
 
 ::itcl::body ArcherCore::cd {args} {
@@ -3690,7 +3663,7 @@ Popup Menu    Right or Ctrl-Left
 }
 
 ::itcl::body ArcherCore::clear {args} {
-    eval cadWrapper clear 0 0 0 1 $args
+    eval gedWrapper clear 0 0 0 1 $args
 
     if {$mShowGroundPlane} {
 	showGroundPlane
@@ -3698,43 +3671,43 @@ Popup Menu    Right or Ctrl-Left
 }
 
 ::itcl::body ArcherCore::clone {args} {
-    eval mgedWrapper clone 0 0 1 1 $args
+    eval gedWrapper clone 0 0 1 1 $args
 }
 
 ::itcl::body ArcherCore::color {args} {
-    eval mgedWrapper color 0 0 1 0 $args
+    eval gedWrapper color 0 0 1 0 $args
 }
 
 ::itcl::body ArcherCore::comb {args} {
-    eval mgedWrapper comb 0 1 1 1 $args
+    eval gedWrapper comb 0 1 1 1 $args
 }
 
 ::itcl::body ArcherCore::comb_color {args} {
-    eval mgedWrapper comb_color 0 1 1 1 $args
+    eval gedWrapper comb_color 0 1 1 1 $args
 }
 
 ::itcl::body ArcherCore::concat {args} {
-    eval mgedWrapper concat 0 0 1 1 $args
+    eval gedWrapper concat 0 0 1 1 $args
 }
 
 ::itcl::body ArcherCore::copy {args} {
-    eval cadWrapper cp 0 0 1 1 $args
+    eval gedWrapper cp 0 0 1 1 $args
 }
 
 ::itcl::body ArcherCore::copyeval {args} {
-    eval mgedWrapper copyeval 0 0 1 1 $args
+    eval gedWrapper copyeval 0 0 1 1 $args
 }
 
 ::itcl::body ArcherCore::copymat {args} {
-    eval mgedWrapper copymat 0 0 1 0 $args
+    eval gedWrapper copymat 0 0 1 0 $args
 }
 
 ::itcl::body ArcherCore::cp {args} {
-    eval cadWrapper cp 0 0 1 1 $args
+    eval gedWrapper cp 0 0 1 1 $args
 }
 
 ::itcl::body ArcherCore::cpi {args} {
-    eval mgedWrapper cpi 0 0 1 1 $args
+    eval gedWrapper cpi 0 0 1 1 $args
 }
 
 ::itcl::body ArcherCore::dbExpand {args} {
@@ -3757,7 +3730,7 @@ Popup Menu    Right or Ctrl-Left
     }
 
     set tobjects {}
-    set lsItems [$itk_component(mged) ls -a]
+    set lsItems [$itk_component(ged) ls -a]
     foreach obj $objects {
 	set pdata [split $obj /]
 	set len [llength $pdata]
@@ -3804,11 +3777,11 @@ Popup Menu    Right or Ctrl-Left
 }
 
 ::itcl::body ArcherCore::decompose {args} {
-    eval mgedWrapper decompose 0 1 1 0 $args
+    eval gedWrapper decompose 0 1 1 0 $args
 }
 
 ::itcl::body ArcherCore::delete {args} {
-    eval cadWrapper kill 1 0 1 1 $args
+    eval gedWrapper kill 1 0 1 1 $args
 }
 
 ::itcl::body ArcherCore::draw {args} {
@@ -3838,15 +3811,15 @@ Popup Menu    Right or Ctrl-Left
 	lappend tobjects [regsub {^/} $obj ""]
     }
 
-    if {[catch {eval dbCmd draw $options $tobjects} ret]} {
-	dbCmd configure -primitiveLabels {}
+    if {[catch {eval gedCmd draw $options $tobjects} ret]} {
+	gedCmd configure -primitiveLabels {}
 	refreshTree
 	SetNormalCursor
 
 	return $ret
     }
 
-    dbCmd configure -primitiveLabels {}
+    gedCmd configure -primitiveLabels {}
     refreshTree
     if {$wflag} {
 	SetNormalCursor
@@ -3856,19 +3829,19 @@ Popup Menu    Right or Ctrl-Left
 }
 
 ::itcl::body ArcherCore::E {args} {
-    eval mgedWrapper E 1 0 0 1 $args
+    eval gedWrapper E 1 0 0 1 $args
 }
 
 ::itcl::body ArcherCore::edcodes {args} {
-    eval mgedWrapper edcodes 0 0 1 0 $args
+    eval gedWrapper edcodes 0 0 1 0 $args
 }
 
 ::itcl::body ArcherCore::edcomb {args} {
-    eval mgedWrapper edcomb 0 0 1 1 $args
+    eval gedWrapper edcomb 0 0 1 1 $args
 }
 
 ::itcl::body ArcherCore::edmater {args} {
-    eval mgedWrapper edmater 0 0 1 0 $args
+    eval gedWrapper edmater 0 0 1 0 $args
 }
 
 ::itcl::body ArcherCore::erase {args} {
@@ -3887,25 +3860,25 @@ Popup Menu    Right or Ctrl-Left
 	lappend tobjects [regsub {^/} $obj ""]
     }
 
-    if {[catch {eval dbCmd erase $tobjects} ret]} {
-	dbCmd configure -primitiveLabels {}
+    if {[catch {eval gedCmd erase $tobjects} ret]} {
+	gedCmd configure -primitiveLabels {}
 	refreshTree
 	SetNormalCursor
 
 	return $ret
     }
 
-    dbCmd configure -primitiveLabels {}
+    gedCmd configure -primitiveLabels {}
     refreshTree
     SetNormalCursor
 }
 
 ::itcl::body ArcherCore::erase_all {args} {
-    eval mgedWrapper erase_all 1 0 0 1 $args
+    eval gedWrapper erase_all 1 0 0 1 $args
 }
 
 ::itcl::body ArcherCore::ev {args} {
-    eval mgedWrapper ev 1 0 0 1 $args
+    eval gedWrapper ev 1 0 0 1 $args
 }
 
 ::itcl::body ArcherCore::exit {args} {
@@ -3913,11 +3886,11 @@ Popup Menu    Right or Ctrl-Left
 }
 
 ::itcl::body ArcherCore::facetize {args} {
-    eval mgedWrapper facetize 0 0 1 1 $args
+    eval gedWrapper facetize 0 0 1 1 $args
 }
 
 ::itcl::body ArcherCore::fracture {args} {
-    eval mgedWrapper fracture 0 1 1 1 $args
+    eval gedWrapper fracture 0 1 1 1 $args
 }
 
 ::itcl::body ArcherCore::g {args} {
@@ -3925,54 +3898,54 @@ Popup Menu    Right or Ctrl-Left
 }
 
 ::itcl::body ArcherCore::group {args} {
-    eval cadWrapper g 0 1 1 1 $args
+    eval gedWrapper g 0 1 1 1 $args
 }
 
 ::itcl::body ArcherCore::hide {args} {
-    eval mgedWrapper hide 0 0 1 1 $args
+    eval gedWrapper hide 0 0 1 1 $args
 }
 
 
 ::itcl::body ArcherCore::i {args} {
-    eval mgedWrapper i 0 1 1 1 $args
+    eval gedWrapper i 0 1 1 1 $args
 }
 
 ::itcl::body ArcherCore::importFg4Section {args} {
-    eval mgedWrapper importFg4Section 0 0 1 1 $args
+    eval gedWrapper importFg4Section 0 0 1 1 $args
 }
 
 ::itcl::body ArcherCore::in {args} {
-    eval mgedWrapper in 0 0 1 1 $args
+    eval gedWrapper in 0 0 1 1 $args
 }
 
 ::itcl::body ArcherCore::inside {args} {
-    eval mgedWrapper inside 0 0 1 1 $args
+    eval gedWrapper inside 0 0 1 1 $args
 }
 
 ::itcl::body ArcherCore::item {args} {
-    eval mgedWrapper item 0 0 1 0 $args
+    eval gedWrapper item 0 0 1 0 $args
 }
 
 ::itcl::body ArcherCore::kill {args} {
-    eval cadWrapper kill 1 0 1 1 $args
+    eval gedWrapper kill 1 0 1 1 $args
 }
 
 ::itcl::body ArcherCore::killall {args} {
-    eval mgedWrapper killall 1 0 1 1 $args
+    eval gedWrapper killall 1 0 1 1 $args
 }
 
 ::itcl::body ArcherCore::killrefs {args} {
-    eval mgedWrapper killrefs 1 0 1 1 $args
+    eval gedWrapper killrefs 1 0 1 1 $args
 }
 
 ::itcl::body ArcherCore::killtree {args} {
-    eval mgedWrapper killtree 1 0 1 1 $args
+    eval gedWrapper killtree 1 0 1 1 $args
 }
 
 ::itcl::body ArcherCore::ls {args} {
     if {$args == {}} {
-	return [dbCmd ls]
-#	eval cadWrapper ls 0 0 0 0 $args
+	return [gedCmd ls]
+#	eval gedWrapper ls 0 0 0 0 $args
     } else {
 	set optionsAndArgs [eval dbExpand $args]
 	set options [lindex $optionsAndArgs 0]
@@ -3981,70 +3954,70 @@ Popup Menu    Right or Ctrl-Left
 	if {$options == {}} {
 	    return $expandedArgs
 	} else {
-	    return [eval dbCmd ls $args]
-#	    return [eval cadWrapper ls 0 0 0 0 $args]
+	    return [eval gedCmd ls $args]
+#	    return [eval gedWrapper ls 0 0 0 0 $args]
 	}
     }
 }
 
 ::itcl::body ArcherCore::make {args} {
-    eval mgedWrapper make 0 0 1 1 $args
+    eval gedWrapper make 0 0 1 1 $args
 }
 
 ::itcl::body ArcherCore::make_bb {args} {
-    eval mgedWrapper make_bb 0 0 1 1 $args
+    eval gedWrapper make_bb 0 0 1 1 $args
 }
 
 ::itcl::body ArcherCore::mater {args} {
-    eval mgedWrapper mater 0 1 1 1 $args
+    eval gedWrapper mater 0 1 1 1 $args
 }
 
 ::itcl::body ArcherCore::mirror {args} {
-    eval mgedWrapper mirror 0 0 1 1 $args
+    eval gedWrapper mirror 0 0 1 1 $args
 }
 
 ::itcl::body ArcherCore::move {args} {
-    eval cadWrapper mv 0 0 1 1 $args
+    eval gedWrapper mv 0 0 1 1 $args
 }
 
 ::itcl::body ArcherCore::move_arb_edge {args} {
-    eval cadWrapper move_arb_edge 0 0 1 0 $args
+    eval gedWrapper move_arb_edge 0 0 1 0 $args
 }
 
 ::itcl::body ArcherCore::move_arb_face {args} {
-    eval cadWrapper move_arb_face 0 0 1 0 $args
+    eval gedWrapper move_arb_face 0 0 1 0 $args
 }
 
 ::itcl::body ArcherCore::mv {args} {
-    eval cadWrapper mv 0 0 1 1 $args
+    eval gedWrapper mv 0 0 1 1 $args
 }
 
 ::itcl::body ArcherCore::mvall {args} {
-    eval mgedWrapper mvall 0 0 1 1 $args
+    eval gedWrapper mvall 0 0 1 1 $args
 }
 
 ::itcl::body ArcherCore::nmg_collapse {args} {
-    eval cadWrapper nmg_collapse 0 0 1 1 $args
+    eval gedWrapper nmg_collapse 0 0 1 1 $args
 }
 
 ::itcl::body ArcherCore::nmg_simplify {args} {
-    eval cadWrapper nmg_simplify 0 0 1 1 $args
+    eval gedWrapper nmg_simplify 0 0 1 1 $args
 }
 
 ::itcl::body ArcherCore::ocenter {args} {
     if {[llength $args] == 4} {
 	set obj [lindex $args 0]
 
-	eval cadWrapper ocenter 0 0 1 0 $args
+	eval gedWrapper ocenter 0 0 1 0 $args
 	redrawObj $obj 0
     } else {
-	eval dbCmd ocenter $args
-#	eval cadWrapper ocenter 0 0 0 0 $args
+	eval gedCmd ocenter $args
+#	eval gedWrapper ocenter 0 0 0 0 $args
     }
 }
 
 ::itcl::body ArcherCore::orotate {args} {
-    set result [eval cadWrapper orotate 0 0 1 0 $args]
+    set result [eval gedWrapper orotate 0 0 1 0 $args]
 
     set len [llength $args]
     if {$len == 4 || $len == 7} {
@@ -4055,7 +4028,7 @@ Popup Menu    Right or Ctrl-Left
 }
 
 ::itcl::body ArcherCore::oscale {args} {
-    set result [eval cadWrapper oscale 0 0 1 0 $args]
+    set result [eval gedWrapper oscale 0 0 1 0 $args]
 
     if {[llength $args] == 5} {
 	redrawObj [lindex $args 0] 0
@@ -4065,109 +4038,13 @@ Popup Menu    Right or Ctrl-Left
 }
 
 ::itcl::body ArcherCore::otranslate {args} {
-    set result [eval cadWrapper otranslate 0 0 1 0 $args]
+    set result [eval gedWrapper otranslate 0 0 1 0 $args]
 
     if {[llength $args] == 4} {
 	redrawObj [lindex $args 0] 0
     }
 
     return $result
-}
-
-::itcl::body ArcherCore::prefix {args} {
-    eval mgedWrapper prefix 0 0 1 1 $args
-}
-
-::itcl::body ArcherCore::push {args} {
-    eval mgedWrapper push 0 1 1 0 $args
-}
-
-::itcl::body ArcherCore::put {args} {
-    eval mgedWrapper put 0 0 1 1 $args
-}
-
-::itcl::body ArcherCore::put_comb {args} {
-    eval mgedWrapper put_comb 0 0 1 1 $args
-}
-
-::itcl::body ArcherCore::putmat {args} {
-    eval mgedWrapper putmat 0 0 1 0 $args
-}
-
-::itcl::body ArcherCore::pwd {} {
-    ::pwd
-}
-
-::itcl::body ArcherCore::r {args} {
-    eval mgedWrapper r 0 1 1 1 $args
-}
-
-::itcl::body ArcherCore::rcodes {args} {
-    eval mgedWrapper rcodes 0 0 1 0 $args
-}
-
-::itcl::body ArcherCore::red {args} {
-    eval mgedWrapper red 0 0 1 1 $args
-}
-
-::itcl::body ArcherCore::rfarb {args} {
-    eval mgedWrapper rfarb 0 0 1 1 $args
-}
-
-::itcl::body ArcherCore::rm {args} {
-    eval cadWrapper rm 0 0 1 1 $args
-}
-
-::itcl::body ArcherCore::rmater {args} {
-    eval mgedWrapper rmater 0 0 1 1 $args
-}
-
-::itcl::body ArcherCore::rotate_arb_face {args} {
-    eval mgedWrapper rotate_arb_face 0 0 1 0 $args
-}
-
-::itcl::body ArcherCore::shader {args} {
-    eval mgedWrapper shader 0 0 1 0 $args
-}
-
-::itcl::body ArcherCore::shells {args} {
-    eval mgedWrapper shells 0 0 1 0 $args
-}
-
-::itcl::body ArcherCore::title {args} {
-    if {$args == {}} {
-	return [dbCmd title]
-    }
-
-    eval mgedWrapper title 0 0 1 0 $args
-}
-
-::itcl::body ArcherCore::track {args} {
-    eval mgedWrapper track 0 0 1 1 $args
-}
-
-::itcl::body ArcherCore::unhide {args} {
-    eval mgedWrapper unhide 0 0 1 1 $args
-}
-
-::itcl::body ArcherCore::units {args} {
-    if {$args == {}} {
-	return [dbCmd units]
-    }
-
-    eval mgedWrapper units 0 0 1 0 $args
-}
-
-::itcl::body ArcherCore::vmake {args} {
-    eval mgedWrapper vmake 0 0 1 1 $args
-}
-
-::itcl::body ArcherCore::wmater {args} {
-    eval mgedWrapper wmater 0 0 1 1 $args
-}
-
-::itcl::body ArcherCore::xpush {args} {
-    eval mgedWrapper wmater 0 1 1 0 $args
 }
 
 ::itcl::body ArcherCore::packTree {data} {
@@ -4226,6 +4103,94 @@ Popup Menu    Right or Ctrl-Left
     return $tree
 }
 
+::itcl::body ArcherCore::prefix {args} {
+    eval gedWrapper prefix 0 0 1 1 $args
+}
+
+::itcl::body ArcherCore::push {args} {
+    eval gedWrapper push 0 1 1 0 $args
+}
+
+::itcl::body ArcherCore::put {args} {
+    eval gedWrapper put 0 0 1 1 $args
+}
+
+::itcl::body ArcherCore::put_comb {args} {
+    eval gedWrapper put_comb 0 0 1 1 $args
+}
+
+::itcl::body ArcherCore::putmat {args} {
+    eval gedWrapper putmat 0 0 1 0 $args
+}
+
+::itcl::body ArcherCore::pwd {} {
+    ::pwd
+}
+
+::itcl::body ArcherCore::r {args} {
+    eval gedWrapper r 0 1 1 1 $args
+}
+
+::itcl::body ArcherCore::rcodes {args} {
+    eval gedWrapper rcodes 0 0 1 0 $args
+}
+
+::itcl::body ArcherCore::red {args} {
+    eval gedWrapper red 0 0 1 1 $args
+}
+
+::itcl::body ArcherCore::rfarb {args} {
+    eval gedWrapper rfarb 0 0 1 1 $args
+}
+
+::itcl::body ArcherCore::rm {args} {
+    eval gedWrapper rm 0 0 1 1 $args
+}
+
+::itcl::body ArcherCore::rmater {args} {
+    eval gedWrapper rmater 0 0 1 1 $args
+}
+
+::itcl::body ArcherCore::rotate_arb_face {args} {
+    eval gedWrapper rotate_arb_face 0 0 1 0 $args
+}
+
+::itcl::body ArcherCore::shader {args} {
+    eval gedWrapper shader 0 0 1 0 $args
+}
+
+::itcl::body ArcherCore::shells {args} {
+    eval gedWrapper shells 0 0 1 0 $args
+}
+
+::itcl::body ArcherCore::title {args} {
+    if {$args == {}} {
+	return [gedCmd title]
+    }
+
+    eval gedWrapper title 0 0 1 0 $args
+}
+
+::itcl::body ArcherCore::track {args} {
+    eval gedWrapper track 0 0 1 1 $args
+}
+
+::itcl::body ArcherCore::unhide {args} {
+    eval gedWrapper unhide 0 0 1 1 $args
+}
+
+::itcl::body ArcherCore::units {args} {
+    if {$args == {}} {
+	return [gedCmd units]
+    }
+
+    if {[llength $args] == 1 && [lindex $args 0] == "-s"} {
+	return [gedCmd units -s]
+    }
+
+    eval gedWrapper units 0 0 1 0 $args
+}
+
 ::itcl::body ArcherCore::unpackTree {tree} {
     return " u [unpackTreeGuts $tree]"
 }
@@ -4260,42 +4225,46 @@ Popup Menu    Right or Ctrl-Left
     }
 }
 
-::itcl::body ArcherCore::whichid {args} {
-    return [eval $itk_component(mged) whichid $args]
+::itcl::body ArcherCore::vmake {args} {
+    eval gedWrapper vmake 0 0 1 1 $args
 }
 
-::itcl::body ArcherCore::who {args} {
-    eval dbCmd who $args
+::itcl::body ArcherCore::wmater {args} {
+    eval gedWrapper wmater 0 0 1 1 $args
+}
+
+::itcl::body ArcherCore::xpush {args} {
+    eval gedWrapper wmater 0 1 1 0 $args
 }
 
 ::itcl::body ArcherCore::Z {args} {
-    eval cadWrapper clear 0 0 0 1 $args
+    eval gedWrapper clear 0 0 0 1 $args
 }
 
 ::itcl::body ArcherCore::zap {args} {
-    eval cadWrapper clear 0 0 0 1 $args
+    eval gedWrapper clear 0 0 0 1 $args
 }
 
 ::itcl::body ArcherCore::updateDisplaySettings {} {
-    if {![info exists itk_component(mged)]} {
+    if {![info exists itk_component(ged)]} {
 	return
     }
 
     switch -- $mZClipMode \
 	$ZCLIP_SMALL_CUBE { \
-				$itk_component(mged) zclip_all 1; \
-				$itk_component(mged) bounds_all {-4096 4095 -4096 4095 -4096 4095}; \
+				$itk_component(ged) zclip_all 1; \
+				$itk_component(ged) bounds_all {-4096 4095 -4096 4095 -4096 4095}; \
 			    } \
 	$ZCLIP_MEDIUM_CUBE { \
-				 $itk_component(mged) zclip_all 1; \
-				 $itk_component(mged) bounds_all {-8192 8191 -8192 8191 -8192 8191}; \
+				 $itk_component(ged) zclip_all 1; \
+				 $itk_component(ged) bounds_all {-8192 8191 -8192 8191 -8192 8191}; \
 			     } \
 	$ZCLIP_LARGE_CUBE { \
-				$itk_component(mged) zclip_all 1; \
-				$itk_component(mged) bounds_all {-16384 16363 -16384 16363 -16384 16363}; \
+				$itk_component(ged) zclip_all 1; \
+				$itk_component(ged) bounds_all {-16384 16363 -16384 16363 -16384 16363}; \
 			    } \
 	$ZCLIP_NONE { \
-			  $itk_component(mged) zclip_all 0; \
+			  $itk_component(ged) zclip_all 0; \
 		      }
 }
 
@@ -4521,53 +4490,53 @@ Popup Menu    Right or Ctrl-Left
 }
 
 ::itcl::body ArcherCore::watchVar {_name1 _name2 _op} {
-    if {![info exists itk_component(mged)]} {
+    if {![info exists itk_component(ged)]} {
 	return
     }
 
     switch -- $_name1 {
 	mMeasuringStickColor {
-	    $itk_component(mged) configure -measuringStickColor $mMeasuringStickColor
+	    $itk_component(ged) configure -measuringStickColor $mMeasuringStickColor
 	}
 	mMeasuringStickMode {
-	    $itk_component(mged) configure -measuringStickMode $mMeasuringStickMode 
+	    $itk_component(ged) configure -measuringStickMode $mMeasuringStickMode 
 	}
 	mModelAxesColor {
 	    if {$mModelAxesColor == "Triple"} {
-		$itk_component(mged) configure -modelAxesTripleColor 1
+		$itk_component(ged) configure -modelAxesTripleColor 1
 	    } else {
-		$itk_component(mged) configure -modelAxesTripleColor 0
-		$itk_component(mged) configure -modelAxesColor $mModelAxesColor
+		$itk_component(ged) configure -modelAxesTripleColor 0
+		$itk_component(ged) configure -modelAxesColor $mModelAxesColor
 	    }
 	}
 	mModelAxesLabelColor {
-	    $itk_component(mged) configure -modelAxesLabelColor $mModelAxesLabelColor
+	    $itk_component(ged) configure -modelAxesLabelColor $mModelAxesLabelColor
 	}
 	mModelAxesTickColor {
-	    $itk_component(mged) configure -modelAxesTickColor $mModelAxesTickColor
+	    $itk_component(ged) configure -modelAxesTickColor $mModelAxesTickColor
 	}
 	mModelAxesTickMajorColor {
-	    $itk_component(mged) configure -modelAxesTickMajorColor $mModelAxesTickMajorColor
+	    $itk_component(ged) configure -modelAxesTickMajorColor $mModelAxesTickMajorColor
 	}
 	mPrimitveLabelColor {
-	    $itk_component(mged) configure -primitiveLabelColor $mPrimitiveLabelColor
+	    $itk_component(ged) configure -primitiveLabelColor $mPrimitiveLabelColor
 	}
 	mScaleColor {
-	    $itk_component(mged) configure -scaleColor $mScaleColor
+	    $itk_component(ged) configure -scaleColor $mScaleColor
 	}
 	mViewAxesColor {
 	    if {$mViewAxesColor == "Triple"} {
-		$itk_component(mged) configure -viewAxesTripleColor 1
+		$itk_component(ged) configure -viewAxesTripleColor 1
 	    } else {
-		$itk_component(mged) configure -viewAxesTripleColor 0
-		$itk_component(mged) configure -viewAxesColor $mViewAxesColor
+		$itk_component(ged) configure -viewAxesTripleColor 0
+		$itk_component(ged) configure -viewAxesColor $mViewAxesColor
 	    }
 	}
 	mViewAxesLabelColor {
-	    $itk_component(mged) configure -viewAxesLabelColor $mViewAxesLabelColor
+	    $itk_component(ged) configure -viewAxesLabelColor $mViewAxesLabelColor
 	}
 	mViewingParamsColor {
-	    $itk_component(mged) configure -viewingParamsColor $mViewingParamsColor
+	    $itk_component(ged) configure -viewingParamsColor $mViewingParamsColor
 	}
     }
 }
