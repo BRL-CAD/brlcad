@@ -21,14 +21,14 @@
 /** @{ */
 /** @file nmg_mk.c
  *
- *	Support routines for n-Manifold Geometry.
+ * Support routines for n-Manifold Geometry.
  *
- *	Naming convention
+ * Naming convention
  *		nmg_m* routines "make" NMG structures.
  *		nmg_k* routines "kill" (delete) NMG structures.
  *
- *	in each of the above cases the letters or words following are an
- *	attempt at a mnemonic representation for what is manipulated
+ * in each of the above cases the letters or words following are an
+ * attempt at a mnemonic representation for what is manipulated
  *
  *	m	Model
  *	r	Region
@@ -43,14 +43,14 @@
  *	vu	vertexuse
  *
  *
- *	Rules:
+ * Rules:
  *
- * XXX - What does "overlap" mean? ctj
- *	edges of loops of the same face must not overlap
- *	the "magic" member of each struct is the first item.
+ *   edges of loops of the same face must not overlap
+ *     XXX - What does "overlap" mean? ctj
+ *   the "magic" member of each struct is the first item.
  *
- *	All routines which create and destroy the NMG data structures
- *	are contained in this module.
+ * All routines which create and destroy the NMG data structures are
+ * contained in this module.
  *
  */
 /** @} */
@@ -82,7 +82,8 @@ static struct vertexuse *nmg_mvvu BU_ARGS((unsigned long *upptr, struct model *m
  *									*
  ************************************************************************/
 
-/*
+
+/**
  *  The nmg_m*() routines are used to create a topology-only object
  *  which at first has no geometry associated with it at all.
  *  A topology-only object can be used to answer questions like:
@@ -220,29 +221,32 @@ static struct vertexuse *nmg_mvvu BU_ARGS((unsigned long *upptr, struct model *m
  *
  */
 
-/*
- *			N M G _ M M
+
+/**
+ * n m g _ m m
  *
- *	Make Model
- *	Create a new model.  The region list is empty.
- *	Creates a new model structure.  The model region structure list
- *	is empty.
+ * Make Model
  *
- *  Returns -
+ * Create a new model.  The region list is empty.  Creates a new model
+ * structure.  The model region structure list is empty.
+ *
+ * Returns -
  *	(struct model *)
  *
- *  Method:
- *	Use NMG_BU_GETSTRUCT to allocate memory and then set all components.
- *	NMG_BU_GETSTRUCT is used instead of the standard GET_name because
- *	all of the GET_name macros expect a model pointer to get the
- *	maxindex from.  So here we use NMG_BU_GETSTRUCT so that we can
- *	set the maxindex and index by hand.
+ * Method:
  *
- *  N.B.:
- *	"maxindex" is a misnomer.  It is the value of the NEXT index
- *	assigned.  This allows "ptab"s to be allocated easly using
- *	maxindex and the index value of the structures to be the actual
- *	index into the "ptab".
+ * Use NMG_BU_GETSTRUCT to allocate memory and then set all
+ * components.  NMG_BU_GETSTRUCT is used instead of the standard
+ * GET_name because all of the GET_name macros expect a model pointer
+ * to get the maxindex from.  So here we use NMG_BU_GETSTRUCT so that
+ * we can set the maxindex and index by hand.
+ *
+ * N.B.:
+ *
+ * "maxindex" is a misnomer.  It is the value of the NEXT index
+ * assigned.  This allows "ptab"s to be allocated easly using maxindex
+ * and the index value of the structures to be the actual index into
+ * the "ptab".
  */
 struct model *
 nmg_mm(void)
@@ -263,17 +267,19 @@ nmg_mm(void)
     return(m);
 }
 
+
 /**
- *			N M G _ M M R
+ * n m g _ m m r
  *
- *	Make Model and Region
- *	Create a new model, and an "empty" region to go with it.  Essentially
- *	this creates a minimal model system.
+ * Make Model and Region.
  *
- *  Returns -
+ * Create a new model, and an "empty" region to go with it.
+ * Essentially this creates a minimal model system.
+ *
+ * Returns -
  *	(struct model *)
  *
- *  Implicit Return -
+ * Implicit Return -
  *	The new region is found with BU_LIST_FIRST(nmgregion, &m->r_hd);
  */
 struct model *
@@ -300,17 +306,18 @@ nmg_mmr(void)
     return(m);
 }
 
+
 /**
- *			N M G _ M R S V
+ * n m g _ m r s v
  *
- *	Make new region, shell, vertex in model as well as the
- *	required "uses".
- *	Create a new region in model consisting of a minimal shell.
+ * Make new region, shell, vertex in model as well as the required
+ * "uses".  Create a new region in model consisting of a minimal
+ * shell.
  *
- *  Returns -
+ * Returns -
  *	(struct nmgregion *)
  *
- *  Implicit Returns -
+ * Implicit Returns -
  *	Region is also found with r=BU_LIST_FIRST(nmgregion, &m->r_hd);
  *	The new shell is found with s=BU_LIST_FIRST(shell, &r->s_hd);
  *	The new vertexuse is s->vu_p;
@@ -341,17 +348,19 @@ nmg_mrsv(struct model *m)
     return(r);
 }
 
+
 /**
- *			N M G _ M S V
+ * n m g _ m s v
  *
- *	Make Shell, Vertex Use, Vertex
- *	Create a new shell in a specified region.  The shell will consist
- *	of a single vertexuse and vertex (which are also created).
+ * Make Shell, Vertex Use, Vertex
  *
- *  Returns -
+ * Create a new shell in a specified region.  The shell will consist
+ * of a single vertexuse and vertex (which are also created).
+ *
+ * Returns -
  *	(struct shell *)
  *
- *  Implicit Returns -
+ * Implicit Returns -
  *	The new shell is also found with s=BU_LIST_FIRST(shell, &r->s_hd);
  *	The new vertexuse is s->vu_p;
  */
@@ -387,17 +396,19 @@ nmg_msv(struct nmgregion *r)
 }
 
 /**
- *			N M G _ M F
+ * n m g _ m f
  *
- *	Make Face from a wire loop.
- *	make a face from a pair of loopuses.  The loopuses must be direct
- *	children of a shell.  The new face will be a child of the same shell.
+ * Make Face from a wire loop.
  *
- * Given a wire loop (by definition, a loop attached to a shell), create
- * a new face, faceuse (and mate) and move the wire loop from the shell
- * to the new faceuse (and mate).
+ * make a face from a pair of loopuses.  The loopuses must be direct
+ * children of a shell.  The new face will be a child of the same
+ * shell.
  *
- *  Implicit Returns -
+ * Given a wire loop (by definition, a loop attached to a shell),
+ * create a new face, faceuse (and mate) and move the wire loop from
+ * the shell to the new faceuse (and mate).
+ *
+ * Implicit Returns -
  *	The first faceuse is fu1=BU_LIST_FIRST(faceuse, &s->fu_hd);
  *	The second faceuse follows:  fu2=BU_LIST_NEXT(faceuse, &fu1->l.magic);
  */
@@ -466,26 +477,28 @@ nmg_mf(struct loopuse *lu1)
     return(fu1);
 }
 
+
 /**
- *			N M G _ M L V
+ * n m g _ m l v
  *
+ * Make a new loop (with specified orientation) and vertex, in a shell
+ * or face.
  * XXX - vertex or vertexuse? or both? ctj
- *	Make a new loop (with specified orientation) and vertex,
- *	in a shell or face.
- *	If the vertex 'v' is NULL, the shell's lone vertex is used,
- *	or a new vertex is created.
  *
- *  "magic" must point to the magic number of a faceuse or shell.
+ * If the vertex 'v' is NULL, the shell's lone vertex is used, or a
+ * new vertex is created.
  *
- *  If the shell has a lone vertex in it, that lone vertex *will*
- *  be used.  If a non-NULL 'v' is provided, the lone vertex and
- *  'v' will be fused together.  XXX Why is this good?
+ * "magic" must point to the magic number of a faceuse or shell.
  *
- *  If a convenient shell does not exist, use s=nmg_msv() to make
- *  the shell and vertex, then call lu=nmg_mlv(s, s->vu_p->v_p, OT_SAME),
- *  followed by nmg_kvu(s->vu_p).
+ * If the shell has a lone vertex in it, that lone vertex *will* be
+ * used.  If a non-NULL 'v' is provided, the lone vertex and 'v' will
+ * be fused together.  XXX Why is this good?
  *
- *  Implicit returns -
+ * If a convenient shell does not exist, use s=nmg_msv() to make the
+ * shell and vertex, then call lu=nmg_mlv(s, s->vu_p->v_p, OT_SAME),
+ * followed by nmg_kvu(s->vu_p).
+ *
+ * Implicit returns -
  *	The new vertexuse can be had by:
  *		BU_LIST_FIRST(vertexuse, &lu->down_hd);
  *
@@ -496,11 +509,11 @@ nmg_mf(struct loopuse *lu1)
  *		lu = BU_LIST_FIRST(loopuse, &s->lu_hd);
  *
  * N.B.  This function is made more complex than warrented by using
- * the "hack" of stealing a vertexuse structure from the shell if
- * at all possible.  A future enhancement to this function would be
- * to remove the vertexuse steal and have the caller pass in the
- * vertex from the shell followed by a call to nmg_kvu(s->vu_p).
- * The v==NULL convention is used only in nmg_mod.c.
+ * the "hack" of stealing a vertexuse structure from the shell if at
+ * all possible.  A future enhancement to this function would be to
+ * remove the vertexuse steal and have the caller pass in the vertex
+ * from the shell followed by a call to nmg_kvu(s->vu_p).  The v==NULL
+ * convention is used only in nmg_mod.c.
  */
 struct loopuse *
 nmg_mlv(unsigned long *magic, struct vertex *v, int orientation)
@@ -604,22 +617,23 @@ nmg_mlv(unsigned long *magic, struct vertex *v, int orientation)
     return(lu1);
 }
 
-/**			N M G _ M V U
+
+/**
+ * n m g _ m v u
  *
- *	Make Vertexuse on existing vertex
+ * Make Vertexuse on existing vertex
  *
- *  This is a support routine for this module, and is not intended for
- *  general use, as it requires lots of cooperation from the caller.
- *  (Like setting the parent's down pointer appropriately).
+ * This is a support routine for this module, and is not intended for
+ * general use, as it requires lots of cooperation from the caller.
+ * (Like setting the parent's down pointer appropriately).
  *
- *  This means that a vu is created but is not attached to the parent
- *  structure.  This is "bad" and requires the caller to fix.
+ * This means that a vu is created but is not attached to the parent
+ * structure.  This is "bad" and requires the caller to fix.
+ *
+ * upptr is a pointer to parent struct
  */
 static struct vertexuse *
 nmg_mvu(struct vertex *v, unsigned long *upptr, struct model *m)
-
-    /* pointer to parent struct */
-
 {
     struct vertexuse *vu;
 
@@ -650,16 +664,18 @@ nmg_mvu(struct vertex *v, unsigned long *upptr, struct model *m)
     return(vu);
 }
 
-/**			N M G _ M V V U
+
+/**
+ * n m g _ m v v u
  *
- *	Make Vertex, Vertexuse
+ * Make Vertex, Vertexuse
  *
- *  This is a support routine for this module, and is not intended for
- *  general use, as it requires lots of cooperation from the caller.
- *  (Like setting the parent's down pointer appropriately).
+ * This is a support routine for this module, and is not intended for
+ * general use, as it requires lots of cooperation from the caller.
+ * (Like setting the parent's down pointer appropriately).
  *
- *  This means that a vu is created but is not attached to the parent
- *  structure.  This is "bad" and requires the caller to fix.
+ * This means that a vu is created but is not attached to the parent
+ * structure.  This is "bad" and requires the caller to fix.
  */
 static struct vertexuse *
 nmg_mvvu(unsigned long *upptr, struct model *m)
@@ -683,24 +699,25 @@ nmg_mvvu(unsigned long *upptr, struct model *m)
 
 
 /**
- *			N M G _ M E
+ * n m g _ m e
  *
- *	Make wire edge
- *	Make a new edge between a pair of vertices in a shell.
+ * Make wire edge.
  *
- *	A new vertex will be made for any NULL vertex pointer parameters.
- *	If we need to make a new vertex and the shell still has its vertexuse
- *	we re-use that vertex rather than freeing and re-allocating.
+ * Make a new edge between a pair of vertices in a shell.
  *
- *	If both vertices were specified, and the shell also had a
- *	vertexuse pointer, the vertexuse in the shell is killed.
- *	XXX Why?
+ * A new vertex will be made for any NULL vertex pointer parameters.
+ * If we need to make a new vertex and the shell still has its
+ * vertexuse we re-use that vertex rather than freeing and
+ * re-allocating.
  *
- *  Explicit Return -
+ * If both vertices were specified, and the shell also had a vertexuse
+ * pointer, the vertexuse in the shell is killed.  XXX Why?
+ *
+ * Explicit Return -
  *	An edgeuse in shell "s" whose vertexuse refers to vertex v1.
  *	The edgeuse mate's vertexuse refers to vertex v2
  *
- *  Implicit Returns -
+ * Implicit Returns -
  *	1)  If the shell had a lone vertex in vu_p, it is destroyed,
  *	even if both vertices were specified.
  *	2)  The returned edgeuse is the first item on the shell's
@@ -793,19 +810,21 @@ nmg_me(struct vertex *v1, struct vertex *v2, struct shell *s)
     return(eu1);
 }
 
+
 /**
- *			N M G _ M E o n V U
+ * n m g _ m e o n v u
  *
- *  Make an edge on vertexuse.
- *  The new edge runs from and to that vertex.
+ * Make an edge on vertexuse.
  *
- *  If the vertexuse was the shell's sole vertexuse, then the new edge
- *  is a wire edge in the shell's eu_hd list.
+ * The new edge runs from and to that vertex.
  *
- *  If the vertexuse was part of a loop-of-a-single-vertex, either
- *  as a loop in a face or as a wire-loop in the shell, the
- *  loop becomes a regular loop with one edge that runs from and to
- *  the original vertex.
+ * If the vertexuse was the shell's sole vertexuse, then the new edge
+ * is a wire edge in the shell's eu_hd list.
+ *
+ * If the vertexuse was part of a loop-of-a-single-vertex, either as a
+ * loop in a face or as a wire-loop in the shell, the loop becomes a
+ * regular loop with one edge that runs from and to the original
+ * vertex.
  */
 struct edgeuse *
 nmg_meonvu(struct vertexuse *vu)
@@ -916,24 +935,25 @@ nmg_meonvu(struct vertexuse *vu)
     return(eu1);
 }
 
-/**			N M G _ M L
+
+/**
+ * n m g _ m l
  *
- *	Make wire loop from wire edgeuse list
+ * Make wire loop from wire edgeuse list
  *
- *	Passed a pointer to a shell.  The wire edgeuse child of the shell
- *	is taken as the head of a list of edge(use)s which will form
- *	the new loop.  The loop is created from the first N contiguous
- *	edges.  Thus the end of the new loop is
- *	delineated by the "next" edge(use)being:
+ * Passed a pointer to a shell.  The wire edgeuse child of the shell
+ * is taken as the head of a list of edge(use)s which will form the
+ * new loop.  The loop is created from the first N contiguous edges.
+ * Thus the end of the new loop is * delineated by the "next"
+ * edge(use)being:
  *
- * 	A) the first object in the list (no other edgeuses in
- * 		shell list)
- *	B) non-contiguous with the previous edge
+ * A) the first object in the list (no other edgeuses in shell list)
+ * B) non-contiguous with the previous edge
  *
- *	A loop is created from this list of edges.  The edges must
- *	form a true circuit, or we dump core on your disk.  If we
- *	succeed, then the edgeuses are moved from the shell edgeuse list
- *	to the loop, and the two loopuses are inserted into the shell.
+ * A loop is created from this list of edges.  The edges must form a
+ * true circuit, or we dump core on your disk.  If we succeed, then
+ * the edgeuses are moved from the shell edgeuse list to the loop, and
+ * the two loopuses are inserted into the shell.
  */
 struct loopuse *
 nmg_ml(struct shell *s)
@@ -1056,6 +1076,7 @@ nmg_ml(struct shell *s)
     return(lu1);
 }
 
+
 /************************************************************************
  *									*
  *				"Kill" Routines				*
@@ -1079,26 +1100,28 @@ nmg_ml(struct shell *s)
  *									*
  ************************************************************************/
 
-/**			N M G _ K V U
+
+/**
+ * n m g _ k v u
  *
- *	Kill vertexuse, and null out parent's vu_p.
+ * Kill vertexuse, and null out parent's vu_p.
  *
- *  This routine is not intented for general use by applications,
- *  because it requires cooperation on the part of the caller
- *  to properly dispose of or fix the now *quite* illegal parent.
- *  (Illegal because the parent's vu_p is NULL).
- *  It exists primarily as a support routine for "mopping up" after
- *  nmg_klu(), nmg_keu(), nmg_ks(), and nmg_mv_vu_between_shells().
+ * This routine is not intented for general use by applications,
+ * because it requires cooperation on the part of the caller to
+ * properly dispose of or fix the now *quite* illegal parent.
+ * (Illegal because the parent's vu_p is NULL).  It exists primarily
+ * as a support routine for "mopping up" after nmg_klu(), nmg_keu(),
+ * nmg_ks(), and nmg_mv_vu_between_shells().
  *
- *  It is also used in a particularly ugly way in
- *  nmg_cut_loop() and nmg_split_lu_at_vu()
- *  as part of their method for obtaining an "empty" loopuse/loop set.
+ * It is also used in a particularly ugly way in nmg_cut_loop() and
+ * nmg_split_lu_at_vu() as part of their method for obtaining an
+ * "empty" loopuse/loop set.
  *
- *  It is worth noting that all these callers ignore the return code,
- *  because they *all* exist to intentionally empty out the parent, but
- *  the return code is provided anyway, in the name of [CTJ] symmetry.
+ * It is worth noting that all these callers ignore the return code,
+ * because they *all* exist to intentionally empty out the parent, but
+ * the return code is provided anyway, in the name of [CTJ] symmetry.
  *
- *  Returns -
+ * Returns -
  *	0	If all is well in the parent
  *	1	If parent is empty, and is thus "illegal"
  */
@@ -1163,9 +1186,10 @@ nmg_kvu(register struct vertexuse *vu)
 
 
 /**
- *			N M G _ K F G
+ * n m g _ k f g
  *
- *  Internal routine to release face geometry when no more faces use it.
+ * Internal routine to release face geometry when no more faces use
+ * it.
  */
 static void
 nmg_kfg(unsigned long *magic_p)
@@ -1197,15 +1221,18 @@ nmg_kfg(unsigned long *magic_p)
     }
 }
 
-/**			N M G _ K F U
+
+/**
+ * n m g _ k f u
  *
- *	Kill Faceuse
+ * Kill Faceuse
  *
- *	delete a faceuse and its mate from the parent shell.
- *	Any children found are brutally murdered as well.
- *	The faceuses are dequeued from the parent shell's list here.
+ * delete a faceuse and its mate from the parent shell.
  *
- *  Returns -
+ * Any children found are brutally murdered as well.  The faceuses are
+ * dequeued from the parent shell's list here.
+ *
+ * Returns -
  *	0	If all is well
  *	1	If parent shell is now empty, and is thus "illegal"
  */
@@ -1259,17 +1286,19 @@ nmg_kfu(struct faceuse *fu1)
     return ret;
 }
 
-/**			N M G _ K L U
+
+/**
+ * n m g _ k l u
  *
- *	Kill loopuse, loopuse mate, and loop.
+ * Kill loopuse, loopuse mate, and loop.
  *
- *	if the loop contains any edgeuses or vertexuses they are killed
- *	before the loop is deleted.
+ * if the loop contains any edgeuses or vertexuses they are killed
+ * before the loop is deleted.
  *
- *	We support the concept of killing a loop with no children to
- *	support the routine "nmg_demote_lu"
+ * We support the concept of killing a loop with no children to
+ * support the routine "nmg_demote_lu"
  *
- *  Returns -
+ * Returns -
  *	0	If all is well
  *	1	If parent is empty, and is thus "illegal"
  */
@@ -1339,25 +1368,26 @@ nmg_klu(struct loopuse *lu1)
     return ret;
 }
 
+
 /**
- *			N M G _ K E G
+ * n m g _ k e g
  *
- *  Internal routine to kill an edge geometry structure (of either type),
- *  if all the edgeuses on it's list have vanished.
- *  Regardless, the edgeuse's geometry pointer is cleared.
+ * Internal routine to kill an edge geometry structure (of either
+ * type), if all the edgeuses on it's list have vanished.  Regardless,
+ * the edgeuse's geometry pointer is cleared.
  *
- *  This routine does only a single edgeuse.
- *  If the edgeuse mate has geometry to be killed, make a second call.
- *  Sometimes only one of the two needs to release the geometry.
+ * This routine does only a single edgeuse.  If the edgeuse mate has
+ * geometry to be killed, make a second call.  Sometimes only one of
+ * the two needs to release the geometry.
  *
- *  Returns -
+ * Returns -
  *	0	If the old edge geometry (eu->g.magic_p) has other uses.
  *	1	If the old edge geometry has been destroyed. Caller beware!
  *
- *  NOT INTENDED FOR GENERAL USE!
- *  However, nmg_mod.c needs it for nmg_eusplit().  (Drat!)
+ * NOT INTENDED FOR GENERAL USE!
+ * However, nmg_mod.c needs it for nmg_eusplit().  (Drat!)
  */
-/**static**/ int
+/* static */ int
 nmg_keg(struct edgeuse *eu)
 {
     NMG_CK_EDGEUSE(eu);
@@ -1391,12 +1421,13 @@ nmg_keg(struct edgeuse *eu)
     return 1;		/* edge geometry has been destroyed */
 }
 
-/*
- *			N M G _ K E U
+
+/**
+ * n m g _ k e u
  *
- *	Delete an edgeuse & it's mate from a shell or loop.
+ * Delete an edgeuse & it's mate from a shell or loop.
  *
- *  Returns -
+ * Returns -
  *	0	If all is well
  *	1	If the parent now has no edgeuses, and is thus "illegal"
  *		and in need of being deleted.  (The lu / shell deletion
@@ -1522,11 +1553,13 @@ nmg_keu(register struct edgeuse *eu1)
     return ret;
 }
 
-/**			N M G _ K S
+
+/**
+ * n m g _ k s
  *
- *	Kill a shell and all children
+ * Kill a shell and all children
  *
- *  Returns -
+ * Returns -
  *	0	If all is well
  *	1	If parent nmgregion is now empty.  While not "illegal",
  *		an empty region is probably worthy of note.
@@ -1563,11 +1596,12 @@ nmg_ks(struct shell *s)
     return 0;
 }
 
-/**			N M G _ K R
+/**
+ * n m g _ k r
  *
- *	Kill a region and all shells in it
+ * Kill a region and all shells in it.
  *
- *  Returns -
+ * Returns -
  *	0	If all is well
  *	1	If model is now empty.  While not "illegal",
  *		an empty model is probably worthy of note.
@@ -1601,9 +1635,11 @@ nmg_kr(struct nmgregion *r)
     return 0;
 }
 
-/**			N M G _ K M
+
+/**
+ * n m g _ k m
  *
- *	Kill an entire model.  Nothing is left.
+ * Kill an entire model.  Nothing is left.
  */
 void
 nmg_km(struct model *m)
@@ -1619,15 +1655,18 @@ nmg_km(struct model *m)
     }
 }
 
+
 /************************************************************************
  *									*
  *			"Geometry" and "Attribute" Routines		*
  *									*
  ************************************************************************/
 
-/**			N M G _ V E R T E X _ G V
+
+/**
+ * n m g _ v e r t e x _ g v
  *
- *	Associate point_t ("vector") coordinates with a vertex
+ * Associate point_t ("vector") coordinates with a vertex
  */
 void
 nmg_vertex_gv(struct vertex *v, const fastf_t *pt)
@@ -1654,11 +1693,12 @@ nmg_vertex_gv(struct vertex *v, const fastf_t *pt)
     }
 }
 
+
 /**
- *			N M G _ V E R T E X _ G
+ * n m g _ v e r t e x _ g
  *
- *	a version that can take x, y, z coords and doesn't need a point
- *	array.  Mostly useful for quick and dirty programs.
+ * a version that can take x, y, z coords and doesn't need a point
+ * array.  Mostly useful for quick and dirty programs.
  */
 void
 nmg_vertex_g(register struct vertex *v, fastf_t x, fastf_t y, fastf_t z)
@@ -1676,9 +1716,11 @@ nmg_vertex_g(register struct vertex *v, fastf_t x, fastf_t y, fastf_t z)
     nmg_vertex_gv(v, pt);
 }
 
-/**			N M G _ V E R T E X U S E _ N V
+
+/**
+ * n m g _ v e r t e x u s e _ n v
  *
- *	Assign a normal vector to a vertexuse
+ * Assign a normal vector to a vertexuse
  */
 void
 nmg_vertexuse_nv(struct vertexuse *vu, const fastf_t *norm)
@@ -1707,17 +1749,18 @@ nmg_vertexuse_nv(struct vertexuse *vu, const fastf_t *norm)
     }
 }
 
+
 /**
- * 			N M G _ V E R T E X U S E _ A _ C N U R B
+ * n m g _ v e r t e x u s e _ a _ c n u r b
  *
- *  Given a vertex with associated geometry in model space
- *  which lies on a face_g_snurb surface, it will have
- *  a corresponding set of (u, v) or (u, v, w) parameters on that surface.
- *  Build the association here.
+ * Given a vertex with associated geometry in model space which lies
+ * on a face_g_snurb surface, it will have a corresponding set of (u,
+ * v) or (u, v, w) parameters on that surface.  Build the association
+ * here.
  *
- *  Note that all vertexuses of a single vertex which are all used
- *  by the same face_g_snurb will have the same "param" value, but
- *  will have individual vertexuse_a_cnurb structures.
+ * Note that all vertexuses of a single vertex which are all used by
+ * the same face_g_snurb will have the same "param" value, but will
+ * have individual vertexuse_a_cnurb structures.
  */
 void
 nmg_vertexuse_a_cnurb(struct vertexuse *vu, const fastf_t *uvw)
@@ -1744,12 +1787,14 @@ nmg_vertexuse_a_cnurb(struct vertexuse *vu, const fastf_t *uvw)
     }
 }
 
+
 /**
- *			N M G _ E D G E _ G
+ * n m g _ e d g e _ g
  *
- *	Compute the equation of the line formed by the endpoints of the edge.
+ * Compute the equation of the line formed by the endpoints of the
+ * edge.
  *
- *  XXX This isn't the best name.  nmg_edge_g_lseg() ?
+ * XXX This isn't the best name.  nmg_edge_g_lseg() ?
  */
 void
 nmg_edge_g(struct edgeuse *eu)
@@ -1851,15 +1896,16 @@ nmg_edge_g(struct edgeuse *eu)
     }
 }
 
+
 /**
- *			N M G _ E D G E _ G _ C N U R B
+ * n m g _ e d g e _ g _ c n u r b
  *
- *  For an edgeuse associated with a face_g_snurb surface,
- *  create a spline curve in the parameter space of the snurb
- *  which describes the path from the start vertex to the end vertex.
+ * For an edgeuse associated with a face_g_snurb surface, create a
+ * spline curve in the parameter space of the snurb which describes
+ * the path from the start vertex to the end vertex.
  *
- *  The parameters of the end points are taken from the vertexuse attributes
- *  at either end of the edgeuse.
+ * The parameters of the end points are taken from the vertexuse
+ * attributes at either end of the edgeuse.
  */
 void
 nmg_edge_g_cnurb(struct edgeuse *eu, int order, int n_knots, fastf_t *kv, int n_pts, int pt_type, fastf_t *points)
@@ -1965,24 +2011,27 @@ nmg_edge_g_cnurb(struct edgeuse *eu, int order, int n_knots, fastf_t *kv, int n_
     }
 }
 
+
 /**
- *			N M G _ E D G E _ G _ C N U R B _ P L I N E A R
+ * n m g _ e d g e _ g _ c n u r b _ p l i n e a r
  *
- *  For an edgeuse associated with a face_g_snurb surface,
- *  create a spline "curve" in the parameter space of the snurb
- *  which describes a STRAIGHT LINE in parameter space
- *  from the u, v parameters of the start vertex to the end vertex.
+ * For an edgeuse associated with a face_g_snurb surface, create a
+ * spline "curve" in the parameter space of the snurb which describes
+ * a STRAIGHT LINE in parameter space from the u, v parameters of the
+ * start vertex to the end vertex.
  *
- *  The parameters of the end points are found in the vertexuse attributes
- *  at either end of the edgeuse, which should have already been established.
+ * The parameters of the end points are found in the vertexuse
+ * attributes at either end of the edgeuse, which should have already
+ * been established.
  *
- *  This is a special case of nmg_edge_g_cnurb(), and should be used when
- *  the path through parameter space is known to be a line segment.
- *  This permits the savings of a lot of memory, both in core and on disk,
- *  by eliminating a knot vector (typ. 64 bytes or more) and a
- *  ctl_point[] array (typ. 16 bytes or more).
+ * This is a special case of nmg_edge_g_cnurb(), and should be used
+ * when the path through parameter space is known to be a line
+ * segment.  This permits the savings of a lot of memory, both in core
+ * and on disk, by eliminating a knot vector (typ. 64 bytes or more)
+ * and a ctl_point[] array (typ. 16 bytes or more).
  *
- *  This special condition is indicated by order == 0.  See nmg.h for details.
+ * This special condition is indicated by order == 0.  See nmg.h for
+ * details.
  */
 void
 nmg_edge_g_cnurb_plinear(struct edgeuse *eu)
@@ -2044,17 +2093,18 @@ nmg_edge_g_cnurb_plinear(struct edgeuse *eu)
     }
 }
 
+
 /**
- *			N M G _ U S E _ E D G E _ G
+ * n m g _ u s e _ e d g e _ g
  *
- *  Associate edgeuse 'eu' with the edge_g_X structure given as 'magic_p'.
- *  If the edgeuse is already associated with some geometry, release
- *  that first.  Note that, to start with, the two edgeuses may be
- *  using different original geometries.
+ * Associate edgeuse 'eu' with the edge_g_X structure given as
+ * 'magic_p'.  If the edgeuse is already associated with some
+ * geometry, release that first.  Note that, to start with, the two
+ * edgeuses may be using different original geometries.
  *
- *  Also do the edgeuse mate.
+ * Also do the edgeuse mate.
  *
- *  Returns -
+ * Returns -
  *	0	If the old edge geometry (eu->g.magic_p) has other uses.
  *	1	If the old edge geometry has been destroyed. Caller beware!
  */
@@ -2139,13 +2189,17 @@ nmg_use_edge_g(struct edgeuse *eu, unsigned long *magic_p)
     return ndead;
 }
 
-/**			N M G _ L O O P _ G
+
+/**
+ * n m g _ l o o p _ g
  *
- *	Build the bounding box for a loop
- *	The bounding box is guaranteed never to have zero thickness.
+ * Build the bounding box for a loop.
+ *
+ * The bounding box is guaranteed never to have zero thickness.
+ *
  * XXX This really isn't loop geometry, this is a loop attribute.
- * XXX This routine really should be called nmg_loop_bb(), unless
- * XXX it gets something more to do.
+ * This routine really should be called nmg_loop_bb(), unless it gets
+ * something more to do.
  */
 void
 nmg_loop_g(struct loop *l, const struct bn_tol *tol)
@@ -2220,12 +2274,14 @@ nmg_loop_g(struct loop *l, const struct bn_tol *tol)
 
 }
 
-/**			N M G _ F A C E _ G
+
+/**
+ * n m g _ f a c e _ g
  *
- *	Assign plane equation to face.
+ * Assign plane equation to face.
  * XXX Should probably be called nmg_face_g_plane()
  *
- *  In the interest of modularity this no longer calls nmg_face_bb().
+ * In the interest of modularity this no longer calls nmg_face_bb().
  */
 void
 nmg_face_g(struct faceuse *fu, const fastf_t *p)
@@ -2269,10 +2325,11 @@ nmg_face_g(struct faceuse *fu, const fastf_t *p)
 }
 
 
-/**		N M G _ F A C E _ N E W _ P L A N E
+/**
+ * n m g _ f a c e _ n e w _ p l a n e
  *
- *	Assign plane equation to this face. If other faces use current
- *	geometry for this face, then make a new geometry for this face.
+ * Assign plane equation to this face. If other faces use current
+ * geometry for this face, then make a new geometry for this face.
  */
 void
 nmg_face_new_g(struct faceuse *fu, const fastf_t *pl)
@@ -2328,17 +2385,19 @@ nmg_face_new_g(struct faceuse *fu, const fastf_t *pl)
     }
 }
 
+
 /**
- *			N M G _ F A C E _ G _ S N U R B
+ * n m g _ f a c e _ g _ s n u r b
  *
- *  Create a new NURBS surface to be the geometry for an NMG face.
+ * Create a new NURBS surface to be the geometry for an NMG face.
  *
- *  If either of the knot vector arrays or the ctl_points arrays are
- *  given as non-null, then simply swipe the caller's arrays.
- *  The caller must have allocated them with bu_malloc() or malloc().
- *  If the pointers are NULL, then the necessary storage is allocated here.
+ * If either of the knot vector arrays or the ctl_points arrays are
+ * given as non-null, then simply swipe the caller's arrays.  The
+ * caller must have allocated them with bu_malloc() or malloc().  If
+ * the pointers are NULL, then the necessary storage is allocated
+ * here.
  *
- *  This is the NMG parallel to rt_nurb_new_snurb().
+ * This is the NMG parallel to rt_nurb_new_snurb().
  */
 void
 nmg_face_g_snurb(struct faceuse *fu, int u_order, int v_order, int n_u_knots, int n_v_knots, fastf_t *ukv, fastf_t *vkv, int n_rows, int n_cols, int pt_type, fastf_t *mesh)
@@ -2408,10 +2467,11 @@ nmg_face_g_snurb(struct faceuse *fu, int u_order, int v_order, int n_u_knots, in
     }
 }
 
-/**			N M G _ F A C E _ B B
+
+/**
+ * n m g _ f a c e _ b b
  *
- *	Build the bounding box for a face
- *
+ * Build the bounding box for a face
  */
 void
 nmg_face_bb(struct face *f, const struct bn_tol *tol)
@@ -2461,10 +2521,11 @@ nmg_face_bb(struct face *f, const struct bn_tol *tol)
     }
 }
 
-/**			N M G _ S H E L L _ A
+
+/**
+ * n m g _ s h e l l _ a
  *
- *	Build the bounding box for a shell
- *
+ * Build the bounding box for a shell
  */
 void
 nmg_shell_a(struct shell *s, const struct bn_tol *tol)
@@ -2544,9 +2605,10 @@ nmg_shell_a(struct shell *s, const struct bn_tol *tol)
     }
 }
 
-/**			N M G _ R E G I O N _ A
+/**
+ * n m g _ r e g i o n _ a
  *
- *	build attributes/extents for all shells in a region
+ * build attributes/extents for all shells in a region
  *
  */
 void
@@ -2582,6 +2644,7 @@ nmg_region_a(struct nmgregion *r, const struct bn_tol *tol)
     }
 }
 
+
 /************************************************************************
  *									*
  *				"Demote" Routines			*
@@ -2595,11 +2658,11 @@ nmg_region_a(struct nmgregion *r, const struct bn_tol *tol)
 
 
 /**
- *			N M G _ D E M O T E _ L U
+ * n m g _ d e m o t e _ l u
  *
- *	Demote a loopuse of edgeuses to a bunch of wire edges in the shell.
+ * Demote a loopuse of edgeuses to a bunch of wire edges in the shell.
  *
- *  Returns -
+ * Returns -
  *	0	If all is well (edges moved to shell, loopuse deleted).
  *	1	If parent is empty, and is thus "illegal".  Still successful.
  */
@@ -2658,12 +2721,14 @@ nmg_demote_lu(struct loopuse *lu1)
     return(ret_val);
 }
 
-/**			N M G _ D E M O T E _ E U
+
+/**
+ * n m g _ d e m o t e _ e u
  *
- *	Demote a wire edge into a pair of self-loop verticies
+ * Demote a wire edge into a pair of self-loop verticies
  *
  *
- *  Returns -
+ * Returns -
  *	0	If all is well
  *	1	If shell is empty, and is thus "illegal".
  */
@@ -2700,6 +2765,7 @@ nmg_demote_eu(struct edgeuse *eu)
     return(ret_val);
 }
 
+
 /************************************************************************
  *									*
  *				"Modify" Routines			*
@@ -2710,10 +2776,12 @@ nmg_demote_eu(struct edgeuse *eu)
  *									*
  ************************************************************************/
 
-/**			N M G _ M O V E V U
+
+/**
+ * n m g _ m o v e v u
  *
- *	Move a vertexuse from an old vertex to a new vertex.
- *	If this was the last use, the old vertex is destroyed.
+ * Move a vertexuse from an old vertex to a new vertex.  If this was
+ * the last use, the old vertex is destroyed.
  *
  * XXX nmg_jvu() as a better name?
  */
@@ -2742,17 +2810,18 @@ nmg_movevu(struct vertexuse *vu, struct vertex *v)
     }
 }
 
+
 /**
- *			N M G _ J E
+ * n m g _ j e
  *
- *	Move a pair of edgeuses onto a single edge (glue edgeuse).
- *	The edgeuse eusrc and its mate are moved to the edge
- *	used by eudst.  eusrc is made to be immediately radial to eudst.
- *	if eusrc does not share the same vertices as eudst, we bomb.
+ * Move a pair of edgeuses onto a single edge (glue edgeuse).  The
+ * edgeuse eusrc and its mate are moved to the edge used by eudst.
+ * eusrc is made to be immediately radial to eudst.  if eusrc does not
+ * share the same vertices as eudst, we bomb.
  *
- *	The edgeuse geometry pointers are not changed by this operation.
+ * The edgeuse geometry pointers are not changed by this operation.
  *
- *	This routine was formerly called nmg_moveeu().
+ * This routine was formerly called nmg_moveeu().
  */
 void
 nmg_je(struct edgeuse *eudst, struct edgeuse *eusrc)
@@ -2826,20 +2895,21 @@ nmg_je(struct edgeuse *eudst, struct edgeuse *eusrc)
     }
 }
 
+
 /**
- *			N M G _ U N G L U E E D G E
+ * n m g _ u n g l u e e d g e
  *
- *	If edgeuse is part of a shared edge (more than one pair of edgeuses
- *	on the edge), it and its mate are "unglued" from the edge, and
- *	associated with a new edge structure.
+ * If edgeuse is part of a shared edge (more than one pair of edgeuses
+ * on the edge), it and its mate are "unglued" from the edge, and
+ * associated with a new edge structure.
  *
- *	Primarily a support routine for nmg_eusplit()
+ * Primarily a support routine for nmg_eusplit()
  *
- *  If the original edge had edge geometry, that is *not* duplicated here,
- *  because it is not easy (or appropriate) for nmg_eusplit() to know
- *  whether the new vertex lies on the previous edge geometry or not.
- *  Hence having the nmg_ebreak() interface, which preserves the ege
- *  geometry across a split, and nmg_esplit() which does not.
+ * If the original edge had edge geometry, that is *not* duplicated
+ * here, because it is not easy (or appropriate) for nmg_eusplit() to
+ * know whether the new vertex lies on the previous edge geometry or
+ * not.  Hence having the nmg_ebreak() interface, which preserves the
+ * ege geometry across a split, and nmg_esplit() which does not.
  */
 void
 nmg_unglueedge(struct edgeuse *eu)
@@ -2885,12 +2955,14 @@ nmg_unglueedge(struct edgeuse *eu)
     }
 }
 
+
 /**
- *			N M G _ J V
+ * n m g _ j v
  *
- *	Join two vertexes into one.
- *	v1 inherits all the vertexuses presently pointing to v2,
- *	and v2 is then destroyed.
+ * Join two vertexes into one.
+ *
+ * v1 inherits all the vertexuses presently pointing to v2, and v2 is
+ * then destroyed.
  */
 void
 nmg_jv(register struct vertex *v1, register struct vertex *v2)
@@ -2903,9 +2975,9 @@ nmg_jv(register struct vertex *v1, register struct vertex *v2)
     if (v1 == v2) return;
 
     /*
-     *  Walk the v2 list, unlinking vertexuse structs,
-     *  and adding them to the *end* of the v1 list
-     *  (which preserves relative ordering).
+     * Walk the v2 list, unlinking vertexuse structs,
+     * and adding them to the *end* of the v1 list
+     * (which preserves relative ordering).
      */
     vu = BU_LIST_FIRST(vertexuse, &v2->vu_hd);
     while (BU_LIST_NOT_HEAD(vu, &v2->vu_hd)) {
@@ -2934,14 +3006,15 @@ nmg_jv(register struct vertex *v1, register struct vertex *v2)
     }
 }
 
+
 /**
- *			N M G _ J F G
+ * n m g _ j f g
  *
- *  Join two faces, so that they share one underlying face geometry.
- *  The loops of the two faces remains unchanged.
+ * Join two faces, so that they share one underlying face geometry.
+ * The loops of the two faces remains unchanged.
  *
- *  If one of the faces does not have any geometry, then it
- *  is made to share the geometry of the other.
+ * If one of the faces does not have any geometry, then it is made to
+ * share the geometry of the other.
  */
 void
 nmg_jfg(struct face *f1, struct face *f2)
@@ -3007,19 +3080,22 @@ nmg_jfg(struct face *f1, struct face *f2)
     }
 }
 
+
 /**
- *			N M G _ J E G
+ * n m g _ j e g
  *
- *  Join two edge geometries.
- *  For all edges in the model which refer to 'src_eg',
- *  change them to refer to 'dest_eg'.  The source is destroyed.
+ * Join two edge geometries.
  *
- *  It is the responsibility of the caller to make certain that the
- *  'dest_eg' is the best one for these edges.
- *  Outrageously wrong requests will cause this routine to abort.
+ * For all edges in the model which refer to 'src_eg', change them to
+ * refer to 'dest_eg'.  The source is destroyed.
  *
- *  This algorithm does not make sense if dest_eg is an edge_g_cnurb;
- *  those only make sense in the parameter space of their associated face.
+ * It is the responsibility of the caller to make certain that the
+ * 'dest_eg' is the best one for these edges.  Outrageously wrong
+ * requests will cause this routine to abort.
+ *
+ * This algorithm does not make sense if dest_eg is an edge_g_cnurb;
+ * those only make sense in the parameter space of their associated
+ * face.
  */
 void
 nmg_jeg(struct edge_g_lseg *dest_eg, struct edge_g_lseg *src_eg)
