@@ -15,6 +15,13 @@ on-going issues.
 Recent Bugs
 -----------
 
+* the ray tracer fails to report LOS and sometimes even hits on a BoT
+  that is marked as unoriented or is inverted (even though it
+  sometimes will report the segments, just without LOS).  this seems
+  to happen for bots that are neither lh or rh (they're mixed) and
+  causes the raytrace to fail if they're set to anything other than
+  'no' for orientation.  this affects rt, nirt, et al.
+
 * g-vrml ignores bots that are created with dxf-g
 
 * Mac OS X installer doesn't include the symbolic links, only
@@ -101,10 +108,6 @@ Recent Bugs
 
 * rtedge seems to get stuck in a loop at the end of rendering, never
   terminates (unless you rtabort/kill the process); works with -P1
-
-* nirt fails to report LOS and sometimes even hits on a BoT that is
-  marked as unoriented or is inverted (even though it sometimes will
-  report the segments, just without LOS)
 
 * nirt/query_ray reports intersection messages in triplicate if the
   shot routines miss but still print out messages
