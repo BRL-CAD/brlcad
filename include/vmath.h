@@ -199,18 +199,26 @@ __BEGIN_DECLS
 
 /** @brief 2-tuple vector */
 typedef fastf_t vect2d_t[ELEMENTS_PER_VECT2D];
+
+/** @brief pointer to a 2-tuple vector */
 typedef fastf_t *vect2dp_t;
 
 /** @brief 2-tuple point */
 typedef fastf_t point2d_t[ELEMENTS_PER_POINT2D];
+
+/** @brief pointer to a 2-tuple point */
 typedef fastf_t *point2dp_t;
 
 /** @brief 3-tuple vector */
 typedef	fastf_t	vect_t[ELEMENTS_PER_VECT];
+
+/** @brief pointer to a 3-tuple vector */
 typedef	fastf_t	*vectp_t;
 
 /** @brief 3-tuple point */
 typedef fastf_t	point_t[ELEMENTS_PER_POINT];
+
+/** @brief pointer to a 3-tuple point */
 typedef fastf_t	*pointp_t;
 
 /** @brief 4-tuple vector */
@@ -224,18 +232,32 @@ typedef fastf_t hpoint_t[ELEMENTS_PER_HPOINT];
 
 /** @brief 4x4 matrix */
 typedef	fastf_t	mat_t[ELEMENTS_PER_MAT];
+
+/** @brief pointer to a 4x4 matrix */
 typedef	fastf_t	*matp_t;
 
+/** Vector component names for homogeneous (4-tuple) vectors */
+typedef enum bn_vector_component_ {
+    X = 0,
+    Y = 1,
+    Z = 2,
+    H = 3,
+    W = H
+} bn_vector_component;
 
 /**
- * return truthfully whether a value is within some epsilon from zero
+ * Locations of deltas (MD*) and scaling values (MS*) in a 4x4
+ * Homogenous Transform matrix
  */
-#define NEAR_ZERO(val, epsilon)	( ((val) > -epsilon) && ((val) < epsilon) )
-
-/**
- * clamp a value to a low/high number
- */
-#define CLAMP(_v, _l, _h) if ((_v) < (_l)) _v = _l; else if ((_v) > (_h)) _v = _h
+typedef enum bn_matrix_component_ {
+    MSX = 0,
+    MDX = 3,
+    MSY = 5,
+    MDY = 7,
+    MSZ = 10,
+    MDZ = 11,
+    MSA = 15
+} bn_matrix_component;
 
 /**
  * @brief
@@ -262,6 +284,18 @@ typedef	fastf_t	*matp_t;
  */
 typedef fastf_t	plane_t[ELEMENTS_PER_PLANE];
 
+
+/**
+ * return truthfully whether a value is within some epsilon from zero
+ */
+#define NEAR_ZERO(val, epsilon)	( ((val) > -epsilon) && ((val) < epsilon) )
+
+/**
+ * clamp a value to a low/high number
+ */
+#define CLAMP(_v, _l, _h) if ((_v) < (_l)) _v = _l; else if ((_v) > (_h)) _v = _h
+
+
 /** @brief Compute distance from a point to a plane */
 #define DIST_PT_PLANE(_pt, _pl) (VDOT(_pt, _pl) - (_pl)[H])
 
@@ -270,20 +304,6 @@ typedef fastf_t	plane_t[ELEMENTS_PER_PLANE];
 	((a)[X]-(b)[X])*((a)[X]-(b)[X]) + \
 	((a)[Y]-(b)[Y])*((a)[Y]-(b)[Y]) + \
 	((a)[Z]-(b)[Z])*((a)[Z]-(b)[Z]) )
-
-/* Element names in homogeneous vector (4-tuple) */
-enum axis {
-    X = 0,
-    Y = 1,
-    Z = 2,
-    H = 3,
-    W = H
-};
-
-/* Locations of deltas in 4x4 Homogenous Transform matrix */
-#define MDX	3
-#define MDY	7
-#define MDZ	11
 
 /** @brief set translation values of 4x4 matrix with x, y, z values */
 #define MAT_DELTAS(_m, _x, _y, _z)	{ \
@@ -347,12 +367,6 @@ enum axis {
 			(_m)[MDY] *= (_v)[Y]; \
 			(_m)[MDZ] *= (_v)[Z]; }
 
-
-/* Locations of scaling values in 4x4 Homogenous Transform matrix */
-#define MSX	0
-#define MSY	5
-#define MSZ	10
-#define MSA	15
 
 /** @brief set scale of 4x4 matrix from xyz */
 #define MAT_SCALE(_m, _x, _y, _z) { \
