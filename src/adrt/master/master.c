@@ -27,6 +27,9 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/time.h>
+
+#include "bu.h"
+
 #include "camera.h"
 #include "dispatcher.h"		/* Dispatcher that creates work units */
 #include "compnet.h"		/* Component Networking, Sends Component Names via Network */
@@ -90,7 +93,6 @@ void master_result (tienet_buffer_t *result);
 
 master_t master;
 
-
 static void
 master_setup ()
 {
@@ -114,14 +116,14 @@ master_setup ()
 
 
 void
-master_init (int port, int obs_port, char *list, char *exec, char *comp_host, int verbose)
+master_init (int port, int obs_port, char *list, char *exec, char *comp_host)
 {
     /* Setup defaults */
     master_setup();
 
     /* Initialize tienet master */
     master.tile_num = DISPATCHER_TILE_NUM * DISPATCHER_TILE_NUM;
-    tienet_master_init(port, master_result, list, exec, 5, ADRT_VER_KEY, verbose);
+    tienet_master_init(port, master_result, list, exec, 5, ADRT_VER_KEY, bu_debug & BU_DEBUG_UNUSED_1);
 
     /* Launch a thread to handle networking */
     pthread_create(&master.networking_thread, NULL, master_networking, &obs_port);
@@ -177,6 +179,9 @@ master_result (tienet_buffer_t *result)
 
     TCOPY (uint16_t, result->data, ind, &wid, 0);
     ind += 2;
+
+    if(bu_debug & BU_DEBUG_UNUSED_2)
+	bu_log("ADRT Master OP: %x\n", op);
 
     switch (op)
     {

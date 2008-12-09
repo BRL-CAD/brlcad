@@ -26,7 +26,7 @@
 
 #include "tie.h"
 
-extern void master_init(int port, int obs_port, char *list, char *exec, char *comp_host, int verbose);
+extern void master_init(int port, int obs_port, char *list, char *exec, char *comp_host);
 
 #endif
 
