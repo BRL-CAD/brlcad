@@ -950,11 +950,11 @@ rt_comb_get(struct bu_vls *log, const struct rt_db_internal *intern, const char 
 	}
 
 	if (comb->rgb_valid) {
-	    bu_vls_printf(log, "rgb %d %d %d ", V3ARGS(comb->rgb));
+	    bu_vls_printf(log, "rgb {%d %d %d} ", V3ARGS(comb->rgb));
 	}
 
 	if (bu_vls_strlen(&comb->shader) > 0) {
-	    bu_vls_printf(log, "shader %s ", bu_vls_addr(&comb->shader));
+	    bu_vls_printf(log, "shader {%s} ", bu_vls_addr(&comb->shader));
 	}
 
 	if (bu_vls_strlen(&comb->material) > 0) {
