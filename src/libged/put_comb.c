@@ -39,9 +39,9 @@ struct line_list{
 
 static struct line_list HeadLines;
 
-static int ged_put_tree_into_comb(struct ged *gedp, struct rt_comb_internal *comb, struct directory *dp, char *old_name, char *new_name, char *str);
+static int ged_put_tree_into_comb(struct ged *gedp, struct rt_comb_internal *comb, struct directory *dp, const char *old_name, const char *new_name, const char *str);
 static int ged_count_nodes(struct ged *gedp, char *line);
-static void put_rgb_into_comb(struct rt_comb_internal *comb, char *str);
+static void put_rgb_into_comb(struct rt_comb_internal *comb, const char *str);
 
 int
 ged_put_comb(struct ged *gedp, int argc, const char *argv[])
@@ -151,7 +151,7 @@ ged_put_comb(struct ged *gedp, int argc, const char *argv[])
 	offset = 2;
     }
 
-    put_rgb_into_comb(comb, (char *)argv[offset + 1]);
+    put_rgb_into_comb(comb, argv[offset + 1]);
     bu_vls_strcpy(&comb->shader, argv[offset +2]);
 
     if (*argv[offset + 3] == 'y' || *argv[offset + 3] == 'Y')
@@ -159,7 +159,7 @@ ged_put_comb(struct ged *gedp, int argc, const char *argv[])
     else
 	comb->inherit = 0;
 
-    if (ged_put_tree_into_comb(gedp, comb, dp, (char *)argv[1], new_name, (char *)argv[offset + 4]) == BRLCAD_ERROR) {
+    if (ged_put_tree_into_comb(gedp, comb, dp, argv[1], new_name, argv[offset + 4]) == BRLCAD_ERROR) {
 	if (comb) {
 	    ged_restore_comb(gedp, dp);
 	    bu_vls_printf(&gedp->ged_result_str, "%s: \toriginal restored\n", argv[0]);
@@ -181,7 +181,7 @@ ged_put_comb(struct ged *gedp, int argc, const char *argv[])
 }
 
 static int
-ged_put_tree_into_comb(struct ged *gedp, struct rt_comb_internal *comb, struct directory *dp, char *old_name, char *new_name, char *str)
+ged_put_tree_into_comb(struct ged *gedp, struct rt_comb_internal *comb, struct directory *dp, const char *old_name, const char *new_name, const char *imstr)
 {
     int			i;
     int			done;
@@ -196,11 +196,15 @@ ged_put_tree_into_comb(struct ged *gedp, struct rt_comb_internal *comb, struct d
     union tree		*tp;
     matp_t		matrix;
     struct bu_vls	vls;
+    char		*str;
 
     if (str == (char *)NULL)
 	return BRLCAD_ERROR;
 
     BU_LIST_INIT(&HeadLines.l);
+
+    /* duplicate the immutable str (from argv) for strtok style mutation */
+    str = strdup(imstr);
 
     /* break str into lines */
     line = str;
@@ -402,7 +406,7 @@ ged_count_nodes(struct ged *gedp, char *line)
 }
 
 void
-put_rgb_into_comb(struct rt_comb_internal *comb, char *str)
+put_rgb_into_comb(struct rt_comb_internal *comb, const char *str)
 {
     int r, g, b;
 
