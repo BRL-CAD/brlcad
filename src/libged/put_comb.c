@@ -220,6 +220,7 @@ ged_put_tree_into_comb(struct ged *gedp, struct rt_comb_internal *comb, struct d
 	if ((n = ged_count_nodes(gedp, bu_vls_addr(&vls))) < 0) {
 	    bu_vls_free(&vls);
 	    bu_list_free(&HeadLines.l);
+	    free(str);
 	    return BRLCAD_ERROR;
 	} else if (n > 0) {
 	    BU_GETSTRUCT(llp, line_list);
@@ -267,6 +268,7 @@ ged_put_tree_into_comb(struct ged *gedp, struct rt_comb_internal *comb, struct d
 		if (rt_tree_array)
 		    bu_free((char *)rt_tree_array, "red: tree list");
 		bu_log("no name specified\n");
+		free(str);
 		return BRLCAD_ERROR;
 	    }
 	    name = ptr;
@@ -303,6 +305,7 @@ ged_put_tree_into_comb(struct ged *gedp, struct rt_comb_internal *comb, struct d
 			if (rt_tree_array)
 			    bu_free((char *)rt_tree_array, "red: tree list");
 			bu_list_free(&HeadLines.l);
+			free(str);
 			return BRLCAD_ERROR;
 		    }
 		    matrix[k] = atof(ptr);
@@ -343,7 +346,9 @@ ged_put_tree_into_comb(struct ged *gedp, struct rt_comb_internal *comb, struct d
     }
 
     bu_list_free(&HeadLines.l);
-    return ged_make_tree(gedp, comb, dp, node_count, old_name, new_name, rt_tree_array, tree_index);
+    i = ged_make_tree(gedp, comb, dp, node_count, old_name, new_name, rt_tree_array, tree_index);
+    free(str);
+    return i;
 }
 
 static int
