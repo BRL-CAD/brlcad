@@ -135,13 +135,6 @@ ged_put_comb(struct ged *gedp, int argc, const char *argv[])
 	comb->GIFTmater = atoi(argv[5]);
 	comb->los = atoi(argv[6]);
 
-#if 0
-	/* use the new values for defaults */
-	item_default = comb->region_id + 1;
-	air_default = comb->aircode;
-	mat_default = comb->GIFTmater;
-	los_default = comb->los;
-#endif
 	offset = 6;
     } else {
 	if (argc != 7) {
@@ -220,7 +213,7 @@ ged_put_tree_into_comb(struct ged *gedp, struct rt_comb_internal *comb, struct d
 	if ((n = ged_count_nodes(gedp, bu_vls_addr(&vls))) < 0) {
 	    bu_vls_free(&vls);
 	    bu_list_free(&HeadLines.l);
-	    free(str);
+	    bu_free(str, "dealloc bu_strdup str");
 	    return BRLCAD_ERROR;
 	} else if (n > 0) {
 	    BU_GETSTRUCT(llp, line_list);
@@ -268,7 +261,7 @@ ged_put_tree_into_comb(struct ged *gedp, struct rt_comb_internal *comb, struct d
 		if (rt_tree_array)
 		    bu_free((char *)rt_tree_array, "red: tree list");
 		bu_log("no name specified\n");
-		free(str);
+		bu_free(str, "dealloc bu_strdup str");
 		return BRLCAD_ERROR;
 	    }
 	    name = ptr;
@@ -305,7 +298,7 @@ ged_put_tree_into_comb(struct ged *gedp, struct rt_comb_internal *comb, struct d
 			if (rt_tree_array)
 			    bu_free((char *)rt_tree_array, "red: tree list");
 			bu_list_free(&HeadLines.l);
-			free(str);
+			bu_free(str, "dealloc bu_strdup str");
 			return BRLCAD_ERROR;
 		    }
 		    matrix[k] = atof(ptr);
