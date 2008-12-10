@@ -3858,7 +3858,6 @@ AC_CONFIG_FILES([
 	src/adrt/Makefile
 	src/adrt/bench/Makefile
 	src/adrt/doc/Makefile
-	src/adrt/isst/Makefile
 	src/adrt/libcommon/Makefile
 	src/adrt/librender/Makefile
 	src/adrt/libtexture/Makefile
