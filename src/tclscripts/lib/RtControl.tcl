@@ -110,6 +110,9 @@ option add *RtControl*tearoff 0 widgetDefault
     private variable isaMged 0
     private variable isaGed 0
 
+    protected variable saveVisibilityBinding {}
+    protected variable saveFocusOutBinding {}
+
     constructor {args} {}
 }
 
@@ -392,6 +395,8 @@ option add *RtControl*tearoff 0 widgetDefault
     itk_component add adv {
 	::toplevel $itk_interior.adv
     }
+    bind $itk_component(adv) <Visibility> "raise $itk_component(adv); break"
+    bind $itk_component(adv) <FocusOut> "raise $itk_component(adv); break"
 
     itk_component add adv_gridF1 {
 	::frame $itk_component(adv).gridF1
@@ -602,6 +607,11 @@ option add *RtControl*tearoff 0 widgetDefault
 }
 
 ::itcl::body RtControl::activate_adv {} {
+    set saveVisibilityBinding [bind $itk_component(hull) <Visibility>]
+    set saveFocusOutBinding [bind $itk_component(hull) <FocusOut>]
+    bind $itk_component(hull) <Visibility> {}
+    bind $itk_component(hull) <FocusOut> {}
+
     raise $itk_component(adv)
 
     # center over control panel
@@ -621,6 +631,10 @@ option add *RtControl*tearoff 0 widgetDefault
 ::itcl::body RtControl::deactivate_adv {} {
     set win_geom_adv [wm geometry $itk_component(adv)]
     wm withdraw $itk_component(adv)
+
+    bind $itk_component(hull) <Visibility> $saveVisibilityBinding 
+    bind $itk_component(hull) <FocusOut> $saveFocusOutBinding 
+    raise $itk_component(hull)
 }
 
 ::itcl::body RtControl::center {w gs {cw ""}} {
