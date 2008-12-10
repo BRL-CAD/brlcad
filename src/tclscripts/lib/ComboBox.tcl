@@ -63,7 +63,7 @@
 
 ::itcl::body cadwidgets::ComboBox::constructor {args} {
     itk_component add frame {
-	::frame $itk_interior.frame -relief sunken -bd 2
+	::frame $itk_interior.frame -relief sunken -bd 1
     } {
 	usual
     }
@@ -83,7 +83,7 @@
     }
 
     itk_component add menubutton {
-	::menubutton $itk_interior.menubutton -relief raised -bd 2 \
+	::menubutton $itk_interior.menubutton -relief raised -bd 1 \
 	    -menu $itk_interior.menubutton.m -indicatoron 1
     } {
 	usual
