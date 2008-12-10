@@ -756,24 +756,17 @@ protect_from_clobber ( ) {
     # prevalent behavior, so we protect against it by keeping a backup
     # of the file that can later be restored.
 
-    if test -f COPYING ; then
-	if test -f COPYING.$$.protect_from_automake.backup ; then
-	    $VERBOSE_ECHO "Already backed up COPYING in `pwd`"
-	else
-	    $VERBOSE_ECHO "Backing up COPYING in `pwd`"
-	    $VERBOSE_ECHO "cp -p COPYING COPYING.$$.protect_from_automake.backup"
-	    cp -p COPYING COPYING.$$.protect_from_automake.backup
+    for file in COPYING INSTALL ; do
+	if test -f ${file} ; then
+	    if test -f ${file}.$$.protect_from_automake.backup ; then
+		$VERBOSE_ECHO "Already backed up ${file} in `pwd`"
+	    else
+		$VERBOSE_ECHO "Backing up ${file} in `pwd`"
+		$VERBOSE_ECHO "cp -p ${file} ${file}.$$.protect_from_automake.backup"
+		cp -p ${file} ${file}.$$.protect_from_automake.backup
+	    fi
 	fi
-    fi
-    if test -f INSTALL ; then
-	if test -f INSTALL.$$.protect_from_automake.backup ; then
-	    $VERBOSE_ECHO "Already backed up INSTALL in `pwd`"
-	else
-	    $VERBOSE_ECHO "Backing up INSTALL in `pwd`"
-	    $VERBOSE_ECHO "cp -p INSTALL INSTALL.$$.protect_from_automake.backup"
-	    cp -p INSTALL INSTALL.$$.protect_from_automake.backup
-	fi
-    fi
+    done
 }
 
 
@@ -840,57 +833,32 @@ restore_clobbered ( ) {
 
     spacer=no
 
-    # COPYING
-    if test -f COPYING.$$.protect_from_automake.backup ; then
-	if test -f COPYING ; then
+    for file in COPYING INSTALL ; do
+	if test -f ${file}.$$.protect_from_automake.backup ; then
+	    if test -f ${file} ; then
 	    # compare entire content, restore if needed
-	    if test "x`cat COPYING`" != "x`cat COPYING.$$.protect_from_automake.backup`" ; then
+	    if test "x`cat ${file}`" != "x`cat ${file}.$$.protect_from_automake.backup`" ; then
 		if test "x$spacer" = "xno" ; then
 		    $VERBOSE_ECHO
 		    spacer=yes
 		fi
 		# restore the backup
-		$VERBOSE_ECHO "Restoring COPYING from backup (automake -f likely clobbered it)"
-		$VERBOSE_ECHO "rm -f COPYING"
-		rm -f COPYING
-		$VERBOSE_ECHO "mv COPYING.$$.protect_from_automake.backup COPYING"
-		mv COPYING.$$.protect_from_automake.backup COPYING
+		$VERBOSE_ECHO "Restoring ${file} from backup (automake -f likely clobbered it)"
+		$VERBOSE_ECHO "rm -f ${file}"
+		rm -f ${file}
+		$VERBOSE_ECHO "mv ${file}.$$.protect_from_automake.backup ${file}"
+		mv ${file}.$$.protect_from_automake.backup ${file}
 	    fi # check contents
-	elif test -f COPYING.$$.protect_from_automake.backup ; then
-	    $VERBOSE_ECHO "mv COPYING.$$.protect_from_automake.backup COPYING"
-	    mv COPYING.$$.protect_from_automake.backup COPYING
-	fi # -f COPYING
-
-	# just in case
-	$VERBOSE_ECHO "rm -f COPYING.$$.protect_from_automake.backup"
-	rm -f COPYING.$$.protect_from_automake.backup
-    fi # -f COPYING.$$.protect_from_automake.backup
-
-    # INSTALL
-    if test -f INSTALL.$$.protect_from_automake.backup ; then
-	if test -f INSTALL ; then
-	    # compare entire content, restore if needed
-	    if test "x`cat INSTALL`" != "x`cat INSTALL.$$.protect_from_automake.backup`" ; then
-		if test "x$spacer" = "xno" ; then
-		    $VERBOSE_ECHO
-		    spacer=yes
-		fi
-		# restore the backup
-		$VERBOSE_ECHO "Restoring INSTALL from backup (automake -f likely clobbered it)"
-		$VERBOSE_ECHO "rm -f INSTALL"
-		rm -f INSTALL
-		$VERBOSE_ECHO "mv INSTALL.$$.protect_from_automake.backup INSTALL"
-		mv INSTALL.$$.protect_from_automake.backup INSTALL
-	    fi # check contents
-	elif test -f INSTALL.$$.protect_from_automake.backup ; then
-	    $VERBOSE_ECHO "mv INSTALL.$$.protect_from_automake.backup INSTALL"
-	    mv INSTALL.$$.protect_from_automake.backup INSTALL
-	fi # -f INSTALL
-
-	# just in case
-	$VERBOSE_ECHO "rm -f INSTALL.$$.protect_from_automake.backup"
-	rm -f INSTALL.$$.protect_from_automake.backup
-    fi # -f INSTALL.$$.protect_from_automake.backup
+	    elif test -f ${file}.$$.protect_from_automake.backup ; then
+		$VERBOSE_ECHO "mv ${file}.$$.protect_from_automake.backup ${file}"
+		mv ${file}.$$.protect_from_automake.backup ${file}
+	    fi # -f ${file}
+	
+	    # just in case
+	    $VERBOSE_ECHO "rm -f ${file}.$$.protect_from_automake.backup"
+	    rm -f ${file}.$$.protect_from_automake.backup
+	fi # -f ${file}.$$.protect_from_automake.backup
+    done
 
     CONFIGURE="`locate_configure_template`"
     if [ "x$CONFIGURE" = "x" ] ; then
