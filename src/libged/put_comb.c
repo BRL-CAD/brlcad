@@ -47,7 +47,7 @@ int
 ged_put_comb(struct ged *gedp, int argc, const char *argv[])
 {
     struct directory *dp;
-    struct rt_db_internal	intern;
+    struct rt_db_internal intern;
     struct rt_comb_internal *comb;
     char new_name_v4[NAMESIZE+1];
     char *new_name;
@@ -81,7 +81,7 @@ ged_put_comb(struct ged *gedp, int argc, const char *argv[])
 	    return BRLCAD_ERROR;
 	}
 
-	if (rt_db_get_internal( &intern, dp, gedp->ged_wdbp->dbip, (fastf_t *)NULL, &rt_uniresource) < 0) {
+	if (rt_db_get_internal(&intern, dp, gedp->ged_wdbp->dbip, (fastf_t *)NULL, &rt_uniresource) < 0) {
 	    bu_vls_printf(&gedp->ged_result_str, "%s: Database read error, aborting\n", argv[0]);
 	    return BRLCAD_ERROR;
 	}
@@ -106,7 +106,7 @@ ged_put_comb(struct ged *gedp, int argc, const char *argv[])
 	bu_vls_init(&comb->material);
     }
 
-    if (gedp->ged_wdbp->dbip->dbi_version < 5)	{
+    if (gedp->ged_wdbp->dbip->dbi_version < 5) {
 	new_name = new_name_v4;
 	if (dp == DIR_NULL)
 	    NAMEMOVE(argv[1], new_name_v4);
@@ -176,20 +176,20 @@ ged_put_comb(struct ged *gedp, int argc, const char *argv[])
 static int
 ged_put_tree_into_comb(struct ged *gedp, struct rt_comb_internal *comb, struct directory *dp, const char *old_name, const char *new_name, const char *imstr)
 {
-    int			i;
-    int			done;
-    char		*line;
-    char		*ptr;
-    char		relation;
-    char		*name;
-    struct rt_tree_array	*rt_tree_array;
-    struct line_list	*llp;
-    int			node_count = 0;
-    int			tree_index = 0;
-    union tree		*tp;
-    matp_t		matrix;
-    struct bu_vls	vls;
-    char		*str;
+    int i;
+    int done;
+    char *line;
+    char *ptr;
+    char relation;
+    char *name;
+    struct rt_tree_array *rt_tree_array;
+    struct line_list *llp;
+    int node_count = 0;
+    int tree_index = 0;
+    union tree *tp;
+    matp_t matrix;
+    struct bu_vls vls;
+    char *str;
 
     if (imstr == (char *)NULL)
 	return BRLCAD_ERROR;
@@ -242,7 +242,7 @@ ged_put_tree_into_comb(struct ged *gedp, struct rt_comb_internal *comb, struct d
     else
 	rt_tree_array = (struct rt_tree_array *)NULL;
 
-    for (BU_LIST_FOR(llp, line_list, &HeadLines.l)) {
+    for (BU_LIST_FOR (llp, line_list, &HeadLines.l)) {
 	done = 0;
 	ptr = strtok(llp->line, delims);
 	while (!done) {
@@ -267,7 +267,7 @@ ged_put_tree_into_comb(struct ged *gedp, struct rt_comb_internal *comb, struct d
 	    name = ptr;
 
 	    /* Eliminate trailing white space from name */
-	    i = strlen( ptr );
+	    i = strlen(ptr);
 	    while (isspace(name[--i]))
 		name[i] = '\0';
 
@@ -365,7 +365,7 @@ ged_count_nodes(struct ged *gedp, char *line)
 	relation = (*ptr);
 
 	if (relation != '+' && relation != 'u' && relation != '-') {
-	    bu_vls_printf(&gedp->ged_result_str, " %c is not a legal operator\n", relation );
+	    bu_vls_printf(&gedp->ged_result_str, " %c is not a legal operator\n", relation);
 	    return -1;
 	}
 
@@ -377,7 +377,7 @@ ged_count_nodes(struct ged *gedp, char *line)
 	    return -1;
 	}
 
-	ptr = strtok( (char *)NULL, delims );
+	ptr = strtok((char *)NULL, delims);
 	/*
 	 * If this token is not a boolean operator, then it must be the start
 	 * of a matrix which we will skip.
@@ -388,7 +388,7 @@ ged_count_nodes(struct ged *gedp, char *line)
 
 	    /* skip past matrix, k=1 because we already have the first value */
 	    for (k=1; k<16; k++) {
-		ptr = strtok( (char *)NULL, delims );
+		ptr = strtok((char *)NULL, delims);
 		if (!ptr) {
 		    bu_vls_printf(&gedp->ged_result_str, "expecting a matrix\n");
 		    return -1;
@@ -436,7 +436,6 @@ put_rgb_into_comb(struct rt_comb_internal *comb, const char *str)
     comb->rgb[2] = (unsigned char)b;
     comb->rgb_valid = 1;
 }
-
 
 
 /*
