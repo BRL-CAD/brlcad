@@ -204,11 +204,7 @@ ged_put_tree_into_comb(struct ged *gedp, struct rt_comb_internal *comb, struct d
     BU_LIST_INIT(&HeadLines.l);
 
     /* duplicate the immutable str (from argv) for strtok style mutation */
-    str = strdup(imstr);
-    if(str == NULL) {
-	bu_log("Failed to allocate memory. Aborting");
-	return BRLCAD_ERROR;
-    }
+    str = bu_strdup(imstr);
 
     /* break str into lines */
     line = str;
@@ -351,7 +347,9 @@ ged_put_tree_into_comb(struct ged *gedp, struct rt_comb_internal *comb, struct d
 
     bu_list_free(&HeadLines.l);
     i = ged_make_tree(gedp, comb, dp, node_count, old_name, new_name, rt_tree_array, tree_index);
-    free(str);
+
+    bu_free(str, "dealloc bu_strdup str");
+
     return i;
 }
 
