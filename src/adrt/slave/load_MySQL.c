@@ -25,7 +25,6 @@
 # define TIE_PRECISION 0
 #endif
 
-#include "load.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -34,6 +33,8 @@
 
 #include "tienet.h"
 #include "umath.h"
+
+#include "load.h"
 
 #ifdef HAVE_MYSQL
 # include <mysql.h>

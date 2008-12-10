@@ -25,10 +25,11 @@
 # define TIE_PRECISION 0
 #endif
 
-#include "load.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
+#include "load.h"
 
 #include "tienet.h"
 #include "umath.h"
