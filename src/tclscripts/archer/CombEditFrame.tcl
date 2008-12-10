@@ -118,7 +118,11 @@
 # Initialize the variables containing the object's specification.
 #
 ::itcl::body CombEditFrame::initGeometry {gdata} {
-    set mRegion [bu_get_value_by_keyword region $gdata]
+    if {![catch {bu_get_value_by_keyword region $gdata} _region]} {
+	set mRegion $_region
+    } else {
+	set mRegion ""
+    }
 
     if {![catch {bu_get_value_by_keyword id $gdata} _id]} {
 	set mId $_id

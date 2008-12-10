@@ -188,6 +188,7 @@ namespace eval ArcherCore {
 	method rotate_arb_face     {args}
 	method shader              {args}
 	method shells              {args}
+	method tire                {args}
 	method title               {args}
 	method track               {args}
 	method unhide              {args}
@@ -400,7 +401,7 @@ namespace eval ArcherCore {
 					   mv mvall nmg_collapse nmg_simplify \
 					   ocenter orotate oscale otranslate packTree prefix push \
 					   put put_comb putmat pwd r rcodes red rfarb rm rmater \
-					   rotate_arb_face shader shells title track unhide units unpackTree \
+					   rotate_arb_face shader shells tire title track unhide units unpackTree \
 					   vmake wmater xpush Z zap
 	}
 	variable mUnwrappedDbCommands {}
@@ -4161,6 +4162,10 @@ Popup Menu    Right or Ctrl-Left
 
 ::itcl::body ArcherCore::shells {args} {
     eval gedWrapper shells 0 0 1 0 $args
+}
+
+::itcl::body ArcherCore::tire {args} {
+    eval gedWrapper tire 0 0 1 1 $args
 }
 
 ::itcl::body ArcherCore::title {args} {

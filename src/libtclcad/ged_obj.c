@@ -687,6 +687,7 @@ static struct go_cmdtab go_cmds[] = {
     {"solids_on_ray",	(char *)0, MAXARGS, go_pass_through_func, ged_solids_on_ray},
     {"summary",	(char *)0, MAXARGS, go_pass_through_func, ged_summary},
     {"sync",	(char *)0, MAXARGS, go_pass_through_func, ged_sync},
+    {"tire",	(char *)0, MAXARGS, go_pass_through_func, ged_tire},
     {"title",	(char *)0, MAXARGS, go_pass_through_func, ged_title},
     {"tol",	(char *)0, MAXARGS, go_pass_through_func, ged_tol},
     {"tops",	(char *)0, MAXARGS, go_pass_through_func, ged_tops},

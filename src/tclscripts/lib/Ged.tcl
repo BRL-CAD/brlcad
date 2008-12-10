@@ -393,6 +393,7 @@ package provide cadwidgets::Ged 1.0
 	method solids_on_ray {args}
 	method summary {args}
 	method sync {args}
+	method tire {args}
 	method title {args}
 	method tol {args}
 	method tops {args}
@@ -1929,6 +1930,10 @@ package provide cadwidgets::Ged 1.0
     eval $mGed sync $args
 }
 
+::itcl::body cadwidgets::Ged::tire {args} {
+    eval $mGed tire $args
+}
+
 ::itcl::body cadwidgets::Ged::title {args} {
     eval $mGed title $args
 }
@@ -2868,6 +2873,7 @@ package provide cadwidgets::Ged 1.0
     $help add solids		{{file object(s)} {returns an ascii summary of solids}}
     $help add summary		{{[s r g]}	{count/list solid/reg/groups}}
     $help add sync		{{} {sync the in memory database to disk}}
+    $help add tire		{{[options] tire_top} {create a tire}}
     $help add title		{{?string?} {print or change the title}}
     $help add tol		{{"[abs #] [rel #] [norm #] [dist #] [perp #]"} {show/set tessellation and calculation tolerances}}
     $help add tops		{{} {find all top level objects}}
