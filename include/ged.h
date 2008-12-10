@@ -2451,6 +2451,14 @@ GED_EXPORT BU_EXTERN(int ged_sync, (struct ged *gedp, int argc, const char *argv
 GED_EXPORT BU_EXTERN(int ged_tables, (struct ged *gedp, int argc, const char *argv[]));
 
 /**
+ * Create a tire
+ *
+ * Usage:
+ *     tire [dncgjpstuwWRDah]
+ */
+GED_EXPORT BU_EXTERN(int ged_tire, (struct ged *gedp, int argc, const char *argv[]));
+
+/**
  * Set/get the database title
  *
  * Usage:

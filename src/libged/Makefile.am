@@ -175,6 +175,7 @@ libged_nil_la_SOURCES = \
 	summary.c \
 	sync.c \
 	tables.c \
+	tire.c \
 	title.c \
 	tol.c \
 	tops.c \
