@@ -198,13 +198,17 @@ ged_put_tree_into_comb(struct ged *gedp, struct rt_comb_internal *comb, struct d
     struct bu_vls	vls;
     char		*str;
 
-    if (str == (char *)NULL)
+    if (imstr == (char *)NULL)
 	return BRLCAD_ERROR;
 
     BU_LIST_INIT(&HeadLines.l);
 
     /* duplicate the immutable str (from argv) for strtok style mutation */
     str = strdup(imstr);
+    if(str == NULL) {
+	bu_log("Failed to allocate memory. Aborting");
+	return BRLCAD_ERROR;
+    }
 
     /* break str into lines */
     line = str;
