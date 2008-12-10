@@ -170,6 +170,7 @@ master_result (tienet_buffer_t *result)
     uint16_t wid;
     uint32_t i, ind, ind2, update;
 
+    static int lastop;
 
     update = 0;
     ind = 0;
@@ -180,8 +181,10 @@ master_result (tienet_buffer_t *result)
     TCOPY (uint16_t, result->data, ind, &wid, 0);
     ind += 2;
 
-    if(bu_debug & BU_DEBUG_UNUSED_2)
-	bu_log("ADRT Master OP: %x\n", op);
+    if(bu_debug & BU_DEBUG_UNUSED_2 && lastop != op) {
+	bu_log("ADRT Master OP: %d %s\n", op, adrt_work_table[op-ADRT_WORK_BASE]);
+	lastop = op;
+    }
 
     switch (op)
     {
