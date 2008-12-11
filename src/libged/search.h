@@ -85,8 +85,8 @@ typedef struct _plandata {
     union {
 	gid_t _g_data;			/* gid */
 	struct {
-	    u_int _f_flags;
-	    u_int _f_mask;
+	    unsigned int _f_flags;
+	    unsigned int _f_mask;
 	} fl;
 	struct _plandata *_p_data[2];	/* PLAN trees */
 	struct _ex {
