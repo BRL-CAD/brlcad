@@ -69,7 +69,9 @@
 #   To verbosely try running with an older (unsupported) autoconf:
 #     AUTOCONF_VERSION=2.50 ./autogen.sh --verbose
 #
-# Author: Christopher Sean Morrison <morrison@brlcad.org>
+# Authors:
+#   Christopher Sean Morrison <morrison@brlcad.org>
+#   Sebastian Pipping <sebastian@pipping.org>
 #
 ######################################################################
 
@@ -1085,6 +1087,24 @@ download_gnulib_config_guess () {
 }
 
 
+##############################
+# LIBTOOLIZE_NEEDED FUNCTION #
+##############################
+libtoolize_needed () {
+    ret=1 # means no, don't need libtoolize
+    for feature in AC_PROG_LIBTOOL LT_INIT ; do
+	$VERBOSE_ECHO "Searching for $feature in $CONFIGURE"
+	found="`grep \"^$feature.*\" $CONFIGURE`"
+	if [ ! "x$found" = "x" ] ; then
+	    ret=0 # means yes, need to run libtoolize
+	    break
+	fi
+    done
+    return ${ret}
+}
+
+
+
 ############################################
 # prepare build via autoreconf or manually #
 ############################################
@@ -1130,8 +1150,9 @@ if [ "x$HAVE_AUTORECONF" = "xyes" ] ; then
 	reconfigure_manually=yes
     else
 	if [ "x$DOWNLOAD" = "xyes" ] ; then
-	    # TODO only if libtool needed
-	    download_gnulib_config_guess
+	    if libtoolize_needed ; then
+		download_gnulib_config_guess
+	    fi
 	fi
     fi
 else
@@ -1211,16 +1232,7 @@ manual_autogen ( ) {
     ##############
     # libtoolize #
     ##############
-    need_libtoolize=no
-    for feature in AC_PROG_LIBTOOL LT_INIT ; do
-	$VERBOSE_ECHO "Searching for $feature in $CONFIGURE"
-	found="`grep \"^$feature.*\" $CONFIGURE`"
-	if [ ! "x$found" = "x" ] ; then
-	    need_libtoolize=yes
-	    break
-	fi
-    done
-    if [ "x$need_libtoolize" = "xyes" ] ; then
+    if libtoolize_needed ; then
 	if [ "x$HAVE_LIBTOOLIZE" = "xyes" ] ; then
 	    $VERBOSE_ECHO "$LIBTOOLIZE $LIBTOOLIZE_OPTIONS"
 	    libtoolize_output="`$LIBTOOLIZE $LIBTOOLIZE_OPTIONS 2>&1`"
@@ -1264,10 +1276,9 @@ manual_autogen ( ) {
 	fi # ltmain.sh
 
 	if [ "x$DOWNLOAD" = "xyes" ] ; then
-	    # TODO only if libtool needed
 	    download_gnulib_config_guess
 	fi
-    fi # need_libtoolize
+    fi # libtoolize_needed
 
     ############
     # autoconf #
