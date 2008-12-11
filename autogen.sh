@@ -114,11 +114,12 @@ ident ( ) {
 # USAGE FUNCTION #
 ##################
 usage ( ) {
-    echo "Usage: $AUTOGEN_SH [-h|--help] [-v|--verbose] [-q|--quiet] [--version]"
-    echo "    --help     Help on $NAME_OF_AUTOGEN usage"
-    echo "    --verbose  Verbose progress output"
-    echo "    --quiet    Quiet suppressed progress output"
-    echo "    --version  Only perform GNU Build System version checks"
+    echo "Usage: $AUTOGEN_SH [-h|--help] [-v|--verbose] [-q|--quiet] [-d|--download] [--version]"
+    echo "    --help      Help on $NAME_OF_AUTOGEN usage"
+    echo "    --verbose   Verbose progress output"
+    echo "    --quiet     Quiet suppressed progress output"
+    echo "    --download  Download the latest config.guess from gnulib"
+    echo "    --version   Only perform GNU Build System version checks"
     echo
     echo "Description: This script will validate that minimum versions of the"
     echo "GNU Build System tools are installed and then run autoreconf for you."
@@ -301,6 +302,8 @@ for arg in $ARGS ; do
 	x--quiet) QUIET=yes ;;
 	x-[qQ]) QUIET=yes ;;
 	x--verbose) VERBOSE=yes ;;
+	x-[dD]) DOWNLOAD=yes ;;
+	x--download) DOWNLOAD=yes ;;
 	x-[vV]) VERBOSE=yes ;;
 	x--version) VERSION_ONLY=yes ;;
 	*)
