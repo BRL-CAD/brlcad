@@ -69,8 +69,10 @@
 #   To verbosely try running with an older (unsupported) autoconf:
 #     AUTOCONF_VERSION=2.50 ./autogen.sh --verbose
 #
-# Authors:
+# Author:
 #   Christopher Sean Morrison <morrison@brlcad.org>
+#
+# Patches:
 #   Sebastian Pipping <sebastian@pipping.org>
 #
 ######################################################################
@@ -107,6 +109,7 @@ ident ( ) {
     fi
 
     echo "autogen.sh build preparation script by Christopher Sean Morrison"
+    echo "  + config.guess download patch by Sebastian Pipping (2008-12-03)"
     echo "revised 3-clause BSD-style license, copyright (c) $__copyright"
     echo "script version $__version, ISO/IEC 9945 POSIX shell script"
 }
@@ -1062,20 +1065,35 @@ download_gnulib_config_guess () {
     # abuse gitweb to download gnulib's latest config.guess via HTTP
     config_guess_temp="config.guess.$$.download"
     ret=1
-    for __cmd in wget curl ; do
+    for __cmd in wget curl fetch ; do
+	$VERBOSE_ECHO "Checking for command ${__cmd}"
+	${__cmd} --version &>/dev/null
+	ret=$?
+	if [ ! $ret = 0 ] ; then
+	    continue
+        fi
+
+	__cmd_version=`${__cmd} --version | head -n 1 | sed -e 's/^[^0-9]\+//' -e 's/ .*//'`
+	$VERBOSE_ECHO "Found ${__cmd} ${__cmd_version}"
+
+	opts=""
 	case ${__cmd} in
 	    wget)
-		wget "${CONFIG_GUESS_URL}" -O "${config_guess_temp}" > /dev/null 2>&1
-		ret=$?
+		opts="-O" 
 		;;
 	    curl)
-		curl "${CONFIG_GUESS_URL}" -o "${config_guess_temp}" > /dev/null 2>&1
-		ret=$?
+		opts="-o"
+		;;
+	    fetch)
+		opts="-t 5 -f"
 		;;
 	esac
 
-	if [ $ret = 0 ] ; then
+	$VERBOSE_ECHO "Running $__cmd \"${CONFIG_GUESS_URL}\" $opts \"${config_guess_temp}\""
+	eval "$__cmd \"${CONFIG_GUESS_URL}\" $opts \"${config_guess_temp}\"" > /dev/null 2>&1
+	if [ $? = 0 ] ; then
 	    mv -f "${config_guess_temp}" ${_aux_dir}/config.guess
+	    ret=0
 	    break
 	fi
     done
