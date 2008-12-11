@@ -2203,9 +2203,6 @@ ged_tire(struct ged *gedp, int argc, const char *argv[])
     if (pattern_type == 1 && tread_type == 0) tread_type = 1;
     if (pattern_type == 2 && tread_type == 0) tread_type = 2;
 
-    bu_log("XXX: tread_type - %d, pattern_type - %d\n", tread_type, pattern_type);
-
-
     /* Make the tire region */
     MakeTire(gedp->ged_wdbp, bu_vls_addr(&dimen), dytred, dztred,
 	     d1, dyside1, zside1, ztire, dyhub, zhub, tire_thickness,
