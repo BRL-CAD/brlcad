@@ -3878,6 +3878,7 @@ AC_CONFIG_FILES([
 	src/archer/plugins/Wizards/Makefile
 	src/archer/plugins/Wizards/tankwizardIA/Makefile
 	src/archer/plugins/Wizards/tankwizardIA/images/Makefile
+	src/archer/plugins/Wizards/tirewizard/Makefile
 	src/brlman/Makefile
 	src/brlman/awf
 	src/brlman/brlman

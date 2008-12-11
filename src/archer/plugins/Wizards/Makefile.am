@@ -1,11 +1,13 @@
 
 SUBDIRS = \
-	tankwizardIA
+	tankwizardIA \
+	tirewizard
 
 documentationdir = $(BRLCAD_DATA)/plugins/archer/Wizards
 
 documentation_DATA = \
-	tankwizardIA.tcl
+	tankwizardIA.tcl \
+	tirewizard.tcl
 
 EXTRA_DIST = \
 	$(documentation_DATA)
