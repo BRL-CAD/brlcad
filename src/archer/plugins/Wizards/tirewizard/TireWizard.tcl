@@ -176,7 +176,7 @@
     # Create rim diameter entry field
     itk_component add paramRimDiameterL {
 	::label $itk_component(paramNonArrowF).rimDiameterL \
-	    -text "Rim Diameter:" \
+	    -text "Rim Diameter (in):" \
 	    -anchor e
     } {}
     itk_component add paramRimDiameterE {
@@ -188,7 +188,7 @@
     # Create rim width entry field
     itk_component add paramRimWidthL {
 	::label $itk_component(paramNonArrowF).rimWidthL \
-	    -text "Rim Width:" \
+	    -text "Rim Width (in):" \
 	    -anchor e
     } {}
     itk_component add paramRimWidthE {
@@ -200,7 +200,7 @@
     # Create tire aspect entry field
     itk_component add paramTireAspectL {
 	::label $itk_component(paramNonArrowF).tireAspectL \
-	    -text "Tire Aspect:" \
+	    -text "Tire Aspect (%):" \
 	    -anchor e
     } {}
     itk_component add paramTireAspectE {
@@ -212,7 +212,7 @@
     # Create tire thickness entry field
     itk_component add paramTireThicknessL {
 	::label $itk_component(paramNonArrowF).tireThicknessL \
-	    -text "Tire Thickness:" \
+	    -text "Tire Thickness (mm):" \
 	    -anchor e
     } {}
     itk_component add paramTireThicknessE {
@@ -224,7 +224,7 @@
     # Create tire width entry field
     itk_component add paramTireWidthL {
 	::label $itk_component(paramNonArrowF).tireWidthL \
-	    -text "Tire Width:" \
+	    -text "Tire Width (mm):" \
 	    -anchor e
     } {}
     itk_component add paramTireWidthE {
@@ -236,7 +236,7 @@
     # Create tread depth entry field
     itk_component add paramTreadDepthL {
 	::label $itk_component(paramNonArrowF).treadDepthL \
-	    -text "Tread Depth:" \
+	    -text "Tread Depth (mm):" \
 	    -anchor e
     } {}
     itk_component add paramTreadDepthE {
@@ -311,7 +311,7 @@
     } {}
 
     # Create "Create Wheel" checkbutton
-    itk_component add paramUseWheelCB {
+    itk_component add paramCreateWheelCB {
 	::checkbutton $itk_component(paramNonArrowF).createWheelCB \
 	    -text "Create Wheel" \
 	    -variable [::itcl::scope createWheel]
@@ -351,7 +351,7 @@
     grid $itk_component(emptyL) -columnspan 2 \
 	-row $row -stick nsew
     incr row
-    grid $itk_component(paramUseWheelCB) -columnspan 2 \
+    grid $itk_component(paramCreateWheelCB) -columnspan 2 \
 	-row $row -stick nsew
     grid columnconfigure $itk_component(paramNonArrowF) 1 -weight 1
 
