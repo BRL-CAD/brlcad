@@ -32,7 +32,7 @@ if { ![file exists $filename] } {
     set filename [file join $brlcadDataPath archer plugins Wizards tirewizard TireWizard.tcl]
 }
 if { ![file exists $filename] } {
-    puts "Could not load the Tire plugin, skipping $filename"
+    puts "Could not load the TireWizard plugin, skipping $filename"
     return
 }
 source $filename
