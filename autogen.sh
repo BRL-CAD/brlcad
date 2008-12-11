@@ -268,6 +268,9 @@ fi
 if [ "x$VERSION_ONLY" = "x" ] ; then
     VERSION_ONLY=no
 fi
+if [ "x$DOWNLOAD" = "x" ] ; then
+    DOWNLOAD=no
+fi
 if [ "x$AUTORECONF_OPTIONS" = "x" ] ; then
     AUTORECONF_OPTIONS="-i -f"
 fi
@@ -287,6 +290,9 @@ if [ "x$ACLOCAL_OPTIONS" = "x" ] ; then
 fi
 if [ "x$AUTOHEADER_OPTIONS" = "x" ] ; then
     AUTOHEADER_OPTIONS=""
+fi
+if [ "x$CONFIG_GUESS_URL" = "x" ] ; then
+    CONFIG_GUESS_URL="http://git.savannah.gnu.org/gitweb/?p=gnulib.git;a=blob_plain;f=build-aux/config.guess;hb=HEAD"
 fi
 for arg in $ARGS ; do
     case "x$arg" in
@@ -1040,6 +1046,42 @@ cd "$START_PATH"
 initialize
 
 
+#########################################
+# DOWNLOAD_GNULIB_CONFIG_GUESS FUNCTION #
+#########################################
+
+# TODO - should make sure wget/curl exist and/or work before trying to
+# use them.
+
+download_gnulib_config_guess () {
+    # abuse gitweb to download gnulib's latest config.guess via HTTP
+    config_guess_temp="config.guess.$$.download"
+    ret=1
+    for __cmd in wget curl ; do
+	case ${__cmd} in
+	    wget)
+		wget "${CONFIG_GUESS_URL}" -O "${config_guess_temp}" > /dev/null 2>&1
+		ret=$?
+		;;
+	    curl)
+		curl "${CONFIG_GUESS_URL}" -o "${config_guess_temp}" > /dev/null 2>&1
+		ret=$?
+		;;
+	esac
+
+	if [ $ret = 0 ] ; then
+	    mv -f "${config_guess_temp}" ${_aux_dir}/config.guess
+	    break
+	fi
+    done
+
+    if [ ! $ret = 0 ] ; then
+	$ECHO "Warning: config.guess download failed from: $CONFIG_GUESS_URL"
+	rm -f "${config_guess_temp}"
+    fi
+}
+
+
 ############################################
 # prepare build via autoreconf or manually #
 ############################################
@@ -1083,6 +1125,11 @@ if [ "x$HAVE_AUTORECONF" = "xyes" ] ; then
 
 	$ECHO "Attempting to run the preparation steps individually"
 	reconfigure_manually=yes
+    else
+	if [ "x$DOWNLOAD" = "xyes" ] ; then
+	    # TODO only if libtool needed
+	    download_gnulib_config_guess
+	fi
     fi
 else
     reconfigure_manually=yes
@@ -1212,6 +1259,11 @@ manual_autogen ( ) {
 		$ECHO $ECHO_N "Continuing build preparation ... $ECHO_C"
 	    fi
 	fi # ltmain.sh
+
+	if [ "x$DOWNLOAD" = "xyes" ] ; then
+	    # TODO only if libtool needed
+	    download_gnulib_config_guess
+	fi
     fi # need_libtoolize
 
     ############
