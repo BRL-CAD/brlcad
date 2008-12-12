@@ -23,15 +23,15 @@
  *
  */
 
-#define  _ISOC99_SOURCE
-#include <features.h>
-#include <common.h>
+#include "common.h"
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
 #include <string.h>
 #include <ctype.h>
 #include <stdbool.h>
+
 #include "bu.h"
 
 #include "vmath.h"    
