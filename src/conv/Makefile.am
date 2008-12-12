@@ -43,6 +43,7 @@ bin_PROGRAMS = \
 	conv-vg2g \
 	cy-g \
 	dbupgrade \
+        dem-g \
 	enf-g \
 	euclid-g \
 	euclid_format \
@@ -113,6 +114,9 @@ cy_g_LDADD = ${WDB}
 
 dbupgrade_SOURCES = dbupgrade.c
 dbupgrade_LDADD = ${WDB}
+
+dem_g_SOURCES = dem-g.c
+dem_g_LDADD = ${WDB}
 
 enf_g_SOURCES = enf-g.c
 enf_g_LDADD = ${WDB}
@@ -284,6 +288,7 @@ FAST_OBJECTS = \
 	$(conv_vg2g_OBJECTS) \
 	$(cy_g_OBJECTS) \
 	$(dbupgrade_OBJECTS) \
+	$(dem_g_OBJECTS) \
 	$(enf_g_OBJECTS) \
 	$(euclid_format_OBJECTS) \
 	$(euclid_g_OBJECTS) \
