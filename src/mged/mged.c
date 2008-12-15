@@ -310,7 +310,6 @@ main(int argc, char **argv)
     fd_set read_set, exception_set;
     struct timeval timeout;
     int result;
-    struct pollfd pfd;
     FILE *out;
 
     setmode(fileno(stdin), O_BINARY);
@@ -398,6 +397,7 @@ main(int argc, char **argv)
 	
 	    /* see if there's valid input waiting (more reliable than select) */
 	    if (result > 0 && FD_ISSET(fileno(stdin), &exception_set)) {
+#ifdef HAVE_POLL_H
 		struct pollfd pfd;
 		pfd.fd = fileno(stdin);
 		pfd.events = POLLIN;
@@ -410,6 +410,9 @@ main(int argc, char **argv)
 		if (pfd.revents & POLLNVAL) {
 		    interactive = 1;
 		}
+#else /* !HAVE_POLL_H */
+		interactive = 1;
+#endif /* HAVE_POLL_H */
 	    }
 
 	    /* just in case we get input too quickly, see if it's coming from a tty */
