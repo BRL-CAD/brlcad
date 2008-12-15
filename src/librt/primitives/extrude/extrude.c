@@ -421,10 +421,11 @@ isect_line_earc(fastf_t *dist, fastf_t *ray_start, fastf_t *ray_dir, fastf_t *ce
     if (dist_count == 0)
 	return(0);
 
-    if (orientation)
+    if (orientation) {
 	VREVERSE(local_z, norm);
-    else
+    } else {
 	VMOVE(local_z, norm);
+    }
 
     VMOVE(local_x, ra);
 
@@ -2030,7 +2031,6 @@ rt_extrude_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip
     bu_ptbl_free(aloop);
     bu_free((char *)aloop, "aloop");
     return(-1);
-#endif
 }
 
 /**
