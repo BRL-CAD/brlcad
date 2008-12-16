@@ -1,4 +1,4 @@
-#                T A N K W I Z A R D . T C L
+#                T A N K W I Z A R D I A . T C L
 # BRL-CAD
 #
 # Copyright (c) 2002-2008 United States Government as represented by
@@ -26,7 +26,7 @@
 #	 This is an Archer plugin for building tank geometry (zone based).
 #
 
-::itcl::class TankWizard {
+::itcl::class TankWizardIA {
     inherit Wizard
 
     constructor {_archer _wizardTop _wizardState _wizardOrigin _originUnits args} {}
@@ -36,9 +36,9 @@
 	# Override's for the Wizard class
 	common wizardMajorType $Archer::pluginMajorTypeWizard
 	common wizardMinorType $Archer::pluginMinorTypeMged
-	common wizardName "Tank Wizard"
+	common wizardName "Tank Wizard IA"
 	common wizardVersion "1.0"
-	common wizardClass TankWizard
+	common wizardClass TankWizardIA
 
 	# Methods that override Wizard methods
 	method setWizardState {_wizardState}
@@ -460,7 +460,7 @@
 #
 #
 #
-::itcl::body TankWizard::constructor {_archer _wizardTop _wizardState _wizardOrigin _originUnits args} {
+::itcl::body TankWizardIA::constructor {_archer _wizardTop _wizardState _wizardOrigin _originUnits args} {
     global env
 
     lappend vehicleTypes $lightGroundMobileTypes $heavyGroundMobileTypes
@@ -500,16 +500,16 @@
     $archersMged units $savedUnits
 }
 
-::itcl::body TankWizard::destructor {} {
+::itcl::body TankWizardIA::destructor {} {
     # nothing for now
 }
 
-::itcl::body TankWizard::setWizardState {_wizardState} {
+::itcl::body TankWizardIA::setWizardState {_wizardState} {
     set wizardState $_wizardState
     initWizardState
 }
 
-::itcl::body TankWizard::initWizardState {} {
+::itcl::body TankWizardIA::initWizardState {} {
     foreach {vname val} $wizardState {
 	if {[info exists $vname]} {
 	    set $vname $val
@@ -523,7 +523,7 @@
     setSponsonArmorThickness
 }
 
-::itcl::body TankWizard::openArrow {arrowName} {
+::itcl::body TankWizardIA::openArrow {arrowName} {
     $itk_component($arrowName) configure -togglestate open
 
     switch -- $arrowName {
@@ -552,14 +552,14 @@
     }
 }
 
-::itcl::body TankWizard::buildParameter {parent} {
+::itcl::body TankWizardIA::buildParameter {parent} {
     buildParameterView $parent
 
     grid rowconfigure $parent 0 -weight 1
     grid columnconfigure $parent 0 -weight 1
 }
 
-::itcl::body TankWizard::buildParameterView {parent} {
+::itcl::body TankWizardIA::buildParameterView {parent} {
     itk_component add paramScroll {
 	iwidgets::scrolledframe $parent.paramScroll \
 	    -hscrollmode dynamic \
@@ -641,7 +641,7 @@
     grid columnconfigure $parent 0 -weight 1
 }
 
-::itcl::body TankWizard::buildCategoryView {parent} {
+::itcl::body TankWizardIA::buildCategoryView {parent} {
     itk_component add classL {
 	::label $parent.classL -text "Class:" \
 	    -anchor e
@@ -690,7 +690,7 @@
     grid columnconfigure $parent 1 -weight 1
 }
 
-::itcl::body TankWizard::buildExteriorView {parent} {
+::itcl::body TankWizardIA::buildExteriorView {parent} {
     # cannot use "hull"; it's already claimed by Itk
     buildArrow $parent gun "Gun" buildGunView
     buildArrow $parent tankHull "Hull" buildHullView
@@ -710,7 +710,7 @@
     grid columnconfigure $parent 1 -weight 1
 }
 
-::itcl::body TankWizard::buildGunView {parent} {
+::itcl::body TankWizardIA::buildGunView {parent} {
     itk_component add gunLengthL {
 	::label $parent.gunLengthL -text "Length:" \
 	    -anchor e
@@ -782,7 +782,7 @@
     grid columnconfigure $parent 1 -weight 1
 }
 
-::itcl::body TankWizard::buildHullView {parent} {
+::itcl::body TankWizardIA::buildHullView {parent} {
     itk_component add hullLengthL {
 	::label $parent.lengthL -text "Length:" \
 	    -anchor e
@@ -828,7 +828,7 @@
     grid columnconfigure $parent 1 -weight 1
 }
 
-::itcl::body TankWizard::buildWheelWellView {parent} {
+::itcl::body TankWizardIA::buildWheelWellView {parent} {
     itk_component add wwDepthL {
 	::label $parent.depthL -text "Depth:" \
 	    -anchor e
@@ -856,7 +856,7 @@
     grid columnconfigure $parent 1 -weight 1
 }
 
-::itcl::body TankWizard::buildFrontSlopeView {parent} {
+::itcl::body TankWizardIA::buildFrontSlopeView {parent} {
     itk_component add convHeightL {
 	::label $parent.convHeightL -text "Convergance Height:" \
 	    -anchor e
@@ -895,7 +895,7 @@
     grid columnconfigure $parent 1 -weight 1
 }
 
-::itcl::body TankWizard::buildTrackView {parent} {
+::itcl::body TankWizardIA::buildTrackView {parent} {
     itk_component add trackWidthL {
 	::label $parent.trackwidthL -text "Width:" \
 	    -anchor e
@@ -989,7 +989,7 @@
     grid columnconfigure $parent 1 -weight 1
 }
 
-::itcl::body TankWizard::buildTurretView {parent} {
+::itcl::body TankWizardIA::buildTurretView {parent} {
     itk_component add turretLengthL {
 	::label $parent.turretLengthL -text "Length:" \
 	    -anchor e
@@ -1072,7 +1072,7 @@
     grid columnconfigure $parent 1 -weight 1
 }
 
-::itcl::body TankWizard::buildArmorView {parent} {
+::itcl::body TankWizardIA::buildArmorView {parent} {
     itk_component add frontArmorL {
 	::label $parent.frontArmorL -text "Front:" \
 	    -anchor e
@@ -1177,7 +1177,7 @@
     grid columnconfigure $parent 1 -weight 1
 }
 
-::itcl::body TankWizard::toggle {arrow view args} {
+::itcl::body TankWizardIA::toggle {arrow view args} {
     set toggleState [$arrow cget -togglestate]
     switch -- $toggleState {
 	closed {
@@ -1189,7 +1189,7 @@
     }
 }
 
-::itcl::body TankWizard::changeClass {} {
+::itcl::body TankWizardIA::changeClass {} {
     set curr [$itk_component(classCB) curselection]
 
     $itk_component(typeCB) clear
@@ -1206,10 +1206,10 @@
     $itk_component(typeCB) configure -editable false
 }
 
-::itcl::body TankWizard::changeType {} {
+::itcl::body TankWizardIA::changeType {} {
 }
 
-::itcl::body TankWizard::buildArrow {parent prefix text buildViewFunc} {
+::itcl::body TankWizardIA::buildArrow {parent prefix text buildViewFunc} {
     itk_component add $prefix {
 	frame $parent.$prefix
     } {}
@@ -1232,7 +1232,7 @@
 							  -column 1 -sticky nsew]
 }
 
-::itcl::body TankWizard::addWizardAttrs {obj {onlyTop 1}} {
+::itcl::body TankWizardIA::addWizardAttrs {obj {onlyTop 1}} {
     if {$onlyTop} {
 	$archersMged attr set $obj \
 	    WizardTop $wizardTop
@@ -1248,7 +1248,7 @@
     }
 }
 
-::itcl::body TankWizard::drawTank {} {
+::itcl::body TankWizardIA::drawTank {} {
     $archersMged configure -autoViewEnable 0
 
     if {$useOriginalZones} {
@@ -1278,7 +1278,7 @@
     $archersMged configure -autoViewEnable 1
 }
 
-::itcl::body TankWizard::buildTank {} {
+::itcl::body TankWizardIA::buildTank {} {
     SetWaitCursor
 
     initRegionIds
@@ -1381,7 +1381,7 @@
     return $wizardTop
 }
 
-::itcl::body TankWizard::buildTankXML {} {
+::itcl::body TankWizardIA::buildTankXML {} {
     append tankXML [beginSystemXML $wizardTop]
 
     append tankXML [beginSystemXML "Hull"]
@@ -1462,7 +1462,7 @@
     append tankXML [endSystemXML]
 }
 
-::itcl::body TankWizard::buildHull {} {
+::itcl::body TankWizardIA::buildHull {} {
     buildHullInterior
     buildHullZones
     buildHullExterior
@@ -1472,7 +1472,7 @@
 #
 # Build hull exterior centered about (0, 0, 0).
 #
-::itcl::body TankWizard::buildHullExterior {} {
+::itcl::body TankWizardIA::buildHullExterior {} {
     # build rear of hull
     set v1 [list -$extHalfLength -$extHalfWidth -$extHalfHeight]
     set v2 [list -$extHalfLength $extHalfWidth -$extHalfHeight]
@@ -1594,7 +1594,7 @@
 #
 # Build hull interior centered about (0, 0, 0).
 #
-::itcl::body TankWizard::buildHullInterior {} {
+::itcl::body TankWizardIA::buildHullInterior {} {
 
     # build rear of hullInterior
     set v1 [list \
@@ -1778,7 +1778,7 @@
 
 ## - buildHullZones
 #
-::itcl::body TankWizard::buildHullZones {} {
+::itcl::body TankWizardIA::buildHullZones {} {
     set zoneLengthDelta [expr {$hullLength / 3.0}]
     set zoneWidthDelta [expr {$hullWidth / 3.0}]
     set zoneUpperHeightDelta [expr {($hullHeight - $convHeight) * 0.5}]
@@ -1800,7 +1800,7 @@
 #
 # Build zones moving from right-rear toward left-front.
 #
-::itcl::body TankWizard::buildLowerHullZones {} {
+::itcl::body TankWizardIA::buildLowerHullZones {} {
     set zdir l
 
     for {set i 0} {$i < 3} {incr i} {
@@ -1896,7 +1896,7 @@
 #
 # Build zones moving from right-rear toward left-front.
 #
-::itcl::body TankWizard::buildUpperHullZones {} {
+::itcl::body TankWizardIA::buildUpperHullZones {} {
     set zdir l
 
     for {set h 0} {$h < 2} {incr h} {
@@ -1999,7 +1999,7 @@
     }
 }
 
-::itcl::body TankWizard::buildHullZoneFromOriginal {name xdir id} {
+::itcl::body TankWizardIA::buildHullZoneFromOriginal {name xdir id} {
     $archersMged facetize $wizardTop\_$name\_hullZone.s \
 	$wizardTop\_c[subst $xdir]r_hullZone.s \
 	$wizardTop\_c[subst $xdir]c_hullZone.s \
@@ -2041,7 +2041,7 @@
     addWizardAttrs $wizardTop\_$name\_hullZone.r
 }
 
-::itcl::body TankWizard::buildFloorHullZoneFromOriginal {id} {
+::itcl::body TankWizardIA::buildFloorHullZoneFromOriginal {id} {
     $archersMged facetize $wizardTop\_floor_hullZone.s \
 	$wizardTop\_lrr_hullZone.s \
 	$wizardTop\_lrc_hullZone.s \
@@ -2092,13 +2092,13 @@
     addWizardAttrs $wizardTop\_floor_hullZone.r
 }
 
-::itcl::body TankWizard::buildWheels {} {
+::itcl::body TankWizardIA::buildWheels {} {
     buildDriveSprockets
     buildRoadWheels
     buildIdlerWheels
 }
 
-::itcl::body TankWizard::buildDriveSprockets {} {
+::itcl::body TankWizardIA::buildDriveSprockets {} {
     set sprocketRadius [expr {$sprocketDiameter * 0.5}]
     set driveSprocketX [expr {-$extHalfLength + $sprocketRadius + $trackThickness}]
     set ly $extHalfWidth
@@ -2160,7 +2160,7 @@
     addWizardAttrs $wizardTop\_sprockets
 }
 
-::itcl::body TankWizard::buildRoadWheels {} {
+::itcl::body TankWizardIA::buildRoadWheels {} {
     set roadWheelRadius [expr {$roadWheelDiameter * 0.5}]
     set tlen [expr {$hullLength - $lowerOffset}]
     set dx [expr {($tlen - $roadWheelDiameter - \
@@ -2255,7 +2255,7 @@
     }
 }
 
-::itcl::body TankWizard::buildIdlerWheels {} {
+::itcl::body TankWizardIA::buildIdlerWheels {} {
     set idlerWheelRadius [expr {$idlerWheelDiameter * 0.5}]
     set tlen [expr {$hullLength - $lowerOffset - $sprocketDiameter}]
     set dx [expr {($tlen - $idlerWheelRadius) / double($numIdlerWheels)}]
@@ -2346,7 +2346,7 @@
     }
 }
 
-::itcl::body TankWizard::buildTracks {} {
+::itcl::body TankWizardIA::buildTracks {} {
     set x [lindex $tankCenter 0]
     set y [lindex $tankCenter 1]
     set z [lindex $tankCenter 2]
@@ -2408,7 +2408,7 @@
     addWizardAttrs $wizardTop\_tracks
 }
 
-::itcl::body TankWizard::buildTurret {} {
+::itcl::body TankWizardIA::buildTurret {} {
     set v1 [list \
 		[expr {-$turretHalfLength + $turretOffset}] \
 		[expr {-$turretHalfWidth + $turretSideOffset}] \
@@ -2552,7 +2552,7 @@
 
 ## - buildGun
 #
-::itcl::body TankWizard::buildGun {} {
+::itcl::body TankWizardIA::buildGun {} {
     set v [list \
 	       [expr {$turretHalfLength - 0.75 * $turretFrontOffset + $turretOffset}] \
 	       0 \
@@ -2599,7 +2599,7 @@
     addWizardAttrs $wizardTop\_gun
 }
 
-::itcl::body TankWizard::setFrontArmorThickness {} {
+::itcl::body TankWizardIA::setFrontArmorThickness {} {
     switch -- $frontArmorType {
 	"7.62mm" {
 	    set frontArmorThickness 2
@@ -2619,7 +2619,7 @@
     }
 }
 
-::itcl::body TankWizard::setRearArmorThickness {} {
+::itcl::body TankWizardIA::setRearArmorThickness {} {
     switch -- $rearArmorType {
 	"7.62mm" {
 	    set rearArmorThickness 2
@@ -2639,7 +2639,7 @@
     }
 }
 
-::itcl::body TankWizard::setRoofArmorThickness {} {
+::itcl::body TankWizardIA::setRoofArmorThickness {} {
     switch -- $roofArmorType {
 	"7.62mm" {
 	    set roofArmorThickness 2
@@ -2659,7 +2659,7 @@
     }
 }
 
-::itcl::body TankWizard::setSideArmorThickness {} {
+::itcl::body TankWizardIA::setSideArmorThickness {} {
     switch -- $sideArmorType {
 	"7.62mm" {
 	    set sideArmorThickness 2
@@ -2679,7 +2679,7 @@
     }
 }
 
-::itcl::body TankWizard::setSponsonArmorThickness {} {
+::itcl::body TankWizardIA::setSponsonArmorThickness {} {
     switch -- $sponsonArmorType {
 	"7.62mm" {
 	    set sponsonArmorThickness 2
@@ -2699,7 +2699,7 @@
     }
 }
 
-::itcl::body TankWizard::initRegionIds {} {
+::itcl::body TankWizardIA::initRegionIds {} {
     set rid [$archer pluginGetMinAllowableRid]
     set turretId $rid
     incr rid
