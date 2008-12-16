@@ -1155,7 +1155,7 @@ JNIEXPORT jobject JNICALL Java_mil_army_muves_brlcadservice_impl_BrlcadJNIWrappe
     max_pt = rts_geometry[sessionId]->rts_mdl_max;
 
     /* get the BoundingBox class */
-    if ( (boundingBox_class=(*env)->FindClass( env, "mil/army/muves/math/BoundingBox" ) ) == NULL ) {
+    if ( (boundingBox_class=(*env)->FindClass( env, "mil/army/muves/sim/math/BoundingBox" ) ) == NULL ) {
 	fprintf( stderr, "Failed to find BoundingBox class\n" );
 	(*env)->ExceptionDescribe(env);
 	return( (jobject)NULL );
@@ -1163,14 +1163,14 @@ JNIEXPORT jobject JNICALL Java_mil_army_muves_brlcadservice_impl_BrlcadJNIWrappe
 
     /* get the BoundingBox constructor id */
     if ( (boundingBox_constructor_id=(*env)->GetMethodID( env, boundingBox_class, "<init>",
-							  "(Lmil/army/muves/math/Point;Lmil/army/muves/math/Point;)V" ) ) == NULL ) {
+							  "(Lmil/army/muves/sim/math/Point;Lmil/army/muves/sim/math/Point;)V" ) ) == NULL ) {
 	fprintf( stderr, "Failed to find BoundingBox constructor method id\n" );
 	(*env)->ExceptionDescribe(env);
 	return( (jobject)NULL );
     }
 
     /* get the Point class */
-    if ( (point_class=(*env)->FindClass( env, "mil/army/muves/math/Point" ) ) == NULL ) {
+    if ( (point_class=(*env)->FindClass( env, "mil/army/muves/sim/math/Point" ) ) == NULL ) {
 	fprintf( stderr, "Failed to find Point class\n" );
 	(*env)->ExceptionDescribe(env);
 	return( (jobject)NULL );
@@ -1405,33 +1405,33 @@ JNIEXPORT jbyteArray JNICALL Java_mil_army_muves_brlcadservice_impl_BrlcadJNIWra
     struct bu_vlb *vlb;
     unsigned char buffer[SIZEOF_NETWORK_DOUBLE*3];
 
-    if ( (rayClass=(*env)->FindClass( env, "mil/army/muves/math/Ray" ) ) == NULL ) {
+    if ( (rayClass=(*env)->FindClass( env, "mil/army/muves/sim/math/Ray" ) ) == NULL ) {
 	fprintf( stderr, "Failed to find Ray class\n" );
 	(*env)->ExceptionDescribe(env);
 	return( (jobject)NULL );
     }
     
-    fidStart = (*env)->GetFieldID( env, rayClass, "start", "Lmil/army/muves/math/Point;" );
+    fidStart = (*env)->GetFieldID( env, rayClass, "start", "Lmil/army/muves/sim/math/Point;" );
     if ( fidStart == 0 && (*env)->ExceptionOccurred(env) ) {
 	fprintf( stderr, "Exception thrown while getting fid of ray start point\n" );
 	(*env)->ExceptionDescribe(env);
 	return( (jobject)NULL );
     }
     
-    fidDirection = (*env)->GetFieldID( env, rayClass, "direction", "Lmil/army/muves/math/Vector3;" );
+    fidDirection = (*env)->GetFieldID( env, rayClass, "direction", "Lmil/army/muves/sim/math/Vector3;" );
     if ( fidDirection == 0 && (*env)->ExceptionOccurred(env) ) {
 	fprintf( stderr, "Exception thrown while getting fid of ray direction vector\n" );
 	(*env)->ExceptionDescribe(env);
 	return( (jobject)NULL );
     }
     
-    if ( (pointClass=(*env)->FindClass( env, "mil/army/muves/math/Point" ) ) == NULL ) {
+    if ( (pointClass=(*env)->FindClass( env, "mil/army/muves/sim/math/Point" ) ) == NULL ) {
 	fprintf( stderr, "Failed to find Point class\n" );
 	(*env)->ExceptionDescribe(env);
 	return( (jobject)NULL );
     }
     
-    if ( (vector3Class=(*env)->FindClass( env, "mil/army/muves/math/Vector3" ) ) == NULL ) {
+    if ( (vector3Class=(*env)->FindClass( env, "mil/army/muves/sim/math/Vector3" ) ) == NULL ) {
 	fprintf( stderr, "Failed to find Vector3 class\n" );
 	(*env)->ExceptionDescribe(env);
 	return( (jobject)NULL );
