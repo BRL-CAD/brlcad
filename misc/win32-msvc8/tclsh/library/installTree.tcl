@@ -155,6 +155,10 @@ puts "Creating [file join $shareDir plugins archer Utilities]"
 file mkdir [file join $shareDir plugins archer Utilities]
 puts "Creating [file join $shareDir plugins archer Wizards]"
 file mkdir [file join $shareDir plugins archer Wizards]
+puts "Creating [file join $shareDir plugins archer Wizards tankwizard]"
+file mkdir [file join $shareDir plugins archer Wizards tankwizard]
+puts "Creating [file join $shareDir plugins archer Wizards tirewizard]"
+file mkdir [file join $shareDir plugins archer Wizards tirewizard]
 puts "Creating [file join $shareDir db]"
 file mkdir [file join $shareDir db]
 #puts "Creating [file join $shareDir pix]"
@@ -233,6 +237,18 @@ file copy [file join $rootDir src archer plugins utility.tcl] \
 puts "copy [file join $rootDir src archer plugins wizards.tcl] [file join $shareDir plugins archer]"
 file copy [file join $rootDir src archer plugins wizards.tcl] \
     [file join $shareDir plugins archer]
+puts "copy [file join $rootDir src archer plugins Wizards tankwizard.tcl] [file join $shareDir plugins archer Wizards]"
+file copy [file join $rootDir src archer plugins Wizards tankwizard.tcl] \
+    [file join $shareDir plugins archer Wizards]
+puts "copy [file join $rootDir src archer plugins Wizards tankwizard TankWizard.tcl] [file join $shareDir plugins archer Wizards tankwizard]"
+file copy [file join $rootDir src archer plugins Wizards tankwizard TankWizard.tcl] \
+    [file join $shareDir plugins archer Wizards tankwizard]
+puts "copy [file join $rootDir src archer plugins Wizards tirewizard.tcl] [file join $shareDir plugins archer Wizards]"
+file copy [file join $rootDir src archer plugins Wizards tirewizard.tcl] \
+    [file join $shareDir plugins archer Wizards]
+puts "copy [file join $rootDir src archer plugins Wizards tirewizard TireWizard.tcl] [file join $shareDir plugins archer Wizards tirewizard]"
+file copy [file join $rootDir src archer plugins Wizards tirewizard TireWizard.tcl] \
+    [file join $shareDir plugins archer Wizards tirewizard]
 puts "copy [file join $rootDir src conv g-xxx.c] [file join $shareDir sample_applications]"
 file copy [file join $rootDir src conv g-xxx.c] [file join $shareDir sample_applications]
 puts "copy [file join $rootDir src conv g-xxx_facets.c] [file join $shareDir sample_applications]"
