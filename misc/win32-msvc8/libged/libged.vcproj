@@ -914,6 +914,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\src\libged\tire.c"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\src\libged\title.c"
 				>
 			</File>
