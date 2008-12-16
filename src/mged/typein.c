@@ -3058,8 +3058,9 @@ pnts_in(int argc, char **argv, struct rt_db_internal *intern, char **prompt) {
     /* prompt for X, Y, Z of points */
     if (argc < numPoints * valuesPerPoint) {
 	struct bu_vls vls;
-        bu_vls_init(&vls);
 	int nextAsk = nextPrompt + 5;
+
+        bu_vls_init(&vls);
 
 	switch (type) {
 	    case RT_PNT_TYPE_PNT:
