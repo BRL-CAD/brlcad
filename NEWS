@@ -14,6 +14,7 @@ changes made.  See document footer for additional details.
 --- 2008-XX-XX  Release 7.XX.X                                     ---
 ----------------------------------------------------------------------
 
+* active wizard plugins and add tire wizard to archer - Bob Parker
 * new initial manual page for bot_dump - Sean Morrison
 * added editing support for hyperboloid primitive to mged - Cliff Yapp
 * new 'lens' procedural tool for making optical lenses - Cliff Yapp
