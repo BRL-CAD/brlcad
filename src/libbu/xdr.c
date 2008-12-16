@@ -28,7 +28,7 @@
  * Routines to insert/extract short/long's into char arrays,
  * independend of machine byte order and word-alignment.
  * Uses encoding compatible with routines found in libpkg,
- * and BSD system routines ntohl(), ntons(), ntohl(), ntohs().
+ * and BSD system routines htonl(), htons(), ntohl(), ntohs().
  *
  */
 
