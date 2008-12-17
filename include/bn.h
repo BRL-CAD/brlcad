@@ -520,7 +520,7 @@ struct bn_unif {
     long	*msr_longs;
 };
 
-#define BN_CK_UNIF (_p) BU_CKMAG(_p, BN_UNIF_MAGIC, "bn_unif")
+#define BN_CK_UNIF(_p)  BU_CKMAG(_p, BN_UNIF_MAGIC, "bn_unif")
 #define BN_CK_GAUSS(_p) BU_CKMAG(_p, BN_GAUSS_MAGIC, "bn_gauss")
 
 
