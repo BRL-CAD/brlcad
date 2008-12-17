@@ -142,7 +142,7 @@ typedef struct {
     int in_sub_element_number;
     sub_element_datatype out_datatype;
     char out_alpha[MAX_STRING_LENGTH];
-    signed long int out_integer;
+    long int out_integer;
     double out_double;
     bool out_undefined;
 } ResultStruct;
@@ -178,7 +178,7 @@ mk_dsp2(struct rt_wdb *fp, const char *name, const char *file, int xdim, int ydi
 
 
 int
-flip_high_low_bytes(signed long int in_value, unsigned char *out_string)
+flip_high_low_bytes(long int in_value, unsigned char *out_string)
 {
     /* it is expected the out_string points to */ 
     /* a string of at least 3 characters */
@@ -203,7 +203,7 @@ flip_high_low_bytes(signed long int in_value, unsigned char *out_string)
 
 
 int
-output_elevation(signed long int in_value, FILE *fp)
+output_elevation(long int in_value, FILE *fp)
 {
     unsigned char buf[3] = "";
     int status = BRLCAD_ERROR;
@@ -765,7 +765,7 @@ int process_manual_scale_factor(
     double *in_z_spatial_resolution_ptr,
     double *in_datum_elevation_in_curr_b_record_ptr)
 {
-    signed long int dem_max_raw_clipped_elevation = 0;
+    long int dem_max_raw_clipped_elevation = 0;
     double dem_max_real_clipped_elevation = 0;
     double raw_dem_2_raw_dsp_manual_scale_factor_lowerlimit = 0;
     double raw_dem_2_raw_dsp_manual_scale_factor_upperlimit = 0;
@@ -838,14 +838,14 @@ int process_manual_scale_factor(
 int process_manual_dem_max_raw_elevation(
     double *out_raw_dem_2_raw_dsp_scale_factor_ptr,
     double *in_raw_dem_2_raw_dsp_auto_scale_factor_ptr,
-    signed long int *in_manual_dem_max_raw_elevation_ptr,
+    long int *in_manual_dem_max_raw_elevation_ptr,
     double *in_derived_dem_max_raw_elevation_ptr,
     double *in_z_spatial_resolution_ptr,
     double *in_datum_elevation_in_curr_b_record_ptr)
 {
     double dem_max_real_clipped_elevation = 0;
-    signed long int manual_dem_max_raw_elevation_lowerlimit = 1;
-    signed long int manual_dem_max_raw_elevation_upperlimit = 999999;
+    long int manual_dem_max_raw_elevation_lowerlimit = 1;
+    long int manual_dem_max_raw_elevation_upperlimit = 999999;
 
     /* compute raw_dem_2_raw_dsp_scale_factor based on the user entered */
     /* dem max raw elevation */
@@ -982,11 +982,11 @@ int
 read_dem(
     char *in_input_filename,                        /* dem input file path and file name */
     double *in_raw_dem_2_raw_dsp_manual_scale_factor, /* user specified raw dem-to-dsp scale factor */
-    signed long int *in_manual_dem_max_raw_elevation,          /* user specified max raw elevation */
+    long int *in_manual_dem_max_raw_elevation,          /* user specified max raw elevation */
     double *in_manual_dem_max_real_elevation,         /* user specified max real elevation in meters */
     char *in_temp_filename,                         /* temp file path and file name */
-    signed long int *out_xdim,                                 /* x dimension of dem (w cells) */
-    signed long int *out_ydim,                                 /* y dimension of dem (n cells) */
+    long int *out_xdim,                                 /* x dimension of dem (w cells) */
+    long int *out_ydim,                                 /* y dimension of dem (n cells) */
     double *out_dsp_elevation,                        /* datum elevation in milimeters (dsp V z coordinate) */
     double *out_x_cell_size,                          /* x scaling factor in milimeters */
     double *out_y_cell_size,                          /* y scaling factor in milimeters */
@@ -997,27 +997,27 @@ read_dem(
     FILE *fp;
     FILE *fp2;
     char buf[1024];
-    signed long int curr_b_record = 0;
-    signed long int indx2 = 0;
-    signed long int indx3 = 0;
-    signed long int indx4 = 0;
-    signed long int indx5 = 0;
-    signed long int indx6 = 0;
-    signed long int tot_elevations_in_curr_b_record = 0;
-    signed long int tot_elevations_in_previous_b_record = 0;
-    signed long int curr_elevation = 0;
-    signed long int additional_1024char_chunks = 0;
-    signed long int number_of_previous_b_elevations = 0;
-    signed long int number_of_last_elevations = 0;
-    signed long int tot_elevations_in_prev_b_records = 0;
-    signed long int elevation_number_in_curr_b_record = 0;
-    signed long int elevation_number = 0;
+    long int curr_b_record = 0;
+    long int indx2 = 0;
+    long int indx3 = 0;
+    long int indx4 = 0;
+    long int indx5 = 0;
+    long int indx6 = 0;
+    long int tot_elevations_in_curr_b_record = 0;
+    long int tot_elevations_in_previous_b_record = 0;
+    long int curr_elevation = 0;
+    long int additional_1024char_chunks = 0;
+    long int number_of_previous_b_elevations = 0;
+    long int number_of_last_elevations = 0;
+    long int tot_elevations_in_prev_b_records = 0;
+    long int elevation_number_in_curr_b_record = 0;
+    long int elevation_number = 0;
     double datum_elevation_in_curr_b_record = 0;
     double datum_elevation_in_previous_b_record = 0;
     double elevation_max_in_a_record = 0;
     double raw_dem_2_raw_dsp_auto_scale_factor = 1;
-    signed long int elevation_units = 0;
-    signed long int ground_units = 0;
+    long int elevation_units = 0;
+    long int ground_units = 0;
     double derived_dem_max_raw_elevation = 0;
     double raw_dem_2_raw_dsp_scale_factor = 0;
 
@@ -1387,14 +1387,14 @@ read_dem(
                     curr_elevation = 0;
                 }
 
-                if (output_elevation((signed long int)round(curr_elevation * raw_dem_2_raw_dsp_scale_factor), fp2) == BRLCAD_ERROR) {
+                if (output_elevation((long int)round(curr_elevation * raw_dem_2_raw_dsp_scale_factor), fp2) == BRLCAD_ERROR) {
                     bu_log("Function 'output_elevation' failed on 'b' record# '%ld', record elevation# '%ld', dem elevation# '%ld', raw elevation value '%ld'.\n", curr_b_record, elevation_number_in_curr_b_record, elevation_number, curr_elevation);
                     fclose(fp);
                     fclose(fp2);
                     return(BRLCAD_ERROR);
                 }
             }
-            additional_1024char_chunks = (signed long int)ceil((tot_elevations_in_curr_b_record - 146.0) / 170.0);
+            additional_1024char_chunks = (long int)ceil((tot_elevations_in_curr_b_record - 146.0) / 170.0);
 
             if (additional_1024char_chunks > 0) {
                 for (indx2 = 1; indx2 < additional_1024char_chunks; indx2++) {
@@ -1423,7 +1423,7 @@ read_dem(
                             curr_elevation = 0;
                         }
 
-                        if (output_elevation((signed long int)round(curr_elevation * raw_dem_2_raw_dsp_scale_factor), fp2) == BRLCAD_ERROR) {
+                        if (output_elevation((long int)round(curr_elevation * raw_dem_2_raw_dsp_scale_factor), fp2) == BRLCAD_ERROR) {
                             bu_log("Function 'output_elevation' failed on 'b' record# '%ld', record elevation# '%ld', dem elevation# '%ld', raw elevation value '%ld'.\n", curr_b_record, elevation_number_in_curr_b_record, elevation_number, curr_elevation);
                             fclose(fp);
                             fclose(fp2);
@@ -1457,7 +1457,7 @@ read_dem(
                         curr_elevation = 0;
                     }
 
-                    if (output_elevation((signed long int)round(curr_elevation * raw_dem_2_raw_dsp_scale_factor), fp2) == BRLCAD_ERROR) {
+                    if (output_elevation((long int)round(curr_elevation * raw_dem_2_raw_dsp_scale_factor), fp2) == BRLCAD_ERROR) {
                         bu_log("Function 'output_elevation' failed on 'b' record# '%ld', record elevation# '%ld', dem elevation# '%ld', raw elevation value '%ld'.\n", curr_b_record, elevation_number_in_curr_b_record, elevation_number, curr_elevation);
                         fclose(fp);
                         fclose(fp2);
@@ -1486,7 +1486,7 @@ read_dem(
                     curr_elevation = 0;
                 }
 
-                if (output_elevation((signed long int)round(curr_elevation * raw_dem_2_raw_dsp_scale_factor), fp2) == BRLCAD_ERROR) {
+                if (output_elevation((long int)round(curr_elevation * raw_dem_2_raw_dsp_scale_factor), fp2) == BRLCAD_ERROR) {
                     bu_log("Function 'output_elevation' failed on 'b' record# '%ld', record elevation# '%ld', dem elevation# '%ld', raw elevation value '%ld'.\n", curr_b_record, elevation_number_in_curr_b_record, elevation_number, curr_elevation);
                     fclose(fp);
                     fclose(fp2);
@@ -1509,13 +1509,13 @@ int
 convert_load_order(
     char *in_temp_filename,        /* temp file path and file name */
     char *in_dsp_output_filename,  /* dsp output file path and file name */
-    signed long int *in_xdim,      /* x dimension of dem (w cells) */
-    signed long int *in_ydim)      /* y dimension of dem (n cells) */
+    long int *in_xdim,      /* x dimension of dem (w cells) */
+    long int *in_ydim)      /* y dimension of dem (n cells) */
 {
     FILE *fp3;
     FILE *fp4;
-    signed long int offset = 0;
-    signed long int column = 0;
+    long int offset = 0;
+    long int column = 0;
     unsigned short int buf4 = 0;
 
     /* size of buf3 determined at run time */
@@ -1547,8 +1547,8 @@ int
 create_model(
     char *in_dsp_output_filename,    /* dsp output file path and file name */
     char *in_model_output_filename,  /* model output file path and file name */
-    signed long int *in_xdim,        /* x dimension of dem (w cells) */
-    signed long int *in_ydim,        /* y dimension of dem (n cells) */
+    long int *in_xdim,        /* x dimension of dem (w cells) */
+    long int *in_ydim,        /* y dimension of dem (n cells) */
     double *in_dsp_elevation,        /* datum elevation in milimeters (dsp V z coordinate) */
     double *in_x_cell_size,          /* x scaling factor in milimeters */
     double *in_y_cell_size,          /* y scaling factor in milimeters */
@@ -2019,10 +2019,10 @@ main(int ac, char *av[])
     progname = *av;
 
     double raw_dem_2_raw_dsp_manual_scale_factor = 0; /* user specified raw dem-to-dsp scale factor */
-    signed long int manual_dem_max_raw_elevation = 0;          /* user specified max raw elevation */
+    long int manual_dem_max_raw_elevation = 0;          /* user specified max raw elevation */
     double manual_dem_max_real_elevation  = 0;        /* user specified max real elevation in meters */
-    signed long int xdim = 0;                                  /* x dimension of dem (w cells) */
-    signed long int ydim = 0;                                  /* y dimension of dem (n cells) */
+    long int xdim = 0;                                  /* x dimension of dem (w cells) */
+    long int ydim = 0;                                  /* y dimension of dem (n cells) */
     double dsp_elevation  = 0;                        /* datum elevation in milimeters (dsp V z coordinate) */
     double x_cell_size  = 0;                          /* x scaling factor in milimeters */
     double y_cell_size = 0;                           /* y scaling factor in milimeters */
