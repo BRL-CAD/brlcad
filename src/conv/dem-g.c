@@ -864,6 +864,9 @@ int process_manual_dem_max_raw_elevation(
     long int manual_dem_max_raw_elevation_lowerlimit = 1;
     long int manual_dem_max_raw_elevation_upperlimit = 999999;
 
+    /* unused variable quelling */
+    in_raw_dem_2_raw_dsp_auto_scale_factor_ptr = in_raw_dem_2_raw_dsp_auto_scale_factor_ptr;
+
     /* compute raw_dem_2_raw_dsp_scale_factor based on the user entered */
     /* dem max raw elevation */
     /* test for zero to avoid divide by 0 math error */
@@ -951,6 +954,10 @@ int process_manual_dem_max_real_elevation(
     double dem_max_raw_elevation = 0;
     double adjusted_manual_dem_max_real_elevation = 0; /* value adjusted to multiple of z_spatial */
     /* resolution then add datum elevation */ 
+
+    /* unused variable quelling */
+    in_raw_dem_2_raw_dsp_auto_scale_factor_ptr = in_raw_dem_2_raw_dsp_auto_scale_factor_ptr;
+    in_derived_dem_max_raw_elevation_ptr = in_derived_dem_max_raw_elevation_ptr;
 
     /* makes sure *in_manual_dem_max_real_elevation_ptr >= *in_datum_elevation_in_curr_b_record_ptr */
     manual_dem_max_real_elevation_lowerlimit = *in_z_spatial_resolution_ptr + *in_datum_elevation_in_curr_b_record_ptr;
