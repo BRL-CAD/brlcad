@@ -14,6 +14,7 @@ changes made.  See document footer for additional details.
 --- 2008-XX-XX  Release 7.XX.X                                     ---
 ----------------------------------------------------------------------
 
+* added new dem-g terrain importer - Richard Weiss
 * layout tweaks to display of selection lists in archer - Doug Howard
 * activate primitive creation buttons in archer - Bob Parker
 * activate wizard plugins and add tire wizard to archer - Bob Parker
