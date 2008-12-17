@@ -1,4 +1,4 @@
-/*                         D E M - G . C
+/*                        D E M - G . C
  * BRL-CAD
  *
  * Copyright (c) 2008 United States Government as represented by
@@ -25,64 +25,88 @@
 
 #include "common.h"
 
-#include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
 #include <string.h>
 #include <ctype.h>
 #include <stdbool.h>
+#include "bio.h"
 
 #include "bu.h"
-
-#include "vmath.h"    
 #include "bn.h"       
+#include "vmath.h"    
 #include "raytrace.h" 
 #include "rtgeom.h"   
 #include "wdb.h"      
 #include "db.h" 
 
-char *progname ="(noname)";
+
+const char *progname ="dem-g";
 
 #define DSP_MAX_RAW_ELEVATION 65535
 
-const char record_type_names[4][24] = { "", "logical record type 'A'", "logical record type 'B'", "logical record type 'C'" } ;
-typedef enum {type_a=1, type_b=2, type_c=3} logical_record_type ;
-typedef enum {type_alpha=1, type_integer=2, type_double=3} sub_element_datatype ;
+const char record_type_names[4][24] = {
+    "",
+    "logical record type 'A'",
+    "logical record type 'B'",
+    "logical record type 'C'"
+};
+
+typedef enum _lrt {
+    type_a=1,
+    type_b=2,
+    type_c=3
+} logical_record_type;
+
+typedef enum _sed {
+    type_alpha=1,
+    type_integer=2,
+    type_double=3
+} sub_element_datatype;
 
 
-/*
- *  The arrays documented in this comment block contain information about the structure
- *  of the DEM-G file, record types 'A', 'B' and 'C'. Data is loaded into these arrays
- *  after they are declared.
+/**
+ * The arrays documented in this comment block contain information
+ * about the structure of the DEM-G file, record types 'A', 'B' and
+ * 'C'. Data is loaded into these arrays after they are declared.
  * 
- *  In the following descriptions, an 'element' is a 'data element' as defined in the
- *  DEM-G file specification. A 'sub-element' is a field of data within an 'element'.
- *  An 'element' will contain at least one 'sub-element'. The '?' within these array
- *  descriptions can be replaced with 'a', 'b' or 'c' to indicate a specific array which
- *  corresponds to a specific record type.
+ * In the following descriptions, an 'element' is a 'data element' as
+ * defined in the DEM-G file specification. A 'sub-element' is a field
+ * of data within an 'element'.  An 'element' will contain at least
+ * one 'sub-element'. The '?' within these array descriptions can be
+ * replaced with 'a', 'b' or 'c' to indicate a specific array which
+ * corresponds to a specific record type.
  * 
- *  ARRAY DESCRIPTION: record_?_element_size[index1][index2][index3]
- *  index1 = element number
- *  index2 = sub-element number within element
- *  index3 = value number
- *  Three values are stored for each sub-element...
- *  when index3=1, value = start character of sub-element within DEM-G file 1024 character A/B/C record.
- *  when index3=2, value = number of characters in sub-element.
- *  when index3=3, value = datatype of sub-element (1=alpha,2=signed long integer,3=double precision float).
+ * ARRAY DESCRIPTION: record_?_element_size[index1][index2][index3]
+ * index1 = element number
+ * index2 = sub-element number within element
+ * index3 = value number
+ * Three values are stored for each sub-element...
+ *
+ * when index3=1, value = start character of sub-element within DEM-G
+ * file 1024 character A/B/C record.
+ *
+ * when index3=2, value = number of characters in sub-element.
+ *
+ * when index3=3, value = datatype of sub-element (1=alpha, 2=signed
+ * long integer, 3=double precision float).
  * 
- *  ARRAY DESCRIPTION: record_?_sub_elements[index]
- *  index = element number
- *  value = number of sub-elements per element
- *  This information allows the code to loop through the contents of the array 'record_?_element_size'
- *  since each element can contain a different number of sub-elements.  
+ * ARRAY DESCRIPTION: record_?_sub_elements[index]
+ * index = element number
+ * value = number of sub-elements per element
+ *
+ * This information allows the code to loop through the contents of
+ * the array 'record_?_element_size' since each element can contain a
+ * different number of sub-elements.
  * 
- *  No values are stored with index 0 within these arrays, therefore the size
- *  of each dimension is increased by 1 "one" to accomidate this.
+ * No values are stored with index 0 within these arrays, therefore
+ * the size of each dimension is increased by 1 "one" to accomidate
+ * this.
  */
 #define A_ROWS 32  /* DEM-G file type 'A' record, number of elements.                        */
 #define A_COLS 16  /* DEM-G file type 'A' record, max number of sub-elements per element.    */
 #define A_VALS 4   /* DEM-G file type 'A' record, number of values to store per sub-element. */
-#define RECORD_TYPE 4   /* DEM-G file type, record type (1=A,2=B,3=C) */
+#define RECORD_TYPE 4   /* DEM-G file type, record type (1=A, 2=B, 3=C) */
 
 int element_counts[4];
 int sub_elements_required_list_counts[4];
@@ -91,13 +115,15 @@ int sub_element_counts[RECORD_TYPE][A_ROWS];
 int sub_elements_required_list[4][A_ROWS][3];
 double conversion_factor_to_milimeters[4];
 
-/*
- *  MAX_STRING_LENGTH DESCRIPTION
- *  The size of the largest string needed to contain the widest ascii sub-element field
- *  as defined in the DEM-G file specification for record types 'A', 'B' and 'C'.
- *  To this size add '4' to account for possibly appending 'E+00' and add '1' to account
- *  for the string terminator character. This value should not change since it is derived
- *  from the DEM-G file specification. 
+/**
+ * MAX_STRING_LENGTH DESCRIPTION
+ *
+ * The size of the largest string needed to contain the widest ascii
+ * sub-element field as defined in the DEM-G file specification for
+ * record types 'A', 'B' and 'C'.  To this size add '4' to account for
+ * possibly appending 'E+00' and add '1' to account for the string
+ * terminator character. This value should not change since it is
+ * derived from the DEM-G file specification.
  */
 #define MAX_STRING_LENGTH 45
 
@@ -105,24 +131,24 @@ double conversion_factor_to_milimeters[4];
 #define FAILURE 1
 
 
-
-/*
- *  ResultStruct DESCRIPTION
- *  This type defines the structure which contains the input & output parameters passed
- *  to & from the function 'read_element'.
+/**
+ * ResultStruct DESCRIPTION
+ *
+ * This type defines the structure which contains the input & output
+ * parameters passed to & from the function 'read_element'.
  */
 typedef struct {
-char                *in_buffer ;
-logical_record_type  in_record_type ;
-bool                 in_is_b_header ; 
-int                  in_element_number ;
-int                  in_sub_element_number ;
-sub_element_datatype out_datatype ;
-char                 out_alpha[MAX_STRING_LENGTH] ;
-signed long int      out_integer ;
-double               out_double ;
-bool                 out_undefined ;
-} ResultStruct ;
+    char *in_buffer;
+    logical_record_type in_record_type;
+    bool in_is_b_header;
+    int in_element_number;
+    int in_sub_element_number;
+    sub_element_datatype out_datatype;
+    char out_alpha[MAX_STRING_LENGTH];
+    signed long int out_integer;
+    double out_double;
+    bool out_undefined;
+} ResultStruct;
 
 
 void usage(void)
@@ -141,16 +167,16 @@ mk_dsp2(struct rt_wdb *fp, const char *name, const char *file, int xdim, int ydi
 {
     struct rt_dsp_internal *dsp;
 
-    BU_GETSTRUCT( dsp, rt_dsp_internal );
+    BU_GETSTRUCT(dsp, rt_dsp_internal);
     dsp->magic = RT_DSP_INTERNAL_MAGIC;
-    bu_vls_init( &dsp->dsp_name );
-    bu_vls_strcat( &dsp->dsp_name, file);
+    bu_vls_init(&dsp->dsp_name);
+    bu_vls_strcat(&dsp->dsp_name, file);
 
     dsp->dsp_xcnt = xdim;
     dsp->dsp_ycnt = ydim;
-    MAT_COPY( dsp->dsp_stom, mat );
+    MAT_COPY(dsp->dsp_stom, mat);
 
-    return wdb_export( fp, name, (genptr_t)dsp, ID_DSP, mk_conv2mm );
+    return wdb_export(fp, name, (genptr_t)dsp, ID_DSP, mk_conv2mm);
 }
 
 
@@ -159,21 +185,21 @@ flip_high_low_bytes(signed long int in_value, unsigned char *out_string)
 {
     /* it is expected the out_string points to */ 
     /* a string of at least 3 characters */
-    unsigned char highbyte  = '\0' ;
-    unsigned char lowbyte = '\0' ;
-    int           status  = FAILURE ;
+    unsigned char highbyte  = '\0';
+    unsigned char lowbyte = '\0';
+    int status  = FAILURE;
 
     if ((in_value >= 0) && (in_value <= 65535)) {
-        highbyte = (unsigned char)floor(in_value / 256) ;
-        lowbyte  = (unsigned char)(in_value - (highbyte * 256)) ;
-        out_string[0] = highbyte ;
-        out_string[1] = lowbyte ;
-        out_string[2] = '\0' ;
-        status = SUCCESS ;
+        highbyte = (unsigned char)floor(in_value / 256);
+        lowbyte  = (unsigned char)(in_value - (highbyte * 256));
+        out_string[0] = highbyte;
+        out_string[1] = lowbyte;
+        out_string[2] = '\0';
+        status = SUCCESS;
     } else {
         printf("Error, function flip_high_low_bytes input value '%ld' not within 0-65535.\n", in_value);
-        out_string[0] = '\0' ;
-        status = FAILURE ;
+        out_string[0] = '\0';
+        status = FAILURE;
     }
     return(status);
 }
@@ -182,17 +208,17 @@ flip_high_low_bytes(signed long int in_value, unsigned char *out_string)
 int
 output_elevation(signed long int in_value, FILE *fp)
 {
-    unsigned char buf[3] = "" ;
-    int           status = FAILURE ;
+    unsigned char buf[3] = "";
+    int status = FAILURE;
 
     /* allow for clipping */
     if (in_value > DSP_MAX_RAW_ELEVATION) {
-        in_value = DSP_MAX_RAW_ELEVATION ;
+        in_value = DSP_MAX_RAW_ELEVATION;
     }
 
-    if (flip_high_low_bytes(in_value,buf) == SUCCESS) {
+    if (flip_high_low_bytes(in_value, buf) == SUCCESS) {
         if (fwrite(buf, 2, 1, fp) == 1) {
-            status = SUCCESS ;
+            status = SUCCESS;
         }
     }
     if (status == FAILURE) {
@@ -203,226 +229,226 @@ output_elevation(signed long int in_value, FILE *fp)
 
 
 /*
- *  ----------------------------------------------------------------------------
- *  removes pre and post whitespace from a string 
- *  ----------------------------------------------------------------------------
+ * ----------------------------------------------------------------------------
+ * removes pre and post whitespace from a string 
+ * ----------------------------------------------------------------------------
  */
 void remove_whitespace(char *input_string)
 {
-    char *idx = '\0' ;
-    int   idx2 = 0 ;
-    int   input_string_length = 0 ;
-    char *firstp = '\0' ;
-    char *lastp = '\0' ;
-    bool  found_start = false ;
-    bool  found_end = false ; 
-    int   cleaned_string_length = 0 ;
+    char *idx = '\0';
+    int idx2 = 0;
+    int input_string_length = 0;
+    char *firstp = '\0';
+    char *lastp = '\0';
+    bool found_start = false;
+    bool found_end = false; 
+    int cleaned_string_length = 0;
 
     input_string_length = strlen(input_string);
-    firstp = input_string ;
+    firstp = input_string;
     /* initially lastp points to null at end of input string */
-    lastp = firstp + input_string_length ;
+    lastp = firstp + input_string_length;
     /* test for zero length input_string, if zero then do nothing */
     if (input_string_length != 0) {
-          /* find start character and set pointer firstp to this character */
-          found_start = false ;
-          idx = firstp ;
-          while ((found_start == false) && (idx < lastp)) {
-              if (isspace(idx[0]) == 0) {
-                  /* execute if non-space found */
-                  found_start = true ;
-                  firstp = idx ;
-              }
-              idx++ ;
-          }
-          /* if found_start is false then string must be all whitespace */
-          /* set null to first character a do nothing more */
-          if (found_start == false) {
-              input_string[0] = '\0' ;
-          } else {
-              /* If found_start is true, check for trailing whitespace */
-              /* Find last character and set pointer lastp to next */
-              /* character after, i.e. where null would be. */
-              /* There as at least one non-space character in this string */
-              /* therefore will not need to deal with an empty string */
-              /* condition in the loop looking for the string end. */
-              found_end = false ;
-              idx = lastp - 1 ;
-              while ((found_end == false) && (idx >= firstp)) {
-                  if (isspace(idx[0]) == 0) {
-                      /* execute if non-space found */
-                      found_end = true ;
-                      lastp = idx + 1 ;
-                  }
-                  idx-- ;
-              }
-              /* Test if characters in string need to be shifted left. */
-              /* If no need to shift left, set null to location of lastp */
-              /* and do nothing more. */
-              if (firstp > input_string) {
-                  /* Execute if need to shift left, this would happen only */
-                  /* if input_string contained pre whitspace. */
-                  cleaned_string_length = lastp - firstp ;
-                  for (idx2 = 0 ; idx2 < cleaned_string_length ; idx2++) {
-                      input_string[idx2] = firstp[idx2] ;
-                  }
-                  input_string[cleaned_string_length] = '\0' ;
-              } else {
-                  lastp[0] = '\0' ;
-              }
-          }
+	/* find start character and set pointer firstp to this character */
+	found_start = false;
+	idx = firstp;
+	while ((found_start == false) && (idx < lastp)) {
+	    if (isspace(idx[0]) == 0) {
+		/* execute if non-space found */
+		found_start = true;
+		firstp = idx;
+	    }
+	    idx++;
+	}
+	/* if found_start is false then string must be all whitespace */
+	/* set null to first character a do nothing more */
+	if (found_start == false) {
+	    input_string[0] = '\0';
+	} else {
+	    /* If found_start is true, check for trailing whitespace */
+	    /* Find last character and set pointer lastp to next */
+	    /* character after, i.e. where null would be. */
+	    /* There as at least one non-space character in this string */
+	    /* therefore will not need to deal with an empty string */
+	    /* condition in the loop looking for the string end. */
+	    found_end = false;
+	    idx = lastp - 1;
+	    while ((found_end == false) && (idx >= firstp)) {
+		if (isspace(idx[0]) == 0) {
+		    /* execute if non-space found */
+		    found_end = true;
+		    lastp = idx + 1;
+		}
+		idx--;
+	    }
+	    /* Test if characters in string need to be shifted left. */
+	    /* If no need to shift left, set null to location of lastp */
+	    /* and do nothing more. */
+	    if (firstp > input_string) {
+		/* Execute if need to shift left, this would happen only */
+		/* if input_string contained pre whitspace. */
+		cleaned_string_length = lastp - firstp;
+		for (idx2 = 0; idx2 < cleaned_string_length; idx2++) {
+		    input_string[idx2] = firstp[idx2];
+		}
+		input_string[cleaned_string_length] = '\0';
+	    } else {
+		lastp[0] = '\0';
+	    }
+	}
     }
 }
 
 /*
- *  ----------------------------------------------------------------------------
- *  retrieve the value from element, sub_element of record a
- *  ----------------------------------------------------------------------------
+ * ----------------------------------------------------------------------------
+ * retrieve the value from element, sub_element of record a
+ * ----------------------------------------------------------------------------
  */
 int read_element(ResultStruct *io_struct)
 {
-    char    tmp_str[MAX_STRING_LENGTH] ;
-    int     element = 0 ;
-    int     sub_element = 0 ;
-    char   *search_result_uppercase ;
-    char   *search_result_lowercase ;
-    double  tmp_dbl = 0 ;
-    long    tmp_long = 0 ;
-    char   *endp ;
-    char   *tmp_ptr = '\0' ;
-    char   *buf = '\0' ;
-    int     status = FAILURE ;
-    logical_record_type   record_type  ;
-    int     start_character = 0 ;
-    int     field_width = 0 ;
-    sub_element_datatype datatype ;
-    bool    is_b_header = false ;
+    char tmp_str[MAX_STRING_LENGTH];
+    int element = 0;
+    int sub_element = 0;
+    char *search_result_uppercase;
+    char *search_result_lowercase;
+    double tmp_dbl = 0;
+    long tmp_long = 0;
+    char *endp;
+    char *tmp_ptr = '\0';
+    char *buf = '\0';
+    int status = FAILURE;
+    logical_record_type record_type ;
+    int start_character = 0;
+    int field_width = 0;
+    sub_element_datatype datatype;
+    bool is_b_header = false;
 
     /* assign input structure values to local variables */ 
-    buf = (*io_struct).in_buffer ;
-    record_type = (*io_struct).in_record_type ;
-    is_b_header = (*io_struct).in_is_b_header ;
-    element = (*io_struct).in_element_number ;
-    sub_element = (*io_struct).in_sub_element_number ;
+    buf = (*io_struct).in_buffer;
+    record_type = (*io_struct).in_record_type;
+    is_b_header = (*io_struct).in_is_b_header;
+    element = (*io_struct).in_element_number;
+    sub_element = (*io_struct).in_sub_element_number;
 
     /* set output fields to defaults */
-    (*io_struct).out_datatype = type_alpha ;
-    (*io_struct).out_alpha[0] = '\0' ;
-    (*io_struct).out_integer = 0 ;
-    (*io_struct).out_double = 0 ;
-    (*io_struct).out_undefined = false ;
+    (*io_struct).out_datatype = type_alpha;
+    (*io_struct).out_alpha[0] = '\0';
+    (*io_struct).out_integer = 0;
+    (*io_struct).out_double = 0;
+    (*io_struct).out_undefined = false;
 
-    if (!((record_type == type_b) && (element == 6)))  {
+    if (!((record_type == type_b) && (element == 6))) {
         /* when the value to be read is not an elevation */
         /* fyi element 6 in a B record type is an elevation */
-        field_width = element_attributes[record_type][element][sub_element][2] ;
-        start_character = element_attributes[record_type][element][sub_element][1] ;
-        datatype = element_attributes[record_type][element][sub_element][3] ;
-        (*io_struct).out_datatype = datatype ;
+        field_width = element_attributes[record_type][element][sub_element][2];
+        start_character = element_attributes[record_type][element][sub_element][1];
+        datatype = element_attributes[record_type][element][sub_element][3];
+        (*io_struct).out_datatype = datatype;
     } else {
         /* when the value to be read is an elevation */
         /* must compute the start_character of the elevation value within the buffer */
-        field_width = 6 ;
-        datatype = type_integer ;    /* sets datatype to integer */
-        (*io_struct).out_datatype = datatype ;
+        field_width = 6;
+        datatype = type_integer;    /* sets datatype to integer */
+        (*io_struct).out_datatype = datatype;
         if (is_b_header == true) {
             /* the buffer contains a B record header and elevation data */
-            start_character =  145 + ((sub_element - 1) * field_width) ; 
+            start_character =  145 + ((sub_element - 1) * field_width); 
         } else {
             /* the buffer contains a B record with only elevation data */
-            start_character =  1 + ((sub_element - 1) * field_width) ; 
+            start_character =  1 + ((sub_element - 1) * field_width); 
         }
     }
 
-/*  strncpy(tmp_str, &buf[element_attributes[record_type][element][sub_element][1]-1], element_attributes[record_type][element][sub_element][2] ) ; */  
+/* strncpy(tmp_str, &buf[element_attributes[record_type][element][sub_element][1]-1], element_attributes[record_type][element][sub_element][2]); */  
 
     /* in bu_strlcpy must include in the 3rd parameter (i.e. count or size) one extra character to account for string terminator */
 
-    bu_strlcpy(tmp_str, &buf[start_character - 1], field_width + 1 ) ;
+    bu_strlcpy(tmp_str, &buf[start_character - 1], field_width + 1);
 
     tmp_str[field_width] = '\0';
 
     /* removes pre & post whitespace, if all whitespace then returns empty string */
-    remove_whitespace(tmp_str) ; 
+    remove_whitespace(tmp_str); 
 
     /* true when element, sub_element contains non-whitespace */
     if (strlen(tmp_str) != 0) { 
         /*
-         *  --------------------------------------------------------------------
-         *  process strings
-         *  --------------------------------------------------------------------
+         * --------------------------------------------------------------------
+         * process strings
+         * --------------------------------------------------------------------
          */
         if (datatype == type_alpha) {
-        /*  tmp_ptr = strcpy((*io_struct).out_alpha, tmp_str); */
+	    /* tmp_ptr = strcpy((*io_struct).out_alpha, tmp_str); */
             bu_strlcpy((*io_struct).out_alpha, tmp_str, strlen(tmp_str)+1); 
-            status = SUCCESS ;
+            status = SUCCESS;
         }
         /*
-         *  --------------------------------------------------------------------
-         *  process integers
-         *  --------------------------------------------------------------------
+         * --------------------------------------------------------------------
+         * process integers
+         * --------------------------------------------------------------------
          */
         if (datatype == type_integer) {
             /* sub_element was defined as a integer */ 
             tmp_long = strtol(tmp_str, &endp, 10);
             if ((tmp_str != endp) && (*endp == '\0')) {
                 /* convert to integer success */
-                (*io_struct).out_integer = tmp_long ;
-                status = SUCCESS ;
+                (*io_struct).out_integer = tmp_long;
+                status = SUCCESS;
             } else {
                 /* convert to integer failed */
                 /* copy string which failed to convert to inetger to output structure */
                 tmp_ptr = strcpy((*io_struct).out_alpha, tmp_str); 
-                status = FAILURE ;
+                status = FAILURE;
             }
         }
         /*
-         *  --------------------------------------------------------------------
-         *  process doubles
-         *  --------------------------------------------------------------------
+         * --------------------------------------------------------------------
+         * process doubles
+         * --------------------------------------------------------------------
          */
         if (datatype == type_double) {
             /* sub_element was defined as a double */ 
             if ((search_result_uppercase = strchr(tmp_str, 'D')) != NULL) {
                 /* uppercase 'D' found, replace with 'E' */
-                search_result_uppercase[0] = 'E' ;
+                search_result_uppercase[0] = 'E';
             } else {
-               if ((search_result_lowercase = strchr(tmp_str, 'd')) != NULL) {
-                   /* lowercase 'd' found, replace with 'e' */
-                   search_result_lowercase[0] = 'e' ;
-               } else {
-                   if ((strchr(tmp_str, 'E') == NULL) && (strchr(tmp_str, 'e') == NULL)) {
-                       /* if no uppercase 'E' and no lowercase 'e' then append 'E+00' */
-                       /* required for function 'strtod' to convert string to double */
-                  /*   tmp_ptr = strcat(tmp_str, "E+00") ;  */
-                       bu_strlcat(tmp_str, "E+00", sizeof(tmp_str)); 
-                   }
-               }
+		if ((search_result_lowercase = strchr(tmp_str, 'd')) != NULL) {
+		    /* lowercase 'd' found, replace with 'e' */
+		    search_result_lowercase[0] = 'e';
+		} else {
+		    if ((strchr(tmp_str, 'E') == NULL) && (strchr(tmp_str, 'e') == NULL)) {
+			/* if no uppercase 'E' and no lowercase 'e' then append 'E+00' */
+			/* required for function 'strtod' to convert string to double */
+			/*  tmp_ptr = strcat(tmp_str, "E+00");  */
+			bu_strlcat(tmp_str, "E+00", sizeof(tmp_str)); 
+		    }
+		}
             }
             /* convert to double */
             tmp_dbl = strtod(tmp_str, &endp);
             if ((tmp_str != endp) && (*endp == '\0')) {
                 /* convert to double success */
-                (*io_struct).out_double = tmp_dbl ;
-                status = SUCCESS ;
+                (*io_struct).out_double = tmp_dbl;
+                status = SUCCESS;
             } else {
                 /* convert to double failed */
                 /* copy string which failed to convert to double to output structure */
                 tmp_ptr = strcpy((*io_struct).out_alpha, tmp_str); 
-                status = FAILURE ;
+                status = FAILURE;
             }
         }
-    /*
-     *  ------------------------------------------------------------------------
-     *  process (strings,integers,doubles) with have undefined values
-     *  ------------------------------------------------------------------------
-     */
+	/*
+	 * ------------------------------------------------------------------------
+	 * process (strings, integers, doubles) with have undefined values
+	 * ------------------------------------------------------------------------
+	 */
     } else {
         /* data was all whitespace */ 
-        (*io_struct).out_undefined = true ;
-        status = SUCCESS ;
+        (*io_struct).out_undefined = true;
+        status = SUCCESS;
     }
-    return (status) ;
+    return (status);
 }
 
 int
@@ -430,28 +456,28 @@ validate_dem_record(char *buf, bool create_log, logical_record_type record_type)
 {
     /* uses global arrays 'sub_element_counts', 'element_counts', 'record_type_names' */
     /* and 'sub_elements_required_list_counts' */
-    ResultStruct  my_out2 ;
-    ResultStruct *my_out_ptr2 ;
-    int           status = FAILURE ;
-    int           element_number = 0 ;
-    int           sub_element_number = 0 ;
-    int           idx = 0 ;
+    ResultStruct my_out2;
+    ResultStruct *my_out_ptr2;
+    int status = FAILURE;
+    int element_number = 0;
+    int sub_element_number = 0;
+    int idx = 0;
 
-    my_out_ptr2 = &my_out2 ;
+    my_out_ptr2 = &my_out2;
 
     /* Loop through all elements and sub_elements to be sure */
     /* there are no errors trying to read any of the data. */
-    for (element_number = 1 ; element_number <= element_counts[record_type] ; element_number++) {
-        for (sub_element_number = 1 ; sub_element_number <= sub_element_counts[record_type][element_number] ; sub_element_number++) {
+    for (element_number = 1; element_number <= element_counts[record_type]; element_number++) {
+        for (sub_element_number = 1; sub_element_number <= sub_element_counts[record_type][element_number]; sub_element_number++) {
             (*my_out_ptr2).in_buffer = buf;
-            (*my_out_ptr2).in_record_type = record_type ;
-            (*my_out_ptr2).in_element_number = element_number ;
-            (*my_out_ptr2).in_sub_element_number = sub_element_number ;
+            (*my_out_ptr2).in_record_type = record_type;
+            (*my_out_ptr2).in_element_number = element_number;
+            (*my_out_ptr2).in_sub_element_number = sub_element_number;
             if (read_element(my_out_ptr2) == FAILURE) {
                 if (create_log == true) {
                     printf("Failed validation of %s element %i sub_element %i, error reading value.\n",
-                            record_type_names[record_type], (*my_out_ptr2).in_element_number,
-                            (*my_out_ptr2).in_sub_element_number); 
+			   record_type_names[record_type], (*my_out_ptr2).in_element_number,
+			   (*my_out_ptr2).in_sub_element_number); 
                 }
                 return(FAILURE);
             } 
@@ -461,17 +487,17 @@ validate_dem_record(char *buf, bool create_log, logical_record_type record_type)
     /* Loop through a list of element sub_elements that must be defined. */
     /* No test for read failure within this loop since this is expected to */
     /* already have been tested. */
-    for (idx = 1 ; idx <= sub_elements_required_list_counts[record_type] ; idx++) {
+    for (idx = 1; idx <= sub_elements_required_list_counts[record_type]; idx++) {
         (*my_out_ptr2).in_buffer = buf;
-        (*my_out_ptr2).in_record_type = record_type ;
-        (*my_out_ptr2).in_element_number = sub_elements_required_list[record_type][idx][1] ;
-        (*my_out_ptr2).in_sub_element_number = sub_elements_required_list[record_type][idx][2] ;
+        (*my_out_ptr2).in_record_type = record_type;
+        (*my_out_ptr2).in_element_number = sub_elements_required_list[record_type][idx][1];
+        (*my_out_ptr2).in_sub_element_number = sub_elements_required_list[record_type][idx][2];
         status = read_element(my_out_ptr2);
         if ((*my_out_ptr2).out_undefined == true) {
             if (create_log == true) {
                 printf("Failed validation of %s element %i sub_element %i, value undefined.\n",
-                        record_type_names[record_type], (*my_out_ptr2).in_element_number,
-                        (*my_out_ptr2).in_sub_element_number); 
+		       record_type_names[record_type], (*my_out_ptr2).in_element_number,
+		       (*my_out_ptr2).in_sub_element_number); 
             }
             return(FAILURE);
         } 
@@ -482,15 +508,15 @@ validate_dem_record(char *buf, bool create_log, logical_record_type record_type)
         /* Validate record 'A' element 8 sub_element 1 */
         /* Unit of measure for ground planimetric coordinates 0=radians, 1=feet, 2=meters, 3=arc-seconds */
         (*my_out_ptr2).in_buffer = buf;
-        (*my_out_ptr2).in_record_type = record_type ;
-        (*my_out_ptr2).in_element_number = 8 ;
-        (*my_out_ptr2).in_sub_element_number = 1 ;
+        (*my_out_ptr2).in_record_type = record_type;
+        (*my_out_ptr2).in_element_number = 8;
+        (*my_out_ptr2).in_sub_element_number = 1;
         status = read_element(my_out_ptr2);
         if (!(((*my_out_ptr2).out_integer >= 0) && ((*my_out_ptr2).out_integer <= 3))) {
             if (create_log == true) {
-                printf("Failed validation of %s element %i sub_element %i, unexpected value, found '%ld', expected '0,1,2,3'.\n",
-                        record_type_names[record_type], (*my_out_ptr2).in_element_number,
-                        (*my_out_ptr2).in_sub_element_number, (*my_out_ptr2).out_integer) ; 
+                printf("Failed validation of %s element %i sub_element %i, unexpected value, found '%ld', expected '0, 1, 2, 3'.\n",
+		       record_type_names[record_type], (*my_out_ptr2).in_element_number,
+		       (*my_out_ptr2).in_sub_element_number, (*my_out_ptr2).out_integer); 
             }
             return(FAILURE);
         } 
@@ -498,15 +524,15 @@ validate_dem_record(char *buf, bool create_log, logical_record_type record_type)
         /* Validate record 'A' element 9 sub_element 1 */
         /* Unit of measure for elevation coordinates 1=feet, 2=meters */
         (*my_out_ptr2).in_buffer = buf;
-        (*my_out_ptr2).in_record_type = record_type ;
-        (*my_out_ptr2).in_element_number = 9 ;
-        (*my_out_ptr2).in_sub_element_number = 1 ;
+        (*my_out_ptr2).in_record_type = record_type;
+        (*my_out_ptr2).in_element_number = 9;
+        (*my_out_ptr2).in_sub_element_number = 1;
         status = read_element(my_out_ptr2);
         if (!(((*my_out_ptr2).out_integer == 1) || ((*my_out_ptr2).out_integer == 2))) {
             if (create_log == true) {
-                printf("Failed validation of %s element %i sub_element %i, unexpected value, found '%ld', expected '1,2'.\n",
-                        record_type_names[record_type], (*my_out_ptr2).in_element_number,
-                        (*my_out_ptr2).in_sub_element_number, (*my_out_ptr2).out_integer) ; 
+                printf("Failed validation of %s element %i sub_element %i, unexpected value, found '%ld', expected '1, 2'.\n",
+		       record_type_names[record_type], (*my_out_ptr2).in_element_number,
+		       (*my_out_ptr2).in_sub_element_number, (*my_out_ptr2).out_integer); 
             }
             return(FAILURE);
         } 
@@ -515,15 +541,15 @@ validate_dem_record(char *buf, bool create_log, logical_record_type record_type)
         /* Number of sides in the polygon which defines the coverage of the DEM file */
         /* Only a value of '4' is supported by this program */
         (*my_out_ptr2).in_buffer = buf;
-        (*my_out_ptr2).in_record_type = record_type ;
-        (*my_out_ptr2).in_element_number = 10 ;
-        (*my_out_ptr2).in_sub_element_number = 1 ;
+        (*my_out_ptr2).in_record_type = record_type;
+        (*my_out_ptr2).in_element_number = 10;
+        (*my_out_ptr2).in_sub_element_number = 1;
         status = read_element(my_out_ptr2);
         if ((*my_out_ptr2).out_integer != 4) {
             if (create_log == true) {
                 printf("Failed validation of %s element %i sub_element %i, unexpected value, found '%ld', expected '4'.\n",
-                        record_type_names[record_type], (*my_out_ptr2).in_element_number,
-                        (*my_out_ptr2).in_sub_element_number, (*my_out_ptr2).out_integer) ; 
+		       record_type_names[record_type], (*my_out_ptr2).in_element_number,
+		       (*my_out_ptr2).in_sub_element_number, (*my_out_ptr2).out_integer); 
             }
             return(FAILURE);
         } 
@@ -531,15 +557,15 @@ validate_dem_record(char *buf, bool create_log, logical_record_type record_type)
         /* Validate record 'A' element 12 sub_element 2 */
         /* Max elevation for DEM */
         (*my_out_ptr2).in_buffer = buf;
-        (*my_out_ptr2).in_record_type = record_type ;
-        (*my_out_ptr2).in_element_number = 12 ;
-        (*my_out_ptr2).in_sub_element_number = 2 ;
+        (*my_out_ptr2).in_record_type = record_type;
+        (*my_out_ptr2).in_element_number = 12;
+        (*my_out_ptr2).in_sub_element_number = 2;
         status = read_element(my_out_ptr2);
         if ((*my_out_ptr2).out_double < 0) {
             if (create_log == true) {
                 printf("Failed validation of %s element %i sub_element %i, unexpected value, found '%g', expected >= '0'.\n",
-                        record_type_names[record_type], (*my_out_ptr2).in_element_number,
-                        (*my_out_ptr2).in_sub_element_number, (*my_out_ptr2).out_double) ; 
+		       record_type_names[record_type], (*my_out_ptr2).in_element_number,
+		       (*my_out_ptr2).in_sub_element_number, (*my_out_ptr2).out_double); 
             }
             return(FAILURE);
         } 
@@ -547,15 +573,15 @@ validate_dem_record(char *buf, bool create_log, logical_record_type record_type)
         /* Validate record 'A' element 15 sub_element 1 */
         /* DEM spatial resolution for X */
         (*my_out_ptr2).in_buffer = buf;
-        (*my_out_ptr2).in_record_type = record_type ;
-        (*my_out_ptr2).in_element_number = 15 ;
-        (*my_out_ptr2).in_sub_element_number = 1 ;
+        (*my_out_ptr2).in_record_type = record_type;
+        (*my_out_ptr2).in_element_number = 15;
+        (*my_out_ptr2).in_sub_element_number = 1;
         status = read_element(my_out_ptr2);
         if ((*my_out_ptr2).out_double <= 0) {
             if (create_log == true) {
                 printf("Failed validation of %s element %i sub_element %i, unexpected value, found '%g', expected > '0'.\n",
-                        record_type_names[record_type], (*my_out_ptr2).in_element_number,
-                        (*my_out_ptr2).in_sub_element_number, (*my_out_ptr2).out_double) ; 
+		       record_type_names[record_type], (*my_out_ptr2).in_element_number,
+		       (*my_out_ptr2).in_sub_element_number, (*my_out_ptr2).out_double); 
             }
             return(FAILURE);
         } 
@@ -563,15 +589,15 @@ validate_dem_record(char *buf, bool create_log, logical_record_type record_type)
         /* Validate record 'A' element 15 sub_element 2 */
         /* DEM spatial resolution for Y */
         (*my_out_ptr2).in_buffer = buf;
-        (*my_out_ptr2).in_record_type = record_type ;
-        (*my_out_ptr2).in_element_number = 15 ;
-        (*my_out_ptr2).in_sub_element_number = 2 ;
+        (*my_out_ptr2).in_record_type = record_type;
+        (*my_out_ptr2).in_element_number = 15;
+        (*my_out_ptr2).in_sub_element_number = 2;
         status = read_element(my_out_ptr2);
         if ((*my_out_ptr2).out_double <= 0) {
             if (create_log == true) {
                 printf("Failed validation of %s element %i sub_element %i, unexpected value, found '%g', expected > '0'.\n",
-                        record_type_names[record_type], (*my_out_ptr2).in_element_number,
-                        (*my_out_ptr2).in_sub_element_number, (*my_out_ptr2).out_double) ; 
+		       record_type_names[record_type], (*my_out_ptr2).in_element_number,
+		       (*my_out_ptr2).in_sub_element_number, (*my_out_ptr2).out_double); 
             }
             return(FAILURE);
         } 
@@ -579,15 +605,15 @@ validate_dem_record(char *buf, bool create_log, logical_record_type record_type)
         /* Validate record 'A' element 15 sub_element 3 */
         /* DEM spatial resolution for Z */
         (*my_out_ptr2).in_buffer = buf;
-        (*my_out_ptr2).in_record_type = record_type ;
-        (*my_out_ptr2).in_element_number = 15 ;
-        (*my_out_ptr2).in_sub_element_number = 3 ;
+        (*my_out_ptr2).in_record_type = record_type;
+        (*my_out_ptr2).in_element_number = 15;
+        (*my_out_ptr2).in_sub_element_number = 3;
         status = read_element(my_out_ptr2);
         if ((*my_out_ptr2).out_double <= 0) {
             if (create_log == true) {
                 printf("Failed validation of %s element %i sub_element %i, unexpected value, found '%g', expected > '0'.\n",
-                        record_type_names[record_type], (*my_out_ptr2).in_element_number,
-                        (*my_out_ptr2).in_sub_element_number, (*my_out_ptr2).out_double) ; 
+		       record_type_names[record_type], (*my_out_ptr2).in_element_number,
+		       (*my_out_ptr2).in_sub_element_number, (*my_out_ptr2).out_double); 
             }
             return(FAILURE);
         } 
@@ -597,15 +623,15 @@ validate_dem_record(char *buf, bool create_log, logical_record_type record_type)
         /* sub_element 2 is number of columns in DEM file */
         /* Only a value of '1' is supported by this program */
         (*my_out_ptr2).in_buffer = buf;
-        (*my_out_ptr2).in_record_type = record_type ;
-        (*my_out_ptr2).in_element_number = 16 ;
-        (*my_out_ptr2).in_sub_element_number = 1 ;
+        (*my_out_ptr2).in_record_type = record_type;
+        (*my_out_ptr2).in_element_number = 16;
+        (*my_out_ptr2).in_sub_element_number = 1;
         status = read_element(my_out_ptr2);
         if ((*my_out_ptr2).out_integer != 1) {
             if (create_log == true) {
                 printf("Failed validation of %s element %i sub_element %i, unexpected value, found '%ld', expected '1'.\n",
-                        record_type_names[record_type], (*my_out_ptr2).in_element_number,
-                        (*my_out_ptr2).in_sub_element_number, (*my_out_ptr2).out_integer) ; 
+		       record_type_names[record_type], (*my_out_ptr2).in_element_number,
+		       (*my_out_ptr2).in_sub_element_number, (*my_out_ptr2).out_integer); 
             }
             return(FAILURE);
         } 
@@ -613,15 +639,15 @@ validate_dem_record(char *buf, bool create_log, logical_record_type record_type)
         /* Validate record 'A' element 16 sub_element 2 */
         /* Number of columns in DEM file */
         (*my_out_ptr2).in_buffer = buf;
-        (*my_out_ptr2).in_record_type = record_type ;
-        (*my_out_ptr2).in_element_number = 16 ;
-        (*my_out_ptr2).in_sub_element_number = 2 ;
+        (*my_out_ptr2).in_record_type = record_type;
+        (*my_out_ptr2).in_element_number = 16;
+        (*my_out_ptr2).in_sub_element_number = 2;
         status = read_element(my_out_ptr2);
         if ((*my_out_ptr2).out_integer < 1) {
             if (create_log == true) {
                 printf("Failed validation of %s element %i sub_element %i, unexpected value, found '%ld', expected >= '1'.\n",
-                        record_type_names[record_type], (*my_out_ptr2).in_element_number,
-                        (*my_out_ptr2).in_sub_element_number, (*my_out_ptr2).out_integer) ; 
+		       record_type_names[record_type], (*my_out_ptr2).in_element_number,
+		       (*my_out_ptr2).in_sub_element_number, (*my_out_ptr2).out_integer); 
             }
             return(FAILURE);
         } 
@@ -633,15 +659,15 @@ validate_dem_record(char *buf, bool create_log, logical_record_type record_type)
         /* Row identification number of the profile, row number is normally set to 1 */
         /* Only a value of '1' is supported by this program */
         (*my_out_ptr2).in_buffer = buf;
-        (*my_out_ptr2).in_record_type = record_type ;
-        (*my_out_ptr2).in_element_number = 1 ;
-        (*my_out_ptr2).in_sub_element_number = 1 ;
+        (*my_out_ptr2).in_record_type = record_type;
+        (*my_out_ptr2).in_element_number = 1;
+        (*my_out_ptr2).in_sub_element_number = 1;
         status = read_element(my_out_ptr2);
         if ((*my_out_ptr2).out_integer != 1) {
             if (create_log == true) {
                 printf("Failed validation of %s element %i sub_element %i, unexpected value, found '%ld', expected '1'.\n",
-                        record_type_names[record_type], (*my_out_ptr2).in_element_number,
-                        (*my_out_ptr2).in_sub_element_number, (*my_out_ptr2).out_integer) ; 
+		       record_type_names[record_type], (*my_out_ptr2).in_element_number,
+		       (*my_out_ptr2).in_sub_element_number, (*my_out_ptr2).out_integer); 
             }
             return(FAILURE);
         } 
@@ -649,15 +675,15 @@ validate_dem_record(char *buf, bool create_log, logical_record_type record_type)
         /* Validate record 'B' element 1 sub_element 2 */
         /* Column identification number of the profile */
         (*my_out_ptr2).in_buffer = buf;
-        (*my_out_ptr2).in_record_type = record_type ;
-        (*my_out_ptr2).in_element_number = 1 ;
-        (*my_out_ptr2).in_sub_element_number = 2 ;
+        (*my_out_ptr2).in_record_type = record_type;
+        (*my_out_ptr2).in_element_number = 1;
+        (*my_out_ptr2).in_sub_element_number = 2;
         status = read_element(my_out_ptr2);
         if ((*my_out_ptr2).out_integer < 1) {
             if (create_log == true) {
                 printf("Failed validation of %s element %i sub_element %i, unexpected value, found '%ld', expected >= '1'.\n",
-                        record_type_names[record_type], (*my_out_ptr2).in_element_number,
-                        (*my_out_ptr2).in_sub_element_number, (*my_out_ptr2).out_integer) ; 
+		       record_type_names[record_type], (*my_out_ptr2).in_element_number,
+		       (*my_out_ptr2).in_sub_element_number, (*my_out_ptr2).out_integer); 
             }
             return(FAILURE);
         } 
@@ -665,15 +691,15 @@ validate_dem_record(char *buf, bool create_log, logical_record_type record_type)
         /* Validate record 'B' element 2 sub_element 1 */
         /* Number of elevations in profile */
         (*my_out_ptr2).in_buffer = buf;
-        (*my_out_ptr2).in_record_type = record_type ;
-        (*my_out_ptr2).in_element_number = 2 ;
-        (*my_out_ptr2).in_sub_element_number = 1 ;
+        (*my_out_ptr2).in_record_type = record_type;
+        (*my_out_ptr2).in_element_number = 2;
+        (*my_out_ptr2).in_sub_element_number = 1;
         status = read_element(my_out_ptr2);
         if ((*my_out_ptr2).out_integer < 1) {
             if (create_log == true) {
                 printf("Failed validation of %s element %i sub_element %i, unexpected value, found '%ld', expected >= '1'.\n",
-                        record_type_names[record_type], (*my_out_ptr2).in_element_number,
-                        (*my_out_ptr2).in_sub_element_number, (*my_out_ptr2).out_integer) ; 
+		       record_type_names[record_type], (*my_out_ptr2).in_element_number,
+		       (*my_out_ptr2).in_sub_element_number, (*my_out_ptr2).out_integer); 
             }
             return(FAILURE);
         } 
@@ -682,15 +708,15 @@ validate_dem_record(char *buf, bool create_log, logical_record_type record_type)
         /* Number of elevations in profile, 1 indicates 1 column per 'B' record */
         /* Only a value of '1' is supported by this program */
         (*my_out_ptr2).in_buffer = buf;
-        (*my_out_ptr2).in_record_type = record_type ;
-        (*my_out_ptr2).in_element_number = 2 ;
-        (*my_out_ptr2).in_sub_element_number = 2 ;
+        (*my_out_ptr2).in_record_type = record_type;
+        (*my_out_ptr2).in_element_number = 2;
+        (*my_out_ptr2).in_sub_element_number = 2;
         status = read_element(my_out_ptr2);
         if ((*my_out_ptr2).out_integer != 1) {
             if (create_log == true) {
                 printf("Failed validation of %s element %i sub_element %i, unexpected value, found '%ld', expected '1'.\n",
-                        record_type_names[record_type], (*my_out_ptr2).in_element_number,
-                        (*my_out_ptr2).in_sub_element_number, (*my_out_ptr2).out_integer) ; 
+		       record_type_names[record_type], (*my_out_ptr2).in_element_number,
+		       (*my_out_ptr2).in_sub_element_number, (*my_out_ptr2).out_integer); 
             }
             return(FAILURE);
         } 
@@ -698,15 +724,15 @@ validate_dem_record(char *buf, bool create_log, logical_record_type record_type)
         /* Validate record 'B' element 4 sub_element 1 */
         /* Elevation of local datum for profile */
         (*my_out_ptr2).in_buffer = buf;
-        (*my_out_ptr2).in_record_type = record_type ;
-        (*my_out_ptr2).in_element_number = 4 ;
-        (*my_out_ptr2).in_sub_element_number = 1 ;
+        (*my_out_ptr2).in_record_type = record_type;
+        (*my_out_ptr2).in_element_number = 4;
+        (*my_out_ptr2).in_sub_element_number = 1;
         status = read_element(my_out_ptr2);
         if ((*my_out_ptr2).out_double < 0) {
             if (create_log == true) {
                 printf("Failed validation of %s element %i sub_element %i, unexpected value, found '%g', expected >= '0'.\n",
-                        record_type_names[record_type], (*my_out_ptr2).in_element_number,
-                        (*my_out_ptr2).in_sub_element_number, (*my_out_ptr2).out_double) ; 
+		       record_type_names[record_type], (*my_out_ptr2).in_element_number,
+		       (*my_out_ptr2).in_sub_element_number, (*my_out_ptr2).out_double); 
             }
             return(FAILURE);
         } 
@@ -714,79 +740,79 @@ validate_dem_record(char *buf, bool create_log, logical_record_type record_type)
         /* Validate record 'B' element 5 sub_element 2 */
         /* Max elevation for profile */
         (*my_out_ptr2).in_buffer = buf;
-        (*my_out_ptr2).in_record_type = record_type ;
-        (*my_out_ptr2).in_element_number = 5 ;
-        (*my_out_ptr2).in_sub_element_number = 2 ;
+        (*my_out_ptr2).in_record_type = record_type;
+        (*my_out_ptr2).in_element_number = 5;
+        (*my_out_ptr2).in_sub_element_number = 2;
         status = read_element(my_out_ptr2);
         if ((*my_out_ptr2).out_double < 0) {
             if (create_log == true) {
                 printf("Failed validation of %s element %i sub_element %i, unexpected value, found '%g', expected >= '0'.\n",
-                        record_type_names[record_type], (*my_out_ptr2).in_element_number,
-                        (*my_out_ptr2).in_sub_element_number, (*my_out_ptr2).out_double) ; 
+		       record_type_names[record_type], (*my_out_ptr2).in_element_number,
+		       (*my_out_ptr2).in_sub_element_number, (*my_out_ptr2).out_double); 
             }
             return(FAILURE);
         } 
     } /* endif when record_type == type_b */
 
-    status = SUCCESS ;
+    status = SUCCESS;
     return(status);
 }
 
-/* the output of this function is to decide if the user input  */
-/* scale factor should be used or not and to warn the user of  */
-/* valid scale factors which have side effects on the data     */
+/* the output of this function is to decide if the user input */
+/* scale factor should be used or not and to warn the user of */
+/* valid scale factors which have side effects on the data */
 int process_manual_scale_factor(
-    double          *in_raw_dem_2_raw_dsp_auto_scale_factor_ptr,
-    double          *in_raw_dem_2_raw_dsp_manual_scale_factor_ptr,
-    double          *in_derived_dem_max_raw_elevation_ptr,
-    double          *in_z_spatial_resolution_ptr,
-    double          *in_datum_elevation_in_curr_b_record_ptr)
+    double *in_raw_dem_2_raw_dsp_auto_scale_factor_ptr,
+    double *in_raw_dem_2_raw_dsp_manual_scale_factor_ptr,
+    double *in_derived_dem_max_raw_elevation_ptr,
+    double *in_z_spatial_resolution_ptr,
+    double *in_datum_elevation_in_curr_b_record_ptr)
 {
-    signed long int  dem_max_raw_clipped_elevation = 0 ;
-    double           dem_max_real_clipped_elevation = 0 ;
-    double           raw_dem_2_raw_dsp_manual_scale_factor_lowerlimit = 0 ;
-    double           raw_dem_2_raw_dsp_manual_scale_factor_upperlimit = 0 ;
+    signed long int dem_max_raw_clipped_elevation = 0;
+    double dem_max_real_clipped_elevation = 0;
+    double raw_dem_2_raw_dsp_manual_scale_factor_lowerlimit = 0;
+    double raw_dem_2_raw_dsp_manual_scale_factor_upperlimit = 0;
 
 
     /* test manual scale factor if out of valid range */
-    raw_dem_2_raw_dsp_manual_scale_factor_lowerlimit = 65535 / 999999 ;
-    raw_dem_2_raw_dsp_manual_scale_factor_upperlimit = 65535 ;
-    if ( !((*in_raw_dem_2_raw_dsp_manual_scale_factor_ptr >= raw_dem_2_raw_dsp_manual_scale_factor_lowerlimit) &&
-           (*in_raw_dem_2_raw_dsp_manual_scale_factor_ptr <= raw_dem_2_raw_dsp_manual_scale_factor_upperlimit)) ) {
+    raw_dem_2_raw_dsp_manual_scale_factor_lowerlimit = 65535 / 999999;
+    raw_dem_2_raw_dsp_manual_scale_factor_upperlimit = 65535;
+    if (!((*in_raw_dem_2_raw_dsp_manual_scale_factor_ptr >= raw_dem_2_raw_dsp_manual_scale_factor_lowerlimit) &&
+	  (*in_raw_dem_2_raw_dsp_manual_scale_factor_ptr <= raw_dem_2_raw_dsp_manual_scale_factor_upperlimit))) {
         printf("Scale factor '%g' was entered. Scale factor must be between '%g' and '%g' inclusive.\n",
-            *in_raw_dem_2_raw_dsp_manual_scale_factor_ptr, raw_dem_2_raw_dsp_manual_scale_factor_lowerlimit,
-            raw_dem_2_raw_dsp_manual_scale_factor_upperlimit );
+	       *in_raw_dem_2_raw_dsp_manual_scale_factor_ptr, raw_dem_2_raw_dsp_manual_scale_factor_lowerlimit,
+	       raw_dem_2_raw_dsp_manual_scale_factor_upperlimit);
         return(FAILURE);
     }
 
     if (*in_raw_dem_2_raw_dsp_manual_scale_factor_ptr == *in_raw_dem_2_raw_dsp_auto_scale_factor_ptr) {
         /* manual scale factor = auto scale factor */
         /* derived_dem_max_raw_elevation is any value 0-999999 */
-        printf("Entered scale factor '%g' matches the default computed scale factor.\n", *in_raw_dem_2_raw_dsp_manual_scale_factor_ptr) ;
+        printf("Entered scale factor '%g' matches the default computed scale factor.\n", *in_raw_dem_2_raw_dsp_manual_scale_factor_ptr);
     } else {
         if (*in_raw_dem_2_raw_dsp_manual_scale_factor_ptr > *in_raw_dem_2_raw_dsp_auto_scale_factor_ptr) {
             /* clipping */
             /* manual scale factor > auto scale factor */
             /* derived_dem_max_raw_elevation is any value 0-999999 */
-            dem_max_raw_clipped_elevation = round(65535 / *in_raw_dem_2_raw_dsp_manual_scale_factor_ptr) ;
+            dem_max_raw_clipped_elevation = round(65535 / *in_raw_dem_2_raw_dsp_manual_scale_factor_ptr);
             dem_max_real_clipped_elevation = 
-                (dem_max_raw_clipped_elevation * *in_z_spatial_resolution_ptr) + *in_datum_elevation_in_curr_b_record_ptr ;
+                (dem_max_raw_clipped_elevation * *in_z_spatial_resolution_ptr) + *in_datum_elevation_in_curr_b_record_ptr;
             printf("Scale factor '%g' was entered. Scale factors above '%g' cause clipping.\n", 
-                *in_raw_dem_2_raw_dsp_manual_scale_factor_ptr, *in_raw_dem_2_raw_dsp_auto_scale_factor_ptr) ;
+		   *in_raw_dem_2_raw_dsp_manual_scale_factor_ptr, *in_raw_dem_2_raw_dsp_auto_scale_factor_ptr);
             printf("Raw DEM elevations above '%ld' are clipped.\n", dem_max_raw_clipped_elevation);
             /* real elevations are in milimeters, convert to meters before reporting value to user */
             printf("Real DEM elevations above '%g' meters are clipped.\n",
-                (dem_max_real_clipped_elevation / conversion_factor_to_milimeters[2]));
+		   (dem_max_real_clipped_elevation / conversion_factor_to_milimeters[2]));
         } else {
             /* manual scale factor < auto scale factor */
-            if ( *in_derived_dem_max_raw_elevation_ptr > 65535 ) {
+            if (*in_derived_dem_max_raw_elevation_ptr > 65535) {
                 /* additional loss of resolution */
                 /* dem file contains raw elevations requiring more than a 2 byte integer to represent */
-                /* therefore an unavoidable amount of loss of resolution is required. in this case    */
-                /* where manual scale factor < auto scale factor, this introduces an additional loss  */
+                /* therefore an unavoidable amount of loss of resolution is required. in this case */
+                /* where manual scale factor < auto scale factor, this introduces an additional loss */
                 /* of resolution that is not necessary. */
                 printf("Scale factor '%g' was entered. Scale factors below '%g' cause additional loss of resolution.\n", 
-                    *in_raw_dem_2_raw_dsp_manual_scale_factor_ptr, *in_raw_dem_2_raw_dsp_auto_scale_factor_ptr) ;
+		       *in_raw_dem_2_raw_dsp_manual_scale_factor_ptr, *in_raw_dem_2_raw_dsp_auto_scale_factor_ptr);
             } else {
                 /* derived_dem_max_raw_elevation <= 65535 */
                 /* dem file elevations can fit into a 2 byte integer, therefore no minimun loss of resolution */
@@ -795,13 +821,13 @@ int process_manual_scale_factor(
                     /* forced loss of resolution */
                     /* manual scale factor < 1 (and) manual scale factor < auto scale factor */
                     printf("Scale factor '%g' was entered. Scale factors below '1' cause loss of resolution.\n", 
-                        *in_raw_dem_2_raw_dsp_manual_scale_factor_ptr) ;
+			   *in_raw_dem_2_raw_dsp_manual_scale_factor_ptr);
                 } else {
                     /* no loss of resolution */
                     /* manual scale factor >= 1 (and) manual scale factor < auto scale factor */
                     /* under these conditions no loss of resolution will occur. */
                     printf("Scale factor '%g' was entered. No loss of resolution will occur.\n", 
-                        *in_raw_dem_2_raw_dsp_manual_scale_factor_ptr) ;
+			   *in_raw_dem_2_raw_dsp_manual_scale_factor_ptr);
                 }
             }
         }
@@ -809,35 +835,35 @@ int process_manual_scale_factor(
     return(SUCCESS);
 }
 
-/* the output of this function is to decide if the user input       */
-/* 'dem max raw elevation' should be used or not and to warn the    */
+/* the output of this function is to decide if the user input */
+/* 'dem max raw elevation' should be used or not and to warn the */
 /* user of valid max elevations which have side effects on the data */
 int process_manual_dem_max_raw_elevation(
-    double          *out_raw_dem_2_raw_dsp_scale_factor_ptr,
-    double          *in_raw_dem_2_raw_dsp_auto_scale_factor_ptr,
+    double *out_raw_dem_2_raw_dsp_scale_factor_ptr,
+    double *in_raw_dem_2_raw_dsp_auto_scale_factor_ptr,
     signed long int *in_manual_dem_max_raw_elevation_ptr,
-    double          *in_derived_dem_max_raw_elevation_ptr,
-    double          *in_z_spatial_resolution_ptr,
-    double          *in_datum_elevation_in_curr_b_record_ptr)
+    double *in_derived_dem_max_raw_elevation_ptr,
+    double *in_z_spatial_resolution_ptr,
+    double *in_datum_elevation_in_curr_b_record_ptr)
 {
-    double           dem_max_real_clipped_elevation = 0 ;
-    signed long int  manual_dem_max_raw_elevation_lowerlimit = 1 ;
-    signed long int  manual_dem_max_raw_elevation_upperlimit = 999999 ;
+    double dem_max_real_clipped_elevation = 0;
+    signed long int manual_dem_max_raw_elevation_lowerlimit = 1;
+    signed long int manual_dem_max_raw_elevation_upperlimit = 999999;
 
     /* compute raw_dem_2_raw_dsp_scale_factor based on the user entered */
     /* dem max raw elevation */
     /* test for zero to avoid divide by 0 math error */
     if (round(*in_manual_dem_max_raw_elevation_ptr) > 0) {
-        *out_raw_dem_2_raw_dsp_scale_factor_ptr = DSP_MAX_RAW_ELEVATION / (double)*in_manual_dem_max_raw_elevation_ptr ;
+        *out_raw_dem_2_raw_dsp_scale_factor_ptr = DSP_MAX_RAW_ELEVATION / (double)*in_manual_dem_max_raw_elevation_ptr;
     } else {
-        *out_raw_dem_2_raw_dsp_scale_factor_ptr = 1 ;
+        *out_raw_dem_2_raw_dsp_scale_factor_ptr = 1;
     }
 
     /* test user input 'dem max raw elevation' if out of valid range */
-    if ( !((*in_manual_dem_max_raw_elevation_ptr >= manual_dem_max_raw_elevation_lowerlimit) &&
-           (*in_manual_dem_max_raw_elevation_ptr <= manual_dem_max_raw_elevation_upperlimit)) ) {
+    if (!((*in_manual_dem_max_raw_elevation_ptr >= manual_dem_max_raw_elevation_lowerlimit) &&
+	  (*in_manual_dem_max_raw_elevation_ptr <= manual_dem_max_raw_elevation_upperlimit))) {
         printf("DEM max raw elevation '%ld' was entered. DEM max raw elevation must be between '%ld' and '%ld' inclusive.\n",
-            *in_manual_dem_max_raw_elevation_ptr, manual_dem_max_raw_elevation_lowerlimit, manual_dem_max_raw_elevation_upperlimit);
+	       *in_manual_dem_max_raw_elevation_ptr, manual_dem_max_raw_elevation_lowerlimit, manual_dem_max_raw_elevation_upperlimit);
         return(FAILURE);
     }
 
@@ -846,30 +872,30 @@ int process_manual_dem_max_raw_elevation(
         /* the derived raw dem elevation must be derived from the real elevation */
         /* listed in the 'a' record. */ 
         /* derived_dem_max_raw_elevation can be any value 0-999999 */
-        printf("Entered DEM max raw elevation '%ld' matches actual DEM max raw elevation.\n", *in_manual_dem_max_raw_elevation_ptr) ;
+        printf("Entered DEM max raw elevation '%ld' matches actual DEM max raw elevation.\n", *in_manual_dem_max_raw_elevation_ptr);
     } else {
         if (*in_manual_dem_max_raw_elevation_ptr < *in_derived_dem_max_raw_elevation_ptr) {
             /* clipping */
             /* user input 'dem max raw elevation' < 'derived dem max raw elevation' */
             /* derived_dem_max_raw_elevation is any value 0-999999 */
             dem_max_real_clipped_elevation = (*in_manual_dem_max_raw_elevation_ptr * *in_z_spatial_resolution_ptr) +
-                                              *in_datum_elevation_in_curr_b_record_ptr ;
+		*in_datum_elevation_in_curr_b_record_ptr;
             printf("DEM max raw elevation '%ld' was entered. Elevations below '%g' cause clipping.\n", 
-                *in_manual_dem_max_raw_elevation_ptr, *in_derived_dem_max_raw_elevation_ptr) ;
+		   *in_manual_dem_max_raw_elevation_ptr, *in_derived_dem_max_raw_elevation_ptr);
             printf("Raw DEM elevations above '%ld' are clipped.\n", *in_manual_dem_max_raw_elevation_ptr);
             /* real elevations are in milimeters, convert to meters before reporting value to user */
             printf("Real DEM elevations above '%g' meters are clipped.\n",
-                (dem_max_real_clipped_elevation / conversion_factor_to_milimeters[2]));
+		   (dem_max_real_clipped_elevation / conversion_factor_to_milimeters[2]));
         } else {
             /* user input 'dem max raw elevation' > 'derived dem max raw elevation' */
-            if ( *in_derived_dem_max_raw_elevation_ptr > 65535 ) {
+            if (*in_derived_dem_max_raw_elevation_ptr > 65535) {
                 /* additional loss of resolution */
                 /* dem file contains raw elevations requiring more than a 2 byte integer to represent */
-                /* therefore an unavoidable amount of loss of resolution is required. in this case    */
-                /* where 'dem max raw elevation' > 'derived dem max raw elevation', this introduces   */
+                /* therefore an unavoidable amount of loss of resolution is required. in this case */
+                /* where 'dem max raw elevation' > 'derived dem max raw elevation', this introduces */
                 /* an additional loss of resolution that is not necessary. */
                 printf("DEM max raw elevation '%ld' was entered. Elevations above '%g' cause additional loss of resolution.\n", 
-                    *in_manual_dem_max_raw_elevation_ptr, *in_derived_dem_max_raw_elevation_ptr) ;
+		       *in_manual_dem_max_raw_elevation_ptr, *in_derived_dem_max_raw_elevation_ptr);
             } else {
                 /* derived_dem_max_raw_elevation <= 65535 */
                 /* dem file elevations can fit into a 2 byte integer, therefore no minimun loss of resolution */
@@ -879,14 +905,14 @@ int process_manual_dem_max_raw_elevation(
                     /* user input 'dem max raw elevation' > 65535 (and) */
                     /* user input 'dem max raw elevation' > 'derived dem max raw elevation' */
                     printf("DEM max raw elevation '%ld' was entered. Raw elevations above 65535 cause loss of resolution.\n", 
-                        *in_manual_dem_max_raw_elevation_ptr) ;
+			   *in_manual_dem_max_raw_elevation_ptr);
                 } else {
                     /* no loss of resolution */
                     /* user input 'dem max raw elevation' <= 65535 (and) */
                     /* user input 'dem max raw elevation' > 'derived dem max raw elevation' */
                     /* under these conditions no loss of resolution will occur. */
                     printf("DEM max raw elevation '%ld' was entered. No loss of resolution will occur.\n",
-                        *in_manual_dem_max_raw_elevation_ptr) ;
+			   *in_manual_dem_max_raw_elevation_ptr);
                 }
             }
         }
@@ -895,61 +921,61 @@ int process_manual_dem_max_raw_elevation(
 }
 
 
-/* the output of this function is to decide if the user input       */
-/* 'dem max real elevation' should be used or not and to warn the    */
+/* the output of this function is to decide if the user input */
+/* 'dem max real elevation' should be used or not and to warn the */
 /* user of valid max elevations which have side effects on the data */
 int process_manual_dem_max_real_elevation(
-    double          *out_raw_dem_2_raw_dsp_scale_factor_ptr,
-    double          *in_raw_dem_2_raw_dsp_auto_scale_factor_ptr,
-    double          *in_manual_dem_max_real_elevation_ptr,
-    double          *in_derived_dem_max_raw_elevation_ptr,
-    double          *in_z_spatial_resolution_ptr,
-    double          *in_datum_elevation_in_curr_b_record_ptr)
+    double *out_raw_dem_2_raw_dsp_scale_factor_ptr,
+    double *in_raw_dem_2_raw_dsp_auto_scale_factor_ptr,
+    double *in_manual_dem_max_real_elevation_ptr,
+    double *in_derived_dem_max_raw_elevation_ptr,
+    double *in_z_spatial_resolution_ptr,
+    double *in_datum_elevation_in_curr_b_record_ptr)
 {
-    double           manual_dem_max_real_elevation_lowerlimit = 0 ;
-    double           manual_dem_max_real_elevation_upperlimit = 0 ;
-    double           dem_max_raw_elevation = 0 ;
-    double           adjusted_manual_dem_max_real_elevation = 0 ; /* value adjusted to multiple of z_spatial */
-                                                                  /* resolution then add datum elevation */ 
+    double manual_dem_max_real_elevation_lowerlimit = 0;
+    double manual_dem_max_real_elevation_upperlimit = 0;
+    double dem_max_raw_elevation = 0;
+    double adjusted_manual_dem_max_real_elevation = 0; /* value adjusted to multiple of z_spatial */
+    /* resolution then add datum elevation */ 
 
     /* makes sure *in_manual_dem_max_real_elevation_ptr >= *in_datum_elevation_in_curr_b_record_ptr */
-    manual_dem_max_real_elevation_lowerlimit = *in_z_spatial_resolution_ptr + *in_datum_elevation_in_curr_b_record_ptr ;
-    manual_dem_max_real_elevation_upperlimit = (999999 * *in_z_spatial_resolution_ptr) + *in_datum_elevation_in_curr_b_record_ptr ;
+    manual_dem_max_real_elevation_lowerlimit = *in_z_spatial_resolution_ptr + *in_datum_elevation_in_curr_b_record_ptr;
+    manual_dem_max_real_elevation_upperlimit = (999999 * *in_z_spatial_resolution_ptr) + *in_datum_elevation_in_curr_b_record_ptr;
 
     /* test user input 'dem max real elevation' if out of valid range */
-    if ( !((*in_manual_dem_max_real_elevation_ptr >= manual_dem_max_real_elevation_lowerlimit) &&
-           (*in_manual_dem_max_real_elevation_ptr <= manual_dem_max_real_elevation_upperlimit)) ) {
+    if (!((*in_manual_dem_max_real_elevation_ptr >= manual_dem_max_real_elevation_lowerlimit) &&
+	  (*in_manual_dem_max_real_elevation_ptr <= manual_dem_max_real_elevation_upperlimit))) {
         /* real elevations are processed in the unit milimeters, convert to meters before reporting to user */
         printf("DEM max real elevation '%g' meters was entered.\n", 
-            (*in_manual_dem_max_real_elevation_ptr / conversion_factor_to_milimeters[2]));
+	       (*in_manual_dem_max_real_elevation_ptr / conversion_factor_to_milimeters[2]));
         printf("DEM max real elevation must be between '%g' meters and '%g' meters inclusive.\n",
-            (manual_dem_max_real_elevation_lowerlimit / conversion_factor_to_milimeters[2]), 
-            (manual_dem_max_real_elevation_upperlimit / conversion_factor_to_milimeters[2]));
+	       (manual_dem_max_real_elevation_lowerlimit / conversion_factor_to_milimeters[2]), 
+	       (manual_dem_max_real_elevation_upperlimit / conversion_factor_to_milimeters[2]));
         return(FAILURE);
     }
 
     /* manual_dem_max_real_elevation value adjusted to multiple of z_spatial resolution then add datum elevation */ 
     adjusted_manual_dem_max_real_elevation = 
         (round((*in_manual_dem_max_real_elevation_ptr - *in_datum_elevation_in_curr_b_record_ptr) / *in_z_spatial_resolution_ptr) * 
-        *in_z_spatial_resolution_ptr) + *in_datum_elevation_in_curr_b_record_ptr ;  
+	 *in_z_spatial_resolution_ptr) + *in_datum_elevation_in_curr_b_record_ptr;  
 
     /* compute raw elevation that corresponds to the adjusted user input max real elevation */
-    dem_max_raw_elevation = (adjusted_manual_dem_max_real_elevation - *in_datum_elevation_in_curr_b_record_ptr) / *in_z_spatial_resolution_ptr ;
+    dem_max_raw_elevation = (adjusted_manual_dem_max_real_elevation - *in_datum_elevation_in_curr_b_record_ptr) / *in_z_spatial_resolution_ptr;
 
     /* report to user the actual max real elevation used if not the value the user entered */
     if (adjusted_manual_dem_max_real_elevation != *in_manual_dem_max_real_elevation_ptr) {
         /* real elevations are processed in the unit milimeters, convert to meters before reporting to user */
         printf("Using max real elevation '%g' meters instead of '%g' meters to allow correct scaling.\n",
-            (adjusted_manual_dem_max_real_elevation / conversion_factor_to_milimeters[2]),
-            (*in_manual_dem_max_real_elevation_ptr / conversion_factor_to_milimeters[2]));
+	       (adjusted_manual_dem_max_real_elevation / conversion_factor_to_milimeters[2]),
+	       (*in_manual_dem_max_real_elevation_ptr / conversion_factor_to_milimeters[2]));
     }
 
     /* compute raw_dem_2_raw_dsp_scale_factor based on the adjusted, user entered, dem max real elevation */
     /* test for zero to avoid divide by 0 math error */
     if (round(dem_max_raw_elevation) > 0) {
-        *out_raw_dem_2_raw_dsp_scale_factor_ptr = DSP_MAX_RAW_ELEVATION / (double)dem_max_raw_elevation ;
+        *out_raw_dem_2_raw_dsp_scale_factor_ptr = DSP_MAX_RAW_ELEVATION / (double)dem_max_raw_elevation;
     } else {
-        *out_raw_dem_2_raw_dsp_scale_factor_ptr = 1 ;
+        *out_raw_dem_2_raw_dsp_scale_factor_ptr = 1;
     }
     return(SUCCESS);
 }
@@ -957,64 +983,64 @@ int process_manual_dem_max_real_elevation(
 
 int
 read_dem(
-    char            *in_input_filename,                        /* dem input file path and file name */
-    double          *in_raw_dem_2_raw_dsp_manual_scale_factor, /* user specified raw dem-to-dsp scale factor */
+    char *in_input_filename,                        /* dem input file path and file name */
+    double *in_raw_dem_2_raw_dsp_manual_scale_factor, /* user specified raw dem-to-dsp scale factor */
     signed long int *in_manual_dem_max_raw_elevation,          /* user specified max raw elevation */
-    double          *in_manual_dem_max_real_elevation,         /* user specified max real elevation in meters */
-    char            *in_temp_filename,                         /* temp file path and file name */
+    double *in_manual_dem_max_real_elevation,         /* user specified max real elevation in meters */
+    char *in_temp_filename,                         /* temp file path and file name */
     signed long int *out_xdim,                                 /* x dimension of dem (w cells) */
     signed long int *out_ydim,                                 /* y dimension of dem (n cells) */
-    double          *out_dsp_elevation,                        /* datum elevation in milimeters (dsp V z coordinate) */
-    double          *out_x_cell_size,                          /* x scaling factor in milimeters */
-    double          *out_y_cell_size,                          /* y scaling factor in milimeters */
-    double          *out_unit_elevation)                       /* z scaling factor in milimeters */
+    double *out_dsp_elevation,                        /* datum elevation in milimeters (dsp V z coordinate) */
+    double *out_x_cell_size,                          /* x scaling factor in milimeters */
+    double *out_y_cell_size,                          /* y scaling factor in milimeters */
+    double *out_unit_elevation)                       /* z scaling factor in milimeters */
  
 {
-    int              status = FAILURE ;
+    int status = FAILURE;
     FILE *fp;
     FILE *fp2;
-    char  buf[1024] ;
-    signed long int  curr_b_record = 0 ;
-    signed long int  indx2 = 0 ;
-    signed long int  indx3 = 0 ;
-    signed long int  indx4 = 0 ;
-    signed long int  indx5 = 0 ;
-    signed long int  indx6 = 0 ;
-    signed long int  tot_elevations_in_curr_b_record = 0 ;
-    signed long int  tot_elevations_in_previous_b_record = 0 ;
-    signed long int  curr_elevation = 0 ;
-    signed long int  additional_1024char_chunks = 0 ;
-    signed long int  number_of_previous_b_elevations = 0 ;
-    signed long int  number_of_last_elevations = 0 ;
-    signed long int  tot_elevations_in_prev_b_records = 0 ;
-    signed long int  elevation_number_in_curr_b_record = 0 ;
-    signed long int  elevation_number = 0 ;
-    double           datum_elevation_in_curr_b_record = 0 ;
-    double           datum_elevation_in_previous_b_record = 0 ;
-    double           elevation_max_in_a_record = 0 ;
-    double           raw_dem_2_raw_dsp_auto_scale_factor = 1 ;
-    signed long int  elevation_units = 0 ;
-    signed long int  ground_units = 0 ;
-    double           derived_dem_max_raw_elevation = 0 ;
-    double           raw_dem_2_raw_dsp_scale_factor = 0 ;
+    char buf[1024];
+    signed long int curr_b_record = 0;
+    signed long int indx2 = 0;
+    signed long int indx3 = 0;
+    signed long int indx4 = 0;
+    signed long int indx5 = 0;
+    signed long int indx6 = 0;
+    signed long int tot_elevations_in_curr_b_record = 0;
+    signed long int tot_elevations_in_previous_b_record = 0;
+    signed long int curr_elevation = 0;
+    signed long int additional_1024char_chunks = 0;
+    signed long int number_of_previous_b_elevations = 0;
+    signed long int number_of_last_elevations = 0;
+    signed long int tot_elevations_in_prev_b_records = 0;
+    signed long int elevation_number_in_curr_b_record = 0;
+    signed long int elevation_number = 0;
+    double datum_elevation_in_curr_b_record = 0;
+    double datum_elevation_in_previous_b_record = 0;
+    double elevation_max_in_a_record = 0;
+    double raw_dem_2_raw_dsp_auto_scale_factor = 1;
+    signed long int elevation_units = 0;
+    signed long int ground_units = 0;
+    double derived_dem_max_raw_elevation = 0;
+    double raw_dem_2_raw_dsp_scale_factor = 0;
 
-    ResultStruct my_out ;
-    ResultStruct *my_out_ptr ;
-    my_out_ptr = &my_out ;
+    ResultStruct my_out;
+    ResultStruct *my_out_ptr;
+    my_out_ptr = &my_out;
 
     /* set defaults for output variables */
-    *out_xdim = 0 ;
-    *out_ydim = 0 ;
-    *out_dsp_elevation = 0 ;
-    *out_x_cell_size = 0 ;
-    *out_y_cell_size = 0 ;
-    *out_unit_elevation = 0 ;
+    *out_xdim = 0;
+    *out_ydim = 0;
+    *out_dsp_elevation = 0;
+    *out_x_cell_size = 0;
+    *out_y_cell_size = 0;
+    *out_unit_elevation = 0;
 
-    if ((fp=fopen(in_input_filename, "r")) == NULL ) {
+    if ((fp=fopen(in_input_filename, "r")) == NULL) {
         printf("Could not open '%s' for read.\n", in_input_filename);
         return(FAILURE);
     }
-    if ((fp2=fopen(in_temp_filename, "wb")) == NULL ) {
+    if ((fp2=fopen(in_temp_filename, "wb")) == NULL) {
         printf("Could not open '%s' for write.\n", in_temp_filename);
         fclose(fp);
         return(FAILURE);
@@ -1026,7 +1052,7 @@ read_dem(
 
     /* Validates all 'A' record sub_elements can be read */
     /* and that all required sub_elements contain values. */
-    if (validate_dem_record(buf,true,type_a) == FAILURE) {
+    if (validate_dem_record(buf, true, type_a) == FAILURE) {
         printf("The DEM file did not validate, failed on logical record type 'A'.\n");
         fclose(fp);
         fclose(fp2);
@@ -1036,20 +1062,20 @@ read_dem(
     /* read quantity of b type records from a record */
     /* this is also the x dimension of the dsp */
     (*my_out_ptr).in_buffer = buf;
-    (*my_out_ptr).in_record_type = type_a ;
-    (*my_out_ptr).in_element_number = 16 ;
-    (*my_out_ptr).in_sub_element_number = 2 ;
+    (*my_out_ptr).in_record_type = type_a;
+    (*my_out_ptr).in_element_number = 16;
+    (*my_out_ptr).in_sub_element_number = 2;
     status = read_element(my_out_ptr);
-    *out_xdim = (*my_out_ptr).out_integer ;
+    *out_xdim = (*my_out_ptr).out_integer;
     printf("total b records in dem file: %ld\n", *out_xdim);
 
     /* Read elevation units from 'a' record */
     (*my_out_ptr).in_buffer = buf;
-    (*my_out_ptr).in_record_type = type_a ;
-    (*my_out_ptr).in_element_number = 9 ;
-    (*my_out_ptr).in_sub_element_number = 1 ;
+    (*my_out_ptr).in_record_type = type_a;
+    (*my_out_ptr).in_element_number = 9;
+    (*my_out_ptr).in_sub_element_number = 1;
     status = read_element(my_out_ptr);
-    elevation_units = (*my_out_ptr).out_integer ;
+    elevation_units = (*my_out_ptr).out_integer;
     if (elevation_units == 1) {
         printf("elevation units in feet\n");
     }
@@ -1059,11 +1085,11 @@ read_dem(
 
     /* Read ground units from 'a' record */
     (*my_out_ptr).in_buffer = buf;
-    (*my_out_ptr).in_record_type = type_a ;
-    (*my_out_ptr).in_element_number = 8 ;
-    (*my_out_ptr).in_sub_element_number = 1 ;
+    (*my_out_ptr).in_record_type = type_a;
+    (*my_out_ptr).in_element_number = 8;
+    (*my_out_ptr).in_sub_element_number = 1;
     status = read_element(my_out_ptr);
-    ground_units = (*my_out_ptr).out_integer ;
+    ground_units = (*my_out_ptr).out_integer;
     if (ground_units == 0) {
         printf("ground units in radians, unit conversion assumes 1 arc-second = 30 meters\n");
     }
@@ -1081,49 +1107,49 @@ read_dem(
     /* The x spatial resolution is the x cell size */
     /* of the dsp primative. */
     (*my_out_ptr).in_buffer = buf;
-    (*my_out_ptr).in_record_type = type_a ;
-    (*my_out_ptr).in_element_number = 15 ;
-    (*my_out_ptr).in_sub_element_number = 1 ;
+    (*my_out_ptr).in_record_type = type_a;
+    (*my_out_ptr).in_element_number = 15;
+    (*my_out_ptr).in_sub_element_number = 1;
     status = read_element(my_out_ptr);
-    *out_x_cell_size = (*my_out_ptr).out_double * conversion_factor_to_milimeters[ground_units] ;
+    *out_x_cell_size = (*my_out_ptr).out_double * conversion_factor_to_milimeters[ground_units];
     printf("dsp x cell size (mm): %g\n", *out_x_cell_size);
 
     /* Read y spatial resolution from 'a' record */
     /* The y spatial resolution is the y cell size */
     /* of the dsp primative. */
     (*my_out_ptr).in_buffer = buf;
-    (*my_out_ptr).in_record_type = type_a ;
-    (*my_out_ptr).in_element_number = 15 ;
-    (*my_out_ptr).in_sub_element_number = 2 ;
+    (*my_out_ptr).in_record_type = type_a;
+    (*my_out_ptr).in_element_number = 15;
+    (*my_out_ptr).in_sub_element_number = 2;
     status = read_element(my_out_ptr);
-    *out_y_cell_size = (*my_out_ptr).out_double * conversion_factor_to_milimeters[ground_units] ;
+    *out_y_cell_size = (*my_out_ptr).out_double * conversion_factor_to_milimeters[ground_units];
     printf("dsp y cell size (mm): %g\n", *out_y_cell_size);
 
     /* Read z spatial resolution from 'a' record. */
     /* The z spatial resolution is the unit elevation */
     /* of the dsp primative. */
     (*my_out_ptr).in_buffer = buf;
-    (*my_out_ptr).in_record_type = type_a ;
-    (*my_out_ptr).in_element_number = 15 ;
-    (*my_out_ptr).in_sub_element_number = 3 ;
+    (*my_out_ptr).in_record_type = type_a;
+    (*my_out_ptr).in_element_number = 15;
+    (*my_out_ptr).in_sub_element_number = 3;
     status = read_element(my_out_ptr);
-    *out_unit_elevation = (*my_out_ptr).out_double * conversion_factor_to_milimeters[elevation_units] ;
+    *out_unit_elevation = (*my_out_ptr).out_double * conversion_factor_to_milimeters[elevation_units];
     printf("dsp unit elevation (mm): %g\n", *out_unit_elevation);
 
     /* read elevation max from 'a' record */
     /* this value is the true max elevation adjusted for all factors and */
     /* is reported in the 'a' record */
     (*my_out_ptr).in_buffer = buf;
-    (*my_out_ptr).in_record_type = type_a ;
-    (*my_out_ptr).in_element_number = 12 ;
-    (*my_out_ptr).in_sub_element_number = 2 ;
+    (*my_out_ptr).in_record_type = type_a;
+    (*my_out_ptr).in_element_number = 12;
+    (*my_out_ptr).in_sub_element_number = 2;
     status = read_element(my_out_ptr);
-    elevation_max_in_a_record = (*my_out_ptr).out_double * conversion_factor_to_milimeters[elevation_units] ;
+    elevation_max_in_a_record = (*my_out_ptr).out_double * conversion_factor_to_milimeters[elevation_units];
     printf("real world elevation max in dem file (mm): %g\n", elevation_max_in_a_record);
 
     /* set value to zero before start of tallying */
-    tot_elevations_in_prev_b_records = 0 ;
-    for (curr_b_record = 1 ; curr_b_record <= *out_xdim ; curr_b_record++ ) {
+    tot_elevations_in_prev_b_records = 0;
+    for (curr_b_record = 1; curr_b_record <= *out_xdim; curr_b_record++) {
 
         /* Reads 1024 character block from dem-g file */
         /* this block contains the record 'b' header and data. */
@@ -1131,7 +1157,7 @@ read_dem(
 
         /* Validates all 'B' record header sub_elements can be */
         /* read and all required sub_elements contain values. */
-        if (validate_dem_record(buf,true,type_b) == FAILURE) {
+        if (validate_dem_record(buf, true, type_b) == FAILURE) {
             printf("The DEM file did not validate, failed on logical record type 'B' number '%ld'.\n", curr_b_record);
             fclose(fp);
             fclose(fp2);
@@ -1139,28 +1165,28 @@ read_dem(
         }
 
         /* Saves the number of elevations in the previous 'b' record */
-        tot_elevations_in_previous_b_record = tot_elevations_in_curr_b_record ;
+        tot_elevations_in_previous_b_record = tot_elevations_in_curr_b_record;
 
         /* Read total elevations in current 'b' record from the */
         /* 'b' record header currently in the buffer. */
         (*my_out_ptr).in_buffer = buf;
-        (*my_out_ptr).in_record_type = type_b ;
-        (*my_out_ptr).in_element_number = 2 ;
-        (*my_out_ptr).in_sub_element_number = 1 ;
+        (*my_out_ptr).in_record_type = type_b;
+        (*my_out_ptr).in_element_number = 2;
+        (*my_out_ptr).in_sub_element_number = 1;
         status = read_element(my_out_ptr);
-        tot_elevations_in_curr_b_record = (*my_out_ptr).out_integer ;
+        tot_elevations_in_curr_b_record = (*my_out_ptr).out_integer;
 
         /* Saves the datum elevation from the previous 'b' record */
-        datum_elevation_in_previous_b_record = datum_elevation_in_curr_b_record ;
+        datum_elevation_in_previous_b_record = datum_elevation_in_curr_b_record;
 
         /* Read datum elevation in current 'b' record from the */
         /* 'b' record header currently in the buffer. */
         (*my_out_ptr).in_buffer = buf;
-        (*my_out_ptr).in_record_type = type_b ;
-        (*my_out_ptr).in_element_number = 4 ;
-        (*my_out_ptr).in_sub_element_number = 1 ;
+        (*my_out_ptr).in_record_type = type_b;
+        (*my_out_ptr).in_element_number = 4;
+        (*my_out_ptr).in_sub_element_number = 1;
         status = read_element(my_out_ptr);
-        datum_elevation_in_curr_b_record = (*my_out_ptr).out_double * conversion_factor_to_milimeters[elevation_units] ;
+        datum_elevation_in_curr_b_record = (*my_out_ptr).out_double * conversion_factor_to_milimeters[elevation_units];
 
         /* Enforces all 'b' records have the same datum elevation */
         /* and each 'b' record has the same number of elevations. */
@@ -1169,7 +1195,7 @@ read_dem(
         if (curr_b_record > 1) {
             if (datum_elevation_in_curr_b_record != datum_elevation_in_previous_b_record) {
                 printf("Datum elevation in 'B' record number '%ld' does not match previous 'B' record datum elevations.\n", 
-                    curr_b_record);
+		       curr_b_record);
                 printf("Datum elevation in current b record is: %g\n", datum_elevation_in_curr_b_record);
                 printf("Datum elevation in previous b record is: %g\n", datum_elevation_in_previous_b_record);
                 printf("This condition is unsupported, import can not continue.\n"); 
@@ -1179,7 +1205,7 @@ read_dem(
             }
             if (tot_elevations_in_curr_b_record != tot_elevations_in_previous_b_record) {
                 printf("Number of elevations in 'B' record number '%ld' does not match previous 'B' record number of elevations.\n", 
-                    curr_b_record);
+		       curr_b_record);
                 printf("The number of elevations in the current b record is: %ld\n", tot_elevations_in_curr_b_record);
                 printf("The number of elevations in the previous b record is: %ld\n", tot_elevations_in_previous_b_record);
                 printf("This condition is unsupported, import can not continue.\n"); 
@@ -1189,18 +1215,18 @@ read_dem(
             }
         }
 
-        /* only perform these computations once for the dem file   */
-        /* using only the values from header of the 1st b record   */
+        /* only perform these computations once for the dem file */
+        /* using only the values from header of the 1st b record */
         /* it is assumed the input values will be the same for the */
         /* remaining b records, but this should be verified.       */
         if (curr_b_record == 1) {
             /* compute scaling factor to convert raw dem elevation values into raw dsp elevation values */
-            derived_dem_max_raw_elevation = (elevation_max_in_a_record - datum_elevation_in_curr_b_record) / *out_unit_elevation ;
+            derived_dem_max_raw_elevation = (elevation_max_in_a_record - datum_elevation_in_curr_b_record) / *out_unit_elevation;
             printf("derived_dem_max_raw_elevation: %g\n", derived_dem_max_raw_elevation);
 
             /* Test for negative value of derived_dem_max_raw_elevation */
-            /* if a negative value occurs, exit import because a fatal  */
-            /* inconsistency exists in the dem data. This test assumes  */
+            /* if a negative value occurs, exit import because a fatal */
+            /* inconsistency exists in the dem data. This test assumes */
             /* that *out_unit_elevation is always > 0. */
             if (derived_dem_max_raw_elevation < 0) {
                 printf("A fatal inconsistency occured in DEM data.\n");
@@ -1216,19 +1242,19 @@ read_dem(
 
             /* test for zero to avoid divide by 0 math error */
             if (derived_dem_max_raw_elevation != 0) {
-                raw_dem_2_raw_dsp_auto_scale_factor = DSP_MAX_RAW_ELEVATION / (double)derived_dem_max_raw_elevation ;
+                raw_dem_2_raw_dsp_auto_scale_factor = DSP_MAX_RAW_ELEVATION / (double)derived_dem_max_raw_elevation;
             } else {
-                raw_dem_2_raw_dsp_auto_scale_factor = 1 ;
+                raw_dem_2_raw_dsp_auto_scale_factor = 1;
             }
             /* set the scale factor to use the default auto_scale_factor */
             /* the auto value should be used if user have not specified */
             /* any custom values. */
-            raw_dem_2_raw_dsp_scale_factor = raw_dem_2_raw_dsp_auto_scale_factor ;
+            raw_dem_2_raw_dsp_scale_factor = raw_dem_2_raw_dsp_auto_scale_factor;
 
             /* Test to be sure only one user custom value was passed to */
             /* this function. A non-zero value indicates a value was passed. */  
             /* More than one value defined will cause this function to abort. */
-            if (*in_raw_dem_2_raw_dsp_manual_scale_factor > 0 ) {
+            if (*in_raw_dem_2_raw_dsp_manual_scale_factor > 0) {
                 if (*in_manual_dem_max_raw_elevation > 0) {
                     printf("Error occured in function 'read_dem', too many user values passed to this function.\n");
                     return(FAILURE);
@@ -1239,21 +1265,21 @@ read_dem(
                 }
             } else {
                 if (*in_manual_dem_max_raw_elevation > 0) {
-                    if (*in_raw_dem_2_raw_dsp_manual_scale_factor > 0 ) {
+                    if (*in_raw_dem_2_raw_dsp_manual_scale_factor > 0) {
                         printf("Error occured in function 'read_dem', too many user values passed to this function.\n");
                         return(FAILURE);
                     }
-                    if (*in_manual_dem_max_real_elevation > 0 ) {
+                    if (*in_manual_dem_max_real_elevation > 0) {
                         printf("Error occured in function 'read_dem', too many user values passed to this function.\n");
                         return(FAILURE);
                     }
                 } else {
                     if (*in_manual_dem_max_real_elevation > 0) {
-                        if (*in_raw_dem_2_raw_dsp_manual_scale_factor > 0 ) {
+                        if (*in_raw_dem_2_raw_dsp_manual_scale_factor > 0) {
                             printf("Error occured in function 'read_dem', too many user values passed to this function.\n");
                             return(FAILURE);
                         }
-                        if (*in_manual_dem_max_raw_elevation > 0 ) {
+                        if (*in_manual_dem_max_raw_elevation > 0) {
                             printf("Error occured in function 'read_dem', too many user values passed to this function.\n");
                             return(FAILURE);
                         }
@@ -1265,10 +1291,10 @@ read_dem(
             /* Test if value is within a valid range and warn user if a chosen */
             /* valid value will produce less than optimal results. */
             if (*in_raw_dem_2_raw_dsp_manual_scale_factor > 0) {
-                raw_dem_2_raw_dsp_scale_factor = *in_raw_dem_2_raw_dsp_manual_scale_factor ;
+                raw_dem_2_raw_dsp_scale_factor = *in_raw_dem_2_raw_dsp_manual_scale_factor;
                 status = process_manual_scale_factor(&raw_dem_2_raw_dsp_auto_scale_factor,
-                                  in_raw_dem_2_raw_dsp_manual_scale_factor, &derived_dem_max_raw_elevation, out_unit_elevation,
-                                  &datum_elevation_in_curr_b_record) ;
+						     in_raw_dem_2_raw_dsp_manual_scale_factor, &derived_dem_max_raw_elevation, out_unit_elevation,
+						     &datum_elevation_in_curr_b_record);
                 if (status == FAILURE) {
                     /* problem encountered processing custom value for scale factor, */
                     /* or value entered was not within the valid range. */
@@ -1284,12 +1310,12 @@ read_dem(
             /* The value 'raw_dem_2_raw_dsp_scale_factor' is output from this function. */
             if (*in_manual_dem_max_raw_elevation > 0) {
                 status = process_manual_dem_max_raw_elevation(
-                                  &raw_dem_2_raw_dsp_scale_factor,
-                                  &raw_dem_2_raw_dsp_auto_scale_factor,
-                                  in_manual_dem_max_raw_elevation,
-                                  &derived_dem_max_raw_elevation,
-                                  out_unit_elevation,
-                                  &datum_elevation_in_curr_b_record);
+		    &raw_dem_2_raw_dsp_scale_factor,
+		    &raw_dem_2_raw_dsp_auto_scale_factor,
+		    in_manual_dem_max_raw_elevation,
+		    &derived_dem_max_raw_elevation,
+		    out_unit_elevation,
+		    &datum_elevation_in_curr_b_record);
                 if (status == FAILURE) {
                     /* problem encountered processing custom value for dem max raw elevation, */
                     /* or value entered was not within the valid range. */
@@ -1304,14 +1330,14 @@ read_dem(
             /* The value 'raw_dem_2_raw_dsp_scale_factor' is output from this function */
             if (*in_manual_dem_max_real_elevation > 0) {
                 /* assumes user input max real elevation in meters, so convert to milimeters */
-                *in_manual_dem_max_real_elevation = *in_manual_dem_max_real_elevation * conversion_factor_to_milimeters[2] ;
+                *in_manual_dem_max_real_elevation = *in_manual_dem_max_real_elevation * conversion_factor_to_milimeters[2];
                 status = process_manual_dem_max_real_elevation(
-                                  &raw_dem_2_raw_dsp_scale_factor,
-                                  &raw_dem_2_raw_dsp_auto_scale_factor,
-                                  in_manual_dem_max_real_elevation,
-                                  &derived_dem_max_raw_elevation,
-                                  out_unit_elevation,
-                                  &datum_elevation_in_curr_b_record) ;
+		    &raw_dem_2_raw_dsp_scale_factor,
+		    &raw_dem_2_raw_dsp_auto_scale_factor,
+		    in_manual_dem_max_real_elevation,
+		    &derived_dem_max_raw_elevation,
+		    out_unit_elevation,
+		    &datum_elevation_in_curr_b_record);
                 if (status == FAILURE) {
                     /* problem encountered processing custom value for dem max real elevation, */
                     /* or value entered was not within the valid range. */
@@ -1323,13 +1349,13 @@ read_dem(
 
 
             /* compute dsp primative 'unit elevation' value */
-            *out_unit_elevation = *out_unit_elevation / raw_dem_2_raw_dsp_scale_factor ;  
+            *out_unit_elevation = *out_unit_elevation / raw_dem_2_raw_dsp_scale_factor;  
             printf("Computed dsp unit elevation, input this into brl-cad (mm): %g\n", *out_unit_elevation);
 
             /* It is assumed all 'b' records will have the same number of elevations. */
             /* This assumption is enforced elsewhere in this code. Therefore the number */
             /* of elevations in the 1st 'b' record can be used as the y dimension of the dsp. */
-            *out_ydim = tot_elevations_in_curr_b_record ;
+            *out_ydim = tot_elevations_in_curr_b_record;
             printf("Number of elevations in each 'b' record, also the number of rows in dsp: %ld\n", *out_ydim);
 
 
@@ -1337,70 +1363,70 @@ read_dem(
             /* This assumption is enforced elsewhere in this code. Therefore the */
             /* datum elevation in the 1st 'b' record can be used as the dsp elevation. */
             /* CONVERT TO MM */
-            *out_dsp_elevation = datum_elevation_in_curr_b_record ;
+            *out_dsp_elevation = datum_elevation_in_curr_b_record;
 
 
         } /* endif when curr_b_record == 1 */
 
         if (tot_elevations_in_curr_b_record > 146) {
             /* process all 146 b_elevations from current 1024_char chunk */
-            for ( indx3 = 1 ; indx3 <= 146 ; indx3++ ) {
+            for (indx3 = 1; indx3 <= 146; indx3++) {
                 /* loop thru 146 elevations in b type buffer with b header */ 
                 /* read total elevations in current b record from the */
                 /* b record header currently in the buffer */
                 (*my_out_ptr).in_buffer = buf;
-                (*my_out_ptr).in_record_type = type_b ;
-                (*my_out_ptr).in_element_number = 6 ;
-                (*my_out_ptr).in_sub_element_number = indx3 ;
-                (*my_out_ptr).in_is_b_header = true ;
+                (*my_out_ptr).in_record_type = type_b;
+                (*my_out_ptr).in_element_number = 6;
+                (*my_out_ptr).in_sub_element_number = indx3;
+                (*my_out_ptr).in_is_b_header = true;
                 status = read_element(my_out_ptr);
-                curr_elevation = (*my_out_ptr).out_integer ;
+                curr_elevation = (*my_out_ptr).out_integer;
 
-                elevation_number_in_curr_b_record = indx3 ;
-                elevation_number = tot_elevations_in_prev_b_records + elevation_number_in_curr_b_record ;
+                elevation_number_in_curr_b_record = indx3;
+                elevation_number = tot_elevations_in_prev_b_records + elevation_number_in_curr_b_record;
 
                 if (curr_elevation < 0) {
                     printf("WARNING: Invalid elevation on 'b' record# '%ld', record elevation# '%ld', dem elevation# '%ld', raw elevation value '%ld'. Set elevation value to zero to compensate.\n", curr_b_record, elevation_number_in_curr_b_record, elevation_number, curr_elevation);
-                    curr_elevation = 0 ;
+                    curr_elevation = 0;
                 }
 
-                if (output_elevation((signed long int)round(curr_elevation * raw_dem_2_raw_dsp_scale_factor),fp2) == FAILURE ) {
+                if (output_elevation((signed long int)round(curr_elevation * raw_dem_2_raw_dsp_scale_factor), fp2) == FAILURE) {
                     printf("Function 'output_elevation' failed on 'b' record# '%ld', record elevation# '%ld', dem elevation# '%ld', raw elevation value '%ld'.\n", curr_b_record, elevation_number_in_curr_b_record, elevation_number, curr_elevation);
                     fclose(fp);
                     fclose(fp2);
                     return(FAILURE);
                 }
             }
-            additional_1024char_chunks = (signed long int)ceil((tot_elevations_in_curr_b_record - 146.0) / 170.0) ;
+            additional_1024char_chunks = (signed long int)ceil((tot_elevations_in_curr_b_record - 146.0) / 170.0);
 
             if (additional_1024char_chunks > 0) {
-                for (indx2 = 1 ; indx2 < additional_1024char_chunks ; indx2++ ) {
+                for (indx2 = 1; indx2 < additional_1024char_chunks; indx2++) {
                     /* no equal used in condition here because don't want to process last chunk in */
                     /* since the last chunk is a partial chunk */
 
                     fread(buf, sizeof(buf[0]), sizeof(buf)/sizeof(buf[0]), fp);
 
-                    for (indx5 = 1 ; indx5 <= 170 ; indx5++ ) {
+                    for (indx5 = 1; indx5 <= 170; indx5++) {
                         /* loop thru 170 elevations in b type buffer with no b header */ 
                         /* read total elevations in current b record from the */
                         /* b record header currently in the buffer */
                         (*my_out_ptr).in_buffer = buf;
-                        (*my_out_ptr).in_record_type = type_b ;
-                        (*my_out_ptr).in_element_number = 6 ;
-                        (*my_out_ptr).in_sub_element_number = indx5 ;
-                        (*my_out_ptr).in_is_b_header = false ;
+                        (*my_out_ptr).in_record_type = type_b;
+                        (*my_out_ptr).in_element_number = 6;
+                        (*my_out_ptr).in_sub_element_number = indx5;
+                        (*my_out_ptr).in_is_b_header = false;
                         status = read_element(my_out_ptr);
-                        curr_elevation = (*my_out_ptr).out_integer ;
+                        curr_elevation = (*my_out_ptr).out_integer;
 
-                        elevation_number_in_curr_b_record = (146 + ((indx2-1)*170)) + indx5 ;
-                        elevation_number = tot_elevations_in_prev_b_records + elevation_number_in_curr_b_record ;
+                        elevation_number_in_curr_b_record = (146 + ((indx2-1)*170)) + indx5;
+                        elevation_number = tot_elevations_in_prev_b_records + elevation_number_in_curr_b_record;
 
                         if (curr_elevation < 0) {
                             printf("WARNING: Invalid elevation on 'b' record# '%ld', record elevation# '%ld', dem elevation# '%ld', raw elevation value '%ld'. Set elevation value to zero to compensate.\n", curr_b_record, elevation_number_in_curr_b_record, elevation_number, curr_elevation);
-                            curr_elevation = 0 ;
+                            curr_elevation = 0;
                         }
 
-                        if (output_elevation((signed long int)round(curr_elevation * raw_dem_2_raw_dsp_scale_factor),fp2) == FAILURE ) {
+                        if (output_elevation((signed long int)round(curr_elevation * raw_dem_2_raw_dsp_scale_factor), fp2) == FAILURE) {
                             printf("Function 'output_elevation' failed on 'b' record# '%ld', record elevation# '%ld', dem elevation# '%ld', raw elevation value '%ld'.\n", curr_b_record, elevation_number_in_curr_b_record, elevation_number, curr_elevation);
                             fclose(fp);
                             fclose(fp2);
@@ -1410,31 +1436,31 @@ read_dem(
                 }
                 /* process last elevation chunk of b record */
                 /* determine # elevations in last 1024 char_chunk */
-                number_of_previous_b_elevations = 146 + ((additional_1024char_chunks - 1)*170) ;
-                number_of_last_elevations = tot_elevations_in_curr_b_record - number_of_previous_b_elevations ;
+                number_of_previous_b_elevations = 146 + ((additional_1024char_chunks - 1)*170);
+                number_of_last_elevations = tot_elevations_in_curr_b_record - number_of_previous_b_elevations;
 
                 fread(buf, sizeof(buf[0]), sizeof(buf)/sizeof(buf[0]), fp);
 
-                for (indx6 = 1 ; indx6 <= number_of_last_elevations ; indx6++ ) {
+                for (indx6 = 1; indx6 <= number_of_last_elevations; indx6++) {
                     /* loop thru remaining elevations in b type buffer with no b header */ 
                     /* b record header currently in the buffer */
                     (*my_out_ptr).in_buffer = buf;
-                    (*my_out_ptr).in_record_type = type_b ;
-                    (*my_out_ptr).in_element_number = 6 ;
-                    (*my_out_ptr).in_sub_element_number = indx6 ;
-                    (*my_out_ptr).in_is_b_header = false ;
+                    (*my_out_ptr).in_record_type = type_b;
+                    (*my_out_ptr).in_element_number = 6;
+                    (*my_out_ptr).in_sub_element_number = indx6;
+                    (*my_out_ptr).in_is_b_header = false;
                     status = read_element(my_out_ptr);
-                    curr_elevation = (*my_out_ptr).out_integer ;
+                    curr_elevation = (*my_out_ptr).out_integer;
 
-                    elevation_number_in_curr_b_record = number_of_previous_b_elevations + indx6 ;
-                    elevation_number = tot_elevations_in_prev_b_records + elevation_number_in_curr_b_record ;
+                    elevation_number_in_curr_b_record = number_of_previous_b_elevations + indx6;
+                    elevation_number = tot_elevations_in_prev_b_records + elevation_number_in_curr_b_record;
 
                     if (curr_elevation < 0) {
                         printf("WARNING: Invalid elevation on 'b' record# '%ld', record elevation# '%ld', dem elevation# '%ld', raw elevation value '%ld'. Set elevation value to zero to compensate.\n", curr_b_record, elevation_number_in_curr_b_record, elevation_number, curr_elevation);
-                        curr_elevation = 0 ;
+                        curr_elevation = 0;
                     }
 
-                    if (output_elevation((signed long int)round(curr_elevation * raw_dem_2_raw_dsp_scale_factor),fp2) == FAILURE ) {
+                    if (output_elevation((signed long int)round(curr_elevation * raw_dem_2_raw_dsp_scale_factor), fp2) == FAILURE) {
                         printf("Function 'output_elevation' failed on 'b' record# '%ld', record elevation# '%ld', dem elevation# '%ld', raw elevation value '%ld'.\n", curr_b_record, elevation_number_in_curr_b_record, elevation_number, curr_elevation);
                         fclose(fp);
                         fclose(fp2);
@@ -1444,26 +1470,26 @@ read_dem(
             }
         } else {
             /* number of total elevations in the b record was less than 146 */
-            for (indx4 = 1 ; indx4 <= tot_elevations_in_curr_b_record ; indx4++ ) {
+            for (indx4 = 1; indx4 <= tot_elevations_in_curr_b_record; indx4++) {
                 /* loop thru elevations in b type buffer with b header */ 
                 /* b record header currently in the buffer */
                 (*my_out_ptr).in_buffer = buf;
-                (*my_out_ptr).in_record_type = type_b ;
-                (*my_out_ptr).in_element_number = 6 ;
-                (*my_out_ptr).in_sub_element_number = indx4 ;
-                (*my_out_ptr).in_is_b_header = true ;
+                (*my_out_ptr).in_record_type = type_b;
+                (*my_out_ptr).in_element_number = 6;
+                (*my_out_ptr).in_sub_element_number = indx4;
+                (*my_out_ptr).in_is_b_header = true;
                 status = read_element(my_out_ptr);
-                curr_elevation = (*my_out_ptr).out_integer ;
+                curr_elevation = (*my_out_ptr).out_integer;
 
-                elevation_number_in_curr_b_record = indx4 ;
-                elevation_number = tot_elevations_in_prev_b_records + elevation_number_in_curr_b_record ;
+                elevation_number_in_curr_b_record = indx4;
+                elevation_number = tot_elevations_in_prev_b_records + elevation_number_in_curr_b_record;
 
                 if (curr_elevation < 0) {
                     printf("WARNING: Invalid elevation on 'b' record# '%ld', record elevation# '%ld', dem elevation# '%ld', raw elevation value '%ld'. Set elevation value to zero to compensate.\n", curr_b_record, elevation_number_in_curr_b_record, elevation_number, curr_elevation);
-                    curr_elevation = 0 ;
+                    curr_elevation = 0;
                 }
 
-                if (output_elevation((signed long int)round(curr_elevation * raw_dem_2_raw_dsp_scale_factor),fp2) == FAILURE ) {
+                if (output_elevation((signed long int)round(curr_elevation * raw_dem_2_raw_dsp_scale_factor), fp2) == FAILURE) {
                     printf("Function 'output_elevation' failed on 'b' record# '%ld', record elevation# '%ld', dem elevation# '%ld', raw elevation value '%ld'.\n", curr_b_record, elevation_number_in_curr_b_record, elevation_number, curr_elevation);
                     fclose(fp);
                     fclose(fp2);
@@ -1471,46 +1497,46 @@ read_dem(
                 }
             }
         }
-    tot_elevations_in_prev_b_records = tot_elevations_in_prev_b_records + tot_elevations_in_curr_b_record ;
+	tot_elevations_in_prev_b_records = tot_elevations_in_prev_b_records + tot_elevations_in_curr_b_record;
     } /* outer for loop using curr_b_record */
 
 
     fclose(fp);
     fclose(fp2);
 
-return(status);
+    return(status);
 }
 
 /* convert 'load-by-column to load-by-row' */
 int
 convert_load_order(
-    char            *in_temp_filename,                         /* temp file path and file name */
-    char            *in_dsp_output_filename,                   /* dsp output file path and file name */
-    signed long int *in_xdim,                                  /* x dimension of dem (w cells) */
-    signed long int *in_ydim)                                  /* y dimension of dem (n cells) */
+    char *in_temp_filename,        /* temp file path and file name */
+    char *in_dsp_output_filename,  /* dsp output file path and file name */
+    signed long int *in_xdim,      /* x dimension of dem (w cells) */
+    signed long int *in_ydim)      /* y dimension of dem (n cells) */
 {
-    FILE               *fp3 ;
-    FILE               *fp4 ;
-    signed long int     offset = 0 ;
-    signed long int     column = 0 ;
-    unsigned short int  buf4 = 0 ;
+    FILE *fp3;
+    FILE *fp4;
+    signed long int offset = 0;
+    signed long int column = 0;
+    unsigned short int buf4 = 0;
 
     /* size of buf3 determined at run time */
-    unsigned short int  buf3[*in_ydim] ;
+    unsigned short int buf3[*in_ydim];
 
-    if ((fp4=fopen(in_dsp_output_filename, "wb")) == NULL ) {
+    if ((fp4=fopen(in_dsp_output_filename, "wb")) == NULL) {
         printf("Could not open '%s' for write.\n", in_dsp_output_filename);
         return(FAILURE);
     }
-    for (offset = 0 ; offset <= *in_ydim-1 ; offset++ ) {
-        if ((fp3=fopen(in_temp_filename, "rb")) == NULL ) {
+    for (offset = 0; offset <= *in_ydim-1; offset++) {
+        if ((fp3=fopen(in_temp_filename, "rb")) == NULL) {
             printf("Could not open '%s' for read.\n", in_temp_filename);
             fclose(fp4);
             return(FAILURE);
         } 
-        for (column = 1 ; column <= *in_xdim ; column++ ) {
+        for (column = 1; column <= *in_xdim; column++) {
             fread(buf3, sizeof(buf3[0]), sizeof(buf3)/sizeof(buf3[0]), fp3);
-            buf4 = buf3[offset] ;
+            buf4 = buf3[offset];
             fwrite(&buf4, sizeof(buf4), 1, fp4);   
         }
         fclose(fp3);
@@ -1522,14 +1548,14 @@ convert_load_order(
 
 int
 create_model(
-    char            *in_dsp_output_filename,                   /* dsp output file path and file name */
-    char            *in_model_output_filename,                 /* model output file path and file name */
-    signed long int *in_xdim,                                  /* x dimension of dem (w cells) */
-    signed long int *in_ydim,                                  /* y dimension of dem (n cells) */
-    double          *in_dsp_elevation,                         /* datum elevation in milimeters (dsp V z coordinate) */
-    double          *in_x_cell_size,                           /* x scaling factor in milimeters */
-    double          *in_y_cell_size,                           /* y scaling factor in milimeters */
-    double          *in_unit_elevation)                        /* z scaling factor in milimeters */
+    char *in_dsp_output_filename,    /* dsp output file path and file name */
+    char *in_model_output_filename,  /* model output file path and file name */
+    signed long int *in_xdim,        /* x dimension of dem (w cells) */
+    signed long int *in_ydim,        /* y dimension of dem (n cells) */
+    double *in_dsp_elevation,        /* datum elevation in milimeters (dsp V z coordinate) */
+    double *in_x_cell_size,          /* x scaling factor in milimeters */
+    double *in_y_cell_size,          /* y scaling factor in milimeters */
+    double *in_unit_elevation)       /* z scaling factor in milimeters */
 {
     struct rt_wdb *db_fp;
 #if 0
@@ -1538,7 +1564,7 @@ create_model(
     unsigned char rgb[3];
     struct wmember wm_hd; /* defined in wdb.h */
 #endif
-    fastf_t dsp_mat[ELEMENTS_PER_MAT] ;
+    fastf_t dsp_mat[ELEMENTS_PER_MAT];
 
     if ((db_fp = wdb_fopen(in_model_output_filename)) == NULL) {
         perror(in_model_output_filename);
@@ -1556,27 +1582,27 @@ create_model(
      * create dsp
      */
 
-    dsp_mat[0] = *in_x_cell_size ;      /* X scale factor in mm */
-    dsp_mat[1] = 0 ;
-    dsp_mat[2] = 0 ;
-    dsp_mat[3] = 0 ;                    /* X coordinate of dsp V in mm */
+    dsp_mat[0] = *in_x_cell_size;      /* X scale factor in mm */
+    dsp_mat[1] = 0;
+    dsp_mat[2] = 0;
+    dsp_mat[3] = 0;                    /* X coordinate of dsp V in mm */
 
-    dsp_mat[4] = 0 ;
-    dsp_mat[5] = *in_y_cell_size ;      /* Y scale factor in mm */
-    dsp_mat[6] = 0 ;
-    dsp_mat[7] = 0 ;                    /* Y coordinate of dsp V in mm */
+    dsp_mat[4] = 0;
+    dsp_mat[5] = *in_y_cell_size;      /* Y scale factor in mm */
+    dsp_mat[6] = 0;
+    dsp_mat[7] = 0;                    /* Y coordinate of dsp V in mm */
 
-    dsp_mat[8] = 0 ;
-    dsp_mat[9] = 0 ;
-    dsp_mat[10] = *in_unit_elevation ;  /* unit elevation in mm, Z scale factor in mm */
-    dsp_mat[11] = *in_dsp_elevation  ;  /* Z coordinate of dsp V in mm */
+    dsp_mat[8] = 0;
+    dsp_mat[9] = 0;
+    dsp_mat[10] = *in_unit_elevation;  /* unit elevation in mm, Z scale factor in mm */
+    dsp_mat[11] = *in_dsp_elevation ;  /* Z coordinate of dsp V in mm */
 
-    dsp_mat[12] = 0 ;
-    dsp_mat[13] = 0 ;
-    dsp_mat[14] = 0 ;
-    dsp_mat[15] = 1 ;
+    dsp_mat[12] = 0;
+    dsp_mat[13] = 0;
+    dsp_mat[14] = 0;
+    dsp_mat[15] = 1;
 
-    mk_dsp2(db_fp, "dsp.s", in_dsp_output_filename, *in_xdim, *in_ydim, dsp_mat) ;
+    mk_dsp2(db_fp, "dsp.s", in_dsp_output_filename, *in_xdim, *in_ydim, dsp_mat);
 
     wdb_close(db_fp);
 
@@ -1586,425 +1612,425 @@ create_model(
 int
 main(int ac, char *av[])
 {
-/*
- *  element_counts[]
- *  element_counts[record_type] = number of elements in each record type
- *  record_type=1 are 'a' type records
- *  record_type=2 are 'b' type records
- *  record_type=3 are 'c' type records
- */
-element_counts[type_a] = 31 ;
-element_counts[type_b] = 5 ;
-element_counts[type_c] = 6 ;
+    /*
+     * element_counts[]
+     * element_counts[record_type] = number of elements in each record type
+     * record_type=1 are 'a' type records
+     * record_type=2 are 'b' type records
+     * record_type=3 are 'c' type records
+     */
+    element_counts[type_a] = 31;
+    element_counts[type_b] = 5;
+    element_counts[type_c] = 6;
 
-/*
- *  element_attributes[][][][]
- *  element_attributes[record_type][element_number][sub_element_number][1] = start byte of sub_element within 1024 character buffer
- *  element_attributes[record_type][element_number][sub_element_number][2] = sub_element ascii character width
- *  element_attributes[record_type][element_number][sub_element_number][3] = sub_element data_type
- *  record_type=1 are 'a' type records
- *  record_type=2 are 'b' type records
- *  record_type=3 are 'c' type records
- *  data_type=1 alpha
- *  data_type=2 integer
- *  data_type=3 double
- */
-element_attributes[type_a][1][1][1] =   1 ;
-element_attributes[type_a][1][1][2] =  40 ;
-element_attributes[type_a][1][1][3] =   1 ;
-element_attributes[type_a][1][2][1] =  41 ;
-element_attributes[type_a][1][2][2] =  40 ;
-element_attributes[type_a][1][2][3] =   1 ;
-element_attributes[type_a][1][3][1] =  81 ;
-element_attributes[type_a][1][3][2] =  29 ;
-element_attributes[type_a][1][3][3] =   1 ;
-element_attributes[type_a][1][4][1] = 110 ;
-element_attributes[type_a][1][4][2] =   4 ;
-element_attributes[type_a][1][4][3] =   2 ;
-element_attributes[type_a][1][5][1] = 114 ;
-element_attributes[type_a][1][5][2] =   2 ;
-element_attributes[type_a][1][5][3] =   2 ;
-element_attributes[type_a][1][6][1] = 116 ;
-element_attributes[type_a][1][6][2] =   7 ;
-element_attributes[type_a][1][6][3] =   3 ;
-element_attributes[type_a][1][7][1] = 123 ;
-element_attributes[type_a][1][7][2] =   4 ;
-element_attributes[type_a][1][7][3] =   2 ;
-element_attributes[type_a][1][8][1] = 127 ;
-element_attributes[type_a][1][8][2] =   2 ;
-element_attributes[type_a][1][8][3] =   2 ;
-element_attributes[type_a][1][9][1] = 129 ;
-element_attributes[type_a][1][9][2] =   7 ;
-element_attributes[type_a][1][9][3] =   3 ;
-element_attributes[type_a][1][10][1] = 136 ;
-element_attributes[type_a][1][10][2] =   1 ;
-element_attributes[type_a][1][10][3] =   1 ;
-element_attributes[type_a][1][11][1] = 137 ;
-element_attributes[type_a][1][11][2] =   1 ;
-element_attributes[type_a][1][11][3] =   1 ;
-element_attributes[type_a][1][12][1] = 138 ;
-element_attributes[type_a][1][12][2] =   3 ;
-element_attributes[type_a][1][12][3] =   1 ;
-element_attributes[type_a][2][1][1] = 141 ;
-element_attributes[type_a][2][1][2] =   4 ;
-element_attributes[type_a][2][1][3] =   1 ;
-element_attributes[type_a][3][1][1] = 145 ;
-element_attributes[type_a][3][1][2] =   6 ;
-element_attributes[type_a][3][1][3] =   2 ;
-element_attributes[type_a][4][1][1] = 151 ;
-element_attributes[type_a][4][1][2] =   6 ;
-element_attributes[type_a][4][1][3] =   2 ;
-element_attributes[type_a][5][1][1] = 157 ;
-element_attributes[type_a][5][1][2] =   6 ;
-element_attributes[type_a][5][1][3] =   2 ;
-element_attributes[type_a][6][1][1] = 163 ;
-element_attributes[type_a][6][1][2] =   6 ;
-element_attributes[type_a][6][1][3] =   2 ;
-element_attributes[type_a][7][1][1] = 169 ;
-element_attributes[type_a][7][1][2] =  24 ;
-element_attributes[type_a][7][1][3] =   3 ;
-element_attributes[type_a][7][2][1] = 193 ;
-element_attributes[type_a][7][2][2] =  24 ;
-element_attributes[type_a][7][2][3] =   3 ;
-element_attributes[type_a][7][3][1] = 217 ;
-element_attributes[type_a][7][3][2] =  24 ;
-element_attributes[type_a][7][3][3] =   3 ;
-element_attributes[type_a][7][4][1] = 241 ;
-element_attributes[type_a][7][4][2] =  24 ;
-element_attributes[type_a][7][4][3] =   3 ;
-element_attributes[type_a][7][5][1] = 265 ;
-element_attributes[type_a][7][5][2] =  24 ;
-element_attributes[type_a][7][5][3] =   3 ;
-element_attributes[type_a][7][6][1] = 289 ;
-element_attributes[type_a][7][6][2] =  24 ;
-element_attributes[type_a][7][6][3] =   3 ;
-element_attributes[type_a][7][7][1] = 313 ;
-element_attributes[type_a][7][7][2] =  24 ;
-element_attributes[type_a][7][7][3] =   3 ;
-element_attributes[type_a][7][8][1] = 337 ;
-element_attributes[type_a][7][8][2] =  24 ;
-element_attributes[type_a][7][8][3] =   3 ;
-element_attributes[type_a][7][9][1] = 361 ;
-element_attributes[type_a][7][9][2] =  24 ;
-element_attributes[type_a][7][9][3] =   3 ;
-element_attributes[type_a][7][10][1] = 385 ;
-element_attributes[type_a][7][10][2] =  24 ;
-element_attributes[type_a][7][10][3] =   3 ;
-element_attributes[type_a][7][11][1] = 409 ;
-element_attributes[type_a][7][11][2] =  24 ;
-element_attributes[type_a][7][11][3] =   3 ;
-element_attributes[type_a][7][12][1] = 433 ;
-element_attributes[type_a][7][12][2] =  24 ;
-element_attributes[type_a][7][12][3] =   3 ;
-element_attributes[type_a][7][13][1] = 457 ;
-element_attributes[type_a][7][13][2] =  24 ;
-element_attributes[type_a][7][13][3] =   3 ;
-element_attributes[type_a][7][14][1] = 481 ;
-element_attributes[type_a][7][14][2] =  24 ;
-element_attributes[type_a][7][14][3] =   3 ;
-element_attributes[type_a][7][15][1] = 505 ;
-element_attributes[type_a][7][15][2] =  24 ;
-element_attributes[type_a][7][15][3] =   3 ;
-element_attributes[type_a][8][1][1] = 529 ;
-element_attributes[type_a][8][1][2] =   6 ;
-element_attributes[type_a][8][1][3] =   2 ;
-element_attributes[type_a][9][1][1] = 535 ;
-element_attributes[type_a][9][1][2] =   6 ;
-element_attributes[type_a][9][1][3] =   2 ;
-element_attributes[type_a][10][1][1] = 541 ;
-element_attributes[type_a][10][1][2] =   6 ;
-element_attributes[type_a][10][1][3] =   2 ;
-element_attributes[type_a][11][1][1] = 547 ;
-element_attributes[type_a][11][1][2] =  24 ;
-element_attributes[type_a][11][1][3] =   3 ;
-element_attributes[type_a][11][2][1] = 571 ;
-element_attributes[type_a][11][2][2] =  24 ;
-element_attributes[type_a][11][2][3] =   3 ;
-element_attributes[type_a][11][3][1] = 595 ;
-element_attributes[type_a][11][3][2] =  24 ;
-element_attributes[type_a][11][3][3] =   3 ;
-element_attributes[type_a][11][4][1] = 619 ;
-element_attributes[type_a][11][4][2] =  24 ;
-element_attributes[type_a][11][4][3] =   3 ;
-element_attributes[type_a][11][5][1] = 643 ;
-element_attributes[type_a][11][5][2] =  24 ;
-element_attributes[type_a][11][5][3] =   3 ;
-element_attributes[type_a][11][6][1] = 667 ;
-element_attributes[type_a][11][6][2] =  24 ;
-element_attributes[type_a][11][6][3] =   3 ;
-element_attributes[type_a][11][7][1] = 691 ;
-element_attributes[type_a][11][7][2] =  24 ;
-element_attributes[type_a][11][7][3] =   3 ;
-element_attributes[type_a][11][8][1] = 715 ;
-element_attributes[type_a][11][8][2] =  24 ;
-element_attributes[type_a][11][8][3] =   3 ;
-element_attributes[type_a][12][1][1] = 739 ;
-element_attributes[type_a][12][1][2] =  24 ;
-element_attributes[type_a][12][1][3] =   3 ;
-element_attributes[type_a][12][2][1] = 763 ;
-element_attributes[type_a][12][2][2] =  24 ;
-element_attributes[type_a][12][2][3] =   3 ;
-element_attributes[type_a][13][1][1] = 787 ;
-element_attributes[type_a][13][1][2] =  24 ;
-element_attributes[type_a][13][1][3] =   3 ;
-element_attributes[type_a][14][1][1] = 811 ;
-element_attributes[type_a][14][1][2] =   6 ;
-element_attributes[type_a][14][1][3] =   2 ;
-element_attributes[type_a][15][1][1] = 817 ;
-element_attributes[type_a][15][1][2] =  12 ;
-element_attributes[type_a][15][1][3] =   3 ;
-element_attributes[type_a][15][2][1] = 829 ;
-element_attributes[type_a][15][2][2] =  12 ;
-element_attributes[type_a][15][2][3] =   3 ;
-element_attributes[type_a][15][3][1] = 841 ;
-element_attributes[type_a][15][3][2] =  12 ;
-element_attributes[type_a][15][3][3] =   3 ;
-element_attributes[type_a][16][1][1] = 853 ;
-element_attributes[type_a][16][1][2] =   6 ;
-element_attributes[type_a][16][1][3] =   2 ;
-element_attributes[type_a][16][2][1] = 859 ;
-element_attributes[type_a][16][2][2] =   6 ;
-element_attributes[type_a][16][2][3] =   2 ;
-element_attributes[type_a][17][1][1] = 865 ;
-element_attributes[type_a][17][1][2] =   5 ;
-element_attributes[type_a][17][1][3] =   2 ;
-element_attributes[type_a][18][1][1] = 870 ;
-element_attributes[type_a][18][1][2] =   1 ;
-element_attributes[type_a][18][1][3] =   2 ;
-element_attributes[type_a][19][1][1] = 871 ;
-element_attributes[type_a][19][1][2] =   5 ;
-element_attributes[type_a][19][1][3] =   2 ;
-element_attributes[type_a][20][1][1] = 876 ;
-element_attributes[type_a][20][1][2] =   1 ;
-element_attributes[type_a][20][1][3] =   2 ;
-element_attributes[type_a][21][1][1] = 877 ;
-element_attributes[type_a][21][1][2] =   4 ;
-element_attributes[type_a][21][1][3] =   2 ;
-element_attributes[type_a][22][1][1] = 881 ;
-element_attributes[type_a][22][1][2] =   4 ;
-element_attributes[type_a][22][1][3] =   2 ;
-element_attributes[type_a][23][1][1] = 885 ;
-element_attributes[type_a][23][1][2] =   1 ;
-element_attributes[type_a][23][1][3] =   1 ;
-element_attributes[type_a][24][1][1] = 886 ;
-element_attributes[type_a][24][1][2] =   1 ;
-element_attributes[type_a][24][1][3] =   2 ;
-element_attributes[type_a][25][1][1] = 887 ;
-element_attributes[type_a][25][1][2] =   2 ;
-element_attributes[type_a][25][1][3] =   2 ;
-element_attributes[type_a][26][1][1] = 889 ;
-element_attributes[type_a][26][1][2] =   2 ;
-element_attributes[type_a][26][1][3] =   2 ;
-element_attributes[type_a][27][1][1] = 891 ;
-element_attributes[type_a][27][1][2] =   2 ;
-element_attributes[type_a][27][1][3] =   2 ;
-element_attributes[type_a][28][1][1] = 893 ;
-element_attributes[type_a][28][1][2] =   4 ;
-element_attributes[type_a][28][1][3] =   2 ;
-element_attributes[type_a][29][1][1] = 897 ;
-element_attributes[type_a][29][1][2] =   4 ;
-element_attributes[type_a][29][1][3] =   2 ;
-element_attributes[type_a][30][1][1] = 901 ;
-element_attributes[type_a][30][1][2] =   2 ;
-element_attributes[type_a][30][1][3] =   2 ;
-element_attributes[type_a][30][2][1] = 903 ;
-element_attributes[type_a][30][2][2] =   2 ;
-element_attributes[type_a][30][2][3] =   2 ;
-element_attributes[type_a][30][3][1] = 905 ;
-element_attributes[type_a][30][3][2] =   2 ;
-element_attributes[type_a][30][3][3] =   2 ;
-element_attributes[type_a][30][4][1] = 907 ;
-element_attributes[type_a][30][4][2] =   2 ;
-element_attributes[type_a][30][4][3] =   2 ;
-element_attributes[type_a][31][1][1] = 909 ;
-element_attributes[type_a][31][1][2] =   7 ;
-element_attributes[type_a][31][1][3] =   3 ;
-element_attributes[type_b][1][1][1] =   1 ;
-element_attributes[type_b][1][1][2] =   6 ;
-element_attributes[type_b][1][1][3] =   2 ;
-element_attributes[type_b][1][2][1] =   7 ;
-element_attributes[type_b][1][2][2] =   6 ;
-element_attributes[type_b][1][2][3] =   2 ;
-element_attributes[type_b][2][1][1] =  13 ;
-element_attributes[type_b][2][1][2] =   6 ;
-element_attributes[type_b][2][1][3] =   2 ;
-element_attributes[type_b][2][2][1] =  19 ;
-element_attributes[type_b][2][2][2] =   6 ;
-element_attributes[type_b][2][2][3] =   2 ;
-element_attributes[type_b][3][1][1] =  25 ;
-element_attributes[type_b][3][1][2] =  24 ;
-element_attributes[type_b][3][1][3] =   3 ;
-element_attributes[type_b][3][2][1] =  49 ;
-element_attributes[type_b][3][2][2] =  24 ;
-element_attributes[type_b][3][2][3] =   3 ;
-element_attributes[type_b][4][1][1] =  73 ;
-element_attributes[type_b][4][1][2] =  24 ;
-element_attributes[type_b][4][1][3] =   3 ;
-element_attributes[type_b][5][1][1] =  97 ;
-element_attributes[type_b][5][1][2] =  24 ;
-element_attributes[type_b][5][1][3] =   3 ;
-element_attributes[type_b][5][2][1] = 121 ;
-element_attributes[type_b][5][2][2] =  24 ;
-element_attributes[type_b][5][2][3] =   3 ;
-element_attributes[type_c][1][1][1] =   1 ;
-element_attributes[type_c][1][1][2] =   6 ;
-element_attributes[type_c][1][1][3] =   2 ;
-element_attributes[type_c][2][1][1] =   7 ;
-element_attributes[type_c][2][1][2] =   6 ;
-element_attributes[type_c][2][1][3] =   2 ;
-element_attributes[type_c][2][2][1] =  13 ;
-element_attributes[type_c][2][2][2] =   6 ;
-element_attributes[type_c][2][2][3] =   2 ;
-element_attributes[type_c][2][3][1] =  19 ;
-element_attributes[type_c][2][3][2] =   6 ;
-element_attributes[type_c][2][3][3] =   2 ;
-element_attributes[type_c][3][1][1] =  25 ;
-element_attributes[type_c][3][1][2] =   6 ;
-element_attributes[type_c][3][1][3] =   2 ;
-element_attributes[type_c][4][1][1] =  31 ;
-element_attributes[type_c][4][1][2] =   6 ;
-element_attributes[type_c][4][1][3] =   2 ;
-element_attributes[type_c][5][1][1] =  37 ;
-element_attributes[type_c][5][1][2] =   6 ;
-element_attributes[type_c][5][1][3] =   2 ;
-element_attributes[type_c][5][2][1] =  43 ;
-element_attributes[type_c][5][2][2] =   6 ;
-element_attributes[type_c][5][2][3] =   2 ;
-element_attributes[type_c][5][3][1] =  49 ;
-element_attributes[type_c][5][3][2] =   6 ;
-element_attributes[type_c][5][3][3] =   2 ;
-element_attributes[type_c][6][1][1] =  55 ;
-element_attributes[type_c][6][1][2] =   6 ;
-element_attributes[type_c][6][1][3] =   2 ;
+    /*
+     * element_attributes[][][][]
+     * element_attributes[record_type][element_number][sub_element_number][1] = start byte of sub_element within 1024 character buffer
+     * element_attributes[record_type][element_number][sub_element_number][2] = sub_element ascii character width
+     * element_attributes[record_type][element_number][sub_element_number][3] = sub_element data_type
+     * record_type=1 are 'a' type records
+     * record_type=2 are 'b' type records
+     * record_type=3 are 'c' type records
+     * data_type=1 alpha
+     * data_type=2 integer
+     * data_type=3 double
+     */
+    element_attributes[type_a][1][1][1] =   1;
+    element_attributes[type_a][1][1][2] =  40;
+    element_attributes[type_a][1][1][3] =   1;
+    element_attributes[type_a][1][2][1] =  41;
+    element_attributes[type_a][1][2][2] =  40;
+    element_attributes[type_a][1][2][3] =   1;
+    element_attributes[type_a][1][3][1] =  81;
+    element_attributes[type_a][1][3][2] =  29;
+    element_attributes[type_a][1][3][3] =   1;
+    element_attributes[type_a][1][4][1] = 110;
+    element_attributes[type_a][1][4][2] =   4;
+    element_attributes[type_a][1][4][3] =   2;
+    element_attributes[type_a][1][5][1] = 114;
+    element_attributes[type_a][1][5][2] =   2;
+    element_attributes[type_a][1][5][3] =   2;
+    element_attributes[type_a][1][6][1] = 116;
+    element_attributes[type_a][1][6][2] =   7;
+    element_attributes[type_a][1][6][3] =   3;
+    element_attributes[type_a][1][7][1] = 123;
+    element_attributes[type_a][1][7][2] =   4;
+    element_attributes[type_a][1][7][3] =   2;
+    element_attributes[type_a][1][8][1] = 127;
+    element_attributes[type_a][1][8][2] =   2;
+    element_attributes[type_a][1][8][3] =   2;
+    element_attributes[type_a][1][9][1] = 129;
+    element_attributes[type_a][1][9][2] =   7;
+    element_attributes[type_a][1][9][3] =   3;
+    element_attributes[type_a][1][10][1] = 136;
+    element_attributes[type_a][1][10][2] =   1;
+    element_attributes[type_a][1][10][3] =   1;
+    element_attributes[type_a][1][11][1] = 137;
+    element_attributes[type_a][1][11][2] =   1;
+    element_attributes[type_a][1][11][3] =   1;
+    element_attributes[type_a][1][12][1] = 138;
+    element_attributes[type_a][1][12][2] =   3;
+    element_attributes[type_a][1][12][3] =   1;
+    element_attributes[type_a][2][1][1] = 141;
+    element_attributes[type_a][2][1][2] =   4;
+    element_attributes[type_a][2][1][3] =   1;
+    element_attributes[type_a][3][1][1] = 145;
+    element_attributes[type_a][3][1][2] =   6;
+    element_attributes[type_a][3][1][3] =   2;
+    element_attributes[type_a][4][1][1] = 151;
+    element_attributes[type_a][4][1][2] =   6;
+    element_attributes[type_a][4][1][3] =   2;
+    element_attributes[type_a][5][1][1] = 157;
+    element_attributes[type_a][5][1][2] =   6;
+    element_attributes[type_a][5][1][3] =   2;
+    element_attributes[type_a][6][1][1] = 163;
+    element_attributes[type_a][6][1][2] =   6;
+    element_attributes[type_a][6][1][3] =   2;
+    element_attributes[type_a][7][1][1] = 169;
+    element_attributes[type_a][7][1][2] =  24;
+    element_attributes[type_a][7][1][3] =   3;
+    element_attributes[type_a][7][2][1] = 193;
+    element_attributes[type_a][7][2][2] =  24;
+    element_attributes[type_a][7][2][3] =   3;
+    element_attributes[type_a][7][3][1] = 217;
+    element_attributes[type_a][7][3][2] =  24;
+    element_attributes[type_a][7][3][3] =   3;
+    element_attributes[type_a][7][4][1] = 241;
+    element_attributes[type_a][7][4][2] =  24;
+    element_attributes[type_a][7][4][3] =   3;
+    element_attributes[type_a][7][5][1] = 265;
+    element_attributes[type_a][7][5][2] =  24;
+    element_attributes[type_a][7][5][3] =   3;
+    element_attributes[type_a][7][6][1] = 289;
+    element_attributes[type_a][7][6][2] =  24;
+    element_attributes[type_a][7][6][3] =   3;
+    element_attributes[type_a][7][7][1] = 313;
+    element_attributes[type_a][7][7][2] =  24;
+    element_attributes[type_a][7][7][3] =   3;
+    element_attributes[type_a][7][8][1] = 337;
+    element_attributes[type_a][7][8][2] =  24;
+    element_attributes[type_a][7][8][3] =   3;
+    element_attributes[type_a][7][9][1] = 361;
+    element_attributes[type_a][7][9][2] =  24;
+    element_attributes[type_a][7][9][3] =   3;
+    element_attributes[type_a][7][10][1] = 385;
+    element_attributes[type_a][7][10][2] =  24;
+    element_attributes[type_a][7][10][3] =   3;
+    element_attributes[type_a][7][11][1] = 409;
+    element_attributes[type_a][7][11][2] =  24;
+    element_attributes[type_a][7][11][3] =   3;
+    element_attributes[type_a][7][12][1] = 433;
+    element_attributes[type_a][7][12][2] =  24;
+    element_attributes[type_a][7][12][3] =   3;
+    element_attributes[type_a][7][13][1] = 457;
+    element_attributes[type_a][7][13][2] =  24;
+    element_attributes[type_a][7][13][3] =   3;
+    element_attributes[type_a][7][14][1] = 481;
+    element_attributes[type_a][7][14][2] =  24;
+    element_attributes[type_a][7][14][3] =   3;
+    element_attributes[type_a][7][15][1] = 505;
+    element_attributes[type_a][7][15][2] =  24;
+    element_attributes[type_a][7][15][3] =   3;
+    element_attributes[type_a][8][1][1] = 529;
+    element_attributes[type_a][8][1][2] =   6;
+    element_attributes[type_a][8][1][3] =   2;
+    element_attributes[type_a][9][1][1] = 535;
+    element_attributes[type_a][9][1][2] =   6;
+    element_attributes[type_a][9][1][3] =   2;
+    element_attributes[type_a][10][1][1] = 541;
+    element_attributes[type_a][10][1][2] =   6;
+    element_attributes[type_a][10][1][3] =   2;
+    element_attributes[type_a][11][1][1] = 547;
+    element_attributes[type_a][11][1][2] =  24;
+    element_attributes[type_a][11][1][3] =   3;
+    element_attributes[type_a][11][2][1] = 571;
+    element_attributes[type_a][11][2][2] =  24;
+    element_attributes[type_a][11][2][3] =   3;
+    element_attributes[type_a][11][3][1] = 595;
+    element_attributes[type_a][11][3][2] =  24;
+    element_attributes[type_a][11][3][3] =   3;
+    element_attributes[type_a][11][4][1] = 619;
+    element_attributes[type_a][11][4][2] =  24;
+    element_attributes[type_a][11][4][3] =   3;
+    element_attributes[type_a][11][5][1] = 643;
+    element_attributes[type_a][11][5][2] =  24;
+    element_attributes[type_a][11][5][3] =   3;
+    element_attributes[type_a][11][6][1] = 667;
+    element_attributes[type_a][11][6][2] =  24;
+    element_attributes[type_a][11][6][3] =   3;
+    element_attributes[type_a][11][7][1] = 691;
+    element_attributes[type_a][11][7][2] =  24;
+    element_attributes[type_a][11][7][3] =   3;
+    element_attributes[type_a][11][8][1] = 715;
+    element_attributes[type_a][11][8][2] =  24;
+    element_attributes[type_a][11][8][3] =   3;
+    element_attributes[type_a][12][1][1] = 739;
+    element_attributes[type_a][12][1][2] =  24;
+    element_attributes[type_a][12][1][3] =   3;
+    element_attributes[type_a][12][2][1] = 763;
+    element_attributes[type_a][12][2][2] =  24;
+    element_attributes[type_a][12][2][3] =   3;
+    element_attributes[type_a][13][1][1] = 787;
+    element_attributes[type_a][13][1][2] =  24;
+    element_attributes[type_a][13][1][3] =   3;
+    element_attributes[type_a][14][1][1] = 811;
+    element_attributes[type_a][14][1][2] =   6;
+    element_attributes[type_a][14][1][3] =   2;
+    element_attributes[type_a][15][1][1] = 817;
+    element_attributes[type_a][15][1][2] =  12;
+    element_attributes[type_a][15][1][3] =   3;
+    element_attributes[type_a][15][2][1] = 829;
+    element_attributes[type_a][15][2][2] =  12;
+    element_attributes[type_a][15][2][3] =   3;
+    element_attributes[type_a][15][3][1] = 841;
+    element_attributes[type_a][15][3][2] =  12;
+    element_attributes[type_a][15][3][3] =   3;
+    element_attributes[type_a][16][1][1] = 853;
+    element_attributes[type_a][16][1][2] =   6;
+    element_attributes[type_a][16][1][3] =   2;
+    element_attributes[type_a][16][2][1] = 859;
+    element_attributes[type_a][16][2][2] =   6;
+    element_attributes[type_a][16][2][3] =   2;
+    element_attributes[type_a][17][1][1] = 865;
+    element_attributes[type_a][17][1][2] =   5;
+    element_attributes[type_a][17][1][3] =   2;
+    element_attributes[type_a][18][1][1] = 870;
+    element_attributes[type_a][18][1][2] =   1;
+    element_attributes[type_a][18][1][3] =   2;
+    element_attributes[type_a][19][1][1] = 871;
+    element_attributes[type_a][19][1][2] =   5;
+    element_attributes[type_a][19][1][3] =   2;
+    element_attributes[type_a][20][1][1] = 876;
+    element_attributes[type_a][20][1][2] =   1;
+    element_attributes[type_a][20][1][3] =   2;
+    element_attributes[type_a][21][1][1] = 877;
+    element_attributes[type_a][21][1][2] =   4;
+    element_attributes[type_a][21][1][3] =   2;
+    element_attributes[type_a][22][1][1] = 881;
+    element_attributes[type_a][22][1][2] =   4;
+    element_attributes[type_a][22][1][3] =   2;
+    element_attributes[type_a][23][1][1] = 885;
+    element_attributes[type_a][23][1][2] =   1;
+    element_attributes[type_a][23][1][3] =   1;
+    element_attributes[type_a][24][1][1] = 886;
+    element_attributes[type_a][24][1][2] =   1;
+    element_attributes[type_a][24][1][3] =   2;
+    element_attributes[type_a][25][1][1] = 887;
+    element_attributes[type_a][25][1][2] =   2;
+    element_attributes[type_a][25][1][3] =   2;
+    element_attributes[type_a][26][1][1] = 889;
+    element_attributes[type_a][26][1][2] =   2;
+    element_attributes[type_a][26][1][3] =   2;
+    element_attributes[type_a][27][1][1] = 891;
+    element_attributes[type_a][27][1][2] =   2;
+    element_attributes[type_a][27][1][3] =   2;
+    element_attributes[type_a][28][1][1] = 893;
+    element_attributes[type_a][28][1][2] =   4;
+    element_attributes[type_a][28][1][3] =   2;
+    element_attributes[type_a][29][1][1] = 897;
+    element_attributes[type_a][29][1][2] =   4;
+    element_attributes[type_a][29][1][3] =   2;
+    element_attributes[type_a][30][1][1] = 901;
+    element_attributes[type_a][30][1][2] =   2;
+    element_attributes[type_a][30][1][3] =   2;
+    element_attributes[type_a][30][2][1] = 903;
+    element_attributes[type_a][30][2][2] =   2;
+    element_attributes[type_a][30][2][3] =   2;
+    element_attributes[type_a][30][3][1] = 905;
+    element_attributes[type_a][30][3][2] =   2;
+    element_attributes[type_a][30][3][3] =   2;
+    element_attributes[type_a][30][4][1] = 907;
+    element_attributes[type_a][30][4][2] =   2;
+    element_attributes[type_a][30][4][3] =   2;
+    element_attributes[type_a][31][1][1] = 909;
+    element_attributes[type_a][31][1][2] =   7;
+    element_attributes[type_a][31][1][3] =   3;
+    element_attributes[type_b][1][1][1] =   1;
+    element_attributes[type_b][1][1][2] =   6;
+    element_attributes[type_b][1][1][3] =   2;
+    element_attributes[type_b][1][2][1] =   7;
+    element_attributes[type_b][1][2][2] =   6;
+    element_attributes[type_b][1][2][3] =   2;
+    element_attributes[type_b][2][1][1] =  13;
+    element_attributes[type_b][2][1][2] =   6;
+    element_attributes[type_b][2][1][3] =   2;
+    element_attributes[type_b][2][2][1] =  19;
+    element_attributes[type_b][2][2][2] =   6;
+    element_attributes[type_b][2][2][3] =   2;
+    element_attributes[type_b][3][1][1] =  25;
+    element_attributes[type_b][3][1][2] =  24;
+    element_attributes[type_b][3][1][3] =   3;
+    element_attributes[type_b][3][2][1] =  49;
+    element_attributes[type_b][3][2][2] =  24;
+    element_attributes[type_b][3][2][3] =   3;
+    element_attributes[type_b][4][1][1] =  73;
+    element_attributes[type_b][4][1][2] =  24;
+    element_attributes[type_b][4][1][3] =   3;
+    element_attributes[type_b][5][1][1] =  97;
+    element_attributes[type_b][5][1][2] =  24;
+    element_attributes[type_b][5][1][3] =   3;
+    element_attributes[type_b][5][2][1] = 121;
+    element_attributes[type_b][5][2][2] =  24;
+    element_attributes[type_b][5][2][3] =   3;
+    element_attributes[type_c][1][1][1] =   1;
+    element_attributes[type_c][1][1][2] =   6;
+    element_attributes[type_c][1][1][3] =   2;
+    element_attributes[type_c][2][1][1] =   7;
+    element_attributes[type_c][2][1][2] =   6;
+    element_attributes[type_c][2][1][3] =   2;
+    element_attributes[type_c][2][2][1] =  13;
+    element_attributes[type_c][2][2][2] =   6;
+    element_attributes[type_c][2][2][3] =   2;
+    element_attributes[type_c][2][3][1] =  19;
+    element_attributes[type_c][2][3][2] =   6;
+    element_attributes[type_c][2][3][3] =   2;
+    element_attributes[type_c][3][1][1] =  25;
+    element_attributes[type_c][3][1][2] =   6;
+    element_attributes[type_c][3][1][3] =   2;
+    element_attributes[type_c][4][1][1] =  31;
+    element_attributes[type_c][4][1][2] =   6;
+    element_attributes[type_c][4][1][3] =   2;
+    element_attributes[type_c][5][1][1] =  37;
+    element_attributes[type_c][5][1][2] =   6;
+    element_attributes[type_c][5][1][3] =   2;
+    element_attributes[type_c][5][2][1] =  43;
+    element_attributes[type_c][5][2][2] =   6;
+    element_attributes[type_c][5][2][3] =   2;
+    element_attributes[type_c][5][3][1] =  49;
+    element_attributes[type_c][5][3][2] =   6;
+    element_attributes[type_c][5][3][3] =   2;
+    element_attributes[type_c][6][1][1] =  55;
+    element_attributes[type_c][6][1][2] =   6;
+    element_attributes[type_c][6][1][3] =   2;
 
-/*
- *  sub_element_counts[][]
- *  sub_element_counts[record_type][element_number] = number of sub_elements within element
- *  record_type=1 are 'a' type records
- *  record_type=2 are 'b' type records
- *  record_type=3 are 'c' type records
- */
-sub_element_counts[type_a][1] =  12 ;
-sub_element_counts[type_a][2] =   1 ;
-sub_element_counts[type_a][3] =   1 ;
-sub_element_counts[type_a][4] =   1 ;
-sub_element_counts[type_a][5] =   1 ;
-sub_element_counts[type_a][6] =   1 ;
-sub_element_counts[type_a][7] =  15 ;
-sub_element_counts[type_a][8] =   1 ;
-sub_element_counts[type_a][9] =   1 ;
-sub_element_counts[type_a][10] =   1 ;
-sub_element_counts[type_a][11] =   8 ;
-sub_element_counts[type_a][12] =   2 ;
-sub_element_counts[type_a][13] =   1 ;
-sub_element_counts[type_a][14] =   1 ;
-sub_element_counts[type_a][15] =   3 ;
-sub_element_counts[type_a][16] =   2 ;
-sub_element_counts[type_a][17] =   1 ;
-sub_element_counts[type_a][18] =   1 ;
-sub_element_counts[type_a][19] =   1 ;
-sub_element_counts[type_a][20] =   1 ;
-sub_element_counts[type_a][21] =   1 ;
-sub_element_counts[type_a][22] =   1 ;
-sub_element_counts[type_a][23] =   1 ;
-sub_element_counts[type_a][24] =   1 ;
-sub_element_counts[type_a][25] =   1 ;
-sub_element_counts[type_a][26] =   1 ;
-sub_element_counts[type_a][27] =   1 ;
-sub_element_counts[type_a][28] =   1 ;
-sub_element_counts[type_a][29] =   1 ;
-sub_element_counts[type_a][30] =   4 ;
-sub_element_counts[type_a][31] =   1 ;
-sub_element_counts[type_b][1] =  2 ;
-sub_element_counts[type_b][2] =  2 ;
-sub_element_counts[type_b][3] =  2 ;
-sub_element_counts[type_b][4] =  1 ;
-sub_element_counts[type_b][5] =  2 ;
-sub_element_counts[type_c][1] =  1 ;
-sub_element_counts[type_c][2] =  3 ;
-sub_element_counts[type_c][3] =  1 ;
-sub_element_counts[type_c][4] =  1 ;
-sub_element_counts[type_c][5] =  3 ;
-sub_element_counts[type_c][6] =  1 ;
-
-
-/*
- *  sub_elements_required_list_counts[]
- *  sub_elements_required_list_counts[record_type] = number of required sub_elements for each record type
- *  record_type=1 are 'a' type records
- *  record_type=2 are 'b' type records
- *  record_type=3 are 'c' type records
- */
-sub_elements_required_list_counts[type_a] = 9 ;
-sub_elements_required_list_counts[type_b] = 6 ;
-sub_elements_required_list_counts[type_c] = 0 ;
+    /*
+     * sub_element_counts[][]
+     * sub_element_counts[record_type][element_number] = number of sub_elements within element
+     * record_type=1 are 'a' type records
+     * record_type=2 are 'b' type records
+     * record_type=3 are 'c' type records
+     */
+    sub_element_counts[type_a][1] =  12;
+    sub_element_counts[type_a][2] =   1;
+    sub_element_counts[type_a][3] =   1;
+    sub_element_counts[type_a][4] =   1;
+    sub_element_counts[type_a][5] =   1;
+    sub_element_counts[type_a][6] =   1;
+    sub_element_counts[type_a][7] =  15;
+    sub_element_counts[type_a][8] =   1;
+    sub_element_counts[type_a][9] =   1;
+    sub_element_counts[type_a][10] =   1;
+    sub_element_counts[type_a][11] =   8;
+    sub_element_counts[type_a][12] =   2;
+    sub_element_counts[type_a][13] =   1;
+    sub_element_counts[type_a][14] =   1;
+    sub_element_counts[type_a][15] =   3;
+    sub_element_counts[type_a][16] =   2;
+    sub_element_counts[type_a][17] =   1;
+    sub_element_counts[type_a][18] =   1;
+    sub_element_counts[type_a][19] =   1;
+    sub_element_counts[type_a][20] =   1;
+    sub_element_counts[type_a][21] =   1;
+    sub_element_counts[type_a][22] =   1;
+    sub_element_counts[type_a][23] =   1;
+    sub_element_counts[type_a][24] =   1;
+    sub_element_counts[type_a][25] =   1;
+    sub_element_counts[type_a][26] =   1;
+    sub_element_counts[type_a][27] =   1;
+    sub_element_counts[type_a][28] =   1;
+    sub_element_counts[type_a][29] =   1;
+    sub_element_counts[type_a][30] =   4;
+    sub_element_counts[type_a][31] =   1;
+    sub_element_counts[type_b][1] =  2;
+    sub_element_counts[type_b][2] =  2;
+    sub_element_counts[type_b][3] =  2;
+    sub_element_counts[type_b][4] =  1;
+    sub_element_counts[type_b][5] =  2;
+    sub_element_counts[type_c][1] =  1;
+    sub_element_counts[type_c][2] =  3;
+    sub_element_counts[type_c][3] =  1;
+    sub_element_counts[type_c][4] =  1;
+    sub_element_counts[type_c][5] =  3;
+    sub_element_counts[type_c][6] =  1;
 
 
-/*
- *  sub_elements_required_list[][][]
- *  sub_elements_required_list[record_type][index][1] = element_number
- *  sub_elements_required_list[record_type][index][2] = sub_element_number that must contain a value
- *  record_type=1 are 'a' type records
- *  record_type=2 are 'b' type records
- *  record_type=3 are 'c' type records
- *  index = arbitrary number from 1 to the number of entries in the list
- */
-sub_elements_required_list[type_a][1][1] =  8 ;
-sub_elements_required_list[type_a][1][2] =  1 ;
-sub_elements_required_list[type_a][2][1] =  9 ;
-sub_elements_required_list[type_a][2][2] =  1 ;
-sub_elements_required_list[type_a][3][1] = 10 ;
-sub_elements_required_list[type_a][3][2] =  1 ;
-sub_elements_required_list[type_a][4][1] = 12 ;
-sub_elements_required_list[type_a][4][2] =  2 ;
-sub_elements_required_list[type_a][5][1] = 15 ;
-sub_elements_required_list[type_a][5][2] =  1 ;
-sub_elements_required_list[type_a][6][1] = 15 ;
-sub_elements_required_list[type_a][6][2] =  2 ;
-sub_elements_required_list[type_a][7][1] = 15 ;
-sub_elements_required_list[type_a][7][2] =  3 ;
-sub_elements_required_list[type_a][8][1] = 16 ;
-sub_elements_required_list[type_a][8][2] =  1 ;
-sub_elements_required_list[type_a][9][1] = 16 ;
-sub_elements_required_list[type_a][9][2] =  2 ;
-sub_elements_required_list[type_b][1][1] =  1 ;
-sub_elements_required_list[type_b][1][2] =  1 ;
-sub_elements_required_list[type_b][2][1] =  1 ;
-sub_elements_required_list[type_b][2][2] =  2 ;
-sub_elements_required_list[type_b][3][1] =  2 ;
-sub_elements_required_list[type_b][3][2] =  1 ;
-sub_elements_required_list[type_b][4][1] =  2 ;
-sub_elements_required_list[type_b][4][2] =  2 ;
-sub_elements_required_list[type_b][5][1] =  4 ;
-sub_elements_required_list[type_b][5][2] =  1 ;
-sub_elements_required_list[type_b][6][1] =  5 ;
-sub_elements_required_list[type_b][6][2] =  2 ;
+    /*
+     * sub_elements_required_list_counts[]
+     * sub_elements_required_list_counts[record_type] = number of required sub_elements for each record type
+     * record_type=1 are 'a' type records
+     * record_type=2 are 'b' type records
+     * record_type=3 are 'c' type records
+     */
+    sub_elements_required_list_counts[type_a] = 9;
+    sub_elements_required_list_counts[type_b] = 6;
+    sub_elements_required_list_counts[type_c] = 0;
 
-/*
- *  conversion_factor_to_milimeters[]
- *  0=radians, 1=feet, 2=meters, 3=arc-seconds
- *  0,3 used for ground units, assumes 1 arc-second = 30 meters 
- *  1,2 used for ground units and elevation units 
- */
-conversion_factor_to_milimeters[0] = 6187944187.412890655 ;
-conversion_factor_to_milimeters[1] =        304.8 ;
-conversion_factor_to_milimeters[2] =       1000.0 ;
-conversion_factor_to_milimeters[3] =      30000.0 ;
+
+    /*
+     * sub_elements_required_list[][][]
+     * sub_elements_required_list[record_type][index][1] = element_number
+     * sub_elements_required_list[record_type][index][2] = sub_element_number that must contain a value
+     * record_type=1 are 'a' type records
+     * record_type=2 are 'b' type records
+     * record_type=3 are 'c' type records
+     * index = arbitrary number from 1 to the number of entries in the list
+     */
+    sub_elements_required_list[type_a][1][1] =  8;
+    sub_elements_required_list[type_a][1][2] =  1;
+    sub_elements_required_list[type_a][2][1] =  9;
+    sub_elements_required_list[type_a][2][2] =  1;
+    sub_elements_required_list[type_a][3][1] = 10;
+    sub_elements_required_list[type_a][3][2] =  1;
+    sub_elements_required_list[type_a][4][1] = 12;
+    sub_elements_required_list[type_a][4][2] =  2;
+    sub_elements_required_list[type_a][5][1] = 15;
+    sub_elements_required_list[type_a][5][2] =  1;
+    sub_elements_required_list[type_a][6][1] = 15;
+    sub_elements_required_list[type_a][6][2] =  2;
+    sub_elements_required_list[type_a][7][1] = 15;
+    sub_elements_required_list[type_a][7][2] =  3;
+    sub_elements_required_list[type_a][8][1] = 16;
+    sub_elements_required_list[type_a][8][2] =  1;
+    sub_elements_required_list[type_a][9][1] = 16;
+    sub_elements_required_list[type_a][9][2] =  2;
+    sub_elements_required_list[type_b][1][1] =  1;
+    sub_elements_required_list[type_b][1][2] =  1;
+    sub_elements_required_list[type_b][2][1] =  1;
+    sub_elements_required_list[type_b][2][2] =  2;
+    sub_elements_required_list[type_b][3][1] =  2;
+    sub_elements_required_list[type_b][3][2] =  1;
+    sub_elements_required_list[type_b][4][1] =  2;
+    sub_elements_required_list[type_b][4][2] =  2;
+    sub_elements_required_list[type_b][5][1] =  4;
+    sub_elements_required_list[type_b][5][2] =  1;
+    sub_elements_required_list[type_b][6][1] =  5;
+    sub_elements_required_list[type_b][6][2] =  2;
+
+    /*
+     * conversion_factor_to_milimeters[]
+     * 0=radians, 1=feet, 2=meters, 3=arc-seconds
+     * 0, 3 used for ground units, assumes 1 arc-second = 30 meters 
+     * 1, 2 used for ground units and elevation units 
+     */
+    conversion_factor_to_milimeters[0] = 6187944187.412890655;
+    conversion_factor_to_milimeters[1] =        304.8;
+    conversion_factor_to_milimeters[2] =       1000.0;
+    conversion_factor_to_milimeters[3] =      30000.0;
 
 
     progname = *av;
 
-    double           raw_dem_2_raw_dsp_manual_scale_factor = 0 ; /* user specified raw dem-to-dsp scale factor */
-    signed long int  manual_dem_max_raw_elevation = 0 ;          /* user specified max raw elevation */
-    double           manual_dem_max_real_elevation  = 0 ;        /* user specified max real elevation in meters */
-    signed long int  xdim = 0 ;                                  /* x dimension of dem (w cells) */
-    signed long int  ydim = 0 ;                                  /* y dimension of dem (n cells) */
-    double           dsp_elevation  = 0 ;                        /* datum elevation in milimeters (dsp V z coordinate) */
-    double           x_cell_size  = 0 ;                          /* x scaling factor in milimeters */
-    double           y_cell_size = 0 ;                           /* y scaling factor in milimeters */
-    double           unit_elevation  = 0 ;                       /* z scaling factor in milimeters */
-    char            *tmp_ptr = '\0' ;
-    int              string_length = 0 ;
+    double raw_dem_2_raw_dsp_manual_scale_factor = 0; /* user specified raw dem-to-dsp scale factor */
+    signed long int manual_dem_max_raw_elevation = 0;          /* user specified max raw elevation */
+    double manual_dem_max_real_elevation  = 0;        /* user specified max real elevation in meters */
+    signed long int xdim = 0;                                  /* x dimension of dem (w cells) */
+    signed long int ydim = 0;                                  /* y dimension of dem (n cells) */
+    double dsp_elevation  = 0;                        /* datum elevation in milimeters (dsp V z coordinate) */
+    double x_cell_size  = 0;                          /* x scaling factor in milimeters */
+    double y_cell_size = 0;                           /* y scaling factor in milimeters */
+    double unit_elevation  = 0;                       /* z scaling factor in milimeters */
+    char *tmp_ptr = '\0';
+    int string_length = 0;
 
     if (ac < 2) {
         usage();
@@ -2012,68 +2038,67 @@ conversion_factor_to_milimeters[3] =      30000.0 ;
     }
 
     remove_whitespace(av[1]);
-    string_length = strlen(av[1]) + 5 ;
-    char             input_filename[string_length] ;          /* dem input file path and file name */
-    char             temp_filename[string_length] ;           /* temp file path and file name */
-    char             dsp_output_filename[string_length] ;     /* dsp output file path and file name */
-    char             model_output_filename[string_length] ;   /* model output file path and file name */
+    string_length = strlen(av[1]) + 5;
+    char input_filename[string_length];          /* dem input file path and file name */
+    char temp_filename[string_length];           /* temp file path and file name */
+    char dsp_output_filename[string_length];     /* dsp output file path and file name */
+    char model_output_filename[string_length];   /* model output file path and file name */
 
     tmp_ptr = strcpy(input_filename, av[1]);
     tmp_ptr = strcpy(temp_filename, input_filename);
-    tmp_ptr = strcat(temp_filename, ".tmp") ;
+    tmp_ptr = strcat(temp_filename, ".tmp");
     tmp_ptr = strcpy(dsp_output_filename, input_filename);
-    tmp_ptr = strcat(dsp_output_filename, ".dsp") ;
+    tmp_ptr = strcat(dsp_output_filename, ".dsp");
     tmp_ptr = strcpy(model_output_filename, input_filename);
-    tmp_ptr = strcat(model_output_filename, ".g") ;
+    tmp_ptr = strcat(model_output_filename, ".g");
 
     printf("input_filename '%s'\n", input_filename);
     printf("temp_filename '%s'\n", temp_filename);
     printf("dsp_output_filename '%s'\n", dsp_output_filename);
     printf("model_output_filename '%s'\n", model_output_filename);
 
-        raw_dem_2_raw_dsp_manual_scale_factor = 0 ;
-        manual_dem_max_raw_elevation = 0 ;
-        manual_dem_max_real_elevation = 0 ;
+    raw_dem_2_raw_dsp_manual_scale_factor = 0;
+    manual_dem_max_raw_elevation = 0;
+    manual_dem_max_real_elevation = 0;
 
     if (read_dem(
-         /* input variables */
-        input_filename,
-        &raw_dem_2_raw_dsp_manual_scale_factor,
-        &manual_dem_max_raw_elevation,
-        &manual_dem_max_real_elevation,
-        temp_filename,
-        /* output variables */
-        &xdim,
-        &ydim,
-        &dsp_elevation,
-        &x_cell_size,
-        &y_cell_size,
-        &unit_elevation) == FAILURE) {
+	    /* input variables */
+	    input_filename,
+	    &raw_dem_2_raw_dsp_manual_scale_factor,
+	    &manual_dem_max_raw_elevation,
+	    &manual_dem_max_real_elevation,
+	    temp_filename,
+	    /* output variables */
+	    &xdim,
+	    &ydim,
+	    &dsp_elevation,
+	    &x_cell_size,
+	    &y_cell_size,
+	    &unit_elevation) == FAILURE) {
         printf("Error occured within function 'read_dem'. Import can not continue.\n");
         exit(FAILURE);
     }
 
-    if (convert_load_order(temp_filename, dsp_output_filename, &xdim, &ydim) == FAILURE ) {
+    if (convert_load_order(temp_filename, dsp_output_filename, &xdim, &ydim) == FAILURE) {
         printf("Error occured within function 'convert_load_order'. Import can not continue.\n");
         exit(FAILURE);
     }
 
     if (create_model(
-    dsp_output_filename,
-    model_output_filename,
-    &xdim,
-    &ydim,
-    &dsp_elevation,
-    &x_cell_size,
-    &y_cell_size,
-    &unit_elevation) == FAILURE) {
+	    dsp_output_filename,
+	    model_output_filename,
+	    &xdim,
+	    &ydim,
+	    &dsp_elevation,
+	    &x_cell_size,
+	    &y_cell_size,
+	    &unit_elevation) == FAILURE) {
         printf("Error occured within function 'create_model'. Model creation can not continue.\n");
         exit(FAILURE);
     }
 
     exit(SUCCESS);
 }
-
 
 
 /*
@@ -2085,4 +2110,3 @@ conversion_factor_to_milimeters[3] =      30000.0 ;
  * End:
  * ex: shiftwidth=4 tabstop=8
  */
-
