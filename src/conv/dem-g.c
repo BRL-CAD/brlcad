@@ -103,10 +103,10 @@ typedef enum _sed {
  * the size of each dimension is increased by 1 "one" to accomidate
  * this.
  */
-#define A_ROWS 32  /* DEM-G file type 'A' record, number of elements.                        */
-#define A_COLS 16  /* DEM-G file type 'A' record, max number of sub-elements per element.    */
-#define A_VALS 4   /* DEM-G file type 'A' record, number of values to store per sub-element. */
-#define RECORD_TYPE 4   /* DEM-G file type, record type (1=A, 2=B, 3=C) */
+#define A_ROWS 32      /* DEM-G file type 'A' record, number of elements.                        */
+#define A_COLS 16      /* DEM-G file type 'A' record, max number of sub-elements per element.    */
+#define A_VALS 4       /* DEM-G file type 'A' record, number of values to store per sub-element. */
+#define RECORD_TYPE 4  /* DEM-G file type, record type (1=A, 2=B, 3=C) */
 
 int element_counts[4];
 int sub_elements_required_list_counts[4];
@@ -182,13 +182,13 @@ flip_high_low_bytes(long int in_value, unsigned char *out_string)
 {
     /* it is expected the out_string points to */ 
     /* a string of at least 3 characters */
-    unsigned char highbyte  = '\0';
+    unsigned char highbyte = '\0';
     unsigned char lowbyte = '\0';
-    int status  = BRLCAD_ERROR;
+    int status = BRLCAD_ERROR;
 
     if ((in_value >= 0) && (in_value <= 65535)) {
         highbyte = (unsigned char)floor(in_value / 256);
-        lowbyte  = (unsigned char)(in_value - (highbyte * 256));
+        lowbyte = (unsigned char)(in_value - (highbyte * 256));
         out_string[0] = highbyte;
         out_string[1] = lowbyte;
         out_string[2] = '\0';
@@ -246,55 +246,60 @@ void remove_whitespace(char *input_string)
     /* initially lastp points to null at end of input string */
     lastp = firstp + input_string_length;
     /* test for zero length input_string, if zero then do nothing */
-    if (input_string_length != 0) {
-	/* find start character and set pointer firstp to this character */
-	found_start = false;
-	idx = firstp;
-	while ((found_start == false) && (idx < lastp)) {
-	    if (isspace(idx[0]) == 0) {
-		/* execute if non-space found */
-		found_start = true;
-		firstp = idx;
-	    }
-	    idx++;
-	}
-	/* if found_start is false then string must be all whitespace */
-	/* set null to first character a do nothing more */
-	if (found_start == false) {
-	    input_string[0] = '\0';
-	} else {
-	    /* If found_start is true, check for trailing whitespace */
-	    /* Find last character and set pointer lastp to next */
-	    /* character after, i.e. where null would be. */
-	    /* There as at least one non-space character in this string */
-	    /* therefore will not need to deal with an empty string */
-	    /* condition in the loop looking for the string end. */
-	    found_end = false;
-	    idx = lastp - 1;
-	    while ((found_end == false) && (idx >= firstp)) {
-		if (isspace(idx[0]) == 0) {
-		    /* execute if non-space found */
-		    found_end = true;
-		    lastp = idx + 1;
-		}
-		idx--;
-	    }
-	    /* Test if characters in string need to be shifted left. */
-	    /* If no need to shift left, set null to location of lastp */
-	    /* and do nothing more. */
-	    if (firstp > input_string) {
-		/* Execute if need to shift left, this would happen only */
-		/* if input_string contained pre whitspace. */
-		cleaned_string_length = lastp - firstp;
-		for (idx2 = 0; idx2 < cleaned_string_length; idx2++) {
-		    input_string[idx2] = firstp[idx2];
-		}
-		input_string[cleaned_string_length] = '\0';
-	    } else {
-		lastp[0] = '\0';
-	    }
-	}
+    if (input_string_length == 0) {
+	return;
     }
+
+    /* find start character and set pointer firstp to this character */
+    found_start = false;
+    idx = firstp;
+    while ((found_start == false) && (idx < lastp)) {
+	if (isspace(idx[0]) == 0) {
+	    /* execute if non-space found */
+	    found_start = true;
+	    firstp = idx;
+	}
+	idx++;
+    }
+    /* if found_start is false then string must be all whitespace */
+    if (found_start == false) {
+	/* set null to first character a do nothing more */
+	input_string[0] = '\0';
+	return;
+    }
+
+    /* If found_start is true, check for trailing whitespace */
+    /* Find last character and set pointer lastp to next */
+    /* character after, i.e. where null would be. */
+    /* There as at least one non-space character in this string */
+    /* therefore will not need to deal with an empty string */
+    /* condition in the loop looking for the string end. */
+    found_end = false;
+    idx = lastp - 1;
+    while ((found_end == false) && (idx >= firstp)) {
+	if (isspace(idx[0]) == 0) {
+	    /* execute if non-space found */
+	    found_end = true;
+	    lastp = idx + 1;
+	}
+	idx--;
+    }
+
+    /* Test if characters in string need to be shifted left. */
+    /* and do nothing more. */
+    if (firstp > input_string) {
+	/* Execute if need to shift left, this would happen only */
+	/* if input_string contained pre whitspace. */
+	cleaned_string_length = lastp - firstp;
+	for (idx2 = 0; idx2 < cleaned_string_length; idx2++) {
+	    input_string[idx2] = firstp[idx2];
+	}
+	input_string[cleaned_string_length] = '\0';
+	return;
+    }
+
+    /* no need to shift left, set null to location of lastp */
+    lastp[0] = '\0';
 }
 
 /*
@@ -350,10 +355,10 @@ int read_element(ResultStruct *io_struct)
         (*io_struct).out_datatype = datatype;
         if (is_b_header == true) {
             /* the buffer contains a B record header and elevation data */
-            start_character =  145 + ((sub_element - 1) * field_width); 
+            start_character = 145 + ((sub_element - 1) * field_width); 
         } else {
             /* the buffer contains a B record with only elevation data */
-            start_character =  1 + ((sub_element - 1) * field_width); 
+            start_character = 1 + ((sub_element - 1) * field_width); 
         }
     }
 
@@ -368,83 +373,81 @@ int read_element(ResultStruct *io_struct)
     /* removes pre & post whitespace, if all whitespace then returns empty string */
     remove_whitespace(tmp_str); 
 
-    /* true when element, sub_element contains non-whitespace */
-    if (strlen(tmp_str) != 0) { 
-        /*
-         * --------------------------------------------------------------------
-         * process strings
-         * --------------------------------------------------------------------
-         */
-        if (datatype == type_alpha) {
-	    /* tmp_ptr = strcpy((*io_struct).out_alpha, tmp_str); */
-            bu_strlcpy((*io_struct).out_alpha, tmp_str, strlen(tmp_str)+1); 
-            status = BRLCAD_OK;
-        }
-        /*
-         * --------------------------------------------------------------------
-         * process integers
-         * --------------------------------------------------------------------
-         */
-        if (datatype == type_integer) {
-            /* sub_element was defined as a integer */ 
-            tmp_long = strtol(tmp_str, &endp, 10);
-            if ((tmp_str != endp) && (*endp == '\0')) {
-                /* convert to integer success */
-                (*io_struct).out_integer = tmp_long;
-                status = BRLCAD_OK;
-            } else {
-                /* convert to integer failed */
-                /* copy string which failed to convert to inetger to output structure */
-                tmp_ptr = strcpy((*io_struct).out_alpha, tmp_str); 
-                status = BRLCAD_ERROR;
-            }
-        }
-        /*
-         * --------------------------------------------------------------------
-         * process doubles
-         * --------------------------------------------------------------------
-         */
-        if (datatype == type_double) {
-            /* sub_element was defined as a double */ 
-            if ((search_result_uppercase = strchr(tmp_str, 'D')) != NULL) {
-                /* uppercase 'D' found, replace with 'E' */
-                search_result_uppercase[0] = 'E';
-            } else {
-		if ((search_result_lowercase = strchr(tmp_str, 'd')) != NULL) {
-		    /* lowercase 'd' found, replace with 'e' */
-		    search_result_lowercase[0] = 'e';
-		} else {
-		    if ((strchr(tmp_str, 'E') == NULL) && (strchr(tmp_str, 'e') == NULL)) {
-			/* if no uppercase 'E' and no lowercase 'e' then append 'E+00' */
-			/* required for function 'strtod' to convert string to double */
-			/*  tmp_ptr = strcat(tmp_str, "E+00");  */
-			bu_strlcat(tmp_str, "E+00", sizeof(tmp_str)); 
-		    }
-		}
-            }
-            /* convert to double */
-            tmp_dbl = strtod(tmp_str, &endp);
-            if ((tmp_str != endp) && (*endp == '\0')) {
-                /* convert to double success */
-                (*io_struct).out_double = tmp_dbl;
-                status = BRLCAD_OK;
-            } else {
-                /* convert to double failed */
-                /* copy string which failed to convert to double to output structure */
-                tmp_ptr = strcpy((*io_struct).out_alpha, tmp_str); 
-                status = BRLCAD_ERROR;
-            }
-        }
-	/*
-	 * ------------------------------------------------------------------------
-	 * process (strings, integers, doubles) with have undefined values
-	 * ------------------------------------------------------------------------
-	 */
-    } else {
+    if (strlen(tmp_str) == 0) { 
         /* data was all whitespace */ 
         (*io_struct).out_undefined = true;
-        status = BRLCAD_OK;
+	return BRLCAD_OK;
     }
+
+    /* sub_element contains non-whitespace */
+
+    /*
+     * --------------------------------------------------------------------
+     * process strings
+     * --------------------------------------------------------------------
+     */
+    if (datatype == type_alpha) {
+	/* tmp_ptr = strcpy((*io_struct).out_alpha, tmp_str); */
+	bu_strlcpy((*io_struct).out_alpha, tmp_str, strlen(tmp_str)+1); 
+	status = BRLCAD_OK;
+    }
+    /*
+     * --------------------------------------------------------------------
+     * process integers
+     * --------------------------------------------------------------------
+     */
+    if (datatype == type_integer) {
+	/* sub_element was defined as a integer */ 
+	tmp_long = strtol(tmp_str, &endp, 10);
+	if ((tmp_str != endp) && (*endp == '\0')) {
+	    /* convert to integer success */
+	    (*io_struct).out_integer = tmp_long;
+	    status = BRLCAD_OK;
+	} else {
+	    /* convert to integer failed */
+	    /* copy string which failed to convert to inetger to output structure */
+	    tmp_ptr = strcpy((*io_struct).out_alpha, tmp_str); 
+	    status = BRLCAD_ERROR;
+	}
+    }
+    
+    /*
+     * --------------------------------------------------------------------
+     * process doubles
+     * --------------------------------------------------------------------
+     */
+    if (datatype == type_double) {
+	/* sub_element was defined as a double */ 
+	if ((search_result_uppercase = strchr(tmp_str, 'D')) != NULL) {
+	    /* uppercase 'D' found, replace with 'E' */
+	    search_result_uppercase[0] = 'E';
+	} else {
+	    if ((search_result_lowercase = strchr(tmp_str, 'd')) != NULL) {
+		/* lowercase 'd' found, replace with 'e' */
+		search_result_lowercase[0] = 'e';
+	    } else {
+		if ((strchr(tmp_str, 'E') == NULL) && (strchr(tmp_str, 'e') == NULL)) {
+		    /* if no uppercase 'E' and no lowercase 'e' then append 'E+00' */
+		    /* required for function 'strtod' to convert string to double */
+		    /*  tmp_ptr = strcat(tmp_str, "E+00");  */
+		    bu_strlcat(tmp_str, "E+00", sizeof(tmp_str)); 
+		}
+	    }
+	}
+	/* convert to double */
+	tmp_dbl = strtod(tmp_str, &endp);
+	if ((tmp_str != endp) && (*endp == '\0')) {
+	    /* convert to double success */
+	    (*io_struct).out_double = tmp_dbl;
+	    status = BRLCAD_OK;
+	} else {
+	    /* convert to double failed */
+	    /* copy string which failed to convert to double to output structure */
+	    tmp_ptr = strcpy((*io_struct).out_alpha, tmp_str); 
+	    status = BRLCAD_ERROR;
+	}
+    }
+
     return (status);
 }
 
@@ -517,6 +520,7 @@ validate_dem_record(char *buf, bool create_log, logical_record_type record_type)
             }
             return(BRLCAD_ERROR);
         } 
+
         /* Test some of the defined sub_elements for expected values */
         /* Validate record 'A' element 9 sub_element 1 */
         /* Unit of measure for elevation coordinates 1=feet, 2=meters */
@@ -533,6 +537,7 @@ validate_dem_record(char *buf, bool create_log, logical_record_type record_type)
             }
             return(BRLCAD_ERROR);
         } 
+
         /* Test some of the defined sub_elements for expected values */
         /* Validate record 'A' element 10 sub_element 1 */
         /* Number of sides in the polygon which defines the coverage of the DEM file */
@@ -550,6 +555,7 @@ validate_dem_record(char *buf, bool create_log, logical_record_type record_type)
             }
             return(BRLCAD_ERROR);
         } 
+
         /* Test some of the defined sub_elements for expected values */
         /* Validate record 'A' element 12 sub_element 2 */
         /* Max elevation for DEM */
@@ -566,6 +572,7 @@ validate_dem_record(char *buf, bool create_log, logical_record_type record_type)
             }
             return(BRLCAD_ERROR);
         } 
+
         /* test some of the defined sub_elements for expected values */
         /* Validate record 'A' element 15 sub_element 1 */
         /* DEM spatial resolution for X */
@@ -582,6 +589,7 @@ validate_dem_record(char *buf, bool create_log, logical_record_type record_type)
             }
             return(BRLCAD_ERROR);
         } 
+
         /* test some of the defined sub_elements for expected values */
         /* Validate record 'A' element 15 sub_element 2 */
         /* DEM spatial resolution for Y */
@@ -598,6 +606,7 @@ validate_dem_record(char *buf, bool create_log, logical_record_type record_type)
             }
             return(BRLCAD_ERROR);
         } 
+
         /* test some of the defined sub_elements for expected values */
         /* Validate record 'A' element 15 sub_element 3 */
         /* DEM spatial resolution for Z */
@@ -614,6 +623,7 @@ validate_dem_record(char *buf, bool create_log, logical_record_type record_type)
             }
             return(BRLCAD_ERROR);
         } 
+
         /* Test some of the defined sub_elements for expected values */
         /* Validate record 'A' element 16 sub_element 1 */
         /* Number of rows in DEM file, set to 1 to indicate element 16 */
@@ -632,6 +642,7 @@ validate_dem_record(char *buf, bool create_log, logical_record_type record_type)
             }
             return(BRLCAD_ERROR);
         } 
+
         /* Test some of the defined sub_elements for expected values */
         /* Validate record 'A' element 16 sub_element 2 */
         /* Number of columns in DEM file */
@@ -668,6 +679,7 @@ validate_dem_record(char *buf, bool create_log, logical_record_type record_type)
             }
             return(BRLCAD_ERROR);
         } 
+
         /* Test some of the defined sub_elements for expected values */
         /* Validate record 'B' element 1 sub_element 2 */
         /* Column identification number of the profile */
@@ -684,6 +696,7 @@ validate_dem_record(char *buf, bool create_log, logical_record_type record_type)
             }
             return(BRLCAD_ERROR);
         } 
+
         /* Test some of the defined sub_elements for expected values */
         /* Validate record 'B' element 2 sub_element 1 */
         /* Number of elevations in profile */
@@ -700,6 +713,7 @@ validate_dem_record(char *buf, bool create_log, logical_record_type record_type)
             }
             return(BRLCAD_ERROR);
         } 
+
         /* Test some of the defined sub_elements for expected values */
         /* Validate record 'B' element 2 sub_element 2 */
         /* Number of elevations in profile, 1 indicates 1 column per 'B' record */
@@ -717,6 +731,7 @@ validate_dem_record(char *buf, bool create_log, logical_record_type record_type)
             }
             return(BRLCAD_ERROR);
         } 
+
         /* Test some of the defined sub_elements for expected values */
         /* Validate record 'B' element 4 sub_element 1 */
         /* Elevation of local datum for profile */
@@ -733,6 +748,7 @@ validate_dem_record(char *buf, bool create_log, logical_record_type record_type)
             }
             return(BRLCAD_ERROR);
         } 
+
         /* Test some of the defined sub_elements for expected values */
         /* Validate record 'B' element 5 sub_element 2 */
         /* Max elevation for profile */
@@ -831,6 +847,7 @@ int process_manual_scale_factor(
     }
     return(BRLCAD_OK);
 }
+
 
 /* the output of this function is to decide if the user input */
 /* 'dem max raw elevation' should be used or not and to warn the */
@@ -1555,12 +1572,6 @@ create_model(
     double *in_unit_elevation)       /* z scaling factor in milimeters */
 {
     struct rt_wdb *db_fp;
-#if 0
-    point_t p1, p2;
-    int is_region;
-    unsigned char rgb[3];
-    struct wmember wm_hd; /* defined in wdb.h */
-#endif
     fastf_t dsp_mat[ELEMENTS_PER_MAT];
 
     if ((db_fp = wdb_fopen(in_model_output_filename)) == NULL) {
@@ -1633,273 +1644,273 @@ main(int ac, char *av[])
      * data_type=2 integer
      * data_type=3 double
      */
-    element_attributes[type_a][1][1][1] =   1;
-    element_attributes[type_a][1][1][2] =  40;
-    element_attributes[type_a][1][1][3] =   1;
-    element_attributes[type_a][1][2][1] =  41;
-    element_attributes[type_a][1][2][2] =  40;
-    element_attributes[type_a][1][2][3] =   1;
-    element_attributes[type_a][1][3][1] =  81;
-    element_attributes[type_a][1][3][2] =  29;
-    element_attributes[type_a][1][3][3] =   1;
+    element_attributes[type_a][1][1][1] = 1;
+    element_attributes[type_a][1][1][2] = 40;
+    element_attributes[type_a][1][1][3] = 1;
+    element_attributes[type_a][1][2][1] = 41;
+    element_attributes[type_a][1][2][2] = 40;
+    element_attributes[type_a][1][2][3] = 1;
+    element_attributes[type_a][1][3][1] = 81;
+    element_attributes[type_a][1][3][2] = 29;
+    element_attributes[type_a][1][3][3] = 1;
     element_attributes[type_a][1][4][1] = 110;
-    element_attributes[type_a][1][4][2] =   4;
-    element_attributes[type_a][1][4][3] =   2;
+    element_attributes[type_a][1][4][2] = 4;
+    element_attributes[type_a][1][4][3] = 2;
     element_attributes[type_a][1][5][1] = 114;
-    element_attributes[type_a][1][5][2] =   2;
-    element_attributes[type_a][1][5][3] =   2;
+    element_attributes[type_a][1][5][2] = 2;
+    element_attributes[type_a][1][5][3] = 2;
     element_attributes[type_a][1][6][1] = 116;
-    element_attributes[type_a][1][6][2] =   7;
-    element_attributes[type_a][1][6][3] =   3;
+    element_attributes[type_a][1][6][2] = 7;
+    element_attributes[type_a][1][6][3] = 3;
     element_attributes[type_a][1][7][1] = 123;
-    element_attributes[type_a][1][7][2] =   4;
-    element_attributes[type_a][1][7][3] =   2;
+    element_attributes[type_a][1][7][2] = 4;
+    element_attributes[type_a][1][7][3] = 2;
     element_attributes[type_a][1][8][1] = 127;
-    element_attributes[type_a][1][8][2] =   2;
-    element_attributes[type_a][1][8][3] =   2;
+    element_attributes[type_a][1][8][2] = 2;
+    element_attributes[type_a][1][8][3] = 2;
     element_attributes[type_a][1][9][1] = 129;
-    element_attributes[type_a][1][9][2] =   7;
-    element_attributes[type_a][1][9][3] =   3;
+    element_attributes[type_a][1][9][2] = 7;
+    element_attributes[type_a][1][9][3] = 3;
     element_attributes[type_a][1][10][1] = 136;
-    element_attributes[type_a][1][10][2] =   1;
-    element_attributes[type_a][1][10][3] =   1;
+    element_attributes[type_a][1][10][2] = 1;
+    element_attributes[type_a][1][10][3] = 1;
     element_attributes[type_a][1][11][1] = 137;
-    element_attributes[type_a][1][11][2] =   1;
-    element_attributes[type_a][1][11][3] =   1;
+    element_attributes[type_a][1][11][2] = 1;
+    element_attributes[type_a][1][11][3] = 1;
     element_attributes[type_a][1][12][1] = 138;
-    element_attributes[type_a][1][12][2] =   3;
-    element_attributes[type_a][1][12][3] =   1;
+    element_attributes[type_a][1][12][2] = 3;
+    element_attributes[type_a][1][12][3] = 1;
     element_attributes[type_a][2][1][1] = 141;
-    element_attributes[type_a][2][1][2] =   4;
-    element_attributes[type_a][2][1][3] =   1;
+    element_attributes[type_a][2][1][2] = 4;
+    element_attributes[type_a][2][1][3] = 1;
     element_attributes[type_a][3][1][1] = 145;
-    element_attributes[type_a][3][1][2] =   6;
-    element_attributes[type_a][3][1][3] =   2;
+    element_attributes[type_a][3][1][2] = 6;
+    element_attributes[type_a][3][1][3] = 2;
     element_attributes[type_a][4][1][1] = 151;
-    element_attributes[type_a][4][1][2] =   6;
-    element_attributes[type_a][4][1][3] =   2;
+    element_attributes[type_a][4][1][2] = 6;
+    element_attributes[type_a][4][1][3] = 2;
     element_attributes[type_a][5][1][1] = 157;
-    element_attributes[type_a][5][1][2] =   6;
-    element_attributes[type_a][5][1][3] =   2;
+    element_attributes[type_a][5][1][2] = 6;
+    element_attributes[type_a][5][1][3] = 2;
     element_attributes[type_a][6][1][1] = 163;
-    element_attributes[type_a][6][1][2] =   6;
-    element_attributes[type_a][6][1][3] =   2;
+    element_attributes[type_a][6][1][2] = 6;
+    element_attributes[type_a][6][1][3] = 2;
     element_attributes[type_a][7][1][1] = 169;
-    element_attributes[type_a][7][1][2] =  24;
-    element_attributes[type_a][7][1][3] =   3;
+    element_attributes[type_a][7][1][2] = 24;
+    element_attributes[type_a][7][1][3] = 3;
     element_attributes[type_a][7][2][1] = 193;
-    element_attributes[type_a][7][2][2] =  24;
-    element_attributes[type_a][7][2][3] =   3;
+    element_attributes[type_a][7][2][2] = 24;
+    element_attributes[type_a][7][2][3] = 3;
     element_attributes[type_a][7][3][1] = 217;
-    element_attributes[type_a][7][3][2] =  24;
-    element_attributes[type_a][7][3][3] =   3;
+    element_attributes[type_a][7][3][2] = 24;
+    element_attributes[type_a][7][3][3] = 3;
     element_attributes[type_a][7][4][1] = 241;
-    element_attributes[type_a][7][4][2] =  24;
-    element_attributes[type_a][7][4][3] =   3;
+    element_attributes[type_a][7][4][2] = 24;
+    element_attributes[type_a][7][4][3] = 3;
     element_attributes[type_a][7][5][1] = 265;
-    element_attributes[type_a][7][5][2] =  24;
-    element_attributes[type_a][7][5][3] =   3;
+    element_attributes[type_a][7][5][2] = 24;
+    element_attributes[type_a][7][5][3] = 3;
     element_attributes[type_a][7][6][1] = 289;
-    element_attributes[type_a][7][6][2] =  24;
-    element_attributes[type_a][7][6][3] =   3;
+    element_attributes[type_a][7][6][2] = 24;
+    element_attributes[type_a][7][6][3] = 3;
     element_attributes[type_a][7][7][1] = 313;
-    element_attributes[type_a][7][7][2] =  24;
-    element_attributes[type_a][7][7][3] =   3;
+    element_attributes[type_a][7][7][2] = 24;
+    element_attributes[type_a][7][7][3] = 3;
     element_attributes[type_a][7][8][1] = 337;
-    element_attributes[type_a][7][8][2] =  24;
-    element_attributes[type_a][7][8][3] =   3;
+    element_attributes[type_a][7][8][2] = 24;
+    element_attributes[type_a][7][8][3] = 3;
     element_attributes[type_a][7][9][1] = 361;
-    element_attributes[type_a][7][9][2] =  24;
-    element_attributes[type_a][7][9][3] =   3;
+    element_attributes[type_a][7][9][2] = 24;
+    element_attributes[type_a][7][9][3] = 3;
     element_attributes[type_a][7][10][1] = 385;
-    element_attributes[type_a][7][10][2] =  24;
-    element_attributes[type_a][7][10][3] =   3;
+    element_attributes[type_a][7][10][2] = 24;
+    element_attributes[type_a][7][10][3] = 3;
     element_attributes[type_a][7][11][1] = 409;
-    element_attributes[type_a][7][11][2] =  24;
-    element_attributes[type_a][7][11][3] =   3;
+    element_attributes[type_a][7][11][2] = 24;
+    element_attributes[type_a][7][11][3] = 3;
     element_attributes[type_a][7][12][1] = 433;
-    element_attributes[type_a][7][12][2] =  24;
-    element_attributes[type_a][7][12][3] =   3;
+    element_attributes[type_a][7][12][2] = 24;
+    element_attributes[type_a][7][12][3] = 3;
     element_attributes[type_a][7][13][1] = 457;
-    element_attributes[type_a][7][13][2] =  24;
-    element_attributes[type_a][7][13][3] =   3;
+    element_attributes[type_a][7][13][2] = 24;
+    element_attributes[type_a][7][13][3] = 3;
     element_attributes[type_a][7][14][1] = 481;
-    element_attributes[type_a][7][14][2] =  24;
-    element_attributes[type_a][7][14][3] =   3;
+    element_attributes[type_a][7][14][2] = 24;
+    element_attributes[type_a][7][14][3] = 3;
     element_attributes[type_a][7][15][1] = 505;
-    element_attributes[type_a][7][15][2] =  24;
-    element_attributes[type_a][7][15][3] =   3;
+    element_attributes[type_a][7][15][2] = 24;
+    element_attributes[type_a][7][15][3] = 3;
     element_attributes[type_a][8][1][1] = 529;
-    element_attributes[type_a][8][1][2] =   6;
-    element_attributes[type_a][8][1][3] =   2;
+    element_attributes[type_a][8][1][2] = 6;
+    element_attributes[type_a][8][1][3] = 2;
     element_attributes[type_a][9][1][1] = 535;
-    element_attributes[type_a][9][1][2] =   6;
-    element_attributes[type_a][9][1][3] =   2;
+    element_attributes[type_a][9][1][2] = 6;
+    element_attributes[type_a][9][1][3] = 2;
     element_attributes[type_a][10][1][1] = 541;
-    element_attributes[type_a][10][1][2] =   6;
-    element_attributes[type_a][10][1][3] =   2;
+    element_attributes[type_a][10][1][2] = 6;
+    element_attributes[type_a][10][1][3] = 2;
     element_attributes[type_a][11][1][1] = 547;
-    element_attributes[type_a][11][1][2] =  24;
-    element_attributes[type_a][11][1][3] =   3;
+    element_attributes[type_a][11][1][2] = 24;
+    element_attributes[type_a][11][1][3] = 3;
     element_attributes[type_a][11][2][1] = 571;
-    element_attributes[type_a][11][2][2] =  24;
-    element_attributes[type_a][11][2][3] =   3;
+    element_attributes[type_a][11][2][2] = 24;
+    element_attributes[type_a][11][2][3] = 3;
     element_attributes[type_a][11][3][1] = 595;
-    element_attributes[type_a][11][3][2] =  24;
-    element_attributes[type_a][11][3][3] =   3;
+    element_attributes[type_a][11][3][2] = 24;
+    element_attributes[type_a][11][3][3] = 3;
     element_attributes[type_a][11][4][1] = 619;
-    element_attributes[type_a][11][4][2] =  24;
-    element_attributes[type_a][11][4][3] =   3;
+    element_attributes[type_a][11][4][2] = 24;
+    element_attributes[type_a][11][4][3] = 3;
     element_attributes[type_a][11][5][1] = 643;
-    element_attributes[type_a][11][5][2] =  24;
-    element_attributes[type_a][11][5][3] =   3;
+    element_attributes[type_a][11][5][2] = 24;
+    element_attributes[type_a][11][5][3] = 3;
     element_attributes[type_a][11][6][1] = 667;
-    element_attributes[type_a][11][6][2] =  24;
-    element_attributes[type_a][11][6][3] =   3;
+    element_attributes[type_a][11][6][2] = 24;
+    element_attributes[type_a][11][6][3] = 3;
     element_attributes[type_a][11][7][1] = 691;
-    element_attributes[type_a][11][7][2] =  24;
-    element_attributes[type_a][11][7][3] =   3;
+    element_attributes[type_a][11][7][2] = 24;
+    element_attributes[type_a][11][7][3] = 3;
     element_attributes[type_a][11][8][1] = 715;
-    element_attributes[type_a][11][8][2] =  24;
-    element_attributes[type_a][11][8][3] =   3;
+    element_attributes[type_a][11][8][2] = 24;
+    element_attributes[type_a][11][8][3] = 3;
     element_attributes[type_a][12][1][1] = 739;
-    element_attributes[type_a][12][1][2] =  24;
-    element_attributes[type_a][12][1][3] =   3;
+    element_attributes[type_a][12][1][2] = 24;
+    element_attributes[type_a][12][1][3] = 3;
     element_attributes[type_a][12][2][1] = 763;
-    element_attributes[type_a][12][2][2] =  24;
-    element_attributes[type_a][12][2][3] =   3;
+    element_attributes[type_a][12][2][2] = 24;
+    element_attributes[type_a][12][2][3] = 3;
     element_attributes[type_a][13][1][1] = 787;
-    element_attributes[type_a][13][1][2] =  24;
-    element_attributes[type_a][13][1][3] =   3;
+    element_attributes[type_a][13][1][2] = 24;
+    element_attributes[type_a][13][1][3] = 3;
     element_attributes[type_a][14][1][1] = 811;
-    element_attributes[type_a][14][1][2] =   6;
-    element_attributes[type_a][14][1][3] =   2;
+    element_attributes[type_a][14][1][2] = 6;
+    element_attributes[type_a][14][1][3] = 2;
     element_attributes[type_a][15][1][1] = 817;
-    element_attributes[type_a][15][1][2] =  12;
-    element_attributes[type_a][15][1][3] =   3;
+    element_attributes[type_a][15][1][2] = 12;
+    element_attributes[type_a][15][1][3] = 3;
     element_attributes[type_a][15][2][1] = 829;
-    element_attributes[type_a][15][2][2] =  12;
-    element_attributes[type_a][15][2][3] =   3;
+    element_attributes[type_a][15][2][2] = 12;
+    element_attributes[type_a][15][2][3] = 3;
     element_attributes[type_a][15][3][1] = 841;
-    element_attributes[type_a][15][3][2] =  12;
-    element_attributes[type_a][15][3][3] =   3;
+    element_attributes[type_a][15][3][2] = 12;
+    element_attributes[type_a][15][3][3] = 3;
     element_attributes[type_a][16][1][1] = 853;
-    element_attributes[type_a][16][1][2] =   6;
-    element_attributes[type_a][16][1][3] =   2;
+    element_attributes[type_a][16][1][2] = 6;
+    element_attributes[type_a][16][1][3] = 2;
     element_attributes[type_a][16][2][1] = 859;
-    element_attributes[type_a][16][2][2] =   6;
-    element_attributes[type_a][16][2][3] =   2;
+    element_attributes[type_a][16][2][2] = 6;
+    element_attributes[type_a][16][2][3] = 2;
     element_attributes[type_a][17][1][1] = 865;
-    element_attributes[type_a][17][1][2] =   5;
-    element_attributes[type_a][17][1][3] =   2;
+    element_attributes[type_a][17][1][2] = 5;
+    element_attributes[type_a][17][1][3] = 2;
     element_attributes[type_a][18][1][1] = 870;
-    element_attributes[type_a][18][1][2] =   1;
-    element_attributes[type_a][18][1][3] =   2;
+    element_attributes[type_a][18][1][2] = 1;
+    element_attributes[type_a][18][1][3] = 2;
     element_attributes[type_a][19][1][1] = 871;
-    element_attributes[type_a][19][1][2] =   5;
-    element_attributes[type_a][19][1][3] =   2;
+    element_attributes[type_a][19][1][2] = 5;
+    element_attributes[type_a][19][1][3] = 2;
     element_attributes[type_a][20][1][1] = 876;
-    element_attributes[type_a][20][1][2] =   1;
-    element_attributes[type_a][20][1][3] =   2;
+    element_attributes[type_a][20][1][2] = 1;
+    element_attributes[type_a][20][1][3] = 2;
     element_attributes[type_a][21][1][1] = 877;
-    element_attributes[type_a][21][1][2] =   4;
-    element_attributes[type_a][21][1][3] =   2;
+    element_attributes[type_a][21][1][2] = 4;
+    element_attributes[type_a][21][1][3] = 2;
     element_attributes[type_a][22][1][1] = 881;
-    element_attributes[type_a][22][1][2] =   4;
-    element_attributes[type_a][22][1][3] =   2;
+    element_attributes[type_a][22][1][2] = 4;
+    element_attributes[type_a][22][1][3] = 2;
     element_attributes[type_a][23][1][1] = 885;
-    element_attributes[type_a][23][1][2] =   1;
-    element_attributes[type_a][23][1][3] =   1;
+    element_attributes[type_a][23][1][2] = 1;
+    element_attributes[type_a][23][1][3] = 1;
     element_attributes[type_a][24][1][1] = 886;
-    element_attributes[type_a][24][1][2] =   1;
-    element_attributes[type_a][24][1][3] =   2;
+    element_attributes[type_a][24][1][2] = 1;
+    element_attributes[type_a][24][1][3] = 2;
     element_attributes[type_a][25][1][1] = 887;
-    element_attributes[type_a][25][1][2] =   2;
-    element_attributes[type_a][25][1][3] =   2;
+    element_attributes[type_a][25][1][2] = 2;
+    element_attributes[type_a][25][1][3] = 2;
     element_attributes[type_a][26][1][1] = 889;
-    element_attributes[type_a][26][1][2] =   2;
-    element_attributes[type_a][26][1][3] =   2;
+    element_attributes[type_a][26][1][2] = 2;
+    element_attributes[type_a][26][1][3] = 2;
     element_attributes[type_a][27][1][1] = 891;
-    element_attributes[type_a][27][1][2] =   2;
-    element_attributes[type_a][27][1][3] =   2;
+    element_attributes[type_a][27][1][2] = 2;
+    element_attributes[type_a][27][1][3] = 2;
     element_attributes[type_a][28][1][1] = 893;
-    element_attributes[type_a][28][1][2] =   4;
-    element_attributes[type_a][28][1][3] =   2;
+    element_attributes[type_a][28][1][2] = 4;
+    element_attributes[type_a][28][1][3] = 2;
     element_attributes[type_a][29][1][1] = 897;
-    element_attributes[type_a][29][1][2] =   4;
-    element_attributes[type_a][29][1][3] =   2;
+    element_attributes[type_a][29][1][2] = 4;
+    element_attributes[type_a][29][1][3] = 2;
     element_attributes[type_a][30][1][1] = 901;
-    element_attributes[type_a][30][1][2] =   2;
-    element_attributes[type_a][30][1][3] =   2;
+    element_attributes[type_a][30][1][2] = 2;
+    element_attributes[type_a][30][1][3] = 2;
     element_attributes[type_a][30][2][1] = 903;
-    element_attributes[type_a][30][2][2] =   2;
-    element_attributes[type_a][30][2][3] =   2;
+    element_attributes[type_a][30][2][2] = 2;
+    element_attributes[type_a][30][2][3] = 2;
     element_attributes[type_a][30][3][1] = 905;
-    element_attributes[type_a][30][3][2] =   2;
-    element_attributes[type_a][30][3][3] =   2;
+    element_attributes[type_a][30][3][2] = 2;
+    element_attributes[type_a][30][3][3] = 2;
     element_attributes[type_a][30][4][1] = 907;
-    element_attributes[type_a][30][4][2] =   2;
-    element_attributes[type_a][30][4][3] =   2;
+    element_attributes[type_a][30][4][2] = 2;
+    element_attributes[type_a][30][4][3] = 2;
     element_attributes[type_a][31][1][1] = 909;
-    element_attributes[type_a][31][1][2] =   7;
-    element_attributes[type_a][31][1][3] =   3;
-    element_attributes[type_b][1][1][1] =   1;
-    element_attributes[type_b][1][1][2] =   6;
-    element_attributes[type_b][1][1][3] =   2;
-    element_attributes[type_b][1][2][1] =   7;
-    element_attributes[type_b][1][2][2] =   6;
-    element_attributes[type_b][1][2][3] =   2;
-    element_attributes[type_b][2][1][1] =  13;
-    element_attributes[type_b][2][1][2] =   6;
-    element_attributes[type_b][2][1][3] =   2;
-    element_attributes[type_b][2][2][1] =  19;
-    element_attributes[type_b][2][2][2] =   6;
-    element_attributes[type_b][2][2][3] =   2;
-    element_attributes[type_b][3][1][1] =  25;
-    element_attributes[type_b][3][1][2] =  24;
-    element_attributes[type_b][3][1][3] =   3;
-    element_attributes[type_b][3][2][1] =  49;
-    element_attributes[type_b][3][2][2] =  24;
-    element_attributes[type_b][3][2][3] =   3;
-    element_attributes[type_b][4][1][1] =  73;
-    element_attributes[type_b][4][1][2] =  24;
-    element_attributes[type_b][4][1][3] =   3;
-    element_attributes[type_b][5][1][1] =  97;
-    element_attributes[type_b][5][1][2] =  24;
-    element_attributes[type_b][5][1][3] =   3;
+    element_attributes[type_a][31][1][2] = 7;
+    element_attributes[type_a][31][1][3] = 3;
+    element_attributes[type_b][1][1][1] = 1;
+    element_attributes[type_b][1][1][2] = 6;
+    element_attributes[type_b][1][1][3] = 2;
+    element_attributes[type_b][1][2][1] = 7;
+    element_attributes[type_b][1][2][2] = 6;
+    element_attributes[type_b][1][2][3] = 2;
+    element_attributes[type_b][2][1][1] = 13;
+    element_attributes[type_b][2][1][2] = 6;
+    element_attributes[type_b][2][1][3] = 2;
+    element_attributes[type_b][2][2][1] = 19;
+    element_attributes[type_b][2][2][2] = 6;
+    element_attributes[type_b][2][2][3] = 2;
+    element_attributes[type_b][3][1][1] = 25;
+    element_attributes[type_b][3][1][2] = 24;
+    element_attributes[type_b][3][1][3] = 3;
+    element_attributes[type_b][3][2][1] = 49;
+    element_attributes[type_b][3][2][2] = 24;
+    element_attributes[type_b][3][2][3] = 3;
+    element_attributes[type_b][4][1][1] = 73;
+    element_attributes[type_b][4][1][2] = 24;
+    element_attributes[type_b][4][1][3] = 3;
+    element_attributes[type_b][5][1][1] = 97;
+    element_attributes[type_b][5][1][2] = 24;
+    element_attributes[type_b][5][1][3] = 3;
     element_attributes[type_b][5][2][1] = 121;
-    element_attributes[type_b][5][2][2] =  24;
-    element_attributes[type_b][5][2][3] =   3;
-    element_attributes[type_c][1][1][1] =   1;
-    element_attributes[type_c][1][1][2] =   6;
-    element_attributes[type_c][1][1][3] =   2;
-    element_attributes[type_c][2][1][1] =   7;
-    element_attributes[type_c][2][1][2] =   6;
-    element_attributes[type_c][2][1][3] =   2;
-    element_attributes[type_c][2][2][1] =  13;
-    element_attributes[type_c][2][2][2] =   6;
-    element_attributes[type_c][2][2][3] =   2;
-    element_attributes[type_c][2][3][1] =  19;
-    element_attributes[type_c][2][3][2] =   6;
-    element_attributes[type_c][2][3][3] =   2;
-    element_attributes[type_c][3][1][1] =  25;
-    element_attributes[type_c][3][1][2] =   6;
-    element_attributes[type_c][3][1][3] =   2;
-    element_attributes[type_c][4][1][1] =  31;
-    element_attributes[type_c][4][1][2] =   6;
-    element_attributes[type_c][4][1][3] =   2;
-    element_attributes[type_c][5][1][1] =  37;
-    element_attributes[type_c][5][1][2] =   6;
-    element_attributes[type_c][5][1][3] =   2;
-    element_attributes[type_c][5][2][1] =  43;
-    element_attributes[type_c][5][2][2] =   6;
-    element_attributes[type_c][5][2][3] =   2;
-    element_attributes[type_c][5][3][1] =  49;
-    element_attributes[type_c][5][3][2] =   6;
-    element_attributes[type_c][5][3][3] =   2;
-    element_attributes[type_c][6][1][1] =  55;
-    element_attributes[type_c][6][1][2] =   6;
-    element_attributes[type_c][6][1][3] =   2;
+    element_attributes[type_b][5][2][2] = 24;
+    element_attributes[type_b][5][2][3] = 3;
+    element_attributes[type_c][1][1][1] = 1;
+    element_attributes[type_c][1][1][2] = 6;
+    element_attributes[type_c][1][1][3] = 2;
+    element_attributes[type_c][2][1][1] = 7;
+    element_attributes[type_c][2][1][2] = 6;
+    element_attributes[type_c][2][1][3] = 2;
+    element_attributes[type_c][2][2][1] = 13;
+    element_attributes[type_c][2][2][2] = 6;
+    element_attributes[type_c][2][2][3] = 2;
+    element_attributes[type_c][2][3][1] = 19;
+    element_attributes[type_c][2][3][2] = 6;
+    element_attributes[type_c][2][3][3] = 2;
+    element_attributes[type_c][3][1][1] = 25;
+    element_attributes[type_c][3][1][2] = 6;
+    element_attributes[type_c][3][1][3] = 2;
+    element_attributes[type_c][4][1][1] = 31;
+    element_attributes[type_c][4][1][2] = 6;
+    element_attributes[type_c][4][1][3] = 2;
+    element_attributes[type_c][5][1][1] = 37;
+    element_attributes[type_c][5][1][2] = 6;
+    element_attributes[type_c][5][1][3] = 2;
+    element_attributes[type_c][5][2][1] = 43;
+    element_attributes[type_c][5][2][2] = 6;
+    element_attributes[type_c][5][2][3] = 2;
+    element_attributes[type_c][5][3][1] = 49;
+    element_attributes[type_c][5][3][2] = 6;
+    element_attributes[type_c][5][3][3] = 2;
+    element_attributes[type_c][6][1][1] = 55;
+    element_attributes[type_c][6][1][2] = 6;
+    element_attributes[type_c][6][1][3] = 2;
 
     /*
      * sub_element_counts[][]
@@ -1908,48 +1919,48 @@ main(int ac, char *av[])
      * record_type=2 are 'b' type records
      * record_type=3 are 'c' type records
      */
-    sub_element_counts[type_a][1] =  12;
-    sub_element_counts[type_a][2] =   1;
-    sub_element_counts[type_a][3] =   1;
-    sub_element_counts[type_a][4] =   1;
-    sub_element_counts[type_a][5] =   1;
-    sub_element_counts[type_a][6] =   1;
-    sub_element_counts[type_a][7] =  15;
-    sub_element_counts[type_a][8] =   1;
-    sub_element_counts[type_a][9] =   1;
-    sub_element_counts[type_a][10] =   1;
-    sub_element_counts[type_a][11] =   8;
-    sub_element_counts[type_a][12] =   2;
-    sub_element_counts[type_a][13] =   1;
-    sub_element_counts[type_a][14] =   1;
-    sub_element_counts[type_a][15] =   3;
-    sub_element_counts[type_a][16] =   2;
-    sub_element_counts[type_a][17] =   1;
-    sub_element_counts[type_a][18] =   1;
-    sub_element_counts[type_a][19] =   1;
-    sub_element_counts[type_a][20] =   1;
-    sub_element_counts[type_a][21] =   1;
-    sub_element_counts[type_a][22] =   1;
-    sub_element_counts[type_a][23] =   1;
-    sub_element_counts[type_a][24] =   1;
-    sub_element_counts[type_a][25] =   1;
-    sub_element_counts[type_a][26] =   1;
-    sub_element_counts[type_a][27] =   1;
-    sub_element_counts[type_a][28] =   1;
-    sub_element_counts[type_a][29] =   1;
-    sub_element_counts[type_a][30] =   4;
-    sub_element_counts[type_a][31] =   1;
-    sub_element_counts[type_b][1] =  2;
-    sub_element_counts[type_b][2] =  2;
-    sub_element_counts[type_b][3] =  2;
-    sub_element_counts[type_b][4] =  1;
-    sub_element_counts[type_b][5] =  2;
-    sub_element_counts[type_c][1] =  1;
-    sub_element_counts[type_c][2] =  3;
-    sub_element_counts[type_c][3] =  1;
-    sub_element_counts[type_c][4] =  1;
-    sub_element_counts[type_c][5] =  3;
-    sub_element_counts[type_c][6] =  1;
+    sub_element_counts[type_a][1] = 12;
+    sub_element_counts[type_a][2] = 1;
+    sub_element_counts[type_a][3] = 1;
+    sub_element_counts[type_a][4] = 1;
+    sub_element_counts[type_a][5] = 1;
+    sub_element_counts[type_a][6] = 1;
+    sub_element_counts[type_a][7] = 15;
+    sub_element_counts[type_a][8] = 1;
+    sub_element_counts[type_a][9] = 1;
+    sub_element_counts[type_a][10] = 1;
+    sub_element_counts[type_a][11] = 8;
+    sub_element_counts[type_a][12] = 2;
+    sub_element_counts[type_a][13] = 1;
+    sub_element_counts[type_a][14] = 1;
+    sub_element_counts[type_a][15] = 3;
+    sub_element_counts[type_a][16] = 2;
+    sub_element_counts[type_a][17] = 1;
+    sub_element_counts[type_a][18] = 1;
+    sub_element_counts[type_a][19] = 1;
+    sub_element_counts[type_a][20] = 1;
+    sub_element_counts[type_a][21] = 1;
+    sub_element_counts[type_a][22] = 1;
+    sub_element_counts[type_a][23] = 1;
+    sub_element_counts[type_a][24] = 1;
+    sub_element_counts[type_a][25] = 1;
+    sub_element_counts[type_a][26] = 1;
+    sub_element_counts[type_a][27] = 1;
+    sub_element_counts[type_a][28] = 1;
+    sub_element_counts[type_a][29] = 1;
+    sub_element_counts[type_a][30] = 4;
+    sub_element_counts[type_a][31] = 1;
+    sub_element_counts[type_b][1] = 2;
+    sub_element_counts[type_b][2] = 2;
+    sub_element_counts[type_b][3] = 2;
+    sub_element_counts[type_b][4] = 1;
+    sub_element_counts[type_b][5] = 2;
+    sub_element_counts[type_c][1] = 1;
+    sub_element_counts[type_c][2] = 3;
+    sub_element_counts[type_c][3] = 1;
+    sub_element_counts[type_c][4] = 1;
+    sub_element_counts[type_c][5] = 3;
+    sub_element_counts[type_c][6] = 1;
 
 
     /*
@@ -1973,36 +1984,36 @@ main(int ac, char *av[])
      * record_type=3 are 'c' type records
      * index = arbitrary number from 1 to the number of entries in the list
      */
-    sub_elements_required_list[type_a][1][1] =  8;
-    sub_elements_required_list[type_a][1][2] =  1;
-    sub_elements_required_list[type_a][2][1] =  9;
-    sub_elements_required_list[type_a][2][2] =  1;
+    sub_elements_required_list[type_a][1][1] = 8;
+    sub_elements_required_list[type_a][1][2] = 1;
+    sub_elements_required_list[type_a][2][1] = 9;
+    sub_elements_required_list[type_a][2][2] = 1;
     sub_elements_required_list[type_a][3][1] = 10;
-    sub_elements_required_list[type_a][3][2] =  1;
+    sub_elements_required_list[type_a][3][2] = 1;
     sub_elements_required_list[type_a][4][1] = 12;
-    sub_elements_required_list[type_a][4][2] =  2;
+    sub_elements_required_list[type_a][4][2] = 2;
     sub_elements_required_list[type_a][5][1] = 15;
-    sub_elements_required_list[type_a][5][2] =  1;
+    sub_elements_required_list[type_a][5][2] = 1;
     sub_elements_required_list[type_a][6][1] = 15;
-    sub_elements_required_list[type_a][6][2] =  2;
+    sub_elements_required_list[type_a][6][2] = 2;
     sub_elements_required_list[type_a][7][1] = 15;
-    sub_elements_required_list[type_a][7][2] =  3;
+    sub_elements_required_list[type_a][7][2] = 3;
     sub_elements_required_list[type_a][8][1] = 16;
-    sub_elements_required_list[type_a][8][2] =  1;
+    sub_elements_required_list[type_a][8][2] = 1;
     sub_elements_required_list[type_a][9][1] = 16;
-    sub_elements_required_list[type_a][9][2] =  2;
-    sub_elements_required_list[type_b][1][1] =  1;
-    sub_elements_required_list[type_b][1][2] =  1;
-    sub_elements_required_list[type_b][2][1] =  1;
-    sub_elements_required_list[type_b][2][2] =  2;
-    sub_elements_required_list[type_b][3][1] =  2;
-    sub_elements_required_list[type_b][3][2] =  1;
-    sub_elements_required_list[type_b][4][1] =  2;
-    sub_elements_required_list[type_b][4][2] =  2;
-    sub_elements_required_list[type_b][5][1] =  4;
-    sub_elements_required_list[type_b][5][2] =  1;
-    sub_elements_required_list[type_b][6][1] =  5;
-    sub_elements_required_list[type_b][6][2] =  2;
+    sub_elements_required_list[type_a][9][2] = 2;
+    sub_elements_required_list[type_b][1][1] = 1;
+    sub_elements_required_list[type_b][1][2] = 1;
+    sub_elements_required_list[type_b][2][1] = 1;
+    sub_elements_required_list[type_b][2][2] = 2;
+    sub_elements_required_list[type_b][3][1] = 2;
+    sub_elements_required_list[type_b][3][2] = 1;
+    sub_elements_required_list[type_b][4][1] = 2;
+    sub_elements_required_list[type_b][4][2] = 2;
+    sub_elements_required_list[type_b][5][1] = 4;
+    sub_elements_required_list[type_b][5][2] = 1;
+    sub_elements_required_list[type_b][6][1] = 5;
+    sub_elements_required_list[type_b][6][2] = 2;
 
     /*
      * conversion_factor_to_milimeters[]
@@ -2011,22 +2022,21 @@ main(int ac, char *av[])
      * 1, 2 used for ground units and elevation units 
      */
     conversion_factor_to_milimeters[0] = 6187944187.412890655;
-    conversion_factor_to_milimeters[1] =        304.8;
-    conversion_factor_to_milimeters[2] =       1000.0;
-    conversion_factor_to_milimeters[3] =      30000.0;
-
+    conversion_factor_to_milimeters[1] = 304.8;
+    conversion_factor_to_milimeters[2] = 1000.0;
+    conversion_factor_to_milimeters[3] = 30000.0;
 
     progname = *av;
 
     double raw_dem_2_raw_dsp_manual_scale_factor = 0; /* user specified raw dem-to-dsp scale factor */
     long int manual_dem_max_raw_elevation = 0;          /* user specified max raw elevation */
-    double manual_dem_max_real_elevation  = 0;        /* user specified max real elevation in meters */
+    double manual_dem_max_real_elevation = 0;        /* user specified max real elevation in meters */
     long int xdim = 0;                                  /* x dimension of dem (w cells) */
     long int ydim = 0;                                  /* y dimension of dem (n cells) */
-    double dsp_elevation  = 0;                        /* datum elevation in milimeters (dsp V z coordinate) */
-    double x_cell_size  = 0;                          /* x scaling factor in milimeters */
+    double dsp_elevation = 0;                        /* datum elevation in milimeters (dsp V z coordinate) */
+    double x_cell_size = 0;                          /* x scaling factor in milimeters */
     double y_cell_size = 0;                           /* y scaling factor in milimeters */
-    double unit_elevation  = 0;                       /* z scaling factor in milimeters */
+    double unit_elevation = 0;                       /* z scaling factor in milimeters */
     char *tmp_ptr = '\0';
     int string_length = 0;
 
