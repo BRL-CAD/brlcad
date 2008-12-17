@@ -5554,6 +5554,15 @@ go_draw_faceplate(struct ged_dm_view *gdvp)
 static void
 go_refresh_view(struct ged_dm_view *gdvp)
 {
+    int restore_zbuffer = 0;
+
+    /* Turn off the zbuffer if the framebuffer is active AND the zbuffer is on. */
+    if (gdvp->gdv_fbs.fbs_mode != GED_OBJ_FB_MODE_OFF &&
+	gdvp->gdv_dmp->dm_zbuffer) {
+	DM_SET_ZBUFFER(gdvp->gdv_dmp, 0);
+	restore_zbuffer = 1;
+    }
+
     DM_DRAW_BEGIN(gdvp->gdv_dmp);
 
     if (gdvp->gdv_fbs.fbs_mode == GED_OBJ_FB_MODE_OVERLAY) {
@@ -5619,6 +5628,10 @@ go_refresh_view(struct ged_dm_view *gdvp)
     }
 
     DM_DRAW_END(gdvp->gdv_dmp);
+
+    if (restore_zbuffer) {
+	DM_SET_ZBUFFER(gdvp->gdv_dmp, 1);
+    }
 }
 
 static void
