@@ -21,6 +21,46 @@
  *
  * USGS ASCII DEM file to dsp primitive converter 
  *
+ * There are several global element arrays that contain information
+ * about the structure of the DEM-G file, record types 'A', 'B' and
+ * 'C'.  Data is loaded into these arrays during main().
+ * 
+ * An 'element' is a 'data element' as defined in the DEM-G file
+ * specification.
+ *
+ * A 'sub-element' is a field of data within an 'element'.
+ *
+ * An 'element' will contain at least one 'sub-element'.  The '?'
+ * within these array descriptions can be replaced with 'a', 'b' or
+ * 'c' to indicate a specific array which corresponds to a specific
+ * record type.
+ * 
+ * ARRAY DESCRIPTION: record_?_element_size[index1][index2][index3]
+ * index1 = element number
+ * index2 = sub-element number within element
+ * index3 = value number
+ * Three values are stored for each sub-element...
+ *
+ * when index3=1, value = start character of sub-element within DEM-G
+ * file 1024 character A/B/C record.
+ *
+ * when index3=2, value = number of characters in sub-element.
+ *
+ * when index3=3, value = datatype of sub-element (1=alpha, 2=signed
+ * long integer, 3=double precision float).
+ * 
+ * ARRAY DESCRIPTION: record_?_sub_elements[index]
+ * index = element number
+ * value = number of sub-elements per element
+ *
+ * This information allows the code to loop through the contents of
+ * the array 'record_?_element_size' since each element can contain a
+ * different number of sub-elements.
+ * 
+ * No values are stored with an index of zero within these arrays,
+ * therefore the size of each dimension is increased by one to
+ * accommodate this.
+ *
  */
 
 #include "common.h"
@@ -65,44 +105,6 @@ typedef enum _sed {
 } sub_element_datatype;
 
 
-/**
- * The arrays documented in this comment block contain information
- * about the structure of the DEM-G file, record types 'A', 'B' and
- * 'C'. Data is loaded into these arrays after they are declared.
- * 
- * In the following descriptions, an 'element' is a 'data element' as
- * defined in the DEM-G file specification. A 'sub-element' is a field
- * of data within an 'element'.  An 'element' will contain at least
- * one 'sub-element'. The '?' within these array descriptions can be
- * replaced with 'a', 'b' or 'c' to indicate a specific array which
- * corresponds to a specific record type.
- * 
- * ARRAY DESCRIPTION: record_?_element_size[index1][index2][index3]
- * index1 = element number
- * index2 = sub-element number within element
- * index3 = value number
- * Three values are stored for each sub-element...
- *
- * when index3=1, value = start character of sub-element within DEM-G
- * file 1024 character A/B/C record.
- *
- * when index3=2, value = number of characters in sub-element.
- *
- * when index3=3, value = datatype of sub-element (1=alpha, 2=signed
- * long integer, 3=double precision float).
- * 
- * ARRAY DESCRIPTION: record_?_sub_elements[index]
- * index = element number
- * value = number of sub-elements per element
- *
- * This information allows the code to loop through the contents of
- * the array 'record_?_element_size' since each element can contain a
- * different number of sub-elements.
- * 
- * No values are stored with index 0 within these arrays, therefore
- * the size of each dimension is increased by 1 "one" to accomidate
- * this.
- */
 #define A_ROWS 32      /* DEM-G file type 'A' record, number of elements.                        */
 #define A_COLS 16      /* DEM-G file type 'A' record, max number of sub-elements per element.    */
 #define A_VALS 4       /* DEM-G file type 'A' record, number of values to store per sub-element. */
@@ -116,8 +118,6 @@ int sub_elements_required_list[4][A_ROWS][3];
 double conversion_factor_to_milimeters[4];
 
 /**
- * MAX_STRING_LENGTH DESCRIPTION
- *
  * The size of the largest string needed to contain the widest ascii
  * sub-element field as defined in the DEM-G file specification for
  * record types 'A', 'B' and 'C'.  To this size add '4' to account for
@@ -127,10 +127,7 @@ double conversion_factor_to_milimeters[4];
  */
 #define MAX_STRING_LENGTH 45
 
-
 /**
- * ResultStruct DESCRIPTION
- *
  * This type defines the structure which contains the input & output
  * parameters passed to & from the function 'read_element'.
  */
@@ -268,12 +265,13 @@ void remove_whitespace(char *input_string)
 	return;
     }
 
-    /* If found_start is true, check for trailing whitespace */
-    /* Find last character and set pointer lastp to next */
-    /* character after, i.e. where null would be. */
-    /* There as at least one non-space character in this string */
-    /* therefore will not need to deal with an empty string */
-    /* condition in the loop looking for the string end. */
+    /* If found_start is true, check for trailing whitespace.  Find
+     * last character and set pointer lastp to next character after,
+     * i.e. where null would be.  There as at least one non-space
+     * character in this string therefore will not need to deal with
+     * an empty string condition in the loop looking for the string
+     * end.
+     */
     found_end = false;
     idx = lastp - 1;
     while ((found_end == false) && (idx >= firstp)) {
@@ -285,8 +283,9 @@ void remove_whitespace(char *input_string)
 	idx--;
     }
 
-    /* Test if characters in string need to be shifted left. */
-    /* and do nothing more. */
+    /* Test if characters in string need to be shifted left and then
+     * do nothing more.
+     */
     if (firstp > input_string) {
 	/* Execute if need to shift left, this would happen only */
 	/* if input_string contained pre whitspace. */
@@ -302,10 +301,9 @@ void remove_whitespace(char *input_string)
     lastp[0] = '\0';
 }
 
-/*
- * ----------------------------------------------------------------------------
+
+/**
  * retrieve the value from element, sub_element of record a
- * ----------------------------------------------------------------------------
  */
 int read_element(ResultStruct *io_struct)
 {
@@ -362,7 +360,7 @@ int read_element(ResultStruct *io_struct)
         }
     }
 
-/* strncpy(tmp_str, &buf[element_attributes[record_type][element][sub_element][1]-1], element_attributes[record_type][element][sub_element][2]); */  
+    /* strncpy(tmp_str, &buf[element_attributes[record_type][element][sub_element][1]-1], element_attributes[record_type][element][sub_element][2]); */  
 
     /* in bu_strlcpy must include in the 3rd parameter (i.e. count or size) one extra character to account for string terminator */
 
@@ -370,7 +368,9 @@ int read_element(ResultStruct *io_struct)
 
     tmp_str[field_width] = '\0';
 
-    /* removes pre & post whitespace, if all whitespace then returns empty string */
+    /* removes pre & post whitespace, if all whitespace then returns
+     * empty string
+     */
     remove_whitespace(tmp_str); 
 
     if (strlen(tmp_str) == 0) { 
@@ -391,6 +391,7 @@ int read_element(ResultStruct *io_struct)
 	bu_strlcpy((*io_struct).out_alpha, tmp_str, strlen(tmp_str)+1); 
 	status = BRLCAD_OK;
     }
+
     /*
      * --------------------------------------------------------------------
      * process integers
@@ -451,11 +452,13 @@ int read_element(ResultStruct *io_struct)
     return (status);
 }
 
+
 int
 validate_dem_record(char *buf, bool create_log, logical_record_type record_type)
 {
-    /* uses global arrays 'sub_element_counts', 'element_counts', 'record_type_names' */
-    /* and 'sub_elements_required_list_counts' */
+    /* uses global arrays 'sub_element_counts', 'element_counts',
+     * 'record_type_names' and 'sub_elements_required_list_counts'
+     */
     ResultStruct my_out2;
     ResultStruct *my_out_ptr2;
     int status = BRLCAD_ERROR;
@@ -465,8 +468,9 @@ validate_dem_record(char *buf, bool create_log, logical_record_type record_type)
 
     my_out_ptr2 = &my_out2;
 
-    /* Loop through all elements and sub_elements to be sure */
-    /* there are no errors trying to read any of the data. */
+    /* Loop through all elements and sub_elements to be sure there are
+     * no errors trying to read any of the data.
+     */
     for (element_number = 1; element_number <= element_counts[record_type]; element_number++) {
         for (sub_element_number = 1; sub_element_number <= sub_element_counts[record_type][element_number]; sub_element_number++) {
             (*my_out_ptr2).in_buffer = buf;
@@ -484,9 +488,10 @@ validate_dem_record(char *buf, bool create_log, logical_record_type record_type)
         }
     }
 
-    /* Loop through a list of element sub_elements that must be defined. */
-    /* No test for read failure within this loop since this is expected to */
-    /* already have been tested. */
+    /* Loop through a list of element sub_elements that must be
+     * defined.  No test for read failure within this loop since this
+     * is expected to already have been tested.
+     */
     for (idx = 1; idx <= sub_elements_required_list_counts[record_type]; idx++) {
         (*my_out_ptr2).in_buffer = buf;
         (*my_out_ptr2).in_record_type = record_type;
@@ -771,9 +776,12 @@ validate_dem_record(char *buf, bool create_log, logical_record_type record_type)
     return(status);
 }
 
-/* the output of this function is to decide if the user input */
-/* scale factor should be used or not and to warn the user of */
-/* valid scale factors which have side effects on the data */
+
+/**
+ * the output of this function is to decide if the user input scale
+ * factor should be used or not and to warn the user of valid scale
+ * factors which have side effects on the data
+ */
 int process_manual_scale_factor(
     double *in_raw_dem_2_raw_dsp_auto_scale_factor_ptr,
     double *in_raw_dem_2_raw_dsp_manual_scale_factor_ptr,
@@ -849,9 +857,11 @@ int process_manual_scale_factor(
 }
 
 
-/* the output of this function is to decide if the user input */
-/* 'dem max raw elevation' should be used or not and to warn the */
-/* user of valid max elevations which have side effects on the data */
+/**
+ * the output of this function is to decide if the user input 'dem max
+ * raw elevation' should be used or not and to warn the user of valid
+ * max elevations which have side effects on the data
+ */
 int process_manual_dem_max_raw_elevation(
     double *out_raw_dem_2_raw_dsp_scale_factor_ptr,
     double *in_raw_dem_2_raw_dsp_auto_scale_factor_ptr,
@@ -938,9 +948,11 @@ int process_manual_dem_max_raw_elevation(
 }
 
 
-/* the output of this function is to decide if the user input */
-/* 'dem max real elevation' should be used or not and to warn the */
-/* user of valid max elevations which have side effects on the data */
+/**
+ * the output of this function is to decide if the user input 'dem max
+ * real elevation' should be used or not and to warn the user of valid
+ * max elevations which have side effects on the data.
+ */
 int process_manual_dem_max_real_elevation(
     double *out_raw_dem_2_raw_dsp_scale_factor_ptr,
     double *in_raw_dem_2_raw_dsp_auto_scale_factor_ptr,
@@ -1004,18 +1016,17 @@ int process_manual_dem_max_real_elevation(
 
 int
 read_dem(
-    char *in_input_filename,                        /* dem input file path and file name */
-    double *in_raw_dem_2_raw_dsp_manual_scale_factor, /* user specified raw dem-to-dsp scale factor */
-    long int *in_manual_dem_max_raw_elevation,          /* user specified max raw elevation */
-    double *in_manual_dem_max_real_elevation,         /* user specified max real elevation in meters */
-    char *in_temp_filename,                         /* temp file path and file name */
-    long int *out_xdim,                                 /* x dimension of dem (w cells) */
-    long int *out_ydim,                                 /* y dimension of dem (n cells) */
-    double *out_dsp_elevation,                        /* datum elevation in milimeters (dsp V z coordinate) */
-    double *out_x_cell_size,                          /* x scaling factor in milimeters */
-    double *out_y_cell_size,                          /* y scaling factor in milimeters */
-    double *out_unit_elevation)                       /* z scaling factor in milimeters */
- 
+    char *in_input_filename,                           /* dem input file path and file name */
+    double *in_raw_dem_2_raw_dsp_manual_scale_factor,  /* user specified raw dem-to-dsp scale factor */
+    long int *in_manual_dem_max_raw_elevation,         /* user specified max raw elevation */
+    double *in_manual_dem_max_real_elevation,          /* user specified max real elevation in meters */
+    char *in_temp_filename,                            /* temp file path and file name */
+    long int *out_xdim,                                /* x dimension of dem (w cells) */
+    long int *out_ydim,                                /* y dimension of dem (n cells) */
+    double *out_dsp_elevation,                         /* datum elevation in milimeters (dsp V z coordinate) */
+    double *out_x_cell_size,                           /* x scaling factor in milimeters */
+    double *out_y_cell_size,                           /* y scaling factor in milimeters */
+    double *out_unit_elevation)                        /* z scaling factor in milimeters */
 {
     int status = BRLCAD_ERROR;
     FILE *fp;
@@ -1067,12 +1078,14 @@ read_dem(
         return(BRLCAD_ERROR);
     }
 
-    /* Reads 1st 1024 character block from dem-g file */
-    /* this block contains the record 'a' data. */
+    /* Reads 1st 1024 character block from dem-g file; this block
+     * contains the record 'a' data.
+     */
     fread(buf, sizeof(buf[0]), sizeof(buf)/sizeof(buf[0]), fp);
 
-    /* Validates all 'A' record sub_elements can be read */
-    /* and that all required sub_elements contain values. */
+    /* Validates all 'A' record sub_elements can be read and that all
+     * required sub_elements contain values.
+     */
     if (validate_dem_record(buf, true, type_a) == BRLCAD_ERROR) {
         bu_log("The DEM file did not validate, failed on logical record type 'A'.\n");
         fclose(fp);
@@ -1124,9 +1137,9 @@ read_dem(
         bu_log("ground units in arc-seconds, unit conversion assumes 1 arc-second = 30 meters\n");
     }
     
-    /* Read x spatial resolution from 'a' record */
-    /* The x spatial resolution is the x cell size */
-    /* of the dsp primative. */
+    /* Read x spatial resolution from 'a' record. The x spatial
+     * resolution is the x cell size of the dsp primative.
+     */
     (*my_out_ptr).in_buffer = buf;
     (*my_out_ptr).in_record_type = type_a;
     (*my_out_ptr).in_element_number = 15;
@@ -1135,9 +1148,9 @@ read_dem(
     *out_x_cell_size = (*my_out_ptr).out_double * conversion_factor_to_milimeters[ground_units];
     bu_log("dsp x cell size (mm): %g\n", *out_x_cell_size);
 
-    /* Read y spatial resolution from 'a' record */
-    /* The y spatial resolution is the y cell size */
-    /* of the dsp primative. */
+    /* Read y spatial resolution from 'a' record.  The y spatial
+     * resolution is the y cell size of the dsp primative.
+     */
     (*my_out_ptr).in_buffer = buf;
     (*my_out_ptr).in_record_type = type_a;
     (*my_out_ptr).in_element_number = 15;
@@ -1146,9 +1159,9 @@ read_dem(
     *out_y_cell_size = (*my_out_ptr).out_double * conversion_factor_to_milimeters[ground_units];
     bu_log("dsp y cell size (mm): %g\n", *out_y_cell_size);
 
-    /* Read z spatial resolution from 'a' record. */
-    /* The z spatial resolution is the unit elevation */
-    /* of the dsp primative. */
+    /* Read z spatial resolution from 'a' record.  The z spatial
+     * resolution is the unit elevation of the dsp primative.
+     */
     (*my_out_ptr).in_buffer = buf;
     (*my_out_ptr).in_record_type = type_a;
     (*my_out_ptr).in_element_number = 15;
@@ -1157,9 +1170,10 @@ read_dem(
     *out_unit_elevation = (*my_out_ptr).out_double * conversion_factor_to_milimeters[elevation_units];
     bu_log("dsp unit elevation (mm): %g\n", *out_unit_elevation);
 
-    /* read elevation max from 'a' record */
-    /* this value is the true max elevation adjusted for all factors and */
-    /* is reported in the 'a' record */
+    /* read elevation max from 'a' record.  this value is the true max
+     * elevation adjusted for all factors and is reported in the 'a'
+     * record.
+     */
     (*my_out_ptr).in_buffer = buf;
     (*my_out_ptr).in_record_type = type_a;
     (*my_out_ptr).in_element_number = 12;
@@ -1176,8 +1190,9 @@ read_dem(
         /* this block contains the record 'b' header and data. */
         fread(buf, sizeof(buf[0]), sizeof(buf)/sizeof(buf[0]), fp);
 
-        /* Validates all 'B' record header sub_elements can be */
-        /* read and all required sub_elements contain values. */
+        /* Validates all 'B' record header sub_elements can be read
+         * and all required sub_elements contain values.
+	 */
         if (validate_dem_record(buf, true, type_b) == BRLCAD_ERROR) {
             bu_log("The DEM file did not validate, failed on logical record type 'B' number '%ld'.\n", curr_b_record);
             fclose(fp);
@@ -1185,11 +1200,12 @@ read_dem(
             return(BRLCAD_ERROR);
         }
 
-        /* Saves the number of elevations in the previous 'b' record */
+        /* Saves the number of elevations in the previous b record */
         tot_elevations_in_previous_b_record = tot_elevations_in_curr_b_record;
 
-        /* Read total elevations in current 'b' record from the */
-        /* 'b' record header currently in the buffer. */
+        /* Read total elevations in current 'b' record from the 'b'
+         * record header currently in the buffer.
+	 */
         (*my_out_ptr).in_buffer = buf;
         (*my_out_ptr).in_record_type = type_b;
         (*my_out_ptr).in_element_number = 2;
@@ -1200,8 +1216,9 @@ read_dem(
         /* Saves the datum elevation from the previous 'b' record */
         datum_elevation_in_previous_b_record = datum_elevation_in_curr_b_record;
 
-        /* Read datum elevation in current 'b' record from the */
-        /* 'b' record header currently in the buffer. */
+        /* Read datum elevation in current 'b' record from the 'b'
+	 * record header currently in the buffer.
+	 */
         (*my_out_ptr).in_buffer = buf;
         (*my_out_ptr).in_record_type = type_b;
         (*my_out_ptr).in_element_number = 4;
@@ -1571,8 +1588,8 @@ int
 create_model(
     char *in_dsp_output_filename,    /* dsp output file path and file name */
     char *in_model_output_filename,  /* model output file path and file name */
-    long int *in_xdim,        /* x dimension of dem (w cells) */
-    long int *in_ydim,        /* y dimension of dem (n cells) */
+    long int *in_xdim,               /* x dimension of dem (w cells) */
+    long int *in_ydim,               /* y dimension of dem (n cells) */
     double *in_dsp_elevation,        /* datum elevation in milimeters (dsp V z coordinate) */
     double *in_x_cell_size,          /* x scaling factor in milimeters */
     double *in_y_cell_size,          /* y scaling factor in milimeters */
@@ -2035,15 +2052,15 @@ main(int ac, char *av[])
 
     progname = *av;
 
-    double raw_dem_2_raw_dsp_manual_scale_factor = 0; /* user specified raw dem-to-dsp scale factor */
-    long int manual_dem_max_raw_elevation = 0;          /* user specified max raw elevation */
-    double manual_dem_max_real_elevation = 0;        /* user specified max real elevation in meters */
-    long int xdim = 0;                                  /* x dimension of dem (w cells) */
-    long int ydim = 0;                                  /* y dimension of dem (n cells) */
-    double dsp_elevation = 0;                        /* datum elevation in milimeters (dsp V z coordinate) */
-    double x_cell_size = 0;                          /* x scaling factor in milimeters */
-    double y_cell_size = 0;                           /* y scaling factor in milimeters */
-    double unit_elevation = 0;                       /* z scaling factor in milimeters */
+    double raw_dem_2_raw_dsp_manual_scale_factor = 0;  /* user specified raw dem-to-dsp scale factor */
+    long int manual_dem_max_raw_elevation = 0;         /* user specified max raw elevation */
+    double manual_dem_max_real_elevation = 0;          /* user specified max real elevation in meters */
+    long int xdim = 0;                                 /* x dimension of dem (w cells) */
+    long int ydim = 0;                                 /* y dimension of dem (n cells) */
+    double dsp_elevation = 0;                          /* datum elevation in milimeters (dsp V z coordinate) */
+    double x_cell_size = 0;                            /* x scaling factor in milimeters */
+    double y_cell_size = 0;                            /* y scaling factor in milimeters */
+    double unit_elevation = 0;                         /* z scaling factor in milimeters */
     char *tmp_ptr = '\0';
     int string_length = 0;
 
