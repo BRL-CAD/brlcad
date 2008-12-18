@@ -451,7 +451,6 @@ static char *p_extrude[] = {
     "Enter Y: ",
     "Enter Z: ",
     "Enter name of sketch: ",
-    "Enter K: ",
     NULL
 };
 
@@ -2157,7 +2156,7 @@ extrude_in(struct ged *gedp, const char **cmd_argvs, struct rt_db_internal *inte
 	eip->v_vec[i] = atof(cmd_argvs[12+i]) * gedp->ged_wdbp->dbip->dbi_local2base;
     }
     eip->sketch_name = bu_strdup(cmd_argvs[15]);
-    eip->keypoint = atoi(cmd_argvs[16]);
+    /* eip->keypoint = atoi(cmd_argvs[16]); */
 
     if ((dp=db_lookup(gedp->ged_wdbp->dbip, eip->sketch_name, LOOKUP_NOISY)) == DIR_NULL) {
 	bu_vls_printf(&gedp->ged_result_str, "Cannot find sketch (%s) for extrusion (%s)\n",
@@ -2929,7 +2928,7 @@ ged_in(struct ged *gedp, int argc, const char *argv[])
 	    fn_in = binunif_in;
 	}
     } else if (strcmp(argv[2], "extrude") == 0) {
-	nvals = 4*3 + 2;
+	nvals = 4*3 + 1;
 	menu = p_extrude;
 	fn_in = extrude_in;
     } else if (strcmp(argv[2], "revolve") == 0) {

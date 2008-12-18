@@ -468,7 +468,6 @@ char *p_extrude[] = {
     "Enter Y: ",
     "Enter Z: ",
     "Enter name of sketch: ",
-    "Enter K: ",
     NULL
 };
 
@@ -919,7 +918,7 @@ f_in(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	    dont_draw = 1;
 	}
     } else if (strcmp(argv[2], "extrude") == 0) {
-	nvals = 4*3 + 2;
+	nvals = 4*3 + 1;
 	menu = p_extrude;
 	fn_in = extrude_in;
     } else if (strcmp(argv[2], "revolve") == 0) {
@@ -2716,7 +2715,6 @@ extrude_in(char **cmd_argvs, struct rt_db_internal *intern)
 	eip->v_vec[i] = atof(cmd_argvs[12+i]) * local2base;
     }
     eip->sketch_name = bu_strdup(cmd_argvs[15]);
-    eip->keypoint = atoi(cmd_argvs[16]);
 
     if ((dp=db_lookup(dbip, eip->sketch_name, LOOKUP_NOISY)) == DIR_NULL) {
 	Tcl_AppendResult(interp, "Cannot find sketch (", eip->sketch_name,

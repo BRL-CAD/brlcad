@@ -463,9 +463,8 @@ struct rt_extrude_internal
     vect_t		h;	/**< @brief  extrusion vector, may not be in (u_vec X v_vec) plane */
     vect_t		u_vec;	/**< @brief  vector in U parameter direction */
     vect_t		v_vec;	/**< @brief  vector in V parameter direction */
-    int		keypoint;	/**< @brief  index of keypoint vertex */
-    char		*sketch_name;	/**< @brief  name of sketch object that defines
-					 * the curve to be extruded */
+    int			keypoint;	/**< @brief  DEPRECATED (UNUSED): index of keypoint vertex */
+    char		*sketch_name;	/**< @brief  name of sketch object that defines the curve to be extruded */
     struct rt_sketch_internal	*skt;	/**< @brief  pointer to referenced sketch */
 };
 

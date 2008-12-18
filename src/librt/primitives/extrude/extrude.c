@@ -2413,7 +2413,7 @@ rt_extrude_get(struct bu_vls *log, const struct rt_db_internal *intern, const ch
 	bu_vls_printf(log, " A {%.25g %.25g %.25g}", V3ARGS(extr->u_vec));
 	bu_vls_printf(log, " B {%.25g %.25g %.25g}", V3ARGS(extr->v_vec));
 	bu_vls_printf(log, " S %s", extr->sketch_name);
-	bu_vls_printf(log, " K %d", extr->keypoint);
+	/*	bu_vls_printf(log, " K %d", extr->keypoint); */
     }
     else if (*attr == 'V')
 	bu_vls_printf(log, "%.25g %.25g %.25g", V3ARGS(extr->V));
@@ -2425,8 +2425,10 @@ rt_extrude_get(struct bu_vls *log, const struct rt_db_internal *intern, const ch
 	bu_vls_printf(log, "%.25g %.25g %.25g", V3ARGS(extr->v_vec));
     else if (*attr == 'S')
 	bu_vls_printf(log, "%s", extr->sketch_name);
-    else if (*attr == 'K')
-	bu_vls_printf(log, "%d", extr->keypoint);
+/*
+  else if (*attr == 'K')
+  bu_vls_printf(log, "%d", extr->keypoint);
+*/
     else {
 	bu_vls_strcat(log, "ERROR: unrecognized attribute, must be V, H, A, B, S, or K!");
 	return BRLCAD_ERROR;
