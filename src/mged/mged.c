@@ -2538,10 +2538,15 @@ f_opendb(
 	 * Check to see if we can access the database
 	 */
 	if (bu_file_exists(argv[1])) {
+	    /* need to reset things before returning */
+	    dbip = save_dbip;
+	    rt_new_material_head(save_materp);
+
 	    if (!bu_file_readable(argv[1])) {
 		bu_log("ERROR: Unable to read from %s\n", argv[1]);
 		return TCL_ERROR;
 	    }
+
 	    bu_log("ERROR: Unable to open %s as geometry database file \n", argv[1]);
 	    return TCL_ERROR;
 	}
