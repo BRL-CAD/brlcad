@@ -275,7 +275,7 @@ writesolid(void)
 	    (void)fprintf( fp, "Semi-major axis: %.9f %.9f %.9f%s", V3BASE2LOCAL( hyp->hyp_A ), eol);
 	    (void)fprintf( fp, "Semi-minor length: %.9f%s", hyp->hyp_b * base2local, eol);
 	    (void)fprintf( fp, "Ratio of Neck to Base: %.9f%s", hyp->hyp_bnr, eol);
-	   break;
+	    break;
 	case ID_ETO:
 	    eto = (struct rt_eto_internal *)es_int.idb_ptr;
 	    (void)fprintf( fp, "Vertex: %.9f %.9f %.9f%s", V3BASE2LOCAL( eto->eto_V ), eol);
