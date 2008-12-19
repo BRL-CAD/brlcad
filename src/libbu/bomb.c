@@ -201,19 +201,20 @@ bu_exit(int status, const char *fmt, ...)
     va_list ap;
     struct bu_vls message;
 
-    bu_vls_init(&message);
-
     if (fmt && strlen(fmt) > 0) {
 	va_start(ap, fmt);
+
+	bu_vls_init(&message);
+
 	bu_vls_vprintf(&message, fmt, ap);
 
 	if (!BU_SETJUMP) {
 	    bu_bomb(bu_vls_addr(&message));
 	}
 	BU_UNSETJUMP;
-    }
 
-    bu_vls_free(&message);
+	bu_vls_free(&message);
+    }
 
     exit(status);
 }
