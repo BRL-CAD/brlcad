@@ -154,6 +154,9 @@ int main(int ac, char *av[])
     /* Close database */
     wdb_close(db_fp);
 
+    bu_vls_free(&name);
+    bu_vls_free(&str);
+
     return 0;
 }
 
