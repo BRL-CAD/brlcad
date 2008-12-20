@@ -68,6 +68,8 @@ void show_help(const char *name, const char *optstr)
     bu_log("options:\n"
 	   "\t-h\n\t\tShow help\n\n"
 	);
+
+    bu_vls_free(&str);
     return;
 }
 
