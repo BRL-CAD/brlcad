@@ -14,6 +14,7 @@ bin_PROGRAMS = \
 	contours \
 	fence \
 	globe \
+	human \
 	kurt \
 	lens \
 	masonry \
@@ -65,6 +66,7 @@ clutter_SOURCES = clutter.c common.c
 contours_SOURCES = contours.c
 fence_SOURCES = fence.c
 globe_SOURCES = globe.c
+human_SOURCES = human.c
 kurt_SOURCES = kurt.c
 lens_SOURCES = lens.c
 masonry_SOURCES = masonry.c
@@ -119,6 +121,7 @@ FAST_OBJECTS = \
 	$(contours_OBJECTS) \
 	$(fence_OBJECTS) \
 	$(globe_OBJECTS) \
+	$(human_OBJECTS) \
 	$(kurt_OBJECTS) \
 	$(lens_OBJECTS) \
 	$(masonry_OBJECTS) \
