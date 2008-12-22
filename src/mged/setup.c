@@ -332,6 +332,7 @@ static struct cmdtab cmdtab[] = {
     {"t_muves", f_t_muves},
     {"ted", f_tedit},
     {"tie", f_tie},
+    {"tire", cmd_tire},
     {"title", cmd_title},
     {"tol", cmd_tol},
     {"top",		bv_top},

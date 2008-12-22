@@ -3064,6 +3064,27 @@ cmd_gqa(ClientData	clientData,
 }
 
 int
+cmd_tire(ClientData	clientData,
+	 Tcl_Interp	*interp,
+	 int		argc,
+	 char		**argv)
+{
+    int ret;
+    Tcl_DString ds;
+
+    Tcl_DStringInit(&ds);
+
+    ret = ged_tire(gedp, argc, argv);
+    Tcl_DStringAppend(&ds, bu_vls_addr(&gedp->ged_result_str), -1);
+    Tcl_DStringResult(interp, &ds);
+
+    if (ret == BRLCAD_OK)
+	return TCL_OK;
+
+    return TCL_ERROR;
+}
+
+int
 cmd_stub(ClientData	clientData,
 	 Tcl_Interp	*interp,
 	 int		argc,

@@ -565,6 +565,10 @@ extern int cmd_gqa(ClientData	clientData,
 		   Tcl_Interp	*interp,
 		   int		argc,
 		   char		**argv);
+extern int cmd_tire(ClientData	clientData,
+		    Tcl_Interp	*interp,
+		    int		argc,
+		    char	**argv);
 
 /* color_scheme.c */
 void cs_set_bg(void);
