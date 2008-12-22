@@ -56,12 +56,20 @@ ged_open(const char *dbtype, const char *filename, int existing_only)
 {
     struct ged *gedp;
     struct rt_wdb *wdbp;
+    struct mater *save_materp = MATER_NULL;
+
+    save_materp = rt_material_head();
+    rt_new_material_head(MATER_NULL);
 
     if (strcmp(dbtype, "db") == 0) {
 	struct db_i	*dbip;
 
-	if ((dbip = ged_open_dbip(filename, existing_only)) == DBI_NULL)
+	if ((dbip = ged_open_dbip(filename, existing_only)) == DBI_NULL) {
+	    /* Restore RT's material head */
+	    rt_new_material_head(save_materp);
+
 	    return GED_NULL;
+	}
 
 	RT_CK_DBI(dbip);
 
@@ -71,8 +79,12 @@ ged_open(const char *dbtype, const char *filename, int existing_only)
     } else {
 	struct db_i	*dbip;
 
-	if (ged_decode_dbip(filename, &dbip) != BRLCAD_OK)
+	if (ged_decode_dbip(filename, &dbip) != BRLCAD_OK) {
+	    /* Restore RT's material head */
+	    rt_new_material_head(save_materp);
+
 	    return GED_NULL;
+	}
 
 	if (strcmp(dbtype, "disk" ) == 0)
 	    wdbp = wdb_dbopen(dbip, RT_WDB_TYPE_DB_DISK);
@@ -83,6 +95,9 @@ ged_open(const char *dbtype, const char *filename, int existing_only)
 	else if (strcmp(dbtype, "inmem_append" ) == 0)
 	    wdbp = wdb_dbopen(dbip, RT_WDB_TYPE_DB_INMEM_APPEND_ONLY);
 	else {
+	    /* Restore RT's material head */
+	    rt_new_material_head(save_materp);
+
 	    bu_log("wdb_open %s target type not recognized", dbtype);
 	    return GED_NULL;
 	}
