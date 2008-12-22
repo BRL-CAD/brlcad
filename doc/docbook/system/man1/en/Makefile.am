@@ -49,6 +49,7 @@ man1DOCBOOK = \
 	attr.xml \
 	autoview.xml \
 	bev.xml \
+	bot_condense.xml \
 	bwscale.xml \
 	g_qa.xml \
 	mged.xml \
