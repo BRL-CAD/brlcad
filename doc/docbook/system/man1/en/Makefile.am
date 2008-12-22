@@ -47,6 +47,7 @@ man1DOCBOOK = \
 	arot.xml \
 	attach.xml \
 	attr.xml \
+	autoview.xml \
 	bwscale.xml \
 	g_qa.xml \
 	mged.xml \
