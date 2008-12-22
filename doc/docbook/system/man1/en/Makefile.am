@@ -58,6 +58,7 @@ man1DOCBOOK = \
 	bwscale.xml \
 	c.xml \
 	cat.xml \
+	center.xml \
 	g_qa.xml \
 	mged.xml \
 	nirt.xml \
