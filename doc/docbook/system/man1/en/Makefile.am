@@ -48,6 +48,7 @@ man1DOCBOOK = \
 	attach.xml \
 	attr.xml \
 	autoview.xml \
+	bev.xml \
 	bwscale.xml \
 	g_qa.xml \
 	mged.xml \
