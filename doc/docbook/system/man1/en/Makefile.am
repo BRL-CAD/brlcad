@@ -56,6 +56,7 @@ man1DOCBOOK = \
 	bot_vertex_fuse.xml \
 	build_region.xml \
 	bwscale.xml \
+	c.xml \
 	g_qa.xml \
 	mged.xml \
 	nirt.xml \
