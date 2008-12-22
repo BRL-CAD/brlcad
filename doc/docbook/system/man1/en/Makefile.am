@@ -54,6 +54,7 @@ man1DOCBOOK = \
 	bot_face_fuse.xml \
 	bot_face_sort.xml \
 	bot_vertex_fuse.xml \
+	build_region.xml \
 	bwscale.xml \
 	g_qa.xml \
 	mged.xml \
