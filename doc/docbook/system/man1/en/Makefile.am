@@ -50,6 +50,7 @@ man1DOCBOOK = \
 	autoview.xml \
 	bev.xml \
 	bot_condense.xml \
+	bot_decimate.xml \
 	bwscale.xml \
 	g_qa.xml \
 	mged.xml \
