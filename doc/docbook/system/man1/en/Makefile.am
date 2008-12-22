@@ -51,6 +51,7 @@ man1DOCBOOK = \
 	bev.xml \
 	bot_condense.xml \
 	bot_decimate.xml \
+	bot_face_fuse.xml \
 	bwscale.xml \
 	g_qa.xml \
 	mged.xml \
