@@ -60,6 +60,7 @@ man1DOCBOOK = \
 	cat.xml \
 	center.xml \
 	color.xml \
+	comb_color.xml \
 	g_qa.xml \
 	mged.xml \
 	nirt.xml \
