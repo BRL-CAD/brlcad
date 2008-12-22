@@ -57,6 +57,7 @@ man1DOCBOOK = \
 	build_region.xml \
 	bwscale.xml \
 	c.xml \
+	cat.xml \
 	g_qa.xml \
 	mged.xml \
 	nirt.xml \
