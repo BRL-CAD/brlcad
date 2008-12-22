@@ -59,6 +59,7 @@ man1DOCBOOK = \
 	c.xml \
 	cat.xml \
 	center.xml \
+	color.xml \
 	g_qa.xml \
 	mged.xml \
 	nirt.xml \
