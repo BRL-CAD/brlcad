@@ -90,6 +90,7 @@ extern double radtodeg;
  * All GED files are stored in a fixed base unit (MM).
  * These factors convert database unit to local (or working) units.
  */
+extern struct ged	*gedp;		/* defined in mged.c */
 extern struct db_i	*dbip;		/* defined in mged.c */
 extern int		 dbih;		/* defined in mged.c */
 extern struct rt_wdb	*wdbp;		/* defined in mged.c */
@@ -560,6 +561,10 @@ int mged_cmd(
     char **argv,
     struct funtab in_functions[]);
 void mged_print_result(int status);
+extern int cmd_gqa(ClientData	clientData,
+		   Tcl_Interp	*interp,
+		   int		argc,
+		   char		**argv);
 
 /* color_scheme.c */
 void cs_set_bg(void);

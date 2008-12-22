@@ -71,6 +71,7 @@
 #include "mater.h"
 #include "libtermio.h"
 #include "db.h"
+#include "ged.h"
 
 /* private */
 #include "./mged.h"
@@ -146,6 +147,7 @@ Tcl_Interp *interp = (Tcl_Interp *)NULL;
 
 int pipe_out[2];
 int pipe_err[2];
+struct ged *gedp = GED_NULL;
 struct db_i *dbip = DBI_NULL;	/* database instance pointer */
 struct rt_wdb *wdbp = RT_WDB_NULL;
 struct dg_obj *dgop = GED_DGO_NULL;
@@ -2484,12 +2486,12 @@ f_opendb(
     int	argc,
     char	**argv)
 {
-    struct db_i		*save_dbip = DBI_NULL;
-    struct mater		*save_materp = MATER_NULL;
-    struct bu_vls		vls;
-    struct bu_vls		msg;	/* use this to hold returned message */
-    int			create_new_db = 0;
-
+    struct ged *save_gedp;
+    struct db_i	*save_dbip = DBI_NULL;
+    struct mater *save_materp = MATER_NULL;
+    struct bu_vls vls;
+    struct bu_vls msg;	/* use this to hold returned message */
+    int create_new_db = 0;
 
     if ( argc <= 1 )  {
 
@@ -2524,6 +2526,7 @@ f_opendb(
 	return TCL_ERROR;
     }
 
+    save_gedp = gedp;
     save_dbip = dbip;
     dbip = DBI_NULL;
     save_materp = rt_material_head();
@@ -2539,6 +2542,7 @@ f_opendb(
 	 */
 	if (bu_file_exists(argv[1])) {
 	    /* need to reset things before returning */
+	    gedp = save_gedp;
 	    dbip = save_dbip;
 	    rt_new_material_head(save_materp);
 
@@ -2592,6 +2596,7 @@ f_opendb(
 		/* not initializing mged */
 		if (argc == 2) {
 		    /* need to reset this before returning */
+		    gedp = save_gedp;
 		    dbip = save_dbip;
 		    rt_new_material_head(save_materp);
 		    Tcl_AppendResult(interp, MORE_ARGS_STR, "Create new database (y|n)[n]? ",
@@ -2603,6 +2608,7 @@ f_opendb(
 		}
 
 		if ( *argv[2] != 'y' && *argv[2] != 'Y' ) {
+		    gedp = save_gedp;
 		    dbip = save_dbip; /* restore previous database */
 		    rt_new_material_head(save_materp);
 		    bu_vls_free(&vls);
@@ -2614,6 +2620,7 @@ f_opendb(
 
 	/* File does not exist, and should be created */
 	if ((dbip = db_create(argv[1], db_version)) == DBI_NULL) {
+	    gedp = save_gedp;
 	    dbip = save_dbip; /* restore previous database */
 	    rt_new_material_head(save_materp);
 	    bu_vls_free(&vls);
@@ -2647,6 +2654,7 @@ f_opendb(
 
     /* close out the old dbip */
     if ( save_dbip )  {
+	struct ged *new_gedp;
 	struct db_i *new_dbip;
 	struct mater *new_materp;
 
@@ -2654,6 +2662,7 @@ f_opendb(
 	new_materp = rt_material_head();
 
 	/* activate the 'saved' values so we can cleanly close the previous db */
+	gedp = save_gedp;
 	dbip = save_dbip;
 	rt_new_material_head(save_materp);
 
@@ -2661,6 +2670,7 @@ f_opendb(
 	f_closedb(clientData, interp, 1, NULL);
 
 	/* restore to the new db just opened */
+	gedp = new_gedp;
 	dbip = new_dbip;
 	rt_new_material_head(new_materp);
     }
@@ -2686,6 +2696,9 @@ f_opendb(
 	Tcl_AppendResult(interp, "wdb_dbopen() failed?\n", (char *)NULL);
 	return TCL_ERROR;
     }
+
+    BU_GETSTRUCT(gedp, ged);
+    GED_INIT(gedp, wdbp);
 
     /* increment use count for this db instance */
     (void)db_clone_dbi(dbip, NULL);

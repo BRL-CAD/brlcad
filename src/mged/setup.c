@@ -164,6 +164,7 @@ static struct cmdtab cmdtab[] = {
     {"get_sed", f_get_sedit},
     {"get_sed_menus", f_get_sedit_menus},
     {"get_solid_keypoint", f_get_solid_keypoint},
+    {"gqa", cmd_gqa},
     {"grid2model_lu", f_grid2model_lu},
     {"grid2view_lu", f_grid2view_lu},
 #ifdef HIDELINE
