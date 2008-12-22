@@ -79,7 +79,8 @@ THESE ARE LOWER PRIORITY OR FOR FUTURE RELEASES
 
 * move analyze logic into librt (with their respective primitives).
 
-* implement make, ted, edsol, mirror, and analyze for revolve primitive
+* implement make, ted, edsol, mirror, and analyze for revolve
+  primitive.  implement tess() too.
 
 * (re)verify rtarea CPA results (see diff history for patch, fix
   naming convention for presented/exposed area
