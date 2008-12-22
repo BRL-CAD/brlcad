@@ -46,6 +46,7 @@ man1DOCBOOK = \
 	area.xml \
 	arot.xml \
 	attach.xml \
+	attr.xml \
 	bwscale.xml \
 	g_qa.xml \
 	mged.xml \
