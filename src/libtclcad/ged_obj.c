@@ -3603,65 +3603,6 @@ go_new_view(struct ged		*gedp,
     new_gdvp->gdv_fbs.fbs_clientData = new_gdvp;
     new_gdvp->gdv_fbs.fbs_interp = go_current_gop->go_interp;
 
-    new_gdvp->gdv_view->gv_adc.gas_a1 = 45.0;
-    new_gdvp->gdv_view->gv_adc.gas_a2 = 45.0;
-    VSET(new_gdvp->gdv_view->gv_adc.gas_line_color, 255, 255, 0);
-    VSET(new_gdvp->gdv_view->gv_adc.gas_tick_color, 255, 255, 255);
-
-    VSET(new_gdvp->gdv_view->gv_grid.ggs_anchor, 0.0, 0.0, 0.0);
-    new_gdvp->gdv_view->gv_grid.ggs_res_h = 1.0;
-    new_gdvp->gdv_view->gv_grid.ggs_res_v = 1.0;
-    new_gdvp->gdv_view->gv_grid.ggs_res_major_h = 5;
-    new_gdvp->gdv_view->gv_grid.ggs_res_major_v = 5;
-    VSET(new_gdvp->gdv_view->gv_grid.ggs_color, 255, 255, 255);
-
-    new_gdvp->gdv_view->gv_rect.grs_draw = 0;
-    new_gdvp->gdv_view->gv_rect.grs_pos[0] = 128;
-    new_gdvp->gdv_view->gv_rect.grs_pos[1] = 128;
-    new_gdvp->gdv_view->gv_rect.grs_dim[0] = 256;
-    new_gdvp->gdv_view->gv_rect.grs_dim[1] = 256;
-    VSET(new_gdvp->gdv_view->gv_rect.grs_color, 255, 255, 255);
-
-    new_gdvp->gdv_view->gv_view_axes.gas_draw = 0;
-    VSET(new_gdvp->gdv_view->gv_view_axes.gas_axes_pos, 0.85, -0.85, 0.0);
-    new_gdvp->gdv_view->gv_view_axes.gas_axes_size = 0.2;
-    new_gdvp->gdv_view->gv_view_axes.gas_line_width = 0;
-    new_gdvp->gdv_view->gv_view_axes.gas_pos_only = 1;
-    VSET(new_gdvp->gdv_view->gv_view_axes.gas_axes_color, 255, 255, 255);
-    VSET(new_gdvp->gdv_view->gv_view_axes.gas_label_color, 255, 255, 0);
-    new_gdvp->gdv_view->gv_view_axes.gas_triple_color = 1;
-
-    new_gdvp->gdv_view->gv_model_axes.gas_draw = 0;
-    VSET(new_gdvp->gdv_view->gv_model_axes.gas_axes_pos, 0.0, 0.0, 0.0);
-    new_gdvp->gdv_view->gv_model_axes.gas_axes_size = 2.0;
-    new_gdvp->gdv_view->gv_model_axes.gas_line_width = 0;
-    new_gdvp->gdv_view->gv_model_axes.gas_pos_only = 0;
-    VSET(new_gdvp->gdv_view->gv_model_axes.gas_axes_color, 255, 255, 255);
-    VSET(new_gdvp->gdv_view->gv_model_axes.gas_label_color, 255, 255, 0);
-    new_gdvp->gdv_view->gv_model_axes.gas_triple_color = 0;
-    new_gdvp->gdv_view->gv_model_axes.gas_tick_enabled = 1;
-    new_gdvp->gdv_view->gv_model_axes.gas_tick_length = 4;
-    new_gdvp->gdv_view->gv_model_axes.gas_tick_major_length = 8;
-    new_gdvp->gdv_view->gv_model_axes.gas_tick_interval = 100;
-    new_gdvp->gdv_view->gv_model_axes.gas_ticks_per_major = 10;
-    new_gdvp->gdv_view->gv_model_axes.gas_tick_threshold = 8;
-    VSET(new_gdvp->gdv_view->gv_model_axes.gas_tick_color, 255, 255, 0);
-    VSET(new_gdvp->gdv_view->gv_model_axes.gas_tick_major_color, 255, 0, 0);
-
-    new_gdvp->gdv_view->gv_center_dot.gos_draw = 0;
-    VSET(new_gdvp->gdv_view->gv_center_dot.gos_line_color, 255, 255, 0);
-
-    new_gdvp->gdv_view->gv_prim_labels.gos_draw = 0;
-    VSET(new_gdvp->gdv_view->gv_prim_labels.gos_text_color, 255, 255, 0);
-
-    new_gdvp->gdv_view->gv_view_params.gos_draw = 0;
-    VSET(new_gdvp->gdv_view->gv_view_params.gos_text_color, 255, 255, 0);
-
-    new_gdvp->gdv_view->gv_view_scale.gos_draw = 0;
-    VSET(new_gdvp->gdv_view->gv_view_scale.gos_line_color, 255, 255, 0);
-    VSET(new_gdvp->gdv_view->gv_view_scale.gos_text_color, 255, 255, 255);
-
-
     /* open the framebuffer */
     go_open_fbs(new_gdvp, go_current_gop->go_interp);
 
