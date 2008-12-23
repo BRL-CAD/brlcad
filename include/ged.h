@@ -108,7 +108,7 @@ __BEGIN_DECLS
 	    bu_vls_trunc(&(_gedp)->ged_result_str, 0); \
 	    bu_vls_printf(&(_gedp)->ged_result_str, "A database is not open!"); \
 	} else								\
-	    bu_log("A database is not open!"); \
+	    bu_log("A database is not open!\n"); \
 	return (_ret); \
     }
 
@@ -1059,6 +1059,8 @@ GED_EXPORT BU_EXTERN(void ged_deering_persp_mat,
 		      const fastf_t *l,
 		      const fastf_t *h,
 		      const fastf_t *eye));
+GED_EXPORT BU_EXTERN(void ged_view_update,
+		     (struct ged_view *gvp));
 
 
 /**
