@@ -347,9 +347,9 @@ struct ged_view {
     mat_t			gv_pmat;		/**< @brief  perspective matrix */
 #if 0
     struct bu_observer		gv_observers;
-    void 			(*gv_callback)();	/**< @brief  called in vo_update with gv_clientData and gvp */
-    genptr_t			gv_clientData;		/**< @brief  passed to gv_callback */
 #endif
+    void 			(*gv_callback)();	/**< @brief  called in ged_view_update with gvp and gv_clientData */
+    genptr_t			gv_clientData;		/**< @brief  passed to gv_callback */
     fastf_t			gv_prevMouseX;
     fastf_t			gv_prevMouseY;
     fastf_t			gv_minMouseDelta;
@@ -448,6 +448,10 @@ GED_EXPORT BU_EXTERN(int ged_vclip,
 
 /* defined in ged.c */
 GED_EXPORT BU_EXTERN(void ged_close,
+		     (struct ged *gedp));
+GED_EXPORT BU_EXTERN(void ged_drawable_close,
+		     (struct ged_drawable *gdp));
+GED_EXPORT BU_EXTERN(void ged_free,
 		     (struct ged *gedp));
 GED_EXPORT BU_EXTERN(void ged_init,
 		     (struct ged *gedp));
@@ -1152,6 +1156,7 @@ GED_EXPORT BU_EXTERN(int ged_attr, (struct ged *gedp, int argc, const char *argv
  * Usage:
  *     arot x y z angle
  */
+GED_EXPORT BU_EXTERN(int ged_arot_args, (struct ged *gedp, int argc, const char *argv[], mat_t rmat));
 GED_EXPORT BU_EXTERN(int ged_arot, (struct ged *gedp, int argc, const char *argv[]));
 
 /**
@@ -2246,6 +2251,7 @@ GED_EXPORT BU_EXTERN(int ged_rmater, (struct ged *gedp, int argc, const char *ar
  * Usage:
  *     rot [-m|-v] x y z
  */
+GED_EXPORT BU_EXTERN(int ged_rot_args, (struct ged *gedp, int argc, const char *argv[], char *coord, mat_t rmat));
 GED_EXPORT BU_EXTERN(int ged_rot, (struct ged *gedp, int argc, const char *argv[]));
 
 /**
@@ -2326,6 +2332,7 @@ GED_EXPORT BU_EXTERN(int ged_saveview, (struct ged *gedp, int argc, const char *
  * Usage:
  *     sca sf
  */
+GED_EXPORT BU_EXTERN(int ged_scale_args, (struct ged *gedp, int argc, const char *argv[], fastf_t *sf));
 GED_EXPORT BU_EXTERN(int ged_scale, (struct ged *gedp, int argc, const char *argv[]));
 
 /**
@@ -2491,6 +2498,7 @@ GED_EXPORT BU_EXTERN(int ged_tops, (struct ged *gedp, int argc, const char *argv
  * Usage:
  *     tra x y z
  */
+GED_EXPORT BU_EXTERN(int ged_tra_args, (struct ged *gedp, int argc, const char *argv[], char *coord, vect_t tvec));
 GED_EXPORT BU_EXTERN(int ged_tra, (struct ged *gedp, int argc, const char *argv[]));
 
 /**
