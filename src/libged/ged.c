@@ -51,80 +51,6 @@ int ged_decode_dbip(const char *dbip_string, struct db_i **dbipp);
 void ged_drawable_init(struct ged_drawable *gdp);
 void ged_drawable_close(struct ged_drawable *gdp);
 
-struct ged *
-ged_open(const char *dbtype, const char *filename, int existing_only)
-{
-    struct ged *gedp;
-    struct rt_wdb *wdbp;
-    struct mater *save_materp = MATER_NULL;
-
-    save_materp = rt_material_head();
-    rt_new_material_head(MATER_NULL);
-
-    if (strcmp(dbtype, "db") == 0) {
-	struct db_i	*dbip;
-
-	if ((dbip = ged_open_dbip(filename, existing_only)) == DBI_NULL) {
-	    /* Restore RT's material head */
-	    rt_new_material_head(save_materp);
-
-	    return GED_NULL;
-	}
-
-	RT_CK_DBI(dbip);
-
-	wdbp = wdb_dbopen(dbip, RT_WDB_TYPE_DB_DISK);
-    } else if (strcmp(dbtype, "file") == 0) {
-	wdbp = wdb_fopen(filename);
-    } else {
-	struct db_i	*dbip;
-
-	if (ged_decode_dbip(filename, &dbip) != BRLCAD_OK) {
-	    /* Restore RT's material head */
-	    rt_new_material_head(save_materp);
-
-	    return GED_NULL;
-	}
-
-	if (strcmp(dbtype, "disk" ) == 0)
-	    wdbp = wdb_dbopen(dbip, RT_WDB_TYPE_DB_DISK);
-	else if (strcmp(dbtype, "disk_append") == 0)
-	    wdbp = wdb_dbopen(dbip, RT_WDB_TYPE_DB_DISK_APPEND_ONLY);
-	else if (strcmp(dbtype, "inmem" ) == 0)
-	    wdbp = wdb_dbopen(dbip, RT_WDB_TYPE_DB_INMEM);
-	else if (strcmp(dbtype, "inmem_append" ) == 0)
-	    wdbp = wdb_dbopen(dbip, RT_WDB_TYPE_DB_INMEM_APPEND_ONLY);
-	else {
-	    /* Restore RT's material head */
-	    rt_new_material_head(save_materp);
-
-	    bu_log("wdb_open %s target type not recognized", dbtype);
-	    return GED_NULL;
-	}
-    }
-
-    BU_GETSTRUCT(gedp, ged);
-    GED_INIT(gedp, wdbp);
-
-    return gedp;
-}
-
-void
-ged_init(struct ged *gedp)
-{
-    if (gedp == GED_NULL)
-	return;
-
-    bu_vls_init(&gedp->ged_log);
-    bu_vls_init(&gedp->ged_result_str);
-
-    bu_vls_extend(&gedp->ged_log, 1);
-    bu_vls_extend(&gedp->ged_result_str, 1);
-
-    BU_GETSTRUCT(gedp->ged_gdp, ged_drawable);
-    ged_drawable_init(gedp->ged_gdp);
-}
-
 void
 ged_close(struct ged *gedp)
 {
@@ -133,14 +59,29 @@ ged_close(struct ged *gedp)
 
     wdb_close(gedp->ged_wdbp);
     ged_drawable_close(gedp->ged_gdp);
+    ged_free(gedp);
+}
 
-    gedp->ged_wdbp = RT_WDB_NULL;
-    gedp->ged_gdp = GED_DRAWABLE_NULL;
+int
+ged_decode_dbip(const char *dbip_string, struct db_i **dbipp)
+{
 
-    bu_vls_free(&gedp->ged_log);
-    bu_vls_free(&gedp->ged_result_str);
+    *dbipp = (struct db_i *)atol(dbip_string);
 
-    bu_free((genptr_t)gedp, "struct ged");
+    /* Could core dump */
+    RT_CK_DBI(*dbipp);
+
+    return BRLCAD_OK;
+}
+
+void
+ged_drawable_close(struct ged_drawable *gdp)
+{
+    if (gdp == GED_DRAWABLE_NULL)
+	return;
+
+    ged_free_qray(gdp);
+    bu_free((genptr_t)gdp, "struct ged_drawable");
 }
 
 void
@@ -162,13 +103,34 @@ ged_drawable_init(struct ged_drawable *gdp)
 }
 
 void
-ged_drawable_close(struct ged_drawable *gdp)
+ged_free(struct ged *gedp)
 {
-    if (gdp == GED_DRAWABLE_NULL)
+    if (gedp == GED_NULL)
 	return;
 
-    ged_free_qray(gdp);
-    bu_free((genptr_t)gdp, "struct ged_drawable");
+    gedp->ged_wdbp = RT_WDB_NULL;
+    gedp->ged_gdp = GED_DRAWABLE_NULL;
+
+    bu_vls_free(&gedp->ged_log);
+    bu_vls_free(&gedp->ged_result_str);
+
+    bu_free((genptr_t)gedp, "struct ged");
+}
+
+void
+ged_init(struct ged *gedp)
+{
+    if (gedp == GED_NULL)
+	return;
+
+    bu_vls_init(&gedp->ged_log);
+    bu_vls_init(&gedp->ged_result_str);
+
+    bu_vls_extend(&gedp->ged_log, 1);
+    bu_vls_extend(&gedp->ged_result_str, 1);
+
+    BU_GETSTRUCT(gedp->ged_gdp, ged_drawable);
+    ged_drawable_init(gedp->ged_gdp);
 }
 
 void
@@ -252,6 +214,64 @@ ged_view_init(struct ged_view *gvp)
     ged_view_update(gvp);
 }
 
+struct ged *
+ged_open(const char *dbtype, const char *filename, int existing_only)
+{
+    struct ged *gedp;
+    struct rt_wdb *wdbp;
+    struct mater *save_materp = MATER_NULL;
+
+    save_materp = rt_material_head();
+    rt_new_material_head(MATER_NULL);
+
+    if (strcmp(dbtype, "db") == 0) {
+	struct db_i	*dbip;
+
+	if ((dbip = ged_open_dbip(filename, existing_only)) == DBI_NULL) {
+	    /* Restore RT's material head */
+	    rt_new_material_head(save_materp);
+
+	    return GED_NULL;
+	}
+
+	RT_CK_DBI(dbip);
+
+	wdbp = wdb_dbopen(dbip, RT_WDB_TYPE_DB_DISK);
+    } else if (strcmp(dbtype, "file") == 0) {
+	wdbp = wdb_fopen(filename);
+    } else {
+	struct db_i	*dbip;
+
+	if (ged_decode_dbip(filename, &dbip) != BRLCAD_OK) {
+	    /* Restore RT's material head */
+	    rt_new_material_head(save_materp);
+
+	    return GED_NULL;
+	}
+
+	if (strcmp(dbtype, "disk" ) == 0)
+	    wdbp = wdb_dbopen(dbip, RT_WDB_TYPE_DB_DISK);
+	else if (strcmp(dbtype, "disk_append") == 0)
+	    wdbp = wdb_dbopen(dbip, RT_WDB_TYPE_DB_DISK_APPEND_ONLY);
+	else if (strcmp(dbtype, "inmem" ) == 0)
+	    wdbp = wdb_dbopen(dbip, RT_WDB_TYPE_DB_INMEM);
+	else if (strcmp(dbtype, "inmem_append" ) == 0)
+	    wdbp = wdb_dbopen(dbip, RT_WDB_TYPE_DB_INMEM_APPEND_ONLY);
+	else {
+	    /* Restore RT's material head */
+	    rt_new_material_head(save_materp);
+
+	    bu_log("wdb_open %s target type not recognized", dbtype);
+	    return GED_NULL;
+	}
+    }
+
+    BU_GETSTRUCT(gedp, ged);
+    GED_INIT(gedp, wdbp);
+
+    return gedp;
+}
+
 /**
  * @brief
  * Open/Create the database and build the in memory directory.
@@ -289,18 +309,6 @@ ged_open_dbip(const char *filename, int existing_only)
 
 
     return dbip;
-}
-
-int
-ged_decode_dbip(const char *dbip_string, struct db_i **dbipp)
-{
-
-    *dbipp = (struct db_i *)atol(dbip_string);
-
-    /* Could core dump */
-    RT_CK_DBI(*dbipp);
-
-    return BRLCAD_OK;
 }
 
 void
