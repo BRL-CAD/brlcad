@@ -34,9 +34,8 @@
 
 
 int
-ged_scale(struct ged *gedp, int argc, const char *argv[])
+ged_scale_args(struct ged *gedp, int argc, const char *argv[], fastf_t *sf)
 {
-    fastf_t sf;
     static const char *usage = "sf";
 
     GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
@@ -49,32 +48,44 @@ ged_scale(struct ged *gedp, int argc, const char *argv[])
     /* must be wanting help */
     if (argc == 1) {
 	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return BRLCAD_OK;
+	return BRLCAD_HELP;
     }
+
+    if (argc != 2) {
+	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	return BRLCAD_ERROR;
+    }
+
+    if (sscanf(argv[1], "%lf", &sf) != 1) {
+	bu_vls_printf(&gedp->ged_result_str, "bad scale factor - %s", argv[1]);
+	return BRLCAD_ERROR;
+    }
+
+    return BRLCAD_OK;
+}
+
+int
+ged_scale(struct ged *gedp, int argc, const char *argv[])
+{
+    int ret;
+    fastf_t sf;
+
+    if ((ret = ged_scale_args(gedp, argc, argv, &sf)) != BRLCAD_OK)
+	return ret;
+
+    if (sf <= SMALL_FASTF || INFINITY < sf)
+	return BRLCAD_OK;
 
     /* scale the view */
-    if (argc == 2) {
-	if (sscanf(argv[1], "%lf", &sf) != 1) {
-	    bu_vls_printf(&gedp->ged_result_str, "bad scale factor - %s", argv[1]);
-	    return BRLCAD_ERROR;
-	}
+    gedp->ged_gvp->gv_scale *= sf;
 
-	if (sf <= SMALL_FASTF || INFINITY < sf)
-	    return BRLCAD_OK;
+    if (gedp->ged_gvp->gv_scale < RT_MINVIEWSIZE)
+	gedp->ged_gvp->gv_scale = RT_MINVIEWSIZE;
+    gedp->ged_gvp->gv_size = 2.0 * gedp->ged_gvp->gv_scale;
+    gedp->ged_gvp->gv_isize = 1.0 / gedp->ged_gvp->gv_size;
+    ged_view_update(gedp->ged_gvp);
 
-	gedp->ged_gvp->gv_scale *= sf;
-
-	if (gedp->ged_gvp->gv_scale < RT_MINVIEWSIZE)
-	    gedp->ged_gvp->gv_scale = RT_MINVIEWSIZE;
-	gedp->ged_gvp->gv_size = 2.0 * gedp->ged_gvp->gv_scale;
-	gedp->ged_gvp->gv_isize = 1.0 / gedp->ged_gvp->gv_size;
-	ged_view_update(gedp->ged_gvp);
-
-	return BRLCAD_OK;
-    }
-
-    bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-    return BRLCAD_ERROR;
+    return BRLCAD_OK;
 }
 
 
