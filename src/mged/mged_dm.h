@@ -223,7 +223,7 @@ struct _view_state {
     int		vs_rc;
     int		vs_flag;
 
-    struct view_obj	*vs_vop;
+    struct ged_view	*vs_gvp;
     fastf_t	vs_i_Viewscale;
     mat_t	vs_model2objview;
     mat_t	vs_objview2model;
@@ -486,8 +486,8 @@ struct dm_list {
 #define scroll_y curr_dm_list->dml_scroll_y
 #define scroll_array curr_dm_list->dml_scroll_array
 
-#define VIEWSIZE	(2.0*view_state->vs_vop->vo_scale)	/* Width of viewing cube */
-#define VIEWFACTOR	(1/view_state->vs_vop->vo_scale)	/* 2.0 / VIEWSIZE */
+#define VIEWSIZE	(view_state->vs_gvp->gv_size)	/* Width of viewing cube */
+#define VIEWFACTOR	(1/view_state->vs_gvp->gv_scale)
 
 #define RATE_ROT_FACTOR 6.0
 #define ABS_ROT_FACTOR 180.0
@@ -567,6 +567,8 @@ extern struct dm_list *curr_dm_list;	/* defined in attach.c */
 
 extern int doEvent();			/* defined in doevent.c */
 extern int common_dm();			/* defined in dm-generic.c */
+
+extern void mged_rtCmdNotify();		/* defined in setup.c */
 
 struct w_dm {
     int	type;

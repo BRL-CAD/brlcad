@@ -115,7 +115,7 @@ f_polybinout(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	return TCL_ERROR;
     }
 
-    FOR_ALL_SOLIDS(sp, &dgop->dgo_headSolid)  {
+    FOR_ALL_SOLIDS(sp, &gedp->ged_gdp->gd_headSolid)  {
 	for ( BU_LIST_FOR( vp, bn_vlist, &(sp->s_vlist) ) )  {
 	    register int	i;
 	    register int	nused = vp->nused;

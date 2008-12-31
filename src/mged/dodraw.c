@@ -849,7 +849,7 @@ drawH_part2(
 	GET_SOLID(sp, &MGED_FreeSolid.l);
 	/* NOTICE:  The structure is dirty & not initialized for you! */
 
-	sp->s_dlist = BU_LIST_LAST(solid, &dgop->dgo_headSolid)->s_dlist + 1;
+	sp->s_dlist = BU_LIST_LAST(solid, &gedp->ged_gdp->gd_headSolid)->s_dlist + 1;
     } else {
 	/* Just updating an existing solid.
 	 *  'tsp' and 'pathpos' will not be used
@@ -906,7 +906,7 @@ drawH_part2(
     if ( !existing_sp )  {
 	/* Add to linked list of solid structs */
 	bu_semaphore_acquire( RT_SEM_MODEL );
-	BU_LIST_APPEND(dgop->dgo_headSolid.back, &sp->l);
+	BU_LIST_APPEND(gedp->ged_gdp->gd_headSolid.back, &sp->l);
 	bu_semaphore_release( RT_SEM_MODEL );
     } else {
 	/* replacing existing solid -- struct already linked in */
@@ -1123,7 +1123,7 @@ cvt_vlblock_to_solids(
 	av[0] = "d";
 	av[1] = shortname;
 	av[2] = NULL;
-	(void)cmd_erase((ClientData)NULL, interp, 2, av);
+	(void)cmd_ged_erase_wrapper((ClientData)NULL, interp, 2, av);
     } else {
 	av[0] = "kill";
 	av[1] = "-f";
@@ -1205,10 +1205,10 @@ invent_solid(
     sp->s_color[1] = sp->s_basecolor[1] = (rgb>> 8) & 0xFF;
     sp->s_color[2] = sp->s_basecolor[2] = (rgb    ) & 0xFF;
     sp->s_regionid = 0;
-    sp->s_dlist = BU_LIST_LAST(solid, &dgop->dgo_headSolid)->s_dlist + 1;
+    sp->s_dlist = BU_LIST_LAST(solid, &gedp->ged_gdp->gd_headSolid)->s_dlist + 1;
 
     /* Solid successfully drawn, add to linked list of solid structs */
-    BU_LIST_APPEND(dgop->dgo_headSolid.back, &sp->l);
+    BU_LIST_APPEND(gedp->ged_gdp->gd_headSolid.back, &sp->l);
 
     createDListALL(sp);
 
@@ -1827,7 +1827,7 @@ cmd_redraw_vlist(ClientData clientData, Tcl_Interp *interp, int argc, char **arg
 	if ( (dp = db_lookup( dbip, argv[i], LOOKUP_NOISY )) == NULL )
 	    continue;
 
-	FOR_ALL_SOLIDS(sp, &dgop->dgo_headSolid)  {
+	FOR_ALL_SOLIDS(sp, &gedp->ged_gdp->gd_headSolid)  {
 	    if ( db_full_path_search( &sp->s_fullpath, dp ) )  {
 #if 0
 		add_solid_path_to_result(interp, sp);

@@ -569,7 +569,7 @@ f_arbdef(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
     arb->magic = RT_ARB_INTERNAL_MAGIC;
 
     /* put vertex of new solid at center of screen */
-    VSET(arb->pt[0], -view_state->vs_vop->vo_center[MDX], -view_state->vs_vop->vo_center[MDY], -view_state->vs_vop->vo_center[MDZ]);
+    VSET(arb->pt[0], -view_state->vs_gvp->gv_center[MDX], -view_state->vs_gvp->gv_center[MDY], -view_state->vs_gvp->gv_center[MDZ]);
 
     /* calculate normal vector defined by rot, fb */
     norm1[0] = cos(fb) * cos(rota);

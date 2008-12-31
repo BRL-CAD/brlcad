@@ -3571,7 +3571,7 @@ f_jmesh(int argc, char **argv)
     topc = build_tops(topv, topv+2000);
     {
 	register struct solid *sp;
-	FOR_ALL_SOLIDS(sp, &dgop->dgo_headSolid) {
+	FOR_ALL_SOLIDS(sp, &gedp->ged_gdp->gd_headSolid) {
 	    sp->s_iflag=DOWN;
 	}
     }

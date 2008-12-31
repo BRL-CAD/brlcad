@@ -150,7 +150,6 @@ int pipe_err[2];
 struct ged *gedp = GED_NULL;
 struct db_i *dbip = DBI_NULL;	/* database instance pointer */
 struct rt_wdb *wdbp = RT_WDB_NULL;
-struct dg_obj *dgop = GED_DGO_NULL;
 int update_views = 0;
 int (*cmdline_hook)() = NULL;
 jmp_buf	jmp_env;		/* For non-local gotos */
@@ -598,8 +597,6 @@ main(int argc, char **argv)
     (void)Tcl_Eval(interp, bu_vls_addr(&input_str));
     bu_vls_trunc(&input_str, 0);
 
-    setview(0.0, 0.0, 0.0);
-
     if (dpy_string == (char *)NULL) {
 	dpy_string = getenv("DISPLAY");
     }
@@ -676,6 +673,11 @@ main(int argc, char **argv)
     if ( dbip != DBI_NULL && (read_only_flag || dbip->dbi_read_only) ) {
 	dbip->dbi_read_only = 1;
 	bu_log( "Opened in READ ONLY mode\n" );
+    }
+
+    if (dbip != DBI_NULL) {
+	setview(0.0, 0.0, 0.0);
+	gedp->ged_gdp->gd_rtCmdNotify = mged_rtCmdNotify;
     }
 
     /* --- Now safe to process commands. --- */
@@ -1808,9 +1810,9 @@ event_check( int non_blocking )
 	non_blocking++;
 	bu_vls_init(&vls);
 	bu_vls_printf(&vls, "knob -i -e aX %f aY %f aZ %f\n",
-		      edit_rate_model_tran[X] * 0.05 * view_state->vs_vop->vo_scale * base2local,
-		      edit_rate_model_tran[Y] * 0.05 * view_state->vs_vop->vo_scale * base2local,
-		      edit_rate_model_tran[Z] * 0.05 * view_state->vs_vop->vo_scale * base2local);
+		      edit_rate_model_tran[X] * 0.05 * view_state->vs_gvp->gv_scale * base2local,
+		      edit_rate_model_tran[Y] * 0.05 * view_state->vs_gvp->gv_scale * base2local,
+		      edit_rate_model_tran[Z] * 0.05 * view_state->vs_gvp->gv_scale * base2local);
 
 	Tcl_Eval(interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
@@ -1842,9 +1844,9 @@ event_check( int non_blocking )
 	non_blocking++;
 	bu_vls_init(&vls);
 	bu_vls_printf(&vls, "knob -i -e aX %f aY %f aZ %f\n",
-		      edit_rate_view_tran[X] * 0.05 * view_state->vs_vop->vo_scale * base2local,
-		      edit_rate_view_tran[Y] * 0.05 * view_state->vs_vop->vo_scale * base2local,
-		      edit_rate_view_tran[Z] * 0.05 * view_state->vs_vop->vo_scale * base2local);
+		      edit_rate_view_tran[X] * 0.05 * view_state->vs_gvp->gv_scale * base2local,
+		      edit_rate_view_tran[Y] * 0.05 * view_state->vs_gvp->gv_scale * base2local,
+		      edit_rate_view_tran[Z] * 0.05 * view_state->vs_gvp->gv_scale * base2local);
 
 	Tcl_Eval(interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
@@ -1908,9 +1910,9 @@ event_check( int non_blocking )
 	    non_blocking++;
 	    bu_vls_init(&vls);
 	    bu_vls_printf(&vls, "knob -i -m aX %f aY %f aZ %f\n",
-			  view_state->vs_rate_model_tran[X] * 0.05 * view_state->vs_vop->vo_scale * base2local,
-			  view_state->vs_rate_model_tran[Y] * 0.05 * view_state->vs_vop->vo_scale * base2local,
-			  view_state->vs_rate_model_tran[Z] * 0.05 * view_state->vs_vop->vo_scale * base2local);
+			  view_state->vs_rate_model_tran[X] * 0.05 * view_state->vs_gvp->gv_scale * base2local,
+			  view_state->vs_rate_model_tran[Y] * 0.05 * view_state->vs_gvp->gv_scale * base2local,
+			  view_state->vs_rate_model_tran[Z] * 0.05 * view_state->vs_gvp->gv_scale * base2local);
 
 	    Tcl_Eval(interp, bu_vls_addr(&vls));
 	    bu_vls_free(&vls);
@@ -1935,9 +1937,9 @@ event_check( int non_blocking )
 	    non_blocking++;
 	    bu_vls_init(&vls);
 	    bu_vls_printf(&vls, "knob -i -v aX %f aY %f aZ %f",
-			  view_state->vs_rate_tran[X] * 0.05 * view_state->vs_vop->vo_scale * base2local,
-			  view_state->vs_rate_tran[Y] * 0.05 * view_state->vs_vop->vo_scale * base2local,
-			  view_state->vs_rate_tran[Z] * 0.05 * view_state->vs_vop->vo_scale * base2local);
+			  view_state->vs_rate_tran[X] * 0.05 * view_state->vs_gvp->gv_scale * base2local,
+			  view_state->vs_rate_tran[Y] * 0.05 * view_state->vs_gvp->gv_scale * base2local,
+			  view_state->vs_rate_tran[Z] * 0.05 * view_state->vs_gvp->gv_scale * base2local);
 
 	    Tcl_Eval(interp, bu_vls_addr(&vls));
 	    bu_vls_free(&vls);
@@ -2343,7 +2345,7 @@ reset_input_strings()
 void
 new_mats(void)
 {
-    vo_update(view_state->vs_vop, interp, 0);
+    ged_view_update(view_state->vs_gvp);
 }
 
 
@@ -2359,7 +2361,7 @@ new_edit_mats(void)
 	    continue;
 
 	curr_dm_list = p;
-	bn_mat_mul( view_state->vs_model2objview, view_state->vs_vop->vo_model2view, modelchanges );
+	bn_mat_mul( view_state->vs_model2objview, view_state->vs_gvp->gv_model2view, modelchanges );
 	bn_mat_inv( view_state->vs_objview2model, view_state->vs_model2objview );
 	view_state->vs_flag = 1;
     }
@@ -2368,13 +2370,14 @@ new_edit_mats(void)
 }
 
 void
-mged_view_obj_callback(genptr_t		clientData,
-		       struct view_obj	*vop)
+mged_view_callback(struct ged_view	*gvp,
+		   genptr_t		clientData)
 {
     struct _view_state *vsp = (struct _view_state *)clientData;
 
     if (state != ST_VIEW) {
-	bn_mat_mul(vsp->vs_model2objview, vop->vo_model2view, modelchanges);
+	bu_log("XXXmged_view_obj_callback: updating model2objview and objview2model\n");
+	bn_mat_mul(vsp->vs_model2objview, gvp->gv_model2view, modelchanges);
 	bn_mat_inv(vsp->vs_objview2model, vsp->vs_model2objview);
     }
     vsp->vs_flag = 1;
@@ -2654,7 +2657,6 @@ f_opendb(
 
     /* close out the old dbip */
     if ( save_dbip )  {
-	struct ged *new_gedp;
 	struct db_i *new_dbip;
 	struct mater *new_materp;
 
@@ -2670,20 +2672,21 @@ f_opendb(
 	f_closedb(clientData, interp, 1, NULL);
 
 	/* restore to the new db just opened */
-	gedp = new_gedp;
 	dbip = new_dbip;
 	rt_new_material_head(new_materp);
     }
 
+#if 0
     {
 	register struct dm_list *dmlp;
 
 	/* update local2base and base2local variables for all view objects */
 	FOR_ALL_DISPLAYS(dmlp, &head_dm_list.l) {
-	    dmlp->dml_view_state->vs_vop->vo_local2base = dbip->dbi_local2base;
-	    dmlp->dml_view_state->vs_vop->vo_base2local = dbip->dbi_base2local;
+	    dmlp->dml_view_state->vs_gvp->gv_local2base = dbip->dbi_local2base;
+	    dmlp->dml_view_state->vs_gvp->gv_base2local = dbip->dbi_base2local;
 	}
     }
+#endif
 
     if ( dbip->dbi_read_only )
 	bu_vls_printf(&msg, "%s: READ ONLY\n", dbip->dbi_filename);
@@ -2700,7 +2703,10 @@ f_opendb(
     BU_GETSTRUCT(gedp, ged);
     GED_INIT(gedp, wdbp);
 
+    /*XXX shouldn't need any of this */
+#if 1
     /* increment use count for this db instance */
+    (void)db_clone_dbi(dbip, NULL);
     (void)db_clone_dbi(dbip, NULL);
 
     /* Establish LIBWDB TCL access to both disk and in-memory databases */
@@ -2737,9 +2743,7 @@ f_opendb(
 	bu_vls_free(&msg);
 	return TCL_ERROR;
     }
-
-    /* link the drawable geometry object to the (new) database object */
-    dgop->dgo_wdbp = wdbp;
+#endif
 
     /* Perhaps do something special with the GUI */
     bu_vls_trunc(&vls, 0);
@@ -2826,26 +2830,28 @@ f_closedb(
     cmd_zap(clientData, interp, 1, av);
 
     /* Close the Tcl database objects */
-#if 0
-    Tcl_Eval(interp, "db close; .inmem close");
-#else
     Tcl_Eval(interp, "rename db \"\"; rename .inmem \"\"");
-#endif
 
     log_event( "CEASE", "(close)" );
 
+#if 0
     /* update any and all other displays */
     {
 	register struct dm_list *dmlp;
 
 	/* update local2base and base2local variables for all view objects */
 	FOR_ALL_DISPLAYS(dmlp, &head_dm_list.l) {
-	    dmlp->dml_view_state->vs_vop->vo_local2base = dbip->dbi_local2base;
-	    dmlp->dml_view_state->vs_vop->vo_base2local = dbip->dbi_base2local;
+	    dmlp->dml_view_state->vs_gvp->gv_local2base = dbip->dbi_local2base;
+	    dmlp->dml_view_state->vs_gvp->gv_base2local = dbip->dbi_base2local;
 	}
     }
+#endif
+
+    ged_drawable_close(gedp->ged_gdp);
+    ged_free(gedp);
 
     /* wipe out the global pointers */
+    gedp = GED_NULL;
     dbip = DBI_NULL;
     rt_new_material_head(MATER_NULL);
 

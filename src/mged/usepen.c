@@ -284,7 +284,7 @@ illuminate(int y) {
      */
     count = ((fastf_t)y + GED_MAX) * ndrawn / GED_RANGE;
 
-    FOR_ALL_SOLIDS(sp, &dgop->dgo_headSolid)  {
+    FOR_ALL_SOLIDS(sp, &gedp->ged_gdp->gd_headSolid)  {
 	/* Only consider solids which are presently in view */
 	if ( sp->s_flag == UP )  {
 	    if ( count-- == 0 ) {
@@ -347,13 +347,13 @@ f_aip(
 	sp = illump;
 	sp->s_iflag = DOWN;
 	if (argc == 1 || *argv[1] == 'f') {
-	    if (BU_LIST_NEXT_IS_HEAD(sp, &dgop->dgo_headSolid))
-		sp = BU_LIST_NEXT(solid, &dgop->dgo_headSolid);
+	    if (BU_LIST_NEXT_IS_HEAD(sp, &gedp->ged_gdp->gd_headSolid))
+		sp = BU_LIST_NEXT(solid, &gedp->ged_gdp->gd_headSolid);
 	    else
 		sp = BU_LIST_PNEXT(solid, sp);
 	} else if (*argv[1] == 'b') {
-	    if (BU_LIST_PREV_IS_HEAD(sp, &dgop->dgo_headSolid))
-		sp = BU_LIST_PREV(solid, &dgop->dgo_headSolid);
+	    if (BU_LIST_PREV_IS_HEAD(sp, &gedp->ged_gdp->gd_headSolid))
+		sp = BU_LIST_PREV(solid, &gedp->ged_gdp->gd_headSolid);
 	    else
 		sp = BU_LIST_PLAST(solid, sp);
 	} else {
@@ -381,12 +381,12 @@ wrt_view( mat_t out, const mat_t change, const mat_t in )
 {
     static mat_t t1, t2;
 
-    bn_mat_mul(t1, view_state->vs_vop->vo_center, in);
+    bn_mat_mul(t1, view_state->vs_gvp->gv_center, in);
     bn_mat_mul(t2, change, t1);
 
     /* Build "fromViewcenter" matrix */
     MAT_IDN(t1);
-    MAT_DELTAS(t1, -view_state->vs_vop->vo_center[MDX], -view_state->vs_vop->vo_center[MDY], -view_state->vs_vop->vo_center[MDZ]);
+    MAT_DELTAS(t1, -view_state->vs_gvp->gv_center[MDX], -view_state->vs_gvp->gv_center[MDY], -view_state->vs_gvp->gv_center[MDZ]);
     bn_mat_mul(out, t1, t2);
 }
 
@@ -534,7 +534,7 @@ f_matpick(
     }
  got:
     /* Include all solids with same tree top */
-    FOR_ALL_SOLIDS(sp, &dgop->dgo_headSolid)  {
+    FOR_ALL_SOLIDS(sp, &gedp->ged_gdp->gd_headSolid)  {
 	for ( j = 0; j <= ipathpos; j++ )  {
 	    if ( DB_FULL_PATH_GET(&sp->s_fullpath, j) !=
 		 DB_FULL_PATH_GET(&illump->s_fullpath, j) )

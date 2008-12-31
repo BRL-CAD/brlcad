@@ -190,7 +190,7 @@ sl_atol(register struct scroll_item *mptr, double val)
     }
 
     bu_vls_init(&vls);
-    bu_vls_printf(&vls, "knob %s %f", mptr->scroll_cmd, val*view_state->vs_vop->vo_scale*base2local);
+    bu_vls_printf(&vls, "knob %s %f", mptr->scroll_cmd, val*view_state->vs_gvp->gv_scale*base2local);
     Tcl_Eval(interp, bu_vls_addr(&vls));
     bu_vls_free(&vls);
 }

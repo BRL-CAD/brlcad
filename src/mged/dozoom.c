@@ -315,13 +315,13 @@ dozoom(int which_eye)
     struct dm_list *save_dm_list = curr_dm_list;
 
     ndrawn = 0;
-    inv_viewsize = view_state->vs_vop->vo_invSize;
+    inv_viewsize = view_state->vs_gvp->gv_isize;
 
     /*
      * Draw all solids not involved in an edit.
      */
-    if ( view_state->vs_vop->vo_perspective <= 0 && view_state->vs_vop->vo_eye_pos[Z] == 1.0 )  {
-	mat = view_state->vs_vop->vo_model2view;
+    if ( view_state->vs_gvp->gv_perspective <= 0 && view_state->vs_gvp->gv_eye_pos[Z] == 1.0 )  {
+	mat = view_state->vs_gvp->gv_model2view;
     } else {
 	/*
 	 *  There are two strategies that could be used:
@@ -336,7 +336,7 @@ dozoom(int which_eye)
 	point_t	l, h, eye;
 
 	/* Determine where eye should be */
-	to_eye_scr = 1 / tan(view_state->vs_vop->vo_perspective * bn_degtorad * 0.5);
+	to_eye_scr = 1 / tan(view_state->vs_gvp->gv_perspective * bn_degtorad * 0.5);
 
 #define SCR_WIDTH_PHYS	330	/* Assume a 330 mm wide screen */
 
@@ -354,34 +354,34 @@ dozoom(int which_eye)
 	switch (which_eye)  {
 	    case 0:
 		/* Non-stereo case */
-		mat = view_state->vs_vop->vo_model2view;
+		mat = view_state->vs_gvp->gv_model2view;
 		/* XXX hack */
 		// if ( mged_variables->mv_faceplate > 0 )
 		if ( 1 ) {
-		    if ( view_state->vs_vop->vo_eye_pos[Z] == 1.0 )  {
+		    if ( view_state->vs_gvp->gv_eye_pos[Z] == 1.0 )  {
 			/* This way works, with reasonable Z-clipping */
-			persp_mat( perspective_mat, view_state->vs_vop->vo_perspective,
+			persp_mat( perspective_mat, view_state->vs_gvp->gv_perspective,
 				   (fastf_t)1.0f, (fastf_t)0.01f, (fastf_t)1.0e10f, (fastf_t)1.0f );
 		    } else {
 			/* This way does not have reasonable Z-clipping,
 			 * but includes shear, for GDurf's testing.
 			 */
-			deering_persp_mat( perspective_mat, l, h, view_state->vs_vop->vo_eye_pos );
+			deering_persp_mat( perspective_mat, l, h, view_state->vs_gvp->gv_eye_pos );
 		    }
 		} else {
 		    /* New way, should handle all cases */
-		    mike_persp_mat( perspective_mat, view_state->vs_vop->vo_eye_pos );
+		    mike_persp_mat( perspective_mat, view_state->vs_gvp->gv_eye_pos );
 		}
 		break;
 	    case 1:
 		/* R */
-		mat = view_state->vs_vop->vo_model2view;
+		mat = view_state->vs_gvp->gv_model2view;
 		eye[X] = eye_delta_scr;
 		deering_persp_mat( perspective_mat, l, h, eye );
 		break;
 	    case 2:
 		/* L */
-		mat = view_state->vs_vop->vo_model2view;
+		mat = view_state->vs_gvp->gv_model2view;
 		eye[X] = -eye_delta_scr;
 		deering_persp_mat( perspective_mat, l, h, eye );
 		break;
@@ -394,7 +394,7 @@ dozoom(int which_eye)
 
     if (dmp->dm_transparency) {
 	/* First, draw opaque stuff */
-	FOR_ALL_SOLIDS(sp, &dgop->dgo_headSolid)  {
+	FOR_ALL_SOLIDS(sp, &gedp->ged_gdp->gd_headSolid)  {
 	    sp->s_flag = DOWN;		/* Not drawn yet */
 
 	    /* If part of object edit, will be drawn below */
@@ -434,7 +434,7 @@ dozoom(int which_eye)
 	DM_SET_DEPTH_MASK(dmp, 0);
 
 	/* Second, draw transparent stuff */
-	FOR_ALL_SOLIDS(sp, &dgop->dgo_headSolid)  {
+	FOR_ALL_SOLIDS(sp, &gedp->ged_gdp->gd_headSolid)  {
 
 	    /* If part of object edit, will be drawn below */
 	    if ( sp->s_iflag == UP )
@@ -474,7 +474,7 @@ dozoom(int which_eye)
 	DM_SET_DEPTH_MASK(dmp, 1);
     } else {
 
-	FOR_ALL_SOLIDS(sp, &dgop->dgo_headSolid)  {
+	FOR_ALL_SOLIDS(sp, &gedp->ged_gdp->gd_headSolid)  {
 	    sp->s_flag = DOWN;		/* Not drawn yet */
 	    /* If part of object edit, will be drawn below */
 	    if ( sp->s_iflag == UP )
@@ -529,7 +529,7 @@ dozoom(int which_eye)
     if ( state == ST_VIEW )
 	return;
 
-    if ( view_state->vs_vop->vo_perspective <= 0 )  {
+    if ( view_state->vs_gvp->gv_perspective <= 0 )  {
 	mat = view_state->vs_model2objview;
     } else {
 	bn_mat_mul( new, perspective_mat, view_state->vs_model2objview );
@@ -542,7 +542,7 @@ dozoom(int which_eye)
 		   color_scheme->cs_geo_hl[1],
 		   color_scheme->cs_geo_hl[2], 1, 1.0);
 
-    FOR_ALL_SOLIDS(sp, &dgop->dgo_headSolid)  {
+    FOR_ALL_SOLIDS(sp, &gedp->ged_gdp->gd_headSolid)  {
 	/* Ignore all objects not being edited */
 	if (sp->s_iflag != UP)
 	    continue;

@@ -52,7 +52,7 @@ cmd_overlay(ClientData	clientData,
 
     ac = argc + 1;
     bu_vls_init(&char_size);
-    bu_vls_printf(&char_size, "%lf", view_state->vs_vop->vo_scale * 0.01);
+    bu_vls_printf(&char_size, "%lf", view_state->vs_gvp->gv_scale * 0.01);
     av[0] = argv[0];		/* command name */
     av[1] = argv[1];		/* plotfile name */
     av[2] = bu_vls_addr(&char_size);
@@ -62,7 +62,7 @@ cmd_overlay(ClientData	clientData,
     } else
 	av[3] = (char *)0;
 
-    if ((ret = dgo_overlay_cmd(dgop, interp, ac, av)) == TCL_OK)
+    if ((ret = ged_overlay(gedp, ac, av)) == TCL_OK)
 	update_views = 1;
 
     bu_vls_free(&char_size);
@@ -93,15 +93,15 @@ f_labelvert(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 
     vbp = rt_vlblock_init();
     MAT_IDN(mat);
-    bn_mat_inv(mat, view_state->vs_vop->vo_rotation);
-    scale = view_state->vs_vop->vo_size / 100;		/* divide by # chars/screen */
+    bn_mat_inv(mat, view_state->vs_gvp->gv_rotation);
+    scale = view_state->vs_gvp->gv_size / 100;		/* divide by # chars/screen */
 
     for ( i=1; i<argc; i++ )  {
 	struct solid	*s;
 	if ( (dp = db_lookup( dbip, argv[i], LOOKUP_NOISY )) == DIR_NULL )
 	    continue;
 	/* Find uses of this solid in the solid table */
-	FOR_ALL_SOLIDS(s, &dgop->dgo_headSolid)  {
+	FOR_ALL_SOLIDS(s, &gedp->ged_gdp->gd_headSolid)  {
 	    if ( db_full_path_search( &s->s_fullpath, dp ) )  {
 		rt_label_vlist_verts( vbp, &s->s_vlist, mat, scale, base2local );
 	    }

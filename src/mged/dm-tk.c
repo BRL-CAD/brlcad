@@ -188,7 +188,7 @@ dirty_hook(void)
 static void
 zclip_hook(void)
 {
-    view_state->vs_vop->vo_zclip = dmp->dm_zclip;
+    view_state->vs_gvp->gv_zclip = dmp->dm_zclip;
     dirty_hook();
 }
 /*

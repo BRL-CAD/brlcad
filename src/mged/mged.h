@@ -79,7 +79,6 @@
 
 #define MGED_DB_NAME "db"
 #define MGED_INMEM_NAME ".inmem"
-#define MGED_DG_NAME "dg"
 
 
 /* Defined in usepen.c */
@@ -94,7 +93,6 @@ extern struct ged	*gedp;		/* defined in mged.c */
 extern struct db_i	*dbip;		/* defined in mged.c */
 extern int		 dbih;		/* defined in mged.c */
 extern struct rt_wdb	*wdbp;		/* defined in mged.c */
-extern struct dg_obj	*dgop;		/* defined in mged.c */
 #define	base2local	(dbip->dbi_base2local)
 #define local2base	(dbip->dbi_local2base)
 #define	cur_title	(dbip->dbi_title)      /* current model title */
@@ -224,7 +222,7 @@ extern struct directory **dir_getspace();
 extern void ellipse();
 
 /* mged.c */
-extern void mged_view_obj_callback(genptr_t clientData, struct view_obj *vop);
+extern void mged_view_callback(struct ged_view *gvp, genptr_t clientData);
 
 /* buttons.c */
 BU_EXTERN(void button, (int bnum) );
@@ -561,14 +559,6 @@ int mged_cmd(
     char **argv,
     struct funtab in_functions[]);
 void mged_print_result(int status);
-extern int cmd_gqa(ClientData	clientData,
-		   Tcl_Interp	*interp,
-		   int		argc,
-		   char		**argv);
-extern int cmd_tire(ClientData	clientData,
-		    Tcl_Interp	*interp,
-		    int		argc,
-		    char	**argv);
 
 /* color_scheme.c */
 void cs_set_bg(void);

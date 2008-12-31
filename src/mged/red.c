@@ -41,8 +41,6 @@
 #include "./mged.h"
 #include "./sedit.h"
 
-extern int cmd_name(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
-
 static char	red_tmpfil[MAXPATHLEN] = {0};
 static char	red_tmpcomb[17];
 static char	*red_tmpcomb_init = "red_tmp.aXXXXXX";
@@ -1396,7 +1394,7 @@ restore_comb(struct directory *dp)
     av[1] = red_tmpcomb;
     av[2] = name;
 
-    (void)cmd_name((ClientData)NULL, interp, 3, av);
+    (void)ged_move(gedp, 3, av);
 
     bu_free( name, "bu_strdup'd name" );
 }

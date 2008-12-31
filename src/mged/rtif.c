@@ -220,11 +220,11 @@ rt_oldwrite(FILE *fp, fastf_t *eye_model)
 {
     register int i;
 
-    (void)fprintf(fp, "%.9e\n", view_state->vs_vop->vo_size);
+    (void)fprintf(fp, "%.9e\n", view_state->vs_gvp->gv_size);
     (void)fprintf(fp, "%.9e %.9e %.9e\n",
 		  eye_model[X], eye_model[Y], eye_model[Z] );
     for ( i=0; i < 16; i++ )  {
-	(void)fprintf(fp, "%.9e ", view_state->vs_vop->vo_rotation[i]);
+	(void)fprintf(fp, "%.9e ", view_state->vs_gvp->gv_rotation[i]);
 	if ( (i%4) == 3 )
 	    (void)fprintf(fp, "\n");
     }
@@ -246,19 +246,19 @@ rt_write(FILE *fp, fastf_t *eye_model)
     quat_t		quat;
     register struct solid *sp;
 
-    (void)fprintf(fp, "viewsize %.15e;\n", view_state->vs_vop->vo_size);
-    quat_mat2quat(quat, view_state->vs_vop->vo_rotation);
+    (void)fprintf(fp, "viewsize %.15e;\n", view_state->vs_gvp->gv_size);
+    quat_mat2quat(quat, view_state->vs_gvp->gv_rotation);
     (void)fprintf(fp, "orientation %.15e %.15e %.15e %.15e;\n", V4ARGS(quat));
     (void)fprintf(fp, "eye_pt %.15e %.15e %.15e;\n",
 		  eye_model[X], eye_model[Y], eye_model[Z] );
 
     (void)fprintf(fp, "start 0; clean;\n");
-    FOR_ALL_SOLIDS(sp, &dgop->dgo_headSolid) {
+    FOR_ALL_SOLIDS(sp, &gedp->ged_gdp->gd_headSolid) {
 	for (i=0;i<sp->s_fullpath.fp_len;i++) {
 	    DB_FULL_PATH_GET(&sp->s_fullpath, i)->d_flags &= ~DIR_USED;
 	}
     }
-    FOR_ALL_SOLIDS(sp, &dgop->dgo_headSolid) {
+    FOR_ALL_SOLIDS(sp, &gedp->ged_gdp->gd_headSolid) {
 	for (i=0; i<sp->s_fullpath.fp_len; i++ ) {
 	    struct directory *dp;
 	    dp = DB_FULL_PATH_GET(&sp->s_fullpath, i);
@@ -273,7 +273,7 @@ rt_write(FILE *fp, fastf_t *eye_model)
 	}
     }
 
-    FOR_ALL_SOLIDS(sp, &dgop->dgo_headSolid) {
+    FOR_ALL_SOLIDS(sp, &gedp->ged_gdp->gd_headSolid) {
 	for (i=0;i<sp->s_fullpath.fp_len;i++) {
 	    DB_FULL_PATH_GET(&sp->s_fullpath, i)->d_flags &= ~DIR_USED;
 	}
@@ -326,10 +326,10 @@ build_tops(char **start, char **end)
      * Find all unique top-level entries.
      *  Mark ones already done with s_wflag == UP
      */
-    FOR_ALL_SOLIDS(sp, &dgop->dgo_headSolid) {
+    FOR_ALL_SOLIDS(sp, &gedp->ged_gdp->gd_headSolid) {
 	sp->s_wflag = DOWN;
     }
-    FOR_ALL_SOLIDS(sp, &dgop->dgo_headSolid)  {
+    FOR_ALL_SOLIDS(sp, &gedp->ged_gdp->gd_headSolid)  {
 	register struct solid *forw;
 	struct directory *dp = FIRST_SOLID(sp);
 
@@ -345,7 +345,7 @@ build_tops(char **start, char **end)
 	    break;
 	}
 	sp->s_wflag = UP;
-	for (BU_LIST_PFOR(forw, sp, solid, &dgop->dgo_headSolid)) {
+	for (BU_LIST_PFOR(forw, sp, solid, &gedp->ged_gdp->gd_headSolid)) {
 	    if ( FIRST_SOLID(forw) == dp )
 		forw->s_wflag = UP;
 	}
@@ -393,7 +393,19 @@ cmd_rtabort(ClientData clientData,
 	    int argc,
 	    char **argv)
 {
-    return dgo_rtabort_cmd(dgop, interp, argc, argv);
+    int ret;
+    Tcl_DString ds;
+
+    Tcl_DStringInit(&ds);
+
+    ret = ged_rtabort(gedp, argc, (const char **)argv);
+    Tcl_DStringAppend(&ds, bu_vls_addr(&gedp->ged_result_str), -1);
+    Tcl_DStringResult(interp, &ds);
+
+    if (ret == BRLCAD_OK)
+	return TCL_OK;
+
+    return TCL_ERROR;
 }
 
 
@@ -500,7 +512,7 @@ rt_set_eye_model(fastf_t *eye_model)
 	vect_t temp;
 
 	VSET( temp, 0.0, 0.0, 1.0 );
-	MAT4X3PNT(eye_model, view_state->vs_vop->vo_view2model, temp);
+	MAT4X3PNT(eye_model, view_state->vs_gvp->gv_view2model, temp);
     } else {
 	/* not doing zclipping, so back out of geometry */
 	register struct solid *sp;
@@ -511,14 +523,14 @@ rt_set_eye_model(fastf_t *eye_model)
 	vect_t  extremum[2];
 	vect_t  minus, plus;    /* vers of this solid's bounding box */
 
-	VSET(eye_model, -view_state->vs_vop->vo_center[MDX],
-	     -view_state->vs_vop->vo_center[MDY], -view_state->vs_vop->vo_center[MDZ]);
+	VSET(eye_model, -view_state->vs_gvp->gv_center[MDX],
+	     -view_state->vs_gvp->gv_center[MDY], -view_state->vs_gvp->gv_center[MDZ]);
 
 	for (i = 0; i < 3; ++i) {
 	    extremum[0][i] = INFINITY;
 	    extremum[1][i] = -INFINITY;
 	}
-	FOR_ALL_SOLIDS (sp, &dgop->dgo_headSolid) {
+	FOR_ALL_SOLIDS (sp, &gedp->ged_gdp->gd_headSolid) {
 	    minus[X] = sp->s_center[X] - sp->s_size;
 	    minus[Y] = sp->s_center[Y] - sp->s_size;
 	    minus[Z] = sp->s_center[Z] - sp->s_size;
@@ -528,7 +540,7 @@ rt_set_eye_model(fastf_t *eye_model)
 	    plus[Z] = sp->s_center[Z] + sp->s_size;
 	    VMAX( extremum[1], plus );
 	}
-	VMOVEN(direction, view_state->vs_vop->vo_rotation + 8, 3);
+	VMOVEN(direction, view_state->vs_gvp->gv_rotation + 8, 3);
 	VSCALE(direction, direction, -1.0);
 	for (i = 0; i < 3; ++i)
 	    if (NEAR_ZERO(direction[i], 1e-10))
@@ -612,7 +624,7 @@ run_rt(void)
     rt_write(fp_in, eye_model);
     (void)fclose( fp_in );
 
-    FOR_ALL_SOLIDS(sp, &dgop->dgo_headSolid)
+    FOR_ALL_SOLIDS(sp, &gedp->ged_gdp->gd_headSolid)
 	sp->s_wflag = DOWN;
 
     BU_GETSTRUCT(run_rtp, run_rt);
@@ -732,7 +744,7 @@ run_rt(void)
     rt_write(fp_in, eye_model);
     (void)fclose( fp_in );
 
-    FOR_ALL_SOLIDS(sp, &dgop->dgo_headSolid)
+    FOR_ALL_SOLIDS(sp, &gedp->ged_gdp->gd_headSolid)
 	sp->s_wflag = DOWN;
 
     BU_GETSTRUCT(run_rtp, run_rt);
@@ -765,6 +777,8 @@ cmd_rt(ClientData	clientData,
     const char *ptr;
     char buf[256] = {0};
     int doRtcheck;
+    int ret;
+    Tcl_DString ds;
 
     CHECK_DBI_NULL;
 
@@ -788,10 +802,20 @@ cmd_rt(ClientData	clientData,
 	argv[0] = buf;
     }
 
-    if (doRtcheck)
-	return dgo_rtcheck_cmd(dgop, view_state->vs_vop, interp, argc, argv);
+    Tcl_DStringInit(&ds);
 
-    return dgo_rt_cmd(dgop, view_state->vs_vop, interp, argc, argv);
+    if (doRtcheck)
+	ret = ged_rtcheck(gedp, argc, (const char **)argv);
+    else
+	ret = ged_rt(gedp, argc, (const char **)argv);
+
+    Tcl_DStringAppend(&ds, bu_vls_addr(&gedp->ged_result_str), -1);
+    Tcl_DStringResult(interp, &ds);
+
+    if (ret == BRLCAD_OK)
+	return TCL_OK;
+
+    return TCL_ERROR;
 }
 
 
@@ -807,6 +831,8 @@ cmd_rrt(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
     register char **vp;
     register int i;
+    int ret;
+    Tcl_DString ds;
 
     CHECK_DBI_NULL;
 
@@ -823,81 +849,17 @@ cmd_rrt(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
     if ( not_state( ST_VIEW, "Ray-trace of current view" ) )
 	return TCL_ERROR;
 
-    vp = &rt_cmd_vec[0];
-    for ( i=1; i < argc; i++ )
-	*vp++ = argv[i];
-    *vp++ = dbip->dbi_filename;
+    Tcl_DStringInit(&ds);
 
-    setup_rt( vp, 1 );
-    (void)run_rt();
+    ret = ged_rrt(gedp, argc, (const char **)argv);
+    Tcl_DStringAppend(&ds, bu_vls_addr(&gedp->ged_result_str), -1);
+    Tcl_DStringResult(interp, &ds);
 
-    return TCL_OK;
+    if (ret == BRLCAD_OK)
+	return TCL_OK;
+
+    return TCL_ERROR;
 }
-
-#if 0
-static void
-rtcheck_vector_handler(ClientData clientData, int mask)
-{
-    int value;
-    struct solid *sp;
-    struct rtcheck *rtcp = (struct rtcheck *)clientData;
-
-    /* Get vector output from rtcheck */
-    if ((value = getc(rtcp->fp)) == EOF) {
-	int retcode;
-	int rpid;
-
-	Tcl_DeleteFileHandler(rtcp->fd);
-	fclose(rtcp->fp);
-
-	FOR_ALL_SOLIDS(sp, &dgop->dgo_headSolid)
-	    sp->s_wflag = DOWN;
-
-	/* Add overlay */
-	cvt_vlblock_to_solids( rtcp->vbp, "OVERLAPS", 0 );
-	rt_vlblock_free(rtcp->vbp);
-
-	/* wait for the forked process */
-	while ((rpid = wait(&retcode)) != rtcp->pid && rpid != -1)
-	    pr_wait_status(retcode);
-
-	/* free rtcp */
-	bu_free((genptr_t)rtcp, "rtcheck_vector_handler: rtcp");
-
-	update_views = 1;
-	return;
-    }
-
-    (void)rt_process_uplot_value( &rtcp->vhead,
-				  rtcp->vbp,
-				  rtcp->fp,
-				  value,
-				  rtcp->csize );
-}
-
-static void
-rtcheck_output_handler(ClientData clientData, int mask)
-{
-    int count;
-    char line[RT_MAXLINE+1] = {0};
-    int fd = (int)((long)clientData & 0xFFFF);	/* fd's will be small */
-
-    /* Get textual output from rtcheck */
-    count = read((int)fd, line, sizeof(line)-1);
-    if (count <= 0) {
-	if (count < 0) {
-	    perror("READ ERROR");
-	}
-	Tcl_DeleteFileHandler(fd);
-	close(fd);
-	return;
-    }
-
-    line[count] = '\0';
-    bu_log("%s", line);
-}
-#endif
-
 
 /**
  *			B A S E N A M E
@@ -1030,8 +992,8 @@ f_saveview(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 
     /* Do not specify -v option to rt; batch jobs must print everything. -Mike */
     (void)fprintf(fp, "#!/bin/sh\n%s -M ", rtcmd);
-    if ( view_state->vs_vop->vo_perspective > 0 )
-	(void)fprintf(fp, "-p%g ", view_state->vs_vop->vo_perspective);
+    if ( view_state->vs_gvp->gv_perspective > 0 )
+	(void)fprintf(fp, "-p%g ", view_state->vs_gvp->gv_perspective);
     for ( i=2; i < argc; i++ )
 	(void)fprintf(fp, "%s ", argv[i]);
 
@@ -1046,9 +1008,9 @@ f_saveview(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
     /* Find all unique top-level entries.
      *  Mark ones already done with s_wflag == UP
      */
-    FOR_ALL_SOLIDS(sp, &dgop->dgo_headSolid)
+    FOR_ALL_SOLIDS(sp, &gedp->ged_gdp->gd_headSolid)
 	sp->s_wflag = DOWN;
-    FOR_ALL_SOLIDS(sp, &dgop->dgo_headSolid)  {
+    FOR_ALL_SOLIDS(sp, &gedp->ged_gdp->gd_headSolid)  {
 	register struct solid *forw;	/* XXX */
 	struct directory *dp = FIRST_SOLID(sp);
 
@@ -1057,7 +1019,7 @@ f_saveview(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	if (dp->d_addr == RT_DIR_PHONY_ADDR) continue;
 	(void)fprintf(fp, "'%s' ", dp->d_namep);
 	sp->s_wflag = UP;
-	for (BU_LIST_PFOR(forw, sp, solid, &dgop->dgo_headSolid)) {
+	for (BU_LIST_PFOR(forw, sp, solid, &gedp->ged_gdp->gd_headSolid)) {
 	    if ( FIRST_SOLID(forw) == dp )
 		forw->s_wflag = UP;
 	}
@@ -1075,7 +1037,7 @@ f_saveview(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
     (void)fprintf(fp, "\nEOF\n");
     (void)fclose( fp );
 
-    FOR_ALL_SOLIDS(sp, &dgop->dgo_headSolid)
+    FOR_ALL_SOLIDS(sp, &gedp->ged_gdp->gd_headSolid)
 	sp->s_wflag = DOWN;
 
     return TCL_OK;
@@ -1294,16 +1256,16 @@ f_loadview(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[])
      * of a commands section, we may finish the computations.
      */
     /* First step:  put eye at view center (view 0, 0, 0) */
-    MAT_COPY(view_state->vs_vop->vo_rotation, rtif_viewrot);
-    MAT_DELTAS_VEC_NEG(view_state->vs_vop->vo_center, rtif_eye_model);
+    MAT_COPY(view_state->vs_gvp->gv_rotation, rtif_viewrot);
+    MAT_DELTAS_VEC_NEG(view_state->vs_gvp->gv_center, rtif_eye_model);
     new_mats(); /* actually updates display here (maybe?) */
 
     /* XXX not sure why the correction factor is needed, but it works -- csm */
     /*  Second step:  put eye at view 0, 0, 1.
      *  For eye to be at 0, 0, 1, the old 0, 0, -1 needs to become 0, 0, 0.
      VSET(xlate, 0.0, 0.0, -1.0);
-     MAT4X3PNT(new_cent, view_state->vs_vop->vo_view2model, xlate);
-     MAT_DELTAS_VEC_NEG(view_state->vs_vop->vo_center, new_cent);
+     MAT4X3PNT(new_cent, view_state->vs_gvp->gv_view2model, xlate);
+     MAT_DELTAS_VEC_NEG(view_state->vs_gvp->gv_center, new_cent);
      new_mats();
     */
 
@@ -1370,7 +1332,7 @@ f_rmats(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 		mode = -1;
 		break;
 	    }
-	    FOR_ALL_SOLIDS(sp, &dgop->dgo_headSolid)  {
+	    FOR_ALL_SOLIDS(sp, &gedp->ged_gdp->gd_headSolid)  {
 		if ( LAST_SOLID(sp) != dp )  continue;
 		if ( BU_LIST_IS_EMPTY( &(sp->s_vlist) ) )  continue;
 		vp = BU_LIST_LAST( bn_vlist, &(sp->s_vlist) );
@@ -1404,20 +1366,20 @@ f_rmats(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	switch (mode)  {
 	    case -1:
 		/* First step:  put eye in center */
-		view_state->vs_vop->vo_scale = scale;
-		MAT_COPY(view_state->vs_vop->vo_rotation, rot);
-		MAT_DELTAS_VEC_NEG(view_state->vs_vop->vo_center, eye_model);
+		view_state->vs_gvp->gv_scale = scale;
+		MAT_COPY(view_state->vs_gvp->gv_rotation, rot);
+		MAT_DELTAS_VEC_NEG(view_state->vs_gvp->gv_center, eye_model);
 		new_mats();
 		/* Second step:  put eye in front */
 		VSET(xlate, 0.0, 0.0, -1.0);	/* correction factor */
-		MAT4X3PNT(eye_model, view_state->vs_vop->vo_view2model, xlate);
-		MAT_DELTAS_VEC_NEG(view_state->vs_vop->vo_center, eye_model);
+		MAT4X3PNT(eye_model, view_state->vs_gvp->gv_view2model, xlate);
+		MAT_DELTAS_VEC_NEG(view_state->vs_gvp->gv_center, eye_model);
 		new_mats();
 		break;
 	    case 0:
-		view_state->vs_vop->vo_scale = scale;
-		MAT_IDN(view_state->vs_vop->vo_rotation);	/* top view */
-		MAT_DELTAS_VEC_NEG( view_state->vs_vop->vo_center, eye_model);
+		view_state->vs_gvp->gv_scale = scale;
+		MAT_IDN(view_state->vs_gvp->gv_rotation);	/* top view */
+		MAT_DELTAS_VEC_NEG( view_state->vs_gvp->gv_center, eye_model);
 		new_mats();
 		break;
 	    case 1:
@@ -1522,7 +1484,7 @@ f_savekey(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
      *  Eye is in conventional place.
      */
     VSET( temp, 0.0, 0.0, 1.0 );
-    MAT4X3PNT(eye_model, view_state->vs_vop->vo_view2model, temp);
+    MAT4X3PNT(eye_model, view_state->vs_gvp->gv_view2model, temp);
     rt_oldwrite(fp, eye_model);
     (void)fclose( fp );
 
@@ -1709,9 +1671,9 @@ f_preview(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
      *  Initialize the view to the current one in MGED
      *  in case a view specification is never given.
      */
-    MAT_COPY(rtif_viewrot, view_state->vs_vop->vo_rotation);
+    MAT_COPY(rtif_viewrot, view_state->vs_gvp->gv_rotation);
     VSET(temp, 0.0, 0.0, 1.0);
-    MAT4X3PNT(rtif_eye_model, view_state->vs_vop->vo_view2model, temp);
+    MAT4X3PNT(rtif_eye_model, view_state->vs_gvp->gv_view2model, temp);
 
     if ( setjmp( jmp_env ) == 0 )
 	/* If user hits ^C, preview will stop, and clean up */
@@ -1761,6 +1723,8 @@ f_preview(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 int
 f_nirt(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
+    int ret;
+    Tcl_DString ds;
     const char *ptr;
     char buf[256];
 
@@ -1776,9 +1740,9 @@ f_nirt(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	argv[0] = buf;
     }
 
+    Tcl_DStringInit(&ds);
 
     if (mged_variables->mv_use_air) {
-	int ret;
 	int insertArgc = 2;
 	char *insertArgv[3];
 	int newArgc;
@@ -1789,19 +1753,27 @@ f_nirt(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	insertArgv[2] = (char *)0;
 	newArgv = bu_dupinsert_argv(1, insertArgc, (const char **)insertArgv, argc, (const char **)argv);
 	newArgc = argc + insertArgc;
-	ret = dgo_nirt_cmd(dgop, view_state->vs_vop, interp, newArgc, newArgv);
+	ret = ged_nirt(gedp, newArgc, (const char **)newArgv);
 	bu_free_argv(newArgc, newArgv);
-
-	return ret;
     } else {
-	return dgo_nirt_cmd(dgop, view_state->vs_vop, interp, argc, argv);
+	ret = ged_nirt(gedp, argc, (const char **)argv);
     }
+
+    Tcl_DStringAppend(&ds, bu_vls_addr(&gedp->ged_result_str), -1);
+    Tcl_DStringResult(interp, &ds);
+
+    if (ret == BRLCAD_OK)
+	return TCL_OK;
+
+    return TCL_ERROR;
 }
 
 
 int
 f_vnirt(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
+    int ret;
+    Tcl_DString ds;
     const char *ptr;
     char buf[256];
 
@@ -1817,12 +1789,17 @@ f_vnirt(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	argv[0] = buf;
     }
 
-#if 1
-    /*XXX Temporalily not available */
-    return TCL_OK;
-#else
-    return dgo_vnirt_cmd(dgop, view_state->vs_vop, interp, argc, argv);
-#endif
+    Tcl_DStringInit(&ds);
+
+    ret = ged_vnirt(gedp, argc, (const char **)argv);
+
+    Tcl_DStringAppend(&ds, bu_vls_addr(&gedp->ged_result_str), -1);
+    Tcl_DStringResult(interp, &ds);
+
+    if (ret == BRLCAD_OK)
+	return TCL_OK;
+
+    return TCL_ERROR;
 }
 
 
@@ -1843,9 +1820,9 @@ cm_vsize(int argc, char **argv)
     if ( argc < 2 )
 	return(-1);
     /* for some reason, scale is supposed to be half of size... */
-    view_state->vs_vop->vo_size = atof(argv[1]);
-    view_state->vs_vop->vo_scale = view_state->vs_vop->vo_size * 0.5;
-    view_state->vs_vop->vo_invSize = 1.0 / view_state->vs_vop->vo_size;
+    view_state->vs_gvp->gv_size = atof(argv[1]);
+    view_state->vs_gvp->gv_scale = view_state->vs_gvp->gv_size * 0.5;
+    view_state->vs_gvp->gv_isize = 1.0 / view_state->vs_gvp->gv_size;
     return(0);
 }
 
@@ -1951,8 +1928,8 @@ cm_end(int argc, char **argv)
     }
 
     /* First step:  put eye at view center (view 0, 0, 0) */
-    MAT_COPY(view_state->vs_vop->vo_rotation, rtif_viewrot);
-    MAT_DELTAS_VEC_NEG(view_state->vs_vop->vo_center, rtif_eye_model);
+    MAT_COPY(view_state->vs_gvp->gv_rotation, rtif_viewrot);
+    MAT_DELTAS_VEC_NEG(view_state->vs_gvp->gv_center, rtif_eye_model);
     new_mats();
 
     /*
@@ -1961,8 +1938,8 @@ cm_end(int argc, char **argv)
      */
     VSET(xv, 0.05, 0.0, 0.0);
     VSET(yv, 0.0, 0.05, 0.0);
-    MAT4X3PNT(xm, view_state->vs_vop->vo_view2model, xv);
-    MAT4X3PNT(ym, view_state->vs_vop->vo_view2model, yv);
+    MAT4X3PNT(xm, view_state->vs_gvp->gv_view2model, xv);
+    MAT4X3PNT(ym, view_state->vs_gvp->gv_view2model, yv);
     RT_ADD_VLIST(vhead, xm, BN_VLIST_LINE_DRAW);
     RT_ADD_VLIST(vhead, rtif_eye_model, BN_VLIST_LINE_MOVE);
     RT_ADD_VLIST(vhead, ym, BN_VLIST_LINE_DRAW);
@@ -1972,8 +1949,8 @@ cm_end(int argc, char **argv)
      *  For eye to be at 0, 0, 1, the old 0, 0, -1 needs to become 0, 0, 0.
      */
     VSET(xlate, 0.0, 0.0, -1.0);	/* correction factor */
-    MAT4X3PNT(new_cent, view_state->vs_vop->vo_view2model, xlate);
-    MAT_DELTAS_VEC_NEG(view_state->vs_vop->vo_center, new_cent);
+    MAT4X3PNT(new_cent, view_state->vs_gvp->gv_view2model, xlate);
+    MAT_DELTAS_VEC_NEG(view_state->vs_gvp->gv_center, new_cent);
     new_mats();
 
     /* If new treewalk is needed, get new objects into view. */
@@ -2134,8 +2111,8 @@ cmd_solids_on_ray (ClientData clientData, Tcl_Interp *interp, int argc, char **a
 	return (TCL_ERROR);
     }
 
-    VSET(ray_orig, -view_state->vs_vop->vo_center[MDX],
-	 -view_state->vs_vop->vo_center[MDY], -view_state->vs_vop->vo_center[MDZ]);
+    VSET(ray_orig, -view_state->vs_gvp->gv_center[MDX],
+	 -view_state->vs_gvp->gv_center[MDY], -view_state->vs_gvp->gv_center[MDZ]);
     /*
      * Compute bounding box of all objects displayed.
      * Borrowed from size_reset() in chgview.c
@@ -2145,7 +2122,7 @@ cmd_solids_on_ray (ClientData clientData, Tcl_Interp *interp, int argc, char **a
 	extremum[0][i] = INFINITY;
 	extremum[1][i] = -INFINITY;
     }
-    FOR_ALL_SOLIDS (sp, &dgop->dgo_headSolid)
+    FOR_ALL_SOLIDS (sp, &gedp->ged_gdp->gd_headSolid)
 	{
 	    minus[X] = sp->s_center[X] - sp->s_size;
 	    minus[Y] = sp->s_center[Y] - sp->s_size;
@@ -2156,7 +2133,7 @@ cmd_solids_on_ray (ClientData clientData, Tcl_Interp *interp, int argc, char **a
 	    plus[Z] = sp->s_center[Z] + sp->s_size;
 	    VMAX( extremum[1], plus );
 	}
-    VMOVEN(ray_dir, view_state->vs_vop->vo_rotation + 8, 3);
+    VMOVEN(ray_dir, view_state->vs_gvp->gv_rotation + 8, 3);
     VSCALE(ray_dir, ray_dir, -1.0);
     for (i = 0; i < 3; ++i)
 	if (NEAR_ZERO(ray_dir[i], 1e-10))
@@ -2181,10 +2158,10 @@ cmd_solids_on_ray (ClientData clientData, Tcl_Interp *interp, int argc, char **a
 	VJOIN1(ray_orig, ray_orig, t_in, ray_dir);
     }
 
-    VMOVEN(unit_H, view_state->vs_vop->vo_model2view, 3);
-    VMOVEN(unit_V, view_state->vs_vop->vo_model2view + 4, 3);
-    VJOIN1(ray_orig, ray_orig, h * view_state->vs_vop->vo_scale * INV_GED, unit_H);
-    VJOIN1(ray_orig, ray_orig, v * view_state->vs_vop->vo_scale * INV_GED, unit_V);
+    VMOVEN(unit_H, view_state->vs_gvp->gv_model2view, 3);
+    VMOVEN(unit_V, view_state->vs_gvp->gv_model2view + 4, 3);
+    VJOIN1(ray_orig, ray_orig, h * view_state->vs_gvp->gv_scale * INV_GED, unit_H);
+    VJOIN1(ray_orig, ray_orig, v * view_state->vs_gvp->gv_scale * INV_GED, unit_V);
 
     /*
      *	Build a list of all the top-level objects currently displayed
@@ -2221,9 +2198,22 @@ cmd_solids_on_ray (ClientData clientData, Tcl_Interp *interp, int argc, char **a
 int
 cmd_who (ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
-    CHECK_DBI_NULL;
+    int ret;
+    Tcl_DString ds;
 
-    return dgo_who_cmd(dgop, interp, argc, argv);
+    if (gedp == GED_NULL)
+	return TCL_OK;
+
+    Tcl_DStringInit(&ds);
+
+    ret = ged_who(gedp, argc, (const char **)argv);
+    Tcl_DStringAppend(&ds, bu_vls_addr(&gedp->ged_result_str), -1);
+    Tcl_DStringResult(interp, &ds);
+
+    if (ret == BRLCAD_OK)
+	return TCL_OK;
+
+    return TCL_ERROR;
 }
 
 

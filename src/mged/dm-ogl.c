@@ -105,7 +105,7 @@ Ogl_dm_init(struct dm_list	*o_dm_list,
 	return TCL_ERROR;
 
     /*XXXX this eventually needs to move into Ogl's private structure */
-    dmp->dm_vp = &view_state->vs_vop->vo_scale;
+    dmp->dm_vp = &view_state->vs_gvp->gv_scale;
     dmp->dm_perspective = mged_variables->mv_perspective_mode;
 
     eventHandler = Ogl_doevent;
@@ -272,7 +272,7 @@ static void
 zclip_hook()
 {
     dmp->dm_zclip = ((struct ogl_vars *)dmp->dm_vars.priv_vars)->mvars.zclipping_on;
-    view_state->vs_vop->vo_zclip = dmp->dm_zclip;
+    view_state->vs_gvp->gv_zclip = dmp->dm_zclip;
     dirty_hook();
 }
 

@@ -264,8 +264,8 @@ zoom_rect_area(void)
     adjust_rect_for_zoom();
 
     /* find old view center */
-    MAT_DELTAS_GET_NEG(old_model_center, view_state->vs_vop->vo_center);
-    MAT4X3PNT(old_view_center, view_state->vs_vop->vo_model2view, old_model_center);
+    MAT_DELTAS_GET_NEG(old_model_center, view_state->vs_gvp->gv_center);
+    MAT4X3PNT(old_view_center, view_state->vs_gvp->gv_model2view, old_model_center);
 
     /* calculate new view center */
     VSET(new_view_center,
@@ -274,7 +274,7 @@ zoom_rect_area(void)
 	 old_view_center[Z]);
 
     /* find new model center */
-    MAT4X3PNT(new_model_center, view_state->vs_vop->vo_view2model, new_view_center);
+    MAT4X3PNT(new_model_center, view_state->vs_gvp->gv_view2model, new_view_center);
     mged_center(new_model_center);
 
     /* zoom in to fill rectangle */

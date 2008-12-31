@@ -265,19 +265,19 @@ dotitles(struct bu_vls *overlay_vls)
     }
 
     /* take some care here to avoid buffer overrun */
-    tmp_val = -view_state->vs_vop->vo_center[MDX]*base2local;
+    tmp_val = -view_state->vs_gvp->gv_center[MDX]*base2local;
     if ( fabs( tmp_val ) < 10e70 ) {
 	sprintf(cent_x, "%.3f", tmp_val);
     } else {
 	sprintf(cent_x, "%.3g", tmp_val);
     }
-    tmp_val = -view_state->vs_vop->vo_center[MDY]*base2local;
+    tmp_val = -view_state->vs_gvp->gv_center[MDY]*base2local;
     if ( fabs( tmp_val ) < 10e70 ) {
 	sprintf(cent_y, "%.3f", tmp_val);
     } else {
 	sprintf(cent_y, "%.3g", tmp_val);
     }
-    tmp_val = -view_state->vs_vop->vo_center[MDZ]*base2local;
+    tmp_val = -view_state->vs_gvp->gv_center[MDZ]*base2local;
     if ( fabs( tmp_val ) < 10e70 ) {
 	sprintf(cent_z, "%.3f", tmp_val);
     } else {
@@ -288,7 +288,7 @@ dotitles(struct bu_vls *overlay_vls)
     Tcl_SetVar(interp, bu_vls_addr(&curr_dm_list->dml_center_name),
 	       bu_vls_addr(&vls), TCL_GLOBAL_ONLY);
 
-    tmp_val = view_state->vs_vop->vo_size*base2local;
+    tmp_val = view_state->vs_gvp->gv_size*base2local;
     if ( fabs( tmp_val ) < 10e70 ) {
 	sprintf(size, "sz=%.3f", tmp_val);
     } else {
@@ -303,7 +303,7 @@ dotitles(struct bu_vls *overlay_vls)
 	       (char *)bu_units_string(dbip->dbi_local2base), TCL_GLOBAL_ONLY);
 
     bu_vls_trunc(&vls, 0);
-    bu_vls_printf(&vls, "az=%3.2f  el=%3.2f  tw=%3.2f", V3ARGS(view_state->vs_vop->vo_aet));
+    bu_vls_printf(&vls, "az=%3.2f  el=%3.2f  tw=%3.2f", V3ARGS(view_state->vs_gvp->gv_aet));
     Tcl_SetVar(interp, bu_vls_addr(&curr_dm_list->dml_aet_name),
 	       bu_vls_addr(&vls), TCL_GLOBAL_ONLY);
 
@@ -325,7 +325,7 @@ dotitles(struct bu_vls *overlay_vls)
 	point_t lines[2*4];	/* up to 4 lines to draw */
 	int num_lines=0;
 
-	if ( view_state->vs_vop->vo_perspective <= 0)
+	if ( view_state->vs_gvp->gv_perspective <= 0)
 	    bn_mat_mul( xform, view_state->vs_model2objview, es_mat );
 	else {
 	    mat_t tmat;
@@ -484,7 +484,7 @@ dotitles(struct bu_vls *overlay_vls)
 	bu_vls_printf(&vls,
 		      " cent=(%s, %s, %s), %s %s, ", cent_x, cent_y, cent_z,
 		      size, bu_units_string(dbip->dbi_local2base));
-	bu_vls_printf(&vls, "az=%3.2f el=%3.2f tw=%3.2f ang=(%s, %s, %s)", V3ARGS(view_state->vs_vop->vo_aet),
+	bu_vls_printf(&vls, "az=%3.2f el=%3.2f tw=%3.2f ang=(%s, %s, %s)", V3ARGS(view_state->vs_gvp->gv_aet),
 		      ang_x, ang_y, ang_z);
 	DM_SET_FGCOLOR(dmp,
 		       color_scheme->cs_status_text1[0],
@@ -509,7 +509,7 @@ dotitles(struct bu_vls *overlay_vls)
     if ( adc_state->adc_draw ) {
 	fastf_t f;
 
-	f = view_state->vs_vop->vo_scale * base2local;
+	f = view_state->vs_gvp->gv_scale * base2local;
 	/* Angle/Distance cursor */
 	bu_vls_trunc(&vls, 0);
 	bu_vls_printf( &vls,

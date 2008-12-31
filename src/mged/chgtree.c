@@ -305,7 +305,7 @@ find_solid_with_path(register struct db_full_path *pathp)
 
     RT_CK_FULL_PATH(pathp);
 
-    FOR_ALL_SOLIDS(sp, &dgop->dgo_headSolid)  {
+    FOR_ALL_SOLIDS(sp, &gedp->ged_gdp->gd_headSolid)  {
 	if ( !db_identical_full_paths( pathp, &sp->s_fullpath ) )  continue;
 
 	/* Paths are the same */
@@ -359,7 +359,7 @@ cmd_oed(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
     if ( not_state( ST_VIEW, "Object Illuminate" ) )  {
 	return TCL_ERROR;
     }
-    if (BU_LIST_IS_EMPTY(&dgop->dgo_headSolid)) {
+    if (BU_LIST_IS_EMPTY(&gedp->ged_gdp->gd_headSolid)) {
 	Tcl_AppendResult(interp, "no solids in view", (char *)NULL);
 	return TCL_ERROR;
     }
@@ -385,7 +385,7 @@ cmd_oed(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
     db_append_full_path( &both, &rhs );
 
     /* Patterned after  ill_common() ... */
-    illump = BU_LIST_NEXT(solid, &dgop->dgo_headSolid);/* any valid solid would do */
+    illump = BU_LIST_NEXT(solid, &gedp->ged_gdp->gd_headSolid);/* any valid solid would do */
     edobj = 0;		/* sanity */
     movedir = 0;		/* No edit modes set */
     MAT_IDN( modelchanges );	/* No changes yet */

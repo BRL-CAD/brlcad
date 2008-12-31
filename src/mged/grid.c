@@ -97,7 +97,7 @@ set_grid_draw(void)
 
     /* This gets done at most one time. */
     if (grid_auto_size && grid_state->gr_draw) {
-	fastf_t res = view_state->vs_vop->vo_size*base2local / 64.0;
+	fastf_t res = view_state->vs_gvp->gv_size*base2local / 64.0;
 
 	grid_state->gr_res_h = res;
 	grid_state->gr_res_v = res;
@@ -147,7 +147,7 @@ draw_grid(void)
     inv_grid_res_h= 1.0 / grid_state->gr_res_h;
     inv_grid_res_v= 1.0 / grid_state->gr_res_v;
 
-    sf = view_state->vs_vop->vo_scale*base2local;
+    sf = view_state->vs_gvp->gv_scale*base2local;
 
     /* sanity - don't draw the grid if it would fill the screen */
     {
@@ -164,7 +164,7 @@ draw_grid(void)
     nh_dots = 2.0 * sf * inv_grid_res_h + (2 * grid_state->gr_res_major_h);
 
     VSCALE(model_grid_anchor, grid_state->gr_anchor, local2base);
-    MAT4X3PNT(view_grid_anchor, view_state->vs_vop->vo_model2view, model_grid_anchor);
+    MAT4X3PNT(view_grid_anchor, view_state->vs_gvp->gv_model2view, model_grid_anchor);
     VSCALE(view_grid_anchor_local, view_grid_anchor, sf);
 
     VSET(view_lleft_corner, -1.0, -inv_aspect, 0.0);
@@ -231,14 +231,14 @@ snap_to_grid(
 	NEAR_ZERO(grid_state->gr_res_v, (fastf_t)SMALL_FASTF))
 	return;
 
-    sf = view_state->vs_vop->vo_scale*base2local;
+    sf = view_state->vs_gvp->gv_scale*base2local;
     inv_sf = 1 / sf;
 
     VSET(view_pt, *mx, *my, 0.0);
     VSCALE(view_pt, view_pt, sf);  /* view_pt now in local units */
 
     VSCALE(model_grid_anchor, grid_state->gr_anchor, local2base);
-    MAT4X3PNT(view_grid_anchor, view_state->vs_vop->vo_model2view, model_grid_anchor);
+    MAT4X3PNT(view_grid_anchor, view_state->vs_gvp->gv_model2view, model_grid_anchor);
     VSCALE(view_grid_anchor, view_grid_anchor, sf);  /* view_grid_anchor now in local units */
 
     grid_units_h = (view_grid_anchor[X] - view_pt[X]) / grid_state->gr_res_h;
@@ -283,13 +283,13 @@ snap_keypoint_to_grid(void)
     }
 
     if (state == ST_S_EDIT) {
-	MAT4X3PNT(view_pt, view_state->vs_vop->vo_model2view, curr_e_axes_pos);
+	MAT4X3PNT(view_pt, view_state->vs_gvp->gv_model2view, curr_e_axes_pos);
     } else {
 	MAT4X3PNT(model_pt, modelchanges, e_axes_pos);
-	MAT4X3PNT(view_pt, view_state->vs_vop->vo_model2view, model_pt);
+	MAT4X3PNT(view_pt, view_state->vs_gvp->gv_model2view, model_pt);
     }
     snap_to_grid(&view_pt[X], &view_pt[Y]);
-    MAT4X3PNT(model_pt, view_state->vs_vop->vo_view2model, view_pt);
+    MAT4X3PNT(model_pt, view_state->vs_gvp->gv_view2model, view_pt);
     VSCALE(model_pt, model_pt, base2local);
 
     bu_vls_init(&cmd);
@@ -313,12 +313,12 @@ snap_view_center_to_grid(void)
     if (dbip == DBI_NULL)
 	return;
 
-    MAT_DELTAS_GET_NEG(model_pt, view_state->vs_vop->vo_center);
-    MAT4X3PNT(view_pt, view_state->vs_vop->vo_model2view, model_pt);
+    MAT_DELTAS_GET_NEG(model_pt, view_state->vs_gvp->gv_center);
+    MAT4X3PNT(view_pt, view_state->vs_gvp->gv_model2view, model_pt);
     snap_to_grid(&view_pt[X], &view_pt[Y]);
-    MAT4X3PNT(model_pt, view_state->vs_vop->vo_view2model, view_pt);
+    MAT4X3PNT(model_pt, view_state->vs_gvp->gv_view2model, view_pt);
 
-    MAT_DELTAS_VEC_NEG(view_state->vs_vop->vo_center, model_pt);
+    MAT_DELTAS_VEC_NEG(view_state->vs_gvp->gv_center, model_pt);
     new_mats();
 
     VSCALE(model_pt, model_pt, base2local);
@@ -344,7 +344,7 @@ round_to_grid(fastf_t *view_dx, fastf_t *view_dy)
 	NEAR_ZERO(grid_state->gr_res_v, (fastf_t)SMALL_FASTF))
 	return;
 
-    sf = view_state->vs_vop->vo_scale*base2local;
+    sf = view_state->vs_gvp->gv_scale*base2local;
     inv_sf = 1 / sf;
 
     /* convert mouse distance to grid units */
@@ -388,14 +388,14 @@ snap_view_to_grid(fastf_t view_dx, fastf_t view_dy)
 
     VSET(view_pt, view_dx, view_dy, 0.0);
 
-    MAT4X3PNT(model_pt, view_state->vs_vop->vo_view2model, view_pt);
-    MAT_DELTAS_GET_NEG(vcenter, view_state->vs_vop->vo_center);
+    MAT4X3PNT(model_pt, view_state->vs_gvp->gv_view2model, view_pt);
+    MAT_DELTAS_GET_NEG(vcenter, view_state->vs_gvp->gv_center);
     VSUB2(diff, model_pt, vcenter);
     VSCALE(diff, diff, base2local);
     VSUB2(model_pt, dml_work_pt, diff);
 
     VSCALE(model_pt, model_pt, local2base);
-    MAT_DELTAS_VEC_NEG(view_state->vs_vop->vo_center, model_pt);
+    MAT_DELTAS_VEC_NEG(view_state->vs_gvp->gv_center, model_pt);
     new_mats();
 }
 
