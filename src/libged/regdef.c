@@ -39,11 +39,6 @@ ged_regdef(struct ged *gedp, int argc, const char *argv[])
     /* initialize result */
     bu_vls_trunc(&gedp->ged_result_str, 0);
 
-    if (argc < 2 || 5 < argc) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return BRLCAD_ERROR;
-    }
-
     /* Get region defaults */
     if (argc == 1) {
 	bu_vls_printf(&gedp->ged_result_str, "ident %d air %d los %d material %d",
@@ -52,6 +47,11 @@ ged_regdef(struct ged *gedp, int argc, const char *argv[])
 		      gedp->ged_wdbp->wdb_los_default,
 		      gedp->ged_wdbp->wdb_mat_default);
 	return BRLCAD_OK;
+    }
+
+    if (argc < 2 || 5 < argc) {
+	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	return BRLCAD_ERROR;
     }
 
     if (sscanf(argv[1], "%d", &item) != 1) {
