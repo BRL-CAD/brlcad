@@ -59,7 +59,7 @@ static struct cmdtab cmdtab[] = {
     {"ae", cmd_ged_view_wrapper, ged_aet},
     {"ae2dir", cmd_ged_plain_wrapper, ged_ae2dir},
     {"aip", f_aip, GED_FUNC_PTR_NULL},
-    {"analyze", f_analyze, GED_FUNC_PTR_NULL},
+    {"analyze", cmd_ged_plain_wrapper, ged_analyze},
     {"arb", f_arbdef, GED_FUNC_PTR_NULL},
     {"arced", f_arced, GED_FUNC_PTR_NULL},
     {"area", f_area, GED_FUNC_PTR_NULL},

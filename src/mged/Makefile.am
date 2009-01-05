@@ -56,7 +56,6 @@ bin_PROGRAMS = \
 
 mged_SOURCES = \
 	adc.c \
-	anal.c \
 	animedit.c \
 	arbs.c \
 	attach.c \
