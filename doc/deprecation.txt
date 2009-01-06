@@ -109,6 +109,11 @@ include/raytrace.h
 * OBSOLETE *
 ************
 
+7.16.0
+------
+include/bu.h
+	bu_association() [unused]
+
 7.14.0
 ------
 include/raytrace.h

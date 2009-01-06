@@ -233,26 +233,6 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\src\libbu\association.c"
-				>
-				<FileConfiguration
-					Name="$(PlatformName)\$(ConfigurationName)|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						AdditionalIncludeDirectories=""
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="$(PlatformName)\$(ConfigurationName)|x64"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						AdditionalIncludeDirectories=""
-					/>
-				</FileConfiguration>
-			</File>
-			<File
 				RelativePath="..\..\..\src\libbu\avs.c"
 				>
 				<FileConfiguration

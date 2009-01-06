@@ -2669,17 +2669,6 @@ BU_EXPORT BU_EXTERN(unsigned char *bu_plong,
 
 /** @} */
 
-/** @addtogroup bu_log */
-/** @{ */
-
-/* association.c */
-BU_EXPORT BU_EXTERN(struct bu_vls *bu_association,
-		    (const char *fname,
-		     const char *value,
-		     int field_sep));
-
-/** @} */
-
 /** @addtogroup butcl */
 /** @{ */
 
