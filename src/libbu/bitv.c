@@ -86,7 +86,7 @@ floor_ilog2(register unsigned int x)
  * users should not call this directly, instead calling the
  * BU_BITV_SHIFT macro instead.
  */
-inline int
+inline unsigned int
 bu_bitv_shift()
 {
     return (floor_ilog2(sizeof(bitv_t)*8));
