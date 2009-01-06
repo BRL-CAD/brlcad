@@ -86,7 +86,12 @@ spltest_SOURCES = spltest.c
 tea_SOURCES = tea.c
 tea_nmg_SOURCES = tea_nmg.c
 terrain_SOURCES = terrain.c
+
 tire_SOURCES = tire.c
+tire_LDADD = \
+	${proc_db_libs} \
+	${GED}
+
 torii_SOURCES = torii.c
 tube_SOURCES = tube.c
 vegitation_SOURCES = vegitation.c
