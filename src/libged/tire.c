@@ -43,9 +43,8 @@
 #define ROWS 5
 #define COLS 5
 #define F_PI 3.1415926535897932384626433832795029L
-#define DEFAULT_TIRE_FILENAME "tire.g"
 
-static char *options="d:c:g:j:p:s:t:u:w:W:R:D:ah";
+static char *options="an:c:d:W:R:D:g:j:p:s:t:u:w:h";
 
 /**
  * Help message printed when -h option is supplied
@@ -66,9 +65,10 @@ show_help(struct ged *gedp, const char *name)
 	cp++;
     }
 
-    bu_vls_printf(&gedp->ged_result_str, "usage: %s [%s] tire_top\n", name, bu_vls_addr(&str));
+    bu_vls_printf(&gedp->ged_result_str, "usage: %s [-%s] tire_top\n", name, bu_vls_addr(&str));
     bu_vls_printf(&gedp->ged_result_str, "options:\n"
 		  "\t-a\n\t\tAuto-generate top level name using\n\t\t(tire-<width>-<aspect>R<rim size>)\n"
+		  "\t-n <name>\n\t\tSpecify custom top level root name\n"
 		  "\t-c <count>\n\t\tSpecify number of tread patterns around tire\n"
 		  "\t-d <width>/<aspect>R<rim size>\n\t\tSpecify tire dimensions\n\t\t(U.S. customary units, integer values only)\n"
 		  "\t-W <width>\n\t\tSpecify tire width in inches (overrides -d)\n"
@@ -80,6 +80,7 @@ show_help(struct ged *gedp, const char *name)
 		  "\t-s <radius>\n\t\tSpecify the radius of the maximum sidewall width\n"
 		  "\t-t <type>\n\t\tGenerate tread with tread type as specified\n"
 		  "\t-u <thickness>\n\t\tSpecify tire thickness in mm\n"
+		  "\t-w <0|1>\n\t\tWhether to include the wheel or not\n"
 		  "\t-h\n\t\tShow help\n\n");
 
     bu_vls_free(&str);
@@ -2100,10 +2101,6 @@ ged_tire(struct ged *gedp, int argc, const char *argv[])
 	return BRLCAD_HELP;
     }
 
-    bu_vls_init(&str);
-    bu_vls_init(&name);
-    bu_vls_init(&dimen);
-
     /* Set Default Parameters - 215/55R17 */
     isoarray[0] = 215;
     isoarray[1] = 55;
@@ -2114,6 +2111,9 @@ ged_tire(struct ged *gedp, int argc, const char *argv[])
     overridearray[1] = 0;
     overridearray[2] = 0;
 
+    bu_vls_init(&name);
+    bu_vls_init(&dimen);
+
     /* Process arguments */
     ret = ReadArgs(gedp, argc, argv,
 		   isoarray, overridearray,
@@ -2123,13 +2123,14 @@ ged_tire(struct ged *gedp, int argc, const char *argv[])
 		   &pattern_type, &zside1, &usewheel);
 
     if (ret != BRLCAD_OK) {
-	bu_vls_free(&str);
 	bu_vls_free(&name);
 	bu_vls_free(&dimen);
 	return ret;
     }
 
     GED_CHECK_EXISTS(gedp, bu_vls_addr(&name), LOOKUP_QUIET, BRLCAD_ERROR);
+
+    bu_vls_init(&str);
 
     /* Calculate floating point value for tread depth */
     tread_depth_float = tread_depth/32.0;
