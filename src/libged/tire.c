@@ -65,12 +65,14 @@ show_help(struct ged *gedp, const char *name)
 	cp++;
     }
 
-    bu_vls_printf(&gedp->ged_result_str, "usage: %s [-%s] tire_top\n", name, bu_vls_addr(&str));
+    bu_vls_printf(&gedp->ged_result_str, "usage: %s [-%s] [tire_name]\n", name, bu_vls_addr(&str));
     bu_vls_printf(&gedp->ged_result_str, "options:\n"
-		  "\t-a\n\t\tAuto-generate top level name using\n\t\t(tire-<width>-<aspect>R<rim size>)\n"
-		  "\t-n <name>\n\t\tSpecify custom top level root name\n"
+		  "\t-a\n\t\tAuto-generate top-level object name using\n"
+		  "\t\t(tire-<width>-<aspect>R<rim size>)\n"
+		  "\t-n <name>\n\t\tSpecify custom top-level object name\n"
 		  "\t-c <count>\n\t\tSpecify number of tread patterns around tire\n"
-		  "\t-d <width>/<aspect>R<rim size>\n\t\tSpecify tire dimensions\n\t\t(U.S. customary units, integer values only)\n"
+		  "\t-d <width>/<aspect>R<rim size>\n\t\tSpecify tire dimensions\n"
+		  "\t\t(U.S. customary units, integer values only)\n"
 		  "\t-W <width>\n\t\tSpecify tire width in inches (overrides -d)\n"
 		  "\t-R <aspect>\n\t\tSpecify tire aspect ratio (#/100) (overrides -d)\n"
 		  "\t-D <rim size>\n\t\tSpecify rim size in inches (overrides -d)\n"
@@ -1978,6 +1980,7 @@ ReadArgs(struct ged *gedp,
     float hwidth, treadep, tthickness, zsideh;
     float fd1, fd2, fd3;
     char spacer1, tiretype;
+    int have_name = 0;
 
     /* skip command name */
     bu_optind = 1;
@@ -1989,6 +1992,12 @@ ReadArgs(struct ged *gedp,
 	switch (c) {
 	    case 'a' :
 		*gen_name = 1;
+		have_name = 1;
+		break;
+	    case 'n':
+		have_name = 1;
+		bu_vls_trunc(name, 0);
+		bu_vls_printf(name, "%s", bu_optarg);
 		break;
 	    case 'c' :
 		sscanf(bu_optarg, "%d", &count);
@@ -2052,13 +2061,17 @@ ReadArgs(struct ged *gedp,
 	}
     }
 
-    if ((argc - bu_optind) != 1) {
+    if ((argc - bu_optind) == 1) {
+	have_name = 1;
+	bu_vls_trunc(name, 0);
+	bu_vls_printf(name, "%s", argv[bu_optind]);
+    }
+
+    if (!have_name) {
+	bu_vls_printf(&gedp->ged_result_str, "%s: need top-level object name\n", argv[0]);
 	show_help(gedp, argv[0]);
 	return BRLCAD_ERROR;
     }
-
-    bu_vls_trunc(name, 0);
-    bu_vls_printf(name, "%s", argv[bu_optind]);
 
     return BRLCAD_OK;
 }
@@ -2094,12 +2107,6 @@ ged_tire(struct ged *gedp, int argc, const char *argv[])
 
     /* initialize result */
     bu_vls_trunc(&gedp->ged_result_str, 0);
-
-    /* must be wanting help */
-    if (argc == 1) {
-	show_help(gedp, argv[0]);
-	return BRLCAD_HELP;
-    }
 
     /* Set Default Parameters - 215/55R17 */
     isoarray[0] = 215;
