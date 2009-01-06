@@ -51,15 +51,13 @@
  * and returns the rest of the line beyond the field separator.
  */
 struct bu_vls *
-bu_association (const char *fname,
-		const char *value,
-		int        field_sep)
+bu_association(const char *fname, const char *value, int field_sep)
 {
-    char		*cp;
-    FILE		*fp;
-    size_t		len;
-    struct bu_vls	*vp = 0;
-    struct bu_vls	buffer;
+    char *cp;
+    FILE *fp;
+    size_t len;
+    struct bu_vls *vp = 0;
+    struct bu_vls buffer;
 
     /* XXX NONPARALLEL */
     /* I'd prefer using "bu_open_mapped_file()" here instead, I think  -Mike */
