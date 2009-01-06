@@ -980,23 +980,6 @@ MakeTreadPattern2(struct rt_wdb (*file), char *suffix, fastf_t dwidth,
     BU_LIST_INIT(&tread.l);
     BU_LIST_INIT(&treadrotated.l);
 
-    /*
-      for (i=1; i<=number_of_patterns; i++) {
-      bu_vls_trunc(&str, 0);
-      bu_vls_printf(&str, "tread_master%s.c", suffix);
-      getYRotMat(&y, i*2*F_PI/number_of_patterns);
-      bu_vls_trunc(&str2, 0);
-      bu_vls_printf(&str2, "tire-tread-shape%s.c", suffix);
-      (void)mk_addmember(bu_vls_addr(&str2), &tread.l, NULL, WMOP_UNION);
-      (void)mk_addmember(bu_vls_addr(&str), &tread.l, y, WMOP_SUBTRACT);
-      bu_vls_trunc(&str, 0);
-      bu_vls_printf(&str, "tread-component-%d%s.c", i, suffix);
-      mk_lcomb(file, bu_vls_addr(&str), &tread, 0, NULL, NULL, NULL, 0);
-      (void)mk_addmember(bu_vls_addr(&str), &treadrotated.l, NULL, WMOP_UNION);
-      (void)BU_LIST_POP_T(&tread.l, struct wmember);
-      }
-    */
-
     bu_vls_trunc(&str2, 0);
     bu_vls_printf(&str2, "tire-tread-shape%s.c", suffix);
     (void)mk_addmember(bu_vls_addr(&str2), &tread.l, NULL, WMOP_UNION);
@@ -1153,23 +1136,6 @@ MakeTreadPattern1(struct rt_wdb (*file), char *suffix, fastf_t dwidth,
 
     BU_LIST_INIT(&tread.l);
     BU_LIST_INIT(&treadrotated.l);
-
-    /*
-      for (i=1; i<=number_of_patterns; i++) {
-      bu_vls_trunc(&str, 0);
-      bu_vls_printf(&str, "tread_master%s.c", suffix);
-      getYRotMat(&y, i*2*F_PI/number_of_patterns);
-      bu_vls_trunc(&str2, 0);
-      bu_vls_printf(&str2, "tire-tread-shape%s.c", suffix);
-      (void)mk_addmember(bu_vls_addr(&str2), &tread.l, NULL, WMOP_UNION);
-      (void)mk_addmember(bu_vls_addr(&str), &tread.l, y, WMOP_SUBTRACT);
-      bu_vls_trunc(&str, 0);
-      bu_vls_printf(&str, "tread-component-%d%s.c", i, suffix);
-      mk_lcomb(file, bu_vls_addr(&str), &tread, 0, NULL, NULL, NULL, 0);
-      (void)mk_addmember(bu_vls_addr(&str), &treadrotated.l, NULL, WMOP_UNION);
-      (void)BU_LIST_POP_T(&tread.l, struct wmember);
-      }
-    */
 
     bu_vls_trunc(&str2, 0);
     bu_vls_printf(&str2, "tire-tread-shape%s.c", suffix);
