@@ -81,6 +81,8 @@ show_help(struct ged *gedp, const char *name)
 		  "\t-t <type>\n\t\tGenerate tread with tread type as specified\n"
 		  "\t-u <thickness>\n\t\tSpecify tire thickness in mm\n"
 		  "\t-h\n\t\tShow help\n\n");
+
+    bu_vls_free(&str);
     return;
 }
 
@@ -545,6 +547,8 @@ MakeWheelCenter(struct rt_wdb (*file), char *suffix,
     bu_vls_trunc(&str, 0);
     bu_vls_printf(&str, "Inner-Hub%s.c", suffix);
     mk_lcomb(file, bu_vls_addr(&str), &innerhub, 0, NULL, NULL, NULL, 0);
+
+    bu_vls_free(&str);
 }
 
 
@@ -567,6 +571,7 @@ MakeWheelRims(struct rt_wdb (*file), char *suffix, fastf_t dyhub,
     vect_t normal, height;
     point_t vertex;
     struct bu_vls str;
+
     bu_vls_init(&str);
 
     /* Set wheel color */
@@ -784,6 +789,7 @@ MakeWheelRims(struct rt_wdb (*file), char *suffix, fastf_t dyhub,
     bu_vls_printf(&str, "wheel%s.r", suffix);
     mk_lcomb(file, bu_vls_addr(&str), &wheel, 1, "plastic", "di=.8 sp=.2", rgb, 0);
 
+    bu_vls_free(&str);
 }
 
 
@@ -879,6 +885,9 @@ MakeExtrude(struct rt_wdb (*file), char *suffix, point2d_t *verts,
     bu_vls_trunc(&str2, 0);
     bu_vls_printf(&str2, "extrude3%s", suffix);
     mk_extrusion(file, bu_vls_addr(&str2), bu_vls_addr(&str), V, h, u_vec, v_vec, 0);
+
+    bu_vls_free(&str);
+    bu_vls_free(&str2);
 }
 
 #define SKETCHNUM2 4
@@ -1002,6 +1011,9 @@ MakeTreadPattern2(struct rt_wdb (*file), char *suffix, fastf_t dwidth,
     bu_vls_trunc(&str, 0);
     bu_vls_printf(&str, "tread%s.c", suffix);
     mk_lcomb(file, bu_vls_addr(&str), &tread, 0, NULL, NULL, NULL , 0);
+
+    bu_vls_free(&str);
+    bu_vls_free(&str2);
 }
 
 
@@ -1173,7 +1185,11 @@ MakeTreadPattern1(struct rt_wdb (*file), char *suffix, fastf_t dwidth,
     bu_vls_trunc(&str, 0);
     bu_vls_printf(&str, "tread%s.c", suffix);
     mk_lcomb(file, bu_vls_addr(&str), &tread, 0, NULL, NULL, NULL , 0);
+
+    bu_vls_free(&str);
+    bu_vls_free(&str2);
 }
+
 
 static void
 TreadPattern(struct rt_wdb (*file), char *suffix, fastf_t dwidth,
@@ -1429,9 +1445,9 @@ MakeTreadSolid(struct rt_wdb (*file), char *suffix,
     vect_t vertex, height;
     point_t origin, normal, C;
 
-
     int i;
     struct bu_vls str;
+
     bu_vls_init(&str);
 
     matrixelltread1 = (fastf_t **)bu_malloc(5 * sizeof(fastf_t *), "matrixrows");
@@ -1556,6 +1572,8 @@ MakeTreadSolid(struct rt_wdb (*file), char *suffix,
     for (i = 0; i < 5; i++)
 	bu_free((char *)matrixelltread2[i], "matrixell2 element");
     bu_free((char *)matrixelltread2, "matrixell2");
+
+    bu_vls_free(&str);
 }
 
 
@@ -1690,7 +1708,7 @@ MakeTreadSolid1(struct rt_wdb (*file), char *suffix,
 	bu_free((char *)matrixelltred2[i], "matrixell2 element");
     bu_free((char *)matrixelltred2, "matrixell2");
 
-
+    bu_vls_free(&str);
 }
 
 typedef void (*MakeTreadProfile)
@@ -1914,6 +1932,9 @@ MakeTire(struct rt_wdb (*file), char *suffix, fastf_t dytred,
     for (i = 0; i < 5; i++)
 	bu_free((char *)matrixcut2[i], "matrixell2 element");
     bu_free((char *)matrixcut2, "matrixell2");
+
+    bu_vls_free(&str);
+    bu_vls_free(&str2);
 }
 
 
@@ -1961,6 +1982,7 @@ MakeAirRegion(struct rt_wdb (*file), char *suffix, fastf_t dyhub, fastf_t zhub, 
     bu_vls_printf(&str, "air%s.r", suffix);
     mk_comb(file, bu_vls_addr(&str), &air, 1, "air", NULL, NULL, 0, 1, 0, 0, 0, 0, 0);
 
+    bu_vls_free(&str);
 }
 
 /* Process command line arguments */
@@ -2115,8 +2137,6 @@ ged_tire(struct ged *gedp, int argc, const char *argv[])
     bu_vls_init(&str);
     bu_vls_init(&name);
     bu_vls_init(&dimen);
-    bu_vls_trunc(&name, 0);
-    bu_vls_trunc(&dimen, 0);
 
     /* Set Default Parameters - 215/55R17 */
     isoarray[0] = 215;
@@ -2136,8 +2156,12 @@ ged_tire(struct ged *gedp, int argc, const char *argv[])
 		   &tread_depth, &tire_thickness, &hub_width,
 		   &pattern_type, &zside1, &usewheel);
 
-    if (ret != BRLCAD_OK)
+    if (ret != BRLCAD_OK) {
+	bu_vls_free(&str);
+	bu_vls_free(&name);
+	bu_vls_free(&dimen);
 	return ret;
+    }
 
     GED_CHECK_EXISTS(gedp, bu_vls_addr(&name), LOOKUP_QUIET, BRLCAD_ERROR);
 
@@ -2242,6 +2266,9 @@ ged_tire(struct ged *gedp, int argc, const char *argv[])
     }
     mk_lcomb(gedp->ged_wdbp, bu_vls_addr(&name), &wheel_and_tire, 0,  NULL, NULL, NULL, 0);
 
+    bu_vls_free(&str);
+    bu_vls_free(&name);
+    bu_vls_free(&dimen);
 
     return BRLCAD_OK;
 }
