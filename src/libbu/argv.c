@@ -51,7 +51,7 @@ bu_dup_argv(int argc, const char *argv[])
     if (argc < 1)
 	return (char **)0;
 
-    av = (char **)bu_calloc(argc+1, sizeof(char *), "bu_copy_argv");
+    av = (char **)bu_calloc((unsigned int)argc+1, sizeof(char *), "bu_copy_argv");
     for (i = 0; i < argc; ++i)
 	av[i] = bu_strdup(argv[i]);
     av[i] = (char *)0;
@@ -70,7 +70,7 @@ bu_dupinsert_argv(int insert, int insertArgc, const char *insertArgv[], int argc
     if (insertArgc < 1)
 	return bu_dup_argv(argc, argv);
 
-    av = (char **)bu_calloc(ac, sizeof(char *), "bu_insert_argv");
+    av = (char **)bu_calloc((unsigned int)ac, sizeof(char *), "bu_insert_argv");
 
     if (insert <= 0) {			    	/* prepend */
 	for (i = 0; i < insertArgc; ++i)
@@ -121,7 +121,7 @@ bu_argv_from_path(const char *path, int *ac)
 	++i;
 
     if (newstr[i] == '\0') {
-	bu_free((void *)newstr, "bu_argv_from_path");
+	bu_free((genptr_t)newstr, "bu_argv_from_path");
 	return (char **)0;
     }
 
@@ -137,7 +137,7 @@ bu_argv_from_path(const char *path, int *ac)
 
 	begin = end + 1;
     }
-    av = (char **)bu_calloc(*ac+1, sizeof(char *), "bu_argv_from_path");
+    av = (char **)bu_calloc((unsigned int)(*ac)+1, sizeof(char *), "bu_argv_from_path");
 
     begin = headpath;
     i = 0;
