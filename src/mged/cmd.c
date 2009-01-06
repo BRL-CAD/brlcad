@@ -960,7 +960,7 @@ mged_cmd(
  * Format: %
  */
 int
-f_comm(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
+f_comm(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 {
     register int pid, rpid;
     int retcode;

@@ -31,7 +31,7 @@
 typedef int (*tcl_func_ptr)(ClientData, Tcl_Interp *, int, const char *[]);
 
 struct cmdtab {
-    char *name;
+    const char *name;
     tcl_func_ptr tcl_func;
     ged_func_ptr ged_func;
 };
@@ -184,7 +184,7 @@ BU_EXTERN(int f_bot_split, (ClientData clientData, Tcl_Interp *interp, int argc,
 BU_EXTERN(int f_clone, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
 BU_EXTERN(int f_closedb, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
 BU_EXTERN(int f_comb_color, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
-BU_EXTERN(int f_comm, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
+BU_EXTERN(int f_comm, (ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[]));
 BU_EXTERN(int f_copy_inv, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
 BU_EXTERN(int f_copymat, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
 BU_EXTERN(int f_debugbu, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
