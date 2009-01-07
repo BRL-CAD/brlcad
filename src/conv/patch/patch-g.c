@@ -63,22 +63,22 @@
 
 #define ABS(_x)	((_x > 0.0)? _x : (-_x))
 
-void	proc_plate(int cnt);
-void	proc_label(char *labelfile);
-void	proc_triangle(int cnt);
-void	proc_wedge(int cnt);
-void	proc_sphere(int cnt);
-void	proc_box(int cnt);
-void	proc_cylin(int cnt);
-void	proc_rod(int cnt);
-void	set_color(int color);
-void	mk_cyladdmember(char *name1, struct wmember *head, struct subtract_list *slist, int mirflag);
-void	proc_donut(int cnt);
+void proc_plate(int cnt);
+void proc_label(char *labelfile);
+void proc_triangle(int cnt);
+void proc_wedge(int cnt);
+void proc_sphere(int cnt);
+void proc_box(int cnt);
+void proc_cylin(int cnt);
+void proc_rod(int cnt);
+void set_color(int color);
+void mk_cyladdmember(char *name1, struct wmember *head, struct subtract_list *slist, int mirflag);
+void proc_donut(int cnt);
 
-static struct bn_tol	tol;
+static struct bn_tol tol;
 static int scratch_num;
 
-struct rt_wdb	*outfp;
+struct rt_wdb *outfp;
 
 static char usage[] = "\
 Usage: patch-g [options] model.g\n\
@@ -112,15 +112,15 @@ main(int argc, char **argv)
 {
 
     int fd, nread;
-    FILE	*gfp=NULL;
-    FILE    *mfp=NULL;
-    char	buf[99], s[132+2];
-    int	c;
+    FILE *gfp=NULL;
+    FILE *mfp=NULL;
+    char buf[99], s[132+2];
+    int c;
     int j = 1;
     int i;
     int done;
     int stop, num;
-    char	name[NAMESIZE+1];
+    char name[NAMESIZE+1];
 
     BU_LIST_INIT(&head.l);
     BU_LIST_INIT(&heada.l);
@@ -365,10 +365,10 @@ main(int argc, char **argv)
     }
 
     for (i = done = 0; !done; i++) {
-	nread = read(fd, buf, sizeof(buf));     /* read one line of file into a buffer  */
+	nread = read(fd, buf, sizeof(buf));     /* read one line of file into a buffer */
 
 	if (nread > 0) {
-	    /*  For valid reads, assign values to the input array  */
+	    /*  For valid reads, assign values to the input array */
 
 	    sscanf(buf, "%lf %lf %lf %c %d %d %d %d %d %d %d %d %d %d %d %d %d %d",
 		   &in[i].x, &in[i].y, &in[i].z, &in[i].surf_mode, &in[i].surf_type,
@@ -395,7 +395,7 @@ main(int argc, char **argv)
 	    in[i].cc = abs(in[i].cc);
 	    in[i].surf_type = abs(in[i].surf_type);
 
-	    /*  Regurgitate data just loaded for debugging   */
+	    /*  Regurgitate data just loaded for debugging */
 	    if (debug > 0) {
 		bu_log("%lf %lf %lf %c %lf %d %d %d %d %d %d %d %d %d %d %d %d %d\n",
 		       in[i].x, in[i].y, in[i].z, in[i].surf_mode, in[i].surf_type,
@@ -593,7 +593,7 @@ main(int argc, char **argv)
     }
 
     return 0;
-}	/* END MAIN PROGRAM  */
+}	/* END MAIN PROGRAM */
 
 
 /**
@@ -759,18 +759,18 @@ proc_sname(char shflg, char mrflg, int cnt, char ctflg)
 static void
 nmg_patch_coplanar_face_merge(struct shell *s, int *face_count, struct patch_faces *p_faces, struct bn_tol *tol, int simplify)
 {
-    struct model	*m;
-    int		len;
-    int		*flags1;
-    int		*flags2;
-    int		face1_no;
-    int		face2_no;
-    struct faceuse	*fu1;
-    struct faceuse	*fu2;
-    struct face	*f1;
-    struct face	*f2;
-    struct face_g_plane	*fg1;
-    struct face_g_plane	*fg2;
+    struct model *m;
+    int len;
+    int *flags1;
+    int *flags2;
+    int face1_no;
+    int face2_no;
+    struct faceuse *fu1;
+    struct faceuse *fu2;
+    struct face *f1;
+    struct face *f2;
+    struct face_g_plane *fg1;
+    struct face_g_plane *fg2;
 
     NMG_CK_SHELL(s);
     BN_CK_TOL(tol);
@@ -784,7 +784,7 @@ nmg_patch_coplanar_face_merge(struct shell *s, int *face_count, struct patch_fac
 
     /* Visit each face in the shell */
     for (BU_LIST_FOR (fu1, faceuse, &s->fu_hd)) {
-	plane_t		n1;
+	plane_t n1;
 
 	if (BU_LIST_NEXT_IS_HEAD(fu1, &s->fu_hd))  break;
 	f1 = fu1->f_p;
@@ -814,8 +814,8 @@ nmg_patch_coplanar_face_merge(struct shell *s, int *face_count, struct patch_fac
 	     BU_LIST_NOT_HEAD(fu2, &s->fu_hd);
 	     fu2 = BU_LIST_NEXT(faceuse, &fu2->l)
 	    ) {
-	    register fastf_t	dist;
-	    plane_t			n2;
+	    register fastf_t dist;
+	    plane_t n2;
 
 	    f2 = fu2->f_p;
 	    NMG_CK_FACE(f2);
@@ -865,8 +865,8 @@ nmg_patch_coplanar_face_merge(struct shell *s, int *face_count, struct patch_fac
 	     * kill now empty faceuse, fumate, and face
 	     */
 	    {
-		struct faceuse	*prev_fu;
-		int		face_no;
+		struct faceuse *prev_fu;
+		int face_no;
 
 		prev_fu = BU_LIST_PREV(faceuse, &fu2->l);
 		/* The prev_fu can never be the head */
@@ -1554,6 +1554,7 @@ Build_solid(int l, char *name, char *mirror_name, int plate_mode, fastf_t *centr
     return(0);
 }
 
+
 /*
  *     This subroutine takes previously generated solid names and combines them
  *	into a common region identity.  Format of the make_region command call
@@ -1572,7 +1573,6 @@ proc_region(char *name1)
     static int reg_count=0;
     static int mir_count=0;
     static int last_cc=0;
-
 
     if (BU_LIST_IS_EMPTY(&head.l))
 	return;
@@ -1623,14 +1623,14 @@ proc_region(char *name1)
 void
 proc_triangle(int cnt)
 {
-    int	k, l;
-    int	index;
-    int	cpts;
-    char	shflg, mrflg, ctflg;
+    int k, l;
+    int index;
+    int cpts;
+    char shflg, mrflg, ctflg;
     static int count=0;
     static int mir_count=0;
     static int last_cc=0;
-    char 	name[NAMESIZE+1], mirror_name[NAMESIZE+1];
+    char name[NAMESIZE+1], mirror_name[NAMESIZE+1];
     plane_t pl;
     point_t last;
 
@@ -1866,15 +1866,15 @@ Get_ave_plane(fastf_t *pl, int num_pts, fastf_t *x, fastf_t *y, fastf_t *z)
 void
 proc_plate(int cnt)
 {
-    int	thick_no;
+    int thick_no;
     int k, l;
     int index;
     static int count=0;
     static int mir_count=0;
     static int last_cc=0;
     int cpts;
-    char	shflg, mrflg, ctflg;
-    char	name[NAMESIZE+1], mirror_name[NAMESIZE+1];
+    char shflg, mrflg, ctflg;
+    char name[NAMESIZE+1], mirror_name[NAMESIZE+1];
     plane_t pl;
     point_t last;
 
@@ -2040,16 +2040,16 @@ proc_plate(int cnt)
 void
 proc_wedge(int cnt)
 {
-    point_t	pt8[8];
+    point_t pt8[8];
     point_t inpt8[8];
     int i, k;
-    vect_t	ab, ac, ad;
+    vect_t ab, ac, ad;
     plane_t planes[5];
     static int count=0;
     static int mir_count=0;
     static int last_cc=0;
-    char	shflg='\0', mrflg, ctflg;
-    char	name[NAMESIZE+1];
+    char shflg='\0', mrflg, ctflg;
+    char name[NAMESIZE+1];
     int ret = 0;
     static struct bn_tol *tols = &tol;
 
@@ -2292,11 +2292,11 @@ proc_sphere(int cnt)
     fastf_t rad;
     point_t center;
     int i;
-    char    shflg='\0', mrflg, ctflg;
+    char shflg='\0', mrflg, ctflg;
     static int count=0;
     static int mir_count=0;
     static int last_cc=0;
-    char 	name[NAMESIZE+1];
+    char name[NAMESIZE+1];
 
     if (in[cnt-1].cc != last_cc) {
 	count = 0;
@@ -2410,16 +2410,16 @@ proc_sphere(int cnt)
 void
 proc_box(int cnt)
 {
-    point_t	pt8[8];
+    point_t pt8[8];
     int k;
-    vect_t	ab, ac, ad, abi, aci, adi;
+    vect_t ab, ac, ad, abi, aci, adi;
     fastf_t len, leni;			/* box edge lengths */
     int valid;				/* valid inside box? */
-    char    shflg='\0', mrflg, ctflg;
+    char shflg='\0', mrflg, ctflg;
     static int count=0;
     static int mir_count=0;
     static int last_cc=0;
-    char	name[NAMESIZE+1];
+    char name[NAMESIZE+1];
 
     if (in[cnt-1].cc != last_cc) {
 	count = 0;
@@ -2947,20 +2947,20 @@ void
 proc_cylin(int cnt)
 {
     point_t base;
-    point_t	top;
+    point_t top;
     point_t sbase;			/* For subtraction case */
-    point_t	stop; 			/* For subtraction case */
-    vect_t	ab, bc;
-    fastf_t	rad1, rad2;
+    point_t stop; 			/* For subtraction case */
+    vect_t ab, bc;
+    fastf_t rad1, rad2;
     fastf_t srad1, srad2;		/* for subtraction case */
     int k, j;
     struct subtract_list *slist, *get_subtract(int cnt);
-    double	thick, ht, sht;
-    char    shflg='\0', mrflg, ctflg;
+    double thick, ht, sht;
+    char shflg='\0', mrflg, ctflg;
     static int count=0;
     static int mir_count=0;
     static int last_cc=0;
-    char	name[NAMESIZE+1];
+    char name[NAMESIZE+1];
 
     if (in[cnt-1].cc != last_cc) {
 	count = 0;
@@ -3033,6 +3033,7 @@ proc_cylin(int cnt)
 		VSUB2(ab, top, base);
 		ht = MAGNITUDE(ab);
 		sin_ang = ht/hypot(ht, rad2-rad1);
+
 		switch (j) {
 
 		    case 0: /* Both ends open */
@@ -3048,12 +3049,12 @@ proc_cylin(int cnt)
 			    fastf_t invers_height;
 
 			    invers_height = 1.0/ht;
-			    VSCALE(unit_h, ab, invers_height)
-				new_h_factor = (thick - rad1)*(ht/(rad2-rad1));
-			    VJOIN1(sbase, base, new_h_factor, unit_h)
+			    VSCALE(unit_h, ab, invers_height);
+			    new_h_factor = (thick - rad1)*(ht/(rad2-rad1));
+			    VJOIN1(sbase, base, new_h_factor, unit_h);
 
-				/* base radius should really be zero, get close */
-				srad1 = .00001;
+			    /* base radius should really be zero, get close */
+			    srad1 = .00001;
 			    mk_trc_top(outfp, name, sbase, top, srad1, srad2);
 			    (void)mk_addmember(name, &head.l, NULL, WMOP_SUBTRACT);
 			} else if (srad2 <= 0.0) {
@@ -3061,12 +3062,12 @@ proc_cylin(int cnt)
 			    fastf_t invers_height;
 
 			    invers_height = 1.0/ht;
-			    VSCALE(unit_h, ab, invers_height)
-				new_h_factor = ht + srad2 * (ht/(rad1-rad2));
-			    VJOIN1(stop, base, new_h_factor, unit_h)
+			    VSCALE(unit_h, ab, invers_height);
+			    new_h_factor = ht + srad2 * (ht/(rad1-rad2));
+			    VJOIN1(stop, base, new_h_factor, unit_h);
 
-				/* top radius should really be zero, get close */
-				srad2 = .00001;
+			    /* top radius should really be zero, get close */
+			    srad2 = .00001;
 			    mk_trc_top(outfp, name, base, stop, srad1, srad2);
 			    (void)mk_addmember(name, &head.l, NULL, WMOP_SUBTRACT);
 			} else {
@@ -3089,8 +3090,7 @@ proc_cylin(int cnt)
 			VSUB2(ab, top, sbase);
 			sht = MAGNITUDE(ab);
 			srad1 = rad2 - sht / ht * (rad2 - rad1);
-			thick = in[k+2].rsurf_thick / ht *
-			    hypot(ht, rad2-rad1);
+			thick = in[k+2].rsurf_thick / ht * hypot(ht, rad2-rad1);
 			srad1 = srad1 - thick;
 			srad2 = rad2 - thick;
 
@@ -3195,8 +3195,7 @@ proc_cylin(int cnt)
 			sht = MAGNITUDE(ab);
 			rad1_tmp = rad2 - sht / ht * (rad2 - rad1);
 			rad2_tmp = rad1 - sht / ht * (rad1 - rad2);
-			thick = in[k+2].rsurf_thick / ht *
-			    hypot(ht, rad2-rad1);
+			thick = in[k+2].rsurf_thick / ht * hypot(ht, rad2-rad1);
 			srad1 = rad1_tmp - thick;
 			srad2 = rad2_tmp - thick;
 
@@ -3209,8 +3208,8 @@ proc_cylin(int cnt)
 			    if (new_ht >= sht)
 				(void)mk_addmember(name, &headf.l, NULL, WMOP_UNION);
 			    else {
-				VJOIN1(sbase, sbase, new_ht, unit_h)
-				    srad1 = 0.00001;
+				VJOIN1(sbase, sbase, new_ht, unit_h);
+				srad1 = 0.00001;
 				mk_trc_top(outfp, name, sbase, stop, srad1, srad2);
 				(void)mk_addmember(name, &head.l, NULL, WMOP_SUBTRACT);
 			    }
@@ -3218,14 +3217,13 @@ proc_cylin(int cnt)
 			    fastf_t new_ht;
 			    vect_t rev_h;
 
-
 			    new_ht = (-ht*srad2/(rad1-rad2));
 			    if (new_ht <= 0.0)
 				(void)mk_addmember(name, &headf.l, NULL, WMOP_UNION);
 			    else {
-				VREVERSE(rev_h, unit_h)
-				    VJOIN1(stop, stop, new_ht, rev_h)
-				    srad2 = 0.00001;
+				VREVERSE(rev_h, unit_h);
+				VJOIN1(stop, stop, new_ht, rev_h);
+				srad2 = 0.00001;
 				mk_trc_top(outfp, name, sbase, stop, srad1, srad2);
 				(void)mk_addmember(name, &head.l, NULL, WMOP_SUBTRACT);
 			    }
@@ -3240,7 +3238,7 @@ proc_cylin(int cnt)
 			break;
 
 		}         /* end switch */
-	    }     		  /* end - plate mode modifications */
+	    } /* end - plate mode modifications */
 	} else {
 	    /* Degenerate length check */
 	    bu_log("Bad Cylinder Length for %s\n", name);
@@ -3248,11 +3246,10 @@ proc_cylin(int cnt)
 	/* make regions */
 
 	/* due to solid subtractions, this might be a null region */
-
 	if ((count % num_unions) == 0 && (BU_LIST_NEXT_NOT_HEAD(&head, &head.l)))
 	    proc_region(name);
 
-    } 	   /* end - for */
+    } /* end for k loop */
     /* catch missed solids into final region */
 
     /* due to solid subtractions, this might be a null region */
@@ -3269,13 +3266,19 @@ proc_cylin(int cnt)
 	mrflg = 'y';
 	ctflg = 'n';
 	bu_strlcpy(name, proc_sname(shflg, mrflg, mir_count+1, ctflg), sizeof(name));
+
 	mir_count++;
+
+	/* Test for a cylinder with no length, all conditions must be true to fail. */
 
 	if (!((in[k].x==in[k+1].x)&&(in[k].y==in[k+1].y)&&(in[k].z==in[k+1].z))) {
 
 	    VSET(base, in[k].x, -in[k].y, in[k].z);
 	    VSET(top, in[k+1].x, -in[k+1].y, in[k+1].z);
 
+	    /* change valid 0 radius cone pts to very small radii,
+	     * also treat negative value radii as positive.
+	     */
 	    if (in[k+2].x == 0)
 		in[k+2].x = .00001;
 	    if (in[k+2].x < 0)
@@ -3284,6 +3287,8 @@ proc_cylin(int cnt)
 		in[k+2].y = .00001;
 	    if (in[k+2].y < 0)
 		in[k+2].y = -in[k+2].y;
+
+	    /* make solid */
 
 	    mk_trc_top(outfp, name, base, top, in[k+2].x, in[k+2].y);
 	    mk_cyladdmember(name, &head, slist, 1);
@@ -3317,19 +3322,19 @@ proc_cylin(int cnt)
 			srad1 = rad1 - thick;
 			srad2 = rad2 - thick;
 
-			if (srad1 <= 0.0 && srad2 <= 0.0)
+			if (srad1 <= 0.0 && srad2 <= 0.0) {
 			    (void)mk_addmember(name, &headf.l, NULL, WMOP_UNION);
-			else if (srad1 <= 0.0) {
+			} else if (srad1 <= 0.0) {
 			    fastf_t new_h_factor;
 			    fastf_t invers_height;
 
 			    invers_height = 1.0/ht;
-			    VSCALE(unit_h, ab, invers_height)
-				new_h_factor = (thick - rad1)*(ht/(rad2-rad1));
-			    VJOIN1(sbase, base, new_h_factor, unit_h)
+			    VSCALE(unit_h, ab, invers_height);
+			    new_h_factor = (thick - rad1)*(ht/(rad2-rad1));
+			    VJOIN1(sbase, base, new_h_factor, unit_h);
 
-				/* base radius should really be zero, get close */
-				srad1 = .00001;
+			    /* base radius should really be zero, get close */
+			    srad1 = .00001;
 			    mk_trc_top(outfp, name, sbase, top, srad1, srad2);
 			    (void)mk_addmember(name, &head.l, NULL, WMOP_SUBTRACT);
 			} else if (srad2 <= 0.0) {
@@ -3337,12 +3342,12 @@ proc_cylin(int cnt)
 			    fastf_t invers_height;
 
 			    invers_height = 1.0/ht;
-			    VSCALE(unit_h, ab, invers_height)
-				new_h_factor = ht + srad2 * (ht/(rad1-rad2));
-			    VJOIN1(stop, base, new_h_factor, unit_h)
+			    VSCALE(unit_h, ab, invers_height);
+			    new_h_factor = ht + srad2 * (ht/(rad1-rad2));
+			    VJOIN1(stop, base, new_h_factor, unit_h);
 
-				/* top radius should really be zero, get close */
-				srad2 = .00001;
+			    /* top radius should really be zero, get close */
+			    srad2 = .00001;
 			    mk_trc_top(outfp, name, base, stop, srad1, srad2);
 			    (void)mk_addmember(name, &head.l, NULL, WMOP_SUBTRACT);
 			} else {
@@ -3365,8 +3370,7 @@ proc_cylin(int cnt)
 			VSUB2(ab, top, sbase);
 			sht = MAGNITUDE(ab);
 			srad1 = rad2 - sht / ht * (rad2 - rad1);
-			thick = in[k+2].rsurf_thick / ht *
-			    hypot(ht, rad2-rad1);
+			thick = in[k+2].rsurf_thick / ht * hypot(ht, rad2-rad1);
 			srad1 = srad1 - thick;
 			srad2 = rad2 - thick;
 
@@ -3376,9 +3380,9 @@ proc_cylin(int cnt)
 			    fastf_t new_ht;
 
 			    new_ht = ht*(thick - rad1)/(rad2-rad1);
-			    if (new_ht >= ht)
+			    if (new_ht >= ht) {
 				(void)mk_addmember(name, &headf.l, NULL, WMOP_UNION);
-			    else {
+			    } else {
 				VJOIN1(sbase, base, new_ht, unit_h);
 				srad1 = 0.00001;
 				mk_trc_top(outfp, name, sbase, top, srad1, srad2);
@@ -3388,9 +3392,9 @@ proc_cylin(int cnt)
 			    fastf_t new_ht;
 
 			    new_ht = sht + ht*srad2/(rad1-rad2);
-			    if (new_ht <= 0.0)
+			    if (new_ht <= 0.0) {
 				(void)mk_addmember(name, &headf.l, NULL, WMOP_UNION);
-			    else {
+			    } else {
 				VJOIN1(stop, sbase, new_ht, unit_h);
 				srad2 = 0.00001;
 				mk_trc_top(outfp, name, sbase, stop, srad1, srad2);
@@ -3471,8 +3475,7 @@ proc_cylin(int cnt)
 			sht = MAGNITUDE(ab);
 			rad1_tmp = rad2 - sht / ht * (rad2 - rad1);
 			rad2_tmp = rad1 - sht / ht * (rad1 - rad2);
-			thick = in[k+2].rsurf_thick / ht *
-			    hypot(ht, rad2-rad1);
+			thick = in[k+2].rsurf_thick / ht * hypot(ht, rad2-rad1);
 			srad1 = rad1_tmp - thick;
 			srad2 = rad2_tmp - thick;
 
@@ -3485,8 +3488,8 @@ proc_cylin(int cnt)
 			    if (new_ht >= sht)
 				(void)mk_addmember(name, &headf.l, NULL, WMOP_UNION);
 			    else {
-				VJOIN1(sbase, sbase, new_ht, unit_h)
-				    srad1 = 0.00001;
+				VJOIN1(sbase, sbase, new_ht, unit_h);
+				srad1 = 0.00001;
 				mk_trc_top(outfp, name, sbase, stop, srad1, srad2);
 				(void)mk_addmember(name, &head.l, NULL, WMOP_SUBTRACT);
 			    }
@@ -3494,14 +3497,13 @@ proc_cylin(int cnt)
 			    fastf_t new_ht;
 			    vect_t rev_h;
 
-
 			    new_ht = (-ht*srad2/(rad1-rad2));
 			    if (new_ht <= 0.0)
 				(void)mk_addmember(name, &headf.l, NULL, WMOP_UNION);
 			    else {
-				VREVERSE(rev_h, unit_h)
-				    VJOIN1(stop, stop, new_ht, rev_h)
-				    srad2 = 0.00001;
+				VREVERSE(rev_h, unit_h);
+				VJOIN1(stop, stop, new_ht, rev_h);
+				srad2 = 0.00001;
 				mk_trc_top(outfp, name, sbase, stop, srad1, srad2);
 				(void)mk_addmember(name, &head.l, NULL, WMOP_SUBTRACT);
 			    }
@@ -3516,16 +3518,21 @@ proc_cylin(int cnt)
 			break;
 
 		}         /* end switch */
-	    }/* plate mode */
+	    } /* end - plate mode modifications */
 	} else {
+	    /* Degenerate length check */
 	    bu_log("Bad Cylinder Length for %s\n", name);
 	}
+	/* make regions */
+
 	/* due to solid subtractions, this might be a null region */
 	if ((mir_count % num_unions) == 0 && (BU_LIST_NEXT_NOT_HEAD(&head, &head.l)))
 	    proc_region(name);
-    }	/* end for k loop */
-	/* due to solid subtractions, this might be a null region */
 
+    } /* end for k loop */
+    /* catch missed solids into final region */
+
+    /* due to solid subtractions, this might be a null region */
     if ((count % num_unions) != 0 && (BU_LIST_NEXT_NOT_HEAD(&head, &head.l)))
 	proc_region(name);
 
@@ -3541,14 +3548,14 @@ proc_rod(int cnt)
 
     int k, l, index;
     point_t base;
-    point_t	top;
+    point_t top;
     fastf_t tmp;
     fastf_t tmp1;
-    char    shflg='\0', mrflg, ctflg;
+    char shflg='\0', mrflg, ctflg;
     static int count=0;
     static int mir_count=0;
     static int last_cc=0;
-    char	name[NAMESIZE+1];
+    char name[NAMESIZE+1];
 
     if (in[cnt-1].cc != last_cc) {
 	count = 0;
@@ -3700,8 +3707,8 @@ proc_rod(int cnt)
 void
 pnorms(fastf_t (*norms)[3], fastf_t (*verts)[3], fastf_t *centroid, int npts, int inv) {
     register int i;
-    vect_t	ab, ac;
-    vect_t	n;
+    vect_t ab, ac;
+    vect_t n;
 
     VSUB2(ab, verts[1], verts[0]);
     VSUB2(ac, verts[2], verts[0]);
@@ -3893,8 +3900,8 @@ set_color(int color)
 int
 inside_cyl(int i, int j)
 {
-    point_t	outbase, outtop, inbase, intop;
-    fastf_t	r1, r2;
+    point_t outbase, outtop, inbase, intop;
+    fastf_t r1, r2;
 
     r1 = in[i+2].x;
     r2 = in[i+2].y;
@@ -3978,9 +3985,9 @@ void
 mk_cyladdmember(char *name1, struct wmember *head, struct subtract_list *slist, int mirflag)
 {
 
-    char			tmpname[NAMESIZE+1];
-    int			cc, solnum;
-    struct subtract_list	*hold;
+    char tmpname[NAMESIZE+1];
+    int cc, solnum;
+    struct subtract_list *hold;
 
     if (!slist) {
 	(void)mk_addmember(name1, &(head->l), NULL, WMOP_UNION);
@@ -4024,8 +4031,8 @@ mk_cyladdmember(char *name1, struct wmember *head, struct subtract_list *slist, 
 struct subtract_list *
 get_subtract(int cnt)
 {
-    static struct subtract_list	*slist = NULL;
-    struct subtract_list		*next, *add_to_list(struct subtract_list *slist, int outsolid, int insolid, int inmirror);
+    static struct subtract_list *slist = NULL;
+    struct subtract_list *next, *add_to_list(struct subtract_list *slist, int outsolid, int insolid, int inmirror);
     int i, j;
 
     /* free up memory for slist, if any */
