@@ -273,7 +273,7 @@ main(int argc, char **argv)
     }
 
     if (rt_g.NMG_debug) {
-	bu_log("librt rt_g.NMG_debug = x%x\n", rt_g.NMG_debug);
+	bu_log("librt rt_g.NMG_debug = 0x%x\n", rt_g.NMG_debug);
     }
 
     /*     This section opens input files - the data file defaults to standard
@@ -397,7 +397,7 @@ main(int argc, char **argv)
 
 	    /*  Regurgitate data just loaded for debugging */
 	    if (debug > 0) {
-		bu_log("%lf %lf %lf %c %lf %d %d %d %d %d %d %d %d %d %d %d %d %d\n",
+		bu_log("%lf %lf %lf %c %d %d %d %d %d %d %d %d %d %d %d %d %d %d\n",
 		       in[i].x, in[i].y, in[i].z, in[i].surf_mode, in[i].surf_type,
 		       in[i].surf_thick, in[i].spacecode, in[i].cc,
 		       in[i].ept[0], in[i].ept[1], in[i].ept[2],
@@ -803,7 +803,7 @@ nmg_patch_coplanar_face_merge(struct shell *s, int *face_count, struct patch_fac
 	       && face1_no < *face_count);
 	if (p_faces[face1_no].fu != fu1 &&
 	    p_faces[face1_no].fu != fu1) {
-	    bu_log("nmg_patch_coplanar_face_merge: Can't find entry for faceuse x%x in p_faces\n", fu1);
+	    bu_log("nmg_patch_coplanar_face_merge: Can't find entry for faceuse 0x%p in p_faces\n", fu1);
 	    continue;
 	}
 
@@ -850,7 +850,7 @@ nmg_patch_coplanar_face_merge(struct shell *s, int *face_count, struct patch_fac
 		   && face2_no < *face_count);
 	    if (p_faces[face2_no].fu != fu2 &&
 		p_faces[face2_no].fu != fu2) {
-		bu_log("nmg_patch_coplanar_face_merge: Couldn`t find entry for faceuse x%x in p_faces\n", fu2);
+		bu_log("nmg_patch_coplanar_face_merge: Couldn`t find entry for faceuse 0x%p in p_faces\n", fu2);
 		continue;
 	    }
 
@@ -900,7 +900,7 @@ nmg_patch_coplanar_face_merge(struct shell *s, int *face_count, struct patch_fac
     bu_free((char *)flags2, "nmg_shell_coplanar_face_merge flags2[]");
 
     if (rt_g.NMG_debug & DEBUG_BASIC) {
-	bu_log("nmg_shell_coplanar_face_merge(s=x%x, tol=x%x, simplify=%d)\n",
+	bu_log("nmg_shell_coplanar_face_merge(s=0x%p, tol=0x%p, simplify=%d)\n",
 	       s, tol, simplify);
     }
 }
@@ -1095,7 +1095,7 @@ Build_solid(int l, char *name, char *mirror_name, int plate_mode, fastf_t *centr
 	    NMG_CK_FACEUSE(fu);
 
 	    if (debug > 2)
-		bu_log("\tMade faceuse x%x\n", fu);
+		bu_log("\tMade faceuse 0x%p\n", fu);
 
 	    /* add it to the list */
 	    bu_ptbl(&faces, BU_PTBL_INS, (long *)fu);
@@ -1132,7 +1132,7 @@ Build_solid(int l, char *name, char *mirror_name, int plate_mode, fastf_t *centr
 	    NMG_CK_FACEUSE(fu);
 	    if (fu->orientation == OT_SAME) {
 		if (nmg_fu_planeeqn(fu, tol)) {
-		    bu_log("Build_solid: Failed to calculate plane eqn for outside fu x%x:\n", fu);
+		    bu_log("Build_solid: Failed to calculate plane eqn for outside fu 0x%p:\n", fu);
 		    nmg_pr_fu_briefly(fu, (char *)NULL);
 		}
 	    }
@@ -1330,7 +1330,7 @@ Build_solid(int l, char *name, char *mirror_name, int plate_mode, fastf_t *centr
 
 	fu = NMG_INDEX_GETP(faceuse, copy_tbl, p_faces[i].fu);
 	if (!fu) {
-	    bu_exit(1, "No fu in duplicate shell corresponding to fu #%d (x%x) in original\n", i, p_faces[i].fu);
+	    bu_exit(1, "No fu in duplicate shell corresponding to fu #%d (0x%p) in original\n", i, p_faces[i].fu);
 	}
 
 	NMG_CK_FACEUSE(fu);
@@ -1483,7 +1483,7 @@ Build_solid(int l, char *name, char *mirror_name, int plate_mode, fastf_t *centr
 		NMG_GET_FU_PLANE(pl1, fu);
 		if (nmg_fu_planeeqn(fu, tol)) {
 		    NMG_GET_FU_PLANE(pl2, fu);
-		    bu_log("Build_solid: Failed to re-calculate plane eqn for fu x%x:\n", fu);
+		    bu_log("Build_solid: Failed to re-calculate plane eqn for fu 0x%p:\n", fu);
 		    nmg_pr_fu_briefly(fu, (char *)NULL);
 		    rt_g.NMG_debug |= DEBUG_MESH;
 		    nmg_ck_fu_verts(fu, fu->f_p, tol);
@@ -1516,7 +1516,7 @@ Build_solid(int l, char *name, char *mirror_name, int plate_mode, fastf_t *centr
 
     /* Calculate bounding boxes */
     if (debug)
-	bu_log("nmg_region_a(r = x%x)\n", r);
+	bu_log("nmg_region_a(r = 0x%p)\n", r);
     nmg_region_a(r, tol);
 
     if (debug)
@@ -1928,8 +1928,7 @@ proc_plate(int cnt)
 		}
 		if (!found_thick) {
 		    if (nthicks >= MAX_THICKNESSES) {
-			bu_log("Component # has too many different thicknesses\n",
-			       in[0].cc);
+			bu_log("Component #%d has too many different thicknesses\n", in[0].cc);
 			bu_log("\t skipping component\n");
 			return;
 		    } else {
@@ -3391,7 +3390,7 @@ proc_rod(int cnt)
 
 	    l= l+1;
 	    if (debug > 3)
-		bu_log("k=%d l=%d %f %f %f %f %d flag=%d\n",
+		bu_log("k=%d l=%d %f %f %f flag=%d %f mirror=%d\n",
 		       k, l, list[k].x, list[k].y, list[k].z,
 		       list[k].flag, list[k].radius, list[k].mirror);
 	}
