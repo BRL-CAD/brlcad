@@ -70,7 +70,8 @@ man1DOCBOOK = \
 	rtarea.xml \
 	rtcheck.xml \
 	rtedge.xml \
-	search.xml
+	search.xml \
+	tire.xml
 
 man1INTRO = \
 	Introduction.xml
