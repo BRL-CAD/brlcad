@@ -52,7 +52,6 @@
 #include <signal.h>
 #include <errno.h>
 #include <X11/keysym.h>
-#include <X11/StringDefs.h>
 #ifdef HAVE_GL_GLX_H
 #  include <GL/glx.h>
 #endif
