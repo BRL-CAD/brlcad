@@ -2931,6 +2931,242 @@ proc_donut(int cnt)
 	proc_region(name);
 }
 
+
+static void
+process_plate_cylin(int j, int k, char shflg, char mrflg, char ctflg, int count, point_t top, point_t base)
+{
+    char name[NAMESIZE+1];
+    fastf_t rad1, rad2;
+    vect_t ab, bc;
+    double thick, ht, sht;
+
+    fastf_t srad1, srad2;		/* for subtraction case */
+    point_t sbase;			/* for subtraction case */
+    point_t stop; 			/* for subtraction case */
+
+    if (in[k].surf_mode== '-') {
+	/* Plate mode */
+	vect_t unit_h;
+	fastf_t sin_ang;
+	fastf_t rad1_tmp, rad2_tmp;
+
+	ctflg = 'y';
+	bu_strlcpy(name, proc_sname(shflg, mrflg, count, ctflg), sizeof(name));
+
+	rad1 = in[k+2].x;
+	rad2 = in[k+2].y;
+	VSUB2(ab, top, base);
+	ht = MAGNITUDE(ab);
+	sin_ang = ht/hypot(ht, rad2-rad1);
+
+	switch (j) {
+
+	    case 0: /* Both ends open */
+
+		thick = in[k+2].rsurf_thick / sin_ang;
+		srad1 = rad1 - thick;
+		srad2 = rad2 - thick;
+
+		if (srad1 <= 0.0 && srad2 <= 0.0) {
+		    (void)mk_addmember(name, &headf.l, NULL, WMOP_UNION);
+		} else if (srad1 <= 0.0) {
+		    fastf_t new_h_factor;
+		    fastf_t invers_height;
+
+		    invers_height = 1.0/ht;
+		    VSCALE(unit_h, ab, invers_height);
+		    new_h_factor = (thick - rad1)*(ht/(rad2-rad1));
+		    VJOIN1(sbase, base, new_h_factor, unit_h);
+
+		    /* base radius should really be zero, get close */
+		    srad1 = .00001;
+		    mk_trc_top(outfp, name, sbase, top, srad1, srad2);
+		    (void)mk_addmember(name, &head.l, NULL, WMOP_SUBTRACT);
+		} else if (srad2 <= 0.0) {
+		    fastf_t new_h_factor;
+		    fastf_t invers_height;
+
+		    invers_height = 1.0/ht;
+		    VSCALE(unit_h, ab, invers_height);
+		    new_h_factor = ht + srad2 * (ht/(rad1-rad2));
+		    VJOIN1(stop, base, new_h_factor, unit_h);
+
+		    /* top radius should really be zero, get close */
+		    srad2 = .00001;
+		    mk_trc_top(outfp, name, base, stop, srad1, srad2);
+		    (void)mk_addmember(name, &head.l, NULL, WMOP_SUBTRACT);
+		} else {
+		    mk_trc_top(outfp, name, base, top, srad1, srad2);
+		    (void)mk_addmember(name, &head.l, NULL, WMOP_SUBTRACT);
+		}
+		break;
+
+	    case 1: /* Base closed, top open */
+
+		VSUB2(ab, top, base);
+		ht = MAGNITUDE(ab);
+		VUNITIZE(ab);
+		VMOVE(unit_h, ab);
+		VSCALE(ab, ab, in[k].rsurf_thick);
+		VADD2(sbase, base, ab);
+
+		rad1 = in[k+2].x;
+		rad2 = in[k+2].y;
+		VSUB2(ab, top, sbase);
+		sht = MAGNITUDE(ab);
+		srad1 = rad2 - sht / ht * (rad2 - rad1);
+		thick = in[k+2].rsurf_thick / ht * hypot(ht, rad2-rad1);
+		srad1 = srad1 - thick;
+		srad2 = rad2 - thick;
+
+		if (srad1 <= 0.0 && srad2 <= 0.0)
+		    (void)mk_addmember(name, &headf.l, NULL, WMOP_UNION);
+		else if (srad1 <= 0.0) {
+		    fastf_t new_ht;
+
+		    new_ht = ht*(thick - rad1)/(rad2-rad1);
+		    if (new_ht >= ht) {
+			(void)mk_addmember(name, &headf.l, NULL, WMOP_UNION);
+		    } else {
+			VJOIN1(sbase, base, new_ht, unit_h);
+			srad1 = 0.00001;
+			mk_trc_top(outfp, name, sbase, top, srad1, srad2);
+			(void)mk_addmember(name, &head.l, NULL, WMOP_SUBTRACT);
+		    }
+		} else if (srad2 <= 0.0) {
+		    fastf_t new_ht;
+
+		    new_ht = sht + ht*srad2/(rad1-rad2);
+		    if (new_ht <= 0.0) {
+			(void)mk_addmember(name, &headf.l, NULL, WMOP_UNION);
+		    } else {
+			VJOIN1(stop, sbase, new_ht, unit_h);
+			srad2 = 0.00001;
+			mk_trc_top(outfp, name, sbase, stop, srad1, srad2);
+			(void)mk_addmember(name, &head.l, NULL, WMOP_SUBTRACT);
+		    }
+		} else {
+		    mk_trc_top(outfp, name, sbase, top, srad1, srad2);
+		    (void)mk_addmember(name, &head.l, NULL, WMOP_SUBTRACT);
+		}
+		break;
+	    case 2: /* Base open, top closed */
+
+		VSUB2(ab, base, top);
+		ht = MAGNITUDE(ab);
+		VUNITIZE(ab);
+		VMOVE(unit_h, ab);
+		VSCALE(ab, ab, in[k].rsurf_thick);
+		VADD2(stop, top, ab);
+
+		rad1 = in[k+2].x;
+		rad2 = in[k+2].y;
+		VSUB2(ab, stop, base);
+		sht = MAGNITUDE(ab);
+		srad2 = rad1 - sht / ht * (rad1 - rad2);
+		thick = in[k+2].rsurf_thick / ht *
+		    hypot(ht, rad2-rad1);
+		srad1 = rad1 - thick;
+		srad2 = srad2 - thick;
+
+		if (srad1 <= 0.0 && srad2 <= 0.0)
+		    (void)mk_addmember(name, &headf.l, NULL, WMOP_UNION);
+		else if (srad1 <= 0.0) {
+		    fastf_t new_ht;
+
+		    new_ht = sht + ht*srad1/(rad2-rad1);
+		    if (new_ht <= 0.0)
+			(void)mk_addmember(name, &headf.l, NULL, WMOP_UNION);
+		    else {
+			VJOIN1(sbase, stop, new_ht, unit_h)
+			    srad1 = 0.00001;
+			mk_trc_top(outfp, name, sbase, stop, srad1, srad2);
+			(void)mk_addmember(name, &head.l, NULL, WMOP_SUBTRACT);
+		    }
+		} else if (srad2 <= 0.0) {
+		    fastf_t new_ht;
+
+		    new_ht = ht*(thick - rad2)/(rad1-rad2);
+		    if (new_ht >= ht)
+			(void)mk_addmember(name, &headf.l, NULL, WMOP_UNION);
+		    else {
+			VJOIN1(stop, top, new_ht, unit_h)
+			    srad2 = 0.00001;
+			mk_trc_top(outfp, name, base, stop, srad1, srad2);
+			(void)mk_addmember(name, &head.l, NULL, WMOP_SUBTRACT);
+		    }
+		} else {
+		    mk_trc_top(outfp, name, base, stop, srad1, srad2);
+		    (void)mk_addmember(name, &head.l, NULL, WMOP_SUBTRACT);
+		}
+		break;
+
+	    case 3: /* Both closed */
+
+		VSUB2(ab, top, base);
+		VSUB2(bc, base, top);
+		ht = MAGNITUDE(ab);
+		VUNITIZE(ab);
+		VMOVE(unit_h, ab);
+		VUNITIZE(bc);
+		VSCALE(ab, ab, in[k].rsurf_thick);
+		VSCALE(bc, bc, in[k].rsurf_thick);
+		VADD2(sbase, base, ab);
+		VADD2(stop, top, bc);
+
+		rad1 = in[k+2].x;
+		rad2 = in[k+2].y;
+		VSUB2(ab, stop, base);
+		sht = MAGNITUDE(ab);
+		rad1_tmp = rad2 - sht / ht * (rad2 - rad1);
+		rad2_tmp = rad1 - sht / ht * (rad1 - rad2);
+		thick = in[k+2].rsurf_thick / ht * hypot(ht, rad2-rad1);
+		srad1 = rad1_tmp - thick;
+		srad2 = rad2_tmp - thick;
+
+		if ((srad1 <= 0.0 && srad2 <= 0.0) || sht <= 0.0)
+		    (void)mk_addmember(name, &headf.l, NULL, WMOP_UNION);
+		else if (srad1 < 0.0) {
+		    fastf_t new_ht;
+
+		    new_ht = ht*(thick-rad1_tmp)/(rad2_tmp-rad1_tmp);
+		    if (new_ht >= sht)
+			(void)mk_addmember(name, &headf.l, NULL, WMOP_UNION);
+		    else {
+			VJOIN1(sbase, sbase, new_ht, unit_h);
+			srad1 = 0.00001;
+			mk_trc_top(outfp, name, sbase, stop, srad1, srad2);
+			(void)mk_addmember(name, &head.l, NULL, WMOP_SUBTRACT);
+		    }
+		} else if (srad2 <= 0.0) {
+		    fastf_t new_ht;
+		    vect_t rev_h;
+
+		    new_ht = (-ht*srad2/(rad1-rad2));
+		    if (new_ht <= 0.0)
+			(void)mk_addmember(name, &headf.l, NULL, WMOP_UNION);
+		    else {
+			VREVERSE(rev_h, unit_h);
+			VJOIN1(stop, stop, new_ht, rev_h);
+			srad2 = 0.00001;
+			mk_trc_top(outfp, name, sbase, stop, srad1, srad2);
+			(void)mk_addmember(name, &head.l, NULL, WMOP_SUBTRACT);
+		    }
+		} else {
+		    mk_trc_top(outfp, name, sbase, stop, srad1, srad2);
+		    (void)mk_addmember(name, &head.l, NULL, WMOP_SUBTRACT);
+		}
+		break;
+
+	    default:
+		bu_log("Unknown cylinder mode\n");
+		break;
+
+	}         /* end switch */
+    } /* end - plate mode modifications */
+}
+
+
 /*
  *	Cylinder Fastgen Support:
  *	Cylinders have the added complexity of being plate or volume mode,
@@ -2948,14 +3184,8 @@ proc_cylin(int cnt)
 {
     point_t base;
     point_t top;
-    point_t sbase;			/* For subtraction case */
-    point_t stop; 			/* For subtraction case */
-    vect_t ab, bc;
-    fastf_t rad1, rad2;
-    fastf_t srad1, srad2;		/* for subtraction case */
     int k, j;
     struct subtract_list *slist, *get_subtract(int cnt);
-    double thick, ht, sht;
     char shflg='\0', mrflg, ctflg;
     static int count=0;
     static int mir_count=0;
@@ -3019,226 +3249,7 @@ proc_cylin(int cnt)
 
 	    j = (int)(in[k+2].z/mmtin);
 
-	    if (in[k].surf_mode== '-') {
-		/* Plate mode */
-		vect_t unit_h;
-		fastf_t sin_ang;
-		fastf_t rad1_tmp, rad2_tmp;
-
-		ctflg = 'y';
-		bu_strlcpy(name, proc_sname(shflg, mrflg, count, ctflg), sizeof(name));
-
-		rad1 = in[k+2].x;
-		rad2 = in[k+2].y;
-		VSUB2(ab, top, base);
-		ht = MAGNITUDE(ab);
-		sin_ang = ht/hypot(ht, rad2-rad1);
-
-		switch (j) {
-
-		    case 0: /* Both ends open */
-
-			thick = in[k+2].rsurf_thick / sin_ang;
-			srad1 = rad1 - thick;
-			srad2 = rad2 - thick;
-
-			if (srad1 <= 0.0 && srad2 <= 0.0) {
-			    (void)mk_addmember(name, &headf.l, NULL, WMOP_UNION);
-			} else if (srad1 <= 0.0) {
-			    fastf_t new_h_factor;
-			    fastf_t invers_height;
-
-			    invers_height = 1.0/ht;
-			    VSCALE(unit_h, ab, invers_height);
-			    new_h_factor = (thick - rad1)*(ht/(rad2-rad1));
-			    VJOIN1(sbase, base, new_h_factor, unit_h);
-
-			    /* base radius should really be zero, get close */
-			    srad1 = .00001;
-			    mk_trc_top(outfp, name, sbase, top, srad1, srad2);
-			    (void)mk_addmember(name, &head.l, NULL, WMOP_SUBTRACT);
-			} else if (srad2 <= 0.0) {
-			    fastf_t new_h_factor;
-			    fastf_t invers_height;
-
-			    invers_height = 1.0/ht;
-			    VSCALE(unit_h, ab, invers_height);
-			    new_h_factor = ht + srad2 * (ht/(rad1-rad2));
-			    VJOIN1(stop, base, new_h_factor, unit_h);
-
-			    /* top radius should really be zero, get close */
-			    srad2 = .00001;
-			    mk_trc_top(outfp, name, base, stop, srad1, srad2);
-			    (void)mk_addmember(name, &head.l, NULL, WMOP_SUBTRACT);
-			} else {
-			    mk_trc_top(outfp, name, base, top, srad1, srad2);
-			    (void)mk_addmember(name, &head.l, NULL, WMOP_SUBTRACT);
-			}
-			break;
-
-		    case 1: /* Base closed, top open */
-
-			VSUB2(ab, top, base);
-			ht = MAGNITUDE(ab);
-			VUNITIZE(ab);
-			VMOVE(unit_h, ab);
-			VSCALE(ab, ab, in[k].rsurf_thick);
-			VADD2(sbase, base, ab);
-
-			rad1 = in[k+2].x;
-			rad2 = in[k+2].y;
-			VSUB2(ab, top, sbase);
-			sht = MAGNITUDE(ab);
-			srad1 = rad2 - sht / ht * (rad2 - rad1);
-			thick = in[k+2].rsurf_thick / ht * hypot(ht, rad2-rad1);
-			srad1 = srad1 - thick;
-			srad2 = rad2 - thick;
-
-			if (srad1 <= 0.0 && srad2 <= 0.0)
-			    (void)mk_addmember(name, &headf.l, NULL, WMOP_UNION);
-			else if (srad1 <= 0.0) {
-			    fastf_t new_ht;
-
-			    new_ht = ht*(thick - rad1)/(rad2-rad1);
-			    if (new_ht >= ht) {
-				(void)mk_addmember(name, &headf.l, NULL, WMOP_UNION);
-			    } else {
-				VJOIN1(sbase, base, new_ht, unit_h);
-				srad1 = 0.00001;
-				mk_trc_top(outfp, name, sbase, top, srad1, srad2);
-				(void)mk_addmember(name, &head.l, NULL, WMOP_SUBTRACT);
-			    }
-			} else if (srad2 <= 0.0) {
-			    fastf_t new_ht;
-
-			    new_ht = sht + ht*srad2/(rad1-rad2);
-			    if (new_ht <= 0.0) {
-				(void)mk_addmember(name, &headf.l, NULL, WMOP_UNION);
-			    } else {
-				VJOIN1(stop, sbase, new_ht, unit_h);
-				srad2 = 0.00001;
-				mk_trc_top(outfp, name, sbase, stop, srad1, srad2);
-				(void)mk_addmember(name, &head.l, NULL, WMOP_SUBTRACT);
-			    }
-			} else {
-			    mk_trc_top(outfp, name, sbase, top, srad1, srad2);
-			    (void)mk_addmember(name, &head.l, NULL, WMOP_SUBTRACT);
-			}
-			break;
-		    case 2: /* Base open, top closed */
-
-			VSUB2(ab, base, top);
-			ht = MAGNITUDE(ab);
-			VUNITIZE(ab);
-			VMOVE(unit_h, ab);
-			VSCALE(ab, ab, in[k].rsurf_thick);
-			VADD2(stop, top, ab);
-
-			rad1 = in[k+2].x;
-			rad2 = in[k+2].y;
-			VSUB2(ab, stop, base);
-			sht = MAGNITUDE(ab);
-			srad2 = rad1 - sht / ht * (rad1 - rad2);
-			thick = in[k+2].rsurf_thick / ht *
-			    hypot(ht, rad2-rad1);
-			srad1 = rad1 - thick;
-			srad2 = srad2 - thick;
-
-			if (srad1 <= 0.0 && srad2 <= 0.0)
-			    (void)mk_addmember(name, &headf.l, NULL, WMOP_UNION);
-			else if (srad1 <= 0.0) {
-			    fastf_t new_ht;
-
-			    new_ht = sht + ht*srad1/(rad2-rad1);
-			    if (new_ht <= 0.0)
-				(void)mk_addmember(name, &headf.l, NULL, WMOP_UNION);
-			    else {
-				VJOIN1(sbase, stop, new_ht, unit_h)
-				    srad1 = 0.00001;
-				mk_trc_top(outfp, name, sbase, stop, srad1, srad2);
-				(void)mk_addmember(name, &head.l, NULL, WMOP_SUBTRACT);
-			    }
-			} else if (srad2 <= 0.0) {
-			    fastf_t new_ht;
-
-			    new_ht = ht*(thick - rad2)/(rad1-rad2);
-			    if (new_ht >= ht)
-				(void)mk_addmember(name, &headf.l, NULL, WMOP_UNION);
-			    else {
-				VJOIN1(stop, top, new_ht, unit_h)
-				    srad2 = 0.00001;
-				mk_trc_top(outfp, name, base, stop, srad1, srad2);
-				(void)mk_addmember(name, &head.l, NULL, WMOP_SUBTRACT);
-			    }
-			} else {
-			    mk_trc_top(outfp, name, base, stop, srad1, srad2);
-			    (void)mk_addmember(name, &head.l, NULL, WMOP_SUBTRACT);
-			}
-			break;
-
-		    case 3: /* Both closed */
-
-			VSUB2(ab, top, base);
-			VSUB2(bc, base, top);
-			ht = MAGNITUDE(ab);
-			VUNITIZE(ab);
-			VMOVE(unit_h, ab);
-			VUNITIZE(bc);
-			VSCALE(ab, ab, in[k].rsurf_thick);
-			VSCALE(bc, bc, in[k].rsurf_thick);
-			VADD2(sbase, base, ab);
-			VADD2(stop, top, bc);
-
-			rad1 = in[k+2].x;
-			rad2 = in[k+2].y;
-			VSUB2(ab, stop, base);
-			sht = MAGNITUDE(ab);
-			rad1_tmp = rad2 - sht / ht * (rad2 - rad1);
-			rad2_tmp = rad1 - sht / ht * (rad1 - rad2);
-			thick = in[k+2].rsurf_thick / ht * hypot(ht, rad2-rad1);
-			srad1 = rad1_tmp - thick;
-			srad2 = rad2_tmp - thick;
-
-			if ((srad1 <= 0.0 && srad2 <= 0.0) || sht <= 0.0)
-			    (void)mk_addmember(name, &headf.l, NULL, WMOP_UNION);
-			else if (srad1 < 0.0) {
-			    fastf_t new_ht;
-
-			    new_ht = ht*(thick-rad1_tmp)/(rad2_tmp-rad1_tmp);
-			    if (new_ht >= sht)
-				(void)mk_addmember(name, &headf.l, NULL, WMOP_UNION);
-			    else {
-				VJOIN1(sbase, sbase, new_ht, unit_h);
-				srad1 = 0.00001;
-				mk_trc_top(outfp, name, sbase, stop, srad1, srad2);
-				(void)mk_addmember(name, &head.l, NULL, WMOP_SUBTRACT);
-			    }
-			} else if (srad2 <= 0.0) {
-			    fastf_t new_ht;
-			    vect_t rev_h;
-
-			    new_ht = (-ht*srad2/(rad1-rad2));
-			    if (new_ht <= 0.0)
-				(void)mk_addmember(name, &headf.l, NULL, WMOP_UNION);
-			    else {
-				VREVERSE(rev_h, unit_h);
-				VJOIN1(stop, stop, new_ht, rev_h);
-				srad2 = 0.00001;
-				mk_trc_top(outfp, name, sbase, stop, srad1, srad2);
-				(void)mk_addmember(name, &head.l, NULL, WMOP_SUBTRACT);
-			    }
-			} else {
-			    mk_trc_top(outfp, name, sbase, stop, srad1, srad2);
-			    (void)mk_addmember(name, &head.l, NULL, WMOP_SUBTRACT);
-			}
-			break;
-
-		    default:
-			bu_log("Unknown cylinder mode\n");
-			break;
-
-		}         /* end switch */
-	    } /* end - plate mode modifications */
+	    process_plate_cylin(j, k, shflg, mrflg, ctflg, count, top, base);
 	} else {
 	    /* Degenerate length check */
 	    bu_log("Bad Cylinder Length for %s\n", name);
@@ -3299,226 +3310,7 @@ proc_cylin(int cnt)
 
 	    j = (int)(in[k+2].z/mmtin);
 
-	    if (in[k].surf_mode== '-') {
-		/* Plate mode */
-		vect_t unit_h;
-		fastf_t sin_ang;
-		fastf_t rad1_tmp, rad2_tmp;
-
-		ctflg = 'y';
-		bu_strlcpy(name, proc_sname(shflg, mrflg, mir_count, ctflg), sizeof(name));
-
-		rad1 = in[k+2].x;
-		rad2 = in[k+2].y;
-		VSUB2(ab, top, base);
-		ht = MAGNITUDE(ab);
-		sin_ang = ht/hypot(ht, rad2-rad1);
-
-		switch (j) {
-
-		    case 0: /* Both ends open */
-
-			thick = in[k+2].rsurf_thick / sin_ang;
-			srad1 = rad1 - thick;
-			srad2 = rad2 - thick;
-
-			if (srad1 <= 0.0 && srad2 <= 0.0) {
-			    (void)mk_addmember(name, &headf.l, NULL, WMOP_UNION);
-			} else if (srad1 <= 0.0) {
-			    fastf_t new_h_factor;
-			    fastf_t invers_height;
-
-			    invers_height = 1.0/ht;
-			    VSCALE(unit_h, ab, invers_height);
-			    new_h_factor = (thick - rad1)*(ht/(rad2-rad1));
-			    VJOIN1(sbase, base, new_h_factor, unit_h);
-
-			    /* base radius should really be zero, get close */
-			    srad1 = .00001;
-			    mk_trc_top(outfp, name, sbase, top, srad1, srad2);
-			    (void)mk_addmember(name, &head.l, NULL, WMOP_SUBTRACT);
-			} else if (srad2 <= 0.0) {
-			    fastf_t new_h_factor;
-			    fastf_t invers_height;
-
-			    invers_height = 1.0/ht;
-			    VSCALE(unit_h, ab, invers_height);
-			    new_h_factor = ht + srad2 * (ht/(rad1-rad2));
-			    VJOIN1(stop, base, new_h_factor, unit_h);
-
-			    /* top radius should really be zero, get close */
-			    srad2 = .00001;
-			    mk_trc_top(outfp, name, base, stop, srad1, srad2);
-			    (void)mk_addmember(name, &head.l, NULL, WMOP_SUBTRACT);
-			} else {
-			    mk_trc_top(outfp, name, base, top, srad1, srad2);
-			    (void)mk_addmember(name, &head.l, NULL, WMOP_SUBTRACT);
-			}
-			break;
-
-		    case 1: /* Base closed, top open */
-
-			VSUB2(ab, top, base);
-			ht = MAGNITUDE(ab);
-			VUNITIZE(ab);
-			VMOVE(unit_h, ab);
-			VSCALE(ab, ab, in[k].rsurf_thick);
-			VADD2(sbase, base, ab);
-
-			rad1 = in[k+2].x;
-			rad2 = in[k+2].y;
-			VSUB2(ab, top, sbase);
-			sht = MAGNITUDE(ab);
-			srad1 = rad2 - sht / ht * (rad2 - rad1);
-			thick = in[k+2].rsurf_thick / ht * hypot(ht, rad2-rad1);
-			srad1 = srad1 - thick;
-			srad2 = rad2 - thick;
-
-			if (srad1 <= 0.0 && srad2 <= 0.0)
-			    (void)mk_addmember(name, &headf.l, NULL, WMOP_UNION);
-			else if (srad1 <= 0.0) {
-			    fastf_t new_ht;
-
-			    new_ht = ht*(thick - rad1)/(rad2-rad1);
-			    if (new_ht >= ht) {
-				(void)mk_addmember(name, &headf.l, NULL, WMOP_UNION);
-			    } else {
-				VJOIN1(sbase, base, new_ht, unit_h);
-				srad1 = 0.00001;
-				mk_trc_top(outfp, name, sbase, top, srad1, srad2);
-				(void)mk_addmember(name, &head.l, NULL, WMOP_SUBTRACT);
-			    }
-			} else if (srad2 <= 0.0) {
-			    fastf_t new_ht;
-
-			    new_ht = sht + ht*srad2/(rad1-rad2);
-			    if (new_ht <= 0.0) {
-				(void)mk_addmember(name, &headf.l, NULL, WMOP_UNION);
-			    } else {
-				VJOIN1(stop, sbase, new_ht, unit_h);
-				srad2 = 0.00001;
-				mk_trc_top(outfp, name, sbase, stop, srad1, srad2);
-				(void)mk_addmember(name, &head.l, NULL, WMOP_SUBTRACT);
-			    }
-			} else {
-			    mk_trc_top(outfp, name, sbase, top, srad1, srad2);
-			    (void)mk_addmember(name, &head.l, NULL, WMOP_SUBTRACT);
-			}
-			break;
-		    case 2: /* Base open, top closed */
-
-			VSUB2(ab, base, top);
-			ht = MAGNITUDE(ab);
-			VUNITIZE(ab);
-			VMOVE(unit_h, ab);
-			VSCALE(ab, ab, in[k].rsurf_thick);
-			VADD2(stop, top, ab);
-
-			rad1 = in[k+2].x;
-			rad2 = in[k+2].y;
-			VSUB2(ab, stop, base);
-			sht = MAGNITUDE(ab);
-			srad2 = rad1 - sht / ht * (rad1 - rad2);
-			thick = in[k+2].rsurf_thick / ht *
-			    hypot(ht, rad2-rad1);
-			srad1 = rad1 - thick;
-			srad2 = srad2 - thick;
-
-			if (srad1 <= 0.0 && srad2 <= 0.0)
-			    (void)mk_addmember(name, &headf.l, NULL, WMOP_UNION);
-			else if (srad1 <= 0.0) {
-			    fastf_t new_ht;
-
-			    new_ht = sht + ht*srad1/(rad2-rad1);
-			    if (new_ht <= 0.0)
-				(void)mk_addmember(name, &headf.l, NULL, WMOP_UNION);
-			    else {
-				VJOIN1(sbase, stop, new_ht, unit_h)
-				    srad1 = 0.00001;
-				mk_trc_top(outfp, name, sbase, stop, srad1, srad2);
-				(void)mk_addmember(name, &head.l, NULL, WMOP_SUBTRACT);
-			    }
-			} else if (srad2 <= 0.0) {
-			    fastf_t new_ht;
-
-			    new_ht = ht*(thick - rad2)/(rad1-rad2);
-			    if (new_ht >= ht)
-				(void)mk_addmember(name, &headf.l, NULL, WMOP_UNION);
-			    else {
-				VJOIN1(stop, top, new_ht, unit_h)
-				    srad2 = 0.00001;
-				mk_trc_top(outfp, name, base, stop, srad1, srad2);
-				(void)mk_addmember(name, &head.l, NULL, WMOP_SUBTRACT);
-			    }
-			} else {
-			    mk_trc_top(outfp, name, base, stop, srad1, srad2);
-			    (void)mk_addmember(name, &head.l, NULL, WMOP_SUBTRACT);
-			}
-			break;
-
-		    case 3: /* Both closed */
-
-			VSUB2(ab, top, base);
-			VSUB2(bc, base, top);
-			ht = MAGNITUDE(ab);
-			VUNITIZE(ab);
-			VMOVE(unit_h, ab);
-			VUNITIZE(bc);
-			VSCALE(ab, ab, in[k].rsurf_thick);
-			VSCALE(bc, bc, in[k].rsurf_thick);
-			VADD2(sbase, base, ab);
-			VADD2(stop, top, bc);
-
-			rad1 = in[k+2].x;
-			rad2 = in[k+2].y;
-			VSUB2(ab, stop, base);
-			sht = MAGNITUDE(ab);
-			rad1_tmp = rad2 - sht / ht * (rad2 - rad1);
-			rad2_tmp = rad1 - sht / ht * (rad1 - rad2);
-			thick = in[k+2].rsurf_thick / ht * hypot(ht, rad2-rad1);
-			srad1 = rad1_tmp - thick;
-			srad2 = rad2_tmp - thick;
-
-			if ((srad1 <= 0.0 && srad2 <= 0.0) || sht <= 0.0)
-			    (void)mk_addmember(name, &headf.l, NULL, WMOP_UNION);
-			else if (srad1 < 0.0) {
-			    fastf_t new_ht;
-
-			    new_ht = ht*(thick-rad1_tmp)/(rad2_tmp-rad1_tmp);
-			    if (new_ht >= sht)
-				(void)mk_addmember(name, &headf.l, NULL, WMOP_UNION);
-			    else {
-				VJOIN1(sbase, sbase, new_ht, unit_h);
-				srad1 = 0.00001;
-				mk_trc_top(outfp, name, sbase, stop, srad1, srad2);
-				(void)mk_addmember(name, &head.l, NULL, WMOP_SUBTRACT);
-			    }
-			} else if (srad2 <= 0.0) {
-			    fastf_t new_ht;
-			    vect_t rev_h;
-
-			    new_ht = (-ht*srad2/(rad1-rad2));
-			    if (new_ht <= 0.0)
-				(void)mk_addmember(name, &headf.l, NULL, WMOP_UNION);
-			    else {
-				VREVERSE(rev_h, unit_h);
-				VJOIN1(stop, stop, new_ht, rev_h);
-				srad2 = 0.00001;
-				mk_trc_top(outfp, name, sbase, stop, srad1, srad2);
-				(void)mk_addmember(name, &head.l, NULL, WMOP_SUBTRACT);
-			    }
-			} else {
-			    mk_trc_top(outfp, name, sbase, stop, srad1, srad2);
-			    (void)mk_addmember(name, &head.l, NULL, WMOP_SUBTRACT);
-			}
-			break;
-
-		    default:
-			bu_log("Unknown cylinder mode\n");
-			break;
-
-		}         /* end switch */
-	    } /* end - plate mode modifications */
+	    process_plate_cylin(j, k, shflg, mrflg, ctflg, count, top, base);
 	} else {
 	    /* Degenerate length check */
 	    bu_log("Bad Cylinder Length for %s\n", name);
