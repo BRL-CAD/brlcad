@@ -22,20 +22,19 @@
  */
 
 struct input {
-
-    fastf_t x, y, z;
-    fastf_t	rsurf_thick;
-    int	surf_type;
-    int	surf_thick;
-    int	spacecode;
-    int	cc;
-    int  	ept[10];
-    int	mirror;
-    int	vc;
-
-    int	prevsurf_type;
-    char	surf_mode;
-
+    fastf_t x;
+    fastf_t y;
+    fastf_t z;
+    fastf_t rsurf_thick;
+    int surf_type;
+    int surf_thick;
+    int spacecode;
+    int cc;
+    int ept[10];
+    int mirror;
+    int vc;
+    int prevsurf_type;
+    char surf_mode;
 } in[10000];
 
 struct patch_verts {
@@ -50,50 +49,48 @@ struct patch_faces
 };
 
 struct patches{
-
-    fastf_t x, y, z;
+    fastf_t x;
+    fastf_t y;
+    fastf_t z;
     int flag;
     fastf_t radius;
     int mirror;
     fastf_t thick;
-
 };
 
 #define NAMESIZE 16
 struct names{
-
-    char	ug[NAMESIZE+1];
-    char	lg[NAMESIZE+1];
-    int	eqlos,
-	matcode;
-
+    char ug[NAMESIZE+1];
+    char lg[NAMESIZE+1];
+    int eqlos;
+    int matcode;
 } nm[9999];
 
 struct subtract_list{
-
-    int			outsolid,
-	insolid,
-	inmirror;
-    struct subtract_list	*next;
+    int outsolid;
+    int insolid;
+    int inmirror;
+    struct subtract_list *next;
 };
 
-point_t		pt[4];
-fastf_t		vertice[5][3];
-fastf_t		first[5][3];
-fastf_t		normal[5][3];
-point_t		ce[4];
-point_t		centroid, Centroid;	/* object, description centroids */
-unsigned char	rgb[3];
+point_t pt[4];
+fastf_t vertice[5][3];
+fastf_t first[5][3];
+fastf_t normal[5][3];
+point_t ce[4];
+point_t centroid;
+point_t Centroid;	/* object, description centroids */
+unsigned char rgb[3];
 int debug = 0;
 float mmtin = 25.4;
 double conv_mm2in;
 fastf_t third = 0.333333333;
 
-char  cname[NAMESIZE+1];
-char  tname[NAMESIZE+1];
-char  surf[2];
+char cname[NAMESIZE+1];
+char tname[NAMESIZE+1];
+char surf[2];
 char thick[3];
-char  space[2];
+char space[2];
 
 int numobj = 0;
 int nflg = 1;
@@ -105,19 +102,24 @@ int rev_norms = 0;	/* reverse normals for plate mode triangles */
 int polysolid = 0;	/* convert triangle-facetted objects to polysolids */
 int arb6 = 0;		/* flag: convert plate-mode objects to arb6s */
 
-mat_t	m;
+mat_t m;
 char *patchfile;
 char *labelfile=NULL;
 char *matfile;
 
-#define MAX_THICKNESSES		500	/* Maximum number of different thicknesses
-					   for a single plate mode solid */
+/* Maximum number of different thicknesses for a single plate mode
+ * solid.
+ */
+#define MAX_THICKNESSES 500	
+
 fastf_t thicks[MAX_THICKNESSES];	/* array of unique plate thicknesses */
 int nthicks;				/* number of unique plate thicknesses
 					   for a single plate mode solid */
 
 struct patches list[15000];
-fastf_t x[1500], y[1500], z[1500];
+fastf_t x[1500];
+fastf_t y[1500];
+fastf_t z[1500];
 int mirror[1500];
 fastf_t radius[1500];
 fastf_t thk[1500];
