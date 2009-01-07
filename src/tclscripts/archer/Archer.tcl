@@ -5163,11 +5163,11 @@ package provide Archer 1.0
     #XXX Not ready yet
     return
 
-    set parent $itk_component(objEditView)
-    itk_component add pipeView {
-	PipeEditFrame $parent.pipeview \
-	    -units "mm"
-    } {}
+#     set parent $itk_component(objEditView)
+#     itk_component add pipeView {
+# 	PipeEditFrame $parent.pipeview \
+# 	    -units "mm"
+#     } {}
 }
 
 ::itcl::body Archer::buildRhcEditView {} {
@@ -5190,11 +5190,11 @@ package provide Archer 1.0
     #XXX Not ready yet
     return
 
-    set parent $itk_component(objEditView)
-    itk_component add sketchView {
-	SketchEditFrame $parent.sketchview \
-	    -units "mm"
-    } {}
+#     set parent $itk_component(objEditView)
+#     itk_component add sketchView {
+# 	SketchEditFrame $parent.sketchview \
+# 	    -units "mm"
+#     } {}
 }
 
 ::itcl::body Archer::buildSphereEditView {} {
@@ -5300,18 +5300,18 @@ package provide Archer 1.0
     #XXX Not ready yet
     return
 
-    $itk_component(botView) configure \
-	-geometryObject $mSelectedObj \
-	-geometryChangedCallback [::itcl::code $this updateObjEditView] \
-	-mged $itk_component(ged) \
-	-labelFont $mFontText \
-	-boldLabelFont $mFontTextBold \
-	-entryFont $mFontText
-    $itk_component(botView) initGeometry $odata
+#     $itk_component(botView) configure \
+# 	-geometryObject $mSelectedObj \
+# 	-geometryChangedCallback [::itcl::code $this updateObjEditView] \
+# 	-mged $itk_component(ged) \
+# 	-labelFont $mFontText \
+# 	-boldLabelFont $mFontTextBold \
+# 	-entryFont $mFontText
+#     $itk_component(botView) initGeometry $odata
 
-    pack $itk_component(botView) \
-	-expand yes \
-	-fill both
+#     pack $itk_component(botView) \
+# 	-expand yes \
+# 	-fill both
 }
 
 ::itcl::body Archer::initCombEditView {odata} {
