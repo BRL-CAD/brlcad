@@ -102,7 +102,6 @@ mged_SOURCES = \
 	predictor.c \
 	qray.c \
 	rect.c \
-	red.c \
 	rtif.c \
 	scroll.c \
 	set.c \

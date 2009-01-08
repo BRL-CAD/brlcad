@@ -36,6 +36,8 @@ struct cmdtab {
     ged_func_ptr ged_func;
 };
 
+extern struct cmdtab mged_cmdtab[];
+
 /* Commands */
 
 BU_EXTERN(int cmd_ged_edit_wrapper, (ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[]));

@@ -43,12 +43,22 @@ cmd_overlay(ClientData	clientData,
 	    int		argc,
 	    char	**argv)
 {
-    int		ret;
-    struct bu_vls	char_size;
-    int		ac;
-    char		*av[5];
+    int ret;
+    Tcl_DString ds;
+    int	 ac;
+    char *av[5];
+    struct bu_vls char_size;
 
-    CHECK_DBI_NULL;
+    if (gedp == GED_NULL)
+	return TCL_OK;
+
+    Tcl_DStringInit(&ds);
+
+    if (argc == 1) {
+	Tcl_DStringAppend(&ds, "file.pl [name]", -1);
+	Tcl_DStringResult(interp, &ds);
+	return TCL_OK;
+    }
 
     ac = argc + 1;
     bu_vls_init(&char_size);
@@ -62,8 +72,14 @@ cmd_overlay(ClientData	clientData,
     } else
 	av[3] = (char *)0;
 
-    if ((ret = ged_overlay(gedp, ac, av)) == TCL_OK)
-	update_views = 1;
+    ret = ged_overlay(gedp, ac, av);
+    Tcl_DStringAppend(&ds, bu_vls_addr(&gedp->ged_result_str), -1);
+    Tcl_DStringResult(interp, &ds);
+
+    if (ret != BRLCAD_OK)
+	return TCL_ERROR;
+
+    update_views = 1;
 
     bu_vls_free(&char_size);
     return ret;

@@ -1019,29 +1019,6 @@ f_quit(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 }
 
 /**
- * sync the database to disk
- */
-int
-f_sync(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
-{
-    int ret;
-    Tcl_DString ds;
-
-    if (gedp == GED_NULL)
-	return TCL_OK;
-
-    ret = ged_sync(gedp, argc, (const char **)argv);
-    Tcl_DStringInit(&ds);
-    Tcl_DStringAppend(&ds, bu_vls_addr(&gedp->ged_result_str), -1);
-    Tcl_DStringResult(interp, &ds);
-
-    if (ret == BRLCAD_OK)
-	return TCL_OK;
-
-    return TCL_ERROR;
-}
-
-/**
  *			H E L P C O M M
  *
  *  Common code for help commands

@@ -1123,13 +1123,13 @@ cvt_vlblock_to_solids(
 	av[0] = "d";
 	av[1] = shortname;
 	av[2] = NULL;
-	(void)cmd_ged_erase_wrapper((ClientData)NULL, interp, 2, av);
+	(void)cmd_ged_erase_wrapper((ClientData)mged_cmdtab, interp, 2, av);
     } else {
 	av[0] = "kill";
 	av[1] = "-f";
 	av[2] = shortname;
 	av[3] = NULL;
-	(void)cmd_kill((ClientData)NULL, interp, 3, av);
+	(void)cmd_ged_erase_wrapper((ClientData)mged_cmdtab, interp, 3, av);
     }
 
     for ( i=0; i < vbp->nused; i++ )  {

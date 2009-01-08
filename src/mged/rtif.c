@@ -381,34 +381,6 @@ setup_rt(register char **vp, int printcmd)
     }
 }
 
-
-/**
- *  C M D _ R T A B O R T
- *
- *  Abort any raytraces started through mged.
- */
-int
-cmd_rtabort(ClientData clientData,
-	    Tcl_Interp *interp,
-	    int argc,
-	    char **argv)
-{
-    int ret;
-    Tcl_DString ds;
-
-    Tcl_DStringInit(&ds);
-
-    ret = ged_rtabort(gedp, argc, (const char **)argv);
-    Tcl_DStringAppend(&ds, bu_vls_addr(&gedp->ged_result_str), -1);
-    Tcl_DStringResult(interp, &ds);
-
-    if (ret == BRLCAD_OK)
-	return TCL_OK;
-
-    return TCL_ERROR;
-}
-
-
 void
 display_error()
 {
@@ -2189,31 +2161,6 @@ cmd_solids_on_ray (ClientData clientData, Tcl_Interp *interp, int argc, char **a
     bu_free((genptr_t) snames, "solid names");
 
     return TCL_OK;
-}
-
-
-/**
- * List the objects currently being drawn.
- */
-int
-cmd_who (ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
-{
-    int ret;
-    Tcl_DString ds;
-
-    if (gedp == GED_NULL)
-	return TCL_OK;
-
-    Tcl_DStringInit(&ds);
-
-    ret = ged_who(gedp, argc, (const char **)argv);
-    Tcl_DStringAppend(&ds, bu_vls_addr(&gedp->ged_result_str), -1);
-    Tcl_DStringResult(interp, &ds);
-
-    if (ret == BRLCAD_OK)
-	return TCL_OK;
-
-    return TCL_ERROR;
 }
 
 
