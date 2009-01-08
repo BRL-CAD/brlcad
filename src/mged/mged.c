@@ -2466,6 +2466,12 @@ do_rc(void)
     return 0;
 }
 
+void
+ged_output_handler(struct ged *gedp, char *line)
+{
+    bu_log(line);
+}
+
 /*
  *			F _ O P E N D B
  *
@@ -2702,6 +2708,8 @@ f_opendb(
 
     BU_GETSTRUCT(gedp, ged);
     GED_INIT(gedp, wdbp);
+
+    gedp->ged_output_handler = ged_output_handler;
 
     /*XXX shouldn't need any of this */
 #if 1
