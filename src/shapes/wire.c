@@ -19,17 +19,10 @@
  */
 /** @file wire.c
  *
+ * This is a program to create wiring or fuel lines.  The user Enters
+ * only the coordinates of the endpoints and the radius of the lines.
+ *
  */
-
-/*  File:  wire.c  */
-/*  S.Coates - 15 September 1992  */
-/*  To compile for use separately:  */
-/*  cc wire.c /usr/brlcad/lib/libwdb.a /usr/brlcad/lib/librt.a  */
-/*	-lmpc -lm -o wire  */
-
-/*  This is a program to create wiring or fuel lines.  The user  */
-/*  Enters only the coordinates of the endpoints and the radius  */
-/*  of the lines.  */
 
 #include "common.h"
 
@@ -214,10 +207,10 @@ main(int argc, char **argv)
     {
 	/*  START # 5  */
 	(void)printf("Segment # %d:  ", (i+1));
-	(void)printf("(%f,%f,%f)", strtpt[i][0], strtpt[i][1], strtpt[i][2]);
+	(void)printf("(%f, %f, %f)", strtpt[i][0], strtpt[i][1], strtpt[i][2]);
 	(void)printf(" %f\n", strtrad[i]);
 	(void)printf("              ");
-	(void)printf("(%f,%f,%f)", endpt[i][0], endpt[i][1], endpt[i][2]);
+	(void)printf("(%f, %f, %f)", endpt[i][0], endpt[i][1], endpt[i][2]);
 	(void)printf("%f\n", endrad[i]);
 	(void)fflush(stdout);
     }							/*  END # 5  */
@@ -244,9 +237,9 @@ main(int argc, char **argv)
 	    + (endpt[i][1] - strtpt[i][1]) * (endpt[i][1] - strtpt[i][1])
 	    + (endpt[i][2] - strtpt[i][2]) * (endpt[i][2] - strtpt[i][2]);
 	r = sqrt(r);
-	dir[0] = (fastf_t)( (endpt[i][0] - strtpt[i][0]) / r);
-	dir[1] = (fastf_t)( (endpt[i][1] - strtpt[i][1]) / r);
-	dir[2] = (fastf_t)( (endpt[i][2] - strtpt[i][2]) / r);
+	dir[0] = (fastf_t)((endpt[i][0] - strtpt[i][0]) / r);
+	dir[1] = (fastf_t)((endpt[i][1] - strtpt[i][1]) / r);
+	dir[2] = (fastf_t)((endpt[i][2] - strtpt[i][2]) / r);
 
 	/*  Height of cone.  */
 	ht = (fastf_t)r;
@@ -265,7 +258,7 @@ main(int argc, char **argv)
 	    solcyl[5] = '0';
 	    solcyl[6] = temp[0];
 	}						/*  END # 11  */
-	else if ( (10 <= i) || (i < 100) )
+	else if ((10 <= i) || (i < 100))
 	{
 	    /*  START # 12  */
 	    solcyl[5] = temp[0];
@@ -307,7 +300,7 @@ main(int argc, char **argv)
 	    solsph[5] = '0';
 	    solsph[6] = temp[0];
 	}						/*  END # 21  */
-	else if ( (10 <= i) || (i < 100) )
+	else if ((10 <= i) || (i < 100))
 	{
 	    /*  START # 22  */
 	    solsph[5] = temp[0];
@@ -346,10 +339,10 @@ main(int argc, char **argv)
 	    regcyl[5] = '0';
 	    regcyl[6] = temp[0];
 
-	    if (i < (numseg - 1) )
+	    if (i < (numseg - 1))
 	    {
 		/*  START # 32  */
-		if ( (i + 1) < 10)
+		if ((i + 1) < 10)
 		{
 		    /*  START # 33  */
 		    solsub1[5] = '0';
@@ -364,7 +357,7 @@ main(int argc, char **argv)
 	    }						/*  END # 32  */
 	}						/*  END # 31  */
 
-	else if ( (10 <= i) || (i < 100) )
+	else if ((10 <= i) || (i < 100))
 	{
 	    /*  START # 35  */
 	    solcyl[5] = temp[0];
@@ -372,7 +365,7 @@ main(int argc, char **argv)
 	    regcyl[5] = temp[0];
 	    regcyl[6] = temp[1];
 
-	    if (i < (numseg - 1) )
+	    if (i < (numseg - 1))
 	    {
 		/*  START # 36  */
 		solsub1[5] = temp1[0];
@@ -389,7 +382,7 @@ main(int argc, char **argv)
 
 	(void)mk_addmember(solcyl, &comb.l, NULL, WMOP_INTERSECT);
 
-	if (i < (numseg - 1) )
+	if (i < (numseg - 1))
 	{
 	    /*  START # 38  */
 	    (void)mk_addmember(solsub1, &comb.l, NULL, WMOP_SUBTRACT);
@@ -419,7 +412,7 @@ main(int argc, char **argv)
 	    solsub2[6] = temp[0];
 	}						/*  END # 41  */
 
-	else if ( (10 <= i) || (i < 100) )
+	else if ((10 <= i) || (i < 100))
 	{
 	    /*  START # 42  */
 	    solsph[5] = temp[0];
@@ -469,7 +462,7 @@ main(int argc, char **argv)
 	    }						/*  END # 52  */
 	}						/*  END # 51  */
 
-	else if ( (10 <= i) || (i < 100) )
+	else if ((10 <= i) || (i < 100))
 	{
 	    /*  START # 53  */
 	    regcyl[5] = temp[0];

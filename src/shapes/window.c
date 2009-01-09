@@ -19,18 +19,12 @@
  */
 /** @file window.c
  *
+ * Program to make a window using libwdb.  The objects will be in
+ * millimeters.  The windows are composed of two arb8s and four
+ * cylinders.  The front of the window is centered at (0, 0, 0) and
+ * extends in the negative x-direction the depth of the window.
+ *
  */
-
-/*  File:  window.c  */
-/*  S.Coates - 26 August 1992  */
-/*  To compile for use separately:  */
-/*  cc window.c /usr/brlcad/lib/libwdb.a /usr/brlcad/lib/librt.a  */
-/*	-lmpc -lm -o window  */
-
-/*  Program to make a window using libwdb.  The objects will be  */
-/*  in millimeters.  The windows are composed of two arb8s and  */
-/*  four cylinders.  The front of the window is centered at (0, 0, 0)  */
-/*  and extends in the negative x-direction the depth of the window.  */
 
 #include "common.h"
 
@@ -44,11 +38,6 @@
 #include "raytrace.h"
 #include "wdb.h"
 
-#ifdef M_PI
-#define PI M_PI
-#else
-#define PI 3.141592653589793
-#endif
 
 int
 main(int argc, char **argv)
@@ -153,7 +142,7 @@ main(int argc, char **argv)
 		/*  START # 6  */
 		j = 2;
 		k = 0;
-		while ( (temp[j] != '\0') && (k < 25) )
+		while ((temp[j] != '\0') && (k < 25))
 		{
 		    /*  START # 7  */
 		    filemged[k] = temp[j];
@@ -170,7 +159,7 @@ main(int argc, char **argv)
 		/*  Set up temporary character string.  */
 		j = 2;
 		k = 0;
-		while ( (temp[j] != '\0') && (k < 15) )
+		while ((temp[j] != '\0') && (k < 15))
 		{
 		    /*  START # 9  */
 		    temp1[k] = temp[j];

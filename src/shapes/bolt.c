@@ -19,16 +19,9 @@
  */
 /** @file bolt.c
  *
+ *  Program to make a bolt using libwdb.  The objects will be in mm.
+ *
  */
-
-/*  File:  bolt.c  */
-/*  S.Coates - 2 September 1992  */
-/*  To compile for use separately:  */
-/*  cc bolt.c /usr/brlcad/lib/libwdb.a /usr/brlcad/lib/librt.a  */
-/*	-lmpc -lm -o bolt  */
-
-/*  Program to make a bolt using libwdb.  The objects will be  */
-/*  in millimeters.  */
 
 #include "common.h"
 
@@ -42,11 +35,6 @@
 #include "raytrace.h"
 #include "wdb.h"
 
-#ifdef M_PI
-#define PI M_PI
-#else
-#define PI 3.141592653589793
-#endif
 
 int
 main(int argc, char **argv)
@@ -143,14 +131,14 @@ main(int argc, char **argv)
 	(void)fflush(stdout);
 	(void)scanf("%lf %lf", &hd, &hh);
 	/*  Find dimensions of washer if necessary.  */
-	if ( (iopt == 2) || (iopt == 3) )
+	if ((iopt == 2) || (iopt == 3))
 	{
 	    (void)printf("Enter diameter & height of washer.\n\t");
 	    (void)fflush(stdout);
 	    (void)scanf("%lf %lf", &wd, &wh);
 	}
 	/*  Find dimensions of bolt stem if necessary.  */
-	if ( (iopt == 3) || (iopt == 4) )
+	if ((iopt == 3) || (iopt == 4))
 	{
 	    (void)printf("Enter diameter & height of bolt stem.\n\t");
 	    (void)fflush(stdout);
@@ -202,7 +190,7 @@ main(int argc, char **argv)
 		/*  START # 5  */
 		j = 2;
 		k = 0;
-		while ( (temp[j] != '\0') && (k < 25) )
+		while ((temp[j] != '\0') && (k < 25))
 		{
 		    /*  START # 6  */
 		    filemged[k] = temp[j];
@@ -219,7 +207,7 @@ main(int argc, char **argv)
 		/*  Set up temporary character string, temp1.  */
 		j = 2;
 		k = 0;
-		while ( (temp[j] != '\0') && (k < 15) )
+		while ((temp[j] != '\0') && (k < 15))
 		{
 		    temp1[k] = temp[j];
 		    j++;
@@ -237,7 +225,7 @@ main(int argc, char **argv)
 		/*  Set temporary character string, temp1.  */
 		j = 3;
 		k = 0;
-		while ( (temp[j] != '\0') && (k < 15) )
+		while ((temp[j] != '\0') && (k < 15))
 		{
 		    temp1[k] = temp[j];
 		    j++;
@@ -316,7 +304,7 @@ main(int argc, char **argv)
 
 	/*  Create all solids needed.  */
 	/*  Create solids of bolt head.  */
-	leg = tan(PI / 6.) * hd / 2.;
+	leg = tan(M_PI / 6.) * hd / 2.;
 	hyp = leg * leg + (hd / 2.) * (hd / 2.);
 	hyp = sqrt(hyp);
 	/*  Bolt head is two solids, create first solid.  */
@@ -377,7 +365,7 @@ main(int argc, char **argv)
 	mk_arb8(fpw, solnam, &pts[0][X]);
 
 	/*  Create washer if necessary.  */
-	if ( (iopt == 2) || (iopt == 3) )
+	if ((iopt == 2) || (iopt == 3))
 	{
 	    bs[0] = (fastf_t)0.;
 	    bs[1] = (fastf_t)0.;
@@ -391,7 +379,7 @@ main(int argc, char **argv)
 	}
 
 	/*  Create bolt stem if necessary.  */
-	if ( (iopt == 3) || (iopt == 4) )
+	if ((iopt == 3) || (iopt == 4))
 	{
 	    bs[0] = (fastf_t)0.;
 	    bs[1] = (fastf_t)0.;
@@ -414,13 +402,13 @@ main(int argc, char **argv)
 	solnam[7] = '2';
 	(void)mk_addmember(solnam, &comb.l, NULL, WMOP_SUBTRACT);
 	/*  Subtract washer if it exists.  */
-	if ( (iopt == 2) || (iopt == 3) )
+	if ((iopt == 2) || (iopt == 3))
 	{
 	    solnam[7] = '3';
 	    (void)mk_addmember(solnam, &comb.l, NULL, WMOP_SUBTRACT);
 	}
 	/*  Subtract stem if it exists.  */
-	if ( (iopt == 3) || (iopt == 4) )
+	if ((iopt == 3) || (iopt == 4))
 	{
 	    solnam[7] = '3';
 	    (void)mk_addmember(solnam, &comb.l, NULL, WMOP_SUBTRACT);
@@ -433,13 +421,13 @@ main(int argc, char **argv)
 	solnam[7] = '2';
 	(void)mk_addmember(solnam, &comb.l, NULL, WMOP_INTERSECT);
 	/*  Subtract washer if it exists.  */
-	if ( (iopt == 2) || (iopt == 3) )
+	if ((iopt == 2) || (iopt == 3))
 	{
 	    solnam[7] = '3';
 	    (void)mk_addmember(solnam, &comb.l, NULL, WMOP_SUBTRACT);
 	}
 	/*  Subtract stem if it exists.  */
-	if ( (iopt == 3) || (iopt == 4) )
+	if ((iopt == 3) || (iopt == 4))
 	{
 	    solnam[7] = '4';
 	    (void)mk_addmember(solnam, &comb.l, NULL, WMOP_SUBTRACT);
@@ -448,7 +436,7 @@ main(int argc, char **argv)
 	mk_lfcomb(fpw, regnam, &comb, 1);
 
 	/*  Create region for washer if it exists.  */
-	if ( (iopt == 2) || (iopt == 3) )
+	if ((iopt == 2) || (iopt == 3))
 	{
 	    solnam[7] = '3';
 	    (void)mk_addmember(solnam, &comb.l, NULL, WMOP_INTERSECT);
@@ -463,7 +451,7 @@ main(int argc, char **argv)
 	}
 
 	/*  Create region for bolt stem if it exists.  */
-	if ( (iopt == 3) || (iopt == 4) )
+	if ((iopt == 3) || (iopt == 4))
 	{
 	    solnam[7] = '4';
 	    (void)mk_addmember(solnam, &comb.l, NULL, WMOP_INTERSECT);
@@ -480,13 +468,13 @@ main(int argc, char **argv)
 	regnam[7] = '2';
 	(void)mk_addmember(regnam, &comb1.l, NULL, WMOP_UNION);
 	/*  Add washer region if necessary.  */
-	if ( (iopt == 2) || (iopt == 3) )
+	if ((iopt == 2) || (iopt == 3))
 	{
 	    regnam[7] = '3';
 	    (void)mk_addmember(regnam, &comb1.l, NULL, WMOP_UNION);
 	}
 	/*  Add bolt stem region if necessary.  */
-	if ( (iopt == 3) || (iopt == 4) )
+	if ((iopt == 3) || (iopt == 4))
 	{
 	    regnam[7] = '4';
 	    (void)mk_addmember(regnam, &comb1.l, NULL, WMOP_UNION);

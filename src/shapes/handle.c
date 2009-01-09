@@ -19,19 +19,13 @@
  */
 /** @file handle.c
  *
+ * Program to make a handle using libwdb.  The objects will be in
+ * millimeters.  This handle will be constructed using three
+ * cylinders, two tori, and two arb8s.  The base of the handle will be
+ * centered at (0, 0, 0) and the height of the handle will extend in
+ * the positive z-direction.
+ *
  */
-
-/*  File:  handle.c  */
-/*  S.Coates - 26 August 1992  */
-/*  To compile for use separately:  */
-/*  cc handle.c /usr/brlcad/lib/libwdb.a /usr/brlcad/lib/librt.a  */
-/*	-lmpc -lm -o handle  */
-
-/*  Program to make a handle using libwdb.  The objects will be  */
-/*  in millimeters.  This handle will be constructed using three  */
-/*  cylinders, two tori, and two arb8s.  The base of the handle  */
-/*  will be centered at (0, 0, 0) and the height of the handle  */
-/*  will extend in the positive z-direction.  */
 
 #include "common.h"
 
@@ -45,11 +39,6 @@
 #include "raytrace.h"
 #include "wdb.h"
 
-#ifdef M_PI
-#define PI M_PI
-#else
-#define PI 3.141592653589793
-#endif
 
 int
 main(int argc, char **argv)
@@ -110,7 +99,7 @@ main(int argc, char **argv)
 	/*  Explain makings of handle.  */
 	(void)printf("\nThis program constructs a handle with the base centered\n");
 	(void)printf("at (0, 0, 0) and the height extending in the positive z-\n");
-	(void)printf("direction.  The handle will be composed of 3 cylinders,\n");
+	(void)printf("direction.  The handle will be composed of 3 cylinders, \n");
 	(void)printf("2 tori, and 2 arb8s.\n\n");
 	(void)fflush(stdout);
 
@@ -165,7 +154,7 @@ main(int argc, char **argv)
 		/*  START # 6  */
 		j = 2;
 		k = 0;
-		while ( (temp[j] != '\0') && (k < 25) )
+		while ((temp[j] != '\0') && (k < 25))
 		{
 		    /*  START # 7  */
 		    filemged[k] = temp[j];
@@ -182,7 +171,7 @@ main(int argc, char **argv)
 		/*  Set up temporary character string.  */
 		j = 2;
 		k = 0;
-		while ( (temp[j] != '\0') && (k < 15) )
+		while ((temp[j] != '\0') && (k < 15))
 		{
 		    /*  START # 9  */
 		    temp1[k] = temp[j];
@@ -195,13 +184,13 @@ main(int argc, char **argv)
 	    }						/*  END # 8  */
 
 	    /*  -l or -h - length and height of handle in mm.  */
-	    else if ( (temp[1] == 'l') || (temp[1] == 'h') )
+	    else if ((temp[1] == 'l') || (temp[1] == 'h'))
 	    {
 		/*  START # 10  */
 		/*  Set up temporary character string.  */
 		j = 2;
 		k = 0;
-		while ( (temp[j] != '\0') && (k < 15) )
+		while ((temp[j] != '\0') && (k < 15))
 		{
 		    /*  START # 11  */
 		    temp1[k] = temp[j];
@@ -220,7 +209,7 @@ main(int argc, char **argv)
 		/*  Set up temporary character string.  */
 		j = 3;
 		k = 0;
-		while ( (temp[j] != '\0') && (k < 15) )
+		while ((temp[j] != '\0') && (k < 15))
 		{
 		    /*  START # 13  */
 		    temp1[k] = temp[j];

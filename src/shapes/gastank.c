@@ -19,17 +19,11 @@
  */
 /** @file gastank.c
  *
+ * Program to create a gas tank using libwdb.  All dimensions are in
+ * mm.  The gas tank is composed of 3 arb8s, 8 spheres, and 12
+ * cylinders.  The gas tank is solid and centered at (0, 0, 0).
+ *
  */
-
-/*  File:  gastank.c  */
-/*  S.Coates - 2 September 1992  */
-/*  To compile for use separatley:  */
-/*  cc gastank.c /usr/brlcad/lib/libwdb.a /usr/brlcad/lib/librt.a  */
-/*	-lmpc -lm -o gastank  */
-
-/*  Program to create a gas tank using libwdb.  All dimensions are  */
-/*  in mm.  The gas tank is composed of 3 arb8s, 8 spheres, and 12  */
-/*  cylinders.  The gas tank is solid and centered at (0, 0, 0).  */
 
 #include "common.h"
 
@@ -43,11 +37,6 @@
 #include "raytrace.h"
 #include "wdb.h"
 
-#ifdef M_PI
-#define PI M_PI
-#else
-#define PI 3.141592653589793
-#endif
 
 int
 main(int argc, char **argv)
@@ -159,7 +148,7 @@ main(int argc, char **argv)
 		/*  START # 6  */
 		j = 2;
 		k = 0;
-		while ( (temp[j] != '\0') && (k < 25) )
+		while ((temp[j] != '\0') && (k < 25))
 		{
 		    /*  START # 7  */
 		    filemged[k] = temp[j];
@@ -176,7 +165,7 @@ main(int argc, char **argv)
 		/*  Set up temporary character string.  */
 		j = 2;
 		k = 0;
-		while ( (temp[j] != '\0') && (k < 15) )
+		while ((temp[j] != '\0') && (k < 15))
 		{
 		    /*  START # 9  */
 		    temp1[k] = temp[j];

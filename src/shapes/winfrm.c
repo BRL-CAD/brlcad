@@ -19,19 +19,12 @@
  */
 /** @file winfrm.c
  *
+ * Program to make a window frame using libwdb.  The objects will be
+ * in millimeters.  The window frames are composed of four arb8s and *
+ * eight cylinders.  The front of the window frame is centered at *
+ * (0, 0, 0) and extends in the negative x-direction the depth of the
+ * * window frame.
  */
-
-/*  File:  winfrm.c  */
-/*  S.Coates - 26 August 1992  */
-/*  To compile for use separately:  */
-/*  cc winfrm.c /usr/brlcad/lib/libwdb.a /usr/brlcad/lib/librt.a  */
-/*	-lmpc -lm -o winfrm  */
-
-/*  Program to make a window frame using libwdb.  The objects will be  */
-/*  in millimeters.  The window frames are composed of four arb8s and  */
-/*  eight cylinders.  The front of the window frame is centered at  */
-/*  (0, 0, 0) and extends in the negative x-direction the depth of the  */
-/*  window frame.  */
 
 #include "common.h"
 
@@ -45,11 +38,6 @@
 #include "raytrace.h"
 #include "wdb.h"
 
-#ifdef M_PI
-#define PI M_PI
-#else
-#define PI 3.141592653589793
-#endif
 
 int
 main(int argc, char **argv)
