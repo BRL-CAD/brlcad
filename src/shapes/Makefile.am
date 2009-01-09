@@ -1,6 +1,7 @@
 
 bin_PROGRAMS = \
 	bolt \
+	fence \
 	gastank \
 	handle \
 	tire \
@@ -12,7 +13,8 @@ AM_CPPFLAGS = ${TCL_CPPFLAGS}
 LDADD = ${WDB}
 
 bolt_SOURCES = bolt.c
-gastank_SOURCES =gastank.c
+fence_SOURCES = fence.c
+gastank_SOURCES = gastank.c
 handle_SOURCES = handle.c
 
 tire_SOURCES = tire.c
@@ -23,6 +25,8 @@ tire_LDADD = \
 window_SOURCES = window.c
 winfrm_SOURCES = winfrm.c
 wire_SOURCES = wire.c
+
+noinst_HEADERS = fence.h
 
 man_MANS = \
 	bolt.1 \
@@ -38,6 +42,7 @@ include $(top_srcdir)/misc/Makefile.defs
 
 FAST_OBJECTS = \
 	$(bolt_OBJECTS) \
+	$(fence_OBJECTS) \
 	$(gastank_OBJECTS) \
 	$(handle_OBJECTS) \
 	$(tire_OBJECTS) \

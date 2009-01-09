@@ -12,7 +12,6 @@ bin_PROGRAMS = \
 	brickwall \
 	clutter \
 	contours \
-	fence \
 	globe \
 	human \
 	kurt \
@@ -63,7 +62,6 @@ breplicator_LDADD = \
 brickwall_SOURCES = brickwall.c
 clutter_SOURCES = clutter.c common.c
 contours_SOURCES = contours.c
-fence_SOURCES = fence.c
 globe_SOURCES = globe.c
 human_SOURCES = human.c
 kurt_SOURCES = kurt.c
@@ -92,7 +90,6 @@ wdb_example_SOURCES = wdb_example.c
 
 noinst_HEADERS = \
 	ducks.h \
-	fence.h \
 	patches.h \
 	tea.h \
 	vegitation.h
@@ -116,7 +113,6 @@ FAST_OBJECTS = \
 	$(brickwall_OBJECTS) \
 	$(clutter_OBJECTS) \
 	$(contours_OBJECTS) \
-	$(fence_OBJECTS) \
 	$(globe_OBJECTS) \
 	$(human_OBJECTS) \
 	$(kurt_OBJECTS) \
