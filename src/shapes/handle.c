@@ -1,4 +1,4 @@
-/*                     M K _ H A N D L E . C
+/*                        H A N D L E . C
  * BRL-CAD
  *
  * Copyright (c) 2004-2008 United States Government as represented by
@@ -17,15 +17,15 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file mk_handle.c
+/** @file handle.c
  *
  */
 
-/*  File:  mk_handle.c  */
+/*  File:  handle.c  */
 /*  S.Coates - 26 August 1992  */
 /*  To compile for use separately:  */
-/*  cc mk_handle.c /usr/brlcad/lib/libwdb.a /usr/brlcad/lib/librt.a  */
-/*	-lmpc -lm -o mk_handle  */
+/*  cc handle.c /usr/brlcad/lib/libwdb.a /usr/brlcad/lib/librt.a  */
+/*	-lmpc -lm -o handle  */
 
 /*  Program to make a handle using libwdb.  The objects will be  */
 /*  in millimeters.  This handle will be constructed using three  */

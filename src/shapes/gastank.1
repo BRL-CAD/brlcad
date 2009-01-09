@@ -1,5 +1,5 @@
-.TH MK_GASTANK 1 BRL-CAD
-.\"                   M K _ G A S T A N K . 1
+.TH GASTANK 1 BRL-CAD
+.\"                      G A S T A N K . 1
 .\" BRL-CAD
 .\"
 .\" Copyright (c) 2005-2008 United States Government as represented by
@@ -39,9 +39,9 @@
 .\"
 .\".\".\"
 .SH NAME
-mk_gastank \- creates an mged file containing gas tanks.
+gastank \- creates an mged file containing gas tanks.
 .SH SYNOPSIS
-.B mk_gastank
+.B gastank
 [ options... ]
 .SH DESCRIPTION
 Mk_gastank is a program to create an mged data base of gas tanks.
@@ -81,7 +81,7 @@ Radius of the corner in millimeters.
 The following is an example from an interactive session.
 .sp
 .nf
-$ mk_gastank
+$ gastank
 
 This program constructs a solid gas tank with all
 edges and corners rounded.
@@ -107,7 +107,7 @@ The following is the same example where all dimensions are on the
 command line.
 .nf
 
-	mk_gastank -fgastank.g -n3 -h300 -w200 -d400 -r30
+	gastank -fgastank.g -n3 -h300 -w200 -d400 -r30
 
 .fi
 In both these examples three gas tanks are created with
@@ -116,7 +116,7 @@ a radius for the corner of 30mm.  The mged file created in
 each case is gastank.g.
 
 .SH  SEE ALSO
-mk_bolt(1), mk_handle(1), mk_window(1), mk_winfrm(1)
+bolt(1), handle(1), window(1), winfrm(1)
 
 .SH AUTHOR
 Susan A. Coates

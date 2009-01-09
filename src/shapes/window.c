@@ -1,4 +1,4 @@
-/*                     M K _ W I N D O W . C
+/*                        W I N D O W . C
  * BRL-CAD
  *
  * Copyright (c) 2004-2008 United States Government as represented by
@@ -17,15 +17,15 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file mk_window.c
+/** @file window.c
  *
  */
 
-/*  File:  mk_window.c  */
+/*  File:  window.c  */
 /*  S.Coates - 26 August 1992  */
 /*  To compile for use separately:  */
-/*  cc mk_window.c /usr/brlcad/lib/libwdb.a /usr/brlcad/lib/librt.a  */
-/*	-lmpc -lm -o mk_window  */
+/*  cc window.c /usr/brlcad/lib/libwdb.a /usr/brlcad/lib/librt.a  */
+/*	-lmpc -lm -o window  */
 
 /*  Program to make a window using libwdb.  The objects will be  */
 /*  in millimeters.  The windows are composed of two arb8s and  */

@@ -1,5 +1,5 @@
-.TH MK_BOLT 1 BRL-CAD
-.\"                      M K _ B O L T . 1
+.TH BOLT 1 BRL-CAD
+.\"                         B O L T . 1
 .\" BRL-CAD
 .\"
 .\" Copyright (c) 2005-2008 United States Government as represented by
@@ -39,9 +39,9 @@
 .\"
 .\".\".\"
 .SH NAME
-mk_bolt \- creates an mged file containing bolts
+bolt \- creates an mged file containing bolts
 .SH SYNOPSIS
-.B mk_bolt
+.B bolt
 [ options... ]
 .SH DESCRIPTION
 Mk_bolt is a program to create an mged data base of one of four
@@ -86,7 +86,7 @@ Height of bolt stem in millimeters.
 The following is an example from an interactive session.
 .sp
 .nf
-$ mk_bolt
+$ bolt
 Enter option:
 	1 - bolt head
 	2 - bolt head & washer
@@ -112,7 +112,7 @@ The following is the same example where all dimensions are on the
 command line.
 .nf
 
-	mk_bolt -o1 -fbolt.g -n3 -hd30 -hh10
+	bolt -o1 -fbolt.g -n3 -hd30 -hh10
 
 .fi
 In both these examples three bolt heads (option 1) are created with
@@ -120,7 +120,7 @@ a diameter of 30mm and a height of 10mm.  The mged file created in
 each case is bolt.g.
 
 .SH SEE ALSO
-mk_handle(1), mk_window(1), mk_winfrm(1), mk_gastank(1)
+handle(1), window(1), winfrm(1), gastank(1)
 
 .SH AUTHOR
 Susan A. Coates

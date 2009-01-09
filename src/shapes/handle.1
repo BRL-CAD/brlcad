@@ -1,5 +1,5 @@
-.TH MK_HANDLE 1 BRL-CAD
-.\"                    M K _ H A N D L E . 1
+.TH HANDLE 1 BRL-CAD
+.\"                       H A N D L E . 1
 .\" BRL-CAD
 .\"
 .\" Copyright (c) 2005-2008 United States Government as represented by
@@ -39,9 +39,9 @@
 .\"
 .\".\".\"
 .SH NAME
-mk_handle \- creates an mged file containing handles
+handle \- creates an mged file containing handles
 .SH SYNOPSIS
-.B mk_handle
+.B handle
 [ options... ]
 .SH DESCRIPTION
 Mk_handle is a program to create an mged data base of handles.
@@ -78,7 +78,7 @@ Radius, r2, of the tori and radius of the cylinders in millimeters
 The following is an example from an interactive session.
 .sp
 .nf
-$ mk_handle
+$ handle
 
 This program constructs a handle with the base centered
 at (0,0,0) and the height extending in the positive z-
@@ -108,7 +108,7 @@ The following is the same example where all dimensions are on the
 command line.
 .nf
 
-	mk_handle -fhandle.g -n3 -l200 -h100 -r120 -r210
+	handle -fhandle.g -n3 -l200 -h100 -r120 -r210
 
 .fi
 In both these examples three handles are created with
@@ -117,7 +117,7 @@ and a radius of 10mm for the cylinders.  The mged file created in
 each case is handle.g.
 
 .SH  SEE ALSO
-mk_bolt(1), mk_window(1), mk_winfrm(1), mk_gastank(1)
+bolt(1), window(1), winfrm(1), gastank(1)
 
 .SH AUTHOR
 Susan A. Coates

@@ -1,4 +1,4 @@
-/*                    M K _ G A S T A N K . C
+/*                       G A S T A N K . C
  * BRL-CAD
  *
  * Copyright (c) 2004-2008 United States Government as represented by
@@ -17,15 +17,15 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file mk_gastank.c
+/** @file gastank.c
  *
  */
 
-/*  File:  mk_gastank.c  */
+/*  File:  gastank.c  */
 /*  S.Coates - 2 September 1992  */
 /*  To compile for use separatley:  */
-/*  cc mk_gastank.c /usr/brlcad/lib/libwdb.a /usr/brlcad/lib/librt.a  */
-/*	-lmpc -lm -o mk_gastank  */
+/*  cc gastank.c /usr/brlcad/lib/libwdb.a /usr/brlcad/lib/librt.a  */
+/*	-lmpc -lm -o gastank  */
 
 /*  Program to create a gas tank using libwdb.  All dimensions are  */
 /*  in mm.  The gas tank is composed of 3 arb8s, 8 spheres, and 12  */

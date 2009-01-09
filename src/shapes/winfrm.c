@@ -1,4 +1,4 @@
-/*                     M K _ W I N F R M . C
+/*                        W I N F R M . C
  * BRL-CAD
  *
  * Copyright (c) 2004-2008 United States Government as represented by
@@ -17,15 +17,15 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file mk_winfrm.c
+/** @file winfrm.c
  *
  */
 
-/*  File:  mk_winfrm.c  */
+/*  File:  winfrm.c  */
 /*  S.Coates - 26 August 1992  */
 /*  To compile for use separately:  */
-/*  cc mk_winfrm.c /usr/brlcad/lib/libwdb.a /usr/brlcad/lib/librt.a  */
-/*	-lmpc -lm -o mk_winfrm  */
+/*  cc winfrm.c /usr/brlcad/lib/libwdb.a /usr/brlcad/lib/librt.a  */
+/*	-lmpc -lm -o winfrm  */
 
 /*  Program to make a window frame using libwdb.  The objects will be  */
 /*  in millimeters.  The window frames are composed of four arb8s and  */

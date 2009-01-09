@@ -1,5 +1,5 @@
-.TH MK_WINDOW 1 BRL-CAD
-.\"                    M K _ W I N D O W . 1
+.TH WINDOW 1 BRL-CAD
+.\"                       W I N D O W . 1
 .\" BRL-CAD
 .\"
 .\" Copyright (c) 2005-2008 United States Government as represented by
@@ -39,9 +39,9 @@
 .\"
 .\".\".\"
 .SH NAME
-mk_window \- creates an mged file containing windows
+window \- creates an mged file containing windows
 .SH SYNOPSIS
-.B mk_window
+.B window
 [ options... ]
 .SH DESCRIPTION
 Mk_window is a program to create an mged data base containing windows.
@@ -78,7 +78,7 @@ Radius of the corner in millimeters
 The following is an example from an interactive session.
 .sp
 .nf
-$ mk_window
+$ window
 
 The windows are composed of 2 arb8s and 4 cylinders.
 The front of the window is centered at (0,0,0) and
@@ -106,7 +106,7 @@ The following is the same example where all dimensions are on the
 command line.
 .nf
 
-	mk_window -fwindow.g -n3 -h200 -w300 -d20 -r30
+	window -fwindow.g -n3 -h200 -w300 -d20 -r30
 
 .fi
 In both these examples three windows are created with
@@ -115,7 +115,7 @@ and a radius of the corner of 30mm.  The mged file created in
 each case is window.g.
 
 .SH  SEE ALSO
-mk_bolt(1), mk_handle(1), mk_winfrm(1), mk_gastank(1)
+bolt(1), handle(1), winfrm(1), gastank(1)
 
 .SH AUTHOR
 Susan A. Coates

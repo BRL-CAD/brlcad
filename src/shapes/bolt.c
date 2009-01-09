@@ -1,4 +1,4 @@
-/*                       M K _ B O L T . C
+/*                          B O L T . C
  * BRL-CAD
  *
  * Copyright (c) 2004-2008 United States Government as represented by
@@ -17,15 +17,15 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file mk_bolt.c
+/** @file bolt.c
  *
  */
 
-/*  File:  mk_bolt.c  */
+/*  File:  bolt.c  */
 /*  S.Coates - 2 September 1992  */
 /*  To compile for use separately:  */
-/*  cc mk_bolt.c /usr/brlcad/lib/libwdb.a /usr/brlcad/lib/librt.a  */
-/*	-lmpc -lm -o mk_bolt  */
+/*  cc bolt.c /usr/brlcad/lib/libwdb.a /usr/brlcad/lib/librt.a  */
+/*	-lmpc -lm -o bolt  */
 
 /*  Program to make a bolt using libwdb.  The objects will be  */
 /*  in millimeters.  */

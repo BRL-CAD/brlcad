@@ -1,4 +1,4 @@
-/*                       M K _ W I R E . C
+/*                          W I R E . C
  * BRL-CAD
  *
  * Copyright (c) 2004-2008 United States Government as represented by
@@ -17,15 +17,15 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file mk_wire.c
+/** @file wire.c
  *
  */
 
-/*  File:  mk_wire.c  */
+/*  File:  wire.c  */
 /*  S.Coates - 15 September 1992  */
 /*  To compile for use separately:  */
-/*  cc mk_wire.c /usr/brlcad/lib/libwdb.a /usr/brlcad/lib/librt.a  */
-/*	-lmpc -lm -o mk_wire  */
+/*  cc wire.c /usr/brlcad/lib/libwdb.a /usr/brlcad/lib/librt.a  */
+/*	-lmpc -lm -o wire  */
 
 /*  This is a program to create wiring or fuel lines.  The user  */
 /*  Enters only the coordinates of the endpoints and the radius  */

@@ -1,5 +1,5 @@
-.TH MK_WINFRM 1 BRL-CAD
-.\"                    M K _ W I N F R M . 1
+.TH WINFRM 1 BRL-CAD
+.\"                       W I N F R M . 1
 .\" BRL-CAD
 .\"
 .\" Copyright (c) 2005-2008 United States Government as represented by
@@ -39,9 +39,9 @@
 .\"
 .\".\".\"
 .SH NAME
-mk_winfrm \- creates an mged file containing window frames
+winfrm \- creates an mged file containing window frames
 .SH SYNOPSIS
-.B mk_winfrm
+.B winfrm
 [ options... ]
 .SH DESCRIPTION
 Mk_winfrm is a program to create an mged data base containing window
@@ -81,7 +81,7 @@ Actual width of the frame in millimeters.
 The following is an example from an interactive session.
 .sp
 .nf
-$ mk_winfrm
+$ winfrm
 
 The window frames are composed of 4 arb8s and 8
 cylinders.  The front of the window frame is centered
@@ -112,7 +112,7 @@ The following is the same example where all dimensions are on the
 command line.
 .nf
 
-	mk_winfrm -fwin.frm.g -n3 -h200 -w300 -d20 -r30 -i10
+	winfrm -fwin.frm.g -n3 -h200 -w300 -d20 -r30 -i10
 
 .fi
 In both these examples three window frames are created with
@@ -122,7 +122,7 @@ frame itself is 10mm.  The mged file created in
 each case is win.frm.g.
 
 .SH  SEE ALSO
-mk_bolt(1), mk_handle(1), mk_window(1), mk_gastank(1)
+bolt(1), handle(1), window(1), gastank(1)
 
 .SH AUTHOR
 Susan A. Coates

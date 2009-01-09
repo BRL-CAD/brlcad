@@ -1,5 +1,5 @@
-.TH MK_WIRE 1 BRL-CAD
-.\"                      M K _ W I R E . 1
+.TH WIRE 1 BRL-CAD
+.\"                         W I R E . 1
 .\" BRL-CAD
 .\"
 .\" Copyright (c) 2005-2008 United States Government as represented by
@@ -39,9 +39,9 @@
 .\"
 .\".\".\"
 .SH NAME
-mk_wire \- creates an mged file containing wiring or fuel lines
+wire \- creates an mged file containing wiring or fuel lines
 .SH SYNOPSIS
-.B mk_wire
+.B wire
 [ options... ]
 .SH DESCRIPTION
 Mk_wire is a program to create an mged data base of solid
@@ -58,7 +58,7 @@ This program is designed to be run interactively.
 The following is an example from an interactive session.
 .sp
 .nf
-$ mk_wire
+$ wire
 Enter mged file name (25 char max).
 	wire.g
 Enter the number of segments (maximum of 10).
@@ -94,7 +94,7 @@ In this example a wire of three segments is made.  These segments
 are joined together with spheres.  All dimensions are in millimeters.
 
 .SH  SEE ALSO
-mk_bolt(1), mk_handle(1), mk_window(1), mk_winfrm(1), mk_gastank(1)
+bolt(1), handle(1), window(1), winfrm(1), gastank(1)
 
 .SH AUTHOR
 Susan A. Coates
