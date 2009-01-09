@@ -56,7 +56,7 @@ ged_scale_args(struct ged *gedp, int argc, const char *argv[], fastf_t *sf)
 	return BRLCAD_ERROR;
     }
 
-    if (sscanf(argv[1], "%lf", &sf) != 1) {
+    if (sscanf(argv[1], "%lf", sf) != 1) {
 	bu_vls_printf(&gedp->ged_result_str, "bad scale factor - %s", argv[1]);
 	return BRLCAD_ERROR;
     }
