@@ -558,9 +558,6 @@ mged_setup(void)
 
     view_state->vs_gvp->gv_callback = mged_view_callback;
     view_state->vs_gvp->gv_clientData = (genptr_t)view_state;
-    view_state->vs_gvp->gv_scale = 500;
-    view_state->vs_gvp->gv_size = 2.0 * view_state->vs_gvp->gv_scale;
-    view_state->vs_gvp->gv_isize = 1.0 / view_state->vs_gvp->gv_size;
     MAT_DELTAS_GET_NEG(view_state->vs_orig_pos, view_state->vs_gvp->gv_center);
 
     /* register commands */

@@ -2376,7 +2376,6 @@ mged_view_callback(struct ged_view	*gvp,
     struct _view_state *vsp = (struct _view_state *)clientData;
 
     if (state != ST_VIEW) {
-	bu_log("XXXmged_view_obj_callback: updating model2objview and objview2model\n");
 	bn_mat_mul(vsp->vs_model2objview, gvp->gv_model2view, modelchanges);
 	bn_mat_inv(vsp->vs_objview2model, vsp->vs_model2objview);
     }
