@@ -35,14 +35,15 @@
 
 int main(int argc, char *argv[])
 {
-    struct rt_wdb *fp_db;
     long i, j, k, l;
-    char name[256];
-    char pname[256];
-    char w1name[256];
-    char w2name[256];
-    char firstname[256];
-    char prefix[256];
+    struct rt_wdb *fp_db = NULL;
+
+    char name[256] = {};
+    char pname[256] = {};
+    char w1name[256] = {};
+    char w2name[256] = {};
+    char firstname[256] = {};
+    char prefix[256] = {};
 
     struct wmember wm;
     struct wmember wm2;
@@ -97,12 +98,23 @@ int main(int argc, char *argv[])
     int round = 0;
 
     if (argc < 11) {
-	bu_exit(1, "Usage: picket_fence <filename> <prefix> <height_in_mm> <spacing> <x0> <y0> <z0> ... <xn> <yn> <zn> [-r]\n");
+	bu_exit(1, "Usage: picket_fence <filename> <prefix> <height_in_mm> <spacing> [-r] <x0> <y0> <z0> ... <xn> <yn> <zn>\n");
     }
     bu_strlcpy(prefix, argv[2], sizeof(prefix));
+
+    height = (fastf_t)atof(argv[3]);
+    if (height <= 0) {
+	bu_exit(1, "Invalid argument, height must be a positive value\n");
+    }
+
     ps = atof(argv[4]);
     if (ps < 0) {
 	bu_exit(1, "Invalid argument, spacing must be non-negative\n");
+    }
+
+    if (strcmp(argv[5], "-r") == 0) {
+	round = 1;
+	argc--; argv++;
     }
 
     fp_db = wdb_fopen(argv[1]);
@@ -112,27 +124,22 @@ int main(int argc, char *argv[])
     }
     mk_id(fp_db, "Picket Fence");
 
+    argc-=5; argv+=5; /* chomp, leave just the waypoints */
+
     BU_LIST_INIT(&wm.l);
     BU_LIST_INIT(&wm2.l);
     BU_LIST_INIT(&fwm.l);
     BU_LIST_INIT(&swm.l);
 
-    for (j = 0; j < ((argc - 4) / 3) - 1; j++) {
-	if (!strcmp(argv[argc - 1], "-r"))
-	    round = 1;
-	x0 = (fastf_t)atof(argv[5 + (3 * j)]);
-	y0 = (fastf_t)atof(argv[6 + (3 * j)]);
-	z0 = (fastf_t)atof(argv[7 + (3 * j)]);
-	x1 = (fastf_t)atof(argv[8 + (3 * j)]);
-	y1 = (fastf_t)atof(argv[9 + (3 * j)]);
-	z1 = (fastf_t)atof(argv[10 + (3 * j)]);
+    for (j = 0; j < (argc / 3) - 1; j++) {
+	x0 = (fastf_t)atof(argv[0 + (3 * j)]);
+	y0 = (fastf_t)atof(argv[1 + (3 * j)]);
+	z0 = (fastf_t)atof(argv[2 + (3 * j)]);
+	x1 = (fastf_t)atof(argv[3 + (3 * j)]);
+	y1 = (fastf_t)atof(argv[4 + (3 * j)]);
+	z1 = (fastf_t)atof(argv[5 + (3 * j)]);
 	if (isnan(x0) || isnan(y0) || isnan(z0) || isnan(x1) || isnan(y1) || isnan(z1)) {
 	    bu_exit(1, "Invalid argument, position is not a valid coordiate\n");
-	}
-
-	height = (fastf_t)atof(argv[3]);
-	if (height <= 0) {
-	    bu_exit(1, "Invalid argument, height must be a positive value\n");
 	}
 
 	width = sqrt(((x1 - x0) * (x1 - x0)) + ((y1 - y0) * (y1 - y0)));
@@ -195,10 +202,12 @@ int main(int argc, char *argv[])
 	for (i = 0; i < numposts; i++) {
 	    snprintf(name, sizeof(name), "%sp%ld-%ld.r", prefix, j, i);
 	    mk_addmember(pname, &wm2.l, NULL, WMOP_UNION);
+
 	    matcolor[0] = 50;
 	    matcolor[1] = 50;
 	    matcolor[2] = 20;
 	    mk_lcomb(fp_db, name, &wm2, 0, "plastic", "", matcolor, 0);
+
 	    nwm = mk_addmember(name, &swm.l, NULL, WMOP_UNION);
 	    for (k = 0; k < 16; k++)
 		nwm->wm_mat[k] = 0;
@@ -215,8 +224,8 @@ int main(int argc, char *argv[])
 	matcolor[1] = 50;
 	matcolor[2] = 20;
 	mk_lcomb(fp_db, name, &swm, 0, "plastic", "", matcolor, 0);
+
 	nwm = mk_addmember(name, &fwm.l, NULL, WMOP_SUBTRACT);
-
 	xt = x1 - x0;
 	yt = y1 - y0;
 	xt /= sqrt((xt * xt) + (yt * yt));
@@ -230,8 +239,8 @@ int main(int argc, char *argv[])
 	nwm->wm_mat[10] = 1;
 	nwm->wm_mat[11] = z0;
 	nwm->wm_mat[15] = 1;
+
 	nwm = mk_addmember(name, &fwm.l, NULL, WMOP_UNION);
-
 	xt = x1 - x0;
 	yt = y1 - y0;
 	xt /= sqrt((xt * xt) + (yt * yt));
@@ -245,21 +254,25 @@ int main(int argc, char *argv[])
 	nwm->wm_mat[10] = 1;
 	nwm->wm_mat[11] = z0;
 	nwm->wm_mat[15] = 1;
+
 	if (j == 0) {
 	    bu_strlcpy(firstname, name, sizeof(firstname));
 	    for (l = 0; l < 16; l++)
 		first_mat[l] = nwm->wm_mat[l];
 	}
     }
-    nwm = mk_addmember(firstname, &fwm.l, NULL, WMOP_SUBTRACT);
 
+    nwm = mk_addmember(firstname, &fwm.l, NULL, WMOP_SUBTRACT);
     for (l = 0; l < 16; l++)
 	nwm->wm_mat[l] = first_mat[l];
+
     snprintf(name, sizeof(name), "%sfence.c", prefix);
     matcolor[0] = 50;
     matcolor[1] = 50;
     matcolor[2] = 20;
     mk_lcomb(fp_db, name, &fwm, 0, "plastic", "", matcolor, 0);
+
+    wdb_close(fp_db);
 
     return 0;
 }
