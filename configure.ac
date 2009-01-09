@@ -3935,7 +3935,6 @@ AC_CONFIG_FILES([
 	src/libwdb/Makefile
 	src/mged/Makefile
 	src/mged/points/Makefile
-	src/mk/Makefile
 	src/nirt/Makefile
 	src/nirt/sfiles/Makefile
 	src/other/Makefile
@@ -3998,6 +3997,7 @@ AC_CONFIG_FILES([
 	src/remrt/Makefile
 	src/rt/Makefile
 	src/rttherm/Makefile
+	src/shapes/Makefile
 	src/sig/Makefile
 	src/tab/Makefile
 	src/tclscripts/Makefile
