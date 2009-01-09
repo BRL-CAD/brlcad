@@ -7,7 +7,7 @@ bin_PROGRAMS = \
 	picket_fence \
 	tire \
 	window \
-	winfrm \
+	window_frame \
 	wire
 
 AM_CPPFLAGS = ${TCL_CPPFLAGS}
@@ -25,7 +25,7 @@ tire_LDADD = \
 	${WDB}
 
 window_SOURCES = window.c
-winfrm_SOURCES = winfrm.c
+window_frame_SOURCES = window_frame.c
 wire_SOURCES = wire.c
 
 noinst_HEADERS = fence.h
@@ -36,7 +36,7 @@ man_MANS = \
 	handle.1 \
 	picket_fence.1 \
 	window.1 \
-	winfrm.1 \
+	window_frame.1 \
 	wire.1
 
 EXTRA_DIST = $(man_MANS)
@@ -51,6 +51,6 @@ FAST_OBJECTS = \
 	$(picket_fence_OBJECTS) \
 	$(tire_OBJECTS) \
 	$(window_OBJECTS) \
-	$(winfrm_OBJECTS) \
+	$(window_frame_OBJECTS) \
 	$(wire_OBJECTS) \
 	$(bin_PROGRAMS)
