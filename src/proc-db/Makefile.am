@@ -34,7 +34,6 @@ bin_PROGRAMS = \
 	tea \
 	tea_nmg \
 	terrain \
-	tire \
 	torii \
 	tube \
 	vegitation \
@@ -86,12 +85,6 @@ spltest_SOURCES = spltest.c
 tea_SOURCES = tea.c
 tea_nmg_SOURCES = tea_nmg.c
 terrain_SOURCES = terrain.c
-
-tire_SOURCES = tire.c
-tire_LDADD = \
-	${proc_db_libs} \
-	${GED}
-
 torii_SOURCES = torii.c
 tube_SOURCES = tube.c
 vegitation_SOURCES = vegitation.c
@@ -144,7 +137,6 @@ FAST_OBJECTS = \
 	$(tea_OBJECTS) \
 	$(tea_nmg_OBJECTS) \
 	$(terrain_OBJECTS) \
-	$(tire_OBJECTS) \
 	$(torii_OBJECTS) \
 	$(tube_OBJECTS) \
 	$(vegitation_OBJECTS) \

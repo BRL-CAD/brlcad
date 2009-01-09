@@ -7,7 +7,8 @@ bin_PROGRAMS = \
 	mk_window \
 	mk_winfrm \
 	mk_gastank \
-	mk_wire
+	mk_wire \
+	tire
 
 AM_CPPFLAGS = ${TCL_CPPFLAGS}
 LDADD = ${WDB}
@@ -18,6 +19,11 @@ mk_handle_SOURCES = mk_handle.c
 mk_window_SOURCES = mk_window.c
 mk_winfrm_SOURCES = mk_winfrm.c
 mk_wire_SOURCES = mk_wire.c
+
+tire_SOURCES = tire.c
+tire_LDADD = \
+	${GED} \
+	${WDB}
 
 man_MANS = \
 	mk_bolt.1 \
@@ -33,9 +39,10 @@ include $(top_srcdir)/misc/Makefile.defs
 
 FAST_OBJECTS = \
 	$(mk_bolt_OBJECTS) \
+	$(mk_gastank_OBJECTS) \
 	$(mk_handle_OBJECTS) \
 	$(mk_window_OBJECTS) \
 	$(mk_winfrm_OBJECTS) \
-	$(mk_gastank_OBJECTS) \
 	$(mk_wire_OBJECTS) \
+	$(tire_OBJECTS) \
 	$(bin_PROGRAMS)
