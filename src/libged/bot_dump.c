@@ -609,7 +609,7 @@ ged_bot_dump(struct ged *gedp, int argc, const char *argv[])
     bu_optind = 1;
 
     /* Get command line options. */
-    while ((c = bu_getopt(argc, (char * const *)argv, "bo:m:t:u")) != EOF) {
+    while ((c = bu_getopt(argc, (char * const *)argv, "bo:m:t:u:")) != EOF) {
 	switch (c) {
 	    case 'b':		/* Binary output file */
 		binary=1;
