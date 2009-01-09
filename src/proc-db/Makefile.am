@@ -20,7 +20,6 @@ bin_PROGRAMS = \
 	metaball \
 	molecule \
 	nmgmodel \
-	picket_fence \
 	pipe \
 	pipetest \
 	pix2g \
@@ -70,7 +69,6 @@ masonry_SOURCES = masonry.c
 metaball_SOURCES = metaball.c
 molecule_SOURCES = molecule.c
 nmgmodel_SOURCES = nmgmodel.c
-picket_fence_SOURCES = picket_fence.c
 pipe_SOURCES = pipe.c
 pipetest_SOURCES = pipetest.c
 pix2g_SOURCES = pix2g.c
@@ -93,9 +91,6 @@ noinst_HEADERS = \
 	patches.h \
 	tea.h \
 	vegitation.h
-
-man_MANS = \
-	picket_fence.1
 
 EXTRA_DIST = \
 	$(man_MANS) \
@@ -120,7 +115,6 @@ FAST_OBJECTS = \
 	$(masonry_OBJECTS) \
 	$(molecule_OBJECTS) \
 	$(nmgmodel_OBJECTS) \
-	$(picket_fence_OBJECTS) \
 	$(pipe_OBJECTS) \
 	$(pipetest_OBJECTS) \
 	$(pix2g_OBJECTS) \

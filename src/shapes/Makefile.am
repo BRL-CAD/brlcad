@@ -4,6 +4,7 @@ bin_PROGRAMS = \
 	fence \
 	gastank \
 	handle \
+	picket_fence \
 	tire \
 	window \
 	winfrm \
@@ -16,6 +17,7 @@ bolt_SOURCES = bolt.c
 fence_SOURCES = fence.c
 gastank_SOURCES = gastank.c
 handle_SOURCES = handle.c
+picket_fence_SOURCES = picket_fence.c
 
 tire_SOURCES = tire.c
 tire_LDADD = \
@@ -32,6 +34,7 @@ man_MANS = \
 	bolt.1 \
 	gastank.1 \
 	handle.1 \
+	picket_fence.1 \
 	window.1 \
 	winfrm.1 \
 	wire.1
@@ -45,6 +48,7 @@ FAST_OBJECTS = \
 	$(fence_OBJECTS) \
 	$(gastank_OBJECTS) \
 	$(handle_OBJECTS) \
+	$(picket_fence_OBJECTS) \
 	$(tire_OBJECTS) \
 	$(window_OBJECTS) \
 	$(winfrm_OBJECTS) \
