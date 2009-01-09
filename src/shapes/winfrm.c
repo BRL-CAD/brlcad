@@ -45,14 +45,14 @@ main(int argc, char **argv)
     /* START # 1  */
     struct rt_wdb *fpw;		/* File to be written to. */
     char filemged[26];		/* Mged file create. */
-    double hgt, wid, dpt;		/* Height, width, & depth of outside window */
+    double hgt, wid, dpt;	/* Height, width, & depth of outside window */
     /* frame. */
     double rds;			/* Radius of the corner of window frame. */
     double isw;			/* Width of frame itself. */
     point_t pts[8];		/* Eight points of arb8. */
     point_t bs;			/* Base of rcc. */
     vect_t ht;			/* Height of rcc. */
-    fastf_t rad;			/* Radius of rcc. */
+    fastf_t rad;		/* Radius of rcc. */
     char *temp;			/* Temporary character string. */
     char temp1[16];		/* Temporary character string. */
 
@@ -61,10 +61,10 @@ main(int argc, char **argv)
     char grpnam[5];		/* Group name. */
     int numwin;			/* Number of windows to be created (<=26). */
 
-    struct wmember comb;		/* Used to make regions. */
+    struct wmember comb;	/* Used to make regions. */
     struct wmember comb1;	/* Used to make groups. */
 
-    int i, j, k;			/* Loop counters. */
+    int i, j, k;		/* Loop counters. */
 
     /* Set up solid, region, and group names. */
     solnam[0] = 's';

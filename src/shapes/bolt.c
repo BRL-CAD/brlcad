@@ -48,11 +48,11 @@ main(int argc, char **argv)
     point_t pts[8];		/* Eight points of arb8. */
     point_t bs;			/* Base of rcc. */
     vect_t ht;			/* Height of rcc. */
-    fastf_t rad;			/* Radius of rcc. */
+    fastf_t rad;		/* Radius of rcc. */
     int iopt;			/* Type of bolt to be built: 1=>bolt head,  */
 				/*  2=>head & washer; 3=>head, washer, &  */
 				/* stem; 4=>head & stem. */
-    int i, j, k;			/* Loop counters. */
+    int i, j, k;		/* Loop counters. */
     char *temp;			/* Temporary character string. */
     char temp1[16];		/* Temporary character string. */
 
@@ -61,7 +61,7 @@ main(int argc, char **argv)
     char grpnam[9];		/* Group name. */
     int numblt;			/* Number of bolts to be created (<=26). */
 
-    struct wmember comb;		/* Used to make regions. */
+    struct wmember comb;	/* Used to make regions. */
     struct wmember comb1;	/* Used to make groups. */
 
     /* Zero all dimnsions of bolt. */

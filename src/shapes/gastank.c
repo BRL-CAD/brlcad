@@ -44,12 +44,12 @@ main(int argc, char **argv)
     /* START # 1  */
     struct rt_wdb *fpw;		/* File to be written to. */
     char filemged[26];		/* Mged file create. */
-    double hgt, wid, dpt;		/* Height, width, & depth of gas tank. */
+    double hgt, wid, dpt;	/* Height, width, & depth of gas tank. */
     double rds;			/* Radius of the corner of gas tank. */
     point_t pts[8];		/* Points for arb8. */
     point_t bs;			/* Base of cylinder. */
     vect_t ht;			/* Height of cylinder. */
-    fastf_t rad;			/* Radius of cylinder & sphere. */
+    fastf_t rad;		/* Radius of cylinder & sphere. */
     point_t cent;		/* Center of sphere. */
 
     /* point_t and vect_t are set using typedef of type fastf_t. */
@@ -64,10 +64,10 @@ main(int argc, char **argv)
     int numtnk;			/* Number of gas tanks to be created */
 				/*  (<=26). */
 
-    struct wmember comb;		/* Used to make regions. */
+    struct wmember comb;	/* Used to make regions. */
     struct wmember comb1;	/* Used to make groups. */
 
-    int i, j, k;			/* Loop counters. */
+    int i, j, k;		/* Loop counters. */
 
     /* Set up solid, region, and group names. */
     solnam[0] = 's';

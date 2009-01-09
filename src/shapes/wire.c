@@ -36,42 +36,44 @@
 #include "raytrace.h"
 #include "wdb.h"
 
-#define MAXWIRESEG 10		/* Maximum number of segments.  The */
-				/* maximum may be no greater then 100  */
-				/* because of the way the name of the */
-				/* segments is found. */
+
+/* Maximum number of segments.  The maximum may be no greater then 100
+ * because of the way the name of the segments is found.
+ */
+#define MAXWIRESEG 10 
+
 
 int
-main(int argc, char **argv)
+main(int argc, char *argv[])
 {
     /* START # 1  */
-    struct rt_wdb *fpw;		/* File to be created. */
-    char filemged[26];		/* Mged file name. */
-    double numseg;		/* Number of segments. */
+    struct rt_wdb *fpw;			/* File to be created. */
+    char filemged[26];			/* Mged file name. */
+    double numseg;			/* Number of segments. */
     double strtpt[MAXWIRESEG][3];	/* Start point of segment. */
     double endpt[MAXWIRESEG][3];	/* End point of segment. */
-    double strtrad[MAXWIRESEG];	/* Radius at starting point of segment. */
-    double endrad[MAXWIRESEG];	/* Radius at ending point of segment. */
+    double strtrad[MAXWIRESEG];		/* Radius at starting point of segment. */
+    double endrad[MAXWIRESEG];		/* Radius at ending point of segment. */
 
-    char solcyl[8], regcyl[8];	/* Solid & region name for cylinder (cone). */
-    char solsph[8], regsph[8];	/* Solid & region name for sphere. */
+    char solcyl[8], regcyl[8];		/* Solid & region name for cylinder (cone). */
+    char solsph[8], regsph[8];		/* Solid & region name for sphere. */
     char solsub1[8], solsub2[8];	/* Solids that are subtracted. */
-    char group[6];		/* Group name. */
+    char group[6];			/* Group name. */
 
-    point_t bs;			/* Base of cone. */
-    vect_t dir;			/* Direction of cone. */
-    fastf_t ht;			/* Height of cone. */
-    fastf_t rdc1;		/* Radius 1 of cone. */
-    fastf_t rdc2;		/* Radius 2 of cone. */
-    point_t cent;		/* Center of sphere. */
+    point_t bs;				/* Base of cone. */
+    vect_t dir;				/* Direction of cone. */
+    fastf_t ht;				/* Height of cone. */
+    fastf_t rdc1;			/* Radius 1 of cone. */
+    fastf_t rdc2;			/* Radius 2 of cone. */
+    point_t cent;			/* Center of sphere. */
     fastf_t rds;			/* Radius of sphere. */
     struct wmember comb;		/* Used to make regions. */
-    struct wmember comb1;	/* Used to make groups. */
+    struct wmember comb1;		/* Used to make groups. */
 
-    int i;			/* Loop counters. */
-    double r;			/* Temporary variables. */
-    char temp[10];		/* Temporary char string. */
-    char temp1[10];		/* Temporary char string. */
+    int i;				/* Loop counters. */
+    double r;				/* Temporary variables. */
+    char temp[10];			/* Temporary char string. */
+    char temp1[10];			/* Temporary char string. */
 
     /* Set up solid, region, & group names. */
     solcyl[0] = 's';
