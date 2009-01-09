@@ -19,7 +19,7 @@
  */
 /** @file bolt.c
  *
- *  Program to make a bolt using libwdb.  The objects will be in mm.
+ * Program to make a bolt using libwdb.  The objects will be in mm.
  *
  */
 
@@ -39,32 +39,32 @@
 int
 main(int argc, char **argv)
 {
-    struct rt_wdb *fpw;		/*  File to be written to.  */
-    char filemged[26];		/*  Mged file create.  */
-    double hd, hh;		/*  Diameter & height of bolt head.  */
-    double wd, wh;		/*  Diameter & height of washer.  */
-    double sd, sh;		/*  Diameter & height of bolt stem.  */
-    double leg, hyp;		/*  Length of leg & hypotenus of triangle.  */
-    point_t pts[8];		/*  Eight points of arb8.  */
-    point_t bs;			/*  Base of rcc.  */
-    vect_t ht;			/*  Height of rcc.  */
-    fastf_t rad;			/*  Radius of rcc.  */
-    int iopt;			/*  Type of bolt to be built: 1=>bolt head,  */
+    struct rt_wdb *fpw;		/* File to be written to. */
+    char filemged[26];		/* Mged file create. */
+    double hd, hh;		/* Diameter & height of bolt head. */
+    double wd, wh;		/* Diameter & height of washer. */
+    double sd, sh;		/* Diameter & height of bolt stem. */
+    double leg, hyp;		/* Length of leg & hypotenus of triangle. */
+    point_t pts[8];		/* Eight points of arb8. */
+    point_t bs;			/* Base of rcc. */
+    vect_t ht;			/* Height of rcc. */
+    fastf_t rad;			/* Radius of rcc. */
+    int iopt;			/* Type of bolt to be built: 1=>bolt head,  */
 				/*  2=>head & washer; 3=>head, washer, &  */
-				/*  stem; 4=>head & stem.  */
-    int i, j, k;			/*  Loop counters.  */
-    char *temp;			/*  Temporary character string.  */
-    char temp1[16];		/*  Temporary character string.  */
+				/* stem; 4=>head & stem. */
+    int i, j, k;			/* Loop counters. */
+    char *temp;			/* Temporary character string. */
+    char temp1[16];		/* Temporary character string. */
 
-    char solnam[9];		/*  Solid name.  */
-    char regnam[9];		/*  Region name.  */
-    char grpnam[9];		/*  Group name.  */
-    int numblt;			/*  Number of bolts to be created (<=26).  */
+    char solnam[9];		/* Solid name. */
+    char regnam[9];		/* Region name. */
+    char grpnam[9];		/* Group name. */
+    int numblt;			/* Number of bolts to be created (<=26). */
 
-    struct wmember comb;		/*  Used to make regions.  */
-    struct wmember comb1;	/*  Used to make groups.  */
+    struct wmember comb;		/* Used to make regions. */
+    struct wmember comb1;	/* Used to make groups. */
 
-    /*  Zero all dimnsions of bolt.  */
+    /* Zero all dimnsions of bolt. */
     iopt = 0;
     hd = 0;
     hh = 0;
@@ -73,7 +73,7 @@ main(int argc, char **argv)
     sd = 0;
     sh = 0;
 
-    /*   Set up solid, region, and group names.  */
+    /*   Set up solid, region, and group names. */
     solnam[0] = 's';
     solnam[1] = '.';
     solnam[2] = 'b';
@@ -99,12 +99,12 @@ main(int argc, char **argv)
     grpnam[4] = ' ';
     grpnam[5] = '\0';
 
-    /*  If there are no arguments ask questions.  */
+    /* If there are no arguments ask questions. */
     if (argc == 1)
     {
-	/*  START # 1  */
+	/* START # 1  */
 
-	/*  Find type of bolt to build.  */
+	/* Find type of bolt to build. */
 	(void)printf("Enter option:\n");
 	(void)printf("\t1 - bolt head\n");
 	(void)printf("\t2 - bolt head & washer\n");
@@ -113,31 +113,31 @@ main(int argc, char **argv)
 	(void)fflush(stdout);
 	(void)scanf("%d", &iopt);
 
-	/*  Get file name of mged file to be created.  */
+	/* Get file name of mged file to be created. */
 	(void)printf("Enter name of mged file to be created (25 char max).\n\t");
 	(void)fflush(stdout);
 	(void)scanf("%26s", filemged);
 
-	/*  Find the number of bolts to be created (<=26).  */
+	/* Find the number of bolts to be created (<=26). */
 	(void)printf("Enter the number of bolts to be created (26 max).\n\t");
 	(void)fflush(stdout);
 	(void)scanf("%d", &numblt);
 	if (numblt > 26) numblt = 26;
 
-	/*  Find dimensions of the bolt.  */
-	/*  Find dimensions of head first.  */
+	/* Find dimensions of the bolt. */
+	/* Find dimensions of head first. */
 	(void)printf("Enter diameter (flat edge to flat edge) & height of ");
 	(void)printf("bolt head.\n\t");
 	(void)fflush(stdout);
 	(void)scanf("%lf %lf", &hd, &hh);
-	/*  Find dimensions of washer if necessary.  */
+	/* Find dimensions of washer if necessary. */
 	if ((iopt == 2) || (iopt == 3))
 	{
 	    (void)printf("Enter diameter & height of washer.\n\t");
 	    (void)fflush(stdout);
 	    (void)scanf("%lf %lf", &wd, &wh);
 	}
-	/*  Find dimensions of bolt stem if necessary.  */
+	/* Find dimensions of bolt stem if necessary. */
 	if ((iopt == 3) || (iopt == 4))
 	{
 	    (void)printf("Enter diameter & height of bolt stem.\n\t");
@@ -145,66 +145,66 @@ main(int argc, char **argv)
 	    (void)scanf("%lf %lf", &sd, &sh);
 	}
 
-    }							/*  END # 1  */
+    }							/* END # 1  */
 
-    /*  If there are arguments do not ask any questions.  Get the  */
-    /*  answers from the arguments.  */
+    /* If there are arguments do not ask any questions.  Get the */
+    /* answers from the arguments. */
     else
     {
-	/*  START # 2  */
+	/* START # 2  */
 
-	/*  List of options.  */
-	/*	-o# - # = 1 => bolt head  */
-	/*	          2 => head & washer  */
-	/*	          3 => head, washer, & stem  */
-	/*	          4 => head & stem  */
-	/*	-fname - name = name of .g file  */
+	/* List of options. */
+	/*	-o# - # = 1 => bolt head */
+	/*	          2 => head & washer */
+	/*	          3 => head, washer, & stem */
+	/*	          4 => head & stem */
+	/*	-fname - name = name of .g file */
 	/*  	-n# - # = number of bolts to create (<=26)  */
-	/*	-hd# - # = head diameter  */
-	/*	-hh# - # = head height  */
-	/*	-wd# - # = washer diameter  */
-	/*	-wh# - # = washer height  */
-	/*	-sd# - # = stem diameter  */
-	/*	-sh# - # = stem height  */
+	/*	-hd# - # = head diameter */
+	/*	-hh# - # = head height */
+	/*	-wd# - # = washer diameter */
+	/*	-wh# - # = washer height */
+	/*	-sd# - # = stem diameter */
+	/*	-sh# - # = stem height */
 
 	for (i=1; i<argc; i++)
 	{
-	    /*  START # 3  */
-	    /*  Put argument into temporary character string.  */
+	    /* START # 3  */
+	    /* Put argument into temporary character string. */
 	    temp = argv[i];
 
-	    /*  -o - set type of bolt to make.  */
+	    /*  -o - set type of bolt to make. */
 	    if (temp[1] == 'o')
 	    {
-		/*  START # 4  */
+		/* START # 4  */
 		if (temp[2] == '1') iopt = 1;
 		if (temp[2] == '2') iopt = 2;
 		if (temp[2] == '3') iopt = 3;
 		if (temp[2] == '4') iopt = 4;
 
-	    }						/*  END # 4  */
+	    }						/* END # 4  */
 
-	    /*  -f - mged file name.  */
+	    /*  -f - mged file name. */
 	    else if (temp[1] == 'f')
 	    {
-		/*  START # 5  */
+		/* START # 5  */
 		j = 2;
 		k = 0;
 		while ((temp[j] != '\0') && (k < 25))
 		{
-		    /*  START # 6  */
+		    /* START # 6  */
 		    filemged[k] = temp[j];
 		    j++;
 		    k++;
-		}					/*  END # 6  */
+		}					/* END # 6  */
 		filemged[k] = '\0';
-	    }						/*  END # 5  */
+	    }						/* END # 5  */
 
-	    /*  -n - number of bolts to be created.  */
+	    /*  -n - number of bolts to be created. */
 	    else if (temp[1] == 'n')
 	    {
-		/*  START # 6.05  */
-		/*  Set up temporary character string, temp1.  */
+		/* START # 6.05  */
+		/* Set up temporary character string, temp1. */
 		j = 2;
 		k = 0;
 		while ((temp[j] != '\0') && (k < 15))
@@ -216,13 +216,13 @@ main(int argc, char **argv)
 		temp1[k] = '\0';
 		(void)sscanf(temp1, "%d", &numblt);
 		if (numblt > 26) numblt = 26;
-	    }						/*  END # 6.05  */
+	    }						/* END # 6.05  */
 
-	    /*  Take care of all other arguments.  */
+	    /* Take care of all other arguments. */
 	    else
 	    {
-		/*  START # 6.1  */
-		/*  Set temporary character string, temp1.  */
+		/* START # 6.1  */
+		/* Set temporary character string, temp1. */
 		j = 3;
 		k = 0;
 		while ((temp[j] != '\0') && (k < 15))
@@ -233,53 +233,53 @@ main(int argc, char **argv)
 		}
 		temp1[k] = '\0';
 
-		/*  -hd & -hh - head diameter & height.  */
+		/*  -hd & -hh - head diameter & height. */
 		if (temp[1] == 'h')
 		{
-		    /*  START # 7  */
-		    if (temp[2] == 'd')	/*  Head diameter.  */
+		    /* START # 7  */
+		    if (temp[2] == 'd')	/* Head diameter. */
 		    {
 			(void)sscanf(temp1, "%lf", &hd);
 		    }
-		    else if (temp[2] =='h')	/*  Head height.  */
+		    else if (temp[2] =='h')	/* Head height. */
 		    {
 			(void)sscanf(temp1, "%lf", &hh);
 		    }
-		}					/*  END # 7  */
+		}					/* END # 7  */
 
-		/*  -wd & -wh - washer diameter & height.  */
+		/*  -wd & -wh - washer diameter & height. */
 		else if (temp[1] == 'w')
 		{
-		    /*  START # 8  */
-		    if (temp[2] == 'd')	/*  Washer diameter.  */
+		    /* START # 8  */
+		    if (temp[2] == 'd')	/* Washer diameter. */
 		    {
 			(void)sscanf(temp1, "%lf", &wd);
 		    }
-		    else if (temp[2] == 'h')	/*  Washer height.  */
+		    else if (temp[2] == 'h')	/* Washer height. */
 		    {
 			(void)sscanf(temp1, "%lf", &wh);
 		    }
-		}					/*  END # 8  */
+		}					/* END # 8  */
 
-		/*  -sd & -sh - stem washer diameter & height.  */
+		/*  -sd & -sh - stem washer diameter & height. */
 		else if (temp[1] == 's')
 		{
-		    /*  START # 9  */
-		    if (temp[2] == 'd')	/*  Stem diameter.  */
+		    /* START # 9  */
+		    if (temp[2] == 'd')	/* Stem diameter. */
 		    {
 			(void)sscanf(temp1, "%lf", &sd);
 		    }
-		    else if (temp[2] == 'h')	/*  Stem height.  */
+		    else if (temp[2] == 'h')	/* Stem height. */
 		    {
 			(void)sscanf(temp1, "%lf", &sh);
 		    }
-		}					/*  END # 9  */
-	    }						/*  END # 6.1  */
+		}					/* END # 9  */
+	    }						/* END # 6.1  */
 
-	}						/*  END # 3  */
-    }							/*  END # 2  */
+	}						/* END # 3  */
+    }							/* END # 2  */
 
-    /*  Print out bolt dimensions.  */
+    /* Print out bolt dimensions. */
     (void)printf("\noption:  %d - ", iopt);
     if (iopt == 1) (void)printf("bolt head\n");
     if (iopt == 2) (void)printf("head & washer\n");
@@ -292,22 +292,22 @@ main(int argc, char **argv)
     (void)printf("number of bolts:  %d\n\n", numblt);
     (void)fflush(stdout);
 
-    /*  Open mged file for writing to.  */
+    /* Open mged file for writing to. */
     fpw = wdb_fopen(filemged);
 
-    /*  Write ident record.  */
+    /* Write ident record. */
     mk_id(fpw, "bolts");
 
-    for (i=0; i<numblt; i++)	/*  Loop for each bolt created.  */
+    for (i=0; i<numblt; i++)	/* Loop for each bolt created. */
     {
-	/*  START # 20  */
+	/* START # 20  */
 
-	/*  Create all solids needed.  */
-	/*  Create solids of bolt head.  */
+	/* Create all solids needed. */
+	/* Create solids of bolt head. */
 	leg = tan(M_PI / 6.) * hd / 2.;
 	hyp = leg * leg + (hd / 2.) * (hd / 2.);
 	hyp = sqrt(hyp);
-	/*  Bolt head is two solids, create first solid.  */
+	/* Bolt head is two solids, create first solid. */
 	pts[0][0] = (fastf_t) ((-hd) / 2.);
 	pts[0][1] = (fastf_t)leg;
 	pts[0][2] = (fastf_t)hh;
@@ -336,7 +336,7 @@ main(int argc, char **argv)
 	solnam[7] = '1';
 	mk_arb8(fpw, solnam, &pts[0][X]);
 
-	/*  Create second solid.  */
+	/* Create second solid. */
 	pts[0][0] = (fastf_t) (hd / 2.);
 	pts[0][1] = (fastf_t)leg;
 	pts[0][2] = (fastf_t)hh;
@@ -364,7 +364,7 @@ main(int argc, char **argv)
 	solnam[7] = '2';
 	mk_arb8(fpw, solnam, &pts[0][X]);
 
-	/*  Create washer if necessary.  */
+	/* Create washer if necessary. */
 	if ((iopt == 2) || (iopt == 3))
 	{
 	    bs[0] = (fastf_t)0.;
@@ -378,7 +378,7 @@ main(int argc, char **argv)
 	    mk_rcc(fpw, solnam, bs, ht, rad);
 	}
 
-	/*  Create bolt stem if necessary.  */
+	/* Create bolt stem if necessary. */
 	if ((iopt == 3) || (iopt == 4))
 	{
 	    bs[0] = (fastf_t)0.;
@@ -392,22 +392,22 @@ main(int argc, char **argv)
 	    mk_rcc(fpw, solnam, bs, ht, rad);
 	}
 
-	/*  Create all regions.  */
-	/*  First must initialize list.  */
+	/* Create all regions. */
+	/* First must initialize list. */
 	BU_LIST_INIT(&comb.l);
 
-	/*  Create region for first half of bolt head.  */
+	/* Create region for first half of bolt head. */
 	solnam[7] = '1';
 	(void)mk_addmember(solnam, &comb.l, NULL, WMOP_INTERSECT);
 	solnam[7] = '2';
 	(void)mk_addmember(solnam, &comb.l, NULL, WMOP_SUBTRACT);
-	/*  Subtract washer if it exists.  */
+	/* Subtract washer if it exists. */
 	if ((iopt == 2) || (iopt == 3))
 	{
 	    solnam[7] = '3';
 	    (void)mk_addmember(solnam, &comb.l, NULL, WMOP_SUBTRACT);
 	}
-	/*  Subtract stem if it exists.  */
+	/* Subtract stem if it exists. */
 	if ((iopt == 3) || (iopt == 4))
 	{
 	    solnam[7] = '3';
@@ -417,16 +417,16 @@ main(int argc, char **argv)
 	regnam[7] = '1';
 	mk_lfcomb(fpw, regnam, &comb, 1);
 
-	/*  Create region for second half of bolt head.  */
+	/* Create region for second half of bolt head. */
 	solnam[7] = '2';
 	(void)mk_addmember(solnam, &comb.l, NULL, WMOP_INTERSECT);
-	/*  Subtract washer if it exists.  */
+	/* Subtract washer if it exists. */
 	if ((iopt == 2) || (iopt == 3))
 	{
 	    solnam[7] = '3';
 	    (void)mk_addmember(solnam, &comb.l, NULL, WMOP_SUBTRACT);
 	}
-	/*  Subtract stem if it exists.  */
+	/* Subtract stem if it exists. */
 	if ((iopt == 3) || (iopt == 4))
 	{
 	    solnam[7] = '4';
@@ -435,12 +435,12 @@ main(int argc, char **argv)
 	regnam[7] = '2';
 	mk_lfcomb(fpw, regnam, &comb, 1);
 
-	/*  Create region for washer if it exists.  */
+	/* Create region for washer if it exists. */
 	if ((iopt == 2) || (iopt == 3))
 	{
 	    solnam[7] = '3';
 	    (void)mk_addmember(solnam, &comb.l, NULL, WMOP_INTERSECT);
-	    /*  Subtract bolt stem if it exists.  */
+	    /* Subtract bolt stem if it exists. */
 	    if (iopt == 3)
 	    {
 		solnam[7] = '4';
@@ -450,7 +450,7 @@ main(int argc, char **argv)
 	    mk_lfcomb(fpw, regnam, &comb, 1);
 	}
 
-	/*  Create region for bolt stem if it exists.  */
+	/* Create region for bolt stem if it exists. */
 	if ((iopt == 3) || (iopt == 4))
 	{
 	    solnam[7] = '4';
@@ -459,33 +459,33 @@ main(int argc, char **argv)
 	    mk_lfcomb(fpw, regnam, &comb, 1);
 	}
 
-	/*  Create a group containing all bolt regions.  */
-	/*  First initialize the list.  */
+	/* Create a group containing all bolt regions. */
+	/* First initialize the list. */
 	BU_LIST_INIT(&comb1.l);
-	/*  Add both bolt head regions to the list.  */
+	/* Add both bolt head regions to the list. */
 	regnam[7] = '1';
 	(void)mk_addmember(regnam, &comb1.l, NULL, WMOP_UNION);
 	regnam[7] = '2';
 	(void)mk_addmember(regnam, &comb1.l, NULL, WMOP_UNION);
-	/*  Add washer region if necessary.  */
+	/* Add washer region if necessary. */
 	if ((iopt == 2) || (iopt == 3))
 	{
 	    regnam[7] = '3';
 	    (void)mk_addmember(regnam, &comb1.l, NULL, WMOP_UNION);
 	}
-	/*  Add bolt stem region if necessary.  */
+	/* Add bolt stem region if necessary. */
 	if ((iopt == 3) || (iopt == 4))
 	{
 	    regnam[7] = '4';
 	    (void)mk_addmember(regnam, &comb1.l, NULL, WMOP_UNION);
 	}
-	/*  Actually create the group.  */
+	/* Actually create the group. */
 	grpnam[4] = 97 + i;
 	mk_lfcomb(fpw, grpnam, &comb1, 0);
 
-    }							/*  END # 20  */
+    }							/* END # 20  */
 
-    /*  Close mged file.  */
+    /* Close mged file. */
     wdb_close(fpw);
     return 0;
 }

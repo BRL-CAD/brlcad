@@ -41,35 +41,35 @@
 int
 main(int argc, char **argv)
 {
-    /*  START # 1  */
-    struct rt_wdb *fpw;		/*  File to be written to.  */
-    char filemged[26];		/*  Mged file create.  */
-    double hgt, wid, dpt;		/*  Height, width, & depth of gas tank.  */
-    double rds;			/*  Radius of the corner of gas tank.  */
-    point_t pts[8];		/*  Points for arb8.  */
-    point_t bs;			/*  Base of cylinder.  */
-    vect_t ht;			/*  Height of cylinder.  */
-    fastf_t rad;			/*  Radius of cylinder & sphere.  */
-    point_t cent;		/*  Center of sphere.  */
+    /* START # 1  */
+    struct rt_wdb *fpw;		/* File to be written to. */
+    char filemged[26];		/* Mged file create. */
+    double hgt, wid, dpt;		/* Height, width, & depth of gas tank. */
+    double rds;			/* Radius of the corner of gas tank. */
+    point_t pts[8];		/* Points for arb8. */
+    point_t bs;			/* Base of cylinder. */
+    vect_t ht;			/* Height of cylinder. */
+    fastf_t rad;			/* Radius of cylinder & sphere. */
+    point_t cent;		/* Center of sphere. */
 
-    /*  point_t and vect_t are set using typedef of type fastf_t.  */
-    /*  fastf_t is a type that is machine dependent.  */
+    /* point_t and vect_t are set using typedef of type fastf_t. */
+    /* fastf_t is a type that is machine dependent. */
 
-    char *temp;			/*  Temporary character string.  */
-    char temp1[16];		/*  Temporary character string.  */
+    char *temp;			/* Temporary character string. */
+    char temp1[16];		/* Temporary character string. */
 
-    char solnam[9];		/*  Solid name.  */
-    char regnam[9];		/*  Region name.  */
-    char grpnam[5];		/*  Group name.  */
-    int numtnk;			/*  Number of gas tanks to be created  */
-				/*  (<=26).  */
+    char solnam[9];		/* Solid name. */
+    char regnam[9];		/* Region name. */
+    char grpnam[5];		/* Group name. */
+    int numtnk;			/* Number of gas tanks to be created */
+				/*  (<=26). */
 
-    struct wmember comb;		/*  Used to make regions.  */
-    struct wmember comb1;	/*  Used to make groups.  */
+    struct wmember comb;		/* Used to make regions. */
+    struct wmember comb1;	/* Used to make groups. */
 
-    int i, j, k;			/*  Loop counters.  */
+    int i, j, k;			/* Loop counters. */
 
-    /*  Set up solid, region, and group names.  */
+    /* Set up solid, region, and group names. */
     solnam[0] = 's';
     solnam[1] = '.';
     solnam[2] = 't';
@@ -94,27 +94,27 @@ main(int argc, char **argv)
     grpnam[3] = ' ';
     grpnam[4] = '\0';
 
-    /*  If there are no arguments ask questions.  */
+    /* If there are no arguments ask questions. */
     if (argc == 1)
     {
-	/*  START # 3  */
+	/* START # 3  */
 
-	/*  Print info about the window.  */
+	/* Print info about the window. */
 	(void)printf("\nThis program constructs a solid gas tank with all\n");
 	(void)printf("edges and corners rounded.\n\n");
 
-	/*  Find name of mged file to be created.  */
+	/* Find name of mged file to be created. */
 	(void)printf("Enter the mged file to be created (25 char max).\n\t");
 	(void)fflush(stdout);
 	(void)scanf("%26s", filemged);
 
-	/*  Find the number of gas tanks to create.  */
+	/* Find the number of gas tanks to create. */
 	(void)printf("Enter the number of gas tanks to create (26 max).\n\t");
 	(void)fflush(stdout);
 	(void)scanf("%d", &numtnk);
 	if (numtnk > 26) numtnk = 26;
 
-	/*  Find the dimensions of the gas tanks.  */
+	/* Find the dimensions of the gas tanks. */
 	(void)printf("Enter the height, width, and depth of the gas tank.\n\t");
 	(void)fflush(stdout);
 	(void)scanf("%lf %lf %lf", &hgt, &wid, &dpt);
@@ -122,56 +122,56 @@ main(int argc, char **argv)
 	(void)fflush(stdout);
 	(void)scanf("%lf", &rds);
 
-    }							/*  END # 3  */
+    }							/* END # 3  */
 
-    /*  If there are arguments get answers from arguments.  */
+    /* If there are arguments get answers from arguments. */
     else
     {
-	/*  START # 4  */
-	/*  List options.  */
-	/*	-fname - name = mged file name.  */
-	/*	-n# - # = number of gas tanks.  */
-	/*	-h# - # = height of gas tank in mm.  */
-	/*	-w# - # = width of gas tank in mm.  */
-	/*	-d# - # = depth of gas tank in mm.  */
-	/*	-r# - # = radius of corners in mm.  */
+	/* START # 4  */
+	/* List options. */
+	/*	-fname - name = mged file name. */
+	/*	-n# - # = number of gas tanks. */
+	/*	-h# - # = height of gas tank in mm. */
+	/*	-w# - # = width of gas tank in mm. */
+	/*	-d# - # = depth of gas tank in mm. */
+	/*	-r# - # = radius of corners in mm. */
 
 	for (i=1; i<argc; i++)
 	{
-	    /*  START # 5  */
-	    /*  Put argument in temporary character string.  */
+	    /* START # 5  */
+	    /* Put argument in temporary character string. */
 	    temp = argv[i];
 
-	    /*  -f - mged file.  */
+	    /*  -f - mged file. */
 	    if (temp[1] == 'f')
 	    {
-		/*  START # 6  */
+		/* START # 6  */
 		j = 2;
 		k = 0;
 		while ((temp[j] != '\0') && (k < 25))
 		{
-		    /*  START # 7  */
+		    /* START # 7  */
 		    filemged[k] = temp[j];
 		    j++;
 		    k++;
-		}					/*  END # 7  */
+		}					/* END # 7  */
 		filemged[k] = '\0';
-	    }						/*  END # 6  */
+	    }						/* END # 6  */
 
-	    /*  All other options.  */
+	    /* All other options. */
 	    else
 	    {
-		/*  START # 8  */
-		/*  Set up temporary character string.  */
+		/* START # 8  */
+		/* Set up temporary character string. */
 		j = 2;
 		k = 0;
 		while ((temp[j] != '\0') && (k < 15))
 		{
-		    /*  START # 9  */
+		    /* START # 9  */
 		    temp1[k] = temp[j];
 		    j++;
 		    k++;
-		}					/*  END # 9  */
+		}					/* END # 9  */
 		temp1[k] = '\0';
 		if (temp[1] == 'n')
 		{
@@ -182,11 +182,11 @@ main(int argc, char **argv)
 		else if (temp[1] == 'w') (void)sscanf(temp1, "%lf", &wid);
 		else if (temp[1] == 'd') (void)sscanf(temp1, "%lf", &dpt);
 		else if (temp[1] == 'r') (void)sscanf(temp1, "%lf", &rds);
-	    }						/*  END # 8  */
-	}						/*  END # 5  */
-    }							/*  END # 4  */
+	    }						/* END # 8  */
+	}						/* END # 5  */
+    }							/* END # 4  */
 
-    /*  Print out all info.  */
+    /* Print out all info. */
     (void)printf("\nmged file:  %s\n", filemged);
     (void)printf("height of gas tank:  %f mm\n", hgt);
     (void)printf("width of gas tank:  %f mm\n", wid);
@@ -195,19 +195,19 @@ main(int argc, char **argv)
     (void)printf("number of gas tanks:  %d\n\n", numtnk);
     (void)fflush(stdout);
 
-    /*  Open mged file.  */
+    /* Open mged file. */
     fpw = wdb_fopen(filemged);
 
-    /*  Write ident record.  */
+    /* Write ident record. */
     mk_id(fpw, "windows");
 
     for (i=0; i<numtnk; i++)
     {
-	/*  START # 2  */
+	/* START # 2  */
 
-	/*  Create all solids.  */
+	/* Create all solids. */
 
-	/*  Create the 3 arb8s.  */
+	/* Create the 3 arb8s. */
 
 	pts[0][0] = (fastf_t)(dpt / 2.);
 	pts[0][1] = (fastf_t)(wid / 2. - rds);
@@ -276,7 +276,7 @@ main(int argc, char **argv)
 	solnam[7] = '3';
 	mk_arb8(fpw, solnam, &pts[0][X]);
 
-	/*  Make 8 spheres.  */
+	/* Make 8 spheres. */
 
 	cent[0] = (fastf_t)(dpt / 2. - rds);
 	cent[1] = (fastf_t)(wid / 2. - rds);
@@ -315,7 +315,7 @@ main(int argc, char **argv)
 	solnam[7] = '1';
 	mk_sph(fpw, solnam, cent, rad);
 
-	/*  Make 12 cylinders.  */
+	/* Make 12 cylinders. */
 
 	bs[0] = (fastf_t)(dpt / 2. - rds);
 	bs[1] = (fastf_t)(wid / 2. - rds);
@@ -381,12 +381,12 @@ main(int argc, char **argv)
 	solnam[7] = '3';
 	mk_rcc(fpw, solnam, bs, ht, rad);
 
-	/*  Make all regions.  */
+	/* Make all regions. */
 
-	/*  Initialize list.  */
+	/* Initialize list. */
 	BU_LIST_INIT(&comb.l);
 
-	/*  Region 1.  */
+	/* Region 1. */
 	solnam[5] = 97 + i;
 	solnam[6] = '0';
 	solnam[7] = '1';
@@ -400,7 +400,7 @@ main(int argc, char **argv)
 	regnam[7] = '1';
 	mk_lfcomb(fpw, regnam, &comb, 1);
 
-	/*  Region 2.  */
+	/* Region 2. */
 	solnam[7] = '2';
 	(void)mk_addmember(solnam, &comb.l, NULL, WMOP_INTERSECT);
 	solnam[7] = '3';
@@ -408,13 +408,13 @@ main(int argc, char **argv)
 	regnam[7] = '2';
 	mk_lfcomb(fpw, regnam, &comb, 1);
 
-	/*  Region 3.  */
+	/* Region 3. */
 	solnam[7] = '3';
 	(void)mk_addmember(solnam, &comb.l, NULL, WMOP_INTERSECT);
 	regnam[7] = '3';
 	mk_lfcomb(fpw, regnam, &comb, 1);
 
-	/*  Region 4.  */
+	/* Region 4. */
 	solnam[7] = '4';
 	(void)mk_addmember(solnam, &comb.l, NULL, WMOP_INTERSECT);
 	solnam[6] = '1';
@@ -428,7 +428,7 @@ main(int argc, char **argv)
 	regnam[7] = '4';
 	mk_lfcomb(fpw, regnam, &comb, 1);
 
-	/*  Region 5.  */
+	/* Region 5. */
 	solnam[6] = '0';
 	solnam[7] = '5';
 	(void)mk_addmember(solnam, &comb.l, NULL, WMOP_INTERSECT);
@@ -443,7 +443,7 @@ main(int argc, char **argv)
 	regnam[7] = '5';
 	mk_lfcomb(fpw, regnam, &comb, 1);
 
-	/*  Region 6.  */
+	/* Region 6. */
 	solnam[6] = '0';
 	solnam[7] = '6';
 	(void)mk_addmember(solnam, &comb.l, NULL, WMOP_INTERSECT);
@@ -458,7 +458,7 @@ main(int argc, char **argv)
 	regnam[7] = '6';
 	mk_lfcomb(fpw, regnam, &comb, 1);
 
-	/*  Region 7.  */
+	/* Region 7. */
 	solnam[6] = '0';
 	solnam[7] = '7';
 	(void)mk_addmember(solnam, &comb.l, NULL, WMOP_INTERSECT);
@@ -473,7 +473,7 @@ main(int argc, char **argv)
 	regnam[7] = '7';
 	mk_lfcomb(fpw, regnam, &comb, 1);
 
-	/*  Region 8.  */
+	/* Region 8. */
 	solnam[6] = '0';
 	solnam[7] = '8';
 	(void)mk_addmember(solnam, &comb.l, NULL, WMOP_INTERSECT);
@@ -488,7 +488,7 @@ main(int argc, char **argv)
 	regnam[7] = '8';
 	mk_lfcomb(fpw, regnam, &comb, 1);
 
-	/*  Region 9.  */
+	/* Region 9. */
 	solnam[6] = '0';
 	solnam[7] = '9';
 	(void)mk_addmember(solnam, &comb.l, NULL, WMOP_INTERSECT);
@@ -503,7 +503,7 @@ main(int argc, char **argv)
 	regnam[7] = '9';
 	mk_lfcomb(fpw, regnam, &comb, 1);
 
-	/*  Region 10.  */
+	/* Region 10. */
 	solnam[6] = '1';
 	solnam[7] = '0';
 	(void)mk_addmember(solnam, &comb.l, NULL, WMOP_INTERSECT);
@@ -518,7 +518,7 @@ main(int argc, char **argv)
 	regnam[7] = '0';
 	mk_lfcomb(fpw, regnam, &comb, 1);
 
-	/*  Region 11.  */
+	/* Region 11. */
 	solnam[6] = '1';
 	solnam[7] = '1';
 	(void)mk_addmember(solnam, &comb.l, NULL, WMOP_INTERSECT);
@@ -533,7 +533,7 @@ main(int argc, char **argv)
 	regnam[7] = '1';
 	mk_lfcomb(fpw, regnam, &comb, 1);
 
-	/*  Region 12.  */
+	/* Region 12. */
 	solnam[6] = '1';
 	solnam[7] = '2';
 	(void)mk_addmember(solnam, &comb.l, NULL, WMOP_INTERSECT);
@@ -546,7 +546,7 @@ main(int argc, char **argv)
 	regnam[7] = '2';
 	mk_lfcomb(fpw, regnam, &comb, 1);
 
-	/*  Region 13.  */
+	/* Region 13. */
 	solnam[6] = '1';
 	solnam[7] = '3';
 	(void)mk_addmember(solnam, &comb.l, NULL, WMOP_INTERSECT);
@@ -559,7 +559,7 @@ main(int argc, char **argv)
 	regnam[7] = '3';
 	mk_lfcomb(fpw, regnam, &comb, 1);
 
-	/*  Region 14.  */
+	/* Region 14. */
 	solnam[6] = '1';
 	solnam[7] = '4';
 	(void)mk_addmember(solnam, &comb.l, NULL, WMOP_INTERSECT);
@@ -572,7 +572,7 @@ main(int argc, char **argv)
 	regnam[7] = '4';
 	mk_lfcomb(fpw, regnam, &comb, 1);
 
-	/*  Region 15.  */
+	/* Region 15. */
 	solnam[6] = '1';
 	solnam[7] = '5';
 	(void)mk_addmember(solnam, &comb.l, NULL, WMOP_INTERSECT);
@@ -585,7 +585,7 @@ main(int argc, char **argv)
 	regnam[7] = '5';
 	mk_lfcomb(fpw, regnam, &comb, 1);
 
-	/*  Region 16.  */
+	/* Region 16. */
 	solnam[6] = '1';
 	solnam[7] = '6';
 	(void)mk_addmember(solnam, &comb.l, NULL, WMOP_INTERSECT);
@@ -598,7 +598,7 @@ main(int argc, char **argv)
 	regnam[7] = '6';
 	mk_lfcomb(fpw, regnam, &comb, 1);
 
-	/*  Region 17.  */
+	/* Region 17. */
 	solnam[6] = '1';
 	solnam[7] = '7';
 	(void)mk_addmember(solnam, &comb.l, NULL, WMOP_INTERSECT);
@@ -611,7 +611,7 @@ main(int argc, char **argv)
 	regnam[7] = '7';
 	mk_lfcomb(fpw, regnam, &comb, 1);
 
-	/*  Region 18.  */
+	/* Region 18. */
 	solnam[6] = '1';
 	solnam[7] = '8';
 	(void)mk_addmember(solnam, &comb.l, NULL, WMOP_INTERSECT);
@@ -624,7 +624,7 @@ main(int argc, char **argv)
 	regnam[7] = '8';
 	mk_lfcomb(fpw, regnam, &comb, 1);
 
-	/*  Region 19.  */
+	/* Region 19. */
 	solnam[6] = '1';
 	solnam[7] = '9';
 	(void)mk_addmember(solnam, &comb.l, NULL, WMOP_INTERSECT);
@@ -637,7 +637,7 @@ main(int argc, char **argv)
 	regnam[7] = '9';
 	mk_lfcomb(fpw, regnam, &comb, 1);
 
-	/*  Region 20.  */
+	/* Region 20. */
 	solnam[6] = '2';
 	solnam[7] = '0';
 	(void)mk_addmember(solnam, &comb.l, NULL, WMOP_INTERSECT);
@@ -650,7 +650,7 @@ main(int argc, char **argv)
 	regnam[7] = '0';
 	mk_lfcomb(fpw, regnam, &comb, 1);
 
-	/*  Region 21.  */
+	/* Region 21. */
 	solnam[6] = '2';
 	solnam[7] = '1';
 	(void)mk_addmember(solnam, &comb.l, NULL, WMOP_INTERSECT);
@@ -663,7 +663,7 @@ main(int argc, char **argv)
 	regnam[7] = '1';
 	mk_lfcomb(fpw, regnam, &comb, 1);
 
-	/*  Region 22.  */
+	/* Region 22. */
 	solnam[6] = '2';
 	solnam[7] = '2';
 	(void)mk_addmember(solnam, &comb.l, NULL, WMOP_INTERSECT);
@@ -676,7 +676,7 @@ main(int argc, char **argv)
 	regnam[7] = '2';
 	mk_lfcomb(fpw, regnam, &comb, 1);
 
-	/*  Region 23.  */
+	/* Region 23. */
 	solnam[6] = '2';
 	solnam[7] = '3';
 	(void)mk_addmember(solnam, &comb.l, NULL, WMOP_INTERSECT);
@@ -689,9 +689,9 @@ main(int argc, char **argv)
 	regnam[7] = '3';
 	mk_lfcomb(fpw, regnam, &comb, 1);
 
-	/*  Create group.  */
+	/* Create group. */
 
-	/*  Initialize list.  */
+	/* Initialize list. */
 	BU_LIST_INIT(&comb1.l);
 
 	regnam[6] = '0';
@@ -746,12 +746,12 @@ main(int argc, char **argv)
 	grpnam[3] = 97 + i;
 	mk_lfcomb(fpw, grpnam, &comb1, 0);
 
-    }							/*  START # 2  */
+    }							/* START # 2  */
 
-    /*  Close file.  */
+    /* Close file. */
     wdb_close(fpw);
     return 0;
-}							/*  END # 1  */
+}							/* END # 1  */
 
 /*
  * Local Variables:
