@@ -14,6 +14,7 @@ changes made.  See document footer for additional details.
 --- 2008-XX-XX  Release 7.XX.X                                     ---
 ----------------------------------------------------------------------
 
+* renamed all mk_ tools to remove the mk_ prefix - Sean Morrison
 * more conversion of documentation to Docbook format - Janine Gettier
 * removed the unused 'k'eypoint point on extrudes - Sean Morrison
 * added new dem-g terrain importer - Richard Weiss

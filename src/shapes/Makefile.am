@@ -1,48 +1,47 @@
 
-#define SRCDIR	mk
-
 bin_PROGRAMS = \
-	mk_bolt \
-	mk_handle \
-	mk_window \
-	mk_winfrm \
-	mk_gastank \
-	mk_wire \
-	tire
+	bolt \
+	gastank \
+	handle \
+	tire \
+	window \
+	winfrm \
+	wire
 
 AM_CPPFLAGS = ${TCL_CPPFLAGS}
 LDADD = ${WDB}
 
-mk_bolt_SOURCES = mk_bolt.c
-mk_gastank_SOURCES = mk_gastank.c
-mk_handle_SOURCES = mk_handle.c
-mk_window_SOURCES = mk_window.c
-mk_winfrm_SOURCES = mk_winfrm.c
-mk_wire_SOURCES = mk_wire.c
+bolt_SOURCES = bolt.c
+gastank_SOURCES =gastank.c
+handle_SOURCES = handle.c
 
 tire_SOURCES = tire.c
 tire_LDADD = \
 	${GED} \
 	${WDB}
 
+window_SOURCES = window.c
+winfrm_SOURCES = winfrm.c
+wire_SOURCES = wire.c
+
 man_MANS = \
-	mk_bolt.1 \
-	mk_gastank.1 \
-	mk_handle.1 \
-	mk_window.1 \
-	mk_winfrm.1 \
-	mk_wire.1
+	bolt.1 \
+	gastank.1 \
+	handle.1 \
+	window.1 \
+	winfrm.1 \
+	wire.1
 
 EXTRA_DIST = $(man_MANS)
 
 include $(top_srcdir)/misc/Makefile.defs
 
 FAST_OBJECTS = \
-	$(mk_bolt_OBJECTS) \
-	$(mk_gastank_OBJECTS) \
-	$(mk_handle_OBJECTS) \
-	$(mk_window_OBJECTS) \
-	$(mk_winfrm_OBJECTS) \
-	$(mk_wire_OBJECTS) \
+	$(bolt_OBJECTS) \
+	$(gastank_OBJECTS) \
+	$(handle_OBJECTS) \
 	$(tire_OBJECTS) \
+	$(window_OBJECTS) \
+	$(winfrm_OBJECTS) \
+	$(wire_OBJECTS) \
 	$(bin_PROGRAMS)
