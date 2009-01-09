@@ -139,7 +139,7 @@ ged_view_init(struct ged_view *gvp)
     if (gvp == GED_VIEW_NULL)
 	return;
 
-    gvp->gv_scale = 1.0;
+    gvp->gv_scale = 500.0;
     gvp->gv_size = 2.0 * gvp->gv_scale;
     gvp->gv_isize = 1.0 / gvp->gv_size;
     VSET(gvp->gv_eye_pos, 0.0, 0.0, 1.0);
