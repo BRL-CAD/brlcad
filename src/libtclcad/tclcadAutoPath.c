@@ -202,6 +202,8 @@ tclcad_auto_path(Tcl_Interp *interp)
 
     int found_init_tcl = 0;
     int found_tk_tcl = 0;
+    int found_itcl_tcl = 0;
+    int found_itk_tcl = 0;
 
     char pathsep[2] = { BU_PATH_SEPARATOR, '\0' };
 
@@ -449,6 +451,34 @@ tclcad_auto_path(Tcl_Interp *interp)
 		    bu_log("Tcl_Eval ERROR:\n%s\n", Tcl_GetStringResult(interp));
 		} else {
 		    found_tk_tcl=1;
+		}
+	    }
+	}
+
+	/* specifically look for itcl.tcl so we can set ITCL_LIBRARY */
+	if (!found_itcl_tcl) {
+	    snprintf(buffer, MAX_BUF, "%s%citcl.tcl", srcpath, BU_DIR_SEPARATOR);
+	    if (bu_file_exists(buffer)) {
+		/* this really sets it */
+		snprintf(buffer, MAX_BUF, "set env(ITCL_LIBRARY) \"%s\"", srcpath);
+		if (Tcl_Eval(interp, buffer)) {
+		    bu_log("Tcl_Eval ERROR:\n%s\n", Tcl_GetStringResult(interp));
+		} else {
+		    found_itcl_tcl=1;
+		}
+	    }
+	}
+
+	/* specifically look for itk.tcl so we can set ITK_LIBRARY */
+	if (!found_itk_tcl) {
+	    snprintf(buffer, MAX_BUF, "%s%citk.tcl", srcpath, BU_DIR_SEPARATOR);
+	    if (bu_file_exists(buffer)) {
+		/* this really sets it */
+		snprintf(buffer, MAX_BUF, "set env(ITK_LIBRARY) \"%s\"", srcpath);
+		if (Tcl_Eval(interp, buffer)) {
+		    bu_log("Tcl_Eval ERROR:\n%s\n", Tcl_GetStringResult(interp));
+		} else {
+		    found_itk_tcl=1;
 		}
 	    }
 	}
