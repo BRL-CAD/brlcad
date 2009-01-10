@@ -93,7 +93,6 @@ noinst_HEADERS = \
 	vegitation.h
 
 EXTRA_DIST = \
-	$(man_MANS) \
 	sgi.sh
 
 DEPENDS = src/libwdb
