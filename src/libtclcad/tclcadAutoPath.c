@@ -404,6 +404,24 @@ tclcad_auto_path(Tcl_Interp *interp)
 
     /*    printf("AUTO_PATH IS %s\n", bu_vls_addr(&auto_path)); */
 
+    /* see if user already set ITCL_LIBRARY override */
+    library_path = getenv("ITCL_LIBRARY");
+    if (!found_itcl_tcl && library_path) {
+	snprintf(buffer, MAX_BUF, "%s%citcl.tcl", library_path, BU_DIR_SEPARATOR);
+	if (bu_file_exists(buffer)) {
+	    found_itcl_tcl=1;
+	}
+    }
+
+    /* see if user already set ITK_LIBRARY override */
+    library_path = getenv("ITK_LIBRARY");
+    if (!found_itk_tcl && library_path) {
+	snprintf(buffer, MAX_BUF, "%s%citk.tcl", library_path, BU_DIR_SEPARATOR);
+	if (bu_file_exists(buffer)) {
+	    found_itk_tcl=1;
+	}
+    }
+
     /* iterate over the auto_path list and modify the real Tcl auto_path */
     for (srcpath = strtok(bu_vls_addr(&auto_path), pathsep);
 	 srcpath;
