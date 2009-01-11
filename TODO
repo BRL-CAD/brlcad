@@ -58,7 +58,6 @@ THESE ARE LOWER PRIORITY OR FOR FUTURE RELEASES
 	attr set t 1 *.r
 
 * fix incrTcl pathing issues when only using system tcl/tk
-  (get incrTcl subconfigure to work like was done for Tcl)
 
 * review adding support for infix and postfix CSG operators for
   libged/mged.  be sure to revive or at least check out the previous
