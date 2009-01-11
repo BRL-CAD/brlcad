@@ -28,6 +28,7 @@ DIST_SUBDIRS = \
 EXTRA_DIST = \
 	CHANGES \
 	INCOMPATIBLE \
+	compat \
 	license.terms \
 	makefile.bc \
 	makefile.vc \
