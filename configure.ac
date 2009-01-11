@@ -910,11 +910,6 @@ if test "x$bc_build_docs" != "xno" ; then
     AC_PATH_PROG(APACHEFOP, fop)
 fi
 
-# AN_MAKEVAR([AR], [BC_PROG_AR])
-# AN_PROGRAM([ar], [BC_PROG_AR])
-# AC_DEFUN([BC_PROG_AR], [AC_CHECK_TOOL(AR, ar, :)])
-# BC_PROG_AR
-
 # XXX tests for ranlib may be required.  "ar ts" was used in cake for
 # sgi and aix so more compensation may be required still.
 
@@ -1880,9 +1875,9 @@ if test "x$bc_use_optimized" != "xno" ; then
 	fi
 
 
-# XXX -fast seems to provoke stack corruption in the shadow
-# computations, possible that the corruption is indeed valid and
-# there's something that needs to be checked/changed.
+# -fast provokes a stack corruption in the shadow computations because
+# of strict aliasing getting enabled.  we _require_
+# -fno-strict-aliasing until someone changes how lists are managed.
 #
 #	BC_COMPILER_AND_LINKER_RECOGNIZES([-fast], [mac_opt_flag])
 #	if test "x$bc_mac_opt_flag_works" = "xno" ; then
@@ -3652,8 +3647,6 @@ AC_SUBST(BRLCAD_LIBS)
 # to core dump.
 AM_CONDITIONAL(LINK_STATIC_REQUIRED, [test "x$build_vendor" = "xsgi" -a "x$compiler" = "xsgi" ])
 
-dnl XXX - hack for justins g.c file
-AM_CONDITIONAL(HAVE_BRLCAD, true)
 AM_CONDITIONAL(HAVE_DOXYGEN, false)
 
 dnl sample applications
