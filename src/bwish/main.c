@@ -123,6 +123,9 @@ Cad_AppInit(Tcl_Interp *interp)
 	if (init_itcl && Itcl_Init(interp) == TCL_ERROR) {
 	    if (!try_auto_path) {
 		try_auto_path=1;
+		/* Itcl_Init() leaves initialization in a bad state
+		 * and can cause retry failures.  cleanup manually.
+		 */
 		Tcl_DeleteCommand(interp, "::itcl::class");
 		Tcl_DeleteNamespace(Tcl_FindNamespace(interp, "::itcl", NULL, 0));
 		continue;
