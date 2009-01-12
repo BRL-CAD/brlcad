@@ -1052,7 +1052,7 @@ static __inline__ int BU_BITTEST(volatile void * addr, int nr)
 		bu_log("BU_BITV_NBITS_CHECK number of bits (%u) out of range (> %u)", \
 			((unsigned)(_nbits)), (_bv)->nbits ); \
 		bu_bomb("process self-terminating"); \
-		}
+	}
 #endif
 
 
@@ -1087,6 +1087,9 @@ static __inline__ int BU_BITTEST(volatile void * addr, int nr)
  */
 #define BU_BITV_LOOP_INDEX	((_wd << BU_BITV_SHIFT) | _b)
 
+/**
+ * Paired with BU_BITV_LOOP_START()
+ */
 #define BU_BITV_LOOP_END	\
 		} /* end for (_b) */ \
 	} /* end for (_wd) */ \
