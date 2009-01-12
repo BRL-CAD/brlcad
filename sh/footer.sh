@@ -2,7 +2,7 @@
 #                       F O O T E R . S H
 # BRL-CAD
 #
-# Copyright (c) 2004-2008 United States Government as represented by
+# Copyright (c) 2004-2009 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -44,8 +44,6 @@
 # bash arrays are actually used for convenience, hence why bash and
 # not sh.
 #
-# Author -
-#   Christopher Sean Morrison
 ###
 
 FILE="$1"
