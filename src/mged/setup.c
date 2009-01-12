@@ -503,6 +503,8 @@ mged_setup(void)
 	if (init_itcl && Itcl_Init(interp) == TCL_ERROR) {
 	    if (!try_auto_path) {
 		try_auto_path=1;
+		Tcl_DeleteCommand(interp, "::itcl::class");
+		Tcl_DeleteNamespace(Tcl_FindNamespace(interp, "::itcl", NULL, 0));
 		continue;
 	    }
 	    bu_log("Itcl_Init ERROR:\n%s\n", Tcl_GetStringResult(interp));
