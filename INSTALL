@@ -307,8 +307,11 @@ render work where performance is critical.  Alises:
 	--enable-run-time-debugging
 
 --enable-64bit-build attempts to force compilation to produce 64-bit
-binaries and libraries.  Default is "auto", where the default
-compilation mode as set by the compiler will be utilized.  Aliases:
+binaries and libraries.  Note that it merely *ATTEMPTS* to force
+64-bit compilation but in all practicality and likelihood, you will
+need to manually specify CFLAGS/CPPFLAGS/CXXFLAGS/LDFLAGS to specify
+64-bit compilation.  Default is "auto", where the default compilation
+mode as set by the compiler will be utilized.  Aliases:
 	--enable-64bit
 	--enable-64
 	--enable-64-build
