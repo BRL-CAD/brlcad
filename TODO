@@ -55,7 +55,14 @@ THESE ARE LOWER PRIORITY OR FOR FUTURE RELEASES
 	attr set t 1 [glob *.r]
 	attr set t 1 *.r
 
-* fix incrTcl pathing issues when only using system tcl/tk
+* mged crashes on Mac if using system Tcl/Tk with our incrTcl.
+  crashes with the following stack (same whether dm-X or dm-ogl):
+	XQueryExtension
+	...
+	glxGetConfig
+	ogl_choose_visual (dm-ogl.c:1359)
+	ogl_open (dm-ogl.c:401)
+	dm_open (dm-generic:82)
 
 * review adding support for infix and postfix CSG operators for
   libged/mged.  be sure to revive or at least check out the previous
