@@ -294,7 +294,7 @@ cmd_ged_in(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv
 }
 
 int
-cmd_ged_inside(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
+cmd_ged_more_wrapper(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 {
     int ret;
     Tcl_DString ds;
@@ -324,7 +324,15 @@ cmd_ged_inside(ClientData clientData, Tcl_Interp *interp, int argc, const char *
 
     /* draw the "inside" solid */
     new_cmd[0] = "draw";
-    new_cmd[1] = argv[2];
+    if (ctp->ged_func == ged_3ptarb)
+	new_cmd[1] = argv[1];
+    else if (ctp->ged_func == ged_inside)
+	new_cmd[1] = argv[2];
+    else {
+	(void)signal(SIGINT, SIG_IGN);
+	return TCL_OK;
+    }
+
     new_cmd[2] = (char *)NULL;
     (void)cmd_draw( clientData, interp, 2, new_cmd );
 

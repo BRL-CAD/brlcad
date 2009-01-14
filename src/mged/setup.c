@@ -50,7 +50,7 @@ extern void mged_global_variable_setup(Tcl_Interp *interp);
 struct cmdtab mged_cmdtab[] = {
     {"%", f_comm, GED_FUNC_PTR_NULL},
     {"35, 25", bv_35_25, GED_FUNC_PTR_NULL},
-    {"3ptarb", f_3ptarb, GED_FUNC_PTR_NULL},
+    {"3ptarb", cmd_ged_more_wrapper, ged_3ptarb},
     {"45, 45", bv_45_45, GED_FUNC_PTR_NULL},
     {"B", cmd_blast, GED_FUNC_PTR_NULL},
     {"accept", be_accept, GED_FUNC_PTR_NULL},
@@ -165,7 +165,7 @@ struct cmdtab mged_cmdtab[] = {
     {"idents", cmd_ged_plain_wrapper, ged_tables},
     {"ill", f_ill, GED_FUNC_PTR_NULL},
     {"in", cmd_ged_in, ged_in},
-    {"inside", cmd_ged_inside, ged_inside},
+    {"inside", cmd_ged_more_wrapper, ged_inside},
     {"item", cmd_ged_plain_wrapper, ged_item},
     {"joint", f_joint, GED_FUNC_PTR_NULL},
     {"journal", f_journal, GED_FUNC_PTR_NULL},
