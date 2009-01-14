@@ -28,6 +28,7 @@
 #include "bio.h"
 
 #include <stdlib.h>
+#include <signal.h>
 #include <ctype.h>
 #include <string.h>
 
@@ -2694,6 +2695,7 @@ ged_in(struct ged *gedp, int argc, const char *argv[])
     struct rt_db_internal internal;
     char **menu;
     int nvals, (*fn_in)();
+    void (*cur_sigint)();
 
     GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
     GED_CHECK_READ_ONLY(gedp, BRLCAD_ERROR);
@@ -2987,17 +2989,29 @@ ged_in(struct ged *gedp, int argc, const char *argv[])
  do_new_update:
     /* The function may have already written via LIBWDB */
     if ( internal.idb_ptr != NULL )  {
+	/* don't allow interrupts while we update the database! */
+	cur_sigint = signal(SIGINT, SIG_IGN);
+
 	if ( (dp=db_diradd( gedp->ged_wdbp->dbip, name, -1L, 0, DIR_SOLID, (genptr_t)&internal.idb_type)) == DIR_NULL )  {
+	    /* restore the handler before returning */
+	    (void)signal(SIGINT, cur_sigint);
+
 	    rt_db_free_internal( &internal, &rt_uniresource );
 	    bu_vls_printf(&gedp->ged_result_str, "%s: Cannot add '%s' to directory\n", argv[0], name);
 	    return BRLCAD_ERROR;
 	}
 	if ( rt_db_put_internal( dp, gedp->ged_wdbp->dbip, &internal, &rt_uniresource ) < 0 )
 	{
+	    /* restore the handler before returning */
+	    (void)signal(SIGINT, cur_sigint);
+
 	    rt_db_free_internal( &internal, &rt_uniresource );
 	    bu_vls_printf(&gedp->ged_result_str, "%s: Database write error, aborting\n", argv[0]);
 	    return BRLCAD_ERROR;
 	}
+
+	/* restore the handler before returning */
+	(void)signal(SIGINT, cur_sigint);
     }
 
     return BRLCAD_OK;

@@ -27,6 +27,7 @@
 #include "bio.h"
 
 #include <stdlib.h>
+#include <signal.h>
 #include <ctype.h>
 #include <math.h>
 #include <string.h>
@@ -917,6 +918,7 @@ ged_inside(struct ged *gedp, int argc, const char *argv[])
     char	*newname;
     int arg = 1;
     static const char *usage = "out_prim in_prim th(s)";
+    void (*cur_sigint)();
 
     GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
     GED_CHECK_READ_ONLY(gedp, BRLCAD_ERROR);
@@ -1171,15 +1173,27 @@ ged_inside(struct ged *gedp, int argc, const char *argv[])
 	    return BRLCAD_ERROR;
     }
 
+    /* don't allow interrupts while we update the database! */
+    cur_sigint = signal(SIGINT, SIG_IGN);
+
     /* Add to in-core directory */
     if ( (dp = db_diradd( gedp->ged_wdbp->dbip,  newname, -1, 0, DIR_SOLID, (genptr_t)&intern.idb_type )) == DIR_NULL )  {
+	/* restore the handler before returning */
+	(void)signal(SIGINT, cur_sigint);
+
 	bu_vls_printf(&gedp->ged_result_str, "%s: Database alloc error, aborting\n", argv[0]);
 	return BRLCAD_ERROR;
     }
     if ( rt_db_put_internal( dp, gedp->ged_wdbp->dbip, &intern, &rt_uniresource ) < 0 ) {
+	/* restore the handler before returning */
+	(void)signal(SIGINT, cur_sigint);
+
 	bu_vls_printf(&gedp->ged_result_str, "%s: Database write error, aborting\n", argv[0]);
 	return BRLCAD_ERROR;
     }
+
+    /* restore the handler before returning */
+    (void)signal(SIGINT, cur_sigint);
 
     return BRLCAD_OK;
 }
