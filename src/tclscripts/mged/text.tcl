@@ -290,6 +290,7 @@ proc gets {channelId args} {
     # the entire input, then we strip off the gets line leaving just
     # the line that was input.  total hack.  total fugly hack.
 
+    proc execute_cmd_save {} {}
     rename execute_cmd execute_cmd_save
     rename gets_execute_cmd execute_cmd
 
