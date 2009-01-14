@@ -15,6 +15,9 @@ on-going issues.
 Recent Bugs
 -----------
 
+* mged on Mac OS X will crash on an X11 call if compiled against
+  system Tcl/Tk (at least on 10.4 linking against 8.4), see TODO
+
 * the ray tracer fails to report LOS and sometimes even hits on a BoT
   that is marked as unoriented or is inverted (even though it
   sometimes will report the segments, just without LOS).  this seems
