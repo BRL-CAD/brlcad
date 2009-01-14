@@ -178,12 +178,18 @@ printf "\n"
 
 # compute documentation line counts
 dc1="`find \"$BASE\" -type f \( -name \*.[123456789n] \) | grep -v '/other/'`"
+[ "x$DEBUG" = "x" ] || echo "DEBUG: dc1 wc is `echo \"$dc1\" | wc`"
 dc2="`find \"$BASE\" -type f \( -name README\* -or -name AUTHORS -or -name BUGS -or -name COPYING -or -name ChangeLog -or -name HACKING -or -name INSTALL -or -name NEWS -or -name TODO -or -name \*.txt -or -name \*.tr -or -name \*.htm\* -or -name \*.xml \) -not -regex '.*docbook/resources/standard.*' -not -name \*~ -not \( -regex '.*/\.svn.*' -or -regex '.*/CVS.*' -or -regex '.*/\.libs.*' -or -regex '.*/\.deps.*' -or -regex '.*autom4te.cache.*' \) | grep -v '/other/' | grep -v legal | grep -v CMakeLists.txt`"
+[ "x$DEBUG" = "x" ] || echo "DEBUG: dc2 wc is `echo \"$dc2\" | wc`"
 dc="$dc1
 $dc2"
 dc_lc="`echo \"$dc\" | sort | xargs wc -l`"
+[ "x$DEBUG" = "x" ] || echo "DEBUG: dc_lc is `echo \"$dc_lc\" | wc`"
 dc_lc_lines="`echo \"$dc_lc\" | grep -v 'total$' | awk '{print $1}'`"
+[ "x$DEBUG" = "x" ] || echo "DEBUG: dc_lc_lines is `echo \"$dc_lc_lines\" | wc`"
 dc_lc_total="`sum $dc_lc_lines`"
+[ "x$DEBUG" = "x" ] || echo "DEBUG: dc_lc_total is $dc_lc_total"
+[ "x$DEBUG" = "x" ] || echo "DEBUG: sum 1 2 3 is `sum 1 2 3`"
 
 # compute build infrastructure line counts
 bic1="`find \"$BASE\" -type f \( -name \*.am -or -name Makefile.defs -or -name configure.ac -or -name autogen.sh -or -name CMakeLists.txt \)`"
