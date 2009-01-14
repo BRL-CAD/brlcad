@@ -113,9 +113,6 @@ Recent Bugs
 * overlap tool in mged encourages very inefficient CSG operations
   (e.g. a simple bolt with an entire hull armor subtracted)
 
-* BoT values are always listed in mm when a point is selected instead
-  of in current editing units.
-
 * a character is (still) sometimes captured by the cursor box
 
 * permute (in mged) requires apply or save before 'new' vertex values
@@ -236,8 +233,6 @@ Recent Bugs
   rt_gettrees().
 
 * report of rtwizard hanging at 40% on Debian (from binary distro)
-
-* make extrude crashes
 
 * tra in console mode outputs a warning about mged_players
 
