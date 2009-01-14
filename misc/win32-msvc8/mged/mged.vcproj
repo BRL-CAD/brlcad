@@ -226,10 +226,6 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\src\mged\anal.c"
-				>
-			</File>
-			<File
 				RelativePath="..\..\..\src\mged\animedit.c"
 				>
 			</File>
@@ -350,10 +346,6 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\src\mged\inside.c"
-				>
-			</File>
-			<File
 				RelativePath="..\..\..\src\mged\mater.c"
 				>
 			</File>
@@ -398,10 +390,6 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\src\mged\red.c"
-				>
-			</File>
-			<File
 				RelativePath="..\..\..\src\mged\rtif.c"
 				>
 			</File>
@@ -435,10 +423,6 @@
 			</File>
 			<File
 				RelativePath="..\..\..\src\mged\track.c"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\src\mged\typein.c"
 				>
 			</File>
 			<File

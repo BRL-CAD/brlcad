@@ -78,7 +78,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="libbu.lib libbn.lib libsysv.lib librt.lib libwdb.lib tcl85.lib"
+				AdditionalDependencies="libbu.lib libbn.lib libsysv.lib librt.lib libwdb.lib tcl85.lib libged.lib"
 				OutputFile="$(PlatformName)\$(ConfigurationName)/picket_fence.exe"
 				LinkIncremental="1"
 				SuppressStartupBanner="true"
@@ -222,7 +222,7 @@
 			Filter="cpp;c;cxx;rc;def;r;odl;idl;hpj;bat;f90;for;f;fpp"
 			>
 			<File
-				RelativePath="..\..\..\src\proc-db\picket_fence.c"
+				RelativePath="..\..\..\src\shapes\picket_fence.c"
 				>
 			</File>
 		</Filter>
