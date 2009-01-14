@@ -5008,7 +5008,7 @@ go_more_args_func(struct ged	*gedp,
     bu_vls_free(&temp);
 
     for (i = 0; i < ac; ++i)
-	bu_free((void *)av[i], "go_in");
+	bu_free((void *)av[i], "go_more_args_func");
 
     return ret;
 }
