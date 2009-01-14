@@ -38,12 +38,12 @@ int main(int argc, char *argv[])
     long i, j, k, l;
     struct rt_wdb *fp_db = NULL;
 
-    char name[256];
-    char pname[256];
-    char w1name[256];
-    char w2name[256];
-    char firstname[256];
-    char prefix[256];
+    char name[256] = {0};
+    char pname[256] = {0};
+    char w1name[256] = {0};
+    char w2name[256] = {0};
+    char firstname[256] = {0};
+    char prefix[256] = {0};
 
     struct wmember wm;
     struct wmember wm2;
