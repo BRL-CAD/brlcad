@@ -46,8 +46,7 @@
 #include "./mged_dm.h"
 #include "./cmd.h"
 
-extern int	newargs;
-extern char	**promp;
+char **promp;
 
 char *p_arb3pt[] = {
     "Enter X, Y, Z for point 1: ",

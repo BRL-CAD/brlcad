@@ -90,7 +90,6 @@ mged_SOURCES = \
 	grid.c \
 	hideline.c \
 	history.c \
-	inside.c \
 	mater.c \
 	menu.c \
 	mged.c \
@@ -111,7 +110,6 @@ mged_SOURCES = \
 	tedit.c \
 	titles.c \
 	track.c \
-	typein.c \
 	update.c \
 	usepen.c \
 	utility1.c \

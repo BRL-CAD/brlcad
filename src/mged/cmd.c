@@ -217,6 +217,123 @@ cmd_ged_erase_wrapper(ClientData clientData, Tcl_Interp *interp, int argc, const
 }
 
 int
+cmd_ged_in(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
+{
+    int ret;
+    Tcl_DString ds;
+    struct cmdtab *ctp = (struct cmdtab *)clientData;
+    const char *new_cmd[3];
+    int c;
+    int do_solid_edit = 0;
+    int dont_draw = 0;
+
+    if (gedp == GED_NULL)
+	return TCL_OK;
+
+    /* Parse options. */
+    bu_optind = 1;		/* re-init bu_getopt() */
+    bu_opterr = 0;          /* suppress bu_getopt()'s error message */
+    while ((c=bu_getopt(argc, (char * const *)argv, "sf")) != EOF) {
+	switch (c)  {
+	    case 's':
+		do_solid_edit = 1;
+		break;
+	    case 'f':
+		dont_draw = 1;
+		break;
+	    default:
+	    {
+		struct bu_vls tmp_vls;
+
+		bu_vls_init(&tmp_vls);
+		bu_vls_printf(&tmp_vls, "in: option '%c' unknown\n", bu_optopt);
+		Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
+		bu_vls_free(&tmp_vls);
+	    }
+
+	    break;
+	}
+    }
+    argc -= bu_optind-1;
+    argv += bu_optind-1;
+
+    ret = (*ctp->ged_func)(gedp, argc, (const char **)argv);
+    Tcl_DStringInit(&ds);
+    if (ret == BRLCAD_MORE_ARGS)
+	Tcl_DStringAppend(&ds, MORE_ARGS_STR, -1);
+    Tcl_DStringAppend(&ds, bu_vls_addr(&gedp->ged_result_str), -1);
+    Tcl_DStringResult(interp, &ds);
+
+    if (dont_draw) {
+	if (ret == BRLCAD_HELP || ret == BRLCAD_OK)
+	    return TCL_OK;
+
+	return TCL_ERROR;
+    }
+
+    if (ret == BRLCAD_HELP)
+	return TCL_OK;
+
+    if (ret != BRLCAD_OK)
+	return TCL_ERROR;
+
+    /* draw the newly "made" solid */
+    new_cmd[0] = "draw";
+    new_cmd[1] = argv[1];
+    new_cmd[2] = (char *)NULL;
+    (void)cmd_draw( clientData, interp, 2, new_cmd );
+
+    if ( do_solid_edit )  {
+	/* Also kick off solid edit mode */
+	new_cmd[0] = "sed";
+	new_cmd[1] = argv[1];
+	new_cmd[2] = (char *)NULL;
+	(void)f_sed( clientData, interp, 2, new_cmd );
+    }
+    return TCL_OK;
+}
+
+int
+cmd_ged_inside(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
+{
+    int ret;
+    Tcl_DString ds;
+    struct cmdtab *ctp = (struct cmdtab *)clientData;
+    const char *new_cmd[3];
+
+    if (gedp == GED_NULL)
+	return TCL_OK;
+
+    if (setjmp(jmp_env) == 0)
+	(void)signal(SIGINT, sig3);  /* allow interupts */
+    else
+	return TCL_OK;
+
+    ret = (*ctp->ged_func)(gedp, argc, (const char **)argv);
+    Tcl_DStringInit(&ds);
+    if (ret == BRLCAD_MORE_ARGS)
+	Tcl_DStringAppend(&ds, MORE_ARGS_STR, -1);
+    Tcl_DStringAppend(&ds, bu_vls_addr(&gedp->ged_result_str), -1);
+    Tcl_DStringResult(interp, &ds);
+
+    if (ret == BRLCAD_HELP)
+	return TCL_OK;
+
+    if (ret != BRLCAD_OK)
+	return TCL_ERROR;
+
+    /* draw the "inside" solid */
+    new_cmd[0] = "draw";
+    new_cmd[1] = argv[2];
+    new_cmd[2] = (char *)NULL;
+    (void)cmd_draw( clientData, interp, 2, new_cmd );
+
+    (void)signal(SIGINT, SIG_IGN);
+
+    return TCL_OK;
+}
+
+int
 cmd_ged_plain_wrapper(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 {
     int ret;
@@ -231,10 +348,7 @@ cmd_ged_plain_wrapper(ClientData clientData, Tcl_Interp *interp, int argc, const
     Tcl_DStringAppend(&ds, bu_vls_addr(&gedp->ged_result_str), -1);
     Tcl_DStringResult(interp, &ds);
 
-    if (ret == BRLCAD_HELP)
-	return TCL_OK;
-
-    if (ret == BRLCAD_OK)
+    if (ret == BRLCAD_HELP || ret == BRLCAD_OK)
 	return TCL_OK;
 
     return TCL_ERROR;
