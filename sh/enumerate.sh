@@ -65,8 +65,8 @@ LC_ALL=C
 
 # convenience for computing a sum of a list of integers without
 # relying on wc or awk to behave consistently
-sum() {
-    if [ "x$2" = "x" ]; then
+sum ( ) {
+    if test "x$2" = "x" ; then
 	echo $1
     else
 	_total=0
