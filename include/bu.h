@@ -1027,10 +1027,19 @@ static __inline__ int BU_BITTEST(volatile void * addr, int nr)
 	((_bv)->bits[(bit)>>BU_BITV_SHIFT] &= ~(((bitv_t)1)<<((bit)&BU_BITV_MASK)))
 
 /**
- * requires #include <string.h>
+ * zeros all of the internal storage bytes in a bit vector array
  */
 #define BU_BITV_ZEROALL(_bv)	\
-	{ memset((char *)((_bv)->bits), 0, BU_BITS2BYTES( (_bv)->nbits )); }
+{ \
+	if ((_bv) && (_bv)->nbits != 0) { \
+		unsigned char *bvp = (unsigned char *)(_bv)->bits; \
+		size_t nbytes = BU_BITS2BYTES((_bv)->nbits); \
+		do { \
+			*bvp++ = (unsigned char)0; \
+		} while (--nbytes != 0); \
+	} \
+}
+
 
 /* This is not done by default for performance reasons */
 #ifdef NO_BOMBING_MACROS
