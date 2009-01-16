@@ -1802,9 +1802,9 @@ struct bu_rb_node
  * B U _ O B S E R V E R
  */
 struct bu_observer {
-    struct bu_list	l;
-    struct bu_vls		observer;
-    struct bu_vls		cmd;
+    struct bu_list l;
+    struct bu_vls observer;
+    struct bu_vls cmd;
 };
 #define BU_OBSERVER_NULL	((struct bu_observer *)0)
 
