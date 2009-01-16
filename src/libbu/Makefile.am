@@ -13,7 +13,6 @@ libbu_nil_la_SOURCES = \
 	bitv.c \
 	bomb.c \
 	brlcad_path.c \
-	bu_tcl.c \
 	cmd.c \
 	cmdhist.c \
 	cmdhist_obj.c \
@@ -65,6 +64,7 @@ libbu_nil_la_SOURCES = \
 	semaphore.c \
 	stat.c \
 	str.c \
+	tcl.c \
 	temp.c \
 	units.c \
 	vers.c \

@@ -7,7 +7,6 @@ man_MANS = libplot3.3
 libbn_nil_la_SOURCES = \
 	anim.c \
 	axis.c \
-	bn_tcl.c \
 	complex.c \
 	font.c \
 	fortran.c \
@@ -26,6 +25,7 @@ libbn_nil_la_SOURCES = \
 	sphmap.c \
 	symbol.c \
 	tabdata.c \
+	tcl.c \
 	tplot.c \
 	vectfont.c \
 	vector.c \
