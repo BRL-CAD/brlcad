@@ -2999,13 +2999,12 @@ static struct rt_sketch_internal *
 nmg_wire_edges_to_sketch( struct model *m )
 {
     struct rt_sketch_internal *skt;
-    struct bu_ptbl vertices;
     struct bu_ptbl segs;
     struct nmgregion *r;
     struct shell *s;
     struct edgeuse *eu;
     struct vertex *v;
-    int index_offset = 0;
+    struct vert_root *vr;
     int index;
 
     skt = bu_calloc( 1, sizeof( struct rt_sketch_internal ), "rt_sketch_internal" );
@@ -3014,58 +3013,62 @@ nmg_wire_edges_to_sketch( struct model *m )
     VSET( skt->u_vec, 1.0, 0.0, 0.0 );
     VSET( skt->v_vec, 0.0, 1.0, 0.0 );
 
-    bu_ptbl_init( &vertices, 64, "vertices for sketch" );
+    vr = create_vert_tree();
     bu_ptbl_init( &segs, 64, "segs for sketch" );
     for ( BU_LIST_FOR( r, nmgregion, &m->r_hd ) ) {
 	for ( BU_LIST_FOR( s, shell, &r->s_hd ) ) {
-	    /* add all the vertices in this shell to the sketch */
-	    bu_ptbl_reset( &vertices );
-	    nmg_vertex_tabulate( &vertices, &s->l.magic );
-	    if ( BU_PTBL_LEN( &vertices ) < 2 ) {
-		/* an empty shell will have a single vertex */
-		continue;
-	    }
-	    index_offset = skt->vert_count;;
-	    skt->vert_count += BU_PTBL_LEN( &vertices );
-	    skt->verts = bu_realloc( skt->verts, skt->vert_count * sizeof( point2d_t ),
-				     "2d points" );
-	    for ( index=0; index < BU_PTBL_LEN( &vertices ); index++ ) {
-		v = (struct vertex *)BU_PTBL_GET( &vertices, index );
-		V2MOVE( skt->verts[index_offset + index], v->vg_p->coord );
-	    }
+            struct edgeuse *eu1;
 
 	    /* add a line segment for each wire edge */
 	    bu_ptbl_reset( &segs );
+            eu1 = NULL;
 	    for ( BU_LIST_FOR( eu, edgeuse, &s->eu_hd ) ) {
 		struct line_seg * lseg;
+                if( eu == eu1 ) {
+                    continue;
+                } else {
+                    eu1 = eu->eumate_p;
+                }
 		BU_GETSTRUCT( lseg, line_seg );
 		lseg->magic = CURVE_LSEG_MAGIC;
 		v = eu->vu_p->v_p;
-		lseg->start = bu_ptbl_locate( &vertices, (long int *)v ) + index_offset;
+                lseg->start = Add_vert( V3ARGS(v->vg_p->coord), vr, tol_sq );
 		v = eu->eumate_p->vu_p->v_p;
-		lseg->end = bu_ptbl_locate( &vertices, (long int *)v ) + index_offset;
+                lseg->end = Add_vert( V3ARGS(v->vg_p->coord), vr, tol_sq );
+                if( verbose ) {
+                    bu_log( "making sketch line seg from #%d (%g %g %g) to #%d (%g %g %g)\n",
+                            lseg->start, V3ARGS( &vr->the_array[lseg->start] ),
+                            lseg->end, V3ARGS( &vr->the_array[lseg->end] ) );
+                }
 		bu_ptbl_ins( &segs, (long int *)lseg );
-	    }
-	    if ( BU_PTBL_LEN( &segs ) < 1 ) {
-		continue;
-	    }
-	    index_offset = skt->skt_curve.seg_count;
-	    skt->skt_curve.seg_count += BU_PTBL_LEN( &segs );
-	    skt->skt_curve.reverse = bu_realloc( skt->skt_curve.reverse,
-						 skt->skt_curve.seg_count * sizeof( int ),
-						 "curve segment reverse" );
-	    memset(skt->skt_curve.reverse, 0, skt->skt_curve.seg_count * sizeof( int ));
-	    skt->skt_curve.segments = bu_realloc( skt->skt_curve.segments,
-						  skt->skt_curve.seg_count * sizeof( genptr_t ),
-						  "curve segments" );
-	    for ( index=0; index<BU_PTBL_LEN( &segs ); index++ ) {
-		genptr_t ptr = BU_PTBL_GET( &segs, index );
-		skt->skt_curve.segments[index+index_offset] = ptr;
 	    }
 	}
     }
 
-    bu_ptbl_free( &vertices );
+    if (BU_PTBL_LEN(&segs) < 1) {
+        bu_free( skt, "rt_sketch_internal" );
+        return NULL;
+    }
+    skt->vert_count = vr->curr_vert;
+    skt->verts = (point2d_t *)bu_malloc(skt->vert_count * sizeof( point2d_t), "skt->verts");
+    for( index = 0 ; index < vr->curr_vert ; index++ ) {
+        skt->verts[index][0] = vr->the_array[index*3];
+        skt->verts[index][1] = vr->the_array[index*3 + 1];
+    }
+    skt->skt_curve.seg_count = BU_PTBL_LEN(&segs);
+    skt->skt_curve.reverse = bu_realloc(skt->skt_curve.reverse,
+            skt->skt_curve.seg_count * sizeof ( int),
+            "curve segment reverse");
+    memset(skt->skt_curve.reverse, 0, skt->skt_curve.seg_count * sizeof ( int));
+    skt->skt_curve.segments = bu_realloc(skt->skt_curve.segments,
+            skt->skt_curve.seg_count * sizeof ( genptr_t),
+            "curve segments");
+    for (index = 0; index < BU_PTBL_LEN(&segs); index++) {
+        genptr_t ptr = BU_PTBL_GET(&segs, index);
+        skt->skt_curve.segments[index] = ptr;
+    }
+
+    free_vert_tree(vr);
     bu_ptbl_free( &segs );
 
     return skt;
@@ -3158,13 +3161,13 @@ main( int argc, char *argv[] )
 		verbose = 1;
 		break;
 	    default:
-		bu_exit(1, usage);
+                bu_exit(1, "%s", usage);
 		break;
 	}
     }
 
     if ( argc - bu_optind < 2 ) {
-	bu_exit( 1, usage );
+        bu_exit(1, "%s", usage);
     }
 
     dxf_file = argv[bu_optind++];
@@ -3303,8 +3306,10 @@ main( int argc, char *argv[] )
 
 	    sprintf( name, "sketch.%d", i );
 	    skt = nmg_wire_edges_to_sketch( layers[i]->m );
-	    mk_sketch( out_fp, name, skt );
-	    (void)mk_addmember( name, &head, NULL, WMOP_UNION );
+            if( skt != NULL ) {
+                mk_sketch(out_fp, name, skt);
+                (void) mk_addmember(name, &head, NULL, WMOP_UNION);
+            }
 #if 0
 	    sprintf( name, "nmg.%d", i );
 	    mk_nmg( out_fp, name, layers[i]->m );
