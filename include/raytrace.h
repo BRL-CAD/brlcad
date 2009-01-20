@@ -2889,6 +2889,8 @@ RT_EXPORT BU_EXTERN(int db_put_external,
 		    (struct bu_external *ep,
 		     struct directory *dp,
 		     struct db_i *dbip));
+
+/* DEPRECATED - use bu_free_external instead */
 RT_EXPORT BU_EXTERN(void db_free_external,
 		    (struct bu_external *ep));
 
