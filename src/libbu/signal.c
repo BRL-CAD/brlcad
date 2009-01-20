@@ -80,10 +80,14 @@ bu_suspend_signal(int signum)
 {
     assert(signum < _BU_MAX_SIGNUM && "signal number out of range");
 
+    if (_bu_signal_func[signum] == _bu_suspend_signal_handler) {
+	return 1;
+    }
+
     _bu_signal_func[signum] = signal(signum, _bu_suspend_signal_handler);
     if (_bu_signal_func[signum] == SIG_ERR) {
 	_bu_signal_func[signum] = (sig_t)0;
-	return 1;
+	return 2;
     }
     _bu_signal_pending[signum] = 0;
     _bu_defer_signal++;
@@ -101,12 +105,19 @@ bu_restore_signal(int signum)
     _bu_defer_signal--;
 
     if (_bu_defer_signal == 0 && _bu_signal_pending[signum] != 0) {
-	sig_t ret = signal(signum, _bu_signal_func[signum]);
+	sig_t ret;
+
+	if (_bu_signal_func[signum] != _bu_suspend_signal_handler) {
+	    /* unexpected state, how did we get here? */
+	    return 1;
+	}
+
+	ret = signal(signum, _bu_signal_func[signum]);
 	_bu_signal_func[signum] = (sig_t)0;
 	_bu_signal_pending[signum] = 0;
 
 	if (ret == SIG_ERR) {
-	    return 1;
+	    return 2;
 	}
 	raise(signum);
     }

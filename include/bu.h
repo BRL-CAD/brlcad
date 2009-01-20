@@ -3050,7 +3050,9 @@ BU_EXPORT BU_EXTERN(char **bu_argv_from_path,
  * bu_restore_signal() is called.  If a signal is received while
  * suspended, it will be raised when/if the signal is restored.
  *
- * Returns non-zero on error with perror set.
+ * Returns non-zero on error (with perror set if signal() failure).
+ * Returns 1 if already suspended.
+ * Returns 2 if signal failure.
  */
 BU_EXPORT BU_EXTERN(int bu_suspend_signal, (int signum));
 
@@ -3062,7 +3064,9 @@ BU_EXPORT BU_EXTERN(int bu_suspend_signal, (int signum));
  * previously installed signal handler will be immediately called
  * albeit only once even if multiple signals were received.
  *
- * Returns non-zero on error with perror set.
+ * Returns non-zero on error (with perror set if signal() failure).
+ * Returns 1 if unexpected suspend state.
+ * Returns 2 if signal failure.
  */
 BU_EXPORT BU_EXTERN(int bu_restore_signal, (int signum));
 
