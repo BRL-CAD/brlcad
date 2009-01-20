@@ -58,8 +58,8 @@
  * various terms of the formula.
  *
  * Returns -
- *	0	REVOLVE is OK
- *	!0	Error in description
+ *	0   REVOLVE is OK
+ *	!0  Error in description
  *
  * Implicit return -
  *	A struct revolve_specific is created, and it's address is stored
@@ -68,16 +68,16 @@
 int
 rt_revolve_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 {
-    struct rt_revolve_internal		*rip;
-    register struct revolve_specific	*rev;
-    const struct bn_tol		*tol = &rtip->rti_tol;
+    struct rt_revolve_internal *rip;
+    register struct revolve_specific *rev;
+    const struct bn_tol *tol = &rtip->rti_tol;
 
-    vect_t	xEnd, yEnd;
+    vect_t xEnd, yEnd;
 
-    int		*endcount;
-    int 	nseg, degree, i, j, k, nends;
+    int *endcount;
+    int nseg, degree, i, j, k, nends;
 
-    fastf_t	bounds[4];	/* { XMIN, XMAX, YMIN, YMAX } */
+    fastf_t bounds[4];	/* { XMIN, XMAX, YMIN, YMAX } */
 
     RT_CK_DB_INTERNAL(ip);
     rip = (struct rt_revolve_internal *)ip->idb_ptr;
@@ -119,7 +119,7 @@ rt_revolve_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip
     nseg = rev->sk->skt_curve.seg_count;
 
     for (i=0; i<nseg; i++) {
-	long		*lng;
+	long *lng;
 	struct line_seg *lsg;
 	struct carc_seg *csg;
 	struct nurb_seg *nsg;
@@ -159,7 +159,7 @@ rt_revolve_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip
     for (i=0, j=0; i<rip->sk->vert_count; i++) {
 	if (endcount[i] % 2 != 0) {
 	    /* add 'i' to list, insertion sort by vert[i][Y] */
-	    for(k=j; k>0; k--) {
+	    for (k=j; k>0; k--) {
 		if ((NEAR_ZERO(rip->sk->verts[i][Y] - rip->sk->verts[endcount[k-1]][Y], SMALL_FASTF)
 		     && rip->sk->verts[i][X] > rip->sk->verts[endcount[k-1]][X])
 		    || (!NEAR_ZERO(rip->sk->verts[i][Y] - rip->sk->verts[endcount[k-1]][Y], SMALL_FASTF)
@@ -219,8 +219,8 @@ rt_revolve_print(const struct soltab *stp)
  * seg will be acquired and filled in.
  *
  * Returns -
- *	0	MISS
- *	>0	HIT
+ *	0   MISS
+ *	>0  HIT
  */
 int
 rt_revolve_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct seg *seghead)
@@ -228,29 +228,29 @@ rt_revolve_shot(struct soltab *stp, struct xray *rp, struct application *ap, str
     register struct revolve_specific *rev =
 	(struct revolve_specific *)stp->st_specific;
     register struct seg *segp;
-    const struct bn_tol	*tol = &ap->a_rt_i->rti_tol;
+    const struct bn_tol *tol = &ap->a_rt_i->rti_tol;
 
     register struct hit *hitp;
-    struct hit		*hits[MAX_HITS], hit[MAX_HITS];
+    struct hit *hits[MAX_HITS], hit[MAX_HITS];
 
-    int 	i, j, nseg, nhits, in, out;
+    int i, j, nseg, nhits, in, out;
 
-    fastf_t	k, m, h, aa, bb;
-    point_t	dp, pr, xlated;
-    vect_t	vr, ur, norm, temp, normS, normE;
+    fastf_t k, m, h, aa, bb;
+    point_t dp, pr, xlated;
+    vect_t vr, ur, norm, temp, normS, normE;
 
-    fastf_t	start, end, min, max, angle;
+    fastf_t start, end, min, max, angle;
 
-    vect_t	dir;
-    point_t	hit1, hit2;
-    point2d_t	hit2d, pt1, pt2, dist;
-    fastf_t	a, b, c, disc, k1, k2, t1, t2, x, y;
-    fastf_t	xmin, xmax, ymin, ymax;
-    long	*lng;
-    struct line_seg	*lsg;
-    struct carc_seg	*csg;
-    struct nurb_seg	*nsg;
-    struct bezier_seg	*bsg;
+    vect_t dir;
+    point_t hit1, hit2;
+    point2d_t hit2d, pt1, pt2, dist;
+    fastf_t a, b, c, disc, k1, k2, t1, t2, x, y;
+    fastf_t xmin, xmax, ymin, ymax;
+    long *lng;
+    struct line_seg *lsg;
+    struct carc_seg *csg;
+    struct nurb_seg *nsg;
+    struct bezier_seg *bsg;
 
     nhits = 0;
 
@@ -446,7 +446,7 @@ rt_revolve_shot(struct soltab *stp, struct xray *rp, struct application *ap, str
 			}
 			if (angle < rev->ang &&
 			    !((angle + M_PI < rev->ang || angle - M_PI > 0)
-			      && rt_sketch_contains(rev->sk, hit2d))){
+			      && rt_sketch_contains(rev->sk, hit2d))) {
 			    if (nhits >= MAX_HITS) return -1; /* too many hits */
 			    hitp = hits[nhits++];
 			    hitp->hit_point[X] = -hit2d[X];
@@ -475,7 +475,7 @@ rt_revolve_shot(struct soltab *stp, struct xray *rp, struct application *ap, str
 			}
 			if (angle < rev->ang &&
 			    !((angle + M_PI < rev->ang || angle - M_PI > 0)
-			      && rt_sketch_contains(rev->sk, hit2d))){
+			      && rt_sketch_contains(rev->sk, hit2d))) {
 			    if (nhits >= MAX_HITS) return -1; /* too many hits */
 			    hitp = hits[nhits++];
 			    hitp->hit_point[X] = -hit2d[X];
@@ -515,7 +515,7 @@ rt_revolve_shot(struct soltab *stp, struct xray *rp, struct application *ap, str
 			    hit2d[X] = -hit2d[X];
 			    if (angle < rev->ang &&
 				!((angle + M_PI < rev->ang || angle - M_PI > 0)
-				  && rt_sketch_contains(rev->sk, hit2d))){
+				  && rt_sketch_contains(rev->sk, hit2d))) {
 				if (nhits >= MAX_HITS) return -1; /* too many hits */
 				hitp = hits[nhits++];
 				hitp->hit_point[X] = -hit2d[X];
@@ -541,7 +541,7 @@ rt_revolve_shot(struct soltab *stp, struct xray *rp, struct application *ap, str
 			    }
 			    if (angle < rev->ang &&
 				!((angle + M_PI < rev->ang || angle - M_PI > 0)
-				  && rt_sketch_contains(rev->sk, hit2d))){
+				  && rt_sketch_contains(rev->sk, hit2d))) {
 				if (nhits >= MAX_HITS) return -1; /* too many hits */
 				hitp = hits[nhits++];
 				hitp->hit_point[X] = -hit2d[X];
@@ -768,8 +768,8 @@ rt_revolve_norm(struct hit *hitp, struct soltab *stp, struct xray *rp)
 {
     register struct revolve_specific *rev =
 	(struct revolve_specific *)stp->st_specific;
-    vect_t	n, nT, xv, yv;
-    fastf_t	angle;
+    vect_t n, nT, xv, yv;
+    fastf_t angle;
 
     VJOIN1(hitp->hit_point, rp->r_pt, hitp->hit_dist, rp->r_dir);
 
@@ -862,13 +862,13 @@ rt_revolve_uv(struct application *ap, struct soltab *stp, struct hit *hitp, stru
     register struct revolve_specific *rev =
 	(struct revolve_specific *)stp->st_specific;
 
-    point_t		hitpoint;
-    fastf_t		angle;
-    long		*lng;
-    struct line_seg	*lsg;
-    struct carc_seg	*csg;
-    struct nurb_seg	*nsg;
-    struct bezier_seg	*bsg;
+    point_t hitpoint;
+    fastf_t angle;
+    long *lng;
+    struct line_seg *lsg;
+    struct carc_seg *csg;
+    struct nurb_seg *nsg;
+    struct bezier_seg *bsg;
 
     VJOIN1(hitpoint, hitp->hit_rayp->r_pt, hitp->hit_dist, hitp->hit_rayp->r_dir);
 
@@ -883,7 +883,7 @@ rt_revolve_uv(struct application *ap, struct soltab *stp, struct hit *hitp, stru
 	case HORIZ_SURF:
 	    hitpoint[Z] = 0;
 
-	    /* Y is the angle: [0,2pi] */
+	    /* Y is the angle: [0, 2pi] */
 	    uvp->uv_u = hitp->hit_vpriv[Y] / rev->ang;
 
 	    /* X is the coord of the endpoint that we're connecting to the revolve axis */
@@ -970,17 +970,17 @@ rt_revolve_class(const struct soltab *stp, const vect_t min, const vect_t max, c
 int
 rt_revolve_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol)
 {
-    struct rt_revolve_internal	*rip;
+    struct rt_revolve_internal *rip;
 
-    int 		nvert, narc, nadd, nseg, i, j, k;
-    point2d_t		*verts;
-    struct curve	*crv;
+    int nvert, narc, nadd, nseg, i, j, k;
+    point2d_t *verts;
+    struct curve *crv;
 
-    vect_t	ell[16], cir[16], ucir[16], height, xdir, ydir, ux, uy, uz, rEnd, xEnd, yEnd;
-    fastf_t	cos22_5 = 0.9238795325112867385,
+    vect_t ell[16], cir[16], ucir[16], height, xdir, ydir, ux, uy, uz, rEnd, xEnd, yEnd;
+    fastf_t cos22_5 = 0.9238795325112867385,
 	cos67_5 = 0.3826834323650898373;
-    int 	*endcount;
-    point_t	add, add2, add3;
+    int *endcount;
+    point_t add, add2, add3;
 
     RT_CK_DB_INTERNAL(ip);
     rip = (struct rt_revolve_internal *)ip->idb_ptr;
@@ -1048,7 +1048,7 @@ rt_revolve_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct r
     nseg = rip->sk->skt_curve.seg_count;
 
     for (i=0; i<nseg; i++) {
-	long		*lng;
+	long *lng;
 	struct line_seg *lsg;
 	struct carc_seg *csg;
 	struct nurb_seg *nsg;
@@ -1093,7 +1093,7 @@ rt_revolve_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct r
 	    VADD3(ell[j], rip->v3d, cir[j], height);
 	}
 	RT_ADD_VLIST(vhead, ell[0], BN_VLIST_LINE_MOVE);
-	for (j=1; j<narc; j++)  {
+	for (j=1; j<narc; j++) {
 	    RT_ADD_VLIST(vhead, ell[j], BN_VLIST_LINE_DRAW);
 	}
 	if (narc < 16) {
@@ -1109,7 +1109,7 @@ rt_revolve_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct r
     for (i=0, j=0; i<rip->sk->vert_count; i++) {
 	if (endcount[i] % 2 != 0) {
 	    /* add 'i' to list, insertion sort by vert[i][Y] */
-	    for(k=j; k>0; k--) {
+	    for (k=j; k>0; k--) {
 		if ((NEAR_ZERO(verts[i][Y] - verts[endcount[k-1]][Y], SMALL_FASTF)
 		     && verts[i][X] > verts[endcount[k-1]][X])
 		    || (!NEAR_ZERO(verts[i][Y] - verts[endcount[k-1]][Y], SMALL_FASTF)
@@ -1178,12 +1178,13 @@ rt_revolve_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct r
     return(0);
 }
 
+
 /**
  * R T _ R E V O L V E _ T E S S
  *
  * Returns -
- *	-1	failure
- *	 0	OK.  *r points to nmgregion that holds this tessellation.
+ *	-1  failure
+ *	 0  OK.  *r points to nmgregion that holds this tessellation.
  */
 int
 rt_revolve_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol)
@@ -1207,15 +1208,15 @@ rt_revolve_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip
  * Apply modeling transformations as well.
  */
 int
-rt_revolve_import5(struct rt_db_internal  *ip, const struct bu_external *ep, const mat_t mat, const struct db_i *dbip, struct resource *resp, const int minor_type)
+rt_revolve_import5(struct rt_db_internal *ip, const struct bu_external *ep, const mat_t mat, const struct db_i *dbip, struct resource *resp, const int minor_type)
 {
-    struct rt_revolve_internal	*rip;
-    fastf_t			vv[ELEMENTS_PER_VECT*3 + 1];
+    struct rt_revolve_internal *rip;
+    fastf_t vv[ELEMENTS_PER_VECT*3 + 1];
 
-    char			*sketch_name;
-    unsigned char		*ptr;
-    struct directory		*dp;
-    struct rt_db_internal	tmp_ip;
+    char *sketch_name;
+    unsigned char *ptr;
+    struct directory *dp;
+    struct rt_db_internal tmp_ip;
 
     RT_CK_DB_INTERNAL(ip)
 	BU_CK_EXTERNAL(ep);
@@ -1284,9 +1285,9 @@ rt_revolve_import5(struct rt_db_internal  *ip, const struct bu_external *ep, con
 int
 rt_revolve_export5(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip)
 {
-    struct rt_revolve_internal	*rip;
-    fastf_t			vec[ELEMENTS_PER_VECT*3 + 1];
-    unsigned char		*ptr;
+    struct rt_revolve_internal *rip;
+    fastf_t vec[ELEMENTS_PER_VECT*3 + 1];
+    unsigned char *ptr;
 
     RT_CK_DB_INTERNAL(ip);
     if (ip->idb_type != ID_REVOLVE)  return(-1);
@@ -1326,9 +1327,9 @@ rt_revolve_export5(struct bu_external *ep, const struct rt_db_internal *ip, doub
 int
 rt_revolve_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose, double mm2local)
 {
-    register struct rt_revolve_internal	*rip =
+    register struct rt_revolve_internal *rip =
 	(struct rt_revolve_internal *)ip->idb_ptr;
-    char	buf[256];
+    char buf[256];
 
     RT_REVOLVE_CK_MAGIC(rip);
     bu_vls_strcat(str, "truncated general revolve (REVOLVE)\n");
@@ -1370,7 +1371,7 @@ rt_revolve_describe(struct bu_vls *str, const struct rt_db_internal *ip, int ver
 void
 rt_revolve_ifree(struct rt_db_internal *ip)
 {
-    register struct rt_revolve_internal	*revolve_ip;
+    register struct rt_revolve_internal *revolve_ip;
 
     RT_CK_DB_INTERNAL(ip);
     revolve_ip = (struct rt_revolve_internal *)ip->idb_ptr;
