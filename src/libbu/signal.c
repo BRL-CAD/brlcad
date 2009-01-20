@@ -37,7 +37,16 @@
 #define _BU_MAX_SIGNUM 128
 
 /* keeps track of whether signal processing is put on hold */
-volatile sig_atomic_t _bu_defer_signal = 0;
+volatile sig_atomic_t _bu_defer_signal[_BU_MAX_SIGNUM] = {
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+};
 
 /* keeps track of whether a signal was received while on hold */
 volatile sig_atomic_t _bu_signal_pending[_BU_MAX_SIGNUM] = {
@@ -70,7 +79,7 @@ volatile sig_t _bu_signal_func[_BU_MAX_SIGNUM] = {
 static void
 _bu_suspend_signal_handler(int signum)
 {
-    if (_bu_defer_signal)
+    if (_bu_defer_signal[signum])
 	_bu_signal_pending[signum]++;
 }
 
@@ -90,7 +99,7 @@ bu_suspend_signal(int signum)
 	return 2;
     }
     _bu_signal_pending[signum] = 0;
-    _bu_defer_signal++;
+    _bu_defer_signal[signum]++;
 
     return 0;
 }
@@ -102,9 +111,9 @@ bu_restore_signal(int signum)
     assert(signum < _BU_MAX_SIGNUM && "signal number out of range");
 
     /* must be before the test to avoid a race condition */
-    _bu_defer_signal--;
+    _bu_defer_signal[signum]--;
 
-    if (_bu_defer_signal == 0 && _bu_signal_pending[signum] != 0) {
+    if (_bu_defer_signal[signum] == 0 && _bu_signal_pending[signum] != 0) {
 	sig_t ret;
 
 	if (_bu_signal_func[signum] != _bu_suspend_signal_handler) {
