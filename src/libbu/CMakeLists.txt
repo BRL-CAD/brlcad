@@ -56,6 +56,7 @@ set(LIBBU_SOURCES
     rb_search.c
     rb_walk.c
     semaphore.c
+    signal.c
     stat.c
     str.c
     tcl.c

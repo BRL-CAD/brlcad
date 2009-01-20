@@ -3043,6 +3043,30 @@ BU_EXPORT BU_EXTERN(char **bu_argv_from_path,
 		    (const char *path, int *ac));
 
 
+/**
+ * Defer signal processing for critical sections.
+ *
+ * Signal processing for a given 'signum' signal is put on hold until
+ * bu_restore_signal() is called.  If a signal is received while
+ * suspended, it will be raised when/if the signal is restored.
+ *
+ * Returns non-zero on error with perror set.
+ */
+BU_EXPORT BU_EXTERN(int bu_suspend_signal, (int signum));
+
+
+/**
+ * Restore signal processing for a given suspended signal.
+ *
+ * If a signal was raised since bu_suspend_signal() was called, the
+ * previously installed signal handler will be immediately called
+ * albeit only once even if multiple signals were received.
+ *
+ * Returns non-zero on error with perror set.
+ */
+BU_EXPORT BU_EXTERN(int bu_restore_signal, (int signum));
+
+
 __END_DECLS
 
 #endif  /* __BU_H__ */
