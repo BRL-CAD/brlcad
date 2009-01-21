@@ -1380,7 +1380,7 @@ manual_autogen ( ) {
 	    $ECHO
 	    $ECHO "Warning:  Unsupported macros were found in $CONFIGURE"
 	    $ECHO
-	    $ECHO "The `echo $CONFIGURE | basename` file was scanned in order to determine if any"
+	    $ECHO "The `basename \"$CONFIGURE\"` file was scanned in order to determine if any"
 	    $ECHO "unsupported macros are used that exceed the minimum version"
 	    $ECHO "settings specified within this file.  As such, the following macros"
 	    $ECHO "should be removed from configure.ac or the version numbers in this"
@@ -1424,7 +1424,7 @@ EOF
 		$ECHO "	$AUTOGEN_SH --verbose"
 	    else
 		$ECHO "reviewing the minimum GNU Autotools version settings contained in"
-		$ECHO "this script along with the macros being used in your `echo $CONFIGURE | basename` file."
+		$ECHO "this script along with the macros being used in your `basename \"$CONFIGURE\"` file."
 	    fi
 	    $ECHO
 	    $ECHO $ECHO_N "Continuing build preparation ... $ECHO_C"
