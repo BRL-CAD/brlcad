@@ -2,11 +2,9 @@
 SUBDIRS = \
 	bench \
 	doc \
-	libcommon \
 	libtexture \
 	libtie \
 	libtienet \
-	libutil \
 	librender \
 	master \
 	misc \
