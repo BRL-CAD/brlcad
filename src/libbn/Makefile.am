@@ -21,6 +21,7 @@ libbn_nil_la_SOURCES = \
 	poly.c \
 	qmath.c \
 	rand.c \
+	randmt.c \
 	scale.c \
 	sphmap.c \
 	symbol.c \

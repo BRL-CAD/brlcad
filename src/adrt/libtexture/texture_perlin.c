@@ -35,7 +35,7 @@
 #define	N	0x1000
 
 
-#define	PRAND (int)(math_rand()*16384)
+#define	PRAND (int)(bn_randmt()*16384)
 #define	S_CURVE(t) (t * t * (3.0 - 2.0 * t))
 #define	AT3(rx, ry, rz) (rx*q.v[0] + ry*q.v[1] + rz*q.v[2]);
 #define	LERP(t, a, b) (a+t*(b-a))

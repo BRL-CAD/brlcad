@@ -136,11 +136,11 @@ void render_path_work(render_t *render, tie_t *tie, tie_ray_t *ray, TIE_3 *pixel
 		bay.v[1] = T.v[2]*bax.v[0];
 		bay.v[2] = T.v[0]*bax.v[1] - T.v[1]*bax.v[0];
 
-		cos_theta = math_rand();
+		cos_theta = bn_randmt();
 		sin_theta = sqrt(cos_theta);
 		cos_theta = 1-cos_theta;
 
-		cos_phi = math_rand() * 2 * M_PI;
+		cos_phi = bn_randmt() * 2 * M_PI;
 		sin_phi = sin(cos_phi);
 		cos_phi = cos(cos_phi);
 

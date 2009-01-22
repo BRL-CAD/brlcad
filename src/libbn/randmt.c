@@ -31,9 +31,8 @@
  * matumoto@math.keio.ac.jp
  */
 
-
-#include "rand.h"
-
+#include "bu.h"
+#include "bn.h"
 
 /* Period parameters */
 #define N 624
@@ -59,7 +58,7 @@ static int mti=N+1;
 
 
 /* initializing the array with a NONZERO seed */
-void math_rand_seed(unsigned long seed) {
+void bn_randmt_seed(unsigned long seed) {
     /*
      * setting initial seeds to mt[N] using
      * the generator Line 25 of Table 1 in
@@ -72,7 +71,7 @@ void math_rand_seed(unsigned long seed) {
 }
 
 
-double math_rand() {
+double bn_randmt() {
     unsigned long y;
     static unsigned long mag01[2]={0x0, MATRIX_A};
 
@@ -82,7 +81,7 @@ double math_rand() {
 
 	/* if sgenrand() has not been called, a default initial seed is used */
 	if (mti == N+1)
-	    math_rand_seed(4357);
+	    bn_randmt_seed(4357);
 
 	for (kk = 0; kk < N-M; kk++) {
 	    y = (mt[kk]&UPPER_MASK)|(mt[kk+1]&LOWER_MASK);

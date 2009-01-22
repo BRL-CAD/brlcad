@@ -1026,6 +1026,31 @@ BN_EXPORT extern void bn_mathtab_constant();
 /** @} */
 
 /*----------------------------------------------------------------------*/
+/* randmt.c */
+/** @addtogroup rnd */
+/** @{ */
+/**
+ * Mersenne Twister random number generation as defined by MT19937.
+ * Moved from src/adrt/libutil/rand.c
+ *
+ * @par Usage:
+ @code
+ double d;
+
+ bn_randmt_seed(integer_seed);
+
+ while (NEED_MORE_RAND_NUMBERS) {
+ d = bn_randmt();
+ }
+ @endcode
+ *
+ */
+
+extern  double  bn_randmt();
+extern  void    bn_randmt_seed(unsigned long seed);
+
+
+/*----------------------------------------------------------------------*/
 /* wavelet.c */
 
 #define CK_POW_2(dimen) { register unsigned long j; register int ok;\
