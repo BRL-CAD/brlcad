@@ -28,7 +28,6 @@
 #include "common.h"
 
 #include <string.h>
-#include <signal.h>
 #ifdef HAVE_SYS_TYPES_H
 #  include <sys/types.h>
 #endif
@@ -230,19 +229,13 @@ db_write(struct db_i *dbip, const genptr_t addr, long int count, long int offset
 	return(-1);
     }
     bu_semaphore_acquire(BU_SEM_SYSCALL);
-    bu_suspend_signal(SIGINT);
-    bu_suspend_signal(SIGHUP);
-    bu_suspend_signal(SIGQUIT);
-    bu_suspend_signal(SIGTSTP);
+    bu_suspend_interrupts();
 
     (void)fseek(dbip->dbi_fp, offset, 0);
     got = fwrite(addr, 1, count, dbip->dbi_fp);
     fflush(dbip->dbi_fp);
 
-    bu_restore_signal(SIGINT);
-    bu_restore_signal(SIGHUP);
-    bu_restore_signal(SIGQUIT);
-    bu_restore_signal(SIGTSTP);
+    bu_restore_interrupts();
     bu_semaphore_release(BU_SEM_SYSCALL);
     if (got != count) {
 	perror("db_write");

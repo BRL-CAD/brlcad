@@ -84,7 +84,21 @@ _bu_suspend_signal_handler(int signum)
 }
 
 
-int
+/**
+ * Defer signal processing for critical sections.
+ *
+ * Signal processing for a given 'signum' signal is put on hold until
+ * bu_restore_signal() is called.  If a signal is received while
+ * suspended, it will be raised when/if the signal is restored.
+ *
+ * Returns non-zero on error (with perror set if signal() failure).
+ * Returns 1 if already suspended.
+ * Returns 2 if signal failure.
+ *
+ * This comment should be moved to bu.h if this HIDDEN function is
+ * publicly exposed.
+ */
+HIDDEN int
 bu_suspend_signal(int signum)
 {
     assert(signum < _BU_MAX_SIGNUM && "signal number out of range");
@@ -105,7 +119,21 @@ bu_suspend_signal(int signum)
 }
 
 
-int
+/**
+ * Restore signal processing for a given suspended signal.
+ *
+ * If a signal was raised since bu_suspend_signal() was called, the
+ * previously installed signal handler will be immediately called
+ * albeit only once even if multiple signals were received.
+ *
+ * Returns non-zero on error (with perror set if signal() failure).
+ * Returns 1 if unexpected suspend state.
+ * Returns 2 if signal failure.
+ *
+ * This comment should be moved to bu.h if this HIDDEN function is
+ * publicly exposed.
+ */
+HIDDEN int
 bu_restore_signal(int signum)
 {
     assert(signum < _BU_MAX_SIGNUM && "signal number out of range");
@@ -131,6 +159,58 @@ bu_restore_signal(int signum)
 	raise(signum);
     }
 
+    return 0;
+}
+
+
+int
+bu_suspend_interrupts()
+{
+    int ret = 0;
+
+#ifdef SIGINT
+    ret += bu_suspend_signal(SIGINT);
+#endif
+#ifdef SIGHUP
+    ret += bu_suspend_signal(SIGHUP);
+#endif
+#ifdef SIGQUIT
+    ret += bu_suspend_signal(SIGQUIT);
+#endif
+#ifdef SIGTSTP
+    ret += bu_suspend_signal(SIGTSTP);
+#endif
+
+    /* should do something sensible on Windows here */
+
+    if (ret > 0)
+	return 1;
+    return 0;
+}
+
+
+int
+bu_restore_interrupts()
+{
+    int ret = 0;
+
+#ifdef SIGINT
+    ret += bu_restore_signal(SIGINT);
+#endif
+#ifdef SIGHUP
+    ret += bu_restore_signal(SIGHUP);
+#endif
+#ifdef SIGQUIT
+    ret += bu_restore_signal(SIGQUIT);
+#endif
+#ifdef SIGTSTP
+    ret += bu_restore_signal(SIGTSTP);
+#endif
+
+    /* should do something sensible on Windows here */
+
+    if (ret > 0)
+	return 1;
     return 0;
 }
 

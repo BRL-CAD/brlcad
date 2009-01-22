@@ -160,11 +160,6 @@ static int isblank(int c) {
 
 typedef void (*sig_t)(int);
 
-/* these signals do not exist in MS Windows even if defined here */
-#define SIGHUP   1
-#define SIGQUIT  3
-#define SIGTSTP 20
-
 /*
  * types
  */
