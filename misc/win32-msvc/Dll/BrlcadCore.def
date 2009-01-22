@@ -307,6 +307,7 @@ rt_vol_ifree
 Add_vert
 clean_vert_tree
 create_vert_tree
+free_vert_tree
 
 wdb_close
 wdb_create_cmd
