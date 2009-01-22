@@ -26,7 +26,6 @@
 
 #include "texture_checker.h"
 #include <stdlib.h>
-#include "umath.h"
 #include "adrt_struct.h"
 
 #include "bu.h"

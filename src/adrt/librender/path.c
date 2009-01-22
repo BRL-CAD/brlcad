@@ -31,12 +31,20 @@
 #include <stdlib.h>
 #include <math.h>
 
-#include "umath.h"
 #include "hit.h"
 #include "adrt_struct.h"
 
 #include "bu.h"
 #include "vmath.h"
+
+
+/* _a is reflected ray, _b is incident ray, _c is normal */
+#define MATH_VEC_REFLECT(_a, _b, _c) { \
+    tfloat _d; \
+    _d = VDOT( _b.v,  _c.v); \
+    VSCALE(_a.v,  _c.v,  2.0*_d); \
+    VSUB2(_a.v,  _b.v,  _a.v); \
+    VUNITIZE(_a.v); }
 
 void render_path_init(render_t *render, int samples) {
     render_path_t *d;
@@ -87,7 +95,7 @@ void render_path_work(render_t *render, tie_t *tie, tie_ray_t *ray, TIE_3 *pixel
 		} else if (new_mesh->attributes->emission > 0.0) {
 		    /* Emitting Light Source */
 		    T = new_mesh->attributes->color;
-		    MATH_VEC_MUL_SCALAR(T, T, new_mesh->attributes->emission);
+		    VSCALE(T.v,  T.v,  new_mesh->attributes->emission);
 		    propogate = 0;
 		} else {
 		    /* Diffuse */
@@ -99,7 +107,7 @@ void render_path_work(render_t *render, tie_t *tie, tie_ray_t *ray, TIE_3 *pixel
 		}
 
 		if (new_ray.depth) {
-		    MATH_VEC_MUL(new_pix, new_pix, T);
+		    VELMUL(new_pix.v,  new_pix.v,  T.v);
 		} else {
 		    new_pix = T;
 		}
@@ -115,13 +123,13 @@ void render_path_work(render_t *render, tie_t *tie, tie_ray_t *ray, TIE_3 *pixel
 		T.v[0] = new_id.norm.v[0] - new_mesh->attributes->gloss*ref.v[0];
 		T.v[1] = new_id.norm.v[1] - new_mesh->attributes->gloss*ref.v[1];
 		T.v[2] = new_id.norm.v[2] - new_mesh->attributes->gloss*ref.v[2];
-		MATH_VEC_UNITIZE(T);
+		VUNITIZE(T.v);
 
 		/* Form Basis X */
 		bax.v[0] = T.v[0] || T.v[1] ? -T.v[1] : 1.0;
 		bax.v[1] = T.v[0];
 		bax.v[2] = 0;
-		MATH_VEC_UNITIZE(bax);
+		VUNITIZE(bax.v);
 
 		/* Form Basis Y, Simplified Cross Product of two unit vectors is a unit vector */
 		bay.v[0] = -T.v[2]*bax.v[1];
@@ -142,7 +150,7 @@ void render_path_work(render_t *render, tie_t *tie, tie_ray_t *ray, TIE_3 *pixel
 		    new_ray.dir.v[n] = (1.0 - new_mesh->attributes->gloss)*T.v[n] + new_mesh->attributes->gloss * ref.v[n];
 		}
 
-		MATH_VEC_UNITIZE(new_ray.dir);
+		VUNITIZE(new_ray.dir.v);
 	    } else {
 		new_pix.v[0] = 0;
 		new_pix.v[1] = 0;
@@ -151,10 +159,10 @@ void render_path_work(render_t *render, tie_t *tie, tie_ray_t *ray, TIE_3 *pixel
 	    }
 	}
 
-	MATH_VEC_ADD(accum, accum, new_pix);
+	VADD2(accum.v,  accum.v,  new_pix.v);
     }
 
-    MATH_VEC_MUL_SCALAR((*pixel), accum, rd->inv_samples);
+    VSCALE((*pixel).v,  accum.v,  rd->inv_samples);
 }
 
 /*

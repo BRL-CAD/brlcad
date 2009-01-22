@@ -32,7 +32,6 @@
 #include "bu.h"
 
 #include "tienet.h"
-#include "umath.h"
 
 #include "load.h"
 
@@ -120,7 +119,7 @@ slave_load_MySQL (uint32_t pid, tie_t *tie, const char *hostname)
 	gind += c;
 
 	/* Assign default attributes */
-	MATH_VEC_SET(slave_load_mesh_list[mind].attributes->color, 0.8, 0.8, 0.8);
+	VSET(slave_load_mesh_list[mind].attributes->color.v, 0.8, 0.8, 0.8);
 
 	/* vertice num */
 	memcpy(&vnum, &((char *)gdata)[gind], sizeof(uint32_t));

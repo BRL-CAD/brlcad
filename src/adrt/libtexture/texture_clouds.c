@@ -26,7 +26,6 @@
 
 #include "texture_clouds.h"
 #include <stdlib.h>
-#include "umath.h"
 #include "adrt_struct.h"
 
 #include "bu.h"

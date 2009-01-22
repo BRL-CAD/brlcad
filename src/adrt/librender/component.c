@@ -59,16 +59,16 @@ void render_component_work(render_t *render, tie_t *tie, tie_ray_t *ray, TIE_3 *
     if ((mesh = (adrt_mesh_t *)tie_work(tie, ray, &id, component_hit, NULL))) {
 	/* Flip normal to face ray origin (via dot product check) */
 	if (ray->dir.v[0] * id.norm.v[0] + ray->dir.v[1] * id.norm.v[1] + ray->dir.v[2] * id.norm.v[2] > 0)
-	    MATH_VEC_MUL_SCALAR(id.norm, id.norm, -1.0);
+	    VSCALE(id.norm.v,  id.norm.v,  -1.0);
 
 	/* shade solid */
 	pixel->v[0] = mesh->flags & ADRT_MESH_HIT ? 0.8 : 0.2;
 	pixel->v[1] = 0.2;
 	pixel->v[2] = mesh->flags & ADRT_MESH_SELECT ? 0.8 : 0.2;
-	MATH_VEC_SUB(vec, ray->pos, id.pos);
-	MATH_VEC_UNITIZE(vec);
-	MATH_VEC_DOT(angle, vec, id.norm);
-	MATH_VEC_MUL_SCALAR((*pixel), (*pixel), (angle*0.8));
+	VSUB2(vec.v,  ray->pos.v,  id.pos.v);
+	VUNITIZE(vec.v);
+	angle = VDOT( vec.v,  id.norm.v);
+	VSCALE((*pixel).v,  (*pixel).v,  (angle*0.8));
     } else if (ray->depth) {
 	pixel->v[0] += 0.2;
 	pixel->v[1] += 0.2;

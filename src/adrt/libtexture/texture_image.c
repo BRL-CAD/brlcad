@@ -29,7 +29,6 @@
 
 #include <stdlib.h>
 #include <string.h>
-#include "umath.h"
 #include "adrt_struct.h"
 
 #include "bu.h"

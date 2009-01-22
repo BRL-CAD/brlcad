@@ -80,16 +80,6 @@
 #define TCOPY(_t, _fv, _fi, _tv, _ti) { \
 	*(_t *)&((uint8_t *)_tv)[_ti] = *(_t *)&((uint8_t *)_fv)[_fi]; }
 
-	/* all these are wrapping vmath.h things now */
-#define	MATH_VEC_SET(_a, _b, _c, _d) VSET(_a.v, _b, _c, _d)
-#define MATH_VEC_CROSS(_a, _b, _c) VCROSS(_a.v, _b.v, _c.v)
-#define	MATH_VEC_UNITIZE(_a) VUNITIZE(_a.v)
-#define MATH_VEC_DOT(_a, _b, _c) _a = VDOT(_b.v, _c.v)
-#define	MATH_VEC_ADD(_a, _b, _c) VADD2(_a.v, _b.v, _c.v)
-#define MATH_VEC_SUB(_a, _b, _c) VSUB2(_a.v, _b.v, _c.v)
-#define	MATH_VEC_MUL(_a, _b, _c) VELMUL(_a.v, _b.v, _c.v)
-#define MATH_VEC_MUL_SCALAR(_a, _b, _c) VSCALE(_a.v, _b.v, _c)
-
 #endif
 
 /*

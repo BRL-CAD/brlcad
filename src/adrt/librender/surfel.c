@@ -103,7 +103,7 @@ void render_surfel_work(render_t *render, tie_t *tie, tie_ray_t *ray, TIE_3 *pix
 	    }
 	}
 
-	MATH_VEC_SET((*pixel), 0.8, 0.8, 0.8);
+	VSET((*pixel).v, 0.8, 0.8, 0.8);
     }
 }
 

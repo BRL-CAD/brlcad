@@ -26,7 +26,6 @@
 
 #include "texture_perlin.h"
 #include <stdlib.h>
-#include "umath.h"
 
 #include "bu.h"
 
@@ -59,7 +58,7 @@ void texture_perlin_init(texture_perlin_t *P) {
 	P->RV[i].v[0] = (tfloat)((PRAND % (2*B)) - B) / B;
 	P->RV[i].v[1] = (tfloat)((PRAND % (2*B)) - B) / B;
 	P->RV[i].v[2] = (tfloat)((PRAND % (2*B)) - B) / B;
-	MATH_VEC_UNITIZE(P->RV[i]);
+	VUNITIZE(P->RV[i].v);
 	P->PV[i] = i;
     }
 
@@ -90,7 +89,7 @@ tfloat texture_perlin_noise3(texture_perlin_t *P, TIE_3 V, tfloat Size, int Dept
     sum = 0;
     for (i = 0; i < Depth; i++) {
 	sum += texture_perlin_omega(P, V);
-	MATH_VEC_MUL_SCALAR(V, V, Size);
+	VSCALE(V.v,  V.v,  Size);
     }
 
     return(sum);

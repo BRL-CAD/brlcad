@@ -72,14 +72,14 @@ void render_cut_init(render_t *render, TIE_3 ray_pos, TIE_3 ray_dir) {
     up.v[1] = 0;
     up.v[2] = 1;
 
-    MATH_VEC_CROSS(normal, ray_dir, up);
-    MATH_VEC_UNITIZE(normal);
+    VCROSS(normal.v,  ray_dir.v,  up.v);
+    VUNITIZE(normal.v);
 
     /* Construct the plane */
     d->plane[0] = normal.v[0];
     d->plane[1] = normal.v[1];
     d->plane[2] = normal.v[2];
-    MATH_VEC_DOT(plane[3], normal, ray_pos); /* up is really new ray_pos */
+    plane[3] = VDOT( normal.v,  ray_pos.v); /* up is really new ray_pos */
     d->plane[3] = -plane[3];
 
     /* Triangle 1 */
@@ -196,7 +196,7 @@ void render_cut_work(render_t *render, tie_t *tie, tie_ray_t *ray, TIE_3 *pixel)
      * If the point after the splitting plane is an inhit, then just shade as usual.
      */
 
-    MATH_VEC_DOT(dot, ray->dir, hit.id.norm);
+    dot = VDOT( ray->dir.v,  hit.id.norm.v);
     /* flip normal */
     dot = fabs(dot);
 
@@ -208,12 +208,12 @@ void render_cut_work(render_t *render, tie_t *tie, tie_ray_t *ray, TIE_3 *pixel)
     } else {
 	/* Mix actual color with white 4:1, shade 50% darker */
 #if 0
-	MATH_VEC_SET(color, 1.0, 1.0, 1.0);
-	MATH_VEC_MUL_SCALAR(color, color, 3.0);
-	MATH_VEC_ADD(color, color, hit.mesh->prop->color);
-	MATH_VEC_MUL_SCALAR(color, color, 0.125);
+	VSET(color.v, 1.0, 1.0, 1.0);
+	VSCALE(color.v,  color.v,  3.0);
+	VADD2(color.v,  color.v,  hit.mesh->prop->color.v);
+	VSCALE(color.v,  color.v,  0.125);
 #else
-	MATH_VEC_SET(color, 0.8, 0.8, 0.7);
+	VSET(color.v, 0.8, 0.8, 0.7);
 #endif
     }
 
@@ -221,14 +221,14 @@ void render_cut_work(render_t *render, tie_t *tie, tie_ray_t *ray, TIE_3 *pixel)
     if (dot < 0) {
 #endif
 	/* Shade using inhit */
-	MATH_VEC_MUL_SCALAR((*pixel), color, (dot*0.90));
+	VSCALE((*pixel).v,  color.v,  (dot*0.90));
 #if 0
     } else {
 	/* shade solid */
-	MATH_VEC_SUB(vec, ray->pos, hit.id.pos);
-	MATH_VEC_UNITIZE(vec);
+	VSUB2(vec.v,  ray->pos.v,  hit.id.pos.v);
+	VUNITIZE(vec.v);
 	angle = vec.v[0]*hit.mod*-hit.plane[0] + vec.v[1]*-hit.mod*hit.plane[1] + vec.v[2]*-hit.mod*hit.plane[2];
-	MATH_VEC_MUL_SCALAR((*pixel), color, (angle*0.90));
+	VSCALE((*pixel).v,  color.v,  (angle*0.90));
     }
 #endif
 

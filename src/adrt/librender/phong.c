@@ -51,10 +51,10 @@ void render_phong_work(render_t *render, tie_t *tie, tie_ray_t *ray, TIE_3 *pixe
 	return;
     }
 
-    MATH_VEC_SUB(vec, ray->pos, id.pos);
-    MATH_VEC_UNITIZE(vec);
-    MATH_VEC_DOT(angle, vec, id.norm);
-    MATH_VEC_MUL_SCALAR((*pixel), (*pixel), angle);
+    VSUB2(vec.v,  ray->pos.v,  id.pos.v);
+    VUNITIZE(vec.v);
+    angle = VDOT( vec.v,  id.norm.v);
+    VSCALE((*pixel).v,  (*pixel).v,  angle);
 }
 
 /*
