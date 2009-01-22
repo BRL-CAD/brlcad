@@ -15,6 +15,10 @@ on-going issues.
 Recent Bugs
 -----------
 
+* xpush fails to properly create a hierarchy leaving some as top-level
+  objects and killing other existing objects resulting in dangling
+  references.
+
 * mged on Mac OS X will crash on an X11 call if compiled against
   system Tcl/Tk (at least on 10.4 linking against 8.4), see TODO
 
