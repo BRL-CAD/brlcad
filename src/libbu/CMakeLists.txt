@@ -28,6 +28,7 @@ set(LIBBU_SOURCES
     htond.c
     htonf.c
     image.c
+    interrupt.c
     ispar.c
     kill.c
     lex.c
@@ -56,7 +57,6 @@ set(LIBBU_SOURCES
     rb_search.c
     rb_walk.c
     semaphore.c
-    signal.c
     stat.c
     str.c
     tcl.c

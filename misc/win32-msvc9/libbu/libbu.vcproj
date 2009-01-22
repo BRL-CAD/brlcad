@@ -677,6 +677,26 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\src\libbu\interrupt.c"
+				>
+				<FileConfiguration
+					Name="$(PlatformName)\$(ConfigurationName)|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						AdditionalIncludeDirectories=""
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="$(PlatformName)\$(ConfigurationName)|x64"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						AdditionalIncludeDirectories=""
+					/>
+				</FileConfiguration>
+			</File>
+			<File
 				RelativePath="..\..\..\src\libbu\ispar.c"
 				>
 				<FileConfiguration
@@ -1221,7 +1241,7 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="..\..\..\src\libbu\signal.c"
+				RelativePath="..\..\..\src\libbu\interrupt.c"
 				>
 				<FileConfiguration
 					Name="$(PlatformName)\$(ConfigurationName)|Win32"
