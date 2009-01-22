@@ -36,6 +36,7 @@
 #include "adrt_struct.h"
 
 #include "bu.h"
+#include "vmath.h"
 
 void render_path_init(render_t *render, int samples) {
     render_path_t *d;
@@ -131,7 +132,7 @@ void render_path_work(render_t *render, tie_t *tie, tie_ray_t *ray, TIE_3 *pixel
 		sin_theta = sqrt(cos_theta);
 		cos_theta = 1-cos_theta;
 
-		cos_phi = math_rand()*MATH_2_PI;
+		cos_phi = math_rand() * 2 * M_PI;
 		sin_phi = sin(cos_phi);
 		cos_phi = cos(cos_phi);
 

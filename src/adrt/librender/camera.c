@@ -125,8 +125,8 @@ static void render_camera_prep_ortho(render_camera_t *camera)
     MATH_VEC_CROSS(side, up, look);
 
     /* Apply tilt to up vector - negate angle to make positive angles clockwise */
-    s = sin(-camera->tilt * MATH_DEG2RAD);
-    c = cos(-camera->tilt * MATH_DEG2RAD);
+    s = sin(-camera->tilt * DEG2RAD);
+    c = cos(-camera->tilt * DEG2RAD);
     MATH_VEC_MUL_SCALAR(up, up, c);
     MATH_VEC_MUL_SCALAR(side, side, s);
     MATH_VEC_ADD(up, up, side);
@@ -181,8 +181,8 @@ static void render_camera_prep_persp(render_camera_t *camera)
     MATH_VEC_CROSS(side, up, look);
 
     /* Apply tilt to up vector - negate angle to make positive angles clockwise */
-    s = sin(-camera->tilt * MATH_DEG2RAD);
-    c = cos(-camera->tilt * MATH_DEG2RAD);
+    s = sin(-camera->tilt * DEG2RAD);
+    c = cos(-camera->tilt * DEG2RAD);
     MATH_VEC_MUL_SCALAR(up, up, c);
     MATH_VEC_MUL_SCALAR(side, side, s);
     MATH_VEC_ADD(up, up, side);
@@ -191,8 +191,8 @@ static void render_camera_prep_persp(render_camera_t *camera)
     MATH_VEC_CROSS(side, up, look);
 
     /* Compute sine and cosine terms for field of view */
-    s = sin(camera->fov*MATH_DEG2RAD);
-    c = cos(camera->fov*MATH_DEG2RAD);
+    s = sin(camera->fov*DEG2RAD);
+    c = cos(camera->fov*DEG2RAD);
 
     /* Up, Look, and Side vectors are complete, generate Top Left reference vector */
     topl.v[0] = s*up.v[0] + camera->aspect*s*side.v[0] + c*look.v[0];
@@ -255,8 +255,8 @@ static void render_camera_prep_persp_dof(render_camera_t *camera)
     MATH_VEC_CROSS(dof_side, dof_up, dof_look);
 
     /* Apply tilt to up vector - negate angle to make positive angles clockwise */
-    sdof = sin(-camera->tilt * MATH_DEG2RAD);
-    cdof = cos(-camera->tilt * MATH_DEG2RAD);
+    sdof = sin(-camera->tilt * DEG2RAD);
+    cdof = cos(-camera->tilt * DEG2RAD);
     MATH_VEC_MUL_SCALAR(dof_up, dof_up, cdof);
     MATH_VEC_MUL_SCALAR(dof_side, dof_side, sdof);
     MATH_VEC_ADD(dof_up, dof_up, dof_side);
@@ -270,13 +270,13 @@ static void render_camera_prep_persp_dof(render_camera_t *camera)
 
     /* Obtain magnitude of reverse look vector */
     MATH_VEC_SUB(dof_look, camera->pos, camera->focus);
-    MATH_VEC_MAG(mag, dof_look);
+    mag = MAGNITUDE(dof_look.v);
     MATH_VEC_UNITIZE(dof_look);
 
 
     /* Compute sine and cosine terms for field of view */
-    sdof = sin(camera->dof*MATH_DEG2RAD);
-    cdof = cos(camera->dof*MATH_DEG2RAD);
+    sdof = sin(camera->dof*DEG2RAD);
+    cdof = cos(camera->dof*DEG2RAD);
 
 
     /* Up, Look, and Side vectors are complete, generate Top Left reference vector */
@@ -332,8 +332,8 @@ static void render_camera_prep_persp_dof(render_camera_t *camera)
 	    MATH_VEC_CROSS(side, up, look);
 
 	    /* Apply tilt to up vector - negate angle to make positive angles clockwise */
-	    sfov = sin(-camera->tilt * MATH_DEG2RAD);
-	    cfov = cos(-camera->tilt * MATH_DEG2RAD);
+	    sfov = sin(-camera->tilt * DEG2RAD);
+	    cfov = cos(-camera->tilt * DEG2RAD);
 	    MATH_VEC_MUL_SCALAR(up, up, cfov);
 	    MATH_VEC_MUL_SCALAR(side, side, sfov);
 	    MATH_VEC_ADD(up, up, side);
@@ -342,8 +342,8 @@ static void render_camera_prep_persp_dof(render_camera_t *camera)
 	    MATH_VEC_CROSS(side, up, look);
 
 	    /* Compute sine and cosine terms for field of view */
-	    sfov = sin(camera->fov*MATH_DEG2RAD);
-	    cfov = cos(camera->fov*MATH_DEG2RAD);
+	    sfov = sin(camera->fov*DEG2RAD);
+	    cfov = cos(camera->fov*DEG2RAD);
 
 
 	    /* Up, Look, and Side vectors are complete, generate Top Left reference vector */
