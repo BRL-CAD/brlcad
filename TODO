@@ -17,6 +17,8 @@ http://sf.net/pm/?group_id=105292
 THESE SHOULD HAPPEN BEFORE THE NEXT RELEASE
 -------------------------------------------
 
+* write mged test script to exhaustively exercise all commands
+
 * test and release!
 
 
