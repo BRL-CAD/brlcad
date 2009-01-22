@@ -947,12 +947,29 @@ typedef double fastf_t;
 /**@{*/
 
 /**
- * bitv_t - The widest fast integer type available, used to implement
- * bit vectors.  On most machines, this is "long", but on some
- * machines a vendor-specific type such as "long long" can give
- * access to wider integers.
+ * bitv_t should be the fastest integer type available for
+ * implementing bit vectors.
+ *
+ * On most machines, this is "long", but on some machines a
+ * compiler/vendor-specific type such as "long long" can give access
+ * to faster integers.  THE SIZE OF bitv_t MUST MATCH BU_BITV_SHIFT
+ * (32-bit type is 5, 64-bit type is 6, see bu_bitv_shift()).
  */
 typedef long bitv_t;
+
+/**
+ * Bit vector shift size
+ *
+ * Should equal to: log(sizeof(bitv_t)*8).  Using bu_bitv_shift() will
+ * return a run-time computed shift size if the size of a bitv_t
+ * changes.  Performance impact is rather minimal for most models but
+ * disabled for a handful of primitives that heavily rely on bit
+ * vectors.
+ */
+#define BU_BITV_SHIFT 5
+
+/** Bit vector mask */
+#define BU_BITV_MASK	((1<<BU_BITV_SHIFT)-1)
 
 /**
  * @brief
@@ -988,12 +1005,6 @@ struct bu_bitv {
  * directly, instead calling the BU_BITV_SHIFT macro instead.
  */
 BU_EXPORT BU_EXTERN(inline unsigned int bu_bitv_shift, ());
-
-/** Bit vector index size */
-#define BU_BITV_SHIFT bu_bitv_shift()
-
-/** Bit vector mask */
-#define BU_BITV_MASK	((1<<BU_BITV_SHIFT)-1)
 
 /*
  * Bit-string manipulators for arbitrarily long bit strings stored as
