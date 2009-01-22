@@ -517,7 +517,7 @@ f_which_shader(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
     CHECK_DBI_NULL;
 
     if ( setjmp( jmp_env ) == 0 )
-	(void)signal( SIGINT, sig3);  /* allow interupts */
+	(void)signal( SIGINT, sig3);  /* allow interrupts */
     else
 	return TCL_OK;
 
@@ -819,7 +819,7 @@ f_tables(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
     numsol = 0;
 
     if ( setjmp( jmp_env ) == 0 ) {
-	/* allow interupts */
+	/* allow interrupts */
 	(void)signal( SIGINT, sig3);  
     } else {
 	bu_vls_free( &cmd );

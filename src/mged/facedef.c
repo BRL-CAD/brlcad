@@ -103,7 +103,7 @@ f_facedef(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
     }
 
     if ( setjmp( jmp_env ) == 0 )
-	(void)signal( SIGINT, sig3);  /* allow interupts */
+	(void)signal( SIGINT, sig3);  /* allow interrupts */
     else
 	return TCL_OK;
 

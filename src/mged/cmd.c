@@ -305,7 +305,7 @@ cmd_ged_more_wrapper(ClientData clientData, Tcl_Interp *interp, int argc, const 
 	return TCL_OK;
 
     if (setjmp(jmp_env) == 0)
-	(void)signal(SIGINT, sig3);  /* allow interupts */
+	(void)signal(SIGINT, sig3);  /* allow interrupts */
     else
 	return TCL_OK;
 
@@ -892,7 +892,7 @@ cmdline(struct bu_vls *vp, int record)
 
 		/* If the command had something to say, print it out. */
 		if (len > 0) {
-		    (void)signal(SIGINT, sig3);  /* allow interupts */
+		    (void)signal(SIGINT, sig3);  /* allow interrupts */
 
 		    bu_log("%s%s", result,
 			   result[len-1] == '\n' ? "" : "\n");

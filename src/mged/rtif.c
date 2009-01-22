@@ -1329,7 +1329,7 @@ f_rmats(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
     (void)signal(SIGINT, cur_sigint);
 #else
     if ( setjmp( jmp_env ) == 0 )
-	(void)signal( SIGINT, sig3);  /* allow interupts */
+	(void)signal( SIGINT, sig3);  /* allow interrupts */
     else
 	return TCL_OK;
 #endif

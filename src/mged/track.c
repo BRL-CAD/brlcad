@@ -100,9 +100,9 @@ f_amtrack(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	return TCL_ERROR;
     }
 
-    /* interupts */
+    /* interrupts */
     if ( setjmp( jmp_env ) == 0 )
-	(void)signal( SIGINT, sig3);  /* allow interupts */
+	(void)signal( SIGINT, sig3);  /* allow interrupts */
     else
 	return TCL_OK;
 
@@ -330,7 +330,7 @@ f_amtrack(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	solname[8] = regname[8] = '\0';
     }
 
-    /* no interupts */
+    /* no interrupts */
     (void)signal( SIGINT, SIG_IGN );
 
     /* find the front track slope to the idler */

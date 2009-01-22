@@ -701,7 +701,7 @@ f_debugmem(ClientData	clientData,
     }
 
     if ( setjmp( jmp_env ) == 0 )
-	(void)signal( SIGINT, sig3 );	/* allow interupts */
+	(void)signal( SIGINT, sig3 );	/* allow interrupts */
     else
 	return TCL_OK;
 
