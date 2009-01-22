@@ -17,8 +17,6 @@ libtieutil_la_LIBADD= \
 noinst_HEADERS = font.h
 
 tieincludedir = $(includedir)/tie
-tieinclude_HEADERS = umath.h rand.h 
-
-EXTRA_DIST=camera.c camera.h umath.c umath.h
+tieinclude_HEADERS = rand.h 
 
 include $(top_srcdir)/misc/Makefile.defs
