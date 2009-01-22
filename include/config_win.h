@@ -155,6 +155,17 @@ static int isblank(int c) {
 }
 
 /*
+ * Signal handling
+ */
+
+typedef void (*sig_t)(int);
+
+/* these signals do not exist in MS Windows even if defined here */
+#define SIGHUP   1
+#define SIGQUIT  3
+#define SIGTSTP 20
+
+/*
  * types
  */
 
