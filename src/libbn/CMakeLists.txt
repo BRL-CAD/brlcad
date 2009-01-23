@@ -15,6 +15,7 @@ set(LIBBN_SOURCES
     poly.c
     qmath.c
     rand.c
+    randmt.c
     scale.c
     sphmap.c
     symbol.c
