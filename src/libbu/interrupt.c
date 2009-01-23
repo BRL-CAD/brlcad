@@ -30,6 +30,8 @@
 #include <signal.h>
 #include <assert.h>
 
+#include "bu.h"
+
 
 /* hard-coded maximum signal number we can defer due to array we're
  * using for quick O(1) access in a single container for all signals.
