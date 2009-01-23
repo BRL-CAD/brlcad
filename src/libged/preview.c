@@ -136,8 +136,7 @@ ged_cm_end(int argc, char **argv)
 	ged_color_soltab((struct solid *)&ged_current_gedp->ged_gdp->gd_headSolid);
     }
 
-    if (ged_current_gedp->ged_refresh_handler != GED_REFRESH_CALLBACK_PTR_NULL &&
-	ged_current_gedp->ged_refresh_clientdata != (void *)0)
+    if (ged_current_gedp->ged_refresh_handler != GED_REFRESH_CALLBACK_PTR_NULL)
 	(*ged_current_gedp->ged_refresh_handler)(ged_current_gedp->ged_refresh_clientdata);
 
     if ( preview_delay > 0 )  {
@@ -195,7 +194,6 @@ ged_setup_rt(struct ged *gedp, register char **vp, int printcmd)
 {
     ged_current_gedp->ged_gdp->gd_rt_cmd_len = vp - ged_current_gedp->ged_gdp->gd_rt_cmd;
     ged_current_gedp->ged_gdp->gd_rt_cmd_len += ged_build_tops(gedp, 
-				     (struct solid *)&gedp->ged_gdp->gd_headSolid,
 				     vp, &ged_current_gedp->ged_gdp->gd_rt_cmd[MAXARGS]);
 
     if (printcmd) {

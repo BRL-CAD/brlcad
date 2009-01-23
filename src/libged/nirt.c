@@ -264,7 +264,6 @@ ged_nirt(struct ged *gedp, int argc, const char *argv[])
 
     /* Note - ged_build_tops sets the last vp to (char *)0 */
     gedp->ged_gdp->gd_rt_cmd_len += ged_build_tops(gedp,
-						   (struct solid *)&gedp->ged_gdp->gd_headSolid,
 						   vp,
 						   &gedp->ged_gdp->gd_rt_cmd[RT_MAXARGS]);
 

@@ -330,7 +330,6 @@ BU_EXTERN (void ged_rt_output_handler,
 	    int	 mask));
 BU_EXTERN (int ged_build_tops,
 	   (struct ged	*gedp,
-	    struct solid	*hsp,
 	    char		**start,
 	    register char	**end));
 
