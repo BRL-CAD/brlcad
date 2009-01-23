@@ -383,6 +383,7 @@ cmd_ged_view_wrapper(ClientData clientData, Tcl_Interp *interp, int argc, const 
     if (ret != BRLCAD_OK)
 	return TCL_ERROR;
 
+    (void)mged_svbase();
     view_state->vs_flag = 1;
 
     return TCL_OK;

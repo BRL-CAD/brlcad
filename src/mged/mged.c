@@ -496,7 +496,6 @@ main(int argc, char **argv)
     BU_LIST_INIT(&MGED_FreeSolid.l);
     BU_LIST_INIT(&rt_g.rtg_vlfree);
     BU_LIST_INIT(&rt_g.rtg_headwdb.l);
-    BU_LIST_INIT(&head_run_rt.l);
 
     memset((void *)&head_cmd_list, 0, sizeof(struct cmd_list));
     BU_LIST_INIT(&head_cmd_list.l);
@@ -2471,6 +2470,13 @@ ged_output_handler(struct ged *gedp, char *line)
     bu_log(line);
 }
 
+static void
+ged_refresh_handler(void *clientdata)
+{
+    view_state->vs_flag = 1;
+    refresh();
+}
+
 /*
  *			F _ O P E N D B
  *
@@ -2709,6 +2715,7 @@ f_opendb(
     GED_INIT(gedp, wdbp);
 
     gedp->ged_output_handler = ged_output_handler;
+    gedp->ged_refresh_handler = ged_refresh_handler;
 
     /*XXX shouldn't need any of this */
 #if 1

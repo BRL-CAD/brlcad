@@ -1120,16 +1120,16 @@ cvt_vlblock_to_solids(
 
     /* Remove any residue colors from a previous overlay w/same name */
     if ( dbip->dbi_read_only )  {
-	av[0] = "d";
+	av[0] = "erase";
 	av[1] = shortname;
 	av[2] = NULL;
-	(void)cmd_ged_erase_wrapper((ClientData)mged_cmdtab, interp, 2, av);
+	(void)ged_erase(gedp, 2, av);
     } else {
 	av[0] = "kill";
 	av[1] = "-f";
 	av[2] = shortname;
 	av[3] = NULL;
-	(void)cmd_ged_erase_wrapper((ClientData)mged_cmdtab, interp, 3, av);
+	(void)ged_kill(gedp, 3, av);
     }
 
     for ( i=0; i < vbp->nused; i++ )  {
