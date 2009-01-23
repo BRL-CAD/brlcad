@@ -45,10 +45,6 @@ THESE ARE LOWER PRIORITY OR FOR FUTURE RELEASES
 * refactor mged's signal handling to make it possible to safely
   interrtupt long-running commands
 
-* add support to 'search' to find objects with a given range of
-  numeric attributes (like finding objects with region_id within a
-  given range or that equal various values)
-
 * add a -color option to all mged commands that draw geometry (B, eid,
   and E come to mind)
 
