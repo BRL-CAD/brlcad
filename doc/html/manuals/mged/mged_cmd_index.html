@@ -2307,7 +2307,7 @@ foo.r_xpand/R
 <P><HR ALIGN="RIGHT"></P>
 </FONT><B><DL>
 <DT><A NAME="oed"></A>oed</B> <I>path_lhs path_rhs</DT>
-</I><DD>The &quot;oed&quot; command places MGED directly into the matrix edit mode.  The <I>path_rhs</I> must be a path to a <A HREF="#SOLID">primitive shape</A>, and <I>path_lhs</I> must be a path to a combination that includes the first component of <I>path_rhs</I> as one of its members.  The edited matrix will be the matrix in the final component of <I>path_lhs</I> that corresponds to the first component of <I>path_rhs</I>.  The last component in <I>path_rhs</I> is used as the reference shape during object editing.</DD>
+</I><DD>The &quot;oed&quot; command places MGED directly into the matrix edit mode.  The <I>path_rhs</I> must be a path to a <A HREF="#SOLID">primitive shape</A>, and <I>path_lhs</I> must be a path to a combination that includes the first component of <I>path_rhs</I> as one of its members. Also, <I>path_rhs/path_lhs<I> must be a path that is currently displayed in mged.  The edited matrix will be the matrix in the final component of <I>path_lhs</I> that corresponds to the first component of <I>path_rhs</I>.  The last component in <I>path_rhs</I> is used as the reference shape during object editing.</DD>
 <FONT SIZE=4><DT>Examples:</DT>
 </FONT><TT><DD>mged&gt;</TT> <B>oed group1/group2 region1/shapea</DD>
 </DL><DIR>
