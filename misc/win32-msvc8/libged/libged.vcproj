@@ -378,6 +378,26 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\src\libged\debugbu.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\src\libged\debugdir.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\src\libged\debuglib.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\src\libged\debugmem.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\src\libged\debugnmg.c"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\src\libged\decompose.c"
 				>
 			</File>

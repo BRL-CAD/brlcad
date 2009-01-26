@@ -41,6 +41,11 @@ libged_nil_la_SOURCES = \
 	copyeval.c \
 	cpi.c \
 	dbip.c \
+	debugbu.c \
+	debugdir.c \
+	debuglib.c \
+	debugmem.c \
+	debugnmg.c \
 	decompose.c \
 	delay.c \
 	dg_obj.c \

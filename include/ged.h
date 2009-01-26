@@ -1387,6 +1387,51 @@ GED_EXPORT BU_EXTERN(int ged_cpi, (struct ged *gedp, int argc, const char *argv[
 GED_EXPORT BU_EXTERN(int ged_dbip, (struct ged *gedp, int argc, const char *argv[]));
 
 /**
+ * Set/get libbu's debug bit vector
+ *
+ * Usage:
+ *     debugbu [hex_code]
+ *     
+ */
+GED_EXPORT BU_EXTERN(int ged_debugbu, (struct ged *gedp, int argc, const char *argv[]));
+
+/**
+ * Dump of the database's directory
+ *
+ * Usage:
+ *     debugdir
+ *     
+ */
+GED_EXPORT BU_EXTERN(int ged_debugdir, (struct ged *gedp, int argc, const char *argv[]));
+
+/**
+ * Set/get librt's debug bit vector
+ *
+ * Usage:
+ *     debuglib [hex_code]
+ *     
+ */
+GED_EXPORT BU_EXTERN(int ged_debuglib, (struct ged *gedp, int argc, const char *argv[]));
+
+/**
+ * Provides user-level access to LIBBU's bu_prmem()
+ *
+ * Usage:
+ *     debugmem
+ *     
+ */
+GED_EXPORT BU_EXTERN(int ged_debugmem, (struct ged *gedp, int argc, const char *argv[]));
+
+/**
+ * Set/get librt's NMG debug bit vector
+ *
+ * Usage:
+ *     debugnmg [hex_code]
+ *     
+ */
+GED_EXPORT BU_EXTERN(int ged_debugnmg, (struct ged *gedp, int argc, const char *argv[]));
+
+/**
  * Decompose nmg_solid into maximally connected shells
  *
  * Usage:

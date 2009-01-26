@@ -321,24 +321,6 @@ Change_name(struct db_i *dbip, struct rt_comb_internal *comb, union tree *comb_l
     comb_leaf->tr_l.tl_name = bu_strdup( new_name );
 }
 
-int
-f_debugdir(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
-{
-    CHECK_DBI_NULL;
-
-    if (argc < 1 || 1 < argc) {
-	struct bu_vls vls;
-
-	bu_vls_init(&vls);
-	bu_vls_printf(&vls, "help debugdir");
-	Tcl_Eval(interp, bu_vls_addr(&vls));
-	bu_vls_free(&vls);
-	return TCL_ERROR;
-    }
-
-    db_pr_dir( dbip );
-    return TCL_OK;
-}
 
 /*
  * Local Variables:
