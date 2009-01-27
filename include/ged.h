@@ -1683,6 +1683,22 @@ GED_EXPORT BU_EXTERN(int ged_gqa, (struct ged *gedp, int argc, const char *argv[
 GED_EXPORT BU_EXTERN(int ged_grid, (struct ged *gedp, int argc, const char *argv[]));
 
 /**
+ * Convert grid coordinates to model coordinates.
+ *
+ * Usage:
+ *     grid2model_lu u v
+ */
+GED_EXPORT BU_EXTERN(int ged_grid2model_lu, (struct ged *gedp, int argc, const char *argv[]));
+
+/**
+ * Convert grid coordinates to view coordinates.
+ *
+ * Usage:
+ *     grid2view_lu u v
+ */
+GED_EXPORT BU_EXTERN(int ged_grid2view_lu, (struct ged *gedp, int argc, const char *argv[]));
+
+/**
  * Create or append objects to a group
  *
  * Usage:
@@ -1916,12 +1932,28 @@ GED_EXPORT BU_EXTERN(int ged_mater, (struct ged *gedp, int argc, const char *arg
 GED_EXPORT BU_EXTERN(int ged_mirror, (struct ged *gedp, int argc, const char *argv[]));
 
 /**
+ * Convert model coordinates to grid coordinates.
+ *
+ * Usage:
+ *     model2grid_lu u v
+ */
+GED_EXPORT BU_EXTERN(int ged_model2grid_lu, (struct ged *gedp, int argc, const char *argv[]));
+
+/**
  * Get the model to view matrix
  *
  * Usage:
  *     model2view
  */
 GED_EXPORT BU_EXTERN(int ged_model2view, (struct ged *gedp, int argc, const char *argv[]));
+
+/**
+ * Convert model coordinates to view coordinates.
+ *
+ * Usage:
+ *     model2view_lu u v
+ */
+GED_EXPORT BU_EXTERN(int ged_model2view_lu, (struct ged *gedp, int argc, const char *argv[]));
 
 /**
  * Move an arb's edge through point
@@ -2621,12 +2653,36 @@ GED_EXPORT BU_EXTERN(int ged_version, (struct ged *gedp, int argc, const char *a
 GED_EXPORT BU_EXTERN(int ged_view, (struct ged *gedp, int argc, const char *argv[]));
 
 /**
+ * Convert view coordinates to grid coordinates.
+ *
+ * Usage:
+ *     view2grid_lu u v
+ */
+GED_EXPORT BU_EXTERN(int ged_view2grid_lu, (struct ged *gedp, int argc, const char *argv[]));
+
+/**
  * Get the view2model matrix.
  *
  * Usage:
  *     view2model
  */
 GED_EXPORT BU_EXTERN(int ged_view2model, (struct ged *gedp, int argc, const char *argv[]));
+
+/**
+ * Convert view coordinates to model coordinates.
+ *
+ * Usage:
+ *     view2model_lu u v
+ */
+GED_EXPORT BU_EXTERN(int ged_view2model_lu, (struct ged *gedp, int argc, const char *argv[]));
+
+/**
+ * Convert a view vector to a model vector.
+ *
+ * Usage:
+ *     view2model_vec u v
+ */
+GED_EXPORT BU_EXTERN(int ged_view2model_vec, (struct ged *gedp, int argc, const char *argv[]));
 
 /**
  * Rotate the view. Note - x, y and z are rotations in view coordinates.

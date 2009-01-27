@@ -152,8 +152,8 @@ struct cmdtab mged_cmdtab[] = {
     {"get_sed_menus", f_get_sedit_menus, GED_FUNC_PTR_NULL},
     {"get_solid_keypoint", f_get_solid_keypoint, GED_FUNC_PTR_NULL},
     {"gqa", cmd_ged_plain_wrapper, ged_gqa},
-    {"grid2model_lu", f_grid2model_lu, GED_FUNC_PTR_NULL},
-    {"grid2view_lu", f_grid2view_lu, GED_FUNC_PTR_NULL},
+    {"grid2model_lu", cmd_ged_plain_wrapper, ged_grid2model_lu},
+    {"grid2view_lu", cmd_ged_plain_wrapper, ged_grid2view_lu},
 #ifdef HIDELINE
     {"H", f_hideline, GED_FUNC_PTR_NULL},
 #endif
@@ -201,9 +201,9 @@ struct cmdtab mged_cmdtab[] = {
     {"mirror", cmd_ged_edit_wrapper, ged_mirror},
     {"mmenu_get", cmd_mmenu_get, GED_FUNC_PTR_NULL},
     {"mmenu_set", cmd_nop, GED_FUNC_PTR_NULL},
-    {"model2grid_lu", f_model2grid_lu, GED_FUNC_PTR_NULL},
+    {"model2grid_lu", cmd_ged_plain_wrapper, ged_model2grid_lu},
     {"model2view", cmd_ged_plain_wrapper, ged_model2view},
-    {"model2view_lu", f_model2view_lu, GED_FUNC_PTR_NULL},
+    {"model2view_lu", cmd_ged_plain_wrapper, ged_model2view_lu},
     {"mrot", cmd_mrot, GED_FUNC_PTR_NULL},
     {"mv", cmd_ged_plain_wrapper, ged_move},
     {"mvall", cmd_ged_plain_wrapper, ged_move_all},
@@ -338,10 +338,10 @@ struct cmdtab mged_cmdtab[] = {
     {"viewget", cmd_viewget, GED_FUNC_PTR_NULL},
     {"viewset", cmd_viewset, GED_FUNC_PTR_NULL},
 #endif
-    {"view2grid_lu", f_view2grid_lu, GED_FUNC_PTR_NULL},
+    {"view2grid_lu", cmd_ged_plain_wrapper, ged_view2grid_lu},
     {"view2model", cmd_ged_plain_wrapper, ged_view2model},
-    {"view2model_lu", f_view2model_lu, GED_FUNC_PTR_NULL},
-    {"view2model_vec", f_view2model_vec, GED_FUNC_PTR_NULL},
+    {"view2model_lu", cmd_ged_plain_wrapper, ged_view2model_lu},
+    {"view2model_vec", cmd_ged_plain_wrapper, ged_view2model_vec},
     {"viewdir", cmd_ged_plain_wrapper, ged_viewdir},
     {"viewsize", cmd_size, GED_FUNC_PTR_NULL},		/* alias "size" for saveview scripts */
     {"vnirt", f_vnirt, GED_FUNC_PTR_NULL},
