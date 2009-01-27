@@ -966,7 +966,7 @@ typedef long bitv_t;
  * disabled for a handful of primitives that heavily rely on bit
  * vectors.
  */
-#define BU_BITV_SHIFT 5
+#define BU_BITV_SHIFT bu_bitv_shift()
 
 /** Bit vector mask */
 #define BU_BITV_MASK	((1<<BU_BITV_SHIFT)-1)
