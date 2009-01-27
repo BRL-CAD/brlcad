@@ -69,6 +69,7 @@ EXTRA_DIST = \
 	master_fetch.sh \
 	master_prep.sh \
 	mged.sh \
+	mged_test.sh \
 	moss.sh \
 	mosspix.asc \
 	nightly.sh \
