@@ -228,8 +228,18 @@ EOF
 #      GEOMETRIC INPUT COMMANDS
 #
 cat in.mged_regress >> mged.mged_regress
-cat make.mged >> mged.mged_regress
+cat make.mged_regress >> mged.mged_regress
 
 #
 #      TRANSLATION/ROTATION COMMANDS
 #
+
+##################################################################
+#
+# Run master script to generate log and .g file for diffing
+#
+##################################################################
+
+$MGED -c mged.g <<EOF >> mged.log 2>&1
+`cat mged.mged_regress`
+EOF
