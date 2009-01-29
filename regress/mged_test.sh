@@ -45,6 +45,31 @@ EOF
 # commands like translate, rot, oed, etc. will be grouped.
 
 
+#
+#                       C L O N E
+#
+
+cat > clone.mged_regress << EOF
+make -s 10 eto_a.s eto
+clone -a 10 10 10 10 eto_a.s
+g clone1.c eto_a.s*
+cp eto_a.s eto_b.s
+clone -b 10 100 100 100 eto_b.s
+g clone2.c eto_b.s*
+cp eto_b.s eto_c.s
+clone -i 30 -m x 10 -n 1 eto_c.s 
+g clone3.c eto_c.s*
+cp eto_c.s eto_d.s
+clone -i 5 -p 30 30 30 -r 10 10 15 -n 20 eto_d.s
+g clone4.c eto_d.s*
+cp eto_d.s eto_e.s
+clone -i 11 -t 1 1 1 -n 20 eto_e.s
+g clone5.c eto_e.s*
+cp clone5.c clone_a.c
+clone -i 2 -p 5 0 10 -r 10 20 30 -n 20 clone_a.c
+g comb_clone.c clone_a.c*
+EOF
+
 
 #
 #                        C O M B 
@@ -61,9 +86,24 @@ comb comb2.c u comb_sph1.s + comb_sph2.s + comb_sph3.s
 comb comb3.c u comb_sph3.s - comb_sph2.s - comb_sph1.s
 comb comb4.c u comb_sph2.s - comb_sph1.s + comb_sph3.s
 c comb5.c u comb_sph2.s - comb_sph1.s + comb_sph3.s
+comb comb6.c u comb2.c + comb1.c u comb3.c u comb4.c - comb5.c
 EOF
 
 
+#
+#                        G 
+#
+# Test commands for g - because g acts on existing primitives,
+# first set up primitives and combinations to act on.
+
+cat > g.mged_regress << EOF
+make -s 10 g_sph1.s sph
+make -s 20 g_sph2.s sph
+make -s 30 g_sph3.s sph
+comb g_comb1.c u comb_sph1.s u comb_sph2.s u comb_sph3.s
+g g1.c g_sph1.s g_sph2.s g_sph3.s
+g g2.c g_sph1.s g_sph2.s g_comb1.c
+EOF
 
 
 #
@@ -272,8 +312,9 @@ EOF
 cat in.mged_regress >> mged.mged_regress
 cat make.mged_regress >> mged.mged_regress
 cat comb.mged_regress >> mged.mged_regress
+cat g.mged_regress >> mged.mged_regress
 cat r.mged_regress >> mged.mged_regress
-
+cat clone.mged_regress >> mged.mged_regress
 #
 #      TRANSLATION/ROTATION COMMANDS
 #
