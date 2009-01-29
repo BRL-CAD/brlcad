@@ -177,6 +177,7 @@ __BEGIN_DECLS
 /* system interface headers */
 #include <setjmp.h> /* for bu_setjmp */
 #include <stddef.h> /* for size_t */
+#include <limits.h> /* for CHAR_BIT */
 
 /* common interface headers */
 #include "tcl.h"	/* Included for Tcl_Interp definition */
@@ -947,15 +948,15 @@ typedef double fastf_t;
 /**@{*/
 
 /**
- * bitv_t should be the fastest integer type available for
- * implementing bit vectors.
+ * bitv_t should be a fast integer type for implementing bit vectors.
  *
- * On most machines, this is "long", but on some machines a
- * compiler/vendor-specific type such as "long long" can give access
- * to faster integers.  THE SIZE OF bitv_t MUST MATCH BU_BITV_SHIFT
- * (32-bit type is 5, 64-bit type is 6, see bu_bitv_shift()).
+ * On many machines, this is a 32-bit "long", but on some machines a
+ * compiler/vendor-specific type such as "long long" or even 'char'
+ * can give access to faster integers.
+ *
+ * THE SIZE OF bitv_t MUST MATCH BU_BITV_SHIFT.
  */
-typedef long bitv_t;
+typedef unsigned char bitv_t;
 
 /**
  * Bit vector shift size
@@ -965,8 +966,22 @@ typedef long bitv_t;
  * changes.  Performance impact is rather minimal for most models but
  * disabled for a handful of primitives that heavily rely on bit
  * vectors.
+ *
+ * (8-bit type: 3, 16-bit type: 4, 32-bit type: 5, 64-bit type: 6)
  */
-#define BU_BITV_SHIFT bu_bitv_shift()
+#ifdef CHAR_BIT
+#  if CHAR_BIT == 8
+#    define BU_BITV_SHIFT 3
+#  elif CHAR_BIT == 16
+#    define BU_BITV_SHIFT 4
+#  elif CHAR_BIT == 32
+#    define BU_BITV_SHIFT 5
+#  elif CHAR_BIT == 64
+#    define BU_BITV_SHIFT 6
+#  endif
+#else
+#  define BU_BITV_SHIFT bu_bitv_shift()
+#endif
 
 /** Bit vector mask */
 #define BU_BITV_MASK	((1<<BU_BITV_SHIFT)-1)

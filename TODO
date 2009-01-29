@@ -19,8 +19,6 @@ THESE SHOULD HAPPEN BEFORE THE NEXT RELEASE
 
 * write mged test script to exhaustively exercise all commands
 
-* refix and test the bit vectors (dag nab it)
-
 * test and release!
 
 
