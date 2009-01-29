@@ -278,7 +278,7 @@ mlib_setup( struct mfuncs **headp,
      * table) and search again.
      */
 
-    bu_log("*ERROR mlib_setup('%s'):  material not known, default assumed %s\n\n",
+    bu_log("WARNING Unknown shader settings on %s\nDefault (plastic) material assumed.\n\n",
 	   material, rp->reg_name );
     if ( material != mdefault )  {
 	material = mdefault;
