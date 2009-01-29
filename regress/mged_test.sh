@@ -46,6 +46,20 @@ EOF
 
 
 #
+#          B U I L D _ R E G I O N
+#
+# build_region requires a large number of target objects with the correct
+# naming conventions - rather than do this manually, clone is used - this
+# means clone should be tested before build_region
+
+cat > build_region.mged_regress << EOF
+make -s 10 br_epa.s epa
+clone -p 20 0 0 -r 0 0 10 -n 36 br_epa.s
+build_region br_epa 0 10000
+build_region -a 42 br_epa 2000 10000
+EOF
+
+#
 #                       C L O N E
 #
 
@@ -89,6 +103,18 @@ c comb5.c u comb_sph2.s - comb_sph1.s + comb_sph3.s
 comb comb6.c u comb2.c + comb1.c u comb3.c u comb4.c - comb5.c
 EOF
 
+#
+#                       C P
+#
+# Shallow object copy - test after make and comb but before
+# clone
+
+cat > cp.mged_regress << EOF
+make -s 1 cp_sph.s sph
+comb cp_comb.c u cp_sph.s
+cp cp_sph.s cp_copy_sph.s
+cp cp_comb.c cp_copy_comb.c
+EOF
 
 #
 #                        G 
@@ -274,6 +300,17 @@ make -s 42 make_trc_s.s trc
 EOF
 
 #
+#                       M V
+#
+cat > mv.mged_regress << EOF
+make -s 40 mv_sph.s sph
+make -s 40 mv_comb_sph.s sph
+comb mv_comb.c u mv_comb_sph.s
+mv mv_sph.s moved_sph.s
+mv mv_comb.c moved_comb.c
+EOF
+
+#
 #                        R 
 #
 # Test commands for r command to build regions - because region building
@@ -314,7 +351,11 @@ cat make.mged_regress >> mged.mged_regress
 cat comb.mged_regress >> mged.mged_regress
 cat g.mged_regress >> mged.mged_regress
 cat r.mged_regress >> mged.mged_regress
+cat cp.mged_regress >> mged.mged_regress
+cat mv.mged_regress >> mged.mged_regress
 cat clone.mged_regress >> mged.mged_regress
+cat build_region.mged_regress >> mged.mged_regress
+
 #
 #      TRANSLATION/ROTATION COMMANDS
 #
