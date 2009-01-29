@@ -960,8 +960,8 @@ typedef long bitv_t;
 /**
  * Bit vector shift size
  *
- * Should equal to: log(sizeof(bitv_t)*8).  Using bu_bitv_shift() will
- * return a run-time computed shift size if the size of a bitv_t
+ * Should equal to: log2(sizeof(bitv_t)*8.0).  Using bu_bitv_shift()
+ * will return a run-time computed shift size if the size of a bitv_t
  * changes.  Performance impact is rather minimal for most models but
  * disabled for a handful of primitives that heavily rely on bit
  * vectors.
