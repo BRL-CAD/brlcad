@@ -45,6 +45,27 @@ EOF
 # commands like translate, rot, oed, etc. will be grouped.
 
 
+
+#
+#                        C O M B 
+#
+# Test commands for c/comb - because comb acts on existing primitives,
+# first set up primitives for comb to act on.
+
+cat > comb.mged_regress << EOF
+make -s 10 comb_sph1.s sph
+make -s 20 comb_sph2.s sph
+make -s 30 comb_sph3.s sph
+comb comb1.c u comb_sph1.s u comb_sph2.s u comb_sph3.s
+comb comb2.c u comb_sph1.s + comb_sph2.s + comb_sph3.s
+comb comb3.c u comb_sph3.s - comb_sph2.s - comb_sph1.s
+comb comb4.c u comb_sph2.s - comb_sph1.s + comb_sph3.s
+c comb5.c u comb_sph2.s - comb_sph1.s + comb_sph3.s
+EOF
+
+
+
+
 #
 #                         I N 
 #
@@ -212,6 +233,27 @@ make -s 42 make_tor_s.s tor
 make -s 42 make_trc_s.s trc
 EOF
 
+#
+#                        R 
+#
+# Test commands for r command to build regions - because region building
+# acts on existing primitives and combinations, first set up primitives
+# and combinations for testing.
+
+cat > r.mged_regress << EOF
+make -s 10 r_sph1.s sph
+make -s 20 r_sph2.s sph
+make -s 30 r_sph3.s sph
+comb r_comb1.c u sph1.s u sph2.s u sph3.s
+comb r_comb2.c u sph1.s + sph2.s + sph3.s
+r r1.r u r_sph1.s u r_sph2.s u r_sph3.s
+r r2.r u r_sph1.s u r_comb1.c
+r r3.r u r_comb1.c u r_comb2.c
+EOF
+
+
+
+
 ##################################################################
 #
 #   Test script assembly - assemble each of the individual
@@ -229,6 +271,8 @@ EOF
 #
 cat in.mged_regress >> mged.mged_regress
 cat make.mged_regress >> mged.mged_regress
+cat comb.mged_regress >> mged.mged_regress
+cat r.mged_regress >> mged.mged_regress
 
 #
 #      TRANSLATION/ROTATION COMMANDS
