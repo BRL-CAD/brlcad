@@ -42,16 +42,15 @@
 
 static const char *mdefault = "default"; /* Name of default material */
 
-/*
- *			M L I B _ A D D _ S H A D E R
+
+/**
+ * M L I B _ A D D _ S H A D E R
  *
- *  Routine to add an array of mfuncs structures to the linked
- *  list of material (shader) routines.
+ * Routine to add an array of mfuncs structures to the linked list of
+ * material (shader) routines.
  */
 void
-mlib_add_shader(headp, mfp1)
-    struct mfuncs **headp;
-    struct mfuncs *mfp1;
+mlib_add_shader(struct mfuncs **headp, struct mfuncs *mfp1)
 {
     register struct mfuncs *mfp;
 
@@ -63,13 +62,14 @@ mlib_add_shader(headp, mfp1)
     }
 }
 
+
 #ifdef HAVE_DLOPEN
-/*
- *  T R Y _ L O A D
+/**
+ * T R Y _ L O A D
  *
- *  Try to load a DSO from the specified path.  If we succeed in opening
- *  the DSO, then retrieve the symbol "shader_mfuncs" and look up the shader
- *  named "material" in the table.
+ * Try to load a DSO from the specified path.  If we succeed in
+ * opening the DSO, then retrieve the symbol "shader_mfuncs" and look
+ * up the shader named "material" in the table.
  */
 static struct mfuncs *
 try_load(const char *path, const char *material, const char *shader_name)
@@ -79,7 +79,6 @@ try_load(const char *path, const char *material, const char *shader_name)
     struct mfuncs *mfp;
     const char *dl_error_str;
     char sym[MAXPATHLEN];
-
 
     if (! (handle = dlopen(path, RTLD_NOW))) {
 	if (R_DEBUG&RDEBUG_MATERIAL)
@@ -126,15 +125,14 @@ try_load(const char *path, const char *material, const char *shader_name)
 }
 
 
-/*
- *  L O A D _ D Y N A M I C _ S H A D E R
+/**
+ * L O A D _ D Y N A M I C _ S H A D E R
  *
- *  Given a shader/material name, try to find a DSO to supply the shader.
- *
+ * Given a shader/material name, try to find a DSO to supply the
+ * shader.
  */
 struct mfuncs *
-load_dynamic_shader(const char *material,
-		    const int mlen)
+load_dynamic_shader(const char *material, const int mlen)
 {
     struct mfuncs *shader_mfuncs = (struct mfuncs *)NULL;
     char libname[MAXPATHLEN];
@@ -202,10 +200,11 @@ load_dynamic_shader(const char *material,
 }
 #endif
 
-/*
- *			M L I B _ S E T U P
+
+/**
+ * M L I B _ S E T U P
  *
- *  Returns -
+ * Returns -
  *	-1	failed
  *	 0	indicates that this region should be dropped
  *	 1	success
@@ -216,9 +215,7 @@ mlib_setup(struct mfuncs **headp,
 	   struct rt_i *rtip)
 {
     register const struct mfuncs *mfp;
-#ifdef HAVE_DLOPEN
-    register struct mfuncs *mfp_new;
-#endif
+    register struct mfuncs *mfp_new = NULL;
     int		ret;
     struct bu_vls	param;
     const char	*material;
@@ -312,10 +309,11 @@ mlib_setup(struct mfuncs **headp,
     return(ret);		/* Good or bad, as mf_setup says */
 }
 
-/*
- *			M L I B _ F R E E
+
+/**
+ * M L I B _ F R E E
  *
- *  Routine to free material-property specific data
+ * Routine to free material-property specific data
  */
 void
 mlib_free(register struct region *rp)
@@ -332,6 +330,7 @@ mlib_free(register struct region *rp)
 	       mfp->mf_magic, MF_MAGIC);
 	return;
     }
+
     if (mfp->mf_free) mfp->mf_free(rp->reg_udata);
     rp->reg_mfuncs = (char *)0;
     rp->reg_udata = (char *)0;
