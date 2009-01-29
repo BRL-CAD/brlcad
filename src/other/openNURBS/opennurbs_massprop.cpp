@@ -256,7 +256,7 @@ bool ON_Sym3x3EigenSolver( double A, double B, double C,
     FF = (cos_phi*cos_phi - sin_phi*sin_phi)*F + sin_phi*cos_phi*(A-C);
   }
 
-  double ee1, ee2, ee3;
+  double ee1 = 0.0, ee2 = 0.0, ee3 = 0.0;
   ON_3dVector EE1, EE2, EE3;
   bool rc = ON_SymTriDiag3x3EigenSolver( AA, BB, CC, DD, EE,
 				    &ee1, EE1,
