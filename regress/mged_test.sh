@@ -44,6 +44,24 @@ EOF
 # special purpose commands like tire, etc.  Similarly, geometry editing
 # commands like translate, rot, oed, etc. will be grouped.
 
+#
+#                  3 P T A R B
+#
+
+cat > 3ptarb.mged_regress << EOF
+3ptarb 3ptarb_test.s 0 0 0 10 0 0 10 10 0 z 0 10 6
+EOF
+
+
+#
+#                  A R B
+#
+
+cat > arb.mged_regress << EOF
+arb arb_test1.s 30 3
+arb arb_test2.s 55 20
+EOF
+
 
 #
 #          B U I L D _ R E G I O N
@@ -115,6 +133,21 @@ comb cp_comb.c u cp_sph.s
 cp cp_sph.s cp_copy_sph.s
 cp cp_comb.c cp_copy_comb.c
 EOF
+
+#
+#                  C P I
+#
+# cpi leaves the new shape in an edit state - for
+# scripting purposes, an accept is added to leave
+# editing state and allow for further operations
+
+cat > cpi.mged_regress << EOF
+in cpi-base-cyl.s rcc 1 2 3 10 10 10 3.5
+cpi cpi-base-cyl.s cpi-cyl.s
+accept
+EOF
+
+
 
 #
 #                        G 
@@ -300,6 +333,70 @@ make -s 42 make_trc_s.s trc
 EOF
 
 #
+#                  M A K E _ B B
+#
+# In order to test this routine for each primitive,
+# the primitives from the make and in command tests will
+# be reused.  BE SURE THE make AND in TESTS RUN BEFORE
+# RUNNING THIS TEST. It also uses comb so run after the
+# comb test.
+
+cat > make_bb.mged_regress << EOF
+make_bb arb4_bb.s make_arb4.s
+make_bb arb5_bb.s make_arb5.s
+make_bb arb6_bb.s make_arb6.s
+make_bb arb7_bb.s make_arb7.s
+make_bb arb8_bb.s make_arb8.s
+make_bb arbn_bb.s make_arbn.s
+make_bb ars_bb.s make_ars.s
+make_bb bot_bb.s make_bot.s
+make_bb ehy_bb.s make_ehy.s
+make_bb ell_bb.s make_ell.s
+make_bb ell1_bb.s make_ell1.s
+make_bb epa_bb.s make_epa.s
+make_bb eto_bb.s make_eto.s
+make_bb extrude_bb.s in_extrude.s
+make_bb grip_bb.s make_grip.s
+make_bb half_bb.s make_half.s
+make_bb nmg_bb.s make_nmg.s
+make_bb part_bb.s make_part.s
+make_bb pipe_bb.s make_pipe.s
+make_bb rcc_bb.s make_rcc.s
+make_bb rec_bb.s make_rec.s
+make_bb rhc_bb.s make_rhc.s
+make_bb rpc_bb.s make_rpc.s
+make_bb rpp_bb.s make_rpp.s
+make_bb sketch_bb.s extrude_test_sketch 
+make_bb sph_bb.s make_sph.s
+make_bb tec_bb.s make_tec.s
+make_bb tgc_bb.s make_tgc.s
+make_bb tor_bb.s make_tor.s
+make_bb trc_bb.s make_trc.s
+comb bb_prim1.c u make_arb4.s u make_arb5.s u make_arb6.s u make_arb7.s u make_arb8.s u make_arbn.s
+make_bb comb_bb1.s bb_prim1.c
+comb bb_prim2.c u make_ars.s u make_bot.s u make_ehy.s u make_ell.s u make_ell1.s u make_epa.s
+make_bb comb_bb2.s bb_prim2.c
+comb bb_prim3.c u make_eto.s u in_extrude.s u make_grip.s u make_nmg.s u make_part.s u make_pipe.s
+make_bb comb_bb3.s bb_prim3.c
+comb bb_prim4.c u make_rcc.s u make_rec.s u make_rhc.s u make_rpc.s u make_rpp.s
+make_bb comb_bb4.s bb_prim4.c
+comb bb_prim5.c u extrude_test_sketch u make_sph.s u make_tec.s u make_tgc.s u make_tor.s u make_trc.s
+make_bb comb_bb5.s bb_prim5.c 
+EOF
+
+
+#
+#                  M I R R O R
+#
+
+cat > mirror.mged_regress << EOF
+
+EOF
+
+
+
+
+#
 #                       M V
 #
 cat > mv.mged_regress << EOF
@@ -309,6 +406,28 @@ comb mv_comb.c u mv_comb_sph.s
 mv mv_sph.s moved_sph.s
 mv mv_comb.c moved_comb.c
 EOF
+
+
+#
+#                       M V A L L
+#
+cat > mvall.mged_regress << EOF
+make -s 40 mvall_sph.s sph
+make -s 40 mvall_comb_sph.s sph
+comb mvall_comb_1.c u mvall_comb_sph.s
+comb moved_all_comb_2.c u mvall_comb_sph.s
+mvall mvall_sph.s movedall_sph.s
+mvall mvall_comb1.c movedall_comb1.c
+mvall mvall_comb_sph.s moved_all_comb_sph.s
+EOF
+
+#
+#                  P R E F I X
+#
+
+cat > prefix.mged_regress << EOF
+EOF
+
 
 #
 #                        R 
@@ -348,11 +467,16 @@ EOF
 #
 cat in.mged_regress >> mged.mged_regress
 cat make.mged_regress >> mged.mged_regress
+cat 3ptarb.mged_regress >> mged.mged_regress
+cat arb.mged_regress >> mged.mged_regress
 cat comb.mged_regress >> mged.mged_regress
 cat g.mged_regress >> mged.mged_regress
 cat r.mged_regress >> mged.mged_regress
+cat make_bb.mged_regress >> mged.mged_regress
 cat cp.mged_regress >> mged.mged_regress
+cat cpi.mged_regress >> mged.mged_regress
 cat mv.mged_regress >> mged.mged_regress
+cat mvall.mged_regress >> mged.mged_regress
 cat clone.mged_regress >> mged.mged_regress
 cat build_region.mged_regress >> mged.mged_regress
 
