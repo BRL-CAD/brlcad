@@ -62,6 +62,30 @@ arb arb_test1.s 30 3
 arb arb_test2.s 55 20
 EOF
 
+#
+#                A R C E D
+#
+cat > arced.mged_regress << EOF
+make arced1.s arb8
+make arced2.s ell
+make arced3.s eto
+comb arced1.c u arced1.s u arced2.s
+comb arced2.c u arced2.s u arced3.s
+arced arced1.c/arced1.s matrix rarc xlate 30 30 5
+l arced1.c
+arced arced1.c/arced2.s matrix rarc rot 5 15 35
+l arced1.c
+arced arced2.c/arced2.s matrix rarc rot 33 33 33
+l arced1.c
+l arced2.c
+arced arced2.c/arced3.s matrix rarc rot 10 10 14
+l arced2.c
+arced arced2.c/arced3.s matrix lmul xlate 13 13 13
+l arced2.c
+arced arced2.c/arced3.s matrix rmul rot 4 4 40
+l arced2.c
+EOF
+
 
 #
 #          B U I L D _ R E G I O N
