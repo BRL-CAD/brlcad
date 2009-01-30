@@ -147,6 +147,61 @@ cpi cpi-base-cyl.s cpi-cyl.s
 accept
 EOF
 
+#
+#     D R A W / E, E R A S E / D and W H O
+#
+# Since erasing something from a view depends on it
+# first being drawn successfully, and restoring the
+# view to its original state after drawing requires
+# erase, combine the tests for these two commands.
+# The who command is needed to see the results of
+# these draw operations from the shell, and can't
+# be meaningfully tested on its own without having
+# something drawn, so include who in this test as well
+cat > draw_erase_who.mged_regress << EOF
+make draw.s sph
+make e.s sph
+e e.s
+draw draw.s
+make d.s sph
+make erase.s sph
+e d.s
+e erase.s
+d d.s
+erase erase.s
+who
+EOF
+
+#
+#                 D R A W
+#
+# Test draw with combinations
+cat > draw.mged_regress << EOF
+make draw_comb_shape.s sph
+comb draw.c u draw_comb_shape.s
+e draw.c
+who
+e draw_comb_shape.s
+who
+erase draw.c
+erase draw_comb_shape.s
+EOF
+
+
+
+#
+#                 E R A S E
+#
+# Test erase with combinations
+cat > erase.mged_regress << EOF
+make erase_comb_shape.s sph
+comb erase.c u erase_comb_shape.s
+e erase.c
+e erase_comb_shape.s
+erase erase.c
+who
+erase erase_comb_shape.s
+EOF
 
 
 #
@@ -390,10 +445,15 @@ EOF
 #
 
 cat > mirror.mged_regress << EOF
-
+make -s 30 mirror_eto1.s eto
+in mirror_eto2.s eto -10 0 0 -1 -1 -1 20 0 3 3 2.5
+comb mirror1.c u mirror_eto1.s u mirror_eto2.s
+mirror -d {1 1 1} -p 100 mirror1.c mirror2.c
+mirror -d {1 1 4} -o {3 2 2} -p 30 mirror1.c mirror3.c
+mirror -x mirror1.c mirror4.c
+mirror -y mirror1.c mirror5.c
+mirror -z mirror1.c mirror6.c
 EOF
-
-
 
 
 #
@@ -420,6 +480,23 @@ mvall mvall_sph.s movedall_sph.s
 mvall mvall_comb1.c movedall_comb1.c
 mvall mvall_comb_sph.s moved_all_comb_sph.s
 EOF
+
+#
+#                      O E D
+#
+cat > oed.mged_regress << EOF
+make oed.s sph
+comb oed1.c u oed.s
+comb oed2.c u oed1.c
+e oed2.c
+status state
+oed oed2.c oed1.c/oed.s
+status state
+accept
+status state
+d oed2.c
+EOF
+
 
 #
 #                  P R E F I X
@@ -450,7 +527,51 @@ r r2.r u r_sph1.s u r_comb1.c
 r r3.r u r_comb1.c u r_comb2.c
 EOF
 
+#
+#                  S E D
+#
+cat > sed.mged_regress << EOF
+make sed.s sph
+e sed.s
+status state
+sed sed.s
+status state
+press accept
+status state
+d sed.s
+EOF
 
+#
+#                  S T A T U S
+#
+cat > status.mged_regress << EOF
+status
+status state
+status Viewscale
+status base2local
+status local2base
+status toViewcenter
+status Viewrot
+status model2view
+status view2model
+status model2objview
+status objview2model
+EOF
+
+#
+#                  W H O
+#
+# Test who with combinations
+cat > who.mged_regress << EOF
+make who1.s sph
+make who2.s sph
+comb who.c u who1.s u who2.s
+e who1.s
+e who.c
+who
+d who.c
+d who1.s
+EOF
 
 
 ##################################################################
@@ -483,10 +604,56 @@ cat mvall.mged_regress >> mged.mged_regress
 cat clone.mged_regress >> mged.mged_regress
 cat build_region.mged_regress >> mged.mged_regress
 cat prefix.mged_regress >> mged.mged_regress
+cat mirror.mged_regress >> mged.mged_regress
 
 #
-#      TRANSLATION/ROTATION COMMANDS
+#     DISPLAYING GEOMETRY - COMMANDS
 #
+cat draw_erase_who.mged_regress >> mged.mged_regress
+cat who.mged_regress >> mged.mged_regress
+cat draw.mged_regress >> mged.mged_regress
+cat erase.mged_regress >> mged.mged_regress
+
+#
+#     EDITING COMMANDS
+#
+cat status.mged_regress >> mged.mged_regress
+cat sed.mged_regress >> mged.mged_regress
+cat oed.mged_regress >> mged.mged_regress
+cat i.mged_regress >> mged.mged_regress
+cat rm.mged_regress >> mged.mged_regress
+cat keypoint.mged_regress >> mged.mged_regress
+cat arced.mged_regress >> mged.mged_regress
+cat .mged_regress >> mged.mged_regress
+cat .mged_regress >> mged.mged_regress
+cat .mged_regress >> mged.mged_regress
+cat .mged_regress >> mged.mged_regress
+cat .mged_regress >> mged.mged_regress
+cat .mged_regress >> mged.mged_regress
+cat .mged_regress >> mged.mged_regress
+cat .mged_regress >> mged.mged_regress
+cat .mged_regress >> mged.mged_regress
+cat .mged_regress >> mged.mged_regress
+cat .mged_regress >> mged.mged_regress
+cat .mged_regress >> mged.mged_regress
+cat .mged_regress >> mged.mged_regress
+cat .mged_regress >> mged.mged_regress
+
+#
+#    VIEW COMMANDS
+#
+cat .mged_regress >> mged.mged_regress
+cat .mged_regress >> mged.mged_regress
+cat .mged_regress >> mged.mged_regress
+cat .mged_regress >> mged.mged_regress
+cat .mged_regress >> mged.mged_regress
+cat .mged_regress >> mged.mged_regress
+cat .mged_regress >> mged.mged_regress
+cat .mged_regress >> mged.mged_regress
+cat .mged_regress >> mged.mged_regress
+
+
+
 
 ##################################################################
 #
