@@ -511,7 +511,7 @@ parse_args(int ac, char *av[])
 				break;
 			    default:
 				bu_vls_printf(&ged_current_gedp->ged_result_str, "Unknown analysis type \"%c\" requested.\n", *p);
-				return BRLCAD_ERROR;
+				return -1;
 			}
 		    }
 		    break;
@@ -520,14 +520,14 @@ parse_args(int ac, char *av[])
 		bu_vls_printf(&ged_current_gedp->ged_result_str, "azimuth not implemented\n");
 		if (sscanf(bu_optarg, "%lg", &azimuth_deg) != 1) {
 		    bu_vls_printf(&ged_current_gedp->ged_result_str, "error parsing azimuth \"%s\"\n", bu_optarg);
-		    return BRLCAD_ERROR;
+		    return -1;
 		}
 		break;
 	    case 'e'	:
 		bu_vls_printf(&ged_current_gedp->ged_result_str, "elevation not implemented\n");
 		if (sscanf(bu_optarg, "%lg", &elevation_deg) != 1) {
 		    bu_vls_printf(&ged_current_gedp->ged_result_str, "error parsing elevation \"%s\"\n", bu_optarg);
-		    return BRLCAD_ERROR;
+		    return -1;
 		}
 		break;
 	    case 'd'	: debug = 1; break;
@@ -551,14 +551,14 @@ parse_args(int ac, char *av[])
 
 		    if (read_units_double(&value1, bu_optarg, units_tab[0])) {
 			bu_vls_printf(&ged_current_gedp->ged_result_str, "error parsing grid spacing value \"%s\"\n", bu_optarg);
-			return BRLCAD_ERROR;
+			return -1;
 		    }
 
 		    if (p) {
 			/* we've got 2 values, they are upper limit and lower limit */
 			if (read_units_double(&value2, p, units_tab[0])) {
 			    bu_vls_printf(&ged_current_gedp->ged_result_str, "error parsing grid spacing limit value \"%s\"\n", p);
-			    return BRLCAD_ERROR;
+			    return -1;
 			}
 
 			gridSpacing = value1;
@@ -577,11 +577,11 @@ parse_args(int ac, char *av[])
 	    case 'G'	:
 		makeOverlapAssemblies = 1;
 		bu_vls_printf(&ged_current_gedp->ged_result_str, "-G option unimplemented\n");
-		return BRLCAD_ERROR;
+		return -1;
 	    case 'n'	:
 		if (sscanf(bu_optarg, "%d", &c) != 1 || c < 0) {
 		    bu_vls_printf(&ged_current_gedp->ged_result_str, "num_hits must be integer value >= 0, not \"%s\"\n", bu_optarg);
-		    return BRLCAD_ERROR;
+		    return -1;
 		}
 
 		require_num_hits = c;
@@ -610,7 +610,7 @@ parse_args(int ac, char *av[])
 	    case 't'	:
 		if (read_units_double(&overlap_tolerance, bu_optarg, units_tab[0])) {
 		    bu_vls_printf(&ged_current_gedp->ged_result_str, "error in overlap tolerance distance \"%s\"\n", bu_optarg);
-		    return BRLCAD_ERROR;
+		    return -1;
 		}
 		break;
 	    case 'v'	:
@@ -619,13 +619,13 @@ parse_args(int ac, char *av[])
 	    case 'V'	:
 		if (read_units_double(&volume_tolerance, bu_optarg, units_tab[1])) {
 		    bu_vls_printf(&ged_current_gedp->ged_result_str, "error in volume tolerance \"%s\"\n", bu_optarg);
-		    return BRLCAD_ERROR;
+		    return -1;
 		}
 		break;
 	    case 'W'	:
 		if (read_units_double(&weight_tolerance, bu_optarg, units_tab[2])) {
 		    bu_vls_printf(&ged_current_gedp->ged_result_str, "error in weight tolerance \"%s\"\n", bu_optarg);
-		    return BRLCAD_ERROR;
+		    return -1;
 		}
 		break;
 
@@ -633,7 +633,7 @@ parse_args(int ac, char *av[])
 		use_air = strtol(bu_optarg, (char **)NULL, 10);
 		if (errno == ERANGE || errno == EINVAL) {
 		    bu_vls_printf(&ged_current_gedp->ged_result_str, "error in air argument\n", bu_optarg);
-		    return BRLCAD_ERROR;
+		    return -1;
 		}
 		break;
 	    case 'u'	:
@@ -654,7 +654,7 @@ parse_args(int ac, char *av[])
 				}
 			    }
 			    bu_vls_printf(&ged_current_gedp->ged_result_str, "Units \"%s\" not found in coversion table\n", units_name[i]);
-			    return BRLCAD_ERROR;
+			    return -1;
 			found_cv:
 			    units[i] = cv;
 			}
@@ -2118,7 +2118,7 @@ ged_gqa(struct ged *gedp, int argc, const char *argv[])
     /* parse command line arguments */
     arg_count = parse_args(argc, (char **)argv);
 
-    if ((argc-arg_count) < 1) {
+    if (arg_count < 0 || (argc-arg_count) < 1) {
 	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return BRLCAD_ERROR;
     }
