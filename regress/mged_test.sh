@@ -426,6 +426,9 @@ EOF
 #
 
 cat > prefix.mged_regress << EOF
+make -s 23 prefix1.s sph
+make -s 23 prefix2.s sph
+prefix has_ prefix*
 EOF
 
 
@@ -479,6 +482,7 @@ cat mv.mged_regress >> mged.mged_regress
 cat mvall.mged_regress >> mged.mged_regress
 cat clone.mged_regress >> mged.mged_regress
 cat build_region.mged_regress >> mged.mged_regress
+cat prefix.mged_regress >> mged.mged_regress
 
 #
 #      TRANSLATION/ROTATION COMMANDS
