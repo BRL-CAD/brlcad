@@ -219,6 +219,15 @@ g g1.c g_sph1.s g_sph2.s g_sph3.s
 g g2.c g_sph1.s g_sph2.s g_comb1.c
 EOF
 
+#
+#                         I
+#
+cat > i.mged_regress << EOF
+make i_prim1.s sph
+make i_prim2.s sph
+comb i_comb.c u i_prim1.s
+i i_prim2.s i_comb.c
+EOF
 
 #
 #                         I N 
@@ -271,8 +280,19 @@ put {extrude_test_sketch} sketch V {10 20 30} A {1 0 0} B {0 1 0} VL { {250 0} {
 in in_extrude.s extrude 0 0 0 0 0 1000 10 0 0 0 10 0 extrude_test_sketch 1 
 EOF
 
-
-
+#
+#            K E Y P O I N T
+#
+cat > keypoint.mged_regress << EOF
+make keypoint.s sph
+e keypoint.s
+sed keypoint.s
+keypoint
+keypoint -10 3 2
+keypoint
+accept
+d keypoint.s
+EOF
 
 
 #
@@ -525,6 +545,17 @@ comb r_comb2.c u sph1.s + sph2.s + sph3.s
 r r1.r u r_sph1.s u r_sph2.s u r_sph3.s
 r r2.r u r_sph1.s u r_comb1.c
 r r3.r u r_comb1.c u r_comb2.c
+EOF
+
+#
+#                  R M
+#
+cat > rm.mged_regress << EOF
+make rm_prim1.s sph
+make rm_prim2.s sph
+comb rm_comb1.c u rm_prim1.s
+comb rm_comb2.c u rm_comb1.c u rm_prim2.s
+rm rm_prim1.s rm_comb2.c
 EOF
 
 #
