@@ -32,6 +32,7 @@ changes made.  See document footer for additional details.
 * new initial manual page for bot_dump - Sean Morrison
 * added editing support for hyperboloid primitive to mged - Cliff Yapp
 * new 'lens' procedural tool for making optical lenses - Cliff Yapp
+* g_tool now guesses if a change was evolutionary - Erik Greenwald
 
 
 ----------------------------------------------------------------------

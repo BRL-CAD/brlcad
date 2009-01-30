@@ -63,6 +63,7 @@ static struct mater *mater_hd2 = MATER_NULL;
 #define	ATTRS	2
 
 static int mode=HUMAN;
+static int evolutionary = 1;
 static Tcl_Interp *interp = NULL;
 static int pre_5_vers=0;
 static int use_floats=0;	/* flag to use floats for comparisons */
@@ -74,7 +75,7 @@ static int version2;
 void
 Usage(char *str)
 {
-    fprintf(stderr, "Usage: %s [-m] file1.g file2.g\n", str);
+    fprintf(stderr, "Usage: %s [-emfv] file1.g file2.g\n", str);
 }
 
 
@@ -297,7 +298,7 @@ compare_values(int type, Tcl_Obj *val1, Tcl_Obj *val2)
 	    }
 	} else {
 	    if (strcmp(str1, str2)) {
-		return 1;
+		return strstr(str2, str1)?2:1;
 	    }
 	}
     }
@@ -313,6 +314,7 @@ do_compare(int type, struct bu_vls *vls, Tcl_Obj *obj1, Tcl_Obj *obj2, char *obj
     int i, j;
     int start_index;
     int found_diffs=0;
+    int ev = 0;
 
     if (Tcl_ListObjLength(interp, obj1, &len1) == TCL_ERROR) {
 	fprintf(stderr, "Error getting length of TCL object!!!\n");
@@ -356,6 +358,7 @@ do_compare(int type, struct bu_vls *vls, Tcl_Obj *obj1, Tcl_Obj *obj2, char *obj
 		bu_exit (1, NULL);
 	    }
 	    if (!strcmp(Tcl_GetStringFromObj(key1, &junk), Tcl_GetStringFromObj(key2, &junk))) {
+
 		found = 1;
 		if (Tcl_ListObjIndex(interp, obj2, j+1, &val2) == TCL_ERROR) {
 		    fprintf(stderr, "Error getting word #%d in TCL object!!! (%s)\n", j+1, Tcl_GetStringFromObj(obj2, &junk));
@@ -364,7 +367,8 @@ do_compare(int type, struct bu_vls *vls, Tcl_Obj *obj1, Tcl_Obj *obj2, char *obj
 		}
 
 		/* check if this value has changed */
-		if (compare_values(type, val1, val2)) {
+		ev = compare_values(type, val1, val2);
+		if ( ev ) {
 		    if (!found_diffs++) {
 			if (mode == HUMAN) {
 			    printf("%s has changed:\n", obj_name);
@@ -508,11 +512,14 @@ do_compare(int type, struct bu_vls *vls, Tcl_Obj *obj1, Tcl_Obj *obj2, char *obj
 	    bu_vls_strcat(vls, Tcl_GetStringFromObj(val2, &junk));
 	    if (val_len > 1)
 		bu_vls_putc(vls, '}');
-
 	    if (type == ATTRS)
 		bu_vls_putc(vls, '\n');
 	}
     }
+
+    if (evolutionary && found_diffs)
+	bu_vls_strcat(vls, ev == 2 ? " (Evolutionary)" : " (Reworked)");
+
     return found_diffs;
 }
 
@@ -916,8 +923,11 @@ main(int argc, char **argv)
 
     invoked_as = argv[0];
 
-    while ((c = bu_getopt(argc, argv, "mfv")) != EOF) {
+    while ((c = bu_getopt(argc, argv, "emfv")) != EOF) {
 	switch (c) {
+	    case 'e':
+		evolutionary = 1;
+		/* no break, evolutionary mode assumes mged readable */
 	    case 'm':	/* mged readable */
 		mode = MGED;
 		break;
