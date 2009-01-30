@@ -679,20 +679,28 @@ cat i.mged_regress >> mged.mged_regress
 cat rm.mged_regress >> mged.mged_regress
 cat keypoint.mged_regress >> mged.mged_regress
 cat arced.mged_regress >> mged.mged_regress
-cat .mged_regress >> mged.mged_regress
-cat .mged_regress >> mged.mged_regress
-cat .mged_regress >> mged.mged_regress
-cat .mged_regress >> mged.mged_regress
-cat .mged_regress >> mged.mged_regress
-cat .mged_regress >> mged.mged_regress
-cat .mged_regress >> mged.mged_regress
-cat .mged_regress >> mged.mged_regress
-cat .mged_regress >> mged.mged_regress
-cat .mged_regress >> mged.mged_regress
-cat .mged_regress >> mged.mged_regress
-cat .mged_regress >> mged.mged_regress
-cat .mged_regress >> mged.mged_regress
-cat .mged_regress >> mged.mged_regress
+
+cat copymat.mged_regress >> mged.mged_regress
+cat putmat.mged_regress >> mged.mged_regress
+cat push.mged_regress >> mged.mged_regress
+cat xpush.mged_regress >> mged.mged_regress
+
+cat accept.mged_regress >> mged.mged_regress
+cat reject.mged_regress >> mged.mged_regress
+cat facedef.mged_regress >> mged.mged_regress
+cat mirface.mged_regress >> mged.mged_regress
+cat permute.mged_regress >> mged.mged_regress
+cat tra.mged_regress >> mged.mged_regress
+cat translate.mged_regress >> mged.mged_regress
+cat sca.mged_regress >> mged.mged_regress
+cat oscale.mged_regress >> mged.mged_regress
+cat extrude.mged_regress >> mged.mged_regress
+cat rot.mged_regress >> mged.mged_regress
+cat orot.mged_regress >> mged.mged_regress
+cat arot.mged_regress >> mged.mged_regress
+cat rotobj.mged_regress >> mged.mged_regress
+cat qorot.mged_regress >> mged.mged_regress
+cat eqn.mged_regress >> mged.mged_regress
 
 #
 #    VIEW COMMANDS
