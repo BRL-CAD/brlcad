@@ -567,6 +567,38 @@ make -s 23 prefix2.s sph
 prefix has_ prefix*
 EOF
 
+#
+#                  P U S H
+#
+cat > push.mged_regress << EOF
+make push1.s arb8
+make push2.s arb7
+comb push_l2.c u push1.s u push2.s
+comb push_l1.c u push_l2.c
+arced push_l1.c/push_l2.c matrix rarc rot 14 14 14
+l push_l1.c
+l push_l2.c
+l push1.s
+l push2.s
+push push_l1.c
+l push_l1.c
+l push_l2.c
+l push1.s
+l push2.s
+EOF
+
+#
+#                  P U T M A T
+#
+cat > putmat.mged_regress << EOF
+make putmat1.s arb5
+make putmat2.s arb6
+comb putmat.c u putmat1.s u putmat2.s
+putmat putmat.c/putmat1.s {1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16}
+putmat putmat.c/putmat2.s {1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16}
+putmat putmat.c/putmat2.s {I}
+l putmat.c
+EOF
 
 #
 #                        R 
@@ -643,6 +675,18 @@ d who.c
 d who1.s
 EOF
 
+#
+#            X P U S H
+#
+cat > xpush.mged_regress << EOF
+make xpush.s arb8
+comb xpush1.c u xpush.s
+comb xpush2.c u xpush.s
+arced xpush1.c/xpush.s matrix rarc rot 14 14 14
+arced xpush2.c/xpush.s matrix rarc rot 24 24 24
+comb xpush_top.c u xpush1.c u xpush2.c
+xpush xpush_top.c
+EOF
 
 ##################################################################
 #
@@ -694,7 +738,6 @@ cat i.mged_regress >> mged.mged_regress
 cat rm.mged_regress >> mged.mged_regress
 cat keypoint.mged_regress >> mged.mged_regress
 cat arced.mged_regress >> mged.mged_regress
-
 cat copymat.mged_regress >> mged.mged_regress
 cat putmat.mged_regress >> mged.mged_regress
 cat push.mged_regress >> mged.mged_regress
