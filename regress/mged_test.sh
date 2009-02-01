@@ -146,6 +146,21 @@ comb comb6.c u comb2.c + comb1.c u comb3.c u comb4.c - comb5.c
 EOF
 
 #
+#               C O P Y M A T
+#
+cat > copymat.mged_regress << EOF
+make copymat.s arb8
+comb copymat1.c u copymat.s
+comb copymat2.c u copymat.s
+arced copymat1.c/copymat.s matrix rarc xlate 10 30 20
+l copymat1.c
+l copymat2.c
+copymat copymat1.c/copymat.s copymat2.c/copymat.s
+l copymat1.c
+l copymat2.c
+EOF
+
+#
 #                       C P
 #
 # Shallow object copy - test after make and comb but before
