@@ -1262,7 +1262,7 @@ rt_hyp_import5(struct rt_db_internal *ip, const struct bu_external *ep, const ma
     MAT4X3VEC(hyp_ip->hyp_A, mat, &vec[2*3]);
 
     hyp_ip->hyp_b = vec[ 9] / mat[15];
-    hyp_ip->hyp_bnr = vec[10] / mat[15];
+    hyp_ip->hyp_bnr = vec[10] ;
 
     return(0);			/* OK */
 }

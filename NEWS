@@ -14,6 +14,7 @@ changes made.  See document footer for additional details.
 --- 2008-XX-XX  Release 7.XX.X                                     ---
 ----------------------------------------------------------------------
 
+* fixed errors in handling of hyp primitive translations - C. Yapp
 * added >, <, >= and <= attr value comparisons in search - C. Yapp
 * fixed double-edged line segment sketch bug in dxf-g - John Anderson
 * mged 'inside' command no longer uses edit state objects - Bob Parker
