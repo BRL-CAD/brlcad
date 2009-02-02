@@ -52,6 +52,18 @@ cat > 3ptarb.mged_regress << EOF
 3ptarb 3ptarb_test.s 0 0 0 10 0 0 10 10 0 z 0 10 6
 EOF
 
+#
+#                  A C C E P T
+#
+cat > accept.mged_regress << EOF
+make accept.s arb8
+sed accept.s
+l accept.s
+tra 10 10 10
+accept
+l accept.s
+EOF
+
 
 #
 #                  A R B
@@ -619,6 +631,18 @@ r r3.r u r_comb1.c u r_comb2.c
 EOF
 
 #
+#                  R E J E C T
+#
+cat > reject.mged_regress << EOF
+make reject.s arb8
+sed reject.s
+l reject.s
+tra 10 10 10
+reject
+l reject.s
+EOF
+
+#
 #                  R M
 #
 cat > rm.mged_regress << EOF
@@ -658,6 +682,20 @@ status model2view
 status view2model
 status model2objview
 status objview2model
+EOF
+
+#
+#                  T R A
+#
+cat > tra.mged_regress << EOF
+make tra.s arb8
+comb tra.c u tra.s
+sed tra.s
+tra 10 -2 4
+accept
+oed / tra.c/tra.s
+tra -3 3 3
+accept
 EOF
 
 #
@@ -745,10 +783,10 @@ cat xpush.mged_regress >> mged.mged_regress
 
 cat accept.mged_regress >> mged.mged_regress
 cat reject.mged_regress >> mged.mged_regress
+cat tra.mged_regress >> mged.mged_regress
 cat facedef.mged_regress >> mged.mged_regress
 cat mirface.mged_regress >> mged.mged_regress
 cat permute.mged_regress >> mged.mged_regress
-cat tra.mged_regress >> mged.mged_regress
 cat translate.mged_regress >> mged.mged_regress
 cat sca.mged_regress >> mged.mged_regress
 cat oscale.mged_regress >> mged.mged_regress
