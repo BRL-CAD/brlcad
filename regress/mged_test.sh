@@ -254,6 +254,27 @@ who
 erase erase_comb_shape.s
 EOF
 
+#
+#                F A C E D E F
+#
+cat > facedef.mged_regress << EOF
+make facedef_a.s arb8
+cp facedef_a.s facedef_b.s
+cp facedef_a.s facedef_c.s
+cp facedef_a.s facedef_d.s
+sed facedef_a.s
+facedef 1234 a 1 .3 0 20
+accept
+sed facedef_b.s
+facedef 2367 b 100 100 0 100 100 100 0 100 0
+accept
+sed facedef_c.s
+facedef 3478 c 20 10 5 0 0
+accept
+sed facedef_d.s
+facedef 1458 d 30 10 10
+accept
+EOF
 
 #
 #                        G 
@@ -510,6 +531,16 @@ comb bb_prim5.c u extrude_test_sketch u make_sph.s u make_tec.s u make_tgc.s u m
 make_bb comb_bb5.s bb_prim5.c 
 EOF
 
+#
+#                  M I R F A C E
+#
+cat > mirface.mged_regress << EOF
+make mirface.s arb8
+sed mirface.s
+tra -10000 0 0
+mirace 1234 x
+accept
+EOF
 
 #
 #                  M I R R O R
@@ -568,6 +599,15 @@ status state
 d oed2.c
 EOF
 
+#
+#                  P E R M U T E
+#
+cat > permute.mged_regres << EOF
+make permute.s arb8
+sed permute.s
+permute 321
+accept
+EOF
 
 #
 #                  P R E F I X
@@ -699,6 +739,29 @@ accept
 EOF
 
 #
+# 		T R A N S L A T E
+#
+cat > translate.mged_regress << EOF
+make translate1.s sph
+make translate2.s eto
+make translate3.s tgc
+comb translate1.c u translate1.s
+comb translate2.c u translate1.s u translate2.s
+sed translate1.s
+translate 100 100 100
+accept
+oed / translate1.c/translate1.s
+translate 200 200 200
+accept
+oed / translate2.c/translate2.s
+translate 300 300 300
+accept
+sed translate3.s
+translate -100 -100 -100
+accept 
+EOF
+
+#
 #                  W H O
 #
 # Test who with combinations
@@ -780,7 +843,6 @@ cat copymat.mged_regress >> mged.mged_regress
 cat putmat.mged_regress >> mged.mged_regress
 cat push.mged_regress >> mged.mged_regress
 cat xpush.mged_regress >> mged.mged_regress
-
 cat accept.mged_regress >> mged.mged_regress
 cat reject.mged_regress >> mged.mged_regress
 cat tra.mged_regress >> mged.mged_regress
@@ -788,6 +850,7 @@ cat facedef.mged_regress >> mged.mged_regress
 cat mirface.mged_regress >> mged.mged_regress
 cat permute.mged_regress >> mged.mged_regress
 cat translate.mged_regress >> mged.mged_regress
+
 cat sca.mged_regress >> mged.mged_regress
 cat oscale.mged_regress >> mged.mged_regress
 cat extrude.mged_regress >> mged.mged_regress
