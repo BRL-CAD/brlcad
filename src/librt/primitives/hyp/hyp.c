@@ -1376,19 +1376,6 @@ rt_hyp_ifree(struct rt_db_internal *ip)
     ip->idb_ptr = GENPTR_NULL;	/* sanity */
 }
 
-/**
- * R T _ H Y P _ X F O R M
- *
- * Create transformed version of internal form.  Free ip if requested.
- * Implement this if it's faster than doing an export/import cycle.
- */
-
-int
-rt_hyp_xform(struct rt_db_internal *op, const mat_t mat, struct rt_db_internal *ip, int free)
-{
-    return(0);
-}
-
 
 /**
  * R T _ H Y P _ P A R A M S
