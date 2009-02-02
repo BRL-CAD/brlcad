@@ -1258,8 +1258,8 @@ rt_hyp_import5(struct rt_db_internal *ip, const struct bu_external *ep, const ma
     /* Apply the modeling transformation */
     if (mat == NULL) mat = bn_mat_identity;
     MAT4X3PNT(hyp_ip->hyp_Vi, mat, &vec[0*3]);
-    MAT4X3PNT(hyp_ip->hyp_Hi, mat, &vec[1*3]);
-    MAT4X3PNT(hyp_ip->hyp_A, mat, &vec[2*3]);
+    MAT4X3VEC(hyp_ip->hyp_Hi, mat, &vec[1*3]);
+    MAT4X3VEC(hyp_ip->hyp_A, mat, &vec[2*3]);
 
     hyp_ip->hyp_b = vec[ 9] / mat[15];
     hyp_ip->hyp_bnr = vec[10] / mat[15];
