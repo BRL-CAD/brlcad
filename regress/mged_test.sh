@@ -57,11 +57,14 @@ EOF
 #
 cat > accept.mged_regress << EOF
 make accept.s arb8
+Z
+e accept.s
 sed accept.s
 l accept.s
 tra 10 10 10
 accept
 l accept.s
+Z
 EOF
 
 
@@ -153,7 +156,7 @@ comb comb1.c u comb_sph1.s u comb_sph2.s u comb_sph3.s
 comb comb2.c u comb_sph1.s + comb_sph2.s + comb_sph3.s
 comb comb3.c u comb_sph3.s - comb_sph2.s - comb_sph1.s
 comb comb4.c u comb_sph2.s - comb_sph1.s + comb_sph3.s
-c comb5.c u comb_sph2.s - comb_sph1.s + comb_sph3.s
+comb comb5.c u comb_sph2.s - comb_sph1.s + comb_sph3.s
 comb comb6.c u comb2.c + comb1.c u comb3.c u comb4.c - comb5.c
 EOF
 
@@ -262,18 +265,27 @@ make facedef_a.s arb8
 cp facedef_a.s facedef_b.s
 cp facedef_a.s facedef_c.s
 cp facedef_a.s facedef_d.s
+Z
+e facedef_a.s
 sed facedef_a.s
 facedef 1234 a 1 .3 0 20
 accept
+Z
+e facedef_b.s
 sed facedef_b.s
 facedef 2367 b 100 100 0 100 100 100 0 100 0
 accept
+Z
+e facedef_c.s
 sed facedef_c.s
 facedef 3478 c 20 10 5 0 0
 accept
+Z
+e facedef_d.s
 sed facedef_d.s
 facedef 1458 d 30 10 10
 accept
+Z
 EOF
 
 #
@@ -536,10 +548,13 @@ EOF
 #
 cat > mirface.mged_regress << EOF
 make mirface.s arb8
+Z
+e mirface.s
 sed mirface.s
 tra -10000 0 0
-mirace 1234 x
+mirface 1234 x
 accept
+Z
 EOF
 
 #
@@ -579,7 +594,7 @@ make -s 40 mvall_comb_sph.s sph
 comb mvall_comb_1.c u mvall_comb_sph.s
 comb moved_all_comb_2.c u mvall_comb_sph.s
 mvall mvall_sph.s movedall_sph.s
-mvall mvall_comb1.c movedall_comb1.c
+mvall mvall_comb_1.c movedall_comb1.c
 mvall mvall_comb_sph.s moved_all_comb_sph.s
 EOF
 
@@ -604,9 +619,12 @@ EOF
 #
 cat > permute.mged_regres << EOF
 make permute.s arb8
+Z
+e permute.s
 sed permute.s
 permute 321
 accept
+Z
 EOF
 
 #
@@ -663,8 +681,8 @@ cat > r.mged_regress << EOF
 make -s 10 r_sph1.s sph
 make -s 20 r_sph2.s sph
 make -s 30 r_sph3.s sph
-comb r_comb1.c u sph1.s u sph2.s u sph3.s
-comb r_comb2.c u sph1.s + sph2.s + sph3.s
+comb r_comb1.c u r_sph1.s u r_sph2.s u r_sph3.s
+comb r_comb2.c u r_sph1.s + r_sph2.s + r_sph3.s
 r r1.r u r_sph1.s u r_sph2.s u r_sph3.s
 r r2.r u r_sph1.s u r_comb1.c
 r r3.r u r_comb1.c u r_comb2.c
@@ -675,11 +693,14 @@ EOF
 #
 cat > reject.mged_regress << EOF
 make reject.s arb8
+Z
+e reject.s
 sed reject.s
 l reject.s
 tra 10 10 10
 reject
 l reject.s
+Z
 EOF
 
 #
@@ -730,12 +751,17 @@ EOF
 cat > tra.mged_regress << EOF
 make tra.s arb8
 comb tra.c u tra.s
+Z
+e tra.s
 sed tra.s
 tra 10 -2 4
 accept
+Z
+e tra.c
 oed / tra.c/tra.s
 tra -3 3 3
 accept
+Z
 EOF
 
 #
@@ -747,18 +773,27 @@ make translate2.s eto
 make translate3.s tgc
 comb translate1.c u translate1.s
 comb translate2.c u translate1.s u translate2.s
+Z
+e translate1.s
 sed translate1.s
 translate 100 100 100
 accept
+Z
+e translate1.c
 oed / translate1.c/translate1.s
 translate 200 200 200
 accept
+Z
+e translate2.c
 oed / translate2.c/translate2.s
 translate 300 300 300
 accept
+Z
+e translate3.s
 sed translate3.s
 translate -100 -100 -100
 accept 
+Z
 EOF
 
 #
