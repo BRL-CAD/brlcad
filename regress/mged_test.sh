@@ -101,6 +101,19 @@ arced arced2.c/arced3.s matrix rmul rot 4 4 40
 l arced2.c
 EOF
 
+#
+#                A R O T
+#
+cat > arot.mged_regress << EOF
+make arot.s arb8
+Z
+e arot.s
+sed arot.s
+arot 1 2 -9 60
+accept
+Z
+EOF
+
 
 #
 #          B U I L D _ R E G I O N
@@ -255,6 +268,19 @@ e erase_comb_shape.s
 erase erase.c
 who
 erase erase_comb_shape.s
+EOF
+
+#
+#       E X T R U D E
+#
+cat > extrude.mged_regress << EOF
+make extrude.s arb8
+Z
+e extrude.s
+sed extrude.s
+extrude 1234 100
+accept
+Z
 EOF
 
 #
@@ -615,6 +641,35 @@ d oed2.c
 EOF
 
 #
+#               O R O T
+#
+cat > orot.mged_regress << EOF
+make orot.s arb8
+comb orot.c u orot.s
+Z
+e orot.c
+oed / orot.c/orot.s
+orot 11 -23 22
+accept
+Z
+EOF
+
+#
+#                O S C A L E
+#
+cat > oscale.mged_regress << EOF
+make oscale.s eto
+comb oscale.c u oscale.s
+Z
+e oscale.c
+oed / oscale.c/oscale.s
+oscale 15
+accept
+Z
+EOF
+
+
+#
 #                  P E R M U T E
 #
 cat > permute.mged_regres << EOF
@@ -671,6 +726,21 @@ l putmat.c
 EOF
 
 #
+#                   Q O R O T
+#
+cat > qorot.mged_regress << EOF
+make qorot.s arb8
+comb qorot.c u qorot.s
+Z
+e qorot.c
+oed / qorot.c/qorot.s
+qorot 2 2 3 10 2 3 40
+qorot -2 3 1 20 20 20 40
+accept
+Z
+EOF
+
+#
 #                        R 
 #
 # Test commands for r command to build regions - because region building
@@ -715,6 +785,52 @@ rm rm_prim1.s rm_comb2.c
 EOF
 
 #
+#                 R O T
+#
+# Test rot command when editing a primitive
+cat > rot_edit.mged_regress << EOF
+make rot.s arb8
+Z
+e rot.s
+sed rot.s
+rot 15 20 -12
+accept
+Z
+EOF
+
+#
+#              R O T O B J
+#
+cat > rotobj.mged_regress << EOF
+make rotobj.s arb7
+comb rotobj.c u rotobj.s
+Z
+e rotobj.c
+oed / rotobj.c/rotobj.s
+rotobj -m 10 10 10
+rotobj -m 10 10 10
+rotobj -v 10 10 10
+rotobj -v 10 10 10
+accept
+Z
+EOF
+
+#
+#                  S C A
+#
+# Test sca command when editing geometry
+
+cat > sca_edit.mged_regress << EOF
+make sca.s arb8
+Z
+e sca.s
+sed sca.s
+sca 10
+accept
+Z
+EOF
+
+#
 #                  S E D
 #
 cat > sed.mged_regress << EOF
@@ -748,7 +864,9 @@ EOF
 #
 #                  T R A
 #
-cat > tra.mged_regress << EOF
+# Test tra command when editing geometry
+
+cat > tra_edit.mged_regress << EOF
 make tra.s arb8
 comb tra.c u tra.s
 Z
@@ -880,21 +998,19 @@ cat push.mged_regress >> mged.mged_regress
 cat xpush.mged_regress >> mged.mged_regress
 cat accept.mged_regress >> mged.mged_regress
 cat reject.mged_regress >> mged.mged_regress
-cat tra.mged_regress >> mged.mged_regress
+cat tra_edit.mged_regress >> mged.mged_regress
 cat facedef.mged_regress >> mged.mged_regress
 cat mirface.mged_regress >> mged.mged_regress
 cat permute.mged_regress >> mged.mged_regress
 cat translate.mged_regress >> mged.mged_regress
-
-cat sca.mged_regress >> mged.mged_regress
+cat sca_edit.mged_regress >> mged.mged_regress
 cat oscale.mged_regress >> mged.mged_regress
 cat extrude.mged_regress >> mged.mged_regress
-cat rot.mged_regress >> mged.mged_regress
+cat rot_edit.mged_regress >> mged.mged_regress
 cat orot.mged_regress >> mged.mged_regress
 cat arot.mged_regress >> mged.mged_regress
 cat rotobj.mged_regress >> mged.mged_regress
 cat qorot.mged_regress >> mged.mged_regress
-cat eqn.mged_regress >> mged.mged_regress
 
 #
 #    VIEW COMMANDS
