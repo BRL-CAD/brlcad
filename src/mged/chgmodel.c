@@ -113,7 +113,7 @@ f_make(ClientData	clientData,
 	av[0] = "draw";
 	av[1] = argv[argc-2];
 	av[2] = NULL;
-	edit_com(argc, argv, 1, 1);
+	edit_com(2, av, 1, 1);
     }
 
     /* Convert to Tcl codes */
