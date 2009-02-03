@@ -56,6 +56,7 @@
 
 /* bu_getopt() options */
 char *options = "A:a:de:f:g:Gn:N:pP:rS:s:t:U:u:vV:W:";
+char *options_str = "[-A A|a|b|e|g|o|v|w] [-a az] [-d] [-e el] [-f densityFile] [-g spacing|upper,lower|upper-lower] [-G] [-n nhits] [-N nviews] [-p] [-P ncpus] [-r] [-S nsamples] [-t overlap_tol] [-U useair] [-u len_units vol_units wt_units] [-v] [-V volume_tol] [-W weight_tol]";
 
 #define ANALYSIS_VOLUME 1
 #define ANALYSIS_WEIGHT 2
@@ -813,7 +814,8 @@ get_densities_from_database(struct rt_i *rtip)
 
     dp = db_lookup(rtip->rti_dbip, "_DENSITIES", LOOKUP_QUIET);
     if (dp == (struct directory *)NULL) {
-	bu_vls_printf(&ged_current_gedp->ged_result_str, "No \"_DENSITIES\" density table object in database\n");
+	bu_vls_printf(&ged_current_gedp->ged_result_str, "No \"_DENSITIES\" density table object in database.");
+	bu_vls_printf(&ged_current_gedp->ged_result_str, " If you do not have density data you can still get adjacent air, bounding box, exposed air, gaps, volume or overlaps by using the -Aa, -Ab, -Ae, -Ag, -Av or -Ao options, respectively.\n");
 	return BRLCAD_ERROR;
     }
 
@@ -2069,7 +2071,7 @@ ged_gqa(struct ged *gedp, int argc, const char *argv[])
     struct cstate state;
     int start_objs; /* index in command line args where geom object list starts */
     struct region_pair *rp;
-    static const char *usage = "[options] object [object ...]";
+    static const char *usage = "object [object ...]";
 
     GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
     GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
@@ -2079,7 +2081,7 @@ ged_gqa(struct ged *gedp, int argc, const char *argv[])
 
     /* must be wanting help */
     if (argc == 1) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s %s", argv[0], options_str, usage);
 	return BRLCAD_HELP;
     }
 
@@ -2119,7 +2121,7 @@ ged_gqa(struct ged *gedp, int argc, const char *argv[])
     arg_count = parse_args(argc, (char **)argv);
 
     if (arg_count < 0 || (argc-arg_count) < 1) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s %s", argv[0], options_str, usage);
 	return BRLCAD_ERROR;
     }
 
