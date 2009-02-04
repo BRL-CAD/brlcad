@@ -95,6 +95,10 @@ if ![info exists mged_default(all_font)] {
     }
 }
 
+if ![info exists mged_default(font_init)] {
+    set mged_default(font_init) ""
+}
+
 if ![info exists font_scheme_data] {
     set font_scheme_data { {fs_button_font button_font Buttons}
 	{fs_entry_font entry_font Entries}
