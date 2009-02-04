@@ -672,7 +672,7 @@ EOF
 #
 #                  P E R M U T E
 #
-cat > permute.mged_regres << EOF
+cat > permute.mged_regress << EOF
 make permute.s arb8
 Z
 e permute.s
@@ -781,7 +781,8 @@ make rm_prim1.s sph
 make rm_prim2.s sph
 comb rm_comb1.c u rm_prim1.s
 comb rm_comb2.c u rm_comb1.c u rm_prim2.s
-rm rm_prim1.s rm_comb2.c
+rm rm_comb2.c rm_prim2.s
+rm rm_comb2.c rm_prim1.s
 EOF
 
 #
