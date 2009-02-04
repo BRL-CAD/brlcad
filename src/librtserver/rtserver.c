@@ -1070,33 +1070,19 @@ JNIEXPORT jint JNICALL Java_mil_army_muves_brlcadservice_impl_BrlcadJNIWrapper_r
     int thread_count, queue_count;
     int i;
     
-    if ( len < 4 ) {
+    if ( len < 2 ) {
 	bu_log( "wrong number of args\n" );
 	return( (jint) 1 );
     }
 
-    /* get number of queues specified by command line */
-    jstring jobj=(jstring)(*env)->GetObjectArrayElement( env, args, 0 );
-    char *str=(char *)(*env)->GetStringUTFChars(env, jobj, 0);
-    queue_count = atoi( str );
-    (*env)->ReleaseStringChars( env, jobj, (const jchar *)str);
-
-
-    /* get number of threads from comamnd line */
-    jobj=(jstring)(*env)->GetObjectArrayElement( env, args, 1 );
-    str=(char *)(*env)->GetStringUTFChars(env, jobj, 0);
-    thread_count = atoi( str );
-    (*env)->ReleaseStringChars( env, jobj, (const jchar *)str);
-
-
     /* get the aruments from the JAVA args object array */
-    jfile_name = (jstring)(*env)->GetObjectArrayElement( env, args, 2 );
+    jfile_name = (jstring)(*env)->GetObjectArrayElement( env, args, 0 );
     file_name = (char *)(*env)->GetStringUTFChars(env, jfile_name, 0);
 
     obj_list = (char **)bu_calloc( num_objects, sizeof( char *), "obj_list" );
     jobj_name = (jstring *)bu_calloc( num_objects, sizeof( jstring ), "jobj_name" );
     for ( i=0; i<num_objects; i++ ) {
-	jobj_name[i] = (jstring)(*env)->GetObjectArrayElement( env, args, i+3 );
+	jobj_name[i] = (jstring)(*env)->GetObjectArrayElement( env, args, i+1 );
 	obj_list[i] = (char *)(*env)->GetStringUTFChars(env, jobj_name[i], 0);
     }
 
@@ -1155,7 +1141,7 @@ JNIEXPORT jobject JNICALL Java_mil_army_muves_brlcadservice_impl_BrlcadJNIWrappe
     max_pt = rts_geometry[sessionId]->rts_mdl_max;
 
     /* get the BoundingBox class */
-    if ( (boundingBox_class=(*env)->FindClass( env, "mil/army/muves/sim/math/BoundingBox" ) ) == NULL ) {
+    if ( (boundingBox_class=(*env)->FindClass( env, "org/brlcad/numerics/BoundingBox" ) ) == NULL ) {
 	fprintf( stderr, "Failed to find BoundingBox class\n" );
 	(*env)->ExceptionDescribe(env);
 	return( (jobject)NULL );
@@ -1163,14 +1149,14 @@ JNIEXPORT jobject JNICALL Java_mil_army_muves_brlcadservice_impl_BrlcadJNIWrappe
 
     /* get the BoundingBox constructor id */
     if ( (boundingBox_constructor_id=(*env)->GetMethodID( env, boundingBox_class, "<init>",
-							  "(Lmil/army/muves/sim/math/Point;Lmil/army/muves/sim/math/Point;)V" ) ) == NULL ) {
+							  "(Lorg/brlcad/numerics/Point;Lorg/brlcad/numerics/Point;)V" ) ) == NULL ) {
 	fprintf( stderr, "Failed to find BoundingBox constructor method id\n" );
 	(*env)->ExceptionDescribe(env);
 	return( (jobject)NULL );
     }
 
     /* get the Point class */
-    if ( (point_class=(*env)->FindClass( env, "mil/army/muves/sim/math/Point" ) ) == NULL ) {
+    if ( (point_class=(*env)->FindClass( env, "org/brlcad/numerics/Point" ) ) == NULL ) {
 	fprintf( stderr, "Failed to find Point class\n" );
 	(*env)->ExceptionDescribe(env);
 	return( (jobject)NULL );
@@ -1405,33 +1391,33 @@ JNIEXPORT jbyteArray JNICALL Java_mil_army_muves_brlcadservice_impl_BrlcadJNIWra
     struct bu_vlb *vlb;
     unsigned char buffer[SIZEOF_NETWORK_DOUBLE*3];
 
-    if ( (rayClass=(*env)->FindClass( env, "mil/army/muves/sim/math/Ray" ) ) == NULL ) {
+    if ( (rayClass=(*env)->FindClass( env, "org/brlcad/numerics/Ray" ) ) == NULL ) {
 	fprintf( stderr, "Failed to find Ray class\n" );
 	(*env)->ExceptionDescribe(env);
 	return( (jobject)NULL );
     }
     
-    fidStart = (*env)->GetFieldID( env, rayClass, "start", "Lmil/army/muves/sim/math/Point;" );
+    fidStart = (*env)->GetFieldID( env, rayClass, "start", "Lorg/brlcad/numerics/Point;" );
     if ( fidStart == 0 && (*env)->ExceptionOccurred(env) ) {
 	fprintf( stderr, "Exception thrown while getting fid of ray start point\n" );
 	(*env)->ExceptionDescribe(env);
 	return( (jobject)NULL );
     }
     
-    fidDirection = (*env)->GetFieldID( env, rayClass, "direction", "Lmil/army/muves/sim/math/Vector3;" );
+    fidDirection = (*env)->GetFieldID( env, rayClass, "direction", "Lorg/brlcad/numerics/Vector3;" );
     if ( fidDirection == 0 && (*env)->ExceptionOccurred(env) ) {
 	fprintf( stderr, "Exception thrown while getting fid of ray direction vector\n" );
 	(*env)->ExceptionDescribe(env);
 	return( (jobject)NULL );
     }
     
-    if ( (pointClass=(*env)->FindClass( env, "mil/army/muves/sim/math/Point" ) ) == NULL ) {
+    if ( (pointClass=(*env)->FindClass( env, "org/brlcad/numerics/Point" ) ) == NULL ) {
 	fprintf( stderr, "Failed to find Point class\n" );
 	(*env)->ExceptionDescribe(env);
 	return( (jobject)NULL );
     }
     
-    if ( (vector3Class=(*env)->FindClass( env, "mil/army/muves/sim/math/Vector3" ) ) == NULL ) {
+    if ( (vector3Class=(*env)->FindClass( env, "org/brlcad/numerics/Vector3" ) ) == NULL ) {
 	fprintf( stderr, "Failed to find Vector3 class\n" );
 	(*env)->ExceptionDescribe(env);
 	return( (jobject)NULL );
