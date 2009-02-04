@@ -451,6 +451,16 @@ accept
 d keypoint.s
 EOF
 
+#
+#		L O O K A T
+#
+cat > lookat.mged_regress << EOF
+view quat
+lookat 50 30 33
+view quat
+EOF
+
+
 
 #
 #                          M A K E
@@ -901,6 +911,29 @@ d sed.s
 EOF
 
 #
+#		S E T
+#
+# For the moment, testing the setting of perspective
+# only (present on quick reference card).
+
+cat > set_perspective.mged_regress << EOF
+set perspective
+set perspective 3.3
+set perspective
+set perspective -1
+set perspective
+EOF
+
+#
+#		S I Z E
+#
+cat > size.mged_regress << EOF
+size
+size 122323
+size
+EOF
+
+#
 #                  S T A T U S
 #
 cat > status.mged_regress << EOF
@@ -936,6 +969,17 @@ oed / tra.c/tra.s
 tra -3 3 3
 accept
 Z
+EOF
+
+#
+#		T R A
+#
+# Test tra command when viewing geometry
+
+cat > tra_view.mged_regress << EOF
+view center
+tra -1000 2 3
+view center
 EOF
 
 #
@@ -1014,6 +1058,15 @@ arced xpush1.c/xpush.s matrix rarc rot 14 14 14
 arced xpush2.c/xpush.s matrix rarc rot 24 24 24
 comb xpush_top.c u xpush1.c u xpush2.c
 xpush xpush_top.c
+EOF
+
+#
+#  	    Z O O M
+#
+cat > zoom.mged_regress << EOF
+size
+zoom 30
+size
 EOF
 
 ##################################################################
@@ -1096,11 +1149,11 @@ cat autoview.mged_regress >> mged.mged_regress
 cat ae.mged_regress >> mged.mged_regress
 cat center.mged_regress >> mged.mged_regress
 cat eye_pt.mged_regress >> mged.mged_regress
-cat .mged_regress >> mged.mged_regress
-cat .mged_regress >> mged.mged_regress
-cat .mged_regress >> mged.mged_regress
-cat .mged_regress >> mged.mged_regress
-cat .mged_regress >> mged.mged_regress
+cat lookat.mged_regress >> mged.mged_regress
+cat size.mged_regress >> mged.mged_regress
+cat zoom.mged_regress >> mged.mged_regress
+cat set_perspective.mged_regress >> mged.mged_regress
+cat tra_view.mged_regress >> mged.mged_regress
 cat .mged_regress >> mged.mged_regress
 cat .mged_regress >> mged.mged_regress
 cat .mged_regress >> mged.mged_regress
