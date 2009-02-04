@@ -44,16 +44,17 @@ enum
     ADRT_WORK_SHOTLINE,
     ADRT_WORK_SPALL,
     ADRT_WORK_SELECT,
-    ADRT_WORK_MINMAX
+    ADRT_WORK_MINMAX,
+    ADRT_WORK_END
 };
 static char *adrt_work_table[40] = {
     "ADRT_WORK_INIT",
-    "ADRT_WORK_STATUS,",
-    "ADRT_WORK_FRAME_ATTR,",
-    "ADRT_WORK_FRAME,",
-    "ADRT_WORK_SHOTLINE,",
-    "ADRT_WORK_SPALL,",
-    "ADRT_WORK_SELECT,",
+    "ADRT_WORK_STATUS",
+    "ADRT_WORK_FRAME_ATTR",
+    "ADRT_WORK_FRAME",
+    "ADRT_WORK_SHOTLINE",
+    "ADRT_WORK_SPALL",
+    "ADRT_WORK_SELECT",
     "ADRT_WORK_MINMAX",
     NULL};
 
@@ -70,7 +71,8 @@ enum
     ADRT_NETOP_WORK,
     ADRT_NETOP_MESG,
     ADRT_NETOP_QUIT,
-    ADRT_NETOP_SHUTDOWN
+    ADRT_NETOP_SHUTDOWN,
+    ADRT_NETOP_END
 };
 static char *adrt_netop_table[40] = {
     "ADRT_NETOP_NOP",
@@ -82,6 +84,13 @@ static char *adrt_netop_table[40] = {
     "ADRT_NETOP_QUIT",
     "ADRT_NETOP_SHUTDOWN",
     NULL};
+
+/* fill in a human readable version of the adrt op (for debugging) */
+#define ADRT_MESSAGE_NAME(op) \
+    (op >= ADRT_WORK_BASE && op <= ADRT_WORK_END) ? adrt_work_table[op-ADRT_WORK_BASE] : \
+    (op >= ADRT_NETOP_BASE && op <= ADRT_NETOP_END) ? adrt_netop_table[op-ADRT_NETOP_BASE] : \
+    "Unknown"
+
 
 #define ADRT_VER_KEY		0
 #define ADRT_VER_DETAIL		"ADRT - Advanced Distributed Ray Tracer"
