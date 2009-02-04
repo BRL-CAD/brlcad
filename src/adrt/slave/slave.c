@@ -383,10 +383,23 @@ adrt_slave_work(tienet_buffer_t *work, tienet_buffer_t *result)
     }
 
 #if 0
-    gettimeofday(&tv, NULL);
-    printf("[Work Units Completed: %.6d  Rays: %.5d k/sec %lld]\r", ++adrt_slave_completed, (int)((tfloat)tie->rays_fired / (tfloat)(1000 * (tv.tv_sec - adrt_slave_startsec + 1))), tie->rays_fired);
-    fflush(stdout);
+    {
+	struct timeval	tv;
+	static int      adrt_slave_completed = 0;
+	static time_t	adrt_slave_startsec = 0;
+	
+	if(adrt_slave_startsec == 0) adrt_slave_startsec = time(NULL);
+
+	gettimeofday(&tv, NULL);
+	printf("\t[Work Units Completed: %.6d  Rays: %.5d k/sec %lld]\n", 
+		++adrt_slave_completed, 
+		(int) ((tfloat) adrt_workspace_list[wid].tie.rays_fired / (tfloat) (1000 * (tv.tv_sec - adrt_slave_startsec + 1))), 
+		adrt_workspace_list[wid].tie.rays_fired);
+	fflush(stdout);
+    }
 #endif
+
+    return;
 }
 
 void 
