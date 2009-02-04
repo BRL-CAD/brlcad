@@ -67,6 +67,18 @@ l accept.s
 Z
 EOF
 
+#
+#		A E
+#
+cat > ae.mged_regress << EOF
+ae 11 12.2 111
+view quat
+view ypr
+view aet
+view center
+view eye
+view size
+EOF
 
 #
 #                  A R B
@@ -144,6 +156,15 @@ make -s 10 br_epa.s epa
 clone -p 20 0 0 -r 0 0 10 -n 36 br_epa.s
 build_region br_epa 0 10000
 build_region -a 42 br_epa 2000 10000
+EOF
+
+#
+#			C E N T E R
+#
+cat > center.mged_regress << EOF
+center
+center 111 2 -300
+center
 EOF
 
 #
@@ -285,6 +306,15 @@ e erase_comb_shape.s
 erase erase.c
 who
 erase erase_comb_shape.s
+EOF
+
+#
+#	E Y E _ P T
+#
+cat > eye_pt.mged_regress << EOF
+eye_pt
+eye_pt 100 100 100
+eye_pt
 EOF
 
 #
@@ -1063,9 +1093,9 @@ cat qorot.mged_regress >> mged.mged_regress
 cat view.mged_regress >> mged.mged_regress
 cat refresh.mged_regress >> mged.mged_regress
 cat autoview.mged_regress >> mged.mged_regress
-cat .mged_regress >> mged.mged_regress
-cat .mged_regress >> mged.mged_regress
-cat .mged_regress >> mged.mged_regress
+cat ae.mged_regress >> mged.mged_regress
+cat center.mged_regress >> mged.mged_regress
+cat eye_pt.mged_regress >> mged.mged_regress
 cat .mged_regress >> mged.mged_regress
 cat .mged_regress >> mged.mged_regress
 cat .mged_regress >> mged.mged_regress
