@@ -897,6 +897,18 @@ Z
 EOF
 
 #
+#                  S C A
+#
+# Test sca command when viewing geometry
+
+cat > sca_view.mged_regress << EOF
+size
+sca 100
+size
+EOF
+
+
+#
 #                  S E D
 #
 cat > sed.mged_regress << EOF
@@ -1154,7 +1166,7 @@ cat size.mged_regress >> mged.mged_regress
 cat zoom.mged_regress >> mged.mged_regress
 cat set_perspective.mged_regress >> mged.mged_regress
 cat tra_view.mged_regress >> mged.mged_regress
-cat .mged_regress >> mged.mged_regress
+cat sca_view.mged_regress >> mged.mged_regress
 cat .mged_regress >> mged.mged_regress
 cat .mged_regress >> mged.mged_regress
 cat .mged_regress >> mged.mged_regress
