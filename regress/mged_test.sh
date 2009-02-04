@@ -116,6 +116,23 @@ EOF
 
 
 #
+#		A U T O V I E W
+#
+cat > autoview.mged_regress << EOF
+Z
+view center -1000 -1000 0
+view aet 34 23 2
+autoview
+view quat
+view ypr
+view aet
+view center
+view eye
+view size
+EOF
+
+
+#
 #          B U I L D _ R E G I O N
 #
 # build_region requires a large number of target objects with the correct
@@ -759,6 +776,14 @@ r r3.r u r_comb1.c u r_comb2.c
 EOF
 
 #
+#               R E F R E S H
+#
+cat > refresh.mged_regress << EOF
+refresh
+EOF
+
+
+#
 #                  R E J E C T
 #
 cat > reject.mged_regress << EOF
@@ -916,6 +941,24 @@ Z
 EOF
 
 #
+#            V I E W
+# 
+cat > view.mged_regress << EOF
+view quat 0.413175911167 0.492403876506 0.586824088833 0.492403876506
+view ypr 10 1 2
+view aet 10 10 10
+view center 23 -2 0
+view eye 2 4 5
+view size 10000
+view quat
+view ypr
+view aet
+view center
+view eye
+view size
+EOF
+
+#
 #                  W H O
 #
 # Test who with combinations
@@ -982,6 +1025,7 @@ cat draw_erase_who.mged_regress >> mged.mged_regress
 cat who.mged_regress >> mged.mged_regress
 cat draw.mged_regress >> mged.mged_regress
 cat erase.mged_regress >> mged.mged_regress
+# need Z here
 
 #
 #     EDITING COMMANDS
@@ -1016,6 +1060,9 @@ cat qorot.mged_regress >> mged.mged_regress
 #
 #    VIEW COMMANDS
 #
+cat view.mged_regress >> mged.mged_regress
+cat refresh.mged_regress >> mged.mged_regress
+cat autoview.mged_regress >> mged.mged_regress
 cat .mged_regress >> mged.mged_regress
 cat .mged_regress >> mged.mged_regress
 cat .mged_regress >> mged.mged_regress
@@ -1025,6 +1072,27 @@ cat .mged_regress >> mged.mged_regress
 cat .mged_regress >> mged.mged_regress
 cat .mged_regress >> mged.mged_regress
 cat .mged_regress >> mged.mged_regress
+cat .mged_regress >> mged.mged_regress
+cat .mged_regress >> mged.mged_regress
+cat .mged_regress >> mged.mged_regress
+cat .mged_regress >> mged.mged_regress
+cat .mged_regress >> mged.mged_regress
+cat .mged_regress >> mged.mged_regress
+cat .mged_regress >> mged.mged_regress
+cat .mged_regress >> mged.mged_regress
+cat .mged_regress >> mged.mged_regress
+cat .mged_regress >> mged.mged_regress
+cat .mged_regress >> mged.mged_regress
+cat .mged_regress >> mged.mged_regress
+cat .mged_regress >> mged.mged_regress
+cat .mged_regress >> mged.mged_regress
+cat .mged_regress >> mged.mged_regress
+cat .mged_regress >> mged.mged_regress
+cat .mged_regress >> mged.mged_regress
+
+
+
+
 
 
 
