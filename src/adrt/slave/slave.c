@@ -117,6 +117,8 @@ adrt_slave_work(tienet_buffer_t *work, tienet_buffer_t *result)
 	    char string[255];
 	    uint32_t n, i, num;
 
+	    ind = 1;	/* ind is too far in for some reason, force it back to 1? */
+
 	    /* reset */
 	    TCOPY(uint8_t, work->data, ind, &c, 0);
 	    ind += 1;
