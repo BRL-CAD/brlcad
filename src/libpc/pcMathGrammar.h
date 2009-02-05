@@ -32,6 +32,7 @@
 #ifndef PC_MATH_GRAMMAR
 #define PC_MATH_GRAMMAR
 
+#include "pcMathLF.h"
 #include "pcMathVM.h"
 
 #include <boost/spirit/include/classic.hpp>
