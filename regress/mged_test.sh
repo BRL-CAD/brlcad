@@ -509,6 +509,79 @@ d keypoint.s
 EOF
 
 #
+#		K I L L
+#
+cat > kill.mged_regress << EOF
+make kill.s arb8
+make kill.c u kill.s
+ls kill.*
+l kill.*
+kill kill.s
+ls kill.*
+l kill.*
+kill kill.c
+ls kill.*
+EOF
+
+#
+#		K I L L A L L
+#
+cat > killall.mged_regress << EOF
+make killall_1.s arb8
+make killall_2.s arb8
+comb killall_1.c u killall_1.s u killall_2.s
+cp killall_1.c u killall_2.c
+comb killall.c u killall_1.c u killall_2.s 
+ls killall*
+l killall*
+killall killall_1.s
+ls killall*
+l killall*
+killall killall_1.c
+ls killall*
+l killall*
+killall killall_2.s
+ls killall*
+l killall*
+killall killall_2.c
+ls killall*
+l killall*
+killall killall.c
+ls killall*
+l killall*
+EOF
+
+#
+#		K I L L T R E E
+#
+cat > killtree.mged_regress << EOF
+put {killtree_sketch.s} sketch V {10 20 30} A {1 0 0} B {0 1 0} VL { {250 0} {500 0} {500 500} {0 500} {0 250} {250 250} {125 125} {0 125} {125 0} {200 200} } SL { { bezier D 4 P { 4 7 9 8 0 } } { line S 0 E 1 } { line S 1 E 2 } { line S 2 E 3 } { line S 3 E 4 } { carc S 6 E 5 R -1 L 0 O 0 } }
+in killtree_extrude.s extrude 0 0 0 0 0 1000 10 0 0 0 10 0 killtree_sketch.s
+make killtree_arb8.s arb8
+make killtree_1.s arb7
+comb killtree_1.c u killtree_1.s
+comb killtree.c u killtree_1.c u killtree_arb8.s u killtree_extrude.s killtree_sketch.s
+ls killtree*
+l killtree*
+killtree killtree.c
+ls killtree*
+l killtree*
+put {killtree_sketch.s} sketch V {10 20 30} A {1 0 0} B {0 1 0} VL { {250 0} {500 0} {500 500} {0 500} {0 250} {250 250} {125 125} {0 125} {125 0} {200 200} } SL { { bezier D 4 P { 4 7 9 8 0 } } { line S 0 E 1 } { line S 1 E 2 } { line S 2 E 3 } { line S 3 E 4 } { carc S 6 E 5 R -1 L 0 O 0 } }
+in killtree_extrude.s extrude 0 0 0 0 0 1000 10 0 0 0 10 0 killtree_sketch.s
+make killtree_arb8.s arb8
+make killtree_1.s arb7
+comb killtree_1.c u killtree_1.s
+comb killtree.c u killtree_1.c u killtree_arb8.s u killtree_extrude.s
+ls killtree*
+l killtree*
+killtree killtree.c
+ls killtree*
+l killtree*
+EOF
+
+
+
+#
 #		K N O B
 #
 cat > knob.mged_regress << EOF
@@ -1385,6 +1458,13 @@ cat orot.mged_regress >> mged.mged_regress
 cat arot.mged_regress >> mged.mged_regress
 cat rotobj.mged_regress >> mged.mged_regress
 cat qorot.mged_regress >> mged.mged_regress
+
+#
+#	DELETING GEOMETRY COMMANDS
+#
+cat kill.mged_regress >> mged.mged_regress
+cat killall.mged_regress >> mged.mged_regress
+cat killtree.mged_regress >> mged.mged_regress
 
 #
 #    VIEW COMMANDS
