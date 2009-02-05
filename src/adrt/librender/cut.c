@@ -50,7 +50,9 @@ typedef struct render_cut_hit_s {
 
 void render_cut_init(render_t *render, TIE_3 ray_pos, TIE_3 ray_dir) {
     render_cut_t *d;
-    TIE_3 list[6], normal, up;
+    TIE_3 *list, normal, up;
+
+    list = (TIE_3 *)bu_malloc(sizeof(TIE_3) * 6, "cutting plane triangles");
 
     render->work = render_cut_work;
     render->free = render_cut_free;
@@ -98,6 +100,7 @@ void render_cut_init(render_t *render, TIE_3 ray_pos, TIE_3 ray_dir) {
 
     tie_push(&d->tie, (TIE_3 **)&list, 2, NULL, 0);
     tie_prep(&d->tie);
+    bu_free(list, "cutting plane triangles");
 }
 
 
