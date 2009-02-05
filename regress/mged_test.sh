@@ -154,6 +154,19 @@ view eye
 view size
 EOF
 
+#
+#		B
+#
+cat > B.mged_regress << EOF
+make B_test1.s arb8
+make B_test2.s eto
+comb B_test.c u B_test1.s
+Z
+e B_test2.s
+who
+B B_test1.s B_test.c
+who
+EOF
 
 #
 #          B U I L D _ R E G I O N
@@ -303,6 +316,27 @@ erase draw.c
 erase draw_comb_shape.s
 EOF
 
+#
+#	D A L L / E R A S E _ A L L
+#
+cat > dall.mged_regress << EOF
+make dall1.s arb8
+make dall2.s arb8
+comb dall1.c u dall1.s
+comb dall2.c u dall1.s
+comb dall3.c u dall1.s u dall2.s
+comb dall4.c u dall2.s
+Z
+e dall1.s dall2.s dall1.c dall2.c dall3.c dall4.c
+who
+dall dall1.s
+who
+Z
+e dall1.s dall2.s dall1.c dall2.c dall3.c dall4.c
+who
+erase_all dall1.s
+who
+EOF
 
 #
 #                 E R A S E
@@ -384,6 +418,19 @@ make -s 30 g_sph3.s sph
 comb g_comb1.c u comb_sph1.s u comb_sph2.s u comb_sph3.s
 g g1.c g_sph1.s g_sph2.s g_sph3.s
 g g2.c g_sph1.s g_sph2.s g_comb1.c
+EOF
+
+#
+#			H I D E
+#
+cat > hide.mged_regress << EOF
+make hidden_1.s arb8
+make hidden_2.s arb8
+comb hidden.c u hidden_2.s
+ls hidden*
+hide hidden_1.s
+hide hidden.c
+ls hidden*
 EOF
 
 #
@@ -1172,6 +1219,22 @@ Z
 EOF
 
 #
+#		U N H I D E
+#
+cat > unhide.mged_regress << EOF
+make unhidden_1.s arb8
+make unhidden_2.s arb8
+comb unhidden.c u unhidden_2.s
+ls unhidden*
+hide unhidden_1.s
+hide unhidden.c
+ls unhidden*
+unhide unhidden_1.s
+unhide unhidden.c
+ls unhidden*
+EOF
+
+#
 #            V I E W
 # 
 cat > view.mged_regress << EOF
@@ -1227,6 +1290,19 @@ xpush xpush_top.c
 EOF
 
 #
+#		Z
+#
+cat > Z.mged_regress << EOF
+make Z_test1.s arb8
+make Z_test2.s eto
+comb Z_test.c u Z_test1.s u Z_test2.s
+e Z_test1.s Z_test2.s Z_test.c
+who
+Z
+who
+EOF
+
+#
 #  	    Z O O M
 #
 cat > zoom.mged_regress << EOF
@@ -1274,7 +1350,11 @@ cat draw_erase_who.mged_regress >> mged.mged_regress
 cat who.mged_regress >> mged.mged_regress
 cat draw.mged_regress >> mged.mged_regress
 cat erase.mged_regress >> mged.mged_regress
-# need Z here
+cat Z.mged_regress >> mged.mged_regress
+cat B.mged_regress >> mged.mged_regress
+cat dall.mged_regress >> mged.mged_regress
+cat hide.mged_regress >> mged.mged_regress
+cat unhide.mged_regress >> mged.mged_regress
 
 #
 #     EDITING COMMANDS
