@@ -15,7 +15,8 @@ if test ! -f "$MGED" ; then
     exit 1  
 fi
 
-rm -f mged.g *.mged_regress mged.log
+# Clear out older results files
+rm -f mged.g mged.log mged_files
 
 # Create mged.g as an empty db file.
 $MGED -c mged.g <<EOF > mged.log 2>&1
@@ -66,6 +67,16 @@ accept
 l accept.s
 Z
 EOF
+
+#
+#		A D C
+#
+cat > adc.mged_regress << EOF
+adc
+knob
+adc
+EOF
+
 
 #
 #		A E
@@ -293,7 +304,6 @@ erase draw_comb_shape.s
 EOF
 
 
-
 #
 #                 E R A S E
 #
@@ -452,6 +462,42 @@ d keypoint.s
 EOF
 
 #
+#		K N O B
+#
+cat > knob.mged_regress << EOF
+knob zero
+knob
+knob x 2 y 2 z 2 X 3 Y 3 Z 3 S 30
+knob
+knob zero
+knob ax 89 ay 73 az 3 aX 300 aY -200 aZ 23 aS 10
+knob
+knob zero
+adc
+knob xadc -10 yadc 3 ang1 23 ang2 55 distadc 44
+knob
+knob zero
+knob
+knob x 2 y 2 z 2 X 3 Y 3 Z 3 S 30
+knob ax 89 ay 73 az 3 aX 300 aY -200 aZ 23 aS 10
+knob xadc -10 yadc 3 ang1 23 ang2 55 distadc 44
+knob
+adc
+knob zero
+EOF
+
+#
+#		L O A D V I E W
+#
+cat > loadview.mged_regress << EOF
+autoview
+ae 35 25 0
+view quat
+loadview mged_saveview_test.rt
+view quat
+EOF
+
+#
 #		L O O K A T
 #
 cat > lookat.mged_regress << EOF
@@ -459,8 +505,6 @@ view quat
 lookat 50 30 33
 view quat
 EOF
-
-
 
 #
 #                          M A K E
@@ -655,6 +699,14 @@ mirror -y mirror1.c mirror5.c
 mirror -z mirror1.c mirror6.c
 EOF
 
+#
+#		M R O T
+#
+cat > mrot.mged_regress << EOF
+view quat
+mrot 3 22 -1
+view quat
+EOF
 
 #
 #                       M V
@@ -698,6 +750,15 @@ d oed2.c
 EOF
 
 #
+#		O R I E N T A T I O N
+#
+cat > orientation.mged_regress << EOF
+view quat
+orientation 0.285190215334 0.670633110412 0.649962411504 0.215561211557
+view quat
+EOF
+
+#
 #               O R O T
 #
 cat > orot.mged_regress << EOF
@@ -725,6 +786,17 @@ accept
 Z
 EOF
 
+#
+#		O V E R L A Y
+#
+#  NOTE : generates output file
+cat > overlay.mged_regress << EOF
+Z
+overlay mged_plot_test.pl
+make overlay_additional_shape.s epa
+e overlay_additional_shape.s
+ps mged_overlay_test.ps
+EOF
 
 #
 #                  P E R M U T E
@@ -740,6 +812,17 @@ Z
 EOF
 
 #
+#		P L O T
+#
+# NOTE : generates output file
+cat > plot.mged_regress << EOF
+autoview
+ae 35 25 0
+B clone4.c
+plot mged_plot_test.pl
+EOF
+
+#
 #                  P R E F I X
 #
 
@@ -747,6 +830,17 @@ cat > prefix.mged_regress << EOF
 make -s 23 prefix1.s sph
 make -s 23 prefix2.s sph
 prefix has_ prefix*
+EOF
+
+#
+#		P S
+#
+# NOTE : generates output file
+cat > ps.mged_regress << EOF
+autoview
+ae 35 25 0
+B clone4.c
+ps mged_ps_test.ps
 EOF
 
 #
@@ -795,6 +889,15 @@ qorot 2 2 3 10 2 3 40
 qorot -2 3 1 20 20 20 40
 accept
 Z
+EOF
+
+#
+#		Q V R O T
+#
+cat > qvrot.mged_regress << EOF
+view quat
+qvrot 4 -30 2 32
+view quat
 EOF
 
 #
@@ -865,6 +968,17 @@ Z
 EOF
 
 #
+#                 R O T
+#
+# Test rot command when editing a primitive
+cat > rot_view.mged_regress << EOF
+view quat
+rot 30 30 30
+view quat
+EOF
+
+
+#
 #              R O T O B J
 #
 cat > rotobj.mged_regress << EOF
@@ -880,6 +994,19 @@ rotobj -v 10 10 10
 accept
 Z
 EOF
+
+#
+#		S A V E V I E W
+#
+#   NOTE - GENERATES OUTPUT FILE
+cat > saveview.mged_regress << EOF
+autoview
+ae 35 25 0
+rot 33 33 31
+sca 4
+saveview mged_saveview_test.rt
+EOF
+
 
 #
 #                  S C A
@@ -937,6 +1064,15 @@ set perspective
 EOF
 
 #
+#		S E T V I E W
+#
+cat > setview.mged_regress << EOF
+view quat
+setview 23 3 1
+view quat
+EOF
+
+#
 #		S I Z E
 #
 cat > size.mged_regress << EOF
@@ -960,6 +1096,15 @@ status model2view
 status view2model
 status model2objview
 status objview2model
+EOF
+
+#
+#		S V
+#
+cat > sv.mged_regress << EOF
+view center
+sv 76 19
+view center
 EOF
 
 #
@@ -1042,6 +1187,15 @@ view aet
 view center
 view eye
 view size
+EOF
+
+#
+#		V R O T
+#
+cat > vrot.mged_regress << EOF
+view quat
+vrot 23 23 -1
+view quat
 EOF
 
 #
@@ -1167,29 +1321,20 @@ cat zoom.mged_regress >> mged.mged_regress
 cat set_perspective.mged_regress >> mged.mged_regress
 cat tra_view.mged_regress >> mged.mged_regress
 cat sca_view.mged_regress >> mged.mged_regress
-cat .mged_regress >> mged.mged_regress
-cat .mged_regress >> mged.mged_regress
-cat .mged_regress >> mged.mged_regress
-cat .mged_regress >> mged.mged_regress
-cat .mged_regress >> mged.mged_regress
-cat .mged_regress >> mged.mged_regress
-cat .mged_regress >> mged.mged_regress
-cat .mged_regress >> mged.mged_regress
-cat .mged_regress >> mged.mged_regress
-cat .mged_regress >> mged.mged_regress
-cat .mged_regress >> mged.mged_regress
-cat .mged_regress >> mged.mged_regress
-cat .mged_regress >> mged.mged_regress
-cat .mged_regress >> mged.mged_regress
-cat .mged_regress >> mged.mged_regress
-cat .mged_regress >> mged.mged_regress
-cat .mged_regress >> mged.mged_regress
-
-
-
-
-
-
+cat rot_view.mged_regress >> mged.mged_regress
+cat mrot.mged_regress >> mged.mged_regress
+cat vrot.mged_regress >> mged.mged_regress
+cat qvrot.mged_regress >> mged.mged_regress
+cat setview.mged_regress >> mged.mged_regress
+cat sv.mged_regress >> mged.mged_regress
+cat orientation.mged_regress >> mged.mged_regress
+cat knob.mged_regress >> mged.mged_regress
+cat adc.mged_regress >> mged.mged_regress
+cat saveview.mged_regress >> mged.mged_regress
+cat loadview.mged_regress >> mged.mged_regress
+cat ps.mged_regress >> mged.mged_regress
+cat plot.mged_regress >> mged.mged_regress
+#cat overlay.mged_regress >> mged.mged_regress
 
 
 ##################################################################
@@ -1198,6 +1343,17 @@ cat .mged_regress >> mged.mged_regress
 #
 ##################################################################
 
-$MGED -c mged.g <<EOF >> mged.log 2>&1
+$MGED -c mged.g << EOF >> mged.log 2>&1
 `cat mged.mged_regress`
 EOF
+
+# group generated files into a single file so they can be
+# included as part of the diff process.
+cat mged_saveview_test.rt >> mged_files
+cat mged_ps_test.ps >> mged_files
+cat mged_plot_test.pl >> mged_files
+#cat mged_overlay_test.ps >> mged_files
+
+# clean up files
+
+rm -f *.mged_regress mged_saveview_test.rt mged_ps_test.ps mged_plot_test.pl mged_overlay_test.ps
