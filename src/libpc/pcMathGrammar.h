@@ -112,6 +112,36 @@ struct ConditionalClosure : boost::spirit::closure<ConditionalClosure, Stack, St
  */
 struct ExpressionGrammar : public boost::spirit::classic::grammar<ExpressionGrammar,StackClosure::context_t>
 {
+    typedef boost::spirit::symbols<boost::shared_ptr<MathFunction> > FunctionTable;
+    typedef boost::spirit::symbols<double> VarTable;
+
+    VarTable const dummy_local_vars;
+    FunctionTable const & functions;
+    VarTable const & global_vars;
+    VarTable const & local_vars;
+
+    ExpressionGrammar(FunctionTable const & funcs, VarTable const & gvars)
+    	: functions(funcs), global_vars(gvars), local_vars(dummy_local_vars)
+    {}
+
+    ExpressionGrammar(FunctionTable const & funcs, VarTable const & gvars, VarTable const & lvars)
+    	: functions(funcs), global_vars(gvars), local_vars(lvars)
+    {}
+    
+    template <typename ScannerT>
+    struct definition
+    {
+    	definition(ExpressionGrammar const & self)
+	    : name(false)
+	{
+	}
+
+	typedef RuleT boost::spirit::classic::rule<ScannerT>;
+	RuleT const & start() const { return top; }
+    private:
+    	RuleT arg, top;
+	NameGrammar name;
+    };
 };
 
 /**

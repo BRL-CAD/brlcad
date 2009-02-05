@@ -35,6 +35,37 @@
 #include <boost/spirit/phoenix/functions.hpp>
 #include <boost/shared_ptr.hpp>
 
+/**
+ * Lazy function wrapper for boost::spirit::symbols::add()
+ */
+struct addsymbol_impl {
+	void operator()()
+	{}
+};
+boost::phoenix::function<addsymbol_impl> const addsymbol = addsymbol_impl();
+
+/**
+ * Lazy function wrapper for boost::spirit::symbols::find()
+ */
+struct findsymbol_impl {
+};
+boost::phoenix::function<findsymbol_impl> const findsymbol = findsymbol_impl();
+
+/**
+ * Lazy function wrapper for T::size()
+ */
+struct size_impl {
+    template <typename T>
+    /* struct result {
+	typedef std::size_t type;
+    };*/
+    template <typename T>
+    std::size_t operator()(T const & t) const
+    {
+    	return t.size();
+    }
+};
+boost::phoenix::function<size_impl> const size = size_impl();
 
 #endif
 /** @} */
