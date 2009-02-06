@@ -82,7 +82,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="opengl32.lib tcl85.lib tk85.lib libbu.lib libbn.lib libsysv.lib librt.lib libfb.lib libged.lib"
+				AdditionalDependencies="opengl32.lib tcl85.lib tk85.lib libbu.lib libbn.lib libsysv.lib librt.lib libfb.lib"
 				OutputFile=".\$(PlatformName)\$(ConfigurationName)/libdm.dll"
 				LinkIncremental="1"
 				SuppressStartupBanner="true"
@@ -401,6 +401,10 @@
 				</FileConfiguration>
 			</File>
 			<File
+				RelativePath="..\..\..\src\libdm\labels.c"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\src\libdm\options.c"
 				>
 				<FileConfiguration
@@ -442,6 +446,10 @@
 			</File>
 			<File
 				RelativePath="..\..\..\src\libdm\rect.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\src\libdm\scale.c"
 				>
 			</File>
 			<File

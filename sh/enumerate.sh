@@ -2,7 +2,7 @@
 #                    E N U M E R A T E . S H
 # BRL-CAD
 #
-# Copyright (c) 2006-2008 United States Government as represented by
+# Copyright (c) 2006-2009 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -65,8 +65,8 @@ LC_ALL=C
 
 # convenience for computing a sum of a list of integers without
 # relying on wc or awk to behave consistently
-sum() {
-    if [ "x$2" = "x" ]; then
+sum ( ) {
+    if test "x$2" = "x" ; then
 	echo $1
     else
 	_total=0
@@ -148,7 +148,7 @@ printf "\n"
 dist_count="`find \"$BASE\" -type f -name Makefile.am | grep -v '/other/' | xargs cat | perl -pi -e 's/\\\\\n//g' | grep \"^[a-zA-Z_]*DIST\" | sed 's/.*=//g' | wc -l`"
 data_count="`find \"$BASE\" -type f -name Makefile.am | grep -v '/other/' | xargs cat | perl -pi -e 's/\\\\\n//g' | grep \"^[a-zA-Z_]*DATA\" | sed 's/.*=//g' | wc -l`"
 mans_count="`find \"$BASE\" -type f -name Makefile.am | grep -v '/other/' | xargs cat | perl -pi -e 's/\\\\\n//g' | grep \"^[a-zA-Z_]*MANS\" | sed 's/.*=//g' | wc -l`"
-srcs_count="`find \"$BASE\" -type f \( -name \*.c -or -name \*.h -or -name \*.tcl -or -name \*.tk -or -name \*.itcl -or -name \*.itk -or -name \*.pl -or -name \*.f -or -name \*.java \) | grep -v '/other/' | wc -l`"
+srcs_count="`find \"$BASE\" -type f \( -name \*.c -or -name \*.h -or -name \*.cxx -or -name \*.cpp -or -name \*.hxx -or -name \*.hpp -or -name \*.tcl -or -name \*.tk -or -name \*.itcl -or -name \*.itk -or -name \*.pl -or -name \*.f -or -name \*.java \) | grep -v '/other/' | wc -l`"
 am_count="`find \"$BASE\" -type f \( -name Makefile.am -or -name configure.ac \) | wc -l`"
 file_count="`echo $dist_count $data_count $mans_count $srcs_count $am_count ++++ p | dc`"
 
@@ -178,15 +178,21 @@ printf "\n"
 
 # compute documentation line counts
 dc1="`find \"$BASE\" -type f \( -name \*.[123456789n] \) | grep -v '/other/'`"
-dc2="`find \"$BASE\" -type f \( -name README\* -or -name AUTHORS -or -name BUGS -or -name COPYING -or -name ChangeLog -or -name HACKING -or -name INSTALL -or -name NEWS -or -name TODO -or -name \*.txt -or -name \*.tr -or -name \*.htm\* \) -not -name \*~ | grep -v '/other/' | grep -v legal`"
+[ "x$DEBUG" = "x" ] || echo "DEBUG: dc1 wc is `echo \"$dc1\" | wc`"
+dc2="`find \"$BASE\" -type f \( -name README\* -or -name AUTHORS -or -name BUGS -or -name COPYING -or -name ChangeLog -or -name HACKING -or -name INSTALL -or -name NEWS -or -name TODO -or -name \*.txt -or -name \*.tr -or -name \*.htm\* -or -name \*.xml \) -not -regex '.*docbook/resources/standard.*' -not -name \*~ -not \( -regex '.*/\.svn.*' -or -regex '.*/CVS.*' -or -regex '.*/\.libs.*' -or -regex '.*/\.deps.*' -or -regex '.*autom4te.cache.*' \) | grep -v '/other/' | grep -v legal | grep -v CMakeLists.txt`"
+[ "x$DEBUG" = "x" ] || echo "DEBUG: dc2 wc is `echo \"$dc2\" | wc`"
 dc="$dc1
 $dc2"
 dc_lc="`echo \"$dc\" | sort | xargs wc -l`"
+[ "x$DEBUG" = "x" ] || echo "DEBUG: dc_lc is `echo \"$dc_lc\" | wc`"
 dc_lc_lines="`echo \"$dc_lc\" | grep -v 'total$' | awk '{print $1}'`"
+[ "x$DEBUG" = "x" ] || echo "DEBUG: dc_lc_lines is `echo \"$dc_lc_lines\" | wc`"
 dc_lc_total="`sum $dc_lc_lines`"
+[ "x$DEBUG" = "x" ] || echo "DEBUG: dc_lc_total is $dc_lc_total"
+[ "x$DEBUG" = "x" ] || echo "DEBUG: sum 1 2 3 is `sum 1 2 3`"
 
 # compute build infrastructure line counts
-bic1="`find \"$BASE\" -type f \( -name \*.am -or -name configure.ac -or -name autogen.sh \)`"
+bic1="`find \"$BASE\" -type f \( -name \*.am -or -name Makefile.defs -or -name configure.ac -or -name autogen.sh -or -name CMakeLists.txt \)`"
 bic2="`find \"$BASE/sh\" -type f \( -name \*.sh \)`"
 bic="$bic1
 $bic2"
@@ -197,7 +203,7 @@ bic_lc_blank="`echo \"$bic\" | xargs awk ' /^[  ]*$/ { ++x } END { print x } '`"
 bic_lc_total="`expr $bic_lc_total - $bic_lc_blank`"
 
 # compute header code line counts
-header="`find \"$BASE\" -type f \( -name \*.h \) | grep -v '/other/' | grep -v '/sh/' | grep -v misc`"
+header="`find \"$BASE\" -type f \( -name \*.h -or -name \*.hxx -or -name \*.hpp \) | grep -v '/other/' | grep -v '/sh/' | grep -v misc`"
 header_lc="`echo \"$header\" | sort | xargs wc -l`"
 header_lc_lines="`echo \"$header_lc\" | grep -v 'total$' | awk '{print $1}'`"
 header_lc_total="`sum $header_lc_lines`"
@@ -205,7 +211,7 @@ header_lc_blank="`echo \"$header\" | xargs awk ' /^[    ]*$/ { ++x } END { print
 header_lc_total="`expr $header_lc_total - $header_lc_blank`"
 
 # compute non-header library code line counts
-sourcelib="`find \"$BASE\" -type f \( -name \*.c -or -name \*.java -or -name \*.f \) | grep -v '/other/' | grep -v '/sh/' | grep -v misc | grep lib`"
+sourcelib="`find \"$BASE\" -type f \( -name \*.c -or -name \*.cxx -or -name \*.cpp -or -name \*.java -or -name \*.f \) | grep -v '/other/' | grep -v '/sh/' | grep -v misc | grep lib`"
 sourcelib_lc="`echo \"$sourcelib\" | sort | xargs wc -l`"
 sourcelib_lc_lines="`echo \"$sourcelib_lc\" | grep -v 'total$' | awk '{print $1}'`"
 sourcelib_lc_total="`sum $sourcelib_lc_lines`"
@@ -213,7 +219,7 @@ sourcelib_lc_blank="`echo \"$sourcelib\" | xargs awk ' /^[      ]*$/ { ++x } END
 sourcelib_lc_total="`expr $sourcelib_lc_total - $sourcelib_lc_blank`"
 
 # compute non-header application code line counts
-sourcebin="`find \"$BASE\" -type f \( -name \*.c -or -name \*.java -or -name \*.f \) | grep -v '/other/' | grep -v '/sh/' | grep -v misc | grep -v lib`"
+sourcebin="`find \"$BASE\" -type f \( -name \*.c -or -name \*.cxx -or -name \*.cpp -or -name \*.java -or -name \*.f \) | grep -v '/other/' | grep -v '/sh/' | grep -v misc | grep -v lib`"
 sourcebin_lc="`echo \"$sourcebin\" | sort | xargs wc -l`"
 sourcebin_lc_lines="`echo \"$sourcebin_lc\" | grep -v 'total$' | awk '{print $1}'`"
 sourcebin_lc_total="`sum $sourcebin_lc_lines`"
@@ -229,7 +235,7 @@ scripts_lc_blank="`echo \"$scripts\" | xargs awk ' /^[  ]*$/ { ++x } END { print
 scripts_lc_total="`expr $scripts_lc_total - $scripts_lc_blank`"
 
 # compute 3rd party code line counts
-other="`find \"$BASE\" -type f \( -name \*.c -or -name \*.h -or -name \*.tcl -or -name \*.tk -or -name \*.itcl -or -name \*.itk -or -name \*.sh -or -name \*.f -or -name \*.java \) | grep '/other/'`"
+other="`find \"$BASE\" -type f \( -name \*.c -or -name \*.cxx -or -name \*.cpp -or -name \*.h -or -name \*.hxx -or -name \*.hpp -or -name \*.tcl -or -name \*.tk -or -name \*.itcl -or -name \*.itk -or -name \*.sh -or -name \*.f -or -name \*.java \) | grep '/other/'`"
 other_lc="`echo \"$other\" | sort | xargs wc -l`"
 other_lc_lines="`echo \"$other_lc\" | grep -v 'total$' | awk '{print $1}'`"
 other_lc_total="`sum $other_lc_lines`"

@@ -2,8 +2,8 @@
 <VisualStudioProject
 	ProjectType="Visual C++"
 	Version="8.00"
-	Name="picket_fence"
-	ProjectGUID="{B808DF2C-A716-42C9-B45D-E84E992A89C3}"
+	Name="g_qa"
+	ProjectGUID="{C7AFA1EC-8D74-4715-B49A-59D597022904}"
 	>
 	<Platforms>
 		<Platform
@@ -40,7 +40,7 @@
 			/>
 			<Tool
 				Name="VCMIDLTool"
-				TypeLibraryName=".\$(PlatformName)\$(ConfigurationName)/picket_fence.tlb"
+				TypeLibraryName=".\$(PlatformName)\$(ConfigurationName)/g_qa.tlb"
 				HeaderFileName=""
 			/>
 			<Tool
@@ -55,10 +55,10 @@
 				EnableFunctionLevelLinking="true"
 				TreatWChar_tAsBuiltInType="false"
 				UsePrecompiledHeader="0"
-				PrecompiledHeaderFile=".\$(PlatformName)\$(ConfigurationName)/picket_fence.pch"
-				AssemblerListingLocation=".\$(PlatformName)\$(ConfigurationName)/"
-				ObjectFile=".\$(PlatformName)\$(ConfigurationName)/"
-				ProgramDataBaseFileName=".\$(PlatformName)\$(ConfigurationName)/"
+				PrecompiledHeaderFile=".\$(PlatformName)\$(ConfigurationName)/g_qa.pch"
+				AssemblerListingLocation="$(PlatformName)\$(ConfigurationName)\"
+				ObjectFile="$(PlatformName)\$(ConfigurationName)\"
+				ProgramDataBaseFileName="$(PlatformName)\$(ConfigurationName)\"
 				WarningLevel="3"
 				SuppressStartupBanner="true"
 				Detect64BitPortabilityProblems="false"
@@ -78,13 +78,13 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="libbu.lib libbn.lib libsysv.lib librt.lib libwdb.lib tcl85.lib libged.lib"
-				OutputFile="$(PlatformName)\$(ConfigurationName)/picket_fence.exe"
+				AdditionalDependencies="libbu.lib libbn.lib libsysv.lib librt.lib libged.lib tcl85.lib"
+				OutputFile="$(PlatformName)\$(ConfigurationName)/g_qa.exe"
 				LinkIncremental="1"
 				SuppressStartupBanner="true"
 				AdditionalLibraryDirectories="../../../brlcadInstall/lib"
 				GenerateDebugInformation="false"
-				ProgramDatabaseFile=".\$(PlatformName)\$(ConfigurationName)/picket_fence.pdb"
+				ProgramDatabaseFile=".\$(PlatformName)\$(ConfigurationName)/g_qa.pdb"
 				SubSystem="1"
 				TargetMachine="1"
 			/>
@@ -139,7 +139,7 @@
 			<Tool
 				Name="VCMIDLTool"
 				TargetEnvironment="3"
-				TypeLibraryName=".\$(PlatformName)\$(ConfigurationName)/picket_fence.tlb"
+				TypeLibraryName=".\$(PlatformName)\$(ConfigurationName)/g_qa.tlb"
 				HeaderFileName=""
 			/>
 			<Tool
@@ -154,7 +154,7 @@
 				EnableFunctionLevelLinking="true"
 				TreatWChar_tAsBuiltInType="false"
 				UsePrecompiledHeader="0"
-				PrecompiledHeaderFile=".\$(PlatformName)\$(ConfigurationName)/picket_fence.pch"
+				PrecompiledHeaderFile=".\$(PlatformName)\$(ConfigurationName)/g_qa.pch"
 				AssemblerListingLocation=".\$(PlatformName)\$(ConfigurationName)/"
 				ObjectFile=".\$(PlatformName)\$(ConfigurationName)/"
 				ProgramDataBaseFileName=".\$(PlatformName)\$(ConfigurationName)/"
@@ -177,13 +177,13 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="libbu.lib libbn.lib libsysv.lib librt.lib libwdb.lib tcl85.lib"
-				OutputFile="$(PlatformName)\$(ConfigurationName)/picket_fence.exe"
+				AdditionalDependencies="libbu.lib libbn.lib libsysv.lib librt.lib tcl85.lib"
+				OutputFile="$(PlatformName)\$(ConfigurationName)/g_qa.exe"
 				LinkIncremental="1"
 				SuppressStartupBanner="true"
 				AdditionalLibraryDirectories="../../../brlcadInstall$(PlatformName)/lib"
 				GenerateDebugInformation="false"
-				ProgramDatabaseFile=".\$(PlatformName)\$(ConfigurationName)/picket_fence.pdb"
+				ProgramDatabaseFile=".\$(PlatformName)\$(ConfigurationName)/g_qa.pdb"
 				SubSystem="1"
 				TargetMachine="17"
 			/>
@@ -222,7 +222,7 @@
 			Filter="cpp;c;cxx;rc;def;r;odl;idl;hpj;bat;f90;for;f;fpp"
 			>
 			<File
-				RelativePath="..\..\..\src\shapes\picket_fence.c"
+				RelativePath="..\..\..\src\gtools\g_qa.c"
 				>
 			</File>
 		</Filter>

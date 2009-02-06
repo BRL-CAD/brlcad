@@ -1,7 +1,7 @@
 #                   R E P O S I T O R Y . S H
 # BRL-CAD
 #
-# Copyright (c) 2008 United States Government as represented by
+# Copyright (c) 2008-2009 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -90,6 +90,30 @@ if test "x$FOUND" = "x" ; then
     echo "-> common.h check succeeded"
 else
     echo "-> common.h check FAILED"
+    FAILED="`expr $FAILED + 1`"
+fi
+
+
+# make sure there isn't a per-target CPPFLAGS in a Makefile.am
+# support for per-target CPPFLAGS wasn't added until automake 1.7
+echo "running CPPFLAGS check..."
+
+if test ! -f "$TOPSRC/Makefile.am" ; then
+    echo "Unable to find the top-level Makefile.am, aborting"
+    exit 1
+fi
+
+AMFILES="`find $TOPSRC -type f -name Makefile.am -exec grep -n -I -e '_CPPFLAGS[[:space:]]*=' {} /dev/null \; | grep -v 'AM_CPPFLAGS' | grep -v 'BREP_CPPFLAGS'`"
+
+FOUND=
+for file in $AMFILES ; do
+    echo "Target-specific CPPFLAGS found in $file"
+done
+
+if test "x$FOUND" = "x" ; then
+    echo "-> cppflags check succeeded"
+else
+    echo "-> cppflags check FAILED"
     FAILED="`expr $FAILED + 1`"
 fi
 

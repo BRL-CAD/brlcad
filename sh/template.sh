@@ -1,7 +1,7 @@
 #                     T E M P L A T E . S H
 # BRL-CAD
 #
-# Copyright (c) 2007-2008 United States Government as represented by
+# Copyright (c) 2007-2009 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -47,11 +47,6 @@
 #   # create a new shell script file under the BSD license
 #   sh/template.sh bsd newscript.sh
 #
-# Author -
-#   Christopher Sean Morrison
-#
-# Source -
-#   BRL-CAD Open Source
 ###
 
 LICE="$1"
