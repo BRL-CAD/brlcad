@@ -999,38 +999,49 @@ proper source distribution tarball may be generated and that a build
 should compile properly regardless of the existence of the GNU Build
 System tools (autoconf, automake, etc).
 
-7) Tag the release using "rel-MAJOR-MINOR-PATCH" format:
-svn cp https://brlcad.svn.sf.net/svnroot/brlcad/brlcad/trunk https://brlcad.svn.sf.net/svnroot/brlcad/brlcad/tags/rel-MAJOR-MINOR-PATCH
+7) Make sure all the changes since the previous release are merged
+into STABLE - be sure to use the explicit form of the merge command, e.g.
 
-8) Checkout a tagged version of the sources (required so that the
+svn co https://brlcad.svn.sourceforge.net/svnroot/brlcad/brlcad/branches/STABLE stable-checkout
+svn merge https://brlcad.svn.sourceforge.net/svnroot/brlcad/brlcad/trunk@33115 https://brlcad.svn.sourceforge.net/svnroot/brlcad/brlcad/trunk@HEAD /home/user/stable-checkout
+svn commit -m "Update STABLE to rel-MAJOR-MINOR-PATCH" 
+
+Note that you may have to break up the commit by commiting some combinations
+of subdirectories individually if the server won't stay connected for the
+whole large commit - these sorts of merges can sometimes be very large.
+
+8) Tag the release using "rel-MAJOR-MINOR-PATCH" format:
+svn cp https://brlcad.svn.sf.net/svnroot/brlcad/brlcad/branches/STABLE https://brlcad.svn.sf.net/svnroot/brlcad/brlcad/tags/rel-MAJOR-MINOR-PATCH
+
+9) Checkout a tagged version of the sources (required so that the
 source distribution is correct):
 svn checkout https://brlcad.svn.sourceforge.net/svnroot/brlcad/brlcad/tags/rel-MAJOR-MINOR-PATCH brlcad
 
-9) Perform another "make distcheck" on the exported/updated sources on
+10) Perform another "make distcheck" on the exported/updated sources on
 a system with the latest GNU Autotools installed to generate the
 distributable compressed source tarballs.
 
-10) Verify that the source distribution tarballs may be expanded; and
+11) Verify that the source distribution tarballs may be expanded; and
 that they build, run, and that the file permissions are correct.
 
-11) Use one of the source distribution tarballs to generate
+12) Use one of the source distribution tarballs to generate
 platform-specific builds.  Use the NAMING A SOURCE RELEASE and the
 NAMING A BINARY RELEASE sections above for naming source and binary
 distribution files respectively.  Test the build: make test && make
 bench
 
-12) Post the source and platform-specific binary distributions to
+13) Post the source and platform-specific binary distributions to
 SourceForge and then select them on the sf.net File Release System:
 sftp sfusername@frs.sourceforge.net:uploads
 put brlcad-*
 
-13) Increment and commit the next BRL-CAD release numbers to SVN;
+14) Increment and commit the next BRL-CAD release numbers to SVN;
 update the include/conf/(MAJOR|MINOR|PATCH) version files, and NEWS
 immediately to an odd-numbered minor version or a new patch developer
 version (e.g. 7.11.0 or 7.4.1).  Update the README version to next
 _expected_ release number (e.g. 7.12.0 or 7.4.2).
 
-14) Announce the new release.  The NEWS file should generally be used
+15) Announce the new release.  The NEWS file should generally be used
 as a basis for making release announcements though the announcements
 almost always require modification and customization tailored to the
 particular forum or audience.  If appropriate, notify and/or update
