@@ -1,7 +1,7 @@
 /*                   G E D _ P R I V A T E . H
  * BRL-CAD
  *
- * Copyright (c) 2008 United States Government as represented by
+ * Copyright (c) 2008-2009 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -302,8 +302,8 @@ BU_EXTERN(int ged_make_tree,
 	   struct rt_comb_internal *comb,
 	   struct directory *dp,
 	   int node_count,
-	   char *old_name,
-	   char *new_name,
+	   const char *old_name,
+	   const char *new_name,
 	   struct rt_tree_array *rt_tree_array,
 	   int tree_index));
 BU_EXTERN(int ged_save_comb,
@@ -330,7 +330,6 @@ BU_EXTERN (void ged_rt_output_handler,
 	    int	 mask));
 BU_EXTERN (int ged_build_tops,
 	   (struct ged	*gedp,
-	    struct solid	*hsp,
 	    char		**start,
 	    register char	**end));
 

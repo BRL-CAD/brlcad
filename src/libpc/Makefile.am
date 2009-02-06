@@ -23,6 +23,7 @@ noinst_HEADERS = \
 	pcGenerator.h \
 	pcParser.h \
 	pcMathVM.h \
+	pcMathLF.h \
 	pcMathGrammar.h \
 	pcSolver.h
 

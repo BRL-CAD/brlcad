@@ -1,7 +1,7 @@
 /*                 P C M A T H G R A M M A R . C P P
  * BRL-CAD
  *
- * Copyright (c) 2008 United States Government as represented by
+ * Copyright (c) 2008-2009 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -32,6 +32,7 @@
 #ifndef PC_MATH_GRAMMAR
 #define PC_MATH_GRAMMAR
 
+#include "pcMathLF.h"
 #include "pcMathVM.h"
 
 #include <boost/spirit/include/classic.hpp>
@@ -80,12 +81,67 @@ public:
     };
 };
 
+boost::spirit::symbols<char> NameGrammar::reserved_keywords;
+/** Different types of closures */
+
+struct FuncExprClosure : boost spirit::closure<FuncExprClosure, Stack, std::string, int, boost::shared_ptr<MathFunction>
+{
+    member1 stack;
+    member2 name;
+    member3 arity;
+    member4 function_ptr;
+};
+
+struct LogicalClosure : boost::spirit::closure<LogicalClosure, Stack, bool>
+{
+    member1 stack;
+    member2 or_op;
+};
+
+
+struct ConditionalClosure : boost::spirit::closure<ConditionalClosure, Stack, Stack, Stack>
+{
+    member1 stack;
+    member2 stack1;
+    member3 stack2;
+};
+
 /**
  * ExpressionGrammar implementation
  * Stack closure is attached to the grammar itself
  */
 struct ExpressionGrammar : public boost::spirit::classic::grammar<ExpressionGrammar,StackClosure::context_t>
 {
+    typedef boost::spirit::symbols<boost::shared_ptr<MathFunction> > FunctionTable;
+    typedef boost::spirit::symbols<double> VarTable;
+
+    VarTable const dummy_local_vars;
+    FunctionTable const & functions;
+    VarTable const & global_vars;
+    VarTable const & local_vars;
+
+    ExpressionGrammar(FunctionTable const & funcs, VarTable const & gvars)
+    	: functions(funcs), global_vars(gvars), local_vars(dummy_local_vars)
+    {}
+
+    ExpressionGrammar(FunctionTable const & funcs, VarTable const & gvars, VarTable const & lvars)
+    	: functions(funcs), global_vars(gvars), local_vars(lvars)
+    {}
+    
+    template <typename ScannerT>
+    struct definition
+    {
+    	definition(ExpressionGrammar const & self)
+	    : name(false)
+	{
+	}
+
+	typedef RuleT boost::spirit::classic::rule<ScannerT>;
+	RuleT const & start() const { return top; }
+    private:
+    	RuleT arg, top;
+	NameGrammar name;
+    };
 };
 
 /**

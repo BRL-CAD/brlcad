@@ -1,7 +1,7 @@
 /*                         P U T _ C O M B . C
  * BRL-CAD
  *
- * Copyright (c) 2008 United States Government as represented by
+ * Copyright (c) 2008-2009 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -39,15 +39,15 @@ struct line_list{
 
 static struct line_list HeadLines;
 
-static int ged_put_tree_into_comb(struct ged *gedp, struct rt_comb_internal *comb, struct directory *dp, char *old_name, char *new_name, char *str);
+static int ged_put_tree_into_comb(struct ged *gedp, struct rt_comb_internal *comb, struct directory *dp, const char *old_name, const char *new_name, const char *str);
 static int ged_count_nodes(struct ged *gedp, char *line);
-static void put_rgb_into_comb(struct rt_comb_internal *comb, char *str);
+static void put_rgb_into_comb(struct rt_comb_internal *comb, const char *str);
 
 int
 ged_put_comb(struct ged *gedp, int argc, const char *argv[])
 {
     struct directory *dp;
-    struct rt_db_internal	intern;
+    struct rt_db_internal intern;
     struct rt_comb_internal *comb;
     char new_name_v4[NAMESIZE+1];
     char *new_name;
@@ -81,7 +81,7 @@ ged_put_comb(struct ged *gedp, int argc, const char *argv[])
 	    return BRLCAD_ERROR;
 	}
 
-	if (rt_db_get_internal( &intern, dp, gedp->ged_wdbp->dbip, (fastf_t *)NULL, &rt_uniresource) < 0) {
+	if (rt_db_get_internal(&intern, dp, gedp->ged_wdbp->dbip, (fastf_t *)NULL, &rt_uniresource) < 0) {
 	    bu_vls_printf(&gedp->ged_result_str, "%s: Database read error, aborting\n", argv[0]);
 	    return BRLCAD_ERROR;
 	}
@@ -106,7 +106,7 @@ ged_put_comb(struct ged *gedp, int argc, const char *argv[])
 	bu_vls_init(&comb->material);
     }
 
-    if (gedp->ged_wdbp->dbip->dbi_version < 5)	{
+    if (gedp->ged_wdbp->dbip->dbi_version < 5) {
 	new_name = new_name_v4;
 	if (dp == DIR_NULL)
 	    NAMEMOVE(argv[1], new_name_v4);
@@ -135,13 +135,6 @@ ged_put_comb(struct ged *gedp, int argc, const char *argv[])
 	comb->GIFTmater = atoi(argv[5]);
 	comb->los = atoi(argv[6]);
 
-#if 0
-	/* use the new values for defaults */
-	item_default = comb->region_id + 1;
-	air_default = comb->aircode;
-	mat_default = comb->GIFTmater;
-	los_default = comb->los;
-#endif
 	offset = 6;
     } else {
 	if (argc != 7) {
@@ -151,7 +144,7 @@ ged_put_comb(struct ged *gedp, int argc, const char *argv[])
 	offset = 2;
     }
 
-    put_rgb_into_comb(comb, (char *)argv[offset + 1]);
+    put_rgb_into_comb(comb, argv[offset + 1]);
     bu_vls_strcpy(&comb->shader, argv[offset +2]);
 
     if (*argv[offset + 3] == 'y' || *argv[offset + 3] == 'Y')
@@ -159,7 +152,7 @@ ged_put_comb(struct ged *gedp, int argc, const char *argv[])
     else
 	comb->inherit = 0;
 
-    if (ged_put_tree_into_comb(gedp, comb, dp, (char *)argv[1], new_name, (char *)argv[offset + 4]) == BRLCAD_ERROR) {
+    if (ged_put_tree_into_comb(gedp, comb, dp, argv[1], new_name, argv[offset + 4]) == BRLCAD_ERROR) {
 	if (comb) {
 	    ged_restore_comb(gedp, dp);
 	    bu_vls_printf(&gedp->ged_result_str, "%s: \toriginal restored\n", argv[0]);
@@ -181,26 +174,30 @@ ged_put_comb(struct ged *gedp, int argc, const char *argv[])
 }
 
 static int
-ged_put_tree_into_comb(struct ged *gedp, struct rt_comb_internal *comb, struct directory *dp, char *old_name, char *new_name, char *str)
+ged_put_tree_into_comb(struct ged *gedp, struct rt_comb_internal *comb, struct directory *dp, const char *old_name, const char *new_name, const char *imstr)
 {
-    int			i;
-    int			done;
-    char		*line;
-    char		*ptr;
-    char		relation;
-    char		*name;
-    struct rt_tree_array	*rt_tree_array;
-    struct line_list	*llp;
-    int			node_count = 0;
-    int			tree_index = 0;
-    union tree		*tp;
-    matp_t		matrix;
-    struct bu_vls	vls;
+    int i;
+    int done;
+    char *line;
+    char *ptr;
+    char relation;
+    char *name;
+    struct rt_tree_array *rt_tree_array;
+    struct line_list *llp;
+    int node_count = 0;
+    int tree_index = 0;
+    union tree *tp;
+    matp_t matrix;
+    struct bu_vls vls;
+    char *str;
 
-    if (str == (char *)NULL)
+    if (imstr == (char *)NULL)
 	return BRLCAD_ERROR;
 
     BU_LIST_INIT(&HeadLines.l);
+
+    /* duplicate the immutable str (from argv) for strtok style mutation */
+    str = bu_strdup(imstr);
 
     /* break str into lines */
     line = str;
@@ -216,6 +213,7 @@ ged_put_tree_into_comb(struct ged *gedp, struct rt_comb_internal *comb, struct d
 	if ((n = ged_count_nodes(gedp, bu_vls_addr(&vls))) < 0) {
 	    bu_vls_free(&vls);
 	    bu_list_free(&HeadLines.l);
+	    bu_free(str, "dealloc bu_strdup str");
 	    return BRLCAD_ERROR;
 	} else if (n > 0) {
 	    BU_GETSTRUCT(llp, line_list);
@@ -244,7 +242,7 @@ ged_put_tree_into_comb(struct ged *gedp, struct rt_comb_internal *comb, struct d
     else
 	rt_tree_array = (struct rt_tree_array *)NULL;
 
-    for (BU_LIST_FOR(llp, line_list, &HeadLines.l)) {
+    for (BU_LIST_FOR (llp, line_list, &HeadLines.l)) {
 	done = 0;
 	ptr = strtok(llp->line, delims);
 	while (!done) {
@@ -263,12 +261,13 @@ ged_put_tree_into_comb(struct ged *gedp, struct rt_comb_internal *comb, struct d
 		if (rt_tree_array)
 		    bu_free((char *)rt_tree_array, "red: tree list");
 		bu_log("no name specified\n");
+		bu_free(str, "dealloc bu_strdup str");
 		return BRLCAD_ERROR;
 	    }
 	    name = ptr;
 
 	    /* Eliminate trailing white space from name */
-	    i = strlen( ptr );
+	    i = strlen(ptr);
 	    while (isspace(name[--i]))
 		name[i] = '\0';
 
@@ -299,6 +298,7 @@ ged_put_tree_into_comb(struct ged *gedp, struct rt_comb_internal *comb, struct d
 			if (rt_tree_array)
 			    bu_free((char *)rt_tree_array, "red: tree list");
 			bu_list_free(&HeadLines.l);
+			bu_free(str, "dealloc bu_strdup str");
 			return BRLCAD_ERROR;
 		    }
 		    matrix[k] = atof(ptr);
@@ -339,7 +339,11 @@ ged_put_tree_into_comb(struct ged *gedp, struct rt_comb_internal *comb, struct d
     }
 
     bu_list_free(&HeadLines.l);
-    return ged_make_tree(gedp, comb, dp, node_count, old_name, new_name, rt_tree_array, tree_index);
+    i = ged_make_tree(gedp, comb, dp, node_count, old_name, new_name, rt_tree_array, tree_index);
+
+    bu_free(str, "dealloc bu_strdup str");
+
+    return i;
 }
 
 static int
@@ -361,7 +365,7 @@ ged_count_nodes(struct ged *gedp, char *line)
 	relation = (*ptr);
 
 	if (relation != '+' && relation != 'u' && relation != '-') {
-	    bu_vls_printf(&gedp->ged_result_str, " %c is not a legal operator\n", relation );
+	    bu_vls_printf(&gedp->ged_result_str, " %c is not a legal operator\n", relation);
 	    return -1;
 	}
 
@@ -373,7 +377,7 @@ ged_count_nodes(struct ged *gedp, char *line)
 	    return -1;
 	}
 
-	ptr = strtok( (char *)NULL, delims );
+	ptr = strtok((char *)NULL, delims);
 	/*
 	 * If this token is not a boolean operator, then it must be the start
 	 * of a matrix which we will skip.
@@ -384,7 +388,7 @@ ged_count_nodes(struct ged *gedp, char *line)
 
 	    /* skip past matrix, k=1 because we already have the first value */
 	    for (k=1; k<16; k++) {
-		ptr = strtok( (char *)NULL, delims );
+		ptr = strtok((char *)NULL, delims);
 		if (!ptr) {
 		    bu_vls_printf(&gedp->ged_result_str, "expecting a matrix\n");
 		    return -1;
@@ -402,7 +406,7 @@ ged_count_nodes(struct ged *gedp, char *line)
 }
 
 void
-put_rgb_into_comb(struct rt_comb_internal *comb, char *str)
+put_rgb_into_comb(struct rt_comb_internal *comb, const char *str)
 {
     int r, g, b;
 
@@ -432,7 +436,6 @@ put_rgb_into_comb(struct rt_comb_internal *comb, char *str)
     comb->rgb[2] = (unsigned char)b;
     comb->rgb_valid = 1;
 }
-
 
 
 /*

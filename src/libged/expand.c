@@ -1,7 +1,7 @@
 /*                         E X P A N D . C
  * BRL-CAD
  *
- * Copyright (c) 2008 United States Government as represented by
+ * Copyright (c) 2008-2009 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -33,7 +33,7 @@
 
 static void
 ged_scrape_escapes_AppendResult(struct bu_vls	*result,
-				char		*str);
+				const char	*str);
 
 int
 ged_expand(struct ged *gedp, int argc, const char *argv[])
@@ -83,7 +83,7 @@ ged_expand(struct ged *gedp, int argc, const char *argv[])
 	if (regexp == 0) {
 	    if (nummatch > 0)
 		bu_vls_printf(&gedp->ged_result_str, " ");
-	    ged_scrape_escapes_AppendResult(&gedp->ged_result_str, (char *)argv[whicharg]);
+	    ged_scrape_escapes_AppendResult(&gedp->ged_result_str, argv[whicharg]);
 	    ++nummatch;
 	    continue;
 	}
@@ -113,7 +113,7 @@ ged_expand(struct ged *gedp, int argc, const char *argv[])
 	if (thismatch == 0) {
 	    if (nummatch > 0)
 		bu_vls_printf(&gedp->ged_result_str, " ");
-	    ged_scrape_escapes_AppendResult(&gedp->ged_result_str, (char *)argv[whicharg]);
+	    ged_scrape_escapes_AppendResult(&gedp->ged_result_str, argv[whicharg]);
 	}
     }
 
@@ -122,7 +122,7 @@ ged_expand(struct ged *gedp, int argc, const char *argv[])
 
 static void
 ged_scrape_escapes_AppendResult(struct bu_vls	*result,
-				char		*str)
+				const char	*str)
 {
     char buf[2];
     buf[1] = '\0';

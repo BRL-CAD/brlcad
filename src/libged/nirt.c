@@ -1,7 +1,7 @@
 /*                          N I R T . C
  * BRL-CAD
  *
- * Copyright (c) 1988-2008 United States Government as represented by
+ * Copyright (c) 1988-2009 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -264,7 +264,6 @@ ged_nirt(struct ged *gedp, int argc, const char *argv[])
 
     /* Note - ged_build_tops sets the last vp to (char *)0 */
     gedp->ged_gdp->gd_rt_cmd_len += ged_build_tops(gedp,
-						   (struct solid *)&gedp->ged_gdp->gd_headSolid,
 						   vp,
 						   &gedp->ged_gdp->gd_rt_cmd[RT_MAXARGS]);
 

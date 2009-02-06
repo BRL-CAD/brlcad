@@ -1,7 +1,7 @@
 /*                         G E T _ O B J _ B O U N D S . C
  * BRL-CAD
  *
- * Copyright (c) 2008 United States Government as represented by
+ * Copyright (c) 2008-2009 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -265,7 +265,8 @@ ged_get_obj_bounds2(struct ged			*gedp,
     /* Get bounds from internal object */
     VMOVE(stp->st_min, rpp_min);
     VMOVE(stp->st_max, rpp_max);
-    intern.idb_meth->ft_prep(stp, &intern, rtip);
+    if (intern.idb_meth->ft_prep)
+	intern.idb_meth->ft_prep(stp, &intern, rtip);
     VMOVE(rpp_min, stp->st_min);
     VMOVE(rpp_max, stp->st_max);
 

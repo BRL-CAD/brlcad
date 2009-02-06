@@ -41,6 +41,11 @@ libged_nil_la_SOURCES = \
 	copyeval.c \
 	cpi.c \
 	dbip.c \
+	debugbu.c \
+	debugdir.c \
+	debuglib.c \
+	debugmem.c \
+	debugnmg.c \
 	decompose.c \
 	delay.c \
 	dg_obj.c \
@@ -72,7 +77,10 @@ libged_nil_la_SOURCES = \
 	get_type.c \
 	glob.c \
 	globals.c \
+	gqa.c \
 	grid.c \
+	grid2model_lu.c \
+	grid2view_lu.c \
 	group.c \
 	hide.c \
 	how.c \
@@ -102,7 +110,9 @@ libged_nil_la_SOURCES = \
 	match.c \
 	mater.c \
 	mirror.c \
+	model2grid_lu.c \
 	model2view.c \
+	model2view_lu.c \
 	move.c \
 	move_all.c \
 	move_arb_edge.c \
@@ -174,6 +184,7 @@ libged_nil_la_SOURCES = \
 	summary.c \
 	sync.c \
 	tables.c \
+	tire.c \
 	title.c \
 	tol.c \
 	tops.c \
@@ -188,7 +199,10 @@ libged_nil_la_SOURCES = \
 	vdraw.c \
 	version.c \
 	view.c \
+	view2grid_lu.c \
 	view2model.c \
+	view2model_lu.c \
+	view2model_vec.c \
 	view_obj.c \
 	viewdir.c \
 	vrot.c \

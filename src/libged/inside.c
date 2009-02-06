@@ -1,7 +1,7 @@
 /*                        I N S I D E . C
  * BRL-CAD
  *
- * Copyright (c) 2008 United States Government as represented by
+ * Copyright (c) 2008-2009 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -278,7 +278,7 @@ arbin(struct ged		*gedp,
 	m = nmg_mm();
 
 	/* get an NMG version of this arb7 */
-	if ( rt_functab[ip->idb_type].ft_tessellate( &r, m, ip, &ttol, &gedp->ged_wdbp->wdb_tol ) )
+	if (!rt_functab[ip->idb_type].ft_tessellate || rt_functab[ip->idb_type].ft_tessellate( &r, m, ip, &ttol, &gedp->ged_wdbp->wdb_tol ) )
 	{
 	    bu_vls_printf(&gedp->ged_result_str, "Cannot tessellate arb7\n");
 	    rt_db_free_internal( ip, &rt_uniresource );
@@ -917,6 +917,7 @@ ged_inside(struct ged *gedp, int argc, const char *argv[])
     char	*newname;
     int arg = 1;
     static const char *usage = "out_prim in_prim th(s)";
+    void (*cur_sigint)();
 
     GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
     GED_CHECK_READ_ONLY(gedp, BRLCAD_ERROR);

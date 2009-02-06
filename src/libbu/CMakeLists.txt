@@ -1,6 +1,5 @@
 set(LIBBU_SOURCES
     argv.c
-    association.c
     avs.c
     backtrace.c
     badmagic.c
@@ -8,7 +7,6 @@ set(LIBBU_SOURCES
     bitv.c
     bomb.c
     brlcad_path.c
-    bu_tcl.c
     cmd.c
     cmdhist.c
     cmdhist_obj.c
@@ -30,6 +28,7 @@ set(LIBBU_SOURCES
     htond.c
     htonf.c
     image.c
+    interrupt.c
     ispar.c
     kill.c
     lex.c
@@ -60,6 +59,7 @@ set(LIBBU_SOURCES
     semaphore.c
     stat.c
     str.c
+    tcl.c
     temp.c
     units.c
     vers.c

@@ -1,7 +1,7 @@
 /*			G _ M E T A B A L L . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2008 United States Government as represented by
+ * Copyright (c) 1985-2009 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -615,11 +615,25 @@ rt_metaball_describe(struct bu_vls *str, const struct rt_db_internal *ip, int ve
 
     snprintf(buf, BUFSIZ, "Metaball with %d points and a threshold of %g (%s rendering)\n", metaball_count, mb->threshold, rt_metaball_lookup_type_name(mb->method));
     bu_vls_strcat(str, buf);
-    if (!verbose)return 0;
+
+    if (!verbose)
+	return 0;
+
     metaball_count=0;
-    for ( BU_LIST_FOR( mbpt, wdb_metaballpt, &mb->metaball_ctrl_head)) {
-	snprintf(buf, BUFSIZ, "\t%d: %g field strength at (%g, %g, %g) and goo of %g\n",
-		 ++metaball_count, mbpt->fldstr, V3ARGS(mbpt->coord), mbpt->sweat);
+    for ( BU_LIST_FOR( mbpt, wdb_metaballpt, &mb->metaball_ctrl_head ) ) {
+	switch(mb->method) {
+	    case METABALL_ISOPOTENTIAL:
+		snprintf(buf, BUFSIZ, "\t%d: %g field strength at (%g, %g, %g)\n",
+		     ++metaball_count, mbpt->fldstr, V3ARGS(mbpt->coord));
+		break;
+	    case METABALL_METABALL:
+	    case METABALL_BLOB:
+		snprintf(buf, BUFSIZ, "\t%d: %g field strength at (%g, %g, %g) and blobbiness factor of %g\n",
+		     ++metaball_count, mbpt->fldstr, V3ARGS(mbpt->coord), mbpt->sweat);
+		break;
+	    default:
+		bu_exit(-1, "Bad metaball method");	/* asplode */
+	}
 	bu_vls_strcat(str, buf);
     }
     return 0;

@@ -1,7 +1,7 @@
 /*                         V U T I L . C
  * BRL-CAD
  *
- * Copyright (c) 2008 United States Government as represented by
+ * Copyright (c) 2008-2009 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -66,12 +66,8 @@ ged_view_update(struct ged_view	*gvp)
     /* apply the perspective angle to model2view */
     bn_mat_mul(gvp->gv_pmodel2view, gvp->gv_pmat, gvp->gv_model2view);
 
-#if 0
     if (gvp->gv_callback)
-	(*gvp->gv_callback)(gvp->gv_clientData, gvp);
-    else if (oflag && interp != (Tcl_Interp *)NULL)
-	bu_observer_notify(interp, &gvp->gv_observers, bu_vls_addr(&gvp->gv_name));
-#endif
+	(*gvp->gv_callback)(gvp, gvp->gv_clientData);
 }
 
 void

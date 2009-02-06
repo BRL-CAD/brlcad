@@ -1,7 +1,7 @@
 /*                         D R A W . C
  * BRL-CAD
  *
- * Copyright (c) 2008 United States Government as represented by
+ * Copyright (c) 2008-2009 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -237,7 +237,8 @@ ged_wireframe_leaf(struct db_tree_state *tsp, struct db_full_path *pathp, struct
 
     RT_CK_DB_INTERNAL(ip);
 
-    if (ip->idb_meth->ft_plot(&vhead, ip,
+    if (!ip->idb_meth->ft_plot ||
+	ip->idb_meth->ft_plot(&vhead, ip,
 			      tsp->ts_ttol,
 			      tsp->ts_tol) < 0) {
 	bu_vls_printf(&dgcdp->gedp->ged_result_str, "%s: plot failure\n", DB_FULL_PATH_CUR_DIR(pathp)->d_namep);

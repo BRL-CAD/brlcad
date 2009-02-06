@@ -1,7 +1,7 @@
 /*                         C O L O R . C
  * BRL-CAD
  *
- * Copyright (c) 1997-2008 United States Government as represented by
+ * Copyright (c) 1997-2009 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -60,19 +60,17 @@
 
 
 /* vmath/libbu routines replicated here to avoid a libbu dependency */
-#define X 0
-#define Y 1
-#define Z 2
+enum axis {
+    X = 0,
+    Y = 1,
+    Z = 2
+};
 #define VSET(a, b, c, d) { (a)[X] = (b); (a)[Y] = (c); (a)[Z] = (d); }
 #define VSETALL(a, s) { (a)[X] = (a)[Y] = (a)[Z] = (s); }
 #define NEAR_ZERO(val, epsilon)	(((val) > -epsilon) && ((val) < epsilon))
 #define V3ARGS(a) (a)[X], (a)[Y], (a)[Z]
 
 
-/**
- * B U _ R G B _ T O _ H S V
- *
- */
 void bu_rgb_to_hsv (unsigned char *rgb, fastf_t *hsv)
 {
     fastf_t	red, grn, blu;
@@ -132,10 +130,7 @@ void bu_rgb_to_hsv (unsigned char *rgb, fastf_t *hsv)
     }
 }
 
-/**
- * B U _ H S V _ T O _ R G B
- *
- */
+
 int bu_hsv_to_rgb (fastf_t *hsv, unsigned char *rgb)
 {
     fastf_t	float_rgb[3];
@@ -191,14 +186,15 @@ int bu_hsv_to_rgb (fastf_t *hsv, unsigned char *rgb)
     return (1);
 }
 
-/**
- * B U _ S T R _ T O _ R G B
- *
- */
+
 int bu_str_to_rgb (char *str, unsigned char *rgb)
 {
     int	num;
     int	r, g, b;
+
+    if (!str || !rgb) {
+	return 0;
+    }
 
     r = g = b = -1;
     while (isspace(*str))
@@ -233,6 +229,36 @@ int bu_str_to_rgb (char *str, unsigned char *rgb)
     }
 
     VSET(rgb, r, g, b);
+    return 1;
+}
+
+
+int
+bu_color_to_rgb_floats(struct bu_color *cp, fastf_t *rgb)
+{
+    if (!cp || !rgb) {
+	return 0;
+    }
+
+    rgb[0] = cp->buc_rgb[RED];
+    rgb[1] = cp->buc_rgb[GRN];
+    rgb[2] = cp->buc_rgb[BLU];
+
+    return 1;
+}
+
+
+int
+bu_color_from_rgb_floats(struct bu_color *cp, fastf_t *rgb)
+{
+    if (!cp || !rgb) {
+	return 0;
+    }
+
+    cp->buc_rgb[RED] = rgb[0];
+    cp->buc_rgb[GRN] = rgb[1];
+    cp->buc_rgb[BLU] = rgb[2];
+
     return 1;
 }
 

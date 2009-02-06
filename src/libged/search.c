@@ -1,7 +1,7 @@
 /*                        S E A R C H . C
  * BRL-CAD
  *
- * Copyright (c) 2008 United States Government as represented by
+ * Copyright (c) 2008-2009 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -725,49 +725,218 @@ f_attr(PLAN *plan, struct db_full_path *entry, struct rt_wdb *wdbp)
     struct bu_attribute_value_pair *avpp;
     int equalpos = 0;
     int checkval = 0;
+    int strcomparison = 0;
     int i;
+    long attr_val;
     bu_vls_init(&attribname);
     bu_vls_init(&value);
 
 
-    /* Check for unescaped equal sign - if present, the
-     * attribute must not only be present but have the
-     * value indicated.  Escaping is done with the "/"
-     * character.
+    /* Check for unescaped >, < or = characters.  If
+     * present, the attribute must not only be present
+     * but the value assigned to the attribute must
+     * satisfy the logical expression.  In the case
+     * where a > or < is used with a string argument
+     * the behavior will follow that of the strcmp 
+     * comparison command.  In the case of equality
+     * between strings, fnmatch is used to support
+     * pattern matching
      */
 
-    while ((equalpos < strlen(plan->attr_data)) && (plan->attr_data[equalpos] != '=')) {
-	if ((plan->attr_data[equalpos] == '/') && (plan->attr_data[equalpos + 1] == '=')) {equalpos++;}
-	equalpos++;
+    while ((equalpos < strlen(plan->attr_data)) && 
+	    (plan->attr_data[equalpos] != '=') &&
+	    (plan->attr_data[equalpos] != '>') &&
+	    (plan->attr_data[equalpos] != '<')) {
+    	if ((plan->attr_data[equalpos] == '/') && (plan->attr_data[equalpos + 1] == '=')) {equalpos++;}
+    	if ((plan->attr_data[equalpos] == '/') && (plan->attr_data[equalpos + 1] == '<')) {equalpos++;}
+    	if ((plan->attr_data[equalpos] == '/') && (plan->attr_data[equalpos + 1] == '>')) {equalpos++;}
+    	equalpos++;
     }
+
 
     if (equalpos == strlen(plan->attr_data)){
-	bu_vls_strcpy(&attribname, plan->attr_data);
+	/*No logical expression given - just copy attribute name*/
+        bu_vls_strcpy(&attribname, plan->attr_data);
     } else {
-	checkval = 1;
-	bu_vls_strncpy(&attribname, plan->attr_data, equalpos);
-	bu_vls_strncpy(&value, &(plan->attr_data[equalpos+1]), strlen(plan->attr_data) - equalpos - 1);
-    }
+	checkval = 1; /*Assume simple equality comparison, then check for other cases and change if found.*/
+	if ((plan->attr_data[equalpos] == '>') && (plan->attr_data[equalpos + 1] != '=')) {checkval = 2;}
+	if ((plan->attr_data[equalpos] == '<') && (plan->attr_data[equalpos + 1] != '=')) {checkval = 3;}
+	if ((plan->attr_data[equalpos] == '=') && (plan->attr_data[equalpos + 1] == '>')) {checkval = 4;}
+	if ((plan->attr_data[equalpos] == '=') && (plan->attr_data[equalpos + 1] == '<')) {checkval = 5;}
+        if ((plan->attr_data[equalpos] == '>') && (plan->attr_data[equalpos + 1] == '=')) {checkval = 4;}
+        if ((plan->attr_data[equalpos] == '<') && (plan->attr_data[equalpos + 1] == '=')) {checkval = 5;}
 
-    /* Get attributes for object and check all of
-     * them to see if there is a match to the requested
-     * attribute.  If a value is supplied, check the
-     * value of any matches to the attribute name before
-     * returning success.
+	bu_vls_strncpy(&attribname, plan->attr_data, equalpos);
+	if (checkval < 4) {
+	    bu_vls_strncpy(&value, &(plan->attr_data[equalpos+1]), strlen(plan->attr_data) - equalpos - 1);
+	} else {
+	    bu_vls_strncpy(&value, &(plan->attr_data[equalpos+2]), strlen(plan->attr_data) - equalpos - 1);
+	}
+    }
+	
+    /* Now that we have the value, check to see if it is all numbers.  If so,
+     * use numerical comparison logic - otherwise use string logic.
+     */
+
+    for (i = 0; i < strlen(bu_vls_addr(&value)); i++) {
+	if (!(isdigit(bu_vls_addr(&value)[i]))) strcomparison = 1;
+    }
+    
+    /* Get attributes for object.
      */
 
     bu_avs_init_empty(&avs);
     db5_get_attributes( wdbp->dbip, &avs, DB_FULL_PATH_CUR_DIR(entry));
     avpp = avs.avp;
+
+    /* Check all attributes for a match to the requested
+     * attribute.  If an expression was supplied, check the
+     * value of any matches to the attribute name in the
+     * logical expression before returning success
+     */
+
     for (i = 0; i < avs.count; i++, avpp++) {
 	if (!bu_fnmatch(bu_vls_addr(&attribname), avpp->name, 0)) {
-	    if ( checkval == 1 ) {
-		if (!bu_fnmatch(bu_vls_addr(&value), avpp->value, 0)) {
-		    bu_avs_free( &avs);
-		    bu_vls_free( &attribname);
-		    bu_vls_free( &value);
-		    return (1);
+	    if ( checkval >= 1 ) {
+    
+		/* String based comparisons */
+ 		if ((checkval == 1) && (strcomparison == 1)) {
+    		    if (!bu_fnmatch(bu_vls_addr(&value), avpp->value, 0)) {
+		    	bu_avs_free( &avs);
+    			bu_vls_free( &attribname);
+    			bu_vls_free( &value);
+    			return (1);
+    		    } else {
+			bu_avs_free( &avs);
+			bu_vls_free( &attribname);
+			bu_vls_free( &value);
+			return (0);
+		    }			
 		}
+		if ((checkval == 2) && (strcomparison == 1)) {
+    		    if (strcmp(bu_vls_addr(&value), avpp->value) < 0) {
+		    	bu_avs_free( &avs);
+    			bu_vls_free( &attribname);
+    			bu_vls_free( &value);
+    			return (1);
+    		    } else {
+			bu_avs_free( &avs);
+			bu_vls_free( &attribname);
+			bu_vls_free( &value);
+			return (0);
+		    }			
+		}
+		if ((checkval == 3) && (strcomparison == 1)) {
+    		    if (strcmp(bu_vls_addr(&value), avpp->value) > 0) {
+		    	bu_avs_free( &avs);
+    			bu_vls_free( &attribname);
+    			bu_vls_free( &value);
+    			return (1);
+    		    } else {
+			bu_avs_free( &avs);
+			bu_vls_free( &attribname);
+			bu_vls_free( &value);
+			return (0);
+		    }			
+		}
+		if ((checkval == 4) && (strcomparison == 1)) {
+    		    if ((!bu_fnmatch(bu_vls_addr(&value), avpp->value, 0)) || (strcmp(bu_vls_addr(&value), avpp->value) < 0) ) {
+		    	bu_avs_free( &avs);
+    			bu_vls_free( &attribname);
+    			bu_vls_free( &value);
+    			return (1);
+    		    } else {
+			bu_avs_free( &avs);
+			bu_vls_free( &attribname);
+			bu_vls_free( &value);
+			return (0);
+		    }			
+		}
+		if ((checkval == 5) && (strcomparison == 1)) {
+    		    if ((!bu_fnmatch(bu_vls_addr(&value), avpp->value, 0)) || (strcmp(bu_vls_addr(&value), avpp->value) > 0) ) {
+		    	bu_avs_free( &avs);
+    			bu_vls_free( &attribname);
+    			bu_vls_free( &value);
+    			return (1);
+    		    } else {
+			bu_avs_free( &avs);
+			bu_vls_free( &attribname);
+			bu_vls_free( &value);
+			return (0);
+		    }			
+		}
+
+		
+		/* Numerical Comparisons */
+		if ((checkval == 1) && (strcomparison == 0)) {
+    		    if (atol(bu_vls_addr(&value)) == atol(avpp->value)) {
+		    	bu_avs_free( &avs);
+    			bu_vls_free( &attribname);
+    			bu_vls_free( &value);
+    			return (1);
+    		    } else {
+			bu_avs_free( &avs);
+			bu_vls_free( &attribname);
+			bu_vls_free( &value);
+			return (0);
+		    }			
+		}
+		if ((checkval == 2) && (strcomparison == 0)) {
+    		    if (atol(bu_vls_addr(&value)) < atol(avpp->value)) {
+		    	bu_avs_free( &avs);
+    			bu_vls_free( &attribname);
+    			bu_vls_free( &value);
+    			return (1);
+    		    } else {
+			bu_avs_free( &avs);
+			bu_vls_free( &attribname);
+			bu_vls_free( &value);
+			return (0);
+		    }			
+		}
+   		if ((checkval == 3) && (strcomparison == 0)) {
+    		    if (atol(bu_vls_addr(&value)) > atol(avpp->value)) {
+		    	bu_avs_free( &avs);
+    			bu_vls_free( &attribname);
+    			bu_vls_free( &value);
+    			return (1);
+    		    } else {
+			bu_avs_free( &avs);
+			bu_vls_free( &attribname);
+			bu_vls_free( &value);
+			return (0);
+		    }			
+		}
+   		if ((checkval == 4) && (strcomparison == 0)) {
+    		    if (atol(bu_vls_addr(&value)) <= atol(avpp->value)) {
+		    	bu_avs_free( &avs);
+    			bu_vls_free( &attribname);
+    			bu_vls_free( &value);
+    			return (1);
+    		    } else {
+			bu_avs_free( &avs);
+			bu_vls_free( &attribname);
+			bu_vls_free( &value);
+			return (0);
+		    }			
+		}
+   		if ((checkval == 5) && (strcomparison == 0)) {
+    		    if (atol(bu_vls_addr(&value)) >= atol(avpp->value)) {
+		    	bu_avs_free( &avs);
+    			bu_vls_free( &attribname);
+    			bu_vls_free( &value);
+    			return (1);
+    		    } else {
+			bu_avs_free( &avs);
+			bu_vls_free( &attribname);
+			bu_vls_free( &value);
+			return (0);
+		    }			
+		}
+   		bu_avs_free( &avs);
+		bu_vls_free( &attribname);
+		bu_vls_free( &value);
+		return (0);
 	    } else {
 		bu_avs_free( &avs);
 		bu_vls_free( &attribname);

@@ -1,7 +1,7 @@
 /*                          R E C T . C
  * BRL-CAD
  *
- * Copyright (c) 1998-2008 United States Government as represented by
+ * Copyright (c) 1998-2009 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -242,15 +242,15 @@ ged_rect(struct ged	*gedp,
 
     if (strcmp(parameter, "lstyle") == 0) {
 	if (argc == 0) {
-	    bu_vls_printf(&gedp->ged_result_str, "%d", gedp->ged_gvp->gv_rect.grs_linestyle);
+	    bu_vls_printf(&gedp->ged_result_str, "%d", gedp->ged_gvp->gv_rect.grs_line_style);
 	    return BRLCAD_OK;
 	} else if (argc == 1) {
 	    i = (int)user_pt[X];
 
 	    if (i <= 0)
-		gedp->ged_gvp->gv_rect.grs_linestyle = 0;
+		gedp->ged_gvp->gv_rect.grs_line_style = 0;
 	    else
-		gedp->ged_gvp->gv_rect.grs_linestyle = 1;
+		gedp->ged_gvp->gv_rect.grs_line_style = 1;
 
 #if 0
 	    if (gedp->ged_gvp->gv_rect.grs_draw)
@@ -266,15 +266,15 @@ ged_rect(struct ged	*gedp,
 
     if (strcmp(parameter, "lwidth") == 0) {
 	if (argc == 0) {
-	    bu_vls_printf(&gedp->ged_result_str, "%d", gedp->ged_gvp->gv_rect.grs_linewidth);
+	    bu_vls_printf(&gedp->ged_result_str, "%d", gedp->ged_gvp->gv_rect.grs_line_width);
 	    return BRLCAD_OK;
 	} else if (argc == 1) {
 	    i = (int)user_pt[X];
 
 	    if (i <= 0)
-		gedp->ged_gvp->gv_rect.grs_linewidth = 1;
+		gedp->ged_gvp->gv_rect.grs_line_width = 1;
 	    else
-		gedp->ged_gvp->gv_rect.grs_linewidth = i;
+		gedp->ged_gvp->gv_rect.grs_line_width = i;
 
 #if 0
 	    if (gedp->ged_gvp->gv_rect.grs_draw)
@@ -337,8 +337,8 @@ ged_rect_vls_print(struct ged *gedp)
 		  gedp->ged_gvp->gv_rect.grs_dim[X],
 		  gedp->ged_gvp->gv_rect.grs_dim[Y]);
     bu_vls_printf(&gedp->ged_result_str, "draw = %d\n", gedp->ged_gvp->gv_rect.grs_draw);
-    bu_vls_printf(&gedp->ged_result_str, "lstyle = %d\n", gedp->ged_gvp->gv_rect.grs_linestyle);
-    bu_vls_printf(&gedp->ged_result_str, "lwidth = %d\n", gedp->ged_gvp->gv_rect.grs_linewidth);
+    bu_vls_printf(&gedp->ged_result_str, "lstyle = %d\n", gedp->ged_gvp->gv_rect.grs_line_style);
+    bu_vls_printf(&gedp->ged_result_str, "lwidth = %d\n", gedp->ged_gvp->gv_rect.grs_line_width);
     bu_vls_printf(&gedp->ged_result_str, "pos = %d %d\n",
 		  gedp->ged_gvp->gv_rect.grs_pos[X],
 		  gedp->ged_gvp->gv_rect.grs_pos[Y]);

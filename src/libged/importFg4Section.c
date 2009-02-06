@@ -1,7 +1,7 @@
 /*              I M P O R T F G 4 S E C T I O N . C
  * BRL-CAD
  *
- * Copyright (c) 1994-2008 United States Government as represented by
+ * Copyright (c) 1994-2009 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -101,7 +101,7 @@ static point_t *grid_pts;
 static void do_grid(char *line);
 static void do_tri(char *line);
 static void do_quad(char *line);
-static void make_bot_object(char		*name,
+static void make_bot_object(const char		*name,
 			    struct rt_wdb	*wdbp);
 
 /*************************** code from libwdb/bot.c ***************************/
@@ -429,7 +429,7 @@ do_quad(char *line)
 }
 
 static void
-make_bot_object(char		*name,
+make_bot_object(const char	*name,
 		struct rt_wdb	*wdbp)
 {
     int i;
@@ -593,7 +593,7 @@ ged_importFg4Section(struct ged *gedp, int argc, const char *argv[])
 	    do_quad(line);
     }
 
-    make_bot_object((char *)argv[1], gedp->ged_wdbp);
+    make_bot_object(argv[1], gedp->ged_wdbp);
     free((void *)lines);
     bu_free((void *)grid_pts, "importFg4Section: grid_pts");
 

@@ -1,7 +1,7 @@
 /*                         C O L O R . C
  * BRL-CAD
  *
- * Copyright (c) 2008 United States Government as represented by
+ * Copyright (c) 2008-2009 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -48,7 +48,6 @@ _ged_edcolor(struct ged *gedp, int argc, const char *argv[])
     char line[128];
     static char hdr[] = "LOW\tHIGH\tRed\tGreen\tBlue\n";
     char tmpfil[MAXPATHLEN];
-    static const char *usage = "";
 
     GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
     GED_CHECK_READ_ONLY(gedp, BRLCAD_ERROR);
@@ -155,6 +154,28 @@ _ged_edcolor(struct ged *gedp, int argc, const char *argv[])
     return BRLCAD_OK;
 }
 
+
+int
+ged_edcolor(struct ged *gedp, int argc, const char *argv[])
+{
+    register struct mater *newp;
+    register struct mater *mp;
+    register struct mater *next_mater;
+
+    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
+    GED_CHECK_READ_ONLY(gedp, BRLCAD_ERROR);
+    GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
+
+    /* initialize result */
+    bu_vls_trunc(&gedp->ged_result_str, 0);
+
+    if (argc != 1) {
+	bu_vls_printf(&gedp->ged_result_str, "Usage: %s", argv[0]);
+	return BRLCAD_ERROR;
+    }
+
+    return _ged_edcolor(gedp, argc, argv);
+}
 
 int
 ged_color(struct ged *gedp, int argc, const char *argv[])

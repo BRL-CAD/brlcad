@@ -1,7 +1,7 @@
 /*                        D M - O G L . C
  * BRL-CAD
  *
- * Copyright (c) 1988-2008 United States Government as represented by
+ * Copyright (c) 1988-2009 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -224,6 +224,7 @@ ogl_open(Tcl_Interp *interp, int argc, char **argv)
 
     *dmp = dm_ogl; /* struct copy */
     dmp->dm_interp = interp;
+    dmp->dm_lineWidth = 1;
 
     dmp->dm_vars.pub_vars = (genptr_t)bu_calloc(1, sizeof(struct dm_xvars), "ogl_open: dm_xvars");
     if (dmp->dm_vars.pub_vars == (genptr_t)NULL) {

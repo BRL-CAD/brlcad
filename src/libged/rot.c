@@ -1,7 +1,7 @@
 /*                         R O T . C
  * BRL-CAD
  *
- * Copyright (c) 2008 United States Government as represented by
+ * Copyright (c) 2008-2009 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -33,11 +33,9 @@
 #include "ged_private.h"
 
 int
-ged_rot(struct ged *gedp, int argc, const char *argv[])
+ged_rot_args(struct ged *gedp, int argc, const char *argv[], char *coord, mat_t rmat)
 {
     vect_t rvec;
-    mat_t rmat;
-    char coord;
     static const char *usage = "[-m|-v] x y z";
 
     GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
@@ -55,11 +53,11 @@ ged_rot(struct ged *gedp, int argc, const char *argv[])
 
     /* process possible coord flag */
     if (argv[1][0] == '-' && (argv[1][1] == 'v' || argv[1][1] == 'm') && argv[1][2] == '\0') {
-	coord = argv[1][1];
+	*coord = argv[1][1];
 	--argc;
 	++argv;
     } else
-	coord = gedp->ged_gvp->gv_coord;
+	*coord = gedp->ged_gvp->gv_coord;
 
     if (argc != 2 && argc != 4) {
 	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
@@ -90,6 +88,19 @@ ged_rot(struct ged *gedp, int argc, const char *argv[])
 
     VSCALE(rvec, rvec, -1.0);
     bn_mat_angles(rmat, rvec[X], rvec[Y], rvec[Z]);
+
+    return BRLCAD_OK;
+}
+
+int
+ged_rot(struct ged *gedp, int argc, const char *argv[])
+{
+    int ret;
+    char coord;
+    mat_t rmat;
+
+    if ((ret = ged_rot_args(gedp, argc, argv, &coord, rmat)) != BRLCAD_OK)
+	return ret;
 
     return ged_do_rot(gedp, coord, rmat, (int (*)())0);
 }

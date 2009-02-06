@@ -1,7 +1,7 @@
 /*                            D S P . C
  * BRL-CAD
  *
- * Copyright (c) 1994-2008 United States Government as represented by
+ * Copyright (c) 1994-2009 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -44,8 +44,8 @@ mk_dsp(struct rt_wdb *fp, const char *name, const char *file, int xdim, int ydim
 
     BU_GETSTRUCT( dsp, rt_dsp_internal );
     dsp->magic = RT_DSP_INTERNAL_MAGIC;
+
     bu_vls_init( &dsp->dsp_name );
-    bu_vls_strcpy( &dsp->dsp_name, "file:");
     bu_vls_strcat( &dsp->dsp_name, file);
 
     dsp->dsp_xcnt = xdim;

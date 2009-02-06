@@ -1,7 +1,7 @@
 /*                        M E M S E T . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2008 United States Government as represented by
+ * Copyright (c) 2004-2009 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -33,6 +33,7 @@ static const int unused = 0;
  * defined for the folks that don't seem to have a system memset()
  */
 #ifndef HAVE_MEMSET
+#include "sysv.h"
 
 char *
 memset(char *s, register char c, register int n)

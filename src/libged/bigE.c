@@ -1,7 +1,7 @@
 /*                          B I G E . C
  * BRL-CAD
  *
- * Copyright (c) 1997-2008 United States Government as represented by
+ * Copyright (c) 1997-2009 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -173,7 +173,9 @@ add_solid(const struct directory	*dp,
     {
 	/* create the NMG version of this solid */
 	eptr->l.m = nmg_mm();
-	if (rt_functab[id].ft_tessellate(&r, eptr->l.m, &intern,
+
+	if (!rt_functab[id].ft_tessellate ||
+	    rt_functab[id].ft_tessellate(&r, eptr->l.m, &intern,
 					 &dgcdp->gedp->ged_wdbp->wdb_ttol,
 					 &dgcdp->gedp->ged_wdbp->wdb_tol) < 0) {
 	    nmg_km( eptr->l.m );
@@ -209,8 +211,9 @@ add_solid(const struct directory	*dp,
 	    {
 		eptr->l.stp->st_id = id;
 		eptr->l.stp->st_meth = &rt_functab[id];
-		if ( rt_functab[id].ft_prep( eptr->l.stp, &intern, dgcdp->rtip ) < 0 )
+		if (!rt_functab[id].ft_prep || rt_functab[id].ft_prep( eptr->l.stp, &intern, dgcdp->rtip ) < 0 ) {
 		    bu_vls_printf(&dgcdp->gedp->ged_result_str, "Prep failure for solid '%s'\n", dp->d_namep);
+		}
 	    }
 	    else
 	    {
@@ -221,7 +224,7 @@ add_solid(const struct directory	*dp,
 		intern2.idb_ptr = (genptr_t)bot;
 		eptr->l.stp->st_id = ID_BOT;
 		eptr->l.stp->st_meth = &rt_functab[ID_BOT];
-		if (rt_functab[ID_BOT].ft_prep(eptr->l.stp, &intern2, dgcdp->rtip) < 0) {
+		if (!rt_functab[ID_BOT].ft_prep || rt_functab[ID_BOT].ft_prep(eptr->l.stp, &intern2, dgcdp->rtip) < 0) {
 		    bu_vls_printf(&dgcdp->gedp->ged_result_str, "Prep failure for solid '%s'\n", dp->d_namep);
 		}
 
@@ -233,7 +236,7 @@ add_solid(const struct directory	*dp,
 
 	    eptr->l.stp->st_id = id;
 	    eptr->l.stp->st_meth = &rt_functab[id];
-	    if (rt_functab[id].ft_prep(eptr->l.stp, &intern, dgcdp->rtip) < 0)
+	    if (!rt_functab[id].ft_prep || rt_functab[id].ft_prep(eptr->l.stp, &intern, dgcdp->rtip) < 0)
 		bu_vls_printf(&dgcdp->gedp->ged_result_str, "Prep failure for solid '%s'\n", dp->d_namep);
 	}
     }
@@ -1205,7 +1208,7 @@ classify_seg( struct seg *seg, struct soltab *shoot, struct xray *rp, struct ged
     rd.hitmiss = (struct hitmiss **)NULL;
     rd.stp = shoot;
 
-    if ( rt_functab[shoot->st_id].ft_shot( shoot, &new_rp, dgcdp->ap, rd.seghead ) ) {
+    if ( rt_functab[shoot->st_id].ft_shot && rt_functab[shoot->st_id].ft_shot( shoot, &new_rp, dgcdp->ap, rd.seghead ) ) {
 	struct seg *seg;
 
 	while ( BU_LIST_WHILE( seg, seg, &rd.seghead->l ) ) {
@@ -1232,7 +1235,7 @@ classify_seg( struct seg *seg, struct soltab *shoot, struct xray *rp, struct ged
 	VCROSS( new_dir, new_rp.r_dir, rp->r_dir );
 	VMOVE( new_rp.r_dir, new_dir );
 	inverse_dir( new_rp.r_dir, rd.rd_invdir );
-	if ( rt_functab[shoot->st_id].ft_shot( shoot, &new_rp, dgcdp->ap, rd.seghead ) ) {
+	if ( rt_functab[shoot->st_id].ft_shot && rt_functab[shoot->st_id].ft_shot( shoot, &new_rp, dgcdp->ap, rd.seghead ) ) {
 	    struct seg *seg;
 
 	    while ( BU_LIST_WHILE( seg, seg, &rd.seghead->l ) ) {
@@ -1419,7 +1422,7 @@ shoot_and_plot(point_t			start_pt,
 	/* actually shoot the ray, assign segments to the leaf, and mark them as IN_SOL */
 	if ( rt_in_rpp( &rp, rd.rd_invdir, shoot->l.stp->st_min, shoot->l.stp->st_max ) )
 	{
-	    if ( rt_functab[shoot->l.stp->st_id].ft_shot( shoot->l.stp, &rp, dgcdp->ap, rd.seghead ) )
+	    if ( rt_functab[shoot->l.stp->st_id].ft_shot && rt_functab[shoot->l.stp->st_id].ft_shot( shoot->l.stp, &rp, dgcdp->ap, rd.seghead ) )
 	    {
 		struct seg *seg;
 
@@ -1908,7 +1911,7 @@ free_etree(union E_tree			*eptr,
 	    }
 	    if ( eptr->l.stp )
 	    {
-		if ( eptr->l.stp->st_specific )
+		if (eptr->l.stp->st_specific && rt_functab[eptr->l.stp->st_id].ft_free)
 		    rt_functab[eptr->l.stp->st_id].ft_free( eptr->l.stp );
 		bu_free( (char *)eptr->l.stp, "struct soltab" );
 	    }
@@ -2196,12 +2199,13 @@ fix_halfs(struct ged_client_data	*dgcdp)
 	    intern2.idb_type = ID_POLY;
 	    intern2.idb_meth = &rt_functab[ID_POLY];
 	    intern2.idb_ptr = (genptr_t)pg;
-	    rt_functab[tp->l.stp->st_id].ft_free( tp->l.stp );
+	    if (rt_functab[tp->l.stp->st_id].ft_free)
+		rt_functab[tp->l.stp->st_id].ft_free( tp->l.stp );
 	    tp->l.stp->st_specific = NULL;
 	    tp->l.stp->st_id = ID_POLY;
 	    VSETALL( tp->l.stp->st_max, -INFINITY );
 	    VSETALL( tp->l.stp->st_min,  INFINITY );
-	    if (rt_functab[ID_POLY].ft_prep(tp->l.stp, &intern2, dgcdp->rtip) < 0) {
+	    if (!rt_functab[ID_POLY].ft_prep || rt_functab[ID_POLY].ft_prep(tp->l.stp, &intern2, dgcdp->rtip) < 0) {
 		bu_vls_printf(&dgcdp->gedp->ged_result_str,
 			      "Prep failure for polysolid version of solid '%s'",
 			      tp->l.stp->st_dp->d_namep);
@@ -2343,7 +2347,7 @@ ged_E(struct ged *gedp, int argc, const char *argv[])
 	    bu_ptbl_reset(&dgcdp->leaf_list);
 	    ts.ts_mater = rp->reg_mater;
 	    db_string_to_path(&path, gedp->ged_wdbp->dbip, rp->reg_name);
-	    dgo_drawH_part2(0, &vhead, &path, &ts, SOLID_NULL, dgcdp);
+	    ged_drawH_part2(0, &vhead, &path, &ts, SOLID_NULL, dgcdp);
 	    db_free_full_path(&path);
 	}
 	/* do not do an rt_free_rti() (closes the database!!!!) */

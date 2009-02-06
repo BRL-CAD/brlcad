@@ -1,7 +1,7 @@
 /*                           W D B . C
  * BRL-CAD
  *
- * Copyright (c) 1987-2008 United States Government as represented by
+ * Copyright (c) 1987-2009 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -337,6 +337,67 @@ mk_ell(struct rt_wdb *wdbp, const char *name, const fastf_t *center, const fastf
 
     return wdb_export( wdbp, name, (genptr_t)ell, ID_ELL, mk_conv2mm );
 }
+
+
+/*
+ *			M K _ H Y P
+ *
+ *  Make a hyperbolid at the given center point with a vertex, height vector,
+ *  A vector, magnitude of the B vector, and neck to base ratio.
+ */
+int
+mk_hyp(struct rt_wdb *wdbp, const char *name, const point_t vertex, const vect_t height_vector, const vect_t vectA, fastf_t magB, fastf_t base_neck_ratio)
+{
+    struct rt_hyp_internal	*hyp;
+    vect_t inH, inAu;
+    vect_t unit_H;
+        
+    
+    BU_GETSTRUCT( hyp, rt_hyp_internal );
+    hyp->hyp_magic = RT_HYP_INTERNAL_MAGIC;
+ 
+
+    if (( MAGNITUDE(vectA) <= SQRT_SMALL_FASTF ) || (magB <= SQRT_SMALL_FASTF))
+	return -2;
+    
+    hyp->hyp_bnr = base_neck_ratio;
+    hyp->hyp_b = magB;
+    VMOVE(hyp->hyp_Hi, height_vector);
+    VMOVE(hyp->hyp_Vi, vertex);
+    VMOVE(hyp->hyp_A, vectA);
+
+    if (MAGNITUDE(hyp->hyp_Hi) < RT_LEN_TOL
+	|| MAGNITUDE( hyp->hyp_A ) < RT_LEN_TOL
+        || hyp->hyp_b < RT_LEN_TOL
+        || hyp->hyp_bnr < RT_LEN_TOL) {
+	bu_log("ERROR, height, axes, and distance to asymptotes must be greater than zero!\n");
+	return  -1;
+    }
+	
+    if (!NEAR_ZERO (VDOT(hyp->hyp_Hi, hyp->hyp_A), RT_DOT_TOL )) {
+    	bu_log("ERROR, major axis must be perpendicular to height vector!\n");
+	return -1;
+    }
+
+    if ( base_neck_ratio >= 1 || base_neck_ratio <= 0 ) {
+    	bu_log("ERROR, neck to base ratio must be between 0 and 1!\n");
+    	return -1;
+    }
+
+    if (hyp->hyp_b > MAGNITUDE( hyp->hyp_A )) {
+	vect_t	majorAxis;
+	fastf_t	minorLen;
+
+	minorLen = MAGNITUDE(hyp->hyp_A);
+	VCROSS( majorAxis, hyp->hyp_Hi, hyp->hyp_A );
+	VSCALE( hyp->hyp_A, majorAxis, hyp->hyp_b );
+	hyp->hyp_b = minorLen;
+    }
+
+    return wdb_export( wdbp, name, (genptr_t)hyp, ID_HYP, mk_conv2mm );
+}
+
+
 
 /*
  *			M K _ T O R

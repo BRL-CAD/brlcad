@@ -1,7 +1,7 @@
 /*                     S E M A P H O R E . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2008 United States Government as represented by
+ * Copyright (c) 2004-2009 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -342,6 +342,24 @@ bu_semaphore_init(unsigned int nsemaphores)
      * parallel operation has begun yet, and do acquire/release.
      */
     bu_nsemaphores = nsemaphores;
+#endif	/* PARALLEL */
+}
+
+void
+bu_semaphore_reinit(unsigned int nsemaphores)
+{
+#if !defined(PARALLEL) && !defined(DEFINED_BU_SEMAPHORES)
+    return;					/* No support on this hardware */
+#else
+    unsigned int	i;
+
+    if (bu_nsemaphores != 0) {
+	free((void *)bu_semaphores);
+	bu_semaphores = (struct bu_semaphores *)0;
+	bu_nsemaphores = 0;
+    }
+
+    bu_semaphore_init(nsemaphores);
 #endif	/* PARALLEL */
 }
 

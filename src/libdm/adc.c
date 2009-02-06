@@ -1,7 +1,7 @@
 /*                           A D C . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2008 United States Government as represented by
+ * Copyright (c) 1985-2009 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -124,7 +124,7 @@ dm_draw_adc(struct dm *dmp, struct ged_view *gvp)
 		   gvp->gv_adc.gas_line_color[0],
 		   gvp->gv_adc.gas_line_color[1],
 		   gvp->gv_adc.gas_line_color[2], 1, 1.0);
-    DM_SET_LINE_ATTR(dmp, gvp->gv_adc.gas_linewidth, 0);
+    DM_SET_LINE_ATTR(dmp, gvp->gv_adc.gas_line_width, 0);
 
     /* Horizontal */
     DM_DRAW_LINE_2D(dmp,
@@ -171,14 +171,14 @@ dm_draw_adc(struct dm *dmp, struct ged_view *gvp)
     x4 = gvp->gv_adc.gas_dv_x - d2;
     y4 = gvp->gv_adc.gas_dv_y + d1;
 
-    DM_SET_LINE_ATTR(dmp, gvp->gv_adc.gas_linewidth, 1);
+    DM_SET_LINE_ATTR(dmp, gvp->gv_adc.gas_line_width, 1);
     DM_DRAW_LINE_2D(dmp,
 		    GED_TO_PM1(x1), GED_TO_PM1(Y1) * dmp->dm_aspect,
 		    GED_TO_PM1(x2), GED_TO_PM1(y2) * dmp->dm_aspect);
     DM_DRAW_LINE_2D(dmp,
 		    GED_TO_PM1(x3), GED_TO_PM1(y3) * dmp->dm_aspect,
 		    GED_TO_PM1(x4), GED_TO_PM1(y4) * dmp->dm_aspect);
-    DM_SET_LINE_ATTR(dmp, gvp->gv_adc.gas_linewidth, 0);
+    DM_SET_LINE_ATTR(dmp, gvp->gv_adc.gas_line_width, 0);
 
     DM_SET_FGCOLOR(dmp,
 		   gvp->gv_adc.gas_tick_color[0],

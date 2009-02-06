@@ -1,7 +1,7 @@
 /*                    P C V C S E T . H
  * BRL-CAD
  *
- * Copyright (c) 2008 United States Government as represented by
+ * Copyright (c) 2008-2009 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -77,6 +77,8 @@ public:
     
     /** Variable access method */
     VariableAbstract * getVariablebyID(std::string vid);
+    void store();
+    void restore();
     
     /** Parameter table data access */
     Parameter * getParameter(std::string pid);

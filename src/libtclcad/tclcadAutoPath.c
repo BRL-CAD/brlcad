@@ -1,7 +1,7 @@
 /*                T C L C A D A U T O P A T H . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2008 United States Government as represented by
+ * Copyright (c) 2004-2009 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -202,6 +202,8 @@ tclcad_auto_path(Tcl_Interp *interp)
 
     int found_init_tcl = 0;
     int found_tk_tcl = 0;
+    int found_itcl_tcl = 0;
+    int found_itk_tcl = 0;
 
     char pathsep[2] = { BU_PATH_SEPARATOR, '\0' };
 
@@ -402,6 +404,24 @@ tclcad_auto_path(Tcl_Interp *interp)
 
     /*    printf("AUTO_PATH IS %s\n", bu_vls_addr(&auto_path)); */
 
+    /* see if user already set ITCL_LIBRARY override */
+    library_path = getenv("ITCL_LIBRARY");
+    if (!found_itcl_tcl && library_path) {
+	snprintf(buffer, MAX_BUF, "%s%citcl.tcl", library_path, BU_DIR_SEPARATOR);
+	if (bu_file_exists(buffer)) {
+	    found_itcl_tcl=1;
+	}
+    }
+
+    /* see if user already set ITK_LIBRARY override */
+    library_path = getenv("ITK_LIBRARY");
+    if (!found_itk_tcl && library_path) {
+	snprintf(buffer, MAX_BUF, "%s%citk.tcl", library_path, BU_DIR_SEPARATOR);
+	if (bu_file_exists(buffer)) {
+	    found_itk_tcl=1;
+	}
+    }
+
     /* iterate over the auto_path list and modify the real Tcl auto_path */
     for (srcpath = strtok(bu_vls_addr(&auto_path), pathsep);
 	 srcpath;
@@ -449,6 +469,34 @@ tclcad_auto_path(Tcl_Interp *interp)
 		    bu_log("Tcl_Eval ERROR:\n%s\n", Tcl_GetStringResult(interp));
 		} else {
 		    found_tk_tcl=1;
+		}
+	    }
+	}
+
+	/* specifically look for itcl.tcl so we can set ITCL_LIBRARY */
+	if (!found_itcl_tcl) {
+	    snprintf(buffer, MAX_BUF, "%s%citcl.tcl", srcpath, BU_DIR_SEPARATOR);
+	    if (bu_file_exists(buffer)) {
+		/* this really sets it */
+		snprintf(buffer, MAX_BUF, "set env(ITCL_LIBRARY) \"%s\"", srcpath);
+		if (Tcl_Eval(interp, buffer)) {
+		    bu_log("Tcl_Eval ERROR:\n%s\n", Tcl_GetStringResult(interp));
+		} else {
+		    found_itcl_tcl=1;
+		}
+	    }
+	}
+
+	/* specifically look for itk.tcl so we can set ITK_LIBRARY */
+	if (!found_itk_tcl) {
+	    snprintf(buffer, MAX_BUF, "%s%citk.tcl", srcpath, BU_DIR_SEPARATOR);
+	    if (bu_file_exists(buffer)) {
+		/* this really sets it */
+		snprintf(buffer, MAX_BUF, "set env(ITK_LIBRARY) \"%s\"", srcpath);
+		if (Tcl_Eval(interp, buffer)) {
+		    bu_log("Tcl_Eval ERROR:\n%s\n", Tcl_GetStringResult(interp));
+		} else {
+		    found_itk_tcl=1;
 		}
 	    }
 	}

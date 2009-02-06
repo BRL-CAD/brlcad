@@ -1,7 +1,7 @@
 /*                        S E A R C H . H
  * BRL-CAD
  *
- * Copyright (c) 2008 United States Government as represented by
+ * Copyright (c) 2008-2009 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -85,8 +85,8 @@ typedef struct _plandata {
     union {
 	gid_t _g_data;			/* gid */
 	struct {
-	    u_int _f_flags;
-	    u_int _f_mask;
+	    unsigned int _f_flags;
+	    unsigned int _f_mask;
 	} fl;
 	struct _plandata *_p_data[2];	/* PLAN trees */
 	struct _ex {

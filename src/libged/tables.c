@@ -1,7 +1,7 @@
 /*                         T A B L E S . C
  * BRL-CAD
  *
- * Copyright (c) 2008 United States Government as represented by
+ * Copyright (c) 2008-2009 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -407,7 +407,8 @@ ged_new_tables(struct ged *gedp, struct directory *dp, struct bu_ptbl *cur_path,
 	    if ( !old && (sol_dp->d_flags & DIR_SOLID) ) {
 		/* if we get here, we must be looking for a solid table */
 		bu_vls_init_if_uninit( &tmp_vls );
-		if ( rt_functab[sol_intern.idb_type].ft_describe( &tmp_vls, &sol_intern, 1, gedp->ged_wdbp->dbip->dbi_base2local, &rt_uniresource, gedp->ged_wdbp->dbip ) < 0 ) {
+		if (!rt_functab[sol_intern.idb_type].ft_describe ||
+		    rt_functab[sol_intern.idb_type].ft_describe( &tmp_vls, &sol_intern, 1, gedp->ged_wdbp->dbip->dbi_base2local, &rt_uniresource, gedp->ged_wdbp->dbip ) < 0 ) {
 		    bu_vls_printf(&gedp->ged_result_str, "%s describe error\n", tree_list[i].tl_tree->tr_l.tl_name);
 		}
 		fprintf( tabptr, "%s", bu_vls_addr(&tmp_vls));

@@ -1,7 +1,7 @@
 /*                         A D J U S T . C
  * BRL-CAD
  *
- * Copyright (c) 2008 United States Government as represented by
+ * Copyright (c) 2008-2009 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -78,6 +78,11 @@ ged_adjust(struct ged *gedp, int argc, const char *argv[])
 
     /* Find out what type of object we are dealing with and tweak it. */
     RT_CK_FUNCTAB(intern.idb_meth);
+
+    if (!intern.idb_meth->ft_adjust) {
+	bu_vls_printf(&gedp->ged_result_str, "wdb_export(%s) adjust failure", name);
+	return BRLCAD_ERROR;
+    }
 
     status = intern.idb_meth->ft_adjust(&gedp->ged_result_str, &intern, argc-2, (char **)argv+2, &rt_uniresource);
     if (status == BRLCAD_OK && wdb_put_internal(gedp->ged_wdbp, name, &intern, 1.0) < 0) {

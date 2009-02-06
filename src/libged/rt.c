@@ -1,7 +1,7 @@
 /*                         R T . C
  * BRL-CAD
  *
- * Copyright (c) 2008 United States Government as represented by
+ * Copyright (c) 2008-2009 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -92,7 +92,6 @@ ged_rt(struct ged *gedp, int argc, const char *argv[])
     if (i == argc) {
 	gedp->ged_gdp->gd_rt_cmd_len = vp - gedp->ged_gdp->gd_rt_cmd;
 	gedp->ged_gdp->gd_rt_cmd_len += ged_build_tops(gedp,
-						       (struct solid *)&gedp->ged_gdp->gd_headSolid,
 						       vp,
 						       &gedp->ged_gdp->gd_rt_cmd[MAXARGS]);
     } else {
@@ -443,7 +442,6 @@ ged_rt_output_handler(ClientData	clientData,
  */
 int
 ged_build_tops(struct ged	*gedp,
-	       struct solid	*hsp,
 	       char		**start,
 	       register char	**end)
 {
@@ -452,11 +450,11 @@ ged_build_tops(struct ged	*gedp,
 
     /*
      * Find all unique top-level entries.
-     *  Mark ones already done with s_flag == UP
+     * Mark ones already done with s_flag == UP
      */
-    FOR_ALL_SOLIDS(sp, &hsp->l)
+    FOR_ALL_SOLIDS(sp, &gedp->ged_gdp->gd_headSolid)
 	sp->s_flag = DOWN;
-    FOR_ALL_SOLIDS(sp, &hsp->l)  {
+    FOR_ALL_SOLIDS(sp, &gedp->ged_gdp->gd_headSolid) {
 	register struct solid *forw;
 	struct directory *dp = FIRST_SOLID(sp);
 
@@ -467,11 +465,11 @@ ged_build_tops(struct ged	*gedp,
 	if (vp < end)
 	    *vp++ = dp->d_namep;
 	else  {
-	    bu_vls_printf(&gedp->ged_result_str, "mged: ran out of comand vector space at %s\n", dp->d_namep);
+	    bu_vls_printf(&gedp->ged_result_str, "libged: ran out of command vector space at %s\n", dp->d_namep);
 	    break;
 	}
 	sp->s_flag = UP;
-	for (BU_LIST_PFOR(forw, sp, solid, &hsp->l)) {
+	for (BU_LIST_PFOR(forw, sp, solid, &gedp->ged_gdp->gd_headSolid)) {
 	    if (FIRST_SOLID(forw) == dp)
 		forw->s_flag = UP;
 	}

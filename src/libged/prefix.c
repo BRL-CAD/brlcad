@@ -1,7 +1,7 @@
 /*                         P R E F I X . C
  * BRL-CAD
  *
- * Copyright (c) 2008 United States Government as represented by
+ * Copyright (c) 2008-2009 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -38,15 +38,15 @@ static void ged_do_prefix(struct db_i *dbip, struct rt_comb_internal *comb, unio
 int
 ged_prefix(struct ged *gedp, int argc, const char *argv[])
 {
-    register int	i, k;
+    register int i, k;
     register struct directory *dp;
-    struct rt_db_internal	intern;
+    struct rt_db_internal intern;
     struct rt_comb_internal *comb;
     char tempstring_v4[NAMESIZE+1];
     struct bu_vls tempstring_v5;
     char *tempstring;
     int len = NAMESIZE+1;
-    static const char *usage = "quat|ypr|aet|center|eye|size [args]";
+    static const char *usage = "new_prefix object(s)";
 
     GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
     GED_CHECK_READ_ONLY(gedp, BRLCAD_ERROR);
@@ -66,6 +66,7 @@ ged_prefix(struct ged *gedp, int argc, const char *argv[])
 	return BRLCAD_ERROR;
     }
 
+    bu_log("XXXged_prefix: step 1\n");
     bu_vls_init(&tempstring_v5);
 
     /* First, check validity, and change node names */
@@ -99,12 +100,25 @@ ged_prefix(struct ged *gedp, int argc, const char *argv[])
 	    argv[i] = "";
 	    continue;
 	}
+
 	/*  Change object name in the directory. */
 	if (db_rename(gedp->ged_wdbp->dbip, dp, tempstring) < 0) {
 	    bu_vls_free(&tempstring_v5);
 	    bu_vls_printf(&gedp->ged_result_str, "error in rename to %s, aborting\n", tempstring);
 	    return BRLCAD_ERROR;
 	}
+
+	if (rt_db_get_internal(&intern, dp, gedp->ged_wdbp->dbip, (fastf_t *)NULL, &rt_uniresource) < 0) {
+	    bu_vls_printf(&gedp->ged_result_str, "Database read error, aborting");
+	    return BRLCAD_ERROR;
+	}
+
+	/*  Change object name on disk. */
+	if (rt_db_put_internal(dp, gedp->ged_wdbp->dbip, &intern, &rt_uniresource)) {
+	    bu_vls_printf(&gedp->ged_result_str, "Database write error, aborting");
+	    return BRLCAD_ERROR;
+	}
+	bu_log("XXXged_prefix: changed name from %s to %s\n", argv[i], tempstring);
     }
 
     bu_vls_free(&tempstring_v5);

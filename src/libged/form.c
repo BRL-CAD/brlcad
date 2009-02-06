@@ -1,7 +1,7 @@
 /*                         F O R M . C
  * BRL-CAD
  *
- * Copyright (c) 2008 United States Government as represented by
+ * Copyright (c) 2008-2009 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -57,6 +57,10 @@ ged_form(struct ged *gedp, int argc, const char *argv[])
 
     if ((ftp = rt_get_functab_by_label(argv[1])) == NULL) {
 	bu_vls_printf(&gedp->ged_result_str, "There is no geometric object type \"%s\".", argv[1]);
+	return BRLCAD_ERROR;
+    }
+
+    if (!ftp->ft_form) {
 	return BRLCAD_ERROR;
     }
 

@@ -1,7 +1,7 @@
 /*                         A R O T . C
  * BRL-CAD
  *
- * Copyright (c) 2008 United States Government as represented by
+ * Copyright (c) 2008-2009 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -33,9 +33,8 @@
 #include "ged_private.h"
 
 int
-ged_arot(struct ged *gedp, int argc, const char *argv[])
+ged_arot_args(struct ged *gedp, int argc, const char *argv[], mat_t rmat)
 {
-    mat_t rmat;
     point_t pt;
     vect_t axis;
     fastf_t angle;
@@ -60,29 +59,40 @@ ged_arot(struct ged *gedp, int argc, const char *argv[])
     }
 
     if (sscanf(argv[1], "%lf", &axis[X]) != 1) {
-	bu_vls_printf(&gedp->ged_result_str, "ged_arot: bad X value - %s\n", argv[1]);
+	bu_vls_printf(&gedp->ged_result_str, "%s: bad X value - %s\n", argv[0], argv[1]);
 	return BRLCAD_ERROR;
     }
 
     if (sscanf(argv[2], "%lf", &axis[Y]) != 1) {
-	bu_vls_printf(&gedp->ged_result_str, "ged_arot: bad Y value - %s\n", argv[2]);
+	bu_vls_printf(&gedp->ged_result_str, "%s: bad Y value - %s\n", argv[0], argv[2]);
 	return BRLCAD_ERROR;
     }
 
     if (sscanf(argv[3], "%lf", &axis[Z]) != 1) {
-	bu_vls_printf(&gedp->ged_result_str, "ged_arot: bad Z value - %s\n", argv[3]);
+	bu_vls_printf(&gedp->ged_result_str, "%s: bad Z value - %s\n", argv[0], argv[3]);
 	return BRLCAD_ERROR;
     }
 
     if (sscanf(argv[4], "%lf", &angle) != 1) {
-	bu_vls_printf(&gedp->ged_result_str, "ged_arot: bad angle - %s\n", argv[4]);
+	bu_vls_printf(&gedp->ged_result_str, "%s: bad angle - %s\n", argv[0], argv[4]);
 	return BRLCAD_ERROR;
     }
 
     VSETALL(pt, 0.0);
     VUNITIZE(axis);
-
     bn_mat_arb_rot(rmat, pt, axis, angle*bn_degtorad);
+
+    return BRLCAD_OK;
+}
+
+int
+ged_arot(struct ged *gedp, int argc, const char *argv[])
+{
+    int ret;
+    mat_t rmat;
+
+    if ((ret = ged_arot_args(gedp, argc, argv, rmat)) != BRLCAD_OK)
+	return ret;
 
     return ged_do_rot(gedp, gedp->ged_gvp->gv_coord, rmat, (int (*)())0);
 }

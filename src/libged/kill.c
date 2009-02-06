@@ -1,7 +1,7 @@
 /*                         K I L L . C
  * BRL-CAD
  *
- * Copyright (c) 2008 United States Government as represented by
+ * Copyright (c) 2008-2009 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -38,6 +38,7 @@ ged_kill(struct ged *gedp, int argc, const char *argv[])
     register int i;
     int	is_phony;
     int	verbose = LOOKUP_NOISY;
+    int force = 0;
     static const char *usage = "object(s)";
 
     GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
@@ -61,6 +62,7 @@ ged_kill(struct ged *gedp, int argc, const char *argv[])
     /* skip past "-f" */
     if (argc > 1 && strcmp(argv[1], "-f") == 0) {
 	verbose = LOOKUP_QUIET;
+	force = 1;
 	argc--;
 	argv++;
     }
@@ -68,6 +70,14 @@ ged_kill(struct ged *gedp, int argc, const char *argv[])
     for (i = 1; i < argc; i++) {
 	if ((dp = db_lookup(gedp->ged_wdbp->dbip,  argv[i], verbose)) != DIR_NULL) {
 	    struct directory *dpp[2];
+
+	    if ( !force && dp->d_major_type == DB5_MAJORTYPE_ATTRIBUTE_ONLY && dp->d_minor_type == 0 ) {
+		bu_vls_printf(&gedp->ged_result_str, "You attempted to delete the _GLOBAL object.\n");
+		bu_vls_printf(&gedp->ged_result_str, "\tIf you delete the \"_GLOBAL\" object you will be losing some important information\n" );
+		bu_vls_printf(&gedp->ged_result_str, "\tsuch as your preferred units and the title of the database.\n" );
+		bu_vls_printf(&gedp->ged_result_str, "\tUse the \"-f\" option, if you really want to do this.\n" );
+		continue;
+	    }
 
 	    is_phony = (dp->d_addr == RT_DIR_PHONY_ADDR);
 

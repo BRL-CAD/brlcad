@@ -1,7 +1,7 @@
 /*                       V E C M A T H . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2008 United States Government as represented by
+ * Copyright (c) 2004-2009 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -106,11 +106,6 @@
 
 #define V_Print(a, b, func) \
 		func( "%s\t<%12.6f,%12.6f,%12.6f>\n", a, (b)[0], (b)[1], (b)[2] )
-#ifndef X
-#define X		0
-#define Y		1
-#define Z		2
-#endif
 
 /*
  * Local Variables:

@@ -1,7 +1,7 @@
 /*                        M I R R O R . C
  * BRL-CAD
  *
- * Copyright (c) 2007-2008 United States Government as represented by
+ * Copyright (c) 2007-2009 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -684,6 +684,46 @@ rt_mirror(struct db_i		*dbip,
 
 	    break;
 	}
+
+	case ID_HYP:
+	{
+	    struct rt_hyp_internal *hyp;
+	    point_t pt;
+	    vect_t h;
+	    vect_t a;
+	    vect_t n;
+	    fastf_t ang;
+	    mat_t mat;
+
+	    hyp = (struct rt_hyp_internal *)internal.idb_ptr;
+	    RT_HYP_CK_MAGIC(hyp);
+
+	    VMOVE(pt, hyp->hyp_Vi);
+	    MAT4X3PNT(hyp->hyp_Vi, mirmat, pt);
+
+	    VMOVE(h, hyp->hyp_Hi);
+	    VUNITIZE(h);
+	    VCROSS(n, mirror_dir, hyp->hyp_Hi);
+	    VUNITIZE(n);
+	    ang = M_PI_2 - acos(VDOT(h,mirror_dir));
+	    bn_mat_arb_rot(mat, origin, n, ang*2);
+	    VMOVE(h, hyp->hyp_Hi);
+	    MAT4X3VEC(hyp->hyp_Hi, mat, h);
+
+	    VMOVE(a, hyp->hyp_A);
+	    VUNITIZE(a);
+	    VCROSS(n, mirror_dir, hyp->hyp_A);
+	    VUNITIZE(n);
+	    ang = M_PI_2 - acos(VDOT(a,mirror_dir));
+	    bn_mat_arb_rot(mat, origin, n, ang*2);
+	    VMOVE(a, hyp->hyp_A);
+	    MAT4X3VEC(hyp->hyp_A, mat, a);
+
+	    break;
+	}
+
+
+
 	case ID_NMG:
 	{
 	    struct model *m;

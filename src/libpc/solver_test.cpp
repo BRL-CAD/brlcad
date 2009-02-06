@@ -1,7 +1,7 @@
 /*                 S O L V E R _ T E S T . C P P
  * BRL-CAD
  *
- * Copyright (c) 2008 United States Government as represented by
+ * Copyright (c) 2008-2009 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -109,14 +109,15 @@ int main()
     /* modify/access parameter property in vc_set using getParameter */
     vc_set.getParameter("G")->setConst(true);
 
-    /* Two solution methods*/ 
-
+    /* Two solution methods*/
+    vc_set.display();
     GBTS.solve(vc_set,S1);
     std::cout << "\nSolution using Generic BackTracking Solver "
               << GBTS.numChecks() << "\t" << GBTS.numSolutions() << std::endl;
     S1.display();
-
     S1.clear();
+
+    vc_set.display();
     GPCS.solve(vc_set,S1);
     std::cout << "\nSolution using Generic Solver "
               << GPCS.numChecks() << "\t" << GPCS.numSolutions() << std::endl;

@@ -1,7 +1,7 @@
 /*                          B I T V . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2008 United States Government as represented by
+ * Copyright (c) 2004-2009 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -86,7 +86,7 @@ floor_ilog2(register unsigned int x)
  * users should not call this directly, instead calling the
  * BU_BITV_SHIFT macro instead.
  */
-inline int
+inline unsigned int
 bu_bitv_shift()
 {
     return (floor_ilog2(sizeof(bitv_t)*8));

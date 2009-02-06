@@ -1,7 +1,7 @@
 /*                        I F _ O G L . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2008 United States Government as represented by
+ * Copyright (c) 2004-2009 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -51,8 +51,6 @@
 #include <ctype.h>
 #include <signal.h>
 #include <errno.h>
-#include <X11/keysym.h>
-#include <X11/StringDefs.h>
 #ifdef HAVE_GL_GLX_H
 #  include <GL/glx.h>
 #endif

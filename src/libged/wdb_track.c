@@ -1,7 +1,7 @@
 /*                         T R A C K . C
  * BRL-CAD
  *
- * Copyright (c) 1994-2008 United States Government as represented by
+ * Copyright (c) 1994-2009 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -63,7 +63,6 @@ The in-memory table of contents may not match the status of the on-disk\n\
 database.  The on-disk database should still be intact.  For safety,\n\
 you should exit now, and resolve the I/O problem, before continuing.\n", (char *)NULL)
 
-extern void aexists();
 
 static int Trackpos = 0;
 static int mat_default = 1;

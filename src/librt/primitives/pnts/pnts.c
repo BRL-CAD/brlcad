@@ -1,7 +1,7 @@
 /*                          P N T S . C
  * BRL-CAD
  *
- * Copyright (c) 2008 United States Government as represented by
+ * Copyright (c) 2008-2009 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -31,92 +31,274 @@
 #include "rtgeom.h"
 #include "vmath.h"
 
-/* length of axes segments plotted for points with zero scale */
-#define SEG_LENGTH .1
+
+static unsigned char *
+pnts_pack_double(unsigned char *buf, unsigned char *data, unsigned int count)
+{
+    htond(buf, data, count);
+    buf += count * SIZEOF_NETWORK_DOUBLE;
+    return buf;
+}
+
+
+static unsigned char *
+pnts_unpack_double(unsigned char *buf, unsigned char *data, unsigned int count)
+{
+    htond(data, buf, count);
+    buf += count * SIZEOF_NETWORK_DOUBLE;
+    return buf;
+}
+
 
 /**
- *                      R T _ P N T S _ E X P O R T 5
+ * R T _ P N T S _ E X P O R T 5
  *
- * Export a pnts collection from the internal structure
- * to the database format: numPoints, scale, points
+ * Export a pnts collection from the internal structure to the
+ * database format
  */
 int
-rt_pnts_export5(struct bu_external *external, const struct rt_db_internal *internal,
-		double local2mm, const struct db_i *db)
+rt_pnts_export5(struct bu_external *external, const struct rt_db_internal *internal, double local2mm, const struct db_i *db)
 {
-    int i, numPointsBytes, scaleBytes, pointBytes;
-    unsigned long numPoints;
-    struct rt_pnts_internal *pnts;
-    register struct pnt *point;
-    struct bu_list *head;
-    fastf_t *points;
+    struct rt_pnts_internal *pnts = NULL;
+    struct bu_list *head = NULL;
+    unsigned long pointDataSize;
+    unsigned char *buf = NULL;
 
     /* acquire internal pnts structure */
     RT_CK_DB_INTERNAL(internal);
     BU_CK_EXTERNAL(external);
+    external->ext_nbytes = 0;
 
     pnts = (struct rt_pnts_internal *) internal->idb_ptr;
     RT_PNTS_CK_MAGIC(pnts);
-   
-    numPoints = pnts->count;
 
+    /* allocate enough for the header (scale + type + count) */
+    external->ext_nbytes = SIZEOF_NETWORK_DOUBLE + sizeof(unsigned short) + sizeof (unsigned long);
+    external->ext_buf = (genptr_t) bu_calloc(sizeof(unsigned char), external->ext_nbytes, "pnts external");
+    buf = (unsigned char *)external->ext_buf;
 
-    /* allocate enough space in buffer for the external format:
-     * unsigned long numPoints, double scale, point doubles
-     */
-    numPointsBytes = sizeof(long);
-    scaleBytes = SIZEOF_NETWORK_DOUBLE;
-    pointBytes = pnts->count * ELEMENTS_PER_PT * SIZEOF_NETWORK_DOUBLE;
+    htond(buf, (unsigned char *)&pnts->scale, 1);
+    buf += SIZEOF_NETWORK_DOUBLE;
+    buf = bu_pshort(buf, (unsigned short)pnts->type);
+    buf = bu_plong(buf, pnts->count);
 
-    external->ext_nbytes = numPointsBytes + scaleBytes + pointBytes;
-    external->ext_buf = (genptr_t) bu_malloc(external->ext_nbytes, "pnts external");
+    if (pnts->count <= 0) {
+	/* no points to stash, we're done */
+	return 0;
+    }
 
-    /* place numPoints and scale at beginning of buffer */
-    (void) bu_plong((unsigned char *) external->ext_buf, numPoints);
+    /* figure out how much data there is for each point */
+    pointDataSize = ELEMENTS_PER_POINT * SIZEOF_NETWORK_DOUBLE;
+    if (pnts->type & RT_PNT_TYPE_COL)
+	pointDataSize += 3 * SIZEOF_NETWORK_DOUBLE;
+    if (pnts->type & RT_PNT_TYPE_SCA)
+	pointDataSize += 1 * SIZEOF_NETWORK_DOUBLE;
+    if (pnts->type & RT_PNT_TYPE_NRM)
+	pointDataSize += ELEMENTS_PER_VECT;
 
-    htond((unsigned char *)external->ext_buf + numPointsBytes, (unsigned char *)&pnts->scale, 1);
+    external->ext_buf = (genptr_t)bu_realloc(external->ext_buf, external->ext_nbytes + (pnts->count * pointDataSize), "pnts external realloc");
+    buf = (unsigned char *)external->ext_buf + external->ext_nbytes;
 
+    /* get busy, serialize the point data depending on what type of point it is */
+    switch (pnts->type) {
+	case RT_PNT_TYPE_PNT: {
+	    register struct pnt *point = (struct pnt *)pnts->point;
+	    head = &point->l;
+    
+	    for (BU_LIST_FOR (point, pnt, head)) {
+		point_t v;
 
-    if (numPoints > 0) {
-	struct pnt *point = (struct pnt *)&pnts->point;
-	head = &point->l;
+		/* pack v */
+		VSCALE(v, point->v, local2mm);
+		buf = pnts_pack_double(buf, (unsigned char *)v, ELEMENTS_PER_POINT);
+	    }
 
-	points = (fastf_t *) bu_malloc(pointBytes, "rt_pnts_export5: points");
-
-	/* scale points and store in memory */
-	for (i = 0, BU_LIST_FOR(point, pnt, head), i += 3) {
-	    VSCALE(&points[i], point->v, local2mm);
+	    break;
 	}
+	case RT_PNT_TYPE_COL: {
+	    register struct pnt_color *point = (struct pnt_color *)pnts->point;
+	    head = &point->l;
+    
+	    for (BU_LIST_FOR (point, pnt_color, head)) {
+		point_t v;
+		double c[3];
 
-	/* place scaled points after numPoints and scale in the buffer */
-	htond((unsigned char *) external->ext_buf + numPointsBytes + scaleBytes,
-	      (unsigned char *) points, ELEMENTS_PER_PT * numPoints);
+		/* pack v */
+		VSCALE(v, point->v, local2mm);
+		buf = pnts_pack_double(buf, (unsigned char *)v, ELEMENTS_PER_POINT);
+		
+		/* pack c */
+		bu_color_to_rgb_floats(&point->c, c);
+		buf = pnts_pack_double(buf, (unsigned char *)c, 3);
+	    }
 
-	bu_free((genptr_t) points, "rt_pnts_export5: points");
+	    break;
+	}
+	case RT_PNT_TYPE_SCA: {
+	    register struct pnt_scale *point = (struct pnt_scale *)pnts->point;
+	    head = &point->l;
+    
+	    for (BU_LIST_FOR (point, pnt_scale, head)) {
+		point_t v;
+		double s[1];
+
+		/* pack v */
+		VSCALE(v, point->v, local2mm);
+		buf = pnts_pack_double(buf, (unsigned char *)v, ELEMENTS_PER_POINT);
+		
+		/* pack s */
+		s[0] = point->s * local2mm;
+		buf = pnts_pack_double(buf, (unsigned char *)s, 1);
+	    }
+
+	    break;
+	}
+	case RT_PNT_TYPE_NRM: {
+	    register struct pnt_normal *point = (struct pnt_normal *)pnts->point;
+	    head = &point->l;
+    
+	    for (BU_LIST_FOR (point, pnt_normal, head)) {
+		point_t v;
+		vect_t n;
+
+		/* pack v */
+		VSCALE(v, point->v, local2mm);
+		buf = pnts_pack_double(buf, (unsigned char *)v, ELEMENTS_PER_POINT);
+		
+		/* pack n */
+		VSCALE(n, point->n, local2mm);
+		buf = pnts_pack_double(buf, (unsigned char *)n, ELEMENTS_PER_VECT);
+	    }
+
+	    break;
+	}
+	case RT_PNT_TYPE_COL_SCA: {
+	    register struct pnt_color_scale *point = (struct pnt_color_scale *)pnts->point;
+	    head = &point->l;
+    
+	    for (BU_LIST_FOR (point, pnt_color_scale, head)) {
+		point_t v;
+		double c[3];
+		double s[1];
+
+		/* pack v */
+		VSCALE(v, point->v, local2mm);
+		buf = pnts_pack_double(buf, (unsigned char *)v, ELEMENTS_PER_POINT);
+		
+		/* pack c */
+		bu_color_to_rgb_floats(&point->c, c);
+		buf = pnts_pack_double(buf, (unsigned char *)c, 3);
+
+		/* pack s */
+		s[0] = point->s * local2mm;
+		buf = pnts_pack_double(buf, (unsigned char *)s, 1);
+	    }
+
+	    break;
+	}
+	case RT_PNT_TYPE_COL_NRM: {
+	    register struct pnt_color_normal *point = (struct pnt_color_normal *)pnts->point;
+	    head = &point->l;
+    
+	    for (BU_LIST_FOR (point, pnt_color_normal, head)) {
+		point_t v;
+		double c[3];
+		vect_t n;
+
+		/* pack v */
+		VSCALE(v, point->v, local2mm);
+		buf = pnts_pack_double(buf, (unsigned char *)v, ELEMENTS_PER_POINT);
+		
+		/* pack c */
+		bu_color_to_rgb_floats(&point->c, c);
+		buf = pnts_pack_double(buf, (unsigned char *)c, 3);
+
+		/* pack n */
+		VSCALE(n, point->n, local2mm);
+		buf = pnts_pack_double(buf, (unsigned char *)n, ELEMENTS_PER_VECT);
+	    }
+
+	    break;
+	}
+	case RT_PNT_TYPE_SCA_NRM: {
+	    register struct pnt_scale_normal *point = (struct pnt_scale_normal *)pnts->point;
+	    head = &point->l;
+    
+	    for (BU_LIST_FOR (point, pnt_scale_normal, head)) {
+		point_t v;
+		double s[1];
+		vect_t n;
+
+		/* pack v */
+		VSCALE(v, point->v, local2mm);
+		buf = pnts_pack_double(buf, (unsigned char *)v, ELEMENTS_PER_POINT);
+		
+		/* pack s */
+		s[0] = point->s * local2mm;
+		buf = pnts_pack_double(buf, (unsigned char *)s, 1);
+
+		/* pack n */
+		VSCALE(n, point->n, local2mm);
+		buf = pnts_pack_double(buf, (unsigned char *)n, ELEMENTS_PER_VECT);
+	    }
+
+	    break;
+	}
+	case RT_PNT_TYPE_COL_SCA_NRM: {
+	    register struct pnt_color_scale_normal *point = (struct pnt_color_scale_normal *)pnts->point;
+	    head = &point->l;
+    
+	    for (BU_LIST_FOR (point, pnt_color_scale_normal, head)) {
+		point_t v;
+		double c[3];
+		double s[1];
+		vect_t n;
+
+		/* pack v */
+		VSCALE(v, point->v, local2mm);
+		buf = pnts_pack_double(buf, (unsigned char *)v, ELEMENTS_PER_POINT);
+		
+		/* pack c */
+		bu_color_to_rgb_floats(&point->c, c);
+		buf = pnts_pack_double(buf, (unsigned char *)c, 3);
+
+		/* pack s */
+		s[0] = point->s * local2mm;
+		buf = pnts_pack_double(buf, (unsigned char *)s, 1);
+
+		/* pack n */
+		VSCALE(n, point->n, local2mm);
+		buf = pnts_pack_double(buf, (unsigned char *)n, ELEMENTS_PER_VECT);
+	    }
+
+	    break;
+	}
+	default:
+	    bu_log("ERROR: unknown points primitive type\n");
+	    return 0;
     }
 
     return 0;
 }
 
+
 /**
- *                     R T _ P N T S _ I M P O R T 5
+ * R T _ P N T S _ I M P O R T 5
  *
- * Import a pnts collection from the database format to
- * the internal structure and apply modeling transformations.
+ * Import a pnts collection from the database format to the internal
+ * structure and apply modeling transformations.
  */
 int
-rt_pnts_import5(struct rt_db_internal *internal, const struct bu_external *external,
-		register const fastf_t *mat, const struct db_i *db)
+rt_pnts_import5(struct rt_db_internal *internal, const struct bu_external *external, const fastf_t *mat, const struct db_i *db)
 {
-    int i, numPointsBytes, scaleBytes, pointBytes;
-    unsigned long numPoints;
-    struct rt_pnts_internal*pnts;
-    struct pnt *point;
-    struct pnt *headPoint;
-    fastf_t *pt;
+    struct rt_pnts_internal *pnts = NULL;
+    struct bu_list *head = NULL;
+    unsigned char *buf = NULL;
+    int i;
 
     RT_CK_DB_INTERNAL(internal);
     BU_CK_EXTERNAL(external);
+    buf = (unsigned char *)external->ext_buf;
 
     /* initialize database structure */
     internal->idb_major_type = DB5_MAJORTYPE_BRLCAD;
@@ -127,65 +309,312 @@ rt_pnts_import5(struct rt_db_internal *internal, const struct bu_external *exter
     /* initialize internal structure */
     pnts = (struct rt_pnts_internal *) internal->idb_ptr;
     pnts->magic = RT_PNTS_INTERNAL_MAGIC;
-    BU_GETSTRUCT(pnts->point, pnt);
-    headPoint = (struct pnt *)pnts->point;
-    BU_LIST_INIT(&headPoint->l);
+    pnts->point = NULL;
 
-    /* pull internal members from buffer */
-    numPointsBytes = sizeof(long);
-    scaleBytes = SIZEOF_NETWORK_DOUBLE;
+    /* unpack the header */
+    ntohd((unsigned char *)&pnts->scale, buf, 1);
+    buf += SIZEOF_NETWORK_DOUBLE;
+    pnts->type = (unsigned short)bu_gshort(buf);
+    buf += SIZEOF_NETWORK_SHORT;
+    pnts->count = (unsigned long)bu_glong(buf);
+    buf += SIZEOF_NETWORK_LONG;
 
-    numPoints = pnts->count = bu_glong((unsigned char *) external->ext_buf);
-    pointBytes = numPoints * ELEMENTS_PER_PT * SIZEOF_NETWORK_DOUBLE;
+    if (pnts->count <= 0) {
+	/* no points to read, we're done */
+	return 0;
+    }
 
-    ntohd((unsigned char *)&pnts->scale, (unsigned char *)external->ext_buf + numPointsBytes, 1);
+    if (mat == NULL) {
+	mat = bn_mat_identity;
+    }
 
-
-    if (numPoints > 0) {
-	pt = (fastf_t *) bu_malloc(pointBytes, "rt_pnts_import5: pt");
-
-	/* pull points from buffer */
-	ntohd((unsigned char *) pt, (unsigned char *) external->ext_buf + numPointsBytes +
-	      scaleBytes, ELEMENTS_PER_PT * numPoints);
-
-
-	if (mat == NULL) {
-	    mat = bn_mat_identity;
-	}
-
-	/* make point_t's from doubles and place in bu_list */
-	for (i = 0; i < numPoints * ELEMENTS_PER_PT; i += 3) {
+    /* get busy, deserialize the point data depending on what type of point it is */
+    switch (pnts->type) {
+	case RT_PNT_TYPE_PNT: {
+	    register struct pnt *point;
 
 	    BU_GETSTRUCT(point, pnt);
-	    
-	    MAT4X3PNT(point->v, mat, &pt[i]);
+	    head = &point->l;
+	    BU_LIST_INIT(head);
+	    pnts->point = point;
+    
+	    for (i = 0; i < pnts->count; i++) {
+		point_t v;
 
-	    BU_LIST_PUSH(&(headPoint->l), &point->l);
+		BU_GETSTRUCT(point, pnt);
+
+		/* unpack v */
+		buf = pnts_unpack_double(buf, (unsigned char *)v, ELEMENTS_PER_POINT);
+		MAT4X3PNT(point->v, mat, v);
+
+		BU_LIST_PUSH(head, &point->l);
+	    }
+
+	    break;
 	}
+	case RT_PNT_TYPE_COL: {
+	    register struct pnt_color *point;
 
-	bu_free((genptr_t) pt, "rt_pnts_import5: pt");
+	    BU_GETSTRUCT(point, pnt_color);
+	    head = &point->l;
+	    BU_LIST_INIT(head);
+	    pnts->point = point;
+    
+	    for (i = 0; i < pnts->count; i++) {
+		point_t v;
+		double c[3];
+
+		BU_GETSTRUCT(point, pnt_color);
+
+		/* unpack v */
+		buf = pnts_unpack_double(buf, (unsigned char *)v, ELEMENTS_PER_POINT);
+		MAT4X3PNT(point->v, mat, v);
+
+		/* unpack c */
+		buf = pnts_unpack_double(buf, (unsigned char *)c, 3);
+		bu_color_from_rgb_floats(&point->c, c);
+
+		BU_LIST_PUSH(head, &point->l);
+	    }
+
+	    break;
+	}
+	case RT_PNT_TYPE_SCA: {
+	    register struct pnt_scale *point;
+
+	    BU_GETSTRUCT(point, pnt_scale);
+	    head = &point->l;
+	    BU_LIST_INIT(head);
+	    pnts->point = point;
+    
+	    for (i = 0; i < pnts->count; i++) {
+		point_t v;
+		double s[1];
+
+		BU_GETSTRUCT(point, pnt_scale);
+
+		/* unpack v */
+		buf = pnts_unpack_double(buf, (unsigned char *)v, ELEMENTS_PER_POINT);
+		MAT4X3PNT(point->v, mat, v);
+
+		/* unpack s */
+		buf = pnts_unpack_double(buf, (unsigned char *)s, 1);
+		point->s = s[0];
+
+		BU_LIST_PUSH(head, &point->l);
+	    }
+
+	    break;
+	}
+	case RT_PNT_TYPE_NRM: {
+	    register struct pnt_normal *point;
+
+	    BU_GETSTRUCT(point, pnt_normal);
+	    head = &point->l;
+	    BU_LIST_INIT(head);
+	    pnts->point = point;
+    
+	    for (i = 0; i < pnts->count; i++) {
+		point_t v;
+		vect_t n;
+
+		BU_GETSTRUCT(point, pnt_normal);
+
+		/* unpack v */
+		buf = pnts_unpack_double(buf, (unsigned char *)v, ELEMENTS_PER_POINT);
+		MAT4X3PNT(point->v, mat, v);
+
+		/* unpack n */
+		buf = pnts_unpack_double(buf, (unsigned char *)n, ELEMENTS_PER_VECT);
+		MAT4X3PNT(point->n, mat, n);
+
+		BU_LIST_PUSH(head, &point->l);
+	    }
+
+	    break;
+	}
+	case RT_PNT_TYPE_COL_SCA: {
+	    register struct pnt_color_scale *point;
+
+	    BU_GETSTRUCT(point, pnt_color_scale);
+	    head = &point->l;
+	    BU_LIST_INIT(head);
+	    pnts->point = point;
+    
+	    for (i = 0; i < pnts->count; i++) {
+		point_t v;
+		double c[3];
+		double s[1];
+
+		BU_GETSTRUCT(point, pnt_color_scale);
+
+		/* unpack v */
+		buf = pnts_unpack_double(buf, (unsigned char *)v, ELEMENTS_PER_POINT);
+		MAT4X3PNT(point->v, mat, v);
+
+		/* unpack c */
+		buf = pnts_unpack_double(buf, (unsigned char *)c, 3);
+		bu_color_from_rgb_floats(&point->c, c);
+
+		/* unpack s */
+		buf = pnts_unpack_double(buf, (unsigned char *)s, 1);
+		point->s = s[0];
+
+		BU_LIST_PUSH(head, &point->l);
+	    }
+
+	    break;
+	}
+	case RT_PNT_TYPE_COL_NRM: {
+	    register struct pnt_color_normal *point;
+
+	    BU_GETSTRUCT(point, pnt_color_normal);
+	    head = &point->l;
+	    BU_LIST_INIT(head);
+	    pnts->point = point;
+    
+	    for (i = 0; i < pnts->count; i++) {
+		point_t v;
+		double c[3];
+		vect_t n;
+
+		BU_GETSTRUCT(point, pnt_color_normal);
+
+		/* unpack v */
+		buf = pnts_unpack_double(buf, (unsigned char *)v, ELEMENTS_PER_POINT);
+		MAT4X3PNT(point->v, mat, v);
+
+		/* unpack c */
+		buf = pnts_unpack_double(buf, (unsigned char *)c, 3);
+		bu_color_from_rgb_floats(&point->c, c);
+
+		/* unpack n */
+		buf = pnts_unpack_double(buf, (unsigned char *)n, ELEMENTS_PER_VECT);
+		MAT4X3PNT(point->n, mat, n);
+
+		BU_LIST_PUSH(head, &point->l);
+	    }
+
+	    break;
+	}
+	case RT_PNT_TYPE_SCA_NRM: {
+	    register struct pnt_scale_normal *point;
+
+	    BU_GETSTRUCT(point, pnt_scale_normal);
+	    head = &point->l;
+	    BU_LIST_INIT(head);
+	    pnts->point = point;
+    
+	    for (i = 0; i < pnts->count; i++) {
+		point_t v;
+		double s[1];
+		vect_t n;
+
+		BU_GETSTRUCT(point, pnt_scale_normal);
+
+		/* unpack v */
+		buf = pnts_unpack_double(buf, (unsigned char *)v, ELEMENTS_PER_POINT);
+		MAT4X3PNT(point->v, mat, v);
+
+		/* unpack s */
+		buf = pnts_unpack_double(buf, (unsigned char *)s, 1);
+		point->s = s[0];
+
+		/* unpack n */
+		buf = pnts_unpack_double(buf, (unsigned char *)n, ELEMENTS_PER_VECT);
+		MAT4X3PNT(point->n, mat, n);
+
+		BU_LIST_PUSH(head, &point->l);
+	    }
+
+	    break;
+	}
+	case RT_PNT_TYPE_COL_SCA_NRM: {
+	    register struct pnt_color_scale_normal *point;
+
+	    BU_GETSTRUCT(point, pnt_color_scale_normal);
+	    head = &point->l;
+	    BU_LIST_INIT(head);
+	    pnts->point = point;
+    
+	    for (i = 0; i < pnts->count; i++) {
+		point_t v;
+		double c[3];
+		double s[1];
+		vect_t n;
+
+		BU_GETSTRUCT(point, pnt_color_scale_normal);
+
+		/* unpack v */
+		buf = pnts_unpack_double(buf, (unsigned char *)v, ELEMENTS_PER_POINT);
+		MAT4X3PNT(point->v, mat, v);
+
+		/* unpack c */
+		buf = pnts_unpack_double(buf, (unsigned char *)c, 3);
+		bu_color_from_rgb_floats(&point->c, c);
+
+		/* unpack s */
+		buf = pnts_unpack_double(buf, (unsigned char *)s, 1);
+		point->s = s[0];
+
+		/* unpack n */
+		buf = pnts_unpack_double(buf, (unsigned char *)n, ELEMENTS_PER_VECT);
+		MAT4X3PNT(point->n, mat, n);
+
+		BU_LIST_PUSH(head, &point->l);
+	    }
+
+	    break;
+	}
+	default:
+	    bu_log("ERROR: unknown points primitive type\n");
+	    return 0;
     }
 
     return 0;
 }
 
+
 /**
- *                       R T _ P N T S _ I F R E E
+ * R T _ P N T S _ I F R E E
  *
- * Free the storage associated with the rt_db_internal version of the collection.
+ * Free the storage associated with the rt_db_internal version of the
+ * collection.  This uses type aliasing to iterate over the list of
+ * points as a bu_list instead of calling up a switching table for
+ * each point type.
  */
 int
 rt_pnts_ifree(struct rt_db_internal *internal)
 {
+    int i;
+    struct bu_list *head;
+    struct bu_list *curr;
+
     RT_CK_DB_INTERNAL(internal);
 
+    head = ((struct bu_list *)(((struct rt_pnts_internal *)(internal->idb_ptr))->point));
+
+    /* free the points */
+    while (BU_LIST_WHILE (curr, bu_list, head)) {
+	BU_LIST_DEQUEUE(curr);
+	if (curr) {
+	    bu_free(curr, "free pnts");
+	}
+    }
+    
+    /* free the head */
+    bu_free(head, "free pnts head");
+
+    /* free the internal container */
     bu_free(internal->idb_ptr, "pnts ifree");
 
+    /* sanity */
     internal->idb_ptr = GENPTR_NULL;
 }
 
+
 /**
- *                      R T _ P N T S _ P R I N T
+ * R T _ P N T S _ P R I N T
  *
  */
 void
@@ -193,21 +622,21 @@ rt_pnts_print(register const struct soltab *stp)
 {
 }
 
+
 /**
- *                      R T _ P N T S _ P L O T
+ * R T _ P N T S _ P L O T
  *
  * Plot pnts collection as axes or spheres.
  */
 int
-rt_pnts_plot(struct bu_list *vhead, struct rt_db_internal *internal,
-	     const struct rt_tess_tol *ttol, const struct bn_tol *tol)
+rt_pnts_plot(struct bu_list *vhead, struct rt_db_internal *internal, const struct rt_tess_tol *ttol, const struct bn_tol *tol)
 {
     struct rt_pnts_internal *pnts;
     struct bu_list *head;
     struct rt_db_internal db;
     struct rt_ell_internal ell;
     struct pnt *point;
-    double scale, vCoord, hCoord;
+    double scale;
     point_t a, b;
 
     RT_CK_DB_INTERNAL(internal);
@@ -237,14 +666,15 @@ rt_pnts_plot(struct bu_list *vhead, struct rt_db_internal *internal,
 	VSET(ell.c, 0, 0, scale);
 
 	/* give rt_ell_plot a sphere representation of each point */
-	for(BU_LIST_FOR(point, pnt, head)) {
+	for (BU_LIST_FOR (point, pnt, head)) {
 	    VMOVE(ell.v, point->v);
 	    rt_ell_plot(vhead, &db, ttol, tol);
 	}
     } else {
-	vCoord = hCoord = SEG_LENGTH / 2;
+	double vCoord, hCoord;
+	vCoord = hCoord = 1;
 
-	for (BU_LIST_FOR(point, pnt, head)) {
+	for (BU_LIST_FOR (point, pnt, head)) {
 	    /* draw first horizontal segment for this point */
 	    VSET(a, point->v[X] - hCoord, point->v[Y], point->v[Z]);
 	    VSET(b, point->v[X] + hCoord, point->v[Y], point->v[Z]);

@@ -1,7 +1,7 @@
 /*                          R E C T . C
  * BRL-CAD
  *
- * Copyright (c) 1998-2008 United States Government as represented by
+ * Copyright (c) 1998-2009 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -50,7 +50,7 @@ dm_draw_rect(struct dm *dmp, struct ged_rect_state *grsp, struct ged_view *gvp)
 		   grsp->grs_color[0],
 		   grsp->grs_color[1],
 		   grsp->grs_color[2], 1, 1.0);
-    DM_SET_LINE_ATTR(dmp, grsp->grs_linewidth, grsp->grs_linestyle);
+    DM_SET_LINE_ATTR(dmp, grsp->grs_line_width, grsp->grs_line_style);
 
     DM_DRAW_LINE_2D(dmp,
 		    grsp->grs_x,

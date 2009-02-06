@@ -1,7 +1,7 @@
 /*                        R E D . C
  * BRL-CAD
  *
- * Copyright (c) 2008 United States Government as represented by
+ * Copyright (c) 2008-2009 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -459,7 +459,7 @@ ged_check_comb(struct ged *gedp)
 }
 
 int
-ged_make_tree(struct ged *gedp, struct rt_comb_internal *comb, struct directory *dp, int node_count, char *old_name, char *new_name, struct rt_tree_array *rt_tree_array, int tree_index)
+ged_make_tree(struct ged *gedp, struct rt_comb_internal *comb, struct directory *dp, int node_count, const char *old_name, const char *new_name, struct rt_tree_array *rt_tree_array, int tree_index)
 {
     struct rt_db_internal	intern;
     union tree		*final_tree;

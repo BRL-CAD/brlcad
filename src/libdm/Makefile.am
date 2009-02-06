@@ -45,9 +45,11 @@ libdm_la_SOURCES = \
 	focus.c \
 	grid.c \
 	knob.c \
+	labels.c \
 	options.c \
 	query.c \
 	rect.c \
+	scale.c \
 	tcl.c \
 	vers.c
 

@@ -1,7 +1,7 @@
 /*                         T A B L E . C
  * BRL-CAD
  *
- * Copyright (c) 1989-2008 United States Government as represented by
+ * Copyright (c) 1989-2009 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -1008,7 +1008,7 @@ const struct rt_functab rt_functab[] = {
      rt_hyp_plot,	rt_nul_vshot,	rt_hyp_tess,	rt_nul_tnurb,
      rt_hyp_import5,	rt_hyp_export5,
      rt_nul_import,	rt_nul_export,	rt_hyp_ifree,
-     rt_hyp_describe,	rt_nul_xform,	rt_hyp_parse,
+     rt_hyp_describe,	rt_generic_xform,	rt_hyp_parse,
      sizeof(struct rt_hyp_internal),		RT_HYP_INTERNAL_MAGIC,
      rt_parsetab_get,	rt_parsetab_adjust,	rt_parsetab_form,
      NULL, rt_hyp_params,

@@ -1,7 +1,7 @@
 /*                    P C S O L V E R . H
  * BRL-CAD
  *
- * Copyright (c) 2008 United States Government as represented by
+ * Copyright (c) 2008-2009 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -145,12 +145,12 @@ bool PCSolver<T>::solve(VCSet & vcset, Solution<T>& S) {
     initiate();
     while (generator()) {
 	++num_checks_;
-	std::cout << "Checking ";
+	/*std::cout << "Checking ";
 	std::list<VariableAbstract *>::iterator i = vcset.Vars.begin();
 	typedef Variable<T> * Vi;
 	for (; i != vcset.Vars.end(); ++i)
 	    std::cout <<  (Vi (*i))->diff() << "\t";
-	std::cout << std::endl;
+	std::cout << std::endl;*/
 
 	if (vcset.check()) {
 	    S.addSolution(vcset.Vars);
@@ -341,6 +341,7 @@ bool BackTrackSolver<T>::solve(VCSet & vcset, Solution<T>& S) {
 
     std::string av =""; /* Actual varying variables in the network */
     std::string ov = ""; /* Constant or non constrained variables */    
+    vcset.store();
 
     for (; i != end; ++i)
 	if ( (*i)->isConstrained() == 1 && ! (*i)->isConst()) {
@@ -359,8 +360,10 @@ bool BackTrackSolver<T>::solve(VCSet & vcset, Solution<T>& S) {
     backtrack();
     if (vcset.check()) {
     	S.addSolution(vcset.Vars);
+	vcset.restore();
 	return true;
     }
+    vcset.restore();
     return false;
 }
 
