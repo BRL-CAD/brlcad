@@ -57,7 +57,7 @@ EOF
 #                  A C C E P T
 #
 cat > accept.mged_regress << EOF
-make accept.s arb8
+in accept.s arb8 10 -9 -8 10 -1 -8 10 -1 0 10 -9 0 3 -9 -8 3 -1 -8 3 -1 0 3 -9 0
 Z
 e accept.s
 sed accept.s
@@ -104,7 +104,7 @@ EOF
 #                A R C E D
 #
 cat > arced.mged_regress << EOF
-make arced1.s arb8
+in arced1.s arb8 10 -9 -8 10 -1 -8 10 -1 0 10 -9 0 3 -9 -8 3 -1 -8 3 -1 0 3 -9 0
 make arced2.s ell
 make arced3.s eto
 comb arced1.c u arced1.s u arced2.s
@@ -128,7 +128,7 @@ EOF
 #                A R O T
 #
 cat > arot.mged_regress << EOF
-make arot.s arb8
+in arot.s arb8 10 -9 -8 10 -1 -8 10 -1 0 10 -9 0 3 -9 -8 3 -1 -8 3 -1 0 3 -9 0
 Z
 e arot.s
 sed arot.s
@@ -158,7 +158,7 @@ EOF
 #		B
 #
 cat > B.mged_regress << EOF
-make B_test1.s arb8
+in B_test1.s arb8 10 -9 -8 10 -1 -8 10 -1 0 10 -9 0 3 -9 -8 3 -1 -8 3 -1 0 3 -9 0
 make B_test2.s eto
 comb B_test.c u B_test1.s
 Z
@@ -239,7 +239,7 @@ EOF
 #               C O P Y M A T
 #
 cat > copymat.mged_regress << EOF
-make copymat.s arb8
+in copymat.s arb8 10 -9 -8 10 -1 -8 10 -1 0 10 -9 0 3 -9 -8 3 -1 -8 3 -1 0 3 -9 0
 comb copymat1.c u copymat.s
 comb copymat2.c u copymat.s
 arced copymat1.c/copymat.s matrix rarc xlate 10 30 20
@@ -320,8 +320,8 @@ EOF
 #	D A L L / E R A S E _ A L L
 #
 cat > dall.mged_regress << EOF
-make dall1.s arb8
-make dall2.s arb8
+in dall1.s arb8 10 -9 -8 10 -1 -8 10 -1 0 10 -9 0 3 -9 -8 3 -1 -8 3 -1 0 3 -9 0
+in dall2.s arb8 10 -9 -8 10 -1 -8 10 -1 0 10 -9 0 3 -9 -8 3 -1 -8 3 -1 0 3 -9 0
 comb dall1.c u dall1.s
 comb dall2.c u dall1.s
 comb dall3.c u dall1.s u dall2.s
@@ -365,7 +365,7 @@ EOF
 #       E X T R U D E
 #
 cat > extrude.mged_regress << EOF
-make extrude.s arb8
+in extrude.s arb8 10 -9 -8 10 -1 -8 10 -1 0 10 -9 0 3 -9 -8 3 -1 -8 3 -1 0 3 -9 0
 Z
 e extrude.s
 sed extrude.s
@@ -378,7 +378,7 @@ EOF
 #                F A C E D E F
 #
 cat > facedef.mged_regress << EOF
-make facedef_a.s arb8
+in facedef_a.s arb8 10 -9 -8 10 -1 -8 10 -1 0 10 -9 0 3 -9 -8 3 -1 -8 3 -1 0 3 -9 0
 cp facedef_a.s facedef_b.s
 cp facedef_a.s facedef_c.s
 cp facedef_a.s facedef_d.s
@@ -424,8 +424,8 @@ EOF
 #			H I D E
 #
 cat > hide.mged_regress << EOF
-make hidden_1.s arb8
-make hidden_2.s arb8
+in hidden_1.s arb8 10 -9 -8 10 -1 -8 10 -1 0 10 -9 0 3 -9 -8 3 -1 -8 3 -1 0 3 -9 0
+in hidden_2.s arb8 10 -9 -8 10 -1 -8 10 -1 0 10 -9 0 3 -9 -8 3 -1 -8 3 -1 0 3 -9 0
 comb hidden.c u hidden_2.s
 ls hidden*
 hide hidden_1.s
@@ -512,8 +512,8 @@ EOF
 #		K I L L
 #
 cat > kill.mged_regress << EOF
-make kill.s arb8
-make kill.c u kill.s
+in kill.s arb8 10 -9 -8 10 -1 -8 10 -1 0 10 -9 0 3 -9 -8 3 -1 -8 3 -1 0 3 -9 0
+comb kill.c u kill.s
 ls kill.*
 l kill.*
 kill kill.s
@@ -527,10 +527,10 @@ EOF
 #		K I L L A L L
 #
 cat > killall.mged_regress << EOF
-make killall_1.s arb8
-make killall_2.s arb8
+in killall_1.s arb8 10 -9 -8 10 -1 -8 10 -1 0 10 -9 0 3 -9 -8 3 -1 -8 3 -1 0 3 -9 0
+cp killall_1.s killall_2.s
 comb killall_1.c u killall_1.s u killall_2.s
-cp killall_1.c u killall_2.c
+cp killall_1.c killall_2.c
 comb killall.c u killall_1.c u killall_2.s 
 ls killall*
 l killall*
@@ -557,8 +557,8 @@ EOF
 cat > killtree.mged_regress << EOF
 put {killtree_sketch.s} sketch V {10 20 30} A {1 0 0} B {0 1 0} VL { {250 0} {500 0} {500 500} {0 500} {0 250} {250 250} {125 125} {0 125} {125 0} {200 200} } SL { { bezier D 4 P { 4 7 9 8 0 } } { line S 0 E 1 } { line S 1 E 2 } { line S 2 E 3 } { line S 3 E 4 } { carc S 6 E 5 R -1 L 0 O 0 } }
 in killtree_extrude.s extrude 0 0 0 0 0 1000 10 0 0 0 10 0 killtree_sketch.s
-make killtree_arb8.s arb8
-make killtree_1.s arb7
+in killtree_arb8.s arb8 10 -9 -8 10 -1 -8 10 -1 0 10 -9 0 3 -9 -8 3 -1 -8 3 -1 0 3 -9 0
+in killtree_1.s arb8 10 -9 -8 10 -1 -8 10 -1 0 10 -9 0 3 -9 -8 3 -1 -8 3 -1 0 3 -9 0
 comb killtree_1.c u killtree_1.s
 comb killtree.c u killtree_1.c u killtree_arb8.s u killtree_extrude.s killtree_sketch.s
 ls killtree*
@@ -568,8 +568,8 @@ ls killtree*
 l killtree*
 put {killtree_sketch.s} sketch V {10 20 30} A {1 0 0} B {0 1 0} VL { {250 0} {500 0} {500 500} {0 500} {0 250} {250 250} {125 125} {0 125} {125 0} {200 200} } SL { { bezier D 4 P { 4 7 9 8 0 } } { line S 0 E 1 } { line S 1 E 2 } { line S 2 E 3 } { line S 3 E 4 } { carc S 6 E 5 R -1 L 0 O 0 } }
 in killtree_extrude.s extrude 0 0 0 0 0 1000 10 0 0 0 10 0 killtree_sketch.s
-make killtree_arb8.s arb8
-make killtree_1.s arb7
+in killtree_arb8.s arb8 10 -9 -8 10 -1 -8 10 -1 0 10 -9 0 3 -9 -8 3 -1 -8 3 -1 0 3 -9 0
+in killtree_1.s arb8 10 -9 -8 10 -1 -8 10 -1 0 10 -9 0 3 -9 -8 3 -1 -8 3 -1 0 3 -9 0
 comb killtree_1.c u killtree_1.s
 comb killtree.c u killtree_1.c u killtree_arb8.s u killtree_extrude.s
 ls killtree*
@@ -794,7 +794,7 @@ EOF
 #                  M I R F A C E
 #
 cat > mirface.mged_regress << EOF
-make mirface.s arb8
+in mirface.s arb8 10 -9 -8 10 -1 -8 10 -1 0 10 -9 0 3 -9 -8 3 -1 -8 3 -1 0 3 -9 0
 Z
 e mirface.s
 sed mirface.s
@@ -882,7 +882,7 @@ EOF
 #               O R O T
 #
 cat > orot.mged_regress << EOF
-make orot.s arb8
+in orot.s arb8 10 -9 -8 10 -1 -8 10 -1 0 10 -9 0 3 -9 -8 3 -1 -8 3 -1 0 3 -9 0
 comb orot.c u orot.s
 Z
 e orot.c
@@ -922,7 +922,7 @@ EOF
 #                  P E R M U T E
 #
 cat > permute.mged_regress << EOF
-make permute.s arb8
+in permute.s arb8 10 -9 -8 10 -1 -8 10 -1 0 10 -9 0 3 -9 -8 3 -1 -8 3 -1 0 3 -9 0
 Z
 e permute.s
 sed permute.s
@@ -967,8 +967,8 @@ EOF
 #                  P U S H
 #
 cat > push.mged_regress << EOF
-make push1.s arb8
-make push2.s arb7
+in push1.s arb8 10 -9 -8 10 -1 -8 10 -1 0 10 -9 0 3 -9 -8 3 -1 -8 3 -1 0 3 -9 0
+in push2.s arb8 10 -9 -8 10 -1 -8 10 -1 0 10 -9 0 3 -9 -8 3 -1 -8 3 -1 0 3 -9 0
 comb push_l2.c u push1.s u push2.s
 comb push_l1.c u push_l2.c
 arced push_l1.c/push_l2.c matrix rarc rot 14 14 14
@@ -987,8 +987,8 @@ EOF
 #                  P U T M A T
 #
 cat > putmat.mged_regress << EOF
-make putmat1.s arb5
-make putmat2.s arb6
+in putmat1.s arb8 10 -9 -8 10 -1 -8 10 -1 0 10 -9 0 3 -9 -8 3 -1 -8 3 -1 0 3 -9 0
+in putmat2.s arb8 10 -9 -8 10 -1 -8 10 -1 0 10 -9 0 3 -9 -8 3 -1 -8 3 -1 0 3 -9 0
 comb putmat.c u putmat1.s u putmat2.s
 putmat putmat.c/putmat1.s {1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16}
 putmat putmat.c/putmat2.s {1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16}
@@ -1000,7 +1000,7 @@ EOF
 #                   Q O R O T
 #
 cat > qorot.mged_regress << EOF
-make qorot.s arb8
+in qorot.s arb8 10 -9 -8 10 -1 -8 10 -1 0 10 -9 0 3 -9 -8 3 -1 -8 3 -1 0 3 -9 0
 comb qorot.c u qorot.s
 Z
 e qorot.c
@@ -1050,7 +1050,7 @@ EOF
 #                  R E J E C T
 #
 cat > reject.mged_regress << EOF
-make reject.s arb8
+in reject.s arb8 10 -9 -8 10 -1 -8 10 -1 0 10 -9 0 3 -9 -8 3 -1 -8 3 -1 0 3 -9 0
 Z
 e reject.s
 sed reject.s
@@ -1078,7 +1078,7 @@ EOF
 #
 # Test rot command when editing a primitive
 cat > rot_edit.mged_regress << EOF
-make rot.s arb8
+in rot.s arb8 10 -9 -8 10 -1 -8 10 -1 0 10 -9 0 3 -9 -8 3 -1 -8 3 -1 0 3 -9 0
 Z
 e rot.s
 sed rot.s
@@ -1102,7 +1102,7 @@ EOF
 #              R O T O B J
 #
 cat > rotobj.mged_regress << EOF
-make rotobj.s arb7
+in rotobj.s arb8 10 -9 -8 10 -1 -8 10 -1 0 10 -9 0 3 -9 -8 3 -1 -8 3 -1 0 3 -9 0
 comb rotobj.c u rotobj.s
 Z
 e rotobj.c
@@ -1134,7 +1134,7 @@ EOF
 # Test sca command when editing geometry
 
 cat > sca_edit.mged_regress << EOF
-make sca.s arb8
+in sca.s arb8 10 -9 -8 10 -1 -8 10 -1 0 10 -9 0 3 -9 -8 3 -1 -8 3 -1 0 3 -9 0
 Z
 e sca.s
 sed sca.s
@@ -1233,7 +1233,7 @@ EOF
 # Test tra command when editing geometry
 
 cat > tra_edit.mged_regress << EOF
-make tra.s arb8
+in tra.s arb8 10 -9 -8 10 -1 -8 10 -1 0 10 -9 0 3 -9 -8 3 -1 -8 3 -1 0 3 -9 0
 comb tra.c u tra.s
 Z
 e tra.s
@@ -1295,8 +1295,8 @@ EOF
 #		U N H I D E
 #
 cat > unhide.mged_regress << EOF
-make unhidden_1.s arb8
-make unhidden_2.s arb8
+in unhidden_1.s arb8 10 -9 -8 10 -1 -8 10 -1 0 10 -9 0 3 -9 -8 3 -1 -8 3 -1 0 3 -9 0
+in unhidden_2.s arb8 10 -9 -8 10 -1 -8 10 -1 0 10 -9 0 3 -9 -8 3 -1 -8 3 -1 0 3 -9 0
 comb unhidden.c u unhidden_2.s
 ls unhidden*
 hide unhidden_1.s
@@ -1353,7 +1353,7 @@ EOF
 #            X P U S H
 #
 cat > xpush.mged_regress << EOF
-make xpush.s arb8
+in xpush.s arb8 10 -9 -8 10 -1 -8 10 -1 0 10 -9 0 3 -9 -8 3 -1 -8 3 -1 0 3 -9 0
 comb xpush1.c u xpush.s
 comb xpush2.c u xpush.s
 arced xpush1.c/xpush.s matrix rarc rot 14 14 14
@@ -1366,7 +1366,7 @@ EOF
 #		Z
 #
 cat > Z.mged_regress << EOF
-make Z_test1.s arb8
+in Z_test1.s arb8 10 -9 -8 10 -1 -8 10 -1 0 10 -9 0 3 -9 -8 3 -1 -8 3 -1 0 3 -9 0
 make Z_test2.s eto
 comb Z_test.c u Z_test1.s u Z_test2.s
 e Z_test1.s Z_test2.s Z_test.c
@@ -1471,7 +1471,7 @@ cat killtree.mged_regress >> mged.mged_regress
 #
 cat view.mged_regress >> mged.mged_regress
 cat refresh.mged_regress >> mged.mged_regress
-cat autoview.mged_regress >> mged.mged_regress
+#cat autoview.mged_regress >> mged.mged_regress
 cat ae.mged_regress >> mged.mged_regress
 cat center.mged_regress >> mged.mged_regress
 cat eye_pt.mged_regress >> mged.mged_regress
@@ -1490,10 +1490,10 @@ cat sv.mged_regress >> mged.mged_regress
 cat orientation.mged_regress >> mged.mged_regress
 cat knob.mged_regress >> mged.mged_regress
 cat adc.mged_regress >> mged.mged_regress
-cat saveview.mged_regress >> mged.mged_regress
-cat loadview.mged_regress >> mged.mged_regress
-cat ps.mged_regress >> mged.mged_regress
-cat plot.mged_regress >> mged.mged_regress
+#cat saveview.mged_regress >> mged.mged_regress
+#cat loadview.mged_regress >> mged.mged_regress
+#cat ps.mged_regress >> mged.mged_regress
+#cat plot.mged_regress >> mged.mged_regress
 #cat overlay.mged_regress >> mged.mged_regress
 
 
@@ -1509,9 +1509,9 @@ EOF
 
 # group generated files into a single file so they can be
 # included as part of the diff process.
-cat mged_saveview_test.rt >> mged_files
-cat mged_ps_test.ps >> mged_files
-cat mged_plot_test.pl >> mged_files
+#cat mged_saveview_test.rt >> mged_files
+#cat mged_ps_test.ps >> mged_files
+#cat mged_plot_test.pl >> mged_files
 #cat mged_overlay_test.ps >> mged_files
 
 # clean up files
