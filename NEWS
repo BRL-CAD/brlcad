@@ -11,11 +11,12 @@ changes made.  See document footer for additional details.
 
 
 ----------------------------------------------------------------------
---- 2008-XX-XX  Release 7.XX.X                                     ---
+--- 2008-02-06  Release 7.14.2                                     ---
 ----------------------------------------------------------------------
 
-* fixed errors in handling of hyp primitive translations - C. Yapp
-* added >, <, >= and <= attr value comparisons in search - C. Yapp
+* fixed errors in handling of hyp primitive translations - Cliff Yapp
+* g_tool now guesses if a change was evolutionary - Erik Greenwald
+* added >, <, >= and <= attr value comparisons in search - Cliff Yapp
 * fixed double-edged line segment sketch bug in dxf-g - John Anderson
 * mged 'inside' command no longer uses edit state objects - Bob Parker
 * reported and fixed mged documentation eto typein bug - Robert Penny
@@ -33,7 +34,6 @@ changes made.  See document footer for additional details.
 * new initial manual page for bot_dump - Sean Morrison
 * added editing support for hyperboloid primitive to mged - Cliff Yapp
 * new 'lens' procedural tool for making optical lenses - Cliff Yapp
-* g_tool now guesses if a change was evolutionary - Erik Greenwald
 
 
 ----------------------------------------------------------------------
