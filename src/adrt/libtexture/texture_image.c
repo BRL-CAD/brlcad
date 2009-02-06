@@ -1,7 +1,7 @@
 /*                     T E X T U R E _ I M A G E . C
  * BRL-CAD / ADRT
  *
- * Copyright (c) 2002-2008 United States Government as represented by
+ * Copyright (c) 2002-2009 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -29,7 +29,6 @@
 
 #include <stdlib.h>
 #include <string.h>
-#include "umath.h"
 #include "adrt_struct.h"
 
 #include "bu.h"

@@ -1,7 +1,7 @@
 /*                       P T C L O U D . C
  * BRL-CAD / ADRT
  *
- * Copyright (c) 2007-2008 United States Government as represented by
+ * Copyright (c) 2007-2009 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -29,11 +29,6 @@
 typedef	struct TIE_3_t {
     float	v[3];
 } TIE_3;
-
-
-#define UNITIZE(_a) { \
-	float _b = sqrt(_a.v[0]*_a.v[0] + _a.v[1]*_a.v[1] + _a.v[2]*_a.v[2]); \
-	_a.v[0] /= _b; _a.v[1] /= _b; _a.v[2] /= _b; }
 
 
 int main(int argc, char *args[]) {
@@ -100,7 +95,7 @@ int main(int argc, char *args[]) {
 	    for (i = 0; i < 3; i++)
 		T.v[i] = sin_theta*cos_phi*bax.v[i] + sin_theta*sin_phi*bay.v[i] + cos_theta*n.v[i];
 	    if (atoi(args[3]))
-		UNITIZE(T);
+		VUNITIZE(T.v);
 	    printf("%f %f %f\n", T.v[0], T.v[1], T.v[2]);
 	}
     }

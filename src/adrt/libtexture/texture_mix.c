@@ -1,7 +1,7 @@
 /*                     T E X T U R E _ M I X . C
  * BRL-CAD / ADRT
  *
- * Copyright (c) 2002-2008 United States Government as represented by
+ * Copyright (c) 2002-2009 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -26,7 +26,6 @@
 
 #include "texture_mix.h"
 #include <stdlib.h>
-#include "umath.h"
 #include "adrt_struct.h"
 
 #include "bu.h"
@@ -60,9 +59,9 @@ void texture_mix_work(__TEXTURE_WORK_PROTOTYPE__) {
 
     td->texture1->work(td->texture1, ADRT_MESH(mesh), ray, id, pixel);
     td->texture2->work(td->texture2, ADRT_MESH(mesh), ray, id, &t);
-    MATH_VEC_MUL_SCALAR((*pixel), (*pixel), td->coef);
-    MATH_VEC_MUL_SCALAR(t, t, (1.0 - td->coef));
-    MATH_VEC_ADD((*pixel), (*pixel), t);
+    VSCALE((*pixel).v,  (*pixel).v,  td->coef);
+    VSCALE(t.v,  t.v,  (1.0 - td->coef));
+    VADD2((*pixel).v,  (*pixel).v,  t.v);
 }
 
 /*

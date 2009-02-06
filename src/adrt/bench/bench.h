@@ -1,7 +1,7 @@
 /*                         B E N C H . H
  * BRL-CAD / ADRT
  *
- * Copyright (c) 2007-2008 United States Government as represented by
+ * Copyright (c) 2007-2009 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or

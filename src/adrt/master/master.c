@@ -1,7 +1,7 @@
 /*                        M A S T E R . C
  * BRL-CAD / ADRT
  *
- * Copyright (c) 2007-2008 United States Government as represented by
+ * Copyright (c) 2007-2009 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -27,6 +27,9 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/time.h>
+
+#include "bu.h"
+
 #include "camera.h"
 #include "dispatcher.h"		/* Dispatcher that creates work units */
 #include "compnet.h"		/* Component Networking, Sends Component Names via Network */
@@ -90,7 +93,6 @@ void master_result (tienet_buffer_t *result);
 
 master_t master;
 
-
 static void
 master_setup ()
 {
@@ -114,14 +116,14 @@ master_setup ()
 
 
 void
-master_init (int port, int obs_port, char *list, char *exec, char *comp_host, int verbose)
+master_init (int port, int obs_port, char *list, char *exec, char *comp_host)
 {
     /* Setup defaults */
     master_setup();
 
     /* Initialize tienet master */
     master.tile_num = DISPATCHER_TILE_NUM * DISPATCHER_TILE_NUM;
-    tienet_master_init(port, master_result, list, exec, 5, ADRT_VER_KEY, verbose);
+    tienet_master_init(port, master_result, list, exec, 5, ADRT_VER_KEY, bu_debug & BU_DEBUG_UNUSED_1);
 
     /* Launch a thread to handle networking */
     pthread_create(&master.networking_thread, NULL, master_networking, &obs_port);
@@ -168,6 +170,7 @@ master_result (tienet_buffer_t *result)
     uint16_t wid;
     uint32_t i, ind, ind2, update;
 
+    static int lastop;
 
     update = 0;
     ind = 0;
@@ -177,6 +180,11 @@ master_result (tienet_buffer_t *result)
 
     TCOPY (uint16_t, result->data, ind, &wid, 0);
     ind += 2;
+
+    if(bu_debug & BU_DEBUG_UNUSED_2 && lastop != op) {
+	bu_log("ADRT Master OP: %d %s\n", op, adrt_work_table[op-ADRT_WORK_BASE]);
+	lastop = op;
+    }
 
     switch (op)
     {

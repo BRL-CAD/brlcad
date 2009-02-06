@@ -50,13 +50,13 @@ libtclcad - a library for Tcl routines related to CAD
 libtermio - a terminal I/O library
 libwdb - the write database library, for creating BRL-CAD geometry models
 mged - the Multi-device Geometry Editor, a CSG solid modeler
-mk - tools for creating various common geometry objects (bolts, handles, windows, etc)
 nirt - Natalie's Interactive Ray-Tracer, an interactive ray-trace tool
 other - 3rd party code optionally utilized by BRL-CAD
 proc-db - tools for procedurally creating geometry models
 remrt - remote distributed ray-trace tools, a client and server
 rt - the BRL-CAD ray-tracers, various analytic and visual ray-trace-based tools
 rttherm - a thermal energy (heat) ray-tracer
+shapes - tools for creating various common geometry objects (bolts, handles, windows, etc)
 sig - signal processing tools, data conversion and manipulation of raw data
 tab - table processing tools, used primarily in conjunction with animation tools
 tclscripts - a library of Tcl routines used by mged, rtwizard, and archer

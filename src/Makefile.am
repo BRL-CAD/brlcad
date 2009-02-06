@@ -69,11 +69,11 @@ kitchensink_dirs = \
 	java \
 	lgt \
 	mged \
-	mk \
 	nirt \
 	proc-db \
 	remrt \
 	rttherm \
+	shapes \
 	sig \
 	tab \
 	tclscripts \

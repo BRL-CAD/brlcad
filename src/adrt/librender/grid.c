@@ -1,7 +1,7 @@
 /*                          G R I D . C
  * BRL-CAD / ADRT
  *
- * Copyright (c) 2007-2008 United States Government as represented by
+ * Copyright (c) 2007-2009 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -59,10 +59,10 @@ void render_grid_work(render_t *render, tie_t *tie, tie_ray_t *ray, TIE_3 *pixel
 	return;
     }
 
-    MATH_VEC_SUB(vec, ray->pos, id.pos);
-    MATH_VEC_UNITIZE(vec);
-    MATH_VEC_DOT(angle, vec, id.norm);
-    MATH_VEC_MUL_SCALAR((*pixel), (*pixel), (angle*0.9));
+    VSUB2(vec.v,  ray->pos.v,  id.pos.v);
+    VUNITIZE(vec.v);
+    angle = VDOT( vec.v,  id.norm.v);
+    VSCALE((*pixel).v,  (*pixel).v,  (angle*0.9));
 
     pixel->v[0] += 0.1;
     pixel->v[1] += 0.1;

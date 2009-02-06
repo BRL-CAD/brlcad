@@ -10,7 +10,6 @@ AM_CFLAGS = \
 	-I${top_srcdir}/src/adrt/libtienet \
 	-I${top_srcdir}/src/adrt/libcommon \
 	-I${top_srcdir}/src/adrt/librender \
-	-I${top_srcdir}/src/adrt/libutil \
 	${TCL_CPPFLAGS}
 
 tieincludedir = $(includedir)/tie

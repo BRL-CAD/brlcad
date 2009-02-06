@@ -1,7 +1,7 @@
 /*                         S L A V E . C
  * BRL-CAD / ADRT
  *
- * Copyright (c) 2007-2008 United States Government as represented by
+ * Copyright (c) 2007-2009 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -25,8 +25,6 @@
 # define TIE_PRECISION 0
 #endif
 
-#include "slave.h"
-#include "load.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -38,6 +36,9 @@
 #include "tie.h"
 #include "tienet.h"
 #include "render_util.h"
+
+#include "slave.h"
+#include "load.h"
 
 typedef struct adrt_slave_project_s {
     tie_t tie;
@@ -115,6 +116,8 @@ adrt_slave_work(tienet_buffer_t *work, tienet_buffer_t *result)
 	    uint8_t c;
 	    char string[255];
 	    uint32_t n, i, num;
+
+	    ind = 1;	/* ind is too far in for some reason, force it back to 1? */
 
 	    /* reset */
 	    TCOPY(uint8_t, work->data, ind, &c, 0);
@@ -382,10 +385,23 @@ adrt_slave_work(tienet_buffer_t *work, tienet_buffer_t *result)
     }
 
 #if 0
-    gettimeofday(&tv, NULL);
-    printf("[Work Units Completed: %.6d  Rays: %.5d k/sec %lld]\r", ++adrt_slave_completed, (int)((tfloat)tie->rays_fired / (tfloat)(1000 * (tv.tv_sec - adrt_slave_startsec + 1))), tie->rays_fired);
-    fflush(stdout);
+    {
+	struct timeval	tv;
+	static int      adrt_slave_completed = 0;
+	static time_t	adrt_slave_startsec = 0;
+	
+	if(adrt_slave_startsec == 0) adrt_slave_startsec = time(NULL);
+
+	gettimeofday(&tv, NULL);
+	printf("\t[Work Units Completed: %.6d  Rays: %.5d k/sec %lld]\n", 
+		++adrt_slave_completed, 
+		(int) ((tfloat) adrt_workspace_list[wid].tie.rays_fired / (tfloat) (1000 * (tv.tv_sec - adrt_slave_startsec + 1))), 
+		adrt_workspace_list[wid].tie.rays_fired);
+	fflush(stdout);
+    }
 #endif
+
+    return;
 }
 
 void 

@@ -1,7 +1,7 @@
 /*                          M A I N . C
  * BRL-CAD
  *
- * Copyright (c) 1998-2008 United States Government as represented by
+ * Copyright (c) 1998-2009 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -123,6 +123,11 @@ Cad_AppInit(Tcl_Interp *interp)
 	if (init_itcl && Itcl_Init(interp) == TCL_ERROR) {
 	    if (!try_auto_path) {
 		try_auto_path=1;
+		/* Itcl_Init() leaves initialization in a bad state
+		 * and can cause retry failures.  cleanup manually.
+		 */
+		Tcl_DeleteCommand(interp, "::itcl::class");
+		Tcl_DeleteNamespace(Tcl_FindNamespace(interp, "::itcl", NULL, 0));
 		continue;
 	    }
 	    bu_log("Itcl_Init ERROR:\n%s\n", Tcl_GetStringResult(interp));

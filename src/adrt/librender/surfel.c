@@ -1,7 +1,7 @@
 /*                        S U R F E L . C
  * BRL-CAD
  *
- * Copyright (c) 2007-2008 United States Government as represented by
+ * Copyright (c) 2007-2009 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -26,7 +26,7 @@
 /*                        S U R F E L . c
  * BRL-CAD / ADRT
  *
- * Copyright (c) 2007-2008 United States Government as represented by
+ * Copyright (c) 2007-2009 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -103,7 +103,7 @@ void render_surfel_work(render_t *render, tie_t *tie, tie_ray_t *ray, TIE_3 *pix
 	    }
 	}
 
-	MATH_VEC_SET((*pixel), 0.8, 0.8, 0.8);
+	VSET((*pixel).v, 0.8, 0.8, 0.8);
     }
 }
 

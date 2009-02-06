@@ -1,7 +1,7 @@
 /*                          M A I N . C
  * BRL-CAD / ADRT
  *
- * Copyright (c) 2007-2008 United States Government as represented by
+ * Copyright (c) 2007-2009 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -32,6 +32,7 @@
 #include "master.h"
 #include "tienet.h"
 
+#include "bu.h"
 
 #ifdef HAVE_GETOPT_H
 # include <getopt.h>
@@ -74,7 +75,7 @@ static void help() {
 
 
 int main(int argc, char **argv) {
-    int port = 0, obs_port = 0, c = 0, verbose = 0;
+    int port = 0, obs_port = 0, c = 0;
     char exec[64], list[64], comp_host[64];
 
 
@@ -132,7 +133,14 @@ int main(int argc, char **argv) {
 		break;
 
             case 'v':
-		verbose = 1;
+		if(!(bu_debug & BU_DEBUG_UNUSED_1))
+		    bu_debug |= BU_DEBUG_UNUSED_1;
+		else if(!(bu_debug & BU_DEBUG_UNUSED_2))
+		    bu_debug |= BU_DEBUG_UNUSED_2;
+		else if(!(bu_debug & BU_DEBUG_UNUSED_3))
+		    bu_debug |= BU_DEBUG_UNUSED_3;
+		else
+		    bu_log("Too verbose!\n");
 		break;
 
             default:
@@ -143,7 +151,7 @@ int main(int argc, char **argv) {
     argc -= optind;
     argv += optind;
 
-    master_init (port, obs_port, list, exec, comp_host, verbose);
+    master_init (port, obs_port, list, exec, comp_host);
 
     return EXIT_SUCCESS;
 }

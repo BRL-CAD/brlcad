@@ -1,7 +1,7 @@
-#                T A N K W I Z A R D I A . T C L
+#                T A N K W I Z A R D . T C L
 # BRL-CAD
 #
-# Copyright (c) 2002-2008 United States Government as represented by
+# Copyright (c) 2002-2009 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # This library is free software; you can redistribute it and/or
@@ -28,11 +28,11 @@
 
 set brlcadDataPath [bu_brlcad_data "plugins"]
 # puts "pwd is [pwd], path is $brlcadDataPath"
-set filename [file join $brlcadDataPath archer Wizards tankwizardIA TankWizardIA.tcl]
+set filename [file join $brlcadDataPath archer Wizards tankwizard TankWizard.tcl]
 if { ![file exists $filename] } {
     # non-tclscript resource, look in the source invocation path
     set brlcadDataPath [bu_brlcad_data "src"]
-    set filename [file join $brlcadDataPath archer plugins Wizards tankwizardIA TankWizardIA.tcl]
+    set filename [file join $brlcadDataPath archer plugins Wizards tankwizard TankWizard.tcl]
 }
 if { ![file exists $filename] } {
     puts "Could not load the TankWizard plugin, skipping $filename"
@@ -41,10 +41,10 @@ if { ![file exists $filename] } {
 source $filename
 
 # Load only once
-set pluginMajorType $TankWizardIA::wizardMajorType
-set pluginMinorType $TankWizardIA::wizardMinorType
-set pluginName $TankWizardIA::wizardName
-set pluginVersion $TankWizardIA::wizardVersion
+set pluginMajorType $TankWizard::wizardMajorType
+set pluginMinorType $TankWizard::wizardMinorType
+set pluginName $TankWizard::wizardName
+set pluginVersion $TankWizard::wizardVersion
 
 # check to see if already loaded
 set plugin [Archer::pluginQuery $pluginName]
@@ -55,15 +55,14 @@ if {$plugin != ""} {
     }
 }
 
-#set iconPath [file join $brlcadDataPath plugins archer Wizards tankwizardIA images tank.png]
 set iconPath ""
 
 # register plugin with Archer's interface
 Archer::pluginRegister $pluginMajorType \
     $pluginMinorType \
     $pluginName \
-    "TankWizardIA" \
-    "TankWizardIA.tcl" \
+    "TankWizard" \
+    "TankWizard.tcl" \
     "Build tank geometry (zone based)." \
     $pluginVersion \
     "SURVICE Engineering" \

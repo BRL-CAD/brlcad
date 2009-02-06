@@ -1,7 +1,7 @@
 /*                         S P A L L . C
  * BRL-CAD / ADRT
  *
- * Copyright (c) 2007-2008 United States Government as represented by
+ * Copyright (c) 2007-2009 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -74,14 +74,14 @@ void render_spall_init(render_t *render, TIE_3 ray_pos, TIE_3 ray_dir, tfloat an
     up.v[1] = 0;
     up.v[2] = 1;
 
-    MATH_VEC_CROSS(normal, ray_dir, up);
-    MATH_VEC_UNITIZE(normal);
+    VCROSS(normal.v,  ray_dir.v,  up.v);
+    VUNITIZE(normal.v);
 
     /* Construct the plane */
     d->plane[0] = normal.v[0];
     d->plane[1] = normal.v[1];
     d->plane[2] = normal.v[2];
-    MATH_VEC_DOT(plane[3], normal, ray_pos); /* up is really new ray_pos */
+    plane[3] = VDOT( normal.v,  ray_pos.v); /* up is really new ray_pos */
     d->plane[3] = -plane[3];
 
     /******************/
@@ -96,15 +96,15 @@ void render_spall_init(render_t *render, TIE_3 ray_pos, TIE_3 ray_dir, tfloat an
     for (i = 0; i < TESSELATION; i++) {
 	tri_list[3*i+0] = ray_pos;
 
-	MATH_VEC_MUL_SCALAR(tri_list[3*i+1], vec_list[i], SPALL_LEN);
-	MATH_VEC_ADD(tri_list[3*i+1], tri_list[3*i+1], ray_pos);
+	VSCALE(tri_list[3*i+1].v,  vec_list[i].v,  SPALL_LEN);
+	VADD2(tri_list[3*i+1].v,  tri_list[3*i+1].v,  ray_pos.v);
 
 	if (i == TESSELATION - 1) {
-	    MATH_VEC_MUL_SCALAR(tri_list[3*i+2], vec_list[0], SPALL_LEN);
-	    MATH_VEC_ADD(tri_list[3*i+2], tri_list[3*i+2], ray_pos);
+	    VSCALE(tri_list[3*i+2].v,  vec_list[0].v,  SPALL_LEN);
+	    VADD2(tri_list[3*i+2].v,  tri_list[3*i+2].v,  ray_pos.v);
 	} else {
-	    MATH_VEC_MUL_SCALAR(tri_list[3*i+2], vec_list[i+1], SPALL_LEN);
-	    MATH_VEC_ADD(tri_list[3*i+2], tri_list[3*i+2], ray_pos);
+	    VSCALE(tri_list[3*i+2].v,  vec_list[i+1].v,  SPALL_LEN);
+	    VADD2(tri_list[3*i+2].v,  tri_list[3*i+2].v,  ray_pos.v);
 	}
     }
 
@@ -195,34 +195,34 @@ void render_spall_work(render_t *render, tie_t *tie, tie_ray_t *ray, TIE_3 *pixe
      * If the point after the splitting plane is an inhit, then just shade as usual.
      */
 
-    MATH_VEC_DOT(dot, ray->dir, hit.id.norm);
+    dot = VDOT( ray->dir.v,  hit.id.norm.v);
     /* flip normal */
     dot = fabs(dot);
   
 
     if (hit.mesh->flags == 1) {
-	MATH_VEC_SET(color, 0.9, 0.2, 0.2);
+	VSET(color.v, 0.9, 0.2, 0.2);
     } else {
 	/* Mix actual color with white 4:1, shade 50% darker */
-	MATH_VEC_SET(color, 1.0, 1.0, 1.0);
-	MATH_VEC_MUL_SCALAR(color, color, 3.0);
-	MATH_VEC_ADD(color, color, hit.mesh->attributes->color);
-	MATH_VEC_MUL_SCALAR(color, color, 0.125);
+	VSET(color.v, 1.0, 1.0, 1.0);
+	VSCALE(color.v,  color.v,  3.0);
+	VADD2(color.v,  color.v,  hit.mesh->attributes->color.v);
+	VSCALE(color.v,  color.v,  0.125);
     }
 
 #if 0
     if (dot < 0) {
 #endif
 	/* Shade using inhit */
-	MATH_VEC_MUL_SCALAR(color, color, (dot*0.50));
-	MATH_VEC_ADD((*pixel), (*pixel), color);
+	VSCALE(color.v,  color.v,  (dot*0.50));
+	VADD2((*pixel).v,  (*pixel).v,  color.v);
 #if 0
     } else {
 	/* shade solid */
-	MATH_VEC_SUB(vec, ray->pos, hit.id.pos);
-	MATH_VEC_UNITIZE(vec);
+	VSUB2(vec.v,  ray->pos.v,  hit.id.pos.v);
+	VUNITIZE(vec.v);
 	angle = vec.v[0]*hit.mod*-hit.plane[0] + vec.v[1]*-hit.mod*hit.plane[1] + vec.v[2]*-hit.mod*hit.plane[2];
-	MATH_VEC_MUL_SCALAR((*pixel), color, (angle*0.50));
+	VSCALE((*pixel).v,  color.v,  (angle*0.50));
     }
 #endif
 

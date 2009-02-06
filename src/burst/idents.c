@@ -1,7 +1,7 @@
 /*                        I D E N T S . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2008 United States Government as represented by
+ * Copyright (c) 2004-2009 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -30,8 +30,9 @@
 #include <string.h>
 #include <signal.h>
 
+#include "vmath.h"
+
 #include "./burst.h"
-#include "./vecmath.h"
 #include "./extern.h"
 
 
@@ -164,7 +165,7 @@ readColors( colorlist, fp )
 	colp = colp->c_next;
 	colp->c_lower = lower;
 	colp->c_upper = upper;
-	CopyVec( colp->c_rgb, rgb );
+	VMOVE( colp->c_rgb, rgb );
     }
     colp->c_next = NULL;
     return	1;

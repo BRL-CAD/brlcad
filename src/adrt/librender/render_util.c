@@ -1,7 +1,7 @@
 /*                   R E N D E R _ U T I L . C
  * BRL-CAD / ADRT
  *
- * Copyright (c) 2007-2008 United States Government as represented by
+ * Copyright (c) 2007-2009 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -22,7 +22,6 @@
  */
 
 #include "render_util.h"
-#include "umath.h"
 #include "adrt_struct.h"
 #include <stdio.h>
 #include <stdlib.h>
@@ -112,8 +111,8 @@ static void* shot_hit(tie_ray_t *ray, tie_id_t *id, tie_tri_t *tri, void *ptr) {
 	/* In-hit */
 	if (shotline->segnum == 0) {
 	    shotline->in_hit = ray->dir;
-	    MATH_VEC_MUL_SCALAR(shotline->in_hit, shotline->in_hit, id->dist);
-	    MATH_VEC_ADD(shotline->in_hit, shotline->in_hit, ray->pos);
+	    VSCALE(shotline->in_hit.v,  shotline->in_hit.v,  id->dist);
+	    VADD2(shotline->in_hit.v,  shotline->in_hit.v,  ray->pos.v);
 	}
 
 	/* Increment */
@@ -187,8 +186,8 @@ void render_util_spall_list(tie_t *tie, tie_ray_t *ray, tfloat angle, void **dat
     shotline.mesh_list = NULL;
     shotline.mesh_num = 0;
 
-    MATH_VEC_SET(shotline.in, 0, 0, 0);
-    MATH_VEC_SET(shotline.out, 0, 0, 0);
+    VSET(shotline.in.v, 0, 0, 0);
+    VSET(shotline.out.v, 0, 0, 0);
 
     /* Fire the center ray first */
     tie_work(tie, ray, &id, shot_hit, &shotline);

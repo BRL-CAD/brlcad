@@ -1,7 +1,7 @@
 /*                           T I E . C
  * BRL-CAD
  *
- * Copyright (c) 2008 United States Government as represented by
+ * Copyright (c) 2008-2009 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -62,11 +62,11 @@ static void tie_tri_prep(tie_t *tie)
 	v2 = tri->data[2];
 
 /* Compute Normal */
-	MATH_VEC_SUB(u, tri->data[1], tri->data[0]);
-	MATH_VEC_SUB(v, tri->data[2], tri->data[0]);
-	MATH_VEC_CROSS(tri->data[1], u, v);
+	VSUB2(u.v,  tri->data[1].v,  tri->data[0].v);
+	VSUB2(v.v,  tri->data[2].v,  tri->data[0].v);
+	VCROSS(tri->data[1].v,  u.v,  v.v);
 
-	MATH_VEC_UNITIZE(tri->data[1]);
+	VUNITIZE(tri->data[1].v);
 
 /* Compute i1 and i2 */
 	u.v[0] = fabs(tri->data[1].v[0]);
@@ -96,8 +96,8 @@ static void tie_tri_prep(tie_t *tie)
 	    tri->v = (tfloat *)((intptr_t)(tri->v) + 1);
 
 /* Compute DotVN */
-	MATH_VEC_MUL_SCALAR(v1, tri->data[0], -1.0);
-	MATH_VEC_DOT(tri->data[2].v[0], v1, tri->data[1]);
+	VSCALE(v1.v,  tri->data[0].v,  -1.0);
+	tri->data[2].v[0] = VDOT( v1.v,  tri->data[1].v);
     }
 }
 
@@ -297,8 +297,8 @@ TIE_FUNC(void* tie_work, tie_t *tie, tie_ray_t *ray, tie_id_t *id, void *(*hitfu
 	    int i1, i2;
 
 	    tri = data->tri_list[i];
-	    MATH_VEC_DOT(u0, tri->data[1], ray->pos);
-	    MATH_VEC_DOT(v0, tri->data[1], ray->dir);
+	    u0 = VDOT( tri->data[1].v,  ray->pos.v);
+	    v0 = VDOT( tri->data[1].v,  ray->dir.v);
 	    t.dist = -(tri->data[2].v[0] + u0) / v0;
 
 /*
@@ -311,8 +311,8 @@ TIE_FUNC(void* tie_work, tie_t *tie, tie_ray_t *ray, tie_id_t *id, void *(*hitfu
 		continue;
 
 /* Compute Intersection Point (P = O + Dt) */
-	    MATH_VEC_MUL_SCALAR(t.pos, ray->dir, t.dist);
-	    MATH_VEC_ADD(t.pos, ray->pos, t.pos);
+	    VSCALE(t.pos.v,  ray->dir.v,  t.dist);
+	    VADD2(t.pos.v,  ray->pos.v,  t.pos.v);
 
 /* Extract i1 and i2 indices from lower bits of the v pointer */
 	    v = (tfloat *)((intptr_t)(tri->v) & ~0x7L);
@@ -417,9 +417,9 @@ TIE_FUNC(void tie_push, tie_t *tie, TIE_3 **tlist, unsigned int tnum, void *plis
 	if (tie_check_degenerate) {
 	    TIE_3 u, v, w;
 
-	    MATH_VEC_SUB(u, (*tlist[i*3+1]), (*tlist[i*3+0]));
-	    MATH_VEC_SUB(v, (*tlist[i*3+2]), (*tlist[i*3+0]));
-	    MATH_VEC_CROSS(w, u, v);
+	    VSUB2(u.v,  (*tlist[i*3+1]).v,  (*tlist[i*3+0]).v);
+	    VSUB2(v.v,  (*tlist[i*3+2]).v,  (*tlist[i*3+0]).v);
+	    VCROSS(w.v,  u.v,  v.v);
 
 	    if (MAGNITUDE(w.v) < 0.0001 * 0.0001)
 		continue;

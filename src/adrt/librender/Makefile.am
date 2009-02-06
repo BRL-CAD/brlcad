@@ -20,7 +20,6 @@ librender_la_SOURCES = \
 librender_la_LIBADD = \
 	${top_builddir}/src/adrt/libtienet/libtienet.la \
 	${top_builddir}/src/adrt/libtie/libtie.la \
-	${top_builddir}/src/adrt/libutil/libtieutil.la \
 	${BN} \
 	${BU} \
 	${LIBM}
@@ -31,7 +30,6 @@ AM_CFLAGS = \
 	-I${top_srcdir}/src/adrt/libtienet \
 	-I${top_srcdir}/src/adrt/libcommon \
 	-I${top_srcdir}/src/adrt/libtexture \
-	-I${top_srcdir}/src/adrt/libutil \
 	${TCL_CPPFLAGS}
 
 tieincludedir = $(includedir)/tie

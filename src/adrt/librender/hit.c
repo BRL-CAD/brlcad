@@ -1,7 +1,7 @@
 /*                           H I T . C
  * BRL-CAD / ADRT
  *
- * Copyright (c) 2007-2008 United States Government as represented by
+ * Copyright (c) 2007-2009 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -23,13 +23,12 @@
 
 #include "hit.h"
 #include "adrt_struct.h"
-#include "libutil/umath.h"
 
 
 void* render_hit(tie_ray_t *ray, tie_id_t *id, tie_tri_t *tri, void *ptr) {
     /* Flip normal to face ray origin (via dot product check) */
     if (ray->dir.v[0] * id->norm.v[0] + ray->dir.v[1] * id->norm.v[1] + ray->dir.v[2] * id->norm.v[2] > 0)
-	MATH_VEC_MUL_SCALAR(id->norm, id->norm, -1.0);
+	VSCALE(id->norm.v,  id->norm.v,  -1.0);
 
     return((adrt_mesh_t *)(tri->ptr));
 }

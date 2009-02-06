@@ -1,7 +1,7 @@
 /*                     T E X T U R E _ P E R L I N . C
  * BRL-CAD / ADRT
  *
- * Copyright (c) 2002-2008 United States Government as represented by
+ * Copyright (c) 2002-2009 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -26,7 +26,6 @@
 
 #include "texture_perlin.h"
 #include <stdlib.h>
-#include "umath.h"
 
 #include "bu.h"
 
@@ -36,7 +35,7 @@
 #define	N	0x1000
 
 
-#define	PRAND (int)(math_rand()*16384)
+#define	PRAND (int)(bn_randmt()*16384)
 #define	S_CURVE(t) (t * t * (3.0 - 2.0 * t))
 #define	AT3(rx, ry, rz) (rx*q.v[0] + ry*q.v[1] + rz*q.v[2]);
 #define	LERP(t, a, b) (a+t*(b-a))
@@ -59,7 +58,7 @@ void texture_perlin_init(texture_perlin_t *P) {
 	P->RV[i].v[0] = (tfloat)((PRAND % (2*B)) - B) / B;
 	P->RV[i].v[1] = (tfloat)((PRAND % (2*B)) - B) / B;
 	P->RV[i].v[2] = (tfloat)((PRAND % (2*B)) - B) / B;
-	MATH_VEC_UNITIZE(P->RV[i]);
+	VUNITIZE(P->RV[i].v);
 	P->PV[i] = i;
     }
 
@@ -90,7 +89,7 @@ tfloat texture_perlin_noise3(texture_perlin_t *P, TIE_3 V, tfloat Size, int Dept
     sum = 0;
     for (i = 0; i < Depth; i++) {
 	sum += texture_perlin_omega(P, V);
-	MATH_VEC_MUL_SCALAR(V, V, Size);
+	VSCALE(V.v,  V.v,  Size);
     }
 
     return(sum);

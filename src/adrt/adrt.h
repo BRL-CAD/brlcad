@@ -1,7 +1,7 @@
 /*                          A D R T . H
  * BRL-CAD
  *
- * Copyright (c) 2008 United States Government as represented by
+ * Copyright (c) 2008-2009 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -34,30 +34,63 @@
 #define	ADRT_PIXEL_FMT		0
 
 /* these are contained in an ADRT_NETOP_WORK message */
+#define ADRT_WORK_BASE 100
 enum
 {
-    ADRT_WORK_INIT = 100,
+    ADRT_WORK_INIT = ADRT_WORK_BASE,
     ADRT_WORK_STATUS,
     ADRT_WORK_FRAME_ATTR,
     ADRT_WORK_FRAME,
     ADRT_WORK_SHOTLINE,
     ADRT_WORK_SPALL,
     ADRT_WORK_SELECT,
-    ADRT_WORK_MINMAX
+    ADRT_WORK_MINMAX,
+    ADRT_WORK_END
 };
+static char *adrt_work_table[40] = {
+    "ADRT_WORK_INIT",
+    "ADRT_WORK_STATUS",
+    "ADRT_WORK_FRAME_ATTR",
+    "ADRT_WORK_FRAME",
+    "ADRT_WORK_SHOTLINE",
+    "ADRT_WORK_SPALL",
+    "ADRT_WORK_SELECT",
+    "ADRT_WORK_MINMAX",
+    NULL};
 
+
+
+#define ADRT_NETOP_BASE 200
 /* top level messages */
 enum
 {
-    ADRT_NETOP_NOP = 200,
+    ADRT_NETOP_NOP = ADRT_NETOP_BASE,
     ADRT_NETOP_INIT,
     ADRT_NETOP_REQWID,
     ADRT_NETOP_LOAD,
     ADRT_NETOP_WORK,
     ADRT_NETOP_MESG,
     ADRT_NETOP_QUIT,
-    ADRT_NETOP_SHUTDOWN
+    ADRT_NETOP_SHUTDOWN,
+    ADRT_NETOP_END
 };
+static char *adrt_netop_table[40] = {
+    "ADRT_NETOP_NOP",
+    "ADRT_NETOP_INIT",
+    "ADRT_NETOP_REQWID",
+    "ADRT_NETOP_LOAD",
+    "ADRT_NETOP_WORK",
+    "ADRT_NETOP_MESG",
+    "ADRT_NETOP_QUIT",
+    "ADRT_NETOP_SHUTDOWN",
+    NULL};
+
+/* fill in a human readable version of the adrt op (for debugging) */
+#define ADRT_MESSAGE_NAME(op) \
+    (op >= ADRT_WORK_BASE && op <= ADRT_WORK_END) ? adrt_work_table[op-ADRT_WORK_BASE] : \
+    (op >= ADRT_NETOP_BASE && op <= ADRT_NETOP_END) ? adrt_netop_table[op-ADRT_NETOP_BASE] : \
+    "Unknown"
+
 
 #define ADRT_VER_KEY		0
 #define ADRT_VER_DETAIL		"ADRT - Advanced Distributed Ray Tracer"

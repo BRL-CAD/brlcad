@@ -1,7 +1,7 @@
 /*                     T E X T U R E _ B U M P . C
  * BRL-CAD / ADRT
  *
- * Copyright (c) 2002-2008 United States Government as represented by
+ * Copyright (c) 2002-2009 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -26,7 +26,6 @@
 
 #include "texture_bump.h"
 #include <stdlib.h>
-#include "umath.h"
 
 #include "bu.h"
 
@@ -59,11 +58,11 @@ void texture_bump_work(__TEXTURE_WORK_PROTOTYPE__) {
     n.v[0] = id->norm.v[0] + sd->coef.v[0]*(2*pixel->v[0]-1.0);
     n.v[1] = id->norm.v[1] + sd->coef.v[1]*(2*pixel->v[1]-1.0);
     n.v[2] = id->norm.v[2] + sd->coef.v[2]*(2*pixel->v[2]-1.0);
-    MATH_VEC_UNITIZE(n);
+    VUNITIZE(n.v);
 
-    MATH_VEC_DOT(d, n, id->norm);
+    d = VDOT( n.v,  id->norm.v);
     if (d < 0)
-	MATH_VEC_MUL_SCALAR(n, n, -1.0);
+	VSCALE(n.v,  n.v,  -1.0);
     id->norm = n;
 }
 

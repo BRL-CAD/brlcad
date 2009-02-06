@@ -2,10 +2,10 @@
 SUBDIRS = \
 	images
 
-documentationdir = $(BRLCAD_DATA)/plugins/archer/Wizards/tankwizardIA
+documentationdir = $(BRLCAD_DATA)/plugins/archer/Wizards/tankwizard
 
 documentation_DATA = \
-	TankWizardIA.tcl
+	TankWizard.tcl
 
 EXTRA_DIST = \
 	$(documentation_DATA)

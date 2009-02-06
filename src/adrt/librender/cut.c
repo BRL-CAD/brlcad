@@ -1,7 +1,7 @@
 /*                        C U T . C
  * BRL-CAD / ADRT
  *
- * Copyright (c) 2007-2008 United States Government as represented by
+ * Copyright (c) 2007-2009 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -27,6 +27,7 @@
 #include <string.h>
 
 #include "bu.h"
+#include "vmath.h"
 
 #include "adrt.h"
 #include "adrt_struct.h"
@@ -49,8 +50,9 @@ typedef struct render_cut_hit_s {
 
 void render_cut_init(render_t *render, TIE_3 ray_pos, TIE_3 ray_dir) {
     render_cut_t *d;
-    TIE_3 list[6], normal, up;
-    tfloat plane[4];
+    TIE_3 *list, normal, up;
+
+    list = (TIE_3 *)bu_malloc(sizeof(TIE_3) * 6, "cutting plane triangles");
 
     render->work = render_cut_work;
     render->free = render_cut_free;
@@ -68,49 +70,37 @@ void render_cut_init(render_t *render, TIE_3 ray_pos, TIE_3 ray_dir) {
     tie_init(&d->tie, 2, TIE_KDTREE_FAST);
 
     /* Calculate the normal to be used for the plane */
-    up.v[0] = 0;
-    up.v[1] = 0;
-    up.v[2] = 1;
-
-    MATH_VEC_CROSS(normal, ray_dir, up);
-    MATH_VEC_UNITIZE(normal);
+    VSET(up.v, 0, 0, 1);
+    VCROSS(normal.v,  ray_dir.v,  up.v);
+    VUNITIZE(normal.v);
 
     /* Construct the plane */
-    d->plane[0] = normal.v[0];
-    d->plane[1] = normal.v[1];
-    d->plane[2] = normal.v[2];
-    MATH_VEC_DOT(plane[3], normal, ray_pos); /* up is really new ray_pos */
-    d->plane[3] = -plane[3];
+    VMOVE(d->plane, normal.v);
+    d->plane[3] = -VDOT( normal.v,  ray_pos.v); /* up is really new ray_pos */
 
     /* Triangle 1 */
-    list[0].v[0] = ray_pos.v[0];
-    list[0].v[1] = ray_pos.v[1];
-    list[0].v[2] = ray_pos.v[2] - THICKNESS;
+    VMOVE(list[0].v, ray_pos.v);
+    list[0].v[2] -= THICKNESS;
 
-    list[1].v[0] = ray_pos.v[0] + LENGTH*ray_dir.v[0];
-    list[1].v[1] = ray_pos.v[1] + LENGTH*ray_dir.v[1];
-    list[1].v[2] = ray_pos.v[2] + LENGTH*ray_dir.v[2] - THICKNESS;
+    VADD2SCALE(list[1].v, ray_pos.v, ray_dir.v, LENGTH);
+    list[1].v[2] -= THICKNESS;
 
-    list[2].v[0] = ray_pos.v[0] + LENGTH*ray_dir.v[0];
-    list[2].v[1] = ray_pos.v[1] + LENGTH*ray_dir.v[1];
-    list[2].v[2] = ray_pos.v[2] + LENGTH*ray_dir.v[2] + THICKNESS;
+    VADD2SCALE(list[2].v, ray_pos.v, ray_dir.v, LENGTH);
+    list[2].v[2] += THICKNESS;
 
     /* Triangle 2 */
-    list[3].v[0] = ray_pos.v[0];
-    list[3].v[1] = ray_pos.v[1];
-    list[3].v[2] = ray_pos.v[2] - THICKNESS;
+    VMOVE(list[3].v, ray_pos.v);
+    list[3].v[2] -= THICKNESS;
 
-    list[4].v[0] = ray_pos.v[0] + LENGTH*ray_dir.v[0];
-    list[4].v[1] = ray_pos.v[1] + LENGTH*ray_dir.v[1];
-    list[4].v[2] = ray_pos.v[2] + LENGTH*ray_dir.v[2] + THICKNESS;
-
-    list[5].v[0] = ray_pos.v[0];
-    list[5].v[1] = ray_pos.v[1];
-    list[5].v[2] = ray_pos.v[2] + THICKNESS;
-
+    VADD2SCALE(list[4].v, ray_pos.v, ray_dir.v, LENGTH);
+    list[4].v[2] += THICKNESS;
+    
+    VMOVE(list[5].v, ray_pos.v);
+    list[5].v[2] -= THICKNESS;
 
     tie_push(&d->tie, (TIE_3 **)&list, 2, NULL, 0);
     tie_prep(&d->tie);
+    bu_free(list, "cutting plane triangles");
 }
 
 
@@ -147,11 +137,9 @@ void render_cut_work(render_t *render, tie_t *tie, tie_ray_t *ray, TIE_3 *pixel)
 
     rd = (render_cut_t *)render->data;
 
-    /* Draw Ballistic Arrow - Blue */
+    /* Draw Arrow - Blue */
     if (tie_work(&rd->tie, ray, &id, render_arrow_hit, NULL)) {
-	pixel->v[0] = 0.0;
-	pixel->v[1] = 0.0;
-	pixel->v[2] = 1.0;
+	VSET(pixel->v, 0.0, 0.0, 1.0);
 	return;
     }
 
@@ -170,7 +158,6 @@ void render_cut_work(render_t *render, tie_t *tie, tie_ray_t *ray, TIE_3 *pixel)
      * Ray = O + td
      * t = -(Pn · R0 + D) / (Pn · Rd)
      */
-
     t = (rd->plane[0]*ray->pos.v[0] + rd->plane[1]*ray->pos.v[1] + rd->plane[2]*ray->pos.v[2] + rd->plane[3]) /
 	(rd->plane[0]*ray->dir.v[0] + rd->plane[1]*ray->dir.v[1] + rd->plane[2]*ray->dir.v[2]);
 
@@ -178,14 +165,8 @@ void render_cut_work(render_t *render, tie_t *tie, tie_ray_t *ray, TIE_3 *pixel)
     if (t > 0)
 	return;
 
-    ray->pos.v[0] += -t * ray->dir.v[0];
-    ray->pos.v[1] += -t * ray->dir.v[1];
-    ray->pos.v[2] += -t * ray->dir.v[2];
-
-    hit.plane[0] = rd->plane[0];
-    hit.plane[1] = rd->plane[1];
-    hit.plane[2] = rd->plane[2];
-    hit.plane[3] = rd->plane[3];
+    VADD2SCALE(ray->pos.v, ray->pos.v, ray->dir.v, -t);
+    HMOVE(hit.plane, rd->plane);
 
     /* Render Geometry */
     if (!tie_work(tie, ray, &id, render_cut_hit, &hit))
@@ -196,24 +177,20 @@ void render_cut_work(render_t *render, tie_t *tie, tie_ray_t *ray, TIE_3 *pixel)
      * If the point after the splitting plane is an inhit, then just shade as usual.
      */
 
-    MATH_VEC_DOT(dot, ray->dir, hit.id.norm);
-    /* flip normal */
-    dot = fabs(dot);
-
+    /* flipped normal */
+    dot = fabs(VDOT( ray->dir.v,  hit.id.norm.v));
 
     if (hit.mesh->flags & (ADRT_MESH_SELECT|ADRT_MESH_HIT)) {
-	color.v[0] = hit.mesh->flags & ADRT_MESH_HIT ? 0.9 : 0.2;
-	color.v[1] = 0.2;
-	color.v[2] = hit.mesh->flags & ADRT_MESH_SELECT ? 0.9 : 0.2;
+	VSET(color.v, hit.mesh->flags & ADRT_MESH_HIT ? 0.9 : 0.2, 0.2, hit.mesh->flags & ADRT_MESH_SELECT ? 0.9 : 0.2);
     } else {
 	/* Mix actual color with white 4:1, shade 50% darker */
 #if 0
-	MATH_VEC_SET(color, 1.0, 1.0, 1.0);
-	MATH_VEC_MUL_SCALAR(color, color, 3.0);
-	MATH_VEC_ADD(color, color, hit.mesh->prop->color);
-	MATH_VEC_MUL_SCALAR(color, color, 0.125);
+	VSET(color.v, 1.0, 1.0, 1.0);
+	VSCALE(color.v,  color.v,  3.0);
+	VADD2(color.v,  color.v,  hit.mesh->prop->color.v);
+	VSCALE(color.v,  color.v,  0.125);
 #else
-	MATH_VEC_SET(color, 0.8, 0.8, 0.7);
+	VSET(color.v, 0.8, 0.8, 0.7);
 #endif
     }
 
@@ -221,20 +198,18 @@ void render_cut_work(render_t *render, tie_t *tie, tie_ray_t *ray, TIE_3 *pixel)
     if (dot < 0) {
 #endif
 	/* Shade using inhit */
-	MATH_VEC_MUL_SCALAR((*pixel), color, (dot*0.90));
+	VSCALE((*pixel).v,  color.v,  (dot*0.90));
 #if 0
     } else {
 	/* shade solid */
-	MATH_VEC_SUB(vec, ray->pos, hit.id.pos);
-	MATH_VEC_UNITIZE(vec);
+	VSUB2(vec.v,  ray->pos.v,  hit.id.pos.v);
+	VUNITIZE(vec.v);
 	angle = vec.v[0]*hit.mod*-hit.plane[0] + vec.v[1]*-hit.mod*hit.plane[1] + vec.v[2]*-hit.mod*hit.plane[2];
-	MATH_VEC_MUL_SCALAR((*pixel), color, (angle*0.90));
+	VSCALE((*pixel).v,  color.v,  (angle*0.90));
     }
 #endif
 
-    pixel->v[0] += 0.1;
-    pixel->v[1] += 0.1;
-    pixel->v[2] += 0.1;
+    VSET(pixel->v, 0.1, 0.1, 0.1);
 }
 
 /*

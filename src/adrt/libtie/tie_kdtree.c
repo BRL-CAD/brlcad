@@ -1,7 +1,7 @@
 /*                    T I E _ K D T R E E . C
  * BRL-CAD
  *
- * Copyright (c) 2008 United States Government as represented by
+ * Copyright (c) 2008-2009 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -241,9 +241,9 @@ static int tie_kdtree_tri_box_overlap(TIE_3 *center, TIE_3 *half_size, TIE_3 tri
     tfloat min, max, d, t, rad;
 
 /* move everything so that the boxcenter is in (0, 0, 0) */
-    MATH_VEC_SUB(v0, triverts[0], (*center));
-    MATH_VEC_SUB(v1, triverts[1], (*center));
-    MATH_VEC_SUB(v2, triverts[2], (*center));
+    VSUB2(v0.v,  triverts[0].v,  (*center).v);
+    VSUB2(v1.v,  triverts[1].v,  (*center).v);
+    VSUB2(v2.v,  triverts[2].v,  (*center).v);
 
 /*
  * First test overlap in the {x, y, z}-directions
@@ -271,9 +271,9 @@ static int tie_kdtree_tri_box_overlap(TIE_3 *center, TIE_3 *half_size, TIE_3 tri
 	return 0;
 
 /* compute triangle edges */
-    MATH_VEC_SUB(e0, v1, v0); /* tri edge 0 */
-    MATH_VEC_SUB(e1, v2, v1); /* tri edge 1 */
-    MATH_VEC_SUB(e2, v0, v2); /* tri edge 2 */
+    VSUB2(e0.v,  v1.v,  v0.v); /* tri edge 0 */
+    VSUB2(e1.v,  v2.v,  v1.v); /* tri edge 1 */
+    VSUB2(e2.v,  v0.v,  v2.v); /* tri edge 2 */
 
 /* Perform the 9 tests */
     fe.v[0] = fabs(e0.v[0]);
@@ -304,14 +304,14 @@ static int tie_kdtree_tri_box_overlap(TIE_3 *center, TIE_3 *half_size, TIE_3 tri
  * Test if the box intersects the plane of the triangle
  * compute plane equation of triangle: normal*x+d=0
  */
-    MATH_VEC_CROSS(normal, e0, e1);
-    MATH_VEC_DOT(d, normal, v0);  /* plane eq: normal . x + d = 0 */
+    VCROSS(normal.v,  e0.v,  e1.v);
+    d = VDOT( normal.v,  v0.v);  /* plane eq: normal . x + d = 0 */
 
     p.v[0] = normal.v[0] > 0 ? half_size->v[0] : -half_size->v[0];
     p.v[1] = normal.v[1] > 0 ? half_size->v[1] : -half_size->v[1];
     p.v[2] = normal.v[2] > 0 ? half_size->v[2] : -half_size->v[2];
 
-    MATH_VEC_DOT(t, normal, p);
+    t = VDOT( normal.v,  p.v);
     return t >= d ? 1 : 0;
 }
 
@@ -361,11 +361,11 @@ static void tie_kdtree_build(tie_t *tie, tie_kdtree_t *node, unsigned int depth,
 	cmin[1] = min;
 	cmax[1] = max;
 
-	MATH_VEC_ADD(center[0], max, min);
-	MATH_VEC_MUL_SCALAR(center[0], center[0], 0.5);
+	VADD2(center[0].v,  max.v,  min.v);
+	VSCALE(center[0].v,  center[0].v,  0.5);
 
 /* Split along largest Axis to keep node sizes relatively cube-like (Naive) */
-	MATH_VEC_SUB(vec, max, min);
+	VSUB2(vec.v,  max.v,  min.v);
 
 /* Determine the largest Axis */
 	if (vec.v[0] >= vec.v[1] && vec.v[0] >= vec.v[2]) {
@@ -449,10 +449,10 @@ static void tie_kdtree_build(tie_t *tie, tie_kdtree_t *node, unsigned int depth,
 		    continue;
 
 		for (n = 0; n < 2; n++) {
-		    MATH_VEC_ADD(center[n], cmax[n], cmin[n]);
-		    MATH_VEC_MUL_SCALAR(center[n], center[n], 0.5);
-		    MATH_VEC_SUB(half_size[n], cmax[n], cmin[n]);
-		    MATH_VEC_MUL_SCALAR(half_size[n], half_size[n], 0.5);
+		    VADD2(center[n].v,  cmax[n].v,  cmin[n].v);
+		    VSCALE(center[n].v,  center[n].v,  0.5);
+		    VSUB2(half_size[n].v,  cmax[n].v,  cmin[n].v);
+		    VSCALE(half_size[n].v,  half_size[n].v,  0.5);
 		}
 
 		for (i = 0; i < node_gd->tri_num; i++) {
@@ -700,10 +700,10 @@ static void tie_kdtree_build(tie_t *tie, tie_kdtree_t *node, unsigned int depth,
     for (n = 0; n < 2; n++) {
 	cnt[n] = 0;
 
-	MATH_VEC_ADD(center[n], cmax[n], cmin[n]);
-	MATH_VEC_MUL_SCALAR(center[n], center[n], 0.5);
-	MATH_VEC_SUB(half_size[n], cmax[n], cmin[n]);
-	MATH_VEC_MUL_SCALAR(half_size[n], half_size[n], 0.5);
+	VADD2(center[n].v,  cmax[n].v,  cmin[n].v);
+	VSCALE(center[n].v,  center[n].v,  0.5);
+	VSUB2(half_size[n].v,  cmax[n].v,  cmin[n].v);
+	VSCALE(half_size[n].v,  half_size[n].v,  0.5);
 
 	for (i = 0; i < node_gd->tri_num; i++) {
 /*
@@ -921,7 +921,7 @@ TIE_FUNC(void tie_kdtree_prep, tie_t *tie)
  * Compute Floating Fuzz Precision Value
  * For now, take largest dimension as basis for TIE_PREC
  */
-    MATH_VEC_SUB(delta, tie->max, tie->min);
+    VSUB2(delta.v,  tie->max.v,  tie->min.v);
     MATH_MAX3(TIE_PREC, delta.v[0], delta.v[1], delta.v[2]);
 #if TIE_PRECISION == TIE_PRECISION_SINGLE
     TIE_PREC *= 0.000000001;
@@ -930,9 +930,9 @@ TIE_FUNC(void tie_kdtree_prep, tie_t *tie)
 #endif
 
 /* Grow the head node to avoid floating point fuzz in the building process with edges */
-    MATH_VEC_MUL_SCALAR(delta, delta, 1.0); /* XXX */
-    MATH_VEC_SUB(tie->min, tie->min, delta);
-    MATH_VEC_ADD(tie->max, tie->max, delta);
+    VSCALE(delta.v,  delta.v,  1.0); /* XXX */
+    VSUB2(tie->min.v,  tie->min.v,  delta.v);
+    VADD2(tie->max.v,  tie->max.v,  delta.v);
 
 /* Compute Max Depth to allow the KD-Tree to grow to */
     tie->max_depth = (int)(TIE_KDTREE_DEPTH_K1 * (log(tie->tri_num) / log(2)) + TIE_KDTREE_DEPTH_K2);

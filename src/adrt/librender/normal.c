@@ -1,7 +1,7 @@
 /*                        N O R M A L . C
  * BRL-CAD / ADRT
  *
- * Copyright (c) 2007-2008 United States Government as represented by
+ * Copyright (c) 2007-2009 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -27,30 +27,34 @@
 #include <stdio.h>
 
 
-void render_normal_init(render_t *render) {
+void
+render_normal_init(render_t *render) {
     render->work = render_normal_work;
     render->free = render_normal_free;
+    return;
 }
 
 
-void render_normal_free(render_t *render) {
+void
+render_normal_free(render_t *render) {
+    return;
 }
 
 
-static void* normal_hit(tie_ray_t *ray, tie_id_t *id, tie_tri_t *tri, void *ptr) {
+static void *
+normal_hit(tie_ray_t *ray, tie_id_t *id, tie_tri_t *tri, void *ptr) {
     return((adrt_mesh_t *)(tri->ptr));
 }
 
 
-void render_normal_work(render_t *render, tie_t *tie, tie_ray_t *ray, TIE_3 *pixel) {
+void
+render_normal_work(render_t *render, tie_t *tie, tie_ray_t *ray, TIE_3 *pixel) {
     tie_id_t	id;
-    adrt_mesh_t	*m;
+    float	one[3] = { 1, 1, 1 };
 
-    if ((m = (adrt_mesh_t *)tie_work(tie, ray, &id, normal_hit, NULL))) {
-	pixel->v[0] = (id.norm.v[0]+1) * 0.5;
-	pixel->v[1] = (id.norm.v[1]+1) * 0.5;
-	pixel->v[2] = (id.norm.v[2]+1) * 0.5;
-    }
+    if (tie_work(tie, ray, &id, normal_hit, NULL))
+	VADD2SCALE(pixel->v, id.norm.v, one, 0.5);
+    return;
 }
 
 /*
