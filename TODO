@@ -346,6 +346,9 @@ THESE ARE LOWER PRIORITY OR FOR FUTURE RELEASES
 
 * incremental raytrace-based display manager
 
+* implement tools for generating coils/springs and gears, improve bolt/nut
+  tool support
+
 
 LIBPC
 -----
