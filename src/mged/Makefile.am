@@ -194,7 +194,8 @@ EXTRA_DIST = \
 	dm-tk.c \
 	fbserv_win32.c \
 	mged.bat \
-	mged.dsp
+	mged.dsp \
+	red.c
 
 DEPS=src/libtermio src/libwdb src/libdm src/other/incrTcl src/libtclcad
 
