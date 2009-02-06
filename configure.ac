@@ -3423,7 +3423,8 @@ if test "x$bc_build_docs" != "xno" ; then
         docbook_processing="yes (man/html/pdf)"
     else
         docbook_processing="yes (man/html only)"
-	APACHEFOP=:
+	docbook_pdf_processing="no"
+	APACHEFOP=""
     fi
 fi
 AC_SUBST(XSLTPROC)
