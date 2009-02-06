@@ -14,6 +14,13 @@ changes made.  See document footer for additional details.
 --- 2008-02-06  Release 7.14.2                                     ---
 ----------------------------------------------------------------------
 
+This release includes a number of new tools and enhancements that
+facilitate geometry import and export including a new 'bot_dump' tool
+for extracting mesh models without evaluating them for solidity, a new
+'dem-g' converter for importing Digital Elevation Model (DEM) data,
+a new 'lens' tool for creating accurate optical lenses, and the dxf-g
+importer receives a bug fix when importing 2D entities.
+
 * fixed errors in handling of hyp primitive translations - Cliff Yapp
 * g_tool now guesses if a change was evolutionary - Erik Greenwald
 * added >, <, >= and <= attr value comparisons in search - Cliff Yapp
