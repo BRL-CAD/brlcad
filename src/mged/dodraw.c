@@ -1,7 +1,7 @@
 /*                        D O D R A W . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2008 United States Government as represented by
+ * Copyright (c) 1985-2009 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -109,8 +109,6 @@ int			mged_wireframe_color_override;
 int			mged_wireframe_color[3];
 static struct model	*mged_nmg_model;
 
-extern struct bn_tol		mged_tol;
-extern struct rt_tess_tol	mged_ttol;
 
 /*
  *		M G E D _ P L O T _ A N I M _ U P C A L L _ H A N D L E R
@@ -851,7 +849,7 @@ drawH_part2(
 	GET_SOLID(sp, &MGED_FreeSolid.l);
 	/* NOTICE:  The structure is dirty & not initialized for you! */
 
-	sp->s_dlist = BU_LIST_LAST(solid, &dgop->dgo_headSolid)->s_dlist + 1;
+	sp->s_dlist = BU_LIST_LAST(solid, &gedp->ged_gdp->gd_headSolid)->s_dlist + 1;
     } else {
 	/* Just updating an existing solid.
 	 *  'tsp' and 'pathpos' will not be used
@@ -902,15 +900,13 @@ drawH_part2(
 	sp->s_regionid = tsp->ts_regionid;
     }
 
-#ifdef DO_DISPLAY_LISTS
     createDListALL(sp);
-#endif
 
     /* Solid is successfully drawn */
     if ( !existing_sp )  {
 	/* Add to linked list of solid structs */
 	bu_semaphore_acquire( RT_SEM_MODEL );
-	BU_LIST_APPEND(dgop->dgo_headSolid.back, &sp->l);
+	BU_LIST_APPEND(gedp->ged_gdp->gd_headSolid.back, &sp->l);
 	bu_semaphore_release( RT_SEM_MODEL );
     } else {
 	/* replacing existing solid -- struct already linked in */
@@ -1124,16 +1120,16 @@ cvt_vlblock_to_solids(
 
     /* Remove any residue colors from a previous overlay w/same name */
     if ( dbip->dbi_read_only )  {
-	av[0] = "d";
+	av[0] = "erase";
 	av[1] = shortname;
 	av[2] = NULL;
-	(void)cmd_erase((ClientData)NULL, interp, 2, av);
+	(void)ged_erase(gedp, 2, av);
     } else {
 	av[0] = "kill";
 	av[1] = "-f";
 	av[2] = shortname;
 	av[3] = NULL;
-	(void)cmd_kill((ClientData)NULL, interp, 3, av);
+	(void)ged_kill(gedp, 3, av);
     }
 
     for ( i=0; i < vbp->nused; i++ )  {
@@ -1186,15 +1182,6 @@ invent_solid(
     /* Need to enter phony name in directory structure */
     dp = db_diradd( dbip,  name, RT_DIR_PHONY_ADDR, 0, DIR_SOLID, &type );
 
-#if 0
-    /* XXX need to get this going. */
-    path.fp_names[0] = dp;
-    state.ts_mater.ma_color[0] = ((rgb>>16) & 0xFF) / 255.0
-	state.ts_mater.ma_color[1] = ((rgb>> 8) & 0xFF) / 255.0
-	state.ts_mater.ma_color[2] = ((rgb    ) & 0xFF) / 255.0
-	drawH_part2( 0, vhead, path, &state, SOLID_NULL );
-#else
-
     /* Obtain a fresh solid structure, and fill it in */
     GET_SOLID(sp, &MGED_FreeSolid.l);
 
@@ -1218,15 +1205,13 @@ invent_solid(
     sp->s_color[1] = sp->s_basecolor[1] = (rgb>> 8) & 0xFF;
     sp->s_color[2] = sp->s_basecolor[2] = (rgb    ) & 0xFF;
     sp->s_regionid = 0;
-    sp->s_dlist = BU_LIST_LAST(solid, &dgop->dgo_headSolid)->s_dlist + 1;
+    sp->s_dlist = BU_LIST_LAST(solid, &gedp->ged_gdp->gd_headSolid)->s_dlist + 1;
 
     /* Solid successfully drawn, add to linked list of solid structs */
-    BU_LIST_APPEND(dgop->dgo_headSolid.back, &sp->l);
+    BU_LIST_APPEND(gedp->ged_gdp->gd_headSolid.back, &sp->l);
 
-#ifdef DO_DISPLAY_LISTS
     createDListALL(sp);
-#endif
-#endif
+
     return(0);		/* OK */
 }
 
@@ -1842,7 +1827,7 @@ cmd_redraw_vlist(ClientData clientData, Tcl_Interp *interp, int argc, char **arg
 	if ( (dp = db_lookup( dbip, argv[i], LOOKUP_NOISY )) == NULL )
 	    continue;
 
-	FOR_ALL_SOLIDS(sp, &dgop->dgo_headSolid)  {
+	FOR_ALL_SOLIDS(sp, &gedp->ged_gdp->gd_headSolid)  {
 	    if ( db_full_path_search( &sp->s_fullpath, dp ) )  {
 #if 0
 		add_solid_path_to_result(interp, sp);

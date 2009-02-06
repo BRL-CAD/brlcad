@@ -1,7 +1,7 @@
 /*                      M E T A B A L L . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2008 United States Government as represented by
+ * Copyright (c) 2008-2009 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -60,22 +60,45 @@ mkfmt(char *fmt, char *prefix, char *postfix, int nframes)
 }
 
 int
-bitronic(struct rt_wdb *outfp, int method, int nframes)
+bitronic(struct rt_wdb *outfp, int method, fastf_t threshold, int nframes)
 {
     char buf[BUFSIZ], fmt[FMTSIZ];
-    double step = 2.0 / (double) nframes;
+    fastf_t step;
+    struct rt_metaball_internal *mb;
+
+    BU_GETSTRUCT( mb, rt_metaball_internal );
+    mb->magic = RT_METABALL_INTERNAL_MAGIC;
+    mb->threshold = threshold > 0 ? threshold : 1.0;
+    mb->method = method >= 0 ? method : 0;	/* default to Blinn blob */
+
+    step = 2.0 / (double) nframes;
 
     mkfmt(fmt, "mball", ".s", nframes);
 
+#if 0
+    bleh[0].l->next = &bleh[1];
+    bleh[1].l->next = NULL;
+
     while(nframes--) {
+	struct wdb_metaballpt *mbpt;
 	snprintf(buf, BUFSIZ, fmt, nframes);
+#define PT(B, X,Y,Z,FLDSTR,GOO)	B.type = WDB_METABALLPT_TYPE_POINT; B.fldstr = FLDSTR; B.sweat = GOO; VSET(B.coord, X, Y, Z);
+	BU_GETSTRUCT( mbpt, wdb_metaballpt );
+	PT(bleh[0], - ((double)nframes) * step, 0, 0, 1, 1);
+	PT(bleh[1], ((double)nframes) * step, 0, 0, 1, 1);
+#undef PT
+	BU_LIST_INSERT( &mb->metaball_ctrl_head, &mbpt->l );
+	/*
+	mk_metaball(outfp, buf, 2, method, threshold, bleh);
+	*/
 	printf("%s\t%f %f\n", buf, - ((double)nframes) * step, ((double)nframes) * step);
     }
+#endif
     return EXIT_FAILURE;
 }
 
 int
-gravotronic(struct rt_wdb *outfp, int method, int nframes, int count)
+gravotronic(struct rt_wdb *outfp, int method, fastf_t threshold, int nframes, int count)
 {
     char buf[BUFSIZ], fmt[FMTSIZ];
 
@@ -147,9 +170,9 @@ main(int argc, char **argv)
     /* here we go! */
 
     if(gravotron)
-	retval = gravotronic(outfp, method, nframes, count);
+	retval = gravotronic(outfp, method, 1.0, nframes, count);
     else
-	retval = bitronic(outfp, method, nframes);
+	retval = bitronic(outfp, method, 1.0, nframes);
 
     /* and clean up  */
 

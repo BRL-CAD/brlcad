@@ -1,7 +1,7 @@
 /*                          P L O T . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2008 United States Government as represented by
+ * Copyright (c) 1985-2009 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -144,15 +144,15 @@ f_plot(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 
     if ( floating )  {
 	pd_3space( fp,
-		   -view_state->vs_vop->vo_center[MDX] - view_state->vs_vop->vo_scale,
-		   -view_state->vs_vop->vo_center[MDY] - view_state->vs_vop->vo_scale,
-		   -view_state->vs_vop->vo_center[MDZ] - view_state->vs_vop->vo_scale,
-		   -view_state->vs_vop->vo_center[MDX] + view_state->vs_vop->vo_scale,
-		   -view_state->vs_vop->vo_center[MDY] + view_state->vs_vop->vo_scale,
-		   -view_state->vs_vop->vo_center[MDZ] + view_state->vs_vop->vo_scale );
+		   -view_state->vs_gvp->gv_center[MDX] - view_state->vs_gvp->gv_scale,
+		   -view_state->vs_gvp->gv_center[MDY] - view_state->vs_gvp->gv_scale,
+		   -view_state->vs_gvp->gv_center[MDZ] - view_state->vs_gvp->gv_scale,
+		   -view_state->vs_gvp->gv_center[MDX] + view_state->vs_gvp->gv_scale,
+		   -view_state->vs_gvp->gv_center[MDY] + view_state->vs_gvp->gv_scale,
+		   -view_state->vs_gvp->gv_center[MDZ] + view_state->vs_gvp->gv_scale );
 	Dashing = 0;
 	pl_linmod( fp, "solid" );
-	FOR_ALL_SOLIDS(sp, &dgop->dgo_headSolid)  {
+	FOR_ALL_SOLIDS(sp, &gedp->ged_gdp->gd_headSolid)  {
 	    /* Could check for differences from last color */
 	    pl_color( fp,
 		      sp->s_color[0],
@@ -195,7 +195,7 @@ f_plot(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
     pl_erase( fp );
     Dashing = 0;
     pl_linmod( fp, "solid");
-    FOR_ALL_SOLIDS(sp, &dgop->dgo_headSolid)  {
+    FOR_ALL_SOLIDS(sp, &gedp->ged_gdp->gd_headSolid)  {
 	if ( Dashing != sp->s_soldash )  {
 	    if ( sp->s_soldash )
 		pl_linmod( fp, "dotdashed");
@@ -216,13 +216,13 @@ f_plot(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 		    case BN_VLIST_POLY_MOVE:
 		    case BN_VLIST_LINE_MOVE:
 			/* Move, not draw */
-			MAT4X3PNT( last, view_state->vs_vop->vo_model2view, *pt );
+			MAT4X3PNT( last, view_state->vs_gvp->gv_model2view, *pt );
 			continue;
 		    case BN_VLIST_POLY_DRAW:
 		    case BN_VLIST_POLY_END:
 		    case BN_VLIST_LINE_DRAW:
 			/* draw */
-			MAT4X3PNT(fin, view_state->vs_vop->vo_model2view, *pt);
+			MAT4X3PNT(fin, view_state->vs_gvp->gv_model2view, *pt);
 			VMOVE( start, last );
 			VMOVE( last, fin );
 			break;
@@ -301,12 +301,12 @@ f_area(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
     if ( not_state( ST_VIEW, "Presented Area Calculation" ) == TCL_ERROR )
 	return TCL_ERROR;
 
-    if ( BU_LIST_IS_EMPTY( &dgop->dgo_headSolid ) ) {
+    if ( BU_LIST_IS_EMPTY( &gedp->ged_gdp->gd_headSolid ) ) {
 	Tcl_AppendResult(interp, "No objects displayed!!!\n", (char *)NULL );
 	return TCL_ERROR;
     }
 
-    FOR_ALL_SOLIDS(sp, &dgop->dgo_headSolid)  {
+    FOR_ALL_SOLIDS(sp, &gedp->ged_gdp->gd_headSolid)  {
 	if ( !sp->s_Eflag && sp->s_soldash != 0 )  {
 	    struct bu_vls vls;
 
@@ -392,7 +392,7 @@ f_area(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
      * Write out rotated but unclipped, untranslated,
      * and unscaled vectors
      */
-    FOR_ALL_SOLIDS(sp, &dgop->dgo_headSolid)  {
+    FOR_ALL_SOLIDS(sp, &gedp->ged_gdp->gd_headSolid)  {
 	for ( BU_LIST_FOR( vp, bn_vlist, &(sp->s_vlist) ) )  {
 	    register int	i;
 	    register int	nused = vp->nused;
@@ -406,13 +406,13 @@ f_area(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 		    case BN_VLIST_POLY_MOVE:
 		    case BN_VLIST_LINE_MOVE:
 			/* Move, not draw */
-			MAT4X3VEC(last, view_state->vs_vop->vo_rotation, *pt);
+			MAT4X3VEC(last, view_state->vs_gvp->gv_rotation, *pt);
 			continue;
 		    case BN_VLIST_POLY_DRAW:
 		    case BN_VLIST_POLY_END:
 		    case BN_VLIST_LINE_DRAW:
 			/* draw.  */
-			MAT4X3VEC(fin, view_state->vs_vop->vo_rotation, *pt);
+			MAT4X3VEC(fin, view_state->vs_gvp->gv_rotation, *pt);
 			break;
 		}
 

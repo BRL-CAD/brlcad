@@ -1,7 +1,7 @@
 /*                       F A C E D E F . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2008 United States Government as represented by
+ * Copyright (c) 1986-2009 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -38,9 +38,8 @@
 #include "./mged.h"
 #include "./sedit.h"
 
-extern struct rt_db_internal es_int;
-extern struct bn_tol mged_tol;
 
+extern struct rt_db_internal es_int;
 
 char *p_rotfb[] = {
     "Enter rot, fb angles: ",
@@ -104,7 +103,7 @@ f_facedef(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
     }
 
     if ( setjmp( jmp_env ) == 0 )
-	(void)signal( SIGINT, sig3);  /* allow interupts */
+	(void)signal( SIGINT, sig3);  /* allow interrupts */
     else
 	return TCL_OK;
 

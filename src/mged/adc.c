@@ -1,7 +1,7 @@
 /*                           A D C . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2008 United States Government as represented by
+ * Copyright (c) 1985-2009 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -97,7 +97,7 @@ adc_set_scroll(void)
 static void
 adc_model_To_adc_view(void)
 {
-    MAT4X3PNT(adc_state->adc_pos_view, view_state->vs_vop->vo_model2view, adc_state->adc_pos_model);
+    MAT4X3PNT(adc_state->adc_pos_view, view_state->vs_gvp->gv_model2view, adc_state->adc_pos_model);
     adc_state->adc_dv_x = adc_state->adc_pos_view[X] * GED_MAX;
     adc_state->adc_dv_y = adc_state->adc_pos_view[Y] * GED_MAX;
 }
@@ -109,7 +109,7 @@ adc_grid_To_adc_view(void)
     point_t view_pt;
 
     VSETALL(model_pt, 0.0);
-    MAT4X3PNT(view_pt, view_state->vs_vop->vo_model2view, model_pt);
+    MAT4X3PNT(view_pt, view_state->vs_gvp->gv_model2view, model_pt);
     VADD2(adc_state->adc_pos_view, view_pt, adc_state->adc_pos_grid);
     adc_state->adc_dv_x = adc_state->adc_pos_view[X] * GED_MAX;
     adc_state->adc_dv_y = adc_state->adc_pos_view[Y] * GED_MAX;
@@ -122,7 +122,7 @@ adc_view_To_adc_grid(void)
     point_t view_pt;
 
     VSETALL(model_pt, 0.0);
-    MAT4X3PNT(view_pt, view_state->vs_vop->vo_model2view, model_pt);
+    MAT4X3PNT(view_pt, view_state->vs_gvp->gv_model2view, model_pt);
     VSUB2(adc_state->adc_pos_grid, adc_state->adc_pos_view, view_pt);
 }
 
@@ -134,10 +134,10 @@ calc_adc_pos(void)
 	adc_view_To_adc_grid();
     } else if (adc_state->adc_anchor_pos == 2) {
 	adc_grid_To_adc_view();
-	MAT4X3PNT(adc_state->adc_pos_model, view_state->vs_vop->vo_view2model, adc_state->adc_pos_view);
+	MAT4X3PNT(adc_state->adc_pos_model, view_state->vs_gvp->gv_view2model, adc_state->adc_pos_view);
     } else {
 	adc_view_To_adc_grid();
-	MAT4X3PNT(adc_state->adc_pos_model, view_state->vs_vop->vo_view2model, adc_state->adc_pos_view);
+	MAT4X3PNT(adc_state->adc_pos_model, view_state->vs_gvp->gv_view2model, adc_state->adc_pos_view);
     }
 }
 
@@ -148,7 +148,7 @@ calc_adc_a1(void)
 	fastf_t dx, dy;
 	point_t view_pt;
 
-	MAT4X3PNT(view_pt, view_state->vs_vop->vo_model2view, adc_state->adc_anchor_pt_a1);
+	MAT4X3PNT(view_pt, view_state->vs_gvp->gv_model2view, adc_state->adc_anchor_pt_a1);
 	dx = view_pt[X] * GED_MAX - adc_state->adc_dv_x;
 	dy = view_pt[Y] * GED_MAX - adc_state->adc_dv_y;
 
@@ -166,7 +166,7 @@ calc_adc_a2(void)
 	fastf_t dx, dy;
 	point_t view_pt;
 
-	MAT4X3PNT(view_pt, view_state->vs_vop->vo_model2view, adc_state->adc_anchor_pt_a2);
+	MAT4X3PNT(view_pt, view_state->vs_gvp->gv_model2view, adc_state->adc_anchor_pt_a2);
 	dx = view_pt[X] * GED_MAX - adc_state->adc_dv_x;
 	dy = view_pt[Y] * GED_MAX - adc_state->adc_dv_y;
 
@@ -185,7 +185,7 @@ calc_adc_dst(void)
 	fastf_t dx, dy;
 	point_t view_pt;
 
-	MAT4X3PNT(view_pt, view_state->vs_vop->vo_model2view, adc_state->adc_anchor_pt_dst);
+	MAT4X3PNT(view_pt, view_state->vs_gvp->gv_model2view, adc_state->adc_anchor_pt_dst);
 
 	dx = view_pt[X] * GED_MAX - adc_state->adc_dv_x;
 	dy = view_pt[Y] * GED_MAX - adc_state->adc_dv_y;
@@ -360,7 +360,7 @@ adc_reset(void)
     adc_state->adc_dv_dist = 0;
 
     VSETALL(adc_state->adc_pos_view, 0.0);
-    MAT4X3PNT(adc_state->adc_pos_model, view_state->vs_vop->vo_view2model, adc_state->adc_pos_view);
+    MAT4X3PNT(adc_state->adc_pos_model, view_state->vs_gvp->gv_view2model, adc_state->adc_pos_view);
     adc_state->adc_dst = (adc_state->adc_dv_dist * INV_GED + 1.0) * M_SQRT1_2;
     adc_state->adc_a1 = adc_state->adc_a2 = 45.0;
     adc_view_To_adc_grid();
@@ -385,11 +385,11 @@ adc_print_vars(void)
     bu_vls_printf(&vls, "draw = %d\n", adc_state->adc_draw);
     bu_vls_printf(&vls, "a1 = %.15e\n", adc_state->adc_a1);
     bu_vls_printf(&vls, "a2 = %.15e\n", adc_state->adc_a2);
-    bu_vls_printf(&vls, "dst = %.15e\n", adc_state->adc_dst * view_state->vs_vop->vo_scale * base2local);
+    bu_vls_printf(&vls, "dst = %.15e\n", adc_state->adc_dst * view_state->vs_gvp->gv_scale * base2local);
     bu_vls_printf(&vls, "odst = %d\n", adc_state->adc_dv_dist);
     bu_vls_printf(&vls, "hv = %.15e %.15e\n",
-		  adc_state->adc_pos_grid[X] * view_state->vs_vop->vo_scale * base2local,
-		  adc_state->adc_pos_grid[Y] * view_state->vs_vop->vo_scale * base2local);
+		  adc_state->adc_pos_grid[X] * view_state->vs_gvp->gv_scale * base2local,
+		  adc_state->adc_pos_grid[Y] * view_state->vs_gvp->gv_scale * base2local);
     bu_vls_printf(&vls, "xyz = %.15e %.15e %.15e\n",
 		  adc_state->adc_pos_model[X] * base2local,
 		  adc_state->adc_pos_model[Y] * base2local,
@@ -566,7 +566,7 @@ f_adc (
     if (strcmp(parameter, "dst") == 0) {
 	if (argc == 0) {
 	    bu_vls_init(&vls);
-	    bu_vls_printf(&vls, "%.15e", adc_state->adc_dst * view_state->vs_vop->vo_scale * base2local);
+	    bu_vls_printf(&vls, "%.15e", adc_state->adc_dst * view_state->vs_gvp->gv_scale * base2local);
 	    Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
 	    bu_vls_free(&vls);
 
@@ -574,9 +574,9 @@ f_adc (
 	} else if (argc == 1) {
 	    if (!adc_state->adc_anchor_dst) {
 		if (incr_flag)
-		    adc_state->adc_dst += user_pt[0] / (view_state->vs_vop->vo_scale * base2local);
+		    adc_state->adc_dst += user_pt[0] / (view_state->vs_gvp->gv_scale * base2local);
 		else
-		    adc_state->adc_dst = user_pt[0] / (view_state->vs_vop->vo_scale * base2local);
+		    adc_state->adc_dst = user_pt[0] / (view_state->vs_gvp->gv_scale * base2local);
 
 		adc_state->adc_dv_dist = (adc_state->adc_dst / M_SQRT1_2 - 1.0) * GED_MAX;
 
@@ -619,9 +619,9 @@ f_adc (
     if (strcmp(parameter, "dh") == 0) {
 	if (argc == 1) {
 	    if (!adc_state->adc_anchor_pos) {
-		adc_state->adc_pos_grid[X] += user_pt[0] / (view_state->vs_vop->vo_scale * base2local);
+		adc_state->adc_pos_grid[X] += user_pt[0] / (view_state->vs_gvp->gv_scale * base2local);
 		adc_grid_To_adc_view();
-		MAT4X3PNT(adc_state->adc_pos_model, view_state->vs_vop->vo_view2model, adc_state->adc_pos_view);
+		MAT4X3PNT(adc_state->adc_pos_model, view_state->vs_gvp->gv_view2model, adc_state->adc_pos_view);
 
 		adc_set_dirty_flag();
 	    }
@@ -636,9 +636,9 @@ f_adc (
     if (strcmp(parameter, "dv") == 0) {
 	if (argc == 1) {
 	    if (!adc_state->adc_anchor_pos) {
-		adc_state->adc_pos_grid[Y] += user_pt[0] / (view_state->vs_vop->vo_scale * base2local);
+		adc_state->adc_pos_grid[Y] += user_pt[0] / (view_state->vs_gvp->gv_scale * base2local);
 		adc_grid_To_adc_view();
-		MAT4X3PNT(adc_state->adc_pos_model, view_state->vs_vop->vo_view2model, adc_state->adc_pos_view);
+		MAT4X3PNT(adc_state->adc_pos_model, view_state->vs_gvp->gv_view2model, adc_state->adc_pos_view);
 
 		adc_set_dirty_flag();
 	    }
@@ -654,8 +654,8 @@ f_adc (
 	if (argc == 0) {
 	    bu_vls_init(&vls);
 	    bu_vls_printf(&vls, "%.15e %.15e",
-			  adc_state->adc_pos_grid[X] * view_state->vs_vop->vo_scale * base2local,
-			  adc_state->adc_pos_grid[Y] * view_state->vs_vop->vo_scale * base2local);
+			  adc_state->adc_pos_grid[X] * view_state->vs_gvp->gv_scale * base2local,
+			  adc_state->adc_pos_grid[Y] * view_state->vs_gvp->gv_scale * base2local);
 	    Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
 	    bu_vls_free(&vls);
 
@@ -663,16 +663,16 @@ f_adc (
 	} else if (argc == 2) {
 	    if (!adc_state->adc_anchor_pos) {
 		if (incr_flag) {
-		    adc_state->adc_pos_grid[X] += user_pt[X] / (view_state->vs_vop->vo_scale * base2local);
-		    adc_state->adc_pos_grid[Y] += user_pt[Y] / (view_state->vs_vop->vo_scale * base2local);
+		    adc_state->adc_pos_grid[X] += user_pt[X] / (view_state->vs_gvp->gv_scale * base2local);
+		    adc_state->adc_pos_grid[Y] += user_pt[Y] / (view_state->vs_gvp->gv_scale * base2local);
 		} else {
-		    adc_state->adc_pos_grid[X] = user_pt[X] / (view_state->vs_vop->vo_scale * base2local);
-		    adc_state->adc_pos_grid[Y] = user_pt[Y] / (view_state->vs_vop->vo_scale * base2local);
+		    adc_state->adc_pos_grid[X] = user_pt[X] / (view_state->vs_gvp->gv_scale * base2local);
+		    adc_state->adc_pos_grid[Y] = user_pt[Y] / (view_state->vs_gvp->gv_scale * base2local);
 		}
 
 		adc_state->adc_pos_grid[Z] = 0.0;
 		adc_grid_To_adc_view();
-		MAT4X3PNT(adc_state->adc_pos_model, view_state->vs_vop->vo_view2model, adc_state->adc_pos_model);
+		MAT4X3PNT(adc_state->adc_pos_model, view_state->vs_gvp->gv_view2model, adc_state->adc_pos_model);
 
 		adc_set_dirty_flag();
 	    }
@@ -785,7 +785,7 @@ f_adc (
 		adc_state->adc_pos_view[X] = adc_state->adc_dv_x * INV_GED;
 		adc_state->adc_pos_view[Y] = adc_state->adc_dv_y * INV_GED;
 		adc_view_To_adc_grid();
-		MAT4X3PNT(adc_state->adc_pos_model, view_state->vs_vop->vo_view2model, adc_state->adc_pos_view);
+		MAT4X3PNT(adc_state->adc_pos_model, view_state->vs_gvp->gv_view2model, adc_state->adc_pos_view);
 
 		adc_set_dirty_flag();
 	    }
@@ -816,7 +816,7 @@ f_adc (
 		adc_state->adc_pos_view[X] = adc_state->adc_dv_x * INV_GED;
 		adc_state->adc_pos_view[Y] = adc_state->adc_dv_y * INV_GED;
 		adc_view_To_adc_grid();
-		MAT4X3PNT(adc_state->adc_pos_model, view_state->vs_vop->vo_view2model, adc_state->adc_pos_view);
+		MAT4X3PNT(adc_state->adc_pos_model, view_state->vs_gvp->gv_view2model, adc_state->adc_pos_view);
 
 		adc_set_dirty_flag();
 	    }

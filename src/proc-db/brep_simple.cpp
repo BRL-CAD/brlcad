@@ -1,7 +1,7 @@
 /*                           B R E P _ C U B E . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2008 United States Government as represented by
+ * Copyright (c) 2004-2009 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -67,16 +67,10 @@ extern "C" {
 }
 #endif
 
-#undef A
-#undef B
-#undef C
-#undef D
-#undef E
-#undef F
-#undef G
-#undef H
 
-
+/* Prevent enum conflict with vmath.h */
+namespace {
+    
 enum {
     A, B, C, D, E, F, G, H
 };
@@ -427,6 +421,8 @@ printPoints(struct rt_brep_internal* bi)
     } else {
 	fprintf(stderr, "brep was NULL!\n");
     }
+}
+
 }
 
 int

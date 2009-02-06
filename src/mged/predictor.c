@@ -1,7 +1,7 @@
 /*                     P R E D I C T O R . C
  * BRL-CAD
  *
- * Copyright (c) 1992-2008 United States Government as represented by
+ * Copyright (c) 1992-2009 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -236,8 +236,8 @@ predictor_frame(void)
     for ( i=0; i < nframes; i++ )  {
 	bn_mat_mul2( view_state->vs_ModelDelta, predictor );
     }
-    bn_mat_mul(predictorXv2m, predictor, view_state->vs_vop->vo_view2model);
-    MAT_DELTAS_GET_NEG(center_m, view_state->vs_vop->vo_center);
+    bn_mat_mul(predictorXv2m, predictor, view_state->vs_gvp->gv_view2model);
+    MAT_DELTAS_GET_NEG(center_m, view_state->vs_gvp->gv_center);
 
     MAT4X3PNT( framecenter_m, predictor, center_m );
 #if 0

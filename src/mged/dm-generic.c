@@ -1,7 +1,7 @@
 /*                    D M - G E N E R I C . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2008 United States Government as represented by
+ * Copyright (c) 2004-2009 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -192,7 +192,7 @@ common_dm(int argc, char **argv)
 		    else
 			VSET(view_pt, fx, fy, 1.0)
 
-			    MAT4X3PNT(model_pt, view_state->vs_vop->vo_view2model, view_pt);
+			    MAT4X3PNT(model_pt, view_state->vs_gvp->gv_view2model, view_pt);
 	    VSCALE(model_pt, model_pt, base2local);
 	    if (dmp->dm_zclip)
 		bu_vls_printf(&vls, "qray_nirt %lf %lf %lf",
@@ -258,7 +258,7 @@ common_dm(int argc, char **argv)
 		snap_to_grid(&fx, &fy);
 
 	    VSET(view_pt, fx, fy, 1.0);
-	    MAT4X3PNT(model_pt, view_state->vs_vop->vo_view2model, view_pt);
+	    MAT4X3PNT(model_pt, view_state->vs_gvp->gv_view2model, view_pt);
 	    VSCALE(model_pt, model_pt, base2local);
 	    bu_vls_printf(&vls, "adc xyz %lf %lf %lf\n", model_pt[X], model_pt[Y], model_pt[Z]);
 	} else if (grid_state->gr_snap && !stolen &&
@@ -267,10 +267,10 @@ common_dm(int argc, char **argv)
 	    point_t model_pt;
 
 	    snap_to_grid(&fx, &fy);
-	    MAT4X3PNT(view_pt, view_state->vs_vop->vo_model2view, curr_e_axes_pos);
+	    MAT4X3PNT(view_pt, view_state->vs_gvp->gv_model2view, curr_e_axes_pos);
 	    view_pt[X] = fx;
 	    view_pt[Y] = fy;
-	    MAT4X3PNT(model_pt, view_state->vs_vop->vo_view2model, view_pt);
+	    MAT4X3PNT(model_pt, view_state->vs_gvp->gv_view2model, view_pt);
 	    VSCALE(model_pt, model_pt, base2local);
 	    bu_vls_printf(&vls, "p %lf %lf %lf", model_pt[X], model_pt[Y], model_pt[Z]);
 	} else if (grid_state->gr_snap && !stolen &&
@@ -279,10 +279,10 @@ common_dm(int argc, char **argv)
 	    point_t model_pt;
 
 	    snap_to_grid(&fx, &fy);
-	    MAT4X3PNT(view_pt, view_state->vs_vop->vo_model2view, curr_e_axes_pos);
+	    MAT4X3PNT(view_pt, view_state->vs_gvp->gv_model2view, curr_e_axes_pos);
 	    view_pt[X] = fx;
 	    view_pt[Y] = fy;
-	    MAT4X3PNT(model_pt, view_state->vs_vop->vo_view2model, view_pt);
+	    MAT4X3PNT(model_pt, view_state->vs_gvp->gv_view2model, view_pt);
 	    VSCALE(model_pt, model_pt, base2local);
 	    bu_vls_printf(&vls, "translate %lf %lf %lf", model_pt[X], model_pt[Y], model_pt[Z]);
 	} else if (grid_state->gr_snap && !stolen &&
@@ -293,11 +293,11 @@ common_dm(int argc, char **argv)
 	    point_t vcenter;
 
 	    snap_to_grid(&fx, &fy);
-	    MAT_DELTAS_GET_NEG(vcenter, view_state->vs_vop->vo_center);
-	    MAT4X3PNT(view_pt, view_state->vs_vop->vo_model2view, vcenter);
+	    MAT_DELTAS_GET_NEG(vcenter, view_state->vs_gvp->gv_center);
+	    MAT4X3PNT(view_pt, view_state->vs_gvp->gv_model2view, vcenter);
 	    view_pt[X] = fx;
 	    view_pt[Y] = fy;
-	    MAT4X3PNT(model_pt, view_state->vs_vop->vo_view2model, view_pt);
+	    MAT4X3PNT(model_pt, view_state->vs_gvp->gv_view2model, view_pt);
 	    VSCALE(model_pt, model_pt, base2local);
 	    bu_vls_printf(&vls, "center %lf %lf %lf", model_pt[X], model_pt[Y], model_pt[Z]);
 	} else
@@ -421,7 +421,7 @@ common_dm(int argc, char **argv)
 		if (grid_state->gr_snap)
 		    snap_to_grid(&view_pt[X], &view_pt[Y]);
 
-		MAT4X3PNT(model_pt, view_state->vs_vop->vo_view2model, view_pt);
+		MAT4X3PNT(model_pt, view_state->vs_gvp->gv_view2model, view_pt);
 		VSCALE(model_pt, model_pt, base2local);
 
 		bu_vls_printf(&vls, "adc xyz %lf %lf %lf\n", model_pt[X], model_pt[Y], model_pt[Z]);
@@ -434,9 +434,9 @@ common_dm(int argc, char **argv)
 	    break;
 	    case 'd':
 		fx = (dm_Xx2Normal(dmp, dml_omx) * GED_MAX -
-		      adc_state->adc_dv_x) * view_state->vs_vop->vo_scale * base2local * INV_GED;
+		      adc_state->adc_dv_x) * view_state->vs_gvp->gv_scale * base2local * INV_GED;
 		fy = (dm_Xy2Normal(dmp, dml_omy, 1) * GED_MAX -
-		      adc_state->adc_dv_y) * view_state->vs_vop->vo_scale * base2local * INV_GED;
+		      adc_state->adc_dv_y) * view_state->vs_gvp->gv_scale * base2local * INV_GED;
 
 		td = sqrt(fx * fx + fy * fy);
 		bu_vls_init(&vls);

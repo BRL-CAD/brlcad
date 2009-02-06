@@ -1,7 +1,7 @@
 /*                         T R A C K . C
  * BRL-CAD
  *
- * Copyright (c) 1994-2008 United States Government as represented by
+ * Copyright (c) 1994-2009 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -100,9 +100,9 @@ f_amtrack(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	return TCL_ERROR;
     }
 
-    /* interupts */
+    /* interrupts */
     if ( setjmp( jmp_env ) == 0 )
-	(void)signal( SIGINT, sig3);  /* allow interupts */
+	(void)signal( SIGINT, sig3);  /* allow interrupts */
     else
 	return TCL_OK;
 
@@ -330,7 +330,7 @@ f_amtrack(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	solname[8] = regname[8] = '\0';
     }
 
-    /* no interupts */
+    /* no interrupts */
     (void)signal( SIGINT, SIG_IGN );
 
     /* find the front track slope to the idler */

@@ -1,7 +1,7 @@
 /*                          D M - T K . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2008 United States Government as represented by
+ * Copyright (c) 2004-2009 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -188,7 +188,7 @@ dirty_hook(void)
 static void
 zclip_hook(void)
 {
-    view_state->vs_vop->vo_zclip = dmp->dm_zclip;
+    view_state->vs_gvp->gv_zclip = dmp->dm_zclip;
     dirty_hook();
 }
 /*

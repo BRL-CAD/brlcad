@@ -1,7 +1,7 @@
 /*                         E D A R B . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2008 United States Government as represented by
+ * Copyright (c) 1985-2009 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -45,7 +45,6 @@ void	ext4to6(int pt1, int pt2, int pt3, register struct rt_arb_internal *arb), o
 
 extern struct rt_db_internal	es_int;
 extern struct rt_db_internal	es_int_orig;
-extern struct bn_tol		mged_tol;
 
 /*
  *  			E D I T A R B
@@ -570,7 +569,7 @@ f_arbdef(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
     arb->magic = RT_ARB_INTERNAL_MAGIC;
 
     /* put vertex of new solid at center of screen */
-    VSET(arb->pt[0], -view_state->vs_vop->vo_center[MDX], -view_state->vs_vop->vo_center[MDY], -view_state->vs_vop->vo_center[MDZ]);
+    VSET(arb->pt[0], -view_state->vs_gvp->gv_center[MDX], -view_state->vs_gvp->gv_center[MDY], -view_state->vs_gvp->gv_center[MDZ]);
 
     /* calculate normal vector defined by rot, fb */
     norm1[0] = cos(fb) * cos(rota);

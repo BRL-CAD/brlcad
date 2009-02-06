@@ -1,7 +1,7 @@
 /*                       B U T T O N S . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2008 United States Government as represented by
+ * Copyright (c) 1985-2009 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -393,9 +393,9 @@ bv_vrestore(ClientData	clientData,
 {
     /* restore to saved view */
     if (vsaved) {
-	view_state->vs_vop->vo_scale = sav_vscale;
-	MAT_COPY(view_state->vs_vop->vo_rotation, sav_viewrot);
-	MAT_COPY(view_state->vs_vop->vo_center, sav_toviewcenter);
+	view_state->vs_gvp->gv_scale = sav_vscale;
+	MAT_COPY(view_state->vs_gvp->gv_rotation, sav_viewrot);
+	MAT_COPY(view_state->vs_gvp->gv_center, sav_toviewcenter);
 	new_mats();
 
 	(void)mged_svbase();
@@ -411,9 +411,9 @@ bv_vsave(ClientData	clientData,
 	 char		**argv)
 {
     /* save current view */
-    sav_vscale = view_state->vs_vop->vo_scale;
-    MAT_COPY(sav_viewrot, view_state->vs_vop->vo_rotation);
-    MAT_COPY(sav_toviewcenter, view_state->vs_vop->vo_center);
+    sav_vscale = view_state->vs_gvp->gv_scale;
+    MAT_COPY(sav_viewrot, view_state->vs_gvp->gv_rotation);
+    MAT_COPY(sav_toviewcenter, view_state->vs_gvp->gv_center);
     vsaved = 1;
     return TCL_OK;
 }
@@ -467,12 +467,12 @@ bv_35_25(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)  {
 static int
 ill_common(void) {
     /* Common part of illumination */
-    if (BU_LIST_IS_EMPTY(&dgop->dgo_headSolid)) {
+    if (BU_LIST_IS_EMPTY(&gedp->ged_gdp->gd_headSolid)) {
 	Tcl_AppendResult(interp, "no solids in view\n", (char *)NULL);
 	return(0);	/* BAD */
     }
 
-    illump = BU_LIST_NEXT(solid, &dgop->dgo_headSolid);/* any valid solid would do */
+    illump = BU_LIST_NEXT(solid, &gedp->ged_gdp->gd_headSolid);/* any valid solid would do */
     illump->s_iflag = UP;
     edobj = 0;		/* sanity */
     edsol = 0;		/* sanity */
@@ -636,7 +636,7 @@ be_accept(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)  {
 	mmenu_set_all( MENU_L1, MENU_NULL );
 	mmenu_set_all( MENU_L2, MENU_NULL );
 
-	FOR_ALL_SOLIDS(sp, &dgop->dgo_headSolid)
+	FOR_ALL_SOLIDS(sp, &gedp->ged_gdp->gd_headSolid)
 	    sp->s_iflag = DOWN;
 
 	illump = SOLID_NULL;
@@ -718,7 +718,7 @@ be_reject(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)  {
     illump = SOLID_NULL;		/* None selected */
 
     /* Clear illumination flags */
-    FOR_ALL_SOLIDS(sp, &dgop->dgo_headSolid)
+    FOR_ALL_SOLIDS(sp, &gedp->ged_gdp->gd_headSolid)
 	sp->s_iflag = DOWN;
     color_soltab();
     (void)chg_state( state, ST_VIEW, "Edit Reject" );
@@ -837,30 +837,7 @@ chg_state(int from, int to, char *str)
     FOR_ALL_DISPLAYS(p, &head_dm_list.l) {
 	curr_dm_list = p;
 
-#if 0
-	if (to == ST_VIEW) {
-	    mat_t o_toViewcenter;
-	    fastf_t o_Viewscale;
-
-	    /* save toViewcenter and Viewscale */
-	    MAT_COPY(o_toViewcenter, view_state->vs_toViewcenter);
-	    o_Viewscale = view_state->vs_Viewscale;
-
-	    /* get new orig_pos */
-	    size_reset();
-	    MAT_DELTAS_GET_NEG(view_state->vs_orig_pos, view_state->vs_toViewcenter);
-
-	    /* restore old toViewcenter and Viewscale */
-	    MAT_COPY(view_state->vs_toViewcenter, o_toViewcenter);
-	    view_state->vs_Viewscale = o_Viewscale;
-	}
-#endif
 	new_mats();
-
-#if 0
-	/* recompute absolute_tran */
-	set_absolute_tran();
-#endif
     }
 
     curr_dm_list = save_dm_list;

@@ -1,7 +1,7 @@
 /*                       O V E R L A Y . C
  * BRL-CAD
  *
- * Copyright (c) 1988-2008 United States Government as represented by
+ * Copyright (c) 1988-2009 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -43,16 +43,26 @@ cmd_overlay(ClientData	clientData,
 	    int		argc,
 	    char	**argv)
 {
-    int		ret;
-    struct bu_vls	char_size;
-    int		ac;
-    char		*av[5];
+    int ret;
+    Tcl_DString ds;
+    int	 ac;
+    char *av[5];
+    struct bu_vls char_size;
 
-    CHECK_DBI_NULL;
+    if (gedp == GED_NULL)
+	return TCL_OK;
+
+    Tcl_DStringInit(&ds);
+
+    if (argc == 1) {
+	Tcl_DStringAppend(&ds, "file.pl [name]", -1);
+	Tcl_DStringResult(interp, &ds);
+	return TCL_OK;
+    }
 
     ac = argc + 1;
     bu_vls_init(&char_size);
-    bu_vls_printf(&char_size, "%lf", view_state->vs_vop->vo_scale * 0.01);
+    bu_vls_printf(&char_size, "%lf", view_state->vs_gvp->gv_scale * 0.01);
     av[0] = argv[0];		/* command name */
     av[1] = argv[1];		/* plotfile name */
     av[2] = bu_vls_addr(&char_size);
@@ -62,8 +72,14 @@ cmd_overlay(ClientData	clientData,
     } else
 	av[3] = (char *)0;
 
-    if ((ret = dgo_overlay_cmd(dgop, interp, ac, av)) == TCL_OK)
-	update_views = 1;
+    ret = ged_overlay(gedp, ac, av);
+    Tcl_DStringAppend(&ds, bu_vls_addr(&gedp->ged_result_str), -1);
+    Tcl_DStringResult(interp, &ds);
+
+    if (ret != BRLCAD_OK)
+	return TCL_ERROR;
+
+    update_views = 1;
 
     bu_vls_free(&char_size);
     return ret;
@@ -93,15 +109,15 @@ f_labelvert(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 
     vbp = rt_vlblock_init();
     MAT_IDN(mat);
-    bn_mat_inv(mat, view_state->vs_vop->vo_rotation);
-    scale = view_state->vs_vop->vo_size / 100;		/* divide by # chars/screen */
+    bn_mat_inv(mat, view_state->vs_gvp->gv_rotation);
+    scale = view_state->vs_gvp->gv_size / 100;		/* divide by # chars/screen */
 
     for ( i=1; i<argc; i++ )  {
 	struct solid	*s;
 	if ( (dp = db_lookup( dbip, argv[i], LOOKUP_NOISY )) == DIR_NULL )
 	    continue;
 	/* Find uses of this solid in the solid table */
-	FOR_ALL_SOLIDS(s, &dgop->dgo_headSolid)  {
+	FOR_ALL_SOLIDS(s, &gedp->ged_gdp->gd_headSolid)  {
 	    if ( db_full_path_search( &s->s_fullpath, dp ) )  {
 		rt_label_vlist_verts( vbp, &s->s_vlist, mat, scale, base2local );
 	    }

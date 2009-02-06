@@ -1,7 +1,7 @@
 /*                         E D A R S . C
  * BRL-CAD
  *
- * Copyright (c) 1996-2008 United States Government as represented by
+ * Copyright (c) 1996-2009 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -46,7 +46,6 @@
 #include "./sedit.h"
 #include "./mged_dm.h"
 
-extern struct bn_tol mged_tol;
 
 void
 find_nearest_ars_pt(

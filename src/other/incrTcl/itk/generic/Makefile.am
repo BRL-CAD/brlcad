@@ -6,15 +6,22 @@ lib_LTLIBRARIES = \
 noinst_LTLIBRARIES = libitg.la
 
 AM_CFLAGS = ${X_CFLAGS}
-# make sure we look in tcl's directory so we find private headers
+
+# make sure we find Tcl's private headers
+if TCL_8_4_HEADERS
+compat_cppflags = \
+	-I$(top_srcdir)/src/other/incrTcl/compat/8.4
+else
+compat_cppflags = \
+	-I$(top_srcdir)/src/other/tcl/generic \
+	-I$(top_srcdir)/src/other/tcl/unix
+endif # TCL_8_4_HEADERS
+
 AM_CPPFLAGS = \
 	${TCL_CPPFLAGS} \
 	${ITCL_CPPFLAGS} \
 	${TK_CPPFLAGS} \
-	-I$(top_srcdir)/src/other/tcl/generic \
-	-I$(top_srcdir)/src/other/tcl/unix \
-	-I$(top_srcdir)/src/other/tk/generic \
-	-I$(top_srcdir)/src/other/tk/unix
+	${compat_cppflags}
 
 libitkstub_la_SOURCES = itkStubLib.c
 libitkstub@ITCL_VERSION@_la_SOURCES = $(libitkstub_la_SOURCES)

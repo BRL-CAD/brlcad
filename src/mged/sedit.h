@@ -1,7 +1,7 @@
 /*                         S E D I T . H
  * BRL-CAD
  *
- * Copyright (c) 1985-2008 United States Government as represented by
+ * Copyright (c) 1985-2009 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -137,6 +137,9 @@
 #define ECMD_METABALL_PT_DEL	88	/* delete a metaball control point */
 #define ECMD_METABALL_PT_ADD	89	/* add a metaball control point */
 #define ECMD_METABALL_RMET	90	/* set the metaball render method */
+
+#define ECMD_HYP_ROT_H		91
+#define ECMD_HYP_ROT_A		92
 
 #define SEDIT_ROTATE (state == ST_S_EDIT && \
 		      (es_edflag == SROT || \

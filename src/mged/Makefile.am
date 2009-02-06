@@ -56,7 +56,6 @@ bin_PROGRAMS = \
 
 mged_SOURCES = \
 	adc.c \
-	anal.c \
 	animedit.c \
 	arbs.c \
 	attach.c \
@@ -91,7 +90,6 @@ mged_SOURCES = \
 	grid.c \
 	hideline.c \
 	history.c \
-	inside.c \
 	mater.c \
 	menu.c \
 	mged.c \
@@ -103,7 +101,6 @@ mged_SOURCES = \
 	predictor.c \
 	qray.c \
 	rect.c \
-	red.c \
 	rtif.c \
 	scroll.c \
 	set.c \
@@ -113,7 +110,6 @@ mged_SOURCES = \
 	tedit.c \
 	titles.c \
 	track.c \
-	typein.c \
 	update.c \
 	usepen.c \
 	utility1.c \
@@ -198,7 +194,8 @@ EXTRA_DIST = \
 	dm-tk.c \
 	fbserv_win32.c \
 	mged.bat \
-	mged.dsp
+	mged.dsp \
+	red.c
 
 DEPS=src/libtermio src/libwdb src/libdm src/other/incrTcl src/libtclcad
 

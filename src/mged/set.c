@@ -1,7 +1,7 @@
 /*                           S E T . C
  * BRL-CAD
  *
- * Copyright (c) 1990-2008 United States Government as represented by
+ * Copyright (c) 1990-2009 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -331,7 +331,7 @@ void
 set_absolute_view_tran(void)
 {
     /* calculate absolute_tran */
-    MAT4X3PNT(view_state->vs_absolute_tran, view_state->vs_vop->vo_model2view, view_state->vs_orig_pos);
+    MAT4X3PNT(view_state->vs_absolute_tran, view_state->vs_gvp->gv_model2view, view_state->vs_orig_pos);
     /* This is used in f_knob()  ---- needed in case absolute_tran is set from Tcl */
     VMOVE(view_state->vs_last_absolute_tran, view_state->vs_absolute_tran);
 }
@@ -343,9 +343,9 @@ set_absolute_model_tran(void)
     point_t diff;
 
     /* calculate absolute_model_tran */
-    MAT_DELTAS_GET_NEG(new_pos, view_state->vs_vop->vo_center);
+    MAT_DELTAS_GET_NEG(new_pos, view_state->vs_gvp->gv_center);
     VSUB2(diff, view_state->vs_orig_pos, new_pos);
-    VSCALE(view_state->vs_absolute_model_tran, diff, 1/view_state->vs_vop->vo_scale);
+    VSCALE(view_state->vs_absolute_model_tran, diff, 1/view_state->vs_gvp->gv_scale);
     /* This is used in f_knob()  ---- needed in case absolute_model_tran is set from Tcl */
     VMOVE(view_state->vs_last_absolute_model_tran, view_state->vs_absolute_model_tran);
 }
@@ -372,7 +372,7 @@ set_dlist(void)
 	    if (dlp1->dml_dmp->dm_displaylist &&
 		dlp1->dml_dlist_state->dl_active == 0) {
 		curr_dm_list = dlp1;
-		createDLists(&dgop->dgo_headSolid);
+		createDLists(&gedp->ged_gdp->gd_headSolid);
 		dlp1->dml_dlist_state->dl_active = 1;
 		dlp1->dml_dirty = 1;
 	    }
@@ -403,9 +403,9 @@ set_dlist(void)
 		if (BU_LIST_IS_HEAD(dlp2, &head_dm_list.l)) {
 		    dlp1->dml_dlist_state->dl_active = 0;
 		    DM_FREEDLISTS(dlp1->dml_dmp,
-				  BU_LIST_FIRST(solid, &dgop->dgo_headSolid)->s_dlist,
-				  BU_LIST_LAST(solid, &dgop->dgo_headSolid)->s_dlist -
-				  BU_LIST_FIRST(solid, &dgop->dgo_headSolid)->s_dlist + 1);
+				  BU_LIST_FIRST(solid, &gedp->ged_gdp->gd_headSolid)->s_dlist,
+				  BU_LIST_LAST(solid, &gedp->ged_gdp->gd_headSolid)->s_dlist -
+				  BU_LIST_FIRST(solid, &gedp->ged_gdp->gd_headSolid)->s_dlist + 1);
 		}
 	    }
 	}
@@ -425,7 +425,7 @@ set_perspective(void)
 	mged_variables->mv_perspective_mode = 0;
 
     /* keep view object in sync */
-    view_state->vs_vop->vo_perspective = mged_variables->mv_perspective;
+    view_state->vs_gvp->gv_perspective = mged_variables->mv_perspective;
 
     /* keep display manager in sync */
     dmp->dm_perspective = mged_variables->mv_perspective_mode;
@@ -440,7 +440,7 @@ establish_perspective(void)
 	perspective_table[perspective_angle] : -1;
 
     /* keep view object in sync */
-    view_state->vs_vop->vo_perspective = mged_variables->mv_perspective;
+    view_state->vs_gvp->gv_perspective = mged_variables->mv_perspective;
 
     /* keep display manager in sync */
     dmp->dm_perspective = mged_variables->mv_perspective_mode;
@@ -475,7 +475,7 @@ toggle_perspective(void)
     mged_variables->mv_perspective = perspective_table[perspective_angle];
 
     /* keep view object in sync */
-    view_state->vs_vop->vo_perspective = mged_variables->mv_perspective;
+    view_state->vs_gvp->gv_perspective = mged_variables->mv_perspective;
 
     /* keep display manager in sync */
     dmp->dm_perspective = mged_variables->mv_perspective_mode;
@@ -486,13 +486,13 @@ toggle_perspective(void)
 static void
 set_coords(void)
 {
-    view_state->vs_vop->vo_coord = mged_variables->mv_coords;
+    view_state->vs_gvp->gv_coord = mged_variables->mv_coords;
 }
 
 static void
 set_rotate_about(void)
 {
-    view_state->vs_vop->vo_rotate_about = mged_variables->mv_rotate_about;
+    view_state->vs_gvp->gv_rotate_about = mged_variables->mv_rotate_about;
 }
 
 /*

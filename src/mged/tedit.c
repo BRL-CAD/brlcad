@@ -1,7 +1,7 @@
 /*                         T E D I T . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2008 United States Government as represented by
+ * Copyright (c) 1985-2009 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -61,7 +61,6 @@
 
 extern struct rt_db_internal	es_int;
 extern struct rt_db_internal	es_int_orig;
-extern struct bn_tol		mged_tol;
 
 static char	tmpfil[MAXPATHLEN] = {0};
 
@@ -173,6 +172,7 @@ writesolid(void)
 	struct rt_rhc_internal *rhc;
 	struct rt_epa_internal *epa;
 	struct rt_ehy_internal *ehy;
+	struct rt_hyp_internal *hyp;
 	struct rt_eto_internal *eto;
 	struct rt_part_internal *part;
 	struct rt_superell_internal *superell;
@@ -268,6 +268,14 @@ writesolid(void)
 	    (void)fprintf( fp, "Semi-minor length: %.9f%s", ehy->ehy_r2 * base2local, eol);
 	    (void)fprintf( fp, "Dist to asymptotes: %.9f%s", ehy->ehy_c * base2local, eol);
 	    break;
+	case ID_HYP:
+	    hyp = (struct rt_hyp_internal *)es_int.idb_ptr;
+	    (void)fprintf( fp, "Vertex: %.9f %.9f %.9f%s", V3BASE2LOCAL( hyp->hyp_Vi ), eol);
+	    (void)fprintf( fp, "Height: %.9f %.9f %.9f%s", V3BASE2LOCAL( hyp->hyp_Hi ), eol);
+	    (void)fprintf( fp, "Semi-major axis: %.9f %.9f %.9f%s", V3BASE2LOCAL( hyp->hyp_A ), eol);
+	    (void)fprintf( fp, "Semi-minor length: %.9f%s", hyp->hyp_b * base2local, eol);
+	    (void)fprintf( fp, "Ratio of Neck to Base: %.9f%s", hyp->hyp_bnr, eol);
+	    break;
 	case ID_ETO:
 	    eto = (struct rt_eto_internal *)es_int.idb_ptr;
 	    (void)fprintf( fp, "Vertex: %.9f %.9f %.9f%s", V3BASE2LOCAL( eto->eto_V ), eol);
@@ -339,6 +347,7 @@ readsolid(void)
 	struct rt_rhc_internal *rhc;
 	struct rt_epa_internal *epa;
 	struct rt_ehy_internal *ehy;
+	struct rt_hyp_internal *hyp;
 	struct rt_eto_internal *eto;
 	struct rt_part_internal *part;
 	struct rt_superell_internal *superell;
@@ -765,6 +774,52 @@ readsolid(void)
 	    }
 	    (void)sscanf( str, "%lf", &a );
 	    ehy->ehy_c = a * local2base;
+	    break;
+	case ID_HYP:
+	    hyp = (struct rt_hyp_internal *)es_int.idb_ptr;
+	    if ( (str=Get_next_line( fp )) == NULL )
+	    {
+		ret_val = 1;
+		break;
+	    }
+	    (void)sscanf( str, "%lf %lf %lf", &a, &b, &c );
+	    VSET( hyp->hyp_Vi, a, b, c );
+	    VSCALE( hyp->hyp_Vi, hyp->hyp_Vi, local2base );
+
+	    if ( (str=Get_next_line( fp )) == NULL )
+	    {
+		ret_val = 1;
+		break;
+	    }
+	    (void)sscanf( str, "%lf %lf %lf", &a, &b, &c );
+	    VSET( hyp->hyp_Hi, a, b, c );
+	    VSCALE( hyp->hyp_Hi, hyp->hyp_Hi, local2base );
+
+	    if ( (str=Get_next_line( fp )) == NULL )
+	    {
+		ret_val = 1;
+		break;
+	    }
+	    (void)sscanf( str, "%lf %lf %lf", &a, &b, &c );
+	    VSET( hyp->hyp_A, a, b, c );
+	    VSCALE( hyp->hyp_A, hyp->hyp_A, local2base );
+
+	    if ( (str=Get_next_line( fp )) == NULL )
+	    {
+		ret_val = 1;
+		break;
+	    }
+	    (void)sscanf( str, "%lf", &a );
+	    hyp->hyp_b = a * local2base;
+
+	    if ( (str=Get_next_line( fp )) == NULL )
+	    {
+		ret_val = 1;
+		break;
+	    }
+	    (void)sscanf( str, "%lf", &a );
+	    hyp->hyp_bnr = a;
+
 	    break;
 	case ID_ETO:
 	    eto = (struct rt_eto_internal *)es_int.idb_ptr;

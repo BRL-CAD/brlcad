@@ -1,7 +1,7 @@
 /*                           R E D . C
  * BRL-CAD
  *
- * Copyright (c) 1992-2008 United States Government as represented by
+ * Copyright (c) 1992-2009 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -40,8 +40,6 @@
 
 #include "./mged.h"
 #include "./sedit.h"
-
-extern int cmd_name(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
 
 static char	red_tmpfil[MAXPATHLEN] = {0};
 static char	red_tmpcomb[17];
@@ -1396,7 +1394,7 @@ restore_comb(struct directory *dp)
     av[1] = red_tmpcomb;
     av[2] = name;
 
-    (void)cmd_name((ClientData)NULL, interp, 3, av);
+    (void)ged_move(gedp, 3, av);
 
     bu_free( name, "bu_strdup'd name" );
 }

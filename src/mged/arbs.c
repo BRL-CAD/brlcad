@@ -1,7 +1,7 @@
 /*                          A R B S . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2008 United States Government as represented by
+ * Copyright (c) 1986-2009 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -46,8 +46,7 @@
 #include "./mged_dm.h"
 #include "./cmd.h"
 
-extern int	newargs;
-extern char	**promp;
+char **promp;
 
 char *p_arb3pt[] = {
     "Enter X, Y, Z for point 1: ",

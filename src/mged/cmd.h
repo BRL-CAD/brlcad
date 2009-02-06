@@ -1,7 +1,7 @@
 /*                           C M D . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2008 United States Government as represented by
+ * Copyright (c) 2004-2009 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -23,12 +23,31 @@
 
 #include "common.h"
 
+#include <tcl.h>
+#include "ged.h"
+
 #include "./mged.h"  /* for BU_EXTERN */
 
+typedef int (*tcl_func_ptr)(ClientData, Tcl_Interp *, int, const char *[]);
+
+struct cmdtab {
+    const char *name;
+    tcl_func_ptr tcl_func;
+    ged_func_ptr ged_func;
+};
+
+extern struct cmdtab mged_cmdtab[];
 
 /* Commands */
 
-BU_EXTERN(int cmd_E, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
+BU_EXTERN(int cmd_ged_edit_wrapper, (ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[]));
+BU_EXTERN(int cmd_ged_erase_wrapper, (ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[]));
+BU_EXTERN(int cmd_ged_in, (ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[]));
+BU_EXTERN(int cmd_ged_more_wrapper, (ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[]));
+BU_EXTERN(int cmd_ged_plain_wrapper, (ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[]));
+BU_EXTERN(int cmd_ged_view_wrapper, (ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[]));
+
+BU_EXTERN(int cmd_E, (ClientData clientData, Tcl_Interp *interp, int argc, const char **argv));
 BU_EXTERN(int cmd_adjust, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
 BU_EXTERN(int cmd_ae2dir, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
 BU_EXTERN(int cmd_aetview, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
@@ -69,6 +88,7 @@ BU_EXTERN(int cmd_get_autoview, (ClientData clientData, Tcl_Interp *interp, int 
 BU_EXTERN(int cmd_get_comb, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
 BU_EXTERN(int cmd_get_more_default, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
 BU_EXTERN(int cmd_get_ptr, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
+BU_EXTERN(int cmd_gqa, (ClientData clientData, Tcl_Interp *interp, int argc, const char **argv));
 BU_EXTERN(int cmd_group, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
 BU_EXTERN(int cmd_has_embedded_fb, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
 BU_EXTERN(int cmd_hide, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
@@ -81,7 +101,7 @@ BU_EXTERN(int cmd_killall, (ClientData clientData, Tcl_Interp *interp, int argc,
 BU_EXTERN(int cmd_killtree, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
 BU_EXTERN(int cmd_list, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
 BU_EXTERN(int cmd_lm, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
-BU_EXTERN(int cmd_lookat, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
+BU_EXTERN(int cmd_lookat, (ClientData clientData, Tcl_Interp *interp, int argc, const char **argv));
 BU_EXTERN(int cmd_ls, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
 BU_EXTERN(int cmd_lt, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
 BU_EXTERN(int cmd_make_bb, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
@@ -128,6 +148,7 @@ BU_EXTERN(int cmd_solids_on_ray, (ClientData clientData, Tcl_Interp *interp, int
 BU_EXTERN(int cmd_stub, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
 BU_EXTERN(int cmd_stuff_str, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
 BU_EXTERN(int cmd_summary, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
+BU_EXTERN(int cmd_tire, (ClientData clientData, Tcl_Interp *interp, int argc, const char **argv));
 BU_EXTERN(int cmd_title, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
 BU_EXTERN(int cmd_tk, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
 BU_EXTERN(int cmd_tol, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
@@ -167,7 +188,7 @@ BU_EXTERN(int f_bot_split, (ClientData clientData, Tcl_Interp *interp, int argc,
 BU_EXTERN(int f_clone, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
 BU_EXTERN(int f_closedb, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
 BU_EXTERN(int f_comb_color, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
-BU_EXTERN(int f_comm, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
+BU_EXTERN(int f_comm, (ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[]));
 BU_EXTERN(int f_copy_inv, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
 BU_EXTERN(int f_copymat, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
 BU_EXTERN(int f_debugbu, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));

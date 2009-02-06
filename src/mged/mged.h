@@ -1,7 +1,7 @@
 /*                           M G E D . H
  * BRL-CAD
  *
- * Copyright (c) 1985-2008 United States Government as represented by
+ * Copyright (c) 1985-2009 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -79,7 +79,6 @@
 
 #define MGED_DB_NAME "db"
 #define MGED_INMEM_NAME ".inmem"
-#define MGED_DG_NAME "dg"
 
 
 /* Defined in usepen.c */
@@ -90,10 +89,10 @@ extern double radtodeg;
  * All GED files are stored in a fixed base unit (MM).
  * These factors convert database unit to local (or working) units.
  */
+extern struct ged	*gedp;		/* defined in mged.c */
 extern struct db_i	*dbip;		/* defined in mged.c */
 extern int		 dbih;		/* defined in mged.c */
 extern struct rt_wdb	*wdbp;		/* defined in mged.c */
-extern struct dg_obj	*dgop;		/* defined in mged.c */
 #define	base2local	(dbip->dbi_base2local)
 #define local2base	(dbip->dbi_local2base)
 #define	cur_title	(dbip->dbi_title)      /* current model title */
@@ -113,6 +112,10 @@ extern struct dg_obj	*dgop;		/* defined in mged.c */
 extern double mged_abs_tol; /* abs surface tolerance */
 extern double mged_rel_tol; /* rel surface tolerance */
 extern double mged_nrm_tol; /* surface normal tolerance */
+
+extern struct bn_tol      mged_tol;  /* calculation tolerance */
+extern struct rt_tess_tol mged_ttol; /* XXX needs to replace mged_abs_tol, et.al. */
+
 
 /* default region codes defined in mover.c */
 extern int item_default;
@@ -219,7 +222,7 @@ extern struct directory **dir_getspace();
 extern void ellipse();
 
 /* mged.c */
-extern void mged_view_obj_callback(genptr_t clientData, struct view_obj *vop);
+extern void mged_view_callback(struct ged_view *gvp, genptr_t clientData);
 
 /* buttons.c */
 BU_EXTERN(void button, (int bnum) );

@@ -1,7 +1,7 @@
 /*                      H I D E L I N E . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2008 United States Government as represented by
+ * Copyright (c) 2004-2009 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -53,8 +53,8 @@
 #define MOVE(v)	  VMOVE(last_move, (v))
 
 #define DRAW(v)	{ vect_t a, b;\
-		  MAT4X3PNT(a, view_state->vs_vop->vo_model2view, last_move);\
-		  MAT4X3PNT(b, view_state->vs_vop->vo_model2view, (v));\
+		  MAT4X3PNT(a, view_state->vs_gvp->gv_model2view, last_move);\
+		  MAT4X3PNT(b, view_state->vs_gvp->gv_model2view, (v));\
 		  pdv_3line(plotfp, a, b ); }
 
 extern struct db_i *dbip;	/* current database instance */
@@ -160,7 +160,7 @@ f_hideline(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 
     /*  Build list of objects being viewed */
     numobjs = 0;
-    FOR_ALL_SOLIDS(sp, &dgop->dgo_headSolid) {
+    FOR_ALL_SOLIDS(sp, &gedp->ged_gdp->gd_headSolid) {
 	for (i = 0; i < numobjs; i++) {
 	    if (objname[i] == FIRST_SOLID(sp)->d_namep)
 		break;
@@ -192,12 +192,12 @@ f_hideline(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 
     if (argc > 2) {
 	sscanf(argv[2], "%lf", &step);
-	step = view_state->vs_vop->vo_scale/step;
+	step = view_state->vs_gvp->gv_scale/step;
 	sscanf(argv[3], "%lf", &epsilon);
-	epsilon *= view_state->vs_vop->vo_scale/100;
+	epsilon *= view_state->vs_gvp->gv_scale/100;
     } else {
-	step = view_state->vs_vop->vo_scale/256;
-	epsilon = 0.1*view_state->vs_vop->vo_scale;
+	step = view_state->vs_gvp->gv_scale/256;
+	epsilon = 0.1*view_state->vs_gvp->gv_scale;
     }
 
     for (i = 0; i < numobjs; i++)
@@ -207,10 +207,10 @@ f_hideline(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 
     /* Crawl along the vectors raytracing as we go */
     VSET(temp, 0.0, 0.0, -1.0);				/* looking at model */
-    MAT4X3VEC(a.a_ray.r_dir, view_state->vs_vop->vo_view2model, temp);
+    MAT4X3VEC(a.a_ray.r_dir, view_state->vs_gvp->gv_view2model, temp);
     VUNITIZE(a.a_ray.r_dir);
 
-    FOR_ALL_SOLIDS(sp, &dgop->dgo_headSolid) {
+    FOR_ALL_SOLIDS(sp, &gedp->ged_gdp->gd_headSolid) {
 
 	ratio = sp->s_size / VIEWSIZE;		/* ignore if small or big */
 	if (ratio >= dmp->dm_bound || ratio < 0.001)
@@ -252,9 +252,9 @@ f_hideline(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 			}
 			for (u = 0; u <= len; u += step) {
 			    VJOIN1(aim_point, last, u, dir);
-			    MAT4X3PNT(temp, view_state->vs_vop->vo_model2view, aim_point);
+			    MAT4X3PNT(temp, view_state->vs_gvp->gv_model2view, aim_point);
 			    temp[Z] = 100;			/* parallel project */
-			    MAT4X3PNT(a.a_ray.r_pt, view_state->vs_vop->vo_view2model, temp);
+			    MAT4X3PNT(a.a_ray.r_pt, view_state->vs_gvp->gv_view2model, temp);
 			    if (rt_shootray(&a)) {
 				if (!visible) {
 				    visible = 1;

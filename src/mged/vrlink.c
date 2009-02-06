@@ -1,7 +1,7 @@
 /*                        V R L I N K . C
  * BRL-CAD
  *
- * Copyright (c) 1992-2008 United States Government as represented by
+ * Copyright (c) 1992-2009 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -151,19 +151,19 @@ vr_viewpoint_hook(void)
     bu_vls_init_if_uninit(&old_str);
     bu_vls_init(&str);
 
-    quat_mat2quat(orient, view_state->vs_vop->vo_rotation);
+    quat_mat2quat(orient, view_state->vs_gvp->gv_rotation);
 
     /* Need to send current viewpoint to VR mgr */
     /* XXX more will be needed */
     /* Eye point, quaturnion for orientation */
     bu_vls_printf(&str, "pov {%e %e %e}   {%e %e %e %e}   %e   {%e %e %e}  %e\n",
-		  -view_state->vs_vop->vo_center[MDX],
-		  -view_state->vs_vop->vo_center[MDY],
-		  -view_state->vs_vop->vo_center[MDZ],
+		  -view_state->vs_gvp->gv_center[MDX],
+		  -view_state->vs_gvp->gv_center[MDY],
+		  -view_state->vs_gvp->gv_center[MDZ],
 		  V4ARGS(orient),
-		  view_state->vs_vop->vo_scale,
-		  V3ARGS(view_state->vs_vop->vo_eye_pos),
-		  view_state->vs_vop->vo_perspective);
+		  view_state->vs_gvp->gv_scale,
+		  V3ARGS(view_state->vs_gvp->gv_eye_pos),
+		  view_state->vs_gvp->gv_perspective);
 
     if ( bu_vls_strcmp( &old_str, &str ) == 0 )  {
 	bu_vls_free( &str );

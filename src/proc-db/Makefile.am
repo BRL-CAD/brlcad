@@ -12,14 +12,14 @@ bin_PROGRAMS = \
 	brickwall \
 	clutter \
 	contours \
-	fence \
 	globe \
+	human \
 	kurt \
+	lens \
 	masonry \
 	metaball \
 	molecule \
 	nmgmodel \
-	picket_fence \
 	pipe \
 	pipetest \
 	pix2g \
@@ -29,10 +29,10 @@ bin_PROGRAMS = \
 	sketch \
 	sphflake \
 	spltest \
+	spring \
 	tea \
 	tea_nmg \
 	terrain \
-	tire \
 	torii \
 	tube \
 	vegitation \
@@ -62,14 +62,14 @@ breplicator_LDADD = \
 brickwall_SOURCES = brickwall.c
 clutter_SOURCES = clutter.c common.c
 contours_SOURCES = contours.c
-fence_SOURCES = fence.c
 globe_SOURCES = globe.c
+human_SOURCES = human.c
 kurt_SOURCES = kurt.c
+lens_SOURCES = lens.c
 masonry_SOURCES = masonry.c
 metaball_SOURCES = metaball.c
 molecule_SOURCES = molecule.c
 nmgmodel_SOURCES = nmgmodel.c
-picket_fence_SOURCES = picket_fence.c
 pipe_SOURCES = pipe.c
 pipetest_SOURCES = pipetest.c
 pix2g_SOURCES = pix2g.c
@@ -79,10 +79,10 @@ room_SOURCES = room.c common.c
 sketch_SOURCES = sketch.c
 sphflake_SOURCES = sphflake.c
 spltest_SOURCES = spltest.c
+spring_SOURCES = spring.c
 tea_SOURCES = tea.c
 tea_nmg_SOURCES = tea_nmg.c
 terrain_SOURCES = terrain.c
-tire_SOURCES = tire.c
 torii_SOURCES = torii.c
 tube_SOURCES = tube.c
 vegitation_SOURCES = vegitation.c
@@ -90,17 +90,11 @@ wdb_example_SOURCES = wdb_example.c
 
 noinst_HEADERS = \
 	ducks.h \
-	fence.h \
 	patches.h \
 	tea.h \
 	vegitation.h
 
-man_MANS = \
-	picket_fence.1 \
-	tire.1
-
 EXTRA_DIST = \
-	$(man_MANS) \
 	sgi.sh
 
 DEPENDS = src/libwdb
@@ -115,13 +109,13 @@ FAST_OBJECTS = \
 	$(brickwall_OBJECTS) \
 	$(clutter_OBJECTS) \
 	$(contours_OBJECTS) \
-	$(fence_OBJECTS) \
 	$(globe_OBJECTS) \
+	$(human_OBJECTS) \
 	$(kurt_OBJECTS) \
+	$(lens_OBJECTS) \
 	$(masonry_OBJECTS) \
 	$(molecule_OBJECTS) \
 	$(nmgmodel_OBJECTS) \
-	$(picket_fence_OBJECTS) \
 	$(pipe_OBJECTS) \
 	$(pipetest_OBJECTS) \
 	$(pix2g_OBJECTS) \
@@ -131,10 +125,10 @@ FAST_OBJECTS = \
 	$(sketch_OBJECTS) \
 	$(sphflake_OBJECTS) \
 	$(spltest_OBJECTS) \
+	$(spring_OBJECTS) \
 	$(tea_OBJECTS) \
 	$(tea_nmg_OBJECTS) \
 	$(terrain_OBJECTS) \
-	$(tire_OBJECTS) \
 	$(torii_OBJECTS) \
 	$(tube_OBJECTS) \
 	$(vegitation_OBJECTS) \

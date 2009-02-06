@@ -1,7 +1,7 @@
 /*                        D M - W G L . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2008 United States Government as represented by
+ * Copyright (c) 2004-2009 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -107,7 +107,7 @@ Wgl_dm_init(struct dm_list	*o_dm_list,
 	return TCL_ERROR;
 
     /*XXXX this eventually needs to move into Wgl's private structure */
-    dmp->dm_vp = &view_state->vs_vop->vo_scale;
+    dmp->dm_vp = &view_state->vs_gvp->gv_scale;
     dmp->dm_perspective = mged_variables->mv_perspective_mode;
 
     eventHandler = Wgl_doevent;
@@ -273,7 +273,7 @@ static void
 zclip_hook()
 {
     dmp->dm_zclip = ((struct wgl_vars *)dmp->dm_vars.priv_vars)->mvars.zclipping_on;
-    view_state->vs_vop->vo_zclip = dmp->dm_zclip;
+    view_state->vs_gvp->gv_zclip = dmp->dm_zclip;
     dirty_hook();
 }
 
