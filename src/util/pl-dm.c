@@ -1,7 +1,7 @@
 /*                         P L - D M . C
  * BRL-CAD
  *
- * Copyright (c) 1999-2008 United States Government as represented by
+ * Copyright (c) 1999-2009 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -103,9 +103,6 @@ static struct cmdtab cmdtab[] = {
 #define MOUSE_MODE_ROTATE 1
 #define MOUSE_MODE_TRANSLATE 3
 #define MOUSE_MODE_ZOOM 4
-#define X 0
-#define Y 1
-#define Z 2
 
 Tcl_Interp *interp;
 Tk_Window tkwin;

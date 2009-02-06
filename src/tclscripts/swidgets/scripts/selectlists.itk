@@ -1,7 +1,7 @@
 #                 S E L E C T L I S T S . I T K
 # BRL-CAD
 #
-# Copyright (c) 2006-2008 United States Government as represented by
+# Copyright (c) 2006-2009 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # This library is free software; you can redistribute it and/or
@@ -33,7 +33,6 @@
 # Usual options.
 #
 
-
 # ------------------------------------------------------------
 #                     SELECTLISTS
 # ------------------------------------------------------------
@@ -47,9 +46,9 @@ itcl::class swidgets::Selectlists {
     itk_option define -sortlist2 sortList2 SortList2 true
     itk_option define -numlines numlines Height 10
     itk_option define -lbwidth lbwidth Width 20
-    itk_option define -state state State normal
     itk_option define -unique unique Unique false
     itk_option define -command command Command {}
+    itk_option define -state state State normal
 
     public {
 	method component {name}
@@ -92,17 +91,23 @@ proc ::swidgets::selectlists {args} {
 	keep -textbackground
 	rename -labelpos -labelpos1 labelPos1 Position
 	rename -labeltext -labeltext1 labeltext1 Text
+	rename -borderwidth -borderwidth1 borderWidth1 BorderWidth
+	rename -relief -relief1 relief1 Relief
+	rename -selectmode -selectmode1 selectMode1 SelectMode
     }
 
     # LISTBOX 2
     itk_component add listbox2 {
 	iwidgets::scrolledlistbox $frame.lstbox2 -vscrollmode static \
-	    -hscrollmode dynamic -selectmode single \
+	    -hscrollmode dynamic \
 	    -dblclickcommand [::itcl::code $this _dblclick "listbox2"]
     } {
 	keep -textbackground
 	rename -labelpos -labelpos2 labelPos2 Position
 	rename -labeltext -labeltext2 labelText2 Text
+	rename -borderwidth -borderwidth2 borderWidth2 BorderWidth
+	rename -relief -relief2 relief2 Relief
+	rename -selectmode -selectmode2 selectMode2 SelectMode
     }
 
     set bbox [frame $frame.bbox]
@@ -122,7 +127,7 @@ proc ::swidgets::selectlists {args} {
     grid $itk_component(btn_del) -column 0 -row 2 -padx 2 -pady 2 -sticky ew
 
     grid $itk_component(listbox1) -column 0 -row 0 -padx 2 -pady 2 -sticky nsew
-    grid $bbox -column 1 -row 0 -sticky ns
+    grid $bbox -column 1 -row 0;# -sticky ns
     grid $itk_component(listbox2) -column 2 -row 0 -padx 2 -pady 2 -sticky nsew
     grid columnconfigure $frame {0 2} -weight 1
     grid rowconfigure $frame 0 -weight 1
@@ -221,7 +226,7 @@ proc ::swidgets::selectlists {args} {
 	$itk_component(listbox2) insert end [$itk_component(listbox1) get $item]
     }
 
-    foreach item [lsort -decreasing $selected] {
+    foreach item [lsort -integer -decreasing $selected] {
 	$itk_component(listbox1) delete $item
     }
 
@@ -251,7 +256,7 @@ proc ::swidgets::selectlists {args} {
 	$itk_component(listbox1) insert end [$itk_component(listbox2) get $item]
     }
 
-    foreach item [lsort -decreasing $selected] {
+    foreach item [lsort -integer -decreasing $selected] {
 	$itk_component(listbox2) delete $item
     }
 

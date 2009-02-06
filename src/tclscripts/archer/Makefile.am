@@ -13,7 +13,6 @@ scripts = \
 	Archer.tcl \
 	ArcherCore.tcl \
 	bgerror.tcl \
-	BotEditFrame.tcl \
 	CombEditFrame.tcl \
 	cursor.tcl \
 	EhyEditFrame.tcl \
@@ -26,12 +25,10 @@ scripts = \
 	HalfEditFrame.tcl \
 	LoadArcherLibs.tcl \
 	PartEditFrame.tcl \
-	PipeEditFrame.tcl \
 	Plugin.tcl \
 	RhcEditFrame.tcl \
 	RpcEditFrame.tcl \
 	ShaderEdit.tcl \
-	SketchEditFrame.tcl \
 	SphereEditFrame.tcl \
 	tabwindow.itk \
 	TgcEditFrame.tcl \

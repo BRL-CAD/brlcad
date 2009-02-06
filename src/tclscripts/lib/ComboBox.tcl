@@ -1,7 +1,7 @@
 #                    C O M B O B O X . T C L
 # BRL-CAD
 #
-# Copyright (c) 1998-2008 United States Government as represented by
+# Copyright (c) 1998-2009 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # This library is free software; you can redistribute it and/or
@@ -63,7 +63,7 @@
 
 ::itcl::body cadwidgets::ComboBox::constructor {args} {
     itk_component add frame {
-	::frame $itk_interior.frame -relief sunken -bd 2
+	::frame $itk_interior.frame -relief sunken -bd 1
     } {
 	usual
     }
@@ -83,7 +83,7 @@
     }
 
     itk_component add menubutton {
-	::menubutton $itk_interior.menubutton -relief raised -bd 2 \
+	::menubutton $itk_interior.menubutton -relief raised -bd 1 \
 	    -menu $itk_interior.menubutton.m -indicatoron 1
     } {
 	usual
@@ -138,17 +138,15 @@
 }
 
 ::itcl::body cadwidgets::ComboBox::getText {} {
-    #    set ev [cget -entryvariable]
+    set ev [cget -entryvariable]
 
     # $-substitution should work, but doesn't
-    #    return [set $ev]
-    return $entrytext
+    return [set $ev]
 }
 
 ::itcl::body cadwidgets::ComboBox::setText {val} {
-    #    set ev [cget -entryvariable]
-    #    set $ev $val
-    set entrytext $val
+    set ev [cget -entryvariable]
+    set $ev $val
 }
 
 ::itcl::body cadwidgets::ComboBox::type {index} {

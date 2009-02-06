@@ -12,6 +12,7 @@ scripties = \
 	Display.tcl \
 	Dm.tcl \
 	Drawable.tcl \
+	Ged.tcl \
 	Help.tcl \
 	Legend.tcl \
 	Mged.tcl \

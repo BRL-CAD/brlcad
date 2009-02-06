@@ -1,7 +1,7 @@
 #                      A R C H E R . T C L
 # BRL-CAD
 #
-# Copyright (c) 2002-2008 United States Government as represented by
+# Copyright (c) 2002-2009 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # This library is free software; you can redistribute it and/or
@@ -19,12 +19,8 @@
 #
 ###
 #
-# Author(s):
-#    Bob Parker
-#    Doug Howard
-#
 # Description:
-#    Archer megawidget.
+#    Archer mega-widget.
 #
 
 namespace eval Archer {
@@ -123,7 +119,7 @@ package provide Archer 1.0
 	proc pluginDialog {_w}
 	proc pluginLoadCWDFiles {}
 	proc pluginLoader {}
-	proc pluginMged {_archer}
+	proc pluginGed {_archer}
 	proc pluginQuery {_name}
 	proc pluginRegister {_majorType _minorType _name _class _file \
 				 {_description ""} \
@@ -162,7 +158,7 @@ package provide Archer 1.0
 	# ArcherCore Override Section
 	method dblClick {_tags}
 	method initDefaultBindings {{_comp ""}}
-	method initMged {}
+	method initGed {}
 	method selectNode {_tags {_rflag 1}}
 	method toggleTreeView {_state}
 
@@ -904,11 +900,11 @@ package provide Archer 1.0
     ::cd $pwd
 }
 
-::itcl::body Archer::pluginMged {_archer} {
-    if {[catch {$_archer component mged} mged]} {
+::itcl::body Archer::pluginGed {_archer} {
+    if {[catch {$_archer component ged} ged]} {
 	return ""
     } else {
-	return $mged
+	return $ged
     }
 }
 
@@ -964,12 +960,12 @@ package provide Archer 1.0
 	error "importFg4Sections: wlist is missing the WizardTop key and its corresponding value"
     }
 
-    if {[info exists itk_component(mged)]} {
+    if {[info exists itk_component(ged)]} {
 	SetWaitCursor
-	set savedUnits [$itk_component(mged) units]
-	$itk_component(mged) units in
-	$itk_component(mged) configure -autoViewEnable 0
-	$itk_component(mged) detachObservers
+	set savedUnits [$itk_component(ged) units -s]
+	$itk_component(ged) units in
+	$itk_component(ged) configure -autoViewEnable 0
+	$itk_component(ged) detachObservers
 
 	set pname ""
 	set firstName ""
@@ -992,22 +988,22 @@ package provide Archer 1.0
 		set solidName "$lastName\.s"
 	    }
 
-	    if {![catch {$itk_component(mged) get_type $solidName} ret]} {
-		#$itk_component(mged) attachObservers
-		$itk_component(mged) units $savedUnits
+	    if {![catch {$itk_component(ged) get_type $solidName} ret]} {
+		#$itk_component(ged) attachObservers
+		$itk_component(ged) units $savedUnits
 		error "importFg4Sections: $solidName already exists!"
 	    }
 
-	    if {[catch {$itk_component(mged) importFg4Section $solidName $sdata} ret]} {
-		#$itk_component(mged) attachObservers
-		$itk_component(mged) units $savedUnits
+	    if {[catch {$itk_component(ged) importFg4Section $solidName $sdata} ret]} {
+		#$itk_component(ged) attachObservers
+		$itk_component(ged) units $savedUnits
 		error "importFg4Sections: $ret"
 	    }
 
-	    eval $itk_component(mged) otranslate $solidName $delta
+	    eval $itk_component(ged) otranslate $solidName $delta
 
 	    # Add to the region
-	    $itk_component(mged) r $regionName u $solidName
+	    $itk_component(ged) r $regionName u $solidName
 
 	    if {$firstName == $lastName} {
 		continue
@@ -1021,43 +1017,43 @@ package provide Archer 1.0
 
 	    set gmember $regionName
 	    foreach gname $reversedGnames {
-		if {[catch {$itk_component(mged) get_type $gname} ret]} {
-		    $itk_component(mged) g $gname $gmember
+		if {[catch {$itk_component(ged) get_type $gname} ret]} {
+		    $itk_component(ged) g $gname $gmember
 		} else {
-		    if {[catch {$itk_component(mged) get $gname tree} tree]} {
-			#$itk_component(mged) attachObservers
-			$itk_component(mged) units $savedUnits
+		    if {[catch {gedCmd get $gname tree} tree]} {
+			#$itk_component(ged) attachObservers
+			$itk_component(ged) units $savedUnits
 			error "importFg4Sections: $gname is not a group!"
 		    }
 
 		    # Add gmember only if its not already there
 		    set tmembers [regsub -all {(\{[ul] )|([{}]+)} $tree " "]
 		    if {[lsearch $tmembers $gmember] == -1} {
-			$itk_component(mged) g $gname $gmember
+			$itk_component(ged) g $gname $gmember
 		    }
 		}
 
 		# Add WizardTop attribute
-		$itk_component(mged) attr set $gname WizardTop $wizTop
+		$itk_component(ged) attr set $gname WizardTop $wizTop
 
 		set gmember $gname
 	    }
 
 	    # Add WizardTop attribute to the region and its solid
-	    $itk_component(mged) attr set $regionName WizardTop $wizTop
-	    $itk_component(mged) attr set $solidName WizardTop $wizTop
+	    $itk_component(ged) attr set $regionName WizardTop $wizTop
+	    $itk_component(ged) attr set $solidName WizardTop $wizTop
 
 	    # Add wizard attributes
 	    #foreach {key val} $wlist {
-	    #$itk_component(mged) attr set $wizTop $key $val
+	    #$itk_component(ged) attr set $wizTop $key $val
 	    #}
 
 	    # Add other attributes that are specific to this region
 	    foreach {key val} $attrList {
-		$itk_component(mged) attr set $regionName $key $val
+		$itk_component(ged) attr set $regionName $key $val
 	    }
 
-	    if {[catch {$itk_component(mged) attr get $regionName transparency} tr]} {
+	    if {[catch {$itk_component(ged) attr get $regionName transparency} tr]} {
 		set tr 1.0
 	    } else {
 		if {![string is double $tr] || $tr < 0.0 || 1.0 < $tr} {
@@ -1065,7 +1061,7 @@ package provide Archer 1.0
 		}
 	    }
 
-	    if {[catch {$itk_component(mged) attr get $regionName vmode} vmode]} {
+	    if {[catch {$itk_component(ged) attr get $regionName vmode} vmode]} {
 		set vmode 0
 	    } else {
 		switch -- $vmode {
@@ -1083,7 +1079,7 @@ package provide Archer 1.0
 
 	# Add wizard attributes
 	foreach {key val} $wlist {
-	    $itk_component(mged) attr set $wizTop $key $val
+	    $itk_component(ged) attr set $wizTop $key $val
 	}
 
 	refreshTree
@@ -1097,21 +1093,21 @@ package provide Archer 1.0
 
 	set mNeedSave 1
 	updateSaveMode
-	$itk_component(mged) units $savedUnits
-	$itk_component(mged) attachObservers
-	$itk_component(mged) refreshAll
-	$itk_component(mged) configure -autoViewEnable 1
+	$itk_component(ged) units $savedUnits
+	$itk_component(ged) attachObservers
+	$itk_component(ged) refreshAll
+	$itk_component(ged) configure -autoViewEnable 1
 	SetNormalCursor
     }
 }
 
 
 ::itcl::body Archer::purgeHistory {} {
-    if {![info exists itk_component(mged)]} {
+    if {![info exists itk_component(ged)]} {
 	return
     }
 
-    foreach obj [$itk_component(mged) ls] {
+    foreach obj [$itk_component(ged) ls] {
 	set obj [regsub {(/)|(/R)} $obj ""]
 	purgeObjHistory $obj
     }
@@ -1170,32 +1166,32 @@ package provide Archer 1.0
     }
 
     # Load MGED database
-    if {[info exists itk_component(mged)]} {
+    if {[info exists itk_component(ged)]} {
 	if {$mDbShared} {
-	    $itk_component(mged) sharedDb $mTarget
+	    $itk_component(ged) sharedGed $mTarget
 	} elseif {$mDbNoCopy || $mDbReadOnly} {
-	    $itk_component(mged) opendb $mTarget
+	    $itk_component(ged) open $mTarget
 	} else {
-	    $itk_component(mged) opendb $mTargetCopy
+	    $itk_component(ged) open $mTargetCopy
 	}
     } else {
-	initMged
+	initGed
 
 	grid forget $itk_component(canvas)
 	if {!$mViewOnly} {
-	    grid $itk_component(mged) -row 1 -column 0 -columnspan 3 -sticky news
+	    grid $itk_component(ged) -row 1 -column 0 -columnspan 3 -sticky news
 	    after idle "$this component cmd configure -cmd_prefix \"[namespace tail $this] cmd\""
 	} else {
-	    grid $itk_component(mged) -row 1 -column 0 -sticky news
+	    grid $itk_component(ged) -row 1 -column 0 -sticky news
 	}
     }
 
-    setColorOption dbCmd -primitiveLabelColor $mPrimitiveLabelColor
-    setColorOption dbCmd -scaleColor $mScaleColor
-    setColorOption dbCmd -viewingParamsColor $mViewingParamsColor
+#    setColorOption gedCmd -primitiveLabelColor $mPrimitiveLabelColor
+#    setColorOption gedCmd -scaleColor $mScaleColor
+#    setColorOption gedCmd -viewingParamsColor $mViewingParamsColor
 
-    set mDbTitle [$itk_component(mged) title]
-    set mDbUnits [$itk_component(mged) units]
+    set mDbTitle [$itk_component(ged) title]
+    set mDbUnits [$itk_component(ged) units]
 
     if {!$mViewOnly} {
 	initDbAttrView $mTarget
@@ -1205,6 +1201,11 @@ package provide Archer 1.0
 	updateWizardMenu
 	updateUtilityMenu
 	deleteTargetOldCopy
+
+	updateCreationButtons 1
+
+	buildGroundPlane
+	showGroundPlane
 
 	# refresh tree contents
 	SetWaitCursor
@@ -1400,8 +1401,8 @@ package provide Archer 1.0
 
 ::itcl::body Archer::initDefaultBindings {{_comp ""}} {
     if {$_comp == ""} {
-	if {[info exists itk_component(mged)]} {
-	    set _comp $itk_component(mged)
+	if {[info exists itk_component(ged)]} {
+	    set _comp $itk_component(ged)
 	} else {
 	    return
 	}
@@ -1436,8 +1437,8 @@ package provide Archer 1.0
     }
 }
 
-::itcl::body Archer::initMged {} {
-    ArcherCore::initMged
+::itcl::body Archer::initGed {} {
+    ArcherCore::initGed
 
     if {!$mViewOnly} {
 	if {$ArcherCore::inheritFromToplevel} {
@@ -1510,7 +1511,7 @@ package provide Archer 1.0
     #    tag refers to a node in the previous database.
     set savePwd ""
 
-    if {[catch {dbCmd get_type $node} ret]} {
+    if {[catch {gedCmd get_type $node} ret]} {
 	if {$savePwd != ""} {
 	    cd $savePwd
 	}
@@ -1542,16 +1543,16 @@ package provide Archer 1.0
     }
 
     # label the object if it's being drawn
-    set mRenderMode [dbCmd how $node]
+    set mRenderMode [gedCmd how $node]
 
     if {$mShowPrimitiveLabels && 0 <= $mRenderMode} {
-	dbCmd configure -primitiveLabels $node
+	gedCmd configure -primitiveLabels $node
     } else {
-	dbCmd configure -primitiveLabels {}
+	gedCmd configure -primitiveLabels {}
     }
 
     if {$rflag} {
-	dbCmd refresh
+	gedCmd refresh
     }
 
     set mPrevSelectedObjPath $mSelectedObjPath
@@ -1704,15 +1705,15 @@ package provide Archer 1.0
 	    # First, apply the command to hobj if necessary.
 	    # Note - we're making the (ass)umption that the object
 	    #        name is the first item in the "expandedArgs" list.
-	    if {![catch {dbCmd attr get $obj history} hobj] &&
+	    if {![catch {gedCmd attr get $obj history} hobj] &&
 		$obj != $hobj} {
 		set tmpArgs [lreplace $expandedArgs 0 0 $hobj]
-		catch {eval dbCmd $cmd $options $tmpArgs}
+		catch {eval gedCmd $cmd $options $tmpArgs}
 	    }
 	}
     }
 
-    if {[catch {eval dbCmd $cmd $options $expandedArgs} ret]} {
+    if {[catch {eval gedCmd $cmd $options $expandedArgs} ret]} {
 	SetNormalCursor
 	return $ret
     }
@@ -1722,7 +1723,7 @@ package provide Archer 1.0
 	updateSaveMode
     }
 
-    dbCmd configure -primitiveLabels {}
+    gedCmd configure -primitiveLabels {}
     if {$tflag} {
 	catch {refreshTree}
     }
@@ -3532,7 +3533,7 @@ package provide Archer 1.0
 	    -variable [::itcl::scope mMode] \
 	    -command [::itcl::code $this setMode 1]
 
-	if {[info exists itk_component(mged)] && $mMode != 0} {
+	if {[info exists itk_component(ged)] && $mMode != 0} {
 	    $itk_component(modesmenu) add separator
 	    $itk_component(modesmenu) add cascade \
 		-label "Active Pane" \
@@ -3590,14 +3591,14 @@ package provide Archer 1.0
 	    -variable [::itcl::scope mLighting] \
 	    -command [::itcl::code $this doLighting]
 
-	if {![info exists itk_component(mged)]} {
+	if {![info exists itk_component(ged)]} {
 	    # Disable a few entries until we read a database
 	    #$itk_component(modesmenu) entryconfigure "Active Pane" -state disabled
 	    $itk_component(modesmenu) entryconfigure "View Axes" -state disabled
 	    $itk_component(modesmenu) entryconfigure "Model Axes" -state disabled
 	}
     } else {
-	if {[info exists itk_component(mged)] && $mMode != 0} {
+	if {[info exists itk_component(ged)] && $mMode != 0} {
 	    $itk_component(menubar) menuconfigure .modes \
 		-text "Modes" \
 		-menu {
@@ -3695,7 +3696,7 @@ package provide Archer 1.0
 	    -variable [::itcl::scope mMode] \
 	    -command [::itcl::code $this setMode 1]
 
-	if {[info exists itk_component(mged)] && $mMode != 0} {
+	if {[info exists itk_component(ged)] && $mMode != 0} {
 	    set i 0
 	    $itk_component(menubar) menuconfigure .modes.activePane.ul \
 		-value $i \
@@ -3724,7 +3725,7 @@ package provide Archer 1.0
 		-command [::itcl::code $this doMultiPane]
 	}
 
-	if {![info exists itk_component(mged)]} {
+	if {![info exists itk_component(ged)]} {
 	    $itk_component(menubar) menuconfigure .modes.viewaxes \
 		-offvalue 0 \
 		-onvalue 1 \
@@ -4186,14 +4187,14 @@ package provide Archer 1.0
 }
 
 ::itcl::body Archer::initEdit {} {
-    if {![info exists itk_component(mged)]} {
+    if {![info exists itk_component(ged)]} {
 	return
     }
 
-    set mSelectedObjType [dbCmd get_type $mSelectedObj]
+    set mSelectedObjType [gedCmd get_type $mSelectedObj]
 
     if {$mSelectedObjType != "bot"} {
-	set odata [lrange [dbCmd get $mSelectedObj] 1 end]
+	set odata [lrange [gedCmd get $mSelectedObj] 1 end]
     } else {
 	set odata ""
     }
@@ -4337,17 +4338,17 @@ package provide Archer 1.0
 
 ::itcl::body Archer::finalizeObjEdit {obj path} {
     if {$obj == "" ||
-	[catch {dbCmd get_type $obj} stuff]} {
+	[catch {gedCmd get_type $obj} stuff]} {
 	return
     }
 
-    if {[catch {dbCmd attr get $obj history} hname]} {
+    if {[catch {gedCmd attr get $obj history} hname]} {
 	set hname ""
     }
 
     # No history
     if {$hname == "" ||
-	[catch {dbCmd get_type $hname} stuff]} {
+	[catch {gedCmd get_type $hname} stuff]} {
 	return
     }
 
@@ -4357,42 +4358,42 @@ package provide Archer 1.0
     # contains the only known valid version of
     # the object. We now copy the valid version
     # in place of the object.
-    set renderData [dbCmd how -b $path]
+    set renderData [gedCmd how -b $path]
     set renderMode [lindex $renderData 0]
     set renderTrans [lindex $renderData 1]
-    dbCmd configure -autoViewEnable 0
-    dbCmd kill $obj
-    dbCmd cp $hname $obj
-    dbCmd unhide $obj
-    dbCmd attr rm $obj previous
-    dbCmd attr rm $obj next
+    gedCmd configure -autoViewEnable 0
+    gedCmd kill $obj
+    gedCmd cp $hname $obj
+    gedCmd unhide $obj
+    gedCmd attr rm $obj previous
+    gedCmd attr rm $obj next
     render $path $renderMode $renderTrans 0
-    dbCmd configure -autoViewEnable 1
+    gedCmd configure -autoViewEnable 1
 }
 
 ::itcl::body Archer::gotoNextObj {} {
     set obj $mSelectedObj
 
     if {$obj == "" ||
-	[catch {dbCmd get_type $obj} stuff]} {
+	[catch {gedCmd get_type $obj} stuff]} {
 	return
     }
 
-    if {[catch {dbCmd attr get $obj history} hname]} {
+    if {[catch {gedCmd attr get $obj history} hname]} {
 	set hname ""
     }
 
     if {$hname == "" ||
-	[catch {dbCmd get_type $hname} stuff]} {
+	[catch {gedCmd get_type $hname} stuff]} {
 	return
     }
 
-    if {[catch {dbCmd attr get $hname next} next]} {
+    if {[catch {gedCmd attr get $hname next} next]} {
 	set next ""
     }
 
     if {$next == "" ||
-	[catch {dbCmd get_type $next} stuff]} {
+	[catch {gedCmd get_type $next} stuff]} {
 	return
     }
 
@@ -4409,25 +4410,25 @@ package provide Archer 1.0
     set obj $mSelectedObj
 
     if {$obj == "" ||
-	[catch {dbCmd get_type $obj} stuff]} {
+	[catch {gedCmd get_type $obj} stuff]} {
 	return
     }
 
-    if {[catch {dbCmd attr get $obj history} hname]} {
+    if {[catch {gedCmd attr get $obj history} hname]} {
 	set hname ""
     }
 
     if {$hname == "" ||
-	[catch {dbCmd get_type $hname} stuff]} {
+	[catch {gedCmd get_type $hname} stuff]} {
 	return
     }
 
-    if {[catch {dbCmd attr get $hname previous} previous]} {
+    if {[catch {gedCmd attr get $hname previous} previous]} {
 	set previous ""
     }
 
     if {$previous == "" ||
-	[catch {dbCmd get_type $previous} stuff]} {
+	[catch {gedCmd get_type $previous} stuff]} {
 	return
     }
 
@@ -4451,38 +4452,38 @@ package provide Archer 1.0
 
 ::itcl::body Archer::purgeObjHistory {obj} {
     # Nothing to do
-    if {[catch {dbCmd attr get $obj history} hobj]} {
+    if {[catch {gedCmd attr get $obj history} hobj]} {
 	return
     }
 
     # Remove obj's history attribute
-    $itk_component(mged) attr rm $obj history
+    $itk_component(ged) attr rm $obj history
 
     # March backwards in the list removing obj's history
-    if {![catch {dbCmd attr get $hobj previous} prev]} {
+    if {![catch {gedCmd attr get $hobj previous} prev]} {
 	while {$prev != ""} {
-	    if {[catch {dbCmd attr get $prev previous} pprev]} {
+	    if {[catch {gedCmd attr get $prev previous} pprev]} {
 		set pprev ""
 	    }
 
-	    $itk_component(mged) kill $prev
+	    $itk_component(ged) kill $prev
 	    set prev $pprev
 	}
     }
 
     # March forward in the list removing obj's history
-    if {![catch {dbCmd attr get $hobj next} next]} {
+    if {![catch {gedCmd attr get $hobj next} next]} {
 	while {$next != ""} {
-	    if {[catch {dbCmd attr get $next next} nnext]} {
+	    if {[catch {gedCmd attr get $next next} nnext]} {
 		set nnext ""
 	    }
 
-	    $itk_component(mged) kill $next
+	    $itk_component(ged) kill $next
 	    set next $nnext
 	}
     }
 
-    $itk_component(mged) kill $hobj
+    $itk_component(ged) kill $hobj
 }
 
 
@@ -4490,16 +4491,16 @@ package provide Archer 1.0
     set obj $mSelectedObj
 
     if {$obj == "" ||
-	[catch {dbCmd get_type $obj} stuff]} {
+	[catch {gedCmd get_type $obj} stuff]} {
 	return
     }
 
-    if {[catch {dbCmd attr get $obj history} hname]} {
+    if {[catch {gedCmd attr get $obj history} hname]} {
 	set hname ""
     }
 
     if {$hname == "" ||
-	[catch {dbCmd get_type $hname} stuff]} {
+	[catch {gedCmd get_type $hname} stuff]} {
 	return
     }
 
@@ -4515,31 +4516,31 @@ package provide Archer 1.0
 
 ::itcl::body Archer::updateNextObjButton {obj} {
     if {$obj == "" ||
-	[catch {dbCmd get_type $obj} stuff]} {
+	[catch {gedCmd get_type $obj} stuff]} {
 	$itk_component(objEditToolbar) itemconfigure next \
 	    -state disabled
 
 	return
     }
 
-    if {[catch {dbCmd attr get $obj history} hname]} {
+    if {[catch {gedCmd attr get $obj history} hname]} {
 	set hname ""
     }
 
     if {$hname == "" ||
-	[catch {dbCmd get_type $hname} stuff]} {
+	[catch {gedCmd get_type $hname} stuff]} {
 	$itk_component(objEditToolbar) itemconfigure next \
 	    -state disabled
 
 	return
     }
 
-    if {[catch {dbCmd attr get $hname next} next]} {
+    if {[catch {gedCmd attr get $hname next} next]} {
 	set next ""
     }
 
     if {$next == "" ||
-	[catch {dbCmd get_type $next} stuff]} {
+	[catch {gedCmd get_type $next} stuff]} {
 	$itk_component(objEditToolbar) itemconfigure next \
 	    -state disabled
     } else {
@@ -4550,88 +4551,88 @@ package provide Archer 1.0
 
 ::itcl::body Archer::updateObjHistory {obj} {
     if {$obj == "" ||
-	[catch {dbCmd get_type $obj} stuff]} {
+	[catch {gedCmd get_type $obj} stuff]} {
 	return
     }
 
-    dbCmd make_name -s 1
-    set new_hname [dbCmd make_name $obj.version]
-    dbCmd cp $obj $new_hname
-    dbCmd hide $new_hname
+    gedCmd make_name -s 1
+    set new_hname [gedCmd make_name $obj.version]
+    gedCmd cp $obj $new_hname
+    gedCmd hide $new_hname
 
-    if {[catch {dbCmd attr get $obj history} old_hname]} {
+    if {[catch {gedCmd attr get $obj history} old_hname]} {
 	set old_hname ""
     }
 
     if {$old_hname != "" &&
-	![catch {dbCmd get_type $old_hname} stuff]} {
+	![catch {gedCmd get_type $old_hname} stuff]} {
 	# Insert into the history list
 
-	if {[catch {dbCmd attr get $old_hname next} next]} {
+	if {[catch {gedCmd attr get $old_hname next} next]} {
 	    set next ""
 	}
 
 	# Delete the future
 	if {$next != "" &&
-	    ![catch {dbCmd get_type $next} stuff]} {
+	    ![catch {gedCmd get_type $next} stuff]} {
 
 	    while {$next != ""} {
 		set deadObj $next
 
-		if {[catch {dbCmd attr get $next next} next]} {
+		if {[catch {gedCmd attr get $next next} next]} {
 		    set next ""
-		} elseif {[catch {dbCmd get_type $next} stuff]} {
+		} elseif {[catch {gedCmd get_type $next} stuff]} {
 		    set next ""
 		}
 
-		dbCmd kill $deadObj
+		gedCmd kill $deadObj
 	    }
 	}
 
-	dbCmd attr set $old_hname next $new_hname
-	dbCmd attr set $new_hname previous $old_hname
+	gedCmd attr set $old_hname next $new_hname
+	gedCmd attr set $new_hname previous $old_hname
     } else {
 	# Initialize the history list
 	# Note - we shouldn't get here
 
-	dbCmd attr set $new_hname previous ""
-	dbCmd attr set $new_hname history $new_hname
+	gedCmd attr set $new_hname previous ""
+	gedCmd attr set $new_hname history $new_hname
     }
 
-    dbCmd attr set $new_hname next ""
-    dbCmd attr set $new_hname history $new_hname
-    dbCmd attr set $obj history $new_hname
+    gedCmd attr set $new_hname next ""
+    gedCmd attr set $new_hname history $new_hname
+    gedCmd attr set $obj history $new_hname
     updatePrevObjButton $obj
     updateNextObjButton $obj
 }
 
 ::itcl::body Archer::updatePrevObjButton {obj} {
     if {$obj == "" ||
-	[catch {dbCmd get_type $obj} stuff]} {
+	[catch {gedCmd get_type $obj} stuff]} {
 	$itk_component(objEditToolbar) itemconfigure prev \
 	    -state disabled
 
 	return
     }
 
-    if {[catch {dbCmd attr get $obj history} hname]} {
+    if {[catch {gedCmd attr get $obj history} hname]} {
 	set hname ""
     }
 
     if {$hname == "" ||
-	[catch {dbCmd get_type $hname} stuff]} {
+	[catch {gedCmd get_type $hname} stuff]} {
 	$itk_component(objEditToolbar) itemconfigure prev \
 	    -state disabled
 
 	return
     }
 
-    if {[catch {dbCmd attr get $hname previous} previous]} {
+    if {[catch {gedCmd attr get $hname previous} previous]} {
 	set previous ""
     }
 
     if {$previous == "" ||
-	[catch {dbCmd get_type $previous} stuff]} {
+	[catch {gedCmd get_type $previous} stuff]} {
 	$itk_component(objEditToolbar) itemconfigure prev \
 	    -state disabled
     } else {
@@ -4645,7 +4646,7 @@ package provide Archer 1.0
 ################################### Object Edit via Mouse Section ###################################
 
 ::itcl::body Archer::beginObjRotate {} {
-    if {![info exists itk_component(mged)]} {
+    if {![info exists itk_component(ged)]} {
 	return
     }
 
@@ -4657,21 +4658,15 @@ package provide Archer 1.0
 	return
     }
 
-    # These values are insignificant (i.e. they will be ignored by the callback)
-    set x 0
-    set y 0
-    set z 0
-
     foreach dname {ul ur ll lr} {
-	set dm [$itk_component(mged) component $dname]
-	set win [$dm component dm]
-	bind $win <1> "$dm orotate_mode %x %y [list [::itcl::code $this handleObjRotate]] $obj $x $y $z; break"
-	bind $win <ButtonRelease-1> "[::itcl::code $this endObjRotate $dm $obj]; break"
+	set win [$itk_component(ged) component $dname]
+	bind $win <1> "$itk_component(ged) pane_orotate_mode $dname $obj %x %y; break"
+	bind $win <ButtonRelease-1> "[::itcl::code $this endObjRotate $dname $obj]; break"
     }
 }
 
 ::itcl::body Archer::beginObjScale {} {
-    if {![info exists itk_component(mged)]} {
+    if {![info exists itk_component(ged)]} {
 	return
     }
 
@@ -4683,21 +4678,15 @@ package provide Archer 1.0
 	return
     }
 
-    # These values are insignificant (i.e. they will be ignored by the callback)
-    set x 0
-    set y 0
-    set z 0
-
     foreach dname {ul ur ll lr} {
-	set dm [$itk_component(mged) component $dname]
-	set win [$dm component dm]
-	bind $win <1> "$dm oscale_mode %x %y [list [::itcl::code $this handleObjScale]] $obj $x $y $z; break"
-	bind $win <ButtonRelease-1> "[::itcl::code $this endObjScale $dm $obj]; break"
+	set win [$itk_component(ged) component $dname]
+	bind $win <1> "$itk_component(ged) pane_oscale_mode $dname $obj %x %y; break"
+	bind $win <ButtonRelease-1> "[::itcl::code $this endObjScale $dname $obj]; break"
     }
 }
 
 ::itcl::body Archer::beginObjTranslate {} {
-    if {![info exists itk_component(mged)]} {
+    if {![info exists itk_component(ged)]} {
 	return
     }
 
@@ -4710,15 +4699,14 @@ package provide Archer 1.0
     }
 
     foreach dname {ul ur ll lr} {
-	set dm [$itk_component(mged) component $dname]
-	set win [$dm component dm]
-	bind $win <1> "$dm otranslate_mode %x %y [list [::itcl::code $this handleObjTranslate]] $obj; break"
-	bind $win <ButtonRelease-1> "[::itcl::code $this endObjTranslate $dm $obj]; break"
+	set win [$itk_component(ged) component $dname]
+	bind $win <1> "$itk_component(ged) pane_otranslate_mode $dname $obj %x %y; break"
+	bind $win <ButtonRelease-1> "[::itcl::code $this endObjTranslate $dname $obj]; break"
     }
 }
 
 ::itcl::body Archer::beginObjCenter {} {
-    if {![info exists itk_component(mged)]} {
+    if {![info exists itk_component(ged)]} {
 	return
     }
 
@@ -4731,73 +4719,92 @@ package provide Archer 1.0
     }
 
     foreach dname {ul ur ll lr} {
-	set dm [$itk_component(mged) component $dname]
-	set win [$dm component dm]
+	set win [$itk_component(ged) component $dname]
 	bind $win <1> "[::itcl::code $this handleObjCenter $obj %x %y]; break"
-	bind $win <ButtonRelease-1> "[::itcl::code $this endObjCenter $dm $obj]; break"
+	bind $win <ButtonRelease-1> "[::itcl::code $this endObjCenter $dname $obj]; break"
     }
 }
 
-::itcl::body Archer::endObjCenter {dsp obj} {
-    $dsp idle_mode
-
-    if {![info exists itk_component(mged)]} {
+::itcl::body Archer::endObjCenter {dname obj} {
+    if {![info exists itk_component(ged)]} {
 	return
     }
 
-    set center [$itk_component(mged) ocenter $obj]
+    $itk_component(ged) pane_idle_mode $dname
+    set mNeedSave 1
+    updateSaveMode
+
+    set center [$itk_component(ged) ocenter $obj]
     addHistory "ocenter $center"
 }
 
-::itcl::body Archer::endObjRotate {dsp obj} {
-    $dsp idle_mode
+::itcl::body Archer::endObjRotate {dname obj} {
+    if {![info exists itk_component(ged)]} {
+	return
+    }
+
+    $itk_component(ged) pane_idle_mode $dname
+    set mNeedSave 1
+    updateSaveMode
 
     #XXX Need code to track overall transformation
-    if {[info exists itk_component(mged)]} {
+    if {[info exists itk_component(ged)]} {
 	#addHistory "orotate obj rx ry rz"
     }
 }
 
-::itcl::body Archer::endObjScale {dsp obj} {
-    $dsp idle_mode
+::itcl::body Archer::endObjScale {dname obj} {
+    if {![info exists itk_component(ged)]} {
+	return
+    }
+
+    $itk_component(ged) pane_idle_mode $dname
+    set mNeedSave 1
+    updateSaveMode
 
     #XXX Need code to track overall transformation
-    if {[info exists itk_component(mged)]} {
+    if {[info exists itk_component(ged)]} {
 	#addHistory "oscale obj sf"
     }
 }
 
-::itcl::body Archer::endObjTranslate {dsp obj} {
-    $dsp idle_mode
+::itcl::body Archer::endObjTranslate {dname obj} {
+    if {![info exists itk_component(ged)]} {
+	return
+    }
+
+    $itk_component(ged) pane_idle_mode $dname
+    set mNeedSave 1
+    updateSaveMode
 
     #XXX Need code to track overall transformation
-    if {[info exists itk_component(mged)]} {
+    if {[info exists itk_component(ged)]} {
 	#addHistory "otranslate obj dx dy dz"
     }
 }
 
 ::itcl::body Archer::handleObjCenter {obj x y} {
-    if {[info exists itk_component(mged)]} {
-	set ocenter [dbCmd ocenter $obj]
+    if {[info exists itk_component(ged)]} {
+	set ocenter [gedCmd ocenter $obj]
     } else {
 	set savePwd [pwd]
 	cd /
-	set ocenter [dbCmd ocenter $obj]
+	set ocenter [gedCmd ocenter $obj]
     }
 
-    set ocenter [vscale $ocenter [dbCmd local2base]]
-    set ovcenter [eval dbCmd m2vPoint $ocenter]
+    set ocenter [vscale $ocenter [gedCmd local2base]]
+    set ovcenter [eval gedCmd m2v_point $ocenter]
 
     # This is the updated view center (i.e. we keep the original view Z)
-    set vcenter [dbCmd screen2view $x $y]
+    set vcenter [gedCmd screen2view $x $y]
     set vcenter [list [lindex $vcenter 0] [lindex $vcenter 1] [lindex $ovcenter 2]]
 
-    set ocenter [vscale [eval dbCmd v2mPoint $vcenter] [dbCmd base2local]]
+    set ocenter [vscale [eval gedCmd v2m_point $vcenter] [gedCmd base2local]]
 
-    if {[info exists itk_component(mged)]} {
-	eval archerWrapper ocenter 0 0 1 0 $obj $ocenter
+    if {[info exists itk_component(ged)]} {
+	eval archerWrapper ocenter 0 0 0 0 $obj $ocenter
     } else {
-	eval archerWrapper ocenter 0 0 1 0 $obj $ocenter
+	eval archerWrapper ocenter 0 0 0 0 $obj $ocenter
 	cd $savePwd
     }
 
@@ -4805,7 +4812,7 @@ package provide Archer 1.0
 }
 
 ::itcl::body Archer::handleObjRotate {obj rx ry rz kx ky kz} {
-    if {[info exists itk_component(mged)]} {
+    if {[info exists itk_component(ged)]} {
 	eval archerWrapper orotate 0 0 1 0 $obj $rx $ry $rz
     } else {
 	set savePwd [pwd]
@@ -4818,7 +4825,7 @@ package provide Archer 1.0
 }
 
 ::itcl::body Archer::handleObjScale {obj sf kx ky kz} {
-    if {[info exists itk_component(mged)]} {
+    if {[info exists itk_component(ged)]} {
 	eval archerWrapper oscale 0 0 1 0 $obj $sf
     } else {
 	set savePwd [pwd]
@@ -4831,7 +4838,7 @@ package provide Archer 1.0
 }
 
 ::itcl::body Archer::handleObjTranslate {obj dx dy dz} {
-    if {[info exists itk_component(mged)]} {
+    if {[info exists itk_component(ged)]} {
 	eval archerWrapper otranslate 0 0 1 0 $obj $dx $dy $dz
     } else {
 	set savePwd [pwd]
@@ -5156,11 +5163,11 @@ package provide Archer 1.0
     #XXX Not ready yet
     return
 
-    set parent $itk_component(objEditView)
-    itk_component add pipeView {
-	PipeEditFrame $parent.pipeview \
-	    -units "mm"
-    } {}
+#     set parent $itk_component(objEditView)
+#     itk_component add pipeView {
+# 	PipeEditFrame $parent.pipeview \
+# 	    -units "mm"
+#     } {}
 }
 
 ::itcl::body Archer::buildRhcEditView {} {
@@ -5183,11 +5190,11 @@ package provide Archer 1.0
     #XXX Not ready yet
     return
 
-    set parent $itk_component(objEditView)
-    itk_component add sketchView {
-	SketchEditFrame $parent.sketchview \
-	    -units "mm"
-    } {}
+#     set parent $itk_component(objEditView)
+#     itk_component add sketchView {
+# 	SketchEditFrame $parent.sketchview \
+# 	    -units "mm"
+#     } {}
 }
 
 ::itcl::body Archer::buildSphereEditView {} {
@@ -5218,7 +5225,7 @@ package provide Archer 1.0
     $itk_component(arb4View) configure \
 	-geometryObject $mSelectedObj \
 	-geometryChangedCallback [::itcl::code $this updateObjEditView] \
-	-mged $itk_component(mged) \
+	-mged $itk_component(ged) \
 	-labelFont $mFontText \
 	-boldLabelFont $mFontTextBold \
 	-entryFont $mFontText
@@ -5233,7 +5240,7 @@ package provide Archer 1.0
     $itk_component(arb5View) configure \
 	-geometryObject $mSelectedObj \
 	-geometryChangedCallback [::itcl::code $this updateObjEditView] \
-	-mged $itk_component(mged) \
+	-mged $itk_component(ged) \
 	-labelFont $mFontText \
 	-boldLabelFont $mFontTextBold \
 	-entryFont $mFontText
@@ -5248,7 +5255,7 @@ package provide Archer 1.0
     $itk_component(arb6View) configure \
 	-geometryObject $mSelectedObj \
 	-geometryChangedCallback [::itcl::code $this updateObjEditView] \
-	-mged $itk_component(mged) \
+	-mged $itk_component(ged) \
 	-labelFont $mFontText \
 	-boldLabelFont $mFontTextBold \
 	-entryFont $mFontText
@@ -5263,7 +5270,7 @@ package provide Archer 1.0
     $itk_component(arb7View) configure \
 	-geometryObject $mSelectedObj \
 	-geometryChangedCallback [::itcl::code $this updateObjEditView] \
-	-mged $itk_component(mged) \
+	-mged $itk_component(ged) \
 	-labelFont $mFontText \
 	-boldLabelFont $mFontTextBold \
 	-entryFont $mFontText
@@ -5278,7 +5285,7 @@ package provide Archer 1.0
     $itk_component(arb8View) configure \
 	-geometryObject $mSelectedObj \
 	-geometryChangedCallback [::itcl::code $this updateObjEditView] \
-	-mged $itk_component(mged) \
+	-mged $itk_component(ged) \
 	-labelFont $mFontText \
 	-boldLabelFont $mFontTextBold \
 	-entryFont $mFontText
@@ -5293,25 +5300,25 @@ package provide Archer 1.0
     #XXX Not ready yet
     return
 
-    $itk_component(botView) configure \
-	-geometryObject $mSelectedObj \
-	-geometryChangedCallback [::itcl::code $this updateObjEditView] \
-	-mged $itk_component(mged) \
-	-labelFont $mFontText \
-	-boldLabelFont $mFontTextBold \
-	-entryFont $mFontText
-    $itk_component(botView) initGeometry $odata
+#     $itk_component(botView) configure \
+# 	-geometryObject $mSelectedObj \
+# 	-geometryChangedCallback [::itcl::code $this updateObjEditView] \
+# 	-mged $itk_component(ged) \
+# 	-labelFont $mFontText \
+# 	-boldLabelFont $mFontTextBold \
+# 	-entryFont $mFontText
+#     $itk_component(botView) initGeometry $odata
 
-    pack $itk_component(botView) \
-	-expand yes \
-	-fill both
+#     pack $itk_component(botView) \
+# 	-expand yes \
+# 	-fill both
 }
 
 ::itcl::body Archer::initCombEditView {odata} {
     $itk_component(combView) configure \
 	-geometryObject $mSelectedObj \
 	-geometryChangedCallback [::itcl::code $this updateObjEditView] \
-	-mged $itk_component(mged) \
+	-mged $itk_component(ged) \
 	-labelFont $mFontText \
 	-boldLabelFont $mFontTextBold \
 	-entryFont $mFontText
@@ -5323,7 +5330,7 @@ package provide Archer 1.0
 }
 
 ::itcl::body Archer::initDbAttrView {name} {
-    if {![info exists itk_component(mged)]} {
+    if {![info exists itk_component(ged)]} {
 	return
     }
 
@@ -5368,7 +5375,7 @@ package provide Archer 1.0
     $itk_component(ehyView) configure \
 	-geometryObject $mSelectedObj \
 	-geometryChangedCallback [::itcl::code $this updateObjEditView] \
-	-mged $itk_component(mged) \
+	-mged $itk_component(ged) \
 	-labelFont $mFontText \
 	-boldLabelFont $mFontTextBold \
 	-entryFont $mFontText
@@ -5383,7 +5390,7 @@ package provide Archer 1.0
     $itk_component(ellView) configure \
 	-geometryObject $mSelectedObj \
 	-geometryChangedCallback [::itcl::code $this updateObjEditView] \
-	-mged $itk_component(mged) \
+	-mged $itk_component(ged) \
 	-labelFont $mFontText \
 	-boldLabelFont $mFontTextBold \
 	-entryFont $mFontText
@@ -5398,7 +5405,7 @@ package provide Archer 1.0
     $itk_component(epaView) configure \
 	-geometryObject $mSelectedObj \
 	-geometryChangedCallback [::itcl::code $this updateObjEditView] \
-	-mged $itk_component(mged) \
+	-mged $itk_component(ged) \
 	-labelFont $mFontText \
 	-boldLabelFont $mFontTextBold \
 	-entryFont $mFontText
@@ -5413,7 +5420,7 @@ package provide Archer 1.0
     $itk_component(etoView) configure \
 	-geometryObject $mSelectedObj \
 	-geometryChangedCallback [::itcl::code $this updateObjEditView] \
-	-mged $itk_component(mged) \
+	-mged $itk_component(ged) \
 	-labelFont $mFontText \
 	-boldLabelFont $mFontTextBold \
 	-entryFont $mFontText
@@ -5428,7 +5435,7 @@ package provide Archer 1.0
     $itk_component(extrudeView) configure \
 	-geometryObject $mSelectedObj \
 	-geometryChangedCallback [::itcl::code $this updateObjEditView] \
-	-mged $itk_component(mged) \
+	-mged $itk_component(ged) \
 	-labelFont $mFontText \
 	-boldLabelFont $mFontTextBold \
 	-entryFont $mFontText
@@ -5443,7 +5450,7 @@ package provide Archer 1.0
     $itk_component(gripView) configure \
 	-geometryObject $mSelectedObj \
 	-geometryChangedCallback [::itcl::code $this updateObjEditView] \
-	-mged $itk_component(mged) \
+	-mged $itk_component(ged) \
 	-labelFont $mFontText \
 	-boldLabelFont $mFontTextBold \
 	-entryFont $mFontText
@@ -5458,7 +5465,7 @@ package provide Archer 1.0
     $itk_component(halfView) configure \
 	-geometryObject $mSelectedObj \
 	-geometryChangedCallback [::itcl::code $this updateObjEditView] \
-	-mged $itk_component(mged) \
+	-mged $itk_component(ged) \
 	-labelFont $mFontText \
 	-boldLabelFont $mFontTextBold \
 	-entryFont $mFontText
@@ -5488,7 +5495,7 @@ package provide Archer 1.0
 }
 
 ::itcl::body Archer::initObjAttrView {} {
-    if {![info exists itk_component(mged)]} {
+    if {![info exists itk_component(ged)]} {
 	return
     }
 
@@ -5523,7 +5530,7 @@ package provide Archer 1.0
     $itk_component(objAttrText) configure \
 	-state normal
     $itk_component(objAttrText) delete 1.0 end
-    set odata [$itk_component(mged) l $mSelectedObj]
+    set odata [$itk_component(ged) l $mSelectedObj]
     $itk_component(objAttrText) insert end "$odata"
 
     # The scrollmode options are needed so that the
@@ -5539,7 +5546,7 @@ package provide Archer 1.0
 }
 
 ::itcl::body Archer::initObjEdit {obj} {
-    if {![info exists itk_component(mged)]} {
+    if {![info exists itk_component(ged)]} {
 	return
     }
 
@@ -5558,7 +5565,7 @@ package provide Archer 1.0
 }
 
 ::itcl::body Archer::initObjEditView {} {
-    if {![info exists itk_component(mged)]} {
+    if {![info exists itk_component(ged)]} {
 	return
     }
 
@@ -5597,10 +5604,10 @@ package provide Archer 1.0
 	set mWizardState ""
     }
 
-    if {[catch {$itk_component(mged) attr get $mSelectedObj WizardTop} mWizardTop]} {
+    if {[catch {$itk_component(ged) attr get $mSelectedObj WizardTop} mWizardTop]} {
 	set mWizardTop ""
     } else {
-	if {[catch {$itk_component(mged) attr get $mWizardTop WizardClass} mWizardClass]} {
+	if {[catch {$itk_component(ged) attr get $mWizardTop WizardClass} mWizardClass]} {
 	    set mWizardClass ""
 	}
     }
@@ -5614,7 +5621,7 @@ package provide Archer 1.0
 
 	initEdit
 
-	if {[info exists itk_component(mged)]} {
+	if {[info exists itk_component(ged)]} {
 	    pack $itk_component(objViewToolbar) -expand no -fill x -anchor n
 	    pack $itk_component(objEditView) -expand yes -fill both -anchor n
 	    pack $itk_component(objEditToolbarF) -expand no -fill x -anchor s
@@ -5631,11 +5638,11 @@ package provide Archer 1.0
 
 ::itcl::body Archer::initObjHistory {obj} {
     if {$obj == "" ||
-	[catch {dbCmd get_type $obj} stuff]} {
+	[catch {gedCmd get_type $obj} stuff]} {
 	return
     }
 
-    if {[catch {dbCmd attr get $obj history} hname]} {
+    if {[catch {gedCmd attr get $obj history} hname]} {
 	set hname ""
     }
 
@@ -5643,17 +5650,17 @@ package provide Archer 1.0
     # the link to it is broken, so create
     # a new one.
     if {$hname == "" ||
-	[catch {dbCmd get_type $hname} stuff]} {
-	dbCmd make_name -s 1
-	set hname [dbCmd make_name $obj.version]
-	#dbCmd attr set $obj history $hname
+	[catch {gedCmd get_type $hname} stuff]} {
+	gedCmd make_name -s 1
+	set hname [gedCmd make_name $obj.version]
+	#gedCmd attr set $obj history $hname
 
-	dbCmd cp $obj $hname
-	dbCmd hide $hname
-	dbCmd attr set $hname previous ""
-	dbCmd attr set $hname next ""
-	dbCmd attr set $hname history $hname
-	dbCmd attr set $obj history $hname
+	gedCmd cp $obj $hname
+	gedCmd hide $hname
+	gedCmd attr set $hname previous ""
+	gedCmd attr set $hname next ""
+	gedCmd attr set $hname history $hname
+	gedCmd attr set $obj history $hname
     }
 }
 
@@ -5666,7 +5673,7 @@ package provide Archer 1.0
 ::itcl::body Archer::initObjWizard {obj wizardLoaded} {
     set parent [$itk_component(vpane) childsite attrView]
 
-    if {[catch {$itk_component(mged) attr get $mWizardTop WizardState} mWizardState]} {
+    if {[catch {$itk_component(ged) attr get $mWizardTop WizardState} mWizardState]} {
 	set wizardStateFound 0
     } else {
 	set wizardStateFound 1
@@ -5685,10 +5692,10 @@ package provide Archer 1.0
 
 	initNoWizard $parent $msg
     } else {
-	if {[catch {$itk_component(mged) attr get $mWizardTop WizardOrigin} wizOrigin]} {
-	    set wizOrigin [dbCmd center]
-	    set wizUnits [dbCmd units]
-	} elseif {[catch {$itk_component(mged) attr get $mWizardTop WizardUnits} wizUnits]} {
+	if {[catch {$itk_component(ged) attr get $mWizardTop WizardOrigin} wizOrigin]} {
+	    set wizOrigin [gedCmd center]
+	    set wizUnits [gedCmd units -s]
+	} elseif {[catch {$itk_component(ged) attr get $mWizardTop WizardUnits} wizUnits]} {
 	    set wizUnits mm
 	}
 
@@ -5724,7 +5731,7 @@ package provide Archer 1.0
     $itk_component(partView) configure \
 	-geometryObject $mSelectedObj \
 	-geometryChangedCallback [::itcl::code $this updateObjEditView] \
-	-mged $itk_component(mged) \
+	-mged $itk_component(ged) \
 	-labelFont $mFontText \
 	-boldLabelFont $mFontTextBold \
 	-entryFont $mFontText
@@ -5742,7 +5749,7 @@ package provide Archer 1.0
     $itk_component(pipeView) configure \
 	-geometryObject $mSelectedObj \
 	-geometryChangedCallback [::itcl::code $this updateObjEditView] \
-	-mged $itk_component(mged) \
+	-mged $itk_component(ged) \
 	-labelFont $mFontText \
 	-boldLabelFont $mFontTextBold \
 	-entryFont $mFontText
@@ -5757,7 +5764,7 @@ package provide Archer 1.0
     $itk_component(rhcView) configure \
 	-geometryObject $mSelectedObj \
 	-geometryChangedCallback [::itcl::code $this updateObjEditView] \
-	-mged $itk_component(mged) \
+	-mged $itk_component(ged) \
 	-labelFont $mFontText \
 	-boldLabelFont $mFontTextBold \
 	-entryFont $mFontText
@@ -5772,7 +5779,7 @@ package provide Archer 1.0
     $itk_component(rpcView) configure \
 	-geometryObject $mSelectedObj \
 	-geometryChangedCallback [::itcl::code $this updateObjEditView] \
-	-mged $itk_component(mged) \
+	-mged $itk_component(ged) \
 	-labelFont $mFontText \
 	-boldLabelFont $mFontTextBold \
 	-entryFont $mFontText
@@ -5790,7 +5797,7 @@ package provide Archer 1.0
     $itk_component(sketchView) configure \
 	-geometryObject $mSelectedObj \
 	-geometryChangedCallback [::itcl::code $this updateObjEditView] \
-	-mged $itk_component(mged) \
+	-mged $itk_component(ged) \
 	-labelFont $mFontText \
 	-boldLabelFont $mFontTextBold \
 	-entryFont $mFontText
@@ -5805,7 +5812,7 @@ package provide Archer 1.0
     $itk_component(sphView) configure \
 	-geometryObject $mSelectedObj \
 	-geometryChangedCallback [::itcl::code $this updateObjEditView] \
-	-mged $itk_component(mged) \
+	-mged $itk_component(ged) \
 	-labelFont $mFontText \
 	-boldLabelFont $mFontTextBold \
 	-entryFont $mFontText
@@ -5820,7 +5827,7 @@ package provide Archer 1.0
     $itk_component(tgcView) configure \
 	-geometryObject $mSelectedObj \
 	-geometryChangedCallback [::itcl::code $this updateObjEditView] \
-	-mged $itk_component(mged) \
+	-mged $itk_component(ged) \
 	-labelFont $mFontText \
 	-boldLabelFont $mFontTextBold \
 	-entryFont $mFontText
@@ -5835,7 +5842,7 @@ package provide Archer 1.0
     $itk_component(torView) configure \
 	-geometryObject $mSelectedObj \
 	-geometryChangedCallback [::itcl::code $this updateObjEditView] \
-	-mged $itk_component(mged) \
+	-mged $itk_component(ged) \
 	-labelFont $mFontText \
 	-boldLabelFont $mFontTextBold \
 	-entryFont $mFontText
@@ -5847,15 +5854,15 @@ package provide Archer 1.0
 }
 
 ::itcl::body Archer::updateObjEdit {updateObj needInit needSave} {
-    set renderData [dbCmd how -b $mSelectedObjPath]
+    set renderData [gedCmd how -b $mSelectedObjPath]
     set renderMode [lindex $renderData 0]
     set renderTrans [lindex $renderData 1]
-    dbCmd configure -autoViewEnable 0
-    dbCmd kill $mSelectedObj
-    dbCmd cp $updateObj $mSelectedObj
-    dbCmd unhide $mSelectedObj
-    dbCmd attr rm $mSelectedObj previous
-    dbCmd attr rm $mSelectedObj next
+    gedCmd configure -autoViewEnable 0
+    gedCmd kill $mSelectedObj
+    gedCmd cp $updateObj $mSelectedObj
+    gedCmd unhide $mSelectedObj
+    gedCmd attr rm $mSelectedObj previous
+    gedCmd attr rm $mSelectedObj next
 
     if {$needInit} {
 	initEdit
@@ -5867,7 +5874,7 @@ package provide Archer 1.0
     }
 
     render $mSelectedObjPath $renderMode $renderTrans 0
-    dbCmd configure -autoViewEnable 1
+    gedCmd configure -autoViewEnable 1
 }
 
 ::itcl::body Archer::updateObjEditView {} {
@@ -6014,19 +6021,19 @@ package provide Archer 1.0
 }
 
 ::itcl::body Archer::invokeWizardDialog {class action wname} {
-    dbCmd make_name -s 1
+    gedCmd make_name -s 1
     set name [string tolower $class]
     set name [regsub wizard $name ""]
     #XXX Temporary special case for TankWizardI
     #if {$class == "TankWizardI"} {
     #set name "simpleTank"
     #} else {
-    #set name [dbCmd make_name $name]
+    #set name [gedCmd make_name $name]
     #}
-    set name [dbCmd make_name $name]
+    set name [gedCmd make_name $name]
     set oname $name
-    set origin [dbCmd center]
-    set units [dbCmd units]
+    set origin [gedCmd center]
+    set units [gedCmd units -s]
 
     set dialog $itk_interior.wizardDialog
     ::iwidgets::dialog $dialog \
@@ -6082,18 +6089,18 @@ package provide Archer 1.0
     if {[namespace tail [$wizard info class]] != "TankWizardI"} {
 	# Here we have the case where the name is being
 	# changed to an object that already exists.
-	if {$oname != $name && ![catch {dbCmd get_type $name} stuff]} {
+	if {$oname != $name && ![catch {gedCmd get_type $name} stuff]} {
 	    ::sdialogs::Stddlgs::errordlg "User Error" \
 		"$name already exists!"
 	    return
 	}
     }
 
-    dbCmd erase $oname
-    dbCmd killtree $oname
-    dbCmd configure -autoViewEnable 0
+    gedCmd erase $oname
+    gedCmd killtree $oname
+    gedCmd configure -autoViewEnable 0
     set obj [$wizard $action]
-    dbCmd configure -autoViewEnable 1
+    gedCmd configure -autoViewEnable 1
 
     set mNeedSave 1
     updateSaveMode
@@ -6111,12 +6118,12 @@ package provide Archer 1.0
 }
 
 ::itcl::body Archer::pluginGetMinAllowableRid {} {
-    if {![info exists itk_component(mged)]} {
+    if {![info exists itk_component(ged)]} {
 	return 0
     }
 
     set maxRid 0
-    foreach {rid rname} [$itk_component(mged) rmap] {
+    foreach {rid rname} [$itk_component(ged) rmap] {
 	if {$maxRid < $rid} {
 	    set maxRid $rid
 	}
@@ -6191,7 +6198,7 @@ package provide Archer 1.0
 	}
 
 	set minorType [$plugin get -minorType]
-	if {[info exists itk_component(mged)] &&
+	if {[info exists itk_component(ged)] &&
 	    ($minorType == $pluginMinorTypeAll ||
 	     $minorType == $pluginMinorTypeMged)} {
 	    lappend uplugins $plugin
@@ -6243,7 +6250,7 @@ package provide Archer 1.0
 
 
 	set minorType [$plugin get -minorType]
-	if {[info exists itk_component(mged)] &&
+	if {[info exists itk_component(ged)] &&
 	    ($minorType == $pluginMinorTypeAll ||
 	     $minorType == $pluginMinorTypeMged)} {
 	    lappend wplugins $plugin
@@ -6300,9 +6307,11 @@ package provide Archer 1.0
     backgroundColor [lindex $mBackground 0] \
 	[lindex $mBackground 1] \
 	[lindex $mBackground 2]
-    setColorOption dbCmd -primitiveLabelColor $mPrimitiveLabelColor
-    setColorOption dbCmd -scaleColor $mScaleColor
-    setColorOption dbCmd -viewingParamsColor $mViewingParamsColor
+    gedCmd configure -measuringStickColor $mMeasuringStickColor
+    gedCmd configure -measuringStickMode $mMeasuringStickMode
+    gedCmd configure -primitiveLabelColor $mPrimitiveLabelColor
+    gedCmd configure -scaleColor $mScaleColor
+    gedCmd configure -viewingParamsColor $mViewingParamsColor
 }
 
 
@@ -6345,17 +6354,17 @@ package provide Archer 1.0
 
     if {$mPrimitiveLabelColor != $mPrimitiveLabelColorPref} {
 	set mPrimitiveLabelColor $mPrimitiveLabelColorPref
-	setColorOption dbCmd -primitiveLabelColor $mPrimitiveLabelColor
+#	setColorOption gedCmd -primitiveLabelColor $mPrimitiveLabelColor
     }
 
     if {$mViewingParamsColor != $mViewingParamsColorPref} {
 	set mViewingParamsColor $mViewingParamsColorPref
-	setColorOption dbCmd -viewingParamsColor $mViewingParamsColor
+#	setColorOption gedCmd -viewingParamsColor $mViewingParamsColor
     }
 
     if {$mScaleColor != $mScaleColorPref} {
 	set mScaleColor $mScaleColorPref
-	setColorOption dbCmd -scaleColor $mScaleColor
+#	setColorOption gedCmd -scaleColor $mScaleColor
     }
 
     if {$mMeasuringStickColor != $mMeasuringStickColorPref} {
@@ -6393,45 +6402,43 @@ package provide Archer 1.0
 ::itcl::body Archer::applyModelAxesPreferences {} {
     switch -- $mModelAxesSize {
 	"Small" {
-	    dbCmd configure -modelAxesSize 0.2
+	    gedCmd configure -modelAxesSize 0.2
 	}
 	"Medium" {
-	    dbCmd configure -modelAxesSize 0.4
+	    gedCmd configure -modelAxesSize 0.4
 	}
 	"Large" {
-	    dbCmd configure -modelAxesSize 0.8
+	    gedCmd configure -modelAxesSize 0.8
 	}
 	"X-Large" {
-	    dbCmd configure -modelAxesSize 1.6
+	    gedCmd configure -modelAxesSize 1.6
 	}
 	"View (1x)" {
-	    dbCmd configure -modelAxesSize 2.0
+	    gedCmd configure -modelAxesSize 2.0
 	}
 	"View (2x)" {
-	    dbCmd configure -modelAxesSize 4.0
+	    gedCmd configure -modelAxesSize 4.0
 	}
 	"View (4x)" {
-	    dbCmd configure -modelAxesSize 8.0
+	    gedCmd configure -modelAxesSize 8.0
 	}
 	"View (8x)" {
-	    dbCmd configure -modelAxesSize 16.0
+	    gedCmd configure -modelAxesSize 16.0
 	}
     }
 
-    dbCmd configure -modelAxesPosition $mModelAxesPosition
-    dbCmd configure -modelAxesLineWidth $mModelAxesLineWidth
+    gedCmd configure -modelAxesPosition $mModelAxesPosition
+    gedCmd configure -modelAxesLineWidth $mModelAxesLineWidth
+    gedCmd configure -modelAxesColor $mModelAxesColor
+    gedCmd configure -modelAxesLabelColor $mModelAxesLabelColor
 
-    setColorOption dbCmd -modelAxesColor $mModelAxesColor -modelAxesTripleColor
-    setColorOption dbCmd -modelAxesLabelColor $mModelAxesLabelColor
-
-    dbCmd configure -modelAxesTickInterval $mModelAxesTickInterval
-    dbCmd configure -modelAxesTicksPerMajor $mModelAxesTicksPerMajor
-    dbCmd configure -modelAxesTickThreshold $mModelAxesTickThreshold
-    dbCmd configure -modelAxesTickLength $mModelAxesTickLength
-    dbCmd configure -modelAxesTickMajorLength $mModelAxesTickMajorLength
-
-    setColorOption dbCmd -modelAxesTickColor $mModelAxesTickColor
-    setColorOption dbCmd -modelAxesTickMajorColor $mModelAxesTickMajorColor
+    gedCmd configure -modelAxesTickInterval $mModelAxesTickInterval
+    gedCmd configure -modelAxesTicksPerMajor $mModelAxesTicksPerMajor
+    gedCmd configure -modelAxesTickThreshold $mModelAxesTickThreshold
+    gedCmd configure -modelAxesTickLength $mModelAxesTickLength
+    gedCmd configure -modelAxesTickMajorLength $mModelAxesTickMajorLength
+    gedCmd configure -modelAxesTickColor $mModelAxesTickColor
+    gedCmd configure -modelAxesTickMajorColor $mModelAxesTickMajorColor
 }
 
 
@@ -6439,31 +6446,31 @@ package provide Archer 1.0
     if {$mModelAxesSizePref != $mModelAxesSize} {
 	set mModelAxesSize $mModelAxesSizePref
 
-	if {[info exists itk_component(mged)]} {
+	if {[info exists itk_component(ged)]} {
 	    switch -- $mModelAxesSize {
 		"Small" {
-		    dbCmd configure -modelAxesSize 0.2
+		    gedCmd configure -modelAxesSize 0.2
 		}
 		"Medium" {
-		    dbCmd configure -modelAxesSize 0.4
+		    gedCmd configure -modelAxesSize 0.4
 		}
 		"Large" {
-		    dbCmd configure -modelAxesSize 0.8
+		    gedCmd configure -modelAxesSize 0.8
 		}
 		"X-Large" {
-		    dbCmd configure -modelAxesSize 1.6
+		    gedCmd configure -modelAxesSize 1.6
 		}
 		"View (1x)" {
-		    dbCmd configure -modelAxesSize 2.0
+		    gedCmd configure -modelAxesSize 2.0
 		}
 		"View (2x)" {
-		    dbCmd configure -modelAxesSize 4.0
+		    gedCmd configure -modelAxesSize 4.0
 		}
 		"View (4x)" {
-		    dbCmd configure -modelAxesSize 8.0
+		    gedCmd configure -modelAxesSize 8.0
 		}
 		"View (8x)" {
-		    dbCmd configure -modelAxesSize 16.0
+		    gedCmd configure -modelAxesSize 16.0
 		}
 	    }
 	}
@@ -6478,89 +6485,89 @@ package provide Archer 1.0
 	set mModelAxesPosition \
 	    "$mModelAxesPositionXPref $mModelAxesPositionYPref $mModelAxesPositionZPref"
 
-	if {[info exists itk_component(mged)]} {
-	    dbCmd configure -modelAxesPosition $mModelAxesPosition
+	if {[info exists itk_component(ged)]} {
+	    gedCmd configure -modelAxesPosition $mModelAxesPosition
 	}
     }
 
     if {$mModelAxesLineWidthPref != $mModelAxesLineWidth} {
 	set mModelAxesLineWidth $mModelAxesLineWidthPref
 
-	if {[info exists itk_component(mged)]} {
-	    dbCmd configure -modelAxesLineWidth $mModelAxesLineWidth
+	if {[info exists itk_component(ged)]} {
+	    gedCmd configure -modelAxesLineWidth $mModelAxesLineWidth
 	}
     }
 
     if {$mModelAxesColorPref != $mModelAxesColor} {
 	set mModelAxesColor $mModelAxesColorPref
 
-	if {[info exists itk_component(mged)]} {
-	    setColorOption dbCmd -modelAxesColor $mModelAxesColor -modelAxesTripleColor
-	}
+#	if {[info exists itk_component(ged)]} {
+#	    setColorOption gedCmd -modelAxesColor $mModelAxesColor -modelAxesTripleColor
+#	}
     }
 
     if {$mModelAxesLabelColorPref != $mModelAxesLabelColor} {
 	set mModelAxesLabelColor $mModelAxesLabelColorPref
 
-	if {[info exists itk_component(mged)]} {
-	    setColorOption dbCmd -modelAxesLabelColor $mModelAxesLabelColor
-	}
+#	if {[info exists itk_component(ged)]} {
+#	    setColorOption gedCmd -modelAxesLabelColor $mModelAxesLabelColor
+#	}
     }
 
     if {$mModelAxesTickIntervalPref != $mModelAxesTickInterval} {
 	set mModelAxesTickInterval $mModelAxesTickIntervalPref
 
-	if {[info exists itk_component(mged)]} {
-	    dbCmd configure -modelAxesTickInterval $mModelAxesTickInterval
+	if {[info exists itk_component(ged)]} {
+	    gedCmd configure -modelAxesTickInterval $mModelAxesTickInterval
 	}
     }
 
     if {$mModelAxesTicksPerMajorPref != $mModelAxesTicksPerMajor} {
 	set mModelAxesTicksPerMajor $mModelAxesTicksPerMajorPref
 
-	if {[info exists itk_component(mged)]} {
-	    dbCmd configure -modelAxesTicksPerMajor $mModelAxesTicksPerMajor
+	if {[info exists itk_component(ged)]} {
+	    gedCmd configure -modelAxesTicksPerMajor $mModelAxesTicksPerMajor
 	}
     }
 
     if {$mModelAxesTickThresholdPref != $mModelAxesTickThreshold} {
 	set mModelAxesTickThreshold $mModelAxesTickThresholdPref
 
-	if {[info exists itk_component(mged)]} {
-	    dbCmd configure -modelAxesTickThreshold $mModelAxesTickThreshold
+	if {[info exists itk_component(ged)]} {
+	    gedCmd configure -modelAxesTickThreshold $mModelAxesTickThreshold
 	}
     }
 
     if {$mModelAxesTickLengthPref != $mModelAxesTickLength} {
 	set mModelAxesTickLength $mModelAxesTickLengthPref
 
-	if {[info exists itk_component(mged)]} {
-	    dbCmd configure -modelAxesTickLength $mModelAxesTickLength
+	if {[info exists itk_component(ged)]} {
+	    gedCmd configure -modelAxesTickLength $mModelAxesTickLength
 	}
     }
 
     if {$mModelAxesTickMajorLengthPref != $mModelAxesTickMajorLength} {
 	set mModelAxesTickMajorLength $mModelAxesTickMajorLengthPref
 
-	if {[info exists itk_component(mged)]} {
-	    dbCmd configure -modelAxesTickMajorLength $mModelAxesTickMajorLength
+	if {[info exists itk_component(ged)]} {
+	    gedCmd configure -modelAxesTickMajorLength $mModelAxesTickMajorLength
 	}
     }
 
     if {$mModelAxesTickColorPref != $mModelAxesTickColor} {
 	set mModelAxesTickColor $mModelAxesTickColorPref
 
-	if {[info exists itk_component(mged)]} {
-	    setColorOption dbCmd -modelAxesTickColor $mModelAxesTickColor
-	}
+#	if {[info exists itk_component(ged)]} {
+#	    setColorOption gedCmd -modelAxesTickColor $mModelAxesTickColor
+#	}
     }
 
     if {$mModelAxesTickMajorColorPref != $mModelAxesTickMajorColor} {
 	set mModelAxesTickMajorColor $mModelAxesTickMajorColorPref
 
-	if {[info exists itk_component(mged)]} {
-	    setColorOption dbCmd -modelAxesTickMajorColor $mModelAxesTickMajorColor
-	}
+#	if {[info exists itk_component(ged)]} {
+#	    setColorOption gedCmd -modelAxesTickMajorColor $mModelAxesTickMajorColor
+#	}
     }
 }
 
@@ -6589,45 +6596,50 @@ package provide Archer 1.0
     switch -- $mViewAxesSize {
 	"Small" {
 	    set offset 0.85
-	    dbCmd configure -viewAxesSize 0.2
+	    gedCmd configure -viewAxesSize 0.2
 	}
 	"Medium" {
 	    set offset 0.75
-	    dbCmd configure -viewAxesSize 0.4
+	    gedCmd configure -viewAxesSize 0.4
 	}
 	"Large" {
 	    set offset 0.55
-	    dbCmd configure -viewAxesSize 0.8
+	    gedCmd configure -viewAxesSize 0.8
 	}
 	"X-Large" {
 	    set offset 0.0
-	    dbCmd configure -viewAxesSize 1.6
+	    gedCmd configure -viewAxesSize 1.6
 	}
     }
 
     switch -- $mViewAxesPosition {
 	default -
 	"Center" {
-	    dbCmd configure -viewAxesPosition {0 0 0}
+	    gedCmd configure -viewAxesPosition {0 0 0}
 	}
 	"Upper Left" {
-	    dbCmd configure -viewAxesPosition "-$offset $offset 0"
+	    gedCmd configure -viewAxesPosition "-$offset $offset 0"
 	}
 	"Upper Right" {
-	    dbCmd configure -viewAxesPosition "$offset $offset 0"
+	    gedCmd configure -viewAxesPosition "$offset $offset 0"
 	}
 	"Lower Left" {
-	    dbCmd configure -viewAxesPosition "-$offset -$offset 0"
+	    gedCmd configure -viewAxesPosition "-$offset -$offset 0"
 	}
 	"Lower Right" {
-	    dbCmd configure -viewAxesPosition "$offset -$offset 0"
+	    gedCmd configure -viewAxesPosition "$offset -$offset 0"
 	}
     }
 
-    dbCmd configure -viewAxesLineWidth $mViewAxesLineWidth
+    if {$mViewAxesColor == "Triple"} {
+	gedCmd configure -viewAxesTripleColor 1
+    } else {
+	gedCmd configure -viewAxesTripleColor 0
+	gedCmd configure -viewAxesColor $mViewAxesColor
+    }
 
-    setColorOption dbCmd -viewAxesColor $mViewAxesColor -viewAxesTripleColor
-    setColorOption dbCmd -viewAxesLabelColor $mViewAxesLabelColor
+    gedCmd configure -viewAxesLineWidth $mViewAxesLineWidth
+    gedCmd configure -viewAxesLabelColor $mViewAxesLabelColor
 }
 
 
@@ -6637,25 +6649,25 @@ package provide Archer 1.0
     if {$mViewAxesSizePref != $mViewAxesSize} {
 	set mViewAxesSize $mViewAxesSizePref
 
-	if {[info exists itk_component(mged)]} {
+	if {[info exists itk_component(ged)]} {
 	    # sanity
 	    set offset 0.0
 	    switch -- $mViewAxesSize {
 		"Small" {
 		    set offset 0.85
-		    dbCmd configure -viewAxesSize 0.2
+		    gedCmd configure -viewAxesSize 0.2
 		}
 		"Medium" {
 		    set offset 0.75
-		    dbCmd configure -viewAxesSize 0.4
+		    gedCmd configure -viewAxesSize 0.4
 		}
 		"Large" {
 		    set offset 0.55
-		    dbCmd configure -viewAxesSize 0.8
+		    gedCmd configure -viewAxesSize 0.8
 		}
 		"X-Large" {
 		    set offset 0.0
-		    dbCmd configure -viewAxesSize 1.6
+		    gedCmd configure -viewAxesSize 1.6
 		}
 	    }
 	}
@@ -6663,23 +6675,23 @@ package provide Archer 1.0
 	set positionNotSet 0
 	set mViewAxesPosition $mViewAxesPositionPref
 
-	if {[info exists itk_component(mged)]} {
+	if {[info exists itk_component(ged)]} {
 	    switch -- $mViewAxesPosition {
 		default -
 		"Center" {
-		    dbCmd configure -viewAxesPosition {0 0 0}
+		    gedCmd configure -viewAxesPosition {0 0 0}
 		}
 		"Upper Left" {
-		    dbCmd configure -viewAxesPosition "-$offset $offset 0"
+		    gedCmd configure -viewAxesPosition "-$offset $offset 0"
 		}
 		"Upper Right" {
-		    dbCmd configure -viewAxesPosition "$offset $offset 0"
+		    gedCmd configure -viewAxesPosition "$offset $offset 0"
 		}
 		"Lower Left" {
-		    dbCmd configure -viewAxesPosition "-$offset -$offset 0"
+		    gedCmd configure -viewAxesPosition "-$offset -$offset 0"
 		}
 		"Lower Right" {
-		    dbCmd configure -viewAxesPosition "$offset -$offset 0"
+		    gedCmd configure -viewAxesPosition "$offset -$offset 0"
 		}
 	    }
 	}
@@ -6689,7 +6701,7 @@ package provide Archer 1.0
 	$mViewAxesPositionPref != $mViewAxesPosition} {
 	set mViewAxesPosition $mViewAxesPositionPref
 
-	if {[info exists itk_component(mged)]} {
+	if {[info exists itk_component(ged)]} {
 	    # sanity
 	    set offset 0.0
 	    switch -- $mViewAxesSize {
@@ -6710,19 +6722,19 @@ package provide Archer 1.0
 	    switch -- $mViewAxesPosition {
 		default -
 		"Center" {
-		    dbCmd configure -viewAxesPosition {0 0 0}
+		    gedCmd configure -viewAxesPosition {0 0 0}
 		}
 		"Upper Left" {
-		    dbCmd configure -viewAxesPosition "-$offset $offset 0"
+		    gedCmd configure -viewAxesPosition "-$offset $offset 0"
 		}
 		"Upper Right" {
-		    dbCmd configure -viewAxesPosition "$offset $offset 0"
+		    gedCmd configure -viewAxesPosition "$offset $offset 0"
 		}
 		"Lower Left" {
-		    dbCmd configure -viewAxesPosition "-$offset -$offset 0"
+		    gedCmd configure -viewAxesPosition "-$offset -$offset 0"
 		}
 		"Lower Right" {
-		    dbCmd configure -viewAxesPosition "$offset -$offset 0"
+		    gedCmd configure -viewAxesPosition "$offset -$offset 0"
 		}
 	    }
 	}
@@ -6731,25 +6743,25 @@ package provide Archer 1.0
     if {$mViewAxesLineWidthPref != $mViewAxesLineWidth} {
 	set mViewAxesLineWidth $mViewAxesLineWidthPref
 
-	if {[info exists itk_component(mged)]} {
-	    dbCmd configure -viewAxesLineWidth $mViewAxesLineWidth
+	if {[info exists itk_component(ged)]} {
+	    gedCmd configure -viewAxesLineWidth $mViewAxesLineWidth
 	}
     }
 
     if {$mViewAxesColorPref != $mViewAxesColor} {
 	set mViewAxesColor $mViewAxesColorPref
 
-	if {[info exists itk_component(mged)]} {
-	    setColorOption dbCmd -viewAxesColor $mViewAxesColor -viewAxesTripleColor
-	}
+#	if {[info exists itk_component(ged)]} {
+#	    setColorOption gedCmd -viewAxesColor $mViewAxesColor -viewAxesTripleColor
+#	}
     }
 
     if {$mViewAxesLabelColorPref != $mViewAxesLabelColor} {
 	set mViewAxesLabelColor $mViewAxesLabelColorPref
 
-	if {[info exists itk_component(mged)]} {
-	    setColorOption dbCmd -viewAxesLabelColor $mViewAxesLabelColor
-	}
+#	if {[info exists itk_component(ged)]} {
+#	    setColorOption gedCmd -viewAxesLabelColor $mViewAxesLabelColor
+#	}
     }
 }
 
@@ -6757,17 +6769,17 @@ package provide Archer 1.0
     # update preference variables
     set mZClipModePref $mZClipMode
 
-    set mBindingModePref $mBindingMode
-    set mMeasuringStickModePref $mMeasuringStickMode
     set mBackgroundRedPref [lindex $mBackground 0]
     set mBackgroundGreenPref [lindex $mBackground 1]
     set mBackgroundBluePref [lindex $mBackground 2]
+    set mBindingModePref $mBindingMode
+    set mEnableBigEPref $mEnableBigE
+    set mMeasuringStickColorPref $mMeasuringStickColor
+    set mMeasuringStickModePref $mMeasuringStickMode
     set mPrimitiveLabelColorPref $mPrimitiveLabelColor
     set mScaleColorPref $mScaleColor
-    set mMeasuringStickColorPref $mMeasuringStickColor
     set mViewingParamsColorPref $mViewingParamsColor
     set mThemePref $mTheme
-    set mEnableBigEPref $mEnableBigE
 
     set mGroundPlaneSizePref $mGroundPlaneSize
     set mGroundPlaneIntervalPref $mGroundPlaneInterval
@@ -6834,9 +6846,9 @@ package provide Archer 1.0
     backgroundColor [lindex $mBackground 0] \
 	[lindex $mBackground 1] \
 	[lindex $mBackground 2]
-    setColorOption dbCmd -primitiveLabelColor $mPrimitiveLabelColor
-    setColorOption dbCmd -viewingParamsColor $mViewingParamsColor
-    setColorOption dbCmd -scaleColor $mScaleColor
+#    setColorOption gedCmd -primitiveLabelColor $mPrimitiveLabelColor
+#    setColorOption gedCmd -viewingParamsColor $mViewingParamsColor
+#    setColorOption gedCmd -scaleColor $mScaleColor
 
     update
     setMode
@@ -6870,26 +6882,33 @@ package provide Archer 1.0
 	puts $pfile "#"
 	puts $pfile "# This file is created and updated by Archer."
 	puts $pfile "#"
-	puts $pfile "set mLastSelectedDir \"$mLastSelectedDir\""
-	puts $pfile "set mBindingMode $mBindingMode"
-	puts $pfile "set mMeasuringStickMode $mMeasuringStickMode"
 	puts $pfile "set mBackground \"$mBackground\""
+	puts $pfile "set mBindingMode $mBindingMode"
+	puts $pfile "set mEnableBigE $mEnableBigE"
+	puts $pfile "set mMeasuringStickColor \"$mMeasuringStickColor\""
+	puts $pfile "set mMeasuringStickMode $mMeasuringStickMode"
 	puts $pfile "set mPrimitiveLabelColor \"$mPrimitiveLabelColor\""
 	puts $pfile "set mScaleColor \"$mScaleColor\""
-	puts $pfile "set mMeasuringStickColor \"$mMeasuringStickColor\""
 	puts $pfile "set mViewingParamsColor \"$mViewingParamsColor\""
 	puts $pfile "set mTheme \"$mTheme\""
-	puts $pfile "set mEnableBigE $mEnableBigE"
+
+	puts $pfile "set mGroundPlaneMajorColor \"$mGroundPlaneMajorColor\""
+	puts $pfile "set mGroundPlaneMinorColor \"$mGroundPlaneMinorColor\""
+	puts $pfile "set mGroundPlaneInterval \"$mGroundPlaneInterval\""
+	puts $pfile "set mGroundPlaneSize \"$mGroundPlaneSize\""
+
 	puts $pfile "set mViewAxesSize \"$mViewAxesSize\""
 	puts $pfile "set mViewAxesPosition \"$mViewAxesPosition\""
 	puts $pfile "set mViewAxesLineWidth $mViewAxesLineWidth"
 	puts $pfile "set mViewAxesColor \"$mViewAxesColor\""
 	puts $pfile "set mViewAxesLabelColor \"$mViewAxesLabelColor\""
+
 	puts $pfile "set mModelAxesSize \"$mModelAxesSize\""
 	puts $pfile "set mModelAxesPosition \"$mModelAxesPosition\""
 	puts $pfile "set mModelAxesLineWidth $mModelAxesLineWidth"
 	puts $pfile "set mModelAxesColor \"$mModelAxesColor\""
 	puts $pfile "set mModelAxesLabelColor \"$mModelAxesLabelColor\""
+
 	puts $pfile "set mModelAxesTickInterval $mModelAxesTickInterval"
 	puts $pfile "set mModelAxesTicksPerMajor $mModelAxesTicksPerMajor"
 	puts $pfile "set mModelAxesTickThreshold $mModelAxesTickThreshold"
@@ -6897,8 +6916,11 @@ package provide Archer 1.0
 	puts $pfile "set mModelAxesTickMajorLength $mModelAxesTickMajorLength"
 	puts $pfile "set mModelAxesTickColor \"$mModelAxesTickColor\""
 	puts $pfile "set mModelAxesTickMajorColor \"$mModelAxesTickMajorColor\""
+
+	puts $pfile "set mLastSelectedDir \"$mLastSelectedDir\""
 	puts $pfile "set mMode $mMode"
 	puts $pfile "set mZClipMode $mZClipMode"
+
 	puts $pfile "set mHPaneFraction1 $mHPaneFraction1"
 	puts $pfile "set mHPaneFraction2 $mHPaneFraction2"
 	puts $pfile "set mVPaneFraction1 $mVPaneFraction1"
@@ -6919,104 +6941,104 @@ package provide Archer 1.0
 ################################### Primitive Creation Section ###################################
 
 ::itcl::body Archer::createObj {type} {
-    dbCmd make_name -s 1
+    gedCmd make_name -s 1
 
     switch -- $type {
 	"arb4" {
-	    set name [dbCmd make_name "arb4."]
+	    set name [gedCmd make_name "arb4."]
 	    createArb4 $name
 	}
 	"arb5" {
-	    set name [dbCmd make_name "arb5."]
+	    set name [gedCmd make_name "arb5."]
 	    createArb5 $name
 	}
 	"arb6" {
-	    set name [dbCmd make_name "arb6."]
+	    set name [gedCmd make_name "arb6."]
 	    createArb6 $name
 	}
 	"arb7" {
-	    set name [dbCmd make_name "arb7."]
+	    set name [gedCmd make_name "arb7."]
 	    createArb7 $name
 	}
 	"arb8" {
-	    set name [dbCmd make_name "arb8."]
+	    set name [gedCmd make_name "arb8."]
 	    createArb8 $name
 	}
 	"bot" {
 	    #XXX Not ready yet
 	    return
 
-	    set name [dbCmd make_name "bot."]
+	    set name [gedCmd make_name "bot."]
 	    createBot $name
 	}
 	"comb" {
-	    set name [dbCmd make_name "comb."]
+	    set name [gedCmd make_name "comb."]
 	    createComb $name
 	}
 	"ehy" {
-	    set name [dbCmd make_name "ehy."]
+	    set name [gedCmd make_name "ehy."]
 	    createEhy $name
 	}
 	"ell" {
-	    set name [dbCmd make_name "ell."]
+	    set name [gedCmd make_name "ell."]
 	    createEll $name
 	}
 	"epa" {
-	    set name [dbCmd make_name "epa."]
+	    set name [gedCmd make_name "epa."]
 	    createEpa $name
 	}
 	"eto" {
-	    set name [dbCmd make_name "eto."]
+	    set name [gedCmd make_name "eto."]
 	    createEto $name
 	}
 	"extrude" {
 	    #XXX Not ready yet
 	    return
 
-	    set name [dbCmd make_name "extrude."]
+	    set name [gedCmd make_name "extrude."]
 	    createExtrude $name
 	}
 	"grip" {
-	    set name [dbCmd make_name "grip."]
+	    set name [gedCmd make_name "grip."]
 	    createGrip $name
 	}
 	"half" {
-	    set name [dbCmd make_name "half."]
+	    set name [gedCmd make_name "half."]
 	    createHalf $name
 	}
 	"part" {
-	    set name [dbCmd make_name "part."]
+	    set name [gedCmd make_name "part."]
 	    createPart $name
 	}
 	"pipe" {
 	    #XXX Not ready yet
 	    return
 
-	    set name [dbCmd make_name "pipe."]
+	    set name [gedCmd make_name "pipe."]
 	    createPipe $name
 	}
 	"rhc" {
-	    set name [dbCmd make_name "rhc."]
+	    set name [gedCmd make_name "rhc."]
 	    createRhc $name
 	}
 	"rpc" {
-	    set name [dbCmd make_name "rpc."]
+	    set name [gedCmd make_name "rpc."]
 	    createRpc $name
 	}
 	"sketch" {
-	    set name [dbCmd make_name "sketch."]
+	    set name [gedCmd make_name "sketch."]
 	    createSketch $name
 	}
 	"sph" {
-	    set name [dbCmd make_name "sph."]
+	    set name [gedCmd make_name "sph."]
 	    createSphere $name
 	}
 	"tgc" {
-	    set name [dbCmd make_name "tgc."]
+	    set name [gedCmd make_name "tgc."]
 	    createTgc $name
 	}
 	"tor" {
-	    set name [dbCmd make_name "tor."]
+	    set name [gedCmd make_name "tor."]
 	    createTorus $name
 	}
 	default {
@@ -7031,9 +7053,9 @@ package provide Archer 1.0
     # make sure stuff is there to select
     $itk_component(tree) selection set $node
 
-    dbCmd configure -autoViewEnable 0
+    gedCmd configure -autoViewEnable 0
     dblClick [$itk_component(tree) selection get]
-    dbCmd configure -autoViewEnable 1
+    gedCmd configure -autoViewEnable 1
 
     set mNeedSave 1
     updateSaveMode
@@ -7043,7 +7065,7 @@ package provide Archer 1.0
     if {![info exists itk_component(arb4View)]} {
 	buildArb4EditView
 	$itk_component(arb4View) configure \
-	    -mged $itk_component(mged)
+	    -mged $itk_component(ged)
     }
     $itk_component(arb4View) createGeometry $name
 }
@@ -7052,7 +7074,7 @@ package provide Archer 1.0
     if {![info exists itk_component(arb5View)]} {
 	buildArb5EditView
 	$itk_component(arb5View) configure \
-	    -mged $itk_component(mged)
+	    -mged $itk_component(ged)
     }
     $itk_component(arb5View) createGeometry $name
 }
@@ -7061,7 +7083,7 @@ package provide Archer 1.0
     if {![info exists itk_component(arb6View)]} {
 	buildArb6EditView
 	$itk_component(arb6View) configure \
-	    -mged $itk_component(mged)
+	    -mged $itk_component(ged)
     }
     $itk_component(arb6View) createGeometry $name
 }
@@ -7070,7 +7092,7 @@ package provide Archer 1.0
     if {![info exists itk_component(arb7View)]} {
 	buildArb7EditView
 	$itk_component(arb7View) configure \
-	    -mged $itk_component(mged)
+	    -mged $itk_component(ged)
     }
     $itk_component(arb7View) createGeometry $name
 }
@@ -7079,7 +7101,7 @@ package provide Archer 1.0
     if {![info exists itk_component(arb8View)]} {
 	buildArb8EditView
 	$itk_component(arb8View) configure \
-	    -mged $itk_component(mged)
+	    -mged $itk_component(ged)
     }
     $itk_component(arb8View) createGeometry $name
 }
@@ -7091,7 +7113,7 @@ package provide Archer 1.0
     if {![info exists itk_component(botView)]} {
 	buildBotEditView
 	$itk_component(botView) configure \
-	    -mged $itk_component(mged)
+	    -mged $itk_component(ged)
     }
     $itk_component(botView) createGeometry $name
 }
@@ -7100,7 +7122,7 @@ package provide Archer 1.0
     if {![info exists itk_component(combView)]} {
 	buildCombEditView
 	$itk_component(combView) configure \
-	    -mged $itk_component(mged)
+	    -mged $itk_component(ged)
     }
     $itk_component(combView) createGeometry $name
 }
@@ -7109,7 +7131,7 @@ package provide Archer 1.0
     if {![info exists itk_component(ehyView)]} {
 	buildEhyEditView
 	$itk_component(ehyView) configure \
-	    -mged $itk_component(mged)
+	    -mged $itk_component(ged)
     }
     $itk_component(ehyView) createGeometry $name
 }
@@ -7118,7 +7140,7 @@ package provide Archer 1.0
     if {![info exists itk_component(ellView)]} {
 	buildEllEditView
 	$itk_component(ellView) configure \
-	    -mged $itk_component(mged)
+	    -mged $itk_component(ged)
     }
     $itk_component(ellView) createGeometry $name
 }
@@ -7127,7 +7149,7 @@ package provide Archer 1.0
     if {![info exists itk_component(epaView)]} {
 	buildEpaEditView
 	$itk_component(epaView) configure \
-	    -mged $itk_component(mged)
+	    -mged $itk_component(ged)
     }
     $itk_component(epaView) createGeometry $name
 }
@@ -7136,7 +7158,7 @@ package provide Archer 1.0
     if {![info exists itk_component(etoView)]} {
 	buildEtoEditView
 	$itk_component(etoView) configure \
-	    -mged $itk_component(mged)
+	    -mged $itk_component(ged)
     }
     $itk_component(etoView) createGeometry $name
 }
@@ -7148,7 +7170,7 @@ package provide Archer 1.0
     if {![info exists itk_component(extrudeView)]} {
 	buildExtrudeEditView
 	$itk_component(extrudeView) configure \
-	    -mged $itk_component(mged)
+	    -mged $itk_component(ged)
     }
     $itk_component(extrudeView) createGeometry $name
 }
@@ -7157,7 +7179,7 @@ package provide Archer 1.0
     if {![info exists itk_component(gripView)]} {
 	buildGripEditView
 	$itk_component(gripView) configure \
-	    -mged $itk_component(mged)
+	    -mged $itk_component(ged)
     }
     $itk_component(gripView) createGeometry $name
 }
@@ -7166,7 +7188,7 @@ package provide Archer 1.0
     if {![info exists itk_component(halfView)]} {
 	buildHalfEditView
 	$itk_component(halfView) configure \
-	    -mged $itk_component(mged)
+	    -mged $itk_component(ged)
     }
     $itk_component(halfView) createGeometry $name
 }
@@ -7175,7 +7197,7 @@ package provide Archer 1.0
     if {![info exists itk_component(partView)]} {
 	buildPartEditView
 	$itk_component(partView) configure \
-	    -mged $itk_component(mged)
+	    -mged $itk_component(ged)
     }
     $itk_component(partView) createGeometry $name
 }
@@ -7187,7 +7209,7 @@ package provide Archer 1.0
     if {![info exists itk_component(pipeView)]} {
 	buildPipeEditView
 	$itk_component(pipeView) configure \
-	    -mged $itk_component(mged)
+	    -mged $itk_component(ged)
     }
     $itk_component(pipeView) createGeometry $name
 }
@@ -7196,7 +7218,7 @@ package provide Archer 1.0
     if {![info exists itk_component(rhcView)]} {
 	buildRhcEditView
 	$itk_component(rhcView) configure \
-	    -mged $itk_component(mged)
+	    -mged $itk_component(ged)
     }
     $itk_component(rhcView) createGeometry $name
 }
@@ -7205,7 +7227,7 @@ package provide Archer 1.0
     if {![info exists itk_component(rpcView)]} {
 	buildRpcEditView
 	$itk_component(rpcView) configure \
-	    -mged $itk_component(mged)
+	    -mged $itk_component(ged)
     }
     $itk_component(rpcView) createGeometry $name
 }
@@ -7214,7 +7236,7 @@ package provide Archer 1.0
     if {![info exists itk_component(sketchView)]} {
 	buildSketchEditView
 	$itk_component(sketchView) configure \
-	    -mged $itk_component(mged)
+	    -mged $itk_component(ged)
     }
     $itk_component(sketchView) createGeometry $name
 }
@@ -7223,7 +7245,7 @@ package provide Archer 1.0
     if {![info exists itk_component(sphView)]} {
 	buildSphereEditView
 	$itk_component(sphView) configure \
-	    -mged $itk_component(mged)
+	    -mged $itk_component(ged)
     }
     $itk_component(sphView) createGeometry $name
 }
@@ -7232,7 +7254,7 @@ package provide Archer 1.0
     if {![info exists itk_component(tgcView)]} {
 	buildTgcEditView
 	$itk_component(tgcView) configure \
-	    -mged $itk_component(mged)
+	    -mged $itk_component(ged)
     }
     $itk_component(tgcView) createGeometry $name
 }
@@ -7241,7 +7263,7 @@ package provide Archer 1.0
     if {![info exists itk_component(torView)]} {
 	buildTorusEditView
 	$itk_component(torView) configure \
-	    -mged $itk_component(mged)
+	    -mged $itk_component(ged)
     }
     $itk_component(torView) createGeometry $name
 }

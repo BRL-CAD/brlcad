@@ -1,7 +1,7 @@
 #                        T E X T . T C L
 # BRL-CAD
 #
-# Copyright (c) 1995-2008 United States Government as represented by
+# Copyright (c) 1995-2009 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # This library is free software; you can redistribute it and/or
@@ -290,6 +290,7 @@ proc gets {channelId args} {
     # the entire input, then we strip off the gets line leaving just
     # the line that was input.  total hack.  total fugly hack.
 
+    proc execute_cmd_save {} {}
     rename execute_cmd execute_cmd_save
     rename gets_execute_cmd execute_cmd
 

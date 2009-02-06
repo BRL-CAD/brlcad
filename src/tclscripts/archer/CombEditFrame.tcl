@@ -1,7 +1,7 @@
 #               C O M B E D I T F R A M E . T C L
 # BRL-CAD
 #
-# Copyright (c) 2002-2008 United States Government as represented by
+# Copyright (c) 2002-2009 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # This library is free software; you can redistribute it and/or
@@ -118,7 +118,11 @@
 # Initialize the variables containing the object's specification.
 #
 ::itcl::body CombEditFrame::initGeometry {gdata} {
-    set mRegion [bu_get_value_by_keyword region $gdata]
+    if {![catch {bu_get_value_by_keyword region $gdata} _region]} {
+	set mRegion $_region
+    } else {
+	set mRegion ""
+    }
 
     if {![catch {bu_get_value_by_keyword id $gdata} _id]} {
 	set mId $_id
