@@ -1,7 +1,7 @@
 /*                       B O T _ D U M P . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2008 United States Government as represented by
+ * Copyright (c) 2004-2009 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -29,7 +29,7 @@
 #include "ged.h"
 
 static char usage[] = "\
-Usage: %s [-b] [-m directory] [-o file] [-t dxf|obj|sat|stl] [-u units] [-v] geom.g [bot1 bot2 ...]\n";
+Usage: %s [-b] [-m directory] [-o file] [-t dxf|obj|sat|stl] [-u units] geom.g [bot1 bot2 ...]\n";
 
 
 /*
@@ -48,7 +48,7 @@ main(int argc, char *argv[])
     bu_optind = 1;
 
     /* Get past command line options. */
-    while ((c = bu_getopt(argc, argv, "bo:m:t:u")) != EOF) {
+    while ((c = bu_getopt(argc, argv, "bo:m:t:u:")) != EOF) {
 	switch (c) {
 	    case 'b':
 	    case 'm':

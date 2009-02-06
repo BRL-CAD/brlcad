@@ -1,7 +1,7 @@
 /*                     G E D _ T Y P E S . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2008 United States Government as represented by
+ * Copyright (c) 2004-2009 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -28,10 +28,12 @@ typedef	float	*matp_t;
 typedef	float	vect_t[4];
 typedef	float	*vectp_t;
 
-#define	X	0
-#define	Y	1
-#define Z	2
-#define H	3
+enum axis {
+    X = 0,
+    Y = 1,
+    Z = 2,
+    H = 3
+};
 
 #define ALPHA	0
 #define BETA	1

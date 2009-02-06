@@ -1,8 +1,8 @@
-.TH DXF-G 1 BRL-CAD
-.\"                        D X F - G . 1
+.TH BOT_DUMP 1 BRL-CAD
+.\"                      B O T _ D U M P . 1
 .\" BRL-CAD
 .\"
-.\" Copyright (c) 2005-2009 United States Government as represented by
+.\" Copyright (c) 2008-2009 United States Government as represented by
 .\" the U.S. Army Research Laboratory.
 .\"
 .\" Redistribution and use in source (Docbook format) and 'compiled'
@@ -39,96 +39,41 @@
 .\"
 .\".\".\"
 .SH NAME
-dxf-g \- DXF Translator (DXF to BRL-CAD)
+bot_dump \- export polygonal BoT primitives without performing evaluation
 .SH SYNOPSIS
-.B dxf-g
-[-c] [-d] [-v] [-s scale_factor] [-t tolerance] file.dxf database.g
+.B bot_dump [-b] [-m directory] [-o file] [-t dxf|obj|sat|stl] [-u units] [-v] geom.g [bot1 bot2 ...]
 .SH DESCRIPTION
-.I dxf-g\^
-converts the specified
-.I file.dxf
-to a BRL-CAD
-.I database.g
-file.
-
-The following options are available:
-
-.TP
-.B \-c
-Only the first color seen for a layer should be used. Without this option,
-layers may be broken into seperate BOT primitives according to color assigned.
-
-.TP
-.B \-d
-Sets a debug flag. The only effect is to cause a core dump on failure.
-This is probably not useful except for developers.
-.TP
-.B \-v
-Produces very verbose output on stderr.
-.TP
-.B \-s \fIscale_factor\fR
-Provides a scale factor to be applied to the DXF input. This can be used for DXF files
-that do not provide units information.
-.TP
-.B -t \fItolerance\fR
-Specifies the maximum distance (in mm) between two vertices at which the two vertices
-will be considered to be the same vertex.
-
+.I bot_dump
 .P
 The
-.B file.dxf
-file is expected to be in the ASCII Autodesk DXF format as defined in the
-Autocad 2006 manuals. This converter handles entities of types:
-.IP
-POLYLINE
-.br
-LWPOLYLINE
-.br
-LEADER
-.br
-DIMENSION
-.br
-VERTEX
-.br
-LINE
-.br
-CIRCLE
-.br
-ARC
-.br
-ELLIPSE
-.br
-3DFACE
-.br
-TEXT
-.br
-MTEXT
-.br
-ATTRIB
-.br
-SOLID
-.br
-SPLINE
+.I -b
+option may be specified to indicate that the output file should be in
+a binary format (e.g., for formats that support ascii and binary
+formats like stl).
 .P
-The POLYLINE entities in AUTOCAD are actually a container for numerous different entity types. The types
-of POLYLINE entities converted include:
-.IP
-3D polylines
-.br
-3D polygon meshes
-.br
-polyface meshes.
+If the
+.I -m
+option is specified, then BoTs will be output to the directory name
+specified with one BoT per file.
 .P
-SOLID entities are 2D shapes with a solid fill, but this converter does not do
-any filling.
-Each layer is converted to a seperate object. Colors are also converted.
+The
+.I -o
+option specifies what output file the BoT data should be dumped to.
+.P
+The
+.I -t
+is used to specify the desired output file type.  The default output
+type is STL in ASCII format.
+.P
+The
+.I -u
+option takes a units string that indicates the unit conversion to
+perform during output (converting from internal millimeter values to
+the unit type specified).
 .SH EXAMPLE
 .RS
-$ \|\fIdxf-g \|sample.dxf \|sample.g\fP
+$ \|\fIbot_dump \| -o some_bot_dump.dxf \| -t dxf \| sample.g \| some_bot\fP
 .RE
-.SH "SEE ALSO"
-.I
-http://images.autodesk.com/adsk/files/dxf_format.pdf
 .SH DIAGNOSTICS
 Error messages are intended to be self-explanatory.
 .SH "BUG REPORTS"

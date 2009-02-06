@@ -43,6 +43,7 @@ bin_PROGRAMS = \
 	conv-vg2g \
 	cy-g \
 	dbupgrade \
+        dem-g \
 	enf-g \
 	euclid-g \
 	euclid_format \
@@ -113,6 +114,9 @@ cy_g_LDADD = ${WDB}
 
 dbupgrade_SOURCES = dbupgrade.c
 dbupgrade_LDADD = ${WDB}
+
+dem_g_SOURCES = dem-g.c
+dem_g_LDADD = ${WDB}
 
 enf_g_SOURCES = enf-g.c
 enf_g_LDADD = ${WDB}
@@ -222,6 +226,7 @@ dist_bin_SCRIPTS = intaval-g.py
 
 dist_man_MANS = \
 	asc-nmg.1 \
+	bot_dump.1 \
 	bot_shell-vtk.1 \
 	conv-vg2g.1 \
 	cy-g.1 \
@@ -277,11 +282,13 @@ FAST_OBJECTS = \
 	$(asc2g_OBJECTS) \
 	$(asc2pix_OBJECTS) \
 	$(asc_nmg_OBJECTS) \
+	$(bot_dump_OBJECTS) \
 	$(bot_raw_OBJECTS) \
 	$(bot_shell_vtk_OBJECTS) \
 	$(conv_vg2g_OBJECTS) \
 	$(cy_g_OBJECTS) \
 	$(dbupgrade_OBJECTS) \
+	$(dem_g_OBJECTS) \
 	$(enf_g_OBJECTS) \
 	$(euclid_format_OBJECTS) \
 	$(euclid_g_OBJECTS) \

@@ -1,7 +1,7 @@
 /*                         A S C 2 G . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2008 United States Government as represented by
+ * Copyright (c) 1985-2009 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -660,6 +660,15 @@ solbld(void)
 
 	    mk_ehy(ofp, name, center, height, a, rad1, rad2, dd);
 	    break;
+
+	case HYP:
+	    VSET(center, val[0], val[1], val[2]);
+	    VSET(height, val[3], val[4], val[5]);
+	    VSET(a, val[6], val[7], val[8]);
+	    rad1 = val[9];
+	    rad2 = val[10];
+
+	    mk_hyp(ofp, name, center, height, a, rad1, rad2);
 
 	case ETO:
 	    VSET(center, val[0], val[1], val[2]);

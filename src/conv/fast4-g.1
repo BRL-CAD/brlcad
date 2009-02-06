@@ -2,7 +2,7 @@
 .\"                      F A S T 4 - G . 1
 .\" BRL-CAD
 .\"
-.\" Copyright (c) 2005-2008 United States Government as represented by
+.\" Copyright (c) 2005-2009 United States Government as represented by
 .\" the U.S. Army Research Laboratory.
 .\"
 .\" Redistribution and use in source (Docbook format) and 'compiled'
@@ -50,31 +50,37 @@ converts the specified
 to a BRL-CAD
 .I file.g
 file.
+.PP
 The
 .I -d
 option prints debugging information and the
 .I -w
 option prints warnings whenever an object is assigned a default name (no
 name specified in the FASTGEN4 file).
+.PP
 The
 .I -q
 option requests quiet mode, so that nothing will be printed except errors.
+.PP
 The
 .I -b
 option specifies a value for a debug flag for libbu and the
 .I -x
 option specifies a value for the librt debug flag.
+.PP
 The
 .I -o
 option indicates that all CTRI and CQUAD elements that get processed should be output to the
-specified plot_file in libplot3 format. This file can be view in MGED using the
+specified plot_file in libplot3 format.  This plot file can be viewed in MGED using the
 .I overlay
 command.
+.PP
 The
 .I -m
 option requests that information about any CHGCOMP and CBACKING elements be output in the specified
 .I muves_warnings
 file.
+.PP
 The
 .I -c
 option allows the user to specify a restricted set of components to process from the
@@ -83,10 +89,18 @@ input file. The
 may be a comma separated list of ident numbers and ranges. For example,
 .I -c 3002,5678,9213,1002-1100
 will convert only the regions with idents of 3002,5678,9213, and everything from 1002 through 1100.
+.PP
+If you have a FASTGEN2 or FASTGEN3 format file, they can be converted by processing them with
+.I rpatch
+and then providing the resulting rpatch file to the
+.I patch-g
+converter.  See their respective manual pages for more information.
+.PP
 The
 .I file.fastgen4
 file is expected to be in the FASTGEN 4.1 format as defined in the
 FASTGEN 4.1 User Manual.
+.PP
 .I CCONE1, CCONE2,
 and
 .I CCONE3
@@ -118,8 +132,7 @@ elements using an algorithm to create unique BRL-CAD names.
 $ \|\fIfast4-g \|sample.fastgen4 \|sample.g\fP
 .RE
 .SH "SEE ALSO"
-.I
-patch-g
+rpatch(1), patch-g(1)
 .br
 .I
 FASTGEN 4.1 User's Manual,

@@ -1,7 +1,7 @@
 /*                  W R I T E _ B R L . C P P
  * BRL-CAD
  *
- * Copyright (c) 2008 United States Government as represented by
+ * Copyright (c) 2008-2009 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -30,11 +30,6 @@
 #include "nmg.h"
 #include "rtgeom.h"
 #include "write_brl.h"
-
-// redefinition from vmath.h (undef is in brep.h)
-#define	X 0
-#define	Y 1
-#define Z 2
 
 
 double IntavalUnitInMm = 0.1;

@@ -1,8 +1,8 @@
-.TH STL-G 1 BRL-CAD
+.TH BOT_SHELL-VTK 1 BRL-CAD
 .\"                B O T _ S H E L L - V T K . 1
 .\" BRL-CAD
 .\"
-.\" Copyright (c) 2005-2008 United States Government as represented by
+.\" Copyright (c) 2005-2009 United States Government as represented by
 .\" the U.S. Army Research Laboratory.
 .\"
 .\" Redistribution and use in source (Docbook format) and 'compiled'
@@ -43,7 +43,7 @@ bot_shell-vtk \- VTK polydata converter (BRL-CAD to VTK)
 .SH SYNOPSIS
 .B bot_shell-vtk [-m] [-n] [-d debug_level] [-g cell_size] -o vtk_polydata_output brlcad_database.g object1 [object2 object3 ...]
 .SH DESCRIPTION
-.I Bot_shell-vtk
+.I bot_shell-vtk
 uses raytracing to extract the exterior triangles from a model made up
 of BOT primitives. The default operation is to fire a single ray at each
 triangle of each BOT primitive in the specified objects. The rays are fired

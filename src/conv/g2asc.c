@@ -1,7 +1,7 @@
 /*                         G 2 A S C . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2008 United States Government as represented by
+ * Copyright (c) 1985-2009 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -261,11 +261,16 @@ main(int argc, char **argv)
 		bu_log("Unable to read '%s', skipping\n", dp->d_namep);
 		continue;
 	    }
+	    if (!intern.idb_meth->ft_get) {
+		bu_log("Unable to get '%s' (unimplemented), skipping\n", dp->d_namep);
+		continue;
+	    }
+
 	    if ( dp->d_flags & DIR_COMB ) {
 		struct bu_vls log;
 
 		bu_vls_init(&log);
-		if ( intern.idb_meth->ft_get(&log, &intern, "tree" ) != TCL_OK )  {
+		if (intern.idb_meth->ft_get(&log, &intern, "tree") != TCL_OK) {
 		    rt_db_free_internal( &intern, &rt_uniresource );
 		    bu_log("Unable to export '%s', skipping\n", dp->d_namep);
 		    Tcl_AppendResult(interp, bu_vls_addr(&log), (char *)0);
@@ -287,7 +292,7 @@ main(int argc, char **argv)
 		struct bu_vls log;
 
 		bu_vls_init(&log);
-		if ( dp->d_minor_type!= ID_CONSTRAINT && intern.idb_meth->ft_get( &log, &intern, NULL ) != TCL_OK )  {
+		if ( (dp->d_minor_type != ID_CONSTRAINT) && (intern.idb_meth->ft_get( &log, &intern, NULL ) != TCL_OK) )  {
 		    rt_db_free_internal( &intern, &rt_uniresource );
 		    bu_log("Unable to export '%s', skipping\n", dp->d_namep );
 		    Tcl_AppendResult(interp, bu_vls_addr(&log), (char *)0);
