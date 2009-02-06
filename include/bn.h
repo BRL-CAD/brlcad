@@ -1,7 +1,7 @@
 /*                            B N . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2008 United States Government as represented by
+ * Copyright (c) 2004-2009 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -21,12 +21,12 @@
 /** @{ */
 /** @file bn.h
  *
- *  Header file for the BRL-CAD Numerical Computation Library, LIBBN.
+ * Header file for the BRL-CAD Numerical Computation Library, LIBBN.
  *
- *  The library provides a broad assortment of numerical algorithms
- *  and computational routines, including random number generation,
- *  vector math, matrix math, quaternion math, complex math,
- *  synthetic division, root finding, etc.
+ * The library provides a broad assortment of numerical algorithms
+ * and computational routines, including random number generation,
+ * vector math, matrix math, quaternion math, complex math,
+ * synthetic division, root finding, etc.
  *
  */
 
@@ -61,41 +61,44 @@ __BEGIN_DECLS
 
 /** @addtogroup tol */
 /** @{ */
-/**			B N _ T O L
+/**
+ * B N _ T O L
  *
  * @brief Support for uniform tolerances
  *
- *  A handy way of passing around the tolerance information needed to
- *  perform approximate floating-point calculations on geometry.
+ * A handy way of passing around the tolerance information needed to
+ * perform approximate floating-point calculations on geometry.
  *
- *  dist & dist_sq establish the distance tolerance.
+ * dist & dist_sq establish the distance tolerance.
  *
- *	If two points are closer together than dist, then they are to
- *	be considered the same point.
- *	For example:
+ * If two points are closer together than dist, then they are to be
+ * considered the same point.
+ *
+ * For example:
  @code
- point_t	a, b;
- vect_t	diff;
- VSUB2( diff, a, b );
- if ( MAGNITUDE(diff) < tol->dist )	a & b are the same.
+ point_t a, b;
+ vect_t diff;
+ VSUB2(diff, a, b);
+ if (MAGNITUDE(diff) < tol->dist)	a & b are the same.
  or, more efficiently:
- if ( MAQSQ(diff) < tol->dist_sq )
+ if (MAQSQ(diff) < tol->dist_sq)
  @endcode
- *  perp & para establish the angular tolerance.
+ * perp & para establish the angular tolerance.
  *
- *	If two rays emanate from the same point, and their dot product
- *	is nearly one, then the two rays are the same, while if their
- *	dot product is nearly zero, then they are perpendicular.
- *	For example:
+ * If two rays emanate from the same point, and their dot product is
+ * nearly one, then the two rays are the same, while if their dot
+ * product is nearly zero, then they are perpendicular.
+ *
+ * For example:
  @code
- vect_t	a, b;
- if ( fabs(VDOT(a, b)) >= tol->para )	a & b are parallel
- if ( fabs(VDOT(a, b)) <= tol->perp )	a & b are perpendicular
+ vect_t a, b;
+ if (fabs(VDOT(a, b)) >= tol->para)	a & b are parallel
+ if (fabs(VDOT(a, b)) <= tol->perp)	a & b are perpendicular
  @endcode
  *
- *  @note
- *	tol->dist_sq = tol->dist * tol->dist;
- *@n	tol->para = 1 - tol->perp;
+ *@note
+ *    tol->dist_sq = tol->dist * tol->dist;
+ *@n  tol->para = 1 - tol->perp;
  */
 struct bn_tol {
     unsigned long	magic;
@@ -111,7 +114,7 @@ struct bn_tol {
 #define BN_VECT_ARE_PERP(_dot, _tol)		\
 	(((_dot) < 0) ? ((-(_dot))<=(_tol)->perp) : ((_dot) <= (_tol)->perp))
 
-#define BN_APPROXEQUAL(_a, _b, _tol) (fabs( (_a) - (_b) ) <= _tol->dist)
+#define BN_APPROXEQUAL(_a, _b, _tol) (fabs((_a) - (_b)) <= _tol->dist)
 /** @} */
 /*----------------------------------------------------------------------*/
 /* anim.c */
@@ -254,7 +257,7 @@ BN_EXPORT BU_EXTERN(void bn_tcl_mat_print,
 /** @addtogroup complex */
 /** @{ */
 /*
- *  Complex numbers
+ * Complex numbers
  */
 
 /* "complex number" data type: */
@@ -265,27 +268,27 @@ typedef struct bn_complex {
 
 /* functions that are efficiently done as macros: */
 
-#define	bn_cx_copy( ap, bp )		{*(ap) = *(bp);}
-#define	bn_cx_neg( cp )			{ (cp)->re = -((cp)->re);(cp)->im = -((cp)->im);}
-#define	bn_cx_real( cp )		(cp)->re
-#define	bn_cx_imag( cp )		(cp)->im
+#define	bn_cx_copy(ap, bp) {*(ap) = *(bp);}
+#define	bn_cx_neg(cp) { (cp)->re = -((cp)->re);(cp)->im = -((cp)->im);}
+#define	bn_cx_real(cp)		(cp)->re
+#define	bn_cx_imag(cp)		(cp)->im
 
-#define bn_cx_add( ap, bp )		{ (ap)->re += (bp)->re; (ap)->im += (bp)->im;}
-#define bn_cx_ampl( cp )		hypot( (cp)->re, (cp)->im )
-#define bn_cx_amplsq( cp )		( (cp)->re * (cp)->re + (cp)->im * (cp)->im )
-#define bn_cx_conj( cp )		{ (cp)->im = -(cp)->im; }
-#define bn_cx_cons( cp, r, i )		{ (cp)->re = r; (cp)->im = i; }
-#define bn_cx_phas( cp )		atan2( (cp)->im, (cp)->re )
-#define bn_cx_scal( cp, s )		{ (cp)->re *= (s); (cp)->im *= (s); }
-#define bn_cx_sub( ap, bp )		{ (ap)->re -= (bp)->re; (ap)->im -= (bp)->im;}
+#define bn_cx_add(ap, bp) { (ap)->re += (bp)->re; (ap)->im += (bp)->im;}
+#define bn_cx_ampl(cp)		hypot((cp)->re, (cp)->im)
+#define bn_cx_amplsq(cp)		((cp)->re * (cp)->re + (cp)->im * (cp)->im)
+#define bn_cx_conj(cp) { (cp)->im = -(cp)->im; }
+#define bn_cx_cons(cp, r, i) { (cp)->re = r; (cp)->im = i; }
+#define bn_cx_phas(cp)		atan2((cp)->im, (cp)->re)
+#define bn_cx_scal(cp, s) { (cp)->re *= (s); (cp)->im *= (s); }
+#define bn_cx_sub(ap, bp) { (ap)->re -= (bp)->re; (ap)->im -= (bp)->im;}
 
-#define bn_cx_mul( ap, bp )	 	\
+#define bn_cx_mul(ap, bp)	 	\
 	{ register fastf_t a__re, b__re; \
 	(ap)->re = ((a__re=(ap)->re)*(b__re=(bp)->re)) - (ap)->im*(bp)->im; \
 	(ap)->im = a__re*(bp)->im + (ap)->im*b__re; }
 
 /* Output variable "ap" is different from input variables "bp" or "cp" */
-#define bn_cx_mul2( ap, bp, cp )	{ \
+#define bn_cx_mul2(ap, bp, cp) { \
 	(ap)->re = (cp)->re * (bp)->re - (cp)->im * (bp)->im; \
 	(ap)->im = (cp)->re * (bp)->im + (cp)->im * (bp)->re; }
 
@@ -314,7 +317,7 @@ BN_EXPORT BU_EXTERN(void bn_mat_print_guts,
 BN_EXPORT BU_EXTERN(double bn_atan2,
 		    (double x, double y));
 
-#define bn_mat_zero( _m )	{ \
+#define bn_mat_zero(_m) { \
 	bu_log("%s:%d bn_mat_zero() is deprecated, use MAT_ZERO()\n", \
 			__FILE__, __LINE__); \
 	(_m)[0] = (_m)[1] = (_m)[2] = (_m)[3] = \
@@ -322,9 +325,9 @@ BN_EXPORT BU_EXTERN(double bn_atan2,
 	(_m)[8] = (_m)[9] = (_m)[10] = (_m)[11] = \
 	(_m)[12] = (_m)[13] = (_m)[14] = (_m)[15] = 0.0; }
 /*
-  #define	bn_mat_zero( _m )	(void)memset( (void *)_m, 0, sizeof(mat_t))
+  #define	bn_mat_zero(_m)	(void)memset((void *)_m, 0, sizeof(mat_t))
 */
-#define bn_mat_idn( _m )	{ \
+#define bn_mat_idn(_m) { \
 	bu_log("%s:%d bn_mat_idn() is deprecated, use MAT_IDN()\n", \
 			__FILE__, __LINE__); \
 	(_m)[1] = (_m)[2] = (_m)[3] = (_m)[4] = \
@@ -332,10 +335,10 @@ BN_EXPORT BU_EXTERN(double bn_atan2,
 	(_m)[11] = (_m)[12] = (_m)[13] = (_m)[14] = 0.0; \
 	(_m)[0] = (_m)[5] = (_m)[10] = (_m)[15] = 1.0; }
 /*
-  #define bn_mat_idn( _m )	(void)memcpy( (void *)_m, (const void *)bn_mat_identity, sizeof(mat_t))
+  #define bn_mat_idn(_m)	(void)memcpy((void *)_m, (const void *)bn_mat_identity, sizeof(mat_t))
 */
 
-#define bn_mat_copy( _d, _s )	{ \
+#define bn_mat_copy(_d, _s) { \
 	bu_log("%s:%d bn_mat_copy() is deprecated, use MAT_COPY()\n", \
 			__FILE__, __LINE__); \
 	(_d)[0] = (_s)[0];\
@@ -355,7 +358,7 @@ BN_EXPORT BU_EXTERN(double bn_atan2,
 	(_d)[14] = (_s)[14];\
 	(_d)[15] = (_s)[15]; }
 /*
-  #define bn_mat_copy(_d, _s)	(void)memcpy( (void *)_d, (const void *)(_s), sizeof(mat_t))
+  #define bn_mat_copy(_d, _s)	(void)memcpy((void *)_d, (const void *)(_s), sizeof(mat_t))
 */
 
 
@@ -488,8 +491,8 @@ BN_EXPORT BU_EXTERN(fastf_t bn_mat_determinant,
 
 BN_EXPORT BU_EXTERN(int bn_mat_is_non_unif,
 		    (const mat_t m));
-void
-BN_EXPORT BU_EXTERN(bn_wrt_point_direc,
+
+BN_EXPORT BU_EXTERN(void bn_wrt_point_direc,
 		    (mat_t out,
 		     const mat_t change,
 		     const mat_t in,
@@ -501,10 +504,11 @@ BN_EXPORT BU_EXTERN(bn_wrt_point_direc,
 /** @addtogroup msr */
 /** @{ */
 /*
- * Define data structures and constants for the "MSR" random number package.
+ * Define data structures and constants for the "MSR" random number
+ * package.
  *
- * Also define a set of macros to access the random number tables
- * and to limit the area/volume that a set of random numbers inhabit.
+ * Also define a set of macros to access the random number tables and
+ * to limit the area/volume that a set of random numbers inhabit.
  */
 
 struct bn_unif {
@@ -516,13 +520,13 @@ struct bn_unif {
     long	*msr_longs;
 };
 
-#define BN_CK_UNIF(_p) BU_CKMAG(_p, BN_UNIF_MAGIC, "bn_unif")
+#define BN_CK_UNIF(_p)  BU_CKMAG(_p, BN_UNIF_MAGIC, "bn_unif")
 #define BN_CK_GAUSS(_p) BU_CKMAG(_p, BN_GAUSS_MAGIC, "bn_gauss")
 
 
 /**
- * NOTE!!! The order of msr_gauss and msr_unif MUST match in the
- * first three entries as msr_gauss is passed as a msr_unif in
+ * NOTE!!! The order of msr_gauss and msr_unif MUST match in the first
+ * three entries as msr_gauss is passed as a msr_unif in
  * msr_gauss_fill.
  */
 struct bn_gauss {
@@ -552,7 +556,7 @@ BN_EXPORT BU_EXTERN(double bn_gauss_fill,
 		    (struct bn_gauss *p));
 
 #define	BN_UNIF_LONG(_p)	\
-	 (((_p)->msr_long_ptr ) ? \
+	 (((_p)->msr_long_ptr) ? \
 		(_p)->msr_longs[--(_p)->msr_long_ptr] : \
 		bn_unif_long_fill(_p))
 #define BN_UNIF_DOUBLE(_p)	\
@@ -649,9 +653,9 @@ BN_EXPORT BU_EXTERN(int bn_3pts_collinear,
 		     point_t c,
 		     const struct bn_tol *tol));
 BN_EXPORT BU_EXTERN(int bn_pt3_pt3_equal,
-		    ( const point_t a,
-		      const point_t b,
-		      const struct bn_tol *tol));
+		    (const point_t a,
+		     const point_t b,
+		     const struct bn_tol *tol));
 BN_EXPORT BU_EXTERN(int bn_dist_pt2_lseg2,
 		    (fastf_t *dist_sq,
 		     fastf_t pca[2],
@@ -847,7 +851,7 @@ BN_EXPORT BU_EXTERN(int bn_isect_planes,
 /* This could be larger, or even dynamic... */
 #define BN_MAX_POLY_DEGREE	4	/* Maximum Poly Order */
 /**
- *  Polynomial data type
+ * Polynomial data type
  */
 typedef  struct bn_poly {
     unsigned long	magic;
@@ -948,36 +952,38 @@ BN_EXPORT BU_EXTERN(void quat_log,
 /* rand.c */
 /** @addtogroup rnd */
 /** @{ */
-/*  A supply of fast pseudo-random numbers from table in bn/rand.c.
- *  The values are in the open interval (i.e. exclusive) of 0.0 to 1.0
- *  range with a period of 4096.
+/**
+ * A supply of fast pseudo-random numbers from table in bn/rand.c.
+ * The values are in the open interval (i.e. exclusive) of 0.0 to 1.0
+ * range with a period of 4096.
  *
  * @par Usage:
  @code
  unsigned idx;
  float f;
 
- BN_RANDSEED( idx, integer_seed );
+ BN_RANDSEED(idx, integer_seed);
 
  while (NEED_MORE_RAND_NUMBERS) {
- f = BN_RANDOM( idx );
+ f = BN_RANDOM(idx);
  }
  @endcode
- * Note that the values from bn_rand_half() become all 0.0 when the benchmark
- * flag is set (bn_rand_halftab is set to all 0's).  The numbers from
- * bn_rand_table do not change, because the procedural noise would cease to
- * exist.
+ *
+ * Note that the values from bn_rand_half() become all 0.0 when the
+ * benchmark flag is set (bn_rand_halftab is set to all 0's).  The
+ * numbers from bn_rand_table do not change, because the procedural
+ * noise would cease to exist.
  */
 #define BN_RAND_TABSIZE 4096
 #define BN_RAND_TABMASK 0xfff
-#define BN_RANDSEED( _i, _seed )  _i = ((unsigned)_seed) % BN_RAND_TABSIZE
+#define BN_RANDSEED(_i, _seed)  _i = ((unsigned)_seed) % BN_RAND_TABSIZE
 BN_EXPORT extern const float bn_rand_table[BN_RAND_TABSIZE];
 
 /** BN_RANDOM always gives numbers between the open interval 0.0 to 1.0 */
-#define BN_RANDOM( _i )	bn_rand_table[ _i = (_i+1) % BN_RAND_TABSIZE ]
+#define BN_RANDOM(_i)	bn_rand_table[ _i = (_i+1) % BN_RAND_TABSIZE ]
 
 /** BN_RANDHALF always gives numbers between the open interval -0.5 and 0.5 */
-#define BN_RANDHALF( _i ) (bn_rand_table[ _i = (_i+1) % BN_RAND_TABSIZE ]-0.5)
+#define BN_RANDHALF(_i) (bn_rand_table[ _i = (_i+1) % BN_RAND_TABSIZE ]-0.5)
 #define BN_RANDHALF_INIT(_p) _p = bn_rand_table
 
 #define BN_RANDHALFTABSIZE	16535	/* Powers of two give streaking */
@@ -989,7 +995,7 @@ BN_EXPORT extern float bn_rand_halftab[BN_RANDHALFTABSIZE];
  * except when benchmark flag is set, when this becomes a constant 0.0
  */
 #define bn_rand_half(_p)	\
-	( (++(_p) >= &bn_rand_halftab[bn_randhalftabsize] || \
+	((++(_p) >= &bn_rand_halftab[bn_randhalftabsize] || \
 	     (_p) < bn_rand_halftab) ? \
 		*((_p) = bn_rand_halftab) : *(_p))
 
@@ -998,7 +1004,7 @@ BN_EXPORT extern float bn_rand_halftab[BN_RANDHALFTABSIZE];
  */
 #define bn_rand_init(_p, _seed)	\
 	(_p) = &bn_rand_halftab[ \
-		(int)( \
+		(int)(\
 		      (bn_rand_halftab[(_seed)%bn_randhalftabsize] + 0.5) * \
 		      (bn_randhalftabsize-1)) ]
 
@@ -1011,8 +1017,8 @@ BN_EXPORT extern float bn_rand_halftab[BN_RANDHALFTABSIZE];
 #define	BN_SINTABSIZE		2048
 BN_EXPORT extern double bn_sin_scale;
 #define bn_tab_sin(_a)	(((_a) > 0) ? \
-	( bn_sin_table[(int)((0.5+ (_a)*bn_sin_scale))&(BN_SINTABSIZE-1)] ) :\
-	(-bn_sin_table[(int)((0.5- (_a)*bn_sin_scale))&(BN_SINTABSIZE-1)] ))
+	(bn_sin_table[(int)((0.5+ (_a)*bn_sin_scale))&(BN_SINTABSIZE-1)]) :\
+	(-bn_sin_table[(int)((0.5- (_a)*bn_sin_scale))&(BN_SINTABSIZE-1)]))
 BN_EXPORT extern const float bn_sin_table[BN_SINTABSIZE];
 
 BN_EXPORT extern void bn_mathtab_constant();
@@ -1020,13 +1026,38 @@ BN_EXPORT extern void bn_mathtab_constant();
 /** @} */
 
 /*----------------------------------------------------------------------*/
+/* randmt.c */
+/** @addtogroup rnd */
+/** @{ */
+/**
+ * Mersenne Twister random number generation as defined by MT19937.
+ * Moved from src/adrt/libutil/rand.c
+ *
+ * @par Usage:
+ @code
+ double d;
+
+ bn_randmt_seed(integer_seed);
+
+ while (NEED_MORE_RAND_NUMBERS) {
+ d = bn_randmt();
+ }
+ @endcode
+ *
+ */
+
+extern  double  bn_randmt();
+extern  void    bn_randmt_seed(unsigned long seed);
+
+
+/*----------------------------------------------------------------------*/
 /* wavelet.c */
 
 #define CK_POW_2(dimen) { register unsigned long j; register int ok;\
 	for (ok=0, j=0; j < sizeof(unsigned long) * 8; j++) { \
-		if ( (unsigned long)(1<<j) == dimen) { ok = 1;  break; } \
+		if ((unsigned long)(1<<j) == dimen) { ok = 1;  break; } \
 	} \
-	if ( ! ok ) { \
+	if (! ok) { \
 		bu_log("%s:%d value %d should be power of 2 (2^%d)\n", \
 			__FILE__, __LINE__, dimen, j); \
 		bu_bomb("CK_POW_2"); \
@@ -1307,44 +1338,45 @@ BN_EXPORT extern const double bn_radtodeg;
 
 /*----------------------------------------------------------------------*/
 /* tabdata.c */
+
 /**
- *			T A B D A T A
+ * T A B D A T A
  *
- *  Data structures to assist with
- *  recording many sets of data sampled along the same set of independent
- *  variables.
- *  The overall notion is that each sample should be
- *  as compact as possible (an array of measurements),
- *  with all the context stored in one place.
+ * Data structures to assist with recording many sets of data sampled
+ * along the same set of independent variables.
  *
- *  These structures and support routines apply to
- *  any measured "curve" or "function" or "table" with one independent
- *  variable and one or more scalar dependent variable(s).
+ * The overall notion is that each sample should be as compact as
+ * possible (an array of measurements), with all the context stored in
+ * one place.
  *
- *  The context is kept in an 'bn_table' structure, and
- *  the data for one particular sample are kept in an 'bn_tabdata'
- *  structure.
+ * These structures and support routines apply to any measured "curve"
+ * or "function" or "table" with one independent variable and one or
+ * more scalar dependent variable(s).
  *
- *  The contents of the sample in val[j] are interpreted
- *  in the interval (wavel[j]..wavel[j+1]).
- *  This value could be power, albedo, absorption, refractive index,
- *  or any other wavelength-specific parameter.
+ * The context is kept in an 'bn_table' structure, and the data for
+ * one particular sample are kept in an 'bn_tabdata' structure.
  *
- *  For example, if the val[] array contains power values, then
- *  val[j] contains the integral of the power from wavel[j] to wavel[j+1]
+ * The contents of the sample in val[j] are interpreted in the
+ * interval (wavel[j]..wavel[j+1]).  This value could be power,
+ * albedo, absorption, refractive index, or any other
+ * wavelength-specific parameter.
  *
- *  As an exmple, assume nwave=2, wavel[0]=500, wavel[1]=600, wavel[2]=700.
- *  Then val[0] would contain data for the 500 to 600nm interval,
- *  and val[1] would contain data for the 600 to 700nm interval.
- *  There would be no storage allocated for val[2] -- don't use it!
- *  There are several interpretations of this:
+ * For example, if the val[] array contains power values, then val[j]
+ * contains the integral of the power from wavel[j] to wavel[j+1]
+ *
+ * As an exmple, assume nwave=2, wavel[0]=500, wavel[1]=600, wavel[2]=700.
+ * Then val[0] would contain data for the 500 to 600nm interval,
+ * and val[1] would contain data for the 600 to 700nm interval.
+ * There would be no storage allocated for val[2] -- don't use it!
+ * There are several interpretations of this:
  *	1)  val[j] stores the total (integral, area) value for the interval, or
  *	2)  val[j] stores the average value across the interval.
  *
- *  The intervals need not be uniformly spaced; it is acceptable to
- *  increase wavelength sampling density around "important" frequencies.
+ * The intervals need not be uniformly spaced; it is acceptable to
+ * increase wavelength sampling density around "important"
+ * frequencies.
  *
- *  See Also -
+ * See Also -
  *	spectrum.h, spectrum.c
  */
 struct bn_table {
@@ -1357,18 +1389,18 @@ struct bn_table {
 
 /* Gets an bn_table, with x[] having size _nx+1 */
 #ifndef NO_BOMBING_MACROS
-#  define BN_GET_TABLE(_table, _nx)  { \
-	if ( (_nx) < 1 )  bu_bomb("RT_GET_TABLE() _nx < 1\n"); \
-	_table = (struct bn_table *)bu_calloc( 1, \
+#  define BN_GET_TABLE(_table, _nx) { \
+	if ((_nx) < 1)  bu_bomb("RT_GET_TABLE() _nx < 1\n"); \
+	_table = (struct bn_table *)bu_calloc(1, \
 		sizeof(struct bn_table) + sizeof(fastf_t)*(_nx), \
-		"struct bn_table" ); \
+		"struct bn_table"); \
 	_table->magic = BN_TABLE_MAGIC; \
 	_table->nx = (_nx);  }
 #else
-#  define BN_GET_TABLE(_table, _nx)  { \
-	_table = (struct bn_table *)bu_calloc( 1, \
+#  define BN_GET_TABLE(_table, _nx) { \
+	_table = (struct bn_table *)bu_calloc(1, \
 		sizeof(struct bn_table) + sizeof(fastf_t)*(_nx), \
-		"struct bn_table" ); \
+		"struct bn_table"); \
 	_table->magic = BN_TABLE_MAGIC; \
 	_table->nx = (_nx);  }
 #endif
@@ -1383,14 +1415,14 @@ struct bn_tabdata {
 #define BN_TABDATA_NULL		((struct bn_tabdata *)NULL)
 
 #define BN_SIZEOF_TABDATA_Y(_tabdata)	sizeof(fastf_t)*((_tabdata)->ny)
-#define BN_SIZEOF_TABDATA(_table)	( sizeof(struct bn_tabdata) + \
+#define BN_SIZEOF_TABDATA(_table)	(sizeof(struct bn_tabdata) + \
 			sizeof(fastf_t)*((_table)->nx-1))
 
 /* Gets an bn_tabdata, with y[] having size _ny */
-#define BN_GET_TABDATA(_data, _table)  { \
+#define BN_GET_TABDATA(_data, _table) { \
 	BN_CK_TABLE(_table);\
-	_data = (struct bn_tabdata *)bu_calloc( 1, \
-		BN_SIZEOF_TABDATA(_table), "struct bn_tabdata" ); \
+	_data = (struct bn_tabdata *)bu_calloc(1, \
+		BN_SIZEOF_TABDATA(_table), "struct bn_tabdata"); \
 	_data->magic = BN_TABDATA_MAGIC; \
 	_data->ny = (_table)->nx; \
 	_data->table = (_table); }
@@ -1547,28 +1579,29 @@ BN_EXPORT BU_EXTERN(struct bn_tabdata *bn_tabdata_mk_linear_filter,
 /*----------------------------------------------------------------------*/
 /* vlist.c */
 #define BN_VLIST_CHUNK	35		/**< @brief  32-bit mach => just less than 1k */
-/*
- *			B N _ V L I S T
+/**
+ * B N _ V L I S T
  *
- *  Definitions for handling lists of vectors (really verticies, or points)
- *  and polygons in 3-space.
- *  Intented for common handling of wireframe display information,
- *  in the full resolution that is calculated in.
+ * Definitions for handling lists of vectors (really verticies, or
+ * points) and polygons in 3-space.  Intented for common handling of
+ * wireframe display information, in the full resolution that is
+ * calculated in.
  *
- *  On 32-bit machines, BN_VLIST_CHUNK of 35 results in bn_vlist structures
- *  just less than 1k bytes.
+ * On 32-bit machines, BN_VLIST_CHUNK of 35 results in bn_vlist
+ * structures just less than 1k bytes.
  *
- *  The head of the doubly linked list can be just a "struct bu_list" head.
+ * The head of the doubly linked list can be just a "struct bu_list"
+ * head.
  *
- *  To visit all the elements in the vlist:
- *	for ( BU_LIST_FOR( vp, rt_vlist, hp ) )  {
+ * To visit all the elements in the vlist:
+ *	for (BU_LIST_FOR (vp, rt_vlist, hp)) {
  *		register int	i;
  *		register int	nused = vp->nused;
  *		register int	*cmd = vp->cmd;
  *		register point_t *pt = vp->pt;
- *		for ( i = 0; i < nused; i++, cmd++, pt++ )  {
- *			access( *cmd, *pt );
- *			access( vp->cmd[i], vp->pt[i] );
+ *		for (i = 0; i < nused; i++, cmd++, pt++) {
+ *			access(*cmd, *pt);
+ *			access(vp->cmd[i], vp->pt[i]);
  *		}
  *	}
  */
@@ -1592,46 +1625,46 @@ struct bn_vlist  {
 #define BN_VLIST_POLY_VERTNORM	6	/**< @brief  per-vertex normal, for interpoloation */
 
 /**
- *  Applications that are going to use BN_ADD_VLIST and BN_GET_VLIST
- *  are required to execute this macro once, on their _free_hd:
- *		BU_LIST_INIT( &_free_hd );
+ * Applications that are going to use BN_ADD_VLIST and BN_GET_VLIST
+ * are required to execute this macro once, on their _free_hd:
+ *		BU_LIST_INIT(&_free_hd);
  *
  * Note that BN_GET_VLIST and BN_FREE_VLIST are non-PARALLEL.
  */
 #define BN_GET_VLIST(_free_hd, p) {\
-		(p) = BU_LIST_FIRST( bn_vlist, (_free_hd) ); \
-		if ( BU_LIST_IS_HEAD( (p), (_free_hd) ) )  { \
+		(p) = BU_LIST_FIRST(bn_vlist, (_free_hd)); \
+		if (BU_LIST_IS_HEAD((p), (_free_hd))) { \
 			(p) = (struct bn_vlist *)bu_malloc(sizeof(struct bn_vlist), "bn_vlist"); \
 			(p)->l.magic = BN_VLIST_MAGIC; \
 		} else { \
-			BU_LIST_DEQUEUE( &((p)->l) ); \
+			BU_LIST_DEQUEUE(&((p)->l)); \
 		} \
 		(p)->nused = 0; \
 	}
 
 /** Place an entire chain of bn_vlist structs on the freelist _free_hd */
-#define BN_FREE_VLIST(_free_hd, hd)	{ \
-	BU_CK_LIST_HEAD( (hd) ); \
-	BU_LIST_APPEND_LIST( (_free_hd), (hd) ); \
+#define BN_FREE_VLIST(_free_hd, hd) { \
+	BU_CK_LIST_HEAD((hd)); \
+	BU_LIST_APPEND_LIST((_free_hd), (hd)); \
 	}
 
-#define BN_ADD_VLIST(_free_hd, _dest_hd, pnt, draw)  { \
+#define BN_ADD_VLIST(_free_hd, _dest_hd, pnt, draw) { \
 	register struct bn_vlist *_vp; \
-	BU_CK_LIST_HEAD( _dest_hd ); \
-	_vp = BU_LIST_LAST( bn_vlist, (_dest_hd) ); \
-	if ( BU_LIST_IS_HEAD( _vp, (_dest_hd) ) || _vp->nused >= BN_VLIST_CHUNK )  { \
+	BU_CK_LIST_HEAD(_dest_hd); \
+	_vp = BU_LIST_LAST(bn_vlist, (_dest_hd)); \
+	if (BU_LIST_IS_HEAD(_vp, (_dest_hd)) || _vp->nused >= BN_VLIST_CHUNK) { \
 		BN_GET_VLIST(_free_hd, _vp); \
-		BU_LIST_INSERT( (_dest_hd), &(_vp->l) ); \
+		BU_LIST_INSERT((_dest_hd), &(_vp->l)); \
 	} \
-	VMOVE( _vp->pt[_vp->nused], (pnt) ); \
+	VMOVE(_vp->pt[_vp->nused], (pnt)); \
 	_vp->cmd[_vp->nused++] = (draw); \
 	}
 
 /**
- *			B N _ V L B L O C K
+ * B N _ V L B L O C K
  *
- *  For plotting, a way of separating plots into separate color vlists:
- *  blocks of vlists, each with an associated color.
+ * For plotting, a way of separating plots into separate color vlists:
+ * blocks of vlists, each with an associated color.
  */
 struct bn_vlblock {
     unsigned long	magic;
@@ -1666,7 +1699,7 @@ BN_EXPORT BU_EXTERN(void bn_vlist_2string,
  * vertex tree support
  */
 /**
- *  packaging structure
+ * packaging structure
  * holds all the required info for a single vertex tree
  */
 struct vert_root {
@@ -1726,7 +1759,7 @@ __END_DECLS
  * plane structures (from src/librt/plane.h)
  */
 /**
- *  Plane structures
+ * Plane structures
  * holds all the required info for geometric planes.
  */
 
@@ -1750,7 +1783,7 @@ struct plane_specific  {
 };
 
 /*
- *  Describe the tri_specific structure.
+ * Describe the tri_specific structure.
  */
 struct tri_specific  {
     point_t	tri_A;			/* triangle vertex (A) */

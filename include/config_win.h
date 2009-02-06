@@ -1,7 +1,7 @@
 /*                          C O N F I G _ W I N . H
  * BRL-CAD
  *
- * Copyright (c) 1993-2008 United States Government as represented by
+ * Copyright (c) 1993-2009 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -153,6 +153,12 @@
 static int isblank(int c) {
     return ((c == ' ') || (c == '\t')) ? 1 : 0;
 }
+
+/*
+ * Signal handling
+ */
+
+typedef void (*sig_t)(int);
 
 /*
  * types

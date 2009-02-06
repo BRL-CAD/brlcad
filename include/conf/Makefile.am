@@ -16,7 +16,8 @@ USER: $(top_builddir)/include/brlcad_config.h
 
 # updated every time make is invoked for timing the compile
 TS:
-	$(ECHO) "\"`LANG=C date -R 2>/dev/null || date +'%a, %d %b %Y %H:%M:%S %z' 2>/dev/null || date`\"" > $@
+	@$(ECHO) "\"`LANG=C date -R 2>/dev/null || date +'%a, %d %b %Y %H:%M:%S %z' 2>/dev/null || date`\"" > $@
+	@cat TS
 
 .PHONY: TS
 

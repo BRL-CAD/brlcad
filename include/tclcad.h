@@ -1,7 +1,7 @@
 /*                        T C L C A D . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2008 United States Government as represented by
+ * Copyright (c) 2004-2009 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -88,6 +88,8 @@ struct ged_obj {
     struct bu_vls	go_name;
     struct bu_observer	go_observers;
     struct bu_vls	go_more_args_callback;
+    struct bu_vls	*go_prim_label_list;
+    int			go_prim_label_list_size;
     Tcl_Interp		*go_interp;
 };
 

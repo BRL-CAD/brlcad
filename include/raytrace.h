@@ -1,7 +1,7 @@
 /*                      R A Y T R A C E . H
  * BRL-CAD
  *
- * Copyright (c) 1993-2008 United States Government as represented by
+ * Copyright (c) 1993-2009 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -207,7 +207,7 @@ struct rt_db_internal  {
 	(_p)->idb_magic = RT_DB_INTERNAL_MAGIC; \
 	(_p)->idb_major_type = -1; \
 	(_p)->idb_minor_type = -1; \
-	(_p)->idb_meth = GENPTR_NULL; \
+	(_p)->idb_meth = (const struct rt_functab *) GENPTR_NULL; \
 	(_p)->idb_ptr = GENPTR_NULL; \
 	bu_avs_init_empty(&(_p)->idb_avs); \
 }
@@ -2530,8 +2530,6 @@ RT_EXPORT BU_EXTERN(void wdb_init,
 		    (struct rt_wdb *wdbp,
 		     struct db_i   *dbip,
 		     int           mode));
-RT_EXPORT BU_EXTERN(int wdb_fflush,
-		    (struct rt_wdb *wdbp));
 RT_EXPORT BU_EXTERN(void wdb_close,
 		    (struct rt_wdb *wdbp));
 RT_EXPORT BU_EXTERN(int wdb_import_from_path,
@@ -2891,6 +2889,8 @@ RT_EXPORT BU_EXTERN(int db_put_external,
 		    (struct bu_external *ep,
 		     struct directory *dp,
 		     struct db_i *dbip));
+
+/* DEPRECATED - use bu_free_external instead */
 RT_EXPORT BU_EXTERN(void db_free_external,
 		    (struct bu_external *ep));
 

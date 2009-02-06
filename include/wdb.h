@@ -1,7 +1,7 @@
 /*                           W D B . H
  * BRL-CAD
  *
- * Copyright (c) 1988-2008 United States Government as represented by
+ * Copyright (c) 1988-2009 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -188,6 +188,14 @@ WDB_EXPORT int mk_ehy(
     fastf_t r1,
     fastf_t r2,
     fastf_t c );
+WDB_EXPORT int mk_hyp(
+    struct rt_wdb *wdbp,
+    const char *name,
+    const point_t vert,
+    const vect_t height_vector,
+    const vect_t vectA,
+    fastf_t magB,
+    fastf_t base_neck_ratio );
 WDB_EXPORT int mk_eto(
     struct rt_wdb *wdbp,
     const char *name,

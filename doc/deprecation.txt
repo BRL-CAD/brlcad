@@ -60,6 +60,14 @@ include/bu.h
 	%S format specifier -> %V format specifier for bu_vls [deprecated 7.14]
 mged
 	-n option -> -c option [deprecated 7.14]
+include/vmath.h
+	VADD2_2D -> V2ADD2 [deprecated 7.14]
+	VSUB2_2D -> V2SUB2 [deprecated 7.14]
+	MAGSQ_2D -> MAG2SQ [deprecated 7.14]
+	VDOT_2D -> V2DOT [deprecated 7.14]
+	VMOVE_2D -> V2MOVE [deprecated 7.14]
+	VSCALE_2D -> V2SCALE [deprecated 7.14]
+	VJOIN1_2D -> V2JOIN1 [deprecated 7.14]
 
 7.12
 ----
@@ -92,6 +100,7 @@ src/librt/bomb.c
 pre 7.0
 -------
 include/raytrace.h
+	db_free_external -> db_free_external [deprecated pre-7.0]
 	RT_HIT_NORM -> RT_HIT_NORMAL [deprecated pre-7.0]
 	struct hit.hit_point -> RT_HIT_POINT [deprecated pre-7.0]
 	struct hit.hit_normal -> RT_HIT_NORMAL [deprecated pre-7.0]
@@ -100,6 +109,11 @@ include/raytrace.h
 ************
 * OBSOLETE *
 ************
+
+7.16.0
+------
+include/bu.h
+	bu_association() [unused]
 
 7.14.0
 ------
@@ -118,6 +132,8 @@ mged
 
 7.12.4
 ------
+include/mater.h
+	rt_material_head -> rt_material_head()  [deprecated 7.12]
 include/raytrace.h
 	removed iterator from NMG_CK_HITMISS_LIST
 include/bu.h

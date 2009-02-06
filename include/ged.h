@@ -1,7 +1,7 @@
 /*                           G E D . H
  * BRL-CAD
  *
- * Copyright (c) 2008 United States Government as represented by
+ * Copyright (c) 2008-2009 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -74,8 +74,21 @@ __BEGIN_DECLS
 #define GED_SCALE_MODE 3
 #define GED_CONSTRAINED_ROTATE_MODE 4
 #define GED_CONSTRAINED_TRANSLATE_MODE 5
+#define GED_OROTATE_MODE 6
+#define GED_OSCALE_MODE 7
+#define GED_OTRANSLATE_MODE 8
 
-/*XXX This macro is temporary */
+/**
+ * S E M A P H O R E S
+ *
+ * Definition of global parallel-processing semaphores.
+ *
+ */
+#define GED_SEM_WORKER RT_SEM_LAST
+#define GED_SEM_STATS GED_SEM_WORKER+1
+#define GED_SEM_LIST GED_SEM_STATS+1
+#define GED_SEM_LAST GED_SEM_LIST+1
+
 #define GED_INIT(_gedp, _wdbp) { \
     ged_init((_gedp)); \
     (_gedp)->ged_wdbp = (_wdbp); \
@@ -95,7 +108,7 @@ __BEGIN_DECLS
 	    bu_vls_trunc(&(_gedp)->ged_result_str, 0); \
 	    bu_vls_printf(&(_gedp)->ged_result_str, "A database is not open!"); \
 	} else								\
-	    bu_log("A database is not open!"); \
+	    bu_log("A database is not open!\n"); \
 	return (_ret); \
     }
 
@@ -195,7 +208,26 @@ struct ged_adc_state {
     fastf_t	gas_anchor_pt_dst[3];
     int		gas_line_color[3];
     int		gas_tick_color[3];
-    int		gas_linewidth;
+    int		gas_line_width;
+};
+
+struct ged_axes_state {
+    int       gas_draw;
+    point_t   gas_axes_pos;		/* in view coordinates */
+    fastf_t   gas_axes_size; 		/* in view coordinates */
+    int	      gas_line_width;    	/* in pixels */
+    int	      gas_pos_only;
+    int	      gas_axes_color[3];
+    int	      gas_label_color[3];
+    int	      gas_triple_color;
+    int	      gas_tick_enabled;
+    int	      gas_tick_length;		/* in pixels */
+    int	      gas_tick_major_length; 	/* in pixels */
+    fastf_t   gas_tick_interval; 	/* in mm */
+    int	      gas_ticks_per_major;
+    int	      gas_tick_threshold;
+    int	      gas_tick_color[3];
+    int	      gas_tick_major_color[3];
 };
 
 struct ged_grid_state {
@@ -209,11 +241,17 @@ struct ged_grid_state {
     int		ggs_color[3];
 };
 
+struct ged_other_state {
+    int gos_draw;
+    int	gos_line_color[3];
+    int	gos_text_color[3];
+};
+
 struct ged_rect_state {
     int		grs_active;	/* 1 - actively drawing a rectangle */
     int		grs_draw;	/* draw rubber band rectangle */
-    int		grs_linewidth;
-    int		grs_linestyle;  /* 0 - solid, 1 - dashed */
+    int		grs_line_width;
+    int		grs_line_style;  /* 0 - solid, 1 - dashed */
     int		grs_pos[2];	/* Position in image coordinates */
     int		grs_dim[2];	/* Rectangle dimension in image coordinates */
     fastf_t	grs_x;		/* Corner of rectangle in normalized     */
@@ -225,6 +263,8 @@ struct ged_rect_state {
     int		grs_cdim[2];	/* Canvas dimension in pixels */
     fastf_t	grs_aspect;	/* Canvas aspect ratio */
 };
+
+
 
 struct ged_run_rt {
     struct bu_list l;
@@ -307,10 +347,9 @@ struct ged_view {
     mat_t			gv_pmat;		/**< @brief  perspective matrix */
 #if 0
     struct bu_observer		gv_observers;
-    void 			(*gv_callback)();	/**< @brief  called in vo_update with gv_clientData and gvp */
-    genptr_t			gv_clientData;		/**< @brief  passed to gv_callback */
 #endif
-    int				gv_zclip;
+    void 			(*gv_callback)();	/**< @brief  called in ged_view_update with gvp and gv_clientData */
+    genptr_t			gv_clientData;		/**< @brief  passed to gv_callback */
     fastf_t			gv_prevMouseX;
     fastf_t			gv_prevMouseY;
     fastf_t			gv_minMouseDelta;
@@ -318,9 +357,16 @@ struct ged_view {
     fastf_t			gv_rscale;
     fastf_t			gv_sscale;
     int				gv_mode;
+    int				gv_zclip;
     struct ged_adc_state 	gv_adc;
+    struct ged_axes_state 	gv_model_axes;
+    struct ged_axes_state 	gv_view_axes;
     struct ged_grid_state 	gv_grid;
     struct ged_rect_state 	gv_rect;
+    struct ged_other_state 	gv_center_dot;
+    struct ged_other_state 	gv_prim_labels;
+    struct ged_other_state 	gv_view_params;
+    struct ged_other_state 	gv_view_scale;
 };
 
 
@@ -337,7 +383,7 @@ struct ged {
     struct ged_drawable		*ged_gdp;
     struct ged_view		*ged_gvp;
 
-    void			*ged_refresh_clientdata;	/**< @brief  function for handling refresh requests */
+    void			*ged_refresh_clientdata;	/**< @brief  client data passed to refresh handler */
     void			(*ged_refresh_handler)();	/**< @brief  function for handling refresh requests */
     void			(*ged_output_handler)();	/**< @brief  function for handling output */
     char			*ged_output_script;		/**< @brief  script for use by the outputHandler */
@@ -402,6 +448,10 @@ GED_EXPORT BU_EXTERN(int ged_vclip,
 
 /* defined in ged.c */
 GED_EXPORT BU_EXTERN(void ged_close,
+		     (struct ged *gedp));
+GED_EXPORT BU_EXTERN(void ged_drawable_close,
+		     (struct ged_drawable *gdp));
+GED_EXPORT BU_EXTERN(void ged_free,
 		     (struct ged *gedp));
 GED_EXPORT BU_EXTERN(void ged_init,
 		     (struct ged *gedp));
@@ -1013,6 +1063,8 @@ GED_EXPORT BU_EXTERN(void ged_deering_persp_mat,
 		      const fastf_t *l,
 		      const fastf_t *h,
 		      const fastf_t *eye));
+GED_EXPORT BU_EXTERN(void ged_view_update,
+		     (struct ged_view *gvp));
 
 
 /**
@@ -1104,6 +1156,7 @@ GED_EXPORT BU_EXTERN(int ged_attr, (struct ged *gedp, int argc, const char *argv
  * Usage:
  *     arot x y z angle
  */
+GED_EXPORT BU_EXTERN(int ged_arot_args, (struct ged *gedp, int argc, const char *argv[], mat_t rmat));
 GED_EXPORT BU_EXTERN(int ged_arot, (struct ged *gedp, int argc, const char *argv[]));
 
 /**
@@ -1332,6 +1385,51 @@ GED_EXPORT BU_EXTERN(int ged_cpi, (struct ged *gedp, int argc, const char *argv[
  *     dbip
  */
 GED_EXPORT BU_EXTERN(int ged_dbip, (struct ged *gedp, int argc, const char *argv[]));
+
+/**
+ * Set/get libbu's debug bit vector
+ *
+ * Usage:
+ *     debugbu [hex_code]
+ *     
+ */
+GED_EXPORT BU_EXTERN(int ged_debugbu, (struct ged *gedp, int argc, const char *argv[]));
+
+/**
+ * Dump of the database's directory
+ *
+ * Usage:
+ *     debugdir
+ *     
+ */
+GED_EXPORT BU_EXTERN(int ged_debugdir, (struct ged *gedp, int argc, const char *argv[]));
+
+/**
+ * Set/get librt's debug bit vector
+ *
+ * Usage:
+ *     debuglib [hex_code]
+ *     
+ */
+GED_EXPORT BU_EXTERN(int ged_debuglib, (struct ged *gedp, int argc, const char *argv[]));
+
+/**
+ * Provides user-level access to LIBBU's bu_prmem()
+ *
+ * Usage:
+ *     debugmem
+ *     
+ */
+GED_EXPORT BU_EXTERN(int ged_debugmem, (struct ged *gedp, int argc, const char *argv[]));
+
+/**
+ * Set/get librt's NMG debug bit vector
+ *
+ * Usage:
+ *     debugnmg [hex_code]
+ *     
+ */
+GED_EXPORT BU_EXTERN(int ged_debugnmg, (struct ged *gedp, int argc, const char *argv[]));
 
 /**
  * Decompose nmg_solid into maximally connected shells
@@ -1569,12 +1667,36 @@ GED_EXPORT BU_EXTERN(int ged_get_type, (struct ged *gedp, int argc, const char *
 GED_EXPORT BU_EXTERN(int ged_glob, (struct ged *gedp, int argc, const char *argv[]));
 
 /**
+ * 
+ *
+ * Usage:
+ *     gqa args
+ */
+GED_EXPORT BU_EXTERN(int ged_gqa, (struct ged *gedp, int argc, const char *argv[]));
+
+/**
  * Grid utility command.
  *
  * Usage:
  *     grid args
  */
 GED_EXPORT BU_EXTERN(int ged_grid, (struct ged *gedp, int argc, const char *argv[]));
+
+/**
+ * Convert grid coordinates to model coordinates.
+ *
+ * Usage:
+ *     grid2model_lu u v
+ */
+GED_EXPORT BU_EXTERN(int ged_grid2model_lu, (struct ged *gedp, int argc, const char *argv[]));
+
+/**
+ * Convert grid coordinates to view coordinates.
+ *
+ * Usage:
+ *     grid2view_lu u v
+ */
+GED_EXPORT BU_EXTERN(int ged_grid2view_lu, (struct ged *gedp, int argc, const char *argv[]));
 
 /**
  * Create or append objects to a group
@@ -1810,12 +1932,28 @@ GED_EXPORT BU_EXTERN(int ged_mater, (struct ged *gedp, int argc, const char *arg
 GED_EXPORT BU_EXTERN(int ged_mirror, (struct ged *gedp, int argc, const char *argv[]));
 
 /**
+ * Convert model coordinates to grid coordinates.
+ *
+ * Usage:
+ *     model2grid_lu u v
+ */
+GED_EXPORT BU_EXTERN(int ged_model2grid_lu, (struct ged *gedp, int argc, const char *argv[]));
+
+/**
  * Get the model to view matrix
  *
  * Usage:
  *     model2view
  */
 GED_EXPORT BU_EXTERN(int ged_model2view, (struct ged *gedp, int argc, const char *argv[]));
+
+/**
+ * Convert model coordinates to view coordinates.
+ *
+ * Usage:
+ *     model2view_lu u v
+ */
+GED_EXPORT BU_EXTERN(int ged_model2view_lu, (struct ged *gedp, int argc, const char *argv[]));
 
 /**
  * Move an arb's edge through point
@@ -2190,6 +2328,7 @@ GED_EXPORT BU_EXTERN(int ged_rmater, (struct ged *gedp, int argc, const char *ar
  * Usage:
  *     rot [-m|-v] x y z
  */
+GED_EXPORT BU_EXTERN(int ged_rot_args, (struct ged *gedp, int argc, const char *argv[], char *coord, mat_t rmat));
 GED_EXPORT BU_EXTERN(int ged_rot, (struct ged *gedp, int argc, const char *argv[]));
 
 /**
@@ -2270,6 +2409,7 @@ GED_EXPORT BU_EXTERN(int ged_saveview, (struct ged *gedp, int argc, const char *
  * Usage:
  *     sca sf
  */
+GED_EXPORT BU_EXTERN(int ged_scale_args, (struct ged *gedp, int argc, const char *argv[], fastf_t *sf));
 GED_EXPORT BU_EXTERN(int ged_scale, (struct ged *gedp, int argc, const char *argv[]));
 
 /**
@@ -2397,6 +2537,14 @@ GED_EXPORT BU_EXTERN(int ged_sync, (struct ged *gedp, int argc, const char *argv
 GED_EXPORT BU_EXTERN(int ged_tables, (struct ged *gedp, int argc, const char *argv[]));
 
 /**
+ * Create a tire
+ *
+ * Usage:
+ *     tire [dncgjpstuwWRDah]
+ */
+GED_EXPORT BU_EXTERN(int ged_tire, (struct ged *gedp, int argc, const char *argv[]));
+
+/**
  * Set/get the database title
  *
  * Usage:
@@ -2427,6 +2575,7 @@ GED_EXPORT BU_EXTERN(int ged_tops, (struct ged *gedp, int argc, const char *argv
  * Usage:
  *     tra x y z
  */
+GED_EXPORT BU_EXTERN(int ged_tra_args, (struct ged *gedp, int argc, const char *argv[], char *coord, vect_t tvec));
 GED_EXPORT BU_EXTERN(int ged_tra, (struct ged *gedp, int argc, const char *argv[]));
 
 /**
@@ -2504,12 +2653,36 @@ GED_EXPORT BU_EXTERN(int ged_version, (struct ged *gedp, int argc, const char *a
 GED_EXPORT BU_EXTERN(int ged_view, (struct ged *gedp, int argc, const char *argv[]));
 
 /**
+ * Convert view coordinates to grid coordinates.
+ *
+ * Usage:
+ *     view2grid_lu u v
+ */
+GED_EXPORT BU_EXTERN(int ged_view2grid_lu, (struct ged *gedp, int argc, const char *argv[]));
+
+/**
  * Get the view2model matrix.
  *
  * Usage:
  *     view2model
  */
 GED_EXPORT BU_EXTERN(int ged_view2model, (struct ged *gedp, int argc, const char *argv[]));
+
+/**
+ * Convert view coordinates to model coordinates.
+ *
+ * Usage:
+ *     view2model_lu u v
+ */
+GED_EXPORT BU_EXTERN(int ged_view2model_lu, (struct ged *gedp, int argc, const char *argv[]));
+
+/**
+ * Convert a view vector to a model vector.
+ *
+ * Usage:
+ *     view2model_vec u v
+ */
+GED_EXPORT BU_EXTERN(int ged_view2model_vec, (struct ged *gedp, int argc, const char *argv[]));
 
 /**
  * Rotate the view. Note - x, y and z are rotations in view coordinates.

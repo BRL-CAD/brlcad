@@ -1,7 +1,7 @@
 /*                       B R E P . H
  * BRL-CAD
  *
- * Copyright (c) 2007-2008 United States Government as represented by
+ * Copyright (c) 2007-2009 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -34,24 +34,10 @@
 
 #ifdef __cplusplus
 extern "C++" {
-/* XXX ack. a hack. */
-#undef X
-#undef Y
-#undef Z
-#undef W
-#undef H
 #include "opennurbs.h"
 #include "opennurbs_ext.h"
 #include <iostream>
 #include <fstream>
-/* XXX ack. fix the hack. */
-#ifdef __VMATH_H__
-#define X 0
-#define Y 1
-#define Z 2
-#define W 3
-#define H W
-#endif
 }
 
 __BEGIN_DECLS

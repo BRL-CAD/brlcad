@@ -26,8 +26,10 @@ man1DOCBOOK = \
 	M.xml \
 	Z.xml \
 	adc.xml \
+	ae.xml \
 	alias-pix.xml \
 	all_sf.xml \
+	analyze.xml \
 	anim_cascade.xml \
 	anim_fly.xml \
 	anim_hardtrack.xml \
@@ -35,7 +37,32 @@ man1DOCBOOK = \
 	anim_lookat.xml \
 	anim_offset.xml \
 	anim_orient.xml \
+	animmate.xml \
+	apropos.xml \
+	aproposdevel.xml \
+	aproposlib.xml \
+	arb.xml \
+	arced.xml \
+	area.xml \
+	arot.xml \
+	attach.xml \
+	attr.xml \
+	autoview.xml \
+	bev.xml \
+	bot_condense.xml \
+	bot_decimate.xml \
+	bot_face_fuse.xml \
+	bot_face_sort.xml \
+	bot_vertex_fuse.xml \
+	build_region.xml \
 	bwscale.xml \
+	c.xml \
+	cat.xml \
+	center.xml \
+	color.xml \
+	comb_color.xml \
+	copyeval.xml \
+	copymat.xml \
 	g_qa.xml \
 	mged.xml \
 	nirt.xml \
@@ -43,7 +70,8 @@ man1DOCBOOK = \
 	rtarea.xml \
 	rtcheck.xml \
 	rtedge.xml \
-	search.xml
+	search.xml \
+	tire.xml
 
 man1INTRO = \
 	Introduction.xml

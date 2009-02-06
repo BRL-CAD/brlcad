@@ -44,6 +44,10 @@ clobber:
 CLEANFILES = \
 	benchmark
 
+DISTCLEANFILES = \
+	*.log \
+	*.pix
+
 DEPS=src/rt db
 
 include $(top_srcdir)/misc/Makefile.defs

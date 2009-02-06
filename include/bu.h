@@ -1,7 +1,7 @@
 /*                            B U . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2008 United States Government as represented by
+ * Copyright (c) 2004-2009 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -177,6 +177,7 @@ __BEGIN_DECLS
 /* system interface headers */
 #include <setjmp.h> /* for bu_setjmp */
 #include <stddef.h> /* for size_t */
+#include <limits.h> /* for CHAR_BIT */
 
 /* common interface headers */
 #include "tcl.h"	/* Included for Tcl_Interp definition */
@@ -947,12 +948,43 @@ typedef double fastf_t;
 /**@{*/
 
 /**
- * bitv_t - The widest fast integer type available, used to implement
- * bit vectors.  On most machines, this is "long", but on some
- * machines a vendor-specific type such as "long long" can give
- * access to wider integers.
+ * bitv_t should be a fast integer type for implementing bit vectors.
+ *
+ * On many machines, this is a 32-bit "long", but on some machines a
+ * compiler/vendor-specific type such as "long long" or even 'char'
+ * can give access to faster integers.
+ *
+ * THE SIZE OF bitv_t MUST MATCH BU_BITV_SHIFT.
  */
-typedef long bitv_t;
+typedef unsigned char bitv_t;
+
+/**
+ * Bit vector shift size
+ *
+ * Should equal to: log2(sizeof(bitv_t)*8.0).  Using bu_bitv_shift()
+ * will return a run-time computed shift size if the size of a bitv_t
+ * changes.  Performance impact is rather minimal for most models but
+ * disabled for a handful of primitives that heavily rely on bit
+ * vectors.
+ *
+ * (8-bit type: 3, 16-bit type: 4, 32-bit type: 5, 64-bit type: 6)
+ */
+#ifdef CHAR_BIT
+#  if CHAR_BIT == 8
+#    define BU_BITV_SHIFT 3
+#  elif CHAR_BIT == 16
+#    define BU_BITV_SHIFT 4
+#  elif CHAR_BIT == 32
+#    define BU_BITV_SHIFT 5
+#  elif CHAR_BIT == 64
+#    define BU_BITV_SHIFT 6
+#  endif
+#else
+#  define BU_BITV_SHIFT bu_bitv_shift()
+#endif
+
+/** Bit vector mask */
+#define BU_BITV_MASK	((1<<BU_BITV_SHIFT)-1)
 
 /**
  * @brief
@@ -987,13 +1019,7 @@ struct bu_bitv {
  * length sizeof(bitv_t)*8.0 bits long.  users should not call this
  * directly, instead calling the BU_BITV_SHIFT macro instead.
  */
-BU_EXPORT BU_EXTERN(inline int bu_bitv_shift, ());
-
-/** Bit vector index size */
-#define BU_BITV_SHIFT bu_bitv_shift()
-
-/** Bit vector mask */
-#define BU_BITV_MASK	((1<<BU_BITV_SHIFT)-1)
+BU_EXPORT BU_EXTERN(inline unsigned int bu_bitv_shift, ());
 
 /*
  * Bit-string manipulators for arbitrarily long bit strings stored as
@@ -1027,10 +1053,19 @@ static __inline__ int BU_BITTEST(volatile void * addr, int nr)
 	((_bv)->bits[(bit)>>BU_BITV_SHIFT] &= ~(((bitv_t)1)<<((bit)&BU_BITV_MASK)))
 
 /**
- * requires #include <string.h>
+ * zeros all of the internal storage bytes in a bit vector array
  */
 #define BU_BITV_ZEROALL(_bv)	\
-	{ memset((char *)((_bv)->bits), 0, BU_BITS2BYTES( (_bv)->nbits )); }
+{ \
+	if ((_bv) && (_bv)->nbits != 0) { \
+		unsigned char *bvp = (unsigned char *)(_bv)->bits; \
+		size_t nbytes = BU_BITS2BYTES((_bv)->nbits); \
+		do { \
+			*bvp++ = (unsigned char)0; \
+		} while (--nbytes != 0); \
+	} \
+}
+
 
 /* This is not done by default for performance reasons */
 #ifdef NO_BOMBING_MACROS
@@ -1052,7 +1087,7 @@ static __inline__ int BU_BITTEST(volatile void * addr, int nr)
 		bu_log("BU_BITV_NBITS_CHECK number of bits (%u) out of range (> %u)", \
 			((unsigned)(_nbits)), (_bv)->nbits ); \
 		bu_bomb("process self-terminating"); \
-		}
+	}
 #endif
 
 
@@ -1087,6 +1122,9 @@ static __inline__ int BU_BITTEST(volatile void * addr, int nr)
  */
 #define BU_BITV_LOOP_INDEX	((_wd << BU_BITV_SHIFT) | _b)
 
+/**
+ * Paired with BU_BITV_LOOP_START()
+ */
 #define BU_BITV_LOOP_END	\
 		} /* end for (_b) */ \
 	} /* end for (_wd) */ \
@@ -1790,9 +1828,9 @@ struct bu_rb_node
  * B U _ O B S E R V E R
  */
 struct bu_observer {
-    struct bu_list	l;
-    struct bu_vls		observer;
-    struct bu_vls		cmd;
+    struct bu_list l;
+    struct bu_vls observer;
+    struct bu_vls cmd;
 };
 #define BU_OBSERVER_NULL	((struct bu_observer *)0)
 
@@ -1915,24 +1953,30 @@ BU_EXPORT BU_EXTERN(int bu_hsv_to_rgb,
 BU_EXPORT BU_EXTERN(int bu_str_to_rgb,
 		    (char *str,
 		     unsigned char *rgb));
-BU_EXPORT BU_EXTERN(void bu_color_of_rgb_chars,
-		    (struct bu_color *cp,
-		     unsigned char *rgb));
-BU_EXPORT BU_EXTERN(int bu_color_to_rgb_chars,
-		    (struct bu_color *cp,
-		     unsigned char *rgb));
-BU_EXPORT BU_EXTERN(int bu_color_of_rgb_floats,
+BU_EXPORT BU_EXTERN(int bu_color_from_rgb_floats,
 		    (struct bu_color *cp,
 		     fastf_t *rgb));
 BU_EXPORT BU_EXTERN(int bu_color_to_rgb_floats,
 		    (struct bu_color *cp,
 		     fastf_t *rgb));
-BU_EXPORT BU_EXTERN(int bu_color_of_hsv_floats,
-		    (struct bu_color *cp,
-		     fastf_t *hsv));
-BU_EXPORT BU_EXTERN(int bu_color_to_hsv_floats,
-		    (struct bu_color *cp,
-		     fastf_t *hsv));
+
+/* UNIMPLEMENTED
+ *
+ * BU_EXPORT BU_EXTERN(void bu_color_from_rgb_chars,
+ * 		    (struct bu_color *cp,
+ * 		     unsigned char *rgb));
+ * BU_EXPORT BU_EXTERN(int bu_color_to_rgb_chars,
+ * 		    (struct bu_color *cp,
+ * 		     unsigned char *rgb));
+ * BU_EXPORT BU_EXTERN(int bu_color_from_hsv_floats,
+ * 		    (struct bu_color *cp,
+ * 		     fastf_t *hsv));
+ * BU_EXPORT BU_EXTERN(int bu_color_to_hsv_floats,
+ * 		    (struct bu_color *cp,
+ * 		     fastf_t *hsv));
+ */
+
+
 /** @} */
 /** @addtogroup bu_log */
 /** @{ */
@@ -2446,6 +2490,8 @@ BU_EXPORT BU_EXTERN(void bu_rb_walk,
 /* semaphore.c */
 BU_EXPORT BU_EXTERN(void bu_semaphore_init,
 		    (unsigned int nsemaphores));
+BU_EXPORT BU_EXTERN(void bu_semaphore_reinit,
+		    (unsigned int nsemaphores));
 BU_EXPORT BU_EXTERN(void bu_semaphore_acquire,
 		    (unsigned int i));
 BU_EXPORT BU_EXTERN(void bu_semaphore_release,
@@ -2658,17 +2704,6 @@ BU_EXPORT BU_EXTERN(unsigned char *bu_pshort,
 BU_EXPORT BU_EXTERN(unsigned char *bu_plong,
 		    (unsigned char *msgp,
 		     unsigned long l));
-
-/** @} */
-
-/** @addtogroup bu_log */
-/** @{ */
-
-/* association.c */
-BU_EXPORT BU_EXTERN(struct bu_vls *bu_association,
-		    (const char *fname,
-		     const char *value,
-		     int field_sep));
 
 /** @} */
 
@@ -3032,6 +3067,36 @@ BU_EXPORT BU_EXTERN(char **bu_dupinsert_argv,
  */
 BU_EXPORT BU_EXTERN(char **bu_argv_from_path,
 		    (const char *path, int *ac));
+
+
+/**
+ * Defer signal processing and interrupts before critical sections.
+ *
+ * Signal processing for a variety of signals that would otherwise
+ * disrupt the logic of an application are put on hold until
+ * bu_restore_interrupts() is called.
+ *
+ * If an interrupt signal is received while suspended, it will be
+ * raised when/if interrupts are restored.
+ *
+ * Returns 0 on success.
+ * Returns non-zero on error (with perror set if signal() failure).
+ */
+BU_EXPORT BU_EXTERN(int bu_suspend_interrupts, ());
+
+
+/**
+ * Resume signal processing and interrupts after critical sections.
+ *
+ * If a signal was raised since bu_suspend_interrupts() was called,
+ * the previously installed signal handler will be immediately called
+ * albeit only once even if multiple signals were received.
+ *
+ * Returns 0 on success.
+ * Returns non-zero on error (with perror set if signal() failure).
+ */
+BU_EXPORT BU_EXTERN(int bu_restore_interrupts, ());
+
 
 
 __END_DECLS

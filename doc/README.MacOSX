@@ -58,6 +58,22 @@ multiprocessor systems, you can enjoy the benefits of decreased
 compile times by utilizing the "-j" option to make.  After running
 configure, run "make -j2" to build on a 2-processor system.
 
+Universal Builds and 64-bit Compilation
+---------------------------------------
+
+Universal builds have not been fully vetted due to how BRL-CAD
+serializes data to disk.  It is possible to make a universal build,
+but whether the build behaves correctly has not yet been validated and
+as such is not recommended.
+
+Compiling 64-bit on Mac OS X is possible but will not occur by merely
+specifying the --enable-64-bit configure flag.  You must specify
+additional CFLAGS/CXXFLAGS/CPPFLAGS/LDFLAGS to get a 64-bit
+compilation.  The exact values for these flags depends on environment
+and is beyond the scope of this document -- if you don't know what
+settings you need, you probably shouldn't be compiling.
+
+
 Bugs
 ----
 The only known bugs specific to Mac OS X are limitations of Tk or the

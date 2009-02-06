@@ -1,7 +1,7 @@
 /*                        R T G E O M . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2008 United States Government as represented by
+ * Copyright (c) 2004-2009 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -361,12 +361,11 @@ struct rt_ehy_internal {
  */
 struct rt_hyp_internal {
     unsigned long hyp_magic;
-    point_t	hyp_V;	/**< @brief  hyp vertex */
-    vect_t	hyp_H;	/**< @brief  height vector */
-    vect_t	hyp_Au;	/**< @brief  unit vector along semi-major axis */
-    fastf_t	hyp_r1;	/**< @brief  scalar semi-major axis length */
-    fastf_t	hyp_r2;	/**< @brief  scalar semi-minor axis length */
-    fastf_t	hyp_c;	/**< @brief  slope of asymptote cone */
+    point_t	hyp_Vi;	/**< @brief  hyp vertex */
+    vect_t	hyp_Hi;	/**< @brief  full height vector */
+    vect_t	hyp_A;	/**< @brief  semi-major axis */
+    fastf_t	hyp_b;	/**< @brief  scalar semi-minor axis length */
+    fastf_t	hyp_bnr;/**< @brief  ratio of minimum neck width to base width */
 };
 #define RT_HYP_CK_MAGIC(_p)	BU_CKMAG(_p, RT_HYP_INTERNAL_MAGIC, "rt_hyp_internal")
 
@@ -464,9 +463,8 @@ struct rt_extrude_internal
     vect_t		h;	/**< @brief  extrusion vector, may not be in (u_vec X v_vec) plane */
     vect_t		u_vec;	/**< @brief  vector in U parameter direction */
     vect_t		v_vec;	/**< @brief  vector in V parameter direction */
-    int		keypoint;	/**< @brief  index of keypoint vertex */
-    char		*sketch_name;	/**< @brief  name of sketch object that defines
-					 * the curve to be extruded */
+    int			keypoint;	/**< @brief  DEPRECATED (UNUSED): index of keypoint vertex */
+    char		*sketch_name;	/**< @brief  name of sketch object that defines the curve to be extruded */
     struct rt_sketch_internal	*skt;	/**< @brief  pointer to referenced sketch */
 };
 
@@ -557,8 +555,22 @@ struct rt_bot_internal
 
 #define RT_BOT_CK_MAGIC(_p)	BU_CKMAG(_p, RT_BOT_INTERNAL_MAGIC, "rt_bot_internal")
 
-/*
- *      ID_PNTS
+
+/**
+ * ID_PNTS
+ *
+ * Points are represented to a structure that contains exactly the
+ * data that it needs for that 'type' of point.  The reason this was
+ * done over using something like a union was to fully optimize memory
+ * usage so that the maximum number of points could be stored without
+ * resorting to out-of-core techniques.  A union is at least the size
+ * of the largest type and would have wasted memory.
+ *
+ * By using this data-driven approach of type identification, it does
+ * result in needing to have a switching table for all supported types
+ * in order to access data.  This could be avoided by storing them as
+ * multiple lists (wasting a few bytes for unused pointers) but is
+ * left as an exercise to the reader.
  */
 
 typedef enum {
@@ -619,7 +631,7 @@ struct pnt_color_scale_normal {
 
 
 struct rt_pnts_internal {
-    long magic;
+    unsigned long magic;
     double scale;
     rt_pnt_type type;
     unsigned long count;
