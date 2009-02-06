@@ -132,6 +132,8 @@ mged
 
 7.12.4
 ------
+include/mater.h
+	rt_material_head -> rt_material_head()  [deprecated 7.12]
 include/raytrace.h
 	removed iterator from NMG_CK_HITMISS_LIST
 include/bu.h
