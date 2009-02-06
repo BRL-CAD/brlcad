@@ -1,7 +1,7 @@
 dnl                    C O N F I G U R E . A C
 dnl BRL-CAD
 dnl
-dnl Copyright (c) 2004-2008 United States Government as represented by
+dnl Copyright (c) 2004-2009 United States Government as represented by
 dnl the U.S. Army Research Laboratory.
 dnl
 dnl Redistribution and use in source and binary forms, with or without
@@ -909,11 +909,6 @@ if test "x$bc_build_docs" != "xno" ; then
     AC_PATH_PROG(XSLTPROC, xsltproc)
     AC_PATH_PROG(APACHEFOP, fop)
 fi
-
-# AN_MAKEVAR([AR], [BC_PROG_AR])
-# AN_PROGRAM([ar], [BC_PROG_AR])
-# AC_DEFUN([BC_PROG_AR], [AC_CHECK_TOOL(AR, ar, :)])
-# BC_PROG_AR
 
 # XXX tests for ranlib may be required.  "ar ts" was used in cake for
 # sgi and aix so more compensation may be required still.
@@ -1880,9 +1875,9 @@ if test "x$bc_use_optimized" != "xno" ; then
 	fi
 
 
-# XXX -fast seems to provoke stack corruption in the shadow
-# computations, possible that the corruption is indeed valid and
-# there's something that needs to be checked/changed.
+# -fast provokes a stack corruption in the shadow computations because
+# of strict aliasing getting enabled.  we _require_
+# -fno-strict-aliasing until someone changes how lists are managed.
 #
 #	BC_COMPILER_AND_LINKER_RECOGNIZES([-fast], [mac_opt_flag])
 #	if test "x$bc_mac_opt_flag_works" = "xno" ; then
@@ -2560,7 +2555,12 @@ else
 	sleep 1
     fi
 fi
-dnl AC_SUBST values are below after itcl sanity check
+AM_CONDITIONAL(TCL_8_4_HEADERS, [test "x$TCL_VERSION" = "x8.4"])
+AC_SUBST(TCL)
+AC_SUBST(TCLSTUB)
+AC_SUBST(TCL_CPPFLAGS)
+AC_SUBST(TCL_VERSION)
+AC_SUBST(LIBTCL)
 
 
 dnl *** Tk ***
@@ -2674,7 +2674,11 @@ else
 	sleep 1
     fi
 fi
-dnl AC_SUBST values are below after itcl sanity check
+AC_SUBST(TK)
+AC_SUBST(TKSTUB)
+AC_SUBST(TK_CPPFLAGS)
+AC_SUBST(TK_VERSION)
+AC_SUBST(LIBTK)
 
 
 dnl *** incrTcl ***
@@ -2771,54 +2775,6 @@ ITCL_LIB_FILE="libitcl${ITCL_VERSION}.a"
 ITK_LIB_FILE="libitk${ITCL_VERSION}.a"
 AC_SUBST(ITCL_LIB_FILE)
 AC_SUBST(ITK_LIB_FILE)
-
-
-dnl *** tcl+itcl sanity ***
-dnl See if the tcl we're using is compatible with the incrTcl we're using.
-dnl Our incrTcl is latest sources that make it only work with 8.5+
-if test "x$TCL" = "x$LIBTCL" ; then
-    if test "x$ITCL" != "x$LIBITCL" && test "x$TCL_VERSION" != "x8.5" ; then
-	# apparently want to use system tcl with non-system incrTcl
-	# is that sane? probably not until 8.5 is everywhere.
-	AC_MSG_NOTICE([}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}])
-	AC_MSG_WARN([Unable to find a system incrTcl compatible with the available system Tcl])
-	AC_MSG_WARN([Enabling compilation of both Tcl and incrTcl])
-	AC_MSG_NOTICE([{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{])
-	# nope!
-	build_brlcad_tcl="yes"
-	build_brlcad_tk="yes"
-	TCL_VERSION="8.5"
-	TK_VERSION="8.5"
-
-	case $host_os in
-	    darwin*)
-		TCL='-L${top_builddir}/src/other/tcl/unix'" -ltcl${TCL_VERSION} $FRAMEWORK_COREFOUNDATION"
-		;;
-	    *)
-		TCL='-L${top_builddir}/src/other/tcl/unix'" -ltcl${TCL_VERSION} ${LIBDL} ${LIBM}"
-		;;
-	esac
-	TCLSTUB='-L${top_builddir}/src/other/tcl/unix'" -ltclstub${TCL_VERSION}"
-	TCL_CPPFLAGS='-I${top_srcdir}/src/other/tcl/generic -I${top_srcdir}/src/other/tcl/unix'
-
-	TK='-L${top_builddir}/src/other/tk/unix'" -ltk${TK_VERSION}"
-	TKSTUB='-L${top_builddir}/src/other/tk/unix'" -ltkstub${TK_VERSION}"
-	TK_CPPFLAGS='-I${top_srcdir}/src/other/tk/generic -I${top_srcdir}/src/other/tk/unix -I${top_srcdir}/src/other/tk/win'
-	if test "x$bc_build_aquatk" = "xyes" ; then
-	    TK_CPPFLAGS="$TK_CPPFLAGS "'-I${top_srcdir}/src/other/tk/xlib'
-	fi
-    fi
-fi
-AC_SUBST(TCL)
-AC_SUBST(TCLSTUB)
-AC_SUBST(TCL_CPPFLAGS)
-AC_SUBST(TCL_VERSION)
-AC_SUBST(LIBTCL)
-AC_SUBST(TK)
-AC_SUBST(TKSTUB)
-AC_SUBST(TK_CPPFLAGS)
-AC_SUBST(TK_VERSION)
-AC_SUBST(LIBTK)
 
 
 dnl *** iwidgets ***
@@ -3467,7 +3423,8 @@ if test "x$bc_build_docs" != "xno" ; then
         docbook_processing="yes (man/html/pdf)"
     else
         docbook_processing="yes (man/html only)"
-	APACHEFOP=:
+	docbook_pdf_processing="no"
+	APACHEFOP=""
     fi
 fi
 AC_SUBST(XSLTPROC)
@@ -3691,8 +3648,6 @@ AC_SUBST(BRLCAD_LIBS)
 # to core dump.
 AM_CONDITIONAL(LINK_STATIC_REQUIRED, [test "x$build_vendor" = "xsgi" -a "x$compiler" = "xsgi" ])
 
-dnl XXX - hack for justins g.c file
-AM_CONDITIONAL(HAVE_BRLCAD, true)
 AM_CONDITIONAL(HAVE_DOXYGEN, false)
 
 dnl sample applications
@@ -3858,13 +3813,10 @@ AC_CONFIG_FILES([
 	src/adrt/Makefile
 	src/adrt/bench/Makefile
 	src/adrt/doc/Makefile
-	src/adrt/isst/Makefile
-	src/adrt/libcommon/Makefile
 	src/adrt/librender/Makefile
 	src/adrt/libtexture/Makefile
 	src/adrt/libtie/Makefile
 	src/adrt/libtienet/Makefile
-	src/adrt/libutil/Makefile
 	src/adrt/master/Makefile
 	src/adrt/misc/Makefile
 	src/adrt/rise/Makefile
@@ -3877,8 +3829,9 @@ AC_CONFIG_FILES([
 	src/archer/plugins/Makefile
 	src/archer/plugins/Utility/Makefile
 	src/archer/plugins/Wizards/Makefile
-	src/archer/plugins/Wizards/tankwizardIA/Makefile
-	src/archer/plugins/Wizards/tankwizardIA/images/Makefile
+	src/archer/plugins/Wizards/tankwizard/Makefile
+	src/archer/plugins/Wizards/tankwizard/images/Makefile
+	src/archer/plugins/Wizards/tirewizard/Makefile
 	src/brlman/Makefile
 	src/brlman/awf
 	src/brlman/brlman
@@ -3935,7 +3888,6 @@ AC_CONFIG_FILES([
 	src/libwdb/Makefile
 	src/mged/Makefile
 	src/mged/points/Makefile
-	src/mk/Makefile
 	src/nirt/Makefile
 	src/nirt/sfiles/Makefile
 	src/other/Makefile
@@ -3998,6 +3950,7 @@ AC_CONFIG_FILES([
 	src/remrt/Makefile
 	src/rt/Makefile
 	src/rttherm/Makefile
+	src/shapes/Makefile
 	src/sig/Makefile
 	src/tab/Makefile
 	src/tclscripts/Makefile

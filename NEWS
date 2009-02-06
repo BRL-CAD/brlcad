@@ -11,6 +11,39 @@ changes made.  See document footer for additional details.
 
 
 ----------------------------------------------------------------------
+--- 2008-02-06  Release 7.14.2                                     ---
+----------------------------------------------------------------------
+
+This release includes a number of new tools and enhancements that
+facilitate geometry import and export including a new 'bot_dump' tool
+for extracting mesh models without evaluating them for solidity, a new
+'dem-g' converter for importing Digital Elevation Model (DEM) data,
+a new 'lens' tool for creating accurate optical lenses, and the dxf-g
+importer receives a bug fix when importing 2D entities.
+
+* fixed errors in handling of hyp primitive translations - Cliff Yapp
+* g_tool now guesses if a change was evolutionary - Erik Greenwald
+* added >, <, >= and <= attr value comparisons in search - Cliff Yapp
+* fixed double-edged line segment sketch bug in dxf-g - John Anderson
+* mged 'inside' command no longer uses edit state objects - Bob Parker
+* reported and fixed mged documentation eto typein bug - Robert Penny
+* fixed mged itcl.tcl startup failure prior to install - Sean Morrison
+* fixed bot_dump -u command line option for setting units - Bob Parker
+* changed automatic 'make' sizes for various primitives - Bob Parker
+* fixed bug with mged 'make' command automatic keypoints - Bob Parker
+* renamed all mk_ tools to remove the mk_ prefix - Sean Morrison
+* more conversion of documentation to Docbook format - Janine Gettier
+* removed the unused 'k'eypoint point on extrudes - Sean Morrison
+* added new dem-g terrain importer - Richard Weiss
+* layout tweaks to display of selection lists in archer - Doug Howard
+* activate primitive creation buttons in archer - Bob Parker
+* activate wizard plugins and add tire wizard to archer - Bob Parker
+* new initial manual page for bot_dump - Sean Morrison
+* added editing support for hyperboloid primitive to mged - Cliff Yapp
+* new 'lens' procedural tool for making optical lenses - Cliff Yapp
+
+
+----------------------------------------------------------------------
 --- 2008-11-04  Release 7.14.0                                     ---
 ----------------------------------------------------------------------
 

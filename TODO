@@ -17,35 +17,79 @@ http://sf.net/pm/?group_id=105292
 THESE SHOULD HAPPEN BEFORE THE NEXT RELEASE
 -------------------------------------------
 
-* test and ship it!
+* write mged test script to exhaustively exercise all commands
+
+* test and release!
 
 
 THESE SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 -------------------------------------------------
 
-* make Mac OS X universal binaries actually work.
+* implement file input support for the pnts primitive
 
 * make color and vectors on pnts work
 
-* optimize bitv counting
-
-* implement make, ted, edsol, mirror, and analyze for hyp primitive
-
-* implement make, ted, edsol, mirror, and analyze for revolve primitive
-
-* fix incrTcl pathing issues when only using system tcl/tk
-  (get incrTcl subconfigure to work like was done for Tcl)
+* rewrite the tables command to not suck
 
 * fix framebuffer refresh bug.  problem was caused when the if_ogl
   framebuffer was changed (back) to request a direct rendering
   context.  presumably that is triggering other code that is failing
   to redraw.
 
-* convert the documentation to docbook
-
 
 THESE ARE LOWER PRIORITY OR FOR FUTURE RELEASES
 -----------------------------------------------
+
+* deprecate either orot or rotobj
+
+* refactor mged's signal handling to make it possible to safely
+  interrtupt long-running commands
+
+* add a -color option to all mged commands that draw geometry (B, eid,
+  and E come to mind)
+
+* have mged record a timestamped command history by default
+
+* implement -exec support for 'search' command
+
+* make ged command names aware of object arguments for automatic
+  globbing and regular expression expansion:
+	attr set t 1 [regex .*\.r]
+	attr set t 1 [glob *.r]
+	attr set t 1 *.r
+
+* mged crashes on Mac if using system Tcl/Tk with our incrTcl.
+  crashes with the following stack (same whether dm-X or dm-ogl):
+	XQueryExtension
+	...
+	glxGetConfig
+	ogl_choose_visual (dm-ogl.c:1359)
+	ogl_open (dm-ogl.c:401)
+	dm_open (dm-generic:82)
+
+* review adding support for infix and postfix CSG operators for
+  libged/mged.  be sure to revive or at least check out the previous
+  effort in src/mged/comb_bool_parse.y that already has support that
+  recognizes the classical infix notation.
+
+* readd support for vrml v1 to g-vrml so that users can select whether
+  they want v2 (default) or previous v1 output format via a
+  command-line switch.  see http://brlcad.svn.sf.net/viewvc/brlcad/brlcad/trunk/conv/g-vrml.c?view=diff&pathrev=22798&r1=16900&r2=16901 
+
+* VRML importer
+
+* make Mac OS X universal binaries actually work.
+
+* implement analyze for all primitives lacking an implementation
+
+* implement general analyze estimate (perhaps just raytrace it) for
+  primitives where values like surface area are very difficult to
+  calculate.
+
+* move analyze logic into librt (with their respective primitives).
+
+* implement make, ted, edsol, mirror, and analyze for revolve
+  primitive.  implement tess() too.
 
 * (re)verify rtarea CPA results (see diff history for patch, fix
   naming convention for presented/exposed area
@@ -300,6 +344,11 @@ THESE ARE LOWER PRIORITY OR FOR FUTURE RELEASES
   features to BRL-CAD, and to allow BRL-CAD to incorporate those features
   as an integrated part of interaction environments.  
 
+* incremental raytrace-based display manager
+
+* implement tools for generating coils/springs and gears, improve bolt/nut
+  tool support
+
 
 LIBPC
 -----
@@ -351,6 +400,9 @@ THESE BREAK PROTOCOL OR ARE BACKWARDS-INCOMPATIBLE
   deprecated or available to be removed as obsolete items.
 
 * make struct rt_functab's ft_label bigger and/or dynamic (e.g. vls)
+
+* remove the storage of the never-implemented keypoint parameter for
+  extrude objects.
 
 
 FUNCTIONALITY NEEDED TO SPEED UP RAYTRACING
@@ -408,6 +460,8 @@ DOCUMENTATION
 
 * BRL-CAD Manifesto
 	Vision & Scope
+
+* BRL-CAD Taxonomy
 
 * Procedural Geometry in BRL-CAD
 

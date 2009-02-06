@@ -15,6 +15,34 @@ on-going issues.
 Recent Bugs
 -----------
 
+* File->Export seems to not work on Windows
+
+* xpush fails to properly create a hierarchy leaving some as top-level
+  objects and killing other existing objects resulting in dangling
+  references.
+
+* mged on Mac OS X will crash on an X11 call if compiled against
+  system Tcl/Tk (at least on 10.4 linking against 8.4), see TODO
+
+* the ray tracer fails to report LOS and sometimes even hits on a BoT
+  that is marked as unoriented or is inverted (even though it
+  sometimes will report the segments, just without LOS).  this seems
+  to happen for bots that are neither lh or rh (they're mixed) and
+  causes the raytrace to fail if they're set to anything other than
+  'no' for orientation.  this affects rt, nirt, et al.
+
+* g-vrml ignores bots that are created with dxf-g
+
+* Mac OS X installer doesn't include the symbolic links, only
+  including the versioned installation directory.
+
+* 'who' command displays the top-level object if you e up an entire
+  path in mged.
+
+* running 'rt' in mged similarly chokes up if you e a particular path
+  (e.g. /all.g/plate.r) resulting in overlaps that the top-level being
+  rendered.  probably rt not dealing with paths.
+
 * Mouse cursor turns into a huge yellow-translucent arrow when running
   MGED through remote X11.
 
@@ -39,13 +67,6 @@ Recent Bugs
 * g2asc of a v4 is apparently writing out the wrong s_cgtypes and
   otherwise parsing v4 .g files incorrectly
 
-* fast4-g skips lines while processing if there are DOS line endings
-
-* pipe primitive has a BU_GETSTRUCT malloc getting called during
-  raytracing that kills performance by more than an order of magnitude
-  (especially when the light source is a pipe and there are a lot of
-  shadow rays)
-
 * bump shader seems to be busted.  only renders as flat by itself and
   stacked with phong it seems to ignore the uv settings.
 
@@ -65,10 +86,6 @@ Recent Bugs
 
 * MGED File->Preferences->Fonts results in error "named font "button
   _font" doesn't exist on Linux.
-
-* lingering default isn't working for at least one linux user
-
-* rtwizard seems to be busted (again)
 
 * mged tab-completion doesn't work if the object names have spaces
 
@@ -90,10 +107,6 @@ Recent Bugs
 * rtedge seems to get stuck in a loop at the end of rendering, never
   terminates (unless you rtabort/kill the process); works with -P1
 
-* nirt fails to report LOS and sometimes even hits on a BoT that is
-  marked as unoriented or is inverted (even though it sometimes will
-  report the segments, just without LOS)
-
 * nirt/query_ray reports intersection messages in triplicate if the
   shot routines miss but still print out messages
 
@@ -105,9 +118,6 @@ Recent Bugs
 
 * overlap tool in mged encourages very inefficient CSG operations
   (e.g. a simple bolt with an entire hull armor subtracted)
-
-* BoT values are always listed in mm when a point is selected instead
-  of in current editing units.
 
 * a character is (still) sometimes captured by the cursor box
 
@@ -143,11 +153,6 @@ Recent Bugs
 * running any of the various mged commands (e.g. clicking the raytrace
   button many times quickly, or running rtarea on a large model) that
   output a lot of data will hang mged (idle cpu utilization).
-
-* mged in console mode goes into an inf loop if you try to read from
-  stdin using Tcl routines (e.g. read stdin, fgets stdin blah).
-
-* mged in GUI mode rejects reads on stdin
 
 * solids.sh regression test fails on Mac OS X with one pixel
   off-by-many on the edge of the middle ARB8 when using an optimized
@@ -234,8 +239,6 @@ Recent Bugs
   rt_gettrees().
 
 * report of rtwizard hanging at 40% on Debian (from binary distro)
-
-* make extrude crashes
 
 * tra in console mode outputs a warning about mged_players
 

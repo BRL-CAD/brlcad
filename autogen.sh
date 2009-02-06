@@ -1,7 +1,7 @@
 #!/bin/sh
 #                        a u t o g e n . s h
 #
-# Copyright (c) 2005-2008 United States Government as represented by
+# Copyright (c) 2005-2009 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -69,7 +69,11 @@
 #   To verbosely try running with an older (unsupported) autoconf:
 #     AUTOCONF_VERSION=2.50 ./autogen.sh --verbose
 #
-# Author: Christopher Sean Morrison <morrison@brlcad.org>
+# Author:
+#   Christopher Sean Morrison <morrison@brlcad.org>
+#
+# Patches:
+#   Sebastian Pipping <sebastian@pipping.org>
 #
 ######################################################################
 
@@ -105,6 +109,7 @@ ident ( ) {
     fi
 
     echo "autogen.sh build preparation script by Christopher Sean Morrison"
+    echo "  + config.guess download patch by Sebastian Pipping (2008-12-03)"
     echo "revised 3-clause BSD-style license, copyright (c) $__copyright"
     echo "script version $__version, ISO/IEC 9945 POSIX shell script"
 }
@@ -114,11 +119,12 @@ ident ( ) {
 # USAGE FUNCTION #
 ##################
 usage ( ) {
-    echo "Usage: $AUTOGEN_SH [-h|--help] [-v|--verbose] [-q|--quiet] [--version]"
-    echo "    --help     Help on $NAME_OF_AUTOGEN usage"
-    echo "    --verbose  Verbose progress output"
-    echo "    --quiet    Quiet suppressed progress output"
-    echo "    --version  Only perform GNU Build System version checks"
+    echo "Usage: $AUTOGEN_SH [-h|--help] [-v|--verbose] [-q|--quiet] [-d|--download] [--version]"
+    echo "    --help      Help on $NAME_OF_AUTOGEN usage"
+    echo "    --verbose   Verbose progress output"
+    echo "    --quiet     Quiet suppressed progress output"
+    echo "    --download  Download the latest config.guess from gnulib"
+    echo "    --version   Only perform GNU Build System version checks"
     echo
     echo "Description: This script will validate that minimum versions of the"
     echo "GNU Build System tools are installed and then run autoreconf for you."
@@ -268,6 +274,9 @@ fi
 if [ "x$VERSION_ONLY" = "x" ] ; then
     VERSION_ONLY=no
 fi
+if [ "x$DOWNLOAD" = "x" ] ; then
+    DOWNLOAD=no
+fi
 if [ "x$AUTORECONF_OPTIONS" = "x" ] ; then
     AUTORECONF_OPTIONS="-i -f"
 fi
@@ -288,6 +297,9 @@ fi
 if [ "x$AUTOHEADER_OPTIONS" = "x" ] ; then
     AUTOHEADER_OPTIONS=""
 fi
+if [ "x$CONFIG_GUESS_URL" = "x" ] ; then
+    CONFIG_GUESS_URL="http://git.savannah.gnu.org/gitweb/?p=gnulib.git;a=blob_plain;f=build-aux/config.guess;hb=HEAD"
+fi
 for arg in $ARGS ; do
     case "x$arg" in
 	x--help) HELP=yes ;;
@@ -295,6 +307,8 @@ for arg in $ARGS ; do
 	x--quiet) QUIET=yes ;;
 	x-[qQ]) QUIET=yes ;;
 	x--verbose) VERBOSE=yes ;;
+	x-[dD]) DOWNLOAD=yes ;;
+	x--download) DOWNLOAD=yes ;;
 	x-[vV]) VERBOSE=yes ;;
 	x--version) VERSION_ONLY=yes ;;
 	*)
@@ -756,24 +770,17 @@ protect_from_clobber ( ) {
     # prevalent behavior, so we protect against it by keeping a backup
     # of the file that can later be restored.
 
-    if test -f COPYING ; then
-	if test -f COPYING.$$.protect_from_automake.backup ; then
-	    $VERBOSE_ECHO "Already backed up COPYING in `pwd`"
-	else
-	    $VERBOSE_ECHO "Backing up COPYING in `pwd`"
-	    $VERBOSE_ECHO "cp -p COPYING COPYING.$$.protect_from_automake.backup"
-	    cp -p COPYING COPYING.$$.protect_from_automake.backup
+    for file in COPYING INSTALL ; do
+	if test -f ${file} ; then
+	    if test -f ${file}.$$.protect_from_automake.backup ; then
+		$VERBOSE_ECHO "Already backed up ${file} in `pwd`"
+	    else
+		$VERBOSE_ECHO "Backing up ${file} in `pwd`"
+		$VERBOSE_ECHO "cp -p ${file} ${file}.$$.protect_from_automake.backup"
+		cp -p ${file} ${file}.$$.protect_from_automake.backup
+	    fi
 	fi
-    fi
-    if test -f INSTALL ; then
-	if test -f INSTALL.$$.protect_from_automake.backup ; then
-	    $VERBOSE_ECHO "Already backed up INSTALL in `pwd`"
-	else
-	    $VERBOSE_ECHO "Backing up INSTALL in `pwd`"
-	    $VERBOSE_ECHO "cp -p INSTALL INSTALL.$$.protect_from_automake.backup"
-	    cp -p INSTALL INSTALL.$$.protect_from_automake.backup
-	fi
-    fi
+    done
 }
 
 
@@ -840,57 +847,32 @@ restore_clobbered ( ) {
 
     spacer=no
 
-    # COPYING
-    if test -f COPYING.$$.protect_from_automake.backup ; then
-	if test -f COPYING ; then
+    for file in COPYING INSTALL ; do
+	if test -f ${file}.$$.protect_from_automake.backup ; then
+	    if test -f ${file} ; then
 	    # compare entire content, restore if needed
-	    if test "x`cat COPYING`" != "x`cat COPYING.$$.protect_from_automake.backup`" ; then
+	    if test "x`cat ${file}`" != "x`cat ${file}.$$.protect_from_automake.backup`" ; then
 		if test "x$spacer" = "xno" ; then
 		    $VERBOSE_ECHO
 		    spacer=yes
 		fi
 		# restore the backup
-		$VERBOSE_ECHO "Restoring COPYING from backup (automake -f likely clobbered it)"
-		$VERBOSE_ECHO "rm -f COPYING"
-		rm -f COPYING
-		$VERBOSE_ECHO "mv COPYING.$$.protect_from_automake.backup COPYING"
-		mv COPYING.$$.protect_from_automake.backup COPYING
+		$VERBOSE_ECHO "Restoring ${file} from backup (automake -f likely clobbered it)"
+		$VERBOSE_ECHO "rm -f ${file}"
+		rm -f ${file}
+		$VERBOSE_ECHO "mv ${file}.$$.protect_from_automake.backup ${file}"
+		mv ${file}.$$.protect_from_automake.backup ${file}
 	    fi # check contents
-	elif test -f COPYING.$$.protect_from_automake.backup ; then
-	    $VERBOSE_ECHO "mv COPYING.$$.protect_from_automake.backup COPYING"
-	    mv COPYING.$$.protect_from_automake.backup COPYING
-	fi # -f COPYING
-
-	# just in case
-	$VERBOSE_ECHO "rm -f COPYING.$$.protect_from_automake.backup"
-	rm -f COPYING.$$.protect_from_automake.backup
-    fi # -f COPYING.$$.protect_from_automake.backup
-
-    # INSTALL
-    if test -f INSTALL.$$.protect_from_automake.backup ; then
-	if test -f INSTALL ; then
-	    # compare entire content, restore if needed
-	    if test "x`cat INSTALL`" != "x`cat INSTALL.$$.protect_from_automake.backup`" ; then
-		if test "x$spacer" = "xno" ; then
-		    $VERBOSE_ECHO
-		    spacer=yes
-		fi
-		# restore the backup
-		$VERBOSE_ECHO "Restoring INSTALL from backup (automake -f likely clobbered it)"
-		$VERBOSE_ECHO "rm -f INSTALL"
-		rm -f INSTALL
-		$VERBOSE_ECHO "mv INSTALL.$$.protect_from_automake.backup INSTALL"
-		mv INSTALL.$$.protect_from_automake.backup INSTALL
-	    fi # check contents
-	elif test -f INSTALL.$$.protect_from_automake.backup ; then
-	    $VERBOSE_ECHO "mv INSTALL.$$.protect_from_automake.backup INSTALL"
-	    mv INSTALL.$$.protect_from_automake.backup INSTALL
-	fi # -f INSTALL
-
-	# just in case
-	$VERBOSE_ECHO "rm -f INSTALL.$$.protect_from_automake.backup"
-	rm -f INSTALL.$$.protect_from_automake.backup
-    fi # -f INSTALL.$$.protect_from_automake.backup
+	    elif test -f ${file}.$$.protect_from_automake.backup ; then
+		$VERBOSE_ECHO "mv ${file}.$$.protect_from_automake.backup ${file}"
+		mv ${file}.$$.protect_from_automake.backup ${file}
+	    fi # -f ${file}
+	
+	    # just in case
+	    $VERBOSE_ECHO "rm -f ${file}.$$.protect_from_automake.backup"
+	    rm -f ${file}.$$.protect_from_automake.backup
+	fi # -f ${file}.$$.protect_from_automake.backup
+    done
 
     CONFIGURE="`locate_configure_template`"
     if [ "x$CONFIGURE" = "x" ] ; then
@@ -1003,15 +985,50 @@ initialize ( ) {
 	fi
     done
 
-    ##########################################
-    # make sure certain required files exist #
-    ##########################################
-    for file in AUTHORS COPYING ChangeLog INSTALL NEWS README ; do
-	if test ! -f $file ; then
-	    $VERBOSE_ECHO "Touching ${file} since it does not exist"
-	    touch $file
+    ###########################################################
+    # make sure certain required files exist for GNU projects #
+    ###########################################################
+    _marker_found=""
+    _marker_found_message_intro='Detected non-GNU marker "'
+    _marker_found_message_mid='" in '
+    for marker in foreign cygnus ; do
+	_marker_found_message=${_marker_found_message_intro}${marker}${_marker_found_message_mid}
+	_marker_found="`grep 'AM_INIT_AUTOMAKE.*'${marker} $CONFIGURE`"
+	if [ ! "x$_marker_found" = "x" ] ; then
+	    $VERBOSE_ECHO "${_marker_found_message}`basename \"$CONFIGURE\"`"
+	    break
+	fi
+	if test -f "`dirname \"$CONFIGURE\"/Makefile.am`" ; then
+	    _marker_found="`grep 'AUTOMAKE_OPTIONS.*'${marker} Makefile.am`"
+	    if [ ! "x$_marker_found" = "x" ] ; then
+		$VERBOSE_ECHO "${_marker_found_message}Makefile.am"
+		break
+	    fi
 	fi
     done
+    if [ "x${_marker_found}" = "x" ] ; then
+	_suggest_foreign=no
+	for file in AUTHORS COPYING ChangeLog INSTALL NEWS README ; do
+	    if [ ! -f $file ] ; then
+		$VERBOSE_ECHO "Touching ${file} since it does not exist"
+		_suggest_foreign=yes
+		touch $file
+	    fi
+	done
+
+	if [ "x${_suggest_foreign}" = "xyes" ] ; then
+	    $ECHO
+	    $ECHO "Warning: Several files expected of projects that conform to the GNU"
+	    $ECHO "coding standards were not found.  The files were automatically added"
+	    $ECHO "for you since you do not have a 'foreign' declaration specified."
+	    $ECHO
+	    $ECHO "Considered adding 'foreign' to AM_INIT_AUTOMAKE in `basename \"$CONFIGURE\"`"
+	    if test -f "`dirname \"$CONFIGURE\"/Makefile.am`" ; then
+		$ECHO "or to AUTOMAKE_OPTIONS in your top-level Makefile.am file."
+	    fi
+	    $ECHO
+	fi
+    fi
 
     ##################################################
     # make sure certain generated files do not exist #
@@ -1072,6 +1089,75 @@ cd "$START_PATH"
 initialize
 
 
+#########################################
+# DOWNLOAD_GNULIB_CONFIG_GUESS FUNCTION #
+#########################################
+
+# TODO - should make sure wget/curl exist and/or work before trying to
+# use them.
+
+download_gnulib_config_guess () {
+    # abuse gitweb to download gnulib's latest config.guess via HTTP
+    config_guess_temp="config.guess.$$.download"
+    ret=1
+    for __cmd in wget curl fetch ; do
+	$VERBOSE_ECHO "Checking for command ${__cmd}"
+	${__cmd} --version > /dev/null 2>&1
+	ret=$?
+	if [ ! $ret = 0 ] ; then
+	    continue
+        fi
+
+	__cmd_version=`${__cmd} --version | head -n 1 | sed -e 's/^[^0-9]\+//' -e 's/ .*//'`
+	$VERBOSE_ECHO "Found ${__cmd} ${__cmd_version}"
+
+	opts=""
+	case ${__cmd} in
+	    wget)
+		opts="-O" 
+		;;
+	    curl)
+		opts="-o"
+		;;
+	    fetch)
+		opts="-t 5 -f"
+		;;
+	esac
+
+	$VERBOSE_ECHO "Running $__cmd \"${CONFIG_GUESS_URL}\" $opts \"${config_guess_temp}\""
+	eval "$__cmd \"${CONFIG_GUESS_URL}\" $opts \"${config_guess_temp}\"" > /dev/null 2>&1
+	if [ $? = 0 ] ; then
+	    mv -f "${config_guess_temp}" ${_aux_dir}/config.guess
+	    ret=0
+	    break
+	fi
+    done
+
+    if [ ! $ret = 0 ] ; then
+	$ECHO "Warning: config.guess download failed from: $CONFIG_GUESS_URL"
+	rm -f "${config_guess_temp}"
+    fi
+}
+
+
+##############################
+# LIBTOOLIZE_NEEDED FUNCTION #
+##############################
+libtoolize_needed () {
+    ret=1 # means no, don't need libtoolize
+    for feature in AC_PROG_LIBTOOL LT_INIT ; do
+	$VERBOSE_ECHO "Searching for $feature in $CONFIGURE"
+	found="`grep \"^$feature.*\" $CONFIGURE`"
+	if [ ! "x$found" = "x" ] ; then
+	    ret=0 # means yes, need to run libtoolize
+	    break
+	fi
+    done
+    return ${ret}
+}
+
+
+
 ############################################
 # prepare build via autoreconf or manually #
 ############################################
@@ -1115,6 +1201,12 @@ if [ "x$HAVE_AUTORECONF" = "xyes" ] ; then
 
 	$ECHO "Attempting to run the preparation steps individually"
 	reconfigure_manually=yes
+    else
+	if [ "x$DOWNLOAD" = "xyes" ] ; then
+	    if libtoolize_needed ; then
+		download_gnulib_config_guess
+	    fi
+	fi
     fi
 else
     reconfigure_manually=yes
@@ -1193,16 +1285,7 @@ manual_autogen ( ) {
     ##############
     # libtoolize #
     ##############
-    need_libtoolize=no
-    for feature in AC_PROG_LIBTOOL LT_INIT ; do
-	$VERBOSE_ECHO "Searching for $feature in $CONFIGURE"
-	found="`grep \"^$feature.*\" $CONFIGURE`"
-	if [ ! "x$found" = "x" ] ; then
-	    need_libtoolize=yes
-	    break
-	fi
-    done
-    if [ "x$need_libtoolize" = "xyes" ] ; then
+    if libtoolize_needed ; then
 	if [ "x$HAVE_LIBTOOLIZE" = "xyes" ] ; then
 	    $VERBOSE_ECHO "$LIBTOOLIZE $LIBTOOLIZE_OPTIONS"
 	    libtoolize_output="`$LIBTOOLIZE $LIBTOOLIZE_OPTIONS 2>&1`"
@@ -1244,7 +1327,11 @@ manual_autogen ( ) {
 		$ECHO $ECHO_N "Continuing build preparation ... $ECHO_C"
 	    fi
 	fi # ltmain.sh
-    fi # need_libtoolize
+
+	if [ "x$DOWNLOAD" = "xyes" ] ; then
+	    download_gnulib_config_guess
+	fi
+    fi # libtoolize_needed
 
     ############
     # autoconf #
@@ -1293,7 +1380,7 @@ manual_autogen ( ) {
 	    $ECHO
 	    $ECHO "Warning:  Unsupported macros were found in $CONFIGURE"
 	    $ECHO
-	    $ECHO "The `echo $CONFIGURE | basename` file was scanned in order to determine if any"
+	    $ECHO "The `basename \"$CONFIGURE\"` file was scanned in order to determine if any"
 	    $ECHO "unsupported macros are used that exceed the minimum version"
 	    $ECHO "settings specified within this file.  As such, the following macros"
 	    $ECHO "should be removed from configure.ac or the version numbers in this"
@@ -1337,7 +1424,7 @@ EOF
 		$ECHO "	$AUTOGEN_SH --verbose"
 	    else
 		$ECHO "reviewing the minimum GNU Autotools version settings contained in"
-		$ECHO "this script along with the macros being used in your `echo $CONFIGURE | basename` file."
+		$ECHO "this script along with the macros being used in your `basename \"$CONFIGURE\"` file."
 	    fi
 	    $ECHO
 	    $ECHO $ECHO_N "Continuing build preparation ... $ECHO_C"
