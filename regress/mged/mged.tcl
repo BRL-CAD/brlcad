@@ -55,8 +55,8 @@ run_test cp
 run_test cpi
 run_test mv
 run_test mvall
-run_test clone
 run_test build_region
+run_test clone
 run_test prefix
 run_test mirror
 
