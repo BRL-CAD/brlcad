@@ -992,30 +992,32 @@ Get the date from the NEWS file.
 version files, NEWS, and README.  See the above VERSION NUMBERS &
 COMPATIBILITY section.  Commit the changes to the source repository.
 
-5) A "./configure && make" completes successfully on all platforms.
+5) "sh autogen.sh && ./configure && make" completes successfully on
+all platforms.  "sh autogen.sh && ./configure --enable-all && make"
+completes successfully on all platforms.
 
-6) Perform a "make distcheck" successfully.  This will ensure that a
-proper source distribution tarball may be generated and that a build
-should compile properly regardless of the existence of the GNU Build
-System tools (autoconf, automake, etc).
+6) Perform a "make distcheck" and "make check" successfully on trunk.
+This will ensure that a proper source distribution tarball may be
+generated that should build, install, and uninstall properly.
 
-7) Make sure all the changes since the previous release are merged
-into STABLE - be sure to use the explicit form of the merge command, e.g.
+7) Sync trunk with the STABLE branch.  Make sure all changes since the
+previous sync are included and that STABLE matches trunk.
 
-svn co https://brlcad.svn.sourceforge.net/svnroot/brlcad/brlcad/branches/STABLE stable-checkout
-svn merge https://brlcad.svn.sourceforge.net/svnroot/brlcad/brlcad/trunk@33115 https://brlcad.svn.sourceforge.net/svnroot/brlcad/brlcad/trunk@HEAD /home/user/stable-checkout
-svn commit -m "Update STABLE to rel-MAJOR-MINOR-PATCH" 
-
-Note that you may have to break up the commit by commiting some combinations
-of subdirectories individually if the server won't stay connected for the
-whole large commit - these sorts of merges can sometimes be very large.
+    svn co https://brlcad.svn.sourceforge.net/svnroot/brlcad/brlcad/branches/STABLE brlcad.STABLE && cd brlcad.STABLE
+    svn log --stop-on-copy https://brlcad.svn.sourceforge.net/svnroot/brlcad/brlcad/branches/STABLE . | more
+    # review the log and obtain the last trunk merge revision number ##### from comments
+    svn merge https://brlcad.svn.sourceforge.net/svnroot/brlcad/brlcad/trunk@##### https://brlcad.svn.sourceforge.net/svnroot/brlcad/brlcad/trunk@HEAD .
+    sh autogen.sh && ./configure --enable-all && make distcheck
+    svn commit -m "merge trunk to STABLE from ##### to HEAD revision"
 
 8) Tag the release using "rel-MAJOR-MINOR-PATCH" format:
-svn cp https://brlcad.svn.sf.net/svnroot/brlcad/brlcad/branches/STABLE https://brlcad.svn.sf.net/svnroot/brlcad/brlcad/tags/rel-MAJOR-MINOR-PATCH
+
+    svn cp https://brlcad.svn.sf.net/svnroot/brlcad/brlcad/branches/STABLE https://brlcad.svn.sf.net/svnroot/brlcad/brlcad/tags/rel-MAJOR-MINOR-PATCH
 
 9) Checkout a tagged version of the sources (required so that the
 source distribution is correct):
-svn checkout https://brlcad.svn.sourceforge.net/svnroot/brlcad/brlcad/tags/rel-MAJOR-MINOR-PATCH brlcad
+
+    svn checkout https://brlcad.svn.sourceforge.net/svnroot/brlcad/brlcad/tags/rel-MAJOR-MINOR-PATCH brlcad
 
 10) Perform another "make distcheck" on the exported/updated sources on
 a system with the latest GNU Autotools installed to generate the
@@ -1023,6 +1025,13 @@ distributable compressed source tarballs.
 
 11) Verify that the source distribution tarballs may be expanded; and
 that they build, run, and that the file permissions are correct.
+Minimally check:
+
+    [ rt ] without options reports usage with correct library versions
+    [ mged -c test.g "make sph sph ; rt" ] pops up a sphere
+    [ benchmark run TIMEFRAME=1 ] completes without ERROR
+    [ mged ] starts up gui, run: opendb test2.g ; make sph sph ; rt
+    [ rtwizard ] starts up gui
 
 12) Use one of the source distribution tarballs to generate
 platform-specific builds.  Use the NAMING A SOURCE RELEASE and the
@@ -1127,7 +1136,7 @@ Multiple platform binary release:
       DevMaster.net (if major and engine-related)
       http://www.devmaster.net/news/submit.php
 
-15) Sit back and enjoy a beverage for a job well done.
+16) Sit back and enjoy a beverage for a job well done.
 
 
 GETTING HELP
