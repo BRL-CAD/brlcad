@@ -31,6 +31,9 @@
 #
 #	SETUP
 
+# Need to make this a proper search and setup for the build mged - 
+# take a look at using set ::env(LD_LIBRARY_PATH) ... and similar
+# tools.  Will need same info current sh scripts get as args.
 set MGED_CMD /usr/brlcad/bin/mged
 
 file delete mged.g mged.log mged.mged
