@@ -33,8 +33,25 @@
 
 # Need to make this a proper search and setup for the build mged - 
 # take a look at using set ::env(LD_LIBRARY_PATH) ... and similar
-# tools.  Will need same info current sh scripts get as args.
+# tools.  Will need same info current sh scripts get as args.  Perhaps
+# use find or other features of standard package fileutil here.
 set MGED_CMD /usr/brlcad/bin/mged
+
+set top_srcdir /home/user/brlcad
+
+if {[info exists ::env(LD_LIBRARY_PATH)]} {
+   set ::env(LD_LIBRARY_PATH) ../src/other/tcl/unix:../src/other/tk/unix:$top_srcdir/src/other/tcl/unix:$top_srcdir/src/other/tk/unix:$::env(LD_LIBRARY_PATH)
+} else {
+   set ::env(LD_LIBRARY_PATH) ../src/other/tcl/unix:../src/other/tk/unix:$top_srcdir/src/other/tcl/unix:$top_srcdir/src/other/tk/unix
+}
+
+if {[info exists ::env(DYLD_LIBRARY_PATH)]} {
+   set ::env(DYLD_LIBRARY_PATH) ../src/other/tcl/unix:../src/other/tk/unix:$top_srcdir/src/other/tcl/unix:$top_srcdir/src/other/tk/unix:$::env(DYLD_LIBRARY_PATH)
+} else {
+   set ::env(DYLD_LIBRARY_PATH) ../src/other/tcl/unix:../src/other/tk/unix:$top_srcdir/src/other/tcl/unix:$top_srcdir/src/other/tk/unix
+}
+
+
 
 file delete mged.g mged.log mged.mged
 
