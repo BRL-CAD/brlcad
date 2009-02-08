@@ -1,5 +1,3 @@
-source regression_resources.tcl
-
 puts "*** Testing 'in' command ***"
 
 in_all_prims in

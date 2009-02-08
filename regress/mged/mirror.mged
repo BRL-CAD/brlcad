@@ -1,5 +1,3 @@
-source regression_resources.tcl
-
 puts "*** Testing 'mirror' command ***"
 
 in_eto mirror 1

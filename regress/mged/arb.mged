@@ -1,5 +1,3 @@
-source regression_resources.tcl
-
 puts "*** Testing 'arb' command ***"
 
 arb arb_test1.s 30 3

@@ -1,4 +1,4 @@
-#                         M G E D . T C L
+#                        R U N _ T E S T . T C L
 # BRL-CAD
 #
 # Copyright (c) 2004-2009 United States Government as represented by
@@ -20,13 +20,11 @@
 
 ###########
 #
-#                     M G E D . T C L
+#                     R U N _ T E S T . T C L
 #
-# This script is the master top level script used to run a comprehensive
-# regression test on all MGED commands.  It runs individual scripts with
-# mged for each command and is responsible for managing outputs in such
-# a fashion that they can be systematically compared to a standard
-#
+# This script is intended to run single tests from within the regress/mged
+# directory, using local mged if compiled in-tree and if not just trying
+# mged.
 
 #
 #	SETUP
@@ -37,11 +35,11 @@ set MGED_CMD [pwd]/../../src/mged/mged
 
 if {![is_mged $MGED_CMD]} {
   global MGED_CMD
-  puts "Error: $MGED_CMD is not present or is not a working mged binary."
-  return 0
+  puts "Warning - using default MGED in path, probably NOT local compiled copy"
+  set MGED_CMD mged
 }
 
-set top_srcdir [lindex $argv 0]
+set top_srcdir ../../ 
 
 if {[info exists ::env(LD_LIBRARY_PATH)]} {
    set ::env(LD_LIBRARY_PATH) ../src/other/tcl/unix:../src/other/tk/unix:$top_srcdir/src/other/tcl/unix:$top_srcdir/src/other/tk/unix:$::env(LD_LIBRARY_PATH)
@@ -55,14 +53,11 @@ if {[info exists ::env(DYLD_LIBRARY_PATH)]} {
    set ::env(DYLD_LIBRARY_PATH) ../src/other/tcl/unix:../src/other/tk/unix:$top_srcdir/src/other/tcl/unix:$top_srcdir/src/other/tk/unix
 }
 
-
-file delete mged.g mged.log mged.mged
-
 proc add_test {cmdname} {
      global top_srcdir
-     set mgedfile [open ./mged.mged a]
-     puts $mgedfile "source [format %s/regress/mged/regression_resources.tcl $top_srcdir]"
-     set testfile [open [format %s/regress/mged/%s.mged $top_srcdir $cmdname] r]
+     set mgedfile [open ./tmp_run_test.mged a]
+     puts $mgedfile "source regression_resources.tcl"
+     set testfile [open [format %s.mged $cmdname] r]
      while {[gets $testfile line] >= 0} {
         puts $mgedfile $line
      }
@@ -73,39 +68,9 @@ proc add_test {cmdname} {
 proc run_test {cmdname} {
      global MGED_CMD
      global top_srcdir
-     if {[file exists [format %s.mged $cmdname]]} {
-        exec $MGED_CMD -c [format %s.g $cmdname] < [format %s.mged $cmdname] >>& [format %s.log $cmdname]
-     } else {
-        exec $MGED_CMD -c [format %s.g $cmdname] < [format %s/regress/mged/%s.mged $top_srcdir $cmdname] >>& [format %s.log $cmdname]
-     }
+     add_test $cmdname
+     exec $MGED_CMD -c [format %s.g $cmdname] < tmp_run_test.mged >>& [format %s.log $cmdname]
+     file delete tmp_run_test.mged 
 }
 
-#
-#	GEOMETRIC INPUT COMMANDS
-#
-add_test in
-add_test make
-add_test 3ptarb
-add_test arb
-add_test comb
-add_test g
-add_test r
-add_test make_bb
-add_test cp
-add_test cpi
-add_test mv
-add_test mvall
-add_test build_region
-add_test clone
-add_test prefix
-add_test mirror
-
-#
-#	DISPLAYING GEOMETRY - COMMANDS
-#
-
-
-
-
-
-run_test mged
+run_test [lindex $argv 0]

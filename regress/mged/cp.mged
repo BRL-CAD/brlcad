@@ -1,5 +1,3 @@
-source regression_resources.tcl
-
 puts "*** Testing 'cp' command ***"
 
 in_sph cp 

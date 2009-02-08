@@ -1,5 +1,3 @@
-source regression_resources.tcl
-
 puts "*** Testing 'build_region' command ***"
 
 batch_insert build_region epa .s 0 15 1

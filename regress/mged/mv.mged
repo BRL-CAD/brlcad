@@ -1,5 +1,3 @@
-source regression_resources.tcl
-
 puts "*** Testing 'mv' command ***"
 
 in_sph mv 1

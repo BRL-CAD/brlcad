@@ -1,5 +1,3 @@
-source regression_resources.tcl
-
 puts "*** Testing 'comb' command ***"
 
 in_sph comb 1

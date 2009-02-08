@@ -1,5 +1,3 @@
-source regression_resources.tcl
-
 puts "*** Testing 'clone' command ***"
 
 in_eto clone _a

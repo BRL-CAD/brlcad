@@ -1,5 +1,3 @@
-source regression_resources.tcl
-
 puts "*** Testing 'r' command ***"
 
 in_sph r 1

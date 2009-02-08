@@ -1,5 +1,3 @@
-source regression_resources.tcl
-
 puts "*** Testing 'prefix' command ***"
 
 in_sph prefix 1

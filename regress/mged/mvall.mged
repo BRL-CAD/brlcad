@@ -1,5 +1,3 @@
-source regression_resources.tcl
-
 puts "*** Testing 'mvall' command ***"
 
 in_sph mvall 1

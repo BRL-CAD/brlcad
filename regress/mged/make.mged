@@ -1,5 +1,3 @@
-source regression_resources.tcl
-
 puts "*** Testing 'make' command ***"
 
 make_all_prims make -1 
