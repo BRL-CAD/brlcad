@@ -1,8 +1,6 @@
-puts "*** Testing 'comb' command ***"
+source regression_resources.tcl
 
-if {![info exists make_primitives_list]} {  
-   source regression_resources.tcl
-}
+puts "*** Testing 'comb' command ***"
 
 in_sph comb 1
 in_sph comb 2
@@ -14,4 +12,4 @@ comb comb4.c u comb_sph2.s - comb_sph1.s + comb_sph3.s
 comb comb5.c u comb_sph2.s - comb_sph1.s + comb_sph3.s
 comb comb6.c u comb2.c + comb1.c u comb3.c u comb4.c - comb5.c
 
-puts "*** 'comb' testing completed ***\n"
+puts "*** 'comb' testing completed ***"

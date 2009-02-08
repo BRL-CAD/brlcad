@@ -1,8 +1,6 @@
-puts "*** Testing 'mirror' command ***"
+source regression_resources.tcl
 
-if {![info exists make_primitives_list]} {  
-   source regression_resources.tcl
-}
+puts "*** Testing 'mirror' command ***"
 
 in_eto mirror 1
 in mirror_eto2.s eto -10 0 0 -1 -1 -1 20 0 3 3 2.5
@@ -13,4 +11,4 @@ mirror -x mirror1.c mirror4.c
 mirror -y mirror1.c mirror5.c
 mirror -z mirror1.c mirror6.c
 
-puts "*** 'mirror' testing completed ***\n"
+puts "*** 'mirror' testing completed ***"

@@ -31,35 +31,51 @@
 #
 #	SETUP
 
-set MGED_CMD /Users/cyapp/brlcad-install/bin/mged
+set MGED_CMD /usr/brlcad/bin/mged
 
-file delete mged.g mged.log
+file delete mged.g mged.log mged.mged
+
+proc add_test {cmdname} {
+     set mgedfile [open mged.mged a]
+     set testfile [open [format %s.mged $cmdname] r]
+     while {[gets $testfile line] >= 0} {
+        puts $mgedfile $line
+     }
+     close $mgedfile
+     close $testfile
+}
 
 proc run_test {cmdname} {
      global MGED_CMD
-     exec $MGED_CMD -c mged.g source [format %s.tcl $cmdname] >>& mged.log
+     exec $MGED_CMD -c [format %s.g $cmdname] < [format %s.mged $cmdname] >>& [format %s.log $cmdname]
 }
 
 #
 #	GEOMETRIC INPUT COMMANDS
 #
-run_test in
-run_test make
-run_test 3ptarb
-run_test arb
-run_test comb
-run_test g
-run_test r
-run_test make_bb
-run_test cp
-run_test cpi
-run_test mv
-run_test mvall
-run_test build_region
-run_test clone
-run_test prefix
-run_test mirror
+add_test in
+add_test make
+add_test 3ptarb
+add_test arb
+add_test comb
+add_test g
+add_test r
+add_test make_bb
+add_test cp
+add_test cpi
+add_test mv
+add_test mvall
+add_test build_region
+add_test clone
+add_test prefix
+add_test mirror
 
 #
 #	DISPLAYING GEOMETRY - COMMANDS
 #
+
+
+
+
+
+run_test mged

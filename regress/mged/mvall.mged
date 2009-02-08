@@ -1,8 +1,6 @@
-puts "*** Testing 'mvall' command ***"
+source regression_resources.tcl
 
-if {![info exists make_primitives_list]} {  
-   source regression_resources.tcl
-}
+puts "*** Testing 'mvall' command ***"
 
 in_sph mvall 1
 in_sph mvall 2
@@ -12,4 +10,4 @@ mvall mvall_sph1.s moved_all_sph.s
 mvall mvall_comb_1.c moved_all_comb1.c
 mvall mvall_sph2.s moved_all_comb_sph.s
 
-puts "*** 'mvall' testing completed ***\n"
+puts "*** 'mvall' testing completed ***"
