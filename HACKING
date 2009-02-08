@@ -992,45 +992,65 @@ Get the date from the NEWS file.
 version files, NEWS, and README.  See the above VERSION NUMBERS &
 COMPATIBILITY section.  Commit the changes to the source repository.
 
-5) A "./configure && make" completes successfully on all platforms.
+5) "sh autogen.sh && ./configure && make" completes successfully on
+all platforms.  "sh autogen.sh && ./configure --enable-all && make"
+completes successfully on all platforms.
 
-6) Perform a "make distcheck" successfully.  This will ensure that a
-proper source distribution tarball may be generated and that a build
-should compile properly regardless of the existence of the GNU Build
-System tools (autoconf, automake, etc).
+6) Perform a "make distcheck" and "make check" successfully on trunk.
+This will ensure that a proper source distribution tarball may be
+generated that should build, install, and uninstall properly.
 
-7) Tag the release using "rel-MAJOR-MINOR-PATCH" format:
-svn cp https://brlcad.svn.sf.net/svnroot/brlcad/brlcad/trunk https://brlcad.svn.sf.net/svnroot/brlcad/brlcad/tags/rel-MAJOR-MINOR-PATCH
+7) Sync trunk with the STABLE branch.  Make sure all changes since the
+previous sync are included and that STABLE matches trunk.
 
-8) Checkout a tagged version of the sources (required so that the
+    svn co https://brlcad.svn.sourceforge.net/svnroot/brlcad/brlcad/branches/STABLE brlcad.STABLE && cd brlcad.STABLE
+    svn log --stop-on-copy https://brlcad.svn.sourceforge.net/svnroot/brlcad/brlcad/branches/STABLE . | more
+    # review the log and obtain the last trunk merge revision number ##### from comments
+    svn merge https://brlcad.svn.sourceforge.net/svnroot/brlcad/brlcad/trunk@##### https://brlcad.svn.sourceforge.net/svnroot/brlcad/brlcad/trunk@HEAD .
+    sh autogen.sh && ./configure --enable-all && make distcheck
+    svn commit -m "merge trunk to STABLE from ##### to HEAD revision"
+
+8) Tag the release using "rel-MAJOR-MINOR-PATCH" format:
+
+    svn cp https://brlcad.svn.sf.net/svnroot/brlcad/brlcad/branches/STABLE https://brlcad.svn.sf.net/svnroot/brlcad/brlcad/tags/rel-MAJOR-MINOR-PATCH
+
+9) Checkout a tagged version of the sources (required so that the
 source distribution is correct):
-svn checkout https://brlcad.svn.sourceforge.net/svnroot/brlcad/brlcad/tags/rel-MAJOR-MINOR-PATCH brlcad
 
-9) Perform another "make distcheck" on the exported/updated sources on
+    svn checkout https://brlcad.svn.sourceforge.net/svnroot/brlcad/brlcad/tags/rel-MAJOR-MINOR-PATCH brlcad
+
+10) Perform another "make distcheck" on the exported/updated sources on
 a system with the latest GNU Autotools installed to generate the
 distributable compressed source tarballs.
 
-10) Verify that the source distribution tarballs may be expanded; and
+11) Verify that the source distribution tarballs may be expanded; and
 that they build, run, and that the file permissions are correct.
+Minimally check:
 
-11) Use one of the source distribution tarballs to generate
+    [ rt ] without options reports usage with correct library versions
+    [ mged -c test.g "make sph sph ; rt" ] pops up a sphere
+    [ benchmark run TIMEFRAME=1 ] completes without ERROR
+    [ mged ] starts up gui, run: opendb test2.g ; make sph sph ; rt
+    [ rtwizard ] starts up gui
+
+12) Use one of the source distribution tarballs to generate
 platform-specific builds.  Use the NAMING A SOURCE RELEASE and the
 NAMING A BINARY RELEASE sections above for naming source and binary
 distribution files respectively.  Test the build: make test && make
 bench
 
-12) Post the source and platform-specific binary distributions to
+13) Post the source and platform-specific binary distributions to
 SourceForge and then select them on the sf.net File Release System:
 sftp sfusername@frs.sourceforge.net:uploads
 put brlcad-*
 
-13) Increment and commit the next BRL-CAD release numbers to SVN;
+14) Increment and commit the next BRL-CAD release numbers to SVN;
 update the include/conf/(MAJOR|MINOR|PATCH) version files, and NEWS
 immediately to an odd-numbered minor version or a new patch developer
 version (e.g. 7.11.0 or 7.4.1).  Update the README version to next
 _expected_ release number (e.g. 7.12.0 or 7.4.2).
 
-14) Announce the new release.  The NEWS file should generally be used
+15) Announce the new release.  The NEWS file should generally be used
 as a basis for making release announcements though the announcements
 almost always require modification and customization tailored to the
 particular forum or audience.  If appropriate, notify and/or update
@@ -1116,7 +1136,7 @@ Multiple platform binary release:
       DevMaster.net (if major and engine-related)
       http://www.devmaster.net/news/submit.php
 
-15) Sit back and enjoy a beverage for a job well done.
+16) Sit back and enjoy a beverage for a job well done.
 
 
 GETTING HELP

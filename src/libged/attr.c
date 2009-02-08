@@ -121,6 +121,9 @@ ged_attr(struct ged *gedp, int argc, const char *argv[])
 
 	i = 3;
 	while (i < argc) {
+	    if(strcmp( argv[i], "region") == 0 && strcmp(argv[i+1], "R") == 0) {
+ 		dp->d_flags |= DIR_REGION;
+ 	    }
 	    (void)bu_avs_add(&avs, argv[i], argv[i+1]);
 	    i += 2;
 	}
@@ -136,6 +139,9 @@ ged_attr(struct ged *gedp, int argc, const char *argv[])
     } else if (strcmp(argv[1], "rm") == 0) {
 	i = 3;
 	while (i < argc) {
+    	    if(strcmp( argv[i], "region") == 0) {
+ 		dp->d_flags = dp->d_flags & ~(DIR_REGION);
+ 	    }
 	    (void)bu_avs_remove(&avs, argv[i]);
 	    i++;
 	}
@@ -158,7 +164,9 @@ ged_attr(struct ged *gedp, int argc, const char *argv[])
 	i = 3;
 	while (i < argc) {
 	    const char *old_val;
-
+	    if(strcmp( argv[i], "region") == 0 && strcmp(argv[i+1], "R") == 0) {
+ 		dp->d_flags |= DIR_REGION;
+ 	    }
 	    old_val = bu_avs_get(&avs, argv[i]);
 	    if ( !old_val ) {
 		(void)bu_avs_add(&avs, argv[i], argv[i+1]);
