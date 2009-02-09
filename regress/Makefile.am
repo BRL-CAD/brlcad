@@ -1,5 +1,8 @@
 .PHONY : regression regress test mged moss lights solids shaders spdi iges weight gqa fastgen flawfinder repository
 
+SUBDIRS = \
+	mged
+
 regression: Makefile clean mged moss lights solids shaders spdi iges weight gqa fastgen flawfinder repository
 	@${ECHO} ---
 	@${ECHO} Regression testing completed.

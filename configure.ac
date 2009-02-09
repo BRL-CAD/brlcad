@@ -3699,6 +3699,7 @@ AC_CONFIG_FILES([
 	Makefile
 	bench/Makefile
 	regress/Makefile
+	regress/mged/Makefile
 	db/Makefile
 	db/include/Makefile
 	doc/Makefile
