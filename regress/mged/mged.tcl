@@ -175,6 +175,4 @@ add_test mirror mged
 #	DISPLAYING GEOMETRY - COMMANDS
 #
 
-run_test clone
-
 run_test mged
