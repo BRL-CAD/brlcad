@@ -32,18 +32,77 @@
 #	SETUP
 
 set test_binary_name mged
+set CMD_NAME ""
+set top_srcdir [lindex $argv 0]
+set top_bindir [lindex $argv 1]
 
-proc is_test_binary {name} {if {[file executable $name] && ![file isdirectory $name]} {return 1} else {return 0}}
-
-set CMD_NAME [pwd]/../../src/mged/$test_binary_name
-
-if {![is_test_binary $CMD_NAME]} {
-  global CMD_NAME
-  puts "Error: $CMD_NAME is not present or is not a working binary."
-  return 0
+if {[string match $top_srcdir ""]} {
+   global top_srcdir
+   puts "Warning:  No source directory supplied. Assuming '../../'"
+   set top_srcdir ../../
 }
 
-set top_srcdir [lindex $argv 0]
+if {![string match $top_bindir ""]} {
+   # We've been given a $top_bindir, try to validate it.  There are two legal
+   # possibilities - the correct top level directory that contains the compiled
+   # src/$test_binary_name/$test_binary_name, or the full path to a working
+   # binary with the correct name.  (The latter isn't really a "top_bindir"
+   # value, but it will allow the correct assignment of a command name which
+   # is the end goal here.
+   global CMD_NAME test_binary_name top_bindir
+
+   # Try legal directory and file options
+   if {[file isdirectory $top_bindir]} {
+      global CMD_NAME test_binary_name top_bindir
+      set candidate_name $top_bindir/src/$test_binary_name/$test_binary_name
+      if {[file executable $candidate_name] && ![file isdirectory $candidate_name]} {
+         global CMD_NAME candidate_name
+	 set CMD_NAME $candidate_name      
+      }
+   } else {
+      global CMD_NAME test_binary_name top_bindir
+      if {[string match $test_binary_name [file tail $top_bindir]] &&     
+          [file executable $top_bindir]} {   
+          global CMD_NAME top_bindir
+          set CMD_NAME $top_bindir
+      } 
+   }
+  
+   # If we don't have a CMD_NAME, wipeout
+   if {[string match $CMD_NAME ""]} {
+      global top_bindir test_binary_name
+      puts "Error: $test_binary_name, is not in the expected place or is not a working binary."
+      puts "Tried $top_bindir/src/$test_binary_name/$test_binary_name and $top_bindir"
+      return 0
+   }
+} else {
+   # OK, top_bindir is empty and we're on our own for a binary directory.  
+   # Check ../../src/$binaryname/$binaryname first, since both in and out of source 
+   # builds should have (for example) mged located there.  If that fails, check 
+   # $top_srcdir/src/$binaryname/$binaryname, which could be different if top_srcdir 
+   # is not equivalent to ../../ - if THAT fails, stop
+   #
+   global CMD_NAME top_srcdir test_binary_name
+   set candidate_name ../../src/$test_binary_name/$test_binary_name
+   if {[file executable $candidate_name] && ![file isdirectory $candidate_name]} {
+      global CMD_NAME candidate_name
+      set CMD_NAME $candidate_name
+   } else {
+      global candidate_name CMD_NAME
+      set candidate_name $top_srcdir/src/$test_binary_name/$test_binary_name
+      if {[file executable $candidate_name] && ![file isdirectory $candidate_name]} {
+            global CMD_NAME candidate_name
+            set CMD_NAME $candidate_name
+      }
+  } 
+   # If we don't have a CMD_NAME, wipeout
+   if {[string match $CMD_NAME ""]} {
+      global top_srcdir test_binary_name
+      puts "Error: $test_binary_name, is not in the expected place or is not a working binary."
+      puts "Tried ../../src/$test_binary_name/$test_binary_name, $top_srcdir/src/$test_binary_name/$test_binary_name"
+      return 0
+   }
+}
 
 if {[info exists ::env(LD_LIBRARY_PATH)]} {
    set ::env(LD_LIBRARY_PATH) ../../src/other/tcl/unix:../../src/other/tk/unix:$top_srcdir/src/other/tcl/unix:$top_srcdir/src/other/tk/unix:$::env(LD_LIBRARY_PATH)
