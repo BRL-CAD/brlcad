@@ -1045,9 +1045,9 @@ sftp sfusername@frs.sourceforge.net:uploads
 put brlcad-*
 
 14) Increment and commit the next BRL-CAD release numbers to SVN;
-update the include/conf/(MAJOR|MINOR|PATCH) version files, and NEWS
-immediately to an odd-numbered minor version or a new patch developer
-version (e.g. 7.11.0 or 7.4.1).  Update the README version to next
+update the include/conf/(MAJOR|MINOR|PATCH) version files immediately
+to an odd-numbered minor version or a new patch developer version
+(e.g. 7.11.0 or 7.4.1).  Update README and NEWS version to next
 _expected_ release number (e.g. 7.12.0 or 7.4.2).
 
 15) Announce the new release.  The NEWS file should generally be used
