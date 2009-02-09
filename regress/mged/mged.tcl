@@ -31,52 +31,58 @@
 #
 #	SETUP
 
-proc is_mged {name} {if {[string match mged [file tail $name]] && [file executable $name] && ![file isdirectory $name]} {return 1} else {return 0}}
+set test_binary_name mged
 
-set MGED_CMD [pwd]/../../src/mged/mged
+proc is_test_binary {name} {if {[file executable $name] && ![file isdirectory $name]} {return 1} else {return 0}}
 
-if {![is_mged $MGED_CMD]} {
-  global MGED_CMD
-  puts "Error: $MGED_CMD is not present or is not a working mged binary."
+set CMD_NAME [pwd]/../../src/mged/$test_binary_name
+
+if {![is_test_binary $CMD_NAME]} {
+  global CMD_NAME
+  puts "Error: $CMD_NAME is not present or is not a working binary."
   return 0
 }
 
 set top_srcdir [lindex $argv 0]
 
 if {[info exists ::env(LD_LIBRARY_PATH)]} {
-   set ::env(LD_LIBRARY_PATH) ../src/other/tcl/unix:../src/other/tk/unix:$top_srcdir/src/other/tcl/unix:$top_srcdir/src/other/tk/unix:$::env(LD_LIBRARY_PATH)
+   set ::env(LD_LIBRARY_PATH) ../../src/other/tcl/unix:../../src/other/tk/unix:$top_srcdir/src/other/tcl/unix:$top_srcdir/src/other/tk/unix:$::env(LD_LIBRARY_PATH)
 } else {
-   set ::env(LD_LIBRARY_PATH) ../src/other/tcl/unix:../src/other/tk/unix:$top_srcdir/src/other/tcl/unix:$top_srcdir/src/other/tk/unix
+   set ::env(LD_LIBRARY_PATH) ../../src/other/tcl/unix:../../src/other/tk/unix:$top_srcdir/src/other/tcl/unix:$top_srcdir/src/other/tk/unix
 }
 
 if {[info exists ::env(DYLD_LIBRARY_PATH)]} {
-   set ::env(DYLD_LIBRARY_PATH) ../src/other/tcl/unix:../src/other/tk/unix:$top_srcdir/src/other/tcl/unix:$top_srcdir/src/other/tk/unix:$::env(DYLD_LIBRARY_PATH)
+   set ::env(DYLD_LIBRARY_PATH) ../../src/other/tcl/unix:../../src/other/tk/unix:$top_srcdir/src/other/tcl/unix:$top_srcdir/src/other/tk/unix:$::env(DYLD_LIBRARY_PATH)
 } else {
-   set ::env(DYLD_LIBRARY_PATH) ../src/other/tcl/unix:../src/other/tk/unix:$top_srcdir/src/other/tcl/unix:$top_srcdir/src/other/tk/unix
+   set ::env(DYLD_LIBRARY_PATH) ../../src/other/tcl/unix:../../src/other/tk/unix:$top_srcdir/src/other/tcl/unix:$top_srcdir/src/other/tk/unix
 }
 
 
 file delete mged.g mged.log mged.mged
 
-proc add_test {cmdname} {
+proc add_test {cmdname {testfilename ""}} {
      global top_srcdir
-     set mgedfile [open ./mged.mged a]
-     puts $mgedfile "source [format %s/regress/mged/regression_resources.tcl $top_srcdir]"
-     set testfile [open [format %s/regress/mged/%s.mged $top_srcdir $cmdname] r]
-     while {[gets $testfile line] >= 0} {
-        puts $mgedfile $line
+     global test_binary_name
+     if {[string match $testfilename ""]} {set testfilename $test_binary_name}
+     set testfile [open [format ./%s.%s $testfilename $testfilename] a]
+     puts $testfile "source [format %s/regress/%s/regression_resources.tcl $top_srcdir $testfilename]"
+     set inputtestfile [open [format %s/regress/%s/%s.%s $top_srcdir $testfilename $cmdname $testfilename] r]
+     while {[gets $inputtestfile line] >= 0} {
+        puts $testfile $line
      }
-     close $mgedfile
      close $testfile
+     close $inputtestfile
 }
 
 proc run_test {cmdname} {
-     global MGED_CMD
+     global CMD_NAME
      global top_srcdir
      if {[file exists [format %s.mged $cmdname]]} {
-        exec $MGED_CMD -c [format %s.g $cmdname] < [format %s.mged $cmdname] >>& [format %s.log $cmdname]
+        exec $CMD_NAME -c [format %s.g $cmdname] < [format %s.mged $cmdname] >>& [format %s.log $cmdname]
      } else {
-        exec $MGED_CMD -c [format %s.g $cmdname] < [format %s/regress/mged/%s.mged $top_srcdir $cmdname] >>& [format %s.log $cmdname]
+        add_test $cmdname [format %s_test $cmdname]
+        exec $CMD_NAME -c [format %s.g $cmdname] < [format %s_test.mged $cmdname] >>& [format %s.log $cmdname]
+        file delete [format %s_test.mged $cmdname]
      }
 }
 
