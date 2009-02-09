@@ -88,7 +88,7 @@ if {![string match $top_bindir ""]} {
       global CMD_NAME candidate_name
       set CMD_NAME $candidate_name
    } else {
-      global candidate_name CMD_NAME
+      global candidate_name CMD_NAME top_srcdir test_binary_name
       set candidate_name $top_srcdir/src/$test_binary_name/$test_binary_name
       if {[file executable $candidate_name] && ![file isdirectory $candidate_name]} {
             global CMD_NAME candidate_name
@@ -119,13 +119,18 @@ if {[info exists ::env(DYLD_LIBRARY_PATH)]} {
 
 file delete mged.g mged.log mged.mged
 
-proc add_test {cmdname {testfilename ""}} {
+proc add_test {cmdname {testfilerootname ""}} {
      global top_srcdir
      global test_binary_name
-     if {[string match $testfilename ""]} {set testfilename $test_binary_name}
-     set testfile [open [format ./%s.%s $testfilename $testfilename] a]
-     puts $testfile "source [format %s/regress/%s/regression_resources.tcl $top_srcdir $testfilename]"
-     set inputtestfile [open [format %s/regress/%s/%s.%s $top_srcdir $testfilename $cmdname $testfilename] r]
+     set testfilename ""
+     if {[string match $testfilerootname ""]} {
+        set testfilename [format ./%s_test.%s $cmdname $test_binary_name]
+     } else {
+        set testfilename [format ./%s_test.%s $testfilerootname $test_binary_name]
+     }
+     set testfile [open $testfilename a]
+     puts $testfile "source [format %s/regress/%s/regression_resources.tcl $top_srcdir $test_binary_name]"
+     set inputtestfile [open [format %s/regress/%s/%s.%s $top_srcdir $test_binary_name $cmdname $test_binary_name] r]
      while {[gets $inputtestfile line] >= 0} {
         puts $testfile $line
      }
@@ -133,14 +138,15 @@ proc add_test {cmdname {testfilename ""}} {
      close $inputtestfile
 }
 
-proc run_test {cmdname} {
+proc run_test {cmdname {testfilename ""}} {
      global CMD_NAME
-     global top_srcdir
-     if {[file exists [format %s.mged $cmdname]]} {
-        exec $CMD_NAME -c [format %s.g $cmdname] < [format %s.mged $cmdname] >>& [format %s.log $cmdname]
+     global test_binary_name
+     if {[string match $testfilename ""]} {set testfilename [format %s_test.%s $cmdname $test_binary_name]}
+     if {[file exists $testfilename]} {
+        exec $CMD_NAME -c [format %s.g $cmdname] < $testfilename >>& [format %s.log $cmdname]
      } else {
-        add_test $cmdname [format %s_test $cmdname]
-        exec $CMD_NAME -c [format %s.g $cmdname] < [format %s_test.mged $cmdname] >>& [format %s.log $cmdname]
+        add_test $cmdname 
+        exec $CMD_NAME -c [format %s.g $cmdname] < $testfilename >>& [format %s.log $cmdname]
         file delete [format %s_test.mged $cmdname]
      }
 }
@@ -148,29 +154,27 @@ proc run_test {cmdname} {
 #
 #	GEOMETRIC INPUT COMMANDS
 #
-add_test in
-add_test make
-add_test 3ptarb
-add_test arb
-add_test comb
-add_test g
-add_test r
-add_test make_bb
-add_test cp
-add_test cpi
-add_test mv
-add_test mvall
-add_test build_region
-add_test clone
-add_test prefix
-add_test mirror
+add_test in mged
+add_test make mged
+add_test 3ptarb mged
+add_test arb mged
+add_test comb mged
+add_test g mged
+add_test r mged
+add_test make_bb mged
+add_test cp mged
+add_test cpi mged
+add_test mv mged
+add_test mvall mged
+add_test build_region mged
+add_test clone mged
+add_test prefix mged
+add_test mirror mged
 
 #
 #	DISPLAYING GEOMETRY - COMMANDS
 #
 
-
-
-
+run_test clone
 
 run_test mged
