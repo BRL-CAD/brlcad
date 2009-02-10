@@ -19,6 +19,10 @@ THESE SHOULD HAPPEN BEFORE THE NEXT RELEASE
 
 * write mged test script to exhaustively exercise all commands
 
+* fix 'gets' with variable infinite loop bug in mged
+
+* file File->Open mged crash bug
+
 * test and release!
 
 
