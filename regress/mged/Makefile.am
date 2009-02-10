@@ -38,6 +38,7 @@ EXTRA_DIST = \
 	mirror.mged \
 	mv.mged \
 	mvall.mged \
+	oed.mged \
 	prefix.mged \
 	r.mged \
 	regression_resources.tcl \

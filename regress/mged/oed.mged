@@ -1,0 +1,307 @@
+puts "*** Testing 'oed' command ***"
+
+in_all_prims oed
+comb_all oed
+
+# Make sure edit states change for all combinations
+
+puts "oed arb4 combination:"
+e oed_arb4.c
+status state
+oed / oed_arb4.c/oed_arb4.s
+status state
+press accept
+status state
+d oed_arb4.c
+
+
+puts "oed arb5 combination:"
+e oed_arb5.c
+status state
+oed / oed_arb5.c/oed_arb5.s
+status state
+press accept
+status state
+d oed_arb5.c
+
+
+puts "oed arb6 combination:"
+e oed_arb6.c
+status state
+oed / oed_arb6.c/oed_arb6.s
+status state
+press accept
+status state
+d oed_arb6.c
+
+
+puts "oed arb7 combination:"
+e oed_arb7.c
+status state
+oed / oed_arb7.c/oed_arb7.s
+status state
+press accept
+status state
+d oed_arb7.c
+
+
+puts "oed arb8 combination:"
+e oed_arb8.c
+status state
+oed / oed_arb8.c/oed_arb8.s
+status state
+press accept
+status state
+d oed_arb8.c
+
+
+puts "oed arbn combination:"
+e oed_arbn.c
+status state
+oed / oed_arbn.c/oed_arbn.s
+status state
+press accept
+status state
+d oed_arbn.c
+
+
+puts "oed ars combination:"
+e oed_ars.c
+status state
+oed / oed_ars.c/oed_ars.s
+status state
+press accept
+status state
+d oed_ars.c
+
+
+puts "oed bot combination:"
+e oed_bot.c
+status state
+oed / oed_bot.c/oed_bot.s
+status state
+press accept
+status state
+d oed_bot.c
+
+
+puts "oed ehy combination:"
+e oed_ehy.c
+status state
+oed / oed_ehy.c/oed_ehy.s
+status state
+press accept
+status state
+d oed_ehy.c
+
+
+puts "oed ell combination:"
+e oed_ell.c
+status state
+oed / oed_ell.c/oed_ell.s
+status state
+press accept
+status state
+d oed_ell.c
+
+
+puts "oed ell1 combination:"
+e oed_ell1.c
+status state
+oed / oed_ell1.c/oed_ell1.s
+status state
+press accept
+status state
+d oed_ell1.c
+
+
+puts "oed epa combination:"
+e oed_epa.c
+status state
+oed / oed_epa.c/oed_epa.s
+status state
+press accept
+status state
+d oed_epa.c
+
+
+puts "oed eto combination:"
+e oed_eto.c
+status state
+oed / oed_eto.c/oed_eto.s
+status state
+press accept
+status state
+d oed_eto.c
+
+
+puts "oed extrude combination:"
+e oed_extrude.c
+status state
+oed / oed_extrude.c/oed_extrude.s
+status state
+press accept
+status state
+d oed_extrude.c
+
+
+puts "oed grip combination:"
+e oed_grip.c
+status state
+oed / oed_grip.c/oed_grip.s
+status state
+press accept
+status state
+d oed_grip.c
+
+
+puts "oed half combination:"
+e oed_half.c
+status state
+oed / oed_half.c/oed_half.s
+status state
+press accept
+status state
+d oed_half.c
+
+
+puts "oed hyp combination:"
+e oed_hyp.c
+status state
+oed / oed_hyp.c/oed_hyp.s
+status state
+press accept
+status state
+d oed_hyp.c
+
+
+puts "oed nmg combination:"
+e oed_nmg.c
+status state
+oed / oed_nmg.c/oed_nmg.s
+status state
+press accept
+status state
+d oed_nmg.c
+
+
+puts "oed part combination:"
+e oed_part.c
+status state
+oed / oed_part.c/oed_part.s
+status state
+press accept
+status state
+d oed_part.c
+
+
+puts "oed pipe combination:"
+e oed_pipe.c
+status state
+oed / oed_pipe.c/oed_pipe.s
+status state
+press accept
+status state
+d oed_pipe.c
+
+
+puts "oed rcc combination:"
+e oed_rcc.c
+status state
+oed / oed_rcc.c/oed_rcc.s
+status state
+press accept
+status state
+d oed_rcc.c
+
+
+puts "oed rec combination:"
+e oed_rec.c
+status state
+oed / oed_rec.c/oed_rec.s
+status state
+press accept
+status state
+d oed_rec.c
+
+
+puts "oed rhc combination:"
+e oed_rhc.c
+status state
+oed / oed_rhc.c/oed_rhc.s
+status state
+press accept
+status state
+d oed_rhc.c
+
+
+puts "oed rpc combination:"
+e oed_rpc.c
+status state
+oed / oed_rpc.c/oed_rpc.s
+status state
+press accept
+status state
+d oed_rpc.c
+
+
+puts "oed rpp combination:"
+e oed_rpp.c
+status state
+oed / oed_rpp.c/oed_rpp.s
+status state
+press accept
+status state
+d oed_rpp.c
+
+
+puts "oed sph combination:"
+e oed_sph.c
+status state
+oed / oed_sph.c/oed_sph.s
+status state
+press accept
+status state
+d oed_sph.c
+
+
+puts "oed tec combination:"
+e oed_tec.c
+status state
+oed / oed_tec.c/oed_tec.s
+status state
+press accept
+status state
+d oed_tec.c
+
+
+puts "oed tgc combination:"
+e oed_tgc.c
+status state
+oed / oed_tgc.c/oed_tgc.s
+status state
+press accept
+status state
+d oed_tgc.c
+
+
+puts "oed tor combination:"
+e oed_tor.c
+status state
+oed / oed_tor.c/oed_tor.s
+status state
+press accept
+status state
+d oed_tor.c
+
+
+puts "oed trc combination:"
+e oed_trc.c
+status state
+oed / oed_trc.c/oed_trc.s
+status state
+press accept
+status state
+d oed_trc.c
+
+puts "*** 'oed' testing completed ***"

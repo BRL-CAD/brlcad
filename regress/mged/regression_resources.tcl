@@ -116,6 +116,14 @@ if {![info exists make_primitives_list]} {
   # TCL routines needed for specific commands, organized alphabetically
   # according to command
 
+  # comb
+  proc comb_all {cmdname} {
+     global make_primitives_list
+     foreach x $make_primitives_list {
+	comb [format %s_%s.c $cmdname $x] u [format %s_%s.s $cmdname $x]
+     }
+  }
+
   # make_bb
   proc make_bb_all {} {
      global make_primitives_list
