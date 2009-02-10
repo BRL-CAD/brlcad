@@ -14,7 +14,7 @@ changes made.  See document footer for additional details.
 --- 2009-03-XX  Release 7.14.4                                     ---
 ----------------------------------------------------------------------
 
-* tbd.
+* fixed g_diff crash when comparing objects - Sean Morrison
 
 
 ----------------------------------------------------------------------
