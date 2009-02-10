@@ -31,7 +31,9 @@ EXTRA_DIST = \
 	erase.mged \
 	g.mged \
 	hide.mged \
+	i.mged \
 	in.mged \
+	keypoint.mged \
 	make.mged \
 	make_bb.mged \
 	mged.tcl \
@@ -42,6 +44,7 @@ EXTRA_DIST = \
 	prefix.mged \
 	r.mged \
 	regression_resources.tcl \
+	rm.mged \
 	run_test \
 	sed.mged \
 	status.mged \
