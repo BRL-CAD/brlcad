@@ -55,8 +55,13 @@ fi
 
 set test_binary_name mged
 set CMD_NAME ""
-set top_srcdir ../../
+set top_srcdir [lindex $argv 2]
 set top_bindir [lindex $argv 1]
+
+if {[string match $top_srcdir ""]} {
+   global top_srcdir
+   set top_srcdir ../../
+}
 
 if {![string match $top_bindir ""]} {
    # We've been given a $top_bindir, try to validate it.   
