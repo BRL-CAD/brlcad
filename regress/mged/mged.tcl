@@ -104,19 +104,6 @@ if {![string match $top_bindir ""]} {
    }
 }
 
-if {[info exists ::env(LD_LIBRARY_PATH)]} {
-   set ::env(LD_LIBRARY_PATH) ../../src/other/tcl/unix:../../src/other/tk/unix:$top_srcdir/src/other/tcl/unix:$top_srcdir/src/other/tk/unix:$::env(LD_LIBRARY_PATH)
-} else {
-   set ::env(LD_LIBRARY_PATH) ../../src/other/tcl/unix:../../src/other/tk/unix:$top_srcdir/src/other/tcl/unix:$top_srcdir/src/other/tk/unix
-}
-
-if {[info exists ::env(DYLD_LIBRARY_PATH)]} {
-   set ::env(DYLD_LIBRARY_PATH) ../../src/other/tcl/unix:../../src/other/tk/unix:$top_srcdir/src/other/tcl/unix:$top_srcdir/src/other/tk/unix:$::env(DYLD_LIBRARY_PATH)
-} else {
-   set ::env(DYLD_LIBRARY_PATH) ../../src/other/tcl/unix:../../src/other/tk/unix:$top_srcdir/src/other/tcl/unix:$top_srcdir/src/other/tk/unix
-}
-
-
 file delete mged.g mged.log mged.mged
 
 proc add_test {cmdname {testfilerootname ""}} {
