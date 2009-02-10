@@ -9,7 +9,10 @@ regress: regression
 test: regression
 
 mged: $(top_srcdir)/regress/mged/mged.tcl
-	 $(top_builddir)/src/bwish/btclsh $(top_srcdir)/regress/mged/mged.tcl $(top_srcdir)
+	TCL_LIBRARY=$(top_srcdir)/src/other/tcl/library \
+	LD_LIBRARY_PATH=$(top_builddir)/src/other/tcl/unix:$(top_builddir)/src/other/tk/unix:$$LD_LIBRARY_PATH \
+	DYLD_LIBRARY_PATH=$(top_builddir)/src/other/tcl/unix:$(top_buildir)/src/other/tk/unix:$$DYLD_LIBRARY_PATH \
+	$(top_builddir)/src/bwish/btclsh $(top_srcdir)/regress/mged/mged.tcl $(top_srcdir)
 	@${ECHO} +++ $@ test complete.
 
 # these are here because they go in the distribution but are not installed
