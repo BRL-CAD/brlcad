@@ -35,7 +35,7 @@ EXTRA_DIST = \
 	prefix.mged \
 	r.mged \
 	regression_resources.tcl \
-	run_test.tcl 
+	run_test 
 
 CLEANFILES = \
 	$(MOSTLYCLEANFILES) \
