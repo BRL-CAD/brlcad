@@ -1,0 +1,12 @@
+puts "*** Testing 'hide' command ***
+
+in_arb8 hide 1
+in_arb8 hide 2
+comb hidden.c u hide_arb81.s u hide_arb82.s
+ls hidden*
+hide hide_arb81.s
+hide hidden.c
+ls hidden*
+Z
+
+puts "*** 'hide' testing completed ***"

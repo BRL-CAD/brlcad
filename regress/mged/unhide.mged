@@ -1,0 +1,15 @@
+puts "*** Testing 'unhide' command ***"
+
+in_arb8 unhide 1
+in_arb8 unhide 2
+comb unhidden.c u unhide_arb81.s u unhide_arb82.s
+ls unhid*
+hide unhide_arb81.s
+hide unhidden.c
+ls unhid*
+unhide unhide_arb81.s
+ls unhid*
+unhide unhidden.c
+ls unhid*
+
+puts "*** 'unhide' testing completed ***"

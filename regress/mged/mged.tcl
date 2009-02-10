@@ -161,5 +161,25 @@ add_test mirror mged
 #
 #	DISPLAYING GEOMETRY - COMMANDS
 #
+add_test draw_e_erase_d_who mged
+add_test who mged
+add_test draw mged
+add_test erase mged
+add_test Z mged
+add_test B mged
+add_test dall mged
+add_test hide mged
+add_test unhide mged
+
+
+
+
+
+
+
+
+
+
+
 
 run_test mged

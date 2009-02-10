@@ -19,12 +19,18 @@ mged: $(top_srcdir)/regress/mged/mged.tcl
 EXTRA_DIST = \
 	3ptarb.mged \
 	arb.mged \
+	B.mged \
 	build_region.mged \
 	clone.mged \
 	comb.mged \
 	cp.mged \
 	cpi.mged \
+	dall.mged \
+	draw_e_erase_d_who.mged \
+	draw.mged \
+	erase.mged \
 	g.mged \
+	hide.mged \
 	in.mged \
 	make.mged \
 	make_bb.mged \
@@ -35,7 +41,10 @@ EXTRA_DIST = \
 	prefix.mged \
 	r.mged \
 	regression_resources.tcl \
-	run_test 
+	run_test \
+	unhide.mged \
+	who.mged \
+	Z.mged 
 
 CLEANFILES = \
 	$(MOSTLYCLEANFILES) \
