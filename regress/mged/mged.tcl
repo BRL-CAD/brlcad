@@ -171,7 +171,35 @@ add_test dall mged
 add_test hide mged
 add_test unhide mged
 
-
+#
+#	EDITING COMMANDS
+#
+add_test status mged
+add_test sed mged
+add_test oed mged
+add_test i mged
+add_test rm mged
+add_test keypoint mged
+add_test arced mged
+add_test copymat mged
+add_test putmat mged
+add_test push mged
+add_test xpush mged
+add_test accept mged
+add_test reject mged
+add_test tra_edit mged
+add_test facedef mged
+add_test mirface mged
+add_test permute mged
+add_test translate mged
+add_test sca_edit mged
+add_test oscale mged
+add_test extrude mged
+add_test rot_edit mged
+add_test orot mged
+add_test arot mged
+add_test rotobj mged
+add_test qorot mged
 
 
 

@@ -123,8 +123,7 @@ if {![info exists make_primitives_list]} {
 	make_bb [format make_bb_box_%s.s $x] [format make_bb_%s.s $x]
      }
   }
-  
-
+ 
   puts "Regression testing definitions loaded.\n"
 
 }

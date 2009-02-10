@@ -42,6 +42,8 @@ EXTRA_DIST = \
 	r.mged \
 	regression_resources.tcl \
 	run_test \
+	sed.mged \
+	status.mged \
 	unhide.mged \
 	who.mged \
 	Z.mged 

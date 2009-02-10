@@ -1,0 +1,15 @@
+puts "*** Testing 'status' command ***"
+
+status
+status state
+status Viewscale
+status base2local
+status local2base
+status toViewcenter
+status Viewrot
+status model2view
+status view2model
+status model2objview
+status objview2model
+
+puts "*** 'status' testing completed ***"
