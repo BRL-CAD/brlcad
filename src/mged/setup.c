@@ -446,6 +446,21 @@ cmd_setup(void)
 }
 
 
+static void
+mged_output_handler(struct ged *gedp, char *line)
+{
+    bu_log(line);
+}
+
+
+static void
+mged_refresh_handler(void *clientdata)
+{
+    view_state->vs_flag = 1;
+    refresh();
+}
+
+
 /*
  * Initialize mged, configure the path, set up the tcl interpreter.
  */
@@ -564,6 +579,11 @@ mged_setup(void)
     view_state->vs_gvp->gv_callback = mged_view_callback;
     view_state->vs_gvp->gv_clientData = (genptr_t)view_state;
     MAT_DELTAS_GET_NEG(view_state->vs_orig_pos, view_state->vs_gvp->gv_center);
+
+    BU_GETSTRUCT(gedp, ged);
+
+    gedp->ged_output_handler = mged_output_handler;
+    gedp->ged_refresh_handler = mged_refresh_handler;
 
     /* register commands */
     cmd_setup();

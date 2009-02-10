@@ -2257,6 +2257,12 @@ mged_finish(int exitcode)
 	db_close(dbip);
 #endif
 
+    if (gedp->ged_gdp)
+	ged_drawable_close(gedp->ged_gdp);
+
+    ged_free(gedp);
+    gedp = GED_NULL;
+
     /* XXX should deallocate libbu semaphores */
 
     mged_global_variable_teardown(interp);
@@ -2464,34 +2470,23 @@ do_rc(void)
     return 0;
 }
 
-void
-ged_output_handler(struct ged *gedp, char *line)
-{
-    bu_log(line);
-}
 
-static void
-ged_refresh_handler(void *clientdata)
-{
-    view_state->vs_flag = 1;
-    refresh();
-}
-
-/*
- *			F _ O P E N D B
+/**
+ * F _ O P E N D B
  *
- *  Close the current database, if open, and then open a new database.
- *  May also open a display manager, if interactive and none selected yet.
+ * Close the current database, if open, and then open a new database.
+ * May also open a display manager, if interactive and none selected
+ * yet.
  *
- *  argv[1] is the filename.
+ * argv[1] is the filename.
  *
- *  There are two invocations:
+ * There are two invocations:
  *	main()
  *	cmdline()		Only one arg is permitted.
  *
- *  Returns TCL_OK if the database opened
- *  Returns TCL_ERROR if the database was not opened (and the user did
- *    not interactively abort)
+ * Returns:
+ *   TCL_OK if database was opened.
+ *   TCL_ERROR if database was NOT opened (and the user didn't abort)
  */
 int
 f_opendb(
@@ -2711,12 +2706,6 @@ f_opendb(
 	return TCL_ERROR;
     }
 
-    BU_GETSTRUCT(gedp, ged);
-    GED_INIT(gedp, wdbp);
-
-    gedp->ged_output_handler = ged_output_handler;
-    gedp->ged_refresh_handler = ged_refresh_handler;
-
     /*XXX shouldn't need any of this */
 #if 1
     /* increment use count for this db instance */
@@ -2732,6 +2721,9 @@ f_opendb(
 	bu_vls_free(&msg);
 	return TCL_ERROR;
     }
+
+    /* associate the gedp with this wdbp */
+    GED_INIT(gedp, wdbp);
 
     /* This creates a "db" command object */
     if (wdb_create_cmd(interp, wdbp, MGED_DB_NAME) != TCL_OK) {
@@ -2861,10 +2853,9 @@ f_closedb(
 #endif
 
     ged_drawable_close(gedp->ged_gdp);
-    ged_free(gedp);
+    gedp->ged_wdbp = RT_WDB_NULL;
 
     /* wipe out the global pointers */
-    gedp = GED_NULL;
     dbip = DBI_NULL;
     rt_new_material_head(MATER_NULL);
 
