@@ -40,9 +40,17 @@ DYLD_LIBRARY_PATH=../src/other/tcl/unix:../src/other/tk/unix:$1/src/other/tcl/un
 #\
 export LD_LIBRARY_PATH DYLD_LIBRARY_PATH
 #\
-exec ../../src/bwish/btclsh $0 $@
+if test -f ../../src/bwish/btclsh ; then
+#\
+   exec ../../src/bwish/btclsh $0 $@
+#\
+else
+#\
+   exec tclsh $0 $@
+#\
+fi
 
-#
+
 #	SETUP
 
 set test_binary_name mged
