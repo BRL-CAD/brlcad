@@ -30,7 +30,7 @@ a new 'lens' tool for creating accurate optical lenses, and the dxf-g
 importer receives a bug fix when importing 2D entities.
 
 * fixed errors in handling of hyp primitive translations - Cliff Yapp
-* g_tool now guesses if a change was evolutionary - Erik Greenwald
+* g_diff now guesses if a change was evolutionary - Erik Greenwald
 * added >, <, >= and <= attr value comparisons in search - Cliff Yapp
 * fixed double-edged line segment sketch bug in dxf-g - John Anderson
 * mged 'inside' command no longer uses edit state objects - Bob Parker
