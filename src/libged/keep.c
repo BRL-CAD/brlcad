@@ -91,7 +91,7 @@ ged_keep(struct ged *gedp, int argc, const char *argv[])
 	    bu_vls_printf(&gedp->ged_result_str, "keep: Error opening '%s'\n", argv[1]);
 	    return BRLCAD_ERROR;
 	} else {
-	    bu_vls_printf(&gedp->ged_result_str, "keep:  appending to '%s'\n");
+	    bu_vls_printf(&gedp->ged_result_str, "keep:  appending to '%s'\n", argv[1]);
 
 	    /* --- Scan geometry database and build in-memory directory --- */
 	    db_dirbuild(new_dbip);
