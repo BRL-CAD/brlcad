@@ -1,0 +1,13 @@
+puts "*** Testing 'copymat' command ***"
+
+in_arb8 copymat
+comb copymat1.c u copymat_arb8.s
+comb copymat2.c u copymat_arb8.s
+arced copymat1.c/copymat_arb8.s matrix rarc xlate 10 30 20
+l copymat1.c
+l copymat2.c
+copymat copymat1.c/copymat_arb8.s copymat2.c/copymat_arb8.s
+l copymat1.c
+l copymat2.c
+
+puts "*** 'copymat' testing completed ***"

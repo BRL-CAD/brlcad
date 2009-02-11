@@ -1,0 +1,13 @@
+puts "*** Testing 'xpush' command ***"
+
+in_arb8 xpush
+comb xpush1.c u xpush_arb8.s
+comb xpush2.c u xpush_arb8.s
+arced xpush1.c/xpush_arb8.s matrix rarc rot 14 14 14
+arced xpush2.c/xpush_arb8.s matrix rarc rot 24 24 24
+comb xpush_top.c u xpush1.c u xpush2.c
+l xpush*
+xpush xpush_top.c
+l xpush*
+
+puts "*** 'xpush' testing completed ***"

@@ -1,0 +1,18 @@
+puts "*** Testing 'push' command ***"
+
+in_arb8 push 1
+in_arb8 push 2
+comb push_l2.c u push_arb81.s u push_arb82.s
+comb push_l1.c u push_l2.c
+arced push_l1.c/push_l2.c matrix rarc rot 14 14 14
+l push_l1.c
+l push_l2.c
+l push_arb81.s
+l push_arb82.s
+push push_l1.c
+l push_l1.c
+l push_l2.c
+l push_arb81.s
+l push_arb82.s
+
+puts "*** 'push' testing completed ***"

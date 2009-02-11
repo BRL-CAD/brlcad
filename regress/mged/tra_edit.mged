@@ -1,0 +1,21 @@
+puts "*** Testing 'tra' command in edit mode ***"
+
+in_arb8 tra
+comb tra.c u tra_arb8.s
+l tra_arb8.s
+Z
+e tra_arb8.s
+sed tra_arb8.s
+tra 10 -2 4
+accept
+l tra_arb8.s
+Z
+l tra.c
+e tra.c
+oed / tra.c/tra_arb8.s
+tra -3 3 3
+accept
+l tra.c
+Z
+
+puts "*** 'tra' testing in edit mode completed ***"

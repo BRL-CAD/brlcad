@@ -1,0 +1,11 @@
+puts "*** Testing 'putmat' command ***"
+
+in_arb8 putmat 1
+in_arb8 putmat 2
+comb putmat.c u putmat_arb81.s u putmat_arb82.s
+putmat putmat.c/putmat_arb81.s {1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16}
+putmat putmat.c/putmat_arb82.s {1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16}
+putmat putmat.c/putmat_arb82.s {I}
+l putmat.c
+
+puts "*** 'putmat' testing completed ***"

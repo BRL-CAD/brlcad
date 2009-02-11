@@ -18,11 +18,14 @@ mged: $(top_srcdir)/regress/mged/mged.tcl
 # these are here because they go in the distribution but are not installed
 EXTRA_DIST = \
 	3ptarb.mged \
+	accept.mged \
 	arb.mged \
+	arced.mged \
 	B.mged \
 	build_region.mged \
 	clone.mged \
 	comb.mged \
+	copymat.mged \
 	cp.mged \
 	cpi.mged \
 	dall.mged \
@@ -42,14 +45,19 @@ EXTRA_DIST = \
 	mvall.mged \
 	oed.mged \
 	prefix.mged \
+	push.mged \
+	putmat.mged \
 	r.mged \
 	regression_resources.tcl \
+	reject.mged \
 	rm.mged \
 	run_test \
 	sed.mged \
 	status.mged \
+	tra_edit.mged \
 	unhide.mged \
 	who.mged \
+	xpush.mged \
 	Z.mged 
 
 CLEANFILES = \
