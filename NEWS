@@ -15,6 +15,7 @@ changes made.  See document footer for additional details.
 ----------------------------------------------------------------------
 
 * fixed g_diff crash when comparing objects - Sean Morrison
+* improved g_qa usage message and missing density message - Bob Parker
 
 
 ----------------------------------------------------------------------
