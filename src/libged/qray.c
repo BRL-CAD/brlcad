@@ -118,6 +118,8 @@ ged_qray(struct ged	*gedp,
 	 int		argc,
 	 const char 	*argv[])
 {
+    if (!(gedp->ged_wdbp)) return BRLCAD_OK;
+    
     GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
     GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
 

@@ -48,8 +48,6 @@ ged_glob(struct ged *gedp, int argc, const char *argv[])
     struct bu_vls src;
     static const char *usage = "expression";
 
-    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
-
     /* initialize result */
     bu_vls_trunc(&gedp->ged_result_str, 0);
 
@@ -120,6 +118,8 @@ ged_glob(struct ged *gedp, int argc, const char *argv[])
 	   it to the database. */
 
 	if (regexp) {
+	    if (!(gedp->ged_wdbp)) return BRLCAD_OK;
+	    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
 	    bu_vls_trunc( &temp, 0 );
 	    if ( db_regexp_match_all( &temp, gedp->ged_wdbp->dbip,
 				      bu_vls_addr(&word) ) == 0 ) {
