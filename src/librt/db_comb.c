@@ -45,6 +45,7 @@
 #include "vmath.h"
 #include "bn.h"
 #include "db.h"
+#include "mater.h"
 #include "raytrace.h"
 
 
@@ -1177,7 +1178,7 @@ rt_comb_get_color(unsigned char rgb[3], const struct rt_comb_internal *comb)
     }
 
     for (mp = rt_material_head(); mp != MATER_NULL; mp = mp->mt_forw) {
-	if (comb->region_id <= mp->mt_high && comb_region_id >= mp->mt_low) {
+	if (comb->region_id <= mp->mt_high && comb->region_id >= mp->mt_low) {
 	    rgb[0] = mp->mt_r;
 	    rgb[1] = mp->mt_g;
 	    rgb[2] = mp->mt_b;

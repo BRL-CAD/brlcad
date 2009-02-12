@@ -2831,7 +2831,7 @@ RT_EXPORT BU_EXTERN(union tree *db_mkgift_tree,
 		    (struct rt_tree_array	*trees,
 		     int			subtreecount,
 		     struct resource		*resp));
-RT_EXPORT BU_EXTERN(void rt_comb_get_color,
+RT_EXPORT BU_EXTERN(int rt_comb_get_color,
 		    (unsigned char rgb[3], const struct rt_comb_internal *comb));
 
 /* tgc.c */
