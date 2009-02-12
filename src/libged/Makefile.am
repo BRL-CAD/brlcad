@@ -120,6 +120,7 @@ libged_nil_la_SOURCES = \
 	mrot.c \
 	nirt.c \
 	nmg_collapse.c \
+	nmg_fix_normals.c \
 	nmg_simplify.c \
 	ocenter.c \
 	open.c \

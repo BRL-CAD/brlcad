@@ -2013,6 +2013,14 @@ GED_EXPORT BU_EXTERN(int ged_vnirt, (struct ged *gedp, int argc, const char *arg
 GED_EXPORT BU_EXTERN(int ged_nmg_collapse, (struct ged *gedp, int argc, const char *argv[]));
 
 /**
+ * Attempt to fix an NMG primitive's normals.
+ *
+ * Usage:
+ *     nmg_fix_normals nmg_prim
+ */
+GED_EXPORT BU_EXTERN(int ged_nmg_fix_normals, (struct ged *gedp, int argc, const char *argv[]));
+
+/**
  * Simplify the NMG primitive, if possible
  *
  * Usage:

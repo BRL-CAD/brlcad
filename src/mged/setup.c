@@ -209,6 +209,7 @@ struct cmdtab mged_cmdtab[] = {
     {"mvall", cmd_ged_plain_wrapper, ged_move_all},
     {"nirt", f_nirt, GED_FUNC_PTR_NULL},
     {"nmg_collapse", cmd_nmg_collapse, GED_FUNC_PTR_NULL},
+    {"nmg_fix_normals", cmd_ged_plain_wrapper, ged_nmg_fix_normals},
     {"nmg_simplify", cmd_ged_plain_wrapper, ged_nmg_simplify},
     {"o_rotate",		be_o_rotate, GED_FUNC_PTR_NULL},
     {"o_scale",	be_o_scale, GED_FUNC_PTR_NULL},
