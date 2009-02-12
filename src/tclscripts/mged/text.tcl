@@ -281,6 +281,8 @@ proc gets {channelId args} {
     if {$len != 0 && $len != 1} {
 	error "Usage: gets channelId ?varName?"
     }
+   
+    upvar $args [lindex $args 0]
 
     if {$channelId != "stdin"} {
 	return [eval tcl_gets $channelId $args]
