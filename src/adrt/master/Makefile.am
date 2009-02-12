@@ -17,6 +17,7 @@ adrt_master_CFLAGS = \
 	${LIBZ_CPPFLAGS}
 
 adrt_master_LDADD = \
+	${top_builddir}/src/adrt/libtie/libtie.la \
 	${top_builddir}/src/adrt/libtienet/libtienet.la \
 	${BU} \
 	${LIBTHREAD} \

@@ -2,8 +2,6 @@
 bin_PROGRAMS = adrt_slave
 
 adrt_slave_SOURCES = \
-	load.c \
-	load_MySQL.c \
 	main.c \
 	slave.c
 
@@ -16,8 +14,6 @@ adrt_slave_CFLAGS = \
 	${LIBZ_CPPFLAGS} \
 	${TCL_CPPFLAGS}
 
-#-DHAVE_MYSQL=0 -I/usr/local/include/mysql
-
 adrt_slave_LDADD = \
 	${LIBTHREAD} \
 	${top_builddir}/src/adrt/librender/librender.la \
@@ -27,8 +23,6 @@ adrt_slave_LDADD = \
 	${top_builddir}/src/adrt/libtie/libtie.la \
 	${LIBZ}
 
-#-L/usr/local/lib/mysql -lmysqlclient
-
-noinst_HEADERS = load.h slave.h
+noinst_HEADERS = slave.h
 
 include $(top_srcdir)/misc/Makefile.defs
