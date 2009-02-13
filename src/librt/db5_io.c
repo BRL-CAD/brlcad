@@ -1436,7 +1436,7 @@ rt_db_put_internal5(
     BU_ASSERT_LONG( ext.ext_nbytes, ==, dp->d_len );
 
     if ( dp->d_flags & RT_DIR_INMEM )  {
-	memcpy((char *)ext.ext_buf, dp->d_un.ptr, ext.ext_nbytes);
+	memcpy(dp->d_un.ptr, ext.ext_buf, ext.ext_nbytes);
 	goto ok;
     }
 
