@@ -1,0 +1,14 @@
+puts "*** Testing 'autoview' command ***"
+
+Z
+view center -1000 -1000 0
+view aet 34 23 2
+autoview
+view quat
+view ypr
+view aet
+view center
+view eye
+view size
+
+puts "*** 'autoview' testing completed ***"

@@ -209,10 +209,38 @@ add_test killall mged
 add_test killtree mged
 
 
+#
+#	VIEW COMMANDS
+#
+add_test view mged
+add_test refresh mged
+#add_test autoview mged
+add_test ae mged
+add_test center mged
+add_test eye_pt mged
+add_test lookat mged
+add_test size mged
+add_test zoom mged
+add_test set_perspective mged
+add_test tra_view mged
+add_test sca_view mged
+add_test rot_view mged
+add_test mrot mged
+add_test vrot mged
+add_test qvrot mged
+add_test setview mged
+add_test sv mged
+add_test orientation mged
+add_test knob mged
+add_test adc mged
+#add_test saveview mged
+#add_test loadview mged
+#add_test ps mged
+#add_test plot mged
+#add_test overlay mged
 
 
-
-
-
-
+#  Having assembled the tests, run them:
 run_test mged
+
+

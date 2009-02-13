@@ -1,0 +1,7 @@
+puts "*** Testing 'mrot' command ***"
+
+view quat
+mrot 3 22 -1
+view quat
+
+puts "*** 'mrot' testing completed ***"

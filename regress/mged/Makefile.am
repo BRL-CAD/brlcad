@@ -19,11 +19,15 @@ mged: $(top_srcdir)/regress/mged/mged.tcl
 EXTRA_DIST = \
 	3ptarb.mged \
 	accept.mged \
+	adc.mged \
+	ae.mged \
 	arb.mged \
 	arced.mged \
 	arot.mged \
+	autoview.mged \
 	B.mged \
 	build_region.mged \
+	center.mged \
 	clone.mged \
 	comb.mged \
 	copymat.mged \
@@ -34,6 +38,7 @@ EXTRA_DIST = \
 	draw.mged \
 	erase.mged \
 	extrude.mged \
+	eye_pt.mged \
 	facedef.mged \
 	g.mged \
 	hide.mged \
@@ -43,37 +48,58 @@ EXTRA_DIST = \
 	kill.mged \
 	killall.mged \
 	killtree.mged \
+	knob.mged \
+	loadview.mged \
+	lookat.mged \
 	make.mged \
 	make_bb.mged \
 	mged.tcl \
 	mirface.mged \
 	mirror.mged \
+	mrot.mged \
 	mv.mged \
 	mvall.mged \
 	oed.mged \
+	orientation.mged \
 	orot.mged \
 	oscale.mged \
+	overlay.mged \
 	permute.mged \
+	plot.mged \
 	prefix.mged \
+	ps.mged \
 	push.mged \
 	putmat.mged \
 	qorot.mged \
+	qvrot.mged \
 	r.mged \
+	refresh.mged \
 	regression_resources.tcl \
 	reject.mged \
 	rm.mged \
 	rot_edit.mged \
+	rot_view.mged \
 	rotobj.mged \
 	run_test \
+	saveview.mged \
 	sca_edit.mged \
+	sca_view.mged \
 	sed.mged \
+	set_perspective.mged \
+	setview.mged \
+	size.mged \
 	status.mged \
+	sv.mged \
 	tra_edit.mged \
+	tra_view.mged \
 	translate.mged \
 	unhide.mged \
+	view.mged \
+	vrot.mged \
 	who.mged \
 	xpush.mged \
-	Z.mged 
+	Z.mged \ 
+	zoom.mged
 
 CLEANFILES = \
 	$(MOSTLYCLEANFILES) \

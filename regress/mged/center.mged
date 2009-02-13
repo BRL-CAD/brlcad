@@ -1,0 +1,7 @@
+puts "*** Testing 'center' command ***"
+
+center
+center 111 2 -300
+center
+
+puts "*** 'center' testing completed ***"

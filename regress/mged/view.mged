@@ -1,0 +1,16 @@
+puts "*** Testing 'view' command ***"
+
+view quat 0.413175911167 0.492403876506 0.586824088833 0.492403876506
+view ypr 10 1 2
+view aet 10 10 10
+view center 23 -2 0
+view eye 2 4 5
+view size 10000
+view quat
+view ypr
+view aet
+view center
+view eye
+view size
+
+puts "*** 'view' testing completed ***"

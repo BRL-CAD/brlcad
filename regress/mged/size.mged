@@ -1,0 +1,7 @@
+puts "*** Testing 'size' command ***"
+
+size
+size 122323
+size
+
+puts "*** 'size' testing completed ***"

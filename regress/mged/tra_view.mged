@@ -1,0 +1,7 @@
+puts "*** Testing 'tra' command in view mode ***"
+
+view center
+tra -1000 2 3
+view center
+
+puts "*** 'tra' testing in view mode completed ***"
