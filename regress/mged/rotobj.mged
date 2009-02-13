@@ -1,0 +1,15 @@
+puts "*** Testing 'rotobj' command ***"
+
+in_arb8 rotobj
+comb rotobj.c u rotobj_arb8.s
+Z
+e rotobj.c
+oed / rotobj.c/rotobj_arb8.s
+rotobj -m 10 10 10
+rotobj -m 20 20 20
+rotobj -v 10 10 10
+rotobj -v 20 20 20
+accept
+Z
+
+puts "*** 'rotobj' testing completed ***"

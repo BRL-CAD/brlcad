@@ -1,0 +1,11 @@
+puts "*** Testing 'extrude' command ***"
+
+in_arb8 extrude
+Z
+e extrude_arb8.s
+sed extrude_arb8.s
+extrude 1234 100
+accept
+Z
+
+puts "*** 'extrude' testing completed ***"

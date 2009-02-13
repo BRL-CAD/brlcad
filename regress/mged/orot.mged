@@ -1,0 +1,12 @@
+puts "*** Testing 'orot' command ***"
+
+in_arb8 orot
+comb orot.c u orot_arb8.s
+Z
+e orot.c
+oed / orot.c/orot_arb8.s
+orot 11 -23 22
+accept
+Z
+
+puts "*** 'orot' testing completed ***"

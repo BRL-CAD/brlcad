@@ -1,0 +1,9 @@
+puts "*** Testing 'rot' command in edit mode ***"
+
+in_all_prims rot 
+comb_all rot 
+Z
+rot_all_prims rot 15 20 -12 
+
+
+puts "*** 'rot' edit mode testing completed ***"

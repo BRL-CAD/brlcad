@@ -132,6 +132,55 @@ if {![info exists make_primitives_list]} {
      }
   }
  
+  # translate all primitives 
+  proc translate_all_prims {cmdname coord1 coord2 coord3} {
+     global make_primitives_list
+     foreach x $make_primitives_list {
+      # for now, in nmg isn't producing sensible results 
+      if {![string match nmg $x]} {
+	e [format %s_%s.s $cmdname $x]
+	sed [format %s_%s.s $cmdname $x]
+	translate $coord1 $coord2 $coord3
+	accept
+	puts "Translated $x primitive"
+	d [format %s_%s.s $cmdname $x]
+       }
+     }
+  }
+
+  # translate all combinations 
+  proc translate_all_combs {cmdname coord1 coord2 coord3} {
+     global make_primitives_list
+     foreach x $make_primitives_list {
+      # for now, in nmg isn't producing sensible results 
+      if {![string match nmg $x]} {
+        e [format %s_%s.c $cmdname $x]
+        oed / [format %s_%s.c/%s_%s.s $cmdname $x $cmdname $x]
+	translate $coord1 $coord2 $coord3
+	accept
+	puts "Translated $x combination"
+	d [format %s_%s.c $cmdname $x]
+      }
+     }
+  }
+
+  # rotate all primitives 
+  proc rot_all_prims {cmdname coord1 coord2 coord3} {
+     global make_primitives_list
+     foreach x $make_primitives_list {
+      # for now, in nmg isn't producing sensible results 
+      if {![string match nmg $x]} {
+	e [format %s_%s.s $cmdname $x]
+	sed [format %s_%s.s $cmdname $x]
+	rot $coord1 $coord2 $coord3
+	accept
+	puts "rotated $x primitive"
+	d [format %s_%s.s $cmdname $x]
+       }
+     }
+  }
+
+
   puts "Regression testing definitions loaded.\n"
 
 }

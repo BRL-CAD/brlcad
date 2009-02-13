@@ -1,0 +1,10 @@
+puts "*** Testing 'translate' command ***"
+
+in_all_prims translate
+comb_all translate
+Z
+translate_all_prims translate -300 200 100
+translate_all_combs translate 600 100 -2
+
+
+puts "*** 'translate' testing completed ***"

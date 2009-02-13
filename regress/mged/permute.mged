@@ -1,0 +1,11 @@
+puts "*** Testing 'permute' command ***"
+
+in_arb8 permute
+Z
+e permute_arb8.s
+sed permute_arb8.s
+permute 321
+accept
+Z
+
+puts "*** 'permute' testing completed ***"

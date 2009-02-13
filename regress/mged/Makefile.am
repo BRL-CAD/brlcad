@@ -21,6 +21,7 @@ EXTRA_DIST = \
 	accept.mged \
 	arb.mged \
 	arced.mged \
+	arot.mged \
 	B.mged \
 	build_region.mged \
 	clone.mged \
@@ -32,6 +33,8 @@ EXTRA_DIST = \
 	draw_e_erase_d_who.mged \
 	draw.mged \
 	erase.mged \
+	extrude.mged \
+	facedef.mged \
 	g.mged \
 	hide.mged \
 	i.mged \
@@ -40,21 +43,30 @@ EXTRA_DIST = \
 	make.mged \
 	make_bb.mged \
 	mged.tcl \
+	mirface.mged \
 	mirror.mged \
 	mv.mged \
 	mvall.mged \
 	oed.mged \
+	orot.mged \
+	oscale.mged \
+	permute.mged \
 	prefix.mged \
 	push.mged \
 	putmat.mged \
+	qorot.mged \
 	r.mged \
 	regression_resources.tcl \
 	reject.mged \
 	rm.mged \
+	rot_edit.mged \
+	rotobj.mged \
 	run_test \
+	sca_edit.mged \
 	sed.mged \
 	status.mged \
 	tra_edit.mged \
+	translate.mged \
 	unhide.mged \
 	who.mged \
 	xpush.mged \

@@ -1,0 +1,11 @@
+puts "*** Testing 'sca' command in edit mode ***"
+
+in_arb8 sca
+Z
+e sca_arb8.s
+sed sca_arb8.s
+sca 10
+accept
+Z
+
+puts "*** 'sca' edit mode testing completed ***"
