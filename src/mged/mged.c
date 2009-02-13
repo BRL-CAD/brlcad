@@ -242,29 +242,6 @@ mgedInvalidParameterHandler(const wchar_t* expression,
 {
 /*
  *   Windows, I think you're number one!
- *
- *                   _____
- *                  ||   ||
- *                  |\___/|
- *                  |     |
- *                  |     |
- *                  |     |
- *                  |     |
- *                  |     |
- *                  |     |
- *             _____|<--->|_____
- *         ___/     |     |     \
- *        /   |     |     |     | \
- *        |   |     |     |     |  |
- *        |   |     |     |     |  |
- *        |                     |  |
- *        |                     |  |
- *        |                       /
- *        |                      /
- *         \                    /
- *          \                  /
- *           |                 |
- *           |                 |
  */
 }
 
