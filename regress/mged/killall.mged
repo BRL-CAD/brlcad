@@ -1,0 +1,27 @@
+puts "*** Testing 'killall' command ***"
+
+in killall_1.s arb8 10 -9 -8 10 -1 -8 10 -1 0 10 -9 0 3 -9 -8 3 -1 -8 3 -1 0 3 -9 0
+cp killall_1.s killall_2.s
+comb killall_1.c u killall_1.s u killall_2.s
+cp killall_1.c killall_2.c
+comb killall.c u killall_1.c u killall_2.s 
+ls killall*
+l killall*
+killall killall_1.s
+ls killall*
+l killall*
+killall killall_1.c
+ls killall*
+l killall*
+killall killall_2.s
+ls killall*
+l killall*
+killall killall_2.c
+ls killall*
+l killall*
+killall killall.c
+ls killall*
+l killall*
+
+
+puts "*** 'killall' testing completed ***"

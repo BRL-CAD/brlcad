@@ -40,6 +40,9 @@ EXTRA_DIST = \
 	i.mged \
 	in.mged \
 	keypoint.mged \
+	kill.mged \
+	killall.mged \
+	killtree.mged \
 	make.mged \
 	make_bb.mged \
 	mged.tcl \

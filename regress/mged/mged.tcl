@@ -201,7 +201,12 @@ add_test arot mged
 add_test rotobj mged
 add_test qorot mged
 
-
+#
+#	DELETING GEOMETRY COMMANDS
+#
+add_test kill mged
+add_test killall mged
+add_test killtree mged
 
 
 
