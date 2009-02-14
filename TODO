@@ -17,8 +17,6 @@ http://sf.net/pm/?group_id=105292
 THESE SHOULD HAPPEN BEFORE THE NEXT RELEASE
 -------------------------------------------
 
-* write mged test script to exhaustively exercise all commands
-
 * fix problem where mged without any arguments fails to initialize
   correctly with no view details (no faceplate or window footer) until
   an object is displayed unless you start mged with a database.  view
