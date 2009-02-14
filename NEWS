@@ -14,6 +14,7 @@ changes made.  See document footer for additional details.
 --- 2009-03-XX  Release 7.14.4                                     ---
 ----------------------------------------------------------------------
 
+* fixed mged switch error running the Primitive Editor - Sean Morrison
 * fixed g_diff crash when comparing objects - Sean Morrison
 * improved g_qa usage message and missing density message - Bob Parker
 * fixed mged font preferences menu when .mgedrc present - Bob Parker
