@@ -324,7 +324,7 @@ ScrollbarWidgetCmd(
 	} else {
 	    fraction = ((double) pixels / (double) length);
 	}
-	sprintf(buf, "%g", fraction);
+	Tcl_PrintDouble(NULL, fraction, buf);
 	Tcl_SetResult(interp, buf, TCL_VOLATILE);
     } else if ((c == 'f') && (strncmp(argv[1], "fraction", length) == 0)) {
 	int x, y, pos, length;
@@ -359,7 +359,7 @@ ScrollbarWidgetCmd(
 	} else if (fraction > 1.0) {
 	    fraction = 1.0;
 	}
-	sprintf(buf, "%g", fraction);
+	Tcl_PrintDouble(NULL, fraction, buf);
 	Tcl_SetResult(interp, buf, TCL_VOLATILE);
     } else if ((c == 'g') && (strncmp(argv[1], "get", length) == 0)) {
 	if (argc != 2) {

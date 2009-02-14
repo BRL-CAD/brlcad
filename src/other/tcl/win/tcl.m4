@@ -622,7 +622,7 @@ AC_DEFUN([SC_CONFIG_CFLAGS], [
 	    CC="\"${PATH64}/cl.exe\" -I\"${MSSDK}/Include\" \
 		-I\"${MSSDK}/Include/crt\" -I\"${MSSDK}/Include/crt/sys\""
 	    RC="\"${MSSDK}/bin/rc.exe\""
-	    CFLAGS_DEBUG="-nologo -Zi -Od ${runtime}d"
+	    CFLAGS_DEBUG="-nologo -Zi -Od ${runtime}"
 	    # Do not use -O2 for Win64 - this has proved buggy in code gen.
 	    CFLAGS_OPTIMIZE="-nologo -O1 ${runtime}"
 	    lflags="-nologo -MACHINE:${MACHINE} -LIBPATH:\"${MSSDK}/Lib/${MACHINE}\""
@@ -746,6 +746,9 @@ AC_DEFUN([SC_CONFIG_CFLAGS], [
 	POST_MAKE_LIB=
 	MAKE_EXE="\${CC} -Fe\[$]@"
 	LIBPREFIX=""
+
+	CFLAGS_DEBUG="${CFLAGS_DEBUG} -D_CRT_SECURE_NO_DEPRECATE -D_CRT_NONSTDC_NO_DEPRECATE"
+	CFLAGS_OPTIMIZE="${CFLAGS_OPTIMIZE} -D_CRT_SECURE_NO_DEPRECATE -D_CRT_NONSTDC_NO_DEPRECATE"
 
 	EXTRA_CFLAGS=""
 	CFLAGS_WARNING="-W3"

@@ -39,7 +39,8 @@ int
 Tcl_GetInt(
     Tcl_Interp *interp,		/* Interpreter to use for error reporting. */
     CONST char *src,		/* String containing a (possibly signed)
-				 * integer in a form acceptable to strtoul. */
+				 * integer in a form acceptable to
+				 * Tcl_GetIntFromObj(). */
     int *intPtr)		/* Place to store converted result. */
 {
     Tcl_Obj obj;
@@ -83,7 +84,8 @@ TclGetLong(
     Tcl_Interp *interp,		/* Interpreter used for error reporting if not
 				 * NULL. */
     CONST char *src,		/* String containing a (possibly signed) long
-				 * integer in a form acceptable to strtoul. */
+				 * integer in a form acceptable to
+				 * Tcl_GetLongFromObj(). */
     long *longPtr)		/* Place to store converted long result. */
 {
     Tcl_Obj obj;
@@ -125,7 +127,8 @@ int
 Tcl_GetDouble(
     Tcl_Interp *interp,		/* Interpreter used for error reporting. */
     CONST char *src,		/* String containing a floating-point number
-				 * in a form acceptable to strtod. */
+				 * in a form acceptable to 
+				 * Tcl_GetDoubleFromObj(). */
     double *doublePtr)		/* Place to store converted result. */
 {
     Tcl_Obj obj;
@@ -166,9 +169,8 @@ Tcl_GetDouble(
 int
 Tcl_GetBoolean(
     Tcl_Interp *interp,		/* Interpreter used for error reporting. */
-    CONST char *src,		/* String containing a boolean number
-				 * specified either as 1/0 or true/false or
-				 * yes/no. */
+    CONST char *src,		/* String containing one of the boolean values
+				 * 1, 0, true, false, yes, no, on off. */
     int *boolPtr)		/* Place to store converted result, which will
 				 * be 0 or 1. */
 {

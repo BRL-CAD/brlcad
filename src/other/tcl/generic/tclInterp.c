@@ -2061,9 +2061,9 @@ SlaveBgerror(
 		    NULL);
 	    return TCL_ERROR;
 	}
-	TclSetBgErrorHandler(interp, objv[0]);
+	TclSetBgErrorHandler(slaveInterp, objv[0]);
     }
-    Tcl_SetObjResult(interp, TclGetBgErrorHandler(interp));
+    Tcl_SetObjResult(interp, TclGetBgErrorHandler(slaveInterp));
     return TCL_OK;
 }
 
@@ -2472,11 +2472,15 @@ SlaveEval(
 
     if (objc == 1) {
 	/*
-	 * TIP #280: Make invoker available to eval'd script.
+	 * TIP #280: Make actual argument location available to eval'd script.
 	 */
 
         Interp *iPtr = (Interp *) interp;
-	result = TclEvalObjEx(slaveInterp, objv[0], 0, iPtr->cmdFramePtr, 0);
+	CmdFrame* invoker = iPtr->cmdFramePtr;
+	int word          = 0;
+
+	TclArgumentGet (interp, objv[0], &invoker, &word);
+	result = TclEvalObjEx(slaveInterp, objv[0], 0, invoker, word);
     } else {
 	objPtr = Tcl_ConcatObj(objc, objv);
 	Tcl_IncrRefCount(objPtr);

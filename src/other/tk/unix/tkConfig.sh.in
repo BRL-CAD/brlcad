@@ -34,7 +34,7 @@ TK_DBGX=
 TK_LIB_FILE='@TK_LIB_FILE@'
 
 # Additional libraries to use when linking Tk.
-TK_LIBS='@XLIBSW@ @LIBS@ @TCL_LIBS@'
+TK_LIBS='@XLIBSW@ @XFT_LIBS@ @LIBS@ @TCL_LIBS@'
 
 # Top-level directory in which Tk's platform-independent files are
 # installed.

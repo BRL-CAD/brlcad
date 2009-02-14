@@ -472,7 +472,7 @@ test treeview-9.0 "scroll callback - empty tree" -body {
     .tv delete [.tv children {}]
     update
     set ::scrolldata
-} -result [list 0 1]
+} -result [list 0.0 1.0]
 
 ### NEED: tests for focus item, selection
 

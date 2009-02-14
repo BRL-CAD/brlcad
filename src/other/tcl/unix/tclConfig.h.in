@@ -289,6 +289,9 @@
 /* Do we have getwd() */
 #undef NO_GETWD
 
+/* Do we have a usable 'isnan'? */
+#undef NO_ISNAN
+
 /* Do we have <limits.h>? */
 #undef NO_LIMITS_H
 
@@ -336,9 +339,6 @@
 
 /* Define to the version of this package. */
 #undef PACKAGE_VERSION
-
-/* May we use XIM peeking safely? */
-#undef PEEK_XCLOSEIM
 
 /* Is this a static build? */
 #undef STATIC_BUILD
@@ -496,7 +496,7 @@
 /* Define to `unsigned' if <sys/types.h> does not define. */
 #undef size_t
 
-/* What is the type of socklen_t? */
+/* Define as int if socklen_t is not available */
 #undef socklen_t
 
 /* Do we want to use the strtod() in compat? */

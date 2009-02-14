@@ -123,6 +123,8 @@ Tcl_InitStubs(
 		p++; q++;
 	    }
 	    if (*p) {
+		/* Construct error message */
+		Tcl_PkgRequireEx(interp, "Tcl", version, 1, NULL);
 		return NULL;
 	    }
 	} else {

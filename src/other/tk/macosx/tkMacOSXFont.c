@@ -5,7 +5,7 @@
  *	font package interface. This version uses ATSU instead of Quickdraw.
  *
  * Copyright 2002-2004 Benjamin Riefenstahl, Benjamin.Riefenstahl@epost.de
- * Copyright (c) 2006-2007 Daniel A. Steffen <das@users.sourceforge.net>
+ * Copyright (c) 2006-2008 Daniel A. Steffen <das@users.sourceforge.net>
  *
  * Some functions were originally copied verbatim from the QuickDraw version
  * of tkMacOSXFont.c, which had these copyright notices:
@@ -213,13 +213,15 @@ static const Tcl_UniChar *UpdateLineBuffer(const MacFont *fontPtr,
  * Initialization and setup of a font data structure.
  */
 
-static void InitFont(Tk_Window tkwin, FMFontFamily familyId,
-	const char *familyName, int size, int qdStyle, MacFont *fontPtr);
+static const char *FamilyNameForFamilyID(FMFontFamily familyId);
+static void InitFont(FMFontFamily familyId, const char *familyName,
+	int size, int qdStyle, MacFont *fontPtr);
 static void InitATSUObjects(FMFontFamily familyId, short qdsize, short qdStyle,
 	ATSUFontID *fontIdPtr, ATSUTextLayout *layoutPtr, ATSUStyle *stylePtr);
 static void InitATSUStyle(ATSUFontID fontId, short ptSize, short qdStyle,
 	ATSUStyle style);
-static void SetFontFeatures(ATSUFontID fontId, int fixed, ATSUStyle style);
+static void SetFontFeatures(ATSUFontID fontId, int fixed, short size,
+	ATSUStyle style);
 static void AdjustFontHeight(MacFont *fontPtr);
 static void InitATSULayout(const TkMacOSXDrawingContext *drawingContextPtr,
 	ATSUTextLayout layout, int fixed);
@@ -470,7 +472,7 @@ TkpGetNativeFont(
     CopyPascalStringToC(fontName, (char*)fontName);
 
     fontPtr = (MacFont *) ckalloc(sizeof(MacFont));
-    InitFont(tkwin, fontFamily, (char*)fontName, fontSize, fontStyle, fontPtr);
+    InitFont(fontFamily, (char*)fontName, fontSize, fontStyle, fontPtr);
 
     return (TkFont *) fontPtr;
 }
@@ -549,7 +551,8 @@ TkpGetFontFromAttributes(
 	fontPtr = (MacFont *) tkFontPtr;
 	ReleaseFont(fontPtr);
     }
-    InitFont(tkwin, familyId, name, faPtr->size, qdStyle, fontPtr);
+    InitFont(familyId, name, TkFontGetPoints(tkwin, faPtr->size),
+	    qdStyle, fontPtr);
 
     return (TkFont *) fontPtr;
 }
@@ -1372,6 +1375,48 @@ UpdateLineBuffer(
 /*
  *---------------------------------------------------------------------------
  *
+ * FamilyNameForFamilyID --
+ *
+ *	Helper for InitFont() and TkMacOSXFontDescriptionForFMFontInfo().
+ *	Retrieves font family names for a given font family ID.
+ *
+ * Results:
+ *	Font family name or NULL.
+ *
+ * Side effects:
+ *	None.
+ *
+ *---------------------------------------------------------------------------
+ */
+
+static const char *
+FamilyNameForFamilyID(
+    FMFontFamily familyId)
+{
+    OSStatus err;
+    char name[256] = "";
+    const MacFontFamily * familyPtr = NULL;
+
+    err = ChkErr(GetFontFamilyName, familyId, name, sizeof(name));
+    if (err == noErr) {
+	/*
+	 * We find the canonical font name, so we can avoid unnecessary
+	 * memory management.
+	 */
+
+	familyPtr = FindFontFamily(name);
+#ifdef TK_MAC_DEBUG_FONTS
+	if (!familyPtr) {
+	    TkMacOSXDbgMsg("Font family '%s' not found", name);
+	}
+#endif
+    }
+    return familyPtr ? familyPtr->name : NULL;
+}
+
+/*
+ *---------------------------------------------------------------------------
+ *
  * InitFont --
  *
  *	Helper for TkpGetNativeFont() and TkpGetFontFromAttributes().
@@ -1393,7 +1438,6 @@ UpdateLineBuffer(
 
 static void
 InitFont(
-    Tk_Window tkwin,		/* For display where font will be used. */
     FMFontFamily familyId,	/* The font family to initialize for. */
     const char * familyName,	/* The font family name, if known. Otherwise
 				 * this can be NULL. */
@@ -1402,45 +1446,24 @@ InitFont(
     MacFont * fontPtr)		/* Filled with information constructed from the
 				 * above arguments. */
 {
-    OSStatus err;
     FontInfo fi;
     TkFontAttributes * faPtr;
     TkFontMetrics * fmPtr;
-    short points;
     int periodWidth, wWidth;
 
     if (size == 0) {
 	size = GetDefFontSize();
     }
-    points = (short) TkFontGetPoints(tkwin, size);
-    ChkErr(FetchFontInfo, familyId, points, qdStyle, &fi);
-    if (familyName == NULL) {
-	char name[256] = "";
-	const MacFontFamily * familyPtr;
-
-	err = ChkErr(GetFontFamilyName, familyId, name, sizeof(name));
-	if (err == noErr) {
-	    /*
-	     * We find the canonical font name, so we can avoid unnecessary
-	     * memory management.
-	     */
-
-	    familyPtr = FindFontFamily(name);
-	    if (familyPtr != NULL) {
-		familyName = familyPtr->name;
-	    } else {
-#ifdef TK_MAC_DEBUG_FONTS
-		TkMacOSXDbgMsg("Font family '%s' not found", name);
-#endif
-	    }
-	}
+    ChkErr(FetchFontInfo, familyId, size, qdStyle, &fi);
+    if (!familyName) {
+	familyName = FamilyNameForFamilyID(familyId);
     }
 
     fontPtr->font.fid = (Font) fontPtr;
 
     faPtr = &fontPtr->font.fa;
     faPtr->family = familyName;
-    faPtr->size = points;
+    faPtr->size = size;
     faPtr->weight = (qdStyle & bold) ? TK_FW_BOLD : TK_FW_NORMAL;
     faPtr->slant = (qdStyle & italic) ? TK_FS_ITALIC : TK_FS_ROMAN;
     faPtr->underline = ((qdStyle & underline) != 0);
@@ -1461,17 +1484,18 @@ InitFont(
     fmPtr->maxWidth = fi.widMax;
 
     fontPtr->qdFont = familyId;
-    fontPtr->qdSize = points;
+    fontPtr->qdSize = size;
     fontPtr->qdStyle = (short) qdStyle;
 
-    InitATSUObjects(familyId, points, qdStyle, &fontPtr->atsuFontId,
+    InitATSUObjects(familyId, size, qdStyle, &fontPtr->atsuFontId,
 	    &fontPtr->atsuLayout, &fontPtr->atsuStyle);
 
     Tk_MeasureChars((Tk_Font)fontPtr, ".", 1, -1, 0, &periodWidth);
     Tk_MeasureChars((Tk_Font)fontPtr, "W", 1, -1, 0, &wWidth);
     fmPtr->fixed = periodWidth == wWidth;
 
-    SetFontFeatures(fontPtr->atsuFontId, fmPtr->fixed, fontPtr->atsuStyle);
+    SetFontFeatures(fontPtr->atsuFontId, fmPtr->fixed, size,
+	    fontPtr->atsuStyle);
 
     AdjustFontHeight(fontPtr);
 }
@@ -1624,6 +1648,7 @@ static void
 SetFontFeatures(
     ATSUFontID fontId,		/* The font id to use. */
     int fixed,			/* Is this a fixed font? */
+    short size,			/* Size of the font */
     ATSUStyle style)		/* The style handle to configure. */
 {
     /*
@@ -1642,6 +1667,19 @@ SetFontFeatures(
 	ChkErr(ATSUSetFontFeatures, style, sizeof(fixed_featureTypes) /
 		sizeof(fixed_featureTypes[0]), fixed_featureTypes,
 		fixed_featureSelectors);
+	if (size <= 10) {
+	    /*
+	     * Disable antialiasing of fixed-width fonts with sizes <= 10
+	     */
+
+	    const ATSStyleRenderingOptions options = kATSStyleNoAntiAliasing;
+	    const ATSUAttributeTag styleTag = kATSUStyleRenderingOptionsTag;
+	    const ByteCount styleSize = sizeof(ATSStyleRenderingOptions);
+	    const ConstATSUAttributeValuePtr styleValue = &options;
+
+	    ChkErr(ATSUSetAttributes, style, 1, &styleTag, &styleSize,
+		    (ATSUAttributeValuePtr*) &styleValue);
+	}
     }
 }
 
@@ -2462,3 +2500,12 @@ TkMacOSXUseAntialiasedText(
     antialiasedTextEnabled = enable;
     return TCL_OK;
 }
+
+/*
+ * Local Variables:
+ * mode: c
+ * c-basic-offset: 4
+ * fill-column: 79
+ * coding: utf-8
+ * End:
+ */

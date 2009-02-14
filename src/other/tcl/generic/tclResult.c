@@ -1161,6 +1161,7 @@ ReleaseKeys(
 
     for (i = KEY_CODE; i < KEY_LAST; i++) {
 	Tcl_DecrRefCount(keys[i]);
+	keys[i] = NULL;
     }
 }
 
@@ -1494,6 +1495,7 @@ Tcl_SetReturnOptions(
     int objc, level, code;
     Tcl_Obj **objv, *mergedOpts;
 
+    Tcl_IncrRefCount(options);
     if (TCL_ERROR == TclListObjGetElements(interp, options, &objc, &objv)
 	    || (objc % 2)) {
 	Tcl_ResetResult(interp);

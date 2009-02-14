@@ -122,7 +122,8 @@ requests when it has a selection.  The default is usually for widgets
 to export selections.
 .OP \-font font Font
 Specifies the font to use when drawing text inside the widget.
-The value may have any of the forms accepted by \fBTk_GetFont\fR.
+The value may have any of the forms described in the \fBfont\fR manual
+page under \fBFONT DESCRIPTION\fR.
 .OP "\-foreground or \-fg" foreground Foreground
 Specifies the normal foreground color to use when displaying the widget.
 .OP \-highlightbackground highlightBackground HighlightBackground

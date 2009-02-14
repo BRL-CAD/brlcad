@@ -6483,3 +6483,95 @@ Several documentation and release notes improvements
 2008-02-01 (bug fix)[CVE-2008-0553] buffer overflow in GIF format (max)
 
 --- Released 8.5.1, February 5, 2008 --- See ChangeLog for details ---
+
+2008-02-27 (bug fix)[1863346] Aqua: memleak in QD drawing (steffen)
+
+2008-02-29 (enhancement) Knight's tour demo (thoyts)
+
+2008-03-12 (bug fix)[1090382] crash when GetFont() fails (jenglish)
+
+2008-03-13 (enhancement) support space in INSTALL_ROOT or $builddir (steffen)
+
+2008-03-21 (bug fix)[1863007,1920030] Export Ttk stubs table (english)
+
+2008-03-26 (bug fix)[1922466] crash  in [. configure -cursor] (gavilán)
+
+2008-03-27 (platform support)[1921166] Solaris 64bit build fixes (steffen)
+
+2008-03-27 (bug fix) restored [::safe::loadTk] (hobbs)
+
+--- Released 8.5.2, March 28, 2008 --- See ChangeLog for details ---
+
+2008-04-07 (bug fix)[1937135] Tk_ParseArgv() double free crash (hobbs)
+
+2008-04-07 (bug fix)[1936238] wish -h mem explosion (bachmann,kenny)
+
+2008-04-14 (bug fix)[1941740] [tk_chooseColor -title] (thoyts)
+
+2008-04-17 (bug fix)[1327482] canvas item <Enter> events (wangnick)
+
+2008-05-23 (bug fix)[1967576] ttk::label height or width 0 panic (lawlor)
+
+2008-06-10 (enhancement)[1986818] Use Xutf8LookupString when possible (english)
+
+2008-06-12 (bug fix)[1991932] global grab segfault (steffen)
+
+2008-06-12 (platform support) Solaris/amd64 gcc 64bit support (steffen)
+
+2008-06-18 (bug fix) Aqua: missing focus on first map (steffen)
+
+--- Released 8.5.3, June 30, 2008 --- See ChangeLog for details ---
+
+2008-07-04 (bug fix)[2009213] crash in [ttk::scale] (polo,english)
+
+2008-07-26 (bug fix)[2026405] portability of [winfo id] (uchida,thoyts)
+
+2008-07-31 (bug fix) export Tk_PkgInitStubsCheck; fixes Tk embed on Windows
+
+2008-08-01 (bug fix)[2009788,2028703] unmapped toplevel crashes (thoyts)
+
+2008-08-05 (bug fix)[2010422] Tk header files revised to accommodate
+incompatible changes in recent X.org releases of X11 headers. (jenglish)
+
+--- Released 8.5.4, August 15, 2008 --- See ChangeLog for details ---
+
+2008-08-19 (behavior change) arguments passed to -[xy]scrollcommand
+callbacks, and values returned by [xy]view methods are explicitly
+formatted as doubles.  (english)
+	*** POTENTIAL INCOMPATIBILITY ***
+
+2008-08-25 (bug fix)[1936220] fix [tk_getOpenFile -multiple 1] on unix (helfter)
+
+2008-08-25 (bug fix)[1023955] default menu cursor: no more Motif (helfter)
+
+2008-08-28 (bug fix) correct TK_LIBS value to include Xft (porter)
+
+2008-10-05 (bug fix)[2112563] format double values explicitly in double
+format, avoiding sensitivity to locale setting. (fellows)
+	*** POTENTIAL INCOMPATIBILITY ***
+
+2008-10-10 (bug fix)[1894038] [package require] any Tk 8.5.* in any Tcl 8.5.*
+(porter)
+
+--- Released 8.5.5, October 15, 2008 --- See ChangeLog for details ---
+
+2008-10-17 (enhancement) keyboard bindings for ttk::scale (thoyts)
+
+2008-11-12 (bug fix)[1777362] permit [text] names containing "-" (thoyts)
+
+2008-11-15 (bug fix)[2239034] limit [wm manage] to Frames (thoyts)
+
+2008-11-19 (bug fix)[2312027] Tk_Create*ImageType() thread safety (nijtmans)
+
+2008-11-22 (bug fix)[1939129,1991930] combobox behind other windows (thoyts)
+
+2008-12-22 (bug fix)[1813597,2218964] eliminate unnecessary units conversion
+in screen distances, reducing precision loss (ferrieux)
+
+2008-12-22 (bug fix)[2107938] no negative font size in PS (fellows)
+
+2008-12-22 (bug fix)[2264732] crash using nondefault visual (english)
+
+2008-12-22 (bug fix)[2207435] [ttk::entry .t -textvar ::noexist::x] (english)
+
+--- Released 8.5.6, December 23, 2008 --- See ChangeLog for details ---

@@ -25,18 +25,6 @@ typedef struct ThreadSpecificData {
 } ThreadSpecificData;
 static Tcl_ThreadDataKey dataKey;
 
-#if defined(TK_USE_INPUT_METHODS) && defined(PEEK_XCLOSEIM)
-/*
- * Structure used to peek into internal XIM data structure. This is only known
- * to work with XFree86.
- */
-
-struct XIMPeek {
-    void *junk1, *junk2;
-    XIC ic_chain;
-};
-#endif
-
 /*
  * Prototypes for functions that are referenced only in this file:
  */
@@ -173,54 +161,10 @@ TkpCloseDisplay(
     TkWmCleanup(dispPtr);
 
 #ifdef TK_USE_INPUT_METHODS
-#if TK_XIM_SPOT
     if (dispPtr->inputXfs) {
 	XFreeFontSet(dispPtr->display, dispPtr->inputXfs);
     }
-#endif
     if (dispPtr->inputMethod) {
-	/*
-	 * Calling XCloseIM with an input context that has not been freed can
-	 * cause a crash. This crash has been reproduced under Linux systems
-	 * with XFree86 3.3 and may have also been seen under Solaris 2.3. The
-	 * crash is caused by a double free of memory inside the X library.
-	 * Memory that was already deallocated may be accessed again inside
-	 * XCloseIM. This bug can be avoided by making sure that a call to
-	 * XDestroyIC is made for each XCreateIC call. This bug has been fixed
-	 * in XFree86 4.2.99.2. The internal layout of the XIM structure
-	 * changed in the XFree86 4.2 release so the test should not be run
-	 * for with these new releases.
-	 */
-
-#if defined(TK_USE_INPUT_METHODS) && defined(PEEK_XCLOSEIM)
-	int do_peek = 0;
-	struct XIMPeek *peek;
-
-	if (strstr(ServerVendor(dispPtr->display), "XFree86")) {
-	    int vendrel = VendorRelease(dispPtr->display);
-
-	    if (vendrel < 336) {
-		/* 3.3.4 and 3.3.5 */
-		do_peek = 1;
-	    } else if (vendrel < 3900) {
-		/* Other 3.3.x versions */
-		do_peek = 1;
-	    } else if (vendrel < 40000000) {
-		/* 4.0.x versions */
-		do_peek = 1;
-	    } else {
-		/* Newer than 4.0 */
-		do_peek = 0;
-	    }
-	}
-
-	if (do_peek) {
-	    peek = (struct XIMPeek *) dispPtr->inputMethod;
-	    if (peek->ic_chain != NULL) {
-		Tcl_Panic("input contexts not freed before XCloseIM");
-	    }
-	}
-#endif
 	XCloseIM(dispPtr->inputMethod);
     }
 #endif
@@ -621,9 +565,7 @@ TkpSync(
  *
  * OpenIM --
  *
- *	Tries to open an X input method, associated with the given display.
- *	Right now we can only deal with a bare-bones input style: no preedit,
- *	and no status.
+ *	Tries to open an X input method associated with the given display.
  *
  * Results:
  *	Stores the input method in dispPtr->inputMethod; if there isn't a
@@ -639,11 +581,12 @@ static void
 OpenIM(
     TkDisplay *dispPtr)		/* Tk's structure for the display. */
 {
-    unsigned short i;
+    int i;
     XIMStyles *stylePtr;
+    XIMStyle bestStyle = 0;
 
     if (XSetLocaleModifiers("") == NULL) {
-	goto error;
+	return;
     }
 
     dispPtr->inputMethod = XOpenIM(dispPtr->display, NULL, NULL, NULL);
@@ -656,38 +599,45 @@ OpenIM(
 	goto error;
     }
 
-#if TK_XIM_SPOT
     /*
-     * If we want to do over-the-spot XIM, we have to check that this mode is
-     * supported. If not we will fall-through to the check below.
+     * Select the best input style supported by both the IM and Tk.
      */
-
     for (i = 0; i < stylePtr->count_styles; i++) {
-	if (stylePtr->supported_styles[i]
-		== (XIMPreeditPosition | XIMStatusNothing)) {
-	    dispPtr->flags |= TK_DISPLAY_XIM_SPOT;
-	    XFree(stylePtr);
-	    return;
-	}
-    }
-#endif /* TK_XIM_SPOT */
-
-    for (i = 0; i < stylePtr->count_styles; i++) {
-	if (stylePtr->supported_styles[i]
-		== (XIMPreeditNothing | XIMStatusNothing)) {
-	    XFree(stylePtr);
-	    return;
+	XIMStyle thisStyle = stylePtr->supported_styles[i];
+	if (thisStyle == (XIMPreeditPosition | XIMStatusNothing)) {
+	    bestStyle = thisStyle;
+	    break;
+	} else if (thisStyle == (XIMPreeditNothing | XIMStatusNothing)) {
+	    bestStyle = thisStyle;
 	}
     }
     XFree(stylePtr);
+    if (bestStyle == 0) {
+	goto error;
+    }
 
-  error:
+    dispPtr->inputStyle = bestStyle;
+
+    /*
+     * Create an XFontSet for preedit area.
+     */
+    if (dispPtr->inputStyle & XIMPreeditPosition) {
+	char **missing_list;
+	int missing_count;
+	char *def_string;
+
+	dispPtr->inputXfs = XCreateFontSet(dispPtr->display,
+		"-*-*-*-R-Normal--14-130-75-75-*-*",
+		&missing_list, &missing_count, &def_string);
+	if (missing_count > 0) {
+	    XFreeStringList(missing_list);
+	}
+    }
+
+    return;
+
+error:
     if (dispPtr->inputMethod) {
-	/*
-	 * This call should not suffer from any core dumping problems since we
-	 * have not allocated any input contexts.
-	 */
-
 	XCloseIM(dispPtr->inputMethod);
 	dispPtr->inputMethod = NULL;
     }

@@ -1,4 +1,4 @@
-#------------------------------------------------------------------------------
+#------------------------------------------------------------- -*- makefile -*-
 # makefile.vc --
 #
 #	Microsoft Visual C++ makefile for use with nmake.exe v1.62+ (VC++ 5.0+)
@@ -10,6 +10,7 @@
 # Copyright (c) 1998-2000 Ajuba Solutions.
 # Copyright (c) 2001-2005 ActiveState Corporation.
 # Copyright (c) 2001-2004 David Gravereaux.
+# Copyright (c) 2003-2008 Pat Thoyts.
 #
 #------------------------------------------------------------------------------
 # RCS: @(#) $Id$
@@ -410,6 +411,9 @@ cdebug	= -O2 $(OPTIMIZATIONS)
 !else
 cdebug	=
 !endif
+!if $(SYMBOLS)
+cdebug	= $(cdebug) -Zi
+!endif
 !else if "$(MACHINE)" == "IA64" || "$(MACHINE)" == "AMD64"
 ### Warnings are too many, can't support warnings into errors.
 cdebug	= -Zi -Od $(DEBUGFLAGS)
@@ -440,7 +444,8 @@ TCL_DEFINES	= -DTCL_PIPE_DLL=\"$(TCLPIPEDLLNAME)\" -DTCL_TOMMATH -DMP_PREC=4 -Di
 BASE_CFLAGS	= $(cflags) $(cdebug) $(crt) $(TCL_INCLUDES) $(TCL_DEFINES)
 CON_CFLAGS	= $(cflags) $(cdebug) $(crt) -DCONSOLE
 TCL_CFLAGS	= $(BASE_CFLAGS) $(OPTDEFINES)
-STUB_CFLAGS     = $(cflags) $(cdebug) $(OPTDEFINES)
+### Stubs files should not be compiled with -GL
+STUB_CFLAGS     = $(cflags) $(cdebug:-GL=) $(OPTDEFINES)
 
 
 #---------------------------------------------------------------------
@@ -451,6 +456,9 @@ STUB_CFLAGS     = $(cflags) $(cdebug) $(OPTDEFINES)
 ldebug	= -debug:full -debugtype:cv
 !else
 ldebug	= -release -opt:ref -opt:icf,3
+!if $(SYMBOLS)
+ldebug	= $(ldebug) -debug:full -debugtype:cv
+!endif
 !endif
 
 ### Declarations common to all linker options
@@ -525,7 +533,7 @@ test: setup $(TCLTEST) dlls $(CAT32)
 
 runtest: setup $(TCLTEST) dlls $(CAT32)
 	set TCL_LIBRARY=$(ROOT)/library
-	$(TCLTEST)
+	$(DEBUGGER) $(TCLTEST)
 
 setup:
 	@if not exist $(OUT_DIR)\nul mkdir $(OUT_DIR)
@@ -566,7 +574,9 @@ $(TCLPIPEDLL): $(WINDIR)\stub16.c
 	$(_VC_MANIFEST_EMBED_DLL)
 
 !if $(STATIC_BUILD)
-!if !$(TCL_USE_STATIC_PACKAGES)
+!if $(TCL_USE_STATIC_PACKAGES)
+$(TCLDDELIB):
+!else
 $(TCLDDELIB): $(TMP_DIR)\tclWinDde.obj
 	$(lib32) -nologo -out:$@ $(TMP_DIR)\tclWinDde.obj
 !endif
@@ -580,7 +590,9 @@ $(TCLDDELIB): $(TMP_DIR)\tclWinDde.obj $(TCLSTUBLIB)
 !endif
 
 !if $(STATIC_BUILD)
-!if !$(TCL_USE_STATIC_PACKAGES)
+!if $(TCL_USE_STATIC_PACKAGES)
+$(TCLREGLIB):
+!else
 $(TCLREGLIB): $(TMP_DIR)\tclWinReg.obj
 	$(lib32) -nologo -out:$@ $(TMP_DIR)\tclWinReg.obj
 !endif
@@ -985,7 +997,9 @@ install-libraries: tclConfig install-msgs install-tzdata
 	    "$(SCRIPT_INSTALL_DIR)\..\tcl8\8.4\platform\shell-$(PKG_SHELL_VER).tm"
 	@echo Installing $(TCLDDELIBNAME)
 !if $(STATIC_BUILD)
+!if !$(TCL_USE_STATIC_PACKAGES)
 	@$(CPY) "$(TCLDDELIB)" "$(LIB_INSTALL_DIR)\"
+!endif
 !else
 	@$(CPY) "$(TCLDDELIB)" "$(LIB_INSTALL_DIR)\dde$(DDEDOTVERSION)\"
 	@$(CPY) "$(ROOT)\library\dde\pkgIndex.tcl" \
@@ -993,7 +1007,9 @@ install-libraries: tclConfig install-msgs install-tzdata
 !endif
 	@echo Installing $(TCLREGLIBNAME)
 !if $(STATIC_BUILD)
+!if !$(TCL_USE_STATIC_PACKAGES)
 	@$(CPY) "$(TCLREGLIB)" "$(LIB_INSTALL_DIR)\"
+!endif
 !else
 	@$(CPY) "$(TCLREGLIB)" "$(LIB_INSTALL_DIR)\reg$(REGDOTVERSION)\"
 	@$(CPY) "$(ROOT)\library\reg\pkgIndex.tcl" \

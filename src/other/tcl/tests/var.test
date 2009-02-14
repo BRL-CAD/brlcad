@@ -527,6 +527,22 @@ test var-8.1 {TclDeleteVars, "unset" traces are called with fully-qualified var 
     list [unset test_ns_var::v] $test_ns_var::info
 } {{} {test_ns_var::v {} u}}
 
+test var-8.2 {TclDeleteNamespaceVars, "unset" traces on ns delete are called with fully-qualified var names} {
+    catch {namespace delete test_ns_var}
+    catch {unset a}
+    set info ""
+    namespace eval test_ns_var {
+        variable v 123 1
+        trace var v u ::traceUnset
+    }
+
+    proc traceUnset {name1 name2 op} {
+	set ::info [concat $::info [list $name1 $name2 $op]]
+    }
+
+    list [namespace delete test_ns_var] $::info
+} {{} {::test_ns_var::v {} u}}
+
 test var-9.1 {behaviour of TclGet/SetVar simple get/set} testsetnoerr {
     catch {unset u}; catch {unset v}
     list \

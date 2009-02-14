@@ -30,21 +30,21 @@ AC_DEFUN([SC_PATH_TCLCONFIG], [
 	AC_ARG_WITH(tcl,
 	    AC_HELP_STRING([--with-tcl],
 		[directory containing tcl configuration (tclConfig.sh)]),
-	    with_tclconfig=${withval})
+	    with_tclconfig="${withval}")
 	AC_MSG_CHECKING([for Tcl configuration])
 	AC_CACHE_VAL(ac_cv_c_tclconfig,[
 
 	    # First check to see if --with-tcl was specified.
 	    if test x"${with_tclconfig}" != x ; then
-		case ${with_tclconfig} in
+		case "${with_tclconfig}" in
 		    */tclConfig.sh )
-			if test -f ${with_tclconfig}; then
+			if test -f "${with_tclconfig}"; then
 			    AC_MSG_WARN([--with-tcl argument should refer to directory containing tclConfig.sh, not to tclConfig.sh itself])
-			    with_tclconfig=`echo ${with_tclconfig} | sed 's!/tclConfig\.sh$!!'`
+			    with_tclconfig="`echo "${with_tclconfig}" | sed 's!/tclConfig\.sh$!!'`"
 			fi ;;
 		esac
 		if test -f "${with_tclconfig}/tclConfig.sh" ; then
-		    ac_cv_c_tclconfig=`(cd ${with_tclconfig}; pwd)`
+		    ac_cv_c_tclconfig="`(cd "${with_tclconfig}"; pwd)`"
 		else
 		    AC_MSG_ERROR([${with_tclconfig} directory doesn't contain tclConfig.sh])
 		fi
@@ -66,7 +66,7 @@ AC_DEFUN([SC_PATH_TCLCONFIG], [
 			`ls -dr ../../../tcl[[8-9]].[[0-9]] 2>/dev/null` \
 			`ls -dr ../../../tcl[[8-9]].[[0-9]]* 2>/dev/null` ; do
 		    if test -f "$i/unix/tclConfig.sh" ; then
-			ac_cv_c_tclconfig=`(cd $i/unix; pwd)`
+			ac_cv_c_tclconfig="`(cd $i/unix; pwd)`"
 			break
 		    fi
 		done
@@ -80,7 +80,7 @@ AC_DEFUN([SC_PATH_TCLCONFIG], [
 			`ls -d /System/Library/Frameworks 2>/dev/null` \
 			; do
 		    if test -f "$i/Tcl.framework/tclConfig.sh" ; then
-			ac_cv_c_tclconfig=`(cd $i/Tcl.framework; pwd)`
+			ac_cv_c_tclconfig="`(cd $i/Tcl.framework; pwd)`"
 			break
 		    fi
 		done
@@ -96,7 +96,7 @@ AC_DEFUN([SC_PATH_TCLCONFIG], [
 			`ls -d /usr/lib 2>/dev/null` \
 			; do
 		    if test -f "$i/tclConfig.sh" ; then
-			ac_cv_c_tclconfig=`(cd $i; pwd)`
+			ac_cv_c_tclconfig="`(cd $i; pwd)`"
 			break
 		    fi
 		done
@@ -110,7 +110,7 @@ AC_DEFUN([SC_PATH_TCLCONFIG], [
 			`ls -dr ${srcdir}/../tcl[[8-9]].[[0-9]] 2>/dev/null` \
 			`ls -dr ${srcdir}/../tcl[[8-9]].[[0-9]]* 2>/dev/null` ; do
 		    if test -f "$i/unix/tclConfig.sh" ; then
-		    ac_cv_c_tclconfig=`(cd $i/unix; pwd)`
+		    ac_cv_c_tclconfig="`(cd $i/unix; pwd)`"
 		    break
 		fi
 		done
@@ -123,7 +123,7 @@ AC_DEFUN([SC_PATH_TCLCONFIG], [
 	    exit 0
 	else
 	    no_tcl=
-	    TCL_BIN_DIR=${ac_cv_c_tclconfig}
+	    TCL_BIN_DIR="${ac_cv_c_tclconfig}"
 	    AC_MSG_RESULT([found ${TCL_BIN_DIR}/tclConfig.sh])
 	fi
     fi
@@ -160,21 +160,21 @@ AC_DEFUN([SC_PATH_TKCONFIG], [
 	AC_ARG_WITH(tk,
 	    AC_HELP_STRING([--with-tk],
 		[directory containing tk configuration (tkConfig.sh)]),
-	    with_tkconfig=${withval})
+	    with_tkconfig="${withval}")
 	AC_MSG_CHECKING([for Tk configuration])
 	AC_CACHE_VAL(ac_cv_c_tkconfig,[
 
 	    # First check to see if --with-tkconfig was specified.
 	    if test x"${with_tkconfig}" != x ; then
-		case ${with_tkconfig} in
+		case "${with_tkconfig}" in
 		    */tkConfig.sh )
-			if test -f ${with_tkconfig}; then
+			if test -f "${with_tkconfig}"; then
 			    AC_MSG_WARN([--with-tk argument should refer to directory containing tkConfig.sh, not to tkConfig.sh itself])
-			    with_tkconfig=`echo ${with_tkconfig} | sed 's!/tkConfig\.sh$!!'`
+			    with_tkconfig="`echo "${with_tkconfig}" | sed 's!/tkConfig\.sh$!!'`"
 			fi ;;
 		esac
 		if test -f "${with_tkconfig}/tkConfig.sh" ; then
-		    ac_cv_c_tkconfig=`(cd ${with_tkconfig}; pwd)`
+		    ac_cv_c_tkconfig="`(cd "${with_tkconfig}"; pwd)`"
 		else
 		    AC_MSG_ERROR([${with_tkconfig} directory doesn't contain tkConfig.sh])
 		fi
@@ -196,7 +196,7 @@ AC_DEFUN([SC_PATH_TKCONFIG], [
 			`ls -dr ../../../tk[[8-9]].[[0-9]] 2>/dev/null` \
 			`ls -dr ../../../tk[[8-9]].[[0-9]]* 2>/dev/null` ; do
 		    if test -f "$i/unix/tkConfig.sh" ; then
-			ac_cv_c_tkconfig=`(cd $i/unix; pwd)`
+			ac_cv_c_tkconfig="`(cd $i/unix; pwd)`"
 			break
 		    fi
 		done
@@ -210,7 +210,7 @@ AC_DEFUN([SC_PATH_TKCONFIG], [
 			`ls -d /System/Library/Frameworks 2>/dev/null` \
 			; do
 		    if test -f "$i/Tk.framework/tkConfig.sh" ; then
-			ac_cv_c_tkconfig=`(cd $i/Tk.framework; pwd)`
+			ac_cv_c_tkconfig="`(cd $i/Tk.framework; pwd)`"
 			break
 		    fi
 		done
@@ -226,7 +226,7 @@ AC_DEFUN([SC_PATH_TKCONFIG], [
 			`ls -d /usr/lib 2>/dev/null` \
 			; do
 		    if test -f "$i/tkConfig.sh" ; then
-			ac_cv_c_tkconfig=`(cd $i; pwd)`
+			ac_cv_c_tkconfig="`(cd $i; pwd)`"
 			break
 		    fi
 		done
@@ -240,7 +240,7 @@ AC_DEFUN([SC_PATH_TKCONFIG], [
 			`ls -dr ${srcdir}/../tk[[8-9]].[[0-9]] 2>/dev/null` \
 			`ls -dr ${srcdir}/../tk[[8-9]].[[0-9]]* 2>/dev/null` ; do
 		    if test -f "$i/unix/tkConfig.sh" ; then
-			ac_cv_c_tkconfig=`(cd $i/unix; pwd)`
+			ac_cv_c_tkconfig="`(cd $i/unix; pwd)`"
 			break
 		    fi
 		done
@@ -253,7 +253,7 @@ AC_DEFUN([SC_PATH_TKCONFIG], [
 	    exit 0
 	else
 	    no_tk=
-	    TK_BIN_DIR=${ac_cv_c_tkconfig}
+	    TK_BIN_DIR="${ac_cv_c_tkconfig}"
 	    AC_MSG_RESULT([found ${TK_BIN_DIR}/tkConfig.sh])
 	fi
     fi
@@ -299,9 +299,9 @@ AC_DEFUN([SC_LOAD_TCLCONFIG], [
     # instead of TCL_BUILD_LIB_SPEC since it will work with both an
     # installed and uninstalled version of Tcl.
     if test -f "${TCL_BIN_DIR}/Makefile" ; then
-        TCL_LIB_SPEC=${TCL_BUILD_LIB_SPEC}
-        TCL_STUB_LIB_SPEC=${TCL_BUILD_STUB_LIB_SPEC}
-        TCL_STUB_LIB_PATH=${TCL_BUILD_STUB_LIB_PATH}
+        TCL_LIB_SPEC="${TCL_BUILD_LIB_SPEC}"
+        TCL_STUB_LIB_SPEC="${TCL_BUILD_STUB_LIB_SPEC}"
+        TCL_STUB_LIB_PATH="${TCL_BUILD_STUB_LIB_PATH}"
     elif test "`uname -s`" = "Darwin"; then
 	# If Tcl was built as a framework, attempt to use the libraries
 	# from the framework at the given location so that linking works
@@ -309,16 +309,16 @@ AC_DEFUN([SC_LOAD_TCLCONFIG], [
 	case ${TCL_DEFS} in
 	    *TCL_FRAMEWORK*)
 		if test -f "${TCL_BIN_DIR}/${TCL_LIB_FILE}"; then
-		    for i in "`cd ${TCL_BIN_DIR}; pwd`" \
-			     "`cd ${TCL_BIN_DIR}/../..; pwd`"; do
+		    for i in "`cd "${TCL_BIN_DIR}"; pwd`" \
+			     "`cd "${TCL_BIN_DIR}"/../..; pwd`"; do
 			if test "`basename "$i"`" = "${TCL_LIB_FILE}.framework"; then
-			    TCL_LIB_SPEC="-F`dirname "$i"` -framework ${TCL_LIB_FILE}"
+			    TCL_LIB_SPEC="-F`dirname "$i" | sed -e 's/ /\\\\ /g'` -framework ${TCL_LIB_FILE}"
 			    break
 			fi
 		    done
 		fi
 		if test -f "${TCL_BIN_DIR}/${TCL_STUB_LIB_FILE}"; then
-		    TCL_STUB_LIB_SPEC="-L${TCL_BIN_DIR} ${TCL_STUB_LIB_FLAG}"
+		    TCL_STUB_LIB_SPEC="-L`echo "${TCL_BIN_DIR}"  | sed -e 's/ /\\\\ /g'` ${TCL_STUB_LIB_FLAG}"
 		    TCL_STUB_LIB_PATH="${TCL_BIN_DIR}/${TCL_STUB_LIB_FILE}"
 		fi
 		;;
@@ -382,9 +382,9 @@ AC_DEFUN([SC_LOAD_TKCONFIG], [
     # instead of TK_BUILD_LIB_SPEC since it will work with both an
     # installed and uninstalled version of Tcl.
     if test -f "${TK_BIN_DIR}/Makefile" ; then
-        TK_LIB_SPEC=${TK_BUILD_LIB_SPEC}
-        TK_STUB_LIB_SPEC=${TK_BUILD_STUB_LIB_SPEC}
-        TK_STUB_LIB_PATH=${TK_BUILD_STUB_LIB_PATH}
+        TK_LIB_SPEC="${TK_BUILD_LIB_SPEC}"
+        TK_STUB_LIB_SPEC="${TK_BUILD_STUB_LIB_SPEC}"
+        TK_STUB_LIB_PATH="${TK_BUILD_STUB_LIB_PATH}"
     elif test "`uname -s`" = "Darwin"; then
 	# If Tk was built as a framework, attempt to use the libraries
 	# from the framework at the given location so that linking works
@@ -392,16 +392,16 @@ AC_DEFUN([SC_LOAD_TKCONFIG], [
 	case ${TK_DEFS} in
 	    *TK_FRAMEWORK*)
 		if test -f "${TK_BIN_DIR}/${TK_LIB_FILE}"; then
-		    for i in "`cd ${TK_BIN_DIR}; pwd`" \
-			     "`cd ${TK_BIN_DIR}/../..; pwd`"; do
+		    for i in "`cd "${TK_BIN_DIR}"; pwd`" \
+			     "`cd "${TK_BIN_DIR}"/../..; pwd`"; do
 			if test "`basename "$i"`" = "${TK_LIB_FILE}.framework"; then
-			    TK_LIB_SPEC="-F`dirname "$i"` -framework ${TK_LIB_FILE}"
+			    TK_LIB_SPEC="-F`dirname "$i" | sed -e 's/ /\\\\ /g'` -framework ${TK_LIB_FILE}"
 			    break
 			fi
 		    done
 		fi
 		if test -f "${TK_BIN_DIR}/${TK_STUB_LIB_FILE}"; then
-		    TK_STUB_LIB_SPEC="-L${TK_BIN_DIR} ${TK_STUB_LIB_FLAG}"
+		    TK_STUB_LIB_SPEC="-L` echo "${TK_BIN_DIR}"  | sed -e 's/ /\\\\ /g'` ${TK_STUB_LIB_FLAG}"
 		    TK_STUB_LIB_PATH="${TK_BIN_DIR}/${TK_STUB_LIB_FILE}"
 		fi
 		;;
@@ -494,7 +494,7 @@ AC_DEFUN([SC_PROG_TCLSH], [
 
 AC_DEFUN([SC_BUILD_TCLSH], [
     AC_MSG_CHECKING([for tclsh in Tcl build directory])
-    BUILD_TCLSH=${TCL_BIN_DIR}/tclsh
+    BUILD_TCLSH="${TCL_BIN_DIR}"/tclsh
     AC_MSG_RESULT([$BUILD_TCLSH])
     AC_SUBST(BUILD_TCLSH)
 ])
@@ -1454,10 +1454,6 @@ dnl AC_CHECK_TOOL(AR, ar)
 	    # files in compat/*.c is being linked in.
 
 	    AS_IF([test x"${USE_COMPAT}" != x],[CFLAGS="$CFLAGS -fno-inline"])
-
-	    # XIM peeking works under XFree86.
-	    AC_DEFINE(PEEK_XCLOSEIM, 1, [May we use XIM peeking safely?])
-
 	    ;;
 	GNU*)
 	    SHLIB_CFLAGS="-fPIC"
@@ -1922,15 +1918,46 @@ dnl AC_CHECK_TOOL(AR, ar)
 		    ])
 		], [AS_IF([test "$arch" = "amd64 i386"], [
 		    AS_IF([test "$GCC" = yes], [
-			AC_MSG_WARN([64bit mode not supported with GCC on $system])
+			case $system in
+			    SunOS-5.1[[1-9]]*|SunOS-5.[[2-9]][[0-9]]*)
+				do64bit_ok=yes
+				CFLAGS="$CFLAGS -m64"
+				LDFLAGS="$LDFLAGS -m64";;
+			    *)
+				AC_MSG_WARN([64bit mode not supported with GCC on $system]);;
+			esac
 		    ], [
 			do64bit_ok=yes
-			CFLAGS="$CFLAGS -xarch=amd64"
-			LDFLAGS="$LDFLAGS -xarch=amd64"
+			case $system in
+			    SunOS-5.1[[1-9]]*|SunOS-5.[[2-9]][[0-9]]*)
+				CFLAGS="$CFLAGS -m64"
+				LDFLAGS="$LDFLAGS -m64";;
+			    *)
+				CFLAGS="$CFLAGS -xarch=amd64"
+				LDFLAGS="$LDFLAGS -xarch=amd64";;
+			esac
 		    ])
 		], [AC_MSG_WARN([64bit mode not supported for $arch])])])
 	    ])
-	    
+
+	    #--------------------------------------------------------------------
+	    # On Solaris 5.x i386 with the sunpro compiler we need to link
+	    # with sunmath to get floating point rounding control
+	    #--------------------------------------------------------------------
+	    AS_IF([test "$GCC" = yes],[use_sunmath=no],[
+		arch=`isainfo`
+		AC_MSG_CHECKING([whether to use -lsunmath for fp rounding control])
+		AS_IF([test "$arch" = "amd64 i386"], [
+			AC_MSG_RESULT([yes])
+			MATH_LIBS="-lsunmath $MATH_LIBS"
+			AC_CHECK_HEADER(sunmath.h)
+			use_sunmath=yes
+			], [
+			AC_MSG_RESULT([no])
+			use_sunmath=no
+		])
+	    ])
+
 	    # Note: need the LIBS below, otherwise Tk won't find Tcl's
 	    # symbols when dynamically loaded into tclsh.
 
@@ -1943,20 +1970,25 @@ dnl AC_CHECK_TOOL(AR, ar)
 		CC_SEARCH_FLAGS='-Wl,-R,${LIB_RUNTIME_DIR}'
 		LD_SEARCH_FLAGS=${CC_SEARCH_FLAGS}
 		AS_IF([test "$do64bit_ok" = yes], [
-		    # We need to specify -static-libgcc or we need to
-		    # add the path to the sparv9 libgcc.
-		    SHLIB_LD="$SHLIB_LD -m64 -mcpu=v9 -static-libgcc"
-		    # for finding sparcv9 libgcc, get the regular libgcc
-		    # path, remove so name and append 'sparcv9'
-		    #v9gcclibdir="`gcc -print-file-name=libgcc_s.so` | ..."
-		    #CC_SEARCH_FLAGS="${CC_SEARCH_FLAGS},-R,$v9gcclibdir"
+		    AS_IF([test "$arch" = "sparcv9 sparc"], [
+			# We need to specify -static-libgcc or we need to
+			# add the path to the sparv9 libgcc.
+			SHLIB_LD="$SHLIB_LD -m64 -mcpu=v9 -static-libgcc"
+			# for finding sparcv9 libgcc, get the regular libgcc
+			# path, remove so name and append 'sparcv9'
+			#v9gcclibdir="`gcc -print-file-name=libgcc_s.so` | ..."
+			#CC_SEARCH_FLAGS="${CC_SEARCH_FLAGS},-R,$v9gcclibdir"
+		    ], [AS_IF([test "$arch" = "amd64 i386"], [
+			SHLIB_LD="$SHLIB_LD -m64 -static-libgcc"
+		    ])])
 		])
 	    ], [
+		AS_IF([test "$use_sunmath" = yes], [textmode=textoff],[textmode=text])
 		case $system in
 		    SunOS-5.[[1-9]][[0-9]]*)
-			SHLIB_LD='${CC} -G -z text';;
+			SHLIB_LD="\${CC} -G -z $textmode \${LDFLAGS}";;
 		    *)
-			SHLIB_LD='/usr/ccs/bin/ld -G -z text';;
+			SHLIB_LD="/usr/ccs/bin/ld -G -z $textmode";;
 		esac
 		CC_SEARCH_FLAGS='-Wl,-R,${LIB_RUNTIME_DIR}'
 		LD_SEARCH_FLAGS='-R ${LIB_RUNTIME_DIR}'
@@ -2043,26 +2075,26 @@ dnl # preprocessing tests use only CPPFLAGS.
     AS_IF([test "${SHARED_BUILD}" = 1 -a "${SHLIB_SUFFIX}" != ""], [
         LIB_SUFFIX=${SHARED_LIB_SUFFIX}
         MAKE_LIB='${SHLIB_LD} -o [$]@ ${OBJS} ${SHLIB_LD_LIBS} ${TCL_SHLIB_LD_EXTRAS} ${TK_SHLIB_LD_EXTRAS} ${LD_SEARCH_FLAGS}'
-        INSTALL_LIB='$(INSTALL_LIBRARY) $(LIB_FILE) $(LIB_INSTALL_DIR)/$(LIB_FILE)'
+        INSTALL_LIB='$(INSTALL_LIBRARY) $(LIB_FILE) "$(LIB_INSTALL_DIR)"/$(LIB_FILE)'
     ], [
         LIB_SUFFIX=${UNSHARED_LIB_SUFFIX}
 
         AS_IF([test "$RANLIB" = ""], [
             MAKE_LIB='$(STLIB_LD) [$]@ ${OBJS}'
-            INSTALL_LIB='$(INSTALL_LIBRARY) $(LIB_FILE) $(LIB_INSTALL_DIR)/$(LIB_FILE)'
+            INSTALL_LIB='$(INSTALL_LIBRARY) $(LIB_FILE) "$(LIB_INSTALL_DIR)"/$(LIB_FILE)'
         ], [
             MAKE_LIB='${STLIB_LD} [$]@ ${OBJS} ; ${RANLIB} [$]@'
-            INSTALL_LIB='$(INSTALL_LIBRARY) $(LIB_FILE) $(LIB_INSTALL_DIR)/$(LIB_FILE) ; (cd $(LIB_INSTALL_DIR) ; $(RANLIB) $(LIB_FILE))'
+            INSTALL_LIB='$(INSTALL_LIBRARY) $(LIB_FILE) "$(LIB_INSTALL_DIR)"/$(LIB_FILE) ; (cd "$(LIB_INSTALL_DIR)" ; $(RANLIB) $(LIB_FILE))'
         ])
     ])
 
     # Stub lib does not depend on shared/static configuration
     AS_IF([test "$RANLIB" = ""], [
         MAKE_STUB_LIB='${STLIB_LD} [$]@ ${STUB_LIB_OBJS}'
-        INSTALL_STUB_LIB='$(INSTALL_LIBRARY) $(STUB_LIB_FILE) $(LIB_INSTALL_DIR)/$(STUB_LIB_FILE)'
+        INSTALL_STUB_LIB='$(INSTALL_LIBRARY) $(STUB_LIB_FILE) "$(LIB_INSTALL_DIR)/$(STUB_LIB_FILE)"'
     ], [
         MAKE_STUB_LIB='${STLIB_LD} [$]@ ${STUB_LIB_OBJS} ; ${RANLIB} [$]@'
-        INSTALL_STUB_LIB='$(INSTALL_LIBRARY) $(STUB_LIB_FILE) $(LIB_INSTALL_DIR)/$(STUB_LIB_FILE) ; (cd $(LIB_INSTALL_DIR) ; $(RANLIB) $(STUB_LIB_FILE))'
+        INSTALL_STUB_LIB='$(INSTALL_LIBRARY) $(STUB_LIB_FILE) "$(LIB_INSTALL_DIR)"/$(STUB_LIB_FILE) ; (cd "$(LIB_INSTALL_DIR)" ; $(RANLIB) $(STUB_LIB_FILE))'
     ])
 
     # Define TCL_LIBS now that we know what DL_LIBS is.
@@ -2375,7 +2407,7 @@ AC_DEFUN([SC_PATH_X], [
 	XLIBSW=nope
 	dirs="/usr/unsupported/lib /usr/local/lib /usr/X386/lib /usr/X11R6/lib /usr/X11R5/lib /usr/lib/X11R5 /usr/lib/X11R4 /usr/openwin/lib /usr/X11/lib /usr/sww/X11/lib"
 	for i in $dirs ; do
-	    if test -r $i/libX11.a -o -r $i/libX11.so -o -r $i/libX11.sl; then
+	    if test -r $i/libX11.a -o -r $i/libX11.so -o -r $i/libX11.sl -o -r $i/libX11.dylib; then
 		AC_MSG_RESULT([$i])
 		XLIBSW="-L$i -lX11"
 		x_libraries="$i"

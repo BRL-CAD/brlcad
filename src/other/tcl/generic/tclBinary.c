@@ -786,7 +786,9 @@ Tcl_BinaryObjCmd(
 		break;
 	    }
 	    if ((count == 0) && (cmd != '@')) {
-		arg++;
+		if (cmd != 'x') {
+		    arg++;
+		}
 		continue;
 	    }
 	    switch (cmd) {

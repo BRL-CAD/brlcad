@@ -478,7 +478,6 @@ TkMacOSXDebugFlashRegion(
 	}
     }
 }
-#endif /* TK_MAC_DEBUG */
 
 #include <mach-o/dyld.h>
 #include <mach-o/nlist.h>
@@ -616,3 +615,5 @@ TkMacOSXGetNamedDebugSymbol(
 #endif /* __LP64__ */
     return addr;
 }
+
+#endif /* TK_MAC_DEBUG */

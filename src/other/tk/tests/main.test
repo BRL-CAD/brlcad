@@ -99,6 +99,30 @@ test main-2.3 {Tk_MainEx: -encoding option} -constraints {
         removeFile script
     } -result {0 {-enc utf-8 script}}
 
+test main-3.1 {Tk_ParseArgv: -help option} -constraints unix -body {
+    # Run only on unix as Win32 pops up native dialog
+    list [catch {exec [interpreter] -help} msg] $msg
+} -match glob -result {1 {% Application initialization failed: Command-specific options:*}}
+
+test main-3.2 {Tk_ParseArgv: -help option} -setup {
+    set maininterp [interp create]
+} -body {
+    $maininterp eval { set argc 1 ; set argv -help }
+    list [catch {load {} Tk $maininterp} msg] $msg
+} -cleanup {
+    interp delete $maininterp
+} -match glob -result {1 {Command-specific options:*}}
+
+test main-3.3 {Tk_ParseArgv: -help option} -setup {
+    set maininterp [interp create]
+} -body {
+    # Repeat of 3.2 to catch cleanup, eg Bug 1927135
+    $maininterp eval { set argc 1 ; set argv -help }
+    list [catch {load {} Tk $maininterp} msg] $msg
+} -cleanup {
+    interp delete $maininterp
+} -match glob -result {1 {Command-specific options:*}}
+
 # cleanup
 cleanupTests
 return

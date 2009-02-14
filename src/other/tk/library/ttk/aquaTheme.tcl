@@ -8,24 +8,25 @@ namespace eval ttk::theme::aqua {
     ttk::style theme settings aqua {
 
 	ttk::style configure . \
-	    -font System \
-	    -background White \
-	    -foreground Black \
-	    -selectbackground SystemHighlight \
-	    -selectforeground SystemHighlightText \
+	    -font TkDefaultFont \
+	    -background systemWindowBody \
+	    -foreground systemModelessDialogActiveText \
+	    -selectbackground systemHighlight \
+	    -selectforeground systemModelessDialogActiveText \
 	    -selectborderwidth 0 \
-	    -insertwidth 1 \
-	    ;
+	    -insertwidth 1
+
 	ttk::style map . \
-	    -foreground [list  disabled "#7f7f7f"  background "#7f7f7f"] \
-	    -selectbackground [list background "#c3c3c3"  !focus "#c3c3c3"] \
-	    -selectforeground [list background "#a3a3a3"  !focus "#000000"] \
-	    ;
+	    -foreground {disabled systemModelessDialogInactiveText
+		    background systemModelessDialogInactiveText} \
+	    -selectbackground {background systemHighlightSecondary
+		    !focus systemHighlightSecondary} \
+	    -selectforeground {background systemModelessDialogInactiveText
+		    !focus systemDialogActiveText}
 
 	# Workaround for #1100117:
 	# Actually, on Aqua we probably shouldn't stipple images in
 	# disabled buttons even if it did work...
-	#
 	ttk::style configure . -stipple {}
 
 	ttk::style configure TButton -anchor center -width -6
@@ -40,12 +41,15 @@ namespace eval ttk::theme::aqua {
 	# Treeview:
 	ttk::style configure Treeview -rowheight 18
 	ttk::style configure Heading -font TkHeadingFont
-	ttk::style map Row -background [list \
-		{selected background} "#c3c3c3" selected SystemHighlight] ;
-	ttk::style map Cell -foreground [list \
-		{selected background} "#000000" selected SystemHighlightText] ;
-	ttk::style map Item -foreground [list \
-		{selected background} "#000000" selected SystemHighlightText] ;
+	ttk::style map Row \
+	    -background {{selected background} systemHighlightSecondary
+		    selected systemHighlight}
+	ttk::style map Cell \
+	    -foreground {{selected background} systemModelessDialogInactiveText
+		    selected systemModelessDialogActiveText}
+	ttk::style map Item \
+	    -foreground {{selected background} systemModelessDialogInactiveText
+		    selected systemModelessDialogActiveText}
 
 	# Enable animation for ttk::progressbar widget:
 	ttk::style configure TProgressbar -period 100 -maxphase 255
@@ -54,7 +58,7 @@ namespace eval ttk::theme::aqua {
 	# with a 14 pixel inset and 4 pixels spacing between border and label
 	# (ref: Apple Human Interface Guidelines / Controls / Grouping Controls)
 	#
-    	ttk::style configure TLabelframe \
+	ttk::style configure TLabelframe \
 		-labeloutside true -labelmargins {14 0 14 4}
 
 	# TODO: panedwindow sashes should be 9 pixels (HIG:Controls:Split Views)

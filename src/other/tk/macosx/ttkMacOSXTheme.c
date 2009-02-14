@@ -160,6 +160,8 @@ static Ttk_StateTable ButtonValueTable[] = {
 };
 
 static Ttk_StateTable ButtonAdornmentTable[] = {
+    { kThemeAdornmentDefault| kThemeAdornmentFocus,
+	TTK_STATE_ALTERNATE| TTK_STATE_FOCUS, 0 },
     { kThemeAdornmentDefault, TTK_STATE_ALTERNATE, 0 },
     { kThemeAdornmentFocus, TTK_STATE_FOCUS, 0 },
     { kThemeAdornmentNone, 0, 0 }
@@ -698,12 +700,13 @@ static void SeparatorElementDraw(
     Drawable d, Ttk_Box b, unsigned int state)
 {
     Rect bounds = BoxToRect(d, b);
-    ThemeDrawState drawState = Ttk_StateTableLookup(ThemeStateTable, state);
+    ThemeDrawState drawState;
 
     /*
      * DrawThemeSeparator only supports kThemeStateActive / kThemeStateInactive
     */
     state &= TTK_STATE_BACKGROUND;
+    drawState = Ttk_StateTableLookup(ThemeStateTable, state);
     BEGIN_DRAWING(d)
     ChkErr(DrawThemeSeparator, &bounds, drawState);
     END_DRAWING

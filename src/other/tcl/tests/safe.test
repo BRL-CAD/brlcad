@@ -15,7 +15,7 @@
 package require Tcl 8.5
 
 if {[lsearch [namespace children] ::tcltest] == -1} {
-    package require tcltest
+    package require tcltest 2
     namespace import -force ::tcltest::*
 }
 
@@ -89,7 +89,7 @@ test safe-3.2 {calling safe::interpCreate on trusted interp} {
     set l [lsort [a aliases]]
     safe::interpDelete a
     set l
-} {clock encoding exit file load source}
+} {clock encoding exit file glob load source}
 test safe-3.3 {calling safe::interpCreate on trusted interp} {
     catch {safe::interpDelete a}
     safe::interpCreate a
@@ -201,7 +201,7 @@ test safe-7.1 {tests that everything works at high level} {
     safe::interpDelete $i
     set v
 } 1.0
-test safe-7.2 {tests specific path and interpFind/AddToAccessPath} {
+test safe-7.2 {tests specific path and interpFind/AddToAccessPath} -body {
     set i [safe::interpCreate -nostat -nested 1 -accessPath [list [info library]]];
     # should not add anything (p0)
     set token1 [safe::interpAddToAccessPath $i [info library]]
@@ -213,7 +213,7 @@ test safe-7.2 {tests specific path and interpFind/AddToAccessPath} {
 	    [catch {interp eval $i {package require http 1}} msg] $msg \
 	    [safe::interpConfigure $i]\
 	    [safe::interpDelete $i]
-} "{\$p(:0:)} {\$p(:1:)} 1 {can't find package http 1} {-accessPath {[list $tcl_library /dummy/unixlike/test/path]} -statics 0 -nested 1 -deleteHook {}} {}"
+} -match glob -result "{\$p(:0:)} {\$p(:*:)} 1 {can't find package http 1} {-accessPath {[list $tcl_library * /dummy/unixlike/test/path]} -statics 0 -nested 1 -deleteHook {}} {}"
 
 
 # test source control on file name
@@ -224,7 +224,7 @@ test safe-8.1 {safe source control on file} {
     list  [catch {$i eval {source}} msg] \
 	    $msg \
 	    [safe::interpDelete $i] ;
-} {1 {wrong # args: should be "source fileName"} {}}
+} {1 {wrong # args: should be "source ?-encoding E? fileName"} {}}
 test safe-8.2 {safe source control on file} {
     set i "a";
     catch {safe::interpDelete $i}
@@ -232,7 +232,7 @@ test safe-8.2 {safe source control on file} {
     list  [catch {$i eval {source}} msg] \
 	    $msg \
 	    [safe::interpDelete $i] ;
-} {1 {wrong # args: should be "source fileName"} {}}
+} {1 {wrong # args: should be "source ?-encoding E? fileName"} {}}
 test safe-8.3 {safe source control on file} {
     set i "a";
     catch {safe::interpDelete $i}
@@ -315,7 +315,7 @@ test safe-8.8 {safe source forbids -rsrc} {
     list  [catch {$i eval {source -rsrc Init}} msg] \
 	    $msg \
 	    [safe::interpDelete $i] ;
-} {1 {wrong # args: should be "source fileName"} {}}
+} {1 {wrong # args: should be "source ?-encoding E? fileName"} {}}
 
 test safe-9.1 {safe interps' deleteHook} {
     set i "a";
@@ -364,7 +364,7 @@ test safe-9.5 {dual specification of nested} {
     list [catch {safe::interpCreate -nested 0 -nestedload} msg] $msg
 } {1 {conflicting values given for -nested and -nestedLoadOk}}
 
-test safe-9.6 {interpConfigure widget like behaviour} {
+test safe-9.6 {interpConfigure widget like behaviour} -body {
    # this test shall work, don't try to "fix it" unless
    # you *really* know what you are doing (ie you are me :p) -- dl
    list [set i [safe::interpCreate \
@@ -381,7 +381,7 @@ test safe-9.6 {interpConfigure widget like behaviour} {
 	 safe::interpConfigure $i]\
 	[safe::interpConfigure $i -deleteHook toto -nosta -nested 0;
 	 safe::interpConfigure $i]
-} {{-accessPath /foo/bar -statics 0 -nested 1 -deleteHook {foo bar}} {-accessPath /foo/bar} {-nested 1} {-statics 0} {-deleteHook {foo bar}} {-accessPath /blah -statics 1 -nested 1 -deleteHook {foo bar}} {-accessPath /blah -statics 0 -nested 0 -deleteHook toto}}
+} -match glob -result {{-accessPath * -statics 0 -nested 1 -deleteHook {foo bar}} {-accessPath *} {-nested 1} {-statics 0} {-deleteHook {foo bar}} {-accessPath * -statics 1 -nested 1 -deleteHook {foo bar}} {-accessPath * -statics 0 -nested 0 -deleteHook toto}}
 
 # testing that nested and statics do what is advertised
 # (we use a static package : Tcltest)

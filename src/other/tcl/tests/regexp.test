@@ -44,6 +44,31 @@ test regexp-1.7 {regexp utf compliance} {
     list [string compare $foo $bar] [regexp 4 $bar]
 } {0 0}
 
+test regexp-1.8 {regexp ***= metasyntax} {
+    regexp -- "***=o" "aeiou"
+} 1
+test regexp-1.9 {regexp ***= metasyntax} {
+    set string "aeiou"
+    regexp -- "***=o" $string
+} 1
+test regexp-1.10 {regexp ***= metasyntax} {
+    set string "aeiou"
+    set re "***=o"
+    regexp -- $re $string
+} 1
+test regexp-1.11 {regexp ***= metasyntax} {
+    regexp -- "***=y" "aeiou"
+} 0
+test regexp-1.12 {regexp ***= metasyntax} {
+    set string "aeiou"
+    regexp -- "***=y" $string
+} 0
+test regexp-1.13 {regexp ***= metasyntax} {
+    set string "aeiou"
+    set re "***=y"
+    regexp -- $re $string
+} 0
+
 test regexp-2.1 {getting substrings back from regexp} {
     set foo {}
     list [regexp ab*c abbbbc foo] $foo

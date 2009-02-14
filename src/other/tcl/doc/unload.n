@@ -1,5 +1,5 @@
 '\"
-'\" Copyright (c) 2003 George Petasis, petasis@iit.demokritos.gr.
+'\" Copyright (c) 2003 George Petasis <petasis@iit.demokritos.gr>.
 '\"
 '\" See the file "license.terms" for information on usage and redistribution
 '\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
@@ -19,7 +19,6 @@ unload \- Unload machine code
 .br
 \fBunload \fR?\fIswitches\fR? \fIfileName packageName interp\fR
 .BE
-
 .SH DESCRIPTION
 .PP
 This command tries to unload shared libraries previously loaded
@@ -35,22 +34,26 @@ The \fIinterp\fR argument is the path name of the interpreter from
 which to unload the package (see the \fBinterp\fR manual entry for
 details); if \fIinterp\fR is omitted, it defaults to the
 interpreter in which the \fBunload\fR command was invoked.
-.LP
+.PP
 If the initial arguments to \fBunload\fR start with \fB\-\fR then
 they are treated as switches.  The following switches are
 currently supported:
 .TP
 \fB\-nocomplain\fR
+.
 Suppresses all error messages. If this switch is given, \fBunload\fR will
 never report an error.
 .TP
 \fB\-keeplibrary\fR
+.
 This switch will prevent \fBunload\fR from issuing the operating system call
 that will unload the library from the process. 
 .TP
 \fB\-\|\-\fR
+.
 Marks the end of switches.  The argument following this one will
 be treated as a \fIfileName\fR even if it starts with a \fB\-\fR.
+.SS "UNLOAD OPERATION"
 .PP
 When a file containing a shared library is loaded through the
 \fBload\fR command, Tcl associates two reference counts to the library
@@ -84,11 +87,13 @@ procedure. If the unload procedure returns \fBTCL_OK\fR, \fBunload\fR will proce
 and decrease the proper reference count (depending on the target interpreter
 type). When both reference counts have reached 0, the library will be
 detached from the process.
+.SS "UNLOAD HOOK PROTOTYPE"
 .PP
 The unload procedure must match the following prototype:
 .CS
 typedef int Tcl_PackageUnloadProc(Tcl_Interp *\fIinterp\fR, int \fIflags\fR);
 .CE
+.PP
 The \fIinterp\fR argument identifies the interpreter from which the
 library is to be unloaded.  The unload procedure must return
 \fBTCL_OK\fR or \fBTCL_ERROR\fR to indicate whether or not it completed
@@ -104,10 +109,11 @@ the library is used by other interpreters),
 library is used only by the target interpreter and the library will be
 detached from the application as soon as the unload procedure returns,
 the \fIflags\fR argument will be set to \fBTCL_UNLOAD_DETACH_FROM_PROCESS\fR. 
+.SS NOTES
 .PP
 The \fBunload\fR command cannot unload libraries that are statically
 linked with the application.
-If \fIfileName\fR is an empty string, then \fIpackageName\fR must
+If \fIfileName\fR is an empty string, then the \fIpackageName\fR argument must
 be specified.
 .PP
 If \fIpackageName\fR is omitted or specified as an empty string,
@@ -125,8 +131,8 @@ module name \fBlast\fR.
 \fBUnix\fR\0\0\0\0\0
 .
 Not all unix operating systems support library unloading. Under such
-an operating system \fBunload\fR returns an error (unless -nocomplain has
-been specified).
+an operating system \fBunload\fR returns an error (unless \fB\-nocomplain\fR
+has been specified).
 .SH BUGS
 .PP
 If the same file is \fBload\fRed by different \fIfileName\fRs, it will
@@ -152,9 +158,7 @@ This allows a C code module to be installed temporarily into a
 long-running Tcl program and then removed again (either because it is
 no longer needed or because it is being updated with a new version)
 without having to shut down the overall Tcl process.
-
 .SH "SEE ALSO"
 info sharedlibextension, load(n), safe(n)
-
 .SH KEYWORDS
 binary code, unloading, safe interpreter, shared library

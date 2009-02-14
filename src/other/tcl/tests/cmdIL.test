@@ -755,7 +755,7 @@ test cmdIL-7.7 {lreverse command - empty object [Bug 1876793]} {
 } {}
 
 testConstraint testobj [llength [info commands testobj]]
-test cmdIL-7.7 {lreverse command - shared intrep [Bug 1675044]} -setup {
+test cmdIL-7.8 {lreverse command - shared intrep [Bug 1675044]} -setup {
     teststringobj set 1 {1 2 3}
     testobj convert 1 list
     testobj duplicate 1 2

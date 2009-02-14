@@ -276,7 +276,7 @@ test compile-11.9 {Tcl_Append*: ensure Tcl_ResetResult is used properly} {
 # TclReleaseLiteral. They are only effective when tcl is compiled 
 # with TCL_MEM_DEBUG
 #
-# Special test for leak on interp delete [Bug 467523]. 
+# Special test for leak on interp delete [Bug 467523].
 test compile-12.1 {testing literal leak on interp delete} -setup {
     proc getbytes {} {
 	set lines [split [memory info] "\n"]

@@ -27,7 +27,7 @@ One of \fBhorizontal\fR or \fBvertical\fR.
 Specifies the orientation of the separator.
 .SH "WIDGET COMMAND"
 Separator widgets support the standard 
-\fBcget\fR, \fBconfigure\fR, \fBinstate\fR, and \fBstate\fR 
+\fBcget\fR, \fBconfigure\fR, \fBidentify\fR, \fBinstate\fR, and \fBstate\fR 
 methods.  No other widget methods are used.
 .SH "SEE ALSO"
 ttk::widget(n)

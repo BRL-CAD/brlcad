@@ -445,8 +445,8 @@ test spinbox-3.64 {SpinboxWidgetCmd procedure, "selection to" widget command} {
 } {1 {wrong # args: should be ".e selection to index"}}
 test spinbox-3.65 {SpinboxWidgetCmd procedure, "xview" widget command} {
     .e xview 5
-    .e xview
-} {0.0537634 0.268817}
+    format {%.6f %.6f} {*}[.e xview]
+} {0.053763 0.268817}
 test spinbox-3.66 {SpinboxWidgetCmd procedure, "xview" widget command} {
     list [catch {.e xview gorp} msg] $msg
 } {1 {bad spinbox index "gorp"}}
@@ -454,7 +454,7 @@ test spinbox-3.67 {SpinboxWidgetCmd procedure, "xview" widget command} {
     .e xview 0
     .e icursor 10
     .e xview insert
-    .e xview
+    format {%.6f %.6f} {*}[.e xview]
 } {0.107527 0.322581}
 test spinbox-3.68 {SpinboxWidgetCmd procedure, "xview" widget command} {
     list [catch {.e xview moveto foo bar} msg] $msg
@@ -464,7 +464,7 @@ test spinbox-3.69 {SpinboxWidgetCmd procedure, "xview" widget command} {
 } {1 {expected floating-point number but got "foo"}}
 test spinbox-3.70 {SpinboxWidgetCmd procedure, "xview" widget command} {
     .e xview moveto 0.5
-    .e xview
+    format {%.6f %.6f} {*}[.e xview]
 } {0.505376 0.72043}
 test spinbox-3.71 {SpinboxWidgetCmd procedure, "xview" widget command} {
     list [catch {.e xview scroll 24} msg] $msg
@@ -475,13 +475,13 @@ test spinbox-3.72 {SpinboxWidgetCmd procedure, "xview" widget command} {
 test spinbox-3.73 {SpinboxWidgetCmd procedure, "xview" widget command} {
     .e xview moveto 0
     .e xview scroll 1 pages
-    .e xview
+    format {%.6f %.6f} {*}[.e xview]
 } {0.193548 0.408602}
 test spinbox-3.74 {SpinboxWidgetCmd procedure, "xview" widget command} {
     .e xview moveto .9
     update
     .e xview scroll -2 p
-    .e xview
+    format {%.6f %.6f} {*}[.e xview]
 } {0.397849 0.612903}
 test spinbox-3.75 {SpinboxWidgetCmd procedure, "xview" widget command} {
     .e xview 30
@@ -519,12 +519,12 @@ test spinbox-3.81 {SpinboxWidgetCmd procedure, "xview" widget command} {
 
     set x {}
     .e xview moveto .1
-    lappend x [lindex [.e xview] 0]
+    lappend x [format {%.6f} [lindex [.e xview] 0]]
     .e xview moveto .11
-    lappend x [lindex [.e xview] 0]
+    lappend x [format {%.6f} [lindex [.e xview] 0]]
     .e xview moveto .12
-    lappend x [lindex [.e xview] 0]
-} {0.0957447 0.106383 0.117021}
+    lappend x [format {%.6f} [lindex [.e xview] 0]]
+} {0.095745 0.106383 0.117021}
 test spinbox-3.82 {SpinboxWidgetCmd procedure} {
     list [catch {.e gorp} msg] $msg
 } {1 {bad option "gorp": must be bbox, cget, configure, delete, get, icursor, identify, index, insert, invoke, scan, selection, set, validate, or xview}}
@@ -603,8 +603,8 @@ test spinbox-5.7 {ConfigureSpinbox procedure} {
     .e insert end "01234567890"
     update
     .e configure -width 5
-    set scrollInfo
-} {0 0.363636}
+    format {%.6f %.6f} {*}$scrollInfo
+} {0.000000 0.363636}
 test spinbox-5.8 {ConfigureSpinbox procedure} {fonts} {
     catch {destroy .e}
     spinbox .e -width 0
@@ -728,15 +728,15 @@ test spinbox-7.1 {InsertChars procedure} {
     .e insert 0 abcde
     .e insert 2 XXX
     update
-    list [.e get] $contents $scrollInfo
-} {abXXXcde abXXXcde {0 1}}
+    list [.e get] $contents [format {%.6f %.6f} {*}$scrollInfo]
+} {abXXXcde abXXXcde {0.000000 1.000000}}
 test spinbox-7.2 {InsertChars procedure} {
     .e delete 0 end
     .e insert 0 abcde
     .e insert 500 XXX
     update
-    list [.e get] $contents $scrollInfo
-} {abcdeXXX abcdeXXX {0 1}}
+    list [.e get] $contents [format {%.6f %.6f} {*}$scrollInfo]
+} {abcdeXXX abcdeXXX {0.000000 1.000000}}
 test spinbox-7.3 {InsertChars procedure} {
     .e delete 0 end
     .e insert 0 0123456789
@@ -822,22 +822,22 @@ test spinbox-8.1 {DeleteChars procedure} {
     .e insert 0 abcde
     .e delete 2 4
     update
-    list [.e get] $contents $scrollInfo
-} {abe abe {0 1}}
+    list [.e get] $contents [format {%.6f %.6f} {*}$scrollInfo]
+} {abe abe {0.000000 1.000000}}
 test spinbox-8.2 {DeleteChars procedure} {
     .e delete 0 end
     .e insert 0 abcde
     .e delete -2 2
     update
-    list [.e get] $contents $scrollInfo
-} {cde cde {0 1}}
+    list [.e get] $contents [format {%.6f %.6f} {*}$scrollInfo]
+} {cde cde {0.000000 1.000000}}
 test spinbox-8.3 {DeleteChars procedure} {
     .e delete 0 end
     .e insert 0 abcde
     .e delete 3 1000
     update
-    list [.e get] $contents $scrollInfo
-} {abc abc {0 1}}
+    list [.e get] $contents [format {%.6f %.6f} {*}$scrollInfo]
+} {abc abc {0.000000 1.000000}}
 test spinbox-8.4 {DeleteChars procedure} {
     .e delete 0 end
     .e insert 0 0123456789abcde
@@ -1236,12 +1236,12 @@ update
 test spinbox-16.1 {SpinboxVisibleRange procedure} {fonts} {
     .e delete 0 end
     .e insert 0 .............................
-    .e xview
-} {0 0.827586}
-test spinbox-15.4 {SpinboxVisibleRange procedure} {
+    format {%.6f %.6f} {*}[.e xview]
+} {0.000000 0.827586}
+test spinbox-16.2 {SpinboxVisibleRange procedure} {
     .e delete 0 end
-    .e xview
-} {0 1}
+    format {%.6f %.6f} {*}[.e xview]
+} {0.000000 1.000000}
 
 catch {destroy .e}
 spinbox .e -width 10 -xscrollcommand scroll -font $fixed
@@ -1251,21 +1251,21 @@ test spinbox-17.1 {SpinboxUpdateScrollbar procedure} {
     .e delete 0 end
     .e insert 0 123
     update
-    set scrollInfo
-} {0 1}
+    format {%.6f %.6f} {*}$scrollInfo
+} {0.000000 1.000000}
 test spinbox-17.2 {SpinboxUpdateScrollbar procedure} {
     .e delete 0 end
     .e insert 0 0123456789abcdef
     .e xview 3
     update
-    set scrollInfo
-} {0.1875 0.8125}
+    format {%.6f %.6f} {*}$scrollInfo
+} {0.187500 0.812500}
 test spinbox-17.3 {SpinboxUpdateScrollbar procedure} {
     .e delete 0 end
     .e insert 0 abcdefghijklmnopqrs
     .e xview 6
     update
-    set scrollInfo
+    format {%.6f %.6f} {*}$scrollInfo
 } {0.315789 0.842105}
 test spinbox-17.4 {SpinboxUpdateScrollbar procedure} {
     destroy .e
@@ -1281,7 +1281,7 @@ test spinbox-17.4 {SpinboxUpdateScrollbar procedure} {
     list $x $errorInfo
 } {{invalid command name "thisisnotacommand"} {invalid command name "thisisnotacommand"
     while executing
-"thisisnotacommand 0 1"
+"thisisnotacommand 0.0 1.0"
     (horizontal scrolling command executed by .e)}}
 
 set l [interp hidden]

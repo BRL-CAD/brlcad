@@ -1159,7 +1159,7 @@ export {
 }
 export {
     CONST char *Tk_PkgInitStubsCheck(Tcl_Interp *interp, CONST char *version,
-	int exact);
+	    int exact)
 }
 
 # Global variables that need to be exported from the tcl shared library.

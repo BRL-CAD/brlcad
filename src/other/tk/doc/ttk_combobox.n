@@ -74,8 +74,8 @@ Otherwise, returns the index of the current value in the list of
 Returns the current value of the combobox.
 .TP
 \fIpathName \fBidentify \fIx y\fR
-Returns the name of the element at position \fIx\fR, \fIy\fR,
-or the empty string if the coordinates are outside the window.
+Returns the name of the element at position \fIx\fR, \fIy\fR.
+See \fIttk::widget(n)\fR.
 .TP
 \fIpathName \fBinstate \fIstateSpec\fR ?\fIscript\fR?
 Test the widget state.
@@ -99,7 +99,8 @@ widget commands (see \fIttk::entry(n)\fR for details):
 .SH "VIRTUAL EVENTS"
 The combobox widget generates a \fB<<ComboboxSelected>>\fR virtual event
 when the user selects an element from the list of values.
-This event is generated after the listbox is unposted.
+If the selection action unposts the listbox,
+this event is delivered after the listbox is unposted.
 .SH "SEE ALSO"
 ttk::widget(n), ttk::entry(n)
 .SH KEYWORDS

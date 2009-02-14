@@ -7,8 +7,8 @@
  * Copyright 2001, Apple Computer, Inc.
  * Copyright (c) 2006-2007 Daniel A. Steffen <das@users.sourceforge.net>
  *
- * See the file "license.terms" for information on usage and redistribution
- * of this file, and for a DISCLAIMER OF ALL WARRANTIES.
+ * See the file "license.terms" for information on usage and redistribution of
+ * this file, and for a DISCLAIMER OF ALL WARRANTIES.
  *
  * RCS: @(#) $Id$
  */
@@ -16,9 +16,9 @@
 #include "tkMacOSXPrivate.h"
 
 /*
- * There are three different ways to set the cursor on the Mac.
- * The default theme cursors (listed in cursorNames below),
- * color resource cursors, & normal cursors.
+ * There are three different ways to set the cursor on the Mac. The default
+ * theme cursors (listed in cursorNames below), color resource cursors, &
+ * normal cursors.
  */
 
 #define NONE		-1	/* Hidden cursor */
@@ -28,17 +28,17 @@
 #define NORMAL		3	/* Cursors of type CURS. */
 
 /*
- * The following data structure contains the system specific data
- * necessary to control Windows cursors.
+ * The following data structure contains the system specific data necessary to
+ * control Windows cursors.
  */
 
 typedef struct {
     TkCursor info;		/* Generic cursor info used by tkCursor.c */
-    Handle macCursor;		/* Resource containing Macintosh cursor.
-				 * For theme cursors, this is -1. */
-    int type;			/* Type of Mac cursor: for theme cursors
-				 * this is the theme cursor constant,
-				 * otherwise one of crsr or CURS */
+    Handle macCursor;		/* Resource containing Macintosh cursor. For
+				 * theme cursors, this is -1. */
+    int type;			/* Type of Mac cursor: for theme cursors this
+				 * is the theme cursor constant, otherwise one
+				 * of crsr or CURS. */
     int count;			/* For animating cursors, the count for the
 				 * cursor. */
 } TkMacOSXCursor;
@@ -94,25 +94,23 @@ static struct CursorName animatedThemeCursorNames[] = {
  * Declarations of static variables used in this file.
  */
 
-static TkMacOSXCursor * gCurrentCursor = NULL;	/* A pointer to the current
-						 * cursor. */
-static int gResizeOverride = false;	/* A boolean indicating whether
-					 * we should use the resize
-					 * cursor during installations. */
-static int gTkOwnsCursor = true;	/* A boolean indicating whether
-					 * Tk owns the cursor. If not (for
-					 * instance, in the case where a Tk
-					 * window is embedded in another app's
-					 * window, and the cursor is out of
-					 * the tk window, we will not attempt
-					 * to adjust the cursor */
+static TkMacOSXCursor * gCurrentCursor = NULL;
+				/* A pointer to the current cursor. */
+static int gResizeOverride = false;
+				/* A boolean indicating whether we should use
+				 * the resize cursor during installations. */
+static int gTkOwnsCursor = true;/* A boolean indicating whether Tk owns the
+				 * cursor. If not (for instance, in the case
+				 * where a Tk window is embedded in another
+				 * app's window, and the cursor is out of the
+				 * tk window, we will not attempt to adjust
+				 * the cursor. */
 
 /*
  * Declarations of procedures local to this file
  */
 
 static void FindCursorByName(TkMacOSXCursor *macCursorPtr, const char *string);
-
 
 /*
  *----------------------------------------------------------------------
@@ -120,10 +118,9 @@ static void FindCursorByName(TkMacOSXCursor *macCursorPtr, const char *string);
  * FindCursorByName --
  *
  *	Retrieve a system cursor by name, and fill the macCursorPtr
- *	structure. If the cursor cannot be found, the macCursor field
- *	will be NULL. The function first attempts to load a color
- *	cursor. If that fails it will attempt to load a black & white
- *	cursor.
+ *	structure. If the cursor cannot be found, the macCursor field will be
+ *	NULL. The function first attempts to load a color cursor. If that
+ *	fails it will attempt to load a black & white cursor.
  *
  * Results:
  *	Fills the macCursorPtr record.
@@ -205,9 +202,9 @@ TkGetCursorByName(
     macCursorPtr->info.cursor = (Tk_Cursor) macCursorPtr;
 
     /*
-     * To find a cursor we must first determine if it is one of the
-     * builtin cursors or the standard arrow cursor. Otherwise, we
-     * attempt to load the cursor as a named Mac resource.
+     * To find a cursor we must first determine if it is one of the builtin
+     * cursors or the standard arrow cursor. Otherwise, we attempt to load the
+     * cursor as a named Mac resource.
      */
 
     if (strcmp(noneCursorName.name, string) == 0) {
@@ -225,11 +222,14 @@ TkGetCursorByName(
     if (namePtr->name == NULL) {
 	for (namePtr = animatedThemeCursorNames;
 		namePtr->name != NULL; namePtr++) {
-	    int namelen = strlen (namePtr->name);
+	    int namelen = strlen(namePtr->name);
+
 	    if (strncmp(namePtr->name, string, namelen) == 0) {
 		const char *numPtr = string + namelen;
+
 		if (*numPtr) {
 		    int result = Tcl_GetInt(NULL, numPtr, &count);
+
 		    if (result != TCL_OK) {
 			continue;
 		    }
@@ -251,9 +251,9 @@ TkGetCursorByName(
 	    int argc;
 
 	    /*
-	     * The user may be trying to specify an XCursor with fore
-	     * & back colors. We don't want this to be an error, so pick
-	     * off the first word, and try again.
+	     * The user may be trying to specify an XCursor with fore & back
+	     * colors. We don't want this to be an error, so pick off the
+	     * first word, and try again.
 	     */
 
 	    if (Tcl_SplitList(interp, string, &argc, &argv) == TCL_OK ) {
@@ -269,9 +269,8 @@ TkGetCursorByName(
 	ckfree((char *)macCursorPtr);
 	Tcl_AppendResult(interp, "bad cursor spec \"", string, "\"", NULL);
 	return NULL;
-    } else {
-	return (TkCursor *) macCursorPtr;
     }
+    return (TkCursor *) macCursorPtr;
 }
 
 /*
@@ -327,12 +326,12 @@ TkpFreeCursor(
     TkMacOSXCursor *macCursorPtr = (TkMacOSXCursor *) cursorPtr;
 
     switch (macCursorPtr->type) {
-	case COLOR:
-	    DisposeCCursor((CCrsrHandle) macCursorPtr->macCursor);
-	    break;
-	case NORMAL:
-	    ReleaseResource(macCursorPtr->macCursor);
-	    break;
+    case COLOR:
+	DisposeCCursor((CCrsrHandle) macCursorPtr->macCursor);
+	break;
+    case NORMAL:
+	ReleaseResource(macCursorPtr->macCursor);
+	break;
     }
 
     if (macCursorPtr == gCurrentCursor) {
@@ -345,9 +344,8 @@ TkpFreeCursor(
  *
  * TkMacOSXInstallCursor --
  *
- *	Installs either the current cursor as defined by TkpSetCursor
- *	or a resize cursor as the cursor the Macintosh should currently
- *	display.
+ *	Installs either the current cursor as defined by TkpSetCursor or a
+ *	resize cursor as the cursor the Macintosh should currently display.
  *
  * Results:
  *	None.
@@ -382,35 +380,35 @@ TkMacOSXInstallCursor(
 	SetThemeCursor(kThemeArrowCursor);
     } else {
 	struct CursorName *namePtr;
+
 	switch (macCursorPtr->type) {
-	    case NONE:
-		if (!cursorHidden) {
-		    cursorHidden = 1;
-		    HideCursor();
-		}
-		cursorNone = 1;
-		break;
-	    case THEME:
-		namePtr = (struct CursorName *) macCursorPtr->macCursor;
-		SetThemeCursor(
-			namePtr->id);
-		break;
-	    case ANIMATED:
-		namePtr = (struct CursorName *) macCursorPtr->macCursor;
-		if (macCursorPtr->count == -1) {
-		    SetAnimatedThemeCursor(namePtr->id, cursorStep++);
-		} else {
-		    SetAnimatedThemeCursor(namePtr->id, macCursorPtr->count);
-		}
-		break;
-	    case COLOR:
-		ccursor = (CCrsrHandle) macCursorPtr->macCursor;
-		SetCCursor(ccursor);
-		break;
-	    case NORMAL:
-		cursor = (CursHandle) macCursorPtr->macCursor;
-		SetCursor(*cursor);
-		break;
+	case NONE:
+	    if (!cursorHidden) {
+		cursorHidden = 1;
+		HideCursor();
+	    }
+	    cursorNone = 1;
+	    break;
+	case THEME:
+	    namePtr = (struct CursorName *) macCursorPtr->macCursor;
+	    SetThemeCursor(namePtr->id);
+	    break;
+	case ANIMATED:
+	    namePtr = (struct CursorName *) macCursorPtr->macCursor;
+	    if (macCursorPtr->count == -1) {
+		SetAnimatedThemeCursor(namePtr->id, cursorStep++);
+	    } else {
+		SetAnimatedThemeCursor(namePtr->id, macCursorPtr->count);
+	    }
+	    break;
+	case COLOR:
+	    ccursor = (CCrsrHandle) macCursorPtr->macCursor;
+	    SetCCursor(ccursor);
+	    break;
+	case NORMAL:
+	    cursor = (CursHandle) macCursorPtr->macCursor;
+	    SetCursor(*cursor);
+	    break;
 	}
     }
     if (cursorHidden && !cursorNone) {
@@ -448,10 +446,10 @@ TkpSetCursor(
     if (cursor == None) {
 	/*
 	 * This is a little tricky. We can't really tell whether
-	 * gCurrentCursor is NULL because it was NULL last time around
-	 * or because we just freed the current cursor. So if the input
-	 * cursor is NULL, we always need to reset it, we can't trust the
-	 * cursorChanged logic.
+	 * gCurrentCursor is NULL because it was NULL last time around or
+	 * because we just freed the current cursor. So if the input cursor is
+	 * NULL, we always need to reset it, we can't trust the cursorChanged
+	 * logic.
 	 */
 
 	gCurrentCursor = NULL;

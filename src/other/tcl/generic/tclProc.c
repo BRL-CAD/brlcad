@@ -245,6 +245,7 @@ Tcl_ProcObjCmd(
 	    if (contextPtr->line
 		    && (contextPtr->nline >= 4) && (contextPtr->line[3] >= 0)) {
 		int isNew;
+		Tcl_HashEntry* hePtr;
 		CmdFrame *cfPtr = (CmdFrame *) ckalloc(sizeof(CmdFrame));
 
 		cfPtr->level = -1;
@@ -261,8 +262,26 @@ Tcl_ProcObjCmd(
 		cfPtr->cmd.str.cmd = NULL;
 		cfPtr->cmd.str.len = 0;
 
-		Tcl_SetHashValue(Tcl_CreateHashEntry(iPtr->linePBodyPtr,
-			(char *) procPtr, &isNew), cfPtr);
+		hePtr = Tcl_CreateHashEntry(iPtr->linePBodyPtr, (char *) procPtr, &isNew);
+		if (!isNew) {
+		    /*
+		     * Get the old command frame and release it.  See also
+		     * TclProcCleanupProc in this file. Currently it seems as
+		     * if only the procbodytest::proc command of the testsuite
+		     * is able to trigger this situation.
+		     */
+
+		    CmdFrame* cfOldPtr = (CmdFrame *) Tcl_GetHashValue(hePtr);
+
+		    if (cfOldPtr->type == TCL_LOCATION_SOURCE) {
+			Tcl_DecrRefCount(cfOldPtr->data.eval.path);
+			cfOldPtr->data.eval.path = NULL;
+		    }
+		    ckfree((char *) cfOldPtr->line);
+		    cfOldPtr->line = NULL;
+		    ckfree((char *) cfOldPtr);
+		}
+		Tcl_SetHashValue(hePtr, cfPtr);
 	    }
 
 	    /*
@@ -908,7 +927,15 @@ Tcl_UplevelObjCmd(
      */
 
     if (objc == 1) {
-	result = Tcl_EvalObjEx(interp, objv[0], TCL_EVAL_DIRECT);
+	/*
+	 * TIP #280. Make argument location available to eval'd script
+	 */
+
+	CmdFrame* invoker = NULL;
+	int word          = 0;
+
+	TclArgumentGet (interp, objv[0], &invoker, &word);
+	result = TclEvalObjEx(interp, objv[0], 0, invoker, word);
     } else {
 	/*
 	 * More than one argument: concatenate them together with spaces
@@ -2154,7 +2181,8 @@ TclProcCleanupProc(
     /*
      * TIP #280: Release the location data associated with this Proc
      * structure, if any. The interpreter may not exist (For example for
-     * procbody structurues created by tbcload.
+     * procbody structures created by tbcload. See also Tcl_ProcObjCmd(), when
+     * the same ProcPtr is overwritten with a new CmdFrame.
      */
 
     if (!iPtr) {
@@ -2211,9 +2239,14 @@ TclUpdateReturnInfo(
     if (iPtr->returnLevel == 0) {
 	/*
 	 * Now we've reached the level to return the requested -code.
+	 * Since iPtr->returnLevel and iPtr->returnCode have completed
+	 * their task, we now reset them to default values so that any
+	 * bare "return TCL_RETURN" that may follow will work [Bug 2152286].
 	 */
 
 	code = iPtr->returnCode;
+	iPtr->returnLevel = 1;
+	iPtr->returnCode = TCL_OK;
 	if (code == TCL_ERROR) {
 	    iPtr->flags |= ERR_LEGACY_COPY;
 	}

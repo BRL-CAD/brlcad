@@ -339,8 +339,8 @@ test exec-9.6 {commands returning errors} {exec} {
     list [catch {exec [interpreter] "$path(sh)" -c "\"$path(echo)\" error msg 1>&2"} msg] $msg
 } {1 {error msg}}
 test exec-9.7 {commands returning errors} {exec stdio} {
-    list [catch {exec [interpreter] "$path(sh)" -c "\"$path(echo)\" error msg 1>&2" \
-		     | [interpreter] "$path(sh)" -c "\"$path(echo)\" error msg 1>&2"} msg] $msg
+    list [catch {exec [interpreter] "$path(sh)" -c "\"$path(echo)\" error msg 1>&2 ; \"$path(sleep)\" 1" \
+		    | [interpreter] "$path(sh)" -c "\"$path(echo)\" error msg 1>&2 ; \"$path(sleep)\" 1"} msg] $msg
 } {1 {error msg
 error msg}}
 

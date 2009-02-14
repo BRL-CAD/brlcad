@@ -555,6 +555,12 @@ CreateFrame(
     }
     if (newWin == NULL) {
 	goto error;
+    } else {
+	/*
+	 * Mark Tk frames as suitable candidates for [wm manage]
+	 */
+	TkWindow *winPtr = (TkWindow *)newWin;
+	winPtr->flags |= TK_WM_MANAGEABLE;
     }
     if (className == NULL) {
 	className = Tk_GetOption(newWin, "class", "Class");

@@ -7129,3 +7129,162 @@ Several documentation and release notes improvements
 Several documentation and release notes improvements
 
 --- Released 8.5.1, February 5, 2008 --- See ChangeLog for details ---
+
+2008-02-06 (enhancement) [clock format] performance (kenny)
+
+2008-02-12 (bug fix)[1891827] compiled [switch -nocase] error (fellows)
+
+2008-02-22 (bug fix)[1818565] missing state array in http::status (thoyts)
+=> http 2.5.4
+
+2008-02-26 (bug fix)[1868845] corrected [eof] ordering (thoyts)
+
+2008-02-26 (new feature) [http::meta] command (thoyts)
+=> http 2.5.5
+
+2008-02-26 (bug fix)[1902436] fixed regexps ending in \* (hobbs)
+
+2008-02-27 (bug fix)[1862555,1902423] [clock] range & l10n (kenny)
+
+2008-02-28 (bug fix) [return -level 0] memory leak (porter)
+
+2008-02-28 (bug fix) [format %llx $big] memory leak (porter)
+
+2008-02-28 (bug fix) expression parser error message memory leak (porter)
+
+2008-02-28 (bug fix) memory leak when enter trace modifies command (porter)
+
+2008-02-29 (enhancement) Consumer refcounting for Tcl_SetReturnOptions()
+and Tcl_AddObjToErrorInfo() (spjuth,porter)
+	*** POTENTIAL INCOMPATIBILITY ***
+
+2008-03-07 (bug fix)[1899164] Avoid expr and script bytecode confusion (porter)
+
+2008-03-07 (bug fix)[1904907] finalize crash in Tcl_GetReturnOptions (kupries)
+
+2008-03-10 (bug fix)[1893815] expr {abs(-1e-350)} => -0.0 (porter)
+
+2008-03-10 (bug fix)[1901113] crash in [tcl::Bgerror {} {}] (madden,porter)
+
+2008-03-11 (bug fix)[1911919] unset trace inf loop in namespace delete (sofer)
+
+2008-03-12 (new feature) some HTTP 1.1 support in http (and more!) (hobbs)
+=> http 2.7
+
+2008-03-13 (enhancement) support space in INSTALL_ROOT or $builddir (steffen)
+
+2008-03-16 (bug fix)[1903325] bytecode stack space prediction crash (fellows)
+
+2008-03-18 (bug fix)[1914604] Tcl Modules: encoding fixed to utf-8; environment
+variables without "." added to customization hooks (kupries)
+	*** POTENTIAL INCOMPATIBILITY ***
+
+2008-03-18 (bug fix)[1914503] alignment of TclStackAlloc() return (sofer)\
+
+2008-03-20 (bug fix)[1868171] expose Tcl_GetMemoryInfo (for AOLserver) (fellows)
+
+2008-03-24 (bug fix)[1923966] crash in [binary format x0s] (thoyts)
+
+2008-03-27 (platform support)[1921166] Solaris 64bit build fixes (steffen)
+
+2008-03-27 clock tzdata updated to Olson's tzdata2008b (kenny)
+
+--- Released 8.5.2, March 28, 2008 --- See ChangeLog for details ---
+
+2008-03-30 (bug fix)[1783544] more robust TclIsNaN() (kenny,teterin)
+
+2008-04-01 (bug fix)[1839067] FP round fix for Solaris/x86 (kupries,schlenker)
+
+2008-04-02 (bug fix)[780533,1932639] [fcopy] callbacks unreliable (ferrieux)
+
+2008-04-04 (bug fix) [chan postevent] crash (kupries)
+
+2008-04-07 (bug fix) Fix broken [format {% d}] (max)
+
+2008-04-07 (bug fix)[1350564] Bi-directional [fcopy] now supported (ferrieux)
+
+2008-05-07 (bug fix) [dict append] crash (mccormack,fellows)
+
+2008-05-21 (bug fix)[1968882] [info complete "\\\n"] => 0 (porter)
+
+2008-05-22 (bug fix)[1968245] Tcl_LogCommandInfo() accept length=-1 (darroch)
+
+2008-05-23 (bug fix)[1965787] 32-bit overflow in [tell] result (ferrieux)
+
+2008-06-12 (platform support) Solaris static build with DTrace (steffen)
+
+2008-06-12 (platform support) Solaris/amd64 gcc 64bit support (steffen)
+
+2008-06-20 (bug fix)[1999035] make [interp bgerror $i] act in $i (porter)
+
+2008-06-23 (bug fix)[1972879] bad path intrep caching (porter)
+
+2008-06-24 (bug fix)[1999176] crash in [glob -dir {} a] (porter)
+
+2008-06-25 (bug fix)[1999119] Support TM packages in Safe Base (kupries)
+
+--- Released 8.5.3, June 30, 2008 --- See ChangeLog for details ---
+
+2008-07-03 (bug fix)[1969717] fix package finding on Samba shares (jos)
+
+2008-07-03 (bug fix)[1987821] mem leak in [seek] on reflected chan (kupries)
+
+2008-07-20 (enhancement)[2008248] dict->list preserve item intreps (pasadyn)
+
+2008-07-21 (bug fix)[2015723] [file] bad use of inodes on Windows (thoyts)
+
+2008-07-21 (enhancement) [info frame] returns file data in more cases (kupries)
+
+2008-07-29 (bug fix)[2030670] fix rare panic in TclStackFree (pasadyn,sofer)
+
+2008-08-08 tzdata updated to Olson's tzdata2008e (kenny)
+
+2008-08-11 (bug fix)[2046846] 64bit support for http zlib crc (thoyts)
+=> http 2.7.1
+
+2008-08-11 (enhancement) automatic [package provide] for TMs (kupries)
+
+--- Released 8.5.4, August 15, 2008 --- See ChangeLog for details ---
+
+2008-08-14 (bug fix)[2055782] fix crash in [namespace inscope] (sofer)
+
+2008-08-21 (bug fix)[2065115] correct handling of ***= RE's (hobbs,porter)
+
+2008-09-10 (enhancement) efficient list->dict conversion (elby,fellows)
+
+2008-09-17 (bug fix)[2116053] export [min] and [max] from tcl::mathfunc (sofer)
+
+2008-09-27 (bug fix)[2130992] prevent overflow crash in [lrepeat] (fellows)
+
+2008-10-05 (bug fix)[2143288] correct bad isqrt() results (boffey,kenny)
+
+2008-10-08 (bug fix)[2151707] fix stack trace from variable trace (porter)
+
+--- Released 8.5.5, October 15, 2008 --- See ChangeLog for details ---
+
+2008-10-24 (bug fix) fix failure to read SHOUTcast streams (thoyts)
+=> http 2.7.2
+
+2008-11-10 (bug fix)[2255235] [platform::shell::LOCATE] update (ring,kupries)
+=> platform::shell 1.1.4
+
+2008-11-13 (bug fix)[2269431] VFS [load] -> tempfile litter (ficicchia,nijtmans)
+
+2008-11-30 (bug fix)[2362156] [clock]: colon in format string (mizuno,kenny)
+
+2008-12-01 (bug fix)[2251175] [{*}{\{}] errors (hellström,ferrieux,porter)
+
+2008-12-02 (bug fix)[2270477] hang in channel finalization (ferrieux,kupries)
+
+2008-12-04 (bug fix)[2385549] [file normalize] failed on some paths (porter)
+
+2008-12-10 tzdata updated to Olson's tzdata2008i (kenny)
+
+2008-12-11 (bug fix)[2407783] spoil ChannelState when channel name passes
+among multiple interps (kupries)
+
+2008-12-21 (bug fix) Fix ability to join threads on 64-bit Windows (thoyts)
+
+2008-12-21 (bug fix)[2114900] updated tclIndex file (cassoff,kenny)
+
+--- Released 8.5.6, December 21, 2008 --- See ChangeLog for details ---

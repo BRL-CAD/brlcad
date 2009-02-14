@@ -700,10 +700,10 @@ TestplatformChmod(
 
     acl_readOnly_found = FALSE;
     for (j = 0; j < ACLSize.AceCount; j++) {
-	PACL *pACE2;
+	LPVOID pACE2;
 	ACE_HEADER *phACE2;
 
-	if (!getAceProc(curAcl, j, (LPVOID *) &pACE2)) {
+	if (!getAceProc(curAcl, j, &pACE2)) {
 	    goto done;
 	}
 
@@ -736,7 +736,7 @@ TestplatformChmod(
 	 * Copy the current ACE from the old to the new ACL.
 	 */
 
-	if (!addAceProc(newAcl, ACL_REVISION, MAXDWORD, pACE2,
+	if (!addAceProc(newAcl, ACL_REVISION, MAXDWORD, (PACL *)pACE2,
 		((PACE_HEADER) pACE2)->AceSize)) {
 	    goto done;
 	}

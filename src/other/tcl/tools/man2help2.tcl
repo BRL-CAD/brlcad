@@ -600,7 +600,7 @@ proc setTabs {tabList} {
 	    set relativeTo [expr {$state(leftMargin) \
 		    + ($state(offset) * $state(nestingLevel))}]
 	}
-	if {[regexp {^\w'(.*)'u$} $arg -> submatch]} {
+	if {[regexp {^\\w'([^']*)'u$} $arg -> submatch]} {
 	    # Magic factor!
 	    set distance [expr {[string length $submatch] * 86.4}]
 	} else {
@@ -976,6 +976,10 @@ proc getTwips {arg} {
 	puts stderr "bad distance \"$arg\""
 	return 0
     }
+    if {[string length $units] > 1} {
+	puts stderr "additional characters after unit \"$arg\""
+	set units [string index $units 0]
+    }
     switch -- $units {
 	c	{
 	    set distance [expr {$distance * 567}]
@@ -985,7 +989,7 @@ proc getTwips {arg} {
 	}
 	default {
 	    puts stderr "bad units in distance \"$arg\""
-	    continue
+	    return 0
 	}
     }
     return $distance

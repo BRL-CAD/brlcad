@@ -485,8 +485,15 @@ proc tclPkgUnknown {name args} {
 	    foreach file [glob -directory $dir -join -nocomplain \
 		    * pkgIndex.tcl] {
 		set dir [file dirname $file]
-		if {![info exists procdDirs($dir)] && [file readable $file]} {
-		    if {[catch {source $file} msg]} {
+		if {![info exists procdDirs($dir)]} {
+		    set code [catch {source $file} msg opt]
+		    if {$code == 1 &&
+			    [lindex [dict get $opt -errorcode] 0] eq "POSIX" &&
+			    [lindex [dict get $opt -errorcode] 1] eq "EACCES"} {
+			# $file was not readable; silently ignore
+			continue
+		    }
+		    if {$code} {
 			tclLog "error reading package index file $file: $msg"
 		    } else {
 			set procdDirs($dir) 1
@@ -497,10 +504,16 @@ proc tclPkgUnknown {name args} {
 	set dir [lindex $use_path end]
 	if {![info exists procdDirs($dir)]} {
 	    set file [file join $dir pkgIndex.tcl]
-	    # safe interps usually don't have "file readable", 
-	    # nor stderr channel
-	    if {([interp issafe] || [file readable $file])} {
-		if {[catch {source $file} msg] && ![interp issafe]}  {
+	    # safe interps usually don't have "file exists", 
+	    if {([interp issafe] || [file exists $file])} {
+		set code [catch {source $file} msg opt]
+		if {$code == 1 &&
+			[lindex [dict get $opt -errorcode] 0] eq "POSIX" &&
+			[lindex [dict get $opt -errorcode] 1] eq "EACCES"} {
+		    # $file was not readable; silently ignore
+		    continue
+		}
+		if {$code}  {
 		    tclLog "error reading package index file $file: $msg"
 		} else {
 		    set procdDirs($dir) 1
@@ -546,8 +559,6 @@ proc tclPkgUnknown {name args} {
 # This procedure extends the "package unknown" function for MacOSX.
 # It scans the Resources/Scripts directories of the immediate children
 # of the auto_path directories for pkgIndex files.
-# Only installed in interps that are not safe so we don't check
-# for [interp issafe] as in tclPkgUnknown.
 #
 # Arguments:
 # original -		original [package unknown] procedure
@@ -583,8 +594,15 @@ proc tcl::MacOSXPkgUnknown {original name args} {
 	foreach file [glob -directory $dir -join -nocomplain \
 		* Resources Scripts pkgIndex.tcl] {
 	    set dir [file dirname $file]
-	    if {![info exists procdDirs($dir)] && [file readable $file]} {
-		if {[catch {source $file} msg]} {
+	    if {![info exists procdDirs($dir)]} {
+		set code [catch {source $file} msg opt]
+		if {$code == 1 &&
+			[lindex [dict get $opt -errorcode] 0] eq "POSIX" &&
+			[lindex [dict get $opt -errorcode] 1] eq "EACCES"} {
+		    # $file was not readable; silently ignore
+		    continue
+		}
+		if {$code} {
 		    tclLog "error reading package index file $file: $msg"
 		} else {
 		    set procdDirs($dir) 1

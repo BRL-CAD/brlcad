@@ -17,7 +17,7 @@ package require Tcl 8.5	;# Guard against [source] in an 8.4- interp
 # Insist on running with compatible version of Tcl
 package require Tcl 8.5.0-8.6
 # Verify that we have Tk binary and script components from the same release
-package require -exact Tk  8.5.1
+package require -exact Tk  8.5.6
 
 # Create a ::tk namespace
 namespace eval ::tk {
@@ -355,7 +355,7 @@ if {![llength [info command tk_chooseDirectory]]} {
 # Define the set of common virtual events.
 #----------------------------------------------------------------------
 
-switch -- [tk windowingsystem] {
+switch -exact -- [tk windowingsystem] {
     "x11" {
 	event add <<Cut>> <Control-Key-x> <Key-F20> 
 	event add <<Copy>> <Control-Key-c> <Key-F16>
@@ -510,7 +510,7 @@ proc ::tk::AmpWidget {class path args} {
 	}
     }
     set result [$class $path {*}$options]
-    if {$class eq "button"} {
+    if {[string match "*button" $class]} {
 	bind $path <<AltUnderlined>> [list $path invoke]
     }
     return $result
@@ -539,8 +539,8 @@ proc ::tk::AmpMenuArgs {widget add type args} {
 #
 proc ::tk::FindAltKeyTarget {path char} {
     switch -- [winfo class $path] {
-	Button -
-	Label {
+	Button - Label - 
+        TButton - TLabel - TCheckbutton {
 	    if {[string equal -nocase $char \
 		  [string index [$path cget -text] [$path cget -underline]]]} {
 		return $path

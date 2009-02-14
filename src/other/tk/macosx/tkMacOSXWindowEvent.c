@@ -418,7 +418,7 @@ TkMacOSXProcessWindowEvent(
 	    break;
     }
 
-    return 0;
+    return eventFound;
 }
 
 /*

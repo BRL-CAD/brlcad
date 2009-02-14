@@ -486,7 +486,7 @@ TkpDisplayButton(
 
 	    Tk_Draw3DRectangle(tkwin, pixmap, dpPtr->border, inset, inset,
 		    Tk_Width(tkwin) - 2*inset, Tk_Height(tkwin) - 2*inset,
-		    butPtr->borderWidth, dpPtr->relief);
+		    borderWidth, dpPtr->relief);
 	}
     }
     if (portChanged) {

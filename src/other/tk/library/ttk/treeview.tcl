@@ -280,7 +280,7 @@ proc ttk::treeview::select.choose.extended {w item} {
     BrowseTo $w $item
 }
 proc ttk::treeview::select.toggle.extended {w item} {
-    $w selection toggle $item
+    $w selection toggle [list $item]
 }
 proc ttk::treeview::select.extend.extended {w item} {
     if {[set anchor [$w focus]] ne ""} {

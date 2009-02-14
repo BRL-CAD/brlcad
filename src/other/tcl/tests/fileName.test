@@ -1534,6 +1534,43 @@ test fileName-19.1 {ensure that [Bug 1325099] stays fixed} {
     list [file exists ~//.nonexistant_file] [file exists ~///.nonexistant_file]
 } {0 0}
 
+test fileName-20.1 {Bug 1750300} -setup {
+    set d [makeDirectory foo]
+    makeFile {} TAGS $d
+} -body {
+    llength [glob -nocomplain -directory $d -- TAGS one two]
+} -cleanup {
+    removeFile TAGS $d
+    removeDirectory foo
+} -result 1
+test fileName-20.2 {Bug 1750300} -setup {
+    set d [makeDirectory foo]
+    makeFile {} TAGS $d
+} -body {
+    llength [glob -nocomplain -directory $d -types {} -- TAGS one two]
+} -cleanup {
+    removeFile TAGS $d
+    removeDirectory foo
+} -result 1
+test fileName-20.3 {Bug 1750300} -setup {
+    set d [makeDirectory foo]
+    makeFile {} TAGS $d
+} -body {
+    llength [glob -nocomplain -directory $d -types {} -- *U*]
+} -cleanup {
+    removeFile TAGS $d
+    removeDirectory foo
+} -result 0
+test fileName-20.4 {Bug 1750300} -setup {
+    set d [makeDirectory foo]
+    makeFile {} TAGS $d
+} -body {
+    llength [glob -nocomplain -directory $d -types {} -- URGENT Urkle]
+} -cleanup {
+    removeFile TAGS $d
+    removeDirectory foo
+} -result 0
+
 # cleanup
 catch {file delete -force C:/globTest}
 cd [temporaryDirectory]

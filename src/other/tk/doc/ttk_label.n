@@ -68,14 +68,8 @@ then automatic wrapping is not performed; otherwise
 the text is split into lines such that no line is longer
 than the specified value.
 .SH "WIDGET COMMAND"
-.TP
-\fIpathName \fBcget\fR \fIoption\fR
-.TP
-\fIpathName \fBconfigure\fR ?\fIoption\fR? ?\fIvalue option value ...\fR?
-.TP
-\fIpathName \fBinstate \fIstateSpec\fR ?\fIscript\fR?
-.TP
-\fIpathName \fBstate\fR ?\fIstateSpec\fR?
-See \fIttk::widget(n)\fR
+Supports the standard widget commands
+\fBconfigure\fR, \fBcget\fR, \fBidentify\fR, \fBinstate\fR, and \fBstate\fR;
+see \fIttk::widget(n)\fR.
 .SH "SEE ALSO"
 ttk::widget(n), label(n)

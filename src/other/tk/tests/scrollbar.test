@@ -163,24 +163,24 @@ test scrollbar-3.10 {ScrollbarWidgetCmd procedure, "cget" option} {
     list [catch {.s cget -orient} msg] $msg
 } {0 vertical}
 scrollbar .s2
-test scrollbar-3.11 {ScrollbarWidgetCmd procedure, "cget" option} win {
-    list [catch {.s2 cget -bd} msg] $msg
-} {0 0}
-test scrollbar-3.12 {ScrollbarWidgetCmd procedure, "cget" option} {unix notAqua} {
-    list [catch {.s2 cget -bd} msg] $msg
-} {0 2}
-test scrollbar-3.12.1 {ScrollbarWidgetCmd procedure, "cget" option} aqua {
-    list [catch {.s2 cget -bd} msg] $msg
-} {0 0}
-test scrollbar-3.13 {ScrollbarWidgetCmd procedure, "cget" option} win {
-    list [catch {.s2 cget -highlightthickness} msg] $msg
-} {0 0}
-test scrollbar-3.14 {ScrollbarWidgetCmd procedure, "cget" option} {unix notAqua} {
-    list [catch {.s2 cget -highlightthickness} msg] $msg
-} {0 0}
-test scrollbar-3.14.1 {ScrollbarWidgetCmd procedure, "cget" option} aqua {
-    list [catch {.s2 cget -highlightthickness} msg] $msg
-} {0 0}
+test scrollbar-3.11 {ScrollbarWidgetCmd procedure, "cget" option} {
+    expr {[.s2 cget -bd] == [lindex [.s2 configure -bd] 3]}
+} 1
+test scrollbar-3.12 {ScrollbarWidgetCmd procedure, "cget" option} emptyTest {
+    # empty test; duplicated scrollbar-3.11
+} {}
+test scrollbar-3.12.1 {ScrollbarWidgetCmd procedure, "cget" option} emptyTest {
+    # empty test; duplicated scrollbar-3.11
+} {}
+test scrollbar-3.13 {ScrollbarWidgetCmd procedure, "cget" option} {
+    expr {[.s2 cget -highlightthickness] == [lindex [.s2 configure -highlightthickness] 3]}
+} 1
+test scrollbar-3.14 {ScrollbarWidgetCmd procedure, "cget" option} emptyTest {
+    # empty test; duplicated scrollbar-3.13
+} {}
+test scrollbar-3.14.1 {ScrollbarWidgetCmd procedure, "cget" option} emptyTest {
+    # empty test; duplicated scrollbar-3.13
+} {}
 destroy .s2
 test scrollbar-3.15 {ScrollbarWidgetCmd procedure, "configure" option} {
     llength [.s configure]
@@ -216,13 +216,13 @@ test scrollbar-3.24 {ScrollbarWidgetCmd procedure, "delta" option} {
     list [catch {.s delta 18 xxyz} msg] $msg
 } {1 {expected integer but got "xxyz"}}
 test scrollbar-3.25 {ScrollbarWidgetCmd procedure, "delta" option} {
-    .s delta 20 0
+    format {%.6g} [.s delta 20 0]
 } {0}
 test scrollbar-3.26 {ScrollbarWidgetCmd procedure, "delta" option} {
-    .s delta 0 20
+    format {%.6g} [.s delta 0 20]
 } [format %.6g [expr 20.0/([getTroughSize .s]-1)]]
 test scrollbar-3.27 {ScrollbarWidgetCmd procedure, "delta" option} {
-    .s delta 0 -20
+    format {%.6g} [.s delta 0 -20]
 } [format %.6g [expr -20.0/([getTroughSize .s]-1)]]
 test scrollbar-3.28 {ScrollbarWidgetCmd procedure, "delta" option} {
     toplevel .t -width 250 -height 100
@@ -230,8 +230,8 @@ test scrollbar-3.28 {ScrollbarWidgetCmd procedure, "delta" option} {
     scrollbar .t.s -orient horizontal -borderwidth 2
     place .t.s -width 201
     update
-    set result [list [.t.s delta 0 20] \
-		    [.t.s delta [expr [getTroughSize .t.s] - 1] 0]]
+    set result [list [format {%.6g} [.t.s delta 0 20]] \
+	    [format {%.6g} [.t.s delta [expr [getTroughSize .t.s] - 1] 0]]]
     destroy .t
     set result
 } {0 1}
@@ -248,26 +248,27 @@ test scrollbar-3.32 {ScrollbarWidgetCmd procedure, "fraction" option} {
     list [catch {.s fraction 24 bogus} msg] $msg
 } {1 {expected integer but got "bogus"}}
 test scrollbar-3.33 {ScrollbarWidgetCmd procedure, "fraction" option} {
-    .s fraction 0 0
+    format {%.6g} [.s fraction 0 0]
 } {0}
 test scrollbar-3.34 {ScrollbarWidgetCmd procedure, "fraction" option} {
-    .s fraction 0 1000
+    format {%.6g} [.s fraction 0 1000]
 } {1}
 test scrollbar-3.35 {ScrollbarWidgetCmd procedure, "fraction" option} {
-    .s fraction 4 21
+    format {%.6g} [.s fraction 4 21]
 } [format %.6g [expr (21.0 - ([winfo height .s] - [getTroughSize .s])/2.0) \
        /([getTroughSize .s] - 1)]]
 test scrollbar-3.36 {ScrollbarWidgetCmd procedure, "fraction" option} unix {
-    .s fraction 4 179
+    format {%.6g} [.s fraction 4 179]
 } {1}
 test scrollbar-3.37 {ScrollbarWidgetCmd procedure, "fraction" option} {testmetrics} {
-    .s fraction 4 [expr 200 - [testmetrics cyvscroll .s]]
+    format {%.6g} [.s fraction 4 [expr 200 - [testmetrics cyvscroll .s]]]
 } {1}
 test scrollbar-3.38 {ScrollbarWidgetCmd procedure, "fraction" option} unix {
-    .s fraction 4 178
+    format {%.6g} [.s fraction 4 178]
 } {0.993711}
 test scrollbar-3.39 {ScrollbarWidgetCmd procedure, "fraction" option} {testmetrics win} {
-    expr [.s fraction 4 [expr 200 - [testmetrics cyvscroll .s] - 2]] \
+    expr \
+    [format {%.6g} [.s fraction 4 [expr 200 - [testmetrics cyvscroll .s] - 2]]] \
 	== [format %g [expr (200.0 - [testmetrics cyvscroll .s]*2 - 2) \
 			   / ($height - 1 - [testmetrics cyvscroll .s]*2)]]
 } 1
@@ -279,7 +280,7 @@ place .t.s -width 201
 update
 
 test scrollbar-3.41 {ScrollbarWidgetCmd procedure, "fraction" option} {
-    .t.s fraction 100 0
+    format {%.6g} [.t.s fraction 100 0]
 } {0.5}
 if {[testConstraint testmetrics]} {
     place configure .t.s -width [expr 2*[testmetrics cxhscroll .t.s]+1]
@@ -288,7 +289,7 @@ if {[testConstraint testmetrics]} {
 }
 update
 test scrollbar-3.42 {ScrollbarWidgetCmd procedure, "fraction" option} {
-    .t.s fraction 100 0
+    format {%.6g} [.t.s fraction 100 0]
 } {0}
 destroy .t
 test scrollbar-3.43 {ScrollbarWidgetCmd procedure, "get" option} {

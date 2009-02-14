@@ -249,9 +249,9 @@ TkpGetNativeAppBitmap(
 	Str255 dummy;
 
 	/*
-	 * We need to first paint the background white. Also, for
-	 * some reason we *must* use GetCIcon instead of GetNamedResource
-	 * for PlotCIcon to work - so we use GetResInfo to get the id.
+	 * We need to first paint the background white. Also, for some reason
+	 * we *must* use GetCIcon instead of GetNamedResource for PlotCIcon to
+	 * work - so we use GetResInfo to get the id.
 	 */
 
 	RGBForeColor(&white);

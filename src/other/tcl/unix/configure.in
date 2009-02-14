@@ -27,7 +27,7 @@ m4_ifdef([SC_USE_CONFIG_HEADERS], [
 TCL_VERSION=8.5
 TCL_MAJOR_VERSION=8
 TCL_MINOR_VERSION=5
-TCL_PATCH_LEVEL=".1"
+TCL_PATCH_LEVEL=".6"
 VERSION=${TCL_VERSION}
 
 #------------------------------------------------------------------------
@@ -41,8 +41,8 @@ if test "${exec_prefix}" = "NONE"; then
     exec_prefix=$prefix
 fi
 # Make sure srcdir is fully qualified!
-srcdir=`cd $srcdir ; pwd`
-TCL_SRC_DIR=`cd $srcdir/..; pwd`
+srcdir="`cd "$srcdir" ; pwd`"
+TCL_SRC_DIR="`cd "$srcdir"/..; pwd`"
 
 #------------------------------------------------------------------------
 # Compress and/or soft link the manpages?
@@ -321,18 +321,14 @@ AC_TYPE_SIZE_T
 AC_TYPE_UID_T
 
 AC_CACHE_CHECK([for socklen_t], tcl_cv_type_socklen_t, [
-    AC_EGREP_CPP(changequote(<<,>>)dnl
-<<(^|[^a-zA-Z_0-9])socklen_t[^a-zA-Z_0-9]>>dnl
-changequote([,]),[
-    #include <sys/types.h>
-    #include <sys/socket.h>
-    #if STDC_HEADERS
-    #include <stdlib.h>
-    #include <stddef.h>
-    #endif
-    ], tcl_cv_type_socklen_t=yes, tcl_cv_type_socklen_t=no)])
+    AC_TRY_COMPILE([
+	#include <sys/types.h>
+	#include <sys/socket.h>
+    ],[
+    	socklen_t foo;
+    ],[tcl_cv_type_socklen_t=yes],[tcl_cv_type_socklen_t=no])])
 if test $tcl_cv_type_socklen_t = no; then
-    AC_DEFINE(socklen_t, unsigned, [What is the type of socklen_t?])
+    AC_DEFINE(socklen_t, int, [Define as int if socklen_t is not available])
 fi
 
 AC_CHECK_TYPE([intptr_t], [
@@ -496,6 +492,18 @@ SC_ENABLE_LANGINFO
 AC_CHECK_FUNCS(chflags)
 
 #--------------------------------------------------------------------
+# Check for support of isnan() function or macro
+#--------------------------------------------------------------------
+
+AC_CACHE_CHECK([isnan], tcl_cv_isnan, [
+    AC_TRY_LINK([#include <math.h>], [
+isnan(0.0);			/* Generates an error if isnan is missing */
+], tcl_cv_isnan=yes, tcl_cv_isnan=no)])
+if test $tcl_cv_isnan = no; then
+    AC_DEFINE(NO_ISNAN, 1, [Do we have a usable 'isnan'?])
+fi
+
+#--------------------------------------------------------------------
 # Darwin specific API checks and defines
 #--------------------------------------------------------------------
 
@@ -649,12 +657,23 @@ if test $tcl_ok = yes; then
     test -z "$ac_cv_path_DTRACE" && tcl_ok=no
 fi
 AC_MSG_CHECKING([whether to enable DTrace support])
+MAKEFILE_SHELL='/bin/sh'
 if test $tcl_ok = yes; then
     AC_DEFINE(USE_DTRACE, 1, [Are we building with DTrace support?])
     DTRACE_SRC="\${DTRACE_SRC}"
     DTRACE_HDR="\${DTRACE_HDR}"
     if test "`uname -s`" != "Darwin" ; then
 	DTRACE_OBJ="\${DTRACE_OBJ}"
+	if test "`uname -s`" = "SunOS" -a "$SHARED_BUILD" = "0" ; then
+	    # Need to create an intermediate object file to ensure tclDTrace.o
+	    # gets included when linking against the static tcl library.
+	    STLIB_LD='stlib_ld () { /usr/ccs/bin/ld -r -o $${1%.a}.o "$${@:2}" && '"${STLIB_LD}"' $${1} $${1%.a}.o ; } && stlib_ld'
+	    MAKEFILE_SHELL='/bin/bash'
+	    # Force use of Sun ar and ranlib, the GNU versions choke on
+	    # tclDTrace.o and the combined object file above.
+	    AR='/usr/ccs/bin/ar'
+	    RANLIB='/usr/ccs/bin/ranlib'
+	fi
     fi
 fi
 AC_MSG_RESULT([$tcl_ok])
@@ -708,7 +727,7 @@ HTML_DIR='$(DISTDIR)/html'
 if test "`uname -s`" = "Darwin" ; then
     SC_ENABLE_FRAMEWORK
     TCL_SHLIB_LD_EXTRAS="-compatibility_version ${TCL_VERSION} -current_version ${TCL_VERSION}`echo ${TCL_PATCH_LEVEL} | awk ['{match($0, "\\\.[0-9]+"); print substr($0,RSTART,RLENGTH)}']`"
-    TCL_SHLIB_LD_EXTRAS="${TCL_SHLIB_LD_EXTRAS}"' -install_name ${DYLIB_INSTALL_DIR}/${TCL_LIB_FILE}'
+    TCL_SHLIB_LD_EXTRAS="${TCL_SHLIB_LD_EXTRAS}"' -install_name "${DYLIB_INSTALL_DIR}"/${TCL_LIB_FILE}'
     echo "$LDFLAGS " | grep -q -- '-prebind ' && TCL_SHLIB_LD_EXTRAS="${TCL_SHLIB_LD_EXTRAS}"' -seg1addr 0xa000000'
     TCL_SHLIB_LD_EXTRAS="${TCL_SHLIB_LD_EXTRAS}"' -sectcreate __TEXT __info_plist Tcl-Info.plist'
     EXTRA_TCLSH_LIBS='-sectcreate __TEXT __info_plist Tclsh-Info.plist'
@@ -735,7 +754,7 @@ if test "$FRAMEWORK_BUILD" = "1" ; then
     fi
     TCL_LIB_FILE="Tcl"
     TCL_LIB_FLAG="-framework Tcl"
-    TCL_BUILD_LIB_SPEC="-F`pwd` -framework Tcl"
+    TCL_BUILD_LIB_SPEC="-F`pwd | sed -e 's/ /\\\\ /g'` -framework Tcl"
     TCL_LIB_SPEC="-F${libdir} -framework Tcl"
     libdir="${libdir}/Tcl.framework/Versions/\${VERSION}"
     TCL_LIBRARY="${libdir}/Resources/Scripts"
@@ -743,7 +762,7 @@ if test "$FRAMEWORK_BUILD" = "1" ; then
     PRIVATE_INCLUDE_DIR="${libdir}/PrivateHeaders"
     HTML_DIR="${libdir}/Resources/Documentation/Reference/Tcl"
     EXTRA_INSTALL="install-private-headers html-tcl"
-    EXTRA_BUILD_HTML='@ln -fs contents.htm $(HTML_INSTALL_DIR)/TclTOC.html' 
+    EXTRA_BUILD_HTML='@ln -fs contents.htm "$(HTML_INSTALL_DIR)"/TclTOC.html' 
     EXTRA_INSTALL_BINARIES='@echo "Installing Info.plist to $(LIB_INSTALL_DIR)/Resources" && mkdir -p "$(LIB_INSTALL_DIR)/Resources" && $(INSTALL_DATA) Tcl-Info.plist "$(LIB_INSTALL_DIR)/Resources/Info.plist"'
     EXTRA_INSTALL_BINARIES="$EXTRA_INSTALL_BINARIES"' && echo "Installing license.terms to $(LIB_INSTALL_DIR)/Resources" && $(INSTALL_DATA) "$(TOP_DIR)/license.terms" "$(LIB_INSTALL_DIR)/Resources"'
     EXTRA_INSTALL_BINARIES="$EXTRA_INSTALL_BINARIES"' && echo "Finalizing Tcl.framework" && rm -f "$(LIB_INSTALL_DIR)/../Current" && ln -s "$(VERSION)" "$(LIB_INSTALL_DIR)/../Current" && for f in "$(LIB_FILE)" tclConfig.sh Resources Headers PrivateHeaders; do rm -f "$(LIB_INSTALL_DIR)/../../$$f" && ln -s "Versions/Current/$$f" "$(LIB_INSTALL_DIR)/../.."; done && f="$(STUB_LIB_FILE)" && rm -f "$(LIB_INSTALL_DIR)/../../$$f" && ln -s "Versions/$(VERSION)/$$f" "$(LIB_INSTALL_DIR)/../.."'
@@ -761,17 +780,17 @@ else
         else
             TCL_LIB_FLAG="-ltcl`echo ${TCL_VERSION} | tr -d .`"
         fi
-        TCL_BUILD_LIB_SPEC="-L`pwd` ${TCL_LIB_FLAG}"
+        TCL_BUILD_LIB_SPEC="-L`pwd | sed -e 's/ /\\\\ /g'` ${TCL_LIB_FLAG}"
         TCL_LIB_SPEC="-L${libdir} ${TCL_LIB_FLAG}"
     else
         TCL_BUILD_EXP_FILE="lib.exp"
         eval "TCL_EXP_FILE=libtcl${TCL_EXPORT_FILE_SUFFIX}"
     
         if test "$GCC" = "yes" ; then
-            TCL_BUILD_LIB_SPEC="-Wl,-bI:`pwd`/${TCL_BUILD_EXP_FILE} -L`pwd`"
-            TCL_LIB_SPEC="-Wl,-bI:${libdir}/${TCL_EXP_FILE} -L`pwd`"
+            TCL_BUILD_LIB_SPEC="-Wl,-bI:`pwd | sed -e 's/ /\\\\ /g'`/${TCL_BUILD_EXP_FILE} -L`pwd | sed -e 's/ /\\\\ /g'`"
+            TCL_LIB_SPEC="-Wl,-bI:${libdir}/${TCL_EXP_FILE} -L${libdir}"
         else
-            TCL_BUILD_LIB_SPEC="-bI:`pwd`/${TCL_BUILD_EXP_FILE}"
+            TCL_BUILD_LIB_SPEC="-bI:`pwd | sed -e 's/ /\\\\ /g'`/${TCL_BUILD_EXP_FILE}"
             TCL_LIB_SPEC="-bI:${libdir}/${TCL_EXP_FILE}"
         fi
     fi
@@ -818,7 +837,7 @@ else
     TCL_STUB_LIB_FLAG="-ltclstub`echo ${TCL_VERSION} | tr -d .`"
 fi
 
-TCL_BUILD_STUB_LIB_SPEC="-L`pwd` ${TCL_STUB_LIB_FLAG}"
+TCL_BUILD_STUB_LIB_SPEC="-L`pwd | sed -e 's/ /\\\\ /g'` ${TCL_STUB_LIB_FLAG}"
 TCL_STUB_LIB_SPEC="-L${TCL_STUB_LIB_DIR} ${TCL_STUB_LIB_FLAG}"
 TCL_BUILD_STUB_LIB_PATH="`pwd`/${TCL_STUB_LIB_FILE}"
 TCL_STUB_LIB_PATH="${TCL_STUB_LIB_DIR}/${TCL_STUB_LIB_FILE}"
@@ -873,6 +892,7 @@ AC_SUBST(INSTALL_TZDATA)
 AC_SUBST(DTRACE_SRC)
 AC_SUBST(DTRACE_HDR)
 AC_SUBST(DTRACE_OBJ)
+AC_SUBST(MAKEFILE_SHELL)
 
 AC_SUBST(BUILD_DLTEST)
 AC_SUBST(TCL_PACKAGE_PATH)

@@ -1690,7 +1690,7 @@ EXTERN void		Tcl_AppendStringsToObjVA (Tcl_Obj * objPtr,
 #ifndef Tcl_HashStats_TCL_DECLARED
 #define Tcl_HashStats_TCL_DECLARED
 /* 269 */
-EXTERN CONST84_RETURN char * Tcl_HashStats (Tcl_HashTable * tablePtr);
+EXTERN char *		Tcl_HashStats (Tcl_HashTable * tablePtr);
 #endif
 #ifndef Tcl_ParseVar_TCL_DECLARED
 #define Tcl_ParseVar_TCL_DECLARED
@@ -3829,7 +3829,7 @@ typedef struct TclStubs {
     void (*tcl_ValidateAllMemory) (CONST char * file, int line); /* 266 */
     void (*tcl_AppendResultVA) (Tcl_Interp * interp, va_list argList); /* 267 */
     void (*tcl_AppendStringsToObjVA) (Tcl_Obj * objPtr, va_list argList); /* 268 */
-    CONST84_RETURN char * (*tcl_HashStats) (Tcl_HashTable * tablePtr); /* 269 */
+    char * (*tcl_HashStats) (Tcl_HashTable * tablePtr); /* 269 */
     CONST84_RETURN char * (*tcl_ParseVar) (Tcl_Interp * interp, CONST char * start, CONST84 char ** termPtr); /* 270 */
     CONST84_RETURN char * (*tcl_PkgPresent) (Tcl_Interp * interp, CONST char * name, CONST char * version, int exact); /* 271 */
     CONST84_RETURN char * (*tcl_PkgPresentEx) (Tcl_Interp * interp, CONST char * name, CONST char * version, int exact, ClientData * clientDataPtr); /* 272 */

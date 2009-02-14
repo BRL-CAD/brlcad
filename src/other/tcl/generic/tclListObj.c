@@ -428,7 +428,16 @@ Tcl_ListObjGetElements(
     if (listPtr->typePtr != &tclListType) {
 	int result, length;
 
-	(void) TclGetStringFromObj(listPtr, &length);
+	/*
+	 * Don't get the string version of a dictionary; that transformation
+	 * is not lossy, but is expensive.
+	 */
+
+	if (listPtr->typePtr == &tclDictType) {
+	    (void) Tcl_DictObjSize(NULL, listPtr, &length);
+	} else {
+	    (void) TclGetStringFromObj(listPtr, &length);
+	}
 	if (!length) {
 	    *objcPtr = 0;
 	    *objvPtr = NULL;
@@ -1658,6 +1667,58 @@ SetListFromAny(
     List *listRepPtr;
 
     /*
+     * Dictionaries are a special case; they have a string representation such
+     * that *all* valid dictionaries are valid lists. Hence we can convert
+     * more directly.
+     */
+
+    if (objPtr->typePtr == &tclDictType) {
+	Tcl_Obj *keyPtr, *valuePtr;
+	Tcl_DictSearch search;
+	int done, size;
+
+	/*
+	 * Create the new list representation. Note that we do not need to do
+	 * anything with the string representation as the transformation (and
+	 * the reverse back to a dictionary) are both order-preserving. Also
+	 * note that since we know we've got a valid dictionary (by
+	 * representation) we also know that fetching the size of the
+	 * dictionary or iterating over it will not fail.
+	 */
+
+	Tcl_DictObjSize(NULL, objPtr, &size);
+	listRepPtr = NewListIntRep(size > 0 ? 2*size : 1, NULL);
+	if (!listRepPtr) {
+	    Tcl_SetResult(interp,
+		    "insufficient memory to allocate list working space",
+		    TCL_STATIC);
+	    return TCL_ERROR;
+	}
+	listRepPtr->elemCount = 2 * size;
+
+	/*
+	 * Populate the list representation.
+	 */
+
+	elemPtrs = &listRepPtr->elements;
+	Tcl_DictObjFirst(NULL, objPtr, &search, &keyPtr, &valuePtr, &done);
+	i = 0;
+	while (!done) {
+	    elemPtrs[i++] = keyPtr;
+	    elemPtrs[i++] = valuePtr;
+	    Tcl_IncrRefCount(keyPtr);
+	    Tcl_IncrRefCount(valuePtr);
+	    Tcl_DictObjNext(&search, &keyPtr, &valuePtr, &done);
+	}
+
+	/*
+	 * Swap the representations.
+	 */
+
+	goto commitRepresentation;
+    }
+
+    /*
      * Get the string representation. Make it up-to-date if necessary.
      */
 
@@ -1742,6 +1803,7 @@ SetListFromAny(
      * Tcl_GetStringFromObj, to use that old internalRep.
      */
 
+  commitRepresentation:
     listRepPtr->refCount++;
     TclFreeIntRep(objPtr);
     objPtr->internalRep.twoPtrValue.ptr1 = (void *) listRepPtr;

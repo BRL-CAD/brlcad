@@ -63,6 +63,10 @@ Returns the current value of the specified \fIoption\fR; see \fIttk::widget(n)\f
 \fIpathName \fBconfigure\fR ?\fIoption\fR? ?\fIvalue option value ...\fR?
 Modify or query widget options; see \fIttk::widget(n)\fR.
 .TP
+\fIpathName \fBidentify\fR \fIx y\fR
+Returns the name of the element at position \fIx\fR, \fIy\fR.
+See \fIttk::widget(n)\fR.
+.TP
 \fIpathName \fBinstate \fIstatespec\fR ?\fIscript\fR?
 Test the widget state; see \fIttk::widget(n)\fR.
 .TP

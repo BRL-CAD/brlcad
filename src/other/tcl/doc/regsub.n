@@ -139,23 +139,30 @@ string after replacement is returned.
 See the manual entry for \fBregexp\fR for details on the interpretation
 of regular expressions.
 .SH EXAMPLES
+.PP
 Replace (in the string in variable \fIstring\fR) every instance of
 \fBfoo\fR which is a word by itself with \fBbar\fR:
 .CS
-\fBregsub\fR -all {\e<foo\e>} $string bar string
+\fBregsub\fR -all {\emfoo\eM} $string bar string
+.CE
+or (using the
+.QW "basic regular expression"
+syntax):
+.CS
+\fBregsub\fR -all {(?b)\e<foo\e>} $string bar string
 .CE
 .PP
 Insert double-quotes around the first instance of the word
 \fBinteresting\fR, however it is capitalized.
 .CS
-\fBregsub\fR -nocase {\e<interesting\e>} $string {"&"} string
+\fBregsub\fR -nocase {\eyinteresting\ey} $string {"&"} string
 .CE
 .PP
 Convert all non-ASCII and Tcl-significant characters into \eu escape
 sequences by using \fBregsub\fR and \fBsubst\fR in combination:
 .CS
 # This RE is just a character class for everything "bad"
-set RE {[][{};#\e\e\e$\es\eu0100-\euffff]}
+set RE {[][{};#\e\e\e$\es\eu0080-\euffff]}
 
 # We will substitute with a fragment of Tcl script in brackets
 set substitution {[format \e\e\e\eu%04x [scan "\e\e&" %c]]}
@@ -170,4 +177,4 @@ regexp(n), re_syntax(n), subst(n),
 string(n)
 .VE
 .SH KEYWORDS
-match, pattern, regular expression, substitute
+match, pattern, quoting, regular expression, substitute

@@ -14,9 +14,9 @@ tcltest::loadTestedCommands
 
 set fixed {Courier -12}
 
-proc record args {
+proc record {name args} {
     global log
-    lappend log $args
+    lappend log [format {%s %.6g %.6g} $name {*}$args]
 }
 
 proc getsize w {
@@ -476,7 +476,7 @@ test listbox-3.78 {ListboxWidgetCmd procedure, "scan" option} {fonts} {
     .t.l scan mark 100 140
     .t.l scan dragto 90 137
     update
-    list [.t.l xview] [.t.l yview]
+    list [format {%.6g %.6g} {*}[.t.l xview]] [format {%.6g %.6g} {*}[.t.l yview]]
 } {{0.249364 0.427481} {0.0714286 0.428571}}
 test listbox-3.79 {ListboxWidgetCmd procedure, "scan" option} {
     list [catch {.l scan foo 2 4} msg] $msg
@@ -628,7 +628,7 @@ test listbox-3.114 {ListboxWidgetCmd procedure, "xview" option} {
     catch {destroy .l2}
     listbox .l2
     update
-    .l2 xview
+    format {%.6g %.6g} {*}[.l2 xview]
 } {0 1}
 test listbox-3.115 {ListboxWidgetCmd procedure, "xview" option} {
     catch {destroy .l}
@@ -636,7 +636,7 @@ test listbox-3.115 {ListboxWidgetCmd procedure, "xview" option} {
     .l insert 0 a b c d e f g h i j k l m n o p q r s t
     pack .l
     update
-    .l xview
+    format {%.6g %.6g} {*}[.l xview]
 } {0 1}
 catch {destroy .l}
 listbox .l -width 10 -height 5 -font $fixed
@@ -646,7 +646,7 @@ pack .l
 update
 test listbox-3.116 {ListboxWidgetCmd procedure, "xview" option} {fonts} {
     .l xview 4
-    .l xview
+    format {%.6g %.6g} {*}[.l xview]
 } {0.08 0.28}
 test listbox-3.117 {ListboxWidgetCmd procedure, "xview" option} {
     list [catch {.l xview foo} msg] $msg
@@ -658,19 +658,19 @@ test listbox-3.119 {ListboxWidgetCmd procedure, "xview" option} {fonts} {
     .l xview 0
     .l xview moveto .4
     update
-    .l xview
+    format {%.6g %.6g} {*}[.l xview]
 } {0.4 0.6}
 test listbox-3.120 {ListboxWidgetCmd procedure, "xview" option} {fonts} {
     .l xview 0
     .l xview scroll 2 units
     update
-    .l xview
+    format {%.6g %.6g} {*}[.l xview]
 } {0.04 0.24}
 test listbox-3.121 {ListboxWidgetCmd procedure, "xview" option} {fonts} {
     .l xview 30
     .l xview scroll -1 pages
     update
-    .l xview
+    format {%.6g %.6g} {*}[.l xview]
 } {0.44 0.64}
 test listbox-3.122 {ListboxWidgetCmd procedure, "xview" option} {fonts} {
     .l configure -width 1
@@ -678,14 +678,14 @@ test listbox-3.122 {ListboxWidgetCmd procedure, "xview" option} {fonts} {
     .l xview 30
     .l xview scroll -4 pages
     update
-    .l xview
+    format {%.6g %.6g} {*}[.l xview]
 } {0.52 0.54}
 test listbox-3.123 {ListboxWidgetCmd procedure, "yview" option} {
     catch {destroy .l}
     listbox .l
     pack  .l
     update
-    .l yview
+    format {%.6g %.6g} {*}[.l yview]
 } {0 1}
 test listbox-3.124 {ListboxWidgetCmd procedure, "yview" option} {
     catch {destroy .l}
@@ -693,7 +693,7 @@ test listbox-3.124 {ListboxWidgetCmd procedure, "yview" option} {
     .l insert 0 el1
     pack  .l
     update
-    .l yview
+    format {%.6g %.6g} {*}[.l yview]
 } {0 1}
 catch {destroy .l}
 listbox .l -width 10 -height 5 -font $fixed
@@ -703,11 +703,11 @@ update
 test listbox-3.125 {ListboxWidgetCmd procedure, "yview" option} {
     .l yview 4
     update
-    .l yview
+    format {%.6g %.6g} {*}[.l yview]
 } {0.2 0.45}
 test listbox-3.126 {ListboxWidgetCmd procedure, "yview" option, partial last line} {
     mkPartial
-    .partial.l yview
+    format {%.6g %.6g} {*}[.partial.l yview]
 } {0 0.266667}
 test listbox-3.127 {ListboxWidgetCmd procedure, "xview" option} {
     list [catch {.l yview foo} msg] $msg
@@ -718,24 +718,24 @@ test listbox-3.128 {ListboxWidgetCmd procedure, "xview" option} {
 test listbox-3.129 {ListboxWidgetCmd procedure, "xview" option} {
     .l yview 0
     .l yview moveto .31
-    .l yview
+    format {%.6g %.6g} {*}[.l yview]
 } {0.3 0.55}
 test listbox-3.130 {ListboxWidgetCmd procedure, "xview" option} {
     .l yview 2
     .l yview scroll 2 pages
-    .l yview
+    format {%.6g %.6g} {*}[.l yview]
 } {0.4 0.65}
 test listbox-3.131 {ListboxWidgetCmd procedure, "xview" option} {
     .l yview 10
     .l yview scroll -3 units
-    .l yview
+    format {%.6g %.6g} {*}[.l yview]
 } {0.35 0.6}
 test listbox-3.132 {ListboxWidgetCmd procedure, "xview" option} {
     .l configure -height 2
     update
     .l yview 15
     .l yview scroll -4 pages
-    .l yview
+    format {%.6g %.6g} {*}[.l yview]
 } {0.55 0.65}
 test listbox-3.133 {ListboxWidgetCmd procedure, "xview" option} {
     list [catch {.l whoknows} msg] $msg
@@ -1302,7 +1302,7 @@ test listbox-8.2 {ListboxEventProc procedure} {fonts} {
     update
     place .l -width 50 -height 80
     update
-    list [.l xview] [.l yview]
+    list [format {%.6g %.6g} {*}[.l xview]] [format {%.6g %.6g} {*}[.l yview]]
 } {{0 0.222222} {0 0.333333}}
 test listbox-8.3 {ListboxEventProc procedure} {
     deleteWindows
@@ -1445,7 +1445,7 @@ test listbox-11.3 {ChangeListboxView procedure} {
     set log {}
     .l yview 2
     update
-    list [.l yview] $log
+    list [format {%.6g %.6g} {*}[.l yview]] $log
 }  {{0.2 0.7} {{y 0.2 0.7}}}
 test listbox-11.4 {ChangeListboxView procedure} {
     catch {destroy .l}
@@ -1456,7 +1456,7 @@ test listbox-11.4 {ChangeListboxView procedure} {
     set log {}
     .l yview 8
     update
-    list [.l yview] $log
+    list [format {%.6g %.6g} {*}[.l yview]] $log
 }  {{0.5 1} {{y 0.5 1}}}
 test listbox-11.5 {ChangeListboxView procedure} {
     catch {destroy .l}
@@ -1468,7 +1468,7 @@ test listbox-11.5 {ChangeListboxView procedure} {
     set log {}
     .l yview 3
     update
-    list [.l yview] $log
+    list [format {%.6g %.6g} {*}[.l yview]] $log
 }  {{0.3 0.8} {}}
 test listbox-11.6 {ChangeListboxView procedure, partial last line} {
     mkPartial
@@ -1485,13 +1485,13 @@ test listbox-12.1 {ChangeListboxOffset procedure} {fonts} {
     set log {}
     .l xview 99
     update
-    list [.l xview] $log
+    list [format {%.6g %.6g} {*}[.l xview]] $log
 } {{0.9 1} {{x 0.9 1}}}
 test listbox-12.2 {ChangeListboxOffset procedure} {fonts} {
     set log {}
     .l xview moveto -.25
     update
-    list [.l xview] $log
+    list [format {%.6g %.6g} {*}[.l xview]] $log
 } {{0 0.1} {{x 0 0.1}}}
 test listbox-12.3 {ChangeListboxOffset procedure} {fonts} {
     .l xview 10
@@ -1499,7 +1499,7 @@ test listbox-12.3 {ChangeListboxOffset procedure} {fonts} {
     set log {}
     .l xview 10
     update
-    list [.l xview] $log
+    list [format {%.6g %.6g} {*}[.l xview]] $log
 } {{0.1 0.2} {}}
 
 catch {destroy .l}
@@ -1516,7 +1516,7 @@ test listbox-13.1 {ListboxScanTo procedure} {fonts} {
     .l scan mark 10 20
     .l scan dragto [expr 10-$width] [expr 20-$height]
     update
-    list [.l xview] [.l yview]
+    list [format {%.6g %.6g} {*}[.l xview]] [format {%.6g %.6g} {*}[.l yview]]
 } {{0.2 0.4} {0.5 0.75}}
 test listbox-13.2 {ListboxScanTo procedure} {fonts} {
     .l yview 5
@@ -1524,10 +1524,10 @@ test listbox-13.2 {ListboxScanTo procedure} {fonts} {
     .l scan mark 10 20
     .l scan dragto 20 40
     update
-    set x [list [.l xview] [.l yview]]
+    set x [list [format {%.6g %.6g} {*}[.l xview]] [format {%.6g %.6g} {*}[.l yview]]]
     .l scan dragto [expr 20-$width] [expr 40-$height]
     update
-    lappend x [.l xview] [.l yview]
+    lappend x [format {%.6g %.6g} {*}[.l xview]] [format {%.6g %.6g} {*}[.l yview]]
 } {{0 0.2} {0 0.25} {0.2 0.4} {0.5 0.75}}
 test listbox-13.3 {ListboxScanTo procedure} {fonts} {
     .l yview moveto 1.0
@@ -1535,10 +1535,10 @@ test listbox-13.3 {ListboxScanTo procedure} {fonts} {
     .l scan mark 10 20
     .l scan dragto 5 10
     update
-    set x [list [.l xview] [.l yview]]
+    set x [list [format {%.6g %.6g} {*}[.l xview]] [format {%.6g %.6g} {*}[.l yview]]]
     .l scan dragto [expr 5+$width] [expr 10+$height]
     update
-    lappend x [.l xview] [.l yview]
+    lappend x [format {%.6g %.6g} {*}[.l xview]] [format {%.6g %.6g} {*}[.l yview]]
 } {{0.8 1} {0.75 1} {0.64 0.84} {0.25 0.5}}
 
 test listbox-14.1 {NearestListboxElement procedure, partial last line} {
@@ -1723,7 +1723,7 @@ test listbox-18.3 {ListboxUpdateVScrollbar procedure} {
     set x
 } {{{invalid command name "gorp"}} {invalid command name "gorp"
     while executing
-"gorp 0 1"
+"gorp 0.0 1.0"
     (vertical scrolling command executed by listbox)}}
 if {[info exists bgerror]} {
     rename bgerror {}
@@ -1755,7 +1755,7 @@ test listbox-19.2 {ListboxUpdateVScrollbar procedure} {
     set x
 } {{{invalid command name "bogus"}} {invalid command name "bogus"
     while executing
-"bogus 0 1"
+"bogus 0.0 1.0"
     (horizontal scrolling command executed by listbox)}}
 
 set l [interp hidden]
@@ -1925,12 +1925,12 @@ test listbox-21.16 {ListboxListVarProc, update vertical scrollbar} {
     .l yview scroll 3 units
     update
     set result {}
-    lappend result [.l yview]
+    lappend result [format {%.6g %.6g} {*}[.l yview]]
     set x [lreplace $x 3 3]
     set x [lreplace $x 3 3]
     set x [lreplace $x 3 3]
     update
-    lappend result [.l yview]
+    lappend result [format {%.6g %.6g} {*}[.l yview]]
     set result
 } [list {0.5 1} {0 1}]
 
@@ -2131,11 +2131,16 @@ test listbox-28.1 {listbox -activestyle} {
     listbox .l -activ non
     .l cget -activestyle
 } none
-test listbox-28.2 {listbox -activestyle} {
+test listbox-28.2-nonwin {listbox -activestyle} {nonwin} {
     destroy .l
     listbox .l
     .l cget -activestyle
 } dotbox
+test listbox-28.2-win {listbox -activestyle} {win} {
+    destroy .l
+    listbox .l
+    .l cget -activestyle
+} underline
 test listbox-28.3 {listbox -activestyle} {
     destroy .l
     listbox .l -activestyle und

@@ -113,6 +113,12 @@ test dict-3.13 {dict get command} {
 test dict-3.14 {dict get command} {
     list [catch {dict get {a b c d} a c} msg] $msg
 } {1 {missing value to go with key}}
+test dict-3.15 {compiled dict get error cleanliness - Bug 2431847} -body {
+    apply {{} {
+	dict set a(z) b c
+	dict get $a(z) d
+    }}
+} -returnCodes error -result {key "d" not known in dictionary}
 
 test dict-4.1 {dict replace command} {
     getOrder [dict replace {a b c d}] a c
@@ -414,6 +420,9 @@ test dict-13.9 {dict append command: write failure} {
     catch {unset dictVar}
     set result
 } {1 {can't set "dictVar": variable is array}}
+test dict-13.10 {compiled dict command: crash case} {
+    apply {{} {dict append dictVar a o k}}
+} {a ok}
 
 test dict-14.1 {dict for command: syntax} {
     list [catch {dict for} msg] $msg
@@ -562,6 +571,13 @@ test dict-14.18 {dict for command in compilation context} {
 test dict-14.19 {dict for and invalid dicts: bug 1531184} -body {
     di[list]ct for {k v} x {}
 } -returnCodes 1 -result {missing value to go with key}
+test dict-14.20 {dict for stack space compilation: bug 1903325} {
+    proc dicttest {x y args} {
+	dict for {a b} $x {}
+	concat "c=$y,$args"
+    }
+    dicttest {} 1 2 3
+} {c=1,2 3}
 # There's probably a lot more tests to add here. Really ought to use a
 # coverage tool for this job...
 

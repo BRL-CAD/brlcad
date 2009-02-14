@@ -2699,18 +2699,20 @@ GetNamespaceFromObj(
     Tcl_Namespace **nsPtrPtr)	/* Result namespace pointer goes here. */
 {
     ResolvedNsName *resNamePtr;
-    Namespace *nsPtr;
+    Namespace *nsPtr, *refNsPtr;
 
     if (objPtr->typePtr == &nsNameType) {
 	/*
-	 * Check that the ResolvedNsName is still valid.
+	 * Check that the ResolvedNsName is still valid; avoid letting the ref 
+	 * cross interps.
 	 */
 
 	resNamePtr = (ResolvedNsName *) objPtr->internalRep.twoPtrValue.ptr1;
 	nsPtr = resNamePtr->nsPtr;
-	if (!(nsPtr->flags & NS_DYING)
-		&& ((resNamePtr->refNsPtr == NULL) || (resNamePtr->refNsPtr
-		== (Namespace *) Tcl_GetCurrentNamespace(interp)))) {
+	refNsPtr = resNamePtr->refNsPtr;
+	if (!(nsPtr->flags & NS_DYING) && (interp == nsPtr->interp) &&
+		(!refNsPtr || ((interp == refNsPtr->interp) &&
+		 (refNsPtr== (Namespace *) Tcl_GetCurrentNamespace(interp))))) {
 	    *nsPtrPtr = (Tcl_Namespace *) nsPtr;
 	    return TCL_OK;
 	}
@@ -3277,12 +3279,15 @@ NamespaceEvalCmd(
 
     if (objc == 4) {
 	/*
-	 * TIP #280: Make invoker available to eval'd script.
+	 * TIP #280: Make actual argument location available to eval'd script.
 	 */
 
-	Interp *iPtr = (Interp *) interp;
+	Interp *iPtr      = (Interp *) interp;
+	CmdFrame* invoker = iPtr->cmdFramePtr;
+	int word          = 3;
 
-	result = TclEvalObjEx(interp, objv[3], 0, iPtr->cmdFramePtr, 3);
+	TclArgumentGet (interp, objv[3], &invoker, &word);
+	result = TclEvalObjEx(interp, objv[3], 0, invoker, word);
     } else {
 	/*
 	 * More than one argument: concatenate them together with spaces
@@ -4294,45 +4299,58 @@ Tcl_SetNamespaceUnknownHandler(
     Tcl_Namespace *nsPtr,	/* Namespace which is being updated. */
     Tcl_Obj *handlerPtr)	/* The new handler, or NULL to reset. */
 {
-    int lstlen;
+    int lstlen = 0;
     Namespace *currNsPtr = (Namespace *)nsPtr;
 
-    if (currNsPtr->unknownHandlerPtr != NULL) {
-	/*
-	 * Remove old handler first.
-	 */
+    /*
+     * Ensure that we check for errors *first* before we change anything.
+     */
 
-	Tcl_DecrRefCount(currNsPtr->unknownHandlerPtr);
-	currNsPtr->unknownHandlerPtr = NULL;
+    if (handlerPtr != NULL) {
+	if (TclListObjLength(interp, handlerPtr, &lstlen) != TCL_OK) {
+	    /*
+	     * Not a list.
+	     */
+
+	    return TCL_ERROR;
+	}
+	if (lstlen > 0) {
+	    /*
+	     * We are going to be saving this handler. Increment the reference
+	     * count before decrementing the refcount on the previous handler,
+	     * so that nothing strange can happen if we are told to set the
+	     * handler to the previous value.
+	     */
+
+	    Tcl_IncrRefCount(handlerPtr);
+	}
     }
 
     /*
-     * If NULL or an empty list is passed, then reset to the default
-     * handler.
+     * Remove old handler next.
      */
 
-    if (handlerPtr == NULL) {
-	currNsPtr->unknownHandlerPtr = NULL;
-    } else if (TclListObjLength(interp, handlerPtr, &lstlen) != TCL_OK) {
+    if (currNsPtr->unknownHandlerPtr != NULL) {
+	Tcl_DecrRefCount(currNsPtr->unknownHandlerPtr);
+    }
+
+    /*
+     * Install the new handler.
+     */
+
+    if (lstlen > 0) {
 	/*
-	 * Not a list.
+	 * Just store the handler. It already has the correct reference count.
 	 */
 
-	return TCL_ERROR;
-    } else if (lstlen == 0) {
-	/*
-	 * Empty list - reset to default.
-	 */
-
-	currNsPtr->unknownHandlerPtr = NULL;
+	currNsPtr->unknownHandlerPtr = handlerPtr;
     } else {
 	/*
-	 * Increment ref count and store. The reference count is decremented
-	 * either in the code above, or when the namespace is deleted.
+	 * If NULL or an empty list is passed, this resets to the default
+	 * handler.
 	 */
 
-	Tcl_IncrRefCount(handlerPtr);
-	currNsPtr->unknownHandlerPtr = handlerPtr;
+	currNsPtr->unknownHandlerPtr = NULL;
     }
     return TCL_OK;
 }
@@ -6937,6 +6955,9 @@ Tcl_LogCommandInfo(
 	}
     }
 
+    if (length < 0) {
+	length = strlen(command);
+    }
     overflow = (length > limit);
     Tcl_AppendObjToErrorInfo(interp, Tcl_ObjPrintf(
 	    "\n    %s\n\"%.*s%s\"", ((iPtr->errorInfo == NULL)

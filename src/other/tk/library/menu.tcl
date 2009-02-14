@@ -261,8 +261,10 @@ proc ::tk::MbPost {w {x {}} {y {}}} {
     if {$cur ne ""} {
 	MenuUnpost {}
     }
-    set Priv(cursor) [$w cget -cursor]
-    $w configure -cursor arrow
+    if {$::tk_strictMotif} {
+        set Priv(cursor) [$w cget -cursor]
+        $w configure -cursor arrow
+    }
     if {[tk windowingsystem] ne "aqua"} {
 	set Priv(relief) [$w cget -relief]
 	$w configure -relief raised
@@ -409,7 +411,9 @@ proc ::tk::MenuUnpost menu {
 	    set menu [$mb cget -menu]
 	    $menu unpost
 	    set Priv(postedMb) {}
-	    $mb configure -cursor $Priv(cursor)
+	    if {$::tk_strictMotif} {
+	        $mb configure -cursor $Priv(cursor)
+	    }
 	    if {[tk windowingsystem] ne "aqua"} {
 		$mb configure -relief $Priv(relief)
 	    } else {
@@ -457,7 +461,9 @@ proc ::tk::MenuUnpost menu {
 	}
 	RestoreOldGrab
 	if {$Priv(menuBar) ne ""} {
-	    $Priv(menuBar) configure -cursor $Priv(cursor)
+	    if {$::tk_strictMotif} {
+		$Priv(menuBar) configure -cursor $Priv(cursor)
+	    }
 	    set Priv(menuBar) {}
 	}
 	if {[tk windowingsystem] ne "x11"} {
@@ -590,8 +596,10 @@ proc ::tk::MenuButtonDown menu {
 
 	if {$Priv(menuBar) eq {}} {
 	    set Priv(menuBar) $menu
-	    set Priv(cursor) [$menu cget -cursor]
-	    $menu configure -cursor arrow
+	    if {$::tk_strictMotif} {
+		set Priv(cursor) [$menu cget -cursor]
+		$menu configure -cursor arrow
+	    }
         }
 
 	# Don't update grab information if the grab window isn't changing.

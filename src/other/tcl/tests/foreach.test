@@ -75,7 +75,7 @@ test foreach-1.14 {foreach errors} {
     set a(0) 44
     list [catch {foreach a {1 2 3} {}} msg o] $msg $::errorInfo
 } {1 {can't set "a": variable is array} {can't set "a": variable is array
-    (setting foreach loop variable "a"
+    (setting foreach loop variable "a")
     invoked from within
 "foreach a {1 2 3} {}"}}
 test foreach-1.15 {foreach errors} {

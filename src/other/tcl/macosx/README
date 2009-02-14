@@ -91,14 +91,17 @@ take care to only use the project matching your DevTools and OS version:
     * Tcl.pbproj for Xcode or ProjectBuilder on 10.3 and earlier, this has a
 	'Tcl' target that simply calls through to the tcl/macosx/GNUMakefile.
     * Tcl.xcode for Xcode 2.4 on 10.4 and Xcode 2.5 on 10.4 and later, which
-	additionally has a native 'tcltest' target useful for debugging, this
-	target's 'Debug' build configuration has ZeroLink and Fix&Continue
-	enabled, use the 'DebugNoFixZL' build configuration if you need a debug
-	build without these features. The following additional build
-	configurations are available for the 'Tcl' and 'tcltest' targets:
+	additionally has native 'tcltest' and 'tests' targets for debugging and
+	running the testsuite, these targets' 'Debug' build configuration has
+	ZeroLink and Fix&Continue enabled, use the 'DebugNoFixZL' build
+	configuration if you need a debug build without these features. The
+	following build configurations are available:
 	'DebugUnthreaded': debug build with threading turned off.
+	'DebugNoCF': debug build with corefoundation turned off.
+	'DebugNoCFUnthreaded': debug build with corefoundation & threading off.
 	'DebugMemCompile': debug build with memory and bytecode debugging on.
 	'DebugLeaks': debug build with PURIFY defined.
+	'DebugGCov': debug build with generation of gcov data files enabled.
 	'Debug64bit': builds the targets as 64bit with debugging enabled,
 		requires a 64bit capable processor (i.e. G5 or Core2/Xeon).
 	'ReleaseUniversal': builds the targets as universal binaries for the
@@ -111,10 +114,17 @@ take care to only use the project matching your DevTools and OS version:
 	'ReleasePPC10.2.8SDK': builds for PowerPC with gcc-3.3 against the
 		10.2.8 SDK, useful to verify on Tiger that building on Jaguar
 		would succeed.
-    * Tcl.xcodeproj for Xcode 3.0 on 10.5 and later, which has the following
-	additional build configuration:
+    * Tcl.xcodeproj for Xcode 3.1 on 10.5 and later, which has the following
+	additional build configurations:
 	'ReleaseUniversal10.5SDK': same as 'ReleaseUniversal' but builds
 		against the 10.5 SDK on Leopard (with 10.5 deployment target).
+	'Debug gcc42':  same as 'Debug' but builds with gcc 4.2.
+	'Debug llvmgcc42': same as 'Debug' but builds with llvm-gcc 4.2.
+	'ReleaseUniversal gcc42': same as 'ReleaseUniversal' but builds with
+		gcc 4.2.
+	'ReleaseUniversal llvmgcc42': same as 'ReleaseUniversal' but builds
+		with llvm-gcc 4.2.
+	Note that all non-SDK configurations have 10.5 deployment target.
 
 Notes about the native targets of the Xcode projects:
     * the Xcode projects refer to the toplevel tcl source directory through the

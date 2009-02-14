@@ -10,32 +10,25 @@
 #
 # RCS: @(#) $Id$
 
-# Rough version history:
-# 1.0	Old http_get interface.
-# 2.0	http:: namespace and http::geturl.
-# 2.1	Added callbacks to handle arriving data, and timeouts.
-# 2.2	Added ability to fetch into a channel.
-# 2.3	Added SSL support, and ability to post from a channel. This version
-#	also cleans up error cases and eliminates the "ioerror" status in
-#	favor of raising an error
-# 2.4	Added -binary option to http::geturl and charset element to the state
-#	array.
-
 package require Tcl 8.4
 # Keep this in sync with pkgIndex.tcl and with the install directories
 # in Makefiles
-package provide http 2.5.3
+package provide http 2.7.2
 
 namespace eval http {
+    # Allow resourcing to not clobber existing data
+
     variable http
-    array set http {
-	-accept */*
-	-proxyhost {}
-	-proxyport {}
-	-proxyfilter http::ProxyRequired
-	-urlencoding utf-8
+    if {![info exists http]} {
+	array set http {
+	    -accept */*
+	    -proxyhost {}
+	    -proxyport {}
+	    -proxyfilter http::ProxyRequired
+	    -urlencoding utf-8
+	}
+	set http(-useragent) "Tcl http client package [package provide http]"
     }
-    set http(-useragent) "Tcl http client package [package provide http]"
 
     proc init {} {
 	# Set up the map for quoting chars. RFC3986 Section 2.3 say percent
@@ -52,24 +45,56 @@ namespace eval http {
 	# These are handled specially
 	set map(\n) %0d%0a
 	variable formMap [array get map]
+
+	# Create a map for HTTP/1.1 open sockets
+	variable socketmap
+	if {[info exists socketmap]} {
+	    # Close but don't remove open sockets on re-init
+	    foreach {url sock} [array get socketmap] {
+		catch {close $sock}
+	    }
+	}
+	array set socketmap {}
     }
     init
 
     variable urlTypes
-    array set urlTypes {
-	http	{80 ::socket}
+    if {![info exists urlTypes]} {
+	set urlTypes(http) [list 80 ::socket]
     }
 
     variable encodings [string tolower [encoding names]]
     # This can be changed, but iso8859-1 is the RFC standard.
-    variable defaultCharset "iso8859-1"
+    variable defaultCharset
+    if {![info exists defaultCharset]} {
+	set defaultCharset "iso8859-1"
+    }
 
     # Force RFC 3986 strictness in geturl url verification?
-    variable strict 1
+    variable strict
+    if {![info exists strict]} {
+	set strict 1
+    }
+
+    # Let user control default keepalive for compatibility
+    variable defaultKeepalive
+    if {![info exists defaultKeepalive]} {
+	set defaultKeepalive 0
+    }
 
     namespace export geturl config reset wait formatQuery register unregister
     # Useful, but not exported: data size status code
 }
+
+# http::Log --
+#
+#	Debugging output -- define this to observe HTTP/1.1 socket usage.
+#	Should echo any args received.
+#
+# Arguments:
+#     msg	Message to output
+#
+proc http::Log {args} {}
 
 # http::register --
 #
@@ -165,22 +190,63 @@ proc http::Finish { token {errormsg ""} {skipCB 0}} {
     variable $token
     upvar 0 $token state
     global errorInfo errorCode
-    if {[string length $errormsg] != 0} {
+    if {$errormsg ne ""} {
 	set state(error) [list $errormsg $errorInfo $errorCode]
-	set state(status) error
+	set state(status) "error"
     }
-    catch {close $state(sock)}
-    catch {after cancel $state(after)}
+    if {($state(status) eq "timeout") || ($state(status) eq "error")
+        || ([info exists state(connection)] && ($state(connection) eq "close"))
+    } {
+        CloseSocket $state(sock) $token
+    }
+    if {[info exists state(after)]} { after cancel $state(after) }
     if {[info exists state(-command)] && !$skipCB} {
 	if {[catch {eval $state(-command) {$token}} err]} {
-	    if {[string length $errormsg] == 0} {
+	    if {$errormsg eq ""} {
 		set state(error) [list $err $errorInfo $errorCode]
 		set state(status) error
 	    }
 	}
-	if {[info exists state(-command)]} {
-	    # Command callback may already have unset our state
-	    unset state(-command)
+	# Command callback may already have unset our state
+	unset -nocomplain state(-command)
+    }
+}
+
+# http::CloseSocket -
+#
+#	Close a socket and remove it from the persistent sockets table.
+#	If possible an http token is included here but when we are called
+#	from a fileevent on remote closure we need to find the correct
+#	entry - hence the second section.
+
+proc ::http::CloseSocket {s {token {}}} {
+    variable socketmap
+    catch {fileevent $s readable {}}
+    set conn_id {}
+    if {$token ne ""} {
+        variable $token
+        upvar 0 $token state
+        if {[info exists state(socketinfo)]} {
+            set conn_id $state(socketinfo)
+        }
+    } else {
+        set map [array get socketmap]
+        set ndx [lsearch -exact $map $s]
+        if {$ndx != -1} {
+            incr ndx -1
+            set conn_id [lindex $map $ndx]
+        }
+    }
+    if {$conn_id eq {} || ![info exists socketmap($conn_id)]} {
+        Log "Closing socket $s (no connection info)"
+        if {[catch {close $s} err]} { Log "Error: $err" }
+    } else {
+	if {[info exists socketmap($conn_id)]} {
+	    Log "Closing connection $conn_id (sock $socketmap($conn_id))"
+	    if {[catch {close $socketmap($conn_id)} err]} { Log "Error: $err" }
+	    unset socketmap($conn_id)
+	} else {
+	    Log "Cannot close connection $conn_id - no socket in socket map"
 	}
     }
 }
@@ -226,6 +292,7 @@ proc http::geturl { url args } {
     variable http
     variable urlTypes
     variable defaultCharset
+    variable defaultKeepalive
     variable strict
 
     # Initialize the state variable, an array. We'll return the name of this
@@ -243,45 +310,53 @@ proc http::geturl { url args } {
 
     array set state {
 	-binary		false
-	-blocksize 	8192
+	-blocksize	8192
 	-queryblocksize 8192
-	-validate 	0
-	-headers 	{}
-	-timeout 	0
-	-type           application/x-www-form-urlencoded
+	-validate	0
+	-headers	{}
+	-timeout	0
+	-type		application/x-www-form-urlencoded
 	-queryprogress	{}
-	state		header
+	-protocol	1.1
+	binary		0
+	state		connecting
 	meta		{}
 	coding		{}
 	currentsize	0
 	totalsize	0
 	querylength	0
 	queryoffset	0
-        type            text/html
-        body            {}
+	type		text/html
+	body		{}
 	status		""
-	http            ""
+	http		""
+	connection	close
     }
+    set state(-keepalive) $defaultKeepalive
+    set state(-strict) $strict
     # These flags have their types verified [Bug 811170]
     array set type {
 	-binary		boolean
 	-blocksize	integer
 	-queryblocksize integer
-	-validate	boolean
+	-strict		boolean
 	-timeout	integer
+	-validate	boolean
     }
     set state(charset)	$defaultCharset
-    set options {-binary -blocksize -channel -command -handler -headers \
-	    -progress -query -queryblocksize -querychannel -queryprogress\
-	    -validate -timeout -type}
-    set usage [join $options ", "]
+    set options {
+	-binary -blocksize -channel -command -handler -headers -keepalive
+	-method -myaddr -progress -protocol -query -queryblocksize
+	-querychannel -queryprogress -strict -timeout -type -validate
+    }
+    set usage [join [lsort $options] ", "]
     set options [string map {- ""} $options]
     set pat ^-([join $options |])$
     foreach {flag value} $args {
-	if {[regexp $pat $flag]} {
+	if {[regexp -- $pat $flag]} {
 	    # Validate numbers
-	    if {[info exists type($flag)] && \
-		    ![string is $type($flag) -strict $value]} {
+	    if {[info exists type($flag)] &&
+		![string is $type($flag) -strict $value]} {
 		unset $token
 		return -code error "Bad value for $flag ($value), must be $type($flag)"
 	    }
@@ -334,7 +409,8 @@ proc http::geturl { url args } {
     #
     # From a validation perspective, we need to ensure that the parts of the
     # URL that are going to the server are correctly encoded.
-    # This is only done if $::http::strict is true (default 0 for compat).
+    # This is only done if $state(-strict) is true (inherited from
+    # $::http::strict).
 
     set URLmatcher {(?x)		# this is _expanded_ syntax
 	^
@@ -367,7 +443,7 @@ proc http::geturl { url args } {
 	# Note that we don't check the hostname for validity here; if it's
 	# invalid, we'll simply fail to resolve it later on.
     }
-    if {$port ne "" && $port>65535} {
+    if {$port ne "" && $port > 65535} {
 	unset $token
 	return -code error "Invalid port number: $port"
     }
@@ -380,7 +456,7 @@ proc http::geturl { url args } {
 	    (?: [-\w.~!$&'()*+,;=:] | %[0-9a-f][0-9a-f] )+
 	    $
 	}
-	if {$strict && ![regexp -- $validityRE $user]} {
+	if {$state(-strict) && ![regexp -- $validityRE $user]} {
 	    unset $token
 	    # Provide a better error message in this error case
 	    if {[regexp {(?i)%(?![0-9a-f][0-9a-f]).?.?} $user bad]} {
@@ -400,7 +476,7 @@ proc http::geturl { url args } {
 	    (?: \? (?: [-\w.~!$&'()*+,;=:@/?] | %[0-9a-f][0-9a-f] )* )?
 	    $
 	}
-	if {$strict && ![regexp -- $validityRE $srvurl]} {
+	if {$state(-strict) && ![regexp -- $validityRE $srvurl]} {
 	    unset $token
 	    # Provide a better error message in this error case
 	    if {[regexp {(?i)%(?![0-9a-f][0-9a-f])..} $srvurl bad]} {
@@ -412,7 +488,7 @@ proc http::geturl { url args } {
     } else {
 	set srvurl /
     }
-    if {[string length $proto] == 0} {
+    if {$proto eq ""} {
 	set proto http
     }
     if {![info exists urlTypes($proto)]} {
@@ -422,7 +498,7 @@ proc http::geturl { url args } {
     set defport [lindex $urlTypes($proto) 0]
     set defcmd [lindex $urlTypes($proto) 1]
 
-    if {[string length $port] == 0} {
+    if {$port eq ""} {
 	set port $defport
     }
     if {![catch {$http(-proxyfilter) $host} proxy]} {
@@ -447,42 +523,78 @@ proc http::geturl { url args } {
     # If a timeout is specified we set up the after event and arrange for an
     # asynchronous socket connection.
 
+    set sockopts [list]
     if {$state(-timeout) > 0} {
 	set state(after) [after $state(-timeout) \
 		[list http::reset $token timeout]]
-	set async -async
-    } else {
-	set async ""
+	lappend sockopts -async
     }
 
     # If we are using the proxy, we must pass in the full URL that includes
     # the server name.
 
-    if {[info exists phost] && [string length $phost]} {
+    if {[info exists phost] && ($phost ne "")} {
 	set srvurl $url
-	set conStat [catch {eval $defcmd $async {$phost $pport}} s]
+	set targetAddr [list $phost $pport]
     } else {
-	set conStat [catch {eval $defcmd $async {$host $port}} s]
+	set targetAddr [list $host $port]
     }
+    # Proxy connections aren't shared among different hosts.
+    set state(socketinfo) $host:$port
 
-    if {$conStat} {
-	# Something went wrong while trying to establish the connection. Clean
-	# up after events and such, but DON'T call the command callback (if
-	# available) because we're going to throw an exception from here
-	# instead.
-	Finish $token "" 1
-	cleanup $token
-	return -code error $s
+    # See if we are supposed to use a previously opened channel.
+    if {$state(-keepalive)} {
+	variable socketmap
+	if {[info exists socketmap($state(socketinfo))]} {
+	    if {[catch {fconfigure $socketmap($state(socketinfo))}]} {
+		Log "WARNING: socket for $state(socketinfo) was closed"
+		unset socketmap($state(socketinfo))
+	    } else {
+		set sock $socketmap($state(socketinfo))
+		Log "reusing socket $sock for $state(socketinfo)"
+		catch {fileevent $sock writable {}}
+		catch {fileevent $sock readable {}}
+	    }
+	}
+	# don't automatically close this connection socket
+	set state(connection) {}
     }
-    set state(sock) $s
+    if {![info exists sock]} {
+	# Pass -myaddr directly to the socket command
+	if {[info exists state(-myaddr)]} {
+	    lappend sockopts -myaddr $state(-myaddr)
+	}
+        if {[catch {eval $defcmd $sockopts $targetAddr} sock]} {
+            # something went wrong while trying to establish the
+            # connection. Clean up after events and such, but DON'T call the
+            # command callback (if available) because we're going to throw an
+            # exception from here instead.
+
+	    set state(sock) $sock
+            Finish $token "" 1
+            cleanup $token
+            return -code error $sock
+        }
+    }
+    set state(sock) $sock
+    Log "Using $sock for $state(socketinfo)" \
+        [expr {$state(-keepalive)?"keepalive":""}]
+    if {$state(-keepalive)} {
+        set socketmap($state(socketinfo)) $sock
+    }
 
     # Wait for the connection to complete.
 
     if {$state(-timeout) > 0} {
-	fileevent $s writable [list http::Connect $token]
+	fileevent $sock writable [list http::Connect $token]
 	http::wait $token
 
-	if {$state(status) eq "error"} {
+	if {![info exists state]} {
+	    # If we timed out then Finish has been called and the users
+	    # command callback may have cleaned up the token. If so
+	    # we end up here with nothing left to do.
+	    return $token
+	} elseif {$state(status) eq "error"} {
 	    # Something went wrong while trying to establish the connection.
 	    # Clean up after events and such, but DON'T call the command
 	    # callback (if available) because we're going to throw an
@@ -499,12 +611,12 @@ proc http::geturl { url args } {
 
     # Send data in cr-lf format, but accept any line terminators
 
-    fconfigure $s -translation {auto crlf} -buffersize $state(-blocksize)
+    fconfigure $sock -translation {auto crlf} -buffersize $state(-blocksize)
 
     # The following is disallowed in safe interpreters, but the socket is
     # already in non-blocking mode in that case.
 
-    catch {fconfigure $s -blocking off}
+    catch {fconfigure $sock -blocking off}
     set how GET
     if {$isQuery} {
 	set state(querylength) [string length $state(-query)]
@@ -525,29 +637,57 @@ proc http::geturl { url args } {
 	fconfigure $state(-querychannel) -blocking 1 -translation binary
 	set contDone 0
     }
+    if {[info exists state(-method)] && $state(-method) ne ""} {
+	set how $state(-method)
+    }
 
     if {[catch {
-	puts $s "$how $srvurl HTTP/1.0"
-	puts $s "Accept: $http(-accept)"
-	if {$port == $defport} {
-	    # Don't add port in this case, to handle broken servers. [Bug
-	    # 504508]
-	    puts $s "Host: $host"
+	puts $sock "$how $srvurl HTTP/$state(-protocol)"
+	puts $sock "Accept: $http(-accept)"
+	array set hdrs $state(-headers)
+	if {[info exists hdrs(Host)]} {
+	    # Allow Host spoofing [Bug 928154]
+	    puts $sock "Host: $hdrs(Host)"
+	} elseif {$port == $defport} {
+	    # Don't add port in this case, to handle broken servers.
+	    # [Bug #504508]
+	    puts $sock "Host: $host"
 	} else {
-	    puts $s "Host: $host:$port"
+	    puts $sock "Host: $host:$port"
 	}
-	puts $s "User-Agent: $http(-useragent)"
+	unset hdrs
+	puts $sock "User-Agent: $http(-useragent)"
+        if {$state(-protocol) == 1.0 && $state(-keepalive)} {
+            puts $sock "Connection: keep-alive"
+        }
+        if {$state(-protocol) > 1.0 && !$state(-keepalive)} {
+            puts $sock "Connection: close" ;# RFC2616 sec 8.1.2.1
+        }
+        if {[info exists phost] && ($phost ne "") && $state(-keepalive)} {
+            puts $sock "Proxy-Connection: Keep-Alive"
+        }
+        set accept_encoding_seen 0
 	foreach {key value} $state(-headers) {
+	    if {[string equal -nocase $key "host"]} { continue }
+            if {[string equal -nocase $key "accept-encoding"]} {
+                set accept_encoding_seen 1
+            }
 	    set value [string map [list \n "" \r ""] $value]
 	    set key [string trim $key]
-	    if {$key eq "Content-Length"} {
+	    if {[string equal -nocase $key "content-length"]} {
 		set contDone 1
 		set state(querylength) $value
 	    }
 	    if {[string length $key]} {
-		puts $s "$key: $value"
+		puts $sock "$key: $value"
 	    }
 	}
+	# Soft zlib dependency check - no package require
+        if {!$accept_encoding_seen && [llength [package provide zlib]]
+            && !([info exists state(-channel)] || [info exists state(-handler)])
+        } {
+            puts $sock "Accept-Encoding: gzip, identity, *;q=0.1"
+        }
 	if {$isQueryChannel && $state(querylength) == 0} {
 	    # Try to determine size of data in channel. If we cannot seek, the
 	    # surrounding catch will trap us
@@ -576,17 +716,17 @@ proc http::geturl { url args } {
 	# their POST data if they expect the client to read their response.
 
 	if {$isQuery || $isQueryChannel} {
-	    puts $s "Content-Type: $state(-type)"
+	    puts $sock "Content-Type: $state(-type)"
 	    if {!$contDone} {
-		puts $s "Content-Length: $state(querylength)"
+		puts $sock "Content-Length: $state(querylength)"
 	    }
-	    puts $s ""
-	    fconfigure $s -translation {auto binary}
-	    fileevent $s writable [list http::Write $token]
+	    puts $sock ""
+	    fconfigure $sock -translation {auto binary}
+	    fileevent $sock writable [list http::Write $token]
 	} else {
-	    puts $s ""
-	    flush $s
-	    fileevent $s readable [list http::Event $token]
+	    puts $sock ""
+	    flush $sock
+	    fileevent $sock readable [list http::Event $sock $token]
 	}
 
 	if {! [info exists state(-command)]} {
@@ -610,7 +750,7 @@ proc http::geturl { url args } {
 
 	# if state(status) is error, it means someone's already called Finish
 	# to do the above-described clean up.
-	if {$state(status) eq "error"} {
+	if {$state(status) ne "error"} {
 	    Finish $token $err 1
 	}
 	cleanup $token
@@ -632,6 +772,7 @@ proc http::data {token} {
     return $state(body)
 }
 proc http::status {token} {
+    if {![info exists $token]} { return "error" }
     variable $token
     upvar 0 $token state
     return $state(status)
@@ -655,7 +796,11 @@ proc http::size {token} {
     upvar 0 $token state
     return $state(currentsize)
 }
-
+proc http::meta {token} {
+    variable $token
+    upvar 0 $token state
+    return $state(meta)
+}
 proc http::error {token} {
     variable $token
     upvar 0 $token state
@@ -721,7 +866,7 @@ proc http::Connect {token} {
 proc http::Write {token} {
     variable $token
     upvar 0 $token state
-    set s $state(sock)
+    set sock $state(sock)
 
     # Output a block.  Tcl will buffer this if the socket blocks
     set done 0
@@ -732,19 +877,20 @@ proc http::Write {token} {
 	    # Chop up large query strings so queryprogress callback can give
 	    # smooth feedback.
 
-	    puts -nonewline $s \
-		    [string range $state(-query) $state(queryoffset) \
-		    [expr {$state(queryoffset) + $state(-queryblocksize) - 1}]]
+	    puts -nonewline $sock \
+		[string range $state(-query) $state(queryoffset) \
+		     [expr {$state(queryoffset) + $state(-queryblocksize) - 1}]]
 	    incr state(queryoffset) $state(-queryblocksize)
 	    if {$state(queryoffset) >= $state(querylength)} {
 		set state(queryoffset) $state(querylength)
+		puts $sock ""
 		set done 1
 	    }
 	} else {
 	    # Copy blocks from the query channel
 
 	    set outStr [read $state(-querychannel) $state(-queryblocksize)]
-	    puts -nonewline $s $outStr
+	    puts -nonewline $sock $outStr
 	    incr state(queryoffset) [string length $outStr]
 	    if {[eof $state(-querychannel)]} {
 		set done 1
@@ -758,16 +904,16 @@ proc http::Write {token} {
 	set done 1
     }
     if {$done} {
-	catch {flush $s}
-	fileevent $s writable {}
-	fileevent $s readable [list http::Event $token]
+	catch {flush $sock}
+	fileevent $sock writable {}
+	fileevent $sock readable [list http::Event $sock $token]
     }
 
     # Callback to the client after we've completely handled everything.
 
     if {[string length $state(-queryprogress)]} {
-	eval $state(-queryprogress) [list $token $state(querylength)\
-		$state(queryoffset)]
+	eval $state(-queryprogress) \
+	    [list $token $state(querylength) $state(queryoffset)]
     }
 }
 
@@ -776,92 +922,208 @@ proc http::Write {token} {
 #	Handle input on the socket
 #
 # Arguments
+#	sock	The socket receiving input.
 #	token	The token returned from http::geturl
 #
 # Side Effects
 #	Read the socket and handle callbacks.
 
-proc http::Event {token} {
+proc http::Event {sock token} {
     variable $token
     upvar 0 $token state
-    set s $state(sock)
 
-     if {[eof $s]} {
-	Eof $token
+    if {![info exists state]} {
+	Log "Event $sock with invalid token '$token' - remote close?"
+	if {! [eof $sock]} {
+	    if {[string length [set d [read $sock]]] != 0} {
+		Log "WARNING: additional data left on closed socket"
+	    }
+	}
+	CloseSocket $sock
 	return
     }
-    if {$state(state) eq "header"} {
-	if {[catch {gets $s line} n]} {
-	    Finish $token $n
+    if {$state(state) eq "connecting"} {
+	set state(state) "header"
+	if {[catch {gets $sock state(http)} n]} {
+	    return [Finish $token $n]
+	}
+    } elseif {$state(state) eq "header"} {
+	if {[catch {gets $sock line} n]} {
+	    return [Finish $token $n]
 	} elseif {$n == 0} {
-	    variable encodings
+	    # We have now read all headers
+	    # We ignore HTTP/1.1 100 Continue returns. RFC2616 sec 8.2.3
+	    if {$state(http) == "" || [lindex $state(http) 1] == 100} { return }
+
 	    set state(state) body
-	    if {$state(-binary) || ![string match -nocase text* $state(type)]
-		    || [string match *gzip* $state(coding)]
-		    || [string match *compress* $state(coding)]} {
+
+	    # If doing a HEAD, then we won't get any body
+	    if {$state(-validate)} {
+		Eof $token
+		return
+	    }
+
+	    # For non-chunked transfer we may have no body -- in this case we
+	    # may get no further file event if the connection doesn't close and
+	    # no more data is sent. We can tell and must finish up now - not
+	    # later.
+	    if {!(([info exists state(connection)]
+		   && ($state(connection) eq "close"))
+		  || [info exists state(transfer)])
+		&&  $state(totalsize) == 0
+	    } then {
+		Log "body size is 0 and no events likely - complete."
+		Eof $token
+		return
+	    }
+
+	    # We have to use binary translation to count bytes properly.
+	    fconfigure $sock -translation binary
+
+	    if {$state(-binary) || ![string match -nocase text* $state(type)]} {
 		# Turn off conversions for non-text data
-		fconfigure $s -translation binary
+		set state(binary) 1
+	    }
+	    if {$state(binary) || [string match *gzip* $state(coding)]
+		|| [string match *compress* $state(coding)]} {
 		if {[info exists state(-channel)]} {
 		    fconfigure $state(-channel) -translation binary
 		}
-	    } else {
-		# If we are getting text, set the incoming channel's encoding
-		# correctly. iso8859-1 is the RFC default, but this could be
-		# any IANA charset. However, we only know how to convert what
-		# we have encodings for.
-		set idx [lsearch -exact $encodings \
-			[string tolower $state(charset)]]
-		if {$idx >= 0} {
-		    fconfigure $s -encoding [lindex $encodings $idx]
-		}
 	    }
-	    if {[info exists state(-channel)] && \
-		    ![info exists state(-handler)]} {
+	    if {[info exists state(-channel)] && 
+		![info exists state(-handler)]} {
 		# Initiate a sequence of background fcopies
-		fileevent $s readable {}
-		CopyStart $s $token
+		fileevent $sock readable {}
+		CopyStart $sock $token
+		return
 	    }
 	} elseif {$n > 0} {
-	    if {[regexp -nocase {^content-type:(.+)$} $line x type]} {
-		set state(type) [string trim $type]
-		# grab the optional charset information
-		regexp -nocase {charset\s*=\s*(\S+)} $type x state(charset)
-	    }
-	    if {[regexp -nocase {^content-length:(.+)$} $line x length]} {
-		set state(totalsize) [string trim $length]
-	    }
-	    if {[regexp -nocase {^content-encoding:(.+)$} $line x coding]} {
-		set state(coding) [string trim $coding]
-	    }
+	    # Process header lines
 	    if {[regexp -nocase {^([^:]+):(.+)$} $line x key value]} {
+		switch -- [string tolower $key] {
+		    content-type {
+			set state(type) [string trim [string tolower $value]]
+			# grab the optional charset information
+			regexp -nocase {charset\s*=\s*(\S+?);?} \
+			    $state(type) -> state(charset)
+		    }
+		    content-length {
+			set state(totalsize) [string trim $value]
+		    }
+		    content-encoding {
+			set state(coding) [string trim $value]
+		    }
+		    transfer-encoding {
+			set state(transfer) \
+			    [string trim [string tolower $value]]
+		    }
+		    proxy-connection -
+		    connection {
+			set state(connection) \
+			    [string trim [string tolower $value]]
+		    }
+		}
 		lappend state(meta) $key [string trim $value]
-	    } elseif {[string match HTTP* $line]} {
-		set state(http) $line
 	    }
 	}
     } else {
+	# Now reading body
 	if {[catch {
 	    if {[info exists state(-handler)]} {
-		set n [eval $state(-handler) {$s $token}]
+		set n [eval $state(-handler) [list $sock $token]]
+	    } elseif {[info exists state(transfer_final)]} {
+		set line [getTextLine $sock]
+		set n [string length $line]
+		if {$n > 0} {
+		    Log "found $n bytes following final chunk"
+		    append state(transfer_final) $line
+		} else {
+		    Log "final chunk part"
+		    Eof $token
+		}
+	    } elseif {[info exists state(transfer)]
+		      && $state(transfer) eq "chunked"} {
+		set size 0
+		set chunk [getTextLine $sock]
+		set n [string length $chunk]
+		if {[string trim $chunk] ne ""} {
+		    scan $chunk %x size
+		    if {$size != 0} {
+			set bl [fconfigure $sock -blocking]
+			fconfigure $sock -blocking 1
+			set chunk [read $sock $size]
+			fconfigure $sock -blocking $bl
+			set n [string length $chunk]
+			if {$n >= 0} {
+			    append state(body) $chunk
+			}
+			if {$size != [string length $chunk]} {
+			    Log "WARNING: mis-sized chunk:\
+				was [string length $chunk], should be $size"
+			}
+			getTextLine $sock
+		    } else {
+			set state(transfer_final) {}
+		    }
+		}
 	    } else {
-		set block [read $s $state(-blocksize)]
+		#Log "read non-chunk $state(currentsize) of $state(totalsize)"
+		set block [read $sock $state(-blocksize)]
 		set n [string length $block]
 		if {$n >= 0} {
 		    append state(body) $block
 		}
 	    }
-	    if {$n >= 0} {
-		incr state(currentsize) $n
+	    if {[info exists state]} {
+		if {$n >= 0} {
+		    incr state(currentsize) $n
+		}
+		# If Content-Length - check for end of data.
+		if {($state(totalsize) > 0)
+		    && ($state(currentsize) >= $state(totalsize))} {
+		    Eof $token
+		}
 	    }
 	} err]} {
-	    Finish $token $err
+	    return [Finish $token $err]
 	} else {
 	    if {[info exists state(-progress)]} {
 		eval $state(-progress) \
-			{$token $state(totalsize) $state(currentsize)}
+		    [list $token $state(totalsize) $state(currentsize)]
 	    }
 	}
     }
+
+    # catch as an Eof above may have closed the socket already
+    if {![catch {eof $sock} eof] && $eof} {
+	if {[info exists $token]} {
+	    set state(connection) close
+	    Eof $token
+	} else {
+	    # open connection closed on a token that has been cleaned up.
+	    CloseSocket $sock
+	}
+	return
+    }
+}
+
+# http::getTextLine --
+#
+#	Get one line with the stream in blocking crlf mode
+#
+# Arguments
+#	sock	The socket receiving input.
+#
+# Results:
+#	The line of text, without trailing newline
+
+proc http::getTextLine {sock} {
+    set tr [fconfigure $sock -translation]
+    set bl [fconfigure $sock -blocking]
+    fconfigure $sock -translation crlf -blocking 1
+    set r [gets $sock]
+    fconfigure $sock -translation $tr -blocking $bl
+    return $r
 }
 
 # http::CopyStart
@@ -869,17 +1131,17 @@ proc http::Event {token} {
 #	Error handling wrapper around fcopy
 #
 # Arguments
-#	s	The socket to copy from
+#	sock	The socket to copy from
 #	token	The token returned from http::geturl
 #
 # Side Effects
 #	This closes the connection upon error
 
-proc http::CopyStart {s token} {
+proc http::CopyStart {sock token} {
     variable $token
     upvar 0 $token state
     if {[catch {
-	fcopy $s $state(-channel) -size $state(-blocksize) -command \
+	fcopy $sock $state(-channel) -size $state(-blocksize) -command \
 	    [list http::CopyDone $token]
     } err]} {
 	Finish $token $err
@@ -900,18 +1162,19 @@ proc http::CopyStart {s token} {
 proc http::CopyDone {token count {error {}}} {
     variable $token
     upvar 0 $token state
-    set s $state(sock)
+    set sock $state(sock)
     incr state(currentsize) $count
     if {[info exists state(-progress)]} {
-	eval $state(-progress) {$token $state(totalsize) $state(currentsize)}
+	eval $state(-progress) \
+	    [list $token $state(totalsize) $state(currentsize)]
     }
     # At this point the token may have been reset
     if {[string length $error]} {
 	Finish $token $error
-    } elseif {[catch {eof $s} iseof] || $iseof} {
+    } elseif {[catch {eof $sock} iseof] || $iseof} {
 	Eof $token
     } else {
-	CopyStart $s $token
+	CopyStart $sock $token
     }
 }
 
@@ -925,7 +1188,7 @@ proc http::CopyDone {token count {error {}}} {
 # Side Effects
 #	Clean up the socket
 
-proc http::Eof {token} {
+proc http::Eof {token {force 0}} {
     variable $token
     upvar 0 $token state
     if {$state(state) eq "header"} {
@@ -934,7 +1197,31 @@ proc http::Eof {token} {
     } else {
 	set state(status) ok
     }
-    set state(state) eof
+
+    if {($state(coding) eq "gzip") && [string length $state(body)] > 0} {
+        if {[catch {
+            set state(body) [Gunzip $state(body)]
+        } err]} {
+            return [Finish $token $err]
+        }
+    }
+
+    if {!$state(binary)} {
+
+        # If we are getting text, set the incoming channel's
+        # encoding correctly.  iso8859-1 is the RFC default, but
+        # this could be any IANA charset.  However, we only know
+        # how to convert what we have encodings for.
+
+        set enc [CharsetToEncoding $state(charset)]
+        if {$enc ne "binary"} {
+            set state(body) [encoding convertfrom $enc $state(body)]
+        }
+
+        # Translate text line endings.
+        set state(body) [string map {\r\n \n \r \n} $state(body)]
+    }
+
     Finish $token
 }
 
@@ -952,17 +1239,17 @@ proc http::wait {token} {
     variable $token
     upvar 0 $token state
 
-    if {![info exists state(status)] || [string length $state(status)] == 0} {
+    if {![info exists state(status)] || $state(status) eq ""} {
 	# We must wait on the original variable name, not the upvar alias
-	vwait $token\(status)
+	vwait ${token}(status)
     }
 
-    return $state(status)
+    return [status $token]
 }
 
 # http::formatQuery --
 #
-#	See documentation for details. Call http::formatQuery with an even
+#	See documentation for details.  Call http::formatQuery with an even
 #	number of arguments, where the first is a name, the second is a value,
 #	the third is another name, and so on.
 #
@@ -1037,3 +1324,100 @@ proc http::ProxyRequired {host} {
 	return [list $http(-proxyhost) $http(-proxyport)]
     }
 }
+
+# http::CharsetToEncoding --
+#
+# 	Tries to map a given IANA charset to a tcl encoding.
+#	If no encoding can be found, returns binary.
+#
+
+proc http::CharsetToEncoding {charset} {
+    variable encodings
+
+    set charset [string tolower $charset]
+    if {[regexp {iso-?8859-([0-9]+)} $charset - num]} {
+	set encoding "iso8859-$num"
+    } elseif {[regexp {iso-?2022-(jp|kr)} $charset - ext]} {
+	set encoding "iso2022-$ext"
+    } elseif {[regexp {shift[-_]?js} $charset -]} {
+	set encoding "shiftjis"
+    } elseif {[regexp {(windows|cp)-?([0-9]+)} $charset - - num]} {
+	set encoding "cp$num"
+    } elseif {$charset eq "us-ascii"} {
+	set encoding "ascii"
+    } elseif {[regexp {(iso-?)?lat(in)?-?([0-9]+)} $charset - - - num]} {
+	switch -- $num {
+	    5 {set encoding "iso8859-9"}
+	    1 -
+	    2 -
+	    3 {set encoding "iso8859-$num"}
+	}
+    } else {
+	# other charset, like euc-xx, utf-8,...  may directly maps to encoding
+	set encoding $charset
+    }
+    set idx [lsearch -exact $encodings $encoding]
+    if {$idx >= 0} {
+	return $encoding
+    } else {
+	return "binary"
+    }
+}
+
+# http::Gunzip --
+#
+#	Decompress data transmitted using the gzip transfer coding.
+#
+
+# FIX ME: redo using zlib sinflate
+proc http::Gunzip {data} {
+    binary scan $data Scb5icc magic method flags time xfl os
+    set pos 10
+    if {$magic != 0x1f8b} {
+        return -code error "invalid data: supplied data is not in gzip format"
+    }
+    if {$method != 8} {
+        return -code error "invalid compression method"
+    }
+
+    foreach {f_text f_crc f_extra f_name f_comment} [split $flags ""] break
+    set extra ""
+    if { $f_extra } {
+	binary scan $data @${pos}S xlen
+        incr pos 2
+        set extra [string range $data $pos $xlen]
+        set pos [incr xlen]
+    }
+
+    set name ""
+    if { $f_name } {
+        set ndx [string first \0 $data $pos]
+        set name [string range $data $pos $ndx]
+        set pos [incr ndx]
+    }
+
+    set comment ""
+    if { $f_comment } {
+        set ndx [string first \0 $data $pos]
+        set comment [string range $data $pos $ndx]
+        set pos [incr ndx]
+    }
+
+    set fcrc ""
+    if { $f_crc } {
+	set fcrc [string range $data $pos [incr pos]]
+        incr pos
+    }
+
+    binary scan [string range $data end-7 end] ii crc size
+    set inflated [zlib inflate [string range $data $pos end-8]]
+    set chk [zlib crc32 $inflated]
+    if { ($crc & 0xffffffff) != ($chk & 0xffffffff)} {
+	return -code error "invalid data: checksum mismatch $crc != $chk"
+    }
+    return $inflated
+}
+
+# Local variables:
+# indent-tabs-mode: t
+# End:

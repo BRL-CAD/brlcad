@@ -455,13 +455,15 @@ ColorDlgHookProc(
     const char *title;
     CHOOSECOLOR *ccPtr;
 
-    switch (uMsg) {
+    if (WM_INITDIALOG == uMsg) {
+
 	/*
 	 * Set the title string of the dialog.
 	 */
 
 	ccPtr = (CHOOSECOLOR *) lParam;
 	title = (const char *) ccPtr->lCustData;
+
 	if ((title != NULL) && (title[0] != '\0')) {
 	    Tcl_DString ds;
 

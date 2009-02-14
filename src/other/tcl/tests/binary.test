@@ -545,6 +545,18 @@ test binary-15.3 {Tcl_BinaryObjCmd: format} {
 test binary-15.4 {Tcl_BinaryObjCmd: format} {
     binary format a*X3x3a* "foo" "z"
 } \x00\x00\x00z
+test binary-15.5 {Tcl_BinaryObjCmd: format - bug #1923966} {
+    binary format x0s 1
+} \x01\x00
+test binary-15.6 {Tcl_BinaryObjCmd: format - bug #1923966} {
+    binary format x0ss 1 1
+} \x01\x00\x01\x00
+test binary-15.7 {Tcl_BinaryObjCmd: format - bug #1923966} {
+    binary format x1s 1
+} \x00\x01\x00
+test binary-15.8 {Tcl_BinaryObjCmd: format - bug #1923966} {
+    binary format x1ss 1 1
+} \x00\x01\x00\x01\x00
 
 test binary-16.1 {Tcl_BinaryObjCmd: format} {
     binary format a*X*a "foo" "z"

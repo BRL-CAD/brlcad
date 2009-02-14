@@ -70,8 +70,10 @@ In this state the \fBdisabledForeground\fR and
 .OP \-width width Width
 Specifies a desired width for the button.
 If an image or bitmap is being displayed in the button then the value is in
-screen units (i.e. any of the forms acceptable to \fBTk_GetPixels\fR);
-for text it is in characters.
+screen units (i.e. any of the forms acceptable to \fBTk_GetPixels\fR).
+For a text button (no image or with \fB\-compound none\fR) then the width 
+specifies how much space in characters to allocate for the text label.
+If the width is negative then this specifies a minimum width.
 If this option is not specified, the button's desired width is computed
 from the size of the image or bitmap or text being displayed in it.
 .BE

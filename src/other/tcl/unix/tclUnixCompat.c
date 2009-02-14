@@ -16,6 +16,50 @@
 #include <errno.h>
 #include <string.h>
 
+/* See also: SC_BLOCKING_STYLE in unix/tcl.m4
+ */
+#ifdef	USE_FIONBIO
+#   ifdef HAVE_SYS_FILIO_H
+#	include	<sys/filio.h>	/* For FIONBIO. */
+#   endif
+#   ifdef HAVE_SYS_IOCTL_H
+#	include	<sys/ioctl.h>
+#   endif
+#endif	/* USE_FIONBIO */
+
+/*
+ *---------------------------------------------------------------------------
+ *
+ * TclUnixSetBlockingMode --
+ *
+ *	Set the blocking mode of a file descriptor.
+ *
+ * Results:
+ *
+ *	0 on success, -1 (with errno set) on error.
+ *
+ *---------------------------------------------------------------------------
+ */
+int
+TclUnixSetBlockingMode(
+    int fd,		/* File descriptor */
+    int mode)		/* TCL_MODE_BLOCKING or TCL_MODE_NONBLOCKING */
+{
+#ifndef USE_FIONBIO
+    int flags = fcntl(fd, F_GETFL);
+
+    if (mode == TCL_MODE_BLOCKING) {
+	flags &= ~O_NONBLOCK;
+    } else {
+	flags |= O_NONBLOCK;
+    }
+    return fcntl(fd, F_SETFL, flags);
+#else /* USE_FIONBIO */
+    int state = (mode == TCL_MODE_NONBLOCKING);
+    return ioctl(fd, FIONBIO, &state);
+#endif /* !USE_FIONBIO */
+}
+
 /*
  * Used to pad structures at size'd boundaries
  *

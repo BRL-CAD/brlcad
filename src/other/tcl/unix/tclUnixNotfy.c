@@ -907,7 +907,7 @@ NotifierThreadProc(
     fd_set writableMask;
     fd_set exceptionalMask;
     int fds[2];
-    int i, status, numFdBits = 0, receivePipe;
+    int i, numFdBits = 0, receivePipe;
     long found;
     struct timeval poll = {0., 0.}, *timePtr;
     char buf[2];
@@ -918,25 +918,12 @@ NotifierThreadProc(
 
     receivePipe = fds[0];
 
-#ifndef USE_FIONBIO
-    status = fcntl(receivePipe, F_GETFL);
-    status |= O_NONBLOCK;
-    if (fcntl(receivePipe, F_SETFL, status) < 0) {
+    if (TclUnixSetBlockingMode(receivePipe, TCL_MODE_NONBLOCKING) < 0) {
 	Tcl_Panic("NotifierThreadProc: could not make receive pipe non blocking");
     }
-    status = fcntl(fds[1], F_GETFL);
-    status |= O_NONBLOCK;
-    if (fcntl(fds[1], F_SETFL, status) < 0) {
+    if (TclUnixSetBlockingMode(fds[1], TCL_MODE_NONBLOCKING) < 0) {
 	Tcl_Panic("NotifierThreadProc: could not make trigger pipe non blocking");
     }
-#else
-    if (ioctl(receivePipe, (int) FIONBIO, &status) < 0) {
-	Tcl_Panic("NotifierThreadProc: could not make receive pipe non blocking");
-    }
-    if (ioctl(fds[1], (int) FIONBIO, &status) < 0) {
-	Tcl_Panic("NotifierThreadProc: could not make trigger pipe non blocking");
-    }
-#endif /* FIONBIO */
 
     /*
      * Install the write end of the pipe into the global variable.

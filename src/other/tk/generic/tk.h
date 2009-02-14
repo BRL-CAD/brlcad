@@ -53,10 +53,10 @@ extern "C" {
 #define TK_MAJOR_VERSION	8
 #define TK_MINOR_VERSION	5
 #define TK_RELEASE_LEVEL	TCL_FINAL_RELEASE
-#define TK_RELEASE_SERIAL	1
+#define TK_RELEASE_SERIAL	6
 
 #define TK_VERSION		"8.5"
-#define TK_PATCH_LEVEL		"8.5.1"
+#define TK_PATCH_LEVEL		"8.5.6"
 
 /*
  * A special definition used to allow this header file to be included from
@@ -722,6 +722,8 @@ typedef XActivateDeactivateEvent XDeactivateEvent;
     (((Tk_FakeWin *) (tkwin))->flags & TK_WIN_MANAGED)
 #define Tk_TopWinHierarchy(tkwin) \
     (((Tk_FakeWin *) (tkwin))->flags & TK_TOP_HIERARCHY)
+#define Tk_IsManageable(tkwin) \
+    (((Tk_FakeWin *) (tkwin))->flags & TK_WM_MANAGEABLE)
 #define Tk_ReqWidth(tkwin)	(((Tk_FakeWin *) (tkwin))->reqWidth)
 #define Tk_ReqHeight(tkwin)	(((Tk_FakeWin *) (tkwin))->reqHeight)
 /* Tk_InternalBorderWidth is deprecated */
@@ -857,6 +859,8 @@ typedef struct Tk_FakeWin {
  * TK_PROP_PROPCHANGE		1 means that PropertyNotify events in the
  *				window's children should propagate up to this
  *				window.
+ * TK_WM_MANAGEABLE		1 marks a window as capable of being converted
+ *				into a toplevel using [wm manage].
  */
 
 #define TK_MAPPED		1
@@ -878,6 +882,7 @@ typedef struct Tk_FakeWin {
 #define TK_WIN_MANAGED		0x10000
 #define TK_TOP_HIERARCHY	0x20000
 #define TK_PROP_PROPCHANGE	0x40000
+#define TK_WM_MANAGEABLE	0x80000
 
 /*
  *--------------------------------------------------------------
@@ -1484,7 +1489,7 @@ typedef struct Tk_ElementSpec {
 
 const char *		Tk_InitStubs _ANSI_ARGS_((Tcl_Interp *interp,
 			    const char *version, int exact));
-const char *		Tk_PkgInitStubsCheck _ANSI_ARGS_((Tcl_Interp *interp,
+EXTERN const char *	Tk_PkgInitStubsCheck _ANSI_ARGS_((Tcl_Interp *interp,
 			    const char *version, int exact));
 
 #ifndef USE_TK_STUBS

@@ -563,7 +563,7 @@ ScrollbarProc(
 		break;
 	    }
 
-	    sprintf(valueString, "%g", pos);
+	    Tcl_PrintDouble(NULL, pos, valueString);
 	    Tcl_DStringAppendElement(&cmdString, "moveto");
 	    Tcl_DStringAppendElement(&cmdString, valueString);
 	}
@@ -669,12 +669,12 @@ ModalLoopProc(
     Tk_Window tkwin,
     XEvent *eventPtr)
 {
-    TkWindow *winPtr = (TkWindow*)tkwin;
+    TkWindow *winPtr = (TkWindow *) tkwin;
     WinScrollbar *scrollPtr = (WinScrollbar *) winPtr->instanceData;
     int oldMode;
 
     if (scrollPtr->hwnd) {
-	Tcl_Preserve((ClientData)scrollPtr);
+	Tcl_Preserve(scrollPtr);
 	scrollPtr->winFlags |= IN_MODAL_LOOP;
 	oldMode = Tcl_SetServiceMode(TCL_SERVICE_ALL);
 	TkWinResendEvent(scrollPtr->oldProc, scrollPtr->hwnd, eventPtr);
@@ -683,7 +683,7 @@ ModalLoopProc(
 	if (scrollPtr->hwnd && scrollPtr->winFlags & ALREADY_DEAD) {
 	    DestroyWindow(scrollPtr->hwnd);
 	}
-	Tcl_Release((ClientData)scrollPtr);
+	Tcl_Release(scrollPtr);
     }
 }
 

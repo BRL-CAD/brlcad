@@ -11,7 +11,7 @@
  *	application event target.
  *
  * Copyright 2001, Apple Computer, Inc.
- * Copyright (c) 2005-2007 Daniel A. Steffen <das@users.sourceforge.net>
+ * Copyright (c) 2005-2008 Daniel A. Steffen <das@users.sourceforge.net>
  *
  * See the file "license.terms" for information on usage and redistribution of
  * this file, and for a DISCLAIMER OF ALL WARRANTIES.
@@ -224,46 +224,21 @@ TkMacOSXInitCarbonEvents(
 	    applicationEventTypes, (void *) carbonEventInterp, NULL);
 
 #ifdef TK_MAC_DEBUG_CARBON_EVENTS
-    TkMacOSXInitNamedDebugSymbol(HIToolbox, void, _TraceEventByName,
-	    CFStringRef);
-    if (_TraceEventByName) {
-	/* Carbon-internal event debugging (c.f. Technote 2124) */
-	_TraceEventByName(CFSTR("kEventRawKeyDown"));
-	_TraceEventByName(CFSTR("kEventRawKeyRepeat"));
-	_TraceEventByName(CFSTR("kEventRawKeyUp"));
-	_TraceEventByName(CFSTR("kEventRawKeyModifiersChanged"));
-	_TraceEventByName(CFSTR("kEventRawKeyRepeat"));
-	_TraceEventByName(CFSTR("kEventMenuBeginTracking"));
-	_TraceEventByName(CFSTR("kEventMenuEndTracking"));
-	_TraceEventByName(CFSTR("kEventMenuOpening"));
-	_TraceEventByName(CFSTR("kEventMenuTargetItem"));
-	_TraceEventByName(CFSTR("kEventCommandProcess"));
-	_TraceEventByName(CFSTR("kEventCommandUpdateStatus"));
-	_TraceEventByName(CFSTR("kEventAppActivated"));
-	_TraceEventByName(CFSTR("kEventAppDeactivated"));
-	_TraceEventByName(CFSTR("kEventAppQuit"));
-	_TraceEventByName(CFSTR("kEventAppHidden"));
-	_TraceEventByName(CFSTR("kEventAppShown"));
-	_TraceEventByName(CFSTR("kEventAppAvailableWindowBoundsChanged"));
-	_TraceEventByName(CFSTR("kEventAppearanceScrollBarVariantChanged"));
-	_TraceEventByName(CFSTR("kEventMouseDown"));
-	_TraceEventByName(CFSTR("kEventMouseUp"));
-#if 0
-	_TraceEventByName(CFSTR("kEventMouseMoved"));
-	_TraceEventByName(CFSTR("kEventMouseDragged"));
-#endif
-	_TraceEventByName(CFSTR("kEventMouseWheelMoved"));
-	_TraceEventByName(CFSTR("kEventMouseScroll"));
-	_TraceEventByName(CFSTR("kEventWindowActivated"));
-	_TraceEventByName(CFSTR("kEventWindowDeactivated"));
-	_TraceEventByName(CFSTR("kEventWindowUpdate"));
-	_TraceEventByName(CFSTR("kEventWindowExpanding"));
-	_TraceEventByName(CFSTR("kEventWindowBoundsChanged"));
-	_TraceEventByName(CFSTR("kEventWindowDragStarted"));
-	_TraceEventByName(CFSTR("kEventWindowDragCompleted"));
-	_TraceEventByName(CFSTR("kEventWindowConstrain"));
-	_TraceEventByName(CFSTR("kEventWindowGetRegion"));
-	_TraceEventByName(CFSTR("kEventWindowDrawContent"));
+    TkMacOSXInitNamedSymbol(HIToolbox, void, DebugTraceEvent, OSType, UInt32,
+	    Boolean);
+    if (DebugTraceEvent) {
+	unsigned int i;
+	const EventTypeSpec *e;
+
+	for (i = 0, e = dispatcherEventTypes;
+		i < GetEventTypeCount(dispatcherEventTypes); i++, e++) {
+	    DebugTraceEvent(e->eventClass, e->eventKind, 1);
+	}
+	for (i = 0, e = applicationEventTypes;
+		i < GetEventTypeCount(applicationEventTypes); i++, e++) {
+	    DebugTraceEvent(e->eventClass, e->eventKind, 1);
+	}
+	DebugTraceEvent = NULL; /* Only enable tracing once. */
     }
 #endif /* TK_MAC_DEBUG_CARBON_EVENTS */
 }
@@ -310,6 +285,24 @@ TkMacOSXInstallWindowCarbonEventHandler(
 	    carbonEventHandlerUPP, GetEventTypeCount(windowEventTypes),
 	    windowEventTypes, (void *) (interp ? interp : carbonEventInterp),
 	    NULL);
+
+#ifdef TK_MAC_DEBUG_CARBON_EVENTS
+    TkMacOSXInitNamedSymbol(HIToolbox, void, DebugTraceEvent, OSType, UInt32,
+	    Boolean);
+    if (DebugTraceEvent) {
+	unsigned int i;
+	const EventTypeSpec *e;
+
+	for (i = 0, e = windowEventTypes;
+		i < GetEventTypeCount(windowEventTypes); i++, e++) {
+	    if (!(e->eventClass == kEventClassMouse && (
+		    e->eventKind == kEventMouseMoved ||
+		    e->eventKind == kEventMouseDragged))) {
+		DebugTraceEvent(e->eventClass, e->eventKind, 1);
+	    }
+	}
+    }
+#endif /* TK_MAC_DEBUG_CARBON_EVENTS */
 }
 
 /*
@@ -344,11 +337,11 @@ InstallStandardApplicationEventHandler(void)
 	* to be installed. Unfortunately there appears to be no public API to
 	* obtain the menubar event target. As a workaround, for now we resort
 	* to calling the HIToolbox-internal GetMenuBarEventTarget() directly
-	* (symbol acquired via TkMacOSXInitNamedDebugSymbol() from HIToolbox
+	* (symbol acquired via TkMacOSXInitNamedSymbol() from HIToolbox
 	* version 343, may not exist in later versions).
 	*/
 	err = ChkErr(InstallStandardEventHandler, GetApplicationEventTarget());
-	TkMacOSXInitNamedDebugSymbol(HIToolbox, EventTargetRef,
+	TkMacOSXInitNamedSymbol(HIToolbox, EventTargetRef,
 		GetMenuBarEventTarget, void);
 	if (GetMenuBarEventTarget) {
 	    ChkErr(InstallStandardEventHandler, GetMenuBarEventTarget());
@@ -688,3 +681,12 @@ TkMacOSXReceiveAndDispatchEvent(void)
     }
     return err;
 }
+
+/*
+ * Local Variables:
+ * mode: c
+ * c-basic-offset: 4
+ * fill-column: 79
+ * coding: utf-8
+ * End:
+ */

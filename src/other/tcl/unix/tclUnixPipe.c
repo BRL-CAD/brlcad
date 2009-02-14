@@ -463,7 +463,7 @@ TclpCreateProcess(
 			((dup2(1,2) == -1) || (fcntl(2, F_SETFD, 0) != 0)))) {
 	    sprintf(errSpace,
 		    "%dforked process couldn't set up input/output: ", errno);
-	    write(fd, errSpace, (size_t) strlen(errSpace));
+	    (void)write(fd, errSpace, (size_t) strlen(errSpace));
 	    _exit(1);
 	}
 
@@ -474,7 +474,7 @@ TclpCreateProcess(
 	RestoreSignals();
 	execvp(newArgv[0], newArgv);			/* INTL: Native. */
 	sprintf(errSpace, "%dcouldn't execute \"%.150s\": ", errno, argv[0]);
-	write(fd, errSpace, (size_t) strlen(errSpace));
+	(void)write(fd, errSpace, (size_t) strlen(errSpace));
 	_exit(1);
     }
 
@@ -841,61 +841,18 @@ PipeBlockModeProc(
 				 * TCL_MODE_BLOCKING or
 				 * TCL_MODE_NONBLOCKING. */
 {
-    PipeState *psPtr = (PipeState *) instanceData;
-    int curStatus;
-    int fd;
+    PipeState *psPtr = instanceData;
 
-#ifndef	USE_FIONBIO
     if (psPtr->inFile) {
-	fd = GetFd(psPtr->inFile);
-	curStatus = fcntl(fd, F_GETFL);
-	if (mode == TCL_MODE_BLOCKING) {
-	    curStatus &= (~(O_NONBLOCK));
-	} else {
-	    curStatus |= O_NONBLOCK;
-	}
-	if (fcntl(fd, F_SETFL, curStatus) < 0) {
+	if (TclUnixSetBlockingMode(GetFd(psPtr->inFile), mode) < 0) {
 	    return errno;
 	}
     }
     if (psPtr->outFile) {
-	fd = GetFd(psPtr->outFile);
-	curStatus = fcntl(fd, F_GETFL);
-	if (mode == TCL_MODE_BLOCKING) {
-	    curStatus &= (~(O_NONBLOCK));
-	} else {
-	    curStatus |= O_NONBLOCK;
-	}
-	if (fcntl(fd, F_SETFL, curStatus) < 0) {
+	if (TclUnixSetBlockingMode(GetFd(psPtr->outFile), mode) < 0) {
 	    return errno;
 	}
     }
-#endif	/* !FIONBIO */
-
-#ifdef	USE_FIONBIO
-    if (psPtr->inFile) {
-	fd = GetFd(psPtr->inFile);
-	if (mode == TCL_MODE_BLOCKING) {
-	    curStatus = 0;
-	} else {
-	    curStatus = 1;
-	}
-	if (ioctl(fd, (int) FIONBIO, &curStatus) < 0) {
-	    return errno;
-	}
-    }
-    if (psPtr->outFile != NULL) {
-	fd = GetFd(psPtr->outFile);
-	if (mode == TCL_MODE_BLOCKING) {
-	    curStatus = 0;
-	} else {
-	    curStatus = 1;
-	}
-	if (ioctl(fd, (int) FIONBIO, &curStatus) < 0) {
-	    return errno;
-	}
-    }
-#endif	/* USE_FIONBIO */
 
     psPtr->isNonBlocking = (mode == TCL_MODE_NONBLOCKING);
 

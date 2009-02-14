@@ -3625,6 +3625,48 @@ test text-33.3 {widget dump -command destroys widget} {
 deleteWindows
 option clear
 
+test text-36.1 "bug #1777362: event handling with hyphenated windows" -setup {
+    proc bgerror {m} {set ::my_error $m}
+    set ::my_error {}
+    pack [set w [text .t-1]]
+} -body {
+    tkwait visibility $w
+    event generate $w <1>
+    event generate $w <1>
+    update
+    set ::my_error
+} -cleanup {
+    destroy .t-1
+} -result {}
+
+test text-36.2 "bug #1777362: event handling with hyphenated windows" -setup {
+    proc bgerror {m} {set ::my_error $m}
+    set ::my_error {}
+    pack [set w [text .t+1]]
+} -body {
+    tkwait visibility $w
+    event generate $w <1>
+    event generate $w <1>
+    update
+    set ::my_error
+} -cleanup {
+    destroy $w
+} -result {}
+
+test text-36.3 "bug #1777362: event handling with hyphenated windows" -setup {
+    proc bgerror {m} {set ::my_error $m}
+    set ::my_error {}
+    pack [set w [text .t*1]]
+} -body {
+    tkwait visibility $w
+    event generate $w <1>
+    event generate $w <1>
+    update
+    set ::my_error
+} -cleanup {
+    destroy $w
+} -result {}
+
 # cleanup
 cleanupTests
 return

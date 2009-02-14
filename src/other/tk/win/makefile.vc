@@ -393,11 +393,10 @@ TTK_OBJS = \
         $(TMP_DIR)\ttkTrack.obj \
         $(TMP_DIR)\ttkTreeview.obj \
         $(TMP_DIR)\ttkWidget.obj \
-        $(TMP_DIR)\ttkStubInit.obj \
-        $(TMP_DIR)\ttkStubLib.obj
+        $(TMP_DIR)\ttkStubInit.obj
 
 TKSTUBOBJS = \
-	$(TMP_DIR)\tkStubLib.obj
+	$(TMP_DIR)\tkStubLib.obj $(TMP_DIR)\ttkStubLib.obj
 
 
 WINDIR          = $(ROOT)\win
@@ -898,7 +897,7 @@ install-binaries:
 !if !$(STATIC_BUILD)
 	@echo creating package index
 	@type << > $(OUT_DIR)\pkgIndex.tcl
-if {[package vcompare [package provide Tcl] $(TCL_PATCH_LEVEL)] != 0} { return }
+if {[catch {package present Tcl 8.5.0-8.6}]} { return }
 package ifneeded Tk $(TK_PATCH_LEVEL) [list load [file join $$dir .. .. bin $(TKLIBNAME)] Tk]
 <<
 	@$(CPY) $(OUT_DIR)\pkgIndex.tcl "$(SCRIPT_INSTALL_DIR)\"

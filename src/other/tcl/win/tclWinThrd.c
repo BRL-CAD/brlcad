@@ -154,6 +154,10 @@ TclpThreadCreate(
 
     EnterCriticalSection(&joinLock);
 
+    *idPtr = 0; /* must initialize as Tcl_Thread is a pointer and
+		 * on WIN64 sizeof void* != sizeof unsigned
+		 */
+
 #if defined(_MSC_VER) || defined(__MSVCRT__) || defined(__BORLANDC__)
     tHandle = (HANDLE) _beginthreadex(NULL, (unsigned) stackSize, proc,
 	    clientData, 0, (unsigned *)idPtr);

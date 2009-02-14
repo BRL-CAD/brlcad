@@ -169,7 +169,7 @@ proc ttk::combobox::SelectEntry {cb index} {
     $cb current $index
     $cb selection range 0 end
     $cb icursor end
-    event generate $cb <<ComboboxSelected>>
+    event generate $cb <<ComboboxSelected>> -when mark
 }
 
 ## Scroll -- Mousewheel binding
@@ -391,6 +391,7 @@ proc ttk::combobox::Post {cb} {
 
     # Post the listbox:
     #
+    wm attribute $popdown -topmost 1
     wm deiconify $popdown
     raise $popdown
 }

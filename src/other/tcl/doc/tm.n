@@ -1,5 +1,5 @@
 '\"
-'\" Copyright (c) 2004 Andreas Kupries <andreas_kupries@users.sourceforge.net>
+'\" Copyright (c) 2004-2008 Andreas Kupries <andreas_kupries@users.sourceforge.net>
 '\"
 '\" See the file "license.terms" for information on usage and redistribution
 '\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
@@ -256,13 +256,20 @@ Note that this is always a single entry because \fIX\fR is always a
 specific value (the current major version of Tcl).
 .SS "USER SPECIFIC PATHS"
 .TP
-\fB$::env(TCL\fIX\fB.\fIy\fB_TM_PATH)\fR
+\fB$::env(TCL\fIX\fB_\fIy\fB_TM_PATH)\fR
 .
 A list of paths, separated by either \fB:\fR (Unix) or \fB;\fR
 (Windows). This is user and site specific as this environment variable
 can be set not only by the user's profile, but by system configuration
 scripts as well.
-.RS
+.TP
+\fB$::env(TCL\fIX\fB.\fIy\fB_TM_PATH)\fR
+.
+Same meaning and content as the previous variable. However the use of
+dot '.' to separate major and minor version number makes this name
+less to non-portable and its use is discouraged. Support of this
+variable has been kept only for backward compatibility with the
+original specification, i.e. TIP 189.
 .PP
 These paths are seen and therefore shared by all Tcl shells in the
 \fB$::env(PATH)\fR of the user.
@@ -271,13 +278,12 @@ Note that \fIX\fR and \fIy\fR follow the general rules set out
 above. In other words, Tcl 8.4, for example, will look at these 5
 environment variables:
 .CS
-\fB$::env(TCL8.4_TM_PATH)\fR
-\fB$::env(TCL8.3_TM_PATH)\fR
-\fB$::env(TCL8.2_TM_PATH)\fR
-\fB$::env(TCL8.1_TM_PATH)\fR
-\fB$::env(TCL8.0_TM_PATH)\fR
+\fB$::env(TCL8.4_TM_PATH)\fR  \fB$::env(TCL8_4_TM_PATH)\fR
+\fB$::env(TCL8.3_TM_PATH)\fR  \fB$::env(TCL8_3_TM_PATH)\fR
+\fB$::env(TCL8.2_TM_PATH)\fR  \fB$::env(TCL8_2_TM_PATH)\fR
+\fB$::env(TCL8.1_TM_PATH)\fR  \fB$::env(TCL8_1_TM_PATH)\fR
+\fB$::env(TCL8.0_TM_PATH)\fR  \fB$::env(TCL8_0_TM_PATH)\fR
 .CE
-.RE
 .SH "SEE ALSO"
 package(n), Tcl Improvement Proposal #189
 .QW "\fITcl Modules\fR"

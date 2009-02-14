@@ -2619,6 +2619,15 @@ test namespace-52.11 {unknown: with TCL_EVAL_INVOKE} -setup {
     rename unknown.save ::unknown
     namespace eval :: [list namespace unknown $handler]
 } -result SUCCESS
+test namespace-52.12 {unknown: error case must not reset handler} -body {
+    namespace eval foo {
+	namespace unknown ok
+	catch {namespace unknown {{}{}{}}}
+	namespace unknown
+    }
+} -cleanup {
+    namespace delete foo
+} -result ok
     
 # cleanup
 catch {rename cmd1 {}}

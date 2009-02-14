@@ -423,14 +423,14 @@ test canvText-11.2 {TextToArea procedure} {
 test canvText-12.1 {ScaleText procedure} {
     .c coords test 100 100
     .c scale all 50 50 2 2
-    .c coords test
-} {150.0 150.0}
+    format {%.6g %.6g} {*}[.c coords test]
+} {150 150}
 
 test canvText-13.1 {TranslateText procedure} {
     .c coords test 100 100
     .c move all 10 10
-    .c coords test
-} {110.0 110.0}
+    format {%.6g %.6g} {*}[.c coords test]
+} {110 110}
 
 .c itemconfig test -text "abcdefghijklmno" -anchor nw
 .c select from test 5
@@ -458,6 +458,9 @@ test canvText-14.4 {GetTextIndex procedure: select error} {
 test canvText-14.5 {GetTextIndex procedure: bad int or unknown index} {
     list [catch {.c index test xyz} msg] $msg
 } {1 {bad index "xyz"}}
+test canvText-14.6 {select clear errors} -body {
+    .c select clear test
+} -returnCodes error -result "wrong \# args: should be \".c select clear\""
 
 test canvText-15.1 {SetTextCursor procedure} {
     .c itemconfig -text "abcdefg"
@@ -491,7 +494,7 @@ test canvText-17.1 {TextToPostscript procedure} {
 \[(000)\]
 \[(000)\]
 \[(00)\]
-] $ay -0.5 0 0 false DrawText
+] $ay -0.5 0.0 0 false DrawText
 grestore
 restore showpage
 

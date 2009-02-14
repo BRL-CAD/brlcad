@@ -1063,7 +1063,8 @@ test reg-33.12 {Bug 1810264 - bad read} {
 test reg-33.13 {Bug 1810264 - infinite loop} {
     regexp {($|^)*} {x}
 } 1
-test reg-33.14 {Bug 1810264 - super-expensive expression} {
+# Some environments have small default stack sizes. [Bug 1905562]
+test reg-33.14 {Bug 1810264 - super-expensive expression} nonPortable {
     regexp {(x{200}){200}$y} {x}
 } 0
 

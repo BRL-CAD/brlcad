@@ -94,31 +94,31 @@ fi
 # If destination is a directory, append the input filename; if your system
 # does not like double slashes in filenames, you may need to add some logic
 
-if [ -d $dst ]
+if [ -d "$dst" ]
 then
-	dst="$dst"/`basename $src`
+	dst="$dst/`basename "$src"`"
 fi
 
 # Make a temp file name in the proper directory.
 
-dstdir=`dirname $dst`
-dsttmp=$dstdir/#inst.$$#
+dstdir="`dirname "$dst"`"
+dsttmp="$dstdir"/#inst.$$#
 
 # Move or copy the file name to the temp name
 
-$doit $instcmd $src $dsttmp
+$doit $instcmd "$src" "$dsttmp"
 
 # and set any options; do chmod last to preserve setuid bits
 
-if [ x"$chowncmd" != x ]; then $doit $chowncmd $dsttmp; fi
-if [ x"$chgrpcmd" != x ]; then $doit $chgrpcmd $dsttmp; fi
-if [ x"$stripcmd" != x ]; then $doit $stripcmd $dsttmp; fi
-if [ x"$chmodcmd" != x ]; then $doit $chmodcmd $dsttmp; fi
+if [ x"$chowncmd" != x ]; then $doit $chowncmd "$dsttmp"; fi
+if [ x"$chgrpcmd" != x ]; then $doit $chgrpcmd "$dsttmp"; fi
+if [ x"$stripcmd" != x ]; then $doit $stripcmd "$dsttmp"; fi
+if [ x"$chmodcmd" != x ]; then $doit $chmodcmd "$dsttmp"; fi
 
 # Now rename the file to the real destination.
 
-$doit $rmcmd $dst
-$doit $mvcmd $dsttmp $dst
+$doit $rmcmd "$dst"
+$doit $mvcmd "$dsttmp" "$dst"
 
 
 exit 0

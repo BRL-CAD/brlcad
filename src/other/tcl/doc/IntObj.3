@@ -137,15 +137,15 @@ then \fBTCL_ERROR\fR is returned, and if \fIinterp\fR is non-NULL,
 an error message is left in \fIinterp\fR.  The \fBTcl_ObjType\fR
 of \fIobjPtr\fR may be changed to make subsequent calls to the
 same routine more efficient. Unlike the other functions,
-\fBTcl_TakeGetBignumFromObj\fR may set the content of the Tcl object
+\fBTcl_TakeBignumFromObj\fR may set the content of the Tcl object
 \fIobjPtr\fR to an empty string in the process of retrieving the
 multiple-precision integer value.
 .PP
 The choice between \fBTcl_GetBignumFromObj\fR and
-\fBTcl_TakeGetBignumFromObj\fR is governed by how the caller will
+\fBTcl_TakeBignumFromObj\fR is governed by how the caller will
 continue to use \fIobjPtr\fR.  If after the \fBmp_int\fR value
 is retrieved from \fIobjPtr\fR, the caller will make no more
-use of \fIobjPtr\fR, then using \fBTcl_TakeGetBignumFromObj\fR
+use of \fIobjPtr\fR, then using \fBTcl_TakeBignumFromObj\fR
 permits Tcl to detect when an unshared \fIobjPtr\fR permits the
 value to be moved instead of copied, which should be more efficient.
 If anything later in the caller requires

@@ -1,5 +1,5 @@
 #
-# Tile package: combobox widget tests
+# ttk::combobox widget tests
 #
 
 package require Tk 8.5
@@ -43,6 +43,26 @@ test combobox-2.4 "current -- value not in list" -body {
     .cb current
 } -result -1
 
-test combobox-end "Cleanup" -body { destroy .cb }
+test combobox-2.end "Cleanup" -body { destroy .cb }
+
+
+test combobox-1890211 "ComboboxSelected event after listbox unposted" -body {
+    # whitebox test...
+    pack [ttk::combobox .cb -values [list a b c]]
+    set result [list]
+    bind .cb <<ComboboxSelected>> {
+    	lappend result Event [winfo ismapped .cb.popdown] [.cb get]
+    }
+    lappend result Start 0 [.cb get]
+    ttk::combobox::Post .cb
+    lappend result Post [winfo ismapped .cb.popdown] [.cb get]
+    .cb.popdown.l selection clear 0 end; .cb.popdown.l selection set 1
+    ttk::combobox::LBSelected .cb.popdown.l
+    lappend result Select [winfo ismapped .cb.popdown] [.cb get]
+    update
+    set result
+} -result [list Start 0 {} Post 1 {} Select 0 b Event 0 b] -cleanup {
+    destroy .cb
+}
 
 tcltest::cleanupTests

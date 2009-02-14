@@ -34,13 +34,13 @@ if {$tcl_platform(platform) == "windows"} {
 
 # testing window embedding for Windows platform
 
-test embed-1.4 {TkpUseWindow procedure, -container must be set} {
+test embed-1.4.win {TkpUseWindow procedure, -container must be set} {
     deleteWindows
     toplevel .container
     list [catch {toplevel .embd -use [winfo id .container]} err] $err
 } {1 {the window to use is not a Tk container}}
 
-test embed-1.5 {TkpUseWindow procedure, -container must be set} {
+test embed-1.5.win {TkpUseWindow procedure, -container must be set} {
     deleteWindows
     frame .container
     list [catch {toplevel .embd -use [winfo id .container]} err] $err
@@ -50,13 +50,13 @@ test embed-1.5 {TkpUseWindow procedure, -container must be set} {
 
 # testing window embedding for other platforms
 
-test embed-1.4 {TkpUseWindow procedure, -container must be set} {
+test embed-1.4.nonwin {TkpUseWindow procedure, -container must be set} {
     deleteWindows
     toplevel .container
     list [catch {toplevel .embd -use [winfo id .container]} err] $err
 } {1 {window ".container" doesn't have -container option set}}
 
-test embed-1.5 {TkpUseWindow procedure, -container must be set} {
+test embed-1.5.nonwin {TkpUseWindow procedure, -container must be set} {
     deleteWindows
     frame .container
     list [catch {toplevel .embd -use [winfo id .container]} err] $err

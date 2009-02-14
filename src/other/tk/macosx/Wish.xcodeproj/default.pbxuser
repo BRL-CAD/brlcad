@@ -17,7 +17,7 @@
 		userBuildSettings = {
 			AUTOCONF = "/usr/local/bin/autoconf-2.59";
 			AUTOHEADER = "/usr/local/bin/autoheader-2.59";
-			GCC = "${DEVELOPER_DIR}/usr/bin/gcc";
+			CODE_SIGN_IDENTITY = "";
 			SYMROOT = "${SRCROOT}/../../build/tk";
 			TCL_SRCROOT = "${SRCROOT}/../../tcl";
 			TK_SRCROOT = "${SRCROOT}/../../tk";
@@ -216,7 +216,7 @@
 		sourceDirectories = (
 		);
 	};
-	F9FD30B30CC1AD070073837D /* tktest-X11 */ = {
+	F97258A50A86873C00096C78 /* tktest-X11 */ = {
 		activeExec = 0;
 		executables = (
 			F9FD31F50CC1AD070073837D /* tktest-X11 */,

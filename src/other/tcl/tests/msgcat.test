@@ -55,7 +55,8 @@ namespace eval ::msgcat::test {
 	set result [string tolower [lindex $setVars 0]]
 	if {[string length $result] == 0} {
 	    if {[info exists ::tcl::mac::locale]} {
-		set result [string tolower $::tcl::mac::locale]
+		set result [string tolower \
+			[msgcat::ConvertLocale $::tcl::mac::locale]]
 	    } else {
 		set result c
 	    }

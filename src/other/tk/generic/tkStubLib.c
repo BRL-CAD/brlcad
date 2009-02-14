@@ -48,11 +48,11 @@
 #include "tkPlatDecls.h"
 #include "tkIntXlibDecls.h"
 
-TkStubs *tkStubsPtr;
-TkPlatStubs *tkPlatStubsPtr;
-TkIntStubs *tkIntStubsPtr;
-TkIntPlatStubs *tkIntPlatStubsPtr;
-TkIntXlibStubs *tkIntXlibStubsPtr;
+TkStubs *tkStubsPtr = NULL;
+TkPlatStubs *tkPlatStubsPtr = NULL;
+TkIntStubs *tkIntStubsPtr = NULL;
+TkIntPlatStubs *tkIntPlatStubsPtr = NULL;
+TkIntXlibStubs *tkIntXlibStubsPtr = NULL;
 
 /*
  * Use our own isdigit to avoid linking to libc on windows
@@ -114,7 +114,10 @@ Tk_InitStubs(
 		p++; q++;
 	    }
             if (*p) {
+		/* Construct error message */
+		Tcl_PkgRequireEx(interp, "Tk", version, 1, NULL);
                 return NULL;
+
             }
         } else {
             actualVersion = Tcl_PkgRequireEx(interp, "Tk", version, 1, NULL);

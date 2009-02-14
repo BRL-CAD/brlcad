@@ -130,9 +130,6 @@
 /* Define to the version of this package. */
 #undef PACKAGE_VERSION
 
-/* May we use XIM peeking safely? */
-#undef PEEK_XCLOSEIM
-
 /* Is this a static build? */
 #undef STATIC_BUILD
 

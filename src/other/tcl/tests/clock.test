@@ -272,9 +272,13 @@ test clock-1.3 "clock format - empty val" {
     clock format 0 -gmt 1 -format ""
 } {}
 
-test clock-1.4 "clock format - bad flag" {
+test clock-1.4 "clock format - bad flag" {*}{
+    -body {
     list [catch {clock format 0 -oops badflag} msg] $msg $::errorCode
-} {1 {bad switch "-oops", must be -format, -gmt, -locale or -timezone} {CLOCK badSwitch -oops}}
+    } 
+    -match glob
+    -result {1 {bad switch "-oops": must be -format, -gmt, -locale, or -timezone} {CLOCK badSwitch -oops}}
+}
 
 test clock-1.5 "clock format - bad timezone" {
     list [catch {clock format 0 -format "%s" -timezone :NOWHERE} msg] $msg $::errorCode
@@ -35460,6 +35464,8 @@ test clock-33.4a {clock milliseconds} {
     concat {}
 } {}
 test clock-33.5 {clock clicks tests, millisecond timing test} {
+    # This test can fail on a system that is so heavily loaded that
+    # the test takes >60 ms to run.
     set start [clock clicks -milli]
     after 10
     set end [clock clicks -milli]
@@ -35470,6 +35476,8 @@ test clock-33.5 {clock clicks tests, millisecond timing test} {
 	  "test should have taken 0-60 ms, actually took [expr $end - $start]"}
 } {ok}
 test clock-33.5a {clock tests, millisecond timing test} {
+    # This test can fail on a system that is so heavily loaded that
+    # the test takes >60 ms to run.
     set start [clock milliseconds]
     after 10
     set end [clock milliseconds]
@@ -35487,12 +35495,16 @@ test clock-33.7 {clock clicks, milli with too much abbreviation} {
 } {1 {ambiguous option "-": must be -milliseconds or -microseconds}}
 
 test clock-33.8 {clock clicks test, microsecond timing test} {
+    # This test can fail on a system that is so heavily loaded that
+    # the test takes >60 ms to run.
     set start [clock clicks -micro]
     after 10
     set end [clock clicks -micro]
     expr {($end > $start) && (($end - $start) <= 60000)}
 } {1}
 test clock-33.8a {clock test, microsecond timing test} {
+    # This test can fail on a system that is so heavily loaded that
+    # the test takes >60 ms to run.
     set start [clock microseconds]
     after 10
     set end [clock microseconds]
@@ -36071,6 +36083,28 @@ test clock-52.1 {Posix timezone and conversion on last Sunday} {
     set result
 } {01:59:59 01:59:59 03:00:00 03:00:00}
 
+test clock-52.2 {correct conversion of times in Europe} {
+   # [Bug 2207436]
+   set result {}
+   foreach t [list 1206838799 1206838800 1224982799 1224982800] {
+       lappend result [clock format $t -format %H:%M:%S \
+                           -timezone MET-1METDST]
+       lappend result [clock format $t -format %H:%M:%S \
+                           -timezone MET0METDST]
+   }
+   set result
+} {01:59:59 00:59:59 03:00:00 02:00:00 02:59:59 01:59:59 02:00:00 01:00:00}
+
+test clock-52.3 {correct conversion of times in Russia} {
+   # [Bug 2207436]
+   set result {}
+   foreach t [list 1206799199 1206799200 1224943199 1224943200] {
+       lappend result [clock format $t -format %H:%M:%S \
+                           -timezone WST-12WSTDST]
+   }
+   set result
+} {01:59:59 03:00:00 02:59:59 02:00:00}
+
 # Regression test for Bug # 1505383
 
 test clock-53.1 {%EC %Ey} {
@@ -36587,6 +36621,63 @@ test clock-60.11 {case insensitive month names} {
 test clock-60.12 {case insensitive month names} {
     clock scan "1 DECEMBER 2000" -gmt true -format "%d %b %Y"
 } [clock scan "2000-12-01" -gmt true -format "%Y-%m-%d"] 
+
+test clock-61.1 {overflow of a wide integer on output} {*}{
+    -body {
+	clock format 0x8000000000000000 -format %s -gmt true
+    } 
+    -result {integer value too large to represent}
+    -returnCodes error
+}
+test clock-61.2 {overflow of a wide integer on output} {*}{
+    -body {
+	clock format -0x8000000000000001 -format %s -gmt true
+    } 
+    -result {integer value too large to represent}
+    -returnCodes error
+}
+test clock-61.3 {near-miss overflow of a wide integer on output} {
+    clock format 0x7fffffffffffffff -format %s -gmt true
+} [expr 0x7fffffffffffffff]
+test clock-61.4 {near-miss overflow of a wide integer on output} {
+    clock format -0x8000000000000000 -format %s -gmt true
+} [expr -0x8000000000000000]
+
+test clock-62.1 {Bug 1902423} {*}{
+    -setup {::tcl::clock::ClearCaches}
+    -body {
+	set s 1204049747
+	set f1 [clock format $s -format {%Y-%m-%d %T} -locale C]
+	set f2 [clock format $s -format {%Y-%m-%d %H:%M:%S} -locale C]
+	if {$f1 ne $f2} {
+	    subst "$f2 is not $f1"
+	} else {
+	    subst "ok"
+	}
+    }
+    -result ok
+}
+
+test clock-63.1 {Incorrect use of internal ConvertLocalToUTC command} {*}{
+    -body {
+	::tcl::clock::ConvertLocalToUTC {immaterial stuff} {} 12345
+    }
+    -returnCodes error
+    -result {key "localseconds" not found in dictionary}
+}
+
+test clock-64.1 {:: in format string [Bug 2362156]} {*}{
+    -body {
+	clock scan 2001-02-03::04:05:06 -gmt 1 -format %Y-%m-%d::%H:%M:%S
+    }
+    -result 981173106
+}
+test clock-64.2 {:: in format string [Bug 2362156]} {*}{
+    -body {
+	clock format 981173106 -gmt 1 -format %Y-%m-%d::%H:%M:%S
+    }
+    -result 2001-02-03::04:05:06
+}
 
 # cleanup
 

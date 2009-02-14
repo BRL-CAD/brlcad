@@ -149,39 +149,45 @@ portion of the expression that was not matched), then the corresponding
 .QW "\fB\-1 \-1\fR"
 if \fB\-indices\fR has been specified or to an empty string otherwise.
 .SH EXAMPLES
+.PP
 Find the first occurrence of a word starting with \fBfoo\fR in a
 string that is not actually an instance of \fBfoobar\fR, and get the
 letters following it up to the end of the word into a variable:
 .CS
-\fBregexp\fR {\e<foo(?!bar\e>)(\ew*)} $string \-> restOfWord
+\fBregexp\fR {\emfoo(?!bar\eM)(\ew*)} $string \-> restOfWord
 .CE
 Note that the whole matched substring has been placed in the variable
-\fB\->\fR which is a name chosen to look nice given that we are not
+.QW \fB\->\fR ,
+which is a name chosen to look nice given that we are not
 actually interested in its contents.
 .PP
 Find the index of the word \fBbadger\fR (in any case) within a string
 and store that in the variable \fBlocation\fR:
 .CS
-\fBregexp\fR \-indices {(?i)\e<badger\e>} $string location
+\fBregexp\fR \-indices {(?i)\embadger\eM} $string location
+.CE
+This could also be written as a \fIbasic\fR regular expression (as opposed
+to using the default syntax of \fIadvanced\fR regular expressions) match by
+prefixing the expression with a suitable flag:
+.CS
+\fBregexp\fR \-indices {(?ib)\e<badger\e>} $string location
 .CE
 .PP
-Count the number of octal digits in a string:
+This counts the number of octal digits in a string:
 .CS
 \fBregexp\fR \-all {[0\-7]} $string
 .CE
 .PP
-List all words (consisting of all sequences of non-whitespace
-characters) in a string:
+This lists all words (consisting of all sequences of non-whitespace
+characters) in a string, and is useful as a more powerful version of the
+\fBsplit\fR command:
 .CS
 \fBregexp\fR \-all \-inline {\eS+} $string
 .CE
-
 .SH "SEE ALSO"
 re_syntax(n), regsub(n),
 .VS 8.5
 string(n)
 .VE
-
-
 .SH KEYWORDS
-match, regular expression, string
+match, parsing, pattern, regular expression, splitting, string

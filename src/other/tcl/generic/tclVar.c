@@ -67,10 +67,19 @@ VarHashCreateVar(
 
 #define VarHashFindVar(tablePtr, key) \
     VarHashCreateVar((tablePtr), (key), NULL)
-
+#ifdef _AIX
+/* Work around AIX cc problem causing crash in TclDeleteVars. Possible
+ * optimizer bug. Do _NOT_ inline this function, this re-activates the
+ * problem.
+ */
+static void
+VarHashInvalidateEntry(Var* varPtr) {
+    varPtr->flags |= VAR_DEAD_HASH;
+}
+#else
 #define VarHashInvalidateEntry(varPtr) \
     ((varPtr)->flags |= VAR_DEAD_HASH)
-
+#endif
 #define VarHashDeleteEntry(varPtr) \
     Tcl_DeleteHashEntry(&(((VarInHash *) varPtr)->entry))
 
@@ -997,8 +1006,7 @@ TclLookupSimpleVar(
 	    }
 	}
     } else {			/* Local var: look in frame varFramePtr. */
-	Proc *procPtr = varFramePtr->procPtr;
-	int localCt = procPtr->numCompiledLocals;
+	int localCt = varFramePtr->numCompiledLocals;
 	Tcl_Obj **objPtrPtr = &varFramePtr->localCachePtr->varName0;
 
 	for (i=0 ; i<localCt ; i++, objPtrPtr++) {
@@ -4360,10 +4368,16 @@ TclDeleteNamespaceVars(
 
     for (varPtr = VarHashFirstVar(tablePtr, &search);  varPtr != NULL;
 	    varPtr = VarHashFirstVar(tablePtr, &search)) {
+	Tcl_Obj *objPtr = Tcl_NewObj();
+	Tcl_IncrRefCount(objPtr);
+	
 	VarHashRefCount(varPtr)++;	/* Make sure we get to remove from
 					 * hash. */
-	UnsetVarStruct(varPtr, NULL, iPtr, /* part1 */ VarHashGetKey(varPtr),
+	Tcl_GetVariableFullName(interp, (Tcl_Var) varPtr, objPtr);
+	UnsetVarStruct(varPtr, NULL, iPtr, /* part1 */ objPtr,
 		NULL, flags);
+	Tcl_DecrRefCount(objPtr); /* free no longer needed obj */
+
 
 	/*
 	 * Remove the variable from the table and force it undefined in case
@@ -4646,16 +4660,13 @@ TclObjVarErrMsg(
 				 * variable, or -1. Only used when part1Ptr is
 				 * NULL. */
 {
-    Tcl_ResetResult(interp);
     if (!part1Ptr) {
 	part1Ptr = localName(((Interp *)interp)->varFramePtr, index);
     }
-    Tcl_AppendResult(interp, "can't ", operation, " \"",
-	    TclGetString(part1Ptr), NULL);
-    if (part2Ptr) {
-	Tcl_AppendResult(interp, "(", TclGetString(part2Ptr), ")", NULL);
-    }
-    Tcl_AppendResult(interp, "\": ", reason, NULL);
+    Tcl_SetObjResult(interp, Tcl_ObjPrintf("can't %s \"%s%s%s%s\": %s",
+	    operation, TclGetString(part1Ptr), (part2Ptr ? "(" : ""),
+	    (part2Ptr ? TclGetString(part2Ptr) : ""), (part2Ptr ? ")" : ""),
+	    reason));
 }
 
 /*

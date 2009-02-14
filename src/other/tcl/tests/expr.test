@@ -6342,6 +6342,24 @@ test expr-37.14 {expr edge cases} {wideIs64bit} {
 test expr-38.1 {abs of smallest 32-bit integer [Bug 1241572]} {wideIs64bit} {
     expr {abs(-2147483648)}
 } 2147483648
+test expr-38.2 {abs and -0 [Bug 1893815]} {
+    expr {abs(-0)}
+} 0
+test expr-38.3 {abs and -0 [Bug 1893815]} {
+    expr {abs(-0.0)}
+} 0.0
+test expr-38.4 {abs and -0 [Bug 1893815]} {
+    expr {abs(-1e-324)}
+} 0.0
+test expr-38.5 {abs and -0 [Bug 1893815]} {
+    ::tcl::mathfunc::abs -0
+} 0
+test expr-38.6 {abs and -0 [Bug 1893815]} {
+    ::tcl::mathfunc::abs -0.0
+} 0.0
+test expr-38.7 {abs and -0 [Bug 1893815]} {
+    ::tcl::mathfunc::abs -1e-324
+} 0.0
 
 testConstraint testexprlongobj   [llength [info commands testexprlongobj]]
 testConstraint testexprdoubleobj [llength [info commands testexprdoubleobj]]
@@ -6752,6 +6770,7 @@ test expr-47.11 {isqrt of zero} {
 
 test expr-47.12 {isqrt of various sizes of integer} {
     set faults 0
+    set trouble {}
     for {set i 0} {$faults < 10 && $i <= 1024} {incr i} {
 	set root [expr {1 << $i}]
 	set rm1 [expr {$root - 1}]
@@ -6772,6 +6791,26 @@ test expr-47.12 {isqrt of various sizes of integer} {
 	if {$tval != $root} {
 	    append trouble "i = " $i ": isqrt(" $arg "+1) == " $tval \
 		" != " $root "\n"
+	    incr faults
+	}
+    }
+    set trouble
+} {}
+
+test expr-47.13 {isqrt and floating point rounding (Bug 2143288)} {
+    set trouble {}
+    set faults 0
+    for {set i 0} {$i < 29 && $faults < 10} {incr i} {
+	for {set j 0} {$j <= $i} {incr j} {
+	    set k [expr {isqrt((1<<56)+(1<<$i)+(1<<$j))}]
+	    if {$k != (1<<28)} {
+		append trouble "i = $i, j = $j, k = $k\n"
+		incr faults
+	    }
+	}
+	set k [expr {isqrt((1<<56)+(1<<29)+(1<<$i))}]
+	if {$k != (1<<28)+1} {
+	    append trouble "i = $i, k = $k\n"
 	    incr faults
 	}
     }

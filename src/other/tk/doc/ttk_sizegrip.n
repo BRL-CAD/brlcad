@@ -24,7 +24,7 @@ by pressing and dragging the grip.
 .SE
 .SH "WIDGET COMMAND"
 Sizegrip widgets support the standard
-\fBcget\fR, \fBconfigure\fR, \fBinstate\fR, and \fBstate\fR
+\fBcget\fR, \fBconfigure\fR, \fBidentify\fR, \fBinstate\fR, and \fBstate\fR
 methods.  No other widget methods are used.
 .SH "PLATFORM-SPECIFIC NOTES"
 On Mac OSX, toplevel windows automatically include a built-in

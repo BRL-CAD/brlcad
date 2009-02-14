@@ -487,7 +487,7 @@ static void GripElementSize(
 {
     int horizontal = *((Ttk_Orient*)clientData) == TTK_ORIENT_HORIZONTAL;
     GripElement *grip = elementRecord;
-    int gripCount;
+    int gripCount = 0;
 
     Tcl_GetIntFromObj(NULL, grip->gripCountObj, &gripCount);
     if (horizontal) {
@@ -506,8 +506,8 @@ static void GripElementDraw(
     GripElement *grip = elementRecord;
     GC lightGC = Ttk_GCForColor(tkwin,grip->lightColorObj,d);
     GC darkGC = Ttk_GCForColor(tkwin,grip->borderColorObj,d);
-    int gripPad = 1;
-    int i, gripCount;
+    int gripPad = 1, gripCount = 0;
+    int i;
 
     Tcl_GetIntFromObj(NULL, grip->gripCountObj, &gripCount);
 
@@ -614,7 +614,7 @@ static void ThumbElementDraw(
     Drawable d, Ttk_Box b, unsigned state)
 {
     ScrollbarElement *sb = elementRecord;
-    int gripCount = 3, orient = TTK_ORIENT_HORIZONTAL;
+    int gripCount = 0, orient = TTK_ORIENT_HORIZONTAL;
     GC lightGC, darkGC;
     int x1, y1, x2, y2, dx, dy, i;
     const int w = WIN32_XDRAWLINE_HACK;
