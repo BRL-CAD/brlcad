@@ -2234,8 +2234,10 @@ mged_finish(int exitcode)
 	db_close(dbip);
 #endif
 
-    if (gedp->ged_gdp)
+    if (gedp->ged_gdp) {
 	ged_drawable_close(gedp->ged_gdp);
+	gedp->ged_gdp = GED_DRAWABLE_NULL;
+    }
 
     ged_free(gedp);
     gedp = GED_NULL;
@@ -2830,6 +2832,8 @@ f_closedb(
 #endif
 
     ged_drawable_close(gedp->ged_gdp);
+    gedp->ged_gdp = NULL;
+
     gedp->ged_wdbp = RT_WDB_NULL;
 
     /* wipe out the global pointers */

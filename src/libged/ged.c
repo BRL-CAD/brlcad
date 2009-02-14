@@ -58,7 +58,11 @@ ged_close(struct ged *gedp)
 	return;
 
     wdb_close(gedp->ged_wdbp);
+    gedp->ged_wdbp = RT_WDB_NULL;
+
     ged_drawable_close(gedp->ged_gdp);
+    gedp->ged_gdp = GED_DRAWABLE_NULL;
+
     ged_free(gedp);
 }
 
