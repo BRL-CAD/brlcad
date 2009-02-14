@@ -5455,7 +5455,7 @@ ReadChars(
     Tcl_EncodingState oldState;
     int encEndFlagSuppressed = 0;
     static int mflag = 0;
-    static int maxInt = 2147483647;
+    static int maxint = 2147483647;
 
 
     factor = *factorPtr;
