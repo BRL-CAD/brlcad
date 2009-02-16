@@ -229,6 +229,7 @@ include_directories(
     ../other/libpng
     ../other/libz
     ../other/tcl/generic
+    ../other/tcl/win
 )
 
 add_definitions(
