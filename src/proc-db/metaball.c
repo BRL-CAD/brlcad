@@ -62,7 +62,10 @@ mkfmt(char *fmt, char *prefix, char *postfix, int nframes)
 int
 bitronic(struct rt_wdb *outfp, int method, fastf_t threshold, int nframes)
 {
-    char buf[BUFSIZ], fmt[FMTSIZ];
+    /*
+    char buf[BUFSIZ];
+    */
+    char fmt[FMTSIZ];
     fastf_t step;
     struct rt_metaball_internal *mb;
 
