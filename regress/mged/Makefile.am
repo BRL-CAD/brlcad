@@ -18,6 +18,8 @@ mged: $(top_srcdir)/regress/mged/mged.tcl
 # these are here because they go in the distribution but are not installed
 EXTRA_DIST = \
 	3ptarb.mged \
+	B.mged \
+	Z.mged \
 	accept.mged \
 	adc.mged \
 	ae.mged \
@@ -25,7 +27,6 @@ EXTRA_DIST = \
 	arced.mged \
 	arot.mged \
 	autoview.mged \
-	B.mged \
 	build_region.mged \
 	center.mged \
 	clone.mged \
@@ -34,8 +35,8 @@ EXTRA_DIST = \
 	cp.mged \
 	cpi.mged \
 	dall.mged \
-	draw_e_erase_d_who.mged \
 	draw.mged \
+	draw_e_erase_d_who.mged \
 	erase.mged \
 	extrude.mged \
 	eye_pt.mged \
@@ -98,7 +99,6 @@ EXTRA_DIST = \
 	vrot.mged \
 	who.mged \
 	xpush.mged \
-	Z.mged \ 
 	zoom.mged
 
 CLEANFILES = \
