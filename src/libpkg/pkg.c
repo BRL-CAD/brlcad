@@ -119,18 +119,6 @@
 #  define PKG_SEND(d, buf, nbytes) write((d), (buf), (nbytes))
 #endif
 
-#if defined(__stardent)
-/* <sys/byteorder.h> seems to be wrong, and this is a LITTLE_ENDIAN machine */
-#  undef	htons
-#  define	htons(x)	((((x)&0xFF)<<8)|(((x)>>8)&0xFF))
-#  undef	htonl
-#  define	htonl(x)	(\
-	((((x)   )&0xFF)<<24) | \
-	((((x)>> 8)&0xFF)<<16) | \
-	((((x)>>16)&0xFF)<< 8) | \
-	((((x)>>24)&0xFF)  ) )
-#endif
-
 #define PKG_CK(p) { \
 	if (p==PKC_NULL||p->pkc_magic!=PKG_MAGIC) { \
 		snprintf(_pkg_errbuf, MAX_PKG_ERRBUF_SIZE, "%s: bad pointer x%lx line %d\n", __FILE__, (long)(p), __LINE__); \
