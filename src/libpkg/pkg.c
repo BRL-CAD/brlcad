@@ -131,20 +131,6 @@
 	((((x)>>24)&0xFF)  ) )
 #endif
 
-
-int pkg_nochecking = 0;	/* set to disable extra checking for input */
-int pkg_permport = 0;	/* TCP port that pkg_permserver() is listening on XXX */
-
-
-#define MAX_PKG_ERRBUF_SIZE 80
-static char _pkg_errbuf[MAX_PKG_ERRBUF_SIZE] = {0};
-static FILE *_pkg_debug = (FILE*)NULL;
-static void _pkg_ck_debug(void);
-static void _pkg_timestamp(void);
-static void _pkg_checkin(register struct pkg_conn *pc, int nodelay);
-
-extern int errno;
-
 #define PKG_CK(p) { \
 	if (p==PKC_NULL||p->pkc_magic!=PKG_MAGIC) { \
 		snprintf(_pkg_errbuf, MAX_PKG_ERRBUF_SIZE, "%s: bad pointer x%lx line %d\n", __FILE__, (long)(p), __LINE__); \
@@ -160,6 +146,17 @@ extern int errno;
 #else
 #  define DMSG(s) /**/
 #endif
+
+
+extern int errno;
+
+int pkg_nochecking = 0;	/* set to disable extra checking for input */
+int pkg_permport = 0;	/* TCP port that pkg_permserver() is listening on XXX */
+
+#define MAX_PKG_ERRBUF_SIZE 80
+static char _pkg_errbuf[MAX_PKG_ERRBUF_SIZE] = {0};
+static FILE *_pkg_debug = (FILE*)NULL;
+
 
 
 /*
@@ -221,6 +218,35 @@ pkg_plong(char *buf, long unsigned int l)
     buf[1] = (l >>= 8);
     buf[0] = l >> 8;
     return((char *)buf+4);
+}
+
+
+/**
+ * P K G _ T I M E S T A M P
+ *
+ * Output a timestamp to the log, suitable for starting each line
+ * with.
+ */
+static void
+_pkg_timestamp(void)
+{
+    time_t now;
+    struct tm *tmp;
+
+    if (!_pkg_debug)  return;
+    (void)time(&now);
+    tmp = localtime(&now);
+    fprintf(_pkg_debug, "%2.2d/%2.2d %2.2d:%2.2d:%2.2d [%5d] ",
+	    tmp->tm_mon+1, tmp->tm_mday,
+	    tmp->tm_hour, tmp->tm_min, tmp->tm_sec,
+	    /* avoid libbu dependency */
+#ifdef HAVE_UNISTD_H
+	    getpid()
+#else
+	    (int)GetCurrentProcessId()
+#endif
+	);
+    /* Don't fflush here, wait for rest of line */
 }
 
 
@@ -307,6 +333,31 @@ _pkg_makeconn(int fd, const struct pkg_switch *switchp, void (*errlog) (char *ms
     pc->pkc_strpos = 0;
     pc->pkc_incur = pc->pkc_inend = 0;
     return(pc);
+}
+
+
+/**
+ * P K G _ C K _ D E B U G
+ */
+static void
+_pkg_ck_debug(void)
+{
+    char *place;
+    char buf[128] = {0};
+    struct stat sbuf;
+
+    if (_pkg_debug)  return;
+    if ((place = (char *)getenv("LIB_PKG_DEBUG")) == (char *)0) {
+	snprintf(buf, 128, "/tmp/pkg.log");
+	place = buf;
+    }
+    /* Named file must exist and be writeable */
+    if (stat(place, &sbuf) != 0) return;
+    if ((_pkg_debug = fopen(place, "a")) == NULL)  return;
+
+    /* Log version number of this code */
+    _pkg_timestamp();
+    fprintf(_pkg_debug, "_pkg_ck_debug %s\n", pkg_version());
 }
 
 
@@ -885,6 +936,60 @@ pkg_inget(register struct pkg_conn *pc, char *buf, int count)
 	todo -= len;
     }
     return(count);
+}
+
+
+/**
+ * P K G _ C H E C K I N
+ *
+ * This routine is called whenever it is necessary to see if there is
+ * more input that can be read.  If input is available, it is read
+ * into pkc_inbuf[].  If nodelay is set, poll without waiting.
+ */
+static void
+_pkg_checkin(register struct pkg_conn *pc, int nodelay)
+{
+    struct timeval tv;
+    fd_set bits;
+    register int i, j;
+
+    /* Check socket for unexpected input */
+    tv.tv_sec = 0;
+    if (nodelay)
+	tv.tv_usec = 0;		/* poll -- no waiting */
+    else
+	tv.tv_usec = 20000;	/* 20 ms */
+
+    FD_ZERO(&bits);
+    FD_SET(pc->pkc_fd, &bits);
+    i = select(pc->pkc_fd+1, &bits, (fd_set *)0, (fd_set *)0, &tv);
+    if (_pkg_debug) {
+	_pkg_timestamp();
+	fprintf(_pkg_debug,
+		"_pkg_checkin: select on fd %d returned %d\n",
+		pc->pkc_fd,
+		i);
+	fflush(_pkg_debug);
+    }
+    if (i > 0) {
+	for (j = 0; j < FD_SETSIZE; j++)
+	    if (FD_ISSET(j, &bits)) break;
+
+	if (j < FD_SETSIZE) {
+	    /* Some fd is ready for I/O */
+	    (void)pkg_suckin(pc);
+	} else {
+	    /* Odd condition, bits! */
+	    snprintf(_pkg_errbuf, MAX_PKG_ERRBUF_SIZE,
+		    "_pkg_checkin: select returned %d, bits=0\n",
+		    i);
+	    (pc->pkc_errlog)(_pkg_errbuf);
+	}
+    } else if (i < 0) {
+	/* Error condition */
+	if (errno != EINTR && errno != EBADF)
+	    _pkg_perror(pc->pkc_errlog, "_pkg_checkin: select");
+    }
 }
 
 
@@ -1772,60 +1877,6 @@ pkg_block(register struct pkg_conn *pc)
 
 
 /**
- * P K G _ C K _ D E B U G
- */
-static void
-_pkg_ck_debug(void)
-{
-    char *place;
-    char buf[128] = {0};
-    struct stat sbuf;
-
-    if (_pkg_debug)  return;
-    if ((place = (char *)getenv("LIB_PKG_DEBUG")) == (char *)0) {
-	snprintf(buf, 128, "/tmp/pkg.log");
-	place = buf;
-    }
-    /* Named file must exist and be writeable */
-    if (stat(place, &sbuf) != 0) return;
-    if ((_pkg_debug = fopen(place, "a")) == NULL)  return;
-
-    /* Log version number of this code */
-    _pkg_timestamp();
-    fprintf(_pkg_debug, "_pkg_ck_debug %s\n", pkg_version());
-}
-
-
-/**
- * P K G _ T I M E S T A M P
- *
- * Output a timestamp to the log, suitable for starting each line
- * with.
- */
-static void
-_pkg_timestamp(void)
-{
-    time_t now;
-    struct tm *tmp;
-
-    if (!_pkg_debug)  return;
-    (void)time(&now);
-    tmp = localtime(&now);
-    fprintf(_pkg_debug, "%2.2d/%2.2d %2.2d:%2.2d:%2.2d [%5d] ",
-	    tmp->tm_mon+1, tmp->tm_mday,
-	    tmp->tm_hour, tmp->tm_min, tmp->tm_sec,
-	    /* avoid libbu dependency */
-#ifdef HAVE_UNISTD_H
-	    getpid()
-#else
-	    (int)GetCurrentProcessId()
-#endif
-	);
-    /* Don't fflush here, wait for rest of line */
-}
-
-
-/**
  * P K G _ S U C K I N
  *
  * Suck all data from the operating system into the internal buffer.
@@ -1964,59 +2015,6 @@ pkg_suckin(register struct pkg_conn *pc)
     return(ret);
 }
 
-
-/**
- * P K G _ C H E C K I N
- *
- * This routine is called whenever it is necessary to see if there is
- * more input that can be read.  If input is available, it is read
- * into pkc_inbuf[].  If nodelay is set, poll without waiting.
- */
-static void
-_pkg_checkin(register struct pkg_conn *pc, int nodelay)
-{
-    struct timeval tv;
-    fd_set bits;
-    register int i, j;
-
-    /* Check socket for unexpected input */
-    tv.tv_sec = 0;
-    if (nodelay)
-	tv.tv_usec = 0;		/* poll -- no waiting */
-    else
-	tv.tv_usec = 20000;	/* 20 ms */
-
-    FD_ZERO(&bits);
-    FD_SET(pc->pkc_fd, &bits);
-    i = select(pc->pkc_fd+1, &bits, (fd_set *)0, (fd_set *)0, &tv);
-    if (_pkg_debug) {
-	_pkg_timestamp();
-	fprintf(_pkg_debug,
-		"_pkg_checkin: select on fd %d returned %d\n",
-		pc->pkc_fd,
-		i);
-	fflush(_pkg_debug);
-    }
-    if (i > 0) {
-	for (j = 0; j < FD_SETSIZE; j++)
-	    if (FD_ISSET(j, &bits)) break;
-
-	if (j < FD_SETSIZE) {
-	    /* Some fd is ready for I/O */
-	    (void)pkg_suckin(pc);
-	} else {
-	    /* Odd condition, bits! */
-	    snprintf(_pkg_errbuf, MAX_PKG_ERRBUF_SIZE,
-		    "_pkg_checkin: select returned %d, bits=0\n",
-		    i);
-	    (pc->pkc_errlog)(_pkg_errbuf);
-	}
-    } else if (i < 0) {
-	/* Error condition */
-	if (errno != EINTR && errno != EBADF)
-	    _pkg_perror(pc->pkc_errlog, "_pkg_checkin: select");
-    }
-}
 
 /*
  * Local Variables:
