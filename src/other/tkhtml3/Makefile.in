@@ -539,7 +539,7 @@ uninstall-binaries:
 	done
 
 uninstall-doc:
-	@list='*.n' \
+	@list='*.n' ; \
 	for i in $$list ; do \
 		echo "Uninstalling $i" ; \
 		rm -f $(DESTDIR)$mandir)/mann/$$i ; \
