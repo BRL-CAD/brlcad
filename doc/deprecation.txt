@@ -110,8 +110,10 @@ include/raytrace.h
 * OBSOLETE *
 ************
 
-7.16.0
+7.14.4
 ------
+include/pkg.h
+	uses size_t for lengths in API calls
 include/bu.h
 	bu_association() [unused]
 
