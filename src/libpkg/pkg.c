@@ -158,7 +158,6 @@ static char _pkg_errbuf[MAX_PKG_ERRBUF_SIZE] = {0};
 static FILE *_pkg_debug = (FILE*)NULL;
 
 
-
 /*
  * Routines to insert/extract short/long's into char arrays,
  * independend of machine byte order and word-alignment.
@@ -389,6 +388,9 @@ pkg_open(const char *host, const char *service, const char *protocol, const char
     int addrlen;			/* length of address */
 #endif
 
+    /* presently unused */
+    passwd = passwd;
+
     _pkg_ck_debug();
     if (_pkg_debug) {
 	_pkg_timestamp();
@@ -406,17 +408,17 @@ pkg_open(const char *host, const char *service, const char *protocol, const char
 #ifdef HAVE_WINSOCK_H
     wVersionRequested = MAKEWORD(1, 1);
     if (WSAStartup(wVersionRequested, &wsaData) != 0) {
-	_pkg_perror(errlog, "pkg_open:  could not find a usable WinSock DLL");
+	_pkg_perror(errlog, "pkg_open: could not find a usable WinSock DLL");
 	return(PKC_ERROR);
     }
 
     if ((lpHostEntry = gethostbyname(host)) == NULL) {
-	_pkg_perror(errlog, "pkg_open:  gethostbyname");
+	_pkg_perror(errlog, "pkg_open: gethostbyname");
 	return(PKC_ERROR);
     }
 
     if ((netfd = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP)) == INVALID_SOCKET) {
-	_pkg_perror(errlog, "pkg_open:  socket");
+	_pkg_perror(errlog, "pkg_open: socket");
 	return(PKC_ERROR);
     }
 
@@ -438,7 +440,7 @@ pkg_open(const char *host, const char *service, const char *protocol, const char
     saServer.sin_addr = *((LPIN_ADDR)*lpHostEntry->h_addr_list);
 
     if (connect(netfd, (LPSOCKADDR)&saServer, sizeof(struct sockaddr)) == SOCKET_ERROR) {
-	_pkg_perror(errlog, "pkg_open:  client connect");
+	_pkg_perror(errlog, "pkg_open: client connect");
 	closesocket(netfd);
 	return(PKC_ERROR);
     }
@@ -496,7 +498,7 @@ pkg_open(const char *host, const char *service, const char *protocol, const char
 #endif
 
     if ((netfd = socket(addr->sa_family, SOCK_STREAM, 0)) < 0) {
-	_pkg_perror(errlog, "pkg_open:  client socket");
+	_pkg_perror(errlog, "pkg_open: client socket");
 	return(PKC_ERROR);
     }
 
@@ -593,7 +595,7 @@ _pkg_permserver_impl(struct in_addr iface, const char *service, const char *prot
 #ifdef HAVE_WINSOCK_H
     wVersionRequested = MAKEWORD(1, 1);
     if (WSAStartup(wVersionRequested, &wsaData) != 0) {
-	_pkg_perror(errlog, "pkg_open:  could not find a usable WinSock DLL");
+	_pkg_perror(errlog, "pkg_open: could not find a usable WinSock DLL");
 	return(PKC_ERROR);
     }
 
@@ -613,7 +615,7 @@ _pkg_permserver_impl(struct in_addr iface, const char *service, const char *prot
     }
 
     if ((pkg_listenfd = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP)) == INVALID_SOCKET) {
-	_pkg_perror(errlog, "pkg_permserver:  socket");
+	_pkg_perror(errlog, "pkg_permserver: socket");
 	return(PKC_ERROR);
     }
 
@@ -631,7 +633,7 @@ _pkg_permserver_impl(struct in_addr iface, const char *service, const char *prot
 	backlog = 5;
 
     if (listen(pkg_listenfd, backlog) == SOCKET_ERROR) {
-	_pkg_perror(errlog, "pkg_permserver:  listen");
+	_pkg_perror(errlog, "pkg_permserver: listen");
 	closesocket(pkg_listenfd);
 
 	return(PKC_ERROR);
@@ -677,7 +679,7 @@ _pkg_permserver_impl(struct in_addr iface, const char *service, const char *prot
 #  endif
 
     if ((pkg_listenfd = socket(addr->sa_family, SOCK_STREAM, 0)) < 0) {
-	_pkg_perror(errlog, "pkg_permserver:  socket");
+	_pkg_perror(errlog, "pkg_permserver: socket");
 	return(-1);
     }
 
@@ -707,7 +709,7 @@ _pkg_permserver_impl(struct in_addr iface, const char *service, const char *prot
 
     if (backlog > 5)  backlog = 5;
     if (listen(pkg_listenfd, backlog) < 0) {
-	_pkg_perror(errlog, "pkg_permserver:  listen");
+	_pkg_perror(errlog, "pkg_permserver: listen");
 #  ifdef HAVE_WINSOCK_H
 	(void)closesocket(pkg_listenfd);
 #  else
@@ -816,7 +818,7 @@ pkg_getclient(int fd, const struct pkg_switch *switchp, void (*errlog) (char *ms
 #ifdef HAVE_WINSOCK_H
     wVersionRequested = MAKEWORD(1, 1);
     if (WSAStartup(wVersionRequested, &wsaData) != 0) {
-	_pkg_perror(errlog, "pkg_open:  could not find a usable WinSock DLL");
+	_pkg_perror(errlog, "pkg_open: could not find a usable WinSock DLL");
 	return(PKC_ERROR);
     }
 #endif
@@ -878,7 +880,7 @@ pkg_close(register struct pkg_conn *pc)
     }
 
     if (pc->pkc_buf != (char *)0) {
-	snprintf(_pkg_errbuf, MAX_PKG_ERRBUF_SIZE, "pkg_close(x%lx):  partial input pkg discarded, buf=x%lx\n",
+	snprintf(_pkg_errbuf, MAX_PKG_ERRBUF_SIZE, "pkg_close(x%lx): partial input pkg discarded, buf=x%lx\n",
 		(long)pc, (long)(pc->pkc_buf));
 	pc->pkc_errlog(_pkg_errbuf);
 	(void)free(pc->pkc_buf);
@@ -915,11 +917,11 @@ pkg_close(register struct pkg_conn *pc)
  * This will block if the required number of bytes are not available.
  * The number of bytes actually transferred is returned.
  */
-int
-pkg_inget(register struct pkg_conn *pc, char *buf, int count)
+static size_t
+_pkg_inget(register struct pkg_conn *pc, char *buf, size_t count)
 {
-    register int len;
-    register int todo = count;
+    register int len = 0;
+    register int todo = (int)count;
 
     while (todo > 0) {
 
@@ -1007,7 +1009,7 @@ _pkg_checkin(register struct pkg_conn *pc, int nodelay)
  * Returns number of bytes of user data actually sent.
  */
 int
-pkg_send(int type, const char *buf, int len, register struct pkg_conn *pc)
+pkg_send(int type, const char *buf, size_t len, register struct pkg_conn *pc)
 {
 #ifdef HAVE_WRITEV
     static struct iovec cmdvec[2];
@@ -1016,13 +1018,12 @@ pkg_send(int type, const char *buf, int len, register struct pkg_conn *pc)
     register int i;
 
     PKG_CK(pc);
-    if (len < 0)  len=0;
 
     if (_pkg_debug) {
 	_pkg_timestamp();
 	fprintf(_pkg_debug,
-		"pkg_send(type=%d, buf=x%lx, len=%d, pc=x%lx)\n",
-		type, (long)buf, len, (long)pc);
+		"pkg_send(type=%d, buf=x%lx, len=%ld, pc=x%lx)\n",
+		type, (long)buf, (long)len, (long)pc);
 	fflush(_pkg_debug);
     }
 
@@ -1041,7 +1042,7 @@ pkg_send(int type, const char *buf, int len, register struct pkg_conn *pc)
 	if (len <= MAXQLEN && len <= PKG_STREAMLEN -
 	    sizeof(struct pkg_header) - pc->pkc_strpos) {
 	    (void)pkg_stream(type, buf, len, pc);
-	    return((pkg_flush(pc) < 0) ? -1 : len);
+	    return((pkg_flush(pc) < 0) ? -1 : (int)len);
 	}
 	if (pkg_flush(pc) < 0)
 	    return(-1);	/* assumes 2nd write would fail too */
@@ -1062,13 +1063,13 @@ pkg_send(int type, const char *buf, int len, register struct pkg_conn *pc)
      * in select() waiting for capacity to go out, and reading input
      * as well.  Prevents deadlocking.
      */
-    if ((i = writev(pc->pkc_fd, cmdvec, (len>0)?2:1)) != len+sizeof(hdr)) {
+    if ((i = writev(pc->pkc_fd, cmdvec, (len>0)?2:1)) != (int)(len+sizeof(hdr))) {
 	if (i < 0) {
 	    _pkg_perror(pc->pkc_errlog, "pkg_send: writev");
 	    return(-1);
 	}
-	snprintf(_pkg_errbuf, MAX_PKG_ERRBUF_SIZE, "pkg_send of %d+%d, wrote %d\n",
-		(int)sizeof(hdr), len, i);
+	snprintf(_pkg_errbuf, MAX_PKG_ERRBUF_SIZE, "pkg_send of %ld+%ld, wrote %d\n",
+		(long)sizeof(hdr), (long)len, i);
 	(pc->pkc_errlog)(_pkg_errbuf);
 	return(i-sizeof(hdr));	/* amount of user data sent */
     }
@@ -1133,7 +1134,7 @@ pkg_send(int type, const char *buf, int len, register struct pkg_conn *pc)
  * disjoint buffers, rather than one.  Fiendishly useful!
  */
 int
-pkg_2send(int type, char *buf1, int len1, char *buf2, int len2, register struct pkg_conn *pc)
+pkg_2send(int type, char *buf1, size_t len1, char *buf2, size_t len2, register struct pkg_conn *pc)
 {
 #ifdef HAVE_WRITEV
     static struct iovec cmdvec[3];
@@ -1142,14 +1143,12 @@ pkg_2send(int type, char *buf1, int len1, char *buf2, int len2, register struct 
     register int i;
 
     PKG_CK(pc);
-    if (len1 < 0)  len1=0;
-    if (len2 < 0)  len2=0;
 
     if (_pkg_debug) {
 	_pkg_timestamp();
 	fprintf(_pkg_debug,
-		"pkg_send2(type=%d, buf1=x%lx, len1=%d, buf2=x%lx, len2=%d, pc=x%lx)\n",
-		type, (long)buf1, len1, (long)buf2, len2, (long)pc);
+		"pkg_send2(type=%d, buf1=x%lx, len1=%ld, buf2=x%lx, len2=%ld, pc=x%lx)\n",
+		type, (long)buf1, (long)len1, (long)buf2, (long)len2, (long)pc);
 	fflush(_pkg_debug);
     }
 
@@ -1180,18 +1179,18 @@ pkg_2send(int type, char *buf1, int len1, char *buf2, int len2, register struct 
      * in select() waiting for capacity to go out, and reading input
      * as well.  Prevents deadlocking.
      */
-    if ((i = writev(pc->pkc_fd, cmdvec, 3)) != len1+len2+sizeof(hdr)) {
+    if ((i = writev(pc->pkc_fd, cmdvec, 3)) != (int)(len1+len2+sizeof(hdr))) {
 	if (i < 0) {
 	    _pkg_perror(pc->pkc_errlog, "pkg_2send: writev");
 	    snprintf(_pkg_errbuf, MAX_PKG_ERRBUF_SIZE,
-		    "pkg_send2(type=%d, buf1=x%lx, len1=%d, buf2=x%lx, len2=%d, pc=x%lx)\n",
-		    type, (unsigned long int)buf1, len1,
-		    (unsigned long int)buf2, len2, (unsigned long int)pc);
+		    "pkg_send2(type=%d, buf1=x%lx, len1=%ld, buf2=x%lx, len2=%ld, pc=x%lx)\n",
+		    type, (unsigned long int)buf1, (long)len1,
+		    (unsigned long int)buf2, (long)len2, (unsigned long int)pc);
 	    (pc->pkc_errlog)(_pkg_errbuf);
 	    return(-1);
 	}
-	snprintf(_pkg_errbuf, MAX_PKG_ERRBUF_SIZE, "pkg_2send of %d+%d+%d, wrote %d\n",
-		(int)sizeof(hdr), len1, len2, i);
+	snprintf(_pkg_errbuf, MAX_PKG_ERRBUF_SIZE, "pkg_2send of %ld+%ld+%ld, wrote %d\n",
+		(long)sizeof(hdr), (long)len1, (long)len2, i);
 	(pc->pkc_errlog)(_pkg_errbuf);
 	return(i-sizeof(hdr));	/* amount of user data sent */
     }
@@ -1285,15 +1284,15 @@ pkg_2send(int type, char *buf1, int len1, char *buf2, int len2, register struct 
  * Returns number of bytes of user data actually sent (or queued).
  */
 int
-pkg_stream(int type, const char *buf, int len, register struct pkg_conn *pc)
+pkg_stream(int type, const char *buf, size_t len, register struct pkg_conn *pc)
 {
     static struct pkg_header hdr;
 
     if (_pkg_debug) {
 	_pkg_timestamp();
 	fprintf(_pkg_debug,
-		"pkg_stream(type=%d, buf=x%lx, len=%d, pc=x%lx)\n",
-		type, (long)buf, len, (long)pc);
+		"pkg_stream(type=%d, buf=x%lx, len=%ld, pc=x%lx)\n",
+		type, (long)buf, (long)len, (long)pc);
 	fflush(_pkg_debug);
     }
 
@@ -1313,7 +1312,7 @@ pkg_stream(int type, const char *buf, int len, register struct pkg_conn *pc)
     memcpy(&(pc->pkc_stream[pc->pkc_strpos]), buf, len);
     pc->pkc_strpos += len;
 
-    return(len + sizeof(struct pkg_header));
+    return((int)(len + sizeof(struct pkg_header)));
 }
 
 
@@ -1374,7 +1373,7 @@ pkg_flush(register struct pkg_conn *pc)
 static int
 _pkg_gethdr(register struct pkg_conn *pc, char *buf)
 {
-    register int i;
+    register size_t i;
 
     PKG_CK(pc);
     if (pc->pkc_left >= 0)  return(1);	/* go get it! */
@@ -1383,10 +1382,10 @@ _pkg_gethdr(register struct pkg_conn *pc, char *buf)
      * At message boundary, read new header.  This will block until
      * the new header arrives (feature).
      */
-    if ((i = pkg_inget(pc, (char *)&(pc->pkc_hdr),
+    if ((i = _pkg_inget(pc, (char *)&(pc->pkc_hdr),
 		       sizeof(struct pkg_header))) != sizeof(struct pkg_header)) {
 	if (i > 0) {
-	    snprintf(_pkg_errbuf, MAX_PKG_ERRBUF_SIZE, "_pkg_gethdr: header read of %d?\n", i);
+	    snprintf(_pkg_errbuf, MAX_PKG_ERRBUF_SIZE, "_pkg_gethdr: header read of %ld?\n", (long)i);
 	    (pc->pkc_errlog)(_pkg_errbuf);
 	}
 	return(-1);
@@ -1406,17 +1405,16 @@ _pkg_gethdr(register struct pkg_conn *pc, char *buf)
 	(pc->pkc_errlog)(_pkg_errbuf);
 	/* Slide over one byte and try again */
 	memmove((char *)&pc->pkc_hdr, ((char *)&pc->pkc_hdr)+1, sizeof(struct pkg_header)-1);
-	if ((i=pkg_inget(pc,
-			 ((char *)&pc->pkc_hdr)+sizeof(struct pkg_header)-1,
-			 1)) != 1) {
-	    snprintf(_pkg_errbuf, MAX_PKG_ERRBUF_SIZE, "_pkg_gethdr: hdr read=%d?\n", i);
+	if ((i = _pkg_inget(pc,
+			    ((char *)&pc->pkc_hdr)+sizeof(struct pkg_header)-1,
+			    1)) != 1) {
+	    snprintf(_pkg_errbuf, MAX_PKG_ERRBUF_SIZE, "_pkg_gethdr: hdr read=%ld?\n", (long)i);
 	    (pc->pkc_errlog)(_pkg_errbuf);
 	    return(-1);
 	}
     }
     pc->pkc_type = pkg_gshort((char *)pc->pkc_hdr.pkh_type);	/* host order */
     pc->pkc_len = pkg_glong((char *)pc->pkc_hdr.pkh_len);
-    if (pc->pkc_len < 0)  pc->pkc_len = 0;
     pc->pkc_buf = (char *)0;
     pc->pkc_left = pc->pkc_len;
     if (pc->pkc_left == 0)  return(1);		/* msg here, no data */
@@ -1446,16 +1444,16 @@ _pkg_gethdr(register struct pkg_conn *pc, char *buf)
  * Returns the length of the message actually received, or -1 on error.
  */
 int
-pkg_waitfor (int type, char *buf, int len, register struct pkg_conn *pc)
+pkg_waitfor(int type, char *buf, size_t len, register struct pkg_conn *pc)
 {
-    register int i;
+    register size_t i;
 
     PKG_CK(pc);
     if (_pkg_debug) {
 	_pkg_timestamp();
 	fprintf(_pkg_debug,
-		"pkg_waitfor (type=%d, buf=x%lx, len=%d, pc=x%lx)\n",
-		type, (long)buf, len, (long)pc);
+		"pkg_waitfor (type=%d, buf=x%lx, len=%ld, pc=x%lx)\n",
+		type, (long)buf, (long)len, (long)pc);
 	fflush(_pkg_debug);
     }
  again:
@@ -1466,7 +1464,7 @@ pkg_waitfor (int type, char *buf, int len, register struct pkg_conn *pc)
     }
 
     if (pc->pkc_buf != (char *)0) {
-	pc->pkc_errlog("pkg_waitfor:  buffer clash\n");
+	pc->pkc_errlog("pkg_waitfor: buffer clash\n");
 	return(-1);
     }
     if (_pkg_gethdr(pc, buf) < 0)  return(-1);
@@ -1488,14 +1486,14 @@ pkg_waitfor (int type, char *buf, int len, register struct pkg_conn *pc)
     /* See if incomming message is larger than user's buffer */
     if (pc->pkc_len > len) {
 	register char *bp;
-	int excess;
+	size_t excess;
 	snprintf(_pkg_errbuf, MAX_PKG_ERRBUF_SIZE,
-		"pkg_waitfor:  message %ld exceeds buffer %d\n",
-		pc->pkc_len, len);
+		"pkg_waitfor: message %ld exceeds buffer %ld\n",
+		pc->pkc_len, (long)len);
 	(pc->pkc_errlog)(_pkg_errbuf);
-	if ((i = pkg_inget(pc, buf, len)) != len) {
+	if ((i = _pkg_inget(pc, buf, len)) != len) {
 	    snprintf(_pkg_errbuf, MAX_PKG_ERRBUF_SIZE,
-		    "pkg_waitfor:  pkg_inget %d gave %d\n", len, i);
+		    "pkg_waitfor: _pkg_inget %ld gave %ld\n", (long)len, (long)i);
 	    (pc->pkc_errlog)(_pkg_errbuf);
 	    return(-1);
 	}
@@ -1504,23 +1502,23 @@ pkg_waitfor (int type, char *buf, int len, register struct pkg_conn *pc)
 	    _pkg_perror(pc->pkc_errlog, "pkg_waitfor: excess message, malloc failed");
 	    return(-1);
 	}
-	if ((i = pkg_inget(pc, bp, excess)) != excess) {
+	if ((i = _pkg_inget(pc, bp, excess)) != excess) {
 	    snprintf(_pkg_errbuf, MAX_PKG_ERRBUF_SIZE,
-		    "pkg_waitfor: pkg_inget of excess, %d gave %d\n",
-		    excess, i);
+		    "pkg_waitfor: _pkg_inget of excess, %ld gave %ld\n",
+		    (long)excess, (long)i);
 	    (pc->pkc_errlog)(_pkg_errbuf);
 	    (void)free(bp);
 	    return(-1);
 	}
 	(void)free(bp);
-	return(len);		/* truncated, but OK */
+	return((int)len);	/* potentially truncated, but OK */
     }
 
     /* Read the whole message into the users buffer */
-    if ((i = pkg_inget(pc, buf, pc->pkc_len)) != pc->pkc_len) {
+    if ((i = _pkg_inget(pc, buf, pc->pkc_len)) != pc->pkc_len) {
 	snprintf(_pkg_errbuf, MAX_PKG_ERRBUF_SIZE,
-		"pkg_waitfor:  pkg_inget %ld gave %d\n",
-		pc->pkc_len, i);
+		"pkg_waitfor: _pkg_inget %ld gave %ld\n",
+		pc->pkc_len, (long)i);
 	(pc->pkc_errlog)(_pkg_errbuf);
 	return(-1);
     }
@@ -1553,7 +1551,7 @@ pkg_waitfor (int type, char *buf, int len, register struct pkg_conn *pc)
 char *
 pkg_bwaitfor(int type, register struct pkg_conn *pc)
 {
-    register int i;
+    register size_t i;
     register char *tmpbuf;
 
     PKG_CK(pc);
@@ -1570,7 +1568,7 @@ pkg_bwaitfor(int type, register struct pkg_conn *pc)
 	    if (pkg_block(pc) < 0)
 		return((char *)0);
 	if (pc->pkc_buf != (char *)0) {
-	    pc->pkc_errlog("pkg_bwaitfor:  buffer clash\n");
+	    pc->pkc_errlog("pkg_bwaitfor: buffer clash\n");
 	    return((char *)0);
 	}
 	if (_pkg_gethdr(pc, (char *)0) < 0)
@@ -1582,9 +1580,9 @@ pkg_bwaitfor(int type, register struct pkg_conn *pc)
 	return((char *)0);
 
     /* Read the whole message into the dynamic buffer */
-    if ((i = pkg_inget(pc, pc->pkc_buf, pc->pkc_len)) != pc->pkc_len) {
+    if ((i = _pkg_inget(pc, pc->pkc_buf, pc->pkc_len)) != pc->pkc_len) {
 	snprintf(_pkg_errbuf, MAX_PKG_ERRBUF_SIZE,
-		"pkg_bwaitfor:  pkg_inget %ld gave %d\n", pc->pkc_len, i);
+		"pkg_bwaitfor: _pkg_inget %ld gave %ld\n", pc->pkc_len, (long)i);
 	(pc->pkc_errlog)(_pkg_errbuf);
     }
     tmpbuf = pc->pkc_buf;
@@ -1621,14 +1619,14 @@ _pkg_dispatch(register struct pkg_conn *pc)
     if (pc->pkc_left != 0)  return(-1);
 
     /* Whole message received, process it via switchout table */
-    for (i=0; pc->pkc_switch[i].pks_handler != NULL; i++) {
+    for (i = 0; pc->pkc_switch[i].pks_handler != NULL; i++) {
 	register char *tempbuf;
 
 	if (pc->pkc_switch[i].pks_type != pc->pkc_type)
 	    continue;
 	/*
-	 * NOTICE:  User Handler must free() message buffer!
-	 * WARNING:  Handler may recurse back to pkg_suckin() --
+	 * NOTICE: User Handler must free() message buffer!
+	 * WARNING: Handler may recurse back to pkg_suckin() --
 	 * reset all connection state variables first!
 	 */
 	tempbuf = pc->pkc_buf;
@@ -1639,7 +1637,7 @@ _pkg_dispatch(register struct pkg_conn *pc)
 	pc->pkc_switch[i].pks_handler(pc, tempbuf);
 	return(1);
     }
-    snprintf(_pkg_errbuf, MAX_PKG_ERRBUF_SIZE, "_pkg_dispatch:  no handler for message type %d, len %ld\n",
+    snprintf(_pkg_errbuf, MAX_PKG_ERRBUF_SIZE, "_pkg_dispatch: no handler for message type %d, len %ld\n",
 	    pc->pkc_type, pc->pkc_len);
     (pc->pkc_errlog)(_pkg_errbuf);
     (void)free(pc->pkc_buf);
@@ -1741,7 +1739,7 @@ pkg_process(register struct pkg_conn *pc)
 	     * header is already in the internal buffer, to prevent
 	     * blocking in _pkg_gethdr().
 	     */
-	    if (available < sizeof(struct pkg_header))
+	    if ((size_t)available < sizeof(struct pkg_header))
 		break;
 
 	    if (_pkg_gethdr(pc, (char *)0) < 0) {
@@ -1781,7 +1779,7 @@ pkg_process(register struct pkg_conn *pc)
 		/* Take all that there is */
 		len = available;
 	    }
-	    len = pkg_inget(pc, pc->pkc_curpos, len);
+	    len = _pkg_inget(pc, pc->pkc_curpos, len);
 	    pc->pkc_curpos += len;
 	    pc->pkc_left -= len;
 	    if (pc->pkc_left > 0) {
@@ -1864,7 +1862,7 @@ pkg_block(register struct pkg_conn *pc)
 
     /* Read the rest of the message, blocking if necessary */
     if (pc->pkc_left > 0) {
-	if (pkg_inget(pc, pc->pkc_curpos, pc->pkc_left) != pc->pkc_left) {
+	if (_pkg_inget(pc, pc->pkc_curpos, pc->pkc_left) != (size_t)pc->pkc_left) {
 	    pc->pkc_left = -1;
 	    return(-1);
 	}
@@ -1951,7 +1949,7 @@ pkg_suckin(register struct pkg_conn *pc)
 
     /* If remaining buffer space is small, make buffer bigger */
     avail = pc->pkc_inlen - pc->pkc_inend;
-    if (avail < 10 * sizeof(struct pkg_header)) {
+    if ((size_t)avail < 10 * sizeof(struct pkg_header)) {
 	pc->pkc_inlen <<= 1;
 	if (_pkg_debug) {
 	    _pkg_timestamp();
@@ -1980,8 +1978,8 @@ pkg_suckin(register struct pkg_conn *pc)
 	    if (_pkg_debug) {
 		_pkg_timestamp();
 		fprintf(_pkg_debug,
-			"pkg_suckin: fd=%d, read for %d returned 0\n",
-			avail, pc->pkc_fd);
+			"pkg_suckin: fd=%d, read for %ld bytes returned 0\n",
+			pc->pkc_fd, (long)avail);
 		fflush(_pkg_debug);
 	    }
 	    ret = 0;	/* EOF */
@@ -1989,8 +1987,8 @@ pkg_suckin(register struct pkg_conn *pc)
 	}
 #ifndef HAVE_WINSOCK_H
 	_pkg_perror(pc->pkc_errlog, "pkg_suckin: read");
-	snprintf(_pkg_errbuf, MAX_PKG_ERRBUF_SIZE, "pkg_suckin: read(%d, x%lx, %d) ret=%d inbuf=x%lx, inend=%d\n",
-		pc->pkc_fd, (long)(&pc->pkc_inbuf[pc->pkc_inend]), avail,
+	snprintf(_pkg_errbuf, MAX_PKG_ERRBUF_SIZE, "pkg_suckin: read(%d, x%lx, %ld) ret=%d inbuf=x%lx, inend=%d\n",
+		pc->pkc_fd, (long)(&pc->pkc_inbuf[pc->pkc_inend]), (long)avail,
 		got,
 		(long)(pc->pkc_inbuf), pc->pkc_inend);
 	(pc->pkc_errlog)(_pkg_errbuf);
@@ -1999,7 +1997,7 @@ pkg_suckin(register struct pkg_conn *pc)
 	goto out;
     }
     if (got > avail) {
-	pc->pkc_errlog("pkg_suckin:  read more bytes than desired\n");
+	pc->pkc_errlog("pkg_suckin: read more bytes than desired\n");
 	got = avail;
     }
     pc->pkc_inend += got;

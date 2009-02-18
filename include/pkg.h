@@ -22,12 +22,15 @@
 /** @file pkg.h
  *
  * @brief
- *  Data structures and manifest constants for use with the PKG library.
+ * Data structures and manifest constants for use with the PKG library.
  *
  */
 
 #ifndef __PKG_H__
 #define __PKG_H__
+
+/* for size_t */
+#include <stddef.h>
 
 #ifndef PKG_EXPORT
 #  if defined(_WIN32) && !defined(__CYGWIN__) && defined(BRLCAD_DLL)
@@ -62,10 +65,13 @@ extern "C" {
 
 struct pkg_conn;
 
+typedef void (*pkg_callback)PKG_ARGS((struct pkg_conn*, char*));
+typedef void (*pkg_errlog)PKG_ARGS((char *msg));
+
 struct pkg_switch {
-    unsigned short	pks_type;	/**< @brief Type code */
-    void	(*pks_handler)PKG_ARGS((struct pkg_conn*, char*));  /**< @brief Message Handler */
-    char	*pks_title;		/**< @brief Description of message type */
+    unsigned short pks_type;	/**< @brief Type code */
+    pkg_callback pks_handler;	/**< @brief Message Handler */
+    char *pks_title;		/**< @brief Description of message type */
 };
 
 /**
@@ -77,33 +83,33 @@ struct pkg_switch {
  */
 #define PKG_MAGIC	0x41FE
 struct pkg_header {
-    unsigned char	pkh_magic[2];		/**< @brief Ident */
-    unsigned char	pkh_type[2];		/**< @brief Message Type */
-    unsigned char	pkh_len[4];		/**< @brief Byte count of remainder */
+    unsigned char pkh_magic[2];	/**< @brief Ident */
+    unsigned char pkh_type[2];	/**< @brief Message Type */
+    unsigned char pkh_len[4];	/**< @brief Byte count of remainder */
 };
 
 #define	PKG_STREAMLEN	(32*1024)
 struct pkg_conn {
-    int		pkc_fd;		/**< @brief TCP connection fd */
+    int	pkc_fd;					/**< @brief TCP connection fd */
     const struct pkg_switch *pkc_switch;	/**< @brief Array of message handlers */
-    void	(*pkc_errlog)PKG_ARGS((char *msg)); /**< @brief Error message logger */
-    struct pkg_header pkc_hdr;	/**< @brief hdr of cur msg */
-    long	pkc_len;	/**< @brief pkg_len, in host order */
-    unsigned short	pkc_type;	/**< @brief pkg_type, in host order */
+    pkg_errlog pkc_errlog;			/**< @brief Error message logger */
+    struct pkg_header pkc_hdr;			/**< @brief hdr of cur msg */
+    size_t pkc_len;				/**< @brief pkg_len, in host order */
+    unsigned short pkc_type;			/**< @brief pkg_type, in host order */
     /* OUTPUT BUFFER */
-    char	pkc_stream[PKG_STREAMLEN]; /**< @brief output stream */
-    unsigned int	pkc_magic;	/**< @brief for validating pointers */
-    int		pkc_strpos;	/**< @brief index into stream buffer */
+    char pkc_stream[PKG_STREAMLEN];		/**< @brief output stream */
+    unsigned int pkc_magic;			/**< @brief for validating pointers */
+    int pkc_strpos;				/**< @brief index into stream buffer */
     /* FIRST LEVEL INPUT BUFFER */
-    char		*pkc_inbuf;	/**< @brief input stream buffer */
-    int		pkc_incur;	/**< @brief current pos in inbuf */
-    int		pkc_inend;	/**< @brief first unused pos in inbuf */
-    int		pkc_inlen;	/**< @brief length of pkc_inbuf */
+    char *pkc_inbuf;				/**< @brief input stream buffer */
+    int pkc_incur;				/**< @brief current pos in inbuf */
+    int pkc_inend;				/**< @brief first unused pos in inbuf */
+    int pkc_inlen;				/**< @brief length of pkc_inbuf */
     /* DYNAMIC BUFFER FOR USER */
-    int		pkc_left;	/**< @brief #  bytes pkg_get expects */
+    int pkc_left;				/**< @brief #  bytes pkg_get expects */
     /* neg->read new hdr, 0->all here, >0 ->more to come */
-    char		*pkc_buf;	/**< @brief start of dynamic buf */
-    char		*pkc_curpos;	/**< @brief current position in pkg_buf */
+    char *pkc_buf;				/**< @brief start of dynamic buf */
+    char *pkc_curpos;				/**< @brief current position in pkg_buf */
 };
 #define PKC_NULL	((struct pkg_conn *)0)
 #define PKC_ERROR	((struct pkg_conn *)(-1L))
@@ -112,20 +118,19 @@ struct pkg_conn {
 #define pkg_send_vls(type, vlsp, pkg)	\
 	pkg_send( (type), bu_vls_addr((vlsp)), bu_vls_strlen((vlsp))+1, (pkg) )
 
-
 PKG_EXPORT PKG_EXTERN(int pkg_process, (register struct pkg_conn *));
 PKG_EXPORT PKG_EXTERN(int pkg_suckin, (register struct pkg_conn *));
-PKG_EXPORT PKG_EXTERN(struct pkg_conn *pkg_open, (const char *host, const char *service, const char *protocol, const char *uname, const char *passwd, const struct pkg_switch* switchp, void (*errlog)PKG_ARGS((char *msg))));
-PKG_EXPORT PKG_EXTERN(struct pkg_conn *pkg_transerver, (const struct pkg_switch* switchp, void (*errlog)PKG_ARGS((char *msg))));
-PKG_EXPORT PKG_EXTERN(int pkg_permserver, (const char *service, const char *protocol, int backlog, void (*errlog)PKG_ARGS((char *msg))));
-PKG_EXPORT PKG_EXTERN(int pkg_permserver_ip, (const char *ipOrHostname, const char *service, const char *protocol, int backlog, void (*errlog)PKG_ARGS((char *msg))));
-PKG_EXPORT PKG_EXTERN(struct pkg_conn *pkg_getclient, (int fd, const struct pkg_switch *switchp, void (*errlog)PKG_ARGS((char *msg)), int nodelay));
+PKG_EXPORT PKG_EXTERN(struct pkg_conn *pkg_open, (const char *host, const char *service, const char *protocol, const char *uname, const char *passwd, const struct pkg_switch* switchp, pkg_errlog errlog));
+PKG_EXPORT PKG_EXTERN(struct pkg_conn *pkg_transerver, (const struct pkg_switch* switchp, pkg_errlog errlog));
+PKG_EXPORT PKG_EXTERN(int pkg_permserver, (const char *service, const char *protocol, int backlog, pkg_errlog));
+PKG_EXPORT PKG_EXTERN(int pkg_permserver_ip, (const char *ipOrHostname, const char *service, const char *protocol, int backlog, pkg_errlog errlog));
+PKG_EXPORT PKG_EXTERN(struct pkg_conn *pkg_getclient, (int fd, const struct pkg_switch *switchp, pkg_errlog errlog, int nodelay));
 PKG_EXPORT PKG_EXTERN(void pkg_close, (struct pkg_conn* pc));
-PKG_EXPORT PKG_EXTERN(int pkg_send, (int type, const char *buf, int len, struct pkg_conn* pc));
-PKG_EXPORT PKG_EXTERN(int pkg_2send, (int type, char *buf1, int len1, char *buf2, int len2, struct pkg_conn* pc));
-PKG_EXPORT PKG_EXTERN(int pkg_stream, (int type, const char *buf, int len, struct pkg_conn* pc));
+PKG_EXPORT PKG_EXTERN(int pkg_send, (int type, const char *buf, size_t len, struct pkg_conn* pc));
+PKG_EXPORT PKG_EXTERN(int pkg_2send, (int type, char *buf1, size_t len1, char *buf2, size_t len2, struct pkg_conn* pc));
+PKG_EXPORT PKG_EXTERN(int pkg_stream, (int type, const char *buf, size_t len, struct pkg_conn* pc));
 PKG_EXPORT PKG_EXTERN(int pkg_flush, (struct pkg_conn* pc));
-PKG_EXPORT PKG_EXTERN(int pkg_waitfor, (int type, char *buf, int len, struct pkg_conn* pc));
+PKG_EXPORT PKG_EXTERN(int pkg_waitfor, (int type, char *buf, size_t len, struct pkg_conn* pc));
 PKG_EXPORT PKG_EXTERN(char *pkg_bwaitfor, (int type, struct pkg_conn* pc));
 PKG_EXPORT PKG_EXTERN(int pkg_block, (struct pkg_conn* pc));
 
