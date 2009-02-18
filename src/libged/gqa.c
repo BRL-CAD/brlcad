@@ -723,7 +723,7 @@ parse_densities_buffer(char *buf, unsigned long len)
 
     p = buf;
 
-    densities = bu_calloc(sizeof(struct density_entry), 128, "density entries");
+    densities = bu_calloc(128, sizeof(struct density_entry), "density entries");
     num_densities = 128;
 
     while (*p) {
@@ -1520,14 +1520,14 @@ allocate_per_region_data(struct cstate *state, int start, int ac, const char *av
     int i;
     int m;
 
-    state->m_lenDensity = bu_calloc(sizeof(double), num_views, "densityLen");
-    state->m_len = bu_calloc(sizeof(double), num_views, "volume");
-    state->m_volume = bu_calloc(sizeof(double), num_views, "volume");
-    state->m_weight = bu_calloc(sizeof(double), num_views, "volume");
-    state->shots = bu_calloc(sizeof(unsigned long), num_views, "volume");
-    state->m_lenTorque = (fastf_t *)bu_calloc(sizeof(vect_t), num_views, "lenTorque");
-    state->m_moi = (fastf_t *)bu_calloc(sizeof(vect_t), num_views, "moments of inertia");
-    state->m_poi = (fastf_t *)bu_calloc(sizeof(vect_t), num_views, "products of inertia");
+    state->m_lenDensity = bu_calloc(num_views, sizeof(double), "densityLen");
+    state->m_len = bu_calloc(num_views, sizeof(double), "volume");
+    state->m_volume = bu_calloc(num_views, sizeof(double), "volume");
+    state->m_weight = bu_calloc(num_views, sizeof(double), "volume");
+    state->shots = bu_calloc(num_views, sizeof(unsigned long), "volume");
+    state->m_lenTorque = (fastf_t *)bu_calloc(num_views, sizeof(vect_t), "lenTorque");
+    state->m_moi = (fastf_t *)bu_calloc(num_views, sizeof(vect_t), "moments of inertia");
+    state->m_poi = (fastf_t *)bu_calloc(num_views, sizeof(vect_t), "products of inertia");
 
     /* build data structures for the list of
      * objects the user specified on the command line
@@ -1535,13 +1535,13 @@ allocate_per_region_data(struct cstate *state, int start, int ac, const char *av
     obj_tbl = bu_calloc(sizeof(struct per_obj_data), num_objects, "report tables");
     for (i=0; i < num_objects; i++) {
 	obj_tbl[i].o_name = (char *)av[start+i];
-	obj_tbl[i].o_len = bu_calloc(sizeof(double), num_views, "o_len");
-	obj_tbl[i].o_lenDensity = bu_calloc(sizeof(double), num_views, "o_lenDensity");
-	obj_tbl[i].o_volume = bu_calloc(sizeof(double), num_views, "o_volume");
-	obj_tbl[i].o_weight = bu_calloc(sizeof(double), num_views, "o_weight");
-	obj_tbl[i].o_lenTorque = (fastf_t *)bu_calloc(sizeof(vect_t), num_views, "lenTorque");
-	obj_tbl[i].o_moi = (fastf_t *)bu_calloc(sizeof(vect_t), num_views, "moments of inertia");
-	obj_tbl[i].o_poi = (fastf_t *)bu_calloc(sizeof(vect_t), num_views, "products of inertia");
+	obj_tbl[i].o_len = bu_calloc(num_views, sizeof(double), "o_len");
+	obj_tbl[i].o_lenDensity = bu_calloc(num_views, sizeof(double), "o_lenDensity");
+	obj_tbl[i].o_volume = bu_calloc(num_views, sizeof(double), "o_volume");
+	obj_tbl[i].o_weight = bu_calloc(num_views, sizeof(double), "o_weight");
+	obj_tbl[i].o_lenTorque = (fastf_t *)bu_calloc(num_views, sizeof(vect_t), "lenTorque");
+	obj_tbl[i].o_moi = (fastf_t *)bu_calloc(num_views, sizeof(vect_t), "moments of inertia");
+	obj_tbl[i].o_poi = (fastf_t *)bu_calloc(num_views, sizeof(vect_t), "products of inertia");
     }
 
     /* build objects for each region */
@@ -1551,10 +1551,10 @@ allocate_per_region_data(struct cstate *state, int start, int ac, const char *av
     for (i=0, BU_LIST_FOR(regp, region, &(rtip->HeadRegion)), i++)  {
 	regp->reg_udata = &reg_tbl[i];
 
-	reg_tbl[i].r_lenDensity = bu_calloc(sizeof(double), num_views, "r_lenDensity");
-	reg_tbl[i].r_len = bu_calloc(sizeof(double), num_views, "r_len");
-	reg_tbl[i].r_volume = bu_calloc(sizeof(double), num_views, "len");
-	reg_tbl[i].r_weight = bu_calloc(sizeof(double), num_views, "len");
+	reg_tbl[i].r_lenDensity = bu_calloc(num_views, sizeof(double), "r_lenDensity");
+	reg_tbl[i].r_len = bu_calloc(num_views, sizeof(double), "r_len");
+	reg_tbl[i].r_volume = bu_calloc(num_views, sizeof(double), "len");
+	reg_tbl[i].r_weight = bu_calloc(num_views, sizeof(double), "len");
 
 	m = strlen(regp->reg_name);
 	if (m > max_region_name_len) max_region_name_len = m;
