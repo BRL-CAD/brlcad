@@ -63,7 +63,12 @@ void helical_compression_coil_plain(struct rt_wdb (*file), char *prefix, fastf_t
     mk_add_pipe_pt(&head, pnt3, wire_diameter, 0.0, pipe_bend);
     mk_add_pipe_pt(&head, pnt4, wire_diameter, 0.0, pipe_bend);
 
+    VSET(pnt1, 0 , 0, pitch);
+    VSET(pnt2, mean_outer_diameter/2, 0, pitch + pitch/4);
+    mk_add_pipe_pt(&head, pnt1, wire_diameter, 0.0, pipe_bend);
+    mk_add_pipe_pt(&head, pnt2, wire_diameter, 0.0, pipe_bend);
 
+/*
     
     for (i = 1; i < nt - 1; i++) {
     	VSET(pnt1, 0 , 0, i*pitch);
@@ -84,7 +89,7 @@ void helical_compression_coil_plain(struct rt_wdb (*file), char *prefix, fastf_t
     mk_add_pipe_pt(&head, pnt2, wire_diameter, 0.0, pipe_bend);
     mk_add_pipe_pt(&head, pnt3, wire_diameter, 0.0, pipe_bend);
     mk_add_pipe_pt(&head, pnt4, wire_diameter, 0.0, pipe_bend);
-
+*/
 
     mk_pipe(file, prefix, &head);
 
@@ -343,12 +348,12 @@ int main(int ac, char *av[])
     bu_vls_trunc(&spring_type, 0);
     bu_vls_trunc(&name, 0);
 
-    mean_outer_diameter = 2000;
-    wire_diameter = 250;
+    mean_outer_diameter = 1000;
+    wire_diameter = 100;
     spring_index = mean_outer_diameter/wire_diameter; 
     helix_angle = 10;
     pitch = wire_diameter;
-    nt = 60;
+    nt = 2;
     end_type = 0;    
 
     bu_vls_printf(&spring_type, "hc");
@@ -374,7 +379,7 @@ int main(int ac, char *av[])
     }
  
     bu_log("Making spring...\n");
-    helical_compression_coil_squared_ground(db_fp, bu_vls_addr(&name), mean_outer_diameter, wire_diameter, helix_angle, pitch, nt, end_type);
+    helical_compression_coil_plain(db_fp, bu_vls_addr(&name), mean_outer_diameter, wire_diameter, helix_angle, pitch, nt, end_type);
 
    /* Close database */
     wdb_close(db_fp);
