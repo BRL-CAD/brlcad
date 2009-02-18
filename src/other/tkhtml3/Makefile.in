@@ -542,7 +542,7 @@ uninstall-doc:
 	@list='*.n' ; \
 	for i in $$list ; do \
 		echo "Uninstalling $i" ; \
-		rm -f $(DESTDIR)$mandir)/mann/$$i ; \
+		rm -f $(DESTDIR)$(mandir)/mann/$$i ; \
 	done
 
 .PHONY: all binaries clean depend distclean doc install libraries test
