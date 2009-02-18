@@ -166,7 +166,7 @@ INSTALLED_MANPAGES = \
 	raise.n \
 	re_syntax.n \
 	read.n \
-	reflectedchan.n \
+	refchan.n \
 	regexp.n \
 	registry.n \
 	regsub.n \

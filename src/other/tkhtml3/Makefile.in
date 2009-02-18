@@ -496,7 +496,7 @@ check:
 
 installcheck:
 
-uninstall: uninstall-binaries
+uninstall: uninstall-binaries uninstall-doc
 	rm -f $(DESTDIR)$(pkglibdir)/pkgIndex.tcl; 
 
 distuninstallcheck: 
@@ -536,6 +536,13 @@ uninstall-binaries:
 	done
 	list='$(bin_BINARIES)'; for p in $$list; do \
 	  rm -f $(DESTDIR)$(bindir)/$$p; \
+	done
+
+uninstall-doc:
+	@list='*.n' \
+	for i in $$list ; do \
+		echo "Uninstalling $i" ; \
+		rm -f $(DESTDIR)$mandir)/mann/$$i ; \
 	done
 
 .PHONY: all binaries clean depend distclean doc install libraries test
