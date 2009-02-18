@@ -167,7 +167,7 @@ struct density_entry {
     long	magic;
     double	grams_per_cu_mm;
     char	*name;
-} *densities;
+} *densities = NULL;
 static int num_densities;
 #define DENSITY_MAGIC 0xaf0127
 
@@ -723,7 +723,7 @@ parse_densities_buffer(char *buf, unsigned long len)
 
     p = buf;
 
-    densities = bu_malloc(sizeof(struct density_entry)*128, "density entries");
+    densities = bu_calloc(sizeof(struct density_entry), 128, "density entries");
     num_densities = 128;
 
     while (*p) {
@@ -2532,7 +2532,6 @@ aborted:
     else
 	aborted = 0; /* reset flag */
 
-
     /* Clear out the lists */
     while (BU_LIST_WHILE(rp, region_pair, &overlapList.l)) {
 	BU_LIST_DEQUEUE(&rp->l);
@@ -2562,7 +2561,6 @@ aborted:
     bu_free(state.m_poi, "m_poi");
 
     for (i=0; i < num_objects; i++) {
-	bu_free(obj_tbl[i].o_name, "o_name");
 	bu_free(obj_tbl[i].o_len, "o_len");
 	bu_free(obj_tbl[i].o_lenDensity, "o_lenDensity");
 	bu_free(obj_tbl[i].o_volume, "o_volume");
@@ -2581,7 +2579,8 @@ aborted:
     }
     bu_free(reg_tbl, "object table");
 
-    bu_free(densities, "densities");
+    if (densities != NULL)
+	bu_free(densities, "densities");
 
     obj_tbl = NULL;
     reg_tbl = NULL;
