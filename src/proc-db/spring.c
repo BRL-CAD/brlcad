@@ -42,7 +42,7 @@
 #define R2D(x) (x / DEG2RAD)
 #define DEFAULT_LENS_FILENAME "spring.g"
 
-void MakeSpring(struct rt_wdb (*file), char *prefix, fastf_t mean_outer_diameter, fastf_t wire_diameter, fastf_t helix_angle, fastf_t pitch, int nt, int end_type)
+void helical_compression_coil_plain(struct rt_wdb (*file), char *prefix, fastf_t mean_outer_diameter, fastf_t wire_diameter, fastf_t helix_angle, fastf_t pitch, int nt, int end_type)
 {
     struct bu_list head;
     int i;
@@ -63,6 +63,8 @@ void MakeSpring(struct rt_wdb (*file), char *prefix, fastf_t mean_outer_diameter
     mk_add_pipe_pt(&head, pnt3, wire_diameter, 0.0, pipe_bend);
     mk_add_pipe_pt(&head, pnt4, wire_diameter, 0.0, pipe_bend);
 
+
+    
     for (i = 1; i < nt - 1; i++) {
     	VSET(pnt1, 0 , 0, i*pitch);
     	VSET(pnt2, mean_outer_diameter, 0, i*pitch+pitch/4);
@@ -88,6 +90,198 @@ void MakeSpring(struct rt_wdb (*file), char *prefix, fastf_t mean_outer_diameter
 
     mk_pipe_free(&head);
 }
+
+void helical_compression_coil_closed(struct rt_wdb (*file), char *prefix, fastf_t mean_outer_diameter, fastf_t wire_diameter, fastf_t helix_angle, fastf_t pitch, int nt, int end_type)
+{
+    struct bu_list head;
+    int i;
+    fastf_t pipe_bend;
+    point_t origin, pnt1, pnt2, pnt3, pnt4;
+
+    VSET(origin, 0, 0 ,0);
+
+    pipe_bend = mean_outer_diameter/2;
+    mk_pipe_init(&head);
+    
+    VSET(pnt1, mean_outer_diameter/2 , 0, 0);
+    VSET(pnt2, mean_outer_diameter, 0, 0);
+    VSET(pnt3, mean_outer_diameter, mean_outer_diameter, 0);
+    VSET(pnt4, 0, mean_outer_diameter, 0);
+    mk_add_pipe_pt(&head, pnt1, wire_diameter, 0.0, pipe_bend);
+    mk_add_pipe_pt(&head, pnt2, wire_diameter, 0.0, pipe_bend);
+    mk_add_pipe_pt(&head, pnt3, wire_diameter, 0.0, pipe_bend);
+    mk_add_pipe_pt(&head, pnt4, wire_diameter, 0.0, pipe_bend);
+
+
+    
+    for (i = 0; i < nt - 1; i++) {
+    	VSET(pnt1, 0 , 0, i*pitch+wire_diameter);
+    	VSET(pnt2, mean_outer_diameter, 0, i*pitch+pitch/4+wire_diameter);
+    	VSET(pnt3, mean_outer_diameter, mean_outer_diameter, i*pitch + pitch/2+wire_diameter);
+    	VSET(pnt4, 0, mean_outer_diameter, i*pitch + pitch*3/4+wire_diameter);
+    	mk_add_pipe_pt(&head, pnt1, wire_diameter, 0.0, pipe_bend);
+   	mk_add_pipe_pt(&head, pnt2, wire_diameter, 0.0, pipe_bend);
+    	mk_add_pipe_pt(&head, pnt3, wire_diameter, 0.0, pipe_bend);
+    	mk_add_pipe_pt(&head, pnt4, wire_diameter, 0.0, pipe_bend);
+    }
+
+    VSET(pnt1, 0 , 0, (nt-1)*pitch+pitch*3/4+wire_diameter);
+    VSET(pnt2, mean_outer_diameter, 0, (nt-1)*pitch + pitch*3/4 +wire_diameter);
+    VSET(pnt3, mean_outer_diameter, mean_outer_diameter, (nt-1)*pitch + pitch*3/4+wire_diameter);
+    VSET(pnt4, mean_outer_diameter/2, mean_outer_diameter, (nt-1)*pitch + pitch*3/4+wire_diameter);
+    mk_add_pipe_pt(&head, pnt1, wire_diameter, 0.0, pipe_bend);
+    mk_add_pipe_pt(&head, pnt2, wire_diameter, 0.0, pipe_bend);
+    mk_add_pipe_pt(&head, pnt3, wire_diameter, 0.0, pipe_bend);
+    mk_add_pipe_pt(&head, pnt4, wire_diameter, 0.0, pipe_bend);
+
+
+    mk_pipe(file, prefix, &head);
+
+    mk_pipe_free(&head);
+}
+
+void helical_compression_coil_ground(struct rt_wdb (*file), char *prefix, fastf_t mean_outer_diameter, fastf_t wire_diameter, fastf_t helix_angle, fastf_t pitch, int nt, int end_type)
+{
+    struct bu_list head;
+    int i;
+    fastf_t pipe_bend;
+    point_t origin, height, pnt1, pnt2, pnt3, pnt4;
+    struct bu_vls str;
+    struct wmember spring;
+   
+    bu_vls_init(&str); 
+       
+    BU_LIST_INIT(&spring.l);
+       
+    pipe_bend = mean_outer_diameter/2;
+    mk_pipe_init(&head);
+    
+    VSET(pnt1, 0, mean_outer_diameter/2 , -pitch/4);
+    mk_add_pipe_pt(&head, pnt1, wire_diameter, 0.0, pipe_bend);
+    
+    for (i = 0; i < nt - 1; i++) {
+    	VSET(pnt1, 0 , 0, i*pitch);
+    	VSET(pnt2, mean_outer_diameter, 0, i*pitch+pitch/4);
+    	VSET(pnt3, mean_outer_diameter, mean_outer_diameter, i*pitch + pitch/2);
+    	VSET(pnt4, 0, mean_outer_diameter, i*pitch + pitch*3/4);
+    	mk_add_pipe_pt(&head, pnt1, wire_diameter, 0.0, pipe_bend);
+   	mk_add_pipe_pt(&head, pnt2, wire_diameter, 0.0, pipe_bend);
+    	mk_add_pipe_pt(&head, pnt3, wire_diameter, 0.0, pipe_bend);
+    	mk_add_pipe_pt(&head, pnt4, wire_diameter, 0.0, pipe_bend);
+    }
+
+    VSET(pnt1, 0 , 0, (nt-1)*pitch);
+    VSET(pnt2, mean_outer_diameter, 0, (nt-1)*pitch + pitch/4);
+    VSET(pnt3, mean_outer_diameter, mean_outer_diameter, (nt-1)*pitch + pitch/2);
+    VSET(pnt4, mean_outer_diameter/2, mean_outer_diameter, (nt-1)*pitch + pitch*3/4);
+    mk_add_pipe_pt(&head, pnt1, wire_diameter, 0.0, pipe_bend);
+    mk_add_pipe_pt(&head, pnt2, wire_diameter, 0.0, pipe_bend);
+    mk_add_pipe_pt(&head, pnt3, wire_diameter, 0.0, pipe_bend);
+    mk_add_pipe_pt(&head, pnt4, wire_diameter, 0.0, pipe_bend);
+
+
+    mk_pipe(file, prefix, &head);
+
+    (void)mk_addmember(prefix, &spring.l, NULL, WMOP_UNION);
+    
+    mk_pipe_free(&head);
+
+    VSET(origin, mean_outer_diameter/2, mean_outer_diameter/2, 0);
+    VSET(height, 0, 0, -wire_diameter);
+    bu_vls_trunc(&str, 0);
+    bu_vls_printf(&str, "%s-sub1.s", prefix);
+    mk_rcc(file, bu_vls_addr(&str), origin, height,  mean_outer_diameter/2+wire_diameter/2+.1*wire_diameter);
+
+    (void)mk_addmember(bu_vls_addr(&str), &spring.l, NULL, WMOP_SUBTRACT);
+    
+    VSET(origin, mean_outer_diameter/2, mean_outer_diameter/2, nt*pitch-wire_diameter/2);
+    VSET(height, 0, 0, wire_diameter);
+    bu_vls_trunc(&str, 0);
+    bu_vls_printf(&str, "%s-sub2.s", prefix);
+    mk_rcc(file, bu_vls_addr(&str), origin, height,  mean_outer_diameter/2+wire_diameter/2+.1*wire_diameter);
+
+    (void)mk_addmember(bu_vls_addr(&str), &spring.l, NULL, WMOP_SUBTRACT);
+
+    bu_vls_trunc(&str, 0);
+    bu_vls_printf(&str, "%s.c", prefix);
+    mk_lcomb(file, bu_vls_addr(&str), &spring, 0, NULL, NULL, NULL, 0); 
+}
+
+void helical_compression_coil_squared_ground(struct rt_wdb (*file), char *prefix, fastf_t mean_outer_diameter, fastf_t wire_diameter, fastf_t helix_angle, fastf_t pitch, int nt, int end_type)
+{
+    struct bu_list head;
+    int i;
+    fastf_t pipe_bend;
+    point_t origin, height, pnt1, pnt2, pnt3, pnt4;
+    struct bu_vls str;
+    struct wmember spring;
+   
+    bu_vls_init(&str); 
+       
+    BU_LIST_INIT(&spring.l);
+       
+    pipe_bend = mean_outer_diameter/2;
+    mk_pipe_init(&head);
+    
+    VSET(pnt1, mean_outer_diameter/2 , 0, -wire_diameter/2);
+    VSET(pnt2, mean_outer_diameter, 0, -wire_diameter/2);
+    VSET(pnt3, mean_outer_diameter, mean_outer_diameter, -wire_diameter/2);
+    VSET(pnt4, 0, mean_outer_diameter, -wire_diameter/2);
+    mk_add_pipe_pt(&head, pnt1, wire_diameter, 0.0, pipe_bend);
+    mk_add_pipe_pt(&head, pnt2, wire_diameter, 0.0, pipe_bend);
+    mk_add_pipe_pt(&head, pnt3, wire_diameter, 0.0, pipe_bend);
+    mk_add_pipe_pt(&head, pnt4, wire_diameter, 0.0, pipe_bend);
+
+    
+    for (i = 0; i < nt - 1; i++) {
+    	VSET(pnt1, 0 , 0, i*pitch-wire_diameter/2);
+    	VSET(pnt2, mean_outer_diameter, 0, i*pitch+pitch/4-wire_diameter/2);
+    	VSET(pnt3, mean_outer_diameter, mean_outer_diameter, i*pitch + pitch/2-wire_diameter/2);
+    	VSET(pnt4, 0, mean_outer_diameter, i*pitch + pitch*3/4-wire_diameter/2);
+    	mk_add_pipe_pt(&head, pnt1, wire_diameter, 0.0, pipe_bend);
+   	mk_add_pipe_pt(&head, pnt2, wire_diameter, 0.0, pipe_bend);
+    	mk_add_pipe_pt(&head, pnt3, wire_diameter, 0.0, pipe_bend);
+    	mk_add_pipe_pt(&head, pnt4, wire_diameter, 0.0, pipe_bend);
+    }
+
+    VSET(pnt1, 0 , 0, (nt-1)*pitch-wire_diameter/2);
+    VSET(pnt2, mean_outer_diameter, 0, (nt-1)*pitch + pitch/4-wire_diameter/2);
+    VSET(pnt3, mean_outer_diameter, mean_outer_diameter, (nt-1)*pitch + pitch/2-wire_diameter/2);
+    VSET(pnt4, mean_outer_diameter/2, mean_outer_diameter, (nt-1)*pitch + pitch*3/4-wire_diameter/2);
+    mk_add_pipe_pt(&head, pnt1, wire_diameter, 0.0, pipe_bend);
+    mk_add_pipe_pt(&head, pnt2, wire_diameter, 0.0, pipe_bend);
+    mk_add_pipe_pt(&head, pnt3, wire_diameter, 0.0, pipe_bend);
+    mk_add_pipe_pt(&head, pnt4, wire_diameter, 0.0, pipe_bend);
+
+
+    mk_pipe(file, prefix, &head);
+
+    (void)mk_addmember(prefix, &spring.l, NULL, WMOP_UNION);
+    
+    mk_pipe_free(&head);
+
+    VSET(origin, mean_outer_diameter/2, mean_outer_diameter/2, 0);
+    VSET(height, 0, 0, -wire_diameter-.1*wire_diameter);
+    bu_vls_trunc(&str, 0);
+    bu_vls_printf(&str, "%s-sub1.s", prefix);
+    mk_rcc(file, bu_vls_addr(&str), origin, height,  mean_outer_diameter/2+wire_diameter/2+.1*wire_diameter);
+
+    (void)mk_addmember(bu_vls_addr(&str), &spring.l, NULL, WMOP_SUBTRACT);
+    
+    VSET(origin, mean_outer_diameter/2, mean_outer_diameter/2, nt*pitch-wire_diameter/2);
+    VSET(height, 0, 0, wire_diameter+.1*wire_diameter);
+    bu_vls_trunc(&str, 0);
+    bu_vls_printf(&str, "%s-sub2.s", prefix);
+    mk_rcc(file, bu_vls_addr(&str), origin, height,  mean_outer_diameter/2+wire_diameter/2+.1*wire_diameter);
+
+    (void)mk_addmember(bu_vls_addr(&str), &spring.l, NULL, WMOP_SUBTRACT);
+
+    bu_vls_trunc(&str, 0);
+    bu_vls_printf(&str, "%s.c", prefix);
+    mk_lcomb(file, bu_vls_addr(&str), &spring, 0, NULL, NULL, NULL, 0); 
+}
+
+
 
 /* Process command line arguments 
 int ReadArgs(int argc, char **argv, int *lens_1side_2side, fastf_t *ref_ind, fastf_t *diameter, fastf_t *thickness, fastf_t *focal_length)
@@ -153,7 +347,7 @@ int main(int ac, char *av[])
     wire_diameter = 250;
     spring_index = mean_outer_diameter/wire_diameter; 
     helix_angle = 10;
-    pitch = 300;
+    pitch = wire_diameter;
     nt = 60;
     end_type = 0;    
 
@@ -175,12 +369,12 @@ int main(int ac, char *av[])
 	if (!bu_file_exists(DEFAULT_LENS_FILENAME)) {
 	    db_fp = wdb_fopen(DEFAULT_LENS_FILENAME);
 	} else {
-	    bu_exit(-1,"Error - no filename supplied and lens.g exists.");
+	    bu_exit(-1,"Error - no filename supplied and spring.g exists.");
 	}
     }
  
     bu_log("Making spring...\n");
-    MakeSpring(db_fp, bu_vls_addr(&name), mean_outer_diameter, wire_diameter, helix_angle, pitch, nt, end_type);
+    helical_compression_coil_squared_ground(db_fp, bu_vls_addr(&name), mean_outer_diameter, wire_diameter, helix_angle, pitch, nt, end_type);
 
    /* Close database */
     wdb_close(db_fp);
