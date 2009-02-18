@@ -56,7 +56,7 @@
 
 /* bu_getopt() options */
 char *options = "A:a:de:f:g:Gn:N:pP:rS:s:t:U:u:vV:W:";
-char *options_str = "[-A A|a|b|e|g|o|v|w] [-a az] [-d] [-e el] [-f densityFile] [-g spacing|upper,lower|upper-lower] [-G] [-n nhits] [-N nviews] [-p] [-P ncpus] [-r] [-S nsamples] [-t overlap_tol] [-U useair] [-u len_units vol_units wt_units] [-v] [-V volume_tol] [-W weight_tol]";
+char *options_str = "[-A A|a|b|c|e|g|m|o|v|w] [-a az] [-d] [-e el] [-f densityFile] [-g spacing|upper,lower|upper-lower] [-G] [-n nhits] [-N nviews] [-p] [-P ncpus] [-r] [-S nsamples] [-t overlap_tol] [-U useair] [-u len_units vol_units wt_units] [-v] [-V volume_tol] [-W weight_tol]";
 
 #define ANALYSIS_VOLUME 1
 #define ANALYSIS_WEIGHT 2
@@ -66,6 +66,8 @@ char *options_str = "[-A A|a|b|e|g|o|v|w] [-a az] [-d] [-e el] [-f densityFile] 
 #define ANALYSIS_EXP_AIR 32 /* exposed air */
 #define ANALYSIS_BOX 64
 #define ANALYSIS_INTERFACES 128
+#define ANALYSIS_CENTROIDS 256
+#define ANALYSIS_MOMENTS 512
 
 #ifndef HUGE
 #  ifdef MAXFLT
@@ -94,6 +96,8 @@ static double Samples_per_model_axis;
 static double overlap_tolerance;
 static double volume_tolerance;
 static double weight_tolerance;
+static const fastf_t one_twelfth = 1.0 / 12.0;
+static int aborted = 0;
 
 static int print_per_region_stats;
 static int max_region_name_len;
@@ -153,6 +157,9 @@ struct cstate {
     vect_t span;	/* How much space does the geometry span in each of X, Y, Z directions */
     vect_t area;	/* area of the view for view with invariant at index */
 
+    fastf_t *m_lenTorque;	/* torque vector for each view */
+    fastf_t *m_moi;    /* one vector per view for collecting the partial moments of inertia calculation */
+    fastf_t *m_poi;    /* one vector per view for collecting the partial products of inertia calculation */
 };
 
 /* the entries in the density table */
@@ -172,6 +179,9 @@ static struct per_obj_data {
     double *o_lenDensity;
     double *o_volume;
     double *o_weight;
+    fastf_t *o_lenTorque;	/* torque vector for each view */
+    fastf_t *o_moi;    /* one vector per view for collecting the partial moments of inertia calculation */
+    fastf_t *o_poi;    /* one vector per view for collecting the partial products of inertia calculation */
 } *obj_tbl;
 
 /* this is the data we track for each region
@@ -463,7 +473,7 @@ parse_args(int ac, char *av[])
 			    case 'A' :
 				analysis_flags = ANALYSIS_VOLUME | ANALYSIS_WEIGHT | \
 				    ANALYSIS_OVERLAPS | ANALYSIS_ADJ_AIR | ANALYSIS_GAP | \
-				    ANALYSIS_EXP_AIR;
+				    ANALYSIS_EXP_AIR | ANALYSIS_CENTROIDS | ANALYSIS_MOMENTS;
 				multiple_analyses = 1;
 				break;
 			    case 'a' :
@@ -480,6 +490,14 @@ parse_args(int ac, char *av[])
 				analysis_flags |= ANALYSIS_BOX;
 
 				break;
+			    case 'c' :
+				if (analysis_flags)
+				    multiple_analyses = 1;
+
+				analysis_flags |= ANALYSIS_WEIGHT;
+				analysis_flags |= ANALYSIS_CENTROIDS;
+
+				break;
 			    case 'e' :
 				if (analysis_flags)
 				    multiple_analyses = 1;
@@ -491,6 +509,15 @@ parse_args(int ac, char *av[])
 				    multiple_analyses = 1;
 
 				analysis_flags |= ANALYSIS_GAP;
+				break;
+			    case 'm' :
+				if (analysis_flags)
+				    multiple_analyses = 1;
+
+				analysis_flags |= ANALYSIS_WEIGHT;
+				analysis_flags |= ANALYSIS_CENTROIDS;
+				analysis_flags |= ANALYSIS_MOMENTS;
+
 				break;
 			    case 'o' :
 				if (analysis_flags)
@@ -1115,6 +1142,40 @@ hit(register struct application *ap, struct partition *PartHeadp, struct seg *se
 		de = &densities[pp->pt_regionp->reg_gmater];
 		if (de->magic == DENSITY_MAGIC) {
 		    struct per_region_data *prd;
+		    vect_t cmass;
+		    vect_t lenTorque;
+		    fastf_t Lx = state->span[0]/state->steps[0];
+		    fastf_t Ly = state->span[1]/state->steps[1];
+		    fastf_t Lz = state->span[2]/state->steps[2];
+		    fastf_t Lx_sq;
+		    fastf_t Ly_sq;
+		    fastf_t Lz_sq;
+		    fastf_t cell_area;
+
+		    switch (state->i_axis) {
+		    case 0:
+			Lx_sq = dist*pp->pt_regionp->reg_los*0.01;
+			Lx_sq *= Lx_sq;
+			Ly_sq = Ly*Ly;
+			Lz_sq = Lz*Lz;
+			cell_area = Ly_sq;
+			break;
+		    case 1:
+			Lx_sq = Lx*Lx;
+			Ly_sq = dist*pp->pt_regionp->reg_los*0.01;
+			Ly_sq *= Ly_sq;
+			Lz_sq = Lz*Lz;
+			cell_area = Lx_sq;
+			break;
+		    case 2:
+		    default:
+			Lx_sq = Lx*Lx;
+			Ly_sq = Ly*Ly;
+			Lz_sq = dist*pp->pt_regionp->reg_los*0.01;
+			Lz_sq *= Lz_sq;
+			cell_area = Lx_sq;
+			break;
+		    }
 
 		    /* factor in the density of this object
 		     * weight computation, factoring in the LOS
@@ -1137,11 +1198,56 @@ hit(register struct application *ap, struct partition *PartHeadp, struct seg *se
 
 		    /* accumulate the per-object per-view weight values */
 		    prd->optr->o_lenDensity[state->i_axis] += val;
+
+		    if (analysis_flags & ANALYSIS_CENTROIDS) {
+			/* calculate the center of mass for this partition */
+			VJOIN1(cmass, pt, dist*0.5, ap->a_ray.r_dir);
+
+			/* calculate the lenTorque for this partition (i.e. centerOfMass * lenDensity) */
+			VSCALE(lenTorque, cmass, val);
+
+			/* accumulate per-object per-view torque values */
+			VADD2(&prd->optr->o_lenTorque[state->i_axis*3], &prd->optr->o_lenTorque[state->i_axis*3], lenTorque);
+
+			/* accumulate the total lenTorque */
+			VADD2(&state->m_lenTorque[state->i_axis*3], &state->m_lenTorque[state->i_axis*3], lenTorque);
+
+			if (analysis_flags & ANALYSIS_MOMENTS) {
+			    vectp_t moi;
+			    vectp_t poi = &state->m_poi[state->i_axis*3];
+			    fastf_t dx_sq = cmass[X]*cmass[X];
+			    fastf_t dy_sq = cmass[Y]*cmass[Y];
+			    fastf_t dz_sq = cmass[Z]*cmass[Z];
+			    fastf_t mass = val * cell_area;
+
+			    /* Collect moments and products of inertia for the current object */
+			    moi = &prd->optr->o_moi[state->i_axis*3];
+			    moi[X] += one_twelfth*mass*(Ly_sq + Lz_sq) + mass*(dy_sq + dz_sq);
+			    moi[Y] += one_twelfth*mass*(Lx_sq + Lz_sq) + mass*(dx_sq + dz_sq);
+			    moi[Z] += one_twelfth*mass*(Lx_sq + Ly_sq) + mass*(dx_sq + dy_sq);
+			    poi = &prd->optr->o_poi[state->i_axis*3];
+			    poi[X] -= mass*cmass[X]*cmass[Y];
+			    poi[Y] -= mass*cmass[X]*cmass[Z];
+			    poi[Z] -= mass*cmass[Y]*cmass[Z];
+
+			    /* Collect moments and products of inertia for all objects */
+			    moi = &state->m_moi[state->i_axis*3];
+			    moi[X] += one_twelfth*mass*(Ly_sq + Lz_sq) + mass*(dy_sq + dz_sq);
+			    moi[Y] += one_twelfth*mass*(Lx_sq + Lz_sq) + mass*(dx_sq + dz_sq);
+			    moi[Z] += one_twelfth*mass*(Lx_sq + Ly_sq) + mass*(dx_sq + dy_sq);
+			    poi = &state->m_poi[state->i_axis*3];
+			    poi[X] -= mass*cmass[X]*cmass[Y];
+			    poi[Y] -= mass*cmass[X]*cmass[Z];
+			    poi[Z] -= mass*cmass[Y]*cmass[Z];
+			}
+		    }
+
 		    bu_semaphore_release(GED_SEM_STATS);
 
 		} else {
 		    bu_vls_printf(&ged_current_gedp->ged_result_str, "density index %d from region %s is not set.\nAdd entry to density table\n",
 				  pp->pt_regionp->reg_gmater, pp->pt_regionp->reg_name);
+		    aborted = 1;
 		    return BRLCAD_ERROR;
 		}
 	    }
@@ -1286,6 +1392,9 @@ plane_worker (int cpu, genptr_t ptr)
     double v_coord;
     struct cstate *state = (struct cstate *)ptr;
 
+    if (aborted)
+	return;
+
     RT_APPLICATION_INIT(&ap);
     ap.a_rt_i = (struct rt_i *)state->rtip;	/* application uses this instance */
     ap.a_hit = hit;			/* where to go on a hit */
@@ -1323,6 +1432,9 @@ plane_worker (int cpu, genptr_t ptr)
 		ap.a_user = v;
 		(void)rt_shootray(&ap);
 
+		if (aborted)
+		    return;
+
 		bu_semaphore_acquire(GED_SEM_STATS);
 		state->shots[state->curr_view]++;
 		bu_semaphore_release(GED_SEM_STATS);
@@ -1339,6 +1451,9 @@ plane_worker (int cpu, genptr_t ptr)
 		DLOG(&ged_current_gedp->ged_result_str, "%5g %5g %5g -> %g %g %g\n", V3ARGS(ap.a_ray.r_pt), V3ARGS(ap.a_ray.r_dir));
 		ap.a_user = v;
 		(void)rt_shootray(&ap);
+
+		if (aborted)
+		    return;
 
 		bu_semaphore_acquire(GED_SEM_STATS);
 		state->shots[state->curr_view]++;
@@ -1410,6 +1525,9 @@ allocate_per_region_data(struct cstate *state, int start, int ac, const char *av
     state->m_volume = bu_calloc(sizeof(double), num_views, "volume");
     state->m_weight = bu_calloc(sizeof(double), num_views, "volume");
     state->shots = bu_calloc(sizeof(unsigned long), num_views, "volume");
+    state->m_lenTorque = (fastf_t *)bu_calloc(sizeof(vect_t), num_views, "lenTorque");
+    state->m_moi = (fastf_t *)bu_calloc(sizeof(vect_t), num_views, "moments of inertia");
+    state->m_poi = (fastf_t *)bu_calloc(sizeof(vect_t), num_views, "products of inertia");
 
     /* build data structures for the list of
      * objects the user specified on the command line
@@ -1421,6 +1539,9 @@ allocate_per_region_data(struct cstate *state, int start, int ac, const char *av
 	obj_tbl[i].o_lenDensity = bu_calloc(sizeof(double), num_views, "o_lenDensity");
 	obj_tbl[i].o_volume = bu_calloc(sizeof(double), num_views, "o_volume");
 	obj_tbl[i].o_weight = bu_calloc(sizeof(double), num_views, "o_weight");
+	obj_tbl[i].o_lenTorque = (fastf_t *)bu_calloc(sizeof(vect_t), num_views, "lenTorque");
+	obj_tbl[i].o_moi = (fastf_t *)bu_calloc(sizeof(vect_t), num_views, "moments of inertia");
+	obj_tbl[i].o_poi = (fastf_t *)bu_calloc(sizeof(vect_t), num_views, "products of inertia");
     }
 
     /* build objects for each region */
@@ -1789,6 +1910,8 @@ int
 terminate_check(struct cstate *state)
 {
     int wv_status;
+    int view;
+    int obj;
 
     DLOG(&ged_current_gedp->ged_result_str, "terminate_check\n");
     RT_CK_RTI(state->rtip);
@@ -1799,7 +1922,6 @@ terminate_check(struct cstate *state)
     if (plot_adjair) fflush(plot_adjair);
     if (plot_gaps) fflush(plot_gaps);
     if (plot_expair) fflush(plot_expair);
-
 
     /* this computation is done first, because there are
      * side effects that must be obtained whether we terminate or not
@@ -1893,6 +2015,17 @@ terminate_check(struct cstate *state)
 	    }
 	}
     }
+
+    for (view=0; view < num_views; view++) {
+	for (obj=0; obj < num_objects; obj++) {
+	    VSCALE(&obj_tbl[obj].o_moi[view*3], &obj_tbl[obj].o_moi[view*3], 0.25);
+	    VSCALE(&obj_tbl[obj].o_poi[view*3], &obj_tbl[obj].o_poi[view*3], 0.25);
+	}
+
+	VSCALE(&state->m_moi[view*3], &state->m_moi[view*3], 0.25);
+	VSCALE(&state->m_poi[view*3], &state->m_poi[view*3], 0.25);
+    }
+
     return 1;
 }
 
@@ -1906,7 +2039,7 @@ summary_reports(struct cstate *state, int start, int ac, const char *av[])
 {
     int view;
     int obj;
-    double avg;
+    double avg_mass;
     struct region *regp;
 
     if (multiple_analyses)
@@ -1917,15 +2050,82 @@ summary_reports(struct cstate *state, int start, int ac, const char *av[])
     if (analysis_flags & ANALYSIS_WEIGHT) {
 	bu_vls_printf(&ged_current_gedp->ged_result_str, "Weight:\n");
 	for (obj=0; obj < num_objects; obj++) {
-	    avg = 0.0;
+	    avg_mass = 0.0;
 
 	    for (view=0; view < num_views; view++) {
 		/* computed in terminate_check() */
-		avg += obj_tbl[obj].o_weight[view];
+		avg_mass += obj_tbl[obj].o_weight[view];
 	    }
-	    avg /= num_views;
+	    avg_mass /= num_views;
 	    bu_vls_printf(&ged_current_gedp->ged_result_str, "\t%*s %g %s\n", -max_region_name_len, obj_tbl[obj].o_name,
-			  avg / units[WGT]->val, units[WGT]->name);
+			  avg_mass / units[WGT]->val, units[WGT]->name);
+
+	    if (analysis_flags & ANALYSIS_CENTROIDS &&
+		!NEAR_ZERO(avg_mass, SQRT_SMALL_FASTF)) {
+		vect_t centroid;
+		fastf_t Dx_sq, Dy_sq, Dz_sq;
+		fastf_t inv_total_mass = 1.0/avg_mass;
+
+		VSETALL(centroid, 0.0);
+		for (view=0; view < num_views; view++) {
+		    vect_t torque;
+		    fastf_t cell_area = state->area[view] / state->shots[view];
+
+		    VSCALE(torque, &obj_tbl[obj].o_lenTorque[view*3], cell_area);
+		    VADD2(centroid, centroid, torque);
+		}
+
+		VSCALE(centroid, centroid, 1.0/(fastf_t)num_views);
+		VSCALE(centroid, centroid, inv_total_mass);
+		bu_vls_printf(&ged_current_gedp->ged_result_str,
+			      "\t\tcentroid: (%g %g %g) mm\n", V3ARGS(centroid));
+
+		/* Do the final calculations for the moments of inertia for the current object */
+		if (analysis_flags & ANALYSIS_MOMENTS) {
+		    struct bu_vls title;
+		    mat_t tmat; /* total mat */
+
+		    MAT_ZERO(tmat);
+		    for (view=0; view < num_views; view++) {
+			vectp_t moi = &obj_tbl[obj].o_moi[view*3];
+			vectp_t poi = &obj_tbl[obj].o_poi[view*3];
+
+			tmat[MSX] += moi[X];
+			tmat[MSY] += moi[Y];
+			tmat[MSZ] += moi[Z];
+			tmat[1] += poi[X];
+			tmat[2] += poi[Y];
+			tmat[6] += poi[Z];
+		    }
+
+		    tmat[MSX] /= (fastf_t)num_views;
+		    tmat[MSY] /= (fastf_t)num_views;
+		    tmat[MSZ] /= (fastf_t)num_views;
+		    tmat[1] /= (fastf_t)num_views;
+		    tmat[2] /= (fastf_t)num_views;
+		    tmat[6] /= (fastf_t)num_views;
+
+		    /* Lastly, apply the parallel axis theorem */
+		    Dx_sq = centroid[X]*centroid[X];
+		    Dy_sq = centroid[Y]*centroid[Y];
+		    Dz_sq = centroid[Z]*centroid[Z];
+		    tmat[MSX] -= avg_mass*(Dy_sq + Dz_sq);
+		    tmat[MSY] -= avg_mass*(Dx_sq + Dz_sq);
+		    tmat[MSZ] -= avg_mass*(Dx_sq + Dy_sq);
+		    tmat[1] += avg_mass*centroid[X]*centroid[Y];
+		    tmat[2] += avg_mass*centroid[X]*centroid[Z];
+		    tmat[6] += avg_mass*centroid[Y]*centroid[Z];
+
+		    tmat[4] = tmat[1];
+		    tmat[8] = tmat[2];
+		    tmat[9] = tmat[6];
+
+		    bu_vls_init(&title);
+		    bu_vls_printf(&title, "For the Moments and Products of Inertia For %s", obj_tbl[obj].o_name);
+		    bn_mat_print_vls(bu_vls_addr(&title), tmat, &ged_current_gedp->ged_result_str);
+		    bu_vls_free(&title);
+		}
+	    }
 	}
 
 
@@ -1936,7 +2136,7 @@ summary_reports(struct cstate *state, int start, int ac, const char *av[])
 		double low = HUGE;
 		double hi = -HUGE;
 
-		avg = 0.0;
+		avg_mass = 0.0;
 
 		for (view=0; view < num_views; view++) {
 		    wv = &((struct per_region_data *)regp->reg_udata)->r_weight[view];
@@ -1946,33 +2146,96 @@ summary_reports(struct cstate *state, int start, int ac, const char *av[])
 
 		    *wv /= units[WGT]->val;
 
-		    avg += *wv;
+		    avg_mass += *wv;
 
 		    if (*wv < low) low = *wv;
 		    if (*wv > hi) hi = *wv;
 		}
 
-		avg /= num_views;
+		avg_mass /= num_views;
 		bu_vls_printf(&ged_current_gedp->ged_result_str, "\t%s %g %s +(%g) -(%g)\n",
 			      regp->reg_name,
-			      avg,
+			      avg_mass,
 			      units[WGT]->name,
-			      hi - avg,
-			      avg - low);
+			      hi - avg_mass,
+			      avg_mass - low);
 	    }
 	}
 
-
 	/* print grand totals */
-	avg = 0.0;
+	avg_mass = 0.0;
 	for (view=0; view < num_views; view++) {
-	    avg += state->m_weight[view] =
+	    avg_mass += state->m_weight[view] =
 		state->m_lenDensity[view] *
 		(state->area[view] / state->shots[view]);
 	}
 
-	avg /= num_views;
-	bu_vls_printf(&ged_current_gedp->ged_result_str, "  Average total weight: %g %s\n", avg / units[WGT]->val, units[WGT]->name);
+	avg_mass /= num_views;
+	bu_vls_printf(&ged_current_gedp->ged_result_str, "  Average total weight: %g %s\n", avg_mass / units[WGT]->val, units[WGT]->name);
+
+	if (analysis_flags & ANALYSIS_CENTROIDS &&
+	    !NEAR_ZERO(avg_mass, SQRT_SMALL_FASTF)) {
+	    vect_t centroid;
+	    fastf_t Dx_sq, Dy_sq, Dz_sq;
+	    fastf_t inv_total_mass = 1.0/avg_mass;
+
+	    VSETALL(centroid, 0.0);
+	    for (view=0; view < num_views; view++) {
+		vect_t torque;
+		fastf_t cell_area = state->area[view] / state->shots[view];
+
+		VSCALE(torque, &state->m_lenTorque[view*3], cell_area);
+		VADD2(centroid, centroid, torque);
+	    }
+
+	    VSCALE(centroid, centroid, 1.0/(fastf_t)num_views);
+	    VSCALE(centroid, centroid, inv_total_mass);
+	    bu_vls_printf(&ged_current_gedp->ged_result_str,
+			  "  Average centroid: (%g %g %g) mm\n", V3ARGS(centroid));
+
+	    /* Do the final calculations for the moments of inertia for the current object */
+	    if (analysis_flags & ANALYSIS_MOMENTS) {
+		mat_t tmat; /* total mat */
+
+		MAT_ZERO(tmat);
+		for (view=0; view < num_views; view++) {
+		    vectp_t moi = &state->m_moi[view*3];
+		    vectp_t poi = &state->m_poi[view*3];
+
+		    tmat[MSX] += moi[X];
+		    tmat[MSY] += moi[Y];
+		    tmat[MSZ] += moi[Z];
+		    tmat[1] += poi[X];
+		    tmat[2] += poi[Y];
+		    tmat[6] += poi[Z];
+		}
+
+		tmat[MSX] /= (fastf_t)num_views;
+		tmat[MSY] /= (fastf_t)num_views;
+		tmat[MSZ] /= (fastf_t)num_views;
+		tmat[1] /= (fastf_t)num_views;
+		tmat[2] /= (fastf_t)num_views;
+		tmat[6] /= (fastf_t)num_views;
+
+		/* Lastly, apply the parallel axis theorem */
+		Dx_sq = centroid[X]*centroid[X];
+		Dy_sq = centroid[Y]*centroid[Y];
+		Dz_sq = centroid[Z]*centroid[Z];
+		tmat[MSX] -= avg_mass*(Dy_sq + Dz_sq);
+		tmat[MSY] -= avg_mass*(Dx_sq + Dz_sq);
+		tmat[MSZ] -= avg_mass*(Dx_sq + Dy_sq);
+		tmat[1] += avg_mass*centroid[X]*centroid[Y];
+		tmat[2] += avg_mass*centroid[X]*centroid[Z];
+		tmat[6] += avg_mass*centroid[Y]*centroid[Z];
+
+		tmat[4] = tmat[1];
+		tmat[8] = tmat[2];
+		tmat[9] = tmat[6];
+
+		bn_mat_print_vls("For the Moments and Products of Inertia For\n\tAll Specified Objects",
+				 tmat, &ged_current_gedp->ged_result_str);
+	    }
+	}
     }
 
 
@@ -1981,14 +2244,14 @@ summary_reports(struct cstate *state, int start, int ac, const char *av[])
 
 	/* print per-object */
 	for (obj=0; obj < num_objects; obj++) {
-	    avg = 0.0;
+	    avg_mass = 0.0;
 
 	    for (view=0; view < num_views; view++)
-		avg += obj_tbl[obj].o_volume[view];
+		avg_mass += obj_tbl[obj].o_volume[view];
 
-	    avg /= num_views;
+	    avg_mass /= num_views;
 	    bu_vls_printf(&ged_current_gedp->ged_result_str, "\t%*s %g %s\n", -max_region_name_len, obj_tbl[obj].o_name,
-			  avg / units[VOL]->val, units[VOL]->name);
+			  avg_mass / units[VOL]->val, units[VOL]->name);
 	}
 
 	if (print_per_region_stats) {
@@ -1998,7 +2261,7 @@ summary_reports(struct cstate *state, int start, int ac, const char *av[])
 	    for (BU_LIST_FOR(regp, region, &(state->rtip->HeadRegion)))  {
 		double low = HUGE;
 		double hi = -HUGE;
-		avg = 0.0;
+		avg_mass = 0.0;
 
 		for (view=0; view < num_views; view++) {
 		    vv = &((struct per_region_data *)regp->reg_udata)->r_volume[view];
@@ -2014,30 +2277,30 @@ summary_reports(struct cstate *state, int start, int ac, const char *av[])
 		    if (*vv < low) low = *vv;
 		    if (*vv > hi) hi = *vv;
 
-		    avg += *vv;
+		    avg_mass += *vv;
 		}
 
-		avg /= num_views;
+		avg_mass /= num_views;
 
 		bu_vls_printf(&ged_current_gedp->ged_result_str, "\t%s volume:%g %s +(%g) -(%g)\n",
 			      regp->reg_name,
-			      avg,
+			      avg_mass,
 			      units[VOL]->name,
-			      hi - avg,
-			      avg - low);
+			      hi - avg_mass,
+			      avg_mass - low);
 	    }
 	}
 
 
 	/* print grand totals */
-	avg = 0.0;
+	avg_mass = 0.0;
 	for (view=0; view < num_views; view++) {
-	    avg += state->m_volume[view] =
+	    avg_mass += state->m_volume[view] =
 		state->m_len[view] * (state->area[view] / state->shots[view]);
 	}
 
-	avg /= num_views;
-	bu_vls_printf(&ged_current_gedp->ged_result_str, "  Average total volume: %g %s\n", avg / units[VOL]->val, units[VOL]->name);
+	avg_mass /= num_views;
+	bu_vls_printf(&ged_current_gedp->ged_result_str, "  Average total volume: %g %s\n", avg_mass / units[VOL]->val, units[VOL]->name);
     }
     if (analysis_flags & ANALYSIS_OVERLAPS) list_report(&overlapList);
     if (analysis_flags & ANALYSIS_ADJ_AIR)  list_report(&adjAirList);
@@ -2071,6 +2334,7 @@ ged_gqa(struct ged *gedp, int argc, const char *argv[])
     struct cstate state;
     int start_objs; /* index in command line args where geom object list starts */
     struct region_pair *rp;
+    struct region *regp;
     static const char *usage = "object [object ...]";
 
     GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
@@ -2088,7 +2352,7 @@ ged_gqa(struct ged *gedp, int argc, const char *argv[])
     ged_current_gedp = gedp;
 
     analysis_flags = ANALYSIS_VOLUME | ANALYSIS_OVERLAPS | ANALYSIS_WEIGHT |
-	ANALYSIS_EXP_AIR | ANALYSIS_ADJ_AIR | ANALYSIS_GAP;
+	ANALYSIS_EXP_AIR | ANALYSIS_ADJ_AIR | ANALYSIS_GAP | ANALYSIS_CENTROIDS | ANALYSIS_MOMENTS;
     multiple_analyses = 1;
     azimuth_deg = 0.0;
     elevation_deg = 0.0;
@@ -2239,8 +2503,11 @@ ged_gqa(struct ged *gedp, int argc, const char *argv[])
 	    state.v = 1;
 
 	    bu_parallel(plane_worker, ncpu, (genptr_t)&state);
-	    view_reports(&state);
 
+	    if (aborted)
+		goto aborted;
+
+	    view_reports(&state);
 	}
 
 	state.first = 0;
@@ -2248,6 +2515,7 @@ ged_gqa(struct ged *gedp, int argc, const char *argv[])
 
     } while (terminate_check(&state));
 
+aborted:
     if (plot_overlaps) fclose(plot_overlaps);
     if (plot_weight) fclose(plot_weight);
     if (plot_volume) fclose(plot_volume);
@@ -2258,7 +2526,11 @@ ged_gqa(struct ged *gedp, int argc, const char *argv[])
 
     if (verbose)
 	bu_vls_printf(&gedp->ged_result_str, "Computation Done\n");
-    summary_reports(&state, start_objs, argc, argv);
+
+    if (!aborted)
+	summary_reports(&state, start_objs, argc, argv);
+    else
+	aborted = 0; /* reset flag */
 
 
     /* Clear out the lists */
@@ -2278,6 +2550,42 @@ ged_gqa(struct ged *gedp, int argc, const char *argv[])
 	BU_LIST_DEQUEUE(&rp->l);
 	bu_free(rp, "exposedAirList items");
     }
+
+    /* Free dynamically allocated state */
+    bu_free(state.m_lenDensity, "m_lenDensity");
+    bu_free(state.m_len, "m_len");
+    bu_free(state.m_volume, "m_volume");
+    bu_free(state.m_weight, "m_weight");
+    bu_free(state.shots, "m_shots");
+    bu_free(state.m_lenTorque, "m_lenTorque");
+    bu_free(state.m_moi, "m_moi");
+    bu_free(state.m_poi, "m_poi");
+
+    for (i=0; i < num_objects; i++) {
+	bu_free(obj_tbl[i].o_name, "o_name");
+	bu_free(obj_tbl[i].o_len, "o_len");
+	bu_free(obj_tbl[i].o_lenDensity, "o_lenDensity");
+	bu_free(obj_tbl[i].o_volume, "o_volume");
+	bu_free(obj_tbl[i].o_weight, "o_weight");
+	bu_free(obj_tbl[i].o_lenTorque, "o_lenTorque");
+	bu_free(obj_tbl[i].o_moi, "o_moi");
+	bu_free(obj_tbl[i].o_poi, "o_poi");
+    }
+    bu_free(obj_tbl, "object table");
+
+    for (i=0, BU_LIST_FOR(regp, region, &(rtip->HeadRegion)), i++)  {
+	bu_free(reg_tbl[i].r_lenDensity, "r_lenDensity");
+	bu_free(reg_tbl[i].r_len, "r_len");
+	bu_free(reg_tbl[i].r_volume, "r_volume");
+	bu_free(reg_tbl[i].r_weight, "r_weight");
+    }
+    bu_free(reg_tbl, "object table");
+
+    bu_free(densities, "densities");
+
+    obj_tbl = NULL;
+    reg_tbl = NULL;
+    densities = NULL;
 
     return BRLCAD_OK;
 }
