@@ -987,8 +987,11 @@ overlap(struct application *ap,
 #endif
 	    bu_semaphore_release(BU_SEM_SYSCALL);
 	}
-    } else
+    } else {
+	bu_semaphore_acquire(GED_SEM_WORKER);
 	bu_vls_printf(&ged_current_gedp->ged_result_str, "overlap %s %s\n", reg1->reg_name, reg2->reg_name);
+	bu_semaphore_release(GED_SEM_WORKER);
+    }
 
     /* XXX We should somehow flag the volume/weight calculations as invalid */
 
@@ -1071,10 +1074,12 @@ hit(register struct application *ap, struct partition *PartHeadp, struct seg *se
 	VJOIN1(pt, ap->a_ray.r_pt, pp->pt_inhit->hit_dist, ap->a_ray.r_dir);
 	VJOIN1(opt, ap->a_ray.r_pt, pp->pt_outhit->hit_dist, ap->a_ray.r_dir);
 
+	bu_semaphore_acquire(GED_SEM_WORKER);
 	DLOG(&ged_current_gedp->ged_result_str, "%s %g->%g\n",
 	     pp->pt_regionp->reg_name,
 	     pp->pt_inhit->hit_dist,
 	     pp->pt_outhit->hit_dist);
+	bu_semaphore_release(GED_SEM_WORKER);
 
 	/* checking for air sticking out of the model .
 	 * This is done here because there may be any number of air
@@ -1128,13 +1133,18 @@ hit(register struct application *ap, struct partition *PartHeadp, struct seg *se
 
 	/* computing the weight of the objects */
 	if (analysis_flags & ANALYSIS_WEIGHT) {
+	    bu_semaphore_acquire(GED_SEM_WORKER);
 	    DLOG(&ged_current_gedp->ged_result_str, "Hit %s doing weight\n", pp->pt_regionp->reg_name);
+	    bu_semaphore_release(GED_SEM_WORKER);
+
 	    /* make sure mater index is within range of densities */
 	    if (pp->pt_regionp->reg_gmater >= num_densities) {
+		bu_semaphore_acquire(GED_SEM_WORKER);
 		bu_vls_printf(&ged_current_gedp->ged_result_str, "density index %d on region %s is outside of range of table [1..%d]\nSet GIFTmater on region or add entry to density table\n",
 			      pp->pt_regionp->reg_gmater,
 			      pp->pt_regionp->reg_name,
 			      num_densities); /* XXX this should do something else */
+		bu_semaphore_release(GED_SEM_WORKER);
 		return BRLCAD_ERROR;
 	    } else {
 
@@ -1185,7 +1195,9 @@ hit(register struct application *ap, struct partition *PartHeadp, struct seg *se
 		    los = pp->pt_regionp->reg_los;
 
 		    if (los < 1) {
+			bu_semaphore_acquire(GED_SEM_WORKER);
 			bu_vls_printf(&ged_current_gedp->ged_result_str, "bad LOS (%d) on %s\n", los, pp->pt_regionp->reg_name);
+			bu_semaphore_release(GED_SEM_WORKER);
 		    }
 
 		    /* accumulate the total weight values */
@@ -1246,8 +1258,11 @@ hit(register struct application *ap, struct partition *PartHeadp, struct seg *se
 		    bu_semaphore_release(GED_SEM_STATS);
 
 		} else {
+		    bu_semaphore_acquire(GED_SEM_WORKER);
 		    bu_vls_printf(&ged_current_gedp->ged_result_str, "density index %d from region %s is not set.\nAdd entry to density table\n",
 				  pp->pt_regionp->reg_gmater, pp->pt_regionp->reg_name);
+		    bu_semaphore_release(GED_SEM_WORKER);
+
 		    aborted = 1;
 		    return BRLCAD_ERROR;
 		}
@@ -1270,11 +1285,13 @@ hit(register struct application *ap, struct partition *PartHeadp, struct seg *se
 		bu_semaphore_release(GED_SEM_STATS);
 	    }
 
+	    bu_semaphore_acquire(GED_SEM_WORKER);
 	    DLOG(&ged_current_gedp->ged_result_str, "\t\tvol hit %s oDist:%g objVol:%g %s\n",
 		 pp->pt_regionp->reg_name,
 		 dist,
 		 prd->optr->o_len[state->curr_view],
 		 prd->optr->o_name);
+	    bu_semaphore_release(GED_SEM_WORKER);
 
 	    if (plot_volume) {
 		point_t opt;
@@ -1350,7 +1367,9 @@ int
 miss(register struct application *ap)
 {
 #if 0
+    bu_semaphore_acquire(GED_SEM_WORKER);
     bu_vls_printf(&ged_current_gedp->ged_result_str, "missed\n");
+    bu_semaphore_release(GED_SEM_WORKER);
 #endif
     return(0);
 }
@@ -1417,7 +1436,9 @@ plane_worker (int cpu, genptr_t ptr)
     while ((v = get_next_row(state))) {
 
 	v_coord = v * gridSpacing;
+	bu_semaphore_acquire(GED_SEM_WORKER);
 	DLOG(&ged_current_gedp->ged_result_str, "  v = %d v_coord=%g\n", v, v_coord);
+	bu_semaphore_release(GED_SEM_WORKER);
 
 	if ((v&1) || state->first) {
 	    /* shoot all the rays in this row.
@@ -1429,7 +1450,9 @@ plane_worker (int cpu, genptr_t ptr)
 		ap.a_ray.r_pt[state->v_axis] = ap.a_rt_i->mdl_min[state->v_axis] + v*gridSpacing;
 		ap.a_ray.r_pt[state->i_axis] = ap.a_rt_i->mdl_min[state->i_axis];
 
+		bu_semaphore_acquire(GED_SEM_WORKER);
 		DLOG(&ged_current_gedp->ged_result_str, "%5g %5g %5g -> %g %g %g\n", V3ARGS(ap.a_ray.r_pt), V3ARGS(ap.a_ray.r_dir));
+		bu_semaphore_release(GED_SEM_WORKER);
 		ap.a_user = v;
 		(void)rt_shootray(&ap);
 
@@ -1449,7 +1472,9 @@ plane_worker (int cpu, genptr_t ptr)
 		ap.a_ray.r_pt[state->v_axis] = ap.a_rt_i->mdl_min[state->v_axis] + v*gridSpacing;
 		ap.a_ray.r_pt[state->i_axis] = ap.a_rt_i->mdl_min[state->i_axis];
 
+		bu_semaphore_acquire(GED_SEM_WORKER);
 		DLOG(&ged_current_gedp->ged_result_str, "%5g %5g %5g -> %g %g %g\n", V3ARGS(ap.a_ray.r_pt), V3ARGS(ap.a_ray.r_dir));
+		bu_semaphore_release(GED_SEM_WORKER);
 		ap.a_user = v;
 		(void)rt_shootray(&ap);
 
@@ -1461,14 +1486,19 @@ plane_worker (int cpu, genptr_t ptr)
 		bu_semaphore_release(GED_SEM_STATS);
 
 		if (debug)
-		    if (u+1 <  state->steps[state->u_axis])
+		    if (u+1 <  state->steps[state->u_axis]) {
+			bu_semaphore_acquire(GED_SEM_WORKER);
 			bu_vls_printf(&ged_current_gedp->ged_result_str, "  ---\n");
+			bu_semaphore_release(GED_SEM_WORKER);
+		    }
 	    }
 	}
     }
 
     if (u == -1) {
+	bu_semaphore_acquire(GED_SEM_WORKER);
 	DLOG(&ged_current_gedp->ged_result_str, "didn't shoot any rays\n");
+	bu_semaphore_release(GED_SEM_WORKER);
     }
 
     /* There's nothing else left to work on in this view.
@@ -1503,7 +1533,9 @@ find_cmd_line_obj(struct per_obj_data *obj_rpt, const char *name)
 	    return i;
 	}
     }
+
     bu_vls_printf(&ged_current_gedp->ged_result_str, "%s Didn't find object named \"%s\" in %d entries\n", BU_FLSTR, name, num_objects);
+
     return BRLCAD_ERROR;
 }
 
@@ -1576,6 +1608,7 @@ list_report(struct region_pair *list)
 
     if (BU_LIST_IS_EMPTY(&list->l)) {
 	bu_vls_printf(&ged_current_gedp->ged_result_str, "No %s\n", (char *)list->r.name);
+
 	return;
     }
 
