@@ -29,8 +29,13 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#ifdef HAVE_UNISTD_H
+#  include <unistd.h>
+#endif
 
 #include "./canon.h"
+
+#include "fb.h"
 
 char cmdbuf[64]="/usr/mdqs/bin/qpr -q "; /* queue name filled in by main() */
 
@@ -64,7 +69,7 @@ queue(fp)
     for (args=1; args < arg_c; args++) {
 
 	if (!strcmp(arg_v[args], "-a")) {
-	    fprintf(pfp, " -w %d -n %d", width, height);
+	    fprintf(pfp, " -w %ld -n %ld", width, height);
 	} if (!strcmp(arg_v[args], "-d")) {
 	    args += 2;	/* skip device specification */
 	} if (!strcmp(arg_v[args], "-v") ||

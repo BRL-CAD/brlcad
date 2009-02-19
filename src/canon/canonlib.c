@@ -47,6 +47,7 @@ int ipu_debug = 0;
  */
 int dsdebug = 0;
 
+#if defined(IRIX) && (IRIX == 4 || IRIX == 5 || IRIX == 6)
 static void
 toshort(dest, src)
     u_char	*dest;
@@ -65,7 +66,6 @@ toint(dest, src)
     dest[2] = (u_char)(src >> 8);
     dest[3] = (u_char)src;
 }
-#if defined(IRIX) && (IRIX == 4 || IRIX == 5 || IRIX == 6)
 static void scsi_perror(int val, struct dsreq *dsp)
 {
     fprintf(stderr, "doscsicmd retuns: %d ds_ret: 0x%02x   ds_status: 0x%02x  ds_msg: 0x%02x\n",
@@ -1161,8 +1161,8 @@ int  ipu_bytes_per_pixel = 3;
 char tray = IPU_UPPER_CASSETTE;
 char conv = IPU_AUTOSCALE;
 char clear = 0;
-int width = 512;
-int height = 512;
+unsigned long width = 512;
+unsigned long height = 512;
 int zoom = 0;
 int scr_width;
 int scr_height;
@@ -1237,7 +1237,7 @@ int parse_args(ac, av)
 	}
 
 	/* add option & arg to arg_v */
-	if (p=strchr(options, c)) {
+	if ((p=strchr(options, c))) {
 	    arg_v[arg_c++] = &arg_buf[len];
 	    arg_v[arg_c] = (char *)NULL;
 	    (void)sprintf(&arg_buf[len], "-%c", c);
