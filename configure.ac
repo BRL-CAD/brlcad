@@ -1897,7 +1897,7 @@ fi
 
 dnl verbose warning flags (if yes or auto)
 if test "x$bc_build_warnings" != "xno" ; then
-	BC_COMPILER_AND_LINKER_RECOGNIZES([-W -Wall -Wundef -Wfloat-equal -Wshadow -Wunreachable-code -Winline -Wconversion], [warning])
+	BC_COMPILER_AND_LINKER_RECOGNIZES([-W -Wall -Wundef -Wfloat-equal -Wshadow -Wunreachable-code -Winline], [warning])
 	# XXX also of interest
 	# -Wmissing-declarations -Wmissing-prototypes -Wstrict-prototypes -pedantic -ansi -Werror
 
