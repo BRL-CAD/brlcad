@@ -124,6 +124,9 @@ htond(register unsigned char *out, register const unsigned char *in, int count)
 		in += SIZEOF_NETWORK_DOUBLE;
 	    }
 	    return;
+	default:
+	    /* nada */
+	    break;
     }
 
     /* Now, for the machine-specific stuff.
@@ -432,6 +435,9 @@ ntohd(register unsigned char *out, register const unsigned char *in, int count)
 		in += SIZEOF_NETWORK_DOUBLE;
 	    }
 	    return;
+	default:
+	    /* nada */
+	    break;
     }
 
     /* Now, for the machine-specific stuff.
