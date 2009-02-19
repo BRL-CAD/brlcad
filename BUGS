@@ -15,6 +15,8 @@ on-going issues.
 Recent Bugs
 -----------
 
+* ls -A and/or e -A reportedly crashes on use, unverified
+
 * File->Export seems to not work on Windows
 
 * xpush fails to properly create a hierarchy leaving some as top-level
