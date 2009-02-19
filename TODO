@@ -42,6 +42,8 @@ THESE SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 * make sure news2tracker.sh is not missing recent news items.  several
   were missing from a recent report generated (unverified).
 
+* make mged 'inside' command work with geometry being edited
+
 
 THESE ARE LOWER PRIORITY OR FOR FUTURE RELEASES
 -----------------------------------------------
