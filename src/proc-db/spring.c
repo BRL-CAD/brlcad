@@ -45,51 +45,36 @@
 void helical_compression_coil_plain(struct rt_wdb (*file), char *prefix, fastf_t mean_outer_diameter, fastf_t wire_diameter, fastf_t helix_angle, fastf_t pitch, int nt, int end_type)
 {
     struct bu_list head;
-    int i;
-    fastf_t pipe_bend;
-    point_t origin, pnt1, pnt2, pnt3, pnt4;
+    int i,j;
+    fastf_t coil_radius, pipe_bend;
+    point_t origin, pnt1, pnt2, pnt3, pnt4, pnt5, pnt6, pnt7, pnt8;
 
     VSET(origin, 0, 0 ,0);
 
-    pipe_bend = mean_outer_diameter/2;
+    coil_radius = mean_outer_diameter/2 - wire_diameter/2;
+    pipe_bend = coil_radius;
     mk_pipe_init(&head);
-    
-    VSET(pnt1, mean_outer_diameter/2 , 0, 0);
-    VSET(pnt2, mean_outer_diameter, 0, pitch/4);
-    VSET(pnt3, mean_outer_diameter, mean_outer_diameter, pitch/2);
-    VSET(pnt4, 0, mean_outer_diameter, pitch*3/4);
-    mk_add_pipe_pt(&head, pnt1, wire_diameter, 0.0, pipe_bend);
-    mk_add_pipe_pt(&head, pnt2, wire_diameter, 0.0, pipe_bend);
-    mk_add_pipe_pt(&head, pnt3, wire_diameter, 0.0, pipe_bend);
-    mk_add_pipe_pt(&head, pnt4, wire_diameter, 0.0, pipe_bend);
-
-    VSET(pnt1, 0 , 0, pitch);
-    VSET(pnt2, mean_outer_diameter/2, 0, pitch + pitch/4);
-    mk_add_pipe_pt(&head, pnt1, wire_diameter, 0.0, pipe_bend);
-    mk_add_pipe_pt(&head, pnt2, wire_diameter, 0.0, pipe_bend);
-
-/*
-    
-    for (i = 1; i < nt - 1; i++) {
-    	VSET(pnt1, 0 , 0, i*pitch);
-    	VSET(pnt2, mean_outer_diameter, 0, i*pitch+pitch/4);
-    	VSET(pnt3, mean_outer_diameter, mean_outer_diameter, i*pitch + pitch/2);
-    	VSET(pnt4, 0, mean_outer_diameter, i*pitch + pitch*3/4);
+    for (i = 0; i < nt; i++) {
+    	VSET(pnt1, 0, -coil_radius, (i-1)*pitch);
+    	VSET(pnt2, coil_radius , -coil_radius, (i-1)*pitch + pitch/8);
+    	VSET(pnt3, coil_radius , 0, (i-1)*pitch + pitch/4);
+    	VSET(pnt4, coil_radius , coil_radius, (i-1)*pitch + pitch*3/8);
+    	VSET(pnt5, 0 , coil_radius, (i-1)*pitch + pitch/2);
+    	VSET(pnt6, -coil_radius , coil_radius, (i-1)*pitch + pitch*5/8);
+    	VSET(pnt7, -coil_radius , 0, (i-1)*pitch + pitch*3/4);
+    	VSET(pnt8, -coil_radius , -coil_radius, (i-1)*pitch + pitch*7/8);
     	mk_add_pipe_pt(&head, pnt1, wire_diameter, 0.0, pipe_bend);
    	mk_add_pipe_pt(&head, pnt2, wire_diameter, 0.0, pipe_bend);
     	mk_add_pipe_pt(&head, pnt3, wire_diameter, 0.0, pipe_bend);
     	mk_add_pipe_pt(&head, pnt4, wire_diameter, 0.0, pipe_bend);
+    	mk_add_pipe_pt(&head, pnt5, wire_diameter, 0.0, pipe_bend);
+    	mk_add_pipe_pt(&head, pnt6, wire_diameter, 0.0, pipe_bend);
+    	mk_add_pipe_pt(&head, pnt7, wire_diameter, 0.0, pipe_bend);
+    	mk_add_pipe_pt(&head, pnt8, wire_diameter, 0.0, pipe_bend);
     }
 
-    VSET(pnt1, 0 , 0, (nt-1)*pitch);
-    VSET(pnt2, mean_outer_diameter, 0, (nt-1)*pitch + pitch/4);
-    VSET(pnt3, mean_outer_diameter, mean_outer_diameter, (nt-1)*pitch + pitch/2);
-    VSET(pnt4, mean_outer_diameter/2, mean_outer_diameter, (nt-1)*pitch + pitch*3/4);
+    VSET(pnt1, 0 , -coil_radius, (nt-1)*pitch);
     mk_add_pipe_pt(&head, pnt1, wire_diameter, 0.0, pipe_bend);
-    mk_add_pipe_pt(&head, pnt2, wire_diameter, 0.0, pipe_bend);
-    mk_add_pipe_pt(&head, pnt3, wire_diameter, 0.0, pipe_bend);
-    mk_add_pipe_pt(&head, pnt4, wire_diameter, 0.0, pipe_bend);
-*/
 
     mk_pipe(file, prefix, &head);
 
