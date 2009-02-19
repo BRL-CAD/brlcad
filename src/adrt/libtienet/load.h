@@ -33,6 +33,11 @@ int slave_load(tie_t *tie, struct adrt_load_info *, uint32_t dlen);
 extern uint32_t slave_load_mesh_num;
 extern adrt_mesh_t *slave_load_mesh_list;
 
+
+
+int slave_load_MySQL (uint32_t pid, tie_t *tie, const char *hostname);
+int slave_load_g (tie_t *tie, char *data);
+
 #endif
 
 /*

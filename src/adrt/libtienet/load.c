@@ -58,16 +58,6 @@ slave_load_free ()
 }
 
 int
-slave_load_g (tie_t *tie, char *data)
-{
-    char *filename, *region;
-    filename = data;
-    region = data + strlen(filename) + 1;
-    printf("Want to read %s from %s\n", region, filename);
-    return -1;
-}
-
-int
 slave_load_region (tie_t *tie, char *data)
 {
     /* 
