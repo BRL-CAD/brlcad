@@ -326,12 +326,12 @@ PKG_EXPORT PKG_EXTERN(unsigned long pkg_glong, (char *buf));
 /**
  * Put a 16-bit short into a char[2] array
  */
-PKG_EXPORT PKG_EXTERN(char *pkg_pshort, (char *buf, short unsigned int s));
+PKG_EXPORT PKG_EXTERN(char *pkg_pshort, (char *buf, unsigned short s));
 
 /**
  * Put a 32-bit long into a char[4] array
  */
-PKG_EXPORT PKG_EXTERN(char *pkg_plong, (char *buf, long unsigned int l));
+PKG_EXPORT PKG_EXTERN(char *pkg_plong, (char *buf, unsigned long l));
 
 /**
  * returns a human-readable string describing this version of the
