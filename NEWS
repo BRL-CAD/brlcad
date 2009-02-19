@@ -19,6 +19,7 @@ changes made.  See document footer for additional details.
 * improved g_qa usage message and missing density message - Bob Parker
 * fixed mged font preferences menu when ".mgedrc" present - Bob Parker
 * fixed oed docs bug noting lhs/rhs must be displayed - John Anderson
+* added the nmg_fix_normals command to mged - Erik Greenwald
 
 
 ----------------------------------------------------------------------
