@@ -1151,6 +1151,7 @@ hit(register struct application *ap, struct partition *PartHeadp, struct seg *se
 		    fastf_t Ly_sq;
 		    fastf_t Lz_sq;
 		    fastf_t cell_area;
+		    int     los;
 
 		    switch (state->i_axis) {
 		    case 0:
@@ -1181,7 +1182,7 @@ hit(register struct application *ap, struct partition *PartHeadp, struct seg *se
 		     * weight computation, factoring in the LOS
 		     * percentage material of the object
 		     */
-		    int los = pp->pt_regionp->reg_los;
+		    los = pp->pt_regionp->reg_los;
 
 		    if (los < 1) {
 			bu_vls_printf(&ged_current_gedp->ged_result_str, "bad LOS (%d) on %s\n", los, pp->pt_regionp->reg_name);
