@@ -98,6 +98,7 @@ validate_port(int port) {
 void
 server_helo(struct pkg_conn *connection, char *buf)
 {
+    connection=connection; /* quell */
     bu_log("Unexpected HELO encountered\n");
     free(buf);
 }
@@ -108,6 +109,7 @@ server_helo(struct pkg_conn *connection, char *buf)
 void
 server_data(struct pkg_conn *connection, char *buf)
 {
+    connection=connection; /* quell */
     bu_log("Received file data\n");
     free(buf);
 }
@@ -118,6 +120,7 @@ server_data(struct pkg_conn *connection, char *buf)
 void
 server_ciao(struct pkg_conn *connection, char *buf)
 {
+    connection=connection; /* quell */
     bu_log("CIAO encountered\n");
     free(buf);
 }
@@ -228,9 +231,9 @@ run_client(const char *server, int port, const char *file)
 {
     my_data stash;
     char s_port[MAX_DIGITS + 1] = {0};
-    int bytes = 0;
+    long bytes = 0;
     FILE *fp = (FILE *)NULL;
-    static const int TPKG_BUFSIZE = 2048;
+    static const unsigned int TPKG_BUFSIZE = 2048;
     char *buffer;
 
     buffer = (char *)bu_calloc(TPKG_BUFSIZE, 1, "buffer allocation");
@@ -267,10 +270,10 @@ run_client(const char *server, int port, const char *file)
     /* send the file data to the server */
     while (!feof(fp) && !ferror(fp)) {
 	bytes = fread(buffer, 1, 2048, fp);
-	bu_log("Read %d bytes from %s\n", bytes, file);
+	bu_log("Read %ld bytes from %s\n", bytes, file);
 
 	if (bytes > 0) {
-	    bytes = pkg_send(MSG_DATA, buffer, bytes, stash.connection);
+	    bytes = pkg_send(MSG_DATA, buffer, (size_t)bytes, stash.connection);
 	    if (bytes < 0) {
 		pkg_close(stash.connection);
 		bu_log("Unable to successfully send data to %s, port %d.\n", stash.server, stash.port);
