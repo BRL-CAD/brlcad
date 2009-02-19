@@ -101,7 +101,7 @@ typedef struct  {
 typedef struct FBIO_ {
     long	if_magic;
     /* Static information: per device TYPE.	*/
-    int	(*if_open)FB_ARGS((struct FBIO_ *ifp, char *file, int width, int height));		/**< @brief open device		*/
+    int	(*if_open)FB_ARGS((struct FBIO_ *ifp, char *file, int _width, int _height));		/**< @brief open device		*/
     int	(*if_close)FB_ARGS((struct FBIO_ *ifp));				/**< @brief close device		*/
     int	(*if_clear)FB_ARGS((struct FBIO_ *ifp, unsigned char *pp));		/**< @brief clear device 	*/
     int	(*if_read)FB_ARGS((struct FBIO_ *ifp, int x, int y, unsigned char *pp, int count));		/**< @brief read pixels		*/
@@ -113,10 +113,10 @@ typedef struct FBIO_ {
     int	(*if_setcursor)FB_ARGS((struct FBIO_ *ifp, const unsigned char *bits, int xb, int yb, int xo, int yo));	/**< @brief define cursor 	*/
     int	(*if_cursor)FB_ARGS((struct FBIO_ *ifp, int mode, int x, int y));		/**< @brief set cursor		*/
     int	(*if_getcursor)FB_ARGS((struct FBIO_ *ifp, int *mode, int *x, int *y));	/**< @brief get cursor		*/
-    int	(*if_readrect)FB_ARGS((struct FBIO_ *ifp, int xmin, int ymin, int width, int height, unsigned char *pp));	/**< @brief read rectangle 	*/
-    int	(*if_writerect)FB_ARGS((struct FBIO_ *ifp, int xmin, int ymin, int width, int height, const unsigned char *pp));	/**< @brief write rectangle 	*/
-    int	(*if_bwreadrect)FB_ARGS((struct FBIO_ *ifp, int xmin, int ymin, int width, int height, unsigned char *pp));	/**< @brief read monochrome rectangle 	*/
-    int	(*if_bwwriterect)FB_ARGS((struct FBIO_ *ifp, int xmin, int ymin, int width, int height, const unsigned char *pp));	/**< @brief write rectangle 	*/
+    int	(*if_readrect)FB_ARGS((struct FBIO_ *ifp, int xmin, int ymin, int _width, int _height, unsigned char *pp));	/**< @brief read rectangle 	*/
+    int	(*if_writerect)FB_ARGS((struct FBIO_ *ifp, int xmin, int ymin, int _width, int _height, const unsigned char *pp));	/**< @brief write rectangle 	*/
+    int	(*if_bwreadrect)FB_ARGS((struct FBIO_ *ifp, int xmin, int ymin, int _width, int _height, unsigned char *pp));	/**< @brief read monochrome rectangle 	*/
+    int	(*if_bwwriterect)FB_ARGS((struct FBIO_ *ifp, int xmin, int ymin, int _width, int _height, const unsigned char *pp));	/**< @brief write rectangle 	*/
     int	(*if_poll)FB_ARGS((struct FBIO_ *ifp));		/**< @brief handle events 	*/
     int	(*if_flush)FB_ARGS((struct FBIO_ *ifp));	/**< @brief flush output 	*/
     int	(*if_free)FB_ARGS((struct FBIO_ *ifp));		/**< @brief free resources 	*/
