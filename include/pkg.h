@@ -21,8 +21,8 @@
 /** @{ */
 /** @file pkg.h
  *
- * @brief
- * Data structures and manifest constants for use with the PKG library.
+ * LIBPKG provides routines to manage multiplexing and de-multiplexing
+ * synchronous and asynchronous messages across stream connections.
  *
  */
 
@@ -52,10 +52,10 @@
  */
 #if __STDC__ || USE_PROTOTYPES
 #	define	PKG_EXTERN(type_and_name, args)	extern type_and_name args
-#	define	PKG_ARGS(args)			args
+#	define	PKG_ARGS(args) args
 #else
 #	define	PKG_EXTERN(type_and_name, args)	extern type_and_name()
-#	define	PKG_ARGS(args)			()
+#	define	PKG_ARGS(args) ()
 #endif
 
 
@@ -115,31 +115,228 @@ struct pkg_conn {
 #define PKC_ERROR	((struct pkg_conn *)(-1L))
 
 
+/**
+ * Sends a VLS as a given message type across a pkg connection.
+ */
 #define pkg_send_vls(type, vlsp, pkg)	\
 	pkg_send( (type), bu_vls_addr((vlsp)), bu_vls_strlen((vlsp))+1, (pkg) )
 
-PKG_EXPORT PKG_EXTERN(int pkg_process, (register struct pkg_conn *));
-PKG_EXPORT PKG_EXTERN(int pkg_suckin, (register struct pkg_conn *));
+
+/**
+ * Open a network connection to a host/server.
+ *
+ * Returns PKC_ERROR on error.
+ */
 PKG_EXPORT PKG_EXTERN(struct pkg_conn *pkg_open, (const char *host, const char *service, const char *protocol, const char *uname, const char *passwd, const struct pkg_switch* switchp, pkg_errlog errlog));
-PKG_EXPORT PKG_EXTERN(struct pkg_conn *pkg_transerver, (const struct pkg_switch* switchp, pkg_errlog errlog));
-PKG_EXPORT PKG_EXTERN(int pkg_permserver, (const char *service, const char *protocol, int backlog, pkg_errlog));
-PKG_EXPORT PKG_EXTERN(int pkg_permserver_ip, (const char *ipOrHostname, const char *service, const char *protocol, int backlog, pkg_errlog errlog));
-PKG_EXPORT PKG_EXTERN(struct pkg_conn *pkg_getclient, (int fd, const struct pkg_switch *switchp, pkg_errlog errlog, int nodelay));
+
+/**
+ * Close a network connection.
+ *
+ * Gracefully release the connection block and close the connection.
+ */
 PKG_EXPORT PKG_EXTERN(void pkg_close, (struct pkg_conn* pc));
+
+/**
+ * 
+ */
+PKG_EXPORT PKG_EXTERN(int pkg_process, (register struct pkg_conn *));
+
+/**
+ * Suck all data from the operating system into the internal buffer.
+ *
+ * This is done with large buffers, to maximize the efficiency of the
+ * data transfer from kernel to user.
+ *
+ * It is expected that the read() system call will return as much data
+ * as the kernel has, UP TO the size indicated.  The only time the
+ * read() may be expected to block is when the kernel does not have
+ * any data at all.  Thus, it is wise to call call this routine only
+ * if:
+ *
+ *	a)  select() has indicated the presence of data, or
+ *	b)  blocking is acceptable.
+ *
+ * This routine is the only place where data is taken off the network.
+ * All input is appended to the internal buffer for later processing.
+ *
+ * Subscripting was used for pkc_incur/pkc_inend to avoid having to
+ * recompute pointers after a realloc().
+ *
+ * Returns -
+ *	-1 on error
+ *	 0 on EOF
+ *	 1 success
+ */
+PKG_EXPORT PKG_EXTERN(int pkg_suckin, (register struct pkg_conn *));
+
+/**
+ * Send a message on the connection.
+ *
+ * Send the user's data, prefaced with an identifying header which
+ * contains a message type value.  All header fields are exchanged in
+ * "network order".
+ *
+ * Note that the whole message (header + data) should be transmitted
+ * by TCP with only one TCP_PUSH at the end, due to the use of
+ * writev().
+ *
+ * Returns number of bytes of user data actually sent.
+ */
 PKG_EXPORT PKG_EXTERN(int pkg_send, (int type, const char *buf, size_t len, struct pkg_conn* pc));
+
+/**
+ * Send a two part message on the connection.
+ *
+ * Exactly like pkg_send, except user's data is located in two
+ * disjoint buffers, rather than one.  Fiendishly useful!
+ */
 PKG_EXPORT PKG_EXTERN(int pkg_2send, (int type, char *buf1, size_t len1, char *buf2, size_t len2, struct pkg_conn* pc));
+
+/**
+ * Send a message that doesn't need a push.
+ *
+ * Exactly like pkg_send except no "push" is necessary here.  If the
+ * packet is sufficiently small (MAXQLEN) it will be placed in the
+ * pkc_stream buffer (after flushing this buffer if there insufficient
+ * room).  If it is larger than this limit, it is sent via pkg_send
+ * (who will do a pkg_flush if there is already data in the stream
+ * queue).
+ *
+ * Returns number of bytes of user data actually sent (or queued).
+ */
 PKG_EXPORT PKG_EXTERN(int pkg_stream, (int type, const char *buf, size_t len, struct pkg_conn* pc));
+
+/**
+ * Empty the stream buffer of any queued messages.
+ *
+ * Flush any pending data in the pkc_stream buffer.
+ *
+ * Returns < 0 on failure, else number of bytes sent.
+ */
 PKG_EXPORT PKG_EXTERN(int pkg_flush, (struct pkg_conn* pc));
+
+/**
+ * Wait for a specific msg, user buf, processing others.
+ *
+ * This routine implements a blocking read on the network connection
+ * until a message of 'type' type is received.  This can be useful for
+ * implementing the synchronous portions of a query/reply exchange.
+ * All messages of any other type are processed by pkg_block().
+ *
+ * Returns the length of the message actually received, or -1 on error.
+ */
 PKG_EXPORT PKG_EXTERN(int pkg_waitfor, (int type, char *buf, size_t len, struct pkg_conn* pc));
+
+/**
+ * Wait for specific msg, malloc buf, processing others.
+ *
+ * This routine implements a blocking read on the network connection
+ * until a message of 'type' type is received.  This can be useful for
+ * implementing the synchronous portions of a query/reply exchange.
+ * All messages of any other type are processed by pkg_block().
+ *
+ * The buffer to contain the actual message is acquired via malloc(),
+ * and the caller must free it.
+ *
+ * Returns pointer to message buffer, or NULL.
+ */
 PKG_EXPORT PKG_EXTERN(char *pkg_bwaitfor, (int type, struct pkg_conn* pc));
+
+/**
+ * Wait until a full message has been read.
+ *
+ * This routine blocks, waiting for one complete message to arrive
+ * from the network.  The actual handling of the message is done with
+ * _pkg_dispatch(), which invokes the user-supplied message handler.
+ *
+ * This routine can be used in a loop to pass the time while waiting
+ * for a flag to be changed by the arrival of an asynchronous message,
+ * or for the arrival of a message of uncertain type.
+ *
+ * The companion routine is pkg_process(), which does not block.
+ *
+ * Control returns to the caller after one full message is processed.
+ * Returns -1 on error, etc.
+ */
 PKG_EXPORT PKG_EXTERN(int pkg_block, (struct pkg_conn* pc));
 
-/* Data conversion routines */
+/**
+ * Become a transient network server
+ *
+ * Become a one-time server on a given open connection.  A client has
+ * already called and we have already answered.  This will be a
+ * servers starting condition if he was created by a process like the
+ * UNIX inetd.
+ *
+ * Returns PKC_ERROR or a pointer to a pkg_conn structure.
+ */
+PKG_EXPORT PKG_EXTERN(struct pkg_conn *pkg_transerver, (const struct pkg_switch* switchp, pkg_errlog errlog));
+
+/**
+ * Create a network server, and listen for connection.
+ *
+ * We are now going to be a server for the indicated service.  Hang a
+ * LISTEN, and return the fd to select() on waiting for new
+ * connections.
+ *
+ * Returns fd to listen on (>=0), -1 on error.
+ */
+PKG_EXPORT PKG_EXTERN(int pkg_permserver, (const char *service, const char *protocol, int backlog, pkg_errlog));
+
+/**
+ * Create network server from IP address, and listen for connection.
+ *
+ * We are now going to be a server for the indicated service.  Hang a
+ * LISTEN, and return the fd to select() on waiting for new
+ * connections.
+ *
+ * Returns fd to listen on (>=0), -1 on error.
+ */
+PKG_EXPORT PKG_EXTERN(int pkg_permserver_ip, (const char *ipOrHostname, const char *service, const char *protocol, int backlog, pkg_errlog errlog));
+
+/**
+ * As permanent network server, accept a new connection
+ *
+ * Given an fd with a listen outstanding, accept the connection.  When
+ * poll == 0, accept is allowed to block.  When poll != 0, accept will
+ * not block.
+ *
+ * Returns -
+ *	       >0 ptr to pkg_conn block of new connection
+ *	 PKC_NULL accept would block, try again later
+ *	PKC_ERROR fatal error
+ */
+PKG_EXPORT PKG_EXTERN(struct pkg_conn *pkg_getclient, (int fd, const struct pkg_switch *switchp, pkg_errlog errlog, int nodelay));
+
+
+/****************************
+ * Data conversion routines *
+ ****************************/
+
+/**
+ * Get a 16-bit short from a char[2] array
+ */
 PKG_EXPORT PKG_EXTERN(unsigned short pkg_gshort, (char *buf));
+
+/**
+ * Get a 32-bit long from a char[4] array
+ */
 PKG_EXPORT PKG_EXTERN(unsigned long pkg_glong, (char *buf));
+
+/**
+ * Put a 16-bit short into a char[2] array
+ */
 PKG_EXPORT PKG_EXTERN(char *pkg_pshort, (char *buf, short unsigned int s));
+
+/**
+ * Put a 32-bit long into a char[4] array
+ */
 PKG_EXPORT PKG_EXTERN(char *pkg_plong, (char *buf, long unsigned int l));
 
+/**
+ * returns a human-readable string describing this version of the
+ * LIBPKG library.
+ */
 PKG_EXPORT PKG_EXTERN(const char *pkg_version, (void));
 
 #ifdef __cplusplus

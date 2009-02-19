@@ -19,26 +19,8 @@
  */
 /** @file pkg.c
  *
- *  Routines to manage multiplexing and de-multiplexing synchronous
- *  and asynchronous messages across stream connections.
- *
- *  Functions -
- *	pkg_gshort	Get a 16-bit short from a char[2] array
- *	pkg_glong	Get a 32-bit long from a char[4] array
- *	pkg_pshort	Put a 16-bit short into a char[2] array
- *	pkg_plong	Put a 32-bit long into a char[4] array
- *	pkg_open	Open a network connection to a host/server
- *	pkg_transerver	Become a transient network server
- *	pkg_permserver	Create a network server, and listen for connection
- *	pkg_getclient	As permanent network server, accept a new connection
- *	pkg_close	Close a network connection
- *	pkg_send	Send a message on the connection
- *	pkg_2send	Send a two part message on the connection
- *	pkg_stream	Send a message that doesn't need a push
- *	pkg_flush	Empty the stream buffer of any queued messages
- *	pkg_waitfor	Wait for a specific msg, user buf, processing others
- *	pkg_bwaitfor	Wait for specific msg, malloc buf, processing others
- *	pkg_block	Wait until a full message has been read
+ * LIBPKG provides routines to manage multiplexing and de-multiplexing
+ * synchronous and asynchronous messages across stream connections.
  *
  */
 
@@ -148,13 +130,10 @@ static FILE *_pkg_debug = (FILE*)NULL;
 
 /*
  * Routines to insert/extract short/long's into char arrays,
- * independend of machine byte order and word-alignment.
+ * independent of machine byte order and word-alignment.
  */
 
 
-/**
- * P K G _ G S H O R T
- */
 unsigned short
 pkg_gshort(char *buf)
 {
@@ -166,9 +145,6 @@ pkg_gshort(char *buf)
 }
 
 
-/**
- * P K G _ G L O N G
- */
 unsigned long
 pkg_glong(char *buf)
 {
@@ -182,9 +158,6 @@ pkg_glong(char *buf)
 }
 
 
-/**
- * P K G _ P S H O R T
- */
 char *
 pkg_pshort(char *buf, short unsigned int s)
 {
@@ -194,9 +167,6 @@ pkg_pshort(char *buf, short unsigned int s)
 }
 
 
-/**
- * P K G _ P L O N G
- */
 char *
 pkg_plong(char *buf, long unsigned int l)
 {
@@ -209,10 +179,12 @@ pkg_plong(char *buf, long unsigned int l)
 
 
 /**
- * P K G _ T I M E S T A M P
+ * _ P K G _ T I M E S T A M P
  *
  * Output a timestamp to the log, suitable for starting each line
  * with.
+ *
+ * This is a private implementation function.
  */
 static void
 _pkg_timestamp(void)
@@ -238,9 +210,11 @@ _pkg_timestamp(void)
 
 
 /**
- * P K G _ E R R L O G
+ * _ P K G _ E R R L O G
  *
  * Default error logger.  Writes to stderr.
+ *
+ * This is a private implementation function.
  */
 static void
 _pkg_errlog(char *s)
@@ -255,9 +229,11 @@ _pkg_errlog(char *s)
 
 
 /**
- * P K G _ P E R R O R
+ * _ P K G _ P E R R O R
  *
  * Produce a perror on the error logging output.
+ *
+ * This is a private implementation function.
  */
 static void
 _pkg_perror(void (*errlog) (char *msg), char *s)
@@ -276,9 +252,7 @@ _pkg_perror(void (*errlog) (char *msg), char *s)
 
 
 /**
- * P K G _ M A K E C O N N
- *
- * Internal.
+ * _ P K G _ M A K E C O N N
  *
  * Malloc and initialize a pkg_conn structure.  We have already
  * connected to a client or server on the given file descriptor.
@@ -286,6 +260,8 @@ _pkg_perror(void (*errlog) (char *msg), char *s)
  * Returns -
  *	       >0 ptr to pkg_conn block of new connection
  *	PKC_ERROR fatal error
+ *
+ * This is a private implementation function.
  */
 static
 struct pkg_conn *
@@ -324,7 +300,9 @@ _pkg_makeconn(int fd, const struct pkg_switch *switchp, void (*errlog) (char *ms
 
 
 /**
- * P K G _ C K _ D E B U G
+ * _ P K G _ C K _ D E B U G
+ *
+ * This is a private implementation function.
  */
 static void
 _pkg_ck_debug(void)
@@ -348,13 +326,6 @@ _pkg_ck_debug(void)
 }
 
 
-/**
- * P K G _ O P E N
- *
- * We are a client.  Make a connection to the server.
- *
- * Returns PKC_ERROR on error.
- */
 struct pkg_conn *
 pkg_open(const char *host, const char *service, const char *protocol, const char *uname, const char *passwd, const struct pkg_switch *switchp, void (*errlog) (char *msg))
 {
@@ -515,16 +486,6 @@ pkg_open(const char *host, const char *service, const char *protocol, const char
 }
 
 
-/**
- * P K G _ T R A N S E R V E R
- *
- * Become a one-time server on the open connection.  A client has
- * already called and we have already answered.  This will be a
- * servers starting condition if he was created by a process like the
- * UNIX inetd.
- *
- * Returns PKC_ERROR or a pointer to a pkg_conn structure.
- */
 struct pkg_conn *
 pkg_transerver(const struct pkg_switch *switchp, void (*errlog)(char *))
 {
@@ -546,7 +507,7 @@ pkg_transerver(const struct pkg_switch *switchp, void (*errlog)(char *))
 
 
 /**
- * Private implementation for pkg servers
+ * This is a private implementation function.
  */
 static int
 _pkg_permserver_impl(struct in_addr iface, const char *service, const char *protocol, int backlog, void (*errlog)(char *msg))
@@ -710,15 +671,6 @@ _pkg_permserver_impl(struct in_addr iface, const char *service, const char *prot
 }
 
 
-/**
- * P K G _ P E R M S E R V E R
- *
- * We are now going to be a server for the indicated service.  Hang a
- * LISTEN, and return the fd to select() on waiting for new
- * connections.
- *
- * Returns fd to listen on (>=0), -1 on error.
- */
 int
 pkg_permserver(const char *service, const char *protocol, int backlog, void (*errlog) (char *msg))
 {
@@ -728,15 +680,6 @@ pkg_permserver(const char *service, const char *protocol, int backlog, void (*er
 }
 
 
-/**
- * P K G _ P E R M S E R V E R _ I P
- *
- * We are now going to be a server for the indicated service.  Hang a
- * LISTEN, and return the fd to select() on waiting for new
- * connections.
- *
- * Returns fd to listen on (>=0), -1 on error.
- */
 int
 pkg_permserver_ip(const char *ipOrHostname, const char *service, const char *protocol, int backlog, void (*errlog)(char *msg))
 {
@@ -759,18 +702,6 @@ pkg_permserver_ip(const char *ipOrHostname, const char *service, const char *pro
 }
 
 
-/**
- * P K G _ G E T C L I E N T
- *
- * Given an fd with a listen outstanding, accept the connection.  When
- * poll == 0, accept is allowed to block.  When poll != 0, accept will
- * not block.
- *
- * Returns -
- *	       >0 ptr to pkg_conn block of new connection
- *	 PKC_NULL accept would block, try again later
- *	PKC_ERROR fatal error
- */
 struct pkg_conn *
 pkg_getclient(int fd, const struct pkg_switch *switchp, void (*errlog) (char *msg), int nodelay)
 {
@@ -845,11 +776,6 @@ pkg_getclient(int fd, const struct pkg_switch *switchp, void (*errlog) (char *ms
 }
 
 
-/**
- * P K G _ C L O S E
- *
- * Gracefully release the connection block and close the connection.
- */
 void
 pkg_close(register struct pkg_conn *pc)
 {
@@ -904,6 +830,8 @@ pkg_close(register struct pkg_conn *pc)
  *
  * This will block if the required number of bytes are not available.
  * The number of bytes actually transferred is returned.
+ *
+ * This is a private implementation function.
  */
 static size_t
 _pkg_inget(register struct pkg_conn *pc, char *buf, size_t count)
@@ -930,11 +858,13 @@ _pkg_inget(register struct pkg_conn *pc, char *buf, size_t count)
 
 
 /**
- * P K G _ C H E C K I N
+ * _ P K G _ C H E C K I N
  *
  * This routine is called whenever it is necessary to see if there is
  * more input that can be read.  If input is available, it is read
  * into pkc_inbuf[].  If nodelay is set, poll without waiting.
+ *
+ * This is a private implementation function.
  */
 static void
 _pkg_checkin(register struct pkg_conn *pc, int nodelay)
@@ -983,19 +913,6 @@ _pkg_checkin(register struct pkg_conn *pc, int nodelay)
 }
 
 
-/**
- * P K G _ S E N D
- *
- * Send the user's data, prefaced with an identifying header which
- * contains a message type value.  All header fields are exchanged in
- * "network order".
- *
- * Note that the whole message (header + data) should be transmitted
- * by TCP with only one TCP_PUSH at the end, due to the use of
- * writev().
- *
- * Returns number of bytes of user data actually sent.
- */
 int
 pkg_send(int type, const char *buf, size_t len, register struct pkg_conn *pc)
 {
@@ -1115,12 +1032,6 @@ pkg_send(int type, const char *buf, size_t len, register struct pkg_conn *pc)
 }
 
 
-/**
- * P K G _ 2 S E N D
- *
- * Exactly like pkg_send, except user's data is located in two
- * disjoint buffers, rather than one.  Fiendishly useful!
- */
 int
 pkg_2send(int type, char *buf1, size_t len1, char *buf2, size_t len2, register struct pkg_conn *pc)
 {
@@ -1259,18 +1170,6 @@ pkg_2send(int type, char *buf1, size_t len1, char *buf2, size_t len2, register s
 }
 
 
-/**
- * P K G _ S T R E A M
- *
- * Exactly like pkg_send except no "push" is necessary here.  If the
- * packet is sufficiently small (MAXQLEN) it will be placed in the
- * pkc_stream buffer (after flushing this buffer if there insufficient
- * room).  If it is larger than this limit, it is sent via pkg_send
- * (who will do a pkg_flush if there is already data in the stream
- * queue).
- *
- * Returns number of bytes of user data actually sent (or queued).
- */
 int
 pkg_stream(int type, const char *buf, size_t len, register struct pkg_conn *pc)
 {
@@ -1304,13 +1203,6 @@ pkg_stream(int type, const char *buf, size_t len, register struct pkg_conn *pc)
 }
 
 
-/**
- * P K G _ F L U S H
- *
- * Flush any pending data in the pkc_stream buffer.
- *
- * Returns < 0 on failure, else number of bytes sent.
- */
 int
 pkg_flush(register struct pkg_conn *pc)
 {
@@ -1349,14 +1241,14 @@ pkg_flush(register struct pkg_conn *pc)
 
 
 /**
- * P K G _ G E T H D R
- *
- * Internal.
+ * _ P K G _ G E T H D R
  *
  * Get header from a new message.
  * Returns:
  *	 1 when there is some message to go look at
  *	-1 on fatal errors
+ *
+ * This is a private implementation function.
  */
 static int
 _pkg_gethdr(register struct pkg_conn *pc, char *buf)
@@ -1421,16 +1313,6 @@ _pkg_gethdr(register struct pkg_conn *pc, char *buf)
 }
 
 
-/**
- * P K G _ W A I T F O R
- *
- * This routine implements a blocking read on the network connection
- * until a message of 'type' type is received.  This can be useful for
- * implementing the synchronous portions of a query/reply exchange.
- * All messages of any other type are processed by pkg_block().
- *
- * Returns the length of the message actually received, or -1 on error.
- */
 int
 pkg_waitfor(int type, char *buf, size_t len, register struct pkg_conn *pc)
 {
@@ -1523,19 +1405,6 @@ pkg_waitfor(int type, char *buf, size_t len, register struct pkg_conn *pc)
 }
 
 
-/**
- * P K G _ B W A I T F O R
- *
- * This routine implements a blocking read on the network connection
- * until a message of 'type' type is received.  This can be useful for
- * implementing the synchronous portions of a query/reply exchange.
- * All messages of any other type are processed by pkg_block().
- *
- * The buffer to contain the actual message is acquired via malloc(),
- * and the caller must free it.
- *
- * Returns pointer to message buffer, or NULL.
- */
 char *
 pkg_bwaitfor(int type, register struct pkg_conn *pc)
 {
@@ -1583,13 +1452,13 @@ pkg_bwaitfor(int type, register struct pkg_conn *pc)
 
 
 /**
- * P K G _ D I S P A T C H
- *
- * Internal.
+ * _ P K G _ D I S P A T C H
  *
  * Given that a whole message has arrived, send it to the appropriate
  * User Handler, or else grouse.  Returns -1 on fatal error, 0 on no
  * handler, 1 if all's well.
+ *
+ * This is a private implementation function.
  */
 static int
 _pkg_dispatch(register struct pkg_conn *pc)
@@ -1636,62 +1505,6 @@ _pkg_dispatch(register struct pkg_conn *pc)
 }
 
 
-/**
- * P K G _ P R O C E S S
- *
- * This routine should be called to process all PKGs that are stored
- * in the internal buffer pkc_inbuf.  This routine does no I/O, and is
- * used in a "polling" paradigm.
- *
- * Only after pkg_process() has been called on all PKG connections
- * should the user process suspend itself in a select() operation,
- * otherwise packages that have been read into the internal buffer
- * will remain unprocessed, potentially forever.
- *
- * If an error code is returned, then select() must NOT be called
- * until pkg_process has been called again.
- *
- * A plausable code sample might be:
- *
- *@code
- *	for (;;) {
- *		fd_set fds;
- *		struct timeval t;
- *		t.tv_sec = 99; t.tv_usec = 0;
- *		FD_ZERO(&fds);
- *		FD_SET(pc->pkc_fd, &fds);
- *		if (pkg_process(pc) < 0) {
- *			printf("pkg_process error encountered\n");
- *			continue;
- *		}
- *		if (select(pc->pkc_fd+1, &fds, NULL, NULL, &t) <= 0) {
- *			if (pkg_suckin(pc) <= 0) {
- *				printf("pkg_suckin error or EOF\n");
- *				break;
- *			}
- *		}
- *		if (pkg_process(pc) < 0) {
- *			printf("pkg_process error encountered\n");
- *			continue;
- *		}
- *		do_other_stuff();
- *	}
- *@endcode
- *
- * Note that the first call to pkg_process() handles all buffered
- * packages before a potentially long delay in select().  The second
- * call to pkg_process() handles any new packages obtained either
- * directly by pkg_suckin() or as a byproduct of a handler.  This
- * double checking is absolutely necessary, because the use of
- * pkg_send() or other pkg routines either in the actual handlers or
- * in do_other_stuff() can cause pkg_suckin() to be called to bring in
- * more packages.
- *
- * Returns -
- *	<0 some internal error encountered; DO NOT call select() next.
- *	 0 All ok, no packages processed
- *	>0 All ok, return is # of packages processed (for the curious)
- */
 int
 pkg_process(register struct pkg_conn *pc)
 {
@@ -1814,22 +1627,6 @@ pkg_process(register struct pkg_conn *pc)
 }
 
 
-/**
- * P K G _ B L O C K
- *
- * This routine blocks, waiting for one complete message to arrive
- * from the network.  The actual handling of the message is done with
- * _pkg_dispatch(), which invokes the user-supplied message handler.
- *
- * This routine can be used in a loop to pass the time while waiting
- * for a flag to be changed by the arrival of an asynchronous message,
- * or for the arrival of a message of uncertain type.
- *
- * The companion routine is pkg_process(), which does not block.
- *
- * Control returns to the caller after one full message is processed.
- * Returns -1 on error, etc.
- */
 int
 pkg_block(register struct pkg_conn *pc)
 {
@@ -1862,33 +1659,6 @@ pkg_block(register struct pkg_conn *pc)
 }
 
 
-/**
- * P K G _ S U C K I N
- *
- * Suck all data from the operating system into the internal buffer.
- * This is done with large buffers, to maximize the efficiency of the
- * data transfer from kernel to user.
- *
- * It is expected that the read() system call will return as much data
- * as the kernel has, UP TO the size indicated.  The only time the
- * read() may be expected to block is when the kernel does not have
- * any data at all.  Thus, it is wise to call call this routine only
- * if:
- *
- *	a)  select() has indicated the presence of data, or
- *	b)  blocking is acceptable.
- *
- * This routine is the only place where data is taken off the network.
- * All input is appended to the internal buffer for later processing.
- *
- * Subscripting was used for pkc_incur/pkc_inend to avoid having to
- * recompute pointers after a realloc().
- *
- * Returns -
- *	-1 on error
- *	 0 on EOF
- *	 1 success
- */
 int
 pkg_suckin(register struct pkg_conn *pc)
 {
