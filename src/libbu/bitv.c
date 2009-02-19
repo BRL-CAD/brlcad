@@ -266,7 +266,7 @@ bu_bitv_to_hex(struct bu_vls *v, register const struct bu_bitv *bv)
 	while (byte_no--)
 	{
 	    bu_vls_printf(v, "%02lx",
-			  ((bv->bits[word_count] & (((bitv_t)0xff)<<(byte_no*8))) >> (byte_no*8)) & (bitv_t)0xff);
+			  (unsigned long)((bv->bits[word_count] & ((bitv_t)(0xff)<<(byte_no*8))) >> (byte_no*8)) & (bitv_t)0xff);
 	}
 	byte_no = sizeof(bitv_t);
     }
