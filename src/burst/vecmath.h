@@ -21,12 +21,14 @@
 /** @file vecmath.h
  *	Author:		Gary S. Moss
  */
-#ifndef _POLY9
+
+#include "common.h"
 #include <math.h>
-#endif
+
 #ifndef Abs
-#define Abs( a )		((a) > 0 ? (a) : -(a))
+#  define Abs( a )		((a) > 0 ? (a) : -(a))
 #endif
+
 #define AbsDotProd( A, B )	(Abs( Dot( A, B ) ))
 #define AddVec( A, B )        { (A)[X] += (B)[X]; \
 				(A)[Y] += (B)[Y]; \
@@ -45,6 +47,7 @@
 				(C)[Y] = (A)[Z]*(B)[X]-(A)[X]*(B)[Z]; \
 				(C)[Z] = (A)[X]*(B)[Y]-(A)[Y]*(B)[X]; }
 #define DEGRAD	57.2957795130823208767981548141051703324054724665642
+
 /* degrees per radian */
 #define DiffVec( A, B )       { (A)[X] -= (B)[X]; \
 				(A)[Y] -= (B)[Y]; \
@@ -97,16 +100,16 @@
 #define Sqr(a)			((a)*(a))
 #define TWO_PI		6.28318530717958647692528676655900576839433879875022
 /* Scale vector 'a' to have magnitude 'l'.				*/
-#define V_Length( a, l ) \
-		{	double f, m; \
-		if ( (m=Mag(a)) == 0.0 ) \
-			brst_log( "Magnitude is zero!\n" ); \
-		else \
-			{ \
-			f = (l)/m; \
-			(a)[X] *= f; (a)[Y] *= f; (a)[Z] *= f; \
-			} \
-		}
+#define V_Length( a, l ) { \
+	double f, m; \
+	m = Mag(a); \
+	if (NEAR_ZERO(m, VDIVIDE_TOL)) \
+		brst_log( "Magnitude is zero!\n" ); \
+	else { \
+		f = (l)/m; \
+		(a)[X] *= f; (a)[Y] *= f; (a)[Z] *= f; \
+	} \
+}
 
 #define V_Print(a, b, func) \
 		func( "%s\t<%12.6f,%12.6f,%12.6f>\n", a, (b)[0], (b)[1], (b)[2] )
