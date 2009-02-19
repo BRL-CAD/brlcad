@@ -46,7 +46,7 @@
 int
 main(int argc, char **argv)
 {
-    int i,ret;
+    int i, ret;
     struct rt_wdb *fp;
     struct directory *dp;
     struct rt_db_internal ip;
@@ -67,16 +67,16 @@ main(int argc, char **argv)
     solnam[7] = '1';
     solnam[8] = '\0';
 
-    /*rt_init_resource(&rt_uniresource,0,NULL);*/
+    /*rt_init_resource(&rt_uniresource, 0, NULL);*/
     if (argc!=2) {
-	bu_exit(1,"Too few arguments, Please provide output filename\n");
+	bu_exit(1, "Too few arguments, Please provide output filename\n");
     }
 
     if ((fp = wdb_fopen(argv[1])) == NULL) {
 	perror(argv[2]);
 	return 1;
     }
-    mk_id(fp,"Parametrics test");
+    mk_id(fp, "Parametrics test");
     cent[0] = 3.4;
     cent[1] = 4.5;
     cent[2] = 5.3;
@@ -99,13 +99,13 @@ main(int argc, char **argv)
     rad = 153.2;
     mk_sph(fp, solnam, cent, rad);
 
-    if ((dp = db_lookup(fp->dbip,solnam,LOOKUP_QUIET)) == DIR_NULL)
+    if ((dp = db_lookup(fp->dbip, solnam, LOOKUP_QUIET)) == DIR_NULL)
 	return 2;
     /*rt_db_get_internal(&intern, dp, fp->dbip, NULL, &rt_uniresource);*/
 
 
-    pc_mk_constraint(fp,"Constraint",0);
-    if ((dp = db_lookup(fp->dbip,"Constraint",LOOKUP_QUIET)) == DIR_NULL)
+    mk_constraint(fp, "Constraint", 0);
+    if ((dp = db_lookup(fp->dbip, "Constraint", LOOKUP_QUIET)) == DIR_NULL)
 	return 3;
     wdb_import(fp, &ip,solnam, (matp_t)NULL);
     ip.idb_meth->ft_params(&pcs,&ip);
