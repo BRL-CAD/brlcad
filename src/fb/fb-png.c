@@ -27,18 +27,21 @@
 #include "common.h"
 
 #include <stdlib.h>
-#include <stdio.h>
 #include <sys/stat.h>
+#include "bio.h"
+
+#ifdef HAVE_WINSOCK_H
+#  include <winsock.h>
+#endif
+#ifdef HAVE_UNISTD_H
+#  include <unistd.h>
+#endif
 
 #include "png.h"
 #include "bu.h"
 #include "fb.h"
 
 #include "pkg.h"
-
-#ifdef HAVE_WINSOCK_H
-#  include <winsock.h>
-#endif
 
 static unsigned char	*scanline;	/* scanline pixel buffers */
 static int	scanbytes;		/* # of bytes of scanline */
@@ -57,7 +60,7 @@ int	screen_width;			/* input width */
 
 double	out_gamma = 1.0;		/* Gamma the image was created at */
 
-extern void	cmap_crunch(register RGBpixel (*scan_buf), register int pixel_ct, ColorMap *cmap);
+extern void	cmap_crunch(register RGBpixel (*scan_buf), register int pixel_ct, ColorMap *colormap);
 
 char usage[] = "\
 Usage: fb-png [-h -i -c] [-# nbytes/pixel] [-F framebuffer] [-g gamma]\n\

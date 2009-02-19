@@ -101,7 +101,7 @@ static int	cr_mask;		/* mask to strip all but high cr bits */
 static int	g_pixel;		/* global # bits/pixel in image */
 static int	pixel;			/* local # bits/pixel in image */
 static int	background;		/* color index of screen background */
-static int	entries;		/* # of global color map entries */
+static size_t	entries;		/* # of global color map entries */
 static RGBpixel	*g_cmap;		/* malloc()ed global color map */
 static RGBpixel	*cmap;			/* malloc()ed local color map */
 /* NOTE:  Relies on R, G, B order and also on RGBpixel being 3 unsigned chars. */
@@ -112,7 +112,7 @@ static RGBpixel	*cmap;			/* malloc()ed local color map */
 
 /* in ioutil.c */
 void Message( const char *format, ... );
-void Fatal( FBIO *fbp, const char *format, ... );
+void Fatal( FBIO *fbiop, const char *format, ... );
 
 
 static void
@@ -163,7 +163,7 @@ PutPixel(register int value)
     if ( pass == stop )
 	Fatal(fbp, "Too much raster data for image size" );
 
-    if ( value > entries )
+    if ( value > (int)entries )
 	Fatal(fbp, "Decoded color index %d exceeds color map size", value );
 
     pixbuf[col*3+RED] = cmap[value][RED];	/* stuff pixel */
@@ -653,7 +653,7 @@ main(int argc, char **argv)
 
 	expand = 255.0 / (double)(0xFF & cr_mask);
 
-	for ( i = 0; i < entries; ++i )
+	for ( i = 0; i < (int)entries; ++i )
 	{
 	    g_cmap[i][RED] = (((int)g_cmap[i][RED]) & cr_mask) * expand
 		+ 0.5;
@@ -674,7 +674,7 @@ main(int argc, char **argv)
 		     entries
 		);
 
-	for ( i = 0; i < entries; ++i )
+	for ( i = 0; i < (int)entries; ++i )
 	    g_cmap[i][RED] =
 		g_cmap[i][GRN] =
 		g_cmap[i][BLU] = i * 255.0 / (entries - 1) + 0.5;
@@ -870,7 +870,7 @@ main(int argc, char **argv)
 
 		expand = 255.0 / (double)(0xFF & cr_mask);
 
-		for ( i = 0; i < entries; ++i )
+		for ( i = 0; i < (int)entries; ++i )
 		{
 		    cmap[i][RED] = (((int)cmap[i][RED]) & cr_mask)
 			* expand + 0.5;

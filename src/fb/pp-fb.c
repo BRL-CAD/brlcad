@@ -55,14 +55,17 @@
 #include "common.h"
 
 #include <stdlib.h>
-#include <stdio.h>
 #include <string.h>
+#include "bio.h"
 
 #ifdef HAVE_SYS_TYPES_H
 #  include <sys/types.h>
 #endif
 #ifdef HAVE_SYS_STAT_H
 #  include <sys/stat.h>
+#endif
+#ifdef HAVE_UNISTD_H
+#  include <unistd.h>
 #endif
 
 #include "bu.h"
@@ -78,7 +81,7 @@ char ibuf[1024];	/* pp file buffer */
 static unsigned char	pix_buf[FBBUFSIZE]; /* Pixel buffer.			*/
 
 #define FBWPIXEL(pix) \
-	{ COPYRGB( fb_p, pix ); \
+	{ COPYRGB(fb_p, pix); \
 	fb_p += sizeof(RGBpixel); \
 	}
 char strg[51];
@@ -230,7 +233,7 @@ main(int argc, char **argv)
     while (1) {
 	printf("Option (?=menu)? ");
 
-	if ( (c=getchar()) == EOF )  break;
+	if ((c=getchar()) == EOF)  break;
 
 	switch (c) {
 	    case '\n':
@@ -315,7 +318,7 @@ main(int argc, char **argv)
 		    putchar('\n');
 		    if ((i%20)==19) {
 			char cbuf[16];
-			printf("(c)ontine,(s)top? ");
+			printf("(c)ontine, (s)top? ");
 			scanf("%1s", cbuf);
 			c = cbuf[0];
 			if (c=='s') break;
@@ -323,7 +326,8 @@ main(int argc, char **argv)
 		}
 		break;
 	    case 'o':
-		opq= ++opq&1;
+		opq++;
+		opq &= 1;
 		if (opq) {
 		    printf("Transparent items now opaque\n");
 		} else {
@@ -470,16 +474,21 @@ paint(void)
     ih=max_h;
     iw=min_w;
     fb_p=pix_buf;
-    iwih=(iw+ih)&1;
+    iwih=iw+ih;
+    iwih&=1;
     flop=1;
     while ((c=g())!='/') {
 	io=c-32;
     noread:		if (io>31) {
 /*	ignore one of pair of intensities if trnf=4 */
-	if (flop) iwih= ++iwih&1;
+	if (flop) {
+	    iwih++;
+	    iwih&=1;
+	}
 	inten=(io&31)+inten_high;
 	if (trnf==4) {
-	    flop= ++flop&1;
+	    ++flop;
+	    flop&=1;
 	    if (opq&&flop) continue;
 	    if (opq==0&&flop!=iwih) continue;
 	}
@@ -553,9 +562,13 @@ paint(void)
 		tcl[BLU]= ((int)tp[BLU]*inten)>>8;
 	    }
 	    for (li=0;li<lj;li++, iw++) {
-		if (flop) iwih= ++iwih&1;
+		if (flop) {
+		    ++iwih;
+		    iwih&=1;
+		}
 		if (trnf==4) {
-		    flop= ++flop&1;
+		    ++flop;
+		    flop&=1;
 		    if ((opq&&flop)||(flop!=iwih&&opq==0)) {
 			iw--;
 			continue;
@@ -704,16 +717,16 @@ int gclr(void)
 }
 int lookup(long int ix, long int *jx, int n)
 {
-    int i, ia, ib;
-    ia= -1;
-    ib=n;
+    int i, i_a, i_b;
+    i_a= -1;
+    i_b=n;
     while (1) {
-	i=(ia+ib)/2;
-/*printf("LOOKUP: ix, jx, ia, ib, i %d %d %d %d %d\n", ix,*(jx+i), ia, ib, i);*/
+	i=(i_a+i_b)/2;
+	/*printf("LOOKUP: ix, jx, ia, ib, i %d %d %d %d %d\n", ix, *(jx+i), i_a, i_b, i);*/
 	if (ix== *(jx+i)) return(i);
-	if (i<=ia) return(-1);
-	if (ix> *(jx+i)) ia=i;
-	else ib=i;
+	if (i<=i_a) return(-1);
+	if (ix> *(jx+i)) i_a=i;
+	else i_b=i;
     }
 }
 void

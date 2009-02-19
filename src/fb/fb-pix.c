@@ -30,14 +30,17 @@
 #include <sys/stat.h>
 #include "bio.h"
 
+#ifdef HAVE_WINSOCK_H
+#  include <winsock.h>
+#endif
+#ifdef HAVE_UNISTD_H
+#  include <unistd.h>
+#endif
+
 #include "bu.h"
 #include "fb.h"
 
 #include "pkg.h"
-
-#ifdef HAVE_WINSOCK_H
-#  include <winsock.h>
-#endif
 
 static unsigned char	*scanline;		/* 1 scanline pixel buffer */
 static int	scanbytes;		/* # of bytes of scanline */
@@ -53,7 +56,7 @@ static int	inverse = 0;		/* Draw upside-down */
 int	screen_height;			/* input height */
 int	screen_width;			/* input width */
 
-extern void	cmap_crunch(register RGBpixel (*scan_buf), register int pixel_ct, ColorMap *cmap);
+extern void	cmap_crunch(register RGBpixel (*scan_buf), register int pixel_ct, ColorMap *colormap);
 
 char usage[] = "\
 Usage: fb-pix [-h -i -c] [-F framebuffer]\n\
