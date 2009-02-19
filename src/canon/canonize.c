@@ -85,10 +85,10 @@ queue(fp)
 	fprintf(stderr, "args written\n");
 
     /* write the image down the pipe */
-    for ( bytes_read = 0;
-	  bytes_read < img_bytes &&
-	      (i = fread(img_buffer, 1, sizeof(img_buffer), fp));
-	  bytes_read += i ) {
+    for (bytes_read = 0;
+	 bytes_read < img_bytes &&
+	     (i = fread(img_buffer, 1, sizeof(img_buffer), fp));
+	 bytes_read += i) {
 	fwrite(img_buffer, 1, i, pfp);
     }
 
@@ -129,7 +129,7 @@ main(int ac, char *av[])
 
     for (; arg_ind < ac; arg_ind++) {
 	if (autosize &&
-	    !fb_common_file_size( &width, &height, av[arg_ind], 3)) {
+	    !fb_common_file_size(&width, &height, av[arg_ind], 3)) {
 	    fprintf(stderr,
 		    "unable to autosize \"%s\"\n",
 		    av[arg_ind]);

@@ -277,7 +277,7 @@ ipu_create_file(struct dsreq *dsp,
     filldsreq(dsp, file_params, sizeof(file_params),
 	      DSRQ_WRITE|DSRQ_SENSE);
 
-    if ( i=doscsireq(getfd(dsp), dsp) )  {
+    if (i=doscsireq(getfd(dsp), dsp)) {
 	fprintf(stderr, "create_file(%d, %d by %d) failed\n",
 		(int)id, width, height);
 	scsi_perror(i, dsp);
@@ -348,14 +348,14 @@ ipu_get_image(struct dsreq *dsp,
 
     size = w * h * 3;
 
-    if ((img = malloc( size )) == NULL) {
+    if ((img = malloc(size)) == NULL) {
 	fprintf(stderr, "malloc error\n");
 	bu_exit(-1, NULL);
     }
 
     filldsreq(dsp, img, size, DSRQ_READ|DSRQ_SENSE);
-    if ( i=doscsireq(getfd(dsp), dsp) )  {
-	fprintf(stderr, "get_image(%d, %d,%d, %d,%d) failed\n",
+    if (i=doscsireq(getfd(dsp), dsp)) {
+	fprintf(stderr, "get_image(%d, %d, %d, %d, %d) failed\n",
 		(int)id, sx, sy, w, h);
 	scsi_perror(i, dsp);
 	bu_exit(-1, NULL);
@@ -394,7 +394,7 @@ ipu_put_image_frag(struct dsreq *dsp,
     CMDLEN(dsp) = 12;
 
     nbytes = w * ipu_bytes_per_pixel * h;
-    if ( nbytes > (256 * 1024 - 2) )  {
+    if (nbytes > (256 * 1024 - 2)) {
 	fprintf(stderr, "ipu_put_image_frag() nbytes=%d exceeds SCSI maximum transfer\n",
 		nbytes);
 	return;
@@ -402,13 +402,13 @@ ipu_put_image_frag(struct dsreq *dsp,
 
     filldsreq(dsp, img, nbytes, DSRQ_WRITE|DSRQ_SENSE);
 
-    if ( i=doscsireq(getfd(dsp), dsp) )  {
+    if (i=doscsireq(getfd(dsp), dsp)) {
 	fprintf(stderr,
-		"\nipu_put_image_frag(%d, %d,%d, %d,%d) failed\n",
+		"\nipu_put_image_frag(%d, %d, %d, %d, %d) failed\n",
 		(int)id, sx, sy, w, h);
 	scsi_perror(i, dsp);
 	bu_exit(-1, NULL);
-    } else if ( ipu_debug )  {
+    } else if (ipu_debug) {
 	fprintf(stderr, "buffer y=%d  \r", sy);
     }
 }
@@ -480,7 +480,7 @@ ipu_put_image(struct dsreq *dsp,
     img_line = 0;
     for (buf_no=0; buf_no < fullbuffers; buf_no++) {
 	/* fill a full buffer */
-	if ( ipu_bytes_per_pixel == 3 )  {
+	if (ipu_bytes_per_pixel == 3) {
 	    for (buf_line = lines_per_buf; buf_line-- > 0; img_line++) {
 		/* move img_line to buf_line */
 		scanline = &img[img_line*bytes_per_line];
@@ -489,7 +489,7 @@ ipu_put_image(struct dsreq *dsp,
 		g = & grn[buf_line*w];
 		b = & blu[buf_line*w];
 
-		for (pixel=0, ip=0; pixel < w; pixel++ ) {
+		for (pixel=0, ip=0; pixel < w; pixel++) {
 		    r[pixel] = scanline[ip++];
 		    g[pixel] = scanline[ip++];
 		    b[pixel] = scanline[ip++];
@@ -522,7 +522,7 @@ ipu_put_image(struct dsreq *dsp,
 	    fprintf(stderr, "\nDoing %d orphans (img_line %d)\n",
 		    orphan_lines, img_line);
 
-	if ( ipu_bytes_per_pixel == 3 )  {
+	if (ipu_bytes_per_pixel == 3) {
 	    for (buf_line = orphan_lines; buf_line-- > 0; img_line++) {
 		scanline = &img[img_line*bytes_per_line];
 		r = & red[buf_line*w];
@@ -652,7 +652,7 @@ ipu_print_config(struct dsreq *dsp,
 
     filldsreq(dsp, params, bytes, DSRQ_WRITE|DSRQ_SENSE);
 
-    if ( i=doscsireq(getfd(dsp), dsp) )  {
+    if (i=doscsireq(getfd(dsp), dsp)) {
 	fprintf(stderr, "error doing print config.\n");
 	scsi_perror(i, dsp);
 	bu_exit(-1, NULL);
@@ -709,7 +709,7 @@ ipu_print_file(struct dsreq *dsp,
     memcpy(&buf[14], pr_param, 4);
 
     filldsreq(dsp, (u_char *)buf, sizeof(buf), DSRQ_WRITE|DSRQ_SENSE);
-    if ( i=doscsireq(getfd(dsp), dsp) )  {
+    if (i=doscsireq(getfd(dsp), dsp)) {
 	fprintf(stderr, "error printing file %d\n", id);
 	scsi_perror(i, dsp);
 	bu_exit(-1, NULL);
@@ -782,7 +782,7 @@ ipu_scan_config(struct dsreq *dsp,
 
     filldsreq(dsp, params, bytes, DSRQ_WRITE|DSRQ_SENSE);
 
-    if ( i=doscsireq(getfd(dsp), dsp) )  {
+    if (i=doscsireq(getfd(dsp), dsp)) {
 	fprintf(stderr, "error doing scan config.\n");
 	scsi_perror(i, dsp);
 	bu_exit(-1, NULL);
@@ -825,7 +825,7 @@ ipu_scan_file(struct dsreq *dsp,
     memcpy(&buf[14], sc_param, 4);
 
     filldsreq(dsp, (u_char *)buf, sizeof(buf), DSRQ_WRITE|DSRQ_SENSE);
-    if ( i=doscsireq(getfd(dsp), dsp) )  {
+    if (i=doscsireq(getfd(dsp), dsp)) {
 	fprintf(stderr, "error scanning file %d.\n", id);
 	scsi_perror(i, dsp);
 	bu_exit(-1, NULL);
@@ -880,7 +880,7 @@ ipu_list_files(struct dsreq *dsp)
 	else if (buf[i+1] == 3) t = 'P';
 	else t = '?';
 
-	sprintf((char *)&p[strlen( (char *)p)], "%1x.%c\t%4dx%4d\n",
+	sprintf((char *)&p[strlen((char *)p)], "%1x.%c\t%4dx%4d\n",
 		buf[i], t,
 		((int)buf[i+2]<<8)+(int)buf[i+3],
 		((int)buf[i+4]<<8)+(int)buf[i+5]);
@@ -1098,7 +1098,7 @@ ipu_get_conf_long(struct dsreq *dsp)
  *  arranged as r0, g0, b0, r1, g1, b1, ...
  */
 void
-ipu_set_palette( dsp, cmap )
+ipu_set_palette(dsp, cmap)
     struct dsreq	*dsp;
     unsigned char	*cmap;		/* NULL or [768] */
 {
@@ -1108,10 +1108,10 @@ ipu_set_palette( dsp, cmap )
     int		ret;
 
     if (ipu_debug) fprintf(stderr, "ipu_set_palette(cmap=x%lx)\n", (long)cmap);
-    if ( cmap == NULL )  {
+    if (cmap == NULL) {
 	register int	j;
 	register unsigned char *cp = linear;
-	for ( j=0; j < 256; j++ )  {
+	for (j=0; j < 256; j++) {
 	    *cp++ = j;
 	    *cp++ = j;
 	    *cp++ = j;
@@ -1120,7 +1120,7 @@ ipu_set_palette( dsp, cmap )
     }
 
     /* The Palette has to be sent in 4 parts */
-    for ( i=0; i < 4; i++ )  {
+    for (i=0; i < 4; i++) {
 	unsigned char	buf[4+2+192];
 
 	memset(p=CMDBUF(dsp), 0, 16);
@@ -1131,7 +1131,7 @@ ipu_set_palette( dsp, cmap )
 	CMDLEN(dsp) = 6;
 
 	/* buf[0]:  Parameter header, 4 bytes long. */
-	toint( buf, 192+2 );
+	toint(buf, 192+2);
 
 	/* buf[4]: MODE PARAMETERS, block(s) of page codes. */
 	buf[4] = 0x30 + i;	/* PAGE CODE "Color Palette Parameters" */
@@ -1140,7 +1140,7 @@ ipu_set_palette( dsp, cmap )
 
 	filldsreq(dsp, buf, sizeof(buf), DSRQ_WRITE|DSRQ_SENSE);
 
-	if ( ret=doscsireq(getfd(dsp), dsp) )  {
+	if (ret=doscsireq(getfd(dsp), dsp)) {
 	    fprintf(stderr, "ipu_set_palette(%d) failed\n", i);
 	    scsi_perror(ret, dsp);
 	    bu_exit(-1, NULL);
@@ -1215,7 +1215,7 @@ int parse_args(ac, av)
     int  c;
     char *p;
 
-    if (  ! (progname=strrchr(*av, '/'))  )
+    if ( ! (progname=strrchr(*av, '/')) )
 	progname = *av;
     else
 	++progname;
@@ -1375,7 +1375,7 @@ int parse_args(ac, av)
 	    case 'V'	: dsdebug = ! dsdebug;
 	    case 'v'	: ipu_debug = !ipu_debug; break;
 	    case '#'	: c = atoi(bu_optarg);
-		switch (c)  {
+		switch (c) {
 		    case 3:
 			ipu_filetype = IPU_RGB_FILE;
 			ipu_bytes_per_pixel = 3;
