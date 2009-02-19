@@ -869,12 +869,12 @@ EXTERN Tcl_Obj *	Tcl_GetStartupScript (CONST char ** encodingNamePtr);
 #ifndef TclpLocaltime_TCL_DECLARED
 #define TclpLocaltime_TCL_DECLARED
 /* 182 */
-EXTERN struct tm *	TclpLocaltime (CONST time_t * clock);
+EXTERN struct tm *	TclpLocaltime (CONST time_t * _clock);
 #endif
 #ifndef TclpGmtime_TCL_DECLARED
 #define TclpGmtime_TCL_DECLARED
 /* 183 */
-EXTERN struct tm *	TclpGmtime (CONST time_t * clock);
+EXTERN struct tm *	TclpGmtime (CONST time_t * _clock);
 #endif
 /* Slot 184 is reserved */
 /* Slot 185 is reserved */
@@ -1287,8 +1287,8 @@ typedef struct TclIntStubs {
     Tcl_Obj * (*tcl_GetStartupScript) (CONST char ** encodingNamePtr); /* 179 */
     void *reserved180;
     void *reserved181;
-    struct tm * (*tclpLocaltime) (CONST time_t * clock); /* 182 */
-    struct tm * (*tclpGmtime) (CONST time_t * clock); /* 183 */
+    struct tm * (*tclpLocaltime) (CONST time_t * _clock); /* 182 */
+    struct tm * (*tclpGmtime) (CONST time_t * _clock); /* 183 */
     void *reserved184;
     void *reserved185;
     void *reserved186;
