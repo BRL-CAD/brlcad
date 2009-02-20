@@ -56,7 +56,7 @@
 
 /* bu_getopt() options */
 char *options = "A:a:de:f:g:Gn:N:pP:rS:s:t:U:u:vV:W:";
-char *options_str = "[-A A|a|b|c|e|g|m|o|v|w] [-a az] [-d] [-e el] [-f densityFile] [-g spacing|upper,lower|upper-lower] [-G] [-n nhits] [-N nviews] [-p] [-P ncpus] [-r] [-S nsamples] [-t overlap_tol] [-U useair] [-u len_units vol_units wt_units] [-v] [-V volume_tol] [-W weight_tol]";
+char *options_str = "[-A A|a|b|c|e|g|m|o|p|v|w] [-a az] [-d] [-e el] [-f densityFile] [-g spacing|upper,lower|upper-lower] [-G] [-n nhits] [-N nviews] [-p] [-P ncpus] [-r] [-S nsamples] [-t overlap_tol] [-U useair] [-u len_units vol_units wt_units] [-v] [-V volume_tol] [-W weight_tol]";
 
 #define ANALYSIS_VOLUME 1
 #define ANALYSIS_WEIGHT 2
@@ -68,6 +68,7 @@ char *options_str = "[-A A|a|b|c|e|g|m|o|v|w] [-a az] [-d] [-e el] [-f densityFi
 #define ANALYSIS_INTERFACES 128
 #define ANALYSIS_CENTROIDS 256
 #define ANALYSIS_MOMENTS 512
+#define ANALYSIS_PLOT_OVERLAPS 1024
 
 #ifndef HUGE
 #  ifdef MAXFLT
@@ -161,6 +162,11 @@ struct cstate {
     fastf_t *m_moi;    /* one vector per view for collecting the partial moments of inertia calculation */
     fastf_t *m_poi;    /* one vector per view for collecting the partial products of inertia calculation */
 };
+
+struct ged_gqa_plot {
+    struct bn_vlblock	*vbp;
+    struct bu_list	*vhead;
+} ged_gqa_plot;
 
 /* the entries in the density table */
 struct density_entry {
@@ -524,6 +530,13 @@ parse_args(int ac, char *av[])
 				    multiple_analyses = 1;
 
 				analysis_flags |= ANALYSIS_OVERLAPS;
+				break;
+			    case 'p' :
+				if (analysis_flags)
+				    multiple_analyses = 1;
+
+				analysis_flags |= ANALYSIS_OVERLAPS;
+				analysis_flags |= ANALYSIS_PLOT_OVERLAPS;
 				break;
 			    case 'v' :
 				if (analysis_flags)
@@ -969,6 +982,13 @@ overlap(struct application *ap,
 	pl_color(plot_overlaps, V3ARGS(overlap_color));
 	pdv_3line(plot_overlaps, ihit, ohit);
 	bu_semaphore_release(BU_SEM_SYSCALL);
+    }
+
+    if (analysis_flags & ANALYSIS_PLOT_OVERLAPS) {
+	bu_semaphore_acquire(GED_SEM_WORKER);
+	BN_ADD_VLIST(ged_gqa_plot.vbp->free_vlist_hd, ged_gqa_plot.vhead, ihit, BN_VLIST_LINE_MOVE);
+	BN_ADD_VLIST(ged_gqa_plot.vbp->free_vlist_hd, ged_gqa_plot.vhead, ohit, BN_VLIST_LINE_DRAW);
+	bu_semaphore_release(GED_SEM_WORKER);
     }
 
     if (analysis_flags & ANALYSIS_OVERLAPS) {
@@ -2425,6 +2445,11 @@ ged_gqa(struct ged *gedp, int argc, const char *argv[])
 
     bu_semaphore_reinit(GED_SEM_LAST);
 
+    if (analysis_flags & ANALYSIS_PLOT_OVERLAPS) {
+	ged_gqa_plot.vbp = rt_vlblock_init();
+	ged_gqa_plot.vhead = rt_vlblock_find(ged_gqa_plot.vbp, 0xFF, 0xFF, 0x00);
+    }
+
     rtip = rt_new_rti(gedp->ged_wdbp->dbip);
     rtip->useair = use_air;
 
@@ -2561,10 +2586,16 @@ aborted:
     if (verbose)
 	bu_vls_printf(&gedp->ged_result_str, "Computation Done\n");
 
-    if (!aborted)
+    if (!aborted) {
 	summary_reports(&state, start_objs, argc, argv);
-    else
+
+	if (analysis_flags & ANALYSIS_PLOT_OVERLAPS)
+	    ged_cvt_vlblock_to_solids(gedp, ged_gqa_plot.vbp, "OVERLAPS", 0);
+    } else
 	aborted = 0; /* reset flag */
+
+    if (analysis_flags & ANALYSIS_PLOT_OVERLAPS)
+	rt_vlblock_free(ged_gqa_plot.vbp);
 
     /* Clear out the lists */
     while (BU_LIST_WHILE(rp, region_pair, &overlapList.l)) {
