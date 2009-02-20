@@ -29,7 +29,7 @@ bin_PROGRAMS = \
 	sketch \
 	sphflake \
 	spltest \
-	spring \
+	coil \
 	tea \
 	tea_nmg \
 	terrain \
@@ -79,7 +79,7 @@ room_SOURCES = room.c common.c
 sketch_SOURCES = sketch.c
 sphflake_SOURCES = sphflake.c
 spltest_SOURCES = spltest.c
-spring_SOURCES = spring.c
+coil_SOURCES = coil.c
 tea_SOURCES = tea.c
 tea_nmg_SOURCES = tea_nmg.c
 terrain_SOURCES = terrain.c
@@ -125,7 +125,7 @@ FAST_OBJECTS = \
 	$(sketch_OBJECTS) \
 	$(sphflake_OBJECTS) \
 	$(spltest_OBJECTS) \
-	$(spring_OBJECTS) \
+	$(coil_OBJECTS) \
 	$(tea_OBJECTS) \
 	$(tea_nmg_OBJECTS) \
 	$(terrain_OBJECTS) \
