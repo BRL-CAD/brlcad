@@ -45,90 +45,31 @@
 void add_cap(){
 }
 
-void helical_compression_coil_plain(struct bu_list *head, fastf_t mean_outer_diameter, fastf_t wire_diameter, fastf_t helix_angle, fastf_t pitch, int nt, int end_type)
+void add_cap_testground(struct bu_list *head, struct wmember *spring, fastf_t mean_outer_diameter, fastf_t wire_diameter, fastf_t helix_angle, fastf_t pitch, int nt, int end_type)
 {
-    int i,j;
-    fastf_t coil_radius, pipe_bend;
-    point_t origin, pnt1, pnt2, pnt3, pnt4, pnt5, pnt6, pnt7, pnt8;
-
-    VSET(origin, 0, 0 ,0);
-
-    coil_radius = mean_outer_diameter/2 - wire_diameter/2;
-    pipe_bend = coil_radius;
-
-    /* add starting feature, if any */
-    add_cap();
-
-    for (i = 0; i < nt; i++) {
-    	VSET(pnt1, 0, -coil_radius, (i-1)*pitch);
-    	VSET(pnt2, coil_radius , -coil_radius, (i-1)*pitch + pitch/8);
-    	VSET(pnt3, coil_radius , 0, (i-1)*pitch + pitch/4);
-    	VSET(pnt4, coil_radius , coil_radius, (i-1)*pitch + pitch*3/8);
-    	VSET(pnt5, 0 , coil_radius, (i-1)*pitch + pitch/2);
-    	VSET(pnt6, -coil_radius , coil_radius, (i-1)*pitch + pitch*5/8);
-    	VSET(pnt7, -coil_radius , 0, (i-1)*pitch + pitch*3/4);
-    	VSET(pnt8, -coil_radius , -coil_radius, (i-1)*pitch + pitch*7/8);
-    	mk_add_pipe_pt(head, pnt1, wire_diameter, 0.0, pipe_bend);
-   	mk_add_pipe_pt(head, pnt2, wire_diameter, 0.0, pipe_bend);
-    	mk_add_pipe_pt(head, pnt3, wire_diameter, 0.0, pipe_bend);
-    	mk_add_pipe_pt(head, pnt4, wire_diameter, 0.0, pipe_bend);
-    	mk_add_pipe_pt(head, pnt5, wire_diameter, 0.0, pipe_bend);
-    	mk_add_pipe_pt(head, pnt6, wire_diameter, 0.0, pipe_bend);
-    	mk_add_pipe_pt(head, pnt7, wire_diameter, 0.0, pipe_bend);
-    	mk_add_pipe_pt(head, pnt8, wire_diameter, 0.0, pipe_bend);
-    }
-
-    VSET(pnt1, 0 , -coil_radius, (nt-1)*pitch);
-    mk_add_pipe_pt(head, pnt1, wire_diameter, 0.0, pipe_bend);
-
-    /* add ending feature, if any */
-    add_cap();
-
-}
-
-void make_coil(struct rt_wdb (*file), char *prefix, fastf_t mean_outer_diameter, fastf_t wire_diameter, fastf_t helix_angle, fastf_t pitch, int nt, int end_type)
-{
-    struct bu_list head;
-    mk_pipe_init(&head);
-   
-    helical_compression_coil_plain(&head, mean_outer_diameter, wire_diameter, helix_angle, pitch, nt, end_type);
-    
-    mk_pipe(file, prefix, &head);
-    mk_pipe_free(&head);
-} 
-
-void add_cap_testground(struct rt_wdb (*file), char *prefix, fastf_t mean_outer_diameter, fastf_t wire_diameter, fastf_t helix_angle, fastf_t pitch, int nt, int end_type)
-{
-    struct bu_list head;
-    int i;
-    fastf_t pipe_bend;
-    point_t origin, height, pnt1, pnt2, pnt3, pnt4;
+   int i;
+    fastf_t pipe_bend, coil_radius;
+    point_t origin, height, pnt1, pnt2, pnt3, pnt4, pnt5, pnt6, pnt7, pnt8, pnt9;
     struct bu_vls str;
-    struct wmember spring;
    
     bu_vls_init(&str); 
-       
-    BU_LIST_INIT(&spring.l);
-       
-    pipe_bend = mean_outer_diameter/2;
-    mk_pipe_init(&head);
     
-    VSET(pnt1, mean_outer_diameter/2 , 0, -wire_diameter/2);
-    VSET(pnt2, mean_outer_diameter, 0, -wire_diameter/2);
-    VSET(pnt3, mean_outer_diameter, mean_outer_diameter, -wire_diameter/2);
-    VSET(pnt4, 0, mean_outer_diameter, -wire_diameter/2);
-    mk_add_pipe_pt(&head, pnt1, wire_diameter, 0.0, pipe_bend);
-    mk_add_pipe_pt(&head, pnt2, wire_diameter, 0.0, pipe_bend);
-    mk_add_pipe_pt(&head, pnt3, wire_diameter, 0.0, pipe_bend);
-    mk_add_pipe_pt(&head, pnt4, wire_diameter, 0.0, pipe_bend);
-
-    mk_pipe(file, prefix, &head);
-
-    (void)mk_addmember(prefix, &spring.l, NULL, WMOP_UNION);
+    coil_radius = mean_outer_diameter/2 - wire_diameter/2;
+    pipe_bend = coil_radius; 
+       
+    VSET(pnt1, 0, -coil_radius, -pitch);
+    VSET(pnt2, coil_radius , -coil_radius, -pitch);
+    VSET(pnt4, coil_radius , coil_radius, -pitch);
+    VSET(pnt6, -coil_radius , coil_radius, -pitch/2);
+    VSET(pnt8, -coil_radius , -coil_radius, 0);
+    mk_add_pipe_pt(head, pnt1, wire_diameter, 0.0, pipe_bend);
+    mk_add_pipe_pt(head, pnt2, wire_diameter, 0.0, pipe_bend);
+    mk_add_pipe_pt(head, pnt4, wire_diameter, 0.0, pipe_bend);
+    mk_add_pipe_pt(head, pnt6, wire_diameter, 0.0, pipe_bend);
+    mk_add_pipe_pt(head, pnt8, wire_diameter, 0.0, pipe_bend);
     
-    mk_pipe_free(&head);
-
-    VSET(origin, mean_outer_diameter/2, mean_outer_diameter/2, 0);
+/*
+    VSET(origin, 0, 0, 0);
     VSET(height, 0, 0, -wire_diameter-.1*wire_diameter);
     bu_vls_trunc(&str, 0);
     bu_vls_printf(&str, "%s-sub1.s", prefix);
@@ -146,8 +87,65 @@ void add_cap_testground(struct rt_wdb (*file), char *prefix, fastf_t mean_outer_
 
     bu_vls_trunc(&str, 0);
     bu_vls_printf(&str, "%s.c", prefix);
-    mk_lcomb(file, bu_vls_addr(&str), &spring, 0, NULL, NULL, NULL, 0); 
+    mk_lcomb(file, bu_vls_addr(&str), &spring, 0, NULL, NULL, NULL, 0); */
 }
+
+
+
+void helical_compression_coil_plain(struct bu_list *head, struct wmember *spring, fastf_t mean_outer_diameter, fastf_t wire_diameter, fastf_t helix_angle, fastf_t pitch, int nt, int end_type)
+{
+    int i,j;
+    fastf_t coil_radius, pipe_bend;
+    point_t origin, pnt1, pnt2, pnt3, pnt4, pnt5, pnt6, pnt7, pnt8;
+
+    VSET(origin, 0, 0 ,0);
+
+    coil_radius = mean_outer_diameter/2 - wire_diameter/2;
+    pipe_bend = coil_radius;
+
+    /* add starting feature, if any*/ 
+    add_cap_testground(head,spring,mean_outer_diameter, wire_diameter, helix_angle, pitch, nt, end_type);
+
+   /*VSET(pnt1, 0, -coil_radius, i*pitch);
+   mk_add_pipe_pt(head, pnt1, wire_diameter, 0.0, pipe_bend);*/
+   
+   for (i = 0; i < nt; i++) {
+    	VSET(pnt2, coil_radius , -coil_radius, i*pitch + pitch/8);
+    	VSET(pnt4, coil_radius , coil_radius, i*pitch + pitch*3/8);
+    	VSET(pnt6, -coil_radius , coil_radius, i*pitch + pitch*5/8);
+    	VSET(pnt8, -coil_radius , -coil_radius, i*pitch + pitch*7/8);
+   	mk_add_pipe_pt(head, pnt2, wire_diameter, 0.0, pipe_bend);
+    	mk_add_pipe_pt(head, pnt4, wire_diameter, 0.0, pipe_bend);
+    	mk_add_pipe_pt(head, pnt6, wire_diameter, 0.0, pipe_bend);
+    	mk_add_pipe_pt(head, pnt8, wire_diameter, 0.0, pipe_bend);
+    }
+
+    VSET(pnt1, 0 , -coil_radius, nt*pitch);
+    mk_add_pipe_pt(head, pnt1, wire_diameter, 0.0, pipe_bend);
+
+    /* add ending feature, if any */
+    add_cap();
+
+}
+
+void make_coil(struct rt_wdb (*file), char *prefix, fastf_t mean_outer_diameter, fastf_t wire_diameter, fastf_t helix_angle, fastf_t pitch, int nt, int end_type)
+{
+    struct bu_list head;
+    mk_pipe_init(&head);
+
+    struct wmember spring_components;
+    BU_LIST_INIT(&spring_components.l);
+    
+    helical_compression_coil_plain(&head, &spring_components, mean_outer_diameter, wire_diameter, helix_angle, pitch, nt, end_type);
+    
+    mk_pipe(file, prefix, &head);
+
+    (void)mk_addmember(prefix, &spring_components.l, NULL, WMOP_UNION);
+
+    
+    
+    mk_pipe_free(&head);
+} 
 
 
 
