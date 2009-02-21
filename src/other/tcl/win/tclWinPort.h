@@ -75,6 +75,9 @@
 /*
  * Ask for the winsock function typedefs, also.
  */
+#ifdef INCL_WINSOCK_API_TYPEDEFS
+#undef INCL_WINSOCK_API_TYPEDEFS
+#endif
 #define INCL_WINSOCK_API_TYPEDEFS   1
 #include <winsock2.h>
 
