@@ -195,6 +195,10 @@ extern "C" {
 #   define CRTIMPORT
 #endif
 
+#ifndef HAVE_DECLSPEC
+#   define HAVE_DECLSPEC 0
+#endif
+
 /*
  * These macros are used to control whether functions are being declared for
  * import or export. If a function is being declared while it is being built
