@@ -737,6 +737,9 @@ if test "`uname -s`" = "Darwin" ; then
     TCL_YEAR="`date +%Y`"
 fi
 
+EXTRA_INSTALL_BINARIES=":"
+EXTRA_BUILD_HTML=":"
+
 if test "$FRAMEWORK_BUILD" = "1" ; then
     AC_DEFINE(TCL_FRAMEWORK, 1, [Is Tcl built as a framework?])
     # Construct a fake local framework structure to make linking with
