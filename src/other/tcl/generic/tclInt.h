@@ -19,6 +19,8 @@
 #ifndef _TCLINT
 #define _TCLINT
 
+#include "../../../../include/common.h"
+
 /*
  * Some numerics configuration options
  */
