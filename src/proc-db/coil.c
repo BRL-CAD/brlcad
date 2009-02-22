@@ -1,4 +1,4 @@
-/*                          S P R I N G . C
+/*                          C O I L . C
  * BRL-CAD
  *
  * Copyright (c) 2009 United States Government as represented by
@@ -20,7 +20,7 @@
 
 /** @file coil.c
  *
- * Spring Generator
+ * Coil Generator
  *
  * Program to create coils using the pipe primitive.
  *
@@ -38,12 +38,15 @@
 #include "raytrace.h"
 #include "wdb.h"
 
-#define D2R(x) (x * DEG2RAD)
-#define R2D(x) (x / DEG2RAD)
 #define DEFAULT_COIL_FILENAME "coil.g"
 
-void add_cap(){
-}
+struct coil_data_t {
+    int nt;     /*Number of Turns*/
+    fastf_t od; /*Outer Diameter*/
+    fastf_t wd; /*Wire Diameter*/
+    fastf_t ha; /*Helix Angle*/
+    fastf_t p;  /*Pitch*/
+};
 
 fastf_t cap_squared(struct bu_list *head, struct wmember *coil, fastf_t mean_outer_diameter, fastf_t wire_diameter, fastf_t helix_angle, fastf_t pitch, fastf_t starting_pitch, int is_start)
 {
@@ -230,6 +233,9 @@ int main(int ac, char *av[])
     bu_vls_trunc(&coil_type, 0);
     bu_vls_trunc(&name, 0);
 
+    struct coil_data_t *coil_data = (struct coil_data_t *)
+    	bu_malloc( sizeof(struct coil_data_t), "coil data structure");
+
     mean_outer_diameter = 1000;
     wire_diameter = 100;
     coil_index = mean_outer_diameter/wire_diameter; 
@@ -263,7 +269,9 @@ int main(int ac, char *av[])
     bu_log("Making coil...\n");
     make_coil(db_fp, bu_vls_addr(&name), mean_outer_diameter, wire_diameter, helix_angle, pitch, nt, end_type);
 
-   /* Close database */
+    bu_free(coil_data, "coil_data");
+
+    /* Close database */
     wdb_close(db_fp);
 
     return 0;
