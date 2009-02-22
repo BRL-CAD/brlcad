@@ -181,20 +181,15 @@ extern "C" {
 #   ifdef STATIC_BUILD
 #       define DLLIMPORT
 #       define DLLEXPORT
-#       if defined(HAVE_DECLSPEC) && defined(_DLL)
+#       if (defined(HAVE_DECLSPEC) && defined(_DLL))
 #           define CRTIMPORT __declspec(dllimport)
 #       else
 #           define CRTIMPORT
 #       endif
 #   else
-#     ifdef HAVE_DECLSPEC
 #       define DLLIMPORT __declspec(dllimport)
 #       define DLLEXPORT __declspec(dllexport)
-#       if HAVE_DECLSPEC && defined(_DLL)
-#	    define CRTIMPORT __declspec(dllimport)
-#	else
-#           define CRTIMPORT __declspec(dllimport)
-#       endif
+#	define CRTIMPORT __declspec(dllimport)
 #   endif
 #else
 #   define DLLIMPORT
