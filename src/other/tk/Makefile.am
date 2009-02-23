@@ -154,6 +154,7 @@ EXTRA_DIST = \
 	unix/README \
 	unix/aclocal.m4 \
 	unix/config.status \
+	unix/configure \
 	unix/configure.in \
 	unix/install-sh \
 	unix/installManPage \
