@@ -606,6 +606,15 @@ mged_setup(void)
     init_qray();
 #endif
 
+    /* Set defaults for view status variables */
+    bu_vls_trunc(&str, 0);
+    bu_vls_printf(&str, "set mged_display(.topid_0.ur,ang) {ang=(0.00 0.00 0.00)};\
+set mged_display(.topid_0.ur,aet) {az=35.00  el=25.00  tw=0.00};\
+set mged_display(.topid_0.ur,size) sz=1000.000;\
+set mged_display(.topid_0.ur,center) {cent=(0.000 0.000 0.000)};\
+set mged_display(units) mm");
+    Tcl_Eval(interp, bu_vls_addr(&str));
+
     Tcl_ResetResult(interp);
 
     bu_vls_free(&str);
