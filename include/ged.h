@@ -462,6 +462,12 @@ GED_EXPORT BU_EXTERN(struct ged *ged_open,
 GED_EXPORT BU_EXTERN(void ged_view_init,
 		     (struct ged_view *gvp));
 
+/* defined in rt.c */
+GED_EXPORT BU_EXTERN(int ged_build_tops,
+		     (struct ged	*gedp,
+		      char		**start,
+		      register char	**end));
+
 /* defined in wdb_comb_std.c */
 GED_EXPORT BU_EXTERN(int wdb_comb_std_cmd,
 		     (struct rt_wdb	*gedp,
