@@ -14,6 +14,7 @@ changes made.  See document footer for additional details.
 --- 2009-03-XX  Release 7.14.4                                     ---
 ----------------------------------------------------------------------
 
+* fixed mged view initialization bugs - Bob Parker
 * integer values in mged without floating point noise - Sean Morrison
 * fixed source distribution compile/install path error - Sean Morrison
 * fixed mged switch error running the Primitive Editor - Sean Morrison
