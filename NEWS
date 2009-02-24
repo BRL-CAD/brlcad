@@ -14,6 +14,8 @@ changes made.  See document footer for additional details.
 --- 2009-03-XX  Release 7.14.4                                     ---
 ----------------------------------------------------------------------
 
+* added -Ap plot visualization option to mged gqa command - Bob Parker
+* added new 'gqa' quantitative analysis command to mged - Bob Parker
 * fixed mged view initialization bugs - Bob Parker
 * integer values in mged without floating point noise - Sean Morrison
 * fixed source distribution compile/install path error - Sean Morrison
