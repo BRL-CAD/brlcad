@@ -694,6 +694,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\src\libged\nmg_fix_normals.c"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\src\libged\nmg_simplify.c"
 				>
 			</File>
