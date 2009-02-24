@@ -19,8 +19,6 @@
 #ifndef _TCLINT
 #define _TCLINT
 
-#include "../../../../include/common.h"
-
 /*
  * Some numerics configuration options
  */
@@ -3894,6 +3892,8 @@ MODULE_SCOPE void	TclBNInitBignumFromWideUInt(mp_int *bignum,
 #include "tclIntDecls.h"
 #include "tclIntPlatDecls.h"
 #include "tclTomMathDecls.h"
+
+#include "../../../../include/common.h"
 
 #endif /* _TCLINT */
 
