@@ -596,7 +596,7 @@ parse_args(int ac, char *av[])
 		    /* find out if we have two or one args user can
 		     * separate them with, or - delimiter
 		     */
-		    if ((p = strchr(bu_optarg, ', ')))
+		    if ((p = strchr(bu_optarg, ',')))
 			*p++ = '\0';
 		    else if ((p = strchr(bu_optarg, '-')))
 			*p++ = '\0';
