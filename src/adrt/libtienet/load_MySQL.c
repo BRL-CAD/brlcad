@@ -215,6 +215,8 @@ slave_load_MySQL (uint32_t pid, tie_t *tie, const char *hostname)
  *******************  stuff to put the .g into the mysql db *********
  *******************************************************************/
 
+#if 0
+
 #ifndef HUGE
 #define HUGE 3.40282347e+38F
 #endif
@@ -847,6 +849,7 @@ int adrt_mysql_shunt(int argc, char *argv[]) {
   mysql_close(&mysql_db);
 }
 
+#endif
 
 #else
 int
