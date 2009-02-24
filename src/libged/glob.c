@@ -24,13 +24,14 @@
  */
 
 #include "common.h"
-#include "bio.h"
 
 #include <stdlib.h>
 #include <ctype.h>
 #include <string.h>
+#include "bio.h"
 
-#include "ged_private.h"
+#include "./ged_private.h"
+
 
 static void ged_debackslash(struct bu_vls *dest, struct bu_vls *src);
 static void ged_backslash_specials(struct bu_vls *dest, struct bu_vls *src);

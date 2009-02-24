@@ -24,13 +24,13 @@
  */
 
 #include "common.h"
-#include "bio.h"
 
 #include <stdlib.h>
 #include <ctype.h>
 #include <string.h>
+#include "bio.h"
 
-#include "ged_private.h"
+#include "./ged_private.h"
 
 int
 ged_decompose(struct ged *gedp, int argc, const char *argv[])

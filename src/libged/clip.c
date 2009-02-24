@@ -33,13 +33,13 @@
  */
 
 #include "common.h"
-#include "bio.h"
 
-#include <stdio.h>
+#include "bio.h"
 
 #include "vmath.h"
 #include "dm.h"
-#include "ged_private.h"
+
+#include "./ged_private.h"
 
 
 static int ged_code(fastf_t x, fastf_t y);

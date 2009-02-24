@@ -44,7 +44,8 @@
 #include "raytrace.h"
 #include "wdb.h"
 #include "plot3.h"
-#include "ged_private.h"
+
+#include "./ged_private.h"
 
 
 static int	grid_size;		/* Number of points that will fit in current grid_pts array */

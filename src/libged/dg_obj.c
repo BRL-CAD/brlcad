@@ -21,10 +21,9 @@
 /** @{ */
 /** @file dg_obj.c
  *
- * A drawable geometry object contains methods and attributes
- * for preparing geometry that is ready (i.e. vlists) for
- * display. Much of this code was extracted from MGED and modified
- * to work herein.
+ * A drawable geometry object contains methods and attributes for
+ * preparing geometry that is ready (i.e. vlists) for display. Much of
+ * this code was extracted from MGED and modified to work herein.
  *
  */
 
@@ -45,7 +44,8 @@
 #include "solid.h"
 #include "plot3.h"
 #include "dg.h"
-#include "ged_private.h"
+
+#include "./ged_private.h"
 
 
 struct dg_client_data {
@@ -316,7 +316,7 @@ dgo_open_tcl(ClientData	clientData,
 
     if (argc == 1) {
 	/* get list of drawable geometry objects */
-	for (BU_LIST_FOR(dgop, dg_obj, &HeadDGObj.l))
+	for (BU_LIST_FOR (dgop, dg_obj, &HeadDGObj.l))
 	    Tcl_AppendResult(interp, bu_vls_addr(&dgop->dgo_name), " ", (char *)NULL);
 
 	return TCL_OK;
@@ -331,7 +331,7 @@ dgo_open_tcl(ClientData	clientData,
     }
 
     /* search for database object */
-    for (BU_LIST_FOR(wdbp, rt_wdb, &rt_g.rtg_headwdb.l)) {
+    for (BU_LIST_FOR (wdbp, rt_wdb, &rt_g.rtg_headwdb.l)) {
 	if (strcmp(bu_vls_addr(&wdbp->wdb_name), argv[2]) == 0)
 	    break;
     }
@@ -1120,7 +1120,7 @@ dgo_autoview_tcl(ClientData	clientData,
     DGO_CHECK_WDBP_NULL(dgop, interp);
 
     /* search for view object */
-    for (BU_LIST_FOR(vop, view_obj, &HeadViewObj.l)) {
+    for (BU_LIST_FOR (vop, view_obj, &HeadViewObj.l)) {
 	if (strcmp(bu_vls_addr(&vop->vo_name), argv[2]) == 0)
 	    break;
     }
@@ -1268,7 +1268,7 @@ dgo_get_eyemodel_cmd(struct dg_obj	*dgop,
     /*
      * Retrieve the view object
      */
-    for (BU_LIST_FOR(vop, view_obj, &HeadViewObj.l)) {
+    for (BU_LIST_FOR (vop, view_obj, &HeadViewObj.l)) {
 	if (strcmp(bu_vls_addr(&vop->vo_name), argv[1]) == 0)
 	    break;
     }
@@ -1285,13 +1285,13 @@ dgo_get_eyemodel_cmd(struct dg_obj	*dgop,
 
     bu_vls_init(&vls);
 
-    quat_mat2quat(quat, vop->vo_rotation );
+    quat_mat2quat(quat, vop->vo_rotation);
 
     bu_vls_printf(&vls, "viewsize %.15e;\n", vop->vo_size);
     bu_vls_printf(&vls, "orientation %.15e %.15e %.15e %.15e;\n",
 		  V4ARGS(quat));
     bu_vls_printf(&vls, "eye_pt %.15e %.15e %.15e;\n",
-		  eye_model[X], eye_model[Y], eye_model[Z] );
+		  eye_model[X], eye_model[Y], eye_model[Z]);
     Tcl_AppendResult(interp, bu_vls_addr(&vls), NULL);
     bu_vls_free(&vls);
     return TCL_OK;
@@ -1410,7 +1410,7 @@ dgo_rt_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[])
     DGO_CHECK_WDBP_NULL(dgop, interp);
 
     /* search for view object */
-    for (BU_LIST_FOR(vop, view_obj, &HeadViewObj.l)) {
+    for (BU_LIST_FOR (vop, view_obj, &HeadViewObj.l)) {
 	if (strcmp(bu_vls_addr(&vop->vo_name), argv[2]) == 0)
 	    break;
     }
@@ -1697,7 +1697,7 @@ dgo_rtcheck_vector_handler(ClientData clientData, int mask)
 	rt_vlblock_free(rtcp->vbp);
 
 	/* wait for the forked process */
-	WaitForSingleObject( rtcp->hProcess, INFINITE );
+	WaitForSingleObject(rtcp->hProcess, INFINITE);
 
 	dgo_notify(rtcp->dgop, rtcp->interp);
 
@@ -1933,24 +1933,24 @@ dgo_rtcheck_cmd(struct dg_obj	*dgop,
     sa.lpSecurityDescriptor = NULL;
 
     /* Create a pipe for the child process's STDERR. */
-    CreatePipe( &e_pipe[0], &e_pipe[1], &sa, 0);
+    CreatePipe(&e_pipe[0], &e_pipe[1], &sa, 0);
 
     /* Create noninheritable read handle and close the inheritable read handle. */
-    DuplicateHandle( GetCurrentProcess(), e_pipe[0],
-		     GetCurrentProcess(),  &pipe_eDup,
-		     0,  FALSE,
-		     DUPLICATE_SAME_ACCESS );
-    CloseHandle( e_pipe[0]);
+    DuplicateHandle(GetCurrentProcess(), e_pipe[0],
+		    GetCurrentProcess(),  &pipe_eDup,
+		    0,  FALSE,
+		    DUPLICATE_SAME_ACCESS);
+    CloseHandle(e_pipe[0]);
 
     /* Create a pipe for the child process's STDOUT. */
-    CreatePipe( &o_pipe[0], &o_pipe[1], &sa, 0);
+    CreatePipe(&o_pipe[0], &o_pipe[1], &sa, 0);
 
     /* Create noninheritable write handle and close the inheritable writehandle. */
-    DuplicateHandle( GetCurrentProcess(), o_pipe[1],
-		     GetCurrentProcess(),  &pipe_oDup ,
-		     0,  FALSE,
-		     DUPLICATE_SAME_ACCESS );
-    CloseHandle( o_pipe[1]);
+    DuplicateHandle(GetCurrentProcess(), o_pipe[1],
+		    GetCurrentProcess(),  &pipe_oDup ,
+		    0,  FALSE,
+		    DUPLICATE_SAME_ACCESS);
+    CloseHandle(o_pipe[1]);
 
     /* Create a pipe for the child process's STDIN. */
     CreatePipe(&i_pipe[0], &i_pipe[1], &sa, 0);
@@ -1959,7 +1959,7 @@ dgo_rtcheck_cmd(struct dg_obj	*dgop,
     DuplicateHandle(GetCurrentProcess(), i_pipe[0],
 		    GetCurrentProcess(), &pipe_iDup,
 		    0, FALSE,                  /* not inherited */
-		    DUPLICATE_SAME_ACCESS );
+		    DUPLICATE_SAME_ACCESS);
     CloseHandle(i_pipe[0]);
 
 
@@ -2008,7 +2008,7 @@ dgo_rtcheck_cmd(struct dg_obj	*dgop,
 
     /* initialize the rtcheck struct */
     rtcp->fd = pipe_iDup;
-    rtcp->fp = _fdopen( _open_osfhandle((HFILE)pipe_iDup, _O_TEXT), "rb" );
+    rtcp->fp = _fdopen(_open_osfhandle((HFILE)pipe_iDup, _O_TEXT), "rb");
     setmode(_fileno(rtcp->fp), O_BINARY);
     rtcp->hProcess = pi.hProcess;
     rtcp->pid = pi.dwProcessId;
@@ -2062,7 +2062,7 @@ dgo_rtcheck_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[
     }
 
     /* search for view object */
-    for (BU_LIST_FOR(vop, view_obj, &HeadViewObj.l)) {
+    for (BU_LIST_FOR (vop, view_obj, &HeadViewObj.l)) {
 	if (strcmp(bu_vls_addr(&vop->vo_name), argv[2]) == 0)
 	    break;
     }
@@ -2101,7 +2101,7 @@ dgo_assoc_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[])
     /* Set associated database object */
     if (argc == 3) {
 	/* search for database object */
-	for (BU_LIST_FOR(wdbp, rt_wdb, &rt_g.rtg_headwdb.l)) {
+	for (BU_LIST_FOR (wdbp, rt_wdb, &rt_g.rtg_headwdb.l)) {
 	    if (strcmp(bu_vls_addr(&wdbp->wdb_name), argv[2]) == 0)
 		break;
 	}
@@ -2215,7 +2215,7 @@ dgo_rtabort_cmd(struct dg_obj	*dgop,
 {
     struct run_rt	*rrp;
 
-    for (BU_LIST_FOR(rrp, run_rt, &dgop->dgo_headRunRt.l)) {
+    for (BU_LIST_FOR (rrp, run_rt, &dgop->dgo_headRunRt.l)) {
 	bu_terminate(rrp->pid);
 	rrp->aborted = 1;
     }
@@ -2269,7 +2269,7 @@ dgo_nirt_tcl(ClientData	clientData,
     DGO_CHECK_WDBP_NULL(dgop, interp);
 
     /* search for view object */
-    for (BU_LIST_FOR(vop, view_obj, &HeadViewObj.l)) {
+    for (BU_LIST_FOR (vop, view_obj, &HeadViewObj.l)) {
 	if (strcmp(bu_vls_addr(&vop->vo_name), argv[2]) == 0)
 	    break;
     }
@@ -2305,7 +2305,7 @@ dgo_vnirt_tcl(ClientData	clientData,
     DGO_CHECK_WDBP_NULL(dgop, interp);
 
     /* search for view object */
-    for (BU_LIST_FOR(vop, view_obj, &HeadViewObj.l)) {
+    for (BU_LIST_FOR (vop, view_obj, &HeadViewObj.l)) {
 	if (strcmp(bu_vls_addr(&vop->vo_name), argv[2]) == 0)
 	    break;
     }
@@ -2711,7 +2711,7 @@ dgo_nmg_region_start(struct db_tree_state *tsp, struct db_full_path *pathp, cons
 	char	*sofar = db_path_to_string(pathp);
 	bu_log("dgo_nmg_region_start(%s)\n", sofar);
 	bu_free((genptr_t)sofar, "path string");
-	rt_pr_tree( combp->tree, 1 );
+	rt_pr_tree(combp->tree, 1);
 	db_pr_tree_state(tsp);
     }
 
@@ -2723,7 +2723,7 @@ dgo_nmg_region_start(struct db_tree_state *tsp, struct db_full_path *pathp, cons
     RT_CK_COMB(combp);
     tp = combp->tree;
     if (!tp)
-	return( -1 );
+	return(-1);
     RT_CK_TREE(tp);
     if (tp->tr_l.tl_op != OP_DB_LEAF)
 	return 0;	/* proceed as usual */
@@ -2731,7 +2731,7 @@ dgo_nmg_region_start(struct db_tree_state *tsp, struct db_full_path *pathp, cons
     /* The subtree is a single node.  It may be a combination, though */
 
     /* Fetch by name, check to see if it's an easy type */
-    dp = db_lookup( tsp->ts_dbip, tp->tr_l.tl_name, LOOKUP_NOISY );
+    dp = db_lookup(tsp->ts_dbip, tp->tr_l.tl_name, LOOKUP_NOISY);
     if (!dp)
 	return 0;	/* proceed as usual */
     if (tsp->ts_mat) {
@@ -2753,29 +2753,29 @@ dgo_nmg_region_start(struct db_tree_state *tsp, struct db_full_path *pathp, cons
 
     switch (intern.idb_type) {
 	case ID_POLY:
-	{
-	    if (RT_G_DEBUG&DEBUG_TREEWALK) {
-		bu_log("fastpath draw ID_POLY %s\n", dp->d_namep);
+	    {
+		if (RT_G_DEBUG&DEBUG_TREEWALK) {
+		    bu_log("fastpath draw ID_POLY %s\n", dp->d_namep);
+		}
+		if (dgcdp->draw_wireframes) {
+		    (void)rt_pg_plot(&vhead, &intern, tsp->ts_ttol, tsp->ts_tol);
+		} else {
+		    (void)rt_pg_plot_poly(&vhead, &intern, tsp->ts_ttol, tsp->ts_tol);
+		}
 	    }
-	    if (dgcdp->draw_wireframes) {
-		(void)rt_pg_plot( &vhead, &intern, tsp->ts_ttol, tsp->ts_tol );
-	    } else {
-		(void)rt_pg_plot_poly( &vhead, &intern, tsp->ts_ttol, tsp->ts_tol );
-	    }
-	}
-	goto out;
+	    goto out;
 	case ID_BOT:
-	{
-	    if (RT_G_DEBUG&DEBUG_TREEWALK) {
-		bu_log("fastpath draw ID_BOT %s\n", dp->d_namep);
+	    {
+		if (RT_G_DEBUG&DEBUG_TREEWALK) {
+		    bu_log("fastpath draw ID_BOT %s\n", dp->d_namep);
+		}
+		if (dgcdp->draw_wireframes) {
+		    (void)rt_bot_plot(&vhead, &intern, tsp->ts_ttol, tsp->ts_tol);
+		} else {
+		    (void)rt_bot_plot_poly(&vhead, &intern, tsp->ts_ttol, tsp->ts_tol);
+		}
 	    }
-	    if (dgcdp->draw_wireframes) {
-		(void)rt_bot_plot( &vhead, &intern, tsp->ts_ttol, tsp->ts_tol );
-	    } else {
-		(void)rt_bot_plot_poly( &vhead, &intern, tsp->ts_ttol, tsp->ts_tol );
-	    }
-	}
-	goto out;
+	    goto out;
 	case ID_COMBINATION:
 	default:
 	    break;
@@ -2811,9 +2811,9 @@ dgo_nmg_region_end(register struct db_tree_state *tsp, struct db_full_path *path
     NMG_CK_MODEL(*tsp->ts_m);
     RT_CK_RESOURCE(tsp->ts_resp);
 
-    BU_LIST_INIT( &vhead );
+    BU_LIST_INIT(&vhead);
 
-    if (RT_G_DEBUG&DEBUG_TREEWALK)  {
+    if (RT_G_DEBUG&DEBUG_TREEWALK) {
 	char	*sofar = db_path_to_string(pathp);
 
 	Tcl_AppendResult(dgcdp->interp, "dgo_nmg_region_end() path='", sofar,
@@ -2822,44 +2822,44 @@ dgo_nmg_region_end(register struct db_tree_state *tsp, struct db_full_path *path
     } else {
 	char	*sofar = db_path_to_string(pathp);
 
-	bu_log( "%s:\n", sofar );
+	bu_log("%s:\n", sofar);
 	bu_free((genptr_t)sofar, "path string");
     }
 
-    if ( curtree->tr_op == OP_NOP )  return  curtree;
+    if (curtree->tr_op == OP_NOP)  return  curtree;
 
-    if ( !dgcdp->draw_nmg_only ) {
-	if ( BU_SETJUMP )
+    if (!dgcdp->draw_nmg_only) {
+	if (BU_SETJUMP)
 	{
 	    char  *sofar = db_path_to_string(pathp);
 
 	    BU_UNSETJUMP;
 
 	    Tcl_AppendResult(dgcdp->interp, "WARNING: Boolean evaluation of ", sofar,
-			     " failed!!!\n", (char *)NULL );
+			     " failed!!!\n", (char *)NULL);
 	    bu_free((genptr_t)sofar, "path string");
-	    if ( curtree )
-		db_free_tree( curtree, tsp->ts_resp );
+	    if (curtree)
+		db_free_tree(curtree, tsp->ts_resp);
 	    return (union tree *)NULL;
 	}
-	failed = nmg_boolean( curtree, *tsp->ts_m, tsp->ts_tol, tsp->ts_resp );
+	failed = nmg_boolean(curtree, *tsp->ts_m, tsp->ts_tol, tsp->ts_resp);
 	BU_UNSETJUMP;
-	if ( failed )  {
-	    db_free_tree( curtree, tsp->ts_resp );
+	if (failed) {
+	    db_free_tree(curtree, tsp->ts_resp);
 	    return (union tree *)NULL;
 	}
     }
-    else if ( curtree->tr_op != OP_NMG_TESS )
+    else if (curtree->tr_op != OP_NMG_TESS)
     {
 	Tcl_AppendResult(dgcdp->interp, "Cannot use '-d' option when Boolean evaluation is required\n", (char *)NULL);
-	db_free_tree( curtree, tsp->ts_resp );
+	db_free_tree(curtree, tsp->ts_resp);
 	return (union tree *)NULL;
     }
     r = curtree->tr_d.td_r;
     NMG_CK_REGION(r);
 
-    if ( dgcdp->do_not_draw_nmg_solids_during_debugging && r )  {
-	db_free_tree( curtree, tsp->ts_resp );
+    if (dgcdp->do_not_draw_nmg_solids_during_debugging && r) {
+	db_free_tree(curtree, tsp->ts_resp);
 	return (union tree *)NULL;
     }
 
@@ -2870,17 +2870,17 @@ dgo_nmg_region_end(register struct db_tree_state *tsp, struct db_full_path *path
 	    BU_UNSETJUMP;
 
 	    Tcl_AppendResult(dgcdp->interp, "WARNING: Triangulation of ", sofar,
-			     " failed!!!\n", (char *)NULL );
+			     " failed!!!\n", (char *)NULL);
 	    bu_free((genptr_t)sofar, "path string");
-	    if ( curtree )
-		db_free_tree( curtree, tsp->ts_resp );
+	    if (curtree)
+		db_free_tree(curtree, tsp->ts_resp);
 	    return (union tree *)NULL;
 	}
 	nmg_triangulate_model(*tsp->ts_m, tsp->ts_tol);
 	BU_UNSETJUMP;
     }
 
-    if ( r != 0 )  {
+    if (r != 0) {
 	int	style;
 	/* Convert NMG to vlist */
 	NMG_CK_REGION(r);
@@ -2909,7 +2909,7 @@ dgo_nmg_region_end(register struct db_tree_state *tsp, struct db_full_path *path
 	    nmg_vlblock_r(dgcdp->draw_edge_uses_vbp, r, 1);
 	}
 	/* NMG region is no longer necessary, only vlist remains */
-	db_free_tree( curtree, tsp->ts_resp );
+	db_free_tree(curtree, tsp->ts_resp);
 	return (union tree *)NULL;
     }
 
@@ -3024,28 +3024,28 @@ dgo_drawtrees(struct dg_obj *dgop, Tcl_Interp *interp, int argc, char *argv[], i
 		    dgo_enable_fastpath = 1;
 		    break;
 		case 'C':
-		{
-		    int		r, g, b;
-		    register char	*cp = bu_optarg;
+		    {
+			int		r, g, b;
+			register char	*cp = bu_optarg;
 
-		    r = atoi(cp);
-		    while ( (*cp >= '0' && *cp <= '9') )  cp++;
-		    while ( *cp && (*cp < '0' || *cp > '9') ) cp++;
-		    g = atoi(cp);
-		    while ( (*cp >= '0' && *cp <= '9') )  cp++;
-		    while ( *cp && (*cp < '0' || *cp > '9') ) cp++;
-		    b = atoi(cp);
+			r = atoi(cp);
+			while ((*cp >= '0' && *cp <= '9'))  cp++;
+			while (*cp && (*cp < '0' || *cp > '9')) cp++;
+			g = atoi(cp);
+			while ((*cp >= '0' && *cp <= '9'))  cp++;
+			while (*cp && (*cp < '0' || *cp > '9')) cp++;
+			b = atoi(cp);
 
-		    if ( r < 0 || r > 255 )  r = 255;
-		    if ( g < 0 || g > 255 )  g = 255;
-		    if ( b < 0 || b > 255 )  b = 255;
+			if (r < 0 || r > 255)  r = 255;
+			if (g < 0 || g > 255)  g = 255;
+			if (b < 0 || b > 255)  b = 255;
 
-		    dgcdp->wireframe_color_override = 1;
-		    dgcdp->wireframe_color[0] = r;
-		    dgcdp->wireframe_color[1] = g;
-		    dgcdp->wireframe_color[2] = b;
-		}
-		break;
+			dgcdp->wireframe_color_override = 1;
+			dgcdp->wireframe_color[0] = r;
+			dgcdp->wireframe_color[1] = g;
+			dgcdp->wireframe_color[2] = b;
+		    }
+		    break;
 		case 'm':
 		    /* clamp it to [-infinity, 2] */
 		    dgcdp->shaded_mode_override = atoi(bu_optarg);
@@ -3065,17 +3065,17 @@ dgo_drawtrees(struct dg_obj *dgop, Tcl_Interp *interp, int argc, char *argv[], i
 
 		    break;
 		default:
-		{
-		    struct bu_vls vls;
+		    {
+			struct bu_vls vls;
 
-		    bu_vls_init(&vls);
-		    bu_vls_printf(&vls, "helplib %s", argv[0]);
-		    Tcl_Eval(interp, bu_vls_addr(&vls));
-		    bu_vls_free(&vls);
-		    bu_free((genptr_t)dgcdp, "dgo_drawtrees: dgcdp");
+			bu_vls_init(&vls);
+			bu_vls_printf(&vls, "helplib %s", argv[0]);
+			Tcl_Eval(interp, bu_vls_addr(&vls));
+			bu_vls_free(&vls);
+			bu_free((genptr_t)dgcdp, "dgo_drawtrees: dgcdp");
 
-		    return TCL_ERROR;
-		}
+			return TCL_ERROR;
+		    }
 	    }
 	}
 	argc -= bu_optind;
@@ -3160,33 +3160,33 @@ dgo_drawtrees(struct dg_obj *dgop, Tcl_Interp *interp, int argc, char *argv[], i
 	    bu_free((genptr_t)dgcdp, "dgo_drawtrees: dgcdp");
 	    return (-1);
 	case 3:
-	{
-	    /* NMG */
-	    dgo_nmg_model = nmg_mm();
-	    dgop->dgo_wdbp->wdb_initial_tree_state.ts_m = &dgo_nmg_model;
-	    if (dgcdp->draw_edge_uses) {
-		Tcl_AppendResult(interp, "Doing the edgeuse thang (-u)\n", (char *)NULL);
-		dgcdp->draw_edge_uses_vbp = rt_vlblock_init();
+	    {
+		/* NMG */
+		dgo_nmg_model = nmg_mm();
+		dgop->dgo_wdbp->wdb_initial_tree_state.ts_m = &dgo_nmg_model;
+		if (dgcdp->draw_edge_uses) {
+		    Tcl_AppendResult(interp, "Doing the edgeuse thang (-u)\n", (char *)NULL);
+		    dgcdp->draw_edge_uses_vbp = rt_vlblock_init();
+		}
+
+		ret = db_walk_tree(dgop->dgo_wdbp->dbip, argc, (const char **)argv,
+				   ncpu,
+				   &dgop->dgo_wdbp->wdb_initial_tree_state,
+				   dgo_enable_fastpath ? dgo_nmg_region_start : 0,
+				   dgo_nmg_region_end,
+				   dgo_nmg_use_tnurbs ? nmg_booltree_leaf_tnurb : nmg_booltree_leaf_tess,
+				   (genptr_t)dgcdp);
+
+		if (dgcdp->draw_edge_uses) {
+		    dgo_cvt_vlblock_to_solids(dgop, interp, dgcdp->draw_edge_uses_vbp, "_EDGEUSES_", 0);
+		    rt_vlblock_free(dgcdp->draw_edge_uses_vbp);
+		    dgcdp->draw_edge_uses_vbp = (struct bn_vlblock *)NULL;
+		}
+
+		/* Destroy NMG */
+		nmg_km(dgo_nmg_model);
+		break;
 	    }
-
-	    ret = db_walk_tree(dgop->dgo_wdbp->dbip, argc, (const char **)argv,
-			       ncpu,
-			       &dgop->dgo_wdbp->wdb_initial_tree_state,
-			       dgo_enable_fastpath ? dgo_nmg_region_start : 0,
-			       dgo_nmg_region_end,
-			       dgo_nmg_use_tnurbs ? nmg_booltree_leaf_tnurb : nmg_booltree_leaf_tess,
-			       (genptr_t)dgcdp);
-
-	    if (dgcdp->draw_edge_uses) {
-		dgo_cvt_vlblock_to_solids(dgop, interp, dgcdp->draw_edge_uses_vbp, "_EDGEUSES_", 0);
-		rt_vlblock_free(dgcdp->draw_edge_uses_vbp);
-		dgcdp->draw_edge_uses_vbp = (struct bn_vlblock *)NULL;
-	    }
-
-	    /* Destroy NMG */
-	    nmg_km(dgo_nmg_model);
-	    break;
-	}
     }
     if (dgcdp->fastpath_count) {
 	bu_log("%d region%s rendered through polygon fastpath\n",
@@ -3214,7 +3214,7 @@ dgo_cvt_vlblock_to_solids(struct dg_obj *dgop, Tcl_Interp *interp, struct bn_vlb
 
     bu_strlcpy(shortname, name, sizeof(shortname));
 
-    for ( i=0; i < vbp->nused; i++ )  {
+    for (i=0; i < vbp->nused; i++) {
 	if (BU_LIST_IS_EMPTY(&(vbp->head[i])))
 	    continue;
 
@@ -3271,24 +3271,24 @@ dgo_invent_solid(struct dg_obj	*dgop,
     GET_SOLID(sp, &FreeSolid.l);
 
     if (copy) {
-	BU_LIST_INIT( &(sp->s_vlist) );
-	rt_vlist_copy( &(sp->s_vlist), vhead );
+	BU_LIST_INIT(&(sp->s_vlist));
+	rt_vlist_copy(&(sp->s_vlist), vhead);
     } else {
 	/* For efficiency, just swipe the vlist */
-	BU_LIST_APPEND_LIST( &(sp->s_vlist), vhead );
+	BU_LIST_APPEND_LIST(&(sp->s_vlist), vhead);
 	BU_LIST_INIT(vhead);
     }
     dgo_bound_solid(interp, sp);
 
     /* set path information -- this is a top level node */
-    db_add_node_to_full_path( &sp->s_fullpath, dp );
+    db_add_node_to_full_path(&sp->s_fullpath, dp);
 
     sp->s_iflag = DOWN;
     sp->s_soldash = 0;
     sp->s_Eflag = 1;		/* Can't be solid edited! */
     sp->s_color[0] = sp->s_basecolor[0] = (rgb>>16) & 0xFF;
     sp->s_color[1] = sp->s_basecolor[1] = (rgb>> 8) & 0xFF;
-    sp->s_color[2] = sp->s_basecolor[2] = (rgb    ) & 0xFF;
+    sp->s_color[2] = sp->s_basecolor[2] = (rgb   ) & 0xFF;
     sp->s_regionid = 0;
     sp->s_dlist = BU_LIST_LAST(solid, &dgop->dgo_headSolid)->s_dlist + 1;
 
@@ -3323,7 +3323,7 @@ dgo_bound_solid(Tcl_Interp *interp, register struct solid *sp)
     xmax = ymax = zmax = -INFINITY;
     xmin = ymin = zmin =  INFINITY;
     sp->s_vlen = 0;
-    for (BU_LIST_FOR(vp, bn_vlist, &(sp->s_vlist))) {
+    for (BU_LIST_FOR (vp, bn_vlist, &(sp->s_vlist))) {
 	register int	j;
 	register int	nused = vp->nused;
 	register int	*cmd = vp->cmd;
@@ -3347,14 +3347,14 @@ dgo_bound_solid(Tcl_Interp *interp, register struct solid *sp)
 		    V_MAX(zmax, (*pt)[Z]);
 		    break;
 		default:
-		{
-		    struct bu_vls tmp_vls;
+		    {
+			struct bu_vls tmp_vls;
 
-		    bu_vls_init(&tmp_vls);
-		    bu_vls_printf(&tmp_vls, "unknown vlist op %d\n", *cmd);
-		    Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
-		    bu_vls_free(&tmp_vls);
-		}
+			bu_vls_init(&tmp_vls);
+			bu_vls_printf(&tmp_vls, "unknown vlist op %d\n", *cmd);
+			Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
+			bu_vls_free(&tmp_vls);
+		    }
 	    }
 	}
 	sp->s_vlen += nused;
@@ -3365,8 +3365,8 @@ dgo_bound_solid(Tcl_Interp *interp, register struct solid *sp)
     sp->s_center[Z] = (zmin + zmax) * 0.5;
 
     sp->s_size = xmax - xmin;
-    V_MAX( sp->s_size, ymax - ymin );
-    V_MAX( sp->s_size, zmax - zmin );
+    V_MAX(sp->s_size, ymax - ymin);
+    V_MAX(sp->s_size, zmax - zmin);
 }
 
 /*
@@ -3436,7 +3436,7 @@ dgo_drawH_part2(int dashflag, struct bu_list *vhead, struct db_full_path *pathp,
 	sp->s_iflag = DOWN;
 	sp->s_soldash = dashflag;
 	sp->s_Eflag = 0;	/* This is a solid */
-	db_dup_full_path( &sp->s_fullpath, pathp );
+	db_dup_full_path(&sp->s_fullpath, pathp);
 	sp->s_regionid = tsp->ts_regionid;
 	sp->s_transparency = dgcdp->transparency;
 	sp->s_dmode = dgcdp->dmode;
@@ -3477,7 +3477,7 @@ dgo_eraseobjall_callback(struct db_i		*dbip,
     struct directory	*dpp[2] = {DIR_NULL, DIR_NULL};
 
     dpp[0] = dp;
-    for (BU_LIST_FOR(dgop, dg_obj, &HeadDGObj.l))
+    for (BU_LIST_FOR (dgop, dg_obj, &HeadDGObj.l))
 	/* drawable geometry objects associated database matches */
 	if (dgop->dgo_wdbp->dbip == dbip) {
 	    dgo_eraseobjall(dgop, interp, dpp);
@@ -3547,7 +3547,7 @@ dgo_eraseobjpath(struct dg_obj	*dgop,
 	    continue;
 
 	/* make sure we will not dereference null */
-	if ( ( ac == 0 ) || (av_orig == 0) || ( *av_orig == 0 ) ) {
+	if ((ac == 0) || (av_orig == 0) || (*av_orig == 0)) {
 	    bu_log("WARNING: Asked to look up a null-named database object\n");
 	    goto end;
 	}
@@ -3613,7 +3613,7 @@ dgo_eraseobjall(struct dg_obj			*dgop,
 	return;
 
     db_full_path_init(&subpath);
-    for (tmp_dpp = dpp; *tmp_dpp != DIR_NULL; ++tmp_dpp)  {
+    for (tmp_dpp = dpp; *tmp_dpp != DIR_NULL; ++tmp_dpp) {
 	RT_CK_DIR(*tmp_dpp);
 	db_add_node_to_full_path(&subpath, *tmp_dpp);
     }
@@ -3621,7 +3621,7 @@ dgo_eraseobjall(struct dg_obj			*dgop,
     sp = BU_LIST_NEXT(solid, &dgop->dgo_headSolid);
     while (BU_LIST_NOT_HEAD(sp, &dgop->dgo_headSolid)) {
 	nsp = BU_LIST_PNEXT(solid, sp);
-	if ( db_full_path_subset( &sp->s_fullpath, &subpath ) )  {
+	if (db_full_path_subset(&sp->s_fullpath, &subpath)) {
 	    BU_LIST_DEQUEUE(&sp->l);
 	    FREE_SOLID(sp, &FreeSolid.l);
 	}
@@ -3685,7 +3685,7 @@ dgo_eraseobj(struct dg_obj		*dgop,
 	sp = nsp;
     }
 
-    if ((*dpp)->d_addr == RT_DIR_PHONY_ADDR ) {
+    if ((*dpp)->d_addr == RT_DIR_PHONY_ADDR) {
 	if (db_dirdelete(dgop->dgo_wdbp->dbip, *dpp) < 0) {
 	    Tcl_AppendResult(interp, "dgo_eraseobj: db_dirdelete failed\n", (char *)NULL);
 	}
@@ -3703,7 +3703,7 @@ dgo_eraseobj(struct dg_obj		*dgop,
 	return;
 
     db_full_path_init(&subpath);
-    for (tmp_dpp = dpp; *tmp_dpp != DIR_NULL; ++tmp_dpp)  {
+    for (tmp_dpp = dpp; *tmp_dpp != DIR_NULL; ++tmp_dpp) {
 	RT_CK_DIR(*tmp_dpp);
 	db_add_node_to_full_path(&subpath, *tmp_dpp);
     }
@@ -3711,14 +3711,14 @@ dgo_eraseobj(struct dg_obj		*dgop,
     sp = BU_LIST_FIRST(solid, &dgop->dgo_headSolid);
     while (BU_LIST_NOT_HEAD(sp, &dgop->dgo_headSolid)) {
 	nsp = BU_LIST_PNEXT(solid, sp);
-	if ( db_full_path_subset( &sp->s_fullpath, &subpath ) )  {
+	if (db_full_path_subset(&sp->s_fullpath, &subpath)) {
 	    BU_LIST_DEQUEUE(&sp->l);
 	    FREE_SOLID(sp, &FreeSolid.l);
 	}
 	sp = nsp;
     }
 
-    if ((*dpp)->d_addr == RT_DIR_PHONY_ADDR ) {
+    if ((*dpp)->d_addr == RT_DIR_PHONY_ADDR) {
 	if (db_dirdelete(dgop->dgo_wdbp->dbip, *dpp) < 0) {
 	    Tcl_AppendResult(interp, "dgo_eraseobj: db_dirdelete failed\n", (char *)NULL);
 	}
@@ -3799,7 +3799,7 @@ dgo_build_tops(Tcl_Interp	*interp,
      */
     FOR_ALL_SOLIDS(sp, &hsp->l)
 	sp->s_flag = DOWN;
-    FOR_ALL_SOLIDS(sp, &hsp->l)  {
+    FOR_ALL_SOLIDS(sp, &hsp->l) {
 	register struct solid *forw;
 	struct directory *dp = FIRST_SOLID(sp);
 
@@ -3815,7 +3815,7 @@ dgo_build_tops(Tcl_Interp	*interp,
 	    break;
 	}
 	sp->s_flag = UP;
-	for (BU_LIST_PFOR(forw, sp, solid, &hsp->l)) {
+	for (BU_LIST_PFOR (forw, sp, solid, &hsp->l)) {
 	    if (FIRST_SOLID(forw) == dp)
 		forw->s_flag = UP;
 	}
@@ -3843,10 +3843,10 @@ dgo_rt_write(struct dg_obj	*dgop,
     register struct solid *sp;
 
     (void)fprintf(fp, "viewsize %.15e;\n", vop->vo_size);
-    quat_mat2quat(quat, vop->vo_rotation );
+    quat_mat2quat(quat, vop->vo_rotation);
     (void)fprintf(fp, "orientation %.15e %.15e %.15e %.15e;\n", V4ARGS(quat));
     (void)fprintf(fp, "eye_pt %.15e %.15e %.15e;\n",
-		  eye_model[X], eye_model[Y], eye_model[Z] );
+		  eye_model[X], eye_model[Y], eye_model[Z]);
 
     (void)fprintf(fp, "start 0; clean;\n");
     FOR_ALL_SOLIDS (sp, &dgop->dgo_headSolid) {
@@ -3855,7 +3855,7 @@ dgo_rt_write(struct dg_obj	*dgop,
 	}
     }
     FOR_ALL_SOLIDS(sp, &dgop->dgo_headSolid) {
-	for (i=0; i<sp->s_fullpath.fp_len; i++ ) {
+	for (i=0; i<sp->s_fullpath.fp_len; i++) {
 	    if (!(DB_FULL_PATH_GET(&sp->s_fullpath, i)->d_flags & DIR_USED)) {
 		register struct animate *anp;
 		for (anp = DB_FULL_PATH_GET(&sp->s_fullpath, i)->d_animate; anp;
@@ -3997,16 +3997,16 @@ dgo_rt_output_handler(ClientData	clientData,
 	 * either EOF has been sent or there was a read error.
 	 * there is no need to block indefinately
 	 */
-	WaitForSingleObject( run_rtp->hProcess, 120 );
+	WaitForSingleObject(run_rtp->hProcess, 120);
 	/* !!! need to observe implications of being non-infinate
-	 *	WaitForSingleObject( run_rtp->hProcess, INFINITE );
+	 *	WaitForSingleObject(run_rtp->hProcess, INFINITE);
 	 */
 
 	if (GetLastError() == ERROR_PROCESS_ABORTED) {
 	    run_rtp->aborted = 1;
 	}
 
-	GetExitCodeProcess( run_rtp->hProcess, &retcode );
+	GetExitCodeProcess(run_rtp->hProcess, &retcode);
 	/* may be useful to try pr_wait_status() here */
 
 	aborted = run_rtp->aborted;
@@ -4095,11 +4095,11 @@ dgo_rt_set_eye_model(struct dg_obj *dgop,
 	    minus[X] = sp->s_center[X] - sp->s_size;
 	    minus[Y] = sp->s_center[Y] - sp->s_size;
 	    minus[Z] = sp->s_center[Z] - sp->s_size;
-	    VMIN( extremum[0], minus );
+	    VMIN(extremum[0], minus);
 	    plus[X] = sp->s_center[X] + sp->s_size;
 	    plus[Y] = sp->s_center[Y] + sp->s_size;
 	    plus[Z] = sp->s_center[Z] + sp->s_size;
-	    VMAX( extremum[1], plus );
+	    VMAX(extremum[1], plus);
 	}
 	VMOVEN(direction, vop->vo_rotation + 8, 3);
 	for (i = 0; i < 3; ++i)
@@ -4210,14 +4210,14 @@ dgo_run_rt(struct dg_obj *dgop,
     sa.lpSecurityDescriptor = NULL;
 
     /* Create a pipe for the child process's STDOUT. */
-    CreatePipe( &pipe_err[0], &pipe_err[1], &sa, 0);
+    CreatePipe(&pipe_err[0], &pipe_err[1], &sa, 0);
 
     /* Create noninheritable read handle and close the inheritable read handle. */
-    DuplicateHandle( GetCurrentProcess(), pipe_err[0],
-		     GetCurrentProcess(),  &pipe_errDup ,
-		     0,  FALSE,
-		     DUPLICATE_SAME_ACCESS );
-    CloseHandle( pipe_err[0] );
+    DuplicateHandle(GetCurrentProcess(), pipe_err[0],
+		    GetCurrentProcess(),  &pipe_errDup ,
+		    0,  FALSE,
+		    DUPLICATE_SAME_ACCESS);
+    CloseHandle(pipe_err[0]);
 
     /* Create a pipe for the child process's STDIN. */
     CreatePipe(&pipe_in[0], &pipe_in[1], &sa, 0);
@@ -4226,7 +4226,7 @@ dgo_run_rt(struct dg_obj *dgop,
     DuplicateHandle(GetCurrentProcess(), pipe_in[1],
 		    GetCurrentProcess(), &pipe_inDup,
 		    0, FALSE,                  /* not inherited */
-		    DUPLICATE_SAME_ACCESS );
+		    DUPLICATE_SAME_ACCESS);
     CloseHandle(pipe_in[1]);
 
 
@@ -4254,7 +4254,7 @@ dgo_run_rt(struct dg_obj *dgop,
     CloseHandle(pipe_err[1]);
 
     /* As parent, send view information down pipe */
-    fp_in = _fdopen( _open_osfhandle((HFILE)pipe_inDup, _O_TEXT), "wb" );
+    fp_in = _fdopen(_open_osfhandle((HFILE)pipe_inDup, _O_TEXT), "wb");
 
     dgo_rt_set_eye_model(dgop, vop, eye_model);
     dgo_rt_write(dgop, vop, fp_in, eye_model);
@@ -4298,7 +4298,7 @@ dgo_notifyWdb(struct rt_wdb *wdbp,
 {
     struct dg_obj *dgop;
 
-    for (BU_LIST_FOR(dgop, dg_obj, &HeadDGObj.l))
+    for (BU_LIST_FOR (dgop, dg_obj, &HeadDGObj.l))
 	if (dgop->dgo_wdbp == wdbp)
 	    dgo_notify(dgop, interp);
 }
@@ -4309,7 +4309,7 @@ dgo_impending_wdb_close(struct rt_wdb	*wdbp,
 {
     struct dg_obj *dgop;
 
-    for (BU_LIST_FOR(dgop, dg_obj, &HeadDGObj.l))
+    for (BU_LIST_FOR (dgop, dg_obj, &HeadDGObj.l))
 	if (dgop->dgo_wdbp == wdbp) {
 	    dgo_zap_cmd(dgop, interp);
 	    dgop->dgo_wdbp = RT_WDB_NULL;
@@ -4322,7 +4322,7 @@ dgo_zapall(struct rt_wdb *wdbp, Tcl_Interp *interp)
 {
     struct dg_obj *dgop;
 
-    for (BU_LIST_FOR(dgop, dg_obj, &HeadDGObj.l))
+    for (BU_LIST_FOR (dgop, dg_obj, &HeadDGObj.l))
 	if (dgop->dgo_wdbp == wdbp) {
 	    dgo_zap_cmd(dgop, interp);
 	    dgo_notify(dgop, interp);
@@ -4371,13 +4371,13 @@ dgo_print_schain(struct dg_obj *dgop, Tcl_Interp *interp, int lvl)
 	    continue;
 
 	/* convert to the local unit for printing */
-	bu_vls_printf(&vls, "  cent=(%.3f,%.3f,%.3f) sz=%g ",
+	bu_vls_printf(&vls, "  cent=(%.3f, %.3f, %.3f) sz=%g ",
 		      sp->s_center[X]*dgop->dgo_wdbp->dbip->dbi_base2local,
 		      sp->s_center[Y]*dgop->dgo_wdbp->dbip->dbi_base2local,
 		      sp->s_center[Z]*dgop->dgo_wdbp->dbip->dbi_base2local,
 		      sp->s_size*dgop->dgo_wdbp->dbip->dbi_base2local);
 	bu_vls_printf(&vls, "reg=%d\n", sp->s_regionid);
-	bu_vls_printf(&vls, "  basecolor=(%d,%d,%d) color=(%d,%d,%d)%s%s%s\n",
+	bu_vls_printf(&vls, "  basecolor=(%d, %d, %d) color=(%d, %d, %d)%s%s%s\n",
 		      sp->s_basecolor[0],
 		      sp->s_basecolor[1],
 		      sp->s_basecolor[2],
@@ -4394,7 +4394,7 @@ dgo_print_schain(struct dg_obj *dgop, Tcl_Interp *interp, int lvl)
 	/* Print the actual vector list */
 	nvlist = 0;
 	npts = 0;
-	for (BU_LIST_FOR(vp, bn_vlist, &(sp->s_vlist))) {
+	for (BU_LIST_FOR (vp, bn_vlist, &(sp->s_vlist))) {
 	    register int	i;
 	    register int	nused = vp->nused;
 	    register int	*cmd = vp->cmd;
@@ -4448,7 +4448,7 @@ dgo_print_schain_vlcmds(struct dg_obj *dgop, Tcl_Interp *interp)
 		      sp->s_color[2]);
 
 	/* Print the actual vector list */
-	for (BU_LIST_FOR(vp, bn_vlist, &(sp->s_vlist))) {
+	for (BU_LIST_FOR (vp, bn_vlist, &(sp->s_vlist))) {
 	    register int	i;
 	    register int	nused = vp->nused;
 	    register int	*cmd = vp->cmd;
@@ -4662,17 +4662,17 @@ dgo_tree_cmd(struct dg_obj	*dgop,
 		cflag = 1;
 		break;
 	    case 'o':
-		if ( (fdout = fopen( bu_optarg, "w+b" )) == NULL ) {
-		    Tcl_SetErrno( errno );
-		    Tcl_AppendResult( interp, "Failed to open output file, ",
-				      strerror( errno ), (char *)NULL );
+		if ((fdout = fopen(bu_optarg, "w+b")) == NULL) {
+		    Tcl_SetErrno(errno);
+		    Tcl_AppendResult(interp, "Failed to open output file, ",
+				     strerror(errno), (char *)NULL);
 		    return TCL_ERROR;
 		}
 		break;
 	    case 'd':
 		displayDepth = atoi(bu_optarg);
-		if ( displayDepth < 0 ){
-		    Tcl_AppendResult( interp, "Negative number supplied as depth - unsupported.", (char *)NULL );
+		if (displayDepth < 0) {
+		    Tcl_AppendResult(interp, "Negative number supplied as depth - unsupported.", (char *)NULL);
 		    return TCL_ERROR;
 		}
 		break;
@@ -4721,10 +4721,10 @@ dgo_tree_cmd(struct dg_obj	*dgop,
 	buffer = NULL;
     }
 
-    if ( fdout != NULL ) {
-	fprintf( fdout, "%s", Tcl_GetStringResult( interp ) );
-	Tcl_ResetResult( interp );
-	fclose( fdout );
+    if (fdout != NULL) {
+	fprintf(fdout, "%s", Tcl_GetStringResult(interp));
+	Tcl_ResetResult(interp);
+	fclose(fdout);
     }
 
     return TCL_OK;

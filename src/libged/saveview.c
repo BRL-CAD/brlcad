@@ -28,10 +28,12 @@
 #include <stdlib.h>
 #include <ctype.h>
 #include <string.h>
-
 #include "bio.h"
+
 #include "solid.h"
-#include "ged_private.h"
+
+#include "./ged_private.h"
+
 
 static char *ged_basename_without_suffix(register const char *p1, register const char *suff);
 

@@ -33,10 +33,12 @@
 #include "common.h"
 
 #include "bio.h"
+
 #include "dg.h"
 #include "solid.h"
 
-#include "ged_private.h"
+#include "./ged_private.h"
+
 
 /**
  * head of drawable geometry object list

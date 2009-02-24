@@ -26,11 +26,13 @@
 #include "common.h"
 
 #include <string.h>
-
 #include "bio.h"
+
 #include "cmd.h"
 #include "rtgeom.h"
-#include "ged_private.h"
+
+#include "./ged_private.h"
+
 
 int
 ged_nmg_simplify(struct ged *gedp, int argc, const char *argv[])

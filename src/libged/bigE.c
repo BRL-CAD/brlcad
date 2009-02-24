@@ -29,7 +29,6 @@
 #include "common.h"
 
 #include <stdlib.h>
-#include <stdio.h>
 #include <string.h>
 #include <time.h>
 #include "bio.h"
@@ -40,7 +39,9 @@
 #include "rtgeom.h"
 #include "solid.h"
 #include "dg.h"
-#include "ged_private.h"
+
+#include "./ged_private.h"
+
 
 /* #define debug 1 */
 

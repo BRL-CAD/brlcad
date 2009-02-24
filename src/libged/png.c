@@ -24,18 +24,20 @@
  */
 
 #include "common.h"
-#include "bio.h"
 
 #include <stdlib.h>
 #include <ctype.h>
 #include <string.h>
+#include "bio.h"
 
 #include "png.h"
 #include "bu.h"
 #include "vmath.h"
 #include "bn.h"
 #include "solid.h"
-#include "ged_private.h"
+
+#include "./ged_private.h"
+
 
 static fastf_t ged_png_color_sf = 1.0/255.0;
 static unsigned int size = 512;

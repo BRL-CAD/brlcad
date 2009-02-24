@@ -24,14 +24,16 @@
  */
 
 #include "common.h"
-#include "bio.h"
 
 #include <stdlib.h>
 #include <string.h>
+#include "bio.h"
 
 #include "mater.h"
 #include "solid.h"
-#include "ged_private.h"
+
+#include "./ged_private.h"
+
 
 /* declare our callbacks used by ged_drawtrees() */
 static union tree *ged_bot_check_region_end(register struct db_tree_state *tsp,

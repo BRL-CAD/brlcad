@@ -26,14 +26,14 @@
 #include "common.h"
 
 #include <math.h>
-#include <stdio.h>
-
 #include "bio.h"
+
 #include "bu.h"
 #include "vmath.h"
 #include "fb.h"
 #include "dm.h"
-#include "ged_private.h"
+
+#include "./ged_private.h"
 
 
 /* Defined in rect.c */

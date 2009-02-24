@@ -33,7 +33,8 @@
 #include "ged.h"
 #include "db.h"
 #include "mater.h"
-#include "ged_private.h"
+
+#include "./ged_private.h"
 
 
 /*

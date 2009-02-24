@@ -24,13 +24,14 @@
  */
 
 #include "common.h"
-#include "bio.h"
 
 #include <stdlib.h>
 #include <ctype.h>
 #include <string.h>
+#include "bio.h"
 
-#include "ged_private.h"
+#include "./ged_private.h"
+
 
 static void ged_usejoy(struct ged *gedp, double xangle, double yangle, double zangle);
 

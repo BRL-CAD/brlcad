@@ -25,15 +25,17 @@
  */
 
 #include "common.h"
-#include "bio.h"
 
 #include <stdlib.h>
 #include <ctype.h>
 #include <string.h>
+#include "bio.h"
 
 #include "rtgeom.h"
 #include "wdb.h"
-#include "ged_private.h"
+
+#include "./ged_private.h"
+
 
 static char *p_half[] = {
     "Enter X, Y, Z of outward pointing normal vector: ",

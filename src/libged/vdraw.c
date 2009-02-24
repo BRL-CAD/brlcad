@@ -109,7 +109,8 @@
 #include "mater.h"
 #include "nmg.h"
 #include "dg.h"
-#include "ged_private.h"
+
+#include "./ged_private.h"
 
 
 #ifndef M_SQRT2

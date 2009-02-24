@@ -24,12 +24,12 @@
  */
 
 #include "common.h"
-#include "bio.h"
 
 #include <stdlib.h>
 #include <ctype.h>
 #include <math.h>
 #include <string.h>
+#include "bio.h"
 
 #include "bu.h"
 #include "vmath.h"
@@ -38,7 +38,9 @@
 #include "rtgeom.h"
 #include "raytrace.h"
 #include "db.h"
-#include "ged_private.h"
+
+#include "./ged_private.h"
+
 
 static char *p_arb4[] = {
     "Enter thickness for face 123: ",

@@ -31,17 +31,16 @@
  */
 
 #include "common.h"
-#include "bio.h"
 
 #include <stdlib.h>
 #include <string.h>
 #include <errno.h>
-#include <stdio.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <stdio.h>
 #include <math.h>
 #include <limits.h>			/* home of INT_MAX aka MAXINT */
+#include "bio.h"
 
 #include "bu.h"
 #include "vmath.h"
@@ -49,7 +48,8 @@
 #include "plot3.h"
 #include "sysv.h"
 
-#include "ged_private.h"
+#include "./ged_private.h"
+
 
 /* bu_getopt() options */
 char *options = "A:a:de:f:g:Gn:N:pP:rS:s:t:U:u:vV:W:";

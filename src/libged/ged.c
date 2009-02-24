@@ -45,7 +45,9 @@
 #include "rtgeom.h"
 #include "raytrace.h"
 #include "plot3.h"
-#include "ged_private.h"
+
+#include "./ged_private.h"
+
 
 int ged_decode_dbip(const char *dbip_string, struct db_i **dbipp);
 void ged_drawable_init(struct ged_drawable *gdp);

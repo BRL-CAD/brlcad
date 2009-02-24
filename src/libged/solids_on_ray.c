@@ -28,13 +28,15 @@
 #include <stdlib.h>
 #include <ctype.h>
 #include <string.h>
-
 #include "bio.h"
+
 #include "bu.h"
 #include "bn.h"
 #include "cmd.h"
 #include "solid.h"
-#include "ged_private.h"
+
+#include "./ged_private.h"
+
 
 static char **ged_skewer_solids(struct ged *gedp, int argc, const char **argv, fastf_t *ray_orig, fastf_t *ray_dir, int full_path);
 

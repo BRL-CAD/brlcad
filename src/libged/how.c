@@ -27,11 +27,12 @@
 
 #include <stdlib.h>
 #include <string.h>
-
 #include "bio.h"
+
 #include "cmd.h"
-#include "ged_private.h"
 #include "solid.h"
+
+#include "./ged_private.h"
 
 
 /*

@@ -24,14 +24,16 @@
  */
 
 #include "common.h"
-#include "bio.h"
 
 #include <signal.h>
 #include <stdlib.h>
+#include "bio.h"
 
 #include "rtgeom.h"
 #include "wdb.h"
-#include "ged_private.h"
+
+#include "./ged_private.h"
+
 
 int
 ged_make(struct ged *gedp, int argc, const char *argv[])

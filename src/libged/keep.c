@@ -26,11 +26,13 @@
 #include "common.h"
 
 #include <string.h>
-
 #include "bio.h"
+
 #include "cmd.h"
 #include "rtgeom.h"
-#include "ged_private.h"
+
+#include "./ged_private.h"
+
 
 struct keep_node_data {
     struct rt_wdb *wdbp;

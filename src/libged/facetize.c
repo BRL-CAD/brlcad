@@ -26,12 +26,14 @@
 #include "common.h"
 
 #include <string.h>
-
 #include "bio.h"
+
 #include "cmd.h"
 #include "rtgeom.h"
 #include "raytrace.h"
-#include "ged_private.h"
+
+#include "./ged_private.h"
+
 
 static union tree *facetize_region_end(struct db_tree_state *tsp, struct db_full_path *pathp, union tree *curtree, genptr_t client_data);
 

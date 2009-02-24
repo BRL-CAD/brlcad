@@ -55,7 +55,7 @@
 #include "dg.h"
 
 #include "./qray.h"
-#include "ged_private.h"
+#include "./ged_private.h"
 
 
 /* defined in draw.c */

@@ -28,11 +28,12 @@
 #include <stdlib.h>
 #include <ctype.h>
 #include <string.h>
-
 #include "bio.h"
+
 #include "db.h"
 #include "mater.h"
-#include "ged_private.h"
+
+#include "./ged_private.h"
 
 
 static void
