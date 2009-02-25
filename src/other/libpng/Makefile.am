@@ -58,7 +58,6 @@ EXTRA_DIST = \
 	aclocal.m4 \
 	autogen.sh \
 	config.h.in \
-	configure \
 	configure.ac \
 	contrib \
 	example.c \
