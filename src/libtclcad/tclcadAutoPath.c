@@ -423,16 +423,6 @@ tclcad_auto_path(Tcl_Interp *interp)
     }
 
     /* iterate over the auto_path list and modify the real Tcl auto_path */
-
-    /* First, clear out real Tcl autopath to make sure nothing
-     * has strayed in that we don't want there
-     */
-    bu_vls_trunc(&lappend, 0);
-    bu_vls_printf(&lappend, "set auto_path \"\"");
-    (void)Tcl_Eval(interp, bu_vls_addr(&lappend));
-    bu_vls_trunc(&lappend, 0);
-
-    /* Now, append the auto_path entries we want*/
     for (srcpath = strtok(bu_vls_addr(&auto_path), pathsep);
 	 srcpath;
 	 srcpath = strtok(NULL, pathsep)) {
