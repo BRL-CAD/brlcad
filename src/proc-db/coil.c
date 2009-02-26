@@ -148,7 +148,7 @@ fastf_t helical_coil_plain(struct bu_list *head, struct wmember *coil, fastf_t m
 
 }
 
-void make_coil(struct rt_wdb (*file), char *prefix, fastf_t mean_outer_diameter, fastf_t wire_diameter, fastf_t helix_angle, fastf_t pitch, int nt, int end_type)
+void make_coil(struct rt_wdb (*file), char *prefix, fastf_t mean_outer_diameter, fastf_t wire_diameter, fastf_t helix_angle, fastf_t pitch, int nt, int start_cap_type, int end_cap_type)
 {
     struct bu_list head;
     mk_pipe_init(&head);
@@ -173,37 +173,45 @@ void make_coil(struct rt_wdb (*file), char *prefix, fastf_t mean_outer_diameter,
 
 
 
-/* Process command line arguments 
-int ReadArgs(int argc, char **argv, int *lens_1side_2side, fastf_t *ref_ind, fastf_t *diameter, fastf_t *thickness, fastf_t *focal_length)
+/* Process command line arguments */ 
+int ReadArgs(int argc, char **argv, fastf_t *mean_outer_diameter, fastf_t *wire_diameter, fastf_t *helix_angle, fastf_t *pitch, int *nt, int *start_cap_type, int *end_cap_type)
 {
     int c = 0;
-    char *options="T:r:d:t:f:";
-    int ltype;
-    float refractive, diam, thick, focal;
+    char *options="d:w:h:p:n:s:e:";
+    int numturns, stype, etype;
+    float mean_od, wired, h_angle, ptch;
 
     bu_opterr = 0;
 
     while ((c=bu_getopt(argc, argv, options)) != -1) {
 	switch (c) {
-	    case 'T' :
-		sscanf(bu_optarg, "%d", &ltype);
-		*lens_1side_2side = ltype;
+	    case 'd' :
+		sscanf(bu_optarg, "%f", &mean_od);
+		*mean_outer_diameter = mean_od;
 		break;
-	    case 'r':
-		sscanf(bu_optarg, "%f", &refractive);
-		*ref_ind = refractive;
+	    case 'w':
+		sscanf(bu_optarg, "%f", &wired);
+		*wire_diameter = wired;
 		break;
-	    case 'd':
-		sscanf(bu_optarg, "%f", &diam);
-		*diameter = diam;
+	    case 'h':
+		sscanf(bu_optarg, "%f", &h_angle);
+		*helix_angle = h_angle;
 		break;
-	    case 't':
-		sscanf(bu_optarg, "%f", &thick);
-		*thickness = thick;
+	    case 'p':
+		sscanf(bu_optarg, "%f", &ptch);
+		*pitch = ptch;
 		break;
-	    case 'f':
-		sscanf(bu_optarg, "%f", &focal);
-		*focal_length = focal;
+	    case 'n':
+		sscanf(bu_optarg, "%d", &numturns);
+		*nt = numturns;
+		break;
+	    case 's':
+		sscanf(bu_optarg, "%d", &stype);
+		*start_cap_type = stype;
+		break;
+	    case 'e':
+		sscanf(bu_optarg, "%d", &etype);
+		*end_cap_type = etype;
 		break;
 	    default:
 		bu_log("%s: illegal option -- %c\n", bu_getprogname(), c);
@@ -212,7 +220,6 @@ int ReadArgs(int argc, char **argv, int *lens_1side_2side, fastf_t *ref_ind, fas
     }
     return(bu_optind);
 }
-*/
 
 
 int main(int ac, char *av[])
@@ -223,33 +230,69 @@ int main(int ac, char *av[])
     struct bu_vls str;
     fastf_t mean_outer_diameter, wire_diameter;
     fastf_t helix_angle, pitch;
+
     int nt; /* Number of turns */
     fastf_t coil_index;
-    int end_type;
+    int start_cap_type, end_cap_type;
     
+    struct coil_data_t *coil_data = (struct coil_data_t *)
+    	bu_malloc( sizeof(struct coil_data_t), "coil data structure");
+	
     bu_vls_init(&str);
     bu_vls_init(&coil_type);
     bu_vls_init(&name);
     bu_vls_trunc(&coil_type, 0);
     bu_vls_trunc(&name, 0);
 
-    struct coil_data_t *coil_data = (struct coil_data_t *)
-    	bu_malloc( sizeof(struct coil_data_t), "coil data structure");
+    mean_outer_diameter = 0;
+    wire_diameter = 0;
+    helix_angle = 0;
+    pitch = 0;
+    nt = 0;
+    start_cap_type = 0;
+    end_cap_type = 0;
 
-    mean_outer_diameter = 1000;
-    wire_diameter = 100;
-    coil_index = mean_outer_diameter/wire_diameter; 
-    helix_angle = 10;
-    pitch = wire_diameter;
-    nt = 2;
-    end_type = 0;    
+   
+    /* Process arguments */  
+    ReadArgs(ac, av, &mean_outer_diameter, &wire_diameter, &helix_angle, &pitch, &nt, &start_cap_type, &end_cap_type);
 
+    /* Handle various potential errors in args and set defaults if nothing supplied */
+  
+    if (mean_outer_diameter < 0 || wire_diameter < 0 || helix_angle < 0 || pitch < 0 || nt < 0 || start_cap_type < 0 || end_cap_type < 0) 
+	bu_exit(-1," Error - negative value in one or more arguments supplied to coil");
+    
+    if (wire_diameter == 0 && mean_outer_diameter == 0) {
+       mean_outer_diameter = 1000;
+       wire_diameter = 100;       
+    }
+   
+    if (wire_diameter == 0 && mean_outer_diameter > 0) {
+	wire_diameter = mean_outer_diameter/10;
+    }
+
+    if (mean_outer_diameter == 0 && wire_diameter > 0) {
+	mean_outer_diameter = wire_diameter * 10;
+    }
+
+    if (pitch == 0) {
+	pitch = wire_diameter;
+    }
+
+    if (pitch < wire_diameter) {
+	bu_log("Warning - pitch less than wire diameter.  Setting pitch to wire diameter: %f mm", wire_diameter);
+	pitch = wire_diameter;
+    }
+    
+    if (nt == 0) nt = 30;
+
+    bu_log("Outer Diameter: %f\n",mean_outer_diameter);
+    bu_log("Wire Diameter: %f\n",wire_diameter);
+    
+    /* Generate Name */
     bu_vls_printf(&coil_type, "hc");
     bu_vls_printf(&name, "coil_%s_%.1f_%.1f_%.1f_%.1f_%d", bu_vls_addr(&coil_type), mean_outer_diameter, coil_index, helix_angle, pitch, nt);
+ 
     
-    /* Process arguments  
-    ReadArgs(ac, av, );
-	*/
     /* Create file name if supplied, else use "string.g" */
     if (av[bu_optind]) {
 	if (!bu_file_exists(av[bu_optind])) {
@@ -267,7 +310,7 @@ int main(int ac, char *av[])
     }
  
     bu_log("Making coil...\n");
-    make_coil(db_fp, bu_vls_addr(&name), mean_outer_diameter, wire_diameter, helix_angle, pitch, nt, end_type);
+    make_coil(db_fp, bu_vls_addr(&name), mean_outer_diameter, wire_diameter, helix_angle, pitch, nt, start_cap_type, end_cap_type);
 
     bu_free(coil_data, "coil_data");
 
