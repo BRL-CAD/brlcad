@@ -38,6 +38,8 @@
 #include "raytrace.h"
 #include "wdb.h"
 
+
+#define D2R(x) (x * DEG2RAD)
 #define DEFAULT_COIL_FILENAME "coil.g"
 
 struct coil_data_t {
@@ -60,11 +62,11 @@ fastf_t cap_squared(struct bu_list *head, struct wmember *coil, fastf_t mean_out
     pipe_bend = coil_radius; 
        
     if (is_start == 1) {
-	VSET(pnt1, 0, -coil_radius, starting_pitch);
-	VSET(pnt2, coil_radius , -coil_radius, starting_pitch);
-    	VSET(pnt4, coil_radius , coil_radius, starting_pitch);
-    	VSET(pnt6, -coil_radius , coil_radius, pitch/2+starting_pitch);
-    	VSET(pnt8, -coil_radius , -coil_radius, pitch+starting_pitch);
+	VSET(pnt1, 0, -coil_radius, starting_pitch - sin(D2R(helix_angle))*coil_radius);
+	VSET(pnt2, coil_radius , -coil_radius, starting_pitch - sin(D2R(helix_angle))*coil_radius);
+    	VSET(pnt4, coil_radius , coil_radius, starting_pitch - sin(D2R(helix_angle))*coil_radius);
+    	VSET(pnt6, -coil_radius , coil_radius, pitch/2+starting_pitch - sin(D2R(helix_angle))*coil_radius);
+    	VSET(pnt8, -coil_radius , -coil_radius, pitch+starting_pitch - sin(D2R(helix_angle))*coil_radius);
     	mk_add_pipe_pt(head, pnt1, wire_diameter, 0.0, pipe_bend);
 	mk_add_pipe_pt(head, pnt2, wire_diameter, 0.0, pipe_bend);
 	mk_add_pipe_pt(head, pnt4, wire_diameter, 0.0, pipe_bend);
@@ -72,11 +74,11 @@ fastf_t cap_squared(struct bu_list *head, struct wmember *coil, fastf_t mean_out
 	mk_add_pipe_pt(head, pnt8, wire_diameter, 0.0, pipe_bend);
 	return pitch + starting_pitch;
     } else {
-	VSET(pnt2, coil_radius, -coil_radius, starting_pitch);
-	VSET(pnt4, coil_radius , coil_radius, pitch/2 + starting_pitch);
-    	VSET(pnt6, -coil_radius , coil_radius, pitch + starting_pitch);
-    	VSET(pnt8, -coil_radius , -coil_radius, pitch + starting_pitch);
-    	VSET(pnt1, 0 , -coil_radius, pitch + starting_pitch);
+	VSET(pnt2, coil_radius, -coil_radius, starting_pitch + sin(D2R(helix_angle))*coil_radius);
+	VSET(pnt4, coil_radius , coil_radius, pitch/2 + starting_pitch + sin(D2R(helix_angle))*coil_radius);
+    	VSET(pnt6, -coil_radius , coil_radius, pitch + starting_pitch + sin(D2R(helix_angle))*coil_radius);
+    	VSET(pnt8, -coil_radius , -coil_radius, pitch + starting_pitch + sin(D2R(helix_angle))*coil_radius);
+    	VSET(pnt1, 0 , -coil_radius, pitch + starting_pitch + sin(D2R(helix_angle))*coil_radius);
 	mk_add_pipe_pt(head, pnt2, wire_diameter, 0.0, pipe_bend);
 	mk_add_pipe_pt(head, pnt4, wire_diameter, 0.0, pipe_bend);
 	mk_add_pipe_pt(head, pnt6, wire_diameter, 0.0, pipe_bend);
@@ -127,10 +129,10 @@ fastf_t helical_coil_plain(struct bu_list *head, struct wmember *coil, fastf_t m
 
     /* Now, do the coils needed for the section */ 
     for (i = 0; i < nt; i++) {
-    	VSET(pnt2, coil_radius , -coil_radius, i*pitch + pitch/8 + starting_pitch);
-    	VSET(pnt4, coil_radius , coil_radius, i*pitch + pitch*3/8 + starting_pitch);
-    	VSET(pnt6, -coil_radius , coil_radius, i*pitch + pitch*5/8 + starting_pitch);
-    	VSET(pnt8, -coil_radius , -coil_radius, i*pitch + pitch*7/8 + starting_pitch);
+    	VSET(pnt2, coil_radius , -coil_radius, i*pitch + pitch/8 + starting_pitch + sin(D2R(helix_angle))*coil_radius);
+    	VSET(pnt4, coil_radius , coil_radius, i*pitch + pitch*3/8 + starting_pitch + sin(D2R(helix_angle))*coil_radius);
+    	VSET(pnt6, -coil_radius , coil_radius, i*pitch + pitch*5/8 + starting_pitch - sin(D2R(helix_angle))*coil_radius);
+    	VSET(pnt8, -coil_radius , -coil_radius, i*pitch + pitch*7/8 + starting_pitch - sin(D2R(helix_angle))*coil_radius);
    	mk_add_pipe_pt(head, pnt2, wire_diameter, 0.0, pipe_bend);
     	mk_add_pipe_pt(head, pnt4, wire_diameter, 0.0, pipe_bend);
     	mk_add_pipe_pt(head, pnt6, wire_diameter, 0.0, pipe_bend);
@@ -279,7 +281,7 @@ int main(int ac, char *av[])
     }
 
     if (pitch < wire_diameter) {
-	bu_log("Warning - pitch less than wire diameter.  Setting pitch to wire diameter: %f mm", wire_diameter);
+	bu_log("Warning - pitch less than wire diameter.  Setting pitch to wire diameter: %f mm\n", wire_diameter);
 	pitch = wire_diameter;
     }
     
