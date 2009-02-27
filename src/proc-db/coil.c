@@ -43,6 +43,7 @@
 #define DEFAULT_COIL_FILENAME "coil.g"
 
 struct coil_data_t {
+    struct bu_list l;
     int nt;     /*Number of Turns*/
     fastf_t od; /*Outer Diameter*/
     fastf_t wd; /*Wire Diameter*/
@@ -313,13 +314,18 @@ void make_coil(struct rt_wdb (*file), char *prefix, fastf_t mean_outer_diameter,
 
 
 /* Process command line arguments */ 
-int ReadArgs(int argc, char **argv, fastf_t *mean_outer_diameter, fastf_t *wire_diameter, fastf_t *helix_angle, fastf_t *pitch, int *nt, int *start_cap_type, int *end_cap_type)
+int ReadArgs(int argc, char **argv, struct bu_list *sections, fastf_t *mean_outer_diameter, fastf_t *wire_diameter, fastf_t *helix_angle, fastf_t *pitch, int *nt, int *start_cap_type, int *end_cap_type)
 {
     int c = 0;
-    char *options="d:w:h:p:n:s:e:";
+    char *options="d:w:h:p:n:s:e:S:";
     int numturns, stype, etype;
     float mean_od, wired, h_angle, ptch;
-
+    int d1;
+    float d2, d3, d4, d5;
+    char s1, s2, s3, s4;
+   
+    struct coil_data_t *coil_data;
+    
     bu_opterr = 0;
 
     while ((c=bu_getopt(argc, argv, options)) != -1) {
@@ -352,6 +358,17 @@ int ReadArgs(int argc, char **argv, fastf_t *mean_outer_diameter, fastf_t *wire_
 		sscanf(bu_optarg, "%d", &etype);
 		*end_cap_type = etype;
 		break;
+	    case 'S':
+	        coil_data = (struct coil_data_t *)
+     	             bu_malloc( sizeof(struct coil_data_t), "coil data structure");
+		sscanf(bu_optarg, "%d%c%f%c%f%c%f%c%f", &d1,&s1,&d2,&s2,&d3,&s3,&d4,&s4,&d5);
+	        coil_data->nt = d1;
+		coil_data->od = d2;
+		coil_data->wd = d3;
+		coil_data->ha = d4;
+		coil_data->p = d5;
+		BU_LIST_APPEND(&(*sections),&((*coil_data).l));	
+		break;
 	    default:
 		bu_log("%s: illegal option -- %c\n", bu_getprogname(), c);
 		bu_exit(EXIT_SUCCESS, NULL);
@@ -370,18 +387,20 @@ int main(int ac, char *av[])
     fastf_t mean_outer_diameter, wire_diameter;
     fastf_t helix_angle, pitch;
 
+    struct bu_list sections;
+    
     int nt; /* Number of turns */
     int start_cap_type, end_cap_type;
     
-    struct coil_data_t *coil_data = (struct coil_data_t *)
-    	bu_malloc( sizeof(struct coil_data_t), "coil data structure");
-	
+
     bu_vls_init(&str);
     bu_vls_init(&coil_type);
     bu_vls_init(&name);
     bu_vls_trunc(&coil_type, 0);
     bu_vls_trunc(&name, 0);
 
+    BU_LIST_INIT( &sections );
+    
     mean_outer_diameter = 0;
     wire_diameter = 0;
     helix_angle = 0;
@@ -392,7 +411,7 @@ int main(int ac, char *av[])
 
    
     /* Process arguments */  
-    ReadArgs(ac, av, &mean_outer_diameter, &wire_diameter, &helix_angle, &pitch, &nt, &start_cap_type, &end_cap_type);
+    ReadArgs(ac, av, &sections, &mean_outer_diameter, &wire_diameter, &helix_angle, &pitch, &nt, &start_cap_type, &end_cap_type);
 
     /* Handle various potential errors in args and set defaults if nothing supplied */
   
@@ -450,7 +469,6 @@ int main(int ac, char *av[])
     bu_log("Making coil...\n");
     make_coil(db_fp, bu_vls_addr(&name), mean_outer_diameter, wire_diameter, helix_angle, pitch, nt, start_cap_type, end_cap_type);
 
-    bu_free(coil_data, "coil_data");
     bu_vls_free(&str);
     bu_vls_free(&name);
     
