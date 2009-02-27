@@ -208,7 +208,7 @@ fastf_t cap_ground(struct rt_wdb *file, struct bu_list *head, char *prefix, stru
 
 
 
-fastf_t helical_coil_plain(struct bu_list *head, struct wmember *coil, fastf_t mean_outer_diameter, fastf_t wire_diameter, fastf_t helix_angle, fastf_t pitch, fastf_t starting_pitch, int nt, int do_1st_pt, int do_last_pt)
+fastf_t helical_coil_plain(struct bu_list *head, struct wmember *coil, fastf_t mean_outer_diameter, fastf_t wire_diameter, fastf_t helix_angle, fastf_t pitch, fastf_t starting_pitch, int nt)
 {
     int i;
     fastf_t coil_radius, pipe_bend;
@@ -217,13 +217,6 @@ fastf_t helical_coil_plain(struct bu_list *head, struct wmember *coil, fastf_t m
     coil_radius = mean_outer_diameter/2 - wire_diameter/2;
     pipe_bend = coil_radius;
 
-    /* If requested, take care of first point */
-    if (do_1st_pt == 0) {
-       VSET(pnt1, 0, -coil_radius, starting_pitch);
-       mk_add_pipe_pt(head, pnt1, wire_diameter, 0.0, pipe_bend);
-    }
-
-    /* Now, do the coils needed for the section */ 
     for (i = 0; i < nt; i++) {
     	VSET(pnt2, coil_radius , -coil_radius, i*pitch + pitch/8 + starting_pitch + sin(D2R(helix_angle))*coil_radius);
     	VSET(pnt4, coil_radius , coil_radius, i*pitch + pitch*3/8 + starting_pitch + sin(D2R(helix_angle))*coil_radius);
@@ -235,14 +228,7 @@ fastf_t helical_coil_plain(struct bu_list *head, struct wmember *coil, fastf_t m
     	mk_add_pipe_pt(head, pnt8, wire_diameter, 0.0, pipe_bend);
     }
 
-    /* If requested, take care of last point */
-    if (do_last_pt == 0) {
-	VSET(pnt1, 0 , -coil_radius, nt*pitch+starting_pitch);
-	mk_add_pipe_pt(head, pnt1, wire_diameter, 0.0, pipe_bend);
-	return nt*pitch+starting_pitch;
-    } else {
-	return (nt-1)*pitch + pitch*7/8 + starting_pitch;
-    }
+    return (nt-1)*pitch + pitch*7/8 + starting_pitch;
 
 }
 
@@ -251,6 +237,7 @@ void make_coil(struct rt_wdb (*file), char *prefix, struct bu_list *sections, in
     struct bu_list head;
     mk_pipe_init(&head);
     fastf_t last_pitch_pt;
+    point_t pnt1;
     int need_subtractions = 0;
     struct wmember coil;
     BU_LIST_INIT(&coil.l);
@@ -261,8 +248,8 @@ void make_coil(struct rt_wdb (*file), char *prefix, struct bu_list *sections, in
     struct coil_data_t *e_data;
     struct coil_data_t *cd;
 	
-    e_data = BU_LIST_FIRST(coil_data_t,&(*sections));
-    s_data = BU_LIST_LAST(coil_data_t,&(*sections));
+    s_data = BU_LIST_FIRST(coil_data_t,&(*sections));
+    e_data = BU_LIST_LAST(coil_data_t,&(*sections));
    
     struct bu_vls str;
     bu_vls_init(&str);
@@ -271,7 +258,8 @@ void make_coil(struct rt_wdb (*file), char *prefix, struct bu_list *sections, in
     
     switch (start_cap_type) {
 	case 0:
-	    last_pitch_pt = helical_coil_plain(&head, &coil_subtractions, s_data->od, s_data->wd, s_data->ha, s_data->p, last_pitch_pt, 1, 0, 1);
+	    VSET(pnt1, 0, -1*(s_data->od/2-s_data->wd/2), last_pitch_pt);
+       	    mk_add_pipe_pt(&head, pnt1, s_data->wd, 0.0, (s_data->od/2-s_data->wd/2));
 	    break;
 	case 1:
 	    last_pitch_pt = cap_squared(file, &head, prefix, &coil_subtractions, s_data->od, s_data->wd, s_data->ha, s_data->p, 0, 1, &need_subtractions);
@@ -287,12 +275,13 @@ void make_coil(struct rt_wdb (*file), char *prefix, struct bu_list *sections, in
     }
    
     for (BU_LIST_FOR(cd, coil_data_t, &(*sections))) {
-        last_pitch_pt = helical_coil_plain(&head, &coil_subtractions, cd->od, cd->wd, cd->ha, cd->p, last_pitch_pt, cd->nt, 1, 1);
+        last_pitch_pt = helical_coil_plain(&head, &coil_subtractions, cd->od, cd->wd, cd->ha, cd->p, last_pitch_pt, cd->nt);
     }
 
     switch (end_cap_type) {
 	case 0:
-	    last_pitch_pt = helical_coil_plain(&head, &coil_subtractions, e_data->od, e_data->wd, e_data->ha, e_data->p, last_pitch_pt, 1, 1, 0);
+	    VSET(pnt1, 0 , -1*(e_data->od/2-e_data->wd/2), 1/8*e_data->p+last_pitch_pt);
+	    mk_add_pipe_pt(&head, pnt1, e_data->wd, 0.0, (e_data->od/2-e_data->wd/2));
 	    break;
 	case 1:
 	    last_pitch_pt = cap_squared(file, &head, prefix, &coil_subtractions, e_data->od, e_data->wd, e_data->ha, e_data->p, last_pitch_pt, 0, &need_subtractions);
@@ -382,7 +371,7 @@ int ReadArgs(int argc, char **argv, struct bu_list *sections, fastf_t *mean_oute
 		coil_data->wd = d3;
 		coil_data->ha = d4;
 		coil_data->p = d5;
-		BU_LIST_APPEND(&(*sections),&((*coil_data).l));	
+		BU_LIST_INSERT(&(*sections),&((*coil_data).l));	
 		break;
 	    default:
 		bu_log("%s: illegal option -- %c\n", bu_getprogname(), c);
