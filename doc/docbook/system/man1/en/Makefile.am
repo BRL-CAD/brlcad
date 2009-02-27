@@ -59,6 +59,7 @@ man1DOCBOOK = \
 	c.xml \
 	cat.xml \
 	center.xml \
+	coil.xml \
 	color.xml \
 	comb_color.xml \
 	copyeval.xml \
