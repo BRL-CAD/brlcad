@@ -259,9 +259,10 @@ void make_coil(struct rt_wdb (*file), char *prefix, struct bu_list *sections, in
    
     struct coil_data_t *s_data;
     struct coil_data_t *e_data;
-    
-    s_data = BU_LIST_FIRST(coil_data_t,&(*sections));
-    e_data = BU_LIST_LAST(coil_data_t,&(*sections));
+    struct coil_data_t *cd;
+	
+    e_data = BU_LIST_FIRST(coil_data_t,&(*sections));
+    s_data = BU_LIST_LAST(coil_data_t,&(*sections));
    
     struct bu_vls str;
     bu_vls_init(&str);
@@ -269,6 +270,9 @@ void make_coil(struct rt_wdb (*file), char *prefix, struct bu_list *sections, in
     last_pitch_pt = 0; 
     
     switch (start_cap_type) {
+	case 0:
+	    last_pitch_pt = helical_coil_plain(&head, &coil_subtractions, s_data->od, s_data->wd, s_data->ha, s_data->p, last_pitch_pt, 1, 0, 1);
+	    break;
 	case 1:
 	    last_pitch_pt = cap_squared(file, &head, prefix, &coil_subtractions, s_data->od, s_data->wd, s_data->ha, s_data->p, 0, 1, &need_subtractions);
 	    break;
@@ -281,10 +285,15 @@ void make_coil(struct rt_wdb (*file), char *prefix, struct bu_list *sections, in
 	default:
 	    break;
     }
-    
-    last_pitch_pt = helical_coil_plain(&head, &coil_subtractions, s_data->od, s_data->wd, s_data->ha, s_data->p, last_pitch_pt, s_data->nt, start_cap_type, end_cap_type);
+   
+    for (BU_LIST_FOR(cd, coil_data_t, &(*sections))) {
+        last_pitch_pt = helical_coil_plain(&head, &coil_subtractions, cd->od, cd->wd, cd->ha, cd->p, last_pitch_pt, cd->nt, 1, 1);
+    }
 
     switch (end_cap_type) {
+	case 0:
+	    last_pitch_pt = helical_coil_plain(&head, &coil_subtractions, e_data->od, e_data->wd, e_data->ha, e_data->p, last_pitch_pt, 1, 1, 0);
+	    break;
 	case 1:
 	    last_pitch_pt = cap_squared(file, &head, prefix, &coil_subtractions, e_data->od, e_data->wd, e_data->ha, e_data->p, last_pitch_pt, 0, &need_subtractions);
 	    break;
