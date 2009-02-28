@@ -41,20 +41,18 @@ ged_tops(struct ged *gedp, int argc, const char *argv[])
     struct directory **dirp;
     struct directory **dirp0 = (struct directory **)NULL;
     int c;
-#ifdef NEW_TOPS_BEHAVIOR
+
+    int no_decorate = 0;
     int aflag = 0;
     int hflag = 0;
     int pflag = 0;
-#else
+
+    /* DEPRECATED */
     int gflag = 0;
+    /* DEPRECATED */
     int uflag = 0;
-#endif
-    int no_decorate = 0;
-#ifdef NEW_TOPS_BEHAVIOR
+
     static const char *usage = "[-a|-h|-n|-p]";
-#else
-    static const char *usage = "[-g|-n|-u]";
-#endif
 
     GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
     GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
@@ -64,8 +62,7 @@ ged_tops(struct ged *gedp, int argc, const char *argv[])
 
     /* process any options */
     bu_optind = 1;	/* re-init bu_getopt() */
-#ifdef NEW_TOPS_BEHAVIOR
-    while ((c = bu_getopt(argc, (char * const *)argv, "ahnp")) != EOF) {
+    while ((c = bu_getopt(argc, (char * const *)argv, "ahnpgu")) != EOF) {
 	switch (c) {
 	    case 'a':
 		aflag = 1;
@@ -79,27 +76,18 @@ ged_tops(struct ged *gedp, int argc, const char *argv[])
 	    case 'p':
 		pflag = 1;
 		break;
-	    default:
-		break;
-	}
-    }
-#else
-    while ((c = bu_getopt(argc, (char * const *)argv, "gun")) != EOF) {
-	switch (c) {
 	    case 'g':
+		bu_log("WARNING: The -g option is deprecated.\n");
 		gflag = 1;
 		break;
 	    case 'u':
+		bu_log("WARNING: The -u option is deprecated.\n");
 		uflag = 1;
-		break;
-	    case 'n':
-		no_decorate = 1;
 		break;
 	    default:
 		break;
 	}
     }
-#endif
 
     argc -= (bu_optind - 1);
     argv += (bu_optind - 1);
@@ -124,24 +112,29 @@ ged_tops(struct ged *gedp, int argc, const char *argv[])
 	    }
     } else {
 	for (i = 0; i < RT_DBNHASH; i++)
-	    for (dp = gedp->ged_wdbp->dbip->dbi_Head[i];
-		 dp != DIR_NULL;
-		 dp = dp->d_forw)  {
-#ifdef NEW_TOPS_BEHAVIOR
-		if (dp->d_nref == 0 &&
-		    (aflag ||
+	    for (dp = gedp->ged_wdbp->dbip->dbi_Head[i]; dp != DIR_NULL; dp = dp->d_forw) {
+
+		if (dp->d_nref != 0) {
+		    continue;
+		}
+
+		if ( (aflag) ||
 		     (hflag && (dp->d_flags & DIR_HIDDEN)) ||
 		     (pflag && dp->d_addr == RT_DIR_PHONY_ADDR) ||
-		     (!aflag && !hflag && !pflag &&
-		      !(dp->d_flags & DIR_HIDDEN) &&
-		      (dp->d_addr != RT_DIR_PHONY_ADDR))))
+		     (gflag && dp->d_major_type == DB5_MAJORTYPE_BRLCAD) ||
+		     (uflag && !(dp->d_flags & DIR_HIDDEN)) ) {
+
+		    /* add object because it matches an option */
 		    *dirp++ = dp;
-#else
-		if (dp->d_nref == 0 &&
-		    ((!gflag || (gflag && dp->d_major_type == DB5_MAJORTYPE_BRLCAD)) &&
-		     (!uflag || (uflag && !(dp->d_flags & DIR_HIDDEN)))))
+
+		} else if ( !aflag && !hflag && !pflag && !gflag && !uflag &&
+			    !(dp->d_flags & DIR_HIDDEN) &&
+			    (dp->d_addr != RT_DIR_PHONY_ADDR) ) {
+
+		    /* add non-hidden real object */
 		    *dirp++ = dp;
-#endif
+
+		}
 	    }
     }
 

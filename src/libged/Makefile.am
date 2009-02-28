@@ -231,7 +231,7 @@ libged_nil_la_SOURCES = \
 AM_CPPFLAGS = \
 	${PNG_CPPFLAGS} \
 	${REGEX_CPPFLAGS} \
-	${TCL_CPPFLAGS} -DNEW_TOPS_BEHAVIOR
+	${TCL_CPPFLAGS}
 
 noinst_HEADERS = \
 	search.h \
