@@ -2339,11 +2339,7 @@ wdb_pathsum_cmd(struct rt_wdb *wdbp,
     }
 
     /*XXX Temporary */
-#if 1
     GED_INIT(&ged, wdbp);
-#else
-    GED_INIT_FROM_WDBP(&ged, wdbp);
-#endif
 
     /*
      *	paths are matched up to last input member
@@ -3645,11 +3641,7 @@ wdb_copyeval_cmd(struct rt_wdb *wdbp,
     }
 
     /*XXX Temporary */
-#if 1
     GED_INIT(&ged, wdbp);
-#else
-    GED_INIT_FROM_WDBP(&ged, wdbp);
-#endif
 
     /* initialize gtd */
     gtd.gtd_gedp = &ged;
@@ -7084,11 +7076,7 @@ wdb_make_bb_cmd(struct rt_wdb *wdbp,
     }
 
     /*XXX Temporary */
-#if 1
     GED_INIT(&ged, wdbp);
-#else
-    GED_INIT_FROM_WDBP(&ged, wdbp);
-#endif
 
     i = 1;
 
@@ -10453,12 +10441,10 @@ wdb_newcmds_tcl(ClientData clientData,
     int ret;
     char flags[128];
 
-    /*XXXX Eventually the clientData will be a "struct ged".
-     *     In the meantime ...
+    /*XXX Eventually the clientData will be a "struct ged".
+     *    In the meantime ...
      */
-#if 1
     GED_INIT(&ged, wdbp);
-#endif
 
     for (ctp = wdb_newcmds; ctp->ct_name != (char *)0; ctp++) {
 	if (ctp->ct_name[0] == argv[1][0] &&
