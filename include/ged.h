@@ -2578,8 +2578,7 @@ GED_EXPORT BU_EXTERN(int ged_tol, (struct ged *gedp, int argc, const char *argv[
  * Find all top level objects
  *
  * Usage:
- *     tops [-a] [-h] [-n] [-p], if NEW_TOPS_BEHAVIOR
- *     tops [-g] [-n] [-u]
+ *     tops [-a] [-h] [-n] [-p] (DEPRECATED: [-g] [-u])
  */
 GED_EXPORT BU_EXTERN(int ged_tops, (struct ged *gedp, int argc, const char *argv[]));
 

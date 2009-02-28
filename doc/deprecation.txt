@@ -62,6 +62,7 @@ include/raytrace.h
 include/bu.h
 	%S format specifier -> %V format specifier for bu_vls [deprecated 7.14]
 mged
+	tops -g -u -> now default behavior [deprecated 7.14]
 	-n option -> -c option [deprecated 7.14]
 include/vmath.h
 	VADD2_2D -> V2ADD2 [deprecated 7.14]
