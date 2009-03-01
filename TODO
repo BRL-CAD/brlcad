@@ -17,8 +17,7 @@ http://sf.net/pm/?group_id=105292
 THESE SHOULD HAPPEN BEFORE THE NEXT RELEASE
 -------------------------------------------
 
-* investigate/quell "A view does not exist" if you run ae without
-  anything displayed.
+* test and release
 
 
 THESE SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS

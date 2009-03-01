@@ -438,6 +438,9 @@ cmd_ged_view_wrapper(ClientData clientData, Tcl_Interp *interp, int argc, const 
     if (gedp == GED_NULL)
 	return TCL_OK;
 
+    if (!gedp->ged_gvp)
+	gedp->ged_gvp = view_state->vs_gvp;
+
     ret = (*ctp->ged_func)(gedp, argc, (const char **)argv);
     Tcl_DStringInit(&ds);
     Tcl_DStringAppend(&ds, bu_vls_addr(&gedp->ged_result_str), -1);
