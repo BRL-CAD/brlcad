@@ -930,6 +930,14 @@ typedef fastf_t	plane_t[ELEMENTS_PER_PLANE];
 #define V3ARGS(a)	(a)[X], (a)[Y], (a)[Z]
 #define V4ARGS(a)	(a)[X], (a)[Y], (a)[Z], (a)[W]
 
+/**
+ * if a value is within computation tolerance of an integer, clamp the
+ * value to that integer.  XXX - should use VDIVIDE_TOL here, but
+ * cannot yet until floats are replaced universally with fastf_t's
+ * since their epsilon is considerably less than that of a double.
+ */
+#define INTCLAMP(_a) ( NEAR_ZERO((_a) - rint(_a), VUNITIZE_TOL) ? (double)(long)rint(_a) : (_a) )
+
 /** @brief integer clamped versions of the previous arg macros. */
 #define V2INTCLAMPARGS(a)	INTCLAMP((a)[X]), INTCLAMP((a)[Y])
 /** @brief integer clamped versions of the previous arg macros. */
@@ -965,14 +973,6 @@ typedef fastf_t	plane_t[ELEMENTS_PER_PLANE];
 #define CPP_HPRINT( _os, _title, _p )	(_os) << (_title) << "=(" << \
 	(_p)[X] << ", " << (_p)[Y] << ", " << (_p)[Z] << "," << (_p)[W]<< ")\n";
 #endif
-
-/**
- * if a value is within computation tolerance of an integer, clamp the
- * value to that integer.  XXX - should use VDIVIDE_TOL here, but
- * cannot yet until floats are replaced universally with fastf_t's
- * since their epsilon is considerably less than that of a double.
- */
-#define INTCLAMP(_a) ( NEAR_ZERO((_a) - rint(_a), VUNITIZE_TOL) ? rint(_a) : (_a) )
 
 /** @brief Vector element multiplication.  Really: diagonal matrix X vect. */
 #define VELMUL(a, b, c) { \
