@@ -600,7 +600,7 @@ ged_drawtrees(struct ged *gedp, int argc, const char *argv[], int kind, struct g
 
 	/* Parse options. */
 	bu_optind = 0;		/* re-init bu_getopt() */
-	while ((c = bu_getopt(argc, (char * const *)argv, "dfm:nqstuvwx:C:STP:")) != EOF) {
+	while ((c = bu_getopt(argc, (char * const *)argv, "dfm:nqstuvwx:C:STP:A:oR")) != EOF) {
 	    switch (c) {
 		case 'u':
 		    dgcdp->draw_edge_uses = 1;
@@ -678,6 +678,11 @@ ged_drawtrees(struct ged *gedp, int argc, const char *argv[], int kind, struct g
 		    if (1.0 < dgcdp->transparency)
 			dgcdp->transparency = 1.0;
 
+		    break;
+		case 'A':
+		case 'o':
+		case 'R':
+		    /* nothing to do, handled by edit_com wrapper on the front-end */
 		    break;
 		default:
 		{
