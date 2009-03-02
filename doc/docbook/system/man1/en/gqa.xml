@@ -37,23 +37,23 @@
 <!-- USE OF THIS DOCUMENTATION, EVEN IF ADVISED OF THE POSSIBILITY OF   -->
 <!-- SUCH DAMAGE.                                                       -->
 
-<refentry id='g_qa1'>
+<refentry id='gqa1'>
   <refmeta>
-    <refentrytitle>G_QA</refentrytitle>
+    <refentrytitle>GQA</refentrytitle>
     <manvolnum>1</manvolnum>
     <refmiscinfo class='source'>BRL-CAD</refmiscinfo>
     <refmiscinfo class='manual'>BRL-CAD User Commands</refmiscinfo>
   </refmeta>
   
   <refnamediv id='name'>
-    <refname>g_qa</refname>
+    <refname>gqa</refname>
     <refpurpose>a BRL-CAD quantitative geometry analysis tool</refpurpose>
   </refnamediv>
   
   <!-- body begins here -->
   <refsynopsisdiv id='synopsis'>
     <cmdsynopsis>
-      <command>g_qa</command>    <arg choice='opt'><replaceable>options</replaceable></arg>
+      <command>gqa</command>    <arg choice='opt'><replaceable>options</replaceable></arg>
       <arg choice='plain'><replaceable>model.g</replaceable></arg>
       <arg choice='plain'><replaceable>objects</replaceable></arg>
     </cmdsynopsis>
@@ -63,7 +63,7 @@
   <refsect1 id='description'>
     <title>DESCRIPTION</title>
     <para>
-      The <command>g_qa</command> program computes and reports a variety of characteristics of the
+      The <command>gqa</command> program computes and reports a variety of characteristics of the
       <emphasis remap='I'>objects</emphasis> specified from the given 
       <emphasis remap='I'>model.g</emphasis> geometric description.
       The characteristics which can be computed include
@@ -180,7 +180,7 @@
     </para>
     
     <para>
-      The user will typically want to run g_qa and verify the results using the
+      The user will typically want to run <command>gqa</command> and verify the results using the
       <option>-f</option> option (see below) before importing the table into the database.
       For example, if a material index is left out of the table, it is easier to rectify 
       the situation using the external file. Once the table has been verified as correct 
@@ -470,7 +470,7 @@
 	<term><option>-p</option></term>
 	<listitem>
 	  <para>
-	    Specifies that <command>g_qa</command> should produce plot files for each of the analyses 
+	    Specifies that <command>gqa</command> should produce plot files for each of the analyses 
 	    it performs.  These can be overlaid on the geometry in <emphasis remap='I'>mged</emphasis>
 	    with the <emphasis remap='I'>overlay</emphasis> command to help visualize the analysis results.
 	    Each of the different analysis types write to a separate plot file and use different 
@@ -493,7 +493,7 @@
 	<term><option>-r</option></term>
 	<listitem>
 	  <para>
-	    Indicates that <command>g_qa</command> should print per-region statistics for weight and 
+	    Indicates that <command>gqa</command> should print per-region statistics for weight and 
 	    volume as well as the values for the objects specified on the command line.
 	  </para>
 	</listitem>
@@ -605,7 +605,7 @@
 	and checks for overlaps.
       </para>
       
-      <userinput>g_qa model.g wheel.r</userinput>
+      <userinput>gqa model.g wheel.r</userinput>
     </example>
 
     <example>
@@ -616,7 +616,7 @@
 	exposed air are detected before the grid is refined to 1 mm.
       </para>
       
-      <userinput>g_qa -g 1cm-1mm -A oe model.g hull turret suspension</userinput>
+      <userinput>gqa -g 1cm-1mm -A oe model.g hull turret suspension</userinput>
     </example>
   
     <example>
@@ -627,13 +627,13 @@
 	will not be refined below 0.3 mm spacing.
       </para>
       
-      <userinput>g_qa -g5in-0.3mm -Avw -u ft,cc,oz test.g hull turret suspension</userinput>
+      <userinput>gqa -g5in-0.3mm -Avw -u ft,cc,oz test.g hull turret suspension</userinput>
     </example>
 
     <para>For an example of each independent analysis type, consider the following:</para>
     <variablelist>
       <varlistentry>
-	<term><prompt>%</prompt><userinput>g_qa -u m,m^3,kg -Ao geometry.g overlaps</userinput></term>
+	<term><prompt>%</prompt><userinput>gqa -u m,m^3,kg -Ao geometry.g overlaps</userinput></term>
 	<listitem>
 	  <literallayout>
 Units:
@@ -646,7 +646,7 @@ list Overlaps:
 	</listitem>
       </varlistentry>
       <varlistentry>
-	<term><prompt>%</prompt><userinput>g_qa -u m,m^3,kg -Ae geometry.g exposed_air.g</userinput></term>
+	<term><prompt>%</prompt><userinput>gqa -u m,m^3,kg -Ae geometry.g exposed_air.g</userinput></term>
 	<listitem>
 	  <literallayout>
 Units:
@@ -659,7 +659,7 @@ list Exposed Air:
 	</listitem>
       </varlistentry>
       <varlistentry>
-	<term><prompt>%</prompt><userinput>g_qa -u m,m^3,kg -Ag geometry.g gap.g</userinput></term>
+	<term><prompt>%</prompt><userinput>gqa -u m,m^3,kg -Ag geometry.g gap.g</userinput></term>
 	<listitem>
 	  <literallayout>
 Units:
@@ -673,7 +673,7 @@ list Gaps:
 	</listitem>
       </varlistentry>
       <varlistentry>
-	<term><prompt>%</prompt><userinput>g_qa -u m,m^3,kg -Av geometry.g closed_box.r</userinput></term>
+	<term><prompt>%</prompt><userinput>gqa -u m,m^3,kg -Av geometry.g closed_box.r</userinput></term>
 	<listitem>
 	  <literallayout>
 Units:
@@ -689,7 +689,7 @@ Summary:
 	</listitem>
       </varlistentry>
       <varlistentry>
-	<term><prompt>%</prompt><userinput>g_qa -u m,m^3,kg -Aw geometry.g closed_box.r</userinput></term>
+	<term><prompt>%</prompt><userinput>gqa -u m,m^3,kg -Aw geometry.g closed_box.r</userinput></term>
 	<listitem>
 	  <literallayout>
 Units:

@@ -64,7 +64,7 @@ man1DOCBOOK = \
 	comb_color.xml \
 	copyeval.xml \
 	copymat.xml \
-	g_qa.xml \
+	gqa.xml \
 	mged.xml \
 	nirt.xml \
 	rt.xml \
