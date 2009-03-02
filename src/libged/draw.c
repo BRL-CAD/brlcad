@@ -551,12 +551,12 @@ ged_cvt_vlblock_to_solids(struct ged *gedp, struct bn_vlblock *vbp, char *name, 
 int
 ged_drawtrees(struct ged *gedp, int argc, const char *argv[], int kind, struct ged_client_data *_dgcdp)
 {
-    int		ret = 0;
-    register int	c;
-    int		ncpu = 1;
-    int		dgo_nmg_use_tnurbs = 0;
-    int		dgo_enable_fastpath = 0;
-    struct model	*dgo_nmg_model;
+    int ret = 0;
+    register int c;
+    int ncpu = 1;
+    int dgo_nmg_use_tnurbs = 0;
+    int dgo_enable_fastpath = 0;
+    struct model *dgo_nmg_model;
     struct ged_client_data *dgcdp;
 
     RT_CHECK_DBI(gedp->ged_wdbp->dbip);
@@ -681,7 +681,7 @@ ged_drawtrees(struct ged *gedp, int argc, const char *argv[], int kind, struct g
 		    break;
 		default:
 		{
-		    bu_vls_printf(&gedp->ged_result_str, "unrecogized option - %c\n", c);
+		    bu_vls_printf(&gedp->ged_result_str, "unrecognized option - %c\n", c);
 		    bu_free((genptr_t)dgcdp, "ged_drawtrees: dgcdp");
 		    return BRLCAD_ERROR;
 		}
@@ -1071,7 +1071,7 @@ ged_color_soltab(struct solid *hsp)
 int
 ged_draw_guts(struct ged *gedp, int argc, const char *argv[], int kind)
 {
-    static const char *usage = "[-A -o -C#/#/# -s] <objects | attribute name/value pairs>";
+    static const char *usage = "[-R -A -o -C#/#/# -s] <objects | attribute name/value pairs>";
 
     GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
     GED_CHECK_DRAWABLE(gedp, BRLCAD_ERROR);
