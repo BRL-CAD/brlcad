@@ -587,8 +587,8 @@
 </B><FONT SIZE=2><P>-- Get a list of available <I>BRL-CAD</I> library interface commands. </P>
 <P><HR ALIGN="RIGHT"></P>
 </FONT><B><DL>
-<DT><A NAME="B"></A>B</B> [<I>-A -o -s C#/#/#</I>] &lt;<I>objects | attribute name/value pairs</I>&gt;</DT>
-<DD>Clear the <I>mged</I> display of any currently displayed objects, then display the list of objects provided in the parameter list.  Equivalent to the <A HREF="#Z">Z</A> command followed by the command <A HREF="#draw">draw</A> &lt;<I>objects</I>&gt;.  The <I>-C</I> option provides the user a way to specify a color that overrides all other color specifications including combination colors and region id-based colors.  The <I>-A</I> and <I>-o</I> options allow the user to select objects by attribute.  The -s option specifies that subtracted and intersected objects should be drawn with solid lines rather than dot-dash lines.  See the draw command for a detailed description of the options.</DD>
+<DT><A NAME="B"></A>B</B> [<I>-R -A -o -s C#/#/#</I>] &lt;<I>objects | attribute name/value pairs</I>&gt;</DT>
+<DD>Clear the <I>mged</I> display of any currently displayed objects, then display the list of objects provided in the parameter list.  Equivalent to the <A HREF="#Z">Z</A> command followed by the command <A HREF="#draw">draw</A> &lt;<I>objects</I>&gt;.  The <I>-C</I> option provides the user a way to specify a color that overrides all other color specifications including combination colors and region id-based colors.  The <I>-A</I> and <I>-o</I> options allow the user to select objects by attribute.  The -s option specifies that subtracted and intersected objects should be drawn with solid lines rather than dot-dash lines.  The -<I>R</I> option means do not automatically resize the view if no other objects are displayed.  See the draw command for a detailed description of the options.</DD>
 <FONT SIZE=4><DT>Examples:</DT>
 </FONT><TT><DD>mged&gt;</TT> <B>B some_object</DD>
 </DL><DIR>
@@ -1335,7 +1335,7 @@ l r230 r231 r232 r233 r234 r235 r236 r237 r238 r239 <BR>
 
 <P><HR ALIGN="RIGHT"></P>
 </FONT><B><DL>
-<DT><A NAME="draw"></A>draw</B> [<I>-A  -s -o -C#/#/#</I>] &lt;<I>objects | attribute name/value pairs</I>&gt;</DT>
+<DT><A NAME="draw"></A>draw</B> [<I>-R -A -s -o -C#/#/#</I>] &lt;<I>objects | attribute name/value pairs</I>&gt;</DT>
 <DD>Add &lt;<I>objects</I>&gt; to the display list so that they will appear on the <I>MGED</I> display. The <A HREF="#e">e</A> command is a synonym for <I>draw</I>.</DD>
 </DL>
 
@@ -1373,8 +1373,8 @@ l r230 r231 r232 r233 r234 r235 r236 r237 r238 r239 <BR>
 
 <P><HR ALIGN="RIGHT"></P>
 </FONT><B><DL>
-<DT><A NAME="e"></A>e</B> [<I>-A -o -s -C#/#/#</I>] &lt;<I>objects| attribute name/value pairs</I>&gt;</DT>
-<DD>The &quot;e&quot; command adds the objects in the argument list to the display list so that they will appear on the <I>MGED</I> display.  This is a synonym for the <A HREF="#draw">draw</A> command; see that entry for a full list of options.  The <I>-C</I> option provides the user a way to specify a color that overrides all other color specifications including combination colors and region-id-based colors.  The -<I>A</I> and <I>-o</I> options allow the user to select objects by attribute.  The -s specifies that subtracted and intersected objects should be drawn with solid lines rather than dot-dash lines.</DD>
+<DT><A NAME="e"></A>e</B> [<I>-R -A -o -s -C#/#/#</I>] &lt;<I>objects| attribute name/value pairs</I>&gt;</DT>
+<DD>The &quot;e&quot; command adds the objects in the argument list to the display list so that they will appear on the <I>MGED</I> display.  This is a synonym for the <A HREF="#draw">draw</A> command; see that entry for a full list of options.  The <I>-C</I> option provides the user a way to specify a color that overrides all other color specifications including combination colors and region-id-based colors.  The -<I>A</I> and <I>-o</I> options allow the user to select objects by attribute.  The -s specifies that subtracted and intersected objects should be drawn with solid lines rather than dot-dash lines.  The -<I>R</I> option means do not automatically resize the view if no other objects are displayed.</DD>
 <FONT SIZE=4><DT>Examples:</DT>
 </FONT><TT><DD>mged&gt;</TT> <B>e object1 object2</DD>
 </DL>
