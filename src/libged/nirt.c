@@ -105,6 +105,9 @@ ged_nirt(struct ged *gedp, int argc, const char *argv[])
     struct ged_qray_dataList *ndlp;
     struct ged_qray_dataList HeadQRayData;
 
+    const char *bin;
+    char nirt[256];
+
     GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
     GED_CHECK_DRAWABLE(gedp, BRLCAD_ERROR);
     GED_CHECK_VIEW(gedp, BRLCAD_ERROR);
@@ -113,8 +116,17 @@ ged_nirt(struct ged *gedp, int argc, const char *argv[])
     /* initialize result */
     bu_vls_trunc(&gedp->ged_result_str, 0);
 
+    bin = bu_brlcad_root("bin", 1);
+    if (bin) {
+#ifdef _WIN32
+	snprintf(nirt, 256, "\"%s/%s\"", bin, argv[0]);
+#else
+	snprintf(nirt, 256, "%s/%s", bin, argv[0]);
+#endif
+    }
+
     vp = &gedp->ged_gdp->gd_rt_cmd[0];
-    *vp++ = "nirt";
+    *vp++ = nirt;
 
     /* swipe x, y, z off the end if present */
     if (argc > 3) {
@@ -624,7 +636,7 @@ ged_vnirt(struct ged *gedp, int argc, const char *argv[])
     bu_vls_printf(&y_vls, "%lf", center_model[Y]);
     bu_vls_printf(&z_vls, "%lf", center_model[Z]);
 
-    /* pass remaining arguments to nirt */
+    /* pass remaining arguments to ged nirt command */
     av[0] = "nirt";
     for (i = 1; i < argc; ++i)
 	av[i] = (char *)argv[i];

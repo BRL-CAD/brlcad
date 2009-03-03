@@ -105,6 +105,9 @@ ged_rtcheck(struct ged *gedp, int argc, const char *argv[])
     vect_t eye_model;
     static const char *usage = "options";
 
+    const char *bin;
+    char rtcheck[256] = {0};
+
     GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
     GED_CHECK_DRAWABLE(gedp, BRLCAD_ERROR);
     GED_CHECK_VIEW(gedp, BRLCAD_ERROR);
@@ -113,9 +116,18 @@ ged_rtcheck(struct ged *gedp, int argc, const char *argv[])
     /* initialize result */
     bu_vls_trunc(&gedp->ged_result_str, 0);
 
+    bin = bu_brlcad_root("bin", 1);
+    if (bin) {
+#ifdef _WIN32
+	snprintf(rtcheck, 256, "\"%s/%s\"", bin, argv[0]);
+#else
+	snprintf(rtcheck, 256, "%s/%s", bin, argv[0]);
+#endif
+    }
+
 #ifndef _WIN32
     vp = &gedp->ged_gdp->gd_rt_cmd[0];
-    *vp++ = (char *)argv[0];
+    *vp++ = rtcheck;
     *vp++ = "-M";
     for (i=1; i < argc; i++)
 	*vp++ = (char *)argv[i];
@@ -212,7 +224,7 @@ ged_rtcheck(struct ged *gedp, int argc, const char *argv[])
 #else
     /* _WIN32 */
     vp = &gedp->ged_gdp->gd_rt_cmd[0];
-    *vp++ = "rtcheck";
+    *vp++ = rtcheck;
     *vp++ = "-M";
     for (i=1; i < argc; i++)
 	*vp++ = (char *)argv[i];

@@ -67,8 +67,6 @@ cmd_rt(ClientData	clientData,
        int		argc,
        char		**argv)
 {
-    const char *ptr;
-    char buf[256] = {0};
     int doRtcheck;
     int ret;
     Tcl_DString ds;
@@ -84,16 +82,6 @@ cmd_rt(ClientData	clientData,
 	doRtcheck = 1;
     else
 	doRtcheck = 0;
-
-    ptr = bu_brlcad_root("bin", 1);
-    if (ptr) {
-#ifdef _WIN32
-	snprintf(buf, 256, "\"%s/%s\"", ptr, argv[0]);
-#else
-	snprintf(buf, 256, "%s/%s", ptr, argv[0]);
-#endif
-	argv[0] = buf;
-    }
 
     Tcl_DStringInit(&ds);
 
@@ -367,20 +355,8 @@ f_nirt(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
     int ret;
     Tcl_DString ds;
-    const char *ptr;
-    char buf[256];
 
     CHECK_DBI_NULL;
-
-    ptr = bu_brlcad_root("bin", 1);
-    if (ptr) {
-#ifdef _WIN32
-	snprintf(buf, 256, "\"%s/%s\"", ptr, argv[0]);
-#else
-	snprintf(buf, 256, "%s/%s", ptr, argv[0]);
-#endif
-	argv[0] = buf;
-    }
 
     Tcl_DStringInit(&ds);
 
@@ -416,20 +392,8 @@ f_vnirt(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
     int ret;
     Tcl_DString ds;
-    const char *ptr;
-    char buf[256];
 
     CHECK_DBI_NULL;
-
-    ptr = bu_brlcad_root("bin", 1);
-    if (ptr) {
-#  ifdef _WIN32
-	snprintf(buf, 256, "\"%s/%s\"", ptr, argv[0]);
-#  else
-	snprintf(buf, 256, "%s/%s", ptr, argv[0]);
-#  endif
-	argv[0] = buf;
-    }
 
     Tcl_DStringInit(&ds);
 
