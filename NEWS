@@ -14,6 +14,7 @@ changes made.  See document footer for additional details.
 --- 2009-03-XX  Release 7.14.4                                     ---
 ----------------------------------------------------------------------
 
+* add tool for automatic coil creation using pipe - Cliff Yapp
 * fixed bugs with external tool invocation in mged - Sean Morrison
 * mged 'make' command no longer doubles the view size - Sean Morrison
 * added -R no-resize option to mged e/B/draw commands - Sean Morrison
