@@ -752,7 +752,30 @@ parse_densities_buffer(char *buf, unsigned long len)
     densities = bu_calloc(128, sizeof(struct density_entry), "density entries");
     num_densities = 128;
 
+    /* Skip initial whitespace */
+    while (*p && (*p == '\t' || *p == ' ' || *p == '\n')) p++;
+
+    /* Skip initial comments */
+    while (*p == '#') {
+	/* Skip comment */
+	while (*p && *p != '\n') p++;
+    }
+
+    /* Skip whitespace */
+    while (*p && (*p == '\t' || *p == ' ' || *p == '\n')) p++;
+
     while (*p) {
+	/* Skip comments */
+	if (*p == '#') {
+	    /* Skip comment */
+	    while (*p && *p != '\n') p++;
+
+	    /* Skip whitespace */
+	    while (*p && (*p == '\t' || *p == ' ' || *p == '\n')) p++;
+
+	    continue;
+	}
+
 	idx = strtol(p, &q, 10);
 	if (q == (char *)NULL) {
 	    bu_vls_printf(&ged_current_gedp->ged_result_str, "could not convert idx\n");
@@ -775,7 +798,10 @@ parse_densities_buffer(char *buf, unsigned long len)
 	    return BRLCAD_ERROR;
 	}
 
-	while ((*p == '\t') || (*p == ' ')) p++;
+	/* Skip tabs and spaces */
+	while (*p && (*p == '\t' || *p == ' ')) p++;
+	if (!*p)
+	    break;
 
 	if ((q = strchr(p, '\n')))
 	    *q++ = '\0';
@@ -796,7 +822,10 @@ parse_densities_buffer(char *buf, unsigned long len)
 	densities[idx].name = bu_strdup(p);
 
 	p = q;
-    } while (p && p < last);
+
+	/* Skip whitespace */
+	while (*p && (*p == '\t' || *p == ' ' || *p == '\n')) p++;
+    }
 
 #ifdef PRINT_DENSITIES
     for (idx=0; idx < num_densities; idx++)
@@ -841,7 +870,7 @@ get_densities_from_file(char *name)
 	return BRLCAD_ERROR;
     }
 
-    buf = bu_malloc(sb.st_size, "density buffer");
+    buf = bu_malloc(sb.st_size+1, "density buffer");
     fread(buf, sb.st_size, 1, fp);
     ret = parse_densities_buffer(buf, (unsigned long)sb.st_size);
     bu_free(buf, "density buffer");
