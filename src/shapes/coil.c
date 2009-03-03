@@ -280,7 +280,7 @@ void make_coil(struct rt_wdb (*file), char *prefix, struct bu_list *sections, in
 
     switch (end_cap_type) {
 	case 0:
-	    VSET(pnt1, 0 , -1*(e_data->od/2-e_data->wd/2), 1/8*e_data->p+last_pitch_pt);
+	    VSET(pnt1, 0 , -1*(e_data->od/2-e_data->wd/2), 0.125*(e_data->p)+last_pitch_pt);
 	    mk_add_pipe_pt(&head, pnt1, e_data->wd, 0.0, (e_data->od/2-e_data->wd/2));
 	    break;
 	case 1:
