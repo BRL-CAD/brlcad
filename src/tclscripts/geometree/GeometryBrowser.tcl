@@ -536,12 +536,7 @@ body GeometryBrowser::getNodeChildren { { node "" } { updateLists "no" }} {
 
 	# process top geometry
 
-	if { $_showAllGeometry } {
-	    set topsCommand "tops -n"
-	} else {
-	    # XXX the -u option only works on v6.0.1+
-	    set topsCommand "tops -n -u"
-	}
+	set topsCommand "tops -n"
 
 	if [ catch $topsCommand roots ] {
 	    # puts $roots
@@ -665,12 +660,7 @@ body GeometryBrowser::updateGeometryLists { { node "" } } {
 	puts "updateGeometryLists $node"
     }
 
-    if { $_showAllGeometry } {
-	set topsCommand "tops -n"
-    } else {
-	# XXX the -u option only works on v6.0.1+
-	set topsCommand "tops -n -u"
-    }
+    set topsCommand "tops -n"
 
     if [ catch $topsCommand objs ] {
 	puts $objs
