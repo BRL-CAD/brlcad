@@ -223,10 +223,12 @@ Recent Bugs
 
 * mged's solid illuminate doesn't work when Lighting is turned on
 
-* raytrace of -s64 and remote -F/dev/Xl crashes inside a memcpy during
-  the first fb_write().  seems to only occur on an unbuffered render
-  to a X24 framebuffer, incremental/buffered worked fine.  acts like
-  stack corruption.
+* raytrace of -s64 and -F/dev/X crashes inside a memcpy during
+  fb_write().  seems to only occur on an unbuffered render to a X24
+  framebuffer, incremental/buffered works fine.  Seems to happen for
+  most image sizes smaller than 128.  This reproduces it:
+
+  ./libtool --mode=execute gdb --args src/rt/rt -F/dev/X -P1 -s64 db/moss.g all.g
 
 * g2asc exports attr lines but will not grok them on asc2g
 
