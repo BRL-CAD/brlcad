@@ -22,6 +22,8 @@
 # Utility routines called by MGED's Tcl/Tk command window(s).
 #
 
+bind Text <Control-Key-slash> {}
+
 proc distribute_text { w cmd str } {
     global mged_players
     global mged_default
