@@ -891,6 +891,8 @@ get_densities_from_database(struct rt_i *rtip)
     struct directory *dp;
     struct rt_db_internal intern;
     struct rt_binunif_internal *bu;
+    int ret;
+    char *buf;
 
     dp = db_lookup(rtip->rti_dbip, "_DENSITIES", LOOKUP_QUIET);
     if (dp == (struct directory *)NULL) {
@@ -911,7 +913,15 @@ get_densities_from_database(struct rt_i *rtip)
 
     RT_CHECK_BINUNIF (bu);
 
-    return parse_densities_buffer(bu->u.int8, bu->count);
+    /* Acquire one extra byte to accomodate parse_densities_buffer()
+     *   (i.e. it wants to write an EOS in buf[bu->count]).
+     */
+    buf = bu_malloc(bu->count+1, "density buffer");
+    memcpy(buf, bu->u.int8, bu->count);
+    ret = parse_densities_buffer(buf, bu->count);
+    bu_free((genptr_t)buf, "density buffer");
+
+    return ret;
 }
 
 
