@@ -2,6 +2,9 @@
 #
 #                           BRL-CAD NIST Density Table v 1.0
 #
+#     *** IMPORTANT:  This file may change over time and should not be relied upon
+#     *** for production analysis work.
+#
 #     Based on data present in various databases available at http://www.nist.gov - each
 # subsection below cites the particular database from which information is drawn.  
 #
