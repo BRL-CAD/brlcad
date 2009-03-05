@@ -56,7 +56,7 @@
     <cmdsynopsis>
       <command>bo</command>
       <group choice='req'>
-	<arg>-i -u</arg>
+	<arg>-i u</arg>
 	<arg>-o</arg>
       </group>
       <arg choice='req'><replaceable>type dest source</replaceable></arg>
@@ -71,7 +71,7 @@
       objects (arrays of values) are supported. One of <emphasis>-i</emphasis> or
       <emphasis>-o</emphasis> must be specified. The <emphasis>-i</emphasis> is for "input,"
       or creating a binary object, and the <emphasis>-o</emphasis> option is used for "output," 
-      or retrieving a binary object. The <emphasis>-u</emphasis> type argument must be supplied 
+      or retrieving a binary object. The <emphasis>u</emphasis> type argument must be supplied 
       when <emphasis>-i</emphasis> is used, to indicate the type of uniform binary object to be 
       created. On input, the <emphasis>dest</emphasis> is the name of the object to be created, 
       and the source is the path to a file containing the values in the local host format. On 
@@ -104,7 +104,7 @@
     <example>
       <title>Create an opaque uniform binary object of characters with a specified name 
       containing the contents of a particular file.</title>
-      <para><prompt>mged></prompt> <userinput>bo -i -u c cmds/usr/brlcad/html/manuals/mged/mged_cmds.html</userinput></para>
+      <para><prompt>mged></prompt> <userinput>bo -i u c cmds /usr/brlcad/html/manuals/mged/mged_cmds.html</userinput></para>
       <para>
 	Creates an opaque uniform binary object of characters with the name <emphasis>cmds</emphasis> 
 	that contains the contents of the file <emphasis>/usr/brlcad/html/manuals/mged/mged_cmds.html</emphasis>.
