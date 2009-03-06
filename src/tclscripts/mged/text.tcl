@@ -23,6 +23,7 @@
 #
 
 bind Text <Control-Key-slash> {}
+bind Text <<Cut>> {}
 
 proc tk_textPaste {w} {
     global tcl_platform
