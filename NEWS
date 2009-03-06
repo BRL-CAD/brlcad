@@ -14,6 +14,7 @@ changes made.  See document footer for additional details.
 --- 2009-03-XX  Release 7.14.4                                     ---
 ----------------------------------------------------------------------
 
+* fixed several SMP threading bugs in gqa command - Bob Parker
 * added centroids and moments of inertia to gqa command - Bob Parker
 * fixed mged 'prefix' command to write renamed objects - Bob Parker
 * update usage of tops command in geometry browser - Cliff Yapp
