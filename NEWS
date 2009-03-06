@@ -14,6 +14,7 @@ changes made.  See document footer for additional details.
 --- 2009-03-XX  Release 7.14.4                                     ---
 ----------------------------------------------------------------------
 
+* improved mged command console cut-and-paste support - Bob Parker
 * improved gqa file support for blank/comment lines - Bob Parker
 * fixed several SMP threading bugs in gqa command - Bob Parker
 * added centroids and moments of inertia to gqa command - Bob Parker
