@@ -143,7 +143,7 @@ struct cmdtab mged_cmdtab[] = {
     {"front", bv_front, GED_FUNC_PTR_NULL},
     {"g", cmd_ged_plain_wrapper, ged_group},
     {"get", cmd_ged_plain_wrapper, ged_get},
-    {"get_autoview", cmd_ged_plain_wrapper, ged_autoview},
+    {"get_autoview", cmd_ged_plain_wrapper, ged_get_autoview},
     {"get_comb", cmd_ged_plain_wrapper, ged_get_comb},
     {"get_dbip", cmd_ged_plain_wrapper, ged_dbip},
     {"get_dm_list", f_get_dm_list, GED_FUNC_PTR_NULL},
