@@ -192,12 +192,18 @@ struct ExpressionGrammar : public boost::spirit::classic::grammar<ExpressionGram
  * VariableGrammar implementation
  * Stack closure is attached to the grammar itself
  */
+struct VariableClosure : boost::spirit::closure<VariableClosure, std::string, Stack>
+{
+    member1 name;
+    member2 stack;
+}
+
 struct VariableGrammar : public boost::spirit::classic::grammar<VariableGrammar, StackClosure::context_t>
 {
     typedef boost::spirit::symbols<boost::shared_ptr<MathFunction> > FunctionTable;
     typedef boost::spirit::symbols<double> VarTable;
 
-    FunctionTable functions;
+    FunctionTable const & functions;
     VarTable & variables;
 
     VariableGrammar(FunctionTable const & f, VarTable & v)
@@ -210,8 +216,51 @@ struct VariableGrammar : public boost::spirit::classic::grammar<VariableGrammar,
 	definition(VariableGrammar const & self)
 	    : expression(self.functions, self.variables)
 	{
+	using boost::spirit::phoenix::arg1;
+	using boost::spirit::phoenix::arg2;
+	using boost::spirit::phoenix::construct_;
+	using boost::spirit::phoenix::if_;
+	using boost::spirit::phoenix::new_;
+	using boost::spirit::phoenix::var;
+	    top = step2;
+
+	/** Parse and perform the assignment of type "a=4". Add the symbols
+	    the self variable table and generate the stack representation */
+	    step2 =
+		    step1
+		    [
+			if_(findsymbol(var(self.variables), step2.name) == (double*) 0)
+			[
+			    addsymbol(var(self.variables), step2.name)
+			]
+		    ]
+		    [
+			push_back(self.stack,
+				new_<VariableNode>(findsymbol(var(self.variables), step2.name))),
+			self.stack += step2.stack,
+			push_back(self.stack, new_<AssignNode>())
+		    ]
+		  ;
+	    step1 =
+		    name
+		    [
+			step2.name = construct_<std::string>(arg1,arg2)
+		    ]
+		  >> '='
+		  >> expression
+		     [
+			step2.stack = arg1
+		     ]
+		  ;
 	}
-	boost::spirit::classic::rule<ScannerT> const & start const {}
+	boost::spirit::classic::rule<ScannerT> const & start const { return top; }
+    private:
+	typedef typename boost::spirit::classic::rule<ScannerT,VariableClosure::context_t> VarRuleT;
+	boost::spirit::classic::rule<ScannerT> top, step1;
+	VarRuleT step2;
+
+	NameGrammar name;
+	ExpressionGrammar expression;
     };
 };
 

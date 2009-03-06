@@ -48,6 +48,18 @@ boost::phoenix::function<addsymbol_impl> const addsymbol = addsymbol_impl();
  * Lazy function wrapper for boost::spirit::symbols::find()
  */
 struct findsymbol_impl {
+    template <typename T, typename Arg>
+    struct result
+    {
+	typedef typename T::symbol_data_t * type;
+    };
+
+    template <typename SymbolT>
+    typename result<SymbolT, std::string>::type
+    operator()(SymbolT const & symbols, std::string const & symbol) const
+    {
+	return find(symbols, symbol.c_str());
+    }
 };
 boost::phoenix::function<findsymbol_impl> const findsymbol = findsymbol_impl();
 
