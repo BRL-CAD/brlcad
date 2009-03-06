@@ -82,9 +82,20 @@ public:
 };
 
 boost::spirit::symbols<char> NameGrammar::reserved_keywords;
+
+/** Finding the math function using the name */
+
+boost::shared_ptr<MathFunction> checked_find
+	(boost::spirit::symbols<boost::shared_ptr<MathFunction> > const & symbols,
+	 std::string const & name)
+{
+    boost::shared_ptr<MathFunction> * ptr;
+    return *ptr;
+}
+
 /** Different types of closures */
 
-struct FuncExprClosure : boost spirit::closure<FuncExprClosure, Stack, std::string, int, boost::shared_ptr<MathFunction>
+struct FuncExprClosure : boost spirit::closure<FuncExprClosure, Stack, std::string, int, boost::shared_ptr<MathFunction> >
 {
     member1 stack;
     member2 name;
@@ -112,7 +123,8 @@ struct ConditionalClosure : boost::spirit::closure<ConditionalClosure, Stack, St
  */
 struct ExpressionGrammar : public boost::spirit::classic::grammar<ExpressionGrammar,StackClosure::context_t>
 {
-    typedef boost::spirit::symbols<boost::shared_ptr<MathFunction> > FunctionTable;
+    typedef boost::shared_ptr<MathFunction> FunctionPointer;
+    typedef boost::spirit::symbols<FunctionPointer> FunctionTable;
     typedef boost::spirit::symbols<double> VarTable;
 
     VarTable const dummy_local_vars;
@@ -134,6 +146,35 @@ struct ExpressionGrammar : public boost::spirit::classic::grammar<ExpressionGram
     	definition(ExpressionGrammar const & self)
 	    : name(false)
 	{
+	    boolean_op.add
+	    	("&&", false)
+		("||", true);
+	    add_op.add
+	    	("+", checked_find(self.functions,"add"))
+		("-", checked_find(self.functions, "subtract"));
+	    bitwise_op.add
+		("&", checked_find(self.functions,"bitwise_and"))
+		("|", checked_find(self.functions,"bitwise_or"))
+		("^", checked_find(self.functions,"bitwise_xor"));
+	    compare_op.add
+		("<", checked_find(self.functions,"less"))
+		(">", checked_find(self.functions,"greater"))
+		("<=", checked_find(self.functions,"leq"))
+		(">=", checked_find(self.functions,"geq"));
+	    equality_op.add
+		("==", checked_find(self.functions,"equal"))
+		("+", checked_find(self.functions,"notequal"));
+	    mult_op.add
+		("*", checked_find(self.functions,"multiply"))
+		("/", checked_find(self.functions,"divide"))
+		("%", checked_find(self.functions,"mod"));
+	    shift_op.add
+		("<<", checked_find(self.functions,"lshift"))
+		(">>", checked_find(self.functions,"rshift"));
+	    unary_op.add
+		("+", FunctionPointer() )
+		("-", checked_find(self.functions,"negate"))
+		("!", checked_find(self.functions,"logical_not"));
 	}
 
 	typedef RuleT boost::spirit::classic::rule<ScannerT>;
@@ -141,6 +182,9 @@ struct ExpressionGrammar : public boost::spirit::classic::grammar<ExpressionGram
     private:
     	RuleT arg, top;
 	NameGrammar name;
+	boost::spirit::symbols<bool> boolean_op;
+	FunctionTable and_op, add_op, bitwise_op, compare_op, equality_op,\
+		      shift_op, mult_op,unary_op;
     };
 };
 
