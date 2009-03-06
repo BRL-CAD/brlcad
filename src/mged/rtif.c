@@ -358,6 +358,11 @@ f_nirt(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 
     CHECK_DBI_NULL;
 
+    /* skip past _mged_ */
+    if (argv[0][0] == '_' && argv[0][1] == 'm' &&
+	strncmp(argv[0], "_mged_", 6) == 0)
+	argv[0] += 6;
+
     Tcl_DStringInit(&ds);
 
     if (mged_variables->mv_use_air) {
@@ -394,6 +399,11 @@ f_vnirt(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
     Tcl_DString ds;
 
     CHECK_DBI_NULL;
+
+    /* skip past _mged_ */
+    if (argv[0][0] == '_' && argv[0][1] == 'm' &&
+	strncmp(argv[0], "_mged_", 6) == 0)
+	argv[0] += 6;
 
     Tcl_DStringInit(&ds);
 
