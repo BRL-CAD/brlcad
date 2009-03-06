@@ -15,6 +15,13 @@ on-going issues.
 Recent Bugs
 -----------
 
+* fbserv is receiving image data very slowly if the framebuffer is a
+  remote X24 interface.  could reproduce on mac with the following:
+
+  fbserv -s1024 1 /dev/X &
+  rt -F1 -s1024 db/moss.g all.g
+  rt -F1 -i -s1024 db/moss.g all.g  # 8x worse
+
 * ls -A and/or e -A reportedly crashes on use, unverified
 
 * File->Export seems to not work on Windows
