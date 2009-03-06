@@ -14,6 +14,7 @@ changes made.  See document footer for additional details.
 --- 2009-03-06  Release 7.14.4                                     ---
 ----------------------------------------------------------------------
 
+* fixed mged "Pick Edit-Primitive" mouse selection bug - Bob Parker
 * improved mged command console cut-and-paste support - Bob Parker
 * fixed mged command input last character bug - Bob Parker
 * improved gqa file support for blank/comment lines - Bob Parker
