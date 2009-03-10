@@ -18,7 +18,8 @@ Geometry Entities
 
 point
 line  (e.g., line segment, ray, bidirectionally infinite line)
-curve
+line set  (e.g., polyline, polygon)
+curve  (e.g., spline, arc, circle, ellipse)
 surface
 curve+surface  (i.e. a trimmed surface)
 solid
@@ -83,12 +84,29 @@ boundingSphere
 Geometry Modifiers
 ------------------
 
-snapTogether  (e.g., | -)
 scale
 rotate
 translate
 shear
-invert
+
+mirror
+copy/clone
+delete
+
+invertRepresentation
+evaluateBoolean  (i.e. CSG)
+snapTogether  (e.g., | -)
+
+sweep
+extrude
+revolve
+extend/stretch
+
+trim  (e.g., cutting plane)
+split  (i.e. copy and two trims)
+
+fillet
+chamfer
 
 
 Ray Tracing
