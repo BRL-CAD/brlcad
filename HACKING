@@ -1003,12 +1003,17 @@ generated that should build, install, and uninstall properly.
 7) Sync trunk with the STABLE branch.  Make sure all changes since the
 previous sync are included and that STABLE matches trunk.
 
-    svn co https://brlcad.svn.sourceforge.net/svnroot/brlcad/brlcad/branches/STABLE brlcad.STABLE && cd brlcad.STABLE
+    # review the log and obtain the last trunk merge revision number from comments, or use PREV
     svn log --stop-on-copy https://brlcad.svn.sourceforge.net/svnroot/brlcad/brlcad/branches/STABLE . | more
-    # review the log and obtain the last trunk merge revision number ##### from comments
-    svn merge https://brlcad.svn.sourceforge.net/svnroot/brlcad/brlcad/trunk@##### https://brlcad.svn.sourceforge.net/svnroot/brlcad/brlcad/trunk@HEAD .
+	*** OR ***
+    export PREV=`svn log --xml --stop-on-copy https://brlcad.svn.sourceforge.net/svnroot/brlcad/brlcad/branches/STABLE | grep 'revision=' | head -n 1 | sed 's/.*revision="\([0-9][0-9]*\)".*/\1/g'`
+    export CURR=`svn log --xml -rHEAD https://brlcad.svn.sourceforge.net/svnroot/brlcad/brlcad/trunk | grep 'revision=' | sed 's/.*="\([0-9][0-9]*\)".*/\1/g'`
+
+    # merge that range of changes into STABLE and make sure it works
+    svn co https://brlcad.svn.sourceforge.net/svnroot/brlcad/brlcad/branches/STABLE brlcad.STABLE && cd brlcad.STABLE
+    svn merge https://brlcad.svn.sourceforge.net/svnroot/brlcad/brlcad/trunk@$PREV https://brlcad.svn.sourceforge.net/svnroot/brlcad/brlcad/trunk@HEAD .
     sh autogen.sh && ./configure --enable-all && make distcheck
-    svn commit -m "merge trunk to STABLE from ##### to HEAD revision"
+    svn commit -m "merge trunk to STABLE from r$PREV to HEAD r$CURR"
 
 8) Tag the release using "rel-MAJOR-MINOR-PATCH" format:
 
@@ -1045,9 +1050,9 @@ sftp sfusername@frs.sourceforge.net:uploads
 put brlcad-*
 
 14) Increment and commit the next BRL-CAD release numbers to SVN;
-update the include/conf/(MAJOR|MINOR|PATCH) version files, and NEWS
-immediately to an odd-numbered minor version or a new patch developer
-version (e.g. 7.11.0 or 7.4.1).  Update the README version to next
+update the include/conf/(MAJOR|MINOR|PATCH) version files immediately
+to an odd-numbered minor version or a new patch developer version
+(e.g. 7.11.0 or 7.4.1).  Update README and NEWS version to next
 _expected_ release number (e.g. 7.12.0 or 7.4.2).
 
 15) Announce the new release.  The NEWS file should generally be used

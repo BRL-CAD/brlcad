@@ -1,0 +1,7 @@
+puts "*** Testing 'cpi' command ***"
+
+in cpi-base-cyl.s rcc 1 2 3 10 10 10 3.5
+cpi cpi-base-cyl.s cpi-cyl.s
+accept
+
+puts "*** 'cpi' testing completed ***"

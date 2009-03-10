@@ -92,6 +92,7 @@
 
     private method doBindings {}
     private method doButtonBindings {}
+    private method doCopy {}
     private method doKeyBindings {}
     private method doControl_a {}
     private method doControl_c {}
@@ -1146,7 +1147,17 @@
     doButtonBindings
 }
 
+::itcl::body Command::doCopy {} {
+    set w $itk_component(text)
+    catch {
+	clipboard clear -displayof $w;
+	clipboard append -displayof $w [selection get -displayof $w]
+    }
+}
+
 ::itcl::body Command::doKeyBindings {} {
+    global tcl_platform
+
     set w $itk_component(text)
     switch $itk_option(-edit_style) {
 	vi {
@@ -1176,7 +1187,11 @@
     bind $w <Right> "[::itcl::code $this doRight]; break"
     bind $w <Control-a> "[::itcl::code $this doControl_a]; break"
     bind $w <Control-b> "[::itcl::code $this backward_char]; break"
-    bind $w <Control-c> "[::itcl::code $this doControl_c]; break"
+    if {$tcl_platform(platform) == "windows"} {
+	bind $w <Control-c> "[::itcl::code $this doCopy]; break"
+    } else {
+	bind $w <Control-c> "[::itcl::code $this doControl_c]; break"
+    }
     bind $w <Control-e> "[::itcl::code $this end_of_line]; break"
     bind $w <Control-f> "[::itcl::code $this forward_char]; break"
     bind $w <Control-k> "[::itcl::code $this delete_end_of_line]; break"
@@ -1285,6 +1300,28 @@
     forward_char
     if {$itk_option(-edit_style) == "vi"} {
 	vi_edit_mode
+    }
+}
+
+bind Text <Control-Key-slash> {}
+bind Text <<Cut>> {}
+
+proc tk_textPaste {w} {
+    global tcl_platform
+    if {![catch {::tk::GetSelection $w CLIPBOARD} sel]} {
+	set oldSeparator [$w cget -autoseparators]
+	if {$oldSeparator} {
+	    $w configure -autoseparators 0
+	    $w edit separator
+	}
+	#if {[tk windowingsystem] ne "x11"} {
+	#    catch { $w delete sel.first sel.last }
+	#}
+	$w insert insert $sel
+	if {$oldSeparator} {
+	    $w edit separator
+	    $w configure -autoseparators 1
+	}
     }
 }
 

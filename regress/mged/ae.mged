@@ -1,0 +1,11 @@
+puts "*** Testing 'ae' command ***"
+
+ae 11 12.2 111
+view quat
+view ypr
+view aet
+view center
+view eye
+view size
+
+puts "*** 'ae' testing completed ***"

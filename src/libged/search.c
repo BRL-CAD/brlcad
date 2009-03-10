@@ -94,9 +94,9 @@
 #include "bio.h"
 
 #include "cmd.h"
-#include "ged_private.h"
 
-#include "search.h"
+#include "./ged_private.h"
+#include "./search.h"
 
 
 /*

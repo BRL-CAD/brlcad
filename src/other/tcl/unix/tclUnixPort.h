@@ -25,6 +25,10 @@
 #ifndef _TCLUNIXPORT
 #define _TCLUNIXPORT
 
+#ifndef MODULE_SCOPE
+#define MODULE_SCOPE extern
+#endif
+
 /*
  *---------------------------------------------------------------------------
  * The following sets of #includes and #ifdefs are required to get Tcl to
@@ -108,20 +112,9 @@ typedef off_t		Tcl_SeekOffset;
 #else
 #   include "../compat/unistd.h"
 #endif
-#ifdef	USE_FIONBIO
-    /*
-     * Not using the Posix fcntl(...,O_NONBLOCK,...) interface, instead
-     * we are using ioctl(..,FIONBIO,..).
-     */
 
-#   ifdef HAVE_SYS_FILIO_H
-#	include	<sys/filio.h>	/* For FIONBIO. */
-#   endif
+MODULE_SCOPE int TclUnixSetBlockingMode(int fd, int mode);
 
-#   ifdef HAVE_SYS_IOCTL_H
-#	include	<sys/ioctl.h>	/* For FIONBIO. */
-#   endif
-#endif	/* USE_FIONBIO */
 #include <utime.h>
 
 /*
@@ -171,18 +164,6 @@ typedef off_t		Tcl_SeekOffset;
 
 #ifndef O_NONBLOCK
 #   define O_NONBLOCK 0x80
-#endif
-
-/*
- * HPUX needs the flag O_NONBLOCK to get the right non-blocking I/O
- * semantics, while most other systems need O_NDELAY.  Define the
- * constant NBIO_FLAG to be one of these
- */
-
-#ifdef HPUX
-#  define NBIO_FLAG O_NONBLOCK
-#else
-#  define NBIO_FLAG O_NDELAY
 #endif
 
 /*
@@ -258,21 +239,11 @@ typedef off_t		Tcl_SeekOffset;
 
 /*
  * The stuff below is needed by the "time" command.  If this system has no
- * gettimeofday call, then must use times and the CLK_TCK #define (from
- * sys/param.h) to compute elapsed time.  Unfortunately, some systems only
- * have HZ and no CLK_TCK, and some might not even have HZ.
+ * gettimeofday call, then must use times() instead.
  */
 
 #ifdef NO_GETTOD
 #   include <sys/times.h>
-#   include <sys/param.h>
-#   ifndef CLK_TCK
-#       ifdef HZ
-#           define CLK_TCK HZ
-#       else
-#           define CLK_TCK 60
-#       endif
-#   endif
 #else
 #   ifdef HAVE_BSDGETTIMEOFDAY
 #	define gettimeofday BSDgettimeofday
@@ -489,18 +460,6 @@ extern char **environ;
 #endif
 
 /*
- * At present (12/91) not all stdlib.h implementations declare strtod.
- * The declaration below is here to ensure that it's declared, so that
- * the compiler won't take the default approach of assuming it returns
- * an int.  There's no ANSI prototype for it because there would end
- * up being too many conflicts with slightly-different prototypes.
- */
-
-#ifdef NO_STDLIB_H
-extern double strtod();
-#endif
-
-/*
  * There is no platform-specific panic routine for Unix in the Tcl internals.
  */
 
@@ -585,6 +544,12 @@ extern double strtod();
 #   if defined(__x86_64__) && !defined(FIXED_RDAR_4685553)
 #       undef USE_VFORK
 #   endif /* __x86_64__ */
+/* Workaround problems with vfork() when building with llvm-gcc-4.2 */
+#   if defined (__llvm__) && \
+	    (__GNUC__ > 4 || (__GNUC__ == 4 && (__GNUC_MINOR__ > 2 || \
+	    (__GNUC_MINOR__ == 2 && __GNUC_PATCHLEVEL__ > 0))))
+#       undef USE_VFORK
+#   endif /* __llvm__ */
 #endif /* __APPLE__ */
 
 /*
@@ -667,10 +632,6 @@ EXTERN int pthread_getattr_np _ANSI_ARGS_((pthread_t, pthread_attr_t *));
 
 #include <pwd.h>
 #include <grp.h>
-
-#ifndef MODULE_SCOPE
-#define MODULE_SCOPE extern
-#endif
 
 MODULE_SCOPE struct passwd*  TclpGetPwNam(const char *name);
 MODULE_SCOPE struct group*   TclpGetGrNam(const char *name);

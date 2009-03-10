@@ -1,0 +1,7 @@
+puts "*** Testing 'qvrot' command ***"
+
+view quat
+qvrot 4 -30 2 32
+view quat
+
+puts "*** 'qvrot' testing completed ***"

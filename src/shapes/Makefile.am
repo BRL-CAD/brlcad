@@ -1,6 +1,7 @@
 
 bin_PROGRAMS = \
 	bolt \
+	coil \
 	fence \
 	gastank \
 	handle \
@@ -14,6 +15,7 @@ AM_CPPFLAGS = ${TCL_CPPFLAGS}
 LDADD = ${WDB}
 
 bolt_SOURCES = bolt.c
+coil_SOURCES = coil.c
 fence_SOURCES = fence.c
 gastank_SOURCES = gastank.c
 handle_SOURCES = handle.c
@@ -45,6 +47,7 @@ include $(top_srcdir)/misc/Makefile.defs
 
 FAST_OBJECTS = \
 	$(bolt_OBJECTS) \
+	$(coil_OBJECTS) \
 	$(fence_OBJECTS) \
 	$(gastank_OBJECTS) \
 	$(handle_OBJECTS) \

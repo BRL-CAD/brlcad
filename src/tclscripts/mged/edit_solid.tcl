@@ -310,9 +310,9 @@ proc esol_build_form { id w type vals do_gui do_cmd do_entries } {
 	    }
 
 	    switch -glob $fe_type {
-		# bu_vls type arguments are %V, char arrays are %s.
-		# XXX - %S is DEPRECATED [7.14]
-		{%*[sSV]} {
+		%*[sSV] {
+		    # bu_vls type arguments are %V, char arrays are %s.
+		    # XXX - %S is DEPRECATED [7.14]
 		    if $do_gui {
 			entry $sform._$attr\E$num -relief sunken
 			grid $sform._$attr\E$num - - -row $row -column 1 -sticky nsew

@@ -417,7 +417,11 @@ Note: not all window managers support the notion of an icon window.
 .TP
 \fBwm manage \fIwidget\fR
 The \fIwidget\fR specified will become a stand alone top-level window.  The
-window will be decorated with the window managers title bar, etc.
+window will be decorated with the window managers title bar, etc. Only
+\fIframe\fR, \fIlabelframe\fR and \fItoplevel\fR widgets can be used
+with this command. Attempting to pass any other widget type will raise
+an error. Attempting to manage a \fItoplevel\fR widget is benign and
+achieves nothing. See also \fBGEOMETRY MANAGEMENT\fR.
 .TP
 \fBwm maxsize \fIwindow\fR ?\fIwidth height\fR?
 If \fIwidth\fR and \fIheight\fR are specified, they give

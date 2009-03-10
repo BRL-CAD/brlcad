@@ -1412,6 +1412,9 @@ Tcl_GlobObjCmd(
 	 */
 
 	Tcl_ListObjLength(interp, typePtr, &length);
+	if (length <= 0) {
+	    goto skipTypes;
+	}
 	globTypes = (Tcl_GlobTypeData*)
 		TclStackAlloc(interp,sizeof(Tcl_GlobTypeData));
 	globTypes->type = 0;
@@ -1529,6 +1532,7 @@ Tcl_GlobObjCmd(
 	}
     }
 
+  skipTypes:
     /*
      * Now we perform the actual glob below. This may involve joining together
      * the pattern arguments, dealing with particular file types etc. We use a
@@ -2452,9 +2456,10 @@ DoGlob(
 	}
 	Tcl_IncrRefCount(joinedPtr);
 	Tcl_DStringFree(&append);
-	Tcl_FSMatchInDirectory(interp, matchesObj, joinedPtr, NULL, types);
+	result = Tcl_FSMatchInDirectory(interp, matchesObj, joinedPtr, NULL,
+		types);
 	Tcl_DecrRefCount(joinedPtr);
-	return TCL_OK;
+	return result;
     }
 
     /*

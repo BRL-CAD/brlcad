@@ -166,7 +166,7 @@ INSTALLED_MANPAGES = \
 	raise.n \
 	re_syntax.n \
 	read.n \
-	reflectedchan.n \
+	refchan.n \
 	regexp.n \
 	registry.n \
 	regsub.n \
@@ -323,14 +323,12 @@ EXTRA_DIST = \
 	macosx \
 	tests \
 	tools \
-	unix/Makefile \
 	unix/Makefile.in \
 	unix/README \
 	unix/aclocal.m4 \
 	unix/config.status \
 	unix/configure \
 	unix/configure.in \
-	unix/dltest/Makefile \
 	unix/dltest/Makefile.in \
 	unix/dltest/README \
 	unix/dltest/pkga.c \
@@ -346,7 +344,6 @@ EXTRA_DIST = \
 	unix/tcl.spec \
 	unix/tclAppInit.c \
 	unix/tclConfig.h.in \
-	unix/tclConfig.sh \
 	unix/tclConfig.sh.in \
 	unix/tclLoadAix.c \
 	unix/tclLoadDl.c \

@@ -90,8 +90,8 @@ static RGBpixel	*pix;			/* input image */
 static RGBpixel	bg = { 0, 0, 0 };	/* background */
 
 /* in ioutil.c */
-void Message( const char *format, ... );
-void Fatal( FBIO *fbp, const char *format, ... );
+void Message(const char *format, ...);
+void Fatal(FBIO *fbiop, const char *format, ...);
 
 
 #ifndef HAVE_DRAND48
@@ -112,10 +112,10 @@ drand48()
 static void
 Sig_Catcher(int sig)
 {
-    (void)signal( sig, SIG_DFL );
+    (void)signal(sig, SIG_DFL);
 
     /* The following is not guaranteed to work, but it's worth a try. */
-    Fatal(fbp, "Interrupted by signal %d", sig );
+    Fatal(fbp, "Interrupted by signal %d", sig);
 }
 
 
@@ -145,9 +145,9 @@ main(int argc, char **argv)
 	    };
 	register int	i;
 
-	for ( i = 0; getsigs[i] != 0; ++i )
-	    if ( signal( getsigs[i], SIG_IGN ) != SIG_IGN )
-		(void)signal( getsigs[i], Sig_Catcher );
+	for (i = 0; getsigs[i] != 0; ++i)
+	    if (signal(getsigs[i], SIG_IGN) != SIG_IGN)
+		(void)signal(getsigs[i], Sig_Catcher);
     }
 
     /* Process arguments. */
@@ -155,8 +155,8 @@ main(int argc, char **argv)
 	register int	c;
 	register bool_t	errors = 0;
 
-	while ( (c = bu_getopt( argc, argv, OPTSTR )) != EOF )
-	    switch ( c )
+	while ((c = bu_getopt(argc, argv, OPTSTR)) != EOF)
+	    switch (c)
 	    {
 		default:	/* '?': invalid option */
 		    errors = 1;
@@ -175,56 +175,56 @@ main(int argc, char **argv)
 		    break;
 
 		case 'n':	/* -n height */
-		    if ( (src_height = atoi( bu_optarg )) <= 0 )
+		    if ((src_height = atoi(bu_optarg)) <= 0)
 			errors = 1;
 
 		    break;
 
 		case 'N':	/* -N height */
-		    if ( (dst_height = atoi( bu_optarg )) <= 0 )
+		    if ((dst_height = atoi(bu_optarg)) <= 0)
 			errors = 1;
 
 		    break;
 
 		case 's':	/* -s size */
-		    if ( (src_height = src_width = atoi( bu_optarg ))
-			 <= 0
+		    if ((src_height = src_width = atoi(bu_optarg))
+			<= 0
 			)
 			errors = 1;
 
 		    break;
 
 		case 'S':	/* -S size */
-		    if ( (dst_height = dst_width = atoi( bu_optarg ))
-			 <= 0
+		    if ((dst_height = dst_width = atoi(bu_optarg))
+			<= 0
 			)
 			errors = 1;
 
 		    break;
 
 		case 'w':	/* -w width */
-		    if ( (src_width = atoi( bu_optarg )) <= 0 )
+		    if ((src_width = atoi(bu_optarg)) <= 0)
 			errors = 1;
 
 		    break;
 
 		case 'W':	/* -W width */
-		    if ( (dst_width = atoi( bu_optarg )) <= 0 )
+		    if ((dst_width = atoi(bu_optarg)) <= 0)
 			errors = 1;
 
 		    break;
 	    }
 
-	if ( errors )
-	    Fatal(fbp, "Usage: %s\n%s", USAGE1, USAGE2 );
+	if (errors)
+	    Fatal(fbp, "Usage: %s\n%s", USAGE1, USAGE2);
     }
 
-    if ( bu_optind < argc )		/* out_fb_file */
+    if (bu_optind < argc)		/* out_fb_file */
     {
-	if ( bu_optind < argc - 1 || out_fb_file != NULL )
+	if (bu_optind < argc - 1 || out_fb_file != NULL)
 	{
-	    Message( "Usage: %s\n%s", USAGE1, USAGE2 );
-	    Fatal(fbp, "Can't handle multiple output frame buffers!" );
+	    Message("Usage: %s\n%s", USAGE1, USAGE2);
+	    Fatal(fbp, "Can't handle multiple output frame buffers!");
 	}
 
 	out_fb_file = argv[bu_optind];
@@ -232,90 +232,82 @@ main(int argc, char **argv)
 
     /* Open frame buffer for unbuffered input. */
 
-    if ( src_width == 0 )
+    if (src_width == 0)
 	src_width = hires ? 1024 : 512;		/* starting default */
 
-    if ( src_height == 0 )
+    if (src_height == 0)
 	src_height = hires ? 1024 : 512;	/* starting default */
 
-    if ( in_fb_file != NULL ) {
+    if (in_fb_file != NULL) {
 
-	if ( (fbp = fb_open( in_fb_file, src_width, src_height ))
-	     == FBIO_NULL
+	if ((fbp = fb_open(in_fb_file, src_width, src_height))
+	    == FBIO_NULL
 	    )
-	    Fatal(fbp, "Couldn't open input frame buffer" );
+	    Fatal(fbp, "Couldn't open input frame buffer");
 	else	{
 	    register int	y;
-	    register int	wt = fb_getwidth( fbp );
-	    register int	ht = fb_getheight( fbp );
+	    register int	wt = fb_getwidth(fbp);
+	    register int	ht = fb_getheight(fbp);
 
 	    /* Use smaller actual input size instead of request. */
 
-	    if ( wt < src_width )
+	    if (wt < src_width)
 		src_width = wt;
 
-	    if ( ht < src_height )
+	    if (ht < src_height)
 		src_height = ht;
 
-	    if ( (long)(size_t)((long)src_width * (long)src_height
-				* (long)sizeof(RGBpixel)
+	    if ((pix = (RGBpixel *)malloc((size_t)src_width
+					  * (size_t)src_height
+					  * sizeof(RGBpixel)
 		     )
-		 != (long)src_width * (long)src_height
-		 * (long)sizeof(RGBpixel)
+		    ) == NULL
 		)
-		Fatal(fbp, "Integer overflow, malloc unusable" );
+		Fatal(fbp, "Not enough memory for pixel array");
 
-	    if ( (pix = (RGBpixel *)malloc( (size_t)src_width
-					    * (size_t)src_height
-					    * sizeof(RGBpixel)
-		      )
-		     ) == NULL
-		)
-		Fatal(fbp, "Not enough memory for pixel array" );
-
-	    for ( y = 0; y < src_height; ++y )
-		if ( fb_read( fbp, 0, y, pix[y * src_width],
-			      src_width
-			 ) == -1
+	    for (y = 0; y < src_height; ++y)
+		if (fb_read(fbp, 0, y, pix[y * src_width],
+			    src_width
+			) == -1
 		    )
-		    Fatal(fbp, "Error reading raster" );
+		    Fatal(fbp, "Error reading raster");
 
-	    if ( fb_close( fbp ) == -1 )
+	    if (fb_close(fbp) == -1)
 	    {
 		fbp = FBIO_NULL;	/* avoid second try */
-		Fatal(fbp, "Error closing input frame buffer" );
+		Fatal(fbp, "Error closing input frame buffer");
 	    }
 	}
     }
 
     /* Open frame buffer for unbuffered output. */
 
-    if ( dst_width == 0 )
+    if (dst_width == 0)
 	dst_width = src_width;		/* default */
 
-    if ( dst_height == 0 )
+    if (dst_height == 0)
 	dst_height = src_height;	/* default */
 
-    if ( (fbp = fb_open( out_fb_file, dst_width, dst_height )) == FBIO_NULL )
-	Fatal(fbp, "Couldn't open output frame buffer" );
+    if ((fbp = fb_open(out_fb_file, dst_width, dst_height)) == FBIO_NULL)
+	Fatal(fbp, "Couldn't open output frame buffer");
     else {
-	register int	wt = fb_getwidth( fbp );
-	register int	ht = fb_getheight( fbp );
+	register int	wt = fb_getwidth(fbp);
+	register int	ht = fb_getheight(fbp);
 
 	/* Use smaller actual frame buffer size for output. */
 
-	if ( wt < dst_width )
+	if (wt < dst_width)
 	    dst_width = wt;
 
-	if ( ht < dst_height )
+	if (ht < dst_height)
 	    dst_height = ht;
 
 	/* Avoid selecting pixels outside the input image. */
 
-	if ( dst_width > src_width )
+	if (dst_width > src_width)
 	    dst_width = src_width;
 
-	if ( dst_height > src_height )
+	if (dst_height > src_height)
 	    dst_height = src_height;
     }
 
@@ -329,34 +321,29 @@ main(int argc, char **argv)
 	register long	wxh = (long)dst_width * (long)dst_height;
 	/* down-counter */
 
-	if ( (long)(size_t)(wxh * (long)sizeof(long))
-	     != wxh * (long)sizeof(long)
-	    )
-	    Fatal(fbp, "Integer overflow, malloc unusable" );
-
-	if ( (loc = (long *)malloc( (size_t)wxh * sizeof(long) )) == NULL )
-	    Fatal(fbp, "Not enough memory for location array" );
+	if ((loc = (long *)malloc((size_t)wxh * sizeof(long))) == NULL)
+	    Fatal(fbp, "Not enough memory for location array");
 
 	/* Initialize pixel location array to sequential order. */
 
-	while ( --wxh >= 0L )
+	while (--wxh >= 0L)
 	    loc[wxh] = wxh;
 
 	/* Select a pixel at random, paint it, and adjust the location array. */
 
-	for ( wxh = (long)dst_width * (long)dst_height; --wxh >= 0L; )
+	for (wxh = (long)dst_width * (long)dst_height; --wxh >= 0L;)
 	{
 	    register long	r = (long)((double)wxh * drand48());
 	    register long	x = loc[r] % dst_width;
 	    register long	y = loc[r] / dst_width;
 
-	    if ( fb_write( fbp, (int)x, (int)y,
-			   in_fb_file == NULL ? bg
-			   : pix[x + y * src_width],
-			   1
-		     ) == -1
+	    if (fb_write(fbp, (int)x, (int)y,
+			 in_fb_file == NULL ? bg
+			 : pix[x + y * src_width],
+			 1
+		    ) == -1
 		)
-		Fatal(fbp, "Error writing pixel" );
+		Fatal(fbp, "Error writing pixel");
 
 	    loc[r] = loc[wxh];	/* track the shuffle */
 	}
@@ -364,12 +351,12 @@ main(int argc, char **argv)
 
     /* Close the frame buffer. */
 
-    if ( fb_close( fbp ) == -1 ) {
+    if (fb_close(fbp) == -1) {
 	fbp = FBIO_NULL;	/* avoid second try */
-	Fatal(fbp, "Error closing output frame buffer" );
+	Fatal(fbp, "Error closing output frame buffer");
     }
 
-    bu_exit( EXIT_SUCCESS, NULL );
+    bu_exit(EXIT_SUCCESS, NULL);
 }
 
 /*

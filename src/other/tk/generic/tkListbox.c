@@ -1246,9 +1246,9 @@ ListboxXviewSubCmd(
 	    - 2*(listPtr->inset + listPtr->selBorderWidth);
     if (objc == 2) {
 	if (listPtr->maxWidth == 0) {
-	    Tcl_SetResult(interp, "0 1", TCL_STATIC);
+	    Tcl_SetResult(interp, "0.0 1.0", TCL_STATIC);
 	} else {
-	    char buf[TCL_DOUBLE_SPACE * 2];
+	    char buf[TCL_DOUBLE_SPACE];
 
 	    fraction = listPtr->xOffset/((double) listPtr->maxWidth);
 	    fraction2 = (listPtr->xOffset + windowWidth)
@@ -1256,8 +1256,10 @@ ListboxXviewSubCmd(
 	    if (fraction2 > 1.0) {
 		fraction2 = 1.0;
 	    }
-	    sprintf(buf, "%g %g", fraction, fraction2);
+	    Tcl_PrintDouble(NULL, fraction, buf);
 	    Tcl_SetResult(interp, buf, TCL_VOLATILE);
+	    Tcl_PrintDouble(NULL, fraction2, buf);
+	    Tcl_AppendResult(interp, " ", buf, NULL);
 	}
     } else if (objc == 3) {
 	if (Tcl_GetIntFromObj(interp, objv[2], &index) != TCL_OK) {
@@ -1318,9 +1320,9 @@ ListboxYviewSubCmd(
 
     if (objc == 2) {
 	if (listPtr->nElements == 0) {
-	    Tcl_SetResult(interp, "0 1", TCL_STATIC);
+	    Tcl_SetResult(interp, "0.0 1.0", TCL_STATIC);
 	} else {
-	    char buf[TCL_DOUBLE_SPACE * 2];
+	    char buf[TCL_DOUBLE_SPACE];
 
 	    fraction = listPtr->topIndex/((double) listPtr->nElements);
 	    fraction2 = (listPtr->topIndex+listPtr->fullLines)
@@ -1328,8 +1330,10 @@ ListboxYviewSubCmd(
 	    if (fraction2 > 1.0) {
 		fraction2 = 1.0;
 	    }
-	    sprintf(buf, "%g %g", fraction, fraction2);
+	    Tcl_PrintDouble(NULL, fraction, buf);
 	    Tcl_SetResult(interp, buf, TCL_VOLATILE);
+	    Tcl_PrintDouble(NULL, fraction2, buf);
+	    Tcl_AppendResult(interp, " ", buf, NULL);
 	}
     } else if (objc == 3) {
 	if (GetListboxIndex(interp, listPtr, objv[2], 0, &index) != TCL_OK) {
@@ -3244,7 +3248,7 @@ static void
 ListboxUpdateVScrollbar(
     register Listbox *listPtr)	/* Information about widget. */
 {
-    char string[TCL_DOUBLE_SPACE * 2];
+    char firstStr[TCL_DOUBLE_SPACE+1], lastStr[TCL_DOUBLE_SPACE+1];
     double first, last;
     int result;
     Tcl_Interp *interp;
@@ -3256,14 +3260,16 @@ ListboxUpdateVScrollbar(
 	first = 0.0;
 	last = 1.0;
     } else {
-	first = listPtr->topIndex/((double) listPtr->nElements);
-	last = (listPtr->topIndex+listPtr->fullLines)
-		/((double) listPtr->nElements);
+	first = listPtr->topIndex / (double) listPtr->nElements;
+	last = (listPtr->topIndex + listPtr->fullLines)
+		/ (double) listPtr->nElements;
 	if (last > 1.0) {
 	    last = 1.0;
 	}
     }
-    sprintf(string, " %g %g", first, last);
+    firstStr[0] = lastStr[0] = ' ';
+    Tcl_PrintDouble(NULL, first, firstStr+1);
+    Tcl_PrintDouble(NULL, last, lastStr+1);
 
     /*
      * We must hold onto the interpreter from the listPtr because the data at
@@ -3271,14 +3277,15 @@ ListboxUpdateVScrollbar(
      */
 
     interp = listPtr->interp;
-    Tcl_Preserve((ClientData) interp);
-    result = Tcl_VarEval(interp, listPtr->yScrollCmd, string, NULL);
+    Tcl_Preserve(interp);
+    result = Tcl_VarEval(interp, listPtr->yScrollCmd, firstStr, lastStr,
+	    NULL);
     if (result != TCL_OK) {
 	Tcl_AddErrorInfo(interp,
 		"\n    (vertical scrolling command executed by listbox)");
 	Tcl_BackgroundError(interp);
     }
-    Tcl_Release((ClientData) interp);
+    Tcl_Release(interp);
 }
 
 /*
@@ -3305,7 +3312,7 @@ static void
 ListboxUpdateHScrollbar(
     register Listbox *listPtr)	/* Information about widget. */
 {
-    char string[TCL_DOUBLE_SPACE * 2];
+    char firstStr[TCL_DOUBLE_SPACE+1], lastStr[TCL_DOUBLE_SPACE+1];
     int result, windowWidth;
     double first, last;
     Tcl_Interp *interp;
@@ -3319,14 +3326,17 @@ ListboxUpdateHScrollbar(
 	first = 0;
 	last = 1.0;
     } else {
-	first = listPtr->xOffset/((double) listPtr->maxWidth);
-	last = (listPtr->xOffset + windowWidth)
-		/((double) listPtr->maxWidth);
+	register double maxWide = (double) listPtr->maxWidth;
+
+	first = listPtr->xOffset / maxWide;
+	last = (listPtr->xOffset + windowWidth) / maxWide;
 	if (last > 1.0) {
 	    last = 1.0;
 	}
     }
-    sprintf(string, " %g %g", first, last);
+    firstStr[0] = lastStr[0] = ' ';
+    Tcl_PrintDouble(NULL, first, firstStr+1);
+    Tcl_PrintDouble(NULL, last, lastStr+1);
 
     /*
      * We must hold onto the interpreter because the data referred to at
@@ -3334,14 +3344,15 @@ ListboxUpdateHScrollbar(
      */
 
     interp = listPtr->interp;
-    Tcl_Preserve((ClientData) interp);
-    result = Tcl_VarEval(interp, listPtr->xScrollCmd, string, NULL);
+    Tcl_Preserve(interp);
+    result = Tcl_VarEval(interp, listPtr->xScrollCmd, firstStr, lastStr,
+	    NULL);
     if (result != TCL_OK) {
 	Tcl_AddErrorInfo(interp,
 		"\n    (horizontal scrolling command executed by listbox)");
 	Tcl_BackgroundError(interp);
     }
-    Tcl_Release((ClientData) interp);
+    Tcl_Release(interp);
 }
 
 /*

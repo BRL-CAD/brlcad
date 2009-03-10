@@ -16,32 +16,6 @@
 #include "tclInt.h"	/* Internal definitions for Tcl. */
 #include "tclIO.h"	/* To get Channel type declaration. */
 
-/*
- * sys/ioctl.h has already been included by tclPort.h. Including termios.h or
- * termio.h causes a bunch of warning messages because some duplicate (but not
- * contradictory) #defines exist in termios.h and/or termio.h
- */
-
-#undef NL0
-#undef NL1
-#undef CR0
-#undef CR1
-#undef CR2
-#undef CR3
-#undef TAB0
-#undef TAB1
-#undef TAB2
-#undef XTABS
-#undef BS0
-#undef BS1
-#undef FF0
-#undef FF1
-#undef ECHO
-#undef NOFLSH
-#undef TOSTOP
-#undef FLUSHO
-#undef PENDIN
-
 #define SUPPORTS_TTY
 
 #undef DIRECT_BAUD
@@ -65,22 +39,6 @@
 #   define GETCONTROL(fd, intPtr)	ioctl((fd), TIOCMGET, (intPtr))
 #   define SETCONTROL(fd, intPtr)	ioctl((fd), TIOCMSET, (intPtr))
 
-    /*
-     * TIP #35 introduced a different on exit flush/close behavior that does
-     * not work correctly with standard channels on all systems. The problem
-     * is tcflush throws away waiting channel data. This may be necessary for
-     * true serial channels that may block, but isn't correct in the standard
-     * case. This might be replaced with tcdrain instead, but that can block.
-     * For now, we revert to making this do nothing, and TtyOutputProc being
-     * the same old FileOutputProc. - hobbs [Bug #525783]
-     */
-
-#   define BAD_TIP35_FLUSH 0
-#   if BAD_TIP35_FLUSH
-#	define TTYFLUSH(fd)		tcflush((fd), TCIOFLUSH);
-#   else
-#	define TTYFLUSH(fd)
-#   endif /* BAD_TIP35_FLUSH */
 #   ifdef FIONREAD
 #	define GETREADQUEUE(fd, int)	ioctl((fd), FIONREAD, &(int))
 #   elif defined(FIORDCHK)
@@ -106,6 +64,9 @@
 #   if !defined(CRTSCTS) && defined(CNEW_RTSCTS)
 #	define CRTSCTS CNEW_RTSCTS
 #   endif /* !CRTSCTS&CNEW_RTSCTS */
+#   if !defined(PAREXT) && defined(CMSPAR)
+#	define PAREXT CMSPAR
+#   endif /* !PAREXT&&CMSPAR */
 #else	/* !USE_TERMIOS */
 
 #ifdef USE_TERMIO
@@ -158,8 +119,6 @@ typedef struct FileState {
 typedef struct TtyState {
     FileState fs;		/* Per-instance state of the file descriptor.
 				 * Must be the first field. */
-    int stateUpdated;		/* Flag to say if the state has been modified
-				 * and needs resetting. */
     IOSTATE savedState;		/* Initial state of device. Used to reset
 				 * state when device closed. */
 } TtyState;
@@ -270,8 +229,6 @@ static int		TcpOutputProc(ClientData instanceData,
 			    const char *buf, int toWrite, int *errorCode);
 static void		TcpWatchProc(ClientData instanceData, int mask);
 #ifdef SUPPORTS_TTY
-static int		TtyCloseProc(ClientData instanceData,
-			    Tcl_Interp *interp);
 static void		TtyGetAttributes(int fd, TtyAttrs *ttyPtr);
 static int		TtyGetOptionProc(ClientData instanceData,
 			    Tcl_Interp *interp, const char *optionName,
@@ -282,10 +239,6 @@ static unsigned long	TtyGetSpeed(int baud);
 #endif /* DIRECT_BAUD */
 static FileState *	TtyInit(int fd, int initialize);
 static void		TtyModemStatusStr(int status, Tcl_DString *dsPtr);
-#if BAD_TIP35_FLUSH
-static int		TtyOutputProc(ClientData instanceData,
-			    const char *buf, int toWrite, int *errorCode);
-#endif /* BAD_TIP35_FLUSH */
 static int		TtyParseMode(Tcl_Interp *interp, const char *mode,
 			    int *speedPtr, int *parityPtr, int *dataPtr,
 			    int *stopPtr);
@@ -331,13 +284,9 @@ static Tcl_ChannelType fileChannelType = {
 static Tcl_ChannelType ttyChannelType = {
     "tty",			/* Type name. */
     TCL_CHANNEL_VERSION_5,	/* v5 channel */
-    TtyCloseProc,		/* Close proc. */
+    FileCloseProc,		/* Close proc. */
     FileInputProc,		/* Input proc. */
-#if BAD_TIP35_FLUSH
-    TtyOutputProc,		/* Output proc. */
-#else /* !BAD_TIP35_FLUSH */
     FileOutputProc,		/* Output proc. */
-#endif /* BAD_TIP35_FLUSH */
     NULL,			/* Seek proc. */
     TtySetOptionProc,		/* Set option proc. */
     TtyGetOptionProc,		/* Get option proc. */
@@ -404,29 +353,11 @@ FileBlockModeProc(
 				 * TCL_MODE_NONBLOCKING. */
 {
     FileState *fsPtr = (FileState *) instanceData;
-    int curStatus;
 
-#ifndef USE_FIONBIO
-    curStatus = fcntl(fsPtr->fd, F_GETFL);
-    if (mode == TCL_MODE_BLOCKING) {
-	CLEAR_BITS(curStatus, O_NONBLOCK);
-    } else {
-	SET_BITS(curStatus, O_NONBLOCK);
-    }
-    if (fcntl(fsPtr->fd, F_SETFL, curStatus) < 0) {
+    if (TclUnixSetBlockingMode(fsPtr->fd, mode) < 0) {
 	return errno;
     }
-    curStatus = fcntl(fsPtr->fd, F_GETFL);
-#else /* USE_FIONBIO */
-    if (mode == TCL_MODE_BLOCKING) {
-	curStatus = 0;
-    } else {
-	curStatus = 1;
-    }
-    if (ioctl(fsPtr->fd, (int) FIONBIO, &curStatus) < 0) {
-	return errno;
-    }
-#endif /* !USE_FIONBIO */
+
     return 0;
 }
 
@@ -738,94 +669,6 @@ FileGetHandleProc(
 }
 
 #ifdef SUPPORTS_TTY
-/*
- *----------------------------------------------------------------------
- *
- * TtyCloseProc --
- *
- *	This function is called from the generic IO level to perform
- *	channel-type-specific cleanup when a tty based channel is closed.
- *
- * Results:
- *	0 if successful, errno if failed.
- *
- * Side effects:
- *	Closes the device of the channel.
- *
- *----------------------------------------------------------------------
- */
-
-static int
-TtyCloseProc(
-    ClientData instanceData,	/* Tty state. */
-    Tcl_Interp *interp)		/* For error reporting - unused. */
-{
-#if BAD_TIP35_FLUSH
-    TtyState *ttyPtr = (TtyState *) instanceData;
-#endif /* BAD_TIP35_FLUSH */
-
-#ifdef TTYFLUSH
-    TTYFLUSH(ttyPtr->fs.fd);
-#endif /* TTYFLUSH */
-
-#if 0
-    /*
-     * TIP#35 agreed to remove the unsave so that TCL could be used as a
-     * simple stty. It would be cleaner to remove all the stuff related to
-     *	  TtyState.stateUpdated
-     *	  TtyState.savedState
-     * Then the structure TtyState would be the same as FileState. IMO this
-     * cleanup could better be done for the final 8.4 release after nobody
-     * complained about the missing unsave. - schroedter
-     */
-    if (ttyPtr->stateUpdated) {
-	SETIOSTATE(ttyPtr->fs.fd, &ttyPtr->savedState);
-    }
-#endif
-
-    return FileCloseProc(instanceData, interp);
-}
-
-/*
- *----------------------------------------------------------------------
- *
- * TtyOutputProc--
- *
- *	This function is invoked from the generic IO level to write output to
- *	a TTY channel.
- *
- * Results:
- *	The number of bytes written is returned or -1 on error. An output
- *	argument contains a POSIX error code if an error occurred, or zero.
- *
- * Side effects:
- *	Writes output on the output device of the channel if the channel is
- *	not designated to be closed.
- *
- *----------------------------------------------------------------------
- */
-
-#if BAD_TIP35_FLUSH
-static int
-TtyOutputProc(
-    ClientData instanceData,	/* File state. */
-    const char *buf,		/* The data buffer. */
-    int toWrite,		/* How many bytes to write? */
-    int *errorCodePtr)		/* Where to store error code. */
-{
-    if (TclInExit()) {
-	/*
-	 * Do not write data during Tcl exit. Serial port may block preventing
-	 * Tcl from exit.
-	 */
-
-	return toWrite;
-    }
-
-    return FileOutputProc(instanceData, buf, toWrite, errorCodePtr);
-}
-#endif /* BAD_TIP35_FLUSH */
-
 #ifdef USE_TERMIOS
 /*
  *----------------------------------------------------------------------
@@ -912,7 +755,6 @@ TtySetOptionProc(
 	 */
 
 	TtySetAttributes(fsPtr->fd, &tty);
-	((TtyState *) fsPtr)->stateUpdated = 1;
 	return TCL_OK;
     }
 
@@ -1704,10 +1546,10 @@ TtyInit(
     int initialize)
 {
     TtyState *ttyPtr;
+    int stateUpdated = 0;
 
     ttyPtr = (TtyState *) ckalloc((unsigned) sizeof(TtyState));
     GETIOSTATE(fd, &ttyPtr->savedState);
-    ttyPtr->stateUpdated = 0;
     if (initialize) {
 	IOSTATE iostate = ttyPtr->savedState;
 
@@ -1718,7 +1560,7 @@ TtyInit(
 		iostate.c_cflag & CREAD ||
 		iostate.c_cc[VMIN] != 1 ||
 		iostate.c_cc[VTIME] != 0) {
-	    ttyPtr->stateUpdated = 1;
+	    stateUpdated = 1;
 	}
 	iostate.c_iflag = IGNBRK;
 	iostate.c_oflag = 0;
@@ -1741,7 +1583,7 @@ TtyInit(
 	 * Only update if we're changing anything to avoid possible blocking.
 	 */
 
-	if (ttyPtr->stateUpdated) {
+	if (stateUpdated) {
 	    SETIOSTATE(fd, &iostate);
 	}
     }
@@ -1969,36 +1811,15 @@ TcpBlockModeProc(
 				 * TCL_MODE_NONBLOCKING. */
 {
     TcpState *statePtr = (TcpState *) instanceData;
-    int setting;
 
-#ifndef USE_FIONBIO
-    setting = fcntl(statePtr->fd, F_GETFL);
     if (mode == TCL_MODE_BLOCKING) {
 	CLEAR_BITS(statePtr->flags, TCP_ASYNC_SOCKET);
-	CLEAR_BITS(setting, O_NONBLOCK);
     } else {
 	SET_BITS(statePtr->flags, TCP_ASYNC_SOCKET);
-	SET_BITS(setting, O_NONBLOCK);
     }
-    if (fcntl(statePtr->fd, F_SETFL, setting) < 0) {
+    if (TclUnixSetBlockingMode(statePtr->fd, mode) < 0) {
 	return errno;
     }
-#else /* USE_FIONBIO */
-    if (mode == TCL_MODE_BLOCKING) {
-	CLEAR_BITS(statePtr->flags, TCP_ASYNC_SOCKET);
-	setting = 0;
-	if (ioctl(statePtr->fd, (int) FIONBIO, &setting) == -1) {
-	    return errno;
-	}
-    } else {
-	SET_BITS(statePtr->flags, TCP_ASYNC_SOCKET);
-	setting = 1;
-	if (ioctl(statePtr->fd, (int) FIONBIO, &setting) == -1) {
-	    return errno;
-	}
-    }
-#endif /* !USE_FIONBIO */
-
     return 0;
 }
 
@@ -2026,7 +1847,6 @@ WaitForConnect(
 {
     int timeOut;		/* How long to wait. */
     int state;			/* Of calling TclWaitForFile. */
-    int flags;			/* fcntl flags for the socket. */
 
     /*
      * If an asynchronous connect is in progress, attempt to wait for it to
@@ -2043,14 +1863,7 @@ WaitForConnect(
 	state = TclUnixWaitForFile(statePtr->fd,
 		TCL_WRITABLE | TCL_EXCEPTION, timeOut);
 	if (!(statePtr->flags & TCP_ASYNC_SOCKET)) {
-#ifndef USE_FIONBIO
-	    flags = fcntl(statePtr->fd, F_GETFL);
-	    CLEAR_BITS(flags, O_NONBLOCK);
-	    (void) fcntl(statePtr->fd, F_SETFL, flags);
-#else /* USE_FIONBIO */
-	    flags = 0;
-	    (void) ioctl(statePtr->fd, FIONBIO, &flags);
-#endif /* !USE_FIONBIO */
+	    (void) TclUnixSetBlockingMode(statePtr->fd, TCL_MODE_BLOCKING);
 	}
 	if (state & TCL_EXCEPTION) {
 	    return -1;
@@ -2536,14 +2349,7 @@ CreateSocket(
 	 */
 
 	if (async) {
-#ifndef USE_FIONBIO
-	    curState = fcntl(sock, F_GETFL);
-	    SET_BITS(curState, O_NONBLOCK);
-	    status = fcntl(sock, F_SETFL, curState);
-#else /* USE_FIONBIO */
-	    curState = 1;
-	    status = ioctl(sock, FIONBIO, &curState);
-#endif /* !USE_FIONBIO */
+	    status = TclUnixSetBlockingMode(sock, TCL_MODE_NONBLOCKING);
 	} else {
 	    status = 0;
 	}
@@ -2565,14 +2371,7 @@ CreateSocket(
 		 */
 
 		if (async) {
-#ifndef USE_FIONBIO
-		    curState = fcntl(sock, F_GETFL);
-		    CLEAR_BITS(curState, O_NONBLOCK);
-		    status = fcntl(sock, F_SETFL, curState);
-#else /* USE_FIONBIO */
-		    curState = 0;
-		    status = ioctl(sock, FIONBIO, &curState);
-#endif /* !USE_FIONBIO */
+		    status = TclUnixSetBlockingMode(sock, TCL_MODE_BLOCKING);
 		}
 	    }
 	}

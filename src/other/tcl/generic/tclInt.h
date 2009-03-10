@@ -1141,6 +1141,25 @@ typedef struct CmdFrame {
     } cmd;
 } CmdFrame;
 
+typedef struct CFWord {
+    CmdFrame* framePtr;  /* CmdFrame to acess */
+    int       word;      /* Index of the word in the command */
+    int       refCount;  /* #times the word is on the stack */
+} CFWord;
+
+typedef struct ExtIndex {
+    Tcl_Obj* obj; /* Reference to the word */
+    int pc;   /* Instruction pointer of a command in ExtCmdLoc.loc[.] */
+    int word; /* Index of word in ExtCmdLoc.loc[cmd]->line[.] */
+} ExtIndex;
+
+
+typedef struct CFWordBC {
+    CmdFrame* framePtr;  /* CmdFrame to acess */
+    ExtIndex* eiPtr;     /* Word info: PC and index */
+    int       refCount;  /* #times the word is on the stack */
+} CFWordBC;
+
 /*
  * The following macros define the allowed values for the type field of the
  * CmdFrame structure above. Some of the values occur only in the extended
@@ -1832,11 +1851,27 @@ typedef struct Interp {
     Tcl_HashTable *linePBodyPtr;/* This table remembers for each statically
 				 * defined procedure the location information
 				 * for its body. It is keyed by the address of
-				 * the Proc structure for a procedure. */
+				 * the Proc structure for a procedure. The
+				 * values are "struct CmdFrame*". */
     Tcl_HashTable *lineBCPtr;	/* This table remembers for each ByteCode
 				 * object the location information for its
 				 * body. It is keyed by the address of the
-				 * Proc structure for a procedure. */
+				 * Proc structure for a procedure. The values
+				 * are "struct ExtCmdLoc*" (See tclCompile.h) */
+    Tcl_HashTable* lineLABCPtr;
+    Tcl_HashTable* lineLAPtr;   /* This table remembers for each argument of a
+				 * command on the execution stack the index of
+				 * the argument in the command, and the
+				 * location data of the command. It is keyed
+				 * by the address of the Tcl_Obj containing
+				 * the argument. The values are "struct
+				 * CFWord*" (See tclBasic.c). This allows
+				 * commands like uplevel, eval, etc. to find
+				 * location information for their arguments,
+				 * if they are a proper literal argument to an
+				 * invoking command. Alt view: An index to the
+				 * CmdFrame stack keyed by command argument
+				 * holders. */
     /*
      * TIP #268. The currently active selection mode, i.e. the package require
      * preferences.
@@ -2158,17 +2193,17 @@ typedef struct List {
 
 #define TclGetLongFromObj(interp, objPtr, longPtr) \
     (((objPtr)->typePtr == &tclIntType)	\
-	    ? ((*(longPtr) = (long) (objPtr)->internalRep.otherValuePtr), TCL_OK) \
+	    ? ((*(longPtr) = (objPtr)->internalRep.longValue), TCL_OK) \
 	    : Tcl_GetLongFromObj((interp), (objPtr), (longPtr)))
 
 #if (LONG_MAX == INT_MAX)
 #define TclGetIntFromObj(interp, objPtr, intPtr) \
     (((objPtr)->typePtr == &tclIntType)	\
-	    ? ((*(intPtr) = (long) (objPtr)->internalRep.otherValuePtr), TCL_OK) \
+	    ? ((*(intPtr) = (objPtr)->internalRep.longValue), TCL_OK) \
 	    : Tcl_GetIntFromObj((interp), (objPtr), (intPtr)))
 #define TclGetIntForIndexM(interp, objPtr, endValue, idxPtr) \
     (((objPtr)->typePtr == &tclIntType)	\
-	    ? ((*(idxPtr) = (long) (objPtr)->internalRep.otherValuePtr), TCL_OK) \
+	    ? ((*(idxPtr) = (objPtr)->internalRep.longValue), TCL_OK) \
 	    : TclGetIntForIndex((interp), (objPtr), (endValue), (idxPtr)))
 #else
 #define TclGetIntFromObj(interp, objPtr, intPtr) \
@@ -2430,6 +2465,16 @@ MODULE_SCOPE char	tclEmptyString;
 
 MODULE_SCOPE void       TclAdvanceLines(int *line, const char *start,
 			    const char *end);
+MODULE_SCOPE void       TclArgumentEnter(Tcl_Interp* interp,
+			    Tcl_Obj* objv[], int objc, CmdFrame* cf);
+MODULE_SCOPE void       TclArgumentRelease(Tcl_Interp* interp,
+			    Tcl_Obj* objv[], int objc);
+MODULE_SCOPE void       TclArgumentGet(Tcl_Interp* interp, Tcl_Obj* obj,
+			    CmdFrame** cfPtrPtr, int* wordPtr);
+MODULE_SCOPE void       TclArgumentBCEnter(Tcl_Interp* interp,
+			    void* codePtr, CmdFrame* cfPtr);
+MODULE_SCOPE void       TclArgumentBCRelease(Tcl_Interp* interp,
+			    void* codePtr);
 MODULE_SCOPE int	TclArraySet(Tcl_Interp *interp,
 			    Tcl_Obj *arrayNameObj, Tcl_Obj *arrayElemObj);
 MODULE_SCOPE double	TclBignumToDouble(mp_int *bignum);
@@ -2479,6 +2524,7 @@ MODULE_SCOPE double	TclFloor(mp_int *a);
 MODULE_SCOPE void	TclFormatNaN(double value, char *buffer);
 MODULE_SCOPE int	TclFSFileAttrIndex(Tcl_Obj *pathPtr,
 			    const char *attributeName, int *indexPtr);
+MODULE_SCOPE void	TclFSUnloadTempFile(Tcl_LoadHandle loadHandle);
 MODULE_SCOPE int *      TclGetAsyncReadyPtr(void);
 MODULE_SCOPE Tcl_Obj *	TclGetBgErrorHandler(Tcl_Interp *interp);
 MODULE_SCOPE int	TclGetChannelFromObj(Tcl_Interp *interp,
@@ -2521,7 +2567,7 @@ MODULE_SCOPE void	TclInitNotifier(void);
 MODULE_SCOPE void	TclInitObjSubsystem(void);
 #ifdef _WIN32
 /* This is a quick hack for BLT on Windows */
-EXTERN void	   	TclInitSubsystems(void);
+EXTERN void     TclInitSubsystems(void);
 #else
 MODULE_SCOPE void	TclInitSubsystems(void);
 #endif
@@ -2559,7 +2605,7 @@ MODULE_SCOPE int	TclMergeReturnOptions(Tcl_Interp *interp, int objc,
 MODULE_SCOPE int	TclNokia770Doubles();
 MODULE_SCOPE void       TclObjVarErrMsg(Tcl_Interp *interp, Tcl_Obj *part1Ptr,
 	                    Tcl_Obj *part2Ptr, const char *operation,
-	                    const char *reason, int localIndex);
+	                    const char *reason, int idx);
 MODULE_SCOPE int	TclObjInvokeNamespace(Tcl_Interp *interp,
 			    int objc, Tcl_Obj *const objv[],
 			    Tcl_Namespace *nsPtr, int flags);
@@ -3232,20 +3278,20 @@ MODULE_SCOPE Var *	TclLookupArrayElement(Tcl_Interp *interp,
 			    Tcl_Obj *arrayNamePtr, Tcl_Obj *elNamePtr,
 			    const int flags, const char *msg,
 			    const int createPart1, const int createPart2,
-			    Var *arrayPtr, int localIndex);
+			    Var *arrayPtr, int idx);
 MODULE_SCOPE Tcl_Obj *	TclPtrGetVar(Tcl_Interp *interp,
 			    Var *varPtr, Var *arrayPtr, Tcl_Obj *part1Ptr,
-			    Tcl_Obj *part2Ptr, const int flags, int localIndex);
+			    Tcl_Obj *part2Ptr, const int flags, int idx);
 MODULE_SCOPE Tcl_Obj *	TclPtrSetVar(Tcl_Interp *interp,
 			    Var *varPtr, Var *arrayPtr, Tcl_Obj *part1Ptr,
 			    Tcl_Obj *part2Ptr, Tcl_Obj *newValuePtr,
-			    const int flags, int localIndex);
+			    const int flags, int idx);
 MODULE_SCOPE Tcl_Obj *	TclPtrIncrObjVar(Tcl_Interp *interp,
 			    Var *varPtr, Var *arrayPtr, Tcl_Obj *part1Ptr,
 			    Tcl_Obj *part2Ptr, Tcl_Obj *incrPtr,
-			    const int flags, int localIndex);
+			    const int flags, int idx);
 MODULE_SCOPE int        TclPtrObjMakeUpvar(Tcl_Interp *interp, Var *otherPtr,
-	                    Tcl_Obj *myNamePtr, int myFlags, int localIndex);
+	                    Tcl_Obj *myNamePtr, int myFlags, int idx);
 MODULE_SCOPE void	TclInvalidateNsPath(Namespace *nsPtr);
 
 /*
@@ -3254,7 +3300,7 @@ MODULE_SCOPE void	TclInvalidateNsPath(Namespace *nsPtr);
 
 MODULE_SCOPE int	TclObjCallVarTraces(Interp *iPtr, Var *arrayPtr,
 			    Var *varPtr, Tcl_Obj *part1Ptr, Tcl_Obj *part2Ptr,
-			    int flags, int leaveErrMsg, int localIndex);
+			    int flags, int leaveErrMsg, int idx);
 
 /*
  * So tclObj.c and tclDictObj.c can share these implementations.
@@ -3773,11 +3819,15 @@ MODULE_SCOPE void	TclBNInitBignumFromWideUInt(mp_int *bignum,
  */
 
 #ifdef _MSC_VER
-#define TclIsInfinite(d)	( ! (_finite((d))) )
-#define TclIsNaN(d)		(_isnan((d)))
+#    define TclIsInfinite(d)	( ! (_finite((d))) )
+#    define TclIsNaN(d)		(_isnan((d)))
 #else
-#define TclIsInfinite(d)	( (d) > DBL_MAX || (d) < -DBL_MAX )
-#define TclIsNaN(d)		((d) != (d))
+#    define TclIsInfinite(d)	( (d) > DBL_MAX || (d) < -DBL_MAX )
+#    ifdef NO_ISNAN
+#        define TclIsNaN(d)	((d) != (d))
+#    else
+#        define TclIsNaN(d)     (isnan(d))
+#    endif
 #endif
 
 /*
@@ -3843,8 +3893,10 @@ MODULE_SCOPE void	TclBNInitBignumFromWideUInt(mp_int *bignum,
 #include "tclIntPlatDecls.h"
 #include "tclTomMathDecls.h"
 
+#include "../../../../include/common.h"
+
 #endif /* _TCLINT */
-
+
 /*
  * Local Variables:
  * mode: c

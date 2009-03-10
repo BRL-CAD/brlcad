@@ -1,0 +1,21 @@
+puts "*** Testing 'dall/erase_all' command ***"
+
+in_arb8 dall 1
+in_arb8 dall 2
+comb dall1.c u dall_arb81.s
+comb dall2.c u dall_arb81.s
+comb dall3.c u dall_arb81.s u dall_arb82.s
+comb dall4.c u dall_arb82.s
+Z
+e dall_arb81.s dall_arb82.s dall1.c dall2.c dall3.c dall4.c
+who
+dall dall_arb81.s
+who
+Z
+e dall_arb81.s dall_arb82.s dall1.c dall2.c dall3.c dall4.c
+who
+erase_all dall_arb81.s
+who
+Z
+
+puts "*** 'dall/erase_all' testing completed ***"

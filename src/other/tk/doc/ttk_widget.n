@@ -144,6 +144,12 @@ and current value.
 .\" Note: Ttk widgets don't use TK_OPTION_SYNONYM.
 If no \fIoption\fR is specified, returns a list describing all of
 the available options for \fIpathName\fR.
+.TP
+\fIpathName \fBidentify\fR \fIx y\fR
+Returns the name of the element under the point given 
+by \fIx\fR and \fIy\fR, or an empty string if the point does
+not lie within any element.
+\fIx\fR and \fIy\fR are pixel coordinates relative to the widget.
 .TP 
 \fIpathName \fBinstate\fR \fIstatespec\fR ?\fIscript\fR?
 Test the widget's state.

@@ -62,6 +62,10 @@ See \fBPANE OPTIONS\fR for the list of available options.
 Removes the specified subpane from the widget.
 \fIpane\fR is either an integer index or the name of a managed subwindow.
 .TP
+\fIpathname\fR \fBidentify\fR \fIx y\fR
+Returns the index of the sash at point \fIx,y\fR,
+or the empty string if \fIx,y\fR is not over a sash.
+.TP
 \fIpathname \fBinsert\fR \fIpos\fR \fIsubwindow\fR \fIoptions...\fR
 Inserts a pane at the specified position.
 \fIpos\fR is either the string \fBend\fR, an integer index, 
@@ -90,9 +94,5 @@ and the total size of the widget.
 .\" depending on which changed most recently.
 Returns the new position of sash number \fIindex\fR.
 .\" Full story: new position may be different than the requested position.
-.TP
-\fIpathname\fR \fBidentify\fR \fIx y\fR
-Returns the index of the sash at point \fIx,y\fR,
-or the empty string if \fIx,y\fR is not over a sash.
 .SH "SEE ALSO"
 ttk::widget(n), ttk::notebook(n), panedwindow(n)

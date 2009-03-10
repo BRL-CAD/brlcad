@@ -39,7 +39,7 @@ menubutton.
 .\" .OP \-padding padding Pad
 .SH "WIDGET COMMAND"
 Menubutton widgets support the standard 
-\fBcget\fR, \fBconfigure\fR, \fBinstate\fR, and \fBstate\fR 
+\fBcget\fR, \fBconfigure\fR, \fBidentify\fR, \fBinstate\fR, and \fBstate\fR 
 methods.  No other widget methods are used.
 .SH "SEE ALSO"
 ttk::widget(n), menu(n), menubutton(n)

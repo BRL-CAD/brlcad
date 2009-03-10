@@ -4858,7 +4858,7 @@ test io-38.2 {Tcl_SetChannelBufferSize, Tcl_GetChannelBufferSize} {
     lappend l [fconfigure $f -buffersize]
     close $f
     set l
-} {4096 10000 1 1 1 100000 100000}
+} {4096 10000 1 1 1 100000 1048576}
 test io-38.3 {Tcl_SetChannelBufferSize, changing buffersize between reads} {
     # This test crashes the interp if Bug #427196 is not fixed
 
@@ -5019,22 +5019,22 @@ test io-39.10 {Tcl_SetChannelOption, blocking mode} {stdio openpipe} {
     close $f1
     set x
 } {0 {} 1 {} 1 {} 1 1 hi 0 0 {} 1}
-test io-39.11 {Tcl_SetChannelOption, Tcl_GetChannelOption, buffer size} {
+test io-39.11 {Tcl_SetChannelOption, Tcl_GetChannelOption, buffer size clipped to lower bound} {
     file delete $path(test1)
     set f [open $path(test1) w]
     fconfigure $f -buffersize -10
     set x [fconfigure $f -buffersize]
     close $f
     set x
-} 4096
-test io-39.12 {Tcl_SetChannelOption, Tcl_GetChannelOption buffer size} {
+} 1
+test io-39.12 {Tcl_SetChannelOption, Tcl_GetChannelOption buffer size clipped to upper bound} {
     file delete $path(test1)
     set f [open $path(test1) w]
     fconfigure $f -buffersize 10000000
     set x [fconfigure $f -buffersize]
     close $f
     set x
-} 4096
+} 1048576
 test io-39.13 {Tcl_SetChannelOption, Tcl_GetChannelOption, buffer size} {
     file delete $path(test1)
     set f [open $path(test1) w]
@@ -6541,13 +6541,47 @@ test io-52.4 {TclCopyChannel} {fcopy} {
     close $f2
     lappend result [file size $path(test1)]
 } {0 0 40}
-test io-52.5 {TclCopyChannel} {fcopy} {
+test io-52.5 {TclCopyChannel, all} {fcopy} {
     file delete $path(test1)
     set f1 [open $thisScript]
     set f2 [open $path(test1) w]
     fconfigure $f1 -translation lf -blocking 0
     fconfigure $f2 -translation lf -blocking 0
-    fcopy $f1 $f2 -size -1
+    fcopy $f1 $f2 -size -1 ;# -1 means 'copy all', same as if no -size specified.
+    set result [list [fconfigure $f1 -blocking] [fconfigure $f2 -blocking]]
+    close $f1
+    close $f2
+    set s1 [file size $thisScript]
+    set s2 [file size $path(test1)]
+    if {"$s1" == "$s2"} {
+        lappend result ok
+    }
+    set result
+} {0 0 ok}
+test io-52.5a {TclCopyChannel, all, other negative value} {fcopy} {
+    file delete $path(test1)
+    set f1 [open $thisScript]
+    set f2 [open $path(test1) w]
+    fconfigure $f1 -translation lf -blocking 0
+    fconfigure $f2 -translation lf -blocking 0
+    fcopy $f1 $f2 -size -2 ;# < 0 behaves like -1, copy all
+    set result [list [fconfigure $f1 -blocking] [fconfigure $f2 -blocking]]
+    close $f1
+    close $f2
+    set s1 [file size $thisScript]
+    set s2 [file size $path(test1)]
+    if {"$s1" == "$s2"} {
+        lappend result ok
+    }
+    set result
+} {0 0 ok}
+test io-52.5b {TclCopyChannel, all, wrapped to negative value} {fcopy} {
+    file delete $path(test1)
+    set f1 [open $thisScript]
+    set f2 [open $path(test1) w]
+    fconfigure $f1 -translation lf -blocking 0
+    fconfigure $f2 -translation lf -blocking 0
+    fcopy $f1 $f2 -size 3221176172 ;# Wrapped to < 0, behaves like -1, copy all
     set result [list [fconfigure $f1 -blocking] [fconfigure $f2 -blocking]]
     close $f1
     close $f2
@@ -6887,6 +6921,211 @@ test io-53.7 {CopyData: Flooding fcopy from pipe} {stdio openpipe fcopy} {
     # -1=error 0=script error N=number of bytes
     expr ($fcopyTestDone == 0) ? $fcopyTestCount : -1
 } {3450}
+test io-53.8 {CopyData: async callback and error handling, Bug 1932639} -setup {
+    # copy progress callback. errors out intentionally
+    proc ::cmd args {
+	lappend ::RES "CMD $args"
+	error !STOP
+    }
+    # capture callback error here
+    proc ::bgerror args {
+	lappend ::RES "bgerror/OK $args"
+	set ::forever has-been-reached
+	return
+    }
+    # Files we use for our channels
+    set foo [makeFile ashgdfashdgfasdhgfasdhgf foo]
+    set bar [makeFile {} bar]
+    # Channels to copy between
+    set f [open $foo r] ; fconfigure $f -translation binary
+    set g [open $bar w] ; fconfigure $g -translation binary -buffering none
+} -constraints {stdio openpipe fcopy} -body {
+    # Record input size, so that result is always defined
+    lappend ::RES [file size $bar]
+    # Run the copy. Should not invoke -command now.
+    fcopy $f $g -size 2 -command ::cmd
+    # Check that -command was not called synchronously
+    set sbs [file size $bar]
+    lappend ::RES [expr {($sbs > 0) ? "sync/FAIL" : "sync/OK"}] $sbs
+    # Now let the async part happen. Should capture the error in cmd
+    # via bgerror. If not break the event loop via timer.
+    set token [after 1000 {
+	lappend ::RES {bgerror/FAIL timeout}
+	set ::forever has-been-reached
+    }]
+    vwait ::forever
+    catch {after cancel $token}
+    # Report
+    set ::RES
+} -cleanup {
+    close $f
+    close $g
+    catch {unset ::RES}
+    catch {unset ::forever}
+    rename ::cmd {}
+    rename ::bgerror {}
+    removeFile foo
+    removeFile bar
+} -result {0 sync/OK 0 {CMD 2} {bgerror/OK !STOP}}
+test io-53.8a {CopyData: async callback and error handling, Bug 1932639, at eof} -setup {
+    # copy progress callback. errors out intentionally
+    proc ::cmd args {
+	lappend ::RES "CMD $args"
+	set ::forever has-been-reached
+	return
+    }
+    # Files we use for our channels
+    set foo [makeFile ashgdfashdgfasdhgfasdhgf foo]
+    set bar [makeFile {} bar]
+    # Channels to copy between
+    set f [open $foo r] ; fconfigure $f -translation binary
+    set g [open $bar w] ; fconfigure $g -translation binary -buffering none
+} -constraints {stdio openpipe fcopy} -body {
+    # Initialize and force eof on the input.
+    seek $f 0 end ; read $f 1
+    set ::RES [eof $f]
+    # Run the copy. Should not invoke -command now.
+    fcopy $f $g -size 2 -command ::cmd
+    # Check that -command was not called synchronously
+    lappend ::RES [expr {([llength $::RES] > 1) ? "sync/FAIL" : "sync/OK"}]
+    # Now let the async part happen. Should capture the eof in cmd
+    # If not break the event loop via timer.
+    set token [after 1000 {
+	lappend ::RES {cmd/FAIL timeout}
+	set ::forever has-been-reached
+    }]
+    vwait ::forever
+    catch {after cancel $token}
+    # Report
+    set ::RES
+} -cleanup {
+    close $f
+    close $g
+    catch {unset ::RES}
+    catch {unset ::forever}
+    rename ::cmd {}
+    removeFile foo
+    removeFile bar
+} -result {1 sync/OK {CMD 0}}
+test io-53.9 {CopyData: -size and event interaction, Bug 780533} -setup {
+    set out [makeFile {} out]
+    set err [makeFile {} err]
+    set pipe [open "|[list [info nameofexecutable] 2> $err]" r+]
+    fconfigure $pipe -translation binary -buffering line
+    puts $pipe {
+	fconfigure stdout -translation binary -buffering line
+	puts stderr Waiting...
+	after 1000
+	foreach x {a b c} {
+	    puts stderr Looping...
+	    puts $x
+	    after 500
+	}
+	proc bye args {
+	    if {[gets stdin line]<0} {
+		puts stderr "CHILD: EOF detected, exiting"
+		exit
+	    } else {
+		puts stderr "CHILD: ignoring line: $line"
+	    }
+	}
+	puts stderr Now-sleeping-forever
+	fileevent stdin readable bye
+	vwait forever
+    }
+    proc ::done args {
+	set ::forever OK
+	return
+    }
+    set ::forever {}
+    set out [open $out w]
+} -constraints {stdio openpipe fcopy} -body {
+    fcopy $pipe $out -size 6 -command ::done
+    set token [after 5000 {
+	set ::forever {fcopy hangs}
+    }]
+    vwait ::forever
+    catch {after cancel $token}
+    set ::forever
+} -cleanup {
+    close $pipe
+    rename ::done {}
+    after 1000;			# Give Windows time to kill the process
+    catch {close $out}
+    catch {removeFile out}
+    catch {removeFile err}
+    catch {unset ::forever}
+} -result OK
+test io-53.10 {Bug 1350564, multi-directional fcopy} -setup {
+    set err [makeFile {} err]
+    set pipe [open "|[list [info nameofexecutable] 2> $err]" r+]
+    fconfigure $pipe -translation binary -buffering line
+    puts $pipe {
+	fconfigure stderr -buffering line
+	# Kill server when pipe closed by invoker.
+	proc bye args {
+	    if {![eof stdin]} { gets stdin ; return }
+	    puts stderr BYE
+	    exit
+	}
+	# Server code. Bi-directional copy between 2 sockets.
+	proc geof {sok} {
+	    puts stderr DONE/$sok
+	    close $sok
+	}
+	proc new {sok args} {
+	    puts stderr NEW/$sok
+	    global l srv
+	    fconfigure $sok -translation binary -buffering none
+	    lappend l $sok
+	    if {[llength $l]==2} {
+		close $srv
+		foreach {a b} $l break
+		fcopy $a $b -command [list geof $a]
+		fcopy $b $a -command [list geof $b]
+		puts stderr 2COPY
+	    }
+	    puts stderr ...
+	}
+	puts stderr SRV
+	set l {}
+	set srv [socket -server new 9999]
+	puts stderr WAITING
+	fileevent stdin readable bye
+	puts OK
+	vwait forever
+    }
+    # wait for OK from server.
+    gets $pipe
+    # Now the two clients.
+    proc ::done {sock} {
+	if {[eof $sock]} { close $sock ; return }
+	lappend ::forever [gets $sock]
+	return
+    }
+    set a [socket 127.0.0.1 9999]
+    set b [socket 127.0.0.1 9999]
+    fconfigure $a -translation binary -buffering none
+    fconfigure $b -translation binary -buffering none
+    fileevent  $a readable [list ::done $a]
+    fileevent  $b readable [list ::done $b]
+} -constraints {stdio openpipe fcopy} -body {
+    # Now pass data through the server in both directions.
+    set ::forever {}
+    puts $a AB
+    vwait ::forever
+    puts $b BA
+    vwait ::forever
+    set ::forever
+} -cleanup {
+    catch {close $a}
+    catch {close $b}
+    close $pipe
+    rename ::done {}
+    after 1000 ;# Give Windows time to kill the process
+    removeFile err
+    catch {unset ::forever}
+} -result {AB BA}
 
 test io-54.1 {Recursive channel events} {socket fileevent} {
     # This test checks to see if file events are delivered during recursive
@@ -7456,11 +7695,21 @@ test io-73.1 {channel Tcl_Obj SetChannelFromAny} {} {
     catch {close [lreplace [list a] 0 end]}
 } {1}
 
+test io-73.2 {channel Tcl_Obj SetChannelFromAny, bug 2407783} {} {
+    # Invalidate intrep of 'channel' Tcl_Obj when transiting between interpreters.
+    interp create foo
+    set f [open [info script] r]
+    seek $f 0
+    set code [catch {interp eval foo [list seek $f 0]} msg]
+    # The string map converts the changing channel handle to a fixed string
+    list $code [string map [list $f @@] $msg]
+} {1 {can not find channel named "@@"}}
+
 # ### ### ### ######### ######### #########
 
 # cleanup
-foreach file [list fooBar longfile script output test1 pipe my_script foo \
-	bar test2 test3 cat stdout kyrillic.txt utf8-fcopy.txt utf8-rp.txt] {
+foreach file [list fooBar longfile script output test1 pipe my_script \
+	test2 test3 cat stdout kyrillic.txt utf8-fcopy.txt utf8-rp.txt] {
     removeFile $file
 }
 cleanupTests

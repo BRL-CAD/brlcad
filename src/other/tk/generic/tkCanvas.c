@@ -1630,7 +1630,7 @@ CanvasWidgetCmd(
 	    break;
 	case CANV_CLEAR:
 	    if (objc != 3) {
-		Tcl_AppendResult(interp, 3, objv, NULL);
+		Tcl_WrongNumArgs(interp, 3, objv, NULL);
 		result = TCL_ERROR;
 		goto done;
 	    }
@@ -4483,9 +4483,6 @@ PickCurrentItem(
 
     buttonDown = canvasPtr->state
 	    & (Button1Mask|Button2Mask|Button3Mask|Button4Mask|Button5Mask);
-    if (!buttonDown) {
-	canvasPtr->flags &= ~LEFT_GRABBED_ITEM;
-    }
 
     /*
      * Save information about this event in the canvas. The event in the
@@ -4558,6 +4555,10 @@ PickCurrentItem(
 	 */
 
 	return;
+    }
+
+    if (!buttonDown) {
+	canvasPtr->flags &= ~LEFT_GRABBED_ITEM;
     }
 
     /*

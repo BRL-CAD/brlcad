@@ -1,0 +1,6 @@
+puts "*** Testing 'arb' command ***"
+
+arb arb_test1.s 30 3
+arb arb_test2.s 55 20
+
+puts "*** 'arb' testing completed ***"

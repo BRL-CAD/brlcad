@@ -68,6 +68,9 @@ htonf(register unsigned char *out, register const unsigned char *in, int count)
 		in += SIZEOF_NETWORK_FLOAT;
 	    }
 	    return;
+	default:
+	    /* nada */
+	    break;
     }
 
     bu_bomb("ntohf.c:  ERROR, no NtoHD conversion for this machine type\n");
@@ -107,6 +110,9 @@ ntohf(register unsigned char *out, register const unsigned char *in, int count)
 		in += SIZEOF_NETWORK_FLOAT;
 	    }
 	    return;
+	default:
+	    /* nada */
+	    break;
     }
 
     bu_bomb("ntohf.c:  ERROR, no NtoHD conversion for this machine type\n");

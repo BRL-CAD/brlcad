@@ -1096,8 +1096,7 @@ Tcl_SplitObjCmd(
  * StringFirstCmd --
  *
  *	This procedure is invoked to process the "string first" Tcl command.
- *	See the user documentation for details on what it does. Note that this
- *	command only functions correctly on properly formed Tcl UTF strings.
+ *	See the user documentation for details on what it does.
  *
  * Results:
  *	A standard Tcl result.
@@ -1203,8 +1202,7 @@ StringFirstCmd(
  * StringLastCmd --
  *
  *	This procedure is invoked to process the "string last" Tcl command.
- *	See the user documentation for details on what it does. Note that this
- *	command only functions correctly on properly formed Tcl UTF strings.
+ *	See the user documentation for details on what it does.
  *
  * Results:
  *	A standard Tcl result.

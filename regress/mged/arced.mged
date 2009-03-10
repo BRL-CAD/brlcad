@@ -1,0 +1,24 @@
+puts "*** Testing 'arced' command ***"
+
+in_arb8 arced 1
+in_ell arced 2
+in_eto arced 3
+comb arced1.c u arced_arb81.s u arced_ell2.s
+comb arced2.c u arced_ell2.s u arced_eto3.s
+l arced1.c
+arced arced1.c/arced_ell2.s matrix rarc xlate 30 30 5
+l arced1.c
+arced arced1.c/arced_ell2.s matrix rarc rot 5 15 35
+l arced1.c
+arced arced2.c/arced_ell2.s matrix rarc rot 33 33 33
+l arced1.c
+l arced2.c
+arced arced2.c/arced_eto3.s matrix rarc rot 10 10 14
+l arced2.c
+arced arced2.c/arced_eto3.s matrix lmul xlate 13 13 13
+l arced2.c
+arced arced2.c/arced_eto3.s matrix rmul rot 4 4 40
+l arced2.c
+
+
+puts "*** 'arced' testing completed ***"

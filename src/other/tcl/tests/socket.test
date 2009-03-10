@@ -566,6 +566,7 @@ test socket-2.11 {detecting new data} {socket} {
     fconfigure $sock -blocking 1
     puts $s2 two
     flush $s2
+    after 500
     fconfigure $sock -blocking 0
     lappend result c:[gets $sock]
     fconfigure $sock -blocking 1

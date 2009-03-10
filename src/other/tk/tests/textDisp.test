@@ -1962,18 +1962,24 @@ test textDisp-16.33 {TkTextYviewCmd procedure} {
 test textDisp-16.34 {TkTextYviewCmd procedure} {
     set res {}
     .t yview 1.0
-    lappend res [expr {[lindex [.t yview] 0] * [.t count -ypixels 1.0 end]}]
+    lappend res [format %.12g [expr {[lindex [.t yview] 0]
+	* [.t count -ypixels 1.0 end]}]]
     .t yview scroll 1 pixels
-    lappend res [expr {[lindex [.t yview] 0] * [.t count -ypixels 1.0 end]}]
+    lappend res [format %.12g [expr {[lindex [.t yview] 0]
+	* [.t count -ypixels 1.0 end]}]]
     .t yview scroll 1 pixels
-    lappend res [expr {[lindex [.t yview] 0] * [.t count -ypixels 1.0 end]}]
+    lappend res [format %.12g [expr {[lindex [.t yview] 0]
+	* [.t count -ypixels 1.0 end]}]]
     .t yview scroll 1 pixels
-    lappend res [expr {[lindex [.t yview] 0] * [.t count -ypixels 1.0 end]}]
+    lappend res [format %.12g [expr {[lindex [.t yview] 0]
+	* [.t count -ypixels 1.0 end]}]]
     .t yview scroll 1 pixels
-    lappend res [expr {[lindex [.t yview] 0] * [.t count -ypixels 1.0 end]}]
+    lappend res [format %.12g [expr {[lindex [.t yview] 0]
+	* [.t count -ypixels 1.0 end]}]]
     .t yview scroll 1 pixels
-    lappend res [expr {[lindex [.t yview] 0] * [.t count -ypixels 1.0 end]}]
-} {0.0 1.0 2.0 3.0 4.0 5.0}
+    lappend res [format %.12g [expr {[lindex [.t yview] 0]
+	* [.t count -ypixels 1.0 end]}]]
+} {0 1 2 3 4 5}
 test textDisp-16.35 {TkTextYviewCmd procedure} {
     set res {}
     .t yview 1.0

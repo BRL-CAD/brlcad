@@ -814,7 +814,9 @@ TclCompileDictForCmd(
     int keyVarIndex, valueVarIndex, nameChars, loopRange, catchRange;
     int infoIndex, jumpDisplacement, bodyTargetOffset, emptyTargetOffset;
     int numVars, endTargetOffset;
-    int savedStackDepth = envPtr->currStackDepth; /* is this necessary? */
+    int savedStackDepth = envPtr->currStackDepth;
+				/* Needed because jumps confuse the stack
+				 * space calculator. */
     const char **argv;
     Tcl_DString buffer;
 
@@ -921,9 +923,7 @@ TclCompileDictForCmd(
 
     envPtr->line = mapPtr->loc[eclIndex].line[4];
     CompileBody(envPtr, bodyTokenPtr, interp);
-    envPtr->currStackDepth = savedStackDepth + 1;
     TclEmitOpcode(   INST_POP,					envPtr);
-    envPtr->currStackDepth = savedStackDepth;
 
     /*
      * Both exception target ranges (error and loop) end here.
@@ -977,6 +977,7 @@ TclCompileDictForCmd(
      * easy!) Note that we skip the END_CATCH. [Bug 1382528]
      */
 
+    envPtr->currStackDepth = savedStackDepth+2;
     jumpDisplacement = CurrentOffset(envPtr) - emptyTargetOffset;
     TclUpdateInstInt4AtPc(INST_JUMP_TRUE4, jumpDisplacement,
 	    envPtr->codeStart + emptyTargetOffset);
@@ -1214,7 +1215,7 @@ TclCompileDictAppendCmd(
 	tokenPtr = TokenAfter(tokenPtr);
     }
     if (parsePtr->numWords > 4) {
-	TclEmitInstInt1(INST_CONCAT1, parsePtr->numWords-2, envPtr);
+	TclEmitInstInt1(INST_CONCAT1, parsePtr->numWords-3, envPtr);
     }
 
     /*
@@ -3358,6 +3359,7 @@ TclCompileReturnCmd(
     /* Optimize [return -level 0 $x]. */
     Tcl_DictObjSize(NULL, returnOpts, &size);
     if (size == 0 && level == 0 && code == TCL_OK) {
+	Tcl_DecrRefCount(returnOpts);
 	return TCL_OK;
     }
 
@@ -3967,7 +3969,7 @@ TclCompileSwitchCmd(
     }
     tokenPtr = TokenAfter(tokenPtr);
     numWords--;
-    if (noCase && (mode != Switch_Exact)) {
+    if (noCase && (mode == Switch_Exact)) {
 	/*
 	 * Can't compile this case; no opcode for case-insensitive equality!
 	 */
@@ -4376,6 +4378,7 @@ TclCompileSwitchCmd(
     foundDefault = 0;
     for (i=0 ; i<numWords ; i+=2) {
 	int nextArmFixupIndex = -1;
+
 	envPtr->currStackDepth = savedStackDepth + 1;
 	if (i!=numWords-2 || bodyToken[numWords-2]->size != 7 ||
 		memcmp(bodyToken[numWords-2]->start, "default", 7)) {
@@ -4400,6 +4403,7 @@ TclCompileSwitchCmd(
 		/*
 		 * Keep in sync with TclCompileRegexpCmd.
 		 */
+
 		if (bodyToken[i]->type == TCL_TOKEN_TEXT) {
 		    Tcl_DString ds;
 
@@ -4439,13 +4443,15 @@ TclCompileSwitchCmd(
 		    }
 		} else {
 		    /*
-		     * Pass correct RE compile flags.  We use only Int1
+		     * Pass correct RE compile flags. We use only Int1
 		     * (8-bit), but that handles all the flags we want to
-		     * pass.  Don't use TCL_REG_NOSUB as we may have backrefs
+		     * pass. Don't use TCL_REG_NOSUB as we may have backrefs
 		     * or capture vars.
 		     */
+
 		    int cflags = TCL_REG_ADVANCED
-			| (noCase ? TCL_REG_NOCASE : 0);
+			    | (noCase ? TCL_REG_NOCASE : 0);
+
 		    TclEmitInstInt1(INST_REGEXP, cflags, envPtr);
 		}
 		break;

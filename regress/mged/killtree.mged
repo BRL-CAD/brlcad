@@ -1,0 +1,26 @@
+puts "*** Testing 'killtree' command ***"
+
+put {killtree_sketch.s} sketch V {10 20 30} A {1 0 0} B {0 1 0} VL { {250 0} {500 0} {500 500} {0 500} {0 250} {250 250} {125 125} {0 125} {125 0} {200 200} } SL { { bezier D 4 P { 4 7 9 8 0 } } { line S 0 E 1 } { line S 1 E 2 } { line S 2 E 3 } { line S 3 E 4 } { carc S 6 E 5 R -1 L 0 O 0 } }
+in killtree_extrude.s extrude 0 0 0 0 0 1000 10 0 0 0 10 0 killtree_sketch.s
+in killtree_arb8.s arb8 10 -9 -8 10 -1 -8 10 -1 0 10 -9 0 3 -9 -8 3 -1 -8 3 -1 0 3 -9 0
+in killtree_1.s arb8 10 -9 -8 10 -1 -8 10 -1 0 10 -9 0 3 -9 -8 3 -1 -8 3 -1 0 3 -9 0
+comb killtree_1.c u killtree_1.s
+comb killtree.c u killtree_1.c u killtree_arb8.s u killtree_extrude.s killtree_sketch.s
+ls killtree*
+l killtree*
+killtree killtree.c
+ls killtree*
+l killtree*
+put {killtree_sketch.s} sketch V {10 20 30} A {1 0 0} B {0 1 0} VL { {250 0} {500 0} {500 500} {0 500} {0 250} {250 250} {125 125} {0 125} {125 0} {200 200} } SL { { bezier D 4 P { 4 7 9 8 0 } } { line S 0 E 1 } { line S 1 E 2 } { line S 2 E 3 } { line S 3 E 4 } { carc S 6 E 5 R -1 L 0 O 0 } }
+in killtree_extrude.s extrude 0 0 0 0 0 1000 10 0 0 0 10 0 killtree_sketch.s
+in killtree_arb8.s arb8 10 -9 -8 10 -1 -8 10 -1 0 10 -9 0 3 -9 -8 3 -1 -8 3 -1 0 3 -9 0
+in killtree_1.s arb8 10 -9 -8 10 -1 -8 10 -1 0 10 -9 0 3 -9 -8 3 -1 -8 3 -1 0 3 -9 0
+comb killtree_1.c u killtree_1.s
+comb killtree.c u killtree_1.c u killtree_arb8.s u killtree_extrude.s
+ls killtree*
+l killtree*
+killtree killtree.c
+ls killtree*
+l killtree*
+
+puts "*** 'killtree' testing completed ***"

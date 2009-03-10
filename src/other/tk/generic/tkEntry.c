@@ -926,11 +926,13 @@ EntryWidgetObjCmd(
 
 	if (objc == 2) {
 	    double first, last;
-	    char buf[TCL_DOUBLE_SPACE * 2];
+	    char buf[TCL_DOUBLE_SPACE];
 
 	    EntryVisibleRange(entryPtr, &first, &last);
-	    sprintf(buf, "%g %g", first, last);
+	    Tcl_PrintDouble(NULL, first, buf);
 	    Tcl_SetResult(interp, buf, TCL_VOLATILE);
+	    Tcl_PrintDouble(NULL, last, buf);
+	    Tcl_AppendResult(interp, " ", buf, NULL);
 	    goto done;
 	} else if (objc == 3) {
 	    if (GetEntryIndex(interp, entryPtr, Tcl_GetString(objv[2]),
@@ -2928,7 +2930,7 @@ static void
 EntryUpdateScrollbar(
     Entry *entryPtr)			/* Information about widget. */
 {
-    char args[TCL_DOUBLE_SPACE * 2];
+    char firstStr[TCL_DOUBLE_SPACE], lastStr[TCL_DOUBLE_SPACE];
     int code;
     double first, last;
     Tcl_Interp *interp;
@@ -2940,8 +2942,10 @@ EntryUpdateScrollbar(
     interp = entryPtr->interp;
     Tcl_Preserve((ClientData) interp);
     EntryVisibleRange(entryPtr, &first, &last);
-    sprintf(args, " %g %g", first, last);
-    code = Tcl_VarEval(interp, entryPtr->scrollCmd, args, NULL);
+    Tcl_PrintDouble(NULL, first, firstStr);
+    Tcl_PrintDouble(NULL, last, lastStr);
+    code = Tcl_VarEval(interp, entryPtr->scrollCmd, " ", firstStr, " ",
+	    lastStr, NULL);
     if (code != TCL_OK) {
 	Tcl_AddErrorInfo(interp,
 		"\n    (horizontal scrolling command executed by ");
@@ -4041,11 +4045,13 @@ SpinboxWidgetObjCmd(
 
 	if (objc == 2) {
 	    double first, last;
-	    char buf[TCL_DOUBLE_SPACE * 2];
+	    char buf[TCL_DOUBLE_SPACE];
 
 	    EntryVisibleRange(entryPtr, &first, &last);
-	    sprintf(buf, "%g %g", first, last);
+	    Tcl_PrintDouble(NULL, first, buf);
 	    Tcl_SetResult(interp, buf, TCL_VOLATILE);
+	    Tcl_PrintDouble(NULL, last, buf);
+	    Tcl_AppendResult(interp, " ", buf, NULL);
 	    goto done;
 	} else if (objc == 3) {
 	    if (GetEntryIndex(interp, entryPtr, Tcl_GetString(objv[2]),

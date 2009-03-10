@@ -466,6 +466,9 @@ TestgetwindowinfoObjCmd(
 
     Tcl_ListObjAppendElement(interp, resObj, Tcl_NewStringObj("text", -1));
     Tcl_ListObjAppendElement(interp, resObj, textObj);
+    Tcl_ListObjAppendElement(interp, resObj, Tcl_NewStringObj("parent", -1));
+    Tcl_ListObjAppendElement(interp, resObj, 
+	Tcl_NewLongObj((long)GetParent(hwnd)));
 
     childrenObj = Tcl_NewListObj(0, NULL);
     EnumChildWindows(hwnd, EnumChildrenProc, (LPARAM)childrenObj);

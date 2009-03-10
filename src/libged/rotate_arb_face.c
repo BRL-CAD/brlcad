@@ -26,11 +26,13 @@
 #include "common.h"
 
 #include <string.h>
-
 #include "bio.h"
+
 #include "cmd.h"
 #include "rtgeom.h"
-#include "ged_private.h"
+
+#include "./ged_private.h"
+
 
 static short int ged_arb_vertices[5][24] = {
     { 1, 2, 3, 0, 1, 2, 4, 0, 2, 3, 4, 0, 1, 3, 4, 0, 0, 0, 0, 0, 0, 0, 0, 0 },	/* arb4 */

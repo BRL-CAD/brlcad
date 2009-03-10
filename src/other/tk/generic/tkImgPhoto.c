@@ -473,13 +473,11 @@ PhotoFormatThreadExitProc(
     while (tsdPtr->oldFormatList != NULL) {
 	freePtr = tsdPtr->oldFormatList;
 	tsdPtr->oldFormatList = tsdPtr->oldFormatList->nextPtr;
-	ckfree((char *) freePtr->name);
 	ckfree((char *) freePtr);
     }
     while (tsdPtr->formatList != NULL) {
 	freePtr = tsdPtr->formatList;
 	tsdPtr->formatList = tsdPtr->formatList->nextPtr;
-	ckfree((char *) freePtr->name);
 	ckfree((char *) freePtr);
     }
 }
@@ -508,8 +506,7 @@ Tk_CreateOldPhotoImageFormat(
     Tk_PhotoImageFormat *formatPtr)
 				/* Structure describing the format. All of the
 				 * fields except "nextPtr" must be filled in
-				 * by caller. Must not have been passed to
-				 * Tk_CreatePhotoImageFormat previously. */
+				 * by caller. */
 {
     Tk_PhotoImageFormat *copyPtr;
     ThreadSpecificData *tsdPtr = (ThreadSpecificData *)
@@ -521,8 +518,6 @@ Tk_CreateOldPhotoImageFormat(
     }
     copyPtr = (Tk_PhotoImageFormat *) ckalloc(sizeof(Tk_PhotoImageFormat));
     *copyPtr = *formatPtr;
-    copyPtr->name = (char *) ckalloc((unsigned) (strlen(formatPtr->name) + 1));
-    strcpy(copyPtr->name, formatPtr->name);
     copyPtr->nextPtr = tsdPtr->oldFormatList;
     tsdPtr->oldFormatList = copyPtr;
 }
@@ -532,8 +527,7 @@ Tk_CreatePhotoImageFormat(
     Tk_PhotoImageFormat *formatPtr)
 				/* Structure describing the format. All of the
 				 * fields except "nextPtr" must be filled in
-				 * by caller. Must not have been passed to
-				 * Tk_CreatePhotoImageFormat previously. */
+				 * by caller. */
 {
     Tk_PhotoImageFormat *copyPtr;
     ThreadSpecificData *tsdPtr = (ThreadSpecificData *)
@@ -545,8 +539,6 @@ Tk_CreatePhotoImageFormat(
     }
     copyPtr = (Tk_PhotoImageFormat *) ckalloc(sizeof(Tk_PhotoImageFormat));
     *copyPtr = *formatPtr;
-    copyPtr->name = (char *) ckalloc((unsigned) (strlen(formatPtr->name) + 1));
-    strcpy(copyPtr->name, formatPtr->name);
     if (isupper((unsigned char) *formatPtr->name)) {
 	copyPtr->nextPtr = tsdPtr->oldFormatList;
 	tsdPtr->oldFormatList = copyPtr;
@@ -4279,7 +4271,7 @@ Tk_FindPhoto(
     Tk_ImageType *typePtr;
 
     clientData = Tk_GetImageMasterData(interp, imageName, &typePtr);
-    if (typePtr != &tkPhotoImageType) {
+    if ((typePtr == NULL) || (typePtr->name != tkPhotoImageType.name)) {
 	return NULL;
     }
     return (Tk_PhotoHandle) clientData;

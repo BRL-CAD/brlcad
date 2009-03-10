@@ -575,7 +575,7 @@ FileWideSeekProc(
 	    return -1;
 	}
     }
-    return (Tcl_LongAsWide(newPos) | (Tcl_LongAsWide(newPosHigh) << 32));
+    return (((Tcl_WideInt)((unsigned)newPos)) | (Tcl_LongAsWide(newPosHigh) << 32));
 }
 
 /*

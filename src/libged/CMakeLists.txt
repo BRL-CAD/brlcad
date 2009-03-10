@@ -116,6 +116,7 @@ set(LIBGED_SOURCES
     mrot.c
     nirt.c
     nmg_collapse.c
+    nmg_fix_normals.c
     nmg_simplify.c
     ocenter.c
     open.c
@@ -228,6 +229,7 @@ include_directories(
     ../other/libpng
     ../other/libz
     ../other/tcl/generic
+    ../other/tcl/win
 )
 
 add_definitions(

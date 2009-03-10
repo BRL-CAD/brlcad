@@ -614,7 +614,7 @@ Tcl_NextHashEntry(
  *----------------------------------------------------------------------
  */
 
-const char *
+char *
 Tcl_HashStats(
     Tcl_HashTable *tablePtr)	/* Table for which to produce stats. */
 {

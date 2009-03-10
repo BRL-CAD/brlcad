@@ -1,0 +1,7 @@
+puts "*** Testing 'lookat' command ***"
+
+view quat
+lookat 50 30 33
+view quat
+
+puts "*** 'lookat' testing completed ***"

@@ -13,8 +13,6 @@
 #include "ttkTheme.h"
 #include "ttkWidget.h"
 
-#define MIN_SASH_THICKNESS 5
-
 /*------------------------------------------------------------------------
  * +++ Layout algorithm.
  *
@@ -570,11 +568,6 @@ static Ttk_Layout PanedGetLayout(
 	}
     }
 
-    /* Sanity-check:
-     */
-    if (pw->paned.sashThickness < MIN_SASH_THICKNESS)
-	pw->paned.sashThickness = MIN_SASH_THICKNESS;
-
     return panedLayout;
 }
 
@@ -899,6 +892,8 @@ static WidgetSpec PanedWidgetSpec =
  * +++ Elements and layouts.
  */
 
+static const int DEFAULT_SASH_THICKNESS = 5;
+
 typedef struct {
     Tcl_Obj *thicknessObj;
 } SashElement;
@@ -914,7 +909,7 @@ static void SashElementSize(
     int *widthPtr, int *heightPtr, Ttk_Padding *paddingPtr)
 {
     SashElement *sash = elementRecord;
-    int thickness = MIN_SASH_THICKNESS;
+    int thickness = DEFAULT_SASH_THICKNESS;
     Tcl_GetIntFromObj(NULL, sash->thicknessObj, &thickness);
     *widthPtr = *heightPtr = thickness;
 }

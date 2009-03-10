@@ -24,10 +24,12 @@
  */
 
 #include "common.h"
+
 #include "bio.h"
 
 #include "solid.h"
-#include "ged_private.h"
+
+#include "./ged_private.h"
 
 /*
  * Auto-adjust the view so that all displayed geometry is in view

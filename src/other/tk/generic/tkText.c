@@ -2653,7 +2653,7 @@ TextPushUndoAction(
 
     Tcl_Obj *seeInsertObj = Tcl_NewObj();
     Tcl_Obj *markSet1InsertObj = Tcl_NewObj();
-    Tcl_Obj *markSet2InsertObj = Tcl_NewObj();
+    Tcl_Obj *markSet2InsertObj = NULL;
     Tcl_Obj *insertCmdObj = Tcl_NewObj();
     Tcl_Obj *deleteCmdObj = Tcl_NewObj();
 
@@ -4326,12 +4326,10 @@ TkTextGetTabs(
 	}
 
 	prevStop = lastStop;
-	if (Tk_GetMMFromObj(interp, textPtr->tkwin, objv[i],
-		&lastStop) != TCL_OK) {
+	if (Tk_GetDoublePixelsFromObj (interp, textPtr->tkwin, objv[i],
+				       &lastStop) != TCL_OK) {
 	    goto error;
 	}
-	lastStop *= WidthOfScreen(Tk_Screen(textPtr->tkwin));
-	lastStop /= WidthMMOfScreen(Tk_Screen(textPtr->tkwin));
 
 	if (i > 0 && (tabPtr->location <= (tabPtr-1)->location)) {
 	    /*

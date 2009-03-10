@@ -26,10 +26,12 @@
 #include "common.h"
 
 #include <string.h>
-
 #include "bio.h"
+
 #include "cmd.h"
-#include "ged_private.h"
+
+#include "./ged_private.h"
+
 
 static union tree *
 ged_pathlist_leaf_func(struct db_tree_state	*tsp,

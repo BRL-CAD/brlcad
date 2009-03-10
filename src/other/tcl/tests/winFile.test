@@ -162,13 +162,15 @@ proc test_access {fname read writ} {
     }
 }
 
-# Create the test file
-# NOTE: [tcltest::makeFile] not used.  Presumably to force file
-# creation in a particular filesystem?  If not, try [makeFile]
-# in a -setup script.
-set fname test.dat
-file delete $fname
-close [open $fname w]
+if {[testConstraint win]} {
+    # Create the test file
+    # NOTE: [tcltest::makeFile] not used.  Presumably to force file
+    # creation in a particular filesystem?  If not, try [makeFile]
+    # in a -setup script.
+    set fname test.dat
+    file delete $fname
+    close [open $fname w]
+}
 
 test winFile-4.0 {
     Enhanced NTFS user/group permissions: test no acccess
@@ -234,7 +236,9 @@ test winFile-4.4 {
     test_access $fname 1 1
 } -result {}
 
-file delete $fname
+if {[testConstraint win]} {
+    file delete $fname
+}
 
 # cleanup
 cleanupTests

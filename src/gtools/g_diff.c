@@ -530,6 +530,8 @@ compare_tcl_solids(char *str1, Tcl_Obj *obj1, struct directory *dp1, char *str2,
     struct bu_vls adjust;
     int different = 0;
 
+    bu_vls_init(&adjust);
+
     /* check if same solid type */
     c1 = str1;
     c2 = str2;
@@ -550,7 +552,6 @@ compare_tcl_solids(char *str1, Tcl_Obj *obj1, struct directory *dp1, char *str2,
     /* same solid type, can use "db adjust" */
 
     if (mode == MGED) {
-	bu_vls_init(&adjust);
 	bu_vls_printf(&adjust, "db adjust %s", dp1->d_namep);
     }
 
@@ -558,8 +559,9 @@ compare_tcl_solids(char *str1, Tcl_Obj *obj1, struct directory *dp1, char *str2,
 
     if (mode != HUMAN) {
 	printf("%s\n", bu_vls_addr(&adjust));
-	bu_vls_free(&adjust);
     }
+
+    bu_vls_free(&adjust);
 
     return different;
 }
@@ -571,12 +573,13 @@ compare_tcl_combs(Tcl_Obj *obj1, struct directory *dp1, Tcl_Obj *obj2, struct di
     struct bu_vls adjust;
     int different = 0;
 
+    bu_vls_init(&adjust);
+
     /* first check if there is any difference */
     if (!strcmp(Tcl_GetStringFromObj(obj1, &junk), Tcl_GetStringFromObj(obj2, &junk)))
 	return 0;
 
     if (mode != HUMAN) {
-	bu_vls_init(&adjust);
 	bu_vls_printf(&adjust, "db adjust %s", dp1->d_namep);
     }
 
@@ -584,8 +587,9 @@ compare_tcl_combs(Tcl_Obj *obj1, struct directory *dp1, Tcl_Obj *obj2, struct di
 
     if (mode != HUMAN) {
 	printf("%s\n", bu_vls_addr(&adjust));
-	bu_vls_free(&adjust);
     }
+
+    bu_vls_free(&adjust);
 
     return different;
 }

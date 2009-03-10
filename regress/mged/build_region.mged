@@ -1,0 +1,7 @@
+puts "*** Testing 'build_region' command ***"
+
+batch_insert build_region epa .s 0 15 1
+build_region build_region_epa 0 15
+build_region -a 42 build_region_epa 5 8
+
+puts "*** 'build_region' testing completed ***"

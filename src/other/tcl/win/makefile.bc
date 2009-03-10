@@ -420,10 +420,10 @@ install-libraries:
 	-@$(MKDIR) "$(SCRIPT_INSTALL_DIR)\http1.0"
 	-@copy "$(ROOT)\library\http1.0\http.tcl"     "$(SCRIPT_INSTALL_DIR)\http1.0"
 	-@copy "$(ROOT)\library\http1.0\pkgIndex.tcl" "$(SCRIPT_INSTALL_DIR)\http1.0"
-	@echo installing http2.4
-	-@$(MKDIR) "$(SCRIPT_INSTALL_DIR)\http2.4"
-	-@copy "$(ROOT)\library\http\http.tcl"     "$(SCRIPT_INSTALL_DIR)\http2.4"
-	-@copy "$(ROOT)\library\http\pkgIndex.tcl" "$(SCRIPT_INSTALL_DIR)\http2.4"
+	@echo installing http2.7
+	-@$(MKDIR) "$(SCRIPT_INSTALL_DIR)\http2.7"
+	-@copy "$(ROOT)\library\http\http.tcl"     "$(SCRIPT_INSTALL_DIR)\http2.7"
+	-@copy "$(ROOT)\library\http\pkgIndex.tcl" "$(SCRIPT_INSTALL_DIR)\http2.7"
 	@echo installing opt0.4
 	-@$(MKDIR) "$(SCRIPT_INSTALL_DIR)\opt0.4"
 	-@copy "$(ROOT)\library\opt\optparse.tcl" "$(SCRIPT_INSTALL_DIR)\opt0.4"

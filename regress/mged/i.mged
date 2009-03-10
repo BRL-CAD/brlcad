@@ -1,0 +1,8 @@
+puts "*** Testing 'i' command ***"
+
+in_sph i 1
+in_sph i 2
+comb i_comb.c u i_sph1.s
+i i_sph2.s i-comb.c
+
+puts "*** 'i' testing completed ***"

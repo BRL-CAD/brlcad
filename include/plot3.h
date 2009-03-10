@@ -81,10 +81,10 @@ BN_EXPORT BU_EXTERN(void pl_label,
 		     char *s));
 BN_EXPORT BU_EXTERN(void pl_space,
 		    (FILE *plotfp,
-		     int x1,
-		     int y1,
-		     int x2,
-		     int y2));
+		     int x_1,
+		     int y_1,
+		     int x_2,
+		     int y_2));
 BN_EXPORT BU_EXTERN(void pl_erase,
 		    (FILE *plotfp));
 BN_EXPORT BU_EXTERN(void pl_circle,
@@ -96,16 +96,16 @@ BN_EXPORT BU_EXTERN(void pl_arc,
 		    (FILE *plotfp,
 		     int xc,
 		     int yc,
-		     int x1,
-		     int y1,
-		     int x2,
-		     int y2));
+		     int x_1,
+		     int y_1,
+		     int x_2,
+		     int y_2));
 BN_EXPORT BU_EXTERN(void pl_box,
 		    (FILE *plotfp,
-		     int x1,
-		     int y1,
-		     int x2,
-		     int y2));
+		     int x_1,
+		     int y_1,
+		     int x_2,
+		     int y_2));
 
 /*
  * BRL extensions to the UNIX-plot file format.
@@ -119,12 +119,12 @@ BN_EXPORT BU_EXTERN(void pl_flush,
 		    (FILE *plotfp));
 BN_EXPORT BU_EXTERN(void pl_3space,
 		    (FILE *plotfp,
-		     int x1,
-		     int y1,
-		     int z1,
-		     int x2,
-		     int y2,
-		     int z2));
+		     int x_1,
+		     int y_1,
+		     int z_1,
+		     int x_2,
+		     int y_2,
+		     int z_2));
 BN_EXPORT BU_EXTERN(void pl_3point,
 		    (FILE *plotfp,
 		     int x,
@@ -142,20 +142,20 @@ BN_EXPORT BU_EXTERN(void pl_3cont,
 		     int z));
 BN_EXPORT BU_EXTERN(void pl_3line,
 		    (FILE *plotfp,
-		     int x1,
-		     int y1,
-		     int z1,
-		     int x2,
-		     int y2,
-		     int z2));
+		     int x_1,
+		     int y_1,
+		     int z_1,
+		     int x_2,
+		     int y_2,
+		     int z_2));
 BN_EXPORT BU_EXTERN(void pl_3box,
 		    (FILE *plotfp,
-		     int x1,
-		     int y1,
-		     int z1,
-		     int x2,
-		     int y2,
-		     int z2));
+		     int x_1,
+		     int y_1,
+		     int z_1,
+		     int x_2,
+		     int y_2,
+		     int z_2));
 
 /* Double floating point versions */
 BN_EXPORT BU_EXTERN(void pd_point,
@@ -178,10 +178,10 @@ BN_EXPORT BU_EXTERN(void pd_cont,
 		     double y));
 BN_EXPORT BU_EXTERN(void pd_space,
 		    (FILE *plotfp,
-		     double x1,
-		     double y1,
-		     double x2,
-		     double y2));
+		     double x_1,
+		     double y_1,
+		     double x_2,
+		     double y_2));
 BN_EXPORT BU_EXTERN(void pd_circle,
 		    (FILE *plotfp,
 		     double x,
@@ -191,16 +191,16 @@ BN_EXPORT BU_EXTERN(void pd_arc,
 		    (FILE *plotfp,
 		     double xc,
 		     double yc,
-		     double x1,
-		     double y1,
-		     double x2,
-		     double y2));
+		     double x_1,
+		     double y_1,
+		     double x_2,
+		     double y_2));
 BN_EXPORT BU_EXTERN(void pd_box,
 		    (FILE *plotfp,
-		     double x1,
-		     double y1,
-		     double x2,
-		     double y2));
+		     double x_1,
+		     double y_1,
+		     double x_2,
+		     double y_2));
 
 /* Double 3-D both in vector and enumerated versions */
 #ifdef __VMATH_H__
@@ -228,12 +228,12 @@ BN_EXPORT BU_EXTERN(void pdv_3box,
 #endif /* __VMATH_H__ */
 BN_EXPORT BU_EXTERN(void pd_3space,
 		    (FILE *plotfp,
-		     double x1,
-		     double y1,
-		     double z1,
-		     double x2,
-		     double y2,
-		     double z2));
+		     double x_1,
+		     double y_1,
+		     double z_1,
+		     double x_2,
+		     double y_2,
+		     double z_2));
 BN_EXPORT BU_EXTERN(void pd_3point,
 		    (FILE *plotfp,
 		     double x,
@@ -251,20 +251,20 @@ BN_EXPORT BU_EXTERN(void pd_3cont,
 		     double z));
 BN_EXPORT BU_EXTERN(void pd_3line,
 		    (FILE *plotfp,
-		     double x1,
-		     double y1,
-		     double z1,
-		     double x2,
-		     double y2,
-		     double z2));
+		     double x_1,
+		     double y_1,
+		     double z_1,
+		     double x_2,
+		     double y_2,
+		     double z_2));
 BN_EXPORT BU_EXTERN(void pd_3box,
 		    (FILE *plotfp,
-		     double x1,
-		     double y1,
-		     double z1,
-		     double x2,
-		     double y2,
-		     double z2));
+		     double x_1,
+		     double y_1,
+		     double z_1,
+		     double x_2,
+		     double y_2,
+		     double z_2));
 BN_EXPORT BU_EXTERN(void pdv_3ray,
 		    (FILE *fp,
 		     const point_t pt,

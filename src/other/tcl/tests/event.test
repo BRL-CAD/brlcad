@@ -205,6 +205,69 @@ test event-5.3 {HandleBgErrors: [Bug 1670155]} -setup {
     rename demo {}
     rename trial {}
 } -result {}
+test event-5.3.1 {Default [interp bgerror] handler} -body {
+    ::tcl::Bgerror
+} -returnCodes error -match glob -result {*msg options*}
+test event-5.4 {Default [interp bgerror] handler} -body {
+    ::tcl::Bgerror {}
+} -returnCodes error -match glob -result {*msg options*}
+test event-5.5 {Default [interp bgerror] handler} -body {
+    ::tcl::Bgerror {} {} {}
+} -returnCodes error -match glob -result {*msg options*}
+test event-5.6 {Default [interp bgerror] handler} -body {
+    ::tcl::Bgerror {} {}
+} -returnCodes error -match glob -result {*-level*}
+test event-5.7 {Default [interp bgerror] handler} -body {
+    ::tcl::Bgerror {} {-level foo}
+} -returnCodes error -match glob -result {*expected integer*}
+test event-5.8 {Default [interp bgerror] handler} -body {
+    ::tcl::Bgerror {} {-level 0}
+} -returnCodes error -match glob -result {*-code*}
+test event-5.9 {Default [interp bgerror] handler} -body {
+    ::tcl::Bgerror {} {-level 0 -code ok}
+} -returnCodes error -match glob -result {*expected integer*}
+test event-5.10 {Default [interp bgerror] handler} {
+    proc bgerror {m} {append ::res $m}
+    set ::res {}
+    ::tcl::Bgerror {} {-level 0 -code 0}
+    rename bgerror {}
+    set ::res
+} {}
+test event-5.11 {Default [interp bgerror] handler} {
+    proc bgerror {m} {append ::res $m}
+    set ::res {}
+    ::tcl::Bgerror msg {-level 0 -code 1}
+    rename bgerror {}
+    set ::res
+} {msg}
+test event-5.12 {Default [interp bgerror] handler} {
+    proc bgerror {m} {append ::res $m}
+    set ::res {}
+    ::tcl::Bgerror msg {-level 0 -code 2}
+    rename bgerror {}
+    set ::res
+} {command returned bad code: 2}
+test event-5.13 {Default [interp bgerror] handler} {
+    proc bgerror {m} {append ::res $m}
+    set ::res {}
+    ::tcl::Bgerror msg {-level 0 -code 3}
+    rename bgerror {}
+    set ::res
+} {invoked "break" outside of a loop}
+test event-5.14 {Default [interp bgerror] handler} {
+    proc bgerror {m} {append ::res $m}
+    set ::res {}
+    ::tcl::Bgerror msg {-level 0 -code 4}
+    rename bgerror {}
+    set ::res
+} {invoked "continue" outside of a loop}
+test event-5.15 {Default [interp bgerror] handler} {
+    proc bgerror {m} {append ::res $m}
+    set ::res {}
+    ::tcl::Bgerror msg {-level 0 -code 5}
+    rename bgerror {}
+    set ::res
+} {command returned bad code: 5}
 
 test event-6.1 {BgErrorDeleteProc procedure} {
     catch {interp delete foo}

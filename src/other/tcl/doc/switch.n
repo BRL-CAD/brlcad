@@ -32,8 +32,13 @@ matches \fIstring\fR and no default is given, then the \fBswitch\fR
 command returns an empty string.
 .PP
 If the initial arguments to \fBswitch\fR start with \fB\-\fR then
-they are treated as options.  The following options are
-currently supported:
+they are treated as options
+.VS 8.5
+unless there are exactly two arguments to \fBswitch\fR (in which case the
+first must the \fIstring\fR and the second must be the
+\fIpattern\fR/\fIbody\fR list).
+.VE 8.5
+The following options are currently supported:
 .TP 10
 \fB\-exact\fR
 Use exact matching when comparing \fIstring\fR to a pattern.  This

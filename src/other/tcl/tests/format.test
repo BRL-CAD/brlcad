@@ -496,6 +496,12 @@ test format-15.3 {testing %0..s 0 padding for chars/strings} {
 test format-15.4 {testing %0..s 0 padding for chars/strings} {
     format %05c 61
 } {0000=}
+test format-15.5 {testing %d space padding for integers} {
+    format "(% 1d) (% 1d)" 10 -10
+} {( 10) (-10)}
+test format-15.6 {testing %d plus padding for integers} {
+    format "(%+1d) (%+1d)" 10 -10
+} {(+10) (-10)}
 
 set a "0123456789"
 set b ""

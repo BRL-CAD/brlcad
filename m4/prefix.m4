@@ -101,21 +101,32 @@ if test "x$BRLCAD_ROOT" = "x/usr" ; then
 	emphasis=15
 	AC_MSG_NOTICE([Pausing $emphasis seconds...])
 	sleep $emphasis
+	tries=0
 	while true ; do
 	    AC_MSG_NOTICE([])
 	    AC_MSG_NOTICE([Would you like to continue with /usr as the install prefix? [[yes/no]]])
 	    read bc_answer
-	    case "x$bc_answer" in
-		x*[[yY]][[eE]][[sS]]*)
-		    bc_answer=yes
-		    break ;;
-		x*[[nN]][[oO]]*)
-		    bc_answer=no
-		    break ;;
-		x*)
-		    AC_MSG_NOTICE([Please answer 'yes' or 'no'])
-		    ;;
-	    esac
+	    if test "x$?" = "x0" ; then
+		case "x$bc_answer" in
+		    x*[[yY]][[eE]][[sS]]*)
+			bc_answer=yes
+			break ;;
+		    x*[[nN]][[oO]]*)
+			bc_answer=no
+			break ;;
+		    x*)
+			AC_MSG_NOTICE([Please answer 'yes' or 'no'])
+			;;
+	        esac
+	    else
+		AC_MSG_NOTICE([Unable to read response, continuing])
+		break
+	    fi
+	    tries="`expr $tries \+ 1`"
+	    if test "x$tries" = "x10" ; then
+		AC_MSG_NOTICE([Unable to read response, continuing])
+		break
+	    fi
 	done
 	if test "x$bc_answer" = "xno" ; then
 	    AC_MSG_ERROR([*** Aborting due to --prefix=/usr ***])

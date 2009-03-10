@@ -4,7 +4,7 @@
 #	uses the standard unix build system in tcl/unix (which can be used directly instead of this
 #	if you are not using the tk/macosx projects).
 #
-# Copyright (c) 2002-2007 Daniel A. Steffen <das@users.sourceforge.net>
+# Copyright (c) 2002-2008 Daniel A. Steffen <das@users.sourceforge.net>
 #
 # See the file "license.terms" for information on usage and redistribution of
 # this file, and for a DISCLAIMER OF ALL WARRANTIES.
@@ -74,6 +74,10 @@ BUILD_STYLE		=
 CONFIGURE_ARGS		=
 OBJ_DIR			= ${OBJROOT}/${BUILD_STYLE}
 
+empty			:=
+space			:= ${empty} ${empty}
+objdir			= $(subst ${space},\ ,${OBJ_DIR})
+
 develop_make_args	:= BUILD_STYLE=Development CONFIGURE_ARGS=--enable-symbols
 deploy_make_args	:= BUILD_STYLE=Deployment INSTALL_TARGET=install-strip \
 			   EXTRA_CFLAGS=-DNDEBUG
@@ -118,31 +122,31 @@ install-${PROJECT}:	target = ${INSTALL_TARGET}
 clean-${PROJECT} distclean-${PROJECT} test-${PROJECT}: \
 			target = $*
 
-DO_MAKE			= +${MAKE} -C ${OBJ_DIR} ${target} ${MAKE_ARGS_V} ${MAKE_ARGS} ${EXTRA_MAKE_ARGS}
+DO_MAKE			= +${MAKE} -C "${OBJ_DIR}" ${target} ${MAKE_ARGS_V} ${MAKE_ARGS} ${EXTRA_MAKE_ARGS}
 
 #-------------------------------------------------------------------------------------------------------
 # build rules
 
 ${PROJECT}:
-	${MAKE} install-${PROJECT} INSTALL_ROOT=${OBJ_DIR}/
+	${MAKE} install-${PROJECT} INSTALL_ROOT="${OBJ_DIR}/"
 
-${OBJ_DIR}/Makefile: ${UNIX_DIR}/Makefile.in ${UNIX_DIR}/configure \
+${objdir}/Makefile: ${UNIX_DIR}/Makefile.in ${UNIX_DIR}/configure \
 		     ${UNIX_DIR}/tclConfig.sh.in Tcl-Info.plist.in
-	mkdir -p ${OBJ_DIR} && cd ${OBJ_DIR} && \
+	mkdir -p "${OBJ_DIR}" && cd "${OBJ_DIR}" && \
 	if [ ${UNIX_DIR}/configure -nt config.status ]; then ${UNIX_DIR}/configure -C \
-	--prefix=${PREFIX} --bindir=${BINDIR} --libdir=${LIBDIR} \
-	--mandir=${MANDIR} --enable-threads --enable-framework --enable-dtrace \
+	--prefix="${PREFIX}" --bindir="${BINDIR}" --libdir="${LIBDIR}" \
+	--mandir="${MANDIR}" --enable-threads --enable-framework --enable-dtrace \
 	${CONFIGURE_ARGS} ${EXTRA_CONFIGURE_ARGS}; else ./config.status; fi
 
-build-${PROJECT}: ${OBJ_DIR}/Makefile
+build-${PROJECT}: ${objdir}/Makefile
 	${DO_MAKE}
 ifeq (${INSTALL_BUILD},)
 # symolic link hackery to trick
 # 'make install INSTALL_ROOT=${OBJ_DIR}'
 # into building Tcl.framework and tclsh in ${SYMROOT}
-	@cd ${OBJ_DIR} && mkdir -p $(dir ./${LIBDIR}) $(dir ./${BINDIR}) ${SYMROOT} && \
-	rm -f ./${LIBDIR} ./${BINDIR} && ln -fs ${SYMROOT} ./${LIBDIR} && \
-	ln -fs ${SYMROOT} ./${BINDIR} && ln -fs ${OBJ_DIR}/tcltest ${SYMROOT}
+	@cd "${OBJ_DIR}" && mkdir -p $(dir $(subst ${space},\ ,./${LIBDIR})) $(dir $(subst ${space},\ ,./${BINDIR})) "${SYMROOT}" && \
+	rm -f "./${LIBDIR}" "./${BINDIR}" && ln -fs "${SYMROOT}" "./${LIBDIR}" && \
+	ln -fs "${SYMROOT}" "./${BINDIR}" && ln -fs "${OBJ_DIR}/tcltest" "${SYMROOT}"
 endif
 
 install-${PROJECT}: build-${PROJECT}
@@ -171,7 +175,7 @@ else
 	if [ -n "$${RM_USRLIB:-}" ]; then rm -f usr/lib; rmdir -p usr 2>&-; fi; \
 	if [ -n "$${RM_SYSTEM:-}" ]; then rm -f System; fi; fi
 # install tclsh symbolic link
-	@ln -fs ${TCLSH} ${INSTALL_ROOT}${BINDIR}/tclsh
+	@ln -fs ${TCLSH} "${INSTALL_ROOT}${BINDIR}/tclsh"
 endif
 endif
 ifeq (${BUILD_STYLE}_${EMBEDDED_BUILD},Development_)
@@ -179,20 +183,20 @@ ifeq (${BUILD_STYLE}_${EMBEDDED_BUILD},Development_)
 # Deployment build can be installed on top
 # of Development build without overwriting
 # the debug library
-	@cd ${INSTALL_ROOT}${LIBDIR}/${PRODUCT_NAME}.framework/Versions/${VERSION} && \
+	@cd "${INSTALL_ROOT}${LIBDIR}/${PRODUCT_NAME}.framework/Versions/${VERSION}" && \
 	ln -f "${PRODUCT_NAME}" "${PRODUCT_NAME}_debug"
 endif
 
 clean-${PROJECT}: %-${PROJECT}:
 	${DO_MAKE}
-	rm -rf ${SYMROOT}/{${PRODUCT_NAME}.framework,${TCLSH},tcltest}
-	rm -f ${OBJ_DIR}{${LIBDIR},${BINDIR}} && \
-	rmdir -p ${OBJ_DIR}$(dir ${LIBDIR}) 2>&- || true && \
-	rmdir -p ${OBJ_DIR}$(dir ${BINDIR}) 2>&- || true
+	rm -rf "${SYMROOT}"/{${PRODUCT_NAME}.framework,${TCLSH},tcltest}
+	rm -f "${OBJ_DIR}"{"${LIBDIR}","${BINDIR}"} && \
+	rmdir -p "${OBJ_DIR}"$(dir $(subst ${space},\ ,${LIBDIR})) 2>&- || true && \
+	rmdir -p "${OBJ_DIR}"$(dir $(subst ${space},\ ,${BINDIR})) 2>&- || true
 
 distclean-${PROJECT}: %-${PROJECT}: clean-${PROJECT}
 	${DO_MAKE}
-	rm -rf ${OBJ_DIR}
+	rm -rf "${OBJ_DIR}"
 
 test-${PROJECT}: %-${PROJECT}: build-${PROJECT}
 	${DO_MAKE}

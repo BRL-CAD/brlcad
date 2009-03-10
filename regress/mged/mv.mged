@@ -1,0 +1,9 @@
+puts "*** Testing 'mv' command ***"
+
+in_sph mv 1
+in_sph mv 2
+comb mv_comb.c u mv_sph2.s
+mv mv_sph1.s moved_sph1.s
+mv mv_comb.c moved_comb.c
+
+puts "*** 'mv' testing completed ***"

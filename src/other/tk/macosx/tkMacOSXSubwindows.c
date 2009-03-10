@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1995-1997 Sun Microsystems, Inc.
  * Copyright 2001, Apple Computer, Inc.
- * Copyright (c) 2006-2007 Daniel A. Steffen <das@users.sourceforge.net>
+ * Copyright (c) 2006-2008 Daniel A. Steffen <das@users.sourceforge.net>
  *
  * See the file "license.terms" for information on usage and redistribution
  * of this file, and for a DISCLAIMER OF ALL WARRANTIES.
@@ -30,6 +30,7 @@
 static void MoveResizeWindow(MacDrawable *macWin);
 static void GenerateConfigureNotify(TkWindow *winPtr, int includeWin);
 static void UpdateOffsets(TkWindow *winPtr, int deltaX, int deltaY);
+static void NotifyVisibility(TkWindow *winPtr, XEvent *eventPtr);
 
 
 /*
@@ -252,6 +253,7 @@ XMapWindow(
 	 * We only need to send the MapNotify event
 	 * for toplevel windows.
 	 */
+
 	event.xany.serial = display->request;
 	event.xany.send_event = False;
 	event.xany.display = display;
@@ -268,6 +270,50 @@ XMapWindow(
 
 	TkMacOSXInvalClipRgns((Tk_Window) macWin->winPtr->parentPtr);
 	TkMacOSXInvalidateWindow(macWin, TK_PARENT_WINDOW);
+    }
+
+    /*
+     * Generate VisibilityNotify events for window and all mapped children.
+     */
+
+    event.xany.send_event = False;
+    event.xany.display = display;
+    event.xvisibility.type = VisibilityNotify;
+    event.xvisibility.state = VisibilityUnobscured;
+    NotifyVisibility(macWin->winPtr, &event);
+}
+
+/*
+ *----------------------------------------------------------------------
+ *
+ * NotifyVisibility --
+ *
+ *	Recursively called helper proc for XMapWindow().
+ 
+ * Results:
+ *	None.
+ *
+ * Side effects:
+ *	VisibilityNotify events are queued.
+ *
+ *----------------------------------------------------------------------
+ */
+
+static void
+NotifyVisibility(
+    TkWindow *winPtr,
+    XEvent *eventPtr)
+{
+    if (winPtr->atts.event_mask & VisibilityChangeMask) {
+	eventPtr->xany.serial = LastKnownRequestProcessed(winPtr->display);
+	eventPtr->xvisibility.window = winPtr->window;
+	Tk_QueueWindowEvent(eventPtr, TCL_QUEUE_TAIL);
+    }
+    for (winPtr = winPtr->childList; winPtr != NULL;
+	    winPtr = winPtr->nextPtr) {
+	if (winPtr->flags & TK_MAPPED) {
+	    NotifyVisibility(winPtr, eventPtr);
+	}
     }
 }
 
@@ -1397,3 +1443,12 @@ Tk_FreePixmap(
     }
     ckfree((char *) macPix);
 }
+
+/*
+ * Local Variables:
+ * mode: c
+ * c-basic-offset: 4
+ * fill-column: 79
+ * coding: utf-8
+ * End:
+ */

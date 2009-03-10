@@ -120,6 +120,7 @@ libged_nil_la_SOURCES = \
 	mrot.c \
 	nirt.c \
 	nmg_collapse.c \
+	nmg_fix_normals.c \
 	nmg_simplify.c \
 	ocenter.c \
 	open.c \
@@ -230,7 +231,7 @@ libged_nil_la_SOURCES = \
 AM_CPPFLAGS = \
 	${PNG_CPPFLAGS} \
 	${REGEX_CPPFLAGS} \
-	${TCL_CPPFLAGS} -DNEW_TOPS_BEHAVIOR
+	${TCL_CPPFLAGS}
 
 noinst_HEADERS = \
 	search.h \

@@ -210,7 +210,7 @@ TCL_EXE			= @TCLSH_PROG@
 # with the distribution, which is slower but guaranteed to work.
 
 INSTALL_STRIP_PROGRAM   = -s
-INSTALL_STRIP_LIBRARY   = -S -S
+INSTALL_STRIP_LIBRARY   = -S -x
 
 INSTALL			= @srcdir@/install-sh -c
 INSTALL_PROGRAM		= ${INSTALL}
@@ -268,8 +268,6 @@ STLIB_LD		= @STLIB_LD@
 SHLIB_LD		= @SHLIB_LD@
 SHLIB_LD_LIBS		= @SHLIB_LD_LIBS@
 TK_SHLIB_LD_EXTRAS	= @TK_SHLIB_LD_EXTRAS@
-
-SHLIB_SUFFIX		= @SHLIB_SUFFIX@
 
 # Additional search flags needed to find the various shared libraries
 # at run-time.  The first symbol is for use when creating a binary
@@ -372,13 +370,11 @@ TTK_OBJS = \
 	ttkPanedwindow.o ttkProgress.o ttkScale.o ttkScrollbar.o ttkScroll.o \
 	ttkSeparator.o ttkSquare.o ttkState.o \
 	ttkTagSet.o ttkTheme.o ttkTrace.o ttkTrack.o ttkTreeview.o \
-	ttkWidget.o
-
-TTK_STUB_OBJS =  ttkStubInit.o ttkStubLib.o
+	ttkWidget.o ttkStubInit.o
 
 STUB_OBJS = tkStubInit.o tkStubLib.o
 
-STUB_LIB_OBJS = tkStubLib.o
+STUB_LIB_OBJS = tkStubLib.o ttkStubLib.o
 
 X11_OBJS = tkUnix.o tkUnix3d.o tkUnixButton.o tkUnixColor.o tkUnixConfig.o \
 	tkUnixCursor.o tkUnixDraw.o tkUnixEmbed.o tkUnixEvent.o \
@@ -402,7 +398,7 @@ AQUA_OBJS = tkMacOSXBitmap.o tkMacOSXButton.o tkMacOSXClipboard.o \
 AQUA_TKTEST_OBJS = tkMacOSXTest.o
 
 OBJS =  $(GENERIC_OBJS) $(WIDG_OBJS) $(CANV_OBJS) $(IMAGE_OBJS) $(TEXT_OBJS) \
-	$(STUB_OBJS) $(TTK_OBJS) $(TTK_STUB_OBJS) \
+	$(STUB_OBJS) $(TTK_OBJS) \
 	$(@TK_WINDOWINGSYSTEM@_OBJS) @PLAT_OBJS@
 
 TK_DECLS = \
@@ -557,7 +553,7 @@ PRIVATE_HDRS = $(GENERIC_DIR)/tkInt.h $(GENERIC_DIR)/tkIntDecls.h \
 DEMOPROGS = browse hello ixset rmt rolodex square tcolor timer widget
 
 SHELL_ENV = \
-	@LD_LIBRARY_PATH_VAR@=`pwd`:${TCL_BIN_DIR}:$${@LD_LIBRARY_PATH_VAR@}; \
+	@LD_LIBRARY_PATH_VAR@="`pwd`:${TCL_BIN_DIR}:$${@LD_LIBRARY_PATH_VAR@}"; \
 	export @LD_LIBRARY_PATH_VAR@; \
 	TCL_LIBRARY=@TCL_SRC_DIR@/library; export TCL_LIBRARY; \
 	TK_LIBRARY=@TK_SRC_DIR@/library; export TK_LIBRARY;
@@ -580,20 +576,20 @@ ${LIB_FILE}: ${OBJS} ${STUB_LIB_FILE} @LIB_RSRC_FILE@
 	rm -f $@
 	@MAKE_LIB@
 	@if test -f $(LIB_FILE) ; then \
-	    if test ! -f libtk$(SHLIB_SUFFIX) ; then \
-		ln -s $(LIB_FILE) libtk$(SHLIB_SUFFIX) ; \
-	    fi ; \
+	 if test ! -f libtk$(SHLIB_SUFFIX) ; then \
+            ln -s $(LIB_FILE) libtk$(SHLIB_SUFFIX) ; \
+	 fi;\
 	fi
 
 ${STUB_LIB_FILE}: ${STUB_LIB_OBJS}
 	rm -f $@
 	@MAKE_STUB_LIB@
 	@if test -f $(STUB_LIB_FILE) ; then \
-	    if test ! -f libtkstub.a ; then \
-		ln -s $(STUB_LIB_FILE) libtkstub.a ; \
-	    fi ; \
+	  if test ! -f libtkstub.a ; then \
+	    ln -s $(STUB_LIB_FILE) libtkstub.a ; \
+	 fi;\
 	fi
-
+	
 # Build Aqua resource files
 ${TK_RSRC_FILE}: $(AQUA_RESOURCES)
 	rm -f $@
@@ -626,7 +622,7 @@ wish: $(WISH_OBJS) $(TK_LIB_FILE) $(TK_STUB_LIB_FILE) @APP_RSRC_FILE@
 # Tk shared libraries.
 
 tktest: $(TKTEST_OBJS) $(TK_LIB_FILE)
-	$(MAKE) tktest-real LIB_RUNTIME_DIR=`pwd`:$(TCL_BIN_DIR)
+	$(MAKE) tktest-real LIB_RUNTIME_DIR="`pwd`:$(TCL_BIN_DIR)"
 
 tktest-real:
 	${CC} ${CFLAGS} ${LDFLAGS} $(TKTEST_OBJS) @TK_BUILD_LIB_SPEC@ \
@@ -682,7 +678,7 @@ demo:
 
 # This target can be used to run wish inside either gdb or insight
 gdb: wish
-	@echo "set env @LD_LIBRARY_PATH_VAR@=`pwd`:${TCL_BIN_DIR}:$${@LD_LIBRARY_PATH_VAR@}" > gdb.run
+	@echo "set env @LD_LIBRARY_PATH_VAR@=\"`pwd`:${TCL_BIN_DIR}:$${@LD_LIBRARY_PATH_VAR@}\"" > gdb.run
 	@echo "set env TCL_LIBRARY=@TCL_SRC_DIR@/library" >> gdb.run
 	@echo "set env TK_LIBRARY=@TK_SRC_DIR@/library" >> gdb.run
 	gdb ./wish --command=gdb.run
@@ -702,12 +698,12 @@ install-strip:
 # possible (e.g. if installing as root).
 
 install-binaries: $(TK_LIB_FILE) $(TK_STUB_LIB_FILE) $(TK_BUILD_EXP_FILE) wish
-	@for i in $(LIB_INSTALL_DIR) $(BIN_INSTALL_DIR) $(PKG_INSTALL_DIR); \
+	@for i in "$(LIB_INSTALL_DIR)" "$(BIN_INSTALL_DIR)" "$(PKG_INSTALL_DIR)"; \
 	    do \
-	    if [ ! -d $$i ] ; then \
+	    if [ ! -d "$$i" ] ; then \
 		echo "Making directory $$i"; \
-		mkdir -p $$i; \
-		chmod 755 $$i; \
+		mkdir -p "$$i"; \
+		chmod 755 "$$i"; \
 		else true; \
 		fi; \
 	    done;
@@ -716,52 +712,51 @@ install-binaries: $(TK_LIB_FILE) $(TK_STUB_LIB_FILE) $(TK_BUILD_EXP_FILE) wish
 	    fi
 	@if test "x$(TK_SHARED_BUILD)" = "x1"; then \
 	    echo "Creating package index $(PKG_INDEX)"; \
-	    rm -f $(PKG_INDEX); \
+	    rm -f "$(PKG_INDEX)"; \
 	    (\
-	    echo "if {[catch {package present Tcl\
-		$(TCLVERSION)$(TCLPATCHL)}]} { return }";\
+	    echo "if {[catch {package present Tcl 8.5.0-8.6}]} { return }";\
 	    relative=`echo | awk '{ORS=" "; split("$(TK_PKG_DIR)",a,"/"); for (f in a) {print ".."}}'`;\
 	    echo "package ifneeded Tk $(MAJOR_VERSION).$(MINOR_VERSION)$(PATCH_LEVEL)\
 		[list load [file join \$$dir $${relative}$(TK_LIB_FILE)] Tk]";\
-	    ) > $(PKG_INDEX); \
+	    ) > "$(PKG_INDEX)"; \
 	    fi
 	@echo "Installing $(LIB_FILE) to $(LIB_INSTALL_DIR)/"
 	@@INSTALL_LIB@
-	@chmod 555 $(LIB_INSTALL_DIR)/$(LIB_FILE)
+	@chmod 555 "$(LIB_INSTALL_DIR)"/$(LIB_FILE)
 	if test -f libtk$(SHLIB_SUFFIX) ; then \
-	    $(INSTALL_LIBRARY) libtk$(SHLIB_SUFFIX) $(LIB_INSTALL_DIR)/libtk$(SHLIB_SUFFIX) ; \
-	    chmod +x $(LIB_INSTALL_DIR)/libtk$(SHLIB_SUFFIX) ; \
+	   $(INSTALL_LIBRARY) libtk$(SHLIB_SUFFIX) $(LIB_INSTALL_DIR)/libtk$(SHLIB_SUFFIX);\
+	   chmod +x $(LIB_INSTALL_DIR)/libtk$(SHLIB_SUFFIX) ; \
 	fi
 	@if test "$(TK_BUILD_EXP_FILE)" != ""; then \
 	    echo "Installing $(TK_EXP_FILE) to $(LIB_INSTALL_DIR)/"; \
 	    $(INSTALL_DATA) $(TK_BUILD_EXP_FILE) \
-			$(LIB_INSTALL_DIR)/$(TK_EXP_FILE); \
+			"$(LIB_INSTALL_DIR)"/$(TK_EXP_FILE); \
 	    fi
 	@echo "Installing wish as $(BIN_INSTALL_DIR)/wish$(VERSION)"
-	@$(INSTALL_PROGRAM) wish $(BIN_INSTALL_DIR)/wish$(VERSION)
+	@$(INSTALL_PROGRAM) wish "$(BIN_INSTALL_DIR)"/wish$(VERSION)
 	@echo "Installing tkConfig.sh to $(LIB_INSTALL_DIR)/"
-	@$(INSTALL_DATA) tkConfig.sh $(LIB_INSTALL_DIR)/tkConfig.sh
+	@$(INSTALL_DATA) tkConfig.sh "$(LIB_INSTALL_DIR)"/tkConfig.sh
 	@if test "$(STUB_LIB_FILE)" != "" ; then \
 	    echo "Installing $(STUB_LIB_FILE) to $(LIB_INSTALL_DIR)/"; \
 	    @INSTALL_STUB_LIB@ ; \
 	    if test -f libtkstub.a ; then \
-		$(INSTALL_LIBRARY) libtkstub.a $(LIB_INSTALL_DIR)/libtkstub.a ; \
-		chmod +x $(LIB_INSTALL_DIR)/libtkstub.a ; \
-	    fi ; \
+	    $(INSTALL_LIBRARY) libtkstub.a $(LIB_INSTALL_DIR)/libtkstub.a ; \
+	    chmod +x $(LIB_INSTALL_DIR)/libtkstub.a ; \
+	    fi;\
 	fi
 	@EXTRA_INSTALL_BINARIES@
 
 install-libraries: libraries
 	@if test "$(@TK_WINDOWINGSYSTEM@_XLIB_HDRS)" != ""; then \
-	    XLIB_INCLUDE_INSTALL_DIR=$(INCLUDE_INSTALL_DIR)/X11; fi; \
-	for i in $(INCLUDE_INSTALL_DIR) $${XLIB_INCLUDE_INSTALL_DIR} \
-		$(SCRIPT_INSTALL_DIR) $(SCRIPT_INSTALL_DIR)/images \
-		$(SCRIPT_INSTALL_DIR)/msgs $(SCRIPT_INSTALL_DIR)/ttk; \
+	    XLIB_INCLUDE_INSTALL_DIR="$(INCLUDE_INSTALL_DIR)"/X11; fi; \
+	for i in "$(INCLUDE_INSTALL_DIR)" "$${XLIB_INCLUDE_INSTALL_DIR}" \
+		"$(SCRIPT_INSTALL_DIR)" "$(SCRIPT_INSTALL_DIR)"/images \
+		"$(SCRIPT_INSTALL_DIR)"/msgs "$(SCRIPT_INSTALL_DIR)"/ttk; \
 	    do \
-	    if [ ! -d $$i ] ; then \
+	    if [ -n "$$i" -a ! -d "$$i" ] ; then \
 		echo "Making directory $$i"; \
-		mkdir -p $$i; \
-		chmod 755 $$i; \
+		mkdir -p "$$i"; \
+		chmod 755 "$$i"; \
 		else true; \
 		fi; \
 	    done;
@@ -771,49 +766,49 @@ install-libraries: libraries
 	@echo "Installing header files";
 	@for i in $(PUBLIC_HDRS); \
 	    do \
-	    $(INSTALL_DATA) $$i $(INCLUDE_INSTALL_DIR); \
+	    $(INSTALL_DATA) $$i "$(INCLUDE_INSTALL_DIR)"; \
 	    done;
 	@list='$(@TK_WINDOWINGSYSTEM@_XLIB_HDRS)'; for i in $$list ; \
 	    do \
-	    $(INSTALL_DATA) $$i $(INCLUDE_INSTALL_DIR)/X11; \
+	    $(INSTALL_DATA) $$i "$(INCLUDE_INSTALL_DIR)"/X11; \
 	    done;
 	@echo "Installing library files to $(SCRIPT_INSTALL_DIR)";
 	@for i in $(TOP_DIR)/library/*.tcl $(GENERIC_DIR)/prolog.ps \
 	        $(TOP_DIR)/library/tclIndex $(UNIX_DIR)/tkAppInit.c; \
 	    do \
-	    $(INSTALL_DATA) $$i $(SCRIPT_INSTALL_DIR); \
+	    $(INSTALL_DATA) $$i "$(SCRIPT_INSTALL_DIR)"; \
 	    done;
 	@echo "Installing library ttk directory";
 	@for i in $(TOP_DIR)/library/ttk/*.tcl; \
 	    do \
 	    if [ -f $$i ] ; then \
-		$(INSTALL_DATA) $$i $(SCRIPT_INSTALL_DIR)/ttk; \
+		$(INSTALL_DATA) $$i "$(SCRIPT_INSTALL_DIR)"/ttk; \
 	    fi; \
 	    done;
 	@echo "Installing library images directory";
 	@for i in $(TOP_DIR)/library/images/*; \
 	    do \
 	    if [ -f $$i ] ; then \
-		$(INSTALL_DATA) $$i $(SCRIPT_INSTALL_DIR)/images; \
+		$(INSTALL_DATA) $$i "$(SCRIPT_INSTALL_DIR)"/images; \
 	    fi; \
 	    done;
 	@echo "Installing translation directory";
 	@for i in $(TOP_DIR)/library/msgs/*.msg; \
 	    do \
 	    if [ -f $$i ] ; then \
-		$(INSTALL_DATA) $$i $(SCRIPT_INSTALL_DIR)/msgs; \
+		$(INSTALL_DATA) $$i "$(SCRIPT_INSTALL_DIR)"/msgs; \
 	    fi; \
 	    done;
 
 install-demos:
-	@for i in $(SCRIPT_INSTALL_DIR) \
-		$(SCRIPT_INSTALL_DIR)/demos \
-		$(SCRIPT_INSTALL_DIR)/demos/images ; \
+	@for i in "$(SCRIPT_INSTALL_DIR)" \
+		"$(SCRIPT_INSTALL_DIR)"/demos \
+		"$(SCRIPT_INSTALL_DIR)"/demos/images ; \
 	    do \
-	    if [ ! -d $$i ] ; then \
+	    if [ ! -d "$$i" ] ; then \
 		echo "Making directory $$i"; \
-		mkdir -p $$i; \
-		chmod 755 $$i; \
+		mkdir -p "$$i"; \
+		chmod 755 "$$i"; \
 		else true; \
 		fi; \
 	    done;
@@ -822,18 +817,18 @@ install-demos:
 	    do \
 	    if [ -f $$i ] ; then \
 		sed -e '3 s|exec wish|exec wish$(VERSION)|' \
-			$$i > $(SCRIPT_INSTALL_DIR)/demos/`basename $$i`; \
+			$$i > "$(SCRIPT_INSTALL_DIR)"/demos/`basename $$i`; \
 	    fi; \
 	    done;
 	@for i in $(DEMOPROGS); \
 	    do \
-	    chmod 755 $(SCRIPT_INSTALL_DIR)/demos/$$i; \
+	    chmod 755 "$(SCRIPT_INSTALL_DIR)"/demos/$$i; \
 	    done;
 	@echo "Installing demo images";
 	@for i in $(TOP_DIR)/library/demos/images/*; \
 	    do \
 	    if [ -f $$i ] ; then \
-		$(INSTALL_DATA) $$i $(SCRIPT_INSTALL_DIR)/demos/images; \
+		$(INSTALL_DATA) $$i "$(SCRIPT_INSTALL_DIR)"/demos/images; \
 		fi; \
 	    done;
 
@@ -841,18 +836,18 @@ install-doc:
 	@if test ! -x $(UNIX_DIR)/installManPage; then \
 	    chmod +x $(UNIX_DIR)/installManPage; \
 	    fi
-	@for i in $(MAN_INSTALL_DIR) $(MAN1_INSTALL_DIR) $(MAN3_INSTALL_DIR) $(MANN_INSTALL_DIR) ; \
+	@for i in "$(MAN_INSTALL_DIR)" "$(MAN1_INSTALL_DIR)" "$(MAN3_INSTALL_DIR)" "$(MANN_INSTALL_DIR)" ; \
 	    do \
-	    if [ ! -d $$i ] ; then \
+	    if [ ! -d "$$i" ] ; then \
 		echo "Making directory $$i"; \
-		mkdir -p $$i; \
-		chmod 755 $$i; \
+		mkdir -p "$$i"; \
+		chmod 755 "$$i"; \
 		else true; \
 		fi; \
 	    done;
 	@echo "Installing and cross-linking top-level (.1) docs";
 	@for i in $(TOP_DIR)/doc/*.1; do \
-	    [ ! -e $(TOP_DIR)/doc/$$i ] || $(UNIX_DIR)/installManPage $(MAN_FLAGS) $(TOP_DIR)/doc/$$i $(MAN1_INSTALL_DIR); \
+	     [ ! -e $(TOP_DIR)/doc/$$i ] || $(UNIX_DIR)/installManPage $(MAN_FLAGS) $(TOP_DIR)/doc/$$i $(MAN1_INSTALL_DIR); \
 	done
 
 	@echo "Installing and cross-linking C API (.3) docs";
@@ -867,12 +862,12 @@ install-doc:
 
 # Optional target to install private headers
 install-private-headers: libraries
-	@for i in $(PRIVATE_INCLUDE_INSTALL_DIR); \
+	@for i in "$(PRIVATE_INCLUDE_INSTALL_DIR)"; \
 	    do \
-	    if [ ! -d $$i ] ; then \
+	    if [ ! -d "$$i" ] ; then \
 		echo "Making directory $$i"; \
-		mkdir -p $$i; \
-		chmod 755 $$i; \
+		mkdir -p "$$i"; \
+		chmod 755 "$$i"; \
 		else true; \
 		fi; \
 	    done;
@@ -882,10 +877,10 @@ install-private-headers: libraries
 	@echo "Installing private header files";
 	@for i in $(PRIVATE_HDRS); \
 	    do \
-	    $(INSTALL_DATA) $$i $(PRIVATE_INCLUDE_INSTALL_DIR); \
+	    $(INSTALL_DATA) $$i "$(PRIVATE_INCLUDE_INSTALL_DIR)"; \
 	    done;
 	@if test -f tkConfig.h; then\
-	    $(INSTALL_DATA) tkConfig.h $(PRIVATE_INCLUDE_INSTALL_DIR); \
+	    $(INSTALL_DATA) tkConfig.h "$(PRIVATE_INCLUDE_INSTALL_DIR)"; \
 	    fi;
 
 Makefile: $(UNIX_DIR)/Makefile.in
@@ -1697,7 +1692,7 @@ BUILD_HTML = \
 	@if test -f "$(BUILD_TCLSH)"; then \
 	$(SHELL_ENV) TCLSH="$(BUILD_TCLSH)"; else \
 	TCLSH="$(TCL_EXE)"; fi ;\
-	$${TCLSH} $(TOOL_DIR)/tcltk-man2html.tcl --htmldir=$(HTML_INSTALL_DIR) \
+	"$${TCLSH}" $(TOOL_DIR)/tcltk-man2html.tcl --htmldir="$(HTML_INSTALL_DIR)" \
 		--srcdir=$(TOP_DIR)/.. $(BUILD_HTML_FLAGS)
 
 #

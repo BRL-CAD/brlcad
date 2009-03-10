@@ -1,15 +1,15 @@
 /*
  * tkMacOSXHLEvents.c --
  *
- *	Implements high level event support for the Macintosh. Currently,
- *	the only event that really does anything is the Quit event.
+ *	Implements high level event support for the Macintosh. Currently, the
+ *	only event that really does anything is the Quit event.
  *
  * Copyright (c) 1995-1997 Sun Microsystems, Inc.
  * Copyright 2001, Apple Computer, Inc.
  * Copyright (c) 2006 Daniel A. Steffen <das@users.sourceforge.net>
  *
- * See the file "license.terms" for information on usage and redistribution
- * of this file, and for a DISCLAIMER OF ALL WARRANTIES.
+ * See the file "license.terms" for information on usage and redistribution of
+ * this file, and for a DISCLAIMER OF ALL WARRANTIES.
  *
  * RCS: @(#) $Id$
  */
@@ -17,47 +17,46 @@
 #include "tkMacOSXPrivate.h"
 
 /*
- * This is a Tcl_Event structure that the Quit AppleEvent handler
- * uses to schedule the ReallyKillMe function.
+ * This is a Tcl_Event structure that the Quit AppleEvent handler uses to
+ * schedule the ReallyKillMe function.
  */
 
 typedef struct KillEvent {
-    Tcl_Event header;		/* Information that is standard for
-				 * all events. */
-    Tcl_Interp *interp;		/* Interp that was passed to the
-				 * Quit AppleEvent */
+    Tcl_Event header;		/* Information that is standard for all
+				 * events. */
+    Tcl_Interp *interp;		/* Interp that was passed to the Quit
+				 * AppleEvent */
 } KillEvent;
 
 /*
  * Static functions used only in this file.
  */
 
-static OSErr QuitHandler(const AppleEvent * event, AppleEvent * reply,
-	long handlerRefcon);
-static OSErr OappHandler(const AppleEvent * event, AppleEvent * reply,
-	long handlerRefcon);
-static OSErr RappHandler(const AppleEvent * event, AppleEvent * reply,
-	long handlerRefcon);
-static OSErr OdocHandler(const AppleEvent * event, AppleEvent * reply,
-	long handlerRefcon);
-static OSErr PrintHandler(const AppleEvent * event, AppleEvent * reply,
-	long handlerRefcon);
-static OSErr ScriptHandler(const AppleEvent * event, AppleEvent * reply,
-	long handlerRefcon);
-static OSErr PrefsHandler(const AppleEvent * event, AppleEvent * reply,
-	long handlerRefcon);
-
-static int MissedAnyParameters(const AppleEvent *theEvent);
-static int ReallyKillMe(Tcl_Event *eventPtr, int flags);
-static OSStatus FSRefToDString(const FSRef *fsref, Tcl_DString *ds);
+static OSErr		QuitHandler(const AppleEvent *event,
+			    AppleEvent *reply, long handlerRefcon);
+static OSErr		OappHandler(const AppleEvent *event,
+			    AppleEvent *reply, long handlerRefcon);
+static OSErr		RappHandler(const AppleEvent *event,
+			    AppleEvent *reply, long handlerRefcon);
+static OSErr		OdocHandler(const AppleEvent *event,
+			    AppleEvent *reply, long handlerRefcon);
+static OSErr		PrintHandler(const AppleEvent *event,
+			    AppleEvent *reply, long handlerRefcon);
+static OSErr		ScriptHandler(const AppleEvent *event,
+			    AppleEvent *reply, long handlerRefcon);
+static OSErr		PrefsHandler(const AppleEvent *event,
+			    AppleEvent *reply, long handlerRefcon);
+static int		MissedAnyParameters(const AppleEvent *theEvent);
+static int		ReallyKillMe(Tcl_Event *eventPtr, int flags);
+static OSStatus		FSRefToDString(const FSRef *fsref, Tcl_DString *ds);
 
 /*
  *----------------------------------------------------------------------
  *
  * TkMacOSXInitAppleEvents --
  *
- *	Initilize the Apple Events on the Macintosh. This registers the
- *	core event handlers.
+ *	Initilize the Apple Events on the Macintosh. This registers the core
+ *	event handlers.
  *
  * Results:
  *	None.
@@ -70,10 +69,11 @@ static OSStatus FSRefToDString(const FSRef *fsref, Tcl_DString *ds);
 
 void
 TkMacOSXInitAppleEvents(
-    Tcl_Interp *interp)		       /* Interp to handle basic events. */
+    Tcl_Interp *interp)		/* Interp to handle basic events. */
 {
-    AEEventHandlerUPP	     OappHandlerUPP, RappHandlerUPP, OdocHandlerUPP,
-	    PrintHandlerUPP, QuitHandlerUPP, ScriptHandlerUPP, PrefsHandlerUPP;
+    AEEventHandlerUPP OappHandlerUPP, RappHandlerUPP, OdocHandlerUPP;
+    AEEventHandlerUPP PrintHandlerUPP, QuitHandlerUPP, ScriptHandlerUPP;
+    AEEventHandlerUPP PrefsHandlerUPP;
     static Boolean initialized = FALSE;
 
     if (!initialized) {
@@ -82,6 +82,7 @@ TkMacOSXInitAppleEvents(
 	/*
 	 * Install event handlers for the core apple events.
 	 */
+
 	QuitHandlerUPP = NewAEEventHandlerUPP(QuitHandler);
 	ChkErr(AEInstallEventHandler, kCoreEventClass, kAEQuitApplication,
 		QuitHandlerUPP, (long) interp, false);
@@ -109,7 +110,7 @@ TkMacOSXInitAppleEvents(
 	if (interp) {
 	    ScriptHandlerUPP = NewAEEventHandlerUPP(ScriptHandler);
 	    ChkErr(AEInstallEventHandler, kAEMiscStandards, kAEDoScript,
-		ScriptHandlerUPP, (long) interp, false);
+		    ScriptHandlerUPP, (long) interp, false);
 	}
     }
 }
@@ -153,10 +154,10 @@ TkMacOSXDoHLEvent(
  *----------------------------------------------------------------------
  */
 
-OSErr
+static OSErr
 QuitHandler(
-    const AppleEvent * event,
-    AppleEvent * reply,
+    const AppleEvent *event,
+    AppleEvent *reply,
     long handlerRefcon)
 {
     Tcl_Interp *interp = (Tcl_Interp *) handlerRefcon;
@@ -164,10 +165,11 @@ QuitHandler(
 
     if (interp) {
 	/*
-	 * Call the exit command from the event loop, since you are not supposed
-	 * to call ExitToShell in an Apple Event Handler. We put this at the head
-	 * of Tcl's event queue because this message usually comes when the Mac is
-	 * shutting down, and we want to kill the shell as quickly as possible.
+	 * Call the exit command from the event loop, since you are not
+	 * supposed to call ExitToShell in an Apple Event Handler. We put this
+	 * at the head of Tcl's event queue because this message usually comes
+	 * when the Mac is shutting down, and we want to kill the shell as
+	 * quickly as possible.
 	 */
 
 	eventPtr = (KillEvent *) ckalloc(sizeof(KillEvent));
@@ -195,18 +197,20 @@ QuitHandler(
  *----------------------------------------------------------------------
  */
 
-OSErr
+static OSErr
 OappHandler(
-    const AppleEvent * event,
-    AppleEvent * reply,
+    const AppleEvent *event,
+    AppleEvent *reply,
     long handlerRefcon)
 {
     Tcl_CmdInfo dummy;
     Tcl_Interp *interp = (Tcl_Interp *) handlerRefcon;
 
     if (interp &&
-	    Tcl_GetCommandInfo(interp, "::tk::mac::OpenApplication", &dummy)) {
-	Tcl_GlobalEval(interp, "::tk::mac::OpenApplication");
+	    Tcl_GetCommandInfo(interp, "::tk::mac::OpenApplication", &dummy)){
+	if (Tcl_GlobalEval(interp, "::tk::mac::OpenApplication") != TCL_OK) {
+	    Tcl_BackgroundError(interp);
+	}
     }
     return noErr;
 }
@@ -227,10 +231,10 @@ OappHandler(
  *----------------------------------------------------------------------
  */
 
-OSErr
+static OSErr
 RappHandler(
-    const AppleEvent * event,
-    AppleEvent * reply,
+    const AppleEvent *event,
+    AppleEvent *reply,
     long handlerRefcon)
 {
     Tcl_CmdInfo dummy;
@@ -238,9 +242,11 @@ RappHandler(
     ProcessSerialNumber thePSN = {0, kCurrentProcess};
     OSStatus err = ChkErr(SetFrontProcess, &thePSN);
 
-    if (interp &&
-	    Tcl_GetCommandInfo(interp, "::tk::mac::ReopenApplication", &dummy)) {
-	Tcl_GlobalEval(interp, "::tk::mac::ReopenApplication");
+    if (interp && Tcl_GetCommandInfo(interp,
+	    "::tk::mac::ReopenApplication", &dummy)) {
+	if (Tcl_GlobalEval(interp, "::tk::mac::ReopenApplication") != TCL_OK){
+	    Tcl_BackgroundError(interp);
+	}
     }
     return err;
 }
@@ -250,8 +256,8 @@ RappHandler(
  *
  * PrefsHandler --
  *
- *	This is the 'pref' core Apple event handler.
- *	Called when the user selects 'Preferences...' in MacOS X
+ *	This is the 'pref' core Apple event handler. Called when the user
+ *	selects 'Preferences...' in MacOS X
  *
  * Results:
  *	None.
@@ -262,18 +268,20 @@ RappHandler(
  *----------------------------------------------------------------------
  */
 
-OSErr
+static OSErr
 PrefsHandler(
-    const AppleEvent * event,
-    AppleEvent * reply,
+    const AppleEvent *event,
+    AppleEvent *reply,
     long handlerRefcon)
 {
     Tcl_CmdInfo dummy;
     Tcl_Interp *interp = (Tcl_Interp *) handlerRefcon;
 
     if (interp &&
-	    Tcl_GetCommandInfo(interp, "::tk::mac::ShowPreferences", &dummy)) {
-	Tcl_GlobalEval(interp, "::tk::mac::ShowPreferences");
+	    Tcl_GetCommandInfo(interp, "::tk::mac::ShowPreferences", &dummy)){
+	if (Tcl_GlobalEval(interp, "::tk::mac::ShowPreferences") != TCL_OK) {
+	    Tcl_BackgroundError(interp);
+	}
     }
     return noErr;
 }
@@ -294,75 +302,75 @@ PrefsHandler(
  *----------------------------------------------------------------------
  */
 
-OSErr
+static OSErr
 OdocHandler(
-    const AppleEvent * event,
-    AppleEvent * reply,
+    const AppleEvent *event,
+    AppleEvent *reply,
     long handlerRefcon)
 {
     Tcl_Interp *interp = (Tcl_Interp *) handlerRefcon;
     AEDescList fileSpecList;
     FSRef file;
-    OSStatus err;
     DescType type;
     Size actual;
-    long count;
+    long count, index;
     AEKeyword keyword;
-    long index;
-    Tcl_DString command;
-    Tcl_DString pathName;
+    Tcl_DString command, pathName;
     Tcl_CmdInfo dummy;
 
     /*
-     * Don't bother if we don't have an interp or
-     * the open document procedure doesn't exist.
+     * Don't bother if we don't have an interp or the open document procedure
+     * doesn't exist.
      */
 
-    if ((interp == NULL) ||
-	    (Tcl_GetCommandInfo(interp, "::tk::mac::OpenDocument", &dummy)) == 0) {
-	    return noErr;
+    if (!interp ||
+	    !Tcl_GetCommandInfo(interp, "::tk::mac::OpenDocument", &dummy)) {
+	return noErr;
     }
 
     /*
-     * If we get any errors wil retrieving our parameters
-     * we just return with no error.
+     * If we get any errors while retrieving our parameters we just return with
+     * no error.
      */
 
-    err = ChkErr(AEGetParamDesc, event, keyDirectObject, typeAEList,
-	    &fileSpecList);
-    if (err != noErr) {
+    if (ChkErr(AEGetParamDesc, event, keyDirectObject, typeAEList,
+	    &fileSpecList) != noErr) {
+	return noErr;
+    }
+    if (MissedAnyParameters(event) != noErr) {
+	return noErr;
+    }
+    if (ChkErr(AECountItems, &fileSpecList, &count) != noErr) {
 	return noErr;
     }
 
-    err = MissedAnyParameters(event);
-    if (err != noErr) {
-	return noErr;
-    }
-
-    err = ChkErr(AECountItems, &fileSpecList, &count);
-    if (err != noErr) {
-	return noErr;
-    }
+    /*
+     * Convert our parameters into a script to evaluate, skipping things that
+     * we can't handle right.
+     */
 
     Tcl_DStringInit(&command);
     Tcl_DStringAppend(&command, "::tk::mac::OpenDocument", -1);
     for (index = 1; index <= count; index++) {
-	err = ChkErr(AEGetNthPtr, &fileSpecList, index, typeFSRef,
-		&keyword, &type, (Ptr) &file, sizeof(FSRef), &actual);
-	if ( err != noErr ) {
+	if (ChkErr(AEGetNthPtr, &fileSpecList, index, typeFSRef, &keyword,
+		&type, (Ptr) &file, sizeof(FSRef), &actual) != noErr) {
 	    continue;
 	}
 
-	err = ChkErr(FSRefToDString, &file, &pathName);
-	if (err == noErr) {
+	if (ChkErr(FSRefToDString, &file, &pathName) == noErr) {
 	    Tcl_DStringAppendElement(&command, Tcl_DStringValue(&pathName));
 	    Tcl_DStringFree(&pathName);
 	}
     }
 
-    Tcl_EvalEx(interp, Tcl_DStringValue(&command), Tcl_DStringLength(&command),
-	    TCL_EVAL_GLOBAL);
+    /*
+     * Now handle the event by evaluating a script.
+     */
 
+    if (Tcl_EvalEx(interp, Tcl_DStringValue(&command),
+	    Tcl_DStringLength(&command), TCL_EVAL_GLOBAL) != TCL_OK) {
+	Tcl_BackgroundError(interp);
+    }
     Tcl_DStringFree(&command);
     return noErr;
 }
@@ -383,7 +391,7 @@ OdocHandler(
  *----------------------------------------------------------------------
  */
 
-OSErr
+static OSErr
 PrintHandler(
     const AppleEvent * event,
     AppleEvent * reply,
@@ -392,66 +400,61 @@ PrintHandler(
     Tcl_Interp *interp = (Tcl_Interp *) handlerRefcon;
     AEDescList fileSpecList;
     FSRef file;
-    OSStatus err;
     DescType type;
     Size actual;
-    long count;
+    long count, index;
     AEKeyword keyword;
-    long index;
-    Tcl_DString command;
-    Tcl_DString pathName;
+    Tcl_DString command, pathName;
     Tcl_CmdInfo dummy;
 
     /*
-     * Don't bother if we don't have an interp or
-     * the print document procedure doesn't exist.
+     * Don't bother if we don't have an interp or the print document procedure
+     * doesn't exist.
      */
 
-    if ((interp == NULL) ||
-	    (Tcl_GetCommandInfo(interp, "::tk::mac::PrintDocument", &dummy)) == 0) {
-	    return noErr;
+    if (!interp ||
+	    !Tcl_GetCommandInfo(interp, "::tk::mac::PrintDocument", &dummy)) {
+	return noErr;
     }
 
     /*
-     * If we get any errors wil retrieving our parameters
-     * we just return with no error.
+     * If we get any errors while retrieving our parameters we just return with
+     * no error.
      */
 
-    err = ChkErr(AEGetParamDesc, event, keyDirectObject, typeAEList,
-	    &fileSpecList);
-    if (err != noErr) {
+    if (ChkErr(AEGetParamDesc, event, keyDirectObject, typeAEList,
+	    &fileSpecList) != noErr) {
 	return noErr;
     }
-
-    err = ChkErr(MissedAnyParameters, event);
-    if (err != noErr) {
+    if (ChkErr(MissedAnyParameters, event) != noErr) {
 	return noErr;
     }
-
-    err = ChkErr(AECountItems, &fileSpecList, &count);
-    if (err != noErr) {
+    if (ChkErr(AECountItems, &fileSpecList, &count) != noErr) {
 	return noErr;
     }
 
     Tcl_DStringInit(&command);
     Tcl_DStringAppend(&command, "::tk::mac::PrintDocument", -1);
     for (index = 1; index <= count; index++) {
-	err = ChkErr(AEGetNthPtr, &fileSpecList, index, typeFSRef, &keyword,
-		&type, (Ptr) &file, sizeof(FSRef), &actual);
-	if ( err != noErr ) {
+	if (ChkErr(AEGetNthPtr, &fileSpecList, index, typeFSRef, &keyword,
+		&type, (Ptr) &file, sizeof(FSRef), &actual) != noErr) {
 	    continue;
 	}
 
-	err = ChkErr(FSRefToDString, &file, &pathName);
-	if (err == noErr) {
+	if (ChkErr(FSRefToDString, &file, &pathName) == noErr) {
 	    Tcl_DStringAppendElement(&command, Tcl_DStringValue(&pathName));
 	    Tcl_DStringFree(&pathName);
 	}
     }
 
-    Tcl_EvalEx(interp, Tcl_DStringValue(&command), Tcl_DStringLength(&command),
-	    TCL_EVAL_GLOBAL);
+    /*
+     * Now handle the event by evaluating a script.
+     */
 
+    if (Tcl_EvalEx(interp, Tcl_DStringValue(&command),
+	    Tcl_DStringLength(&command), TCL_EVAL_GLOBAL) != TCL_OK) {
+	Tcl_BackgroundError(interp);
+    }
     Tcl_DStringFree(&command);
     return noErr;
 }
@@ -472,23 +475,23 @@ PrintHandler(
  *----------------------------------------------------------------------
  */
 
-OSErr
+static OSErr
 ScriptHandler(
-    const AppleEvent * event,
-    AppleEvent * reply,
+    const AppleEvent *event,
+    AppleEvent *reply,
     long handlerRefcon)
 {
     OSStatus theErr;
     AEDescList theDesc;
     int tclErr = -1;
-    Tcl_Interp *interp;
+    Tcl_Interp *interp = (Tcl_Interp *) handlerRefcon;
     char errString[128];
 
-    interp = (Tcl_Interp *) handlerRefcon;
-
     /*
-     * The do script event receives one parameter that should be data or a file.
+     * The do script event receives one parameter that should be data or a
+     * file.
      */
+
     theErr = AEGetParamDesc(event, keyDirectObject, typeWildCard,
 	    &theDesc);
     if (theErr != noErr) {
@@ -497,95 +500,98 @@ ScriptHandler(
 	theErr = AEPutParamPtr(reply, keyErrorString, typeChar, errString,
 		strlen(errString));
     } else if (MissedAnyParameters(event)) {
+	/*
+	 * Return error if parameter is missing.
+	 */
+
 	sprintf(errString, "AEDoScriptHandler: extra parameters");
 	AEPutParamPtr(reply, keyErrorString, typeChar, errString,
 		strlen(errString));
 	theErr = -1771;
-    } else {
-	if (theDesc.descriptorType == (DescType)typeChar) {
-	    Tcl_DString encodedText;
-	    short i;
-	    Size  size;
-	    char  * data;
+    } else if (theDesc.descriptorType == (DescType) typeChar) {
+	/*
+	 * We've had some data sent to us. Evaluate it.
+	 */
 
-	    size = AEGetDescDataSize(&theDesc);
+	Tcl_DString encodedText;
+	short i;
+	Size size = AEGetDescDataSize(&theDesc);
+	char *data = ckalloc(size + 1);
 
-	    data = (char *)ckalloc(size + 1);
-	    if ( !data ) {
-		theErr = -1771;
+	AEGetDescData(&theDesc, data, size);
+	data[size] = 0;
+	for (i = 0; i < size; i++) {
+	    if (data[i] == '\r') {
+		data[i] = '\n';
 	    }
-	    else {
-		   AEGetDescData(&theDesc,data,size);
-		   data [ size ] = 0;
-		   for (i = 0; i < size; i++)
-		    if (data[i] == '\r')
-		     data[i] = '\n';
-		   AEReplaceDescData(theDesc.descriptorType, data,
-			   size + 1, &theDesc);
-	    }
-	    Tcl_ExternalToUtfDString(NULL, data, size,
-		    &encodedText);
-	    tclErr = Tcl_EvalEx(interp, Tcl_DStringValue(&encodedText),
-		    Tcl_DStringLength(&encodedText), TCL_EVAL_GLOBAL);
-	    Tcl_DStringFree(&encodedText);
-	} else if (theDesc.descriptorType == (DescType)typeAlias) {
-	    Boolean dummy;
-	    FSRef file;
-	    AliasPtr	alias;
-	    Size	theSize;
+	}
+	AEReplaceDescData(theDesc.descriptorType, data, size + 1, &theDesc);
+	Tcl_ExternalToUtfDString(NULL, data, size, &encodedText);
+	tclErr = Tcl_EvalEx(interp, Tcl_DStringValue(&encodedText),
+		Tcl_DStringLength(&encodedText), TCL_EVAL_GLOBAL);
+	Tcl_DStringFree(&encodedText);
+    } else if (theDesc.descriptorType == (DescType) typeAlias) {
+	/*
+	 * We've had a file sent to us. Source it.
+	 */
 
-	    theSize = AEGetDescDataSize(&theDesc);
-	    alias = (AliasPtr) ckalloc(theSize);
-	    if (alias) {
-		AEGetDescData (&theDesc, alias, theSize);
+	Boolean dummy;
+	FSRef file;
+	Size theSize = AEGetDescDataSize(&theDesc);
+	AliasPtr alias = (AliasPtr) ckalloc(theSize);
 
-		theErr = FSResolveAlias(NULL, &alias,
-			&file, &dummy);
-		ckfree((char*)alias);
-	    } else {
-		theErr = memFullErr;
-	    }
+	if (alias) {
+	    AEGetDescData(&theDesc, alias, theSize);
+
+	    theErr = FSResolveAlias(NULL, &alias, &file, &dummy);
+	    ckfree((char*)alias);
+	} else {
+	    theErr = memFullErr;
+	}
+	if (theErr == noErr) {
+	    Tcl_DString scriptName;
+
+	    theErr = FSRefToDString(&file, &scriptName);
 	    if (theErr == noErr) {
-		Tcl_DString scriptName;
-		theErr = FSRefToDString(&file, &scriptName);
-		if (theErr == noErr) {
-		    Tcl_EvalFile(interp, Tcl_DStringValue(&scriptName));
-		    Tcl_DStringFree(&scriptName);
-		}
-	    } else {
-		sprintf(errString, "AEDoScriptHandler: file not found");
-		AEPutParamPtr(reply, keyErrorString, typeChar,
-			errString, strlen(errString));
+		Tcl_EvalFile(interp, Tcl_DStringValue(&scriptName));
+		Tcl_DStringFree(&scriptName);
 	    }
 	} else {
-	    sprintf(errString,
-		    "AEDoScriptHandler: invalid script type '%-4.4s', must be 'alis' or 'TEXT'",
-		    (char *)(&theDesc.descriptorType));
-	    AEPutParamPtr(reply, keyErrorString, typeChar,
-		    errString, strlen(errString));
-	    theErr = -1770;
+	    sprintf(errString, "AEDoScriptHandler: file not found");
+	    AEPutParamPtr(reply, keyErrorString, typeChar, errString,
+		    strlen(errString));
 	}
+    } else {
+	/*
+	 * Umm, don't recognize what we've got...
+	 */
+
+	sprintf(errString, "AEDoScriptHandler: invalid script type '%-4.4s',"
+		" must be 'alis' or 'TEXT'", (char*) &theDesc.descriptorType);
+	AEPutParamPtr(reply, keyErrorString, typeChar, errString,
+		strlen(errString));
+	theErr = -1770;
     }
 
     /*
      * If we actually go to run Tcl code - put the result in the reply.
      */
+
     if (tclErr >= 0) {
-	if (tclErr == TCL_OK)  {
-	    AEPutParamPtr(reply, keyDirectObject, typeChar,
-		Tcl_GetStringResult(interp),
-		strlen(Tcl_GetStringResult(interp)));
+	int reslen;
+	const char *result =
+		Tcl_GetStringFromObj(Tcl_GetObjResult(interp), &reslen);
+
+	if (tclErr == TCL_OK) {
+	    AEPutParamPtr(reply, keyDirectObject, typeChar, result, reslen);
 	} else {
-	    AEPutParamPtr(reply, keyErrorString, typeChar,
-		Tcl_GetStringResult(interp),
-		strlen(Tcl_GetStringResult(interp)));
-	    AEPutParamPtr(reply, keyErrorNumber, typeInteger,
-		(Ptr) &tclErr, sizeof(int));
+	    AEPutParamPtr(reply, keyErrorString, typeChar, result, reslen);
+	    AEPutParamPtr(reply, keyErrorNumber, typeInteger, (Ptr) &tclErr,
+		    sizeof(int));
 	}
     }
 
     AEDisposeDesc(&theDesc);
-
     return theErr;
 }
 
@@ -594,8 +600,8 @@ ScriptHandler(
  *
  * ReallyKillMe --
  *
- *	This proc tries to kill the shell by running exit,
- *	called from an event scheduled by the "Quit" AppleEvent handler.
+ *	This proc tries to kill the shell by running exit, called from an
+ *	event scheduled by the "Quit" AppleEvent handler.
  *
  * Results:
  *	Runs the "exit" command which might kill the shell.
@@ -613,10 +619,14 @@ ReallyKillMe(
 {
     Tcl_Interp *interp = ((KillEvent *) eventPtr)->interp;
     Tcl_CmdInfo dummy;
-    if (Tcl_GetCommandInfo(interp, "::tk::mac::Quit", &dummy)) {
-	 Tcl_GlobalEval(interp, "::tk::mac::Quit");
-    } else {
-	Tcl_GlobalEval(interp, "exit");
+    int quit = Tcl_GetCommandInfo(interp, "::tk::mac::Quit", &dummy);
+
+    if (Tcl_GlobalEval(interp, quit ? "::tk::mac::Quit" : "exit") != TCL_OK) {
+	/*
+	 * Should be never reached...
+	 */
+
+	Tcl_BackgroundError(interp);
     }
     return 1;
 }
@@ -637,7 +647,7 @@ ReallyKillMe(
  *----------------------------------------------------------------------
  */
 
-int
+static int
 MissedAnyParameters(
     const AppleEvent *theEvent)
 {
@@ -646,7 +656,7 @@ MissedAnyParameters(
    OSStatus err;
 
    err = ChkErr(AEGetAttributePtr, theEvent, keyMissedKeywordAttr,
-	   typeWildCard, &returnedType, NULL, 0, &actualSize);
+	    typeWildCard, &returnedType, NULL, 0, &actualSize);
 
    return (err != errAEDescNotFound);
 }
@@ -667,7 +677,7 @@ MissedAnyParameters(
  *----------------------------------------------------------------------
  */
 
-OSStatus
+static OSStatus
 FSRefToDString(
     const FSRef *fsref,
     Tcl_DString *ds)
@@ -681,3 +691,11 @@ FSRefToDString(
     }
     return err;
 }
+
+/*
+ * Local Variables:
+ * mode: c
+ * c-basic-offset: 4
+ * fill-column: 78
+ * End:
+ */

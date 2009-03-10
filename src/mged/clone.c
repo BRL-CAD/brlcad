@@ -113,7 +113,7 @@ struct nametbl {
     int names_used;
 };
 
-struct nametbl obj_list;
+static struct nametbl obj_list;
 
 /**
  * a polynamial value for representing knots

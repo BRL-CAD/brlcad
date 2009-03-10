@@ -369,12 +369,24 @@ namespace eval ::safe {
 	    lappend slave_auto_path "\$[PathToken $i]"
 	    incr i
 	}
+	# Extend the access list with the paths used to look for Tcl
+	# Modules. We safe the virtual form separately as well, as
+	# syncing it with the slave has to be defered until the
+	# necessary commands are present for setup.
+	foreach dir [::tcl::tm::list] {
+	    lappend access_path $dir
+	    Set [PathToken $i $slave] $dir
+	    lappend slave_auto_path "\$[PathToken $i]"
+	    lappend slave_tm_path   "\$[PathToken $i]"
+	    incr i
+	}
+	Set [TmPathListName      $slave] $slave_tm_path
 	Set $nname $i
-	Set [PathListName $slave] $access_path
+	Set [PathListName        $slave] $access_path
 	Set [VirtualPathListName $slave] $slave_auto_path
 
-	Set [StaticsOkName $slave] $staticsok
-	Set [NestedOkName $slave] $nestedok
+	Set [StaticsOkName  $slave] $staticsok
+	Set [NestedOkName   $slave] $nestedok
 	Set [DeleteHookName $slave] $deletehook
 
 	SyncAccessPath $slave
@@ -439,13 +451,17 @@ proc ::safe::interpAddToAccessPath {slave path} {
 	# NB we need to add [namespace current], aliases are always
 	# absolute paths.
 	::interp alias $slave source {} [namespace current]::AliasSource $slave
-	::interp alias $slave load {} [namespace current]::AliasLoad $slave
+	::interp alias $slave load   {} [namespace current]::AliasLoad $slave
 
 	# This alias lets the slave use the encoding names, convertfrom,
 	# convertto, and system, but not "encoding system <name>" to set
 	# the system encoding.
 
 	::interp alias $slave encoding {} [namespace current]::AliasEncoding \
+		$slave
+
+	# Handling Tcl Modules, we need a restricted form of Glob.
+	::interp alias $slave glob {} [namespace current]::AliasGlob \
 		$slave
 
 	# This alias lets the slave have access to a subset of the 'file'
@@ -463,14 +479,24 @@ proc ::safe::interpAddToAccessPath {slave path} {
 	# by Tcl_MakeSafe(3)
 
 
-	# Source init.tcl into the slave, to get auto_load and other
-	# procedures defined:
+	# Source init.tcl and tm.tcl into the slave, to get auto_load
+	# and other procedures defined:
 
-	if {[catch {::interp eval $slave\
+	if {[catch {::interp eval $slave \
 		{source [file join $tcl_library init.tcl]}} msg]} {
 	    Log $slave "can't source init.tcl ($msg)"
 	    error "can't source init.tcl into slave $slave ($msg)"
 	}
+
+	if {[catch {::interp eval $slave \
+		{source [file join $tcl_library tm.tcl]}} msg]} {
+	    Log $slave "can't source tm.tcl ($msg)"
+	    error "can't source tm.tcl into slave $slave ($msg)"
+	}
+
+	# Sync the paths used to search for Tcl modules. This can be
+	# done only now, after tm.tcl was loaded.
+	::interp eval $slave [list ::tcl::tm::add {*}[Set [TmPathListName $slave]]]
 
 	return $slave
     }
@@ -610,6 +636,10 @@ proc ::safe::setLogCmd {args} {
     proc VirtualPathListName {slave} {
 	return "[InterpStateName $slave](access_path_slave)"
     }
+    # returns the variable name of the complete tm path list
+    proc TmPathListName {slave} {
+	return "[InterpStateName $slave](tm_path_slave)"
+    }
     # returns the variable name of the number of items
     proc PathNumberName {slave} {
 	return "[InterpStateName $slave](access_path,n)"
@@ -707,19 +737,96 @@ proc ::safe::setLogCmd {args} {
 	}
     }
 
+    # AliasGlob is the target of the "glob" alias in safe interpreters.
+
+    proc AliasGlob {slave args} {
+	Log $slave "GLOB ! $args" NOTICE
+	set cmd {}
+	set at 0
+
+	set dir        {}
+	set virtualdir {}
+
+	while {$at < [llength $args]} {
+	    switch -glob -- [set opt [lindex $args $at]] {
+		-nocomplain -
+		-join       { lappend cmd $opt ; incr at }
+		-directory  {
+		    lappend cmd $opt ; incr at
+		    set virtualdir [lindex $args $at]
+
+		    # get the real path from the virtual one.
+		    if {[catch {set dir [TranslatePath $slave $virtualdir]} msg]} {
+			Log $slave $msg
+			return -code error "permission denied"
+		    }
+		    # check that the path is in the access path of that slave
+		    if {[catch {DirInAccessPath $slave $dir} msg]} {
+			Log $slave $msg
+			return -code error "permission denied"
+		    }
+		    lappend cmd $dir ; incr at
+		}
+		pkgIndex.tcl {
+		    # Oops, this is globbing a subdirectory in regular
+		    # package search. That is not wanted. Abort,
+		    # handler does catch already (because glob was not
+		    # defined before). See package.tcl, lines 484ff in
+		    # tclPkgUnknown.
+		    error "unknown command glob"
+		}
+		-* {
+		    Log $slave "Safe base rejecting glob option '$opt'"
+		    error      "Safe base rejecting glob option '$opt'"
+		}
+		default {
+		    lappend cmd $opt ; incr at
+		}
+	    }
+	}
+
+	Log $slave "GLOB = $cmd" NOTICE
+
+	if {[catch {::interp invokehidden $slave glob {*}$cmd} msg]} {
+	    Log $slave $msg
+	    return -code error "script error"
+	}
+
+	Log $slave "GLOB @ $msg" NOTICE
+
+	# Translate path back to what the slave should see.
+	set res {}
+	foreach p $msg {
+	    regsub -- ^$dir $p $virtualdir p
+	    lappend res $p
+	}
+
+	Log $slave "GLOB @ $res" NOTICE
+	return $res
+    }
 
     # AliasSource is the target of the "source" alias in safe interpreters.
 
     proc AliasSource {slave args} {
 
 	set argc [llength $args]
-	# Allow only "source filename"
+	# Extended for handling of Tcl Modules to allow not only
+	# "source filename", but "source -encoding E filename" as
+	# well.
+	if {[lindex $args 0] eq "-encoding"} {
+	    incr argc -2
+	    set encoding [lrange $args 0 1]
+	    set at 2
+	} else {
+	    set at 0
+	    set encoding {}
+	}
 	if {$argc != 1} {
-	    set msg "wrong # args: should be \"source fileName\""
+	    set msg "wrong # args: should be \"source ?-encoding E? fileName\""
 	    Log $slave "$msg ($args)"
 	    return -code error $msg
 	}
-	set file [lindex $args 0]
+	set file [lindex $args $at]
 	
 	# get the real path from the virtual one.
 	if {[catch {set file [TranslatePath $slave $file]} msg]} {
@@ -740,7 +847,7 @@ proc ::safe::setLogCmd {args} {
 	}
 
 	# passed all the tests , lets source it:
-	if {[catch {::interp invokehidden $slave source $file} msg]} {
+	if {[catch {::interp invokehidden $slave source {*}$encoding $file} msg]} {
 	    Log $slave $msg
 	    return -code error "script error"
 	}
@@ -837,6 +944,25 @@ proc ::safe::setLogCmd {args} {
 
 	if {[lsearch -exact $norm_access_path $norm_parent] == -1} {
 	    error "\"$file\": not in access_path"
+	}
+    }
+
+    proc DirInAccessPath {slave dir} {
+	set access_path [GetAccessPath $slave]
+
+	if {[file isfile $dir]} {
+	    error "\"$dir\": is a file"
+	}
+
+	# Normalize paths for comparison since lsearch knows nothing of
+	# potential pathname anomalies.
+	set norm_dir [file normalize $dir]
+	foreach path $access_path {
+	    lappend norm_access_path [file normalize $path]
+	}
+
+	if {[lsearch -exact $norm_access_path $norm_dir] == -1} {
+	    error "\"$dir\": not in access_path"
 	}
     }
 

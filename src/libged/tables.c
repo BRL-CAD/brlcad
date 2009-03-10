@@ -34,9 +34,10 @@
 #endif
 #include <ctype.h>
 #include <string.h>
-
 #include "bio.h"
-#include "ged_private.h"
+
+#include "./ged_private.h"
+
 
 /* structure to distinguish new solids from existing (old) solids */
 struct identt {

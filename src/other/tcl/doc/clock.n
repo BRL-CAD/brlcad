@@ -592,8 +592,9 @@ with exactly two digits.  On input, accepts two digits and interprets them
 as the number of the minute of the hour.
 .TP
 \fB%N\fR
-On output, produces the number of the month (1-12) with one or two digits.
-digits.  On input, accepts one or two digits, possibly with leading whitespace,
+On output, produces the number of the month (1-12) with one or two digits,
+and a leading blank for one-digit dates.
+On input, accepts one or two digits, possibly with leading whitespace,
 and interprets them as the number of the month.
 .TP
 \fB%Od\fR, \fB%Oe\fR, \fB%OH\fR, \fB%OI\fR, \fB%Ok\fR, \fB%Ol\fR, \fB%Om\fR, \fB%OM\fR, \fB%OS\fR, \fB%Ou\fR, \fB%Ow\fR, \fB%Oy\fR
@@ -881,6 +882,7 @@ unit can be specified as a singular or plural, as in \fB3 weeks\fR.
 These modifiers may also be specified:
 \fBtomorrow\fR, \fByesterday\fR, \fBtoday\fR, \fBnow\fR,
 \fBlast\fR, \fBthis\fR, \fBnext\fR, \fBago\fR.
+.PP
 The actual date is calculated according to the following steps.
 .PP
 First, any absolute date and/or time is processed and converted.

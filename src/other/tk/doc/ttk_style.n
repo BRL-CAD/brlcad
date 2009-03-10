@@ -58,7 +58,7 @@ for style \fIstyle\fR.
 .TP 
 \fBttk::style element create\fR \fIelementName\fR \fItype\fR ?\fIargs...\fR?
 Creates a new element in the current theme of type \fItype\fR.
-The only built-in element type is \fIimage\fR (see \fIimage(n)\fR),
+The only built-in element type is \fIimage\fR (see \fBttk_image\fR(n)),
 although themes may define other element types 
 (see \fBTtk_RegisterElementFactory\fR).
 .TP 
@@ -117,6 +117,6 @@ ttk::style layout Horizontal.TScrollbar {
 }
 .CE
 .SH "SEE ALSO"
-ttk::intro(n), ttk::widget(n), photo(n)
+ttk::intro(n), ttk::widget(n), photo(n), ttk_image(n)
 .SH KEYWORDS
 style, theme, appearance

@@ -186,7 +186,7 @@ possible the lines are counted based on the smallest possible
 \fBeval\fR or procedure body, as that scope is usually easier to find
 than any dynamic outer scope.
 .PP
-The syntactic form \fB{expand}\fR is handled like \fBeval\fR. I.e. if it
+The syntactic form \fB{*}\fR is handled like \fBeval\fR. I.e. if it
 is given a literal list argument the system tracks the linenumber
 within the list words as well, and otherwise all linenumbers are
 counted relative to the start of each word (smallest scope)

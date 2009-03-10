@@ -50,17 +50,19 @@
  */
 
 #include "common.h"
-#include "bio.h"
 
 #include <stdlib.h>
 #include <ctype.h>
 #include <math.h>
 #include <string.h>
+#include "bio.h"
 
 #include "vmath.h"
 #include "db.h"
 #include "raytrace.h"
-#include "ged_private.h"
+
+#include "./ged_private.h"
+
 
 #define CLONE_VERSION "Clone ver 4.0\n2006-08-08\n"
 #define CLONE_BUFSIZE 512
@@ -100,7 +102,7 @@ struct nametbl {
     int names_used;
 };
 
-struct nametbl obj_list;
+static struct nametbl obj_list;
 
 /**
  * a polynamial value for representing knots

@@ -1,6 +1,4 @@
-# $Id: PKGBUILD 31528 2008-06-21 18:45:54Z louipc $
-
-#                     P K G B U I L D . I N
+#                     P K G B U I L D
 # BRL-CAD
 #
 # Copyright (c) 2007-2009 United States Government as represented by
@@ -38,7 +36,7 @@
 #
 # This is the BRL-CAD package file for Arch Linux.
 #
-# Contributor: Loui Chang <louipc.ist@gmail.com>
+# Contributor: Loui Chang <louipc.ist@NOSPAMgmail.com>
 #
 ###
 pkgname=brlcad
@@ -52,7 +50,8 @@ url="http://brlcad.org"
 license=('custom:BDL' 'BSD' 'LGPL')
 install=brlcad.install
 arch=('i686' 'x86_64')
-makedepends=('bc')
+makedepends=('bc' 'libxslt')
+optdepends=('tkhtml3: For man page browsing in mged.')
 depends=('libpng' 'zlib' 'libgl' 'tk>=8.5')
 
 options=('!libtool' '!strip' 'docs')

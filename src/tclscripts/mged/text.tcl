@@ -22,6 +22,28 @@
 # Utility routines called by MGED's Tcl/Tk command window(s).
 #
 
+bind Text <Control-Key-slash> {}
+bind Text <<Cut>> {}
+
+proc tk_textPaste {w} {
+    global tcl_platform
+    if {![catch {::tk::GetSelection $w CLIPBOARD} sel]} {
+	set oldSeparator [$w cget -autoseparators]
+	if {$oldSeparator} {
+	    $w configure -autoseparators 0
+	    $w edit separator
+	}
+	#if {[tk windowingsystem] ne "x11"} {
+	#    catch { $w delete sel.first sel.last }
+	#}
+	$w insert insert $sel
+	if {$oldSeparator} {
+	    $w edit separator
+	    $w configure -autoseparators 1
+	}
+    }
+}
+
 proc distribute_text { w cmd str } {
     global mged_players
     global mged_default
@@ -281,6 +303,8 @@ proc gets {channelId args} {
     if {$len != 0 && $len != 1} {
 	error "Usage: gets channelId ?varName?"
     }
+   
+    upvar $args [lindex $args 0]
 
     if {$channelId != "stdin"} {
 	return [eval tcl_gets $channelId $args]
@@ -1884,8 +1908,16 @@ proc tab_expansion { line } {
     return [list $newCommand $matches]
 }
 
+proc do_windows_copy {_w} {
+    catch {
+	clipboard clear -displayof $_w;
+	clipboard append -displayof $_w [selection get -displayof $_w]
+    }
+}
+
 proc set_text_key_bindings { id } {
     global mged_gui
+    global tcl_platform
 
     set w .$id.t
     switch $mged_gui($id,edit_style) {
@@ -1996,12 +2028,16 @@ proc set_text_key_bindings { id } {
 	break
     }
 
-    bind $w <Control-c> "\
+    if {$tcl_platform(platform) == "windows"} {
+	bind $w <Control-c> "do_windows_copy $w; break"
+    } else {
+	bind $w <Control-c> "\
 	interrupt_cmd %W;\
 	if {\$mged_gui($id,edit_style) == \"vi\"} {\
 	    vi_insert_mode %W\
 	};\
 	break"
+    }
 
     bind $w <Control-e> {
 	end_of_line %W

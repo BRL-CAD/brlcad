@@ -49,6 +49,7 @@ man1DOCBOOK = \
 	attr.xml \
 	autoview.xml \
 	bev.xml \
+	bo.xml \
 	bot_condense.xml \
 	bot_decimate.xml \
 	bot_face_fuse.xml \
@@ -59,11 +60,19 @@ man1DOCBOOK = \
 	c.xml \
 	cat.xml \
 	center.xml \
+	coil.xml \
 	color.xml \
 	comb_color.xml \
 	copyeval.xml \
 	copymat.xml \
-	g_qa.xml \
+	cp.xml \
+	cpi.xml \
+	d.xml \
+	dall.xml \
+	db.xml \
+	db_glob.xml \
+	dbconcat.xml \
+	gqa.xml \
 	mged.xml \
 	nirt.xml \
 	rt.xml \

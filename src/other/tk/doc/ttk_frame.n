@@ -37,7 +37,7 @@ If specified, the widget's requested width in pixels.
 If specified, the widget's requested height in pixels.
 .SH "WIDGET COMMAND"
 Supports the standard widget commands
-\fBconfigure\fR, \fBcget\fR, \fBinstate\fR, and \fBstate\fR;
+\fBconfigure\fR, \fBcget\fR, \fBidentify\fR, \fBinstate\fR, and \fBstate\fR;
 see \fIttk::widget(n)\fR.
 .SH "NOTES"
 Note that if the \fBpack\fR, \fBgrid\fR, or other geometry managers

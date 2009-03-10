@@ -24,16 +24,18 @@
  */
 
 #include "common.h"
-#include "bio.h"
 
 #include <stdlib.h>
 #include <ctype.h>
 #include <string.h>
+#include "bio.h"
 
 #include "plot3.h"
 #include "solid.h"
-#include "qray.h"
-#include "ged_private.h"
+
+#include "./qray.h"
+#include "./ged_private.h"
+
 
 /*
  *  plot file [opts]

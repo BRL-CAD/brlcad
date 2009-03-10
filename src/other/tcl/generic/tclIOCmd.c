@@ -1643,6 +1643,15 @@ Tcl_FcopyObjCmd(
 	    if (TclGetIntFromObj(interp, objv[i+1], &toRead) != TCL_OK) {
 		return TCL_ERROR;
 	    }
+	    if (toRead<0) {
+		/*
+		 * Handle all negative sizes like -1, meaning 'copy all'. By
+		 * resetting toRead we avoid changes in the core copying
+		 * functions (which explicitly check for -1 and crash on any
+		 * other negative value).
+		 */
+		toRead = -1;
+	    }
 	    break;
 	case FcopyCommand:
 	    cmdPtr = objv[i+1];

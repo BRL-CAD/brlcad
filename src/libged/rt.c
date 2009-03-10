@@ -31,7 +31,7 @@
 #include "cmd.h"
 #include "solid.h"
 
-#include "ged_private.h"
+#include "./ged_private.h"
 
 
 int
@@ -41,6 +41,9 @@ ged_rt(struct ged *gedp, int argc, const char *argv[])
     register int i;
     char pstring[32];
     static const char *usage = "options";
+
+    const char *bin;
+    char rt[256] = {0};
 
     GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
     GED_CHECK_DRAWABLE(gedp, BRLCAD_ERROR);
@@ -55,8 +58,17 @@ ged_rt(struct ged *gedp, int argc, const char *argv[])
 	return BRLCAD_ERROR;
     }
 
+    bin = bu_brlcad_root("bin", 1);
+    if (bin) {
+#ifdef _WIN32
+	snprintf(rt, 256, "\"%s/%s\"", bin, argv[0]);
+#else
+	snprintf(rt, 256, "%s/%s", bin, argv[0]);
+#endif
+    }
+
     vp = &gedp->ged_gdp->gd_rt_cmd[0];
-    *vp++ = (char *)argv[0];
+    *vp++ = rt;
     *vp++ = "-M";
 
     if (gedp->ged_gvp->gv_perspective > 0) {

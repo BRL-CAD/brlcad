@@ -24,14 +24,15 @@
  */
 
 #include "common.h"
-#include "bio.h"
 
 #include <stdlib.h>
 #include <ctype.h>
 #include <string.h>
+#include "bio.h"
 
 #include "rtgeom.h"
-#include "ged_private.h"
+
+#include "./ged_private.h"
 
 int
 ged_arb(struct ged *gedp, int argc, const char *argv[])

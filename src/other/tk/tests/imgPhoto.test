@@ -665,18 +665,6 @@ test imgPhoto-14.3 {GIF -index interleaving and small frames} -setup {
     image delete $i
 }
 
-test imgPhoto-14.3 {GIF -index interleaving and small frames} -setup {
-    set i [image create photo]
-} -body {
-    # Interleaved GIFs used to crash us when a smaller subsequent frame
-    # was accessed.
-    $i configure -format {GIF -index 1} -data {
-        R0lGODdhAQAFAPAAAP8AAAAAACwAAAAAAQAFAEACAoRdACwAAAAAAQAEAEACAoRRADs=
-    }
-} -cleanup {
-    image delete $i
-}
-
 test imgPhoto-14.4 {GIF buffer overflow} -setup {
     set i [image create photo]
 } -body {

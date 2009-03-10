@@ -216,7 +216,7 @@ if (\fBTcl_DictObjFirst\fR(interp, objPtr, &search,
         &key, &value, &done) != TCL_OK) {
     return TCL_ERROR;
 }
-for (; done ; \fBTcl_DictObjNext\fR(&search, &key, &value, &done)) {
+for (; !done ; \fBTcl_DictObjNext\fR(&search, &key, &value, &done)) {
     /*
      * Note that strcmp() is not a good way of comparing
      * objects and is just used here for demonstration

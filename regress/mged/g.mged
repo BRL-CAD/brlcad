@@ -1,0 +1,10 @@
+puts "*** Testing 'g' command ***"
+
+in_sph g 1
+in_sph g 2
+in_sph g 3
+comb g_comb1.c u g_sph1.s u g_sph2.s u g_sph3.s
+g g1.c g_sph1.s g_sph2.s g_sph3.s
+g g2.c g_sph1.s g_sph2.s g_comb1.c
+
+puts "*** 'g' testing completed ***"

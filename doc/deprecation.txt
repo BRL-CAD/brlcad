@@ -50,6 +50,9 @@ new names should be listed for reference.
 
 7.14
 ----
+src/gtools
+	g_[toolname] -> g[toolname] [deprecated 7.14]
+
 src/other/jove
 	jove -> emacs [deprecated 7.14]
 include/raytrace.h
@@ -59,6 +62,7 @@ include/raytrace.h
 include/bu.h
 	%S format specifier -> %V format specifier for bu_vls [deprecated 7.14]
 mged
+	tops -g -u -> now default behavior [deprecated 7.14]
 	-n option -> -c option [deprecated 7.14]
 include/vmath.h
 	VADD2_2D -> V2ADD2 [deprecated 7.14]
@@ -110,8 +114,10 @@ include/raytrace.h
 * OBSOLETE *
 ************
 
-7.16.0
+7.14.4
 ------
+include/pkg.h
+	uses size_t for lengths in API calls
 include/bu.h
 	bu_association() [unused]
 

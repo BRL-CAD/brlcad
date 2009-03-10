@@ -191,6 +191,15 @@ test ttk-3.2 "Propagate errors from variable traces" -body {
     unset ::A ; destroy .cb
 } -returnCodes error -result {can't set "A": failure}
 
+test ttk-3.4 "SF#2009213" -body {
+    ttk::style configure TScale -sliderrelief {}
+    pack [ttk::scale .s]
+    update
+} -cleanup {
+    ttk::style configure TScale -sliderrelief raised
+    destroy .s
+}
+
 # Test resource allocation
 # (@@@ "-font" is a compatibility option now, so tests 4.1-4.3
 # don't really test anything useful at the moment.)

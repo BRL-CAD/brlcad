@@ -1,0 +1,11 @@
+puts "*** Testing 'Z' command ***"
+
+in_arb8 Z 1
+in_eto Z 2
+comb Z.c u Z_arb81.s u Z_eto2.s
+e Z_arb81.s Z_eto2.s Z.c
+who
+Z
+who
+
+puts "*** 'Z' testing completed ***"

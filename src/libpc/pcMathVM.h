@@ -220,6 +220,12 @@ struct FunctionNode : public Node
     virtual MathFunction const & func() const = 0;
 };
 
+struct AssignNode : public Node
+{
+    boost::shared_ptr<Node> clone() const;
+    void assign(double & var, double val) const;
+};
+
 struct ConstantNode : public NumberNode
 {
     ConstantNode(double v);
@@ -249,7 +255,6 @@ struct sysFunctionNode : public FunctionNode
 private:
     boost::shared_ptr<MathFunction> fp;
 };
-
 #endif
 /** @} */
 /*

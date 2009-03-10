@@ -338,8 +338,6 @@ PrintUsage(
 {
     register Tk_ArgvInfo *infoPtr;
     size_t width, i, numSpaces;
-#define NUM_SPACES 20
-    static char spaces[] = "                    ";
     char tmp[TCL_DOUBLE_SPACE];
 
     /*
@@ -372,13 +370,8 @@ PrintUsage(
 	    }
 	    Tcl_AppendResult(interp, "\n ", infoPtr->key, ":", NULL);
 	    numSpaces = width + 1 - strlen(infoPtr->key);
-	    while (numSpaces > 0) {
-		if (numSpaces >= NUM_SPACES) {
-		    Tcl_AppendResult(interp, spaces, NULL);
-		} else {
-		    Tcl_AppendResult(interp, spaces+NUM_SPACES-numSpaces,NULL);
-		}
-		numSpaces -= NUM_SPACES;
+	    while (numSpaces-- > 0) {
+		Tcl_AppendResult(interp, " ", NULL);
 	    }
 	    Tcl_AppendResult(interp, infoPtr->help, NULL);
 	    switch (infoPtr->type) {
@@ -387,7 +380,7 @@ PrintUsage(
 		Tcl_AppendResult(interp, "\n\t\tDefault value: ", tmp, NULL);
 		break;
 	    case TK_ARGV_FLOAT:
-		sprintf(tmp, "%g", *((double *) infoPtr->dst));
+		Tcl_PrintDouble(NULL, *((double *) infoPtr->dst), tmp);
 		Tcl_AppendResult(interp, "\n\t\tDefault value: ", tmp, NULL);
 		break;
 	    case TK_ARGV_STRING: {

@@ -56,18 +56,13 @@ in the style.
 .\" .OP \-padding padding Padding
 .\" .OP \-relief relief Relief
 .SH "WIDGET COMMAND"
+In addition to the standard 
+\fBcget\fR, \fBconfigure\fR, \fBidentify\fR, \fBinstate\fR, and \fBstate\fR 
+commands, checkbuttons support the following additional
+widget commands:
 .TP
 \fIpathName \fBinvoke\fR
 Invokes the command associated with the button.
-.TP
-\fIpathName \fBcget\fR \fIoption\fR
-.TP
-\fIpathName \fBconfigure\fR ?\fIoption\fR? ?\fIvalue option value ...\fR?
-.TP
-\fIpathName \fBinstate \fIstateSpec\fR ?\fIscript\fR?
-.TP
-\fIpathName \fBstate\fR ?\fIstateSpec\fR?
-See \fIttk::widget(n)\fR
 .SH "COMPATIBILITY OPTIONS"
 .OP \-state state State
 May be set to \fBnormal\fR or \fBdisabled\fR to control the

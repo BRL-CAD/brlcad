@@ -1,0 +1,7 @@
+puts "*** Testing 'setview' command ***"
+
+view quat
+setview 23 3 1
+view quat
+
+puts "*** 'setview' testing completed ***"

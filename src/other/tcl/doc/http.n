@@ -9,13 +9,13 @@
 '\" RCS: @(#) $Id$
 '\" 
 .so man.macros
-.TH "http" n 2.5 http "Tcl Bundled Packages"
+.TH "http" n 2.7 http "Tcl Bundled Packages"
 .BS
 '\" Note:  do not modify the .SH NAME line immediately below!
 .SH NAME
-http \- Client-side implementation of the HTTP/1.0 protocol
+http \- Client-side implementation of the HTTP/1.1 protocol
 .SH SYNOPSIS
-\fBpackage require http ?2.5?\fR
+\fBpackage require http ?2.7?\fR
 .\" See Also -useragent option documentation in body!
 .sp
 \fB::http::config \fI?options?\fR
@@ -36,6 +36,8 @@ http \- Client-side implementation of the HTTP/1.0 protocol
 .sp
 \fB::http::ncode \fItoken\fR
 .sp
+\fB::http::meta \fItoken\fR
+.sp
 \fB::http::data \fItoken\fR
 .sp
 \fB::http::error \fItoken\fR
@@ -48,9 +50,9 @@ http \- Client-side implementation of the HTTP/1.0 protocol
 .BE
 .SH DESCRIPTION
 .PP
-The \fBhttp\fR package provides the client side of the HTTP/1.0
+The \fBhttp\fR package provides the client side of the HTTP/1.1
 protocol.  The package implements the GET, POST, and HEAD operations
-of HTTP/1.0.  It allows configuration of a proxy host to get through
+of HTTP/1.1.  It allows configuration of a proxy host to get through
 firewalls.  The package is compatible with the \fBSafesock\fR security
 policy, so it can be used by untrusted applets to do URL fetching from
 a restricted set of hosts. This package can be extended to support
@@ -121,7 +123,7 @@ characters.
 .TP
 \fB\-useragent\fR \fIstring\fR
 The value of the User-Agent header in the HTTP request.  The default is
-.QW "\fBTcl http client package 2.5\fR" .
+.QW "\fBTcl http client package 2.7\fR" .
 .RE
 .TP
 \fB::http::geturl\fR \fIurl\fR ?\fIoptions\fR? 
@@ -204,6 +206,19 @@ HTTP request:
 Pragma: no-cache
 .CE
 .TP
+\fB\-keepalive\fR \fIboolean\fR
+If true, attempt to keep the connection open for servicing
+multiple requests.  Default is 0.
+.TP
+\fB\-method\fR \fItype\fR
+Force the HTTP request method to \fItype\fR. \fB::http::geturl\fR will
+auto-select GET, POST or HEAD based on other options, but this option
+enables choices like PUT and DELETE for webdav support.
+.TP
+\fB\-myaddr\fR \fIaddress\fR
+Pass an specific local address to the underlying \fBsocket\fR call in case
+multiple interfaces are available.
+.TP
 \fB\-progress\fR \fIcallback\fR
 The \fIcallback\fR is made after each transfer of data from the URL.
 The callback gets three additional arguments: the \fItoken\fR from
@@ -219,6 +234,11 @@ proc httpProgress {token total current} {
 }
 .CE
 .RE
+.TP
+\fB\-protocol\fR \fIversion\fR
+Select the HTTP protocol version to use. This should be 1.0 or 1.1 (the
+default). Should only be necessary for servers that do not understand or
+otherwise complain about HTTP/1.1.
 .TP
 \fB\-query\fR \fIquery\fR
 This flag causes \fB::http::geturl\fR to do a POST request that passes the
@@ -248,6 +268,9 @@ unable to determine the size, it returns an error.
 The \fIcallback\fR is made after each transfer of data to the URL
 (i.e. POST) and acts exactly like the \fB\-progress\fR option (the
 callback format is the same).
+.TP
+\fB\-strict\fR \fIboolean\fR
+Whether to enforce RFC 3986 URL validation on the request.  Default is 1.
 .TP
 \fB\-timeout\fR \fImilliseconds\fR
 If \fImilliseconds\fR is non-zero, then \fB::http::geturl\fR sets up a timeout
@@ -314,6 +337,11 @@ code (200, 404, etc.) from the \fBhttp\fR element of the state array.
 This is a convenience procedure that returns the \fBcurrentsize\fR
 element of the state array, which represents the number of bytes
 received from the URL in the \fB::http::geturl\fR call.
+.TP
+\fB::http::meta\fR \fItoken\fR
+This is a convenience procedure that returns the \fBmeta\fR
+element of the state array which contains the HTTP response
+headers. See below for an explanation of this element.
 .TP
 \fB::http::cleanup\fR \fItoken\fR
 This procedure cleans up the state associated with the connection
@@ -446,7 +474,7 @@ The HTTP status reply from the server.  This value
 is returned by the \fB::http::code\fR command.  The format of this value is:
 .RS
 .CS
-\fIHTTP/1.0 code string\fR
+\fIHTTP/1.1 code string\fR
 .CE
 The \fIcode\fR is a three-digit number defined in the HTTP standard.
 A code of 200 is OK.  Codes beginning with 4 or 5 indicate errors.

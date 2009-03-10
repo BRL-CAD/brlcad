@@ -77,8 +77,8 @@ if test ! -f mged.g ; then
     exit 1
 fi
 
-cmds="`$MGED -c mged.g ? 2>&1`"
-help="`$MGED -c mged.g help 2>&1`" 
+cmds="`$MGED -c mged.g ? 2>&1 | grep -v Using`"
+help="`$MGED -c mged.g help 2>&1 | grep -v Using`"
 # cmds="$cmds `$MGED -c mged.g ?lib 2>&1`"
 # cmds="$cmds `$MGED -c mged.g ?devel 2>&1`"
 

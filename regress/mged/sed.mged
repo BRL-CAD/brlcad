@@ -1,0 +1,308 @@
+puts "*** Testing 'sed' command ***"
+
+in_all_prims sed
+
+
+# Make sure edit states change for all primitives that don't
+# have a custom editor  (e.g. sketch)
+
+puts "sed arb4 primitive:"
+e sed_arb4.s
+status state
+sed sed_arb4.s
+status state
+press accept
+status state
+d sed_arb4.s
+
+
+puts "sed arb5 primitive:"
+e sed_arb5.s
+status state
+sed sed_arb5.s
+status state
+press accept
+status state
+d sed_arb5.s
+
+
+puts "sed arb6 primitive:"
+e sed_arb6.s
+status state
+sed sed_arb6.s
+status state
+press accept
+status state
+d sed_arb6.s
+
+
+puts "sed arb7 primitive:"
+e sed_arb7.s
+status state
+sed sed_arb7.s
+status state
+press accept
+status state
+d sed_arb7.s
+
+
+puts "sed arb8 primitive:"
+e sed_arb8.s
+status state
+sed sed_arb8.s
+status state
+press accept
+status state
+d sed_arb8.s
+
+
+puts "sed arbn primitive:"
+e sed_arbn.s
+status state
+sed sed_arbn.s
+status state
+press accept
+status state
+d sed_arbn.s
+
+
+puts "sed ars primitive:"
+e sed_ars.s
+status state
+sed sed_ars.s
+status state
+press accept
+status state
+d sed_ars.s
+
+
+puts "sed bot primitive:"
+e sed_bot.s
+status state
+sed sed_bot.s
+status state
+press accept
+status state
+d sed_bot.s
+
+
+puts "sed ehy primitive:"
+e sed_ehy.s
+status state
+sed sed_ehy.s
+status state
+press accept
+status state
+d sed_ehy.s
+
+
+puts "sed ell primitive:"
+e sed_ell.s
+status state
+sed sed_ell.s
+status state
+press accept
+status state
+d sed_ell.s
+
+
+puts "sed ell1 primitive:"
+e sed_ell1.s
+status state
+sed sed_ell1.s
+status state
+press accept
+status state
+d sed_ell1.s
+
+
+puts "sed epa primitive:"
+e sed_epa.s
+status state
+sed sed_epa.s
+status state
+press accept
+status state
+d sed_epa.s
+
+
+puts "sed eto primitive:"
+e sed_eto.s
+status state
+sed sed_eto.s
+status state
+press accept
+status state
+d sed_eto.s
+
+
+puts "sed extrude primitive:"
+e sed_extrude.s
+status state
+sed sed_extrude.s
+status state
+press accept
+status state
+d sed_extrude.s
+
+
+puts "sed grip primitive:"
+e sed_grip.s
+status state
+sed sed_grip.s
+status state
+press accept
+status state
+d sed_grip.s
+
+
+puts "sed half primitive:"
+e sed_half.s
+status state
+sed sed_half.s
+status state
+press accept
+status state
+d sed_half.s
+
+
+puts "sed hyp primitive:"
+e sed_hyp.s
+status state
+sed sed_hyp.s
+status state
+press accept
+status state
+d sed_hyp.s
+
+
+puts "sed nmg primitive:"
+e sed_nmg.s
+status state
+sed sed_nmg.s
+status state
+press accept
+status state
+d sed_nmg.s
+
+
+puts "sed part primitive:"
+e sed_part.s
+status state
+sed sed_part.s
+status state
+press accept
+status state
+d sed_part.s
+
+
+puts "sed pipe primitive:"
+e sed_pipe.s
+status state
+sed sed_pipe.s
+status state
+press accept
+status state
+d sed_pipe.s
+
+
+puts "sed rcc primitive:"
+e sed_rcc.s
+status state
+sed sed_rcc.s
+status state
+press accept
+status state
+d sed_rcc.s
+
+
+puts "sed rec primitive:"
+e sed_rec.s
+status state
+sed sed_rec.s
+status state
+press accept
+status state
+d sed_rec.s
+
+
+puts "sed rhc primitive:"
+e sed_rhc.s
+status state
+sed sed_rhc.s
+status state
+press accept
+status state
+d sed_rhc.s
+
+
+puts "sed rpc primitive:"
+e sed_rpc.s
+status state
+sed sed_rpc.s
+status state
+press accept
+status state
+d sed_rpc.s
+
+
+puts "sed rpp primitive:"
+e sed_rpp.s
+status state
+sed sed_rpp.s
+status state
+press accept
+status state
+d sed_rpp.s
+
+
+puts "sed sph primitive:"
+e sed_sph.s
+status state
+sed sed_sph.s
+status state
+press accept
+status state
+d sed_sph.s
+
+
+puts "sed tec primitive:"
+e sed_tec.s
+status state
+sed sed_tec.s
+status state
+press accept
+status state
+d sed_tec.s
+
+
+puts "sed tgc primitive:"
+e sed_tgc.s
+status state
+sed sed_tgc.s
+status state
+press accept
+status state
+d sed_tgc.s
+
+
+puts "sed tor primitive:"
+e sed_tor.s
+status state
+sed sed_tor.s
+status state
+press accept
+status state
+d sed_tor.s
+
+
+puts "sed trc primitive:"
+e sed_trc.s
+status state
+sed sed_trc.s
+status state
+press accept
+status state
+d sed_trc.s
+
+puts "*** 'sed' testing completed ***"

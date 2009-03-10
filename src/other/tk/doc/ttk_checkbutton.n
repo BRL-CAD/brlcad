@@ -38,7 +38,7 @@ The name of a global variable whose value is linked to the widget.
 Defaults to the widget pathname if not specified.
 .SH "WIDGET COMMAND"
 In addition to the standard 
-\fBcget\fR, \fBconfigure\fR, \fBinstate\fR, and \fBstate\fR 
+\fBcget\fR, \fBconfigure\fR, \fBidentify\fR, \fBinstate\fR, and \fBstate\fR 
 commands, checkbuttons support the following additional
 widget commands:
 .TP

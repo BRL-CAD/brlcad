@@ -24,13 +24,13 @@
  */
 
 #include "common.h"
-#include "bio.h"
 
 #include <stdlib.h>
 #include <ctype.h>
 #include <string.h>
+#include "bio.h"
 
-#include "ged_private.h"
+#include "./ged_private.h"
 
 
 static void ged_do_prefix(struct db_i *dbip, struct rt_comb_internal *comb, union tree *comb_leaf, genptr_t prefix_ptr, genptr_t obj_ptr, genptr_t user_ptr3);

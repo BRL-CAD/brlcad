@@ -123,6 +123,7 @@ typedef struct _REPARSE_DATA_BUFFER {
 	    WORD SubstituteNameLength;
 	    WORD PrintNameOffset;
 	    WORD PrintNameLength;
+	    ULONG Flags;
 	    WCHAR PathBuffer[1];
 	} SymbolicLinkReparseBuffer;
 	struct {
@@ -445,18 +446,18 @@ WinSymLinkDirectory(
 
     memset(reparseBuffer, 0, sizeof(DUMMY_REPARSE_BUFFER));
     reparseBuffer->ReparseTag = IO_REPARSE_TAG_MOUNT_POINT;
-    reparseBuffer->SymbolicLinkReparseBuffer.SubstituteNameLength =
+    reparseBuffer->MountPointReparseBuffer.SubstituteNameLength =
 	    wcslen(nativeTarget) * sizeof(WCHAR);
     reparseBuffer->Reserved = 0;
-    reparseBuffer->SymbolicLinkReparseBuffer.PrintNameLength = 0;
-    reparseBuffer->SymbolicLinkReparseBuffer.PrintNameOffset =
-	    reparseBuffer->SymbolicLinkReparseBuffer.SubstituteNameLength
+    reparseBuffer->MountPointReparseBuffer.PrintNameLength = 0;
+    reparseBuffer->MountPointReparseBuffer.PrintNameOffset =
+	    reparseBuffer->MountPointReparseBuffer.SubstituteNameLength
 	    + sizeof(WCHAR);
-    memcpy(reparseBuffer->SymbolicLinkReparseBuffer.PathBuffer, nativeTarget,
+    memcpy(reparseBuffer->MountPointReparseBuffer.PathBuffer, nativeTarget,
 	    sizeof(WCHAR)
-	    + reparseBuffer->SymbolicLinkReparseBuffer.SubstituteNameLength);
+	    + reparseBuffer->MountPointReparseBuffer.SubstituteNameLength);
     reparseBuffer->ReparseDataLength =
-	    reparseBuffer->SymbolicLinkReparseBuffer.SubstituteNameLength+12;
+	    reparseBuffer->MountPointReparseBuffer.SubstituteNameLength+12;
 
     return NativeWriteReparse(linkDirPath, reparseBuffer);
 }
@@ -604,12 +605,12 @@ WinReadLinkDirectory(
 	 */
 
 	offset = 0;
-	if (reparseBuffer->SymbolicLinkReparseBuffer.PathBuffer[0] == L'\\') {
+	if (reparseBuffer->MountPointReparseBuffer.PathBuffer[0] == L'\\') {
 	    /*
 	     * Check whether this is a mounted volume.
 	     */
 
-	    if (wcsncmp(reparseBuffer->SymbolicLinkReparseBuffer.PathBuffer,
+	    if (wcsncmp(reparseBuffer->MountPointReparseBuffer.PathBuffer,
 		    L"\\??\\Volume{",11) == 0) {
 		char drive;
 
@@ -618,7 +619,7 @@ WinReadLinkDirectory(
 		 * to fix here. It doesn't seem very well documented.
 		 */
 
-		reparseBuffer->SymbolicLinkReparseBuffer.PathBuffer[1]=L'\\';
+		reparseBuffer->MountPointReparseBuffer.PathBuffer[1]=L'\\';
 
 		/*
 		 * Check if a corresponding drive letter exists, and use that
@@ -626,7 +627,7 @@ WinReadLinkDirectory(
 		 */
 
 		drive = TclWinDriveLetterForVolMountPoint(
-			reparseBuffer->SymbolicLinkReparseBuffer.PathBuffer);
+			reparseBuffer->MountPointReparseBuffer.PathBuffer);
 		if (drive != -1) {
 		    char driveSpec[3] = {
 			'\0', ':', '\0'
@@ -649,14 +650,14 @@ WinReadLinkDirectory(
 		 */
 
 		goto invalidError;
-	    } else if (wcsncmp(reparseBuffer->SymbolicLinkReparseBuffer
+	    } else if (wcsncmp(reparseBuffer->MountPointReparseBuffer
 		    .PathBuffer, L"\\\\?\\",4) == 0) {
 		/*
 		 * Strip off the prefix.
 		 */
 
 		offset = 4;
-	    } else if (wcsncmp(reparseBuffer->SymbolicLinkReparseBuffer
+	    } else if (wcsncmp(reparseBuffer->MountPointReparseBuffer
 		    .PathBuffer, L"\\??\\",4) == 0) {
 		/*
 		 * Strip off the prefix.
@@ -667,8 +668,8 @@ WinReadLinkDirectory(
 	}
 
 	Tcl_WinTCharToUtf((const char *)
-		reparseBuffer->SymbolicLinkReparseBuffer.PathBuffer,
-		(int) reparseBuffer->SymbolicLinkReparseBuffer
+		reparseBuffer->MountPointReparseBuffer.PathBuffer,
+		(int) reparseBuffer->MountPointReparseBuffer
 		.SubstituteNameLength, &ds);
 
 	copy = Tcl_DStringValue(&ds)+offset;
@@ -775,7 +776,6 @@ NativeWriteReparse(
 	TclWinConvertError(GetLastError());
 	return -1;
     }
-
     hFile = (*tclWinProcs->createFileProc)(linkDirPath, GENERIC_WRITE, 0,
 	    NULL, OPEN_EXISTING,
 	    FILE_FLAG_OPEN_REPARSE_POINT|FILE_FLAG_BACKUP_SEMANTICS, NULL);

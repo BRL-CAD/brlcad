@@ -1,0 +1,7 @@
+puts "*** Testing 'eye_pt' command ***"
+
+eye_pt
+eye_pt 100 100 100
+eye_pt
+
+puts "*** 'eye_pt' testing completed ***"

@@ -214,7 +214,7 @@
 		sourceDirectories = (
 		);
 	};
-	F9FD30B30CC1AD070073837D /* tktest-X11 */ = {
+	F97258A50A86873C00096C78 /* tktest-X11 */ = {
 		activeExec = 0;
 		executables = (
 			F9FD31F50CC1AD070073837D /* tktest-X11 */,

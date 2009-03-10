@@ -953,7 +953,7 @@ declare 268 generic {
     void Tcl_AppendStringsToObjVA(Tcl_Obj *objPtr, va_list argList)
 }
 declare 269 generic {
-    CONST84_RETURN char * Tcl_HashStats(Tcl_HashTable *tablePtr)
+    char * Tcl_HashStats(Tcl_HashTable *tablePtr)
 }
 declare 270 generic {
     CONST84_RETURN char * Tcl_ParseVar(Tcl_Interp *interp, CONST char *start,
@@ -2154,11 +2154,14 @@ export {
 }
 export {
     CONST char *TclTomMathInitializeStubs(Tcl_Interp* interp,
-	CONST char* version, int epoch, int revision
+	CONST char* version, int epoch, int revision)
 }
 export {
     CONST char *Tcl_PkgInitStubsCheck(Tcl_Interp *interp, CONST char *version,
-	int exact);
+	int exact)
+}
+export {
+    void Tcl_GetMemoryInfo(Tcl_DString *dsPtr)
 }
 
 # Global variables that need to be exported from the tcl shared library.

@@ -4,7 +4,7 @@
 #	uses the standard unix build system in tk/unix (which can be used directly instead of this
 #	if you are not using the tk/macosx projects).
 #
-# Copyright (c) 2002-2007 Daniel A. Steffen <das@users.sourceforge.net>
+# Copyright (c) 2002-2008 Daniel A. Steffen <das@users.sourceforge.net>
 #
 # See the file "license.terms" for information on usage and redistribution of
 # this file, and for a DISCLAIMER OF ALL WARRANTIES.
@@ -84,6 +84,10 @@ BUILD_STYLE		=
 CONFIGURE_ARGS		=
 OBJ_DIR			= ${OBJROOT}/${BUILD_STYLE}
 
+empty			:=
+space			:= ${empty} ${empty}
+objdir			= $(subst ${space},\ ,${OBJ_DIR})
+
 develop_make_args	:= BUILD_STYLE=Development CONFIGURE_ARGS=--enable-symbols
 deploy_make_args	:= BUILD_STYLE=Deployment INSTALL_TARGET=install-strip
 embedded_make_args	:= EMBEDDED_BUILD=1
@@ -108,15 +112,17 @@ WISH			= wish${VERSION}
 BUILD_TARGET		:= all tktest
 INSTALL_TARGET		:= install
 
-ifneq ($(wildcard ${TCL_BUILD_DIR}/tclConfig.sh),)
+ifneq ($(wildcard $(subst ${space},\ ,${TCL_BUILD_DIR})/tclConfig.sh),)
 TCL_DIR			:= ${TCL_BUILD_DIR}
 TCL_FRAMEWORK_DIR	:= ${TCL_BUILD_DIR}/..
+MAKE_VARS		:=
 else
 TCL_DIR			:= ${TCL_FRAMEWORK_DIR}/Tcl.framework
 TCL_EXE			:= ${TCLSH_DIR}/tclsh${TCL_VERSION}
-MAKE_VARS		= TCL_EXE
+MAKE_VARS		:= TCL_EXE
 export DYLD_FRAMEWORK_PATH := ${TCL_FRAMEWORK_DIR}
 endif
+
 export CPPROG		:= cp -p
 
 ifeq (${TK_X11},)
@@ -125,6 +131,7 @@ else
 override CONFIGURE_ARGS := ${CONFIGURE_ARGS} --enable-xft
 VERSION			:= ${VERSION}-X11
 wish			:= ${wish}-X11
+override EMBEDDED_BUILD :=
 endif
 
 INSTALL_TARGETS		= install-binaries install-libraries
@@ -146,7 +153,7 @@ install-${PROJECT}:	target = ${INSTALL_TARGET}
 clean-${PROJECT} distclean-${PROJECT} test-${PROJECT}: \
 			target = $*
 
-DO_MAKE			= +${MAKE} -C ${OBJ_DIR} ${target} ${MAKE_ARGS_V} ${MAKE_ARGS} ${EXTRA_MAKE_ARGS}
+DO_MAKE			= +${MAKE} -C "${OBJ_DIR}" ${target} ${MAKE_ARGS_V} ${MAKE_ARGS} ${EXTRA_MAKE_ARGS}
 
 #-------------------------------------------------------------------------------------------------------
 # locations for custom tk install actions
@@ -168,37 +175,37 @@ TK_FMWK_DIR		:= ${FMWK_DIR}/${PRODUCT_NAME}.framework/Versions/${VERSION}
 # build rules
 
 ${PROJECT}:
-	${MAKE} install-${PROJECT} INSTALL_ROOT=${OBJ_DIR}/
+	${MAKE} install-${PROJECT} INSTALL_ROOT="${OBJ_DIR}/"
 
-${OBJ_DIR}/Makefile: ${UNIX_DIR}/Makefile.in ${UNIX_DIR}/configure \
+${objdir}/Makefile: ${UNIX_DIR}/Makefile.in ${UNIX_DIR}/configure \
 		     ${UNIX_DIR}/tkConfig.sh.in Tk-Info.plist.in Wish-Info.plist.in
-	mkdir -p ${OBJ_DIR} && cd ${OBJ_DIR} && \
+	mkdir -p "${OBJ_DIR}" && cd "${OBJ_DIR}" && \
 	if [ ${UNIX_DIR}/configure -nt config.status ]; then ${UNIX_DIR}/configure -C \
-	--prefix=${PREFIX} --bindir=${BINDIR} --libdir=${LIBDIR} \
-	--mandir=${MANDIR} --enable-threads --enable-framework \
-	--with-tcl=${TCL_DIR} \
+	--prefix="${PREFIX}" --bindir="${BINDIR}" --libdir="${LIBDIR}" \
+	--mandir="${MANDIR}" --enable-threads --enable-framework \
+	--with-tcl="${TCL_DIR}" \
 	${CONFIGURE_ARGS} ${EXTRA_CONFIGURE_ARGS}; else ./config.status; fi
-ifneq (${TK_X11},)
-	@cd ${OBJ_DIR} && sed -e 's#/Versions/${TCL_VERSION}#/Versions/${VERSION}#' \
+ifneq (${VERSION},${TCL_VERSION})
+	@cd "${OBJ_DIR}" && sed -e 's#/Versions/${TCL_VERSION}#/Versions/${VERSION}#' \
 	tkConfig.sh > tkConfig.sh.1 && mv -f tkConfig.sh.1 tkConfig.sh
 endif
 
-build-${PROJECT}: ${OBJ_DIR}/Makefile
+build-${PROJECT}: ${objdir}/Makefile
 	${DO_MAKE}
 ifeq (${INSTALL_BUILD},)
 # symolic link hackery to trick
 # 'make install INSTALL_ROOT=${OBJ_DIR}'
 # into building Tk.framework and wish in ${SYMROOT}
-	@cd ${OBJ_DIR} && mkdir -p $(dir ./${LIBDIR}) $(dir ./${BINDIR}) ${SYMROOT} && \
-	rm -rf ./${LIBDIR} ./${BINDIR} && ln -fs ${SYMROOT} ./${LIBDIR} && \
-	ln -fs ${SYMROOT} ./${BINDIR} && ln -fs ${OBJ_DIR}/tktest ${SYMROOT}
+	@cd "${OBJ_DIR}" && mkdir -p $(dir $(subst ${space},\ ,./${LIBDIR})) $(dir $(subst ${space},\ ,./${BINDIR})) "${SYMROOT}" && \
+	rm -rf "./${LIBDIR}" "./${BINDIR}" && ln -fs "${SYMROOT}" "./${LIBDIR}" && \
+	ln -fs "${SYMROOT}" "./${BINDIR}" && ln -fs "${OBJ_DIR}/tktest" "${SYMROOT}"
 ifeq (${TK_X11},)
-	@rm -f ${OBJ_DIR}/${BINDIR} && \
-	ln -fs Wish.app/Contents/MacOS/Wish ${SYMROOT}/${WISH}
+	@rm -f "${OBJ_DIR}/${BINDIR}" && \
+	ln -fs Wish.app/Contents/MacOS/Wish "${SYMROOT}/${WISH}"
 endif
 # Create symbolic link to Tcl.framework in ${SYMROOT}if necessary
-	@cd ${SYMROOT} && if [ ! -e Tcl.framework -o -L Tcl.framework ]; then \
-	rm -f Tcl.framework && ln -s ${TCL_FRAMEWORK_DIR}/Tcl.framework . ; fi
+	@cd "${SYMROOT}" && if [ ! -e Tcl.framework -o -L Tcl.framework ]; then \
+	rm -f Tcl.framework && ln -s "${TCL_FRAMEWORK_DIR}/Tcl.framework" . ; fi
 endif
 
 install-${PROJECT}: build-${PROJECT}
@@ -212,7 +219,7 @@ endif
 ifeq (${EMBEDDED_BUILD}_${TK_X11},1_)
 # workaround bug with 'cp -pRH' on Darwin 6 and earlier
 	@if [ "`uname -r | awk -F. '{print $$1}'`" -lt 7 ]; then \
-	mkdir -p ${TOP_DIR}/{"${TCL_FMWK_DIR}","${TK_FMWK_DIR}"}/PrivateHeaders; fi
+	mkdir -p "${TOP_DIR}"/{"${TCL_FMWK_DIR}","${TK_FMWK_DIR}"}/PrivateHeaders; fi
 endif
 ifeq (${INSTALL_BUILD},1)
 ifeq (${EMBEDDED_BUILD},1)
@@ -228,16 +235,16 @@ else
 	if [ ! -d usr/lib ]; then mkdir -p usr && ln -fs /usr/lib usr/ && RM_USRLIB=1; fi; \
 	if [ -n "${TK_X11}" -a ! -d usr/X11R6 ]; then mkdir -p usr && ln -fs /usr/X11R6 usr/ && RM_USRX11=1; fi; \
 	if [ ! -d System ]; then ln -fs /System . && RM_SYSTEM=1; fi; \
-	if [ ! -d ./${LIBDIR}/Tcl.framework ]; then ln -fs ${TCL_FRAMEWORK_DIR}/Tcl.framework ./${LIBDIR}; RM_TCL=1; fi; \
+	if [ ! -d "./${LIBDIR}/Tcl.framework" ]; then ln -fs "${TCL_FRAMEWORK_DIR}/Tcl.framework" "./${LIBDIR}"; RM_TCL=1; fi; \
 	redo_prebinding -r . "./${TK_FMWK_DIR}/${PRODUCT_NAME}"; \
 	if [ -z "${TK_X11}" ]; then redo_prebinding -r . "./${TK_FMWK_DIR}/Resources/Wish.app/Contents/MacOS/Wish"; \
 	else redo_prebinding -r . "./${BINDIR}/${WISH}"; fi; \
 	if [ -n "$${RM_USRLIB:-}" ]; then rm -f usr/lib; rmdir -p usr 2>&-; fi; \
 	if [ -n "$${RM_USRX11:-}" ]; then rm -f usr/X11R6; rmdir -p usr 2>&-; fi; \
 	if [ -n "$${RM_SYSTEM:-}" ]; then rm -f System; fi; \
-	if [ -n "$${RM_TCL:-}" ]; then rm -f ./${LIBDIR}/Tcl.framework; fi; fi
+	if [ -n "$${RM_TCL:-}" ]; then rm -f "./${LIBDIR}/Tcl.framework"; fi; fi
 # install wish symbolic link
-	@ln -fs ${WISH} ${INSTALL_ROOT}${BINDIR}/${wish}
+	@ln -fs ${WISH} "${INSTALL_ROOT}${BINDIR}/${wish}"
 endif
 endif
 ifeq (${BUILD_STYLE}_${EMBEDDED_BUILD},Development_)
@@ -245,20 +252,20 @@ ifeq (${BUILD_STYLE}_${EMBEDDED_BUILD},Development_)
 # Deployment build can be installed on top
 # of Development build without overwriting
 # the debug library
-	@cd ${INSTALL_ROOT}${LIBDIR}/${PRODUCT_NAME}.framework/Versions/${VERSION} && \
+	@cd "${INSTALL_ROOT}${LIBDIR}/${PRODUCT_NAME}.framework/Versions/${VERSION}" && \
 	ln -f "${PRODUCT_NAME}" "${PRODUCT_NAME}_debug"
 endif
 ifeq (${TK_X11},)
 ifeq (${EMBEDDED_BUILD},)
 # install Wish.app link in APPLICATION_INSTALL_PATH and setup 'Wish Shell' compatibility links
-	@cd ${TOP_DIR} && if [ -n "${APP_DIR}" ]; then mkdir -p "./${APP_DIR}" && rm -rf "./${APP_DIR}/Wish.app" && \
-	ln -fsh "./$$(echo ${APP_DIR} | sed -e 's#/[^/][^/]*#/..#g')/${FMWK_DIR}/${PRODUCT_NAME}.framework/Resources/Wish.app" "./${APP_DIR}" && \
+	@cd "${TOP_DIR}" && if [ -n "${APP_DIR}" ]; then mkdir -p "./${APP_DIR}" && rm -rf "./${APP_DIR}/Wish.app" && \
+	ln -fsh "./$$(echo "${APP_DIR}" | sed -e 's#/[^/][^/]*#/..#g')/${FMWK_DIR}/${PRODUCT_NAME}.framework/Resources/Wish.app" "./${APP_DIR}" && \
 	ln -fsh Wish.app "./${APP_DIR}/Wish Shell.app"; fi && \
 	ln -fsh Wish.app "./${TK_FMWK_DIR}/Resources/Wish Shell.app" && \
 	ln -fsh Wish "./${TK_FMWK_DIR}/Resources/Wish.app/Contents/MacOS/Wish Shell"
 else
 # if we are embedding frameworks, move them into the app and fix their install names
-	@cd ${TOP_DIR} && \
+	@cd "${TOP_DIR}" && \
 	rm -rf "./${APP_DIR}/Wish.app" && mkdir -p "./${APP_DIR}" && \
 	mv -f "./${TK_FMWK_DIR}/Resources/Wish.app" "./${APP_DIR}" && \
 	ln -fsh Wish.app "./${APP_DIR}/Wish Shell.app" && \
@@ -266,8 +273,8 @@ else
 	mkdir -p "./${APP_DIR}/Wish.app/Contents/Frameworks" && \
 	${CPPROG} -RH "./${FMWK_DIR}"/T{cl,k}.framework "./${APP_DIR}/Wish.app/Contents/Frameworks" && \
 	cd "./${APP_DIR}/Wish.app/Contents" && \
-	rm -rf Frameworks/Tcl.framework/{,/Versions/$(TCL_VERSION)}/{Headers,PrivateHeaders,*_debug,lib*.a,*Config.sh} && \
-	rm -rf Frameworks/Tk.framework/{,/Versions/$(VERSION)}/{Headers,PrivateHeaders,*_debug,lib*.a,*Config.sh} && \
+	rm -rf Frameworks/Tcl.framework/{,/Versions/${TCL_VERSION}}/{Headers,PrivateHeaders,*_debug,lib*.a,*Config.sh} && \
+	rm -rf Frameworks/Tk.framework/{,/Versions/${VERSION}}/{Headers,PrivateHeaders,*_debug,lib*.a,*Config.sh} && \
 	fix_install_id ( ) { \
 	    chmod -RH a+w "$$1"; \
 	    install_name_tool -id $$(otool -L "$$1" | awk "/$$2\.framework.*[^:]\$$/ {sub(\"^.*/Frameworks\",\"@executable_path/../Frameworks\",\$$1); print \$$1}") "$$1"; \
@@ -281,21 +288,21 @@ else
 	fix_install_id Frameworks/Tcl.framework/Tcl Tcl && fix_install_id Frameworks/Tk.framework/Tk Tk && \
 	fix_install_name MacOS/Wish Tcl && fix_install_name MacOS/Wish Tk
 ifeq (${INSTALL_BUILD},1)
-	@cd ${TOP_DIR} && rm -rf "./${FMWK_DIR}"/T{cl,k}.framework && rmdir -p "./${FMWK_DIR}" 2>&- || true
+	@cd "${TOP_DIR}" && rm -rf "./${FMWK_DIR}"/T{cl,k}.framework && rmdir -p "./${FMWK_DIR}" 2>&- || true
 endif
 endif
 endif
 
 clean-${PROJECT}: %-${PROJECT}:
 	${DO_MAKE}
-	rm -rf ${SYMROOT}/{${PRODUCT_NAME}.framework,${WISH},tktest}
-	rm -f ${OBJ_DIR}{${LIBDIR},${BINDIR}} && \
-	rmdir -p ${OBJ_DIR}$(dir ${LIBDIR}) 2>&- || true && \
-	rmdir -p ${OBJ_DIR}$(dir ${BINDIR}) 2>&- || true
+	rm -rf "${SYMROOT}"/{${PRODUCT_NAME}.framework,${WISH},tktest}
+	rm -f "${OBJ_DIR}"{"${LIBDIR}","${BINDIR}"} && \
+	rmdir -p "${OBJ_DIR}"$(dir $(subst ${space},\ ,${LIBDIR})) 2>&- || true && \
+	rmdir -p "${OBJ_DIR}"$(dir $(subst ${space},\ ,${BINDIR})) 2>&- || true
 
 distclean-${PROJECT}: %-${PROJECT}: clean-${PROJECT}
 	${DO_MAKE}
-	rm -rf ${OBJ_DIR}
+	rm -rf "${OBJ_DIR}"
 
 test-${PROJECT}: %-${PROJECT}: build-${PROJECT}
 	${DO_MAKE}

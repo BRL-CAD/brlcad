@@ -603,9 +603,8 @@ NativeGetTime(
     ClientData clientData)
 {
     struct timeval tv;
-    struct timezone tz;
 
-    (void) gettimeofday(&tv, &tz);
+    (void) gettimeofday(&tv, NULL);
     timePtr->sec = tv.tv_sec;
     timePtr->usec = tv.tv_usec;
 }

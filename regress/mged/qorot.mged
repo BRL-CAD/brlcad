@@ -1,0 +1,13 @@
+puts "*** Testing 'qorot' command ***"
+
+in_arb8 qorot
+comb qorot.c u qorot_arb8.s
+Z
+e qorot.c
+oed / qorot.c/qorot_arb8.s
+qorot 2 2 3 10 2 3 40
+qorot -2 3 1 20 20 20 40
+accept
+Z
+
+puts "*** 'qorot' testing completed ***"

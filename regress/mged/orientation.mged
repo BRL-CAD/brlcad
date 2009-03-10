@@ -1,0 +1,7 @@
+puts "*** Testing 'orientation' command ***"
+
+view quat
+orientation 0.285190215334 0.670633110412 0.649962411504 0.215561211557
+view quat
+
+puts "*** 'orientation' testing completed ***"

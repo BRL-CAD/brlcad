@@ -1,0 +1,13 @@
+puts "*** Testing 'draw' command ***"
+
+Z
+in_sph draw 1
+comb draw.c u draw_sph1.s
+e draw.c
+who
+e draw_sph1.s
+who
+erase draw.c
+erase draw_sph1.s
+
+puts "*** 'draw' testing completed ***"

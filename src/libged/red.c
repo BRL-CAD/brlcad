@@ -28,10 +28,12 @@
 #include <stdlib.h>
 #include <ctype.h>
 #include <string.h>
-
 #include "bio.h"
+
 #include "db.h"
-#include "ged_private.h"
+
+#include "./ged_private.h"
+
 
 static int ged_check_comb(struct ged *gedp);
 static int ged_build_comb(struct ged *gedp, struct rt_comb_internal *comb, struct directory *dp, int node_count, char *old_name);

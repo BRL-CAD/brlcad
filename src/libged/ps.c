@@ -24,17 +24,19 @@
  */
 
 #include "common.h"
-#include "bio.h"
 
 #include <stdlib.h>
 #include <ctype.h>
 #include <string.h>
+#include "bio.h"
 
 #include "bu.h"
 #include "vmath.h"
 #include "bn.h"
 #include "solid.h"
-#include "ged_private.h"
+
+#include "./ged_private.h"
+
 
 static fastf_t ged_default_ps_ppi = 72.0;
 static fastf_t ged_default_ps_scale = 4.5 * 72.0 / 4096.0;

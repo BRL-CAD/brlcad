@@ -108,12 +108,13 @@ f_make(ClientData	clientData,
     Tcl_DStringResult(interp, &ds);
 
     if (ret == BRLCAD_OK) {
-	const char *av[3];
+	const char *av[4];
 
 	av[0] = "draw";
-	av[1] = argv[argc-2];
-	av[2] = NULL;
-	edit_com(2, av, 1, 1);
+	av[1] = "-R";
+	av[2] = argv[argc-2];
+	av[3] = NULL;
+	edit_com(3, av, 1, 1);
     }
 
     /* Convert to Tcl codes */

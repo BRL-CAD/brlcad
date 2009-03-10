@@ -651,7 +651,7 @@ ThumbActionProc(ControlRef theControl, ControlPartCode partCode)
 	     * for the display to update.
 	     */
 
-	    sprintf(valueString, "%g", newFirstFraction);
+	    Tcl_PrintDouble(NULL, newFirstFraction, valueString);
 	    Tcl_DStringSetLength(&cmdString, 0);
 	    Tcl_DStringAppend(&cmdString, scrollPtr->command,
 		scrollPtr->commandSize);
@@ -693,8 +693,8 @@ ScrollbarActionProc(
     ControlRef theControl,	/* Handle to scrollbat control */
     ControlPartCode partCode)	/* Part of scrollbar that was "hit" */
 {
-    TkScrollbar *scrollPtr = (TkScrollbar *)(intptr_t)GetControlReference(
-	    theControl);
+    TkScrollbar *scrollPtr = (TkScrollbar *)(intptr_t)
+	    GetControlReference(theControl);
     MacScrollbar *macScrollPtr = (MacScrollbar *) scrollPtr;
     Tcl_DString cmdString;
 
@@ -702,7 +702,7 @@ ScrollbarActionProc(
     Tcl_DStringAppend(&cmdString, scrollPtr->command,
 	    scrollPtr->commandSize);
 
-    if ( partCode == kAppearancePartUpButton ||
+    if (partCode == kAppearancePartUpButton ||
 	    partCode == kAppearancePartDownButton ) {
 	Tcl_DStringAppendElement(&cmdString, "scroll");
 	Tcl_DStringAppendElement(&cmdString,
@@ -717,16 +717,16 @@ ScrollbarActionProc(
     } else if (partCode == kAppearancePartIndicator) {
 	char valueString[TCL_DOUBLE_SPACE];
 
-	sprintf(valueString, "%g",
+	Tcl_PrintDouble(NULL,
 		(GetControl32BitValue(macScrollPtr->sbHandle) -
-		MIN_SCROLLBAR_VALUE) / SCROLLBAR_SCALING_VALUE);
+		MIN_SCROLLBAR_VALUE) / SCROLLBAR_SCALING_VALUE, valueString);
 	Tcl_DStringAppendElement(&cmdString, "moveto");
 	Tcl_DStringAppendElement(&cmdString, valueString);
     }
-    Tcl_Preserve((ClientData) scrollPtr->interp);
+    Tcl_Preserve(scrollPtr->interp);
     Tcl_EvalEx(scrollPtr->interp, Tcl_DStringValue(&cmdString),
 	    Tcl_DStringLength(&cmdString), TCL_EVAL_GLOBAL);
-    Tcl_Release((ClientData) scrollPtr->interp);
+    Tcl_Release(scrollPtr->interp);
     Tcl_DStringFree(&cmdString);
     TkMacOSXRunTclEventLoop();
 }
@@ -756,11 +756,11 @@ ScrollbarBindProc(
     Tk_Window tkwin,		/* Target window for event. */
     KeySym keySym)		/* The KeySym if a key event. */
 {
-    TkWindow *winPtr = (TkWindow*)tkwin;
+    TkWindow *winPtr = (TkWindow *) tkwin;
     TkScrollbar *scrollPtr = (TkScrollbar *) winPtr->instanceData;
     MacScrollbar *macScrollPtr = (MacScrollbar *) winPtr->instanceData;
 
-    Tcl_Preserve((ClientData)scrollPtr);
+    Tcl_Preserve(scrollPtr);
     macScrollPtr->macFlags |= IN_MODAL_LOOP;
 
     if (eventPtr->type == ButtonPress) {
@@ -772,10 +772,11 @@ ScrollbarBindProc(
 	Window window;
 
 	/*
-	 * To call Macintosh control routines we must have the port
-	 * set to the window containing the control. We will then test
-	 * which part of the control was hit and act accordingly.
+	 * To call Macintosh control routines we must have the port set to the
+	 * window containing the control. We will then test which part of the
+	 * control was hit and act accordingly.
 	 */
+
 	destPort = TkMacOSXGetDrawablePort(Tk_WindowId(scrollPtr->tkwin));
 	portChanged = QDSwapPort(destPort, &savePort);
 	TkMacOSXSetUpClippingRgn(Tk_WindowId(scrollPtr->tkwin));
@@ -787,9 +788,10 @@ ScrollbarBindProc(
 	TkMacOSXTrackingLoop(1);
 	if (part == kAppearancePartIndicator && scrollPtr->jump == false) {
 	    /*
-	     * Case 1: In thumb, no jump scrolling. Call track control
-	     * with the thumb action proc which will do most of the work.
+	     * Case 1: In thumb, no jump scrolling. Call track control with
+	     * the thumb action proc which will do most of the work.
 	     */
+
 	    mouseDownPoint.h = where.h;
 	    mouseDownPoint.v = where.v;
 	    part = HandleControlClick(macScrollPtr->sbHandle, where,
@@ -797,18 +799,20 @@ ScrollbarBindProc(
 	} else if (part == kAppearancePartIndicator) {
 	    /*
 	     * Case 2: in thumb with jump scrolling. Call HandleControlClick
-	     * with a NULL action proc. Use the new value of the control
-	     * to set update the control.
+	     * with a NULL action proc. Use the new value of the control to
+	     * set update the control.
 	     */
+
 	    part = HandleControlClick(macScrollPtr->sbHandle, where,
 		    TkMacOSXModifierState(), NULL);
 	    if (part == kAppearancePartIndicator) {
 		Tcl_DString cmdString;
 		char valueString[TCL_DOUBLE_SPACE];
 
-		sprintf(valueString, "%g",
+		Tcl_PrintDouble(NULL,
 			(GetControl32BitValue(macScrollPtr->sbHandle) -
-			MIN_SCROLLBAR_VALUE) / SCROLLBAR_SCALING_VALUE);
+			MIN_SCROLLBAR_VALUE) / SCROLLBAR_SCALING_VALUE,
+			valueString);
 		Tcl_DStringInit(&cmdString);
 		Tcl_DStringAppend(&cmdString, scrollPtr->command,
 			strlen(scrollPtr->command));
@@ -816,10 +820,10 @@ ScrollbarBindProc(
 		Tcl_DStringAppendElement(&cmdString, valueString);
 
 		interp = scrollPtr->interp;
-		Tcl_Preserve((ClientData) interp);
+		Tcl_Preserve(interp);
 		Tcl_EvalEx(interp, Tcl_DStringValue(&cmdString),
 			Tcl_DStringLength(&cmdString), TCL_EVAL_GLOBAL);
-		Tcl_Release((ClientData) interp);
+		Tcl_Release(interp);
 		Tcl_DStringFree(&cmdString);
 		TkMacOSXRunTclEventLoop();
 	    }
@@ -829,12 +833,15 @@ ScrollbarBindProc(
 	     * HandleControlClick with the scrollActionProc which will do
 	     * most all the work.
 	     */
+
 	    HandleControlClick(macScrollPtr->sbHandle, where,
 		    TkMacOSXModifierState(), scrollActionProc);
+
 	    /*
 	     * Workaround for Carbon bug where the scrollbar down arrow
 	     * sometimes gets "stuck" after the mousebutton has been released.
 	     */
+
 	    if (scrollPtr->tkwin) {
 		TkMacOSXSetUpClippingRgn(Tk_WindowId(scrollPtr->tkwin));
 	    }
@@ -862,7 +869,7 @@ ScrollbarBindProc(
 	macScrollPtr->sbHandle = NULL;
     }
     macScrollPtr->macFlags &= ~IN_MODAL_LOOP;
-    Tcl_Release((ClientData)scrollPtr);
+    Tcl_Release(scrollPtr);
 
     return TCL_OK;
 }

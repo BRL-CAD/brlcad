@@ -2667,53 +2667,41 @@ TclCallVarTraces(
   done:
     if (code == TCL_ERROR) {
 	if (leaveErrMsg) {
+	    const char *verb = "";
 	    const char *type = "";
-	    Tcl_Obj *options = Tcl_GetReturnOptions((Tcl_Interp *)iPtr, code);
-	    Tcl_Obj *errorInfoKey, *errorInfo;
 
-	    TclNewLiteralStringObj(errorInfoKey, "-errorinfo");
-	    Tcl_IncrRefCount(errorInfoKey);
-	    Tcl_DictObjGet(NULL, options, errorInfoKey, &errorInfo);
-	    Tcl_IncrRefCount(errorInfo);
-	    Tcl_DictObjRemove(NULL, options, errorInfoKey);
-	    if (Tcl_IsShared(errorInfo)) {
-		Tcl_DecrRefCount(errorInfo);
-		errorInfo = Tcl_DuplicateObj(errorInfo);
-		Tcl_IncrRefCount(errorInfo);
-	    }
-	    Tcl_AppendToObj(errorInfo, "\n    (", -1);
 	    switch (flags&(TCL_TRACE_READS|TCL_TRACE_WRITES|TCL_TRACE_ARRAY)) {
 	    case TCL_TRACE_READS:
-		type = "read";
-		Tcl_AppendToObj(errorInfo, type, -1);
+		verb = "read";
+		type = verb;
 		break;
 	    case TCL_TRACE_WRITES:
-		type = "set";
-		Tcl_AppendToObj(errorInfo, "write", -1);
+		verb = "set";
+		type = "write";
 		break;
 	    case TCL_TRACE_ARRAY:
-		type = "trace array";
-		Tcl_AppendToObj(errorInfo, "array", -1);
+		verb = "trace array";
+		type = "array";
 		break;
 	    }
+
 	    if (disposeFlags & TCL_TRACE_RESULT_OBJECT) {
-		TclVarErrMsg((Tcl_Interp *) iPtr, part1, part2, type,
+		Tcl_SetObjResult((Tcl_Interp *)iPtr, (Tcl_Obj *) result);
+	    } else {
+		Tcl_SetResult((Tcl_Interp *)iPtr, result, TCL_STATIC);
+	    }
+	    Tcl_AddErrorInfo((Tcl_Interp *)iPtr, "");
+
+	    Tcl_AppendObjToErrorInfo((Tcl_Interp *)iPtr, Tcl_ObjPrintf(
+		    "\n    (%s trace on \"%s%s%s%s\")", type, part1,
+		    (part2 ? "(" : ""), (part2 ? part2 : ""),
+		    (part2 ? ")" : "") ));
+	    if (disposeFlags & TCL_TRACE_RESULT_OBJECT) {
+		TclVarErrMsg((Tcl_Interp *) iPtr, part1, part2, verb,
 			Tcl_GetString((Tcl_Obj *) result));
 	    } else {
-		TclVarErrMsg((Tcl_Interp *) iPtr, part1, part2, type, result);
+		TclVarErrMsg((Tcl_Interp *) iPtr, part1, part2, verb, result);
 	    }
-	    Tcl_AppendToObj(errorInfo, " trace on \"", -1);
-	    Tcl_AppendToObj(errorInfo, part1, -1);
-	    if (part2 != NULL) {
-		Tcl_AppendToObj(errorInfo, "(", -1);
-		Tcl_AppendToObj(errorInfo, part1, -1);
-		Tcl_AppendToObj(errorInfo, ")", -1);
-	    }
-	    Tcl_AppendToObj(errorInfo, "\")", -1);
-	    Tcl_DictObjPut(NULL, options, errorInfoKey, errorInfo);
-	    Tcl_DecrRefCount(errorInfoKey);
-	    Tcl_DecrRefCount(errorInfo);
-	    code = Tcl_SetReturnOptions((Tcl_Interp *)iPtr, options);
 	    iPtr->flags &= ~(ERR_ALREADY_LOGGED);
 	    Tcl_DiscardInterpState(state);
 	} else {

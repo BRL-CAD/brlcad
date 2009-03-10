@@ -76,7 +76,8 @@ static int UpdateScrollbar(Tcl_Interp *interp, ScrollHandle h)
 {
     Scrollable *s = h->scrollPtr;
     WidgetCore *corePtr = h->corePtr;
-    char args[TCL_DOUBLE_SPACE * 2];
+    char arg1[TCL_DOUBLE_SPACE + 2];
+    char arg2[TCL_DOUBLE_SPACE + 2];
     int code;
 
     h->flags &= ~SCROLL_UPDATE_REQUIRED;
@@ -85,12 +86,12 @@ static int UpdateScrollbar(Tcl_Interp *interp, ScrollHandle h)
 	return TCL_OK;
     }
 
-    sprintf(args, " %g %g",
-		(double)s->first / s->total,
-		(double)s->last / s->total);
+    arg1[0] = arg2[0] = ' ';
+    Tcl_PrintDouble(interp, (double)s->first / s->total, arg1+1);
+    Tcl_PrintDouble(interp, (double)s->last / s->total, arg2+1);
 
     Tcl_Preserve(corePtr);
-    code = Tcl_VarEval(interp, s->scrollCmd, args, NULL);
+    code = Tcl_VarEval(interp, s->scrollCmd, arg1, arg2, NULL);
     if (WidgetDestroyed(corePtr)) {
 	Tcl_Release(corePtr);
 	return TCL_ERROR;
@@ -190,11 +191,10 @@ int TtkScrollviewCommand(
     int newFirst = s->first;
 
     if (objc == 2) {
-	char buf[TCL_DOUBLE_SPACE * 2];
-	sprintf(buf, "%g %g",
-		(double)s->first / s->total,
-		(double)s->last / s->total);
-	Tcl_SetResult(interp, buf, TCL_VOLATILE);
+	Tcl_Obj *result[2];
+	result[0] = Tcl_NewDoubleObj((double)s->first / s->total);
+	result[1] = Tcl_NewDoubleObj((double)s->last / s->total);
+	Tcl_SetObjResult(interp, Tcl_NewListObj(2, result));
 	return TCL_OK;
     } else if (objc == 3) {
 	if (Tcl_GetIntFromObj(interp, objv[2], &newFirst) != TCL_OK) {

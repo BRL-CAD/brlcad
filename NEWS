@@ -11,6 +11,38 @@ changes made.  See document footer for additional details.
 
 
 ----------------------------------------------------------------------
+--- 2009-03-06  Release 7.14.4                                     ---
+----------------------------------------------------------------------
+
+* fixed mged "Pick Edit-Primitive" mouse selection bug - Bob Parker
+* improved mged command console cut-and-paste support - Bob Parker
+* fixed mged command input last character bug - Bob Parker
+* improved gqa file support for blank/comment lines - Bob Parker
+* fixed several SMP threading bugs in gqa command - Bob Parker
+* added centroids and moments of inertia to gqa command - Bob Parker
+* fixed mged 'prefix' command to write renamed objects - Bob Parker
+* update usage of tops command in geometry browser - Cliff Yapp
+* fix description of u option in bo command's man page - Cliff Yapp
+* add tool for automatic coil creation using pipe - Cliff Yapp
+* fixed bugs with external tool invocation in mged - Sean Morrison
+* mged 'make' command no longer doubles the view size - Sean Morrison
+* added -R no-resize option to mged e/B/draw commands - Sean Morrison
+* mged 'tops' command -g and -u options are deprecated - Sean Morrison
+* added -Ap plot visualization option to mged gqa command - Bob Parker
+* added new 'gqa' quantitative analysis command to mged - Bob Parker
+* fixed mged view initialization bugs - Bob Parker
+* integer values in mged without floating point noise - Sean Morrison
+* fixed source distribution compile/install path error - Sean Morrison
+* fixed mged switch error running the Primitive Editor - Sean Morrison
+* fixed g_diff crash when comparing objects - Sean Morrison
+* improved g_qa usage message and missing density message - Bob Parker
+* fixed mged font preferences menu when ".mgedrc" present - Bob Parker
+* fixed oed docs bug noting lhs/rhs must be displayed - John Anderson
+* added the nmg_fix_normals command to mged - Erik Greenwald
+* upgrade libpng to 1.2.35 (Security fix) - Erik Greenwald
+
+
+----------------------------------------------------------------------
 --- 2009-02-06  Release 7.14.2                                     ---
 ----------------------------------------------------------------------
 
@@ -22,7 +54,7 @@ a new 'lens' tool for creating accurate optical lenses, and the dxf-g
 importer receives a bug fix when importing 2D entities.
 
 * fixed errors in handling of hyp primitive translations - Cliff Yapp
-* g_tool now guesses if a change was evolutionary - Erik Greenwald
+* g_diff now guesses if a change was evolutionary - Erik Greenwald
 * added >, <, >= and <= attr value comparisons in search - Cliff Yapp
 * fixed double-edged line segment sketch bug in dxf-g - John Anderson
 * mged 'inside' command no longer uses edit state objects - Bob Parker

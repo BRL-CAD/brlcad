@@ -1,0 +1,8 @@
+puts "*** Testing 'ps' command ***"
+
+autoview
+ae 35 25 0
+B clone4.c
+ps mged_ps_test.ps
+
+puts "*** 'ps' testing completed ***"

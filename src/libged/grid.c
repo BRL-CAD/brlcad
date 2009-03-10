@@ -26,12 +26,13 @@
 #include "common.h"
 
 #include <math.h>
-#include <stdio.h>
-
 #include "bio.h"
+
 #include "bu.h"
 #include "vmath.h"
-#include "ged_private.h"
+
+#include "./ged_private.h"
+
 
 static void ged_grid_vls_print(struct ged *gedp);
 static void ged_snap_to_grid(struct ged *gedp, fastf_t *mx, fastf_t *my);

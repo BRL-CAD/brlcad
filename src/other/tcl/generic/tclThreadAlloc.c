@@ -608,7 +608,7 @@ TclThreadFreeObj(
  *----------------------------------------------------------------------
  */
 
-MODULE_SCOPE void
+void
 Tcl_GetMemoryInfo(
     Tcl_DString *dsPtr)
 {
@@ -986,7 +986,30 @@ TclFinalizeThreadAlloc(void)
     TclpFreeAllocCache(NULL);
 }
 
-#else
+#else /* !(TCL_THREADS && USE_THREAD_ALLOC) */
+/*
+ *----------------------------------------------------------------------
+ *
+ * Tcl_GetMemoryInfo --
+ *
+ *	Return a list-of-lists of memory stats.
+ *
+ * Results:
+ *	None.
+ *
+ * Side effects:
+ *	List appended to given dstring.
+ *
+ *----------------------------------------------------------------------
+ */
+
+void
+Tcl_GetMemoryInfo(
+    Tcl_DString *dsPtr)
+{
+    Tcl_Panic("Tcl_GetMemoryInfo called when threaded memory allocator not in use");
+}
+
 /*
  *----------------------------------------------------------------------
  *
@@ -1009,7 +1032,7 @@ TclFinalizeThreadAlloc(void)
 {
     Tcl_Panic("TclFinalizeThreadAlloc called when threaded memory allocator not in use");
 }
-#endif /* TCL_THREADS */
+#endif /* TCL_THREADS && USE_THREAD_ALLOC */
 
 /*
  * Local Variables:

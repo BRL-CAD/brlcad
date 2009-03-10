@@ -501,6 +501,12 @@ rename cswtest-exact {}
 rename iswtest-exact {}
 rename cswtest2-exact {}
 rename iswtest2-exact {}
+# Bug 1891827
+test switch-10.15 {(not) compiled exact nocase regression} {
+    apply {{} {
+	switch -nocase -- A { a {return yes} default {return no} }
+    }}
+} yes
 
 # Added due to TIP#75
 test switch-11.1 {regexp matching with -matchvar} {
@@ -629,7 +635,113 @@ test switch-14.4 {-regexp -- compilation [Bug 1854399]} {
     }
     foo
 } yes
+test switch-14.5 {switch -regexp compilation} {
+    apply {{} {
+	switch -regexp -- 0 {
+	    {0|1|2} {return yes}
+	    default {return no}
+	}
+    }}
+} yes
+test switch-14.6 {switch -regexp compilation} {
+    apply {{} {
+	switch -regexp -- 0 {
+	    {0|11|222} {return yes}
+	    default {return no}
+	}
+    }}
+} yes
+test switch-14.7 {switch -regexp compilation} {
+    apply {{} {
+	switch -regexp -- 0 {
+	    {[012]} {return yes}
+	    default {return no}
+	}
+    }}
+} yes
+test switch-14.8 {switch -regexp compilation} {
+    apply {{} {
+	switch -regexp -- x {
+	    {0|1|2} {return yes}
+	    default {return no}
+	}
+    }}
+} no
+test switch-14.9 {switch -regexp compilation} {
+    apply {{} {
+	switch -regexp -- x {
+	    {0|11|222} {return yes}
+	    default {return no}
+	}
+    }}
+} no
+test switch-14.10 {switch -regexp compilation} {
+    apply {{} {
+	switch -regexp -- x {
+	    {[012]} {return yes}
+	    default {return no}
+	}
+    }}
+} no
+test switch-14.11 {switch -regexp compilation} {
+    apply {{} {
+	switch -regexp -- x {
+	    {0|1|2} {return yes}
+	    .+ {return yes2}
+	    default {return no}
+	}
+    }}
+} yes2
+test switch-14.12 {switch -regexp compilation} {
+    apply {{} {
+	switch -regexp -- x {
+	    {0|11|222} {return yes}
+	    .+ {return yes2}
+	    default {return no}
+	}
+    }}
+} yes2
+test switch-14.13 {switch -regexp compilation} {
+    apply {{} {
+	switch -regexp -- x {
+	    {[012]} {return yes}
+	    .+ {return yes2}
+	    default {return no}
+	}
+    }}
+} yes2
+test switch-14.14 {switch -regexp compilation} {
+    apply {{} {
+	switch -regexp -- {} {
+	    {0|1|2} {return yes}
+	    .+ {return yes2}
+	    default {return no}
+	}
+    }}
+} no
+test switch-14.15 {switch -regexp compilation} {
+    apply {{} {
+	switch -regexp -- {} {
+	    {0|11|222} {return yes}
+	    .+ {return yes2}
+	    default {return no}
+	}
+    }}
+} no
+test switch-14.16 {switch -regexp compilation} {
+    apply {{} {
+	switch -regexp -- {} {
+	    {[012]} {return yes}
+	    .+ {return yes2}
+	    default {return no}
+	}
+    }}
+} no
 
 # cleanup
 ::tcltest::cleanupTests
 return
+
+# Local Variables:
+# mode: tcl
+# End:

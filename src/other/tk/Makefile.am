@@ -150,7 +150,6 @@ EXTRA_DIST = \
 	license.terms \
 	macosx \
 	tests \
-	unix/Makefile \
 	unix/Makefile.in \
 	unix/README \
 	unix/aclocal.m4 \
@@ -164,7 +163,6 @@ EXTRA_DIST = \
 	unix/tk.spec \
 	unix/tkAppInit.c \
 	unix/tkConfig.h.in \
-	unix/tkConfig.sh \
 	unix/tkConfig.sh.in \
 	unix/tkUnix.c \
 	unix/tkUnix3d.c \

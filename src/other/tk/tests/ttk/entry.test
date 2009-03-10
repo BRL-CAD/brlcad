@@ -79,7 +79,7 @@ test entry-2.2 "Initial scroll position" -body {
     .e insert end "0123456789"
     pack .e; update
     set scrollInfo
-} -result {0 0.5} -cleanup { destroy .e }
+} -result {0.0 0.5} -cleanup { destroy .e }
 # NOTE: result can vary depending on font.
 
 # Bounding box / scrolling tests.
@@ -105,7 +105,7 @@ test entry-3.2 "xview" -body {
     .e insert end [string repeat "0" 40]
     update idletasks
     set result [.e xview]
-} -result {0 0.5}
+} -result {0.0 0.5}
 
 test entry-3.last "Series 3 cleanup" -body {
     destroy .e

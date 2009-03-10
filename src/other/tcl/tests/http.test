@@ -117,7 +117,7 @@ test http-2.1 {http::reset} {
 
 test http-3.1 {http::geturl} {
     list [catch {http::geturl -bogus flag} msg] $msg
-} {1 {Unknown option flag, can be: -binary, -blocksize, -channel, -command, -handler, -headers, -progress, -query, -queryblocksize, -querychannel, -queryprogress, -validate, -timeout, -type}}
+} {1 {Unknown option flag, can be: -binary, -blocksize, -channel, -command, -handler, -headers, -keepalive, -method, -myaddr, -progress, -protocol, -query, -queryblocksize, -querychannel, -queryprogress, -strict, -timeout, -type, -validate}}
 test http-3.2 {http::geturl} {
     catch {http::geturl http:junk} err
     set err
@@ -205,7 +205,7 @@ test http-3.10 {http::geturl queryprogress} {
 	lappend postProgress $y
     }
     set postProgress {}
-    set t [http::geturl $posturl -query $query \
+    set t [http::geturl $posturl -keepalive 0 -query $query \
 	    -queryprogress postProgress -queryblocksize 16384]
     http::wait $t
     list [http::status $t] [string length $query] $postProgress [http::data $t]
@@ -332,7 +332,7 @@ test http-3.24 {http::geturl parse failures} -body {
 } -returnCodes error -result {Illegal encoding character usage "%qu" in URL path}
 
 test http-4.1 {http::Event} {
-    set token [http::geturl $url]
+    set token [http::geturl $url -keepalive 0]
     upvar #0 $token data
     array set meta $data(meta)
     expr ($data(totalsize) == $meta(Content-Length))
@@ -364,6 +364,7 @@ test http-4.4 {http::Event} {
 test http-4.5 {http::Event} {
     set testfile [makeFile "" testfile]
     set out [open $testfile w]
+    fconfigure $out -translation lf
     set token [http::geturl $url -channel $out]
     close $out
     upvar #0 $token data
@@ -398,7 +399,7 @@ if 0 {
     } {111 111}
 }
 test http-4.7 {http::Event} {
-    set token [http::geturl $url -progress myProgress]
+    set token [http::geturl $url -keepalive 0 -progress myProgress]
     set progress
 } {111 111}
 test http-4.8 {http::Event} {
@@ -417,20 +418,20 @@ test http-4.10 {http::Event} {
 #	Short timeout to working server (the test server). This lets us try a
 #	reset during the connection.
 test http-4.11 {http::Event} {
-    set token [http::geturl $url -timeout 1 -command {#}]
+    set token [http::geturl $url -timeout 1 -keepalive 0 -command {#}]
     http::reset $token
     http::status $token
 } {reset}
 #	Longer timeout with reset.
 test http-4.12 {http::Event} {
-    set token [http::geturl $url/?timeout=10 -command {#}]
+    set token [http::geturl $url/?timeout=10 -keepalive 0 -command {#}]
     http::reset $token
     http::status $token
 } {reset}
 #	Medium timeout to working server that waits even longer. The timeout
 #	hits while waiting for a reply.
 test http-4.13 {http::Event} {
-    set token [http::geturl $url?timeout=30 -timeout 10 -command {#}]
+    set token [http::geturl $url?timeout=30 -keepalive 0 -timeout 10 -command {#}]
     http::wait $token
     http::status $token
 } {timeout}

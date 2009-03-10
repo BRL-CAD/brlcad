@@ -26,6 +26,8 @@ if {[catch {package require procbodytest}]} {
     testConstraint procbodytest 1
 }
 
+testConstraint memory     [llength [info commands memory]]
+
 catch {namespace delete {*}[namespace children :: test_ns_*]}
 catch {rename p ""}
 catch {rename {} ""}
@@ -233,7 +235,7 @@ test proc-4.3 {TclCreateProc, procbody obj, too many args} procbodytest {
     catch {rename t ""}
     set result
 } {procedure "t": arg list contains 3 entries, precompiled header expects 1}
-test proc-4.4 {TclCreateProc, procbody obj, inconsitent arg name} procbodytest {
+test proc-4.4 {TclCreateProc, procbody obj, inconsistent arg name} procbodytest {
     catch {
 	proc p {x y z} {
 	    set v [join [list $x $y $z]]
@@ -249,7 +251,7 @@ test proc-4.4 {TclCreateProc, procbody obj, inconsitent arg name} procbodytest {
     catch {rename t ""}
     set result
 } {procedure "t": formal parameter 1 is inconsistent with precompiled body}
-test proc-4.5 {TclCreateProc, procbody obj, inconsitent arg default type} procbodytest {
+test proc-4.5 {TclCreateProc, procbody obj, inconsistent arg default type} procbodytest {
     catch {
 	proc p {x y {z Z}} {
 	    set v [join [list $x $y $z]]
@@ -265,7 +267,7 @@ test proc-4.5 {TclCreateProc, procbody obj, inconsitent arg default type} procbo
     catch {rename t ""}
     set result
 } {procedure "t": formal parameter 2 is inconsistent with precompiled body}
-test proc-4.6 {TclCreateProc, procbody obj, inconsitent arg default type} procbodytest {
+test proc-4.6 {TclCreateProc, procbody obj, inconsistent arg default type} procbodytest {
     catch {
 	proc p {x y z} {
 	    set v [join [list $x $y $z]]
@@ -281,7 +283,7 @@ test proc-4.6 {TclCreateProc, procbody obj, inconsitent arg default type} procbo
     catch {rename t ""}
     set result
 } {procedure "t": formal parameter 2 is inconsistent with precompiled body}
-test proc-4.7 {TclCreateProc, procbody obj, inconsitent arg default value} procbodytest {
+test proc-4.7 {TclCreateProc, procbody obj, inconsistent arg default value} procbodytest {
     catch {
 	proc p {x y {z Z}} {
 	    set v [join [list $x $y $z]]
@@ -297,6 +299,30 @@ test proc-4.7 {TclCreateProc, procbody obj, inconsitent arg default value} procb
     catch {rename t ""}
     set result
 } {procedure "t": formal parameter "z" has default value inconsistent with precompiled body}
+test proc-4.8 {TclCreateProc, procbody obj, no leak on multiple iterations} -setup {
+    proc getbytes {} {
+	set lines [split [memory info] "\n"]
+	lindex $lines 3 3
+    }
+    proc px x {
+	set y [string tolower $x]
+	return "$x:$y"
+    }
+    px x
+} -constraints {procbodytest memory} -body {
+
+    set end [getbytes]
+    for {set i 0} {$i < 5} {incr i} {
+
+	procbodytest::proc tx x px
+
+	set tmp $end
+	set end [getbytes]
+    }
+    set leakedBytes [expr {$end - $tmp}]
+} -cleanup {
+    rename getbytes {}
+} -result 0
 
 test proc-5.1 {Bytecompiling noop; test for correct argument substitution} {
     proc p args {} ; # this will be bytecompiled into t

@@ -317,6 +317,48 @@ TclDefaultBgErrorHandlerObjCmd(
 	return TCL_ERROR;
     }
 
+    /*
+     * Check for a valid return options dictionary.
+     */
+
+    TclNewLiteralStringObj(keyPtr, "-level");
+    Tcl_IncrRefCount(keyPtr);
+    Tcl_DictObjGet(NULL, objv[2], keyPtr, &valuePtr);
+    Tcl_DecrRefCount(keyPtr);
+    if (valuePtr == NULL) {
+	Tcl_SetObjResult(interp, Tcl_NewStringObj(
+		"missing return option \"-level\"", -1));
+	return TCL_ERROR;
+    }
+    if (Tcl_GetIntFromObj(interp, valuePtr, &level) == TCL_ERROR) {
+	return TCL_ERROR;
+    }
+    TclNewLiteralStringObj(keyPtr, "-code");
+    Tcl_IncrRefCount(keyPtr);
+    Tcl_DictObjGet(NULL, objv[2], keyPtr, &valuePtr);
+    Tcl_DecrRefCount(keyPtr);
+    if (valuePtr == NULL) {
+	Tcl_SetObjResult(interp, Tcl_NewStringObj(
+		"missing return option \"-code\"", -1));
+	return TCL_ERROR;
+    }
+    if (Tcl_GetIntFromObj(interp, valuePtr, &code) == TCL_ERROR) {
+	return TCL_ERROR;
+    }
+
+    if (level != 0) {
+	/* We're handling a TCL_RETURN exception */
+	code = TCL_RETURN;
+    }
+    if (code == TCL_OK) {
+	/*
+	 * Somehow we got to exception handling with no exception.
+	 * (Pass TCL_OK to TclBackgroundException()?)
+	 * Just return without doing anything.
+	 */
+	return TCL_OK;
+    }
+
     /* Construct the bgerror command */
     TclNewLiteralStringObj(tempObjv[0], "bgerror");
     Tcl_IncrRefCount(tempObjv[0]);
@@ -326,21 +368,6 @@ TclDefaultBgErrorHandlerObjCmd(
      * a non-error exception brought us here.
      */
 
-    TclNewLiteralStringObj(keyPtr, "-level");
-    Tcl_IncrRefCount(keyPtr);
-    Tcl_DictObjGet(NULL, objv[2], keyPtr, &valuePtr);
-    Tcl_DecrRefCount(keyPtr);
-    Tcl_GetIntFromObj(NULL, valuePtr, &level);
-    if (level != 0) {
-	/* We're handling a TCL_RETURN exception */
-	code = TCL_RETURN;
-    } else {
-	TclNewLiteralStringObj(keyPtr, "-code");
-	Tcl_IncrRefCount(keyPtr);
-	Tcl_DictObjGet(NULL, objv[2], keyPtr, &valuePtr);
-	Tcl_DecrRefCount(keyPtr);
-	Tcl_GetIntFromObj(NULL, valuePtr, &code);
-    }
     switch (code) {
     case TCL_ERROR:
 	tempObjv[1] = objv[1];
@@ -376,7 +403,6 @@ TclDefaultBgErrorHandlerObjCmd(
     Tcl_DictObjGet(NULL, objv[2], keyPtr, &valuePtr);
     Tcl_DecrRefCount(keyPtr);
     if (valuePtr) {
-	Tcl_IncrRefCount(valuePtr);
 	Tcl_AppendObjToErrorInfo(interp, valuePtr);
     }
 

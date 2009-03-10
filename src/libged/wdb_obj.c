@@ -1353,14 +1353,11 @@ wdb_tops_cmd(struct rt_wdb *wdbp,
     struct directory **dirp0 = (struct directory **)NULL;
     struct bu_vls vls;
     int c;
-#ifdef NEW_TOPS_BEHAVIOR
+
     int aflag = 0;
     int hflag = 0;
     int pflag = 0;
-#else
-    int gflag = 0;
-    int uflag = 0;
-#endif
+
     int no_decorate = 0;
 
     RT_CK_WDB_TCL(interp, wdbp);
@@ -1368,7 +1365,7 @@ wdb_tops_cmd(struct rt_wdb *wdbp,
 
     /* process any options */
     bu_optind = 1;	/* re-init bu_getopt() */
-#ifdef NEW_TOPS_BEHAVIOR
+
     while ((c = bu_getopt(argc, argv, "ahnp")) != EOF) {
 	switch (c) {
 	    case 'a':
@@ -1387,23 +1384,6 @@ wdb_tops_cmd(struct rt_wdb *wdbp,
 		break;
 	}
     }
-#else
-    while ((c = bu_getopt(argc, argv, "gun")) != EOF) {
-	switch (c) {
-	    case 'g':
-		gflag = 1;
-		break;
-	    case 'u':
-		uflag = 1;
-		break;
-	    case 'n':
-		no_decorate = 1;
-		break;
-	    default:
-		break;
-	}
-    }
-#endif
 
     argc -= (bu_optind - 1);
     argv += (bu_optind - 1);
@@ -1431,7 +1411,7 @@ wdb_tops_cmd(struct rt_wdb *wdbp,
 	    for (dp = wdbp->dbip->dbi_Head[i];
 		 dp != DIR_NULL;
 		 dp = dp->d_forw) {
-#ifdef NEW_TOPS_BEHAVIOR
+
 		if (dp->d_nref == 0 &&
 		    (aflag ||
 		     (hflag && (dp->d_flags & DIR_HIDDEN)) ||
@@ -1440,12 +1420,6 @@ wdb_tops_cmd(struct rt_wdb *wdbp,
 		      !(dp->d_flags & DIR_HIDDEN) &&
 		      (dp->d_addr != RT_DIR_PHONY_ADDR))))
 		    *dirp++ = dp;
-#else
-		if (dp->d_nref == 0 &&
-		    ((!gflag || (gflag && dp->d_major_type == DB5_MAJORTYPE_BRLCAD)) &&
-		     (!uflag || (uflag && !(dp->d_flags & DIR_HIDDEN)))))
-		    *dirp++ = dp;
-#endif
 	    }
     }
 
@@ -2339,11 +2313,7 @@ wdb_pathsum_cmd(struct rt_wdb *wdbp,
     }
 
     /*XXX Temporary */
-#if 1
     GED_INIT(&ged, wdbp);
-#else
-    GED_INIT_FROM_WDBP(&ged, wdbp);
-#endif
 
     /*
      *	paths are matched up to last input member
@@ -3645,11 +3615,7 @@ wdb_copyeval_cmd(struct rt_wdb *wdbp,
     }
 
     /*XXX Temporary */
-#if 1
     GED_INIT(&ged, wdbp);
-#else
-    GED_INIT_FROM_WDBP(&ged, wdbp);
-#endif
 
     /* initialize gtd */
     gtd.gtd_gedp = &ged;
@@ -7084,11 +7050,7 @@ wdb_make_bb_cmd(struct rt_wdb *wdbp,
     }
 
     /*XXX Temporary */
-#if 1
     GED_INIT(&ged, wdbp);
-#else
-    GED_INIT_FROM_WDBP(&ged, wdbp);
-#endif
 
     i = 1;
 
@@ -10453,12 +10415,10 @@ wdb_newcmds_tcl(ClientData clientData,
     int ret;
     char flags[128];
 
-    /*XXXX Eventually the clientData will be a "struct ged".
-     *     In the meantime ...
+    /*XXX Eventually the clientData will be a "struct ged".
+     *    In the meantime ...
      */
-#if 1
     GED_INIT(&ged, wdbp);
-#endif
 
     for (ctp = wdb_newcmds; ctp->ct_name != (char *)0; ctp++) {
 	if (ctp->ct_name[0] == argv[1][0] &&

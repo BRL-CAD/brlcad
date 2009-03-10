@@ -6,10 +6,10 @@
  *
  * Copyright (c) 1995-1997 Sun Microsystems, Inc.
  * Copyright 2001, Apple Computer, Inc.
- * Copyright (c) 2005-2007 Daniel A. Steffen <das@users.sourceforge.net>
+ * Copyright (c) 2005-2008 Daniel A. Steffen <das@users.sourceforge.net>
  *
- * See the file "license.terms" for information on usage and redistribution
- * of this file, and for a DISCLAIMER OF ALL WARRANTIES.
+ * See the file "license.terms" for information on usage and redistribution of
+ * this file, and for a DISCLAIMER OF ALL WARRANTIES.
  *
  * RCS: @(#) $Id$
  */
@@ -24,19 +24,20 @@
 #include <mach-o/getsect.h>
 
 /*
- * Define the following to 0 to not attempt to use an undocumented SPI
- * to notify the window server that an unbundled executable is a full
- * GUI application after loading Tk.
+ * Define the following to 0 to not attempt to use an undocumented SPI to
+ * notify the window server that an unbundled executable is a full GUI
+ * application after loading Tk.
  */
+
 #ifndef MAC_OSX_TK_USE_CPS_SPI
 #define MAC_OSX_TK_USE_CPS_SPI 1
 #endif
 
 /*
  * The following structures are used to map the script/language codes of a
- * font to the name that should be passed to Tcl_GetEncoding() to obtain
- * the encoding for that font. The set of numeric constants is fixed and
- * defined by Apple.
+ * font to the name that should be passed to Tcl_GetEncoding() to obtain the
+ * encoding for that font. The set of numeric constants is fixed and defined
+ * by Apple.
  */
 
 typedef struct Map {
@@ -83,13 +84,13 @@ static Map scriptMap[] = {
 Tcl_Encoding TkMacOSXCarbonEncoding = NULL;
 
 /*
- * If the App is in an App package, then we want to add the Scripts
- * directory to the auto_path.
+ * If the App is in an App package, then we want to add the Scripts directory
+ * to the auto_path.
  */
+
 static char scriptPath[PATH_MAX + 1] = "";
 
 float tkMacOSXToolboxVersionNumber = 0;
-
 
 /*
  *----------------------------------------------------------------------
@@ -100,8 +101,8 @@ float tkMacOSXToolboxVersionNumber = 0;
  *	tk_library variable.
  *
  * Results:
- *	Returns a standard Tcl result. Leaves an error message or result
- *	in the interp's result.
+ *	Returns a standard Tcl result. Leaves an error message or result in
+ *	the interp's result.
  *
  * Side effects:
  *	Sets "tk_library" Tcl variable, runs "tk.tcl" script.
@@ -119,9 +120,9 @@ TkpInit(
     Tk_MacOSXSetupTkNotifier();
 
     /*
-     * Since it is possible for TkInit to be called multiple times
-     * and we don't want to do the following initialization multiple times
-     * we protect against doing it more than once.
+     * Since it is possible for TkInit to be called multiple times and we
+     * don't want to do the following initialization multiple times we protect
+     * against doing it more than once.
      */
 
     if (!initialized) {
@@ -130,7 +131,7 @@ TkpInit(
 	CFURLRef bundleUrl = NULL;
 	CFStringEncoding encoding;
 	const char *encodingStr = NULL;
-	int  i;
+	int i;
 	struct utsname name;
 	long osVersion = 0;
 
@@ -145,7 +146,7 @@ TkpInit(
 	}
 	if (osVersion && osVersion < (MAC_OS_X_VERSION_MIN_REQUIRED-1000)/10) {
 	    Tcl_Panic("Mac OS X 10.%d or later required !",
-		(MAC_OS_X_VERSION_MIN_REQUIRED-1000)/10);
+		    (MAC_OS_X_VERSION_MIN_REQUIRED-1000)/10);
 	}
 	TK_IF_MAC_OS_X_API (3, &kHIToolboxVersionNumber,
 	    tkMacOSXToolboxVersionNumber = kHIToolboxVersionNumber;
@@ -174,7 +175,7 @@ TkpInit(
 		"com.tcltk.tklibrary", TK_FRAMEWORK_VERSION, 1, PATH_MAX,
 		tkLibPath) != TCL_OK)
 #endif
-	    {
+	{
 	    /* Tk.framework not found, check if resource file is open */
 	    Handle rsrc = Get1NamedResource('CURS', "\phand");
 	    if (rsrc) {
@@ -194,7 +195,7 @@ TkpInit(
 		    image = _dyld_get_image_header(i);
 		    if (image) {
 			data = getsectdatafromheader(image, SEG_TEXT,
-					"__tk_rsrc", (void*)&size);
+				"__tk_rsrc", (void *) &size);
 			if (data) {
 			    data += _dyld_get_image_vmaddr_slide(i);
 			    break;
@@ -222,7 +223,7 @@ TkpInit(
 		    if (write(fd, data, size) == -1) {
 			break;
 		    }
-		    if(ChkErr(FSPathMakeRef, (unsigned char*)fileName, &ref,
+		    if(ChkErr(FSPathMakeRef, (unsigned char *) fileName, &ref,
 			    NULL) != noErr) {
 			break;
 		    }
@@ -260,11 +261,14 @@ TkpInit(
 	     * executable's url and compare the resulting url with the main
 	     * bundle url.
 	     */
+
 	    int j = 3;
 	    CFURLRef url = CFBundleCopyExecutableURL(bundleRef);
+
 	    while (url && j--) {
-		CFURLRef parent = CFURLCreateCopyDeletingLastPathComponent(NULL,
-			url);
+		CFURLRef parent =
+			CFURLCreateCopyDeletingLastPathComponent(NULL, url);
+
 		CFRelease(url);
 		url = parent;
 	    }
@@ -275,8 +279,11 @@ TkpInit(
 	    CFRelease(bundleUrl);
 	}
 
-	/* If we are not a bundled executable, notify the window server that
-	 * we are a foregroundable app. */
+	/*
+	 * If we are not a bundled executable, notify the window server that
+	 * we are a foregroundable app.
+	 */
+
 	if (!bundledExecutable) {
 	    OSStatus err = procNotFound;
 	    ProcessSerialNumber psn = { 0, kCurrentProcess };
@@ -293,6 +300,7 @@ TkpInit(
 		 * server. Load the SPI symbol dynamically, so that we don't
 		 * break if it ever disappears or changes its name.
 		 */
+
 		TkMacOSXInitNamedSymbol(CoreGraphics, OSStatus,
 			CPSEnableForegroundOperation, ProcessSerialNumberPtr);
 		if (CPSEnableForegroundOperation) {
@@ -327,8 +335,8 @@ TkpInit(
 	}
 
 	/*
-	 * FIXME: Close stdin & stdout for remote debugging otherwise we
-	 * will fight with gdb for stdin & stdout
+	 * FIXME: Close stdin & stdout for remote debugging otherwise we will
+	 * fight with gdb for stdin & stdout
 	 */
 
 	if (getenv("XCNOSTDIN") != NULL) {
@@ -389,9 +397,9 @@ TkpInit(
  *
  * TkpGetAppName --
  *
- *	Retrieves the name of the current application from a platform
- *	specific location. For Unix, the application name is the tail
- *	of the path contained in the tcl variable argv0.
+ *	Retrieves the name of the current application from a platform specific
+ *	location. For Unix, the application name is the tail of the path
+ *	contained in the tcl variable argv0.
  *
  * Results:
  *	Returns the application name in the given Tcl_DString.
@@ -426,8 +434,8 @@ TkpGetAppName(
  *
  * TkpDisplayWarning --
  *
- *	This routines is called from Tk_Main to display warning
- *	messages that occur during startup.
+ *	This routines is called from Tk_Main to display warning messages that
+ *	occur during startup.
  *
  * Results:
  *	None.
@@ -444,6 +452,7 @@ TkpDisplayWarning(
     CONST char *title)		/* Title of warning. */
 {
     Tcl_Channel errChannel = Tcl_GetStdChannel(TCL_STDERR);
+
     if (errChannel) {
 	Tcl_WriteChars(errChannel, title, -1);
 	Tcl_WriteChars(errChannel, ": ", 2);
@@ -457,13 +466,11 @@ TkpDisplayWarning(
  *
  * TkMacOSXDefaultStartupScript --
  *
- *
- *	On MacOS X, we look for a file in the Resources/Scripts
- *	directory called AppMain.tcl and if found, we set argv[1] to
- *	that, so that the rest of the code will find it, and add the
- *	Scripts folder to the auto_path. If we don't find the startup
- *	script, we just bag it, assuming the user is starting up some
- *	other way.
+ *	On MacOS X, we look for a file in the Resources/Scripts directory
+ *	called AppMain.tcl and if found, we set argv[1] to that, so that the
+ *	rest of the code will find it, and add the Scripts folder to the
+ *	auto_path. If we don't find the startup script, we just bag it,
+ *	assuming the user is starting up some other way.
  *
  * Results:
  *	None.
@@ -482,24 +489,21 @@ TkMacOSXDefaultStartupScript(void)
     bundleRef = CFBundleGetMainBundle();
 
     if (bundleRef != NULL) {
-	CFURLRef appMainURL;
-	appMainURL = CFBundleCopyResourceURL(bundleRef,
-		CFSTR("AppMain"),
-		CFSTR("tcl"),
-		CFSTR("Scripts"));
+	CFURLRef appMainURL = CFBundleCopyResourceURL(bundleRef,
+		CFSTR("AppMain"), CFSTR("tcl"), CFSTR("Scripts"));
 
 	if (appMainURL != NULL) {
 	    CFURLRef scriptFldrURL;
 	    char startupScript[PATH_MAX + 1];
 
 	    if (CFURLGetFileSystemRepresentation (appMainURL, true,
-		    (unsigned char*) startupScript, PATH_MAX)) {
-		Tcl_SetStartupScript(Tcl_NewStringObj(startupScript, -1), NULL);
-		scriptFldrURL = CFURLCreateCopyDeletingLastPathComponent(
-			NULL, appMainURL);
+		    (unsigned char *) startupScript, PATH_MAX)) {
+		Tcl_SetStartupScript(Tcl_NewStringObj(startupScript,-1), NULL);
+		scriptFldrURL = CFURLCreateCopyDeletingLastPathComponent(NULL,
+			appMainURL);
 		if (scriptFldrURL != NULL) {
-		    CFURLGetFileSystemRepresentation(scriptFldrURL,
-			    true, (unsigned char*) scriptPath, PATH_MAX);
+		    CFURLGetFileSystemRepresentation(scriptFldrURL, true,
+			    (unsigned char *) scriptPath, PATH_MAX);
 		    CFRelease(scriptFldrURL);
 		}
 	    }
@@ -513,11 +517,9 @@ TkMacOSXDefaultStartupScript(void)
  *
  * TkMacOSXGetNamedSymbol --
  *
- *
- *	Dynamically acquire address of a named symbol from a loaded
- *	dynamic library, so that we can use API that may not be
- *	available on all OS versions.
- *	If module is non-NULL and not the empty string, use twolevel
+ *	Dynamically acquire address of a named symbol from a loaded dynamic
+ *	library, so that we can use API that may not be available on all OS
+ *	versions. If module is non-NULL and not the empty string, use twolevel
  *	namespace lookup.
  *
  * Results:
@@ -535,18 +537,68 @@ TkMacOSXGetNamedSymbol(
     const char* symbol)
 {
     NSSymbol nsSymbol = NULL;
+
     if (module && *module) {
-	if(NSIsSymbolNameDefinedWithHint(symbol, module)) {
+	if (NSIsSymbolNameDefinedWithHint(symbol, module)) {
 	    nsSymbol = NSLookupAndBindSymbolWithHint(symbol, module);
 	}
     } else {
-	if(NSIsSymbolNameDefined(symbol)) {
+	if (NSIsSymbolNameDefined(symbol)) {
 	    nsSymbol = NSLookupAndBindSymbol(symbol);
 	}
     }
-    if (nsSymbol) {
-	return NSAddressOfSymbol(nsSymbol);
-    } else {
+
+    if (!nsSymbol) {
 	return NULL;
     }
+    return NSAddressOfSymbol(nsSymbol);
 }
+
+/*
+ *----------------------------------------------------------------------
+ *
+ * TkMacOSXGetStringObjFromCFString --
+ *
+ *	Get a string object from a CFString as efficiently as possible.
+ *
+ * Results:
+ *	New string object or NULL if conversion failed.
+ *
+ * Side effects:
+ *	None.
+ *
+ *----------------------------------------------------------------------
+ */
+
+MODULE_SCOPE Tcl_Obj*
+TkMacOSXGetStringObjFromCFString(
+    CFStringRef str)
+{
+    Tcl_Obj *obj = NULL;
+    const char *c = CFStringGetCStringPtr(str, kCFStringEncodingUTF8);
+
+    if (c) {
+	obj = Tcl_NewStringObj(c, -1);
+    } else {
+	CFRange all = CFRangeMake(0, CFStringGetLength(str));
+	CFIndex len;
+
+	if (CFStringGetBytes(str, all, kCFStringEncodingUTF8, 0, false, NULL,
+		0, &len) > 0) {
+	    obj = Tcl_NewObj();
+	    Tcl_SetObjLength(obj, len);
+	    CFStringGetBytes(str, all, kCFStringEncodingUTF8, 0, false,
+		    (UInt8*) obj->bytes, len, NULL);
+	}
+    }
+    return obj;
+}
+
+/*
+ * Local Variables:
+ * mode: c
+ * c-basic-offset: 4
+ * fill-column: 79
+ * coding: utf-8
+ * End:
+ */

@@ -170,14 +170,19 @@ take care to only use the project matching your DevTools and OS version:
 	'Tk' target that simply calls through to the tcl/macosx/GNUMakefile. It
 	requires a build of the 'Tcl' target of tcl/macosx/Tcl.pbproj.
     * Wish.xcode Xcode 2.4 on 10.4 and Xcode 2.5 on 10.4 and later, which
-	additionally has a native 'tktest' target useful for debugging, this
-	target's 'Debug' build configuration has ZeroLink and Fix&Continue
-	enabled, use the 'DebugNoFixZL' build configuration if you need a debug
-	build without these features. The following additional build
-	configurations are available for the 'Tk' and 'tktest' targets:
+	additionally has native 'tktest' and 'tktest-X11' targets for
+	debugging, these targets' 'Debug' build configuration has ZeroLink and
+	Fix&Continue enabled, use the 'DebugNoFixZL' build configuration if you
+	need a debug build without these features. The following build
+	configurations are available:
 	'DebugUnthreaded': debug build with threading turned off.
+	'DebugNoCF': debug build with corefoundation turned off
+		(for 'tktest-X11' only).
+	'DebugNoCFUnthreaded': debug build with corefoundation turned off
+		(for 'tktest-X11' only) and with threading turned off.
 	'DebugMemCompile': debug build with memory and bytecode debugging on.
 	'DebugLeaks': debug build with PURIFY defined.
+	'DebugGCov': debug build with generation of gcov data files enabled.
 	'ReleaseUniversal': builds the targets as universal binaries for the
 		ppc and i386 architectures.
 	'ReleaseUniversal10.4uSDK': same as 'ReleaseUniversal' but builds
@@ -188,10 +193,21 @@ take care to only use the project matching your DevTools and OS version:
 	'ReleasePPC10.2.8SDK': builds for PowerPC with gcc-3.3 against the
 		10.2.8 SDK, useful to verify on Tiger that building on Jaguar
 		would succeed.
-    * Wish.xcodeproj for Xcode 3.0 on 10.5 and later, which has the following
-	additional build configuration:
+    * Wish.xcodeproj for Xcode 3.1 on 10.5 and later, which has the following
+	additional build configurations:
 	'ReleaseUniversal10.5SDK': same as 'ReleaseUniversal' but builds
 		against the 10.5 SDK on Leopard (with 10.5 deployment target).
+	'Debug gcc42':  same as 'Debug' but builds with gcc 4.2.
+	'Debug llvmgcc42': same as 'Debug' but builds with llvm-gcc 4.2.
+	'ReleaseUniversal gcc42': same as 'ReleaseUniversal' but builds with
+		gcc 4.2.
+	'ReleaseUniversal llvmgcc42': same as 'ReleaseUniversal' but builds
+		with llvm-gcc 4.2.
+	'Debug64bit': builds the 'tktest-X11' target as 64bit with debugging
+		 enabled (requires a 64bit capable processor).
+	Note that all non-SDK configurations have 10.5 deployment target and
+		that all Universal configurations build the 'tktest-X11' target
+		also for the ppc64 and x86_64 architectures.
 
 Notes about the native targets of the Xcode projects:
     * the Xcode projects refer to the toplevel tcl and tk source dirs through

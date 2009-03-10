@@ -26,10 +26,12 @@
 #include "common.h"
 
 #include <string.h>
-
 #include "bio.h"
+
 #include "cmd.h"
-#include "ged_private.h"
+
+#include "./ged_private.h"
+
 
 struct ged_killtree_data {
     struct ged *gedp;

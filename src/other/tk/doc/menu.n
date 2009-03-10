@@ -638,7 +638,7 @@ window of the topmost pixel in the entry specified by \fIindex\fR.
 The default bindings support four different ways of using menus:
 .TP
 \fBPulldown Menus in Menubar\fR
-This is the most command case. You create a menu widget that will become the
+This is the most common case. You create a menu widget that will become the
 menu bar. You then add cascade entries to this menu, specifying the
 pull down menus you wish to use in your menu bar. You then create all
 of the pulldowns. Once you have done this, specify the menu using the

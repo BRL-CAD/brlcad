@@ -21,8 +21,9 @@ global \- Access global variables
 .PP
 This command has no effect unless executed in the context of a proc body.
 If the \fBglobal\fR command is executed in the context of a proc body, it
-creates local variables linked to the corresponding global variables (and
-therefore these variables are listed by info locals).
+creates local variables linked to the corresponding global variables (though
+these linked variables, like those created by \fBupvar\fR, are not included
+in the list returned by \fBinfo locals\fR).
 .PP
 If \fIvarname\fR contains namespace qualifiers, the local variable's name is
 the unqualified name of the global variable, as determined by the

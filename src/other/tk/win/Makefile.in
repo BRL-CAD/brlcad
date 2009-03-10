@@ -385,11 +385,10 @@ TTK_OBJS = \
 	ttkTrack.$(OBJEXT) \
 	ttkTreeview.$(OBJEXT) \
 	ttkWidget.$(OBJEXT) \
-	ttkStubInit.$(OBJEXT) \
-	ttkStubLib.$(OBJEXT)
+	ttkStubInit.$(OBJEXT)
 
 STUB_OBJS = \
-	tkStubLib.$(OBJEXT)
+	tkStubLib.$(OBJEXT) ttkStubLib.$(OBJEXT)
 
 TCL_DOCS = "$(TCL_SRC_DIR_NATIVE)"/doc/*.[13n]
 TK_DOCS = "$(ROOT_DIR_NATIVE)"/doc/*.[13n]
@@ -480,8 +479,7 @@ install-binaries: binaries
 	@echo "Creating package index $(PKG_INDEX)"; 
 	@$(RM) $(PKG_INDEX);
 	@(\
-	echo "if {[catch {package present Tcl\
-		$(TCLVERSION)$(TCLPATCHL)}]} { return }";\
+	echo "if {[catch {package present Tcl 8.5.0-8.6}]} { return }";\
 	echo "package ifneeded Tk $(VERSION)$(PATCH_LEVEL)\
 		[list load [file join \$$dir .. .. bin $(TK_DLL_FILE)] Tk]";\
 	) > $(PKG_INDEX);

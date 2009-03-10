@@ -102,10 +102,10 @@ reclaim an object's storage.
 .PP
 Tcl objects are typed.
 An object's internal representation is controlled by its type.
-Seven types are predefined in the Tcl core
+Several types are predefined in the Tcl core
 including integer, double, list, and bytecode.
 Extension writers can extend the set of types
-by using the procedure \fBTcl_RegisterObjType\fR .
+by defining their own \fBTcl_ObjType\fR structs.
 .SH "THE TCL_OBJ STRUCTURE"
 .PP
 Each Tcl object is represented by a \fBTcl_Obj\fR structure

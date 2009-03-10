@@ -3,13 +3,23 @@
  * SOURCE: tk/generic/tkStubLib.c, version 1.9 2004/03/17
  */
 
+/*
+ * We need to ensure that we use the tcl stub macros so that this file
+ * contains no references to any of the tcl stub functions.
+ */
+
+#ifndef USE_TCL_STUBS
+#define USE_TCL_STUBS
+#endif
+#undef USE_TCL_STUB_PROCS
+
 #include "tk.h"
 
 #define USE_TTK_STUBS 1
 #include "ttkTheme.h"
 
 MODULE_SCOPE const TtkStubs *ttkStubsPtr;
-const TtkStubs *ttkStubsPtr;
+const TtkStubs *ttkStubsPtr = NULL;
 
 /*
  *----------------------------------------------------------------------

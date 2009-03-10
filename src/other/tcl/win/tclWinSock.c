@@ -13,6 +13,10 @@
 
 #include "tclWinInt.h"
 
+#ifdef _MSC_VER
+#   pragma comment (lib, "ws2_32")
+#endif
+
 /*
  * Support for control over sockets' KEEPALIVE and NODELAY behavior is
  * currently disabled.

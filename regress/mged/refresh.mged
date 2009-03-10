@@ -1,0 +1,5 @@
+puts "*** Testing 'refresh' command ***"
+
+refresh
+
+puts "*** 'refresh' testing completed ***"

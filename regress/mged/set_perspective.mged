@@ -1,0 +1,9 @@
+puts "*** Testing 'set' command - setting the perspective***"
+
+set perspective
+set perspective 3.3
+set perspective
+set perspective -1
+set perspective
+
+puts "*** 'set' has set perspective - test completed ***"

@@ -24,13 +24,12 @@
  */
 
 #include "common.h"
-#include "bio.h"
 
 #include <stdlib.h>
 #include <sys/types.h>
 #include <sys/stat.h>
-#include <stdio.h>
 #include <string.h>
+#include "bio.h"
 
 #include "vmath.h"
 #include "nmg.h"
@@ -39,7 +38,8 @@
 #include "raytrace.h"
 #include "wdb.h"
 
-#include "ged_private.h"
+#include "./ged_private.h"
+
 
 #define V3ARGS_SCALE(_a)       (_a)[X]*cfactor, (_a)[Y]*cfactor, (_a)[Z]*cfactor
 

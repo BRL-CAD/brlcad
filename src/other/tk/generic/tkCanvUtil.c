@@ -268,12 +268,7 @@ Tk_CanvasGetCoordFromObj(
 {
     TkCanvas *canvasPtr = (TkCanvas *) canvas;
 
-    if (Tk_GetMMFromObj(canvasPtr->interp, canvasPtr->tkwin, obj,
-	    doublePtr) != TCL_OK) {
-	return TCL_ERROR;
-    }
-    *doublePtr *= canvasPtr->pixelsPerMM;
-    return TCL_OK;
+    return Tk_GetDoublePixelsFromObj(canvasPtr->interp, canvasPtr->tkwin, obj, doublePtr);
 }
 
 /*
@@ -897,7 +892,7 @@ Tk_GetDash(
 	goto badDashList;
     }
 
-    if (ABS(dash->number) > sizeof(char *)) {
+    if ((unsigned int)ABS(dash->number) > sizeof(char *)) {
 	ckfree((char *) dash->pattern.pt);
     }
     if (argc > (int)sizeof(char *)) {
@@ -938,7 +933,7 @@ Tk_GetDash(
     if (argv != NULL) {
 	ckfree((char *) argv);
     }
-    if (ABS(dash->number) > sizeof(char *)) {
+    if ((unsigned int)ABS(dash->number) > sizeof(char *)) {
 	ckfree((char *) dash->pattern.pt);
     }
     dash->number = 0;
@@ -1010,13 +1005,13 @@ Tk_DeleteOutline(
     if (outline->gc != None) {
 	Tk_FreeGC(display, outline->gc);
     }
-    if (ABS(outline->dash.number) > sizeof(char *)) {
+    if ((unsigned int)ABS(outline->dash.number) > sizeof(char *)) {
 	ckfree((char *) outline->dash.pattern.pt);
     }
-    if (ABS(outline->activeDash.number) > sizeof(char *)) {
+    if ((unsigned int)ABS(outline->activeDash.number) > sizeof(char *)) {
 	ckfree((char *) outline->activeDash.pattern.pt);
     }
-    if (ABS(outline->disabledDash.number) > sizeof(char *)) {
+    if ((unsigned int)ABS(outline->disabledDash.number) > sizeof(char *)) {
 	ckfree((char *) outline->disabledDash.pattern.pt);
     }
     if (outline->color != NULL) {
@@ -1445,7 +1440,7 @@ Tk_CanvasPsOutline(
 	str = (char *)ckalloc((unsigned int) (1 - 8*dash->number));
 	lptr = (char *)ckalloc((unsigned int) (1 - 2*dash->number));
     }
-    ptr = (ABS(dash->number) > sizeof(char *)) ?
+    ptr = ((unsigned int)ABS(dash->number) > sizeof(char *)) ?
 	    dash->pattern.pt : dash->pattern.array;
     if (dash->number > 0) {
 	char *ptr0 = ptr;

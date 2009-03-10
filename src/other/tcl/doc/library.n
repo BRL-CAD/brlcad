@@ -65,7 +65,7 @@ named by \fIcmd\fR.  If not, it returns an empty string.  This command
 examines the directories in the current search path (given by the PATH
 environment variable) in its search for an executable file named
 \fIcmd\fR.  On Windows platforms, the search is expanded with the same
-directories and file extensions as used by \fBexec\fR. \fBAuto_exec\fR
+directories and file extensions as used by \fBexec\fR. \fBAuto_execok\fR
 remembers information about previous searches in an array named
 \fBauto_execs\fR;  this avoids the path search in future calls for the
 same \fIcmd\fR.  The command \fBauto_reset\fR may be used to force

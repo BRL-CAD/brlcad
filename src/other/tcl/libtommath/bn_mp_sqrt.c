@@ -27,7 +27,7 @@ int mp_sqrt(mp_int *arg, mp_int *ret)
   mp_int t1,t2;
   int i, j, k;
 #ifndef NO_FLOATING_POINT
-  double d;
+  volatile double d;
   mp_digit dig;
 #endif
 
@@ -64,12 +64,29 @@ int mp_sqrt(mp_int *arg, mp_int *ret)
   for (k = arg->used-1; k >= j; --k) {
       d = ldexp(d, DIGIT_BIT) + (double) (arg->dp[k]);
   }
+
+  /* 
+   * At this point, d is the nearest floating point number to the most
+   * significant 1 or 2 mp_digits of arg. Extract its square root.
+   */
+     
   d = sqrt(d);
+
+  /* dig is the most significant mp_digit of the square root */
+
   dig = (mp_digit) ldexp(d, -DIGIT_BIT);
+
+  /* 
+   * If the most significant digit is nonzero, find the next digit down
+   * by subtracting DIGIT_BIT times thie most significant digit. 
+   * Subtract one from the result so that our initial estimate is always
+   * low.
+   */
+
   if (dig) {
       t1.used = i+2;
       d -= ldexp((double) dig, DIGIT_BIT);
-      if (d != 0.0) {
+      if (d >= 1.0) {
 	  t1.dp[i+1] = dig;
 	  t1.dp[i] = ((mp_digit) d) - 1;
       } else {

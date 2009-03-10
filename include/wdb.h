@@ -216,6 +216,14 @@ WDB_EXPORT WDB_EXTERN(int mk_arbn, (struct rt_wdb *fp, const char *name, int neq
 WDB_EXPORT WDB_EXTERN(int mk_ars, (struct rt_wdb *fp, const char *name, int ncurves, int pts_per_curve,
 				   fastf_t	*curves[]) );
 
+/**
+ * Given the appropriate parameters, makes the non-geometric
+ * constraint object and writes it to the database using
+ * wdb_put_internal.  Only supported on database version 5 or above
+ */
+WDB_EXPORT WDB_EXTERN(int mk_constraint, (struct rt_wdb *wdbp, const char *name, const char *expr));
+
+
 typedef enum {
     WDB_BINUNIF_FLOAT,
     WDB_BINUNIF_DOUBLE,

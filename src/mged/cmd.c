@@ -217,6 +217,72 @@ cmd_ged_erase_wrapper(ClientData clientData, Tcl_Interp *interp, int argc, const
 }
 
 int
+cmd_ged_gqa(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
+{
+    register char **vp;
+    register int i;
+    int ret;
+    Tcl_DString ds;
+    struct cmdtab *ctp = (struct cmdtab *)clientData;
+
+    if (gedp == GED_NULL)
+	return TCL_OK;
+
+    vp = &gedp->ged_gdp->gd_rt_cmd[0];
+
+    /* Grab command name and any options */
+    *vp++ = argv[0];
+    for (i=1; i < argc; i++) {
+	if (argv[i][0] != '-')
+	    break;
+
+	if (argv[i][0] == '-' &&
+	    argv[i][1] == '-' &&
+	    argv[i][2] == '\0') {
+	    ++i;
+	    break;
+	}
+
+	*vp++ = (char *)argv[i];
+    }
+
+    /*
+     * Append remaining args, if any. Otherwise, append currently displayed objects.
+     */
+    if (i < argc) {
+	while (i < argc)
+	    *vp++ = (char *)argv[i++];
+	gedp->ged_gdp->gd_rt_cmd_len = vp - gedp->ged_gdp->gd_rt_cmd;
+	*vp = 0;
+	vp = &gedp->ged_gdp->gd_rt_cmd[0];
+	while (*vp)
+	    bu_vls_printf(&gedp->ged_result_str, "%s ", *vp++);
+
+	bu_vls_printf(&gedp->ged_result_str, "\n");
+    } else {
+	gedp->ged_gdp->gd_rt_cmd_len = vp - gedp->ged_gdp->gd_rt_cmd;
+	gedp->ged_gdp->gd_rt_cmd_len += ged_build_tops(gedp,
+						       vp,
+						       &gedp->ged_gdp->gd_rt_cmd[MAXARGS]);
+    }
+
+    ret = (*ctp->ged_func)(gedp, gedp->ged_gdp->gd_rt_cmd_len, gedp->ged_gdp->gd_rt_cmd);
+    Tcl_DStringInit(&ds);
+    Tcl_DStringAppend(&ds, bu_vls_addr(&gedp->ged_result_str), -1);
+    Tcl_DStringResult(interp, &ds);
+
+    if (ret == BRLCAD_HELP)
+	return TCL_OK;
+
+    if (ret != BRLCAD_OK)
+	return TCL_ERROR;
+
+    update_views = 1;
+
+    return TCL_OK;
+}
+
+int
 cmd_ged_in(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 {
     int ret;
@@ -371,6 +437,9 @@ cmd_ged_view_wrapper(ClientData clientData, Tcl_Interp *interp, int argc, const 
 
     if (gedp == GED_NULL)
 	return TCL_OK;
+
+    if (!gedp->ged_gvp)
+	gedp->ged_gvp = view_state->vs_gvp;
 
     ret = (*ctp->ged_func)(gedp, argc, (const char **)argv);
     Tcl_DStringInit(&ds);

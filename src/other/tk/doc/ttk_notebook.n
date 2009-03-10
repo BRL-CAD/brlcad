@@ -79,6 +79,27 @@ Specifies the integer index (0-based) of a character to underline
 in the text string.
 The underlined character is used for mnemonic activation
 if \fBttk::notebook::enableTraversal\fR is called.
+.SH "TAB IDENTIFIERS"
+The \fItabid\fR argument to the following commands may take
+any of the following forms:
+.IP \(bu
+An integer between zero and the number of tabs;
+.IP \(bu
+The name of a slave window;
+.IP \(bu
+A positional specification of the form
+.QW @\fIx\fR,\fIy\fR ,
+which identifies the tab 
+.IP \(bu
+The literal string
+.QW \fBcurrent\fR ,
+which identifies the currently-selected tab; or:
+.IP \(bu
+The literal string
+.QW \fBend\fR ,
+which returns the number of tabs 
+(only valid for
+.QW "\fIpathname \fBindex\fR" ).
 .SH "WIDGET COMMAND"
 .TP
 \fIpathname \fBadd\fR \fIwindow\fR ?\fIoptions...\fR?
@@ -102,6 +123,10 @@ Hides the tab specified by \fItabid\fR.
 The tab will not be displayed, but the associated window
 remains managed by the notebook and its configuration remembered.
 Hidden tabs may be restored with the \fBadd\fR command.
+.TP
+\fIpathName \fBidentify\fR \fIx y\fR
+Returns the name of the element at position \fIx\fR, \fIy\fR.
+See \fIttk::widget(n)\fR.
 .TP
 \fIpathname \fBindex\fR \fItabid\fR
 Returns the numeric index of the tab specified by \fItabid\fR,
@@ -161,27 +186,6 @@ Multiple notebooks in a single toplevel may be enabled for traversal,
 including nested notebooks.  
 However, notebook traversal only works properly if all panes
 are direct children of the notebook.
-.SH "TAB IDENTIFIERS"
-The \fItabid\fR argument to the above commands may take
-any of the following forms:
-.IP \(bu
-An integer between zero and the number of tabs;
-.IP \(bu
-The name of a slave window;
-.IP \(bu
-A positional specification of the form
-.QW @\fIx\fR,\fIy\fR ,
-which identifies the tab 
-.IP \(bu
-The literal string
-.QW \fBcurrent\fR ,
-which identifies the currently-selected tab; or:
-.IP \(bu
-The literal string
-.QW \fBend\fR ,
-which returns the number of tabs 
-(only valid for
-.QW "\fIpathname \fBindex\fR" ).
 .SH "VIRTUAL EVENTS"
 The notebook widget generates a \fB<<NotebookTabChanged>>\fR
 virtual event after a new tab is selected.

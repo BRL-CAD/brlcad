@@ -1,5 +1,5 @@
 
-Libpng 1.2.32 - September 18, 2008
+Libpng 1.2.35 - February 14, 2009
 
 This is a public release of libpng, intended for use in production codes.
 
@@ -8,45 +8,45 @@ Files available for download:
 Source files with LF line endings (for Unix/Linux) and with a
 "configure" script
 
-   libpng-1.2.32.tar.gz
-   libpng-1.2.32.tar.lzma
+   libpng-1.2.35.tar.gz
+   libpng-1.2.35.tar.lzma
      (Get the lzma codec from <http://tukaani.org/lzma>).
-   libpng-1.2.32.tar.bz2
+   libpng-1.2.35.tar.bz2
 
 Source files with LF line endings (for Unix/Linux) without the
 "configure" script
 
-   libpng-1.2.32-no-config.tar.gz
-   libpng-1.2.32-no-config.tar.lzma
-   libpng-1.2.32-no-config.tar.bz2
+   libpng-1.2.35-no-config.tar.gz
+   libpng-1.2.35-no-config.tar.lzma
+   libpng-1.2.35-no-config.tar.bz2
 
 Source files with CRLF line endings (for Windows), without the
 "configure" script
 
-   lpng1232.zip
-   lpng1232.7z
-   lpng1232.tar.bz2
+   lpng1235.zip
+   lpng1235.7z
+   lpng1235.tar.bz2
 
 Project files
 
-   libpng-1.2.32-project-netware.zip
-   libpng-1.2.32-project-wince.zip
+   libpng-1.2.35-project-netware.zip
+   libpng-1.2.35-project-wince.zip
 
 Other information:
 
-   libpng-1.2.32-README.txt
-   libpng-1.2.32-KNOWNBUGS.txt
-   libpng-1.2.32-LICENSE.txt
-   libpng-1.2.32-Y2K-compliance.txt
-   libpng-1.2.32-[previous version]-diff.txt
+   libpng-1.2.35-README.txt
+   libpng-1.2.35-KNOWNBUGS.txt
+   libpng-1.2.35-LICENSE.txt
+   libpng-1.2.35-Y2K-compliance.txt
+   libpng-1.2.35-[previous version]-diff.txt
 
-Changes since the last public release (1.2.31):
+Changes since the last public release (1.2.34):
 
-version 1.2.32 [September 18, 2008]
+version 1.2.35 [February 14, 2009]
 
-  Shortened tIME_string to 29 bytes in pngtest.c
-  Fixed off-by-one error introduced in png_push_read_zTXt() function in
-    libpng-1.2.30/pngpread.c (Harald van Dijk)
+  Zero out all arrays of pointers after png_malloc(). (Tavis Ormandy)
+  Use png_memset() instead of a loop to intialize pointers.  We realize
+    this will not work on platforms where the NULL pointer is not all zeroes.
 
 Send comments/corrections/commendations to png-mng-implement at lists.sf.net
 (subscription required; visit 

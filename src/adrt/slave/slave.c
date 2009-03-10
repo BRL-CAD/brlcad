@@ -132,7 +132,7 @@ adrt_slave_work(tienet_buffer_t *work, tienet_buffer_t *result)
 
 	    for (i = 0; i < num; i++) {
 		/* string length */
-		TCOPY(uint8_t, work->data, ind, &c, 0);
+		TCOPY(uint8_t, work->data, ind, &c, 0);	/* this likes to break, 'num' is way too big. */
 		ind += 1;
 
 		/* string */

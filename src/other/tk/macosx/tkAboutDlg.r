@@ -4,7 +4,7 @@
  *	This file creates resources for the Tk "About Box" dialog.
  *
  * Copyright (c) 1996 Sun Microsystems, Inc.
- * Copyright (c) 2006-2007 Daniel A. Steffen <das@users.sourceforge.net>
+ * Copyright (c) 2006-2008 Daniel A. Steffen <das@users.sourceforge.net>
  *
  * See the file "license.terms" for information on usage and redistribution
  * of this file, and for a DISCLAIMER OF ALL WARRANTIES.
@@ -47,8 +47,8 @@ resource 'DITL' (128, "About Box", purgeable) {
 	{232, 147, 252, 217}, Button	    {enabled, "Ok"},
 	{ 20, 108, 212, 344}, StaticText    {disabled,
 	    "Tcl " TCL_PATCH_LEVEL " & Tk " TK_PATCH_LEVEL "\n\n"
-	    "© 2002-2007 Tcl Core Team." "\n\n"
-	    "© 2002-2007 Daniel A. Steffen." "\n\n"
+	    "© 2002-2008 Tcl Core Team." "\n\n"
+	    "© 2002-2008 Daniel A. Steffen." "\n\n"
 	    "Jim Ingham & Ian Reid" "\n"
 	    "© 2001-2002 Apple Computer, Inc." "\n\n"
 	    "Jim Ingham & Ray Johnson" "\n"

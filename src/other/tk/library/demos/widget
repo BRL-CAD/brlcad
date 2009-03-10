@@ -358,6 +358,8 @@ addFormattedText {
     @@demo ruler	A ruler with adjustable tab stops
     @@demo floor	A building floor plan
     @@demo cscroll	A simple scrollable canvas
+    @@new
+    @@demo knightstour  A Knight's tour of the chess board
 
     @@subtitle	Scales and Progress Bars
     @@demo hscale	Horizontal scale

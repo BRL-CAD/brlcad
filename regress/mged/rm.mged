@@ -1,0 +1,10 @@
+puts "*** Testing 'rm' command ***"
+
+in_sph rm 1
+in_sph rm 2
+comb rm_comb1.c u rm_sph1.s
+comb rm_comb2.c u rm_comb1.c u rm_sph2.s
+rm rm_comb2.c rm_sph2.s
+rm rm_comb2.c rm_sph1.s
+
+puts "*** 'rm' testing completed ***"

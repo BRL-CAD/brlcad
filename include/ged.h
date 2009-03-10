@@ -462,6 +462,12 @@ GED_EXPORT BU_EXTERN(struct ged *ged_open,
 GED_EXPORT BU_EXTERN(void ged_view_init,
 		     (struct ged_view *gvp));
 
+/* defined in rt.c */
+GED_EXPORT BU_EXTERN(int ged_build_tops,
+		     (struct ged	*gedp,
+		      char		**start,
+		      register char	**end));
+
 /* defined in wdb_comb_std.c */
 GED_EXPORT BU_EXTERN(int wdb_comb_std_cmd,
 		     (struct rt_wdb	*gedp,
@@ -2013,6 +2019,14 @@ GED_EXPORT BU_EXTERN(int ged_vnirt, (struct ged *gedp, int argc, const char *arg
 GED_EXPORT BU_EXTERN(int ged_nmg_collapse, (struct ged *gedp, int argc, const char *argv[]));
 
 /**
+ * Attempt to fix an NMG primitive's normals.
+ *
+ * Usage:
+ *     nmg_fix_normals nmg_prim
+ */
+GED_EXPORT BU_EXTERN(int ged_nmg_fix_normals, (struct ged *gedp, int argc, const char *argv[]));
+
+/**
  * Simplify the NMG primitive, if possible
  *
  * Usage:
@@ -2564,8 +2578,7 @@ GED_EXPORT BU_EXTERN(int ged_tol, (struct ged *gedp, int argc, const char *argv[
  * Find all top level objects
  *
  * Usage:
- *     tops [-a] [-h] [-n] [-p], if NEW_TOPS_BEHAVIOR
- *     tops [-g] [-n] [-u]
+ *     tops [-a] [-h] [-n] [-p] (DEPRECATED: [-g] [-u])
  */
 GED_EXPORT BU_EXTERN(int ged_tops, (struct ged *gedp, int argc, const char *argv[]));
 

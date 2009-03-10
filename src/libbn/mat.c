@@ -87,7 +87,6 @@ bn_mat_print_guts(const char	*title,
     }
 }
 
-
 /**
  * B N _ M A T _ P R I N T
  */
@@ -99,6 +98,21 @@ bn_mat_print(const char		*title,
 
     bn_mat_print_guts(title, m, obuf, 1024);
     bu_log("%s\n", obuf);
+}
+
+
+/**
+ * B N _ M A T _ P R I N T _ V L S
+ */
+void
+bn_mat_print_vls(const char	*title,
+		 const mat_t	m,
+		 struct bu_vls	*vls)
+{
+    char obuf[1024];
+
+    bn_mat_print_guts(title, m, obuf, 1024);
+    bu_vls_printf(vls, "%s\n", obuf);
 }
 
 

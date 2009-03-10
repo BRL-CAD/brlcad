@@ -16,7 +16,11 @@ sample_applications_DATA = fortran_example.f
 bin_SCRIPTS = brlcad-config
 man_MANS = brlcad-config.1
 
+DATAFILES = \
+	NIST_DENSITIES
+
 EXTRA_DIST = \
+	${DATAFILES} \
 	$(man_MANS) \
 	$(sample_applications_DATA) \
 	Cakefile.defs \
@@ -31,6 +35,11 @@ EXTRA_DIST = \
 	doxygen_structure \
 	flawfinder \
 	libtool.m4
+
+datafilesdir = $(BRLCAD_DATA)/data
+
+datafiles_DATA = \
+	$(DATAFILES)
 
 DISTCLEANFILES = \
 	brlcad-config \

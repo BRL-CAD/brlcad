@@ -75,7 +75,7 @@ typedef struct TkWindowEvent {
  * Array of event masks corresponding to each X event:
  */
 
-static unsigned long eventMasks[TK_LASTEVENT] = {
+static unsigned long realEventMasks[MappingNotify+1] = {
     0,
     0,
     KeyPressMask,			/* KeyPress */
@@ -113,7 +113,10 @@ static unsigned long eventMasks[TK_LASTEVENT] = {
     0,					/* SelectionNotify */
     ColormapChangeMask,			/* ColormapNotify */
     0,					/* ClientMessage */
-    0,					/* Mapping Notify */
+    0					/* Mapping Notify */
+};
+
+static unsigned long virtualEventMasks[TK_LASTEVENT-VirtualEvent] = {
     VirtualEventMask,			/* VirtualEvents */
     ActivateMask,			/* ActivateNotify */
     ActivateMask,			/* DeactivateNotify */
@@ -210,9 +213,7 @@ static void		UpdateButtonEventState(XEvent *eventPtr);
 static int		WindowEventProc(Tcl_Event *evPtr, int flags);
 #ifdef TK_USE_INPUT_METHODS
 static int		InvokeInputMethods(TkWindow *winPtr, XEvent *eventPtr);
-#if TK_XIM_SPOT
-static void		CreateXIMSpotMethods(TkWindow *winPtr);
-#endif /* TK_XIM_SPOT */
+static void		CreateXIC(TkWindow *winPtr);
 #endif /* TK_USE_INPUT_METHODS */
 
 /*
@@ -319,69 +320,52 @@ InvokeMouseHandlers(
 /*
  *----------------------------------------------------------------------
  *
- * CreateXIMSpotMethods --
+ * CreateXIC --
  *
- *	Create the X input methods for our winPtr. XIM is only ever enabled on
- *	Unix.
- *
- * Results:
- *	None.
- *
- * Side effects:
- *	An input context is created or we Tcl_Panic.
+ *	Create the X input context for our winPtr.
+ *	XIM is only ever enabled on Unix.
  *
  *----------------------------------------------------------------------
  */
 
-#if defined(TK_USE_INPUT_METHODS) && TK_XIM_SPOT
+#if defined(TK_USE_INPUT_METHODS)
 static void
-CreateXIMSpotMethods(
+CreateXIC(
     TkWindow *winPtr)
 {
     TkDisplay *dispPtr = winPtr->dispPtr;
+    long im_event_mask = 0L;
+    const char *preedit_attname = NULL;
+    XVaNestedList preedit_attlist = NULL;
 
-    if (dispPtr->flags & TK_DISPLAY_XIM_SPOT) {
-	XVaNestedList preedit_attr;
+    if (dispPtr->inputStyle & XIMPreeditPosition) {
 	XPoint spot = {0, 0};
 
-	if (dispPtr->inputXfs == NULL) {
-	    /*
-	     * We only need to create one XFontSet
-	     */
-
-	    char **missing_list;
-	    int missing_count;
-	    char *def_string;
-
-	    dispPtr->inputXfs = XCreateFontSet(dispPtr->display,
-		    "-*-*-*-R-Normal--14-130-75-75-*-*",
-		    &missing_list, &missing_count, &def_string);
-	    if (missing_count > 0) {
-		XFreeStringList(missing_list);
-	    }
-	}
-
-	preedit_attr = XVaCreateNestedList(0, XNSpotLocation,
-		&spot, XNFontSet, dispPtr->inputXfs, NULL);
-	if (winPtr->inputContext != NULL) {
-	    Tcl_Panic("inputContext not NULL");
-	}
-	winPtr->inputContext = XCreateIC(dispPtr->inputMethod,
-		XNInputStyle, XIMPreeditPosition|XIMStatusNothing,
-		XNClientWindow, winPtr->window,
-		XNFocusWindow, winPtr->window,
-		XNPreeditAttributes, preedit_attr,
+	preedit_attname = XNPreeditAttributes;
+	preedit_attlist = XVaCreateNestedList(0,
+		XNSpotLocation, &spot,
+		XNFontSet, dispPtr->inputXfs,
 		NULL);
-	XFree(preedit_attr);
-    } else {
-	if (winPtr->inputContext != NULL) {
-	    Tcl_Panic("inputContext not NULL");
-	}
-	winPtr->inputContext = XCreateIC(dispPtr->inputMethod,
-		XNInputStyle, XIMPreeditNothing|XIMStatusNothing,
-		XNClientWindow, winPtr->window,
-		XNFocusWindow, winPtr->window,
-		NULL);
+    }
+
+    winPtr->inputContext = XCreateIC(dispPtr->inputMethod,
+	    XNInputStyle, dispPtr->inputStyle,
+	    XNClientWindow, winPtr->window,
+	    XNFocusWindow, winPtr->window,
+	    preedit_attname, preedit_attlist,
+	    NULL);
+
+    if (preedit_attlist) {
+	XFree(preedit_attlist);
+    }
+
+    /*
+     * Adjust the window's event mask if the IM requires it.
+     */
+    XGetICValues(winPtr->inputContext, XNFilterEvents, &im_event_mask, NULL);
+    if ((winPtr->atts.event_mask & im_event_mask) != im_event_mask) {
+	winPtr->atts.event_mask |= im_event_mask;
+	XSelectInput(winPtr->display, winPtr->window, winPtr->atts.event_mask);
     }
 }
 #endif
@@ -397,8 +381,7 @@ CreateXIMSpotMethods(
  *	context).
  *
  *	When the event is a FocusIn event, set the input context focus to the
- *	receiving window. This is needed for certain versions of Solaris, but
- *	we are still not sure whether it is being done in the right way.
+ *	receiving window.
  *
  * Results:
  *	1 when we are done with the event.
@@ -419,38 +402,24 @@ InvokeInputMethods(
     TkDisplay *dispPtr = winPtr->dispPtr;
 
     if ((dispPtr->flags & TK_DISPLAY_USE_IM)) {
-	long im_event_mask = 0L;
 	if (!(winPtr->flags & (TK_CHECKED_IC|TK_ALREADY_DEAD))) {
 	    winPtr->flags |= TK_CHECKED_IC;
 	    if (dispPtr->inputMethod != NULL) {
-#if TK_XIM_SPOT
-		CreateXIMSpotMethods(winPtr);
-#else
+		CreateXIC(winPtr);
+	    }
+	}
+	switch (eventPtr->type) {
+	    case FocusIn:
 		if (winPtr->inputContext != NULL) {
-		    Tcl_Panic("inputContext not NULL");
+		    XSetICFocus(winPtr->inputContext);
 		}
-		winPtr->inputContext = XCreateIC(dispPtr->inputMethod,
-			XNInputStyle, XIMPreeditNothing|XIMStatusNothing,
-			XNClientWindow, winPtr->window,
-			XNFocusWindow, winPtr->window,
-			NULL);
-#endif
-	    }
-	}
-	if (winPtr->inputContext != NULL &&
-	    (eventPtr->xany.type == FocusIn)) {
-	    XGetICValues(winPtr->inputContext,
-		    XNFilterEvents, &im_event_mask, NULL);
-	    if (im_event_mask != 0L) {
-		XSelectInput(winPtr->display, winPtr->window,
-			winPtr->atts.event_mask | im_event_mask);
-		XSetICFocus(winPtr->inputContext);
-	    }
-	}
-	if (eventPtr->type == KeyPress || eventPtr->type == KeyRelease) {
-	    if (XFilterEvent(eventPtr, None)) {
-		return 1;
-	    }
+		break;
+	    case KeyPress:
+	    case KeyRelease:
+		if (XFilterEvent(eventPtr, None)) {
+		    return 1;
+		}
+		break;
 	}
     }
     return 0;
@@ -523,7 +492,7 @@ GetTkWindowFromXEvent(
  *
  * GetEventMaskFromXEvent --
  *
- *	The event type is looked up in our eventMasks table, and may be
+ *	The event type is looked up in our eventMasks tables, and may be
  *	changed to a different mask depending on the state of the event and
  *	window members.
  *
@@ -540,7 +509,23 @@ static unsigned long
 GetEventMaskFromXEvent(
     XEvent *eventPtr)
 {
-    unsigned long mask = eventMasks[eventPtr->xany.type];
+    unsigned long mask;
+
+    /*
+     * Get the event mask from the correct table. Note that there are two
+     * tables here because that means we no longer need this code to rely on
+     * the exact value of VirtualEvent, which has caused us problems in the
+     * past when X11 changed the value of LASTEvent. [Bug ???]
+     */
+
+    if (eventPtr->xany.type <= MappingNotify) {
+	mask = realEventMasks[eventPtr->xany.type];
+    } else if (eventPtr->xany.type >= VirtualEvent
+	    && eventPtr->xany.type<TK_LASTEVENT) {
+	mask = virtualEventMasks[eventPtr->xany.type - VirtualEvent];
+    } else {
+	mask = 0;
+    }
 
     /*
      * Events selected by StructureNotify require special handling. They look

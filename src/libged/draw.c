@@ -24,14 +24,16 @@
  */
 
 #include "common.h"
-#include "bio.h"
 
 #include <stdlib.h>
 #include <string.h>
+#include "bio.h"
 
 #include "mater.h"
 #include "solid.h"
-#include "ged_private.h"
+
+#include "./ged_private.h"
+
 
 /* declare our callbacks used by ged_drawtrees() */
 static union tree *ged_bot_check_region_end(register struct db_tree_state *tsp,
@@ -549,12 +551,12 @@ ged_cvt_vlblock_to_solids(struct ged *gedp, struct bn_vlblock *vbp, char *name, 
 int
 ged_drawtrees(struct ged *gedp, int argc, const char *argv[], int kind, struct ged_client_data *_dgcdp)
 {
-    int		ret = 0;
-    register int	c;
-    int		ncpu = 1;
-    int		dgo_nmg_use_tnurbs = 0;
-    int		dgo_enable_fastpath = 0;
-    struct model	*dgo_nmg_model;
+    int ret = 0;
+    register int c;
+    int ncpu = 1;
+    int dgo_nmg_use_tnurbs = 0;
+    int dgo_enable_fastpath = 0;
+    struct model *dgo_nmg_model;
     struct ged_client_data *dgcdp;
 
     RT_CHECK_DBI(gedp->ged_wdbp->dbip);
@@ -598,7 +600,7 @@ ged_drawtrees(struct ged *gedp, int argc, const char *argv[], int kind, struct g
 
 	/* Parse options. */
 	bu_optind = 0;		/* re-init bu_getopt() */
-	while ((c = bu_getopt(argc, (char * const *)argv, "dfm:nqstuvwx:C:STP:")) != EOF) {
+	while ((c = bu_getopt(argc, (char * const *)argv, "dfm:nqstuvwx:C:STP:A:oR")) != EOF) {
 	    switch (c) {
 		case 'u':
 		    dgcdp->draw_edge_uses = 1;
@@ -677,9 +679,14 @@ ged_drawtrees(struct ged *gedp, int argc, const char *argv[], int kind, struct g
 			dgcdp->transparency = 1.0;
 
 		    break;
+		case 'A':
+		case 'o':
+		case 'R':
+		    /* nothing to do, handled by edit_com wrapper on the front-end */
+		    break;
 		default:
 		{
-		    bu_vls_printf(&gedp->ged_result_str, "unrecogized option - %c\n", c);
+		    bu_vls_printf(&gedp->ged_result_str, "unrecognized option - %c\n", c);
 		    bu_free((genptr_t)dgcdp, "ged_drawtrees: dgcdp");
 		    return BRLCAD_ERROR;
 		}
@@ -1069,7 +1076,7 @@ ged_color_soltab(struct solid *hsp)
 int
 ged_draw_guts(struct ged *gedp, int argc, const char *argv[], int kind)
 {
-    static const char *usage = "[-A -o -C#/#/# -s] <objects | attribute name/value pairs>";
+    static const char *usage = "[-R -A -o -C#/#/# -s] <objects | attribute name/value pairs>";
 
     GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
     GED_CHECK_DRAWABLE(gedp, BRLCAD_ERROR);

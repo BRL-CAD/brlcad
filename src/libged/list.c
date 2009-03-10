@@ -26,10 +26,12 @@
 #include "common.h"
 
 #include <string.h>
-
 #include "bio.h"
+
 #include "cmd.h"
-#include "ged_private.h"
+
+#include "./ged_private.h"
+
 
 void ged_do_list(struct ged *gedp, register struct directory *dp, int verbose);
 

@@ -91,26 +91,28 @@ bn_encode_mat(struct bu_vls *vp, const mat_t m)
     }
 
     bu_vls_printf(vp, "%g %g %g %g  %g %g %g %g  %g %g %g %g  %g %g %g %g",
-		  m[0], m[1], m[2], m[3], m[4], m[5], m[6], m[7],
-		  m[8], m[9], m[10], m[11], m[12], m[13], m[14], m[15]);
+		  INTCLAMP(m[0]), INTCLAMP(m[1]), INTCLAMP(m[2]), INTCLAMP(m[3]),
+		  INTCLAMP(m[4]), INTCLAMP(m[5]), INTCLAMP(m[6]), INTCLAMP(m[7]),
+		  INTCLAMP(m[8]), INTCLAMP(m[9]), INTCLAMP(m[10]), INTCLAMP(m[11]),
+		  INTCLAMP(m[12]), INTCLAMP(m[13]), INTCLAMP(m[14]), INTCLAMP(m[15]));
 }
 
 void
 bn_encode_quat(struct bu_vls *vp, const mat_t q)
 {
-    bu_vls_printf(vp, "%g %g %g %g", V4ARGS(q));
+    bu_vls_printf(vp, "%g %g %g %g", V4INTCLAMPARGS(q));
 }
 
 void
 bn_encode_vect(struct bu_vls *vp, const mat_t v)
 {
-    bu_vls_printf(vp, "%g %g %g", V3ARGS(v));
+    bu_vls_printf(vp, "%g %g %g", V3INTCLAMPARGS(v));
 }
 
 void
 bn_encode_hvect(struct bu_vls *vp, const mat_t v)
 {
-    bu_vls_printf(vp, "%g %g %g %g", V4ARGS(v));
+    bu_vls_printf(vp, "%g %g %g %g", V4INTCLAMPARGS(v));
 }
 
 void
@@ -330,8 +332,8 @@ bn_math_cmd(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 
 	bn_eigen2x2(&val1, &val2, vec1, vec2, (fastf_t)a, (fastf_t)b,
 		    (fastf_t)c);
-	bu_vls_printf(&result, "%g %g {%g %g %g} {%g %g %g}", val1, val2,
-		      V3ARGS(vec1), V3ARGS(vec2));
+	bu_vls_printf(&result, "%g %g {%g %g %g} {%g %g %g}", INTCLAMP(val1), INTCLAMP(val2),
+		      V3INTCLAMPARGS(vec1), V3INTCLAMPARGS(vec2));
     } else if (math_func == bn_mat_fromto) {
 	mat_t o;
 	vect_t from, to;
@@ -594,7 +596,7 @@ bn_math_cmd(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	}
 
 	VJOIN1(a, pt, dist[0], dir);
-	bu_vls_printf(&result, "%g %g", a[0], a[1]);
+	bu_vls_printf(&result, "%g %g", V2INTCLAMPARGS(a));
 
     } else {
 	bu_vls_printf(&result, "libbn/bn_tcl.c: math function %s not supported yet\n", argv[0]);
@@ -624,8 +626,8 @@ static struct math_func_link {
     {"mat4x3vec",          bn_mat4x3vec},
     {"mat4x3pnt",          bn_mat4x3pnt},
     {"hdivide",            bn_hdivide},
-    {"vjoin1",	      bn_vjoin1},
-    {"vblend",		bn_vblend},
+    {"vjoin1",	           bn_vjoin1},
+    {"vblend",	           bn_vblend},
     {"mat_ae",             bn_mat_ae},
     {"mat_ae_vec",         bn_ae_vec},
     {"mat_aet_vec",        bn_aet_vec},

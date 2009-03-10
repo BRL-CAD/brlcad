@@ -81,7 +81,7 @@
 
 /* Library entry points which are true functions. */
 FB_EXPORT extern void 	fb_configureWindow(FBIO *, int, int);
-FB_EXPORT extern FBIO	*fb_open(char *file, int width, int height);
+FB_EXPORT extern FBIO	*fb_open(char *file, int _width, int _height);
 FB_EXPORT extern int	fb_close(FBIO *ifp);
 FB_EXPORT extern int	fb_genhelp(void);
 FB_EXPORT extern int	fb_ioinit(FBIO *ifp);
@@ -120,10 +120,10 @@ FB_EXPORT extern int	_fb_pgin();
 FB_EXPORT extern int	_fb_pgout();
 FB_EXPORT extern int	_fb_pgflush();
 FB_EXPORT extern int	_fb_disk_enable;
-FB_EXPORT extern int	fb_sim_readrect(FBIO *ifp, int xmin, int ymin, int width, int height, unsigned char *pp);
-FB_EXPORT extern int	fb_sim_writerect(FBIO *ifp, int xmin, int ymin, int width, int height, const unsigned char *pp);
-FB_EXPORT extern int	fb_sim_bwreadrect(FBIO *ifp, int xmin, int ymin, int width, int height, unsigned char *pp);
-FB_EXPORT extern int	fb_sim_bwwriterect(FBIO *ifp, int xmin, int ymin, int width, int height, const unsigned char *pp);
+FB_EXPORT extern int	fb_sim_readrect(FBIO *ifp, int xmin, int ymin, int _width, int _height, unsigned char *pp);
+FB_EXPORT extern int	fb_sim_writerect(FBIO *ifp, int xmin, int ymin, int _width, int _height, const unsigned char *pp);
+FB_EXPORT extern int	fb_sim_bwreadrect(FBIO *ifp, int xmin, int ymin, int _width, int _height, unsigned char *pp);
+FB_EXPORT extern int	fb_sim_bwwriterect(FBIO *ifp, int xmin, int ymin, int _width, int _height, const unsigned char *pp);
 FB_EXPORT extern int	fb_sim_view(FBIO *ifp, int xcenter, int ycenter, int xzoom, int yzoom);
 FB_EXPORT extern int	fb_sim_getview(FBIO *ifp, int *xcenter, int *ycenter, int *xzoom, int *yzoom);
 FB_EXPORT extern int	fb_sim_cursor(FBIO *ifp, int mode, int x, int y);

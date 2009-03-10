@@ -6,7 +6,7 @@
 # RCS: @(#) $Id$
 
 AC_INIT(../generic/tk.h)
-AC_PREREQ(2.59)
+AC_PREREQ(2.52)
 
 # The following define is needed when building with Cygwin since newer
 # versions of autoconf incorrectly set SHELL to /bin/bash instead of
@@ -16,7 +16,7 @@ SHELL=/bin/sh
 TK_VERSION=8.5
 TK_MAJOR_VERSION=8
 TK_MINOR_VERSION=5
-TK_PATCH_LEVEL=".1"
+TK_PATCH_LEVEL=".6"
 VER=$TK_MAJOR_VERSION$TK_MINOR_VERSION
 
 #------------------------------------------------------------------------
@@ -230,14 +230,14 @@ else
 fi
 
 # The wish.exe.manifest requires these
-# TK_WIN_VERSION is the 4 dotted pair Windows version format
-# Make sure the patch level doesn't contain extra dotted pairs (interim rel)
-AB_PATCH_LEVEL="`echo $TK_PATCH_LEVEL | sed -e 's/\..*//'`"
+# TK_WIN_VERSION is the 4 dotted pair Windows version format which needs
+# the release level, and must account for interim release versioning
 case "$TK_PATCH_LEVEL" in
-     a*) TK_WIN_VERSION="$TK_VERSION.0.`echo $AB_PATCH_LEVEL | tr -d a`" ;;
-     b*) TK_WIN_VERSION="$TK_VERSION.1.`echo $AB_PATCH_LEVEL | tr -d b`" ;;
-     .*) TK_WIN_VERSION="$TK_VERSION.2$TK_PATCH_LEVEL" ;;
+     *a*) TK_RELEASE_LEVEL=0 ;;
+     *b*) TK_RELEASE_LEVEL=1 ;;
+     *)   TK_RELEASE_LEVEL=2 ;;
 esac
+TK_WIN_VERSION="$TK_VERSION.$TK_RELEASE_LEVEL.`echo $TK_PATCH_LEVEL | tr -d ab.`"
 AC_SUBST(TK_WIN_VERSION)
 # X86|AMD64|IA64 for manifest
 AC_SUBST(MACHINE)

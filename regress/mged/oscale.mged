@@ -1,0 +1,12 @@
+puts "*** Testing 'oscale' command ***"
+
+in_eto oscale
+comb oscale.c u oscale_eto.s
+Z
+e oscale.c
+oed / oscale.c/oscale_eto.s
+oscale 15
+accept
+Z
+
+puts "*** 'oscale' testing completed ***"

@@ -1,0 +1,11 @@
+puts "*** Testing 'arot' command ***"
+
+in_arb8 arot
+Z
+e arot_arb8.s
+sed arot_arb8.s
+arot 1 2 -9 60
+accept
+Z
+
+puts "*** 'arot' testing completed ***"

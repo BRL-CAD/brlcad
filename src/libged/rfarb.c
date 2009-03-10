@@ -31,7 +31,8 @@
 #include "bio.h"
 
 #include "rtgeom.h"
-#include "ged_private.h"
+#include "./ged_private.h"
+
 
 int
 ged_rfarb(struct ged *gedp, int argc, const char *argv[])

@@ -96,7 +96,7 @@ main(
     char **argv)		/* Values of command-line arguments. */
 {
     FILE *f;
-#define MAX_LINE_SIZE 1000
+#define MAX_LINE_SIZE 4000
     char line[MAX_LINE_SIZE];
     char *p;
 
@@ -197,6 +197,7 @@ DoMacro(
 				 * invocation. */
 {
     char *p, *end;
+    int quote;
 
     /*
      * If there is no macro name, then just skip the whole line.
@@ -234,8 +235,11 @@ DoMacro(
 	    }
 	    QuoteText(p+1, (end-(p+1)));
 	} else {
-	    for (end = p+1; (*end != 0) && !isspace(*end); end++) {
-		/* Empty loop body. */
+	    quote = 0;
+	    for (end = p+1; (*end != 0) && (quote || !isspace(*end)); end++) {
+		if (*end == '\'') {
+		    quote = !quote;
+		}
 	    }
 	    QuoteText(p, end-p);
 	}
@@ -346,8 +350,9 @@ DoText(
 
 		p += 2;
 		sscanf(p,"%d",&ch);
-		PRINT(("text \\u%04x", ch));
+		PRINT(("text \\u%04x\n", ch));
 		while(*p&&*p!='\'') p++;
+		p++;
 	    } else if (*p != 0) {
 		PRINT(("char {\\%c}\n", *p));
 		p++;

@@ -597,7 +597,16 @@ static int		EvalStatsCmd(ClientData clientData,
 #endif /* TCL_COMPILE_STATS */
 #ifdef TCL_COMPILE_DEBUG
 static char *		GetOpcodeName(unsigned char *pc);
+static void		PrintByteCodeInfo(ByteCode *codePtr);
+static const char *	StringForResultCode(int result);
+static void		ValidatePcAndStackTop(ByteCode *codePtr,
+			    unsigned char *pc, int stackTop,
+			    int stackLowerBound, int checkStack);
 #endif /* TCL_COMPILE_DEBUG */
+static void		DeleteExecStack(ExecStack *esPtr);
+static void		DupExprCodeInternalRep(Tcl_Obj *srcPtr,
+			    Tcl_Obj *copyPtr);
+static void		FreeExprCodeInternalRep(Tcl_Obj *objPtr);
 static ExceptionRange *	GetExceptRangeForPc(unsigned char *pc, int catchOnly,
 			    ByteCode *codePtr);
 static const char *	GetSrcInfoForPc(unsigned char *pc, ByteCode *codePtr,
@@ -607,17 +616,22 @@ static Tcl_Obj **	GrowEvaluationStack(ExecEnv *eePtr, int growth,
 static void		IllegalExprOperandType(Tcl_Interp *interp,
 			    unsigned char *pc, Tcl_Obj *opndPtr);
 static void		InitByteCodeExecution(Tcl_Interp *interp);
-#ifdef TCL_COMPILE_DEBUG
-static void		PrintByteCodeInfo(ByteCode *codePtr);
-static const char *	StringForResultCode(int result);
-static void		ValidatePcAndStackTop(ByteCode *codePtr,
-			    unsigned char *pc, int stackTop,
-			    int stackLowerBound, int checkStack);
-#endif /* TCL_COMPILE_DEBUG */
-static void		DeleteExecStack(ExecStack *esPtr);
 /* Useful elsewhere, make available in tclInt.h or stubs? */
 static Tcl_Obj **	StackAllocWords(Tcl_Interp *interp, int numWords);
 static Tcl_Obj **	StackReallocWords(Tcl_Interp *interp, int numWords);
+
+/*
+ * The structure below defines a bytecode Tcl object type to hold the
+ * compiled bytecode for Tcl expressions.
+ */
+
+static Tcl_ObjType exprCodeType = {
+    "exprcode",
+    FreeExprCodeInternalRep,	/* freeIntRepProc */
+    DupExprCodeInternalRep,	/* dupIntRepProc */
+    NULL,			/* updateStringProc */
+    NULL			/* setFromAnyProc */
+};
 
 /*
  *----------------------------------------------------------------------
@@ -837,31 +851,36 @@ TclFinalizeExecution(void)
 
 /*
  * Auxiliary code to insure that GrowEvaluationStack always returns correctly 
- * aligned memory. This assumes that TCL_ALLOCALIGN is a multiple of the
- * wordsize 'sizeof(Tcl_Obj *)'. 
+ * aligned memory.
+ *
+ * WALLOCALIGN represents the alignment reqs in words, just as TCL_ALLOCALIGN
+ * represents the reqs in bytes. This assumes that TCL_ALLOCALIGN is a
+ * multiple of the wordsize 'sizeof(Tcl_Obj *)'. 
  */
 
 #define WALLOCALIGN \
     (TCL_ALLOCALIGN/sizeof(Tcl_Obj *))
 
+/*
+ * OFFSET computes how many words have to be skipped until the next aligned
+ * word. Note that we are only interested in the low order bits of ptr, so
+ * that any possible information loss in PTR2INT is of no consequence.
+ */
+
 static inline int
 OFFSET(
-    Tcl_Obj **markerPtr)
+    void *ptr)
 {
-    /*
-     * Note that we are only interested in the low bits of the address, so
-     * that the fact that PTR2INT may lose the high bits is irrelevant.
-     */
-
-    int mask, base, new;
-
-    mask = WALLOCALIGN-1;
-    base = (PTR2INT(markerPtr) & mask);
-    new  = ((base + 1) + mask) & ~mask;
-    return (new - base);
+    int mask = TCL_ALLOCALIGN-1;
+    int base = PTR2INT(ptr) & mask;
+    return (TCL_ALLOCALIGN - base)/sizeof(Tcl_Obj *);
 }
 
-#define MEMSTART(markerPtr) \
+/*
+ * Given a marker, compute where the following aligned memory starts. 
+ */
+
+#define MEMSTART(markerPtr)			\
     ((markerPtr) + OFFSET(markerPtr))
 
 
@@ -896,6 +915,7 @@ GrowEvaluationStack(
     int newBytes, newElems, currElems;
     int needed = growth - (esPtr->endPtr - esPtr->tosPtr);
     Tcl_Obj **markerPtr = esPtr->markerPtr, **memStart;
+    int moveWords = 0;
 
     if (move) {
 	if (!markerPtr) {
@@ -930,9 +950,9 @@ GrowEvaluationStack(
      */
 
     if (move) {
-	move = esPtr->tosPtr - MEMSTART(markerPtr) + 1;
+	moveWords = esPtr->tosPtr - MEMSTART(markerPtr) + 1;
     }
-    needed = growth + move + WALLOCALIGN - 1;
+    needed = growth + moveWords + WALLOCALIGN - 1;
 
     /*
      * Check if there is enough room in the next stack (if there is one, it
@@ -992,8 +1012,8 @@ GrowEvaluationStack(
     esPtr->tosPtr = memStart - 1;
     
     if (move) {
-	memcpy(memStart, MEMSTART(markerPtr), move*sizeof(Tcl_Obj *));
-	esPtr->tosPtr += move;
+	memcpy(memStart, MEMSTART(markerPtr), moveWords*sizeof(Tcl_Obj *));
+	esPtr->tosPtr += moveWords;
 	oldPtr->markerPtr = (Tcl_Obj **) *markerPtr;
 	oldPtr->tosPtr = markerPtr-1;
     }
@@ -1190,36 +1210,32 @@ Tcl_ExprObj(
     register ByteCode *codePtr = NULL;
     				/* Tcl Internal type of bytecode. Initialized
 				 * to avoid compiler warning. */
-    Tcl_Obj *saveObjPtr;
     int result;
 
     /*
-     * Get the ByteCode from the object. If it exists, make sure it hasn't
-     * been invalidated by, e.g., someone redefining a command with a compile
-     * procedure (this might make the compiled code wrong). If necessary,
-     * convert the object to be a ByteCode object and compile it. Also, if the
-     * code was compiled in/for a different interpreter, we recompile it.
-     *
-     * Precompiled expressions, however, are immutable and therefore they are
-     * not recompiled, even if the epoch has changed.
+     * Execute the expression after first saving the interpreter's result.
      */
 
-    if (objPtr->typePtr == &tclByteCodeType) {
+    Tcl_Obj *saveObjPtr = Tcl_GetObjResult(interp);
+    Tcl_IncrRefCount(saveObjPtr);
+
+    /*
+     * Get the expression ByteCode from the object. If it exists, make sure it
+     * is valid in the current context.
+     */
+    if (objPtr->typePtr == &exprCodeType) {
+	Namespace *namespacePtr = iPtr->varFramePtr->nsPtr;
+
 	codePtr = (ByteCode *) objPtr->internalRep.otherValuePtr;
 	if (((Interp *) *codePtr->interpHandle != iPtr)
-		|| (codePtr->compileEpoch != iPtr->compileEpoch)) {
-	    if (codePtr->flags & TCL_BYTECODE_PRECOMPILED) {
-		if ((Interp *) *codePtr->interpHandle != iPtr) {
-		    Tcl_Panic("Tcl_ExprObj: compiled expression jumped interps");
-		}
-		codePtr->compileEpoch = iPtr->compileEpoch;
-	    } else {
-		objPtr->typePtr->freeIntRepProc(objPtr);
-		objPtr->typePtr = (Tcl_ObjType *) NULL;
-	    }
+		|| (codePtr->compileEpoch != iPtr->compileEpoch)
+		|| (codePtr->nsPtr != namespacePtr)
+		|| (codePtr->nsEpoch != namespacePtr->resolverEpoch)) {
+	    objPtr->typePtr->freeIntRepProc(objPtr);
+	    objPtr->typePtr = (Tcl_ObjType *) NULL;
 	}
     }
-    if (objPtr->typePtr != &tclByteCodeType) {
+    if (objPtr->typePtr != &exprCodeType) {
 	/*
 	 * TIP #280: No invoker (yet) - Expression compilation.
 	 */
@@ -1248,6 +1264,7 @@ Tcl_ExprObj(
 
 	TclEmitOpcode(INST_DONE, &compEnv);
 	TclInitByteCodeObj(objPtr, &compEnv);
+	objPtr->typePtr = &exprCodeType;
 	TclFreeCompileEnv(&compEnv);
 	codePtr = (ByteCode *) objPtr->internalRep.otherValuePtr;
 #ifdef TCL_COMPILE_DEBUG
@@ -1258,12 +1275,6 @@ Tcl_ExprObj(
 #endif /* TCL_COMPILE_DEBUG */
     }
 
-    /*
-     * Execute the expression after first saving the interpreter's result.
-     */
-
-    saveObjPtr = Tcl_GetObjResult(interp);
-    Tcl_IncrRefCount(saveObjPtr);
     Tcl_ResetResult(interp);
 
     /*
@@ -1276,8 +1287,6 @@ Tcl_ExprObj(
     codePtr->refCount--;
     if (codePtr->refCount <= 0) {
 	TclCleanupByteCode(codePtr);
-	objPtr->typePtr = NULL;
-	objPtr->internalRep.otherValuePtr = NULL;
     }
 
     /*
@@ -1297,6 +1306,72 @@ Tcl_ExprObj(
     }
     TclDecrRefCount(saveObjPtr);
     return result;
+}
+
+/*
+ *----------------------------------------------------------------------
+ *
+ * DupExprCodeInternalRep --
+ *
+ *	Part of the Tcl object type implementation for Tcl expression
+ *	bytecode.  We do not copy the bytecode intrep.  Instead, we
+ *	return without setting copyPtr->typePtr, so the copy is a plain
+ *	string copy of the expression value, and if it is to be used
+ * 	as a compiled expression, it will just need a recompile.
+ *
+ *	This makes sense, because with Tcl's copy-on-write practices,
+ *	the usual (only?) time Tcl_DuplicateObj() will be called is
+ *	when the copy is about to be modified, which would invalidate
+ * 	any copied bytecode anyway.  The only reason it might make sense
+ * 	to copy the bytecode is if we had some modifying routines that
+ * 	operated directly on the intrep, like we do for lists and dicts.
+ *
+ * Results:
+ *	None.
+ *
+ * Side effects:
+ *	None.
+ *
+ *----------------------------------------------------------------------
+ */
+
+static void
+DupExprCodeInternalRep(
+    Tcl_Obj *srcPtr,
+    Tcl_Obj *copyPtr)
+{
+    return;
+}
+
+/*
+ *----------------------------------------------------------------------
+ *
+ * FreeExprCodeInternalRep --
+ *
+ *	Part of the Tcl object type implementation for Tcl expression
+ * 	bytecode.  Frees the storage allocated to hold the internal rep,
+ *	unless ref counts indicate bytecode execution is still in progress.
+ *
+ * Results:
+ *	None.
+ *
+ * Side effects:
+ *	May free allocated memory.  Leaves objPtr untyped.
+ *----------------------------------------------------------------------
+ */
+
+static void
+FreeExprCodeInternalRep(
+    Tcl_Obj *objPtr)
+{
+    ByteCode *codePtr = (ByteCode *) objPtr->internalRep.otherValuePtr;
+
+    codePtr->refCount--;
+    if (codePtr->refCount <= 0) {
+	TclCleanupByteCode(codePtr);
+    }
+    objPtr->typePtr = NULL;
+    objPtr->internalRep.otherValuePtr = NULL;
 }
 
 /*
@@ -1372,9 +1447,6 @@ TclCompEvalObj(
 	codePtr = (ByteCode *) objPtr->internalRep.otherValuePtr;
 	if (((Interp *) *codePtr->interpHandle != iPtr)
 		|| (codePtr->compileEpoch != iPtr->compileEpoch)
-#ifdef CHECK_PROC_ORIGINATION	/* [Bug: 3412 Pedantic] */
-		|| codePtr->procPtr != iPtr->varFramePtr->procPtr
-#endif
 		|| (codePtr->nsPtr != namespacePtr)
 		|| (codePtr->nsEpoch != namespacePtr->resolverEpoch)) {
 	    if (codePtr->flags & TCL_BYTECODE_PRECOMPILED) {
@@ -1682,6 +1754,8 @@ TclExecuteByteCode(
     bcFramePtr->cmd.str.cmd = NULL;
     bcFramePtr->cmd.str.len = 0;
 
+    TclArgumentBCEnter((Tcl_Interp*) iPtr,codePtr,bcFramePtr);
+
 #ifdef TCL_COMPILE_DEBUG
     if (tclTraceExec >= 2) {
 	PrintByteCodeInfo(codePtr);
@@ -1866,6 +1940,7 @@ TclExecuteByteCode(
 	TRACE(("=> "));
 	objResultPtr = POP_OBJECT();
 	result = Tcl_SetReturnOptions(interp, OBJ_AT_TOS);
+	Tcl_DecrRefCount(OBJ_AT_TOS);
 	OBJ_AT_TOS = objResultPtr;
 	if (result == TCL_OK) {
 	    TRACE_APPEND(("continuing to next instruction (result=\"%.30s\")",
@@ -1976,6 +2051,16 @@ TclExecuteByteCode(
 	    CACHE_STACK_INFO();
 	    if (result != TCL_OK) {
 		cleanup = 0;
+		if (result == TCL_ERROR) {
+		    /*
+		     * Tcl_EvalEx already did the task of logging
+		     * the error to the stack trace for us, so set
+		     * a flag to prevent the TEBC exception handling
+		     * machinery from trying to do it again.
+		     * Tcl Bug 2037338.  See test execute-8.4.
+		     */
+		    iPtr->flags |= ERR_ALREADY_LOGGED;
+		}
 		goto processExceptionReturn;
 	    }
 	    opnd = TclGetUInt4AtPtr(pc+1);
@@ -6593,7 +6678,7 @@ TclExecuteByteCode(
 		    "%u => ERROR reading leaf dictionary key \"%s\": ",
 		    opnd, O2S(dictPtr)), Tcl_GetObjResult(interp));
 	} else {
-	    /*Tcl_ResetResult(interp);*/
+	    Tcl_ResetResult(interp);
 	    Tcl_AppendResult(interp, "key \"", TclGetString(OBJ_AT_TOS),
 		    "\" not known in dictionary", NULL);
 	    TRACE_WITH_OBJ(("%u => ERROR ", opnd), Tcl_GetObjResult(interp));
@@ -7316,6 +7401,8 @@ TclExecuteByteCode(
 	    Tcl_Panic("TclExecuteByteCode execution failure: end stack top < start stack top");
 	}
     }
+
+    TclArgumentBCRelease((Tcl_Interp*) iPtr,codePtr);
 
     /*
      * Restore the stack to the state it had previous to this bytecode.

@@ -1,0 +1,13 @@
+puts "*** Testing 'accept' command ***"
+
+in_arb8 accept
+Z
+e accept_arb8.s
+sed accept_arb8.s
+l accept_arb8.s
+tra 10 10 10
+accept
+l accept_arb8.s
+Z
+
+puts "*** 'accept' testing completed ***"

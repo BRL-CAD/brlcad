@@ -118,6 +118,8 @@ ged_qray(struct ged	*gedp,
 	 int		argc,
 	 const char 	*argv[])
 {
+    if (!(gedp->ged_wdbp)) return BRLCAD_OK;
+    
     GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
     GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
 
@@ -435,7 +437,7 @@ ged_init_qray(struct ged_drawable *gdp)
     for (qfdp = def_qray_fmt_data; qfdp->fmt != (char *)NULL; ++qfdp)
 	++n;
 
-    gdp->gd_qray_fmts = (struct ged_qray_fmt *)bu_malloc(sizeof(struct ged_qray_fmt) * n + 1, "qray_fmts");
+    gdp->gd_qray_fmts = (struct ged_qray_fmt *)bu_calloc(n+1, sizeof(struct ged_qray_fmt), "qray_fmts");
 
     for (i = 0; i < n; ++i) {
 	gdp->gd_qray_fmts[i].type = def_qray_fmt_data[i].type;

@@ -6,7 +6,8 @@ dnl	to configure the system for the local environment.
 # RCS: @(#) $Id$
 
 AC_INIT([tk],[8.5])
-AC_PREREQ(2.59)
+#AC_PREREQ(2.59)
+AC_PREREQ(2.52)
 
 dnl This is only used when included from macosx/configure.ac
 m4_ifdef([SC_USE_CONFIG_HEADERS], [
@@ -27,7 +28,7 @@ m4_ifdef([SC_USE_CONFIG_HEADERS], [
 TK_VERSION=8.5
 TK_MAJOR_VERSION=8
 TK_MINOR_VERSION=5
-TK_PATCH_LEVEL=".1"
+TK_PATCH_LEVEL=".6"
 VERSION=${TK_VERSION}
 LOCALES="cs da de el en en_gb eo es fr hu it nl pl pt ru sv"
 
@@ -58,8 +59,8 @@ if test "${exec_prefix}" = "NONE"; then
     exec_prefix=$prefix
 fi
 # Make sure srcdir is fully qualified!
-srcdir=`cd $srcdir ; pwd`
-TK_SRC_DIR=`cd $srcdir/..; pwd`
+srcdir="`cd "$srcdir" ; pwd`"
+TK_SRC_DIR="`cd "$srcdir"/..; pwd`"
 
 #------------------------------------------------------------------------
 # Compress and/or soft link the manpages?
@@ -573,7 +574,7 @@ WISH_RSRC_FILE='wish$(VERSION).rsrc'
 if test "`uname -s`" = "Darwin" ; then
     SC_ENABLE_FRAMEWORK
     TK_SHLIB_LD_EXTRAS="-compatibility_version ${TK_VERSION} -current_version ${TK_VERSION}`echo ${TK_PATCH_LEVEL} | awk ['{match($0, "\\\.[0-9]+"); print substr($0,RSTART,RLENGTH)}']`"
-    TK_SHLIB_LD_EXTRAS="${TK_SHLIB_LD_EXTRAS}"' -install_name ${DYLIB_INSTALL_DIR}/${TK_LIB_FILE} -unexported_symbols_list $$(f=$(TCL_STUB_LIB_FILE).E && nm -gjp $(TCL_BIN_DIR)/$(TCL_STUB_LIB_FILE) | grep ^_[[^_]] > $$f && echo $$f)'
+    TK_SHLIB_LD_EXTRAS="${TK_SHLIB_LD_EXTRAS}"' -install_name "${DYLIB_INSTALL_DIR}"/${TK_LIB_FILE} -unexported_symbols_list $$(f=$(TCL_STUB_LIB_FILE).E && nm -gjp "$(TCL_BIN_DIR)"/$(TCL_STUB_LIB_FILE) | grep ^_[[^_]] > $$f && echo $$f)'
     echo "$LDFLAGS " | grep -q -- '-prebind ' && TK_SHLIB_LD_EXTRAS="${TK_SHLIB_LD_EXTRAS}"' -seg1addr 0xb000000'
     TK_SHLIB_LD_EXTRAS="${TK_SHLIB_LD_EXTRAS}"' -sectcreate __TEXT __info_plist Tk-Info.plist'
     EXTRA_WISH_LIBS='-sectcreate __TEXT __info_plist Wish-Info.plist'
@@ -602,7 +603,7 @@ if test "$FRAMEWORK_BUILD" = "1" ; then
     fi
     TK_LIB_FILE="Tk"
     TK_LIB_FLAG="-framework Tk"
-    TK_BUILD_LIB_SPEC="-F`pwd` -framework Tk"
+    TK_BUILD_LIB_SPEC="-F`pwd | sed -e 's/ /\\\\ /g'` -framework Tk"
     TK_LIB_SPEC="-F${libdir} -framework Tk"
     libdir="${libdir}/Tk.framework/Versions/\${VERSION}"
     TK_LIBRARY="${libdir}/Resources/Scripts"
@@ -613,7 +614,7 @@ if test "$FRAMEWORK_BUILD" = "1" ; then
     PRIVATE_INCLUDE_DIR="${libdir}/PrivateHeaders"
     HTML_DIR="${libdir}/Resources/Documentation/Reference/Tk"
     EXTRA_INSTALL="install-private-headers html-tk"
-    EXTRA_BUILD_HTML='@ln -fs contents.htm $(HTML_INSTALL_DIR)/TkTOC.html' 
+    EXTRA_BUILD_HTML='@ln -fs contents.htm "$(HTML_INSTALL_DIR)"/TkTOC.html' 
     EXTRA_INSTALL_BINARIES='@echo "Installing Info.plist to $(LIB_INSTALL_DIR)/Resources" && mkdir -p "$(LIB_INSTALL_DIR)/Resources" && $(INSTALL_DATA) Tk-Info.plist "$(LIB_INSTALL_DIR)/Resources/Info.plist"'
     EXTRA_INSTALL_BINARIES="$EXTRA_INSTALL_BINARIES"' && echo "Installing license.terms to $(LIB_INSTALL_DIR)/Resources" && $(INSTALL_DATA) "$(TOP_DIR)/license.terms" "$(LIB_INSTALL_DIR)/Resources"'
     if test $tk_aqua = yes; then
@@ -639,17 +640,17 @@ else
         else
             TK_LIB_FLAG="-ltk`echo ${TK_VERSION} | tr -d .`"
         fi
-        TK_BUILD_LIB_SPEC="-L`pwd` ${TK_LIB_FLAG}"
+        TK_BUILD_LIB_SPEC="-L`pwd | sed -e 's/ /\\\\ /g'` ${TK_LIB_FLAG}"
         TK_LIB_SPEC="-L${libdir} ${TK_LIB_FLAG}"
     else
         TK_BUILD_EXP_FILE="lib.exp"
         eval "TK_EXP_FILE=libtk${TCL_EXPORT_FILE_SUFFIX}"
     
         if test "$GCC" = "yes" ; then
-            TK_BUILD_LIB_SPEC="-Wl,-bI:`pwd`/${TK_BUILD_EXP_FILE} -L`pwd`"
-            TK_LIB_SPEC="-Wl,-bI:${libdir}/${TK_EXP_FILE} -L`pwd`"
+            TK_BUILD_LIB_SPEC="-Wl,-bI:`pwd | sed -e 's/ /\\\\ /g'`/${TK_BUILD_EXP_FILE} -L`pwd | sed -e 's/ /\\\\ /g'`"
+            TK_LIB_SPEC="-Wl,-bI:${libdir}/${TK_EXP_FILE} -L${libdir}"
         else
-            TK_BUILD_LIB_SPEC="-bI:`pwd`/${TK_BUILD_EXP_FILE}"
+            TK_BUILD_LIB_SPEC="-bI:`pwd | sed -e 's/ /\\\\ /g'`/${TK_BUILD_EXP_FILE}"
             TK_LIB_SPEC="-bI:${libdir}/${TK_EXP_FILE}"
         fi
     fi
@@ -662,9 +663,9 @@ if test $tk_aqua = yes; then
     REZ=/Developer/Tools/Rez
     REZ_FLAGS='-d "SystemSevenOrLater=1" -useDF -ro'
     if test "$SHARED_BUILD" = 0; then
-        EXTRA_INSTALL_BINARIES='@echo "Installing $(TK_RSRC_FILE) to $(LIB_INSTALL_DIR)" && $(INSTALL_DATA) $(TK_RSRC_FILE) $(LIB_INSTALL_DIR)'
-	TK_BUILD_LIB_SPEC="$TK_BUILD_LIB_SPEC -sectcreate __TEXT __tk_rsrc `pwd`/\${TK_RSRC_FILE}"
-	TK_LIB_SPEC="$TK_LIB_SPEC -sectcreate __TEXT __tk_rsrc ${libdir}/\${TK_RSRC_FILE}"        
+	EXTRA_INSTALL_BINARIES='@echo "Installing $(TK_RSRC_FILE) to $(LIB_INSTALL_DIR)" && $(INSTALL_DATA) $(TK_RSRC_FILE) "$(LIB_INSTALL_DIR)"'
+	TK_BUILD_LIB_SPEC="$TK_BUILD_LIB_SPEC -sectcreate __TEXT __tk_rsrc `pwd | sed -e 's/ /\\\\ /g'`/\${TK_RSRC_FILE}"
+	TK_LIB_SPEC="$TK_LIB_SPEC -sectcreate __TEXT __tk_rsrc ${libdir}/\${TK_RSRC_FILE}"
     else
         TK_SHLIB_LD_EXTRAS="$TK_SHLIB_LD_EXTRAS -sectcreate __TEXT __tk_rsrc \${TK_RSRC_FILE}"
     fi
@@ -685,7 +686,7 @@ else
     TK_STUB_LIB_FLAG="-ltkstub`echo ${TK_VERSION} | tr -d .`"
 fi
 
-TK_BUILD_STUB_LIB_SPEC="-L`pwd` ${TK_STUB_LIB_FLAG}"
+TK_BUILD_STUB_LIB_SPEC="-L`pwd | sed -e 's/ /\\\\ /g'` ${TK_STUB_LIB_FLAG}"
 TK_STUB_LIB_SPEC="-L${TK_STUB_LIB_DIR} ${TK_STUB_LIB_FLAG}"
 TK_BUILD_STUB_LIB_PATH="`pwd`/${TK_STUB_LIB_FILE}"
 TK_STUB_LIB_PATH="${TK_STUB_LIB_DIR}/${TK_STUB_LIB_FILE}"

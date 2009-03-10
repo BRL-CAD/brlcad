@@ -1,0 +1,9 @@
+puts "*** Testing 'loadview' command ***"
+
+utoview
+ae 35 25 0
+view quat
+loadview mged_saveview_test.rt
+view quat
+
+puts "*** 'loadview' testing completed ***"

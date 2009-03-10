@@ -26,10 +26,11 @@
 #include "common.h"
 
 #include <string.h>
-
 #include "bio.h"
+
 #include "cmd.h"
-#include "ged_private.h"
+
+#include "./ged_private.h"
 
 
 #define GED_MAGIC_PUSH_ID	0x50495323

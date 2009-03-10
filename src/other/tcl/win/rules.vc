@@ -214,6 +214,7 @@ _VC_MANIFEST_EMBED_DLL=if exist $@.manifest mt -nologo -manifest $@.manifest -ou
 STATIC_BUILD	= 0
 TCL_THREADS	= 0
 DEBUG		= 0
+SYMBOLS		= 0
 PROFILE		= 0
 MSVCRT		= 0
 LOIMPACT	= 0
@@ -250,6 +251,12 @@ TCL_THREADS	= 0
 DEBUG		= 1
 !else
 DEBUG		= 0
+!endif
+!if [nmakehlp -f $(OPTS) "pdbs"]
+!message *** Doing pdbs
+SYMBOLS		= 1
+!else
+SYMBOLS		= 0
 !endif
 !if [nmakehlp -f $(OPTS) "profile"]
 !message *** Doing profile
@@ -523,6 +530,12 @@ Failed to find tcl.h.  The TCLDIR macro does not appear correct.
 !if [echo PKG_SHELL_VER = \>> versions.vc] \
    && [nmakehlp -V ..\library\platform\pkgIndex.tcl "platform::shell" >> versions.vc]
 !endif
+!if [echo PKG_DDE_VER = \>> versions.vc] \
+   && [nmakehlp -V ..\library\dde\pkgIndex.tcl "dde " >> versions.vc]
+!endif
+!if [echo PKG_REG_VER =\>> versions.vc] \
+   && [nmakehlp -V ..\library\reg\pkgIndex.tcl registry >> versions.vc]
+!endif
 !endif
 
 !include versions.vc
@@ -549,8 +562,8 @@ TCLSH           = "$(_TCLDIR)\bin\tclsh$(TCL_VERSION)t$(SUFX).exe"
 TCLSTUBLIB	= "$(_TCLDIR)\lib\tclstub$(TCL_VERSION).lib"
 TCLIMPLIB	= "$(_TCLDIR)\lib\tcl$(TCL_VERSION)$(SUFX).lib"
 TCL_LIBRARY	= $(_TCLDIR)\lib
-TCLREGLIB	= "$(_TCLDIR)\lib\tclreg11$(SUFX:t=).lib"
-TCLDDELIB	= "$(_TCLDIR)\lib\tcldde12$(SUFX:t=).lib"
+TCLREGLIB	= "$(_TCLDIR)\lib\tclreg12$(SUFX:t=).lib"
+TCLDDELIB	= "$(_TCLDIR)\lib\tcldde13$(SUFX:t=).lib"
 COFFBASE	= \must\have\tcl\sources\to\build\this\target
 TCLTOOLSDIR	= \must\have\tcl\sources\to\build\this\target
 TCL_INCLUDES    = -I"$(_TCLDIR)\include"
@@ -562,8 +575,8 @@ TCLSH		= "$(_TCLDIR)\win\$(BUILDDIRTOP)\tclsh$(TCL_VERSION)t$(SUFX).exe"
 TCLSTUBLIB	= "$(_TCLDIR)\win\$(BUILDDIRTOP)\tclstub$(TCL_VERSION).lib"
 TCLIMPLIB	= "$(_TCLDIR)\win\$(BUILDDIRTOP)\tcl$(TCL_VERSION)$(SUFX).lib"
 TCL_LIBRARY	= $(_TCLDIR)\library
-TCLREGLIB	= "$(_TCLDIR)\win\$(BUILDDIRTOP)\tclreg11$(SUFX:t=).lib"
-TCLDDELIB	= "$(_TCLDIR)\win\$(BUILDDIRTOP)\tcldde12$(SUFX:t=).lib"
+TCLREGLIB	= "$(_TCLDIR)\win\$(BUILDDIRTOP)\tclreg12$(SUFX:t=).lib"
+TCLDDELIB	= "$(_TCLDIR)\win\$(BUILDDIRTOP)\tcldde13$(SUFX:t=).lib"
 COFFBASE	= "$(_TCLDIR)\win\coffbase.txt"
 TCLTOOLSDIR	= $(_TCLDIR)\tools
 TCL_INCLUDES	= -I"$(_TCLDIR)\generic" -I"$(_TCLDIR)\win"

@@ -45,6 +45,7 @@
 #include "vmath.h"
 #include "bn.h"
 #include "db.h"
+#include "mater.h"
 #include "raytrace.h"
 
 
@@ -1150,6 +1151,45 @@ db_mkgift_tree(
     }
     return( curtree );
 }
+
+
+/**
+ * r t _ c o m b _ g e t _ c o l o r
+ *
+ * fills in rgb with the color for a given comb combination
+ *
+ * returns truthfully if a color could be got
+ */
+int
+rt_comb_get_color(unsigned char rgb[3], const struct rt_comb_internal *comb)
+{
+    struct mater *mp = MATER_NULL;
+
+    if (!comb)
+	return 0;
+
+    RT_CK_COMB(comb);
+
+    if (comb->rgb_valid) {
+	rgb[0] = comb->rgb[0];
+	rgb[1] = comb->rgb[1];
+	rgb[2] = comb->rgb[2];
+	return 1;
+    }
+
+    for (mp = rt_material_head(); mp != MATER_NULL; mp = mp->mt_forw) {
+	if (comb->region_id <= mp->mt_high && comb->region_id >= mp->mt_low) {
+	    rgb[0] = mp->mt_r;
+	    rgb[1] = mp->mt_g;
+	    rgb[2] = mp->mt_b;
+	    return 1;
+	}
+    }
+
+    /* fail */
+    return 0;
+}
+
 
 /** @} */
 /*

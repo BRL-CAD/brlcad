@@ -2319,10 +2319,10 @@ BU_EXPORT BU_EXTERN(void bu_copy_external,
 BU_EXPORT BU_EXTERN(char *bu_next_token,
 		    (char *str));
 BU_EXPORT BU_EXTERN(void bu_structparse_get_terse_form,
-		    (struct bu_vls *log,
+		    (struct bu_vls *logstr,
 		     const struct bu_structparse *sp));
 BU_EXPORT BU_EXTERN(int bu_structparse_argv,
-		    (struct bu_vls *log,
+		    (struct bu_vls *logstr,
 		     int argc,
 		     char **argv,
 		     const struct bu_structparse *desc,

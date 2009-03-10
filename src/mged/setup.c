@@ -143,7 +143,7 @@ struct cmdtab mged_cmdtab[] = {
     {"front", bv_front, GED_FUNC_PTR_NULL},
     {"g", cmd_ged_plain_wrapper, ged_group},
     {"get", cmd_ged_plain_wrapper, ged_get},
-    {"get_autoview", cmd_ged_plain_wrapper, ged_autoview},
+    {"get_autoview", cmd_ged_plain_wrapper, ged_get_autoview},
     {"get_comb", cmd_ged_plain_wrapper, ged_get_comb},
     {"get_dbip", cmd_ged_plain_wrapper, ged_dbip},
     {"get_dm_list", f_get_dm_list, GED_FUNC_PTR_NULL},
@@ -151,7 +151,7 @@ struct cmdtab mged_cmdtab[] = {
     {"get_sed", f_get_sedit, GED_FUNC_PTR_NULL},
     {"get_sed_menus", f_get_sedit_menus, GED_FUNC_PTR_NULL},
     {"get_solid_keypoint", f_get_solid_keypoint, GED_FUNC_PTR_NULL},
-    {"gqa", cmd_ged_plain_wrapper, ged_gqa},
+    {"gqa", cmd_ged_gqa, ged_gqa},
     {"grid2model_lu", cmd_ged_plain_wrapper, ged_grid2model_lu},
     {"grid2view_lu", cmd_ged_plain_wrapper, ged_grid2view_lu},
 #ifdef HIDELINE
@@ -188,6 +188,7 @@ struct cmdtab mged_cmdtab[] = {
     {"lookat", cmd_ged_view_wrapper, ged_lookat},
     {"ls", cmd_ged_plain_wrapper, ged_ls},
     {"M", f_mouse, GED_FUNC_PTR_NULL},
+    {"m2v_point", cmd_ged_plain_wrapper, ged_m2v_point},
     {"make", f_make, GED_FUNC_PTR_NULL},
     {"make_bb", cmd_ged_plain_wrapper, ged_make_bb},
     {"make_name", cmd_ged_plain_wrapper, ged_make_name},
@@ -209,6 +210,7 @@ struct cmdtab mged_cmdtab[] = {
     {"mvall", cmd_ged_plain_wrapper, ged_move_all},
     {"nirt", f_nirt, GED_FUNC_PTR_NULL},
     {"nmg_collapse", cmd_nmg_collapse, GED_FUNC_PTR_NULL},
+    {"nmg_fix_normals", cmd_ged_plain_wrapper, ged_nmg_fix_normals},
     {"nmg_simplify", cmd_ged_plain_wrapper, ged_nmg_simplify},
     {"o_rotate",		be_o_rotate, GED_FUNC_PTR_NULL},
     {"o_scale",	be_o_scale, GED_FUNC_PTR_NULL},
@@ -330,6 +332,7 @@ struct cmdtab mged_cmdtab[] = {
     {"tree", cmd_ged_plain_wrapper, ged_tree},
     {"unhide", cmd_ged_plain_wrapper, ged_unhide},
     {"units", cmd_units, GED_FUNC_PTR_NULL},
+    {"v2m_point", cmd_ged_plain_wrapper, ged_v2m_point},
     {"vars", f_set, GED_FUNC_PTR_NULL},
     {"vdraw", cmd_ged_plain_wrapper, ged_vdraw},
     {"view", cmd_ged_view_wrapper, ged_view},
@@ -443,6 +446,21 @@ cmd_setup(void)
     tkwin = NULL;
 
     bu_vls_free(&temp);
+}
+
+
+static void
+mged_output_handler(struct ged *gedp, char *line)
+{
+    bu_log(line);
+}
+
+
+static void
+mged_refresh_handler(void *clientdata)
+{
+    view_state->vs_flag = 1;
+    refresh();
 }
 
 
@@ -565,6 +583,12 @@ mged_setup(void)
     view_state->vs_gvp->gv_clientData = (genptr_t)view_state;
     MAT_DELTAS_GET_NEG(view_state->vs_orig_pos, view_state->vs_gvp->gv_center);
 
+    BU_GETSTRUCT(gedp, ged);
+    GED_INIT(gedp, NULL);
+    
+    gedp->ged_output_handler = mged_output_handler;
+    gedp->ged_refresh_handler = mged_refresh_handler;
+
     /* register commands */
     cmd_setup();
 
@@ -583,6 +607,15 @@ mged_setup(void)
     /* initialize "Query Ray" variables */
     init_qray();
 #endif
+
+    /* Set defaults for view status variables */
+    bu_vls_trunc(&str, 0);
+    bu_vls_printf(&str, "set mged_display(.topid_0.ur,ang) {ang=(0.00 0.00 0.00)};\
+set mged_display(.topid_0.ur,aet) {az=35.00  el=25.00  tw=0.00};\
+set mged_display(.topid_0.ur,size) sz=1000.000;\
+set mged_display(.topid_0.ur,center) {cent=(0.000 0.000 0.000)};\
+set mged_display(units) mm");
+    Tcl_Eval(interp, bu_vls_addr(&str));
 
     Tcl_ResetResult(interp);
 

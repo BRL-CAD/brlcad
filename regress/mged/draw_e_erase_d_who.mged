@@ -1,0 +1,18 @@
+puts "*** Testing 'draw/e + erase/d + who' command ***"
+
+Z
+in_sph draw
+in_sph e
+in_sph d
+in_sph erase
+e e_sph.s
+draw draw_sph.s
+e d_sph.s
+e erase_sph.s
+d d_sph.s
+erase erase_sph.s
+who
+erase e_sph.s
+erase draw_sph.s
+
+puts "*** 'draw/e + erase/d + who' testing completed ***"

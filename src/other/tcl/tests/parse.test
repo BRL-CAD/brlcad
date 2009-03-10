@@ -884,6 +884,10 @@ test parse-15.59 {CommandComplete procedure} {
     # Test for Tcl Bug 684744
     info complete [encoding convertfrom identity "\x00;if 1 \{"]
 } 0
+test parse-15.60 {CommandComplete procedure} {
+    # Test for Tcl Bug 1968882
+    info complete \\\n
+} 0
 
 test parse-16.1 {Tcl_EvalEx, check termOffset is set correctly for non TCL_OK cases, bug 2535} {
     subst {[eval {return foo}]bar}

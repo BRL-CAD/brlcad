@@ -588,15 +588,6 @@ SetDictFromAny(
 	}
 
 	/*
-	 * If the list is shared its string rep must not be lost so it still
-	 * is the same list.
-	 */
-
-	if (Tcl_IsShared(objPtr)) {
-	    (void) TclGetString(objPtr);
-	}
-
-	/*
 	 * Build the hash of key/value pairs.
 	 */
 

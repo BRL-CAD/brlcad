@@ -26,10 +26,12 @@
 #include "common.h"
 
 #include <string.h>
-
 #include "bio.h"
+
 #include "cmd.h"
-#include "ged_private.h"
+
+#include "./ged_private.h"
+
 
 static void
 ged_dir_check5(register struct db_i		*input_dbip,

@@ -314,6 +314,10 @@ BN_EXPORT BU_EXTERN(void bn_mat_print_guts,
 		     const mat_t m,
 		     char *buf,
 		     int buflen));
+BN_EXPORT BU_EXTERN(void bn_mat_print_vls,
+		    (const char *title,
+		     const mat_t m,
+		     struct bu_vls *vls));
 BN_EXPORT BU_EXTERN(double bn_atan2,
 		    (double x, double y));
 

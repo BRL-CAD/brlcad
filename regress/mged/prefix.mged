@@ -1,0 +1,8 @@
+puts "*** Testing 'prefix' command ***"
+
+in_sph prefix 1
+in_sph prefix 2
+comb prefix_comb.c u prefix_sph1.s u prefix_sph2.s
+prefix has_ prefix*
+
+puts "*** 'prefix' testing completed ***"

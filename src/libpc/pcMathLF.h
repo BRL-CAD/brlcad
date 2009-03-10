@@ -39,8 +39,30 @@
  * Lazy function wrapper for boost::spirit::symbols::add()
  */
 struct addsymbol_impl {
-	void operator()()
-	{}
+	typedef boost::shared_ptr<MathFunction> FunctionPtr;
+	typedef boost::spirit::symbols<FunctionPtr> FunctionTable;
+
+	template<typename T, typename Arg1, typename Arg2 = spirit::nil_t>
+	struct result
+	{
+	    typedef void type;
+	};
+	template <typename SymbolT>
+	void operator()(SymbolT & symbols, std::string const & name) const
+	{
+	    symbols.add(name.c_str());
+	}
+
+	void operator()(FunctionTable & symbols, std::string const & name,
+			UserFunction const & func) const
+	{
+	    FunctionPtr * fp = find(symbols, name.c_str());
+	    if(fp)
+		fp->reset(new UserFunction(func));
+	    else
+		symbols.add(name.c_str(), FunctionPtr(new UserFunction(func)));
+	}
+
 };
 boost::phoenix::function<addsymbol_impl> const addsymbol = addsymbol_impl();
 
@@ -48,17 +70,51 @@ boost::phoenix::function<addsymbol_impl> const addsymbol = addsymbol_impl();
  * Lazy function wrapper for boost::spirit::symbols::find()
  */
 struct findsymbol_impl {
+    template <typename T, typename Arg>
+    struct result
+    {
+	typedef typename T::symbol_data_t * type;
+    };
+
+    template <typename SymbolT>
+    typename result<SymbolT, std::string>::type
+    operator()(SymbolT const & symbols, std::string const & symbol) const
+    {
+	return find(symbols, symbol.c_str());
+    }
 };
 boost::phoenix::function<findsymbol_impl> const findsymbol = findsymbol_impl();
+
+/**
+ * Lazy function wrapper for Stack::push_back & generic Container::push_back
+ */
+struct push_back_impl {
+    template <typename T, typename Arg>
+    struct result
+    {
+	typedef void type;
+    };
+    void operator()(Stack & stack, Node * n) const
+    {
+	BOOST_ASSERT(n);
+	stack.push_back(n);
+    }
+    template<typename Container>
+    void operator()(Container & c, typename Container::value_type const & data) const
+    {
+	c.push_back(data);
+    }
+};
+boost::phoenix::function<push_back_impl> const push_back = push_back_impl();
 
 /**
  * Lazy function wrapper for T::size()
  */
 struct size_impl {
     template <typename T>
-    /* struct result {
+    struct result {
 	typedef std::size_t type;
-    };*/
+    };
     template <typename T>
     std::size_t operator()(T const & t) const
     {
@@ -66,6 +122,22 @@ struct size_impl {
     }
 };
 boost::phoenix::function<size_impl> const size = size_impl();
+
+/**
+ * Lazy function wrapper for boost::shared_ptr<T>::reset
+ */
+struct reset_impl {
+    template <typename T1, typename T2>
+    struct result {
+	typedef void type;
+    };
+    template <typename T>
+    void operator()(boost::shared_ptr<T> * shptr, T * ptr = 0) const
+    {
+	shptr.reset(ptr);
+    }
+};
+boost::phoenix::function<reset_impl> const reset = reset_impl();
 
 #endif
 /** @} */

@@ -26,10 +26,12 @@
 #include "common.h"
 
 #include <string.h>
-
 #include "bio.h"
+
 #include "cmd.h"
-#include "ged_private.h"
+
+#include "./ged_private.h"
+
 
 static int
 ged_list_children(struct ged			*gedp,

@@ -80,10 +80,31 @@ GetFont(
 	i = 0;
     }
     if (!fontPtr->faces[i].ftFont) {
-	FcPattern *pat = FcFontRenderPrepare(0, fontPtr->pattern,
-		fontPtr->faces[i].source);
+	FcPattern *pat = FcFontRenderPrepare(0,
+	    fontPtr->pattern, fontPtr->faces[i].source);
+	XftFont *ftFont = XftFontOpenPattern(fontPtr->display, pat);
 
-	fontPtr->faces[i].ftFont = XftFontOpenPattern(fontPtr->display, pat);
+	if (!ftFont) {
+	    /*
+	     * The previous call to XftFontOpenPattern() should not fail,
+	     * but sometimes does anyway.  Usual cause appears to be
+	     * a misconfigured fontconfig installation; see [Bug 1090382].
+	     * Try a fallback:
+	     */
+	    ftFont = XftFontOpen(fontPtr->display, fontPtr->screen,
+			FC_FAMILY, FcTypeString, "sans",
+			FC_SIZE, FcTypeDouble, 12.0,
+			NULL);
+	}
+	if (!ftFont) {
+	    /*
+	     * The previous call should definitely not fail.
+	     * Impossible to proceed at this point.
+	     */
+	    Tcl_Panic("Cannot find a usable font.");
+	}
+
+	fontPtr->faces[i].ftFont = ftFont;
     }
     return fontPtr->faces[i].ftFont;
 }

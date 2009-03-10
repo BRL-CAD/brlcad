@@ -61,6 +61,13 @@ typedef unsigned int fpu_control_t __attribute__ ((__mode__ (__HI__)));
 #   define ADJUST_FPU_CONTROL_WORD
 #endif
 
+/* Sun ProC needs sunmath for rounding control on x86 like gcc above.
+ *
+ *
+ */
+#if defined(__sun) && defined(__i386) && !defined(__GNUC__)
+#include <sunmath.h>
+#endif
 /*
  * HP's PA_RISC architecture uses 7ff4000000000000 to represent a quiet NaN.
  * Everyone else uses 7ff8000000000000. (Why, HP, why?)
@@ -83,7 +90,7 @@ static int maxpow10_wide;	/* The powers of ten that can be represented
 				 * exactly as wide integers. */
 static Tcl_WideUInt *pow10_wide;
 #define MAXPOW	22
-static double pow10[MAXPOW+1];	/* The powers of ten that can be represented
+static double pow10vals[MAXPOW+1];	/* The powers of ten that can be represented
 				 * exactly as IEEE754 doubles. */
 static int mmaxpow;		/* Largest power of ten that can be
 				 * represented exactly in a 'double'. */
@@ -1309,6 +1316,9 @@ MakeLowPrecisionDouble(
     _FPU_GETCW(oldRoundingMode);
     _FPU_SETCW(roundTo53Bits);
 #endif
+#if defined(__sun) && defined(__i386) && !defined(__GNUC__)
+    ieee_flags("set","precision","double",NULL);
+#endif
 
     /*
      * Test for the easy cases.
@@ -1323,7 +1333,7 @@ MakeLowPrecisionDouble(
 		 * without special handling.
 		 */
 
-		retval = (double)(Tcl_WideInt)significand * pow10[ exponent ];
+		retval = (double)(Tcl_WideInt)significand * pow10vals[ exponent ];
 		goto returnValue;
 	    } else {
 		int diff = DBL_DIG - numSigDigs;
@@ -1336,8 +1346,8 @@ MakeLowPrecisionDouble(
 		     */
 
 		    volatile double factor =
-			    (double)(Tcl_WideInt)significand * pow10[diff];
-		    retval = factor * pow10[exponent-diff];
+			    (double)(Tcl_WideInt)significand * pow10vals[diff];
+		    retval = factor * pow10vals[exponent-diff];
 		    goto returnValue;
 		}
 	    }
@@ -1349,7 +1359,7 @@ MakeLowPrecisionDouble(
 		 * only one rounding.
 		 */
 
-		retval = (double)(Tcl_WideInt)significand / pow10[-exponent];
+		retval = (double)(Tcl_WideInt)significand / pow10vals[-exponent];
 		goto returnValue;
 	    }
 	}
@@ -1380,6 +1390,9 @@ MakeLowPrecisionDouble(
 
 #if defined(__GNUC__) && defined(__i386)
     _FPU_SETCW(oldRoundingMode);
+#endif
+#if defined(__sun) && defined(__i386) && !defined(__GNUC__)
+    ieee_flags("clear","precision",NULL,NULL);
 #endif
 
     return retval;
@@ -1426,6 +1439,9 @@ MakeHighPrecisionDouble(
     fpu_control_t oldRoundingMode;
     _FPU_GETCW(oldRoundingMode);
     _FPU_SETCW(roundTo53Bits);
+#endif
+#if defined(__sun) && defined(__i386) && !defined(__GNUC__)
+    ieee_flags("set","precision","double",NULL);
 #endif
 
     /*
@@ -1484,6 +1500,9 @@ MakeHighPrecisionDouble(
 
 #if defined(__GNUC__) && defined(__i386)
     _FPU_SETCW(oldRoundingMode);
+#endif
+#if defined(__sun) && defined(__i386) && !defined(__GNUC__)
+    ieee_flags("clear","precision",NULL,NULL);
 #endif
     return retval;
 }
@@ -2178,7 +2197,7 @@ TclInitDoubleConversion(void)
 	mmaxpow = MAXPOW;
     }
     for (i=0 ; i<=mmaxpow ; ++i) {
-	pow10[i] = d;
+	pow10vals[i] = d;
 	d *= 10.0;
     }
 
@@ -2571,7 +2590,7 @@ Pow10TimesFrExp(
 	 * Multiply by 10**exponent
 	 */
 
-	retval = frexp(retval * pow10[exponent&0xf], &j);
+	retval = frexp(retval * pow10vals[exponent&0xf], &j);
 	expt += j;
 	for (i=4; i<9; ++i) {
 	    if (exponent & (1<<i)) {
@@ -2584,7 +2603,7 @@ Pow10TimesFrExp(
 	 * Divide by 10**-exponent
 	 */
 
-	retval = frexp(retval / pow10[(-exponent) & 0xf], &j);
+	retval = frexp(retval / pow10vals[(-exponent) & 0xf], &j);
 	expt += j;
 	for (i=4; i<9; ++i) {
 	    if ((-exponent) & (1<<i)) {

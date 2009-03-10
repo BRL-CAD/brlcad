@@ -59,6 +59,10 @@ Modify or query widget options; see \fIttk::widget(n)\fR.
 Returns the scrollbar settings in the form of a list whose
 elements are the arguments to the most recent \fBset\fR widget command.
 .TP
+\fIpathName \fBidentify\fR \fIx y\fR
+Returns the name of the element at position \fIx\fR, \fIy\fR.
+See \fIttk::widget(n)\fR.
+.TP
 \fIpathName \fBinstate \fIstatespec\fR ?\fIscript\fR?
 Test the widget state; see \fIttk::widget(n)\fR.
 .TP
@@ -94,12 +98,6 @@ and 1.0 corresponds to the bottom or right.
 widget.
 If \fIx\fR and \fIy\fR refer to a point outside the trough, the closest
 point in the trough is used.
-.TP
-\fIpathName \fBidentify\fR \fIx y\fR
-Returns the name of the element under the point given 
-by \fIx\fR and \fIy\fR, or an empty string if the point does
-not lie in any element of the scrollbar.
-\fIX\fR and \fIy\fR are pixel coordinates relative to the scrollbar widget.
 .SH "SCROLLING COMMANDS"
 When the user interacts with the scrollbar, for example by dragging
 the thumb, the scrollbar notifies the associated widget that it

@@ -1,0 +1,23 @@
+puts "*** Testing 'knob' command ***"
+
+knob zero
+knob
+knob x 2 y 2 z 2 X 3 Y 3 Z 3 S 30
+knob
+knob zero
+knob ax 89 ay 73 az 3 aX 300 aY -200 aZ 23 aS 10
+knob
+knob zero
+adc
+knob xadc -10 yadc 3 ang1 23 ang2 55 distadc 44
+knob
+knob zero
+knob
+knob x 2 y 2 z 2 X 3 Y 3 Z 3 S 30
+knob ax 89 ay 73 az 3 aX 300 aY -200 aZ 23 aS 10
+knob xadc -10 yadc 3 ang1 23 ang2 55 distadc 44
+knob
+adc
+knob zero
+
+puts "*** 'knob' testing completed ***"

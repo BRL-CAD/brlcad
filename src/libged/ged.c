@@ -45,7 +45,9 @@
 #include "rtgeom.h"
 #include "raytrace.h"
 #include "plot3.h"
-#include "ged_private.h"
+
+#include "./ged_private.h"
+
 
 int ged_decode_dbip(const char *dbip_string, struct db_i **dbipp);
 void ged_drawable_init(struct ged_drawable *gdp);
@@ -58,7 +60,11 @@ ged_close(struct ged *gedp)
 	return;
 
     wdb_close(gedp->ged_wdbp);
+    gedp->ged_wdbp = RT_WDB_NULL;
+
     ged_drawable_close(gedp->ged_gdp);
+    gedp->ged_gdp = GED_DRAWABLE_NULL;
+
     ged_free(gedp);
 }
 
@@ -142,6 +148,7 @@ ged_view_init(struct ged_view *gvp)
     gvp->gv_scale = 500.0;
     gvp->gv_size = 2.0 * gvp->gv_scale;
     gvp->gv_isize = 1.0 / gvp->gv_size;
+    VSET(gvp->gv_aet, 35.0, 25.0, 0.0);
     VSET(gvp->gv_eye_pos, 0.0, 0.0, 1.0);
     MAT_IDN(gvp->gv_rotation);
     MAT_IDN(gvp->gv_center);
@@ -211,6 +218,7 @@ ged_view_init(struct ged_view *gvp)
     VSET(gvp->gv_view_scale.gos_line_color, 255, 255, 0);
     VSET(gvp->gv_view_scale.gos_text_color, 255, 255, 255);
 
+    ged_mat_aet(gvp);
     ged_view_update(gvp);
 }
 

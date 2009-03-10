@@ -361,7 +361,7 @@ BC_ARG_WITH([with_java], [jdk], [Specify use of or path to the JDK for librtserv
 BC_ARG_WITH([with_x11], [x11], [Specify use of or path to X11 (optional)], [auto])
 
 # use opengl
-BC_ARG_WITH([with_opengl], [ogl], [Specify use of or path to OpenGL (optional)], [auto])
+BC_ARG_WITH([with_opengl], [ogl], [Specify use of or path to OpenGL (optional)], [no])
 
 # use wgl
 BC_ARG_WITH([with_wgl], [wgl], [Specify use of or path to WindowsGL], [auto])
@@ -1897,7 +1897,7 @@ fi
 
 dnl verbose warning flags (if yes or auto)
 if test "x$bc_build_warnings" != "xno" ; then
-	BC_COMPILER_AND_LINKER_RECOGNIZES([-W -Wall -Wundef -Wfloat-equal -Wshadow -Wunreachable-code -Winline -Wconversion], [warning])
+	BC_COMPILER_AND_LINKER_RECOGNIZES([-W -Wall -Wundef -Wfloat-equal -Wshadow -Wunreachable-code -Winline], [warning])
 	# XXX also of interest
 	# -Wmissing-declarations -Wmissing-prototypes -Wstrict-prototypes -pedantic -ansi -Werror
 
@@ -3699,6 +3699,7 @@ AC_CONFIG_FILES([
 	Makefile
 	bench/Makefile
 	regress/Makefile
+	regress/mged/Makefile
 	db/Makefile
 	db/include/Makefile
 	doc/Makefile

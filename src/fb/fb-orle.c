@@ -30,7 +30,11 @@
 #include "common.h"
 
 #include <stdlib.h>
-#include <stdio.h>
+#include "bio.h"
+
+#ifdef HAVE_UNISTD_H
+#  include <unistd.h>
+#endif
 
 #include "bu.h"
 #include "fb.h"
