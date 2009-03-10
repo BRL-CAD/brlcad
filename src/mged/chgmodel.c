@@ -434,8 +434,8 @@ int
 f_qorot(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
     mat_t temp;
-    vect_t s_point, point, v_work, model_pt;
     vect_t	specified_pt, direc;
+    double ang;
 
     CHECK_DBI_NULL;
     CHECK_READ_ONLY;
@@ -461,34 +461,21 @@ f_qorot(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
     VSCALE(specified_pt, specified_pt, dbip->dbi_local2base);
     VSET(direc, atof(argv[4]), atof(argv[5]), atof(argv[6]));
 
-    /* find point for rotation to take place wrt */
-    MAT4X3PNT(model_pt, es_mat, specified_pt);
-    MAT4X3PNT(point, modelchanges, model_pt);
+    if ( NEAR_ZERO(direc[0],SQRT_SMALL_FASTF) &&
+	 NEAR_ZERO(direc[1],SQRT_SMALL_FASTF) &&
+	 NEAR_ZERO(direc[2],SQRT_SMALL_FASTF) ) {
+	Tcl_AppendResult(interp, "ERROR: magnitude of direction vector >=  0\n", (char *)NULL);
+	return TCL_ERROR;
+    }
+    VUNITIZE(direc);
 
-    /* Find absolute translation vector to go from "model_pt" to
-     * 	"point" without any of the rotations in "modelchanges"
+    ang = atof(argv[7]) * bn_degtorad;
+
+    /* Get matrix for rotation about a point,direction vector and apply to
+     *	modelchanges matrix
      */
-    VSCALE(s_point, point, modelchanges[15]);
-    VSUB2(v_work, s_point, model_pt);
-
-    /* REDO "modelchanges" such that:
-     *	1. NO rotations (identity)
-     *	2. trans == v_work
-     *	3. same scale factor
-     */
-    MAT_IDN(temp);
-    MAT_DELTAS_VEC(temp, v_work);
-    temp[15] = modelchanges[15];
-    MAT_COPY(modelchanges, temp);
-
-    /* build new rotation matrix */
-    MAT_IDN(temp);
-    bn_mat_angles(temp, 0.0, 0.0, atof(argv[7]));
-
-    /* Record the new rotation matrix into the revised
-     *	modelchanges matrix wrt "point"
-     */
-    wrt_point_direc(modelchanges, temp, modelchanges, point, direc);
+    bn_mat_arb_rot(temp, specified_pt, direc, ang);
+    bn_mat_mul2(temp,modelchanges);
 
     new_edit_mats();
 
