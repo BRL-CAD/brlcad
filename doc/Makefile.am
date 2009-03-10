@@ -18,6 +18,7 @@ documentation_DATA = \
 	README.Solaris \
 	README.VAX \
 	README.Windows \
+	TODO.BREP \
 	anim.txt \
 	archer_ack.txt \
 	benchmark.tr \

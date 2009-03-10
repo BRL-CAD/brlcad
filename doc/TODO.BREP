@@ -1,0 +1,118 @@
+BREP TODO
+=========
+
+Included below is a basic work breakdown related to the implementation
+of boundary representation (BREP) support in BRL-CAD.  Feel free to
+add to or expand this list and/or embellish it with additional
+information as appropriate.  If you would like to work on the BREP
+implementation, send a note to the brlcad-devel mailing list.
+
+This file is a general scratch pad for categorizing and itemizing BREP
+implementation tasks.  It is not an implementation plan.
+
+This is a work in progress.
+
+
+Geometry Entities
+-----------------
+
+point
+line  (e.g., line segment, ray, bidirectionally infinite line)
+curve
+surface
+curve+surface  (i.e. a trimmed surface)
+solid
+
+
+Geometry Evaluation
+-------------------
+
+point -> point
+point -> line
+point -> curve
+point -> surface
+point -> curve+surface
+point -> solid
+
+line -> line
+line -> curve
+line -> surface
+line -> curve+surface
+line -> solid
+
+curve -> curve
+curve -> surface
+curve -> curve+surface
+curve -> solid
+
+surface -> surface
+surface -> solid
+
+solid -> solid
+
+
+Geometry Queries
+----------------
+
+[ geometric properties ]
+intersects
+intersectionSet
+firstIntersectionSet
+closestDistance
+closestSet  (e.g., closestPoint)
+booleanEvaluation
+insideSet  (e.g., insideSolid, insideLoop (trimmed))
+
+[ parametric properties ]
+uvMapping
+curvatures
+normalSet  (e.g., normalVector, normalPlane)
+tangentSet  (e.g., tangentVectors, tangentPlanes)
+
+[ checks ]
+isValid
+isSolid
+isManifold
+isFlat
+
+[ bounding volumes ]
+boundingBox
+boundingSphere
+
+
+Geometry Modifiers
+------------------
+
+snapTogether  (e.g., | -)
+scale
+rotate
+translate
+shear
+invert
+
+
+Ray Tracing
+-----------
+
+line -> solid evaluation
+  intersectionSet query
+  normalSet query
+
+
+Interactive Visualization
+-------------------------
+
+implicit primitive to solid conversion
+solid on solid CSG evaluation  (i.e. unevaluated to evaluated BREP)
+solid tessellation
+
+
+Conversion
+----------
+
+3DM to BRL-CAD
+BRL-CAD to 3DM
+STEP to BRL-CAD
+IGES to BRL-CAD
+BRL-CAD to STEP
+BRL-CAD to IGES
