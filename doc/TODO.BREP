@@ -69,15 +69,20 @@ Geometry Queries
 
 [ geometric properties ]
 intersects
+inside
+outside
+on
 intersectionSet
 firstIntersectionSet
 closestDistance
 closestSet  (e.g., closestPoint)
 booleanEvaluation
 insideSet  (e.g., insideSolid, insideLoop (trimmed))
+outsideSet
+onSet
 
 [ parametric properties ]
-uvMapping
+uvSpace <--> ImageSpace Mapping (for ALL primitive types)
 curvatures
 normalSet  (e.g., normalVector, normalPlane)
 tangentSet  (e.g., tangentVectors, tangentPlanes)
