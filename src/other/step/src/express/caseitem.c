@@ -49,7 +49,7 @@ CASE_ITinitialize(void)
 ** Procedure:	CASE_ITcreate
 ** Parameters:	Linked_List labels	- list of Expressions for case labels
 **		Statement   statement	- statement associated with this branch
-**		Error*      errc	- buffer for error code
+**		Error*      experrc	- buffer for error code
 ** Returns:	Case_Item		- the case item created
 ** Description:	Create and return a new case item.
 **

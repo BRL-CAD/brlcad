@@ -1,4 +1,4 @@
-#include <limits>
+#include <limits.h>
 #include <cfloat>
 
 #include <sdai.h>

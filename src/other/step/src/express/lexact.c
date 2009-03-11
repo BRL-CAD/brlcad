@@ -52,6 +52,7 @@ static char rcsid[] = "$Id: lexact.c,v 1.10 1997/09/24 20:05:38 dar Exp $";
  */
 
 #define LEX_ACTIONS_C
+#include <stdlib.h>
 #include <ctype.h>
 /*#include <strings.h>*/
 #include "lexact.h"
@@ -65,14 +66,13 @@ static char rcsid[] = "$Id: lexact.c,v 1.10 1997/09/24 20:05:38 dar Exp $";
 #include "dict.h"
 #include "memory.h"
 
-extern int		yylineno;
-extern exp_YYSTYPE	exp_yylval;
+extern int		expyylineno;
 extern FILE*		yyin;
 
 #ifdef FLEX
-extern char*		exp_yytext;
+extern char*		yytext;
 #else /* LEX */
-extern char		exp_yytext[];
+extern char		yytext[];
 #endif /*FLEX*/
 
 #define SCAN_COMMENT_LENGTH	256
@@ -219,8 +219,8 @@ void
 SCANpush_buffer(char *filename,FILE *fp)
 {
 	SCANbuffer.savedPos = SCANcurrent;
-	SCANbuffer.lineno = yylineno;
-	yylineno = 1;
+	SCANbuffer.lineno = expyylineno;
+	expyylineno = 1;
 	++SCAN_current_buffer;
 #ifdef keep_nul
 	SCANbuffer.numRead = 0;
@@ -240,7 +240,7 @@ SCANpop_buffer()
 		fclose(SCANbuffer.file);
 	--SCAN_current_buffer;
 	SCANcurrent = SCANbuffer.savedPos;
-	yylineno = SCANbuffer.lineno;	/* DEL */
+	expyylineno = SCANbuffer.lineno;	/* DEL */
 	current_filename = SCANbuffer.filename;
 }
 
@@ -292,21 +292,21 @@ SCANinitialize(void)
 int
 SCANprocess_real_literal(void)
 {
-    sscanf(exp_yytext, "%lf", &(exp_yylval.rVal));
+    sscanf(yytext, "%lf", &(yylval.rVal));
     return TOK_REAL_LITERAL;
 }
 
 int
 SCANprocess_integer_literal(void)
 {
-    sscanf(exp_yytext, "%d", &(exp_yylval.iVal));
+    sscanf(yytext, "%d", &(yylval.iVal));
     return TOK_INTEGER_LITERAL;
 }
 
 int
 SCANprocess_binary_literal(void)
 {
-    exp_yylval.binary = SCANstrdup(exp_yytext+1); /* drop '%' prefix */
+    yylval.binary = SCANstrdup(yytext+1); /* drop '%' prefix */
     return TOK_BINARY_LITERAL;
 }
 
@@ -314,9 +314,9 @@ int
 SCANprocess_logical_literal(char * string)
 {
 	switch (string[0]) {
-	case 'T':	exp_yylval.logical = Ltrue;	break;
-	case 'F':	exp_yylval.logical = Lfalse;	break;
-	default:	exp_yylval.logical = Lunknown;	break;
+	case 'T':	yylval.logical = Ltrue;	break;
+	case 'F':	yylval.logical = Lfalse;	break;
+	default:	yylval.logical = Lunknown;	break;
 	/* default will actually be triggered by 'UNKNOWN' keyword */
 	}
 	free(string);
@@ -333,9 +333,9 @@ SCANprocess_identifier_or_keyword(void)
 	char *src, *dest;
 
 	/* make uppercase copy */
-	len = strlen(exp_yytext);
+	len = strlen(yytext);
 	dest = test_string = (char *)malloc(len+1);
-	for (src=exp_yytext;*src;src++,dest++) {
+	for (src=yytext;*src;src++,dest++) {
 		*dest = (islower(*src)?toupper(*src):*src);
 	}
 	*dest = '\0';
@@ -360,18 +360,18 @@ SCANprocess_identifier_or_keyword(void)
     /* if macro invocation */
     /*    SCANpush_buffer(); */
     /*    strcpy(SCANbuffer.text, macro_expansion); */
-    /*    return exp_yylex(); */
+    /*    return yylex(); */
     /* else */
     element.key = test_string;
     if ((found = HASHsearch(macros, &element, HASH_FIND)) != NULL) {
 	free(test_string);
 	SCANpush_buffer();
 	STRINGcopy_into(SCANbuffer.text, found->data);
-	return exp_yylex();
+	return yylex();
     } else {
 #endif
 
-	exp_yylval.symbol =SYMBOLcreate(test_string,yylineno,current_filename);
+	yylval.symbol =SYMBOLcreate(test_string,expyylineno,current_filename);
 	if (k) {
 		/* built-in function/procedure */
 		return(k->token);
@@ -398,15 +398,15 @@ SCANprocess_string(void)
 	char *s, *d;	/* source, destination */
 
 	/* strip off quotes */
-	exp_yylval.string = SCANstrdup(exp_yytext+1); /* remove 1st single quote */
+	yylval.string = SCANstrdup(yytext+1); /* remove 1st single quote */
 
 #if 0
-	s = strrchr(exp_yylval.string,'\'');
+	s = strrchr(yylval.string,'\'');
 	if (s) *s = '\0';			/* remove last single quote */
 #endif
 
 	/* change pairs of quotes to single quotes */
-	for (s = d = exp_yylval.string;*s;) {
+	for (s = d = yylval.string;*s;) {
 		if (*s != '\'') {
 			*d++ = *s++;
 		} else if (0 == strncmp(s,"''",2)) {
@@ -432,22 +432,22 @@ SCANprocess_encoded_string(void)
 	int count;
 
 	/* strip off quotes */
-	exp_yylval.string = SCANstrdup(exp_yytext+1); /* remove 1st double quote */
+	yylval.string = SCANstrdup(yytext+1); /* remove 1st double quote */
 
-	s = strrchr(exp_yylval.string,'"');
+	s = strrchr(yylval.string,'"');
 	if (s) *s = '\0';			/* remove last double quote */
 	/* if string was unterminated, there will be no quote to remove */
 	/* in which case the scanner has already complained about it */
 
 	count = 0;
-	for (s = exp_yylval.string;*s;s++,count++) {
+	for (s = yylval.string;*s;s++,count++) {
 		if (!isxdigit(*s)) {
-			ERRORreport_with_line(ERROR_encoded_string_bad_digit,yylineno,*s);
+			ERRORreport_with_line(ERROR_encoded_string_bad_digit,expyylineno,*s);
 		}
 	}
 
 	if (0 != (count%8)) {
-		ERRORreport_with_line(ERROR_encoded_string_bad_count,yylineno,count);
+		ERRORreport_with_line(ERROR_encoded_string_bad_count,expyylineno,count);
 	}
 
 	return TOK_STRING_LITERAL_ENCODED;
@@ -457,10 +457,10 @@ int
 SCANprocess_semicolon(int commentp)
 {
     if (commentp) {
-	strcpy(last_comment_, strchr(exp_yytext, '-'));
-	exp_yylval.string = last_comment_;
+	strcpy(last_comment_, strchr(yytext, '-'));
+	yylval.string = last_comment_;
     } else {
-	exp_yylval.string = last_comment;
+	yylval.string = last_comment;
     }
 
     if (last_comment) {
@@ -473,7 +473,7 @@ SCANprocess_semicolon(int commentp)
 void
 SCANsave_comment(void)
 {
-    strcpy(last_comment_, exp_yytext);
+    strcpy(last_comment_, yytext);
     last_comment = last_comment;
 }
 
@@ -548,11 +548,11 @@ SCANinclude_file(char *filename)
 	FILE *fp;
 
 	if ((fp = fopen(filename, "r")) == NULL) {
-		ERRORreport_with_line(ERROR_include_file, yylineno);
+		ERRORreport_with_line(ERROR_include_file, expyylineno);
 	} else {
 		if (print_objects_while_running & OBJ_SCHEMA_BITS) {
 			fprintf(stderr,"parse: including %s at line %d of %s\n",
-				filename,yylineno,SCANbuffer.filename);
+				filename,expyylineno,SCANbuffer.filename);
 		}
 		SCANpush_buffer(filename,fp);
 	}
@@ -586,5 +586,5 @@ SCANstrdup(char *s)
 
 long
 SCANtell() {
-    return yylineno;
+    return expyylineno;
 }

@@ -103,7 +103,7 @@ int tag_count;	/* use this to count tagged GENERIC types in the formal */
 		/* milk it for all it's worth!  -snc */
 
 /*SUPPRESS 61*/
-/* Type current_type;	/* pass type placeholder down */
+/* Type current_type;*/	/* pass type placeholder down */
 		/* this allows us to attach a dictionary to it only when */
 		/* we decide we absolutely need one */
 
@@ -395,7 +395,7 @@ static struct scope {
 	Expression	first;	/* first [syntactic] qualifier (if more */
 				/* than one is contained in this */
 				/* [semantic] qualifier - used for */
-				/* group_ref + attr_ref - see rule for
+				/* group_ref + attr_ref - see rule for */
 				/* qualifier) */
     } qualifier;
 }
@@ -862,7 +862,7 @@ explicit_attribute	: attribute_decl_list TOK_COLON optional
 				}
 				v = EXPcreate(...);
 				v->symbol = SYMBOLget_name(
-					IDENTget_identifier(x)),$4,&errc);
+					IDENTget_identifier(x)),$4,&experrc);
 				VARput_optional(v, true);
 				VARput_reference(v,attr);
 				LISTadd_last(vlist,(Generic)v);

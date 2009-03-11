@@ -86,7 +86,7 @@ STMTinitialize(void)
 ** Procedure:	ASSIGNcreate
 ** Parameters:	Expression lhs	- the left-hand-side of the assignment
 **		Expression rhs	- the right-hand-side of the assignment
-**		Error*     errc	- buffer for error code
+**		Error*     experrc	- buffer for error code
 ** Returns:	Assignment	- the assignment statement created
 ** Description:	Create and return an assignment statement.
 */
@@ -106,7 +106,7 @@ ASSIGNcreate(Expression lhs, Expression rhs)
 ** Procedure:	CASEcreate
 ** Parameters:	Expression  selector	- expression to case on
 **		Linked_List cases	- list of Case_Items
-**		Error*      errc	- buffer for error code
+**		Error*      experrc	- buffer for error code
 ** Returns:	Case_Statement		- the case statement created
 ** Description:	Create and return a case statement.
 */
@@ -127,7 +127,7 @@ CASEcreate(Expression selector, Linked_List cases)
 ** Procedure:	COMP_STMTcreate
 ** Parameters:	Linked_List statements	- list of Statements making up
 **					  the compound statement
-**		Error*      errc	- buffer for error code
+**		Error*      experrc	- buffer for error code
 ** Returns:	Compound_Statement	- the compound statement created
 ** Description:	Create and return a compound statement.
 */
@@ -147,7 +147,7 @@ COMP_STMTcreate(Linked_List statements)
 ** Parameters:	Expression test		- the condition for the if
 **		Statement  then		- code executed for test == true
 **		Statement  otherwise	- code executed for test == false
-**		Error*      errc	- buffer for error code
+**		Error*      experrc	- buffer for error code
 ** Returns:	Conditional		- the if statement created
 ** Description:	Create and return an if statement.
 */
@@ -168,7 +168,7 @@ CONDcreate(Expression test, Linked_List then, Linked_List otherwise)
 ** Procedure:	PCALLcreate
 ** Parameters:	Procedure   procedure	- procedure called by statement
 **		Linked_List parameters	- list of actual parameter Expressions
-**		Error*      errc	- buffer for error code
+**		Error*      experrc	- buffer for error code
 ** Returns:	Procedure_Call		- the procedure call generated
 ** Description:	Create and return a procedure call statement.
 */
@@ -188,7 +188,7 @@ PCALLcreate(Linked_List parameters)
 ** Procedure:	LOOPcreate
 ** Parameters:	Linked_List controls	- list of Loop_Controls for the loop
 **		Statement   body	- statement to be repeated
-**		Error*      errc	- buffer for error code
+**		Error*      experrc	- buffer for error code
 ** Returns:	Loop			- the loop generated
 ** Description:	Create and return a loop statement.
 */
@@ -222,7 +222,7 @@ ALIAScreate(Scope scope,Variable variable,Linked_List statements)
 **		Expression start	- initial value
 **		Expression end		- terminal value
 **		Expression increment	- value by which to increment
-**		Error*     errc		- buffer for error code
+**		Error*     experrc		- buffer for error code
 ** Returns:	Increment_Control	- increment control created
 ** Description:	Create and return an increment control as specified.
 */
@@ -246,7 +246,7 @@ INCR_CTLcreate(Symbol *control, Expression start,
 /*
 ** Procedure:	RETcreate
 ** Parameters:	Expression expression	- value to return
-**		Error*     errc		- buffer for error code
+**		Error*     experrc		- buffer for error code
 ** Returns:	Return_Statement	- the return statement created
 ** Description:	Create and return a return statement.
 */

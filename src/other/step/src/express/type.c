@@ -411,7 +411,7 @@ TYPEget_size(Type type)
     int		size;
     Expression	upper;
     Linked_List	list;
-    Error	errc;
+    Error	experrc;
 
     class = OBJget_class(type);
     if (class == Class_Select_Type) {
@@ -434,9 +434,9 @@ TYPEget_size(Type type)
 	if ((upper == LITERAL_INFINITY) ||
 	    (upper == EXPRESSION_NULL))
 	    return AGGR_CHUNK_SIZE;
-	errc = 0;
+	experrc = 0;
 	size = EXPget_integer_value(upper);
-	if (errc) ERRORreport_with_symbol(errc, &type->symbol);
+	if (experrc) ERRORreport_with_symbol(experrc, &type->symbol);
 	return size;
     } else if (TYPEinherits_from(type, Class_Aggregate_Type)) {
 	upper = AGGR_TYPEget_upper_limit(type);
@@ -444,12 +444,12 @@ TYPEget_size(Type type)
 	    (upper == EXPRESSION_NULL) ||
 	    TYPEis_identifier(upper->type))
 	    return AGGR_CHUNK_SIZE;
-	errc = 0;
+	experrc = 0;
 	size = EXPget_integer_value(upper);
-	if (errc) ERRORreport_with_symbol(errc, &type->symbol);
-	errc = 0;
+	if (experrc) ERRORreport_with_symbol(experrc, &type->symbol);
+	experrc = 0;
 	size = size - EXPget_integer_value(AGGR_TYPEget_lower_limit(type)) + 1;
-	if (errc) ERRORreport_with_symbol(errc, &type->symbol);
+	if (experrc) ERRORreport_with_symbol(experrc, &type->symbol);
 	return size;
     } else if (class == Class_Entity_Type) {
 #if 0
@@ -485,7 +485,7 @@ TYPEcompatible(Type lhs_type, Type rhs_type)
     Class	rhs_class;
     Entity	entity;
     Linked_List	list;
-    Error	errc;
+    Error	experrc;
 
     lhs_class = OBJget_class(lhs_type);
     rhs_class = OBJget_class(rhs_type);
@@ -510,7 +510,7 @@ TYPEcompatible(Type lhs_type, Type rhs_type)
 	    return False;
 	}
     } else if (CLASSinherits_from(lhs_class, Class_Composed_Type)) {
-	return OBJequal(rhs_type, lhs_type, &errc);
+	return OBJequal(rhs_type, lhs_type, &experrc);
     } else if (lhs_class == Class_Number_Type) {
 	return ((rhs_class == Class_Number_Type) ||
 		(rhs_class == Class_Real_Type) ||

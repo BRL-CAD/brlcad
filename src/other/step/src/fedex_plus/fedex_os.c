@@ -1,7 +1,7 @@
-
+#include <stdlib.h>
 #include <stdio.h>
-#include "express.h"
-#include "resolve.h"
+#include "../express/express.h"
+#include "../express/resolve.h"
 #include "classes.h"
 
 #define SCHEMA_FILE_PREFIX	"Sdai"

@@ -84,7 +84,7 @@ DICTinitialize(void)
 ** Procedure:	DICTdefine
 ** Parameters:	Dictionary dictionary	- dictionary to modify
 **		Generic    entry	- entry to be added
-**		Error*     errc		- buffer for error code
+**		Error*     experrc		- buffer for error code
 ** Returns:	int failure		- 0 on success, 1 on failure
 ** Description:	Define anything in a dictionary.  Generates an error
 **		directly if there is a duplicate value.
@@ -118,7 +118,7 @@ DICTdefine(Dictionary dict, char *name, Generic obj, Symbol *sym,char type)
 		} else {
 			ERRORreport_with_symbol(ERROR_duplicate_decl_diff_file,sym,name,old->symbol->line,old->symbol->filename);
 		}
-		errc = ERROR_subordinate_failed;
+		experrc = ERROR_subordinate_failed;
 		return(1);
 	}
 	return 0;
@@ -139,7 +139,7 @@ DICTdefine(Dictionary dict, char *name, Generic obj, Symbol *sym,char type)
 		} else {
 			ERRORreport_with_symbol(ERROR_duplicate_decl_diff_file,sym,name,old->symbol->line,old->symbol->filename);
 		}
-		errc = ERROR_subordinate_failed;
+		experrc = ERROR_subordinate_failed;
 		return(1);
 	}
 	return 0;
@@ -168,7 +168,7 @@ DICT_define(Dictionary dict, char *name, Generic obj, Symbol *sym,char type)
 	} else {
 		ERRORreport_with_symbol(ERROR_duplicate_decl_diff_file,sym,name,e2->symbol->line,e2->symbol->filename);
 	}
-	errc = ERROR_subordinate_failed;
+	experrc = ERROR_subordinate_failed;
 	return(1);
 }
 

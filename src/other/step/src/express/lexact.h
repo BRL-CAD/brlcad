@@ -112,7 +112,7 @@ GLOBAL Error		ERROR_nonascii_char;
 /* function prototypes */
 /***********************/
 
-extern int	exp_yylex PROTO((void));	/* the scanner */
+extern int	yylex PROTO((void));	/* the scanner */
 
 extern void	SCANinitialize PROTO((void));
 extern int	SCANprocess_real_literal PROTO((void));
@@ -164,7 +164,7 @@ SCANnextchar(char* buffer)
 #endif
 	buffer[0] = *(SCANcurrent++);
 	if (!isascii(buffer[0])) {
-	    ERRORreport_with_line(ERROR_nonascii_char,yylineno,
+	    ERRORreport_with_line(ERROR_nonascii_char,expyylineno,
 				  0xff & buffer[0]);
 	    buffer[0] = ' ';	/* substitute space */
 	}

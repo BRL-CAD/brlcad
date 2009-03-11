@@ -73,9 +73,10 @@ static char rcsid[] = "$Id: fedex_main.c,v 3.0.1.3 1997/11/05 23:12:18 sauderd D
  * Added * to typedefs.  Replaced warning kludges with ERRORoption.
  */
 
+#include <stdlib.h>
 #include <stdio.h>
-#include "express.h"
-#include "resolve.h"
+#include "../express/express.h"
+#include "../express/resolve.h"
 
 static void
 fedex_plus_usage()

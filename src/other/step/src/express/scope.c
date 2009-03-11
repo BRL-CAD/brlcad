@@ -141,11 +141,11 @@ SCOPEget_types(Scope scope)
 {
     struct Scope*	data;
     Linked_List		list;
-    Error		errc;
+    Error		experrc;
     Symbol s;
     DictionaryEntry	de;
 
-    list = OBJcreate(Class_Linked_List, &errc);
+    list = OBJcreate(Class_Linked_List, &experrc);
     DICTdo_init(scope->symbol_table,&de);
     while (s = DICTdo(&de)) {
 	if (OBJis_kind_of(s, Class_Type))
@@ -166,12 +166,12 @@ SCOPEget_variables(Scope scope)
 {
     struct Scope*	data;
     Linked_List		list;
-    Error		errc;
+    Error		experrc;
     Symbol s;
     DictionaryEntry	de;
 
-    list = OBJcreate(Class_Linked_List, &errc);
-    data = (struct Scope*)OBJget_data(scope, Class_Scope, &errc);
+    list = OBJcreate(Class_Linked_List, &experrc);
+    data = (struct Scope*)OBJget_data(scope, Class_Scope, &experrc);
     DICTdo_init(data->symbol_table,&de);
     while (s = DICTdo(&de)) {
 	if (OBJis_kind_of(s, Class_Variable))
@@ -192,12 +192,12 @@ SCOPEget_algorithms(Scope scope)
 {
     struct Scope*	data;
     Linked_List		list;
-    Error		errc;
+    Error		experrc;
     Symbol s;
     DictionaryEntry	de;
 
-    list = OBJcreate(Class_Linked_List, &errc);
-    data = (struct Scope*)OBJget_data(scope, Class_Scope, &errc);
+    list = OBJcreate(Class_Linked_List, &experrc);
+    data = (struct Scope*)OBJget_data(scope, Class_Scope, &experrc);
     DICTdo_init(data->symbol_table,&de);
     while (s = DICTdo(&de)) {
 	if (OBJis_kind_of(s, Class_Algorithm))
@@ -218,12 +218,12 @@ SCOPEget_constants(Scope scope)
 {
     struct Scope*	data;
     Linked_List		list;
-    Error		errc;
+    Error		experrc;
     Symbol s;
     DictionaryEntry	de;
 
-    list = OBJcreate(Class_Linked_List, &errc);
-    data = (struct Scope*)OBJget_data(scope, Class_Scope, &errc);
+    list = OBJcreate(Class_Linked_List, &experrc);
+    data = (struct Scope*)OBJget_data(scope, Class_Scope, &experrc);
     DICTdo_init(data->symbol_table,&de);
     while (s = DICTdo(&de)) {
 	if (OBJis_kind_of(s, Class_Constant))
@@ -243,10 +243,10 @@ Dictionary
 SCOPEget_references(Scope scope)
 {
     struct Scope*       data;
-    Error               errc;
+    Error               experrc;
 
-    data = (struct Scope*)OBJget_data(scope, Class_Scope, &errc);
-    return OBJcopy(data->references, &errc);
+    data = (struct Scope*)OBJget_data(scope, Class_Scope, &experrc);
+    return OBJcopy(data->references, &experrc);
 }
 
 /*
@@ -263,9 +263,9 @@ void
 SCOPEput_resolved(Scope scope)
 {
     struct Scope*	data;
-    Error		errc;
+    Error		experrc;
 
-    data = (struct Scope*)OBJget_data(scope, Class_Scope, &errc);
+    data = (struct Scope*)OBJget_data(scope, Class_Scope, &experrc);
     data->resolved = true;
 }
 
@@ -280,9 +280,9 @@ Boolean
 SCOPEget_resolved(Scope scope)
 {
     struct Scope*	data;
-    Error		errc;
+    Error		experrc;
 
-    data = (struct Scope*)OBJget_data(scope, Class_Scope, &errc);
+    data = (struct Scope*)OBJget_data(scope, Class_Scope, &experrc);
     return data->resolved;
 }
 
@@ -301,19 +301,19 @@ SCOPEdump(Scope scope, FILE* file)
 {
     Dictionary	dict;
     Linked_List	list, exp_list,ref;
-    Error	errc;
+    Error	experrc;
     Symbol s;
     DictionaryEntry	de;
 
     fprintf(file, "definitions:\n");
-    dict = ((struct Scope*)OBJget_data(scope, Class_Scope, &errc))->symbol_table;
+    dict = ((struct Scope*)OBJget_data(scope, Class_Scope, &experrc))->symbol_table;
     DICTdo_init(dict,&de);
     while (s = DICTdo(&de)) {
 	fprintf(file, "%s %s\n", SYMBOLget_name(s), CLASSget_name(OBJget_class(s)));
     }
 
     fprintf(file, "Used symbols:\n");
-    list = ((struct Scope*)OBJget_data(scope, Class_Scope, &errc))->use;
+    list = ((struct Scope*)OBJget_data(scope, Class_Scope, &experrc))->use;
     LISTdo(list, use, Linked_List)
 	fprintf(file, "From schema %s\n", SYMBOLget_name(LISTget_first(use)));
         exp_list = LISTget_second(use);
@@ -325,7 +325,7 @@ SCOPEdump(Scope scope, FILE* file)
     LISTod; 
 
     fprintf(file, "References:\n");
-    dict = ((struct Scope*)OBJget_data(scope, Class_Scope, &errc))->references;
+    dict = ((struct Scope*)OBJget_data(scope, Class_Scope, &experrc))->references;
     DICTdo_init(dict,&de);
     while (ref = DICTdo(&de)) {
 	fprintf(file, "From schema %s\n", SYMBOLget_name(LISTget_first(ref)));
@@ -342,7 +342,7 @@ SCOPEdump(Scope scope, FILE* file)
     LISTdo(list, s, Schema)
 	SCHEMAdump(s, file);
     LISTod;
-    OBJfree(list, &errc); */
+    OBJfree(list, &experrc); */
 
 }
 /*
@@ -365,12 +365,12 @@ char * SCOPE_get_ref_name(Linked_List ref_entry)
 void
 SCOPEprint(Scope scope)
 {
-	Error errc;
+	Error experrc;
 	struct Scope *data;
 
 	print_force(scope_print);
 
-	data = OBJget_data(scope,Class_Scope,&errc);
+	data = OBJget_data(scope,Class_Scope,&experrc);
 	SCOPE_print(data);
 
 	print_unforce(scope_print);

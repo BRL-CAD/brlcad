@@ -40,7 +40,7 @@
  */
 
 #include <dirobj.h>
-
+#include <dirent.h>
 
 // to help ObjectCenter
 #ifndef HAVE_MEMMOVE

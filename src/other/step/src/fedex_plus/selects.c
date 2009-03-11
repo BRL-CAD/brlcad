@@ -21,6 +21,7 @@ extern int multiple_inheritance;
 ********    The functions in this file generate C++ code for representing
 ********    EXPRESS SELECT types.
 **************************************************************************/
+#include <stdlib.h>
 #include "classes.h"
 
 #define BASE_SELECT "SCLP23(Select)"

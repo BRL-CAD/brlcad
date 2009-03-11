@@ -25,6 +25,7 @@ static char rcsid[] ="$Id: classes.c,v 3.0.1.11 1997/09/18 21:14:46 sauderd Exp 
 /* this is used to add new dictionary calls */
 /* #define NEWDICT */
 
+#include <stdlib.h>
 #include "classes.h"
 
 char *FundamentalType(const Type t,int report_reftypes);

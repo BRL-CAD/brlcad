@@ -51,6 +51,7 @@ static char rcsid[] = "$Id: error.c,v 1.13 1997/10/23 21:41:44 sauderd Exp $";
  * prettied up interface to print_objects_when_running
  */
 
+#include <stdlib.h>
 #include "conf.h"
 #include <setjmp.h>
 
@@ -271,7 +272,7 @@ va_dcl
 		    exit(EXPRESS_fail((Express)0));
 	    }
     }
-    errc = ERROR_none;
+    experrc = ERROR_none;
     va_end(args);
 }
 
@@ -417,7 +418,7 @@ va_dcl
 	    }
         }
     }
-    errc = ERROR_none;
+    experrc = ERROR_none;
     va_end(args);
 }
 

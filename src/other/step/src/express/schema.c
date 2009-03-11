@@ -75,7 +75,7 @@ SCHEMAinitialize(void)
 /*
 ** Procedure:	SCOPEcreate
 ** Parameters:	Scope  scope	- next higher scope
-**		Error* errc	- buffer for error code
+**		Error* experrc	- buffer for error code
 ** Returns:	Scope		- the scope created
 ** Description:	Create and return an empty scope inside a parent scope.
 */
@@ -112,7 +112,7 @@ SCOPEcreate_nostab(char type)
 ** Procedure:	SCHEMAcreate
 ** Parameters:	String name	- name of schema to create
 **		Scope  scope	- local scope for schema
-**		Error* errc	- buffer for error code
+**		Error* experrc	- buffer for error code
 ** Returns:	Schema		- the schema created
 ** Description:	Create and return a schema as specified.
 */

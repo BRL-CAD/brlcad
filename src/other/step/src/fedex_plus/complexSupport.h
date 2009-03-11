@@ -1,10 +1,6 @@
 #ifndef COMPLEXSUP_H
 #define COMPLEXSUP_H
 
-#ifdef HAVE_CONFIG_H
-#include <scl_cf.h>
-#endif
-
 #ifdef HAVE_MEMCPY
 # ifdef __CLCC__
 void* memcpy(void*, const void*, int);
@@ -25,9 +21,9 @@ extern "C"
 //#include <ctype.h>
 //extern char *   strncpy(char *, const char *, size_t);
 #include "classes.h"
-#include "express.h"
-#include "exppp.h"
-#include "dict.h"
+#include "../express/express.h"
+#include "../exppp/exppp.h"
+#include "../express/dict.h"
 }
 
 #define FALSE      0

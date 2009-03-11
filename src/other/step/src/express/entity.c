@@ -318,7 +318,7 @@ ENTITY_lookup(Entity entity, char * name)
         result = DICTlookup(entity->schema->referenced_objects, name);
         if (result != 0) {
 	  ENTITY_type = DICT_type;
-          errc = ERROR_none;
+          experrc = ERROR_none;
           return result;
         }
 
@@ -331,7 +331,7 @@ ENTITY_lookup(Entity entity, char * name)
 		if (result) return(result);
         LISTod;
 
-	errc = ERROR_undefined_identifier;
+	experrc = ERROR_undefined_identifier;
 	return 0;
 }
 #endif
@@ -377,15 +377,15 @@ void
 ENTITY_free(Generic dummy)
 {
     struct Entity*	entity = (struct Entity*)dummy;
-    Error		errc;
+    Error		experrc;
 
-    OBJfree(entity->attributes, &errc);
-    OBJfree(entity->supertypes, &errc);
-    OBJfree(entity->subtypes, &errc);
-    OBJfree(entity->subtype_expression, &errc);
-    OBJfree(entity->unique, &errc);
-    OBJfree(entity->constraints, &errc);
-    OBJfree(entity->instances, &errc);
+    OBJfree(entity->attributes, &experrc);
+    OBJfree(entity->supertypes, &experrc);
+    OBJfree(entity->subtypes, &experrc);
+    OBJfree(entity->subtype_expression, &experrc);
+    OBJfree(entity->unique, &experrc);
+    OBJfree(entity->constraints, &experrc);
+    OBJfree(entity->instances, &experrc);
 }
 
 void
@@ -393,17 +393,17 @@ ENTITY_copy(Generic dummy1, Generic dummy2)
 {
     struct Entity*	dest = (struct Entity*)dummy1;
     struct Entity*	source = (struct Entity*)dummy2;
-    Error		errc;
+    Error		experrc;
 
-    dest->supertypes = OBJcopy(source->supertypes, &errc);
-    dest->subtypes = OBJcopy(source->subtypes, &errc);
-    dest->subtype_expression = OBJcopy(source->subtype_expression, &errc);
-    dest->attributes = OBJcopy(source->attributes, &errc);
+    dest->supertypes = OBJcopy(source->supertypes, &experrc);
+    dest->subtypes = OBJcopy(source->subtypes, &experrc);
+    dest->subtype_expression = OBJcopy(source->subtype_expression, &experrc);
+    dest->attributes = OBJcopy(source->attributes, &experrc);
     dest->inheritance = source->inheritance;
     dest->attribute_count = source->attribute_count;
-    dest->unique = OBJcopy(source->unique, &errc);
-    dest->constraints = OBJcopy(source->constraints, &errc);
-    dest->instances = OBJcopy(source->instances, &errc);
+    dest->unique = OBJcopy(source->unique, &experrc);
+    dest->constraints = OBJcopy(source->constraints, &experrc);
+    dest->instances = OBJcopy(source->instances, &experrc);
     dest->mark = source->mark;
 }
 
@@ -412,10 +412,10 @@ ENTITY_equal(Generic dummy1, Generic dummy2)
 {
     struct Entity*	entity1 = (struct Entity*)dummy1;
     struct Entity*	entity2 = (struct Entity*)dummy2;
-    Error		errc;
+    Error		experrc;
 
-    return (OBJequal(entity1->attributes, entity2->attributes, &errc) &&
-	    OBJequal(entity1->supertypes, entity2->supertypes, &errc));
+    return (OBJequal(entity1->attributes, entity2->attributes, &experrc) &&
+	    OBJequal(entity1->supertypes, entity2->supertypes, &experrc));
 }
 
 void
@@ -511,10 +511,10 @@ void
 ENTITYput_supertypes(Entity entity, Linked_List list)
 {
     struct Entity*	data;
-    Error		errc;
+    Error		experrc;
 
-    data = (struct Entity*)OBJget_data(entity, Class_Entity, &errc);
-    OBJfree(data->supertypes, &errc);
+    data = (struct Entity*)OBJget_data(entity, Class_Entity, &experrc);
+    OBJfree(data->supertypes, &experrc);
     data->supertypes = OBJreference(list);
 }
 
@@ -530,11 +530,11 @@ void
 ENTITYput_subtypes(Entity entity, Expression expression)
 {
     struct Entity*	data;
-    Error		errc;
+    Error		experrc;
 
-    data = (struct Entity*)OBJget_data(entity, Class_Entity, &errc);
-    OBJfree(data->subtypes, &errc);
-    OBJfree(data->subtype_expression, &errc);
+    data = (struct Entity*)OBJget_data(entity, Class_Entity, &experrc);
+    OBJfree(data->subtypes, &experrc);
+    OBJfree(data->subtype_expression, &experrc);
     data->subtypes = LIST_NULL;
     data->subtype_expression = OBJreference(expression);
 }
@@ -617,10 +617,10 @@ void
 ENTITYput_constraints(Entity entity, Linked_List list)
 {
     struct Entity*	data;
-    Error		errc;
+    Error		experrc;
 
-    data = (struct Entity*)OBJget_data(entity, Class_Entity, &errc);
-    OBJfree(data->constraints, &errc);
+    data = (struct Entity*)OBJget_data(entity, Class_Entity, &experrc);
+    OBJfree(data->constraints, &experrc);
     data->constraints = OBJreference(list);
 }
 
@@ -656,9 +656,9 @@ void
 ENTITYdelete_instance(Entity entity, Generic instance)
 {
     struct Entity*	data;
-    Error		errc;
+    Error		experrc;
 
-    data = (struct Entity*)OBJget_data(entity, Class_Entity, &errc);
+    data = (struct Entity*)OBJget_data(entity, Class_Entity, &experrc);
     LISTdo_links(data->instances, link)
 	if (link->data == instance)
 	    LISTremove(data->instances, link);
@@ -715,9 +715,9 @@ Entity
 ENTITYget_supertype(Entity child, String supername)
 {
     struct Entity*	data;
-    Error		errc;
+    Error		experrc;
 
-    data = (struct Entity*)OBJget_data(child, Class_Entity, &errc);
+    data = (struct Entity*)OBJget_data(child, Class_Entity, &experrc);
     LISTdo(data->supertypes, super, Entity)
 	if (STRINGequal(supername,ENTITYget_name(super))) return(super);
 	if (OBJis_kind_of(super, Class_Entity))
@@ -739,9 +739,9 @@ Entity
 ENTITYget_subtype(Entity child, String subname)
 {
     struct Entity*	data;
-    Error		errc;
+    Error		experrc;
 
-    data = (struct Entity*)OBJget_data(child, Class_Entity, &errc);
+    data = (struct Entity*)OBJget_data(child, Class_Entity, &experrc);
     LISTdo(data->subtypes, sub, Entity)
 	if (STRINGequal(subname,ENTITYget_name(sub))) return(sub);
 	if (ENTITY_NULL != (sub = ENTITYget_subtype(sub,subname)))
@@ -762,11 +762,11 @@ Boolean
 ENTITYhas_subtype(Entity parent, Entity child)
 {
     struct Entity*	data;
-    Error		errc;
+    Error		experrc;
 
-    data = (struct Entity*)OBJget_data(parent, Class_Entity, &errc);
+    data = (struct Entity*)OBJget_data(parent, Class_Entity, &experrc);
     LISTdo(data->subtypes, entity, Entity)
-	if (OBJequal(entity, child, &errc))
+	if (OBJequal(entity, child, &experrc))
 	    return True;
 	if (ENTITYhas_subtype(entity, child))
 	    return True;
@@ -816,11 +816,11 @@ Boolean
 ENTITYhas_immediate_subtype(Entity parent, Entity child)
 {
     struct Entity*	data;
-    Error		errc;
+    Error		experrc;
 
-    data = (struct Entity*)OBJget_data(parent, Class_Entity, &errc);
+    data = (struct Entity*)OBJget_data(parent, Class_Entity, &experrc);
     LISTdo(data->subtypes, entity, Entity)
-	if (OBJequal(entity, child, &errc))
+	if (OBJequal(entity, child, &experrc))
 	    return True;
     LISTod;
     return False;
@@ -855,9 +855,9 @@ Linked_List
 ENTITYget_subtypes(Entity entity)
 {
     struct Entity*	data;
-    Error		errc;
+    Error		experrc;
 
-    data = (struct Entity*)OBJget_data(entity, Class_Entity, &errc);
+    data = (struct Entity*)OBJget_data(entity, Class_Entity, &experrc);
     return OBJreference(data->subtypes);
 }
 
@@ -873,9 +873,9 @@ Boolean
 ENTITYget_abstract(Entity entity)
 {
 	struct Entity*	data;
-	Error		errc;
+	Error		experrc;
 
-	data = (struct Entity*)OBJget_data(entity,Class_Entity,&errc);
+	data = (struct Entity*)OBJget_data(entity,Class_Entity,&experrc);
 	return data->abstract;
 }
 
@@ -883,9 +883,9 @@ void
 ENTITYput_abstract(Entity entity, Boolean abstract)
 {
 	struct Entity*	data;
-	Error		errc;
+	Error		experrc;
 
-	data = (struct Entity*)OBJget_data(entity,Class_Entity,&errc);
+	data = (struct Entity*)OBJget_data(entity,Class_Entity,&experrc);
 	data->abstract = abstract;
 }
 
@@ -901,9 +901,9 @@ Expression
 ENTITYget_subtype_expression(Entity entity)
 {
     struct Entity*	data;
-    Error		errc;
+    Error		experrc;
 
-    data = (struct Entity*)OBJget_data(entity, Class_Entity, &errc);
+    data = (struct Entity*)OBJget_data(entity, Class_Entity, &experrc);
     return OBJreference(data->subtype_expression);
 }
 
@@ -932,7 +932,7 @@ ENTITY_get_all_attributes(Entity entity, Linked_List result)
 #if 0
     LISTdo(entity->attributes, name, char *)
 	LISTadd_last(result,
-		     (Generic)SCOPElookup(entity, name, False, &errc));
+		     (Generic)SCOPElookup(entity, name, False, &experrc));
 #endif
 	LISTdo(entity->u.entity->attributes,attr,Generic)
 		LISTadd_last(result,attr);
@@ -1081,9 +1081,9 @@ Linked_List
 ENTITYget_uniqueness_list(Entity entity)
 {
     struct Entity*	data;
-    Error		errc;
+    Error		experrc;
 
-    data = (struct Entity*)OBJget_data(entity, Class_Entity, &errc);
+    data = (struct Entity*)OBJget_data(entity, Class_Entity, &experrc);
     return OBJreference(data->unique);
 }
 
@@ -1098,9 +1098,9 @@ Linked_List
 ENTITYget_constraints(Entity entity)
 {
     struct Entity*	data;
-    Error		errc;
+    Error		experrc;
 
-    data = (struct Entity*)OBJget_data(entity, Class_Entity, &errc);
+    data = (struct Entity*)OBJget_data(entity, Class_Entity, &experrc);
     return OBJreference(data->constraints);
 }
 
@@ -1115,9 +1115,9 @@ Linked_List
 ENTITYget_instances(Entity entity)
 {
     struct Entity*	data;
-    Error		errc;
+    Error		experrc;
 
-    data = (struct Entity*)OBJget_data(entity, Class_Entity, &errc);
+    data = (struct Entity*)OBJget_data(entity, Class_Entity, &experrc);
     return OBJreference(data->instances);
 }
 

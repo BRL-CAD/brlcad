@@ -95,7 +95,7 @@ GLOBAL char *current_filename			INITIALLY("stdin");
 GLOBAL Boolean	ERRORoccurred			INITIALLY(False);
 
 
-GLOBAL Error	errc				INITIALLY(ERROR_none);
+GLOBAL Error	experrc				INITIALLY(ERROR_none);
 GLOBAL Error	ERROR_subordinate_failed	INITIALLY(ERROR_none);
 GLOBAL Error	ERROR_syntax_expecting		INITIALLY(ERROR_none);
 

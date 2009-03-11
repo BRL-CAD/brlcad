@@ -74,7 +74,7 @@ char *nnew();
 /* space allocation macros with error package: */
 /***********************************************/
 
-extern int yylineno;
+extern int expyylineno;
 
 /* CALLOC grabs and initializes to all 0s space for the indicated */
 /* number of instances of the indicated type */

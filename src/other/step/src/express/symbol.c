@@ -58,7 +58,7 @@ char *filename;
 {
 	Symbol *sym = SYMBOL_new();
 	sym->name = name;
-	sym->line = yylineno;
+	sym->line = expyylineno;
 	sym->filename = current_filename;
 	return sym;
 }

@@ -759,10 +759,10 @@ void
 EXPput_type(Expression expression, Type type)
 {
     Type	data;
-    Error	errc;
+    Error	experrc;
 
-    data = (Type)OBJget_data(expression, Class_Expression, &errc);
-    OBJfree(*data, &errc);
+    data = (Type)OBJget_data(expression, Class_Expression, &experrc);
+    OBJfree(*data, &experrc);
     *data = OBJreference(type);
 }
 
@@ -777,9 +777,9 @@ Type
 EXPget_type(Expression expression)
 {
     Type	data;
-    Error	errc;
+    Error	experrc;
 
-    data = (Type)OBJget_data(expression, Class_Expression, &errc);
+    data = (Type)OBJget_data(expression, Class_Expression, &experrc);
     return OBJreference(*data);
 }
 
@@ -788,14 +788,14 @@ EXPget_type(Expression expression)
 ** Procedure:	EXPresolve_qualification
 ** Parameters:	Expression expression	- qualified identifier to resolve
 **		Scope      scope	- scope in which to resolve
-**		Error*     errc		- buffer for error code
+**		Error*     experrc		- buffer for error code
 ** Returns:	Symbol			- the symbol referenced by the expression
 ** Description:	Retrieves the symbol definition referenced by a (possibly
 **	qualified) identifier.
 */
 
 Symbol
-EXPresolve_qualification(Expression expression, Scope scope, Error* errc)
+EXPresolve_qualification(Expression expression, Scope scope, Error* experrc)
 {
     String	name;
 
@@ -803,18 +803,18 @@ EXPresolve_qualification(Expression expression, Scope scope, Error* errc)
 	return SYMBOL_NULL;
     if (OBJis_kind_of(expression, Class_Identifier)) {
 	name = SYMBOLget_name(IDENTget_identifier(expression));
-	return SCOPElookup(scope, name, true, errc);
+	return SCOPElookup(scope, name, true, experrc);
     } else if (OBJis_kind_of(expression, Class_Binary_Expression) &&
 	       (BIN_EXPget_operator(expression) == OP_DOT)) {
 	scope =
 	    (Scope)EXPresolve_qualification(BIN_EXPget_first_operand(expression),
-					    scope, errc);
-	if (*errc != ERROR_none)
+					    scope, experrc);
+	if (*experrc != ERROR_none)
 	    return SYMBOL_NULL;
 	return EXPresolve_qualification(BIN_EXPget_second_operand(expression),
-					scope, errc);
+					scope, experrc);
     } else {
-	*errc = ERROR_bad_qualification;
+	*experrc = ERROR_bad_qualification;
 	return SYMBOL_NULL;
     }
 }
@@ -827,7 +827,7 @@ EXPresolve_qualification(Expression expression, Scope scope, Error* errc)
 **		Expression operand1	- first operand
 **		Expression operand2	- second operand
 **		Expression operand3	- third operand
-**		Error*     errc		- buffer for error code
+**		Error*     experrc		- buffer for error code
 ** Returns:	Ternary_Expression	- the expression created
 ** Description:	Create a ternary operation Expression.
 */
@@ -856,9 +856,9 @@ Expression
 TERN_EXPget_second_operand(Ternary_Expression expression)
 {
     struct Ternary_Expression*	data;
-    Error	errc;
+    Error	experrc;
 
-    data = (struct Ternary_Expression )OBJget_data(expression, Class_Binary_Expression, &errc);
+    data = (struct Ternary_Expression )OBJget_data(expression, Class_Binary_Expression, &experrc);
     return OBJreference(data->op2);
 }
 
@@ -866,9 +866,9 @@ Expression
 TERN_EXPget_third_operand(Ternary_Expression expression)
 {
     struct Ternary_Expression*	data;
-    Error	errc;
+    Error	experrc;
 
-    data = (struct Ternary_Expression )OBJget_data(expression, Class_Binary_Expression, &errc);
+    data = (struct Ternary_Expression )OBJget_data(expression, Class_Binary_Expression, &experrc);
     return OBJreference(data->op3);
 }
 
@@ -879,7 +879,7 @@ TERN_EXPget_third_operand(Ternary_Expression expression)
 ** Parameters:	Op_Code	   op		- operation
 **		Expression operand1	- first operand
 **		Expression operand2	- second operand
-**		Error*     errc		- buffer for error code
+**		Error*     experrc		- buffer for error code
 ** Returns:	Binary_Expression	- the expression created
 ** Description:	Create a binary operation Expression.
 */
@@ -908,9 +908,9 @@ Expression
 BIN_EXPget_second_operand(Binary_Expression expression)
 {
     Expression*	data;
-    Error	errc;
+    Error	experrc;
 
-    data = (Expression*)OBJget_data(expression, Class_Binary_Expression, &errc);
+    data = (Expression*)OBJget_data(expression, Class_Binary_Expression, &experrc);
     return OBJreference(*data);
 }
 
@@ -919,7 +919,7 @@ BIN_EXPget_second_operand(Binary_Expression expression)
 ** Procedure:	UN_EXPcreate
 ** Parameters:	Op_Code	   op		- operation
 **		Expression operand	- operand
-**		Error*     errc		- buffer for error code
+**		Error*     experrc		- buffer for error code
 ** Returns:	Unary_Expression	- the expression created
 ** Description:	Create a unary operation Expression.
 */
@@ -939,20 +939,20 @@ UN_EXPcreate(Op_Code op, Expression operand)
 /*
 ** Procedure:	ONEOFcreate
 ** Parameters:	Linked_List selections	- list of selections for oneof()
-**		Error*      errc	- buffer for error code
+**		Error*      experrc	- buffer for error code
 ** Returns:	One_Of_Expression	- the oneof expression created
 ** Description:	Create a oneof() Expression.
 */
 
 One_Of_Expression
-ONEOFcreate(Linked_List selections, Error* errc)
+ONEOFcreate(Linked_List selections, Error* experrc)
 {
     One_Of_Expression	result;
     Linked_List	data;
 
-    *errc = ERROR_none;
-    result = OBJcreate(Class_One_Of_Expression, errc);
-    data = (Linked_List)OBJget_data(result, Class_One_Of_Expression, errc);
+    *experrc = ERROR_none;
+    result = OBJcreate(Class_One_Of_Expression, experrc);
+    data = (Linked_List)OBJget_data(result, Class_One_Of_Expression, experrc);
     *data = OBJreference(selections);
     return result;
 }
@@ -969,10 +969,10 @@ void
 ONEOFput_selections(One_Of_Expression expression, Linked_List selections)
 {
     Linked_List	data;
-    Error		errc;
+    Error		experrc;
 
-    data = (Linked_List)OBJget_data(expression, Class_One_Of_Expression, &errc);
-    OBJfree(*data, &errc);
+    data = (Linked_List)OBJget_data(expression, Class_One_Of_Expression, &experrc);
+    OBJfree(*data, &experrc);
     *data = OBJreference(selections);
 }
 
@@ -987,9 +987,9 @@ Linked_List
 ONEOFget_selections(One_Of_Expression expression)
 {
     Linked_List	data;
-    Error		errc;
+    Error		experrc;
 
-    data = (Linked_List)OBJget_data(expression, Class_One_Of_Expression, &errc);
+    data = (Linked_List)OBJget_data(expression, Class_One_Of_Expression, &experrc);
     return *data;
 }
 
@@ -997,20 +997,20 @@ ONEOFget_selections(One_Of_Expression expression)
 ** Procedure:	FCALLcreate
 ** Parameters:	Function    function	- function called by expression
 **		Linked_List parameters	- parameters to function call
-**		Error*      errc	- buffer for error code
+**		Error*      experrc	- buffer for error code
 ** Returns:	Function_Call		- the function call created
 ** Description:	Create a function call Expression.
 */
 
 Function_Call
-FCALLcreate(Function function, Linked_List parameters, Error* errc)
+FCALLcreate(Function function, Linked_List parameters, Error* experrc)
 {
     Function_Call	result;
     Algorithm*		data;
 
-    *errc = ERROR_none;
-    result = OBJcreate(Class_Function_Call, errc);
-    data = (Algorithm*)OBJget_data(result, Class_Function_Call, errc);
+    *experrc = ERROR_none;
+    result = OBJcreate(Class_Function_Call, experrc);
+    data = (Algorithm*)OBJget_data(result, Class_Function_Call, experrc);
     *data = OBJreference(function);
     ONEOFput_selections(result, parameters);
     return result;
@@ -1028,13 +1028,13 @@ void
 FCALLput_algorithm(Function_Call expression, Function function)
 {
     Algorithm*	data;
-    Error	errc;
+    Error	experrc;
 
-    data = (Algorithm*)OBJget_data(expression, Class_Function_Call, &errc);
+    data = (Algorithm*)OBJget_data(expression, Class_Function_Call, &experrc);
     if (*data == ALGORITHM_NULL)
 	*data = OBJreference(function);
     else
-	OBJbecome(*data, function, &errc);
+	OBJbecome(*data, function, &experrc);
 }
 
 /*
@@ -1062,9 +1062,9 @@ Function
 FCALLget_algorithm(Function_Call expression)
 {
     Algorithm*	data;
-    Error	errc;
+    Error	experrc;
 
-    data = (Algorithm*)OBJget_data(expression, Class_Function_Call, &errc);
+    data = (Algorithm*)OBJget_data(expression, Class_Function_Call, &experrc);
     return OBJreference(*data);
 }
 
@@ -1080,20 +1080,20 @@ FCALLget_algorithm(Function_Call expression)
 /*
 ** Procedure:	IDENTcreate
 ** Parameters:	Symbol ident	- identifier referenced by expression
-**		Error* errc	- buffer for error code
+**		Error* experrc	- buffer for error code
 ** Returns:	Identifier	- the identifier expression created
 ** Description:	Create a simple identifier Expression.
 */
 
 Identifier
-IDENTcreate(Symbol ident, Error* errc)
+IDENTcreate(Symbol ident, Error* experrc)
 {
     Identifier	result;
     Variable	data;
 
-    *errc = ERROR_none;
-    result = OBJcreate(Class_Identifier, errc);
-    data = (Variable)OBJget_data(result, Class_Identifier, errc);
+    *experrc = ERROR_none;
+    result = OBJcreate(Class_Identifier, experrc);
+    data = (Variable)OBJget_data(result, Class_Identifier, experrc);
     *data = OBJreference(ident);
     return result;
 }
@@ -1110,10 +1110,10 @@ void
 IDENTput_identifier(Identifier expression, Symbol identifier)
 {
     Variable	data;
-    Error	errc;
+    Error	experrc;
 
-    data = (Variable)OBJget_data(expression, Class_Identifier, &errc);
-    OBJfree(*data, &errc);
+    data = (Variable)OBJget_data(expression, Class_Identifier, &experrc);
+    OBJfree(*data, &experrc);
     *data = OBJreference(identifier);
 }
 
@@ -1129,9 +1129,9 @@ Symbol
 IDENTget_identifier(Identifier expression)
 {
     Variable	data;
-    Error	errc;
+    Error	experrc;
 
-    data = (Variable)OBJget_data(expression, Class_Identifier, &errc);
+    data = (Variable)OBJget_data(expression, Class_Identifier, &experrc);
     return OBJreference(*data);
 }
 
@@ -1139,21 +1139,21 @@ IDENTget_identifier(Identifier expression)
 ** Procedure:	AGGR_LITcreate
 ** Parameters:	Type        type	- type of aggregate literal
 **		Linked_List value	- value of aggregate literal
-**		Error*      errc	- buffer for error code
+**		Error*      experrc	- buffer for error code
 ** Returns:	Aggregate_Literal	- the literal created
 ** Description:	Create an aggregate literal Expression.
 */
 
 Aggregate_Literal
-AGGR_LITcreate(Type type, Linked_List value, Error* errc)
+AGGR_LITcreate(Type type, Linked_List value, Error* experrc)
 {
     Aggregate_Literal	result;
     Linked_List	data;
 
-    *errc = ERROR_none;
-    result = OBJcreate(Class_Aggregate_Literal, errc);
+    *experrc = ERROR_none;
+    result = OBJcreate(Class_Aggregate_Literal, experrc);
     EXPput_type(result, OBJreference(type));
-    data = (Linked_List)OBJget_data(result, Class_Aggregate_Literal, errc);
+    data = (Linked_List)OBJget_data(result, Class_Aggregate_Literal, experrc);
     *data = OBJreference(value);
     return result;
 }
@@ -1161,21 +1161,21 @@ AGGR_LITcreate(Type type, Linked_List value, Error* errc)
 /*
 ** Procedure:	INT_LITcreate
 ** Parameters:	Integer value	- value of integer literal
-**		Error*  errc	- buffer for error code
+**		Error*  experrc	- buffer for error code
 ** Returns:	Integer_Literal	- the literal created
 ** Description:	Create an integer literal Expression.
 */
 
 Integer_Literal
-INT_LITcreate(Integer value, Error* errc)
+INT_LITcreate(Integer value, Error* experrc)
 {
     Integer_Literal	result;
     Integer*		data;
 
-    *errc = ERROR_none;
-    result = OBJcreate(Class_Integer_Literal, errc);
+    *experrc = ERROR_none;
+    result = OBJcreate(Class_Integer_Literal, experrc);
     EXPput_type(result, OBJreference(TYPE_INTEGER));
-    data = (Integer*)OBJget_data(result, Class_Integer_Literal, errc);
+    data = (Integer*)OBJget_data(result, Class_Integer_Literal, experrc);
     *data = value;
     return result;
 }
@@ -1183,21 +1183,21 @@ INT_LITcreate(Integer value, Error* errc)
 /*
 ** Procedure:	LOG_LITcreate
 ** Parameters:	Logical value	- value of logical literal
-**		Error*  errc	- buffer for error code
+**		Error*  experrc	- buffer for error code
 ** Returns:	Logical_Literal	- the literal created
 ** Description:	Create a logical literal Expression.
 */
 
 Logical_Literal
-LOG_LITcreate(Logical value, Error* errc)
+LOG_LITcreate(Logical value, Error* experrc)
 {
     Logical_Literal	result;
     Logical*		data;
 
-    *errc = ERROR_none;
-    result = OBJcreate(Class_Logical_Literal, errc);
+    *experrc = ERROR_none;
+    result = OBJcreate(Class_Logical_Literal, experrc);
     EXPput_type(result, OBJreference(TYPE_LOGICAL));
-    data = (Logical*)OBJget_data(result, Class_Logical_Literal, errc);
+    data = (Logical*)OBJget_data(result, Class_Logical_Literal, experrc);
     *data = value;
     return result;
 }
@@ -1205,21 +1205,21 @@ LOG_LITcreate(Logical value, Error* errc)
 /*
 ** Procedure:	REAL_LITcreate
 ** Parameters:	Real    value	- value of real literal
-**		Error*  errc	- buffer for error code
+**		Error*  experrc	- buffer for error code
 ** Returns:	Real_Literal	- the literal created
 ** Description:	Create a real literal Expression.
 */
 
 Real_Literal
-REAL_LITcreate(Real value, Error* errc)
+REAL_LITcreate(Real value, Error* experrc)
 {
     Real_Literal	result;
     Real*		data;
 
-    *errc = ERROR_none;
-    result = OBJcreate(Class_Real_Literal, errc);
+    *experrc = ERROR_none;
+    result = OBJcreate(Class_Real_Literal, experrc);
     EXPput_type(result, OBJreference(TYPE_REAL));
-    data = (Real*)OBJget_data(result, Class_Real_Literal, errc);
+    data = (Real*)OBJget_data(result, Class_Real_Literal, experrc);
     *data = value;
     return result;
 }
@@ -1227,42 +1227,42 @@ REAL_LITcreate(Real value, Error* errc)
 /*
 ** Procedure:	STR_LITcreate
 ** Parameters:	String value	- value of string literal
-**		Error* errc	- buffer for error code
+**		Error* experrc	- buffer for error code
 ** Returns:	String_Literal	- the literal created
 ** Description:	Create a string literal Expression.
 */
 
 String_Literal
-STR_LITcreate(String value, Error* errc)
+STR_LITcreate(String value, Error* experrc)
 {
     String_Literal	result;
     String*		data;
 
-    *errc = ERROR_none;
-    result = OBJcreate(Class_String_Literal, errc);
+    *experrc = ERROR_none;
+    result = OBJcreate(Class_String_Literal, experrc);
     EXPput_type(result, OBJreference(TYPE_STRING));
-    data = (String*)OBJget_data(result, Class_String_Literal, errc);
+    data = (String*)OBJget_data(result, Class_String_Literal, experrc);
     *data = STRINGcopy(value);
     return result;
 }
 /*
 ** Procedure:	BIN_LITcreate
 ** Parameters:	Binary value	- value of binary literal
-**		Error* errc	- buffer for error code
+**		Error* experrc	- buffer for error code
 ** Returns:	Binary_Literal	- the literal created
 ** Description:	Create a string literal Expression.
 */
 
 Binary_Literal
-BIN_LITcreate(Binary value, Error* errc)
+BIN_LITcreate(Binary value, Error* experrc)
 {
     Binary_Literal	result;
     Binary*		data;
 
-    *errc = ERROR_none;
-    result = OBJcreate(Class_Binary_Literal, errc);
+    *experrc = ERROR_none;
+    result = OBJcreate(Class_Binary_Literal, experrc);
     EXPput_type(result, OBJreference(TYPE_BINARY));
-    data = (Binary*)OBJget_data(result, Class_Binary_Literal, errc);
+    data = (Binary*)OBJget_data(result, Class_Binary_Literal, experrc);
     *data = STRINGcopy(value);
     return result;
 }
@@ -1270,102 +1270,102 @@ BIN_LITcreate(Binary value, Error* errc)
 /*
 ** Procedure:	AGGR_LITget_value
 ** Parameters:	Aggregate_Literal literal	- literal to examine
-**		Error*            errc		- buffer for error code
+**		Error*            experrc		- buffer for error code
 ** Returns:	Linked_List			- the literal's value
 ** Description:	Retrieve the value of an aggregate literal.
 */
 
 Linked_List
-AGGR_LITget_value(Aggregate_Literal literal, Error* errc)
+AGGR_LITget_value(Aggregate_Literal literal, Error* experrc)
 {
     Linked_List	data;
 
-    data = (Linked_List)OBJget_data(literal, Class_Aggregate_Literal, errc);
-    return OBJcopy(*data, errc);
+    data = (Linked_List)OBJget_data(literal, Class_Aggregate_Literal, experrc);
+    return OBJcopy(*data, experrc);
 }
 
 /*
 ** Procedure:	INT_LITget_value
 ** Parameters:	Integer_Literal literal	- literal to examine
-**		Error*          errc	- buffer for error code
+**		Error*          experrc	- buffer for error code
 ** Returns:	Integer			- the literal's value
 ** Description:	Retrieve the value of an integer literal.
 */
 
 Integer
-INT_LITget_value(Integer_Literal literal, Error* errc)
+INT_LITget_value(Integer_Literal literal, Error* experrc)
 {
     Integer*	data;
 
-    data = (Integer*)OBJget_data(literal, Class_Integer_Literal, errc);
+    data = (Integer*)OBJget_data(literal, Class_Integer_Literal, experrc);
     return *data;
 }
 
 /*
 ** Procedure:	LOG_LITget_value
 ** Parameters:	Logical_Literal literal	- literal to examine
-**		Error*          errc	- buffer for error code
+**		Error*          experrc	- buffer for error code
 ** Returns:	Logical			- the literal's value
 ** Description:	Retrieve the value of a logical literal.
 */
 
 Logical
-LOG_LITget_value(Logical_Literal literal, Error* errc)
+LOG_LITget_value(Logical_Literal literal, Error* experrc)
 {
     Logical*	data;
 
-    data = (Logical*)OBJget_data(literal, Class_Logical_Literal, errc);
+    data = (Logical*)OBJget_data(literal, Class_Logical_Literal, experrc);
     return *data;
 }
 
 /*
 ** Procedure:	REAL_LITget_value
 ** Parameters:	Real_Literal literal	- literal to examine
-**		Error*       errc	- buffer for error code
+**		Error*       experrc	- buffer for error code
 ** Returns:	Real			- the literal's value
 ** Description:	Retrieve the value of a real literal.
 */
 
 Real
-REAL_LITget_value(Real_Literal literal, Error* errc)
+REAL_LITget_value(Real_Literal literal, Error* experrc)
 {
     Real*	data;
 
-    data = (Real*)OBJget_data(literal, Class_Real_Literal, errc);
+    data = (Real*)OBJget_data(literal, Class_Real_Literal, experrc);
     return *data;
 }
 
 /*
 ** Procedure:	STR_LITget_value
 ** Parameters:	String_Literal literal	- literal to examine
-**		Error*       errc	- buffer for error code
+**		Error*       experrc	- buffer for error code
 ** Returns:	String			- the literal's value
 ** Description:	Retrieve the value of a string literal.
 */
 
 String
-STR_LITget_value(String_Literal literal, Error* errc)
+STR_LITget_value(String_Literal literal, Error* experrc)
 {
     String*	data;
 
-    data = (String*)OBJget_data(literal, Class_String_Literal, errc);
+    data = (String*)OBJget_data(literal, Class_String_Literal, experrc);
     return STRINGcopy(*data);
 }
 
 /*
 ** Procedure:	BIN_LITget_value
 ** Parameters:	Binary_Literal literal	- literal to examine
-**		Error*       errc	- buffer for error code
+**		Error*       experrc	- buffer for error code
 ** Returns:	Binary			- the literal's value
 ** Description:	Retrieve the value of a binary literal.
 */
 
 Binary
-BIN_LITget_value(Binary_Literal literal, Error* errc)
+BIN_LITget_value(Binary_Literal literal, Error* experrc)
 {
     String*	data;
 
-    data = (String*)OBJget_data(literal, Class_Binary_Literal, errc);
+    data = (String*)OBJget_data(literal, Class_Binary_Literal, experrc);
     return STRINGcopy(*data);
 }
 
@@ -1376,7 +1376,7 @@ BIN_LITget_value(Binary_Literal literal, Error* errc)
 ** Parameters:	String     ident	- local identifier for source elements
 **		Expression source	- source aggregate to query
 **		Expression discriminant	- discriminating expression for query
-**		Error*     errc		- buffer for error code
+**		Error*     experrc		- buffer for error code
 ** Returns:	Query			- the query expression created
 ** Description:	Create a query Expression.
 */
@@ -1412,9 +1412,9 @@ Variable
 QUERYget_variable(Query expression)
 {
     struct Query*	data;
-    Error		errc;
+    Error		experrc;
 
-    data = (struct Query*)OBJget_data(expression, Class_Query, &errc);
+    data = (struct Query*)OBJget_data(expression, Class_Query, &experrc);
     return OBJreference(data->identifier);
 }
 
@@ -1429,9 +1429,9 @@ Expression
 QUERYget_source(Query expression)
 {
     struct Query*	data;
-    Error		errc;
+    Error		experrc;
 
-    data = (struct Query*)OBJget_data(expression, Class_Query, &errc);
+    data = (struct Query*)OBJget_data(expression, Class_Query, &experrc);
     return OBJreference(data->fromSet);
 }
 
@@ -1446,9 +1446,9 @@ Expression
 QUERYget_discriminant(Query expression)
 {
     struct Query*	data;
-    Error		errc;
+    Error		experrc;
 
-    data = (struct Query*)OBJget_data(expression, Class_Query, &errc);
+    data = (struct Query*)OBJget_data(expression, Class_Query, &experrc);
     return OBJreference(data->discriminant);
 }
 
@@ -1466,7 +1466,7 @@ QUERYget_discriminant(Query expression)
 /*
 ** Procedure:	EXPget_integer_value
 ** Parameters:	Expression  expression	- expression to evaluate
-**		Error*      errc	- buffer for error code
+**		Error*      experrc	- buffer for error code
 ** Returns:	int			- value of expression
 ** Description:	Compute the value of an integer expression.
 */
@@ -1474,13 +1474,13 @@ QUERYget_discriminant(Query expression)
 int
 EXPget_integer_value(Expression expression)
 {
-    errc = ERROR_none;
+    experrc = ERROR_none;
     if (expression == EXPRESSION_NULL)
 	return 0;
     if (expression->return_type->u.type->body->type == integer_) {
 	return INT_LITget_value(expression);
     } else {
-	errc = ERROR_integer_expression_expected;
+	experrc = ERROR_integer_expression_expected;
 	return 0;
     }
 }

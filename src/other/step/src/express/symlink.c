@@ -2,6 +2,7 @@
 /* used in an EXPRESS file */
 /* Author: Don Libes, NIST, 20-Mar-1993 */
 
+#include <stdlib.h>
 #include <sys/param.h>
 #include <stdio.h>
 #include <errno.h>

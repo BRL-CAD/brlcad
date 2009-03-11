@@ -34,11 +34,8 @@ Now you can say things like:
 	foo_destroy(foo1);
 
 */
-
-#ifdef REAL_MALLOC
 #include <stdlib.h>
-#endif
-
+#include <string.h>
 #include "memory.h"
 #include "error.h"
 

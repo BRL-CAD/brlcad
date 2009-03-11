@@ -1,18 +1,18 @@
+#include <stdlib.h>
 #include <stdio.h>
 #include <memory.h>
+#include <errno.h>
 #ifdef __STDC__
 #include <stdarg.h>
 #else
 #include <varargs.h>
 #endif
 
-#include <errno.h>
-
 int exppp_output_filename_reset;	/* if true, force output filename */
   /* DAR - moved this from .h file - not sure why was there. */
 
-#include "expbasic.h"
-#include "express.h"
+#include "../express/expbasic.h"
+#include "../express/express.h"
 #include "exppp.h"
 
 #define EXPR_out(e,p) EXPR__out(e,p,OP_UNKNOWN)
@@ -348,7 +348,7 @@ SCHEMAout(Schema s)
 		fprintf(stdout,"%s: writing schema file %s\n",EXPRESSprogram_name,filename);
 	}
 	if (!(exppp_fp = f = fopen(filename,"w"))) {
-		ERRORreport(ERROR_file_unwriteable,filename,strerror(errno));
+		ERRORreport(ERROR_file_unwriteable,filename,sys_errlist[errno]);
 		return 0;
 	}
 
@@ -587,7 +587,7 @@ copy_file_chunk(char *filename, int start, int end, int level)
     int i, indent, undent = 0, fix;
 
     if (!(infile = fopen(filename, "r"))) {
-	ERRORreport(ERROR_file_unreadable, filename, strerror(errno));
+	ERRORreport(ERROR_file_unreadable, filename, sys_errlist[errno]);
     }
 
     /* skip to start of chunk */

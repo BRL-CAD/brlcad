@@ -56,6 +56,7 @@ static char rcsid[] = "$Id: resolve.c,v 1.14 1997/01/21 19:19:51 dar Exp $";
  */
 
 #define RESOLVE_C
+#include <stdlib.h>
 #include "resolve.h"
 #include "stack.h"
 #include "schema.h"

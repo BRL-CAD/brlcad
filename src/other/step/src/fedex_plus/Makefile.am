@@ -1,0 +1,55 @@
+bin_PROGRAMS = \
+	fedex_os \
+	fedex_idl \
+	fedex_plus
+
+COMMON = \
+	classes_misc.c
+
+fedex_os_SOURCES = \
+	$(COMMON) \
+	fedex_os.c	
+
+fedex_idl_SOURCES = \
+	$(COMMON) \
+	fedex_idl.c
+
+fedex_plus_SOURCES = \
+	fedex_main.c \
+	classes_wrapper.cc \
+	classes.c \
+	selects.c \
+	multpass.c \
+	collect.cc \
+	complexlist.cc \
+	entlist.cc \
+	multlist.cc \
+	orlist.cc \
+	entnode.cc \
+	expressbuild.cc \
+	non-ors.cc \
+	match-ors.cc \
+	trynext.cc \
+	write.cc \
+	print.cc
+	
+fedex_os_LDADD = ${EXPRESS} ${EXPPP} $(top_builddir)/src/express/fedex.o
+
+fedex_idl_LDADD = ${EXPRESS} ${EXPPP} $(top_builddir)/src/express/fedex.o
+
+fedex_plus_LDADD = classes_misc.o ${EXPRESS} ${EXPPP} $(top_builddir)/src/express/fedex.o
+
+noinst_HEADERS = \
+	classes.h \
+	complexSupport.h
+
+DEPS = \
+	src/express \
+	src/exppp
+
+include $(top_srcdir)/misc/Makefile.defs
+
+FAST_OBJECTS = \
+	$(fedex_os_OBJECTS) \
+	$(fedex_idl_OBJECTS) \
+	$(fedex_plus_OBJECTS)

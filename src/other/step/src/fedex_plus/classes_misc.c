@@ -1,4 +1,5 @@
 #define	CLASSES_MISC_C
+#include <stdlib.h>
 #include "classes.h"
 /*******************************************************************
 ** FedEx parser output module for generating C++  class definitions

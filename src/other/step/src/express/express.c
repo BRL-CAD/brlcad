@@ -444,7 +444,7 @@ static
 Express
 PARSERrun(char *filename,FILE *fp)
 {
-	extern int exp_yyparse();
+	extern int yyparse();
 	extern void SCAN_lex_init PROTO((char *,FILE *));
 
 	if (print_objects_while_running & OBJ_PASS_BITS) {
@@ -456,9 +456,8 @@ PARSERrun(char *filename,FILE *fp)
 	}
 
 	yyin = fp;
-	yynewparse();
 	SCAN_lex_init(filename,fp);
-	if (exp_yyparse() != 0) {
+	if (yyparse() != 0) {
 		ERRORreport(ERROR_bail_out);
 		/* free model and model->u.express */
 		return 0;

@@ -84,6 +84,7 @@ static char rcsid[] = "$Id: variable.c,v 1.7 1997/01/21 19:19:51 dar Exp $";
  */
 
 #define VARIABLE_C
+#include <stdlib.h>
 #include "variable.h"
 #include "object.h"
 
@@ -110,10 +111,10 @@ void
 VAR_free(Generic dummy)
 {
     struct Variable*	var = (struct Variable*)dummy;
-    Error		errc;
+    Error		experrc;
 
-    OBJfree(var->type, &errc);
-    OBJfree(var->initializer, &errc);
+    OBJfree(var->type, &experrc);
+    OBJfree(var->initializer, &experrc);
 }
 
 void
@@ -135,9 +136,9 @@ VAR_equal(Generic dummy1, Generic dummy2)
 {
     struct Variable*	var1 = (struct Variable*)dummy1;
     struct Variable*	var2 = (struct Variable*)dummy2;
-    Error		errc;
+    Error		experrc;
 
-    return (OBJequal(var1->type, var2->type, &errc) /* &&
+    return (OBJequal(var1->type, var2->type, &experrc) /* &&
 Deep compare or not even necessary? - DEL
 	    (var1->ref_class == var2->ref_class)*/);
 }
@@ -225,7 +226,7 @@ VARget_simple_name(Variable v)
 ** Procedure:	VARcreate
 ** Parameters:	String name	- name of variable to create
 **		Type   type	- type of new variable
-**		Error* errc	- buffer for error code
+**		Error* experrc	- buffer for error code
 ** Returns:	Variable	- the Variable created
 ** Description:	Create and return a new variable.
 **
@@ -257,10 +258,10 @@ void
 VARput_type(Variable var, Type type)
 {
     struct Variable*	data;
-    Error		errc;
+    Error		experrc;
 
-    data = (struct Variable*)OBJget_data(var, Class_Variable, &errc);
-    OBJfree(data->type, &errc);
+    data = (struct Variable*)OBJget_data(var, Class_Variable, &experrc);
+    OBJfree(data->type, &experrc);
     data->type = OBJreference(type);
 }
 
@@ -279,10 +280,10 @@ void
 VARput_initializer(Variable var, Expression init)
 {
     struct Variable*	data;
-    Error		errc;
+    Error		experrc;
 
-    data = (struct Variable*)OBJget_data(var, Class_Variable, &errc);
-    OBJfree(data->initializer, &errc);
+    data = (struct Variable*)OBJget_data(var, Class_Variable, &experrc);
+    OBJfree(data->initializer, &experrc);
     data->initializer = OBJreference(init);
 }
 
@@ -316,9 +317,9 @@ void
 VARput_optional(Variable var, Boolean val)
 {
     struct Variable*	data;
-    Error		errc;
+    Error		experrc;
 
-    data = (struct Variable*)OBJget_data(var, Class_Variable, &errc);
+    data = (struct Variable*)OBJget_data(var, Class_Variable, &experrc);
     if (val)
 	data->flags |= VAR_OPT_MASK;
     else
@@ -341,9 +342,9 @@ void
 VARput_variable(Variable var, Boolean val)
 {
     struct Variable*	data;
-    Error		errc;
+    Error		experrc;
 
-    data = (struct Variable*)OBJget_data(var, Class_Variable, &errc);
+    data = (struct Variable*)OBJget_data(var, Class_Variable, &experrc);
     if (val)
 	data->flags |= VAR_VAR_MASK;
     else
@@ -362,9 +363,9 @@ void
 VARput_reference(Variable var, Expression ref)
 {
     struct Variable*	data;
-    Error		errc;
+    Error		experrc;
 
-    data = (struct Variable*)OBJget_data(var, Class_Variable, &errc);
+    data = (struct Variable*)OBJget_data(var, Class_Variable, &experrc);
     data->reference = ref;
 }
 
@@ -381,9 +382,9 @@ void
 VARput_inverse(Variable var, Symbol attr)
 {
     struct Variable*	data;
-    Error		errc;
+    Error		experrc;
 
-    data = (struct Variable*)OBJget_data(var, Class_Variable, &errc);
+    data = (struct Variable*)OBJget_data(var, Class_Variable, &experrc);
     data->inverse = attr;
 }
 
@@ -398,9 +399,9 @@ Symbol
 VARget_inverse(Variable var)
 {
     struct Variable*	data;
-    Error		errc;
+    Error		experrc;
 
-    data = (struct Variable*)OBJget_data(var, Class_Variable, &errc);
+    data = (struct Variable*)OBJget_data(var, Class_Variable, &experrc);
     return data->inverse;
 }
 
@@ -416,9 +417,9 @@ void
 VARput_reference_class(Variable var, Reference_Class ref)
 {
     struct Variable*	data;
-    Error		errc;
+    Error		experrc;
 
-    data = (struct Variable*)OBJget_data(var, Class_Variable, &errc);
+    data = (struct Variable*)OBJget_data(var, Class_Variable, &experrc);
     data->ref_class = ref;
 }
 
@@ -434,9 +435,9 @@ void
 VARput_offset(Variable var, int offset)
 {
     struct Variable*	data;
-    Error		errc;
+    Error		experrc;
 
-    data = (struct Variable*)OBJget_data(var, Class_Variable, &errc);
+    data = (struct Variable*)OBJget_data(var, Class_Variable, &experrc);
     data->offset = offset;
 }
 
@@ -451,9 +452,9 @@ Type
 VARget_type(Variable var)
 {
     struct Variable*	data;
-    Error		errc;
+    Error		experrc;
 
-    data = (struct Variable*)OBJget_data(var, Class_Variable, &errc);
+    data = (struct Variable*)OBJget_data(var, Class_Variable, &experrc);
     return OBJreference(data->type);
 }
 
@@ -477,9 +478,9 @@ Boolean
 VARget_optional(Variable var)
 {
     struct Variable*	data;
-    Error		errc;
+    Error		experrc;
 
-    data = (struct Variable*)OBJget_data(var, Class_Variable, &errc);
+    data = (struct Variable*)OBJget_data(var, Class_Variable, &experrc);
     return (data->flags & VAR_OPT_MASK) != 0;
 }
 
@@ -494,9 +495,9 @@ Boolean
 VARget_variable(Variable var)
 {
     struct Variable*	data;
-    Error		errc;
+    Error		experrc;
 
-    data = (struct Variable*)OBJget_data(var, Class_Variable, &errc);
+    data = (struct Variable*)OBJget_data(var, Class_Variable, &experrc);
     return (data->flags & VAR_VAR_MASK) != 0;
 }
 
@@ -511,9 +512,9 @@ Expression
 VARget_reference_class(Variable var)
 {
     struct Variable*	data;
-    Error		errc;
+    Error		experrc;
 
-    data = (struct Variable*)OBJget_data(var, Class_Variable, &errc);
+    data = (struct Variable*)OBJget_data(var, Class_Variable, &experrc);
     return data->reference;
 }
 
@@ -528,9 +529,9 @@ Reference_Class
 VARget_reference_class(Variable var)
 {
     struct Variable*	data;
-    Error		errc;
+    Error		experrc;
 
-    data = (struct Variable*)OBJget_data(var, Class_Variable, &errc);
+    data = (struct Variable*)OBJget_data(var, Class_Variable, &experrc);
     return data->ref_class;
 }
 
@@ -546,12 +547,12 @@ VARget_reference_class(Variable var)
 void
 VARprint(Variable var)
 {
-	Error errc;
+	Error experrc;
 	struct Var *data;
 
 	print_force(var_print);
 
-	data = OBJget_data(var,Class_Variable,&errc);
+	data = OBJget_data(var,Class_Variable,&experrc);
 	VAR_print(data);
 
 	print_unforce(var_print);
