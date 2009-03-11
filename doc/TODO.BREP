@@ -20,8 +20,9 @@ point
 line  (e.g., line segment, ray, bidirectionally infinite line)
 line set  (e.g., polyline, polygon)
 curve  (e.g., spline, arc, circle, ellipse)
-surface
-curve+surface  (i.e. a trimmed surface)
+plane
+surface (e.g., spline, polygonal)
+surface+curve  (i.e. a trimmed surface)
 solid
 
 
@@ -129,9 +130,34 @@ chamfer
 Ray Tracing
 -----------
 
-line -> solid evaluation
-  intersectionSet query
-  normalSet query
+intersectionSet query
+  boundingBox
+  line -> solid evaluation
+normalSet query
+  line -> solid evaluation
+
+line->solid evaluation
+  line->surface || line->plane
+
+line->plane
+  line->line
+
+line->surface
+  line->curve || line->line
+  closestDistance
+
+closestDistance
+  point->plane
+  point->point
+
+line->curve
+  line->point
+
+line->line
+  line->point
+
+line->point
+  point->point
 
 
 Interactive Visualization
