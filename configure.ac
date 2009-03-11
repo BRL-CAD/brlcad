@@ -3722,10 +3722,10 @@ AC_SUBST(TK_PATH)
 dnl configure enigma
 AC_CONFIG_SUBDIRS([misc/enigma])
 
-dnl configure step
-if test "x$bc_build_step" = "xyes" ; then
-    AC_CONFIG_SUBDIRS([src/other/step])
-fi
+#dnl configure step
+#if test "x$bc_build_step" = "xyes" ; then
+#    AC_CONFIG_SUBDIRS([src/other/step])
+#fi
 
 dnl configure tkhtml3
 if test "x$bc_build_tkhtml3" = "xyes" ; then
