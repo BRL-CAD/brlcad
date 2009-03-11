@@ -31,23 +31,35 @@ Geometry Evaluation
 point -> point
 point -> line
 point -> curve
+point -> plane
 point -> surface
-point -> curve+surface
+point -> surface+curve
 point -> solid
 
 line -> line
 line -> curve
+line -> plane
 line -> surface
-line -> curve+surface
+line -> surface+curve
 line -> solid
 
 curve -> curve
+curve -> plane
 curve -> surface
-curve -> curve+surface
+curve -> surface+curve
 curve -> solid
 
+plane -> plane
+plane -> surface
+plane -> surface+curve
+plane -> solid
+
 surface -> surface
+surface -> surface+curve
 surface -> solid
+
+surface+curve -> surface+curve
+surface+curve -> solid
 
 solid -> solid
 
