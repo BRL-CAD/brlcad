@@ -1,0 +1,21 @@
+
+config/README
+
+examples/ - directory containing files that you can "source" to
+	install SCL as appropriate for NIST.
+
+scl_cf.h.in - used by configure to create an arch-specific header file
+	that handles problem areas for compilers and operating systems.
+	The created file is <arch_dir>/scl_cf.h
+
+mkProbe.current.in - used by configure to create an arch-specific mkProbe
+	script. The created file is <arch_dir>/bin/mkProbe
+
+setup-arch.current.in - used by configure to create an arch-specific
+	setup-arch script. The created file is <arch_dir>/bin/setup-arch
+
+sclbuild.current.in - used by configure to create an arch-specific
+	sclbuild script. The created file is <arch_dir>/bin/sclbuild
+
+checkout - checks out files from RCS as appropriate for this directory.
+

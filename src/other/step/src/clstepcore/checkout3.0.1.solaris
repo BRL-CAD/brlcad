@@ -1,0 +1,100 @@
+co -l ExpDict.cc
+co -l ExpDict.h
+co -l ExpDict.inline.cc
+co -l Makefile
+co -l Registry.h
+co -l Registry.inline.cc
+co -l STEPaggregate.cc
+co -l STEPaggregate.h
+co -l STEPattribute.cc
+co -l STEPattribute.h
+co -l STEPattribute.inline.cc
+co -l STEPattributeList.cc
+co -l STEPattributeList.h
+co -l STEPcomplex.cc
+co -l STEPcomplex.h
+co -l STEPentity.cc
+co -l STEPentity.h
+co -l STEPundefined.cc
+co -l STEPundefined.h
+co -l SingleLinkList.cc
+co -l SingleLinkList.h
+co -l SingleLinkList.inline.cc
+co -l baseType.h
+co -l collect.cc
+co -l complexSupport.h
+co -l complexlist.cc
+co -l dictdefs.h
+co -l entlist.cc
+co -l entnode.cc
+co -l match-ors.cc
+co -l multlist.cc
+co -l non-ors.cc
+co -l orlist.cc
+co -l print.cc
+co -l read_func.cc
+co -l read_func.h
+co -l scl_osschema.h
+co -l sclprefixes.h
+co -l sdai.cc
+co -l sdai.h
+co -l sdaiBinary.cc
+co -l sdaiBinary.h
+co -l sdaiEnum.cc
+co -l sdaiEnum.h
+co -l sdaiSelect.cc
+co -l sdaiSelect.h
+co -l sdaiString.cc
+co -l sdaiString.h
+co -l trynext.cc
+
+ci -f -sDP3.0.1 -m"Adding a new state DP3.0.1 and associated revision" ExpDict.cc
+ci -f -sDP3.0.1 -m"Adding a new state DP3.0.1 and associated revision" ExpDict.h
+ci -f -sDP3.0.1 -m"Adding a new state DP3.0.1 and associated revision" ExpDict.inline.cc
+ci -f -sDP3.0.1 -m"Adding a new state DP3.0.1 and associated revision" Makefile
+ci -f -sDP3.0.1 -m"Adding a new state DP3.0.1 and associated revision" Registry.h
+ci -f -sDP3.0.1 -m"Adding a new state DP3.0.1 and associated revision" Registry.inline.cc
+ci -f -sDP3.0.1 -m"Adding a new state DP3.0.1 and associated revision" STEPaggregate.cc
+ci -f -sDP3.0.1 -m"Adding a new state DP3.0.1 and associated revision" STEPaggregate.h
+ci -f -sDP3.0.1 -m"Adding a new state DP3.0.1 and associated revision" STEPattribute.cc
+ci -f -sDP3.0.1 -m"Adding a new state DP3.0.1 and associated revision" STEPattribute.h
+ci -f -sDP3.0.1 -m"Adding a new state DP3.0.1 and associated revision" STEPattribute.inline.cc
+ci -f -sDP3.0.1 -m"Adding a new state DP3.0.1 and associated revision" STEPattributeList.cc
+ci -f -sDP3.0.1 -m"Adding a new state DP3.0.1 and associated revision" STEPattributeList.h
+ci -f -sDP3.0.1 -m"Adding a new state DP3.0.1 and associated revision" STEPcomplex.cc
+ci -f -sDP3.0.1 -m"Adding a new state DP3.0.1 and associated revision" STEPcomplex.h
+ci -f -sDP3.0.1 -m"Adding a new state DP3.0.1 and associated revision" STEPentity.cc
+ci -f -sDP3.0.1 -m"Adding a new state DP3.0.1 and associated revision" STEPentity.h
+ci -f -sDP3.0.1 -m"Adding a new state DP3.0.1 and associated revision" STEPundefined.cc
+ci -f -sDP3.0.1 -m"Adding a new state DP3.0.1 and associated revision" STEPundefined.h
+ci -f -sDP3.0.1 -m"Adding a new state DP3.0.1 and associated revision" SingleLinkList.cc
+ci -f -sDP3.0.1 -m"Adding a new state DP3.0.1 and associated revision" SingleLinkList.h
+ci -f -sDP3.0.1 -m"Adding a new state DP3.0.1 and associated revision" SingleLinkList.inline.cc
+ci -f -sDP3.0.1 -m"Adding a new state DP3.0.1 and associated revision" baseType.h
+ci -f -sDP3.0.1 -m"Adding a new state DP3.0.1 and associated revision" collect.cc
+ci -f -sDP3.0.1 -m"Adding a new state DP3.0.1 and associated revision" complexSupport.h
+ci -f -sDP3.0.1 -m"Adding a new state DP3.0.1 and associated revision" complexlist.cc
+ci -f -sDP3.0.1 -m"Adding a new state DP3.0.1 and associated revision" dictdefs.h
+ci -f -sDP3.0.1 -m"Adding a new state DP3.0.1 and associated revision" entlist.cc
+ci -f -sDP3.0.1 -m"Adding a new state DP3.0.1 and associated revision" entnode.cc
+ci -f -sDP3.0.1 -m"Adding a new state DP3.0.1 and associated revision" match-ors.cc
+ci -f -sDP3.0.1 -m"Adding a new state DP3.0.1 and associated revision" multlist.cc
+ci -f -sDP3.0.1 -m"Adding a new state DP3.0.1 and associated revision" non-ors.cc
+ci -f -sDP3.0.1 -m"Adding a new state DP3.0.1 and associated revision" orlist.cc
+ci -f -sDP3.0.1 -m"Adding a new state DP3.0.1 and associated revision" print.cc
+ci -f -sDP3.0.1 -m"Adding a new state DP3.0.1 and associated revision" read_func.cc
+ci -f -sDP3.0.1 -m"Adding a new state DP3.0.1 and associated revision" read_func.h
+ci -f -sDP3.0.1 -m"Adding a new state DP3.0.1 and associated revision" scl_osschema.h
+ci -f -sDP3.0.1 -m"Adding a new state DP3.0.1 and associated revision" sclprefixes.h
+ci -f -sDP3.0.1 -m"Adding a new state DP3.0.1 and associated revision" sdai.cc
+ci -f -sDP3.0.1 -m"Adding a new state DP3.0.1 and associated revision" sdai.h
+ci -f -sDP3.0.1 -m"Adding a new state DP3.0.1 and associated revision" sdaiBinary.cc
+ci -f -sDP3.0.1 -m"Adding a new state DP3.0.1 and associated revision" sdaiBinary.h
+ci -f -sDP3.0.1 -m"Adding a new state DP3.0.1 and associated revision" sdaiEnum.cc
+ci -f -sDP3.0.1 -m"Adding a new state DP3.0.1 and associated revision" sdaiEnum.h
+ci -f -sDP3.0.1 -m"Adding a new state DP3.0.1 and associated revision" sdaiSelect.cc
+ci -f -sDP3.0.1 -m"Adding a new state DP3.0.1 and associated revision" sdaiSelect.h
+ci -f -sDP3.0.1 -m"Adding a new state DP3.0.1 and associated revision" sdaiString.cc
+ci -f -sDP3.0.1 -m"Adding a new state DP3.0.1 and associated revision" sdaiString.h
+ci -f -sDP3.0.1 -m"Adding a new state DP3.0.1 and associated revision" trynext.cc
+

@@ -1,0 +1,162 @@
+###############################################################
+# Makefile macros for SCL
+###############################################################
+
+###############################################################
+# This is the make include file for Orbix applications
+###############################################################
+
+# include /depot/orbix-2.0/arch.sunos5/corba2/demos/orbixmtsol2s4.mk
+@ORBIX_MK_FILE@
+
+PDES_ROOT = @PDES_ROOT@
+ARCH_ROOT=$(PDES_ROOT)/@ARCH_ROOT@
+
+# RANLIB is changed to "echo" if configure couldn't find ranlib on your system.
+# Configure checks your path to find it.
+RANLIB=@RANLIB@
+@SET_MAKE@
+LEX=@LEX@
+YACC=@YACC@
+
+# The C compiler to use
+#CC 	= $(SUNROOT)/acc
+CC 	= @CC@
+
+# The C++ compiler to use
+CXX 	= @CXX@
+
+
+###############################################################
+# Locations for the C++ library and header files.  
+# These are here so that they can be filled in and used for makedepend if 
+# desired.
+# To get an idea how to fill these in you could look at CC and CXX defined 
+# above. You need to fill these in to match the compilers defined by CC and 
+# CXX.
+###############################################################
+CPLUSROOT = /depot/sparcworks.new
+CPLUS_INCLUDE_ROOT = $(CPLUSROOT)/SC3.0.1
+CPLUS_INC_DIR 	= $(CPLUS_INCLUDE_ROOT)/include/CC_411
+C_INC_DIR 	= $(CPLUS_INCLUDE_ROOT)/include/cc_411
+CPLUSINCLUDES 	= -I$(CPLUS_INC_DIR) -I$(C_INC_DIR)
+CPLUS_DEFS 	= 
+
+# These should not need to be used
+CPLUS_LIB_DIR 	= $(CPLUSROOT)/lib
+CPLUS_LIBS 	=  -lC
+
+###############################################################
+# Macros for InterViews 
+# Used to build the clprobe-ui and cl-ivfasd source code
+###############################################################
+
+# this is SUN 3.1 C++ build of IV
+#IVROOT = /depot/iv3.1_SUN.C++
+IVROOT = @IV_ROOT_DIR@
+
+IV_INCLUDE_DIR = @IV_INCLUDE_DIR@
+INTERVIEWS_LIB_DIR = @INTERVIEWS_LIB_DIR@
+INTERVIEWS_LIBS = -lIV
+
+###############################################################
+# Macros for compiling with ObjectStore
+###############################################################
+
+#OS_ROOTDIR=/depot/OStore4.0/sunpro
+OS_ROOTDIR=@OS_ROOTDIR@
+
+OSSG= $(OS_ROOTDIR)/bin/ossg
+OSSCHEMA_FLAGS=
+
+#OS_INCS= -I$(OS_ROOTDIR)/include
+OS_INCS= @OS_INC_DIR@
+
+#OS_LIB_DIR= -L$(OS_ROOTDIR)/lib
+OS_LIB_DIR= @OS_LIB_DIR@
+
+#LIBOSC_LD =
+LIBOSC_LD = @LIBOSC_LD@
+
+#LIBOSTHR_LD= -losthr
+LIBOSTHR_LD= @LIBOSTHR_LD@
+
+#TFLAGS= -pta -vdelx
+#TFLAGS=  -mt -pta -vdelx
+TFLAGS=  -mt -pta -vdelx
+
+# generated to contain "$(TFLAGS) -D__OSTORE__" when appropriate
+OS_FLAGS= @OS_FLAGS@
+
+#OS_LIBS= -loscol -los $(LIBOSTHR_LD) $(LIBOSC_LD)
+OS_LIBS= @OS_LIBS@
+OS_LD_FLAGS= $(OS_LIB_DIR) $(OS_LIBS)
+
+# If you want your schema databases or example databases placed in
+# directories other than the current directory, or in a rawfs directory,
+# you should either:
+#   - uncomment the last two lines of this comment and set
+#    OS_SCHEMA_DB_DIR to the schema database directory path and
+#    set OS_EXAMPLE_DB_DIR to the database directory path you want
+# or
+#   - set your environment variables OS_SCHEMA_DB_DIR and
+#    OS_EXAMPLE_DB_DIR to the paths you want
+#
+# ** NOTE that both OS_SCHEMA_DB_DIR and OS_EXAMPLE_DB_DIR must end
+# ** with a forward slash - '/'. This means a value of './' is
+# ** equivalent to the current directory.
+#
+OS_SCHEMA_DB_DIR=./
+OS_EXAMPLE_DB_DIR=./
+
+###############################################################
+# Macros for compiling with Orbix CORBA implementation
+# PART26 - specifies that the SCL code (including generated) is to be used
+#	with CORBA. One of the uses specifies that certain constructs are not 
+#	to be used from the fedex_plus generated code but from the idl 
+#	generated code. e.g. the C++ enum definitions
+# NO_BOOLS_LOGS - specifies that the C++ enum definitions for Bool and 
+#	Logical will be from the idl generated code.
+###############################################################
+
+#ORBIX_FLAGS= -DPART26 -DNO_BOOLS_LOGS
+ORBIX_FLAGS= @ORBIX_FLAGS@
+
+SCL_IDL_INCDIR= $(ARCH_ROOT)/ofiles/sdaiOrbix
+#ORBIX_INCS=
+ORBIX_INCS= @ORBIX_INCS@
+
+LIBS_SRV= $(ITSRV) $(OS_LD_FLAGS) -lthread $(SYSLIBS) -lm 
+LIBS_CLT= $(ITCLT) $(SYSLIBS) -lm 
+
+###############################################################
+#  Combined compiler and database macros
+#  The following macros are used in the Makefiles
+###############################################################
+
+M = @SUN_ARCH@
+X = X11
+RM = rm -f
+SHELL = /bin/sh
+
+SCL_DEFS= @DEFS@ @SCL_DEFS@
+
+MR_COND_DEFS = $(SCL_DEFS) $(OS_FLAGS) $(ORBIX_FLAGS)
+MR_INCLUDES = $(OS_INCS) $(ORBIX_INCS)
+CDEBUGFLAGS = -g
+
+CFLAGS = $(CDEBUGFLAGS) $(MR_COND_DEFS)
+LDFLAGS = $(OS_LD_FLAGS)
+
+MAKE_DEPEND = makedepend
+# you might want to look for them here if you don't seem to have it
+#MAKE_DEPEND = /depot/openwin3/arch/bin/makedepend
+#MAKE_DEPEND = /depot/x11r5/plat/bin/makedepend
+
+###############################################################
+# change above macros based on your environment
+###############################################################
+
+.KEEP_STATE:
+
+.SUFFIXES: . .o .c .h .cc

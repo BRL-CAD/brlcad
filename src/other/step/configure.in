@@ -1,0 +1,672 @@
+dnl Process this file with autoconf to produce a configure script named 
+dnl configure.
+dnl This configure script must be run from the root SCL directory.
+
+dnl Don't use the cache file. It confuses things since it won't check your
+dnl environment variables like CXX, CCC, and CC.
+dnl These set the two variables to null.
+define([AC_CACHE_LOAD], )
+define([AC_CACHE_SAVE], )
+
+AC_INIT(src)
+
+# note when updating version numbers here, also update pkgIndex.in (see
+# comments in Makefile)
+SCL_MAJOR_VERSION=3
+SCL_MINOR_VERSION=1
+SCL_MICRO_VERSION=0
+SCL_VERSION=$SCL_MAJOR_VERSION.$SCL_MINOR_VERSION
+SCL_VERSION_NODOTS=$SCL_MAJOR_VERSION$SCL_MINOR_VERSION
+SCL_VERSION_FULL=$SCL_VERSION.$SCL_MICRO_VERSION
+VERSION=$SCL_MAJOR_VERSION.$SCL_MINOR_VERSION
+
+# This forced identification should reduce the pain significantly of using 
+# people's configure output to identify problems. Use echo so they can't turn
+# this of.
+echo "configuring SCL $SCL_MAJOR_VERSION.$SCL_MINOR_VERSION.$SCL_MICRO_VERSION"
+
+
+dnl The configure script must be run from the root SCL directory.
+dnl This sets the PDES_ROOT macro.
+PDES_ROOT=`pwd`
+AC_SUBST(PDES_ROOT)
+EXAMPLE_NAME="example"
+AC_SUBST(EXAMPLE_NAME)
+
+# could change this so that it will conditionally not make the test stuff
+MAKE_EXAMPLE_NAME="make -k"
+AC_SUBST(MAKE_EXAMPLE_NAME)
+MKPROBE_OPTIONS="-i -p"
+
+dnl Require that they give you an arch dir argument using --with-arch={dir}
+dnl Set ARCH_ROOT using it. Use ARCH_ROOT to create an arch dir and edit files 
+AC_ARG_WITH(arch, [  --with-arch             - arch directory for SCL (required)], 
+[
+dnl this is what happens if a --with-arch argument is given without a value
+if test "$withval" = "yes" ; then
+dnl ARCH_ROOT="$(PDES_ROOT)/arch"
+echo "No architecture dir specified with --with-arch argument... specify the architecture directory using --with-arch=specify-arch-directory-here"
+exit 1
+dnl this is what happens if a --with-arch argument is given with a value
+else
+echo "Specified architecture directory: $withval"
+ARCH_ROOT=$withval 
+fi
+AC_SUBST(ARCH_ROOT) ], 
+dnl this is what happens if no --with-arch argument is given
+[echo "No architecture info specified... specify the architecture directory using --with-arch=specify-arch-directory-here"
+exit 1
+])
+
+AC_MSG_CHECKING([system version])
+    SUN_ARCH=`uname -s`
+    the_sys=`uname -s`-`uname -r`
+    case $the_sys in 
+        SunOS-4*)
+dnl	   DEFINES="-DSUN4"
+	   AC_MSG_RESULT([SUN4])
+	   SUN_ARCH="SUN4"
+	   ;;
+	SunOS-5*)
+dnl	   DEFINES="-DSYSV"
+	   AC_MSG_RESULT([SUN5])
+	   SUN_ARCH="SUN5"
+	   ;;
+esac
+
+AC_SUBST(SUN_ARCH)
+
+dnl This is so we can do special things for when we run this at NIST
+if test `domainname` = cme.nist.gov ; then
+NIST=yes
+AC_MSG_RESULT(we are at NIST)
+else
+NIST=no
+AC_MSG_RESULT(we are not at NIST)
+fi
+
+dnl This sets the variable SET_MAKE to be null or to be MAKE=make. This assures
+dnl that make can be called recursively through subdirectories.
+AC_SET_MAKE
+
+dnl Check for the gcc C compiler. If found set the environment variable CC
+dnl to be gcc. Otherwise set to cc
+AC_PROG_CC
+
+dnl See if it found gcc. The first test should work but it seems to have some
+dnl problems.
+dnl if test $GCC -eq yes ; then
+if test $ac_cv_prog_gcc = yes; then
+ AC_MSG_RESULT()
+else
+  AC_MSG_RESULT("  if you want to use SPARCworks acc under sunos you need to ")
+  AC_MSG_RESULT("  set the CC variable in ${ARCH_ROOT}/make_rules")
+fi
+
+dnl look for whatever AC_PROG_CC found and replace with complete path
+dnl AC_MSG_RESULT(CC is $CC)
+AC_MSG_RESULT(Replacing $CC with it's complete path)
+AC_PROGRAM_PATH(CC_PATH, $CC,$CC)
+CC=$CC_PATH
+AC_SUBST(CC)
+
+dnl Determine the C++ compiler to use. Set to the environment variable CXX or
+dnl CCC in that order. Otherwise search for c++, g++, gcc, CC in that order.
+dnl Sets the make variable CXX.
+AC_PROG_CXX
+
+AC_HEADER_DIRENT
+AC_STDC_HEADERS
+AC_HAVE_HEADERS(string.h memory.h)
+AC_HAVE_HEADERS(unistd.h)
+AC_HAVE_HEADERS(sysent.h)
+AC_CHECK_HEADER(sys/stat.h, AC_DEFINE(HAVE_SYS_STAT_H))
+AC_CHECK_HEADER(stat.h, AC_DEFINE(HAVE_STAT_H))
+AC_CHECK_HEADER(dirent.h, AC_DEFINE(HAVE_DIRENT_H))
+AC_CHECK_HEADER(sys/ndir.h, AC_DEFINE(HAVE_SYS_NDIR_H))
+AC_CHECK_HEADER(sys/dir.h, AC_DEFINE(HAVE_SYS_DIR_H))
+AC_CHECK_HEADER(ndir.h, AC_DEFINE(HAVE_NDIR_H))
+AC_CHECK_HEADER(stdarg.h, AC_DEFINE(HAVE_STDARG_H))
+
+AC_CHECK_FUNC(memcpy, AC_DEFINE(HAVE_MEMCPY))
+AC_CHECK_FUNC(memmove, AC_DEFINE(HAVE_MEMMOVE))
+AC_CHECK_FUNC(sysconf, AC_DEFINE(HAVE_SYSCONF))
+AC_CHECK_FUNC(strchr, AC_DEFINE(HAVE_STRCHR))
+AC_CHECK_FUNC(abs, AC_DEFINE(HAVE_ABS))
+
+dnl Look for whatever AC_PROG_CXX found and replace with complete path
+dnl AC_MSG_RESULT(CXX is $CXX)
+AC_MSG_RESULT(Replacing $CXX with complete path)
+AC_PROGRAM_PATH(CXX_PATH, $CXX,$CXX)
+CXX=$CXX_PATH
+AC_SUBST(CXX)
+
+AC_PROG_RANLIB
+case $RANLIB in
+	*ranlib*)
+	;;
+	*)
+		echo "replacing ranlib with echo for use with make since ranlib is missing"
+		RANLIB="echo"
+		AC_SUBST(RANLIB)
+	;;
+esac
+AC_MSG_RESULT(RANLIB is $RANLIB)
+
+dnl Check for flex then lex. Set the make variable LEX to the result.
+AC_PROG_LEX
+AC_MSG_RESULT(LEX is $LEX)
+
+
+USINGLEX="no"
+case $LEX in
+	*flex*)
+		USINGLEX="no"
+	;;
+	*lex*)
+		USINGLEX="yes"
+	;;
+esac
+
+dnl Look for whatever AC_PROG_LEX found and replace with complete path
+dnl Set LEX_PATH to the complete path for $LEX
+AC_PROGRAM_PATH(LEX_PATH, $LEX,$LEX)
+
+DOLLAR=$
+
+if test "$USINGLEX" = "yes" ; then
+
+SCANNER=LEX
+dnl This variable still needs to substituted with something
+FLEX=flex
+
+LC_ONEA="	$DOLLAR(LEX) $DOLLAR(LEXFLAGS) $DOLLAR< > $DOLLAR*.lex"
+#LC_ONEB="*.lex.c"
+LC_ONEB=".c"
+LC_TWOA="	$DOLLAR(UTIL)/uniquify_lex $DOLLAR*"
+LC_TWOB=" "
+
+LO_ONEA="	$DOLLAR(LEX) $DOLLAR(LEXFLAGS) $DOLLAR< > $DOLLAR*"
+LO_ONEB=".c"
+LO_TWOA="	$DOLLAR(UTIL)/uniquify_lex $DOLLAR*"
+LO_TWOB=" "
+LO_THREEA="	$DOLLAR(CC) $DOLLAR(CCFLAGS) -c $DOLLAR*"
+LO_THREEB=".c"
+
+LOP_ONEA="	$DOLLAR(LEX) $DOLLAR(LEXFLAGS) $DOLLAR< > $DOLLAR"
+LOP_ONEB="*.c"
+LOP_TWOA="	$DOLLAR(UTIL)/uniquify_lex $DOLLAR"
+LOP_TWOB="*"
+LOP_THREEA="	$DOLLAR(CC) $DOLLAR(CCFLAGS) $DOLLAR(PROFILE) -c $DOLLAR"
+LOP_THREEB="*.c -o $DOLLAR"
+LOP_THREEC="@"
+
+else
+
+SCANNER=FLEX
+FLEX=$LEX_PATH
+
+LC_ONEA="	$DOLLAR(FLEX) $DOLLAR(FLEXFLAGS) $DOLLAR< > $DOLLAR*.flex"
+#LC_ONEB="*.flex.c"
+LC_ONEB=".c"
+LC_TWOA="	$DOLLAR(UTIL)/uniquify_flex $DOLLAR*"
+LC_TWOB=" "
+
+LO_ONEA="	$DOLLAR(FLEX) $DOLLAR(FLEXFLAGS) $DOLLAR< > $DOLLAR*.flex"
+LO_ONEB=".c"
+LO_TWOA="	$DOLLAR(UTIL)/uniquify_flex $DOLLAR*"
+LO_TWOB=" "
+LO_THREEA="	$DOLLAR(CC) $DOLLAR(CCFLAGS) -c $DOLLAR*"
+LO_THREEB=".c"
+
+LOP_ONEA="	$DOLLAR(FLEX) $DOLLAR(FLEXFLAGS) $DOLLAR< > $DOLLAR"
+LOP_ONEB="*.c"
+LOP_TWOA="	$DOLLAR(UTIL)/uniquify_flex $DOLLAR"
+LOP_TWOB="*"
+LOP_THREEA="	$DOLLAR(CC) $DOLLAR(CCFLAGS) $DOLLAR(PROFILE) -c $DOLLAR"
+LOP_THREEB="*.c -o $DOLLAR"
+LOP_THREEC="@"
+fi
+
+
+AC_MSG_RESULT(Replacing $LEX with it's complete path $LEX_PATH)
+LEX=$LEX_PATH
+AC_SUBST(LEX)
+AC_SUBST(FLEX)
+AC_SUBST(SCANNER)
+
+AC_SUBST(LC_ONEA)
+AC_SUBST(LC_ONEB)
+AC_SUBST(LC_TWOA)
+AC_SUBST(LC_TWOB)
+
+AC_SUBST(LO_ONEA)
+AC_SUBST(LO_ONEB)
+AC_SUBST(LO_TWOA)
+AC_SUBST(LO_TWOB)
+AC_SUBST(LO_THREEA)
+AC_SUBST(LO_THREEB)
+
+AC_SUBST(LOP_ONEA)
+AC_SUBST(LOP_ONEB)
+AC_SUBST(LOP_TWOA)
+AC_SUBST(LOP_TWOB)
+AC_SUBST(LOP_THREEA)
+AC_SUBST(LOP_THREEB)
+AC_SUBST(LOP_THREEC)
+
+dnl Check for bison, byacc, yacc in that order. 
+dnl Set the make variable YACC to the result (it does it again below).
+AC_PROG_YACC
+AC_MSG_RESULT(YACC is $YACC)
+
+USINGYACC="yes"
+YACC_PATH=$YACC
+BISON="bison"
+case $YACC in
+	*yacc*)
+		USINGYACC="yes"
+
+dnl Look for whatever AC_PROG_YACC found and replace with complete path
+dnl Set YACC_PATH to the complete path for $YACC
+AC_PROGRAM_PATH(YACC_PATH, $YACC,$YACC)
+	;;
+	*bin*)
+		dnl assume (since it didn't find yacc or byacc) that it 
+		dnl is using bison with a path which means that
+		dnl configure didn't make it "bison -y"
+		USINGYACC="no"
+
+dnl Look for whatever AC_PROG_YACC found and replace with complete path
+dnl Set YACC_PATH to the complete path for $YACC
+AC_PROGRAM_PATH(YACC_PATH, $YACC,$YACC)
+BISON=$YACC_PATH
+	;;
+	*bison*)
+		USINGYACC="no"
+		dnl Assume that autoconf has replaced $YACC with bison -y
+		dnl Don't use bison -y in the AC_PROGRAM_PATH macro.
+
+dnl Look for whatever AC_PROG_YACC found and replace with complete path
+dnl Set YACC_PATH to the complete path for bison
+AC_PROGRAM_PATH(YACC_PATH, bison,$YACC)
+YACC_PATH="$YACC_PATH -y"
+BISON=$YACC_PATH
+	;;
+esac
+
+AC_MSG_RESULT(Replacing $YACC with it's complete path $YACC_PATH)
+YACC=$YACC_PATH
+dnl Set the make variable YACC to the $YACC.
+AC_SUBST(YACC)
+dnl Set the make variable BISON to the $BISON.
+AC_SUBST(BISON)
+
+if test "$USINGYACC" = "yes" ; then
+YC_ONEA="	$(YACC) $(YACCFLAGS) $<"
+YC_ONEB=" "
+YC_TWO="	$(UTIL)/yacctokens.sh"
+YC_THREEA="	mv y.tab.c $"
+YC_THREEB="*.tab.c"
+YC_FOURA="	mv y.tab.h $"
+YC_FOURB="*.tab.h"
+YC_FIVEA="	$(UTIL)/uniquify_yacc $"
+YC_FIVEB="*"
+YC_SIXA="	$(BISONTOKENS) $"
+YC_SIXB="*"
+YC_SEVENA="#"
+YC_SEVENB="#"
+YC_EIGHTA="#"
+YC_EIGHTB="#"
+
+YO_ONEA="	$(YACC) $(YACCFLAGS)  $<"
+YO_ONEB=" "
+YO_TWOA="	mv y.tab.c $"
+YO_TWOB="*.tab.c"
+YO_THREEA="	mv y.tab.h $"
+YO_THREEB="*.tab.h"
+YO_FOURA="	$(UTIL)/uniquify_yacc $"
+YO_FOURB="*"
+YO_FIVEA="	$(BISONTOKENS) $"
+YO_FIVEB="*"
+YO_SIXA="	$(CC) $(CCFLAGS) -c $"
+YO_SIXB="*.c"
+
+YOP_ONEA="	$(YACC) $(YACCFLAGS)  $<"
+YOP_ONEB=" "
+YOP_TWOA="	$(UTIL)/uniquify_yacc $"
+YOP_TWOB="*"
+YOP_THREEA="	$(BISONTOKENS) $"
+YOP_THREEB="*"
+YOP_FOURA="	$(CC) $(CCFLAGS) $(PROFILE) -c $"
+YOP_FOURB="*.c -o $"
+YOP_FOURC="@"
+
+else
+YC_ONEA="	$(YACC) $(YACCFLAGS) -o $"
+YC_ONEB="*.tab.c $<"
+YC_TWO="# sed barf's on slashes, so expand them out here"
+YC_THREEA="	cp $(UTIL)/bison.errors bison.sub"
+YC_THREEB=" "
+YC_FOURA="	cat $"
+YC_FOURB="*.tab.c | sed -e '/yyerror(\"parse error\");/r bison.sub' -e '/yyerror(\"parse error\");/d' > tmp.c"
+YC_FIVEA="	rm bison.sub"
+YC_FIVEB=" "
+YC_SIXA="	mv tmp.c $"
+YC_SIXB="*.tab.c"
+YC_SEVENA="	$(UTIL)/uniquify_yacc $"
+YC_SEVENB="*"
+YC_EIGHTA="	$(BISONTOKENS) $"
+YC_EIGHTB="*"
+
+YO_ONEA="	$(BISON) $(YACCFLAGS) -o $"
+YO_ONEB="*.tab.c $<"
+YO_TWOA="	$(UTIL)/uniquify_yacc $"
+YO_TWOB="*"
+YO_THREEA="	$(BISONTOKENS) $"
+YO_THREEB="*"
+YO_FOURA="	$(CC) $(CCFLAGS) -c $"
+YO_FOURB="*.c"
+YO_FIVEA="#"
+YO_FIVEB="#"
+YO_SIXA="#"
+YO_SIXB="#"
+
+YOP_ONEA="	$(BISON) $(YACCFLAGS) -o $"
+YOP_ONEB="*.c $<"
+YOP_TWOA="	$(UTIL)/uniquify_yacc $"
+YOP_TWOB="*"
+YOP_THREEA="	$(BISONTOKENS) $"
+YOP_THREEB="*"
+YOP_FOURA="	$(CC) $(CCFLAGS) $(PROFILE) -c $"
+YOP_FOURB="*.c -o $"
+YOP_FOURC="@"
+
+fi
+AC_SUBST(YC_ONEA)
+AC_SUBST(YC_ONEB)
+AC_SUBST(YC_TWO)
+AC_SUBST(YC_THREEA)
+AC_SUBST(YC_THREEB)
+AC_SUBST(YC_FOURA)
+AC_SUBST(YC_FOURB)
+AC_SUBST(YC_FIVEA)
+AC_SUBST(YC_FIVEB)
+AC_SUBST(YC_SIXA)
+AC_SUBST(YC_SIXB)
+AC_SUBST(YC_SEVENA)
+AC_SUBST(YC_SEVENB)
+AC_SUBST(YC_EIGHTA)
+AC_SUBST(YC_EIGHTB)
+
+AC_SUBST(YO_ONEA)
+AC_SUBST(YO_ONEB)
+AC_SUBST(YO_TWOA)
+AC_SUBST(YO_TWOB)
+AC_SUBST(YO_THREEA)
+AC_SUBST(YO_THREEB)
+AC_SUBST(YO_FOURA)
+AC_SUBST(YO_FOURB)
+AC_SUBST(YO_FIVEA)
+AC_SUBST(YO_FIVEB)
+AC_SUBST(YO_SIXA)
+AC_SUBST(YO_SIXB)
+
+AC_SUBST(YOP_ONEA)
+AC_SUBST(YOP_ONEB)
+AC_SUBST(YOP_TWOA)
+AC_SUBST(YOP_TWOB)
+AC_SUBST(YOP_THREEA)
+AC_SUBST(YOP_THREEB)
+AC_SUBST(YOP_FOURA)
+AC_SUBST(YOP_FOURB)
+AC_SUBST(YOP_FOURC)
+
+SCL_DEFS=" "
+dnl SCL_DEFS="-D_SUNCPLUSPLUS"
+dnl AC_MSG_RESULT(SCL_DEFS is $SCL_DEFS)
+dnl SCL_DEFS="${SCL_DEFS} -D_HI_"
+dnl AC_MSG_RESULT(SCL_DEFS is $SCL_DEFS)
+AC_SUBST(SCL_DEFS)
+
+dnl This will replace the following variables with defaults if 
+dnl --with-iv or --without-iv is not used.
+IV_ROOT_DIR=" "
+MAKE_IVFASD=" "
+MAKE_PROBEUI=" "
+EXECUTABLE_MKPROBE=" "
+AC_SUBST(IV_ROOT_DIR)
+AC_SUBST(MAKE_IVFASD)
+AC_SUBST(MAKE_PROBEUI)
+AC_SUBST(EXECUTABLE_MKPROBE)
+
+AC_ARG_WITH(iv, [  --with-iv               - root directory for InterViews], 
+[
+if test "$withval" = "yes" || test "$withval" = "no" ; then
+AC_MSG_WARN("No InterViews root dir specified with --with-iv argument... specify the IV root directory using --with-iv=specify-iv-root-directory-here")
+else
+AC_MSG_RESULT("Specified root directory for InterViews: $withval")
+IV_ROOT_DIR=$withval 
+MAKE_IVFASD="make -k ivfasd"
+MAKE_PROBEUI="make -k probe-ui"
+MKPROBE_OPTIONS="-i"
+dnl EXECUTABLE_MKPROBE="chmod 775 mkProbe.$ARCH_ROOT"
+EXECUTABLE_MKPROBE="chmod 775 mkProbe.current"
+AC_SUBST(IV_ROOT_DIR)
+AC_SUBST(MAKE_IVFASD)
+AC_SUBST(MAKE_PROBEUI)
+AC_SUBST(EXECUTABLE_MKPROBE)
+fi
+], 
+[
+AC_MSG_WARN("No InterViews info specified... to use InterViews specify the IV root directory using --with-iv=specify-iv-root-directory-here")
+])
+
+dnl This will replace the following variables with defaults if 
+dnl --with-iv-includes or --without-iv-includes is not used.
+IV_INCLUDE_DIR="$(IVROOT)/installed/include"
+AC_SUBST(IV_INCLUDE_DIR) 
+
+AC_ARG_WITH(iv-includes, [  --with-iv-includes      - directory for InterViews includes], 
+[
+if test "$withval" = "yes" || test "$withval" = "no" ; then
+AC_MSG_WARN("No InterViews include dir specified with --with-iv-includes... using the default include dir")
+dnl IV_INCLUDE_DIR="$(IVROOT)/installed/include"
+dnl AC_SUBST(IV_INCLUDE_DIR) 
+else
+AC_MSG_RESULT("Specified include directory for InterViews: $withval")
+IV_INCLUDE_DIR=$withval 
+AC_SUBST(IV_INCLUDE_DIR) 
+fi
+], 
+dnl action if called without either option --with-iv-includes or --without-iv-includes
+)
+
+dnl This will replace the following variables with defaults if 
+dnl --with-iv-lib or --without-iv-lib is not used.
+INTERVIEWS_LIB_DIR="$(IVROOT)/installed/lib/${SUN_ARCH}"
+AC_SUBST(INTERVIEWS_LIB_DIR) 
+
+AC_ARG_WITH(iv-lib, [  --with-iv-lib           - directory for InterViews library], 
+[
+if test "$withval" = "yes" || test "$withval" = "no" ; then
+AC_MSG_WARN("No InterViews lib dir specified with --with-iv-lib... using the default dir")
+else
+AC_MSG_RESULT("Specified lib directory for InterViews: $withval")
+INTERVIEWS_LIB_DIR=$withval
+AC_SUBST(INTERVIEWS_LIB_DIR) 
+fi
+], 
+dnl action if called without either option --with-iv-lib or --without-iv-lib
+)
+
+AC_SUBST(MKPROBE_OPTIONS)
+
+dnl This will replace the following variables with defaults if 
+dnl --with-ostore or --without-ostore is not used.
+
+OS_FLAGS=" "
+AC_SUBST(OS_FLAGS)
+
+OS_ROOTDIR=" "
+OS_INC_DIR=" "
+LIBOSC_LD=" "
+LIBOSTHR_LD=" "
+OS_LIB_DIR=" "
+OS_LIBS=" "
+
+AC_SUBST(OS_ROOTDIR)
+AC_SUBST(OS_INC_DIR)
+AC_SUBST(LIBOSC_LD)
+AC_SUBST(LIBOSTHR_LD)
+AC_SUBST(OS_LIB_DIR)
+AC_SUBST(OS_LIBS)
+
+AC_ARG_WITH(ostore, [  --with-ostore           - root directory for ObjectStore], 
+[
+if test "$withval" = "yes" || test "$withval" = "no" ; then
+AC_MSG_WARN("No ObjectStore root dir specified with --with-ostore... ")
+else
+AC_MSG_RESULT("Specified root directory for ObjectStore: $withval")
+
+OS_FLAGS="$(TFLAGS) -D__OSTORE__"
+AC_SUBST(OS_FLAGS)
+
+OS_ROOTDIR=$withval
+OS_INC_DIR="-I$(OS_ROOTDIR)/include"
+LIBOSC_LD=" "
+LIBOSTHR_LD="-losthr"
+OS_LIB_DIR="-L$(OS_ROOTDIR)/lib"
+OS_LIBS="-loscol -los $(LIBOSTHR_LD) $(LIBOSC_LD)"
+
+AC_SUBST(OS_ROOTDIR)
+AC_SUBST(OS_INC_DIR)
+AC_SUBST(LIBOSC_LD)
+AC_SUBST(LIBOSTHR_LD)
+AC_SUBST(OS_LIB_DIR)
+AC_SUBST(OS_LIBS)
+
+fi
+], 
+dnl action if called without either option --with-ostore or --without-ostore
+)
+
+AC_ARG_WITH(ostore-includes, [  --with-ostore-includes  - directory for ObjectStore includes], 
+[
+if test "$withval" = "yes" || test "$withval" = "no" ; then
+AC_MSG_WARN("No ObjectStore include dir specified with --with-ostore-includes... ")
+else
+AC_MSG_RESULT("Specified include directory for ObjectStore: $withval")
+
+OS_INC_DIR="-I$withval"
+AC_SUBST(OS_INC_DIR)
+
+fi
+], 
+dnl action if called without either option --with-ostore-includes or --without-ostore-includes
+)
+
+AC_ARG_WITH(ostore-lib, [  --with-ostore-lib       - lib directory for ObjectStore], 
+[
+if test "$withval" = "yes" || test "$withval" = "no" ; then
+AC_MSG_WARN("No ObjectStore lib dir specified with --with-ostore-lib... ")
+else
+AC_MSG_RESULT("Specified lib directory for ObjectStore: $withval")
+
+OS_LIB_DIR="-L$withval"
+
+AC_SUBST(OS_LIB_DIR)
+
+fi
+], 
+dnl action if called without either option --with-ostore-lib or --without-ostore-lib
+)
+
+CP_SCLPREFIXES="cp sclprefixes.h.noOrbixOstore sclprefixes.h"
+AC_SUBST(CP_SCLPREFIXES)
+
+MAKE_SDAIORBIX=" "
+AC_SUBST(MAKE_SDAIORBIX)
+
+ORBIX_INCS=" "
+ORBIX_FLAGS=" "
+ORBIX_MK_FILE=" "
+
+AC_SUBST(ORBIX_INCS)
+AC_SUBST(ORBIX_FLAGS)
+AC_SUBST(ORBIX_MK_FILE)
+
+AC_ARG_WITH(orbixmk, [  --with-orbixmk          - Orbix .mk make rules/macros file], 
+[
+if test "$withval" = "yes" || test "$withval" = "no" ; then
+AC_MSG_WARN("No Orbix .mk file specified with --with-orbixmk... ")
+
+if test $NIST = "yes" && test "$withval" = "yes" ; then
+AC_MSG_RESULT("Assigning NIST defaults for orbix options")
+CP_SCLPREFIXES="cp sclprefixes.h.OrbixOstore sclprefixes.h"
+AC_SUBST(CP_SCLPREFIXES)
+MAKE_SDAIORBIX="make -k sdaiOrbix"
+AC_SUBST(MAKE_SDAIORBIX)
+ORBIX_FLAGS="-DPART26 -DNO_BOOLS_LOGS -D__CORBA__ -DNO_P26_NAMESPACE"
+ORBIX_INCS="-I$(SCL_IDL_INCDIR) -I$(ORBIX_INCDIR)"
+ORBIX_MK_FILE="include /depot/orbix-2.0/arch.sunos5/corba2/demos/orbixmtsol2s4.mk"
+AC_SUBST(ORBIX_INCS)
+AC_SUBST(ORBIX_FLAGS)
+AC_SUBST(ORBIX_MK_FILE)
+fi
+
+else
+AC_MSG_RESULT("Specified Orbix .mk file to be included in make_rules: $withval")
+
+CP_SCLPREFIXES="cp sclprefixes.h.OrbixOstore sclprefixes.h"
+AC_SUBST(CP_SCLPREFIXES)
+
+MAKE_SDAIORBIX="make -k sdaiOrbix"
+AC_SUBST(MAKE_SDAIORBIX)
+
+ORBIX_MK_FILE="include $withval"
+
+ORBIX_FLAGS="-DPART26 -DNO_BOOLS_LOGS -D__CORBA__ -DNO_P26_NAMESPACE"
+ORBIX_INCS="-I$(SCL_IDL_INCDIR) -I$(ORBIX_INCDIR)"
+
+AC_SUBST(ORBIX_INCS)
+AC_SUBST(ORBIX_FLAGS)
+AC_SUBST(ORBIX_MK_FILE)
+
+fi
+], 
+dnl action if called without either option --with-orbixmk or --without-orbixmk
+)
+
+
+AC_ARG_WITH(logging, [  --with-logging          - turn on SCL logging], 
+[
+AC_MSG_RESULT("Turn on SCL logging: $withval")
+if test "$withval" = "yes" ; then
+SCL_DEFS="$SCL_DEFS -DSCL_LOGGING"
+AC_SUBST(SCL_DEFS)
+
+fi
+], 
+dnl action if called without either option --with-logging or --without-logging
+)
+
+echo ARCH_ROOT is: $ARCH_ROOT
+
+AC_CONFIG_HEADER(config/scl_cf.h)
+
+AC_OUTPUT(config/sclbuild.current config/mkProbe.current config/setup-arch.current arch_template/make_rules arch_template/testbuild/schema-loc arch_template/ofiles/sdaiOrbix/corbaIncludes.h arch_template/Probes/template-schema/Makefile.personal src/express/mkrules , [chmod +x config/setup-arch.current ; chmod +x config/sclbuild.current ; chmod +x config/mkProbe.current ; config/setup-arch.current ; config/sclbuild.current])
+
+dnl if test $SUN_ARCH = sun4; then
+dnl  AC_MSG_RESULT(sun4)
+dnl AC_OUTPUT(arch_template/make_rules.sun2 ,cd arch_template; rm -f make_rules ; ln -s make_rules.sun2 make_rules)
+dnl else
+dnl  AC_MSG_RESULT(sun5)
+dnl AC_OUTPUT(arch_template/make_rules.sun ,cd arch_template ; rm -f make_rules ; ln -s make_rules.sun make_rules)
+dnl fi
+
+dnl ///////////////////////////////////////////////////////////////
+
+dnl ACC=cc
+dnl AC_LANG_C
+dnl AC_LANG_CPLUSPLUS

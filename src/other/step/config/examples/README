@@ -1,0 +1,10 @@
+
+config/examples/README
+
+To run one of these you must:
+
+1. edit one of these so it makes sense for your site.
+2. cd to the top level SCL directory.
+3. source it like this:
+ source config/examples/build.gnu.sunos 
+

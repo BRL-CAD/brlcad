@@ -1,0 +1,34 @@
+##################################################################
+# schema_loc   --  defines location of schema libraries & includes
+# change these macros to reflect your environment
+
+# ************  NOTE **********
+# You need to change the values of the following macros to work with your
+# environment.  See the README for details.  If you build your class
+# libraries with 'mkProbe -i ...', you probably just need to change
+# PDES_ROOT to reflect your structure.  Try to keep everything defined
+# in terms of SCHEMA_NAME... that way you can build for different
+# class libraries on the make command line witha minimum of fuss.
+
+#
+#  change PDES_ROOT to the location that SCL is installed
+PDES_ROOT 	= /proj/pdevel/ds/scl3-1
+
+#  change ARCH_ROOT to keep different compilers separate
+#ARCH_ROOT	= $(PDES_ROOT)/arch$(TARGET_ARCH)
+ARCH_ROOT	= $(PDES_ROOT)/arch-gnu-sunos-40
+
+#  change MAKE_RULES to use different compilers
+MAKE_RULES 	= $(ARCH_ROOT)/make_rules
+include $(MAKE_RULES)
+
+#	Locations for the schema class library and header files.  You
+#	need to generate and make the schema supplied with the release
+#	from $(PDES_ROOT)/data/example/example.exp
+#
+
+SCHEMA_NAME 	= example
+SCHEMA_DIR 	= $(PDES_ROOT)/src/clSchemas/$(SCHEMA_NAME)
+SCHEMA_LIB_DIR 	= $(ARCH_ROOT)/Probes/$(SCHEMA_NAME)
+LIBSCHEMA 	= -L$(SCHEMA_LIB_DIR) -lC$(SCHEMA_NAME)
+

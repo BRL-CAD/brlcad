@@ -1,0 +1,322 @@
+# $Id: mkrules.in,v 1.2 1997/10/29 19:59:02 sauderd Exp $
+#
+# Set up default rules and location macros for NIST PDES Toolkit Makefiles
+#
+# This software was developed by U.S. Government employees as part of
+# their official duties, and is not subject to copyright.
+#
+
+# The C compiler to use
+#CC 	= $(SUNROOT)/acc
+CC 	= /depot/gnu/arch/bin/gcc
+
+# The C++ compiler to use
+CXX 	= /depot/gnu/arch/bin/c++
+
+GNUROOT = /depot/cygnus/arch
+
+#cc 	= $(GNUROOT)/bin/gcc
+#CC 	= $(GNUROOT)/bin/g++
+CPLUS_INC_DIR 	= $(GNUROOT)/lib/g++-include	
+CPLUS_LIB_DIR 	= $(GNUROOT)/lib
+CPLUS_LIBS 	= -lg++ -lm
+#LDFLAGS		= -L$(CPLUS_LIB_DIR) $(CPLUS_LIBS)
+# Note with the cygnus 95q4 release of g++ you cannot explicitly
+# state your c++ include path.  It confuses the compiler and several
+# of the prototypes for standard str* and mem* function will not be 
+# found.  The compiler knows the include path implicitly.
+CPLUSINCLUDES 	= 
+# You still need the includes for makedepend
+#CPLUS_DEFS 	= -D__GNUG__ -I$(CPLUS_INC_DIR) \
+#                  -I$(GNUROOT)/95q4/sparc-sun-sunos4.1.4/include
+
+################################
+# User-definable flags to CC:
+################################
+#CPU = SUN4
+#USER_CFLAGS = -g -D$(CPU)
+
+# Root of PDES software tree
+PDES = /proj/pdevel/scl3-1
+# try this for the PC (titanic:/proj is PC-NFS mounted on P: at NIST)
+# PDES = P:/pdevel/
+
+# Release level
+BPR = BPR3.1
+
+#Directory for special binaries
+UTIL = /proj/pdevel/scl3-1/bin
+
+# Include path for libmisc headers
+# INCLUDE = $(PDES)include/libmisc/
+
+# Installation path for binaries
+#PDESBINDIR = $(PDES)arch/$(BPR)/bin/
+PDESBINDIR = $(PDES)/arch-gnu-solaris/bin/
+
+# Miscellaneous library
+LIBDIR = $(PDES)/arch-gnu-solaris/lib/
+#LIBDIR = $(PDES)src/express/
+#LOCAL_LIB = -lmisc 
+
+# Directory for PDES libraries
+PDESLIBDIR = $(PDES)/arch-gnu-solaris/lib/
+
+# Include path for Express WF and FedEx
+#EXPINCDIR = $(PDES)/include/express/
+
+# delete following defn for PC
+EXPINCDIR = $(PDES)/src/express/
+
+# Include path for EXPRESS Pretty Printer
+EXPPPINCDIR = $(PDES)/src/exppp/ 
+
+# Include path and library for P21 WF
+#P21INCDIR = $(PDES)include/p21/
+P21INCDIR = $(PDES)/src/p21/
+
+# Bison token extractor
+BISONTOKENS = $(UTIL)/bisontokens.sh
+
+################################
+# Load sequences.  These are site-independent.
+################################
+
+# The libraries
+
+EXPLIB = -lexpress
+P21LIB = -lp21
+
+# link with these libraries for express wf and fedex
+#EXPRESS_LIBS = -L$(LIBDIR) $(EXPLIB) $(LOCAL_LIB) -lbison -ll 
+EXPRESS_LIBS = -L$(LIBDIR) $(EXPLIB) $(LOCAL_LIB) -ll 
+
+# link with these libraries for p21 wf
+#P21_LIBS = -L$(LIBDIR) -L$(PDESLIBDIR) $(P21LIB) $(EXPLIB) $(LOCAL_LIB) -lbison -ll 
+P21_LIBS = -L$(LIBDIR) -L$(PDESLIBDIR) $(P21LIB) $(EXPLIB) $(LOCAL_LIB) -ll 
+
+# compile with these cc flags for express wf and fedex
+EXPRESS_CFLAGS = -DHAVE_CONFIG_H -I. -I$(EXPINCDIR) -I/proj/pdevel/scl3-1/arch-gnu-solaris
+
+# compile with these cc flags for p21 wf
+P21_CFLAGS = -I. -I$(P21INCDIR) $(EXPRESS_CFLAGS) 
+
+################################
+# CC flags for Express and STEP
+################################
+#COND_DEFS = -D__STDC__
+
+CFLAGS = $(EXPRESS_CFLAGS) -I$(EXPPPINCDIR) $(USER_CFLAGS) 
+
+################################
+# Don't touch these if you can avoid it!
+################################
+
+LD_LIBS = $(LIBS) $(LOCAL_LIB) 
+LD_FLAGS = -L$(LIBDIR) $(LD_LIBS) $(LDFLAGS) 
+
+################
+# The parser generator
+################
+
+YACC=/depot/gnu/arch/bin/bison -y
+#YACC = yacc
+BISON = /depot/gnu/arch/bin/bison -y
+YACCFLAGS = -d -v $(YFLAGS)
+
+################
+# The two lexical analyzer generators
+################
+
+#LEX = /usr/bin/lex
+#FLEX = /usr/local/bin/gnu/flex
+
+LEX=/depot/pub/arch.sunos5.6/bin/flex
+FLEX = /depot/pub/arch.sunos5.6/bin/flex
+
+FLEXFLAGS = -t $(LOCAL_FLEXFLAGS)
+LEXFLAGS = -t $(LOCAL_LEXFLAGS)
+
+CFLAGS_I = 
+
+CCFLAGS = $(CFLAGS_I) $(CFLAGS) 
+
+PROFILE = -pg 
+
+################
+# Miscellaneous tools
+################
+
+AR = ar
+GREP = grep
+# change RANLIB to "echo" if your system doesn't have ranlib
+RANLIB = ranlib
+
+################
+# Empty and redefine suffixes table
+################
+
+.SUFFIXES:
+.SUFFIXES: . .o .o_p .c .C .y .l .h .O .S 
+
+.PRECIOUS: .a .h 
+
+################
+# Basic C compilation and linking
+################
+
+.c:
+	$(CC) $(CCFLAGS) -o $@ $< $(LD_FLAGS) 
+.o:
+	$(CC) $(CCFLAGS) -o $@ $< $(LD_FLAGS) 
+.c.o:
+	/bin/rm -f $*.o
+	$(CC) $(CCFLAGS) -c $*.c
+
+.o_p:
+	$(CC) $(CCFLAGS) $(PROFILE) -o $@ $< $(LD_FLAGS) 
+.c.o_p:
+	$(CC) $(CCFLAGS) $(PROFILE) -c $*.c -o $@
+
+################
+# Rules for compiling .y files with /depot/gnu/arch/bin/bison -y
+################
+
+.y.c:
+	$(YACC) $(YACCFLAGS) -o $*.tab.c $<
+# sed barf's on slashes, so expand them out here
+	cp $(UTIL)/bison.errors bison.sub 
+	cat $*.tab.c | sed -e '/yyerror("parse error");/r bison.sub' -e '/yyerror("parse error");/d' > tmp.c
+	rm bison.sub 
+	mv tmp.c $*.tab.c
+	$(UTIL)/uniquify_yacc $*
+	$(BISONTOKENS) $*
+
+.y.o:
+	$(BISON) $(YACCFLAGS) -o $*.tab.c $<
+	$(UTIL)/uniquify_yacc $*
+	$(BISONTOKENS) $*
+	$(CC) $(CCFLAGS) -c $*.c
+##
+##
+
+.y.o_p:   
+	$(BISON) $(YACCFLAGS) -o $*.c $<
+	$(UTIL)/uniquify_yacc $*
+	$(BISONTOKENS) $*
+	$(CC) $(CCFLAGS) $(PROFILE) -c $*.c -o $@
+
+################
+# Rules for compiling .y files with Bison
+################
+
+#.y.c:
+#	$(BISON) $(YACCFLAGS) -o $*.tab.c $<
+## sed barf's on slashes, so expand them out here
+#	cp $(UTIL)/bison.errors bison.sub
+#	cat $*.tab.c | sed -e '/yyerror("parse error");/r bison.sub' -e '/yyerror("parse error");/d' > tmp.c
+#	rm bison.sub
+#	mv tmp.c $*.tab.c
+#	$(UTIL)/uniquify_yacc $*
+#	$(BISONTOKENS) $*
+#.y.o:
+#	$(BISON) $(YACCFLAGS) -o $*.tab.c $<
+#	$(UTIL)/uniquify_yacc $*
+#	$(BISONTOKENS) $*
+#	$(CC) $(CCFLAGS) -c $*.c
+#.y.o_p:   
+#	$(BISON) $(YACCFLAGS) -o $*.c $<
+#	$(UTIL)/uniquify_yacc $*
+#	$(BISONTOKENS) $*
+#	$(CC) $(CCFLAGS) $(PROFILE) -c $*.c -o $@
+
+
+################
+# Rules for compiling .y files with yacc
+################
+
+#.y.c:
+#	$(YACC) $(YACCFLAGS) $<
+#	$(UTIL)/yacctokens.sh
+#	mv y.tab.c $*.tab.c
+#	mv y.tab.h $*.tab.h
+#	$(UTIL)/uniquify_yacc $*
+#	$(BISONTOKENS) $*
+#.y.o:
+#	$(YACC) $(YACCFLAGS)  $<
+#	mv y.tab.c $*.tab.c
+#	mv y.tab.h $*.tab.h
+#	$(UTIL)/uniquify_yacc $*
+#	$(BISONTOKENS) $*
+#	$(CC) $(CCFLAGS) -c $*.c
+#.y.o_p:   
+#	$(YACC) $(YACCFLAGS)  $<
+#	$(UTIL)/uniquify_yacc $*
+#	$(BISONTOKENS) $*
+#	$(CC) $(CCFLAGS) $(PROFILE) -c $*.c -o $@
+
+################
+# Rules for compiling .l files with /depot/pub/arch.sunos5.6/bin/flex
+################
+
+SCANNER=FLEX
+
+.l.c:
+	$(FLEX) $(FLEXFLAGS) $< > $*.flex.c
+	$(UTIL)/uniquify_flex $* 
+
+.l.o:
+	$(FLEX) $(FLEXFLAGS) $< > $*.flex.c
+	$(UTIL)/uniquify_flex $* 
+	$(CC) $(CCFLAGS) -c $*.c
+
+.l.o_p:
+	$(FLEX) $(FLEXFLAGS) $< > $*.c
+	$(UTIL)/uniquify_flex $*
+	$(CC) $(CCFLAGS) $(PROFILE) -c $*.c -o $@
+
+################
+# Rules for compiling .l files with Flex
+################
+
+#SCANNER=FLEX
+#
+#.l.c:
+#	$(FLEX) $(FLEXFLAGS) $< > $*.flex.c
+#	$(UTIL)/uniquify_flex $*
+#.l.o:
+#	$(FLEX) $(FLEXFLAGS) $< > $*.flex.c
+#	$(UTIL)/uniquify_flex $*
+#	$(CC) $(CCFLAGS) -c $*.c
+#.l.o_p:
+#	$(FLEX) $(FLEXFLAGS) $< > $*.c
+#	$(UTIL)/uniquify_flex $*
+#	$(CC) $(CCFLAGS) $(PROFILE) -c $*.c -o $@
+
+################
+# Rules for compiling .l files with Lex
+################
+
+#SCANNER=LEX
+
+#.l.c:
+#	$(LEX) $(LEXFLAGS) $< > $*.lex.c
+#	$(UTIL)/uniquify_lex $*
+#.l.o:
+#	$(LEX) $(LEXFLAGS) $< > $*.c
+#	$(UTIL)/uniquify_lex $*
+#	$(CC) $(CCFLAGS) -c $*.c
+#.l.o_p:
+#	$(LEX) $(LEXFLAGS) $< > $*.c
+#	$(UTIL)/uniquify_lex $*
+#	$(CC) $(CCFLAGS) $(PROFILE) -c $*.c -o $@
+
+################
+# Rules for loading files into Saber-C
+################
+
+.c.S:
+	#load $<
+.o.O:
+	#load $<
+

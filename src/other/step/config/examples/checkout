@@ -1,0 +1,8 @@
+co build.gnu.solaris
+co build.gnu.sunos
+co build.sun.sunos
+co build.sun.solaris
+co build.sun.solaris.ostore
+co build.sun.solaris.ostore.orbix
+co build.centerline.sunos
+co build.sun4-2.sunos

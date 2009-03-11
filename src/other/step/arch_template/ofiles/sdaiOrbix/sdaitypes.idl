@@ -1,0 +1,116 @@
+#ifndef sdaitypes_idl
+#define sdaitypes_idl
+
+      //
+      // SDAI Simple types
+      //
+typedef long   bound_instance_value;
+typedef any    Error_base;
+typedef string DAObjectID;
+typedef string Time_stamp;
+typedef string Schema_name;
+typedef string Entity_name;
+
+enum Bool 
+{
+	BFalse,
+	BTrue,
+	BUnset
+};
+
+enum Logical 
+{
+	LFalse,
+	LTrue,
+	LUnset,
+	LUnknown
+};
+
+enum Number_discriminant 
+{
+	Number_discriminant__long, 
+	Number_discriminant__double 
+};
+
+union Number switch ( Number_discriminant ) 
+{
+	case Number_discriminant__long : long c1;
+	case Number_discriminant__double : double c2;
+};
+
+enum Access_type
+{
+	sdaiRO,
+	sdaiRW
+};
+
+enum Commit_mode
+{
+	sdaiCOMMIT,
+	sdaiABORT
+};
+
+    // Error_id, enumerators taken from ISO/DIS 10303-22:1996(E), 14 June 1996.
+enum Error_id 
+{
+    sdaiNO_ERR,     // No error 
+    sdaiSS_OPN,     // Session open
+    sdaiSS_NAVL,    // Session not available
+    sdaiSS_NOPN,    // Session is not open
+    sdaiRP_NEXS,    // Repository does not exist 
+    sdaiRP_NAVL,    // Repository not available 
+    sdaiRP_OPN,     // Repository already opened 
+    sdaiRP_NOPN,    // Repository is not open 
+    sdaiTR_EAB,     // Transaction ended abnormally so it no longer exists
+    sdaiTR_EXS,     // Transaction exists
+    sdaiTR_NAVL,    // Transaction not available
+    sdaiTR_RW,      // Transaction read-write
+    sdaiTR_NRW,     // Transaction not read-write
+    sdaiTR_NEXS,    // Transaction does not exist
+    sdaiMO_NDEQ,    // SDAI-model not domain-equivalent 
+    sdaiMO_NEXS,    // SDAI-model does not exist 
+    sdaiMO_NVLD,    // SDAI-model invalid
+    sdaiMO_DUP,     // SDAI-model duplicate
+    sdaiMX_NRW,     // SDAI-model access not read-write
+    sdaiMX_NDEF,    // SDAI-model access is not defined
+    sdaiMX_RW,      // SDAI-model access read-write
+    sdaiMX_RO,      // SDAI-model access read-only
+    sdaiSD_NDEF,    // Schema definition is not defined
+    sdaiED_NDEF,    // Entity definition not defined
+    sdaiED_NDEQ,    // Entity definition not domain equivalent
+    sdaiED_NVLD,    // Entity definition invalid
+    sdaiRU_NDEF,    // Rule not defined 
+    sdaiEX_NSUP,    // Expression evaluation not supported 
+    sdaiAT_NVLD,    // Attribute invalid
+    sdaiAT_NDEF,    // Attribute not defined
+    sdaiSI_DUP,     // Schema instance duplicate
+    sdaiSI_NEXS,    // Schema instance does not exist
+    sdaiEI_NEXS,    // Entity instance does not exist 
+    sdaiEI_NAVL,    // Entity instance not available
+    sdaiEI_NVLD,    // Entity instance invalid
+    sdaiEI_NEXP,    // Entity instance not exported
+    sdaiSC_NEXS,    // Scope does not exist 
+    sdaiSC_EXS,     // Scope exists 
+    sdaiAI_NEXS,    // Aggregate instance does not exist 
+    sdaiAI_NVLD,    // Aggregate instance invalid 
+    sdaiAI_NSET,    // Aggregate instance is empty 
+    sdaiVA_NVLD,    // Value invalid
+    sdaiVA_NEXS,    // Value does not exist
+    sdaiVA_NSET,    // Value not set 
+    sdaiVT_NVLD,    // Value type invalid
+    sdaiIR_NEXS,    // Iterator does not exist 
+    sdaiIR_NSET,    // Current member is not defined
+    sdaiIX_NVLD,    // Index invalid
+    sdaiER_NSET,    // Event recording not set
+    sdaiOP_NVLD,    // Operator invalid 
+    sdaiFN_NAVL,    // Function not available
+    sdaiSY_ERR      // Underlying system error 
+};
+
+  exception SDAIException
+  {
+    unsigned long minor;
+  };
+
+
+#endif

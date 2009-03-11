@@ -278,6 +278,9 @@ BC_ARG_ENABLE([build_urt], [urt-build], [Build the included Utah Raster Toolkit]
 # force enable/disable building of openNURBS
 BC_ARG_ENABLE([build_opennurbs], [opennurbs-build], [Build the included openNURBS library], [auto])
 
+# force enable/disable building of NIST STEP Class Libraries 
+BC_ARG_ENABLE([build_step], [step-build], [Build the included STEP Class Libraries], [yes])
+
 # force enable/disable building of termlib
 BC_ARG_ENABLE([build_termlib], [termlib-build], [Build the included termlib library], [auto])
 
@@ -449,6 +452,12 @@ BC_ARG_ALIAS([build_opennurbs], [libopennurbs])
 BC_ARG_ALIAS([build_opennurbs], [libopennurbs-build])
 BC_ARG_ALIAS([build_opennurbs], [open-nurbs])
 BC_ARG_ALIAS([build_opennurbs], [open-nurbs-build])
+
+# aliases to force building NIST STEP Class Libraries (help uses step-build)
+BC_ARG_ALIAS([build_step], [step])
+BC_ARG_ALIAS([build_step], [steplibs])
+BC_ARG_ALIAS([build_step], [libstep-build])
+BC_ARG_ALIAS([build_step], [libstep])
 
 # aliases to force building tcl (help uses tcl-build)
 BC_ARG_ALIAS([build_tcl], [tcl])
@@ -633,6 +642,9 @@ if test "x$set_everything" != "x" ; then
 	if test "x$bc_build_opennurbs_set" = "xno" ; then
 		bc_build_opennurbs="$set_everything"
 	fi
+	if test "x$bc_build_step" = "xno" ; then
+		bc_build_step="$set_everything"
+	fi
 	if test "x$bc_build_termlib_set" = "xno" ; then
 		bc_build_termlib="$set_everything"
 	fi
@@ -759,6 +771,9 @@ AC_MSG_RESULT($bc_build_urt)
 
 AC_MSG_CHECKING(whether to build the openNURBS library)
 AC_MSG_RESULT($bc_build_opennurbs)
+
+AC_MSG_CHECKING(whether to build the NIST Step Class libraries)
+AC_MSG_RESULT($bc_build_step)
 
 AC_MSG_CHECKING(whether to build the Tcl library)
 AC_MSG_RESULT($bc_build_tcl)
@@ -2447,6 +2462,22 @@ fi
 AC_SUBST(OPENNURBS)
 AC_SUBST(OPENNURBS_CPPFLAGS)
 
+dnl *** NIST STEP Class Libraries ***
+dnl figure out whether we need to build NIST STEP Class Libraries
+STEP_VERSION="3.2.0"
+AC_SUBST(STEP_VERSION)
+AC_MSG_CHECKING(whether to build NIST Step Class Libraries)
+if test ! "x$bc_build_step" = "xno" ; then
+    build_brlcad_step=yes
+    AC_MSG_RESULT(yes)
+else
+    build_brlcad_step=no
+    STEP=""
+    AC_MSG_RESULT(no)
+fi
+AC_SUBST(STEP)
+
+
 
 dnl *** Tcl ***
 dnl See if libtcl seems to work
@@ -3483,6 +3514,7 @@ AM_CONDITIONAL(BUILD_REGEX, [test "x$build_brlcad_regex" = "xyes"])
 AM_CONDITIONAL(BUILD_ZLIB, [test "x$build_brlcad_zlib" = "xyes"])
 AM_CONDITIONAL(BUILD_URT, [test "x$build_brlcad_urt" = "xyes"])
 AM_CONDITIONAL(BUILD_OPENNURBS, [test "x$build_brlcad_opennurbs" = "xyes"])
+AM_CONDITIONAL(BUILD_STEP, [test "x$build_brlcad_step" = "xyes"])
 AM_CONDITIONAL(BUILD_TERMLIB, [test "x$build_brlcad_termlib" = "xyes"])
 AM_CONDITIONAL(BUILD_TNT, [test "x$build_brlcad_tnt" = "xyes"])
 AM_CONDITIONAL(BUILD_JOVE, [test "x$build_brlcad_jove" = "xyes"])
@@ -3689,6 +3721,11 @@ AC_SUBST(TK_PATH)
 
 dnl configure enigma
 AC_CONFIG_SUBDIRS([misc/enigma])
+
+dnl configure step
+if test "x$bc_build_step" = "xyes" ; then
+    AC_CONFIG_SUBDIRS([src/other/step])
+fi
 
 dnl configure tkhtml3
 if test "x$bc_build_tkhtml3" = "xyes" ; then
@@ -4081,6 +4118,7 @@ AC_MSG_RESULT([Build termlib ........................: $build_brlcad_termlib])
 AC_MSG_RESULT([Build Utah Raster Toolkit.............: $build_brlcad_urt])
 AC_MSG_RESULT([Build Template Numerical Toolkit......: $build_brlcad_tnt])
 AC_MSG_RESULT([Build openNURBS.......................: $build_brlcad_opennurbs])
+AC_MSG_RESULT([Build NIST STEP Class Libraries.......: $build_brlcad_step])
 AC_MSG_RESULT([Build jove ...........................: $build_brlcad_jove])
 AC_MSG_RESULT([])
 AC_MSG_RESULT([X11 support (optional)................: $build_against_x11])

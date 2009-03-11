@@ -1,0 +1,23 @@
+co README
+co Makefile
+co make_rules.in
+co sclprefixes.h.OrbixOstore
+co sclprefixes.h.noOrbixOstore
+
+#co make_rules.gnu
+#co make_rules.sun.solaris
+#co make_rules.sun.solaris.orbix
+#co make_rules.sun.solaris.orbix.ostore
+#co make_rules.sun.solaris.ostore
+#co make_rules.sun.sunos
+#co make_rules.sun.sunos.orbix
+#co make_rules.sun.sunos.ostore
+#co make_rules.centerline.sunos
+#co make_rules.txt
+#co make_rules.sun.o3db
+#co make_rules.o3db
+#co make_rules.ocenter
+#co make_rules.txt
+# echo " "
+# echo "***** NOTE ***** Don't forget to create link for sclprefixes.h"
+# echo " "

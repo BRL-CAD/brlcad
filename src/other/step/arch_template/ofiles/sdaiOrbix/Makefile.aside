@@ -1,0 +1,90 @@
+# $Id: Makefile,v 1.8 1998/01/12 18:47:42 sauderd Exp $
+
+# This code was developed with the support of the United States Government,
+# and is not subject to copyright.
+
+MAKE_RULES =  ../../make_rules
+include $(MAKE_RULES)
+
+PDES = ../../..
+
+# this is now in the make_rules if you are using the right one
+# include /depot/orbix-2.0/arch.sunos5/corba2/demos/orbixmtsol2s4.mk
+
+INCLUDES = \
+	-I. \
+	-I../.. \
+	$(MR_INCLUDES)
+
+# NO_BOOLS_LOGS turned on indicates to the SCL that the boolean and logical
+# enumerated types are defined by Orbix from the idl in this directory
+# CORBA_DEFS is defined for the SCL code as well meaning that the access functs
+# etc are defined to implement a server under Orbix.
+C++FLAGS = $(CFLAGS) $(INCLUDES) -mt -D_REENTRANT
+
+# -A generates support for the use of type any.
+# -B generates code to support the BOA approach.
+IDLFLAGS	= -A -I.
+
+CLIENT_OBJ= p26sdaiC.o
+#CLIENT_OBJ= sdaitypesC.o appinstanceC.o
+
+SERVER_OBJ= p26sdaiS.o
+#SERVER_OBJ= sdaitypesS.o appinstanceS.o
+
+SERV_LIBRARY = ../../lib/libCsdaiOrbix_server.a
+
+CLIENT_LIBRARY = ../../lib/libCsdaiOrbix_client.a
+
+message: all
+	@echo
+	@echo " link $(CLIENT_LIBRARY) with your client code and " 
+	@echo " link $(SERV_LIBRARY) with your server code." 
+	@echo
+
+#	@echo " link sdaitypesC.o appinstanceC.o with your client code and " 
+#	@echo " link sdaitypesS.o appinstanceS.o with your server code." 
+
+#all: serverobj clientobj
+
+all: $(SERV_LIBRARY) $(CLIENT_LIBRARY)
+
+$(SERV_LIBRARY): $(SERVER_OBJ)
+	@echo " "
+	@echo "making $(SERV_LIBRARY)"
+	ar rc $(SERV_LIBRARY) $?; \
+	$(RANLIB) $(SERV_LIBRARY); \
+
+$(CLIENT_LIBRARY): $(CLIENT_OBJ)
+	@echo " "
+	@echo "making $(CLIENT_LIBRARY)"
+	ar rc $(CLIENT_LIBRARY) $?; \
+	$(RANLIB) $(CLIENT_LIBRARY); \
+
+clientobj: $(CLIENT_OBJ)
+
+serverobj: $(SERVER_OBJ)
+
+# Header dependancies
+#sdaitypes.hh: sdaitypes.idl
+#	$(IDL) $(IDLFLAGS) $<
+#	@echo
+p26sdaiS.cc: p26sdai.hh p26sdai.idl
+p26sdaiC.cc: p26sdai.hh p26sdai.idl
+sdaitypesS.cc: sdaitypes.hh sdaitypes.idl
+sdaitypesC.cc: sdaitypes.hh sdaitypes.idl
+appinstanceS.cc: appinstance.hh appinstance.idl
+appinstanceC.cc: appinstance.hh appinstance.idl
+
+#sdaitypesS.o: sdaitypesS.cc
+#	$(C++) -c $(C++FLAGS) $<
+#	@echo
+#sdaitypesC.o: sdaitypesC.cc
+#	$(C++) -c $(C++FLAGS) $<
+#	@echo
+
+clean:
+	rm -f sdaitypesC.o sdaitypesS.o appinstanceC.o appinstanceS.o $(SERV_LIBRARY) $(CLIENT_LIBRARY)
+
+# DO NOT DELETE THIS LINE -- make depend depends on it.
+

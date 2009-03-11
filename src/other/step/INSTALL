@@ -1,0 +1,443 @@
+INSTALL
+
+This file is contains installation instructions for the
+STEP Class Library.
+
+These installation requires that you have the following software
+available:
+
+- C compiler
+- C++ compiler
+- bison, byacc, or yacc 
+- flex or lex
+
+and optionally the following packages built with the same C++
+compiler as above: 
+
+- InterViews X Windows user interface toolkit
+- Orbix - a CORBA implementation
+- ObjectStore - Object Oriented Database
+
+--------------------
+Installation
+--------------------
+
+The configure script in this directory is used to install the SCL. It
+uses your path to find the required software that it needs. For the
+optional software you must tell the configure script what you want to
+use with a command line option.  
+
+For more information on how to predict what software configure will
+use see "Configuring Configure" below. For more information on using
+SCL with the optional software see "Configure Options" below.
+
+The configure script must be run from the root directory of your SCL
+installation (where this file is located.) It requires one command
+line option that is used to create an architecture specific directory
+which will contain the architecture-specific installation.  You can
+run configure multiple times with different arch names to install SCL
+with different compilers and to use various combinations of the
+optional software packages listed above. Each arch directory
+installation will be built using the same source code (under src)
+although it may turn on or off different compiler directives. To
+install a minimal installation run the following in this directory:
+
+./configure --with-arch=<arch-dir-name>
+
+where <arch-dir-name> is the name of a directory that will be created
+to contain the installation.  We try to use descriptive names like
+arch-sun-solaris, arch-gnu-sunos, arch-sun-solaris-ostore-orbix,
+arch-sun-solaris-ostore, etc. These are interpreted as:
+
+arch-<compiler>-<operating-system>-<options>
+
+If you are only going to have one installation you might want to
+simply use "arch."
+
+*HINT* Don't use spaces within a configure command line
+option. e.g. don't type --with-arch = arch-gnu-solaris
+
+*NOTE* To use SCL you will generate and build Schema Class Libaries
+based on your application's EXPRESS schemas. You can use the
+mkProbe.<arch-dir-name> script (with a "-l" option) that is created by
+configure to generate and build a Schema Class Library for your
+application (see README in this directory). You can also use
+fedex_plus to generate a Schema Class Library (see README in this
+directory).
+
+*NOTE* There are several examples of files that we used to help us
+install SCL at NIST using several different configurations. They are
+in ~scl/config/examples/build.* These files configure configure by
+editing the path and several environment variables (see "Configuring
+Configure" below). If you were to use one of those files you would
+"source" it from the top level SCL directory like this: 
+ source config/examples/build.gnu.sunos 
+
+--------------------
+What Configure Creates
+--------------------
+
+Configure uses the --with-arch=<arch-dir-name> argument to create an
+architecture-specific directory named <arch-dir-name>. The following
+libraries and executables are placed under this directory:
+
+Libraries installed under <arch-dir-name>/lib:
+ libexpress.a
+ libexppp.a
+ libCedcore.a
+ libCdai.a
+ libCutils.a
+ libCivfasd.a (only if --with-iv argument is used)
+ libCprobe-ui.a (only if --with-iv argument is used)
+ libCsdaiOrbix_client.a (only if --with-orbixmk argument is used)
+ libCsdaiOrbix_server.a (only if --with-orbixmk argument is used)
+
+Executables installed under <arch-dir-name>/bin:
+ fedex - performs syntax checking, limited semantic checking and
+	produces associated error messages given an EXPRESS file.
+ symlink - generates symbolic links to files based on the name of
+	the schemas they contains.
+ exppp - formats EXPRESS according to STEP specified guidelines.
+ fedex_plus - generates a C++ class library representation of EXPRESS.
+ fedex_os - generates additional C++ to use the fedex_plus output with
+	ObjectStore.
+ fedex_idl - generates an Interface Definition Language (IDL)
+	representation of EXPRESS
+
+Object files are built under the directories <arch-dir-name>/ofiles/* and
+under src/express, src/exppp, and src/fedex_plus.
+
+The test programs in the directories under src/test/* are built under
+<arch-dir-name>/testbuild/*.
+
+Configure runs the <arch-dir-name>/bin/mkProbe script with the -i
+option to install example SCL code using the data/example/example.exp
+EXPRESS schema. The -i option causes mkProbe to install the source
+code under src/clSchemas/example/ and to build the source under
+<arch-dir-name>/Probes/example/. In the <arch-dir-name>/Probes/example/ 
+directory mkProbe builds an object library for the SCL code generated
+based on the example EXPRESS schema. It builds the p21read_example
+application which uses SCL to read and write a Part 21 file. If the
+InterViews-related SCL libraries were built then a Data Probe
+(dp_example) for the example schema is also built (The InterViews
+library from Stanford University would also had to have been built
+previously for a Data Probe to build.)
+
+The following are scripts that configure creates (and two of them are
+run by configure before it finishes):
+
+ config/setup-arch.current - script created and run by configure to create
+	the <arch-dir-name> directory hierarchy.
+ <arch-dir-name>/bin/setup-arch - a backup copy of config/setup-arch.current
+	This script is most useful as documentation of what configure
+	did with respect to <arch-dir-name>.
+
+ config/sclbuild.current - script created and run by configure to build the
+	SCL software.
+ <arch-dir-name>/bin/sclbuild - a backup copy of config/sclbuild.current
+	This script is most useful as documentation of what configure
+	did with respect to <arch-dir-name>.
+
+ <arch-dir-name>/bin/mkProbe - a script for users to create a Schema 
+	Class Library and (by default but optionally) the Data Probe 
+	editor. The generated Data Probe is based on the libraries
+	installed under <arch-dir-name>/lib and the user interface is
+	based on the InterViews X Windows user interface toolkit. 
+ config/mkProbe.current - same as <arch-dir-name>/bin/mkProbe but will
+	be overwritten with subsequent runs of configure.
+
+After configure creates the scripts config/setup-arch.current,
+config/sclbuild.current, and config/mkProbe.current it installs them
+in the <arch-dir-name>/bin directory without the .current suffix. This
+is the appropriate place for them since they are only useful in the
+context of the <arch-dir-name> directory. Also, the config/*.current
+versions will be overwritten during future runs of configure. 
+
+These are two files generated as a byproduct of running configure.
+I'm not sure how useful they will be for you.
+
+ config.status - a file which describes which configuration options
+	were specified when the package was last configured.  This
+	file is a shell script which, if run, will recreate the same
+	configuration. 
+
+ config.log - a log file generated by configure
+
+Configure generates two important files (and a backup file) that are
+used by our makefiles to build our code. They are:
+
+<arch-dir-name>/make_rules - used to build object files under
+		<arch-dir-name> directories 
+src/express/mkrules - used to build the src/express, src/exppp, and 
+		src/fedex_plus directories
+src/express/mkrules.<arch-dir-name> - a backup copy of src/express/mkrules
+		used by the script <arch-dir-name>/bin/sclbuild to
+		recreate src/express/mkrules 
+
+The two files above could be edited and the packages rebuilt to fix
+anything that configure found incorrectly.
+
+Another important file generated by configure is...
+
+<arch-dir-name>/scl_cf.h - #include file for our source code to help
+	get around common compile problems based on compiler and
+	operating system specifics. Configure also generates a flag
+	HAVE_CONFIG_H used on compile lines to specify that the
+	scl_cf.h file exists. It is made available inside the source
+	code using the compiler -D option (i.e. -DHAVE_CONFIG_H).
+
+Configure edits a Makefile template to contain the correct SCL root
+directory. It is:
+<arch-dir-name>/Probes/template-schema/Makefile.personal - used by the
+		mkProbe script to create a C++ library for an EXPRESS schema.
+
+--------------------
+Configuring Configure
+--------------------
+
+There are two ways you can direct configure to use the software that
+you want it to use:
+
+- change your path so that only what you want is found
+- use an environment variable to specify it explicitly
+
+You can use the unix command "which" to search your path for a
+software executable.  For example to find out which yacc will be found
+in your path use: 
+
+  % which yacc
+
+Configure is built using the gnu software package autoconf. It is
+designed by gnu to search for gnu software first. You may not want to
+use gnu software or you may want an additional SCL installation for
+use with other software. You can direct configure to search for a
+specific software executable using environment variables.  Here is
+what configure does to find each of the required software executables:
+
+C++ compiler:
+Search your path for the C++ compiler specified by the environment
+variables CXX or CCC in that order. Otherwise search for c++, g++,
+gcc, or CC in that order.
+
+*WARNING* At NIST we were not able to link the fedex_plus executable
+using the Sun sparcworks compiler version 3.0.1.  It built successfully
+with version 4.2. Our version 3.0.1 was patched which may have been
+part of the problem. 
+
+C compiler:
+Search your path for the C compiler specified by the environment
+variable CC.  Otherwise search for gcc followed by cc.
+
+yacc or equivalent:
+Search your path for the compiler compiler specified by the
+environment variable YACC.  Otherwise search for bison, byacc, or yacc
+in that order.
+[NOTE:  the EXPRESS Toolkit produces more extensive error messages
+when using bison than with the other tools.]
+
+lex or equivalent:
+Search your path for the lexical analyzer specified by the environment
+variable LEX.  Otherwise search for flex followed by lex.
+
+You can set the environment variable to a complete path or just the
+executable name. If you use a complete path, that is what will be used
+to install SCL. If you just use the executable name only, SCL will be
+configured to use the specified executable based on what was found
+using your path at the time the configure script is run. In either
+case, the SCL Makefiles will be set up to use a complete path for the
+executable. This ensures that the arch directory will always be built
+with what you wanted it to be built with no matter how often you build
+it. It also allows for better debugging if problems occur when
+building the SCL. The complete path will ensure you know exactly what
+is being used to build the software.
+
+You can set an environment variable as follows:
+
+  % setenv CXX CC
+
+This will tell configure to search your path for a C++ compiler named
+CC instead of searching for the other C++ compiler names listed above.
+You may also give it a complete path.
+
+  % setenv CXX /depot/sparcworks/CC
+
+At NIST, we wrote scripts which do such variable setting to test the 
+cofigure script with various compilers and operating systems.  The
+scripts are provided with this release under ~PDES/config/examples.
+They may facilitate your installation if you are creating multiple
+builds or a build which does not reflect your current environment.  To
+use a script, modify it with the desired settings, "source" it, and
+run configure.
+
+Worst case, you can edit what configure generates and run "make"
+yourself (see "Handling Installation Problems").
+
+--------------------
+Configure Options
+--------------------
+
+The only options this configure script uses are listed below. These
+are printed out at the end of the default help information when
+configure is run with the "--help" option.
+
+--enable and --with options recognized:
+  --with-arch             - arch directory for SCL (required)
+  --with-iv               - root directory for InterViews
+  --with-iv-includes      - directory for InterViews includes
+  --with-iv-lib           - directory for InterViews library
+  --with-ostore           - root directory for ObjectStore
+  --with-ostore-includes  - directory for ObjectStore includes
+  --with-ostore-lib       - lib directory for ObjectStore
+  --with-orbixmk          - Orbix .mk make rules/macros file
+  --with-logging          - turn on SCL logging
+
+All of the above options (except --with-logging) require an
+argument. The argument is given following the option and an "=". An
+example of running configure with the --with-arch and --with-iv
+options follows:
+
+  % configure --with-arch=arch-gnu-sunos --with-iv=/depot/iv_gnu3.1
+
+*IMPORTANT NOTE* when specifying a directory name for any option
+provide the complete path (except for the --with-arch option) and do
+not end with a slash (i.e. "/"). DO NOT SPECIFY A COMPLETE PATH for
+the --with-arch option.
+
+--with-arch=<arch-dir-name> - the only required argument. 
+<arch-dir-name> is used to name the architecture-specific directory
+containing the SCL installation. It is also used to name scripts
+generated by configure. See the section above "What Configure
+Creates". THIS ARGUMENT SHOULD NOT CONTAIN A COMPLETE PATH AND IT
+SHOULD NOT CONTAIN ANY SLASHES.
+
+--with-iv=<iv-rootdir-name> - specifies the root directory for
+InterViews. It is used as the basis for the default iv-includes and
+iv-lib directories. This option will cause configure to build the
+ivfasd and probe-ui libraries used by the mkProbe.<arch-dir-name>
+script to create a Data Probe. Providing this option will cause
+configure to turn on execute permisions for the mkProbe.<arch-dir-name> 
+script.
+
+--with-iv-includes=<iv-includes-dir-name> - specifies the directory for
+InterViews includes. <iv-includes-dir-name>, if provided, must specify
+a complete path. The default include directory (when this option is
+not used) is 
+<iv-rootdir-name>/installed/include
+where <iv-rootdir-name> is specified using --with-iv
+
+--with-iv-lib=<iv-lib-dir-name> - specifies the directory for InterViews
+libs. <iv-lib-dir-name>, if provided, must specify a complete
+path. The default lib directory (when this option is not used) is 
+<iv-rootdir-name>/installed/lib/<sun_arch>
+where <iv-rootdir-name> is specified using --with-iv and <sun_arch> is
+either SUN4 or SUN5 as output by configure as the system version.
+
+--with-ostore=<ostore-rootdir-name> - specifies the root directory for
+ObjectStore. It is used as the basis for the default ostore-includes
+and ostore-lib directories. This option will build the SCL libraries
+for use with ObjectStore OODBMS.
+
+--with-ostore-includes=<ostore-includes-dir-name> - specifies the
+directory for ObjectStore includes. <ostore-includes-dir-name>, if
+provided, must specify a complete path. The default include directory
+(when this option is not used ) is 
+<ostore-rootdir-name>/include
+where <ostore-rootdir-name> is specified using --with-ostore
+
+--with-ostore-lib=<ostore-lib-dir-name> - specifies the directory
+for ObjectStore libraries. <ostore-lib-dir-name>, if provided, must
+specify a complete path. The default lib directory (when this option
+is not used) is 
+<ostore-rootdir-name>/lib
+where <ostore-rootdir-name> is specified using --with-ostore
+
+--with-orbixmk=<orbix-mk-file> - specifies the Orbix .mk make
+rules/macros file that defines Orbix macros to be used in
+Makefiles. This argument should specify the file along with its
+complete path. The appropriate version of this file should be found in
+the demos directory in your Orbix installation. e.g. here is where it
+is located for solaris sun C++ at NIST:
+/depot/orbix-2.0/arch.sunos5/corba2/demos/orbixmtsol2s4.mk"
+
+--with-logging - turns on SCL logging capabilities. Configures the
+make_rules to turn on logging capabilities in the fedex_plus generated
+code when the -l or -L option is used with fedex_plus.
+
+--------------------
+Handling Installation Problems
+--------------------
+
+- What is configure using to build SCL?
+
+To find out what configure will use before you run it and to direct it
+to use something else see "Configuring Configure" above.
+
+You can look at the output from configure while it is running. It
+outputs complete paths for the software it needs as it runs (except
+for bison). It lets you know at each step what it is doing and what it
+is finding.
+
+You can look at output files that are generated by configure. Two
+important files that are used by our makefiles to build our code are:
+
+<arch-dir-name>/make_rules - used to build object files under
+		<arch-dir-name> directories 
+src/express/mkrules - used to build the src/express, src/exppp, and 
+		src/fedex_plus directories
+
+You could look at the makefile macro definitions in the output files
+above to see what configure is using.
+
+- What went wrong? I'm getting error messages that things aren't
+building.
+
+Check the paths you used in configure options to build SCL with
+optional software packages
+(e.g. --with-iv-includes=<iv-includes-dir-name>).  Make sure each
+directory specified contains a complete path and does not end with a
+slash (i.e. "/"). For example, the compiler may not be finding
+#include files because it is being told to look in a directory
+/depot/iv//installed/include which is invalid (because the --with-iv
+option was given /depot/iv/ which ends with a slash and that was
+combined with the default include dir subdirectory incorrectly).
+
+See "What is configure using to build SCL?" above to determine what
+software is being used. Check the date the required software was
+built. If it is really old that could likely be the problem. 
+
+See the sections "Configuring Configure" to help configure get the
+correct software for your site. See "Configure Options" to correctly
+specify configure options.
+
+- How do I configure and build the software by hand?
+
+Once configure has been run you could edit these two files generated
+by configure:
+<arch-dir-name>/make_rules - used to build object files under
+		<arch-dir-name> directories 
+src/express/mkrules - used to build the src/express, src/exppp, and 
+		src/fedex_plus directories
+to contain macros defined appropriately for your site. Then you could
+run sclbuild.<arch-dir-name> to rebuild the appropriate software. You
+could also look inside sclbuild.<arch-dir-name> and execute the make
+commands individually to get a better idea of what is going wrong.
+
+- How do I rebuild the software?
+
+To rebuild everything you can move the arch directory aside (or delete
+it) and run the configure script again as you did originally.
+
+or
+
+You can execute the generated script sclbuild.<arch-dir-name> to
+rebuild everything. It will run "make clean" to remove the current
+object files and it rebuild everything. If you want to save any old
+libraries you will need to change their names.
+
+--------------------
+How was configure created?
+--------------------
+
+The configure script was generated from the file configure.in (which
+we created) by autoconf version 2.7 from gnu. It was created under
+SunOS Release 4.1.4 but it should run under your version of unix.

@@ -1,0 +1,24 @@
+
+arch_template/README
+
+This directory must exist to use the configure installation script for
+SCL. Configure (located in the top-level SCL directory) installs all
+the NIST STEP Toolset software for you. You can use configure to
+install the NIST STEP Toolset as many times as you wish using the
+configuration options you choose under an arch directory name you
+supply. For details on running configure see the file ../INSTALL
+
+sclprefixes.h.OrbixStore - #defines macros used all over SCL to
+	handle namespacing for SCL (for the Orbix and ObjectStore
+	version of SCL). This file is not #included directly by SCL
+	(see <ARCH_DIR>/scl_prefixes.h below).
+
+sclprefixes.h.noOrbixStore - #defines macros used all over SCL to
+	handle namespacing for SCL (for the version of SCL that
+	doesn't use Orbix or ObjectStore). This file is not #included
+	directly by SCL (see <ARCH_DIR>/scl_prefixes.h below).
+
+<ARCH_DIR>/sclprefixes.h - a copy of one of the above #included in
+	much SCL source code. It is created (copied) under the
+	<ARCH_DIR> directory created by the configure installation
+	script. 

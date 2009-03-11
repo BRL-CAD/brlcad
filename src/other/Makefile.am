@@ -101,6 +101,12 @@ else !BUILD_OPENNURBS
 OPENNURBSDIR=
 endif
 
+if BUILD_STEP
+STEPDIR=step
+else !BUILD_STEP
+STEPDIR=
+endif
+
 if BUILD_TNT
 TNTDIR=tnt
 else !BUILD_TNT
@@ -146,6 +152,7 @@ SUBDIRS = \
 	${TKIMGDIR} \
 	${BLTDIR} \
 	${OPENNURBSDIR} \
+	${STEPDIR} \
 	${TNTDIR} \
 	awf
 
@@ -171,6 +178,7 @@ DIST_SUBDIRS = \
 	libutahrle \
 	libz \
 	openNURBS \
+	step \
 	tcl \
 	tk \
 	tkhtml3 \

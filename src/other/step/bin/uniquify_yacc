@@ -1,0 +1,43 @@
+#!/bin/sh
+#
+# uniquify_yacc
+#
+# Rename necessary globals in yacc/bison output so that global name
+# collisions do not occur between distinct parsers.  yyfoo becomes
+# fn_yyfoo, where the parser is named fnparse or fnyacc, and is
+# defined by fnparse.tab.[ch] or fnyacc.tab.[ch].
+#
+# by clark@cme.nist.gov (Steve Clark)
+#
+# this script is in the public domain, and is provided with
+# absolutely no warranty
+#
+
+# derive parser name from source file name
+NAME=`echo $1 | sed -e 's/parse$//' -e 's/yacc$//'`
+
+cat $1.tab.c \
+  | sed -e "s/yyparse/${NAME}_yyparse/g"\
+	-e "s/yylex/${NAME}_yylex/g"\
+	-e "s/yylval/${NAME}_yylval/g"\
+	-e "s/yychar/${NAME}_yychar/g"\
+	-e "s/yyerrflag/${NAME}_yyerrflag/g"\
+	-e "s/yyv\([^as]\)/${NAME}_yyv\1/g"\
+	-e "s/YYSTYPE/${NAME}_YYSTYPE/g"\
+	-e "s/yynerrs/${NAME}_yynerrs/g"\
+        -e "s/yydef/${NAME}_yydef/g"\
+        -e "s/yychk/${NAME}_yychk/g"\
+        -e "s/yyr2/${NAME}_yyr2/g"\
+        -e "s/yyr1/${NAME}_yyr1/g"\
+        -e "s/yypgo/${NAME}_yypgo/g"\
+        -e "s/yyval/${NAME}_yyval/g"\
+        -e "s/yyexca/${NAME}_yyexca/g"\
+        -e "s/yyact/${NAME}_yyact/g"\
+        -e "s/yypact/${NAME}_yypact/g"\
+        -e "s/yytext/${NAME}_yytext/g"\
+        -e "s/yydebug/${NAME}_yydebug/g"\
+      > $1.c			# create the target .c
+sed -e "s/yylval/${NAME}_yylval/g"\
+    -e "s/YYSTYPE/${NAME}_YYSTYPE/g"\
+    $1.tab.h > $1.h		# process and save the token definitions
+rm $1.tab.c $1.tab.h

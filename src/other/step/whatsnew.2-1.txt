@@ -1,0 +1,369 @@
+
+	What's new in the STEP Class Library and Data Probe release 2.1
+				June 1995
+
+This release of the STEP Class Library (SCL), fedex_plus code
+generator, and Data Probe also contains the latest releases of the
+fedex syntax and semantic checker, the NIST Express Toolkit (also new
+on SOLIS as of June 12, 1995), and the Express Pretty Printer Toolkit.
+The NIST Express Toolkit and fedex have been updated to handle the IS
+version of Express and various problems have been fixed as a result of
+pre-validation conformance testing.  Following is an overview of
+what's new in the STEP Class Library (and hence fedex_plus) and the
+Data Probe. 
+
+--------------------
+*Compilers supported:
+--------------------
+The SCL and Data Probe now compiles with gnu C++ v2.5.8, v2.6, and 
+Sun C++ v3.0.1.  The SCL also compiles with ppCC, the pre-processor of
+the Open OODB from TI.
+
+-------------------
+*Complex Instances:
+-------------------
+
+The SCL now supports instantiation of complex instances via a class
+called STEPcomplex.  The SCL supports reading and writing of complex
+instances from/to Part 21 and Working files using the external mapping
+specified in Part 21.  
+
+Complex instances are created by calling the constructor for
+STEPcomplex with a list of entity name strings.  The combination of
+entity names that are passed in to become part of the complex instance
+are not validated to determine if they are a legal set of entities
+with regard to the inheritance structure specified in Express.
+Attributes within each of the represented entities are validated as
+usual.
+
+An entity hierarchy with triangle and circle both inheriting from
+shape with andor inheritance would allow creation of a
+circle-shape-triangle entity.  Here is an example of how such an
+object could be created.
+
+    SCLstring *entNmArr[64]; // array of entity type names
+    int fileid = 1;
+    Registry *registry = new Registry(SchemaInit);
+
+    entNmArr[0] = new SCLstring("shape");
+    entNmArr[1] = new SCLstring("triangle");
+    entNmArr[2] = new SCLstring("circle");
+    entNmArr[3] = 0;
+    STEPentity * obj = new STEPcomplex(&_reg, (const SCLstring **)entNmArr, 
+				       fileid);
+
+In the same manner the toolkit would allow a user to create a
+circle-shape-triangle-color entity even if it was not valid given the
+Express. 
+
+The complex instances implementation has a late bound flavor.  The
+instances do not have code generated implementing attribute access
+functions with names matching the name of the attribute.  This method
+of access, normally associated with an early binding, is available for 
+non-complex instances and is partially available for instances
+involving multiple inheritance.  The complex entity instance's
+attributes are accessible through the STEPattribute class in a manner
+similar to the non-complex instances.
+
+The Data Probe reads and writes complex instances from/to Part 21 and
+Working files but supports very limited editing of complex instances.
+
+----------------------
+*Multiple Inheritance:
+----------------------
+
+The SCL offers two choices to users in handling multiple inheritance.
+These include the method offered by SCL in previous releases and the
+current method.  The current method handles attributes inherited from
+all parents.  It does not correctly handle multiple inheritance where
+an entity has more than one path through parents to a common ancestor.
+One could imagine this case as a diamond shaped inheritance structure.
+When this case of multiple inheritance is encountered attributes are
+duplicated.  This case of multiple inheritance may possibly be
+avoided by modifying the EXPRESS schema by breaking some links in the 
+inheritance hierarchy.  This will not have an adverse affect on the
+implemementation.  The user may choose to use the current or previous
+method of handling multiple inheritance.  The current method is the
+default behavior.  The previous method is obtained by supplying the 
+-s (or -S) option with the fedex_plus code generator or the mkProbe
+script.
+
+When the fedex_plus code generator is generating the C++ class library
+representation of a schema, it outputs information calling attention
+to the cases of multiple inheritance.
+
+The previous method of handling multiple inheritance:
+
+This method of handling multiple inheritance is useful where
+attributes are inherited from only one parent.  It does not allow an
+entity instance to be casted in C++ to a class representing
+non-implemented parents.  These multiply inherited instances are
+created in the same manner as non-multiply inherited, non-complex
+instances.
+
+For each entity that has multiple parents the first parent that
+contains or inherits attributes is used in the inheritance hierarchy
+for the C++ class representing the entity.  In each case of multiple
+inheritance the parents are searched for attributes in the same order
+as they were specified for the entity in Express.  Once attributes
+have been found associated with one parent, attributes from other
+parents are ignored.  All attributes handled have access functions.
+
+The current method of handling multiple inheritance:
+
+Multiply inherited instances are created in the same manner as
+non-multiply inherited, non-complex instances.  These include calling
+any of the following functions:
+1. the constructor of the entity class.
+2. Registry::ObjCreate() with the name of the entity as a string argument.
+3. EntityDescriptor::NewSTEPentity() from the dictionary entry
+associated with the entity to be created.
+
+ a  c   e			
+ |  |   |	This hierarchy modeled in Express turns into
+ b  d   f	the data structures pictured below.
+ \  |  /			
+  \ | /  h			
+   \|/  /
+    g -
+
+Each STEPentity also has a pointer back to g's STEPentity. 
+
+STEPentity 		STEPentity 		STEPentity 
+-------------------- 	-------------------- 	--------------------
+| - attribute list |	| - attribute list |	| - attribute list |	
+|   for a, b, c, d,|	|   for c and d    |	|   for e and f    |	
+|   e, f, h, and g |	|   (in that order)|	|   (in that order)|
+|   (in that order)|	|   		   |	|		   |
+| - pointer to     |	| - pointer to     |	| - pointer to     |
+|   STEPentity ----+--->|   STEPentity ----+--->|   STEPentity ----+----
+| - pointer to 	   |	| - pointer to 	   |	| - pointer to     |	|
+|   dictionary 	   |	|   dictionary 	   |	|   dictionary     |	|
+|   entry for g    |	|   entry for d    |	|   entry for f    |	|
+--------------------	--------------------	--------------------	|
+ 	|			|			|		|
+	a			c			e		|
+----------------------  ----------------------  ----------------------  |
+| - attributes for a |  | - attributes for c |  | - attributes for e |  |
+| - access functions |  | - access functions |  | - access functions |  |
+|   for a            |  |   for c            |  |   for e            |  |
+----------------------  ----------------------  ----------------------  |
+ 	|			|			|		|
+	b			d			f		|
+----------------------  ----------------------  ----------------------  |
+| - attributes for b |  | - attributes for d |  | - attributes for f |  |
+| - access functions |  | - access functions |  | - access functions |  |
+|   for b            |  |   for d            |  |   for f            |  |
+----------------------  ----------------------  ----------------------  |
+ 	|								|
+	g								|
+----------------------							|
+| - attributes for g |							|
+| - access functions |							|
+|   for g            |							|
+----------------------							|
+							        	|
+						 STEPentity <-----------
+						 --------------------
+						 | - attribute list |
+						 |   for h	    |
+						 | - pointer to     |
+						 |   STEPentity     |
+						 | - pointer to     |
+						 |   dictionary     |
+						 |   entry for h    |	
+						 --------------------
+							|
+							h
+							|
+						----------------------
+						| - attributes for h |
+						| - access functions |
+						|   for h            |
+						----------------------
+
+Multiply inherited entities have two early bound access functions
+associated with all of the attributes - one for get attribute value
+and one for set attribute value.  These access functions have the same
+name as the attribute.  The requirement for use of these access
+functions is that they must be called from the appropriate part of
+the data structure representing the multiply inherited instance.  C's
+attribute access functions could be called from a pointer to the C or
+D part of the data structures shown above.  Functions are supplied for
+accessing the appropriate part of the data structure. 
+
+   a
+  / \	An Express schema containing this type of inheritance hierarchy
+ |   |	under the current multiple inheritance implementation will cause
+ b   c	attributes for 'a' to be duplicated.
+ |   |
+  \ /
+   d
+
+
+The Data Probe fully supports the SCL implementation of multiply
+inherited entity instances.  Inside a STEP Entity Editor window,
+attribute dictionary information is displayed as usual for all 
+attributes in multiply inherited entity instances.  It currently,
+however, only displays the first parent encountered each step up the
+parent hierarchy when displaying Express dictionary information for
+the entity as a result of pressing the Type Information button.
+
+------------------
+*Part 21 Comments:
+------------------
+The SCL now handles comments associated with Part 21 and SCL Working
+files.  It saves comments preceding an entity instance with the entity
+instance that follows.  It can handle saving all the comments in the
+example below.  All the comments would be saved as part of entity
+instance #1.
+
+/*comment 1*/ /*cmt 1.5 */
+#1/*cmt 2*/=/*cmt 3*/ORGANIZATION/*cmt 4*/( 'hi','foo','bar')/*cmt 5*/;/*cmt6*/
+#2=ORGANIZATION('ab','cd','ef');
+
+When writing instance #1 above to a Part 21 or Working file, all
+comments that have been saved with the instance will be written out
+separately preceding the instance as follows.
+
+/*comment 1*/
+/*cmt 1.5 */
+/*cmt 2*/
+/*cmt 3*/
+/*cmt 4*/
+/*cmt 5*/
+#1=ORGANIZATION('hi','foo','bar');
+/*cmt6*/
+#2=ORGANIZATION('ab','cd','ef');
+
+Part 21 comments are also read and written for header entity instances. 
+
+Part 21 comments are supported in the Data Probe.  Comments associated
+with an entity appear in the comment field on the STEP Entity Editor
+window.  The comment (formerly "label") field accepts comments that
+will be saved to a Part 21 or Working file and comments that are not.
+Comments written as valid Part 21 comments (i.e. enclosed in /* */)
+will be saved in files.  Non-Part 21 text will only last until the end
+of the Data Probe session or until the entity is deleted, whichever
+comes first.
+
+---------
+*Selects:
+---------
+The way SCL handles selects for editing and writing part 21 files has
+been updated.  Here are the new rules.  
+
+- If there is only one choice in the select (i.e. a select of one
+type), the value for that choice can be entered without qualification. 
+
+- If the select is between entities only (and not via nested selects),
+the element types are assumed to be unique and values can be entered
+as a reference to an entity instance.
+
+- In all other cases the value must be qualified by enclosing the
+value in the type of the select item.
+
+- These rules apply to editing in the Data Probe, as well as reading
+from and writing to a file.
+
+When editing a select attribute in the Data Probe STEP Entity Editor
+window, mouse clicking the edit button offers support for qualifying
+the select attribute value.  When you click the edit button for a
+select attribute, and choose a type from the list, it is applied to
+the attribute value field in the entity editor.
+
+If there wasn't a value in the attribute previously, then the field will 
+contain just the type specifier, e.g., Str1() if Str1 is the type selected.
+
+If a value exists in the field, it is modified to accomodate the new 
+specifier.  This means the following:
+ o  If the value in the field starts with a single-quote ('), it is 
+	assumed to be a string literal, and is completely wrapped in the new 
+	specifier (e.g., 'foobar' --> Str1('foobar') ).
+ o  If the value starts with an open-paren ('('), it is assumed to be an 
+	aggregate literal, and is wrapped in the new specifier as above.
+ o  If the value already has a specified type (e.g., Str1('foo')), things 
+	get interesting.  (By the way, containing a specified type is
+	determined by the existence of an open paren (after the first
+	character) encountered before end-of-string.) Ordinarily, the
+	type specifier is replaced by the new type, e.g.,
+	Str1(.enumval.) --> Enum1(.enumval.). 
+    However, if the new type is a SELECT, then the whole value in the 
+	field is wrapped in the new type specifier, e.g., Str1('foo') --> 
+	Sel1(Str1('foo')) if the new type is Sel1.  This is because it is
+	assumed that the user is qualifying the subtype of the SELECT before
+	'editing'.  A possible future enhancement may check to see if
+	the field contains a valid select subtype, and if not, do a
+	replace as in the above Str1->Enum1 example.
+
+If the field entry matches none of these cases, it is just wrapped in the 
+type specifier... actually, the only real reason for having the string 
+and aggregate special cases is that they contain (or can contain) 
+parentheses that would throw off checking for type specifiers...
+
+Validation of all of this still occurs in the editing window as usual,
+so if the user chooses something invalid, it is still flagged in the
+STEP Entity Editor window.
+
+---------
+*Strings:
+---------
+Strings can now differentiate between a string that does not exist and
+a string that has no elements.  This may be done with the following
+functions in the SCLstring class in scl_string.h:
+
+    // returns 1 if _strBuf is a null ptr or if it is an empty string (i.e. "")
+    int is_null() const;
+
+    // returns 1 if _strBuf is a null ptr, and 0 otherwise
+    int is_undefined() const;
+
+    // deletes _strBuf
+    void set_undefined() ;
+
+    // zeroes out space in _strBuf
+    int set_null() ;
+
+The Data Probe now differentiates between a STRING attribute value
+that does not exist and one that exists but contains no characters.
+When editing an attribute of type string in a STEP Entity Editor
+window, an attribute value containing only a dollar sign indicates that
+the string attribute value does not exist.  An attribute value
+containing only a backslash followed by a dollar sign indicates a
+string value of length one containing a dollar sign.  The absence of a
+value indicates that the string exists but contains no characters.
+
+-------------
+*Enumerations:
+-------------
+The access functions for enumerations now accept the associated C/C++
+enumeration value rather than the enumeration class.  Implicit calling
+of casting functions makes it possible for instances of the
+enumeration class still to be passed into the attribute's get
+functions and to be assigned the return value of the attribute's put
+functions.
+
+--------
+*Boolean:
+--------
+Attributes of type Boolean and aggregate of Boolean were previously 
+implemented using the Logical and Logicals classes (respectively).
+The fedex_plus code generator now generates classes Boolean and
+Booleans to implement attributes of type Boolean and aggregate of
+Boolean respectively.
+
+
+--------------------------------
+*Public Data Member Name Changes:
+--------------------------------
+In class STEPentity:
+Descriptor is now eDesc
+
+In class STEPattribute:
+Descriptor is now aDesc
+
+The name change in STEPentity was to avoid symbol name conflicts of
+STEPentity::Descriptor with access functions generated for Express
+entity attributes named descriptor.  The new name will not be
+conflicting with any generated names since the letter case will never
+match.

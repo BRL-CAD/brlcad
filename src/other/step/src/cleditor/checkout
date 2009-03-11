@@ -1,0 +1,34 @@
+#!/bin/sh
+co README
+co mgrnode.h
+co mgrnode.cc
+co mgrnodearray.h
+co mgrnodearray.cc
+co mgrnodelist.h
+co mgrnodelist.cc
+co dispnode.h
+co dispnode.cc
+co dispnodelist.h
+co dispnodelist.cc
+co cmdmgr.h
+co cmdmgr.cc
+co instmgr.h
+co instmgr.cc
+co s_HEADER_SCHEMA.cc
+co s_HEADER_SCHEMA.init.cc
+co s_HEADER_SCHEMA.h
+co STEPfile.h
+co STEPfile.cc
+co STEPfile.inline.cc
+co editordefines.h
+co seeinfodefault.h
+co Makefile
+
+
+# dataeditor.h
+# dataeditor.cc
+# displaymgr.h
+# dispnode.inline.h
+# dispnodelist.inline.h
+# editordefines.h
+# mgrnode.inline2.h

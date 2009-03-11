@@ -1,0 +1,11 @@
+#!/bin/sh
+
+co Makefile
+co README
+co SEarritr.h
+co needFunc.cc
+co needFunc.h
+co runtests
+co schema-loc
+co tests.h
+co scltest.cc

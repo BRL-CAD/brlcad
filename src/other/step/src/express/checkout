@@ -1,0 +1,35 @@
+#!/bin/sh
+#$Id: checkout,v 1.7 1997/10/22 16:49:09 sauderd Exp $
+
+co mkrules.in
+
+# misc build files
+co $* makefile expparse.y expscan.l
+co $* .Sanitize
+
+# drivers
+co $* fedex.c symlink.c
+
+# include files for express
+co $* alg.h caseitem.h conf.h entity.h express.h expbasic.h
+co $* expr.h lexact.h resolve.h schema.h scope.h
+co $* stmt.h symbol.h type.h variable.h
+
+# C files for express
+co $* alg.c caseitem.c entity.c express.c expr.c lexact.c
+co $* resolve.c schema.c scope.c stmt.c symbol.c type.c
+co $* variable.c inithook.c yyvars.c
+
+# include files for utils
+co $* basic.h de_end.h decstart.h defstart.h dict.h error.h hash.h
+co $* linklist.h memory.h object.h stack.h 
+
+# C files for utils
+co $* dict.c error.c hash.c linklist.c memory.c object.c
+
+# stuff that should isn't use but is still referred to.
+# Perhaps we will use it in the future
+# co $* print.h
+
+# documentation?  what a concept
+co Changes

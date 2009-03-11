@@ -1,0 +1,59 @@
+source ~sauderd/env/orbixostore.solaris.env
+	
+#set path=(/itl/links/spro/bin $path)
+set path=(. \
+	~/bin \
+	/depot/usenet/arch/bin \
+	/depot/ncd/binSun4 \
+	/depot/X11R4/arch/bin \
+	/depot/ctrline-eval/CenterLine/bin \
+	/depot/CenterLine/bin \
+	/ignore/pdevel/arch/bin \
+	/depot/sparcworks/bin \
+	/depot/sundry/arch/bin \
+	$FMHOME/bin \
+	/depot/doswindows/arch/bin \
+	/usr/ucb /bin /usr/bin /etc /usr/games /usr/etc \
+	/usr/bsd /usr/bin/X11 \
+	/depot/netmedia/plat/bin /depot/acrobat/plat/bin /depot/www/bin \
+	/depot/tcl/arch/bin \
+	/depot/tcl/bin \
+	/depot/pub/arch/bin \
+	/usr/sbin \
+	/usr/ccs/bin \
+)
+
+# for xnews playing
+setenv OPENWINHOME /depot/openwin3
+set path= ( $path $OPENWINHOME/bin/ $OPENWINHOME/demo)
+
+#klm has the following
+setenv EDITOR /depot/gnu/arch/bin/emacs
+setenv PRINTER lp
+setenv MORE "-s"
+setenv MANPATH /depot/gnu/man:/depot/sundry/man:/depot/openwin3/man:/depot/SPARCworks/man:/depot/SPARCworks/lang/man:/usr/man:/depot/tcl/man:/proj/pdeseval/good/man:/depot/emacs/man:/proj/apde/pure/man
+
+setenv MANPATH $ORBIXHOME/arch.sunos5/man:$MANPATH
+
+# unsetenv LD_LIBRARY_PATH
+# setenv LD_LIBRARY_PATH /depot/sparcworks/lib:/usr/lib:/depot/OStore4.0/sunpro/lib:/depot/x11r5/plat/lib:/depot/openwin3/lib:$ORBIXHOME/arch.sunos5/corba2/lib
+
+setenv LD_LIBRARY_PATH /itl/links/spro/lib:/usr/lib:/depot/OStore4.0/arch.sunos4/sunpro/lib:/depot/x11r5/plat/lib:/depot/openwin3/lib:/depot/openwin3/lib:$ORBIXHOME/arch.sunos5/corba2/lib
+
+set path=($ORBIXHOME/arch.sunos5/corba2/bin $path)
+
+unsetenv LEX
+#setenv LEX /itl/links/spro/bin/lex
+setenv LEX lex
+
+unsetenv YACC
+#setenv YACC byacc
+#setenv YACC /itl/links/spro/bin/yacc
+setenv YACC yacc
+
+unsetenv CC
+setenv CC /itl/links/spro/bin/acc
+unsetenv CXX
+setenv CXX /itl/links/spro/bin/CC
+
+configure --with-arch=arch-sunitl-solaris-ostore-orbix --with-iv=/proj/pdeseval/iv3.1_SUN.C++.SOLARIS --with-iv-includes=/proj/pdeseval/iv3.1_SUN.C++.SOLARIS/src/include --with-iv-lib=/proj/pdeseval/iv3.1_SUN.C++.SOLARIS/src/lib/IV/SUN4 --with-ostore=/depot/OStore4.0/sunpro --with-orbixmk=/depot/orbix-2.0/arch.sunos5/corba2/demos/orbixmtsol2s4.mk

@@ -1,0 +1,2788 @@
+//
+//  File: sdai.idl
+//
+//  Description: Early binding CORBA IDL interface to SDAI. 
+//
+//      The binding is derived from the the following documents: 
+//
+//            ISO/CD 10303-26:1996(E) of December 16, 1996
+//
+//      and,
+//            ISO/DIS 10303-23:1996(E) of January 28, 1997
+//            ISO/DIS 10303-22:1996(E)
+//            OMG, CORBAservices:Common Object Services Specification,
+//            Updated edition of November 22, 1996. 
+//
+//  Rev:         $Revision: 1.5 $
+//  Created:     $Date: 1998/01/14 16:06:51 $
+//  Author:      $Author: sauderd $
+//
+//  Copyright Industrial Technology Institute 1997 -- All Rights Reserved
+//
+
+#ifndef SDAI_IDL
+#define SDAI_IDL
+
+//module P26
+/*
+module SDAI
+{
+*/
+      //
+      // Forward declarations of all interfaces in this module
+      // 
+  interface Application_instance;
+  interface Application_instanceFactory;
+  interface DAObject;
+  interface DAObjectFactory;
+  interface DAObject_SDAI;
+  interface DAObject_SDAIFactory;
+  interface Entity_extent;
+  interface Error_event;
+  interface Event;
+  interface Implementation;
+  interface Model;
+  interface Model_contents;
+  interface Model_contents_instances;
+  interface PID;
+  interface PID_DA; 
+  interface PID_SDAI;
+  interface Repository;
+  interface Repository_contents;
+  interface Schema_instance;
+  interface Scope;
+  interface Session;
+  interface Session_Factory;
+  interface Session_instance;
+  interface Transaction;
+
+      //
+      // SDAI Aggregate types
+      //
+  typedef sequence<Application_instance> Application_instance__list;
+  typedef sequence<DAObject>             DAObject__list;
+  typedef sequence<DAObject>             DAObject__set;
+  typedef sequence<DAObject_SDAI>        DAObject_SDAI__list;
+  typedef sequence<DAObject_SDAI>        DAObject_SDAI__set;
+  typedef sequence<Entity_extent>        Entity_extent__list;
+  typedef sequence<Entity_extent>        Entity_extent__set;
+  typedef sequence<Error_event>          Error_event__list;
+  typedef sequence<Model>                Model__list;
+  typedef sequence<Model_contents>       Model_contents__list;
+  typedef sequence<Object>               Object__list;
+  typedef sequence<Repository>           Repository__set;
+  typedef sequence<Repository>           Repository__list;
+  typedef sequence<string>               string__list;
+  typedef sequence<Schema_instance>      Schema_instance__list;
+  typedef sequence<Session>              Session__list;
+
+      //
+      // SDAI Simple types
+      //
+  typedef long   bound_instance_value;
+  typedef any    Error_base;
+  typedef string DAObjectID;
+  typedef string Time_stamp;
+  typedef string Schema_name;
+  typedef string Entity_name;
+
+      // EXPRESS number data type (10303-26:1996(E) 5.2.1.1)
+  enum Number_discriminant
+  {
+    Number_discriminant__long,
+    Number_discriminant__double
+  };
+
+  union Number switch (Number_discriminant)
+  {
+    case Number_discriminant__long:   long c1;
+    case Number_discriminant__double: double c2;
+  };
+
+      // EXPRESS logical data type (10303-26:1996(E) 5.2.1.4)
+  enum Logical
+  {
+    LFalse,
+    LTrue,
+    LUnset,
+    LUnknown
+  };
+
+      // EXPRESS boolean data type (10303-26:1996(E) 5.2.1.5)
+  enum Bool
+  {
+    BFalse,
+    BTrue,
+    BUnset
+  };
+
+      // SDAI access_type data type
+  enum Access_type
+  {
+    sdaiRO,
+    sdaiRW,
+    Access_type_unset
+  };
+
+      // SDAI transaction commit mode
+  enum Commit_mode
+  {
+    sdaiCOMMIT,
+    sdaiABORT
+  };
+
+     // Error_id, enumerators taken from ISO/DIS 10303-22:1996(E), 14 June 1996.
+  enum Error_id 
+  {
+    sdaiNO_ERR,     // No error 
+    sdaiSS_OPN,     // Session open
+    sdaiSS_NAVL,    // Session not available
+    sdaiSS_NOPN,    // Session is not open
+    sdaiRP_NEXS,    // Repository does not exist 
+    sdaiRP_NAVL,    // Repository not available 
+    sdaiRP_OPN,     // Repository already opened 
+    sdaiRP_NOPN,    // Repository is not open 
+    sdaiTR_EAB,     // Transaction ended abnormally so it no longer exists
+    sdaiTR_EXS,     // Transaction exists
+    sdaiTR_NAVL,    // Transaction not available
+    sdaiTR_RW,      // Transaction read-write
+    sdaiTR_NRW,     // Transaction not read-write
+    sdaiTR_NEXS,    // Transaction does not exist
+    sdaiMO_NDEQ,    // SDAI-model not domain-equivalent 
+    sdaiMO_NEXS,    // SDAI-model does not exist 
+    sdaiMO_NVLD,    // SDAI-model invalid
+    sdaiMO_DUP,     // SDAI-model duplicate
+    sdaiMX_NRW,     // SDAI-model access not read-write
+    sdaiMX_NDEF,    // SDAI-model access is not defined
+    sdaiMX_RW,      // SDAI-model access read-write
+    sdaiMX_RO,      // SDAI-model access read-only
+    sdaiSD_NDEF,    // Schema definition is not defined
+    sdaiED_NDEF,    // Entity definition not defined
+    sdaiED_NDEQ,    // Entity definition not domain equivalent
+    sdaiED_NVLD,    // Entity definition invalid
+    sdaiRU_NDEF,    // Rule not defined 
+    sdaiEX_NSUP,    // Expression evaluation not supported 
+    sdaiAT_NVLD,    // Attribute invalid
+    sdaiAT_NDEF,    // Attribute not defined
+    sdaiSI_DUP,     // Schema instance duplicate
+    sdaiSI_NEXS,    // Schema instance does not exist
+    sdaiEI_NEXS,    // Entity instance does not exist 
+    sdaiEI_NAVL,    // Entity instance not available
+    sdaiEI_NVLD,    // Entity instance invalid
+    sdaiEI_NEXP,    // Entity instance not exported
+    sdaiSC_NEXS,    // Scope does not exist 
+    sdaiSC_EXS,     // Scope exists 
+    sdaiAI_NEXS,    // Aggregate instance does not exist 
+    sdaiAI_NVLD,    // Aggregate instance invalid 
+    sdaiAI_NSET,    // Aggregate instance is empty 
+    sdaiVA_NVLD,    // Value invalid
+    sdaiVA_NEXS,    // Value does not exist
+    sdaiVA_NSET,    // Value not set 
+    sdaiVT_NVLD,    // Value type invalid
+    sdaiIR_NEXS,    // Iterator does not exist 
+    sdaiIR_NSET,    // Current member is not defined
+    sdaiIX_NVLD,    // Index invalid
+    sdaiER_NSET,    // Event recording not set
+    sdaiOP_NVLD,    // Operator invalid 
+    sdaiFN_NAVL,    // Function not available
+    sdaiSY_ERR      // Underlying system error 
+  };
+
+  exception SDAIException
+  {
+    unsigned long minor;
+  };
+
+  interface Object__sdailist;
+
+  interface Aggregate_instance
+  {
+        // SDAI query (ISO/DIS 10303-22:1996(E) 10.4.14)
+        //
+        //   This operation populates an existing non-persistent list by
+        // executing a query over a source (self is the source). The 
+        // aggregate instance identifies the set of entities over which
+        // the query is executed.
+        //
+        //    After the query is executed, the resulting aggregate will contain
+        // the instance identifiers for those entity instances where the 
+        // evaluation of the logical expression defining the criteria is TRUE.
+        //
+        //    If the resulting list already contained any entity instance
+        // identifiers then they remain in the list and those resulting from
+        // the query are appended.
+        //
+        //   Possible Error indicators:
+        //
+        //  sdaiSS_NOPN  An SDAI session is not open
+        //  sdaiAI_NEXS  The input or output aggregate instance does not exist
+        //  sdaiRP_NEXS  The repository does not exist
+        //  sdaiMO_NEXS  The SDAI-model does not exist
+        //  sdaiSI_NEXS  The schema instance does not exist
+        //  sdaiEI_NEXS  The entity instance does not exist
+        //  sdaiEI_NVLD  The logical expression entity instance is invalid
+        //  sdaiVA_NVLD  The logical expression value is invalid
+        //  sdaiOP_NVLD  The logical expression operator is invalid
+        //  sdaiAT_NVLD  The logical expression attribute is invalid
+        //  sdaiVT_NVLD  The logical expression value/operator/attribute 
+        //                 combination is invalid
+        //  sdaiFN_NAVL  This function is not supported by this implementation
+        //  sdaiSY_ERR   Underlying system error
+        //
+        /* jg == Still not clear what is the role of theEntity. Also, 
+           the specification in Part 23, 7.4.2.1.7 has a generic result 
+           parameter.
+           Furthermore, what is the purpose of class Query_source in Part 23,
+           5.3.13.11. No operation uses it.
+
+           This function is particularly badly specified because the third
+           parameter's type is of an interface derived from this one */
+    long SDAIQuery(in string expression, 
+                   in Object theEntity,
+                   inout Object__sdailist destination) raises(SDAIException);
+  };
+
+  interface Object__iterator
+  {
+    // add SDAI operations here
+  };
+
+  interface Object__sdailist : Aggregate_instance
+  {
+    attribute Object__list list_;
+
+    // add SDAI operations here
+  };
+
+     // interface PID (ISO/DIS 10303-23:1996(E) 5.3.10.1)
+     // Also, CORBA POS specification, Section 5.4
+     //
+     //    The PID class maintains the persistent object identifier for every
+     // persistent object, objects of class DAObject, and objects of any class
+     // derived directly or indirectly from DAObject.
+     //
+     // POS: The PID identifies one or more locations within a Datastore that
+     // represent the persistent data of an object and generates a string
+     // identifier for that data. An object must have a PID in order to store
+     // its data persistently.
+     //
+  interface PID
+  {
+        // datastore_type (ISO/DIS 10303-23:1996(E) 5.3.10.1)
+        //
+        //    The datastore_type attribute shall identify the type of the 
+        // data access interface of the underlying datastore. It shall be
+        // set to the value "SDAI" for all Model_contents stored in an
+        // SDAI implementation.
+        //
+        // POS: This identifies the interface of a Datastore. Example
+        // datastore_types might be "DB2", "PosixFS" and "ObjectStore". The
+        // PDS hides the Datastore's interface from the client, the persistent
+        // object and the POM, but PDS implementations are dependent on the
+        // Datastore's interface.
+        //
+    attribute string datastore_type;
+
+        // get_PIDstring (ISO/DIS 10303-23:1996(E) 5.3.10.1)
+        //
+        //    This fuction shall return the string representation of the 
+        // persistent object identifier for the object referred to by this
+        // PID. The contents of the PIDString is not specified in this part
+        // of ISO 10303. The persistent object identifier shall consist of
+        // identifiers from the PID class itself as well as from its derived
+        // classes. The PID class shall maintain the persistent identifier
+        // for the repository in which the persistent object resides.
+        //
+        // POS: This operation returns a string version of the PID called the
+        // PIDString. A client should only obtain the PIDString using this
+        // operation. This allows the PID implementation to decide the form 
+        // of the PIDString.
+        //
+    string get_PIDString();
+  };
+
+     // interface PIDFactory 
+     //
+     //    This is an example PIDFactory as given in CORBAservices: Common
+     // Object Services Specification, Chapter 5: the Persistent Object
+     // Service Specification, Section 5.4.2 Example PIDFactory Interface. 
+     //
+  interface PIDFactory
+  {
+    PID create_PID_from_key(in string key);
+    PID create_PID_from_string(in string pid_string);
+    PID create_PID_from_string_and_key(in string pid_string, in string key);
+  };
+
+     // interface PID_DA (ISO/DIS 10303-23:1996(E) 5.3.10.3)
+     // Also, CORBA POS specification, Direct Access Protocol, Section 5.10.1
+     //
+     // The Direct Access Protocol supports direct access to persistent data
+     // through typed attributes organized in data objects that are defined
+     // in a Data Definition Language (DDL). An object using this protocol
+     // whould represent its persistent data as one or more interconnected
+     // data objects, For uniformity, the persistent data of an object is
+     // described as a single data object; however, that data object might be
+     // the root of a graph of data objects interconnected by stored data
+     // object references. If an object uses multiple data objects, the
+     // object traverses the graph by following stored data object references.
+     //
+     //    The PID_DA class maintains the persistent object identifier for an
+     // application DAObject.
+     //
+     // POS: The Persistent Identifiers (PIDs) used by the PDS_DA contain
+     // an object identifier that is local to the particular PDS. This value
+     // may be accessed through this extension to the CosPersistencePID 
+     // interface.
+     //
+  interface PID_DA : PID
+  {
+        // oid (ISO/DIS 10303-23:1996(E) 5.3.10.3)
+        //
+        //   This attribute shall set and return the string representation of the
+        // persistent identifier, local to the Model_contents, of the DAObject
+        // referred to by this object.
+        //
+        // POS: This returns the data object identifier used by this PDS for
+        // the data object specified by the PID. The DAObjectID type is 
+        // defined as an unbounded sequence of bytes that may be 
+        // vendor-dependent.
+        //
+    attribute DAObjectID oid;
+  };
+
+     // interface PID_SDAI (ISO/DIS 10303-23:1996(E) 5.3.10.2)
+     //
+     //    The PID_SDAI class maintains the persistent object identifier for
+     // a Model_contents object.
+     //
+  interface PID_SDAI : PID
+  {
+        // Modelid (ISO/DIS 10303-23:1996(E) 5.3.10.3)
+        //
+        //    This attribute shall set and return the string representation of
+        // the persistent identifier of the cluster of data for the 
+        // Model_contents referred to by this PID.
+        //
+    attribute string Modelid;
+  };
+
+     // interface DAObject (ISO/DIS 10303-23:1996(E) 5.3.10.5)
+     // Also, CORBA POS Section 5.10.2, Direct Access Protocol.
+     //
+     //  From POS: The DAObject interface provides operations that many data
+     // object clients need. A Datastore implementation may provide support
+     // for these operations automatically for its data objects. A data object
+     // is not required to support this interface. A client can obtain access
+     // to these operations by narrowing a data object reference to the
+     // DAObject interface.
+     //
+  interface DAObject
+  {
+        // dado_same (ISO/DIS 10303-23:1996(E) 5.3.10.5)
+        //
+        //   Returns TRUE if obj points to the same object as self
+        //
+        //    POS specification description: This returns true if the target
+        // data object and the parameter data object are the same data object.
+        // This operation can be used to test data object references for
+        // identity.
+        //
+    Bool dado_same(in DAObject obj);
+
+        // Get persistent label (ISO/DIS 10303-22:1996(E) 10.11.6)
+        //
+        //    This operation returns a persistent label for the specified
+        // application instance. The label shall be unique within the
+        // repository containing the SDAI-model containing the application
+        // instance. Any subsequent request for a persistent label for the
+        // same application instance shall return the same persistent label
+        // in the current or nay subsequent SDAI session.
+        //
+        //   Possible Error indicators:
+        //
+        //  sdaiTR_NEXS  The transaction has not been started
+        //  sdaiTR_NAVL  The transaction is currently not available
+        //  sdaiTR_EAB   The transaction ended abnormally
+        //  sdaiRP_NOPN  The repository is not open
+        //  sdaiEI_NEXS  The entity instance does not exist 
+        //  sdaiFN_NAVL  This function is not supported by the implementation
+        //  sdaiSY_ERR   An underlying system error occurred
+        //
+        //    POS specification description: This returns the object identifier
+        // for the data object. The scope of data object identifiers is
+        // implementation-specific, but is not guaranteed to be global.
+        // 
+        /* jg == The return value of this function in Part 23 is PID_DA which
+                 seems wrong. We follow the CORBAservices specification here.
+                 (Persistent Object Service Specification, Section 5.10). Also
+                 note that the return value as described in the text above
+                 should be a string type.
+         */
+    DAObjectID dado_oid();
+
+        // dado_pid
+        //
+        //    POS specification description: This returns a PID_DA for the 
+        // data object.
+        //
+        /* jg == This function is not included in Part 23 and 26. However, it is 
+                 part of interface DAObject in the specification of the
+                 Persistent Object Service. 
+         */
+    PID_DA dado_pid();
+
+        // dado_remove (ISO/DIS 10303-23:1996(E) 5.3.10.5)
+        //
+        //    This function shall delete the object from persistent store and
+        // releases its resources. The function need not delete the aggregate-
+        // valued attributes of an object.
+        //
+        //    POS specification description: This deletes the object from the
+        // persistent store and deletes the in-memory data object.
+        //
+    void dado_remove();
+
+        // dado_free (ISO/DIS 10303-23:1996(E) 5.3.10.5)
+        // 
+        //    This function shall inform the implementation that it is free
+        // to move the object back to the persistent store.
+        // 
+        //    POS specification description: This informs the PDS (Persistent 
+        // Data Service) that the data object is not required for the time
+        // being, and the PDS may move it back to persistent store. The data
+        // object must be preserved and must be brought back the next time it is 
+        // referenced. This operation is only a hint and is provided to improve
+        // performance and resource usage. 
+        //
+    void dado_free();
+  };
+
+  interface DAObjectFactory
+  {
+    DAObject create_DAObject();
+  };
+  
+     // interface DAObject_SDAI (ISO/DIS 10303-23:1996(E) 5.3.10.6)
+     //
+     //   The DAObject_SDAI interface specializes the DAObject interface
+     // (which is borrowed from the POS, and consequently has a fixed interface)
+     // for an SDAI implementation. The DAObject_SDAI interface collects all
+     // the behaviors required of entity instances. It is the common base class
+     // of both Application_instances and Dictionary_instances. (From 
+     // ISO/DIS 10303-23:1996(E) Annex B.)
+     //
+  interface DAObject_SDAI : DAObject
+  {
+    /* jg == See comment in Session_instance about FindUsedin
+    Object__list FindUsedin(in string attrName, in Schema_instance__list aggr)
+                  raises(SDAIException);
+
+          == Function Owning_model() is the only function that is not also a
+             member of class Session_instance.
+     */
+
+        // Find entity instance SDAI-model (ISO/DIS 10303-22:1996(E) 10.10.3)
+        //
+        //    This operation returns the identifier for the SDAI-model that
+        // contains an entity_instance.
+        //
+        //   Possible Error indicators:
+        //
+        //  sdaiMO_NEXS  The SDAI-model does not exist
+        //  sdaiTR_NAVL  The transaction is currently not available
+        //  sdaiTR_EAB   The transaction ended abnormally
+        //  sdaiEI_NEXS  The entity instance does not exist 
+        //  sdaiSY_ERR   An underlying system error occurred
+        //
+//    Model Owning_model() raises(SDAIException);
+
+        // Find entity instance users (ISO/DIS 10303-22:1996(E) 10.10.8)
+        //
+        //   Returns the identifiers of all the entity instances that 
+        // reference the specified entity instance within the specified
+        // set of schema instances and appends them to the resulting non-
+        // persistent list. In the case where the specified entity instance 
+        // is referenced multiple times by the same referencing entity 
+        // instance, the referencing entity instance shall appear in the
+        // result once for each reference.
+        //
+        //   Possible Error indicators:
+        //
+        //  sdaiSS_NOPN  An SDAI session is not open
+        //  sdaiEI_NEXS  The entity instance does not exist 
+        //  sdaiAI_NEXS  The list instance does not exist 
+        //  sdaiRP_NOPN  The repository is not open
+        //  sdaiTR_NAVL  The transaction is currently not available
+        //  sdaiTR_EAB   The transaction ended abnormally
+        //  sdaiFN_NAVL  This function is not supported by the implementation
+        //  sdaiSY_ERR   An underlying system error occurred
+        //
+        //   See same function in Session_instance
+        //
+//    Object__list FindUsers(in Schema_instance__list aggr) raises(SDAIException);
+
+        // Find instance roles (ISO/DIS 10303-22:1996(E) 10.10.11)
+        //
+        //   Returns the identifiers of all the attributes of the entity
+        // instances that reference the specified entity instance within
+        // the specified set of schema instances and appends them to the
+        // resulting non-persistent list. In the case where the specified 
+        // entity instance is referenced multiple times by the same
+        // referencing attribute, the referencing attribute shall appear in 
+        // the result once. In implementations supporting domain equivalence,
+        // attributes defined in external schemas may be included in the
+        // result.
+        //
+        //   Possible Error indicators:
+        //
+        //  sdaiSS_NOPN  An SDAI session is not open
+        //  sdaiEI_NEXS  The entity instance does not exist 
+        //  sdaiSI_NEXS  The schema instance does not exist 
+        //  sdaiAI_NEXS  The list instance does not exist 
+        //  sdaiRP_NOPN  The repository is not open
+        //  sdaiTR_NAVL  The transaction is currently not available
+        //  sdaiTR_EAB   The transaction ended abnormally
+        //  sdaiFN_NAVL  This function is not supported by the implementation
+        //  sdaiSY_ERR   An underlying system error occurred
+        //
+        //   See same function in Session_instance
+        //
+//    Object__list FindRoles(in Schema_instance__list aggr) raises(SDAIException);
+
+        // Find instance data types (ISO/DIS 10303-22:1996(E) 10.10.12)
+        //
+        //   Returns the indentifiers of all the named_types of which the 
+        // specified entity instance is a member and appends them to the
+        // resulting non-persistent list. In implementations supporting
+        // domain equivalence, the types from external schemas domain
+        // equivalent with the resulting types from the native schema for
+        // the entity instance are included in the result.
+        //
+        //   Possible Error indicators:
+        //
+        //  sdaiSS_NOPN  An SDAI session is not open
+        //  sdaiEI_NEXS  The entity instance does not exist 
+        //  sdaiAI_NEXS  The list instance does not exist 
+        //  sdaiRP_NOPN  The repository is not open
+        //  sdaiTR_NAVL  The transaction is currently not available
+        //  sdaiTR_EAB   The transaction ended abnormally
+        //  sdaiFN_NAVL  This function is not supported by the implementation
+        //  sdaiSY_ERR   An underlying system error occurred
+        //
+        //   See same function in Session_instance
+        //
+//    Object__list FindDataTypes(in Schema_instance__list aggr) raises(SDAIException);
+
+        // Express entity instance comparison operator (:=:)
+        // 
+        // Convenience function. ISO/DIS 10303-23:1996(E) 5.3.10.6.6
+        //
+        //   Determines whether the parameter refers to the same entity
+        // instance as self. It returns TRUE if the two instances are the
+        // same, FALSE if the two instances are not the same, UNKNOWN if
+        // either instance is unset.
+        //
+        //   Possible Error indicators:
+        //
+        //  sdaiMX_NDEF   SDAI-model access not defined
+        //  sdaiEI_NEXS   Entity instance does not exist
+        //  sdaiTY_NDEF   Type not defined
+        //  sdaiSY_ERR    Underlying system error
+        //
+        //   See same function in Session_instance
+        //
+//    Logical IsSame(in Object otherEntity) raises(SDAIException);
+
+        // Get instance type (ISO/DIS 10303-22:1996(E) 10.10.4)
+        //
+        //   Returns the identifier of the entity_definition, as found in 
+        // the SDAI data dictionary, upon which the specified entity_instance
+        // is based.
+        //
+        //   Possible Error indicators:
+        //
+        //  sdaiMX_NDEF  The SDAI-model access is not defined
+        //  sdaiTR_NAVL  The transaction is currently not available
+        //  sdaiTR_EAB   The transaction ended abnormally
+        //  sdaiEI_NEXS   Entity instance does not exist
+        //  sdaiFN_NAVL  This function is not supported by the implementation
+        //  sdaiSY_ERR   An underlying system error occurred
+        //
+        //   See same function in Session_instance
+        //
+    string GetInstanceTypeName() raises(SDAIException);
+
+        // Is instance of (ISO/DIS 10303-22:1996(E) 10.10.5)
+        //
+        //   Determines whether an entity_instance is an instance of exactly
+        // the specified entity data type, not one of its subtypes, or if the
+        // entity_instance is an instance of an entity data type defined to
+        // be domain equivalent with exactly the specified entity data type
+        // via an instance of domain_equivalent_type.
+        //
+        //   Possible Error indicators:
+        //
+        //  sdaiMX_NDEF  The SDAI-model access is not defined
+        //  sdaiTR_NAVL  The transaction is currently not available
+        //  sdaiTR_EAB   The transaction ended abnormally
+        //  sdaiED_NDEF  The entity definition is not defined
+        //  sdaiEI_NEXS   Entity instance does not exist
+        //  sdaiFN_NAVL  This function is not supported by the implementation
+        //  sdaiSY_ERR   An underlying system error occurred
+        //
+    Bool IsInstanceOf(in string typeName) raises(SDAIException);
+
+        // Is kind of (ISO/DIS 10303-22:1996(E) 10.10.6)
+        //
+        //   Determines whether an entity_instance is an instance of a 
+        // particular entity type or of one of its subtypes including the
+        // case where it is a constituent of a complex subtype. The
+        // subtype relationship shall be determined solely on the basis of 
+        // information from within the application schemas. 
+        //
+        //   Possible Error indicators:
+        //
+        //  sdaiMX_NDEF  The SDAI-model access is not defined
+        //  sdaiTR_NAVL  The transaction is currently not available
+        //  sdaiTR_EAB   The transaction ended abnormally
+        //  sdaiED_NDEF  The entity definition is not defined
+        //  sdaiEI_NEXS   Entity instance does not exist
+        //  sdaiFN_NAVL  This function is not supported by the implementation
+        //  sdaiSY_ERR   An underlying system error occurred
+        //
+    Bool IsKindOf(in string typeName) raises(SDAIException);
+
+        // Is SDAI kind of (ISO/DIS 10303-22:1996(E) 10.10.7)
+        //
+        //   Determines whether an entity_instance is an instance of a 
+        // particular entity type or of one of its subtypes including the
+        // case where it is a constituent of a complex subtype. The
+        // subtype relationship shall be determined on the basis of 
+        // information from within the application schemas and the SDAI
+        // parameter data schema.
+        //
+        //   Possible Error indicators:
+        //
+        //  sdaiMX_NDEF  The SDAI-model access is not defined
+        //  sdaiTR_NAVL  The transaction is currently not available
+        //  sdaiTR_EAB   The transaction ended abnormally
+        //  sdaiED_NDEF  The entity definition is not defined
+        //  sdaiEI_NEXS   Entity instance does not exist
+        //  sdaiFN_NAVL  This function is not supported by the implementation
+        //  sdaiSY_ERR   An underlying system error occurred
+        //
+    Bool IsSDAIKindOf(in string typeName) raises(SDAIException);
+  };
+
+  interface DAObject_SDAIFactory
+  {
+    DAObject_SDAI create();
+  };
+
+   // interface Application_instance (ISO/DIS 10303-23:1996(E) 5.3.12)
+     //
+     //   The Application_instance interface collects the behaviors commmon
+     // to all SDAI application_instances. Instances of application data, as
+     // defined, for example, in STEP application protocols, are, in a sense,
+     // descendants of this class. (From ISO/DIS 10303-23:1996(E) Annex B.)
+     //
+
+/*
+  interface Application_instance
+*/
+  interface Application_instance : DAObject_SDAI
+  {
+/*
+    void StepFileId(in long fid);
+    long StepFileId();
+*/
+	attribute long StepFileId;
+
+        // Validate where rule (ISO/DIS 10303-22:1996(E) 10.11.9)
+        //
+        //   This operation determines whether a where rule is satisfied for
+        // an application instance. The rule may be one declared directly as
+        // part of the entity_definition upon which the application instance
+        // is based or it may be one declared on a defined_type that constrains
+        // the value of an attribute declared in the entity_definition upon
+        // which the application instance is based.
+        //
+        //   Possible Error indicators:
+        //
+        //  sdaiMX_NDEF  The SDAI-model access is not defined
+        //  sdaiRU_NDEF  The rule is not defined
+        //  sdaiEI_NEXS  The entity instance does not exist 
+        //  sdaiTR_NAVL  The transaction is currently not available
+        //  sdaiTR_EAB   The transaction ended abnormally
+        //  sdaiEX_NSUP  The bound expression evaluation is not supported by
+        //                 this implementation
+        //  sdaiFN_NAVL  This function is not supported by the implementation
+        //  sdaiSY_ERR   An underlying system error occurred
+        //
+//    Logical ValidateWhereRule(in string ruleName)
+//                 raises(SDAIException);
+
+        // Validate required explicit attributes assigned 
+        //                               (ISO/DIS 10303-22:1996(E) 10.11.10)
+        //
+        //   This operation determines whether all required explicit attributes
+        // of an application instance have values.
+        //
+        //   Possible Error indicators:
+        //
+        //  sdaiMX_NDEF  The SDAI-model access is not defined
+        //  sdaiEI_NEXS  The entity instance does not exist 
+        //  sdaiAI_NEXS  The list instance does not exist 
+        //  sdaiTR_NAVL  The transaction is currently not available
+        //  sdaiTR_EAB   The transaction ended abnormally
+        //  sdaiFN_NAVL  This function is not supported by the implementation
+        //  sdaiSY_ERR   An underlying system error occurred
+        //
+//    Bool ValidateRequiredExplicitAttributesAssigned(
+//                out string__list attrList) raises(SDAIException);
+
+        // Validate inverse attributes (ISO/DIS 10303-22:1996(E) 10.11.11)
+        //
+        //   This operation determines whether all cardinality constraints 
+        // specified in inverse attribute declarations are satisfied for an
+        // application instance.
+        //
+        //   Possible Error indicators:
+        //
+        //  sdaiMX_NDEF  The SDAI-model access is not defined
+        //  sdaiEI_NEXS  The entity instance does not exist 
+        //  sdaiAI_NEXS  The list instance does not exist 
+        //  sdaiTR_NAVL  The transaction is currently not available
+        //  sdaiTR_EAB   The transaction ended abnormally
+        //  sdaiEX_NSUP  The bound expression evaluation is not supported by
+        //                 this implementation
+        //  sdaiFN_NAVL  This function is not supported by the implementation
+        //  sdaiSY_ERR   An underlying system error occurred
+        //
+        /* jg == Note that the return value specified in Part 22 is boolean */
+//    Logical ValidateInverseAttrs(out string__list attrList)
+//                 raises(SDAIException);
+
+        // Validate explicit attributes references 
+        //                               (ISO/DIS 10303-22:1996(E) 10.11.12)
+        //
+        //    This operation determines whether all of the entity instances
+        // that are values of attributes of an application instance are of
+        // a valid entity data type for those attributes.
+        //
+        //   Possible Error indicators:
+        //
+        //  sdaiMX_NDEF  The SDAI-model access is not defined
+        //  sdaiEI_NEXS  The entity instance does not exist 
+        //  sdaiAI_NEXS  The list instance does not exist 
+        //  sdaiTR_NAVL  The transaction is currently not available
+        //  sdaiTR_EAB   The transaction ended abnormally
+        //  sdaiFN_NAVL  This function is not supported by the implementation
+        //  sdaiSY_ERR   An underlying system error occurred
+        //
+//    Logical ValidateExplicitAttrsReferences(in string__list aggr)
+//                 raises(SDAIException);
+
+        // Validate aggregates size (ISO/DIS 10303-22:1996(E) 10.11.13)
+        //
+        //    This operation determines whether the number of members, or
+        // valid index values for array instances, of any attributes of the
+        // specified application instance meet the constraints specified in
+        // the declared types of these attributes.
+        //
+        //   Possible Error indicators:
+        //
+        //  sdaiMX_NDEF  The SDAI-model access is not defined
+        //  sdaiVA_NSET  The bound value is not set
+        //  sdaiEI_NEXS  The entity instance does not exist 
+        //  sdaiAI_NEXS  The list instance does not exist 
+        //  sdaiTR_NAVL  The transaction is currently not available
+        //  sdaiTR_EAB   The transaction ended abnormally
+        //  sdaiEX_NSUP  The bound expression evaluation is not supported by
+        //                 this implementation
+        //  sdaiFN_NAVL  This function is not supported by the implementation
+        //  sdaiSY_ERR   An underlying system error occurred
+        //
+//    Logical ValidateAggrSize(in string__list aggr)
+//                 raises(SDAIException);
+
+        // Validate aggregates uniqueness (ISO/DIS 10303-22:1996(E) 10.11.14)
+        //
+        //    This operation determines whether all the members are unique in
+        // any aggregate instance that is a value of any attribute whose 
+        // declared type requires this uniqueness. This validation is performed
+        // for all attributes of a particular instance. Uniqueness is determined
+        // by instance identifier comparison in cases where entity_instances
+        // are the elements of the aggregate.
+        //
+        //   Possible Error indicators:
+        //
+        //  sdaiMX_NDEF  The SDAI-model access is not defined
+        //  sdaiVA_NSET  The bound value is not set
+        //  sdaiEI_NEXS  The entity instance does not exist 
+        //  sdaiAI_NEXS  The list instance does not exist 
+        //  sdaiTR_NAVL  The transaction is currently not available
+        //  sdaiTR_EAB   The transaction ended abnormally
+        //  sdaiEX_NSUP  The bound expression evaluation is not supported by
+        //                 this implementation
+        //  sdaiFN_NAVL  This function is not supported by the implementation
+        //  sdaiSY_ERR   An underlying system error occurred
+        //
+//    Logical ValidateAggrUniqueness(in string__list aggr)
+//                 raises(SDAIException);
+
+        // Validate array not optional (ISO/DIS 10303-22:1996(E) 10.11.15)
+        //
+        //    This operation determines whether array instances whose array
+        // type declaration does not allow optional elements have values at
+        // all index positions. This validation is performed for all attributes
+        // of the specified application instance having array instances as 
+        // their values.
+        //
+        //   Possible Error indicators:
+        //
+        //  sdaiMX_NDEF  The SDAI-model access is not defined
+        //  sdaiVA_NSET  The bound value is not set
+        //  sdaiEI_NEXS  The entity instance does not exist 
+        //  sdaiAI_NEXS  The list instance does not exist 
+        //  sdaiTR_NAVL  The transaction is currently not available
+        //  sdaiTR_EAB   The transaction ended abnormally
+        //  sdaiEX_NSUP  The bound expression evaluation is not supported by
+        //                 this implementation
+        //  sdaiFN_NAVL  This function is not supported by the implementation
+        //  sdaiSY_ERR   An underlying system error occurred
+        //
+//    Logical ValidateArrayNotOptional(in string__list aggr)
+//                 raises(SDAIException);
+
+        // Validate string width (ISO/DIS 10303-22:1996(E) 10.11.16)
+        //
+        //    This operation determines whether strings that are attribute
+        // values are of the specified width. This validation is performed
+        // for all attributes of a particular instance with a string as their
+        // value.
+        //
+        //   Possible Error indicators:
+        //
+        //  sdaiMX_NDEF  The SDAI-model access is not defined
+        //  sdaiVA_NSET  The bound value is not set
+        //  sdaiEI_NEXS  The entity instance does not exist 
+        //  sdaiAI_NEXS  The list instance does not exist 
+        //  sdaiTR_NAVL  The transaction is currently not available
+        //  sdaiTR_EAB   The transaction ended abnormally
+        //  sdaiEX_NSUP  The bound expression evaluation is not supported by
+        //                 this implementation
+        //  sdaiFN_NAVL  This function is not supported by the implementation
+        //  sdaiSY_ERR   An underlying system error occurred
+        //
+//    Logical ValidateStringWidth(in string__list aggr)
+//                 raises(SDAIException);
+
+        // Validate binary width (ISO/DIS 10303-22:1996(E) 10.11.17)
+        //
+        //    This operation determines whether BINARY values for attributes
+        // are of the specified width. This validation is performed for all
+        // attribute binary values of a particular instance.
+        //
+        //   Possible Error indicators:
+        //
+        //  sdaiMX_NDEF  The SDAI-model access is not defined
+        //  sdaiVA_NSET  The bound value is not set
+        //  sdaiEI_NEXS  The entity instance does not exist 
+        //  sdaiAI_NEXS  The list instance does not exist 
+        //  sdaiTR_NAVL  The transaction is currently not available
+        //  sdaiTR_EAB   The transaction ended abnormally
+        //  sdaiEX_NSUP  The bound expression evaluation is not supported by
+        //                 this implementation
+        //  sdaiFN_NAVL  This function is not supported by the implementation
+        //  sdaiSY_ERR   An underlying system error occurred
+        //
+//    Logical ValidateBinaryWidth(in string__list aggr)
+//                 raises(SDAIException);
+
+        // Validate real precision (ISO/DIS 10303-22:1996(E) 10.11.18)
+        //
+        //    This operation determines whether real values for attributes
+        // are of the specified minimum precision. This validation is performed
+        // for all attributes of a particular instance with real values.
+        //
+        //   Possible Error indicators:
+        //
+        //  sdaiMX_NDEF  The SDAI-model access is not defined
+        //  sdaiVA_NSET  The bound value is not set
+        //  sdaiEI_NEXS  The entity instance does not exist 
+        //  sdaiAI_NEXS  The list instance does not exist 
+        //  sdaiTR_NAVL  The transaction is currently not available
+        //  sdaiTR_EAB   The transaction ended abnormally
+        //  sdaiEX_NSUP  The bound expression evaluation is not supported by
+        //                 this implementation
+        //  sdaiFN_NAVL  This function is not supported by the implementation
+        //  sdaiSY_ERR   An underlying system error occurred
+        //
+//    Logical ValidateRealPrecision(in string__list aggr)
+//                 raises(SDAIException);
+
+        // Validate scope reference restrictions 
+        //                                   (ISO/DIS 10303-22:1996(E) 10.8.9)
+        //
+        //    This operation determines whether the reference restrictions of
+        // all instances in the scope of the identified instance are satisfied.
+        // This function validates each instance in the specified scope as well
+        // as in any nested scope.
+        //
+        //   Possible Error indicators:
+        //
+        //  sdaiEI_NEXS  The entity instance does not exist 
+        //  sdaiTR_NAVL  The transaction is currently not available
+        //  sdaiTR_EAB   The transaction ended abnormally
+        //  sdaiFN_NAVL  This function is not supported by the implementation
+        //  sdaiSY_ERR   An underlying system error occurred
+        //
+//    Logical ValidateScope() raises(SDAIException);
+
+        // Copy application instance (ISO/DIS 10303-22:1996(E) 10.11.1)
+        //
+        //    This operation creates a copy of the specified application
+        // instance in the specified SDAI-model. The values of attributes or
+        // elements of aggregates at any level of nesting in the new instance
+        // are set as follows:
+        //
+        //    - for entity instance references, the new instance will reference
+        //      the same application_instances as the original.
+        //    - for simple types, the values are copied.
+        //    - for aggregate instances, new aggregate instances are created.
+        //
+        //    TargetModel is the SDAI-model to contain the copy of the
+        // specified application instance. If TargetModel is not the SDAI-
+        // model within which self exists, then it shall be based upon the
+        // same schema as the SDAI-model in which self exists or it shall be
+        // based upon a schema containing an entity type defined as domain 
+        // equivalent with the entity type upon which self is based. Only 
+        // attributes with the same attribute.name in the domain equivalent
+        // entity type are set with values. The TargetModel and SDAI-model in
+        // which the object to be copied exists shall both be associated with
+        // the same schema_instance in the case where they are different.
+        //
+        //    This operation creates references between entity instances in
+        // the two different SDAI-models if required.
+        //
+        //    In the entity_extent in TargetModel.contents.folders that has
+        // entity_extent.definition = Object.definition, entity_extent.instances
+        // shall contain NewObject. This same entity_extent shall also appear in
+        // TargetModel.contents.populated_folders.
+        //
+        //   Possible Error indicators:
+        //
+        //  sdaiMX_NDEF  The SDAI-model access is not defined
+        //  sdaiMX_NRW   The SDAI-model access in not read-write
+        //  sdaiMO_NDEQ  The SDAI-model is not domain equivalent with the
+        //                 application instance
+        //  sdaiMO_NEXS  The SDAI-model does not exist
+        //  sdaiTR_NRW   The transaction is not read-write
+        //  sdaiTR_NAVL  The transaction is currently not available
+        //  sdaiTR_EAB   The transaction ended abnormally
+        //  sdaiEI_NEXS  The entity instance does not exist 
+        //  sdaiSY_ERR   An underlying system error occurred
+        //
+//    Application_instance Copy(in Model_contents targetModel)
+//                 raises(SDAIException);
+
+        // Create aggregate instance (ISO/DIS 10303-22:1996(E) 10.11.5)
+        //
+        //    This operation creates a new, empty aggregate instance as the
+        // representation of the specified attribute for an application 
+        // instance replacing any existing attribute value. If the attribute
+        // domain is an aggregate of aggregates, only the outer-most aggregate
+        // is created. In the case where the specified attribute value was 
+        // previously an aggregate instance, this operation behaves as if the
+        // Unset attribute value operation whee executed on the attribute
+        // before the new aggregate is created. In the case where the domain
+        // of the specified attribute is EXPRESS SELECT TYPE, the aggregate_
+        // primitive provided as input/output shall be a select_aggregate_
+        // instance and the select_aggregate_instance_data_type shall be set
+        // on input with the defined_type specifying the aggregation_type the
+        // operation is to create.
+        //
+        //   Possible Error indicators:
+        //
+        //  sdaiTR_NRW   The transaction is not read-write
+        //  sdaiTR_NAVL  The transaction is currently not available
+        //  sdaiTR_EAB   The transaction ended abnormally
+        //  sdaiMX_NRW   The SDAI-model access in not read-write
+        //  sdaiEI_NEXS  The entity instance does not exist 
+        //  sdaiAT_NDEF  The attribute is not defined
+        //  sdaiAT_NVLD  The attribute is not an explicit attribute
+        //  sdaiVA_NSET  The bound value is not set
+        //  sdaiEX_NSUP  The bound expression evaluation is not supported by
+        //                 this implementation
+        //  sdaiSY_ERR   An underlying system error occurred
+        //
+//    any CreateAggrInstance(in string attrName)
+//                 raises(SDAIException);
+
+        // Get persistent label (ISO/DIS 10303-22:1996(E) 10.11.6)
+        //
+        //    This operation returns a persistent label for the specified
+        // application instance. The label shall be unique within the
+        // repository containing the SDAI-model containing the application
+        // instance. ANy subsequent request for a persistent label for the
+        // same application instance shall return the same persistent label
+        // in the current or nay subsequent SDAI session.
+        //
+        //   Possible Error indicators:
+        //
+        //  sdaiTR_NEXS  The transaction has not been started
+        //  sdaiTR_NAVL  The transaction is currently not available
+        //  sdaiTR_EAB   The transaction ended abnormally
+        //  sdaiRP_NOPN  The repository is not open
+        //  sdaiEI_NEXS  The entity instance does not exist 
+        //  sdaiFN_NAVL  This function is not supported by the implementation
+        //  sdaiSY_ERR   An underlying system error occurred
+        //
+    string GetPersistentLabel() raises(SDAIException);
+
+        // Get description (ISO/DIS 10303-22:1996(E) 10.11.8)
+        //
+        //    This operation returns a human readable description for the
+        // specified application instance. Any subsequent request for a
+        // description for the same application instance shall return the
+        // same description in the current SDAI session. For implementations
+        // where application instances exist in a file encoded according to
+        // ISO 10303-21, the form of this description shall be the application 
+        // instance name followed by one space followed by the name of the
+        // file containing the application instance.
+        //
+        //   Possible Error indicators:
+        //
+        //  sdaiTR_NEXS  The transaction has not been started
+        //  sdaiTR_NAVL  The transaction is currently not available
+        //  sdaiTR_EAB   The transaction ended abnormally
+        //  sdaiRP_NOPN  The repository is not open
+        //  sdaiEI_NEXS  The entity instance does not exist 
+        //  sdaiSY_ERR   An underlying system error occurred
+        //
+    string GetDescription() raises(SDAIException);
+
+        // Is scope owner (ISO/DIS 10303-22:1996(E) 10.8.2)
+        //
+        //    This operation test whether an application instance owns a
+        // scope.
+        //
+        //   Possible Error indicators:
+        //
+        //  sdaiSS_NOPN  An SDAI sessionis not open
+        //  sdaiEI_NEXS  The entity instance does not exist 
+        //  sdaiTR_NAVL  The transaction is currently not available
+        //  sdaiTR_EAB   The transaction ended abnormally
+        //  sdaiFN_NAVL  This function is not supported by the implementation
+        //  sdaiSY_ERR   An underlying system error occurred
+        //
+//    Logical IsScopeOwner() raises(SDAIException);
+
+        // Get scope (ISO/DIS 10303-22:1996(E) 10.8.3)
+        //
+//    Scope GetScope() raises(SDAIException);
+
+        // Add to scope (ISO/DIS 10303-22:1996(E) 10.8.1)
+        //
+        //    This operation adds an application instance to the scope owned
+        // by another application instance. A new scope is created if Target
+        // did not already own a scope. This places a restriction on the
+        // domain of valid references to to Object to those application
+        // instances within the same scope. 
+        //
+        //   Possible Error indicators:
+        //
+        //  sdaiEI_NEXS  The entity instance does not exist 
+        //  sdaiTR_NRW   The transaction is not read-write
+        //  sdaiTR_NAVL  The transaction is currently not available
+        //  sdaiTR_EAB   The transaction ended abnormally
+        //  sdaiMX_NRW   The SDAI-model access in not read-write
+        //  sdaiFN_NAVL  This function is not supported by the implementation
+        //  sdaiSY_ERR   An underlying system error occurred
+        //
+//    void AddToScope(in Application_instance target) raises(SDAIException);
+
+        // Remove from scope (ISO/DIS 10303-22:1996(E) 10.8.4)
+        //
+        //    This operation removes an application instance from the specified
+        // scope. If the specified scope is nested within a higher level scope
+        // then the application instance is added to the next higher level
+        // scope. If the application instance is the last member of the set
+        // scope.owned, leaving the scope with no owned application instances,
+        // then the scope is deleted.
+        //
+        //   Possible Error indicators:
+        //
+        //  sdaiEI_NEXS  The entity instance does not exist 
+        //  sdaiEI_NAVL  The entity instance is not in the scope
+        //  sdaiSC_NEXS  Scope does not exist
+        //  sdaiTR_NRW   The transaction is not read-write
+        //  sdaiTR_NAVL  The transaction is currently not available
+        //  sdaiTR_EAB   The transaction ended abnormally
+        //  sdaiRP_NOPN  The repository is not open
+        //  sdaiMX_NRW   The SDAI-model access in not read-write
+        //  sdaiFN_NAVL  This function is not supported by the implementation
+        //  sdaiSY_ERR   An underlying system error occurred
+        //
+//    void RemoveFromScope(in Scope scope) raises(SDAIException);
+
+        // Add to export list (ISO/DIS 10303-22:1996(E) 10.8.5)
+        //
+        //    This operation extends the domain of valid references of an
+        // application instance to the next higher level. THis operation adds
+        // the application instance to the export list of a scope. The
+        // application instance to be exported from the specified scope shall
+        // be a member of Target.owned or shall be a member of scope.export_list
+        // of a nested scope owned by an application instance that is a member
+        // of Target.owned.
+        //
+        //   Possible Error indicators:
+        //
+        //  sdaiEI_NEXS  The entity instance does not exist 
+        //  sdaiEI_NAVL  The entity instance is not in the scope
+        //  sdaiSC_NEXS  Scope does not exist
+        //  sdaiTR_NRW   The transaction is not read-write
+        //  sdaiTR_NAVL  The transaction is currently not available
+        //  sdaiTR_EAB   The transaction ended abnormally
+        //  sdaiMX_NRW   The SDAI-model access in not read-write
+        //  sdaiFN_NAVL  This function is not supported by the implementation
+        //  sdaiSY_ERR   An underlying system error occurred
+        //
+//    void AddToExportList(in Scope target) raises(SDAIException);
+
+        // Remove from export list (ISO/DIS 10303-22:1996(E) 10.8.6)
+        //
+        //    This operation restores the restriction on the domain of valid
+        // references of an application instance by one level to those
+        // application instances available within the owning scope. This 
+        // operation removes the application instance from the export list
+        // scope.
+        //
+        //   Possible Error indicators:
+        //
+        //  sdaiEI_NEXS  The entity instance does not exist 
+        //  sdaiEI_NAVL  The entity instance is not in the scope
+        //  sdaiEI_NEXP  The entity instance is not exported
+        //  sdaiSC_NEXS  Scope does not exist
+        //  sdaiTR_NRW   The transaction is not read-write
+        //  sdaiTR_NAVL  The transaction is currently not available
+        //  sdaiTR_EAB   The transaction ended abnormally
+        //  sdaiMX_NRW   The SDAI-model access in not read-write
+        //  sdaiFN_NAVL  This function is not supported by the implementation
+        //  sdaiSY_ERR   An underlying system error occurred
+        //
+//    void RemoveFromExportList(in Scope scope) raises(SDAIException);
+  };
+
+  interface Application_instanceFactory 
+  {
+    Application_instance create();
+  };
+
+     // SDAI entity session_instance (ISO/DIS 10303-22:1996(E) 9.4.6)
+     //
+     //   A session_instance is an sdai_instance whose definition is an
+     // entity type defined in the SDAI session schema or interfaced into
+     // the SDAI session schema from the SDAI population schema. Entity types
+     // interfaced into the SDAI session schema from the SDAI dictionary
+     // schema are not instances of session_instance. The subtype relationship
+     // between session_instance and sdai_instance shall be supported in all
+     // SDAI implementations.
+     //
+  interface Session_instance
+  {
+     // jg == Check method FindUsedin, inconsistent specification between Part 26
+     // (7.1.2) and Part 23 (7.1.1.2). Check against Part 22 (10.10.9), see
+     // if it is possible to implement this function in an early binding.
+
+        // Find entity instance users (ISO/DIS 10303-22:1996(E) 10.10.8)
+        //
+        //   Returns the identifiers of all the entity instances that 
+        // reference the specified entity instance within the specified
+        // set of schema instances and appends them to the resulting non-
+        // persistent list. In the case where the specified entity instance 
+        // is referenced multiple times by the same referencing entity 
+        // instance, the referencing entity instance shall appear in the
+        // result once for each reference.
+        //
+        //   Possible Error indicators:
+        //
+        //  sdaiSS_NOPN  An SDAI session is not open
+        //  sdaiEI_NEXS  The entity instance does not exist 
+        //  sdaiAI_NEXS  The list instance does not exist 
+        //  sdaiRP_NOPN  The repository is not open
+        //  sdaiTR_NAVL  The transaction is currently not available
+        //  sdaiTR_EAB   The transaction ended abnormally
+        //  sdaiFN_NAVL  This function is not supported by the implementation
+        //  sdaiSY_ERR   An underlying system error occurred
+        //
+    Object__list FindUsers(in Schema_instance__list aggr)
+                 raises(SDAIException);
+
+        // Find instance roles (ISO/DIS 10303-22:1996(E) 10.10.11)
+        //
+        //   Returns the identifiers of all the attributes of the entity
+        // instances that reference the specified entity instance within
+        // the specified set of schema instances and appends them to the
+        // resulting non-persistent list. In the case where the specified 
+        // entity instance is referenced multiple times by the same
+        // referencing attribute, the referencing attribute shall appear in 
+        // the result once. In implementations supporting domain equivalence,
+        // attributes defined in external schemas may be included in the
+        // result.
+        //
+        //   Possible Error indicators:
+        //
+        //  sdaiSS_NOPN  An SDAI session is not open
+        //  sdaiEI_NEXS  The entity instance does not exist 
+        //  sdaiSI_NEXS  The schema instance does not exist 
+        //  sdaiAI_NEXS  The list instance does not exist 
+        //  sdaiRP_NOPN  The repository is not open
+        //  sdaiTR_NAVL  The transaction is currently not available
+        //  sdaiTR_EAB   The transaction ended abnormally
+        //  sdaiFN_NAVL  This function is not supported by the implementation
+        //  sdaiSY_ERR   An underlying system error occurred
+        //
+    Object__list FindRoles(in Schema_instance__list aggr)
+                 raises(SDAIException);
+
+        // Find instance data types (ISO/DIS 10303-22:1996(E) 10.10.12)
+        //
+        //   Returns the indentifiers of all the named_types of which the 
+        // specified entity instance is a member and appends them to the
+        // resulting non-persistent list. In implementations supporting
+        // domain equivalence, the types from external schemas domain
+        // equivalent with the resulting types from the native schema for
+        // the entity instance are included in the result.
+        //
+        //   Possible Error indicators:
+        //
+        //  sdaiSS_NOPN  An SDAI session is not open
+        //  sdaiEI_NEXS  The entity instance does not exist 
+        //  sdaiAI_NEXS  The list instance does not exist 
+        //  sdaiRP_NOPN  The repository is not open
+        //  sdaiTR_NAVL  The transaction is currently not available
+        //  sdaiTR_EAB   The transaction ended abnormally
+        //  sdaiFN_NAVL  This function is not supported by the implementation
+        //  sdaiSY_ERR   An underlying system error occurred
+        //
+    Object__list FindDataTypes(in Schema_instance__list aggr)
+                 raises(SDAIException);
+
+        // Express entity instance comparison operator (:=:)
+        // 
+        // Convenience function. ISO/DIS 10303-23:1996(E) 7.1.1.5
+        //
+        //   Determines whether the parameter refers to the same entity
+        // instance as self. It returns TRUE if the two instances are the
+        // same, FALSE if the two instances are not the same, UNKNOWN if
+        // either instance is unset.
+        //
+        //   Possible Error indicators:
+        //
+        //  sdaiMX_NDEF   SDAI-model access not defined
+        //  sdaiEI_NEXS   Entity instance does not exist
+        //  sdaiTY_NDEF   Type not defined
+        //  sdaiSY_ERR    Underlying system error
+        //
+    Logical IsSame(in Object otherEntity) raises(SDAIException);
+
+        // Get instance type (ISO/DIS 10303-22:1996(E) 10.10.4)
+        //
+        //   Returns the identifier of the entity_definition, as found in 
+        // the SDAI data dictionary, upon which the specified entity_instance
+        // is based.
+        //
+        //   Possible Error indicators:
+        //
+        //  sdaiMX_NDEF  The SDAI-model access is not defined
+        //  sdaiTR_NAVL  The transaction is currently not available
+        //  sdaiTR_EAB   The transaction ended abnormally
+        //  sdaiEI_NEXS   Entity instance does not exist
+        //  sdaiFN_NAVL  This function is not supported by the implementation
+        //  sdaiSY_ERR   An underlying system error occurred
+        //
+    string GetInstanceTypeName() raises(SDAIException);
+
+        // Is instance of (ISO/DIS 10303-22:1996(E) 10.10.5)
+        //
+        //   Determines whether an entity_instance is an instance of exactly
+        // the specified entity data type, not one of its subtypes, or if the
+        // entity_instance is an instance of an entity data type defined to
+        // be domain equivalent with exactly the specified entity data type
+        // via an instance of domain_equivalent_type.
+        //
+        //   Possible Error indicators:
+        //
+        //  sdaiMX_NDEF  The SDAI-model access is not defined
+        //  sdaiTR_NAVL  The transaction is currently not available
+        //  sdaiTR_EAB   The transaction ended abnormally
+        //  sdaiED_NDEF  The entity definition is not defined
+        //  sdaiEI_NEXS   Entity instance does not exist
+        //  sdaiFN_NAVL  This function is not supported by the implementation
+        //  sdaiSY_ERR   An underlying system error occurred
+        //
+    Bool IsInstanceOf(in string typeName) raises(SDAIException);
+
+        // Is kind of (ISO/DIS 10303-22:1996(E) 10.10.6)
+        //
+        //   Determines whether an entity_instance is an instance of a 
+        // particular entity type or of one of its subtypes including the
+        // case where it is a constituent of a complex subtype. The
+        // subtype relationship shall be determined solely on the basis of 
+        // information from within the application schemas. 
+        //
+        //   Possible Error indicators:
+        //
+        //  sdaiMX_NDEF  The SDAI-model access is not defined
+        //  sdaiTR_NAVL  The transaction is currently not available
+        //  sdaiTR_EAB   The transaction ended abnormally
+        //  sdaiED_NDEF  The entity definition is not defined
+        //  sdaiEI_NEXS   Entity instance does not exist
+        //  sdaiFN_NAVL  This function is not supported by the implementation
+        //  sdaiSY_ERR   An underlying system error occurred
+        //
+    Bool IsKindOf(in string typeName) raises(SDAIException);
+
+        // Is SDAI kind of (ISO/DIS 10303-22:1996(E) 10.10.7)
+        //
+        //   Determines whether an entity_instance is an instance of a 
+        // particular entity type or of one of its subtypes including the
+        // case where it is a constituent of a complex subtype. The
+        // subtype relationship shall be determined on the basis of 
+        // information from within the application schemas and the SDAI
+        // parameter data schema.
+        //
+        //   Possible Error indicators:
+        //
+        //  sdaiMX_NDEF  The SDAI-model access is not defined
+        //  sdaiTR_NAVL  The transaction is currently not available
+        //  sdaiTR_EAB   The transaction ended abnormally
+        //  sdaiED_NDEF  The entity definition is not defined
+        //  sdaiEI_NEXS   Entity instance does not exist
+        //  sdaiFN_NAVL  This function is not supported by the implementation
+        //  sdaiSY_ERR   An underlying system error occurred
+        //
+    Bool IsSDAIKindOf(in string typeName) raises(SDAIException);
+  };
+
+  interface Event : Session_instance
+  {
+    readonly attribute string function_id_;
+    readonly attribute Time_stamp time_;
+  };
+
+  interface Error_event : Event
+  {
+    readonly attribute Error_id error_;
+    readonly attribute string description_;
+    readonly attribute Error_base base_;
+  };
+
+   // SDAI entity sdai_session (ISO/DIS 10303-22:1996(E) 7.4.1)
+     //
+     //   An sdai_session represents the information describing an SDAI
+     // session at a point in time while the SDAI implementation is active.
+     // It contains information reflecting the state of the session with
+     // respect to transactions, errors, event recording, repositories, and
+     // the data dictionary.
+     //
+  interface Session : Session_instance
+  {
+    readonly attribute Implementation sdai_implementation_;
+    readonly attribute Bool recording_active_;
+    readonly attribute Error_event__list errors_;
+    readonly attribute Transaction active_transaction_;
+    // DAS changed based on Part 23
+    //    readonly attribute Repository__list known_servers_;
+    readonly attribute Repository__set known_servers_;
+    // DAS changed based on Part 23
+    //    readonly attribute Repository__list active_servers_;
+    readonly attribute Repository__set active_servers_;
+
+    readonly attribute Model__list active_models_;
+    readonly attribute Schema_instance data_dictionary_;
+
+        // Open session (ISO/DIS 10303-22:1996(E) 10.3.1)
+        //
+        //   This operation initiates the SDAI implementation and commences
+        // a new SDAI session. The repository containing the session schema
+        // instance and data is opened by this operation and only the Close
+        // session operation can close that repository. Access to the session
+        // data is available immediately. In implementations supporting 
+        // access to a data dictionary, the repositories and SDAI-models
+        // containing the data dictionary information are not opened by this
+        // operation and are not accessible until a transaction has been
+        // started.
+        //
+        //   Possible Error indicators:
+        //
+        //  sdaiSS_OPN   An SDAI session is already open
+        //  sdaiSS_NAVL  The implementation cannot open a session
+        //  sdaiSY_ERR   Underlying system error
+        //
+// DASBUG
+//    Session  OpenSession() raises(SDAIException);
+
+        // Close session (ISO/DIS 10303-22:1996(E) 10.4.4)
+        //
+        //   This operation terminates the SDAI session. Further SDAI 
+        // operations can be processed only after a subsequent Open session
+        // operation. In implementations supporting transaction levels 1 or
+        // 2, the implementation shall behave as if the Close repository 
+        // operation is performed on each repository in session.active_servers.
+        // In an implementation supporting transaction level 3, the 
+        // implementation shall behave as if the End transaction access and
+        // abort operation is performed if a transaction existed in the 
+        // session followed by the Close repository operation on each open
+        // repository regardless of whether a transaction existed or not.
+        //
+        //   All instances of all entity types in all SDAI and application
+        // schemas shall no longer be available.
+        //
+        //   Possible Error indicators:
+        //
+        //  sdaiSS_OPN   An SDAI session is already open
+        //  sdaiSY_ERR   Underlying system error
+        //
+    void CloseSession() raises(SDAIException);
+
+        // Errors
+        //
+        // Convenience function. (ISO/DIS 10303-23:1996(E) 7.1.2.1.1)
+        //
+        //   The Errors function shall provide read-only public access to
+        // the list of errors in the errors attribute of class Session. It
+        // shall return a read-only list of the error events associated with
+        // the session. If event recording is not on, the function shall 
+        // return an empty list.
+        //
+        //   Possible Error indicators:
+        //
+        //  sdaiSS_NOPN  Session not open 
+        //  sdaiSY_ERR   Underlying system error
+        //
+    Error_event__list Errors() raises(SDAIException);
+
+        // Open repository (ISO/DIS 10303-22:1996(E) 10.4.5)
+        //
+        //   This operation makes the contents of a repository available
+        // for subsequent access.
+        //
+        //   Repository shall be added to the set in Session.active_servers.
+        //
+        //   Possible Error indicators:
+        //
+        //  sdaiSS_NOPN  Session not open 
+        //  sdaiRP_NEXS  The repository does not exist 
+        //  sdaiRP_NAVL  The repository is currently unavailable
+        //  sdaiRP_OPN   The repository is already open
+        //  sdaiSY_ERR   Underlying system error
+        //
+    void OpenRepo(inout Repository repo) raises(SDAIException);
+
+        // Close repository (ISO/DIS 10303-22:1996(E) 10.5.3)
+        //
+        //   This operation closes and sdai_repository that has been
+        // previously opened. SDAI-models and schema instances within the
+        // repository are no longer available for access.
+        //
+        //   In an implementation supporting transaction levels 1 or 2, the
+        // implementation shall behave as if an End read-only access is 
+        // performed on all read-only SDAI-models. In an implementation
+        // supporting transaction level 1, the implementation shall behave
+        // as if an End read-write access on all read-write SDAI-models is 
+        // performed on all active SDAI-models within the repository. In an
+        // implementation supporting transaction level 2, the implementation
+        // shall behave as if an Undo changes and End read-write access on 
+        // all read-write SDAI-models is performed on all active SDAI-models
+        // within the repository.
+        //
+        //   In an implementation supporting transaction level 3, if a read-
+        // write transaction is active in the session then there are two
+        // circumstances in which this operation shall result in the TR_RW
+        // error. The first is if any SDAI-model within the repository has been
+        // created, deleted, or modified since the most recent commit or abort
+        // operation was performed. Otherwise, implementations supporting
+        // transaction level 3 shall behave as if the End read-only access
+        // operation is performed on all active read-only SDAI-models and the
+        // End read-write access operation is performed on all active read-
+        // write SDAI-models within the repository before the repository is 
+        // closed.
+        //
+        //   Possible Error indicators:
+        //
+        //  sdaiSS_NOPN  Session not open 
+        //  sdaiRP_NEXS  The repository does not exist 
+        //  sdaiRP_OPN   The repository is already open
+        //  sdaiTR_RW    The transaction is read-write and changes are unresolved
+        //  sdaiSY_ERR   Underlying system error
+        //
+    void CloseRepo(inout Repository repo) raises(SDAIException);
+
+        // Delete aggregate
+        //
+        // Convenience function. (ISO/DIS 10303-23:1996(E) 7.1.2.1.6)
+        //
+        //   Deletes a persistent Aggregate_instance. Entity_instances having
+        // attribute values which refer to the deleted Aggregate_instance
+        // need not be automatically updated.
+        //
+        //   Possible Error indicators:
+        //
+        //  sdaiMX_NRW   SDAI-model access not read-write
+        //  sdaiAG_NEXS  Aggregate does not exist
+        //  sdaiSY_ERR   Underlying system error
+        //
+    void DeleteAggr(inout any aggr)
+                 raises(SDAIException);
+
+        // Record error (ISO/DIS 10303-22:1996(E) 10.4.1)
+        //
+        //   This operation appends an error event to the SDAI session
+        // errors record.
+        //
+        //   Possible Error indicators:
+        //
+        //  sdaiSS_NOPN  An SDAI session is not open
+        //  sdaiER_NSET  Event recording active is not set
+        //  sdaiFN_NAVL  This function is not supported by this implementation
+        //  sdaiSY_ERR   Underlying system error
+        //
+    void RecordError(in string functionID, in long error, in string descpt)
+                 raises(SDAIException);
+
+        // Is recording on
+        //
+        // Convenience function. (ISO/DIS 10303-23:1996(E) 7.1.2.1.8)
+        //
+        //   It indicates whether event recording is currently enabled, 
+        // disabled, or not supported by the SDAI implementation. It returns
+        // TRUE if event recording is enabled, FALSE if disabled, and UNKNOWN
+        // if not supported.
+        //
+        //   Possible Error indicators:
+        //
+        //  sdaiSS_NOPN  An SDAI session is not open
+        //  sdaiSY_ERR   Underlying system error
+        //
+    Logical IsRecordingOn() raises(SDAIException);
+
+        // Start event recording (ISO/DIS 10303-22:1996(E) 10.4.2)
+        //
+        //   This operation enables, or re-enables, event recording by SDAI
+        // operations in the SDAI session. Any error events previously 
+        // recorded during the session remain in the error event record and
+        // any new error events recorded are appended to the error event
+        // record.
+        //
+        //   Possible Error indicators:
+        //
+        //  sdaiSS_NOPN  An SDAI session is not open
+        //  sdaiFN_NAVL  This function is not supported by this implementation
+        //  sdaiSY_ERR   Underlying system error
+        //
+    Bool StartEventRecording() raises(SDAIException);
+
+        // Stop event recording (ISO/DIS 10303-22:1996(E) 10.4.3)
+        //
+        //   This operation disables event recording for an SDAI session.
+        //
+        //   Session.recording_active shall be set to, or remain, FALSE.
+        //
+        //   Possible Error indicators:
+        //
+        //  sdaiSS_NOPN  An SDAI session is not open
+        //  sdaiFN_NAVL  This function is not supported by this implementation
+        //  sdaiSY_ERR   Underlying system error
+        //
+    Bool StopEventRecording() raises(SDAIException);
+
+        // Start transaction read-write access (ISO/DIS 10303-22:1996(E) 10.4.6)
+        // Start transaction read-only access (ISO/DIS 10303-22:1996(E) 10.4.7)
+        //
+        //   This operation specifies the beginning of a sequence of operations
+        // for which access is provided to entity_instances such that changes
+        // may be or not be made to those instances.
+        //
+        //   A valid instance of sdai_transaction is created.
+        //
+        //   Transaction shall be set as Session.active_transaction
+        //
+        //   Transaction.mode shall be set to the given access type.
+        // 
+        //   Possible Error indicators:
+        //
+        //  sdaiSS_NOPN  An SDAI session is not open
+        //  sdaiTR_EXS   A transaction has already been started
+        //  sdaiFN_NAVL  This function is not supported by this implementation
+        //  sdaiSY_ERR   Underlying system error
+        //
+    Transaction StartTransaction(in Access_type theMode)
+                 raises(SDAIException);
+
+        // Commit (ISO/DIS 10303-22:1996(E) 10.4.8)
+        //
+        //   This operation makes persistent all changes to the contents,
+        // SDAI-models and schema instances, of all open repositories made
+        // since the last Start transaction with read-write access, Commit or
+        // Abort operation, whichever operation occurred most recently. The
+        // existing read-write transaction continues to be active. This 
+        // operation performs no function in the case where the current
+        // transaction is read-only. This operation updates or sets the
+        // change_date attribute of any schema instance or SDAI-model that
+        // has been modified or created. 
+        // 
+        //  The current condition of all instances of the following in open
+        // repositories is made persistent:
+        // 
+        //    sdai_repository_contents, schema_instance, sdai_model.name, 
+        //    sdai_model_contents, entity_extent, scope, application_instance,
+        //    aggregate_instance except for non_persistent_list_instance.
+        // 
+        //   Possible Error indicators:
+        //
+        //  sdaiSS_NOPN  An SDAI session is not open
+        //  sdaiTR_NEXS  A transaction has not been started
+        //  sdaiTR_EAB   The transaction ended abnormally
+        //  sdaiFN_NAVL  This function is not supported by this implementation
+        //  sdaiSY_ERR   Underlying system error
+        //
+    void Commit(in Transaction xaction) raises(SDAIException);
+
+        // Abort (ISO/DIS 10303-22:1996(E) 10.4.9)
+        //
+        //   This operation restores the condition of the contents, SDAI-models
+        // and schema instances, of all open repositories to that which existed
+        // at the time of the last Start transaction read-write or Commit
+        // operation whichever operation occurred most recently. All deleted
+        // instances are restored, all created instances no longer exist and
+        // all modifications to instances are lost. The existing read-write
+        // transaction continues to be active. This operation performs no
+        // function in the case where the current transaction is read-only.
+        // 
+        //   The behavior of an iterator on an aggregate_instance that was
+        // deleted, created, or changed since the most recent Start transaction
+        // read-write or commit operation is not specified in Part 22.
+        // 
+        //   For instances of the following that were created since the most
+        // recent Start transaction read-write or Commit in open repositories,
+        // function equivalent to the appropriate Delete operation shall occur: 
+        // 
+        //    schema_instance, sdai_model, scope, application_instance,
+        //    aggregate_instance except for non_persistent_list_instance
+        // 
+        //   For instance of the following that were deleted, either directly
+        // or indirectly, since the most recent Start transaction read-write or
+        // commit in open repositories, each instance is restored to the
+        // condition that existed at the time of the Start transaction read-write
+        // or Commit:
+        // 
+        //    schema_instance, sdai_model, sdai_model_contents, entity_extent, 
+        //    scope, application_instance, aggregate_instance except for non_
+        //    persistent_list_instance 
+        // 
+        //   The condition of all instances of the following that have been 
+        // changed since the most recent Start transaction read-write or Commit
+        // in open repositories is reset to that which existed at the time of 
+        // the Start transaction read-write or Commit:
+        // 
+        //    sdai_repository_contents, 
+        //    schema_instance, sdai_model, sdai_model_contents, entity_extent, 
+        //    scope, application_instance, aggregate_instance except for non_
+        //    persistent_list_instance 
+        // 
+        //   Possible Error indicators:
+        //
+        //  sdaiSS_NOPN  An SDAI session is not open
+        //  sdaiTR_NEXS  A transaction has not been started
+        //  sdaiTR_EAB   The transaction ended abnormally
+        //  sdaiTR_NAVL  The transaction is currently no available
+        //  sdaiFN_NAVL  This function is not supported by this implementation
+        //  sdaiSY_ERR   Underlying system error
+        //
+    void Abort(in Transaction xaction) raises(SDAIException);
+
+        // End transaction access and commit (ISO/DIS 10303-22:1996(E) 10.4.10)
+        // End transaction access and abort (ISO/DIS 10303-22:1996(E) 10.4.11)
+        //
+        //   This operation ends the sequence of operations started by the Start
+        // transaction read-write access or Start transaction read-only access
+        // operation. The implementation shall behave as if the Abort or Commit
+        // operation is performed before ending the transaction access. Further
+        // operations accessing entity instances within the session may be
+        // processed only after a subsequent Start transaction read-write or
+        // Start transaction read-only access operation.
+        // 
+        //   Possible Error indicators:
+        //
+        //  sdaiSS_NOPN  An SDAI session is not open
+        //  sdaiTR_NEXS  A transaction has not been started
+        //  sdaiTR_EAB   The transaction ended abnormally
+        //  sdaiTR_NAVL  The transaction is currently no available
+        //  sdaiFN_NAVL  This function is not supported by this implementation
+        //  sdaiSY_ERR   Underlying system error
+        //
+    void EndTransaction(inout Transaction xaction, in Commit_mode mode)
+                 raises(SDAIException);
+  };
+
+  interface SessionFactory
+  {
+    Session create();
+  };
+
+     // SDAI entity Implementation (ISO/DIS 10303-22:1996(E) 7.4.2)
+     //
+     //   An implementation represents a software product that provides the
+     // functionality defined by an SDAI language binding.
+     //
+  interface Implementation : Session_instance
+  {
+    readonly attribute string name_;
+    readonly attribute string level_;
+    readonly attribute string sdai_version_;
+    readonly attribute string binding_version_;
+    readonly attribute long implementation_class_;
+    readonly attribute long transaction_level_;
+    readonly attribute long expression_level_;
+    readonly attribute long recording_level_;
+    readonly attribute long scope_level_;
+    readonly attribute long domain_equivalence_level_;
+  };
+
+     // SDAI entity Transaction (ISO/DIS 10303-22:1996(E) 7.4.5)
+     //
+     //   An sdai_transaction describes the currently available access to data
+     // (RW or RO) within an sdai_session. Transactions shall not exist
+     // outside of a session and only one transaction shall be active at any
+     // given time. Transactions are required only of SDAI implementations
+     // supporting transaction level 3.
+     //
+  interface Transaction : Session_instance
+  {
+    readonly attribute Access_type mode_;
+    readonly attribute Session owning_session_;
+  };
+
+     // SDAI entity sdai_repository (ISO/DIS 10303-22:1996(E) 7.4.3)
+     //
+     //   An sdai_repository represents the identification of a facility
+     // where sdai_models and schema_instances can be stored during a session.
+     //
+     //   This is intended to support the physical location of the SDAI-models
+     // and schema instances.
+     //
+  interface Repository : Session_instance
+  {
+    readonly attribute string name_;
+    readonly attribute Repository_contents contents_;
+    readonly attribute string description_;
+// DAS BUG
+//    readonly attribute Session__list session_;
+    readonly attribute Session session_;
+
+        // Create SDAI-model (ISO/DIS 10303-22:1996(E) 10.5.1)
+        //
+        //   This operation establishes a new sdai_model within which
+        // entity instances can be created and accessed. The newly created
+        // SDAI-model has no access mode associated with it.
+        //
+        //   New instances of sdai_model and of sdai_model_contents shall be
+        // created.
+        //
+        //   Model.contents.instances and Model.contents.populated_folders
+        // shall be initialized with set instances containing no members.
+        //
+        //   Model.contents.folders shall contain a single entity_extent
+        // instance for each entity_definition in Schema.entitites, with 
+        // entity_extent.definition set to the corresponding entity_definition
+        // and entity_extent.instances being initialized with a set instance
+        // containing no members.
+        //
+        //   Repository.contents.models shall be updated to include Model.
+        //
+        //   Possible Error indicators:
+        //
+        //  sdaiSS_NOPN  An SDAI session is not open
+        //  sdaiRP_NEXS  The repository does not exist
+        //  sdaiRP_NOPN  The repository is not open
+        //  sdaiTR_NRW   The transaction is not read-write
+        //  sdaiTR_NAVL  The transaction is currently no available
+        //  sdaiTR_EAB   The transaction ended abnormally
+        //  sdaiSI_DUP   A duplicate schema instance name exists
+        //  sdaiVT_NVLD  The schema instance name value type is invalid
+        //  sdaiSD_NDEF  The schema definition is not defined
+        //  sdaiSY_ERR   Underlying system error
+        //
+    Model CreateModel(in string modelName, in string schemaName)
+                 raises(SDAIException);
+
+        // Start read-only access (ISO/DIS 10303-22:1996(E) 10.7.3)
+        //
+        //   This operation makes available the instances within an SDAI-
+        // model but restricts access to them to be read-only. Any subsequent
+        // SDAI operation that attempts to modify instances within the 
+        // sdai_model shall result in an error.
+        //
+        //   Possible Error indicators:
+        //
+        //  sdaiSS_NOPN  An SDAI session is not open
+        //  sdaiTR_NEXS  A transaction has not been started
+        //  sdaiTR_NAVL  The transaction is currently no available
+        //  sdaiTR_EAB   The transaction ended abnormally
+        //  sdaiRP_NOPN  The repository is not open
+        //  sdaiMO_NEXS  The SDAI-model does not exist
+        //  sdaiMX_RO    The SDAI-model access is read-only
+        //  sdaiMX_RW    The SDAI-model access is read-write
+        //  sdaiSY_ERR   Underlying system error
+        //
+    Model GetModel(in string modelName) raises(SDAIException);
+
+        // Start read-write access (ISO/DIS 10303-22:1996(E) 10.7.6)
+        // Promote SDAI-model to read-write (ISO/DIS 10303-22:1996(E) 10.7.4)
+        //
+        //    Start read-write access makes available the instances within an
+        // SDAI-model and allows access to them to be read-write.
+        //
+        //    Model shall be added to sdai_session.active_models for the
+        // current session.
+        //
+        //    Promote SDAI-model to read-write allows read-write access to
+        // instances within and sdai_model to which the Start read-only
+        // access operation had been applied or that had been automatically 
+        // started with read-only access as the result of a reference to an
+        // entity instance withing the SDAI-model.
+        //
+        //   Possible Error indicators:
+        //
+        //  sdaiSS_NOPN  An SDAI session is not open
+        //  sdaiTR_NEXS  A transaction has not been started
+        //  sdaiTR_NRW   The transaction is not read-write
+        //  sdaiTR_NAVL  The transaction is currently no available
+        //  sdaiTR_EAB   The transaction ended abnormally
+        //  sdaiRP_NOPN  The repository is not open
+        //  sdaiMO_NEXS  The SDAI-model does not exist
+        //  sdaiMX_NDEF  The SDAI-model access is not defined 
+        //  sdaiMX_RO    The SDAI-model access is read-only
+        //  sdaiMX_RW    The SDAI-model access is read-write
+        //  sdaiSY_ERR   Underlying system error
+        //
+    Model GetModelRW(in string modelName) raises(SDAIException);
+
+        // Delete SDAI-model (ISO/DIS 10303-22:1996(E) 10.7.1)
+        //
+        //   This operation deletes an sdai_model along with all of the
+        // entity_instances, aggregate_instances, and scopes that it contains
+        // Any subsequent operation using a reference to the SDAI-model or to
+        // any of its contents shall behave as if the reference was unset.
+        //
+        //   Possible Error indicators:
+        //
+        //  sdaiSS_NOPN  An SDAI session is not open
+        //  sdaiTR_NEXS  A transaction has not been started
+        //  sdaiTR_NRW   The transaction is not read-write
+        //  sdaiTR_NAVL  The transaction is currently no available
+        //  sdaiTR_EAB   The transaction ended abnormally
+        //  sdaiRP_NOPN  The repository is not open
+        //  sdaiMO_NEXS  The SDAI-model does not exist
+        //  sdaiSY_ERR   Underlying system error
+        //
+    void DeleteModel(inout Model model) raises(SDAIException);
+
+        // Get session identifier (ISO/DIS 10303-22:1996(E) 10.11.7)
+        //
+        //   This operation returns the session identifier for the application
+        // instance referenced by the specified persistent label.
+        //
+        //   Possible Error indicators:
+        //
+        //  sdaiTR_NEXS  A transaction has not been started
+        //  sdaiTR_NAVL  The transaction is currently no available
+        //  sdaiTR_EAB   The transaction ended abnormally
+        //  sdaiRP_NOPN  The repository is not open
+        //  sdaiRP_NEXS  The repository does not exist
+        //  sdaiEI_NEXS  The entity instance does not exist
+        //  sdaiFN_NAVL  This function is not supported by this implementation
+        //  sdaiSY_ERR   Underlying system error
+        //
+    DAObject GetSessionIdentifier(in PID_DA label) raises(SDAIException);
+
+        // Create schema instance (ISO/DIS 10303-22:1996(E) 10.5.2)
+        //
+        //   This operation establishes a new schema instance.
+        //
+        //   The early-binding version of the function shall create a schema-
+        // specific Schema_instance.
+        //
+        //   Possible Error indicators:
+        //
+        //  sdaiSS_NOPN  An SDAI session is not open
+        //  sdaiRP_NEXS  The repository does not exist
+        //  sdaiRP_NOPN  The repository is not open
+        //  sdaiTR_NRW   The transaction is not read-write
+        //  sdaiTR_NAVL  The transaction is currently no available
+        //  sdaiTR_EAB   The transaction ended abnormally
+        //  sdaiSI_DUP   A duplicate schema instance name exists
+        //  sdaiVT_NVLD  The schema instance name value type is invalid
+        //  sdaiSD_NDEF  The schema definition is not defined
+        //  sdaiSY_ERR   Underlying system error
+        //
+    Schema_instance CreateSchemaInstance(in string sname, in string schemaName)
+                 raises(SDAIException);
+
+        // Delete schema instance (ISO/DIS 10303-22:1996(E) 10.6.1)
+        //
+        //   This operation deletes a schema instance. If references between
+        // two SDAI-models associated with the schema instance existed and
+        // there is not another schema instance with which both SDAI-models
+        // are associated, then the references between the entity instances in 
+        // those two SDAI-models shall behave as if they are unset when they
+        // are subsequently accessed.
+        //
+        //   Possible Error indicators:
+        //
+        //  sdaiSS_NOPN  An SDAI session is not open
+        //  sdaiSI_NEXS  The schema instance does not exist
+        //  sdaiRP_NOPN  The repository is not open
+        //  sdaiTR_NRW   The transaction is not read-write
+        //  sdaiTR_NAVL  The transaction is currently no available
+        //  sdaiTR_EAB   The transaction ended abnormally
+        //  sdaiSY_ERR   Underlying system error
+        //
+    void DeleteSchemaInstance(inout Schema_instance inst)
+                 raises(SDAIException);
+
+        // SDAI query (ISO/DIS 10303-22:1996(E) 10.4.14)
+        //
+        //   This operation populates an existing non-persistent list by
+        // executing a query over a source (self is the source). The source
+        // identifies a set of SDAI-models and for each SDAI-model in the set
+        // the query is executed over the entity_extent of the entity type
+        // defined in the logical expression of the query.
+        //
+        //    After the query is executed, the resulting aggregate will contain
+        // the instance identifiers for those entity instances where the 
+        // evaluation of the logical expression defining the criteria is TRUE.
+        //
+        //    If the resulting list already contained any entity instance
+        // identifiers then they remain in the list and those resulting from
+        // the query are appended.
+        //
+        //   Possible Error indicators:
+        //
+        //  sdaiSS_NOPN  An SDAI session is not open
+        //  sdaiAI_NEXS  The input or output aggregate instance does not exist
+        //  sdaiRP_NEXS  The repository does not exist
+        //  sdaiMO_NEXS  The SDAI-model does not exist
+        //  sdaiSI_NEXS  The schema instance does not exist
+        //  sdaiEI_NEXS  The entity instance does not exist
+        //  sdaiEI_NVLD  The logical expression entity instance is invalid
+        //  sdaiVA_NVLD  The logical expression value is invalid
+        //  sdaiOP_NVLD  The logical expression operator is invalid
+        //  sdaiAT_NVLD  The logical expression attribute is invalid
+        //  sdaiVT_NVLD  The logical expression value/operator/attribute 
+        //                 combination is invalid
+        //  sdaiFN_NAVL  This function is not supported by this implementation
+        //  sdaiSY_ERR   Underlying system error
+        //
+        /* jg == Still not clear what is the role of theEntity. Also, 
+           the specification in Part 23, 7.4.2.1.7 has a generic result 
+           parameter.
+           Furthermore, what is the purpose of class Query_source in Part 23,
+           5.3.13.11. No operation uses it. */
+    long SDAIQuery(in string expression, 
+                   in Object theEntity,
+                   inout Object__sdailist destination) raises(SDAIException);
+  };
+
+
+     // SDAI entity sdai_repository_contents (ISO/DIS 10303-22:1996(E) 7.4.4)
+     //
+     //   An sdai_repository_contents identifies the sdai_models and 
+     // schema_instances that exist within a repository.
+     //
+  interface Repository_contents : Session_instance
+  {
+    readonly attribute Model__list models_;
+    readonly attribute Schema_instance__list schemas_;
+    readonly attribute Repository repository_;
+// DAS BUG
+//    readonly attribute Repository__list repository_;
+  };
+
+     // SDAI entity schema_instance (ISO/DIS 10303-22:1996(E) 8.4.1)
+     //
+     //   A schema instance is a logical collection of sdai_models. It is
+     // used as the domain for global rule validation, as the domain over 
+     // which references between entity instances in different SDAI-models
+     // are supported and as the domain for uniqueness validation. A schema_
+     // instance is based upon one schema. Associating SDAI-models with the
+     // schema_instance when the SDAI-model is based upon another schema shall
+     // also be supported provided the schema upon which the SDAI-model is 
+     // based contains constructs declared as domain equivalent with constructs
+     // in the schema upon which the schema_instance is based. ALthough a
+     // schema_instance exists in one repository, assiciating SDAI-models
+     // from any repository with the schema_instance shall be supported.
+     //
+  interface Schema_instance : Session_instance
+  {
+    readonly attribute string name_;
+    readonly attribute Model__list associated_models_;
+    readonly attribute Schema_name native_schema_;
+    readonly attribute Repository repository_;
+    readonly attribute Time_stamp change_date_;
+    readonly attribute Time_stamp validation_date_;
+    readonly attribute Logical validation_result_;
+// DAS BUG
+//    readonly attribute Logical validation_level_;
+    readonly attribute long validation_level_;
+
+        // Rename schema instance (ISO/DIS 10303-22:1996(E) 10.6.2)
+        //
+        //   This operation renames a schema instance.
+        //
+        //   Possible Error indicators:
+        //
+        // sdaiSS_NOPN An SDAI session is not open.
+        // sdaiSI_DUP  A duplicate schema instance name exists.
+        // sdaiVT_NVLD The schema instance name value type is invalid.
+        // sdaiSI_NEXS The schema instance does not exist.
+        // sdaiRP_NOPN The repository is not open.
+        // sdaiTR_NRW  The transaction is not read-write.
+        // sdaiTR_NAVL The transaction is currently not available.
+        // sdaiTR_EAB  The transaction ended abnormally.
+        // sdaiSY_ERR  An underlying system error occurred.
+        //
+    void Rename(in string name) raises(SDAIException);
+
+        // Add SDAI-model (ISO/DIS 10303-22:1996(E) 10.6.3)
+        //
+        // This operation adds an SDAI-model to the set of SDAI-models
+        // that are associated with a schema instance.  The attribute
+        // Schema_instance::associated_models_ is updated.  If the SDAI-model
+        // is not based upon the same schema as the schema instance but
+        // is based upon an external schema, then an entity instance in the
+        // SDAI-model shall be considered associated with the schema
+        // instance only if its entity type is defined as being domain
+        // equivalent with an entity type from the native schema upon which
+        // the schema instance is based (see Annex A.2). If domain
+        // equivalence is not supported and the model being added
+        // is based upon an external schema, the error sdaiFN_NAVL
+        // is returned.
+        //
+        //   Possible Error indicators:
+        //
+        // sdaiSS_NOPN An SDAI session is not open.
+        // sdaiSI_NEXS The schema instance does not exist.
+        // sdaiRP_NOPN The repository is not open.
+        // sdaiTR_NRW  The transaction is not read-write.
+        // sdaiTR_NAVL The transaction is currently not available.
+        // sdaiTR_EAB  The transaction ended abnormally.
+        // sdaiMO_NEXS The SDAI-model does not exist.
+        // sdaiMO_NDEQ The SDAI-model is not domain equivalent with the
+        // schema instance.
+        // sdaiFN_NAVL Domain equivalence is not supported by this
+        //implementation.
+        // sdaiSY_ERR  An underlying system error occurred.
+        //
+    void AddModel(in Model model) raises(SDAIException);
+
+
+        // Remove SDAI-model (ISO/DIS 10303-22:1996(E) 10.6.4)
+        //
+        // This operation removes an SDAI-model from the set of
+        // SDAI-models that are associated with a schema instance.
+        // The attribute Schema_instance::associated_models_
+        // is updated to reflect the operation.
+        //
+        //   Possible Error indicators:
+        //
+        // sdaiSS_NOPN An SDAI session is not open.
+        // sdaiSI_NEXS The schema instance does not exist.
+        // sdaiRP_NOPN The repository is not open.
+        // sdaiTR_NRW  The transaction is not read-write.
+        // sdaiTR_NAVL The transaction is currently not available.
+        // sdaiTR_EAB  The transaction ended abnormally.
+        // sdaiMO_NEXS The SDAI-model does not exist.
+        // sdaiMO_NVLD The SDAI-model is associated with the schema instance.
+        // sdaiSY_ERR  An underlying system error occurred.
+        //
+    void RemoveModel(in Model model) raises(SDAIException);
+
+        // Validate Global Rule (ISO/DIS 10303-22:1996(E) 10.6.5)
+        //
+        // This operation determines whether a global rule
+        // defined in a schema is satisfied by the population
+        // associated with a schema instance.  The entity instances
+        // included in the validation are all entity instances
+        // of the entity types to which the global rule applies
+        // in all of the SDAI-models that are associated with
+        // the schema instance. Entity instances within SDAI-models
+        // based upon an external schema are included in the validation
+        // if they are instances of entity types defined to be
+        // domain equivalent with entity types in the native schema
+        // by an instance of external_schema. Entity instances so
+        // included shall be treated as instances of the native type
+        // as defined in domain_equivalent_type. If the external entity
+        // type lacks properties required to satisfy the rule
+        // then the ED_NVLD error results. References to entity instances
+        // in SDAI-models that are not associated with the schema
+        // instance shall as treated if they are unset.
+        //
+        //   Possible Error indicators:
+        //
+        // sdaiSS_NOPN An SDAI session is not open.
+        // sdaiRU_NDEF The rule is not defined.
+        // sdaiSI_NEXS The schema instance does not exist.
+        // sdaiED_NVLD An external entity definition is invalid for the rule.
+        // sdaiRP_NOPN The repository is not open.
+        // sdaiTR_NRW  The transaction is not read-write.
+        // sdaiTR_NAVL The transaction is currently not available.
+        // sdaiTR_EAB  The transaction ended abnormally.
+        // sdaiEX_NSUP The rule expression evaluation is not supported
+        // by this implementation.
+        // sdaiFN_NAVL This function is not supported by this implementation.
+        // sdaiSY_ERR  An underlying system error occurred.
+        //
+    Logical ValidateGlobalRule(in string ruleName, 
+                               inout string__list aggr)
+                 raises(SDAIException);
+
+        // Validate Uniqueness Rule (ISO/DIS 10303-22:1996(E) 10.6.6)
+        //
+        // This operation determines whether a uniqueness rule
+        // defined in a schema is satisfied by the population
+        // associated with a schema instance. The entity instances
+        // included in the validation are all entity instances of
+        // the entity type in which the rule was declared in all
+        // of the SDAI-models that are associated with the schema
+        // instance. Entity instances within SDAI-models based upon
+        // an external schema are included in the validation if they
+        // are instances of entity types defined to be domain equivalent
+        // with entity types in the native schema by an instance of
+        // external_schema. Entity instances so included shall be
+        // treated as instances of the native type as defined in
+        // domain_equivalent_type. If the external entity type lacks
+        // properties required to satisfy the rule then the ED_NVLD error
+        // results. References to entity instances in SDAI-models that
+        // are not associated with the schema instance shall as
+        // treated if they are unset.
+        //
+        //   Possible Error indicators:
+        //
+        // sdaiSS_NOPN An SDAI session is not open.
+        // sdaiRU_NDEF The rule is not defined.
+        // sdaiSI_NEXS The schema instance does not exist.
+        // sdaiRP_NOPN The repository is not open.
+        // sdaiTR_NAVL The transaction is currently not available.
+        // sdaiTR_EAB  The transaction ended abnormally.
+        // sdaiEX_NSUP The attribute expression evaluation is not
+        // supported by this implementation.
+        // sdaiFN_NAVL This function is not supported by this implementation.
+        // sdaiSY_ERR  An underlying system error occurred.
+        //
+    Logical ValidateUniquenessRule(in string ruleName, inout Object theEntity)
+                 raises(SDAIException);
+
+        // Validate instance reference domain (ISO/DIS 10303-22:1996(E) 10.6.7)
+        //
+        // This operation determines whether all attributes in
+        // the specified application instance with a reference
+        // to an entity instance as their value refer to entity
+        // instances within SDAI-models associated with the
+        // specified schema instance.
+        //
+        //   Possible Error indicators:
+        //
+        // sdaiSS_NOPN An SDAI session is not open.
+        // sdaiEI_NEXS The entity instance does not exist.
+        // sdaiSI_NEXS The schema instance does not exist.
+        // sdaiRP_NOPN The repository is not open.
+        // sdaiTR_NAVL The transaction is currently not available.
+        // sdaiTR_EAB  The transaction ended abnormally.
+        // sdaiFN_NAVL This function is not supported by this implementation.
+        // sdaiSY_ERR  An underlying system error occurred.
+        //
+    Logical ValidateInstanceReferenceDomain(in Application_instance app,
+                     inout string__list aggr)
+                 raises(SDAIException);
+
+        // Validate schema instance (ISO/DIS 10303-22:1996(E) 10.6.8)
+        //
+        // This operation determines whether the population
+        // associated with a schema instance conforms to all
+        // constraints specified within the schema upon which
+        // the scheme instance is based. This operation updates
+        // the validation information maintained within the
+        // schema instance.
+        //
+        //   Possible Error indicators:
+        //
+        // sdaiSS_NOPN An SDAI session is not open.
+        // sdaiSI_NEXS The schema instance does not exist.
+        // sdaiRP_NOPN The repository is not open.
+        // sdaiTR_NAVL The transaction is currently not available.
+        // sdaiTR_EAB  The transaction ended abnormally.
+        // sdaiTR_NRW  The transaction is not read-write.
+        // sdaiFN_NAVL This function is not supported by this implementation.
+        // sdaiSY_ERR  An underlying system error occurred.
+        //
+    Logical ValidateSchemaInstance() raises(SDAIException);
+
+
+        // Is validation current (ISO/DIS 10303-22:1996(E) 10.6.9)
+        //
+        // This operation determines whether complete validation
+        // of a schema instance may be required based on whether
+        // the schema_instance.validation_result has a value or
+        // based on whether any modification to a schema instance
+        // or any of the SDAI-models associated with the schema
+        // instance has been performed since the most recent
+        // Validate schema instance operation was performed.
+        // The validation result not being set or any modification
+        // found will result in the operation determining that
+        // validation is not current.
+        //
+        //   Possible Error indicators:
+        //
+        // sdaiSS_NOPN An SDAI session is not open.
+        // sdaiSI_NEXS The schema instance does not exist.
+        // sdaiRP_NOPN The repository is not open.
+        // sdaiTR_NAVL The transaction is currently not available.
+        // sdaiTR_EAB  The transaction ended abnormally.
+        // sdaiFN_NAVL This function is not supported by this implementation.
+        // sdaiSY_ERR  An underlying system error occurred.
+        //
+    Logical IsValidationCurrent() raises(SDAIException);
+  };
+
+     // SDAI entity sdai_model (ISO/DIS 10303-22:1996(E) 8.4.2)
+     //
+     //   An sdai_model is a grouping mechanism consisting of a set of 
+     // related entity instances based upon a schema_definition.
+     //
+  interface Model : Session_instance
+  {
+    readonly attribute Schema_name underlying_schema_name_;
+    readonly attribute string name_;
+    readonly attribute Access_type mode_;
+    readonly attribute Model_contents contents_;
+    readonly attribute Repository repository_;
+    readonly attribute Time_stamp change_date_;
+    readonly attribute Schema_instance__list associated_with_;
+
+        // Rename SDAI-model (ISO/DIS 10303-22:1996(E) 10.7.2)
+        //
+        // This operation assigns a new name to an sdai_model.
+        //
+        //   Possible Error indicators:
+        //
+        // sdaiSS_NOPN An SDAI session is not open.
+        // sdaiTR_NEXS A transaction has not been started.
+        // sdaiTR_NRW  The transaction is not read-write.
+        // sdaiTR_NAVL The transaction is currently not available.
+        // sdaiTR_EAB  The transaction ended abnormally.
+        // sdaiRP_NOPN The repository is not open.
+        // sdaiMO_NEXS The SDAI-model does not exist.
+        // sdaiVT_NVLD The SDAI-model name value type is invalid.
+        // sdaiMO_DUP  A duplicate SDAI-model name exists.
+        // sdaiSY_ERR  An underlying system error occurred.
+        //
+    void RenameModel(in string modelName) raises(SDAIException);
+
+        // End read-only access, End read-write access
+        // (ISO/DIS 10303-22:1996(E) 10.7.5, and 10.7.7)
+        //
+        // The End read-only access operation ends read-only
+        // access to an sdai_model (Note that read-only
+        // access to a model commences upon invocation of the
+        // operation Repository::GetModel.)  Subsequent
+        // operations on the instances contained in the
+        // SDAI-model will fail until access to the SDAI-model
+        // is started by a Start read-only access or Start
+        // read-write access operation, or after automatically
+        // starting read-only access to the SDAI-model as the
+        // result of using a reference to an entity instance
+        // within the SDAI- model.
+        // 
+        // The End read-write access operation ends read-write
+        // access to an sdai_model (Read-write access commences
+        // with the invocation of the operation
+        // Repository::GetModelRW).  Subsequent operations on
+        // the instances contained in the SDAI-model will fail
+        // until access to the SDAI-model is started by a Start
+        // read-only access or Start read-write access operation,
+        // or after automatically starting read-only access to the
+        // SDAI-model as the result of using a reference to an entity
+        // instance within the SDAI- model. In implementations
+        // supporting transaction level 2, the implementation shall
+        // behave as if the Undo changes operation had been performed
+        // on the SDAI-model. In implementations supporting
+        // transaction level 3, if any application_instance or scope
+        // within the SDAI-model has been created, deleted or modified
+        // since the last Commit, Abort or Start transaction read-write
+        // access operation, whichever occurred most recently, this
+        // operation shall result in the TR_RW error.
+        // 
+        // Upon successful return of the CloseModel() function,
+        // model.mode will become unset and sdai_session.active_models
+        // will no longer include this model.
+        //
+        //   Possible Error indicators:
+        //
+        // sdaiSS_NOPN An SDAI session is not open.
+        // sdaiRP_NOPN The repository is not open.
+        // sdaiMO_NEXS The SDAI-model does not exist.
+        // sdaiMX_NDEF The SDAI-model access is not defined.
+        // sdaiMX_RW   The SDAI-model access is read-write. (if access was RO)
+        // sdaiTR_RW   The transaction is read-write and changes are unresolved.
+        // sdaiSY_ERR  An underlying system error occurred.
+        //
+    void CloseModel() raises(SDAIException);
+
+        // Promote SDAI-model to read-write (ISO/DIS 10303-22:1996(E) 10.7.4)
+        //
+        // This operation allows read-write access to
+        // instances within an sdai_model to which the
+        // Start read- only access operation had been
+        // applied or that had been automatically started
+        // with read-only access as the result of a reference
+        // to an entity instance within the SDAI-model.
+        // Upon successful return of this function,
+        // Model.mode shall be set to read_write.
+        //
+        //   Possible Error indicators:
+        //
+        // sdaiSS_NOPN An SDAI session is not open.
+        // sdaiTR_NEXS A transaction has not been started.
+        // sdaiTR_NRW  The transaction is not read-write.
+        // sdaiTR_NAVL The transaction is currently not available.
+        // sdaiTR_EAB  The transaction ended abnormally.
+        // sdaiRP_NOPN The repository is not open.
+        // sdaiMO_NEXS The SDAI-model does not exist.
+        // sdaiMX_NDEF The SDAI-model access is not defined.
+        // sdaiMX_RW   The SDAI-model access is read-write.
+        // sdaiSY_ERR  An underlying system error occurred.
+        //
+    Model PromoteModelToReadWrite() raises(SDAIException);
+
+        // Save changes (ISO/DIS 10303-22:1996(E) 10.7.11)
+        //
+        // This operation makes persistent all changes to
+        // the contents, application_instances and scopes,
+        // of an sdai_model made since the last Save changes,
+        // Undo changes, or Start read-write access operation
+        // whichever operation occurred most recently. The
+        // existing read-write access continues to be active.
+        // This operation is valid only for an sdai_model to
+        // which read-write access is currently available. This
+        // operation updates or sets the change_date attribute
+        // for the specified SDAI-model.  Upon successful return
+        // of this function, the current condition of all
+        // instances of the following in the SDAI-model are
+        // made persistent: sdai_model_contents, entity_extent,
+        // scope, application_instance, and aggregate_instance
+        // except for non_persistent_list_instance.  Model.change_date
+        // is set to the current date.
+        //
+        //   Possible Error indicators:
+        //
+        // sdaiSS_NOPN An SDAI session is not open.
+        // sdaiMO_NEXS The SDAI-model does not exist.
+        // sdaiMX_NRW  The SDAI-model access is not read-write.
+        // sdaiFN_NAVL This function is not supported by this implementation.
+        // sdaiSY_ERR  An underlying system error occurred.
+        //
+    void SaveChanges() raises(SDAIException);
+
+        // Undo changes (ISO/DIS 10303-22:1996(E) 10.7.10)
+        //
+        // This operation restores the condition of the contents,
+        // including application_instances and related scopes,
+        // of an sdai_model to that which existed at the time
+        // of the last Save changes or Start read-write access
+        // operation, whichever operation occurred most recently.
+        // All created instances no longer exist, all deleted
+        // instances are restored and all modifications to
+        // instances are lost. This operation is valid only for
+        // an sdai_model to which read-write access is currently
+        // available. The existing read-write access to the
+        // SDAI-model continues.
+        //
+        //   Possible Error indicators:
+        //
+        // sdaiSS_NOPN An SDAI session is not open.
+        // sdaiMO_NEXS The SDAI-model does not exist.
+        // sdaiMX_NRW  The SDAI-model access is not read-write.
+        // sdaiFN_NAVL This function is not supported by this implementation.
+        // sdaiSY_ERR  An underlying system error occurred.
+        //
+    void UndoChanges() raises(SDAIException);
+
+        // SDAI query (ISO/DIS 10303-22:1996(E) 10.4.14)
+        //
+        //   This operation populates an existing non-persistent list by
+        // executing a query over a source (self is the source). The source
+        // identifies a set of SDAI-models and for each SDAI-model in the set
+        // the query is executed over the entity_extent of the entity type
+        // defined in the logical expression of the query.
+        //
+        //    After the query is executed, the resulting aggregate will contain
+        // the instance identifiers for those entity instances where the 
+        // evaluation of the logical expression defining the criteria is TRUE.
+        //
+        //    If the resulting list already contained any entity instance
+        // identifiers then they remain in the list and those resulting from
+        // the query are appended.
+        //
+        //   Possible Error indicators:
+        //
+        //  sdaiSS_NOPN  An SDAI session is not open
+        //  sdaiAI_NEXS  The input or output aggregate instance does not exist
+        //  sdaiRP_NEXS  The repository does not exist
+        //  sdaiMO_NEXS  The SDAI-model does not exist
+        //  sdaiSI_NEXS  The schema instance does not exist
+        //  sdaiEI_NEXS  The entity instance does not exist
+        //  sdaiEI_NVLD  The logical expression entity instance is invalid
+        //  sdaiVA_NVLD  The logical expression value is invalid
+        //  sdaiOP_NVLD  The logical expression operator is invalid
+        //  sdaiAT_NVLD  The logical expression attribute is invalid
+        //  sdaiVT_NVLD  The logical expression value/operator/attribute 
+        //                 combination is invalid
+        //  sdaiFN_NAVL  This function is not supported by this implementation
+        //  sdaiSY_ERR   Underlying system error
+        //
+        /* jg == Still not clear what is the role of theEntity. Also, 
+           the specification in Part 23, 7.4.2.1.7 has a generic result 
+           parameter.
+           Furthermore, what is the purpose of class Query_source in Part 23,
+           5.3.13.11. No operation uses it. */
+    long SDAIQuery(in string expression, 
+                   in Object theEntity,
+                   inout Object__sdailist destination) raises(SDAIException);
+  };
+
+    //
+    // This is part of the CORBA POS DA interface which is partially used
+    // in the Model_contents class of Part 23
+    //
+    // interface PDS
+    // {
+    //   PDS connect(in Object obj, in CosPersistencePID::PID p);
+    //   void disconnect(in Object obj, in CosPersistencePID::PID p);
+    //   void store(in Object obj, in CosPersistencePID::PID p);
+    //   void restore(in Object obj, in CosPersistencePID::PID p);
+    //   void delete(in Object obj, in CosPersistencePID::PID p);
+    // }
+    // 
+    // interface DAObjectFactoryFinder
+    // {
+    //   DAObjectFactory find_factory(in string key); 
+    // }
+    // 
+    // interface PDS_DA : CosPersistencePDS::PDS
+    // {
+    //   DAObject get_data();
+    //   void set_data(in DAObject new_data);
+    // * DAObject lookup(in DAObjectID id);
+    //   PID_DA get_pid();
+    // * PID_DA get_object_pid();
+    //   DAObjectFactoryFinder data_factories();
+    // }
+    //
+    //
+    // interface Model_contents : Session_instance, PDS_DA,
+    // DAObjectFactoryFinder
+    // {
+    // readonly attribute Model parent_model_;
+    // readonly attribute Model_contents_instances instances_;
+    // readonly attribute Entity_extent__list folders_;
+    // readonly attribute Entity_extent__list populated_folders_;
+    //
+    // delete() in PDS
+    // void DeleteInstance(inout DAObject_SDAI appInst) raises(SDAIException);
+    //
+    // store() in PDS
+    // void AddInstance(inout DAObject_SDAI appInst) raises(SDAIException);
+    //
+    // factory for instance in PDS
+    // DAObject CreateEntityInstance(in string Type) raises(SDAIException);
+    //
+    // DAObject_SDAI__list GetEntity_extent(in string entityName)
+    //             raises(SDAIException);
+    //
+    // };
+
+     // SDAI entity sdai_model_contents (ISO/DIS 10303-22:1996(E) 8.4.3)
+     //
+     //   An sdai_model_contents contains the entity instances making up an
+     // sdai_model. The entity instances are available in a single collection
+     // regardless of entity data type and grouped by entity data type into
+     // multiple collections.
+     //
+     //   NOTE: The availability and grouping of the entity instances in 
+     //         three alternative attributes is one case where ease of 
+     //         access for the application programmer is taken into account
+     //         in this schema.
+     //
+  interface Model_contents : Session_instance
+  {
+//    readonly attribute Model parent_model_;
+    readonly attribute Model_contents_instances instances_;
+    readonly attribute Entity_extent__list folders_;
+    readonly attribute Entity_extent__list populated_folders_;
+
+        // get_object_pid (ISO/DIS 10303-23:1996(E) 7.5.3)
+        //
+        //    This function shall return the persistent object identifier
+        // for a DAObject.
+        //
+        //   Possible Error indicators:
+        //
+        // sdaiSS_NOPN An SDAI session is not open.
+        // sdaiRP_NOPN Repository not open
+        // sdaiMO_NEXS SDAI-model does not exist
+        // sdaiED_NDEF Entity definition unknown in this model
+        // sdaiSY_ERR  An underlying system error occurred.
+        //
+    PID_DA get_object_pid(in DAObject obj) raises(SDAIException);
+
+        // lookup (ISO/DIS 10303-23:1996(E) 7.5.3)
+        //
+        //   This function shall return the DAObject for the persistent
+        // object identifier p.
+        //
+        //   Possible Error indicators:
+        //
+        // sdaiSS_NOPN An SDAI session is not open.
+        // sdaiRP_NOPN Repository not open
+        // sdaiED_NDEF Entity definition unknown in this model
+        // sdaiSY_ERR  An underlying system error occurred.
+        //
+    DAObject lookup(in PID_DA p) raises(SDAIException);
+
+        // find_factory (ISO/DIS 10303-23:1996(E) 7.5.3)
+        //
+        //    This function shall return the DAObjectFactory for the type
+        // named TypeName.
+        //
+        //   Possible Error indicators:
+        //
+        // sdaiSS_NOPN An SDAI session is not open.
+        // sdaiRP_NOPN Repository not open
+        // sdaiED_NDEF Entity definition unknown in this model
+        // sdaiSY_ERR  An underlying system error occurred.
+        //
+    DAObjectFactory find_factory(in string TypeName) raises(SDAIException);
+
+        // Delete application instance (ISO/DIS 10303-22:1996(E) 10.11.2)
+        //
+        //    This operation deletes an application instance. All aggregate
+        // instances created as part of the application instance or as nested
+        // aggregate instances within an aggregate instance created as part of
+        // the deleted application instance are deleted. Subsequent to this
+        // operation, any attribute values of application instances defined
+        // in application or SDAI schemas that refer to the deleted application
+        // instance shall respond as if their attribute value had been unset
+        // (e.g., the Test attribute operation will return FALSE and the
+        // Remove from scope operation will result in the EI_NAVL error in
+        // cases where the deleted application instance had been in a scope).
+        // Any application instance referred to by the deleted application
+        // instance is not affected.
+        //
+        //   Possible Error indicators:
+        //
+        // sdaiTR_NRW   The transaction is not read-write
+        // sdaiTR_NAVL  The transaction is currently not available
+        // sdaiTR_EAB   The transaction ended abnormally
+        // sdaiMX_NRW   The SDAI-model access is not read-write
+        // sdaiEI_NEXS  The entity instance does not exist
+        // sdaiSY_ERR   Underlying system error
+        //
+    void DeleteInstance(inout DAObject_SDAI appInst) raises(SDAIException);
+
+        // Add application instance
+        //
+        // Convenience function. ISO/DIS 10303-23:1996(E) 7.5.3.1.2
+        //
+        //    The AddInstance function shall add an application instance to 
+        // the receiver.
+        //
+        //   Possible Error indicators:
+        //
+        // sdaiSS_NOPN An SDAI session is not open.
+        // sdaiRP_NOPN Repository not open
+        // sdaiED_NDEF Entity definition unknown in this model
+        // sdaiSY_ERR  An underlying system error occurred.
+        //
+    void AddInstance(inout DAObject_SDAI appInst) raises(SDAIException);
+
+        // Get entity extent
+        //
+        // Convenience function. ISO/DIS 10303-23:1996(E) 7.5.3.1.3
+        //
+        //    The GetEntity_extent function shall return a reference to a 
+        // read-only entity folder from the folders attribute within the
+        // contents attribute of the receiver. This folder shall contain all
+        // of the instances of a particular entity and its derived types 
+        // within the model. The entity may be specified indirectly by the
+        // entityName parameter or directly by the entity in a late binding.
+        //
+        //   Possible Error indicators:
+        //
+        // sdaiSS_NOPN An SDAI session is not open.
+        // sdaiRP_NOPN Repository not open
+        // sdaiMO_NEXS SDAI-model does not exist
+        // sdaiED_NDEF Entity definition unknown in this model
+        // sdaiSY_ERR  An underlying system error occurred.
+        //
+    DAObject_SDAI__set GetEntity_extent(in string entityName)
+                 raises(SDAIException);
+
+        // Create entity instance (ISO/DIS 10303-22:1996(E) 10.7.9)
+        //
+        //    This operation creates a new entity instance of the specified
+        // entity data type. The attributes of the entity instance are
+        // initially unset so that the Test attribute operation returns FALSE.
+        // This operation is applicable only to instances of entity types
+        // declared in application schemas.
+        //
+        //   Possible Error indicators:
+        //
+        // sdaiSS_NOPN  An SDAI session is not open.
+        // sdaiTR_NAVL  The transaction is currently not available
+        // sdaiTR_EAB   The transaction ended abnormally
+        // sdaiMX_NRW   The SDAI-model access is not read-write
+        // sdaiED_NDEF  Entity definition unknown in this model
+        // sdaiED_NVLD  The SDAI-model and entity definition are not based
+        //              upon the same schema.
+        // sdaiSY_ERR   An underlying system error occurred.
+        //
+    DAObject CreateEntityInstance(in string Type)
+                 raises(SDAIException);
+  };
+
+     // Class Model_contents_instances (ISO/DIS 10303-23:1996(E) 7.5.2)
+     //
+     //    The class Model_contents_instances shall implement convenience
+     // functions required by Model_contents in this part of ISO 10303.
+     //
+  interface Model_contents_instances : DAObject
+  {  
+    readonly attribute DAObject__list contents_;
+  };
+
+     // SDAI entity entity_extent (ISO/DIS 10303-22:1996(E) 8.4.4)
+     //
+     //    An entity_extent groups all instance of an entity data type that
+     // exist in an sdai_model. This grouping includes instances of the 
+     // specified entity_definition, instances of all subtypes of the
+     // entity_definition and instances of other entity_definitions resulting
+     // from the mapping of the EXPRESS AND and ANDOR constraints as described
+     // in annex A which contains the entity data types as a constituent.
+     //
+     //   NOTE: Extents of instances of a particular type are useful as entry
+     //         points within an SDAI-model for gaining access to instances
+     //         of any root entity types in schemas containing tree or
+     //         hierarchical structures.
+     //
+//  interface Entity_extent : DAObject_SDAI
+  interface Entity_extent : Session_instance
+  {
+    readonly attribute DAObject__list instances_;
+    readonly attribute Entity_name definition_name_;
+    readonly attribute Model_contents__list owned_by_;
+  };
+
+     // SDAI entity scope (ISO/DIS 10303-22:1996(E) 8.4.5)
+     //
+     //    A scope provides the structure to support the scope of reference
+     // and existence relationships between entity instances defined by the ISO
+     // 10303-21 SCOPE construct. ISO 10303-22 refers to the application 
+     // instance within which the scope structure is defined as the owner and 
+     // those application instances appearing within the scope structure as 
+     // being owned by the scope owner. Application instances owned by a scope
+     // may themselves own a scope. A scope exists in the same SDAI-model as
+     // the application_instance owning the scope (e.g., if the SDAI-model
+     // containing the application instance is deleted, the the scope is 
+     // deleted).
+     //
+  interface Scope : Session_instance
+  {
+    readonly attribute Application_instance owner_;
+    readonly attribute Application_instance__list owned_;
+    readonly attribute Application_instance__list export_list_;
+
+        // Scoped delete (ISO/DIS 10303-22:1996(E) 10.8.7)
+        //
+        //    This operation deletes all application instances within a
+        // scope. The implementation shall behave as if the Delete application
+        // instance operation had veen executed on the application instance
+        // owning the specified scope, and on the application instances owned
+        // by that scope, and shall delete the specified scope. If any 
+        // application instances owned by the specified scope are themselves
+        // scope owners, then these scopes are similarly deleted. The scoped
+        // deletion of these nested scopes continues until no owned application
+        // instance of any nested scope owns a scope.
+        //
+        //   Possible Error indicators:
+        //
+        //  sdaiSC_NEXS  The scope does not exist
+        //  sdaiTR_NRW   The transaction is not read-write
+        //  sdaiTR_NAVL  The transaction is currently not available
+        //  sdaiTR_EAB   The transaction ended abnormally
+        //  sdaiMX_NRW   The SDAI-model access in not read-write
+        //  sdaiRP_NOPN  The repository is not open
+        //  sdaiFN_NAVL  This function is not supported by the implementation
+        //  sdaiSY_ERR   An underlying system error occurred
+        //
+    void ScopedDelete() raises(SDAIException);
+
+        // Scoped copy (ISO/DIS 10303-22:1996(E) 10.8.8)
+        //
+        //    This operation creates a new scope, creates copies of the
+        // application instances owning and owned by the specified scope in
+        // the specified SDAI-model and populates the scope.owner, owning
+        // and export_list attributes based upon the copied application 
+        // instances. The target model may be the SDAI-model within which the
+        // scope exists or may be another SDAI-model based upon the same 
+        // schema as the one within which the scope exists. If any application
+        // instances owned by the specified scope are themselves scope owners,
+        // then these scopes are similarly copied. The scoped copy of these
+        // nested scopes continues until no owned application instance of
+        // any nested scope owns a scope. All references beween application
+        // instances in these scopes are reset to reference the newly copied
+        // application instances.
+        //
+        //   Possible Error indicators:
+        //
+        //  sdaiSC_NEXS  The scope does not exist
+        //  sdaiTR_NRW   The transaction is not read-write
+        //  sdaiTR_NAVL  The transaction is currently not available
+        //  sdaiTR_EAB   The transaction ended abnormally
+        //  sdaiMX_NRW   The SDAI-model access in not read-write
+        //  sdaiMO_NEXS  The SDAI-model does not exist
+        //  sdaiMO_NVLD  The SDAI-model and scope are based upon different
+        //               schemas.
+        //  sdaiFN_NAVL  This function is not supported by the implementation
+        //  sdaiSY_ERR   An underlying system error occurred
+        //
+    Scope ScopedCopy(in Model_contents model) raises(SDAIException);
+  };
+
+//
+// Include here modules specifying the early binding interfaces to the 
+// application schemas in the implementation.
+//
+// e.g., #include <APPLICATION_SCHEMA>.idl
+// #include "exampleSchema.idl"
+
+/*
+};
+*/
+#endif
+
+
