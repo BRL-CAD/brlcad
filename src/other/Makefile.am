@@ -152,7 +152,6 @@ SUBDIRS = \
 	${TKIMGDIR} \
 	${BLTDIR} \
 	${OPENNURBSDIR} \
-	${STEPDIR} \
 	${TNTDIR} \
 	awf
 
@@ -163,7 +162,8 @@ endif
 # end ONLY_BENCHMARK
 
 EXTRA_DIST = \
-	boost 
+	boost \
+	step 
 
 DIST_SUBDIRS = \
 	URToolkit \
@@ -178,7 +178,6 @@ DIST_SUBDIRS = \
 	libutahrle \
 	libz \
 	openNURBS \
-	step \
 	tcl \
 	tk \
 	tkhtml3 \
