@@ -1,8 +1,25 @@
 
-/* National Institute of Standards and Technology (NIST)
- * Manufacturing Engineering Laboratory (MEL)
- * Factory Automation Systems Division (FASD)
- * ********************************************************************
+This software was produced by the National Institute of Standards and 
+Technology (NIST), an agency of the U.S. government, and by statute is 
+not subject to copyright in the United States. Recipients of this 
+software assume all responsibility associated with its operation, 
+modification, maintenance, and subsequent redistribution.
+
+Acknowledgements:
+The STEP Class Library (SCL) was developed by the Manufacturing 
+Systems Integration Division at NIST to support testing of the 
+Standard for the Exchange of Product Model Data (a.k.a STEP) and 
+validation of STEP's emerging implementation specifications. Funding 
+for the project has come from the Department of Commerce and the 
+Department of Defense agencies including the Office of the Defense 
+CALS (Continuous Acquisition and Life-Cycle Support) Executive and 
+the Defense Advanced Research Projects Agency (DARPA). Recent 
+enhancements were sponsored by the National Information Infrastructure 
+Protocols Consortium and NIST's Systems Integration for Manufacturing 
+Applications (SIMA) program.
+
+
+/* ********************************************************************
  *                            D I S C L A I M E R
  *                              (February 6, 1992)
  *  
