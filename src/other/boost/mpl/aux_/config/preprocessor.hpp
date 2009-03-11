@@ -10,7 +10,7 @@
 //
 // See http://www.boost.org/libs/mpl for documentation.
 
-// $Source$
+// $Id$
 // $Date$
 // $Revision$
 
@@ -18,7 +18,7 @@
 
 #if !defined(BOOST_MPL_CFG_BROKEN_PP_MACRO_EXPANSION) \
     && (   BOOST_WORKAROUND(__MWERKS__, <= 0x3003) \
-        || BOOST_WORKAROUND(__BORLANDC__, BOOST_TESTED_AT(0x561)) \
+        || BOOST_WORKAROUND(__BORLANDC__, < 0x582) \
         || BOOST_WORKAROUND(__IBMCPP__, BOOST_TESTED_AT(502)) \
         )
 

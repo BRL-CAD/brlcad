@@ -10,7 +10,7 @@
 //
 // See http://www.boost.org/libs/mpl for documentation.
 
-// $Source$
+// $Id$
 // $Date$
 // $Revision$
 
@@ -25,7 +25,7 @@
 #if    !defined(BOOST_MPL_CFG_NO_DEFAULT_PARAMETERS_IN_NESTED_TEMPLATES) \
     && !defined(BOOST_MPL_PREPROCESSING_MODE) \
     && BOOST_WORKAROUND(__BORLANDC__, >= 0x560) \
-    && BOOST_WORKAROUND(__BORLANDC__, < 0x600)
+    && BOOST_WORKAROUND(__BORLANDC__, BOOST_TESTED_AT(0x610))
 
 #   define BOOST_MPL_CFG_NO_DEFAULT_PARAMETERS_IN_NESTED_TEMPLATES
 
@@ -35,7 +35,7 @@
 #if    !defined(BOOST_MPL_CFG_BROKEN_DEFAULT_PARAMETERS_IN_NESTED_TEMPLATES) \
     && !defined(BOOST_MPL_PREPROCESSING_MODE) \
     && (   BOOST_WORKAROUND(__MWERKS__, <= 0x3001) \
-        || BOOST_WORKAROUND(__BORLANDC__, < 0x600) \
+        || BOOST_WORKAROUND(__BORLANDC__, BOOST_TESTED_AT(0x610)) \
         || defined(BOOST_MPL_CFG_NO_DEFAULT_PARAMETERS_IN_NESTED_TEMPLATES) \
         )
         

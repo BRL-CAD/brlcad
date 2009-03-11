@@ -34,12 +34,15 @@ namespace boost {
   //   - If edge e=(u,v) is in the root graph, then edge e
   //     is also in any subgraph that contains both vertex u and v.
 
-  // The Graph template parameter must have a vertex_index
-  // and edge_index internal property. It is assumed that
-  // the vertex indices are assigned automatically by the
-  // graph during a call to add_vertex(). It is not
-  // assumed that the edge vertices are assigned automatically,
-  // they are explicitly assigned here.
+  // The Graph template parameter must have a vertex_index and edge_index
+  // internal property. It is assumed that the vertex indices are assigned
+  // automatically by the graph during a call to add_vertex(). It is not
+  // assumed that the edge vertices are assigned automatically, they are
+  // explicitly assigned here.
+  //
+  // NOTE [asutton]: The requirement of internal indexing causes this to fail
+  // for many, many graphs (i.e., those of non-vecS storage, and using bundled
+  // properties). To work around this - in part - you can do the following:
 
   template <typename Graph>
   class subgraph {
@@ -78,6 +81,8 @@ namespace boost {
 
     typedef typename Graph::edge_property_type         edge_property_type;
     typedef typename Graph::vertex_property_type       vertex_property_type;
+    typedef typename Graph::vertex_bundled             vertex_bundled;
+    typedef typename Graph::edge_bundled               edge_bundled;
     typedef subgraph_tag                               graph_tag;
     typedef Graph                                      graph_type;
     typedef typename Graph::graph_property_type        graph_property_type;
@@ -833,6 +838,19 @@ namespace boost {
     PMap pmap(&g);
     return pmap[k];
   }
+
+#ifndef BOOST_GRAPH_NO_BUNDLED_PROPERTIES
+  template<typename TG, typename T, typename Bundle>
+  inline
+  typename property_map<subgraph<TG>, T Bundle::*>::type
+  get(T Bundle::* p, subgraph<TG>& sg)
+  {
+    typedef typename property_map<subgraph<TG>, T Bundle::*>::type
+      result_type;
+    return result_type(&sg, p);
+  }
+
+#endif
 
   template <typename G, typename Property, typename Key, typename Value>
   void

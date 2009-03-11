@@ -16,7 +16,7 @@
 #include "boost/limits.hpp"
 #include "boost/date_time/compiler_config.hpp"
 #include "boost/cstdint.hpp"
-#include <cmath>
+#include <boost/config/no_tr1/cmath.hpp>
 #include <cstdlib> //for MCW 7.2 std::abs(long long)
 
 namespace boost {

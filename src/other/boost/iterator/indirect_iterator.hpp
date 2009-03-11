@@ -110,7 +110,7 @@ namespace boost
   private:    
       typename super_t::reference dereference() const
       {
-# if BOOST_WORKAROUND(__BORLANDC__, BOOST_TESTED_AT(0x551))
+# if BOOST_WORKAROUND(__BORLANDC__, < 0x5A0 )
           return const_cast<super_t::reference>(**this->base());
 # else
           return **this->base();

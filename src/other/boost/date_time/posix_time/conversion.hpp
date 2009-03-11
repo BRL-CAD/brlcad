@@ -72,14 +72,18 @@ namespace posix_time {
    * built with microsecond resolution the FILETIME's sub second value 
    * will be truncated. Nanosecond resolution has no truncation. 
    *
-   * Note ftime is part of the Win32 API, so it is not portable to non-windows
+   * \note FILETIME is part of the Win32 API, so it is not portable to non-windows
    * platforms.
+   *
+   * \note The function is templated on the FILETIME type, so that
+   *       it can be used with both native FILETIME and the ad-hoc
+   *       boost::date_time::winapi::file_time type.
    */
-  template<class time_type>
+  template< typename TimeT, typename FileTimeT >
   inline
-  time_type from_ftime(const FILETIME& ft)
+  TimeT from_ftime(const FileTimeT& ft)
   {
-    return boost::date_time::time_from_ftime<time_type>(ft);
+    return boost::date_time::time_from_ftime<TimeT>(ft);
   }
 
 #endif // BOOST_HAS_FTIME

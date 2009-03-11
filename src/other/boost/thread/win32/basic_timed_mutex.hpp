@@ -123,11 +123,6 @@ namespace boost
                 return timed_lock(system_time(timeout));
             }
 
-            long get_active_count()
-            {
-                return ::boost::detail::interlocked_read_acquire(&active_count);
-            }
-
             void unlock()
             {
                 long const offset=lock_flag_value;
@@ -141,11 +136,6 @@ namespace boost
                 }
             }
 
-            bool locked()
-            {
-                return get_active_count()>=lock_flag_value;
-            }
-            
         private:
             void* get_event()
             {

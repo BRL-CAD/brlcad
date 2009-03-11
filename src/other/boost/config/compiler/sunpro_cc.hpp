@@ -74,7 +74,36 @@
 //
 #define BOOST_NO_TWO_PHASE_NAME_LOOKUP
 #define BOOST_NO_ADL_BARRIER
+#define BOOST_NO_INITIALIZER_LISTS
 
+//
+// C++0x features
+//
+
+#if(__SUNPRO_CC >= 0x590) 
+#  define BOOST_HAS_LONG_LONG
+#else
+#  define BOOST_NO_LONG_LONG
+#endif
+
+#define BOOST_NO_CHAR16_T                       
+#define BOOST_NO_CHAR32_T                       
+#define BOOST_NO_CONSTEXPR                      
+#define BOOST_NO_DECLTYPE                       
+#define BOOST_NO_DEFAULTED_FUNCTIONS              
+#define BOOST_NO_DELETED_FUNCTIONS              
+#define BOOST_NO_EXPLICIT_CONVERSION_OPERATORS 
+#define BOOST_NO_EXTERN_TEMPLATE                
+#define BOOST_NO_RAW_LITERALS                   
+#define BOOST_NO_RVALUE_REFERENCES              
+#define BOOST_NO_SCOPED_ENUMS                   
+#define BOOST_NO_STATIC_ASSERT                  
+#define BOOST_NO_UNICODE_LITERALS               
+#define BOOST_NO_VARIADIC_TEMPLATES
+
+//
+// Version
+//
 
 #define BOOST_COMPILER "Sun compiler version " BOOST_STRINGIZE(__SUNPRO_CC)
 
@@ -91,9 +120,3 @@
 #     error "Unknown compiler version - please run the configure tests and report the results"
 #  endif
 #endif
-
-
-
-
-
-

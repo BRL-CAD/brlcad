@@ -41,9 +41,9 @@ namespace boost
 
 #ifndef BOOST_NO_SFINAE
     template<typename T>
-    typename enable_if<boost::is_convertible<T&,detail::thread_move_t<T> >, detail::thread_move_t<T> >::type move(T& t)
+    typename enable_if<boost::is_convertible<T&,detail::thread_move_t<T> >, T >::type move(T& t)
     {
-        return t;
+        return T(detail::thread_move_t<T>(t));
     }
 #endif
     

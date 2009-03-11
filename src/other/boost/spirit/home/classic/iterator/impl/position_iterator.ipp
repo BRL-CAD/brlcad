@@ -124,7 +124,8 @@ public:
     typedef boost::iterator_adaptor<
         main_iter_t,
         ForwardIterT,
-        const_value_type
+        const_value_type,
+        boost::forward_traversal_tag
     > type;
 };
 

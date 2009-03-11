@@ -253,7 +253,7 @@ public:
     std::auto_ptr<dynamic_property_map> pm(
       new detail::dynamic_property_map_adaptor<PropertyMap>(property_map));
     property_maps_type::iterator i =
-      property_maps.insert(property_maps_type::value_type(name, 0));
+      property_maps.insert(property_maps_type::value_type(name, (dynamic_property_map*)0));
     i->second = pm.release();
 
     return *this;

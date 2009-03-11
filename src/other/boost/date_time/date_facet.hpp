@@ -9,17 +9,21 @@
  * $Date$
  */
 
-
-#include "boost/algorithm/string/replace.hpp"
-#include "boost/date_time/period.hpp"
-#include "boost/date_time/special_values_formatter.hpp"
-#include "boost/date_time/period_formatter.hpp"
-#include "boost/date_time/period_parser.hpp"
-#include "boost/date_time/date_generator_formatter.hpp"
-#include "boost/date_time/date_generator_parser.hpp"
-#include "boost/date_time/format_date_parser.hpp"
+#include <locale>
 #include <string>
 #include <vector>
+#include <iterator> // ostreambuf_iterator
+#include <boost/throw_exception.hpp>
+#include <boost/algorithm/string/replace.hpp>
+#include <boost/date_time/compiler_config.hpp>
+#include <boost/date_time/period.hpp>
+#include <boost/date_time/special_defs.hpp>
+#include <boost/date_time/special_values_formatter.hpp>
+#include <boost/date_time/period_formatter.hpp>
+#include <boost/date_time/period_parser.hpp>
+#include <boost/date_time/date_generator_formatter.hpp>
+#include <boost/date_time/date_generator_parser.hpp>
+#include <boost/date_time/format_date_parser.hpp>
 
 namespace boost { namespace date_time {
 
@@ -348,11 +352,12 @@ namespace boost { namespace date_time {
                                       m_month_short_names[tm_value.tm_mon]);
       }
       // use time_put facet to create final string
+      const char_type* p_format = a_format.c_str();
       return std::use_facet<std::time_put<CharT> >(a_ios.getloc()).put(next, a_ios, 
                                                                        fill_char, 
                                                                        &tm_value,
-                                                                       &*a_format.begin(), 
-                                                                       &*a_format.begin()+a_format.size());
+                                                                       p_format, 
+                                                                       p_format + a_format.size());
     }
   protected:
     string_type                   m_format;
@@ -638,7 +643,8 @@ namespace boost { namespace date_time {
         }
         m_sv_parser.match(from, to, mr);
         if(mr.current_match == match_results::PARSE_ERROR) {
-          throw std::ios_base::failure("Parse failed. No match found for '" + mr.cache + "'");
+          boost::throw_exception(std::ios_base::failure("Parse failed. No match found for '" + mr.cache + "'"));
+          BOOST_DATE_TIME_UNREACHABLE_EXPRESSION(return from); // should never reach
         }
         dd = duration_type(static_cast<special_values>(mr.current_match)); 
       }

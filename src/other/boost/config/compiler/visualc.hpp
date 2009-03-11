@@ -22,6 +22,11 @@
 #  define BOOST_NO_DEPENDENT_TYPES_IN_TEMPLATE_VALUE_PARAMETERS
 #  define BOOST_NO_VOID_RETURNS
 #  define BOOST_NO_EXCEPTION_STD_NAMESPACE
+
+#  if BOOST_MSVC == 1202
+#    define BOOST_NO_STD_TYPEINFO
+#  endif
+
    // disable min/max macro defines on vc6:
    //
 #endif
@@ -79,13 +84,17 @@
 #  define BOOST_NO_MEMBER_TEMPLATE_FRIENDS
 #endif
 
-#if _MSC_VER <= 1500  // 1500 == VC++ 9.0
+#if _MSC_VER <= 1600  // 1600 == VC++ 10.0
 #  define BOOST_NO_TWO_PHASE_NAME_LOOKUP
 #endif
 
 #if _MSC_VER == 1500  // 1500 == VC++ 9.0
    // A bug in VC9:
 #  define BOOST_NO_ADL_BARRIER
+#endif
+
+#if _MSC_VER <= 1500  || !defined(BOOST_STRICT_CONFIG) // 1500 == VC++ 9.0
+#  define BOOST_NO_INITIALIZER_LISTS
 #endif
 
 #ifndef _NATIVE_WCHAR_T_DEFINED
@@ -112,6 +121,8 @@
 #endif
 #if (_MSC_VER >= 1310) && defined(_MSC_EXTENSIONS)
 #   define BOOST_HAS_LONG_LONG
+#else
+#   define BOOST_NO_LONG_LONG
 #endif
 #if (_MSC_VER >= 1400) && !defined(_DEBUG)
 #   define BOOST_HAS_NRVO
@@ -123,11 +134,33 @@
 #ifndef _MSC_EXTENSIONS
 #  define BOOST_DISABLE_WIN32
 #endif
+#ifndef _CPPRTTI
+#  define BOOST_NO_RTTI
+#endif
 
 //
 // all versions support __declspec:
 //
 #define BOOST_HAS_DECLSPEC
+//
+// C++0x features
+//
+//   See above for BOOST_NO_LONG_LONG
+
+#define BOOST_NO_CHAR16_T                       
+#define BOOST_NO_CHAR32_T                       
+#define BOOST_NO_CONSTEXPR                      
+#define BOOST_NO_DECLTYPE                       
+#define BOOST_NO_DEFAULTED_FUNCTIONS              
+#define BOOST_NO_DELETED_FUNCTIONS              
+#define BOOST_NO_EXPLICIT_CONVERSION_OPERATORS 
+#define BOOST_NO_EXTERN_TEMPLATE                
+#define BOOST_NO_RAW_LITERALS                   
+#define BOOST_NO_RVALUE_REFERENCES              
+#define BOOST_NO_SCOPED_ENUMS                   
+#define BOOST_NO_STATIC_ASSERT                  
+#define BOOST_NO_UNICODE_LITERALS               
+#define BOOST_NO_VARIADIC_TEMPLATES             
 //
 // prefix and suffix headers:
 //
@@ -151,6 +184,10 @@
 #     define BOOST_COMPILER_VERSION evc4.0
 #   elif _MSC_VER == 1400
 #     define BOOST_COMPILER_VERSION evc8
+#   elif _MSC_VER == 1500
+#     define BOOST_COMPILER_VERSION evc9
+#   elif _MSC_VER == 1600
+#     define BOOST_COMPILER_VERSION evc10
 #   else
 #      if defined(BOOST_ASSERT_CONFIG)
 #         error "Unknown EVC++ compiler version - please run the configure tests and report the results"
@@ -172,6 +209,8 @@
 #     define BOOST_COMPILER_VERSION 8.0
 #   elif _MSC_VER == 1500
 #     define BOOST_COMPILER_VERSION 9.0
+#   elif _MSC_VER == 1600
+#     define BOOST_COMPILER_VERSION 10.0
 #   else
 #     define BOOST_COMPILER_VERSION _MSC_VER
 #   endif
@@ -187,7 +226,7 @@
 #endif
 //
 // last known and checked version is 1500 (VC9):
-#if (_MSC_VER > 1500)
+#if (_MSC_VER > 1600)
 #  if defined(BOOST_ASSERT_CONFIG)
 #     error "Unknown compiler version - please run the configure tests and report the results"
 #  else
