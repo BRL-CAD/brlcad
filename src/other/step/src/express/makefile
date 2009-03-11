@@ -187,7 +187,7 @@ dosfedex: $(OFILES) libdos.a
 	aout2exe fedex
 
 symlink: symlink.o libexpress.a
-	$(CC) $(CFLAGS) symlink.o libexpress.a -o symlink -L$(PDESLIBDIR) -ll
+	$(CC) $(CFLAGS) symlink.o libexpress.a -o symlink -L$(PDESLIBDIR)
 
 ################################
 # Build the library.

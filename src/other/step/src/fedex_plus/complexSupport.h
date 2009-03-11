@@ -11,8 +11,9 @@ void* memcpy(void*, const void*, int);
 # endif
 #endif
 
-#include <iostream.h>
-#include <fstream.h>
+#include <iostream>
+#include <fstream>
+using namespace std;
 
 extern "C"
 {
@@ -79,11 +80,11 @@ class ComplexList;
 class ComplexCollect;
 
 class EntNode {
-    friend SimpleList;
-    friend AndOrList;
-    friend AndList;
-    friend OrList;
-    friend ComplexList;
+    friend class SimpleList;
+    friend class AndOrList;
+    friend class AndList;
+    friend class OrList;
+    friend class ComplexList;
 
   public:
     EntNode( char *nm="" ) : next(0), mark(NOMARK), multSupers(0)
@@ -91,11 +92,11 @@ class EntNode {
     EntNode( char *[] );  // given a list, create a linked list of EntNodes
     ~EntNode() { if ( next ) delete next; }
     operator const char *() { return name; }
-    operator== ( EntNode &ent )
+    int operator== ( EntNode &ent )
         { return ( strcmp( name, ent.name ) == 0 ); }
-    operator<  ( EntNode &ent )
+    int operator<  ( EntNode &ent )
         { return ( strcmp( name, ent.name ) < 0 ); }
-    operator>  ( EntNode &ent )
+    int operator>  ( EntNode &ent )
         { return ( strcmp( name, ent.name ) > 0 ); }
     void setmark( MarkType stamp=MARK ) { mark = stamp; }
     void markAll( MarkType=MARK );
@@ -115,11 +116,11 @@ class EntNode {
 };
 
 class EntList {
-    friend MultList;
-    friend JoinList;
-    friend OrList;
-    friend ComplexList;
-    friend ComplexCollect;
+    friend class MultList;
+    friend class JoinList;
+    friend class OrList;
+    friend class ComplexList;
+    friend class ComplexCollect;
     friend ostream & operator<< ( ostream &, EntList & );
     friend ostream & operator<< ( ostream &, MultList & );
 
@@ -167,14 +168,14 @@ class EntList {
 };
 
 class SimpleList : public EntList {
-    friend ComplexList;
+    friend class ComplexList;
     friend ostream & operator<< ( ostream &, SimpleList & );
 
   public:
     SimpleList( const char *n ) : I_marked(NOMARK), EntList(SIMPLE)
         { strcpy( name, n ); }
     ~SimpleList() {}
-    operator== ( const char *nm )
+    int operator== ( const char *nm )
         { return ( strcmp( name, nm ) == 0 ); }
     const char *Name() { return name; }
     int contains( const char *nm ) { return *this == nm; }
@@ -195,8 +196,8 @@ class MultList : public EntList {
     // Supports concepts and functionality common to all the compound list
     // types, especially AND and ANDOR.
 
-    friend ComplexList;
-    friend ComplexCollect;
+    friend class ComplexList;
+    friend class ComplexCollect;
     friend ostream & operator<< ( ostream &, MultList & );
 
   public:
@@ -242,7 +243,7 @@ class JoinList : public MultList {
 };
 
 class AndOrList : public JoinList {
-    friend ComplexList;
+    friend class ComplexList;
 
   public:
     AndOrList() : JoinList( ANDOR ) {}
@@ -252,8 +253,8 @@ class AndOrList : public JoinList {
 };
 
 class AndList : public JoinList {
-    friend MultList;
-    friend ComplexList;
+    friend class MultList;
+    friend class ComplexList;
     friend ostream & operator<< ( ostream &, ComplexList & );
 
   public:
@@ -290,23 +291,23 @@ class ComplexList {
     // Contains the entire list of EntLists which describe the set of
     // instantiable complex entities defined by an EXPRESS expression.
 
-    friend MultList;
-    friend ComplexCollect;
+    friend class MultList;
+    friend class ComplexCollect;
     friend ostream & operator<< ( ostream &, ComplexList & );
 
   public:
-    ComplexList( AndList *and = NULL ) : head(and), list(0), next(0),
+    ComplexList( AndList *alist = NULL ) : head(alist), list(0), next(0),
                                          abstract(0), dependent(0),
                                          multSupers(0) {}
     ComplexList( Entity, ComplexCollect * );
     ~ComplexList();
     void buildList();
     void remove();
-    operator<  ( ComplexList &c )
+    int operator<  ( ComplexList &c )
         { return ( strcmp( supertype(), c.supertype() ) < 0 ); }
-    operator< ( char *name )
+    int operator< ( char *name )
         { return ( strcmp( supertype(), name ) < 0 ); }
-    operator== ( char *name )
+    int operator== ( char *name )
         { return ( strcmp( supertype(), name ) == 0 ); }
     const char *supertype() { return ((SimpleList *)head->childList)->name; }
       // Based on knowledge that ComplexList always created by ANDing supertype

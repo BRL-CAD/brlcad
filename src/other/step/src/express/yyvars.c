@@ -18,7 +18,8 @@ static char rcsid[] = "$Id: yyvars.c,v 1.1 1994/05/11 21:36:48 libes dec96 $";
 
 #include <stdio.h>
 
-FILE *yyin = {stdin}, *yyout = {stdout};
+/* FILE *yyin = {stdin}, *yyout = {stdout}; */
+FILE *yyin = NULL, *yyout = NULL;
 int yylineno = 1;
 int yynerrs;		/* total errors */
 

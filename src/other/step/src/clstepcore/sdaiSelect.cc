@@ -14,7 +14,7 @@
 
 #include <stdio.h> // to get the BUFSIZ #define
 #include <ExpDict.h>
-#include <strstream.h>
+#include <sstream>
 //#include <STEPentity.h>
 #include <scl_string.h>
 #include <sdai.h>
@@ -198,7 +198,7 @@ SCLP23(Select)::SelectValidLevel(const char *attrValue, ErrorDescriptor *err,
 //      (attrValue, CurrentUnderlyingType () -> Name (), err, im);
 //  else 
 
-  istrstream strtmp (attrValue);
+  istringstream strtmp (attrValue);
   s = tmp -> STEPread (strtmp, err, im);
   delete tmp;
   return s;
@@ -259,7 +259,7 @@ SCLP23(Select)::StrToVal(const char *Val, const char *selectType,
 	  case INTEGER_TYPE:
 	  default:
 	  {
-	      istrstream strtmp (Val);
+	      istringstream strtmp (Val);
 	      err->GreaterSeverity( STEPread_content (strtmp) );
 	      if(_error.severity() != SEVERITY_NULL)
 		  err->AppendFromErrorArg(&_error);
@@ -673,11 +673,11 @@ SCLP23(Select)::STEPwrite_verbose(ostream& out, const char *currSch) const
 const char *
 SCLP23(Select)::STEPwrite(SCLstring& s, const char *currSch)  const
 {
-  strstream buf;
+  ostringstream buf;
   STEPwrite (buf, currSch);
   buf << ends;  // have to add the terminating \0 char
   char * tmp;
-  tmp = buf.str ();
+  /*** tmp = buf.str (); ***/ tmp = &(buf.str()[0]);
   s = tmp;
   delete tmp;
   return s;

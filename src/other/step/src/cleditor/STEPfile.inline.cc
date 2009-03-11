@@ -322,7 +322,9 @@ void
 STEPfile::SetFileIdIncrement()
 {
     if (instances ().MaxFileId() < 0) _fileIdIncr = 0;
-    else _fileIdIncr = (int)((ceil((instances ().MaxFileId() + 99)/1000) + 1) * 1000);
+    else _fileIdIncr = // (int)((ceil((instances ().MaxFileId() + 99)/1000) + 1) * 1000);
+    		(int)((ceil((double) ((instances ().MaxFileId() + 99)/1000) ) + 1) * 1000);
+    		// FIXME: Is this correct? Why put an integer expression into ceil()?
 }
 
 char *STEPfile::schemaName( char *schName )

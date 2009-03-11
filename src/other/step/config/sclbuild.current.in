@@ -7,6 +7,7 @@
 #
 
 echo "Running the script: sclbuild - builds scl under @PDES_ROOT@/@ARCH_ROOT@"
+set -x
 
 cd @PDES_ROOT@
 
@@ -16,15 +17,15 @@ cd src/express
 mv -f mkrules mkrules.bak
 cp mkrules.@ARCH_ROOT@ mkrules
 make clean
-make -k install
+make install || exit 1
 
 cd ../exppp
 make clean
-make -k install
+make install || exit 1
 
 cd ../fedex_plus
 make clean
-make -k install
+make install || exit 1
 
 cd @PDES_ROOT@
 
@@ -33,9 +34,9 @@ cd @ARCH_ROOT@
 cd ofiles
 # make clean
 @MAKE_SDAIORBIX@
-make -k editorCore
-make -k dai
-make -k utils 
+make editorCore || exit 1
+make dai        || exit 1
+make utils      || exit 1
 @MAKE_IVFASD@
 @MAKE_PROBEUI@
 
@@ -48,7 +49,7 @@ cd ../Probes
 #../bin/mkProbe -i -p ../../data/example/example.exp example
 
 #create in ~pdevel
-../bin/mkProbe @MKPROBE_OPTIONS@ ../../data/example/example.exp example
+../bin/mkProbe @MKPROBE_OPTIONS@ ../../data/example/example.exp example || exit 1
 
 cp ../../src/test/p21read/testfile.step example
 

@@ -74,6 +74,7 @@ static char rcsid[] = "";
 #include <pwd.h>
 #include <stdlib.h>
 #include <setjmp.h>
+#include <errno.h>
 
 #include "express.h"
 #include "resolve.h"
@@ -81,7 +82,7 @@ static char rcsid[] = "";
 #include "scope.h"
 
 extern FILE *yyin;
-extern Express yyresult;
+extern Express yyexpresult;
 
 static Error ERROR_ref_nonexistent;
 static Error ERROR_tilde_expansion_failed;
@@ -393,10 +394,7 @@ EXPRESSinitialize(void)
 void
 EXPRESSparse(Express model,FILE *fp, char *filename)
 {
-	extern char* sys_errlist[];
-	extern int errno;
-
-	yyresult = model;
+	yyexpresult = model;
 
 	if (!fp) fp = fopen(filename,"r");
 	if (!fp) {
@@ -411,7 +409,7 @@ EXPRESSparse(Express model,FILE *fp, char *filename)
 	}
 
 	if (!fp) {
-		ERRORreport(ERROR_file_unreadable,filename,sys_errlist[errno]);
+		ERRORreport(ERROR_file_unreadable,filename,strerror(errno));
 		return;
 	}
 
@@ -466,7 +464,7 @@ PARSERrun(char *filename,FILE *fp)
 		return 0;
 	}
 	EXPRESSpass = 1;
-	return yyresult;
+	return yyexpresult;
 }
 
 static void RENAMEresolve(Rename *r, Schema s);
@@ -643,8 +641,6 @@ EXPRESSfind_schema(Dictionary modeldict,char *name)
 				name,dir->full);
 			return 0;
 		} else {
-			extern int errno;
-
 			if (print_objects_while_running & OBJ_SCHEMA_BITS) {
 				fprintf(stdout,"pass %d: %s (schema file not found), errno = %d\n",EXPRESSpass,dir->full,errno);
 			}

@@ -4,10 +4,8 @@
 
 #include <sys/param.h>
 #include <stdio.h>
+#include <errno.h>
 #include "express.h"
-
-extern char *sys_errlist[];
-extern int errno;
 
 void
 create_links(Express model)
@@ -46,7 +44,7 @@ create_links(Express model)
 
 		if (-1 == symlink(linksrc,linkname)) {
 			fprintf(stderr,"symlink(%s,%s) failed: %s\n",
-				linksrc,linkname,sys_errlist[errno]);
+				linksrc,linkname,strerror(errno));
 			exit(1);
 		}
 	}

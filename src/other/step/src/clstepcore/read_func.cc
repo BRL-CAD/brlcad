@@ -106,7 +106,7 @@ int
 ReadInteger(SCLP23(Integer) &val, const char *s, ErrorDescriptor *err, 
 	    char *tokenList)
 {
-    istrstream in((char *)s);
+    istringstream in((char *)s);
     return ReadInteger(val, in, err, tokenList);
 }
 
@@ -137,7 +137,7 @@ IntValidLevel (const char *attrValue, ErrorDescriptor *err,
     if(clearError)
 	err->ClearErrorMsg();
 
-    istrstream in((char *)attrValue);
+    istringstream in((char *)attrValue);
     in >> ws; // skip white space
     char c = in.peek();
     if(in.eof())
@@ -378,7 +378,7 @@ ReadReal(SCLP23(Real) &val, istream &in, ErrorDescriptor *err,
     int success = 0;
     success = sscanf(buf," %G", &d);
 */
-    istrstream in2((char *)buf);
+    istringstream in2((char *)buf);
 
     // now that we have the real the stream will be able to salvage reading 
     // whatever kind of format was used to represent the real.
@@ -429,7 +429,7 @@ int
 ReadReal(SCLP23(Real) &val, const char *s, ErrorDescriptor *err, 
 	 char *tokenList)
 {
-    istrstream in((char *)s);
+    istringstream in((char *)s);
     return ReadReal(val, in, err, tokenList);
 }
 
@@ -460,7 +460,7 @@ RealValidLevel (const char *attrValue, ErrorDescriptor *err,
     if(clearError)
 	err->ClearErrorMsg();
 
-    istrstream in((char *)attrValue);
+    istringstream in((char *)attrValue);
     in >> ws; // skip white space
     char c = in.peek();
     if(in.eof())
@@ -534,7 +534,7 @@ int
 ReadNumber(SCLP23(Real) &val, const char *s, ErrorDescriptor *err, 
 	   char *tokenList)
 {
-    istrstream in((char *)s);
+    istringstream in((char *)s);
     return ReadNumber(val, in, err, tokenList);
 }
 
@@ -566,7 +566,7 @@ NumberValidLevel (const char *attrValue, ErrorDescriptor *err,
     if(clearError)
 	err->ClearErrorMsg();
 
-    istrstream in((char *)attrValue);
+    istringstream in((char *)attrValue);
     in >> ws; // skip white space
     char c = in.peek();
     if(in.eof())

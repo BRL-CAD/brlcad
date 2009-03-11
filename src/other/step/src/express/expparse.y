@@ -107,7 +107,7 @@ int tag_count;	/* use this to count tagged GENERIC types in the formal */
 		/* this allows us to attach a dictionary to it only when */
 		/* we decide we absolutely need one */
 
-Express yyresult;	/* hook to everything built by parser */
+Express yyexpresult;	/* hook to everything built by parser */
 
 Symbol *interface_schema;	/* schema of interest in use/ref clauses */
 void (*interface_func)();	/* func to attach rename clauses */
@@ -871,12 +871,12 @@ explicit_attribute	: attribute_decl_list TOK_COLON optional
 
 express_file		: { scope = scopes;
 			    /* no need to define scope->this */
-			    scope->this_ = yyresult;
+			    scope->this_ = yyexpresult;
 			    scope->pscope = scope;
 			    scope->type = OBJ_EXPRESS;
-			    yyresult->symbol.name = yyresult->u.express->filename;
-			    yyresult->symbol.filename = yyresult->u.express->filename;
-			    yyresult->symbol.line = 1;
+			    yyexpresult->symbol.name = yyexpresult->u.express->filename;
+			    yyexpresult->symbol.filename = yyexpresult->u.express->filename;
+			    yyexpresult->symbol.line = 1;
 			  }
 			  schema_decl_list
 			;

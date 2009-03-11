@@ -1958,7 +1958,7 @@ TypeDescriptor::NonRefTypeDescriptor() const
 	// an aggregate
 	///////////////////////////////////////////////////////////////////////
 
-TypeDescriptor::IsAggrType() const
+int TypeDescriptor::IsAggrType() const
 {
     switch(NonRefType())
     {

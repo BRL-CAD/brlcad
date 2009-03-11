@@ -72,7 +72,7 @@ STEPaggregate::AggrValidLevel(const char *value, ErrorDescriptor *err,
     if(clearError)
 	err->ClearErrorMsg();
 
-    istrstream in ((char *)value); // sz defaults to length of s
+    istringstream in ((char *)value); // sz defaults to length of s
 
     ReadValue(in, err, elem_type, insts, addFileId, 0, 0);
     CheckRemainingInput(in, err, elem_type->AttrTypeName(buf), tokenList);
@@ -237,7 +237,7 @@ STEPaggregate::StrToVal(const char *s, ErrorDescriptor *err,
 			const TypeDescriptor *elem_type, InstMgr *insts,
 			int addFileId)
 {
-    istrstream in((char *)s);
+    istringstream in((char *)s);
     return ReadValue(in, err, elem_type, insts, addFileId, 1, 0);
 }
 
@@ -525,7 +525,7 @@ GenericAggrNode::StrToVal(istream &in, ErrorDescriptor *err)
 Severity 
 GenericAggrNode::STEPread(const char *s, ErrorDescriptor *err)
 {
-    istrstream in((char *) s);
+    istringstream in((char *) s);
     return value.STEPread(in, err);
 }
 
@@ -818,7 +818,7 @@ EntityNode::STEPread(const char *s, ErrorDescriptor *err,
 		     const TypeDescriptor *elem_type, 
 		     InstMgr *insts, int addFileId)
 {
-    istrstream in((char *)s);
+    istringstream in((char *)s);
     return STEPread(in, err, elem_type, insts, addFileId);
 }
 
@@ -1105,7 +1105,7 @@ SelectNode::StrToVal(const char *s, ErrorDescriptor *err,
 	node = S_ENTITY_NULL;
 */
 	// KC you will have to decide what to do here
-    istrstream in((char*)s);
+    istringstream in((char*)s);
     if (err->severity( node->STEPread(in, err, insts) ) != SEVERITY_NULL)
 	err->AppendToDetailMsg (node ->Error ());
     return err->severity();
@@ -1124,7 +1124,7 @@ SelectNode::STEPread(const char *s, ErrorDescriptor *err,
 		     const TypeDescriptor *elem_type, 
 		     InstMgr *insts, int addFileId)
 {
-    istrstream in((char *)s);
+    istringstream in((char *)s);
     return STEPread(in, err, elem_type, insts, addFileId);
 }
 
@@ -1301,7 +1301,7 @@ StringNode::StrToVal(istream &in, ErrorDescriptor *err)
 Severity 
 StringNode::STEPread(const char *s, ErrorDescriptor *err)
 {
-    istrstream in((char *)s);
+    istringstream in((char *)s);
 
     value.STEPread(in, err);
     CheckRemainingInput(in, err, "string", ",)");
@@ -1453,7 +1453,7 @@ BinaryNode::StrToVal(istream &in, ErrorDescriptor *err)
 Severity 
 BinaryNode::STEPread(const char *s, ErrorDescriptor *err)
 {
-    istrstream in((char *)s);
+    istringstream in((char *)s);
 
     value.STEPread(in, err);
     CheckRemainingInput(in, err, "binary", ",)");
@@ -1670,7 +1670,7 @@ EnumNode::StrToVal(istream &in, ErrorDescriptor *err)
 Severity 
 EnumNode::STEPread(const char *s, ErrorDescriptor *err)
 {
-    istrstream in((char *)s); // sz defaults to length of s
+    istringstream in((char *)s); // sz defaults to length of s
 
     int nullable = 0;
     node->STEPread (in, err,  nullable);

@@ -11,7 +11,7 @@
 
 /* $Id: sdaiBinary.cc,v */
 
-#include <strstream.h>
+#include <sstream>
 #include <sdai.h>
 
 extern Severity 
@@ -164,7 +164,7 @@ SCLP23(Binary)::ReadBinary(istream& in, ErrorDescriptor *err, int AssignVal,
 Severity
 SCLP23(Binary)::StrToVal (const char * s, ErrorDescriptor *err)
 {
-    istrstream in ((char *)s); // sz defaults to length of s
+    istringstream in ((char *)s); // sz defaults to length of s
     return ReadBinary(in, err, 1, 0);
 }
 
@@ -298,7 +298,7 @@ SCLP23(Binary)::STEPread (istream& in, ErrorDescriptor *err)
 Severity 
 SCLP23(Binary)::STEPread (const char *s, ErrorDescriptor *err)
 {
-    istrstream in((char *)s);
+    istringstream in((char *)s);
     return STEPread (in, err);
 }
 
@@ -365,7 +365,7 @@ SCLP23(Binary)::BinaryValidLevel (const char *value, ErrorDescriptor *err,
 				  int optional, char *tokenList, 
 				  int needDelims, int clearError)
 {
-    istrstream in((char *)value);
+    istringstream in((char *)value);
     return BinaryValidLevel (in, err, optional, tokenList, 
 			     needDelims, clearError);
 }

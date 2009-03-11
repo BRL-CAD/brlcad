@@ -17,7 +17,7 @@
 #endif
 
 /* C++ Stuff */
-#include <iostream.h>
+#include <iostream>
 
 /* General SCL stuff */
 #include <ExpDict.h>

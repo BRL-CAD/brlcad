@@ -38,7 +38,7 @@ SCLundefined::StrToVal(istream &in, ErrorDescriptor *err)
 Severity 
 SCLundefined::STEPread(const char *s, ErrorDescriptor *err)
 {
-    istrstream in((char *) s);
+    istringstream in((char *) s);
     return STEPread(in, err);
 }
 
@@ -46,7 +46,7 @@ Severity
 SCLundefined::STEPread(istream &in, ErrorDescriptor *err)
 {
     char c = '\0';
-    strstream ss;
+    ostringstream ss;
     SCLstring str;
 
     int terminal = 0;
@@ -109,7 +109,7 @@ SCLundefined::STEPread(istream &in, ErrorDescriptor *err)
     }	  
 
     ss << ends;
-    val = ss.str();
+    /*** val = ss.str(); ***/ val = &(ss.str()[0]);
 
     err->GreaterSeverity(SEVERITY_NULL);
     return SEVERITY_NULL;

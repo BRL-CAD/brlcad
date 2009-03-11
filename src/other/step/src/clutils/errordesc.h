@@ -24,7 +24,7 @@
 #endif
 
 #include <scl_string.h>
-#include <iostream.h>
+#include <iostream>
 
 typedef enum Severity {
     SEVERITY_MAX	= -5,

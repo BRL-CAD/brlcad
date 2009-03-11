@@ -36,7 +36,7 @@ class STEPattributeList;
 
 class AttrListNode :  public SingleLinkNode 
 {
-  friend STEPattributeList;
+  friend class STEPattributeList;
 
   protected:
     STEPattribute *attr;

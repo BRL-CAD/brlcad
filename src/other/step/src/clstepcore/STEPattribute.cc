@@ -107,7 +107,7 @@ STEPattribute::StrToVal (const char* s, InstMgr * instances, int addFileId)
 	return _error.severity (SEVERITY_INPUT_ERROR);
     }
 
-    istrstream in ((char *)s); // sz defaults to length of s
+    istringstream in ((char *)s); // sz defaults to length of s
     int valAssigned = 0;
 
     // read in value for attribute
@@ -1133,7 +1133,8 @@ STEPattribute::AddErrorInfo()
 char
 STEPattribute::SkipBadAttr(istream& in, char *StopChars)
 {
-    int sk = in.skip(0);  //turn skipping whitespace off
+    ios_base::fmtflags flbuf = in.flags();
+    in.unsetf(ios_base::skipws);  // turn skipping whitespace off
 
 	// read bad data until end of this attribute or entity.
     char *foundCh = 0;
@@ -1160,7 +1161,7 @@ STEPattribute::SkipBadAttr(istream& in, char *StopChars)
 	_error.AppendToDetailMsg(errStr);
     }
     in.putback (c);
-    in.skip(sk);     //set skip whitespace to its original state
+    in.flags(flbuf);  // set skip whitespace to its original state
     return c;
 }
 

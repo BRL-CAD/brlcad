@@ -50,7 +50,7 @@ class TypeDescriptor;
 class AttrDescriptor;
 class EntityDescriptor;
 
-#include <strstream.h>
+#include <sstream>
 //#include <ExpDict.h>
 
 //#define s_String	char *

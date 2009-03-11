@@ -1925,7 +1925,10 @@ TYPEselect_lib_print (const Type type, FILE* f, Schema schema)
 	      fprintf( f, "   Error( \"Underlying type is not %s\" );\n",
 		       AccessType (t) );
 	      PRINT_SELECTBUG_WARNING (f) ;
-	      fprintf( f, "   return 0;\n}\n\n" );
+	      if (TYPEis_boolean (t) || TYPEis_logical (t))
+	          fprintf( f, "   return (%s)0;\n}\n\n", TYPEget_utype(t) );
+	      else
+	          fprintf( f, "   return 0;\n}\n\n" );
 	    }
 	LISTod;
 	LISTdo( dups, t, Type )

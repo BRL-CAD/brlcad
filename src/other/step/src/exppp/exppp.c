@@ -6,10 +6,10 @@
 #include <varargs.h>
 #endif
 
-extern char *sys_errlist[];
+#include <errno.h>
+
 int exppp_output_filename_reset;	/* if true, force output filename */
   /* DAR - moved this from .h file - not sure why was there. */
-int errno;
 
 #include "expbasic.h"
 #include "express.h"
@@ -98,7 +98,7 @@ char *rmheader[] = {
 ""									,
 0};
 
-FILE *exppp_fp = stdout;		/* output file */
+FILE *exppp_fp = NULL;		/* output file */
 char *exppp_buf = 0;		/* output buffer */
 int exppp_maxbuflen = 0;		/* size of expppbuf */
 int exppp_buflen = 0;		/* remaining space in expppbuf */
@@ -150,7 +150,7 @@ va_dcl
 {
 	char *fmt;
 #endif
-	FILE *f = exppp_fp;
+	FILE *f = exppp_fp?exppp_fp:stdout;
 	char *p;
 	char buf[10000];
 	int len;
@@ -201,7 +201,7 @@ va_dcl
 {
 	char *fmt;
 #endif
-	FILE *f = exppp_fp;
+	FILE *f = exppp_fp?exppp_fp:stdout;
 	char *p;
 	char buf[10000];
 	int len;
@@ -251,7 +251,7 @@ EXPRESSout(Express e)
 
 	if (exppp_rmpp) {
 		if (!(rm = fopen(rmfilename,"w"))) {
-			ERRORreport(ERROR_file_unwriteable,rmfilename,sys_errlist[errno]);
+			ERRORreport(ERROR_file_unwriteable,rmfilename,strerror(errno));
 			return;
 		}
 
@@ -272,7 +272,7 @@ EXPRESSout(Express e)
 		/* owner+group executable, readable to world */
 		if (0 != chmod(rmfilename,0774)) {
 			fprintf(stderr,"%s: could not mark %s executable (%s)\n",
-				EXPRESSprogram_name,rmfilename,sys_errlist[errno]);
+				EXPRESSprogram_name,rmfilename,strerror(errno));
 			return;
 		}
 	}
@@ -348,7 +348,7 @@ SCHEMAout(Schema s)
 		fprintf(stdout,"%s: writing schema file %s\n",EXPRESSprogram_name,filename);
 	}
 	if (!(exppp_fp = f = fopen(filename,"w"))) {
-		ERRORreport(ERROR_file_unwriteable,filename,sys_errlist[errno]);
+		ERRORreport(ERROR_file_unwriteable,filename,strerror(errno));
 		return 0;
 	}
 
@@ -587,7 +587,7 @@ copy_file_chunk(char *filename, int start, int end, int level)
     int i, indent, undent = 0, fix;
 
     if (!(infile = fopen(filename, "r"))) {
-	ERRORreport(ERROR_file_unreadable, filename, sys_errlist[errno]);
+	ERRORreport(ERROR_file_unreadable, filename, strerror(errno));
     }
 
     /* skip to start of chunk */
@@ -1892,7 +1892,7 @@ prep_string()
 	}
 	string_func_in_use = True;
 
-	exppp_buf = exppp_bufp = malloc(BIGBUFSIZ);
+	exppp_buf = exppp_bufp = (char*)malloc(BIGBUFSIZ);
 	if (!exppp_buf) {
 		fprintf(stderr,"failed to allocate exppp buffer\n");
 		return 1;
@@ -1912,7 +1912,7 @@ prep_string()
 static char *
 finish_string()
 {
-	char *b = realloc(exppp_buf,1+exppp_maxbuflen-exppp_buflen);
+	char *b = (char*)realloc(exppp_buf,1+exppp_maxbuflen-exppp_buflen);
 
 	if (b == 0) {
 		fprintf(stderr,"failed to reallocate exppp buffer\n");
@@ -1940,7 +1940,7 @@ prep_file()
 
 	/* temporarily change file to stdout and print */
 	/* This avoids messing up any printing in progress */
-	oldfp = exppp_fp;
+	oldfp = exppp_fp?exppp_fp:stdout;
 	exppp_fp = stdout;
 	curpos = 1;
 }

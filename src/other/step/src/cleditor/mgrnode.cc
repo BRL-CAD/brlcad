@@ -21,7 +21,7 @@
 //#include <STEPentity.h>
 #include <sdai.h>
 
-#include <stream.h>
+#include <iostream>
 
 void *MgrNode::SEE()
 {

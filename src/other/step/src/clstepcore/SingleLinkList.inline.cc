@@ -13,7 +13,7 @@
 /* $Id: SingleLinkList.inline.cc,v 3.0.1.2 1997/11/05 21:59:23 sauderd DP3.1 $ */
 
 #include <SingleLinkList.h>
-#include <stream.h>
+#include <iostream>
 
 SingleLinkNode * 	
 SingleLinkNode::NextNode ()  const
@@ -47,7 +47,7 @@ SingleLinkNode *
 SingleLinkList::NewNode () 
 {
     //  defined in subtypes
-    cerr << "\n\n******BUG****** a virtually defined function should \n"
+    std::cerr << "\n\n******BUG****** a virtually defined function should \n"
 	 << "be called for SingleLinkList::NewNode()\n\n";
     return new SingleLinkNode();
 }

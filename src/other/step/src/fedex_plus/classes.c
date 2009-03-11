@@ -597,7 +597,7 @@ TYPEget_express_type (const Type t)
 
 	/*  this will declare extra memory when aggregate is > 1D  */
 	
-	permval = malloc (strlen (retval) * sizeof (char) +1);
+	permval = (char*)malloc(strlen (retval) * sizeof (char) +1);
 	strcpy (permval, retval);
 	return permval;
 	

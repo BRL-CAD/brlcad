@@ -89,11 +89,11 @@ P21LIB = -lp21
 
 # link with these libraries for express wf and fedex
 #EXPRESS_LIBS = -L$(LIBDIR) $(EXPLIB) $(LOCAL_LIB) -lbison -ll 
-EXPRESS_LIBS = -L$(LIBDIR) $(EXPLIB) $(LOCAL_LIB) -ll 
+EXPRESS_LIBS = -L$(LIBDIR) $(EXPLIB) $(LOCAL_LIB) 
 
 # link with these libraries for p21 wf
 #P21_LIBS = -L$(LIBDIR) -L$(PDESLIBDIR) $(P21LIB) $(EXPLIB) $(LOCAL_LIB) -lbison -ll 
-P21_LIBS = -L$(LIBDIR) -L$(PDESLIBDIR) $(P21LIB) $(EXPLIB) $(LOCAL_LIB) -ll 
+P21_LIBS = -L$(LIBDIR) -L$(PDESLIBDIR) $(P21LIB) $(EXPLIB) $(LOCAL_LIB) 
 
 # compile with these cc flags for express wf and fedex
 EXPRESS_CFLAGS = -DHAVE_CONFIG_H -I. -I$(EXPINCDIR) -I/proj/pdevel/scl3-1/arch-gnu-solaris

@@ -25,7 +25,6 @@ extern const char *SCLversion;
 #include <ctype.h>
 //#include <stdio.h>
 //#include <strstream.h>
-#include <values.h>
 
 #include <string.h>
 

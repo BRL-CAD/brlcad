@@ -26,7 +26,7 @@
 /*#include <math.h>*/
 #include <instmgr.h>
 #include <Registry.h>
-#include <fstream.h>
+#include <fstream>
 #include <dirobj.h>
 #include <errordesc.h>
 #include <time.h>

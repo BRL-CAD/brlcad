@@ -25,7 +25,7 @@
 #include <OpenOODB.h>
 #endif
 
-#include <stream.h>
+#include <iostream>
 class GenNodeList;
 class MgrNodeList;
 class DisplayNodeList;
@@ -37,9 +37,9 @@ class DisplayNodeList;
 
 class GenericNode
 {
-friend GenNodeList;
-friend MgrNodeList;
-friend DisplayNodeList;
+friend class GenNodeList;
+friend class MgrNodeList;
+friend class DisplayNodeList;
 
 protected:
     GenericNode *next;

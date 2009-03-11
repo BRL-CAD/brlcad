@@ -1,5 +1,0 @@
-co Makefile
-co appinstance.idl
-co sdaitypes.idl
-co p26sdai.idl
-co corbaIncludes.h.in

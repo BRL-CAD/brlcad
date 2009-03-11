@@ -51,7 +51,7 @@ int AddToAggrNameList(const char *aggr, FILE* idl_file)
     }
     else if(i < aggrNameList_maxsize)
     {
-	aggrNameList[i] = malloc( sizeof(char)*(strlen(aggr)+1) );
+	aggrNameList[i] = (char*)malloc( sizeof(char)*(strlen(aggr)+1) );
 	strcpy(aggrNameList[i],aggr);
 	aggrNameList_size++;
     }
@@ -67,7 +67,7 @@ int AddToAggrNameList(const char *aggr, FILE* idl_file)
 	}
 	free(aggrNameList);
 	aggrNameList = tmpList;
-	aggrNameList[i] = malloc( sizeof(char)*(strlen(aggr)+1) );
+	aggrNameList[i] = (char*)malloc( sizeof(char)*(strlen(aggr)+1) );
 	strcpy(aggrNameList[i],aggr);
 	aggrNameList_size++;
     }

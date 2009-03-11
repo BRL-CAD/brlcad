@@ -986,7 +986,7 @@ SCLP23(Application_instance) *
 ReadEntityRef(const char * s, ErrorDescriptor *err, char *tokenList, 
 	      InstMgr * instances, int addFileId)
 {
-    istrstream in((char *)s);
+    istringstream in((char *)s);
     return ReadEntityRef(in, err, tokenList, instances, addFileId);
 }
 

@@ -19,7 +19,7 @@
 
 //static char rcsid[] ="$Id: sdaiEnum.cc,v 1.5 1997/11/05 21:59:14 sauderd DP3.1 $";
 
-#include <strstream.h>
+#include <sstream>
 
 //#ifndef SCLP23(TRUE)
 //#ifndef SCLP23(FALSE)
@@ -724,7 +724,7 @@ SCLP23(Enum)::StrToVal (const char * s)
 Severity 
 SCLP23(Enum)::StrToVal (const char * s, ErrorDescriptor *err, int optional)
 {
-    istrstream in ((char *)s); // sz defaults to length of s
+    istringstream in ((char *)s); // sz defaults to length of s
 
     Severity sev = ReadEnum(in, err, 1, 0);
     if( (err->severity() == SEVERITY_INCOMPLETE) && optional)
@@ -737,7 +737,7 @@ SCLP23(Enum)::StrToVal (const char * s, ErrorDescriptor *err, int optional)
 Severity
 SCLP23(Enum)::STEPread (const char *s, ErrorDescriptor *err, int optional)
 {
-    istrstream in((char *)s);
+    istringstream in((char *)s);
     return STEPread (in, err, optional);
 }
 
@@ -857,7 +857,7 @@ SCLP23(Enum)::EnumValidLevel(const char *value, ErrorDescriptor *err,
 				int optional, char *tokenList, 
 				int needDelims, int clearError)
 {
-    istrstream in((char *)value);
+    istringstream in((char *)value);
     return EnumValidLevel (in, err, optional, tokenList, needDelims,
 			   clearError);
 /*

@@ -8,7 +8,7 @@ message:
 	@echo "using defaults from your path."
 	@echo "If... "
 	@echo "- the installation fails or "
-	@echo "- you didn't get the compilers, etc you expected or 
+	@echo "- you didn't get the compilers, etc you expected or "
 	@echo "- you want to do multiple installations (using different compilers or "
 	@echo "  other SCL options)"
 	@echo "then you will need to read the instructions in INSTALL"

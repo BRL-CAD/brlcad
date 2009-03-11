@@ -142,7 +142,9 @@ typedef int (*intFuncptr)();
 
 
 /* pacify IBM's c89 */
+#if !defined(_POSIX_SOURCE)
 #define _POSIX_SOURCE
+#endif
 
 /* backward compatibility */
 typedef char *String;

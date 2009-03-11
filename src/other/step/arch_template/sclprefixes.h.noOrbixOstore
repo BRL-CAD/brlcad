@@ -155,6 +155,7 @@ The macro SCLP23 is used everywhere else.
 #endif
 
 
+#define CC_NO_NESTED_CLASSES 1
 #ifdef CC_NO_NESTED_CLASSES
 
   // SCLBOOL_H and SCLLOG_H are used in the sdaiEnum.h header file where

@@ -12,7 +12,7 @@
 /* $Id: sdaiString.cc,v 1.4 1997/11/05 21:59:17 sauderd DP3.1 $ */
 
 #include <sdai.h>
-#include <strstream.h>
+#include <sstream>
 
 
 SCLP23(String)& 
@@ -92,7 +92,7 @@ SCLP23(String)::STEPread (istream& in, ErrorDescriptor *err)
     in >> c;
 
 	// remember the current format state to restore the previous settings
-    long int flags = in.flags();
+    ios_base::fmtflags flags = in.flags();
     in.unsetf(ios::skipws);
 
     if (c == STRING_DELIM)
@@ -144,6 +144,6 @@ SCLP23(String)::STEPread (istream& in, ErrorDescriptor *err)
 Severity 
 SCLP23(String)::STEPread (const char *s, ErrorDescriptor *err)
 {
-    istrstream in((char *)s);
+    istringstream in((char *)s);
     return STEPread (in, err);
 }

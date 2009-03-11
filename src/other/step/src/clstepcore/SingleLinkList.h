@@ -55,7 +55,7 @@ class SingleLinkList  {
 
 
 class SingleLinkNode {
-    friend SingleLinkList;    
+    friend class SingleLinkList;
   protected:
 
   public:

@@ -1018,7 +1018,7 @@ class SchRename {
       { strcpy( schName, sch ); strcpy( newName, newnm ); }
     ~SchRename() { delete next; }
     const char *objName() const { return newName; }
-    operator<  ( SchRename &schrnm )
+    int operator<  ( SchRename &schrnm )
         { return ( strcmp( schName, schrnm.schName ) < 0 ); }
     int choice( const char *nm ) const;
             // is nm one of our possible choices?
@@ -1558,7 +1558,7 @@ class AggrTypeDescriptor  :    public TypeDescriptor  {
     SCLP23(LOGICAL)& UniqueElements()	{ return _uniqueElements; } 
     void UniqueElements (SCLP23(LOGICAL) &ue) 
 					{ _uniqueElements.put(ue.asInt()); } 
-    void UniquesElements (SCLLOG(Logical) ue)     { _uniqueElements.put(ue); }
+    void UniqueElements (SCLLOG(Logical) ue)     { _uniqueElements.put(ue); }
     void UniqueElements (const char *ue) { _uniqueElements.put(ue); }
 
     class TypeDescriptor * AggrDomainType()    { return _aggrDomainType; } 

@@ -75,15 +75,15 @@ all: fedex_plus fedex_os fedex_idl
 
 $(PROG): $(OFILES) $(PDESLIBDIR)libexpress.a $(PDESLIBDIR)libexppp.a
 	 $(CXX) $(CFLAGS) $(INCLUDES) $(OFILES) $(LDFLAGS) -L$(PDESLIBDIR) \
-	 -lexppp -lexpress -ll -o $(PROG)
+	 -lexppp -lexpress -o $(PROG)
 
 fedex_os: fedex_os.o classes_misc.o
 	$(CC) $(CFLAGS) -o fedex_os fedex_os.o classes_misc.o $(LDFLAGS) \
-	-L$(PDESLIBDIR) -lexppp -lexpress -ll
+	-L$(PDESLIBDIR) -lexppp -lexpress
 
 fedex_idl: fedex_idl.o classes_misc.o
 	$(CC) $(CFLAGS) -o fedex_idl fedex_idl.o classes_misc.o $(LDFLAGS) \
-	-L$(PDESLIBDIR) -lexppp -lexpress -ll
+	-L$(PDESLIBDIR) -lexppp -lexpress
 
 relink: 
 	 $(CC) $(CFLAGS) -o $(PROG) $(OFILES) $(LIBS) 

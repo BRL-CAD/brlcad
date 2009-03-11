@@ -1,0 +1,88 @@
+# .Sanitize for express
+
+# Each directory to survive it's way into a release will need a file
+# like this one called "./.Sanitize".  All keyword lines must exist,
+# and must exist in the order specified by this file.  Each directory
+# in the tree will be processed, top down, in the following order.
+
+# Hash started lines like this one are comments and will be deleted
+# before anything else is done.  Blank lines will also be squashed
+# out.
+
+# The lines between the "Do-first:" line and the "Things-to-keep:"
+# line are executed as a /bin/sh shell script before anything else is
+# done in this directory.
+
+Do-first:
+
+# All files listed between the "Things-to-keep:" line and the
+# "Do-last:" line will be kept.  All other files will be removed.
+# Directories listed in this section will have their own Sanitize
+# called.  Directories not listed will be removed in their entirety
+# with rm -rf.
+
+Things-to-keep:
+
+README
+makefile
+conf.h
+expparse.y
+expscan.l
+mkrules
+fedex.c
+symlink.c
+alg.h
+caseitem.h
+entity.h
+express.h
+expbasic.h
+expr.h
+lexact.h
+resolve.h
+schema.h
+scope.h
+stmt.h
+symbol.h
+type.h
+variable.h
+alg.c
+caseitem.c
+entity.c
+express.c
+expr.c
+lexact.c
+resolve.c
+schema.c
+scope.c
+stmt.c
+symbol.c
+type.c
+variable.c
+yyvars.c
+inithook.c
+basic.h
+de_end.h
+decstart.h
+defstart.h
+dict.h
+error.h
+hash.h
+linklist.h
+memory.h
+object.h
+stack.h
+dict.c
+error.c
+hash.c
+linklist.c
+memory.c
+object.c
+pause.c
+
+# The lines between the "Do-last:" line and the end of the file
+# are executed as a /bin/sh shell script after everything else is
+# done.
+
+Do-last:
+
+# eof

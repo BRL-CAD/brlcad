@@ -329,7 +329,7 @@ void MultList::addSimpleAndSubs( Entity newEnt, ComplexCollect *col )
     ComplexList *sublist;
     SimpleList *simple;
     EntList *newlist;
-    OrList *or;
+    OrList *olist;
 	
     // First get the easy case out of the way.  If newEnt has no subtypes
     // just create a corresponding SimpleList:
@@ -377,18 +377,18 @@ void MultList::addSimpleAndSubs( Entity newEnt, ComplexCollect *col )
 	// Since the subtype is not abstract, it can be instantiated without
 	// its subtypes.  Create an OrList OR'ing the supertype alone and its
 	// entire List:
-	or = new OrList;
+	olist = new OrList;
 	simple = new SimpleList( (char *)sublist->supertype() );
-	or->appendList( simple );
+	olist->appendList( simple );
 	// We just added "newlist" to the end of this.  We now replace it with
 	// our new or, and place it underneath the or.  This OR's the new
 	// subtype alone with the subtype + its own subtypes - just what we
 	// want for a non-abstract subtype.
-	or->appendList( newlist );
+	olist->appendList( newlist );
 	numchildren--;
 	// (Slightly ugly:  Since we just grabbed newlist from this to or, we
 	// had the side effect of making this's numcount incorrect.  I could
 	// have done this more elegantly, but was lazy.)
-	appendList( or );
+	appendList( olist );
     }
 }

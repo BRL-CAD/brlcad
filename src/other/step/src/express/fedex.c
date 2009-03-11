@@ -77,6 +77,7 @@ char *FEDEXversion(void)
 }
 
 #include <stdio.h>
+#include <unistd.h>
 #include "error.h"
 #include "express.h"
 #include "resolve.h"
@@ -116,10 +117,6 @@ usage()
 int
 main(int argc, char** argv)
 {
-	extern char *optarg;
-	extern int optind;
-	extern int getopt(int, char *const *, const char *);
-/*	extern int getopt(int, char**, char*);*/
 	int c;
 	int rc;
 	char *cp;

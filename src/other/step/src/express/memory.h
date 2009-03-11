@@ -25,7 +25,6 @@
  */
 
 #include "basic.h"
-#include <malloc.h>
 
 /*****************/
 /* packages used */

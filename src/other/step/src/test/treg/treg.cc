@@ -48,7 +48,7 @@ void PopulateEntity(STEPentity *ent)
 	// into, because STEPattribute has this StrToVal() function to put
 	// a string value as the value of the attribute.  Then, depending on
 	// the type of the attribute, put something nearly appropriate in.
-	ostrstream valstr;
+	ostringstream valstr;
 	switch (attrDesc->NonRefType()) 
 	{
 	case INTEGER_TYPE: // for these types, just put in a random number
@@ -76,7 +76,8 @@ void PopulateEntity(STEPentity *ent)
 	    needOutput = 0;
 	}
 	valstr << ends;  // flush and null-terminate the stream
-	char *val = valstr.str();  // fix stream into char* string
+	/*** char *val = valstr.str(); ***/  // fix stream into char* string
+	char *val = &(valstr.str()[0]);
 	if (needOutput) 
             cout << val << endl;
 	attr->StrToVal(val);  // and assign

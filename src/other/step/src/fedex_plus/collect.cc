@@ -96,7 +96,7 @@ int ComplexCollect::supports( EntNode *ents )
      */
 {
     EntNode *node = ents, *nextnode;
-    AndList *and;
+    AndList *alist;
     ComplexList *clist = clists, *cl = NULL, *current;
     int retval;
     EntList *elist, *next;
@@ -111,8 +111,8 @@ int ComplexCollect::supports( EntNode *ents )
 	    node->next = NULL;
             if ( !cl ) {
                 // We may have created cl already in an earlier pass.
-                and = new AndList;
-                cl = new ComplexList( and );
+                alist = new AndList;
+                cl = new ComplexList( alist );
             }
             current = clists;
             while ( current ) {
@@ -124,7 +124,7 @@ int ComplexCollect::supports( EntNode *ents )
 			// childList" points to the EntLists directly under the
 			// top-level AND.  We'll add that list right under the
 			// new AND we created at cl's top level.
-                        and->appendList( current->head->childList );
+                        alist->appendList( current->head->childList );
                     }
                 }
                 current = current->next;
