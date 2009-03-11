@@ -1,0 +1,54 @@
+AUTOMAKE_OPTIONS = 1.6 dist-zip dist-bzip2
+ACLOCAL_AMFLAGS = -I m4
+
+scl_dirs = \
+	include \
+	src \
+	doc \
+	data	
+
+support_dirs = \
+	m4 \
+	misc
+
+SUBDIRS = \
+	$(scl_dirs) \
+	$(support_dirs)
+
+DIST_SUBDIRS = \
+	$(scl_dirs) \
+	$(support_dirs)
+
+documentationdir = $(SCL_DATA)
+
+documentation_DATA = \
+	AUTHORS \
+	COPYING \
+	INSTALL \
+	NEWS \
+	README
+
+EXTRA_DIST = \
+	$(documentation_DATA) \
+	ChangeLog \
+	autogen.sh \
+	libtool
+
+DISTCLEANFILES = \
+	$(CONFIG_CACHE) \
+	aclocal.m4 \
+	aclocal.m4~ \
+	config.log \
+	config.status \
+	install.$(host_triplet).log \
+	libtool \
+	so_locations
+
+include $(top_srcdir)/misc/Makefile.defs
+
+# Local Variables:
+# mode: Makefile
+# tab-width: 8
+# indent-tabs-mode: t
+# End:
+# ex: shiftwidth=8 tabstop=8
