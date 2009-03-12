@@ -945,7 +945,7 @@ ged_clone(struct ged *gedp, int argc, const char *argv[])
 
     /* must be wanting help */
     if (argc == 1) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	print_usage(gedp);
 	return BRLCAD_HELP;
     }
 
