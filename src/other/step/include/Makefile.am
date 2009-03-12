@@ -9,7 +9,7 @@ SUBDIRS = conf
 # in subdirectories here.
 
 noinst_HEADERS = \
-	scl_prefixes.h 
+	sclprefixes.h 
 
 
 include $(top_srcdir)/misc/Makefile.defs

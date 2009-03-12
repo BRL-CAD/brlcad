@@ -1330,12 +1330,11 @@ AC_CONFIG_FILES([
 	Makefile
 	m4/Makefile
 	misc/Makefile
-	conf/Makefile
 	include/Makefile
 	include/conf/Makefile
 	doc/Makefile
 	doc/man/Makefile
-	doc/man1/Makefile
+	doc/man/man1/Makefile
 	data/Makefile
 	data/ap203/Makefile
 	data/ap227/Makefile
