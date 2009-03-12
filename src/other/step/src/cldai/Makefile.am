@@ -13,12 +13,27 @@ libstepdai_nil_la_SOURCES = \
 
 libstepdai_nil_la_LDFLAGS =
 libstepdai_nil_la_LIBADD = 
-libstepdai_nil_la_CXXFLAGS = -I../clstepcore -I../clutils
+libstepdai_nil_la_CXXFLAGS = -I$(top_srcdir)/src/clstepcore -I$(top_srcdir)/src/clutils
 
 libstepdai_la_SOURCES = 
 libstepdai_la_LDFLAGS =
 libstepdai_la_LIBADD = \
 	libstepdai_nil.la
+
+noinst_HEADERS = \
+	ErrorMap.hh \
+	ErrorRpt.hh \
+	impconv.hh \
+	imptypes.hh \
+	sdaiApplication_instance_set.h \
+	sdaiDaObject.h \
+	sdaiEntity_extent.h \
+	sdaiEntity_extent_set.h \
+	sdaiModel_contents.h \
+	sdaiModel_contents_list.h \
+	sdaiObject.h \
+	sdaiSession_instance.h \
+	StrUtil.hh
 
 EXTRA_DIST = \
 	ErrorMap.cc \
