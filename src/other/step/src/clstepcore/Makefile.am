@@ -34,6 +34,7 @@ libstepcore_nil_la_SOURCES = \
 
 libstepcore_nil_la_LDFLAGS =
 libstepcore_nil_la_LIBADD = 
+libstepcore_nil_la_CXXFLAGS = -I../cldai -I../clutils -I../cleditor
 
 libstepcore_la_SOURCES = 
 libstepcore_la_LDFLAGS =
