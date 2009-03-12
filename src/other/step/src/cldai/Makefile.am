@@ -13,6 +13,7 @@ libstepdai_nil_la_SOURCES = \
 
 libstepdai_nil_la_LDFLAGS =
 libstepdai_nil_la_LIBADD = 
+libstepdai_nil_la_CXXFLAGS = -I../clstepcore -I../clutils
 
 libstepdai_la_SOURCES = 
 libstepdai_la_LDFLAGS =
