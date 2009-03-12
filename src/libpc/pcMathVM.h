@@ -34,7 +34,7 @@
 
 #include <boost/shared_ptr.hpp>
 #include <boost/iterator/indirect_iterator.hpp>
-#include <boost/spirit/include/classic_symbols.hpp>
+#include <boost/spirit/symbols/symbols.hpp>
 
 #include <iostream>
 #include <string>
@@ -101,8 +101,8 @@ struct MathFunction;
 struct MathVM
 {
     Stack stack;
-    boost::spirit::classic::symbols<double> variables;
-    boost::spirit::classic::symbols<boost::shared_ptr<MathFunction> > functions;
+    boost::spirit::symbols<double> variables;
+    boost::spirit::symbols<boost::shared_ptr<MathFunction> > functions;
     void display();
 };
 
@@ -186,7 +186,7 @@ private:
 struct UserFunctionExpression;
 struct UserFunction : public MathFunction
 {
-    typedef boost::spirit::classic::symbols<double> symboltable;
+    typedef boost::spirit::symbols<double> symboltable;
     typedef boost::shared_ptr<symboltable> stptr;
 
     /** Create and Copy constructors */
@@ -196,7 +196,7 @@ struct UserFunction : public MathFunction
 
     /** Data access methods */
     UserFunction * asUserFunction();
-    boost::spirit::classic::symbols<double> const & localvariables() const;
+    boost::spirit::symbols<double> const & localvariables() const;
 
     /** Arity return method */
     std::size_t arity() const;

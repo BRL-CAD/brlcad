@@ -27,13 +27,14 @@
 
 #include "common.h"
 
+#include "pcMathGrammar.h"
 #include "pcMathVM.h"
 #include <iostream>
 #include <cmath>
 
 
 typedef boost::shared_ptr<MathFunction> ct;
-using boost::spirit::classic::find;
+using boost::spirit::find;
 
 /* Test functions */
 
@@ -101,7 +102,7 @@ void eval()
 	args.clear();
     }
     
-    using boost::spirit::classic::find;
+    using boost::spirit::find;
     
     vm.stack.push_back(new ConstantNode(100));
     vm.stack.push_back(new ConstantNode(2));

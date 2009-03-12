@@ -31,15 +31,24 @@
  */
 #ifndef PC_MATH_GRAMMAR
 #define PC_MATH_GRAMMAR
+#define PHOENIX_LIMIT 6
 
 #include "pcMathLF.h"
 #include "pcMathVM.h"
 
-#include <boost/spirit/include/classic.hpp>
-#include <boost/spirit/core.hpp>
-#include <boost/spirit/attribute/closure.hpp>
+#include <boost/spirit.hpp>
 #include <boost/spirit/phoenix.hpp>
+#include <string>
+
+/*#include <boost/spirit/core.hpp>
+#include <boost/spirit/phoenix.hpp>
+#include <boost/spirit/utility/functor_parser.hpp>
 #include <boost/spirit/symbols/symbols.hpp>
+#include <boost/spirit/attribute/closure.hpp>
+#include <boost/spirit/utility/lists.hpp>
+#include <boost/spirit/dynamic/if.hpp>
+#include <boost/spirit/phoenix/functions.hpp>
+*/
 
 /**
  * 				boost::spirit::closure
@@ -53,7 +62,7 @@ struct StackClosure : boost::spirit::closure<StackClosure, Stack>
     member1 stack;
 };
 
-class NameGrammar : public boost::spirit::classic::grammar<NameGrammar
+class NameGrammar : public boost::spirit::grammar<NameGrammar>
 {
     boost::spirit::symbols<char> dummy_reserved_keywords;
 public:
@@ -66,10 +75,10 @@ public:
     template <typename ScannerT>
     struct definition {
 	definition(NameGrammar const & self) {
-	    name = boost::spirit::classic::lexeme_d
+	    name = boost::spirit::lexeme_d
 	    	   [
-		   	((boost::spirit::classic::alpha_p|'_')
-			>> *(boost::spirit::classic::alnum_p | '_'))
+		   	((boost::spirit::alpha_p|'_')
+			>> *(boost::spirit::alnum_p | '_'))
 		   ]
 		 - self.keywords
 		 ;
@@ -85,17 +94,33 @@ boost::spirit::symbols<char> NameGrammar::reserved_keywords;
 
 /** Finding the math function using the name */
 
-boost::shared_ptr<MathFunction> checked_find
-	(boost::spirit::symbols<boost::shared_ptr<MathFunction> > const & symbols,
-	 std::string const & name)
+boost::shared_ptr<MathFunction>
+checked_find(boost::spirit::symbols<boost::shared_ptr<MathFunction> > const & symbols, std::string const & name)
 {
-    boost::shared_ptr<MathFunction> * ptr;
+    boost::shared_ptr<MathFunction> * ptr = find(symbols, name.c_str());
+    BOOST_ASSERT(ptr && ptr->get());
     return *ptr;
 }
 
-/** Different types of closures */
+struct checked_find_impl {
+    template <typename T1, typename T2>
+    struct result {
+	typedef boost::shared_ptr<MathFunction> type;
+    };
+    boost::shared_ptr<MathFunction> operator()(boost::spirit::symbols<boost::shared_ptr<MathFunction> > const & symbols,\
+    		std::string const & name) const
+    {
+	boost::shared_ptr<MathFunction> * ptr = find(symbols, name.c_str());
+	return ptr ? *ptr: boost::shared_ptr<MathFunction>();
+    }
+};
 
-struct FuncExprClosure : boost spirit::closure<FuncExprClosure, Stack, std::string, int, boost::shared_ptr<MathFunction> >
+phoenix::function<checked_find_impl> const checked_find_ = checked_find_impl();
+
+/** Different types of closures */
+struct FuncExprClosure 
+	: boost::spirit::closure<FuncExprClosure,
+				Stack, std::string, int, boost::shared_ptr<MathFunction> >
 {
     member1 stack;
     member2 name;
@@ -121,7 +146,8 @@ struct ConditionalClosure : boost::spirit::closure<ConditionalClosure, Stack, St
  * ExpressionGrammar implementation
  * Stack closure is attached to the grammar itself
  */
-struct ExpressionGrammar : public boost::spirit::classic::grammar<ExpressionGrammar,StackClosure::context_t>
+
+struct ExpressionGrammar : public boost::spirit::grammar<ExpressionGrammar,StackClosure::context_t>
 {
     typedef boost::shared_ptr<MathFunction> FunctionPointer;
     typedef boost::spirit::symbols<FunctionPointer> FunctionTable;
@@ -177,10 +203,20 @@ struct ExpressionGrammar : public boost::spirit::classic::grammar<ExpressionGram
 		("!", checked_find(self.functions,"logical_not"));
 	}
 
-	typedef RuleT boost::spirit::classic::rule<ScannerT>;
+	typedef boost::spirit::rule<ScannerT> RuleT;
 	RuleT const & start() const { return top; }
     private:
-    	RuleT arg, top;
+    	typedef boost::spirit::rule<ScannerT, StackClosure::context_t> SRuleT;
+    	typedef boost::spirit::rule<ScannerT, FuncExprClosure::context_t> FRuleT;
+    	typedef boost::spirit::rule<ScannerT, LogicalClosure::context_t> LRuleT;
+    	typedef boost::spirit::rule<ScannerT, ConditionalClosure::context_t> CRuleT;
+
+	RuleT arg, top;
+	SRuleT add_expr, and_expr, bitwise_expr, compare_expr, equality_expr, expr, expr_atom,
+		logical_expr, number, or_expr, or_op, mult_expr, shift_expr;
+	FRuleT unary_expr, func;
+	CRuleT conditional_expr_helper;
+	LRuleT lobical_expr_helper;
 	NameGrammar name;
 	boost::spirit::symbols<bool> boolean_op;
 	FunctionTable and_op, add_op, bitwise_op, compare_op, equality_op,\
@@ -196,9 +232,9 @@ struct VariableClosure : boost::spirit::closure<VariableClosure, std::string, St
 {
     member1 name;
     member2 stack;
-}
+};
 
-struct VariableGrammar : public boost::spirit::classic::grammar<VariableGrammar, StackClosure::context_t>
+struct VariableGrammar : public boost::spirit::grammar<VariableGrammar, StackClosure::context_t>
 {
     typedef boost::spirit::symbols<boost::shared_ptr<MathFunction> > FunctionTable;
     typedef boost::spirit::symbols<double> VarTable;
@@ -216,12 +252,12 @@ struct VariableGrammar : public boost::spirit::classic::grammar<VariableGrammar,
 	definition(VariableGrammar const & self)
 	    : expression(self.functions, self.variables)
 	{
-	using boost::spirit::phoenix::arg1;
-	using boost::spirit::phoenix::arg2;
-	using boost::spirit::phoenix::construct_;
-	using boost::spirit::phoenix::if_;
-	using boost::spirit::phoenix::new_;
-	using boost::spirit::phoenix::var;
+	using phoenix::arg1;
+	using phoenix::arg2;
+	using phoenix::construct_;
+	using phoenix::if_;
+	using phoenix::new_;
+	using phoenix::var;
 	    top = step2;
 
 	/** Parse and perform the assignment of type "a=4". Add the symbols
@@ -253,18 +289,17 @@ struct VariableGrammar : public boost::spirit::classic::grammar<VariableGrammar,
 		     ]
 		  ;
 	}
-	boost::spirit::classic::rule<ScannerT> const & start const { return top; }
+	typename boost::spirit::rule<ScannerT> const & start() const { return top; }
     private:
-	typedef typename boost::spirit::classic::rule<ScannerT,VariableClosure::context_t> VarRuleT;
-	boost::spirit::classic::rule<ScannerT> top, step1;
+	typedef typename boost::spirit::rule<ScannerT,VariableClosure::context_t> VarRuleT;
+	boost::spirit::rule<ScannerT> top, step1;
 	VarRuleT step2;
 
 	NameGrammar name;
 	ExpressionGrammar expression;
     };
 };
-
-
+#endif
 /** @} */
 /*
  * Local Variables:
