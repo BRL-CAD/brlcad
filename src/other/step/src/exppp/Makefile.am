@@ -24,7 +24,7 @@ libexppp_nil_la_LIBADD =
 libexppp_la_SOURCES =
 libexppp_la_LIBADD = libexppp_nil.la
 
-noinst_HEADERS = 
+noinst_HEADERS = \
 	exppp.h
 
 EXTRA_DIST = \
