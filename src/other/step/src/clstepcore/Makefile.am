@@ -31,6 +31,28 @@ libstepcore_nil_la_SOURCES = \
 	trynext.cc \
 	print.cc
 
+noinst_HEADERS = \
+	baseType.h \
+	complexSupport.h \
+	dictdefs.h \
+	ExpDict.h \
+	read_func.h \
+	Registry.h \
+	scl_osschema.h \
+	sdaiApplication_instance.h \
+	sdaiBinary.h \
+	sdaiEnum.h \
+	sdai.h \
+	sdaiSelect.h \
+	sdaiString.h \
+	Select.h \
+	SingleLinkList.h \
+	STEPaggregate.h \
+	STEPattribute.h \
+	STEPattributeList.h \
+	STEPcomplex.h \
+	STEPundefined.h
+
 
 libstepcore_nil_la_LDFLAGS =
 libstepcore_nil_la_LIBADD = 
