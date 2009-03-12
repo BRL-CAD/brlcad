@@ -34,8 +34,7 @@ EXTRA_DIST = \
 	$(BUILT_SOURCES) \
 	MAJOR \
 	MINOR \
-	PATCH \
-	make.vbs
+	PATCH 
 
 # remove all except COUNT
 CLEANFILES = \
