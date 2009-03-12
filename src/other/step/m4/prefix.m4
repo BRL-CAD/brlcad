@@ -1,5 +1,5 @@
 #                      P R E F I X . M 4
-# BRL-CAD
+# SCL
 #
 # Copyright (c) 2008-2009 United States Government as represented by
 # the U.S. Army Research Laboratory.
@@ -34,42 +34,42 @@
 #
 ###
 #
-# BC_BRLCAD_ROOT
+# BC_SCL_ROOT
 #
 # set up the installation path
 #
 #
-# BC_BRLCAD_DATA
+# BC_SCL_DATA
 #
-# set up the BRLCAD_DATA install directory
+# set up the SCL_DATA install directory
 #
 ###
 
-AC_DEFUN([BC_BRLCAD_ROOT], [
+AC_DEFUN([BC_SCL_ROOT], [
 
-# set up the BRLCAD_ROOT installation path
-AC_MSG_CHECKING([where BRL-CAD is to be installed])
+# set up the SCL_ROOT installation path
+AC_MSG_CHECKING([where SCL is to be installed])
 bc_prefix="$prefix"
 eval "bc_prefix=\"$bc_prefix\""
 eval "bc_prefix=\"$bc_prefix\""
 if test "x$bc_prefix" = "xNONE" ; then
     bc_prefix="$ac_default_prefix"
-    # should be /usr/brlcad, but just in case
+    # should be /usr/scl, but just in case
     eval "bc_prefix=\"$bc_prefix\""
     eval "bc_prefix=\"$bc_prefix\""
 fi
-AC_DEFINE_UNQUOTED([BRLCAD_ROOT], "$bc_prefix", "Location BRL-CAD will install to")
+AC_DEFINE_UNQUOTED([SCL_ROOT], "$bc_prefix", "Location SCL will install to")
 AC_MSG_RESULT($bc_prefix)
-if test ! "x$BRLCAD_ROOT" = "x" ; then
+if test ! "x$SCL_ROOT" = "x" ; then
 	AC_MSG_NOTICE([}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}])
-	AC_MSG_WARN([BRLCAD_ROOT should only be used to override an install directory at runtime])
-	AC_MSG_WARN([BRLCAD_ROOT is presently set to "${BRLCAD_ROOT}"])
-	AC_MSG_NOTICE([It is highly recommended that BRLCAD_ROOT be unset and not used])
-	if test "x$BRLCAD_ROOT" = "x$bc_prefix" ; then
-		AC_MSG_WARN([BRLCAD_ROOT is not necessary and may cause unexpected behavior])
+	AC_MSG_WARN([SCL_ROOT should only be used to override an install directory at runtime])
+	AC_MSG_WARN([SCL_ROOT is presently set to "${SCL_ROOT}"])
+	AC_MSG_NOTICE([It is highly recommended that SCL_ROOT be unset and not used])
+	if test "x$SCL_ROOT" = "x$bc_prefix" ; then
+		AC_MSG_WARN([SCL_ROOT is not necessary and may cause unexpected behavior])
 		AC_MSG_NOTICE([{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{])
 	else
-		AC_MSG_ERROR([*** Environment variable BRLCAD_ROOT conflicts with --prefix ***])
+		AC_MSG_ERROR([*** Environment variable SCL_ROOT conflicts with --prefix ***])
 	fi
 	# emphasize that this is unnecessary
 	emphasis=2
@@ -77,92 +77,39 @@ if test ! "x$BRLCAD_ROOT" = "x" ; then
 	sleep $emphasis
 else
 	# compensate for autoconf inconsistencies
-	BRLCAD_ROOT="$bc_prefix"
+	SCL_ROOT="$bc_prefix"
 fi
-AC_SUBST(BRLCAD_ROOT)
-
-# make sure the user doesn't try to set /usr as the prefix
-if test "x$BRLCAD_ROOT" = "x/usr" ; then
-    if test "x$BRLCAD_ROOT_OVERRIDE" = "x" ; then
-	AC_MSG_NOTICE([}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}])
-	AC_MSG_WARN([It is STRONGLY recommended that you DO NOT install BRL-CAD into /usr])
-	AC_MSG_WARN([as BRL-CAD provides several libraries that may conflict with other])
-	AC_MSG_WARN([libraries (e.g. librt, libbu, libbn) on certain system configurations.])
-	AC_MSG_WARN([])
-	AC_MSG_WARN([Since our libraries predate all those that we're known to conflict with])
-	AC_MSG_WARN([and are at the very core of our geometry services and project heritage,])
-	AC_MSG_WARN([we have no plans to change the names of our libraries at this time.])
-	AC_MSG_WARN([])
-	AC_MSG_WARN([If you choose to continue installing into /usr, you do so entirely at])
-	AC_MSG_WARN([your own risk.  You have been warned.])
-	AC_MSG_NOTICE([])
-	AC_MSG_NOTICE([Consider using a different --prefix value.])
-	# emphasize just how bad of an idea this is
-	emphasis=15
-	AC_MSG_NOTICE([Pausing $emphasis seconds...])
-	sleep $emphasis
-	tries=0
-	while true ; do
-	    AC_MSG_NOTICE([])
-	    AC_MSG_NOTICE([Would you like to continue with /usr as the install prefix? [[yes/no]]])
-	    read bc_answer
-	    if test "x$?" = "x0" ; then
-		case "x$bc_answer" in
-		    x*[[yY]][[eE]][[sS]]*)
-			bc_answer=yes
-			break ;;
-		    x*[[nN]][[oO]]*)
-			bc_answer=no
-			break ;;
-		    x*)
-			AC_MSG_NOTICE([Please answer 'yes' or 'no'])
-			;;
-	        esac
-	    else
-		AC_MSG_NOTICE([Unable to read response, continuing])
-		break
-	    fi
-	    tries="`expr $tries \+ 1`"
-	    if test "x$tries" = "x10" ; then
-		AC_MSG_NOTICE([Unable to read response, continuing])
-		break
-	    fi
-	done
-	if test "x$bc_answer" = "xno" ; then
-	    AC_MSG_ERROR([*** Aborting due to --prefix=/usr ***])
-	fi
-    fi
-fi
+AC_SUBST(SCL_ROOT)
 
 ])
 
 
-AC_DEFUN([BC_BRLCAD_DATA], [
+AC_DEFUN([BC_SCL_DATA], [
 
-AC_MSG_CHECKING([where BRL-CAD resources are to be installed])
+AC_MSG_CHECKING([where SCL resources are to be installed])
 bc_data_dir="${datadir}"
 if test "x$bc_data_dir" = "xNONE/share" ; then
-	bc_data_dir="${bc_prefix}/share/brlcad/${BRLCAD_VERSION}"
+	bc_data_dir="${bc_prefix}/share/scl/${SCLLIB_VERSION}"
 elif test "x$bc_data_dir" = "x\${prefix}/share" ; then
-	bc_data_dir="${bc_prefix}/share/brlcad/${BRLCAD_VERSION}"
+	bc_data_dir="${bc_prefix}/share/scl/${SCLLIB_VERSION}"
 fi
 eval "bc_data_dir=\"$bc_data_dir\""
 eval "bc_data_dir=\"$bc_data_dir\""
 if test "x$bc_data_dir" = "xNONE/share" ; then
-	bc_data_dir="${bc_prefix}/share/brlcad/${BRLCAD_VERSION}"
+	bc_data_dir="${bc_prefix}/share/brlcad/${SCLLIB_VERSION}"
 fi
-AC_DEFINE_UNQUOTED([BRLCAD_DATA], "$bc_data_dir", "Location BRL-CAD resources will install to")
+AC_DEFINE_UNQUOTED([SCL_DATA], "$bc_data_dir", "Location SCL resources will install to")
 AC_MSG_RESULT($bc_data_dir)
-if test ! "x$BRLCAD_DATA" = "x" ; then
+if test ! "x$SCL_DATA" = "x" ; then
 	AC_MSG_NOTICE([}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}])
-	AC_MSG_WARN([BRLCAD_DATA should only be used to override an install directory at runtime])
-	AC_MSG_WARN([BRLCAD_DATA is presently set to "${BRLCAD_DATA}"])
-	AC_MSG_NOTICE([It is highly recommended that BRLCAD_DATA be unset and not used])
-	if test "x$BRLCAD_DATA" = "x$bc_data_dir" ; then
-		AC_MSG_WARN([BRLCAD_DATA is not necessary and may cause unexpected behavior])
+	AC_MSG_WARN([SCL_DATA should only be used to override an install directory at runtime])
+	AC_MSG_WARN([SCL_DATA is presently set to "${SCL_DATA}"])
+	AC_MSG_NOTICE([It is highly recommended that SCL_DATA be unset and not used])
+	if test "x$SCL_DATA" = "x$bc_data_dir" ; then
+		AC_MSG_WARN([SCL_DATA is not necessary and may cause unexpected behavior])
 		AC_MSG_NOTICE([{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{])
 	else
-		AC_MSG_ERROR([*** Environment variable BRLCAD_DATA conflicts with --prefix or --datadir ***])
+		AC_MSG_ERROR([*** Environment variable SCL_DATA conflicts with --prefix or --datadir ***])
 	fi
 	# emphasize that this is unnecessary
 	emphasis=2
@@ -170,9 +117,9 @@ if test ! "x$BRLCAD_DATA" = "x" ; then
 	sleep $emphasis
 else
 	# compensate for autoconf inconsistencies
-	BRLCAD_DATA="$bc_data_dir"
+	SCL_DATA="$bc_data_dir"
 fi
-AC_SUBST(BRLCAD_DATA)
+AC_SUBST(SCL_DATA)
 
 ])
 
