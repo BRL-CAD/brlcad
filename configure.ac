@@ -112,9 +112,9 @@ AC_SUBST(PACKAGE_NAME)
 BRLCAD_VERSION=CAD_VERSION
 AC_SUBST(BRLCAD_VERSION)
 
-# force locale setting to C so things like date output as expected
-LC_ALL=C
+# force lang/locale setting to C so things like date output as expected
 LANG=C
+LC_ALL=C
 
 CONFIG_DAY=`date +%d`
 CONFIG_MONTH=`date +%m`
