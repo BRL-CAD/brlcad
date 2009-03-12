@@ -2,7 +2,12 @@ AUTOMAKE_OPTIONS = 1.6 dist-zip dist-bzip2
 ACLOCAL_AMFLAGS = -I m4
 
 scl_dirs = \
-	src 
+	src \
+	include \
+	m4 \
+	misc \
+	doc \
+	data 
 
 SUBDIRS = \
 	$(scl_dirs) 
@@ -20,11 +25,6 @@ documentation_DATA = \
 	README
 
 EXTRA_DIST = \
-	m4 \
-	misc \
-	include \
-	doc \
-	data \
 	$(documentation_DATA) \
 	ChangeLog \
 	autogen.sh \

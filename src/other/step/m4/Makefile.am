@@ -1,4 +1,3 @@
-
 scl_m4 = \
 	args.m4 \
 	cache.m4 \

@@ -81,11 +81,11 @@ dnl setting in autogen.sh script.
 AC_PREREQ(2.52)
 
 dnl See HACKING for details on how to properly update the version
-define([MAJOR_VERSION], [patsubst(esyscmd([cat conf/MAJOR]), [
+define([MAJOR_VERSION], [patsubst(esyscmd([cat include/conf/MAJOR]), [
 ])])
-define([MINOR_VERSION], [patsubst(esyscmd([cat conf/MINOR]), [
+define([MINOR_VERSION], [patsubst(esyscmd([cat include/conf/MINOR]), [
 ])])
-define([PATCH_VERSION], [patsubst(esyscmd([cat conf/PATCH]), [
+define([PATCH_VERSION], [patsubst(esyscmd([cat include/conf/PATCH]), [
 ])])
 define([SCL_VERSION], [patsubst([MAJOR_VERSION.MINOR_VERSION.PATCH_VERSION], [
 ])])
@@ -1328,6 +1328,18 @@ bc_configure_args="$ac_configure_args"
 
 AC_CONFIG_FILES([
 	Makefile
+	m4/Makefile
+	misc/Makefile
+	conf/Makefile
+	include/Makefile
+	include/conf/Makefile
+	doc/Makefile
+	doc/man/Makefile
+	doc/man1/Makefile
+	data/Makefile
+	data/ap203/Makefile
+	data/ap227/Makefile
+	data/example/Makefile
 	src/Makefile
 	src/express/Makefile
 	src/exppp/Makefile
