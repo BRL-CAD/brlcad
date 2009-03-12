@@ -125,7 +125,7 @@ AC_SUBST(CONFIG_TS)
 
 
 # print out the title with a pretty box computed to wrap around
-title="Configuring STEP Class Libraries Release $SCLLIB_VERSION, Build $CONFIG_DATE"
+title="Configuring STEP Class Libraries Release SCL_VERSION, Build $CONFIG_DATE"
 length="`echo x${title}x | wc -c`"
 separator=""
 while test $length -gt 1 ; do
@@ -1380,7 +1380,7 @@ dnl **********************
 AC_MSG_RESULT([Done.])
 AC_MSG_RESULT([])
 BC_BOLD
-AC_MSG_RESULT([STEP Class Libraries Release $SCL_VERSION, Build $CONFIG_DATE])
+AC_MSG_RESULT([STEP Class Libraries Release SCL_VERSION, Build $CONFIG_DATE])
 BC_UNBOLD
 AC_MSG_RESULT([])
 AC_MSG_RESULT([             Prefix: ${bc_prefix}])

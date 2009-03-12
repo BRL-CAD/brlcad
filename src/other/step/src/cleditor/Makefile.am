@@ -24,6 +24,19 @@ libstepeditor_la_LDFLAGS =
 libstepeditor_la_LIBADD = \
 	libstepeditor_nil.la
 
+noinst_HEADERS = \
+	cmdmgr.h \
+	dispnode.h \
+	dispnodelist.h \
+	editordefines.h \
+	instmgr.h \
+	mgrnodearray.h \
+	mgrnode.h \
+	mgrnodelist.h \
+	seeinfodefault.h \
+	s_HEADER_SCHEMA.h \
+	STEPfile.h
+
 
 include $(top_srcdir)/misc/Makefile.defs
 

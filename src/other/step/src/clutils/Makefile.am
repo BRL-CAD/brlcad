@@ -19,6 +19,21 @@ libsteputils_la_LDFLAGS =
 libsteputils_la_LIBADD = \
 	libsteputils_nil.la
 
+noinst_HEADERS = \
+	dirobj.h \
+	errordesc.h \
+	gennodearray.h \
+	gennode.h \
+	gennodelist.h \
+	scl_char_str_list.h \
+	scldir.h \
+	scl_hash.h \
+	scl_string.h \
+	stat.h \
+	Str.h \
+	str_list.h
+
+
 EXTRA_DIST = \
 	dirobj.cc \
 	README
