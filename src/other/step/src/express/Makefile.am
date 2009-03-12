@@ -1,6 +1,8 @@
 lib_LTLIBRARIES = libexpress.la
 noinst_LTLIBRARIES = libexpress_nil.la
 
+AM_CFLAGS = -I$(top_srcdir)/include/express
+
 bin_PROGRAMS = \
 	fedex \
 	symlink
@@ -52,34 +54,9 @@ libexpress_la_LIBADD = \
 	libexpress_nil.la
 
 noinst_HEADERS = \
-	expparse.h \
-	alg.h \
-	basic.h \
-	caseitem.h \
 	conf.h \
-	de_end.h \
-	decstart.h \
-	defstart.h \
-	dict.h \
-	entity.h \
-	error.h \
-	expbasic.h \
-	expr.h \
-	express.h \
 	exptoks.h \
-	hash.h \
-	lexact.h \
-	linklist.h \
-	memory.h \
-	object.h \
-	resolve.h \
-	schema.h \
-	scope.h \
 	stack.h \
-	stmt.h \
-	symbol.h \
-	type.h \
-	variable.h \
 	y.tok.h
 
 expparse.h: expparse.y

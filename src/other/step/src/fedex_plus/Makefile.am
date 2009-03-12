@@ -3,6 +3,10 @@ bin_PROGRAMS = \
 	fedex_idl \
 	fedex_plus
 
+
+AM_CFLAGS = -I$(top_srcdir)/include/express -I$(top_srcdir)/include/exppp
+AM_CXXFLAGS = -I$(top_srcdir)/include/express -I$(top_srcdir)/include/exppp
+
 COMMON = \
 	classes_misc.c
 

@@ -1,5 +1,8 @@
 
-SUBDIRS = conf
+SUBDIRS = \
+	conf \
+	express \
+	exppp
 
 # As yet the status of most of scl's headers is
 # not clarified - the C++ headers are shared among

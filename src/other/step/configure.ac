@@ -1332,6 +1332,8 @@ AC_CONFIG_FILES([
 	misc/Makefile
 	include/Makefile
 	include/conf/Makefile
+	include/express/Makefile
+	include/exppp/Makefile
 	doc/Makefile
 	doc/man/Makefile
 	doc/man/man1/Makefile
