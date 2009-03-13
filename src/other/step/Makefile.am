@@ -29,7 +29,8 @@ EXTRA_DIST = \
 	config \
 	ChangeLog \
 	autogen.sh \
-	libtool
+	libtool \
+	configure.ac
 
 DISTCLEANFILES = \
 	$(CONFIG_CACHE) \
