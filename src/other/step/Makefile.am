@@ -38,6 +38,7 @@ DISTCLEANFILES = \
 	aclocal.m4~ \
 	config.log \
 	config.status \
+	configure \
 	install.$(host_triplet).log \
 	libtool \
 	so_locations
