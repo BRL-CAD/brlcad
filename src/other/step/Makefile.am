@@ -28,7 +28,6 @@ EXTRA_DIST = \
 	$(documentation_DATA) \
 	config \
 	ChangeLog \
-	autogen.sh \
 	libtool \
 	configure.ac
 
