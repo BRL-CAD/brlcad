@@ -255,6 +255,28 @@ struct sysFunctionNode : public FunctionNode
 private:
     boost::shared_ptr<MathFunction> fp;
 };
+
+struct BranchNode : public FunctionNode
+{
+    BranchNode(Stack const & stack1, Stack const & stack2);
+    boost::shared_ptr<Node> clone() const;
+    MathFunction const & func() const;
+
+    std::size_t nbranches() const;
+    Stack * branch(std::size_t i);
+private:
+    struct BranchFunc : public MathFunction {
+	BranchFunc(Stack const & stack1, Stack const & stack2);
+	
+	std::size_t arity() const;
+	double evalp(std::vector<double> const & params) const;
+
+	Stack stack1_;
+	Stack stack2_;
+    };
+    BranchFunc func_;
+};
+
 #endif
 /** @} */
 /*

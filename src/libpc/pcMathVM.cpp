@@ -359,6 +359,48 @@ MathFunction const & sysFunctionNode::func() const
 {
     return *fp;
 }
+/** BranchNode Methods */
+
+BranchNode::BranchNode(Stack const & stack1, Stack const & stack2)
+	: func_(stack1, stack2)
+{}
+
+boost::shared_ptr<Node> BranchNode::clone() const
+{
+    return boost::shared_ptr<Node>(new BranchNode(*this));
+}
+
+MathFunction const & BranchNode::func() const
+{
+    return func_;
+}
+
+std::size_t BranchNode::nbranches() const
+{
+    return 2;
+}
+
+Stack * BranchNode::branch(std::size_t i)
+{
+    if (i > 1)
+        return 0;
+    return i == 0 ? &func_.stack1_ : &func_.stack2_;
+}
+
+BranchNode::BranchFunc::BranchFunc(Stack const & stack1, Stack const & stack2)
+    : MathFunction("branch"),
+    stack1_(stack1), stack2_(stack2)
+{}
+
+std::size_t BranchNode::BranchFunc::arity() const
+{
+    return 1;
+}
+
+double BranchNode::BranchFunc::evalp(std::vector<double> const & params) const
+{
+    return evaluate(params[0] ? stack1_ : stack2_);
+}
 
 /** Functions assisting evaluation */
 
