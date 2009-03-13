@@ -38,6 +38,7 @@
 
 #include <boost/spirit.hpp>
 #include <boost/spirit/phoenix.hpp>
+#include <boost/spirit/dynamic/if.hpp>
 #include <string>
 
 /*#include <boost/spirit/core.hpp>
@@ -172,6 +173,20 @@ struct ExpressionGrammar : public boost::spirit::grammar<ExpressionGrammar,Stack
     	definition(ExpressionGrammar const & self)
 	    : name(false)
 	{
+	    using phoenix::arg1;
+	    using phoenix::arg2;
+	    using phoenix::construct_;
+	    using phoenix::if_;
+	    using phoenix::new_;
+	    using phoenix::var;
+
+	    using boost::spirit::ch_p;
+	    using boost::spirit::epsilon_p;
+	    using boost::spirit::if_p;
+	    using boost::spirit::list_p;
+	    using boost::spirit::nothing_p;
+	    using boost::spirit::real_p;
+	    using boost::spirit::str_p;
 	    boolean_op.add
 	    	("&&", false)
 		("||", true);
@@ -201,6 +216,33 @@ struct ExpressionGrammar : public boost::spirit::grammar<ExpressionGrammar,Stack
 		("+", FunctionPointer() )
 		("-", checked_find(self.functions,"negate"))
 		("!", checked_find(self.functions,"logical_not"));
+	    top
+	    	= expr[self.stack = arg1];
+	    expr
+	    	= logical_expr[expr.stack = arg1]
+	    	>> !conditional_expr_helper[expr.stack +=arg1];
+	    conditional_expr_helper
+	    	= (ch_p('?')
+		>> expr
+		   [
+		   	conditional_expr_helper.stack1 = arg1
+		   ]
+		>> ':'
+		>> expr
+		   [
+		   	conditional_expr_helper.stack2 = arg2
+		   ]
+		>> !conditional_expr_helper
+		   [
+		   	conditional_expr_helper.stack2 +=arg1
+		   ]
+		  )
+		  [
+		  	push_back(conditional_expr_helper.stack,
+					new_<BranchNode>(conditional_expr_helper.stack1,
+							conditional_expr_helper.stack2))
+		  ]
+		;
 	}
 
 	typedef boost::spirit::rule<ScannerT> RuleT;
