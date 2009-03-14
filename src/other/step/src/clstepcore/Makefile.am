@@ -64,6 +64,7 @@ libstepcore_la_LIBADD = \
 	libstepcore_nil.la
 
 EXTRA_DIST = \
+	ExpDict.h.s \
 	README \
 	dict-pic.txt \
 	notes.txt

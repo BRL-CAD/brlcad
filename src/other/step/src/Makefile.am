@@ -1,31 +1,30 @@
+
+nonexpressdirs = \
+	cldai \
+	cleditor \
+	clstepcore \
+	clutils \
+	exppp \
+	fedex_plus
+
 if ONLY_EXPRESS
-SUBDIRS = \
-	express
+SUBDIRS = express
 
 else !ONLY_EXPRESS
 SUBDIRS = \
 	express \
-	exppp \
-	fedex_plus \
-	clstepcore \
-	cleditor \
-	cldai \
-	clutils
+	$(nonexpressdirs)
 endif
 
 EXTRA_DIST = \
+	clSchemas \
 	clivfasd \
 	clprobe-ui \
 	test
 
 DIST_SUBDIRS = \
 	express \
-	exppp \
-	fedex_plus \
-	clstepcore \
-	cleditor \
-	cldai \
-	clutils
+	$(nonexpressdirs)
 
 include $(top_srcdir)/misc/Makefile.defs
 
