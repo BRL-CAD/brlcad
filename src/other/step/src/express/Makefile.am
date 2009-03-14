@@ -70,6 +70,7 @@ BUILT_SOURCES = \
 	expscan.c
 
 EXTRA_DIST = \
+	$(BUILT_SOURCES) \
 	README \
 	Changes
 
