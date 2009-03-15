@@ -169,8 +169,6 @@ namespace eval RtWizard {
 	    method createOccModeDialog {parent}
 	    method occModeDialogReveal {}
 	    method occModeDialogOK {}
-	    method occModeDialogApply {}
-	    method occModeDialogCancel {}
 
 	    method createIntensityDialog {parent}
 	    method intensityDialogReveal {}
@@ -189,28 +187,28 @@ namespace eval RtWizard {
 
 	    variable selected ""
 	    variable currentEye {742.404 519.837 422.618}
-	    variable currentSize 2000
 	    variable currentCenter {0 0 0}
 	    variable currentRmat \
 		{-0.573576  0.819152  0         0  \
 		     -0.346189 -0.242404  0.906308  0  \
 		     0.742404  0.519837  0.422618  0  \
 		     0         0         0         1}
-	    variable currentAzimuth 35
-	    variable currentElevation 25
-	    variable currentPerspective 0
 	    variable currentEyemodel ""
 
 	    # Azimuth Stuff
+	    variable currentAzimuth 35
 	    variable oldAzimuth
 
 	    # Elevation Stuff
+	    variable currentElevation 25
 	    variable oldElevation
 
 	    # Size Stuff
+	    variable currentSize 2000
 	    variable oldSize
 
 	    # Perspective Stuff
+	    variable currentPerspective 0
 	    variable oldPerspective
 
 	    # Line-color stuff
@@ -229,8 +227,8 @@ namespace eval RtWizard {
 	    variable occMode 1
 
 	    # Intensity Stuff
-	    variable oldIntensity 12
 	    variable intensity
+	    variable oldIntensity 12
 
 	    # Menu stuff
 	    variable viewMenu ""
@@ -1224,8 +1222,7 @@ namespace eval RtWizard {
     # perspectiveDialogOK - executed when the OK button is pressed.
     #
     ::itcl::body MGEDpage::perspectiveDialogOK {} {
-	set oldPerspective [ $itk_component(perspective) get]
-	$::mgedObj perspective_angle $oldPerspective
+	$::mgedObj perspective_angle [ $itk_component(perspective) get]
 	$itk_component(perspectiveDialog) deactivate
 	updateStatus
     }
@@ -1234,8 +1231,7 @@ namespace eval RtWizard {
     # perspectiveDialogApply - executed when the apply button is pressed.
     #
     ::itcl::body MGEDpage::perspectiveDialogApply {} {
-	set oldPerspective [ $itk_component(perspective) get]
-	$::mgedObj perspective_angle $oldPerspective
+	$::mgedObj perspective_angle [ $itk_component(perspective) get]
 	updateStatus
     }
 
@@ -1243,8 +1239,7 @@ namespace eval RtWizard {
     # perspectiveDialogCancel - executed when the close button is pressed.
     #
     ::itcl::body MGEDpage::perspectiveDialogCancel {} {
-	$itk_component(perspective) set $oldPerspective
-	$::mgedObj perspective $oldPerspective
+	$::mgedObj perspective_angle $oldPerspective
 	$itk_component(perspectiveDialog) deactivate
 	updateStatus
     }
@@ -1371,10 +1366,9 @@ namespace eval RtWizard {
 	$itk_component(occModeDialog) hide Help
 	$itk_component(occModeDialog) buttonconfigure OK \
 	    -command "[::itcl::code $this occModeDialogOK]"
-	$itk_component(occModeDialog) buttonconfigure Apply \
-	    -command "[::itcl::code $this occModeDialogApply]"
-	$itk_component(occModeDialog) buttonconfigure Cancel \
-	    -command "[::itcl::code $this occModeDialogCancel]"
+
+	$itk_component(occModeDialog) hide Apply
+	$itk_component(occModeDialog) hide Cancel
 
 	pack $itk_component(occModeRB)
 
@@ -1395,23 +1389,6 @@ namespace eval RtWizard {
     #
     ::itcl::body MGEDpage::occModeDialogOK {} {
 	set occMode [ $itk_component(occModeRB) get ]
-	$itk_component(occModeDialog) deactivate
-	updateStatus
-    }
-
-    #
-    # occModeDialogApply - executed when the apply button is pressed.
-    #
-    ::itcl::body MGEDpage::occModeDialogApply {} {
-	set occMode [ $itk_component(occModeRB) get ]
-	updateStatus
-    }
-
-    #
-    # occModeDialogCancel - executed when the close button is pressed.
-    #
-    ::itcl::body MGEDpage::occModeDialogCancel {} {
-	$itk_component(occModeRB) select $oldOccMode
 	$itk_component(occModeDialog) deactivate
 	updateStatus
     }
