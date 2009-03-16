@@ -660,7 +660,7 @@ namespace eval RtWizard {
     #
     # getPerspective - returns the current view perspective
     #
-    itcl::body MGEDpage::getPerspective { } {
+    itcl::body MGEDpage::getPerspective {} {
 	if {$isSelected == "true"} {
 	    set currentPerspective [$::mgedObj perspective_angle]
 	}
