@@ -1,3 +1,28 @@
+***********************************************************************
+Notes/TODO items specific to the STEP libraries as included in BRL-CAD:
+
+* Original build system has been replaced with Makefile.am and
+  configure.ac files in the style of BRL-CAD's autotools build
+  system.
+
+* Changes have been made to src/express to get it compiling with
+  the output of different versions of lex/flex/bison.  These
+  changes are not yet tested in terms of impact on functionality
+  and should be a starting point for any debugging of EXPRESS
+  parsing issues.
+
+* None of the original test codes have been incorporated into the
+  new build system, but they are still present in src/test
+
+* Express and exppp header files have been relocated to subdirectories
+  in include.  The names of the library files being built have been
+  altered, and clstepcore and cleditor now build as separate libraries.
+
+* Numerous minor changes have been made, mostly including stdlib
+  and other required files.
+
+***********************************************************************
+
 README.scl (top level README) February 1998
 
 THE NIST STEP TOOLSET
