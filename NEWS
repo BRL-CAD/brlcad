@@ -14,6 +14,7 @@ changes made.  See document footer for additional details.
 --- 2009-04-XX  Release 7.14.6                                     ---
 ----------------------------------------------------------------------
 
+* fixed small memory leak in gqa - Bob Parker
 * implemented rtwizard perspective rendering support - Sean Morrison
 * fixed rtwizard perspective and occlusion dialog bugs - Sean Morrison
 
