@@ -52,6 +52,7 @@ MODELS = \
 	cube.asc \
 	demo.asc \
 	galileo.asc \
+	goliath.asc \
 	havoc.asc \
 	kman.asc \
 	ktank.asc \
