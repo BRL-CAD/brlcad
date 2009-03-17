@@ -17,6 +17,7 @@ changes made.  See document footer for additional details.
 * fixed small memory leak in gqa - Bob Parker
 * implemented rtwizard perspective rendering support - Sean Morrison
 * fixed rtwizard perspective and occlusion dialog bugs - Sean Morrison
+* mged 'clone' command utilizes a new naming convention - Keith Bowman
 * fixed mged bug mirroring rcc primitives - Keith Bowman
 * modified rpp vertex ordering to match arb8 vertices - Keith Bowman
 * fixed mged 'qorot' command rotation about point bug - Keith Bowman
