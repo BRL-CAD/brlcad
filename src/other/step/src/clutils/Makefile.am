@@ -17,7 +17,8 @@ libsteputils_nil_la_LIBADD =
 libsteputils_la_SOURCES = 
 libsteputils_la_LDFLAGS =
 libsteputils_la_LIBADD = \
-	libsteputils_nil.la
+	libsteputils_nil.la \
+	${LIBSTDCXX}
 
 noinst_HEADERS = \
 	dirobj.h \

@@ -22,7 +22,8 @@ libstepeditor_nil_la_CXXFLAGS = -I$(top_srcdir)/src/clstepcore -I$(top_srcdir)/s
 libstepeditor_la_SOURCES = 
 libstepeditor_la_LDFLAGS =
 libstepeditor_la_LIBADD = \
-	libstepeditor_nil.la
+	libstepeditor_nil.la \
+	${LIBSTDCXX}
 
 noinst_HEADERS = \
 	cmdmgr.h \

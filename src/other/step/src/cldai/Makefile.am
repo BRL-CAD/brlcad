@@ -18,7 +18,8 @@ libstepdai_nil_la_CXXFLAGS = -I$(top_srcdir)/src/clstepcore -I$(top_srcdir)/src/
 libstepdai_la_SOURCES = 
 libstepdai_la_LDFLAGS =
 libstepdai_la_LIBADD = \
-	libstepdai_nil.la
+	libstepdai_nil.la \
+	${LIBSTDCXX}
 
 noinst_HEADERS = \
 	ErrorMap.hh \

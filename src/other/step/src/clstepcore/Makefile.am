@@ -61,7 +61,8 @@ libstepcore_nil_la_CXXFLAGS = -I$(top_srcdir)/src/cldai -I$(top_srcdir)/src/clut
 libstepcore_la_SOURCES = 
 libstepcore_la_LDFLAGS =
 libstepcore_la_LIBADD = \
-	libstepcore_nil.la
+	libstepcore_nil.la \
+	${LIBSTDCXX}
 
 EXTRA_DIST = \
 	ExpDict.h.s \
