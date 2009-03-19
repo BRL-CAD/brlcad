@@ -359,6 +359,100 @@ cmd_ged_in(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv
     return TCL_OK;
 }
 
+
+extern struct rt_db_internal es_int;
+
+int
+cmd_ged_inside(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
+{
+    register struct directory *dp;
+    int ret;
+    int arg;
+    Tcl_DString ds;
+    const char *new_cmd[3];
+    struct rt_db_internal intern;
+    struct directory *outdp;
+
+    if (gedp == GED_NULL)
+	return TCL_OK;
+
+    if (setjmp(jmp_env) == 0)
+	(void)signal(SIGINT, sig3);  /* allow interrupts */
+    else
+	return TCL_OK;
+
+    RT_INIT_DB_INTERNAL(&intern);
+
+    if (state == ST_S_EDIT) {
+	/* solid edit mode */
+	/* apply es_mat editing to parameters */
+	transform_editing_solid(&intern, es_mat, &es_int, 0);
+	outdp = LAST_SOLID(illump);
+
+	if (argc < 2) {
+	    Tcl_AppendResult(interp, "You are in Primitive Edit mode, using edited primitive as outside primitive: ", (char *)NULL);
+	    add_solid_path_to_result(interp, illump);
+	    Tcl_AppendResult(interp, "\n", (char *)NULL);
+	}
+
+	arg = 1;
+	ret = ged_inside_internal(gedp, &intern, argc, argv, arg, outdp->d_namep);
+    }  else if (state == ST_O_EDIT) {
+	mat_t newmat;
+
+	/* object edit mode */
+	if (illump->s_Eflag) {
+	    Tcl_AppendResult(interp, "Cannot find inside of a processed (E'd) region\n",
+			     (char *)NULL);
+	    (void)signal(SIGINT, SIG_IGN);
+	    return TCL_ERROR;
+	}
+	/* use the solid at bottom of path (key solid) */
+	/* apply es_mat and modelchanges editing to parameters */
+	bn_mat_mul(newmat, modelchanges, es_mat);
+	transform_editing_solid(&intern, newmat, &es_int, 0);
+	outdp = LAST_SOLID(illump);
+
+	if (argc < 2) {
+	    Tcl_AppendResult(interp, "You are in Object Edit mode, using key solid as outside solid: ", (char *)NULL);
+	    add_solid_path_to_result(interp, illump);
+	    Tcl_AppendResult(interp, "\n", (char *)NULL);
+	}
+
+	arg = 1;
+	ret = ged_inside_internal(gedp, &intern, argc, argv, arg, outdp->d_namep);
+    } else {
+	arg = 2;
+	ret = ged_inside(gedp, argc, (const char **)argv);
+    }
+
+    Tcl_DStringInit(&ds);
+    if (ret == BRLCAD_MORE_ARGS)
+	Tcl_DStringAppend(&ds, MORE_ARGS_STR, -1);
+    Tcl_DStringAppend(&ds, bu_vls_addr(&gedp->ged_result_str), -1);
+    Tcl_DStringResult(interp, &ds);
+
+    if (ret == BRLCAD_HELP) {
+	(void)signal(SIGINT, SIG_IGN);
+	return TCL_OK;
+    }
+
+    if (ret != BRLCAD_OK) {
+	(void)signal(SIGINT, SIG_IGN);
+	return TCL_ERROR;
+    }
+
+    /* draw the "inside" solid */
+    new_cmd[0] = "draw";
+    new_cmd[1] = argv[arg];
+    new_cmd[2] = (char *)NULL;
+    (void)cmd_draw(clientData, interp, 2, new_cmd);
+
+    (void)signal(SIGINT, SIG_IGN);
+
+    return TCL_OK;
+}
+
 int
 cmd_ged_more_wrapper(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 {

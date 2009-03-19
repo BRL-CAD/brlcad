@@ -44,6 +44,7 @@ BU_EXTERN(int cmd_ged_edit_wrapper, (ClientData clientData, Tcl_Interp *interp, 
 BU_EXTERN(int cmd_ged_erase_wrapper, (ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[]));
 BU_EXTERN(int cmd_ged_gqa, (ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[]));
 BU_EXTERN(int cmd_ged_in, (ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[]));
+BU_EXTERN(int cmd_ged_inside, (ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[]));
 BU_EXTERN(int cmd_ged_more_wrapper, (ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[]));
 BU_EXTERN(int cmd_ged_plain_wrapper, (ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[]));
 BU_EXTERN(int cmd_ged_view_wrapper, (ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[]));

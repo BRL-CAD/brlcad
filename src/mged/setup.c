@@ -165,7 +165,7 @@ struct cmdtab mged_cmdtab[] = {
     {"idents", cmd_ged_plain_wrapper, ged_tables},
     {"ill", f_ill, GED_FUNC_PTR_NULL},
     {"in", cmd_ged_in, ged_in},
-    {"inside", cmd_ged_more_wrapper, ged_inside},
+    {"inside", cmd_ged_inside, ged_inside},
     {"item", cmd_ged_plain_wrapper, ged_item},
     {"joint", f_joint, GED_FUNC_PTR_NULL},
     {"journal", f_journal, GED_FUNC_PTR_NULL},

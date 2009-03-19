@@ -161,7 +161,7 @@ __BEGIN_DECLS
 /** add a new directory entry to the currently open database */
 #define GED_DB_DIRADD(_gedp, _dp, _name, _laddr, _len, _flags, _ptr, _ret) \
     if (((_dp) = db_diradd((_gedp)->ged_wdbp->dbip, (_name), (_laddr), (_len), (_flags), (_ptr))) == DIR_NULL) { \
-	bu_vls_printf(&(_gedp)->ged_result_str, "An error has occured while adding a new object to the database."); \
+	bu_vls_printf(&(_gedp)->ged_result_str, "An error has occurred while adding a new object to the database."); \
 	return (_ret); \
     }
 
@@ -461,6 +461,15 @@ GED_EXPORT BU_EXTERN(struct ged *ged_open,
 		      int existing_only));
 GED_EXPORT BU_EXTERN(void ged_view_init,
 		     (struct ged_view *gvp));
+
+/* defined in inside.c */
+GED_EXPORT BU_EXTERN(int ged_inside_internal,
+		     (struct ged *gedp,
+		      struct rt_db_internal *ip,
+		      int argc,
+		      char *argv[],
+		      int arg,
+		      char *o_name));
 
 /* defined in rt.c */
 GED_EXPORT BU_EXTERN(int ged_build_tops,
