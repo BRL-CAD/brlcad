@@ -782,13 +782,13 @@ rt_gettrees_muves(struct rt_i *rtip, const char **attrs, int argc, const char **
 	    /* The macro makes it hard to regain place, punt */
 	    goto again;
 	}
-    } RT_VISIT_ALL_SOLTABS_END
+    } RT_VISIT_ALL_SOLTABS_END;
 
-	  /*
-	   * Another pass, no restarting.  Assign "piecestate" indices
-	   * for those solids which contain pieces.
-	   */
-	  RT_VISIT_ALL_SOLTABS_START( stp, rtip )  {
+    /*
+     * Another pass, no restarting.  Assign "piecestate" indices
+     * for those solids which contain pieces.
+     */
+    RT_VISIT_ALL_SOLTABS_START( stp, rtip )  {
 	if ( stp->st_npieces > 1 )  {
 	    /* all pieces must be within model bounding box for pieces
 	     * to work correctly.
@@ -799,35 +799,35 @@ rt_gettrees_muves(struct rt_i *rtip, const char **attrs, int argc, const char **
 	}
 	if (RT_G_DEBUG&DEBUG_SOLIDS)
 	    rt_pr_soltab( stp );
-    } RT_VISIT_ALL_SOLTABS_END
+    } RT_VISIT_ALL_SOLTABS_END;
 
-	  /* Handle finishing touches on the trees that needed soltab
-	   * structs that the parallel code couldn't look at yet.
-	   */
-	  for ( BU_LIST_FOR( regp, region, &(rtip->HeadRegion) ) )  {
-	      RT_CK_REGION(regp);
+    /* Handle finishing touches on the trees that needed soltab
+     * structs that the parallel code couldn't look at yet.
+     */
+    for ( BU_LIST_FOR( regp, region, &(rtip->HeadRegion) ) )  {
+	RT_CK_REGION(regp);
 
-	      /* The region and the entire tree are cross-referenced */
-	      rt_tree_region_assign( regp->reg_treetop, regp );
+	/* The region and the entire tree are cross-referenced */
+	rt_tree_region_assign( regp->reg_treetop, regp );
 
-	      /*
-	       * Find region RPP, and update the model maxima and
-	       * minima.
-	       *
-	       * Don't update min & max for halfspaces; instead, add
-	       * them to the list of infinite solids, for special
-	       * handling.
-	       */
-	      if ( rt_bound_tree( regp->reg_treetop, region_min, region_max ) < 0 )  {
-		  bu_log("rt_gettrees() %s\n", regp->reg_name );
-		  bu_bomb("rt_gettrees(): rt_bound_tree() fail\n");
-	      }
-	      if ( region_max[X] < INFINITY )  {
-		  /* infinite regions are exempted from this */
-		  VMINMAX( rtip->mdl_min, rtip->mdl_max, region_min );
-		  VMINMAX( rtip->mdl_min, rtip->mdl_max, region_max );
-	      }
-	  }
+	/*
+	 * Find region RPP, and update the model maxima and
+	 * minima.
+	 *
+	 * Don't update min & max for halfspaces; instead, add
+	 * them to the list of infinite solids, for special
+	 * handling.
+	 */
+	if ( rt_bound_tree( regp->reg_treetop, region_min, region_max ) < 0 )  {
+	    bu_log("rt_gettrees() %s\n", regp->reg_name );
+	    bu_bomb("rt_gettrees(): rt_bound_tree() fail\n");
+	}
+	if ( region_max[X] < INFINITY )  {
+	    /* infinite regions are exempted from this */
+	    VMINMAX( rtip->mdl_min, rtip->mdl_max, region_min );
+	    VMINMAX( rtip->mdl_min, rtip->mdl_max, region_max );
+	}
+    }
 
     /* DEBUG:  Ensure that all region trees are valid */
     for ( BU_LIST_FOR( regp, region, &(rtip->HeadRegion) ) )  {
