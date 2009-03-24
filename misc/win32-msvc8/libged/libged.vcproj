@@ -306,6 +306,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\src\libged\bot_flip.c"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\src\libged\bot_merge.c"
 				>
 			</File>
@@ -315,6 +319,10 @@
 			</File>
 			<File
 				RelativePath="..\..\..\src\libged\bot_split.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\src\libged\bot_sync.c"
 				>
 			</File>
 			<File

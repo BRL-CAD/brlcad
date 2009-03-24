@@ -4667,6 +4667,10 @@ RT_EXPORT BU_EXTERN(int rt_bot_smooth,
 		     char *bot_name,
 		     struct db_i *dbip,
 		     fastf_t normal_tolerance_angle));
+RT_EXPORT BU_EXTERN(int rt_bot_flip,
+		    (struct rt_bot_internal *bot));
+RT_EXPORT BU_EXTERN(int rt_bot_sync,
+		    (struct rt_bot_internal *bot));
 
 #endif
 RT_EXPORT BU_EXTERN(int rt_bot_same_orientation,

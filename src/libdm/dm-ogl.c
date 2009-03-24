@@ -179,6 +179,7 @@ HIDDEN float wireColor[4];
 HIDDEN float ambientColor[4];
 HIDDEN float specularColor[4];
 HIDDEN float diffuseColor[4];
+HIDDEN float backColor[] = {1.0, 1.0, 0.0, 1.0}; /* yellow */
 
 void
 ogl_fogHint(struct dm *dmp, int fastfog)
@@ -1015,7 +1016,12 @@ ogl_drawVList(struct dm *dmp, register struct bn_vlist *vp)
 			glMaterialfv(GL_FRONT_AND_BACK, GL_EMISSION, black);
 			glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, ambientColor);
 			glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, specularColor);
-			glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, diffuseColor);
+
+			if (1 < dmp->dm_light) {
+			    glMaterialfv(GL_FRONT, GL_DIFFUSE, diffuseColor);
+			    glMaterialfv(GL_BACK, GL_DIFFUSE, backColor);
+			} else
+			    glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, diffuseColor);
 
 			if (dmp->dm_transparency)
 			    glEnable(GL_BLEND);

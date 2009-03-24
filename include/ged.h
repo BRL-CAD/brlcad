@@ -1266,6 +1266,14 @@ GED_EXPORT BU_EXTERN(int ged_bot_face_fuse, (struct ged *gedp, int argc, const c
 GED_EXPORT BU_EXTERN(int ged_bot_face_sort, (struct ged *gedp, int argc, const char *argv[]));
 
 /**
+ * Flip/reverse the specified bot's orientation.
+ *
+ * Usage:
+ *     bot_flip bot_obj
+ */
+GED_EXPORT BU_EXTERN(int ged_bot_flip, (struct ged *gedp, int argc, const char *argv[]));
+
+/**
  * Create bot_dest by merging the bot sources.
  *
  * Usage:
@@ -1277,7 +1285,7 @@ GED_EXPORT BU_EXTERN(int ged_bot_merge, (struct ged *gedp, int argc, const char 
  * Calculate vertex normals for the BOT primitive
  *
  * Usage:
- *     bot_smoooth [-t ntol] new_bot old_bot
+ *     bot_smooth [-t ntol] new_bot old_bot
  */
 GED_EXPORT BU_EXTERN(int ged_bot_smooth, (struct ged *gedp, int argc, const char *argv[]));
 
@@ -1288,6 +1296,14 @@ GED_EXPORT BU_EXTERN(int ged_bot_smooth, (struct ged *gedp, int argc, const char
  *     bot_split bot_obj
  */
 GED_EXPORT BU_EXTERN(int ged_bot_split, (struct ged *gedp, int argc, const char *argv[]));
+
+/**
+ * Sync the specified bot's orientation (i.e. make sure all neighboring triangles have same orientation).
+ *
+ * Usage:
+ *     bot_sync bot_obj
+ */
+GED_EXPORT BU_EXTERN(int ged_bot_sync, (struct ged *gedp, int argc, const char *argv[]));
 
 /**
  * Fuse bot vertices

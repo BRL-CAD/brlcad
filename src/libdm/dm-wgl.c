@@ -161,11 +161,7 @@ HIDDEN float wireColor[4];
 HIDDEN float ambientColor[4];
 HIDDEN float specularColor[4];
 HIDDEN float diffuseColor[4];
-#if 1
 HIDDEN float backColor[] = {1.0, 1.0, 0.0, 1.0}; /* yellow */
-#else
-HIDDEN float backColor[] = {0.1, 0.1, 0.1, 1.0}; /* dark gray */
-#endif
 
 void
 wgl_fogHint(dmp, fastfog)
@@ -984,16 +980,12 @@ wgl_drawVList(dmp, vp)
 			glMaterialfv(GL_FRONT_AND_BACK, GL_EMISSION, black);
 			glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, ambientColor);
 			glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, specularColor);
-#if 0
-			glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, diffuseColor);
-#else
-			if (1 < dmp->dm_light)
-			    glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, diffuseColor);
-			else {
+
+			if (1 < dmp->dm_light) {
 			    glMaterialfv(GL_FRONT, GL_DIFFUSE, diffuseColor);
 			    glMaterialfv(GL_BACK, GL_DIFFUSE, backColor);
-			}
-#endif
+			} else
+			    glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, diffuseColor);
 
 			if (dmp->dm_transparency)
 			    glEnable(GL_BLEND);
