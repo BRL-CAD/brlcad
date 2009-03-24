@@ -143,17 +143,17 @@
 
       <itemizedlist>
 	<listitem>
-	  <para>primitive solids - the minimal elements of the DAG.</para>
+	  <para>primitive <emphasis>solids</emphasis> - the minimal elements of the DAG.</para>
 	</listitem>
 	<listitem>
 	  <para>
-	    combinations - the nonminimal elements of the DAG, 
+	    <emphasis>combinations</emphasis> - the nonminimal elements of the DAG, 
 	    some of which are specially marked as regions. The maximal 
 	    elements of the DAG are called tops.
 	  </para>
 	</listitem>
 	<listitem>
-	  <para>arcs - contain boolean operators and 4x4 homogeneous transformation matrices.</para>
+	  <para><emphasis>arcs</emphasis> - contain boolean operators and 4x4 homogeneous transformation matrices.</para>
 	</listitem>
       </itemizedlist>
     </para>
@@ -224,7 +224,237 @@
       In the case of librt, each database object will contain exactly one combination 
       node or leaf (solid) node. 
     </para>
+    <section>
+      <title>Object Structure</title>
+      <para>
+	All objects share certain common properties, which are stored in a standardized 
+	<emphasis>object wrapper</emphasis> consisting of an Object Header and an Object Footer.
+      </para>
+      <para>
+	The Object Header consists of:
+	<itemizedlist>
+	  <listitem>
+	    <para>
+	      An 8-bit Magic1 element that holds a specific magic number value used for 
+	      database integrity checking.
+	    </para>
+	  </listitem>
+	  <listitem>
+	    <para>
+	      A 16-bit Flags element consisting of three 8-bit fields: HFlags, AFlags, 
+	      and BFlags, described later.
+	    </para>
+	  </listitem>
+	  <listitem>
+	    <para>
+	      A 16-bit Object_Type element organized into two 8-bit-wide fields: the 
+	      Major_Type and the Minor_Type.
+	    </para>
+	  </listitem>
+	  <listitem>
+	    <para>
+	      An Object_Length element that indicates the total number of bytes required 
+	      for this object, including the magic numbers.
+	    </para>
+	  </listitem>
+	  <listitem>
+	    <para>
+	      An Object_Name element that is a string holding a name unique to that object 
+	      and drawn from a name space that is global to the database. Like other strings, 
+	      it consists of two fields, Length and Data. In the case of the Object_Name 
+	      element, these are referred to as Name_Length and Name_Data, respectively. 
+	      Note: The Object_Name element is mandatory for all allocated storage in the 
+	      database. Database free-space managment objects are the only objects for which 
+	      the Object_Name element is optional.
+	    </para>
+	  </listitem>
+	</itemizedlist>
+      </para>
+      <para>
+	The Object Footer consists of:
+	<itemizedlist>
+	  <listitem>
+	    <para>
+	      Any padding bytes necessary to bring the total size of the object in bytes to an 
+	      integral multiple of 8.
+	    </para>
+	  </listitem>
+	  <listitem>
+	    <para>
+	      An 8-bit Magic2 element that holds a specific magic number value used for database 
+	      integrity checking.
+	    </para>
+	  </listitem>
+	</itemizedlist>
+      </para>
+      <para>
+	Objects may store application-specific information in an Object Interior.
+	<itemizedlist>
+	  <listitem>
+	    <para>
+	      An object may optionally have an Object_Attributes element consisting of a
+	      pair of fields: Attribute_Length and Attribute_Data. From the point of view 
+	      of the database interface specification, the names and values of these attributes 
+	      are opaque????; a standardized import/export encoding API will be provided.
+	    </para>
+	  </listitem>
+	  <listitem>
+	    <para>
+	      An object may optionally have an Object_Body element consisting of a pair of 
+	      fields, Body_Length and Body_Data. From the point of view of the database 
+	      interface specification, the format of the data is opaque??.
+	    </para>
+	  </listitem>
+	</itemizedlist>
+      </para>
+      <para>
+	The on-disk version of each object consists of three distinct parts: Object Header, 
+	Object Interior, and Object Footer. This is called the external format of the object.
+      </para>
+      <table frame='all'>
+	<title>On-Disk BRL-CAD Object Structure</title>
+	<tgroup cols='3' align='center' colsep='1' rowsep='1'>
+	  <thead>
+	    <row>
+	      <entry>Part</entry>
+	      <entry>Element</entry>
+	      <entry>Comments</entry>
+	    </row>
+	  </thead>
+	  <tbody>
+	    <row>
+	      <entry morerows='4' valign='middle'><para>Object Header:</para><para>(not compressible)</para></entry>
+	      <entry>Magic1</entry>
+	      <entry morerows='2' valign='middle'>Required</entry>
+	    </row>
+	    <row>
+	      <entry>HFlags, AFlags, BFlags</entry>
+	    </row>
+	    <row>
+	      <entry><para>Object_Type</para><para>(Major_Type, Minor_Type)</para></entry>
+	    </row>
+	    <row>
+	      <entry>Object_Length</entry>
+	      <entry>Required</entry>
+	    </row>
+	    <row>
+	      <entry align='center'>
+		<para>
+		  <informaltable frame='none'>
+		    <tgroup cols='2' align='center'>
+		      <tbody>
+			<row>
+			  <entry>Object Name:</entry>
+			  <entry>
+			    <para>
+			      <informaltable frame='all'>
+				<tgroup cols='1' align='center'>
+				  <tbody>
+				    <row><entry>Name_Length</entry></row>
+				    <row><entry>Name_Data</entry></row>
+				  </tbody>
+				</tgroup>
+			      </informaltable>
+			    </para>
+			  </entry>
+			</row>
+		      </tbody>
+		    </tgroup>
+		  </informaltable>
+		</para>
+	      </entry>
+	      <entry><para>Conditional on flag bit N,</para><para>Required for Application Data</para></entry>
+	    </row>
+	    <row>
+	      <entry morerows='1' valign='middle'><para>Object Interior:</para><para>(individually compressible)</para></entry>
+	      <entry align='center'>
+		<para>
+		  <informaltable frame='none'>
+		    <tgroup cols='2' align='center'>
+		      <tbody>
+			<row>
+			  <entry>Object Attributes:</entry>
+			  <entry>
+			    <para>
+			      <informaltable frame='all'>
+				<tgroup cols='1' align='center'>
+				  <tbody>
+				    <row><entry>Attribute_Length</entry></row>
+				    <row><entry>Attribute_Data</entry></row>
+				</tbody>
+			      </tgroup>
+			    </informaltable>
+			  </para>
+			</entry>
+		      </row>
+		    </tbody>
+		  </tgroup>
+		</informaltable>
+		</para>
+	      </entry>
+	      <entry><para>Conditional on flag bit A</para><para>(ZZZ compression)</para></entry>
+	    </row>
+	    <row>
+	      <entry align='center'>
+		<para>
+		<informaltable frame='none'>
+		  <tgroup cols='2' align='center'>
+		    <tbody>
+		      <row>
+			<entry>Object Body:</entry>
+			<entry>
+			  <para>
+			    <informaltable frame='all'>
+			      <tgroup cols='1' align='center'>
+				<tbody>
+				  <row><entry>Body_Length</entry></row>
+				  <row><entry>Body_Data</entry></row>
+				</tbody>
+			      </tgroup>
+			    </informaltable>
+			  </para>
+			</entry>
+		      </row>
+		    </tbody>
+		  </tgroup>
+		</informaltable>
+		</para>
+	      </entry>
+	      <entry><para>Conditional on flag bit B</para><para>(ZZZ compression)</para></entry>
+	    </row>
+	    <row>
+	      <entry morerows='1' valign='middle'><para>Object Footer:</para><para>(not compressible)</para></entry>
+	      <entry>Padding</entry>
+	      <entry><para>As required to maintain 8-byte</para><para>object boundaries</para></entry>
+	    </row>
+	    <row>
+	      <entry>Magic2</entry>
+	      <entry>Required</entry>
+	    </row>
+	  </tbody>
+	</tgroup>
+      </table>
+    </section>
+
   </section>
+
+
+
+
+  <itemizedlist>
+    <listitem>
+      <para>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+      </para>
+    </listitem>
+  </itemizedlist>
+
+
+
+
   <section>
     <title>How Objects Are Grouped into a Database</title>
     <para>
