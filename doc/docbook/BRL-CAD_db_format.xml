@@ -542,7 +542,255 @@
 	  </tbody>
 	</tgroup>
       </table>
+
+      <section>
+	<title>Wid Flags</title>
+	<para>
+	  The length of an object or subelement in the database is recorded using an 
+	  unsigned integer. These are variable-width fields based on the magnitude of the 
+	  maximum number needed. The Wid bits specify the size of the unsigned integer 
+	  employed in each instance. There are four 2-bit width (Wid) flags: Object_Wid 
+	  and Name_Wid (stored in HFlags), Attribute_Wid (stored in AFlags), and Body_Wid 
+	  (stored in BFlags). The Wid fields are interpreted in this manner:
+	</para>
+	
+	<table frame='all'>
+	  <title>Wid Flag Structure</title>
+	  <tgroup cols='2' align='center'>
+	    <thead>
+	      <row>
+		<entry>Wid Bits</entry>
+		<entry>Width (in bits) of Associated Length Fields</entry>
+	    </row>
+	  </thead>
+	  <tbody>
+	    <row>
+	      <entry>00</entry>
+	      <entry>8</entry>
+	    </row>
+	    <row>
+	      <entry>01</entry>
+	      <entry>16</entry>
+	    </row>
+	    <row>
+	      <entry>10</entry>
+	      <entry>32</entry>
+	    </row>
+	    <row>
+	      <entry>11</entry>
+	      <entry>64</entry>
+	    </row>
+	  </tbody>
+	</tgroup>
+      </table>
+      <para>
+	The Object_Wid flag, at the high end of HFlags, encodes the width of the Object_Length 
+	field. The Name_Wid flag, in bits 3 and 4 of HFlags, encodes the width of the Name_Length 
+	field (when the name element is present; see the N bit, shown later.). Attribute_Wid (or 
+	Body_Wid, as the case may be) encodes the width of the Attribute_Length field (when the 
+	Object_Attributes (or Object_Attributes) element is present.
+	http://ftp.arl.mil/~mike/papers/brlcad5.0/newdb.html - bbitSee the P bit, below.)??????????.
+      </para>
+      <para>
+	The rationale for allowing the width of the Object_Length field to be specified independently 
+	of the other widths is to save space on objects in which the values in many of the length 
+	fields nearly overflow the specified field width, so that their sum requires a wider field. 
+	For example, for four 255-byte interior fields, the corresponding length fields need be no 
+	more than 8 bits wide, so the choice Interior_Wid=00 suffices, but their combined length of 
+	1020 bytes would require Object_Wid=01. Because all of the length fields besides Object_Length 
+	must have the same width, the largest of the values stored in these length fields determines 
+	the value of Interior_Wid required. Both Object_Wid and Interior_Wid may vary from object to 
+	object. It is expected that the routines that write an object to the disk will use the 
+	narrowest width possible for each object.
+      </para>
+      </section>
+
+      <section>
+	<title>"r" Bits</title>
+	<para>
+	  The bits labled as "r" in all three flags are reserved for future design
+	  work assigning additional optional fields in the object.
+	</para>
+      </section>
+ 
+      <section>
+	<title>HFlags - the DLI Flag</title>
+	<para>
+	  The DLI flag is a 2-bit flag that indicates whether the object is an Application 
+	  Data Object or a Database Layer Internal Object. The bits are interpreted as follows: 
+	</para>
+	<table frame='all' pgwide='1'>
+	  <title>DLI Flag Structure</title>
+	  <tgroup cols='2' align='center'>
+	    <thead>
+	      <row>
+		<entry>DLI Bits</entry>
+		<entry>Meaning</entry>
+	    </row>
+	  </thead>
+	  <tbody>
+	    <row>
+	      <entry>00</entry>
+	      <entry align='left'>
+		Application Data Object 
+		<para>
+		  The object contains application-specific data. N must be 1. A and B are 
+		  determined by what the application presents for storage in the object; both 
+		  may be 0 (empty Object_Interior).
+		</para>
+	      </entry>
+	    </row>
+	    <row>
+	      <entry>01</entry>
+	      <entry align='left'>
+		Database Layer Internal, Header Object
+		<para>
+		  A Header Object must be the first object encountered in the database. In 
+		  order to support direct concatenation of two existing databases into one new 
+		  database, additional header objects may appear elsewhere in the database The 
+		  header object has no object name, object attributes, or object body (e.g., 
+		  N=0, A=0, B=0). Major_Type=RESERVED, Minor_Type=0. 
+		</para>
+	      </entry>
+	    </row>
+	    <row>
+	      <entry>10</entry>
+	      <entry align='left'>
+		Database Layer Internal, Free Storage. 
+		<para>
+		  Unused space in the database is kept using a special Free DB Storage object 
+		  that has no object name or object attributes. The object body is null-filled 
+		  and of the proper size for the storage to be represented. Like all other objects, 
+		  the total length of the object will be a multiple of 8 bytes. N=0, A=0, B=1. 
+		  Major_Type=RESERVED, Minor_Type=0. 
+		</para>
+	      </entry>
+	    </row>
+	    <row>
+	      <entry>11</entry>
+	      <entry align='left'>
+		Database Layer Internal, Reserved
+		<para>
+		  This value is reserved for future use.
+		</para>
+	      </entry>
+	    </row>
+	  </tbody>
+	</tgroup>
+      </table>
+      <para>
+	The DLI flag is not available to the higher database access layers.
+      </para>
+      <note>
+	<para>
+	  Implementation note: Before writing a new object into the database in a free area, 
+	  the library should read the object header from the database and confirm that the space
+	  is indeed free. Similarly, additions to the end should be checked by ensuring that the 
+	  file hasn't been extended. In case the check fails, the database write should fail, the 
+	  user should be notified, and the internal library mode (not the operating system file 
+	  access permissions) should be changed over to read-only access so that no further attempts
+	  to write will be issued. These checks will provide protection against two or more users 
+	  trying to modify the same database simultaneously and accidentally stepping on each 
+	  other. In the NFS world, file locking isn't a strong enough assurance.
+	</para>
+      </note>
+      </section>
+ 
+      <section>
+	<title>HFlags - the N Bit</title>
+	<para>
+	  The "N" bit indicates whether the Name element (consisting of Name_Length and Object_Name 
+	  fields) is present (1) or absent (0) in the noncompressible basic header immediately following the 
+	  Object_Length field. The width of the Name_Length field is specified by the Name_Wid field.
+	</para>
+      </section>
+     
+      <section>
+	<title>AFlags/BFlags - the P Bit</title>
+	<para>
+	  The ``P'' bit indicates whether the Attributes (or, alternatively, Body) element consisting
+	  of Attribute_Length and Attribute_Data (or Body_Length and Body_Data) fields, is present (1)
+	  or absent (0) in the Object_Interior.
+	</para>
+      </section>
+
+      <section>
+	<title>AFlags/BFlags - the ZZZ Flag</title>
+	<para>
+	  The 3-bit ``ZZZ'' flag indicates the compression, if any, of the object Attributes (or Body):
+	</para>
+	<table frame='all'>
+	  <title>ZZZ Flag Structure</title>
+	  <tgroup cols='2' align='center'>
+	    <thead>
+	      <row>
+		<entry>ZZZ Bits</entry>
+		<entry>Compression Algorithm</entry>
+	    </row>
+	  </thead>
+	  <tbody>
+	    <row>
+	      <entry>000</entry>
+	      <entry>None</entry>
+	    </row>
+	    <row>
+	      <entry>001</entry>
+	      <entry>GNU GZIP</entry>
+	    </row>
+	    <row>
+	      <entry>010</entry>
+	      <entry>Burroughs-Wheeler</entry>
+	    </row>
+	    <row>
+	      <entry>011</entry>
+	      <entry>Reserved</entry>
+	    </row>
+	    <row>
+	      <entry>100</entry>
+	      <entry>Reserved</entry>
+	    </row>
+	    <row>
+	      <entry>101</entry>
+	      <entry>Reserved</entry>
+	    </row>
+	    <row>
+	      <entry>110</entry>
+	      <entry>Reserved</entry>
+	    </row>
+	    <row>
+	      <entry>111</entry>
+	      <entry>Reserved</entry>
+	    </row>
+	  </tbody>
+	</tgroup>
+      </table>
+      </section>
     </section>
+
+    <section>
+      <title>Object Type</title>
+      <para>
+      </para>
+    </section>
+
+    <section>
+      <title>Object Length</title>
+      <para>
+      </para>
+    </section>
+
+    <section>
+      <title>Object Name</title>
+      <para>
+      </para>
+    </section>
+
+    <section>
+      <title>Object Attributes</title>
+      <para>
+      </para>
+    </section>
+
 
   </section>
 
