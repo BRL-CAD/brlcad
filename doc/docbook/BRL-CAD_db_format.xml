@@ -1,0 +1,265 @@
+<!DOCTYPE article PUBLIC "-//OASIS//DTD DocBook XML V4.5//EN"
+"/usr/share/sgml/docbook/xml-dtd-4.5/docbookx.dtd">
+<article class='specification'>
+  <articleinfo>
+    <title>BRL-CAD Database Format</title>
+    <subtitle>Version 5 (DRAFT)</subtitle>
+    <authorgroup>
+      <author>
+        <firstname>Lee</firstname>
+        <surname>Butler</surname>
+        <othername role='mi'>A</othername>
+        <affiliation>
+          <shortaffil>U.S. Army Research Laboratory</shortaffil>
+          <orgdiv>Survivability/Lethality Analysis Directorate</orgdiv>
+          <address>
+            Aberdeen Proving Ground
+            <state>MD</state> 
+            <postcode>21005-5068</postcode>
+          </address>
+        </affiliation>
+      </author>
+      <author>
+        <firstname>Michael</firstname>
+        <surname>Muuss</surname>
+        <othername role='mi'>John</othername>
+        <affiliation>
+          <shortaffil>U.S. Army Research Laboratory</shortaffil>
+          <orgdiv>Survivability/Lethality Analysis Directorate</orgdiv>
+          <address>
+            Aberdeen Proving Ground
+            <state>MD</state> 
+            <postcode>21005-5068</postcode>
+          </address>
+        </affiliation>
+      </author>
+      <author>
+        <firstname>Paul</firstname>
+        <surname>Tanenbaum</surname>
+        <othername role='mi'>J</othername>
+        <affiliation>
+          <shortaffil>U.S. Army Research Laboratory</shortaffil>
+          <orgdiv>Survivability/Lethality Analysis Directorate</orgdiv>
+          <address>
+            Aberdeen Proving Ground
+            <state>MD</state> 
+            <postcode>21005-5068</postcode>
+          </address>
+        </affiliation>
+      </author>
+      <author>
+        <firstname>John</firstname>
+        <surname>Anderson</surname>
+        <othername role='mi'>R</othername>
+        <affiliation>
+          <shortaffil>U.S. Army Research Laboratory</shortaffil>
+          <orgdiv>Survivability/Lethality Analysis Directorate</orgdiv>
+          <address>
+            Aberdeen Proving Ground
+            <state>MD</state> 
+            <postcode>21005-5068</postcode>
+          </address>
+        </affiliation>
+      </author>
+      <author>
+        <firstname>Robert</firstname>
+        <surname>Parker</surname>
+        <othername role='mi'>G</othername>
+        <affiliation>
+          <shortaffil>U.S. Army Research Laboratory</shortaffil>
+          <orgdiv>Survivability/Lethality Analysis Directorate</orgdiv>
+          <address>
+            Aberdeen Proving Ground
+            <state>MD</state> 
+            <postcode>21005-5068</postcode>
+          </address>
+        </affiliation>
+      </author>
+      <author>
+        <firstname>Ronald</firstname>
+        <surname>Bowers</surname>
+        <othername role='mi'>A</othername>
+        <affiliation>
+          <shortaffil>U.S. Army Research Laboratory</shortaffil>
+          <orgdiv>Survivability/Lethality Analysis Directorate</orgdiv>
+          <address>
+            Aberdeen Proving Ground
+            <state>MD</state> 
+            <postcode>21005-5068</postcode>
+          </address>
+        </affiliation>
+      </author>
+      <author>
+        <firstname>Christopher</firstname>
+        <surname>Johnson</surname>
+        <othername role='mi'>T</othername>
+        <affiliation>
+          <shortaffil>U.S. Army Research Laboratory</shortaffil>
+          <orgdiv>Survivability/Lethality Analysis Directorate</orgdiv>
+          <address>
+            Aberdeen Proving Ground
+            <state>MD</state> 
+            <postcode>21005-5068</postcode>
+          </address>
+        </affiliation>
+      </author>
+      <author>
+        <firstname>Eric</firstname>
+        <surname>Edwards</surname>
+        <othername role='mi'>W</othername>
+        <affiliation>
+          <shortaffil>SURVICE Engineering Company</shortaffil>
+          <address>
+            <street>4695 Millennium Drive</street>
+            <city>Belcamp</city>
+            <state>MD</state> 
+            <postcode>21017-1505</postcode>
+          </address>
+        </affiliation>
+      </author>
+    </authorgroup>
+  </articleinfo>
+  
+  <abstract>
+    <para>
+      BRL-CAD software uses its own binary file format to store the geometric information and
+      other properties required to define CAD models. BRL-CAD used its version 4 (v4) binary 
+      ".g" database format for over 10 years, but a variety of long standing issues with 
+      that format prompted the development of version 5.  Issues addressed by the new format
+      include a machine-independent format, expanding the upper limit of numbers to double 
+      precision floating point, and lifting a 16 character size limit on object names.
+    </para>
+  </abstract>
+
+  <section>
+    <title>Background and Terminology</title>
+    <para>
+      BRL-CAD is a constructive solid geometry (CSG) modeling system. Primitive solid shapes 
+      are combined using boolean operations to form regions of homogeneous material. 
+    </para>
+    <para>
+      The database is organized as a <emphasis>directed acyclic graph</emphasis> (DAG), which 
+      comprises 
+
+      <itemizedlist>
+	<listitem>
+	  <para>primitive solids - the minimal elements of the DAG.</para>
+	</listitem>
+	<listitem>
+	  <para>
+	    combinations - the nonminimal elements of the DAG, 
+	    some of which are specially marked as regions. The maximal 
+	    elements of the DAG are called tops.
+	  </para>
+	</listitem>
+	<listitem>
+	  <para>arcs - contain boolean operators and 4x4 homogeneous transformation matrices.</para>
+	</listitem>
+      </itemizedlist>
+    </para>
+    <para>
+      In a slight abuse of terminology, the DAG is often spoken of as a tree or collection 
+      of trees. In this context, the solids are also called <emphasis>leaves</emphasis>. 
+    </para>
+    <section>
+      <title>Format of Data Elements/Database External Format</title>
+      <para>
+	The external format has several important properties, especially with regard 
+	to the <emphasis>Object_Body</emphasis>:
+	<itemizedlist>
+	  <listitem>
+	    <para>
+	      Numbers are stored in binary for storage efficiency, for speed of reading 
+	      and writing, and for preventing errors from creeping in due to repetitive 
+	      conversion between binary and an ASCII string representation. This eliminates 
+	      the need to use the old g2asc and asc2g to move databases between machines of 
+	      different architectures.
+	    </para>
+	  </listitem>
+	  <listitem>
+	    <para>
+	      All data in the object wrapper are stored in a machine-independent format, 
+	      as follows:
+	      <itemizedlist mark='opencircle'>
+		<listitem>
+		  <para>
+		    All floating point numbers are stored as IEEE double-precision, in 
+		    big-endian order, where byte 0 is on the left end of the word.
+		  </para>
+		</listitem>
+		<listitem>
+		  <para>
+		    All integers are stored as either <emphasis>unsigned</emphasis> or 
+		    <emphasis>twos-complement signed</emphasis> binary numbers in either 
+		    8, 16, 32, or 64 bits, in big-endian order.
+		  </para>
+		</listitem>
+		<listitem>
+		  <para>
+		    All character strings are stored in the ASCII 8-bit character set. 
+		    A string is stored as an integer followed by an array of 8-bit 
+		    characters. The last character in the array is always a null byte. 
+		    The integer indicates the number of bytes in the array including the 
+		    terminating null.
+		  </para>
+		</listitem>
+	      </itemizedlist>
+	    </para>
+	  </listitem>
+	</itemizedlist>
+      </para>
+    </section>
+  </section>
+
+  <section>
+    <title>Definition of a Single, Generic Database Object</title>
+    <para>
+      The database access library stores <emphasis>objects</emphasis> as a collection 
+      of data with a globally unique name and places no interpretation on the content 
+      of those data. The <emphasis>object</emphasis> is the smallest granularity of 
+      an item in the database; objects must be read from and written to the database 
+      in a single atomic operation.
+    </para>
+    <para>
+      In the case of librt, each database object will contain exactly one combination 
+      node or leaf (solid) node. 
+    </para>
+  </section>
+  <section>
+    <title>How Objects Are Grouped into a Database</title>
+    <para>
+      
+    </para>
+  </section>
+  <section>
+    <title>Details of BRL-CAD-Specific Nongeometric Database Object Types</title>
+    <para>
+      
+    </para>
+  </section>
+  <section>
+    <title>Details of BRL-CAD-Specific Geometric Database Object Types</title>
+    <para>
+      
+    </para>
+  </section>
+  <section>
+    <title>Extensions for Deferred Implementation</title>
+    <para>
+      
+    </para>
+  </section>
+  <section>
+    <title>Community Feedback on the Proposal</title>
+    <para>
+      
+    </para>
+  </section>
+  <section>
+    <title>Database Library Application Programming Interface (API)</title>
+    <para>
+      
+    </para>
+  </section>
+ 
+ </article>
