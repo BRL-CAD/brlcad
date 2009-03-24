@@ -434,6 +434,114 @@
 	  </tbody>
 	</tgroup>
       </table>
+      <para>
+	????Need a description that says that an object can now have (1) EITHER an attribute OR a 
+	body, (2) BOTH an attribute and a body, or (3) NEITHER an attribute nor a body.
+      </para>
+      <para>
+	The routines db_get_external() and db_put_external() are used to move objects in external 
+	format between memory and the database disk file. The routines db_wrap_external() and 
+	db_unwrap_external() are used to wrap and unwrap the (??? Object_Body or Object_Interior ???) 
+	(already in external form) in a standardized database object's wrapper.
+      </para>
+    </section>
+
+    <section>
+      <title>Flags</title>
+      <para>
+	The Flags element consists of three 8-bit fields: HFlags, AFlags, and BFlags. The HFlags 
+	field is 1 byte containing flag bits that pertain to the noncompressible basic header and 
+	the database object as a whole. The AFlags and BFlags fields are each single bytes containing 
+	flag bits that pertain to the (potentially compressed) attributes and body, respectively, in 
+	the object interior.
+      </para>
+      <table frame='all'>
+	<title>BRL-CAD Flags Structure</title>
+	<tgroup cols='26' align='center'>
+	  <colspec colname='h1'/>
+	  <colspec colname='h2'/>
+	  <colspec colname='h3'/>
+	  <colspec colname='h4'/>
+	  <colspec colname='h5'/>
+	  <colspec colname='h6'/>
+	  <colspec colname='h7'/>
+	  <colspec colname='h8'/>
+	  <colspec colname='s1'/>
+	  <colspec colname='a1'/>
+	  <colspec colname='a2'/>
+	  <colspec colname='a3'/>
+	  <colspec colname='a4'/>
+	  <colspec colname='a5'/>
+	  <colspec colname='a6'/>
+	  <colspec colname='a7'/>
+	  <colspec colname='a8'/>
+	  <colspec colname='s2'/>
+	  <colspec colname='b1'/>
+	  <colspec colname='b2'/>
+	  <colspec colname='b3'/>
+	  <colspec colname='b4'/>
+	  <colspec colname='b5'/>
+	  <colspec colname='b6'/>
+	  <colspec colname='b7'/>
+	  <colspec colname='b8'/>
+	  <thead>
+	    <row>
+	      <entry namest='h1' nameend='h8' align='center'>HFlags</entry>
+	      <entry></entry>
+	      <entry namest='a1' nameend='a8' align='center'>AFlags</entry>
+	      <entry></entry>
+	      <entry namest='b1' nameend='b8' align='center'>BFlags</entry>
+	    </row>
+	  </thead>
+	  <tbody>
+	    <row>
+	      <entry>7</entry>
+	      <entry>6</entry>
+	      <entry>5</entry>
+	      <entry>4</entry>
+	      <entry>3</entry>
+	      <entry>2</entry>
+	      <entry>1</entry>
+	      <entry>0</entry>
+	      <entry morerows='1'> </entry>
+	      <entry>7</entry>
+	      <entry>6</entry>
+	      <entry>5</entry>
+	      <entry>4</entry>
+	      <entry>3</entry>
+	      <entry>2</entry>
+	      <entry>1</entry>
+	      <entry>0</entry>
+	      <entry morerows='1'> </entry>
+	      <entry>7</entry>
+	      <entry>6</entry>
+	      <entry>5</entry>
+	      <entry>4</entry>
+	      <entry>3</entry>
+	      <entry>2</entry>
+	      <entry>1</entry>
+	      <entry>0</entry>
+	    </row>
+	    <row>
+	      <entry namest='h1' nameend='h2'>Wid</entry>
+	      <entry>N</entry>
+	      <entry namest='h4' nameend='h5'>Wid</entry>
+	      <entry>r</entry>
+	      <entry namest='h7' nameend='h8'>DLI</entry>
+	      <entry namest='a1' nameend='a2'>Wid</entry>
+	      <entry>P</entry>
+	      <entry>r</entry>
+	      <entry>r</entry>
+	      <entry namest='a6' nameend='a8'>ZZZ</entry>
+	      <entry namest='b1' nameend='b2'>Wid</entry>
+	      <entry>P</entry>
+	      <entry>r</entry>
+	      <entry>r</entry>
+	      <entry namest='b6' nameend='b8'>ZZZ</entry>
+	    </row>
+	  </tbody>
+	</tgroup>
+      </table>
     </section>
 
   </section>
