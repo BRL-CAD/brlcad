@@ -64,6 +64,13 @@ target_link_libraries(g4-g5
     BrlcadCore
 )
 
+add_executable(g5-g4
+    g5-g4.c
+)
+target_link_libraries(g5-g4
+    BrlcadCore
+)
+
 add_executable(g-acad
     g-acad.c
 )
