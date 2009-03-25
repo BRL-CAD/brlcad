@@ -555,7 +555,7 @@
 	</para>
 	
 	<table frame='all'>
-	  <title>Wid Flag Structure</title>
+	  <title>Wid Flag Definitions</title>
 	  <tgroup cols='2' align='center'>
 	    <thead>
 	      <row>
@@ -720,7 +720,7 @@
 	  The 3-bit ``ZZZ'' flag indicates the compression, if any, of the object Attributes (or Body):
 	</para>
 	<table frame='all'>
-	  <title>ZZZ Flag Structure</title>
+	  <title>ZZZ Flag Definitions</title>
 	  <tgroup cols='2' align='center'>
 	    <thead>
 	      <row>
@@ -1197,39 +1197,234 @@
 	  although such use is discouraged.
 	</para>
       </section>
+
       <section>
-	<title></title>
+	<title>Bulk Binary Objects (Major_Types 8-31)</title>
 	<para>
+	  This class of objects contains various "bulk" binary data that might otherwise have 
+	  been placed in auxiliary files.
 	</para>
-      </section>
-      <section>
-	<title></title>
 	<para>
+	  MGED and standalone commands must be built to store/extract these opaque?? binary 
+	  objects between a ".g" file and stdin/stdout/auxiliary files. A user might want to use 
+	  those same MGED commands to store/extract the binary object body of any object for external 
+	  processing. An easy example to imagine is the importing and exporting of texture maps for 
+	  external processing, but the same commands could be used for importing and exporting 
+	  solid parameters in their external binary form.
 	</para>
-      </section>
-      <section>
-	<title></title>
 	<para>
+	  These objects may be referenced in combination nodes, for organizational purposes, but 
+	  they cannot be drawn in MGED or raytraced, and doing so would result in a warning message 
+	  being printed by the tree walker as that arc is traversed. This class may be used by all 
+	  applications and layers.
 	</para>
-      </section>
-      <section>
-	<title></title>
 	<para>
+	  The data's purpose may be placed in the "purpose=" attribute. (????????Need a 
+	  table/registry of presently known values for this attribute.)
 	</para>
-      </section>
-      <section>
-	<title></title>
 	<para>
+	  Routines that retrieve bulk binary objects should check the minor type and the 
+	  "purpose=" attribute and send a warning message in the event of a mismatch, but 
+	  best-effort processing of the object should continue. This will permit some degree 
+	  of error checking, which should benefit novice users without standing in the way of 
+	  "creatively" reusing one set of data, (e.g., using one array of values as both a height 
+	  field and a bwtexture). This allows common data perversion practices, such as interpreting 
+	  an array of floats as an array of bytes, to continue.
 	</para>
-      </section>
-      <section>
-	<title></title>
 	<para>
+	  Each application will need to have its own syntax for the user to specify whether the data 
+	  source is an outboard file or a raw-binary object. For example, the current RT sh_texture 
+	  module uses the keyword file="name" to indicate an outboard file; that might be supplemented 
+	  with an additional obj="name" possibility for retrieving from an inboard raw-binary object.
 	</para>
+
+	<section>
+	  <title>Major_Type = 8: Experimental Binary Objects</title>
+	  <para>
+	    This class of objects contains bulk binary data and is intended for experimental 
+	    use by applications developers. Each time a database containing objects of this type 
+	    is opened, BRL-CAD will issue a user-visible warning. Production software and databases 
+	    should not use these objects. Developers should obtain registered 16-bit object types 
+	    from the website in order to avoid collisions with other applications.
+	  </para>
+	</section>
+	<section>
+	  <title>Major_Type = 9: Uniform Array Binary Objects</title>
+	  <para>
+	    This class of objects contain various "bulk" binary data that might otherwise have 
+	    been placed in an auxiliary file.
+	  </para>
+	  <para>
+	    Point of Discussion?????Has ramifications... we have to implement type advising, so 
+	    that applications that use these data can compare the type provided in the minor 
+	    type code with the type that they're expecting and advise the user (with a warning 
+	    message) that there is a potential type mismatch.
+	  </para>
+	  <table frame='all'>
+	    <title>Uniform Array Binary Objects Minor_Type Structure</title>
+	    <tgroup cols='8' align='center'>
+	      <colspec colname='h1'/>
+	      <colspec colname='h2'/>
+	      <colspec colname='h3'/>
+	      <colspec colname='h4'/>
+	      <colspec colname='h5'/>
+	      <colspec colname='h6'/>
+	      <colspec colname='h7'/>
+	      <colspec colname='h8'/>
+	      <thead>
+		<row>
+		  <entry namest='h1' nameend='h8' align='center'>Minor_Type</entry>
+		</row>
+	      </thead>
+	      <tbody>
+		<row>
+		  <entry>7</entry>
+		  <entry>6</entry>
+		  <entry>5</entry>
+		  <entry>4</entry>
+		  <entry>3</entry>
+		  <entry>2</entry>
+		  <entry>1</entry>
+		  <entry>0</entry>
+		</row>
+		<row>
+		  <entry>r</entry>
+		  <entry>r</entry>
+		  <entry namest='h3' nameend='h4'>Wid</entry>
+		  <entry>S</entry>
+		  <entry namest='h6' nameend='h8'>Atom</entry>
+		</row>
+	      </tbody>
+	    </tgroup>
+	  </table>
+	  <para>
+	    The 3-bit ``Atom'' flag indicates the fundamental data type of the atomic elements 
+	    in the array according to the following scheme:
+	  </para>
+	  <table frame='all'>
+	    <title>Atom Flag Definitions</title>
+	    <tgroup cols='2' align='center'>
+	      <thead>
+		<row>
+		  <entry>Atom Bits</entry>
+		  <entry>Data Type</entry>
+		</row>
+	      </thead>
+	      <tbody>
+		<row>
+		  <entry>000</entry>
+		  <entry>Reserved for sanity check</entry>
+		</row>
+		<row>
+		  <entry>001</entry>
+		  <entry>Reserved</entry>
+		</row>
+		<row>
+		  <entry>010</entry>
+		  <entry>float (IEEE, network order)</entry>
+		</row>
+		<row>
+		  <entry>011</entry>
+		  <entry>double (IEEE, network order)</entry>
+		</row>
+		<row>
+		  <entry>100</entry>
+		  <entry>8-bit int</entry>
+		</row>
+		<row>
+		  <entry>101</entry>
+		  <entry>16-bit int</entry>
+		</row>
+		<row>
+		  <entry>110</entry>
+		  <entry>32-bit int</entry>
+		</row>
+		<row>
+		  <entry>111</entry>
+		  <entry>64-bit int</entry>
+		</row>
+	      </tbody>
+	    </tgroup>
+	  </table>
+	  <para>
+	    The ``S'' bit indicates whether an integer type is signed (1) or unsigned (0). 
+	    Floats and doubles (i.e., atomic types with the highest atom bit equal to 0) are 
+	    explicitly signed, so they will have the ``S'' bit equal to 1. (The bit patterns 
+	    corresponding to unsigned floats and doubles are reserved for possible other use.)
+	  </para>
+	  <para>
+	    The 2-bit ``Wid'' flag specifies the length (in atomic elements) of the array elements: 
+	  </para>
+	  <table frame='all'>
+	    <title>Wid Flag Definitions</title>
+	    <tgroup cols='2' align='center'>
+	      <thead>
+		<row>
+		  <entry>Wid Bits</entry>
+		  <entry>Atoms per Array Element</entry>
+		</row>
+	      </thead>
+	      <tbody>
+		<row>
+		  <entry>00</entry>
+		  <entry>1</entry>
+		</row>
+		<row>
+		  <entry>01</entry>
+		  <entry>2</entry>
+		</row>
+		<row>
+		  <entry>10</entry>
+		  <entry>3</entry>
+		</row>
+		<row>
+		  <entry>11</entry>
+		  <entry>4</entry>
+		</row>
+	      </tbody>
+	    </tgroup>
+	  </table>
+	  <para>
+	    The remaining Minor_Type bits ``r'' are reserved for the design committee to use for
+	    other purposes, possibly including extensions of the ``Atom'' and/or ``Wid'' flags.
+	  </para>
+	  <para>
+	    As examples, data in PIX(5) format, which might be used for a texture map, would 
+	    have Minor_Type ``0010 0100'', indicating a triple of unsigned char, and CMYK data 
+	    might be stored with Minor_Type ``0011 1011'', indicating a quadruple of doubles.
+	  </para>
+	  <para>
+	    The data's purpose (e.g., height field, texture, bump, displacement, etc.) may be 
+	    placed in the "purpose=" attribute. ?????Point of Discussion???(Need a table/registry 
+	    of presently known values for this attribute.)
+	  </para>
+	</section>
+	<section>
+	  <title>Major_Type = 10: MIME-Typed Binary Objects</title>
+	  <para>
+	    This class of objects contains data, the format of which is specified in the 
+	    attribute "mime_type". The Minor_Type of these objects should always be zero.
+	  </para>
+	</section>
+	<section>
+	  <title>Major_Type = 16-31: Registered-Type Binary Objects</title>
+	  <para>
+	    This class of objects contains application-specific bulk binary data and is intended 
+	    for use in production software and databases. Developers can obtain registered 16-bit 
+	    object types from the website to identify these objects. The data's purpose, (e.g. height 
+	    field, texture, bump, displacement, etc.) may be placed in the "purpose=" attribute. 
+	    (Need a table/registry of presently known values for this attribute).
+	  </para>
+	</section>
       </section>
+      
       <section>
-	<title></title>
+	<title>Major_Type = 255: Database Layer Internal Objects</title>
 	<para>
+	  A Minor_Type of 1 indicates that this is a contiguous block of free storage.
+	</para>
+	<para>
+	  A Minor_Type of 2 indicates that this is a database header.
 	</para>
       </section>
 
