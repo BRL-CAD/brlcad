@@ -1118,17 +1118,84 @@
 	      <entry>41</entry>
 	      <entry>Collection of points (PNTS)</entry>
 	    </row>
-
 	  </tbody>
 	</tgroup>
       </table>
+      <para>
+	The details of these Minor_Types are provided in Section IV.
+      </para>
       </section>
 
       <section>
-	<title></title>
+	<title>Major_Type = 3: Attribute-Only Objects</title>
 	<para>
+	  This type of object stores only attributes in the object interior section; it has no 
+	  object body elements.
 	</para>
-
+	<para>
+	  For example, if several objects need to have the same shader parameters, it would be 
+	  possible to create one attribute-only object to hold these common attributes and serve as a 
+	  simple form of "macro". Objects that needed to share these attributes could all reference the 
+	  same attribute object. If the attribute object is altered, then all of the objects that 
+	  reference it would be updated together. Without this capability, the user would have to 
+	  update each element individually to alter the attributes.
+	</para>
+	<para>
+	  Conventions will have to be established regarding which attributes of an attribute-only 
+	  object will be used when a macro reference is performed. For example, rt shaders will 
+	  only be interested in the value of the "oshader=" attribute, while librt's tree-walker 
+	  might also be interested in the "rgb=", "giftmater=", "nsn=", "material=", and "los=" 
+	  attributes (assuming that a convention was developed so that a combination could 
+	  macro-reference an attribute-only object too).
+	</para>
+	<para>
+	  An attribute-only object may not have an object body; thus, flag bit B must always be 
+	  zero for this type of object.
+	</para>
+	<para>
+	  As used by the rt family of applications codes, these attribute-only objects will 
+	  contain "macros" for shaders. The shader name and its parameters shall be encoded as a 
+	  single ASCII string, which is the value of the "oshader=" attribute. An rt shader named 
+	  "macro" (or equivalent) would take a single parameter "obj=", which would specify the 
+	  name of the attribute-only object in the database from which the actual shader and 
+	  shader parameter information would be extracted.
+	</para>
+	<para>
+	  There will be one attribute-only object with a reserved object name of "_GLOBAL" that 
+	  will be used to contain various kinds of states that are global to the entire ".g" database 
+	  and that had previously been found in the database header itself. There will be the 
+	  following BRL-CAD-specific attributes whose meaning is predefined for the _GLOBAL object:
+	  <itemizedlist>
+	    <listitem>
+	      <para>
+		title = The database "title" string previously found in the database header.
+	      </para>
+	    </listitem>
+	    <listitem>
+	      <para>
+		units = The most recent editing units, specified as an ASCII string with a 
+		floating point conversion factor. For example, the conversion factor for inches 
+		to millimeters would be 25.4.
+	      </para>
+	    </listitem>
+	    <listitem>
+	      <para>
+		regionid_colortable = A string that contains a collection of all the information 
+		previously found in "struct material_rec ID_MATERIAL" records. Exact encoding yet
+		to be determined; it's a collection of integer 5-tuples of the form: 
+		{low, high, r, g, b}.
+	      </para>
+	    </listitem>
+	  </itemizedlist>
+	</para>
+	<para>
+	  In addition, the "comment=" attribute of the "_GLOBAL" object may be used to store 
+	  human-readable remarks about the database that are not more properly associated with a 
+	  specific database item. These might include remarks about data sources, model evolution, 
+	  security classification, and release restrictions. In the absense of some outboard 
+	  revision-control system, this might also be a place to record modification history, 
+	  although such use is discouraged.
+	</para>
       </section>
       <section>
 	<title></title>
