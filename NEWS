@@ -14,6 +14,7 @@ changes made.  See document footer for additional details.
 --- 2009-04-XX  Release 7.14.6                                     ---
 ----------------------------------------------------------------------
 
+* BLT is no longer an archer/bwish external dependency - Bob Parker
 * restored mged 'inside' command on edit state objects - Bob Parker
 * adjust brlman script to use system man command - Cliff Yapp
 * fixed small memory leak in gqa - Bob Parker
