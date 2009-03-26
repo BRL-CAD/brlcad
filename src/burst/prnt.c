@@ -40,13 +40,15 @@
 
 #include "./Sc.h"
 #include "./ascii.h"
-#include "./vecmath.h"
 #include "./extern.h"
 
 
 #define MAX_COLS	128
 
 #define PHANTOM_ARMOR	111
+
+#define FABS(a)		((a) > 0 ? (a) : -(a))
+#define AproxEq(a,b,e)	(FABS((a)-(b)) < (e))
 
 static fastf_t getNormThickness();
 
@@ -88,8 +90,8 @@ f_Nerror(ap)
 {
     brst_log("Couldn't compute thickness or exit point %s.\n",
 	     "along normal direction");
-    V_Print("\tpnt", ap->a_ray.r_pt, brst_log);
-    V_Print("\tdir", ap->a_ray.r_dir, brst_log);
+    brst_log("\tpnt\t<%12.6f,%12.6f,%12.6f>\n", ap->a_ray.r_pt, brst_log);
+    brst_log("\tdir\t<%12.6f,%12.6f,%12.6f>\n", ap->a_ray.r_dir, brst_log);
     ap->a_rbeam = 0.0;
     return	0;
 }
@@ -267,9 +269,9 @@ prntBurstHdr(bpt, shotdir)
     fastf_t vec[3];
     /* Transform burst point (model coordinate system) into the shotline
        coordinate system. */
-    vec[Y] = Dot(gridhor, bpt);	/* Y' */
-    vec[Z] = Dot(gridver, bpt);	/* Z' */
-    vec[X] = -Dot(shotdir, bpt);	/* X' - shotdir is reverse of X' */
+    vec[Y] = VDOT(gridhor, bpt);	/* Y' */
+    vec[Z] = VDOT(gridver, bpt);	/* Z' */
+    vec[X] = -VDOT(shotdir, bpt);	/* X' - shotdir is reverse of X' */
 
     if (	outfile[0] != NUL
 		&&	fprintf(outfp,
@@ -381,10 +383,10 @@ prntSeg(ap, cpp, space, entrynorm, exitnorm, burstflag)
     fastf_t sinfbangle;	/* sine of fall back angle */
 
     /* This *should* give negative of desired result. */
-    icosobliquity = Dot(ap->a_ray.r_dir, entrynorm);
+    icosobliquity = VDOT(ap->a_ray.r_dir, entrynorm);
     icosobliquity = -icosobliquity;
 
-    ocosobliquity = Dot(ap->a_ray.r_dir, exitnorm);
+    ocosobliquity = VDOT(ap->a_ray.r_dir, exitnorm);
 
     if (NEAR_ZERO(exitnorm[Y], VDIVIDE_TOL) && NEAR_ZERO(exitnorm[X], VDIVIDE_TOL))
 	rotangle = 0.0;
@@ -397,7 +399,7 @@ prntSeg(ap, cpp, space, entrynorm, exitnorm, burstflag)
     }
     /* Compute sine of fallback angle.  NB: the Air Force measures the
        fallback angle from the horizontal (X-Y) plane. */
-    sinfbangle = Dot(exitnorm, zaxis);
+    sinfbangle = VDOT(exitnorm, zaxis);
 
     los = (cpp->pt_outhit->hit_dist-cpp->pt_inhit->hit_dist)*unitconv;
 #ifdef VDEBUG
@@ -492,13 +494,13 @@ prntRayHeader(raydir, shotdir, rayno)
     fastf_t sinelev; /* sine of ray elevation */
     if (outfile[0] == NUL)
 	return;
-    cosxr = -Dot(shotdir, raydir); /* shotdir is reverse of X' */
-    cosyr = Dot(gridhor, raydir);
+    cosxr = -VDOT(shotdir, raydir); /* shotdir is reverse of X' */
+    cosyr = VDOT(gridhor, raydir);
     if (NEAR_ZERO(cosyr, VDIVIDE_TOL) && NEAR_ZERO(cosxr, VDIVIDE_TOL))
 	azim = 0.0;
     else
 	azim = atan2(cosyr, cosxr);
-    sinelev = Dot(gridver, raydir);
+    sinelev = VDOT(gridver, raydir);
     if (	fprintf(outfp,
 			"%c %8.3f %8.3f %6u\n",
 			PB_RAY_HEADER,
@@ -559,7 +561,7 @@ prntRegionHdr(ap, pt_headp, pp, entrynorm, exitnorm)
 
 
     /* calculate cosine of obliquity angle */
-    cosobliquity = Dot(ap->a_ray.r_dir, entrynorm);
+    cosobliquity = VDOT(ap->a_ray.r_dir, entrynorm);
     cosobliquity = -cosobliquity;
 #if DEBUG
     if (cosobliquity - COS_TOL > 1.0)
@@ -654,8 +656,8 @@ getNormThickness(ap, pp, cosobliquity, normvec)
 	a_thick.a_level++;
 	a_thick.a_user = regp->reg_regionid;
 	a_thick.a_purpose = "normal thickness";
-	CopyVec(a_thick.a_ray.r_pt, ihitp->hit_point);
-	Scale2Vec(normvec, -1.0, a_thick.a_ray.r_dir);
+	VMOVE(a_thick.a_ray.r_pt, ihitp->hit_point);
+	VSCALE( a_thick.a_ray.r_dir,normvec, -1.0);
 	if (rt_shootray(&a_thick) == -1 && fatalerror)
 	{
 	    /* Fatal error in application routine. */

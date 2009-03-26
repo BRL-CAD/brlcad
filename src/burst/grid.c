@@ -37,12 +37,19 @@
 #include "fb.h"
 #include "plot3.h"
 
-#include "./vecmath.h"
 #include "./ascii.h"
 #include "./extern.h"
 
 #define DEBUG_GRID	0
 #define DEBUG_SHOT	1
+#ifndef	EPSILON
+#define EPSILON		0.000001
+#endif
+#define FABS(a)		((a) > 0 ? (a) : -(a))
+#define AproxEq(a,b,e)	(FABS((a)-(b)) < (e))
+#define AproxEqVec(A,B,e) ( AproxEq((A)[X], (B)[X], (e)) && \
+			    AproxEq((A)[Y], (B)[Y], (e)) &&	\
+			    AproxEq((A)[Z], (B)[Z], (e)) )
 
 /* local communication with multitasking process */
 static int currshot;	/* current shot index */
@@ -152,7 +159,7 @@ doBursts()
 {
     boolean			status = 1;
     noverlaps = 0;
-    CopyVec(ag.a_ray.r_dir, viewdir); /* XXX -- could be done up in
+    VMOVE(ag.a_ray.r_dir, viewdir); /* XXX -- could be done up in
 					 gridModel() */
     for (; ! userinterrupt; view_pix(&ag))
     {
@@ -594,7 +601,7 @@ f_ShotHit(ap, pt_headp, segp)
 		if (bp == PT_NULL && bdist > 0.0)
 		{
 		    bp = pp;	/* register exterior burst */
-		    CopyVec(burstnorm, exitnorm);
+		    VMOVE(burstnorm, exitnorm);
 		}
 
 		/* If there is a void, output 01 air as space. */
@@ -610,7 +617,7 @@ f_ShotHit(ap, pt_headp, segp)
 		    {
 			/* Bursting on armor/void (ouchh). */
 			bp = pp;
-			CopyVec(burstnorm, exitnorm);
+			VMOVE(burstnorm, exitnorm);
 		    }
 		    prntSeg(ap, pp, OUTSIDE_AIR,
 			    entrynorm, exitnorm, pp == bp);
@@ -632,7 +639,7 @@ f_ShotHit(ap, pt_headp, segp)
 			    )
 			{
 			    bp = pp; /* register interior burst */
-			    CopyVec(burstnorm, exitnorm);
+			    VMOVE(burstnorm, exitnorm);
 			}
 			prntSeg(ap, pp, nregp->reg_aircode,
 				entrynorm, exitnorm, pp == bp);
@@ -750,7 +757,7 @@ f_ShotHit(ap, pt_headp, segp)
 		       ap->a_ray.r_dir);
 	    }
 	    else	  /* Interior burst point: no fuzing offset. */
-		CopyVec(burstpt, bp->pt_outhit->hit_point);
+		VMOVE(burstpt, bp->pt_outhit->hit_point);
 
 	/* Only generate burst rays if nspallrays is greater then
 	   zero. */
@@ -797,8 +804,8 @@ chkEntryNorm(pp, rayp, normvec, purpose)
     boolean ret = 1;
     totalct++;
     /* Dot product of ray direction with normal *should* be negative. */
-    f = Dot(rayp->r_dir, normvec);
-    if (NearZero(f))
+    f = VDOT(rayp->r_dir, normvec);
+    if (NEAR_ZERO(f, EPSILON))
     {
 #ifdef DEBUG
 	brst_log("chkEntryNorm: near 90 degree obliquity.\n");
@@ -828,7 +835,7 @@ chkEntryNorm(pp, rayp, normvec, purpose)
 		 pp->pt_inhit->hit_point[Z]);
 	brst_log("\t%d of %d normals flipped.\n", flipct, totalct);
 #endif
-	ScaleVec(normvec, -1.0);
+	VSCALE(normvec, normvec, -1.0);
 	ret = 0;
     }
     return ret;
@@ -848,8 +855,8 @@ chkExitNorm(pp, rayp, normvec, purpose)
     boolean ret = 1;
     totalct++;
     /* Dot product of ray direction with normal *should* be positive. */
-    f = Dot(rayp->r_dir, normvec);
-    if (NearZero(f))
+    f = VDOT(rayp->r_dir, normvec);
+    if (NEAR_ZERO(f, EPSILON))
     {
 #ifdef DEBUG
 	brst_log("chkExitNorm: near 90 degree obliquity.\n");
@@ -879,7 +886,7 @@ chkExitNorm(pp, rayp, normvec, purpose)
 		 pp->pt_outhit->hit_point[Z]);
 	brst_log("\t%d of %d normals flipped.\n", flipct, totalct);
 #endif
-	ScaleVec(normvec, -1.0);
+	VSCALE(normvec, normvec, -1.0);
 	ret = 0;
     }
     return ret;
@@ -1001,14 +1008,14 @@ getRayOrigin(ap)
 	    }
 	}
 	else	/* Single shot specified. */
-	    CopyVec(vec, fire);
+	    VMOVE(vec, fire);
 	if (TSTBIT(firemode, FM_3DIM))
 	{
 	    fastf_t	hitpoint[3];
 	    /* Project 3-d hit-point back into grid space. */
-	    CopyVec(hitpoint, vec);
-	    vec[X] = Dot(gridhor, hitpoint);
-	    vec[Y] = Dot(gridver, hitpoint);
+	    VMOVE(hitpoint, vec);
+	    vec[X] = VDOT(gridhor, hitpoint);
+	    vec[Y] = VDOT(gridver, hitpoint);
 	}
 	ap->a_x = vec[X] / cellsz;
 	ap->a_y = vec[Y] / cellsz;
@@ -1043,10 +1050,10 @@ getRayOrigin(ap)
     }
     /* Compute cell horizontal and vertical	vectors relative to
        grid origin. */
-    Scale2Vec(gridhor, scalecx, gridxinc);
-    Scale2Vec(gridver, scalecy, gridyinc);
-    Add2Vec(gridsoff, gridyinc, ap->a_ray.r_pt);
-    AddVec(ap->a_ray.r_pt, gridxinc);
+    VSCALE(gridxinc, gridhor, scalecx);
+    VSCALE(gridyinc, gridver, scalecy);
+    VADD2( ap->a_ray.r_pt,gridsoff, gridyinc);
+    VADD2(ap->a_ray.r_pt, ap->a_ray.r_pt, gridxinc);
     return	1;
 }
 
@@ -1108,9 +1115,9 @@ gridInit()
 	brst_log("gridInit: canting warhead\n");
 #endif
 	cantwarhead = 1;
-	Scale2Vec(gridhor,  negsinyaw, xdeltavec);
-	Scale2Vec(gridver,  sinpitch,  ydeltavec);
-	Add2Vec(xdeltavec, ydeltavec, cantdelta);
+	VSCALE(xdeltavec, gridhor, negsinyaw);
+	VSCALE(ydeltavec, gridver, sinpitch);
+	VADD2( cantdelta,xdeltavec, ydeltavec);
     }
 
     /* unit vector from origin of model toward eye */
@@ -1133,18 +1140,18 @@ gridInit()
 	if (groundburst)
 	{
 	    /* extend grid to include ground platform */
-	    modelmax[X] = Max(rtip->mdl_max[X], grndfr);
-	    modelmin[X] = Min(rtip->mdl_min[X], -grndbk);
-	    modelmax[Y] = Max(rtip->mdl_max[Y], grndlf);
-	    modelmin[Y] = Min(rtip->mdl_min[Y], -grndrt);
+	    modelmax[X] = FMAX(rtip->mdl_max[X], grndfr);
+	    modelmin[X] = FMIN(rtip->mdl_min[X], -grndbk);
+	    modelmax[Y] = FMAX(rtip->mdl_max[Y], grndlf);
+	    modelmin[Y] = FMIN(rtip->mdl_min[Y], -grndrt);
 	    modelmax[Z] = rtip->mdl_max[Z];
-	    modelmin[Z] = Min(rtip->mdl_min[Z], -grndht);
+	    modelmin[Z] = FMIN(rtip->mdl_min[Z], -grndht);
 	}
 	else
 	{
 	    /* size grid by model RPP */
-	    CopyVec(modelmin, rtip->mdl_min);
-	    CopyVec(modelmax, rtip->mdl_max);
+	    VMOVE(modelmin, rtip->mdl_min);
+	    VMOVE(modelmax, rtip->mdl_max);
 	}
 	/* Calculate extent of grid. */
 	gridrt = max(	gridhor[X] * modelmax[X],
@@ -1265,13 +1272,13 @@ gridInit()
     /* determine largest grid dimension for frame buffer display */
     gridwidth  = gridxfin - gridxorg + 1;
     gridheight = gridyfin - gridyorg + 1;
-    gridsz = Max(gridwidth, gridheight);
+    gridsz = FMAX(gridwidth, gridheight);
 
     /* vector to grid origin from model origin */
-    Scale2Vec(viewdir, standoff, gridsoff);
+    VSCALE(gridsoff, viewdir, standoff);
 
     /* direction of grid rays */
-    ScaleVec(viewdir, -1.0);
+    VSCALE(viewdir, viewdir, -1.0);
 
     prntTimer("grid");
     notify(NULL, NOTIFY_DELETE);
@@ -1364,7 +1371,7 @@ gridShot()
 	    break;
 	currshot++;
 	prntFiringCoords(a.a_uvec);
-	CopyVec(a.a_ray.r_dir, viewdir);
+	VMOVE(a.a_ray.r_dir, viewdir);
 	a.a_level = 0;	 /* initialize recursion level */
 	plotGrid(a.a_ray.r_pt);
 	if (rt_shootray(&a) == -1 && fatalerror)
@@ -1403,7 +1410,7 @@ lgtModel(ap, pp, hitp, rayp, surfnorm)
     fastf_t surfnorm[3];
 {
     Colors  *colorp;
-    fastf_t intensity = -Dot(viewdir, surfnorm);
+    fastf_t intensity = -VDOT(viewdir, surfnorm);
     if (intensity < 0.0)
 	intensity = -intensity;
 
@@ -1420,7 +1427,7 @@ lgtModel(ap, pp, hitp, rayp, surfnorm)
 	ap->a_color[RED] =
 	    ap->a_color[GRN] =
 	    ap->a_color[BLU] = 1.0;
-    ScaleVec(ap->a_color, intensity);
+    VSCALE(ap->a_color, ap->a_color, intensity);
     ap->a_cumlen = hitp->hit_dist;
 }
 
@@ -1434,7 +1441,7 @@ static fastf_t
 max(a, b)
     fastf_t	a, b;
 {
-    return	Max(a, b);
+    return	FMAX(a, b);
 }
 
 /*
@@ -1447,7 +1454,7 @@ static fastf_t
 min(a, b)
     fastf_t	a, b;
 {
-    return	Min(a, b);
+    return	FMIN(a, b);
 }
 
 /*
@@ -1612,7 +1619,7 @@ spallInit()
 	fastf_t	sinphi = sin(phi);
 	fastf_t	gammaval, gammainc, gammalast;
 	int m;
-	sinphi = Abs(sinphi);
+	sinphi = FABS(sinphi);
 	m = (TWO_PI * sinphi)/delta + 1;
 	gammainc = TWO_PI / m;
 	gammalast = TWO_PI-gammainc+EPSILON;
@@ -1658,8 +1665,8 @@ burstPoint(ap, normal, bpt)
        axis. */
     if (cantwarhead)
     {
-	AddVec(a_burst.a_ray.r_dir, cantdelta);
-	V_Length(a_burst.a_ray.r_dir, 1.0);
+	VADD2(a_burst.a_ray.r_dir, a_burst.a_ray.r_dir, cantdelta);
+	VUNITIZE(a_burst.a_ray.r_dir)
     }
     /* If a deflected cone is specified (the default) the spall cone
        axis is half way between the main penetrator axis and exit
@@ -1667,10 +1674,10 @@ burstPoint(ap, normal, bpt)
     */
     if (deflectcone)
     {
-	AddVec(a_burst.a_ray.r_dir, normal);
-	V_Length(a_burst.a_ray.r_dir, 1.0);
+	VADD2(a_burst.a_ray.r_dir, a_burst.a_ray.r_dir, normal);
+	VUNITIZE(a_burst.a_ray.r_dir)
     }
-    CopyVec(a_burst.a_ray.r_pt, bpt);
+    VMOVE(a_burst.a_ray.r_pt, bpt);
 
     comphi = 0.0; /* Initialize global for concurrent access. */
 
@@ -1702,7 +1709,7 @@ burstRay()
 	if (done)
 	    break;
 	sinphi = sin(phi);
-	sinphi = Abs(sinphi);
+	sinphi = FABS(sinphi);
 	m = (TWO_PI * sinphi)/delta + 1;
 	gammainc = TWO_PI / m;
 	gammalast = TWO_PI - gammainc + EPSILON;
@@ -1763,18 +1770,18 @@ spallVec(dvec, s_rdir, phi, gammaval)
 		||	AproxEqVec(dvec, negzaxis, VEC_TOL)
 	)
     {
-	CopyVec(evec, xaxis);
+	VMOVE(evec, xaxis);
     }
     else
     {
-	CrossProd(dvec, zaxis, evec);
+	VCROSS(evec, dvec, zaxis);
     }
-    CrossProd(evec, dvec, fvec);
-    Scale2Vec(dvec, cosphi, cosdphi);
+    VCROSS(fvec, evec, dvec);
+    VSCALE(cosdphi,dvec, cosphi);
     ssgaphi = singamma * sinphi;
     csgaphi = cosgamma * sinphi;
     VJOIN2(s_rdir, cosdphi, ssgaphi, evec, csgaphi, fvec);
-    V_Length(s_rdir, 1.0); /* unitize */
+    VUNITIZE(s_rdir);
     return;
 }
 

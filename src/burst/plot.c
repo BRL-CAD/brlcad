@@ -34,7 +34,6 @@
 #include "raytrace.h"
 #include "plot3.h"
 
-#include "./vecmath.h"
 #include "./burst.h"
 #include "./extern.h"
 

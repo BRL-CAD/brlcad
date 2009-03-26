@@ -33,8 +33,7 @@ noinst_HEADERS = \
 	Hm.h \
 	Mm.h \
 	Sc.h \
-	trie.h \
-	vecmath.h
+	trie.h
 
 EXTRA_DIST = burst.format
 
