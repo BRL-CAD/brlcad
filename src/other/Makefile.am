@@ -85,16 +85,6 @@ else !BUILD_TKIMG
 TKIMGDIR=
 endif
 
-if BUILD_BLT
-if WITH_X11
-BLTDIR=blt
-else !WITH_X11
-BLTDIR=
-endif
-else !BUILD_BLT
-BLTDIR=
-endif
-
 if BUILD_OPENNURBS
 OPENNURBSDIR=openNURBS
 else !BUILD_OPENNURBS
@@ -150,7 +140,6 @@ SUBDIRS = \
 	${JOVEDIR} \
 	${TKHTML3DIR} \
 	${TKIMGDIR} \
-	${BLTDIR} \
 	${OPENNURBSDIR} \
 	${TNTDIR} \
 	awf
@@ -167,7 +156,6 @@ EXTRA_DIST = \
 DIST_SUBDIRS = \
 	URToolkit \
 	awf \
-	blt \
 	incrTcl \
 	iwidgets \
 	jove \
