@@ -391,32 +391,19 @@
 	    -text $text
     } {}
 
-    set hbc [$itk_component($name1\L) cget -background]
-
     itk_component add $name1\F {
 	::frame $parent.$name2\F \
 	    -relief sunken \
-	    -bd 2
+	    -bd 0
     } {}
 
-    set listHeight [expr [llength $listOfChoices] * 19]
     itk_component add $name1\CB {
-	::iwidgets::combobox $itk_component($name1\F).$name2\CB \
-	    -editable false \
+	::ttk::combobox $itk_component($name1\F).$name2\CB \
+	    -state readonly \
 	    -textvariable $var \
-	    -listheight $listHeight \
-	    -background $::ArcherCore::SystemWindow \
-	    -textbackground $::ArcherCore::SystemWindow \
-	    -relief flat
+	    -values $listOfChoices
     } {}
-    $itk_component($name1\CB) component entry configure \
-	-disabledbackground $::ArcherCore::SystemWindow \
-	-disabledforeground $::ArcherCore::SystemWindowText
-    eval $itk_component($name1\CB) insert list end $listOfChoices
 
-    $itk_component($name1\CB) component arrowBtn configure \
-	-background $hbc \
-	-highlightbackground $hbc
     pack $itk_component($name1\CB) -expand yes -fill both
 }
 
