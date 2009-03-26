@@ -30,7 +30,6 @@
 #include <tcl.h>
 #include <itcl.h>
 #include <itk.h>
-#include <blt.h>
 #include "bio.h"
 
 #include "bu.h"
@@ -69,12 +68,6 @@ Tclcad_Init(Tcl_Interp *interp)
     /* Initialize [incr Tk] */
     if (Itk_Init(interp) == TCL_ERROR) {
 	bu_log("Itk_Init ERROR:\n%s\n", Tcl_GetStringResult(interp));
-	return TCL_ERROR;
-    }
-
-    /* Initialize BLT */
-    if (Blt_Init(interp) == TCL_ERROR) {
-	bu_log("Blt_Init ERROR:\n%s\n", Tcl_GetStringResult(interp));
 	return TCL_ERROR;
     }
 

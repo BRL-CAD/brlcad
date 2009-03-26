@@ -48,13 +48,12 @@ libtclcad_la_CFLAGS = \
 	-I$(top_srcdir)/src/other/tcl/generic \
 	-I$(top_srcdir)/src/other/tcl/unix \
 	-I$(top_srcdir)/src/other/tk/generic \
-	-I$(top_srcdir)/src/other/tk/unix \
-	-I$(top_srcdir)/src/other/blt/src
+	-I$(top_srcdir)/src/other/tk/unix
 libtclcad_la_LDFLAGS = -version-info 19:1 -no-undefined
 libtclcad_la_LIBADD = ${TCLCAD_LIBS}
 
 EXTRA_DIST = libtclcad.dsp
 
-DEPENDS = src/libdm src/other/blt src/libged src/other/incrTcl
+DEPENDS = src/libdm src/libged src/other/incrTcl
 
 include $(top_srcdir)/misc/Makefile.defs

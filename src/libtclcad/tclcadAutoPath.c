@@ -39,8 +39,6 @@
 #include "itk.h"
 #endif
 
-#include "blt.h"
-
 /* incrTcl prior to 3.3 doesn't provide ITK_VERSION */
 #ifndef ITK_VERSION
 #  define ITK_VERSION ITCL_VERSION
@@ -162,7 +160,6 @@ tclcad_tcl_library(Tcl_Interp *interp)
  * BRLCAD_ROOT/lib/itclITCL_VERSION/itcl.tcl
  * BRLCAD_ROOT/lib/itkITK_VERSION/itk.tcl
  * BRLCAD_ROOT/lib/iwidgetsIWIDGETS_VERSION/iwidgets.tcl
- * BRLCAD_ROOT/lib/bltBLT_VERSION/pkgIndex.tcl
  * BRLCAD_DATA/tclscripts/pkgIndex.tcl and subdirs
  *
  ** source invocation paths
@@ -171,7 +168,6 @@ tclcad_tcl_library(Tcl_Interp *interp)
  * src/other/incrTcl/itcl/library/itcl.tcl
  * src/other/incrTcl/itk/library/itk.tcl
  * src/other/iwidgets/library/iwidgets.tcl
- * src/other/blt/pkgIndex.tcl
  * src/tclscripts/pkgIndex.tcl and subdirs
  *
  * if TCLCAD_LIBRARY_PATH is set
@@ -273,8 +269,6 @@ tclcad_auto_path(Tcl_Interp *interp)
 		      BU_PATH_SEPARATOR, root, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR, ITK_VERSION);
 	bu_vls_printf(&auto_path, "%c%s%clib%ciwidgets%s",
 		      BU_PATH_SEPARATOR, root, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR, IWIDGETS_VERSION);
-	bu_vls_printf(&auto_path, "%c%s%clib%cblt%s",
-		      BU_PATH_SEPARATOR, root, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR, BLT_VERSION);
 	bu_vls_printf(&auto_path, "%c%s%ctclscripts",
 		      BU_PATH_SEPARATOR, data, BU_DIR_SEPARATOR);
 	bu_vls_printf(&auto_path, "%c%s%ctclscripts%clib",
@@ -312,8 +306,6 @@ tclcad_auto_path(Tcl_Interp *interp)
 		      BU_PATH_SEPARATOR, srcpath, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR);
 	bu_vls_printf(&auto_path, "%c%s%csrc%cother%ciwidgets",
 		      BU_PATH_SEPARATOR, srcpath, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR);
-	bu_vls_printf(&auto_path, "%c%s%csrc%cother%cblt%clibrary",
-		      BU_PATH_SEPARATOR, srcpath, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR);
 	bu_vls_printf(&auto_path, "%c%s%csrc%ctclscripts",
 		      BU_PATH_SEPARATOR, srcpath, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR);
 	bu_vls_printf(&auto_path, "%c%s%csrc%ctclscripts%clib",
@@ -351,8 +343,6 @@ tclcad_auto_path(Tcl_Interp *interp)
 			  BU_PATH_SEPARATOR, srcpath, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR);
 	    bu_vls_printf(&auto_path, "%c%s%c..%csrc%cother%ciwidgets",
 			  BU_PATH_SEPARATOR, srcpath, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR);
-	    bu_vls_printf(&auto_path, "%c%s%c..%csrc%cother%cblt%clibrary",
-			  BU_PATH_SEPARATOR, srcpath, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR);
 	    bu_vls_printf(&auto_path, "%c%s%c..%csrc%ctclscripts",
 			  BU_PATH_SEPARATOR, srcpath, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR);
 	    bu_vls_printf(&auto_path, "%c%s%c..%csrc%ctclscripts%clib",
@@ -384,8 +374,6 @@ tclcad_auto_path(Tcl_Interp *interp)
 		      BU_PATH_SEPARATOR, root, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR, ITK_VERSION);
 	bu_vls_printf(&auto_path, "%c%s%clib%ciwidgets%s",
 		      BU_PATH_SEPARATOR, root, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR, IWIDGETS_VERSION);
-	bu_vls_printf(&auto_path, "%c%s%clib%cblt%s",
-		      BU_PATH_SEPARATOR, root, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR, BLT_VERSION);
 	bu_vls_printf(&auto_path, "%c%s%ctclscripts",
 		      BU_PATH_SEPARATOR, data, BU_DIR_SEPARATOR);
 	bu_vls_printf(&auto_path, "%c%s%ctclscripts%clib",
