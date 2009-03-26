@@ -219,11 +219,11 @@ proc main {} {
 	set size [wm maxsize $::ArcherCore::application]
 	set w [lindex $size 0]
 	set h [lindex $size 1]
-	if {2048 < $w} {
-	    set w 2048
+	if {1400 < $w} {
+	    set w 1400
 	}
-	if {1600 < $h} {
-	    set h 1600
+	if {1100 < $h} {
+	    set h 1100
 	}
         set width [expr {$w - 8}]
         set height [expr {$h - 40}]
@@ -239,11 +239,11 @@ proc main {} {
 	set size [wm maxsize .]
 	set w [lindex $size 0]
 	set h [lindex $size 1]
-	if {2048 < $w} {
-	    set w 2048
+	if {1600 < $w} {
+	    set w 1600
 	}
-	if {1600 < $h} {
-	    set h 1600
+	if {1200 < $h} {
+	    set h 1200
 	}
         set width [expr {$w - 8}]
         set height [expr {$h - 40}]
