@@ -4443,20 +4443,16 @@ Popup Menu    Right or Ctrl-Left
 	    -text $text
     } {}
 
-    set hbc [$itk_component($name1\L) cget -background]
-
     itk_component add $name1\F {
 	::frame $parent.$name2\F \
 	    -relief sunken \
 	    -bd 0
     } {}
 
-    set listHeight [expr [llength $listOfChoices] * 19]
     itk_component add $name1\CB {
 	::ttk::combobox $itk_component($name1\F).$name2\CB \
 	    -state readonly \
 	    -textvariable [::itcl::scope $varName] \
-	    -height $listHeight \
 	    -values $listOfChoices
     } {}
 
