@@ -299,9 +299,6 @@ BC_ARG_ENABLE([build_itcl], [itcl-build], [Build the included incrTcl], [auto])
 # force enable/disable building of iwidgets
 BC_ARG_ENABLE([build_iwidgets], [iwidgets-install], [Install the included iwidgets], [auto])
 
-# force enable/disable building of blt
-BC_ARG_ENABLE([build_blt], [blt-build], [Build the included BLT], [auto])
-
 # tkhtml3
 BC_ARG_ENABLE([build_tkhtml3], [tkhtml3-build], [Build the included tkhtml3], [yes])
 
@@ -492,11 +489,6 @@ BC_ARG_ALIAS([build_itcl], [incrtcl-build])
 BC_ARG_ALIAS([build_iwidgets], [iwidgets])
 BC_ARG_ALIAS([build_iwidgets], [iwidgets-build])
 
-# aliases to force building blt (help uses blt-build)
-BC_ARG_ALIAS([build_blt], [blt])
-BC_ARG_ALIAS([build_blt], [libblt])
-BC_ARG_ALIAS([build_blt], [libblt-build])
-
 # aliases to force building tkhtml3 (help uses tkhtml3-build)
 BC_ARG_ALIAS([build_tkhtml3], [tkhtml3])
 
@@ -660,9 +652,6 @@ if test "x$set_everything" != "x" ; then
 	if test "x$bc_build_iwidgets_set" = "xno" ; then
 		bc_build_iwidgets="$set_everything"
 	fi
-	if test "x$bc_build_blt_set" = "xno" ; then
-		bc_build_blt="$set_everything"
-	fi
 	if test "x$bc_build_tkhtml3" = "xno" ; then
 		bc_build_tkhtml3="$set_everything"
 	fi
@@ -789,9 +778,6 @@ AC_MSG_RESULT($bc_build_itcl)
 
 AC_MSG_CHECKING(whether to install the iwidgets library)
 AC_MSG_RESULT($bc_build_iwidgets)
-
-AC_MSG_CHECKING(whether to build the BLT library)
-AC_MSG_RESULT($bc_build_blt)
 
 AC_MSG_CHECKING(whether to build the tkhtml3 library)
 AC_MSG_RESULT($bc_build_tkhtml3)
@@ -2034,7 +2020,6 @@ AC_CHECK_FUNCS(\
 	setpriority \
 	setprogname \
 	srand48 \
-	strcasecmp \
 	strchr \
 	strdup \
 	strlcat \
@@ -2047,7 +2032,6 @@ AC_CHECK_FUNCS(\
 	vfork \
 	writev \
 )
-# strcasecmp checked for BLT
 
 dnl *** check if basename() exists ***
 AC_MSG_CHECKING([for basename])
@@ -2880,37 +2864,6 @@ AC_DEFINE_UNQUOTED([IWIDGETS_VERSION], "$IWIDGETS_VERSION", "Version of iWidgets
 AC_SUBST(IWIDGETS_VERSION)
 
 
-dnl *** BLT ***
-dnl figure out whether we need to build BLT
-BLT_VERSION="2.4"
-BLT_SUFFIX="`echo ${BLT_VERSION} | tr -d .`"
-case $host_os in
-     *netbsd-*|*freebsd-[[1-3]]*.*|*openbsd-[[1-3]]*|*sunos4*)
-	 # some OS's don't like dots in the lib name
-	 BLT_VERSION=$BLT_SUFFIX
-	 ;;
-esac
-AC_SUBST(BLT_VERSION)
-AC_SUBST(BLT_SUFFIX)
-BLT_LIBRARY="${BRLCAD_ROOT}/lib/blt${BLT_VERSION}"
-AC_SUBST(BLT_LIBRARY)
-AC_MSG_CHECKING(whether to build libblt)
-if test "x$build_against_x11" = "xno" ; then
-    # BLT *requires* X11
-    bc_built_blt=no
-fi
-if test ! "x$bc_build_blt" = "xno" ; then
-    build_brlcad_blt=yes
-    BLT='${top_builddir}/src/other/blt/libBLT${BLT_SUFFIX}.la'
-    AC_MSG_RESULT(yes)
-else
-    build_brlcad_blt=no
-    BLT=""
-    AC_MSG_RESULT(no)
-fi
-AC_SUBST(BLT)
-
-
 dnl *** tkhtml3 ***
 dnl figure out whether we need to build tkhtml3
 TKHTML3_VERSION="alpha16"
@@ -3506,7 +3459,6 @@ AM_CONDITIONAL(BUILD_TCL, [test "x$build_brlcad_tcl" = "xyes"])
 AM_CONDITIONAL(BUILD_TK, [test "x$build_brlcad_tk" = "xyes"])
 AM_CONDITIONAL(BUILD_ITCL, [test "x$build_brlcad_itcl" = "xyes"])
 AM_CONDITIONAL(BUILD_IWIDGETS, [test "x$build_brlcad_iwidgets" = "xyes"])
-AM_CONDITIONAL(BUILD_BLT, [test "x$build_brlcad_blt" = "xyes"])
 AM_CONDITIONAL(BUILD_TKHTML3, [test "x$build_brlcad_tkhtml3" = "xyes"])
 AM_CONDITIONAL(BUILD_TKIMG, [test "x$build_brlcad_tkimg" = "xyes"])
 AM_CONDITIONAL(BUILD_PNG, [test "x$build_brlcad_png" = "xyes"])
@@ -3631,7 +3583,7 @@ OPTICAL_LIBS="${RT} ${RT_LIBS} ${BN} ${BN_LIBS} ${BU} ${BU_LIBS} ${TCL}"
 MULTISPECTRAL_LIBS="${OPTICAL} ${OPTICAL_LIBS} ${RT} ${RT_LIBS} ${BN} ${BN_LIBS} ${BU} ${BU_LIBS}"
 PC_LIBS="${LIBSTDCXX} ${BU} ${BU_LIBS}"
 DM_LIBS="${GED} ${GED_LIBS} ${RT} ${RT_LIBS} ${FB} ${FB_LIBS} ${PNG} ${TK} ${X_LIBS} ${FRAMEWORK_CARBON}"
-TCLCAD_LIBS="${GED} ${GED_LIBS} ${DM} ${DM_LIBS} ${FB} ${FB_LIBS} ${ITK} ${ITCL} ${TK} ${TCLSTUB} ${BLT} ${TCL}"
+TCLCAD_LIBS="${GED} ${GED_LIBS} ${DM} ${DM_LIBS} ${FB} ${FB_LIBS} ${ITK} ${ITCL} ${TK} ${TCLSTUB} ${TCL}"
 BRLCAD_LIBS="${GED} ${GED_LIBS} ${WDB} ${WDB_LIBS} ${RT} ${RT_LIBS} ${BN} ${BN_LIBS} ${BU} ${BU_LIBS}"
 
 AC_SUBST(BN)
@@ -3936,18 +3888,6 @@ AC_CONFIG_FILES([
 	src/other/URToolkit/tools/Makefile
 	src/other/URToolkit/tools/clock/Makefile
 	src/other/awf/Makefile
-	src/other/blt/Makefile
-	src/other/blt/cf/Makefile
-	src/other/blt/demos/Makefile
-	src/other/blt/demos/bitmaps/Makefile
-	src/other/blt/examples/Makefile
-	src/other/blt/html/Makefile
-	src/other/blt/library/Makefile
-	src/other/blt/library/dd_protocols/Makefile
-	src/other/blt/library/pkgIndex.tcl
-	src/other/blt/man/Makefile
-	src/other/blt/src/Makefile
-	src/other/blt/win/Makefile
 	src/other/incrTcl/Makefile
 	src/other/incrTcl/doc/Makefile
 	src/other/incrTcl/itcl/Makefile
@@ -4107,7 +4047,6 @@ AC_MSG_RESULT([Build Tcl ............................: $build_brlcad_tcl])
 AC_MSG_RESULT([Build Tk .............................: $build_brlcad_tk])
 AC_MSG_RESULT([Build Itcl/Itk .......................: $build_brlcad_itcl])
 AC_MSG_RESULT([Build IWidgets .......................: $build_brlcad_iwidgets])
-AC_MSG_RESULT([Build BLT ............................: $build_brlcad_blt])
 AC_MSG_RESULT([Build tkhtml3 ........................: $build_brlcad_tkhtml3])
 AC_MSG_RESULT([Build tkImg ..........................: $build_brlcad_tkimg])
 AC_MSG_RESULT([Build libpng .........................: $build_brlcad_png])
