@@ -4448,30 +4448,18 @@ Popup Menu    Right or Ctrl-Left
     itk_component add $name1\F {
 	::frame $parent.$name2\F \
 	    -relief sunken \
-	    -bd 2
+	    -bd 0
     } {}
 
     set listHeight [expr [llength $listOfChoices] * 19]
     itk_component add $name1\CB {
-	::iwidgets::combobox $itk_component($name1\F).$name2\CB \
-	    -editable false \
+	::ttk::combobox $itk_component($name1\F).$name2\CB \
+	    -state readonly \
 	    -textvariable [::itcl::scope $varName] \
-	    -listheight $listHeight \
-	    -background $SystemWindow \
-	    -textbackground $SystemWindow \
-	    -relief flat
+	    -height $listHeight \
+	    -values $listOfChoices
     } {}
-    #XXX I wouldn't have to break encapsulation if they'd make better widgets!
-    #    Yeah, I could tweak the combobox. But, then I'd have to manage the mods
-    #    of their code. It's easier to do it this way.
-    $itk_component($name1\CB) component entry configure \
-	-disabledbackground $SystemWindow \
-	-disabledforeground $SystemWindowText
-    eval $itk_component($name1\CB) insert list end $listOfChoices
 
-    $itk_component($name1\CB) component arrowBtn configure \
-	-background $hbc \
-	-highlightbackground $hbc
     pack $itk_component($name1\CB) -expand yes -fill both
 }
 

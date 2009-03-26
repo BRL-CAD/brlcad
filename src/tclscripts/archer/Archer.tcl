@@ -1897,7 +1897,7 @@ package provide Archer 1.0
 	    -labelpos nw \
 	    -borderwidth 2 \
 	    -relief groove
-    }
+    } {}
 
     set oglParent [$itk_component(displayLF) childsite]
 
