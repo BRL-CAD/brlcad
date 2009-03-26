@@ -34,7 +34,6 @@
 #include "./hmenu.h"
 #include "./lgt.h"
 #include "./extern.h"
-#include "./vecmath.h"
 #include "./mat_db.h"
 #include "./screen.h"
 
@@ -274,7 +273,7 @@ mat_Edit_Db_Entry(int id)
 	}
     }
     entry->mode_flag = MF_USED;
-    mat_db_size = Max( mat_db_size, id+1 );
+    V_MAX( mat_db_size, id+1 );
     return	1;
 }
 

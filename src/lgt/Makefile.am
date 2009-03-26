@@ -32,8 +32,7 @@ noinst_HEADERS = \
 	mat_db.h \
 	screen.h \
 	texture.h \
-	tree.h \
-	vecmath.h
+	tree.h
 
 lgt_LDADD = \
 	$(top_builddir)/src/vfont/libvfont_nil.la \

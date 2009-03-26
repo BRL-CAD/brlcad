@@ -34,7 +34,6 @@
 #include "./hmenu.h"
 #include "./lgt.h"
 #include "./extern.h"
-#include "./vecmath.h"
 
 
 /**
@@ -67,13 +66,13 @@ grid_Rotate(fastf_t azim, fastf_t elev, fastf_t roll, register fastf_t *des_H, r
 	fastf_t	tmp_V[3], tmp_H[3], prime_V[3];
 	fastf_t	sn_roll = sin( roll );
 	fastf_t	cs_roll = cos( roll );
-	Scale2Vec( des_V, cs_roll, tmp_V );
-	Scale2Vec( des_H, sn_roll, tmp_H );
-	Add2Vec( tmp_V, tmp_H, prime_V );
-	Scale2Vec( des_V, -sn_roll, tmp_V );
-	Scale2Vec( des_H, cs_roll, tmp_H );
-	Add2Vec( tmp_V, tmp_H, des_H );
-	CopyVec( des_V, prime_V );
+	VSCALE( tmp_V, des_V, cs_roll );
+	VSCALE( tmp_H, des_H, sn_roll );
+	VADD2( prime_V, tmp_V, tmp_H );
+	VSCALE( tmp_V, des_V, -sn_roll );
+	VSCALE( tmp_H, des_H, cs_roll );
+	VADD2( des_H, tmp_V, tmp_H );
+	VMOVE( des_V, prime_V );
     }
     return;
 }

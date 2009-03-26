@@ -35,7 +35,6 @@
 #include "./hmenu.h"
 #include "./lgt.h"
 #include "./extern.h"
-#include "./vecmath.h"
 #include "./ascii.h"
 #include "./tree.h"
 
@@ -364,8 +363,8 @@ read_Trie(FILE *fp)
 	else
 	{
 	    /* Merge with existing range.			*/
-	    ir_min = Min( ir_min, min );
-	    ir_max = Max( ir_max, max );
+	    V_MIN( ir_min, min );
+	    V_MAX( ir_max, max );
 	    bu_log(	"Global temperature range is %d to %d\n",
 			ir_min, ir_max
 		);

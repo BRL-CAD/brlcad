@@ -37,7 +37,6 @@
 #include "./hmenu.h"
 #include "./lgt.h"
 #include "./extern.h"
-#include "./vecmath.h"
 #include "./mat_db.h"
 #include "./tree.h"
 #include "./screen.h"
@@ -56,10 +55,14 @@
 #define FLIPPED_NORMALS_BUG	0 /* Keep an eye out for dark spots. */
 #endif
 
+#define EPSILON 0.000001
+#define V_Print(a, b, func) \
+		func( "%s\t<%12.6f,%12.6f,%12.6f>\n", a, (b)[0], (b)[1], (b)[2] )
+
 #if FLIPPED_NORMALS_BUG
 #define Check_Iflip( _pp, _normal, _rdir, _stp )\
 	{
-	    fastf_t	f = Dot( _rdir, _normal );\
+	    fastf_t	f = VDOT( _rdir, _normal );\
 						      if ( f >= 0.0 )\
 							  {\
 							       if ( ! _pp->pt_inflip && (RT_G_DEBUG&DEBUG_NORML) )\
@@ -77,7 +80,7 @@
 
 #if FLIPPED_NORMALS_BUG
 #define Check_Oflip( _pp, _normal, _rdir, _stp )\
-	{	fastf_t	f = Dot( _rdir, _normal );\
+	{	fastf_t	f = VDOT( _rdir, _normal );\
 	if ( f <= 0.0 )\
 		{\
 		if ( ! _pp->pt_outflip && (RT_G_DEBUG&DEBUG_NORML) )\
@@ -356,8 +359,8 @@ render_Model(int frame)
 
     if ( RT_G_DEBUG & DEBUG_CELLSIZE )
 	bu_log( "Cell size is %g mm.\n", cell_sz );
-    Scale2Vec( grid_hor, a_cellsz, grid_dh );
-    Scale2Vec( grid_ver, a_cellsz, grid_dv );
+    VSCALE( grid_dh, grid_hor, a_cellsz );
+    VSCALE( grid_dv, grid_ver, a_cellsz );
 
     /* Statistics for refraction tuning. */
     refrac_missed = 0;
@@ -460,8 +463,8 @@ render_Scan(int cpu, void *data)
 
 	    /* Compute vectors from center to origin (bottom-left)
 	       of grid. */
-	    Scale2Vec( grid_dv, (fastf_t)(-a_gridsz/2)+a.a_y, grid_y_inc );
-	    Scale2Vec( grid_dh, (fastf_t)(-a_gridsz/2)+a.a_x, grid_x_inc );
+	    VSCALE( grid_y_inc, grid_dv, (fastf_t)(-a_gridsz/2)+a.a_y );
+	    VSCALE( grid_x_inc, grid_dh, (fastf_t)(-a_gridsz/2)+a.a_x );
 	    for (	;
 			! user_interrupt
 			    &&	a.a_x < (grid_x_fin+1) * aperture_sz;
@@ -472,8 +475,8 @@ render_Scan(int cpu, void *data)
 		if ( NEAR_ZERO(rel_perspective, SMALL_FASTF) )
 		{
 		    /* Parallel rays emanating from grid. */
-		    Add2Vec( grid_loc, grid_y_inc, aim_pt );
-		    Add2Vec( aim_pt, grid_x_inc, a.a_ray.r_pt );
+		    VADD2( aim_pt, grid_loc, grid_y_inc );
+		    VADD2( a.a_ray.r_pt, aim_pt, grid_x_inc );
 		    VREVERSE( a.a_ray.r_dir, lgts[0].dir );
 		}
 		else
@@ -486,9 +489,9 @@ render_Scan(int cpu, void *data)
 		{
 		    VMOVE( a.a_ray.r_pt, lgts[0].loc );
 		    /* Compute ray direction. */
-		    Add2Vec( grid_loc, grid_y_inc, aim_pt );
-		    AddVec( aim_pt, grid_x_inc );
-		    Diff2Vec( aim_pt, lgts[0].loc, a.a_ray.r_dir );
+		    VADD2( aim_pt, grid_loc, grid_y_inc );
+		    VADD2( aim_pt, aim_pt, grid_x_inc );
+		    VSUB2( a.a_ray.r_dir, aim_pt, lgts[0].loc );
 		    VUNITIZE( a.a_ray.r_dir );
 		}
 		a.a_level = 0; /* Recursion level (bounces). */
@@ -518,7 +521,7 @@ render_Scan(int cpu, void *data)
 				"raytracing aborted" );
 			return;
 		    }
-		AddVec( grid_x_inc, grid_dh );
+		VADD2( grid_x_inc, grid_x_inc, grid_dh );
 	    }
 	}
     }
@@ -1001,7 +1004,7 @@ correct_Lgt(register struct application *ap, register struct partition *pp, regi
 	return	lgt_entry->energy;
 
     /* Vector to light src from surface contact pt. */
-    Diff2Vec( lgt_entry->loc, pp->pt_inhit->hit_point, lgt_dir );
+    VSUB2( lgt_dir, lgt_entry->loc, pp->pt_inhit->hit_point );
     VUNITIZE( lgt_dir );
     if ( shadowing )
     {
@@ -1029,7 +1032,7 @@ correct_Lgt(register struct application *ap, register struct partition *pp, regi
 
 	/* Pass distance to light source to hit routine. */
 	ap_hit.a_cumlen =
-	    Dist3d( pp->pt_inhit->hit_point, lgt_entry->loc );
+	    DIST_PT_PT( pp->pt_inhit->hit_point, lgt_entry->loc );
 
 	if ( RT_G_DEBUG & DEBUG_SHADOW )
 	{
@@ -1059,14 +1062,14 @@ correct_Lgt(register struct application *ap, register struct partition *pp, regi
 	    cons_Vector( lgt_cntr, lgt_entry->azim, lgt_entry->elev );
 	else
 	{
-	    Diff2Vec( lgt_entry->loc, modl_cntr, lgt_cntr );
+	    VSUB2( lgt_cntr, lgt_entry->loc, modl_cntr );
 	    VUNITIZE( lgt_cntr );
 	}
-	cos_angl = Dot( lgt_cntr, lgt_dir );
+	cos_angl = VDOT( lgt_cntr, lgt_dir );
 	if ( NEAR_ZERO( cos_angl, EPSILON ) )
 	    /* Negligable intensity. */
 	    return	0.0;
-	ang_dist = sqrt( 1.0 - Sqr( cos_angl ) );
+	ang_dist = sqrt( 1.0 - pow( cos_angl, 2 ) );
 	rel_radius = lgt_entry->radius / pp->pt_inhit->hit_dist;
 	if ( RT_G_DEBUG & DEBUG_RGB )
 	{
@@ -1109,10 +1112,10 @@ mirror_Reflect(register struct application *ap, register struct partition *pp, r
     VREVERSE( r_dir, ap->a_ray.r_dir );
 
     {
-	fastf_t	f = 2.0	* Dot( r_dir, normal );
+	fastf_t	f = 2.0	* VDOT( r_dir, normal );
 	fastf_t tmp_dir[3];
-	Scale2Vec( normal, f, tmp_dir );
-	Diff2Vec( tmp_dir, r_dir, ap_hit.a_ray.r_dir );
+	VSCALE( tmp_dir, normal, f );
+	VSUB2( ap_hit.a_ray.r_dir, tmp_dir, r_dir );
     }
     /* Set up ray origin at surface contact point. */
     VMOVE( ap_hit.a_ray.r_pt, pp->pt_inhit->hit_point );
@@ -1344,9 +1347,9 @@ f_Backgr(register struct application *ap)
 	    fastf_t cos_s;
 	    if ( lgts[i].energy <= 0.0 )
 		continue;
-	    Diff2Vec( lgts[i].loc, ap->a_ray.r_pt, real_l_1 );
+	    VSUB2( real_l_1, lgts[i].loc, ap->a_ray.r_pt );
 	    VUNITIZE( real_l_1 );
-	    if (	(cos_s = Dot( ap->a_ray.r_dir, real_l_1 ))
+	    if (	(cos_s = VDOT( ap->a_ray.r_dir, real_l_1 ))
 			> 0.0
 			&&	cos_s <= 1.0
 		)
@@ -1461,20 +1464,20 @@ refract(register fastf_t *v_1, register fastf_t *norml, fastf_t ri_1, fastf_t ri
 	return	1;
     }
     beta = ri_1 / ri_2;
-    Scale2Vec( v_1, beta, w );
-    CrossProd( w, norml, u );
+    VSCALE( w, v_1, beta );
+    VCROSS( u, w, norml );
     /*	|w X norml| = |w||norml| * sin( theta_1 )
 	|u| = ri_1/ri_2 * sin( theta_1 ) = sin( theta_2 )
     */
-    if ( (beta = Dot( u, u )) > 1.0 ) /* beta = sin( theta_2 )^^2. */
+    if ( (beta = VDOT( u, u )) > 1.0 ) /* beta = sin( theta_2 )^^2. */
     {
 	/* Past critical angle, total reflection.
 	   Calculate reflected (bounced) incident ray.
 	*/
 	VREVERSE( u, v_1 );
-	beta = 2.0 * Dot( u, norml );
-	Scale2Vec( norml, beta, w );
-	Diff2Vec( w, u, v_2 );
+	beta = 2.0 * VDOT( u, norml );
+	VSCALE( w, norml, beta );
+	VSUB2( v_2, w, u );
 	if ( RT_G_DEBUG & DEBUG_REFRACT )
 	{
 	    V_Print( "\tdeflected refracted ray", v_2, bu_log );
@@ -1485,11 +1488,11 @@ refract(register fastf_t *v_1, register fastf_t *norml, fastf_t ri_1, fastf_t ri
     {
 	/* 1 - beta = 1 - sin( theta_2 )^^2
 	   = cos( theta_2 )^^2.
-	   beta = -1.0 * cos( theta_2 ) - Dot( w, norml ).
+	   beta = -1.0 * cos( theta_2 ) - VDOT( w, norml ).
 	*/
-	beta = -sqrt( 1.0 - beta ) - Dot( w, norml );
-	Scale2Vec( norml, beta, u );
-	Add2Vec( w, u, v_2 );
+	beta = -sqrt( 1.0 - beta ) - VDOT( w, norml );
+	VSCALE( u, norml, beta );
+	VADD2( v_2, w, u );
 	if ( RT_G_DEBUG & DEBUG_REFRACT )
 	{
 	    V_Print( "\trefracted ray", v_2, bu_log );
@@ -1644,17 +1647,17 @@ model_Reflectance(register struct application *ap, struct partition *pp, Mat_Db_
 	    return;
 	}
 	/* Direction unit vector to light source from hit pt. */
-	Diff2Vec( lgt_entry->loc, pp->pt_inhit->hit_point, lgt_dir );
+	VSUB2( lgt_dir, lgt_entry->loc, pp->pt_inhit->hit_point );
 	VUNITIZE( lgt_dir );
     }
 
     /* Calculate diffuse reflectance from light source. */
-    if ( (cos_il = Dot( norml, lgt_dir )) < 0.0 )
+    if ( (cos_il = VDOT( norml, lgt_dir )) < 0.0 )
 	cos_il = 0.0;
     /* Facter in light source intensity and diffuse weighting. */
     ff = cos_il * lgt_energy * mdb_entry->wgt_diffuse;
     /* Facter in light source color. */
-    Scale2Vec( lgt_entry->coef, ff, ap->a_color );
+    VSCALE( ap->a_color, lgt_entry->coef, ff );
     if ( RT_G_DEBUG & DEBUG_RGB )
     {
 	bu_log( "\tDiffuse reflectance:\n" );
@@ -1682,15 +1685,15 @@ model_Reflectance(register struct application *ap, struct partition *pp, Mat_Db_
 	register fastf_t specular;
 	fastf_t cos_s;
 	ff = 2.0 * cos_il;
-	Scale2Vec( norml, ff, tmp_dir );
-	Diff2Vec( tmp_dir, lgt_dir, lgt_reflect );
+	VSCALE( tmp_dir, norml, ff );
+	VSUB2( lgt_reflect, tmp_dir, lgt_dir );
 	if ( RT_G_DEBUG & DEBUG_RGB )
 	{
 	    bu_log( "\tSpecular reflectance:\n" );
 	    V_Print( "\t           dir of eye", view_dir, bu_log );
 	    V_Print( "\tdir reflected lgt ray", lgt_reflect, bu_log );
 	}
-	if (	(cos_s = Dot( view_dir, lgt_reflect )) > 0.0
+	if (	(cos_s = VDOT( view_dir, lgt_reflect )) > 0.0
 		&&	cos_s <= 1.0
 	    )
 	{
@@ -1776,7 +1779,7 @@ hl_Dst_Diff(register int dx0, register int dy0, register int dx1, register int d
 {
     short distance;
     distance = hl_dstmap[dy0*a_gridsz+dx0] - hl_dstmap[dy1*a_gridsz+dx1];
-    distance = Abs( distance );
+    distance = abs( distance );
     return (unsigned short)(distance) > (unsigned short)maxdist;
 }
 int
@@ -1811,7 +1814,7 @@ hl_Norm_Diff(register RGBpixel (*pix1), register RGBpixel (*pix2))
     dir2[X] -= 1.0;
     dir2[Y] -= 1.0;
     dir2[Z] -= 1.0;
-    return	Dot( dir1, dir2 ) < COSTOL;
+    return	VDOT( dir1, dir2 ) < COSTOL;
 }
 
 
@@ -1840,7 +1843,7 @@ hi_Obliq(RGBpixel (*pix))
     dir[X] -= 1.0;
     dir[Y] -= 1.0;
     dir[Z] -= 1.0;
-    return Dot( dir, lgts[0].dir ) < OBLTOL;
+    return VDOT( dir, lgts[0].dir ) < OBLTOL;
 }
 
 static void
@@ -2209,7 +2212,7 @@ view_end(void)
 fastf_t
 gauss_Wgt_Func(fastf_t R)
 {
-    return	exp( - Sqr( R ) / LOG10E ) / (LOG10E * PI);
+    return	exp( - pow( R, 2 ) / M_LOG10E ) / (M_LOG10E * M_PI);
 }
 
 static int

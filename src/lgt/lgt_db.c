@@ -33,7 +33,6 @@
 #include "./hmenu.h"
 #include "./lgt.h"
 #include "./extern.h"
-#include "./vecmath.h"
 #include "./screen.h"
 static int	get_Lgt_Entry(register Lgt_Source *entry, FILE *fp), put_Lgt_Entry(register Lgt_Source *entry, FILE *fp);
 
@@ -72,10 +71,10 @@ lgt_Print_Db(int id)
 	{
 	    if ( --lines <= 0 && ! do_More( &lines ) )
 		break;
-	    prnt_Scroll( "       azimuth\t\t(%g)\n", entry->azim*DEGRAD );
+	    prnt_Scroll( "       azimuth\t\t(%g)\n", entry->azim*RAD2DEG );
 	    if ( --lines <= 0 && ! do_More( &lines ) )
 		break;
-	    prnt_Scroll( "       elevation\t(%g)\n", entry->elev*DEGRAD );
+	    prnt_Scroll( "       elevation\t(%g)\n", entry->elev*RAD2DEG );
 	}
 	if ( --lines <= 0 && ! do_More( &lines ) )
 	    break;
@@ -166,7 +165,7 @@ lgt_Edit_Db_Entry(int id)
     int			red, grn, blu;
     if ( id < 0 || id >= MAX_LGTS )
 	return	-1;
-    lgt_db_size = Max( lgt_db_size, id+1 );
+    V_MAX( lgt_db_size, id+1 );
     entry = &lgts[id];
     (void) snprintf( editprompt, MAX_LN, "light source name ? (%s) ", entry->name );
     if ( get_Input( input_buf, MAX_LN, editprompt ) != NULL )
@@ -178,18 +177,18 @@ lgt_Edit_Db_Entry(int id)
     if ( entry->over || entry->stp == SOLTAB_NULL )
     {
 	(void) sprintf( editprompt, "azimuth ? (%g) ",
-			entry->azim*DEGRAD );
+			entry->azim*RAD2DEG );
 	if ( get_Input( input_buf, MAX_LN, editprompt ) != NULL )
 	{
 	    (void) sscanf( input_buf, "%lf", &entry->azim );
-	    entry->azim /= DEGRAD;
+	    entry->azim /= RAD2DEG;
 	}
 	(void) sprintf( editprompt, "elevation ? (%g) ",
-			entry->elev*DEGRAD );
+			entry->elev*RAD2DEG );
 	if ( get_Input( input_buf, MAX_LN, editprompt ) != NULL )
 	{
 	    (void) sscanf( input_buf, "%lf", &entry->elev );
-	    entry->elev /= DEGRAD;
+	    entry->elev /= RAD2DEG;
 	}
 	(void) sprintf( editprompt, "distance ? (%g) ", entry->dist );
 	if ( get_Input( input_buf, MAX_LN, editprompt ) != NULL )

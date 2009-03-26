@@ -43,7 +43,6 @@
 #include "./lgt.h"
 #include "./extern.h"
 #include "./ascii.h"
-#include "./vecmath.h"
 #include "./lgt.h"
 
 #define WINBORDER	4  /* Thickness of window border. */
@@ -621,8 +620,8 @@ sgi_Window_In( origin, x, y, x0, y0, out_flag )
 		    sgi_OL_Erase();
 		    x = val;
 		    dx = x - x0;
-		    dx = Abs( dx );
-		    dw = Max( dx, dy );
+		    dx = labs( dx );
+		    dw = FMAX( dx, dy );
 		    sgi_OL_Opaque();
 		    sgi_Rect( x0+dw-xwin, y0+dw-ywin, x0-dw-xwin, y0-dw-ywin );
 		}
@@ -635,8 +634,8 @@ sgi_Window_In( origin, x, y, x0, y0, out_flag )
 		    sgi_OL_Erase();
 		    y = val;
 		    dy = y - y0;
-		    dy = Abs( dy );
-		    dw = Max( dx, dy );
+		    dy = labs( dy );
+		    dw = FMAX( dx, dy );
 		    sgi_OL_Opaque();
 		    sgi_Rect( x0+dw-xwin, y0+dw-ywin, x0-dw-xwin, y0-dw-ywin );
 		}
