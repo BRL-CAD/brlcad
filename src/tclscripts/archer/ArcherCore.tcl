@@ -40,6 +40,7 @@ namespace eval ArcherCore {
     if {![info exists parentClass]} {
 	set parentClass itk::Toplevel
 	set inheritFromToplevel 1
+	set cursorWaitCount 0
 
 #	if {$tcl_platform(platform) == "windows"} {
 #	    set parentClass itk::Toplevel
@@ -635,23 +636,8 @@ Popup Menu    Right or Ctrl-Left
 
 	set parent [$itk_component(hpane) childsite bottomView]
 	itk_component add advancedTabs {
-	    blt::tabnotebook $parent.tabs \
-		-relief flat \
-		-tiers 99 \
-		-tearoff 1 \
-		-gap 3 \
-		-width 0 \
-		-height 0 \
-		-outerpad 0 \
-		-highlightthickness 1 \
-		-selectforeground black
+	    ttk::notebook $parent.tabs
 	} {}
-	$itk_component(advancedTabs) configure \
-	    -highlightcolor [$itk_component(advancedTabs) cget -background] \
-	    -borderwidth 0 \
-	    -font $mFontText
-	$itk_component(advancedTabs) insert end -text "Command" -stipple gray25
-	$itk_component(advancedTabs) insert end -text "History" -stipple gray25
 
 	itk_component add cmd {
 	    Command $itk_component(advancedTabs).cmd \
@@ -662,12 +648,6 @@ Popup Menu    Right or Ctrl-Left
 		-prompt2 "% " -result_color black -cmd_color red
 	} {}
 
-	set i 0
-	$itk_component(advancedTabs) tab configure $i \
-	    -window $itk_component(cmd) \
-	    -fill both
-	incr i
-
 	itk_component add history {
 	    ::iwidgets::scrolledtext $itk_component(advancedTabs).history \
 		-relief sunken -borderwidth 2 \
@@ -675,10 +655,10 @@ Popup Menu    Right or Ctrl-Left
 		-scrollmargin 2 -visibleitems 80x15 \
 		-textbackground $SystemWindow
 	} {}
-	$itk_component(advancedTabs) tab configure $i \
-	    -window $itk_component(history) \
-	    -fill both
 	[$itk_component(history) component text] configure -state disabled
+
+	$itk_component(advancedTabs) add $itk_component(cmd) -text "Command"
+	$itk_component(advancedTabs) add $itk_component(history) -text "History"
     }
 
     # vertical panes
@@ -1046,7 +1026,7 @@ Popup Menu    Right or Ctrl-Left
 	return
     }
 
-    SetWaitCursor
+    SetWaitCursor $this
 
     if {$eflag} {
 	set optionsAndArgs [eval dbExpand $args]
@@ -1072,7 +1052,7 @@ Popup Menu    Right or Ctrl-Left
     }
 
     if {[catch {eval gedCmd $cmd $options $expandedArgs} ret]} {
-	SetNormalCursor
+	SetNormalCursor $this
 	return $ret
     }
 
@@ -1085,7 +1065,7 @@ Popup Menu    Right or Ctrl-Left
     if {$tflag} {
 	catch {refreshTree}
     }
-    SetNormalCursor
+    SetNormalCursor $this
 
     return $ret
 }
@@ -1542,6 +1522,7 @@ Popup Menu    Right or Ctrl-Left
 	set mLastSelectedDir [file dirname $target]
     }
 
+    ::update
     Load $target
 }
 
@@ -1673,7 +1654,7 @@ Popup Menu    Right or Ctrl-Left
 
     set mNeedSave 1
     updateSaveMode
-    SetWaitCursor
+    SetWaitCursor $this
     gedCmd kill $comp
 
     set select [$itk_component(tree) selection get]
@@ -1702,18 +1683,18 @@ Popup Menu    Right or Ctrl-Left
     set parent [$itk_component(tree) query -parent $element]
     $itk_component(tree) remove $element $parent
     refreshTree
-    SetNormalCursor
+    SetNormalCursor $this
 }
 
 ::itcl::body ArcherCore::doCopyOrMove {top comp cmd} {
     set mNeedSave 1
     updateSaveMode
-    SetWaitCursor
+    SetWaitCursor $this
     set comp2 [string trim [$top.entry get]]
     wm withdraw $top
     gedCmd $cmd $comp
     refreshTree
-    SetNormalCursor
+    SetNormalCursor $this
     destroy $top
 }
 
@@ -2194,7 +2175,7 @@ Popup Menu    Right or Ctrl-Left
 
 ::itcl::body ArcherCore::render {node state trans updateTree {wflag 1}} {
     if {$wflag} {
-	SetWaitCursor
+	SetWaitCursor $this
     }
 
     set savePwd ""
@@ -2275,7 +2256,7 @@ Popup Menu    Right or Ctrl-Left
     }
 
     if {$wflag} {
-	SetNormalCursor
+	SetNormalCursor $this
     }
 }
 
@@ -2384,7 +2365,7 @@ Popup Menu    Right or Ctrl-Left
 }
 
 ::itcl::body ArcherCore::doLighting {} {
-    SetWaitCursor
+    SetWaitCursor $this
 
     if {$mZClipMode != $ZCLIP_NONE} {
 	gedCmd zclip_all $mLighting
@@ -2393,7 +2374,7 @@ Popup Menu    Right or Ctrl-Left
     gedCmd zbuffer_all $mLighting
     gedCmd light_all $mLighting
 
-    SetNormalCursor
+    SetNormalCursor $this
 }
 
 ::itcl::body ArcherCore::doViewReset {} {
@@ -2853,6 +2834,7 @@ Popup Menu    Right or Ctrl-Left
 #                         GENERAL
 # ------------------------------------------------------------
 ::itcl::body ArcherCore::Load {target} {
+    SetWaitCursor $this
     if {$mNeedSave} {
 	$itk_component(saveDialog) center [namespace tail $this]
 	if {[$itk_component(saveDialog) activate]} {
@@ -2933,9 +2915,7 @@ Popup Menu    Right or Ctrl-Left
 	deleteTargetOldCopy
 
 	# refresh tree contents
-	SetWaitCursor
 	refreshTree 0
-	SetNormalCursor
     } else {
 	doLighting
     }
@@ -2945,6 +2925,7 @@ Popup Menu    Right or Ctrl-Left
 	set mDefaultBindingMode $ROTATE_MODE
 	beginViewRotate
     }
+    SetNormalCursor $this
 }
 
 ::itcl::body ArcherCore::GetUserCmds {} {
@@ -3799,7 +3780,7 @@ Popup Menu    Right or Ctrl-Left
     }
 
     if {$wflag} {
-	SetWaitCursor
+	SetWaitCursor $this
     }
 
     set optionsAndArgs [eval dbExpand $args]
@@ -3815,7 +3796,7 @@ Popup Menu    Right or Ctrl-Left
     if {[catch {eval gedCmd draw $options $tobjects} ret]} {
 	gedCmd configure -primitiveLabels {}
 	refreshTree
-	SetNormalCursor
+	SetNormalCursor $this
 
 	return $ret
     }
@@ -3823,7 +3804,7 @@ Popup Menu    Right or Ctrl-Left
     gedCmd configure -primitiveLabels {}
     refreshTree
     if {$wflag} {
-	SetNormalCursor
+	SetNormalCursor $this
     }
 
     return $ret
@@ -3850,7 +3831,7 @@ Popup Menu    Right or Ctrl-Left
 	return
     }
 
-    SetWaitCursor
+    SetWaitCursor $this
 
     set optionsAndArgs [eval dbExpand $args]
     set options [lindex $optionsAndArgs 0]
@@ -3864,14 +3845,14 @@ Popup Menu    Right or Ctrl-Left
     if {[catch {eval gedCmd erase $tobjects} ret]} {
 	gedCmd configure -primitiveLabels {}
 	refreshTree
-	SetNormalCursor
+	SetNormalCursor $this
 
 	return $ret
     }
 
     gedCmd configure -primitiveLabels {}
     refreshTree
-    SetNormalCursor
+    SetNormalCursor $this
 }
 
 ::itcl::body ArcherCore::erase_all {args} {

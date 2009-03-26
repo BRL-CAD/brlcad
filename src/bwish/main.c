@@ -72,7 +72,6 @@ Cad_AppInit(Tcl_Interp *interp)
     int init_tk = 1;
     int init_itcl = 1;
     int init_itk = 1;
-    int init_blt = 1;
 
     /* a two-pass init loop.  the first pass just tries default init
      * routines while the second calls tclcad_auto_path() to help it
@@ -149,19 +148,6 @@ Cad_AppInit(Tcl_Interp *interp)
 	}
 	Tcl_StaticPackage(interp, "Itk", Itk_Init, (Tcl_PackageInitProc *) NULL);
 	init_itk=0;
-
-	/* Initialize BLT */
-	Tcl_ResetResult(interp);
-	if (init_blt && Blt_Init(interp) == TCL_ERROR) {
-	    if (!try_auto_path) {
-		try_auto_path=1;
-		continue;
-	    }
-	    bu_log("Blt_Init ERROR:\n%s\n", Tcl_GetStringResult(interp));
-	    return TCL_ERROR;
-	}
-	Tcl_StaticPackage(interp, "BLT", Blt_Init, (Tcl_PackageInitProc *) NULL);
-	init_blt=0;
 #endif
 
 	/* don't actually want to loop forever */

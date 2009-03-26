@@ -29,21 +29,6 @@
 #***
 ##############################################################
 
-if {$tcl_platform(os) == "Windows NT"} {
-    package require BLT
-} else {
-    # For the moment, leave it this way for
-    # all other platforms.
-    #package require blt
-    package require BLT
-}
-
-# avoid a pkg_index error about ::blt:: being unknown
-namespace eval blt {}
-
-if {![info exists ::blt::cursorWaitCount]} {
-    set ::blt::cursorWaitCount 0
-}
 
 # PROCEDURE: SetWaitCursor
 #
@@ -55,25 +40,16 @@ if {![info exists ::blt::cursorWaitCount]} {
 # Results:
 #       None
 #
-proc SetWaitCursor {} {
-    incr ::blt::cursorWaitCount
+proc SetWaitCursor {_w} {
+    incr ::ArcherCore::cursorWaitCount
 
-    if {1 < $::blt::cursorWaitCount} {
+    if {1 < $::ArcherCore::cursorWaitCount} {
 	# Already in cursor wait mode
 	return
     }
 
-    update idletasks
-    set children [winfo children .]
-    foreach kid $children {
-	if {![catch {$kid isa "::itk::Toplevel"} result]} {
-	    switch -- $result {
-		"1" {catch {blt::busy $kid}}
-	    }
-	}
-    }
-    blt::busy .
-    update
+    $_w configure -cursor watch
+    ::update idletasks
 }
 
 # PROCEDURE: SetNormalCursor
@@ -86,29 +62,15 @@ proc SetWaitCursor {} {
 # Results:
 #       None
 #
-proc SetNormalCursor {} {
-    incr ::blt::cursorWaitCount -1
-    if {$::blt::cursorWaitCount < 0} {
-	# Already in cursor normal mode
-	set ::blt::cursorWaitCount 0
+proc SetNormalCursor {_w} {
+    incr ::ArcherCore::cursorWaitCount -1
+
+    if {$::ArcherCore::cursorWaitCount != 0} {
 	return
     }
 
-    if {$::blt::cursorWaitCount != 0} {
-	return
-    }
-
-    update idletasks
-    set children [winfo children .]
-    foreach kid $children {
-	if {![catch {$kid isa "::itk::Toplevel"} result]} {
-	    switch -- $result {
-		"1" {catch {blt::busy release $kid}}
-	    }
-	}
-    }
-    blt::busy release .
-    update
+    $_w configure -cursor {}
+    ::update idletasks
 }
 
 

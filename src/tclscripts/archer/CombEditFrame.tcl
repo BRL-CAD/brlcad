@@ -51,9 +51,9 @@
 	#	variable mMaterial ""
 	variable mInherit ""
 
-	method buildGeneralGUI {parent tabs ti}
-	method buildShaderGUI {parent tabs ti}
-	method buildTreeGUI {parent tabs ti}
+	method buildGeneralGUI {}
+	method buildShaderGUI {}
+	method buildTreeGUI {}
 
 	# Override what's in GeometryEditFrame
 	method updateGeometryIfMod {}
@@ -71,32 +71,12 @@
     set parent [childsite upper]
 
     itk_component add tabs {
-	blt::tabnotebook $parent.tabs \
-	    -relief flat \
-	    -tiers 99 \
-	    -tearoff 0 \
-	    -gap 3 \
-	    -width 0 \
-	    -height 0 \
-	    -outerpad 2 \
-	    -highlightthickness 1 \
-	    -selectforeground black
+	ttk::notebook $parent.tabs
     } {}
-    $itk_component(tabs) configure \
-	-highlightcolor [$itk_component(tabs) cget -background] \
-	-borderwidth 0 \
-	-font [list $ArcherCore::SystemWindowFont 8]
-    $itk_component(tabs) insert end -text "General" -stipple gray25
-    $itk_component(tabs) insert end -text "Shader" -stipple gray25
-    $itk_component(tabs) insert end -text "Tree" -stipple gray25
 
-    set parent $itk_component(tabs)
-    set ti 0
-    buildGeneralGUI $parent $itk_component(tabs) $ti
-    incr ti
-    buildShaderGUI $parent $itk_component(tabs) $ti
-    incr ti
-    buildTreeGUI $parent $itk_component(tabs) $ti
+    buildGeneralGUI
+    buildShaderGUI
+    buildTreeGUI
 
     pack $itk_component(tabs) -expand yes -fill both
 
@@ -264,9 +244,9 @@
 #                      PROTECTED METHODS
 # ------------------------------------------------------------
 
-::itcl::body CombEditFrame::buildGeneralGUI {parent tabs tabIndex} {
+::itcl::body CombEditFrame::buildGeneralGUI {} {
     itk_component add combGeneralF {
-	::frame $parent.combgeneralf
+	::frame $itk_component(tabs).combgeneralf
     } {}
 
     set parent $itk_component(combGeneralF)
@@ -446,15 +426,10 @@
 	-row $row \
 	-sticky nsew
     grid columnconfigure $parent 1 -weight 1
-    pack $itk_component(combGeneralF) -expand yes -fill x -anchor n
+
     #    pack $itk_component(combGeneralF) -expand yes -fill both
     #    pack $parent -expand yes -fill x -anchor n
     #    grid columnconfigure [namespace tail $this] 1 -weight 1
-
-    $tabs tab configure $tabIndex \
-	-window $itk_component(combGeneralF) \
-	-fill x \
-	-anchor n
 
     # Set up bindings
     bind $itk_component(combIdE) <Return> [::itcl::code $this updateGeometryIfMod]
@@ -471,24 +446,24 @@
 
     #    bind $itk_component(combMaterialE) <Return> [::itcl::code $this updateGeometryIfMod]
     #    bind $itk_component(combInheritE) <Return> [::itcl::code $this updateGeometryIfMod]
+
+    $itk_component(tabs) add $itk_component(combGeneralF) -text "General"
 }
 
-::itcl::body CombEditFrame::buildShaderGUI {parent tabs ti} {
+::itcl::body CombEditFrame::buildShaderGUI {} {
     itk_component add combShader {
-	::ShaderEdit $parent.shader \
+	::ShaderEdit $itk_component(tabs).shader \
 	    -shaderChangedCallback [::itcl::code $this updateGeometryIfMod]
     } {}
 
-    $tabs tab configure $ti \
-	-window $itk_component(combShader) \
-	-fill both
-
     #    bind $itk_component(combShaderE) <Return> [::itcl::code $this updateGeometryIfMod]
+
+    $itk_component(tabs) add $itk_component(combShader) -text "Shader"
 }
 
-::itcl::body CombEditFrame::buildTreeGUI {parent tabs ti} {
+::itcl::body CombEditFrame::buildTreeGUI {} {
     itk_component add combTreeF {
-	::frame $parent.treef
+	::frame $itk_component(tabs).treef
     } {}
 
     set parent $itk_component(combTreeF)
@@ -502,17 +477,13 @@
     grid $itk_component(combTreeT) \
 	-row 0 \
 	-sticky nsew
-    #    pack $itk_component(combTreeT) -expand yes -fill both
-    pack $itk_component(combTreeF) -expand yes -fill both
-
-    $tabs tab configure $ti \
-	-window $itk_component(combTreeF) \
-	-fill both
 
     #    bind $itk_component(combTreeT) <Leave> [::itcl::code $this updateGeometryIfMod]
     #    bind $itk_component(combTreeT) <Return> [::itcl::code $this updateGeometryIfMod]
     #    bind $itk_component(combTreeT) <FocusOut> [::itcl::code $this updateGeometryIfMod]
     bind $itk_component(combTreeT) <KeyRelease> [::itcl::code $this updateGeometryIfMod]
+
+    $itk_component(tabs) add $itk_component(combTreeF) -text "Tree"
 }
 
 ::itcl::body CombEditFrame::updateGeometryIfMod {} {
