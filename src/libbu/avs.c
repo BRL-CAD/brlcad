@@ -332,7 +332,7 @@ bu_avs_print(const struct bu_attribute_value_set *avsp, const char *title)
  * Add a name/value pair even if the name already exists in this AVS.
  */
 void
-bu_avs_add_nonunique(struct bu_attribute_value_set *avsp, char *name, char *value)
+bu_avs_add_nonunique(struct bu_attribute_value_set *avsp, const char *name, const char *value)
 {
     struct bu_attribute_value_pair *app;
 

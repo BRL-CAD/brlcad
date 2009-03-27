@@ -1889,8 +1889,8 @@ BU_EXPORT BU_EXTERN(void bu_avs_print,
 		     const char *title));
 BU_EXPORT BU_EXTERN(void bu_avs_add_nonunique,
 		    (struct bu_attribute_value_set *avsp,
-		     char *attribute,
-		     char *value));
+		     const char *attribute,
+		     const char *value));
 /** @} */
 
 /** @addtogroup bitv */
