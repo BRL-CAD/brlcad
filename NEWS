@@ -31,6 +31,13 @@ changes made.  See document footer for additional details.
 --- 2009-03-06  Release 7.14.4                                     ---
 ----------------------------------------------------------------------
 
+Included in this release are various MGED bug fixes and enhancements.
+The 'gqa' quantitative analysis tool is integrated into MGED and
+receives numerous enhancements including computing moments of inertia
+and calculating geometric centroids.  There is now also a new 'coil'
+procedural geometry tool for generating coil shapes automatically
+using the pipe primitive.
+
 * fixed mged "Pick Edit-Primitive" mouse selection bug - Bob Parker
 * improved mged command console cut-and-paste support - Bob Parker
 * fixed mged command input last character bug - Bob Parker
