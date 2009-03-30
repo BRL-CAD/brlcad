@@ -4,11 +4,7 @@
 CGM_DIR = ${HOME}/CGM-10.1
 
 bin_PROGRAMS = g-sat
-g_sat_SOURCES = g-sat.cxx
-
-# noinst_PROGRAMS = test
-# test_SOURCES = test.cxx
-# test_LDADD = ${RT}
+g_sat_SOURCES = g-sat.cpp
 
 AM_CPPFLAGS = \
 	-I${HOME}/local/CGM-10.1/include \
