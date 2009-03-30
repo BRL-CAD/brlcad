@@ -2,7 +2,7 @@
 <VisualStudioProject
 	ProjectType="Visual C++"
 	Version="8.00"
-	Name="g_qa"
+	Name="g_transfer"
 	ProjectGUID="{C7AFA1EC-8D74-4715-B49A-59D597022904}"
 	>
 	<Platforms>
@@ -40,7 +40,7 @@
 			/>
 			<Tool
 				Name="VCMIDLTool"
-				TypeLibraryName=".\$(PlatformName)\$(ConfigurationName)/g_qa.tlb"
+				TypeLibraryName=".\$(PlatformName)\$(ConfigurationName)/g_transfer.tlb"
 				HeaderFileName=""
 			/>
 			<Tool
@@ -55,7 +55,7 @@
 				EnableFunctionLevelLinking="true"
 				TreatWChar_tAsBuiltInType="false"
 				UsePrecompiledHeader="0"
-				PrecompiledHeaderFile=".\$(PlatformName)\$(ConfigurationName)/g_qa.pch"
+				PrecompiledHeaderFile=".\$(PlatformName)\$(ConfigurationName)/g_transfer.pch"
 				AssemblerListingLocation="$(PlatformName)\$(ConfigurationName)\"
 				ObjectFile="$(PlatformName)\$(ConfigurationName)\"
 				ProgramDataBaseFileName="$(PlatformName)\$(ConfigurationName)\"
@@ -79,12 +79,12 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="libbu.lib libbn.lib libsysv.lib librt.lib libged.lib tcl85.lib"
-				OutputFile="$(PlatformName)\$(ConfigurationName)/g_qa.exe"
+				OutputFile="$(PlatformName)\$(ConfigurationName)/g_transfer.exe"
 				LinkIncremental="1"
 				SuppressStartupBanner="true"
 				AdditionalLibraryDirectories="../../../brlcadInstall/lib"
 				GenerateDebugInformation="false"
-				ProgramDatabaseFile=".\$(PlatformName)\$(ConfigurationName)/g_qa.pdb"
+				ProgramDatabaseFile=".\$(PlatformName)\$(ConfigurationName)/g_transfer.pdb"
 				SubSystem="1"
 				TargetMachine="1"
 			/>
@@ -139,7 +139,7 @@
 			<Tool
 				Name="VCMIDLTool"
 				TargetEnvironment="3"
-				TypeLibraryName=".\$(PlatformName)\$(ConfigurationName)/g_qa.tlb"
+				TypeLibraryName=".\$(PlatformName)\$(ConfigurationName)/g_transfer.tlb"
 				HeaderFileName=""
 			/>
 			<Tool
@@ -154,7 +154,7 @@
 				EnableFunctionLevelLinking="true"
 				TreatWChar_tAsBuiltInType="false"
 				UsePrecompiledHeader="0"
-				PrecompiledHeaderFile=".\$(PlatformName)\$(ConfigurationName)/g_qa.pch"
+				PrecompiledHeaderFile=".\$(PlatformName)\$(ConfigurationName)/g_transfer.pch"
 				AssemblerListingLocation=".\$(PlatformName)\$(ConfigurationName)/"
 				ObjectFile=".\$(PlatformName)\$(ConfigurationName)/"
 				ProgramDataBaseFileName=".\$(PlatformName)\$(ConfigurationName)/"
@@ -178,12 +178,12 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="libbu.lib libbn.lib libsysv.lib librt.lib tcl85.lib"
-				OutputFile="$(PlatformName)\$(ConfigurationName)/g_qa.exe"
+				OutputFile="$(PlatformName)\$(ConfigurationName)/g_transfer.exe"
 				LinkIncremental="1"
 				SuppressStartupBanner="true"
 				AdditionalLibraryDirectories="../../../brlcadInstall$(PlatformName)/lib"
 				GenerateDebugInformation="false"
-				ProgramDatabaseFile=".\$(PlatformName)\$(ConfigurationName)/g_qa.pdb"
+				ProgramDatabaseFile=".\$(PlatformName)\$(ConfigurationName)/g_transfer.pdb"
 				SubSystem="1"
 				TargetMachine="17"
 			/>
@@ -222,7 +222,7 @@
 			Filter="cpp;c;cxx;rc;def;r;odl;idl;hpj;bat;f90;for;f;fpp"
 			>
 			<File
-				RelativePath="..\..\..\src\gtools\g_qa.c"
+				RelativePath="..\..\..\src\gtools\g_transfer.c"
 				>
 			</File>
 		</Filter>
