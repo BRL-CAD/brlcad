@@ -49,6 +49,7 @@
 #include "raytrace.h"
 #include "wdb.h"
 #include "mater.h"
+#include "ged.h"
 
 
 static struct mater *mater_hd1 = MATER_NULL;
