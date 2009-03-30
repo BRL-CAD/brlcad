@@ -32,6 +32,10 @@ THESE SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 THESE ARE LOWER PRIORITY OR FOR FUTURE RELEASES
 -----------------------------------------------
 
+* refactor wdb_obj and view_obj in libged.  with the de-tcl'ing of the
+  base libs, it should disappear but shouldn't have wdb_*() funcs in
+  libged regardless.  work in progress.
+
 * make sure news2tracker.sh is not missing recent news items.  several
   were missing from a recent report generated (unverified).
 

@@ -477,6 +477,10 @@ GED_EXPORT BU_EXTERN(int ged_build_tops,
 		      char		**start,
 		      register char	**end));
 
+
+/* FIXME: wdb routines do not belong in libged.  need to be
+ * refactored, renamed, or removed.
+ */
 /* defined in wdb_comb_std.c */
 GED_EXPORT BU_EXTERN(int wdb_comb_std_cmd,
 		     (struct rt_wdb	*gedp,
@@ -484,6 +488,9 @@ GED_EXPORT BU_EXTERN(int wdb_comb_std_cmd,
 		      int		argc,
 		      char 		**argv));
 
+/* FIXME: wdb routines do not belong in libged.  need to be
+ * refactored, renamed, or removed.
+ */
 /* defined in wdb_obj.c */
 GED_EXPORT BU_EXTERN(int Wdb_Init,
 		    (Tcl_Interp *interp));
@@ -827,6 +834,9 @@ GED_EXPORT BU_EXTERN(int	wdb_stub_cmd,
 
 
 
+/* FIXME: vo routines do not belong in libged.  need to be refactored,
+ * renamed, or removed.
+ */
 /* defined in view_obj.c */
 GED_EXPORT extern struct view_obj HeadViewObj;		/**< @brief  head of view object list */
 GED_EXPORT BU_EXTERN(int Vo_Init,
