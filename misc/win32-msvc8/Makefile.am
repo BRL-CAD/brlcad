@@ -78,7 +78,10 @@ EXTRA_DIST= \
 	g52g4/g52g4.vcproj \
 	gif2fb/gif2fb.vcproj \
 	globe/globe.vcproj \
+	g_diff/g_qa.vcproj \
+	g_lint/g_qa.vcproj \
 	g_qa/g_qa.vcproj \
+	g_transfer/g_qa.vcproj \
 	iges2g/iges2g.vcproj \
 	itclstub/itclstub.vcproj \
 	itkstub/itkstub.vcproj \
