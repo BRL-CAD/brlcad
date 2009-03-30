@@ -23,20 +23,6 @@ THESE SHOULD HAPPEN BEFORE THE NEXT RELEASE
 THESE SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 -------------------------------------------------
 
-* implement file input support for the pnts primitive
-
-* make color and vectors on pnts work
-
-* rewrite the tables command to not suck
-
-* fix framebuffer refresh bug.  problem was caused when the if_ogl
-  framebuffer was changed (back) to request a direct rendering
-  context.  presumably that is triggering other code that is failing
-  to redraw.
-
-* make sure news2tracker.sh is not missing recent news items.  several
-  were missing from a recent report generated (unverified).
-
 * make mged 'inside' command work with geometry being edited
 
 * make mged 'mirror' command work with three args like before with
@@ -47,6 +33,20 @@ THESE SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 
 THESE ARE LOWER PRIORITY OR FOR FUTURE RELEASES
 -----------------------------------------------
+
+* make sure news2tracker.sh is not missing recent news items.  several
+  were missing from a recent report generated (unverified).
+
+* rewrite the tables command to not suck
+
+* fix framebuffer refresh bug.  problem was caused when the if_ogl
+  framebuffer was changed (back) to request a direct rendering
+  context.  presumably that is triggering other code that is failing
+  to redraw.
+
+* implement file input support for the pnts primitive
+
+* make color and vectors on pnts work
 
 * segregate the nmg routines out of librt back into their own library
 
