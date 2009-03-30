@@ -1616,7 +1616,34 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "libgcv", "..\libgcv\libgcv.
 		Release.AspNetCompiler.Debug = "False"
 	EndProjectSection
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "g_diff", "..\g_diff\g_diff.vcproj", "{C7AFA1EC-8D74-4715-B49A-59D597022904}"
+	ProjectSection(WebsiteProperties) = preProject
+		Debug.AspNetCompiler.Debug = "True"
+		Release.AspNetCompiler.Debug = "False"
+	EndProjectSection
+	ProjectSection(ProjectDependencies) = postProject
+		{E1CBDBEE-887A-4CD8-9D3E-59A52CA2E45E} = {E1CBDBEE-887A-4CD8-9D3E-59A52CA2E45E}
+	EndProjectSection
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "g_lint", "..\g_lint\g_lint.vcproj", "{C7AFA1EC-8D74-4715-B49A-59D597022904}"
+	ProjectSection(WebsiteProperties) = preProject
+		Debug.AspNetCompiler.Debug = "True"
+		Release.AspNetCompiler.Debug = "False"
+	EndProjectSection
+	ProjectSection(ProjectDependencies) = postProject
+		{E1CBDBEE-887A-4CD8-9D3E-59A52CA2E45E} = {E1CBDBEE-887A-4CD8-9D3E-59A52CA2E45E}
+	EndProjectSection
+EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "g_qa", "..\g_qa\g_qa.vcproj", "{C7AFA1EC-8D74-4715-B49A-59D597022904}"
+	ProjectSection(WebsiteProperties) = preProject
+		Debug.AspNetCompiler.Debug = "True"
+		Release.AspNetCompiler.Debug = "False"
+	EndProjectSection
+	ProjectSection(ProjectDependencies) = postProject
+		{E1CBDBEE-887A-4CD8-9D3E-59A52CA2E45E} = {E1CBDBEE-887A-4CD8-9D3E-59A52CA2E45E}
+	EndProjectSection
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "g_transfer", "..\g_transfer\g_transfer.vcproj", "{C7AFA1EC-8D74-4715-B49A-59D597022904}"
 	ProjectSection(WebsiteProperties) = preProject
 		Debug.AspNetCompiler.Debug = "True"
 		Release.AspNetCompiler.Debug = "False"
