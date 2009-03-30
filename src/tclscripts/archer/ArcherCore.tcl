@@ -1982,7 +1982,9 @@ Popup Menu    Right or Ctrl-Left
 	return
     }
 
-    set fractions [$itk_component(hpane) fraction]
+    if {[catch {$itk_component(hpane) fraction} fractions]} {
+	return
+    }
 
     if {[llength $fractions] == 2} {
 	set mHPaneFraction1 [lindex $fractions 0]
