@@ -177,7 +177,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="libbu.lib libbn.lib libsysv.lib librt.lib tcl85.lib"
+				AdditionalDependencies="libbu.lib libbn.lib libsysv.lib librt.lib libged.lib tcl85.lib"
 				OutputFile="$(PlatformName)\$(ConfigurationName)/g_qa.exe"
 				LinkIncremental="1"
 				SuppressStartupBanner="true"
