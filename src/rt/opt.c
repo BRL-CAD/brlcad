@@ -44,6 +44,16 @@ int		width = 0;		/* # of pixels in X */
 int		height = 0;		/* # of lines in Y */
 
 
+/* boolean type definition */
+typedef int bool;
+#define         false   (0)
+#define         true    (1)
+
+
+/* boolean to enable/disable rtarea center computations */
+extern bool rtarea_compute_centers;
+
+
 /***** Variables shared with viewing model *** */
 int		doubles_out = 0;	/* u_char or double .pix output file */
 double		azimuth = 0.0, elevation = 0.0;
@@ -167,7 +177,7 @@ int get_args( int argc, register char **argv )
 
 
 #define GETOPT_STR	\
-	".:,:@:a:b:c:d:e:f:g:h:ij:k:l:n:o:p:q:rs:tu:v:w:x:A:BC:D:E:F:G:H:IJ:K:MN:O:P:Q:RST:U:V:WX:!:+:"
+	".:,:@:a:b:c:d:e:f:g:h:ij:k:l:n:o:p:q:rs:tu:v:w:x:yA:BC:D:E:F:G:H:IJ:K:MN:O:P:Q:RST:U:V:WX:!:+:"
 
     while ( (c=bu_getopt( argc, argv, GETOPT_STR )) != EOF )  {
 	switch ( c )  {
@@ -567,6 +577,10 @@ int get_args( int argc, register char **argv )
 		break;
 	    case 'd':
 		rpt_dist = atoi( bu_optarg );
+		break;
+	    case 'y':
+                /* enable rtarea center computations */
+		rtarea_compute_centers = true;
 		break;
 	    case '+':
 	    {

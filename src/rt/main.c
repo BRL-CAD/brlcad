@@ -49,6 +49,15 @@
 #include "rtprivate.h"
 #include "brlcad_version.h"
 
+/* boolean type definition */
+typedef int bool; 
+#define         false   (0)
+#define         true    (1)
+
+/* rt global boolean to indicate if rtarea should compute
+ * centers. this is set in opt.c
+ */
+bool rtarea_compute_centers=false;
 
 extern const char title[];
 extern const char usage[];
@@ -186,6 +195,7 @@ int main(int argc, char **argv)
 	(void)fputs(usage, stderr);
 	return 1;
     }
+
     /* Identify the versions of the libraries we are using. */
     if (rt_verbosity & VERBOSE_LIBVERSIONS) {
 	(void)fprintf(stderr, "%s%s%s%s\n",
