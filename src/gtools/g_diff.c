@@ -19,14 +19,15 @@
  */
 /** @file g_diff.c
  *
- * Routine to determine the differences between two BRL-CAD databases
- * (".g" files).  With no options, the output to stdout is an MGED
- * script that may be fed to MGED to convert the first database to the
+ * Routine to determine the differences between two BRL-CAD databases.
+ *
+ * With no options, the output to stdout is an MGED script that may be
+ * provided as input to MGED to convert the first database to the
  * match the second.  The script uses the MGED "db" command to make
- * the changes. Some solid types do not yet have support in the "db"
- * command. Such solids that change from one database to the next,
+ * the changes.  Some solid types do not yet have support in the "db"
+ * command.  Such solids that change from one database to the next,
  * will be noted by a comment in the database as: "#IMPORT solid_name
- * from database_name"
+ * from database_name".
  *
  */
 
@@ -54,19 +55,19 @@ static struct mater *mater_hd1 = MATER_NULL;
 static struct mater *mater_hd2 = MATER_NULL;
 
 
-#define HUMAN	1
-#define MGED	2
+#define HUMAN 1
+#define MGED  2
 
 /* type of adjustment, for do_compare() */
-#define	PARAMS	1
-#define	ATTRS	2
+#define PARAMS 1
+#define ATTRS  2
 
-static int mode=HUMAN;
+static int mode = HUMAN;
 static int evolutionary = 1;
 static Tcl_Interp *interp = NULL;
-static int pre_5_vers=0;
-static int use_floats=0;	/* flag to use floats for comparisons */
-static int verify_region_attribs=0;	/* flag to verify region attributes */
+static int pre_5_vers = 0;
+static int use_floats = 0;	/* flag to use floats for comparisons */
+static int verify_region_attribs = 0;	/* flag to verify region attributes */
 static struct db_i *dbip1, *dbip2;
 static int version2;
 
@@ -82,10 +83,10 @@ int
 compare_colors(void)
 {
     struct mater *mp1, *mp2;
-    int found1=0, found2=0;
-    int is_diff=0;
+    int found1 = 0, found2 = 0;
+    int is_diff = 0;
 
-    for (mp1 = mater_hd1; mp1 != MATER_NULL; mp1 = mp1->mt_forw)  {
+    for (mp1 = mater_hd1; mp1 != MATER_NULL; mp1 = mp1->mt_forw) {
 	found1 = 0;
 	mp2 = mater_hd2;
 	while (mp2 != MATER_NULL) {
@@ -103,7 +104,7 @@ compare_colors(void)
 	if (!found1)
 	    break;
     }
-    for (mp2 = mater_hd2; mp2 != MATER_NULL; mp2 = mp2->mt_forw)  {
+    for (mp2 = mater_hd2; mp2 != MATER_NULL; mp2 = mp2->mt_forw) {
 	found1 = 0;
 	mp1 = mater_hd1;
 	while (mp1 != MATER_NULL) {
@@ -158,19 +159,19 @@ compare_colors(void)
     if (is_diff) {
 	if (mode == HUMAN) {
 	    printf("Color table has changed from:\n");
-	    for (mp1 = mater_hd1; mp1 != MATER_NULL; mp1 = mp1->mt_forw)  {
+	    for (mp1 = mater_hd1; mp1 != MATER_NULL; mp1 = mp1->mt_forw) {
 		printf("\t%d..%d %d %d %d\n", mp1->mt_low, mp1->mt_high,
 		       mp1->mt_r, mp1->mt_g, mp1->mt_b);
 	    }
 	    printf("\t\tto:\n");
-	    for (mp2 = mater_hd2; mp2 != MATER_NULL; mp2 = mp2->mt_forw)  {
+	    for (mp2 = mater_hd2; mp2 != MATER_NULL; mp2 = mp2->mt_forw) {
 		printf("\t%d..%d %d %d %d\n", mp2->mt_low, mp2->mt_high,
 		       mp2->mt_r, mp2->mt_g, mp2->mt_b);
 	    }
 	} else {
 	    if (version2 > 4)
 		printf("attr rm _GLOBAL regionid_colortable\n");
-	    for (mp2 = mater_hd2; mp2 != MATER_NULL; mp2 = mp2->mt_forw)  {
+	    for (mp2 = mater_hd2; mp2 != MATER_NULL; mp2 = mp2->mt_forw) {
 		printf("color %d %d %d %d %d\n", mp2->mt_low, mp2->mt_high,
 		       mp2->mt_r, mp2->mt_g, mp2->mt_b);
 	    }
@@ -271,7 +272,7 @@ compare_values(int type, Tcl_Obj *val1, Tcl_Obj *val2)
 	return 1;
     }
 
-    for (i=0; i<len1; i++) {
+    for (i = 0; i<len1; i++) {
 	char *str1;
 	char *str2;
 
@@ -312,7 +313,7 @@ do_compare(int type, struct bu_vls *vls, Tcl_Obj *obj1, Tcl_Obj *obj2, char *obj
     int len1, len2, found, junk;
     int i, j;
     int start_index;
-    int found_diffs=0;
+    int found_diffs = 0;
     int ev = 0;
 
     if (Tcl_ListObjLength(interp, obj1, &len1) == TCL_ERROR) {
@@ -367,7 +368,7 @@ do_compare(int type, struct bu_vls *vls, Tcl_Obj *obj1, Tcl_Obj *obj2, char *obj
 
 		/* check if this value has changed */
 		ev = compare_values(type, val1, val2);
-		if ( ev ) {
+		if (ev) {
 		    if (!found_diffs++) {
 			if (mode == HUMAN) {
 			    printf("%s has changed:\n", obj_name);
@@ -597,7 +598,7 @@ void
 verify_region_attrs(struct directory *dp, struct db_i *dbip, Tcl_Obj *obj)
 {
     Tcl_Obj **objs;
-    int len=0;
+    int len = 0;
     int i;
     struct rt_db_internal intern;
     struct rt_comb_internal *comb;
@@ -676,11 +677,11 @@ static char *region_attrs[] = { "region",
 void
 remove_region_attrs(Tcl_Obj *obj)
 {
-    int len=0;
+    int len = 0;
     Tcl_Obj **objs;
     char *key;
     int i, j;
-    int found_material=0;
+    int found_material = 0;
 
     if (Tcl_ListObjGetElements(interp, obj, &len, &objs) != TCL_OK) {
 	fprintf(stderr, "Cannot get length of attributes for %s\n",
@@ -775,7 +776,7 @@ int
 diff_objs(struct rt_wdb *wdb1, struct rt_wdb *wdb2)
 {
     struct directory *dp1, *dp2;
-    char *argv[4]={NULL, NULL, NULL, NULL};
+    char *argv[4] = {NULL, NULL, NULL, NULL};
     struct bu_vls s1_tcl, s2_tcl;
     struct bu_vls vls;
     int has_diff = 0;

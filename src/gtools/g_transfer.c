@@ -102,12 +102,14 @@ hit(struct application *ap, struct partition *p, struct seg *s)
     bu_log("HIT!\n");
     return 0;
 }
+
 int
 miss(struct application *ap)
 {
     bu_log("MISSED!\n");
     return 0;
 }
+
 void
 do_something() {
     /* shoot a ray at some geometry just to show that we can */
@@ -272,7 +274,7 @@ run_server(int port) {
 	}
 
 	/* got a connection, process it */
-	title = pkg_bwaitfor(MSG_HELO, client);
+	title = pkg_bwaitfor (MSG_HELO, client);
 	if (title == NULL) {
 	    bu_log("Failed to process the client connection, still waiting\n");
 	    pkg_close(client);
@@ -325,7 +327,8 @@ run_server(int port) {
 }
 
 
-/** base routine that the client uses to send an object to the server.
+/**
+ * base routine that the client uses to send an object to the server.
  * this is the hook callback function for both the primitives and
  * combinations encountered during a db_functree() traversal.
  *
@@ -365,9 +368,10 @@ send_to_server(struct db_i *dbip, struct directory *dp, genptr_t connection)
 }
 
 
-/** start up a client that connects to the given server, and sends
- *  serialized .g data.  if the user specified geometry, only that
- *  geometry is sent via send_to_server().
+/**
+ * start up a client that connects to the given server, and sends
+ * serialized .g data.  if the user specified geometry, only that
+ * geometry is sent via send_to_server().
  */
 void
 run_client(const char *server, int port, struct db_i *dbip, int geomc, const char **geomv)
@@ -453,8 +457,6 @@ run_client(const char *server, int port, struct db_i *dbip, int geomc, const cha
 }
 
 
-/** main application
- */
 int
 main(int argc, char *argv[]) {
     const char * const argv0 = argv[0];
