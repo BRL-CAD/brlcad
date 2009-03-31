@@ -142,13 +142,13 @@
     </para>
     <variablelist remap='TP'>
       <varlistentry>
-	<term><option>-c"set compute_centers=#"</option></term>
+	<term><option>-c "set compute_centers=#"</option></term>
 	<listitem>
 	  <para>and</para>
 	</listitem>
       </varlistentry>
       <varlistentry>
-	<term><option>-c"set cc=#"</option></term>
+	<term><option>-c "set cc=#"</option></term>
 	<listitem>
 	  <para>
 	    determine whether area centers should be computed and reported.
@@ -173,7 +173,7 @@
 
       <para>
 	The command	
-	<userinput>rtarea -c"set cc=1" example.g all</userinput> 
+	<userinput>rtarea -c "set cc=1" example.g all</userinput> 
 	computes the area and centers for model 'example.g' group 'all'.
       </para>
 	
