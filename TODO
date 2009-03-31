@@ -30,6 +30,17 @@ THESE SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 THESE ARE LOWER PRIORITY OR FOR FUTURE RELEASES
 -----------------------------------------------
 
+* image objects (tbd objects) for v5 geometry files
+
+* material objects (non-geometric attribute-only objects) for v5
+  geometry files.  instead of material attribute value becomes
+  material object name.  material object encompasses hierarchical
+  material traits.
+
+* shader objects (non-geometric attribute-only objects) for v5
+  geometry files.  allow shader string to refer to said objects for
+  shader parameters.
+
 * refactor wdb_obj and view_obj in libged.  with the de-tcl'ing of the
   base libs, it should disappear but shouldn't have wdb_*() funcs in
   libged regardless.  work in progress.
