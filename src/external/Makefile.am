@@ -7,7 +7,7 @@ CUBIT_DIR =
 CUBIT_FILES = \
 	Cubit/Makefile.am \
 	Cubit/Makefile.in \
-	Cubit/g-sat.cxx
+	Cubit/g-sat.cpp
 endif
 
 if BUILD_EF
