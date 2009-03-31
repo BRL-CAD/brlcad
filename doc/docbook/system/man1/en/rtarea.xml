@@ -63,7 +63,7 @@
   <refsect1 id='description'>
     <title>DESCRIPTION</title>
     <para>
-      <emphasis remap='I'>Rtarea</emphasis> calculates the exposed and presented 
+      <emphasis remap='I'>Rtarea</emphasis> calculates the exposed, presented and centers of 
       surface areas of specified geometry objects from a particular view.  The summary 
       output includes details for individual regions, assemblies (combinations that contain
       regions), and summarized totals.  The exposed area is the occluded 2D
@@ -75,8 +75,9 @@
     </para>
     
     <para>
-      It presently does not compute the entire surface area of objects
-      displayed, though that would be a nice feature to have.
+      WARNING: <emphasis remap='I'>Rtarea</emphasis> may not correctly report area or 
+      center when instancing is done at the group level. Using <command>xpush</command> 
+      can be a workaround for this problem.
     </para>
 
     <para>
@@ -126,14 +127,66 @@
     </para>
     
   </refsect1>
-  
+ 
+  <refsect1 id='additional_options'>
+    <title>ADDITIONAL OPTIONS</title>
+    <para>
+      To configure its behavior, <command>rtarea</command> makes use of 
+      the <option>-c</option> option.
+    </para>
+    
+    <para>
+      Note that this approach is necessitated by the fact that 
+      <emphasis remap='I'>librt (3)</emphasis> has used up nearly the entire 
+      alphabet. A transition to GNU-style long option names is planned.
+    </para>
+    <variablelist remap='TP'>
+      <varlistentry>
+	<term><option>-c"set compute_centers=#"</option></term>
+	<listitem>
+	  <para>and</para>
+	</listitem>
+      </varlistentry>
+      <varlistentry>
+	<term><option>-c"set cc=#"</option></term>
+	<listitem>
+	  <para>
+	    determine whether area centers should be computed and reported.
+	    Valid values are 1 (on) and 0 (off). The default is off.
+	  </para>
+	</listitem>
+      </varlistentry>
+    </variablelist>
+  </refsect1>
+ 
+  <refsect1 id='examples'>
+    <title>EXAMPLES</title>
+
+    <example>
+      <title>Rtarea processing of example.g</title>
+      
+      <para>
+	The command	
+	<userinput>rtarea example.g all</userinput> 
+	computes the area for model 'example.g' group 'all'.
+      </para>
+
+      <para>
+	The command	
+	<userinput>rtarea -c"set cc=1" example.g all</userinput> 
+	computes the area and centers for model 'example.g' group 'all'.
+      </para>
+	
+    </example>
+  </refsect1>
+
   <refsect1 id='see_also'>
     <title>SEE ALSO</title>
     <para>
     <citerefentry><refentrytitle>mged</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>rt</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>pix-fb</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>librt</refentrytitle><manvolnum>3</manvolnum></citerefentry>, <citerefentry><refentrytitle>pix</refentrytitle><manvolnum>5</manvolnum></citerefentry>.
     </para>
   </refsect1>
-  
+
   <refsect1 id='diagnostics'>
     <title>DIAGNOSTICS</title>
     <para>
@@ -163,3 +216,5 @@
   </refsect1>
 </refentry>
 
+
+ 
