@@ -45,6 +45,9 @@ THESE ARE LOWER PRIORITY OR FOR FUTURE RELEASES
   base libs, it should disappear but shouldn't have wdb_*() funcs in
   libged regardless.  work in progress.
 
+* reorganize the header files in include so it is clear which headers
+  pertain to which libraries.
+
 * make sure news2tracker.sh is not missing recent news items.  several
   were missing from a recent report generated (unverified).
 
