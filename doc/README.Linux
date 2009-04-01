@@ -7,7 +7,7 @@ Linux distributions.
 Table of Contents
 -----------------
 Arch Linux
-Ubuntu
+Ubuntu/Debian
 PPC64 Linux
 
 
@@ -20,12 +20,12 @@ build situation (eg. building from a tarball vs building from SVN).
 Run `makepkg` in that directory to build the package.
 
 
-Ubuntu
-------
+Ubuntu/Debian
+-------------
 
-Users of Ubuntu and other similar packaging distributions of Linux
-will need to ensure that a few essentials are in place before you will
-be able to compile BRL-CAD.
+Users of Ubuntu, Debian, and other similar packaging distributions of
+Linux will need to ensure that a few essentials are in place before
+you will be able to compile BRL-CAD.
 
 Following the build instructions in the INSTALL file, if you are
 starting from configure then you will need:
@@ -48,6 +48,11 @@ and update the alternatives entry for automake so that it refers to
 version 1.9 and not version 1.4:
 
 sudo update-alternatives automake /usr/bin/automake-1.9
+
+You will also want to make sure that you have the X11 development
+headers installed:
+
+apt-get install xserver-xorg-dev libx11-dev libxi-dev
 
 
 PPC64 Linux
