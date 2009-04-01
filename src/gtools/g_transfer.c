@@ -514,7 +514,9 @@ main(int argc, char *argv[]) {
 	/* XXX = wdb_dbopen(dbip, RT_WDB_TYPE_DB_INMEM); */
 
 	/* ignore broken pipes */
+#ifdef SIGPIPE
 	(void)signal(SIGPIPE, SIG_IGN);
+#endif
 
 	/* fire up the server */
 	bu_log("Listening on port %d\n", port);
