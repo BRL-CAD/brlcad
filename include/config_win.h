@@ -164,11 +164,8 @@ typedef void (*sig_t)(int);
  * types
  */
 
-#if 0
-typedef _off_t off_t;
-#else
 #define off_t _off_t
-#endif
+
 typedef int pid_t;
 typedef int socklen_t;
 typedef unsigned char uint8_t;
