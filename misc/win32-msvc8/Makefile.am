@@ -86,7 +86,6 @@ EXTRA_DIST= \
 	itclstub/itclstub.vcproj \
 	itkstub/itkstub.vcproj \
 	kurt/kurt.vcproj \
-	libBLT/libBLT.vcproj \
 	libItcl/libItcl.vcproj \
 	libItk/libItk.vcproj \
 	libbn/libbn.vcproj \

@@ -216,16 +216,6 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "itkstub", "..\itkstub\itkst
 		Release.AspNetCompiler.Debug = "False"
 	EndProjectSection
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "libBLT", "..\libBLT\libBLT.vcproj", "{7A073879-92A6-4934-B386-37AF30F27B38}"
-	ProjectSection(ProjectDependencies) = postProject
-		{5118991D-8BCF-4FE4-981C-F33C9D500E95} = {5118991D-8BCF-4FE4-981C-F33C9D500E95}
-		{9C2287FD-4991-493F-81A4-41CAA48565CE} = {9C2287FD-4991-493F-81A4-41CAA48565CE}
-	EndProjectSection
-	ProjectSection(WebsiteProperties) = preProject
-		Debug.AspNetCompiler.Debug = "True"
-		Release.AspNetCompiler.Debug = "False"
-	EndProjectSection
-EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "libItcl", "..\libItcl\libItcl.vcproj", "{39785814-94C1-4245-AA56-60ED2C0E1F41}"
 	ProjectSection(ProjectDependencies) = postProject
 		{97D16904-207B-4602-ADC5-4D4D34AA421D} = {97D16904-207B-4602-ADC5-4D4D34AA421D}
