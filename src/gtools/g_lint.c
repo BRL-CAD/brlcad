@@ -41,7 +41,7 @@
 #define made_it()	bu_log("Made it to %s:%d\n", __FILE__, __LINE__);
 
 #define OPT_STRING	"a:ce:g:opr:st:ux:?"
-#define RAND_NUM	((fastf_t)random()/INT_MAX)
+#define RAND_NUM	((fastf_t)rand()/RAND_MAX)
 #define RAND_OFFSET	((1 - cell_center) * 	\
 			 (RAND_NUM * celsiz - celsiz / 2))
 #define TITLE_LEN	80
