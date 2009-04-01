@@ -229,6 +229,10 @@
 			Filter="cpp;c;cxx;rc;def;r;odl;idl;hpj;bat"
 			>
 			<File
+				RelativePath="..\..\..\src\libsysv\bcmp.c"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\src\libsysv\memset.c"
 				>
 			</File>

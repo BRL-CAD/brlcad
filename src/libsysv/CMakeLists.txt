@@ -1,4 +1,5 @@
 set(LIBSYSV_SOURCES
+    bcmp.c
     memset.c
     strchr.c
     strdup.c
