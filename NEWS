@@ -14,6 +14,7 @@ changes made.  See document footer for additional details.
 --- 2009-04-XX  Release 7.14.6                                     ---
 ----------------------------------------------------------------------
 
+* rtarea now computes center of area - Richard Weiss, Keith Bowman
 * reduced archer's initial and maximum window size - Bob Parker
 * BLT is no longer an archer/bwish external dependency - Bob Parker
 * restored mged 'inside' command on edit state objects - Bob Parker
