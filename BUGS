@@ -15,6 +15,9 @@ on-going issues.
 Recent Bugs
 -----------
 
+* Windows MSVC build files seem to have the project dependencies all
+  jacked up as it doesn't seem to compile things in the right order.
+
 * rtwizard reportedly won't display a line overlay if you line object
   is obscured by another.  Example being to display a vehicle as
   ghost, crew as solid, and crew as line.
