@@ -51,6 +51,10 @@ __BEGIN_DECLS
 #  endif
 #endif
 
+#ifndef HAVE_BCMP
+SYSV_EXPORT extern int bcmp(char *b1, char *b2, int len);
+#endif
+
 #ifndef HAVE_MEMSET
 SYSV_EXPORT extern char *memset(char *s, char c, int n);
 #endif
