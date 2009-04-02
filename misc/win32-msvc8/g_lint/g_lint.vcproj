@@ -3,7 +3,7 @@
 	ProjectType="Visual C++"
 	Version="8.00"
 	Name="g_lint"
-	ProjectGUID="{C7AFA1EC-8D74-4715-B49A-59D597022904}"
+	ProjectGUID="{44C37F98-6D5F-4980-84A2-647148FB4A0B}"
 	>
 	<Platforms>
 		<Platform

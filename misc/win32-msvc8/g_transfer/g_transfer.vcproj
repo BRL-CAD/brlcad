@@ -3,7 +3,7 @@
 	ProjectType="Visual C++"
 	Version="8.00"
 	Name="g_transfer"
-	ProjectGUID="{C7AFA1EC-8D74-4715-B49A-59D597022904}"
+	ProjectGUID="{425AA1E2-1885-4B62-BCC7-1307EA29AE88}"
 	>
 	<Platforms>
 		<Platform
