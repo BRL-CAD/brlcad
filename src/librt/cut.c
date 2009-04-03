@@ -45,7 +45,6 @@
 
 #include "vmath.h"
 #include "raytrace.h"
-#include "nmg.h"
 #include "plot3.h"
 
 

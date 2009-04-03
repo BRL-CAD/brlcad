@@ -222,7 +222,7 @@ void updateStack(Stack & s,
 		 UserFunction::symboltable const & dlocalvariables,
 		 std::vector<std::string> argn)
 {
-    using boost::spirit::classic::find;
+    using boost::spirit::find;
     if (s.empty())
 	return;
     /** create a map between data adresses in destination Variable table
@@ -276,7 +276,7 @@ UserFunction * UserFunction::asUserFunction()
     return this;
 }
 
-boost::spirit::classic::symbols<double> const & UserFunction::localvariables() const
+boost::spirit::symbols<double> const & UserFunction::localvariables() const
 {
     return localvariables_;
 }
@@ -293,7 +293,7 @@ double UserFunction::evalp(std::vector<double> const & args) const
     /** store data from args into the copy */
     std::size_t const size = argnames.size();
     for(std::size_t i =0; i != size ; ++i) {
-	double * const p = boost::spirit::classic::find(temp, argnames[i].c_str());
+	double * const p = boost::spirit::find(temp, argnames[i].c_str());
 	assert(p);
 	*p = args[i];
     }
@@ -358,6 +358,48 @@ boost::shared_ptr<Node> sysFunctionNode::clone() const
 MathFunction const & sysFunctionNode::func() const
 {
     return *fp;
+}
+/** BranchNode Methods */
+
+BranchNode::BranchNode(Stack const & stack1, Stack const & stack2)
+	: func_(stack1, stack2)
+{}
+
+boost::shared_ptr<Node> BranchNode::clone() const
+{
+    return boost::shared_ptr<Node>(new BranchNode(*this));
+}
+
+MathFunction const & BranchNode::func() const
+{
+    return func_;
+}
+
+std::size_t BranchNode::nbranches() const
+{
+    return 2;
+}
+
+Stack * BranchNode::branch(std::size_t i)
+{
+    if (i > 1)
+        return 0;
+    return i == 0 ? &func_.stack1_ : &func_.stack2_;
+}
+
+BranchNode::BranchFunc::BranchFunc(Stack const & stack1, Stack const & stack2)
+    : MathFunction("branch"),
+    stack1_(stack1), stack2_(stack2)
+{}
+
+std::size_t BranchNode::BranchFunc::arity() const
+{
+    return 1;
+}
+
+double BranchNode::BranchFunc::evalp(std::vector<double> const & params) const
+{
+    return evaluate(params[0] ? stack1_ : stack2_);
 }
 
 /** Functions assisting evaluation */

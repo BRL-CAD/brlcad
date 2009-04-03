@@ -95,7 +95,7 @@ for PLACE in ${PATH_ELEMENTS} ; do
 	if test "${TRY}" != "${PATTERN}" ; then
 		# Found something(s), format it/them
 		echo ${TRY}
-		awf -man ${TRY} | ${MORE}
+		man ${TRY}
 		if test "x$?" = "x0" ; then
 		    break
 		fi

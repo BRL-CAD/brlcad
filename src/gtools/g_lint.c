@@ -19,8 +19,8 @@
  */
 /** @file g_lint.c
  *
- *	Sample some BRL-CAD geometry, reporting overlaps
- *	and potential problems with air regions.
+ * Sample some BRL-CAD geometry, reporting overlaps and potential
+ * problems with air regions.
  *
  */
 
@@ -28,122 +28,129 @@
 
 #include <stdlib.h>
 #include <string.h>
-#include <stdio.h>
 #include <math.h>
-#include <limits.h>			/* home of INT_MAX aka MAXINT */
+#include <limits.h> /* home of INT_MAX aka MAXINT */
+#include "bio.h"
 
 #include "bu.h"
 #include "vmath.h"
 #include "raytrace.h"
 #include "plot3.h"
 
+
 #define made_it()	bu_log("Made it to %s:%d\n", __FILE__, __LINE__);
 
-#define	OPT_STRING	"a:ce:g:opr:st:ux:?"
-#define	RAND_NUM	((fastf_t)random()/INT_MAX)
-#define	RAND_OFFSET	((1 - cell_center) *		\
+#define OPT_STRING	"a:ce:g:opr:st:ux:?"
+#define RAND_NUM	((fastf_t)rand()/RAND_MAX)
+#define RAND_OFFSET	((1 - cell_center) * 	\
 			 (RAND_NUM * celsiz - celsiz / 2))
-#define	TITLE_LEN	80
+#define TITLE_LEN	80
 
-/*
- *			G _ L I N T _ C T R L
+
+/**
+ * G _ L I N T _ C T R L
  *
- *	Specification of what an how to report results
+ * Specification of what an how to report results
  */
 struct g_lint_ctrl
 {
-    long		glc_magic;	/* Magic no. for integrity check */
-    long		glc_debug;	/* Bits to tailor diagnostics */
-    fastf_t		glc_tol;	/* Overlap/void tolerance */
-    unsigned long	glc_what_to_report;	/* Bits to tailor the output */
-    unsigned long	glc_how_to_report;	/* Nature of the output */
-    FILE		*glc_fp;	/* The output stream */
-    unsigned char	*glc_color;	/* RGB for plot3(5) output */
+    long glc_magic;			/* Magic no. for integrity check */
+    long glc_debug;			/* Bits to tailor diagnostics */
+    fastf_t glc_tol;			/* Overlap/void tolerance */
+    unsigned long glc_what_to_report;	/* Bits to tailor the output */
+    unsigned long glc_how_to_report;	/* Nature of the output */
+    FILE *glc_fp;			/* The output stream */
+    unsigned char *glc_color;		/* RGB for plot3(5) output */
 };
 #define G_LINT_CTRL_NULL	((struct g_lint_ctrl *) 0)
-#define G_LINT_CTRL_MAGIC	0x676c6374
-/*
- *	The meanings of the bits in the what-to-report
- *	member of the g_lint_ctrl structure
- */
-#define	G_LINT_OVLP	0x001
-#define	G_LINT_A_CONT	0x002
-#define	G_LINT_A_UNCONF	0x004
-#define	G_LINT_A_1ST	0x008
-#define	G_LINT_A_LAST	0x010
-#define	G_LINT_A_ANY	(G_LINT_A_CONT | G_LINT_A_UNCONF |	\
-			 G_LINT_A_1ST  | G_LINT_A_LAST)
-#define	G_LINT_VAC	0x020
-#define	G_LINT_ALL	(G_LINT_OVLP | G_LINT_A_ANY | G_LINT_VAC)
-/*
- *	The possible values of the how-to-report flag
- */
-#define	G_LINT_ASCII			0
-#define	G_LINT_ASCII_WITH_ORIGIN	1
-#define	G_LINT_PLOT3			2
+#define G_LINT_CTRL_MAGIC 0x676c6374
 
 /*
- *			G _ L I N T _ S E G
+ * The meanings of the bits in the what-to-report member of the
+ * g_lint_ctrl structure
+ */
+#define G_LINT_OVLP     0x001
+#define G_LINT_A_CONT   0x002
+#define G_LINT_A_UNCONF 0x004
+#define G_LINT_A_1ST    0x008
+#define G_LINT_A_LAST   0x010
+#define G_LINT_A_ANY    (G_LINT_A_CONT | G_LINT_A_UNCONF |	\
+			 G_LINT_A_1ST  | G_LINT_A_LAST)
+#define G_LINT_VAC      0x020
+#define G_LINT_ALL      (G_LINT_OVLP | G_LINT_A_ANY | G_LINT_VAC)
+
+/*
+ * The possible values of the how-to-report flag
+ */
+#define G_LINT_ASCII             0
+#define G_LINT_ASCII_WITH_ORIGIN 1
+#define G_LINT_PLOT3             2
+
+
+/**
+ * G _ L I N T _ S E G
  *
- *	The critical information about a particular overlap
- *	found on one ray
+ * The critical information about a particular overlap found on one
+ * ray.
  */
 struct g_lint_seg
 {
-    long		gls_magic;	/* Magic no. for integrity check */
-    double		gls_length;
-    point_t		gls_origin;
-    point_t		gls_entry;
-    point_t		gls_exit;
-    struct g_lint_seg	*gls_next;
+    long gls_magic;	/* Magic no. for integrity check */
+    double gls_length;
+    point_t gls_origin;
+    point_t gls_entry;
+    point_t gls_exit;
+    struct g_lint_seg *gls_next;
 };
-#define	G_LINT_SEG_NULL		((struct g_lint_seg *) 0)
-#define G_LINT_SEG_MAGIC	0x676c7367
+#define G_LINT_SEG_NULL  ((struct g_lint_seg *) 0)
+#define G_LINT_SEG_MAGIC 0x676c7367
 
-/*
- *			G _ L I N T _ O V L P
+
+/**
+ * G _ L I N T _ O V L P
  *
- *	A pair of overlapping regions and a list of all the
- *	offending ray intervals
+ * A pair of overlapping regions and a list of all the offending ray
+ * intervals.
  */
 struct g_lint_ovlp
 {
-    long		glo_magic;	/* Magic no. for integrity check */
-    struct region	*glo_r1;
-    struct region	*glo_r2;
-    struct g_lint_seg	*glo_segs;
-    struct g_lint_seg	*glo_seg_last;
-    double		glo_cum_length;
+    long glo_magic; /* Magic no. for integrity check */
+    struct region *glo_r1;
+    struct region *glo_r2;
+    struct g_lint_seg *glo_segs;
+    struct g_lint_seg *glo_seg_last;
+    double glo_cum_length;
 };
-#define	G_LINT_OVLP_NULL	((struct g_lint_ovlp *) 0)
-#define G_LINT_OVLP_MAGIC	0x676c6f76
+#define G_LINT_OVLP_NULL	((struct g_lint_ovlp *) 0)
+#define G_LINT_OVLP_MAGIC 0x676c6f76
 
-static unsigned char	dflt_plot_rgb[] =
+static unsigned char dflt_plot_rgb[] =
 {
     255,   0,   0,	/* overlap */
     255, 255,   0,	/* air_contiguous */
-    0, 255,   0,	/* air_unconfined */
+    0,   255,   0,	/* air_unconfined */
     255,   0, 255,	/* air_first */
-    0, 255, 255,	/* air_last */
+    0,   255, 255,	/* air_last */
     128, 128, 128	/* vacuum */
 };
 
-bu_rb_tree		*ovlp_log = 0;		/* Log of previous overlaps */
-bu_rb_tree		*ovlps_by_vol;		/* For sorting by volume */
+bu_rb_tree *ovlp_log = 0;	/* Log of previous overlaps */
+bu_rb_tree *ovlps_by_vol;	/* For sorting by volume */
 
 int log_2 (unsigned long x)
 {
-    int	result;
+    int result;
 
     for (result = 0; x > 1; ++result)
 	x >>= 1;
     return (result);
 }
 
-/*
- *	The usage message -- it's a long 'un
+
+/**
+ * The usage message -- it's a long 'un.
  */
-static char	*usage[] = {
+static char *usage[] = {
     "Usage: 'g_lint [options] model.g object ...'\n",
     "Options:\n",
     "  -a azim      View target from azimuth of azim (0.0 degrees)\n",
@@ -166,24 +173,27 @@ static char	*usage[] = {
     0
 };
 
-/*			P R I N T U S A G E ()
+
+/**
+ * P R I N T U S A G E
  *
- *	Reports a usage message on stderr.
+ * Reports a usage message on stderr.
  */
 void printusage (void)
 {
-    char	**u;
+    char **u;
 
     for (u = usage; *u != 0; ++u)
 	bu_log("%s", *u);
 }
 
-/*
- *		C R E A T E _ S E G M E N T ()
+
+/**
+ * C R E A T E _ S E G M E N T
  */
 struct g_lint_seg *create_segment (void)
 {
-    struct g_lint_seg	*sp;
+    struct g_lint_seg *sp;
 
     sp = bu_malloc(sizeof(struct g_lint_seg), "g_lint segment structure");
     sp -> gls_magic = G_LINT_SEG_MAGIC;
@@ -193,11 +203,12 @@ struct g_lint_seg *create_segment (void)
     return (sp);
 }
 
-/*
- *		P R I N T _ S E G M E N T ()
+
+/**
+ * P R I N T _ S E G M E N T
  *
- *	This routine writes one overlap segent to stdout.
- *	It's the workhorse of the reporting process for overlaps.
+ * This routine writes one overlap segent to stdout.
+ * It's the workhorse of the reporting process for overlaps.
  */
 void print_segment (const char *r1name, const char *r2name, double seg_length, point_t origin, point_t entrypt, point_t exitpt)
 {
@@ -208,12 +219,13 @@ void print_segment (const char *r1name, const char *r2name, double seg_length, p
 	   r1name, r2name, seg_length, V3ARGS(entrypt), V3ARGS(exitpt));
 }
 
-/*
- *		C R E A T E _ O V E R L A P ()
+
+/**
+ * C R E A T E _ O V E R L A P
  */
 struct g_lint_ovlp *create_overlap (struct region *r1, struct region *r2)
 {
-    struct g_lint_ovlp	*op;
+    struct g_lint_ovlp *op;
 
     BU_CKMAG(r1, RT_REGION_MAGIC, "region structure");
     BU_CKMAG(r2, RT_REGION_MAGIC, "region structure");
@@ -238,16 +250,15 @@ struct g_lint_ovlp *create_overlap (struct region *r1, struct region *r2)
     return (op);
 }
 
-/*
- *		F R E E _ O V E R L A P ()
+
+/**
+ * F R E E _ O V E R L A P
  */
 void free_overlap (struct g_lint_ovlp *op)
 {
     BU_CKMAG(op, G_LINT_OVLP_MAGIC, "g_lint overlap structure");
 
-    /*
-     *		XXX	Oughta do something cleaner than what follows...
-     */
+    /* XXX - Oughta do something cleaner than what follows... */
     if (op -> glo_segs != G_LINT_SEG_NULL)
 	bu_log("%s:%d: Memory Leak!\n", __FILE__, __LINE__);
 
@@ -255,17 +266,18 @@ void free_overlap (struct g_lint_ovlp *op)
     bu_free((genptr_t) op, "g_lint overlap structure");
 }
 
-/*
- *		_ P R I N T _ O V E R L A P ()
+
+/**
+ * _ P R I N T _ O V E R L A P
  *
- *	The call-back for finally outputting data
- *	for all the overlap segments between any two regions.
+ * The call-back for finally outputting data for all the overlap
+ * segments between any two regions.
  */
 void _print_overlap (void *v, int show_origin)
 {
-    const char		*r1name, *r2name;
-    struct g_lint_ovlp	*op = (struct g_lint_ovlp *) v;
-    struct g_lint_seg	*sp;
+    const char *r1name, *r2name;
+    struct g_lint_ovlp *op = (struct g_lint_ovlp *) v;
+    struct g_lint_seg *sp;
 
     BU_CKMAG(op, G_LINT_OVLP_MAGIC, "g_lint overlap structure");
     BU_CKMAG(op -> glo_r1, RT_REGION_MAGIC, "region structure");
@@ -280,37 +292,40 @@ void _print_overlap (void *v, int show_origin)
 		      sp -> gls_entry, sp -> gls_exit);
 }
 
-/*
- *		P R I N T _ O V E R L A P ()
+
+/**
+ * P R I N T _ O V E R L A P
  *
- *	A wrapper for _print_overlap()
- *	for use when you don't want to print the ray origin.
+ * A wrapper for _print_overlap() for use when you don't want to print
+ * the ray origin.
  */
 void print_overlap (void *v, int depth)
 {
     _print_overlap(v, 0);
 }
 
-/*
- *		P R I N T _ O V E R L A P _ O ()
+
+/**
+ * P R I N T _ O V E R L A P _ O
  *
- *	A wrapper for _print_overlap()
- *	for use when you do want to print the ray origin.
+ * A wrapper for _print_overlap() for use when you do want to print
+ * the ray origin.
  */
 void print_overlap_o (void *v, int depth)
 {
     _print_overlap(v, 1);
 }
 
-/*
- *		C O M P A R E _ O V E R L A P S ()
+
+/**
+ * C O M P A R E _ O V E R L A P S
  *
- *	    The red-black-tree comparison callback for the overlap log
+ * The red-black-tree comparison callback for the overlap log.
  */
 int compare_overlaps (void *v1, void *v2)
 {
-    struct g_lint_ovlp	*o1 = (struct g_lint_ovlp *) v1;
-    struct g_lint_ovlp	*o2 = (struct g_lint_ovlp *) v2;
+    struct g_lint_ovlp *o1 = (struct g_lint_ovlp *) v1;
+    struct g_lint_ovlp *o2 = (struct g_lint_ovlp *) v2;
 
     BU_CKMAG(o1, G_LINT_OVLP_MAGIC, "g_lint overlap structure");
     BU_CKMAG(o2, G_LINT_OVLP_MAGIC, "g_lint overlap structure");
@@ -327,16 +342,17 @@ int compare_overlaps (void *v1, void *v2)
 	return (0);
 }
 
-/*
- *		C O M P A R E _ B Y _ V O L ()
+
+/**
+ * C O M P A R E _ B Y _ V O L
  *
- *	    The red-black-tree comparison callback for
- *	    the final re-sorting of the overlaps by volume
+ * The red-black-tree comparison callback for the final re-sorting of
+ * the overlaps by volume.
  */
 int compare_by_vol (void *v1, void *v2)
 {
-    struct g_lint_ovlp	*o1 = (struct g_lint_ovlp *) v1;
-    struct g_lint_ovlp	*o2 = (struct g_lint_ovlp *) v2;
+    struct g_lint_ovlp *o1 = (struct g_lint_ovlp *) v1;
+    struct g_lint_ovlp *o2 = (struct g_lint_ovlp *) v2;
 
     BU_CKMAG(o1, G_LINT_OVLP_MAGIC, "g_lint overlap structure");
     BU_CKMAG(o2, G_LINT_OVLP_MAGIC, "g_lint overlap structure");
@@ -349,47 +365,46 @@ int compare_by_vol (void *v1, void *v2)
 	return (0);
 }
 
-/*
- *		I N S E R T _ B Y _ V O L ()
+
+/**
+ * I N S E R T _ B Y _ V O L
  *
- *	The call-back, used in traversing the overlap log,
- *	to insert overlaps into the sorted-by-volume tree.
+ * The call-back, used in traversing the overlap log, to insert
+ * overlaps into the sorted-by-volume tree.
  */
 void insert_by_vol (void *v, int depth)
 {
-    int			rc;	/* Return code from bu_rb_insert() */
-    struct g_lint_ovlp	*op = (struct g_lint_ovlp *) v;
+    int rc;	/* Return code from bu_rb_insert() */
+    struct g_lint_ovlp *op = (struct g_lint_ovlp *) v;
 
     if ((rc = bu_rb_insert(ovlps_by_vol, (void *) op)))
 	bu_exit (1, "%s:%d: bu_rb_insert() returns %d:  This should not happen\n",
 		 __FILE__, __LINE__, rc);
 }
 
-/*
- *		U P D A T E _ O V L P _ L O G ()
+
+/**
+ * U P D A T E _ O V L P _ L O G
  *
- *		Log an overlap found along a ray.
+ * Log an overlap found along a ray.
  *
- *	If regions r1 and r2 were not already known to overlap,
- *	this routine creates a new entry in the overlap log.
- *	Either way, it then modifies their entry to record this
- *	particular find.
+ * If regions r1 and r2 were not already known to overlap, this
+ * routine creates a new entry in the overlap log.  Either way, it
+ * then modifies their entry to record this particular find.
  */
 void update_ovlp_log (struct region *r1, struct region *r2, double seg_length, fastf_t *origin, fastf_t *entrypt, fastf_t *exitpt)
 {
-    int			rc;	/* Return code from bu_rb_insert() */
-    struct g_lint_ovlp	*op;
-    struct g_lint_seg	*sp;
+    int rc;	/* Return code from bu_rb_insert() */
+    struct g_lint_ovlp *op;
+    struct g_lint_seg *sp;
 
-    /*
-     *	Prepare an overlap query
-     */
+    /* Prepare an overlap query */
     op = create_overlap (r1, r2);
 
     /*
-     *	Add this overlap, if necessary.
-     *	Either way, op will end up pointing to the unique
-     *	(struct g_lint_ovlp) for regions r1 and r2.
+     * Add this overlap, if necessary.
+     * Either way, op will end up pointing to the unique
+     * (struct g_lint_ovlp) for regions r1 and r2.
      */
     if ((rc = bu_rb_insert(ovlp_log, (void *) op)) < 0) {
 	free_overlap(op);
@@ -400,7 +415,7 @@ void update_ovlp_log (struct region *r1, struct region *r2, double seg_length, f
 		 __FILE__, __LINE__, rc);
 
     /*
-     *	Fill in a new segment structure and add it to the overlap
+     * Fill in a new segment structure and add it to the overlap
      */
     sp = create_segment();
     op -> glo_cum_length += (sp -> gls_length = seg_length);
@@ -416,7 +431,7 @@ void update_ovlp_log (struct region *r1, struct region *r2, double seg_length, f
 
 unsigned char *get_color (unsigned char *ucp, unsigned long x)
 {
-    int	index;
+    int index;
 
     for (index = 0; x > 1; ++index)
 	x >>= 1;
@@ -424,40 +439,40 @@ unsigned char *get_color (unsigned char *ucp, unsigned long x)
     return (ucp + (index * 3));
 }
 
-/*			R P T _ H I T
+
+/**
+ * R P T _ H I T
  *
- *	Ray-hit handler for use by rt_shootray().
+ * Ray-hit handler for use by rt_shootray().
  *
- *	Checks every partition along the ray, reporting on stdout
- *	possible problems with modeled air.  Conditions reported
- *	are:
- *	    - Contiguous partitions with differing non-zero air codes,
- *	    - First partition along a ray with a non-zero air code,
- *	    - Last partition along a ray with a non-zero air code, and
- *	    - Void between successive partitions (exit point from one
- *		not equal to entry point of next), if it is longer
- *		than tolerance, and either of the partitions is air;
- *		and
- *	    - Void between successive partitions (exit point from one
- *		not equal to entry point of next), if it is longer
- *		than tolerance.
- *	The function returns the number of possible problems it
- *	discovers.
+ * Checks every partition along the ray, reporting on stdout possible
+ * problems with modeled air.  Conditions reported are:
+ *
+ *   - Contiguous partitions with differing non-zero air codes,
+ *   - First partition along a ray with a non-zero air code,
+ *   - Last partition along a ray with a non-zero air code, and
+ *   - Void between successive partitions (exit point from one not
+ *   equal to entry point of next), if it is longer than tolerance,
+ *   and either of the partitions is air; * and
+ *   - Void between successive partitions (exit point from one not
+ *   equal to entry point of next), if it is longer than tolerance.
+ *
+ * The function returns the number of possible problems it discovers.
  */
 static int rpt_hit (struct application *ap, struct partition *ph, struct seg *dummy)
 {
-    struct partition	*pp;
-    vect_t		delta;
-    fastf_t		mag_del;
-    int			problems = 0;
-    int			last_air = 0;
-    struct g_lint_ctrl	*cp = (struct g_lint_ctrl *) ap -> a_uptr;
-    int			show_origin;
-    int			do_plot3;
-    fastf_t		tolerance;
-    unsigned long	what_to_report;
-    unsigned long	debug;
-    unsigned char	*color;
+    struct partition *pp;
+    vect_t delta;
+    fastf_t mag_del;
+    int problems = 0;
+    int last_air = 0;
+    struct g_lint_ctrl *cp = (struct g_lint_ctrl *) ap -> a_uptr;
+    int show_origin;
+    int do_plot3;
+    fastf_t tolerance;
+    unsigned long what_to_report;
+    unsigned long debug;
+    unsigned char *color;
 
     RT_AP_CHECK(ap);
     BU_CKMAG(ph, PT_HD_MAGIC, "partition-list head");
@@ -470,8 +485,8 @@ static int rpt_hit (struct application *ap, struct partition *ph, struct seg *du
     debug = cp -> glc_debug;
 
     /*
-     *	Before we do anything else,
-     *	compute all the hit points along this partition
+     * Before we do anything else, compute all the hit points along
+     * this partition.
      */
     for (pp = ph -> pt_forw; pp != ph; pp = pp -> pt_forw) {
 	BU_CKMAG(pp, PT_MAGIC, "partition structure");
@@ -483,7 +498,7 @@ static int rpt_hit (struct application *ap, struct partition *ph, struct seg *du
     }
 
     /*
-     *	Now, do the real work of checking the partitions...
+     * Now, do the real work of checking the partitions...
      */
     for (pp = ph -> pt_forw; pp != ph; pp = pp -> pt_forw) {
 	/* Check air partitions */
@@ -540,10 +555,10 @@ static int rpt_hit (struct application *ap, struct partition *ph, struct seg *du
 		    VSUB2(delta, pp -> pt_inhit -> hit_point,
 			  pp -> pt_back -> pt_outhit -> hit_point);
 		    if (debug & G_LINT_A_UNCONF) {
-			bu_log("inhit (%g,%g,%g) - back outhit (%g,%g,%g) ",
+			bu_log("inhit (%g, %g, %g) - back outhit (%g, %g, %g) ",
 			       V3ARGS(pp -> pt_inhit -> hit_point),
 			       V3ARGS(pp -> pt_back -> pt_outhit -> hit_point));
-			bu_log(" = (%g,%g,%g), mag=%g\n",
+			bu_log(" = (%g, %g, %g), mag=%g\n",
 			       V3ARGS(delta), MAGNITUDE(delta));
 		    }
 		    if ((mag_del = MAGNITUDE(delta)) > tolerance) {
@@ -598,10 +613,10 @@ static int rpt_hit (struct application *ap, struct partition *ph, struct seg *du
 		    VSUB2(delta, pp -> pt_forw -> pt_inhit -> hit_point,
 			  pp -> pt_outhit -> hit_point);
 		    if (debug & G_LINT_A_UNCONF) {
-			bu_log("forw inhit (%g,%g,%g) - outhit (%g,%g,%g) ",
+			bu_log("forw inhit (%g, %g, %g) - outhit (%g, %g, %g) ",
 			       V3ARGS(pp -> pt_forw -> pt_inhit -> hit_point),
 			       V3ARGS(pp -> pt_outhit -> hit_point));
-			bu_log(" = (%g,%g,%g), mag=%g\n",
+			bu_log(" = (%g, %g, %g), mag=%g\n",
 			       V3ARGS(delta), MAGNITUDE(delta));
 		    }
 		    if ((mag_del = MAGNITUDE(delta)) > tolerance) {
@@ -642,10 +657,10 @@ static int rpt_hit (struct application *ap, struct partition *ph, struct seg *du
 	    VSUB2(delta, pp -> pt_inhit -> hit_point,
 		  pp -> pt_back -> pt_outhit -> hit_point);
 	    if (debug & G_LINT_VAC) {
-		bu_log("inhit (%g,%g,%g) - back outhit (%g,%g,%g) ",
+		bu_log("inhit (%g, %g, %g) - back outhit (%g, %g, %g) ",
 		       V3ARGS(pp -> pt_inhit -> hit_point),
 		       V3ARGS(pp -> pt_back -> pt_outhit -> hit_point));
-		bu_log(" = (%g,%g,%g), mag=%g\n",
+		bu_log(" = (%g, %g, %g), mag=%g\n",
 		       V3ARGS(delta), MAGNITUDE(delta));
 	    }
 	    if ((mag_del = MAGNITUDE(delta)) > tolerance) {
@@ -679,45 +694,57 @@ static int rpt_hit (struct application *ap, struct partition *ph, struct seg *du
     return (problems);
 }
 
-/*		    N O _ O P _ O V E R L A P
- *			N O _ O P _ H I T
- *		       N O _ O P _ M I S S
+
+/**
+ * N O _ O P _ O V E R L A P
  *
- *	Null event handlers for use by rt_shootray().
- *
+ * Null event handler for use by rt_shootray().
  */
 static int no_op_overlap (struct application *ap, struct partition *pp, struct region *r1, struct region *r2, struct partition *hp)
 {
     return (0);
 }
 
+
+/**
+ * N O _ O P _ H I T
+ *
+ * Null event handler for use by rt_shootray().
+ */
 static int no_op_hit (struct application *ap, struct partition *ph, struct seg *dummy)
 {
     return (1);
 }
 
+
+/**
+ * N O _ O P _ M I S S
+ *
+ * Null event handler for use by rt_shootray().
+ */
 static int no_op_miss (struct application *ap)
 {
     return (1);
 }
 
-/*			R P T _ O V L P
+
+/**
+ * R P T _ O V L P
  *
- *	Overlap handler for use by rt_shootray().
+ * Overlap handler for use by rt_shootray().
  *
- *	Reports the current overlap on stdout, if the overlap
- *	is of length greater than tolerance.  The function
- *	returns 1 if the overlap was large enough to report,
- *	otherwise 0.
+ * Reports the current overlap on stdout, if the overlap is of length
+ * greater than tolerance.  The function returns 1 if the overlap was
+ * large enough to report, otherwise 0.
  */
 static int rpt_ovlp (struct application *ap, struct partition *pp, struct region *r1, struct region *r2, struct partition *hp)
 {
-    vect_t		delta;
-    fastf_t		mag_del;
-    struct g_lint_ctrl	*cp;
-    int			show_origin;
-    int			do_plot3;
-    fastf_t		tolerance;
+    vect_t delta;
+    fastf_t mag_del;
+    struct g_lint_ctrl *cp;
+    int show_origin;
+    int do_plot3;
+    fastf_t tolerance;
 
     RT_AP_CHECK(ap);
     BU_CKMAG(pp, PT_MAGIC, "partition structure");
@@ -757,8 +784,8 @@ static int rpt_ovlp (struct application *ap, struct partition *pp, struct region
 
 void init_plot3 (struct application *ap)
 {
-    register struct rt_i	*rtip;
-    struct g_lint_ctrl		*cp;
+    register struct rt_i *rtip;
+    struct g_lint_ctrl *cp;
 
     RT_AP_CHECK(ap);
     rtip = ap -> a_rt_i;
@@ -769,39 +796,40 @@ void init_plot3 (struct application *ap)
     pdv_3space(cp -> glc_fp, rtip->rti_pmin, rtip->rti_pmax);
 }
 
+
 int
 main (int argc, char **argv)
 {
-    struct application	ap;
-    char		db_title[TITLE_LEN+1];	/* Title of database */
-    char		*sp;			/* String from strtoul(3) */
-    fastf_t		azimuth = 0.0;
-    fastf_t		celsiz = 100.0;		/* Spatial sampling rate */
-    fastf_t		elevation = 0.0;
-    struct g_lint_ctrl	control;		/* Info handed to librt(3) */
-    int			cell_center = 0;	/* Fire from center of cell? */
-    int			ch;			/* Character from getopt */
-    int			complement_bits;	/* Used by -r option */
-    int			i;			/* Dummy loop index */
-    int			use_air = 0;		/* Does air count? */
-    mat_t		model2view;		/* Model-to-view matrix */
-    mat_t		view2model;		/* View-to-model matrix */
-    point_t		cell;			/* Cell center, view coords */
-    point_t		g_min;			/* Lower-left of grid plane */
-    point_t		g_max;			/* Upper-right of grid plane */
-    point_t		mdl_cell;		/* Cell center, model coords */
-    point_t		mdl_extrema[2];		/* mdl_min and mdl_max */
-    point_t		mdl_bb_vertex;		/* A bounding-box vertex */
-    point_t		mdl_row_orig;		/* "Origin" of view-plane row */
-    point_t		mdl_vpo;		/* View-plane origin */
-    point_t		v_bb_vertex;	/* bounding-box vertex, view coords */
-    struct rt_i		*rtip;
-    vect_t		unit_D;			/* View basis vectors */
-    vect_t		unit_H;
-    vect_t		unit_V;
+    struct application ap;
+    char db_title[TITLE_LEN+1];	/* Title of database */
+    char *sp;			/* String from strtoul(3) */
+    fastf_t azimuth = 0.0;
+    fastf_t celsiz = 100.0;	/* Spatial sampling rate */
+    fastf_t elevation = 0.0;
+    struct g_lint_ctrl control;	/* Info handed to librt(3) */
+    int cell_center = 0;	/* Fire from center of cell? */
+    int ch;			/* Character from getopt */
+    int complement_bits;	/* Used by -r option */
+    int i;			/* Dummy loop index */
+    int use_air = 0;		/* Does air count? */
+    mat_t model2view;		/* Model-to-view matrix */
+    mat_t view2model;		/* View-to-model matrix */
+    point_t cell;		/* Cell center, view coords */
+    point_t g_min;		/* Lower-left of grid plane */
+    point_t g_max;		/* Upper-right of grid plane */
+    point_t mdl_cell;		/* Cell center, model coords */
+    point_t mdl_extrema[2];	/* mdl_min and mdl_max */
+    point_t mdl_bb_vertex;	/* A bounding-box vertex */
+    point_t mdl_row_orig;	/* "Origin" of view-plane row */
+    point_t mdl_vpo;		/* View-plane origin */
+    point_t v_bb_vertex;	/* bounding-box vertex, view coords */
+    struct rt_i *rtip;
+    vect_t unit_D;		/* View basis vectors */
+    vect_t unit_H;
+    vect_t unit_V;
 
-    extern int		bu_optind;			/* For use with getopt */
-    extern char		*bu_optarg;
+    extern int bu_optind;	/* For use with getopt */
+    extern char *bu_optarg;
 
     bu_log("%s\n", rt_version());
 
@@ -929,7 +957,7 @@ main (int argc, char **argv)
     bu_log("\n");
 
     /*
-     *	Initialize the application structure
+     * Initialize the application structure
      */
     RT_APPLICATION_INIT(&ap);
     ap.a_hit =
@@ -946,8 +974,8 @@ main (int argc, char **argv)
     ap.a_purpose = "Look for possible problems in geometry";
 
     /* Compute the basis vectors for the view coordinate system
-     *	(N.B. I use VMOVEN() here instead of VMOVE() to emphasize that
-     *	 each call copies exactly three elements of the array).
+     * (N.B. I use VMOVEN() here instead of VMOVE() to emphasize that
+     *  each call copies exactly three elements of the array).
      */
     MAT_IDN(view2model);
     bn_mat_ae(view2model, azimuth, elevation);
@@ -957,12 +985,12 @@ main (int argc, char **argv)
     VMOVEN(unit_V, model2view + 8, 3);
 
     /* Compute the limits of gridding
-     *	0. initialize mdl_extrema, g_min, and g_max,
-     *	1. build each vertex of the bounding box in turn,
-     *	2. rotate it into view coordinates,
-     *	3. keep a running record of the horizontal and vertical
-     *	   extrema in the view plane.
-     *	4. Expand the extrema to the next whole multiple of celsiz.
+     * 0. initialize mdl_extrema, g_min, and g_max,
+     * 1. build each vertex of the bounding box in turn,
+     * 2. rotate it into view coordinates,
+     * 3. keep a running record of the horizontal and vertical
+     *    extrema in the view plane.
+     * 4. Expand the extrema to the next whole multiple of celsiz.
      */
     VMOVE(mdl_extrema[0], rtip -> mdl_min);
     VMOVE(mdl_extrema[1], rtip -> mdl_max);
@@ -986,7 +1014,7 @@ main (int argc, char **argv)
 	init_plot3(&ap);
 
     /*
-     *	Do the actual gridding
+     * Do the actual gridding
      */
     bu_log("Firing rays... ");
     VSCALE(ap.a_ray.r_dir, unit_D, -1.0);
@@ -1005,8 +1033,8 @@ main (int argc, char **argv)
     }
 
     /*
-     *	If overlaps have been collected for sorting,
-     *	sort them now and then print them out.
+     * If overlaps have been collected for sorting,
+     * sort them now and then print them out.
      */
     if (ovlp_log) {
 	ovlps_by_vol = bu_rb_create1("overlaps by volume", compare_by_vol);

@@ -1,0 +1,90 @@
+--------------------
+Introduction
+--------------------
+
+This directory contains the source for the NIST EXPRESS Toolkit.  The
+Toolkit was written by Don Libes, NIST.  The toolkit corresponds to
+the EXPRESS DIS.
+
+--------------------
+How to Get the Latest Version of the Source or Documentation
+--------------------
+
+The source may be ftp'd as pub/step/npttools/exptk.tar.Z from
+ftp.cme.nist.gov.  Request email delivery by mailing to
+"nptserver@cme.nist.gov".  The contents of the message should be (no
+subject line) "send pub/step/npttools/exptk.tar.Z".
+
+The papers mentioned above can be retrieved separately as
+pub/step/nptdocs/exptk-<file>.ps.Z where <file> is one of:
+
+	intro
+	requirements
+	design-and-impl
+	lessons-learned
+	using-apps
+	obtaining-installing
+	programmer-ref
+	creating-apps
+	updating-apps
+
+--------------------
+Systems Supported
+--------------------
+
+The toolkit is written in ANSI C.
+
+The toolkit can build using either Bison or Yacc and Flex or Lex.
+This is configured by commenting (and uncommenting) the relevant lines
+in mkrules.  Hopefully, these lines will be obvious when you look at
+them.
+
+I expect this should run on any UNIX, POSIX, or other system using a
+compatibility package.  For instance, you can build this on a PC
+runing DOS using djgpp (GNU C on DOS).  (Ask your local archie server
+where to get djgpp.)
+
+--------------------
+Installing the Toolkit
+--------------------
+
+Read the document "The NIST EXPRESS Toolkit: Obtaining and
+Installing".  See "How to Get the ... Documentation" above.  This
+document corresponds to the file "obtaining-installing".
+
+--------------------
+History
+--------------------
+
+This toolkit shares a great deal of inspiration from the N14-based
+"Fed-X" toolkit which was written by by Steve Clark (NIST) with
+contributions from Don Libes (NIST) and Dave Briggs (Boeing).
+
+Read the document "The NIST EXPRESS Toolkit: Introduction and
+Overview" for more historical information.  See "How to Get the ...
+Documentation" above.  This document corresponds to the file "intro".
+
+
+--------------------
+Support
+--------------------
+
+The system is distributed in source form and you are encourage to
+experiment with the toolkit, especially if you have problems with it.
+While it is often quicker for you to have us diagnos your problems, it
+is quicker for us to have you diagnose your own problems.  This
+software is a prototype, intended to spur development of commercial
+products.
+
+Nonetheless, if you do have questions and/or problems, you may send
+e-mail to "exptk@cme.nist.gov".  Please includes schemas, version
+numbers, platform descriptions, and any other information that could
+be relevant.
+
+Standard NIST Disclaimer: This software was produced by the National
+Institute of Standards and Technology (NIST), an agency of the U.S.
+government, and by statute is not subject to copyright in the United
+States.  Recipients of this software assume all responsibility
+associated with its operation, modification, maintenance, and
+subsequent redistribution.
+

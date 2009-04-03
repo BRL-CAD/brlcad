@@ -91,30 +91,54 @@
 #if __GNUC__ > 3 || ( __GNUC__ == 3 && __GNUC_MINOR__ >= 1 )
 #define BOOST_HAS_NRVO
 #endif
-
 //
-// C++0x features
+// RTTI and typeinfo detection is possible post gcc-4.3:
 //
-#if __GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ > 2)
-// C++0x features are only enabled when -std=c++0x or -std=gnu++0x are
-// passed on the command line, which in turn defines
-// __GXX_EXPERIMENTAL_CXX0X__. 
-#  if defined(__GXX_EXPERIMENTAL_CXX0X__)
-#    define BOOST_HAS_STATIC_ASSERT
-#    define BOOST_HAS_VARIADIC_TMPL
-#    define BOOST_HAS_RVALUE_REFS
-#    define BOOST_HAS_DECLTYPE
+#if __GNUC__ * 100 + __GNUC_MINOR__ >= 403
+#  ifndef __GXX_RTTI
+#     define BOOST_NO_TYPEID
+#     define BOOST_NO_RTTI
 #  endif
 #endif
 
 //
-// Potential C++0x features
+// C++0x features
 //
+
+#define BOOST_NO_CHAR16_T                       
+#define BOOST_NO_CHAR32_T                       
+#define BOOST_NO_CONSTEXPR                      
+#define BOOST_NO_DEFAULTED_FUNCTIONS              
+#define BOOST_NO_DELETED_FUNCTIONS              
+#define BOOST_NO_EXPLICIT_CONVERSION_OPERATORS 
+#define BOOST_NO_EXTERN_TEMPLATE                
+#define BOOST_NO_RAW_LITERALS                   
+#define BOOST_NO_SCOPED_ENUMS                   
+#define BOOST_NO_UNICODE_LITERALS               
+
+#if (__GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ > 2)) && defined(__GXX_EXPERIMENTAL_CXX0X__)
+// C++0x features are only enabled when -std=c++0x or -std=gnu++0x are
+// passed on the command line, which in turn defines
+// __GXX_EXPERIMENTAL_CXX0X__.
+#  define BOOST_HAS_DECLTYPE
+#  define BOOST_HAS_RVALUE_REFS
+#  define BOOST_HAS_STATIC_ASSERT
+#else
+#  define BOOST_NO_DECLTYPE                       
+#  define BOOST_NO_RVALUE_REFERENCES              
+#  define BOOST_NO_STATIC_ASSERT                  
+#endif
+
+#if !defined(__GXX_EXPERIMENTAL_CXX0X__) || __GNUC__ < 4 || (__GNUC__ == 4 && __GNUC_MINOR__ < 4)
+#  define BOOST_NO_INITIALIZER_LISTS
+#endif
 
 // Variadic templates compiler: 
 //   http://www.generic-programming.org/~dgregor/cpp/variadic-templates.html
 #ifdef __VARIADIC_TEMPLATES
 #  define BOOST_HAS_VARIADIC_TMPL
+#else
+#  define BOOST_NO_VARIADIC_TEMPLATES
 #endif
 
 // ConceptGCC compiler:

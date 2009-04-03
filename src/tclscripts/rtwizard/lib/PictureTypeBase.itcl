@@ -258,11 +258,16 @@ namespace eval RtWizard {
 	    set ar [ expr $width.0 / $height.0 ]
 
 	    #
+	    # Get the perspective angle
+	    #
+	    set perspective [$viewPage getPerspective]
+
+	    #
 	    # Assemble the rt command - note that it is a
 	    # full-blown script.
 	    #
 	    set cmd [list rt -M -R -F $fb -w $width \
-			 -n $height -V $ar -A 0.9 \
+			 -n $height -V $ar -A 0.9 -p $perspective \
 			 -C [lindex $bg 0]/[lindex $bg 1]/[lindex $bg 2] \
 			 $::RtWizard::dbFile]
 
@@ -315,6 +320,11 @@ namespace eval RtWizard {
 		 set ar [ expr $width.0 / $height.0 ]
 
 		 #
+		 # Get the perspective angle
+		 #
+		 set perspective [$viewPage getPerspective]
+
+		 #
 		 # Determine if region colors were requested, if so, use them.
 		 # Otherwise, use the specified foreground colors.
 		 #
@@ -335,7 +345,7 @@ namespace eval RtWizard {
 		     set occObjects [$occObjsPage getObjects]
 
 		     set cmd [list rtedge -M -R -F $fb -w $width \
-				  -n $height -V $ar -A 0.9 \
+				  -n $height -V $ar -A 0.9 -p $perspective \
 				  -c "$fgMode" \
 				  -c "set bg=[lindex $nl 0],[lindex $nl 1],[lindex $nl 2]" \
 				  -c "set om=$occMode" \

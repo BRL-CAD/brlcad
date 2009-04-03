@@ -112,9 +112,9 @@ AC_SUBST(PACKAGE_NAME)
 BRLCAD_VERSION=CAD_VERSION
 AC_SUBST(BRLCAD_VERSION)
 
-# force locale setting to C so things like date output as expected
-LC_ALL=C
+# force lang/locale setting to C so things like date output as expected
 LANG=C
+LC_ALL=C
 
 CONFIG_DAY=`date +%d`
 CONFIG_MONTH=`date +%m`
@@ -278,6 +278,9 @@ BC_ARG_ENABLE([build_urt], [urt-build], [Build the included Utah Raster Toolkit]
 # force enable/disable building of openNURBS
 BC_ARG_ENABLE([build_opennurbs], [opennurbs-build], [Build the included openNURBS library], [auto])
 
+# force enable/disable building of NIST STEP Class Libraries 
+BC_ARG_ENABLE([build_step], [step-build], [Build the included STEP Class Libraries], [yes])
+
 # force enable/disable building of termlib
 BC_ARG_ENABLE([build_termlib], [termlib-build], [Build the included termlib library], [auto])
 
@@ -295,9 +298,6 @@ BC_ARG_ENABLE([build_itcl], [itcl-build], [Build the included incrTcl], [auto])
 
 # force enable/disable building of iwidgets
 BC_ARG_ENABLE([build_iwidgets], [iwidgets-install], [Install the included iwidgets], [auto])
-
-# force enable/disable building of blt
-BC_ARG_ENABLE([build_blt], [blt-build], [Build the included BLT], [auto])
 
 # tkhtml3
 BC_ARG_ENABLE([build_tkhtml3], [tkhtml3-build], [Build the included tkhtml3], [yes])
@@ -450,6 +450,12 @@ BC_ARG_ALIAS([build_opennurbs], [libopennurbs-build])
 BC_ARG_ALIAS([build_opennurbs], [open-nurbs])
 BC_ARG_ALIAS([build_opennurbs], [open-nurbs-build])
 
+# aliases to force building NIST STEP Class Libraries (help uses step-build)
+BC_ARG_ALIAS([build_step], [step])
+BC_ARG_ALIAS([build_step], [steplibs])
+BC_ARG_ALIAS([build_step], [libstep-build])
+BC_ARG_ALIAS([build_step], [libstep])
+
 # aliases to force building tcl (help uses tcl-build)
 BC_ARG_ALIAS([build_tcl], [tcl])
 BC_ARG_ALIAS([build_tcl], [libtcl])
@@ -482,11 +488,6 @@ BC_ARG_ALIAS([build_itcl], [incrtcl-build])
 # aliases to force building iwidgets (help uses iwidgets-install)
 BC_ARG_ALIAS([build_iwidgets], [iwidgets])
 BC_ARG_ALIAS([build_iwidgets], [iwidgets-build])
-
-# aliases to force building blt (help uses blt-build)
-BC_ARG_ALIAS([build_blt], [blt])
-BC_ARG_ALIAS([build_blt], [libblt])
-BC_ARG_ALIAS([build_blt], [libblt-build])
 
 # aliases to force building tkhtml3 (help uses tkhtml3-build)
 BC_ARG_ALIAS([build_tkhtml3], [tkhtml3])
@@ -633,6 +634,9 @@ if test "x$set_everything" != "x" ; then
 	if test "x$bc_build_opennurbs_set" = "xno" ; then
 		bc_build_opennurbs="$set_everything"
 	fi
+	if test "x$bc_build_step" = "xno" ; then
+		bc_build_step="$set_everything"
+	fi
 	if test "x$bc_build_termlib_set" = "xno" ; then
 		bc_build_termlib="$set_everything"
 	fi
@@ -647,9 +651,6 @@ if test "x$set_everything" != "x" ; then
 	fi
 	if test "x$bc_build_iwidgets_set" = "xno" ; then
 		bc_build_iwidgets="$set_everything"
-	fi
-	if test "x$bc_build_blt_set" = "xno" ; then
-		bc_build_blt="$set_everything"
 	fi
 	if test "x$bc_build_tkhtml3" = "xno" ; then
 		bc_build_tkhtml3="$set_everything"
@@ -760,6 +761,9 @@ AC_MSG_RESULT($bc_build_urt)
 AC_MSG_CHECKING(whether to build the openNURBS library)
 AC_MSG_RESULT($bc_build_opennurbs)
 
+AC_MSG_CHECKING(whether to build the NIST Step Class libraries)
+AC_MSG_RESULT($bc_build_step)
+
 AC_MSG_CHECKING(whether to build the Tcl library)
 AC_MSG_RESULT($bc_build_tcl)
 
@@ -774,9 +778,6 @@ AC_MSG_RESULT($bc_build_itcl)
 
 AC_MSG_CHECKING(whether to install the iwidgets library)
 AC_MSG_RESULT($bc_build_iwidgets)
-
-AC_MSG_CHECKING(whether to build the BLT library)
-AC_MSG_RESULT($bc_build_blt)
 
 AC_MSG_CHECKING(whether to build the tkhtml3 library)
 AC_MSG_RESULT($bc_build_tkhtml3)
@@ -1998,6 +1999,7 @@ AC_TYPE_SIGNAL
 AC_CHECK_FUNCS(\
 	XQueryExtension \
 	alarm \
+	bcmp \
 	dlopen \
 	drand48 \
 	fchmod \
@@ -2019,7 +2021,6 @@ AC_CHECK_FUNCS(\
 	setpriority \
 	setprogname \
 	srand48 \
-	strcasecmp \
 	strchr \
 	strdup \
 	strlcat \
@@ -2032,7 +2033,6 @@ AC_CHECK_FUNCS(\
 	vfork \
 	writev \
 )
-# strcasecmp checked for BLT
 
 dnl *** check if basename() exists ***
 AC_MSG_CHECKING([for basename])
@@ -2447,6 +2447,22 @@ fi
 AC_SUBST(OPENNURBS)
 AC_SUBST(OPENNURBS_CPPFLAGS)
 
+dnl *** NIST STEP Class Libraries ***
+dnl figure out whether we need to build NIST STEP Class Libraries
+STEP_VERSION="3.2.0"
+AC_SUBST(STEP_VERSION)
+AC_MSG_CHECKING(whether to build NIST Step Class Libraries)
+if test ! "x$bc_build_step" = "xno" ; then
+    build_brlcad_step=yes
+    AC_MSG_RESULT(yes)
+else
+    build_brlcad_step=no
+    STEP=""
+    AC_MSG_RESULT(no)
+fi
+AC_SUBST(STEP)
+
+
 
 dnl *** Tcl ***
 dnl See if libtcl seems to work
@@ -2847,37 +2863,6 @@ AC_MSG_RESULT($build_brlcad_iwidgets)
 IWIDGETS_VERSION="4.0.1"
 AC_DEFINE_UNQUOTED([IWIDGETS_VERSION], "$IWIDGETS_VERSION", "Version of iWidgets")
 AC_SUBST(IWIDGETS_VERSION)
-
-
-dnl *** BLT ***
-dnl figure out whether we need to build BLT
-BLT_VERSION="2.4"
-BLT_SUFFIX="`echo ${BLT_VERSION} | tr -d .`"
-case $host_os in
-     *netbsd-*|*freebsd-[[1-3]]*.*|*openbsd-[[1-3]]*|*sunos4*)
-	 # some OS's don't like dots in the lib name
-	 BLT_VERSION=$BLT_SUFFIX
-	 ;;
-esac
-AC_SUBST(BLT_VERSION)
-AC_SUBST(BLT_SUFFIX)
-BLT_LIBRARY="${BRLCAD_ROOT}/lib/blt${BLT_VERSION}"
-AC_SUBST(BLT_LIBRARY)
-AC_MSG_CHECKING(whether to build libblt)
-if test "x$build_against_x11" = "xno" ; then
-    # BLT *requires* X11
-    bc_built_blt=no
-fi
-if test ! "x$bc_build_blt" = "xno" ; then
-    build_brlcad_blt=yes
-    BLT='${top_builddir}/src/other/blt/libBLT${BLT_SUFFIX}.la'
-    AC_MSG_RESULT(yes)
-else
-    build_brlcad_blt=no
-    BLT=""
-    AC_MSG_RESULT(no)
-fi
-AC_SUBST(BLT)
 
 
 dnl *** tkhtml3 ***
@@ -3475,7 +3460,6 @@ AM_CONDITIONAL(BUILD_TCL, [test "x$build_brlcad_tcl" = "xyes"])
 AM_CONDITIONAL(BUILD_TK, [test "x$build_brlcad_tk" = "xyes"])
 AM_CONDITIONAL(BUILD_ITCL, [test "x$build_brlcad_itcl" = "xyes"])
 AM_CONDITIONAL(BUILD_IWIDGETS, [test "x$build_brlcad_iwidgets" = "xyes"])
-AM_CONDITIONAL(BUILD_BLT, [test "x$build_brlcad_blt" = "xyes"])
 AM_CONDITIONAL(BUILD_TKHTML3, [test "x$build_brlcad_tkhtml3" = "xyes"])
 AM_CONDITIONAL(BUILD_TKIMG, [test "x$build_brlcad_tkimg" = "xyes"])
 AM_CONDITIONAL(BUILD_PNG, [test "x$build_brlcad_png" = "xyes"])
@@ -3483,6 +3467,7 @@ AM_CONDITIONAL(BUILD_REGEX, [test "x$build_brlcad_regex" = "xyes"])
 AM_CONDITIONAL(BUILD_ZLIB, [test "x$build_brlcad_zlib" = "xyes"])
 AM_CONDITIONAL(BUILD_URT, [test "x$build_brlcad_urt" = "xyes"])
 AM_CONDITIONAL(BUILD_OPENNURBS, [test "x$build_brlcad_opennurbs" = "xyes"])
+AM_CONDITIONAL(BUILD_STEP, [test "x$build_brlcad_step" = "xyes"])
 AM_CONDITIONAL(BUILD_TERMLIB, [test "x$build_brlcad_termlib" = "xyes"])
 AM_CONDITIONAL(BUILD_TNT, [test "x$build_brlcad_tnt" = "xyes"])
 AM_CONDITIONAL(BUILD_JOVE, [test "x$build_brlcad_jove" = "xyes"])
@@ -3599,7 +3584,7 @@ OPTICAL_LIBS="${RT} ${RT_LIBS} ${BN} ${BN_LIBS} ${BU} ${BU_LIBS} ${TCL}"
 MULTISPECTRAL_LIBS="${OPTICAL} ${OPTICAL_LIBS} ${RT} ${RT_LIBS} ${BN} ${BN_LIBS} ${BU} ${BU_LIBS}"
 PC_LIBS="${LIBSTDCXX} ${BU} ${BU_LIBS}"
 DM_LIBS="${GED} ${GED_LIBS} ${RT} ${RT_LIBS} ${FB} ${FB_LIBS} ${PNG} ${TK} ${X_LIBS} ${FRAMEWORK_CARBON}"
-TCLCAD_LIBS="${GED} ${GED_LIBS} ${DM} ${DM_LIBS} ${FB} ${FB_LIBS} ${ITK} ${ITCL} ${TK} ${TCLSTUB} ${BLT} ${TCL}"
+TCLCAD_LIBS="${GED} ${GED_LIBS} ${DM} ${DM_LIBS} ${FB} ${FB_LIBS} ${ITK} ${ITCL} ${TK} ${TCLSTUB} ${TCL}"
 BRLCAD_LIBS="${GED} ${GED_LIBS} ${WDB} ${WDB_LIBS} ${RT} ${RT_LIBS} ${BN} ${BN_LIBS} ${BU} ${BU_LIBS}"
 
 AC_SUBST(BN)
@@ -3689,6 +3674,11 @@ AC_SUBST(TK_PATH)
 
 dnl configure enigma
 AC_CONFIG_SUBDIRS([misc/enigma])
+
+dnl configure step
+if test "x$bc_build_step" = "xyes" ; then
+    AC_CONFIG_SUBDIRS([src/other/step])
+fi
 
 dnl configure tkhtml3
 if test "x$bc_build_tkhtml3" = "xyes" ; then
@@ -3834,7 +3824,6 @@ AC_CONFIG_FILES([
 	src/archer/plugins/Wizards/tankwizard/images/Makefile
 	src/archer/plugins/Wizards/tirewizard/Makefile
 	src/brlman/Makefile
-	src/brlman/awf
 	src/brlman/brlman
 	src/burst/Makefile
 	src/bwish/Makefile
@@ -3900,18 +3889,6 @@ AC_CONFIG_FILES([
 	src/other/URToolkit/tools/Makefile
 	src/other/URToolkit/tools/clock/Makefile
 	src/other/awf/Makefile
-	src/other/blt/Makefile
-	src/other/blt/cf/Makefile
-	src/other/blt/demos/Makefile
-	src/other/blt/demos/bitmaps/Makefile
-	src/other/blt/examples/Makefile
-	src/other/blt/html/Makefile
-	src/other/blt/library/Makefile
-	src/other/blt/library/dd_protocols/Makefile
-	src/other/blt/library/pkgIndex.tcl
-	src/other/blt/man/Makefile
-	src/other/blt/src/Makefile
-	src/other/blt/win/Makefile
 	src/other/incrTcl/Makefile
 	src/other/incrTcl/doc/Makefile
 	src/other/incrTcl/itcl/Makefile
@@ -4071,7 +4048,6 @@ AC_MSG_RESULT([Build Tcl ............................: $build_brlcad_tcl])
 AC_MSG_RESULT([Build Tk .............................: $build_brlcad_tk])
 AC_MSG_RESULT([Build Itcl/Itk .......................: $build_brlcad_itcl])
 AC_MSG_RESULT([Build IWidgets .......................: $build_brlcad_iwidgets])
-AC_MSG_RESULT([Build BLT ............................: $build_brlcad_blt])
 AC_MSG_RESULT([Build tkhtml3 ........................: $build_brlcad_tkhtml3])
 AC_MSG_RESULT([Build tkImg ..........................: $build_brlcad_tkimg])
 AC_MSG_RESULT([Build libpng .........................: $build_brlcad_png])
@@ -4081,6 +4057,7 @@ AC_MSG_RESULT([Build termlib ........................: $build_brlcad_termlib])
 AC_MSG_RESULT([Build Utah Raster Toolkit.............: $build_brlcad_urt])
 AC_MSG_RESULT([Build Template Numerical Toolkit......: $build_brlcad_tnt])
 AC_MSG_RESULT([Build openNURBS.......................: $build_brlcad_opennurbs])
+AC_MSG_RESULT([Build NIST STEP Class Libraries.......: $build_brlcad_step])
 AC_MSG_RESULT([Build jove ...........................: $build_brlcad_jove])
 AC_MSG_RESULT([])
 AC_MSG_RESULT([X11 support (optional)................: $build_against_x11])

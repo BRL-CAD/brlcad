@@ -10,7 +10,7 @@
 //
 // See http://www.boost.org/libs/mpl for documentation.
 
-// $Source$
+// $Id$
 // $Date$
 // $Revision$
 
@@ -19,7 +19,7 @@
 
 #if    !defined(BOOST_MPL_CFG_NO_DEPENDENT_ARRAY_TYPES) \
     && !defined(BOOST_MPL_PREPROCESSING_MODE) \
-    && ( BOOST_WORKAROUND(__BORLANDC__, < 0x600) \
+    && ( BOOST_WORKAROUND(__BORLANDC__, BOOST_TESTED_AT(0x610)) \
         || BOOST_WORKAROUND(BOOST_MSVC, <= 1300) \
         )
 

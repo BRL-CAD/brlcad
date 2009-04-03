@@ -39,7 +39,6 @@
 #include "./lgt.h"
 #include "./extern.h"
 #include "./mat_db.h"
-#include "./vecmath.h"
 #include "./ascii.h"
 #include "./tree.h"
 #include "./screen.h"
@@ -50,6 +49,9 @@
 
 #define MAX_ARGS	81
 #define MAX_COLS	128
+
+fastf_t epsilon = 0.000001;
+
 static char	*prog_id;
 static char	**objects;
 static char	svkey_file[MAX_LN] = { 0 };
@@ -637,20 +639,20 @@ f_Grid_Roll(char **args)
     {
 	if ( tty )
 	{
-	    (void) sprintf( prompt, "Grid roll ? (%g) ", grid_roll*DEGRAD );
+	    (void) sprintf( prompt, "Grid roll ? (%g) ", grid_roll*RAD2DEG );
 	    if ( get_Input( input_ln, MAX_LN, prompt ) != NULL )
 	    {
 		if ( sscanf( input_ln, "%lf", &grid_roll ) != 1 )
 		    return	-1;
 		else
-		    grid_roll /= DEGRAD;
+		    grid_roll /= RAD2DEG;
 	    }
 	}
 	else
 	    return	-1;
     }
     else
-	grid_roll /= DEGRAD;
+	grid_roll /= RAD2DEG;
     return	1;
 }
 
@@ -679,7 +681,7 @@ f_Anti_Aliasing(char **args)
     if ( aperture_sz > 1 )
     {
 	anti_aliasing = TRUE;
-	sample_sz = Sqr( aperture_sz );
+	sample_sz = aperture_sz * aperture_sz;
     }
     else
 	anti_aliasing = FALSE;
@@ -1111,10 +1113,10 @@ f_Cursor_Module()
 				    static char	buf[5];
 				    static char	*ar[3];
 				    dx = mx - xx0;
-				    dx = Abs( dx );
+				    dx = abs( dx );
 				    dy = my - yy0;
-				    dy = Abs( dy );
-				    dw = Max( dx, dy );
+				    dy = abs( dy );
+				    dw = FMAX( dx, dy );
 #define Pixel2Grid(x_) ((x_)/((fastf_t)fbiop->if_width/grid_sz))
 #define Grid2Model(x_) ((x_)*cell_sz)
 				    scale = dw / (fastf_t)(grid_sz);
@@ -1389,7 +1391,7 @@ f_GridConfig(char **args)
 		bu_log( "Can't read view size!\n" );
 		return	-1;
 	    }
-	    if ( vsize > EPSILON )
+	    if ( vsize > epsilon )
 	    {
 		view_size = vsize;
 		force_viewsz = TRUE;
@@ -1864,7 +1866,7 @@ f_Movie()
 	return	TRUE;
     (void) sprintf( prompt,
 		    "Starting and ending view azimuth ? (%g %g) ",
-		    movie.m_azim_beg*DEGRAD, movie.m_azim_end*DEGRAD
+		    movie.m_azim_beg*RAD2DEG, movie.m_azim_end*RAD2DEG
 	);
     if ( get_Input( input_ln, MAX_LN, prompt) != NULL )
     {
@@ -1875,13 +1877,13 @@ f_Movie()
 	}
 	else
 	{
-	    movie.m_azim_beg /= DEGRAD;
-	    movie.m_azim_end /= DEGRAD;
+	    movie.m_azim_beg /= RAD2DEG;
+	    movie.m_azim_end /= RAD2DEG;
 	}
     }
     (void) sprintf( prompt,
 		    "Starting and ending view elevation ? (%g %g) ",
-		    movie.m_elev_beg*DEGRAD, movie.m_elev_end*DEGRAD
+		    movie.m_elev_beg*RAD2DEG, movie.m_elev_end*RAD2DEG
 	);
     if ( get_Input( input_ln, MAX_LN, prompt ) != NULL )
     {
@@ -1892,13 +1894,13 @@ f_Movie()
 	}
 	else
 	{
-	    movie.m_elev_beg /= DEGRAD;
-	    movie.m_elev_end /= DEGRAD;
+	    movie.m_elev_beg /= RAD2DEG;
+	    movie.m_elev_end /= RAD2DEG;
 	}
     }
     (void) sprintf( prompt,
 		    "Starting and ending view roll ? (%g %g) ",
-		    movie.m_roll_beg*DEGRAD, movie.m_roll_end*DEGRAD
+		    movie.m_roll_beg*RAD2DEG, movie.m_roll_end*RAD2DEG
 	);
     if ( get_Input( input_ln, MAX_LN, prompt ) != NULL )
     {
@@ -1909,8 +1911,8 @@ f_Movie()
 	}
 	else
 	{
-	    movie.m_roll_beg /= DEGRAD;
-	    movie.m_roll_end /= DEGRAD;
+	    movie.m_roll_beg /= RAD2DEG;
+	    movie.m_roll_end /= RAD2DEG;
 	}
     }
     (void) sprintf( prompt, "Manual viewer positioning ? [y|n](%c) ", movie.m_over ? 'y' : 'n' );
@@ -3271,8 +3273,8 @@ setup_Lgts(int frame)
 	    /* Perspective used in animation. */
 	    fastf_t	grid_delta[3], f;
 	    f = EYE_SIZE * rel_perspective;
-	    Scale2Vec( lgts[0].dir, -f, grid_delta );
-	    Add2Vec( lgts[0].loc, grid_delta, grid_loc );
+	    VSCALE( grid_delta, lgts[0].dir, -f );
+	    VADD2( grid_loc, lgts[0].loc, grid_delta );
 	}
 	else
 	{
@@ -3288,10 +3290,10 @@ setup_Lgts(int frame)
 		-lgts[0].dir[Y],
 		-lgts[0].dir[Z]
 	    );
-	V_Print( "\teye location", lgts[0].loc, bu_log );
-	V_Print( "\tgrid location", grid_loc, bu_log );
-	V_Print( "\tgrid horizontal", grid_hor, bu_log );
-	V_Print( "\tgrid vertical", grid_ver, bu_log );
+	bu_log( "\teye location\t<%12.6f,%12.6f,%12.6f>\n", lgts[0].loc );
+	bu_log( "\tgrid location\t<%12.6f,%12.6f,%12.6f>\n", grid_loc );
+	bu_log( "\tgrid horizontal\t<%12.6f,%12.6f,%12.6f>\n", grid_hor );
+	bu_log( "\tgrid vertical\t<%12.6f,%12.6f,%12.6f>\n", grid_ver );
     }
     else
 	if (   !	lgts[0].over
@@ -3304,8 +3306,8 @@ setup_Lgts(int frame)
 	    VMOVE( lgts[0].loc, eye_stp->st_center );
 	    VMOVE( grid_loc, grid_stp->st_center );
 	    /* Observer positioned by actual solid in data base. */
-	    Diff2Vec( lgts[0].loc, grid_loc, lgts[0].dir );
-	    if ( MAGNITUDE( lgts[0].dir ) < EPSILON  )
+	    VSUB2( lgts[0].dir, lgts[0].loc, grid_loc );
+	    if ( MAGNITUDE( lgts[0].dir ) < epsilon  )
 	    {
 		bu_log( "The GRID is on top of your EYE!\n" );
 		prnt_Timer( "LGTS" );
@@ -3327,7 +3329,7 @@ setup_Lgts(int frame)
 		    lgts[0].dir[Y],
 		    lgts[0].dir[Z] );
 	    VCROSS( grid_hor, lgts[0].dir, neg_z_axis );
-	    if ( (mag = MAGNITUDE( grid_hor )) < EPSILON )
+	    if ( (mag = MAGNITUDE( grid_hor )) < epsilon )
 	    {
 		/* Must be top view. */
 		VMOVE( grid_hor, y_axis );
@@ -3338,7 +3340,7 @@ setup_Lgts(int frame)
 		/* Unitize first. */
 		VSCALE( grid_hor, grid_hor, 1.0/mag );
 		VCROSS( grid_ver, lgts[0].dir, grid_hor );
-		if ( (mag = MAGNITUDE( grid_ver )) < EPSILON )
+		if ( (mag = MAGNITUDE( grid_ver )) < epsilon )
 		{
 		    /* Must be top ([+/-]90, 90) view. */
 		    VMOVE( grid_ver, y_axis );
@@ -3348,8 +3350,8 @@ setup_Lgts(int frame)
 		    /* Unitize first. */
 		    VSCALE( grid_ver, grid_ver, 1.0/mag );
 		    /* Check for inverted image. */
-		    if (	Dot( grid_hor, y_axis ) < 0
-				&&	Dot( grid_ver, neg_z_axis ) > 0
+		    if (	VDOT( grid_hor, y_axis ) < 0
+				&&	VDOT( grid_ver, neg_z_axis ) > 0
 			)
 		    {
 			VSCALE( grid_ver, grid_ver, -1.0 );
@@ -3387,12 +3389,12 @@ setup_Lgts(int frame)
 			    lgts[0].dir );
 		}
 		/* Apply grid translation. */
-		Scale2Vec( grid_hor, x_grid_offset, hor_adjust );
-		Scale2Vec( grid_ver, y_grid_offset, ver_adjust );
-		AddVec( grid_loc, hor_adjust );
-		AddVec( grid_loc, ver_adjust );
-		DiffVec( lgts[0].loc, hor_adjust );
-		DiffVec( lgts[0].loc, ver_adjust );
+		VSCALE( hor_adjust, grid_hor, x_grid_offset );
+		VSCALE( ver_adjust, grid_ver, y_grid_offset );
+		VADD2( grid_loc, grid_loc, hor_adjust );
+		VADD2( grid_loc, grid_loc, ver_adjust );
+		VSUB2( lgts[0].loc, lgts[0].loc, hor_adjust );
+		VSUB2( lgts[0].loc, lgts[0].loc, ver_adjust );
 	    }
 	    else	/* Position grid using user options. */
 	    {
@@ -3406,12 +3408,12 @@ setup_Lgts(int frame)
 		/* Compute grid position in model space. */
 		VJOIN1( grid_loc, modl_cntr, grid_dist, lgts[0].dir );
 		/* Apply grid translation. */
-		Scale2Vec( grid_hor, x_grid_offset, hor_adjust );
-		Scale2Vec( grid_ver, y_grid_offset, ver_adjust );
-		AddVec( grid_loc, hor_adjust );
-		AddVec( grid_loc, ver_adjust );
-		DiffVec( lgts[0].loc, hor_adjust );
-		DiffVec( lgts[0].loc, ver_adjust );
+		VSCALE( hor_adjust, grid_hor, x_grid_offset );
+		VSCALE( ver_adjust, grid_ver, y_grid_offset );
+		VADD2( grid_loc, grid_loc, hor_adjust );
+		VADD2( grid_loc, grid_loc, ver_adjust );
+		VSUB2( lgts[0].loc, lgts[0].loc, hor_adjust );
+		VSUB2( lgts[0].loc, lgts[0].loc, ver_adjust );
 	    }
     /* Get light source positions in model space. */
     if ( movie.m_noframes > 1  && movie.m_lgts )
@@ -3450,7 +3452,7 @@ setup_Lgts(int frame)
 		)
 	    {
 		VMOVE( lgts[i].loc, lgts[i].stp->st_center );
-		lgts[i].dist = Dist3d( lgts[i].loc, modl_cntr );
+		lgts[i].dist = DIST_PT_PT( lgts[i].loc, modl_cntr );
 	    }
 	    else
 	    {
@@ -3468,7 +3470,7 @@ setup_Lgts(int frame)
 		&&	lgts[i].rgb[2] == 0
 	    )
 	    bu_log( "Warning: light source %d is black.\n", i );
-	Scale2Vec( lgts[i].rgb, RGB_INVERSE, lgts[i].coef );
+	VSCALE( lgts[i].coef, lgts[i].rgb, RGB_INVERSE );
     }
     prnt_Timer( "LGTS" );
     return	1;
@@ -3590,7 +3592,7 @@ make_Script(char *file)
     if ( max_bounce )
 	(void) fprintf( run_fp,	" -K%d", max_bounce );
     if ( !NEAR_ZERO(grid_roll, SMALL_FASTF) )
-	(void) fprintf( run_fp,	" -a%g", grid_roll*DEGRAD );
+	(void) fprintf( run_fp,	" -a%g", grid_roll*RAD2DEG );
     if ( background[0] || background[1] || background[2] )
 	(void) fprintf( run_fp,
 			" -b\"%d %d %d\"",
@@ -3736,7 +3738,7 @@ pars_Argv(int argc, register char **argv)
     prnt_Timer( "PREP" );
 
     /* Compute model radius. */
-    modl_radius = Dist3d( rt_ip->mdl_min, rt_ip->mdl_max ) / 2.0;
+    modl_radius = DIST_PT_PT( rt_ip->mdl_min, rt_ip->mdl_max ) / 2.0;
     if ( ! force_viewsz )
 	view_size = modl_radius * 2.0;
     bu_log( "Model minimum [%11.4f,%11.4f,%11.4f]\n",

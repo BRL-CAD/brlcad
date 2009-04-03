@@ -32,6 +32,9 @@
 // function pointers to void*.
 
 namespace boost {
+
+#if !defined( __CODEGEARC__ )
+
 namespace detail {
 
 #if !defined(BOOST_NO_TEMPLATE_PARTIAL_SPECIALIZATION) && !defined(BOOST_TT_TEST_MS_FUNC_SIGS)
@@ -86,8 +89,13 @@ struct is_function_impl<T&> : public false_type
 
 } // namespace detail
 
-BOOST_TT_AUX_BOOL_TRAIT_DEF1(is_function,T,::boost::detail::is_function_impl<T>::value)
+#endif // !defined( __CODEGEARC__ )
 
+#if defined( __CODEGEARC__ )
+BOOST_TT_AUX_BOOL_TRAIT_DEF1(is_function,T,__is_function(T))
+#else
+BOOST_TT_AUX_BOOL_TRAIT_DEF1(is_function,T,::boost::detail::is_function_impl<T>::value)
+#endif
 } // namespace boost
 
 #include <boost/type_traits/detail/bool_trait_undef.hpp>

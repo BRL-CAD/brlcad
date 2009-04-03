@@ -23,9 +23,6 @@
  *
  *	Map between Major_Types/Minor_Types and ASCII strings
  *
- *  Author -
- *	Paul J. Tanenbaum
- *
  */
 
 #include "common.h"
@@ -38,7 +35,6 @@
 #include "bu.h"
 #include "vmath.h"
 #include "db5.h"
-#include "nmg.h"
 #include "raytrace.h"
 
 struct db5_type {

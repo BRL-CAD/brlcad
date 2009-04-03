@@ -1,101 +1,265 @@
-.TH RTAREA 1 BRL-CAD
-.\"                       R T A R E A . 1
-.\" BRL-CAD
+.\"     Title: RTAREA
+.\"    Author: [see the "AUTHOR" section]
+.\" Generator: DocBook XSL Stylesheets v1.74.0 <http://docbook.sf.net/>
+.\"      Date: 03/31/2009
+.\"    Manual: BRL-CAD User Commands
+.\"    Source: BRL-CAD
+.\"  Language: English
 .\"
-.\" Copyright (c) 1987-2009 United States Government as represented by
-.\" the U.S. Army Research Laboratory.
-.\"
-.\" Redistribution and use in source (Docbook format) and 'compiled'
-.\" forms (PDF, PostScript, HTML, RTF, etc), with or without
-.\" modification, are permitted provided that the following conditions
-.\" are met:
-.\"
-.\" 1. Redistributions of source code (Docbook format) must retain the
-.\" above copyright notice, this list of conditions and the following
-.\" disclaimer.
-.\"
-.\" 2. Redistributions in compiled form (transformed to other DTDs,
-.\" converted to PDF, PostScript, HTML, RTF, and other formats) must
-.\" reproduce the above copyright notice, this list of conditions and
-.\" the following disclaimer in the documentation and/or other
-.\" materials provided with the distribution.
-.\"
-.\" 3. The name of the author may not be used to endorse or promote
-.\" products derived from this documentation without specific prior
-.\" written permission.
-.\"
-.\" THIS DOCUMENTATION IS PROVIDED BY THE AUTHOR AS IS'' AND ANY
-.\" EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
-.\" IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
-.\" PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
-.\" ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
-.\" CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT
-.\" OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR
-.\" BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
-.\" LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-.\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE
-.\" USE OF THIS DOCUMENTATION, EVEN IF ADVISED OF THE POSSIBILITY OF
-.\" SUCH DAMAGE.
-.\"
-.\".\".\"
-.SH NAME
+.TH "RTAREA" "1" "03/31/2009" "BRL\-CAD" "BRL\-CAD User Commands"
+.\" -----------------------------------------------------------------
+.\" * (re)Define some macros
+.\" -----------------------------------------------------------------
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.\" toupper - uppercase a string (locale-aware)
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.de toupper
+.tr aAbBcCdDeEfFgGhHiIjJkKlLmMnNoOpPqQrRsStTuUvVwWxXyYzZ
+\\$*
+.tr aabbccddeeffgghhiijjkkllmmnnooppqqrrssttuuvvwwxxyyzz
+..
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.\" SH-xref - format a cross-reference to an SH section
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.de SH-xref
+.ie n \{\
+.\}
+.toupper \\$*
+.el \{\
+\\$*
+.\}
+..
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.\" SH - level-one heading that works better for non-TTY output
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.de1 SH
+.\" put an extra blank line of space above the head in non-TTY output
+.if t \{\
+.sp 1
+.\}
+.sp \\n[PD]u
+.nr an-level 1
+.set-an-margin
+.nr an-prevailing-indent \\n[IN]
+.fi
+.in \\n[an-margin]u
+.ti 0
+.HTML-TAG ".NH \\n[an-level]"
+.it 1 an-trap
+.nr an-no-space-flag 1
+.nr an-break-flag 1
+\." make the size of the head bigger
+.ps +3
+.ft B
+.ne (2v + 1u)
+.ie n \{\
+.\" if n (TTY output), use uppercase
+.toupper \\$*
+.\}
+.el \{\
+.nr an-break-flag 0
+.\" if not n (not TTY), use normal case (not uppercase)
+\\$1
+.in \\n[an-margin]u
+.ti 0
+.\" if not n (not TTY), put a border/line under subheading
+.sp -.6
+\l'\n(.lu'
+.\}
+..
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.\" SS - level-two heading that works better for non-TTY output
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.de1 SS
+.sp \\n[PD]u
+.nr an-level 1
+.set-an-margin
+.nr an-prevailing-indent \\n[IN]
+.fi
+.in \\n[IN]u
+.ti \\n[SN]u
+.it 1 an-trap
+.nr an-no-space-flag 1
+.nr an-break-flag 1
+.ps \\n[PS-SS]u
+\." make the size of the head bigger
+.ps +2
+.ft B
+.ne (2v + 1u)
+.if \\n[.$] \&\\$*
+..
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.\" BB/BE - put background/screen (filled box) around block of text
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.de BB
+.if t \{\
+.sp -.5
+.br
+.in +2n
+.ll -2n
+.gcolor red
+.di BX
+.\}
+..
+.de EB
+.if t \{\
+.if "\\$2"adjust-for-leading-newline" \{\
+.sp -1
+.\}
+.br
+.di
+.in
+.ll
+.gcolor
+.nr BW \\n(.lu-\\n(.i
+.nr BH \\n(dn+.5v
+.ne \\n(BHu+.5v
+.ie "\\$2"adjust-for-leading-newline" \{\
+\M[\\$1]\h'1n'\v'+.5v'\D'P \\n(BWu 0 0 \\n(BHu -\\n(BWu 0 0 -\\n(BHu'\M[]
+.\}
+.el \{\
+\M[\\$1]\h'1n'\v'-.5v'\D'P \\n(BWu 0 0 \\n(BHu -\\n(BWu 0 0 -\\n(BHu'\M[]
+.\}
+.in 0
+.sp -.5v
+.nf
+.BX
+.in
+.sp .5v
+.fi
+.\}
+..
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.\" BM/EM - put colored marker in margin next to block of text
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.de BM
+.if t \{\
+.br
+.ll -2n
+.gcolor red
+.di BX
+.\}
+..
+.de EM
+.if t \{\
+.br
+.di
+.ll
+.gcolor
+.nr BH \\n(dn
+.ne \\n(BHu
+\M[\\$1]\D'P -.75n 0 0 \\n(BHu -(\\n[.i]u - \\n(INu - .75n) 0 0 -\\n(BHu'\M[]
+.in 0
+.nf
+.BX
+.in
+.fi
+.\}
+..
+.\" -----------------------------------------------------------------
+.\" * set default formatting
+.\" -----------------------------------------------------------------
+.\" disable hyphenation
+.nh
+.\" disable justification (adjust text to left margin only)
+.ad l
+.\" -----------------------------------------------------------------
+.\" * MAIN CONTENT STARTS HERE *
+.\" -----------------------------------------------------------------
+.SH "Name"
 rtarea \- Calculate exposed and presented surface areas
-.SH SYNOPSIS
-.B rtarea
-[ options ... ]
-model.g
-objects ...
-.SH DESCRIPTION
-.I Rtarea
-calculates the exposed and presented surface areas of specified
-geometry objects from a particular view.  The summary output includes
-details for individual regions, assemblies (combinations that contain
-regions), and summarized totals.  The exposed area is the occluded 2D
-projection of the specified geometry.  That is to say that if another
-object is in front, it will reduce the amount of exposed area.  The
-presented area is the unoccluded 2D projection of the geometry, where
-hidden objects will report their presented area regardless of any
-objects that are in front.
+.SH "Synopsis"
+.fam C
+.HP \w'\fBrtarea\fR\ 'u
+\fBrtarea\fR [\fIoptions\fR...] \fImodel\&.g\fR \fIobjects\fR...
+.fam
+.SH "DESCRIPTION"
 .PP
-It presently does not compute the entire surface area of objects
-displayed though that would be a nice feature to have.
+
+\fIRtarea\fR
+calculates the exposed, presented and centers of surface areas of specified geometry objects from a particular view\&. The summary output includes details for individual regions, assemblies (combinations that contain regions), and summarized totals\&. The exposed area is the occluded 2D projection of the specified geometry\&. That is, if another object is in front, it will reduce the amount of exposed area\&. The presented area is the unoccluded 2D projection of the geometry, where hidden objects will report their presented area regardless of any objects that are in front\&.
+.PP
+WARNING:
+\fIRtarea\fR
+may not correctly report area or center when instancing is done at the group level\&. Using
+\fBxpush\fR
+can be a workaround for this problem\&.
 .PP
 The model geometry is the list of
-.I objects
+\fIobjects\fR
 in the input database
-.IR model.g .
-.TP
-.B \-X\ #
-Set rtarea debug flags to a (hexadecimal) number.
-A flag value of 1 causes 3-D plot output to be written to stdout.
-All solid RPPs are plotted as grey boxes, and the walk path is
-in alternating blue and green segments.
-A flag value of 2 adds red segments for all attempted steps,
-as well as the final steps.
-A flag value of 3 adds some debugging prints to stderr in addition
-to the plots.  This is useful for immediate path review, eg,
-.sp .5
-	rtarea -X 1 ... | tiris
-.TP
-.B \-x\ #
-Set librt debug flags to a (hexadecimal) number.
-.TP
-.B \-n\ # of steps
-.LP
+\fImodel\&.g\fR\&.
+.PP
+\fB\-X #\fR
+.RS 4
+Sets rtarea debug flags to a (hexadecimal) number\&. A flag value of 1 causes 3\-D plot output to be written to stdout\&. All solid RPPs are plotted as grey boxes, and the walk path is in alternating blue and green segments\&. A flag value of 2 adds red segments for all attempted steps, as well as the final steps\&. A flag value of 3 adds some debugging prints to stderr in addition to the plots\&. This is useful for immediate path review, e\&.g\&.,
+\fBrtarea \-X 1 \&.\&.\&. | tiris\fR
+.RE
+.PP
+\fB\-x #\fR
+.RS 4
+Sets librt debug flags to a (hexadecimal) number\&.
+.RE
+.PP
+\fB\-n #\fR
+.RS 4
+Number of steps\&.
+.RE
+.PP
 The
-.B rtarea
+\fBrtarea\fR
 program employs
-.IR librt (3)
-for the geometry interrogation.
-.sp
+\fBlibrt\fR(3)
+for the geometry interrogation\&.
+.SH "ADDITIONAL OPTIONS"
+.PP
+To configure its behavior,
+\fBrtarea\fR
+makes use of the
+\fB\-c\fR
+option\&.
+.PP
+Note that this approach is necessitated by the fact that
+\fIlibrt (3)\fR
+has used up nearly the entire alphabet\&. A transition to GNU\-style long option names is planned\&.
+.PP
+\fB\-c "set compute_centers=#"\fR
+.RS 4
+and
+.RE
+.PP
+\fB\-c "set cc=#"\fR
+.RS 4
+determine whether area centers should be computed and reported\&. Valid values are 1 (on) and 0 (off)\&. The default is off\&.
+.RE
+.SH "EXAMPLES"
+.PP
+\fBExample\ \&1.\ \&Rtarea processing of example.g\fR
+.PP
+The command
+\fBrtarea example\&.g all\fR
+computes the area for model \'example\&.g\' group \'all\'\&.
+.PP
+The command
+\fBrtarea \-c "set cc=1" example\&.g all\fR
+computes the area and centers for model \'example\&.g\' group \'all\'\&.
 .SH "SEE ALSO"
-mged(1), rt(1), pix-fb(1), librt(3), pix(5).
-.SH DIAGNOSTICS
-Numerous error conditions are possible.
-Descriptive messages are printed on standard error.
-.SH COPYRIGHT
-This software is Copyright (c) 1987-2009 United States Government as
-represented by the U.S. Army Research Laboratory. All rights reserved.
+.PP
+
+\fBmged\fR(1),
+\fBrt\fR(1),
+\fBpix-fb\fR(1),
+\fBlibrt\fR(3),
+\fBpix\fR(5)\&.
+.SH "DIAGNOSTICS"
+.PP
+Numerous error conditions are possible\&. Descriptive messages are printed on stderr\&.
+.SH "COPYRIGHT"
+.PP
+This software is Copyright (c) 1987\-2009 United States Government as represented by the U\&.S\&. Army Research Laboratory\&. All rights reserved\&.
 .SH "BUG REPORTS"
-Reports of bugs or problems should be submitted via electronic
-mail to <bugs@brlcad.org>.
+.PP
+Reports of bugs or problems should be submitted via electronic mail to <bugs@brlcad\&.org>\&.
+.SH "AUTHOR"
+.PP
+BRL\-CAD Team

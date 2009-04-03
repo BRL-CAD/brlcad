@@ -195,17 +195,17 @@ rt_mirror(struct db_i		*dbip,
 	    bn_mat_arb_rot(mat, origin, n, ang*2);
 	    VMOVE(a, tgc->a);
 	    MAT4X3VEC(tgc->a, mat, a);
-	    VMOVE(b, tgc->b);
-	    MAT4X3VEC(tgc->b, mat, b);
-
-	    VMOVE(c, tgc->c);
-	    VUNITIZE(c);
-	    VCROSS(n, mirror_dir, tgc->c);
-	    VUNITIZE(n);
-	    ang = M_PI_2 - acos(VDOT(c,mirror_dir));
-	    bn_mat_arb_rot(mat, origin, n, ang*2);
 	    VMOVE(c, tgc->c);
 	    MAT4X3VEC(tgc->c, mat, c);
+
+	    VMOVE(b, tgc->b);
+	    VUNITIZE(b);
+	    VCROSS(n, mirror_dir, tgc->b);
+	    VUNITIZE(n);
+	    ang = M_PI_2 - acos(VDOT(b,mirror_dir));
+	    bn_mat_arb_rot(mat, origin, n, ang*2);
+	    VMOVE(b, tgc->b);
+	    MAT4X3VEC(tgc->b, mat, b);
 	    VMOVE(d, tgc->d);
 	    MAT4X3VEC(tgc->d, mat, d);
 

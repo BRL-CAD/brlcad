@@ -72,10 +72,10 @@ void Parser::parse(struct pc_pc_set * pcs)
 	name.clear();
 	//std::cout<<"Parameter expression Input: "<<(char *) bu_vls_addr(&(par->name))<<std::endl;
 	if (par->ctype == PC_DB_BYEXPR) {
-	    boost::spirit::classic::parse_info<> p_info = \
-	    boost::spirit::classic::parse(\
+	    boost::spirit::parse_info<> p_info = \
+	    boost::spirit::parse(\
 			    (char *) bu_vls_addr(&(par->data.expression)),\
-			    *var_gram, boost::spirit::classic::space_p);
+			    *var_gram, boost::spirit::space_p);
 	    if (p_info.full) {
 		//vcset.pushVar();
 	    } else {

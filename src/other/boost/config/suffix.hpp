@@ -1,21 +1,22 @@
 //  Boost config.hpp configuration header file  ------------------------------//
 
-//  (C) Copyright John Maddock 2001 - 2003.
-//  (C) Copyright Darin Adler 2001.
-//  (C) Copyright Peter Dimov 2001.
-//  (C) Copyright Bill Kempf 2002.
-//  (C) Copyright Jens Maurer 2002.
-//  (C) Copyright David Abrahams 2002 - 2003.
-//  (C) Copyright Gennaro Prota 2003.
-//  (C) Copyright Eric Friedman 2003.
-//  Use, modification and distribution are subject to the
-//  Boost Software License, Version 1.0. (See accompanying file
-//  LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
+//  Copyright (c) 2001-2003 John Maddock
+//  Copyright (c) 2001 Darin Adler
+//  Copyright (c) 2001 Peter Dimov
+//  Copyright (c) 2002 Bill Kempf 
+//  Copyright (c) 2002 Jens Maurer
+//  Copyright (c) 2002-2003 David Abrahams
+//  Copyright (c) 2003 Gennaro Prota
+//  Copyright (c) 2003 Eric Friedman
+//
+// Distributed under the Boost Software License, Version 1.0. (See
+// accompanying file LICENSE_1_0.txt or copy at
+// http://www.boost.org/LICENSE_1_0.txt)
 
-//  See http://www.boost.org for most recent version.
+//  See http://www.boost.org/ for most recent version.
 
 //  Boost config.hpp policy and rationale documentation has been moved to
-//  http://www.boost.org/libs/config
+//  http://www.boost.org/libs/config/
 //
 //  This file is intended to be stable, and relatively unchanging.
 //  It should contain boilerplate code only - no compiler specific
@@ -30,11 +31,13 @@
 // remember that since these just declare a bunch of macros, there should be
 // no namespace issues from this.
 //
-#if !defined(BOOST_HAS_LONG_LONG)                                               \
+#if !defined(BOOST_HAS_LONG_LONG) && !defined(BOOST_NO_LONG_LONG)                                              \
    && !defined(BOOST_MSVC) && !defined(__BORLANDC__)
 # include <limits.h>
 # if (defined(ULLONG_MAX) || defined(ULONG_LONG_MAX) || defined(ULONGLONG_MAX))
 #   define BOOST_HAS_LONG_LONG
+# else
+#   define BOOST_NO_LONG_LONG
 # endif
 #endif
 
@@ -157,6 +160,13 @@
 #endif
 
 //
+// Without typeid support we have no dynamic RTTI either:
+//
+#if defined(BOOST_NO_TYPEID) && !defined(BOOST_NO_RTTI)
+#  define BOOST_NO_RTTI
+#endif
+
+//
 // If we have a standard allocator, then we have a partial one as well:
 //
 #if !defined(BOOST_NO_STD_ALLOCATOR)
@@ -215,7 +225,8 @@
 // from here then add to the appropriate compiler section):
 //
 #if (defined(__MT__) || defined(_MT) || defined(_REENTRANT) \
-    || defined(_PTHREADS)) && !defined(BOOST_HAS_THREADS)
+    || defined(_PTHREADS) || defined(__APPLE__) || defined(__DragonFly__)) \
+    && !defined(BOOST_HAS_THREADS)
 #  define BOOST_HAS_THREADS
 #endif
 
@@ -266,11 +277,11 @@
 // Define BOOST_NO_SLIST and BOOST_NO_HASH if required.
 // Note that this is for backwards compatibility only.
 //
-#  ifndef BOOST_HAS_SLIST
+#  if !defined(BOOST_HAS_SLIST) && !defined(BOOST_NO_SLIST)
 #     define BOOST_NO_SLIST
 #  endif
 
-#  ifndef BOOST_HAS_HASH
+#  if !defined(BOOST_HAS_HASH) && !defined(BOOST_NO_HASH)
 #     define BOOST_NO_HASH
 #  endif
 
@@ -372,7 +383,7 @@ namespace std {
 //    with
 //       BOOST_USE_FACET(Type, loc);
 //    Note do not add a std:: prefix to the front of BOOST_USE_FACET!
-//  Use for BOOST_HAS_FACET is analagous.
+//  Use for BOOST_HAS_FACET is analogous.
 
 #if defined(BOOST_NO_STD_USE_FACET)
 #  ifdef BOOST_HAS_TWO_ARG_USE_FACET
@@ -434,6 +445,12 @@ namespace std {
 #  define BOOST_DEDUCED_TYPENAME
 #endif
 
+#ifndef BOOST_NO_TYPENAME_WITH_CTOR
+#  define BOOST_CTOR_TYPENAME typename
+#else
+#  define BOOST_CTOR_TYPENAME
+#endif
+
 // long long workaround ------------------------------------------//
 // On gcc (and maybe other compilers?) long long is alway supported
 // but it's use may generate either warnings (with -ansi), or errors
@@ -453,12 +470,11 @@ namespace boost{
 
 // BOOST_[APPEND_]EXPLICIT_TEMPLATE_[NON_]TYPE macros --------------------------//
 //
-// Some compilers have problems with function templates whose
-// template parameters don't appear in the function parameter
-// list (basically they just link one instantiation of the
-// template in the final executable). These macros provide a
-// uniform way to cope with the problem with no effects on the
-// calling syntax.
+// Some compilers have problems with function templates whose template
+// parameters don't appear in the function parameter list (basically
+// they just link one instantiation of the template in the final
+// executable). These macros provide a uniform way to cope with the
+// problem with no effects on the calling syntax.
 
 // Example:
 //
@@ -499,18 +515,18 @@ namespace boost{
 #  include "boost/type.hpp"
 #  include "boost/non_type.hpp"
 
-#  define BOOST_EXPLICIT_TEMPLATE_TYPE(t)         boost::type<t>* = 0
-#  define BOOST_EXPLICIT_TEMPLATE_TYPE_SPEC(t)    boost::type<t>*
-#  define BOOST_EXPLICIT_TEMPLATE_NON_TYPE(t, v)  boost::non_type<t, v>* = 0
+#  define BOOST_EXPLICIT_TEMPLATE_TYPE(t)              boost::type<t>* = 0
+#  define BOOST_EXPLICIT_TEMPLATE_TYPE_SPEC(t)         boost::type<t>*
+#  define BOOST_EXPLICIT_TEMPLATE_NON_TYPE(t, v)       boost::non_type<t, v>* = 0
 #  define BOOST_EXPLICIT_TEMPLATE_NON_TYPE_SPEC(t, v)  boost::non_type<t, v>*
 
-#  define BOOST_APPEND_EXPLICIT_TEMPLATE_TYPE(t)         \
+#  define BOOST_APPEND_EXPLICIT_TEMPLATE_TYPE(t)        \
              , BOOST_EXPLICIT_TEMPLATE_TYPE(t)
-#  define BOOST_APPEND_EXPLICIT_TEMPLATE_TYPE_SPEC(t)    \
+#  define BOOST_APPEND_EXPLICIT_TEMPLATE_TYPE_SPEC(t)   \
              , BOOST_EXPLICIT_TEMPLATE_TYPE_SPEC(t)
-#  define BOOST_APPEND_EXPLICIT_TEMPLATE_NON_TYPE(t, v)  \
+#  define BOOST_APPEND_EXPLICIT_TEMPLATE_NON_TYPE(t, v) \
              , BOOST_EXPLICIT_TEMPLATE_NON_TYPE(t, v)
-#  define BOOST_APPEND_EXPLICIT_TEMPLATE_NON_TYPE_SPEC(t, v)  \
+#  define BOOST_APPEND_EXPLICIT_TEMPLATE_NON_TYPE_SPEC(t, v)    \
              , BOOST_EXPLICIT_TEMPLATE_NON_TYPE_SPEC(t, v)
 
 #else

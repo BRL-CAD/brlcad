@@ -843,9 +843,9 @@ package provide Archer 1.0
     wm geometry $dialog 400x400
 
     # Event bindings
-    bind $dialog <Enter> "raise $dialog"
-    bind $dialog <Configure> "raise $dialog"
-    bind $dialog <FocusOut> "raise $dialog"
+#    bind $dialog <Enter> "raise $dialog"
+#    bind $dialog <Configure> "raise $dialog"
+#    bind $dialog <FocusOut> "raise $dialog"
 
     $dialog center $w
     $dialog activate
@@ -961,7 +961,7 @@ package provide Archer 1.0
     }
 
     if {[info exists itk_component(ged)]} {
-	SetWaitCursor
+	SetWaitCursor $this
 	set savedUnits [$itk_component(ged) units -s]
 	$itk_component(ged) units in
 	$itk_component(ged) configure -autoViewEnable 0
@@ -1097,7 +1097,7 @@ package provide Archer 1.0
 	$itk_component(ged) attachObservers
 	$itk_component(ged) refreshAll
 	$itk_component(ged) configure -autoViewEnable 1
-	SetNormalCursor
+	SetNormalCursor $this
     }
 }
 
@@ -1126,6 +1126,7 @@ package provide Archer 1.0
 }
 
 ::itcl::body Archer::Load {_target} {
+    SetWaitCursor $this
     if {$mNeedSave} {
 	$itk_component(saveDialog) center [namespace tail $this]
 	if {[$itk_component(saveDialog) activate]} {
@@ -1208,9 +1209,7 @@ package provide Archer 1.0
 	showGroundPlane
 
 	# refresh tree contents
-	SetWaitCursor
 	refreshTree 0
-	SetNormalCursor
     } else {
 	applyPreferences
 	doLighting
@@ -1220,6 +1219,7 @@ package provide Archer 1.0
 	set mDefaultBindingMode $ROTATE_MODE
 	beginViewRotate
     }
+    SetNormalCursor $this
 }
 
 ::itcl::body Archer::updateTheme {} {
@@ -1688,7 +1688,7 @@ package provide Archer 1.0
 
 ################################### Miscellaneous Section ###################################
 ::itcl::body Archer::archerWrapper {cmd eflag hflag sflag tflag args} {
-    SetWaitCursor
+    SetWaitCursor $this
 
     if {$eflag} {
 	set optionsAndArgs [eval dbExpand $args]
@@ -1714,7 +1714,7 @@ package provide Archer 1.0
     }
 
     if {[catch {eval gedCmd $cmd $options $expandedArgs} ret]} {
-	SetNormalCursor
+	SetNormalCursor $this
 	return $ret
     }
 
@@ -1727,7 +1727,7 @@ package provide Archer 1.0
     if {$tflag} {
 	catch {refreshTree}
     }
-    SetNormalCursor
+    SetNormalCursor $this
 
     return $ret
 }
@@ -1760,75 +1760,22 @@ package provide Archer 1.0
     set parent [$itk_component(aboutDialog) childsite]
 
     itk_component add aboutDialogTabs {
-	blt::tabnotebook $parent.tabs \
-	    -side bottom \
-	    -relief flat \
-	    -tiers 99 \
-	    -tearoff 0 \
-	    -gap 3 \
-	    -width 0 \
-	    -height 0 \
-	    -outerpad 0 \
-	    -highlightthickness 1 \
-	    -selectforeground black
+	ttk::notebook $parent.tabs
     } {}
-    $itk_component(aboutDialogTabs) configure \
-	-highlightcolor [$itk_component(aboutDialogTabs) cget -background] \
-	-borderwidth 0 \
-	-font $mFontText
-    $itk_component(aboutDialogTabs) insert end -text "About" -stipple gray25
-    $itk_component(aboutDialogTabs) insert end -text "License" -stipple gray25
-    $itk_component(aboutDialogTabs) insert end -text "Acknowledgements" -stipple gray25
-
 
     # About Info
-    #    set aboutImg [image create photo -file [file join $env(ARCHER_HOME) $brlcadDataPath tclscripts archer images aboutArcher.png]]
     set aboutImg [image create photo -file [file join $brlcadDataPath tclscripts archer images aboutArcher.png]]
     itk_component add aboutInfo {
 	::label $itk_component(aboutDialogTabs).aboutInfo \
 	    -image $aboutImg
     } {}
 
-    set aboutTabIndex 0
-    $itk_component(aboutDialogTabs) tab configure $aboutTabIndex \
-	-window $itk_component(aboutInfo) \
-	-fill both
-
-
-    # License Info
-    itk_component add licenseDialogTabs {
-	blt::tabnotebook $itk_component(aboutDialogTabs).tabs \
-	    -side top \
-	    -relief flat \
-	    -tiers 99 \
-	    -tearoff 0 \
-	    -gap 3 \
-	    -width 0 \
-	    -height 0 \
-	    -outerpad 0 \
-	    -highlightthickness 1 \
-	    -selectforeground black
-    } {}
-    $itk_component(licenseDialogTabs) configure \
-	-highlightcolor [$itk_component(licenseDialogTabs) cget -background] \
-	-borderwidth 0 \
-	-font $mFontText
-    $itk_component(licenseDialogTabs) insert end -text "BRL-CAD" -stipple gray25
-
-    incr aboutTabIndex
-    $itk_component(aboutDialogTabs) tab configure $aboutTabIndex \
-	-window $itk_component(licenseDialogTabs) \
-	-fill both
-
-    set licenseTabIndex -1
-
     # BRL-CAD License Info
-    #    set fd [open [file join $env(ARCHER_HOME) $brlcadDataPath COPYING] r]
     set fd [open [file join $brlcadDataPath COPYING] r]
     set mBrlcadLicenseInfo [read $fd]
     close $fd
     itk_component add brlcadLicenseInfo {
-	::iwidgets::scrolledtext $itk_component(licenseDialogTabs).brlcadLicenseInfo \
+	::iwidgets::scrolledtext $itk_component(aboutDialogTabs).brlcadLicenseInfo \
 	    -wrap word \
 	    -hscrollmode dynamic \
 	    -vscrollmode dynamic \
@@ -1838,12 +1785,6 @@ package provide Archer 1.0
     } {}
     $itk_component(brlcadLicenseInfo) insert 0.0 $mBrlcadLicenseInfo
     $itk_component(brlcadLicenseInfo) configure -state disabled
-
-    incr licenseTabIndex
-    $itk_component(licenseDialogTabs) tab configure $licenseTabIndex \
-	-window $itk_component(brlcadLicenseInfo) \
-	-fill both
-
 
     # Acknowledgement Info
     #    set fd [open [file join $env(ARCHER_HOME) $brlcadDataPath doc archer_ack.txt] r]
@@ -1862,10 +1803,9 @@ package provide Archer 1.0
     $itk_component(ackInfo) insert 0.0 $mAckInfo
     $itk_component(ackInfo) configure -state disabled
 
-    incr aboutTabIndex
-    $itk_component(aboutDialogTabs) tab configure $aboutTabIndex \
-	-window $itk_component(ackInfo) \
-	-fill both
+    $itk_component(aboutDialogTabs) add $itk_component(aboutInfo) -text "About"
+    $itk_component(aboutDialogTabs) add $itk_component(brlcadLicenseInfo) -text "License"
+    $itk_component(aboutDialogTabs) add $itk_component(ackInfo) -text "Acknowledgements"
 
     # Version Info
     itk_component add versionInfo {
@@ -1957,7 +1897,7 @@ package provide Archer 1.0
 	    -labelpos nw \
 	    -borderwidth 2 \
 	    -relief groove
-    }
+    } {}
 
     set oglParent [$itk_component(displayLF) childsite]
 
@@ -2024,6 +1964,8 @@ package provide Archer 1.0
 
     grid rowconfigure $oglParent 0 -weight 1
     grid columnconfigure $oglParent 0 -weight 1
+
+    $itk_component(preferenceTabs) add $itk_component(displayLF) -text "Display"
 }
 
 
@@ -2417,31 +2359,33 @@ package provide Archer 1.0
 
     grid rowconfigure $parent 0 -weight 1
     grid columnconfigure $parent 0 -weight 1
+
+    $itk_component(preferenceTabs) add $itk_component(generalLF) -text "General"
 }
 
 
 ::itcl::body Archer::buildGroundPlanePreferences {} {
-    itk_component add groundPlaneF {
-	::iwidgets::Labeledframe $itk_component(preferenceTabs).groundPlaneF \
+    itk_component add groundPlaneLF {
+	::iwidgets::Labeledframe $itk_component(preferenceTabs).groundPlaneLF \
 	    -labeltext "Ground Plane Settings" \
 	    -labelpos nw \
 	    -borderwidth 2 \
 	    -relief groove
     }
 
-    set parent [$itk_component(groundPlaneF) childsite]
-    itk_component add groundPlaneF2 {
+    set parent [$itk_component(groundPlaneLF) childsite]
+    itk_component add groundPlaneF {
 	::frame $parent.groundPlaneF
     } {}
 
     itk_component add groundPlaneSizeL {
-	::label $itk_component(groundPlaneF2).sizeL \
+	::label $itk_component(groundPlaneF).sizeL \
 	    -anchor e \
 	    -text "Square Size:"
     } {}
     set hbc [$itk_component(groundPlaneSizeL) cget -background]
     itk_component add groundPlaneSizeE {
-	::entry $itk_component(groundPlaneF2).sizeE \
+	::entry $itk_component(groundPlaneF).sizeE \
 	    -width 12 \
 	    -background $SystemWindow \
 	    -highlightbackground $hbc \
@@ -2450,19 +2394,19 @@ package provide Archer 1.0
 	    -vcmd [::itcl::code $this validateDouble %P]
     } {}
     itk_component add groundPlaneSizeUnitsL {
-	::label $itk_component(groundPlaneF2).sizeUnitsL \
+	::label $itk_component(groundPlaneF).sizeUnitsL \
 	    -anchor e \
 	    -text "mm"
     } {}
 
     itk_component add groundPlaneIntervalL {
-	::label $itk_component(groundPlaneF2).intervalL \
+	::label $itk_component(groundPlaneF).intervalL \
 	    -anchor e \
 	    -text "Line Interval:"
     } {}
     set hbc [$itk_component(groundPlaneIntervalL) cget -background]
     itk_component add groundPlaneIntervalE {
-	::entry $itk_component(groundPlaneF2).intervalE \
+	::entry $itk_component(groundPlaneF).intervalE \
 	    -width 12 \
 	    -background $SystemWindow \
 	    -highlightbackground $hbc \
@@ -2471,19 +2415,19 @@ package provide Archer 1.0
 	    -vcmd [::itcl::code $this validateDouble %P]
     } {}
     itk_component add groundPlaneIntervalUnitsL {
-	::label $itk_component(groundPlaneF2).intervalUnitsL \
+	::label $itk_component(groundPlaneF).intervalUnitsL \
 	    -anchor e \
 	    -text "mm"
     } {}
 
-    buildComboBox $itk_component(groundPlaneF2) \
+    buildComboBox $itk_component(groundPlaneF) \
 	groundPlaneMajorColor \
 	majorColor \
 	mGroundPlaneMajorColorPref \
 	"Major Color:" \
 	$mColorListNoTriple
 
-    buildComboBox $itk_component(groundPlaneF2) \
+    buildComboBox $itk_component(groundPlaneF) \
 	groundPlaneMinorColor \
 	minorColor \
 	mGroundPlaneMinorColorPref \
@@ -2506,10 +2450,12 @@ package provide Archer 1.0
     grid $itk_component(groundPlaneMinorColorF) -column 1 -row $i -sticky ew
 
     set i 0
-    grid $itk_component(groundPlaneF2) -column 0 -row $i -sticky nw
+    grid $itk_component(groundPlaneF) -column 0 -row $i -sticky nw
 
     grid rowconfigure $parent 0 -weight 1
     grid columnconfigure $parent 0 -weight 1
+
+    $itk_component(preferenceTabs) add $itk_component(groundPlaneLF) -text "Ground Plane"
 }
 
 
@@ -2599,20 +2545,20 @@ package provide Archer 1.0
 
 
 ::itcl::body Archer::buildModelAxesPreferences {} {
-    itk_component add modelAxesF {
-	::iwidgets::Labeledframe $itk_component(preferenceTabs).modelAxesF \
+    itk_component add modelAxesLF {
+	::iwidgets::Labeledframe $itk_component(preferenceTabs).modelAxesLF \
 	    -labeltext "Model Axes Settings" \
 	    -labelpos nw \
 	    -borderwidth 2 \
 	    -relief groove
     }
 
-    set parent [$itk_component(modelAxesF) childsite]
-    itk_component add modelAxesF2 {
+    set parent [$itk_component(modelAxesLF) childsite]
+    itk_component add modelAxesF {
 	::frame $parent.modelAxesF
     } {}
 
-    buildComboBox $itk_component(modelAxesF2) \
+    buildComboBox $itk_component(modelAxesF) \
 	modelAxesSize \
 	size \
 	mModelAxesSizePref \
@@ -2621,30 +2567,30 @@ package provide Archer 1.0
 	     "View (1x)" "View (2x)" "View (4x)" "View (8x)"}
 
     #    itk_component add modelAxesPositionL {
-    #	::label $itk_component(modelAxesF2).positionL \
+    #	::label $itk_component(modelAxesF).positionL \
 	#	    -text "Position:"
     #    }
     #    itk_component add modelAxesPositionF {
-    #	::frame $itk_component(modelAxesF2).positionF
+    #	::frame $itk_component(modelAxesF).positionF
     #    } {}
     #    _build_model_axes_position $itk_component(modelAxesPositionF)
-    buildModelAxesPosition $itk_component(modelAxesF2)
+    buildModelAxesPosition $itk_component(modelAxesF)
 
-    buildComboBox $itk_component(modelAxesF2) \
+    buildComboBox $itk_component(modelAxesF) \
 	modelAxesLineWidth \
 	lineWidth \
 	mModelAxesLineWidthPref \
 	"Line Width:" \
 	{1 2 3}
 
-    buildComboBox $itk_component(modelAxesF2) \
+    buildComboBox $itk_component(modelAxesF) \
 	modelAxesColor \
 	color \
 	mModelAxesColorPref \
 	"Axes Color:" \
 	$mColorList
 
-    buildComboBox $itk_component(modelAxesF2) \
+    buildComboBox $itk_component(modelAxesF) \
 	modelAxesLabelColor \
 	labelColor \
 	mModelAxesLabelColorPref \
@@ -2652,12 +2598,12 @@ package provide Archer 1.0
 	$mColorListNoTriple
 
     itk_component add modelAxesTickIntervalL {
-	::label $itk_component(modelAxesF2).tickIntervalL \
+	::label $itk_component(modelAxesF).tickIntervalL \
 	    -text "Tick Interval:"
     } {}
     set hbc [$itk_component(modelAxesTickIntervalL) cget -background]
     itk_component add modelAxesTickIntervalE {
-	::entry $itk_component(modelAxesF2).tickIntervalE \
+	::entry $itk_component(modelAxesF).tickIntervalE \
 	    -textvariable [::itcl::scope mModelAxesTickIntervalPref] \
 	    -validate key \
 	    -validatecommand [::itcl::code $this validateTickInterval %P] \
@@ -2665,42 +2611,42 @@ package provide Archer 1.0
 	    -highlightbackground $hbc
     } {}
 
-    buildComboBox $itk_component(modelAxesF2) \
+    buildComboBox $itk_component(modelAxesF) \
 	modelAxesTicksPerMajor \
 	ticksPerMajor \
 	mModelAxesTicksPerMajorPref \
 	"Ticks Per Major:" \
 	{2 3 4 5 6 8 10 12}
 
-    buildComboBox $itk_component(modelAxesF2) \
+    buildComboBox $itk_component(modelAxesF) \
 	modelAxesTickThreshold \
 	tickThreshold \
 	mModelAxesTickThresholdPref \
 	"Tick Threshold:" \
 	{4 8 16 32 64}
 
-    buildComboBox $itk_component(modelAxesF2) \
+    buildComboBox $itk_component(modelAxesF) \
 	modelAxesTickLength \
 	tickLength \
 	mModelAxesTickLengthPref \
 	"Tick Length:" \
 	{2 4 8 16}
 
-    buildComboBox $itk_component(modelAxesF2) \
+    buildComboBox $itk_component(modelAxesF) \
 	modelAxesTickMajorLength \
 	tickMajorLength \
 	mModelAxesTickMajorLengthPref \
 	"Major Tick Length:" \
 	{2 4 8 16}
 
-    buildComboBox $itk_component(modelAxesF2) \
+    buildComboBox $itk_component(modelAxesF) \
 	modelAxesTickColor \
 	tickColor \
 	mModelAxesTickColorPref \
 	"Tick Color:" \
 	$mColorListNoTriple
 
-    buildComboBox $itk_component(modelAxesF2) \
+    buildComboBox $itk_component(modelAxesF) \
 	modelAxesTickMajorColor \
 	tickMajorColor \
 	mModelAxesTickMajorColorPref \
@@ -2754,10 +2700,12 @@ package provide Archer 1.0
     grid $itk_component(modelAxesTickMajorColorF) -column 1 -row $i -sticky ew
 
     set i 0
-    grid $itk_component(modelAxesF2) -column 0 -row $i -sticky nw
+    grid $itk_component(modelAxesF) -column 0 -row $i -sticky nw
 
     grid rowconfigure $parent 0 -weight 1
     grid columnconfigure $parent 0 -weight 1
+
+    $itk_component(preferenceTabs) add $itk_component(modelAxesLF) -text "Model Axes"
 }
 
 
@@ -2907,47 +2855,14 @@ package provide Archer 1.0
 
     set parent [$itk_component(preferencesDialog) childsite]
     itk_component add preferenceTabs {
-	blt::tabnotebook $parent.tabs \
-	    -side left \
-	    -relief flat \
-	    -tiers 99 \
-	    -tearoff 0 \
-	    -gap 3 \
-	    -width 0 \
-	    -height 0 \
-	    -selectforeground black
+	ttk::notebook $parent.tabs
     } {}
 
-    $itk_component(preferenceTabs) insert end -text "General" -stipple gray25
-    $itk_component(preferenceTabs) insert end -text "Model Axes" -stipple gray25
-    $itk_component(preferenceTabs) insert end -text "View Axes" -stipple gray25
-    $itk_component(preferenceTabs) insert end -text "Ground Plane" -stipple gray25
-    $itk_component(preferenceTabs) insert end -text "Display" -stipple gray25
-
-    set i 0
     buildGeneralPreferences
-    $itk_component(preferenceTabs) tab configure $i \
-	-window $itk_component(generalLF) -fill both
-
-    incr i
     buildModelAxesPreferences
-    $itk_component(preferenceTabs) tab configure $i \
-	-window $itk_component(modelAxesF) -fill both
-
-    incr i
     buildViewAxesPreferences
-    $itk_component(preferenceTabs) tab configure $i \
-	-window $itk_component(viewAxesF) -fill both
-
-    incr i
     buildGroundPlanePreferences
-    $itk_component(preferenceTabs) tab configure $i \
-	-window $itk_component(groundPlaneF) -fill both
-
-    incr i
     buildDisplayPreferences
-    $itk_component(preferenceTabs) tab configure $i \
-	-window $itk_component(displayLF) -fill both
 
     pack $itk_component(preferenceTabs) -expand yes -fill both
 
@@ -3239,48 +3154,48 @@ package provide Archer 1.0
 
 
 ::itcl::body Archer::buildViewAxesPreferences {} {
-    itk_component add viewAxesF {
-	::iwidgets::Labeledframe $itk_component(preferenceTabs).viewAxesF \
+    itk_component add viewAxesLF {
+	::iwidgets::Labeledframe $itk_component(preferenceTabs).viewAxesLF \
 	    -labeltext "View Axes Settings" \
 	    -labelpos nw \
 	    -borderwidth 2 \
 	    -relief groove
     }
 
-    set parent [$itk_component(viewAxesF) childsite]
-    itk_component add viewAxesF2 {
+    set parent [$itk_component(viewAxesLF) childsite]
+    itk_component add viewAxesF {
 	::frame $parent.viewAxesF
     } {}
 
-    buildComboBox $itk_component(viewAxesF2) \
+    buildComboBox $itk_component(viewAxesF) \
 	viewAxesSize \
 	size \
 	mViewAxesSizePref \
 	"Size:" \
 	{Small Medium Large X-Large}
 
-    buildComboBox $itk_component(viewAxesF2) \
+    buildComboBox $itk_component(viewAxesF) \
 	viewAxesPosition \
 	position \
 	mViewAxesPositionPref \
 	"Position:" \
 	{Center "Upper Left" "Upper Right" "Lower Left" "Lower Right"}
 
-    buildComboBox $itk_component(viewAxesF2) \
+    buildComboBox $itk_component(viewAxesF) \
 	viewAxesLineWidth \
 	lineWidth \
 	mViewAxesLineWidthPref \
 	"Line Width:" \
 	{1 2 3}
 
-    buildComboBox $itk_component(viewAxesF2) \
+    buildComboBox $itk_component(viewAxesF) \
 	viewAxesColor \
 	color \
 	mViewAxesColorPref \
 	"Axes Color:" \
 	$mColorList
 
-    buildComboBox $itk_component(viewAxesF2) \
+    buildComboBox $itk_component(viewAxesF) \
 	viewAxesLabelColor \
 	labelColor \
 	mViewAxesLabelColorPref \
@@ -3304,17 +3219,19 @@ package provide Archer 1.0
     grid $itk_component(viewAxesLabelColorF) -column 1 -row $i -sticky ew
 
     set i 0
-    grid $itk_component(viewAxesF2) -column 0 -row $i -sticky nw
+    grid $itk_component(viewAxesF) -column 0 -row $i -sticky nw
 
     grid rowconfigure $parent 0 -weight 1
     grid columnconfigure $parent 0 -weight 1
+
+    $itk_component(preferenceTabs) add $itk_component(viewAxesLF) -text "View Axes"
 }
 
 
 ::itcl::body Archer::doAboutArcher {} {
-    bind $itk_component(aboutDialog) <Enter> "raise $itk_component(aboutDialog)"
-    bind $itk_component(aboutDialog) <Configure> "raise $itk_component(aboutDialog)"
-    bind $itk_component(aboutDialog) <FocusOut> "raise $itk_component(aboutDialog)"
+#    bind $itk_component(aboutDialog) <Enter> "raise $itk_component(aboutDialog)"
+#    bind $itk_component(aboutDialog) <Configure> "raise $itk_component(aboutDialog)"
+#    bind $itk_component(aboutDialog) <FocusOut> "raise $itk_component(aboutDialog)"
 
     $itk_component(aboutDialog) center [namespace tail $this]
     $itk_component(aboutDialog) activate
@@ -6012,9 +5929,9 @@ package provide Archer 1.0
     #    wm geometry $dialog "500x500"
 
     # Event bindings
-    bind $dialog <Enter> "raise $dialog"
-    bind $dialog <Configure> "raise $dialog"
-    bind $dialog <FocusOut> "raise $dialog"
+#    bind $dialog <Enter> "raise $dialog"
+#    bind $dialog <Configure> "raise $dialog"
+#    bind $dialog <FocusOut> "raise $dialog"
 
     $dialog center $w
     $dialog activate

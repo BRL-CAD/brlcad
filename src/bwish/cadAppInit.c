@@ -37,7 +37,6 @@
 #  include "itk.h"
 #  include "dm.h"
 #  include "fb.h"
-#  include "blt.h"
 #endif
 
 #include "bu.h"
@@ -69,12 +68,6 @@ Cad_AppInit(Tcl_Interp *interp)
 /* Initialize [incr Tk] */
     if (Itk_Init(interp) == TCL_ERROR) {
 	bu_log("Itk_Init ERROR:\n%s\n", Tcl_GetStringResult(interp));
-	return TCL_ERROR;
-    }
-
-/* Initialize BLT */
-    if (Blt_Init(interp) == TCL_ERROR) {
-	bu_log("Blt_Init ERROR:\n%s\n", Tcl_GetStringResult(interp));
 	return TCL_ERROR;
     }
 #endif

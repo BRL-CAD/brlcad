@@ -20,7 +20,17 @@ namespace boost {
 namespace date_time {
 
   //!Defines some nice types for handling time level resolutions
-  enum time_resolutions {sec, tenth, hundreth, milli, ten_thousandth, micro, nano, NumResolutions };
+  enum time_resolutions {
+    sec,
+    tenth,
+    hundreth, // deprecated misspelled version of hundredth
+    hundredth = hundreth,
+    milli,
+    ten_thousandth,
+    micro,
+    nano,
+    NumResolutions
+  };
 
   //! Flags for daylight savings or summer time
   enum dst_flags {not_dst, is_dst, calculate};

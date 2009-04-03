@@ -11,8 +11,34 @@ changes made.  See document footer for additional details.
 
 
 ----------------------------------------------------------------------
+--- 2009-04-03  Release 7.14.6                                     ---
+----------------------------------------------------------------------
+
+* ported g_lint, g_diff, and g_transfer to Windows - Sean Morrison
+* rtarea now computes center of area - Richard Weiss, Keith Bowman
+* reduced archer's initial and maximum window size - Bob Parker
+* BLT is no longer an archer/bwish external dependency - Bob Parker
+* restored mged 'inside' command on edit state objects - Bob Parker
+* adjust brlman script to use system man command - Cliff Yapp
+* fixed small memory leak in gqa - Bob Parker
+* implemented rtwizard perspective rendering support - Sean Morrison
+* fixed rtwizard perspective and occlusion dialog bugs - Sean Morrison
+* mged 'clone' command utilizes a new naming convention - Keith Bowman
+* fixed mged bug mirroring rcc primitives - Keith Bowman
+* modified rpp vertex ordering to match arb8 vertices - Keith Bowman
+* fixed mged 'qorot' command rotation about point bug - Keith Bowman
+
+
+----------------------------------------------------------------------
 --- 2009-03-06  Release 7.14.4                                     ---
 ----------------------------------------------------------------------
+
+Included in this release are various MGED bug fixes and enhancements.
+The 'gqa' quantitative analysis tool is integrated into MGED and
+receives numerous enhancements including computing moments of inertia
+and calculating geometric centroids.  There is now also a new 'coil'
+procedural geometry tool for generating coil shapes automatically
+using the pipe primitive.
 
 * fixed mged "Pick Edit-Primitive" mouse selection bug - Bob Parker
 * improved mged command console cut-and-paste support - Bob Parker

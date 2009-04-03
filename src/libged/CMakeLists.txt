@@ -19,9 +19,11 @@ set(LIBGED_SOURCES
     bot_dump.c
     bot_face_fuse.c
     bot_face_sort.c
+    bot_flip.c
     bot_merge.c
     bot_smooth.c
     bot_split.c
+    bot_sync.c
     bot_vertex_fuse.c
     cat.c
     center.c

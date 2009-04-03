@@ -85,20 +85,16 @@ else !BUILD_TKIMG
 TKIMGDIR=
 endif
 
-if BUILD_BLT
-if WITH_X11
-BLTDIR=blt
-else !WITH_X11
-BLTDIR=
-endif
-else !BUILD_BLT
-BLTDIR=
-endif
-
 if BUILD_OPENNURBS
 OPENNURBSDIR=openNURBS
 else !BUILD_OPENNURBS
 OPENNURBSDIR=
+endif
+
+if BUILD_STEP
+STEPDIR=step
+else !BUILD_STEP
+STEPDIR=
 endif
 
 if BUILD_TNT
@@ -144,7 +140,6 @@ SUBDIRS = \
 	${JOVEDIR} \
 	${TKHTML3DIR} \
 	${TKIMGDIR} \
-	${BLTDIR} \
 	${OPENNURBSDIR} \
 	${TNTDIR} \
 	awf
@@ -156,12 +151,11 @@ endif
 # end ONLY_BENCHMARK
 
 EXTRA_DIST = \
-	boost 
+	boost
 
 DIST_SUBDIRS = \
 	URToolkit \
 	awf \
-	blt \
 	incrTcl \
 	iwidgets \
 	jove \
@@ -171,6 +165,7 @@ DIST_SUBDIRS = \
 	libutahrle \
 	libz \
 	openNURBS \
+	step \
 	tcl \
 	tk \
 	tkhtml3 \

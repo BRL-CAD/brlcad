@@ -36,7 +36,6 @@
 #include "bu.h"
 #include "vmath.h"
 #include "bn.h"
-#include "nmg.h"
 #include "rtgeom.h"
 #include "raytrace.h"
 

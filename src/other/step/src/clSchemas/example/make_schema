@@ -1,0 +1,3 @@
+OFILES = schema.o SdaiAll.o compstructs.o\
+	SdaiEXAMPLE_SCHEMA.o \
+	SdaiEXAMPLE_SCHEMA.init.o 

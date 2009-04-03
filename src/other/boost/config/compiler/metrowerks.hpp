@@ -42,6 +42,7 @@
 #   if(__MWERKS__ <= 0x3206) || !defined(BOOST_STRICT_CONFIG) // 9.5
 #     define BOOST_NO_MEMBER_TEMPLATE_FRIENDS
 #     define BOOST_NO_IS_ABSTRACT
+#     define BOOST_NO_INITIALIZER_LISTS
 #    endif
 
 #if !__option(wchar_type)
@@ -83,9 +84,26 @@
 //
 // C++0x features
 //
+//   See boost\config\suffix.hpp for BOOST_NO_LONG_LONG
+//
 #if __MWERKS__ > 0x3206 && __option(rvalue_refs)
 #  define BOOST_HAS_RVALUE_REFS
+#else
+#  define BOOST_NO_RVALUE_REFERENCES              
 #endif
+#define BOOST_NO_CHAR16_T                       
+#define BOOST_NO_CHAR32_T                       
+#define BOOST_NO_CONSTEXPR                      
+#define BOOST_NO_DECLTYPE                       
+#define BOOST_NO_DEFAULTED_FUNCTIONS              
+#define BOOST_NO_DELETED_FUNCTIONS              
+#define BOOST_NO_EXPLICIT_CONVERSION_OPERATORS 
+#define BOOST_NO_EXTERN_TEMPLATE                
+#define BOOST_NO_RAW_LITERALS                   
+#define BOOST_NO_SCOPED_ENUMS                   
+#define BOOST_NO_STATIC_ASSERT                  
+#define BOOST_NO_UNICODE_LITERALS               
+#define BOOST_NO_VARIADIC_TEMPLATES
 
 #define BOOST_COMPILER "Metrowerks CodeWarrior C++ version " BOOST_STRINGIZE(BOOST_COMPILER_VERSION)
 

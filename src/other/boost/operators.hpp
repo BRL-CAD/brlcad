@@ -8,6 +8,7 @@
 //  See http://www.boost.org/libs/utility/operators.htm for documentation.
 
 //  Revision History
+//  07 Aug 08 Added "euclidean" spelling. (Daniel Frey)
 //  03 Apr 08 Make sure "convertible to bool" is sufficient
 //            for T::operator<, etc. (Daniel Frey)
 //  24 May 07 Changed empty_base to depend on T, see
@@ -582,7 +583,35 @@ struct ordered_euclidian_ring_operators1
     : totally_ordered1<T
     , euclidian_ring_operators1<T, B
       > > {};
-      
+
+template <class T, class U, class B = ::boost::detail::empty_base<T> >
+struct euclidean_ring_operators2
+    : ring_operators2<T, U
+    , dividable2<T, U
+    , dividable2_left<T, U
+    , modable2<T, U
+    , modable2_left<T, U, B
+      > > > > > {};
+
+template <class T, class B = ::boost::detail::empty_base<T> >
+struct euclidean_ring_operators1
+    : ring_operators1<T
+    , dividable1<T
+    , modable1<T, B
+      > > > {};
+
+template <class T, class U, class B = ::boost::detail::empty_base<T> >
+struct ordered_euclidean_ring_operators2
+    : totally_ordered2<T, U
+    , euclidean_ring_operators2<T, U, B
+      > > {};
+
+template <class T, class B = ::boost::detail::empty_base<T> >
+struct ordered_euclidean_ring_operators1
+    : totally_ordered1<T
+    , euclidean_ring_operators1<T, B
+      > > {};
+
 template <class T, class P, class B = ::boost::detail::empty_base<T> >
 struct input_iteratable
     : equality_comparable1<T
@@ -839,6 +868,8 @@ BOOST_OPERATOR_TEMPLATE(field_operators)
 BOOST_OPERATOR_TEMPLATE(ordered_field_operators)
 BOOST_OPERATOR_TEMPLATE(euclidian_ring_operators)
 BOOST_OPERATOR_TEMPLATE(ordered_euclidian_ring_operators)
+BOOST_OPERATOR_TEMPLATE(euclidean_ring_operators)
+BOOST_OPERATOR_TEMPLATE(ordered_euclidean_ring_operators)
 BOOST_OPERATOR_TEMPLATE2(input_iteratable)
 BOOST_OPERATOR_TEMPLATE1(output_iteratable)
 BOOST_OPERATOR_TEMPLATE2(forward_iteratable)

@@ -2,6 +2,7 @@
 lib_LTLIBRARIES = libsysv.la
 
 libsysv_la_SOURCES = \
+	bcmp.c \
 	memset.c \
 	strchr.c \
 	strdup.c \

@@ -161,7 +161,7 @@ __BEGIN_DECLS
 /** add a new directory entry to the currently open database */
 #define GED_DB_DIRADD(_gedp, _dp, _name, _laddr, _len, _flags, _ptr, _ret) \
     if (((_dp) = db_diradd((_gedp)->ged_wdbp->dbip, (_name), (_laddr), (_len), (_flags), (_ptr))) == DIR_NULL) { \
-	bu_vls_printf(&(_gedp)->ged_result_str, "An error has occured while adding a new object to the database."); \
+	bu_vls_printf(&(_gedp)->ged_result_str, "An error has occurred while adding a new object to the database."); \
 	return (_ret); \
     }
 
@@ -462,12 +462,25 @@ GED_EXPORT BU_EXTERN(struct ged *ged_open,
 GED_EXPORT BU_EXTERN(void ged_view_init,
 		     (struct ged_view *gvp));
 
+/* defined in inside.c */
+GED_EXPORT BU_EXTERN(int ged_inside_internal,
+		     (struct ged *gedp,
+		      struct rt_db_internal *ip,
+		      int argc,
+		      char *argv[],
+		      int arg,
+		      char *o_name));
+
 /* defined in rt.c */
 GED_EXPORT BU_EXTERN(int ged_build_tops,
 		     (struct ged	*gedp,
 		      char		**start,
 		      register char	**end));
 
+
+/* FIXME: wdb routines do not belong in libged.  need to be
+ * refactored, renamed, or removed.
+ */
 /* defined in wdb_comb_std.c */
 GED_EXPORT BU_EXTERN(int wdb_comb_std_cmd,
 		     (struct rt_wdb	*gedp,
@@ -475,6 +488,9 @@ GED_EXPORT BU_EXTERN(int wdb_comb_std_cmd,
 		      int		argc,
 		      char 		**argv));
 
+/* FIXME: wdb routines do not belong in libged.  need to be
+ * refactored, renamed, or removed.
+ */
 /* defined in wdb_obj.c */
 GED_EXPORT BU_EXTERN(int Wdb_Init,
 		    (Tcl_Interp *interp));
@@ -818,6 +834,9 @@ GED_EXPORT BU_EXTERN(int	wdb_stub_cmd,
 
 
 
+/* FIXME: vo routines do not belong in libged.  need to be refactored,
+ * renamed, or removed.
+ */
 /* defined in view_obj.c */
 GED_EXPORT extern struct view_obj HeadViewObj;		/**< @brief  head of view object list */
 GED_EXPORT BU_EXTERN(int Vo_Init,
@@ -1257,6 +1276,14 @@ GED_EXPORT BU_EXTERN(int ged_bot_face_fuse, (struct ged *gedp, int argc, const c
 GED_EXPORT BU_EXTERN(int ged_bot_face_sort, (struct ged *gedp, int argc, const char *argv[]));
 
 /**
+ * Flip/reverse the specified bot's orientation.
+ *
+ * Usage:
+ *     bot_flip bot_obj
+ */
+GED_EXPORT BU_EXTERN(int ged_bot_flip, (struct ged *gedp, int argc, const char *argv[]));
+
+/**
  * Create bot_dest by merging the bot sources.
  *
  * Usage:
@@ -1268,7 +1295,7 @@ GED_EXPORT BU_EXTERN(int ged_bot_merge, (struct ged *gedp, int argc, const char 
  * Calculate vertex normals for the BOT primitive
  *
  * Usage:
- *     bot_smoooth [-t ntol] new_bot old_bot
+ *     bot_smooth [-t ntol] new_bot old_bot
  */
 GED_EXPORT BU_EXTERN(int ged_bot_smooth, (struct ged *gedp, int argc, const char *argv[]));
 
@@ -1279,6 +1306,14 @@ GED_EXPORT BU_EXTERN(int ged_bot_smooth, (struct ged *gedp, int argc, const char
  *     bot_split bot_obj
  */
 GED_EXPORT BU_EXTERN(int ged_bot_split, (struct ged *gedp, int argc, const char *argv[]));
+
+/**
+ * Sync the specified bot's orientation (i.e. make sure all neighboring triangles have same orientation).
+ *
+ * Usage:
+ *     bot_sync bot_obj
+ */
+GED_EXPORT BU_EXTERN(int ged_bot_sync, (struct ged *gedp, int argc, const char *argv[]));
 
 /**
  * Fuse bot vertices

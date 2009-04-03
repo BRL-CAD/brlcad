@@ -20,11 +20,11 @@ REM  License along with this file; see the file named COPYING for more
 REM  information.
 REM 
 
-REM	Author:		Bob Parker
-REM	Company:	Survice Engineering
-
 SETLOCAL
-SET CAD_VERSION=7.14.3
+
+REM XXX FIXME: SHOULD NOT NEED TO SET BRLCAD_DATA OR CAD_VERSION XXX
+SET CAD_VERSION=7.14.6
+
 SET SAVE_CD=%CD%
 SET PATH=%~dp0
 CD %PATH%\..

@@ -3938,6 +3938,177 @@ rt_bot_smooth( struct rt_bot_internal *bot, char *bot_name, struct db_i *dbip, f
     return( 0 );
 }
 
+int
+rt_bot_flip(struct rt_bot_internal *bot)
+{
+    register int i;
+    register int tmp_index;
+
+    RT_BOT_CK_MAGIC(bot);
+
+    for (i = 0; i < bot->num_faces; ++i) {
+	/* Swap any two vertex references. Here we're swapping 1 and 2. */
+	tmp_index = bot->faces[i*3+1];
+	bot->faces[i*3+1] = bot->faces[i*3+2];
+	bot->faces[i*3+2] = tmp_index;
+    }
+
+    switch (bot->orientation) {
+    case RT_BOT_CCW:
+	bot->orientation = RT_BOT_CW;
+	break;
+    case RT_BOT_CW:
+	bot->orientation = RT_BOT_CCW;
+	break;
+    case RT_BOT_UNORIENTED:
+    default:
+	break;
+    }
+
+    return 0;
+}
+
+struct tri_edges {
+    struct bu_list l;
+    int edge_1[2];
+    int edge_2[2];
+    int edge_3[2];
+    int tri;
+};
+
+void
+rt_bot_sync_func(struct rt_bot_internal *bot,
+		 struct tri_edges *tep,
+		 struct tri_edges *headTep,
+		 struct tri_edges *usedTep)
+{
+    struct tri_edges *neighbor_tep;
+
+    for (BU_LIST_FOR(neighbor_tep, tri_edges, &headTep->l)) {
+	if ((tep->edge_1[0] == neighbor_tep->edge_1[0] &&
+	     tep->edge_1[1] == neighbor_tep->edge_1[1]) ||
+	    (tep->edge_1[0] == neighbor_tep->edge_2[0] &&
+	     tep->edge_1[1] == neighbor_tep->edge_2[1]) ||
+	    (tep->edge_1[0] == neighbor_tep->edge_3[0] &&
+	     tep->edge_1[1] == neighbor_tep->edge_3[1]) ||
+	    (tep->edge_2[0] == neighbor_tep->edge_1[0] &&
+	     tep->edge_2[1] == neighbor_tep->edge_1[1]) ||
+	    (tep->edge_2[0] == neighbor_tep->edge_2[0] &&
+	     tep->edge_2[1] == neighbor_tep->edge_2[1]) ||
+	    (tep->edge_2[0] == neighbor_tep->edge_3[0] &&
+	     tep->edge_2[1] == neighbor_tep->edge_3[1]) ||
+	    (tep->edge_3[0] == neighbor_tep->edge_1[0] &&
+	     tep->edge_3[1] == neighbor_tep->edge_1[1]) ||
+	    (tep->edge_3[0] == neighbor_tep->edge_2[0] &&
+	     tep->edge_3[1] == neighbor_tep->edge_2[1]) ||
+	    (tep->edge_3[0] == neighbor_tep->edge_3[0] &&
+	     tep->edge_3[1] == neighbor_tep->edge_3[1])) {
+	    /* Found a shared edge of a neighboring triangle whose orientation needs to be reversed. */
+	    int tmp_index;
+
+	    BU_LIST_DEQUEUE(&neighbor_tep->l);
+	    BU_LIST_APPEND(&usedTep->l, &neighbor_tep->l);
+
+	    /* Swap any two vertex references. Here we're swapping 1 and 2. */
+	    tmp_index = bot->faces[neighbor_tep->tri*3+1];
+	    bot->faces[neighbor_tep->tri*3+1] = bot->faces[neighbor_tep->tri*3+2];
+	    bot->faces[neighbor_tep->tri*3+2] = tmp_index;
+
+	    /* Also need to reverse the edges in neighbor_tep */
+	    tmp_index = neighbor_tep->edge_1[0];
+	    neighbor_tep->edge_1[0] = neighbor_tep->edge_1[1];
+	    neighbor_tep->edge_1[1] = tmp_index;
+	    tmp_index = neighbor_tep->edge_2[0];
+	    neighbor_tep->edge_2[0] = neighbor_tep->edge_2[1];
+	    neighbor_tep->edge_2[1] = tmp_index;
+	    tmp_index = neighbor_tep->edge_3[0];
+	    neighbor_tep->edge_3[0] = neighbor_tep->edge_3[1];
+	    neighbor_tep->edge_3[1] = tmp_index;
+
+	    rt_bot_sync_func(bot, neighbor_tep, headTep, usedTep);
+	    neighbor_tep = headTep;
+	} else if ((tep->edge_1[0] == neighbor_tep->edge_1[1] &&
+	     tep->edge_1[1] == neighbor_tep->edge_1[0]) ||
+	    (tep->edge_1[0] == neighbor_tep->edge_2[1] &&
+	     tep->edge_1[1] == neighbor_tep->edge_2[0]) ||
+	    (tep->edge_1[0] == neighbor_tep->edge_3[1] &&
+	     tep->edge_1[1] == neighbor_tep->edge_3[0]) ||
+	    (tep->edge_2[0] == neighbor_tep->edge_1[1] &&
+	     tep->edge_2[1] == neighbor_tep->edge_1[0]) ||
+	    (tep->edge_2[0] == neighbor_tep->edge_2[1] &&
+	     tep->edge_2[1] == neighbor_tep->edge_2[0]) ||
+	    (tep->edge_2[0] == neighbor_tep->edge_3[1] &&
+	     tep->edge_2[1] == neighbor_tep->edge_3[0]) ||
+	    (tep->edge_3[0] == neighbor_tep->edge_1[1] &&
+	     tep->edge_3[1] == neighbor_tep->edge_1[0]) ||
+	    (tep->edge_3[0] == neighbor_tep->edge_2[1] &&
+	     tep->edge_3[1] == neighbor_tep->edge_2[0]) ||
+	    (tep->edge_3[0] == neighbor_tep->edge_3[1] &&
+	     tep->edge_3[1] == neighbor_tep->edge_3[0])) {
+	    /* Found a shared edge of a neighboring triangle whose orientation is fine. */
+
+	    BU_LIST_DEQUEUE(&neighbor_tep->l);
+	    BU_LIST_APPEND(&usedTep->l, &neighbor_tep->l);
+
+	    rt_bot_sync_func(bot, neighbor_tep, headTep, usedTep);
+	    neighbor_tep = headTep;
+	}
+    }
+}
+
+int
+rt_bot_sync(struct rt_bot_internal *bot)
+{
+    register int i;
+    struct tri_edges headTep;
+    struct tri_edges usedTep;
+    struct tri_edges *tep;
+    int pt_A, pt_B, pt_C;
+
+    RT_BOT_CK_MAGIC(bot);
+
+    /* Nothing to do */
+    if (bot->num_faces < 2)
+	return 0;
+
+    BU_LIST_INIT(&headTep.l);
+    BU_LIST_INIT(&usedTep.l);
+
+    /* Initialize tep list */
+    for (i = 0; i < bot->num_faces; ++i) {
+	tep = (struct tri_edges *)bu_calloc(1, sizeof(struct tri_edges), "rt_bot_sync_orient: tep");
+	BU_LIST_APPEND(&headTep.l, &tep->l);
+
+	pt_A = bot->faces[i*3];
+	pt_B = bot->faces[i*3+1];
+	pt_C = bot->faces[i*3+2];
+
+	tep->tri = i;
+	tep->edge_1[0] = pt_A;
+	tep->edge_1[1] = pt_B;
+	tep->edge_2[0] = pt_B;
+	tep->edge_2[1] = pt_C;
+	tep->edge_3[0] = pt_C;
+	tep->edge_3[1] = pt_A;
+    }
+
+    while (BU_LIST_WHILE(tep, tri_edges, &headTep.l)) {
+	BU_LIST_DEQUEUE(&tep->l);
+	BU_LIST_APPEND(&usedTep.l, &tep->l);
+
+	rt_bot_sync_func(bot, tep, &headTep, &usedTep);
+    }
+
+    while (BU_LIST_WHILE(tep, tri_edges, &usedTep.l)) {
+	BU_LIST_DEQUEUE(&tep->l);
+	bu_free(tep, "rt_bot_sync_orient: tep");
+    }
+
+    return 0;
+}
+
+
+
 /** @} */
 /*
  * Local Variables:

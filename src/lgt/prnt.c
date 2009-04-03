@@ -34,7 +34,6 @@
 #include "./hmenu.h"
 #include "./lgt.h"
 #include "./extern.h"
-#include "./vecmath.h"
 #include "./tree.h"
 #include "./screen.h"
 #include "./ascii.h"
@@ -202,7 +201,7 @@ prnt_Status(void)
     bu_strlcpy( PROGRAM_NM_PTR, scratchbuf, strlen( scratchbuf ) );
     snprintf( scratchbuf, TEMPLATE_COLS+1, " %s ",
 	      ged_file == NULL ? "(null)" : ged_file );
-    bu_strlcpy( F_GED_DB_PTR, scratchbuf, Min( strlen( scratchbuf ), 26 ) );
+    bu_strlcpy( F_GED_DB_PTR, scratchbuf, FMIN(strlen( scratchbuf ), 26));
     sprintf( scratchbuf, " [%04d-", grid_x_org );
     bu_strlcpy( GRID_PIX_PTR, scratchbuf, strlen( scratchbuf ) );
     sprintf( scratchbuf, "%04d,", grid_x_fin );
@@ -221,7 +220,7 @@ void
 update_Screen(void)
 {
     register int	tem_co, row, col;
-    tem_co = Min( co, TEMPLATE_COLS );
+    tem_co = FMIN(co, TEMPLATE_COLS);
     for ( row = 0; template[row][0] != '\0'; row++ )
     {
 	register int	lastcol = -2;

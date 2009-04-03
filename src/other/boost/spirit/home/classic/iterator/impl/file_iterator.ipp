@@ -322,7 +322,7 @@ private:
 
         ~mapping()
         {
-            munmap(data, size);
+            munmap(static_cast<char*>(data), size);
         }
 
     private:
@@ -377,7 +377,7 @@ public:
         }
         catch(...)
         {
-            munmap(p, stat_buf.st_size);
+            munmap(static_cast<char*>(p), stat_buf.st_size);
             throw;
         }
 

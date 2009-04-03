@@ -906,52 +906,26 @@ nmgin(struct ged *gedp, struct rt_db_internal *ip, fastf_t thick)
 }
 
 int
-ged_inside(struct ged *gedp, int argc, const char *argv[])
+ged_inside_internal(struct ged *gedp, struct rt_db_internal *ip, int argc, char *argv[], int arg, char *o_name)
 {
     register int i;
     struct directory	*dp;
-    struct directory	*outdp;
     int	cgtype;		/* cgtype ARB 4..8 */
     int	nface;
     fastf_t	thick[6];
     plane_t	planes[6];
-    struct rt_db_internal	intern;
     char	*newname;
-    int arg = 1;
-    static const char *usage = "out_prim in_prim th(s)";
-    void (*cur_sigint)();
-
-    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
-    GED_CHECK_READ_ONLY(gedp, BRLCAD_ERROR);
-    GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
 
     /* initialize result */
     bu_vls_trunc(&gedp->ged_result_str, 0);
 
-    RT_INIT_DB_INTERNAL(&intern);
-
-    if ( argc < arg+1 ) {
-	bu_vls_printf(&gedp->ged_result_str, "Enter name of outside solid: ");
-	return BRLCAD_MORE_ARGS;
-    }
-    if ( (outdp = db_lookup( gedp->ged_wdbp->dbip,  argv[arg], LOOKUP_QUIET )) == DIR_NULL ) {
-	bu_vls_printf(&gedp->ged_result_str, "%s: %s not found", argv[0], argv[arg]);
-	return BRLCAD_ERROR;
-    }
-    ++arg;
-
-    if ( rt_db_get_internal( &intern, outdp, gedp->ged_wdbp->dbip, bn_mat_identity, &rt_uniresource ) < 0 ) {
-	bu_vls_printf(&gedp->ged_result_str, "Database read error, aborting");
-	return BRLCAD_ERROR;
-    }
-
-    if ( intern.idb_type == ID_ARB8 )  {
+    if (ip->idb_type == ID_ARB8) {
 	/* find the comgeom arb type, & reorganize */
 	int uvec[8], svec[11];
 	struct bu_vls error_msg;
 
-	if ( rt_arb_get_cgtype( &cgtype, intern.idb_ptr, &gedp->ged_wdbp->wdb_tol, uvec, svec ) == 0 ) {
-	    bu_vls_printf(&gedp->ged_result_str, "%s: BAD ARB\n", outdp->d_namep);
+	if (rt_arb_get_cgtype(&cgtype, ip->idb_ptr, &gedp->ged_wdbp->wdb_tol, uvec, svec) == 0) {
+	    bu_vls_printf(&gedp->ged_result_str, "%s: BAD ARB\n", o_name);
 	    return BRLCAD_ERROR;
 	}
 
@@ -959,25 +933,26 @@ ged_inside(struct ged *gedp, int argc, const char *argv[])
 	 * any editing in the es_mat matrix or path to this solid.
 	 */
 	bu_vls_init(&error_msg);
-	if (rt_arb_calc_planes(&error_msg, intern.idb_ptr, cgtype, planes, &gedp->ged_wdbp->wdb_tol) < 0)  {
-	    bu_vls_printf(&gedp->ged_result_str, "%s\nrt_arb_calc_planes(%s): failed\n", bu_vls_addr(&error_msg), outdp->d_namep);
+	if (rt_arb_calc_planes(&error_msg, ip->idb_ptr, cgtype, planes, &gedp->ged_wdbp->wdb_tol) < 0)  {
+	    bu_vls_printf(&gedp->ged_result_str, "%s\nrt_arb_calc_planes(%s): failed\n", bu_vls_addr(&error_msg), o_name);
 	    bu_vls_free(&error_msg);
 	    return BRLCAD_ERROR;
 	}
 	bu_vls_free(&error_msg);
     }
-    /* "intern" is now loaded with the outside solid data */
+
+    /* "ip" is loaded with the outside solid data */
 
     /* get the inside solid name */
-    if ( argc < arg+1 ) {
+    if (argc < arg+1) {
 	bu_vls_printf(&gedp->ged_result_str, "Enter name of the inside solid: ");
 	return BRLCAD_MORE_ARGS;
     }
-    if ( db_lookup( gedp->ged_wdbp->dbip, argv[arg], LOOKUP_QUIET ) != DIR_NULL ) {
+    if (db_lookup( gedp->ged_wdbp->dbip, argv[arg], LOOKUP_QUIET ) != DIR_NULL) {
 	bu_vls_printf(&gedp->ged_result_str, "%s: %s already exists.\n", argv[0], argv[arg]);
 	return BRLCAD_ERROR;
     }
-    if ( gedp->ged_wdbp->dbip->dbi_version < 5 && (int)strlen(argv[arg]) > NAMESIZE )  {
+    if (gedp->ged_wdbp->dbip->dbi_version < 5 && (int)strlen(argv[arg]) > NAMESIZE)  {
 	bu_vls_printf(&gedp->ged_result_str, "Database version 4 names are limited to %d characters\n", NAMESIZE);
 	return BRLCAD_ERROR;
     }
@@ -985,17 +960,17 @@ ged_inside(struct ged *gedp, int argc, const char *argv[])
     ++arg;
 
     /* get thicknesses and calculate parameters for newrec */
-    switch ( intern.idb_type )  {
+    switch (ip->idb_type)  {
 
 	case ID_ARB8:
 	{
 	    char **prompt;
 	    struct rt_arb_internal *arb =
-		(struct rt_arb_internal *)intern.idb_ptr;
+		(struct rt_arb_internal *)ip->idb_ptr;
 
 	    nface = 6;
 
-	    switch ( cgtype ) {
+	    switch (cgtype) {
 		case 8:
 		    prompt = p_arb8;
 		    break;
@@ -1023,7 +998,7 @@ ged_inside(struct ged *gedp, int argc, const char *argv[])
 	    }
 
 	    for (i=0; i<nface; i++) {
-		if ( argc < arg+1 ) {
+		if (argc < arg+1) {
 		    bu_vls_printf(&gedp->ged_result_str, "%s", prompt[i]);
 		    return BRLCAD_MORE_ARGS;
 		}
@@ -1031,88 +1006,88 @@ ged_inside(struct ged *gedp, int argc, const char *argv[])
 		++arg;
 	    }
 
-	    if (arbin(gedp, &intern, thick, nface, cgtype, planes))
+	    if (arbin(gedp, ip, thick, nface, cgtype, planes))
 		return BRLCAD_ERROR;
 	    break;
 	}
 
 	case ID_TGC:
 	    for (i=0; i<3; i++) {
-		if ( argc < arg+1 ) {
+		if (argc < arg+1) {
 		    bu_vls_printf(&gedp->ged_result_str, "%s", p_tgcin[i]);
 		    return BRLCAD_MORE_ARGS;
 		}
-		thick[i] = atof( argv[arg] ) * gedp->ged_wdbp->dbip->dbi_local2base;
+		thick[i] = atof(argv[arg]) * gedp->ged_wdbp->dbip->dbi_local2base;
 		++arg;
 	    }
 
-	    if (tgcin(gedp, &intern, thick))
+	    if (tgcin(gedp, ip, thick))
 		return BRLCAD_ERROR;
 	    break;
 
 	case ID_ELL:
-	    if ( argc < arg+1 ) {
+	    if (argc < arg+1) {
 		bu_vls_printf(&gedp->ged_result_str, "Enter desired thickness: ");
 		return BRLCAD_MORE_ARGS;
 	    }
-	    thick[0] = atof( argv[arg] ) * gedp->ged_wdbp->dbip->dbi_local2base;
+	    thick[0] = atof(argv[arg]) * gedp->ged_wdbp->dbip->dbi_local2base;
 	    ++arg;
 
-	    if (ellgin(gedp, &intern, thick))
+	    if (ellgin(gedp, ip, thick))
 		return BRLCAD_ERROR;
 	    break;
 
 	case ID_TOR:
-	    if ( argc < arg+1 ) {
+	    if (argc < arg+1) {
 		bu_vls_printf(&gedp->ged_result_str, "Enter desired thickness: ");
 		return BRLCAD_MORE_ARGS;
 	    }
-	    thick[0] = atof( argv[arg] ) * gedp->ged_wdbp->dbip->dbi_local2base;
+	    thick[0] = atof(argv[arg]) * gedp->ged_wdbp->dbip->dbi_local2base;
 	    ++arg;
 
-	    if (torin(gedp, &intern, thick))
+	    if (torin(gedp, ip, thick))
 		return BRLCAD_ERROR;
 	    break;
 
 	case ID_PARTICLE:
 	    for (i = 0; i < 1; i++) {
-		if ( argc < arg+1 ) {
+		if (argc < arg+1) {
 		    bu_vls_printf(&gedp->ged_result_str, "%s", p_partin[i]);
 		    return BRLCAD_MORE_ARGS;
 		}
-		thick[i] = atof( argv[arg] ) * gedp->ged_wdbp->dbip->dbi_local2base;
+		thick[i] = atof(argv[arg]) * gedp->ged_wdbp->dbip->dbi_local2base;
 		++arg;
 	    }
 
-	    if (partin(gedp, &intern, thick))
+	    if (partin(gedp, ip, thick))
 		return BRLCAD_ERROR;
 	    break;
 
 	case ID_RPC:
 	    for (i = 0; i < 4; i++) {
-		if ( argc < arg+1 ) {
+		if (argc < arg+1) {
 		    bu_vls_printf(&gedp->ged_result_str, "%s", p_rpcin[i]);
 		    return BRLCAD_MORE_ARGS;
 		}
-		thick[i] = atof( argv[arg] ) * gedp->ged_wdbp->dbip->dbi_local2base;
+		thick[i] = atof(argv[arg]) * gedp->ged_wdbp->dbip->dbi_local2base;
 		++arg;
 	    }
 
-	    if (rpcin(gedp, &intern, thick))
+	    if (rpcin(gedp, ip, thick))
 		return BRLCAD_ERROR;
 	    break;
 
 	case ID_RHC:
 	    for (i = 0; i < 4; i++) {
-		if ( argc < arg+1 ) {
+		if (argc < arg+1) {
 		    bu_vls_printf(&gedp->ged_result_str, "%s", p_rhcin[i]);
 		    return BRLCAD_MORE_ARGS;
 		}
-		thick[i] = atof( argv[arg] ) * gedp->ged_wdbp->dbip->dbi_local2base;
+		thick[i] = atof(argv[arg]) * gedp->ged_wdbp->dbip->dbi_local2base;
 		++arg;
 	    }
 
-	    if (rhcin(gedp, &intern, thick))
+	    if (rhcin(gedp, ip, thick))
 		return BRLCAD_ERROR;
 	    break;
 
@@ -1122,11 +1097,11 @@ ged_inside(struct ged *gedp, int argc, const char *argv[])
 		    bu_vls_printf(&gedp->ged_result_str, "%s", p_epain[i]);
 		    return BRLCAD_MORE_ARGS;
 		}
-		thick[i] = atof( argv[arg] ) * gedp->ged_wdbp->dbip->dbi_local2base;
+		thick[i] = atof(argv[arg]) * gedp->ged_wdbp->dbip->dbi_local2base;
 		++arg;
 	    }
 
-	    if (epain(gedp, &intern, thick))
+	    if (epain(gedp, ip, thick))
 		return BRLCAD_ERROR;
 	    break;
 
@@ -1136,11 +1111,11 @@ ged_inside(struct ged *gedp, int argc, const char *argv[])
 		    bu_vls_printf(&gedp->ged_result_str, "%s", p_ehyin[i]);
 		    return BRLCAD_MORE_ARGS;
 		}
-		thick[i] = atof( argv[arg] ) * gedp->ged_wdbp->dbip->dbi_local2base;
+		thick[i] = atof(argv[arg]) * gedp->ged_wdbp->dbip->dbi_local2base;
 		++arg;
 	    }
 
-	    if (ehyin(gedp, &intern, thick))
+	    if (ehyin(gedp, ip, thick))
 		return BRLCAD_ERROR;
 	    break;
 
@@ -1150,41 +1125,76 @@ ged_inside(struct ged *gedp, int argc, const char *argv[])
 		    bu_vls_printf(&gedp->ged_result_str, "%s", p_etoin[i]);
 		    return BRLCAD_MORE_ARGS;
 		}
-		thick[i] = atof( argv[arg] ) * gedp->ged_wdbp->dbip->dbi_local2base;
+		thick[i] = atof(argv[arg]) * gedp->ged_wdbp->dbip->dbi_local2base;
 		++arg;
 	    }
 
-	    if (etoin(gedp, &intern, thick))
+	    if (etoin(gedp, ip, thick))
 		return BRLCAD_ERROR;
 	    break;
 
 	case ID_NMG:
-	    if ( argc < arg+1 ) {
+	    if (argc < arg+1) {
 		bu_vls_printf(&gedp->ged_result_str, "%s", p_nmgin);
 		return BRLCAD_MORE_ARGS;
 	    }
-	    thick[0] = atof( argv[arg] ) * gedp->ged_wdbp->dbip->dbi_local2base;
+	    thick[0] = atof(argv[arg]) * gedp->ged_wdbp->dbip->dbi_local2base;
 	    ++arg;
-	    if (nmgin(gedp,  &intern, thick[0]))
+	    if (nmgin(gedp,  ip, thick[0]))
 		return BRLCAD_ERROR;
 	    break;
 
 	default:
-	    bu_vls_printf(&gedp->ged_result_str, "Cannot find inside for '%s' solid\n", rt_functab[intern.idb_type].ft_name);
+	    bu_vls_printf(&gedp->ged_result_str, "Cannot find inside for '%s' solid\n", rt_functab[ip->idb_type].ft_name);
 	    return BRLCAD_ERROR;
     }
 
     /* Add to in-core directory */
-    if ( (dp = db_diradd( gedp->ged_wdbp->dbip,  newname, -1, 0, DIR_SOLID, (genptr_t)&intern.idb_type )) == DIR_NULL )  {
+    if ((dp = db_diradd(gedp->ged_wdbp->dbip, newname, -1, 0, DIR_SOLID, (genptr_t)&ip->idb_type)) == DIR_NULL) {
 	bu_vls_printf(&gedp->ged_result_str, "%s: Database alloc error, aborting\n", argv[0]);
 	return BRLCAD_ERROR;
     }
-    if ( rt_db_put_internal( dp, gedp->ged_wdbp->dbip, &intern, &rt_uniresource ) < 0 ) {
+    if (rt_db_put_internal(dp, gedp->ged_wdbp->dbip, ip, &rt_uniresource) < 0) {
 	bu_vls_printf(&gedp->ged_result_str, "%s: Database write error, aborting\n", argv[0]);
 	return BRLCAD_ERROR;
     }
 
     return BRLCAD_OK;
+}
+
+int
+ged_inside(struct ged *gedp, int argc, const char *argv[])
+{
+    struct directory	*outdp;
+    struct rt_db_internal intern;
+    int arg = 1;
+    static const char *usage = "out_prim in_prim th(s)";
+
+    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
+    GED_CHECK_READ_ONLY(gedp, BRLCAD_ERROR);
+    GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
+
+    /* initialize result */
+    bu_vls_trunc(&gedp->ged_result_str, 0);
+
+    RT_INIT_DB_INTERNAL(&intern);
+
+    if (argc < arg+1) {
+	bu_vls_printf(&gedp->ged_result_str, "Enter name of outside solid: ");
+	return BRLCAD_MORE_ARGS;
+    }
+    if ((outdp = db_lookup(gedp->ged_wdbp->dbip,  argv[arg], LOOKUP_QUIET)) == DIR_NULL) {
+	bu_vls_printf(&gedp->ged_result_str, "%s: %s not found", argv[0], argv[arg]);
+	return BRLCAD_ERROR;
+    }
+    ++arg;
+
+    if (rt_db_get_internal(&intern, outdp, gedp->ged_wdbp->dbip, bn_mat_identity, &rt_uniresource) < 0) {
+	bu_vls_printf(&gedp->ged_result_str, "Database read error, aborting");
+	return BRLCAD_ERROR;
+    }
+
+    return ged_inside_internal(gedp, &intern, argc, argv, arg, outdp->d_namep);
 }
 
 

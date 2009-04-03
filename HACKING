@@ -86,7 +86,7 @@ channels:
   Discussion forums are available on the project site at
   http://sourceforge.net/forum/?group_id=105292 for both developers
   and users.  Of particular interest to developers is, of course, the
-  "Developers" forum where all contributors are incouraged to
+  "Developers" forum where all contributors are encouraged to
   participate.
 
 
@@ -202,7 +202,7 @@ library similar to curses but with less overhead.
 libdm: The display manager library contains the logic for generalizing
 a drawable context.  This includes the ability to output
 drawing/plotting instructions to a variety of devices such as X11,
-Postscript, OpenGL, plot files, textfiles, and more.  There is
+Postscript, OpenGL, plot files, text files, and more.  There is
 generally structured order to data going to a display manager (like
 the wireframe in the geometry editor).
 	Depends on: librt libbn libbu libtcl libpng (X11)
@@ -247,7 +247,7 @@ intersection tests against a given set of geometry.  The library
 supports communication with a BRL-CAD geometry repository and
 multithreaded ray dispatch.
 	Depends on: librt libbn libbu libtcl
-	Includes dependent libraries as part of this libaray
+	Includes dependent libraries as part of this library
 
 libsysv: The System 5 compatibility library exists to support legacy
 systems that lack functionality required by BRL-CAD.  This library is
@@ -273,7 +273,7 @@ libbrlcad: This "conglomerate" library provides the core geometry
 engine facilities in BRL-CAD by combining the numerics, ray-tracing,
 and geometry database processing libraries into one library.
 	Depends on: libwdb librt libbn libbu
-	Includes dependent libraries as part of this libaray
+	Includes dependent libraries as part of this library
 
 
 FILESYSTEM ORGANIZATION
@@ -295,7 +295,7 @@ include/
 m4/
 	Autoconf compilation resource files
 misc/
-	Anything not categorized or is sufficently en masse
+	Anything not categorized or is sufficiently en masse
 pix/
 	Sample raytrace images, includes benchmark reference images
 regress/
@@ -305,7 +305,7 @@ sh/
 src/
 	Sources, see src/README for more details
 src/adrt
-	Advanced Distributed RayTracer
+	Advanced Distributed Ray Tracer
 src/conv/
 	Various geometry converters
 src/conv/iges/
@@ -369,9 +369,9 @@ are a few tools and enhancements to libraries that are implemented in
 C++ (the new BREP object type in librt, for example), but there are
 presently no C++ bindings available beyond experimental developments.
 While C++ as an implementation language of new tools and new library
-interfaces is not prohibitied, the mixing of C++ semantics and C++
-code (including simple // style comments) in the existing C files is
-not allowed.  As new interfaces are developed, new contributors become
+interfaces is not prohibited, the mixing of C++ semantics and C++ code
+(including simple // style comments) in the existing C files is not
+allowed.  As new interfaces are developed, new contributors become
 involved, and C++ code integration becomes more prevalent, the
 contributor guidelines will become reinforced with more details.
 
@@ -802,7 +802,7 @@ developers to address issues as they are encountered regardless of who
 introduces the problem.
 
 3) Contributors making commits to the repository are required to
-uphold the legal conventions and requirements overviewed in the
+uphold the legal conventions and requirements summarized in the
 COPYING file.  This includes the implicit assignment of copyright to
 the U.S. Government on all contributed code unless otherwise
 explicitly arranged as well as the usage of appropriate license

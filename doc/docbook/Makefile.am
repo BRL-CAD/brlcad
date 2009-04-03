@@ -17,6 +17,7 @@ DIST_SUBDIRS = \
 
 EXTRA_DIST = \
 	README \
+	BRL-CAD_db_format.xml \
 	catalog.xml \
 	resources 
 

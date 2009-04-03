@@ -3,7 +3,7 @@
 	ProjectType="Visual C++"
 	Version="8.00"
 	Name="g_qa"
-	ProjectGUID="{C7AFA1EC-8D74-4715-B49A-59D597022904}"
+	ProjectGUID="{0C340B47-4D59-40AC-8029-FCE7C63F3575}"
 	>
 	<Platforms>
 		<Platform
@@ -177,7 +177,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="libbu.lib libbn.lib libsysv.lib librt.lib tcl85.lib"
+				AdditionalDependencies="libbu.lib libbn.lib libsysv.lib librt.lib libged.lib tcl85.lib"
 				OutputFile="$(PlatformName)\$(ConfigurationName)/g_qa.exe"
 				LinkIncremental="1"
 				SuppressStartupBanner="true"

@@ -33,7 +33,6 @@
 #include "raytrace.h"
 #include "fb.h"
 
-#include "./vecmath.h"
 #include "./extern.h"
 
 
@@ -191,8 +190,8 @@ paintSpallFb( ap )
     CenterCell( x );	/* center of cell */
     CenterCell( y );
     celldist = ap->a_cumlen/cellsz * zoom;
-    x = roundToInt( x + Dot( ap->a_ray.r_dir, gridhor ) * celldist );
-    y = roundToInt( y + Dot( ap->a_ray.r_dir, gridver ) * celldist );
+    x = roundToInt( x + VDOT( ap->a_ray.r_dir, gridhor ) * celldist );
+    y = roundToInt( y + VDOT( ap->a_ray.r_dir, gridver ) * celldist );
     bu_semaphore_acquire( RT_SEM_STATS );
     err = fb_write( fbiop, x, y, pixel, 1 );
     bu_semaphore_release( RT_SEM_STATS );

@@ -17,6 +17,9 @@
 #include <list>
 #include <set>
 
+// TODO: Deprecating this requires some cooperation from Boost.Config. It's not
+// a good idea to just refuse the inclusion because it could break otherwise
+// functioning code.
 #if !defined BOOST_NO_HASH
 #  ifdef BOOST_HASH_SET_HEADER
 #    include BOOST_HASH_SET_HEADER
@@ -44,6 +47,7 @@
 #include <boost/type_traits/is_same.hpp>
 #include <boost/detail/workaround.hpp>
 #include <boost/graph/properties.hpp>
+#include <boost/graph/named_graph.hpp>
 
 namespace boost {
 
@@ -333,7 +337,14 @@ namespace boost {
 #else
       VertexProperty, EdgeProperty,
 #endif
-      GraphProperty, EdgeListS>::type
+      GraphProperty, EdgeListS>::type,
+      // Support for named vertices
+      public graph::maybe_named_graph<
+        adjacency_list<OutEdgeListS,VertexListS,DirectedS,
+                       VertexProperty,EdgeProperty,GraphProperty,EdgeListS>,
+        typename adjacency_list_traits<OutEdgeListS, VertexListS, DirectedS,
+                                       EdgeListS>::vertex_descriptor,
+        VertexProperty>
   {
 #if !defined(BOOST_GRAPH_NO_BUNDLED_PROPERTIES)
     typedef typename detail::retag_property_list<vertex_bundle_t,
@@ -432,6 +443,12 @@ namespace boost {
       adjacency_list tmp(x);
       x = *this;
       *this = tmp;
+    }
+
+    void clear()
+    {
+      this->clearing_graph();
+      Base::clear();
     }
 
 #ifndef BOOST_GRAPH_NO_BUNDLED_PROPERTIES

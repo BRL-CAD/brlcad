@@ -487,8 +487,8 @@ proc bgerror {error} {
 	    # Make sure the wait cursor is unlocked
 	    if [info exists App::gui] {
 		$App::gui SetStatusString
+		SetNormalCursor $App::gui
 	    }
-	    SetNormalCursor
 	}
 	SAVE {
 	    # already handled by bgerrorSave procedure

@@ -109,15 +109,15 @@ mk_rpp(struct rt_wdb *wdbp, const char *name, const fastf_t *min, const fastf_t 
 {
     point_t	pt8[8];
 
-    VSET( pt8[0], min[X], min[Y], min[Z] );
-    VSET( pt8[1], max[X], min[Y], min[Z] );
-    VSET( pt8[2], max[X], max[Y], min[Z] );
-    VSET( pt8[3], min[X], max[Y], min[Z] );
+    VSET( pt8[0], max[X], min[Y], min[Z] );
+    VSET( pt8[1], max[X], max[Y], min[Z] );
+    VSET( pt8[2], max[X], max[Y], max[Z] );
+    VSET( pt8[3], max[X], min[Y], max[Z] );
 
-    VSET( pt8[4], min[X], min[Y], max[Z] );
-    VSET( pt8[5], max[X], min[Y], max[Z] );
-    VSET( pt8[6], max[X], max[Y], max[Z] );
-    VSET( pt8[7], min[X], max[Y], max[Z] );
+    VSET( pt8[4], min[X], min[Y], min[Z] );
+    VSET( pt8[5], min[X], max[Y], min[Z] );
+    VSET( pt8[6], min[X], max[Y], max[Z] );
+    VSET( pt8[7], min[X], min[Y], max[Z] );
 
     return( mk_arb8( wdbp, name, &pt8[0][X] ) );
 }

@@ -14,7 +14,9 @@
 #include "boost/limits.hpp" //work around compilers without limits
 #include "boost/date_time/special_defs.hpp"
 #include "boost/date_time/locale_config.hpp"
-#include <iostream>
+#ifndef BOOST_DATE_TIME_NO_LOCALE
+#  include <ostream>
+#endif
 
 namespace boost {
 namespace date_time {

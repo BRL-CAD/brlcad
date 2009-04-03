@@ -326,7 +326,6 @@ EXTRA_DIST = \
 	unix/Makefile.in \
 	unix/README \
 	unix/aclocal.m4 \
-	unix/config.status \
 	unix/configure \
 	unix/configure.in \
 	unix/dltest/Makefile.in \

@@ -1,0 +1,3 @@
+fix SUPERTYPE OF statement
+* ONEOF etc
+* remove subtypes from SUPERTYPE list that aren't mentioned in schema.

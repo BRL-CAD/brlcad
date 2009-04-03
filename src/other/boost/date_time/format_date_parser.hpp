@@ -17,7 +17,20 @@
 #include "boost/date_time/special_values_parser.hpp"
 #include <string>
 #include <vector>
+#include <sstream>
+#include <iterator>
+#ifndef BOOST_NO_STDC_NAMESPACE
+#  include <cctype>
+#else
+#  include <ctype.h>
+#endif
 
+#ifdef BOOST_NO_STDC_NAMESPACE
+namespace std {
+  using ::isspace;
+  using ::isdigit;
+}
+#endif
 namespace boost { namespace date_time {
   
 //! Helper function for parsing fixed length strings into integers
@@ -57,7 +70,7 @@ fixed_string_to_int(std::istreambuf_iterator<charT>& itr,
   }
   try {
     i = boost::lexical_cast<int_type>(mr.cache);
-  }catch(bad_lexical_cast blc){
+  }catch(bad_lexical_cast&){
     // we want to return -1 if the cast fails so nothing to do here
   }
   return i;
@@ -139,7 +152,7 @@ class format_date_parser
 {
  public:
   typedef std::basic_string<charT>        string_type;
-  typedef std::basic_ostringstream<charT>  stringstream_type;
+  typedef std::basic_istringstream<charT>  stringstream_type;
   typedef std::istreambuf_iterator<charT> stream_itr_type;
   typedef typename string_type::const_iterator const_itr;
   typedef typename date_type::year_type  year_type;
@@ -216,8 +229,7 @@ class format_date_parser
              const string_type& format_str,
              const special_values_parser<date_type,charT>& sv_parser) const
   {
-    stringstream_type ss;
-    ss << value; 
+    stringstream_type ss(value);
     stream_itr_type sitr(ss);
     stream_itr_type stream_end;
     return parse_date(sitr, stream_end, format_str, sv_parser);

@@ -19,15 +19,13 @@
  */
 /** @file g_qa.c
  *
- * Author: Lee Butler
- *
- * perform quantitative analysis checks on geometry
+ * Perform quantitative analysis checks on geometry.
  *
  * XXX need to look at gap computation
  *
  * plot the points where overlaps start/stop
  *
- *	Designed to be a framework for 3d sampling of the geometry volume.
+ * Designed to be a framework for 3d sampling of the geometry volume.
  */
 
 #include "common.h"
@@ -36,11 +34,10 @@
 #include "cmd.h"
 #include "ged.h"
 
-static char usage[] = "Usage: %s [-A A|a|b|e|g|o|v|w] [-a az] [-d] [-e el] [-f densityFile] [-g spacing|upper,lower|upper-lower] [-G] [-n nhits] [-N nviews] [-p] [-P ncpus] [-r] [-S nsamples] [-t overlap_tol] [-U useair] [-u len_units vol_units wt_units] [-v] [-V volume_tol] [-W weight_tol] model object [object...]\n";
+static char usage[] = "Usage: %s [-A A|a|b|e|g|o|v|w] [-a az] [-d] [-e el] [-f densityFile] [-g spacing|upper, lower|upper-lower] [-G] [-n nhits] [-N nviews] [-p] [-P ncpus] [-r] [-S nsamples] [-t overlap_tol] [-U useair] [-u len_units vol_units wt_units] [-v] [-V volume_tol] [-W weight_tol] model object [object...]\n";
 
 /*
- *	M A I N
- *
+ * M A I N
  */
 int
 main(int argc, char *argv[])
@@ -57,31 +54,31 @@ main(int argc, char *argv[])
     /* Get past command line options. */
     while ((c=bu_getopt(argc, argv, "A:a:de:f:g:Gn:N:pP:rS:s:t:U:u:vV:W:")) != EOF) {
 	switch (c) {
-	case 'A':
-	case 'a':
-	case 'e':
-	case 'd':
-	case 'f':
-	case 'g':
-	case 'G':
-	case 'n':
-	case 'N':
-	case 'p':
-	case 'P':
-	case 'r':
-	case 'S':
-	case 't':
-	case 'v':
-	case 'V':
-	case 'W':
-	case 'U':
-	case 'u':
-	    break;
-	case '?':
-	case 'h':
-	default:
-	    bu_exit(1, usage, argv[0]);
-	    break;
+	    case 'A':
+	    case 'a':
+	    case 'e':
+	    case 'd':
+	    case 'f':
+	    case 'g':
+	    case 'G':
+	    case 'n':
+	    case 'N':
+	    case 'p':
+	    case 'P':
+	    case 'r':
+	    case 'S':
+	    case 't':
+	    case 'v':
+	    case 'V':
+	    case 'W':
+	    case 'U':
+	    case 'u':
+		break;
+	    case '?':
+	    case 'h':
+	    default:
+		bu_exit(1, usage, argv[0]);
+		break;
 	}
     }
 

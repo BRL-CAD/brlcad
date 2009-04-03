@@ -37,7 +37,6 @@
 #include "./hmenu.h"
 #include "./lgt.h"
 #include "./extern.h"
-#include "./vecmath.h"
 #include "./tree.h"
 
 #define IR_DATA_WID	512
@@ -45,6 +44,10 @@
 #define Kelvin2Fah( f )	(9.0/5.0)*((f)-273.15) + 32.0
 #define S_BINS		10
 #define HUE_TOL		0.5
+#define FABS(a)		((a) > 0 ? (a) : -(a))
+#define AproxEq(a,b,e)	(FABS((a)-(b)) < (e))
+
+extern fastf_t epsilon;
 
 static RGBpixel	black = { 0, 0, 0 };
 static int	ir_max_index = -1;
@@ -121,7 +124,8 @@ display_Temps(int xmin, int ymin)
 	    {
 		int	temp = AMBIENT+percent*RANGE;
 		register int	lgtindex = temp - ir_min;
-		pixel = (RGBpixel *) ir_table[Min(lgtindex, ir_max_index)];
+		pixel = (RGBpixel *) ir_table[(lgtindex < ir_max_index ?
+					       lgtindex : ir_max_index)];
 		/* this should be an &ir_table...,
 		   allowed by ANSI C, but not K&R
 		   compilers. */
@@ -196,8 +200,8 @@ read_IR(FILE *fp)
 	else
 	{
 	    /* Merge with existing range.			*/
-	    ir_min = Min( ir_min, min );
-	    ir_max = Max( ir_max, max );
+	    V_MIN( ir_min, min );
+	    V_MAX( ir_max, max );
 	    bu_log(	"Global temperature range is %d to %d\n",
 			ir_min, ir_max
 		);
@@ -333,7 +337,7 @@ init_Temp_To_RGB(void)
 	    );
 	return	0;
     }
-    sample_sz = Sqr( ir_aperture );
+    sample_sz = pow(ir_aperture, 2);
     if ( ir_table != (RGBpixel *)RGBPIXEL_NULL )
 	/* Table already initialized presumably from another view,
 	   since range may differ we must create a different
@@ -489,7 +493,7 @@ f_IR_Model(register struct application *ap, Octree *op)
     octnt_max[Y] = op->o_points->c_point[Y] + delta;
     octnt_max[Z] = op->o_points->c_point[Z] + delta;
 
-    if ( AproxEq( point[X], octnt_min[X], EPSILON ) )
+    if ( AproxEq( point[X], octnt_min[X], epsilon ) )
 	/* Intersection point lies on plane whose normal is the
 	   negative X-axis.
 	*/
@@ -499,7 +503,7 @@ f_IR_Model(register struct application *ap, Octree *op)
 	norml[Z] =  0.0;
     }
     else
-	if ( AproxEq( point[X], octnt_max[X], EPSILON ) )
+	if ( AproxEq( point[X], octnt_max[X], epsilon ) )
 	    /* Intersection point lies on plane whose normal is the
 	       positive X-axis.
 	    */
@@ -509,7 +513,7 @@ f_IR_Model(register struct application *ap, Octree *op)
 	    norml[Z] = 0.0;
 	}
 	else
-	    if ( AproxEq( point[Y], octnt_min[Y], EPSILON ) )
+	    if ( AproxEq( point[Y], octnt_min[Y], epsilon ) )
 		/* Intersection point lies on plane whose normal is the
 		   negative Y-axis.
 		*/
@@ -519,7 +523,7 @@ f_IR_Model(register struct application *ap, Octree *op)
 		norml[Z] =  0.0;
 	    }
 	    else
-		if ( AproxEq( point[Y], octnt_max[Y], EPSILON ) )
+		if ( AproxEq( point[Y], octnt_max[Y], epsilon ) )
 		    /* Intersection point lies on plane whose normal is the
 		       positive Y-axis.
 		    */
@@ -529,7 +533,7 @@ f_IR_Model(register struct application *ap, Octree *op)
 		    norml[Z] = 0.0;
 		}
 		else
-		    if ( AproxEq( point[Z], octnt_min[Z], EPSILON ) )
+		    if ( AproxEq( point[Z], octnt_min[Z], epsilon ) )
 			/* Intersection point lies on plane whose normal is the
 			   negative Z-axis.
 			*/
@@ -539,7 +543,7 @@ f_IR_Model(register struct application *ap, Octree *op)
 			norml[Z] = -1.0;
 		    }
 		    else
-			if ( AproxEq( point[Z], octnt_max[Z], EPSILON ) )
+			if ( AproxEq( point[Z], octnt_max[Z], epsilon ) )
 			    /* Intersection point lies on plane whose normal is the
 			       positive Z-axis.
 			    */
@@ -551,7 +555,7 @@ f_IR_Model(register struct application *ap, Octree *op)
 
     {
 	/* Factor in reflectance from "ambient" light source.	*/
-	fastf_t	intensity = Dot( norml, lgts[0].dir );
+	fastf_t	intensity = VDOT( norml, lgts[0].dir );
 	/* Calculate index into false-color table.		*/
 	register int	lgtindex = op->o_temp - ir_min;
 	if ( lgtindex > ir_max_index )

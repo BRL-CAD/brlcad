@@ -1,0 +1,22 @@
+data/ap203/README
+
+The EXPRESS schema in this directory is based on ISO 10303-203, an
+international standard which is copyrighted by ISO. ISO has granted
+NIST permission to publicly distribute the EXPRESS source from ISO
+standards. The EXPRESS schema provided in this software release has
+been modified to facilitate its use with this software and is provided
+as an example schema only. This disclaimer must be included in any
+redistribution of the EXPRESS schema. This disclaimer must also be
+included in the file containing the EXPRESS schema.
+
+The EXPRESS source for the modified AP 203 schema contained in the
+file 203wseds.exp has modifications to it from the standard based on
+Standard Enhancement and Discrepancy System (SEDS) reports.  SEDS
+reports are an informal way for ISO TC 184/SC4 to document errors,
+ambiguities, and enhancements to the standard; and to recommend
+corrections for formal adoption via a technical corrigendum,
+amendment, or revision.
+
+The data files in this directory were developed by ITI as part of the
+STEP conformance testing project.  The files contain data that conform
+to the modified AP203 schema.

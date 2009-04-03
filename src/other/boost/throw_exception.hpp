@@ -24,11 +24,7 @@
 #include <boost/detail/workaround.hpp>
 #include <exception>
 
-#if !defined( BOOST_EXCEPTION_DISABLE ) && defined( BOOST_NO_TYPEID )
-# define BOOST_EXCEPTION_DISABLE
-#endif
-
-#if !defined( BOOST_EXCEPTION_DISABLE ) && defined( __BORLANDC__ ) && BOOST_WORKAROUND( __BORLANDC__, < 0x590 )
+#if !defined( BOOST_EXCEPTION_DISABLE ) && defined( __BORLANDC__ ) && BOOST_WORKAROUND( __BORLANDC__, BOOST_TESTED_AT(0x593) )
 # define BOOST_EXCEPTION_DISABLE
 #endif
 
@@ -37,8 +33,14 @@
 #endif
 
 #if !defined( BOOST_NO_EXCEPTIONS ) && !defined( BOOST_EXCEPTION_DISABLE )
-# include <boost/exception/enable_current_exception.hpp>
-# include <boost/exception/enable_error_info.hpp>
+# include <boost/exception/exception.hpp>
+# include <boost/current_function.hpp>
+# define BOOST_THROW_EXCEPTION(x) ::boost::throw_exception(::boost::enable_error_info(x) <<\
+    ::boost::throw_function(BOOST_CURRENT_FUNCTION) <<\
+    ::boost::throw_file(__FILE__) <<\
+    ::boost::throw_line((int)__LINE__))
+#else
+# define BOOST_THROW_EXCEPTION(x) ::boost::throw_exception(x)
 #endif
 
 namespace boost

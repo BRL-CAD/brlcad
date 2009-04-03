@@ -20,6 +20,8 @@
 
 namespace boost {
 
+#if !defined( __CODEGEARC__ )
+
 namespace detail{
 
 #if !(defined(__EDG_VERSION__) && __EDG_VERSION__ <= 238)
@@ -110,7 +112,13 @@ template <> struct is_signed_imp<const volatile wchar_t> : public true_type{};
 
 }
 
+#endif // !defined( __CODEGEARC__ )
+
+#if defined( __CODEGEARC__ )
+BOOST_TT_AUX_BOOL_TRAIT_DEF1(is_signed,T,__is_signed(T))
+#else
 BOOST_TT_AUX_BOOL_TRAIT_DEF1(is_signed,T,::boost::detail::is_signed_imp<T>::value)
+#endif
 
 } // namespace boost
 

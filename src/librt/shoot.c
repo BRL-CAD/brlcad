@@ -125,6 +125,20 @@ rt_res_pieces_clean(struct resource *resp, struct rt_i *rtip)
     if (rtip) {
 	for ( i = rtip->rti_nsolids_with_pieces-1; i >= 0; i-- )  {
 	    psp = &resp->re_pieces[i];
+
+	    /* 
+	     * Skip uninitialized structures.
+	     * Doing this until we figure out why all "struct rt_piecestate" array
+	     * members are NOT getting initialized in rt_res_pieces_init() above.
+	     * Initial glance looks like tree.c/rt_gettrees_muves() can be called
+	     * in such a way as to assign stp->st_piecestate_num multiple times,
+	     * each time with a different value. This value is an index into the
+	     * resp->re_pieces array. When this happens, it causes all but the
+	     * last referenced "struct rt_piecestate" member to be initialized.
+	     */
+	    if (psp->magic == 0)
+		continue;
+
 	    RT_CK_PIECESTATE(psp);
 	    rt_htbl_free(&psp->htab);
 	    bu_bitv_free(psp->shot);

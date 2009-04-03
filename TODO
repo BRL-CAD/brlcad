@@ -23,9 +23,39 @@ THESE SHOULD HAPPEN BEFORE THE NEXT RELEASE
 THESE SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 -------------------------------------------------
 
-* implement file input support for the pnts primitive
+* make mged 'mirror' command work with three args like before with
+  last being an axis in order to preserve backwards compatibility
 
-* make color and vectors on pnts work
+
+THESE ARE LOWER PRIORITY OR FOR FUTURE RELEASES
+-----------------------------------------------
+
+* 3D plot objects for v5 geometry files.  very closely related to
+  other ideas about having 3d wireframe objects, but these would
+  probably be non-geometric in nature.  basically the plot3 files that
+  are stored out to disk being stored as objects in the database with
+  support for the overlay command to  import, export, display them.
+
+* image objects (tbd objects) for v5 geometry files
+
+* material objects (non-geometric attribute-only objects) for v5
+  geometry files.  instead of material attribute value becomes
+  material object name.  material object encompasses hierarchical
+  material traits.
+
+* shader objects (non-geometric attribute-only objects) for v5
+  geometry files.  allow shader string to refer to said objects for
+  shader parameters.
+
+* refactor wdb_obj and view_obj in libged.  with the de-tcl'ing of the
+  base libs, it should disappear but shouldn't have wdb_*() funcs in
+  libged regardless.  work in progress.
+
+* reorganize the header files in include so it is clear which headers
+  pertain to which libraries.
+
+* make sure news2tracker.sh is not missing recent news items.  several
+  were missing from a recent report generated (unverified).
 
 * rewrite the tables command to not suck
 
@@ -34,19 +64,20 @@ THESE SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
   context.  presumably that is triggering other code that is failing
   to redraw.
 
-* make sure news2tracker.sh is not missing recent news items.  several
-  were missing from a recent report generated (unverified).
+* implement file input support for the pnts primitive
 
-* make mged 'inside' command work with geometry being edited
+* make color and vectors on pnts work
 
-* make mged 'mirror' command work with three args like before with
-  last being an axis in order to preserve backwards compatibility
+* segregate the nmg routines out of librt back into their own library
 
-* port g_lint to windows
+* implement a routine/command to convert from a bot to an nmg
+  (similar/related to the nmg-bot tool, but the reverse).
 
-
-THESE ARE LOWER PRIORITY OR FOR FUTURE RELEASES
------------------------------------------------
+* implement a jitter-style option to rt that makes it average the ray
+  results to take a weighted light contribution for a given
+  resolution.  saves more memory over rendering at 2x/4x/8x/whatever
+  with or without jitter and then scaling down.  present jitter option
+  doesn't average.
 
 * refactor mged/bwish/g_diff initialization to all use the same routine
 
@@ -360,7 +391,7 @@ THESE ARE LOWER PRIORITY OR FOR FUTURE RELEASES
 
 * incremental raytrace-based display manager
 
-* implement tools for generating coils/springs and gears, improve bolt/nut
+* implement tools for generating springs and gears, improve bolt/nut
   tool support
 
 

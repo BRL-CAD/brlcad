@@ -38,7 +38,6 @@
 #include "bio.h"
 
 #include "vmath.h"
-#include "nmg.h"
 #include "raytrace.h"
 #include "nurb.h"
 

@@ -10,7 +10,7 @@
 #ifndef BOOST_SPIRIT_NUMERICS_IPP
 #define BOOST_SPIRIT_NUMERICS_IPP
 
-#include <cmath>
+#include <boost/config/no_tr1/cmath.hpp>
 #include <limits>
 
 namespace boost { namespace spirit {

@@ -37,7 +37,6 @@
 #include "./hmenu.h"
 #include "./lgt.h"
 #include "./extern.h"
-#include "./vecmath.h"
 #include "./screen.h"
 
 #ifndef SIGTSTP
@@ -164,9 +163,9 @@ interpolate_Frame(int frame)
 	rel_frame * (movie.m_elev_end - movie.m_elev_beg);
     grid_roll = movie.m_roll_beg +
 	rel_frame * (movie.m_roll_end - movie.m_roll_beg);
-    bu_log( "\tview azimuth\t%g\n", lgts[0].azim*DEGRAD );
-    bu_log( "\tview elevation\t%g\n", lgts[0].elev*DEGRAD );
-    bu_log( "\tview roll\t%g\n", grid_roll*DEGRAD );
+    bu_log( "\tview azimuth\t%g\n", lgts[0].azim*RAD2DEG );
+    bu_log( "\tview elevation\t%g\n", lgts[0].elev*RAD2DEG );
+    bu_log( "\tview roll\t%g\n", grid_roll*RAD2DEG );
     if ( movie.m_over )
     {
 	lgts[0].over = 1;
@@ -212,7 +211,7 @@ ready_Output_Device(int frame)
     if ( force_cellsz )
     {
 	grid_sz = (int)(view_size / cell_sz);
-	grid_sz = Max( grid_sz, 1 ); /* must be non-zero */
+	V_MAX( grid_sz, 1 ); /* must be non-zero */
 	setGridSize( grid_sz );
 	prnt_Status();
     }
@@ -277,8 +276,8 @@ init_Lgts(void)
     lgts[0].rgb[0] = 255;
     lgts[0].rgb[1] = 255;
     lgts[0].rgb[2] = 255;
-    lgts[0].azim = 30.0/DEGRAD;
-    lgts[0].elev = 30.0/DEGRAD;
+    lgts[0].azim = 30.0/RAD2DEG;
+    lgts[0].elev = 30.0/RAD2DEG;
     lgts[0].dist = 0.0;
     lgts[0].energy = 0.4;
     lgts[0].stp = SOLTAB_NULL;
@@ -290,8 +289,8 @@ init_Lgts(void)
     lgts[1].rgb[0] = 255;
     lgts[1].rgb[1] = 255;
     lgts[1].rgb[2] = 255;
-    lgts[1].azim = 60.0/DEGRAD;
-    lgts[1].elev = 60.0/DEGRAD;
+    lgts[1].azim = 60.0/RAD2DEG;
+    lgts[1].elev = 60.0/RAD2DEG;
     lgts[1].dist = 10000.0;
     lgts[1].energy = 1.0;
     lgts[1].stp = SOLTAB_NULL;

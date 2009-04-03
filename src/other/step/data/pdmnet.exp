@@ -1,0 +1,2837 @@
+SCHEMA pdm_schema;
+
+(* Version 1.1 12/09/1998 *)
+
+ CONSTANT
+  dummy_gri : geometric_representation_item := representation_item('') ||
+              geometric_representation_item();
+ END_CONSTANT;
+
+ TYPE action_item = SELECT
+      (product_definition,product_definition_formation,
+       product_definition_relationship);
+ END_TYPE;
+
+ TYPE action_request_item = SELECT
+      (product_definition,product_definition_formation,
+       product_definition_relationship);
+ END_TYPE;
+
+ TYPE ahead_or_behind = ENUMERATION OF
+      (ahead,exact,behind);
+ END_TYPE;
+
+ TYPE amount_of_substance_measure = REAL;
+ END_TYPE;
+
+ TYPE approval_item = SELECT
+      (action,applied_action_assignment,certification,configuration_effectivity
+       ,contract,product_definition,product_definition_formation,
+       product_definition_relationship,versioned_action_request);
+ END_TYPE;
+
+ TYPE area_measure = REAL;
+ END_TYPE;
+
+ TYPE attribute_type = SELECT
+      (label,text);
+ END_TYPE;
+
+ TYPE axis2_placement = SELECT
+      (axis2_placement_2d,axis2_placement_3d);
+ END_TYPE;
+
+ TYPE certification_item = SELECT
+      (product_definition_formation_relationship);
+ END_TYPE;
+
+ TYPE characterized_definition = SELECT
+      (characterized_object,characterized_product_definition,shape_definition);
+ END_TYPE;
+
+ TYPE characterized_product_definition = SELECT
+      (product_definition,product_definition_relationship);
+ END_TYPE;
+
+ TYPE configuration_design_item = SELECT
+      (product_definition,product_definition_formation);
+ END_TYPE;
+
+ TYPE context_dependent_measure = REAL;
+ END_TYPE;
+
+ TYPE contract_item = SELECT
+      (action,product_definition_formation);
+ END_TYPE;
+
+ TYPE count_measure = NUMBER;
+ END_TYPE;
+
+ TYPE date_and_time_item = SELECT
+      (action,applied_action_assignment,
+       applied_person_and_organization_assignment,
+       applied_organization_assignment,approval_person_organization,
+       certification,product_definition,product_definition_formation,
+       versioned_action_request);
+ END_TYPE;
+
+ TYPE date_item = SELECT
+      (action,applied_action_assignment,
+       applied_person_and_organization_assignment,
+       applied_organization_assignment,approval_person_organization,
+       certification,product_definition,product_definition_formation,
+       versioned_action_request);
+ END_TYPE;
+
+ TYPE date_time_or_event_occurrence = SELECT
+      (date_time_select,event_occurrence);
+ END_TYPE;
+
+ TYPE date_time_select = SELECT
+      (date,local_time,date_and_time);
+ END_TYPE;
+
+ TYPE day_in_month_number = INTEGER;
+  WHERE
+   wr1 : {1<=SELF<=31};
+ END_TYPE;
+
+ TYPE derived_property_select = SELECT
+      (property_definition);
+ END_TYPE;
+
+ TYPE description_attribute_select = SELECT
+      (action_request_solution,application_context,approval_role,
+       configuration_design,date_role,date_time_role,
+       context_dependent_shape_representation,effectivity,external_source,
+       organization_role,person_and_organization_role,person_and_organization,
+       property_definition_representation,representation);
+ END_TYPE;
+
+ TYPE descriptive_measure = STRING;
+ END_TYPE;
+
+ TYPE dimension_count = INTEGER;
+  WHERE
+   wr1 : SELF > 0;
+ END_TYPE;
+
+ TYPE document_reference_item = SELECT
+      (product_definition,product_definition_formation_relationship,
+       product_definition_relationship,shape_aspect,shape_aspect_relationship);
+ END_TYPE;
+
+ TYPE effectivity_item = SELECT
+      (product_definition,product_definition_formation,
+       product_definition_relationship);
+ END_TYPE;
+
+ TYPE electric_current_measure = REAL;
+ END_TYPE;
+
+ TYPE event_occurrence_item = SELECT
+      (organizational_project);
+ END_TYPE;
+
+ TYPE external_identification_item = SELECT
+      (document_file,product_definition);
+ END_TYPE;
+
+ TYPE founded_item_select = SELECT
+      (representation_item);
+ END_TYPE;
+
+ TYPE hour_in_day = INTEGER;
+  WHERE
+   wr1 : {0<=SELF<=24};
+ END_TYPE;
+
+ TYPE id_attribute_select = SELECT
+      (action,application_context,organizational_project,representation);
+ END_TYPE;
+
+ TYPE identification_item = SELECT
+      (application_context,approval_status,document_file,organization,
+       product_definition,security_classification_level,
+       shape_aspect_relationship);
+ END_TYPE;
+
+ TYPE identifier = STRING;
+ END_TYPE;
+
+ TYPE label = STRING;
+ END_TYPE;
+
+ TYPE length_measure = REAL;
+ END_TYPE;
+
+ TYPE luminous_intensity_measure = REAL;
+ END_TYPE;
+
+ TYPE mass_measure = REAL;
+ END_TYPE;
+
+ TYPE measure_value = SELECT
+      (length_measure,mass_measure,time_measure,electric_current_measure,
+       thermodynamic_temperature_measure,amount_of_substance_measure,
+       luminous_intensity_measure,plane_angle_measure,solid_angle_measure,
+       area_measure,volume_measure,ratio_measure,parameter_value,
+       numeric_measure,context_dependent_measure,descriptive_measure,
+       positive_length_measure,positive_plane_angle_measure,
+       positive_ratio_measure,count_measure);
+ END_TYPE;
+
+ TYPE minute_in_hour = INTEGER;
+  WHERE
+   wr1 : {0<=SELF<=59};
+ END_TYPE;
+
+ TYPE month_in_year_number = INTEGER;
+  WHERE
+   wr1 : {1<=SELF<=12};
+ END_TYPE;
+
+ TYPE name_attribute_select = SELECT
+      (action_request_solution,configuration_design,
+       context_dependent_shape_representation,derived_unit,effectivity,
+       person_and_organization,product_definition,
+       property_definition_representation);
+ END_TYPE;
+
+ TYPE numeric_measure = NUMBER;
+ END_TYPE;
+
+ TYPE organization_item = SELECT
+      (action,applied_action_assignment,applied_identification_assignment,
+       configuration_item,contract,document_file,product,product_definition,
+       product_definition_formation,versioned_action_request);
+ END_TYPE;
+
+ TYPE organizational_project_item = SELECT
+      (product_concept);
+ END_TYPE;
+
+ TYPE parameter_value = REAL;
+ END_TYPE;
+
+ TYPE person_and_organization_item = SELECT
+      (action,applied_action_assignment,configuration_item,document_file,
+       product,product_definition,product_definition_formation,
+       versioned_action_request);
+ END_TYPE;
+
+ TYPE person_organization_select = SELECT
+      (person,organization,person_and_organization);
+ END_TYPE;
+
+ TYPE plane_angle_measure = REAL;
+ END_TYPE;
+
+ TYPE positive_length_measure = length_measure;
+  WHERE
+   wr1 : SELF > 0;
+ END_TYPE;
+
+ TYPE positive_plane_angle_measure = plane_angle_measure;
+  WHERE
+   wr1 : SELF > 0;
+ END_TYPE;
+
+ TYPE positive_ratio_measure = ratio_measure;
+  WHERE
+   wr1 : SELF > 0;
+ END_TYPE;
+
+ TYPE product_or_formation_or_definition = SELECT
+      (product,product_definition_formation,product_definition);
+ END_TYPE;
+
+ TYPE ratio_measure = REAL;
+ END_TYPE;
+
+ TYPE represented_definition = SELECT
+      (general_property,property_definition,shape_aspect,
+       shape_aspect_relationship);
+ END_TYPE;
+
+ TYPE role_select = SELECT
+      (action_assignment,action_request_assignment,approval_assignment,
+       approval_date_time,certification_assignment,contract_assignment,
+       document_reference,effectivity_assignment,
+       security_classification_assignment);
+ END_TYPE;
+
+ TYPE second_in_minute = REAL;
+  WHERE
+   wr1 : {0<=SELF<=60};
+ END_TYPE;
+
+ TYPE security_classification_item = SELECT
+      (assembly_component_usage,document,product_definition,
+       product_definition_formation);
+ END_TYPE;
+
+ TYPE shape_definition = SELECT
+      (product_definition_shape,shape_aspect,shape_aspect_relationship);
+ END_TYPE;
+
+ TYPE si_prefix = ENUMERATION OF
+      (exa,peta,tera,giga,mega,kilo,hecto,deca,deci,centi,milli,micro,nano,pico
+       ,femto,atto);
+ END_TYPE;
+
+ TYPE si_unit_name = ENUMERATION OF
+      (metre,gram,second,ampere,kelvin,mole,candela,radian,steradian,hertz,
+       newton,pascal,joule,watt,coulomb,volt,farad,ohm,siemens,weber,tesla,
+       henry,degree_celsius,lumen,lux,becquerel,gray,sievert);
+ END_TYPE;
+
+ TYPE solid_angle_measure = REAL;
+ END_TYPE;
+
+ TYPE source = ENUMERATION OF
+      (made,bought,not_known);
+ END_TYPE;
+
+ TYPE source_item = SELECT
+      (identifier);
+ END_TYPE;
+
+ TYPE supported_item = SELECT
+      (action_directive,action,action_method);
+ END_TYPE;
+
+ TYPE text = STRING;
+ END_TYPE;
+
+ TYPE thermodynamic_temperature_measure = REAL;
+ END_TYPE;
+
+ TYPE time_measure = REAL;
+ END_TYPE;
+
+ TYPE transformation = SELECT
+      (item_defined_transformation,functionally_defined_transformation);
+ END_TYPE;
+
+ TYPE trimming_select = SELECT
+      (cartesian_point,parameter_value);
+ END_TYPE;
+
+ TYPE unit = SELECT
+      (named_unit,derived_unit);
+ END_TYPE;
+
+ TYPE vector_or_direction = SELECT
+      (vector,direction);
+ END_TYPE;
+
+ TYPE volume_measure = REAL;
+ END_TYPE;
+
+ TYPE year_number = INTEGER;
+ END_TYPE;
+
+ ENTITY action;
+  name : label;
+  description : OPTIONAL text;
+  chosen_method : action_method;
+  DERIVE
+   id : identifier := get_id_value(SELF);
+  WHERE
+   wr1 : SIZEOF(USEDIN(SELF,'PDM_SCHEMA.' + 'ID_ATTRIBUTE.IDENTIFIED_ITEM'
+         )) <= 1;
+ END_ENTITY;
+
+ ENTITY action_assignment
+  ABSTRACT SUPERTYPE;
+  assigned_action : action;
+  DERIVE
+   role : object_role := get_role(SELF);
+  WHERE
+   wr1 : SIZEOF(USEDIN(SELF,'PDM_SCHEMA.' +
+         'ROLE_ASSOCIATION.ITEM_WITH_ROLE')) <= 1;
+ END_ENTITY;
+
+ ENTITY action_directive;
+  name : label;
+  description : OPTIONAL text;
+  analysis : text;
+  comment : text;
+  requests : SET[1:?] OF versioned_action_request;
+ END_ENTITY;
+
+ ENTITY action_method;
+  name : label;
+  description : OPTIONAL text;
+  consequence : text;
+  purpose : text;
+ END_ENTITY;
+
+ ENTITY action_relationship;
+  name : label;
+  description : OPTIONAL text;
+  relating_action : action;
+  related_action : action;
+ END_ENTITY;
+
+ ENTITY action_request_assignment
+  ABSTRACT SUPERTYPE;
+  assigned_action_request : versioned_action_request;
+  DERIVE
+   role : object_role := get_role(SELF);
+  WHERE
+   wr1 : SIZEOF(USEDIN(SELF,'PDM_SCHEMA.' +
+         'ROLE_ASSOCIATION.ITEM_WITH_ROLE')) <= 1;
+ END_ENTITY;
+
+ ENTITY action_request_solution;
+  method : action_method;
+  request : versioned_action_request;
+  DERIVE
+   description : text := get_description_value(SELF);
+   name : label := get_name_value(SELF);
+  WHERE
+   wr1 : SIZEOF(USEDIN(SELF,'PDM_SCHEMA.' +
+         'DESCRIPTION_ATTRIBUTE.DESCRIBED_ITEM')) <= 1;
+   wr2 : SIZEOF(USEDIN(SELF,'PDM_SCHEMA.' + 'NAME_ATTRIBUTE.NAMED_ITEM'))
+         <= 1;
+ END_ENTITY;
+
+ ENTITY action_request_status;
+  status : label;
+  assigned_request : versioned_action_request;
+ END_ENTITY;
+
+ ENTITY action_status;
+  status : label;
+  assigned_action : executed_action;
+ END_ENTITY;
+
+ ENTITY address;
+  internal_location : OPTIONAL label;
+  street_number : OPTIONAL label;
+  street : OPTIONAL label;
+  postal_box : OPTIONAL label;
+  town : OPTIONAL label;
+  region : OPTIONAL label;
+  postal_code : OPTIONAL label;
+  country : OPTIONAL label;
+  facsimile_number : OPTIONAL label;
+  telephone_number : OPTIONAL label;
+  electronic_mail_address : OPTIONAL label;
+  telex_number : OPTIONAL label;
+  WHERE
+   wr1 : EXISTS(internal_location) OR EXISTS(street_number) OR EXISTS(street)
+         OR EXISTS(postal_box) OR EXISTS(town) OR EXISTS(region) OR EXISTS(
+         postal_code) OR EXISTS(country) OR EXISTS(facsimile_number) OR EXISTS(
+         telephone_number) OR EXISTS(electronic_mail_address) OR EXISTS(
+         telex_number);
+ END_ENTITY;
+
+ ENTITY alternate_product_relationship;
+  name : label;
+  definition : OPTIONAL text;
+  alternate : product;
+  base : product;
+  basis : text;
+  UNIQUE
+   ur1 : alternate,base;
+  WHERE
+   wr1 : alternate :<>: base;
+ END_ENTITY;
+
+ ENTITY amount_of_substance_measure_with_unit
+  SUBTYPE OF (measure_with_unit);
+  WHERE
+   wr1 : 'PDM_SCHEMA.AMOUNT_OF_SUBSTANCE_UNIT' IN TYPEOF(SELF\
+         measure_with_unit.unit_component);
+ END_ENTITY;
+
+ ENTITY amount_of_substance_unit
+  SUBTYPE OF (named_unit);
+  WHERE
+   wr1 : (SELF\named_unit.dimensions.length_exponent = 0.0) AND (SELF\
+         named_unit.dimensions.mass_exponent = 0.0) AND (SELF\named_unit.
+         dimensions.time_exponent = 0.0) AND (SELF\named_unit.dimensions.
+         electric_current_exponent = 0.0) AND (SELF\named_unit.dimensions.
+         thermodynamic_temperature_exponent = 0.0) AND (SELF\named_unit.
+         dimensions.amount_of_substance_exponent = 1.0) AND (SELF\named_unit.
+         dimensions.luminous_intensity_exponent = 0.0);
+ END_ENTITY;
+
+ ENTITY application_context;
+  application : label;
+  DERIVE
+   description : text := get_description_value(SELF);
+   id : identifier := get_id_value(SELF);
+  INVERSE
+   context_elements : SET[1:?] OF application_context_element FOR
+                      frame_of_reference;
+  WHERE
+   wr1 : SIZEOF(USEDIN(SELF,'PDM_SCHEMA.' +
+         'DESCRIPTION_ATTRIBUTE.DESCRIBED_ITEM')) <= 1;
+   wr2 : SIZEOF(USEDIN(SELF,'PDM_SCHEMA.' + 'ID_ATTRIBUTE.IDENTIFIED_ITEM'
+         )) <= 1;
+ END_ENTITY;
+
+ ENTITY application_context_element
+  SUPERTYPE OF (ONEOF(product_concept_context,product_context,
+                product_definition_context));
+  name : label;
+  frame_of_reference : application_context;
+ END_ENTITY;
+
+ ENTITY application_context_relationship;
+  name : label;
+  description : OPTIONAL text;
+  relating_context : application_context;
+  related_context : application_context;
+ END_ENTITY;
+
+ ENTITY application_protocol_definition;
+  status : label;
+  application_interpreted_model_schema_name : label;
+  application_protocol_year : year_number;
+  application : application_context;
+ END_ENTITY;
+
+ ENTITY applied_action_assignment
+  SUBTYPE OF (action_assignment);
+  items : SET[1:?] OF action_item;
+ END_ENTITY;
+
+ ENTITY applied_action_request_assignment
+  SUBTYPE OF (action_request_assignment);
+  items : SET[1:?] OF action_request_item;
+ END_ENTITY;
+
+ ENTITY applied_approval_assignment
+  SUBTYPE OF (approval_assignment);
+  items : SET[1:?] OF approval_item;
+ END_ENTITY;
+
+ ENTITY applied_certification_assignment
+  SUBTYPE OF (certification_assignment);
+  items : SET[1:?] OF certification_item;
+ END_ENTITY;
+
+ ENTITY applied_contract_assignment
+  SUBTYPE OF (contract_assignment);
+  items : SET[1:?] OF contract_item;
+ END_ENTITY;
+
+ ENTITY applied_date_and_time_assignment
+  SUBTYPE OF (date_and_time_assignment);
+  items : SET[1:?] OF date_and_time_item;
+ END_ENTITY;
+
+ ENTITY applied_date_assignment
+  SUBTYPE OF (date_assignment);
+  items : SET[1:?] OF date_item;
+ END_ENTITY;
+
+ ENTITY applied_document_reference
+  SUBTYPE OF (document_reference);
+  items : SET[1:?] OF document_reference_item;
+ END_ENTITY;
+
+ ENTITY applied_document_usage_constraint_assignment
+  SUBTYPE OF (document_usage_constraint_assignment);
+  items : SET[1:?] OF document_reference_item;
+ END_ENTITY;
+
+ ENTITY applied_effectivity_assignment
+  SUBTYPE OF (effectivity_assignment);
+  items : SET[1:?] OF effectivity_item;
+ END_ENTITY;
+
+ ENTITY applied_event_occurrence_assignment
+  SUBTYPE OF (event_occurrence_assignment);
+  items : SET[1:?] OF event_occurrence_item;
+ END_ENTITY;
+
+ ENTITY applied_external_identification_assignment
+  SUBTYPE OF (external_identification_assignment);
+  items : SET[1:?] OF external_identification_item;
+ END_ENTITY;
+
+ ENTITY applied_identification_assignment
+  SUBTYPE OF (identification_assignment);
+  items : SET[1:?] OF identification_item;
+ END_ENTITY;
+
+ ENTITY applied_organization_assignment
+  SUBTYPE OF (organization_assignment);
+  items : SET[1:?] OF organization_item;
+ END_ENTITY;
+
+ ENTITY applied_organizational_project_assignment
+  SUBTYPE OF (organizational_project_assignment);
+  items : SET[1:?] OF organizational_project_item;
+ END_ENTITY;
+
+ ENTITY applied_person_and_organization_assignment
+  SUBTYPE OF (person_and_organization_assignment);
+  items : SET[1:?] OF person_and_organization_item;
+ END_ENTITY;
+
+ ENTITY applied_security_classification_assignment
+  SUBTYPE OF (security_classification_assignment);
+  items : SET[1:?] OF security_classification_item;
+ END_ENTITY;
+
+ ENTITY approval;
+  status : approval_status;
+  level : label;
+ END_ENTITY;
+
+ ENTITY approval_assignment
+  ABSTRACT SUPERTYPE;
+  assigned_approval : approval;
+  DERIVE
+   role : object_role := get_role(SELF);
+  WHERE
+   wr1 : SIZEOF(USEDIN(SELF,'PDM_SCHEMA.' +
+         'ROLE_ASSOCIATION.ITEM_WITH_ROLE')) <= 1;
+ END_ENTITY;
+
+ ENTITY approval_date_time;
+  date_time : date_time_select;
+  dated_approval : approval;
+  DERIVE
+   role : object_role := get_role(SELF);
+  WHERE
+   wr1 : SIZEOF(USEDIN(SELF,'PDM_SCHEMA.' +
+         'ROLE_ASSOCIATION.ITEM_WITH_ROLE')) <= 1;
+ END_ENTITY;
+
+ ENTITY approval_person_organization;
+  person_organization : person_organization_select;
+  authorized_approval : approval;
+  role : approval_role;
+ END_ENTITY;
+
+ ENTITY approval_relationship;
+  name : label;
+  description : OPTIONAL text;
+  relating_approval : approval;
+  related_approval : approval;
+ END_ENTITY;
+
+ ENTITY approval_role;
+  role : label;
+  DERIVE
+   description : text := get_description_value(SELF);
+  WHERE
+   wr1 : SIZEOF(USEDIN(SELF,'PDM_SCHEMA.' +
+         'DESCRIPTION_ATTRIBUTE.DESCRIBED_ITEM')) <= 1;
+ END_ENTITY;
+
+ ENTITY approval_status;
+  name : label;
+ END_ENTITY;
+
+ ENTITY area_measure_with_unit
+  SUBTYPE OF (measure_with_unit);
+  WHERE
+   wr1 : 'PDM_SCHEMA.AREA_UNIT' IN TYPEOF(SELF\measure_with_unit.
+         unit_component);
+ END_ENTITY;
+
+ ENTITY area_unit
+  SUBTYPE OF (named_unit);
+  WHERE
+   wr1 : (SELF\named_unit.dimensions.length_exponent = 2.0) AND (SELF\
+         named_unit.dimensions.mass_exponent = 0.0) AND (SELF\named_unit.
+         dimensions.time_exponent = 0.0) AND (SELF\named_unit.dimensions.
+         electric_current_exponent = 0.0) AND (SELF\named_unit.dimensions.
+         thermodynamic_temperature_exponent = 0.0) AND (SELF\named_unit.
+         dimensions.amount_of_substance_exponent = 0.0) AND (SELF\named_unit.
+         dimensions.luminous_intensity_exponent = 0.0);
+ END_ENTITY;
+
+ ENTITY assembly_component_usage
+  SUPERTYPE OF (ONEOF(next_assembly_usage_occurrence,
+                specified_higher_usage_occurrence,promissory_usage_occurrence))
+  SUBTYPE OF (product_definition_usage);
+  reference_designator : OPTIONAL identifier;
+ END_ENTITY;
+
+ ENTITY assembly_component_usage_substitute;
+  name : label;
+  definition : OPTIONAL text;
+  base : assembly_component_usage;
+  substitute : assembly_component_usage;
+  UNIQUE
+   ur1 : base,substitute;
+  WHERE
+   wr1 : base.relating_product_definition :=: substitute.
+         relating_product_definition;
+   wr2 : base :<>: substitute;
+ END_ENTITY;
+
+ ENTITY axis2_placement_2d
+  SUBTYPE OF (placement);
+  ref_direction : OPTIONAL direction;
+  DERIVE
+   p : LIST[2:2] OF direction := build_2axes(ref_direction);
+  WHERE
+   wr1 : SELF\geometric_representation_item.dim = 2;
+ END_ENTITY;
+
+ ENTITY axis2_placement_3d
+  SUBTYPE OF (placement);
+  axis : OPTIONAL direction;
+  ref_direction : OPTIONAL direction;
+  DERIVE
+   p : LIST[3:3] OF direction := build_axes(axis,ref_direction);
+  WHERE
+   wr1 : SELF\placement.location.dim = 3;
+   wr2 : (NOT (EXISTS(axis))) OR (axis.dim = 3);
+   wr3 : (NOT (EXISTS(ref_direction))) OR (ref_direction.dim = 3);
+   wr4 : (NOT (EXISTS(axis))) OR (NOT (EXISTS(ref_direction))) OR (
+         cross_product(axis,ref_direction).magnitude > 0.0);
+ END_ENTITY;
+
+ ENTITY calendar_date
+  SUBTYPE OF (date);
+  day_component : day_in_month_number;
+  month_component : month_in_year_number;
+  WHERE
+   wr1 : valid_calendar_date(SELF);
+ END_ENTITY;
+
+ ENTITY cartesian_point
+  SUBTYPE OF (point);
+  coordinates : LIST[1:3] OF length_measure;
+ END_ENTITY;
+
+ ENTITY cartesian_transformation_operator
+  SUPERTYPE OF (ONEOF(cartesian_transformation_operator_2d,
+                cartesian_transformation_operator_3d))
+  SUBTYPE OF (geometric_representation_item,functionally_defined_transformation
+              );
+  axis1 : OPTIONAL direction;
+  axis2 : OPTIONAL direction;
+  local_origin : cartesian_point;
+  scale : OPTIONAL REAL;
+  DERIVE
+   scl : REAL := NVL(scale,1.0);
+  WHERE
+   wr1 : scl > 0.0;
+ END_ENTITY;
+
+ ENTITY cartesian_transformation_operator_2d
+  SUBTYPE OF (cartesian_transformation_operator);
+  DERIVE
+   u : LIST[2:2] OF direction := base_axis(2,SELF\
+       cartesian_transformation_operator.axis1,SELF\
+       cartesian_transformation_operator.axis2,?);
+  WHERE
+   wr1 : SELF\geometric_representation_item.dim = 2;
+ END_ENTITY;
+
+ ENTITY cartesian_transformation_operator_3d
+  SUBTYPE OF (cartesian_transformation_operator);
+  axis3 : OPTIONAL direction;
+  DERIVE
+   u : LIST[3:3] OF direction := base_axis(3,SELF\
+       cartesian_transformation_operator.axis1,SELF\
+       cartesian_transformation_operator.axis2,axis3);
+  WHERE
+   wr1 : SELF\geometric_representation_item.dim = 3;
+ END_ENTITY;
+
+ ENTITY certification;
+  name : label;
+  purpose : text;
+  kind : certification_type;
+ END_ENTITY;
+
+ ENTITY certification_assignment
+  ABSTRACT SUPERTYPE;
+  assigned_certification : certification;
+  DERIVE
+   role : object_role := get_role(SELF);
+  WHERE
+   wr1 : SIZEOF(USEDIN(SELF,'PDM_SCHEMA.' +
+         'ROLE_ASSOCIATION.ITEM_WITH_ROLE')) <= 1;
+ END_ENTITY;
+
+ ENTITY certification_type;
+  description : label;
+ END_ENTITY;
+
+ ENTITY characterized_object;
+  name : label;
+  description : OPTIONAL text;
+ END_ENTITY;
+
+ ENTITY configuration_design;
+  configuration : configuration_item;
+  design : configuration_design_item;
+  DERIVE
+   name : label := get_name_value(SELF);
+   description : text := get_description_value(SELF);
+  UNIQUE
+   ur1 : configuration,design;
+  WHERE
+   wr1 : SIZEOF(USEDIN(SELF,'PDM_SCHEMA.' + 'NAME_ATTRIBUTE.NAMED_ITEM'))
+         <= 1;
+   wr2 : SIZEOF(USEDIN(SELF,'PDM_SCHEMA.' +
+         'DESCRIPTION_ATTRIBUTE.DESCRIBED_ITEM')) <= 1;
+ END_ENTITY;
+
+ ENTITY configuration_effectivity
+  SUBTYPE OF (product_definition_effectivity);
+  configuration : configuration_design;
+  UNIQUE
+   ur1 : configuration,usage,id;
+  WHERE
+   wr1 : 'PDM_SCHEMA.PRODUCT_DEFINITION_USAGE' IN TYPEOF(SELF\
+         product_definition_effectivity.usage);
+ END_ENTITY;
+
+ ENTITY configuration_item;
+  id : identifier;
+  name : label;
+  description : OPTIONAL text;
+  item_concept : product_concept;
+  purpose : OPTIONAL label;
+ END_ENTITY;
+
+ ENTITY context_dependent_shape_representation;
+  representation_relation : shape_representation_relationship;
+  represented_product_relation : product_definition_shape;
+  DERIVE
+   description : text := get_description_value(SELF);
+   name : label := get_name_value(SELF);
+  WHERE
+   wr1 : 'PDM_SCHEMA.PRODUCT_DEFINITION_RELATIONSHIP' IN TYPEOF(SELF.
+         represented_product_relation.definition);
+   wr2 : SIZEOF(USEDIN(SELF,'PDM_SCHEMA.' +
+         'DESCRIPTION_ATTRIBUTE.DESCRIBED_ITEM')) <= 1;
+   wr3 : SIZEOF(USEDIN(SELF,'PDM_SCHEMA.' + 'NAME_ATTRIBUTE.NAMED_ITEM'))
+         <= 1;
+ END_ENTITY;
+
+ ENTITY context_dependent_unit
+  SUBTYPE OF (named_unit);
+  name : label;
+ END_ENTITY;
+
+ ENTITY contract;
+  name : label;
+  purpose : text;
+  kind : contract_type;
+ END_ENTITY;
+
+ ENTITY contract_assignment
+  ABSTRACT SUPERTYPE;
+  assigned_contract : contract;
+  DERIVE
+   role : object_role := get_role(SELF);
+  WHERE
+   wr1 : SIZEOF(USEDIN(SELF,'PDM_SCHEMA.' +
+         'ROLE_ASSOCIATION.ITEM_WITH_ROLE')) <= 1;
+ END_ENTITY;
+
+ ENTITY contract_type;
+  description : label;
+ END_ENTITY;
+
+ ENTITY conversion_based_unit
+  SUBTYPE OF (named_unit);
+  name : label;
+  conversion_factor : measure_with_unit;
+ END_ENTITY;
+
+ ENTITY coordinated_universal_time_offset;
+  hour_offset : INTEGER;
+  minute_offset : OPTIONAL INTEGER;
+  sense : ahead_or_behind;
+  WHERE
+   wr1 : {0<=hour_offset<=12};
+   wr2 : {0<=minute_offset<=59};
+   wr3 : NOT ((hour_offset <> 0) AND (sense = exact));
+ END_ENTITY;
+
+ ENTITY date
+  SUPERTYPE OF (calendar_date);
+  year_component : year_number;
+ END_ENTITY;
+
+ ENTITY date_and_time;
+  date_component : date;
+  time_component : local_time;
+ END_ENTITY;
+
+ ENTITY date_and_time_assignment
+  ABSTRACT SUPERTYPE;
+  assigned_date_and_time : date_and_time;
+  role : date_time_role;
+ END_ENTITY;
+
+ ENTITY date_assignment
+  ABSTRACT SUPERTYPE;
+  assigned_date : date;
+  role : date_role;
+ END_ENTITY;
+
+ ENTITY date_role;
+  name : label;
+  DERIVE
+   description : text := get_description_value(SELF);
+  WHERE
+   wr1 : SIZEOF(USEDIN(SELF,'PDM_SCHEMA.' +
+         'DESCRIPTION_ATTRIBUTE.DESCRIBED_ITEM')) <= 1;
+ END_ENTITY;
+
+ ENTITY date_time_role;
+  name : label;
+  DERIVE
+   description : text := get_description_value(SELF);
+  WHERE
+   wr1 : SIZEOF(USEDIN(SELF,'PDM_SCHEMA.' +
+         'DESCRIPTION_ATTRIBUTE.DESCRIBED_ITEM')) <= 1;
+ END_ENTITY;
+
+ ENTITY dated_effectivity
+  SUBTYPE OF (effectivity);
+  effectivity_end_date : OPTIONAL date_time_or_event_occurrence;
+  effectivity_start_date : date_time_or_event_occurrence;
+ END_ENTITY;
+
+ ENTITY derived_unit;
+  elements : SET[1:?] OF derived_unit_element;
+  DERIVE
+   name : label := get_name_value(SELF);
+  WHERE
+   wr1 : (SIZEOF(elements) > 1) OR ((SIZEOF(elements) = 1) AND (elements[1].
+         exponent <> 1.0));
+   wr2 : SIZEOF(USEDIN(SELF,'PDM_SCHEMA.' + 'NAME_ATTRIBUTE.NAMED_ITEM'))
+         <= 1;
+ END_ENTITY;
+
+ ENTITY derived_unit_element;
+  unit : named_unit;
+  exponent : REAL;
+ END_ENTITY;
+
+ ENTITY description_attribute;
+  attribute_value : text;
+  described_item : description_attribute_select;
+ END_ENTITY;
+
+ ENTITY descriptive_representation_item
+  SUBTYPE OF (representation_item);
+  description : text;
+ END_ENTITY;
+
+ ENTITY dimensional_exponents;
+  length_exponent : REAL;
+  mass_exponent : REAL;
+  time_exponent : REAL;
+  electric_current_exponent : REAL;
+  thermodynamic_temperature_exponent : REAL;
+  amount_of_substance_exponent : REAL;
+  luminous_intensity_exponent : REAL;
+ END_ENTITY;
+
+ ENTITY directed_action
+  SUBTYPE OF (executed_action);
+  directive : action_directive;
+ END_ENTITY;
+
+ ENTITY direction
+  SUBTYPE OF (geometric_representation_item);
+  direction_ratios : LIST[2:3] OF REAL;
+  WHERE
+   wr1 : SIZEOF(QUERY(tmp <* direction_ratios | tmp <> 0.0)) > 0;
+ END_ENTITY;
+
+ ENTITY document;
+  id : identifier;
+  name : label;
+  description : OPTIONAL text;
+  kind : document_type;
+  INVERSE
+   representation_type : SET[0:?] OF document_representation_type FOR
+                         represented_document;
+ END_ENTITY;
+
+ ENTITY document_file
+  SUBTYPE OF (document,characterized_object);
+  WHERE
+   wr1 : SELF\characterized_object.name = ' ';
+   wr2 : SELF\characterized_object.description = ' ';
+   wr3 : SIZEOF(QUERY(drt <* SELF\document.representation_type | drt.name IN [
+         'digital','physical'])) = 1;
+ END_ENTITY;
+
+ ENTITY document_product_association;
+  name : label;
+  description : OPTIONAL text;
+  relating_document : document;
+  related_product : product_or_formation_or_definition;
+ END_ENTITY;
+
+ ENTITY document_product_equivalence
+  SUBTYPE OF (document_product_association);
+  WHERE
+   wr1 : name = 'equivalence';
+   wr2 : NOT ('PDM_SCHEMA.PRODUCT' IN TYPEOF(SELF\
+         document_product_association.related_product)) OR ((SELF\
+         document_product_association.relating_document.kind.product_data_type
+         = 'configuration controlled document') AND (SIZEOF(QUERY(prpc <* USEDIN
+         (SELF\document_product_association.related_product,
+         'PDM_SCHEMA.PRODUCT_RELATED_PRODUCT_CATEGORY.PRODUCTS') | prpc\
+         product_category.name = 'document')) = 1));
+   wr3 : NOT ('PDM_SCHEMA.PRODUCT_DEFINITION_FORMATION' IN TYPEOF(SELF\
+         document_product_association.related_product)) OR ((SELF\
+         document_product_association.relating_document.kind.product_data_type
+         = 'configuration controlled document version') AND (SIZEOF(QUERY(prpc
+         <* USEDIN(SELF\document_product_association.related_product\
+         product_definition_formation.of_product,
+         'PDM_SCHEMA.PRODUCT_RELATED_PRODUCT_CATEGORY.PRODUCTS') | prpc\
+         product_category.name = 'document')) = 1));
+   wr4 : NOT ('PDM_SCHEMA.PRODUCT_DEFINITION' IN TYPEOF(SELF\
+         document_product_association.related_product)) OR ((SELF\
+         document_product_association.relating_document.kind.product_data_type
+         = 'configuration controlled document definition') AND (SIZEOF(QUERY(
+         prpc <* USEDIN(SELF\document_product_association.related_product\
+         product_definition.formation.of_product,
+         'PDM_SCHEMA.PRODUCT_RELATED_PRODUCT_CATEGORY.PRODUCTS') | prpc\
+         product_category.name = 'document')) = 1));
+ END_ENTITY;
+
+ ENTITY document_reference
+  ABSTRACT SUPERTYPE;
+  assigned_document : document;
+  source : label;
+  DERIVE
+   role : object_role := get_role(SELF);
+  WHERE
+   wr1 : SIZEOF(USEDIN(SELF,'PDM_SCHEMA.' +
+         'ROLE_ASSOCIATION.ITEM_WITH_ROLE')) <= 1;
+ END_ENTITY;
+
+ ENTITY document_relationship;
+  name : label;
+  description : OPTIONAL text;
+  relating_document : document;
+  related_document : document;
+ END_ENTITY;
+
+ ENTITY document_representation_type;
+  name : label;
+  represented_document : document;
+ END_ENTITY;
+
+ ENTITY document_type;
+  product_data_type : label;
+ END_ENTITY;
+
+ ENTITY document_usage_constraint;
+  source : document;
+  subject_element : label;
+  subject_element_value : text;
+ END_ENTITY;
+
+ ENTITY document_usage_constraint_assignment
+  ABSTRACT SUPERTYPE;
+  assigned_document_usage : document_usage_constraint;
+  role : document_usage_role;
+ END_ENTITY;
+
+ ENTITY document_usage_role;
+  name : label;
+  description : OPTIONAL text;
+ END_ENTITY;
+
+ ENTITY effectivity
+  SUPERTYPE OF (ONEOF(serial_numbered_effectivity,dated_effectivity,
+                lot_effectivity,time_interval_based_effectivity));
+  id : identifier;
+  DERIVE
+   name : label := get_name_value(SELF);
+   description : text := get_description_value(SELF);
+  WHERE
+   wr1 : SIZEOF(USEDIN(SELF,'PDM_SCHEMA.' + 'NAME_ATTRIBUTE.NAMED_ITEM'))
+         <= 1;
+   wr2 : SIZEOF(USEDIN(SELF,'PDM_SCHEMA.' +
+         'DESCRIPTION_ATTRIBUTE.DESCRIBED_ITEM')) <= 1;
+ END_ENTITY;
+
+ ENTITY effectivity_assignment
+  ABSTRACT SUPERTYPE;
+  assigned_effectivity : effectivity;
+  DERIVE
+   role : object_role := get_role(SELF);
+  WHERE
+   wr1 : SIZEOF(USEDIN(SELF,'PDM_SCHEMA.' +
+         'ROLE_ASSOCIATION.ITEM_WITH_ROLE')) <= 1;
+ END_ENTITY;
+
+ ENTITY effectivity_relationship;
+  name : label;
+  description : OPTIONAL text;
+  related_effectivity : effectivity;
+  relating_effectivity : effectivity;
+ END_ENTITY;
+
+ ENTITY electric_current_measure_with_unit
+  SUBTYPE OF (measure_with_unit);
+  WHERE
+   wr1 : 'PDM_SCHEMA.ELECTRIC_CURRENT_UNIT' IN TYPEOF(SELF\
+         measure_with_unit.unit_component);
+ END_ENTITY;
+
+ ENTITY electric_current_unit
+  SUBTYPE OF (named_unit);
+  WHERE
+   wr1 : (SELF\named_unit.dimensions.length_exponent = 0.0) AND (SELF\
+         named_unit.dimensions.mass_exponent = 0.0) AND (SELF\named_unit.
+         dimensions.time_exponent = 0.0) AND (SELF\named_unit.dimensions.
+         electric_current_exponent = 1.0) AND (SELF\named_unit.dimensions.
+         thermodynamic_temperature_exponent = 0.0) AND (SELF\named_unit.
+         dimensions.amount_of_substance_exponent = 0.0) AND (SELF\named_unit.
+         dimensions.luminous_intensity_exponent = 0.0);
+ END_ENTITY;
+
+ ENTITY event_occurrence;
+  id : identifier;
+  name : label;
+  description : OPTIONAL text;
+ END_ENTITY;
+
+ ENTITY event_occurrence_assignment
+  ABSTRACT SUPERTYPE;
+  assigned_event_occurrence : event_occurrence;
+  role : event_occurrence_role;
+ END_ENTITY;
+
+ ENTITY event_occurrence_role;
+  name : label;
+  description : OPTIONAL text;
+ END_ENTITY;
+
+ ENTITY executed_action
+  SUBTYPE OF (action);
+ END_ENTITY;
+
+ ENTITY external_identification_assignment
+  ABSTRACT SUPERTYPE
+  SUBTYPE OF (identification_assignment);
+  source : external_source;
+ END_ENTITY;
+
+ ENTITY external_source;
+  source_id : source_item;
+  DERIVE
+   description : text := get_description_value(SELF);
+  WHERE
+   wr1 : SIZEOF(USEDIN(SELF,'PDM_SCHEMA.' +
+         'DESCRIPTION_ATTRIBUTE.DESCRIBED_ITEM')) <= 1;
+ END_ENTITY;
+
+ ENTITY functionally_defined_transformation;
+  name : label;
+  description : OPTIONAL text;
+ END_ENTITY;
+
+ ENTITY general_property;
+  id : identifier;
+  name : label;
+  description : OPTIONAL text;
+ END_ENTITY;
+
+ ENTITY general_property_association;
+  name : label;
+  description : OPTIONAL text;
+  base_definition : general_property;
+  derived_definition : derived_property_select;
+  WHERE
+   wr1 : SIZEOF(USEDIN(derived_definition,'PDM_SCHEMA.' +
+         'GENERAL_PROPERTY_ASSOCIATION.' + 'DERIVED_DEFINITION')) = 1;
+   wr2 : derived_definition.name = base_definition.name;
+ END_ENTITY;
+
+ ENTITY general_property_relationship;
+  name : label;
+  description : OPTIONAL text;
+  relating_property : general_property;
+  related_property : general_property;
+ END_ENTITY;
+
+ ENTITY geometric_representation_context
+  SUBTYPE OF (representation_context);
+  coordinate_space_dimension : dimension_count;
+ END_ENTITY;
+
+ ENTITY geometric_representation_item
+  SUPERTYPE OF (ONEOF(point,direction,vector,placement,
+                cartesian_transformation_operator))
+  SUBTYPE OF (representation_item);
+  DERIVE
+   dim : dimension_count := dimension_of(SELF);
+  WHERE
+   wr1 : SIZEOF(QUERY(using_rep <* using_representations(SELF) | NOT (
+         'PDM_SCHEMA.GEOMETRIC_REPRESENTATION_CONTEXT' IN TYPEOF(using_rep
+         .context_of_items)))) = 0;
+ END_ENTITY;
+
+ ENTITY global_uncertainty_assigned_context
+  SUBTYPE OF (representation_context);
+  uncertainty : SET[1:?] OF uncertainty_measure_with_unit;
+ END_ENTITY;
+
+ ENTITY global_unit_assigned_context
+  SUBTYPE OF (representation_context);
+  units : SET[1:?] OF unit;
+ END_ENTITY;
+
+ ENTITY id_attribute;
+  attribute_value : identifier;
+  identified_item : id_attribute_select;
+ END_ENTITY;
+
+ ENTITY identification_assignment
+  ABSTRACT SUPERTYPE;
+  assigned_id : identifier;
+  role : identification_role;
+ END_ENTITY;
+
+ ENTITY identification_role;
+  name : label;
+  description : OPTIONAL text;
+ END_ENTITY;
+
+ ENTITY item_defined_transformation;
+  name : label;
+  description : OPTIONAL text;
+  transform_item_1 : representation_item;
+  transform_item_2 : representation_item;
+ END_ENTITY;
+
+ ENTITY length_measure_with_unit
+  SUBTYPE OF (measure_with_unit);
+  WHERE
+   wr1 : 'PDM_SCHEMA.LENGTH_UNIT' IN TYPEOF(SELF\measure_with_unit.
+         unit_component);
+ END_ENTITY;
+
+ ENTITY length_unit
+  SUBTYPE OF (named_unit);
+  WHERE
+   wr1 : (SELF\named_unit.dimensions.length_exponent = 1.0) AND (SELF\
+         named_unit.dimensions.mass_exponent = 0.0) AND (SELF\named_unit.
+         dimensions.time_exponent = 0.0) AND (SELF\named_unit.dimensions.
+         electric_current_exponent = 0.0) AND (SELF\named_unit.dimensions.
+         thermodynamic_temperature_exponent = 0.0) AND (SELF\named_unit.
+         dimensions.amount_of_substance_exponent = 0.0) AND (SELF\named_unit.
+         dimensions.luminous_intensity_exponent = 0.0);
+ END_ENTITY;
+
+ ENTITY local_time;
+  hour_component : hour_in_day;
+  minute_component : OPTIONAL minute_in_hour;
+  second_component : OPTIONAL second_in_minute;
+  zone : coordinated_universal_time_offset;
+  WHERE
+   wr1 : valid_time(SELF);
+ END_ENTITY;
+
+ ENTITY lot_effectivity
+  SUBTYPE OF (effectivity);
+  effectivity_lot_id : identifier;
+  effectivity_lot_size : measure_with_unit;
+ END_ENTITY;
+
+ ENTITY luminous_intensity_measure_with_unit
+  SUBTYPE OF (measure_with_unit);
+  WHERE
+   wr1 : 'PDM_SCHEMA.LUMINOUS_INTENSITY_UNIT' IN TYPEOF(SELF\
+         measure_with_unit.unit_component);
+ END_ENTITY;
+
+ ENTITY luminous_intensity_unit
+  SUBTYPE OF (named_unit);
+  WHERE
+   wr1 : (SELF\named_unit.dimensions.length_exponent = 0.0) AND (SELF\
+         named_unit.dimensions.mass_exponent = 0.0) AND (SELF\named_unit.
+         dimensions.time_exponent = 0.0) AND (SELF\named_unit.dimensions.
+         electric_current_exponent = 0.0) AND (SELF\named_unit.dimensions.
+         thermodynamic_temperature_exponent = 0.0) AND (SELF\named_unit.
+         dimensions.amount_of_substance_exponent = 0.0) AND (SELF\named_unit.
+         dimensions.luminous_intensity_exponent = 1.0);
+ END_ENTITY;
+
+ ENTITY make_from_usage_option
+  SUBTYPE OF (product_definition_usage);
+  ranking : INTEGER;
+  ranking_rationale : text;
+  quantity : measure_with_unit;
+  WHERE
+   wr1 : (NOT ('NUMBER' IN TYPEOF(quantity.value_component))) OR (quantity.
+         value_component > 0);
+ END_ENTITY;
+
+ ENTITY mapped_item
+  SUBTYPE OF (representation_item);
+  mapping_source : representation_map;
+  mapping_target : representation_item;
+  WHERE
+   wr1 : acyclic_mapped_representation(using_representations(SELF),[SELF]);
+ END_ENTITY;
+
+ ENTITY mass_measure_with_unit
+  SUBTYPE OF (measure_with_unit);
+  WHERE
+   wr1 : 'PDM_SCHEMA.MASS_UNIT' IN TYPEOF(SELF\measure_with_unit.
+         unit_component);
+ END_ENTITY;
+
+ ENTITY mass_unit
+  SUBTYPE OF (named_unit);
+  WHERE
+   wr1 : (SELF\named_unit.dimensions.length_exponent = 0.0) AND (SELF\
+         named_unit.dimensions.mass_exponent = 1.0) AND (SELF\named_unit.
+         dimensions.time_exponent = 0.0) AND (SELF\named_unit.dimensions.
+         electric_current_exponent = 0.0) AND (SELF\named_unit.dimensions.
+         thermodynamic_temperature_exponent = 0.0) AND (SELF\named_unit.
+         dimensions.amount_of_substance_exponent = 0.0) AND (SELF\named_unit.
+         dimensions.luminous_intensity_exponent = 0.0);
+ END_ENTITY;
+
+ ENTITY measure_representation_item
+  SUBTYPE OF (representation_item,measure_with_unit);
+ END_ENTITY;
+
+ ENTITY measure_with_unit
+  SUPERTYPE OF (ONEOF(length_measure_with_unit,mass_measure_with_unit,
+                time_measure_with_unit,electric_current_measure_with_unit,
+                thermodynamic_temperature_measure_with_unit,
+                amount_of_substance_measure_with_unit,
+                luminous_intensity_measure_with_unit,
+                plane_angle_measure_with_unit,solid_angle_measure_with_unit,
+                area_measure_with_unit,volume_measure_with_unit,
+                ratio_measure_with_unit));
+  value_component : measure_value;
+  unit_component : unit;
+  WHERE
+   wr1 : valid_units(SELF);
+ END_ENTITY;
+
+ ENTITY name_attribute;
+  attribute_value : label;
+  named_item : name_attribute_select;
+ END_ENTITY;
+
+ ENTITY named_unit
+  SUPERTYPE OF (ONEOF(si_unit,conversion_based_unit,context_dependent_unit)
+                ANDOR ONEOF(length_unit,mass_unit,time_unit,
+                electric_current_unit,thermodynamic_temperature_unit,
+                amount_of_substance_unit,luminous_intensity_unit,
+                plane_angle_unit,solid_angle_unit,area_unit,volume_unit,
+                ratio_unit));
+  dimensions : dimensional_exponents;
+ END_ENTITY;
+
+ ENTITY next_assembly_usage_occurrence
+  SUBTYPE OF (assembly_component_usage);
+ END_ENTITY;
+
+ ENTITY object_role;
+  name : label;
+  description : OPTIONAL text;
+ END_ENTITY;
+
+ ENTITY organization;
+  id : OPTIONAL identifier;
+  name : label;
+  description : OPTIONAL text;
+ END_ENTITY;
+
+ ENTITY organization_assignment
+  ABSTRACT SUPERTYPE;
+  assigned_organization : organization;
+  role : organization_role;
+ END_ENTITY;
+
+ ENTITY organization_relationship;
+  name : label;
+  description : OPTIONAL text;
+  relating_organization : organization;
+  related_organization : organization;
+ END_ENTITY;
+
+ ENTITY organization_role;
+  name : label;
+  DERIVE
+   description : text := get_description_value(SELF);
+  WHERE
+   wr1 : SIZEOF(USEDIN(SELF,'PDM_SCHEMA.' +
+         'DESCRIPTION_ATTRIBUTE.DESCRIBED_ITEM')) <= 1;
+ END_ENTITY;
+
+ ENTITY organizational_address
+  SUBTYPE OF (address);
+  organizations : SET[1:?] OF organization;
+  description : OPTIONAL text;
+ END_ENTITY;
+
+ ENTITY organizational_project;
+  name : label;
+  description : OPTIONAL text;
+  responsible_organizations : SET[1:?] OF organization;
+  DERIVE
+   id : identifier := get_id_value(SELF);
+  WHERE
+   wr1 : SIZEOF(USEDIN(SELF,'PDM_SCHEMA.' + 'ID_ATTRIBUTE.IDENTIFIED_ITEM'
+         )) <= 1;
+ END_ENTITY;
+
+ ENTITY organizational_project_assignment
+  ABSTRACT SUPERTYPE;
+  assigned_organizational_project : organizational_project;
+  role : organizational_project_role;
+ END_ENTITY;
+
+ ENTITY organizational_project_relationship;
+  name : label;
+  description : OPTIONAL text;
+  relating_organizational_project : organizational_project;
+  related_organizational_project : organizational_project;
+ END_ENTITY;
+
+ ENTITY organizational_project_role;
+  name : label;
+  description : OPTIONAL text;
+ END_ENTITY;
+
+ ENTITY person;
+  id : identifier;
+  last_name : OPTIONAL label;
+  first_name : OPTIONAL label;
+  middle_names : OPTIONAL LIST[1:?] OF label;
+  prefix_titles : OPTIONAL LIST[1:?] OF label;
+  suffix_titles : OPTIONAL LIST[1:?] OF label;
+  WHERE
+   wr1 : EXISTS(last_name) OR EXISTS(first_name);
+ END_ENTITY;
+
+ ENTITY person_and_organization;
+  the_person : person;
+  the_organization : organization;
+  DERIVE
+   name : label := get_name_value(SELF);
+   description : text := get_description_value(SELF);
+  WHERE
+   wr1 : SIZEOF(USEDIN(SELF,'PDM_SCHEMA.' + 'NAME_ATTRIBUTE.NAMED_ITEM'))
+         <= 1;
+   wr2 : SIZEOF(USEDIN(SELF,'PDM_SCHEMA.' +
+         'DESCRIPTION_ATTRIBUTE.DESCRIBED_ITEM')) <= 1;
+ END_ENTITY;
+
+ ENTITY person_and_organization_assignment
+  ABSTRACT SUPERTYPE;
+  assigned_person_and_organization : person_and_organization;
+  role : person_and_organization_role;
+ END_ENTITY;
+
+ ENTITY person_and_organization_role;
+  name : label;
+  DERIVE
+   description : text := get_description_value(SELF);
+  WHERE
+   wr1 : SIZEOF(USEDIN(SELF,'PDM_SCHEMA.' +
+         'DESCRIPTION_ATTRIBUTE.DESCRIBED_ITEM')) <= 1;
+ END_ENTITY;
+
+ ENTITY personal_address
+  SUBTYPE OF (address);
+  people : SET[1:?] OF person;
+  description : OPTIONAL text;
+ END_ENTITY;
+
+ ENTITY placement
+  SUPERTYPE OF (ONEOF(axis2_placement_2d,axis2_placement_3d))
+  SUBTYPE OF (geometric_representation_item);
+  location : cartesian_point;
+ END_ENTITY;
+
+ ENTITY plane_angle_measure_with_unit
+  SUBTYPE OF (measure_with_unit);
+  WHERE
+   wr1 : 'PDM_SCHEMA.PLANE_ANGLE_UNIT' IN TYPEOF(SELF\measure_with_unit.
+         unit_component);
+ END_ENTITY;
+
+ ENTITY plane_angle_unit
+  SUBTYPE OF (named_unit);
+  WHERE
+   wr1 : (SELF\named_unit.dimensions.length_exponent = 0.0) AND (SELF\
+         named_unit.dimensions.mass_exponent = 0.0) AND (SELF\named_unit.
+         dimensions.time_exponent = 0.0) AND (SELF\named_unit.dimensions.
+         electric_current_exponent = 0.0) AND (SELF\named_unit.dimensions.
+         thermodynamic_temperature_exponent = 0.0) AND (SELF\named_unit.
+         dimensions.amount_of_substance_exponent = 0.0) AND (SELF\named_unit.
+         dimensions.luminous_intensity_exponent = 0.0);
+ END_ENTITY;
+
+ ENTITY point
+  SUPERTYPE OF (cartesian_point)
+  SUBTYPE OF (geometric_representation_item);
+ END_ENTITY;
+
+ ENTITY product;
+  id : identifier;
+  name : label;
+  description : OPTIONAL text;
+  frame_of_reference : SET[1:?] OF product_context;
+ END_ENTITY;
+
+ ENTITY product_category;
+  name : label;
+  description : OPTIONAL text;
+ END_ENTITY;
+
+ ENTITY product_category_relationship;
+  name : label;
+  description : OPTIONAL text;
+  category : product_category;
+  sub_category : product_category;
+  WHERE
+   wr1 : acyclic_product_category_relationship(SELF,[SELF.sub_category]);
+ END_ENTITY;
+
+ ENTITY product_concept;
+  id : identifier;
+  name : label;
+  description : OPTIONAL text;
+  market_context : product_concept_context;
+  UNIQUE
+   ur1 : id;
+ END_ENTITY;
+
+ ENTITY product_concept_context
+  SUBTYPE OF (application_context_element);
+  market_segment_type : label;
+ END_ENTITY;
+
+ ENTITY product_context
+  SUBTYPE OF (application_context_element);
+  discipline_type : label;
+ END_ENTITY;
+
+ ENTITY product_definition;
+  id : identifier;
+  description : OPTIONAL text;
+  formation : product_definition_formation;
+  frame_of_reference : product_definition_context;
+  DERIVE
+   name : label := get_name_value(SELF);
+  WHERE
+   wr1 : SIZEOF(USEDIN(SELF,'PDM_SCHEMA.' + 'NAME_ATTRIBUTE.NAMED_ITEM'))
+         <= 1;
+ END_ENTITY;
+
+ ENTITY product_definition_context
+  SUBTYPE OF (application_context_element);
+  life_cycle_stage : label;
+ END_ENTITY;
+
+ ENTITY product_definition_context_association;
+  definition : product_definition;
+  frame_of_reference : product_definition_context;
+  role : product_definition_context_role;
+ END_ENTITY;
+
+ ENTITY product_definition_context_role;
+  name : label;
+  description : OPTIONAL text;
+ END_ENTITY;
+
+ ENTITY product_definition_effectivity
+  SUBTYPE OF (effectivity);
+  usage : product_definition_relationship;
+  WHERE
+   wr1 : SIZEOF(USEDIN(SELF,'PDM_SCHEMA.' +
+         'EFFECTIVITY_ASSIGNMENT.ASSIGNED_EFFECTIVITY')) = 0;
+ END_ENTITY;
+
+ ENTITY product_definition_formation;
+  id : identifier;
+  description : OPTIONAL text;
+  of_product : product;
+  UNIQUE
+   ur1 : id,of_product;
+ END_ENTITY;
+
+ ENTITY product_definition_formation_relationship;
+  id : identifier;
+  name : label;
+  description : OPTIONAL text;
+  relating_product_definition_formation : product_definition_formation;
+  related_product_definition_formation : product_definition_formation;
+ END_ENTITY;
+
+ ENTITY product_definition_formation_with_specified_source
+  SUBTYPE OF (product_definition_formation);
+  make_or_buy : source;
+ END_ENTITY;
+
+ ENTITY product_definition_relationship;
+  id : identifier;
+  name : label;
+  description : OPTIONAL text;
+  relating_product_definition : product_definition;
+  related_product_definition : product_definition;
+ END_ENTITY;
+
+ ENTITY product_definition_shape
+  SUBTYPE OF (property_definition);
+  UNIQUE
+   ur1 : SELF\property_definition.definition;
+  WHERE
+   wr1 : NOT ('PDM_SCHEMA.SHAPE_DEFINITION' IN TYPEOF(SELF\
+         property_definition.definition));
+ END_ENTITY;
+
+ ENTITY product_definition_usage
+  SUPERTYPE OF (ONEOF(make_from_usage_option,assembly_component_usage))
+  SUBTYPE OF (product_definition_relationship);
+  UNIQUE
+   ur1 : SELF\product_definition_relationship.id,SELF\
+   product_definition_relationship.relating_product_definition,SELF\
+   product_definition_relationship.related_product_definition;
+  WHERE
+   wr1 : acyclic_product_definition_relationship(SELF,[SELF\
+         product_definition_relationship.related_product_definition],
+         'PDM_SCHEMA.PRODUCT_DEFINITION_USAGE');
+ END_ENTITY;
+
+ ENTITY product_definition_with_associated_documents
+  SUBTYPE OF (product_definition);
+  documentation_ids : SET[1:?] OF document;
+ END_ENTITY;
+
+ ENTITY product_related_product_category
+  SUBTYPE OF (product_category);
+  products : SET[1:?] OF product;
+ END_ENTITY;
+
+ ENTITY promissory_usage_occurrence
+  SUBTYPE OF (assembly_component_usage);
+ END_ENTITY;
+
+ ENTITY property_definition;
+  name : label;
+  description : OPTIONAL text;
+  definition : characterized_definition;
+ END_ENTITY;
+
+ ENTITY property_definition_representation;
+  definition : represented_definition;
+  used_representation : representation;
+  DERIVE
+   description : text := get_description_value(SELF);
+   name : label := get_name_value(SELF);
+  WHERE
+   wr1 : SIZEOF(USEDIN(SELF,'PDM_SCHEMA.' +
+         'DESCRIPTION_ATTRIBUTE.DESCRIBED_ITEM')) <= 1;
+   wr2 : SIZEOF(USEDIN(SELF,'PDM_SCHEMA.' + 'NAME_ATTRIBUTE.NAMED_ITEM'))
+         <= 1;
+ END_ENTITY;
+
+ ENTITY quantified_assembly_component_usage
+  SUBTYPE OF (assembly_component_usage);
+  quantity : measure_with_unit;
+  WHERE
+   wr1 : (NOT ('NUMBER' IN TYPEOF(quantity.value_component))) OR (quantity.
+         value_component > 0);
+ END_ENTITY;
+
+ ENTITY ratio_measure_with_unit
+  SUBTYPE OF (measure_with_unit);
+  WHERE
+   wr1 : 'PDM_SCHEMA.RATIO_UNIT' IN TYPEOF(SELF\measure_with_unit.
+         unit_component);
+ END_ENTITY;
+
+ ENTITY ratio_unit
+  SUBTYPE OF (named_unit);
+  WHERE
+   wr1 : (SELF\named_unit.dimensions.length_exponent = 0.0) AND (SELF\
+         named_unit.dimensions.mass_exponent = 0.0) AND (SELF\named_unit.
+         dimensions.time_exponent = 0.0) AND (SELF\named_unit.dimensions.
+         electric_current_exponent = 0.0) AND (SELF\named_unit.dimensions.
+         thermodynamic_temperature_exponent = 0.0) AND (SELF\named_unit.
+         dimensions.amount_of_substance_exponent = 0.0) AND (SELF\named_unit.
+         dimensions.luminous_intensity_exponent = 0.0);
+ END_ENTITY;
+
+ ENTITY relative_event_occurrence
+  SUBTYPE OF (event_occurrence);
+  base_event : event_occurrence;
+  offset : time_measure_with_unit;
+ END_ENTITY;
+
+ ENTITY representation;
+  name : label;
+  items : SET[1:?] OF representation_item;
+  context_of_items : representation_context;
+  DERIVE
+   id : identifier := get_id_value(SELF);
+   description : text := get_description_value(SELF);
+  WHERE
+   wr1 : SIZEOF(USEDIN(SELF,'PDM_SCHEMA.' + 'ID_ATTRIBUTE.IDENTIFIED_ITEM'
+         )) <= 1;
+   wr2 : SIZEOF(USEDIN(SELF,'PDM_SCHEMA.' +
+         'DESCRIPTION_ATTRIBUTE.DESCRIBED_ITEM')) <= 1;
+ END_ENTITY;
+
+ ENTITY representation_context;
+  context_identifier : identifier;
+  context_type : text;
+  INVERSE
+   representations_in_context : SET[1:?] OF representation FOR context_of_items
+                                ;
+ END_ENTITY;
+
+ ENTITY representation_item;
+  name : label;
+  WHERE
+   wr1 : SIZEOF(using_representations(SELF)) > 0;
+ END_ENTITY;
+
+ ENTITY representation_map;
+  mapping_origin : representation_item;
+  mapped_representation : representation;
+  INVERSE
+   map_usage : SET[1:?] OF mapped_item FOR mapping_source;
+  WHERE
+   wr1 : item_in_context(SELF.mapping_origin,SELF.mapped_representation.
+         context_of_items);
+ END_ENTITY;
+
+ ENTITY representation_relationship;
+  name : label;
+  description : OPTIONAL text;
+  rep_1 : representation;
+  rep_2 : representation;
+ END_ENTITY;
+
+ ENTITY representation_relationship_with_transformation
+  SUBTYPE OF (representation_relationship);
+  transformation_operator : transformation;
+  WHERE
+   wr1 : SELF\representation_relationship.rep_1.context_of_items :<>: SELF\
+         representation_relationship.rep_2.context_of_items;
+ END_ENTITY;
+
+ ENTITY role_association;
+  role : object_role;
+  item_with_role : role_select;
+ END_ENTITY;
+
+ ENTITY security_classification;
+  name : label;
+  purpose : text;
+  security_level : security_classification_level;
+ END_ENTITY;
+
+ ENTITY security_classification_assignment
+  ABSTRACT SUPERTYPE;
+  assigned_security_classification : security_classification;
+  DERIVE
+   role : object_role := get_role(SELF);
+  WHERE
+   wr1 : SIZEOF(USEDIN(SELF,'PDM_SCHEMA.' +
+         'ROLE_ASSOCIATION.ITEM_WITH_ROLE')) <= 1;
+ END_ENTITY;
+
+ ENTITY security_classification_level;
+  name : label;
+ END_ENTITY;
+
+ ENTITY serial_numbered_effectivity
+  SUBTYPE OF (effectivity);
+  effectivity_start_id : identifier;
+  effectivity_end_id : OPTIONAL identifier;
+ END_ENTITY;
+
+ ENTITY shape_aspect;
+  name : label;
+  description : OPTIONAL text;
+  of_shape : product_definition_shape;
+  product_definitional : LOGICAL;
+ END_ENTITY;
+
+ ENTITY shape_aspect_relationship;
+  name : label;
+  description : OPTIONAL text;
+  relating_shape_aspect : shape_aspect;
+  related_shape_aspect : shape_aspect;
+ END_ENTITY;
+
+ ENTITY shape_definition_representation
+  SUBTYPE OF (property_definition_representation);
+  WHERE
+   wr1 : ('PDM_SCHEMA.PRODUCT_DEFINITION_SHAPE' IN TYPEOF(SELF.definition)
+         ) OR ('PDM_SCHEMA.SHAPE_DEFINITION' IN TYPEOF(SELF.definition.
+         definition));
+   wr2 : 'PDM_SCHEMA.SHAPE_REPRESENTATION' IN TYPEOF(SELF.
+         used_representation);
+ END_ENTITY;
+
+ ENTITY shape_representation
+  SUBTYPE OF (representation);
+ END_ENTITY;
+
+ ENTITY shape_representation_relationship
+  SUBTYPE OF (representation_relationship);
+  WHERE
+   wr1 : 'PDM_SCHEMA.SHAPE_REPRESENTATION' IN (TYPEOF(SELF\
+         representation_relationship.rep_1) + TYPEOF(SELF\
+         representation_relationship.rep_2));
+ END_ENTITY;
+
+ ENTITY si_unit
+  SUBTYPE OF (named_unit);
+  prefix : OPTIONAL si_prefix;
+  name : si_unit_name;
+  DERIVE
+   SELF\named_unit.dimensions : dimensional_exponents := dimensions_for_si_unit
+                                (name);
+ END_ENTITY;
+
+ ENTITY solid_angle_measure_with_unit
+  SUBTYPE OF (measure_with_unit);
+  WHERE
+   wr1 : 'PDM_SCHEMA.SOLID_ANGLE_UNIT' IN TYPEOF(SELF\measure_with_unit.
+         unit_component);
+ END_ENTITY;
+
+ ENTITY solid_angle_unit
+  SUBTYPE OF (named_unit);
+  WHERE
+   wr1 : (SELF\named_unit.dimensions.length_exponent = 0.0) AND (SELF\
+         named_unit.dimensions.mass_exponent = 0.0) AND (SELF\named_unit.
+         dimensions.time_exponent = 0.0) AND (SELF\named_unit.dimensions.
+         electric_current_exponent = 0.0) AND (SELF\named_unit.dimensions.
+         thermodynamic_temperature_exponent = 0.0) AND (SELF\named_unit.
+         dimensions.amount_of_substance_exponent = 0.0) AND (SELF\named_unit.
+         dimensions.luminous_intensity_exponent = 0.0);
+ END_ENTITY;
+
+ ENTITY specified_higher_usage_occurrence
+  SUBTYPE OF (assembly_component_usage);
+  upper_usage : assembly_component_usage;
+  next_usage : next_assembly_usage_occurrence;
+  UNIQUE
+   ur1 : upper_usage,next_usage;
+  WHERE
+   wr1 : SELF :<>: upper_usage;
+   wr2 : SELF\product_definition_relationship.relating_product_definition :=:
+         upper_usage.relating_product_definition;
+   wr3 : SELF\product_definition_relationship.related_product_definition :=:
+         next_usage.related_product_definition;
+   wr4 : (upper_usage.related_product_definition :=: next_usage.
+         relating_product_definition) OR (SIZEOF(QUERY(pdr <* USEDIN(
+         upper_usage.related_product_definition,
+         'PDM_SCHEMA.PRODUCT_DEFINITION_RELATIONSHIP.' +
+         'RELATED_PRODUCT_DEFINITION') | pdr.relating_product_definition :=:
+         next_usage.relating_product_definition)) = 1);
+   wr5 : SIZEOF(['PDM_SCHEMA.NEXT_ASSEMBLY_USAGE_OCCURRENCE',
+         'PDM_SCHEMA.SPECIFIED_HIGHER_USAGE_OCCURRENCE'] * TYPEOF(
+         upper_usage)) = 1;
+ END_ENTITY;
+
+ ENTITY thermodynamic_temperature_measure_with_unit
+  SUBTYPE OF (measure_with_unit);
+  WHERE
+   wr1 : 'PDM_SCHEMA.THERMODYNAMIC_TEMPERATURE_UNIT' IN TYPEOF(SELF\
+         measure_with_unit.unit_component);
+ END_ENTITY;
+
+ ENTITY thermodynamic_temperature_unit
+  SUBTYPE OF (named_unit);
+  WHERE
+   wr1 : (SELF\named_unit.dimensions.length_exponent = 0.0) AND (SELF\
+         named_unit.dimensions.mass_exponent = 0.0) AND (SELF\named_unit.
+         dimensions.time_exponent = 0.0) AND (SELF\named_unit.dimensions.
+         electric_current_exponent = 0.0) AND (SELF\named_unit.dimensions.
+         thermodynamic_temperature_exponent = 1.0) AND (SELF\named_unit.
+         dimensions.amount_of_substance_exponent = 0.0) AND (SELF\named_unit.
+         dimensions.luminous_intensity_exponent = 0.0);
+ END_ENTITY;
+
+ ENTITY time_interval;
+  id : identifier;
+  name : label;
+  description : OPTIONAL text;
+ END_ENTITY;
+
+ ENTITY time_interval_based_effectivity
+  SUBTYPE OF (effectivity);
+  effectivity_period : time_interval;
+ END_ENTITY;
+
+ ENTITY time_interval_with_bounds
+  SUBTYPE OF (time_interval);
+  primary_bound : date_time_or_event_occurrence;
+  secondary_bound : OPTIONAL date_time_or_event_occurrence;
+  derivation : OPTIONAL time_measure_with_unit;
+  WHERE
+   wr1 : NOT (EXISTS(secondary_bound) AND EXISTS(derivation));
+ END_ENTITY;
+
+ ENTITY time_measure_with_unit
+  SUBTYPE OF (measure_with_unit);
+  WHERE
+   wr1 : 'PDM_SCHEMA.TIME_UNIT' IN TYPEOF(SELF\measure_with_unit.
+         unit_component);
+ END_ENTITY;
+
+ ENTITY time_unit
+  SUBTYPE OF (named_unit);
+  WHERE
+   wr1 : (SELF\named_unit.dimensions.length_exponent = 0.0) AND (SELF\
+         named_unit.dimensions.mass_exponent = 0.0) AND (SELF\named_unit.
+         dimensions.time_exponent = 1.0) AND (SELF\named_unit.dimensions.
+         electric_current_exponent = 0.0) AND (SELF\named_unit.dimensions.
+         thermodynamic_temperature_exponent = 0.0) AND (SELF\named_unit.
+         dimensions.amount_of_substance_exponent = 0.0) AND (SELF\named_unit.
+         dimensions.luminous_intensity_exponent = 0.0);
+ END_ENTITY;
+
+ ENTITY uncertainty_measure_with_unit
+  SUBTYPE OF (measure_with_unit);
+  name : label;
+  description : OPTIONAL text;
+  WHERE
+   wr1 : valid_measure_value(SELF\measure_with_unit.value_component);
+ END_ENTITY;
+
+ ENTITY value_representation_item
+  SUBTYPE OF (representation_item);
+  value_component : measure_value;
+  WHERE
+   wr1 : SIZEOF(QUERY(rep <* using_representations(SELF) | NOT (
+         'PDM_SCHEMA.GLOBAL_UNIT_ASSIGNED_CONTEXT' IN TYPEOF(rep.
+         context_of_items)))) = 0;
+ END_ENTITY;
+
+ ENTITY vector
+  SUBTYPE OF (geometric_representation_item);
+  orientation : direction;
+  magnitude : length_measure;
+  WHERE
+   wr1 : magnitude >= 0.0;
+ END_ENTITY;
+
+ ENTITY versioned_action_request;
+  id : identifier;
+  version : label;
+  purpose : text;
+  description : OPTIONAL text;
+ END_ENTITY;
+
+ ENTITY volume_measure_with_unit
+  SUBTYPE OF (measure_with_unit);
+  WHERE
+   wr1 : 'PDM_SCHEMA.VOLUME_UNIT' IN TYPEOF(SELF\measure_with_unit.
+         unit_component);
+ END_ENTITY;
+
+ ENTITY volume_unit
+  SUBTYPE OF (named_unit);
+  WHERE
+   wr1 : (SELF\named_unit.dimensions.length_exponent = 3.0) AND (SELF\
+         named_unit.dimensions.mass_exponent = 0.0) AND (SELF\named_unit.
+         dimensions.time_exponent = 0.0) AND (SELF\named_unit.dimensions.
+         electric_current_exponent = 0.0) AND (SELF\named_unit.dimensions.
+         thermodynamic_temperature_exponent = 0.0) AND (SELF\named_unit.
+         dimensions.amount_of_substance_exponent = 0.0) AND (SELF\named_unit.
+         dimensions.luminous_intensity_exponent = 0.0);
+ END_ENTITY;
+
+ FUNCTION acyclic_mapped_representation(parent_set : SET OF representation;
+                                        children_set : SET OF
+                                        representation_item) : BOOLEAN;
+  LOCAL
+   x,y : SET OF representation_item;
+  END_LOCAL;
+  x := QUERY(z <* children_set | 'PDM_SCHEMA.MAPPED_ITEM' IN TYPEOF(z));
+  IF SIZEOF(x) > 0
+   THEN
+    REPEAT i := 1 TO HIINDEX(x);
+     IF x[i]\mapped_item.mapping_source.mapped_representation IN parent_set
+      THEN
+       RETURN (FALSE);
+     END_IF;
+     IF NOT acyclic_mapped_representation(parent_set + x[i]\mapped_item.
+        mapping_source.mapped_representation,x[i]\mapped_item.mapping_source.
+        mapped_representation.items)
+      THEN
+       RETURN (FALSE);
+     END_IF;
+    END_REPEAT;
+  END_IF;
+  x := children_set - x;
+  IF SIZEOF(x) > 0
+   THEN
+    REPEAT i := 1 TO HIINDEX(x);
+     y := QUERY(z <* bag_to_set(USEDIN(x[i],'')) |
+          'PDM_SCHEMA.REPRESENTATION_ITEM' IN TYPEOF(z));
+     IF NOT acyclic_mapped_representation(parent_set,y)
+      THEN
+       RETURN (FALSE);
+     END_IF;
+    END_REPEAT;
+  END_IF;
+  RETURN (TRUE);
+ END_FUNCTION;
+
+ FUNCTION acyclic_product_category_relationship(relation :
+                                                product_category_relationship;
+                                                children : SET OF
+                                                product_category) : LOGICAL;
+  LOCAL
+   x : SET OF product_category_relationship;
+   local_children : SET OF product_category;
+  END_LOCAL;
+  REPEAT i := 1 TO HIINDEX(children);
+   IF relation.category :=: children[i]
+    THEN
+     RETURN (FALSE);
+   END_IF;
+  END_REPEAT;
+  x := bag_to_set(USEDIN(relation.category,'PDM_SCHEMA.' +
+       'PRODUCT_CATEGORY_RELATIONSHIP.SUB_CATEGORY'));
+  local_children := children + relation.category;
+  IF SIZEOF(x) > 0
+   THEN
+    REPEAT i := 1 TO HIINDEX(x);
+     IF NOT acyclic_product_category_relationship(x[i],local_children)
+      THEN
+       RETURN (FALSE);
+     END_IF;
+    END_REPEAT;
+  END_IF;
+  RETURN (TRUE);
+ END_FUNCTION;
+
+ FUNCTION acyclic_product_definition_relationship(relation :
+          product_definition_relationship;relatives : SET[1:?] OF
+                                                  product_definition;
+                                                  specific_relation : STRING) :
+                                                  LOGICAL;
+  LOCAL
+   x : SET OF product_definition_relationship;
+  END_LOCAL;
+  IF relation.relating_product_definition IN relatives
+   THEN
+    RETURN (FALSE);
+  END_IF;
+  x := QUERY(pd <* bag_to_set(USEDIN(relation.relating_product_definition,
+       'PDM_SCHEMA.' + 'PRODUCT_DEFINITION_RELATIONSHIP.' +
+       'RELATED_PRODUCT_DEFINITION')) | specific_relation IN TYPEOF(pd));
+  REPEAT i := 1 TO HIINDEX(x);
+   IF NOT acyclic_product_definition_relationship(x[i],relatives + relation.
+      relating_product_definition,specific_relation)
+    THEN
+     RETURN (FALSE);
+   END_IF;
+  END_REPEAT;
+  RETURN (TRUE);
+ END_FUNCTION;
+
+ FUNCTION bag_to_set(the_bag : BAG OF GENERIC : intype) : SET OF GENERIC :
+                     intype;
+  LOCAL
+   the_set : SET OF GENERIC : intype := [];
+  END_LOCAL;
+  IF SIZEOF(the_bag) > 0
+   THEN
+    REPEAT i := 1 TO HIINDEX(the_bag);
+     the_set := the_set + the_bag[i];
+    END_REPEAT;
+  END_IF;
+  RETURN (the_set);
+ END_FUNCTION;
+
+ FUNCTION base_axis(dim : INTEGER;axis1,axis2,axis3 : direction) : LIST[2:3] OF
+                    direction;
+  LOCAL
+   vec : direction;
+   u : LIST[2:3] OF direction;
+   factor : REAL;
+  END_LOCAL;
+  IF (dim = 3)
+   THEN
+    u[3] := NVL(normalise(axis3), dummy_gri || direction([0.0,0.0,1.0]));
+    u[1] := first_proj_axis(u[3],axis1);
+    u[2] := second_proj_axis(u[3],u[1],axis2);
+   ELSE
+    u[3] := ?;
+    IF EXISTS(axis1)
+     THEN
+      u[1] := normalise(axis1);
+      u[2] := orthogonal_complement(u[1]);
+      IF EXISTS(axis2)
+       THEN
+        factor := dot_product(axis2,u[2]);
+        IF (factor < 0.0)
+         THEN
+          u[2].direction_ratios[1] := - u[2].direction_ratios[1];
+          u[2].direction_ratios[2] := - u[2].direction_ratios[2];
+        END_IF;
+      END_IF;
+     ELSE
+      IF EXISTS(axis2)
+       THEN
+        u[2] := normalise(axis2);
+        u[1] := orthogonal_complement(u[2]);
+        u[1].direction_ratios[1] := - u[1].direction_ratios[1];
+        u[1].direction_ratios[2] := - u[1].direction_ratios[2];
+       ELSE
+        u[1].name := '';
+        u[2].name := '';
+        u[1].direction_ratios[1] := 1.0;
+        u[1].direction_ratios[2] := 0.0;
+        u[2].direction_ratios[1] := 0.0;
+        u[2].direction_ratios[2] := 1.0;
+      END_IF;
+    END_IF;
+  END_IF;
+  RETURN (u);
+ END_FUNCTION;
+
+ FUNCTION build_2axes(ref_direction : direction) : LIST[2:2] OF direction;
+  LOCAL
+   u : LIST[2:2] OF direction;
+  END_LOCAL;
+  u[1] := NVL(normalise(ref_direction), dummy_gri || direction([1.0,0.0]));
+  u[2] := orthogonal_complement(u[1]);
+  RETURN (u);
+ END_FUNCTION;
+
+ FUNCTION build_axes(axis,ref_direction : direction) : LIST[3:3] OF direction;
+  LOCAL
+   u : LIST[3:3] OF direction;
+   d : direction;
+  END_LOCAL;
+  d := NVL(normalise(axis), dummy_gri || direction([0.0,0.0,1.0]));
+  u[1] := first_proj_axis(d,ref_direction);
+  u[2] := normalise(cross_product(d,u[1])).orientation;
+  u[3] := d;
+  RETURN (u);
+ END_FUNCTION;
+
+ FUNCTION cross_product(arg1,arg2 : direction) : vector;
+  LOCAL
+   mag : REAL;
+   res : direction;
+   v1,v2 : LIST[3:3] OF REAL;
+   result : vector;
+  END_LOCAL;
+  IF (NOT EXISTS(arg1) OR (arg1.dim = 2)) OR (NOT EXISTS(arg2) OR (arg2.dim = 2
+     ))
+   THEN
+    RETURN (?);
+   ELSE
+    BEGIN
+     v1 := normalise(arg1).direction_ratios;
+     v2 := normalise(arg2).direction_ratios;
+     res.name := '';
+     res.direction_ratios[1] := (v1[2] * v2[3] - v1[3] * v2[2]);
+     res.direction_ratios[2] := (v1[3] * v2[1] - v1[1] * v2[3]);
+     res.direction_ratios[3] := (v1[1] * v2[2] - v1[2] * v2[1]);
+     mag := 0.0;
+     REPEAT i := 1 TO 3;
+      mag := mag + res.direction_ratios[i] * res.direction_ratios[i];
+     END_REPEAT;
+     IF (mag > 0.0)
+      THEN
+       result.orientation := res;
+       result.magnitude := SQRT(mag);
+      ELSE
+       result.orientation := arg1;
+       result.magnitude := 0.0;
+     END_IF;
+     result.name := '';
+     RETURN (result);
+    END;
+  END_IF;
+ END_FUNCTION;
+
+ FUNCTION derive_dimensional_exponents(x : unit) : dimensional_exponents;
+  LOCAL
+   i : INTEGER;
+   result : dimensional_exponents := dimensional_exponents(0.0,0.0,0.0,0.0,0.0,
+   0.0,0.0);
+  END_LOCAL;
+  IF 'PDM_SCHEMA.DERIVED_UNIT' IN TYPEOF(x)
+   THEN
+    REPEAT i := LOINDEX(x.elements) TO HIINDEX(x.elements);
+     result.length_exponent := result.length_exponent + (x.elements[i].exponent
+                                * x.elements[i].unit.dimensions.length_exponent
+                               );
+     result.mass_exponent := result.mass_exponent + (x.elements[i].exponent * x
+                             .elements[i].unit.dimensions.mass_exponent);
+     result.time_exponent := result.time_exponent + (x.elements[i].exponent * x
+                             .elements[i].unit.dimensions.time_exponent);
+     result.electric_current_exponent := result.electric_current_exponent + (x.
+                                         elements[i].exponent * x.elements[i].
+                                         unit.dimensions.
+                                         electric_current_exponent);
+     result.thermodynamic_temperature_exponent := result.
+     thermodynamic_temperature_exponent + (x.elements[i].exponent * x.elements[
+                                                  i].unit.dimensions.
+     thermodynamic_temperature_exponent);
+     result.amount_of_substance_exponent := result.amount_of_substance_exponent
+                                             + (x.elements[i].exponent * x.
+                                            elements[i].unit.dimensions.
+                                            amount_of_substance_exponent);
+     result.luminous_intensity_exponent := result.luminous_intensity_exponent +
+                                            (x.elements[i].exponent * x.
+                                           elements[i].unit.dimensions.
+                                           luminous_intensity_exponent);
+    END_REPEAT;
+   ELSE
+    result := x.dimensions;
+  END_IF;
+  RETURN (result);
+ END_FUNCTION;
+
+ FUNCTION dimension_of(item : geometric_representation_item) : dimension_count;
+  LOCAL
+   x : SET OF representation;
+   y : representation_context;
+  END_LOCAL;
+  x := using_representations(item);
+  y := x[1].context_of_items;
+  RETURN (y\geometric_representation_context.coordinate_space_dimension);
+ END_FUNCTION;
+
+ FUNCTION dimensions_for_si_unit(n : si_unit_name) : dimensional_exponents;
+  CASE n OF
+   metre : RETURN (dimensional_exponents(1.0,0.0,0.0,0.0,0.0,0.0,0.0));
+   gram : RETURN (dimensional_exponents(0.0,1.0,0.0,0.0,0.0,0.0,0.0));
+   second : RETURN (dimensional_exponents(0.0,0.0,1.0,0.0,0.0,0.0,0.0));
+   ampere : RETURN (dimensional_exponents(0.0,0.0,0.0,1.0,0.0,0.0,0.0));
+   kelvin : RETURN (dimensional_exponents(0.0,0.0,0.0,0.0,1.0,0.0,0.0));
+   mole : RETURN (dimensional_exponents(0.0,0.0,0.0,0.0,0.0,1.0,0.0));
+   candela : RETURN (dimensional_exponents(0.0,0.0,0.0,0.0,0.0,0.0,1.0));
+   radian : RETURN (dimensional_exponents(0.0,0.0,0.0,0.0,0.0,0.0,0.0));
+   steradian : RETURN (dimensional_exponents(0.0,0.0,0.0,0.0,0.0,0.0,0.0));
+   hertz : RETURN (dimensional_exponents(0.0,0.0,- 1.0,0.0,0.0,0.0,0.0));
+   newton : RETURN (dimensional_exponents(1.0,1.0,- 2.0,0.0,0.0,0.0,0.0));
+   pascal : RETURN (dimensional_exponents(- 1.0,1.0,- 2.0,0.0,0.0,0.0,0.0));
+   joule : RETURN (dimensional_exponents(2.0,1.0,- 2.0,0.0,0.0,0.0,0.0));
+   watt : RETURN (dimensional_exponents(2.0,1.0,- 3.0,0.0,0.0,0.0,0.0));
+   coulomb : RETURN (dimensional_exponents(0.0,0.0,1.0,1.0,0.0,0.0,0.0));
+   volt : RETURN (dimensional_exponents(2.0,1.0,- 3.0,- 1.0,0.0,0.0,0.0));
+   farad : RETURN (dimensional_exponents(- 2.0,- 1.0,4.0,1.0,0.0,0.0,0.0));
+   ohm : RETURN (dimensional_exponents(2.0,1.0,- 3.0,- 2.0,0.0,0.0,0.0));
+   siemens : RETURN (dimensional_exponents(- 2.0,- 1.0,3.0,2.0,0.0,0.0,0.0));
+   weber : RETURN (dimensional_exponents(2.0,1.0,- 2.0,- 1.0,0.0,0.0,0.0));
+   tesla : RETURN (dimensional_exponents(0.0,1.0,- 2.0,- 1.0,0.0,0.0,0.0));
+   henry : RETURN (dimensional_exponents(2.0,1.0,- 2.0,- 2.0,0.0,0.0,0.0));
+   degree_celsius : RETURN (dimensional_exponents(0.0,0.0,0.0,0.0,1.0,0.0,0.0))
+                     ;
+   lumen : RETURN (dimensional_exponents(0.0,0.0,0.0,0.0,0.0,0.0,1.0));
+   lux : RETURN (dimensional_exponents(- 2.0,0.0,0.0,0.0,0.0,0.0,1.0));
+   becquerel : RETURN (dimensional_exponents(0.0,0.0,- 1.0,0.0,0.0,0.0,0.0));
+   gray : RETURN (dimensional_exponents(2.0,0.0,- 2.0,0.0,0.0,0.0,0.0));
+   sievert : RETURN (dimensional_exponents(2.0,0.0,- 2.0,0.0,0.0,0.0,0.0));
+   OTHERWISE : RETURN (?);
+  END_CASE;
+ END_FUNCTION;
+
+ FUNCTION dot_product(arg1,arg2 : direction) : REAL;
+  LOCAL
+   scalar : REAL;
+   vec1,vec2 : direction;
+   ndim : INTEGER;
+  END_LOCAL;
+  IF NOT EXISTS(arg1) OR NOT EXISTS(arg2)
+   THEN
+    scalar := ?;
+   ELSE
+    IF (arg1.dim <> arg2.dim)
+     THEN
+      scalar := ?;
+     ELSE
+      BEGIN
+       vec1 := normalise(arg1);
+       vec2 := normalise(arg2);
+       ndim := arg1.dim;
+       scalar := 0.0;
+       REPEAT i := 1 TO ndim;
+        scalar := scalar + vec1.direction_ratios[i] * vec2.direction_ratios[i];
+       END_REPEAT;
+      END;
+    END_IF;
+  END_IF;
+  RETURN (scalar);
+ END_FUNCTION;
+
+ FUNCTION first_proj_axis(z_axis,arg : direction) : direction;
+  LOCAL
+   x_axis : direction;
+   v : direction;
+   z : direction;
+   x_vec : vector;
+  END_LOCAL;
+  IF (NOT EXISTS(z_axis))
+   THEN
+    RETURN (?);
+   ELSE
+    z := normalise(z_axis);
+    IF NOT EXISTS(arg)
+     THEN
+      IF (z.direction_ratios <> [1.0,0.0,0.0])
+       THEN
+        v := dummy_gri || direction([1.0,0.0,0.0]);
+       ELSE
+        v := dummy_gri || direction([0.0,1.0,0.0]);
+      END_IF;
+     ELSE
+      IF (arg.dim <> 3)
+       THEN
+        RETURN (?);
+      END_IF;
+      IF ((cross_product(arg,z).magnitude) = 0.0)
+       THEN
+        RETURN (?);
+       ELSE
+        v := normalise(arg);
+      END_IF;
+    END_IF;
+    x_vec := scalar_times_vector(dot_product(v,z),z);
+    x_axis := vector_difference(v,x_vec).orientation;
+    x_axis := normalise(x_axis);
+  END_IF;
+  RETURN (x_axis);
+ END_FUNCTION;
+
+ FUNCTION get_description_value(obj : description_attribute_select) : text;
+  LOCAL
+   description_bag : BAG OF description_attribute := (USEDIN(obj,
+   'PDM_SCHEMA.' + 'DESCRIPTION_ATTRIBUTE.' + 'DESCRIBED_ITEM'));
+  END_LOCAL;
+  IF SIZEOF(description_bag) = 1
+   THEN
+    RETURN (description_bag[1].attribute_value);
+   ELSE
+    RETURN (?);
+  END_IF;
+ END_FUNCTION;
+
+ FUNCTION get_id_value(obj : id_attribute_select) : identifier;
+  LOCAL
+   id_bag : BAG OF id_attribute := (USEDIN(obj,'PDM_SCHEMA.' +
+   'ID_ATTRIBUTE.' + 'IDENTIFIED_ITEM'));
+  END_LOCAL;
+  IF SIZEOF(id_bag) = 1
+   THEN
+    RETURN (id_bag[1].attribute_value);
+   ELSE
+    RETURN (?);
+  END_IF;
+ END_FUNCTION;
+
+ FUNCTION get_name_value(obj : name_attribute_select) : label;
+  LOCAL
+   name_bag : BAG OF name_attribute := (USEDIN(obj,'PDM_SCHEMA.' +
+   'NAME_ATTRIBUTE.' + 'NAMED_ITEM'));
+  END_LOCAL;
+  IF SIZEOF(name_bag) = 1
+   THEN
+    RETURN (name_bag[1].attribute_value);
+   ELSE
+    RETURN (?);
+  END_IF;
+ END_FUNCTION;
+
+ FUNCTION get_role(obj : role_select) : object_role;
+  LOCAL
+   role_bag : BAG OF role_association := (USEDIN(obj,'PDM_SCHEMA.' +
+   'ROLE_ASSOCIATION.' + 'ITEM_WITH_ROLE'));
+  END_LOCAL;
+  IF SIZEOF(role_bag) = 1
+   THEN
+    RETURN (role_bag[1].role);
+   ELSE
+    RETURN (?);
+  END_IF;
+ END_FUNCTION;
+
+ FUNCTION item_in_context(item : representation_item;cntxt :
+                          representation_context) : BOOLEAN;
+  LOCAL
+   y : BAG OF representation_item;
+  END_LOCAL;
+  IF SIZEOF(USEDIN(item,'PDM_SCHEMA.REPRESENTATION.ITEMS') * cntxt.
+     representations_in_context) > 0
+   THEN
+    RETURN (TRUE);
+   ELSE
+    y := QUERY(z <* USEDIN(item,'') | 'PDM_SCHEMA.REPRESENTATION_ITEM' IN
+         TYPEOF(z));
+    IF SIZEOF(y) > 0
+     THEN
+      REPEAT i := 1 TO HIINDEX(y);
+       IF item_in_context(y[i],cntxt)
+        THEN
+         RETURN (TRUE);
+       END_IF;
+      END_REPEAT;
+    END_IF;
+  END_IF;
+  RETURN (FALSE);
+ END_FUNCTION;
+
+ FUNCTION leap_year(year : year_number) : BOOLEAN;
+  IF ((((year MOD 4) = 0) AND ((year MOD 100) <> 0)) OR ((year MOD 400) = 0))
+   THEN
+    RETURN (TRUE);
+   ELSE
+    RETURN (FALSE);
+  END_IF;
+ END_FUNCTION;
+
+ FUNCTION normalise(arg : vector_or_direction) : vector_or_direction;
+  LOCAL
+   ndim : INTEGER;
+   v : direction;
+   result : vector_or_direction;
+   vec : vector;
+   mag : REAL;
+  END_LOCAL;
+  IF NOT EXISTS(arg)
+   THEN
+    result := ?;
+   ELSE
+    ndim := arg.dim;
+    IF 'PDM_SCHEMA.VECTOR' IN TYPEOF(arg)
+     THEN
+      BEGIN
+       vec := arg;
+       v := arg.orientation;
+       IF arg.magnitude = 0.0
+        THEN
+         RETURN (?);
+        ELSE
+         vec.magnitude := 1.0;
+       END_IF;
+      END;
+     ELSE
+      v := arg;
+    END_IF;
+    mag := 0.0;
+    REPEAT i := 1 TO ndim;
+     mag := mag + v.direction_ratios[i] * v.direction_ratios[i];
+    END_REPEAT;
+    IF mag > 0.0
+     THEN
+      mag := SQRT(mag);
+      REPEAT i := 1 TO ndim;
+       v.direction_ratios[i] := v.direction_ratios[i] / mag;
+      END_REPEAT;
+      IF 'PDM_SCHEMA.VECTOR' IN TYPEOF(arg)
+       THEN
+        vec.orientation := v;
+        result := vec;
+       ELSE
+        result := v;
+      END_IF;
+     ELSE
+      RETURN (?);
+    END_IF;
+  END_IF;
+  RETURN (result);
+ END_FUNCTION;
+
+ FUNCTION orthogonal_complement(vec : direction) : direction;
+  LOCAL
+   result : direction;
+  END_LOCAL;
+  IF (vec.dim <> 2) OR NOT EXISTS(vec)
+   THEN
+    RETURN (?);
+   ELSE
+    result.name := '';
+    result.direction_ratios[1] := - vec.direction_ratios[2];
+    result.direction_ratios[2] := vec.direction_ratios[1];
+    RETURN (result);
+  END_IF;
+ END_FUNCTION;
+
+ FUNCTION scalar_times_vector(scalar : REAL;vec : vector_or_direction) : vector
+                              ;
+  LOCAL
+   v : direction;
+   mag : REAL;
+   result : vector;
+  END_LOCAL;
+  IF NOT EXISTS(scalar) OR NOT EXISTS(vec)
+   THEN
+    RETURN (?);
+   ELSE
+    IF 'PDM_SCHEMA.VECTOR' IN TYPEOF(vec)
+     THEN
+      v := vec.orientation;
+      mag := scalar * vec.magnitude;
+     ELSE
+      v := vec;
+      mag := scalar;
+    END_IF;
+    IF (mag < 0.0)
+     THEN
+      REPEAT i := 1 TO SIZEOF(v.direction_ratios);
+       v.direction_ratios[i] := - v.direction_ratios[i];
+      END_REPEAT;
+      mag := - mag;
+    END_IF;
+    result.name := '';
+    result.orientation := normalise(v);
+    result.magnitude := mag;
+  END_IF;
+  RETURN (result);
+ END_FUNCTION;
+
+ FUNCTION second_proj_axis(z_axis,x_axis,arg : direction) : direction;
+  LOCAL
+   y_axis : vector;
+   v : direction;
+   temp : vector;
+  END_LOCAL;
+  IF NOT EXISTS(arg)
+   THEN
+    v := dummy_gri || direction([0.0,1.0,0.0]);
+   ELSE
+    v := arg;
+  END_IF;
+  temp := scalar_times_vector(dot_product(v,z_axis),z_axis);
+  y_axis := vector_difference(v,temp);
+  temp := scalar_times_vector(dot_product(v,x_axis),x_axis);
+  y_axis := vector_difference(y_axis,temp);
+  y_axis := normalise(y_axis);
+  RETURN (y_axis.orientation);
+ END_FUNCTION;
+
+ FUNCTION using_items(item : founded_item_select;checked_items : SET OF
+                      founded_item_select) : SET OF founded_item_select;
+  LOCAL
+   new_check_items : SET OF founded_item_select;
+   result_items : SET OF founded_item_select;
+   next_items : SET OF founded_item_select;
+   i : INTEGER;
+  END_LOCAL;
+  result_items := [];
+  new_check_items := checked_items + [item];
+  next_items := QUERY(z <* bag_to_set(USEDIN(item,'')) | (
+                'PDM_SCHEMA.REPRESENTATION_ITEM' IN TYPEOF(z)) OR (
+                'PDM_SCHEMA.FOUNDED_ITEM' IN TYPEOF(z)));
+  IF SIZEOF(next_items) > 0
+   THEN
+    REPEAT i := 1 TO HIINDEX(next_items);
+     IF NOT (next_items[i] IN new_check_items)
+      THEN
+       result_items := result_items + [next_items[i]] + using_items(next_items[
+                       i],new_check_items);
+     END_IF;
+    END_REPEAT;
+  END_IF;
+  RETURN (result_items);
+ END_FUNCTION;
+
+ FUNCTION using_representations(item : founded_item_select) : SET OF
+                                representation;
+  LOCAL
+   results : SET OF representation;
+   result_bag : BAG OF representation;
+   intermediate_items : SET OF founded_item_select;
+   i : INTEGER;
+   j : INTEGER;
+  END_LOCAL;
+  results := [];
+  result_bag := USEDIN(item,'PDM_SCHEMA.REPRESENTATION.ITEMS');
+  IF SIZEOF(result_bag) > 0
+   THEN
+    REPEAT i := 1 TO HIINDEX(result_bag);
+     results := results + result_bag[i];
+    END_REPEAT;
+  END_IF;
+  intermediate_items := using_items(item,[]);
+  IF SIZEOF(intermediate_items) > 0
+   THEN
+    REPEAT i := 1 TO HIINDEX(intermediate_items);
+     result_bag := USEDIN(intermediate_items[i],
+                   'PDM_SCHEMA.REPRESENTATION.ITEMS');
+     IF SIZEOF(result_bag) > 0
+      THEN
+       REPEAT j := 1 TO HIINDEX(result_bag);
+        results := results + result_bag[j];
+       END_REPEAT;
+     END_IF;
+    END_REPEAT;
+  END_IF;
+  RETURN (results);
+ END_FUNCTION;
+
+ FUNCTION valid_calendar_date(date : calendar_date) : LOGICAL;
+  CASE date.month_component OF
+   1 : RETURN ({1<=date.day_component<=31});
+   2 : BEGIN
+        IF (leap_year(date.year_component))
+         THEN
+          RETURN ({1<=date.day_component<=29});
+         ELSE
+          RETURN ({1<=date.day_component<=28});
+        END_IF;
+       END;
+   3 : RETURN ({1<=date.day_component<=31});
+   4 : RETURN ({1<=date.day_component<=30});
+   5 : RETURN ({1<=date.day_component<=31});
+   6 : RETURN ({1<=date.day_component<=30});
+   7 : RETURN ({1<=date.day_component<=31});
+   8 : RETURN ({1<=date.day_component<=31});
+   9 : RETURN ({1<=date.day_component<=30});
+   10 : RETURN ({1<=date.day_component<=31});
+   11 : RETURN ({1<=date.day_component<=30});
+   12 : RETURN ({1<=date.day_component<=31});
+  END_CASE;
+ END_FUNCTION;
+
+ FUNCTION valid_measure_value(m : measure_value) : BOOLEAN;
+  IF ('REAL' IN TYPEOF(m))
+   THEN
+    RETURN (m > 0.0);
+   ELSE
+    IF ('INTEGER' IN TYPEOF(m))
+     THEN
+      RETURN (m > 0);
+     ELSE
+      RETURN (TRUE);
+    END_IF;
+  END_IF;
+ END_FUNCTION;
+
+ FUNCTION valid_time(time : local_time) : BOOLEAN;
+  IF EXISTS(time.second_component)
+   THEN
+    RETURN (EXISTS(time.minute_component));
+   ELSE
+    RETURN (TRUE);
+  END_IF;
+ END_FUNCTION;
+
+ FUNCTION valid_units(m : measure_with_unit) : BOOLEAN;
+  IF 'PDM_SCHEMA.LENGTH_MEASURE' IN TYPEOF(m.value_component)
+   THEN
+    IF derive_dimensional_exponents(m.unit_component) <> dimensional_exponents(
+       1.0,0.0,0.0,0.0,0.0,0.0,0.0)
+     THEN
+      RETURN (FALSE);
+    END_IF;
+  END_IF;
+  IF 'PDM_SCHEMA.MASS_MEASURE' IN TYPEOF(m.value_component)
+   THEN
+    IF derive_dimensional_exponents(m.unit_component) <> dimensional_exponents(
+       0.0,1.0,0.0,0.0,0.0,0.0,0.0)
+     THEN
+      RETURN (FALSE);
+    END_IF;
+  END_IF;
+  IF 'PDM_SCHEMA.TIME_MEASURE' IN TYPEOF(m.value_component)
+   THEN
+    IF derive_dimensional_exponents(m.unit_component) <> dimensional_exponents(
+       0.0,0.0,1.0,0.0,0.0,0.0,0.0)
+     THEN
+      RETURN (FALSE);
+    END_IF;
+  END_IF;
+  IF 'PDM_SCHEMA.ELECTRIC_CURRENT_MEASURE' IN TYPEOF(m.value_component)
+   THEN
+    IF derive_dimensional_exponents(m.unit_component) <> dimensional_exponents(
+       0.0,0.0,0.0,1.0,0.0,0.0,0.0)
+     THEN
+      RETURN (FALSE);
+    END_IF;
+  END_IF;
+  IF 'PDM_SCHEMA.THERMODYNAMIC_TEMPERATURE_MEASURE' IN TYPEOF(m.
+     value_component)
+   THEN
+    IF derive_dimensional_exponents(m.unit_component) <> dimensional_exponents(
+       0.0,0.0,0.0,0.0,1.0,0.0,0.0)
+     THEN
+      RETURN (FALSE);
+    END_IF;
+  END_IF;
+  IF 'PDM_SCHEMA.AMOUNT_OF_SUBSTANCE_MEASURE' IN TYPEOF(m.value_component)
+   THEN
+    IF derive_dimensional_exponents(m.unit_component) <> dimensional_exponents(
+       0.0,0.0,0.0,0.0,0.0,1.0,0.0)
+     THEN
+      RETURN (FALSE);
+    END_IF;
+  END_IF;
+  IF 'PDM_SCHEMA.LUMINOUS_INTENSITY_MEASURE' IN TYPEOF(m.value_component)
+   THEN
+    IF derive_dimensional_exponents(m.unit_component) <> dimensional_exponents(
+       0.0,0.0,0.0,0.0,0.0,0.0,1.0)
+     THEN
+      RETURN (FALSE);
+    END_IF;
+  END_IF;
+  IF 'PDM_SCHEMA.PLANE_ANGLE_MEASURE' IN TYPEOF(m.value_component)
+   THEN
+    IF derive_dimensional_exponents(m.unit_component) <> dimensional_exponents(
+       0.0,0.0,0.0,0.0,0.0,0.0,0.0)
+     THEN
+      RETURN (FALSE);
+    END_IF;
+  END_IF;
+  IF 'PDM_SCHEMA.SOLID_ANGLE_MEASURE' IN TYPEOF(m.value_component)
+   THEN
+    IF derive_dimensional_exponents(m.unit_component) <> dimensional_exponents(
+       0.0,0.0,0.0,0.0,0.0,0.0,0.0)
+     THEN
+      RETURN (FALSE);
+    END_IF;
+  END_IF;
+  IF 'PDM_SCHEMA.AREA_MEASURE' IN TYPEOF(m.value_component)
+   THEN
+    IF derive_dimensional_exponents(m.unit_component) <> dimensional_exponents(
+       2.0,0.0,0.0,0.0,0.0,0.0,0.0)
+     THEN
+      RETURN (FALSE);
+    END_IF;
+  END_IF;
+  IF 'PDM_SCHEMA.VOLUME_MEASURE' IN TYPEOF(m.value_component)
+   THEN
+    IF derive_dimensional_exponents(m.unit_component) <> dimensional_exponents(
+       3.0,0.0,0.0,0.0,0.0,0.0,0.0)
+     THEN
+      RETURN (FALSE);
+    END_IF;
+  END_IF;
+  IF 'PDM_SCHEMA.RATIO_MEASURE' IN TYPEOF(m.value_component)
+   THEN
+    IF derive_dimensional_exponents(m.unit_component) <> dimensional_exponents(
+       0.0,0.0,0.0,0.0,0.0,0.0,0.0)
+     THEN
+      RETURN (FALSE);
+    END_IF;
+  END_IF;
+  IF 'PDM_SCHEMA.POSITIVE_LENGTH_MEASURE' IN TYPEOF(m.value_component)
+   THEN
+    IF derive_dimensional_exponents(m.unit_component) <> dimensional_exponents(
+       1.0,0.0,0.0,0.0,0.0,0.0,0.0)
+     THEN
+      RETURN (FALSE);
+    END_IF;
+  END_IF;
+  IF 'PDM_SCHEMA.POSITIVE_PLANE_ANGLE_MEASURE' IN TYPEOF(m.value_component
+     )
+   THEN
+    IF derive_dimensional_exponents(m.unit_component) <> dimensional_exponents(
+       0.0,0.0,0.0,0.0,0.0,0.0,0.0)
+     THEN
+      RETURN (FALSE);
+    END_IF;
+  END_IF;
+  RETURN (TRUE);
+ END_FUNCTION;
+
+ FUNCTION vector_difference(arg1,arg2 : vector_or_direction) : vector;
+  LOCAL
+   result : vector;
+   res,vec1,vec2 : direction;
+   mag,mag1,mag2 : REAL;
+   ndim : INTEGER;
+  END_LOCAL;
+  IF ((NOT EXISTS(arg1)) OR (NOT EXISTS(arg2))) OR (arg1.dim <> arg2.dim)
+   THEN
+    RETURN (?);
+   ELSE
+    BEGIN
+     IF 'PDM_SCHEMA.VECTOR' IN TYPEOF(arg1)
+      THEN
+       mag1 := arg1.magnitude;
+       vec1 := arg1.orientation;
+      ELSE
+       mag1 := 1.0;
+       vec1 := arg1;
+     END_IF;
+     IF 'PDM_SCHEMA.VECTOR' IN TYPEOF(arg2)
+      THEN
+       mag2 := arg2.magnitude;
+       vec2 := arg2.orientation;
+      ELSE
+       mag2 := 1.0;
+       vec2 := arg2;
+     END_IF;
+     vec1 := normalise(vec1);
+     vec2 := normalise(vec2);
+     ndim := SIZEOF(vec1.direction_ratios);
+     mag := 0.0;
+     REPEAT i := 1 TO ndim;
+      res.direction_ratios[i] := mag1 * vec1.direction_ratios[i] - mag2 * vec2.
+                                 direction_ratios[i];
+      mag := mag + (res.direction_ratios[i] * res.direction_ratios[i]);
+     END_REPEAT;
+     IF (mag > 0.0)
+      THEN
+       result.magnitude := SQRT(mag);
+       result.orientation := res;
+      ELSE
+       result.magnitude := 0.0;
+       result.orientation := vec1;
+     END_IF;
+    END;
+  END_IF;
+  result.name := '';
+  RETURN (result);
+ END_FUNCTION;
+
+ RULE compatible_dimension FOR (cartesian_point,direction,
+                                representation_context,
+                                geometric_representation_context);
+  WHERE
+   wr1 : SIZEOF(QUERY(x <* cartesian_point | SIZEOF(QUERY(y <*
+         geometric_representation_context | item_in_context(x,y) AND (HIINDEX(x
+         .coordinates) <> y.coordinate_space_dimension))) > 0)) = 0;
+   wr2 : SIZEOF(QUERY(x <* direction | SIZEOF(QUERY(y <*
+         geometric_representation_context | item_in_context(x,y) AND (HIINDEX(x
+         .direction_ratios) <> y.coordinate_space_dimension))) > 0)) = 0;
+ END_RULE;
+
+ RULE product_requires_category FOR (product,product_related_product_category);
+  WHERE
+   wr1 : SIZEOF(QUERY(p <* product | SIZEOF(USEDIN(p,'PDM_SCHEMA.' +
+         'PRODUCT_RELATED_PRODUCT_CATEGORY.PRODUCTS')) = 0)) = 0;
+ END_RULE;
+
+ RULE product_requires_version FOR (product,product_definition_formation);
+  WHERE
+   wr1 : SIZEOF(QUERY(prod <* product | (NOT (SIZEOF(QUERY(pdf <*
+         product_definition_formation | (prod :=: pdf.of_product))) >= 1)))) =
+         0;
+ END_RULE;
+
+ RULE versioned_action_request_requires_status FOR (versioned_action_request,
+                                                    action_request_status);
+  WHERE
+   wr1 : SIZEOF(QUERY(ar <* versioned_action_request | (NOT (SIZEOF(QUERY(ars <*
+         action_request_status | (ar :=: ars.assigned_request))) = 1)))) = 0;
+ END_RULE;
+
+END_SCHEMA;

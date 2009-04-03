@@ -47,7 +47,7 @@
 				Name="VCCLCompilerTool"
 				Optimization="2"
 				InlineFunctionExpansion="1"
-				AdditionalIncludeDirectories="../../../include;../../../src/other/tcl/generic;../../../src/other/tcl/win;../../../src/other/tk/generic;../../../src/other/tk/win;../../../src/other/tk/bitmaps;../../../src/other/tk/xlib;../../../src/other/incrTcl/itcl/generic;../../../src/other/incrTcl/itk/generic;../../../src/other/blt/src"
+				AdditionalIncludeDirectories="../../../include;../../../src/other/tcl/generic;../../../src/other/tcl/win;../../../src/other/tk/generic;../../../src/other/tk/win;../../../src/other/tk/bitmaps;../../../src/other/tk/xlib;../../../src/other/incrTcl/itcl/generic;../../../src/other/incrTcl/itk/generic"
 				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;TCL_THREADS=1;BRLCAD_DLL;HAVE_CONFIG_H;BRLCADBUILD;_CRT_SECURE_NO_WARNINGS;BWISH"
 				StringPooling="true"
 				RuntimeLibrary="2"
@@ -73,7 +73,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="imm32.lib comctl32.lib tcl85.lib tk85.lib itcl34.lib itk34.lib libbu.lib libbn.lib librt.lib libfb.lib libdm.lib libtclcad.lib BLT24.lib libged.lib"
+				AdditionalDependencies="imm32.lib comctl32.lib tcl85.lib tk85.lib itcl34.lib itk34.lib libbu.lib libbn.lib librt.lib libfb.lib libdm.lib libtclcad.lib libged.lib"
 				LinkIncremental="1"
 				AdditionalLibraryDirectories="../../../brlcadInstall/lib"
 				GenerateDebugInformation="false"
@@ -136,7 +136,7 @@
 				Name="VCCLCompilerTool"
 				Optimization="2"
 				InlineFunctionExpansion="1"
-				AdditionalIncludeDirectories="../../../include;../../../src/other/tcl/generic;../../../src/other/tcl/win;../../../src/other/tk/generic;../../../src/other/tk/win;../../../src/other/tk/bitmaps;../../../src/other/tk/xlib;../../../src/other/incrTcl/itcl/generic;../../../src/other/incrTcl/itk/generic;../../../src/other/blt/src"
+				AdditionalIncludeDirectories="../../../include;../../../src/other/tcl/generic;../../../src/other/tcl/win;../../../src/other/tk/generic;../../../src/other/tk/win;../../../src/other/tk/bitmaps;../../../src/other/tk/xlib;../../../src/other/incrTcl/itcl/generic;../../../src/other/incrTcl/itk/generic"
 				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;TCL_THREADS=1;BRLCAD_DLL;HAVE_CONFIG_H;BRLCADBUILD;_CRT_SECURE_NO_WARNINGS;BWISH;TCL_CFG_DO64BIT;STDC_HEADERS;_stati64=_stat64"
 				StringPooling="true"
 				RuntimeLibrary="2"
@@ -159,7 +159,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="imm32.lib comctl32.lib tcl85.lib tk85.lib itcl34.lib itk34.lib libbu.lib libbn.lib librt.lib libfb.lib libdm.lib libtclcad.lib BLT24.lib"
+				AdditionalDependencies="imm32.lib comctl32.lib tcl85.lib tk85.lib itcl34.lib itk34.lib libbu.lib libbn.lib librt.lib libfb.lib libdm.lib libtclcad.lib"
 				LinkIncremental="1"
 				AdditionalLibraryDirectories="../../../brlcadInstall$(PlatformName)/lib"
 				GenerateDebugInformation="false"

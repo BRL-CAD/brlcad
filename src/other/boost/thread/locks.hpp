@@ -234,6 +234,12 @@ namespace boost
         {
             try_lock();
         }
+        template<typename TimeDuration>
+        unique_lock(Mutex& m_,TimeDuration const& target_time):
+            m(&m_),is_locked(false)
+        {
+            timed_lock(target_time);
+        }
         unique_lock(Mutex& m_,system_time const& target_time):
             m(&m_),is_locked(false)
         {

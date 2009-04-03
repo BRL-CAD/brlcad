@@ -15,6 +15,22 @@ on-going issues.
 Recent Bugs
 -----------
 
+* mged 'facetize -n' command is giving many errors:
+    ERROR: color index out of range (-128 > 255)
+  and it shouldn't.  seems to be happening on 3-manifold surfaces but
+  only for particuar faces.  looks like the painting algorithm that is
+  being used is flawed (and an incomplete implementation).
+
+* running 'keep' on too many objects (hundreds is causing a usage
+  statement (and not doing the keep)
+
+* Windows MSVC build files seem to have the project dependencies all
+  jacked up as it doesn't seem to compile things in the right order.
+
+* rtwizard reportedly won't display a line overlay if you line object
+  is obscured by another.  Example being to display a vehicle as
+  ghost, crew as solid, and crew as line.
+
 * fbserv is receiving image data very slowly if the framebuffer is a
   remote X24 interface.  could reproduce on mac with the following:
 

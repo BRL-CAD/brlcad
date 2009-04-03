@@ -83,6 +83,22 @@ set mged_help_data(c)		$helplib_data(wdb_comb_std)
 set mged_help_data(cat)		$helplib_data(wdb_cat)
 set mged_help_data(center)	$helplib_data(vo_center)
 set mged_help_data(closedb)	{{}	{close any open database}}
+set mged_help_data(clone)	{{[-abhimnprtv] <object>}	{clone allows user to quickly create copies of objects
+	-a <n> <x> <y> <z>	- Specifies a translation split between n copies.
+	-b <n> <x> <y> <z>	- Specifies a rotation around x, y, and z axes
+				  split between n copies.
+	-c		- Increment the second number in object names.
+	-f		- Don't draw the new object.
+	-g		- Don't resize the view after drawing new objects.
+	-h		- Prints this message.
+	-i <n>		- Specifies the increment between each copy.
+	-m <axis> <pos>		- Specifies the axis and point to mirror the group.
+	-n <# copies>		- Specifies the number of copies to make.
+	-p <x> <y> <z>		- Specifies point to rotate around for -r.
+				  (Default is 0 0 0).
+	-r <x> <y> <z>		- Specifies the rotation around x, y, and z axes.
+	-t <x> <y> <z>		- Specifies translation between each copy.
+	-v		- Prints version info.}}
 set mged_help_data(color)	$helplib_data(wdb_color)
 set mged_help_data(comb)	$helplib_data(wdb_comb)
 set mged_help_data(comb_color)	{{comb R G B}	{assign a color to a combination (like 'mater')}}

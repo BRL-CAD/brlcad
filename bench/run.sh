@@ -40,7 +40,7 @@
 # several well-known datasets into 512x512 images where performance
 # metrics are documented and fairly well understood.  The local
 # machine's performance is compared to the base system (called VGR)
-# and a numeric "VGR" mulitplier of performance is computed.  This
+# and a numeric "VGR" multiplier of performance is computed.  This
 # number is a simplified metric from which one may qualitatively
 # compare cpu and cache performance, versions of BRL-CAD, and
 # different compiler characteristics.

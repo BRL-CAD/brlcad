@@ -113,7 +113,7 @@ COMMA	[,]
 	first_token = 0;
     }
 
-    /* BEGIN BZFlag-specific lexer declarations */
+    /* BEGIN application-specific lexer declarations */
 %}
 
 <LINE>"PLATE" {
@@ -168,7 +168,7 @@ COMMA	[,]
 }
 
 %{
-    /* END BZFlag-specific lexer declarations */
+    /* END application-specific lexer declarations */
 %}
 
 {INT} {

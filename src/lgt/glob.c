@@ -33,7 +33,6 @@
 #include "./hmenu.h"
 #include "./lgt.h"
 #include "./extern.h"
-#include "./vecmath.h"
 #include "./tree.h"
 FBIO	*fbiop = FBIO_NULL;    /* Framebuffer interface ptr.	*/
 
@@ -117,7 +116,7 @@ fastf_t	rel_perspective = 0.25;	/* Manual perspective adjustment.	*/
 fastf_t	sample_sz;		/* Over-sampling ratio (aperture^2).	*/
 fastf_t view_rots[16];		/* Store 4x4 MGED saved view matrix.	*/
 fastf_t	view2model[16];		/* View-to-model matrix from view_rots.	*/
-fastf_t	view_size;		/* Absolute grid size from MGED view.	*/
+fastf_t	view_size;		/* fabsolute grid size from MGED view.	*/
 fastf_t	cell_sz = 0.0;		/* Cell size of grid in target coords.	*/
 
 int anti_aliasing = false;	/* Anti-aliasing thru over-sampling.	*/

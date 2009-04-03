@@ -38,7 +38,6 @@
 #include "bu.h"
 #include "vmath.h"
 #include "db5.h"
-#include "nmg.h"
 #include "rtgeom.h"
 #include "raytrace.h"
 #include "nurb.h"

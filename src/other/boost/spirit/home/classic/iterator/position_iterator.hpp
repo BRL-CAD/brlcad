@@ -252,18 +252,18 @@ private:
     void increment()
     {
         typename base_t::reference val = *(this->base());
-        if (val == '\n' || val == '\r') {
+        if (val == '\n') {
             ++this->base_reference();
-            if (this->base_reference() != _end) {
-                typename base_t::reference val2 = *(this->base());
-                if ((val == '\n' && val2 == '\r')
-                    || (val == '\r' && val2 == '\n'))
-                {
-                    ++this->base_reference();
-                }
-            }
             this->next_line(_pos);
             static_cast<main_iter_t &>(*this).newline();
+        }
+        else if ( val == '\r') {
+            ++this->base_reference();
+            if (this->base_reference() == _end || *(this->base()) != '\n')
+            {
+                this->next_line(_pos);
+                static_cast<main_iter_t &>(*this).newline();
+            }
         }
         else if (val == '\t') {
             this->tabulation(_pos);
@@ -289,8 +289,7 @@ private:
         OtherDerivedT const &rhs = static_cast<OtherDerivedT const &>(x);
         bool x_is_end = rhs._isend;
 
-        return (_isend && x_is_end) ||
-            (!_isend && !x_is_end && this->base() == rhs.base());
+        return (_isend == x_is_end) && (_isend || this->base() == rhs.base());
     }
 
 protected:

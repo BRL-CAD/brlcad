@@ -76,3 +76,8 @@
 #   define BOOST_HASH_MAP_HEADER <backward/hash_map>
 # endif
 #endif
+
+#ifndef __GXX_EXPERIMENTAL_CXX0X__
+#  define BOOST_NO_STD_UNORDERED
+#endif
+

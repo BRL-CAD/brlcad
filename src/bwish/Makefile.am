@@ -29,7 +29,6 @@ bwish_SOURCES = \
 blib_LIBS = \
 	${TCLCAD} \
 	${DM} \
-	${BLT} \
 	${ITK} \
 	${ITCL} \
 	${TK} \

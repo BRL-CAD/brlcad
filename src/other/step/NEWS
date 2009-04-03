@@ -1,0 +1,924 @@
+************************************************************************
+ Updates from http://www.statik.tu-cottbus.de/fileadmin/project_dth/scl/
+			Jan 2005 - Mar 2006
+
+The original SCL source distribution could not be cleanly un-archived 
+on case-insensitive file systems like Windows' NTFS because of a name 
+conflict.
+
+SCL is mainly written in C++, but it also contains C sources, lex and 
+yacc sources (compatible to flex and bison) and csh and sh scripts. 
+The C++ sources, written in the 1990s, are not fully compliant to 
+ANSI/ISO C++. Updates have been made to base parts of SCL to ANSI/ISO 
+C++ (only the SPF interface, not the complete database system 
+interfaces or the dataprobe GUI). Some problems were also addresses 
+with newer UNIX-like systems.
+
+There were also some issues with the configure script and some 
+makefiles which are addressed, as well as a new macro that is at 
+least required for gcc.
+
+Remaing problem: The p21 file scanner of SCL currently 
+does not allow for comments within the parameter list of 
+data records. Only comments outside of data records are 
+accepted.
+
+    DISCLAIMER: Use at your own risk. These patches are 
+    incomplete, may be incorrect, and are not endorsed 
+    by NIST.
+
+************************************************************************
+
+	   What's New in the STEP Class Library Release 3.2
+			     February 1998
+
+
+mkProbe now prints a usage message showing allowable command line
+arguments when it is run without arguments.
+
+Extended the EXPRESS Pretty Printer:
+
+- added command line options -a and -A to the exppp executable to
+specify that the output should be alphabetized. Without the -a option
+the order of the TYPEs and entities in the original EXPRESS is
+preserved when pretty printing an EXPRESS file.
+
+- Fixed a bug in the exppp toolkit where it would crash when handling
+PROCEDUREs in EXPRESS.
+
+- Extended the NIST Pretty Printer Toolkit to provide string and
+buffer representations for EXPRESS USE and REFERENCE statements, and
+for providing access to the EXPRESS SUPERTYPE statements.
+
+Extended the STEP Class Library Toolkit capabilities including:
+
+- adding additional dictionary constructs for representing EXPRESS:
+SUPERTYPE statements, WHERE rules within entities, USE FROM clauses,
+REFERENCE FROM clauses, global rules, PROCEDUREs, and
+FUNCTIONS. Information about these objects is available but validation
+based on it is not performed.
+
+- enhanced fedex_plus C++ code generator to generate the necessary
+dictionary objects for the above EXPRESS constructs for a particular
+schema. Also enhanced schema dictionary code generation to add
+information necessary to generate an EXPRESS schema (i.e. which
+entities, types, global rules, USE and REFERENCE statements, etc are
+associated with which EXPRESS schema dictionary object).
+
+- added capability to generate EXPRESS from the above dictionary
+constructs (e.g. USE, REFERENCE, global rules, functions, procedures,
+etc.) and the existing dictionary constructs for EXPRESS schemas,
+types, entities, and attributes.
+
+- Fixed a bug in the casting functions for the classes handling
+instances of SELECT TYPEs in EXPRESS.
+e.g.
+SdaiMeasure_value::operator SCLP23(Real)()
+{
+// was missing stmts such as these...
+   if( CurrentUnderlyingType () == config_control_designt_area_measure )
+      return  _real;
+   if( CurrentUnderlyingType () == config_control_designt_context_dependent_measure )
+      return  _real;
+}
+
+- Fixed an aggregate element TypeDescriptor (TD) pointer problem in
+the dictionary. The TD pointer in the aggregate dictionary entry is
+supposed to point at the TD representing the element type for the
+aggregate. It pointed at the underlying or base type's TD (e.g. the TD
+for STRING) instead of for the type which was specified in the EXPRESS.
+For example where it should have pointed at a TD for a TYPE label -
+where label is defined as TYPE label = STRING; END_TYPE - it pointed
+at the TD for STRING.  The TD for the aggregate element now points at
+the TD for label.
+
+- Fixed the casting operator for the class representing EXPRESS
+enumeration types. It was returning the last element of the enum type
+as the the default when the enum was unset. This choice predated enums
+having an unset enum value. It now returns <enum_name>_unset as the
+default when the enum is unset.
+
+- cleaned up a bit of leaked memory. The memory leaked was mostly
+handles to static memory.
+
+- sdaiString not reading a value '' properly.
+
+- sdaiString copy constructor mixing up undefined and unset values.
+
+- dictionary objects handling and writing WHERE rule and UNIQUE rule
+comments in EXPRESS. Added a data member 
+
+    SCLstring _comment; // Comment contained in the EXPRESS.
+
+to classes Where_rule and Uniqueness_rule. Also they have functions: 
+
+    SCLstring comment_() const { return _comment; }
+    void comment_(const char* c) { _comment = c; }
+
+to manipulate them. When writing EXPRESS for entities and types the
+keywords WHERE and UNIQUE are only written if there are actual
+rules. If there are only comments the keywords are written as a
+comment.
+
+**********************************************************************
+
+	   What's New in the STEP Class Library Release 3.1
+			     October 1997
+
+The following is a list of enhancements which are found in the version
+3.1 release of the SCL and Data Probe.  It assumes you are familiar
+with EXPRESS (ISO 10303-11).  Familiarity with version 2.1 or higher
+is a big plus.
+
+-------------------
+Easier Installation
+-------------------
+
+We created a script called configure using gnu's autoconf software. 
+The configure script is used to install the SCL release. Configure
+automates the editing of multiple SCL files based on site-specific
+information needed for installation. It performs checks against the
+software and operating system environment to create a header file used
+by SCL to handle commonly known software porting problem areas.
+Finally, it builds all the SCL executables, scripts, and libraries.
+
+Configure requires one command line argument specifying a name which
+is used to create a directory. Configure installs the architecture and
+environment specific SCL executables, scripts, libraries, and object
+code is under this directory.
+
+Configure accepts optional command line arguments to install the SCL
+for use with optional software packages (like Orbix and/or
+ObjectStore) and for use with different compilers on different
+operating systems and/or machine architectures. Configure may be
+executed several times to create several SCL builds under separate
+architecture/environment specific directories. Each of these
+directories is based on the same source code directory to minimize
+space requirements. This is possible because the SCL source code was
+created with preprocessor switches which allows the same source code
+to be built for different purposes. Separate builds are also necessary
+to use SCL with different C++ compilers since C++ object code is not
+compatible between C++ compilers.
+
+-----------------------------------------------------
+Alignment with the C++ Binding (ISO 10303-23) to the Standard Data
+Access Interface (SDAI, ISO 10303-22)
+-----------------------------------------------------
+
+SCL has been better aligned with the C++ binding (ISO 10303-23,
+a.k.a. STEP Part 23) to SDAI. This has involved several name changes
+for classes implementing base EXPRESS types and application-schema
+defined EXPRESS types. The name changes were possible since these
+types and classes have been moved to be encapsulated by a namespace
+implemented via a struct definition. The namespace has been defined in
+a way that offers great flexibility in avoiding name conflict with
+other software packages (like X Windows, CORBA implementations, etc)
+and your application code. The namespace name is easily changed if
+necessary. As a result of adding a namespace a noticeable difference
+in SCL use has occurred.
+
+Use of underlying SCL classes and types are now wrapped in macros that
+are defined in the file sclprefixes.h. This file is installed under
+the arch directory which allows it to be adjusted as necessary for
+each SCL software installation. For example, if a compiler or software
+package has a problem handling the namespace mechanism via a struct
+definition alternate macros can be used from the sclprefixes.h file
+bypassing the namespace altogether. If a name conflict occurs when the
+namespace is turned off macros can be used that add a name prefix to
+SCL types and classes. Use of the macros when using SCL types and
+classes is what allows for the flexibility in dealing with problem
+areas when using SCL with other software.
+
+An example of a name change and macro use: sdaiString has now become
+SCLP23(String) which could translate to SDAI::String or SDAI_String
+(depending on whether you use the SDAI namespace or not) or any other
+namespace or prefix as is necessary. To change the SDAI namespace name
+or prefix name the macro definition for SCLP23() could be changed in
+the sclprefixes.h file.
+
+The early bound access functions that are generated by fedex_plus from
+EXPRESS defined entities have been updated to the latest version of
+Part 23's C++ binding to SDAI. A previous early bound function defined
+as "const SdaiLabel Name()" would now be defined according to Part 23 as
+"const SdaiLabel name_()". *notice* that application schema defined
+types are not yet defined in a namespace. Compatibility with previous
+versions of SCL early bound functions has been maintained via the -a
+fedex_plus option.
+
+-----------------------------------------------------
+SDAI Session Schema objects implemented (model_contents, extents, etc)
+-----------------------------------------------------
+
+Several classes and types defined as part of SDAI Part 23's Session
+Schema have been implemented (where before they mostly had stub
+functions). These have been implemented for use with or without the
+ObjectStore object oriented database. Model_contents_<schema_name> is
+now being generated by fedex_plus allowing Entity_extents to be
+maintained for entities as desired. 
+
+-----------------------------------------------------
+Object Oriented Database Capability Using ObjectStore
+-----------------------------------------------------
+
+SCL has been enhanced to optionally use the object oriented database
+ObjectStore from ODI. The INSTALL file describes how to build the SCL
+libraries for use with ObjectStore. The SCL libraries built for use
+with ObjectStore may then be used to create persistent or transient
+SCL objects. The transient objects use the ObjectStore transient
+database. 
+
+The SCL application, fedex_os, uses an application schema written in
+EXPRESS to generate additional code needed for use with ObjectStore. 
+Fedex_os is used in conjunction with fedex_plus for generating the C++
+necessary to implement your application schema.
+
+Although building SCL libraries for use with ObjectStore is
+documented, instructions for building your application with SCL
+libraries and ObjectStore is as of yet undocumented. The undocumented
+steps for building an SCL/ObjectStore application are the steps
+required to build any ObjectStore application. A person familiar with
+building ObjectStore applications should be able to create a Makefile
+able to perform these necessary steps.
+
+A good starting point for creating a Makefile suitable for building an
+SCL/ObjectStore application would be the Makefile generated using the
+mkProbe script. The configure script (executed with the ObjectStore
+options) generates a make_rules file which contains the necessary
+Makefile macros for using ObjectStore.  The mkProbe generated Makefile
+already includes this make_rules file. The Makefile is set up to build
+a simple application which uses the appropriate SCL and ObjectStore
+libraries. The Makefile rules for building this application could be
+used as a starting point for creating Makefile rules to build your own
+SCL/ObjectStore application. (The example application code is not set
+up to use ObjectStore.) Additional steps would need to be added to run
+the ObjectStore schema generator (ossg), link with the additional
+application-specific ObjectStore object files, run os_postlink, etc.
+
+-------------------------------------------------------
+Use of Orbix with SCL for Developing CORBA Applications
+-------------------------------------------------------
+
+SCL has been enhanced to be able to use Orbix for developing SCL
+applications for use within the Common Object Request Broker
+Architecture (CORBA). CORBA is used to provide an architecture for use
+of objects within a distributed environment. Distributed communication
+occurs by client applications communicating with servers through
+Object Request Brokers (ORBs). Clients may be written to use any
+number of programming languages provided the CORBA software vendor
+(Orbix in this case) supports the language. We have only tested
+clients written using C++. We may soon test JAVA clients.
+
+The SCL application, fedex_idl, is used to create an Interface
+Definition Language (IDL) schema from your application's EXPRESS
+schema. The generation of IDL schemas by fedex_idl is according to
+STEP's Part 26 Interface Definition Language binding to the SDAI. The
+Orbix IDL compiler is then used to generate the client and server code
+necessary for communication through an Orbix ORB. The SCL application,
+fedex_plus, would then be run with the -c option on your application's
+EXPRESS schema to generate the server implementation objects required
+to build an Orbix server (it uses the TIE approach). You would be
+required to write the C++ main() function for the server code.
+
+Although building SCL libraries for use with Orbix is documented,
+instructions for building your application with SCL libraries and
+Orbix is as of yet undocumented. The undocumented steps for building
+an SCL/Orbix application are the steps required to build any Orbix
+application. A person familiar with building Orbix applications should
+be able to create a Makefile able to perform these necessary steps.
+
+A good starting point for creating a Makefile suitable for building an
+SCL/Orbix application would be the Makefile generated using the
+mkProbe script. The configure script (executed with the Orbix options)
+generates a make_rules file which contains the necessary Makefile
+macros for using Orbix.  The mkProbe generated Makefile already
+includes this make_rules file. The Makefile is set up to build a
+simple application which uses the appropriate SCL and Orbix
+libraries. The Makefile rules for building this application could be
+used as a starting point for creating Makefile rules to build your own
+SCL/Orbix application. (The example application code is not set up to
+use Orbix.) Additional steps would need to be added to build the
+additional server code you would need to write, register the server
+with Orbix, build and link with the IDL compiler generated code, etc.
+
+-----------------------------------------------------
+Use of Orbix and ObjectStore with SCL
+-----------------------------------------------------
+
+SCL has been enhanced to be able to be used with Orbix and ObjectStore
+providing a persistent server for use within a distributed CORBA
+environment. We have used SCL in this way for two NIST projects: the
+National Industrial Information Infrastructure Protocols project and
+the National Advanced Manufacturing Testbed Framework project.
+
+Once again, although building the SCL libraries for use with Orbix and
+ObjectStore is documented (via installation using the configure
+script), instructions for building your application to use Orbix and
+ObjectStore is as of yet undocumented. See the previous two sections.
+
+-----------------------
+MULTIPLE SCHEMA SUPPORT
+-----------------------
+
+A library and Data Probe can now be generated for an EXPRESS file
+containing multiple schemas.  This is done primarily by dividing the
+source code generated by fedex_plus into separate files.  Separate
+files are generated for each schema contained in the EXPRESS file.  In
+addition, often schemas are dependent on one another.  This will be
+the case if the schemas use and reference entities and types from each
+other.  If, for example, entity X in schema A is a subtype of entity Y
+in schema B, X will not be processed until B in schema Y is processed.
+Other such cases of interdependence occur if an entity in schema A
+contains as an attribute an enumeration or select type defined in
+another schema.  To address such cases, fedex_plus may process a
+schema in multiple passes.  At each pass, only the objects in the
+schema which are not dependent on not-yet-processed objects in other
+schemas are processed.  At each successive pass through the schemas as
+more and more objects are processed, more and more dependent entities
+will become processable.  Certain schemas may require three passes or
+more in cases of chains of dependence (such as A being a supertype of
+B which is a supertype of C, etc.).
+
+For an EXPRESS file with multiple dependent schemas, it is advisable
+to organize the file with bottom-up design.  Schemas containing the
+simpler, building block types and entities should appear first.  By
+doing so, when fedex_plus begins processing the more complex schemas,
+there will be fewer cases in which the parser will encounter not-yet-
+defined objects from other schemas.  (The objects which are referenced
+the most will have already been defined.)  This will minimize the
+number of times fedex_plus is required to divide output files.
+
+One known case of interdependence which fedex_plus is not able to
+support occurs if say select A has select B as an item, and select B
+has select A as an item.  (This is unsupported even if A and B are in
+the same schema.)  fedex_plus has no way in which it can generate
+compilable source code for the selects because each is dependent on
+the other.  In addition, this would cause the parser to fall into an
+endless loop, so we strongly discourage it.  ;-)
+
+------------------------------
+USE / REFERENCE CLAUSE SUPPORT
+------------------------------
+
+The SCL also partially supports the EXPRESS concepts of USE and
+REFERENCE.  According to the rules of EXPRESS, schema A may reference
+objects from schema B by way of a USE or REFERENCE clause (U/R).  Any
+object which is not U/R'ed from schema A to B, directly or indirectly,
+is not visible to B.  The SCL does not support the hiding of objects
+between schemas.  Basically, an object defined anywhere in the SCL is
+visible everywhere else. What is supported is renamings of objects
+between schemas.  Say schema B uses entity X from schema A and renames
+it to Y (i.e., "USE from A (X as Y);").  If a Part 21 file is read in
+or written out using the SCL or the Data Probe, if the "current"
+schema is defined to be B, the renamings defined by B's U/R statements
+will be used.  The "current" schema is set according to the first
+schema listed in the FILE_SCHEMA section of the Part 21 file's header
+section.  (It is assumed that I/O is being done with the SCL's
+STEPfile object.)  If no current schema is defined, all possible
+entity and type names are recognized in file reading, and the original
+names only are used in writing.
+
+As mentioned above, the SCL does not support the hiding of objects of
+say, schema A, which are not U/R'ed by schema B.  Thus, it's possible
+to use the SCL or Data Probe to read or write a Part 21 file in which
+A is the current schema and which contains instances of entities which
+are not U/R'ed by A.  This will not be flagged as an error.
+
+The U/R clause is more poorly supported by the Data Probe.  When the
+Probe displays instances of entities, only their original names are
+displayed.  (This also applies when an entity has a select attribute
+and the current choice of the select is being displayed by name.  For
+example, if a select is set to HEIGHT(35), the original name of
+`HEIGHT' is displayed even if we're in schema B which renames HEIGHT
+to LENGTH.)  When a user is using a <<step entity editor window>> to
+create an instance of an entity, all possible names for a type are
+recognized.  This includes the original object name plus all names
+given to it by other U/R'ing schemas, regardless of the current
+schema.
+
+Another shortcoming with the U/R support is related to the fact that
+the SCL does not allow objects of the same name in different schemas.
+For this reason, U/R support is also limited to cases where the new
+name is unique within the entire EXPRESS file.
+
+Lastly, the U/R support is unable to deal with aggregate types of
+two or more dimensions.  Say we were attempting to instantiate a 2D
+aggregate of selects.  Type names will appear in the inner select
+instantiations, and they should be set according to the current
+schema.  However, since the SCL currently does not fully support
+higher-dimension aggregates (it uses the SCLundefined class and
+considers the entire instantiation a string), it's impossible to
+verify the values within the aggregate instance.
+
+----------------------
+COMPLEX ENTITY SUPPORT
+----------------------
+
+By complex entity, I mean ones which require external mapping (see Part 21,
+section 11.2.5).
+
+New Features
+------------
+(I really think the structures and functions I used to support this
+are a recursive work of art.  Too bad it's all invisible to the user.)
+
+1. The primary enhancement now included is the checking of the
+legality of complex entities.  If a user attempts to initialize a
+complex entity (class STEPcomplex), the SCL will determine, based on
+the supertype and subtype information of the EXPRESS, if the entity
+represents a legal combination of entities.  If not, an error message
+will be issued, and a complex entity will not be created.  Formerly,
+the SCL would only check if the entity names themselves were valid and
+not worry about the combination.
+
+2. Non-independent entities cannot be instantiated.  These are
+entities which cannot be created without external mapping.  Say we
+have,
+
+ENTITY A SUPERTYPE OF (B AND C);
+
+The SCL would not accept an instantiation statement such as,
+
+#11=C(xx,yy,...);
+
+C requires external mapping since it can only exist together with B,
+in a statement such as,
+
+#11=(A(...)B(...)C(...));
+
+If a user attempts to create a C with internal mapping using the
+STEPfile object (the class which handles all reading and writing of
+Part 21 files within the SCL), an entity will not be created and an
+error message will be issued.  The SCL behaves similarly if a user
+attempts to create an instance of an abstract supertype.
+
+The above behavior is also reflected in the Data Probe.  All entities
+which are abstract supertypes are marked with an `*' (as in SCL vn.
+2.1).  Entities which cannot be instatiated without external mapping
+are marked with a `%'.  Neither can be created using the Data Probe.
+(The Probe does not have the capability of creating complex entities,
+see below, next section.)
+
+(Note: A user can instantiate an entity such as C from the STEPentity
+level, bypassing STEPfile.  STEPentity will allow the initialization
+but will place a warning in its errorDesc field.)
+
+3. fedex_plus may be compiled with the flag COMPLEX_INFO.  If this
+flag is turned on, fedex_plus prints out (to `cout') a large amount of
+detail on the complex entities it finds and their overall structure.
+This is useful to see how fedex interpreted the complex information of
+an EXPRESS file, and to get a simple graphical view of the supertype-
+subtype hierarchy of the file.
+
+fedex_plus's makefile contains the commented-out line,
+
+#USER_DEFS = -DCOMPLEX_INFO
+
+If this line is uncommented, a fedex_plus executable will be built
+which prints such information.
+
+Limitations
+-----------
+
+1. As in multi-schema support (above), complex entity (CE) support is
+not completely reflected in the Data Probe.  This may be seen in a
+number of instances (you can skip this if you don't intend to use the
+Probe):
+
+(a) It's impossible to create an instance of a CE using the Data
+Probe.  (See point #2 under "Complex Entity Support"). 
+
+(b) The Data Probe is able to correctly read a CE from a Part 21 file,
+and place a copy of it in the Entity Instance List Window.  It also
+allows the user to edit the values of the entity's attributes by
+selecting the entity (from the Ent Instance List Win) and creating a
+STEP Entity Editor Window.  The Data Probe, however, does not accu-
+rately display the type information of the CE (in the Type Information
+Window).  What it does do is takes the name of the 1st entity in the
+list (CE entity names are displayed alphabetically) and shows the type
+info for that entity.
+
+2. The SCL does not read partial complex instances.  Generally, if a
+single entity-member of a complex entity has an error, the entire rest
+of the complex entity will be skipped.
+
+3. If entity members of a complex entity have been renamed (through
+the EXPRESS USE/REF clause - see previous section), they are read and
+written properly.  However, the SCL may not write the members of the
+CE in alphabetical order (as required by Part 21, sect 11.2.5.3).  The
+individual entities are sorted according to their original names.  If
+the renaming of an individual entity places it out of order, the nodes
+will be printed out of order.
+
+4. "Diamond inheritance" is not handled automatically and must be
+fixed by hand in the code generated by fedex_plus.  (See
+whatsnew.2-1.txt, section "Multiple Inheritance".)
+
+5. Selects between aggregates: A select containing two aggregate
+choices of the same type (e.g., ARRAY and ARRAY, as opposed to ARRAY
+and SET) will cause fedex_plus to generate code which cannot be
+compiled.
+
+6. Problem with sparcworks compiler version 4.0(?) - operator int() =
+op enum().  This happens in the following case... Both functions,
+however, are required by Part 23.  We fixed this by removing enough
+functions for it to build.  We were not sure if this error is the fault
+of the sparcworks compiler or is a problem with the standard.
+
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!DISCLAIMERS!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+Names of companies and products are provided in order to adequately
+specify procedures and equipment used.  In no case does such
+identification imply recommendation or endorsement by the National
+Institute of Standards and Technology, nor does it imply that the
+products are necessarily the best available for the purpose.
+
+NO WARRANTY
+===========
+
+NIST PROVIDES ABSOLUTELY NO WARRANTY.  THE NIST STEP TOOLKIT
+IS PROVIDED "AS IS" WITHOUT WARRANTY OF ANY KIND, EITHER
+EXPRESSED OR IMPLIED, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
+THE ENTIRE RISK AS TO THE QUALITY AND PERFORMANCE OF THE PROGRAM IS
+WITH YOU.  SHOULD ANY PORTION OF THE NIST STEP TOOLKIT PROVE DEFECTIVE,
+YOU ASSUME THE COST OF ALL NECESSARY SERVICING, REPAIR, OR CORRECTION.
+
+IN NO EVENT WILL NIST BE LIABLE FOR DAMAGES, INCLUDING ANY LOST
+PROFITS, LOST MONIES, OR OTHER SPECIAL, INCIDENTAL OR CONSEQUENTIAL
+DAMAGES ARISING OUT OF THE USE OR INABILITY TO USE (INCLUDING BUT NOT
+LIMITED TO LOSS OF DATA OR DATA BEING RENDERED INACCURATE, OR LOSSES
+SUSTAINED BY THIRD PARTIES, OR A FAILURE OF THE PROGRAM TO OPERATE
+WITH PROGRAMS NOT DISTRIBUTED BY NIST) THE PROGRAMS, EVEN IF YOU HAVE
+BEEN ADVISED OF THE POSSIBILITY OF SUCH DAMAGES, OR FOR ANY CLAIM BY
+ANY OTHER PARTY.
+
+**********************************************************************
+
+        What's new in the STEP Class Library and Data Probe release 2.1
+                                June 1995
+
+This release of the STEP Class Library (SCL), fedex_plus code
+generator, and Data Probe also contains the latest releases of the
+fedex syntax and semantic checker, the NIST Express Toolkit (also new
+on SOLIS as of June 12, 1995), and the Express Pretty Printer Toolkit.
+The NIST Express Toolkit and fedex have been updated to handle the IS
+version of Express and various problems have been fixed as a result of
+pre-validation conformance testing.  Following is an overview of
+what's new in the STEP Class Library (and hence fedex_plus) and the
+Data Probe. 
+
+--------------------
+*Compilers supported:
+--------------------
+The SCL and Data Probe now compiles with gnu C++ v2.5.8, v2.6, and 
+Sun C++ v3.0.1.  The SCL also compiles with ppCC, the pre-processor of
+the Open OODB from TI.
+
+-------------------
+*Complex Instances:
+-------------------
+
+The SCL now supports instantiation of complex instances via a class
+called STEPcomplex.  The SCL supports reading and writing of complex
+instances from/to Part 21 and Working files using the external mapping
+specified in Part 21.  
+
+Complex instances are created by calling the constructor for
+STEPcomplex with a list of entity name strings.  The combination of
+entity names that are passed in to become part of the complex instance
+are not validated to determine if they are a legal set of entities
+with regard to the inheritance structure specified in Express.
+Attributes within each of the represented entities are validated as
+usual.
+
+An entity hierarchy with triangle and circle both inheriting from
+shape with andor inheritance would allow creation of a
+circle-shape-triangle entity.  Here is an example of how such an
+object could be created.
+
+    SCLstring *entNmArr[64]; // array of entity type names
+    int fileid = 1;
+    Registry *registry = new Registry(SchemaInit);
+
+    entNmArr[0] = new SCLstring("shape");
+    entNmArr[1] = new SCLstring("triangle");
+    entNmArr[2] = new SCLstring("circle");
+    entNmArr[3] = 0;
+    STEPentity * obj = new STEPcomplex(&_reg, (const SCLstring **)entNmArr, 
+                                       fileid);
+
+In the same manner the toolkit would allow a user to create a
+circle-shape-triangle-color entity even if it was not valid given the
+Express. 
+
+The complex instances implementation has a late bound flavor.  The
+instances do not have code generated implementing attribute access
+functions with names matching the name of the attribute.  This method
+of access, normally associated with an early binding, is available for 
+non-complex instances and is partially available for instances
+involving multiple inheritance.  The complex entity instance's
+attributes are accessible through the STEPattribute class in a manner
+similar to the non-complex instances.
+
+The Data Probe reads and writes complex instances from/to Part 21 and
+Working files but supports very limited editing of complex instances.
+
+----------------------
+*Multiple Inheritance:
+----------------------
+
+The SCL offers two choices to users in handling multiple inheritance.
+These include the method offered by SCL in previous releases and the
+current method.  The current method handles attributes inherited from
+all parents.  It does not correctly handle multiple inheritance where
+an entity has more than one path through parents to a common ancestor.
+One could imagine this case as a diamond shaped inheritance structure.
+When this case of multiple inheritance is encountered attributes are
+duplicated.  This case of multiple inheritance may possibly be
+avoided by modifying the EXPRESS schema by breaking some links in the 
+inheritance hierarchy.  This will not have an adverse affect on the
+implemementation.  The user may choose to use the current or previous
+method of handling multiple inheritance.  The current method is the
+default behavior.  The previous method is obtained by supplying the 
+-s (or -S) option with the fedex_plus code generator or the mkProbe
+script.
+
+When the fedex_plus code generator is generating the C++ class library
+representation of a schema, it outputs information calling attention
+to the cases of multiple inheritance.
+
+The previous method of handling multiple inheritance:
+
+This method of handling multiple inheritance is useful where
+attributes are inherited from only one parent.  It does not allow an
+entity instance to be casted in C++ to a class representing
+non-implemented parents.  These multiply inherited instances are
+created in the same manner as non-multiply inherited, non-complex
+instances.
+
+For each entity that has multiple parents the first parent that
+contains or inherits attributes is used in the inheritance hierarchy
+for the C++ class representing the entity.  In each case of multiple
+inheritance the parents are searched for attributes in the same order
+as they were specified for the entity in Express.  Once attributes
+have been found associated with one parent, attributes from other
+parents are ignored.  All attributes handled have access functions.
+
+The current method of handling multiple inheritance:
+
+Multiply inherited instances are created in the same manner as
+non-multiply inherited, non-complex instances.  These include calling
+any of the following functions:
+1. the constructor of the entity class.
+2. Registry::ObjCreate() with the name of the entity as a string argument.
+3. EntityDescriptor::NewSTEPentity() from the dictionary entry
+associated with the entity to be created.
+
+ a  c   e                       
+ |  |   |       This hierarchy modeled in Express turns into
+ b  d   f       the data structures pictured below.
+ \  |  /                        
+  \ | /  h                      
+   \|/  /
+    g -
+
+Each STEPentity also has a pointer back to g's STEPentity. 
+
+STEPentity              STEPentity              STEPentity 
+--------------------    --------------------    --------------------
+| - attribute list |    | - attribute list |    | - attribute list |    
+|   for a, b, c, d,|    |   for c and d    |    |   for e and f    |    
+|   e, f, h, and g |    |   (in that order)|    |   (in that order)|
+|   (in that order)|    |                  |    |                  |
+| - pointer to     |    | - pointer to     |    | - pointer to     |
+|   STEPentity ----+--->|   STEPentity ----+--->|   STEPentity ----+----
+| - pointer to     |    | - pointer to     |    | - pointer to     |    |
+|   dictionary     |    |   dictionary     |    |   dictionary     |    |
+|   entry for g    |    |   entry for d    |    |   entry for f    |    |
+--------------------    --------------------    --------------------    |
+        |                       |                       |               |
+        a                       c                       e               |
+----------------------  ----------------------  ----------------------  |
+| - attributes for a |  | - attributes for c |  | - attributes for e |  |
+| - access functions |  | - access functions |  | - access functions |  |
+|   for a            |  |   for c            |  |   for e            |  |
+----------------------  ----------------------  ----------------------  |
+        |                       |                       |               |
+        b                       d                       f               |
+----------------------  ----------------------  ----------------------  |
+| - attributes for b |  | - attributes for d |  | - attributes for f |  |
+| - access functions |  | - access functions |  | - access functions |  |
+|   for b            |  |   for d            |  |   for f            |  |
+----------------------  ----------------------  ----------------------  |
+        |                                                               |
+        g                                                               |
+----------------------                                                  |
+| - attributes for g |                                                  |
+| - access functions |                                                  |
+|   for g            |                                                  |
+----------------------                                                  |
+                                                                        |
+                                                 STEPentity <-----------
+                                                 --------------------
+                                                 | - attribute list |
+                                                 |   for h          |
+                                                 | - pointer to     |
+                                                 |   STEPentity     |
+                                                 | - pointer to     |
+                                                 |   dictionary     |
+                                                 |   entry for h    |   
+                                                 --------------------
+                                                        |
+                                                        h
+                                                        |
+                                                ----------------------
+                                                | - attributes for h |
+                                                | - access functions |
+                                                |   for h            |
+                                                ----------------------
+
+Multiply inherited entities have two early bound access functions
+associated with all of the attributes - one for get attribute value
+and one for set attribute value.  These access functions have the same
+name as the attribute.  The requirement for use of these access
+functions is that they must be called from the appropriate part of
+the data structure representing the multiply inherited instance.  C's
+attribute access functions could be called from a pointer to the C or
+D part of the data structures shown above.  Functions are supplied for
+accessing the appropriate part of the data structure. 
+
+   a
+  / \   An Express schema containing this type of inheritance hierarchy
+ |   |  under the current multiple inheritance implementation will cause
+ b   c  attributes for 'a' to be duplicated.
+ |   |
+  \ /
+   d
+
+
+The Data Probe fully supports the SCL implementation of multiply
+inherited entity instances.  Inside a STEP Entity Editor window,
+attribute dictionary information is displayed as usual for all 
+attributes in multiply inherited entity instances.  It currently,
+however, only displays the first parent encountered each step up the
+parent hierarchy when displaying Express dictionary information for
+the entity as a result of pressing the Type Information button.
+
+------------------
+*Part 21 Comments:
+------------------
+The SCL now handles comments associated with Part 21 and SCL Working
+files.  It saves comments preceding an entity instance with the entity
+instance that follows.  It can handle saving all the comments in the
+example below.  All the comments would be saved as part of entity
+instance #1.
+
+/*comment 1*/ /*cmt 1.5 */
+#1/*cmt 2*/=/*cmt 3*/ORGANIZATION/*cmt 4*/( 'hi','foo','bar')/*cmt 5*/;/*cmt6*/
+#2=ORGANIZATION('ab','cd','ef');
+
+When writing instance #1 above to a Part 21 or Working file, all
+comments that have been saved with the instance will be written out
+separately preceding the instance as follows.
+
+/*comment 1*/
+/*cmt 1.5 */
+/*cmt 2*/
+/*cmt 3*/
+/*cmt 4*/
+/*cmt 5*/
+#1=ORGANIZATION('hi','foo','bar');
+/*cmt6*/
+#2=ORGANIZATION('ab','cd','ef');
+
+Part 21 comments are also read and written for header entity instances. 
+
+Part 21 comments are supported in the Data Probe.  Comments associated
+with an entity appear in the comment field on the STEP Entity Editor
+window.  The comment (formerly "label") field accepts comments that
+will be saved to a Part 21 or Working file and comments that are not.
+Comments written as valid Part 21 comments (i.e. enclosed in /* */)
+will be saved in files.  Non-Part 21 text will only last until the end
+of the Data Probe session or until the entity is deleted, whichever
+comes first.
+
+---------
+*Selects:
+---------
+The way SCL handles selects for editing and writing part 21 files has
+been updated.  Here are the new rules.  
+
+- If there is only one choice in the select (i.e. a select of one
+type), the value for that choice can be entered without qualification. 
+
+- If the select is between entities only (and not via nested selects),
+the element types are assumed to be unique and values can be entered
+as a reference to an entity instance.
+
+- In all other cases the value must be qualified by enclosing the
+value in the type of the select item.
+
+- These rules apply to editing in the Data Probe, as well as reading
+from and writing to a file.
+
+When editing a select attribute in the Data Probe STEP Entity Editor
+window, mouse clicking the edit button offers support for qualifying
+the select attribute value.  When you click the edit button for a
+select attribute, and choose a type from the list, it is applied to
+the attribute value field in the entity editor.
+
+If there wasn't a value in the attribute previously, then the field will 
+contain just the type specifier, e.g., Str1() if Str1 is the type selected.
+
+If a value exists in the field, it is modified to accomodate the new 
+specifier.  This means the following:
+ o  If the value in the field starts with a single-quote ('), it is 
+        assumed to be a string literal, and is completely wrapped in the new 
+        specifier (e.g., 'foobar' --> Str1('foobar') ).
+ o  If the value starts with an open-paren ('('), it is assumed to be an 
+        aggregate literal, and is wrapped in the new specifier as above.
+ o  If the value already has a specified type (e.g., Str1('foo')), things 
+        get interesting.  (By the way, containing a specified type is
+        determined by the existence of an open paren (after the first
+        character) encountered before end-of-string.) Ordinarily, the
+        type specifier is replaced by the new type, e.g.,
+        Str1(.enumval.) --> Enum1(.enumval.). 
+    However, if the new type is a SELECT, then the whole value in the 
+        field is wrapped in the new type specifier, e.g., Str1('foo') --> 
+        Sel1(Str1('foo')) if the new type is Sel1.  This is because it is
+        assumed that the user is qualifying the subtype of the SELECT before
+        'editing'.  A possible future enhancement may check to see if
+        the field contains a valid select subtype, and if not, do a
+        replace as in the above Str1->Enum1 example.
+
+If the field entry matches none of these cases, it is just wrapped in the 
+type specifier... actually, the only real reason for having the string 
+and aggregate special cases is that they contain (or can contain) 
+parentheses that would throw off checking for type specifiers...
+
+Validation of all of this still occurs in the editing window as usual,
+so if the user chooses something invalid, it is still flagged in the
+STEP Entity Editor window.
+
+---------
+*Strings:
+---------
+Strings can now differentiate between a string that does not exist and
+a string that has no elements.  This may be done with the following
+functions in the SCLstring class in scl_string.h:
+
+    // returns 1 if _strBuf is a null ptr or if it is an empty string (i.e. "")
+    int is_null() const;
+
+    // returns 1 if _strBuf is a null ptr, and 0 otherwise
+    int is_undefined() const;
+
+    // deletes _strBuf
+    void set_undefined() ;
+
+    // zeroes out space in _strBuf
+    int set_null() ;
+
+The Data Probe now differentiates between a STRING attribute value
+that does not exist and one that exists but contains no characters.
+When editing an attribute of type string in a STEP Entity Editor
+window, an attribute value containing only a dollar sign indicates that
+the string attribute value does not exist.  An attribute value
+containing only a backslash followed by a dollar sign indicates a
+string value of length one containing a dollar sign.  The absence of a
+value indicates that the string exists but contains no characters.
+
+-------------
+*Enumerations:
+-------------
+The access functions for enumerations now accept the associated C/C++
+enumeration value rather than the enumeration class.  Implicit calling
+of casting functions makes it possible for instances of the
+enumeration class still to be passed into the attribute's get
+functions and to be assigned the return value of the attribute's put
+functions.
+
+--------
+*Boolean:
+--------
+Attributes of type Boolean and aggregate of Boolean were previously 
+implemented using the Logical and Logicals classes (respectively).
+The fedex_plus code generator now generates classes Boolean and
+Booleans to implement attributes of type Boolean and aggregate of
+Boolean respectively.
+
+
+--------------------------------
+*Public Data Member Name Changes:
+--------------------------------
+In class STEPentity:
+Descriptor is now eDesc
+
+In class STEPattribute:
+Descriptor is now aDesc
+
+The name change in STEPentity was to avoid symbol name conflicts of
+STEPentity::Descriptor with access functions generated for Express
+entity attributes named descriptor.  The new name will not be
+conflicting with any generated names since the letter case will never
+match.
+

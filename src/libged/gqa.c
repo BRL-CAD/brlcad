@@ -80,7 +80,7 @@ char *options_str = "[-A A|a|b|c|e|g|m|o|p|v|w] [-a az] [-d] [-e el] [-f density
 #endif
 
 static int analysis_flags;
-static int multiple_analyses = 1;
+static int multiple_analyses;
 
 static double azimuth_deg;
 static double elevation_deg;
@@ -2667,6 +2667,7 @@ ged_gqa(struct ged *gedp, int argc, const char *argv[])
 	bu_free(obj_tbl[i].o_poi, "o_poi");
     }
     bu_free(obj_tbl, "object table");
+    obj_tbl = NULL;
 
     for (i=0, BU_LIST_FOR (regp, region, &(rtip->HeadRegion)), i++) {
 	bu_free(reg_tbl[i].r_lenDensity, "r_lenDensity");
@@ -2675,13 +2676,14 @@ ged_gqa(struct ged *gedp, int argc, const char *argv[])
 	bu_free(reg_tbl[i].r_weight, "r_weight");
     }
     bu_free(reg_tbl, "object table");
-
-    if (densities != NULL)
-	bu_free(densities, "densities");
-
-    obj_tbl = NULL;
     reg_tbl = NULL;
-    densities = NULL;
+
+    if (densities != NULL) {
+	bu_free(densities, "densities");
+	densities = NULL;
+    }
+
+    rt_free_rti(rtip);
 
     return BRLCAD_OK;
 }

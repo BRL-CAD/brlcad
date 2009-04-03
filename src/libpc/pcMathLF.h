@@ -35,6 +35,8 @@
 #include <boost/spirit/phoenix/functions.hpp>
 #include <boost/shared_ptr.hpp>
 
+#include <string>
+
 /**
  * Lazy function wrapper for boost::spirit::symbols::add()
  */
@@ -42,7 +44,7 @@ struct addsymbol_impl {
 	typedef boost::shared_ptr<MathFunction> FunctionPtr;
 	typedef boost::spirit::symbols<FunctionPtr> FunctionTable;
 
-	template<typename T, typename Arg1, typename Arg2 = spirit::nil_t>
+	template<typename T, typename Arg1, typename Arg2 = boost::spirit::nil_t>
 	struct result
 	{
 	    typedef void type;
@@ -64,7 +66,7 @@ struct addsymbol_impl {
 	}
 
 };
-boost::phoenix::function<addsymbol_impl> const addsymbol = addsymbol_impl();
+phoenix::function<addsymbol_impl> const addsymbol = addsymbol_impl();
 
 /**
  * Lazy function wrapper for boost::spirit::symbols::find()
@@ -83,7 +85,7 @@ struct findsymbol_impl {
 	return find(symbols, symbol.c_str());
     }
 };
-boost::phoenix::function<findsymbol_impl> const findsymbol = findsymbol_impl();
+phoenix::function<findsymbol_impl> const findsymbol = findsymbol_impl();
 
 /**
  * Lazy function wrapper for Stack::push_back & generic Container::push_back
@@ -105,7 +107,7 @@ struct push_back_impl {
 	c.push_back(data);
     }
 };
-boost::phoenix::function<push_back_impl> const push_back = push_back_impl();
+phoenix::function<push_back_impl> const push_back = push_back_impl();
 
 /**
  * Lazy function wrapper for T::size()
@@ -121,7 +123,7 @@ struct size_impl {
     	return t.size();
     }
 };
-boost::phoenix::function<size_impl> const size = size_impl();
+phoenix::function<size_impl> const size = size_impl();
 
 /**
  * Lazy function wrapper for boost::shared_ptr<T>::reset
@@ -137,8 +139,7 @@ struct reset_impl {
 	shptr.reset(ptr);
     }
 };
-boost::phoenix::function<reset_impl> const reset = reset_impl();
-
+phoenix::function<reset_impl> const reset = reset_impl();
 #endif
 /** @} */
 /*
