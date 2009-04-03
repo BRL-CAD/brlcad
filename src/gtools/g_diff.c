@@ -972,6 +972,9 @@ main(int argc, char **argv)
     }
 
     interp = Tcl_CreateInterp();
+    tclcad_auto_path(interp);
+    tclcad_tcl_library(interp);
+
     if (Tcl_Init(interp) == TCL_ERROR) {
 	bu_exit(1, "Tcl_Init error %s\n", Tcl_GetStringResult(interp));
     }

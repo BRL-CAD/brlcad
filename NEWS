@@ -11,7 +11,7 @@ changes made.  See document footer for additional details.
 
 
 ----------------------------------------------------------------------
---- 2009-04-XX  Release 7.14.6                                     ---
+--- 2009-04-03  Release 7.14.6                                     ---
 ----------------------------------------------------------------------
 
 * ported g_lint, g_diff, and g_transfer to Windows - Sean Morrison
