@@ -15,6 +15,12 @@ on-going issues.
 Recent Bugs
 -----------
 
+* mged 'facetize -n' command is giving many errors:
+    ERROR: color index out of range (-128 > 255)
+  and it shouldn't.  seems to be happening on 3-manifold surfaces but
+  only for particuar faces.  looks like the painting algorithm that is
+  being used is flawed (and an incomplete implementation).
+
 * running 'keep' on too many objects (hundreds is causing a usage
   statement (and not doing the keep)
 
