@@ -30,6 +30,11 @@ THESE SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 THESE ARE LOWER PRIORITY OR FOR FUTURE RELEASES
 -----------------------------------------------
 
+* integrate library tester into regression suite that validates
+  exported library symbols published in headers.  make sure they at
+  least exist and maybe even try to ensure they will run with null
+  arguments without crashing.
+
 * 3D plot objects for v5 geometry files.  very closely related to
   other ideas about having 3d wireframe objects, but these would
   probably be non-geometric in nature.  basically the plot3 files that
