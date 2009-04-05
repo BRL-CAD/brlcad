@@ -83,6 +83,7 @@ EXTRA_DIST = \
 	solidspix.asc \
 	spdi.sh \
 	spdipix.asc \
+	testlib.c \
 	weight.sh
 
 CLEANFILES = \
