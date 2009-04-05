@@ -38,9 +38,11 @@
  * cleanly within the regression testing harness and to robustly load
  * and call functions.
  *
- * Example use: 
- * grep '^BU_EXPORT BU_EXTERN' bu.h | sed 's/^[^,]*[[:space:]*]\([a-zA-Z_][a-zA-Z0-9_]*\),.*/\1/g' | xargs ./a.out
  */
+#if 0
+Example use:
+grep '^BU_EXPORT BU_EXTERN' bu.h | sed 's/^[^,]*[[:space:]*]\([a-zA-Z_][a-zA-Z0-9_]*\),.*/\1/g' | xargs ./a.out
+#endif
 
 #include <stdio.h>
 #include <dlfcn.h>
