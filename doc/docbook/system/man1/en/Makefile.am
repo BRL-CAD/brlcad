@@ -50,6 +50,7 @@ man1DOCBOOK = \
 	autoview.xml \
 	bev.xml \
 	bo.xml \
+	bolt.xml \
 	bot_condense.xml \
 	bot_decimate.xml \
 	bot_face_fuse.xml \
