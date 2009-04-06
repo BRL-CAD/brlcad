@@ -33,7 +33,6 @@ wire_SOURCES = wire.c
 noinst_HEADERS = fence.h
 
 man_MANS = \
-	window_frame.1 \
 	wire.1
 
 EXTRA_DIST = $(man_MANS)
