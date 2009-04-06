@@ -146,6 +146,8 @@ THESE ARE LOWER PRIORITY OR FOR FUTURE RELEASES
 
 * move analyze logic into librt (with their respective primitives).
 
+* implement tessellation support for the new BREP primitive.
+
 * implement make, ted, edsol, mirror, and analyze for revolve
   primitive.  implement tess() too.
 
