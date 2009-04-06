@@ -36,6 +36,8 @@
 #include <utility>
 
 #define BN_VMATH_PREFIX_INDICES 1
+#define ROOT_TOL 1.E-6
+
 #include "vmath.h"
 
 #include "brep.h"
@@ -560,6 +562,207 @@ brep_edge_check(int reason,
 }
 
 
+void
+utah_F(const ON_3dPoint &S, const ON_3dVector &p1, const double p1d, const ON_3dVector &p2, const double p2d, double &f1, double &f2)
+{
+    f1 = (S * p1) + p1d;
+    f2 = (S * p2) + p2d;
+}
+
+void
+utah_Fu(const ON_3dVector &Su, const ON_3dVector &p1, const ON_3dVector &p2, double &d0, double &d1)
+{
+    d0 = Su * p1;
+    d1 = Su * p2;
+}
+
+void
+utah_Fv(const ON_3dVector &Sv, const ON_3dVector &p1, const ON_3dVector &p2, double &d0, double &d1)
+{
+    d0 = Sv * p1;
+    d1 = Sv * p2;
+}
+
+void
+utah_ray_planes(const ON_Ray &r, ON_3dVector &p1, double &p1d, ON_3dVector &p2, double &p2d)
+{
+    ON_3dPoint ro(r.m_origin);
+    ON_3dVector rdir(r.m_dir);
+    double rdx, rdy, rdz;
+    double rdxmag, rdymag, rdzmag;
+
+    rdx = rdir.x;
+    rdy = rdir.y;
+    rdz = rdir.z;
+
+    rdxmag = fabs(rdx);
+    rdymag = fabs(rdy);
+    rdzmag = fabs(rdz);
+
+    if (rdxmag > rdymag && rdxmag > rdzmag) p1 = ON_3dVector(rdy, -rdx, 0);
+    else p1 = ON_3dVector(0, rdz, -rdy);
+    p2 = ON_CrossProduct(p1, rdir);
+
+    p1d = -(p1 * ro);
+    p2d = -(p2 * ro);
+}
+
+double
+utah_calc_t(const ON_Ray &r, ON_3dPoint &S)
+{
+    ON_3dVector d(r.m_dir);
+    ON_3dVector oS(S - r.m_origin);
+
+    return (d * oS) / (d * d);
+}
+
+void
+utah_pushBack(const ON_Surface* surf, ON_2dPoint &uv)
+{
+    double t0, t1;
+
+    surf->GetDomain(0, &t0, &t1);
+    if (uv.x < t0)
+    {
+        uv.x = t0;
+    } else if (uv.x >= t1)
+    {
+        uv.x = t1 - ROOT_TOL;
+    }
+
+    surf->GetDomain(1, &t0, &t1);
+    if (uv.y < t0)
+    {
+        uv.y = t0;
+    } else if (uv.y >= t1)
+    {
+        uv.y = t1 - ROOT_TOL;
+    }
+}
+
+void
+utah_newton_solver(const ON_Surface* surf, const ON_Ray& r, ON_2dPoint &uv, double& t, ON_3dVector &N, bool& converged)
+{
+    int i;
+    double j11, j12, j21, j22;
+    double f, g;
+    double rootdist, oldrootdist;
+    double J, invdetJ;
+
+    ON_3dVector p1, p2;
+    double p1d = 0, p2d = 0;
+    converged = false;
+    utah_ray_planes(r, p1, p1d, p2, p2d);
+
+    ON_3dPoint S;
+    ON_3dVector Su, Sv;
+    ON_2dPoint uv0(uv);
+
+    surf->Ev1Der(uv.x, uv.y, S, Su, Sv);
+
+    utah_F(S, p1, p1d, p2, p2d, f, g);
+    rootdist = fabs(f) + fabs(g);
+
+    for (i = 0; i < BREP_MAX_ITERATIONS; i++) {
+        utah_Fu(Su, p1, p2, j11, j21);
+        utah_Fv(Sv, p1, p2, j12, j22);
+
+        J = (j11 * j22 - j12 * j21);
+
+        if (NEAR_ZERO(J, BREP_INTERSECTION_ROOT_EPSILON)) {
+            // perform jittered perturbation in parametric domain....
+            uv.x = uv.x + .1 * drand48() * (uv0.x - uv.x);
+            uv.y = uv.y + .1 * drand48() * (uv0.y - uv.y);
+            continue;
+        }
+
+        invdetJ = 1. / J;
+
+        uv.x -= invdetJ * (j22 * f - j12 * g);
+        uv.y -= invdetJ * (j11 * g - j21 * f);
+
+        utah_pushBack(surf, uv);
+
+        surf->Ev1Der(uv.x, uv.y, S, Su, Sv);
+        utah_F(S, p1, p1d, p2, p2d, f, g);
+        oldrootdist = rootdist;
+        rootdist = fabs(f) + fabs(g);
+
+        if (oldrootdist < rootdist) return;
+
+        /**
+         * DDR
+         * Very complex surfaces will have issues because the normal will be messed up
+         * Need to check the dot between the ray dir and the normal
+         * and if < tol then make another iterations unless we are
+         * close to max iterations
+         */
+        if (rootdist < ROOT_TOL) {
+            t = utah_calc_t(r, S);
+            converged = true;
+            N = ON_CrossProduct(Su, Sv);
+            N.Unitize();
+
+            return;
+        }
+    }
+}
+
+bool
+utah_isTrimmed(ON_2dPoint uv, const ON_BrepFace *face) {
+
+    bool retVal = false;
+
+    for (int i = 0; i < face->LoopCount(); i++) {
+        ON_BrepLoop* loop = face->Loop(i);
+        for (int j = 0; j < loop->m_ti.Count(); j++) {
+            ON_BrepTrim& trim = face->Brep()->m_T[loop->m_ti[j]];
+            const ON_Curve* trimCurve = trim.TrimCurveOf();
+        }
+    }
+
+    return retVal;
+}
+
+int
+utah_brep_intersect(const SubsurfaceBBNode* sbv, const ON_BrepFace* face, const ON_Surface* surf, pt2d_t uv, ON_Ray& ray, HitList& hits)
+{
+    ON_3dVector N;
+    bool hit;
+    double t;
+    ON_2dPoint ouv(uv[0], uv[1]);
+    int found = BREP_INTERSECT_ROOT_DIVERGED;
+    bool converged = false;
+
+    utah_newton_solver(surf, ray, ouv, t, N, converged);
+
+    /*
+     * DDR
+     * The utah people are using this t_min which represents the last point hit along the ray to ensure we are looking
+     * at points futher down the ray.  I haven't implemented this I'm not sure we need it
+     *
+     * if (converged && (t > 1.e-2) && (t < t_min) && (!utah_isTrimmed(ouv, face))) hit = true;
+     *
+     */
+    if (converged && (t > 1.e-2) && (!utah_isTrimmed(ouv, face))) hit = true;
+
+    uv[0] = ouv.x;
+    uv[1] = ouv.y;
+
+    if (hit)
+    {
+        ON_3dPoint _pt;
+        ON_3dVector _norm(N);
+        _pt = ray.m_origin + (ray.m_dir*t);
+        if (face->m_bRev) _norm.Reverse();
+        hits.push_back(brep_hit(*face,(const fastf_t*)ray.m_origin,(const fastf_t*)_pt,(const fastf_t*)_norm, uv));
+        hits.back().sbv = sbv;
+        found = BREP_INTERSECT_FOUND;
+    }
+
+    return found;
+}
+
 int
 brep_intersect(const SubsurfaceBBNode* sbv, const ON_BrepFace* face, const ON_Surface* surf, pt2d_t uv, ON_Ray& ray, HitList& hits)
 {
@@ -720,7 +923,7 @@ rt_brep_shot(struct soltab *stp, register struct xray *rp, struct application *a
 	brep_hit* hit;
 	pt2d_t uv = {sbv->m_u.Mid(), sbv->m_v.Mid()};
 	TRACE1("surface: " << s);
-	int status = brep_intersect(sbv, f, surf, uv, r, all_hits);
+	int status = utah_brep_intersect(sbv, f, surf, uv, r, all_hits);
 	if (status == BREP_INTERSECT_FOUND) {
 	    TRACE("INTERSECTION: " << PT(all_hits.back().point) << all_hits.back().trimmed << ", " << all_hits.back().closeToEdge << ", " << all_hits.back().oob);
 	} else {
@@ -730,21 +933,13 @@ rt_brep_shot(struct soltab *stp, register struct xray *rp, struct application *a
 	s++;
     }
 
-
     HitList hits = all_hits;
 
     // sort the hits
     hits.sort();
 
-    int num = 0;
-    for (HitList::iterator i = hits.begin(); i != hits.end(); ++i) {
-	TRACE("hit " << num << ": " << PT(i->point) << " [" << VDOT(i->normal, rp->r_dir) << "] " << i->trimmed << ", " << i->closeToEdge << ", " << i->oob);
-	++num;
-    }
-
-
     TRACE("---");
-    num = 0;
+    int num = 0;
     for (HitList::iterator i = hits.begin(); i != hits.end(); ++i) {
 	if ((i->trimmed && !i->closeToEdge) || i->oob || NEAR_ZERO(VDOT(i->normal, rp->r_dir), RT_DOT_TOL)) {
 	    // remove what we were removing earlier
@@ -792,12 +987,23 @@ rt_brep_shot(struct soltab *stp, register struct xray *rp, struct application *a
 	}
     }
 
+    /*
+     *  DDR Giant hack to this seems to make this work with the examples from proc-db
+     *  although it doesn't work with some of the other examples I have tried.  This may
+     *  fix things because I'm not trimming.  Fix trimming and then if this extra point is still
+     *  showing up then investigate what is causing this extra point
+     */
+    if (hits.size() > 1 && (hits.size() % 2) != 0) {
+        HitList::iterator i = hits.begin();
+        hits.erase(i);
+    }
+
     // remove "duplicate" points
     //     HitList::iterator new_end = unique(hits.begin(), hits.end());
     //     hits.erase(new_end, hits.end());
 
     if (hits.size() > 1 && (hits.size() % 2) != 0) {
-	cerr << "WTF???" << endl;
+        cerr << "**** ERROR odd number of hits: " << hits.size() << "\n";
 #if PLOTTING
 	pcount++;
 	if (pcount > -1) {
@@ -898,7 +1104,7 @@ rt_brep_shot(struct soltab *stp, register struct xray *rp, struct application *a
 	    hit = true;
 	}
 	else {
-	    TRACE2("screen xy: " << ap->a_x << "," << ap->a_y);
+	    //TRACE2("screen xy: " << ap->a_x << "," << ap->a_y);
 	}
     }
 
