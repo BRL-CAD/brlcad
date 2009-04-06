@@ -32,11 +32,6 @@ wire_SOURCES = wire.c
 
 noinst_HEADERS = fence.h
 
-man_MANS = \
-	wire.1
-
-EXTRA_DIST = $(man_MANS)
-
 include $(top_srcdir)/misc/Makefile.defs
 
 FAST_OBJECTS = \

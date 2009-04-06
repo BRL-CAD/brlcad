@@ -86,7 +86,8 @@ man1DOCBOOK = \
 	search.xml \
 	tire.xml \
 	window.xml \
-	window_frame.xml
+	window_frame.xml \
+	wire.xml
 
 man1INTRO = \
 	Introduction.xml
