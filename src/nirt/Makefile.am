@@ -26,7 +26,6 @@ showshot_SOURCES = showshot.c
 showshot_LDADD = ${BN}
 
 man_MANS = \
-	nirt.1 \
 	showshot.1
 
 noinst_HEADERS = \

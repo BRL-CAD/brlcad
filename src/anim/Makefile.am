@@ -64,13 +64,6 @@ chan_permute_SOURCES = chan_permute.c
 chan_permute_LDADD = ${BU}
 
 man_MANS = \
-	anim_cascade.1 \
-	anim_fly.1 \
-	anim_hardtrack.1 \
-	anim_keyread.1 \
-	anim_lookat.1 \
-	anim_offset.1 \
-	anim_orient.1 \
 	anim_script.1 \
 	anim_sort.1 \
 	anim_time.1 \

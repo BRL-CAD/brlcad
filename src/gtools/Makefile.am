@@ -24,8 +24,7 @@ g_qa_LDADD = ${RT} ${GED}
 
 man_MANS = \
 	g_diff.1 \
-	g_lint.1 \
-	g_qa.1
+	g_lint.1
 
 EXTRA_DIST = $(man_MANS)
 
