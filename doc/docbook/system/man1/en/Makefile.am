@@ -78,6 +78,7 @@ man1DOCBOOK = \
 	handle.xml \
 	mged.xml \
 	nirt.xml \
+	picket_fence.xml \
 	rt.xml \
 	rtarea.xml \
 	rtcheck.xml \
