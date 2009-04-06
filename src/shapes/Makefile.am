@@ -33,7 +33,6 @@ wire_SOURCES = wire.c
 noinst_HEADERS = fence.h
 
 man_MANS = \
-	handle.1 \
 	picket_fence.1 \
 	window.1 \
 	window_frame.1 \

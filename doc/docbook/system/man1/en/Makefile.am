@@ -75,6 +75,7 @@ man1DOCBOOK = \
 	dbconcat.xml \
 	gastank.xml \
 	gqa.xml \
+	handle.xml \
 	mged.xml \
 	nirt.xml \
 	rt.xml \
