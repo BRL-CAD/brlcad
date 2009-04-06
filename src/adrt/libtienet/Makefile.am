@@ -1,4 +1,6 @@
 
+#bin_PROGRAMS = g-adrt
+
 lib_LTLIBRARIES = libtienet.la
 
 AM_CFLAGS = ${TCL_CPPFLAGS} -D__STRICT_ANSI__ \
@@ -12,5 +14,10 @@ libtienet_la_LIBADD = ${BU} ${BU_LIBS} ${top_builddir}/src/adrt/libtie/libtie.la
 
 tieincludedir = $(includedir)/tie
 tieinclude_HEADERS = load.h tienet.h tienet_define.h tienet_util.h tienet_master.h tienet_slave.h tienet_util.h
+
+#g_adrt_SOURCES = g-adrt.c
+#g_adrt_LDADD = libtienet.la
+
+EXTRA_DIST = g-adrt.c
 
 include $(top_srcdir)/misc/Makefile.defs
