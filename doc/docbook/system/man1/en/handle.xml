@@ -193,7 +193,7 @@ number of handles:  3
 <refsect1 id='see_also'>
   <title>SEE ALSO</title>
   <para>
-   bolt(1), window(1), winfrm(1), gastank(1)
+   bolt(1), window(1), window_frame(1), gastank(1)
   </para>
 </refsect1>
 
