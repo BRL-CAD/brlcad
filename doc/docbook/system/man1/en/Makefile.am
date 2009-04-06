@@ -84,7 +84,8 @@ man1DOCBOOK = \
 	rtcheck.xml \
 	rtedge.xml \
 	search.xml \
-	tire.xml
+	tire.xml \
+	window.xml
 
 man1INTRO = \
 	Introduction.xml

@@ -33,7 +33,6 @@ wire_SOURCES = wire.c
 noinst_HEADERS = fence.h
 
 man_MANS = \
-	window.1 \
 	window_frame.1 \
 	wire.1
 
