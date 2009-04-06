@@ -473,12 +473,6 @@ a tessellated BRL-CAD geometry format.  Default is "no".  Aliases:
 	--enable-nx
 	--enable-nx-build
 
---enable-adrt-build turns on compilation of the Advanced Distributed
-Ray-Tracer (ADRT), a high-performance triangle ray-tracer.  Default is
-"auto", depending on whether SDL and Python are detected during
-configuration.  Aliases:
-	--enable-adrt
-
 --enable-models-install turns on installation of provided example
 geometry models.  Default is "yes".  Aliases:
 	--enable-models
@@ -578,18 +572,6 @@ hard-enabled in the MSVC build files for BRL-CAD.  Default is "auto"
 for configure meaning that the wgl interfaces will be compiled if the
 Windows opengl32 dll is found.  Aliases:
 	--with-windowsgl
-
---with-sdl informs configure that it should run sdl-config to locate
-SDL functionality.  SDL IS ONLY USED BY ADRT (see above).  Default is
-"auto", and if Python is also found then compilation of ADRT can be
-enabled.  Aliases:
-	--with-libsdl
-
---with-python informs configure that it should run python to locate
-Python functionality.  PYTHON IS ONLY USED BY ADRT (see above).
-Default is "auto", and if SDL is also found then compilation of ADRT
-can be enabled.  Aliases:
-	--with-libpython
 
 
 COMPILATION OPTIONS
