@@ -36,7 +36,7 @@
 #include <utility>
 
 #define BN_VMATH_PREFIX_INDICES 1
-#define ROOT_TOL 1.E-4
+#define ROOT_TOL 1.E-7
 
 #include "vmath.h"
 
@@ -706,15 +706,16 @@ bool
 utah_isTrimmed(ON_2dPoint uv, const ON_BrepFace *face) {
 
     bool retVal = false;
-/*
+
     for (int i = 0; i < face->LoopCount(); i++) {
         ON_BrepLoop* loop = face->Loop(i);
         if (loop->TrimCount() > 0)
         {
-            return true;
+
+            return false;
         }
     }
-*/
+
     return retVal;
 }
 
@@ -983,6 +984,12 @@ rt_brep_shot(struct soltab *stp, register struct xray *rp, struct application *a
 		++i;
 	    }
 	}
+    }
+
+    if (hits.size() > 1 && (hits.size() % 2) != 0) {
+        HitList::iterator i = hits.end();
+        --i;
+        hits.erase(i);
     }
 
     // remove "duplicate" points
