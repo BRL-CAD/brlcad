@@ -104,7 +104,8 @@
 	    -thickness 5 \
 	    -sashborderwidth 1 \
 	    -sashcursor sb_v_double_arrow \
-	    -showhandle 0
+	    -showhandle 0 \
+	    -background $ArcherCore::LABEL_BACKGROUND_COLOR
     } {}
 
     $itk_component(pane) add upper
@@ -113,7 +114,7 @@
     if {1} {
 	set parent [$itk_component(pane) childsite upper]
 	itk_component add upper {
-	    ::frame $parent.upper
+	    ::ttk::frame $parent.upper
 	} {}
 
 	# Repack parent so it's anchor to the north
@@ -124,7 +125,7 @@
 
 	set parent [$itk_component(pane) childsite lower]
 	itk_component add lower {
-	    ::frame $parent.lower
+	    ::ttk::frame $parent.lower
 	} {}
 
 	# Repack parent so it's anchor to the north
@@ -151,24 +152,24 @@
     }
 
     itk_component add valueSeparator {
-	::frame $itk_interior.valueSeparator \
+	::ttk::frame $itk_interior.valueSeparator \
 	    -height 2 \
 	    -relief raised \
 	    -borderwidth 1
     } {}
     itk_component add value {
-	::frame $itk_interior.value
+	::ttk::frame $itk_interior.value
     } {}
     itk_component add valueL {
-	::label $itk_component(value).valueL \
+	::ttk::label $itk_component(value).valueL \
 	    -text "Enter a value:" \
 	    -anchor e
     } {}
     itk_component add valueCS {
-	::frame $itk_component(value).valueCS
+	::ttk::frame $itk_component(value).valueCS
     } {}
     itk_component add valueUnitsL {
-	::label $itk_component(value).valueUnitsL \
+	::ttk::label $itk_component(value).valueUnitsL \
 	    -textvariable [::itcl::scope itk_option(-valueUnits)] \
 	    -anchor e
     } {
@@ -387,14 +388,13 @@
 
 ::itcl::body GeometryEditFrame::buildComboBox {parent name1 name2 var text listOfChoices} {
     itk_component add $name1\L {
-	::label $parent.$name2\L \
+	::ttk::label $parent.$name2\L \
 	    -text $text
     } {}
 
     itk_component add $name1\F {
-	::frame $parent.$name2\F \
-	    -relief sunken \
-	    -bd 0
+	::ttk::frame $parent.$name2\F \
+	    -relief sunken
     } {}
 
     itk_component add $name1\CB {
@@ -409,26 +409,18 @@
 
 ::itcl::body GeometryEditFrame::buildArrow {parent prefix text buildViewFunc} {
     itk_component add $prefix {
-	frame $parent.$prefix
-    } {
-	usual
-    }
+	::ttk::frame $parent.$prefix
+    } {}
     itk_component add $prefix\Arrow {
 	::swidgets::togglearrow $itk_component($prefix).arrow
-    } {
-	#	usual
-    }
+    } {}
     itk_component add $prefix\Label {
-	label $itk_component($prefix).label -text $text \
+	::ttk::label $itk_component($prefix).label -text $text \
 	    -anchor w
-    } {
-	usual
-    }
+    } {}
     itk_component add $prefix\View {
-	frame $itk_component($prefix).$prefix\View
-    } {
-	usual
-    }
+	::ttk::frame $itk_component($prefix).$prefix\View
+    } {}
     $buildViewFunc $itk_component($prefix\View)
     grid $itk_component($prefix\Arrow) -row 0 -column 0 -sticky e
     grid $itk_component($prefix\Label) -row 0 -column 1 -sticky w

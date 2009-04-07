@@ -64,143 +64,104 @@
 ::itcl::body GripEditFrame::constructor {args} {
     set parent [$this childsite]
     itk_component add gripType {
-	::label $parent.griptype \
+	::ttk::label $parent.griptype \
 	    -text "Grip:" \
 	    -anchor e
-    } {
-	rename -font -boldLabelFont boldLabelFont Font
-    }
+    } {}
     itk_component add gripName {
-	::label $parent.gripname \
+	::ttk::label $parent.gripname \
 	    -textvariable [::itcl::scope itk_option(-geometryObject)] \
 	    -anchor w
-    } {
-	rename -font -boldLabelFont boldLabelFont Font
-    }
+    } {}
 
     # Create header labels
     itk_component add gripXL {
-	::label $parent.gripXL \
+	::ttk::label $parent.gripXL \
 	    -text "X"
-    } {
-	rename -font -boldLabelFont boldLabelFont Font
-    }
+    } {}
     itk_component add gripYL {
-	::label $parent.gripYL \
+	::ttk::label $parent.gripYL \
 	    -text "Y"
-    } {
-	rename -font -boldLabelFont boldLabelFont Font
-    }
+    } {}
     itk_component add gripZL {
-	::label $parent.gripZL \
+	::ttk::label $parent.gripZL \
 	    -text "Z"
-    } {
-	rename -font -boldLabelFont boldLabelFont Font
-    }
+    } {}
 
     # create widgets for vertices
     itk_component add gripVL {
-	::label $parent.gripVL \
+	::ttk::label $parent.gripVL \
 	    -text "V:" \
 	    -anchor e
-    } {
-	rename -font -labelFont labelFont Font
-    }
+    } {}
     itk_component add gripVxE {
-	::entry $parent.gripVxE \
+	::ttk::entry $parent.gripVxE \
 	    -textvariable [::itcl::scope mVx] \
 	    -validate key \
 	    -validatecommand {GeometryEditFrame::validateDouble %P}
-    } {
-	rename -font -entryFont entryFont Font
-    }
+    } {}
     itk_component add gripVyE {
-	::entry $parent.gripVyE \
+	::ttk::entry $parent.gripVyE \
 	    -textvariable [::itcl::scope mVy] \
 	    -validate key \
 	    -validatecommand {GeometryEditFrame::validateDouble %P}
-    } {
-	rename -font -entryFont entryFont Font
-    }
+    } {}
     itk_component add gripVzE {
-	::entry $parent.gripVzE \
+	::ttk::entry $parent.gripVzE \
 	    -textvariable [::itcl::scope mVz] \
 	    -validate key \
 	    -validatecommand {GeometryEditFrame::validateDouble %P}
-    } {
-	rename -font -entryFont entryFont Font
-    }
+    } {}
     itk_component add gripVUnitsL {
-	::label $parent.gripVUnitsL \
+	::ttk::label $parent.gripVUnitsL \
 	    -textvariable [::itcl::scope itk_option(-units)] \
 	    -anchor e
-    } {
-	rename -font -labelFont labelFont Font
-    }
+    } {}
     itk_component add gripNL {
-	::label $parent.gripNL \
+	::ttk::label $parent.gripNL \
 	    -text "N:" \
 	    -anchor e
-    } {
-	rename -font -labelFont labelFont Font
-    }
+    } {}
     itk_component add gripNxE {
-	::entry $parent.gripNxE \
+	::ttk::entry $parent.gripNxE \
 	    -textvariable [::itcl::scope mNx] \
 	    -state disabled \
-	    -disabledforeground black \
 	    -validate key \
 	    -validatecommand {GeometryEditFrame::validateDouble %P}
-    } {
-	rename -font -entryFont entryFont Font
-    }
+    } {}
     itk_component add gripNyE {
-	::entry $parent.gripNyE \
+	::ttk::entry $parent.gripNyE \
 	    -textvariable [::itcl::scope mNy] \
 	    -state disabled \
-	    -disabledforeground black \
 	    -validate key \
 	    -validatecommand {GeometryEditFrame::validateDouble %P}
-    } {
-	rename -font -entryFont entryFont Font
-    }
+    } {}
     itk_component add gripNzE {
-	::entry $parent.gripNzE \
+	::ttk::entry $parent.gripNzE \
 	    -textvariable [::itcl::scope mNz] \
 	    -state disabled \
-	    -disabledforeground black \
 	    -validate key \
 	    -validatecommand {GeometryEditFrame::validateDouble %P}
-    } {
-	rename -font -entryFont entryFont Font
-    }
+    } {}
     itk_component add gripNUnitsL {
-	::label $parent.gripNUnitsL \
+	::ttk::label $parent.gripNUnitsL \
 	    -anchor e
-    } {
-	rename -font -labelFont labelFont Font
-    }
+    } {}
     itk_component add gripLL {
-	::label $parent.gripLL \
+	::ttk::label $parent.gripLL \
 	    -text "L:" \
 	    -anchor e
-    } {
-	rename -font -labelFont labelFont Font
-    }
+    } {}
     itk_component add gripLE {
-	::entry $parent.gripLE \
+	::ttk::entry $parent.gripLE \
 	    -textvariable [::itcl::scope mL] \
 	    -validate key \
 	    -validatecommand {GeometryEditFrame::validateDouble %P}
-    } {
-	rename -font -entryFont entryFont Font
-    }
+    } {}
     itk_component add gripLUnitsL {
-	::label $parent.gripLUnitsL \
+	::ttk::label $parent.gripLUnitsL \
 	    -anchor e
-    } {
-	rename -font -labelFont labelFont Font
-    }
+    } {}
 
     set row 0
     grid $itk_component(gripType) \

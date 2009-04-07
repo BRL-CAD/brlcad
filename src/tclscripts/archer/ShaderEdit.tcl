@@ -61,7 +61,7 @@
 	    {Camouflage camo}
 	    {Air air}
 	    {Extern extern}
-	    {unlisted unlisted}
+	    {Unlisted unlisted}
 	    {None ""}
 	}
 
@@ -69,7 +69,7 @@
 	    Plastic
 	    Mirror
 	    Glass
-	    unlisted
+	    Unlisted
 	    None
 	}
 
@@ -85,7 +85,7 @@
 	    {Plastic plastic}
 	    {Mirror mirror}
 	    {Glass glass}
-	    {unlisted unlisted}
+	    {Unlisted unlisted}
 	    {None ""}
 	}
 
@@ -241,7 +241,7 @@
 	method build_unlisted {parent id}
 	method buildUnlisted {parent id}
 
-	method changeShader {stype}
+	method changeShader {}
 	method updateShader {stype}
 	method updateShaderForm {id}
 	method destroyCurrentShader {}
@@ -321,45 +321,21 @@
     set shaderSpec $_shaderSpec
 
     itk_component add shaderL {
-	::label $itk_interior.shaderL \
+	::ttk::label $itk_interior.shaderL \
 	    -text "Spec"
     } {}
 
-    itk_component add shaderF {
-	::frame $itk_interior.shaderF \
-	    -relief sunken \
-	    -bd 1
+    itk_component add shaderCB {
+	::ttk::combobox $itk_interior.shaderCB \
+	    -state readonly \
+	    -textvariable [::itcl::scope shaderSpec] \
+	    -values $SHADER_NAMES
     } {}
-
-    itk_component add shaderE {
-	::entry $itk_component(shaderF).shaderE \
-	    -relief flat \
-	    -textvariable [::itcl::scope shaderSpec]
-    } {}
-    bind $itk_component(shaderE) <KeyRelease> [::itcl::code $this updateShaderForm 0]
-
-    itk_component add shaderMB {
-	::menubutton $itk_component(shaderF).shaderMB \
-	    -relief raised \
-	    -bd 1 \
-	    -indicatoron 1 \
-	    -menu $itk_component(shaderF).shaderMB.shaderM
-    } {}
-
-    itk_component add shaderM {
-	::menu $itk_component(shaderMB).shaderM
-    } {}
-
-    foreach sname $SHADER_NAMES stype $SHADER_TYPES {
-	$itk_component(shaderM) add command \
-	    -label $sname \
-	    -command [::itcl::code $this changeShader $stype]
-    }
 
     itk_component add shaderBody {
-	::frame $itk_interior.shaderBody \
+	::ttk::frame $itk_interior.shaderBody \
 	    -relief sunken \
-	    -bd 1
+	    -borderwidth 1
     } {}
 
     set slen [llength $shaderSpec]
@@ -368,16 +344,12 @@
 	build_$stype $itk_component(shaderBody) 0
     }
 
-    grid $itk_component(shaderE) $itk_component(shaderMB) \
-	-sticky "ew"
-    grid columnconfigure $itk_component(shaderF) 0 -weight 1
-
     set row 0
     grid $itk_component(shaderL) \
 	-row $row \
 	-column 0 \
 	-sticky "e"
-    grid $itk_component(shaderF) \
+    grid $itk_component(shaderCB) \
 	-row $row \
 	-column 1 \
 	-sticky "ew"
@@ -390,6 +362,8 @@
 
     grid rowconfigure $itk_interior 1 -weight 1
     grid columnconfigure $itk_interior 1 -weight 1
+
+    bind $itk_component(shaderCB) <<ComboboxSelected>> [::itcl::code $this changeShader]
 }
 
 ::itcl::body ShaderEdit::build_plastic {parent id} {
@@ -415,18 +389,18 @@
 
 ::itcl::body ShaderEdit::buildPhong {parent id} {
     itk_component add phong$id\F {
-	::frame $parent.phong$id\F
+	::ttk::frame $parent.phong$id\F
     } {}
 
     set parent $itk_component(phong$id\F)
 
     itk_component add phongTrans$id\L {
-	::label $parent.phongTrans$id\L \
+	::ttk::label $parent.phongTrans$id\L \
 	    -text "Transparency"
     } {}
 
     itk_component add phongTrans$id\E {
-	::entry $parent.phongTrans$id\E \
+	::ttk::entry $parent.phongTrans$id\E \
 	    -width 5 \
 	    -textvariable [::itcl::scope phongTrans($id)] \
 	    -validate key \
@@ -435,12 +409,12 @@
 
 
     itk_component add phongRefl$id\L {
-	::label $parent.phongRefl$id\L \
+	::ttk::label $parent.phongRefl$id\L \
 	    -text "Mirror Reflectance"
     } {}
 
     itk_component add phongRefl$id\E {
-	::entry $parent.phongRefl$id\E \
+	::ttk::entry $parent.phongRefl$id\E \
 	    -width 5 \
 	    -textvariable [::itcl::scope phongRefl($id)] \
 	    -validate key \
@@ -448,12 +422,12 @@
     } {}
 
     itk_component add phongSpec$id\L {
-	::label $parent.phongSpec$id\L \
+	::ttk::label $parent.phongSpec$id\L \
 	    -text "Specular Reflectivity"
     } {}
 
     itk_component add phongSpec$id\E {
-	::entry $parent.phongSpec$id\E \
+	::ttk::entry $parent.phongSpec$id\E \
 	    -width 5 \
 	    -textvariable [::itcl::scope phongSpec($id)] \
 	    -validate key \
@@ -461,12 +435,12 @@
     } {}
 
     itk_component add phongDiff$id\L {
-	::label $parent.phongDiff$id\L \
+	::ttk::label $parent.phongDiff$id\L \
 	    -text "Diffuse Reflectivity"
     } {}
 
     itk_component add phongDiff$id\E {
-	::entry $parent.phongDiff$id\E \
+	::ttk::entry $parent.phongDiff$id\E \
 	    -width 5 \
 	    -textvariable [::itcl::scope phongDiff($id)] \
 	    -validate key \
@@ -474,12 +448,12 @@
     } {}
 
     itk_component add phongRi$id\L {
-	::label $parent.phongRi$id\L \
+	::ttk::label $parent.phongRi$id\L \
 	    -text "Reflective Index"
     } {}
 
     itk_component add phongRi$id\E {
-	::entry $parent.phongRi$id\E \
+	::ttk::entry $parent.phongRi$id\E \
 	    -width 5 \
 	    -textvariable [::itcl::scope phongRi($id)] \
 	    -validate key \
@@ -487,12 +461,12 @@
     } {}
 
     itk_component add phongExt$id\L {
-	::label $parent.phongExt$id\L \
+	::ttk::label $parent.phongExt$id\L \
 	    -text "Extinction"
     } {}
 
     itk_component add phongExt$id\E {
-	::entry $parent.phongExt$id\E \
+	::ttk::entry $parent.phongExt$id\E \
 	    -width 5 \
 	    -textvariable [::itcl::scope phongExt($id)] \
 	    -validate key \
@@ -500,12 +474,12 @@
     } {}
 
     itk_component add phongShine$id\L {
-	::label $parent.phongShine$id\L \
+	::ttk::label $parent.phongShine$id\L \
 	    -text "Shininess"
     } {}
 
     itk_component add phongShine$id\E {
-	::entry $parent.phongShine$id\E \
+	::ttk::entry $parent.phongShine$id\E \
 	    -width 5 \
 	    -textvariable [::itcl::scope phongShine($id)] \
 	    -validate key \
@@ -513,12 +487,12 @@
     } {}
 
     itk_component add phongEmiss$id\L {
-	::label $parent.phongEmiss$id\L \
+	::ttk::label $parent.phongEmiss$id\L \
 	    -text "Emission"
     } {}
 
     itk_component add phongEmiss$id\E {
-	::entry $parent.phongEmiss$id\E \
+	::ttk::entry $parent.phongEmiss$id\E \
 	    -width 5 \
 	    -textvariable [::itcl::scope phongEmiss($id)] \
 	    -validate key \
@@ -565,18 +539,18 @@
 
 ::itcl::body ShaderEdit::buildLight {parent id} {
     itk_component add light$id\F {
-	::frame $parent.light$id\F
+	::ttk::frame $parent.light$id\F
     } {}
 
     set parent $itk_component(light$id\F)
 
     itk_component add lightFraction$id\L {
-	::label $parent.lightFraction$id\L \
+	::ttk::label $parent.lightFraction$id\L \
 	    -text "Fraction"
     } {}
 
     itk_component add lightFraction$id\E {
-	::entry $parent.lightFraction$id\E \
+	::ttk::entry $parent.lightFraction$id\E \
 	    -width 5 \
 	    -textvariable [::itcl::scope lightFraction($id)] \
 	    -validate key \
@@ -584,12 +558,12 @@
     } {}
 
     itk_component add lightAngle$id\L {
-	::label $parent.lightAngle$id\L \
+	::ttk::label $parent.lightAngle$id\L \
 	    -text "Angle"
     } {}
 
     itk_component add lightAngle$id\E {
-	::entry $parent.lightAngle$id\E \
+	::ttk::entry $parent.lightAngle$id\E \
 	    -width 5 \
 	    -textvariable [::itcl::scope lightAngle($id)] \
 	    -validate key \
@@ -597,12 +571,12 @@
     } {}
 
     itk_component add lightTarget$id\L {
-	::label $parent.lightTarget$id\L \
+	::ttk::label $parent.lightTarget$id\L \
 	    -text "Target"
     } {}
 
     itk_component add lightTarget$id\E {
-	::entry $parent.lightTarget$id\E \
+	::ttk::entry $parent.lightTarget$id\E \
 	    -width 5 \
 	    -textvariable [::itcl::scope lightTarget($id)] \
 	    -validate key \
@@ -610,12 +584,12 @@
     } {}
 
     itk_component add lightLumens$id\L {
-	::label $parent.lightLumens$id\L \
+	::ttk::label $parent.lightLumens$id\L \
 	    -text "Lumens"
     } {}
 
     itk_component add lightLumens$id\E {
-	::entry $parent.lightLumens$id\E \
+	::ttk::entry $parent.lightLumens$id\E \
 	    -width 5 \
 	    -textvariable [::itcl::scope lightLumens($id)] \
 	    -validate key \
@@ -644,30 +618,30 @@
 
 ::itcl::body ShaderEdit::buildUnlisted {parent id} {
     itk_component add unlisted$id\F {
-	::frame $parent.unlisted$id\F
+	::ttk::frame $parent.unlisted$id\F
     } {}
 
     set parent $itk_component(unlisted$id\F)
 
     itk_component add unlistedName$id\L {
-	::label $parent.unlistedName$id\L \
+	::ttk::label $parent.unlistedName$id\L \
 	    -text "Name"
     } {}
 
     itk_component add unlistedName$id\E {
-	::entry $parent.unlistedName$id\E \
+	::ttk::entry $parent.unlistedName$id\E \
 	    -textvariable [::itcl::scope unlistedName($id)]
     } {}
     bind $itk_component(unlistedName$id\E) <KeyRelease> \
 	[::itcl::code $this updateUnlistedSpec 0]
 
     itk_component add unlistedParams$id\L {
-	::label $parent.unlistedParams$id\L \
+	::ttk::label $parent.unlistedParams$id\L \
 	    -text "Params"
     } {}
 
     itk_component add unlistedParams$id\E {
-	::entry $parent.unlistedParams$id\E \
+	::ttk::entry $parent.unlistedParams$id\E \
 	    -textvariable [::itcl::scope unlistedParams($id)]
     } {}
     bind $itk_component(unlistedParams$id\E) <KeyRelease> \
@@ -689,21 +663,38 @@
 #
 # Destroy the current shader and build a new one.
 #
-::itcl::body ShaderEdit::changeShader {stype} {
-    if {[llength $shaderSpec] > 0} {
-	set o_stype [lindex $shaderSpec 0]
-
-	if {$o_stype == $stype} {
-	    # Nothing to do
-	    return
+::itcl::body ShaderEdit::changeShader {} {
+    switch -- $shaderSpec {
+	"Plastic" {
+	    set stype plastic
+	}
+	"Mirror" {
+	    set stype mirror
+	}
+	"Glass" {
+	    set stype glass
+	}
+	"Unlisted" {
+	    set stype unlisted
+	}
+	default {
+	    set stype ""
 	}
     }
 
     set shaderSpec $stype
+
+    if {$shaderType == $stype} {
+	# Nothing to do
+	return
+    }
+
     destroyCurrentShader
 
     if {$stype != ""} {
 	build_$stype $itk_component(shaderBody) 0
+    } else {
+	set shaderType ""
     }
 
     if {$allowCallbacks && $itk_option(-shaderChangedCallback) != ""} {

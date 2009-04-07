@@ -229,14 +229,16 @@ namespace eval ArcherCore {
 
 	common MEASURING_STICK "cad_measuring_stick"
 
+	common LABEL_BACKGROUND_COLOR [::ttk::style lookup label -background]
+
 	set brlcadDataPath [bu_brlcad_data ""]
 	if {$tcl_platform(platform) != "windows"} {
 	    set SystemWindowFont Helvetica
 	    set SystemWindowText black
-	    set SystemWindow \#d9d9d9
+	    set SystemWindow $LABEL_BACKGROUND_COLOR
 	    set SystemHighlight black
 	    set SystemHighlightText \#ececec
-	    set SystemButtonFace \#d9d9d9
+	    set SystemButtonFace $LABEL_BACKGROUND_COLOR
 	} else {
 	    set SystemWindowFont SystemWindowText
 	    set SystemWindowText SystemWindowText
@@ -621,7 +623,8 @@ Popup Menu    Right or Ctrl-Left
 	    -thickness 5 \
 	    -sashborderwidth 1 \
 	    -sashcursor sb_v_double_arrow \
-	    -showhandle 0
+	    -showhandle 0 \
+	    -background $LABEL_BACKGROUND_COLOR
     } {}
 
     $itk_component(hpane) add topView
@@ -636,7 +639,7 @@ Popup Menu    Right or Ctrl-Left
 
 	set parent [$itk_component(hpane) childsite bottomView]
 	itk_component add advancedTabs {
-	    ttk::notebook $parent.tabs
+	    ::ttk::notebook $parent.tabs
 	} {}
 
 	itk_component add cmd {
@@ -645,7 +648,8 @@ Popup Menu    Right or Ctrl-Left
 		-hscrollmode none -vscrollmode dynamic \
 		-scrollmargin 2 -visibleitems 80x15 \
 		-textbackground $SystemWindow -prompt "ArcherCore> " \
-		-prompt2 "% " -result_color black -cmd_color red
+		-prompt2 "% " -result_color black -cmd_color red \
+		-background $LABEL_BACKGROUND_COLOR
 	} {}
 
 	itk_component add history {
@@ -669,7 +673,8 @@ Popup Menu    Right or Ctrl-Left
 	    -thickness 5 \
 	    -sashborderwidth 1 \
 	    -sashcursor sb_h_double_arrow \
-	    -showhandle 0
+	    -showhandle 0 \
+	    -background $LABEL_BACKGROUND_COLOR
     } {}
 
     $itk_component(vpane) add hierarchyView
@@ -694,21 +699,22 @@ Popup Menu    Right or Ctrl-Left
     # frame for all geometry canvas's
     set parent [$itk_component(vpane) childsite geomView]
     itk_component add canvasF {
-	::frame $parent.canvasF \
-	    -bd 1 \
+	::ttk::frame $parent.canvasF \
+	    -borderwidth 1 \
 	    -relief sunken
-    }
+    } {}
 
     if {!$mViewOnly} {
 	itk_component add tree_expand {
 	    ::button $itk_component(canvasF).tree_expand
-	} {
-	}
-	$itk_component(tree_expand) configure -relief flat \
+	} {}
+	$itk_component(tree_expand) configure \
+	    -relief flat \
 	    -image [image create photo -file \
 			[file join $mImgDir Themes $mTheme "pane_blank.png"]] \
 	    -state disabled \
-	    -command [::itcl::code $this toggleTreeView "open"]
+	    -command [::itcl::code $this toggleTreeView "open"] \
+	    -background $LABEL_BACKGROUND_COLOR
 
 	itk_component add canvas_menu {
 	    ::iwidgets::menubar $itk_component(canvasF).canvas_menu \
@@ -717,7 +723,7 @@ Popup Menu    Right or Ctrl-Left
 		-activeborderwidth 2 \
 		-borderwidth 0 \
 		-activebackground $SystemHighlight \
-		-activeforeground $SystemHighlightText
+		-activeforeground $SystemHighlightText \
 	} {
 	    keep -background
 	}
@@ -729,7 +735,7 @@ Popup Menu    Right or Ctrl-Left
 		-activeborderwidth 2 \
 		-borderwidth 0 \
 		-activebackground $SystemHighlight \
-		-activeforeground $SystemHighlightText
+		-activeforeground $SystemHighlightText \
 	} {
 	    keep -background
 	}
@@ -742,18 +748,20 @@ Popup Menu    Right or Ctrl-Left
 	itk_component add attr_expand {
 	    ::button $itk_component(canvasF).attr_expand
 	} {}
-	$itk_component(attr_expand) configure -relief flat \
+	$itk_component(attr_expand) configure \
+	    -relief flat \
 	    -image [image create photo -file \
 			[file join $mImgDir Themes $mTheme "pane_blank.png"]] \
 	    -state disabled \
-	    -command [::itcl::code $this toggleAttrView "open"]
+	    -command [::itcl::code $this toggleAttrView "open"] \
+	    -background $LABEL_BACKGROUND_COLOR
 
 	# dummy canvas
 	itk_component add canvas {
 	    ::frame $itk_component(canvasF).canvas \
-		-bd 0 \
+		-borderwidth 0 \
 		-relief flat 
-	}
+	} {}
 	grid $itk_component(tree_expand) -row 0 -column 0 -sticky w
 	grid $itk_component(canvas_menu) -row 0 -column 1 -sticky w
 	grid $itk_component(attr_expand) -row 0 -column 2 -sticky e
@@ -763,24 +771,27 @@ Popup Menu    Right or Ctrl-Left
 
 	# stuff that goes at top of attributes frame
 	itk_component add attr_title_frm {
-	    ::frame [$itk_component(vpane) childsite attrView].attrTitleF
+	    ::ttk::frame [$itk_component(vpane) childsite attrView].attrTitleF
 	} {}
 
 	itk_component add attr_collapse {
 	    ::button $itk_component(attr_title_frm).attr_collapse
 	} {}
-	$itk_component(attr_collapse) configure -relief flat \
+	$itk_component(attr_collapse) configure \
+	    -relief flat \
 	    -image [image create photo -file \
 			[file join $mImgDir Themes $mTheme "pane_expand.png"]] \
-	    -command [::itcl::code $this toggleAttrView "close"]
+	    -command [::itcl::code $this toggleAttrView "close"] \
+	    -background $LABEL_BACKGROUND_COLOR
 
 	itk_component add attr_label {
 	    ::label $itk_component(attr_title_frm).attr_label \
-		-text "Attributes" -font $mFontText
+		-text "Attributes" -font $mFontText \
+		-background $LABEL_BACKGROUND_COLOR
 	} {}
 
-	set sep [::frame $itk_component(attr_title_frm).sep -height 2 \
-		     -bd 1 -relief sunken]
+	set sep [::ttk::frame $itk_component(attr_title_frm).sep -height 2 \
+		     -borderwidth 1 -relief sunken]
 	pack $sep -side bottom -fill x
 	pack $itk_component(attr_collapse) -side left -pady 1
 	pack $itk_component(attr_label) -side left -fill x
@@ -793,14 +804,9 @@ Popup Menu    Right or Ctrl-Left
 		-balloonfont "{CG Times} 8" \
 		-balloonbackground \#ffffdd \
 		-borderwidth 1 \
-		-orient horizontal
-	} {
-	    # XXX If uncommented, the following line hoses things
-	    # WRT -balloonbackground option and the addition of frames
-	    # acting as filler (i.e. it causes borders to appear
-	    # around the fill objects)
-	    #usual
-	}
+		-orient horizontal \
+		-background $LABEL_BACKGROUND_COLOR
+	} {}
 
 	$itk_component(primaryToolbar) add button open \
 	    -balloonstr "Open an existing geometry file" \
@@ -820,42 +826,35 @@ Popup Menu    Right or Ctrl-Left
 
 	# status bar
 	itk_component add statusF {
-	    ::frame $itk_interior.statfrm
-	} {
-	    usual
-	}
+	    ::ttk::frame $itk_interior.statfrm
+	} {}
 
 	itk_component add status {
-	    ::label  $itk_component(statusF).status -anchor w -relief sunken -bd 1 \
+	    ::ttk::label  $itk_component(statusF).status -anchor w -relief sunken \
 		-font $mFontText \
 		-textvariable [::itcl::scope mStatusStr]
-	} {
-	    usual
-	}
+	} {}
 
 	itk_component add progress {
 	    ::canvas $itk_component(statusF).progress \
 		-relief sunken \
 		-bd 1 \
+		-background $LABEL_BACKGROUND_COLOR \
 		-width $mProgressBarWidth \
 		-height $mProgressBarHeight
 	} {}
 
 	itk_component add editLabel {
-	    ::label  $itk_component(statusF).edit -relief sunken -bd 1 \
+	    ::ttk::label  $itk_component(statusF).edit -relief sunken \
 		-font $mFontText \
 		-width 5
-	} {
-	    usual
-	}
+	} {}
 
 	itk_component add dbtype {
-	    ::label  $itk_component(statusF).dbtype -anchor w -relief sunken -bd 1 \
+	    ::ttk::label  $itk_component(statusF).dbtype -anchor w -relief sunken \
 		-font $mFontText \
 		-width 8 -textvariable [::itcl::scope mDbType]
-	} {
-	    usual
-	}
+	} {}
 
 	pack $itk_component(dbtype) -side right -padx 1 -pady 1
 	pack $itk_component(editLabel) -side right -padx 1 -pady 1
@@ -868,7 +867,7 @@ Popup Menu    Right or Ctrl-Left
 	# dummy canvas
 	itk_component add canvas {
 	    ::frame $itk_component(canvasF).canvas \
-		-bd 0 \
+		-borderwidth 0 \
 		-relief flat
 	}
 
@@ -883,26 +882,18 @@ Popup Menu    Right or Ctrl-Left
 
     # docking areas
     itk_component add north {
-	::frame $itk_interior.north -height 0
-    } {
-	usual
-    }
+	::ttk::frame $itk_interior.north -height 0
+    } {}
     itk_component add south {
-	::frame $itk_interior.south -height 0
-    } {
-	usual
-    }
+	::ttk::frame $itk_interior.south -height 0
+    } {}
     set parent [$itk_component(hpane) childsite topView]
     itk_component add east {
-	::frame $parent.east -width 0
-    } {
-	usual
-    }
+	::ttk::frame $parent.east -width 0
+    } {}
     itk_component add west {
-	::frame $itk_interior.west -width 0
-    } {
-	usual
-    }
+	::ttk::frame $itk_interior.west -width 0
+    } {}
 
     pack $itk_component(south) -side bottom -fill x
     pack $itk_component(north) -side top -fill x
@@ -940,6 +931,8 @@ Popup Menu    Right or Ctrl-Left
     trace add variable [::itcl::scope mViewAxesLabelColor] write watchVar
 
     eval itk_initialize $args
+
+    $this configure -background $LABEL_BACKGROUND_COLOR
 
     if {!$mViewOnly} {
 	# set initial toggle variables
@@ -1269,27 +1262,28 @@ Popup Menu    Right or Ctrl-Left
 ::itcl::body ArcherCore::initTree {} {
     set parent [$itk_component(vpane) childsite hierarchyView]
     itk_component add tree_frm {
-	::frame $parent.tree_frm \
-	    -bd 1 \
+	::ttk::frame $parent.tree_frm \
+	    -borderwidth 1 \
 	    -relief sunken
     } {
     }
 
     itk_component add tree_title {
 	::label $itk_component(tree_frm).tree_title \
-	    -text "Hierarchy" -font $mFontText
-    } {
-    }
+	    -text "Hierarchy" -font $mFontText \
+	    -background $LABEL_BACKGROUND_COLOR
+    } {}
 
     if {!$mViewOnly} {
 	itk_component add tree_collapse {
 	    ::button $itk_component(tree_frm).tree_collapse
-	} {
-	}
-	$itk_component(tree_collapse) configure -relief flat \
+	} {}
+	$itk_component(tree_collapse) configure \
+	    -relief flat \
 	    -image [image create photo -file \
 			[file join $mImgDir Themes $mTheme "pane_collapse.png"]] \
-	    -command [::itcl::code $this toggleTreeView "close"]
+	    -command [::itcl::code $this toggleTreeView "close"] \
+	    -background $LABEL_BACKGROUND_COLOR
     }
 
     itk_component add tree {
@@ -1302,8 +1296,7 @@ Popup Menu    Right or Ctrl-Left
 	    -selectcmd [::itcl::code $this selectNode %n] \
 	    -dblselectcmd [::itcl::code $this dblClick %n] \
 	    -textmenuloadcommand [::itcl::code $this loadMenu]
-    } {
-    }
+    } {}
 
     [$itk_component(tree) component popupmenu] configure \
 	-background $SystemButtonFace \
@@ -1707,11 +1700,9 @@ Popup Menu    Right or Ctrl-Left
 	    -balloonbackground \#ffffdd \
 	    -borderwidth 1 \
 	    -orient vertical \
-	    -state disabled
-    } {
-	# XXX If uncommented, the following line hoses things
-	#usual
-    }
+	    -state disabled \
+	    -background $LABEL_BACKGROUND_COLOR
+    } {}
 
     $itk_component(viewToolbar) add radiobutton rotate \
 	-balloonstr "Rotate view" \
@@ -4350,61 +4341,56 @@ Popup Menu    Right or Ctrl-Left
     after idle "$win configure -relief flat"
 
     set parent [$itk_component(centerDialog) childsite]
-
     itk_component add centerDialogXL {
-	::label $parent.xl \
+	::ttk::label $parent.xl \
 	    -text "X:"
     } {}
-    set hbc [$itk_component(centerDialogXL) cget -background]
+
     itk_component add centerDialogXE {
-	::entry $parent.xe \
+	::ttk::entry $parent.xe \
 	    -width 12 \
-	    -background $SystemWindow \
-	    -highlightbackground $hbc \
 	    -textvariable [::itcl::scope mCenterX] \
 	    -validate key \
-	    -vcmd [::itcl::code $this validateDouble %P]
+	    -validatecommand [::itcl::code $this validateDouble %P]
     } {}
     itk_component add centerDialogXUL {
-	::label $parent.xul \
+	::ttk::label $parent.xul \
 	    -textvariable [::itcl::scope mDbUnits]
     } {}
     itk_component add centerDialogYL {
-	::label $parent.yl \
+	::ttk::label $parent.yl \
 	    -text "Y:"
     } {}
     itk_component add centerDialogYE {
-	::entry $parent.ye \
+	::ttk::entry $parent.ye \
 	    -width 12 \
-	    -background $SystemWindow \
-	    -highlightbackground $hbc \
 	    -textvariable [::itcl::scope mCenterY] \
 	    -validate key \
-	    -vcmd [::itcl::code $this validateDouble %P]
+	    -validatecommand [::itcl::code $this validateDouble %P]
     } {}
     itk_component add centerDialogYUL {
-	::label $parent.yul \
+	::ttk::label $parent.yul \
 	    -textvariable [::itcl::scope mDbUnits]
     } {}
     itk_component add centerDialogZL {
-	::label $parent.zl \
+	::ttk::label $parent.zl \
 	    -text "Z:"
     } {}
     itk_component add centerDialogZE {
-	::entry $parent.ze \
+	::ttk::entry $parent.ze \
 	    -width 12 \
-	    -background $SystemWindow \
-	    -highlightbackground $hbc \
 	    -textvariable [::itcl::scope mCenterZ] \
 	    -validate key \
-	    -vcmd [::itcl::code $this validateDouble %P]
+	    -validatecommand [::itcl::code $this validateDouble %P]
     } {}
     itk_component add centerDialogZUL {
-	::label $parent.zul \
+	::ttk::label $parent.zul \
 	    -textvariable [::itcl::scope mDbUnits]
     } {}
 
     after idle "$itk_component(centerDialog) center"
+
+    $itk_component(centerDialog) configure -background $LABEL_BACKGROUND_COLOR
 
     set col 0
     set row 0
@@ -4441,14 +4427,13 @@ Popup Menu    Right or Ctrl-Left
 
 ::itcl::body ArcherCore::buildComboBox {parent name1 name2 varName text listOfChoices} {
     itk_component add $name1\L {
-	::label $parent.$name2\L \
+	::ttk::label $parent.$name2\L \
 	    -text $text
     } {}
 
     itk_component add $name1\F {
-	::frame $parent.$name2\F \
-	    -relief sunken \
-	    -bd 0
+	::ttk::frame $parent.$name2\F \
+	    -relief sunken
     } {}
 
     itk_component add $name1\CB {

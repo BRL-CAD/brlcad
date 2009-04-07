@@ -71,7 +71,7 @@
     set parent [childsite upper]
 
     itk_component add tabs {
-	ttk::notebook $parent.tabs
+	::ttk::notebook $parent.tabs
     } {}
 
     buildGeneralGUI
@@ -246,19 +246,19 @@
 
 ::itcl::body CombEditFrame::buildGeneralGUI {} {
     itk_component add combGeneralF {
-	::frame $itk_component(tabs).combgeneralf
+	::ttk::frame $itk_component(tabs).combgeneralf
     } {}
 
     set parent $itk_component(combGeneralF)
     itk_component add combType {
-	::label $parent.combtype \
+	::ttk::label $parent.combtype \
 	    -text "Combination:" \
 	    -anchor e
     } {
 	rename -font -boldLabelFont boldLabelFont Font
     }
     itk_component add combName {
-	::label $parent.combname \
+	::ttk::label $parent.combname \
 	    -textvariable [::itcl::scope itk_option(-geometryObject)] \
 	    -anchor w
     } {
@@ -271,14 +271,14 @@
 	"Region:" \
 	{yes no}
     itk_component add combIdL {
-	::label $parent.combidL \
+	::ttk::label $parent.combidL \
 	    -text "Id:" \
 	    -anchor e
     } {
 	rename -font -labelFont labelFont Font
     }
     itk_component add combIdE {
-	::entry $parent.combidE \
+	::ttk::entry $parent.combidE \
 	    -textvariable [::itcl::scope mId] \
 	    -validate key \
 	    -validatecommand {GeometryEditFrame::validateDigit %P}
@@ -286,14 +286,14 @@
 	rename -font -entryFont entryFont Font
     }
     itk_component add combAirL {
-	::label $parent.combairL \
+	::ttk::label $parent.combairL \
 	    -text "Air:" \
 	    -anchor e
     } {
 	rename -font -labelFont labelFont Font
     }
     itk_component add combAirE {
-	::entry $parent.combairE \
+	::ttk::entry $parent.combairE \
 	    -textvariable [::itcl::scope mAir] \
 	    -validate key \
 	    -validatecommand {GeometryEditFrame::validateDigit %P}
@@ -301,14 +301,14 @@
 	rename -font -entryFont entryFont Font
     }
     itk_component add combLosL {
-	::label $parent.comblosL \
+	::ttk::label $parent.comblosL \
 	    -text "Los:" \
 	    -anchor e
     } {
 	rename -font -labelFont labelFont Font
     }
     itk_component add combLosE {
-	::entry $parent.comblosE \
+	::ttk::entry $parent.comblosE \
 	    -textvariable [::itcl::scope mLos] \
 	    -validate key \
 	    -validatecommand {GeometryEditFrame::validateDigitMax100 %P}
@@ -316,14 +316,14 @@
 	rename -font -entryFont entryFont Font
     }
     itk_component add combGiftL {
-	::label $parent.combgiftL \
+	::ttk::label $parent.combgiftL \
 	    -text "GIFTmater:" \
 	    -anchor e
     } {
 	rename -font -labelFont labelFont Font
     }
     itk_component add combGiftE {
-	::entry $parent.combgiftE \
+	::ttk::entry $parent.combgiftE \
 	    -textvariable [::itcl::scope mGift] \
 	    -validate key \
 	    -validatecommand {GeometryEditFrame::validateDigit %P}
@@ -331,14 +331,14 @@
 	rename -font -entryFont entryFont Font
     }
     itk_component add combRgbL {
-	::label $parent.combrgbL \
+	::ttk::label $parent.combrgbL \
 	    -text "Rgb:" \
 	    -anchor e
     } {
 	rename -font -labelFont labelFont Font
     }
     itk_component add combRgbE {
-	::entry $parent.combrgbE \
+	::ttk::entry $parent.combrgbE \
 	    -textvariable [::itcl::scope mRgb]
     } {
 	rename -font -entryFont entryFont Font
@@ -463,13 +463,13 @@
 
 ::itcl::body CombEditFrame::buildTreeGUI {} {
     itk_component add combTreeF {
-	::frame $itk_component(tabs).treef
+	::ttk::frame $itk_component(tabs).treef
     } {}
 
     set parent $itk_component(combTreeF)
     itk_component add combTreeT {
 	::text $parent.treeT \
-	    -background $ArcherCore::SystemWindow
+	    -background $::ArcherCore::LABEL_BACKGROUND_COLOR
     } {
 	#usual
     }

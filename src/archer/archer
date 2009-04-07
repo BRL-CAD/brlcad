@@ -58,6 +58,9 @@ done
 #\
 exec $WISH $0 $@
 
+# Set ttk theme
+::ttk::style theme use clam
+
 # normalize ARCHER_HOME
 if {[info exists env(ARCHER_HOME)]} {
     set dir [file normalize $env(ARCHER_HOME)]

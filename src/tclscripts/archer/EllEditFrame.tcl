@@ -80,211 +80,152 @@
 ::itcl::body EllEditFrame::buildUpperPanel {} {
     set parent [$this childsite]
     itk_component add ellType {
-	::label $parent.elltype \
+	::ttk::label $parent.elltype \
 	    -text "Ellipsoid:" \
 	    -anchor e
-    } {
-	rename -font -boldLabelFont boldLabelFont Font
-    }
+    } {}
     itk_component add ellName {
-	::label $parent.ellname \
+	::ttk::label $parent.ellname \
 	    -textvariable [::itcl::scope itk_option(-geometryObject)] \
 	    -anchor w
-    } {
-	rename -font -boldLabelFont boldLabelFont Font
-    }
+    } {}
 
     # Create header labels
     itk_component add ellXL {
-	::label $parent.ellXL \
+	::ttk::label $parent.ellXL \
 	    -text "X"
-    } {
-	rename -font -boldLabelFont boldLabelFont Font
-    }
+    } {}
     itk_component add ellYL {
-	::label $parent.ellYL \
+	::ttk::label $parent.ellYL \
 	    -text "Y"
-    } {
-	rename -font -boldLabelFont boldLabelFont Font
-    }
+    } {}
     itk_component add ellZL {
-	::label $parent.ellZL \
+	::ttk::label $parent.ellZL \
 	    -text "Z"
-    } {
-	rename -font -boldLabelFont boldLabelFont Font
-    }
+    } {}
 
     # create widgets for vertices and vectors
     itk_component add ellVL {
-	::label $parent.ellVL \
+	::ttk::label $parent.ellVL \
 	    -text "V:" \
 	    -anchor e
-    } {
-	rename -font -labelFont labelFont Font
-    }
+    } {}
     itk_component add ellVxE {
-	::entry $parent.ellVxE \
+	::ttk::entry $parent.ellVxE \
 	    -textvariable [::itcl::scope mVx] \
 	    -validate key \
 	    -validatecommand {GeometryEditFrame::validateDouble %P}
-    } {
-	rename -font -entryFont entryFont Font
-    }
+    } {}
     itk_component add ellVyE {
-	::entry $parent.ellVyE \
+	::ttk::entry $parent.ellVyE \
 	    -textvariable [::itcl::scope mVy] \
 	    -validate key \
 	    -validatecommand {GeometryEditFrame::validateDouble %P}
-    } {
-	rename -font -entryFont entryFont Font
-    }
+    } {}
     itk_component add ellVzE {
-	::entry $parent.ellVzE \
+	::ttk::entry $parent.ellVzE \
 	    -textvariable [::itcl::scope mVz] \
 	    -validate key \
 	    -validatecommand {GeometryEditFrame::validateDouble %P}
-    } {
-	rename -font -entryFont entryFont Font
-    }
+    } {}
     itk_component add ellVUnitsL {
-	::label $parent.ellVUnitsL \
+	::ttk::label $parent.ellVUnitsL \
 	    -textvariable [::itcl::scope itk_option(-units)] \
 	    -anchor e
-    } {
-	rename -font -labelFont labelFont Font
-    }
+    } {}
     itk_component add ellAL {
-	::label $parent.ellAL \
+	::ttk::label $parent.ellAL \
 	    -text "A:" \
 	    -anchor e
-    } {
-	rename -font -labelFont labelFont Font
-    }
+    } {}
     itk_component add ellAxE {
-	::entry $parent.ellAxE \
+	::ttk::entry $parent.ellAxE \
 	    -textvariable [::itcl::scope mAx] \
 	    -state disabled \
-	    -disabledforeground black \
 	    -validate key \
 	    -validatecommand {GeometryEditFrame::validateDouble %P}
-    } {
-	rename -font -entryFont entryFont Font
-    }
+    } {}
     itk_component add ellAyE {
-	::entry $parent.ellAyE \
+	::ttk::entry $parent.ellAyE \
 	    -textvariable [::itcl::scope mAy] \
 	    -state disabled \
-	    -disabledforeground black \
 	    -validate key \
 	    -validatecommand {GeometryEditFrame::validateDouble %P}
-    } {
-	rename -font -entryFont entryFont Font
-    }
+    } {}
     itk_component add ellAzE {
-	::entry $parent.ellAzE \
+	::ttk::entry $parent.ellAzE \
 	    -textvariable [::itcl::scope mAz] \
 	    -state disabled \
-	    -disabledforeground black \
 	    -validate key \
 	    -validatecommand {GeometryEditFrame::validateDouble %P}
-    } {
-	rename -font -entryFont entryFont Font
-    }
+    } {}
     itk_component add ellAUnitsL {
-	::label $parent.ellAUnitsL \
+	::ttk::label $parent.ellAUnitsL \
 	    -textvariable [::itcl::scope itk_option(-units)] \
 	    -anchor e
-    } {
-	rename -font -labelFont labelFont Font
-    }
+    } {}
     itk_component add ellBL {
-	::label $parent.ellBL \
+	::ttk::label $parent.ellBL \
 	    -text "B:" \
 	    -anchor e
-    } {
-	rename -font -labelFont labelFont Font
-    }
+    } {}
     itk_component add ellBxE {
-	::entry $parent.ellBxE \
+	::ttk::entry $parent.ellBxE \
 	    -textvariable [::itcl::scope mBx] \
 	    -state disabled \
-	    -disabledforeground black \
 	    -validate key \
 	    -validatecommand {GeometryEditFrame::validateDouble %P}
-    } {
-	rename -font -entryFont entryFont Font
-    }
+    } {}
     itk_component add ellByE {
-	::entry $parent.ellByE \
+	::ttk::entry $parent.ellByE \
 	    -textvariable [::itcl::scope mBy] \
 	    -state disabled \
-	    -disabledforeground black \
 	    -validate key \
 	    -validatecommand {GeometryEditFrame::validateDouble %P}
-    } {
-	rename -font -entryFont entryFont Font
-    }
+    } {}
     itk_component add ellBzE {
-	::entry $parent.ellBzE \
+	::ttk::entry $parent.ellBzE \
 	    -textvariable [::itcl::scope mBz] \
 	    -state disabled \
-	    -disabledforeground black \
 	    -validate key \
 	    -validatecommand {GeometryEditFrame::validateDouble %P}
-    } {
-	rename -font -entryFont entryFont Font
-    }
+    } {}
     itk_component add ellBUnitsL {
-	::label $parent.ellBUnitsL \
+	::ttk::label $parent.ellBUnitsL \
 	    -textvariable [::itcl::scope itk_option(-units)] \
 	    -anchor e
-    } {
-	rename -font -labelFont labelFont Font
-    }
+    } {}
     itk_component add ellCL {
-	::label $parent.ellCL \
+	::ttk::label $parent.ellCL \
 	    -text "C:" \
 	    -anchor e
-    } {
-	rename -font -labelFont labelFont Font
-    }
+    } {}
     itk_component add ellCxE {
-	::entry $parent.ellCxE \
+	::ttk::entry $parent.ellCxE \
 	    -textvariable [::itcl::scope mCx] \
 	    -state disabled \
-	    -disabledforeground black \
 	    -validate key \
 	    -validatecommand {GeometryEditFrame::validateDouble %P}
-    } {
-	rename -font -entryFont entryFont Font
-    }
+    } {}
     itk_component add ellCyE {
-	::entry $parent.ellCyE \
+	::ttk::entry $parent.ellCyE \
 	    -textvariable [::itcl::scope mCy] \
 	    -state disabled \
-	    -disabledforeground black \
 	    -validate key \
 	    -validatecommand {GeometryEditFrame::validateDouble %P}
-    } {
-	rename -font -entryFont entryFont Font
-    }
+    } {}
     itk_component add ellCzE {
-	::entry $parent.ellCzE \
+	::ttk::entry $parent.ellCzE \
 	    -textvariable [::itcl::scope mCz] \
 	    -state disabled \
-	    -disabledforeground black \
 	    -validate key \
 	    -validatecommand {GeometryEditFrame::validateDouble %P}
-    } {
-	rename -font -entryFont entryFont Font
-    }
+    } {}
     itk_component add ellCUnitsL {
-	::label $parent.ellCUnitsL \
+	::ttk::label $parent.ellCUnitsL \
 	    -textvariable [::itcl::scope itk_option(-units)] \
 	    -anchor e
-    } {
-	rename -font -labelFont labelFont Font
-    }
+    } {}
 
     set row 0
     grid $itk_component(ellType) \

@@ -81,231 +81,167 @@
 ::itcl::body EhyEditFrame::buildUpperPanel {} {
     set parent [$this childsite]
     itk_component add ehyType {
-	::label $parent.ehytype \
+	::ttk::label $parent.ehytype \
 	    -text "Ehy:" \
 	    -anchor e
-    } {
-	rename -font -boldLabelFont boldLabelFont Font
-    }
+    } {}
     itk_component add ehyName {
-	::label $parent.ehyname \
+	::ttk::label $parent.ehyname \
 	    -textvariable [::itcl::scope itk_option(-geometryObject)] \
 	    -anchor w
-    } {
-	rename -font -boldLabelFont boldLabelFont Font
-    }
+    } {}
 
     # Create header labels
     itk_component add ehyXL {
-	::label $parent.ehyXL \
+	::ttk::label $parent.ehyXL \
 	    -text "X"
-    } {
-	rename -font -boldLabelFont boldLabelFont Font
-    }
+    } {}
     itk_component add ehyYL {
-	::label $parent.ehyYL \
+	::ttk::label $parent.ehyYL \
 	    -text "Y"
-    } {
-	rename -font -boldLabelFont boldLabelFont Font
-    }
+    } {}
     itk_component add ehyZL {
-	::label $parent.ehyZL \
+	::ttk::label $parent.ehyZL \
 	    -text "Z"
-    } {
-	rename -font -boldLabelFont boldLabelFont Font
-    }
+    } {}
 
     # create widgets for vertices
     itk_component add ehyVL {
-	::label $parent.ehyVL \
+	::ttk::label $parent.ehyVL \
 	    -text "V:" \
 	    -anchor e
-    } {
-	rename -font -labelFont labelFont Font
-    }
+    } {}
     itk_component add ehyVxE {
-	::entry $parent.ehyVxE \
+	::ttk::entry $parent.ehyVxE \
 	    -textvariable [::itcl::scope mVx] \
 	    -validate key \
 	    -validatecommand {GeometryEditFrame::validateDouble %P}
-    } {
-	rename -font -entryFont entryFont Font
-    }
+    } {}
     itk_component add ehyVyE {
-	::entry $parent.ehyVyE \
+	::ttk::entry $parent.ehyVyE \
 	    -textvariable [::itcl::scope mVy] \
 	    -validate key \
 	    -validatecommand {GeometryEditFrame::validateDouble %P}
-    } {
-	rename -font -entryFont entryFont Font
-    }
+    } {}
     itk_component add ehyVzE {
-	::entry $parent.ehyVzE \
+	::ttk::entry $parent.ehyVzE \
 	    -textvariable [::itcl::scope mVz] \
 	    -validate key \
 	    -validatecommand {GeometryEditFrame::validateDouble %P}
-    } {
-	rename -font -entryFont entryFont Font
-    }
+    } {}
     itk_component add ehyVUnitsL {
-	::label $parent.ehyVUnitsL \
+	::ttk::label $parent.ehyVUnitsL \
 	    -textvariable [::itcl::scope itk_option(-units)] \
 	    -anchor e
-    } {
-	rename -font -labelFont labelFont Font
-    }
+    } {}
     itk_component add ehyHL {
-	::label $parent.ehyHL \
+	::ttk::label $parent.ehyHL \
 	    -text "H:" \
 	    -anchor e
-    } {
-	rename -font -labelFont labelFont Font
-    }
+    } {}
     itk_component add ehyHxE {
-	::entry $parent.ehyHxE \
+	::ttk::entry $parent.ehyHxE \
 	    -textvariable [::itcl::scope mHx] \
 	    -state disabled \
-	    -disabledforeground black \
 	    -validate key \
 	    -validatecommand {GeometryEditFrame::validateDouble %P}
-    } {
-	rename -font -entryFont entryFont Font
-    }
+    } {}
     itk_component add ehyHyE {
-	::entry $parent.ehyHyE \
+	::ttk::entry $parent.ehyHyE \
 	    -textvariable [::itcl::scope mHy] \
 	    -state disabled \
-	    -disabledforeground black \
 	    -validate key \
 	    -validatecommand {GeometryEditFrame::validateDouble %P}
-    } {
-	rename -font -entryFont entryFont Font
-    }
+    } {}
     itk_component add ehyHzE {
-	::entry $parent.ehyHzE \
+	::ttk::entry $parent.ehyHzE \
 	    -textvariable [::itcl::scope mHz] \
 	    -state disabled \
-	    -disabledforeground black \
 	    -validate key \
 	    -validatecommand {GeometryEditFrame::validateDouble %P}
-    } {
-	rename -font -entryFont entryFont Font
-    }
+    } {}
     itk_component add ehyHUnitsL {
-	::label $parent.ehyHUnitsL \
+	::ttk::label $parent.ehyHUnitsL \
 	    -textvariable [::itcl::scope itk_option(-units)] \
 	    -anchor e
-    } {
-	rename -font -labelFont labelFont Font
-    }
+    } {}
     itk_component add ehyAL {
-	::label $parent.ehyAL \
+	::ttk::label $parent.ehyAL \
 	    -text "A:" \
 	    -anchor e
-    } {
-	rename -font -labelFont labelFont Font
-    }
+    } {}
     itk_component add ehyAxE {
-	::entry $parent.ehyAxE \
+	::ttk::entry $parent.ehyAxE \
 	    -textvariable [::itcl::scope mAx] \
 	    -state disabled \
-	    -disabledforeground black \
 	    -validate key \
 	    -validatecommand {GeometryEditFrame::validateDouble %P}
-    } {
-	rename -font -entryFont entryFont Font
-    }
+    } {}
     itk_component add ehyAyE {
-	::entry $parent.ehyAyE \
+	::ttk::entry $parent.ehyAyE \
 	    -textvariable [::itcl::scope mAy] \
 	    -state disabled \
-	    -disabledforeground black \
 	    -validate key \
 	    -validatecommand {GeometryEditFrame::validateDouble %P}
-    } {
-	rename -font -entryFont entryFont Font
-    }
+    } {}
     itk_component add ehyAzE {
-	::entry $parent.ehyAzE \
+	::ttk::entry $parent.ehyAzE \
 	    -textvariable [::itcl::scope mAz] \
 	    -state disabled \
-	    -disabledforeground black \
 	    -validate key \
 	    -validatecommand {GeometryEditFrame::validateDouble %P}
-    } {
-	rename -font -entryFont entryFont Font
-    }
+    } {}
     itk_component add ehyAUnitsL {
-	::label $parent.ehyAUnitsL \
+	::ttk::label $parent.ehyAUnitsL \
 	    -anchor e
-    } {
-	rename -font -labelFont labelFont Font
-    }
+    } {}
     itk_component add ehyR_1L {
-	::label $parent.ehyR_1L \
+	::ttk::label $parent.ehyR_1L \
 	    -text "r_1:" \
 	    -anchor e
-    } {
-	rename -font -labelFont labelFont Font
-    }
+    } {}
     itk_component add ehyR_1E {
-	::entry $parent.ehyR_1E \
+	::ttk::entry $parent.ehyR_1E \
 	    -textvariable [::itcl::scope mR_1] \
 	    -validate key \
 	    -validatecommand {GeometryEditFrame::validateDouble %P}
-    } {
-	rename -font -entryFont entryFont Font
-    }
+    } {}
     itk_component add ehyR_1UnitsL {
-	::label $parent.ehyR_1UnitsL \
+	::ttk::label $parent.ehyR_1UnitsL \
 	    -textvariable [::itcl::scope itk_option(-units)] \
 	    -anchor e
-    } {
-	rename -font -labelFont labelFont Font
-    }
+    } {}
     itk_component add ehyR_2L {
-	::label $parent.ehyR_2L \
+	::ttk::label $parent.ehyR_2L \
 	    -text "r_2:" \
 	    -anchor e
-    } {
-	rename -font -labelFont labelFont Font
-    }
+    } {}
     itk_component add ehyR_2E {
-	::entry $parent.ehyR_2E \
+	::ttk::entry $parent.ehyR_2E \
 	    -textvariable [::itcl::scope mR_2] \
 	    -validate key \
 	    -validatecommand {GeometryEditFrame::validateDouble %P}
-    } {
-	rename -font -entryFont entryFont Font
-    }
+    } {}
     itk_component add ehyR_2UnitsL {
-	::label $parent.ehyR_2UnitsL \
+	::ttk::label $parent.ehyR_2UnitsL \
 	    -textvariable [::itcl::scope itk_option(-units)] \
 	    -anchor e
-    } {
-	rename -font -labelFont labelFont Font
-    }
+    } {}
     itk_component add ehyCL {
-	::label $parent.ehyCL \
+	::ttk::label $parent.ehyCL \
 	    -text "c:" \
 	    -anchor e
-    } {
-	rename -font -labelFont labelFont Font
-    }
+    } {}
     itk_component add ehyCE {
-	::entry $parent.ehyCE \
+	::ttk::entry $parent.ehyCE \
 	    -textvariable [::itcl::scope mC] \
 	    -validate key \
 	    -validatecommand {GeometryEditFrame::validateDouble %P}
-    } {
-	rename -font -entryFont entryFont Font
-    }
+    } {}
     itk_component add ehyCUnitsL {
-	::label $parent.ehyCUnitsL \
+	::ttk::label $parent.ehyCUnitsL \
 	    -anchor e
-    } {
-	rename -font -labelFont labelFont Font
-    }
+    } {}
 
     set row 0
     grid $itk_component(ehyType) \

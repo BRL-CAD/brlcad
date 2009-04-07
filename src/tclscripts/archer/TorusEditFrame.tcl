@@ -77,166 +77,121 @@
 ::itcl::body TorusEditFrame::buildUpperPanel {} {
     set parent [$this childsite]
     itk_component add torType {
-	::label $parent.tortype \
+	::ttk::label $parent.tortype \
 	    -text "Torus:" \
 	    -anchor e
-    } {
-	rename -font -boldLabelFont boldLabelFont Font
-    }
+    } {}
     itk_component add torName {
-	::label $parent.torname \
+	::ttk::label $parent.torname \
 	    -textvariable [::itcl::scope itk_option(-geometryObject)] \
 	    -anchor w
-    } {
-	rename -font -boldLabelFont boldLabelFont Font
-    }
+    } {}
 
     # Create header labels
     itk_component add torXL {
-	::label $parent.torXL \
+	::ttk::label $parent.torXL \
 	    -text "X"
-    } {
-	rename -font -boldLabelFont boldLabelFont Font
-    }
+    } {}
     itk_component add torYL {
-	::label $parent.torYL \
+	::ttk::label $parent.torYL \
 	    -text "Y"
-    } {
-	rename -font -boldLabelFont boldLabelFont Font
-    }
+    } {}
     itk_component add torZL {
-	::label $parent.torZL \
+	::ttk::label $parent.torZL \
 	    -text "Z"
-    } {
-	rename -font -boldLabelFont boldLabelFont Font
-    }
+    } {}
 
     # create widgets for vertices, vectors etc.
     itk_component add torVL {
-	::label $parent.torVL \
+	::ttk::label $parent.torVL \
 	    -text "V:" \
 	    -anchor e
-    } {
-	rename -font -labelFont labelFont Font
-    }
+    } {}
     itk_component add torVxE {
-	::entry $parent.torVxE \
+	::ttk::entry $parent.torVxE \
 	    -textvariable [::itcl::scope mVx] \
 	    -validate key \
 	    -validatecommand {GeometryEditFrame::validateDouble %P}
-    } {
-	rename -font -entryFont entryFont Font
-    }
+    } {}
     itk_component add torVyE {
-	::entry $parent.torVyE \
+	::ttk::entry $parent.torVyE \
 	    -textvariable [::itcl::scope mVy] \
 	    -validate key \
 	    -validatecommand {GeometryEditFrame::validateDouble %P}
-    } {
-	rename -font -entryFont entryFont Font
-    }
+    } {}
     itk_component add torVzE {
-	::entry $parent.torVzE \
+	::ttk::entry $parent.torVzE \
 	    -textvariable [::itcl::scope mVz] \
 	    -validate key \
 	    -validatecommand {GeometryEditFrame::validateDouble %P}
-    } {
-	rename -font -entryFont entryFont Font
-    }
+    } {}
     itk_component add torVUnitsL {
-	::label $parent.torVUnitsL \
+	::ttk::label $parent.torVUnitsL \
 	    -textvariable [::itcl::scope itk_option(-units)] \
 	    -anchor e
-    } {
-	rename -font -labelFont labelFont Font
-    }
+    } {}
     itk_component add torHL {
-	::label $parent.torHL \
+	::ttk::label $parent.torHL \
 	    -text "H:" \
 	    -anchor e
-    } {
-	rename -font -labelFont labelFont Font
-    }
+    } {}
     itk_component add torHxE {
-	::entry $parent.torHxE \
+	::ttk::entry $parent.torHxE \
 	    -textvariable [::itcl::scope mHx] \
 	    -state disabled \
-	    -disabledforeground black \
 	    -validate key \
 	    -validatecommand {GeometryEditFrame::validateDouble %P}
-    } {
-	rename -font -entryFont entryFont Font
-    }
+    } {}
     itk_component add torHyE {
-	::entry $parent.torHyE \
+	::ttk::entry $parent.torHyE \
 	    -textvariable [::itcl::scope mHy] \
 	    -state disabled \
-	    -disabledforeground black \
 	    -validate key \
 	    -validatecommand {GeometryEditFrame::validateDouble %P}
-    } {
-	rename -font -entryFont entryFont Font
-    }
+    } {}
     itk_component add torHzE {
-	::entry $parent.torHzE \
+	::ttk::entry $parent.torHzE \
 	    -textvariable [::itcl::scope mHz] \
 	    -state disabled \
-	    -disabledforeground black \
 	    -validate key \
 	    -validatecommand {GeometryEditFrame::validateDouble %P}
-    } {
-	rename -font -entryFont entryFont Font
-    }
+    } {}
     itk_component add torHUnitsL {
-	::label $parent.torHUnitsL \
+	::ttk::label $parent.torHUnitsL \
 	    -anchor e
-    } {
-	rename -font -labelFont labelFont Font
-    }
+    } {}
     itk_component add torR_aL {
-	::label $parent.torR_aL \
+	::ttk::label $parent.torR_aL \
 	    -text "r_a:" \
 	    -anchor e
-    } {
-	rename -font -labelFont labelFont Font
-    }
+    } {}
     itk_component add torR_aE {
-	::entry $parent.torR_aE \
+	::ttk::entry $parent.torR_aE \
 	    -textvariable [::itcl::scope mR_a] \
 	    -validate key \
 	    -validatecommand {GeometryEditFrame::validateDouble %P}
-    } {
-	rename -font -entryFont entryFont Font
-    }
+    } {}
     itk_component add torR_aUnitsL {
-	::label $parent.torR_aUnitsL \
+	::ttk::label $parent.torR_aUnitsL \
 	    -textvariable [::itcl::scope itk_option(-units)] \
 	    -anchor e
-    } {
-	rename -font -labelFont labelFont Font
-    }
+    } {}
     itk_component add torR_hL {
-	::label $parent.torR_hL \
+	::ttk::label $parent.torR_hL \
 	    -text "r_h:" \
 	    -anchor e
-    } {
-	rename -font -labelFont labelFont Font
-    }
+    } {}
     itk_component add torR_hE {
-	::entry $parent.torR_hE \
+	::ttk::entry $parent.torR_hE \
 	    -textvariable [::itcl::scope mR_h] \
 	    -validate key \
 	    -validatecommand {GeometryEditFrame::validateDouble %P}
-    } {
-	rename -font -entryFont entryFont Font
-    }
+    } {}
     itk_component add torR_hUnitsL {
-	::label $parent.torR_hUnitsL \
+	::ttk::label $parent.torR_hUnitsL \
 	    -textvariable [::itcl::scope itk_option(-units)] \
 	    -anchor e
-    } {
-	rename -font -labelFont labelFont Font
-    }
+    } {}
 
     set row 0
     grid $itk_component(torType) \

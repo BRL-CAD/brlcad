@@ -67,210 +67,152 @@
 ::itcl::body EtoEditFrame::constructor {args} {
     set parent [$this childsite]
     itk_component add etoType {
-	::label $parent.etotype \
+	::ttk::label $parent.etotype \
 	    -text "Eto:" \
 	    -anchor e
-    } {
-	rename -font -boldLabelFont boldLabelFont Font
-    }
+    } {}
     itk_component add etoName {
-	::label $parent.etoname \
+	::ttk::label $parent.etoname \
 	    -textvariable [::itcl::scope itk_option(-geometryObject)] \
 	    -anchor w
-    } {
-	rename -font -boldLabelFont boldLabelFont Font
-    }
+    } {}
 
     # Create header labels
     itk_component add etoXL {
-	::label $parent.etoXL \
+	::ttk::label $parent.etoXL \
 	    -text "X"
-    } {
-	rename -font -boldLabelFont boldLabelFont Font
-    }
+    } {}
     itk_component add etoYL {
-	::label $parent.etoYL \
+	::ttk::label $parent.etoYL \
 	    -text "Y"
-    } {
-	rename -font -boldLabelFont boldLabelFont Font
-    }
+    } {}
     itk_component add etoZL {
-	::label $parent.etoZL \
+	::ttk::label $parent.etoZL \
 	    -text "Z"
-    } {
-	rename -font -boldLabelFont boldLabelFont Font
-    }
+    } {}
 
     # create widgets for vertices
     itk_component add etoVL {
-	::label $parent.etoVL \
+	::ttk::label $parent.etoVL \
 	    -text "V:" \
 	    -anchor e
-    } {
-	rename -font -labelFont labelFont Font
-    }
+    } {}
     itk_component add etoVxE {
-	::entry $parent.etoVxE \
+	::ttk::entry $parent.etoVxE \
 	    -textvariable [::itcl::scope mVx] \
 	    -validate key \
 	    -validatecommand {GeometryEditFrame::validateDouble %P}
-    } {
-	rename -font -entryFont entryFont Font
-    }
+    } {}
     itk_component add etoVyE {
-	::entry $parent.etoVyE \
+	::ttk::entry $parent.etoVyE \
 	    -textvariable [::itcl::scope mVy] \
 	    -validate key \
 	    -validatecommand {GeometryEditFrame::validateDouble %P}
-    } {
-	rename -font -entryFont entryFont Font
-    }
+    } {}
     itk_component add etoVzE {
-	::entry $parent.etoVzE \
+	::ttk::entry $parent.etoVzE \
 	    -textvariable [::itcl::scope mVz] \
 	    -validate key \
 	    -validatecommand {GeometryEditFrame::validateDouble %P}
-    } {
-	rename -font -entryFont entryFont Font
-    }
+    } {}
     itk_component add etoVUnitsL {
-	::label $parent.etoVUnitsL \
+	::ttk::label $parent.etoVUnitsL \
 	    -textvariable [::itcl::scope itk_option(-units)] \
 	    -anchor e
-    } {
-	rename -font -labelFont labelFont Font
-    }
+    } {}
     itk_component add etoNL {
-	::label $parent.etoNL \
+	::ttk::label $parent.etoNL \
 	    -text "N:" \
 	    -anchor e
-    } {
-	rename -font -labelFont labelFont Font
-    }
+    } {}
     itk_component add etoNxE {
-	::entry $parent.etoNxE \
+	::ttk::entry $parent.etoNxE \
 	    -textvariable [::itcl::scope mNx] \
 	    -state disabled \
-	    -disabledforeground black \
 	    -validate key \
 	    -validatecommand {GeometryEditFrame::validateDouble %P}
-    } {
-	rename -font -entryFont entryFont Font
-    }
+    } {}
     itk_component add etoNyE {
-	::entry $parent.etoNyE \
+	::ttk::entry $parent.etoNyE \
 	    -textvariable [::itcl::scope mNy] \
 	    -state disabled \
-	    -disabledforeground black \
 	    -validate key \
 	    -validatecommand {GeometryEditFrame::validateDouble %P}
-    } {
-	rename -font -entryFont entryFont Font
-    }
+    } {}
     itk_component add etoNzE {
-	::entry $parent.etoNzE \
+	::ttk::entry $parent.etoNzE \
 	    -textvariable [::itcl::scope mNz] \
 	    -state disabled \
-	    -disabledforeground black \
 	    -validate key \
 	    -validatecommand {GeometryEditFrame::validateDouble %P}
-    } {
-	rename -font -entryFont entryFont Font
-    }
+    } {}
     itk_component add etoNUnitsL {
-	::label $parent.etoNUnitsL \
+	::ttk::label $parent.etoNUnitsL \
 	    -anchor e
-    } {
-	rename -font -labelFont labelFont Font
-    }
+    } {}
     itk_component add etoCL {
-	::label $parent.etoCL \
+	::ttk::label $parent.etoCL \
 	    -text "C:" \
 	    -anchor e
-    } {
-	rename -font -labelFont labelFont Font
-    }
+    } {}
     itk_component add etoCxE {
-	::entry $parent.etoCxE \
+	::ttk::entry $parent.etoCxE \
 	    -textvariable [::itcl::scope mCx] \
 	    -state disabled \
-	    -disabledforeground black \
 	    -validate key \
 	    -validatecommand {GeometryEditFrame::validateDouble %P}
-    } {
-	rename -font -entryFont entryFont Font
-    }
+    } {}
     itk_component add etoCyE {
-	::entry $parent.etoCyE \
+	::ttk::entry $parent.etoCyE \
 	    -textvariable [::itcl::scope mCy] \
 	    -state disabled \
-	    -disabledforeground black \
 	    -validate key \
 	    -validatecommand {GeometryEditFrame::validateDouble %P}
-    } {
-	rename -font -entryFont entryFont Font
-    }
+    } {}
     itk_component add etoCzE {
-	::entry $parent.etoCzE \
+	::ttk::entry $parent.etoCzE \
 	    -textvariable [::itcl::scope mCz] \
 	    -state disabled \
-	    -disabledforeground black \
 	    -validate key \
 	    -validatecommand {GeometryEditFrame::validateDouble %P}
-    } {
-	rename -font -entryFont entryFont Font
-    }
+    } {}
     itk_component add etoCUnitsL {
-	::label $parent.etoCUnitsL \
+	::ttk::label $parent.etoCUnitsL \
 	    -textvariable [::itcl::scope itk_option(-units)] \
 	    -anchor e
-    } {
-	rename -font -labelFont labelFont Font
-    }
+    } {}
     itk_component add etoRL {
-	::label $parent.etoRL \
+	::ttk::label $parent.etoRL \
 	    -text "r:" \
 	    -anchor e
-    } {
-	rename -font -labelFont labelFont Font
-    }
+    } {}
     itk_component add etoRE {
-	::entry $parent.etoRE \
+	::ttk::entry $parent.etoRE \
 	    -textvariable [::itcl::scope mR] \
 	    -validate key \
 	    -validatecommand {GeometryEditFrame::validateDouble %P}
-    } {
-	rename -font -entryFont entryFont Font
-    }
+    } {}
     itk_component add etoRUnitsL {
-	::label $parent.etoRVUnitsL \
+	::ttk::label $parent.etoRVUnitsL \
 	    -textvariable [::itcl::scope itk_option(-units)] \
 	    -anchor e
-    } {
-	rename -font -labelFont labelFont Font
-    }
+    } {}
     itk_component add etoR_dL {
-	::label $parent.etoR_dL \
+	::ttk::label $parent.etoR_dL \
 	    -text "r_d:" \
 	    -anchor e
-    } {
-	rename -font -labelFont labelFont Font
-    }
+    } {}
     itk_component add etoR_dE {
-	::entry $parent.etoR_dE \
+	::ttk::entry $parent.etoR_dE \
 	    -textvariable [::itcl::scope mR_d] \
 	    -validate key \
 	    -validatecommand {GeometryEditFrame::validateDouble %P}
-    } {
-	rename -font -entryFont entryFont Font
-    }
+    } {}
     itk_component add etoR_dUnitsL {
-	::label $parent.etoR_dUnitsL \
+	::ttk::label $parent.etoR_dUnitsL \
 	    -textvariable [::itcl::scope itk_option(-units)] \
 	    -anchor e
-    } {
-	rename -font -labelFont labelFont Font
-    }
+    } {}
 
     set row 0
     grid $itk_component(etoType) \

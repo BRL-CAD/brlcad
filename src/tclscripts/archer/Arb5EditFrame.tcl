@@ -98,326 +98,186 @@
 ::itcl::body Arb5EditFrame::buildUpperPanel {} {
     set parent [$this childsite upper]
     itk_component add arb5Type {
-	::label $parent.arb5type \
+	::ttk::label $parent.arb5type \
 	    -text "Arb5:" \
 	    -anchor e
-    } {
-	rename -font -boldLabelFont boldLabelFont Font
-    }
+    } {}
     itk_component add arb5Name {
-	::label $parent.arb5name \
+	::ttk::label $parent.arb5name \
 	    -textvariable [::itcl::scope itk_option(-geometryObject)] \
 	    -anchor w
-    } {
-	rename -font -boldLabelFont boldLabelFont Font
-    }
+    } {}
 
     # Create header labels
     itk_component add arb5XL {
-	::label $parent.arb5XL \
+	::ttk::label $parent.arb5XL \
 	    -text "X"
-    } {
-	rename -font -boldLabelFont boldLabelFont Font
-    }
+    } {}
     itk_component add arb5YL {
-	::label $parent.arb5YL \
+	::ttk::label $parent.arb5YL \
 	    -text "Y"
-    } {
-	rename -font -boldLabelFont boldLabelFont Font
-    }
+    } {}
     itk_component add arb5ZL {
-	::label $parent.arb5ZL \
+	::ttk::label $parent.arb5ZL \
 	    -text "Z"
-    } {
-	rename -font -boldLabelFont boldLabelFont Font
-    }
+    } {}
 
     # create widgets for vertices
     itk_component add arb5V1L {
-	::radiobutton $parent.arb5V1L \
+	::ttk::label $parent.arb5V1L \
 	    -text "V1:" \
-	    -indicatoron 0 \
-	    -variable [::itcl::scope mVIndex] \
-	    -value 1 \
-	    -relief flat \
-	    -overrelief raised \
-	    -offrelief flat \
-	    -borderwidth 1 \
-	    -padx 0 \
-	    -highlightthickness 0 \
-	    -state disabled \
 	    -anchor e
-    } {
-	rename -font -labelFont labelFont Font
-    }
-    $itk_component(arb5V1L) configure \
-	-disabledforeground [$itk_component(arb5V1L) cget -foreground] \
-	-selectcolor  [$itk_component(arb5V1L) cget -background]
+    } {}
     itk_component add arb5V1xE {
-	::entry $parent.arb5V1xE \
+	::ttk::entry $parent.arb5V1xE \
 	    -textvariable [::itcl::scope mV1x] \
 	    -state disabled \
-	    -disabledforeground black \
 	    -validate key \
 	    -validatecommand {GeometryEditFrame::validateDouble %P}
-    } {
-	rename -font -entryFont entryFont Font
-    }
+    } {}
     itk_component add arb5V1yE {
-	::entry $parent.arb5V1yE \
+	::ttk::entry $parent.arb5V1yE \
 	    -textvariable [::itcl::scope mV1y] \
 	    -state disabled \
-	    -disabledforeground black \
 	    -validate key \
 	    -validatecommand {GeometryEditFrame::validateDouble %P}
-    } {
-	rename -font -entryFont entryFont Font
-    }
+    } {}
     itk_component add arb5V1zE {
-	::entry $parent.arb5V1zE \
+	::ttk::entry $parent.arb5V1zE \
 	    -textvariable [::itcl::scope mV1z] \
 	    -state disabled \
-	    -disabledforeground black \
 	    -validate key \
 	    -validatecommand {GeometryEditFrame::validateDouble %P}
-    } {
-	rename -font -entryFont entryFont Font
-    }
+    } {}
     itk_component add arb5V1UnitsL {
-	::label $parent.arb5V1UnitsL \
+	::ttk::label $parent.arb5V1UnitsL \
 	    -textvariable [::itcl::scope itk_option(-units)] \
 	    -anchor e
-    } {
-	rename -font -labelFont labelFont Font
-    }
+    } {}
     itk_component add arb5V2L {
-	::radiobutton $parent.arb5V2L \
+	::ttk::label $parent.arb5V2L \
 	    -text "V2:" \
-	    -indicatoron 0 \
-	    -variable [::itcl::scope mVIndex] \
-	    -value 2 \
-	    -relief flat \
-	    -overrelief raised \
-	    -offrelief flat \
-	    -borderwidth 1 \
-	    -padx 0 \
-	    -highlightthickness 0 \
-	    -state disabled \
 	    -anchor e
-    } {
-	rename -font -labelFont labelFont Font
-    }
-    $itk_component(arb5V2L) configure \
-	-disabledforeground [$itk_component(arb5V2L) cget -foreground] \
-	-selectcolor  [$itk_component(arb5V2L) cget -background]
+    } {}
     itk_component add arb5V2xE {
-	::entry $parent.arb5V2xE \
+	::ttk::entry $parent.arb5V2xE \
 	    -textvariable [::itcl::scope mV2x] \
 	    -state disabled \
-	    -disabledforeground black \
 	    -validate key \
 	    -validatecommand {GeometryEditFrame::validateDouble %P}
-    } {
-	rename -font -entryFont entryFont Font
-    }
+    } {}
     itk_component add arb5V2yE {
-	::entry $parent.arb5V2yE \
+	::ttk::entry $parent.arb5V2yE \
 	    -textvariable [::itcl::scope mV2y] \
 	    -state disabled \
-	    -disabledforeground black \
 	    -validate key \
 	    -validatecommand {GeometryEditFrame::validateDouble %P}
-    } {
-	rename -font -entryFont entryFont Font
-    }
+    } {}
     itk_component add arb5V2zE {
-	::entry $parent.arb5V2zE \
+	::ttk::entry $parent.arb5V2zE \
 	    -textvariable [::itcl::scope mV2z] \
 	    -state disabled \
-	    -disabledforeground black \
 	    -validate key \
 	    -validatecommand {GeometryEditFrame::validateDouble %P}
-    } {
-	rename -font -entryFont entryFont Font
-    }
+    } {}
     itk_component add arb5V2UnitsL {
-	::label $parent.arb5V2UnitsL \
+	::ttk::label $parent.arb5V2UnitsL \
 	    -textvariable [::itcl::scope itk_option(-units)] \
 	    -anchor e
-    } {
-	rename -font -labelFont labelFont Font
-    }
+    } {}
     itk_component add arb5V3L {
-	::radiobutton $parent.arb5V3L \
+	::ttk::label $parent.arb5V3L \
 	    -text "V3:" \
-	    -indicatoron 0 \
-	    -variable [::itcl::scope mVIndex] \
-	    -value 3 \
-	    -relief flat \
-	    -overrelief raised \
-	    -offrelief flat \
-	    -borderwidth 1 \
-	    -padx 0 \
-	    -highlightthickness 0 \
-	    -state disabled \
 	    -anchor e
-    } {
-	rename -font -labelFont labelFont Font
-    }
-    $itk_component(arb5V3L) configure \
-	-disabledforeground [$itk_component(arb5V3L) cget -foreground] \
-	-selectcolor  [$itk_component(arb5V3L) cget -background]
+    } {}
     itk_component add arb5V3xE {
-	::entry $parent.arb5V3xE \
+	::ttk::entry $parent.arb5V3xE \
 	    -textvariable [::itcl::scope mV3x] \
 	    -state disabled \
-	    -disabledforeground black \
 	    -validate key \
 	    -validatecommand {GeometryEditFrame::validateDouble %P}
-    } {
-	rename -font -entryFont entryFont Font
-    }
+    } {}
     itk_component add arb5V3yE {
-	::entry $parent.arb5V3yE \
+	::ttk::entry $parent.arb5V3yE \
 	    -textvariable [::itcl::scope mV3y] \
 	    -state disabled \
-	    -disabledforeground black \
 	    -validate key \
 	    -validatecommand {GeometryEditFrame::validateDouble %P}
-    } {
-	rename -font -entryFont entryFont Font
-    }
+    } {}
     itk_component add arb5V3zE {
-	::entry $parent.arb5V3zE \
+	::ttk::entry $parent.arb5V3zE \
 	    -textvariable [::itcl::scope mV3z] \
 	    -state disabled \
-	    -disabledforeground black \
 	    -validate key \
 	    -validatecommand {GeometryEditFrame::validateDouble %P}
-    } {
-	rename -font -entryFont entryFont Font
-    }
+    } {}
     itk_component add arb5V3UnitsL {
-	::label $parent.arb5V3UnitsL \
+	::ttk::label $parent.arb5V3UnitsL \
 	    -textvariable [::itcl::scope itk_option(-units)] \
 	    -anchor e
-    } {
-	rename -font -labelFont labelFont Font
-    }
+    } {}
     itk_component add arb5V4L {
-	::radiobutton $parent.arb5V4L \
+	::ttk::label $parent.arb5V4L \
 	    -text "V4:" \
-	    -indicatoron 0 \
-	    -variable [::itcl::scope mVIndex] \
-	    -value 4 \
-	    -relief flat \
-	    -overrelief raised \
-	    -offrelief flat \
-	    -borderwidth 1 \
-	    -padx 0 \
-	    -highlightthickness 0 \
-	    -state disabled \
 	    -anchor e
-    } {
-	rename -font -labelFont labelFont Font
-    }
-    $itk_component(arb5V4L) configure \
-	-disabledforeground [$itk_component(arb5V4L) cget -foreground] \
-	-selectcolor  [$itk_component(arb5V4L) cget -background]
+    } {}
     itk_component add arb5V4xE {
-	::entry $parent.arb5V4xE \
+	::ttk::entry $parent.arb5V4xE \
 	    -textvariable [::itcl::scope mV4x] \
 	    -state disabled \
-	    -disabledforeground black \
 	    -validate key \
 	    -validatecommand {GeometryEditFrame::validateDouble %P}
-    } {
-	rename -font -entryFont entryFont Font
-    }
+    } {}
     itk_component add arb5V4yE {
-	::entry $parent.arb5V4yE \
+	::ttk::entry $parent.arb5V4yE \
 	    -textvariable [::itcl::scope mV4y] \
 	    -state disabled \
-	    -disabledforeground black \
 	    -validate key \
 	    -validatecommand {GeometryEditFrame::validateDouble %P}
-    } {
-	rename -font -entryFont entryFont Font
-    }
+    } {}
     itk_component add arb5V4zE {
-	::entry $parent.arb5V4zE \
+	::ttk::entry $parent.arb5V4zE \
 	    -textvariable [::itcl::scope mV4z] \
 	    -state disabled \
-	    -disabledforeground black \
 	    -validate key \
 	    -validatecommand {GeometryEditFrame::validateDouble %P}
-    } {
-	rename -font -entryFont entryFont Font
-    }
+    } {}
     itk_component add arb5V4UnitsL {
-	::label $parent.arb5V4UnitsL \
+	::ttk::label $parent.arb5V4UnitsL \
 	    -textvariable [::itcl::scope itk_option(-units)] \
 	    -anchor e
-    } {
-	rename -font -labelFont labelFont Font
-    }
+    } {}
     itk_component add arb5V5L {
-	::radiobutton $parent.arb5V5L \
+	::ttk::label $parent.arb5V5L \
 	    -text "V5:" \
-	    -indicatoron 0 \
-	    -variable [::itcl::scope mVIndex] \
-	    -value 5 \
-	    -relief flat \
-	    -overrelief raised \
-	    -offrelief flat \
-	    -borderwidth 1 \
-	    -padx 0 \
-	    -highlightthickness 0 \
-	    -state disabled \
 	    -anchor e
-    } {
-	rename -font -labelFont labelFont Font
-    }
-    $itk_component(arb5V5L) configure \
-	-disabledforeground [$itk_component(arb5V5L) cget -foreground] \
-	-selectcolor  [$itk_component(arb5V5L) cget -background]
+    } {}
     itk_component add arb5V5xE {
-	::entry $parent.arb5V5xE \
+	::ttk::entry $parent.arb5V5xE \
 	    -textvariable [::itcl::scope mV5x] \
 	    -state disabled \
-	    -disabledforeground black \
 	    -validate key \
 	    -validatecommand {GeometryEditFrame::validateDouble %P}
-    } {
-	rename -font -entryFont entryFont Font
-    }
+    } {}
     itk_component add arb5V5yE {
-	::entry $parent.arb5V5yE \
+	::ttk::entry $parent.arb5V5yE \
 	    -textvariable [::itcl::scope mV5y] \
 	    -state disabled \
-	    -disabledforeground black \
 	    -validate key \
 	    -validatecommand {GeometryEditFrame::validateDouble %P}
-    } {
-	rename -font -entryFont entryFont Font
-    }
+    } {}
     itk_component add arb5V5zE {
-	::entry $parent.arb5V5zE \
+	::ttk::entry $parent.arb5V5zE \
 	    -textvariable [::itcl::scope mV5z] \
 	    -state disabled \
-	    -disabledforeground black \
 	    -validate key \
 	    -validatecommand {GeometryEditFrame::validateDouble %P}
-    } {
-	rename -font -entryFont entryFont Font
-    }
+    } {}
     itk_component add arb5V5UnitsL {
-	::label $parent.arb5V5UnitsL \
+	::ttk::label $parent.arb5V5UnitsL \
 	    -textvariable [::itcl::scope itk_option(-units)] \
 	    -anchor e
-    } {
-	rename -font -labelFont labelFont Font
-    }
+    } {}
 
     set row 0
     grid $itk_component(arb5Type) \
@@ -589,7 +449,7 @@
 ::itcl::body Arb5EditFrame::buildMoveEdgePanel {parent} {
     foreach edge {12 23 34 14 15 25 35 45} {
 	itk_component add moveEdge$edge {
-	    ::radiobutton $parent.me$edge \
+	    ::ttk::radiobutton $parent.me$edge \
 		-variable [::itcl::scope mEditMode] \
 		-value [subst $[subst moveEdge$edge]] \
 		-text "Move edge $edge" \
@@ -603,7 +463,7 @@
 
     foreach point {5} {
 	itk_component add movePoint$point {
-	    ::radiobutton $parent.me$point \
+	    ::ttk::radiobutton $parent.me$point \
 		-variable [::itcl::scope mEditMode] \
 		-value [subst $[subst movePoint$point]] \
 		-text "Move point $point" \
@@ -619,7 +479,7 @@
 ::itcl::body Arb5EditFrame::buildMoveFacePanel {parent} {
     foreach face {1234 125 235 345 145} {
 	itk_component add moveFace$face {
-	    ::radiobutton $parent.mf$face \
+	    ::ttk::radiobutton $parent.mf$face \
 		-variable [::itcl::scope mEditMode] \
 		-value [subst $[subst moveFace$face]] \
 		-text "Move face $face" \
@@ -635,7 +495,7 @@
 ::itcl::body Arb5EditFrame::buildRotateFacePanel {parent} {
     foreach face {1234 125 235 345 145} {
 	itk_component add rotateFace$face {
-	    ::radiobutton $parent.rf$face \
+	    ::ttk::radiobutton $parent.rf$face \
 		-variable [::itcl::scope mEditMode] \
 		-value [subst $[subst rotateFace$face]] \
 		-text "Rotate face $face" \
