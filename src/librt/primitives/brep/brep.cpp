@@ -36,7 +36,7 @@
 #include <utility>
 
 #define BN_VMATH_PREFIX_INDICES 1
-#define ROOT_TOL 1.E-6
+#define ROOT_TOL 1.E-4
 
 #include "vmath.h"
 
@@ -648,6 +648,7 @@ utah_newton_solver(const ON_Surface* surf, const ON_Ray& r, ON_2dPoint &uv, doub
     double f, g;
     double rootdist, oldrootdist;
     double J, invdetJ;
+    bool checkedforedge = false;
 
     ON_3dVector p1, p2;
     double p1d = 0, p2d = 0;
@@ -690,13 +691,6 @@ utah_newton_solver(const ON_Surface* surf, const ON_Ray& r, ON_2dPoint &uv, doub
 
         if (oldrootdist < rootdist) return;
 
-        /**
-         * DDR
-         * Very complex surfaces will have issues because the normal will be messed up
-         * Need to check the dot between the ray dir and the normal
-         * and if < tol then make another iterations unless we are
-         * close to max iterations
-         */
         if (rootdist < ROOT_TOL) {
             t = utah_calc_t(r, S);
             converged = true;
@@ -712,23 +706,25 @@ bool
 utah_isTrimmed(ON_2dPoint uv, const ON_BrepFace *face) {
 
     bool retVal = false;
-
+/*
     for (int i = 0; i < face->LoopCount(); i++) {
         ON_BrepLoop* loop = face->Loop(i);
-        for (int j = 0; j < loop->m_ti.Count(); j++) {
-            ON_BrepTrim& trim = face->Brep()->m_T[loop->m_ti[j]];
-            const ON_Curve* trimCurve = trim.TrimCurveOf();
+        if (loop->TrimCount() > 0)
+        {
+            return true;
         }
     }
-
+*/
     return retVal;
 }
+
+static int hit_count = 0;
 
 int
 utah_brep_intersect(const SubsurfaceBBNode* sbv, const ON_BrepFace* face, const ON_Surface* surf, pt2d_t uv, ON_Ray& ray, HitList& hits)
 {
     ON_3dVector N;
-    bool hit;
+    bool hit = false;
     double t;
     ON_2dPoint ouv(uv[0], uv[1]);
     int found = BREP_INTERSECT_ROOT_DIVERGED;
@@ -755,6 +751,7 @@ utah_brep_intersect(const SubsurfaceBBNode* sbv, const ON_BrepFace* face, const 
         ON_3dVector _norm(N);
         _pt = ray.m_origin + (ray.m_dir*t);
         if (face->m_bRev) _norm.Reverse();
+        hit_count += 1;
         hits.push_back(brep_hit(*face,(const fastf_t*)ray.m_origin,(const fastf_t*)_pt,(const fastf_t*)_norm, uv));
         hits.back().sbv = sbv;
         found = BREP_INTERSECT_FOUND;
@@ -916,6 +913,7 @@ rt_brep_shot(struct soltab *stp, register struct xray *rp, struct application *a
     HitList all_hits; // record all hits
     MissList misses; // XXX - get rid of this stuff (for debugging)
     int s = 0;
+    hit_count = 0;
     for (BBNode::IsectList::iterator i = inters.begin(); i != inters.end(); i++) {
 	const SubsurfaceBBNode* sbv = dynamic_cast<SubsurfaceBBNode*>((*i).m_node);
 	const ON_BrepFace* f = sbv->m_face;
@@ -987,23 +985,27 @@ rt_brep_shot(struct soltab *stp, register struct xray *rp, struct application *a
 	}
     }
 
-    /*
-     *  DDR Giant hack to this seems to make this work with the examples from proc-db
-     *  although it doesn't work with some of the other examples I have tried.  This may
-     *  fix things because I'm not trimming.  Fix trimming and then if this extra point is still
-     *  showing up then investigate what is causing this extra point
-     */
-    if (hits.size() > 1 && (hits.size() % 2) != 0) {
-        HitList::iterator i = hits.begin();
-        hits.erase(i);
-    }
-
     // remove "duplicate" points
     //     HitList::iterator new_end = unique(hits.begin(), hits.end());
     //     hits.erase(new_end, hits.end());
 
     if (hits.size() > 1 && (hits.size() % 2) != 0) {
-        cerr << "**** ERROR odd number of hits: " << hits.size() << "\n";
+        cerr << "**** ERROR odd number of hits: " << hits.size() << " hit_count: " << hit_count << "\n";
+        point_t last_point;
+        TRACE2("ray origin: " << rp->r_pt[0] << "," << rp->r_pt[1] << "," << rp->r_pt[2]);
+        int hitCount = 0;
+        for (HitList::iterator i = hits.begin(); i != hits.end(); ++i) {
+            if (hitCount == 0)
+            {
+                TRACE2("point: " << i->point[0] << "," << i->point[1] << "," << i->point[2] << " dist_to_ray: " << DIST_PT_PT(i->point, rp->r_pt));
+            }
+            else
+            {
+                TRACE2("point: " << i->point[0] << "," << i->point[1] << "," << i->point[2] << " dist_to_ray: " << DIST_PT_PT(i->point, rp->r_pt) << " dist_to_last_point: " << DIST_PT_PT(i->point, last_point));
+            }
+            VMOVE(last_point, i->point);
+            hitCount += 1;
+        }
 #if PLOTTING
 	pcount++;
 	if (pcount > -1) {
