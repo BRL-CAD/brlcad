@@ -78,6 +78,9 @@ man1DOCBOOK = \
 	debuglib.xml \
 	debugmem.xml \
 	debugnmg.xml \
+	decompose.xml \
+	delay.xml \
+	dm.xml \
 	gastank.xml \
 	gqa.xml \
 	handle.xml \
