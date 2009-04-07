@@ -57,7 +57,7 @@ directory by default, the "BRL-CAD" name should be used as the
 official name of the project wherever possible unless technical
 limitations prohibit it.
 
-Unacceptible variations of the project name include BRLCAD, BrlCAD,
+Unacceptable variations of the project name include BRLCAD, BrlCAD,
 BrlCad, Brlcad, BRLcad, BrlCAD, Brl-CAD, Brl-Cad, Brl-cad, etc.
 
 Incorrect albeit perhaps humorous mispronunciations overheard include
