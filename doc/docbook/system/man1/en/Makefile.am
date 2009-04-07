@@ -73,6 +73,11 @@ man1DOCBOOK = \
 	db.xml \
 	db_glob.xml \
 	dbconcat.xml \
+	debugbu.xml \
+	debugdir.xml \
+	debuglib.xml \
+	debugmem.xml \
+	debugnmg.xml \
 	gastank.xml \
 	gqa.xml \
 	handle.xml \
