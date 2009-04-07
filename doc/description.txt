@@ -50,8 +50,8 @@ to spell the name in uppercase and utilizing a hyphen.  The "BRL-CAD"
 name should be used for all materials that will be publicly displayed
 or published.
 
-While it is acceptible to use the unhypenated and lowercase "brlcad"
-name for files and directories that refer to the package,
+While it is acceptable to use the non-hyphenated and lowercase
+"brlcad" name for files and directories that refer to the package,
 e.g. brlcad-7.8.2.tar.gz will compile and install into the /usr/brlcad
 directory by default, the "BRL-CAD" name should be used as the
 official name of the project wherever possible unless technical
