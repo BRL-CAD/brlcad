@@ -44,7 +44,7 @@ pnts_pack_double(unsigned char *buf, unsigned char *data, unsigned int count)
 static unsigned char *
 pnts_unpack_double(unsigned char *buf, unsigned char *data, unsigned int count)
 {
-    htond(data, buf, count);
+    ntohd(data, buf, count);
     buf += count * SIZEOF_NETWORK_DOUBLE;
     return buf;
 }
@@ -73,7 +73,7 @@ rt_pnts_export5(struct bu_external *external, const struct rt_db_internal *inter
     RT_PNTS_CK_MAGIC(pnts);
 
     /* allocate enough for the header (scale + type + count) */
-    external->ext_nbytes = SIZEOF_NETWORK_DOUBLE + sizeof(unsigned short) + sizeof (unsigned long);
+    external->ext_nbytes = SIZEOF_NETWORK_DOUBLE + SIZEOF_NETWORK_SHORT + SIZEOF_NETWORK_LONG;
     external->ext_buf = (genptr_t) bu_calloc(sizeof(unsigned char), external->ext_nbytes, "pnts external");
     buf = (unsigned char *)external->ext_buf;
 
@@ -88,16 +88,50 @@ rt_pnts_export5(struct bu_external *external, const struct rt_db_internal *inter
     }
 
     /* figure out how much data there is for each point */
-    pointDataSize = ELEMENTS_PER_POINT * SIZEOF_NETWORK_DOUBLE;
-    if (pnts->type & RT_PNT_TYPE_COL)
-	pointDataSize += 3 * SIZEOF_NETWORK_DOUBLE;
-    if (pnts->type & RT_PNT_TYPE_SCA)
-	pointDataSize += 1 * SIZEOF_NETWORK_DOUBLE;
-    if (pnts->type & RT_PNT_TYPE_NRM)
-	pointDataSize += ELEMENTS_PER_VECT;
+    switch (pnts->type) {
+        case RT_PNT_TYPE_PNT: {
+            pointDataSize = 3;
+            break;
+        }
+        case RT_PNT_TYPE_COL: {
+            pointDataSize = 6;
+            break;
+        }
+        case RT_PNT_TYPE_SCA: {
+            pointDataSize = 4;
+            break;
+        }
+        case RT_PNT_TYPE_NRM: {
+            pointDataSize = 6;
+            break;
+        }
+        case RT_PNT_TYPE_COL_SCA: {
+            pointDataSize = 7;
+            break;
+        }
+        case RT_PNT_TYPE_COL_NRM: {
+            pointDataSize = 9;
+            break;
+        }
+        case RT_PNT_TYPE_SCA_NRM: {
+            pointDataSize = 7;
+            break;
+        }
+        case RT_PNT_TYPE_COL_SCA_NRM: {
+            pointDataSize = 10;
+            break;
+        }
+        default:
+            bu_log("ERROR: unknown points primitive type\n");
+            return 0;
+    }
+
+    /* convert number of doubles to number of network bytes required to store doubles */
+    pointDataSize = pointDataSize * SIZEOF_NETWORK_DOUBLE;
 
     external->ext_buf = (genptr_t)bu_realloc(external->ext_buf, external->ext_nbytes + (pnts->count * pointDataSize), "pnts external realloc");
     buf = (unsigned char *)external->ext_buf + external->ext_nbytes;
+    external->ext_nbytes = external->ext_nbytes + (pnts->count * pointDataSize);
 
     /* get busy, serialize the point data depending on what type of point it is */
     switch (pnts->type) {
@@ -586,20 +620,17 @@ rt_pnts_import5(struct rt_db_internal *internal, const struct bu_external *exter
 int
 rt_pnts_ifree(struct rt_db_internal *internal)
 {
-    int i;
-    struct bu_list *head;
-    struct bu_list *curr;
+    struct pnt *head = (struct pnt *) NULL;
+    struct pnt *curr = (struct pnt *) NULL;
 
     RT_CK_DB_INTERNAL(internal);
 
-    head = ((struct bu_list *)(((struct rt_pnts_internal *)(internal->idb_ptr))->point));
+    head = (struct pnt *)(((struct rt_pnts_internal *)(internal->idb_ptr))->point);
 
     /* free the points */
-    while (BU_LIST_WHILE (curr, bu_list, head)) {
-	BU_LIST_DEQUEUE(curr);
-	if (curr) {
-	    bu_free(curr, "free pnts");
-	}
+    while (BU_LIST_WHILE (curr, pnt, &(head->l))) {
+        BU_LIST_DEQUEUE( &(curr->l) );
+        bu_free(curr, "free pnts");
     }
     
     /* free the head */
@@ -698,6 +729,77 @@ rt_pnts_plot(struct bu_list *vhead, struct rt_db_internal *internal, const struc
     return 0;
 }
 
+
+/**
+ * R T _ P N T S _ D E S C R I B E
+ *
+ * Make human-readable formatted presentation of this solid.  First
+ * line describes type of solid.  Additional lines are indented one
+ * tab, and give parameter values.
+ */
+static char *pnt_str="point\n";
+static char *pnt_color_str="point color\n";
+static char *pnt_scale_str="point scale\n";
+static char *pnt_normal_str="point normal\n";
+static char *pnt_color_scale_str="point color scale\n";
+static char *pnt_color_normal_str="point color normal\n";
+static char *pnt_scale_normal_str="point scale normal\n";
+static char *pnt_color_scale_normal_str="point color scale normal\n";
+int
+rt_pnts_describe(struct bu_vls *str, const struct rt_db_internal *intern, int verbose, double mm2local)
+{
+    struct rt_pnts_internal *pnts;
+    char buf[256];
+    double defaultSize = 0.0;
+    unsigned long numPoints = 0;
+    unsigned long loop_counter = 0;
+    void *headPoint = (void *) NULL;
+    void *loop_ptr = (void *) NULL;
+
+    /* retrieve head record values */
+    pnts = (struct rt_pnts_internal *) intern->idb_ptr;
+    defaultSize = pnts->scale;
+    numPoints = pnts->count;
+    headPoint = pnts->point;
+
+    bu_vls_strcat( str, "Point Cloud (PNTS)\n");
+
+    switch ( pnts->type )
+    {
+	case RT_PNT_TYPE_PNT:
+            bu_vls_strcat(str, pnt_str);
+            loop_counter = 1;
+            for (BU_LIST_FOR(loop_ptr, pnt, &(((struct pnt *)headPoint)->l))) {
+		snprintf( buf, 256, "point: '%lu' \t (%lf %lf %lf)\n",
+                loop_counter,
+		((struct pnt *)loop_ptr)->v[X] * mm2local,
+		((struct pnt *)loop_ptr)->v[Y] * mm2local,
+		((struct pnt *)loop_ptr)->v[Z] * mm2local ); 
+		bu_vls_strcat( str, buf );
+                loop_counter++;
+            }
+	    break;
+	case RT_PNT_TYPE_COL:
+	    break;
+	case RT_PNT_TYPE_SCA:
+	    break;
+	case RT_PNT_TYPE_NRM:
+	    break;
+	case RT_PNT_TYPE_COL_SCA:
+	    break;
+	case RT_PNT_TYPE_COL_NRM:
+	    break;
+	case RT_PNT_TYPE_SCA_NRM:
+	    break;
+	case RT_PNT_TYPE_COL_SCA_NRM:
+	    break;
+	default:
+	    break;
+    }
+    
+    return(0);
+}
+
 /*
  * Local Variables:
  * tab-width: 8
@@ -707,3 +809,4 @@ rt_pnts_plot(struct bu_list *vhead, struct rt_db_internal *internal, const struc
  * End:
  * ex: shiftwidth=4 tabstop=8
  */
+
