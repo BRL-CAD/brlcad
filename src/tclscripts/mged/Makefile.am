@@ -15,6 +15,7 @@ scripties = \
 	build_region.tcl \
 	calipers.tcl \
 	callbacks.tcl \
+	clear.tcl \
 	collaborate.tcl \
 	color.tcl \
 	color_scheme.tcl \
