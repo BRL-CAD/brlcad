@@ -27,12 +27,14 @@
 #       clear
 #
 proc clear {} {
-  global mged_players
-  foreach clearid $mged_players {
-   .$clearid.t delete 1.0 end
-   .$clearid.t insert insert " "
-   beginning_of_line .$clearid.t
-   .$clearid.t  edit reset
+  set clearid [cmd_win get]
+  if {$clearid == "" || $clearid == "mged"} {
+    puts [exec clear]
+  } else { 
+    .$clearid.t delete 1.0 end
+    .$clearid.t insert insert " "
+    beginning_of_line .$clearid.t
+    .$clearid.t  edit reset
   }
 }
 
