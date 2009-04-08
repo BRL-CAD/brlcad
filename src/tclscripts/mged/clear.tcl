@@ -28,12 +28,12 @@
 #
 proc clear {} {
   global mged_players
-  set clearid [set mged_players]
-  .$clearid.t delete 1.0 end
-  .$clearid.t insert insert " "
-  beginning_of_line .$clearid.t
-  .$clearid.t  edit reset
- 
+  foreach clearid $mged_players {
+   .$clearid.t delete 1.0 end
+   .$clearid.t insert insert " "
+   beginning_of_line .$clearid.t
+   .$clearid.t  edit reset
+  }
 }
 
 # Local Variables:
