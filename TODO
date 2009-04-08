@@ -30,6 +30,8 @@ THESE SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 THESE ARE LOWER PRIORITY OR FOR FUTURE RELEASES
 -----------------------------------------------
 
+* add a 'clear' command to mged/archer (but not as a libged command)
+
 * implement a routine to convert an NMG NURBS object to the newer
   openNURBS BREP object type to facilitate tool migration. could be
   useful to allow conversion of polygonal NMGs tool.
