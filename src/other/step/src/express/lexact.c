@@ -66,7 +66,7 @@ static char rcsid[] = "$Id: lexact.c,v 1.10 1997/09/24 20:05:38 dar Exp $";
 #include "dict.h"
 #include "memory.h"
 
-extern int		expyylineno;
+extern int		yylineno;
 extern FILE*		yyin;
 
 #ifdef FLEX
@@ -219,8 +219,8 @@ void
 SCANpush_buffer(char *filename,FILE *fp)
 {
 	SCANbuffer.savedPos = SCANcurrent;
-	SCANbuffer.lineno = expyylineno;
-	expyylineno = 1;
+	SCANbuffer.lineno = yylineno;
+	yylineno = 1;
 	++SCAN_current_buffer;
 #ifdef keep_nul
 	SCANbuffer.numRead = 0;
@@ -240,7 +240,7 @@ SCANpop_buffer()
 		fclose(SCANbuffer.file);
 	--SCAN_current_buffer;
 	SCANcurrent = SCANbuffer.savedPos;
-	expyylineno = SCANbuffer.lineno;	/* DEL */
+	yylineno = SCANbuffer.lineno;	/* DEL */
 	current_filename = SCANbuffer.filename;
 }
 
@@ -371,7 +371,7 @@ SCANprocess_identifier_or_keyword(void)
     } else {
 #endif
 
-	yylval.symbol =SYMBOLcreate(test_string,expyylineno,current_filename);
+	yylval.symbol =SYMBOLcreate(test_string,yylineno,current_filename);
 	if (k) {
 		/* built-in function/procedure */
 		return(k->token);
@@ -442,12 +442,12 @@ SCANprocess_encoded_string(void)
 	count = 0;
 	for (s = yylval.string;*s;s++,count++) {
 		if (!isxdigit(*s)) {
-			ERRORreport_with_line(ERROR_encoded_string_bad_digit,expyylineno,*s);
+			ERRORreport_with_line(ERROR_encoded_string_bad_digit,yylineno,*s);
 		}
 	}
 
 	if (0 != (count%8)) {
-		ERRORreport_with_line(ERROR_encoded_string_bad_count,expyylineno,count);
+		ERRORreport_with_line(ERROR_encoded_string_bad_count,yylineno,count);
 	}
 
 	return TOK_STRING_LITERAL_ENCODED;
@@ -548,11 +548,11 @@ SCANinclude_file(char *filename)
 	FILE *fp;
 
 	if ((fp = fopen(filename, "r")) == NULL) {
-		ERRORreport_with_line(ERROR_include_file, expyylineno);
+		ERRORreport_with_line(ERROR_include_file, yylineno);
 	} else {
 		if (print_objects_while_running & OBJ_SCHEMA_BITS) {
 			fprintf(stderr,"parse: including %s at line %d of %s\n",
-				filename,expyylineno,SCANbuffer.filename);
+				filename,yylineno,SCANbuffer.filename);
 		}
 		SCANpush_buffer(filename,fp);
 	}
@@ -586,5 +586,5 @@ SCANstrdup(char *s)
 
 long
 SCANtell() {
-    return expyylineno;
+    return yylineno;
 }

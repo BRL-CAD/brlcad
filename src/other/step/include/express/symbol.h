@@ -93,7 +93,7 @@ GLOBAL struct freelist_head SYMBOL_fl;
 #define SYMBOL_new()		(struct Symbol_ *)MEM_new(&SYMBOL_fl)
 #define SYMBOL_destroy(x)	MEM_destroy(&SYMBOL_fl,(Freelist *)(Generic)x)
 
-#define SYMBOLset(obj)		obj->symbol.line = expyylineno; \
+#define SYMBOLset(obj)		obj->symbol.line = yylineno; \
 				obj->symbol.filename = current_filename
 /* for backwards compatibility only, no one should ever need this */
 #define SYMBOLget_name(sym)	((sym)->name)
