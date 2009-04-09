@@ -645,6 +645,7 @@ AC_CHECK_HEADERS( \
 	sys/types.h \
 	sys/un.h \
 	sys/wait.h \
+	unistd.h \
 )
 
 AC_CHECK_HEADER(sys/sched.h,
@@ -1015,6 +1016,8 @@ AC_CHECK_FUNCS(\
 	getprogname \
 	kill \
 	lrand48 \
+	memcpy \
+	memmove \
 	memset \
 	mkstemp \
 	pipe \
