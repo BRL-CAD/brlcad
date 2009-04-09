@@ -42,6 +42,19 @@
 #include <dirobj.h>
 #include <dirent.h>
 
+#ifdef HAVE_CONFIG_H
+# include <scl_config.h>
+#endif
+
+/* for getuid() */
+#ifdef HAVE_UNISTD_H
+#  include <unistd.h>
+#endif
+/* for stat() file status */
+#ifdef HAVE_SYS_STAT_H
+# include <sys/stat.h>
+#endif
+
 // to help ObjectCenter
 #ifndef HAVE_MEMMOVE
 extern "C"
