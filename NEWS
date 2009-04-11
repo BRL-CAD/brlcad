@@ -14,6 +14,7 @@ changes made.  See document footer for additional details.
 --- 2009-05-XX  Release 7.14.7                                     ---
 ----------------------------------------------------------------------
 
+* add a left handed winding flag to the coil tool - Cliff Yapp
 * add a clear command to MGED's command line - Cliff Yapp, Bob Parker
 
 
