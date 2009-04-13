@@ -37,6 +37,9 @@
 
 #include "common.h"
 
+/* for size_t */
+#include <stddef.h>
+
 __BEGIN_DECLS
 
 #ifndef SYSV_EXPORT
@@ -52,7 +55,7 @@ __BEGIN_DECLS
 #endif
 
 #ifndef HAVE_BCMP
-SYSV_EXPORT extern int bcmp(char *b1, char *b2, int len);
+SYSV_EXPORT extern int bcmp(const void *b1, const void *b2, size_t len);
 #endif
 
 #ifndef HAVE_MEMSET

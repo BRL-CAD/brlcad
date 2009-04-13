@@ -22,12 +22,12 @@ static const int unused = 0;
 #include "sysv.h"
 
 int
-bcmp(register char *b1, register char *b2, int len)
+bcmp(register const void *b1, register const void *b2, size_t len)
 {
     int ret = 0;
 
     while (len-- > 0) {
-	if (*b1++ != *b2++) {
+	if (*(const char *)(b1)++ != *(const char *)(b2)++) {
 	    ret = 1;
 	    break;
 	}
