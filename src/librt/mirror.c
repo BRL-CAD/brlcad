@@ -1,4 +1,4 @@
-1/*                        M I R R O R . C
+/*                        M I R R O R . C
   * BRL-CAD
   *
   * Copyright (c) 2007-2009 United States Government as represented by
