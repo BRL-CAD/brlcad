@@ -138,7 +138,7 @@ ipu_acquire(struct dsreq *dsp,
     filldsreq(dsp, buf, sizeof(buf), DSRQ_READ|DSRQ_SENSE);
 
     if (!doscsireq(getfd(dsp), dsp) &&
-	bcmp(&buf[8], "CANON   IPU-", 12)) {
+	memcmp(&buf[8], "CANON   IPU-", 12)) {
 	fprintf(stderr,
 		"ipu_inquire() device is not IPU-10/CLC500!\n%s\n",
 		&buf[8]);
@@ -188,7 +188,7 @@ ipu_inquire(struct dsreq *dsp)
 
 	/* 20 characters of Vendor/Product ID */
 	memcpy(&response[strlen(response)], &buf[8], 20);
-	if (bcmp(&buf[8], "CANON   IPU-", 12)) {
+	if (memcmp(&buf[8], "CANON   IPU-", 12)) {
 	    fprintf(stderr,
 		    "ipu_inquire() device is not IPU-10/CLC500!\n%s\n",
 		    response);
