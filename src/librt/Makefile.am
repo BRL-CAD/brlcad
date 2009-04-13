@@ -65,7 +65,6 @@ librt_nil_la_SOURCES = \
 	many.c \
 	mater.c \
 	memalloc.c \
-	mirror.c \
 	mkbundle.c \
 	opennurbs_ext.cpp \
 	oslo_calc.c \
@@ -114,6 +113,7 @@ librt_nil_la_SOURCES = \
 	primitives/hf/hf.c \
 	primitives/hyp/hyp.c \
 	primitives/metaball/metaball.c \
+	primitives/mirror.c \
 	primitives/nmg/nmg.c \
 	primitives/nmg/nmg_bool.c \
 	primitives/nmg/nmg_ck.c \
