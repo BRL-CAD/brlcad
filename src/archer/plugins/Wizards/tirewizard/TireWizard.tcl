@@ -409,7 +409,7 @@
 }
 
 ::itcl::body TireWizard::buildTire {} {
-    SetWaitCursor
+    SetWaitCursor $archer
 
     $archer pluginUpdateStatusBar "Building Tire..."
     $archer pluginUpdateSaveMode 1
@@ -456,7 +456,7 @@
     after 50
     $archer pluginUpdateProgressBar 1.0
 
-    SetNormalCursor
+    SetNormalCursor $archer
 
     $archer pluginUpdateProgressBar 0.0
     $archer pluginUpdateStatusBar ""
