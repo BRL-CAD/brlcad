@@ -703,19 +703,142 @@ utah_newton_solver(const ON_Surface* surf, const ON_Ray& r, ON_2dPoint &uv, doub
 }
 
 bool
-utah_isTrimmed(ON_2dPoint uv, const ON_BrepFace *face) {
+lines_intersect(double x1, double y1, double x2, double y2, double x3, double y3, double x4, double y4)
+{
+    double tol = 1e-8;
+    double A1 = y2-y1;
+    double B1 = x1-x2;
+    double C1 = A1*x1+B1*y1;
 
-    bool retVal = false;
+    double A2 = y4-y3;
+    double B2 = x3-x4;
+    double C2 = A2*x3+B2*y3;
 
-    for (int i = 0; i < face->LoopCount(); i++) {
-        ON_BrepLoop* loop = face->Loop(i);
-        if (loop->TrimCount() > 0)
+    double det = A1*B2 - A2*B1;
+
+    if (NEAR_ZERO(det, tol)) {
+        return false;
+    }
+    else {
+        double x = (B2*C1 - B1*C2)/det;
+        double y = (A1*C2 - A2*C1)/det;
+
+        if ((x >= min(x1, x2)) && (x <= max(x1, x2)) && (x >= min(x3, x4)) && (x <= max(x3, x4)) && (y >= min(y1, y2)) && (y <= max(y1, y2)) && (y >= min(y3, y4)) && (y <= max(y3, y4)))
         {
+            return true;
+        }
 
-            return false;
+        if (NEAR_ZERO(x-x1, tol) && NEAR_ZERO(y-y1, tol))
+        {
+            return true;
+        }
+
+        if (NEAR_ZERO(x-x2, tol) && NEAR_ZERO(y-y2, tol))
+        {
+            return true;
+        }
+
+        if (NEAR_ZERO(x-x3, tol) && NEAR_ZERO(y-y3, tol))
+        {
+            return true;
+        }
+
+        if (NEAR_ZERO(x-x4, tol) && NEAR_ZERO(y-y4, tol))
+        {
+            return true;
         }
     }
 
+    return false;
+}
+
+bool
+utah_isTrimmed(ON_2dPoint uv, const ON_BrepFace *face) {
+    static bool firstTime = true;
+    static int numberPoints = 100;
+    static bool curvesCal[300];
+    static ON_3dPoint points[300][100];
+
+    if (firstTime)
+    {
+        for (int i = 0; i < 1000; i++)
+        {
+            curvesCal[i] = false;
+        }
+        firstTime = false;
+    }
+
+    bool retVal = false;
+    if (face == NULL)
+    {
+        return false;
+    }
+    const ON_Surface* surf = face->SurfaceOf();
+    if (surf == NULL)
+    {
+        return false;
+    }
+    TRACE1("utah_isTrimmed: " << uv);
+    // for each loop
+    double umin, umax;
+    double vmin, vmax;
+    ON_2dPoint from, to;
+    from.x = uv.x;
+    from.y = to.y =uv.y;
+    surf->GetDomain(0, &umin, &umax);
+    surf->GetDomain(1, &vmin, &vmax);
+    to.x = umax + 1;
+    int intersections = 0;
+    for (int i = 0; i < face->LoopCount(); i++) {
+        ON_BrepLoop* loop = face->Loop(i);
+        if (loop == 0)
+        {
+            continue;
+        }
+        // for each trim
+        for( int lti = 0; lti < loop->TrimCount(); lti++ ) {
+            const ON_BrepTrim* trim = loop->Trim( lti );
+            if (0 == trim )
+                continue;
+            const ON_Curve* trimCurve = face->Brep()->m_C2[trim->m_c2i];
+            if (trimCurve == 0)
+            {
+                continue;
+            }
+            ON_3dPoint startPoint = trimCurve->PointAtStart();
+            ON_3dPoint endPoint = trimCurve->PointAtEnd();
+            ON_Interval domain = trimCurve->Domain();
+            if (!curvesCal[trim->m_c2i])
+            {
+                printf("%d domain (%lf, %lf) start (%lf, %lf, %lf) end (%lf, %lf, %lf)\n", trim->m_c2i, domain.m_t[0], domain.m_t[1], startPoint.x, startPoint.y, startPoint.z, endPoint.x, endPoint.y, endPoint.z);
+                curvesCal[trim->m_c2i] = true;
+                double step = (domain.m_t[1]-domain.m_t[0])/(double)numberPoints;
+                double t = domain.m_t[0];
+                for (int s = 0; s < numberPoints; s++)
+                {
+                    points[trim->m_c2i][s] = trimCurve->PointAt(t);
+                    t += step;
+                }
+            }
+
+            for (int i = 0; i < numberPoints-1; i++)
+            {
+                if (lines_intersect(from.x, from.y, to.x, to.y, points[trim->m_c2i][i].x, points[trim->m_c2i][i].y, points[trim->m_c2i][i+1].x, points[trim->m_c2i][i+1].y))
+                {
+                    intersections += 1;
+                }
+            }
+            if (lines_intersect(from.x, from.y, to.x, to.y, points[trim->m_c2i][numberPoints-1].x, points[trim->m_c2i][numberPoints-1].y, points[trim->m_c2i][0].x, points[trim->m_c2i][0].y))
+            {
+                intersections += 1;
+            }
+            if (intersections == 0) // if this happens means we missed the trim compeletely
+            {
+                intersections = 2;
+            }
+        }
+    }
+    retVal= (intersections > 0 && (intersections % 2) == 0);
     return retVal;
 }
 
