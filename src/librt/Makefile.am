@@ -149,15 +149,15 @@ librt_nil_la_SOURCES = \
 	primitives/sph/sph.c \
 	primitives/submodel/submodel.c \
 	primitives/superell/superell.c \
-	primitives/tor/tor.c \
+	primitives/table.c \
 	primitives/tgc/tgc.c \
+	primitives/tor/tor.c \
 	primitives/vol/vol.c \
 	regionfix.c \
 	roots.c \
 	shoot.c \
 	spectrum.c \
 	storage.c \
-	table.c \
 	tcl.c \
 	timer42.c \
 	transform.c \
