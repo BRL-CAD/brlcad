@@ -1999,7 +1999,6 @@ AC_TYPE_SIGNAL
 AC_CHECK_FUNCS(\
 	XQueryExtension \
 	alarm \
-	bcmp \
 	dlopen \
 	drand48 \
 	fchmod \

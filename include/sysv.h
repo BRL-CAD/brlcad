@@ -54,10 +54,6 @@ __BEGIN_DECLS
 #  endif
 #endif
 
-#ifndef HAVE_BCMP
-SYSV_EXPORT extern int bcmp(const void *b1, const void *b2, size_t len);
-#endif
-
 #ifndef HAVE_MEMSET
 SYSV_EXPORT extern void *memset(void *s, int c, size_t n);
 #endif
