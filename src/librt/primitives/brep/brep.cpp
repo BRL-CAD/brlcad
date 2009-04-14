@@ -754,21 +754,21 @@ lines_intersect(double x1, double y1, double x2, double y2, double x3, double y3
 
 bool
 utah_isTrimmed(ON_2dPoint uv, const ON_BrepFace *face) {
-    static bool firstTime = true;
-    static int numberPoints = 100;
-    static bool curvesCal[300];
-    static ON_3dPoint points[300][100];
+    static bool approximationsInit = false;
+    static bool curveApproximated[100];
+    static ON_3dPoint curveApproximations[100][200];
+    static int numberOfPoints = 200;
+    static int maxCurves = 100;
 
-    if (firstTime)
+    if (!approximationsInit)
     {
-        for (int i = 0; i < 1000; i++)
+        approximationsInit = true;
+        for (int i = 0; i < maxCurves; i++)
         {
-            curvesCal[i] = false;
+            curveApproximated[i] = false;
         }
-        firstTime = false;
     }
 
-    bool retVal = false;
     if (face == NULL)
     {
         return false;
@@ -780,17 +780,8 @@ utah_isTrimmed(ON_2dPoint uv, const ON_BrepFace *face) {
     }
     TRACE1("utah_isTrimmed: " << uv);
     // for each loop
-    double umin, umax;
-    double vmin, vmax;
-    ON_2dPoint from, to;
-    from.x = uv.x;
-    from.y = to.y =uv.y;
-    surf->GetDomain(0, &umin, &umax);
-    surf->GetDomain(1, &vmin, &vmax);
-    to.x = umax + 1;
-    int intersections = 0;
-    for (int i = 0; i < face->LoopCount(); i++) {
-        ON_BrepLoop* loop = face->Loop(i);
+    for (int li = 0; li < face->LoopCount(); li++) {
+        ON_BrepLoop* loop = face->Loop(li);
         if (loop == 0)
         {
             continue;
@@ -805,41 +796,53 @@ utah_isTrimmed(ON_2dPoint uv, const ON_BrepFace *face) {
             {
                 continue;
             }
-            ON_3dPoint startPoint = trimCurve->PointAtStart();
-            ON_3dPoint endPoint = trimCurve->PointAtEnd();
+            double closestT;
+            double currentDistance;
+            double shortestDistance;
+            double t;
+            ON_3dPoint hitPoint(uv.x, uv.y, 0.0);
+            ON_3dPoint closestPoint;
+            // trimCurve->GetClosestPoint(hitPoint, &closestT); This isn't working...
             ON_Interval domain = trimCurve->Domain();
-            if (!curvesCal[trim->m_c2i])
+            double step = (domain.m_t[1]-domain.m_t[0])/(double)numberOfPoints;
+            if (!curveApproximated[trim->m_c2i])
             {
-                printf("%d domain (%lf, %lf) start (%lf, %lf, %lf) end (%lf, %lf, %lf)\n", trim->m_c2i, domain.m_t[0], domain.m_t[1], startPoint.x, startPoint.y, startPoint.z, endPoint.x, endPoint.y, endPoint.z);
-                curvesCal[trim->m_c2i] = true;
-                double step = (domain.m_t[1]-domain.m_t[0])/(double)numberPoints;
-                double t = domain.m_t[0];
-                for (int s = 0; s < numberPoints; s++)
+                curveApproximated[trim->m_c2i] = true;
+                t = domain.m_t[0];
+                for (int i = 0; i < numberOfPoints; i++)
                 {
-                    points[trim->m_c2i][s] = trimCurve->PointAt(t);
+                    curveApproximations[trim->m_c2i][i] = trimCurve->PointAt(t);
                     t += step;
                 }
             }
-
-            for (int i = 0; i < numberPoints-1; i++)
+            closestT = t = domain.m_t[0];
+            closestPoint = curveApproximations[trim->m_c2i][0];
+            currentDistance = shortestDistance = closestPoint.DistanceTo(hitPoint);
+            for (int i = 0; i < numberOfPoints; i++)
             {
-                if (lines_intersect(from.x, from.y, to.x, to.y, points[trim->m_c2i][i].x, points[trim->m_c2i][i].y, points[trim->m_c2i][i+1].x, points[trim->m_c2i][i+1].y))
+                closestPoint = curveApproximations[trim->m_c2i][i];
+                currentDistance = closestPoint.DistanceTo(hitPoint);
+                if (currentDistance < shortestDistance)
                 {
-                    intersections += 1;
+                    closestT = t;
+                    shortestDistance = currentDistance;
                 }
+                t += step;
             }
-            if (lines_intersect(from.x, from.y, to.x, to.y, points[trim->m_c2i][numberPoints-1].x, points[trim->m_c2i][numberPoints-1].y, points[trim->m_c2i][0].x, points[trim->m_c2i][0].y))
+            ON_3dVector tangent, kappa;
+            trimCurve->EvCurvature(closestT, closestPoint, tangent, kappa);
+            ON_3dVector hitDirection(hitPoint.x-closestPoint.x, hitPoint.y-closestPoint.y, hitPoint.z-closestPoint.z);
+            ON_3dVector normal = ON_CrossProduct(tangent, kappa);
+            double dot = (hitDirection * kappa);
+            //printf("closestT=%lf dot=%lf closestPoint=(%lf, %lf, %lf) hitPoint=(%lf, %lf, %lf) tangent=(%lf, %lf, %lf) kappa=(%lf, %lf, %lf) normal=(%lf, %lf, %lf) hitDirection=(%lf, %lf, %lf)\n", closestT, dot, closestPoint.x, closestPoint.y, closestPoint.z, hitPoint.x, hitPoint.y, hitPoint.z, tangent.x, tangent.y, tangent.z, kappa.x, kappa.y, kappa.z, normal.x, normal.y, normal.z, hitDirection.x, hitDirection.y, hitDirection.z);
+            if (((li == 0) && (dot < 0.0)) ||
+                    ((li > 0) && (dot > 0.0)))
             {
-                intersections += 1;
-            }
-            if (intersections == 0) // if this happens means we missed the trim compeletely
-            {
-                intersections = 2;
+                return true;
             }
         }
     }
-    retVal= (intersections > 0 && (intersections % 2) == 0);
-    return retVal;
+    return false;
 }
 
 static int hit_count = 0;
@@ -865,6 +868,7 @@ utah_brep_intersect(const SubsurfaceBBNode* sbv, const ON_BrepFace* face, const 
      *
      */
     if (converged && (t > 1.e-2) && (!utah_isTrimmed(ouv, face))) hit = true;
+    //if (converged && (t > 1.e-2)) hit = true;
 
     uv[0] = ouv.x;
     uv[1] = ouv.y;
@@ -1108,12 +1112,17 @@ rt_brep_shot(struct soltab *stp, register struct xray *rp, struct application *a
 	    }
 	}
     }
-
+/*
     if (hits.size() > 1 && (hits.size() % 2) != 0) {
         HitList::iterator i = hits.end();
         --i;
         hits.erase(i);
     }
+    if (hits.size() > 1 && (hits.size() % 2) != 0) {
+        HitList::iterator i = hits.begin();
+        hits.erase(i);
+    }
+*/
 
     // remove "duplicate" points
     //     HitList::iterator new_end = unique(hits.begin(), hits.end());
