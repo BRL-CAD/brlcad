@@ -200,7 +200,7 @@ set mged_help_data(nmg_collapse)	$helplib_data(wdb_nmg_collapse)
 set mged_help_data(nmg_fix_normals)	{{NMG object} {Attempt to fix the normals of an NMG object.}}
 set mged_help_data(nmg_simplify)	$helplib_data(wdb_nmg_simplify)
 set mged_help_data(oed)		{{path_lhs path_rhs}	{go from view to object_edit of path_lhs/path_rhs}}
-set mged_help_data(opendb)	{{[database.g]}	{close current .g file, and open new .g file}}
+set mged_help_data(opendb)	{{[database.g]}	{close any currently open .g file and open the specified database.g file, or return the name of the currently open geometry database}}
 set mged_help_data(orientation)	$helplib_data(vo_orient)
 set mged_help_data(orot)	{{[-i] xdeg ydeg zdeg}	{rotate object being edited}}
 set mged_help_data(oscale)	{{factor}	{scale object by factor}}
