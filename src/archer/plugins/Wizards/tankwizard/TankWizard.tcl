@@ -565,8 +565,8 @@
 	    -hscrollmode dynamic \
 	    -vscrollmode dynamic
     } {}
+    $itk_component(paramScroll) configure -background $ArcherCore::LABEL_BACKGROUND_COLOR
     set newParent [$itk_component(paramScroll) childsite]
-
 
     # Create frame for stuff not in a toggle arrow
     itk_component add paramNonArrowF {
@@ -575,7 +575,7 @@
 
     # Create name entry field
     itk_component add paramNameL {
-	::label $itk_component(paramNonArrowF).nameL \
+	::ttk::label $itk_component(paramNonArrowF).nameL \
 	    -text "Name:" \
 	    -anchor e
     } {}
@@ -583,20 +583,19 @@
     #XXX wizardTop is temporarily hardwired
     #-state disabled
     itk_component add paramNameE {
-	::entry $itk_component(paramNonArrowF).nameE \
-	    -textvariable [::itcl::scope wizardTop] \
-	    -disabledforeground black
+	::ttk::entry $itk_component(paramNonArrowF).nameE \
+	    -textvariable [::itcl::scope wizardTop]
     } {}
 
     # Create origin entry field
     itk_component add paramOriginL {
-	::label $itk_component(paramNonArrowF).originL \
+	::ttk::label $itk_component(paramNonArrowF).originL \
 	    -text "Origin:" \
 	    -anchor e
     } {}
 
     itk_component add paramOriginE {
-	::entry $itk_component(paramNonArrowF).originE \
+	::ttk::entry $itk_component(paramNonArrowF).originE \
 	    -textvariable [::itcl::scope wizardOrigin]
     } {}
 
@@ -643,41 +642,45 @@
 
 ::itcl::body TankWizard::buildCategoryView {parent} {
     itk_component add classL {
-	::label $parent.classL -text "Class:" \
+	::ttk::label $parent.classL -text "Class:" \
 	    -anchor e
     } {}
     itk_component add classCB {
-	iwidgets::combobox $parent.classCB
+	::ttk::combobox $parent.classCB \
+	    -state disabled \
+	    -values $vehicleClasses
     } {}
-    eval $itk_component(classCB) insert list end \
+#    eval $itk_component(classCB) insert list end \
 	$vehicleClasses
 
     itk_component add typeL {
-	::label $parent.typeL -text "Type:" \
+	::ttk::label $parent.typeL -text "Type:" \
 	    -anchor e
     } {}
     itk_component add typeCB {
-	iwidgets::combobox $parent.typeCB
+	::ttk::combobox $parent.typeCB \
+	    -state disabled \
+	    -values $heavyGroundMobileTypes
     } {}
-    eval $itk_component(typeCB) insert list end \
+#    eval $itk_component(typeCB) insert list end \
 	$heavyGroundMobileTypes
 
     # make initial selections
-    $itk_component(classCB) selection set 1
-    $itk_component(typeCB) selection set 0
+    $itk_component(classCB) set [lindex $vehicleClasses 1]
+    $itk_component(typeCB) set [lindex $heavyGroundMobileTypes 0]
 
     # set up callbacks
-    $itk_component(classCB) configure -selectioncommand [::itcl::code $this changeClass]
-    $itk_component(typeCB) configure -selectioncommand [::itcl::code $this changeType]
+#    $itk_component(classCB) configure -selectioncommand [::itcl::code $this changeClass]
+#    $itk_component(typeCB) configure -selectioncommand [::itcl::code $this changeType]
 
     # turn off editing
-    $itk_component(classCB) configure -editable false
-    $itk_component(typeCB) configure -editable false
+#    $itk_component(classCB) configure -editable false
+#    $itk_component(typeCB) configure -editable false
 
-    if {!$enableCategory} {
-	$itk_component(classCB) component arrowBtn configure -state disable
-	$itk_component(typeCB) component arrowBtn configure -state disable
-    }
+#    if {!$enableCategory} {
+#	$itk_component(classCB) component arrowBtn configure -state disable
+#	$itk_component(typeCB) component arrowBtn configure -state disable
+#    }
 
     # pack widgets
     set row 0
@@ -712,51 +715,51 @@
 
 ::itcl::body TankWizard::buildGunView {parent} {
     itk_component add gunLengthL {
-	::label $parent.gunLengthL -text "Length:" \
+	::ttk::label $parent.gunLengthL -text "Length:" \
 	    -anchor e
     } {}
     itk_component add gunLengthE {
-	::entry $parent.gunLengthE -textvariable [::itcl::scope gunLength]
+	::ttk::entry $parent.gunLengthE -textvariable [::itcl::scope gunLength]
     } {}
 
     itk_component add gunBaseInnerDiameterL {
-	::label $parent.gunBaseInnerDiameterL -text "Inner Diameter (Base):" \
+	::ttk::label $parent.gunBaseInnerDiameterL -text "Inner Diameter (Base):" \
 	    -anchor e
     } {}
     itk_component add gunBaseInnerDiameterE {
-	::entry $parent.gunBaseInnerDiameterE -textvariable [::itcl::scope gunBaseInnerDiameter]
+	::ttk::entry $parent.gunBaseInnerDiameterE -textvariable [::itcl::scope gunBaseInnerDiameter]
     } {}
 
     itk_component add gunEndInnerDiameterL {
-	::label $parent.gunEndInnerDiameterL -text "Inner Diameter (End):" \
+	::ttk::label $parent.gunEndInnerDiameterL -text "Inner Diameter (End):" \
 	    -anchor e
     } {}
     itk_component add gunEndInnerDiameterE {
-	::entry $parent.gunEndInnerDiameterE -textvariable [::itcl::scope gunEndInnerDiameter]
+	::ttk::entry $parent.gunEndInnerDiameterE -textvariable [::itcl::scope gunEndInnerDiameter]
     } {}
 
     itk_component add gunBaseOuterDiameterL {
-	::label $parent.gunBaseOuterDiameterL -text "Outer Diameter (Base):" \
+	::ttk::label $parent.gunBaseOuterDiameterL -text "Outer Diameter (Base):" \
 	    -anchor e
     } {}
     itk_component add gunBaseOuterDiameterE {
-	::entry $parent.gunBaseOuterDiameterE -textvariable [::itcl::scope gunBaseOuterDiameter]
+	::ttk::entry $parent.gunBaseOuterDiameterE -textvariable [::itcl::scope gunBaseOuterDiameter]
     } {}
 
     itk_component add gunEndOuterDiameterL {
-	::label $parent.gunEndOuterDiameterL -text "Outer Diameter (End):" \
+	::ttk::label $parent.gunEndOuterDiameterL -text "Outer Diameter (End):" \
 	    -anchor e
     } {}
     itk_component add gunEndOuterDiameterE {
-	::entry $parent.gunEndOuterDiameterE -textvariable [::itcl::scope gunEndOuterDiameter]
+	::ttk::entry $parent.gunEndOuterDiameterE -textvariable [::itcl::scope gunEndOuterDiameter]
     } {}
 
     itk_component add gunElevationL {
-	::label $parent.gunElevationL -text "Elevation (DEG):" \
+	::ttk::label $parent.gunElevationL -text "Elevation (DEG):" \
 	    -anchor e
     } {}
     itk_component add gunElevationE {
-	::entry $parent.gunElevationE -textvariable [::itcl::scope gunElevation]
+	::ttk::entry $parent.gunElevationE -textvariable [::itcl::scope gunElevation]
     } {}
 
     # pack widgets
@@ -784,27 +787,27 @@
 
 ::itcl::body TankWizard::buildHullView {parent} {
     itk_component add hullLengthL {
-	::label $parent.lengthL -text "Length:" \
+	::ttk::label $parent.lengthL -text "Length:" \
 	    -anchor e
     } {}
     itk_component add hullLengthE {
-	::entry $parent.lengthE -textvariable [::itcl::scope hullLength]
+	::ttk::entry $parent.lengthE -textvariable [::itcl::scope hullLength]
     } {}
 
     itk_component add hullWidthL {
-	::label $parent.widthL -text "Width:" \
+	::ttk::label $parent.widthL -text "Width:" \
 	    -anchor e
     } {}
     itk_component add hullWidthE {
-	::entry $parent.widthE -textvariable [::itcl::scope hullWidth]
+	::ttk::entry $parent.widthE -textvariable [::itcl::scope hullWidth]
     } {}
 
     itk_component add hullHeightL {
-	::label $parent.heightL -text "Height:" \
+	::ttk::label $parent.heightL -text "Height:" \
 	    -anchor e
     } {}
     itk_component add hullHeightE {
-	::entry $parent.heightE -textvariable [::itcl::scope hullHeight]
+	::ttk::entry $parent.heightE -textvariable [::itcl::scope hullHeight]
     } {}
 
     buildArrow $parent wheelWell "Wheel Well Cutout" buildWheelWellView
@@ -830,19 +833,19 @@
 
 ::itcl::body TankWizard::buildWheelWellView {parent} {
     itk_component add wwDepthL {
-	::label $parent.depthL -text "Depth:" \
+	::ttk::label $parent.depthL -text "Depth:" \
 	    -anchor e
     } {}
     itk_component add wwDepthE {
-	::entry $parent.depthE -textvariable [::itcl::scope wwDepth]
+	::ttk::entry $parent.depthE -textvariable [::itcl::scope wwDepth]
     } {}
 
     itk_component add wwHeightL {
-	::label $parent.heightL -text "Height:" \
+	::ttk::label $parent.heightL -text "Height:" \
 	    -anchor e
     } {}
     itk_component add wwHeightE {
-	::entry $parent.heightE -textvariable [::itcl::scope wwHeight]
+	::ttk::entry $parent.heightE -textvariable [::itcl::scope wwHeight]
     } {}
 
     # pack widgets
@@ -858,27 +861,27 @@
 
 ::itcl::body TankWizard::buildFrontSlopeView {parent} {
     itk_component add convHeightL {
-	::label $parent.convHeightL -text "Convergance Height:" \
+	::ttk::label $parent.convHeightL -text "Convergance Height:" \
 	    -anchor e
     } {}
     itk_component add convHeightE {
-	::entry $parent.convHeightE -textvariable [::itcl::scope convHeight]
+	::ttk::entry $parent.convHeightE -textvariable [::itcl::scope convHeight]
     } {}
 
     itk_component add upperOffsetL {
-	::label $parent.upperOffsetL -text "Upper Offset:" \
+	::ttk::label $parent.upperOffsetL -text "Upper Offset:" \
 	    -anchor e
     } {}
     itk_component add upperOffsetE {
-	::entry $parent.upperOffsetE -textvariable [::itcl::scope upperOffset]
+	::ttk::entry $parent.upperOffsetE -textvariable [::itcl::scope upperOffset]
     } {}
 
     itk_component add lowerOffsetL {
-	::label $parent.lowerOffsetL -text "Lower Offset:" \
+	::ttk::label $parent.lowerOffsetL -text "Lower Offset:" \
 	    -anchor e
     } {}
     itk_component add lowerOffsetE {
-	::entry $parent.lowerOffsetE -textvariable [::itcl::scope lowerOffset]
+	::ttk::entry $parent.lowerOffsetE -textvariable [::itcl::scope lowerOffset]
     } {}
 
     # pack widgets
@@ -897,67 +900,67 @@
 
 ::itcl::body TankWizard::buildTrackView {parent} {
     itk_component add trackWidthL {
-	::label $parent.trackwidthL -text "Width:" \
+	::ttk::label $parent.trackwidthL -text "Width:" \
 	    -anchor e
     } {}
     itk_component add trackWidthE {
-	::entry $parent.trackWidthE -textvariable [::itcl::scope trackWidth]
+	::ttk::entry $parent.trackWidthE -textvariable [::itcl::scope trackWidth]
     } {}
 
     itk_component add trackThicknessL {
-	::label $parent.trackthicknessL -text "Thickness:" \
+	::ttk::label $parent.trackthicknessL -text "Thickness:" \
 	    -anchor e
     } {}
     itk_component add trackThicknessE {
-	::entry $parent.trackThicknessE -textvariable [::itcl::scope trackThickness]
+	::ttk::entry $parent.trackThicknessE -textvariable [::itcl::scope trackThickness]
     } {}
 
     itk_component add trackClearanceL {
-	::label $parent.trackclearanceL -text "Clearance:" \
+	::ttk::label $parent.trackclearanceL -text "Clearance:" \
 	    -anchor e
     } {}
     itk_component add trackClearanceE {
-	::entry $parent.trackClearanceE -textvariable [::itcl::scope trackClearance]
+	::ttk::entry $parent.trackClearanceE -textvariable [::itcl::scope trackClearance]
     } {}
 
     itk_component add numRoadWheelsL {
-	::label $parent.numRoadWheelsL -text "Number of Road Wheels:" \
+	::ttk::label $parent.numRoadWheelsL -text "Number of Road Wheels:" \
 	    -anchor e
     } {}
     itk_component add numRoadWheelsE {
-	::entry $parent.numRoadWheelsE -textvariable [::itcl::scope numRoadWheels]
+	::ttk::entry $parent.numRoadWheelsE -textvariable [::itcl::scope numRoadWheels]
     } {}
 
     itk_component add roadWheelDiameterL {
-	::label $parent.roadWheelDiameterL -text "Road Wheel Diameter:" \
+	::ttk::label $parent.roadWheelDiameterL -text "Road Wheel Diameter:" \
 	    -anchor e
     } {}
     itk_component add roadWheelDiameterE {
-	::entry $parent.roadWheelDiameterE -textvariable [::itcl::scope roadWheelDiameter]
+	::ttk::entry $parent.roadWheelDiameterE -textvariable [::itcl::scope roadWheelDiameter]
     } {}
 
     itk_component add numIdlerWheelsL {
-	::label $parent.numIdlerWheelsL -text "Number of Idler Wheels:" \
+	::ttk::label $parent.numIdlerWheelsL -text "Number of Idler Wheels:" \
 	    -anchor e
     } {}
     itk_component add numIdlerWheelsE {
-	::entry $parent.numIdlerWheelsE -textvariable [::itcl::scope numIdlerWheels]
+	::ttk::entry $parent.numIdlerWheelsE -textvariable [::itcl::scope numIdlerWheels]
     } {}
 
     itk_component add idlerWheelDiameterL {
-	::label $parent.idlerWheelDiameterL -text "Idler Wheel Diameter:" \
+	::ttk::label $parent.idlerWheelDiameterL -text "Idler Wheel Diameter:" \
 	    -anchor e
     } {}
     itk_component add idlerWheelDiameterE {
-	::entry $parent.idlerWheelDiameterE -textvariable [::itcl::scope idlerWheelDiameter]
+	::ttk::entry $parent.idlerWheelDiameterE -textvariable [::itcl::scope idlerWheelDiameter]
     } {}
 
     itk_component add sprocketDiameterL {
-	::label $parent.sprocketDiameterL -text "Drive Sprocket Diameter:" \
+	::ttk::label $parent.sprocketDiameterL -text "Drive Sprocket Diameter:" \
 	    -anchor e
     } {}
     itk_component add sprocketDiameterE {
-	::entry $parent.sprocketDiameterE -textvariable [::itcl::scope sprocketDiameter]
+	::ttk::entry $parent.sprocketDiameterE -textvariable [::itcl::scope sprocketDiameter]
     } {}
 
     # pack widgets
@@ -991,59 +994,59 @@
 
 ::itcl::body TankWizard::buildTurretView {parent} {
     itk_component add turretLengthL {
-	::label $parent.turretLengthL -text "Length:" \
+	::ttk::label $parent.turretLengthL -text "Length:" \
 	    -anchor e
     } {}
     itk_component add turretLengthE {
-	::entry $parent.turretLengthE -textvariable [::itcl::scope turretLength]
+	::ttk::entry $parent.turretLengthE -textvariable [::itcl::scope turretLength]
     } {}
 
     itk_component add turretWidthL {
-	::label $parent.turretwidthL -text "Width:" \
+	::ttk::label $parent.turretwidthL -text "Width:" \
 	    -anchor e
     } {}
     itk_component add turretWidthE {
-	::entry $parent.turretWidthE -textvariable [::itcl::scope turretWidth]
+	::ttk::entry $parent.turretWidthE -textvariable [::itcl::scope turretWidth]
     } {}
 
     itk_component add turretHeightL {
-	::label $parent.turretheightL -text "Height:" \
+	::ttk::label $parent.turretheightL -text "Height:" \
 	    -anchor e
     } {}
     itk_component add turretHeightE {
-	::entry $parent.turretHeightE -textvariable [::itcl::scope turretHeight]
+	::ttk::entry $parent.turretHeightE -textvariable [::itcl::scope turretHeight]
     } {}
 
     itk_component add turretOffsetL {
-	::label $parent.turretOffsetL -text "Offset:" \
+	::ttk::label $parent.turretOffsetL -text "Offset:" \
 	    -anchor e
     } {}
     itk_component add turretOffsetE {
-	::entry $parent.turretOffsetE -textvariable [::itcl::scope turretOffset]
+	::ttk::entry $parent.turretOffsetE -textvariable [::itcl::scope turretOffset]
     } {}
 
     itk_component add turretFrontOffsetL {
-	::label $parent.turretFrontOffsetL -text "Front Offset:" \
+	::ttk::label $parent.turretFrontOffsetL -text "Front Offset:" \
 	    -anchor e
     } {}
     itk_component add turretFrontOffsetE {
-	::entry $parent.turretFrontOffsetE -textvariable [::itcl::scope turretFrontOffset]
+	::ttk::entry $parent.turretFrontOffsetE -textvariable [::itcl::scope turretFrontOffset]
     } {}
 
     itk_component add turretRearOffsetL {
-	::label $parent.turretRearOffsetL -text "Rear Offset:" \
+	::ttk::label $parent.turretRearOffsetL -text "Rear Offset:" \
 	    -anchor e
     } {}
     itk_component add turretRearOffsetE {
-	::entry $parent.turretRearOffsetE -textvariable [::itcl::scope turretRearOffset]
+	::ttk::entry $parent.turretRearOffsetE -textvariable [::itcl::scope turretRearOffset]
     } {}
 
     itk_component add turretSideOffsetL {
-	::label $parent.turretSideOffsetL -text "SideOffset:" \
+	::ttk::label $parent.turretSideOffsetL -text "SideOffset:" \
 	    -anchor e
     } {}
     itk_component add turretSideOffsetE {
-	::entry $parent.turretSideOffsetE -textvariable [::itcl::scope turretSideOffset]
+	::ttk::entry $parent.turretSideOffsetE -textvariable [::itcl::scope turretSideOffset]
     } {}
 
     # pack widgets
@@ -1074,88 +1077,89 @@
 
 ::itcl::body TankWizard::buildArmorView {parent} {
     itk_component add frontArmorL {
-	::label $parent.frontArmorL -text "Front:" \
+	::ttk::label $parent.frontArmorL -text "Front:" \
 	    -anchor e
     } {}
     itk_component add frontArmorCB {
-	iwidgets::combobox $parent.frontArmorCB \
+	::ttk::combobox $parent.frontArmorCB \
+	    -state readonly \
 	    -textvariable [::itcl::scope frontArmorType] \
-	    -selectioncommand [::itcl::code $this setFrontArmorThickness]
-    } {
-	usual
-    }
-    eval $itk_component(frontArmorCB) insert list end \
+	    -values $weaponTypes
+    } {}
+    bind $itk_component(frontArmorCB) <<ComboboxSelected>> [::itcl::code $this setFrontArmorThickness]
+#    eval $itk_component(frontArmorCB) insert list end \
 	$weaponTypes
 
     itk_component add sideArmorL {
-	::label $parent.sideArmorL -text "Side:" \
+	::ttk::label $parent.sideArmorL -text "Side:" \
 	    -anchor e
     } {}
     itk_component add sideArmorCB {
-	iwidgets::combobox $parent.sideArmorCB \
+	::ttk::combobox $parent.sideArmorCB \
+	    -state readonly \
 	    -textvariable [::itcl::scope sideArmorType] \
-	    -selectioncommand [::itcl::code $this setSideArmorThickness]
-    } {
-	usual
-    }
-    eval $itk_component(sideArmorCB) insert list end \
+	    -values $weaponTypes
+    } {}
+    bind $itk_component(sideArmorCB) <<ComboboxSelected>> [::itcl::code $this setSideArmorThickness]
+#    eval $itk_component(sideArmorCB) insert list end \
 	$weaponTypes
 
     itk_component add sponsonArmorL {
-	::label $parent.sponsonArmorL -text "Sponson:" \
+	::ttk::label $parent.sponsonArmorL -text "Sponson:" \
 	    -anchor e
     } {}
     itk_component add sponsonArmorCB {
-	iwidgets::combobox $parent.sponsonsArmorCB \
+	::ttk::combobox $parent.sponsonsArmorCB \
+	    -state readonly \
 	    -textvariable [::itcl::scope sponsonArmorType] \
-	    -selectioncommand [::itcl::code $this setSponsonArmorThickness]
-    } {
-	usual
-    }
-    eval $itk_component(sponsonArmorCB) insert list end \
+	    -values $weaponTypes
+    } {}
+    bind $itk_component(sponsonArmorCB) <<ComboboxSelected>> [::itcl::code $this setSponsonArmorThickness]
+
+#    eval $itk_component(sponsonArmorCB) insert list end \
 	$weaponTypes
 
     itk_component add rearArmorL {
-	::label $parent.rearArmorL -text "Rear:" \
+	::ttk::label $parent.rearArmorL -text "Rear:" \
 	    -anchor e
     } {}
     itk_component add rearArmorCB {
-	iwidgets::combobox $parent.rearArmorCB \
+	::ttk::combobox $parent.rearArmorCB \
+	    -state readonly \
 	    -textvariable [::itcl::scope rearArmorType] \
-	    -selectioncommand [::itcl::code $this setRearArmorThickness]
-    } {
-	usual
-    }
-    eval $itk_component(rearArmorCB) insert list end \
+	    -values $weaponTypes
+    } {}
+    bind $itk_component(rearArmorCB) <<ComboboxSelected>> [::itcl::code $this setRearArmorThickness]
+#    eval $itk_component(rearArmorCB) insert list end \
 	$weaponTypes
 
     itk_component add roofArmorL {
-	::label $parent.roofArmorL -text "Roof:" \
+	::ttk::label $parent.roofArmorL -text "Roof:" \
 	    -anchor e
     } {}
     itk_component add roofArmorCB {
-	iwidgets::combobox $parent.roofArmorCB \
+	::ttk::combobox $parent.roofArmorCB \
+	    -state readonly \
 	    -textvariable [::itcl::scope roofArmorType] \
-	    -selectioncommand [::itcl::code $this setRoofArmorThickness]
-    } {
-	usual
-    }
-    eval $itk_component(roofArmorCB) insert list end \
+	    -values $weaponTypes
+    } {}
+    bind $itk_component(roofArmorCB) <<ComboboxSelected>> [::itcl::code $this setRoofArmorThickness]
+#    eval $itk_component(roofArmorCB) insert list end \
 	$weaponTypes
 
     # make initial selections
-    $itk_component(frontArmorCB) selection set 0
-    $itk_component(rearArmorCB) selection set 0
-    $itk_component(roofArmorCB) selection set 0
-    $itk_component(sideArmorCB) selection set 0
-    $itk_component(sponsonArmorCB) selection set 0
+#    $itk_component(frontArmorCB) set "7.62mm"
+#    $itk_component(rearArmorCB) set "7.62mm"
+#    $itk_component(roofArmorCB) set "7.62mm"
+#    $itk_component(sideArmorCB) set "7.62mm"
+#    $itk_component(sponsonArmorCB) set "7.62mm"
 
     # turn off editing
-    $itk_component(frontArmorCB) configure -editable false
-    $itk_component(rearArmorCB) configure -editable false
-    $itk_component(roofArmorCB) configure -editable false
-    $itk_component(sideArmorCB) configure -editable false
-    $itk_component(sponsonArmorCB) configure -editable false
+#    $itk_component(frontArmorCB) configure -editable false
+#    $itk_component(rearArmorCB) configure -editable false
+#    $itk_component(roofArmorCB) configure -editable false
+#    $itk_component(sideArmorCB) configure -editable false
+#    $itk_component(sponsonArmorCB) configure -editable false
 
     # pack widgets
     set row 0
@@ -1190,20 +1194,6 @@
 }
 
 ::itcl::body TankWizard::changeClass {} {
-    set curr [$itk_component(classCB) curselection]
-
-    $itk_component(typeCB) clear
-    set types [lindex $vehicleTypes $curr]
-    eval $itk_component(typeCB) insert list end $types
-
-    # temporarily turn on editing
-    $itk_component(typeCB) configure -editable true
-
-    # initialize selections
-    $itk_component(typeCB) selection set 0
-
-    # turn off editing
-    $itk_component(typeCB) configure -editable false
 }
 
 ::itcl::body TankWizard::changeType {} {
@@ -1211,17 +1201,17 @@
 
 ::itcl::body TankWizard::buildArrow {parent prefix text buildViewFunc} {
     itk_component add $prefix {
-	frame $parent.$prefix
+	::ttk::frame $parent.$prefix
     } {}
     itk_component add $prefix\Arrow {
 	::swidgets::togglearrow $itk_component($prefix).arrow
     } {}
     itk_component add $prefix\Label {
-	label $itk_component($prefix).label -text $text \
+	::ttk::label $itk_component($prefix).label -text $text \
 	    -anchor w
     } {}
     itk_component add $prefix\View {
-	frame $itk_component($prefix).$prefix\View
+	::ttk::frame $itk_component($prefix).$prefix\View
     } {}
     $buildViewFunc $itk_component($prefix\View)
     grid $itk_component($prefix\Arrow) -row 0 -column 0 -sticky e
