@@ -186,9 +186,6 @@ struct rt_nurb_internal {
 #define RT_NURB_GET_CONTROL_POINT(_s, _u, _v)	((_s)->ctl_points[ \
 	((_v)*(_s)->s_size[0]+(_u))*RT_NURB_EXTRACT_COORDS((_s)->pt_type)])
 
-/*
- * a b-rep solid consists of a
- */
 /* ID_BREP */
 struct rt_brep_internal {
     unsigned long magic;
@@ -198,10 +195,11 @@ struct rt_brep_internal {
 #define RT_BREP_CK_MAGIC( _p) BU_CKMAG(_p, RT_BREP_INTERNAL_MAGIC, "rt_brep_internal");
 
 /*
- *	ID_NMG
+ * ID_NMG
  *
- *  The internal form of the NMG is not rt_nmg_internal, but just
- *  a "struct model", from nmg.h.  e.g.:
+ * The internal form of the NMG is not rt_nmg_internal, but just a
+ * "struct model", from nmg.h.  e.g.:
+ *
  *	if ( intern.idb_type == ID_NMG )
  *		m = (struct model *)intern.idb_ptr;
  */
@@ -213,8 +211,8 @@ struct rt_brep_internal {
 struct rt_ebm_internal  {
     unsigned long	magic;
     char		file[RT_EBM_NAME_LEN];
-    int		xdim;		/**< @brief  X dimension (w cells) */
-    int		ydim;		/**< @brief  Y dimension (n cells) */
+    int		xdim;			/**< @brief  X dimension (w cells) */
+    int		ydim;			/**< @brief  Y dimension (n cells) */
     fastf_t		tallness;	/**< @brief  Z dimension (mm) */
     mat_t		mat;		/**< @brief  convert local coords to model space */
     /* REMAINING ELEMENTS PROVIDED BY IMPORT, UNUSED BY EXPORT */
@@ -229,11 +227,11 @@ struct rt_ebm_internal  {
 struct rt_vol_internal  {
     unsigned long	magic;
     char		file[RT_VOL_NAME_LEN];
-    int		xdim;		/**< @brief  X dimension */
-    int		ydim;		/**< @brief  Y dimension */
-    int		zdim;		/**< @brief  Z dimension */
-    int		lo;		/**< @brief  Low threshold */
-    int		hi;		/**< @brief  High threshold */
+    int		xdim;			/**< @brief  X dimension */
+    int		ydim;			/**< @brief  Y dimension */
+    int		zdim;			/**< @brief  Z dimension */
+    int		lo;			/**< @brief  Low threshold */
+    int		hi;			/**< @brief  High threshold */
     vect_t		cellsize;	/**< @brief  ideal coords: size of each cell */
     mat_t		mat;		/**< @brief  convert local coords to model space */
     /* REMAINING ELEMENTS PROVIDED BY IMPORT, UNUSED BY EXPORT */
@@ -250,9 +248,9 @@ struct rt_hf_internal {
     char		cfile[128];	/**< @brief  name of control file (optional) */
     char		dfile[128];	/**< @brief  name of data file */
     char		fmt[8];		/**< @brief  CV style file format descriptor */
-    int		w;		/**< @brief  # samples wide of data file.  ("i", "x") */
-    int		n;		/**< @brief  nlines of data file.  ("j", "y") */
-    int		shorts;		/**< @brief  !0 --> memory array is short, not float */
+    int		w;			/**< @brief  # samples wide of data file.  ("i", "x") */
+    int		n;			/**< @brief  nlines of data file.  ("j", "y") */
+    int		shorts;			/**< @brief  !0 --> memory array is short, not float */
     fastf_t		file2mm;	/**< @brief  scale factor to cvt file units to mm */
     vect_t		v;		/**< @brief  origin of HT in model space */
     vect_t		x;		/**< @brief  model vect corresponding to "w" dir (will be unitized) */
@@ -389,27 +387,27 @@ struct rt_eto_internal {
 #define DSP_NAME_LEN 128
 struct rt_dsp_internal{
     unsigned long	magic;
-#define dsp_file dsp_name /**< @brief  for backwards compatibility */
-    struct bu_vls	dsp_name;		/**< @brief  name of data file */
-    unsigned int	dsp_xcnt;		/**< @brief  # samples in row of data */
-    unsigned int	dsp_ycnt;		/**< @brief  # of columns in data */
-    unsigned short	dsp_smooth;		/**< @brief  bool: surf normal interp */
+#define dsp_file dsp_name 		/**< @brief for backwards compatibility */
+    struct bu_vls	dsp_name;	/**< @brief  name of data file */
+    unsigned int	dsp_xcnt;	/**< @brief  # samples in row of data */
+    unsigned int	dsp_ycnt;	/**< @brief  # of columns in data */
+    unsigned short	dsp_smooth;	/**< @brief  bool: surf normal interp */
 #define DSP_CUT_DIR_ADAPT	'a'
 #define DSP_CUT_DIR_llUR	'l'
 #define DSP_CUT_DIR_ULlr	'L'
-    unsigned char   dsp_cuttype;		/**< @brief  type of cut to make */
+    unsigned char   dsp_cuttype;	/**< @brief  type of cut to make */
 
-    mat_t		dsp_mtos;		/**< @brief  model to solid space */
+    mat_t		dsp_mtos;	/**< @brief  model to solid space */
     /* END OF USER SETABLE VARIABLES, BEGIN INTERNAL STUFF */
-    mat_t		dsp_stom;		/**< @brief  solid to model space
-						 * computed from dsp_mtos */
-    unsigned short	*dsp_buf;		/**< @brief  actual data */
-    struct bu_mapped_file *dsp_mp;		/**< @brief  mapped file for data */
-    struct rt_db_internal *dsp_bip;		/**< @brief  db object for data */
+    mat_t		dsp_stom;	/**< @brief  solid to model space
+					 * computed from dsp_mtos */
+    unsigned short	*dsp_buf;	/**< @brief  actual data */
+    struct bu_mapped_file *dsp_mp;	/**< @brief  mapped file for data */
+    struct rt_db_internal *dsp_bip;	/**< @brief  db object for data */
 #define RT_DSP_SRC_V4_FILE	'4'
 #define RT_DSP_SRC_FILE	'f'
 #define RT_DSP_SRC_OBJ	'o'
-    char		dsp_datasrc;		/**< @brief  which type of data source */
+    char		dsp_datasrc;	/**< @brief  which type of data source */
 };
 #define RT_DSP_CK_MAGIC(_p)	BU_CKMAG(_p, RT_DSP_INTERNAL_MAGIC, "rt_dsp_internal")
 
@@ -425,15 +423,18 @@ struct rt_sketch_internal
     point_t		V;		/**< @brief  default embedding of sketch */
     vect_t		u_vec;		/**< @brief  u_vec and v_vec are unit vectors defining the plane of */
     vect_t		v_vec;		/**< @brief  the sketch */
-    int		vert_count;	/**< @brief  number of vertices in this sketch */
-    point2d_t	*verts;		/**< @brief  array of 2D vertices that may be used as
-				 * endpoints, centers, or spline control points */
+    int		vert_count;		/**< @brief  number of vertices in this sketch */
+    point2d_t	*verts;			/**< @brief array of 2D
+				 	 * vertices that may be used
+				 	 * as endpoints, centers, or
+				 	 * spline control points.
+					 */
 /* XXX this should have a distinctive name, like rt_curve */
     struct curve {
 	int		seg_count;	/**< @brief  number of segments in this curve */
 	int		*reverse;	/**< @brief  array of ints indicating if segment should be reversed */
 	genptr_t	*segments;	/**< @brief  array of pointers to segments in this curve */
-    } skt_curve;				/**< @brief  the curve in this sketch */
+    } skt_curve;			/**< @brief  the curve in this sketch */
 };
 #define RT_SKETCH_CK_MAGIC(_p)	BU_CKMAG(_p, RT_SKETCH_INTERNAL_MAGIC, "rt_sketch_internal")
 
@@ -442,9 +443,9 @@ struct rt_sketch_internal
  */
 struct rt_submodel_internal {
     unsigned long	magic;
-    struct bu_vls	file;	/**< @brief  .g filename, 0-len --> this database. */
+    struct bu_vls	file;		/**< @brief  .g filename, 0-len --> this database. */
     struct bu_vls	treetop;	/**< @brief  one treetop only */
-    int		meth;		/**< @brief  space partitioning method */
+    int		meth;			/**< @brief  space partitioning method */
     /* other option flags (lazy prep, etc.)?? */
     /* REMAINING ELEMENTS PROVIDED BY IMPORT, UNUSED BY EXPORT */
     mat_t		root2leaf;
@@ -459,17 +460,18 @@ struct rt_submodel_internal {
 struct rt_extrude_internal
 {
     unsigned long	magic;
-    point_t		V;	/**< @brief  vertex, start and end point of loop to be extruded */
-    vect_t		h;	/**< @brief  extrusion vector, may not be in (u_vec X v_vec) plane */
-    vect_t		u_vec;	/**< @brief  vector in U parameter direction */
-    vect_t		v_vec;	/**< @brief  vector in V parameter direction */
+    point_t		V;		/**< @brief  vertex, start and end point of loop to be extruded */
+    vect_t		h;		/**< @brief  extrusion vector, may not be in (u_vec X v_vec) plane */
+    vect_t		u_vec;		/**< @brief  vector in U parameter direction */
+    vect_t		v_vec;		/**< @brief  vector in V parameter direction */
     int			keypoint;	/**< @brief  DEPRECATED (UNUSED): index of keypoint vertex */
     char		*sketch_name;	/**< @brief  name of sketch object that defines the curve to be extruded */
     struct rt_sketch_internal	*skt;	/**< @brief  pointer to referenced sketch */
 };
 
-/*	Note that the u_vec and v_vec are not unit vectors, their magnitude and direction are
- *	used for scaling and rotation
+/**
+ * Note that the u_vec and v_vec are not unit vectors, their magnitude
+ * and direction are used for scaling and rotation.
  */
 #define RT_EXTRUDE_CK_MAGIC(_p)	BU_CKMAG(_p, RT_EXTRUDE_INTERNAL_MAGIC, "rt_extrude_internal")
 
@@ -478,14 +480,14 @@ struct rt_extrude_internal
  */
 struct rt_revolve_internal {
     unsigned long	magic;
-    point_t		v3d;	/**< @brief vertex in 3d space  */
-    vect_t		axis3d;	/**< @brief revolve axis in 3d space, y axis */
+    point_t		v3d;		/**< @brief vertex in 3d space  */
+    vect_t		axis3d;		/**< @brief revolve axis in 3d space, y axis */
 
-    point2d_t		v2d;	/**< @brief vertex in 2d sketch */
-    vect2d_t		axis2d;	/**< @brief revolve axis in 2d sketch */
+    point2d_t		v2d;		/**< @brief vertex in 2d sketch */
+    vect2d_t		axis2d;		/**< @brief revolve axis in 2d sketch */
 
-    vect_t		r;	/**< @brief vector in start plane, x axis */
-    fastf_t		ang;	/**< @brief angle to revolve*/
+    vect_t		r;		/**< @brief vector in start plane, x axis */
+    fastf_t		ang;		/**< @brief angle to revolve*/
     struct bu_vls	sketch_name;	/**< @brief name of sketch */
     struct rt_sketch_internal *sk;	/**< @brief pointer to sketch */
 };
@@ -519,7 +521,7 @@ struct rt_bot_internal
     unsigned char	bot_flags;		/**< @brief  flags, (indicates surface normals available, for example) */
     int		num_vertices;
     int		num_faces;
-    int		*faces;			/**< @brief  array of ints for faces [num_faces*3] */
+    int		*faces;				/**< @brief  array of ints for faces [num_faces*3] */
     fastf_t		*vertices;		/**< @brief  array of floats for vertices [num_vertices*3] */
     fastf_t		*thickness;		/**< @brief  array of plate mode thicknesses (corresponds to array of faces)
 						 * NULL for modes RT_BOT_SURFACE and RT_BOT_SOLID.
@@ -530,8 +532,8 @@ struct rt_bot_internal
 						 */
     int		num_normals;
     fastf_t		*normals;		/**< @brief  array of unit surface normals [num_normals*3] */
-    int		num_face_normals;	/**< @brief  current size of the face_normals array below (number of faces in the array) */
-    int		*face_normals;		/**< @brief  array of indices into the "normals" array, one per face vertex [num_face_normals*3] */
+    int		num_face_normals;		/**< @brief  current size of the face_normals array below (number of faces in the array) */
+    int		*face_normals;			/**< @brief  array of indices into the "normals" array, one per face vertex [num_face_normals*3] */
 };
 
 /* orientationss for BOT */
@@ -549,9 +551,9 @@ struct rt_bot_internal
 						 * the thickness divided by the cosine of the obliquity angle */
 
 /* flags for bot_flags */
-#define RT_BOT_HAS_SURFACE_NORMALS    0x1     /**< @brief  This primitive may have surface normals at each face vertex */
-#define RT_BOT_USE_NORMALS	      0x2     /**< @brief  Use the surface normals if they exist */
-#define RT_BOT_USE_FLOATS	      0x4     /**< @brief  Use the single precision version of "tri_specific" during prep */
+#define RT_BOT_HAS_SURFACE_NORMALS    0x1       /**< @brief  This primitive may have surface normals at each face vertex */
+#define RT_BOT_USE_NORMALS	      0x2       /**< @brief  Use the surface normals if they exist */
+#define RT_BOT_USE_FLOATS	      0x4       /**< @brief  Use the single precision version of "tri_specific" during prep */
 
 #define RT_BOT_CK_MAGIC(_p)	BU_CKMAG(_p, RT_BOT_INTERNAL_MAGIC, "rt_bot_internal")
 
