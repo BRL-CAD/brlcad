@@ -211,6 +211,7 @@ brep_preprocess_trims(const ON_BrepFace& face, SurfaceTree* tree) {
     for (list<BBNode*>::iterator i = leaves.begin(); i != leaves.end(); i++) {
 	SubsurfaceBBNode* bb = dynamic_cast<SubsurfaceBBNode*>(*i);
 
+/*
 	// check to see if the bbox encloses a trim
 	ON_3dPoint uvmin(bb->m_u.Min(), bb->m_v.Min(), 0);
 	ON_3dPoint uvmax(bb->m_u.Max(), bb->m_v.Max(), 0);
@@ -220,16 +221,18 @@ brep_preprocess_trims(const ON_BrepFace& face, SurfaceTree* tree) {
 	    // for each trim
 	    for (int j = 0; j < loop.m_ti.Count(); j++) {
 		ON_BrepTrim& trim = face.Brep()->m_T[loop.m_ti[j]];
-
+*/
 		/* tell the NURBS curves to cache their Bezier spans
 		 * (used in trimming routines, and not thread safe)
 		 */
+/*
 		const ON_Curve* c = trim.TrimCurveOf();
 		if (c->ClassId()->IsDerivedFrom(&ON_NurbsCurve::m_ON_NurbsCurve_class_id)) {
 		    ON_NurbsCurve::Cast(c)->CacheBezierSpans();
 		}
 	    }
 	}
+*/
 	bb->m_checkTrim = true; // XXX - ack, hardcode for now
 
 	/* for this node to be completely trimmed, all four corners
@@ -239,7 +242,7 @@ brep_preprocess_trims(const ON_BrepFace& face, SurfaceTree* tree) {
 	 * trimmed, we must account for it.
 	 */
 	bb->m_trimmed = false; // XXX - ack, hardcode for now
-    }
+    } 
 }
 
 int
