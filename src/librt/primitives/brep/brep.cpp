@@ -506,23 +506,35 @@ brep_newton_iterate(const ON_Surface* surf, plane_ray& pr, pt2d_t R, ON_3dVector
     }
 }
 
-#define BREP_INTERSECT_RIGHT_OF_EDGE            -5
-#define BREP_INTERSECT_MISSED_EDGE              -4
-#define BREP_INTERSECT_ROOT_ITERATION_LIMIT  	-3
-#define BREP_INTERSECT_ROOT_DIVERGED            -2
-#define BREP_INTERSECT_OOB       		-1
-#define BREP_INTERSECT_TRIMMED     		0
-#define BREP_INTERSECT_FOUND   	    		1
 
-static const char* BREP_INTERSECT_REASONS[] = {
-    "grazed to the right of the edge",
-    "missed the edge altogether (outside tolerance)",
-    "hit root iteration limit",
-    "root diverged",
-    "out of subsurface bounds",
-    "trimmed",
-    "found"};
-#define BREP_INTERSECT_GET_REASON(i) BREP_INTERSECT_REASONS[(i)+5]
+typedef enum {
+    BREP_INTERSECT_RIGHT_OF_EDGE = -5,
+    BREP_INTERSECT_MISSED_EDGE = -4,
+    BREP_INTERSECT_ROOT_ITERATION_LIMIT = -3,
+    BREP_INTERSECT_ROOT_DIVERGED = -2,
+    BREP_INTERSECT_OOB = -1,
+    BREP_INTERSECT_TRIMMED = 0,
+    BREP_INTERSECT_FOUND = 1
+} brep_intersect_reason_t;
+
+static const char* BREP_INTERSECT_REASON(brep_intersect_reason_t index)
+{
+    static const char *reason[] = {
+	"grazed to the right of the edge",
+	"missed the edge altogether (outside tolerance)",
+	"hit root iteration limit",
+	"root diverged",
+	"out of subsurface bounds",
+	"trimmed",
+	"found",
+	"UNKNOWN"
+    };
+
+    return reason[index+5];
+}
+
+
+
 
 int
 brep_edge_check(int reason,
@@ -533,6 +545,8 @@ brep_edge_check(int reason,
 		HitList& hits)
 {
     // if the intersection was not found for any reason, we need to
+
+
     // check and see if we are close to any topological edges; we may
     // have hit a crack...
 
@@ -650,7 +664,6 @@ utah_newton_solver(const ON_Surface* surf, const ON_Ray& r, ON_2dPoint &uv, doub
     double f, g;
     double rootdist, oldrootdist;
     double J, invdetJ;
-    bool checkedforedge = false;
 
     ON_3dVector p1, p2;
     double p1d = 0, p2d = 0;
@@ -906,8 +919,6 @@ brep_intersect(const SubsurfaceBBNode* sbv, const ON_BrepFace* face, const ON_Su
 	Dlast = d;
     }
     if (found > 0) {
-	fastf_t l, h;
-
 	ON_3dPoint _pt;
 	ON_3dVector _norm;
 	surf->EvNormal(uv[0], uv[1],_pt,_norm);
@@ -999,6 +1010,7 @@ plot_file()
 #define BB_PLOT(p1, p2) pdv_3box(plot_file(), p1, p2)
 #endif
 
+
 /**
  *  			R T _ B R E P _ S H O T
  *
@@ -1015,7 +1027,6 @@ rt_brep_shot(struct soltab *stp, register struct xray *rp, struct application *a
 {
     //TRACE1("rt_brep_shot origin:" << ON_PRINT3(rp->r_pt) << " dir:" << ON_PRINT3(rp->r_dir));
     TRACE("^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^");
-    vect_t invdir;
     struct brep_specific* bs = (struct brep_specific*)stp->st_specific;
 
     // check the hierarchy to see if we have a hit at a leaf node
@@ -1035,14 +1046,13 @@ rt_brep_shot(struct soltab *stp, register struct xray *rp, struct application *a
 	const SubsurfaceBBNode* sbv = dynamic_cast<SubsurfaceBBNode*>((*i).m_node);
 	const ON_BrepFace* f = sbv->m_face;
 	const ON_Surface* surf = f->SurfaceOf();
-	brep_hit* hit;
 	pt2d_t uv = {sbv->m_u.Mid(), sbv->m_v.Mid()};
 	TRACE1("surface: " << s);
 	int status = utah_brep_intersect(sbv, f, surf, uv, r, all_hits);
 	if (status == BREP_INTERSECT_FOUND) {
 	    TRACE("INTERSECTION: " << PT(all_hits.back().point) << all_hits.back().trimmed << ", " << all_hits.back().closeToEdge << ", " << all_hits.back().oob);
 	} else {
-	    TRACE1("dammit");
+	    TRACE2(BREP_INTERSECT_REASON((brep_intersect_reason_t)status));
 	    misses.push_back(ip_t(all_hits.size()-1, status));
 	}
 	s++;
@@ -1144,10 +1154,8 @@ rt_brep_shot(struct soltab *stp, register struct xray *rp, struct application *a
 #endif
 
 	num = 0;
-	int lastSign = 0;
 	MissList::iterator m = misses.begin();
 	for (HitList::iterator i = all_hits.begin(); i != all_hits.end(); ++i) {
-	    double dot = VDOT(i->normal, rp->r_dir);
 
 #if PLOTTING
 	    if (pcount > -1) {
@@ -1190,13 +1198,13 @@ rt_brep_shot(struct soltab *stp, register struct xray *rp, struct application *a
 
 	    TRACE("hit " << num << ": " << ON_PRINT3(i->point) << " [" << dot << "]");
 	    while ((m != misses.end()) && (m->first == num)) {
-		TRACE("miss " << num << ": " << BREP_INTERSECT_GET_REASON(m->second));
+		TRACE("miss " << num << ": " << BREP_INTERSECT_REASON(m->second));
 		++m;
 	    }
 	    num++;
 	}
 	while (m != misses.end()) {
-	    TRACE("miss " << BREP_INTERSECT_GET_REASON(m->second));
+	    TRACE("miss " << BREP_INTERSECT_REASON(m->second));
 	    ++m;
 	}
     }
@@ -1337,7 +1345,7 @@ plot_bbnode(BBNode* node, struct bu_list* vhead) {
 
     }
 
-    for (int i = 0; i < node->m_children.size(); i++) {
+    for (size_t i = 0; i < node->m_children.size(); i++) {
 	plot_bbnode(node->m_children[i], vhead);
     }
 }
@@ -1478,7 +1486,7 @@ RT_MemoryArchive::RT_MemoryArchive(genptr_t memory, size_t len)
     : ON_BinaryArchive(ON::read3dm), pos(0)
 {
     m_buffer.reserve(len);
-    for (int i = 0; i < len; i++) {
+    for (size_t i = 0; i < len; i++) {
 	m_buffer.push_back(((char*)memory)[i]);
     }
 }
@@ -1536,7 +1544,7 @@ size_t
 RT_MemoryArchive::Read(size_t amount, void* buf)
 {
     const int read_amount = (pos + amount > m_buffer.size()) ? m_buffer.size()-pos : amount;
-    const int start = pos;
+    const size_t start = pos;
     for (; pos < (start+read_amount); pos++) {
 	((char*)buf)[pos-start] = m_buffer[pos];
     }
