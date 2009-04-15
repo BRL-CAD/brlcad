@@ -46,13 +46,6 @@
 #include "raytrace.h"
 #include "rtgeom.h"
 
-#ifdef write
-#   undef write
-#endif
-
-#ifdef read
-#   undef read
-#endif
 
 #ifdef __cplusplus
 extern "C" {
