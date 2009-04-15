@@ -755,15 +755,16 @@ lines_intersect(double x1, double y1, double x2, double y2, double x3, double y3
 bool
 utah_isTrimmed(ON_2dPoint uv, const ON_BrepFace *face) {
     static bool approximationsInit = false;
-    static bool curveApproximated[100];
-    static ON_3dPoint curveApproximations[100][200];
-    static int numberOfPoints = 200;
-    static int maxCurves = 100;
+    static const int MAX_CURVES = 10000;
+    static const int MAX_NUMBEROFPOINTS = 1000;
+
+    static bool curveApproximated[MAX_CURVES];
+    static ON_3dPoint curveApproximations[MAX_CURVES][MAX_NUMBEROFPOINTS];
 
     if (!approximationsInit)
     {
         approximationsInit = true;
-        for (int i = 0; i < maxCurves; i++)
+        for (int i = 0; i < MAX_CURVES; i++)
         {
             curveApproximated[i] = false;
         }
@@ -804,12 +805,12 @@ utah_isTrimmed(ON_2dPoint uv, const ON_BrepFace *face) {
             ON_3dPoint closestPoint;
             // trimCurve->GetClosestPoint(hitPoint, &closestT); This isn't working...
             ON_Interval domain = trimCurve->Domain();
-            double step = (domain.m_t[1]-domain.m_t[0])/(double)numberOfPoints;
+            double step = (domain.m_t[1]-domain.m_t[0])/(double)MAX_NUMBEROFPOINTS;
             if (!curveApproximated[trim->m_c2i])
             {
                 curveApproximated[trim->m_c2i] = true;
                 t = domain.m_t[0];
-                for (int i = 0; i < numberOfPoints; i++)
+                for (int i = 0; i < MAX_NUMBEROFPOINTS; i++)
                 {
                     curveApproximations[trim->m_c2i][i] = trimCurve->PointAt(t);
                     t += step;
@@ -818,7 +819,7 @@ utah_isTrimmed(ON_2dPoint uv, const ON_BrepFace *face) {
             closestT = t = domain.m_t[0];
             closestPoint = curveApproximations[trim->m_c2i][0];
             currentDistance = shortestDistance = closestPoint.DistanceTo(hitPoint);
-            for (int i = 0; i < numberOfPoints; i++)
+            for (int i = 0; i < MAX_NUMBEROFPOINTS; i++)
             {
                 closestPoint = curveApproximations[trim->m_c2i][i];
                 currentDistance = closestPoint.DistanceTo(hitPoint);
