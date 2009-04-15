@@ -205,29 +205,15 @@ brep_preprocess_trims(const ON_BrepFace& face, SurfaceTree* tree) {
     for (list<BBNode*>::iterator i = leaves.begin(); i != leaves.end(); i++) {
 	SubsurfaceBBNode* bb = dynamic_cast<SubsurfaceBBNode*>(*i);
 
-
-	/* XXX - TODO: check to see if this portion of the surface
-	 * needs to be checked for trims
-	 */
-#if 0
-	pt2d_t test[] = {{bb->m_u.Min(), bb->m_v.Min()},
-			 {bb->m_u.Max(), bb->m_v.Min()},
-			 {bb->m_u.Max(), bb->m_v.Max()},
-			 {bb->m_u.Min(), bb->m_v.Max()}};
-#endif
-
-
 	// check to see if the bbox encloses a trim
 	ON_3dPoint uvmin(bb->m_u.Min(), bb->m_v.Min(), 0);
 	ON_3dPoint uvmax(bb->m_u.Max(), bb->m_v.Max(), 0);
 	ON_BoundingBox bbox(uvmin, uvmax);
-	bool internalTrim = false;
 	for (int i = 0; i < face.Brep()->m_L.Count(); i++) {
 	    ON_BrepLoop& loop = face.Brep()->m_L[i];
 	    // for each trim
 	    for (int j = 0; j < loop.m_ti.Count(); j++) {
 		ON_BrepTrim& trim = face.Brep()->m_T[loop.m_ti[j]];
-		if (bbox.Intersection(trim.m_pbox)) internalTrim = true;
 
 		// tell the NURBS curves to cache their Bezier spans
 		// (used in trimming routines, and not thread safe)
