@@ -45,7 +45,7 @@
 
 /* maximum input line buffer size */
 #define BUFSIZE (16*1024)
-
+#define SIZE (128*1024*1024)
 #define TYPE_LEN 200
 #define NAME_LEN 200
 
@@ -68,6 +68,7 @@ static fastf_t **ars_curves = NULL;
 static char *slave_name = "safe_interp";
 static char *db_name = "_db";
 
+static int linecnt = 0;
 static char usage[] = "\
 Usage: asc2g file.asc file.g\n\
  Convert an ASCII BRL-CAD database to binary form\n\
@@ -1598,7 +1599,90 @@ arbnbld(void)
      */
     mk_arbn(ofp, name, neqn, eqn);
 }
+/**
+ * E N D S W I T H
+ *
+ * This routine checks the last character in the string to see if it matches the
+ * specified character. Used by getline() to check for an escaped return.
+ *
+ */
+int
+endswith(char *line, char ch)
+{
+    if ( *(line+strlen(line)-1) == ch ) {
+	return 1;
+    }
+    return 0;
+}
+/**
+ * B R A C E C N T
+ *
+ * This routine counts the number of open braces and is used to determine whether a Tcl
+ * command is complete.
+ *
+ */
+int
+bracecnt(char *line)
+{
+    char *start;
+    int cnt = 0;
 
+    start = line;
+    while(*start != '\0') {
+	if (*start == '{') {
+	    cnt++;
+	} else if (*start == '}') {
+	    cnt--;
+	}
+	start++;
+    }
+    return cnt;
+}
+/**
+ * G E T L I N E
+ *
+ * This routine reads the next block of Tcl commands. This block is expected to be a Tcl
+ * command script and will be fed to an interpreter using Tcl_Eval(). Any escaped returns
+ * or open braces are parsed through and concatenated ensuring Tcl commands are complete.
+ * 
+ *  SIZE is used as the approximate blocking size allowing to grow past this to close the
+ * command line.
+ */
+int
+getline(register struct bu_vls *line, register FILE *fp)
+{
+    int ret = 0;
+    struct bu_vls tmp;
+    int bcnt = 0;
+    int escapedcr = 0;
+
+    bu_vls_init(&tmp);
+
+    if ((ret=bu_vls_gets(line, fp)) >= 0) {
+        linecnt++;
+	escapedcr = endswith(bu_vls_addr(line),'\\');
+        bcnt = bracecnt(bu_vls_addr(line));
+        while ( (ret >= 0) && ((bu_vls_strlen(line) < SIZE) || (escapedcr) || ( bcnt != 0 )) ) {
+	    linecnt++;
+	    if (escapedcr) {
+		bu_vls_trunc(line, bu_vls_strlen(line)-1);
+	    }
+            if ((ret=bu_vls_gets(&tmp, fp)) > 0) {
+		escapedcr = endswith(bu_vls_addr(&tmp),'\\');
+		bcnt = bcnt + bracecnt(bu_vls_addr(&tmp));
+		bu_vls_putc(line, '\n');
+		bu_vls_strcat(line,bu_vls_addr(&tmp));
+		bu_vls_trunc(&tmp,0);
+	    } else {
+		escapedcr = 0;
+	    }
+        }
+	ret = bu_vls_strlen(line);
+    }
+    bu_vls_free(&tmp);
+
+    return ret;
+}
 
 /**
  * M A I N
@@ -1607,6 +1691,9 @@ int
 main(int argc, char *argv[])
 {
     char c1[3];
+    struct bu_vls       str_title;
+    struct bu_vls       str_put;
+    struct bu_vls	line;
 
     bu_debug = BU_DEBUG_COREDUMP;
 
@@ -1626,22 +1713,31 @@ main(int argc, char *argv[])
 
     rt_init_resource(&rt_uniresource, 0, NULL);
 
-    if (bu_fgets(c1, 6, ifp) == NULL) {
+    bu_vls_init(&line);
+    bu_vls_extend( &line, SIZE);
+    bu_vls_init(&str_title);
+    bu_vls_strcpy( &str_title, "title");
+    bu_vls_init(&str_put);
+    bu_vls_strcpy( &str_put, "put ");
+
+    if (bu_vls_gets(&line, ifp) < 0) {
 	fclose(ifp); ifp = NULL;
 	wdb_close(ofp); ofp = NULL;
 	bu_exit(1, "Unexpected EOF\n");
     }
 
     /* new style ascii database */
-    if (!strncmp(c1, "title", 5) || !strncmp(c1, "put ", 4)) {
+    if (!bu_vls_strncmp( &line, &str_title, 5) || !bu_vls_strncmp( &line, &str_put, 4)) {
 	Tcl_Interp     *interp;
 	Tcl_Interp     *safe_interp;
 
 	/* this is a Tcl script */
 
 
-	/* No longer need ifp */
-	fclose(ifp); ifp = NULL;
+        rewind(ifp);
+        bu_vls_trunc( &line, 0);
+	/* No longer need ifp
+	fclose(ifp); ifp = NULL;  */
 
 	BU_LIST_INIT(&rt_g.rtg_headwdb.l);
 
@@ -1672,18 +1768,28 @@ main(int argc, char *argv[])
 	    Tcl_CreateAlias(safe_interp, "dbfind", interp, db_name, ac, av);
 	}
 
-	if (Tcl_EvalFile(safe_interp, argv[1]) != TCL_OK) {
-	    bu_log("Failed to process input file (%s)!\n", argv[1]);
-	    bu_log("%s\n", Tcl_GetStringResult(safe_interp));
-	    Tcl_Exit(1);
-	}
+        while ((getline(&line,ifp)) >= 0)
+        {
+	    if (Tcl_Eval(safe_interp, (const char *)bu_vls_addr(&line)) != TCL_OK) {
+	        bu_log("Failed to process input file (%s)!\n", argv[1]);
+	        bu_log("%s\n", Tcl_GetStringResult(safe_interp));
+	        Tcl_Exit(1);
+	    }            
+            bu_vls_trunc(&line,0);
+        }
 
 	/* free up our resources */
 	mk_write_color_table(ofp);
 	wdb_close(ofp); ofp = NULL;
+        bu_vls_free(&line);
+        bu_vls_free(&str_title);
+        bu_vls_free(&str_put);
 
 	Tcl_Exit(0);
     } else {
+        bu_vls_free(&line);
+        bu_vls_free(&str_title);
+        bu_vls_free(&str_put);
 	rewind(ifp);
     }
 

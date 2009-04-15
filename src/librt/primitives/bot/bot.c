@@ -1878,7 +1878,7 @@ int
 rt_bot_adjust(struct bu_vls *log, struct rt_db_internal *intern, int argc, char **argv)
 {
     struct rt_bot_internal *bot;
-    Tcl_Obj *obj, *list, **obj_array;
+    Tcl_Obj *obj, **obj_array;
     int len;
     int i;
 
@@ -1889,8 +1889,6 @@ rt_bot_adjust(struct bu_vls *log, struct rt_db_internal *intern, int argc, char 
     while ( argc >= 2 )
     {
 	obj = Tcl_NewStringObj( argv[1], -1 );
-	list = Tcl_NewListObj( 0, NULL );
-	Tcl_ListObjAppendList( brlcad_interp, list, obj );
 
 	if ( !strncmp( argv[0], "fm", 2 ) )
 	{
@@ -1906,7 +1904,7 @@ rt_bot_adjust(struct bu_vls *log, struct rt_db_internal *intern, int argc, char 
 		if ( i < 0 || i >= bot->num_faces )
 		{
 		    bu_vls_printf(log, "Face number out of range");
-		    Tcl_DecrRefCount( list );
+		    Tcl_DecrRefCount( obj );
 		    return( BRLCAD_ERROR );
 		}
 
@@ -1931,7 +1929,7 @@ rt_bot_adjust(struct bu_vls *log, struct rt_db_internal *intern, int argc, char 
 	    new_num = atoi( Tcl_GetStringFromObj( obj, NULL ) );
 	    if ( new_num < 0 ) {
 		bu_vls_printf(log, "Number of normals may not be less than 0");
-		Tcl_DecrRefCount( list );
+		Tcl_DecrRefCount( obj );
 		return( BRLCAD_ERROR );
 	    }
 
@@ -1968,10 +1966,10 @@ rt_bot_adjust(struct bu_vls *log, struct rt_db_internal *intern, int argc, char 
 
 	    if ( argv[0][2] == '\0' )
 	    {
-		(void)Tcl_ListObjGetElements( brlcad_interp, list, &len, &obj_array );
+		(void)Tcl_ListObjGetElements( brlcad_interp, obj, &len, &obj_array );
 		if ( len != bot->num_faces || len <= 0 ) {
 		    bu_vls_printf(log, "Must provide normals for all faces!!!");
-		    Tcl_DecrRefCount( list );
+		    Tcl_DecrRefCount( obj );
 		    return( BRLCAD_ERROR );
 		}
 		if ( bot->face_normals )
@@ -1984,21 +1982,21 @@ rt_bot_adjust(struct bu_vls *log, struct rt_db_internal *intern, int argc, char 
 
 		    if ( *f_str == '\0' ) {
 			bu_vls_printf(log, "incomplete list of face_normals");
-			Tcl_DecrRefCount( list );
+			Tcl_DecrRefCount( obj );
 			return( BRLCAD_ERROR );
 		    }
 		    bot->face_normals[i*3] = atoi( f_str );
 		    f_str = bu_next_token( f_str );
 		    if ( *f_str == '\0' ) {
 			bu_vls_printf(log, "incomplete list of face_normals");
-			Tcl_DecrRefCount( list );
+			Tcl_DecrRefCount( obj );
 			return( BRLCAD_ERROR );
 		    }
 		    bot->face_normals[i*3+1] = atoi( f_str );
 		    f_str = bu_next_token( f_str );
 		    if ( *f_str == '\0' ) {
 			bu_vls_printf(log, "incomplete list of face_normals");
-			Tcl_DecrRefCount( list );
+			Tcl_DecrRefCount( obj );
 			return( BRLCAD_ERROR );
 		    }
 		    bot->face_normals[i*3+2] = atoi( f_str );
@@ -2011,17 +2009,17 @@ rt_bot_adjust(struct bu_vls *log, struct rt_db_internal *intern, int argc, char 
 		if ( i < 0 || i >= bot->num_faces )
 		{
 		    bu_vls_printf(log, "face_normal number out of range!!!");
-		    Tcl_DecrRefCount( list );
+		    Tcl_DecrRefCount( obj );
 		    return( BRLCAD_ERROR );
 		}
-		f_str = Tcl_GetStringFromObj( list, NULL );
+		f_str = Tcl_GetStringFromObj( obj, NULL );
 		while ( isspace( *f_str ) ) f_str++;
 		bot->face_normals[i*3] = atoi( f_str );
 		f_str = bu_next_token( f_str );
 		if ( *f_str == '\0' )
 		{
 		    bu_vls_printf(log, "incomplete vertex");
-		    Tcl_DecrRefCount( list );
+		    Tcl_DecrRefCount( obj );
 		    return( BRLCAD_ERROR );
 		}
 		bot->face_normals[i*3+1] = atoi( f_str );
@@ -2029,7 +2027,7 @@ rt_bot_adjust(struct bu_vls *log, struct rt_db_internal *intern, int argc, char 
 		if ( *f_str == '\0' )
 		{
 		    bu_vls_printf(log, "incomplete vertex");
-		    Tcl_DecrRefCount( list );
+		    Tcl_DecrRefCount( obj );
 		    return( BRLCAD_ERROR );
 		}
 		bot->face_normals[i*3+2] = atoi( f_str );
@@ -2041,11 +2039,11 @@ rt_bot_adjust(struct bu_vls *log, struct rt_db_internal *intern, int argc, char 
 
 	    if ( argv[0][1] == '\0' )
 	    {
-		(void)Tcl_ListObjGetElements( brlcad_interp, list, &len, &obj_array );
+		(void)Tcl_ListObjGetElements( brlcad_interp, obj, &len, &obj_array );
 		if ( len <= 0 )
 		{
 		    bu_vls_printf(log, "Must provide at least one normal!!!");
-		    Tcl_DecrRefCount( list );
+		    Tcl_DecrRefCount( obj );
 		    return( BRLCAD_ERROR );
 		}
 		bot->num_normals = len;
@@ -2059,7 +2057,7 @@ rt_bot_adjust(struct bu_vls *log, struct rt_db_internal *intern, int argc, char 
 		    if ( *v_str == '\0' )
 		    {
 			bu_vls_printf(log, "incomplete list of normals");
-			Tcl_DecrRefCount( list );
+			Tcl_DecrRefCount( obj );
 			return( BRLCAD_ERROR );
 		    }
 		    bot->normals[i*3] = atof( v_str );
@@ -2067,7 +2065,7 @@ rt_bot_adjust(struct bu_vls *log, struct rt_db_internal *intern, int argc, char 
 		    if ( *v_str == '\0' )
 		    {
 			bu_vls_printf(log, "incomplete list of normals");
-			Tcl_DecrRefCount( list );
+			Tcl_DecrRefCount( obj );
 			return( BRLCAD_ERROR );
 		    }
 		    bot->normals[i*3+1] = atof( v_str );
@@ -2075,11 +2073,10 @@ rt_bot_adjust(struct bu_vls *log, struct rt_db_internal *intern, int argc, char 
 		    if ( *v_str == '\0' )
 		    {
 			bu_vls_printf(log, "incomplete list of normals");
-			Tcl_DecrRefCount( list );
+			Tcl_DecrRefCount( obj );
 			return( BRLCAD_ERROR );
 		    }
 		    bot->normals[i*3+2] = atof( v_str );
-		    Tcl_DecrRefCount( obj_array[i] );
 		}
 		bot->bot_flags |= RT_BOT_HAS_SURFACE_NORMALS;
 	    } else {
@@ -2087,10 +2084,10 @@ rt_bot_adjust(struct bu_vls *log, struct rt_db_internal *intern, int argc, char 
 		if ( i < 0 || i >= bot->num_normals )
 		{
 		    bu_vls_printf(log, "normal number out of range!!!");
-		    Tcl_DecrRefCount( list );
+		    Tcl_DecrRefCount( obj );
 		    return( BRLCAD_ERROR );
 		}
-		v_str = Tcl_GetStringFromObj( list, NULL );
+		v_str = Tcl_GetStringFromObj( obj, NULL );
 		while ( isspace( *v_str ) ) v_str++;
 
 		bot->normals[i*3] = atof( v_str );
@@ -2098,7 +2095,7 @@ rt_bot_adjust(struct bu_vls *log, struct rt_db_internal *intern, int argc, char 
 		if ( *v_str == '\0' )
 		{
 		    bu_vls_printf(log, "incomplete normal");
-		    Tcl_DecrRefCount( list );
+		    Tcl_DecrRefCount( obj );
 		    return( BRLCAD_ERROR );
 		}
 		bot->normals[i*3+1] = atof( v_str );
@@ -2106,7 +2103,7 @@ rt_bot_adjust(struct bu_vls *log, struct rt_db_internal *intern, int argc, char 
 		if ( *v_str == '\0' )
 		{
 		    bu_vls_printf(log, "incomplete normal");
-		    Tcl_DecrRefCount( list );
+		    Tcl_DecrRefCount( obj );
 		    return( BRLCAD_ERROR );
 		}
 		bot->normals[i*3+2] = atof( v_str );
@@ -2118,11 +2115,11 @@ rt_bot_adjust(struct bu_vls *log, struct rt_db_internal *intern, int argc, char 
 
 	    if ( argv[0][1] == '\0' )
 	    {
-		(void)Tcl_ListObjGetElements( brlcad_interp, list, &len, &obj_array );
+		(void)Tcl_ListObjGetElements( brlcad_interp, obj, &len, &obj_array );
 		if ( len <= 0 )
 		{
 		    bu_vls_printf(log, "Must provide at least one vertex!!!");
-		    Tcl_DecrRefCount( list );
+		    Tcl_DecrRefCount( obj );
 		    return( BRLCAD_ERROR );
 		}
 		bot->num_vertices = len;
@@ -2136,7 +2133,7 @@ rt_bot_adjust(struct bu_vls *log, struct rt_db_internal *intern, int argc, char 
 		    if ( *v_str == '\0' )
 		    {
 			bu_vls_printf(log, "incomplete list of vertices");
-			Tcl_DecrRefCount( list );
+			Tcl_DecrRefCount( obj );
 			return( BRLCAD_ERROR );
 		    }
 		    bot->vertices[i*3] = atof( v_str );
@@ -2144,7 +2141,7 @@ rt_bot_adjust(struct bu_vls *log, struct rt_db_internal *intern, int argc, char 
 		    if ( *v_str == '\0' )
 		    {
 			bu_vls_printf(log, "incomplete list of vertices");
-			Tcl_DecrRefCount( list );
+			Tcl_DecrRefCount( obj );
 			return( BRLCAD_ERROR );
 		    }
 		    bot->vertices[i*3+1] = atof( v_str );
@@ -2152,11 +2149,10 @@ rt_bot_adjust(struct bu_vls *log, struct rt_db_internal *intern, int argc, char 
 		    if ( *v_str == '\0' )
 		    {
 			bu_vls_printf(log, "incomplete list of vertices");
-			Tcl_DecrRefCount( list );
+			Tcl_DecrRefCount( obj );
 			return( BRLCAD_ERROR );
 		    }
 		    bot->vertices[i*3+2] = atof( v_str );
-		    Tcl_DecrRefCount( obj_array[i] );
 		}
 	    }
 	    else
@@ -2165,10 +2161,10 @@ rt_bot_adjust(struct bu_vls *log, struct rt_db_internal *intern, int argc, char 
 		if ( i < 0 || i >= bot->num_vertices )
 		{
 		    bu_vls_printf(log, "vertex number out of range!!!");
-		    Tcl_DecrRefCount( list );
+		    Tcl_DecrRefCount( obj );
 		    return( BRLCAD_ERROR );
 		}
-		v_str = Tcl_GetStringFromObj( list, NULL );
+		v_str = Tcl_GetStringFromObj( obj, NULL );
 		while ( isspace( *v_str ) ) v_str++;
 
 		bot->vertices[i*3] = atof( v_str );
@@ -2176,7 +2172,7 @@ rt_bot_adjust(struct bu_vls *log, struct rt_db_internal *intern, int argc, char 
 		if ( *v_str == '\0' )
 		{
 		    bu_vls_printf(log, "incomplete vertex");
-		    Tcl_DecrRefCount( list );
+		    Tcl_DecrRefCount( obj );
 		    return( BRLCAD_ERROR );
 		}
 		bot->vertices[i*3+1] = atof( v_str );
@@ -2184,7 +2180,7 @@ rt_bot_adjust(struct bu_vls *log, struct rt_db_internal *intern, int argc, char 
 		if ( *v_str == '\0' )
 		{
 		    bu_vls_printf(log, "incomplete vertex");
-		    Tcl_DecrRefCount( list );
+		    Tcl_DecrRefCount( obj );
 		    return( BRLCAD_ERROR );
 		}
 		bot->vertices[i*3+2] = atof( v_str );
@@ -2196,11 +2192,11 @@ rt_bot_adjust(struct bu_vls *log, struct rt_db_internal *intern, int argc, char 
 
 	    if ( argv[0][1] == '\0' )
 	    {
-		(void)Tcl_ListObjGetElements( brlcad_interp, list, &len, &obj_array );
+		(void)Tcl_ListObjGetElements( brlcad_interp, obj, &len, &obj_array );
 		if ( len <= 0 )
 		{
 		    bu_vls_printf(log, "Must provide at least one face!!!");
-		    Tcl_DecrRefCount( list );
+		    Tcl_DecrRefCount( obj );
 		    return( BRLCAD_ERROR );
 		}
 		bot->num_faces = len;
@@ -2232,7 +2228,7 @@ rt_bot_adjust(struct bu_vls *log, struct rt_db_internal *intern, int argc, char 
 		    if ( *f_str == '\0' )
 		    {
 			bu_vls_printf(log, "incomplete list of faces");
-			Tcl_DecrRefCount( list );
+			Tcl_DecrRefCount( obj );
 			return( BRLCAD_ERROR );
 		    }
 		    bot->faces[i*3] = atoi( f_str );
@@ -2240,7 +2236,7 @@ rt_bot_adjust(struct bu_vls *log, struct rt_db_internal *intern, int argc, char 
 		    if ( *f_str == '\0' )
 		    {
 			bu_vls_printf(log, "incomplete list of faces");
-			Tcl_DecrRefCount( list );
+			Tcl_DecrRefCount( obj );
 			return( BRLCAD_ERROR );
 		    }
 		    bot->faces[i*3+1] = atoi( f_str );
@@ -2248,7 +2244,7 @@ rt_bot_adjust(struct bu_vls *log, struct rt_db_internal *intern, int argc, char 
 		    if ( *f_str == '\0' )
 		    {
 			bu_vls_printf(log, "incomplete list of faces");
-			Tcl_DecrRefCount( list );
+			Tcl_DecrRefCount( obj );
 			return( BRLCAD_ERROR );
 		    }
 		    bot->faces[i*3+2] = atoi( f_str );
@@ -2260,17 +2256,17 @@ rt_bot_adjust(struct bu_vls *log, struct rt_db_internal *intern, int argc, char 
 		if ( i < 0 || i >= bot->num_faces )
 		{
 		    bu_vls_printf(log, "face number out of range!!!");
-		    Tcl_DecrRefCount( list );
+		    Tcl_DecrRefCount( obj );
 		    return( BRLCAD_ERROR );
 		}
-		f_str = Tcl_GetStringFromObj( list, NULL );
+		f_str = Tcl_GetStringFromObj( obj, NULL );
 		while ( isspace( *f_str ) ) f_str++;
 		bot->faces[i*3] = atoi( f_str );
 		f_str = bu_next_token( f_str );
 		if ( *f_str == '\0' )
 		{
 		    bu_vls_printf(log, "incomplete vertex");
-		    Tcl_DecrRefCount( list );
+		    Tcl_DecrRefCount( obj );
 		    return( BRLCAD_ERROR );
 		}
 		bot->faces[i*3+1] = atoi( f_str );
@@ -2278,7 +2274,7 @@ rt_bot_adjust(struct bu_vls *log, struct rt_db_internal *intern, int argc, char 
 		if ( *f_str == '\0' )
 		{
 		    bu_vls_printf(log, "incomplete vertex");
-		    Tcl_DecrRefCount( list );
+		    Tcl_DecrRefCount( obj );
 		    return( BRLCAD_ERROR );
 		}
 		bot->faces[i*3+2] = atoi( f_str );
@@ -2290,17 +2286,17 @@ rt_bot_adjust(struct bu_vls *log, struct rt_db_internal *intern, int argc, char 
 
 	    if ( argv[0][1] == '\0' )
 	    {
-		(void)Tcl_ListObjGetElements( brlcad_interp, list, &len, &obj_array );
+		(void)Tcl_ListObjGetElements( brlcad_interp, obj, &len, &obj_array );
 		if ( len <= 0 )
 		{
 		    bu_vls_printf(log, "Must provide at least one thickness!!!");
-		    Tcl_DecrRefCount( list );
+		    Tcl_DecrRefCount( obj );
 		    return( BRLCAD_ERROR );
 		}
 		if ( len > bot->num_faces )
 		{
 		    bu_vls_printf(log, "Too many thicknesses (there are not that many faces)!!!");
-		    Tcl_DecrRefCount( list );
+		    Tcl_DecrRefCount( obj );
 		    return( BRLCAD_ERROR );
 		}
 		if ( !bot->thickness ) {
@@ -2310,7 +2306,6 @@ rt_bot_adjust(struct bu_vls *log, struct rt_db_internal *intern, int argc, char 
 		for ( i=0; i<len; i++ )
 		{
 		    bot->thickness[i] = atof( Tcl_GetStringFromObj( obj_array[i], NULL ) );
-		    Tcl_DecrRefCount( obj_array[i] );
 		}
 	    }
 	    else
@@ -2319,14 +2314,14 @@ rt_bot_adjust(struct bu_vls *log, struct rt_db_internal *intern, int argc, char 
 		if ( i < 0 || i >= bot->num_faces )
 		{
 		    bu_vls_printf(log, "face number out of range!!!");
-		    Tcl_DecrRefCount( list );
+		    Tcl_DecrRefCount( obj );
 		    return( BRLCAD_ERROR );
 		}
 		if ( !bot->thickness ) {
 		    bot->thickness = (fastf_t *)bu_calloc( bot->num_faces, sizeof( fastf_t ),
 							   "bot->thickness" );
 		}
-		t_str = Tcl_GetStringFromObj( list, NULL );
+		t_str = Tcl_GetStringFromObj( obj, NULL );
 		bot->thickness[i] = atof( t_str );
 	    }
 	}
@@ -2334,7 +2329,7 @@ rt_bot_adjust(struct bu_vls *log, struct rt_db_internal *intern, int argc, char 
 	{
 	    char *m_str;
 
-	    m_str = Tcl_GetStringFromObj( list, NULL );
+	    m_str = Tcl_GetStringFromObj( obj, NULL );
 	    if ( isdigit( *m_str ) )
 	    {
 		int mode;
@@ -2343,7 +2338,7 @@ rt_bot_adjust(struct bu_vls *log, struct rt_db_internal *intern, int argc, char 
 		if ( mode < RT_BOT_SURFACE || mode > RT_BOT_PLATE_NOCOS )
 		{
 		    bu_vls_printf(log, "unrecognized mode!!!");
-		    Tcl_DecrRefCount( list );
+		    Tcl_DecrRefCount( obj );
 		    return( BRLCAD_ERROR );
 		}
 		bot->mode = mode;
@@ -2361,7 +2356,7 @@ rt_bot_adjust(struct bu_vls *log, struct rt_db_internal *intern, int argc, char 
 		else
 		{
 		    bu_vls_printf(log, "unrecognized mode!!!");
-		    Tcl_DecrRefCount( list );
+		    Tcl_DecrRefCount( obj );
 		    return( BRLCAD_ERROR );
 		}
 	    }
@@ -2370,7 +2365,7 @@ rt_bot_adjust(struct bu_vls *log, struct rt_db_internal *intern, int argc, char 
 	{
 	    char *o_str;
 
-	    o_str = Tcl_GetStringFromObj( list, NULL );
+	    o_str = Tcl_GetStringFromObj( obj, NULL );
 	    if ( isdigit( *o_str ) )
 	    {
 		int orientation;
@@ -2379,7 +2374,7 @@ rt_bot_adjust(struct bu_vls *log, struct rt_db_internal *intern, int argc, char 
 		if ( orientation < RT_BOT_UNORIENTED || orientation > RT_BOT_CW )
 		{
 		    bu_vls_printf(log, "unrecognized orientation!!!");
-		    Tcl_DecrRefCount( list );
+		    Tcl_DecrRefCount( obj );
 		    return( BRLCAD_ERROR );
 		}
 		bot->orientation = orientation;
@@ -2395,14 +2390,14 @@ rt_bot_adjust(struct bu_vls *log, struct rt_db_internal *intern, int argc, char 
 		else
 		{
 		    bu_vls_printf(log, "unrecognized orientation!!!");
-		    Tcl_DecrRefCount( list );
+		    Tcl_DecrRefCount( obj );
 		    return( BRLCAD_ERROR );
 		}
 	    }
 	}
 	else if ( !strcmp( argv[0], "flags" ) )
 	{
-	    (void)Tcl_ListObjGetElements( brlcad_interp, list, &len, &obj_array );
+	    (void)Tcl_ListObjGetElements( brlcad_interp, obj, &len, &obj_array );
 	    bot->bot_flags = 0;
 	    for ( i=0; i<len; i++ ) {
 		char *str;
@@ -2416,13 +2411,13 @@ rt_bot_adjust(struct bu_vls *log, struct rt_db_internal *intern, int argc, char 
 		    bot->bot_flags |= RT_BOT_USE_FLOATS;
 		} else {
 		    bu_vls_printf(log, "unrecognized flag (must be \"has_normals\", \"use_normals\", or \"use_floats\"!!!");
-		    Tcl_DecrRefCount( list );
+		    Tcl_DecrRefCount( obj );
 		    return( BRLCAD_ERROR );
 		}
 	    }
 	}
 
-	Tcl_DecrRefCount( list );
+	Tcl_DecrRefCount( obj );
 
 	argc -= 2;
 	argv += 2;
