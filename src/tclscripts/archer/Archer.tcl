@@ -166,7 +166,6 @@ package provide Archer 1.0
 	method buildAboutDialog {}
 	method buildBackgroundColor {_parent}
 	method buildDisplayPreferences {}
-	method buildEmbeddedMenubar {}
 	method buildGeneralPreferences {}
 	method buildGroundPlanePreferences {}
 	method buildInfoDialogs {}
@@ -182,8 +181,16 @@ package provide Archer 1.0
 	method launchDisplayMenuEnd {}
 	method menuStatusCB {_w}
 	method updateCreationButtons {_on}
-	method buildModesMenu {}
 	method updatePrimaryToolbar {}
+
+	method buildEmbeddedMenubar {}
+	method buildEmbeddedFileMenu {}
+	method buildEmbeddedDisplayMenu {}
+	method buildEmbeddedModesMenu {}
+	method buildEmbeddedRaytraceMenu {}
+	method buildEmbeddedHelpMenu {}
+
+	method buildModesMenu {}
 
 	# Modes Section
 	method initMode {{_updateFractions 0}}
@@ -1070,16 +1077,14 @@ package provide Archer 1.0
     if {!$mViewOnly} {
 	if {$ArcherCore::inheritFromToplevel} {
 	    $itk_component(filemenu) entryconfigure "Raytrace Control Panel..." -state normal
-	    #$itk_component(filemenu) entryconfigure "Export Geometry to PNG..." -state normal
-	    #$itk_component(filemenu) entryconfigure "Compact" -state disabled
-	    catch {$itk_component(filemenu) delete "Compact"}
 
-#	    $itk_component(filemenu) entryconfigure "Import" -state disabled
-#	    $itk_component(filemenu) entryconfigure "Export" -state disabled
 	    $itk_component(displaymenu) entryconfigure "Standard Views" -state normal
 	    $itk_component(displaymenu) entryconfigure "Reset" -state normal
 	    $itk_component(displaymenu) entryconfigure "Autoview" -state normal
 	    $itk_component(displaymenu) entryconfigure "Center..." -state normal
+	    $itk_component(displaymenu) entryconfigure "Clear" -state normal
+	    $itk_component(displaymenu) entryconfigure "Refresh" -state normal
+
 	    $itk_component(modesmenu) entryconfigure "Active Pane" -state normal
 	    $itk_component(modesmenu) entryconfigure "Quad View" -state normal
 	    $itk_component(modesmenu) entryconfigure "View Axes" -state normal
@@ -1089,27 +1094,35 @@ package provide Archer 1.0
 	    $itk_component(modesmenu) entryconfigure "Viewing Parameters" -state normal
 	    $itk_component(modesmenu) entryconfigure "Scale" -state normal
 	    $itk_component(modesmenu) entryconfigure "Lighting" -state normal
-	    $itk_component(displaymenu) entryconfigure "Clear" -state normal
-	    $itk_component(displaymenu) entryconfigure "Refresh" -state normal
 
 	    $itk_component(raytracemenu) entryconfigure "rt" -state normal
 	    $itk_component(raytracemenu) entryconfigure "rtcheck" -state normal
 	    $itk_component(raytracemenu) entryconfigure "rtedge" -state normal
 	    $itk_component(raytracemenu) entryconfigure "nirt" -state normal
 	} else {
-	    $itk_component(menubar) menuconfigure .file.rt  -state normal
-	    #$itk_component(menubar) menuconfigure .file.png -state normal
-	    #$itk_component(menubar) menuconfigure .file.compact -state disabled
-	    catch {$itk_component(menubar) delete .file.compact}
+	    $itk_component(menubar) menuconfigure .file.rt -state normal
 
-#	    $itk_component(menubar) menuconfigure .file.import -state disabled
-#	    $itk_component(menubar) menuconfigure .file.export -state disabled
 	    $itk_component(menubar) menuconfigure .display.standard -state normal
 	    $itk_component(menubar) menuconfigure .display.reset -state normal
 	    $itk_component(menubar) menuconfigure .display.autoview -state normal
 	    $itk_component(menubar) menuconfigure .display.center -state normal
 	    $itk_component(menubar) menuconfigure .display.clear -state normal
 	    $itk_component(menubar) menuconfigure .display.refresh -state normal
+
+	    $itk_component(menubar) menuconfigure .modes.activepane -state normal
+	    $itk_component(menubar) menuconfigure .modes.quad -state normal
+	    $itk_component(menubar) menuconfigure .modes.vaxes -state normal
+	    $itk_component(menubar) menuconfigure .modes.maxes -state normal
+	    $itk_component(menubar) menuconfigure .modes.gplane -state normal
+	    $itk_component(menubar) menuconfigure .modes.plabels -state normal
+	    $itk_component(menubar) menuconfigure .modes.vparams -state normal
+	    $itk_component(menubar) menuconfigure .modes.scale -state normal
+	    $itk_component(menubar) menuconfigure .modes.light -state normal
+
+	    $itk_component(menubar) menuconfigure .raytrace.rt -state normal
+	    $itk_component(menubar) menuconfigure .raytrace.rtcheck -state normal
+	    $itk_component(menubar) menuconfigure .raytrace.rtedge -state normal
+	    $itk_component(menubar) menuconfigure .raytrace.nirt -state normal
 	}
     }
 }
@@ -1204,9 +1217,19 @@ package provide Archer 1.0
 
     catch {
 	if {!$mDbNoCopy && !$mDbReadOnly && $mNeedSave} {
-	    $itk_component(filemenu) entryconfigure "Save" -state normal
+	    if {$ArcherCore::inheritFromToplevel} {
+		$itk_component(filemenu) entryconfigure "Save" -state normal
+	    } else {
+		$itk_component(menubar) menuconfigure .file.save \
+		    -state normal
+	    }
 	} else {
-	    $itk_component(filemenu) entryconfigure "Save" -state disabled
+	    if {$ArcherCore::inheritFromToplevel} {
+		$itk_component(filemenu) entryconfigure "Save" -state disabled
+	    } else {
+		$itk_component(menubar) menuconfigure .file.save \
+		    -state disabled
+	    }
 	}
     }
 }
@@ -1483,218 +1506,6 @@ package provide Archer 1.0
     $itk_component(preferenceTabs) add $itk_component(displayF) -text "Display"
 }
 
-
-::itcl::body Archer::buildEmbeddedMenubar {} {
-    # menubar
-    itk_component add menubar {
-	::iwidgets::menubar $itk_interior.menubar \
-	    -helpvariable [::itcl::scope mStatusStr] \
-	    -font $mFontText \
-	    -activebackground $SystemHighlight \
-	    -activeforeground $SystemHighlightText
-    } {
-	keep -background
-    }
-
-    $itk_component(menubar) component menubar configure \
-	-relief flat
-
-    # File
-    $itk_component(menubar) add menubutton file \
-	-text "File" -menu {
-	    options -tearoff 1
-
-	    command new \
-		-label "New..." \
-		-helpstr "Open target description"
-	    command open \
-		-label "Open..." \
-		-helpstr "Open target description"
-	    command save \
-		-label "Save" \
-		-helpstr "Save target description"
-#	    command compact \
-		-label "Compact" \
-		-helpstr "Compact the target description"
-#	    cascade import \
-		-label "Import" \
-		-menu {
-		    command importFg4 \
-			-label "Fastgen 4 Import..." \
-			-helpstr "Import from Fastgen 4"
-		    command importStlDir \
-			-label "STL Import Directory..." \
-			-helpstr "Import from STL"
-		    command importStlFile \
-			-label "STL Import File..." \
-			-helpstr "Import from STL"
-		}
-#	    cascade export \
-		-label "Export" \
-		-menu {
-		    command exportFg4 \
-			-label "Fastgen 4 Export..." \
-			-helpstr "Export to Fastgen 4"
-		    command exportStl \
-			-label "STL Export..." \
-			-helpstr "Export to STL"
-		    command exportVrml \
-			-label "VRML Export..." \
-			-helpstr "Export to VRML"
-		}
-	    separator sep0
-	    command rt -label "Raytrace Control Panel..." \
-		-helpstr "Launch Ray Trace Panel"
-	    #	command png -label "Export Geometry to PNG..." \
-		-helpstr "Launch PNG Export Panel"
-	    #	separator sep1
-	    command pref \
-		-label "Preferences..." \
-		-command [::itcl::code $this doPreferences] \
-		-helpstr "Set application preferences"
-	    separator sep2
-	    command exit \
-		-label "Quit" \
-		-helpstr "Exit Archer"
-	}
-    $itk_component(menubar) menuconfigure .file.new \
-	-command [::itcl::code $this newDb]
-    $itk_component(menubar) menuconfigure .file.open \
-	-command [::itcl::code $this openDb]
-    $itk_component(menubar) menuconfigure .file.save \
-	-command [::itcl::code $this saveDb]
-#    $itk_component(menubar) menuconfigure .file.compact \
-	-command [::itcl::code $this compact] \
-	-state disabled
-#    $itk_component(menubar) menuconfigure .file.import \
-	-state disabled
-#    $itk_component(menubar) menuconfigure .file.import.importFg4 \
-	-command [::itcl::code $this importFg4]
-#    $itk_component(menubar) menuconfigure .file.import.importStlDir \
-	-command [::itcl::code $this importStl 1]
-#    $itk_component(menubar) menuconfigure .file.import.importStlFile \
-	-command [::itcl::code $this importStl 0]
-#    $itk_component(menubar) menuconfigure .file.export \
-	-state disabled
-#    $itk_component(menubar) menuconfigure .file.export.exportFg4 \
-	-command [::itcl::code $this exportFg4]
-#    $itk_component(menubar) menuconfigure .file.export.exportStl \
-	-command [::itcl::code $this exportStl]
-#    $itk_component(menubar) menuconfigure .file.export.exportVrml \
-	-command [::itcl::code $this exportVrml]
-#    $itk_component(menubar) menuconfigure .file.rt \
-	-command [::itcl::code $this raytracePanel] \
-	-state disabled
-#    $itk_component(menubar) menuconfigure .file.png \
-	-command [::itcl::code $this doPng] \
-	-state disabled
-#    $itk_component(menubar) menuconfigure .file.pref \
-	-command [::itcl::code $this doPreferences]
-#    $itk_component(menubar) menuconfigure .file.exit \
-	-command [::itcl::code $this Close]
-
-    # View Menu
-    $itk_component(menubar) add menubutton display \
-	-text "Display" -menu {
-	    options -tearoff 1
-
-	    command reset -label "Reset" \
-		-helpstr "Set view to default"
-	    command autoview -label "Autoview" \
-		-helpstr "Set view size and center according to what's being displayed"
-	    command center -label "Center..." \
-		-helpstr "Set the view center"
-
-	    cascade standard -label "Standard Views" -menu {
-		command front -label "Front" \
-		    -helpstr "Set view to front"
-		command rear -label "Rear" \
-		    -helpstr "Set view to rear"
-		command port -label "Port" \
-		    -helpstr "Set view to port/left"
-		command starboard -label "Starboard" \
-		    -helpstr "Set view to starboard/right"
-		command top -label "Top" \
-		    -helpstr "Set view to top"
-		command bottom -label "Bottom" \
-		    -helpstr "Set view to bottom"
-		separator sep0
-		command 35,25 -label "35,25" \
-		    -helpstr "Set view to az=35, el=25"
-		command 45,45 -label "45,45" \
-		    -helpstr "Set view to az=45, el=45"
-	    }
-
-	    command clear -label "Clear" \
-		-helpstr "Clear the display"
-	    command refresh -label "Refresh" \
-		-helpstr "Refresh the display"
-	}
-    $itk_component(menubar) menuconfigure .display.standard \
-	-state disabled
-    $itk_component(menubar) menuconfigure .display.reset \
-	-command [::itcl::code $this doViewReset] \
-	-state disabled
-    $itk_component(menubar) menuconfigure .display.autoview \
-	-command [::itcl::code $this doAutoview] \
-	-state disabled
-    $itk_component(menubar) menuconfigure .display.center \
-	-command [::itcl::code $this doViewCenter] \
-	-state disabled
-    $itk_component(menubar) menuconfigure .display.standard.front \
-	-command [::itcl::code $this doAe 0 0]
-    $itk_component(menubar) menuconfigure .display.standard.rear \
-	-command [::itcl::code $this doAe 180 0]
-    $itk_component(menubar) menuconfigure .display.standard.port \
-	-command [::itcl::code $this doAe 90 0]
-    $itk_component(menubar) menuconfigure .display.standard.starboard \
-	-command [::itcl::code $this doAe -90 0]
-    $itk_component(menubar) menuconfigure .display.standard.top \
-	-command [::itcl::code $this doAe 0 90]
-    $itk_component(menubar) menuconfigure .display.standard.bottom \
-	-command [::itcl::code $this doAe 0 -90]
-    $itk_component(menubar) menuconfigure .display.standard.35,25 \
-	-command [::itcl::code $this doAe 35 25]
-    $itk_component(menubar) menuconfigure .display.standard.45,45 \
-	-command [::itcl::code $this doAe 45 45]
-    $itk_component(menubar) menuconfigure .display.clear \
-	-command [::itcl::code $this clear] \
-	-state disabled
-    $itk_component(menubar) menuconfigure .display.refresh \
-	-command [::itcl::code $this refreshDisplay] \
-	-state disabled
-
-    # Modes Menu
-    $itk_component(menubar) add menubutton modes \
-	-text "Modes" \
-
-    updateUtilityMenu
-
-    # Help Menu
-    $itk_component(menubar) add menubutton help \
-	-text "Help" \
-	-menu {
-	    options -tearoff 1
-	    command archerHelp -label "Archer Help..." \
-		-helpstr "Archer's User Manual"
-	    separator sep0
-	    command aboutPlugins -label "About Plug-ins..." \
-		-helpstr "Info about Plug-ins"
-	    command aboutArcher -label "About Archer..." \
-		-helpstr "Info about Archer"
-
-	    #	    command overrides -label "Mouse Mode Overrides..." \
-		-helpstr "Mouse mode override definitions"
-	}
-    $itk_component(menubar) menuconfigure .help.archerHelp \
-	-command [::itcl::code $this doArcherHelp]
-    $itk_component(menubar) menuconfigure .help.aboutPlugins \
-	-command "::Archer::pluginDialog [namespace tail $this]"
-    $itk_component(menubar) menuconfigure .help.aboutArcher \
-	-command [::itcl::code $this doAboutArcher]
-    #    $itk_component(menubar) menuconfigure .help.overrides \
-	-command [::itcl::code $this doMouseOverrides]
-}
 
 ::itcl::body Archer::buildGeneralPreferences {} {
     set parent $itk_component(preferenceTabs)
@@ -2346,40 +2157,6 @@ package provide Archer 1.0
     } {
 	keep -background
     }
-    # Import
-#    itk_component add importMenu {
-#	::menu $itk_component(filemenu).importMenu \
-#	    -tearoff 0
-#    } {
-#	keep -background
-#    }
-#
-#    $itk_component(importMenu) add command \
-#	-label "Fastgen 4 Import..." \
-#	-command [::itcl::code $this importFg4]
-#    $itk_component(importMenu) add command \
-#	-label "STL Import Directory..." \
-#	-command [::itcl::code $this importStl 1]
-#    $itk_component(importMenu) add command \
-#	-label "STL Import File..." \
-#	-command [::itcl::code $this importStl 0]
-#
-#    # Export
-#    itk_component add exportMenu {
-#	::menu $itk_component(filemenu).exportMenu \
-#	    -tearoff 0
-#    } {
-#	keep -background
-#    }
-#    $itk_component(exportMenu) add command \
-#	-label "Fastgen 4 Export..." \
-#	-command [::itcl::code $this exportFg4]
-#    $itk_component(exportMenu) add command \
-#	-label "STL Export..." \
-#	-command [::itcl::code $this exportStl]
-#    $itk_component(exportMenu) add command \
-#	-label "VRML Export..." \
-#	-command [::itcl::code $this exportVrml]
 
     # Populate File menu
     $itk_component(filemenu) add command \
@@ -2392,28 +2169,11 @@ package provide Archer 1.0
 	-label "Save" \
 	-command [::itcl::code $this saveDb] \
 	-state disabled
-    #    $itk_component(filemenu) add command \
-	-label "Compact" \
-	-command [::itcl::code $this compact] \
-	-state disabled
-#    $itk_component(filemenu) add cascade \
-#	-label "Import" \
-#	-menu $itk_component(importMenu) \
-#	-state disabled
-#    $itk_component(filemenu) add cascade \
-#	-label "Export" \
-#	-menu $itk_component(exportMenu) \
-#	-state disabled
     $itk_component(filemenu) add separator
     $itk_component(filemenu) add command \
 	-label "Raytrace Control Panel..." \
 	-command [::itcl::code $this raytracePanel] \
 	-state disabled
-    #    $itk_component(filemenu) add command \
-	-label "Export Geometry to PNG..." \
-	-command [::itcl::code $this doPng] \
-	-state disabled
-    #    $itk_component(filemenu) add separator
     $itk_component(filemenu) add command \
 	-label "Preferences..." \
 	-command [::itcl::code $this doPreferences]
@@ -2909,109 +2669,6 @@ package provide Archer 1.0
     }
 }
 
-::itcl::body Archer::buildModesMenu {} {
-    itk_component add modesmenu {
-	menu $itk_component(menubar).modesmenu \
-	    -tearoff 0
-    } {
-	keep -background
-    }
-
-    itk_component add activepanemenu {
-	menu $itk_component(modesmenu).activepanemenu \
-	    -tearoff 0
-    } {
-	keep -background
-    }
-    set i 0
-    $itk_component(activepanemenu) add radiobutton \
-	-label "Upper Left" \
-	-value $i \
-	-variable [::itcl::scope mActivePane] \
-	-command [::itcl::code $this setActivePane ul]
-    incr i
-    $itk_component(activepanemenu) add radiobutton \
-	-label "Upper Right" \
-	-value $i \
-	-variable [::itcl::scope mActivePane] \
-	-command [::itcl::code $this setActivePane ur]
-    set mActivePane $i
-    incr i
-    $itk_component(activepanemenu) add radiobutton \
-	-label "Lower Left" \
-	-value $i \
-	-variable [::itcl::scope mActivePane] \
-	-command [::itcl::code $this setActivePane ll]
-    incr i
-    $itk_component(activepanemenu) add radiobutton \
-	-label "Lower Right" \
-	-value $i \
-	-variable [::itcl::scope mActivePane] \
-	-command [::itcl::code $this setActivePane lr]
-
-    $itk_component(modesmenu) add cascade \
-	-label "Active Pane" \
-	-menu $itk_component(activepanemenu) \
-	-state disabled
-    $itk_component(modesmenu) add checkbutton \
-	-label "Quad View" \
-	-offvalue 0 \
-	-onvalue 1 \
-	-variable [::itcl::scope mMultiPane] \
-	-command [::itcl::code $this doMultiPane] \
-	-state disabled
-    $itk_component(modesmenu) add separator
-    $itk_component(modesmenu) add checkbutton \
-	-label "View Axes" \
-	-offvalue 0 \
-	-onvalue 1 \
-	-variable [::itcl::scope mShowViewAxes] \
-	-command [::itcl::code $this showViewAxes] \
-	-state disabled
-    $itk_component(modesmenu) add checkbutton \
-	-label "Model Axes" \
-	-offvalue 0 \
-	-onvalue 1 \
-	-variable [::itcl::scope mShowModelAxes] \
-	-command [::itcl::code $this showModelAxes] \
-	-state disabled
-    $itk_component(modesmenu) add checkbutton \
-	-label "Ground Plane" \
-	-offvalue 0 \
-	-onvalue 1 \
-	-variable [::itcl::scope mShowGroundPlane] \
-	-command [::itcl::code $this showGroundPlane] \
-	-state disabled
-    $itk_component(modesmenu) add checkbutton \
-	-label "Primitive Labels" \
-	-offvalue 0 \
-	-onvalue 1 \
-	-variable [::itcl::scope mShowPrimitiveLabels] \
-	-command [::itcl::code $this showPrimitiveLabels] \
-	-state disabled
-    $itk_component(modesmenu) add checkbutton \
-	-label "Viewing Parameters" \
-	-offvalue 0 \
-	-onvalue 1 \
-	-variable [::itcl::scope mShowViewingParams] \
-	-command [::itcl::code $this showViewParams] \
-	-state disabled
-    $itk_component(modesmenu) add checkbutton \
-	-label "Scale" \
-	-offvalue 0 \
-	-onvalue 1 \
-	-variable [::itcl::scope mShowScale] \
-	-command [::itcl::code $this showScale] \
-	-state disabled
-    $itk_component(modesmenu) add checkbutton \
-	-label "Lighting" \
-	-offvalue 0 \
-	-onvalue 2 \
-	-variable [::itcl::scope mLighting] \
-	-command [::itcl::code $this doLighting] \
-	-state disabled
-}
-
 ::itcl::body Archer::updatePrimaryToolbar {} {
     # Populate the primary toolbar
     $itk_component(primaryToolbar) insert 0 button new \
@@ -3109,12 +2766,14 @@ package provide Archer 1.0
 
     set parent [$itk_component(primaryToolbar) component other]
     itk_component add primitiveMenu {
-	::menu $parent.menu
+	::menu $parent.menu \
+	    -tearoff 0
     } {
 	keep -background
     }
     itk_component add arbMenu {
-	::menu $itk_component(primitiveMenu).arbmenu
+	::menu $itk_component(primitiveMenu).arbmenu \
+	    -tearoff 0
     } {
 	keep -background
     }
@@ -3336,6 +2995,472 @@ package provide Archer 1.0
     $itk_component(primaryToolbar) itemconfigure edit_translate -state disabled
     $itk_component(primaryToolbar) itemconfigure edit_scale -state disabled
     $itk_component(primaryToolbar) itemconfigure edit_center -state disabled
+}
+
+
+::itcl::body Archer::buildEmbeddedMenubar {} {
+    itk_component add menubar {
+	::iwidgets::menubar $itk_interior.menubar \
+	    -helpvariable [::itcl::scope mStatusStr] \
+	    -font $mFontText \
+	    -activebackground $SystemHighlight \
+	    -activeforeground $SystemHighlightText
+    } {
+	keep -background
+    }
+
+    $itk_component(menubar) component menubar configure \
+	-relief flat
+
+    buildEmbeddedFileMenu
+    buildEmbeddedDisplayMenu
+    buildEmbeddedModesMenu
+    buildEmbeddedRaytraceMenu
+    updateUtilityMenu
+    buildEmbeddedHelpMenu
+}
+
+::itcl::body Archer::buildEmbeddedFileMenu {} {
+    $itk_component(menubar) add menubutton file \
+	-text "File" -menu {
+	    options -tearoff 0
+
+	    command new \
+		-label "New..." \
+		-helpstr "Open target description"
+	    command open \
+		-label "Open..." \
+		-helpstr "Open target description"
+	    command save \
+		-label "Save" \
+		-helpstr "Save target description"
+	    separator sep0
+	    command rt -label "Raytrace Control Panel..." \
+		-helpstr "Launch Ray Trace Panel"
+	    command pref \
+		-label "Preferences..." \
+		-helpstr "Set application preferences"
+	    separator sep1
+	    command exit \
+		-label "Quit" \
+		-helpstr "Exit Archer"
+	}
+    $itk_component(menubar) menuconfigure .file.new \
+	-command [::itcl::code $this newDb]
+    $itk_component(menubar) menuconfigure .file.open \
+	-command [::itcl::code $this openDb]
+    $itk_component(menubar) menuconfigure .file.save \
+	-command [::itcl::code $this saveDb] \
+	-state disabled
+    $itk_component(menubar) menuconfigure .file.rt \
+	-command [::itcl::code $this raytracePanel] \
+	-state disabled
+    $itk_component(menubar) menuconfigure .file.pref \
+	-command [::itcl::code $this doPreferences]
+    $itk_component(menubar) menuconfigure .file.exit \
+	-command [::itcl::code $this Close]
+}
+
+::itcl::body Archer::buildEmbeddedDisplayMenu {} {
+    $itk_component(menubar) add menubutton display \
+	-text "Display" -menu {
+	    options -tearoff 0
+
+	    command reset -label "Reset" \
+		-helpstr "Set view to default"
+	    command autoview -label "Autoview" \
+		-helpstr "Set view size and center according to what's being displayed"
+	    command center -label "Center..." \
+		-helpstr "Set the view center"
+
+	    cascade background -label "Background Color" -menu {
+		command black -label "Black" \
+		    -helpstr "Set display background to black"
+		command grey -label "Grey" \
+		    -helpstr "Set display background to grey"
+		command white -label "White" \
+		    -helpstr "Set display background to white"
+		command cyan -label "Cyan" \
+		    -helpstr "Set display background to cyan"
+		command blue -label "Blue" \
+		    -helpstr "Set display background to blue"
+	    }
+
+	    cascade standard -label "Standard Views" -menu {
+		command front -label "Front" \
+		    -helpstr "Set view to front"
+		command rear -label "Rear" \
+		    -helpstr "Set view to rear"
+		command port -label "Port" \
+		    -helpstr "Set view to port/left"
+		command starboard -label "Starboard" \
+		    -helpstr "Set view to starboard/right"
+		command top -label "Top" \
+		    -helpstr "Set view to top"
+		command bottom -label "Bottom" \
+		    -helpstr "Set view to bottom"
+		separator sep0
+		command 35,25 -label "35,25" \
+		    -helpstr "Set view to az=35, el=25"
+		command 45,45 -label "45,45" \
+		    -helpstr "Set view to az=45, el=45"
+	    }
+
+	    command clear -label "Clear" \
+		-helpstr "Clear the display"
+	    command refresh -label "Refresh" \
+		-helpstr "Refresh the display"
+	}
+
+    $itk_component(menubar) menuconfigure .display.standard \
+	-state disabled
+    $itk_component(menubar) menuconfigure .display.reset \
+	-command [::itcl::code $this doViewReset] \
+	-state disabled
+    $itk_component(menubar) menuconfigure .display.autoview \
+	-command [::itcl::code $this doAutoview] \
+	-state disabled
+    $itk_component(menubar) menuconfigure .display.center \
+	-command [::itcl::code $this doViewCenter] \
+	-state disabled
+    $itk_component(menubar) menuconfigure .display.background.black \
+	-command [::itcl::code $this backgroundColor 0 0 0]
+    $itk_component(menubar) menuconfigure .display.background.grey \
+	-command [::itcl::code $this backgroundColor 100 100 100]
+    $itk_component(menubar) menuconfigure .display.background.white \
+	-command [::itcl::code $this backgroundColor 255 255 255]
+    $itk_component(menubar) menuconfigure .display.background.cyan \
+	-command [::itcl::code $this backgroundColor 0 200 200]
+    $itk_component(menubar) menuconfigure .display.background.blue \
+	-command [::itcl::code $this backgroundColor 0 0 160]
+    $itk_component(menubar) menuconfigure .display.standard.front \
+	-command [::itcl::code $this doAe 0 0]
+    $itk_component(menubar) menuconfigure .display.standard.rear \
+	-command [::itcl::code $this doAe 180 0]
+    $itk_component(menubar) menuconfigure .display.standard.port \
+	-command [::itcl::code $this doAe 90 0]
+    $itk_component(menubar) menuconfigure .display.standard.starboard \
+	-command [::itcl::code $this doAe -90 0]
+    $itk_component(menubar) menuconfigure .display.standard.top \
+	-command [::itcl::code $this doAe 0 90]
+    $itk_component(menubar) menuconfigure .display.standard.bottom \
+	-command [::itcl::code $this doAe 0 -90]
+    $itk_component(menubar) menuconfigure .display.standard.35,25 \
+	-command [::itcl::code $this doAe 35 25]
+    $itk_component(menubar) menuconfigure .display.standard.45,45 \
+	-command [::itcl::code $this doAe 45 45]
+    $itk_component(menubar) menuconfigure .display.clear \
+	-command [::itcl::code $this clear] \
+	-state disabled
+    $itk_component(menubar) menuconfigure .display.refresh \
+	-command [::itcl::code $this refreshDisplay] \
+	-state disabled
+}
+
+::itcl::body Archer::buildEmbeddedHelpMenu {} {
+    $itk_component(menubar) add menubutton help \
+	-text "Help" \
+	-menu {
+	    options -tearoff 1
+	    command archerHelp -label "Archer Help..." \
+		-helpstr "Archer's User Manual"
+	    separator sep0
+	    command aboutPlugins -label "About Plug-ins..." \
+		-helpstr "Info about Plug-ins"
+	    command aboutArcher -label "About Archer..." \
+		-helpstr "Info about Archer"
+
+	    #	    command overrides -label "Mouse Mode Overrides..." \
+		-helpstr "Mouse mode override definitions"
+	}
+    $itk_component(menubar) menuconfigure .help.archerHelp \
+	-command [::itcl::code $this doArcherHelp]
+    $itk_component(menubar) menuconfigure .help.aboutPlugins \
+	-command "::Archer::pluginDialog [namespace tail $this]"
+    $itk_component(menubar) menuconfigure .help.aboutArcher \
+	-command [::itcl::code $this doAboutArcher]
+    #    $itk_component(menubar) menuconfigure .help.overrides \
+	-command [::itcl::code $this doMouseOverrides]
+}
+
+::itcl::body Archer::buildEmbeddedModesMenu {} {
+    $itk_component(menubar) add menubutton modes \
+	-text "Modes" -menu {
+	    options -tearoff 0
+
+	    cascade activepane -label "Active Pane" -menu {
+		radiobutton ul -label "Upper Left" \
+		    -helpstr "Set active pane to upper left"
+		radiobutton ur -label "Upper Right" \
+		    -helpstr "Set active pane to upper right"
+		radiobutton ll -label "Lower Left" \
+		    -helpstr "Set active pane to lower left"
+		radiobutton lr -label "Lower Right" \
+		    -helpstr "Set active pane to lower right"
+	    }
+	    checkbutton quad -label "Quad View" \
+		-helpstr "Toggle between single and quad display."
+	    separator sep1
+	    checkbutton vaxes -label "View Axes" \
+		-helpstr "Toggle display of the view axes."
+	    checkbutton maxes -label "Model Axes" \
+		-helpstr "Toggle display of the model axes."
+	    checkbutton gplane -label "Ground Plane" \
+		-helpstr "Toggle display of the ground plane."
+	    checkbutton plabels -label "Primitive Labels" \
+		-helpstr "Toggle display of the primitive labels."
+	    checkbutton vparams -label "Viewing Parameters" \
+		-helpstr "Toggle display of the viewing parameters."
+	    checkbutton scale -label "Scale" \
+		-helpstr "Toggle display of the view scale."
+	    checkbutton light -label "Lighting" \
+		-helpstr "Toggle lighting on/off."
+	}
+    $itk_component(menubar) menuconfigure .modes.activepane \
+	-state disabled
+    set i 0
+    $itk_component(menubar) menuconfigure .modes.activepane.ul \
+	-value $i \
+	-variable [::itcl::scope mActivePane] \
+	-command [::itcl::code $this setActivePane ul]
+    incr i
+    $itk_component(menubar) menuconfigure .modes.activepane.ur \
+	-value $i \
+	-variable [::itcl::scope mActivePane] \
+	-command [::itcl::code $this setActivePane ur]
+    incr i
+    $itk_component(menubar) menuconfigure .modes.activepane.ll \
+	-value $i \
+	-variable [::itcl::scope mActivePane] \
+	-command [::itcl::code $this setActivePane ll]
+    incr i
+    $itk_component(menubar) menuconfigure .modes.activepane.lr \
+	-value $i \
+	-variable [::itcl::scope mActivePane] \
+	-command [::itcl::code $this setActivePane lr]
+    $itk_component(menubar) menuconfigure .modes.quad \
+	-command [::itcl::code $this doMultiPane] \
+	-offvalue 0 \
+	-onvalue 1 \
+	-variable [::itcl::scope mMultiPane] \
+	-state disabled
+    $itk_component(menubar) menuconfigure .modes.vaxes \
+	-offvalue 0 \
+	-onvalue 1 \
+	-variable [::itcl::scope mShowViewAxes] \
+	-command [::itcl::code $this showViewAxes] \
+	-state disabled
+    $itk_component(menubar) menuconfigure .modes.maxes \
+	-offvalue 0 \
+	-onvalue 1 \
+	-variable [::itcl::scope mShowModelAxes] \
+	-command [::itcl::code $this showModelAxes] \
+	-state disabled
+    $itk_component(menubar) menuconfigure .modes.gplane \
+	-offvalue 0 \
+	-onvalue 1 \
+	-variable [::itcl::scope mShowGroundPlane] \
+	-command [::itcl::code $this showGroundPlane] \
+	-state disabled
+    $itk_component(menubar) menuconfigure .modes.plabels \
+	-offvalue 0 \
+	-onvalue 1 \
+	-variable [::itcl::scope mShowPrimitiveLabels] \
+	-command [::itcl::code $this showPrimitiveLabels] \
+	-state disabled
+    $itk_component(menubar) menuconfigure .modes.vparams \
+	-offvalue 0 \
+	-onvalue 1 \
+	-variable [::itcl::scope mShowViewingParams] \
+	-command [::itcl::code $this showViewParams] \
+	-state disabled
+    $itk_component(menubar) menuconfigure .modes.scale \
+	-offvalue 0 \
+	-onvalue 1 \
+	-variable [::itcl::scope mShowScale] \
+	-command [::itcl::code $this showScale] \
+	-state disabled
+    $itk_component(menubar) menuconfigure .modes.light \
+	-offvalue 0 \
+	-onvalue 1 \
+	-variable [::itcl::scope mLighting] \
+	-command [::itcl::code $this doLighting] \
+	-state disabled
+}
+
+::itcl::body Archer::buildEmbeddedRaytraceMenu {} {
+    $itk_component(menubar) add menubutton raytrace \
+	-text "Raytrace" -menu {
+	    options -tearoff 0
+
+	    cascade rt -label "rt" -menu {
+		command rt512 -label "512x512" \
+		    -helpstr "Render the current view with rt -s 512."
+		command rt1024 -label "1024x1024" \
+		    -helpstr "Render the current view with rt -s 1024."
+		command rtwinsize -label "Window Size" \
+		    -helpstr "Render the current view with rt using the window size."
+	    }
+
+	    cascade rtcheck -label "rtcheck" -menu {
+		command rtcheck50 -label "50x50" \
+		    -helpstr "Run rtcheck -s 50."
+		command rtcheck100 -label "100x100" \
+		    -helpstr "Run rtcheck -s 100."
+		command rtcheck256 -label "256x256" \
+		    -helpstr "Run rtcheck -s 256."
+		command rtcheck512 -label "512x512" \
+		    -helpstr "Run rtcheck -s 512."
+	    }
+
+	    cascade rtedge -label "rtedge" -menu {
+		command rtedge512 -label "512x512" \
+		    -helpstr "Render the current view with rtedge -s 512."
+		command rtedge1024 -label "1024x1024" \
+		    -helpstr "Render the current view with rtedge -s 1024."
+		command rtedgewinsize -label "Window Size" \
+		    -helpstr "Render the current view with rtedge using the window size."
+	    }
+
+	    command nirt -label "nirt" \
+		-helpstr "Fire nirt at current view."
+	}
+
+    $itk_component(menubar) menuconfigure .raytrace.rt \
+	-state disabled
+    $itk_component(menubar) menuconfigure .raytrace.rt.rt512 \
+	-command [::itcl::code $this launchRtApp rt 512]
+    $itk_component(menubar) menuconfigure .raytrace.rt.rt1024 \
+	-command [::itcl::code $this launchRtApp rt 1024]
+    $itk_component(menubar) menuconfigure .raytrace.rt.rtwinsize \
+	-command [::itcl::code $this launchRtApp rt window]
+
+    $itk_component(menubar) menuconfigure .raytrace.rtcheck \
+	-state disabled
+    $itk_component(menubar) menuconfigure .raytrace.rtcheck.rtcheck50 \
+	-command [::itcl::code $this launchRtApp rtcheck 50]
+    $itk_component(menubar) menuconfigure .raytrace.rtcheck.rtcheck100 \
+	-command [::itcl::code $this launchRtApp rtcheck 100]
+    $itk_component(menubar) menuconfigure .raytrace.rtcheck.rtcheck256 \
+	-command [::itcl::code $this launchRtApp rtcheck 256]
+    $itk_component(menubar) menuconfigure .raytrace.rtcheck.rtcheck512 \
+	-command [::itcl::code $this launchRtApp rtcheck 512]
+
+    $itk_component(menubar) menuconfigure .raytrace.rtedge \
+	-state disabled
+    $itk_component(menubar) menuconfigure .raytrace.rtedge.rtedge512 \
+	-command [::itcl::code $this launchRtApp rtedge 512]
+    $itk_component(menubar) menuconfigure .raytrace.rtedge.rtedge1024 \
+	-command [::itcl::code $this launchRtApp rtedge 1024]
+    $itk_component(menubar) menuconfigure .raytrace.rtedge.rtedgewinsize \
+	-command [::itcl::code $this launchRtApp rtedge window]
+
+    $itk_component(menubar) menuconfigure .raytrace.nirt \
+	-command [::itcl::code $this launchNirt] \
+	-state disabled
+}
+
+::itcl::body Archer::buildModesMenu {} {
+    itk_component add modesmenu {
+	menu $itk_component(menubar).modesmenu \
+	    -tearoff 0
+    } {
+	keep -background
+    }
+
+    itk_component add activepanemenu {
+	menu $itk_component(modesmenu).activepanemenu \
+	    -tearoff 0
+    } {
+	keep -background
+    }
+    set i 0
+    $itk_component(activepanemenu) add radiobutton \
+	-label "Upper Left" \
+	-value $i \
+	-variable [::itcl::scope mActivePane] \
+	-command [::itcl::code $this setActivePane ul]
+    incr i
+    $itk_component(activepanemenu) add radiobutton \
+	-label "Upper Right" \
+	-value $i \
+	-variable [::itcl::scope mActivePane] \
+	-command [::itcl::code $this setActivePane ur]
+    set mActivePane $i
+    incr i
+    $itk_component(activepanemenu) add radiobutton \
+	-label "Lower Left" \
+	-value $i \
+	-variable [::itcl::scope mActivePane] \
+	-command [::itcl::code $this setActivePane ll]
+    incr i
+    $itk_component(activepanemenu) add radiobutton \
+	-label "Lower Right" \
+	-value $i \
+	-variable [::itcl::scope mActivePane] \
+	-command [::itcl::code $this setActivePane lr]
+
+    $itk_component(modesmenu) add cascade \
+	-label "Active Pane" \
+	-menu $itk_component(activepanemenu) \
+	-state disabled
+    $itk_component(modesmenu) add checkbutton \
+	-label "Quad View" \
+	-offvalue 0 \
+	-onvalue 1 \
+	-variable [::itcl::scope mMultiPane] \
+	-command [::itcl::code $this doMultiPane] \
+	-state disabled
+    $itk_component(modesmenu) add separator
+    $itk_component(modesmenu) add checkbutton \
+	-label "View Axes" \
+	-offvalue 0 \
+	-onvalue 1 \
+	-variable [::itcl::scope mShowViewAxes] \
+	-command [::itcl::code $this showViewAxes] \
+	-state disabled
+    $itk_component(modesmenu) add checkbutton \
+	-label "Model Axes" \
+	-offvalue 0 \
+	-onvalue 1 \
+	-variable [::itcl::scope mShowModelAxes] \
+	-command [::itcl::code $this showModelAxes] \
+	-state disabled
+    $itk_component(modesmenu) add checkbutton \
+	-label "Ground Plane" \
+	-offvalue 0 \
+	-onvalue 1 \
+	-variable [::itcl::scope mShowGroundPlane] \
+	-command [::itcl::code $this showGroundPlane] \
+	-state disabled
+    $itk_component(modesmenu) add checkbutton \
+	-label "Primitive Labels" \
+	-offvalue 0 \
+	-onvalue 1 \
+	-variable [::itcl::scope mShowPrimitiveLabels] \
+	-command [::itcl::code $this showPrimitiveLabels] \
+	-state disabled
+    $itk_component(modesmenu) add checkbutton \
+	-label "Viewing Parameters" \
+	-offvalue 0 \
+	-onvalue 1 \
+	-variable [::itcl::scope mShowViewingParams] \
+	-command [::itcl::code $this showViewParams] \
+	-state disabled
+    $itk_component(modesmenu) add checkbutton \
+	-label "Scale" \
+	-offvalue 0 \
+	-onvalue 1 \
+	-variable [::itcl::scope mShowScale] \
+	-command [::itcl::code $this showScale] \
+	-state disabled
+    $itk_component(modesmenu) add checkbutton \
+	-label "Lighting" \
+	-offvalue 0 \
+	-onvalue 2 \
+	-variable [::itcl::scope mLighting] \
+	-command [::itcl::code $this doLighting] \
+	-state disabled
 }
 
 

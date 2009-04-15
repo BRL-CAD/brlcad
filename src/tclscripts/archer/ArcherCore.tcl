@@ -37,18 +37,14 @@ LoadArcherCoreLibs
 package provide ArcherCore 1.0
 
 namespace eval ArcherCore {
-    if {![info exists parentClass]} {
+    set cursorWaitCount 0
+
+    if {1} {
 	set parentClass itk::Toplevel
 	set inheritFromToplevel 1
-	set cursorWaitCount 0
-
-#	if {$tcl_platform(platform) == "windows"} {
-#	    set parentClass itk::Toplevel
-#	    set inheritFromToplevel 1
-#	} else {
-#	    set parentClass TabWindow
-#	    set inheritFromToplevel 0
-#	}
+    } else {
+	set parentClass itk::Widget
+	set inheritFromToplevel 0
     }
 }
 
@@ -267,7 +263,7 @@ namespace eval ArcherCore {
 	variable mTargetCopy ""
 	variable mTargetOldCopy ""
 	variable mDisplayType
-	variable mLighting 2
+	variable mLighting 1
 	variable mRenderMode -1
 	variable mActivePane
 	variable mStatusStr ""
