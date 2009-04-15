@@ -137,7 +137,6 @@ package provide Archer 1.0
 	method pluginUpdateStatusBar {msg}
 
 	method importFg4Sections   {_slist _wlist _delta}
-	method purgeHistory        {}
 
 	# ArcherCore Override Section
 	method Load                {_target}
@@ -190,16 +189,7 @@ package provide Archer 1.0
 	method initMode {{_updateFractions 0}}
 
 	# Object Edit Section
-	method applyEdit {}
 	method initEdit {}
-	method finalizeObjEdit {_obj _path}
-	method gotoNextObj {}
-	method gotoPrevObj {}
-	method purgeObjHistory {obj}
-	method resetEdit {}
-	method updateNextObjButton {_obj}
-	method updateObjHistory {_obj}
-	method updatePrevObjButton {_obj}
 
 	# Object Edit VIA Mouse Section
 	method beginObjRotate {}
@@ -261,9 +251,7 @@ package provide Archer 1.0
 	method initHalfEditView {_odata}
 	method initNoWizard {_parent _msg}
 	method initObjAttrView {}
-	method initObjEdit {_obj}
 	method initObjEditView {}
-	method initObjHistory {_obj}
 	method initObjWizard {_obj _wizardLoaded}
 	method initPartEditView {_odata}
 	method initPipeEditView {_odata}
@@ -340,7 +328,7 @@ package provide Archer 1.0
 # ------------------------------------------------------------
 ::itcl::body Archer::constructor {{_viewOnly 0} {_noCopy 0} args} {
     # Append a few more commands
-    lappend mgedCommands importFg4Sections purgeHistory
+    lappend mgedCommands importFg4Sections
 
     if {!$mViewOnly} {
 	if {$ArcherCore::inheritFromToplevel} {
@@ -774,29 +762,6 @@ package provide Archer 1.0
 }
 
 
-::itcl::body Archer::purgeHistory {} {
-    if {![info exists itk_component(ged)]} {
-	return
-    }
-
-    foreach obj [$itk_component(ged) ls] {
-	set obj [regsub {(/)|(/R)} $obj ""]
-	purgeObjHistory $obj
-    }
-
-    updatePrevObjButton ""
-    updateNextObjButton ""
-
-    set selNode [$itk_component(tree) query -selected]
-    if {$selNode != ""} {
-	set selNodePath [$itk_component(tree) query -path $selNode]
-	toggleTreePath $selNodePath
-    }
-
-    set mNeedSave 1
-    updateSaveMode
-}
-
 ::itcl::body Archer::Load {_target} {
     SetWaitCursor $this
     if {$mNeedSave} {
@@ -858,10 +823,6 @@ package provide Archer 1.0
 	    grid $itk_component(ged) -row 1 -column 0 -sticky news
 	}
     }
-
-#    setColorOption gedCmd -primitiveLabelColor $mPrimitiveLabelColor
-#    setColorOption gedCmd -scaleColor $mScaleColor
-#    setColorOption gedCmd -viewingParamsColor $mViewingParamsColor
 
     set mDbTitle [$itk_component(ged) title]
     set mDbUnits [$itk_component(ged) units]
@@ -1019,14 +980,6 @@ package provide Archer 1.0
 	$itk_component(objViewToolbar) itemconfigure objEditView \
 	    -image [image create photo \
 			-file [file join $dir option_tree.png]]
-
-	# Object Edit Toolbar
-	$itk_component(objEditToolbar) itemconfigure prev \
-	    -image [image create photo \
-			-file [file join $dir arrow_back.png]]
-	$itk_component(objEditToolbar) itemconfigure next \
-	    -image [image create photo \
-			-file [file join $dir arrow_forward.png]]
     }
 }
 
@@ -1121,10 +1074,6 @@ package provide Archer 1.0
 	    #$itk_component(filemenu) entryconfigure "Compact" -state disabled
 	    catch {$itk_component(filemenu) delete "Compact"}
 
-#	    $itk_component(filemenu) insert "Import" command \
-		-label "Purge History" \
-		-command [::itcl::code $this purgeHistory]
-
 #	    $itk_component(filemenu) entryconfigure "Import" -state disabled
 #	    $itk_component(filemenu) entryconfigure "Export" -state disabled
 	    $itk_component(displaymenu) entryconfigure "Standard Views" -state normal
@@ -1153,10 +1102,6 @@ package provide Archer 1.0
 	    #$itk_component(menubar) menuconfigure .file.compact -state disabled
 	    catch {$itk_component(menubar) delete .file.compact}
 
-#	    $itk_component(menubar) insert .file.import command purgeHist \
-		-label "Purge History" \
-		-helpstr "Remove all object history"
-
 #	    $itk_component(menubar) menuconfigure .file.import -state disabled
 #	    $itk_component(menubar) menuconfigure .file.export -state disabled
 	    $itk_component(menubar) menuconfigure .display.standard -state normal
@@ -1165,9 +1110,6 @@ package provide Archer 1.0
 	    $itk_component(menubar) menuconfigure .display.center -state normal
 	    $itk_component(menubar) menuconfigure .display.clear -state normal
 	    $itk_component(menubar) menuconfigure .display.refresh -state normal
-
-	    $itk_component(menubar) menuconfigure .file.purgeHist \
-		-command [::itcl::code $this purgeHistory]
 	}
     }
 }
@@ -1687,16 +1629,6 @@ package provide Archer 1.0
 		-helpstr "Clear the display"
 	    command refresh -label "Refresh" \
 		-helpstr "Refresh the display"
-#	    separator sep1
-#	    cascade toolbars -label "Toolbars" -menu {
-#		#	    checkbutton primary -label "Primary" \
-#							  -helpstr "Toggle on/off primary toolbar"
-#							  checkbutton views -label "View Controls" \
-#							      -helpstr "Toggle on/off view toolbar"
-#						      }
-#
-#	    checkbutton statusbar -label "Status Bar" \
-#		-helpstr "Toggle on/off status bar"
 	}
     $itk_component(menubar) menuconfigure .display.standard \
 	-state disabled
@@ -1731,15 +1663,6 @@ package provide Archer 1.0
     $itk_component(menubar) menuconfigure .display.refresh \
 	-command [::itcl::code $this refreshDisplay] \
 	-state disabled
-#    #    $itk_component(menubar) menuconfigure .display.toolbars.primary -offvalue 0 -onvalue 1 \
-#	-variable [::itcl::scope itk_option(-primaryToolbar)] \
-#	-command [::itcl::code $this doPrimaryToolbar]
-#    $itk_component(menubar) menuconfigure .display.toolbars.views -offvalue 0 -onvalue 1 \
-#	-variable [::itcl::scope itk_option(-viewToolbar)] \
-#	-command [::itcl::code $this doViewToolbar]
-#    $itk_component(menubar) menuconfigure .display.statusbar -offvalue 0 -onvalue 1 \
-#	-variable [::itcl::scope itk_option(-statusbar)] \
-#	-command [::itcl::code $this doStatusbar]
 
     # Modes Menu
     $itk_component(menubar) add menubutton modes \
@@ -3424,8 +3347,6 @@ package provide Archer 1.0
 	updateVPaneFractions
     }
 
-#    grid $itk_component(attr_expand) -row 0 -column 2 -sticky e
-
     set itk_option(-primaryToolbar) 1
     doPrimaryToolbar
 
@@ -3435,7 +3356,6 @@ package provide Archer 1.0
 	buildEmbeddedMenubar
 	pack $itk_component(menubar) -side top -fill x -padx 1 -before $itk_component(south)
     } else {
-#	updateModesMenu
 	updateUtilityMenu
     }
 
@@ -3466,93 +3386,6 @@ package provide Archer 1.0
 
 
 ################################### Object Edit Section ###################################
-
-::itcl::body Archer::applyEdit {} {
-    set doRefreshTree 0
-    switch -- $mSelectedObjType {
-	"arb4" {
-	    $itk_component(arb4View) updateGeometry
-	}
-	"arb5" {
-	    $itk_component(arb5View) updateGeometry
-	}
-	"arb6" {
-	    $itk_component(arb6View) updateGeometry
-	}
-	"arb7" {
-	    $itk_component(arb7View) updateGeometry
-	}
-	"arb8" {
-	    $itk_component(arb8View) updateGeometry
-	}
-	"bot" {
-	    $itk_component(botView) updateGeometry
-	}
-	"comb" {
-	    $itk_component(combView) updateGeometry
-	    set doRefreshTree 1
-	}
-	"ell" {
-	    $itk_component(ellView) updateGeometry
-	}
-	"ehy" {
-	    $itk_component(ehyView) updateGeometry
-	}
-	"epa" {
-	    $itk_component(epaView) updateGeometry
-	}
-	"eto" {
-	    $itk_component(etoView) updateGeometry
-	}
-	"extrude" {
-	    $itk_component(extrudeView) updateGeometry
-	}
-	"grip" {
-	    $itk_component(gripView) updateGeometry
-	}
-	"half" {
-	    $itk_component(halfView) updateGeometry
-	}
-	"part" {
-	    $itk_component(partView) updateGeometry
-	}
-	"pipe" {
-	    $itk_component(pipeView) updateGeometry
-	}
-	"rpc" {
-	    $itk_component(rpcView) updateGeometry
-	}
-	"rhc" {
-	    $itk_component(rhcView) updateGeometry
-	}
-	"sketch" {
-	    $itk_component(sketchView) updateGeometry
-	}
-	"sph" {
-	    $itk_component(sphView) updateGeometry
-	}
-	"tgc" {
-	    $itk_component(tgcView) updateGeometry
-	}
-	"tor" {
-	    $itk_component(torView) updateGeometry
-	}
-    }
-
-    updateObjHistory $mSelectedObj
-    if {$doRefreshTree} {
-	refreshTree
-    }
-
-    set mNeedSave 1
-    updateSaveMode
-
-    # Disable the "apply" and "reset" buttons
-    $itk_component(objEditToolbar) itemconfigure apply \
-	-state disabled
-    $itk_component(objEditToolbar) itemconfigure reset \
-	-state disabled
-}
 
 
 ::itcl::body Archer::initEdit {} {
@@ -3703,304 +3536,6 @@ package provide Archer 1.0
 	}
     }
 }
-
-
-::itcl::body Archer::finalizeObjEdit {obj path} {
-    if {$obj == "" ||
-	[catch {gedCmd get_type $obj} stuff]} {
-	return
-    }
-
-    if {[catch {gedCmd attr get $obj history} hname]} {
-	set hname ""
-    }
-
-    # No history
-    if {$hname == "" ||
-	[catch {gedCmd get_type $hname} stuff]} {
-	return
-    }
-
-    # Presumably, by the time we get here the
-    # user has either saved or refused to save
-    # any pending edits and so the history list
-    # contains the only known valid version of
-    # the object. We now copy the valid version
-    # in place of the object.
-    set renderData [gedCmd how -b $path]
-    set renderMode [lindex $renderData 0]
-    set renderTrans [lindex $renderData 1]
-    gedCmd configure -autoViewEnable 0
-    gedCmd kill $obj
-    gedCmd cp $hname $obj
-    gedCmd unhide $obj
-    gedCmd attr rm $obj previous
-    gedCmd attr rm $obj next
-    render $path $renderMode $renderTrans 0
-    gedCmd configure -autoViewEnable 1
-}
-
-::itcl::body Archer::gotoNextObj {} {
-    set obj $mSelectedObj
-
-    if {$obj == "" ||
-	[catch {gedCmd get_type $obj} stuff]} {
-	return
-    }
-
-    if {[catch {gedCmd attr get $obj history} hname]} {
-	set hname ""
-    }
-
-    if {$hname == "" ||
-	[catch {gedCmd get_type $hname} stuff]} {
-	return
-    }
-
-    if {[catch {gedCmd attr get $hname next} next]} {
-	set next ""
-    }
-
-    if {$next == "" ||
-	[catch {gedCmd get_type $next} stuff]} {
-	return
-    }
-
-    updateObjEdit $next 1 1
-    updatePrevObjButton $obj
-    updateNextObjButton $obj
-
-    if {$mSelectedObjType == "comb"} {
-	refreshTree
-    }
-}
-
-::itcl::body Archer::gotoPrevObj {} {
-    set obj $mSelectedObj
-
-    if {$obj == "" ||
-	[catch {gedCmd get_type $obj} stuff]} {
-	return
-    }
-
-    if {[catch {gedCmd attr get $obj history} hname]} {
-	set hname ""
-    }
-
-    if {$hname == "" ||
-	[catch {gedCmd get_type $hname} stuff]} {
-	return
-    }
-
-    if {[catch {gedCmd attr get $hname previous} previous]} {
-	set previous ""
-    }
-
-    if {$previous == "" ||
-	[catch {gedCmd get_type $previous} stuff]} {
-	return
-    }
-
-    updateObjEdit $previous 1 1
-    updatePrevObjButton $obj
-    updateNextObjButton $obj
-
-    if {$mSelectedObjType == "comb"} {
-	refreshTree
-    }
-}
-
-::itcl::body Archer::purgeObjHistory {obj} {
-    # Nothing to do
-    if {[catch {gedCmd attr get $obj history} hobj]} {
-	return
-    }
-
-    # Remove obj's history attribute
-    $itk_component(ged) attr rm $obj history
-
-    # March backwards in the list removing obj's history
-    if {![catch {gedCmd attr get $hobj previous} prev]} {
-	while {$prev != ""} {
-	    if {[catch {gedCmd attr get $prev previous} pprev]} {
-		set pprev ""
-	    }
-
-	    $itk_component(ged) kill $prev
-	    set prev $pprev
-	}
-    }
-
-    # March forward in the list removing obj's history
-    if {![catch {gedCmd attr get $hobj next} next]} {
-	while {$next != ""} {
-	    if {[catch {gedCmd attr get $next next} nnext]} {
-		set nnext ""
-	    }
-
-	    $itk_component(ged) kill $next
-	    set next $nnext
-	}
-    }
-
-    $itk_component(ged) kill $hobj
-}
-
-
-::itcl::body Archer::resetEdit {} {
-    set obj $mSelectedObj
-
-    if {$obj == "" ||
-	[catch {gedCmd get_type $obj} stuff]} {
-	return
-    }
-
-    if {[catch {gedCmd attr get $obj history} hname]} {
-	set hname ""
-    }
-
-    if {$hname == "" ||
-	[catch {gedCmd get_type $hname} stuff]} {
-	return
-    }
-
-    updateObjEdit $hname 1 0
-
-    # Disable the apply and reset buttons
-    $itk_component(objEditToolbar) itemconfigure apply \
-	-state disabled
-    $itk_component(objEditToolbar) itemconfigure reset \
-	-state disabled
-}
-
-
-::itcl::body Archer::updateNextObjButton {obj} {
-    if {$obj == "" ||
-	[catch {gedCmd get_type $obj} stuff]} {
-	$itk_component(objEditToolbar) itemconfigure next \
-	    -state disabled
-
-	return
-    }
-
-    if {[catch {gedCmd attr get $obj history} hname]} {
-	set hname ""
-    }
-
-    if {$hname == "" ||
-	[catch {gedCmd get_type $hname} stuff]} {
-	$itk_component(objEditToolbar) itemconfigure next \
-	    -state disabled
-
-	return
-    }
-
-    if {[catch {gedCmd attr get $hname next} next]} {
-	set next ""
-    }
-
-    if {$next == "" ||
-	[catch {gedCmd get_type $next} stuff]} {
-	$itk_component(objEditToolbar) itemconfigure next \
-	    -state disabled
-    } else {
-	$itk_component(objEditToolbar) itemconfigure next \
-	    -state normal
-    }
-}
-
-::itcl::body Archer::updateObjHistory {obj} {
-    if {$obj == "" ||
-	[catch {gedCmd get_type $obj} stuff]} {
-	return
-    }
-
-    gedCmd make_name -s 1
-    set new_hname [gedCmd make_name $obj.version]
-    gedCmd cp $obj $new_hname
-    gedCmd hide $new_hname
-
-    if {[catch {gedCmd attr get $obj history} old_hname]} {
-	set old_hname ""
-    }
-
-    if {$old_hname != "" &&
-	![catch {gedCmd get_type $old_hname} stuff]} {
-	# Insert into the history list
-
-	if {[catch {gedCmd attr get $old_hname next} next]} {
-	    set next ""
-	}
-
-	# Delete the future
-	if {$next != "" &&
-	    ![catch {gedCmd get_type $next} stuff]} {
-
-	    while {$next != ""} {
-		set deadObj $next
-
-		if {[catch {gedCmd attr get $next next} next]} {
-		    set next ""
-		} elseif {[catch {gedCmd get_type $next} stuff]} {
-		    set next ""
-		}
-
-		gedCmd kill $deadObj
-	    }
-	}
-
-	gedCmd attr set $old_hname next $new_hname
-	gedCmd attr set $new_hname previous $old_hname
-    } else {
-	# Initialize the history list
-	# Note - we shouldn't get here
-
-	gedCmd attr set $new_hname previous ""
-	gedCmd attr set $new_hname history $new_hname
-    }
-
-    gedCmd attr set $new_hname next ""
-    gedCmd attr set $new_hname history $new_hname
-    gedCmd attr set $obj history $new_hname
-    updatePrevObjButton $obj
-    updateNextObjButton $obj
-}
-
-::itcl::body Archer::updatePrevObjButton {obj} {
-    if {$obj == "" ||
-	[catch {gedCmd get_type $obj} stuff]} {
-	$itk_component(objEditToolbar) itemconfigure prev \
-	    -state disabled
-
-	return
-    }
-
-    if {[catch {gedCmd attr get $obj history} hname]} {
-	set hname ""
-    }
-
-    if {$hname == "" ||
-	[catch {gedCmd get_type $hname} stuff]} {
-	$itk_component(objEditToolbar) itemconfigure prev \
-	    -state disabled
-
-	return
-    }
-
-    if {[catch {gedCmd attr get $hname previous} previous]} {
-	set previous ""
-    }
-
-    if {$previous == "" ||
-	[catch {gedCmd get_type $previous} stuff]} {
-	$itk_component(objEditToolbar) itemconfigure prev \
-	    -state disabled
-    } else {
-	$itk_component(objEditToolbar) itemconfigure prev \
-	    -state normal
-    }
-}
-
 
 
 ################################### Object Edit via Mouse Section ###################################
@@ -4428,59 +3963,6 @@ package provide Archer 1.0
 	    -borderwidth 1 \
 	    -relief sunken
     } {}
-
-    itk_component add objEditToolbarF {
-	::ttk::frame $parent.objEditToolbarF \
-	    -borderwidth 1 \
-	    -relief sunken
-    } {}
-
-    itk_component add objEditToolbar {
-	::iwidgets::toolbar $itk_component(objEditToolbarF).objEditToolbar \
-	    -helpvariable [::itcl::scope mStatusStr] \
-	    -balloonfont "{CG Times} 8" \
-	    -balloonbackground \#ffffdd \
-	    -borderwidth 1 \
-	    -orient horizontal \
-	    -font $mFontText
-    } {
-	# XXX If uncommented, the following line hoses things
-	#usual
-    }
-
-    $itk_component(objEditToolbar) add button prev \
-	-text $mLeftArrow \
-	-helpstr "Go to the previous object state" \
-	-balloonstr "Go to the previous object state" \
-	-pady 0 \
-	-command [::itcl::code $this gotoPrevObj]
-    $itk_component(objEditToolbar) add button apply \
-	-text Apply \
-	-helpstr "Apply the current edits" \
-	-balloonstr "Apply the current edits" \
-	-pady 0 \
-	-command [::itcl::code $this applyEdit]
-    $itk_component(objEditToolbar) add button reset \
-	-text Reset \
-	-helpstr "Delete the current edits" \
-	-balloonstr "Delete the current edits" \
-	-pady 0 \
-	-command [::itcl::code $this resetEdit]
-    $itk_component(objEditToolbar) add button next \
-	-text $mRightArrow \
-	-helpstr "Go to the next object state" \
-	-balloonstr "Go to the next object state" \
-	-pady 0 \
-	-command [::itcl::code $this gotoNextObj]
-
-    # Configure the font here so that the font actually gets
-    # applied to the button. Sheesh!!!
-    $itk_component(objEditToolbar) itemconfigure prev \
-	-font $mFontArrowsName
-    $itk_component(objEditToolbar) itemconfigure next \
-	-font $mFontArrowsName
-
-    pack $itk_component(objEditToolbar) -expand yes
 }
 
 ::itcl::body Archer::buildObjViewToolbar {} {
@@ -4700,7 +4182,6 @@ package provide Archer 1.0
     catch {pack forget $itk_component(objViewToolbar)}
     catch {pack forget $itk_component(objAttrView)}
     catch {pack forget $itk_component(objEditView)}
-    catch {pack forget $itk_component(objEditToolbarF)}
     catch {pack forget $itk_component(noWizard)}
     set mNoWizardActive 0
 
@@ -4721,7 +4202,6 @@ package provide Archer 1.0
     set mSelectedObj ""
     set mSelectedObjType ""
     set mPasteActive 0
-    set mPendingEdits 0
 
     # The scrollmode options are needed so that the
     # scrollbars dynamically appear/disappear. Sheesh!
@@ -4865,18 +4345,12 @@ package provide Archer 1.0
 	return
     }
 
-    if {$mWizardClass == "" &&
-	!$mNoWizardActive &&
-	$mPrevObjViewMode == $OBJ_EDIT_VIEW_MODE} {
-	finalizeObjEdit $mPrevSelectedObj $mPrevSelectedObjPath
-    }
     set mPrevObjViewMode $mObjViewMode
 
     catch {pack forget $itk_component(dbAttrView)}
     catch {pack forget $itk_component(objViewToolbar)}
     catch {pack forget $itk_component(objAttrView)}
     catch {pack forget $itk_component(objEditView)}
-    catch {pack forget $itk_component(objEditToolbarF)}
     catch {pack forget $itk_component(noWizard)}
     set mNoWizardActive 0
 
@@ -4907,25 +4381,6 @@ package provide Archer 1.0
     pack $itk_component(objAttrView) -expand yes -fill both -anchor n
 }
 
-::itcl::body Archer::initObjEdit {obj} {
-    if {![info exists itk_component(ged)]} {
-	return
-    }
-
-    set mPendingEdits 0
-
-    initObjHistory $obj
-
-    updatePrevObjButton $obj
-    updateNextObjButton $obj
-
-    # Disable the apply and reset buttons
-    $itk_component(objEditToolbar) itemconfigure apply \
-	-state disabled
-    $itk_component(objEditToolbar) itemconfigure reset \
-	-state disabled
-}
-
 ::itcl::body Archer::initObjEditView {} {
     if {![info exists itk_component(ged)]} {
 	return
@@ -4943,16 +4398,12 @@ package provide Archer 1.0
 	return
     }
 
-    if {$mPendingEdits} {
-	finalizeObjEdit $mPrevSelectedObj $mPrevSelectedObjPath
-    }
     set mPrevObjViewMode $mObjViewMode
 
     catch {pack forget $itk_component(dbAttrView)}
     catch {pack forget $itk_component(objViewToolbar)}
     catch {pack forget $itk_component(objAttrView)}
     catch {pack forget $itk_component(objEditView)}
-    catch {pack forget $itk_component(objEditToolbarF)}
     catch {pack forget $itk_component(noWizard)}
     set mNoWizardActive 0
 
@@ -4975,8 +4426,6 @@ package provide Archer 1.0
     }
 
     if {$mWizardClass == ""} {
-	initObjEdit $mSelectedObj
-
 	# free the current primitive view if any
 	set _slaves [pack slaves $itk_component(objEditView)]
 	catch {eval pack forget $_slaves}
@@ -4986,7 +4435,6 @@ package provide Archer 1.0
 	if {[info exists itk_component(ged)]} {
 	    pack $itk_component(objViewToolbar) -expand no -fill x -anchor n
 	    pack $itk_component(objEditView) -expand yes -fill both -anchor n
-	    pack $itk_component(objEditToolbarF) -expand no -fill x -anchor s
 	}
     } else {
 	if {[pluginQuery $mWizardClass] == -1} {
@@ -4995,34 +4443,6 @@ package provide Archer 1.0
 	} else {
 	    initObjWizard $mSelectedObj 1
 	}
-    }
-}
-
-::itcl::body Archer::initObjHistory {obj} {
-    if {$obj == "" ||
-	[catch {gedCmd get_type $obj} stuff]} {
-	return
-    }
-
-    if {[catch {gedCmd attr get $obj history} hname]} {
-	set hname ""
-    }
-
-    # The history list is non-existent or
-    # the link to it is broken, so create
-    # a new one.
-    if {$hname == "" ||
-	[catch {gedCmd get_type $hname} stuff]} {
-	gedCmd make_name -s 1
-	set hname [gedCmd make_name $obj.version]
-	#gedCmd attr set $obj history $hname
-
-	gedCmd cp $obj $hname
-	gedCmd hide $hname
-	gedCmd attr set $hname previous ""
-	gedCmd attr set $hname next ""
-	gedCmd attr set $hname history $hname
-	gedCmd attr set $obj history $hname
     }
 }
 
@@ -5240,14 +4660,7 @@ package provide Archer 1.0
 }
 
 ::itcl::body Archer::updateObjEditView {} {
-    set mPendingEdits 1
     redrawObj $mSelectedObjPath
-
-    # Enable the apply and reset buttons
-    $itk_component(objEditToolbar) itemconfigure apply \
-	-state normal
-    $itk_component(objEditToolbar) itemconfigure reset \
-	-state normal
 }
 
 
@@ -5463,7 +4876,7 @@ package provide Archer 1.0
     }
 
     gedCmd erase $oname
-    gedCmd killtree $oname
+    gedCmd killtree -a $oname
     gedCmd configure -autoViewEnable 0
     set obj [$wizard $action]
     gedCmd configure -autoViewEnable 1
@@ -5702,17 +5115,14 @@ package provide Archer 1.0
 
     if {$mPrimitiveLabelColor != $mPrimitiveLabelColorPref} {
 	set mPrimitiveLabelColor $mPrimitiveLabelColorPref
-#	setColorOption gedCmd -primitiveLabelColor $mPrimitiveLabelColor
     }
 
     if {$mViewingParamsColor != $mViewingParamsColorPref} {
 	set mViewingParamsColor $mViewingParamsColorPref
-#	setColorOption gedCmd -viewingParamsColor $mViewingParamsColor
     }
 
     if {$mScaleColor != $mScaleColorPref} {
 	set mScaleColor $mScaleColorPref
-#	setColorOption gedCmd -scaleColor $mScaleColor
     }
 
     if {$mMeasuringStickColor != $mMeasuringStickColorPref} {
@@ -5848,18 +5258,10 @@ package provide Archer 1.0
 
     if {$mModelAxesColorPref != $mModelAxesColor} {
 	set mModelAxesColor $mModelAxesColorPref
-
-#	if {[info exists itk_component(ged)]} {
-#	    setColorOption gedCmd -modelAxesColor $mModelAxesColor -modelAxesTripleColor
-#	}
     }
 
     if {$mModelAxesLabelColorPref != $mModelAxesLabelColor} {
 	set mModelAxesLabelColor $mModelAxesLabelColorPref
-
-#	if {[info exists itk_component(ged)]} {
-#	    setColorOption gedCmd -modelAxesLabelColor $mModelAxesLabelColor
-#	}
     }
 
     if {$mModelAxesTickIntervalPref != $mModelAxesTickInterval} {
@@ -5904,18 +5306,10 @@ package provide Archer 1.0
 
     if {$mModelAxesTickColorPref != $mModelAxesTickColor} {
 	set mModelAxesTickColor $mModelAxesTickColorPref
-
-#	if {[info exists itk_component(ged)]} {
-#	    setColorOption gedCmd -modelAxesTickColor $mModelAxesTickColor
-#	}
     }
 
     if {$mModelAxesTickMajorColorPref != $mModelAxesTickMajorColor} {
 	set mModelAxesTickMajorColor $mModelAxesTickMajorColorPref
-
-#	if {[info exists itk_component(ged)]} {
-#	    setColorOption gedCmd -modelAxesTickMajorColor $mModelAxesTickMajorColor
-#	}
     }
 }
 
@@ -6098,18 +5492,10 @@ package provide Archer 1.0
 
     if {$mViewAxesColorPref != $mViewAxesColor} {
 	set mViewAxesColor $mViewAxesColorPref
-
-#	if {[info exists itk_component(ged)]} {
-#	    setColorOption gedCmd -viewAxesColor $mViewAxesColor -viewAxesTripleColor
-#	}
     }
 
     if {$mViewAxesLabelColorPref != $mViewAxesLabelColor} {
 	set mViewAxesLabelColor $mViewAxesLabelColorPref
-
-#	if {[info exists itk_component(ged)]} {
-#	    setColorOption gedCmd -viewAxesLabelColor $mViewAxesLabelColor
-#	}
     }
 }
 
@@ -6194,9 +5580,6 @@ package provide Archer 1.0
     backgroundColor [lindex $mBackground 0] \
 	[lindex $mBackground 1] \
 	[lindex $mBackground 2]
-#    setColorOption gedCmd -primitiveLabelColor $mPrimitiveLabelColor
-#    setColorOption gedCmd -viewingParamsColor $mViewingParamsColor
-#    setColorOption gedCmd -scaleColor $mScaleColor
 
     update
     initMode

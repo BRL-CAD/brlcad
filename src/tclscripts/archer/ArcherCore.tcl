@@ -287,7 +287,6 @@ namespace eval ArcherCore {
 	variable mSelectedObj ""
 	variable mSelectedObjType ""
 	variable mPasteActive 0
-	variable mPendingEdits 0
 	variable mMultiPane 0
 
 	variable mHPaneFraction1 80
@@ -738,8 +737,7 @@ Popup Menu    Right or Ctrl-Left
 	    keep -background
 	}
     }
-#    $itk_component(canvas_menu) component menubar configure \
-#	-relief flat
+
     buildCanvasMenubar
 
     if {!$mViewOnly} {
@@ -1450,7 +1448,6 @@ Popup Menu    Right or Ctrl-Left
 }
 
 ::itcl::body ArcherCore::doViewToolbar {} {
-#    configure -viewToolbar $itk_option(-viewToolbar)
 }
 
 ::itcl::body ArcherCore::doStatusBar {} {
@@ -1664,8 +1661,6 @@ Popup Menu    Right or Ctrl-Left
     $itk_component(primaryToolbar) itemconfigure measure -state disabled
 
     eval pack configure [pack slaves $itk_component(primaryToolbar)] -padx 2
-
-#    pack $itk_component(primaryToolbar) -expand yes -fill both
 }
 
 ::itcl::body ArcherCore::beginViewRotate {} {
@@ -1813,16 +1808,7 @@ Popup Menu    Right or Ctrl-Left
     $itk_component(primaryToolbar) itemconfigure cpick -state normal
     $itk_component(primaryToolbar) itemconfigure measure -state normal
 
-#    if {$_comp == ""} {
-#	return
-#    }
-
     $itk_component(ged) init_view_bindings
-#    $itk_component(viewToolbar) configure -state normal
-#    $itk_component(viewToolbar) itemconfigure cpick \
-	-state normal
-
-#    catch {eval [$itk_component(viewToolbar) itemcget $mDefaultBindingMode -command]}
 }
 
 ::itcl::body ArcherCore::initBrlcadBindings {} {
@@ -1831,7 +1817,6 @@ Popup Menu    Right or Ctrl-Left
     }
 
     $itk_component(ged) init_view_bindings brlcad
-#    $itk_component(viewToolbar) configure -state disabled
 }
 
 
@@ -2818,17 +2803,12 @@ Popup Menu    Right or Ctrl-Left
     set mSelectedObj ""
     set mSelectedObjType ""
     set mPasteActive 0
-    set mPendingEdits 0
 
     if {!$mViewOnly} {
 	gedCmd size [expr {$mGroundPlaneSize * 1.5 * [gedCmd base2local]}]
 	buildGroundPlane
 	showGroundPlane
     }
-
-#    setColorOption gedCmd -primitiveLabelColor $mPrimitiveLabelColor
-#    setColorOption gedCmd -scaleColor $mScaleColor
-#    setColorOption gedCmd -viewingParamsColor $mViewingParamsColor
 
     if {!$mViewOnly} {
 	doLighting
@@ -3673,7 +3653,6 @@ Popup Menu    Right or Ctrl-Left
 ::itcl::body ArcherCore::ls {args} {
     if {$args == {}} {
 	return [gedCmd ls]
-#	eval gedWrapper ls 0 0 0 0 $args
     } else {
 	set optionsAndArgs [eval dbExpand $args]
 	set options [lindex $optionsAndArgs 0]
@@ -3683,7 +3662,6 @@ Popup Menu    Right or Ctrl-Left
 	    return $expandedArgs
 	} else {
 	    return [eval gedCmd ls $args]
-#	    return [eval gedWrapper ls 0 0 0 0 $args]
 	}
     }
 }
@@ -3740,7 +3718,6 @@ Popup Menu    Right or Ctrl-Left
 	redrawObj $obj 0
     } else {
 	eval gedCmd ocenter $args
-#	eval gedWrapper ocenter 0 0 0 0 $args
     }
 }
 
