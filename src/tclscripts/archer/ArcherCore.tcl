@@ -39,12 +39,9 @@ package provide ArcherCore 1.0
 namespace eval ArcherCore {
     set cursorWaitCount 0
 
-    if {1} {
+    if {![info exists parentClass]} {
 	set parentClass itk::Toplevel
 	set inheritFromToplevel 1
-    } else {
-	set parentClass itk::Widget
-	set inheritFromToplevel 0
     }
 }
 
@@ -53,9 +50,6 @@ namespace eval ArcherCore {
 
     itk_option define -quitcmd quitCmd Command {}
     itk_option define -master master Master "."
-    itk_option define -primaryToolbar primaryToolbar PrimaryToolbar 1
-    itk_option define -viewToolbar viewToolbar ViewToolbar 1
-    itk_option define -statusbar statusbar Statusbar 1
 
     constructor {{_viewOnly 0} {_noCopy 0} args} {}
     destructor {}
@@ -484,11 +478,6 @@ Popup Menu    Right or Ctrl-Left
 	method primaryToolbarAdd        {_type _name {args ""}}
 	method primaryToolbarRemove     {_index}
 
-	# private window commands
-	method doPrimaryToolbar {}
-	method doViewToolbar    {}
-	method doStatusBar       {}
-
 	# tree commands
 	method alterTreeNodeChildren {node option value}
 	method toggleTreePath   {_path}
@@ -603,7 +592,6 @@ Popup Menu    Right or Ctrl-Left
 
     if {[llength $args] == 1} {
 	set args [lindex $args 0]
-
     }
 
     set mDisplayType [dm_bestXType $env(DISPLAY)]
@@ -684,8 +672,8 @@ Popup Menu    Right or Ctrl-Left
     } else {
 	$itk_component(vpane) add geomView
 	$itk_component(vpane) paneconfigure geomView \
-	    -margin 0
-	$itk_component(vpane) hide hierarchyView
+	    -margin 0 \
+	    -minimum 0
     }
 
     # frame for all geometry canvas's
@@ -696,42 +684,16 @@ Popup Menu    Right or Ctrl-Left
 	    -relief sunken
     } {}
 
-#    if {!$mViewOnly}
-    if {0} {
-	itk_component add tree_expand {
-	    ::button $itk_component(canvasF).tree_expand
-	} {}
-	$itk_component(tree_expand) configure \
-	    -relief flat \
-	    -image [image create photo -file \
-			[file join $mImgDir Themes $mTheme "pane_blank.png"]] \
-	    -state disabled \
-	    -command [::itcl::code $this toggleTreeView "open"] \
-	    -background $LABEL_BACKGROUND_COLOR
-
-	itk_component add canvas_menu {
-	    ::iwidgets::menubar $itk_component(canvasF).canvas_menu \
-		-helpvariable [::itcl::scope mStatusStr] \
-		-font $mFontText \
-		-activeborderwidth 2 \
-		-borderwidth 0 \
-		-activebackground $SystemHighlight \
-		-activeforeground $SystemHighlightText \
-	} {
-	    keep -background
-	}
-    } else {
-	itk_component add canvas_menu {
-	    ::iwidgets::menubar $itk_component(canvasF).canvas_menu \
-		-helpvariable [::itcl::scope mStatusStr] \
-		-font $mFontText \
-		-activeborderwidth 2 \
-		-borderwidth 0 \
-		-activebackground $SystemHighlight \
-		-activeforeground $SystemHighlightText \
-	} {
-	    keep -background
-	}
+    itk_component add canvas_menu {
+	::iwidgets::menubar $itk_component(canvasF).canvas_menu \
+	    -helpvariable [::itcl::scope mStatusStr] \
+	    -font $mFontText \
+	    -activeborderwidth 2 \
+	    -borderwidth 0 \
+	    -activebackground $SystemHighlight \
+	    -activeforeground $SystemHighlightText
+    } {
+	keep -background
     }
 
     buildCanvasMenubar
@@ -825,6 +787,7 @@ Popup Menu    Right or Ctrl-Left
     pack $itk_component(east)  -side right -fill y
     if {!$mViewOnly} {
 	pack $itk_component(advancedTabs) -fill both -expand yes
+	pack $itk_component(statusF) -before $itk_component(south) -side bottom -fill x
     }
     pack $itk_component(tree) -fill both -expand yes
     pack $itk_component(hpane) -fill both -expand yes
@@ -893,40 +856,9 @@ Popup Menu    Right or Ctrl-Left
 # ------------------------------------------------------------
 #                        OPTIONS
 # ------------------------------------------------------------
-::itcl::configbody ArcherCore::primaryToolbar {
-    if {!$mViewOnly} {
-	if {$itk_option(-primaryToolbar)} {
-	    pack $itk_component(primaryToolbar) \
-		-before $itk_component(north) \
-		-side top \
-		-fill x \
-		-pady 2
-	} else {
-	    pack forget $itk_component(primaryToolbar)
-	}
-    }
-}
 
-::itcl::configbody ArcherCore::viewToolbar {
-    return
-    if {!$mViewOnly} {
-	if {$itk_option(-viewToolbar)} {
-	    pack $itk_component(viewToolbar) -expand yes -fill both
-	} else {
-	    pack forget $itk_component(viewToolbar)
-	}
-    }
-}
 
-::itcl::configbody ArcherCore::statusbar {
-    if {!$mViewOnly} {
-	if {$itk_option(-statusbar)} {
-	    pack $itk_component(statusF) -before $itk_component(south) -side bottom -fill x
-	} else {
-	    pack forget $itk_component(statusF)
-	}
-    }
-}
+
 
 ::itcl::body ArcherCore::handleMoreArgs {args} {
     eval $itk_component(cmd) print_more_args_prompt $args
@@ -1237,7 +1169,7 @@ Popup Menu    Right or Ctrl-Left
 
     # RT Control Panel
     itk_component add rtcntrl {
-	RtControl $itk_interior.rtcp -mged $itk_component(ged)
+	RtControl $itk_interior.rtcp -mged $itk_component(ged) -tearoff 0
     } {
 	usual
     }
@@ -1270,8 +1202,7 @@ Popup Menu    Right or Ctrl-Left
     # Other bindings for mged
     #bind $itk_component(ged) <Enter> {focus %W}
 
-#    if {!$mViewOnly}
-    if {0} {
+    if {$mViewOnly} {
 	$itk_component(canvas_menu) menuconfigure .raytrace.rt \
 	    -state normal
 	$itk_component(canvas_menu) menuconfigure .raytrace.rt.fivetwelve \
@@ -1300,25 +1231,23 @@ Popup Menu    Right or Ctrl-Left
 	    -state normal
 	$itk_component(canvas_menu) menuconfigure .raytrace.nirt \
 	    -state normal
-    }
 
-    if {0} {
-    $itk_component(canvas_menu) menuconfigure .view.front \
-	-state normal
-    $itk_component(canvas_menu) menuconfigure .view.rear \
-	-state normal
-    $itk_component(canvas_menu) menuconfigure .view.port \
-	-state normal
-    $itk_component(canvas_menu) menuconfigure .view.starboard \
-	-state normal
-    $itk_component(canvas_menu) menuconfigure .view.top \
-	-state normal
-    $itk_component(canvas_menu) menuconfigure .view.bottom \
-	-state normal
-    $itk_component(canvas_menu) menuconfigure .view.35,25 \
-	-state normal
-    $itk_component(canvas_menu) menuconfigure .view.45,45 \
-	-state normal
+	$itk_component(canvas_menu) menuconfigure .view.front \
+	    -state normal
+	$itk_component(canvas_menu) menuconfigure .view.rear \
+	    -state normal
+	$itk_component(canvas_menu) menuconfigure .view.port \
+	    -state normal
+	$itk_component(canvas_menu) menuconfigure .view.starboard \
+	    -state normal
+	$itk_component(canvas_menu) menuconfigure .view.top \
+	    -state normal
+	$itk_component(canvas_menu) menuconfigure .view.bottom \
+	    -state normal
+	$itk_component(canvas_menu) menuconfigure .view.35,25 \
+	    -state normal
+	$itk_component(canvas_menu) menuconfigure .view.45,45 \
+	    -state normal
     }
 
     bind $itk_component(canvasF) <Configure> [::itcl::code $this updateRtControl]
@@ -1439,16 +1368,6 @@ Popup Menu    Right or Ctrl-Left
 # ------------------------------------------------------------
 #                    WINDOW COMMANDS
 # ------------------------------------------------------------
-::itcl::body ArcherCore::doPrimaryToolbar {} {
-    configure -primaryToolbar $itk_option(-primaryToolbar)
-}
-
-::itcl::body ArcherCore::doViewToolbar {} {
-}
-
-::itcl::body ArcherCore::doStatusBar {} {
-    configure -statusbar $itk_option(-statusbar)
-}
 
 ::itcl::body ArcherCore::dockArea {{position "south"}} {
     switch -- $position {
@@ -1657,6 +1576,20 @@ Popup Menu    Right or Ctrl-Left
     $itk_component(primaryToolbar) itemconfigure measure -state disabled
 
     eval pack configure [pack slaves $itk_component(primaryToolbar)] -padx 2
+
+    if {$mViewOnly} {
+	grid $itk_component(primaryToolbar) \
+	    -row 0 \
+	    -column 0 \
+	    -in $itk_component(canvasF) \
+	    -sticky e
+    } else {
+	pack $itk_component(primaryToolbar) \
+	    -before $itk_component(north) \
+	    -side top \
+	    -fill x \
+	    -pady 2
+    }
 }
 
 ::itcl::body ArcherCore::beginViewRotate {} {
@@ -3204,7 +3137,7 @@ Popup Menu    Right or Ctrl-Left
 ::itcl::body ArcherCore::launchRtApp {app size} {
     global tcl_platform
 
-    if {![info exists itk_component(ged)] || $mViewOnly} {
+    if {![info exists itk_component(ged)]} {
 	return
     }
 

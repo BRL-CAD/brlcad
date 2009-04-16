@@ -846,13 +846,13 @@ package provide Archer 1.0
 
 	buildGroundPlane
 	showGroundPlane
-
-	# refresh tree contents
-	refreshTree 0
     } else {
 	applyPreferences
 	doLighting
     }
+
+    # refresh tree contents
+    refreshTree 0
 
     if {$mBindingMode == 0} {
 	set mDefaultBindingMode $ROTATE_MODE
@@ -1046,11 +1046,16 @@ package provide Archer 1.0
 
     ArcherCore::initDefaultBindings $_comp
 
-    if {!$mViewOnly} {
-	foreach dname {ul ur ll lr} {
-	    set dm [$_comp component $dname]
-	    set win [$dm component dm]
+    foreach dname {ul ur ll lr} {
+	set dm [$_comp component $dname]
+	set win [$dm component dm]
 
+	if {$mViewOnly} {
+	    bind $win <Control-ButtonPress-1> \
+		"[::itcl::code $this launchDisplayMenuBegin $dm [$itk_component(canvas_menu) component view-menu] %X %Y]; break"
+	    bind $win <3> \
+		"[::itcl::code $this launchDisplayMenuBegin $dm [$itk_component(canvas_menu) component view-menu] %X %Y]; break"
+	} else {
 	    if {$ArcherCore::inheritFromToplevel} {
 		bind $win <Control-ButtonPress-1> \
 		    "[::itcl::code $this launchDisplayMenuBegin $dm $itk_component(displaymenu) %X %Y]; break"
@@ -2144,7 +2149,7 @@ package provide Archer 1.0
 
 ::itcl::body Archer::buildToplevelMenubar {} {
     itk_component add menubar {
-	menu $itk_interior.menubar \
+	::menu $itk_interior.menubar \
 	    -tearoff 0
     } {
 	keep -background
@@ -2183,7 +2188,7 @@ package provide Archer 1.0
 	-command [::itcl::code $this Close]
 
     itk_component add displaymenu {
-	menu $itk_component(menubar).displaymenu \
+	::menu $itk_component(menubar).displaymenu \
 	    -tearoff 0
     } {
 	keep -background
@@ -2202,7 +2207,7 @@ package provide Archer 1.0
 	-state disabled
 
     itk_component add backgroundmenu {
-	menu $itk_component(displaymenu).backgroundmenu \
+	::menu $itk_component(displaymenu).backgroundmenu \
 	    -tearoff 0
     } {
 	keep -background
@@ -2228,7 +2233,7 @@ package provide Archer 1.0
 	-state normal
 
     itk_component add stdviewsmenu {
-	menu $itk_component(displaymenu).stdviewsmenu \
+	::menu $itk_component(displaymenu).stdviewsmenu \
 	    -tearoff 0
     } {
 	keep -background
@@ -2275,14 +2280,14 @@ package provide Archer 1.0
     updateUtilityMenu
 
     itk_component add raytracemenu {
-	menu $itk_component(menubar).raytracemenu \
+	::menu $itk_component(menubar).raytracemenu \
 	    -tearoff 0
     } {
 	keep -background
     }
 
     itk_component add rtmenu {
-	menu $itk_component(raytracemenu).rtmenu \
+	::menu $itk_component(raytracemenu).rtmenu \
 	    -tearoff 0
     } {
 	keep -background
@@ -2298,7 +2303,7 @@ package provide Archer 1.0
 	-command [::itcl::code $this launchRtApp rt window]
 
     itk_component add rtcheckmenu {
-	menu $itk_component(raytracemenu).rtcheckmenu \
+	::menu $itk_component(raytracemenu).rtcheckmenu \
 	    -tearoff 0
     } {
 	keep -background
@@ -2317,7 +2322,7 @@ package provide Archer 1.0
 	-command [::itcl::code $this launchRtApp rtcheck 512]
 
     itk_component add rtedgemenu {
-	menu $itk_component(raytracemenu).rtedgemenu \
+	::menu $itk_component(raytracemenu).rtedgemenu \
 	    -tearoff 0
     } {
 	keep -background
@@ -2351,7 +2356,7 @@ package provide Archer 1.0
 	-state disabled
 
     itk_component add helpmenu {
-	menu $itk_component(menubar).helpmenu \
+	::menu $itk_component(menubar).helpmenu \
 	    -tearoff 0
     } {
 	#	rename -font -menuFont menuFont MenuFont
@@ -3471,9 +3476,6 @@ package provide Archer 1.0
 	updateHPaneFractions
 	updateVPaneFractions
     }
-
-    set itk_option(-primaryToolbar) 1
-    doPrimaryToolbar
 
     if {$ArcherCore::inheritFromToplevel == 0} {
 	pack forget $itk_component(menubar)
