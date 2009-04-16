@@ -1603,7 +1603,7 @@ arbnbld(void)
  * E N D S W I T H
  *
  * This routine checks the last character in the string to see if it matches the
- * specified character. Used by getline() to check for an escaped return.
+ * specified character. Used by gettclblock() to check for an escaped return.
  *
  */
 int
@@ -1639,7 +1639,7 @@ bracecnt(char *line)
     return cnt;
 }
 /**
- * G E T L I N E
+ * G E T T C L B L O C K
  *
  * This routine reads the next block of Tcl commands. This block is expected to be a Tcl
  * command script and will be fed to an interpreter using Tcl_Eval(). Any escaped returns
@@ -1649,7 +1649,7 @@ bracecnt(char *line)
  * command line.
  */
 int
-getline(register struct bu_vls *line, register FILE *fp)
+gettclblock(register struct bu_vls *line, register FILE *fp)
 {
     int ret = 0;
     struct bu_vls tmp;
@@ -1768,7 +1768,7 @@ main(int argc, char *argv[])
 	    Tcl_CreateAlias(safe_interp, "dbfind", interp, db_name, ac, av);
 	}
 
-        while ((getline(&line,ifp)) >= 0)
+        while ((gettclblock(&line,ifp)) >= 0)
         {
 	    if (Tcl_Eval(safe_interp, (const char *)bu_vls_addr(&line)) != TCL_OK) {
 	        bu_log("Failed to process input file (%s)!\n", argv[1]);
