@@ -491,10 +491,10 @@ static int rpt_hit (struct application *ap, struct partition *ph, struct seg *du
     for (pp = ph -> pt_forw; pp != ph; pp = pp -> pt_forw) {
 	BU_CKMAG(pp, PT_MAGIC, "partition structure");
 
-	RT_HIT_NORM(pp -> pt_inhit, pp -> pt_inseg -> seg_stp,
-		    &ap -> a_ray);
-	RT_HIT_NORM(pp -> pt_outhit, pp -> pt_outseg -> seg_stp,
-		    &ap -> a_ray);
+	RT_HIT_NORMAL(NULL, pp -> pt_inhit, pp -> pt_inseg -> seg_stp,
+		    &ap -> a_ray, 0);
+	RT_HIT_NORMAL(NULL, pp -> pt_outhit, pp -> pt_outseg -> seg_stp,
+		    &ap -> a_ray, 0);
     }
 
     /*
@@ -758,8 +758,8 @@ static int rpt_ovlp (struct application *ap, struct partition *pp, struct region
     tolerance = cp -> glc_tol;
 
     /* Compute entry and exit points, and the vector between them */
-    RT_HIT_NORM(pp -> pt_inhit, pp -> pt_inseg -> seg_stp, &ap -> a_ray);
-    RT_HIT_NORM(pp -> pt_outhit, pp -> pt_outseg -> seg_stp, &ap -> a_ray);
+    RT_HIT_NORMAL(NULL, pp -> pt_inhit, pp -> pt_inseg -> seg_stp, &ap -> a_ray, 0);
+    RT_HIT_NORMAL(NULL, pp -> pt_outhit, pp -> pt_outseg -> seg_stp, &ap -> a_ray, 0);
     VSUB2(delta, pp -> pt_inhit -> hit_point, pp -> pt_outhit -> hit_point);
 
     if ((mag_del = MAGNITUDE(delta)) > tolerance) {

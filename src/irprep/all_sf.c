@@ -575,14 +575,8 @@ hit(register struct application *ap_p, struct partition *PartHeadp, struct seg *
 	    /*  Find the leave point of the first region.  */
 	    hitp = pp->pt_outhit;
 	    stp = pp->pt_outseg->seg_stp;
-	    RT_HIT_NORM(hitp, stp, &(ap_p->a_ray));
-	    /*  Flip normal if needed.  */
-	    if (pp->pt_outflip)
-	    {
-		VREVERSE(hitp->hit_normal, hitp->hit_normal);
-		pp->pt_outflip = 0;
-	    }
-	    lvpt[X] = hitp->hit_point[X];
+	    RT_HIT_NORMAL(hitp->hit_normal, hitp, stp, &(ap_p->a_ray), pp->pt_outflip);
+
 	    lvpt[Y] = hitp->hit_point[Y];
 	    lvpt[Z] = hitp->hit_point[Z];
 
@@ -601,13 +595,8 @@ hit(register struct application *ap_p, struct partition *PartHeadp, struct seg *
 	    /*  Find the enter point for the second region.  */
 	    hitp = pp->pt_inhit;
 	    stp = pp->pt_inseg->seg_stp;
-	    RT_HIT_NORM(hitp, stp, &(ap_p->a_ray));
-	    /*  Flip normal if needed.  */
-	    if (pp->pt_inflip)
-	    {
-		VREVERSE(hitp->hit_normal, hitp->hit_normal);
-		pp->pt_inflip = 0;
-	    }
+	    RT_HIT_NORMAL(hitp->hit_normal, hitp, stp, &(ap_p->a_ray), pp->pt_inflip);
+
 	    entpt[X] = hitp->hit_point[X];
 	    entpt[Y] = hitp->hit_point[Y];
 	    entpt[Z] = hitp->hit_point[Z];
@@ -643,13 +632,8 @@ hit(register struct application *ap_p, struct partition *PartHeadp, struct seg *
 	    /*  Find leaving point.  */
 	    hitp = pp->pt_outhit;
 	    stp = pp->pt_outseg->seg_stp;
-	    RT_HIT_NORM(hitp, stp, &(ap_p->a_ray));
-	    /*  Flip normal if needed.  */
-	    if (pp->pt_outflip)
-	    {
-		VREVERSE(hitp->hit_normal, hitp->hit_normal);
-		pp->pt_outflip = 0;
-	    }
+	    RT_HIT_NORMAL(hitp->hit_normal, hitp, stp, &(ap_p->a_ray), pp->pt_outflip);
+
 	    lvpt[X] = hitp->hit_point[X];
 	    lvpt[Y] = hitp->hit_point[Y];
 	    lvpt[Z] = hitp->hit_point[Z];

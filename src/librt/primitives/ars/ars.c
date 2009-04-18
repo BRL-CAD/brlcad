@@ -748,27 +748,26 @@ rt_ars_shot(struct soltab *stp, register struct xray *rp, struct application *ap
 	register int i, j;
 
 	if ( nhits )
-	    RT_HIT_NORM( &hits[0], stp, 0 )
+	    RT_HIT_NORMAL(NULL, &hits[0], stp, 0, 0);
 
-		for ( i=0; i<nhits-1; i++ )
-		{
-		    fastf_t dist;
+	for ( i=0; i<nhits-1; i++ ) {
+	    fastf_t dist;
 
-		    RT_HIT_NORM( &hits[i+1], stp, 0 )
-			dist = hits[i].hit_dist - hits[i+1].hit_dist;
-		    if ( NEAR_ZERO( dist, ap->a_rt_i->rti_tol.dist ) &&
-			 VDOT( hits[i].hit_normal, rp->r_dir ) *
-			 VDOT( hits[i+1].hit_normal, rp->r_dir) > 0)
-		    {
-			for ( j=i; j<nhits-1; j++ )
-			    hits[j] = hits[j+1];
-			nhits--;
-			i--;
-		    }
-		}
+	    RT_HIT_NORMAL(NULL, &hits[i+1], stp, 0, 0);
+	    dist = hits[i].hit_dist - hits[i+1].hit_dist;
+	    if ( NEAR_ZERO( dist, ap->a_rt_i->rti_tol.dist ) &&
+		 VDOT( hits[i].hit_normal, rp->r_dir ) *
+		 VDOT( hits[i+1].hit_normal, rp->r_dir) > 0)
+	    {
+		for ( j=i; j<nhits-1; j++ )
+		    hits[j] = hits[j+1];
+		nhits--;
+		i--;
+	    }
+	}
     }
 
-    if ( nhits&1 )  {
+    if (nhits&1) {
 	register int i;
 	/*
 	 * If this condition exists, it is almost certainly due to

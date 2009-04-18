@@ -815,13 +815,8 @@ hit(register struct application *ap_p, struct partition *PartHeadp, struct seg *
 		/*  Find leaving point.  */
 		hitp = pp->pt_outhit;
 		stp = pp->pt_outseg->seg_stp;
-		RT_HIT_NORM(hitp, stp, &(ap_p->a_ray));
-		/*  Flip normal if needed.  */
-		if (pp->pt_outflip)
-		{
-		    VREVERSE(hitp->hit_normal, hitp->hit_normal);
-		    pp->pt_outflip = 0;
-		}
+		RT_HIT_NORMAL(hitp->hit_normal, hitp, stp, &(ap_p->a_ray), pp->pt_outflip);
+
 		iprev = icur;
 		iair = 0;	/*  A region was just hit.  */
 	    }					/*  END # 3H  */
@@ -882,13 +877,8 @@ hit(register struct application *ap_p, struct partition *PartHeadp, struct seg *
 		/*  Find leave point.  */
 		hitp = pp->pt_outhit;
 		stp = pp->pt_outseg->seg_stp;
-		RT_HIT_NORM(hitp, stp, &(ap_p->a_ray));
-		/*  Flip normal if needed.  */
-		if (pp->pt_outflip)
-		{
-		    VREVERSE(hitp->hit_normal, hitp->hit_normal);
-		    pp->pt_outflip = 0;
-		}
+		RT_HIT_NORMAL(hitp->hit_normal, hitp, stp, &(ap_p->a_ray), pp->pt_outflip);
+
 		iprev = icur;
 		iair = 0;	/*  Hit a region.  */
 	    }					/*  END # 6H  */
@@ -917,13 +907,8 @@ hit(register struct application *ap_p, struct partition *PartHeadp, struct seg *
 		/*  Find leaving point.  */
 		hitp = pp->pt_outhit;
 		stp = pp->pt_outseg->seg_stp;
-		RT_HIT_NORM(hitp, stp, &(ap_p->a_ray));
-		/*  Flip normal if needed.  */
-		if (pp->pt_outflip)
-		{
-		    VREVERSE(hitp->hit_normal, hitp->hit_normal);
-		    pp->pt_outflip = 0;
-		}
+		RT_HIT_NORMAL(hitp->hit_normal, hitp, stp, &(ap_p->a_ray), pp->pt_outflip);
+
 		iprev = icur;
 		iair = 0;	/*  Hit a region.  */
 	    }					/*  END # 8H  */
@@ -957,13 +942,8 @@ hit(register struct application *ap_p, struct partition *PartHeadp, struct seg *
 		/*  Find leaving point.  */
 		hitp = pp->pt_outhit;
 		stp = pp->pt_outseg->seg_stp;
-		RT_HIT_NORM(hitp, stp, &(ap_p->a_ray));
-		/*  Flip normal if needed.  */
-		if (pp->pt_outflip)
-		{
-		    VREVERSE(hitp->hit_normal, hitp->hit_normal);
-		    pp->pt_outflip = 0;
-		}
+		RT_HIT_NORMAL(hitp->hit_normal, hitp, stp, &(ap_p->a_ray), pp->pt_outflip);
+
 		iprev = icur;
 		iair = 0;	/*  Hit region.  */
 	    }					/*  END # 11H  */

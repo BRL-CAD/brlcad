@@ -2371,13 +2371,7 @@ hit(register struct application *ap_p, struct partition *PartHeadp, struct seg *
 	 */
 	hitp=pp->pt_inhit;
 	stp=pp->pt_inseg->seg_stp;
-	RT_HIT_NORM(hitp, stp, &(ap_p->a_ray));
-	/*  Flip normal if needed.  */
-	if (pp->pt_inflip)
-	{
-	    VREVERSE(hitp->hit_normal, hitp->hit_normal);
-	    pp->pt_inflip=0;
-	}
+	RT_HIT_NORMAL(hitp->hit_normal, hitp, stp, &(ap_p->a_ray), pp->pt_inflip);
 
 	/*  Find front surface area of region.  */
 	costheta1 = hitp->hit_normal[X] * ap_p->a_ray.r_dir[X]
@@ -2626,13 +2620,7 @@ hit(register struct application *ap_p, struct partition *PartHeadp, struct seg *
 	 */
 	hitp=pp->pt_outhit;
 	stp=pp->pt_outseg->seg_stp;
-	RT_HIT_NORM(hitp, stp, &(ap_p->a_ray));
-	/*  Flip normal if needed.  */
-	if (pp->pt_outflip)
-	{
-	    VREVERSE(hitp->hit_normal, hitp->hit_normal);
-	    pp->pt_inflip=0;
-	}
+	RT_HIT_NORMAL(hitp->hit_normal, hitp, stp, &(ap_p->a_ray), pp->pt_outflip);
 
 	/*  Find back surface area of regions. */
 	costheta1 = hitp->hit_normal[X] * ap_p->a_ray.r_dir[X]
