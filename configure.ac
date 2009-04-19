@@ -3828,13 +3828,8 @@ AC_CONFIG_FILES([
 	src/bwish/Makefile
 	src/canon/Makefile
 	src/conv/Makefile
-	src/conv/comgeom/Makefile
-	src/conv/dxf/Makefile
 	src/conv/iges/Makefile
 	src/conv/intaval/Makefile
-	src/conv/jack/Makefile
-	src/conv/off/Makefile
-	src/conv/patch/Makefile
 	src/external/Makefile
 	src/external/Cubit/Makefile
 	src/external/EndgameFramework/Makefile

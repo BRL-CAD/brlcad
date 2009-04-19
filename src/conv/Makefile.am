@@ -5,11 +5,20 @@ EXTRA_DIST = \
 	3dm/CMakeLists.txt \
 	CMakeLists.txt \
 	Formats.csv \
+	comgeom/CMakeLists.txt \
+	comgeom/try.sh \
 	dbclean.sh \
+	dxf/CMakeLists.txt \
 	g-xxx.c \
 	g-xxx_facets.c \
 	g4-g5.c \
 	g5-g4.c \
+	jack/CMakeLists.txt \
+	off/CMakeLists.txt \
+	patch/CMakeLists.txt \
+	patch/pull_comp.sh \
+	patch/pull_solidsub.sh \
+	patch/rpatch.f \
 	walk_example.c
 
 if ONLY_BENCHMARK
@@ -25,26 +34,23 @@ bin_PROGRAMS = \
 else !ONLY_BENCHMARK
 
 SUBDIRS = \
-	. \
-	comgeom \
-	dxf \
 	iges \
-	intaval \
-	jack \
-	off \
-	patch
+	intaval
 
 bin_PROGRAMS = \
 	3dm-g \
 	asc-nmg \
 	asc2g \
 	asc2pix \
+	bot-bldxf \
 	bot_dump \
 	bot_shell-vtk \
+	comgeom-g \
 	conv-vg2g \
 	cy-g \
 	dbupgrade \
-        dem-g \
+	dem-g \
+	dxf-g \
 	enf-g \
 	euclid-g \
 	euclid_format \
@@ -52,26 +58,33 @@ bin_PROGRAMS = \
 	fast4-g \
 	g-acad \
 	g-adrt \
+	g-dxf \
 	g-euclid \
 	g-euclid1 \
-	g-var \
+	g-jack \
 	g-nff \
 	g-nmg \
 	g-obj \
+	g-off \
 	g-shell.rect \
 	g-stl \
 	g-tankill \
+	g-var \
 	g-vrml \
 	g-x3d \
 	g2asc \
+	jack-g \
 	nastran-g \
 	nmg-bot \
 	nmg-rib \
 	nmg-sgp \
+	off-g \
+	patch-g \
 	pix2asc \
 	ply-g \
 	poly-bot \
 	proe-g \
+	rpatch \
 	stl-g \
 	tankill-g \
 	viewpoint-g
@@ -92,7 +105,7 @@ if BUILD_OPENNURBS
 else
 3dm_g_CXXFLAGS =
 endif
-3dm_g_SOURCES = 3dm-g.cpp
+3dm_g_SOURCES = 3dm/3dm-g.cpp
 3dm_g_LDADD = \
 	${WDB} \
 	${WDB_LIBS} \
@@ -116,8 +129,24 @@ asc_nmg_LDADD = ${WDB}
 bot_dump_SOURCES = bot_dump.c
 bot_dump_LDADD = ${RT} ${GED}
 
+bot_bldxf_SOURCES = dxf/bot-bldxf.c
+bot_bldxf_LDADD = ${RT}
+
 bot_shell_vtk_SOURCES = bot_shell-vtk.c
 bot_shell_vtk_LDADD = ${RT}
+
+comgeom_g_SOURCES = \
+	comgeom/cvt.c \
+	comgeom/f2a.c \
+	comgeom/mat.c \
+	comgeom/read.c \
+	comgeom/region.c \
+	comgeom/solid.c \
+	comgeom/tools.c
+comgeom_g_LDADD = \
+	${WDB} \
+	${BU} \
+	${BU_LIBS}
 
 conv_vg2g_SOURCES = conv-vg2g.c
 conv_vg2g_LDADD = ${BU} ${SYSV}
@@ -130,6 +159,9 @@ dbupgrade_LDADD = ${WDB}
 
 dem_g_SOURCES = dem-g.c
 dem_g_LDADD = ${WDB}
+
+dxf_g_SOURCES = dxf/dxf-g.c
+dxf_g_LDADD = ${WDB}
 
 enf_g_SOURCES = enf-g.c
 enf_g_LDADD = ${WDB}
@@ -161,11 +193,19 @@ g_acad_LDADD = ${WDB}
 g_adrt_SOURCES = g-adrt.c
 g_adrt_LDADD = ${WDB}
 
+g_dxf_SOURCES = dxf/g-dxf.c
+g_dxf_LDADD = ${WDB} ${GCV}
+
 g_euclid1_SOURCES = euclid/g-euclid1.c
 g_euclid1_LDADD = ${RT}
 
 g_euclid_SOURCES = euclid/g-euclid.c
 g_euclid_LDADD = ${RT}
+
+g_jack_SOURCES = jack/g-jack.c
+g_jack_LDADD = \
+	${WDB} \
+	${WDB_LIBS}
 
 g_nff_SOURCES = g-nff.c
 g_nff_LDADD = ${WDB}
@@ -175,6 +215,11 @@ g_nmg_LDADD = ${WDB}
 
 g_obj_SOURCES = g-obj.c
 g_obj_LDADD = ${WDB}
+
+g_off_SOURCES = off/g-off.c
+g_off_LDADD = \
+	${RT} \
+	${RT_LIBS}
 
 g_shell_rect_SOURCES = g-shell.rect.c
 g_shell_rect_LDADD = ${WDB}
@@ -200,6 +245,11 @@ g_xxx_LDADD = ${WDB}
 g_xxx_facets_SOURCES = g-xxx_facets.c
 g_xxx_facets_LDADD = ${WDB}
 
+jack_g_SOURCES = jack/jack-g.c
+jack_g_LDADD = \
+	${WDB} \
+	${WDB_LIBS}
+
 nastran_g_SOURCES = nastran-g.c
 nastran_g_LDADD = ${WDB}
 
@@ -212,6 +262,16 @@ nmg_rib_LDADD = ${WDB}
 nmg_sgp_SOURCES = nmg/nmg-sgp.c
 nmg_sgp_LDADD = ${WDB}
 
+off_g_SOURCES = off/off-g.c
+off_g_LDADD = \
+	${WDB} \
+	${WDB_LIBS}
+
+patch_g_SOURCES = patch/patch-g.c
+patch_g_LDADD = \
+	${WDB}\
+	${WDB_LIBS}
+
 pix2asc_SOURCES = asc/pix2asc.c
 
 ply_g_SOURCES = ply-g.c
@@ -222,6 +282,12 @@ poly_bot_LDADD = ${WDB}
 
 proe_g_SOURCES = proe-g.c
 proe_g_LDADD = ${WDB}
+
+rpatch_SOURCES = patch/rpatch.c
+rpatch_LDADD = \
+	${BU} \
+	${BU_LIBS} \
+	${SYSV}
 
 stl_g_SOURCES = stl/stl-g.c
 stl_g_LDADD = ${WDB}
@@ -237,15 +303,23 @@ walk_example_LDADD = ${RT}
 
 dist_bin_SCRIPTS = intaval-g.py
 
+noinst_HEADERS = \
+	comgeom/3d.h \
+	comgeom/ged_types.h \
+	dxf/dxf.h
+
 dist_man_MANS = \
 	asc/g2asc.1 \
 	asc/pix2asc.1 \
 	bot_dump.1 \
 	bot_shell-vtk.1 \
+	comgeom/comgeom-g.1 \
 	conv-vg2g.1 \
 	cy-g.1 \
 	dbclean.1 \
 	dbupgrade.1 \
+	dxf/dxf-g.1 \
+	dxf/g-dxf.1 \
 	enf-g.1 \
 	euclid/euclid-g.1 \
 	euclid/g-euclid.1 \
@@ -296,13 +370,16 @@ FAST_OBJECTS = \
 	$(asc2g_OBJECTS) \
 	$(asc2pix_OBJECTS) \
 	$(asc_nmg_OBJECTS) \
+	$(bot_bldxf_OBJECTS) \
 	$(bot_dump_OBJECTS) \
 	$(bot_raw_OBJECTS) \
 	$(bot_shell_vtk_OBJECTS) \
+	$(comgeom_g_OBJECTS) \
 	$(conv_vg2g_OBJECTS) \
 	$(cy_g_OBJECTS) \
 	$(dbupgrade_OBJECTS) \
 	$(dem_g_OBJECTS) \
+	$(dxf_g_OBJECTS) \
 	$(enf_g_OBJECTS) \
 	$(euclid_format_OBJECTS) \
 	$(euclid_g_OBJECTS) \
@@ -313,11 +390,14 @@ FAST_OBJECTS = \
 	$(g5_g4_OBJECTS) \
 	$(g_acad_OBJECTS) \
 	$(g_adrt_OBJECTS) \
+	$(g_dxf_OBJECTS) \
 	$(g_euclid1_OBJECTS) \
 	$(g_euclid_OBJECTS) \
+	$(g_jack_OBJECTS) \
 	$(g_nff_OBJECTS) \
 	$(g_nmg_OBJECTS) \
 	$(g_obj_OBJECTS) \
+	$(g_off_OBJECTS) \
 	$(g_shell_rect_OBJECTS) \
 	$(g_stl_OBJECTS) \
 	$(g_tankill_OBJECTS) \
@@ -326,14 +406,18 @@ FAST_OBJECTS = \
 	$(g_x3d_OBJECTS) \
 	$(g_xxx_OBJECTS) \
 	$(g_xxx_facets_OBJECTS) \
+	$(jack_g_OBJECTS) \
 	$(nastran_g_OBJECTS) \
 	$(nmg_bot_OBJECTS) \
 	$(nmg_rib_OBJECTS) \
 	$(nmg_sgp_OBJECTS) \
+	$(off_g_OBJECTS) \
+	$(patch_g_OBJECTS) \
 	$(pix2asc_OBJECTS) \
 	$(ply_g_OBJECTS) \
 	$(poly_bot_OBJECTS) \
 	$(proe_g_OBJECTS) \
+	$(rpatch_OBJECTS) \
 	$(stl_g_OBJECTS) \
 	$(tankill_g_OBJECTS) \
 	$(viewpoint_g_OBJECTS) \
