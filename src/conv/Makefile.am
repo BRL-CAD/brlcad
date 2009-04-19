@@ -121,13 +121,13 @@ dem_g_LDADD = ${WDB}
 enf_g_SOURCES = enf-g.c
 enf_g_LDADD = ${WDB}
 
-euclid_format_SOURCES = euclid_format.c
+euclid_format_SOURCES = euclid/euclid_format.c
 euclid_format_LDADD = ${RT}
 
-euclid_g_SOURCES = euclid-g.c
+euclid_g_SOURCES = euclid/euclid-g.c
 euclid_g_LDADD = ${WDB}
 
-euclid_unformat_SOURCES = euclid_unformat.c
+euclid_unformat_SOURCES = euclid/euclid_unformat.c
 euclid_unformat_LDADD = ${BU} ${BN} ${SYSV}
 
 fast4_g_SOURCES = fast4-g.c
@@ -148,10 +148,10 @@ g_acad_LDADD = ${WDB}
 g_adrt_SOURCES = g-adrt.c
 g_adrt_LDADD = ${WDB}
 
-g_euclid1_SOURCES = g-euclid1.c
+g_euclid1_SOURCES = euclid/g-euclid1.c
 g_euclid1_LDADD = ${RT}
 
-g_euclid_SOURCES = g-euclid.c
+g_euclid_SOURCES = euclid/g-euclid.c
 g_euclid_LDADD = ${RT}
 
 g_nff_SOURCES = g-nff.c
@@ -234,10 +234,10 @@ dist_man_MANS = \
 	dbclean.1 \
 	dbupgrade.1 \
 	enf-g.1 \
-	euclid-g.1 \
+	euclid/euclid-g.1 \
+	euclid/g-euclid.1 \
 	fast4-g.1 \
 	g-acad.1 \
-	g-euclid.1 \
 	g-nff.1 \
 	g-obj.1 \
 	g-shell.rect.1 \
