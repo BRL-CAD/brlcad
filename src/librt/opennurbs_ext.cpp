@@ -45,7 +45,7 @@
 #define RANGE_LO 0.45
 #define UNIVERSAL_SAMPLE_COUNT 1001
 
-#define BBOX_GROW 1e-4
+#define BBOX_GROW 1e-1
 
 
 namespace brlcad {
