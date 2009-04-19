@@ -45,40 +45,40 @@
 
 
 #define V3ARGSIN(a)       (a)[X]/25.4, (a)[Y]/25.4, (a)[Z]/25.4
-#define VSETIN( a, b )	{\
+#define VSETIN(a, b) {\
     (a)[X] = (b)[X]/25.4; \
     (a)[Y] = (b)[Y]/25.4; \
     (a)[Z] = (b)[Z]/25.4; \
 }
 
 
-static char	usage[] = "Usage: %s [-bvi] [-xX lvl] [-a abs_tess_tol] [-r rel_tess_tol] [-n norm_tess_tol] [-D dist_calc_tol] [-o output_file_name.stl | -m directory_name] brlcad_db.g object(s)\n";
+static char usage[] = "Usage: %s [-bvi] [-xX lvl] [-a abs_tess_tol] [-r rel_tess_tol] [-n norm_tess_tol] [-D dist_calc_tol] [-o output_file_name.stl | -m directory_name] brlcad_db.g object(s)\n";
 
-static int	verbose;
-static int	NMG_debug;	/* saved arg of -X, for longjmp handling */
-static int	ncpu = 1;	/* Number of processors */
-static int	binary = 0;	/* Default output is ASCII */
-static char	*output_file = NULL;		/* output filename */
-static char	*output_directory = NULL;	/* directory name to hold output files */
-static FILE	*fp;		/* Output file pointer */
-static int	bfd;		/* Output binary file descriptor */
-static struct db_i		*dbip;
-static struct model		*the_model;
-static struct bu_vls 		file_name;	/* file name built from region name */
-static struct rt_tess_tol	ttol;		/* tesselation tolerance in mm */
-static struct bn_tol		tol;		/* calculation tolerance */
-static struct db_tree_state	tree_state;	/* includes tol & model */
+static int verbose;
+static int NMG_debug;			/* saved arg of -X, for longjmp handling */
+static int ncpu = 1;			/* Number of processors */
+static int binary = 0;			/* Default output is ASCII */
+static char *output_file = NULL;	/* output filename */
+static char *output_directory = NULL;	/* directory name to hold output files */
+static FILE *fp;			/* Output file pointer */
+static int bfd;				/* Output binary file descriptor */
+static struct db_i *dbip;
+static struct model *the_model;
+static struct bu_vls file_name;		/* file name built from region name */
+static struct rt_tess_tol ttol;		/* tesselation tolerance in mm */
+static struct bn_tol tol;		/* calculation tolerance */
+static struct db_tree_state tree_state;	/* includes tol & model */
 
-static int		regions_tried = 0;
-static int		regions_converted = 0;
-static int		regions_written = 0;
-static int		inches = 0;
-static unsigned int	tot_polygons = 0;
+static int regions_tried = 0;
+static int regions_converted = 0;
+static int regions_written = 0;
+static int inches = 0;
+static unsigned int tot_polygons = 0;
 
 
 /* Byte swaps a four byte value */
 void
-lswap( unsigned int *v)
+lswap(unsigned int *v)
 {
     unsigned int r;
 
@@ -97,54 +97,54 @@ nmg_to_stl(struct nmgregion *r, struct db_full_path *pathp, int region_id, int m
     char *region_name;
     int region_polys=0;
 
-    NMG_CK_REGION( r );
+    NMG_CK_REGION(r);
     RT_CK_FULL_PATH(pathp);
 
-    region_name = db_path_to_string( pathp );
+    region_name = db_path_to_string(pathp);
 
-    if ( output_directory ) {
+    if (output_directory) {
 	char *c;
 
-	bu_vls_trunc( &file_name, 0 );
-	bu_vls_strcpy( &file_name, output_directory );
-	bu_vls_putc( &file_name, '/' );
+	bu_vls_trunc(&file_name, 0);
+	bu_vls_strcpy(&file_name, output_directory);
+	bu_vls_putc(&file_name, '/');
 	c = region_name;
 	c++;
-	while ( *c != '\0' ) {
-	    if ( *c == '/' ) {
-		bu_vls_putc( &file_name, '@' );
-	    } else if ( *c == '.' || isspace( *c ) ) {
-		bu_vls_putc( &file_name, '_' );
+	while (*c != '\0') {
+	    if (*c == '/') {
+		bu_vls_putc(&file_name, '@');
+	    } else if (*c == '.' || isspace(*c)) {
+		bu_vls_putc(&file_name, '_');
 	    } else {
-		bu_vls_putc( &file_name, *c );
+		bu_vls_putc(&file_name, *c);
 	    }
 	    c++;
 	}
-	bu_vls_strcat( &file_name, ".stl" );
-	if ( !binary ) {
+	bu_vls_strcat(&file_name, ".stl");
+	if (!binary) {
 	    /* Open ASCII output file */
-	    if ( (fp=fopen( bu_vls_addr( &file_name ), "wb+" )) == NULL )
+	    if ((fp=fopen(bu_vls_addr(&file_name), "wb+")) == NULL)
 	    {
-		perror( "g-stl" );
-		bu_exit(1, "Cannot open ASCII output file (%s) for writing\n", bu_vls_addr( &file_name ) );
+		perror("g-stl");
+		bu_exit(1, "Cannot open ASCII output file (%s) for writing\n", bu_vls_addr(&file_name));
 	    }
 	} else {
 	    char buf[81] = {0};	/* need exactly 80 char for header */
 
 	    /* Open binary output file */
-	    if ( (bfd=open( bu_vls_addr( &file_name ), O_WRONLY|O_CREAT|O_TRUNC|O_BINARY, S_IRUSR|S_IWUSR|S_IRGRP|S_IROTH)) < 0 )
+	    if ((bfd=open(bu_vls_addr(&file_name), O_WRONLY|O_CREAT|O_TRUNC|O_BINARY, S_IRUSR|S_IWUSR|S_IRGRP|S_IROTH)) < 0)
 	    {
-		perror( "g-stl" );
-		bu_log( "ERROR: Cannot open binary output file (%s) for writing\n", bu_vls_addr( &file_name ) );
+		perror("g-stl");
+		bu_log("ERROR: Cannot open binary output file (%s) for writing\n", bu_vls_addr(&file_name));
 	    }
 
 	    if (!region_name) {
-		snprintf( buf, 80, "BRL-CAD generated STL FILE (Units=%s)", inches?"inches":"mm");
+		snprintf(buf, 80, "BRL-CAD generated STL FILE (Units=%s)", inches?"inches":"mm");
 	    } else {
 		if (region_name && strlen(region_name) > 0) {
-		    snprintf( buf, 80, "BRL-CAD generated STL FILE (Units=%s) %s", inches?"inches":"mm", region_name);
+		    snprintf(buf, 80, "BRL-CAD generated STL FILE (Units=%s) %s", inches?"inches":"mm", region_name);
 		} else {
-		    snprintf( buf, 80, "BRL-CAD generated STL FILE (Units=%s) %s", inches?"inches":"mm", region_name);
+		    snprintf(buf, 80, "BRL-CAD generated STL FILE (Units=%s) %s", inches?"inches":"mm", region_name);
 		}
 	    }
 	    write(bfd, &buf, 80);
@@ -156,36 +156,36 @@ nmg_to_stl(struct nmgregion *r, struct db_full_path *pathp, int region_id, int m
     }
 
     m = r->m_p;
-    NMG_CK_MODEL( m );
+    NMG_CK_MODEL(m);
 
     /* Write pertinent info for this region */
-    if ( !binary )
-	fprintf( fp, "solid %s\n", (region_name+1));
+    if (!binary)
+	fprintf(fp, "solid %s\n", (region_name+1));
 
     /* triangulate model */
-    nmg_triangulate_model( m, &tol );
+    nmg_triangulate_model(m, &tol);
 
     /* Check triangles */
-    for ( BU_LIST_FOR( s, shell, &r->s_hd ) )
+    for (BU_LIST_FOR (s, shell, &r->s_hd))
     {
 	struct faceuse *fu;
 
-	NMG_CK_SHELL( s );
+	NMG_CK_SHELL(s);
 
-	for ( BU_LIST_FOR( fu, faceuse, &s->fu_hd ) )
+	for (BU_LIST_FOR (fu, faceuse, &s->fu_hd))
 	{
 	    struct loopuse *lu;
 	    vect_t facet_normal;
 
-	    NMG_CK_FACEUSE( fu );
+	    NMG_CK_FACEUSE(fu);
 
-	    if ( fu->orientation != OT_SAME )
+	    if (fu->orientation != OT_SAME)
 		continue;
 
 	    /* Grab the face normal and save it for all the vertex loops */
-	    NMG_GET_FU_NORMAL( facet_normal, fu);
+	    NMG_GET_FU_NORMAL(facet_normal, fu);
 
-	    for ( BU_LIST_FOR( lu, loopuse, &fu->lu_hd ) )
+	    for (BU_LIST_FOR (lu, loopuse, &fu->lu_hd))
 	    {
 		struct edgeuse *eu;
 		int vert_count=0;
@@ -193,65 +193,65 @@ nmg_to_stl(struct nmgregion *r, struct db_full_path *pathp, int region_id, int m
 		float *flt_ptr;
 		unsigned char vert_buffer[50];
 
-		NMG_CK_LOOPUSE( lu );
+		NMG_CK_LOOPUSE(lu);
 
-		if ( BU_LIST_FIRST_MAGIC( &lu->down_hd ) != NMG_EDGEUSE_MAGIC )
+		if (BU_LIST_FIRST_MAGIC(&lu->down_hd) != NMG_EDGEUSE_MAGIC)
 		    continue;
 
-		memset(vert_buffer, 0, sizeof( vert_buffer ));
+		memset(vert_buffer, 0, sizeof(vert_buffer));
 
-		if ( !binary ) {
-		    fprintf( fp, "  facet normal %f %f %f\n", V3ARGS( facet_normal ) );
-		    fprintf( fp, "    outer loop\n");
+		if (!binary) {
+		    fprintf(fp, "  facet normal %f %f %f\n", V3ARGS(facet_normal));
+		    fprintf(fp, "    outer loop\n");
 		} else {
 		    flt_ptr = flts;
-		    VMOVE( flt_ptr, facet_normal );
+		    VMOVE(flt_ptr, facet_normal);
 		    flt_ptr += 3;
 		}
 
 		/* check vertex numbers for each triangle */
-		for ( BU_LIST_FOR( eu, edgeuse, &lu->down_hd ) )
+		for (BU_LIST_FOR (eu, edgeuse, &lu->down_hd))
 		{
-		    NMG_CK_EDGEUSE( eu );
+		    NMG_CK_EDGEUSE(eu);
 
 		    vert_count++;
 
 		    v = eu->vu_p->v_p;
-		    NMG_CK_VERTEX( v );
-		    if ( !binary )
-			fprintf( fp, "      vertex ");
+		    NMG_CK_VERTEX(v);
+		    if (!binary)
+			fprintf(fp, "      vertex ");
 		    if (inches)
-			if ( !binary ) {
-			    fprintf( fp, "%f %f %f\n", V3ARGSIN( v->vg_p->coord ));
+			if (!binary) {
+			    fprintf(fp, "%f %f %f\n", V3ARGSIN(v->vg_p->coord));
 			} else {
-			    VSETIN( flt_ptr, v->vg_p->coord );
+			    VSETIN(flt_ptr, v->vg_p->coord);
 			    flt_ptr += 3;
 			}
 		    else
-			if ( !binary ) {
-			    fprintf( fp, "%f %f %f\n", V3ARGS( v->vg_p->coord ));
+			if (!binary) {
+			    fprintf(fp, "%f %f %f\n", V3ARGS(v->vg_p->coord));
 			} else {
-			    VMOVE( flt_ptr, v->vg_p->coord );
+			    VMOVE(flt_ptr, v->vg_p->coord);
 			    flt_ptr += 3;
 			}
 		}
-		if ( vert_count > 3 )
+		if (vert_count > 3)
 		{
-		    bu_free( region_name, "region name" );
-		    bu_log( "lu x%x has %d vertices!\n", lu, vert_count );
-		    bu_exit(1, "ERROR: LU is not a triangle" );
+		    bu_free(region_name, "region name");
+		    bu_log("lu x%x has %d vertices!\n", lu, vert_count);
+		    bu_exit(1, "ERROR: LU is not a triangle");
 		}
-		else if ( vert_count < 3 )
+		else if (vert_count < 3)
 		    continue;
-		if ( !binary ) {
-		    fprintf( fp, "    endloop\n");
-		    fprintf( fp, "  endfacet\n");
+		if (!binary) {
+		    fprintf(fp, "    endloop\n");
+		    fprintf(fp, "  endfacet\n");
 		} else {
 		    int i;
 
-		    htonf(vert_buffer, (const unsigned char *)flts, 12 );
-		    for ( i=0; i<12; i++ ) {
-			lswap( (unsigned int *)&vert_buffer[i*4] );
+		    htonf(vert_buffer, (const unsigned char *)flts, 12);
+		    for (i=0; i<12; i++) {
+			lswap((unsigned int *)&vert_buffer[i*4]);
 		    }
 		    write(bfd, vert_buffer, 50);
 		}
@@ -260,26 +260,26 @@ nmg_to_stl(struct nmgregion *r, struct db_full_path *pathp, int region_id, int m
 	    }
 	}
     }
-    if ( !binary )
-	fprintf( fp, "endsolid %s\n", (region_name+1));
+    if (!binary)
+	fprintf(fp, "endsolid %s\n", (region_name+1));
 
-    if ( output_directory ) {
-	if ( binary ) {
+    if (output_directory) {
+	if (binary) {
 	    unsigned char tot_buffer[4];
 
 	    /* Re-position pointer to 80th byte */
-	    lseek( bfd, 80, SEEK_SET );
+	    lseek(bfd, 80, SEEK_SET);
 
 	    /* Write out number of triangles */
-	    bu_plong( tot_buffer, (unsigned long)region_polys );
-	    lswap( (unsigned int *)tot_buffer );
+	    bu_plong(tot_buffer, (unsigned long)region_polys);
+	    lswap((unsigned int *)tot_buffer);
 	    write(bfd, tot_buffer, 4);
-	    close( bfd );
+	    close(bfd);
 	} else {
 	    fclose(fp);
 	}
     }
-    bu_free( region_name, "region name" );
+    bu_free(region_name, "region name");
 }
 
 
@@ -288,14 +288,14 @@ nmg_to_stl(struct nmgregion *r, struct db_full_path *pathp, int region_id, int m
  */
 int
 main(argc, argv)
-    int	argc;
-    char	*argv[];
+    int argc;
+    char *argv[];
 {
-    register int	c;
-    double		percent;
-    int		i;
+    register int c;
+    double percent;
+    int i;
 
-    bu_setlinebuf( stderr );
+    bu_setlinebuf(stderr);
 
 #if MEMORY_LEAK_CHECKING
     rt_g.debug |= DEBUG_MEM_FULL;
@@ -321,11 +321,11 @@ main(argc, argv)
     tol.para = 1 - tol.perp;
 
     /* init resources we might need */
-    rt_init_resource( &rt_uniresource, 0, NULL );
+    rt_init_resource(&rt_uniresource, 0, NULL);
 
     /* make empty NMG model */
     the_model = nmg_mm();
-    BU_LIST_INIT( &rt_g.rtg_vlfree );	/* for vlist macros */
+    BU_LIST_INIT(&rt_g.rtg_vlfree);	/* for vlist macros */
 
     /* Get command line arguments. */
     while ((c = bu_getopt(argc, argv, "a:bm:n:o:r:vx:D:P:X:i")) != EOF) {
@@ -346,7 +346,7 @@ main(argc, argv)
 		break;
 	    case 'm':
 		output_directory = bu_optarg;
-		bu_vls_init( &file_name );
+		bu_vls_init(&file_name);
 		break;
 	    case 'r':		/* Relative tolerance. */
 		ttol.rel = atof(bu_optarg);
@@ -355,19 +355,19 @@ main(argc, argv)
 		verbose++;
 		break;
 	    case 'P':
-		ncpu = atoi( bu_optarg );
+		ncpu = atoi(bu_optarg);
 		rt_g.debug = 1;	/* XXX DEBUG_ALLRAYS -- to get core dumps */
 		break;
 	    case 'x':
-		sscanf( bu_optarg, "%x", (unsigned int *)&rt_g.debug );
+		sscanf(bu_optarg, "%x", (unsigned int *)&rt_g.debug);
 		break;
 	    case 'D':
 		tol.dist = atof(bu_optarg);
 		tol.dist_sq = tol.dist * tol.dist;
-		rt_pr_tol( &tol );
+		rt_pr_tol(&tol);
 		break;
 	    case 'X':
-		sscanf( bu_optarg, "%x", (unsigned int *)&rt_g.NMG_debug );
+		sscanf(bu_optarg, "%x", (unsigned int *)&rt_g.NMG_debug);
 		NMG_debug = rt_g.NMG_debug;
 		break;
 	    case 'i':
@@ -383,30 +383,30 @@ main(argc, argv)
 	bu_exit(1, usage, argv[0]);
     }
 
-    if ( output_file && output_directory ) {
-	bu_log( "ERROR: options \"-o\" and \"-m\" are mutually exclusive\n" );
-	bu_exit(1, usage, argv[0] );
+    if (output_file && output_directory) {
+	bu_log("ERROR: options \"-o\" and \"-m\" are mutually exclusive\n");
+	bu_exit(1, usage, argv[0]);
     }
 
-    if ( !output_file && !output_directory ) {
-	if ( binary ) {
+    if (!output_file && !output_directory) {
+	if (binary) {
 	    bu_exit(1, "Can't output binary to stdout\n");
 	}
 	fp = stdout;
-    } else if ( output_file ) {
-	if ( !binary ) {
+    } else if (output_file) {
+	if (!binary) {
 	    /* Open ASCII output file */
-	    if ( (fp=fopen( output_file, "wb+" )) == NULL )
+	    if ((fp=fopen(output_file, "wb+")) == NULL)
 	    {
-		perror( argv[0] );
-		bu_exit(1, "Cannot open ASCII output file (%s) for writing\n", output_file );
+		perror(argv[0]);
+		bu_exit(1, "Cannot open ASCII output file (%s) for writing\n", output_file);
 	    }
 	} else {
 	    /* Open binary output file */
-	    if ( (bfd=open( output_file, O_WRONLY|O_CREAT|O_TRUNC|O_BINARY, S_IRUSR|S_IWUSR|S_IRGRP|S_IROTH)) < 0 )
+	    if ((bfd=open(output_file, O_WRONLY|O_CREAT|O_TRUNC|O_BINARY, S_IRUSR|S_IWUSR|S_IRGRP|S_IROTH)) < 0)
 	    {
-		perror( argv[0] );
-		bu_exit(1, "Cannot open binary output file (%s) for writing\n", output_file );
+		perror(argv[0]);
+		bu_exit(1, "Cannot open binary output file (%s) for writing\n", output_file);
 	    }
 	}
     }
@@ -418,33 +418,33 @@ main(argc, argv)
 	perror(argv[0]);
 	bu_exit(1, "Unable to open geometry file (%s)\n", argv[0]);
     }
-    if ( db_dirbuild( dbip ) ) {
-	bu_exit(1, "ERROR: db_dirbuild failed\n" );
+    if (db_dirbuild(dbip)) {
+	bu_exit(1, "ERROR: db_dirbuild failed\n");
     }
 
     BN_CK_TOL(tree_state.ts_tol);
     RT_CK_TESS_TOL(tree_state.ts_ttol);
 
-    if ( verbose ) {
-	bu_log( "Model: %s\n", argv[0] );
-	bu_log( "Objects:" );
-	for ( i=1; i<argc; i++ )
-	    bu_log( " %s", argv[i] );
-	bu_log( "\nTesselation tolerances:\n\tabs = %g mm\n\trel = %g\n\tnorm = %g\n",
-		tree_state.ts_ttol->abs, tree_state.ts_ttol->rel, tree_state.ts_ttol->norm );
-	bu_log( "Calculational tolerances:\n\tdist = %g mm perp = %g\n",
-		tree_state.ts_tol->dist, tree_state.ts_tol->perp );
+    if (verbose) {
+	bu_log("Model: %s\n", argv[0]);
+	bu_log("Objects:");
+	for (i=1; i<argc; i++)
+	    bu_log(" %s", argv[i]);
+	bu_log("\nTesselation tolerances:\n\tabs = %g mm\n\trel = %g\n\tnorm = %g\n",
+	       tree_state.ts_ttol->abs, tree_state.ts_ttol->rel, tree_state.ts_ttol->norm);
+	bu_log("Calculational tolerances:\n\tdist = %g mm perp = %g\n",
+	       tree_state.ts_tol->dist, tree_state.ts_tol->perp);
     }
 
     /* Write out STL header if output file is binary */
-    if ( binary && output_file ) {
+    if (binary && output_file) {
 	char buf[81];	/* need exactly 80 char for header */
 
-	memset(buf, 0, sizeof( buf ));
+	memset(buf, 0, sizeof(buf));
 	if (inches) {
-	    bu_strlcpy( buf, "BRL-CAD generated STL FILE (Units=inches)", sizeof(buf));
+	    bu_strlcpy(buf, "BRL-CAD generated STL FILE (Units=inches)", sizeof(buf));
 	} else {
-	    bu_strlcpy( buf, "BRL-CAD generated STL FILE (Units=mm)", sizeof(buf));
+	    bu_strlcpy(buf, "BRL-CAD generated STL FILE (Units=mm)", sizeof(buf));
 	}
 	write(bfd, &buf, 80);
 
@@ -465,33 +465,33 @@ main(argc, argv)
     percent = 0;
     if (regions_tried>0) {
 	percent = ((double)regions_converted * 100) / regions_tried;
-	if ( verbose )
+	if (verbose)
 	    bu_log("Tried %d regions, %d converted to NMG's successfully.  %g%%\n",
 		   regions_tried, regions_converted, percent);
     }
     percent = 0;
 
-    if ( regions_tried > 0 ) {
+    if (regions_tried > 0) {
 	percent = ((double)regions_written * 100) / regions_tried;
-	if ( verbose )
-	    bu_log( "                  %d triangulated successfully. %g%%\n",
-		    regions_written, percent );
+	if (verbose)
+	    bu_log("                  %d triangulated successfully. %g%%\n",
+		   regions_written, percent);
     }
 
-    bu_log( "%ld triangles written\n", tot_polygons );
+    bu_log("%ld triangles written\n", tot_polygons);
 
-    if ( output_file ) {
-	if ( binary ) {
+    if (output_file) {
+	if (binary) {
 	    unsigned char tot_buffer[4];
 
 	    /* Re-position pointer to 80th byte */
-	    lseek( bfd, 80, SEEK_SET );
+	    lseek(bfd, 80, SEEK_SET);
 
 	    /* Write out number of triangles */
-	    bu_plong( tot_buffer, (unsigned long)tot_polygons );
-	    lswap( (unsigned int *)tot_buffer );
+	    bu_plong(tot_buffer, (unsigned long)tot_polygons);
+	    lswap((unsigned int *)tot_buffer);
 	    write(bfd, tot_buffer, 4);
-	    close( bfd );
+	    close(bfd);
 	} else {
 	    fclose(fp);
 	}
