@@ -97,7 +97,7 @@ asc2g_LDADD = ${WDB} ${GED}
 
 asc2pix_SOURCES = asc/asc2pix.c
 
-asc_nmg_SOURCES = asc-nmg.c
+asc_nmg_SOURCES = nmg/asc-nmg.c
 asc_nmg_LDADD = ${WDB}
 
 bot_dump_SOURCES = bot_dump.c
@@ -157,7 +157,7 @@ g_euclid_LDADD = ${RT}
 g_nff_SOURCES = g-nff.c
 g_nff_LDADD = ${WDB}
 
-g_nmg_SOURCES = g-nmg.c
+g_nmg_SOURCES = nmg/g-nmg.c
 g_nmg_LDADD = ${WDB}
 
 g_obj_SOURCES = g-obj.c
@@ -190,13 +190,13 @@ g_xxx_facets_LDADD = ${WDB}
 nastran_g_SOURCES = nastran-g.c
 nastran_g_LDADD = ${WDB}
 
-nmg_bot_SOURCES = nmg-bot.c
+nmg_bot_SOURCES = nmg/nmg-bot.c
 nmg_bot_LDADD = ${WDB}
 
-nmg_rib_SOURCES = nmg-rib.c
+nmg_rib_SOURCES = nmg/nmg-rib.c
 nmg_rib_LDADD = ${WDB}
 
-nmg_sgp_SOURCES = nmg-sgp.c
+nmg_sgp_SOURCES = nmg/nmg-sgp.c
 nmg_sgp_LDADD = ${WDB}
 
 pix2asc_SOURCES = asc/pix2asc.c
@@ -225,7 +225,6 @@ walk_example_LDADD = ${RT}
 dist_bin_SCRIPTS = intaval-g.py
 
 dist_man_MANS = \
-	asc-nmg.1 \
 	asc/g2asc.1 \
 	asc/pix2asc.1 \
 	bot_dump.1 \
@@ -240,15 +239,16 @@ dist_man_MANS = \
 	g-acad.1 \
 	g-euclid.1 \
 	g-nff.1 \
-	g-nmg.1 \
 	g-obj.1 \
 	g-shell.rect.1 \
 	g-var.1 \
 	g-vrml.1 \
 	g-x3d.1 \
 	nastran-g.1 \
-	nmg-bot.1 \
-	nmg-rib.1 \
+	nmg/asc-nmg.1 \
+	nmg/g-nmg.1 \
+	nmg/nmg-bot.1 \
+	nmg/nmg-rib.1 \
 	ply-g.1 \
 	poly-bot.1 \
 	proe-g.1 \
