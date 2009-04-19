@@ -3277,10 +3277,9 @@ RT_EXPORT BU_EXTERN(void db_functree,
 		     genptr_t client_data));
 
 /* mirror.c */
-RT_EXPORT BU_EXTERN(struct directory *rt_mirror,
+RT_EXPORT BU_EXTERN(struct rt_db_internal *rt_mirror,
 		    (struct db_i *dpip,
-		     const char	*from,
-		     const char *to,
+		     struct rt_db_internal *ip,
 		     point_t mirror_origin,
 		     vect_t mirror_dir,
 		     fastf_t mirror_pt,

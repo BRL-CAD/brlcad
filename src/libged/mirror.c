@@ -35,6 +35,11 @@ ged_mirror(struct ged *gedp, int argc, const char *argv[])
     fastf_t mirror_pt = 0.0;
     static const char *usage = "[-h] [-d dir] [-o origin] [-p distance] [-x] [-y] [-z] old new";
 
+    int ret;
+    register struct directory *dp;
+    struct rt_db_internal *ip;
+    struct rt_db_internal internal;
+
     int early_out = 0;
 
     GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
@@ -114,15 +119,44 @@ ged_mirror(struct ged *gedp, int argc, const char *argv[])
 	return BRLCAD_ERROR;
     }
 
+    /* make sure object mirroring to does not already exist */
+    if (db_lookup(gedp->ged_wdbp->dbip, argv[bu_optind+1], LOOKUP_QUIET) != DIR_NULL) {
+	bu_vls_printf(&gedp->ged_result_str, "ERROR: %s already exists\n", argv[bu_optind+1]);
+	return BRLCAD_ERROR;
+    }
+
+    /* look up the object being mirrored */
+    if ((dp = db_lookup(gedp->ged_wdbp->dbip, argv[bu_optind], LOOKUP_NOISY)) == DIR_NULL) {
+	return BRLCAD_ERROR;
+    }
+
+    /* get object being mirrored */
+    ret = rt_db_get_internal(&internal, dp, gedp->ged_wdbp->dbip, NULL, gedp->ged_wdbp->wdb_resp);
+    if (ret < 0) {
+	bu_vls_printf(&gedp->ged_result_str, "ERROR: Unable to load solid [%s]\n", argv[bu_optind]);
+	return BRLCAD_ERROR;
+    }
+    
     /* mirror the object */
-    if (rt_mirror(gedp->ged_wdbp->dbip,
-		  argv[bu_optind],
-		  argv[bu_optind+1],
-		  mirror_origin,
-		  mirror_dir,
-		  mirror_pt,
-		  &rt_uniresource) == DIR_NULL) {
-	bu_vls_printf(&gedp->ged_result_str, "%s: not able to perform the mirror", argv[0]);
+    ip = rt_mirror(gedp->ged_wdbp->dbip,
+		   &internal,
+		   mirror_origin,
+		   mirror_dir,
+		   mirror_pt,
+		   gedp->ged_wdbp->wdb_resp);
+    if (ip == NULL) {
+	bu_vls_printf(&gedp->ged_result_str, "ERROR: Unable to mirror %s", argv[0]);
+	return BRLCAD_ERROR;
+    }
+
+    /* add the mirrored object to the directory */
+    if ((dp = db_diradd(gedp->ged_wdbp->dbip, argv[bu_optind+1], -1L, 0, dp->d_flags, (genptr_t)&ip->idb_type)) == DIR_NULL) {
+	bu_vls_printf(&gedp->ged_result_str, "ERROR: Unable to add [%s] to the database directory", argv[bu_optind+1]);
+	return BRLCAD_ERROR;
+    }
+    /* save the mirrored object to disk */
+    if (rt_db_put_internal(dp, gedp->ged_wdbp->dbip, ip, gedp->ged_wdbp->wdb_resp) < 0) {
+	bu_vls_printf(&gedp->ged_result_str, "ERROR: Unable to store [%s] to the database", argv[bu_optind+1]);
 	return BRLCAD_ERROR;
     }
 

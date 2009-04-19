@@ -39,24 +39,18 @@
 
 /**
  * Mirror an object about some axis at a specified point on the axis.
+ * It is the caller's responsibility to retain and free the internal.
  *
- * Returns a directory pointer to the new mirrored object
- *
- * Note: mirror_dir is expected to be normalized.
- *
+ * Returns the modified internal object or NULL on error.
  **/
-struct directory *
+struct rt_db_internal *
 rt_mirror(struct db_i *dbip,
-	  const char *from,
-	  const char *to,
+	  struct rt_db_internal *ip,
 	  point_t mirror_origin,
 	  vect_t mirror_dir,
 	  fastf_t mirror_pt,
 	  struct resource *resp)
 {
-    register struct directory *dp;
-    struct rt_db_internal internal;
-
     register int i, j;
     int id;
     mat_t rmat;
@@ -68,35 +62,22 @@ rt_mirror(struct db_i *dbip,
     static fastf_t tol_dist_sq = 0.005 * 0.005;
     static point_t origin = {0.0, 0.0, 0.0};
 
+    RT_CK_DBI(dbip);
+    RT_CK_DB_INTERNAL(ip);
+
     VUNITIZE(mirror_dir);
 
     if (!NEAR_ZERO(MAGSQ(mirror_dir) - 1.0, tol_dist_sq)) {
-	bu_log("rt_mirror: mirror_dir is invalid!\n");
-	return DIR_NULL;
+	bu_log("ERROR: mirror direction is invalid\n");
+	return NULL;
     }
 
     if (!resp) {
 	resp=&rt_uniresource;
     }
 
-    /* look up the object being mirrored */
-    if ((dp = db_lookup(dbip, from, LOOKUP_NOISY)) == DIR_NULL) {
-	return DIR_NULL;
-    }
-
-    /* make sure object mirroring to does not already exist */
-    if (db_lookup(dbip, to, LOOKUP_QUIET) != DIR_NULL) {
-	bu_log("%s already exists\n", to);
-	return DIR_NULL;
-    }
-
-    /* get object being mirrored */
-    id = rt_db_get_internal(&internal, dp, dbip, NULL, resp);
-    if (id < 0) {
-	bu_log("ERROR: Unable to load solid [%s]\n", from);
-	return DIR_NULL;
-    }
-    RT_CK_DB_INTERNAL(&internal);
+    /* FIXME: not the best, but consistent until v6 */
+    id = ip->idb_type;
 
     mirror_pt *= dbip->dbi_local2base;
     MAT_IDN(mirmat);
@@ -146,7 +127,7 @@ rt_mirror(struct db_i *dbip,
 		fastf_t ang;
 		mat_t mat;
 
-		tor = (struct rt_tor_internal *)internal.idb_ptr;
+		tor = (struct rt_tor_internal *)ip->idb_ptr;
 		RT_TOR_CK_MAGIC(tor);
 
 		VMOVE(pt, tor->v);
@@ -174,7 +155,7 @@ rt_mirror(struct db_i *dbip,
 		fastf_t ang;
 		mat_t mat;
 
-		tgc = (struct rt_tgc_internal *)internal.idb_ptr;
+		tgc = (struct rt_tgc_internal *)ip->idb_ptr;
 		RT_TGC_CK_MAGIC(tgc);
 
 		VMOVE(pt, tgc->v);
@@ -223,7 +204,7 @@ rt_mirror(struct db_i *dbip,
 		fastf_t ang;
 		mat_t mat;
 
-		ell = (struct rt_ell_internal *)internal.idb_ptr;
+		ell = (struct rt_ell_internal *)ip->idb_ptr;
 		RT_ELL_CK_MAGIC(ell);
 
 		VMOVE(pt, ell->v);
@@ -262,7 +243,7 @@ rt_mirror(struct db_i *dbip,
 	    {
 		struct rt_arb_internal *arb;
 
-		arb = (struct rt_arb_internal *)internal.idb_ptr;
+		arb = (struct rt_arb_internal *)ip->idb_ptr;
 		RT_ARB_CK_MAGIC(arb);
 
 		/* mirror each vertex */
@@ -283,7 +264,7 @@ rt_mirror(struct db_i *dbip,
 		fastf_t ang;
 		mat_t mat;
 
-		haf = (struct rt_half_internal *)internal.idb_ptr;
+		haf = (struct rt_half_internal *)ip->idb_ptr;
 		RT_HALF_CK_MAGIC(haf);
 
 		VMOVE(n1, haf->eqn);
@@ -327,7 +308,7 @@ rt_mirror(struct db_i *dbip,
 		fastf_t ang;
 		mat_t mat;
 
-		grp = (struct rt_grip_internal *)internal.idb_ptr;
+		grp = (struct rt_grip_internal *)ip->idb_ptr;
 		RT_GRIP_CK_MAGIC(grp);
 
 		VMOVE(pt, grp->center);
@@ -350,7 +331,7 @@ rt_mirror(struct db_i *dbip,
 		fastf_t *verts;
 		fastf_t *norms;
 
-		pg = (struct rt_pg_internal *)internal.idb_ptr;
+		pg = (struct rt_pg_internal *)ip->idb_ptr;
 		RT_PG_CK_MAGIC(pg);
 
 		verts = (fastf_t *)bu_calloc(pg->max_npts*3, sizeof(fastf_t), "rt_mirror: verts");
@@ -398,7 +379,7 @@ rt_mirror(struct db_i *dbip,
 	    {
 		struct rt_nurb_internal *nurb;
 
-		nurb = (struct rt_nurb_internal *)internal.idb_ptr;
+		nurb = (struct rt_nurb_internal *)ip->idb_ptr;
 		RT_NURB_CK_MAGIC(nurb);
 
 		for (i=0; i<nurb->nsrf; i++) {
@@ -465,7 +446,7 @@ rt_mirror(struct db_i *dbip,
 	    {
 		struct rt_arbn_internal *arbn;
 
-		arbn = (struct rt_arbn_internal *)internal.idb_ptr;
+		arbn = (struct rt_arbn_internal *)ip->idb_ptr;
 		RT_ARBN_CK_MAGIC(arbn);
 
 		for (i=0; i<arbn->neqn; i++) {
@@ -499,7 +480,7 @@ rt_mirror(struct db_i *dbip,
 		struct rt_pipe_internal *pipe;
 		struct wdb_pipept *ps;
 
-		pipe = (struct rt_pipe_internal *)internal.idb_ptr;
+		pipe = (struct rt_pipe_internal *)ip->idb_ptr;
 		RT_PIPE_CK_MAGIC(pipe);
 
 		for (BU_LIST_FOR (ps, wdb_pipept, &pipe->pipe_segs_head)) {
@@ -520,7 +501,7 @@ rt_mirror(struct db_i *dbip,
 		fastf_t ang;
 		mat_t mat;
 
-		part = (struct rt_part_internal *)internal.idb_ptr;
+		part = (struct rt_part_internal *)ip->idb_ptr;
 		RT_PART_CK_MAGIC(part);
 
 		VMOVE(pt, part->part_V);
@@ -548,7 +529,7 @@ rt_mirror(struct db_i *dbip,
 		fastf_t ang;
 		mat_t mat;
 
-		rpc = (struct rt_rpc_internal *)internal.idb_ptr;
+		rpc = (struct rt_rpc_internal *)ip->idb_ptr;
 		RT_RPC_CK_MAGIC(rpc);
 
 		VMOVE(pt, rpc->rpc_V);
@@ -585,7 +566,7 @@ rt_mirror(struct db_i *dbip,
 		fastf_t ang;
 		mat_t mat;
 
-		rhc = (struct rt_rhc_internal *)internal.idb_ptr;
+		rhc = (struct rt_rhc_internal *)ip->idb_ptr;
 		RT_RHC_CK_MAGIC(rhc);
 
 		VMOVE(pt, rhc->rhc_V);
@@ -622,7 +603,7 @@ rt_mirror(struct db_i *dbip,
 		fastf_t ang;
 		mat_t mat;
 
-		epa = (struct rt_epa_internal *)internal.idb_ptr;
+		epa = (struct rt_epa_internal *)ip->idb_ptr;
 		RT_EPA_CK_MAGIC(epa);
 
 		VMOVE(pt, epa->epa_V);
@@ -659,7 +640,7 @@ rt_mirror(struct db_i *dbip,
 		fastf_t ang;
 		mat_t mat;
 
-		eto = (struct rt_eto_internal *)internal.idb_ptr;
+		eto = (struct rt_eto_internal *)ip->idb_ptr;
 		RT_ETO_CK_MAGIC(eto);
 
 		VMOVE(pt, eto->eto_V);
@@ -697,7 +678,7 @@ rt_mirror(struct db_i *dbip,
 		fastf_t ang;
 		mat_t mat;
 
-		hyp = (struct rt_hyp_internal *)internal.idb_ptr;
+		hyp = (struct rt_hyp_internal *)ip->idb_ptr;
 		RT_HYP_CK_MAGIC(hyp);
 
 		VMOVE(pt, hyp->hyp_Vi);
@@ -734,7 +715,7 @@ rt_mirror(struct db_i *dbip,
 		struct bu_ptbl table;
 		struct vertex *v;
 
-		m = (struct model *)internal.idb_ptr;
+		m = (struct model *)ip->idb_ptr;
 		NMG_CK_MODEL(m);
 
 		/* move every vertex */
@@ -763,10 +744,8 @@ rt_mirror(struct db_i *dbip,
 
 		    if (*f->g.magic_p != NMG_FACE_G_PLANE_MAGIC) {
 			bu_log("Sorry, can only mirror NMG solids with planar faces\n");
-			bu_log("Error [%s] has \n", from);
 			bu_ptbl_free(&table);
-			rt_db_free_internal(&internal, resp);
-			return DIR_NULL;
+			return NULL;
 		    }
 		}
 
@@ -789,17 +768,15 @@ rt_mirror(struct db_i *dbip,
 			fu = fu->fumate_p;
 		    }
 		    if (fu->orientation != OT_SAME) {
-			bu_log("Error with orientation of the NMG faces for [%s]\n", from);
+			bu_log("ERROR: Unexpected NMG face orientation\n");
 			bu_ptbl_free(&table);
-			rt_db_free_internal(&internal, resp);
-			return DIR_NULL;
+			return NULL;
 		    }
 
 		    if (nmg_calc_face_g(fu)) {
-			bu_log("Error calculating the NMG faces for [%s]\n", from);
+			bu_log("ERROR: Unable to calculate NMG faces for mirroring\n");
 			bu_ptbl_free(&table);
-			rt_db_free_internal(&internal, resp);
-			return DIR_NULL;
+			return NULL;
 		    }
 		}
 
@@ -813,7 +790,7 @@ rt_mirror(struct db_i *dbip,
 		struct rt_ars_internal *ars;
 		fastf_t *tmp_curve;
 
-		ars = (struct rt_ars_internal *)internal.idb_ptr;
+		ars = (struct rt_ars_internal *)ip->idb_ptr;
 		RT_ARS_CK_MAGIC(ars);
 
 		/* mirror each vertex */
@@ -846,7 +823,7 @@ rt_mirror(struct db_i *dbip,
 	    {
 		struct rt_ebm_internal *ebm;
 
-		ebm = (struct rt_ebm_internal *)internal.idb_ptr;
+		ebm = (struct rt_ebm_internal *)ip->idb_ptr;
 		RT_EBM_CK_MAGIC(ebm);
 
 		bn_mat_mul(temp, mirmat, ebm->mat);
@@ -858,7 +835,7 @@ rt_mirror(struct db_i *dbip,
 	    {
 		struct rt_dsp_internal *dsp;
 
-		dsp = (struct rt_dsp_internal *)internal.idb_ptr;
+		dsp = (struct rt_dsp_internal *)ip->idb_ptr;
 		RT_DSP_CK_MAGIC(dsp);
 
 		bn_mat_mul(temp, mirmat, dsp->dsp_mtos);
@@ -870,7 +847,7 @@ rt_mirror(struct db_i *dbip,
 	    {
 		struct rt_vol_internal *vol;
 
-		vol = (struct rt_vol_internal *)internal.idb_ptr;
+		vol = (struct rt_vol_internal *)ip->idb_ptr;
 		RT_VOL_CK_MAGIC(vol);
 
 		bn_mat_mul(temp, mirmat, vol->mat);
@@ -888,7 +865,7 @@ rt_mirror(struct db_i *dbip,
 		mat_t mat;
 
 
-		superell = (struct rt_superell_internal *)internal.idb_ptr;
+		superell = (struct rt_superell_internal *)ip->idb_ptr;
 		RT_SUPERELL_CK_MAGIC(superell);
 
 		VMOVE(pt, superell->v);
@@ -930,7 +907,7 @@ rt_mirror(struct db_i *dbip,
 	    {
 		struct rt_comb_internal *comb;
 
-		comb = (struct rt_comb_internal *)internal.idb_ptr;
+		comb = (struct rt_comb_internal *)ip->idb_ptr;
 		RT_CK_COMB(comb);
 
 		if (comb->tree) {
@@ -942,7 +919,7 @@ rt_mirror(struct db_i *dbip,
 	    {
 		struct rt_bot_internal *bot;
 
-		bot = (struct rt_bot_internal *)internal.idb_ptr;
+		bot = (struct rt_bot_internal *)ip->idb_ptr;
 		RT_BOT_CK_MAGIC(bot);
 
 		/* mirror each vertex */
@@ -981,24 +958,12 @@ rt_mirror(struct db_i *dbip,
 	    }
 	default:
 	    {
-		rt_db_free_internal(&internal, resp);
 		bu_log("Unknown or unsupported object type (id==%d)\n", id);
-		bu_log("ERROR: cannot mirror object [%s]\n", from);
-		return DIR_NULL;
+		return NULL;
 	    }
     }
 
-    /* save the mirrored object to disk */
-    if ((dp = db_diradd(dbip, to, -1L, 0, dp->d_flags, (genptr_t)&internal.idb_type)) == DIR_NULL) {
-	bu_log("ERROR: Unable to add [%s] to the database directory", to);
-	return DIR_NULL;
-    }
-    if (rt_db_put_internal(dp, dbip, &internal, resp) < 0) {
-	bu_log("ERROR: Unable to store [%s] to the database", to);
-	return DIR_NULL;
-    }
-
-    return dp;
+    return ip;
 }
 
 
