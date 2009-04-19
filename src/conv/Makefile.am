@@ -92,10 +92,10 @@ else
 asc2g_LDFLAGS =
 endif
 
-asc2g_SOURCES = asc2g.c
+asc2g_SOURCES = asc/asc2g.c
 asc2g_LDADD = ${WDB} ${GED}
 
-asc2pix_SOURCES = asc2pix.c
+asc2pix_SOURCES = asc/asc2pix.c
 
 asc_nmg_SOURCES = asc-nmg.c
 asc_nmg_LDADD = ${WDB}
@@ -133,7 +133,7 @@ euclid_unformat_LDADD = ${BU} ${BN} ${SYSV}
 fast4_g_SOURCES = fast4-g.c
 fast4_g_LDADD = ${WDB}
 
-g2asc_SOURCES = g2asc.c
+g2asc_SOURCES = asc/g2asc.c
 g2asc_LDADD = ${WDB}
 
 g4_g5_SOURCES = g4-g5.c
@@ -199,7 +199,7 @@ nmg_rib_LDADD = ${WDB}
 nmg_sgp_SOURCES = nmg-sgp.c
 nmg_sgp_LDADD = ${WDB}
 
-pix2asc_SOURCES = pix2asc.c
+pix2asc_SOURCES = asc/pix2asc.c
 
 ply_g_SOURCES = ply-g.c
 ply_g_LDADD = ${WDB}
@@ -226,6 +226,8 @@ dist_bin_SCRIPTS = intaval-g.py
 
 dist_man_MANS = \
 	asc-nmg.1 \
+	asc/g2asc.1 \
+	asc/pix2asc.1 \
 	bot_dump.1 \
 	bot_shell-vtk.1 \
 	conv-vg2g.1 \
@@ -245,11 +247,9 @@ dist_man_MANS = \
 	g-var.1 \
 	g-vrml.1 \
 	g-x3d.1 \
-	g2asc.1 \
 	nastran-g.1 \
 	nmg-bot.1 \
 	nmg-rib.1 \
-	pix2asc.1 \
 	ply-g.1 \
 	poly-bot.1 \
 	proe-g.1 \
