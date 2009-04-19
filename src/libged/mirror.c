@@ -33,7 +33,7 @@ ged_mirror(struct ged *gedp, int argc, const char *argv[])
     point_t mirror_origin = {0.0, 0.0, 0.0};
     vect_t mirror_dir = {1.0, 0.0, 0.0};
     fastf_t mirror_pt = 0.0;
-    static const char *usage = "[-h] [-d dir] [-o origin] [-p scalar_pt] [-x] [-y] [-z] old new";
+    static const char *usage = "[-h] [-d dir] [-o origin] [-p distance] [-x] [-y] [-z] old new";
 
     int early_out = 0;
 
@@ -115,8 +115,6 @@ ged_mirror(struct ged *gedp, int argc, const char *argv[])
     }
 
     /* mirror the object */
-    VUNITIZE(mirror_dir);
-
     if (rt_mirror(gedp->ged_wdbp->dbip,
 		  argv[bu_optind],
 		  argv[bu_optind+1],

@@ -68,6 +68,8 @@ rt_mirror(struct db_i *dbip,
     static fastf_t tol_dist_sq = 0.005 * 0.005;
     static point_t origin = {0.0, 0.0, 0.0};
 
+    VUNITIZE(mirror_dir);
+
     if (!NEAR_ZERO(MAGSQ(mirror_dir) - 1.0, tol_dist_sq)) {
 	bu_log("rt_mirror: mirror_dir is invalid!\n");
 	return DIR_NULL;
