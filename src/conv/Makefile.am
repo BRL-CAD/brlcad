@@ -169,7 +169,7 @@ g_shell_rect_LDADD = ${WDB}
 g_stl_SOURCES = stl/g-stl.c
 g_stl_LDADD = ${WDB} ${GCV}
 
-g_tankill_SOURCES = g-tankill.c
+g_tankill_SOURCES = tankill/g-tankill.c
 g_tankill_LDADD = ${RT}
 
 g_var_SOURCES = g-var.c
@@ -213,7 +213,7 @@ proe_g_LDADD = ${WDB}
 stl_g_SOURCES = stl/stl-g.c
 stl_g_LDADD = ${WDB}
 
-tankill_g_SOURCES = tankill-g.c
+tankill_g_SOURCES = tankill/tankill-g.c
 tankill_g_LDADD = ${WDB}
 
 viewpoint_g_SOURCES = viewpoint-g.c
@@ -243,7 +243,6 @@ dist_man_MANS = \
 	g-nmg.1 \
 	g-obj.1 \
 	g-shell.rect.1 \
-	g-tankill.1 \
 	g-var.1 \
 	g-vrml.1 \
 	g-x3d.1 \
@@ -255,7 +254,8 @@ dist_man_MANS = \
 	proe-g.1 \
 	stl/g-stl.1 \
 	stl/stl-g.1 \
-	tankill-g.1 \
+	tankill/g-tankill.1 \
+	tankill/tankill-g.1 \
 	viewpoint-g.1
 
 sample_applicationsdir = $(SAMPLE_APPLICATIONS_DIR)
