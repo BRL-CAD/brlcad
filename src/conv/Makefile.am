@@ -2,6 +2,7 @@
 AM_CPPFLAGS = ${TCL_CPPFLAGS}
 
 EXTRA_DIST = \
+	3dm/CMakeLists.txt \
 	CMakeLists.txt \
 	Formats.csv \
 	dbclean.sh \
@@ -25,7 +26,6 @@ else !ONLY_BENCHMARK
 
 SUBDIRS = \
 	. \
-	3dm \
 	comgeom \
 	dxf \
 	iges \
@@ -35,6 +35,7 @@ SUBDIRS = \
 	patch
 
 bin_PROGRAMS = \
+	3dm-g \
 	asc-nmg \
 	asc2g \
 	asc2pix \
@@ -84,6 +85,18 @@ noinst_PROGRAMS = \
 
 endif
 # end ONLY_BENCHMARK
+
+
+if BUILD_OPENNURBS
+3dm_g_CXXFLAGS = -DOBJ_BREP=1 ${OPENNURBS_CPPFLAGS}
+else
+3dm_g_CXXFLAGS =
+endif
+3dm_g_SOURCES = 3dm-g.cpp
+3dm_g_LDADD = \
+	${WDB} \
+	${WDB_LIBS} \
+	${OPENNURBS}
 
 # static is required to avoid MIPSpro 7.3 long rpath linker bug
 if LINK_STATIC_REQUIRED
@@ -279,6 +292,7 @@ FAST_OBJECTS = \
 else !ONLY_BENCHMARK
 
 FAST_OBJECTS = \
+	$(3dm_g_OBJECTS) \
 	$(asc2g_OBJECTS) \
 	$(asc2pix_OBJECTS) \
 	$(asc_nmg_OBJECTS) \
