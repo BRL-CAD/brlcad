@@ -136,6 +136,8 @@ ged_mirror(struct ged *gedp, int argc, const char *argv[])
 	bu_vls_printf(&gedp->ged_result_str, "ERROR: Unable to load solid [%s]\n", argv[bu_optind]);
 	return BRLCAD_ERROR;
     }
+
+    mirror_pt *= gedp->ged_wdbp->dbip->dbi_local2base;
     
     /* mirror the object */
     ip = rt_mirror(gedp->ged_wdbp->dbip,

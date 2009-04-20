@@ -79,7 +79,6 @@ rt_mirror(struct db_i *dbip,
     /* FIXME: not the best, but consistent until v6 */
     id = ip->idb_type;
 
-    mirror_pt *= dbip->dbi_local2base;
     MAT_IDN(mirmat);
 
     /* Build mirror transform matrix, for those who need it. */
