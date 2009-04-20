@@ -259,6 +259,7 @@ typedef unsigned short uint16_t;
  * faking it
  */
 
+#define drand48() ((double)rand() / (RAND_MAX + 1))
 #define fork() -1
 #define getprogname() _pgmptr
 #define rint(_X) (floor((_X) + 0.5))
