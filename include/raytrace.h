@@ -3280,9 +3280,8 @@ RT_EXPORT BU_EXTERN(void db_functree,
 RT_EXPORT BU_EXTERN(struct rt_db_internal *rt_mirror,
 		    (struct db_i *dpip,
 		     struct rt_db_internal *ip,
-		     point_t mirror_origin,
+		     point_t mirror_pt,
 		     vect_t mirror_dir,
-		     fastf_t mirror_pt,
 		     struct resource *resp));
 
 /*

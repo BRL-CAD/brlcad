@@ -46,9 +46,8 @@
 struct rt_db_internal *
 rt_mirror(struct db_i *dbip,
 	  struct rt_db_internal *ip,
-	  point_t mirror_origin,
+	  point_t mirror_pt,
 	  vect_t mirror_dir,
-	  fastf_t mirror_pt,
 	  struct resource *resp)
 {
     register int i, j;
@@ -96,25 +95,10 @@ rt_mirror(struct db_i *dbip,
     MAT_COPY(temp, mirmat);
     bn_mat_mul(mirmat, temp, rmat);
 
-    /* Factor in the mirror_origin */
-    {
-	vect_t v;
-
-	VSUB2(v, origin, mirror_origin);
-	VUNITIZE(v);
-
-	if (NEAR_ZERO(MAGSQ(v) - 1.0, tol_dist_sq)) {
-	    fastf_t h = MAGNITUDE(mirror_origin);
-	    fastf_t cosa = VDOT(v, mirror_dir);
-
-	    mirror_pt = mirror_pt - h * cosa;
-	}
-    }
-
     /* Add the translation to mirmat */
-    mirmat[3 + X*4] += 2 * mirror_pt * mirror_dir[X];
-    mirmat[3 + Y*4] += 2 * mirror_pt * mirror_dir[Y];
-    mirmat[3 + Z*4] += 2 * mirror_pt * mirror_dir[Z];
+    mirmat[3 + X*4] += mirror_pt[X] * mirror_dir[X];
+    mirmat[3 + Y*4] += mirror_pt[Y] * mirror_dir[Y];
+    mirmat[3 + Z*4] += mirror_pt[Z] * mirror_dir[Z];
 
     switch (id) {
 	case ID_TOR:
@@ -278,13 +262,11 @@ rt_mirror(struct db_i *dbip,
 		    point_t ptB;
 		    point_t ptC;
 		    vect_t h;
-		    vect_t v;
 		    fastf_t mag;
 		    fastf_t cosa;
 
 		    VSCALE(ptA, n1, haf->eqn[H]);
-		    VSCALE(v, mirror_dir, 2 * mirror_pt);
-		    VADD2(ptB, ptA, v);
+		    VADD2(ptB, ptA, mirror_dir);
 		    VSUB2(h, ptB, ptA);
 		    mag = MAGNITUDE(h);
 		    VUNITIZE(h);
