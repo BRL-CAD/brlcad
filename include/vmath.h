@@ -1052,7 +1052,7 @@ typedef fastf_t	plane_t[ELEMENTS_PER_PLANE];
 
 /**
  * @brief Apply a 4x4 matrix to a 3-tuple which is an absolute Point
- * in space.
+ * in space.  Output and input points should be separate arrays.
  */
 #define MAT4X3PNT(o, m, i) { \
 	register double _f; \
@@ -1062,7 +1062,10 @@ typedef fastf_t	plane_t[ELEMENTS_PER_PLANE];
 	(o)[Z]=((m)[8]*(i)[X] + (m)[9]*(i)[Y] + (m)[10]*(i)[Z] + (m)[11])* _f; \
 }
 
-/** @brief Multiply an Absolute 3-Point by a full 4x4 matrix. */
+/**
+ * @brief Multiply an Absolute 3-Point by a full 4x4 matrix.  Output
+ * and input points should be separate arrays.
+ */
 #define PNT3X4MAT(o, i, m) { \
 	register double _f; \
 	_f = 1.0/((i)[X]*(m)[3] + (i)[Y]*(m)[7] + (i)[Z]*(m)[11] + (m)[15]); \
@@ -1072,8 +1075,8 @@ typedef fastf_t	plane_t[ELEMENTS_PER_PLANE];
 }
 
 /**
- * @brief Multiply an Absolute hvect_t 4-Point by a full 4x4
- * matrix.
+ * @brief Multiply an Absolute hvect_t 4-Point by a full 4x4 matrix.
+ * Output and input points should be separate arrays.
  */
 #define MAT4X4PNT(o, m, i) { \
 	(o)[X]=(m)[ 0]*(i)[X] + (m)[ 1]*(i)[Y] + (m)[ 2]*(i)[Z] + (m)[ 3]*(i)[H]; \
@@ -1084,8 +1087,8 @@ typedef fastf_t	plane_t[ELEMENTS_PER_PLANE];
 
 /**
  * @brief Apply a 4x4 matrix to a 3-tuple which is a relative Vector
- * in space This macro can scale the length of the vector if [15] !=
- * 1.0.
+ * in space. This macro can scale the length of the vector if [15] !=
+ * 1.0.  Output and input points should be separate arrays.
  */
 #define MAT4X3VEC(o, m, i) { \
 	register double _f; \
@@ -1099,7 +1102,10 @@ typedef fastf_t	plane_t[ELEMENTS_PER_PLANE];
 	(o) = (i) / (m)[15]; \
 }
 
-/** @brief Multiply a Relative 3-Vector by most of a 4x4 matrix. */
+/**
+ * @brief Multiply a Relative 3-Vector by most of a 4x4 matrix.
+ * Output and input points should be separate arrays.
+ */
 #define VEC3X4MAT(o, i, m) { \
 	register double _f; \
 	_f = 1.0/((m)[15]); \
