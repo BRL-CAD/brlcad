@@ -1090,7 +1090,7 @@ rt_brep_shot(struct soltab *stp, register struct xray *rp, struct application *a
 	++num;
     }
 
-    {
+    if (hits.size() > 0) {
 	// we should have "valid" points now, remove duplicates or grazes
 	HitList::iterator last = hits.begin();
 	HitList::iterator i = hits.begin();
