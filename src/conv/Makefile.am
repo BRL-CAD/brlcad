@@ -2,20 +2,14 @@
 AM_CPPFLAGS = ${TCL_CPPFLAGS}
 
 EXTRA_DIST = \
-	3dm/CMakeLists.txt \
 	CMakeLists.txt \
 	Formats.csv \
-	comgeom/CMakeLists.txt \
 	comgeom/try.sh \
 	dbclean.sh \
-	dxf/CMakeLists.txt \
 	g-xxx.c \
 	g-xxx_facets.c \
 	g4-g5.c \
 	g5-g4.c \
-	jack/CMakeLists.txt \
-	off/CMakeLists.txt \
-	patch/CMakeLists.txt \
 	patch/pull_comp.sh \
 	patch/pull_solidsub.sh \
 	patch/rpatch.f \

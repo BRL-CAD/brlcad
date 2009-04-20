@@ -13,8 +13,16 @@ add_definitions(
     -DON_DLL_IMPORTS
 )
 
+add_executable(3dm-g
+    3dm/3dm-g.cpp
+)
+target_link_libraries(3dm-g
+    BrlcadCore
+    openNURBS
+)
+
 add_executable(asc2g
-    asc2g.c
+    asc/asc2g.c
 )
 target_link_libraries(asc2g
     BrlcadCore
@@ -22,11 +30,45 @@ target_link_libraries(asc2g
 )
 
 add_executable(g2asc
-    g2asc.c
+    asc/g2asc.c
 )
 target_link_libraries(g2asc
     BrlcadCore
     tcl85
+)
+
+add_executable(comgeom-g
+    comgeom/cvt.c
+    comgeom/f2a.c
+    comgeom/mat.c
+    comgeom/read.c
+    comgeom/region.c
+    comgeom/solid.c
+    comgeom/tools.c
+)
+target_link_libraries(comgeom-g
+    BrlcadCore
+)
+
+add_executable(bot-bldxf
+    dxf/bot-bldxf.c
+)
+target_link_libraries(bot-bldxf
+    BrlcadCore
+)
+
+add_executable(dxf-g
+    dxf/dxf-g.c
+)
+target_link_libraries(dxf-g
+    BrlcadCore
+)
+
+add_executable(g-dxf
+    dxf/g-dxf.c
+)
+target_link_libraries(g-dxf
+    BrlcadCore
 )
 
 add_executable(fast4-g
@@ -36,15 +78,43 @@ target_link_libraries(fast4-g
     BrlcadCore
 )
 
+add_executable(jack-g
+    jack/jack-g.c
+)
+target_link_libraries(jack-g
+    BrlcadCore
+)
+
+add_executable(g-jack
+    jack/g-jack.c
+)
+target_link_libraries(g-jack
+    BrlcadCore
+)
+
+add_executable(g-off
+    off/g-off.c
+)
+target_link_libraries(g-off
+    BrlcadCore
+)
+
+add_executable(off-g
+    off/off-g.c
+)
+target_link_libraries(off-g
+    BrlcadCore
+)
+
 add_executable(stl-g
-    stl-g.c
+    stl/stl-g.c
 )
 target_link_libraries(stl-g
     BrlcadCore
 )
 
 add_executable(g-stl
-    g-stl.c
+    stl/g-stl.c
 )
 target_link_libraries(g-stl
     BrlcadCore
@@ -85,15 +155,29 @@ target_link_libraries(g-obj
     BrlcadCore
 )
 
+add_executable(patch-g
+    patch/patch-g.c
+)
+target_link_libraries(patch-g
+    BrlcadCore
+)
+
+add_executable(rpatch
+    patch/rpatch.c
+)
+target_link_libraries(rpatch
+    BrlcadCore
+)
+
 add_executable(g-tankill
-    g-tankill.c
+    tankill/g-tankill.c
 )
 target_link_libraries(g-tankill
     BrlcadCore
 )
 
 add_executable(tankill-g
-    tankill-g.c
+    tankill/tankill-g.c
 )
 target_link_libraries(tankill-g
     BrlcadCore
