@@ -30,10 +30,10 @@ int
 ged_mirror(struct ged *gedp, int argc, const char *argv[])
 {
     register int k;
-    point_t mirror_origin = {0.0, 0.0, 0.0};
+    point_t mirror_pt = {0.0, 0.0, 0.0};
     vect_t mirror_dir = {1.0, 0.0, 0.0};
-    fastf_t mirror_pt = 0.0;
-    static const char *usage = "[-h] [-d dir] [-o origin] [-p distance] [-x] [-y] [-z] old new";
+    fastf_t mirror_offset = 0.0;
+    static const char *usage = "[-h] [-p \"xyz_point\"] [-d \"ijk_dir\"] [-x] [-y] [-z] [-o offset] old new";
 
     int ret;
     register struct directory *dp;
@@ -56,6 +56,16 @@ ged_mirror(struct ged *gedp, int argc, const char *argv[])
     bu_optind = 1;
     while ((k = bu_getopt(argc, (char * const *)argv, (const char *)"d:D:hHo:O:p:P:xXyYzZ")) != EOF) {
 	switch (k) {
+	    case 'p':
+	    case 'P':
+		if (sscanf(bu_optarg, "%lf %lf %lf",
+			   &mirror_pt[X],
+			   &mirror_pt[Y],
+			   &mirror_pt[Z]) != 3) {
+		    bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+		    return BRLCAD_ERROR;
+		}
+		break;
 	    case 'd':
 	    case 'D':
 		if (sscanf(bu_optarg, "%lf %lf %lf",
@@ -66,19 +76,9 @@ ged_mirror(struct ged *gedp, int argc, const char *argv[])
 		    return BRLCAD_ERROR;
 		}
 		break;
-	    case 'p':
-	    case 'P':
-		if (sscanf(bu_optarg, "%lf", &mirror_pt) != 1) {
-		    bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-		    return BRLCAD_ERROR;
-		}
-		break;
 	    case 'o':
 	    case 'O':
-		if (sscanf(bu_optarg, "%lf %lf %lf",
-			   &mirror_origin[X],
-			   &mirror_origin[Y],
-			   &mirror_origin[Z]) != 3) {
+		if (sscanf(bu_optarg, "%lf", &mirror_offset) != 1) {
 		    bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 		    return BRLCAD_ERROR;
 		}
@@ -132,14 +132,14 @@ ged_mirror(struct ged *gedp, int argc, const char *argv[])
 	return BRLCAD_ERROR;
     }
 
-    mirror_pt *= gedp->ged_wdbp->dbip->dbi_local2base;
+    mirror_offset *= gedp->ged_wdbp->dbip->dbi_local2base;
     VUNITIZE(mirror_dir);
-    VJOIN1(mirror_origin, mirror_origin, mirror_pt, mirror_dir);
+    VJOIN1(mirror_pt, mirror_pt, mirror_offset, mirror_dir);
     
     /* mirror the object */
     ip = rt_mirror(gedp->ged_wdbp->dbip,
 		   &internal,
-		   mirror_origin,
+		   mirror_pt,
 		   mirror_dir,
 		   gedp->ged_wdbp->wdb_resp);
     if (ip == NULL) {

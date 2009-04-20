@@ -1161,19 +1161,18 @@ of a whole screen or collection of objects.
 
 \section{Creating New Leaves (Solids/Primitives)}
 
-A family of commands exists to allow the user to
-add more actual solids (leaf nodes) to the model database.
-To obtain a precise duplicate of an existing solid (presumably to be
-changed by a subsequent editing command), the copy ({\em cp}) command
-can be used.  It is important to note that the copy operation is
-different from creating an {\em instance} of an existing solid;
-there are occasions to use both operations.
-If the precise configuration of the solid desired is not important, the
-{\em make} command can be used to create a stock prototype solid of the
-desired type with the given name, which can then be edited to suit.
-The {\em mirror} command makes a
-duplicate of an existing solid reflected about
-one of the coordinate axes.
+A family of commands exists to allow the user to add more actual
+solids (leaf nodes) to the model database.  To obtain a precise
+duplicate of an existing solid (presumably to be changed by a
+subsequent editing command), the copy ({\em cp}) command can be used.
+It is important to note that the copy operation is different from
+creating an {\em instance} of an existing solid; there are occasions
+to use both operations.  If the precise configuration of the solid
+desired is not important, the {\em make} command can be used to create
+a stock prototype solid of the desired type with the given name, which
+can then be edited to suit.  The {\em mirror} command makes a
+duplicate of an existing solid reflected about a given coordinate
+axis.
 
 If the actual numeric parameters of a solid are known, then the {\em in}
 command can be used.  In addition to prompting for the descriptions of
@@ -2043,7 +2042,7 @@ Key	& Argument[s]	& Description \\
   killall	& obj1* obj2* ... objn*	& remove object[s] + references from file \\
   killtree	& obj1* objn* ... objn*	& remove complete paths  **CAREFUL** \\
   t	& object*	& table of contents \\
-  mirror	& oldobj newobj axis	& mirror image of an object \\
+  mirror	& -[axis] oldobj newobj	& mirror image of an object \\
   mirface	& \#\#\#\# axis	& mirror face \#\#\#\# about an axis \\
   extrude	& \#\#\#\# distance	& extrude an arb face \\
   item	& region item air	& change region item/air codes \\
@@ -2368,7 +2367,7 @@ being edited will be analyzed.
 \section{Mirror Object}
 
 {\em \center
-mirror oldobj newobj axis
+mirror -[axis] oldobj newobj
 }
 
 This command is used to create a new object which is
@@ -2381,10 +2380,10 @@ The only acceptable values for the parameter "axis" are "x", "y", and "z".
 
 Examples:
 {\em
-              mirror tur.left.s tur.right.s y
-              mirror tur.top.s tur.bot.s z
-              mirror tur.front.s tur.back.s x
-              mirror lt\_gun rt\_gun y
+              mirror -y tur.left.s tur.right.s
+              mirror -z tur.top.s tur.bot.s
+              mirror -x tur.front.s tur.back.s
+              mirror -y lt\_gun rt\_gun
 }
 
 \section{Create ARB8}

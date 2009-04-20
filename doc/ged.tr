@@ -418,7 +418,7 @@ Examples:      l hull
 ------------------------------------------------------------------------
 .sp 3
 .ce
-m oldsolid newsolid axis
+mirror -[axis] oldsolid newsolid
 .sp 2
 This command is used to create and display a new solid record which is
 the mirror image of an existing solid.  The mirror image is about an
@@ -429,9 +429,9 @@ indicated by "axis" and the new solid record will be called
 "newsolid".  The only acceptable values for the parameter "axis" are
 "x", "y", and "z".
 .sp
-Examples:     m tur.left.s tur.right.s y
-              m tur.top.s tur.bot.s z
-              m tur.front.s tur.back.s x
+Examples:     mirror -y tur.left.s tur.right.s
+              mirror -z tur.top.s tur.bot.s
+              mirror -x tur.front.s tur.back.s
 .sp 3
 .ce
 ------------------------------------------------------------------------

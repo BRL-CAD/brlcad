@@ -1967,7 +1967,7 @@ GED_EXPORT BU_EXTERN(int ged_mater, (struct ged *gedp, int argc, const char *arg
  * Mirror the primitive or combination along the specified axis.
  *
  * Usage:
- *     mirror [-d dir] [-o origin] [-p scalar_pt] [-x] [-y] [-z] old new
+ *     mirror [-p point] [-d dir] [-x] [-y] [-z] [-o offset] old new
  *
  */
 GED_EXPORT BU_EXTERN(int ged_mirror, (struct ged *gedp, int argc, const char *argv[]));
