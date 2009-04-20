@@ -1048,7 +1048,7 @@ const struct rt_functab rt_functab[] = {
      rt_pnts_plot,	NULL,	NULL,	NULL,
      rt_pnts_import5,	rt_pnts_export5,
      NULL,	NULL,	rt_pnts_ifree,
-     NULL,	rt_pnts_xform,	NULL,
+     rt_pnts_describe,	rt_pnts_xform,	NULL,
      sizeof(struct rt_pnts_internal),	RT_PNTS_INTERNAL_MAGIC,
      NULL,	NULL,	NULL,
      NULL, NULL
