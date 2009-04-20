@@ -1088,7 +1088,7 @@ typedef fastf_t	plane_t[ELEMENTS_PER_PLANE];
 /**
  * @brief Apply a 4x4 matrix to a 3-tuple which is a relative Vector
  * in space. This macro can scale the length of the vector if [15] !=
- * 1.0.  Output and input points should be separate arrays.
+ * 1.0.  Output and input vectors should be separate arrays.
  */
 #define MAT4X3VEC(o, m, i) { \
 	register double _f; \
@@ -1104,7 +1104,7 @@ typedef fastf_t	plane_t[ELEMENTS_PER_PLANE];
 
 /**
  * @brief Multiply a Relative 3-Vector by most of a 4x4 matrix.
- * Output and input points should be separate arrays.
+ * Output and input vectors should be separate arrays.
  */
 #define VEC3X4MAT(o, i, m) { \
 	register double _f; \
