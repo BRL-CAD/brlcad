@@ -47,6 +47,8 @@ ged_dbip(struct ged *gedp, int argc, const char *argv[])
 	return BRLCAD_ERROR;
     }
 
+    /* oh my gawd, no you didn't.. this code needs to die. */
+    /* FIXME: there be a buggy hack here! */
 #if defined(_WIN32) && !defined(__CYGWIN__)
     bu_vls_printf(&gedp->ged_result_str, "%lu", (UINT_PTR)gedp->ged_wdbp->dbip);
 #else
