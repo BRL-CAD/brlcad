@@ -34,7 +34,7 @@
 #define	ADRT_PIXEL_FMT		0
 
 /* these are contained in an ADRT_NETOP_WORK message */
-#define ADRT_WORK_BASE 100
+#define ADRT_WORK_BASE 10
 enum
 {
     ADRT_WORK_INIT = ADRT_WORK_BASE,
@@ -60,7 +60,7 @@ static char *adrt_work_table[40] = {
 
 
 
-#define ADRT_NETOP_BASE 200
+#define ADRT_NETOP_BASE 50
 /* top level messages */
 enum
 {
@@ -91,6 +91,10 @@ static char *adrt_netop_table[40] = {
     (op >= ADRT_NETOP_BASE && op <= ADRT_NETOP_END) ? adrt_netop_table[op-ADRT_NETOP_BASE] : \
     "Unknown"
 
+    /* use the high bit to indicate if mode has changed */
+#define ADRT_MESSAGE_MODE_CHANGE(x) (x |= 0x80)
+#define ADRT_MESSAGE_MODE_CHANGEP(x) (x & 0x80)
+#define ADRT_MESSAGE_MODE(x) (x & ^0x80)
 
 #define ADRT_VER_KEY		0
 #define ADRT_VER_DETAIL		"ADRT - Advanced Distributed Ray Tracer"
