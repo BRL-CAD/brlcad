@@ -29,16 +29,20 @@
 int
 ged_mirror(struct ged *gedp, int argc, const char *argv[])
 {
+    static const char *usage = "[-h] [-p \"point\"] [-d \"dir\"] [-x|-y|-z] [-o offset] old new"; /* trailing
+												   * x|y|z
+												   * intentionally
+												   * not
+												   * documented
+												   */
     register int k;
     point_t mirror_pt = {0.0, 0.0, 0.0};
     vect_t mirror_dir = {1.0, 0.0, 0.0};
     fastf_t mirror_offset = 0.0;
-    static const char *usage = "[-h] [-p \"xyz_point\"] [-d \"ijk_dir\"] [-x] [-y] [-z] [-o offset] old new";
-
     int ret;
-    register struct directory *dp;
     struct rt_db_internal *ip;
     struct rt_db_internal internal;
+    register struct directory *dp;
 
     GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
     GED_CHECK_READ_ONLY(gedp, BRLCAD_ERROR);
@@ -108,9 +112,32 @@ ged_mirror(struct ged *gedp, int argc, const char *argv[])
 
     argc -= bu_optind;
 
-    if (argc == 1) {
+    if (argc < 2 || argc > 4) {
 	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return BRLCAD_ERROR;
+    } else if (argc == 3) {
+	/* support a trailing x|y|z option as classic command
+	 * behavior.  THIS IS INTENTIONALLY UNDOCUMENTED.  if users
+	 * have to read the usage, they can learn the new form.
+	 */
+	switch (argv[bu_optind+2][0]) {
+	    case 'x':
+	    case 'X':
+		VSET(mirror_dir, 1.0, 0.0, 0.0);
+		break;
+	    case 'y':
+	    case 'Y':
+		VSET(mirror_dir, 0.0, 1.0, 0.0);
+		break;
+	    case 'z':
+	    case 'Z':
+		VSET(mirror_dir, 0.0, 0.0, 1.0);
+		break;
+	    default:
+		bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+		return BRLCAD_ERROR;
+		break;
+	}
     }
 
     /* make sure object mirroring to does not already exist */
@@ -156,6 +183,17 @@ ged_mirror(struct ged *gedp, int argc, const char *argv[])
     if (rt_db_put_internal(dp, gedp->ged_wdbp->dbip, ip, gedp->ged_wdbp->wdb_resp) < 0) {
 	bu_vls_printf(&gedp->ged_result_str, "Unable to store [%s] to the database", argv[bu_optind+1]);
 	return BRLCAD_ERROR;
+    }
+
+    /* draw the new object */
+    {
+	const char *e_argv[3] = {
+	    "draw",
+	    argv[bu_optind+1],
+	    NULL
+	};
+	(void)ged_draw(gedp, 2, e_argv);
+	ged_view_update(gedp->ged_gvp);
     }
 
     return BRLCAD_OK;
