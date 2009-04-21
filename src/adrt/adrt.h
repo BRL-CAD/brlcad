@@ -94,7 +94,7 @@ static char *adrt_netop_table[40] = {
     /* use the high bit to indicate if mode has changed */
 #define ADRT_MESSAGE_MODE_CHANGE(x) (x |= 0x80)
 #define ADRT_MESSAGE_MODE_CHANGEP(x) (x & 0x80)
-#define ADRT_MESSAGE_MODE(x) (x & ^0x80)
+#define ADRT_MESSAGE_MODE(x) (x & ~0x80)
 
 #define ADRT_VER_KEY		0
 #define ADRT_VER_DETAIL		"ADRT - Advanced Distributed Ray Tracer"
