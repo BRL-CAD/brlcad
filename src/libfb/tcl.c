@@ -265,12 +265,11 @@ fb_cmd_open_existing(ClientData clientData, Tcl_Interp *interp, int argc, char *
     return TCL_ERROR;
 }
 
+
 int
 fb_cmd_close_existing(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
     FBIO *ifp;
-    struct bu_vls vls;
-    int status;
 
     if (argc != 2) {
 	/* XXX need help message */
@@ -283,95 +282,9 @@ fb_cmd_close_existing(ClientData clientData, Tcl_Interp *interp, int argc, char 
     }
 
     FB_TCL_CK_FBIO(ifp);
-    _fb_pgflush(ifp);
-#ifdef IF_X
-    if (strcasecmp(ifp->if_name, X_device_name) == 0) {
-	if ((status = X24_close_existing(ifp)) <= -1) {
-	    bu_vls_init(&vls);
-	    bu_vls_printf(&vls, "fb_close_existing: can not close device \"%s\", ret=%d.\n",
-			  ifp->if_name, status);
-	    Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
-	    bu_vls_free(&vls);
-
-	    return TCL_ERROR;
-	}
-	if (ifp->if_pbase != PIXEL_NULL) {
-	    free((void *)ifp->if_pbase);
-	}
-	free((void *)ifp->if_name);
-	free((void *)ifp);
-	return TCL_OK;
-    }
-#endif  /* IF_X */
-
-#ifdef IF_WGL
-    if (strcasecmp(ifp->if_name, wgl_device_name) == 0) {
-	if ((status = wgl_close_existing(ifp)) <= -1) {
-	    bu_vls_init(&vls);
-	    bu_vls_printf(&vls, "fb_close_existing: can not close device \"%s\", ret=%d.\n",
-			  ifp->if_name, status);
-	    Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
-	    bu_vls_free(&vls);
-
-	    return TCL_ERROR;
-	}
-	if (ifp->if_pbase != PIXEL_NULL)
-	    free((void *)ifp->if_pbase);
-	free((void *)ifp->if_name);
-	free((void *)ifp);
-	return TCL_OK;
-    }
-#endif  /* IF_WGL */
-
-#ifdef IF_OGL
-    if (strcasecmp(ifp->if_name, ogl_device_name) == 0) {
-	if ((status = ogl_close_existing(ifp)) <= -1) {
-	    bu_vls_init(&vls);
-	    bu_vls_printf(&vls, "fb_close_existing: can not close device \"%s\", ret=%d.\n",
-			  ifp->if_name, status);
-	    Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
-	    bu_vls_free(&vls);
-
-	    return TCL_ERROR;
-	}
-	if (ifp->if_pbase != PIXEL_NULL)
-	    free((void *)ifp->if_pbase);
-	free((void *)ifp->if_name);
-	free((void *)ifp);
-	return TCL_OK;
-    }
-#endif  /* IF_OGL */
-
-#ifdef IF_TK
-#if 0
-/* XXX TJM: not yet */
-    if (strcasecmp(ifp->if_name, tk_device_name) == 0) {
-	if ((status = tk_close_existing(ifp)) <= -1) {
-	    bu_vls_init(&vls);
-	    bu_vls_printf(&vls, "fb_close_existing: can not close device \"%s\", ret=%d.\n",
-			  ifp->if_name, status);
-	    Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
-	    bu_vls_free(&vls);
-
-	    return TCL_ERROR;
-	}
-	if (ifp->if_pbase != PIXEL_NULL)
-	    free((void *)ifp->if_pbase);
-	free((void *)ifp->if_name);
-	free((void *)ifp);
-	return TCL_OK;
-    }
-#endif
-#endif  /* IF_TK */
-
-    bu_vls_init(&vls);
-    bu_vls_printf(&vls, "fb_close_existing: can not close device\nifp: %s    device name: %s\n",
-		  argv[1], ifp->if_name);
-    Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
-    bu_vls_free(&vls);
-
-    return TCL_ERROR;
+    return fb_close_existing(ifp);
 }
+
 
 void
 fb_configureWindow(FBIO *ifp, int width, int height)

@@ -237,6 +237,96 @@ fb_close(FBIO *ifp)
     return	0;
 }
 
+
+int
+fb_close_existing(FBIO *ifp)
+{
+    int status;
+
+    if (!ifp)
+	return 0;
+
+    FB_CK_FBIO(ifp);
+
+    _fb_pgflush(ifp);
+
+    /* FIXME: these should be callbacks, not listed directly */
+
+#ifdef IF_X
+    {
+	extern FBIO X24_interface;
+	if (strcasecmp(ifp->if_name, X24_interface.if_type) == 0) {
+	    if ((status = X24_close_existing(ifp)) <= -1) {
+		fb_log("fb_close_existing: cannot close device \"%s\", ret=%d.\n", ifp->if_name, status);
+		return BRLCAD_ERROR;
+	    }
+	    if (ifp->if_pbase != PIXEL_NULL) {
+		free((void *)ifp->if_pbase);
+	    }
+	    free((void *)ifp->if_name);
+	    free((void *)ifp);
+	    return BRLCAD_OK;
+	}
+    }
+#endif  /* IF_X */
+
+#ifdef IF_WGL
+    {
+	extern FBIO wgl_interface;
+	if (strcasecmp(ifp->if_name, wgl_interface.if_type) == 0) {
+	    if ((status = wgl_close_existing(ifp)) <= -1) {
+		fb_log("fb_close_existing: cannot close device \"%s\", ret=%d.\n", ifp->if_name, status);
+		return BRLCAD_ERROR;
+	    }
+	    if (ifp->if_pbase != PIXEL_NULL)
+		free((void *)ifp->if_pbase);
+	    free((void *)ifp->if_name);
+	    free((void *)ifp);
+	    return BRLCAD_OK;
+	}
+    }
+#endif  /* IF_WGL */
+
+#ifdef IF_OGL
+    {
+	extern FBIO ogl_interface;
+	if (strcasecmp(ifp->if_name, ogl_interface.if_type) == 0) {
+	    if ((status = ogl_close_existing(ifp)) <= -1) {
+		fb_log("fb_close_existing: cannot close device \"%s\", ret=%d.\n", ifp->if_name, status);
+		return BRLCAD_ERROR;
+	    }
+	    if (ifp->if_pbase != PIXEL_NULL)
+		free((void *)ifp->if_pbase);
+	    free((void *)ifp->if_name);
+	    free((void *)ifp);
+	    return BRLCAD_OK;
+	}
+    }
+#endif  /* IF_OGL */
+
+#ifdef IF_TK
+    {
+	extern FBIO tk_interface;
+	if (strcasecmp(ifp->if_name, tk_interface.if_type) == 0) {
+	    if ((status = tk_close_existing(ifp)) <= -1) {
+		fb_log("fb_close_existing: cannot close device \"%s\", ret=%d.\n", ifp->if_name, status);
+		return BRLCAD_ERROR;
+	    }
+	    if (ifp->if_pbase != PIXEL_NULL)
+		free((void *)ifp->if_pbase);
+	    free((void *)ifp->if_name);
+	    free((void *)ifp);
+	    return BRLCAD_OK;
+	}
+    }
+#endif  /* IF_TK */
+
+    fb_log("fb_close_existing: cannot close device\nifp: %s\n", ifp->if_name);
+
+    return BRLCAD_ERROR;
+}
+
+
 /*
  *  Generic Help.
  *  Print out the list of available frame buffers.
