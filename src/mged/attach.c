@@ -154,7 +154,9 @@ mged_fb_close(void)
     struct bu_vls vls;
 
     bu_vls_init(&vls);
-    bu_vls_printf(&vls, "fb_close_existing %lu", fbp);
+
+    /* FIXME: there be a hack here!.. this code needs to die. */
+    bu_vls_printf(&vls, "fb_close_existing %ld", (long)(*(void**)&fbp));
     (void)Tcl_Eval(interp, bu_vls_addr(&vls));
     bu_vls_free(&vls);
 
