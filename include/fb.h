@@ -83,6 +83,7 @@
 FB_EXPORT extern void 	fb_configureWindow(FBIO *, int, int);
 FB_EXPORT extern FBIO	*fb_open(char *file, int _width, int _height);
 FB_EXPORT extern int	fb_close(FBIO *ifp);
+FB_EXPORT extern int	fb_close_existing(FBIO *ifp);
 FB_EXPORT extern int	fb_genhelp(void);
 FB_EXPORT extern int	fb_ioinit(FBIO *ifp);
 FB_EXPORT extern int	fb_seek(FBIO *ifp, int x, int y);
@@ -128,6 +129,8 @@ FB_EXPORT extern int	fb_sim_view(FBIO *ifp, int xcenter, int ycenter, int xzoom,
 FB_EXPORT extern int	fb_sim_getview(FBIO *ifp, int *xcenter, int *ycenter, int *xzoom, int *yzoom);
 FB_EXPORT extern int	fb_sim_cursor(FBIO *ifp, int mode, int x, int y);
 FB_EXPORT extern int	fb_sim_getcursor(FBIO *ifp, int *mode, int *x, int *y);
+
+/* FIXME:  these IF_* sections need to die.  they don't belong in a public header. */
 
 #ifdef IF_X
 FB_EXPORT extern int _X24_open_existing();
