@@ -1059,7 +1059,17 @@ rt_brep_shot(struct soltab *stp, register struct xray *rp, struct application *a
 	if (status == BREP_INTERSECT_FOUND) {
 	    TRACE("INTERSECTION: " << PT(all_hits.back().point) << all_hits.back().trimmed << ", " << all_hits.back().closeToEdge << ", " << all_hits.back().oob);
 	} else {
-	    TRACE2(BREP_INTERSECT_REASON((brep_intersect_reason_t)status));
+	    static int reasons = 0;
+	    if (reasons < 100) {
+		TRACE2(BREP_INTERSECT_REASON((brep_intersect_reason_t)status));
+		reasons++;
+	    } else {
+		static int quelled = 0;
+		if (!quelled) {
+		    TRACE2("Too many reasons.  Suppressing further output." << std::endl);
+		    quelled = 1;
+		}
+	    }
 	    misses.push_back(ip_t(all_hits.size()-1, status));
 	}
 	s++;
@@ -1205,13 +1215,33 @@ rt_brep_shot(struct soltab *stp, register struct xray *rp, struct application *a
 
 	    TRACE("hit " << num << ": " << ON_PRINT3(i->point) << " [" << dot << "]");
 	    while ((m != misses.end()) && (m->first == num)) {
-		TRACE("miss " << num << ": " << BREP_INTERSECT_REASON(m->second));
+		static int reasons = 0;
+		if (reasons < 100) {
+		    reasons++;
+		    TRACE("miss " << num << ": " << BREP_INTERSECT_REASON(m->second));
+		} else {
+		    static int quelled = 0;
+		    if (!quelled) {
+			TRACE("Too many reasons.  Suppressing further output." << std::endl);
+			quelled = 1;
+		    }
+		}
 		++m;
 	    }
 	    num++;
 	}
 	while (m != misses.end()) {
-	    TRACE("miss " << BREP_INTERSECT_REASON(m->second));
+	    static int reasons = 0;
+	    if (reasons < 100) {
+		reasons++;
+		TRACE("miss " << BREP_INTERSECT_REASON(m->second));
+	    } else {
+		static int quelled = 0;
+		if (!quelled) {
+		    TRACE("Too many reasons.  Suppressing further output." << std::endl);
+		    quelled = 1;
+		}
+	    }
 	    ++m;
 	}
     }
