@@ -3405,6 +3405,8 @@ if test "x$bc_build_docs" != "xno" ; then
     if test "x$APACHEFOP" != "x" ; then
 	docbook_pdf_processing=yes
         docbook_processing="yes (man/html/pdf)"
+		# set FOP_OPTS to avoid dock bounce on osX
+	APACHEFOP="FOP_OPTS=-Djava.awt.headless=true $APACHEFOP"
     else
         docbook_processing="yes (man/html only)"
 	docbook_pdf_processing="no"
