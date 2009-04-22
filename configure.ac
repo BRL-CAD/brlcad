@@ -3808,7 +3808,6 @@ AC_CONFIG_FILES([
 	src/adrt/libtie/Makefile
 	src/adrt/libtienet/Makefile
 	src/adrt/master/Makefile
-	src/adrt/misc/Makefile
 	src/adrt/rise/Makefile
 	src/adrt/scripts/Makefile
 	src/adrt/slave/Makefile
