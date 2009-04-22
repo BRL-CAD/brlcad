@@ -1439,22 +1439,31 @@ rt_brep_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_t
 
 
     /* Routine to iterate over the surfaces in the BREP and plot lines corresponding
-     * to their projections into 3-space.  Very crude walk method and untrimmed, but
-     * it illustrates how to go straight from uv parameter space to real space coordinates.
-     * Uncomment if untrimmed wireframes of surfaces are needed.
+     * to their projections into 3-space.  Very crude walk method - doesn't properly
+     * handle drawing in the case of trims - but it illustrates how to go straight 
+     * from uv parameter space to real space coordinates.
+     * Needs to become proper tesselation routine.
      */
-    /*
-    for (i = 0; i < bi->brep->m_S.Count(); i++) {
-	ON_Surface *s = bi->brep->m_S[i];
-	for (j = 0; j <= 10; j++) {
-	    for (k = 0; k <= 10; k++) {
+   /*
+    for (i = 0; i < bi->brep->m_F.Count(); i++) {
+	ON_BrepFace *f = &(bi->brep->m_F[i]);
+	const ON_Surface *s = bi->brep->m_F[i].SurfaceOf();
+	int foundfirst = 0;
+	for (j = 0; j <= 20; j++) {
+	    for (k = 0; k <= 20; k++) {
+		ON_2dPoint uv;
 		ON_3dPoint plotpt;
-	    	s->EvPoint(s->Domain(0).ParameterAt((double)j/10),s->Domain(1).ParameterAt((double)k/10),plotpt,0,0);
-                VMOVE(pt1, plotpt);
-		if (j == 0) {
-		    RT_ADD_VLIST(vhead, pt1, BN_VLIST_LINE_MOVE);
-		} else {
-		    RT_ADD_VLIST(vhead, pt1, BN_VLIST_LINE_DRAW);
+		uv.x = s->Domain(0).ParameterAt((double)j/20);
+		uv.y = s->Domain(1).ParameterAt((double)k/20);
+		if (!(utah_isTrimmed(uv,f))) {
+		    s->EvPoint(uv.x,uv.y,plotpt,0,0);
+		    VMOVE(pt1, plotpt);
+		    if (j == 0 || foundfirst == 0) {
+			RT_ADD_VLIST(vhead, pt1, BN_VLIST_LINE_MOVE);
+		        foundfirst = 1;
+		    } else {
+    			RT_ADD_VLIST(vhead, pt1, BN_VLIST_LINE_DRAW);
+    		    }
 		}
 	    }
 	}
