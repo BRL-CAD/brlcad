@@ -1366,7 +1366,8 @@ rt_brep_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_t
 {
     TRACE1("rt_brep_plot");
     struct rt_brep_internal* bi;
-
+    int i, j, k;
+    
     RT_CK_DB_INTERNAL(ip);
     bi = (struct rt_brep_internal*)ip->idb_ptr;
     RT_BREP_CK_MAGIC(bi);
@@ -1410,7 +1411,7 @@ rt_brep_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_t
     //       plot_bbnode(st.getRootNode(), vhead);
     //     }
 
-    for (int i = 0; i < bi->brep->m_E.Count(); i++) {
+    for (i = 0; i < bi->brep->m_E.Count(); i++) {
 	ON_BrepEdge& e = brep->m_E[i];
 	const ON_Curve* crv = e.EdgeCurveOf();
 
@@ -1435,6 +1436,30 @@ rt_brep_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_t
 	    }
 	}
     }
+
+
+    /* Routine to iterate over the surfaces in the BREP and plot lines corresponding
+     * to their projections into 3-space.  Very crude walk method and untrimmed, but
+     * it illustrates how to go straight from uv parameter space to real space coordinates.
+     * Uncomment if untrimmed wireframes of surfaces are needed.
+     */
+    /*
+    for (i = 0; i < bi->brep->m_S.Count(); i++) {
+	ON_Surface *s = bi->brep->m_S[i];
+	for (j = 0; j <= 10; j++) {
+	    for (k = 0; k <= 10; k++) {
+		ON_3dPoint plotpt;
+	    	s->EvPoint(s->Domain(0).ParameterAt((double)j/10),s->Domain(1).ParameterAt((double)k/10),plotpt,0,0);
+                VMOVE(pt1, plotpt);
+		if (j == 0) {
+		    RT_ADD_VLIST(vhead, pt1, BN_VLIST_LINE_MOVE);
+		} else {
+		    RT_ADD_VLIST(vhead, pt1, BN_VLIST_LINE_DRAW);
+		}
+	    }
+	}
+    }	
+    */
 
     return 0;
 }
