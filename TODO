@@ -46,7 +46,21 @@ THESE ARE LOWER PRIORITY OR FOR FUTURE RELEASES
   other ideas about having 3d wireframe objects, but these would
   probably be non-geometric in nature.  basically the plot3 files that
   are stored out to disk being stored as objects in the database with
-  support for the overlay command to  import, export, display them.
+  support for the overlay command to import, export, display them.
+
+  minimally should probably support the basic drafting elements of
+  points, line segments, polylines (connected line segments), arcs,
+  circles, spline curves, and text.
+        point := x, y, z
+        line := start point, end point
+        polyline := various (closed, open, paired, modified, etc)
+        circle := center point, radius
+        arc := center point, radius, start angle, end angle
+        spline := control points, knot values
+        text := string, insertion point, orientation, size, style, alignment
+
+* make _plot() callbacks fill in plot objects instead of returning
+  line segments.
 
 * image objects (tbd objects) for v5 geometry files
 
