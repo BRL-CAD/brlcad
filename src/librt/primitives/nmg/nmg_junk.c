@@ -213,7 +213,8 @@ nmg_isect_face3p_shell_int(struct nmg_inter_struct *is, struct faceuse *fu1, str
 	     * intersection, and go to it!.
 	     */
 	    bu_log("nmg_isect_face3p_shell_int(, s2=x%x) eu1=x%x, no eu2\n", s2, eu1);
-	    nmg_isect_edge3p_shell(is, eu1, s2);
+/* XXX eso no existe todavia */
+/* 	    nmg_isect_edge3p_shell(is, eu1, s2); */
 	}
     }
 
