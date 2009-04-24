@@ -48,16 +48,19 @@ THESE ARE LOWER PRIORITY OR FOR FUTURE RELEASES
   are stored out to disk being stored as objects in the database with
   support for the overlay command to import, export, display them.
 
-  minimally should probably support the basic drafting elements of
-  points, line segments, polylines (connected line segments), arcs,
-  circles, spline curves, and text.
+  minimally should probably support the basic drafting elements
+  (predominantly from collada, dxf, iges, and step specifications):
+
         point := x, y, z
         line := start point, end point
         polyline := various (closed, open, paired, modified, etc)
         circle := center point, radius
+        ellipse := center point, major radius, minor radius
+        hyperbola := center point, major radius, minor radius
+        parabola := center point, focal length
         arc := center point, radius, start angle, end angle
-        spline := control points, knot values
-        text := string, insertion point, orientation, size, style, alignment
+        spline := degree, control points, knot values
+        text := string, insertion point, size, style, alignment
 
 * make _plot() callbacks fill in plot objects instead of returning
   line segments.
