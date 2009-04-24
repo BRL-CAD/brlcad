@@ -24,8 +24,22 @@
  * This module is a resting place for unfinished subroutines that are
  * NOT a part of the current NMG library, but which were sufficiently
  * far along as to be worth saving.
+ *
+ * THESE ROUTINES ARE ALL MARKED STATIC AS THEY ARE EXPERIMENTAL AND
+ * NOT YET INTENDED TO BE USED.  ASK A BRL-CAD DEVELOPER IF YOU NEED
+ * SOMETHING IN HERE WHAT IT WILL TAKE TO ENABLE THE ROUTINE.
  */
 /** @} */
+
+#include "common.h"
+
+#include <string.h>
+#include "bio.h"
+
+#include "bu.h"
+#include "bn.h"
+#include "vmath.h"
+#include "raytrace.h"
 
 
 /**
@@ -51,7 +65,7 @@
  * about not creating fundamental structures on his own...  :-)
  * Retired in favor of more modern tessellation strategies.
  */
-struct shell *
+static struct shell *
 nmg_polytonmg(fp, r, tol)
     FILE *fp;
     struct nmgregion *r;
@@ -166,7 +180,7 @@ nmg_polytonmg(fp, r, tol)
  * does only "interior" edges, and is not a general face/shell
  * intersector.
  */
-void
+static void
 nmg_isect_face3p_shell_int(is, fu1, s2)
     struct nmg_inter_struct *is;
     struct faceuse *fu1;
