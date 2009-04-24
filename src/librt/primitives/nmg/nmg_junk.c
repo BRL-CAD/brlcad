@@ -66,10 +66,7 @@
  * Retired in favor of more modern tessellation strategies.
  */
 static struct shell *
-nmg_polytonmg(fp, r, tol)
-    FILE *fp;
-    struct nmgregion *r;
-    const struct bn_tol *tol;
+nmg_polytonmg(FILE *fp, struct nmgregion *r, const struct bn_tol *tol)
 {
     int i, j, num_pts, num_facets, pts_this_face, facet;
     int vl_len;
@@ -181,10 +178,7 @@ nmg_polytonmg(fp, r, tol)
  * intersector.
  */
 static void
-nmg_isect_face3p_shell_int(is, fu1, s2)
-    struct nmg_inter_struct *is;
-    struct faceuse *fu1;
-    struct shell *s2;
+nmg_isect_face3p_shell_int(struct nmg_inter_struct *is, struct faceuse *fu1, struct shell *s2)
 {
     struct shell *s1;
     struct loopuse *lu1;
@@ -207,7 +201,7 @@ nmg_isect_face3p_shell_int(is, fu1, s2)
 	    struct edgeuse *eu2;
 
 	    eu2 = nmg_find_matching_eu_in_s(eu1, s2);
-	    if (eu2	) {
+	    if (eu2) {
 		bu_log("nmg_isect_face3p_shell_int() eu1=x%x, e1=x%x, eu2=x%x, e2=x%x (nothing to do)\n", eu1, eu1->e_p, eu2, eu2->e_p);
 		/* Whether the edgeuse is in a face, or a wire
 		 * edgeuse, the other guys will isect it.
