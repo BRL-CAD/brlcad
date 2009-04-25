@@ -47,7 +47,7 @@
 extern void init_qray(void);
 extern void mged_global_variable_setup(Tcl_Interp *interp);
 
-struct cmdtab mged_cmdtab[] = {
+static struct cmdtab mged_cmdtab[] = {
     {"%", f_comm, GED_FUNC_PTR_NULL},
     {"35, 25", bv_35_25, GED_FUNC_PTR_NULL},
     {"3ptarb", cmd_ged_more_wrapper, ged_3ptarb},

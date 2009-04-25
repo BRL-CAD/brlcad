@@ -36,7 +36,6 @@ struct cmdtab {
     ged_func_ptr ged_func;
 };
 
-extern struct cmdtab mged_cmdtab[];
 
 /* Commands */
 
