@@ -21,6 +21,8 @@ changes made.  See document footer for additional details.
 * removal of archer's separate experience modes - Bob Parker
 * add a left handed winding flag to the coil tool - Cliff Yapp
 * add a clear command to MGED's command line - Cliff Yapp, Bob Parker
+* initial implementation of a new 'pnts' primitive for point clouds
+	- Nicholas Reed, Sean Morrison
 
 
 ----------------------------------------------------------------------
