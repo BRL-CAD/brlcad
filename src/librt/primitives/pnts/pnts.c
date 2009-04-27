@@ -281,7 +281,7 @@ rt_pnts_export5(struct bu_external *external, const struct rt_db_internal *inter
 	    break;
 	}
 	default:
-	    bu_log("ERROR: unknown points primitive type\n");
+            bu_log("ERROR: unknown points primitive type (type=%d)\n", pnts->type);
 	    return 0;
     }
 
@@ -574,7 +574,7 @@ rt_pnts_import5(struct rt_db_internal *internal, const struct bu_external *exter
 	    break;
 	}
 	default:
-	    bu_log("ERROR: unknown points primitive type\n");
+            bu_log("ERROR: unknown points primitive type (type=%d)\n", pnts->type);
 	    return 0;
     }
 
@@ -599,8 +599,13 @@ rt_pnts_ifree(struct rt_db_internal *internal)
 
     pnts = ((struct rt_pnts_internal *)(internal->idb_ptr));
 
-    /* FIXME: need to free the individual points here */
-    
+    switch (pnts->type) {
+	case RT_PNT_TYPE_PNT: {
+	}
+	default:
+            bu_log("ERROR: unknown points primitive type (type=%d)\n", pnts->type);
+            return 0;
+    }
 
     /* free the internal container */
     bu_free(internal->idb_ptr, "pnts ifree");
@@ -875,7 +880,7 @@ rt_pnts_describe(struct bu_vls *str, const struct rt_db_internal *intern, int ve
 	    break;
 	}
 	default:
-            bu_log("ERROR: unknown points primitive type\n");
+            bu_log("ERROR: unknown points primitive type (type=%d)\n", pnts->type);
             return 0;
     }
 
