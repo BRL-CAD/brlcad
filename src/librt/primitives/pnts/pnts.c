@@ -112,7 +112,7 @@ rt_pnts_export5(struct bu_external *external, const struct rt_db_internal *inter
 	    register struct pnt *point = (struct pnt *)pnts->point;
 	    head = &point->l;
     
-	    for (BU_LIST_FOR (point, pnt, head)) {
+	    for (BU_LIST_FOR(point, pnt, head)) {
 		point_t v;
 
 		/* pack v */
@@ -126,7 +126,7 @@ rt_pnts_export5(struct bu_external *external, const struct rt_db_internal *inter
 	    register struct pnt_color *point = (struct pnt_color *)pnts->point;
 	    head = &point->l;
     
-	    for (BU_LIST_FOR (point, pnt_color, head)) {
+	    for (BU_LIST_FOR(point, pnt_color, head)) {
 		point_t v;
 		double c[3];
 
@@ -145,7 +145,7 @@ rt_pnts_export5(struct bu_external *external, const struct rt_db_internal *inter
 	    register struct pnt_scale *point = (struct pnt_scale *)pnts->point;
 	    head = &point->l;
     
-	    for (BU_LIST_FOR (point, pnt_scale, head)) {
+	    for (BU_LIST_FOR(point, pnt_scale, head)) {
 		point_t v;
 		double s[1];
 
@@ -164,7 +164,7 @@ rt_pnts_export5(struct bu_external *external, const struct rt_db_internal *inter
 	    register struct pnt_normal *point = (struct pnt_normal *)pnts->point;
 	    head = &point->l;
     
-	    for (BU_LIST_FOR (point, pnt_normal, head)) {
+	    for (BU_LIST_FOR(point, pnt_normal, head)) {
 		point_t v;
 		vect_t n;
 
@@ -183,7 +183,7 @@ rt_pnts_export5(struct bu_external *external, const struct rt_db_internal *inter
 	    register struct pnt_color_scale *point = (struct pnt_color_scale *)pnts->point;
 	    head = &point->l;
     
-	    for (BU_LIST_FOR (point, pnt_color_scale, head)) {
+	    for (BU_LIST_FOR(point, pnt_color_scale, head)) {
 		point_t v;
 		double c[3];
 		double s[1];
@@ -207,7 +207,7 @@ rt_pnts_export5(struct bu_external *external, const struct rt_db_internal *inter
 	    register struct pnt_color_normal *point = (struct pnt_color_normal *)pnts->point;
 	    head = &point->l;
     
-	    for (BU_LIST_FOR (point, pnt_color_normal, head)) {
+	    for (BU_LIST_FOR(point, pnt_color_normal, head)) {
 		point_t v;
 		double c[3];
 		vect_t n;
@@ -231,7 +231,7 @@ rt_pnts_export5(struct bu_external *external, const struct rt_db_internal *inter
 	    register struct pnt_scale_normal *point = (struct pnt_scale_normal *)pnts->point;
 	    head = &point->l;
     
-	    for (BU_LIST_FOR (point, pnt_scale_normal, head)) {
+	    for (BU_LIST_FOR(point, pnt_scale_normal, head)) {
 		point_t v;
 		double s[1];
 		vect_t n;
@@ -255,7 +255,7 @@ rt_pnts_export5(struct bu_external *external, const struct rt_db_internal *inter
 	    register struct pnt_color_scale_normal *point = (struct pnt_color_scale_normal *)pnts->point;
 	    head = &point->l;
     
-	    for (BU_LIST_FOR (point, pnt_color_scale_normal, head)) {
+	    for (BU_LIST_FOR(point, pnt_color_scale_normal, head)) {
 		point_t v;
 		double c[3];
 		double s[1];
@@ -593,21 +593,14 @@ rt_pnts_import5(struct rt_db_internal *internal, const struct bu_external *exter
 int
 rt_pnts_ifree(struct rt_db_internal *internal)
 {
-    struct pnt *head = (struct pnt *) NULL;
-    struct pnt *curr = (struct pnt *) NULL;
+    struct rt_pnts_internal *pnts;
 
     RT_CK_DB_INTERNAL(internal);
 
-    head = (struct pnt *)(((struct rt_pnts_internal *)(internal->idb_ptr))->point);
+    pnts = ((struct rt_pnts_internal *)(internal->idb_ptr));
 
-    /* free the points */
-    while (BU_LIST_WHILE (curr, pnt, &(head->l))) {
-        BU_LIST_DEQUEUE(&(curr->l));
-        bu_free(curr, "free pnts");
-    }
+    /* FIXME: need to free the individual points here */
     
-    /* free the head */
-    bu_free(head, "free pnts head");
 
     /* free the internal container */
     bu_free(internal->idb_ptr, "pnts ifree");
@@ -670,7 +663,7 @@ rt_pnts_plot(struct bu_list *vhead, struct rt_db_internal *internal, const struc
 	VSET(ell.c, 0, 0, scale);
 
 	/* give rt_ell_plot a sphere representation of each point */
-	for (BU_LIST_FOR (point, pnt, head)) {
+	for (BU_LIST_FOR(point, pnt, head)) {
 	    VMOVE(ell.v, point->v);
 	    rt_ell_plot(vhead, &db, ttol, tol);
 	}
@@ -678,7 +671,7 @@ rt_pnts_plot(struct bu_list *vhead, struct rt_db_internal *internal, const struc
 	double vCoord, hCoord;
 	vCoord = hCoord = 1;
 
-	for (BU_LIST_FOR (point, pnt, head)) {
+	for (BU_LIST_FOR(point, pnt, head)) {
 	    /* draw first horizontal segment for this point */
 	    VSET(a, point->v[X] - hCoord, point->v[Y], point->v[Z]);
 	    VSET(b, point->v[X] + hCoord, point->v[Y], point->v[Z]);
@@ -740,12 +733,11 @@ rt_pnts_describe(struct bu_vls *str, const struct rt_db_internal *intern, int ve
     bu_vls_strcat(str, buf);
 
     loop_counter = 1;
-    switch (pnts->type)
-    {
+    switch (pnts->type) {
 	case RT_PNT_TYPE_PNT: {
 	    register struct pnt *point;
             bu_vls_strcat(str, pnt_str);
-            for (BU_LIST_FOR (point, pnt, &(((struct pnt *)headPoint)->l))) {
+            for (BU_LIST_FOR(point, pnt, &(((struct pnt *)headPoint)->l))) {
 		snprintf(buf, 256, "%lu, \t (%lf %lf %lf)\n",
 			 loop_counter,
 			 point->v[X] * mm2local,
@@ -759,7 +751,7 @@ rt_pnts_describe(struct bu_vls *str, const struct rt_db_internal *intern, int ve
 	case RT_PNT_TYPE_COL: {
 	    register struct pnt_color *point;
             bu_vls_strcat(str, pnt_color_str);
-            for (BU_LIST_FOR (point, pnt_color, &(((struct pnt_color *)headPoint)->l))) {
+            for (BU_LIST_FOR(point, pnt_color, &(((struct pnt_color *)headPoint)->l))) {
 		snprintf(buf, 256, "%lu, \t (%lf %lf %lf), (%lf %lf %lf)\n",
 			 loop_counter,
 			 point->v[X] * mm2local,
@@ -776,7 +768,7 @@ rt_pnts_describe(struct bu_vls *str, const struct rt_db_internal *intern, int ve
 	case RT_PNT_TYPE_SCA: {
 	    register struct pnt_scale *point;
             bu_vls_strcat(str, pnt_scale_str);
-            for (BU_LIST_FOR (point, pnt_scale, &(((struct pnt_scale *)headPoint)->l))) {
+            for (BU_LIST_FOR(point, pnt_scale, &(((struct pnt_scale *)headPoint)->l))) {
 		snprintf(buf, 256, "%lu, \t (%lf %lf %lf), (%lf)\n",
 			 loop_counter,
 			 point->v[X] * mm2local,
@@ -791,7 +783,7 @@ rt_pnts_describe(struct bu_vls *str, const struct rt_db_internal *intern, int ve
 	case RT_PNT_TYPE_NRM: {
 	    register struct pnt_normal *point;
             bu_vls_strcat(str, pnt_normal_str);
-            for (BU_LIST_FOR (point, pnt_normal, &(((struct pnt_normal *)headPoint)->l))) {
+            for (BU_LIST_FOR(point, pnt_normal, &(((struct pnt_normal *)headPoint)->l))) {
 		snprintf(buf, 256, "%lu, \t (%lf %lf %lf), (%lf %lf %lf)\n",
 			 loop_counter,
 			 point->v[X] * mm2local,
@@ -808,7 +800,7 @@ rt_pnts_describe(struct bu_vls *str, const struct rt_db_internal *intern, int ve
 	case RT_PNT_TYPE_COL_SCA: {
 	    register struct pnt_color_scale *point;
             bu_vls_strcat(str, pnt_color_scale_str);
-            for (BU_LIST_FOR (point, pnt_color_scale, &(((struct pnt_color_scale *)headPoint)->l))) {
+            for (BU_LIST_FOR(point, pnt_color_scale, &(((struct pnt_color_scale *)headPoint)->l))) {
 		snprintf(buf, 256, "%lu, \t (%lf %lf %lf), (%lf %lf %lf), (%lf)\n",
 			 loop_counter,
 			 point->v[X] * mm2local,
@@ -826,7 +818,7 @@ rt_pnts_describe(struct bu_vls *str, const struct rt_db_internal *intern, int ve
 	case RT_PNT_TYPE_COL_NRM: {
 	    register struct pnt_color_normal *point;
             bu_vls_strcat(str, pnt_color_normal_str);
-            for (BU_LIST_FOR (point, pnt_color_normal, &(((struct pnt_color_normal *)headPoint)->l))) {
+            for (BU_LIST_FOR(point, pnt_color_normal, &(((struct pnt_color_normal *)headPoint)->l))) {
 		snprintf(buf, 256, "%lu, \t (%lf %lf %lf), (%lf %lf %lf), (%lf %lf %lf)\n",
 			 loop_counter,
 			 point->v[X] * mm2local,
@@ -846,7 +838,7 @@ rt_pnts_describe(struct bu_vls *str, const struct rt_db_internal *intern, int ve
 	case RT_PNT_TYPE_SCA_NRM: {
 	    register struct pnt_scale_normal *point;
             bu_vls_strcat(str, pnt_scale_normal_str);
-            for (BU_LIST_FOR (point, pnt_scale_normal, &(((struct pnt_scale_normal *)headPoint)->l))) {
+            for (BU_LIST_FOR(point, pnt_scale_normal, &(((struct pnt_scale_normal *)headPoint)->l))) {
 		snprintf(buf, 256, "%lu, \t (%lf %lf %lf), (%lf), (%lf %lf %lf)\n",
 			 loop_counter,
 			 point->v[X] * mm2local,
@@ -864,7 +856,7 @@ rt_pnts_describe(struct bu_vls *str, const struct rt_db_internal *intern, int ve
 	case RT_PNT_TYPE_COL_SCA_NRM: {
 	    register struct pnt_color_scale_normal *point;
             bu_vls_strcat(str, pnt_color_scale_normal_str);
-            for (BU_LIST_FOR (point, pnt_color_scale_normal, &(((struct pnt_color_scale_normal *)headPoint)->l))) {
+            for (BU_LIST_FOR(point, pnt_color_scale_normal, &(((struct pnt_color_scale_normal *)headPoint)->l))) {
 		snprintf(buf, 256, "%lu, \t (%lf %lf %lf), (%lf %lf %lf), (%lf), (%lf %lf %lf)\n",
 			 loop_counter,
 			 point->v[X] * mm2local,
@@ -899,4 +891,3 @@ rt_pnts_describe(struct bu_vls *str, const struct rt_db_internal *intern, int ve
  * End:
  * ex: shiftwidth=4 tabstop=8
  */
-
