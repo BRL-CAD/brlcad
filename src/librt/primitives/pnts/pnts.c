@@ -60,7 +60,6 @@ int
 rt_pnts_export5(struct bu_external *external, const struct rt_db_internal *internal, double local2mm, const struct db_i *db)
 {
     struct rt_pnts_internal *pnts = NULL;
-    struct bu_list *head = NULL;
     unsigned long pointDataSize;
     unsigned char *buf = NULL;
 
@@ -109,10 +108,9 @@ rt_pnts_export5(struct bu_external *external, const struct rt_db_internal *inter
     /* get busy, serialize the point data depending on what type of point it is */
     switch (pnts->type) {
 	case RT_PNT_TYPE_PNT: {
-	    register struct pnt *point = (struct pnt *)pnts->point;
-	    head = &point->l;
+	    register struct pnt *point;
     
-	    for (BU_LIST_FOR(point, pnt, head)) {
+            for (BU_LIST_FOR(point, pnt, &(((struct pnt *)pnts->point)->l))) {
 		point_t v;
 
 		/* pack v */
@@ -123,10 +121,9 @@ rt_pnts_export5(struct bu_external *external, const struct rt_db_internal *inter
 	    break;
 	}
 	case RT_PNT_TYPE_COL: {
-	    register struct pnt_color *point = (struct pnt_color *)pnts->point;
-	    head = &point->l;
+	    register struct pnt_color *point;
     
-	    for (BU_LIST_FOR(point, pnt_color, head)) {
+            for (BU_LIST_FOR(point, pnt_color, &(((struct pnt_color *)pnts->point)->l))) {
 		point_t v;
 		double c[3];
 
@@ -142,10 +139,9 @@ rt_pnts_export5(struct bu_external *external, const struct rt_db_internal *inter
 	    break;
 	}
 	case RT_PNT_TYPE_SCA: {
-	    register struct pnt_scale *point = (struct pnt_scale *)pnts->point;
-	    head = &point->l;
+	    register struct pnt_scale *point;
     
-	    for (BU_LIST_FOR(point, pnt_scale, head)) {
+            for (BU_LIST_FOR(point, pnt_scale, &(((struct pnt_scale *)pnts->point)->l))) {
 		point_t v;
 		double s[1];
 
@@ -161,10 +157,9 @@ rt_pnts_export5(struct bu_external *external, const struct rt_db_internal *inter
 	    break;
 	}
 	case RT_PNT_TYPE_NRM: {
-	    register struct pnt_normal *point = (struct pnt_normal *)pnts->point;
-	    head = &point->l;
+	    register struct pnt_normal *point;
     
-	    for (BU_LIST_FOR(point, pnt_normal, head)) {
+            for (BU_LIST_FOR(point, pnt_normal, &(((struct pnt_normal *)pnts->point)->l))) {
 		point_t v;
 		vect_t n;
 
@@ -180,10 +175,9 @@ rt_pnts_export5(struct bu_external *external, const struct rt_db_internal *inter
 	    break;
 	}
 	case RT_PNT_TYPE_COL_SCA: {
-	    register struct pnt_color_scale *point = (struct pnt_color_scale *)pnts->point;
-	    head = &point->l;
+	    register struct pnt_color_scale *point;
     
-	    for (BU_LIST_FOR(point, pnt_color_scale, head)) {
+            for (BU_LIST_FOR(point, pnt_color_scale, &(((struct pnt_color_scale *)pnts->point)->l))) {
 		point_t v;
 		double c[3];
 		double s[1];
@@ -204,10 +198,9 @@ rt_pnts_export5(struct bu_external *external, const struct rt_db_internal *inter
 	    break;
 	}
 	case RT_PNT_TYPE_COL_NRM: {
-	    register struct pnt_color_normal *point = (struct pnt_color_normal *)pnts->point;
-	    head = &point->l;
+	    register struct pnt_color_normal *point;
     
-	    for (BU_LIST_FOR(point, pnt_color_normal, head)) {
+            for (BU_LIST_FOR(point, pnt_color_normal, &(((struct pnt_color_normal *)pnts->point)->l))) {
 		point_t v;
 		double c[3];
 		vect_t n;
@@ -228,10 +221,9 @@ rt_pnts_export5(struct bu_external *external, const struct rt_db_internal *inter
 	    break;
 	}
 	case RT_PNT_TYPE_SCA_NRM: {
-	    register struct pnt_scale_normal *point = (struct pnt_scale_normal *)pnts->point;
-	    head = &point->l;
+	    register struct pnt_scale_normal *point;
     
-	    for (BU_LIST_FOR(point, pnt_scale_normal, head)) {
+            for (BU_LIST_FOR(point, pnt_scale_normal, &(((struct pnt_scale_normal *)pnts->point)->l))) {
 		point_t v;
 		double s[1];
 		vect_t n;
@@ -252,10 +244,9 @@ rt_pnts_export5(struct bu_external *external, const struct rt_db_internal *inter
 	    break;
 	}
 	case RT_PNT_TYPE_COL_SCA_NRM: {
-	    register struct pnt_color_scale_normal *point = (struct pnt_color_scale_normal *)pnts->point;
-	    head = &point->l;
+	    register struct pnt_color_scale_normal *point;
     
-	    for (BU_LIST_FOR(point, pnt_color_scale_normal, head)) {
+            for (BU_LIST_FOR(point, pnt_color_scale_normal, &(((struct pnt_color_scale_normal *)pnts->point)->l))) {
 		point_t v;
 		double c[3];
 		double s[1];
@@ -599,6 +590,7 @@ rt_pnts_ifree(struct rt_db_internal *internal)
     RT_CK_DB_INTERNAL(internal);
 
     pnts = ((struct rt_pnts_internal *)(internal->idb_ptr));
+    RT_PNTS_CK_MAGIC(pnts);
 
     /* since each point type has a bu_list as the first struct
      * element, we can treat them all as 'pnt' structs in order to
@@ -629,6 +621,7 @@ rt_pnts_print(register const struct soltab *stp)
     register struct rt_pnts_internal *pnts;
 
     pnts = (struct rt_pnts_internal *)stp->st_specific;
+    RT_PNTS_CK_MAGIC(pnts);
 
     switch (pnts->type) {
 	case RT_PNT_TYPE_PNT: {
@@ -695,7 +688,7 @@ rt_pnts_plot(struct bu_list *vhead, struct rt_db_internal *internal, const struc
 
     RT_CK_DB_INTERNAL(internal);
 
-    pnts = (struct rt_pnts_internal *) internal->idb_ptr;
+    pnts = (struct rt_pnts_internal *)internal->idb_ptr;
     RT_PNTS_CK_MAGIC(pnts);
 
     if (pnts->count > 0) {
@@ -783,6 +776,8 @@ rt_pnts_describe(struct bu_vls *str, const struct rt_db_internal *intern, int ve
 
     /* retrieve head record values */
     pnts = (struct rt_pnts_internal *) intern->idb_ptr;
+    RT_PNTS_CK_MAGIC(pnts);
+
     defaultSize = pnts->scale;
     numPoints = pnts->count;
 
