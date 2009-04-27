@@ -88,42 +88,15 @@ rt_pnts_export5(struct bu_external *external, const struct rt_db_internal *inter
     }
 
     /* figure out how much data there is for each point */
-    switch (pnts->type) {
-        case RT_PNT_TYPE_PNT: {
-            pointDataSize = 3;
-            break;
-        }
-        case RT_PNT_TYPE_COL: {
-            pointDataSize = 6;
-            break;
-        }
-        case RT_PNT_TYPE_SCA: {
-            pointDataSize = 4;
-            break;
-        }
-        case RT_PNT_TYPE_NRM: {
-            pointDataSize = 6;
-            break;
-        }
-        case RT_PNT_TYPE_COL_SCA: {
-            pointDataSize = 7;
-            break;
-        }
-        case RT_PNT_TYPE_COL_NRM: {
-            pointDataSize = 9;
-            break;
-        }
-        case RT_PNT_TYPE_SCA_NRM: {
-            pointDataSize = 7;
-            break;
-        }
-        case RT_PNT_TYPE_COL_SCA_NRM: {
-            pointDataSize = 10;
-            break;
-        }
-        default:
-            bu_log("ERROR: unknown points primitive type\n");
-            return 0;
+    pointDataSize = 3; /* v */
+    if (pnts->type & RT_PNT_TYPE_COL) {
+	pointDataSize += 3; /* c */
+    }
+    if (pnts->type & RT_PNT_TYPE_SCA) {
+	pointDataSize += 1; /* s */
+    }
+    if (pnts->type & RT_PNT_TYPE_NRM) {
+	pointDataSize += 3; /* n */
     }
 
     /* convert number of doubles to number of network bytes required to store doubles */
@@ -754,7 +727,6 @@ rt_pnts_describe(struct bu_vls *str, const struct rt_db_internal *intern, int ve
     unsigned long numPoints = 0;
     unsigned long loop_counter = 0;
     void *headPoint = (void *) NULL;
-    void *loop_ptr = (void *) NULL;
 
     /* retrieve head record values */
     pnts = (struct rt_pnts_internal *) intern->idb_ptr;
@@ -770,130 +742,146 @@ rt_pnts_describe(struct bu_vls *str, const struct rt_db_internal *intern, int ve
     loop_counter = 1;
     switch ( pnts->type )
     {
-	case RT_PNT_TYPE_PNT:
+	case RT_PNT_TYPE_PNT: {
+	    register struct pnt *point;
             bu_vls_strcat(str, pnt_str);
-            for (BU_LIST_FOR(loop_ptr, pnt, &(((struct pnt *)headPoint)->l))) {
+            for (BU_LIST_FOR(point, pnt, &(((struct pnt *)headPoint)->l))) {
 		snprintf( buf, 256, "%lu, \t (%lf %lf %lf)\n",
-                loop_counter,
-		((struct pnt *)loop_ptr)->v[X] * mm2local,
-		((struct pnt *)loop_ptr)->v[Y] * mm2local,
-		((struct pnt *)loop_ptr)->v[Z] * mm2local ); 
+			  loop_counter,
+			  point->v[X] * mm2local,
+			  point->v[Y] * mm2local,
+			  point->v[Z] * mm2local ); 
 		bu_vls_strcat( str, buf );
                 loop_counter++;
             }
 	    break;
-	case RT_PNT_TYPE_COL:
+	}
+	case RT_PNT_TYPE_COL: {
+	    register struct pnt_color *point;
             bu_vls_strcat(str, pnt_color_str);
-            for (BU_LIST_FOR(loop_ptr, pnt_color, &(((struct pnt_color *)headPoint)->l))) {
+            for (BU_LIST_FOR(point, pnt_color, &(((struct pnt_color *)headPoint)->l))) {
 		snprintf( buf, 256, "%lu, \t (%lf %lf %lf), (%lf %lf %lf)\n",
-                loop_counter,
-		((struct pnt_color *)loop_ptr)->v[X] * mm2local,
-		((struct pnt_color *)loop_ptr)->v[Y] * mm2local,
-		((struct pnt_color *)loop_ptr)->v[Z] * mm2local, 
-		((struct pnt_color *)loop_ptr)->c.buc_rgb[0],
-		((struct pnt_color *)loop_ptr)->c.buc_rgb[1],
-		((struct pnt_color *)loop_ptr)->c.buc_rgb[2] ); 
+			  loop_counter,
+			  point->v[X] * mm2local,
+			  point->v[Y] * mm2local,
+			  point->v[Z] * mm2local, 
+			  point->c.buc_rgb[0],
+			  point->c.buc_rgb[1],
+			  point->c.buc_rgb[2] ); 
 		bu_vls_strcat( str, buf );
                 loop_counter++;
             }
 	    break;
-	case RT_PNT_TYPE_SCA:
+	}
+	case RT_PNT_TYPE_SCA: {
+	    register struct pnt_scale *point;
             bu_vls_strcat(str, pnt_scale_str);
-            for (BU_LIST_FOR(loop_ptr, pnt_scale, &(((struct pnt_scale *)headPoint)->l))) {
+            for (BU_LIST_FOR(point, pnt_scale, &(((struct pnt_scale *)headPoint)->l))) {
 		snprintf( buf, 256, "%lu, \t (%lf %lf %lf), (%lf)\n",
-                loop_counter,
-		((struct pnt_scale *)loop_ptr)->v[X] * mm2local,
-		((struct pnt_scale *)loop_ptr)->v[Y] * mm2local,
-		((struct pnt_scale *)loop_ptr)->v[Z] * mm2local, 
-		((struct pnt_scale *)loop_ptr)->s );
+			  loop_counter,
+			  point->v[X] * mm2local,
+			  point->v[Y] * mm2local,
+			  point->v[Z] * mm2local, 
+			  point->s );
 		bu_vls_strcat( str, buf );
                 loop_counter++;
             }
 	    break;
-	case RT_PNT_TYPE_NRM:
+	}
+	case RT_PNT_TYPE_NRM: {
+	    register struct pnt_normal *point;
             bu_vls_strcat(str, pnt_normal_str);
-            for (BU_LIST_FOR(loop_ptr, pnt_normal, &(((struct pnt_normal *)headPoint)->l))) {
+            for (BU_LIST_FOR(point, pnt_normal, &(((struct pnt_normal *)headPoint)->l))) {
 		snprintf( buf, 256, "%lu, \t (%lf %lf %lf), (%lf %lf %lf)\n",
-                loop_counter,
-		((struct pnt_normal *)loop_ptr)->v[X] * mm2local,
-		((struct pnt_normal *)loop_ptr)->v[Y] * mm2local,
-		((struct pnt_normal *)loop_ptr)->v[Z] * mm2local, 
-		((struct pnt_normal *)loop_ptr)->n[X],
-		((struct pnt_normal *)loop_ptr)->n[Y],
-		((struct pnt_normal *)loop_ptr)->n[Z] );
+			  loop_counter,
+			  point->v[X] * mm2local,
+			  point->v[Y] * mm2local,
+			  point->v[Z] * mm2local, 
+			  point->n[X],
+			  point->n[Y],
+			  point->n[Z] );
 		bu_vls_strcat( str, buf );
                 loop_counter++;
             }
 	    break;
-	case RT_PNT_TYPE_COL_SCA:
+	}
+	case RT_PNT_TYPE_COL_SCA: {
+	    register struct pnt_color_scale *point;
             bu_vls_strcat(str, pnt_color_scale_str);
-            for (BU_LIST_FOR(loop_ptr, pnt_color_scale, &(((struct pnt_color_scale *)headPoint)->l))) {
+            for (BU_LIST_FOR(point, pnt_color_scale, &(((struct pnt_color_scale *)headPoint)->l))) {
 		snprintf( buf, 256, "%lu, \t (%lf %lf %lf), (%lf %lf %lf), (%lf)\n",
                 loop_counter,
-		((struct pnt_color_scale *)loop_ptr)->v[X] * mm2local,
-		((struct pnt_color_scale *)loop_ptr)->v[Y] * mm2local,
-		((struct pnt_color_scale *)loop_ptr)->v[Z] * mm2local, 
-		((struct pnt_color_scale *)loop_ptr)->c.buc_rgb[0],
-		((struct pnt_color_scale *)loop_ptr)->c.buc_rgb[1],
-		((struct pnt_color_scale *)loop_ptr)->c.buc_rgb[2], 
-		((struct pnt_color_scale *)loop_ptr)->s );
+			  point->v[X] * mm2local,
+			  point->v[Y] * mm2local,
+			  point->v[Z] * mm2local, 
+			  point->c.buc_rgb[0],
+			  point->c.buc_rgb[1],
+			  point->c.buc_rgb[2], 
+			  point->s );
 		bu_vls_strcat( str, buf );
                 loop_counter++;
             }
 	    break;
-	case RT_PNT_TYPE_COL_NRM:
+	}
+	case RT_PNT_TYPE_COL_NRM: {
+	    register struct pnt_color_normal *point;
             bu_vls_strcat(str, pnt_color_normal_str);
-            for (BU_LIST_FOR(loop_ptr, pnt_color_normal, &(((struct pnt_color_normal *)headPoint)->l))) {
+            for (BU_LIST_FOR(point, pnt_color_normal, &(((struct pnt_color_normal *)headPoint)->l))) {
 		snprintf( buf, 256, "%lu, \t (%lf %lf %lf), (%lf %lf %lf), (%lf %lf %lf)\n",
-                loop_counter,
-		((struct pnt_color_normal *)loop_ptr)->v[X] * mm2local,
-		((struct pnt_color_normal *)loop_ptr)->v[Y] * mm2local,
-		((struct pnt_color_normal *)loop_ptr)->v[Z] * mm2local, 
-		((struct pnt_color_normal *)loop_ptr)->c.buc_rgb[0],
-		((struct pnt_color_normal *)loop_ptr)->c.buc_rgb[1],
-		((struct pnt_color_normal *)loop_ptr)->c.buc_rgb[2], 
-		((struct pnt_color_normal *)loop_ptr)->n[X],
-		((struct pnt_color_normal *)loop_ptr)->n[Y],
-		((struct pnt_color_normal *)loop_ptr)->n[Z] );
+			  loop_counter,
+			  point->v[X] * mm2local,
+			  point->v[Y] * mm2local,
+			  point->v[Z] * mm2local, 
+			  point->c.buc_rgb[0],
+			  point->c.buc_rgb[1],
+			  point->c.buc_rgb[2], 
+			  point->n[X],
+			  point->n[Y],
+			  point->n[Z] );
 		bu_vls_strcat( str, buf );
                 loop_counter++;
             }
 	    break;
-	case RT_PNT_TYPE_SCA_NRM:
+	}
+	case RT_PNT_TYPE_SCA_NRM: {
+	    register struct pnt_scale_normal *point;
             bu_vls_strcat(str, pnt_scale_normal_str);
-            for (BU_LIST_FOR(loop_ptr, pnt_scale_normal, &(((struct pnt_scale_normal *)headPoint)->l))) {
+            for (BU_LIST_FOR(point, pnt_scale_normal, &(((struct pnt_scale_normal *)headPoint)->l))) {
 		snprintf( buf, 256, "%lu, \t (%lf %lf %lf), (%lf), (%lf %lf %lf)\n",
-                loop_counter,
-		((struct pnt_scale_normal *)loop_ptr)->v[X] * mm2local,
-		((struct pnt_scale_normal *)loop_ptr)->v[Y] * mm2local,
-		((struct pnt_scale_normal *)loop_ptr)->v[Z] * mm2local, 
-		((struct pnt_scale_normal *)loop_ptr)->s,
-		((struct pnt_scale_normal *)loop_ptr)->n[X],
-		((struct pnt_scale_normal *)loop_ptr)->n[Y],
-		((struct pnt_scale_normal *)loop_ptr)->n[Z] );
+			  loop_counter,
+			  point->v[X] * mm2local,
+			  point->v[Y] * mm2local,
+			  point->v[Z] * mm2local, 
+			  point->s,
+			  point->n[X],
+			  point->n[Y],
+			  point->n[Z] );
 		bu_vls_strcat( str, buf );
                 loop_counter++;
             }
 	    break;
-	case RT_PNT_TYPE_COL_SCA_NRM:
+	}
+	case RT_PNT_TYPE_COL_SCA_NRM: {
+	    register struct pnt_color_scale_normal *point;
             bu_vls_strcat(str, pnt_color_scale_normal_str);
-            for (BU_LIST_FOR(loop_ptr, pnt_color_scale_normal, &(((struct pnt_color_scale_normal *)headPoint)->l))) {
+            for (BU_LIST_FOR(point, pnt_color_scale_normal, &(((struct pnt_color_scale_normal *)headPoint)->l))) {
 		snprintf( buf, 256, "%lu, \t (%lf %lf %lf), (%lf %lf %lf), (%lf), (%lf %lf %lf)\n",
-                loop_counter,
-		((struct pnt_color_scale_normal *)loop_ptr)->v[X] * mm2local,
-		((struct pnt_color_scale_normal *)loop_ptr)->v[Y] * mm2local,
-		((struct pnt_color_scale_normal *)loop_ptr)->v[Z] * mm2local, 
-		((struct pnt_color_scale_normal *)loop_ptr)->c.buc_rgb[0],
-		((struct pnt_color_scale_normal *)loop_ptr)->c.buc_rgb[1],
-		((struct pnt_color_scale_normal *)loop_ptr)->c.buc_rgb[2], 
-		((struct pnt_color_scale_normal *)loop_ptr)->s,
-		((struct pnt_color_scale_normal *)loop_ptr)->n[X],
-		((struct pnt_color_scale_normal *)loop_ptr)->n[Y],
-		((struct pnt_color_scale_normal *)loop_ptr)->n[Z] );
+			  loop_counter,
+			  point->v[X] * mm2local,
+			  point->v[Y] * mm2local,
+			  point->v[Z] * mm2local, 
+			  point->c.buc_rgb[0],
+			  point->c.buc_rgb[1],
+			  point->c.buc_rgb[2], 
+			  point->s,
+			  point->n[X],
+			  point->n[Y],
+			  point->n[Z] );
 		bu_vls_strcat( str, buf );
                 loop_counter++;
             }
 	    break;
+	}
 	default:
             bu_log("ERROR: unknown points primitive type\n");
             return 0;
