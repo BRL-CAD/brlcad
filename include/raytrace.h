@@ -400,12 +400,14 @@ struct seg {
 	BU_LIST_DEQUEUE( &((p)->l) ); \
 	(p)->l.forw = (p)->l.back = BU_LIST_NULL; \
 	(p)->seg_in.hit_magic = (p)->seg_out.hit_magic = RT_HIT_MAGIC; \
-	res->re_segget++; }
+	res->re_segget++; \
+}
 
 #define RT_FREE_SEG(p, res)  { \
 	RT_CHECK_SEG(p); \
 	BU_LIST_INSERT( &((res)->re_seg), &((p)->l) ); \
-	res->re_segfree++; }
+	res->re_segfree++; \
+}
 
 /**
  * This could be
@@ -417,7 +419,8 @@ struct seg {
 	while ( BU_LIST_WHILE( _a, seg, &((_segheadp)->l) ) )  { \
 		BU_LIST_DEQUEUE( &(_a->l) ); \
 		RT_FREE_SEG( _a, _res ); \
-	} }
+	} \
+}
 
 /**
  * Macros to operate on Right Rectangular Parallelpipeds (RPPs).
@@ -2182,12 +2185,12 @@ struct ray_data {
 		(_p) = (struct hitmiss *)bu_calloc(1, sizeof( struct hitmiss ), "hitmiss "BU_FLSTR ); \
 	else \
 		BU_LIST_DEQUEUE( &((_p)->l) ); \
-	}
+}
 
 #define NMG_FREE_HITLIST(_p, _ap) { \
 	BU_CK_LIST_HEAD( (_p) ); \
 	BU_LIST_APPEND_LIST( &((_ap)->a_resource->re_nmgfree), (_p) ); \
-	}
+}
 
 #define HIT 1	/**< @brief  a hit on a face */
 #define MISS 0	/**< @brief  a miss on the face */
@@ -2204,7 +2207,8 @@ struct ray_data {
 	rt_g.NMG_debug |= DEBUG_NMGRT; \
 	nmg_isect_ray_model(rd); \
 	(void) nmg_ray_segs(rd); \
-	bu_bomb("Should have bombed before this\n"); }
+	bu_bomb("Should have bombed before this\n"); \
+   }
 #endif
 
 
