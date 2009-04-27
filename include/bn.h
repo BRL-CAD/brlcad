@@ -1619,6 +1619,7 @@ struct bn_vlist  {
 #define BN_CK_VLIST(_p) BU_CKMAG((_p), BN_VLIST_MAGIC, "bn_vlist")
 #define BN_CK_VLIST_TCL(_interp, _p) BU_CKMAG_TCL(_interp, (_p), BN_VLIST_MAGIC, "bn_vlist")
 
+/* should these be enum? -Erik */
 /* Values for cmd[] */
 #define BN_VLIST_LINE_MOVE	0
 #define BN_VLIST_LINE_DRAW	1
@@ -1627,6 +1628,7 @@ struct bn_vlist  {
 #define BN_VLIST_POLY_DRAW	4	/**< @brief  subsequent poly vertex */
 #define BN_VLIST_POLY_END	5	/**< @brief  last vert (repeats 1st), draw poly */
 #define BN_VLIST_POLY_VERTNORM	6	/**< @brief  per-vertex normal, for interpoloation */
+#define BN_VLIST_POINT_DRAW	7	/**< @brief  Draw a single point */
 
 /**
  * Applications that are going to use BN_ADD_VLIST and BN_GET_VLIST
