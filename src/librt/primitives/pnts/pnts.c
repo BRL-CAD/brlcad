@@ -590,28 +590,32 @@ rt_pnts_import5(struct rt_db_internal *internal, const struct bu_external *exter
  * points as a bu_list instead of calling up a switching table for
  * each point type.
  */
-int
+void
 rt_pnts_ifree(struct rt_db_internal *internal)
 {
     struct rt_pnts_internal *pnts;
+    register struct bu_list *point;
 
     RT_CK_DB_INTERNAL(internal);
 
     pnts = ((struct rt_pnts_internal *)(internal->idb_ptr));
 
-    switch (pnts->type) {
-	case RT_PNT_TYPE_PNT: {
-	}
-	default:
-            bu_log("ERROR: unknown points primitive type (type=%d)\n", pnts->type);
-            return 0;
+    /* since each point type has a bu_list as the first struct
+     * element, we can treat them all as 'pnt' structs in order to
+     * iterate over the bu_list and free them.
+     */ 
+    for (BU_LIST_FOR(point, bu_list, &(((struct pnt *)pnts->point)->l))) {
+	bu_free(point, "free point");
+	/* don't bother dequeuing */
     }
+
+    /* free the head point */
+    bu_free(pnts->point, "free head point");
+    pnts->point = NULL; /* sanity */
 
     /* free the internal container */
     bu_free(internal->idb_ptr, "pnts ifree");
-
-    /* sanity */
-    internal->idb_ptr = GENPTR_NULL;
+    internal->idb_ptr = GENPTR_NULL; /* sanity */
 }
 
 
@@ -622,6 +626,54 @@ rt_pnts_ifree(struct rt_db_internal *internal)
 void
 rt_pnts_print(register const struct soltab *stp)
 {
+    register struct rt_pnts_internal *pnts;
+
+    pnts = (struct rt_pnts_internal *)stp->st_specific;
+
+    switch (pnts->type) {
+	case RT_PNT_TYPE_PNT: {
+	    register struct pnt *point;
+            for (BU_LIST_FOR(point, pnt, &(((struct pnt *)pnts->point)->l))) {
+	    }
+	}
+	case RT_PNT_TYPE_COL: {
+	    register struct pnt_color *point;
+            for (BU_LIST_FOR(point, pnt_color, &(((struct pnt_color *)pnts->point)->l))) {
+	    }
+	}
+	case RT_PNT_TYPE_SCA: {
+	    register struct pnt_scale *point;
+            for (BU_LIST_FOR(point, pnt_scale, &(((struct pnt_scale *)pnts->point)->l))) {
+	    }
+	}
+	case RT_PNT_TYPE_NRM: {
+	    register struct pnt_normal *point;
+            for (BU_LIST_FOR(point, pnt_normal, &(((struct pnt_normal *)pnts->point)->l))) {
+	    }
+	}
+	case RT_PNT_TYPE_COL_SCA: {
+	    register struct pnt_color_scale *point;
+            for (BU_LIST_FOR(point, pnt_color_scale, &(((struct pnt_color_scale *)pnts->point)->l))) {
+	    }
+	}
+	case RT_PNT_TYPE_COL_NRM: {
+	    register struct pnt_color_normal *point;
+            for (BU_LIST_FOR(point, pnt_color_normal, &(((struct pnt_color_normal *)pnts->point)->l))) {
+	    }
+	}
+	case RT_PNT_TYPE_SCA_NRM: {
+	    register struct pnt_scale_normal *point;
+            for (BU_LIST_FOR(point, pnt_scale_normal, &(((struct pnt_scale_normal *)pnts->point)->l))) {
+	    }
+	}
+	case RT_PNT_TYPE_COL_SCA_NRM: {
+	    register struct pnt_color_scale_normal *point;
+            for (BU_LIST_FOR(point, pnt_color_scale_normal, &(((struct pnt_color_scale_normal *)pnts->point)->l))) {
+	    }
+	}
+	default:
+            bu_log("ERROR: unknown points primitive type (type=%d)\n", pnts->type);
+    }
 }
 
 
@@ -655,6 +707,8 @@ rt_pnts_plot(struct bu_list *vhead, struct rt_db_internal *internal, const struc
     }
 
     if (scale > 0) {
+	extern int rt_ell_plot(struct bu_list *, struct rt_db_internal *, const struct rt_tess_tol *, const struct bn_tol *);
+
 	/* set local database */
 	db.idb_magic = RT_DB_INTERNAL_MAGIC;
 	db.idb_major_type = ID_ELL;
