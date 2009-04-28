@@ -2815,9 +2815,6 @@ RT_EXPORT BU_EXTERN(void db_comb_describe,
 		     int		verbose,
 		     double		mm2local,
 		     struct resource	*resp));
-RT_EXPORT BU_EXTERN(void rt_comb_ifree,
-		    (struct rt_db_internal *ip,
-		     struct resource *resp));
 RT_EXPORT BU_EXTERN(int rt_comb_describe,
 		    (struct bu_vls	*str,
 		     const struct rt_db_internal *ip,
@@ -5861,9 +5858,15 @@ RT_EXPORT BU_EXTERN(int rt_mk_binunif,
 		     unsigned int minor_type,
 		     long max_count));
 
-/* XXX do not rely on *_ifree() functions, why are these needed? */
+/* XXX do not rely on *_ifree() functions.  there are a few direct
+ * usage instances throughout the code that need to be converted to
+ * use rt_get_functab_by_label() before the decls can be removed.
+ */
 #ifdef _RT_DECL_IFREE
 /* defined in dsp.c */
+RT_EXPORT BU_EXTERN(void rt_comb_ifree,
+		    (struct rt_db_internal *ip,
+		     struct resource *resp));
 RT_EXPORT BU_EXTERN(void rt_dsp_ifree,
 		    (struct rt_db_internal *ip));
 

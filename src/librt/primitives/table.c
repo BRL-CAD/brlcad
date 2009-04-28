@@ -311,6 +311,7 @@ BU_EXTERN(int rt_comb_adjust, (struct bu_vls *log,
 BU_EXTERN(int rt_comb_form, (struct bu_vls *log, const struct rt_functab *ftp));
 BU_EXTERN(void rt_comb_make, (const struct rt_functab *ftp,
 			      struct rt_db_internal *intern, double diameter));
+BU_EXTERN(void rt_comb_ifree, (struct rt_db_internal *ip, struct resource *resp));
 
 /* generics for solid */
 BU_EXTERN(int rt_parsetab_get, (struct bu_vls *log,
