@@ -43,9 +43,6 @@
 #include "raytrace.h"
 
 
-BU_EXTERN(void rt_arbn_print, (const struct soltab *stp) );
-
-
 /**
  *  			R T _ A R B N _ P R E P
  *

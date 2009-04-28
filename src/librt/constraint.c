@@ -50,7 +50,6 @@ const struct bu_structparse rt_constraint_parse[] = {
  * R T _ C O N S T R A I N T _ I F R E E
  *
  * Free the storage associated with the rt_db_internal version of constraint object.
- * TODO: Rename to rt_constraint_ifree??
  */
 void
 rt_constraint_ifree( struct rt_db_internal *ip, struct resource *resp)

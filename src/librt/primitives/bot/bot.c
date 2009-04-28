@@ -1292,7 +1292,7 @@ rt_bot_xform(struct rt_db_internal *op, const fastf_t *mat, struct rt_db_interna
     }
 
     if ( free && op != ip ) {
-	rt_bot_ifree( ip );
+	rt_bot_ifree( ip, NULL );
     }
 
     return( 0 );
