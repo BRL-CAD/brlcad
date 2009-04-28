@@ -1853,12 +1853,17 @@ rt_curve_free(struct curve *crv)
  * solid.
  */
 void
-rt_sketch_ifree(struct rt_db_internal	*ip)
+rt_sketch_ifree(struct rt_db_internal *ip, struct resource *resp)
 {
-    register struct rt_sketch_internal	*sketch_ip;
-    struct curve				*crv;
+    register struct rt_sketch_internal *sketch_ip;
+    struct curve *crv;
 
     RT_CK_DB_INTERNAL(ip);
+
+    if (!resp) {
+	resp = &rt_uniresource;
+    }
+
     sketch_ip = (struct rt_sketch_internal *)ip->idb_ptr;
     RT_SKETCH_CK_MAGIC(sketch_ip);
     sketch_ip->magic = 0;			/* sanity */
@@ -1882,7 +1887,6 @@ rt_sketch_ifree(struct rt_db_internal	*ip)
 	bu_log("Barrier check at end of sketch_ifree():\n");
 	bu_mem_barriercheck();
     }
-
 }
 
 void
