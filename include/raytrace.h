@@ -5858,31 +5858,6 @@ RT_EXPORT BU_EXTERN(int rt_mk_binunif,
 		     unsigned int minor_type,
 		     long max_count));
 
-/* XXX do not rely on *_ifree() functions.  there are a few direct
- * usage instances throughout the code that need to be converted to
- * use rt_get_functab_by_label() before the decls can be removed.
- */
-#ifdef _RT_DECL_IFREE
-/* defined in dsp.c */
-RT_EXPORT BU_EXTERN(void rt_comb_ifree,
-		    (struct rt_db_internal *ip,
-		     struct resource *resp));
-RT_EXPORT BU_EXTERN(void rt_dsp_ifree,
-		    (struct rt_db_internal *ip));
-
-/* defined in ebm.c */
-RT_EXPORT BU_EXTERN(void rt_ebm_ifree,
-		    (struct rt_db_internal *ip));
-
-/* defined in vol.c */
-RT_EXPORT BU_EXTERN(void rt_vol_ifree,
-		    (struct rt_db_internal *ip));
-
-/* definted in sketch.c */
-RT_EXPORT BU_EXTERN(void rt_sketch_ifree,
-		    (struct rt_db_internal *ip));
-#endif
-
 /* defined in db5_bin.c */
 RT_EXPORT BU_EXTERN(void rt_binunif_free,
 		    (struct rt_binunif_internal *bip));
