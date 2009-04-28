@@ -164,6 +164,7 @@ zap_nl(void)
 void
 strsolbld(void)
 {
+    const struct rt_functab *ftp;
     char	*type = NULL;
     char	*name = NULL;
     char	*args = NULL;
@@ -196,7 +197,9 @@ strsolbld(void)
 	if (bu_struct_parse(&str, rt_functab[ID_DSP].ft_parsetab, (char *)dsp) < 0) {
 	    bu_log("strsolbld(%s): Unable to parse %s solid's args of '%s'\n",
 		   name, type, args);
-	    rt_dsp_ifree((struct rt_db_internal *)dsp);
+	    ftp = rt_get_functab_by_label("dsp");
+	    if (ftp && ftp->ft_ifree)
+		ftp->ft_ifree((struct rt_db_internal *)dsp, NULL);
 	    goto out;
 	}
 	dsp->magic = RT_DSP_INTERNAL_MAGIC;
@@ -217,7 +220,9 @@ strsolbld(void)
 	if (bu_struct_parse(&str, rt_functab[ID_EBM].ft_parsetab, (char *)ebm) < 0) {
 	    bu_log("strsolbld(%s): Unable to parse %s solid's args of '%s'\n",
 		   name, type, args);
-	    rt_ebm_ifree((struct rt_db_internal *)ebm);
+	    ftp = rt_get_functab_by_label("ebm");
+	    if (ftp && ftp->ft_ifree)
+		ftp->ft_ifree((struct rt_db_internal *)ebm, NULL);
 	    return;
 	}
 	ebm->magic = RT_EBM_INTERNAL_MAGIC;
@@ -237,7 +242,9 @@ strsolbld(void)
 	if (bu_struct_parse(&str, rt_functab[ID_VOL].ft_parsetab, (char *)vol) < 0) {
 	    bu_log("strsolbld(%s): Unable to parse %s solid's args of '%s'\n",
 		   name, type, args);
-	    rt_vol_ifree((struct rt_db_internal *)vol);
+	    ftp = rt_get_functab_by_label("vol");
+	    if (ftp && ftp->ft_ifree)
+		ftp->ft_ifree((struct rt_db_internal *)vol, NULL);
 	    return;
 	}
 	vol->magic = RT_VOL_INTERNAL_MAGIC;
