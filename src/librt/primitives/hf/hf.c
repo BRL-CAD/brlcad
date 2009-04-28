@@ -2181,9 +2181,13 @@ rt_hf_shot(struct soltab *stp, register struct xray *rp, struct application *ap,
  *  Free the storage associated with the rt_db_internal version of this solid.
  */
 		void
-		    rt_hf_ifree(struct rt_db_internal *ip)
+		    rt_hf_ifree(struct rt_db_internal *ip, struct resource *resp)
 		    {
 			register struct rt_hf_internal	*xip;
+
+			if (!resp) {
+			    resp = &rt_uniresource;
+			}
 
 			RT_CK_DB_INTERNAL(ip);
 			xip = (struct rt_hf_internal *)ip->idb_ptr;

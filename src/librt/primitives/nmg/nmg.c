@@ -2719,9 +2719,13 @@ rt_nmg_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose
  *  Free the storage associated with the rt_db_internal version of this solid.
  */
 void
-rt_nmg_ifree(struct rt_db_internal *ip)
+rt_nmg_ifree(struct rt_db_internal *ip, struct resource *resp)
 {
     register struct model	*m;
+
+    if (!resp) {
+	resp = &rt_uniresource;
+    }
 
     RT_CK_DB_INTERNAL(ip);
     if (ip->idb_ptr) {

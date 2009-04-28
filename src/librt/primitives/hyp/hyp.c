@@ -1363,11 +1363,16 @@ rt_hyp_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose
  * solid.
  */
 void
-rt_hyp_ifree(struct rt_db_internal *ip)
+rt_hyp_ifree(struct rt_db_internal *ip, struct resource *resp)
 {
     register struct rt_hyp_internal *hyp_ip;
 
     RT_CK_DB_INTERNAL(ip);
+
+    if (!resp) {
+	resp = &rt_uniresource;
+    }
+
     hyp_ip = (struct rt_hyp_internal *)ip->idb_ptr;
     RT_HYP_CK_MAGIC(hyp_ip);
     hyp_ip->hyp_magic = 0;			/* sanity */
