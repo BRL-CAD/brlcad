@@ -196,8 +196,6 @@ char *conv_features( tag_t solid_tag, char *part_name, char *refset_name, char *
 		     double units_conv, int make_region );
 static void do_suppressions( tag_t node );
 
-extern void rt_sketch_ifree(struct rt_db_internal *ip);
-
 
 void
 add_to_obj_list( char *name )
