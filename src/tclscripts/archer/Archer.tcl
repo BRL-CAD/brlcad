@@ -137,6 +137,7 @@ package provide Archer 1.0
 	method pluginUpdateStatusBar {msg}
 
 	method importFg4Sections   {_slist _wlist _delta}
+	method setDefaultBindingMode {_mode}
 
 	# ArcherCore Override Section
 	method Load                {_target}
@@ -989,6 +990,34 @@ package provide Archer 1.0
 			-file [file join $dir option_tree.png]]
     }
 }
+
+::itcl::body Archer::setDefaultBindingMode {_mode} {
+    set saved_mode $mDefaultBindingMode
+
+    if {[::ArcherCore::setDefaultBindingMode $_mode]} {
+	return
+    }
+
+    switch -- $mDefaultBindingMode \
+	$OBJECT_ROTATE_MODE { \
+	    beginObjRotate
+	} \
+	$OBJECT_TRANSLATE_MODE { \
+	    beginObjTranslate
+	} \
+	$OBJECT_SCALE_MODE { \
+	    beginObjScale
+	} \
+	$OBJECT_CENTER_MODE { \
+	    if {$saved_mode == $OBJECT_TRANSLATE_MODE} { \
+		set mDefaultBindingMode $saved_mode
+		beginObjTranslate
+	    } else { \
+		beginObjCenter
+	    } \
+	}
+}
+
 
 ################################### End Public Section ###################################
 
@@ -3528,6 +3557,13 @@ package provide Archer 1.0
 	set odata ""
     }
 
+    if {[info exists GeometryEditFrame::mEditCommand]} {
+	set GeometryEditFrame::mEditMode 0
+	set GeometryEditFrame::mEditCommand ""
+	set GeometryEditFrame::mEditParam1 0
+	set GeometryEditFrame::mEditParam2 0
+    }
+
     switch -- $mSelectedObjType {
 	"arb4" {
 	    if {![info exists itk_component(arb4View)]} {
@@ -3680,9 +3716,17 @@ package provide Archer 1.0
 	return
     }
 
+#    initEdit
+
     foreach dname {ul ur ll lr} {
 	set win [$itk_component(ged) component $dname]
-	bind $win <1> "$itk_component(ged) pane_orotate_mode $dname $obj %x %y; break"
+
+	if {$GeometryEditFrame::mEditCommand != ""} {
+	    bind $win <1> "$itk_component(ged) pane_$GeometryEditFrame::mEditCommand\_mode $dname $obj $GeometryEditFrame::mEditParam1 $GeometryEditFrame::mEditParam2 %x %y; break"
+	} else {
+	    bind $win <1> "$itk_component(ged) pane_orotate_mode $dname $obj %x %y; break"
+	}
+
 	bind $win <ButtonRelease-1> "[::itcl::code $this endObjRotate $dname $obj]; break"
     }
 }
@@ -3699,6 +3743,8 @@ package provide Archer 1.0
 	beginViewRotate
 	return
     }
+
+    initEdit
 
     foreach dname {ul ur ll lr} {
 	set win [$itk_component(ged) component $dname]
@@ -3720,9 +3766,17 @@ package provide Archer 1.0
 	return
     }
 
+    set ::GeometryEditFrame::mEditLastTransMode $OBJECT_TRANSLATE_MODE
+
     foreach dname {ul ur ll lr} {
 	set win [$itk_component(ged) component $dname]
-	bind $win <1> "$itk_component(ged) pane_otranslate_mode $dname $obj %x %y; break"
+
+	if {$GeometryEditFrame::mEditCommand != ""} {
+	    bind $win <1> "$itk_component(ged) pane_$GeometryEditFrame::mEditCommand\_mode $dname $obj $GeometryEditFrame::mEditParam1 %x %y; break"
+	} else {
+	    bind $win <1> "$itk_component(ged) pane_otranslate_mode $dname $obj %x %y; break"
+	}
+
 	bind $win <ButtonRelease-1> "[::itcl::code $this endObjTranslate $dname $obj]; break"
     }
 }
@@ -3739,6 +3793,8 @@ package provide Archer 1.0
 	beginViewRotate
 	return
     }
+
+    set ::GeometryEditFrame::mEditLastTransMode $OBJECT_CENTER_MODE
 
     foreach dname {ul ur ll lr} {
 	set win [$itk_component(ged) component $dname]
@@ -3806,14 +3862,15 @@ package provide Archer 1.0
 }
 
 ::itcl::body Archer::handleObjCenter {obj x y} {
-    if {[info exists itk_component(ged)]} {
-	set ocenter [gedCmd ocenter $obj]
-    } else {
-	set savePwd [pwd]
-	cd /
-	set ocenter [gedCmd ocenter $obj]
-    }
+#    if {[info exists itk_component(ged)]} {
+#	set ocenter [gedCmd ocenter $obj]
+#    } else {
+#	set savePwd [pwd]
+#	cd /
+#	set ocenter [gedCmd ocenter $obj]
+#    }
 
+    set ocenter [gedCmd ocenter $obj]
     set ocenter [vscale $ocenter [gedCmd local2base]]
     set ovcenter [eval gedCmd m2v_point $ocenter]
 
@@ -3823,12 +3880,19 @@ package provide Archer 1.0
 
     set ocenter [vscale [eval gedCmd v2m_point $vcenter] [gedCmd base2local]]
 
-    if {[info exists itk_component(ged)]} {
-	eval archerWrapper ocenter 0 0 0 0 $obj $ocenter
+    if {$GeometryEditFrame::mEditCommand != ""} {
+	set gdata [$GeometryEditFrame::mEditCommand $obj $GeometryEditFrame::mEditParam1 $ocenter]
+#	eval adjust $mSelectedObj $gdata
     } else {
 	eval archerWrapper ocenter 0 0 0 0 $obj $ocenter
-	cd $savePwd
     }
+
+#    if {[info exists itk_component(ged)]} {
+#	eval archerWrapper ocenter 0 0 0 0 $obj $ocenter
+#    } else {
+#	eval archerWrapper ocenter 0 0 0 0 $obj $ocenter
+#	cd $savePwd
+#    }
 
     redrawObj $obj 0
 }
@@ -4255,6 +4319,7 @@ package provide Archer 1.0
 ::itcl::body Archer::initArb8EditView {odata} {
     $itk_component(arb8View) configure \
 	-geometryObject $mSelectedObj \
+	-geometryObjectPath $mSelectedObjPath \
 	-geometryChangedCallback [::itcl::code $this updateObjEditView] \
 	-mged $itk_component(ged) \
 	-labelFont $mFontText \

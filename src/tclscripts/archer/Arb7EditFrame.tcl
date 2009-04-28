@@ -733,16 +733,12 @@
 	}
     }
 
-    set gdata [$itk_option(-mged) move_arb_edge \
-		   $itk_option(-geometryObject) \
-		   $edgeIndex \
-		   [list $mValueX $mValueY $mValueZ]]
+    $itk_option(-mged) move_arb_edge \
+	$itk_option(-geometryObjectPath) \
+	$edgeIndex \
+	[list $mValueX $mValueY $mValueZ]
 
-    eval $itk_option(-mged) adjust \
-	$itk_option(-geometryObject) \
-	$gdata
-
-    initGeometry $gdata
+    initGeometry [lrange [$itk_option(-mged) get $itk_option(-geometryObject)] 1 end]
 
     if {$itk_option(-geometryChangedCallback) != ""} {
 	$itk_option(-geometryChangedCallback)
@@ -759,16 +755,12 @@
 	}
     }
 
-    set gdata [$itk_option(-mged) move_arb_face \
-		   $itk_option(-geometryObject) \
-		   $faceIndex \
-		   [list $mValueX $mValueY $mValueZ]]
-
-    eval $itk_option(-mged) adjust \
+    $itk_option(-mged) move_arb_face \
 	$itk_option(-geometryObject) \
-	$gdata
+	$faceIndex \
+	[list $mValueX $mValueY $mValueZ]
 
-    initGeometry $gdata
+    initGeometry [lrange [$itk_option(-mged) get $itk_option(-geometryObject)] 1 end]
 
     if {$itk_option(-geometryChangedCallback) != ""} {
 	$itk_option(-geometryChangedCallback)
@@ -797,17 +789,13 @@
 	}
     }
 
-    set gdata [$itk_option(-mged) rotate_arb_face \
-		   $itk_option(-geometryObject) \
-		   $faceIndex \
-		   $mVIndex \
-		   [list $mValueX $mValueY $mValueZ]]
-
-    eval $itk_option(-mged) adjust \
+    $itk_option(-mged) rotate_arb_face \
 	$itk_option(-geometryObject) \
-	$gdata
+	$faceIndex \
+	$mEditParam2 \
+	[list $mValueX $mValueY $mValueZ]
 
-    initGeometry $gdata
+    initGeometry [lrange [$itk_option(-mged) get $itk_option(-geometryObject)] 1 end]
 
     if {$itk_option(-geometryChangedCallback) != ""} {
 	$itk_option(-geometryChangedCallback)
@@ -935,106 +923,153 @@
 ::itcl::body Arb7EditFrame::initValuePanel {} {
     switch -- $mEditMode \
 	$moveEdge12 { \
-			  set mVIndex 0; \
+			  set mEditCommand move_arb_edge; \
+			  set mEditClass $EDIT_CLASS_TRANS; \
+			  set mEditParam1 1; \
 			  configure -valueUnits "mm"; \
 			  updateUpperPanel {} {1 2 3 4 5 6 7} \
 		      } \
 	$moveEdge23 { \
-			  set mVIndex 0; \
+			  set mEditCommand move_arb_edge; \
+			  set mEditClass $EDIT_CLASS_TRANS; \
+			  set mEditParam1 2; \
 			  configure -valueUnits "mm"; \
 			  updateUpperPanel {} {1 2 3 4 5 6 7} \
 		      } \
 	$moveEdge34 { \
-			  set mVIndex 0; \
+			  set mEditCommand move_arb_edge; \
+			  set mEditClass $EDIT_CLASS_TRANS; \
+			  set mEditParam1 3; \
 			  configure -valueUnits "mm"; \
 			  updateUpperPanel {} {1 2 3 4 5 6 7} \
 		      } \
 	$moveEdge14 { \
-			  set mVIndex 0; \
+			  set mEditCommand move_arb_edge; \
+			  set mEditClass $EDIT_CLASS_TRANS; \
+			  set mEditParam1 4; \
 			  configure -valueUnits "mm"; \
 			  updateUpperPanel {} {1 2 3 4 5 6 7} \
 		      } \
 	$moveEdge15 { \
-			  set mVIndex 0; \
+			  set mEditCommand move_arb_edge; \
+			  set mEditClass $EDIT_CLASS_TRANS; \
+			  set mEditParam1 5; \
 			  configure -valueUnits "mm"; \
 			  updateUpperPanel {} {1 2 3 4 5 6 7} \
 		      } \
 	$moveEdge26 { \
-			  set mVIndex 0; \
+			  set mEditCommand move_arb_edge; \
+			  set mEditClass $EDIT_CLASS_TRANS; \
+			  set mEditParam1 6; \
 			  configure -valueUnits "mm"; \
 			  updateUpperPanel {} {1 2 3 4 5 6 7} \
 		      } \
 	$moveEdge56 { \
-			  set mVIndex 0; \
+			  set mEditCommand move_arb_edge; \
+			  set mEditClass $EDIT_CLASS_TRANS; \
+			  set mEditParam1 7; \
 			  configure -valueUnits "mm"; \
 			  updateUpperPanel {} {1 2 3 4 5 6 7} \
 		      } \
 	$moveEdge67 { \
-			  set mVIndex 0; \
+			  set mEditCommand move_arb_edge; \
+			  set mEditClass $EDIT_CLASS_TRANS; \
+			  set mEditParam1 8; \
 			  configure -valueUnits "mm"; \
 			  updateUpperPanel {} {1 2 3 4 5 6 7} \
 		      } \
 	$moveEdge37 { \
-			  set mVIndex 0; \
+			  set mEditCommand move_arb_edge; \
+			  set mEditClass $EDIT_CLASS_TRANS; \
+			  set mEditParam1 9; \
 			  configure -valueUnits "mm"; \
 			  updateUpperPanel {} {1 2 3 4 5 6 7} \
 		      } \
 	$moveEdge57 { \
-			  set mVIndex 0; \
+			  set mEditCommand move_arb_edge; \
+			  set mEditClass $EDIT_CLASS_TRANS; \
+			  set mEditParam1 10; \
 			  configure -valueUnits "mm"; \
 			  updateUpperPanel {} {1 2 3 4 5 6 7} \
 		      } \
 	$moveEdge45 { \
-			  set mVIndex 0; \
+			  set mEditCommand move_arb_edge; \
+			  set mEditClass $EDIT_CLASS_TRANS; \
+			  set mEditParam1 11; \
 			  configure -valueUnits "mm"; \
 			  updateUpperPanel {} {1 2 3 4 5 6 7} \
 		      } \
 	$movePoint5 { \
-			  set mVIndex 0; \
+			  set mEditCommand move_arb_edge; \
+			  set mEditClass $EDIT_CLASS_TRANS; \
+			  set mEditParam1 12; \
 			  configure -valueUnits "mm"; \
 			  updateUpperPanel {} {1 2 3 4 5 6 7} \
 		      } \
 	$moveFace1234 { \
-			    set mVIndex 0; \
+			    set mEditCommand move_arb_face; \
+			    set mEditClass $EDIT_CLASS_TRANS; \
+			    set mEditParam1 1; \
 			    configure -valueUnits "mm"; \
 			    updateUpperPanel {} {1 2 3 4 5 6 7} \
 			} \
 	$moveFace2376 { \
-			    set mVIndex 0; \
+			    set mEditCommand move_arb_face; \
+			    set mEditClass $EDIT_CLASS_TRANS; \
+			    set mEditParam1 4; \
 			    configure -valueUnits "mm"; \
 			    updateUpperPanel {} {1 2 3 4 5 6 7} \
 			} \
 	$rotateFace1234 { \
-			      set mVIndex 1; \
+			      set mEditCommand rotate_arb_face; \
+			      set mEditClass $EDIT_CLASS_ROT; \
+			      set mEditParam1 1; \
+			      set mEditParam2 1; \
 			      configure -valueUnits "deg"; \
 			      updateUpperPanel {1 2 3 4} {5 6 7} \
 			  } \
 	$rotateFace567 { \
-			     set mVIndex 5; \
+			     set mEditCommand rotate_arb_face; \
+			     set mEditClass $EDIT_CLASS_ROT; \
+			     set mEditParam1 2; \
+			     set mEditParam2 5; \
 			     configure -valueUnits "deg"; \
 			     updateUpperPanel {5} {1 2 3 4 6 7} \
 			 } \
 	$rotateFace145 { \
-			     set mVIndex 5; \
+			     set mEditCommand rotate_arb_face; \
+			     set mEditClass $EDIT_CLASS_ROT; \
+			     set mEditParam1 3; \
+			     set mEditParam2 1; \
 			     configure -valueUnits "deg"; \
 			     updateUpperPanel {5} {1 2 3 4 6 7} \
 			 } \
 	$rotateFace2376 { \
-			      set mVIndex 2; \
+			      set mEditCommand rotate_arb_face; \
+			      set mEditClass $EDIT_CLASS_ROT; \
+			      set mEditParam1 4; \
+			      set mEditParam2 2; \
 			      configure -valueUnits "deg"; \
 			      updateUpperPanel {2 3 6 7} {1 4 5} \
 			  } \
 	$rotateFace1265 { \
-			      set mVIndex 5; \
+			      set mEditCommand rotate_arb_face; \
+			      set mEditClass $EDIT_CLASS_ROT; \
+			      set mEditParam1 5; \
+			      set mEditParam2 2; \
 			      configure -valueUnits "deg"; \
 			      updateUpperPanel {5} {1 2 3 4 6 7} \
 			  } \
 	$rotateFace4375 { \
-			      set mVIndex 5; \
+			      set mEditCommand rotate_arb_face; \
+			      set mEditClass $EDIT_CLASS_ROT; \
+			      set mEditParam1 6; \
+			      set mEditParam2 4; \
 			      configure -valueUnits "deg"; \
 			      updateUpperPanel {5} {1 2 3 4 6 7} \
 			  }
 
+    GeometryEditFrame::initValuePanel
     updateValuePanel
 }
 

@@ -59,6 +59,37 @@ namespace eval ArcherCore {
 	common splash ""
 	common showWindow 0
 
+	common ROTATE_MODE 0
+	common TRANSLATE_MODE 1
+	common SCALE_MODE 2
+	common CENTER_MODE 3
+	common COMP_PICK_MODE 4
+	common MEASURE_MODE 5
+	common OBJECT_ROTATE_MODE 6
+	common OBJECT_TRANSLATE_MODE 7
+	common OBJECT_SCALE_MODE 8
+	common OBJECT_CENTER_MODE 9
+
+	common OBJ_EDIT_VIEW_MODE 0
+	common OBJ_ATTR_VIEW_MODE 1
+
+	common brlcadDataPath
+	common SystemWindowFont
+	common SystemWindowText
+	common SystemWindow
+	common SystemHighlight
+	common SystemHighlightText
+	common SystemButtonFace
+
+	common ZCLIP_SMALL_CUBE 0
+	common ZCLIP_MEDIUM_CUBE 1
+	common ZCLIP_LARGE_CUBE 2
+	common ZCLIP_NONE 3
+
+	common MEASURING_STICK "cad_measuring_stick"
+
+	common LABEL_BACKGROUND_COLOR [::ttk::style lookup label -background]
+
 	proc packTree              {_data}
 	proc unpackTree            {_tree}
 
@@ -74,6 +105,7 @@ namespace eval ArcherCore {
 	method shootRay {_start _op _target _prep _no_bool _onehit}
 	method addMouseRayCallback {_callback}
 	method deleteMouseRayCallback {_callback}
+	method setDefaultBindingMode {_mode}
 
 	# public database commands
 	method gedCmd               {args}
@@ -189,37 +221,6 @@ namespace eval ArcherCore {
 	method xpush               {args}
 	method Z                   {args}
 	method zap                 {args}
-
-	common ROTATE_MODE 0
-	common TRANSLATE_MODE 1
-	common SCALE_MODE 2
-	common CENTER_MODE 3
-	common COMP_PICK_MODE 4
-	common MEASURE_MODE 5
-	common OBJECT_ROTATE_MODE 6
-	common OBJECT_SCALE_MODE 7
-	common OBJECT_TRANSLATE_MODE 8
-	common OBJECT_CENTER_MODE 9
-
-	common OBJ_EDIT_VIEW_MODE 0
-	common OBJ_ATTR_VIEW_MODE 1
-
-	common brlcadDataPath
-	common SystemWindowFont
-	common SystemWindowText
-	common SystemWindow
-	common SystemHighlight
-	common SystemHighlightText
-	common SystemButtonFace
-
-	common ZCLIP_SMALL_CUBE 0
-	common ZCLIP_MEDIUM_CUBE 1
-	common ZCLIP_LARGE_CUBE 2
-	common ZCLIP_NONE 3
-
-	common MEASURING_STICK "cad_measuring_stick"
-
-	common LABEL_BACKGROUND_COLOR [::ttk::style lookup label -background]
 
 	set brlcadDataPath [bu_brlcad_data ""]
 	if {$tcl_platform(platform) != "windows"} {
@@ -3203,6 +3204,39 @@ Popup Menu    Right or Ctrl-Left
     if {$i != -1} {
 	set mMouseRayCallbacks [lreplace $mMouseRayCallbacks $i $i]
     }
+}
+
+::itcl::body ArcherCore::setDefaultBindingMode {_mode} {
+    set mDefaultBindingMode $_mode
+
+    set ret 0
+    switch -- $mDefaultBindingMode \
+	$ROTATE_MODE { \
+		beginViewRotate \
+		set ret 1
+	} \
+	$TRANSLATE_MODE { \
+		beginViewTranslate \
+		set ret 1
+	} \
+	$SCALE_MODE { \
+		beginViewScale \
+		set ret 1
+	} \
+	$CENTER_MODE { \
+		initCenterMode \
+		set ret 1
+	} \
+	$COMP_PICK_MODE { \
+		initCompPick \
+		set ret 1
+	} \
+	$MEASURE_MODE { \
+		initMeasure \
+		set ret 1
+	}
+
+    return $ret
 }
 
 ::itcl::body ArcherCore::getTkColor {r g b} {

@@ -32,6 +32,7 @@
 
     itk_option define -mged mged Mged ""
     itk_option define -geometryObject geometryObject GeometryObject ""
+    itk_option define -geometryObjectPath geometryObjectPath GeometryObjectPath ""
     itk_option define -geometryChangedCallback geometryChangedCallback GeometryChangedCallback ""
 
     itk_option define -labelFont labelFont Font [list $::ArcherCore::SystemWindowFont 12]
@@ -44,6 +45,17 @@
     destructor {}
 
     public {
+	common mEditMode 0
+	common mEditCommand ""
+	common mEditClass ""
+	common mEditParam1 1
+	common mEditParam2 1
+	common mEditLastTransMode $::ArcherCore::OBJECT_CENTER_MODE
+
+	common EDIT_CLASS_ROT 0
+	common EDIT_CLASS_SCALE 1
+	common EDIT_CLASS_TRANS 2
+
 	proc validateDigit {d}
 	proc validateDigitMax100 {d}
 	proc validateDouble {d}
@@ -58,7 +70,6 @@
     }
 
     protected {
-	variable mEditMode 0
 	variable mScaleFactor 0.25
 	variable mSize -1
 	variable mDelta -1
@@ -218,6 +229,10 @@
 }
 
 ::itcl::configbody GeometryEditFrame::geometryObject {
+    # Nothing for now
+}
+
+::itcl::configbody GeometryEditFrame::geometryObjectPath {
     # Nothing for now
 }
 
@@ -384,6 +399,11 @@
 }
 
 ::itcl::body GeometryEditFrame::initValuePanel {} {
+    if {$mEditClass == $EDIT_CLASS_TRANS} {
+	$::ArcherCore::application setDefaultBindingMode $mEditLastTransMode
+    } else {
+	$::ArcherCore::application setDefaultBindingMode $::ArcherCore::OBJECT_ROTATE_MODE
+    }
 }
 
 ::itcl::body GeometryEditFrame::buildComboBox {parent name1 name2 var text listOfChoices} {

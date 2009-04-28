@@ -2547,6 +2547,12 @@ RT_EXPORT BU_EXTERN(int wdb_import_from_path,
 		     struct rt_db_internal *ip,
 		     const char *path,
 		     struct rt_wdb *wdb));
+RT_EXPORT BU_EXTERN(int wdb_import_from_path2,
+		    (struct bu_vls *logstr,
+		     struct rt_db_internal *ip,
+		     const char *path,
+		     struct rt_wdb *wdb,
+		     matp_t matp));
 
 
 /* db_anim.c */
@@ -3342,6 +3348,12 @@ RT_EXPORT extern short earb7[12][18];
 RT_EXPORT extern short earb6[10][18];
 RT_EXPORT extern short earb5[9][18];
 RT_EXPORT extern short earb4[5][18];
+
+RT_EXPORT extern short arb8_edge_vertex_mapping[12][2];
+RT_EXPORT extern short arb7_edge_vertex_mapping[12][2];
+RT_EXPORT extern short arb6_edge_vertex_mapping[10][2];
+RT_EXPORT extern short arb5_edge_vertex_mapping[9][2];
+RT_EXPORT extern short arb4_edge_vertex_mapping[5][2];
 
 /* epa.c */
 RT_EXPORT BU_EXTERN(void rt_ell,

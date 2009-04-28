@@ -438,18 +438,19 @@ wdb_close(struct rt_wdb *wdbp)
 
 
 /**
- * W D B _ I M P O R T _ F R O M _ P A T H
+ * W D B _ I M P O R T _ F R O M _ P A T H 2
  *
  * Given the name of a database object or a full path to a leaf
  * object, obtain the internal form of that leaf.  Packaged separately
- * mainly to make available nice Tcl error handling.
+ * mainly to make available nice Tcl error handling. Additionally,
+ * copies ts.ts_mat to matp.
  *
  * Returns -
  *	BRLCAD_OK
  *	BRLCAD_ERROR
  */
 int
-wdb_import_from_path(struct bu_vls *log, struct rt_db_internal *ip, const char *path, struct rt_wdb *wdb)
+wdb_import_from_path2(struct bu_vls *log, struct rt_db_internal *ip, const char *path, struct rt_wdb *wdb, matp_t matp)
 {
     struct db_i	*dbip;
     int status;
@@ -481,6 +482,8 @@ wdb_import_from_path(struct bu_vls *log, struct rt_db_internal *ip, const char *
 	db_free_full_path(&old_path);
 	db_free_full_path(&new_path);
 
+	MAT_COPY(matp, ts.ts_mat);
+
 	if (ret < 0) {
 	    bu_vls_printf(log, "wdb_import_from_path: '%s' is a bad path\n", path);
 	    return BRLCAD_ERROR;
@@ -496,6 +499,8 @@ wdb_import_from_path(struct bu_vls *log, struct rt_db_internal *ip, const char *
 	    return BRLCAD_ERROR;
 	}
     } else {
+	MAT_IDN(matp);
+
 	status = wdb_import(wdb, ip, path, (matp_t)NULL);
 	if (status == -4) {
 	    bu_vls_printf(log, "%s: not found\n", path);
@@ -508,6 +513,25 @@ wdb_import_from_path(struct bu_vls *log, struct rt_db_internal *ip, const char *
     }
 
     return BRLCAD_OK;
+}
+
+/**
+ * W D B _ I M P O R T _ F R O M _ P A T H
+ *
+ * Given the name of a database object or a full path to a leaf
+ * object, obtain the internal form of that leaf.  Packaged separately
+ * mainly to make available nice Tcl error handling.
+ *
+ * Returns -
+ *	BRLCAD_OK
+ *	BRLCAD_ERROR
+ */
+int
+wdb_import_from_path(struct bu_vls *log, struct rt_db_internal *ip, const char *path, struct rt_wdb *wdb)
+{
+    mat_t mat;
+
+    return wdb_import_from_path2(log, ip, path, wdb, mat);
 }
 
 #if 0

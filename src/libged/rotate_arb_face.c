@@ -34,7 +34,7 @@
 #include "./ged_private.h"
 
 
-static short int ged_arb_vertices[5][24] = {
+static const short int ged_arb_vertices[5][24] = {
     { 1, 2, 3, 0, 1, 2, 4, 0, 2, 3, 4, 0, 1, 3, 4, 0, 0, 0, 0, 0, 0, 0, 0, 0 },	/* arb4 */
     { 1, 2, 3, 4, 1, 2, 5, 0, 2, 3, 5, 0, 3, 4, 5, 0, 1, 4, 5, 0, 0, 0, 0, 0 },	/* arb5 */
     { 1, 2, 3, 4, 2, 3, 6, 5, 1, 5, 6, 4, 1, 2, 5, 0, 3, 4, 6, 0, 0, 0, 0, 0 },	/* arb6 */
@@ -52,9 +52,12 @@ ged_rotate_arb_face(struct ged *gedp, int argc, const char *argv[])
     int face;
     int vi;
     point_t pt;
+    mat_t mat;
     register int i;
     int pnt5;		/* special arb7 case */
-    static const char *usage = "arb face pt";
+    char *last;
+    struct directory *dp;
+    static const char *usage = "arb face pt rvec";
 
     GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
     GED_CHECK_READ_ONLY(gedp, BRLCAD_ERROR);
@@ -74,12 +77,22 @@ ged_rotate_arb_face(struct ged *gedp, int argc, const char *argv[])
 	return BRLCAD_ERROR;
     }
 
-    if (gedp->ged_wdbp->dbip == 0) {
-	bu_vls_printf(&gedp->ged_result_str, "db does not support lookup operations");
+    if ((last = strrchr(argv[1], '/')) == NULL)
+	last = (char *)argv[1];
+    else
+	++last;
+
+    if (last[0] == '\0') {
+	bu_vls_printf(&gedp->ged_result_str, "illegal input - %s", argv[1]);
 	return BRLCAD_ERROR;
     }
 
-    if (wdb_import_from_path(&gedp->ged_result_str, &intern, argv[1], gedp->ged_wdbp) == BRLCAD_ERROR)
+    if ((dp = db_lookup(gedp->ged_wdbp->dbip, last, LOOKUP_QUIET)) == DIR_NULL) {
+	bu_vls_printf(&gedp->ged_result_str, "%s not found", argv[1]);
+	return BRLCAD_ERROR;
+    }
+
+    if (wdb_import_from_path2(&gedp->ged_result_str, &intern, argv[1], gedp->ged_wdbp, mat) == BRLCAD_ERROR)
 	return BRLCAD_ERROR;
 
     if (intern.idb_major_type != DB5_MAJORTYPE_BRLCAD ||
@@ -177,14 +190,18 @@ ged_rotate_arb_face(struct ged *gedp, int argc, const char *argv[])
 
     {
 	register int i;
+	mat_t invmat;
+
+	bn_mat_inv(invmat, mat);
 
 	for (i = 0; i < 8; ++i) {
-	    bu_vls_printf(&gedp->ged_result_str, "V%d {%g %g %g} ",
-			  i + 1,
-			  arb->pt[i][X],
-			  arb->pt[i][Y],
-			  arb->pt[i][Z]);
+	    point_t arb_pt;
+
+	    MAT4X3PNT(arb_pt, invmat, arb->pt[i]);
+	    VMOVE(arb->pt[i], arb_pt);
 	}
+
+	GED_DB_PUT_INTERNAL(gedp, dp, &intern, &rt_uniresource, BRLCAD_ERROR);
     }
 
     rt_db_free_internal(&intern, &rt_uniresource);

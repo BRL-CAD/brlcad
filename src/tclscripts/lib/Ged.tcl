@@ -219,14 +219,19 @@ package provide cadwidgets::Ged 1.0
 	method more_args_callback {args}
 	method mouse_constrain_rot {args}
 	method mouse_constrain_trans {args}
+	method mouse_move_arb_edge {args}
+	method mouse_move_arb_face {args}
 	method mouse_orotate {args}
 	method mouse_oscale {args}
 	method mouse_otranslate {args}
 	method mouse_rot {args}
+	method mouse_rotate_arb_face {args}
 	method mouse_scale {args}
 	method mouse_trans {args}
 	method move_arb_edge {args}
+	method move_arb_edge_mode {args}
 	method move_arb_face {args}
+	method move_arb_face_mode {args}
 	method mv {args}
 	method mvall {args}
 	method nirt {args}
@@ -264,12 +269,17 @@ package provide cadwidgets::Ged 1.0
 	method pane_lookat {_pane args}
 	method pane_m2v_point {_pane args}
 	method pane_model2view {_pane args}
+	method pane_move_arb_edge_mode {_pane args}
+	method pane_move_arb_face_mode {_pane args}
 	method pane_mouse_constrain_rot {_pane args}
 	method pane_mouse_constrain_trans {_pane args}
+	method pane_mouse_move_arb_edge {_pane args}
+	method pane_mouse_move_arb_face {_pane args}
 	method pane_mouse_orotate {_pane args}
 	method pane_mouse_oscale {_pane args}
 	method pane_mouse_otranslate {_pane args}
 	method pane_mouse_rot {_pane args}
+	method pane_mouse_rotate_arb_face {_pane args}
 	method pane_mouse_scale {_pane args}
 	method pane_mouse_trans {_pane args}
 	method pane_nirt {_pane args}
@@ -295,6 +305,7 @@ package provide cadwidgets::Ged 1.0
 	method pane_rot_about {_pane args}
 	method pane_rot_point {_pane args}
 	method pane_rotate_mode {_pane args}
+	method pane_rotate_arb_face_mode {_pane args}
 	method pane_rrt {_pane args}
 	method pane_rt {_pane args}
 	method pane_rtarea {_pane args}
@@ -362,6 +373,7 @@ package provide cadwidgets::Ged 1.0
 	method rot_about {args}
 	method rot_point {args}
 	method rotate_arb_face {args}
+	method rotate_arb_face_mode {args}
 	method rotate_mode {args}
 	method rrt {args}
 	method rt {args}
@@ -1206,6 +1218,14 @@ package provide cadwidgets::Ged 1.0
     eval $mGed mouse_constrain_trans $itk_component($itk_option(-pane)) $args
 }
 
+::itcl::body cadwidgets::Ged::mouse_move_arb_edge {args} {
+    eval $mGed mouse_move_arb_edge $itk_component($itk_option(-pane)) $args
+}
+
+::itcl::body cadwidgets::Ged::mouse_move_arb_face {args} {
+    eval $mGed mouse_move_arb_face $itk_component($itk_option(-pane)) $args
+}
+
 ::itcl::body cadwidgets::Ged::mouse_orotate {args} {
     eval $mGed mouse_orotate $itk_component($itk_option(-pane)) $args
 }
@@ -1222,6 +1242,10 @@ package provide cadwidgets::Ged 1.0
     eval $mGed mouse_rot $itk_component($itk_option(-pane)) $args
 }
 
+::itcl::body cadwidgets::Ged::mouse_rotate_arb_face {args} {
+    eval $mGed mouse_rotate_arb_face $itk_component($itk_option(-pane)) $args
+}
+
 ::itcl::body cadwidgets::Ged::mouse_scale {args} {
     eval $mGed mouse_scale $itk_component($itk_option(-pane)) $args
 }
@@ -1234,8 +1258,16 @@ package provide cadwidgets::Ged 1.0
     eval $mGed move_arb_edge $args
 }
 
+::itcl::body cadwidgets::Ged::move_arb_edge_mode {args} {
+    eval $mGed move_arb_edge_mode $itk_component($itk_option(-pane)) $args
+}
+
 ::itcl::body cadwidgets::Ged::move_arb_face {args} {
     eval $mGed move_arb_face $args
+}
+
+::itcl::body cadwidgets::Ged::move_arb_face_mode {args} {
+    eval $mGed move_arb_face_mode $itk_component($itk_option(-pane)) $args
 }
 
 ::itcl::body cadwidgets::Ged::mv {args} {
@@ -1386,12 +1418,28 @@ package provide cadwidgets::Ged 1.0
     eval $mGed model2view $itk_component($_pane) $args
 }
 
+::itcl::body cadwidgets::Ged::pane_move_arb_edge_mode {_pane args} {
+    eval $mGed move_arb_edge_mode $itk_component($_pane) $args
+}
+
+::itcl::body cadwidgets::Ged::pane_move_arb_face_mode {_pane args} {
+    eval $mGed move_arb_face_mode $itk_component($_pane) $args
+}
+
 ::itcl::body cadwidgets::Ged::pane_mouse_constrain_rot {_pane args} {
     eval $mGed mouse_constrain_rot $itk_component($_pane) $args
 }
 
 ::itcl::body cadwidgets::Ged::pane_mouse_constrain_trans {_pane args} {
     eval $mGed mouse_constrain_trans $itk_component($_pane) $args
+}
+
+::itcl::body cadwidgets::Ged::pane_mouse_move_arb_edge {_pane args} {
+    eval $mGed mouse_move_arb_edge $itk_component($_pane) $args
+}
+
+::itcl::body cadwidgets::Ged::pane_mouse_move_arb_face {_pane args} {
+    eval $mGed mouse_move_arb_face $itk_component($_pane) $args
 }
 
 ::itcl::body cadwidgets::Ged::pane_mouse_orotate {_pane args} {
@@ -1408,6 +1456,10 @@ package provide cadwidgets::Ged 1.0
 
 ::itcl::body cadwidgets::Ged::pane_mouse_rot {_pane args} {
     eval $mGed mouse_rot $itk_component($_pane) $args
+}
+
+::itcl::body cadwidgets::Ged::pane_mouse_rotate_arb_face {_pane args} {
+    eval $mGed mouse_rotate_arb_face $itk_component($_pane) $args
 }
 
 ::itcl::body cadwidgets::Ged::pane_mouse_scale {_pane args} {
@@ -1508,6 +1560,10 @@ package provide cadwidgets::Ged 1.0
 
 ::itcl::body cadwidgets::Ged::pane_rotate_mode {_pane args} {
     eval $mGed rotate_mode $itk_component($_pane) $args
+}
+
+::itcl::body cadwidgets::Ged::pane_rotate_arb_face_mode {_pane args} {
+    eval $mGed rotate_arb_face_mode $itk_component($_pane) $args
 }
 
 ::itcl::body cadwidgets::Ged::pane_rrt {_pane args} {
@@ -1799,6 +1855,10 @@ package provide cadwidgets::Ged 1.0
 
 ::itcl::body cadwidgets::Ged::rotate_arb_face {args} {
     eval $mGed rotate_arb_face $args
+}
+
+::itcl::body cadwidgets::Ged::rotate_arb_face_mode {args} {
+    eval $mGed rotate_arb_face_mode $itk_component($itk_option(-pane)) $args
 }
 
 ::itcl::body cadwidgets::Ged::rotate_mode {args} {

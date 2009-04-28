@@ -35,6 +35,27 @@
 #include "./ged_private.h"
 
 
+/* The ged_arbX_faces arrays are used for relative face movement. */
+static const int ged_arb8_faces_first_vertex[6] = {
+    0, 4, 0, 1, 0, 2
+};
+
+static const int ged_arb7_faces_first_vertex[6] = {
+    0, 0, 1, 1, 1
+};
+
+static const int ged_arb6_faces_first_vertex[5] = {
+    0, 1, 0, 0, 2
+};
+
+static const int ged_arb5_faces_first_vertex[5] = {
+    0, 0, 1, 2, 0
+};
+
+static const int ged_arb4_faces_first_vertex[4] = {
+    0, 0, 1, 0
+};
+
 int
 ged_move_arb_face(struct ged *gedp, int argc, const char *argv[])
 {
@@ -43,8 +64,13 @@ ged_move_arb_face(struct ged *gedp, int argc, const char *argv[])
     fastf_t planes[7][4];		/* ARBs defining plane equations */
     int arb_type;
     int face;
+    int bad_face_id = 0;
+    int rflag = 0;
     point_t pt;
-    static const char *usage = "arb face pt";
+    mat_t mat;
+    char *last;
+    struct directory *dp;
+    static const char *usage = "[-r] arb face pt";
 
     GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
     GED_CHECK_READ_ONLY(gedp, BRLCAD_ERROR);
@@ -59,17 +85,38 @@ ged_move_arb_face(struct ged *gedp, int argc, const char *argv[])
 	return BRLCAD_HELP;
     }
 
-    if (argc != 4) {
+    if (argc < 4 || 5 < argc) {
 	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return BRLCAD_ERROR;
     }
 
-    if (gedp->ged_wdbp->dbip == 0) {
-	bu_vls_printf(&gedp->ged_result_str, "db does not support lookup operations");
+    if (argc == 5) {
+	if (argv[1][0] != '-' || argv[1][1] != 'r' || argv[1][2] != '\0') {
+	    bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	    return BRLCAD_ERROR;
+	}
+
+	rflag = 1;
+	--argc;
+	++argv;
+    }
+
+    if ((last = strrchr(argv[1], '/')) == NULL)
+	last = (char *)argv[1];
+    else
+	++last;
+
+    if (last[0] == '\0') {
+	bu_vls_printf(&gedp->ged_result_str, "illegal input - %s", argv[1]);
 	return BRLCAD_ERROR;
     }
 
-    if (wdb_import_from_path(&gedp->ged_result_str, &intern, argv[1], gedp->ged_wdbp) == BRLCAD_ERROR)
+    if ((dp = db_lookup(gedp->ged_wdbp->dbip, last, LOOKUP_QUIET)) == DIR_NULL) {
+	bu_vls_printf(&gedp->ged_result_str, "%s not found", argv[1]);
+	return BRLCAD_ERROR;
+    }
+
+    if (wdb_import_from_path2(&gedp->ged_result_str, &intern, argv[1], gedp->ged_wdbp, mat) == BRLCAD_ERROR)
 	return BRLCAD_ERROR;
 
     if (intern.idb_major_type != DB5_MAJORTYPE_BRLCAD ||
@@ -114,6 +161,35 @@ ged_move_arb_face(struct ged *gedp, int argc, const char *argv[])
 	return BRLCAD_ERROR;
     }
 
+    if (rflag) {
+	int arb_pt_index;
+
+	switch (arb_type) {
+	case ARB4:
+	    arb_pt_index = ged_arb4_faces_first_vertex[face];
+	    break;
+	case ARB5:
+	    arb_pt_index = ged_arb5_faces_first_vertex[face];
+	    break;
+	case ARB6:
+	    arb_pt_index = ged_arb6_faces_first_vertex[face];
+	    break;
+	case ARB7:
+	    arb_pt_index = ged_arb7_faces_first_vertex[face];
+	    break;
+	case ARB8:
+	    arb_pt_index = ged_arb8_faces_first_vertex[face];
+	    break;
+	default:
+	    bu_vls_printf(&gedp->ged_result_str, "unrecognized arb type");
+	    rt_db_free_internal(&intern, &rt_uniresource);
+
+	    return BRLCAD_ERROR;
+	}
+
+	VADD2(pt, pt, arb->pt[arb_pt_index]);
+    }
+
     /* change D of planar equation */
     planes[face][3] = VDOT(&planes[face][0], pt);
 
@@ -122,17 +198,20 @@ ged_move_arb_face(struct ged *gedp, int argc, const char *argv[])
 
     {
 	register int i;
+	mat_t invmat;
+
+	bn_mat_inv(invmat, mat);
 
 	for (i = 0; i < 8; ++i) {
-	    bu_vls_printf(&gedp->ged_result_str, "V%d {%g %g %g} ",
-			  i + 1,
-			  arb->pt[i][X],
-			  arb->pt[i][Y],
-			  arb->pt[i][Z]);
+	    point_t arb_pt;
+
+	    MAT4X3PNT(arb_pt, invmat, arb->pt[i]);
+	    VMOVE(arb->pt[i], arb_pt);
 	}
+
+	GED_DB_PUT_INTERNAL(gedp, dp, &intern, &rt_uniresource, BRLCAD_ERROR);
     }
 
-    rt_db_free_internal(&intern, &rt_uniresource);
     return BRLCAD_OK;
 }
 
