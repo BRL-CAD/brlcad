@@ -1027,8 +1027,10 @@ Rm_nulls(void)
 		comb->tree = (union tree *)NULL;
 
 	    if (rt_db_put_internal(dp, dbip, &intern, &rt_uniresource) < 0) {
+		const struct rt_functab *ftp = rt_get_functab_by_label("comb");
 		bu_log("Unable to write modified combination '%s' to database\n", dp->d_namep);
-		rt_comb_ifree(&intern, &rt_uniresource);
+		if (ftp && ftp->ft_ifree)
+		    ftp->ft_ifree(&intern, &rt_uniresource);
 		continue;
 	    }
 	}
