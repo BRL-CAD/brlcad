@@ -51,7 +51,6 @@ extern int rt_bot_minpieces;
 
 /* from g_bot.c */
 extern int rt_bot_prep( struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip );
-extern void rt_bot_ifree( struct rt_db_internal *ip );
 
 int rt_ars_tess( struct nmgregion **r, struct model *m, struct rt_db_internal *ip,
 		 const struct rt_tess_tol *ttol, const struct bn_tol *tol );
@@ -419,12 +418,13 @@ rt_ars_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose
  *  Free the storage associated with the rt_db_internal version of this solid.
  */
 void
-rt_ars_ifree(struct rt_db_internal *ip)
+rt_ars_ifree(struct rt_db_internal *ip, struct resource *resp)
 {
     register struct rt_ars_internal	*arip;
     register int			i;
 
     RT_CK_DB_INTERNAL(ip);
+    if (!resp) resp = &rt_uniresource;
     arip = (struct rt_ars_internal *)ip->idb_ptr;
     RT_ARS_CK_MAGIC(arip);
 

@@ -120,7 +120,6 @@ static const struct arb_info rt_arb_info[6] = {
     { "4378", {7, 6, 2, 3} }
 };
 
-BU_EXTERN(void rt_arb_ifree, (struct rt_db_internal *) );
 
 const struct bu_structparse rt_arb_parse[] = {
     { "%f", 3, "V1", bu_offsetof(struct rt_arb_internal, pt[0][X]), BU_STRUCTPARSE_FUNC_NULL },
@@ -1398,9 +1397,10 @@ rt_arb_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose
  * solid.
  */
 void
-rt_arb_ifree(struct rt_db_internal *ip)
+rt_arb_ifree(struct rt_db_internal *ip, struct resource *resp)
 {
     RT_CK_DB_INTERNAL(ip);
+    if (!resp) resp = &rt_uniresource;
     bu_free( ip->idb_ptr, "arb ifree" );
     ip->idb_ptr = (genptr_t)NULL;
 }

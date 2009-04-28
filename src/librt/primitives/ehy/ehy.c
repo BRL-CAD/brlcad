@@ -1656,11 +1656,13 @@ rt_ehy_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose
  *  Free the storage associated with the rt_db_internal version of this solid.
  */
 void
-rt_ehy_ifree(struct rt_db_internal *ip)
+rt_ehy_ifree(struct rt_db_internal *ip, struct resource *resp)
 {
     register struct rt_ehy_internal	*xip;
 
     RT_CK_DB_INTERNAL(ip);
+    if (!resp) resp = &rt_uniresource;
+
     xip = (struct rt_ehy_internal *)ip->idb_ptr;
     RT_EHY_CK_MAGIC(xip);
     xip->ehy_magic = 0;		/* sanity */
