@@ -46,17 +46,10 @@ __BEGIN_DECLS
 #define GED_LISTEVAL	2
 #define GED_EVAL_ONLY	3
 
-/*
- * rt_comb_ifree() should NOT be used here because
- * it doesn't know how to free attributes.
- * rt_db_free_internal() should be used instead.
- */
-#define USE_RT_COMB_IFREE 0
-
-#define GED_WIREFRAME 0
+#define GED_WIREFRAME        0
 #define GED_SHADED_MODE_BOTS 1
-#define GED_SHADED_MODE_ALL 2
-#define GED_BOOL_EVAL 3
+#define GED_SHADED_MODE_ALL  2
+#define GED_BOOL_EVAL        3
 
 struct ged_id_names {
     struct bu_list l;
