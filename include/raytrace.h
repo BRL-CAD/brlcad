@@ -397,7 +397,7 @@ struct seg {
 #define RT_CK_SEG(_p)		BU_CKMAG(_p, RT_SEG_MAGIC, "struct seg")
 
 #define RT_GET_SEG(p, res) { \
-	while (!BU_LIST_WHILE ((p), seg, &((res)->re_seg)) || !(p)) \
+	while (!BU_LIST_WHILE((p), seg, &((res)->re_seg)) || !(p)) \
 		rt_get_seg(res); \
 	BU_LIST_DEQUEUE(&((p)->l)); \
 	(p)->l.forw = (p)->l.back = BU_LIST_NULL; \
@@ -418,7 +418,7 @@ struct seg {
  */
 #define RT_FREE_SEG_LIST(_segheadp, _res) { \
 	register struct seg *_a; \
-	while (BU_LIST_WHILE (_a, seg, &((_segheadp)->l))) { \
+	while (BU_LIST_WHILE(_a, seg, &((_segheadp)->l))) { \
 		BU_LIST_DEQUEUE(&(_a->l)); \
 		RT_FREE_SEG(_a, _res); \
 	} \
@@ -945,10 +945,10 @@ struct rt_binunif_internal {
 	unsigned long	*uint64;
     } u;
 };
-#define RT_CHECK_BINUNIF (_p)		BU_CKMAG(_p, RT_BINUNIF_INTERNAL_MAGIC, "rt_binunif_internal")
-#define RT_CK_BINUNIF (_p)		RT_CHECK_BINUNIF (_p)
+#define RT_CHECK_BINUNIF(_p)			BU_CKMAG(_p, RT_BINUNIF_INTERNAL_MAGIC, "rt_binunif_internal")
+#define RT_CK_BINUNIF(_p)			RT_CHECK_BINUNIF(_p)
 #define RT_CHECK_BINUNIF_TCL(_interp, _p)	BU_CKMAG_TCL(interp, _p, RT_BINUNIF_MAGIC, "rt_binunif_internal")
-#define RT_CK_BINUNIF_TCL(_interp, _p)	RT_CHECK_BINUNIF_TCL(_interp, _p)
+#define RT_CK_BINUNIF_TCL(_interp, _p)		RT_CHECK_BINUNIF_TCL(_interp, _p)
 
 
 /**
@@ -3360,8 +3360,6 @@ RT_EXPORT BU_EXTERN(void rt_vls_pipept,
 		     int seg_no,
 		     const struct rt_db_internal *ip,
 		     double mm2local));
-RT_EXPORT BU_EXTERN(void rt_pipept_print,
-		    ());		/* needs wdb_pipept for arg */
 RT_EXPORT BU_EXTERN(int rt_pipe_ck,
 		    (const struct bu_list *headp));
 
@@ -3372,8 +3370,6 @@ RT_EXPORT BU_EXTERN(void rt_vls_metaballpt,
 		     const int pt_no,
 		     const struct rt_db_internal *ip,
 		     const double mm2local));
-RT_EXPORT BU_EXTERN(void rt_metaballpt_print,
-		    ());		/* needs wdb_metaballpt for arg */
 RT_EXPORT BU_EXTERN(int rt_metaball_ck,
 		    (const struct bu_list *headp));
 RT_EXPORT BU_EXTERN(fastf_t rt_metaball_point_value,
@@ -3675,8 +3671,6 @@ RT_EXPORT BU_EXTERN(void rt_label_vlist_verts,
 
 #ifdef __RTGEOM_H__
 /* sketch.c */
-RT_EXPORT BU_EXTERN(void rt_sketch_ifree,
-		    (struct rt_db_internal	*ip));
 RT_EXPORT BU_EXTERN(int curve_to_vlist,
 		    (struct bu_list		*vhead,
 		     const struct rt_tess_tol	*ttol,
@@ -5879,6 +5873,10 @@ RT_EXPORT BU_EXTERN(void rt_ebm_ifree,
 
 /* defined in vol.c */
 RT_EXPORT BU_EXTERN(void rt_vol_ifree,
+		    (struct rt_db_internal *ip));
+
+/* definted in sketch.c */
+RT_EXPORT BU_EXTERN(void rt_sketch_ifree,
 		    (struct rt_db_internal *ip));
 #endif
 
