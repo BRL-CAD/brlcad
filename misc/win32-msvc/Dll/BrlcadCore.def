@@ -276,8 +276,6 @@ rt_db_get_internal
 rt_db_lookup_internal
 rt_db_put_internal
 rt_dirbuild
-rt_dsp_ifree
-rt_ebm_ifree
 rt_free_rti
 rt_functab
 rt_g
@@ -304,7 +302,6 @@ rt_uniresource
 rt_vlist_cleanup
 rt_vlist_to_uplot
 rt_vls_color_map
-rt_vol_ifree
 
 Add_vert
 clean_vert_tree
