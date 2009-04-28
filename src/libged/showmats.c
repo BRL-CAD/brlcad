@@ -102,11 +102,7 @@ ged_showmats(struct ged *gedp, int argc, const char *argv[])
 	if (comb->tree)
 	    db_tree_funcleaf(gedp->ged_wdbp->dbip, comb, comb->tree, Do_showmats,
 			     (genptr_t)&sm_data, (genptr_t)NULL, (genptr_t)NULL);
-#if USE_RT_COMB_IFREE
-	rt_comb_ifree(&intern, &rt_uniresource);
-#else
 	rt_db_free_internal(&intern, &rt_uniresource);
-#endif
 
 	if (!sm_data.smd_count) {
 	    bu_vls_printf(&gedp->ged_result_str, "%s is not a member of %s\n", sm_data.smd_child, parent);
