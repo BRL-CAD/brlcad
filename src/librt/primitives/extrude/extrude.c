@@ -2299,12 +2299,17 @@ rt_extrude_describe(struct bu_vls *str, const struct rt_db_internal *ip, int ver
  *  Free the storage associated with the rt_db_internal version of this solid.
  */
 void
-rt_extrude_ifree(struct rt_db_internal *ip)
+rt_extrude_ifree(struct rt_db_internal *ip, struct resource *resp)
 {
     register struct rt_extrude_internal *extrude_ip;
     struct rt_db_internal tmp_ip;
 
     RT_CK_DB_INTERNAL(ip);
+
+    if (!resp) {
+	resp = &rt_uniresource;
+    }
+
     extrude_ip = (struct rt_extrude_internal *)ip->idb_ptr;
     RT_EXTRUDE_CK_MAGIC(extrude_ip);
     if (extrude_ip->skt) {
@@ -2313,7 +2318,7 @@ rt_extrude_ifree(struct rt_db_internal *ip)
 	tmp_ip.idb_type = ID_SKETCH;
 	tmp_ip.idb_ptr = (genptr_t)extrude_ip->skt;
 	tmp_ip.idb_meth = &rt_functab[ID_SKETCH];
-	rt_sketch_ifree(&tmp_ip);
+	tmp_ip.idb_meth->ft_ifree(ip, resp);
     }
     extrude_ip->magic = 0;			/* sanity */
 
