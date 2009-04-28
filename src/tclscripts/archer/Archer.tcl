@@ -4259,6 +4259,7 @@ package provide Archer 1.0
 ::itcl::body Archer::initArb4EditView {odata} {
     $itk_component(arb4View) configure \
 	-geometryObject $mSelectedObj \
+	-geometryObjectPath $mSelectedObjPath \
 	-geometryChangedCallback [::itcl::code $this updateObjEditView] \
 	-mged $itk_component(ged) \
 	-labelFont $mFontText \
@@ -4274,6 +4275,7 @@ package provide Archer 1.0
 ::itcl::body Archer::initArb5EditView {odata} {
     $itk_component(arb5View) configure \
 	-geometryObject $mSelectedObj \
+	-geometryObjectPath $mSelectedObjPath \
 	-geometryChangedCallback [::itcl::code $this updateObjEditView] \
 	-mged $itk_component(ged) \
 	-labelFont $mFontText \
@@ -4289,6 +4291,7 @@ package provide Archer 1.0
 ::itcl::body Archer::initArb6EditView {odata} {
     $itk_component(arb6View) configure \
 	-geometryObject $mSelectedObj \
+	-geometryObjectPath $mSelectedObjPath \
 	-geometryChangedCallback [::itcl::code $this updateObjEditView] \
 	-mged $itk_component(ged) \
 	-labelFont $mFontText \
@@ -4304,6 +4307,7 @@ package provide Archer 1.0
 ::itcl::body Archer::initArb7EditView {odata} {
     $itk_component(arb7View) configure \
 	-geometryObject $mSelectedObj \
+	-geometryObjectPath $mSelectedObjPath \
 	-geometryChangedCallback [::itcl::code $this updateObjEditView] \
 	-mged $itk_component(ged) \
 	-labelFont $mFontText \

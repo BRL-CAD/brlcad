@@ -542,7 +542,7 @@
     }
 
     $itk_option(-mged) move_arb_face \
-	$itk_option(-geometryObject) \
+	$itk_option(-geometryObjectPath) \
 	$faceIndex \
 	[list $mValueX $mValueY $mValueZ]
 
@@ -570,7 +570,7 @@
     }
 
     $itk_option(-mged) rotate_arb_face \
-	$itk_option(-geometryObject) \
+	$itk_option(-geometryObjectPath) \
 	$faceIndex \
 	$mEditParam2 \
 	[list $mValueX $mValueY $mValueZ]
