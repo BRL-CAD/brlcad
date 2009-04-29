@@ -2313,14 +2313,18 @@ Popup Menu    Right or Ctrl-Left
 
     if {$restore == 1} {
 	set mRestoringTree 1
-	# set the open state of nodes
-	foreach path $paths {
-	    toggleTreePath $path
+
+	catch {
+	    # set the open state of nodes
+	    foreach path $paths {
+		toggleTreePath $path
+	    }
+
+	    if {$selNodePath != ""} {
+		toggleTreePath $selNodePath
+	    }
 	}
 
-	if {$selNodePath != ""} {
-	    toggleTreePath $selNodePath
-	}
 	set mRestoringTree 0
     }
 
