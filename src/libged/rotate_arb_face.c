@@ -154,16 +154,26 @@ ged_rotate_arb_face(struct ged *gedp, int argc, const char *argv[])
 	return BRLCAD_ERROR;
     }
 
-    /* check if point 5 is in the face */
-    pnt5 = 0;
-    for (i=0; i<4; i++)  {
-	if (ged_arb_vertices[arb_type-4][face*4+i]==5)
-	    pnt5=1;
-    }
+    /* special case for arb4 */
+    if (arb_type == ARB4 && vi >= 3)
+	vi = 4;
+
+    /* special case for arb6 */
+    if (arb_type == ARB6 && vi >= 5)
+	vi = 6;
 
     /* special case for arb7 */
-    if (arb_type == ARB7  && pnt5)
-	vi = 4;
+    if (arb_type == ARB7) {
+	/* check if point 5 is in the face */
+	pnt5 = 0;
+	for (i=0; i<4; i++)  {
+	    if (ged_arb_vertices[arb_type-4][face*4+i]==5)
+		pnt5=1;
+	}
+
+	if (pnt5)
+	    vi = 4;
+    }
 
     {
 	/* Apply incremental changes */
