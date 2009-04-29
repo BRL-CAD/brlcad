@@ -18,24 +18,18 @@ Recent Bugs
 * The nmg objects are raytracing VERY slowly, more than an order of
   magnitude slower than tracing that nmg converted to an equivalent
   bot.  There appears to be major resource contention and/or thread
-  locking on SMP machines resulting in nearly serialized performance
-  (perhaps over-utilization of the rt_uniresource), though the trace
-  is still slow with -P1.  Confirmed with a simple test case of a
-  sphere converted to an nmg:
+  locking on SMP machines resulting in nearly serialized performance,
+  though the trace is still slow with -P1.  Confirmed with a simple
+  test case of a sphere converted to an nmg:
 
     make sph sph ; facetize -n sph.nmg sph
 
   Looks like bots are fine and problem is independent of framebuffer
-  and image size.  Problem confirmed on head and as far back as at
-  least 7.8.0 so it could just be that they "suck" without the
-  optimizations that have gone into the bot primitive.
-
-  Profile of a -P1 run shows there may be a syscall getting in the
-  way, exacerbating the problem on bigger SMP configurations.
-  Otherwise, profile shows 30% in system calls (interrupts, mutex
-  locking, and allocs), 25% in isect_ray_faceuse, 15% in
-  bn_isect_line3_plane, 5% in nmg_ray_segs, 5% in nmg_isect_ray_model,
-  4% in ray_miss_vertex,
+  and image size.  Problem seems to be the way the ray_data structure
+  is used to track hitmiss data.  It is horribly inefficient with a
+  large per-shot calloc/free occurring.  Quick timing test showed
+  eliminating the calloc/free alone should result in approximately a
+  3x increase.
 
 * mged 'facetize -n' command is giving many errors:
     ERROR: color index out of range (-128 > 255)
