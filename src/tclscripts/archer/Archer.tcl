@@ -142,6 +142,7 @@ package provide Archer 1.0
 	# ArcherCore Override Section
 	method Load                {_target}
 	method updateTheme {}
+	method kill                {args}
     }
 
     protected {
@@ -769,6 +770,18 @@ package provide Archer 1.0
     }
 }
 
+::itcl::body Archer::kill {args} {
+    eval gedWrapper kill 1 0 1 1 $args
+
+    if {$mSelectedObj != "" && [lsearch $args $mSelectedObj] != -1} {
+	set tops [$itk_component(ged) tops]
+	if {[llength $tops]} {
+	    set obj [lindex $tops 0]
+	    set obj [regsub -all {/} $obj ""]
+	    selectNode [$itk_component(tree) find $obj] 0
+	}
+    }
+}
 
 ::itcl::body Archer::Load {_target} {
     SetWaitCursor $this
