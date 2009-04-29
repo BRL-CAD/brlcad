@@ -422,9 +422,6 @@
 	-row $row \
 	-column 1 \
 	-sticky nsew
-    #    grid $itk_component(combInheritL) $itk_component(combInheritE) \
-	-row $row \
-	-sticky nsew
     grid columnconfigure $parent 1 -weight 1
 
     #    pack $itk_component(combGeneralF) -expand yes -fill both
