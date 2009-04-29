@@ -1025,6 +1025,7 @@
 			      set mEditClass $EDIT_CLASS_ROT; \
 			      set mEditParam1 1; \
 			      set mEditParam2 1; \
+			      invokeRotationPointDialog {1 2 3 4}; \
 			      configure -valueUnits "deg"; \
 			      updateUpperPanel {1 2 3 4} {5 6 7} \
 			  } \
@@ -1040,7 +1041,7 @@
 			     set mEditCommand rotate_arb_face; \
 			     set mEditClass $EDIT_CLASS_ROT; \
 			     set mEditParam1 3; \
-			     set mEditParam2 1; \
+			     set mEditParam2 5; \
 			     configure -valueUnits "deg"; \
 			     updateUpperPanel {5} {1 2 3 4 6 7} \
 			 } \
@@ -1049,6 +1050,7 @@
 			      set mEditClass $EDIT_CLASS_ROT; \
 			      set mEditParam1 4; \
 			      set mEditParam2 2; \
+			      invokeRotationPointDialog {2 3 6 7}; \
 			      configure -valueUnits "deg"; \
 			      updateUpperPanel {2 3 6 7} {1 4 5} \
 			  } \
@@ -1056,7 +1058,7 @@
 			      set mEditCommand rotate_arb_face; \
 			      set mEditClass $EDIT_CLASS_ROT; \
 			      set mEditParam1 5; \
-			      set mEditParam2 2; \
+			      set mEditParam2 5; \
 			      configure -valueUnits "deg"; \
 			      updateUpperPanel {5} {1 2 3 4 6 7} \
 			  } \
@@ -1064,7 +1066,7 @@
 			      set mEditCommand rotate_arb_face; \
 			      set mEditClass $EDIT_CLASS_ROT; \
 			      set mEditParam1 6; \
-			      set mEditParam2 4; \
+			      set mEditParam2 5; \
 			      configure -valueUnits "deg"; \
 			      updateUpperPanel {5} {1 2 3 4 6 7} \
 			  }

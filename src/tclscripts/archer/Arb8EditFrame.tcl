@@ -43,6 +43,9 @@
 	method buildUpperPanel
 	method buildLowerPanel
 	method buildValuePanel
+
+	common mRotationPointDialog ""
+	common mRotationPointCB ""
     }
 
     public {
@@ -118,6 +121,9 @@
 	method initValuePanel {}
 
 	method editGeometry {}
+
+	method buildRotationPointDialog {}
+	method invokeRotationPointDialog {_choices}
     }
 
     private {}
@@ -129,6 +135,8 @@
 # ------------------------------------------------------------
 
 ::itcl::body Arb8EditFrame::constructor {args} {
+    buildRotationPointDialog
+
     eval itk_initialize $args
 }
 
@@ -1367,6 +1375,7 @@
 			      set mEditClass $EDIT_CLASS_ROT; \
 			      set mEditParam1 1; \
 			      set mEditParam2 1; \
+			      invokeRotationPointDialog {1 2 3 4}; \
 			      configure -valueUnits "deg"; \
 			      updateUpperPanel {1 2 3 4} {5 6 7 8} \
 			  } \
@@ -1375,6 +1384,7 @@
 			      set mEditClass $EDIT_CLASS_ROT; \
 			      set mEditParam1 2; \
 			      set mEditParam2 5; \
+			      invokeRotationPointDialog {5 6 7 8}; \
 			      configure -valueUnits "deg"; \
 			      updateUpperPanel {5 6 7 8} {1 2 3 4} \
 			  } \
@@ -1383,6 +1393,7 @@
 			      set mEditClass $EDIT_CLASS_ROT; \
 			      set mEditParam1 3; \
 			      set mEditParam2 1; \
+			      invokeRotationPointDialog {1 4 5 8}; \
 			      configure -valueUnits "deg"; \
 			      updateUpperPanel {1 5 8 4} {2 3 6 7} \
 			  } \
@@ -1391,6 +1402,7 @@
 			      set mEditClass $EDIT_CLASS_ROT; \
 			      set mEditParam1 4; \
 			      set mEditParam2 2; \
+			      invokeRotationPointDialog {2 3 6 7}; \
 			      configure -valueUnits "deg"; \
 			      updateUpperPanel {2 3 6 7} {1 5 8 4} \
 			  } \
@@ -1399,6 +1411,7 @@
 			      set mEditClass $EDIT_CLASS_ROT; \
 			      set mEditParam1 5; \
 			      set mEditParam2 1; \
+			      invokeRotationPointDialog {1 2 5 6}; \
 			      configure -valueUnits "deg"; \
 			      updateUpperPanel {1 2 5 6} {3 4 7 8} \
 			  } \
@@ -1406,7 +1419,8 @@
 			      set mEditCommand rotate_arb_face; \
 			      set mEditClass $EDIT_CLASS_ROT; \
 			      set mEditParam1 6; \
-			      set mEditParam2 4; \
+			      set mEditParam2 3; \
+			      invokeRotationPointDialog {3 4 7 8}; \
 			      configure -valueUnits "deg"; \
 			      updateUpperPanel {3 4 7 8} {1 2 5 6} \
 			  }
@@ -1442,6 +1456,83 @@
 	$rotateFace1265 {rotateFace 1265} \
 	$rotateFace4378 {rotateFace 4378}
 }
+
+::itcl::body Arb8EditFrame::buildRotationPointDialog {} {
+    if {$mRotationPointDialog != ""} {
+	return
+    }
+
+    set dialog [::iwidgets::dialog .\#auto \
+		    -modality application \
+		    -title "Select Rotation Point" \
+		    -background $::ArcherCore::SystemButtonFace]
+    set mRotationPointDialog $dialog
+
+    $dialog configure -background $::ArcherCore::LABEL_BACKGROUND_COLOR
+
+    $dialog hide 1
+    $dialog hide 2
+    $dialog hide 3
+
+    $dialog configure \
+	-thickness 2 \
+	-buttonboxpady 0
+
+    $dialog configure \
+	-thickness 2 \
+	-buttonboxpady 0
+    $dialog buttonconfigure 0 \
+	-defaultring yes \
+	-defaultringpad 3 \
+	-borderwidth 1 \
+	-pady 0
+
+    # ITCL can be nasty
+    set win [$dialog component bbox component OK component hull]
+    after idle "$win configure -relief flat"
+
+    # Build combobox
+    set parent [$dialog childsite]
+    ::ttk::label $parent.rpointL \
+	-text "Rotation Point:"
+
+    ::ttk::frame $parent.rpointF \
+	-relief sunken
+
+    ::ttk::combobox $parent.rpointF.rpointCB \
+	-state readonly \
+	-textvariable ::GeometryEditFrame::mEditParam2 \
+	-values {}
+    set mRotationPointCB $parent.rpointF.rpointCB
+
+    pack $parent.rpointF.rpointCB -expand yes -fill both
+
+    set row 0
+    grid $parent.rpointL \
+	-row $row \
+	-column 0 \
+	-sticky ne
+    grid $parent.rpointF \
+	-row $row \
+	-column 1 \
+	-sticky nsew
+    grid columnconfigure $parent 1 -weight 1
+
+    $dialog buttonconfigure OK -command "$dialog deactivate"
+    wm protocol $dialog WM_DELETE_WINDOW "$dialog deactivate"
+
+    # Lame tcl/tk won't center the window properly
+    # the first time unless we call update.
+    update
+
+    after idle "$dialog center"
+}
+    
+::itcl::body Arb8EditFrame::invokeRotationPointDialog {_choices} {
+    $mRotationPointCB configure -values $_choices
+    $mRotationPointDialog activate
+}
+
 
 # Local Variables:
 # mode: Tcl
