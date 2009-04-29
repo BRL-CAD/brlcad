@@ -53,7 +53,6 @@ struct nmg_specific {
     char *manifolds; /*  structure 1-3manifold table */
     vect_t nmg_invdir;
     int nmg_emagic;	/* STRUCT END magic number */
-    struct ray_data *rd;
 };
 
 struct tmp_v {
