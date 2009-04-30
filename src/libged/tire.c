@@ -1511,13 +1511,13 @@ MakeTreadSolid(struct rt_wdb (*file), char *suffix,
     mk_eto(file, bu_vls_addr(&str), origin, normal, C, ell2treadcadparams[1], ell2treadcadparams[4]);
 
     VSET(vertex, 0, -ell1treadcadparams[2] - ell1treadcadparams[2] * .01, 0);
-    VSET(height, 0, ell2treadcadparams[3] + ell1treadcadparams[2] * .01 , 0);
+    VSET(height, 0, ell1treadcadparams[2] - dytred/2 + ell1treadcadparams[2] * .01 , 0);
     bu_vls_trunc(&str, 0);
     bu_vls_printf(&str, "TopTreadClipL%s.s", suffix);
     mk_rcc(file, bu_vls_addr(&str), vertex, height, ztire - dztred);
 
     VSET(vertex, 0, ell1treadcadparams[2] + ell1treadcadparams[2] * .01, 0);
-    VSET(height, 0, -ell2treadcadparams[3] - ell1treadcadparams[2] * .01, 0);
+    VSET(height, 0, -ell1treadcadparams[2] + dytred/2 - ell1treadcadparams[2] * .01, 0);
     bu_vls_trunc(&str, 0);
     bu_vls_printf(&str, "TopTreadClipR%s.s", suffix);
     mk_rcc(file, bu_vls_addr(&str), vertex, height, ztire - dztred);
