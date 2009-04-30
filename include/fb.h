@@ -117,9 +117,6 @@ FB_EXPORT extern int	fb_scursor(FBIO *ifp, int mode, int x, int y);
  * Some functions and variables we couldn't hide.
  * Not for general consumption.
  */
-FB_EXPORT extern int	_fb_pgin();
-FB_EXPORT extern int	_fb_pgout();
-FB_EXPORT extern int	_fb_pgflush();
 FB_EXPORT extern int	_fb_disk_enable;
 FB_EXPORT extern int	fb_sim_readrect(FBIO *ifp, int xmin, int ymin, int _width, int _height, unsigned char *pp);
 FB_EXPORT extern int	fb_sim_writerect(FBIO *ifp, int xmin, int ymin, int _width, int _height, const unsigned char *pp);

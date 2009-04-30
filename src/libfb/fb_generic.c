@@ -224,7 +224,7 @@ fb_close(FBIO *ifp)
     int	i;
 
     FB_CK_FBIO(ifp);
-    _fb_pgflush( ifp );
+    fb_flush( ifp );
     if ( (i=(*ifp->if_close)( ifp )) <= -1 )  {
 	fb_log(	"fb_close: can not close device \"%s\", ret=%d.\n",
 		ifp->if_name, i );
@@ -248,7 +248,7 @@ fb_close_existing(FBIO *ifp)
 
     FB_CK_FBIO(ifp);
 
-    _fb_pgflush(ifp);
+    fb_flush(ifp);
 
     /* FIXME: these should be callbacks, not listed directly */
 
