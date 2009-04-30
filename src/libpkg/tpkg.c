@@ -62,7 +62,8 @@ typedef struct _my_data_ {
 #define MAX_DIGITS	5
 
 
-/** print a usage statement when invoked with bad, help, or no arguments
+/**
+ * print a usage statement when invoked with bad, help, or no arguments
  */
 static void
 usage(const char *msg, const char *argv0)
@@ -79,7 +80,8 @@ usage(const char *msg, const char *argv0)
 }
 
 
-/** simple "valid" port number check used by client and server
+/**
+ * simple "valid" port number check used by client and server
  */
 static void
 validate_port(int port) {
@@ -89,7 +91,8 @@ validate_port(int port) {
 }
 
 
-/** callback when a HELO message packet is received.
+/**
+ * callback when a HELO message packet is received.
  *
  * We should not encounter this packet specifically since we listened
  * for it before beginning processing of packets as part of a simple
@@ -104,7 +107,8 @@ server_helo(struct pkg_conn *connection, char *buf)
 }
 
 
-/** callback when a DATA message packet is received
+/**
+ * callback when a DATA message packet is received
  */
 void
 server_data(struct pkg_conn *connection, char *buf)
@@ -115,7 +119,8 @@ server_data(struct pkg_conn *connection, char *buf)
 }
 
 
-/** callback when a CIAO message packet is received
+/**
+ * callback when a CIAO message packet is received
  */
 void
 server_ciao(struct pkg_conn *connection, char *buf)
@@ -126,7 +131,8 @@ server_ciao(struct pkg_conn *connection, char *buf)
 }
 
 
-/** start up a server that listens for a single client.
+/**
+ * start up a server that listens for a single client.
  */
 void
 run_server(int port) {
@@ -171,7 +177,7 @@ run_server(int port) {
 	}
 
 	/* got a connection, process it */
-	buffer = pkg_bwaitfor(MSG_HELO, client);
+	buffer = pkg_bwaitfor (MSG_HELO, client);
 	if (buffer == NULL) {
 	    bu_log("Failed to process the client connection, still waiting\n");
 	    pkg_close(client);
@@ -223,8 +229,9 @@ run_server(int port) {
 }
 
 
-/** start up a client that connects to the given server, and sends
- *  serialized file data.
+/**
+ * start up a client that connects to the given server, and sends
+ * serialized file data.
  */
 void
 run_client(const char *server, int port, const char *file)
@@ -298,7 +305,8 @@ run_client(const char *server, int port, const char *file)
 }
 
 
-/** main application for both the client and server
+/**
+ * main application for both the client and server
  */
 int
 main(int argc, char *argv[]) {
