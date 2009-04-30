@@ -2859,7 +2859,7 @@ dmo_closeFb(dmop)
     if (dmop->dmo_fbs.fbs_fbp == FBIO_NULL)
 	return TCL_OK;
 
-    _fb_pgflush(dmop->dmo_fbs.fbs_fbp);
+    fb_flush(dmop->dmo_fbs.fbs_fbp);
 
     switch (dmop->dmo_dmp->dm_type) {
 #ifdef DM_X
