@@ -279,6 +279,7 @@ rt_dirbuild
 rt_free_rti
 rt_functab
 rt_g
+rt_get_functab_by_label
 rt_gettree
 rt_hf_to_dsp
 rt_init_resource
