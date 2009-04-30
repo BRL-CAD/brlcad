@@ -1,3 +1,9 @@
+if BUILD_STEP
+STEPDIR=step
+else !BUILD_STEP
+STEPDIR=
+endif
+
 
 AM_CPPFLAGS = ${TCL_CPPFLAGS}
 
@@ -29,6 +35,7 @@ else !ONLY_BENCHMARK
 
 SUBDIRS = \
 	iges \
+	${STEPDIR} \
 	intaval
 
 bin_PROGRAMS = \
