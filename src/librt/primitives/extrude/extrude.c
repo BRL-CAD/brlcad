@@ -2318,7 +2318,7 @@ rt_extrude_ifree(struct rt_db_internal *ip, struct resource *resp)
 	tmp_ip.idb_type = ID_SKETCH;
 	tmp_ip.idb_ptr = (genptr_t)extrude_ip->skt;
 	tmp_ip.idb_meth = &rt_functab[ID_SKETCH];
-	tmp_ip.idb_meth->ft_ifree(ip, resp);
+	tmp_ip.idb_meth->ft_ifree(tmp_ip, resp);
     }
     extrude_ip->magic = 0;			/* sanity */
 
