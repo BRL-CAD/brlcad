@@ -5690,7 +5690,7 @@ go_close_fbs(struct ged_dm_view *gdvp)
     if (gdvp->gdv_fbs.fbs_fbp == FBIO_NULL)
 	return TCL_OK;
 
-    _fb_pgflush(gdvp->gdv_fbs.fbs_fbp);
+    fb_flush(gdvp->gdv_fbs.fbs_fbp);
 
     switch (gdvp->gdv_dmp->dm_type) {
 #ifdef DM_X
