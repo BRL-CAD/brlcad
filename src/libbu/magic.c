@@ -55,12 +55,24 @@ bu_identify_magic(register unsigned long magic)
 	    return "bu_color";
 	case BU_EXTERNAL_MAGIC:
 	    return "bu_external";
+	case BU_HASH_ENTRY_MAGIC:
+	    return "bu_hash_entry";
+	case BU_HASH_RECORD_MAGIC:
+	    return "bu_hash_record";
+	case BU_HASH_TBL_MAGIC:
+	    return "bu_hash_table";
 	case BU_HIST_MAGIC:
 	    return "bu_hist";
+	case BU_HOOK_LIST_MAGIC:
+	    return "bu_hook_list";
+	case BU_IMAGE_FILE_MAGIC:
+	    return "bu_image_file";
 	case BU_LIST_HEAD_MAGIC:
 	    return "bu_list";
 	case BU_MAPPED_FILE_MAGIC:
 	    return "bu_mapped_file";
+	case BU_MRO_MAGIC:
+	    return "bu_mro";
 	case BU_PTBL_MAGIC:
 	    return "bu_ptbl";
 	case BU_RB_LIST_MAGIC:
