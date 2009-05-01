@@ -23,6 +23,8 @@
  *
  * Routines to insert/extract short/long's. Must account for byte
  * order and non-alignment problems.
+ *
+ * DEPRECATED: use the libbu serialization routines.
  */
 /** @} */
 
@@ -31,14 +33,7 @@ unsigned short
 fbgetshort(char *msgp)
 {
     register unsigned char *p = (unsigned char *) msgp;
-#ifdef vax
-    /*
-     * vax compiler doesn't put shorts in registers
-     */
     register unsigned long u;
-#else
-    register unsigned short u;
-#endif
 
     u = *p++ << 8;
     return ((unsigned short)(u | *p));
