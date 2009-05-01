@@ -51,7 +51,7 @@ $(fedex_hdrs): ${fedex_srcs}
 
 # $(step_g_OBJECTS): $(fedex_srcs)
 
-CLEANFILES = $(fedex_srcs)
+# CLEANFILES = $(fedex_srcs)
 
 include $(top_srcdir)/misc/Makefile.defs
 
