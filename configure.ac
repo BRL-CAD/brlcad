@@ -2448,12 +2448,12 @@ AC_SUBST(OPENNURBS_CPPFLAGS)
 
 dnl *** NIST STEP Class Libraries ***
 dnl figure out whether we need to build NIST STEP Class Libraries
-STEP_CPPFLAGS="-I\${top_srcdir}/src/other/step/src/clstepcore -I\${top_srcdir}/src/other/step/src/cleditor -I\${top_srcdir}/src/other/step/src/cldai  -I\${top_srcdir}/src/other/step/src/clutils -I\${top_srcdir}/src/other/step/include"
+STEP_CPPFLAGS='-I${top_srcdir}/src/other/step/src/clstepcore -I${top_srcdir}/src/other/step/src/cleditor -I${top_srcdir}/src/other/step/src/cldai  -I${top_srcdir}/src/other/step/src/clutils -I${top_srcdir}/src/other/step/include'
 STEP_VERSION="3.2.0"
 AC_SUBST(STEP_VERSION)
 AC_MSG_CHECKING(whether to build NIST Step Class Libraries)
 if test ! "x$bc_build_step" = "xno" ; then
-    #FIXME:  This should be "yes" - changed after r34379 to avoid build issues, revert to "yes" again to re-enable SCL build as soon as possible!!!!
+    STEP=""
     build_brlcad_step=no
     AC_MSG_RESULT(no)
 else
