@@ -15,7 +15,7 @@ COMMON = \
 exppp_SOURCES = \
 	exppp-main.c
 
-exppp_LDADD = ${EXPRESS} ${EXPPP} $(top_builddir)/src/express/fedex.o
+exppp_LDADD = ${EXPRESS} libexppp.la $(top_builddir)/src/express/fedex.o
 
 libexppp_nil_la_SOURCES = $(COMMON)
 libexppp_nil_la_LIBADD = 

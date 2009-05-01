@@ -39,9 +39,9 @@ fedex_SOURCES = \
 symlink_SOURCES = \
 	symlink.c 
 
-fedex_LDADD = ${EXPRESS}
+fedex_LDADD = libexpress.la
 
-symlink_LDADD = ${EXPRESS} fedex.o
+symlink_LDADD = libexpress.la fedex.o
 
 libexpress_nil_la_SOURCES = \
 	$(COMMON)
