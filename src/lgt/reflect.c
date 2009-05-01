@@ -1929,11 +1929,11 @@ hl_Postprocess(void)
 	    /* Output foreground or background pixel. */
 	    if ( on )
 	    {
-		FB_WPIXEL( fbiop, *fgp );
+		fb_wpixel( fbiop, *fgp );
 	    }
 	    else
 	    {
-		FB_WPIXEL( fbiop, *bgp );
+		fb_wpixel( fbiop, *bgp );
 	    }
 	}
     }
@@ -2030,7 +2030,7 @@ view_pix(register struct application *ap, RGBpixel (*scanbuf), vect_t (*aliasbuf
 	    if ( fb_seek( fbiop, x, y ) != -1 )
 	    {
 		/* WARNING: no error checking. */
-		FB_WPIXEL( fbiop, pixel );
+		fb_wpixel( fbiop, pixel );
 		return;
 	    }
 	    break;

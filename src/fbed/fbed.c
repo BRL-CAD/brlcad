@@ -476,7 +476,7 @@ fillRectangle(register Rectangle *rectp, register RGBpixel (*pixelp))
 	    register int x = lft;
 	    (void) fb_seek( fbp, x, btm );
 	    for (; x <= rgt; x++ )
-		FB_WPIXEL( fbp, *pixelp );
+		fb_wpixel( fbp, *pixelp );
 	}
 	(void) fb_flush( fbp );
     }
@@ -1580,7 +1580,7 @@ f_Transliterate() /* Transliterate pixels of color1 to target color2.*/
 	    if ( AproxPixel( cur, old, tolerance ) )
 	    {
 		(void) fb_seek( fbp, x, y );
-		FB_WPIXEL( fbp, new );
+		fb_wpixel( fbp, new );
 	    }
 	}
     }
@@ -1866,7 +1866,7 @@ f_Put_Pixel() /* Put pixel. */
 			     paint, 1 );
 	else {
 	    (void) fb_seek( fbp, cursor_pos.p_x, cursor_pos.p_y );
-	    FB_WPIXEL( fbp, paint );
+	    fb_wpixel( fbp, paint );
 	}
     } else {
 	fb_Paint( cursor_pos.p_x - rectwid, cursor_pos.p_y - rectwid,

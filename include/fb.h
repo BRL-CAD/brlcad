@@ -151,16 +151,6 @@ FB_EXPORT extern int wgl_close_existing();
 			   (to)[GRN]=(from)[GRN];\
 			   (to)[BLU]=(from)[BLU]; }
 
-/**
- * A fast inline version of fb_wpixel.  This one does NOT check for errors,
- *  nor "return" a value.  For reasons of C syntax it needs the basename
- *  of an RGBpixel rather than a pointer to one.
- */
-#define	FB_WPIXEL(ifp, pp) {if((ifp)->if_pno==-1)_fb_pgin((ifp),(ifp)->if_pixcur/(ifp)->if_ppixels);\
-	(*((ifp)->if_pcurp+0))=(pp)[0];(*((ifp)->if_pcurp+1))=(pp)[1];(*((ifp)->if_pcurp+2))=(pp)[2];\
-	(ifp)->if_pcurp+=3;(ifp)->if_pixcur++;(ifp)->if_pdirty=1;\
-	if ((ifp)->if_pcurp>=(ifp)->if_pendp) {_fb_pgout((ifp));(ifp)->if_pno= -1;}}
-
 /* Debug Bitvector Definition */
 #define	FB_DEBUG_BIO	1	/* Buffered io calls (less r/wpixel) */
 #define	FB_DEBUG_CMAP	2	/* Contents of colormaps */

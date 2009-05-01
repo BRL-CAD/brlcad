@@ -193,15 +193,15 @@ oldflavor(void)
     for (y = fb_sz-1; y >= 0; y--) {
 	for (x = 0; x < fb_sz; x++) {
 	    if (x == y || x == fb_sz - y) {
-		FB_WPIXEL(fbp, white);
+		fb_wpixel(fbp, white);
 	    } else
 		if (x == middle || y == middle) {
-		    FB_WPIXEL(fbp, red);
+		    fb_wpixel(fbp, red);
 		} else
 		    if ((x & mask) && (y & mask)) {
-			FB_WPIXEL(fbp, black);
+			fb_wpixel(fbp, black);
 		    } else {
-			FB_WPIXEL(fbp, white);
+			fb_wpixel(fbp, white);
 		    }
 	}
     }
