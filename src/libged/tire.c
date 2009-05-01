@@ -1081,9 +1081,9 @@ MakeTreadPattern1(struct rt_wdb (*file), char *suffix, fastf_t dwidth,
 	{ -.15, 1 },
 
 	{ 0.05, 1 },
-	{ .44, .7 },
-	{ .1, .3 },
-	{ .4, 0 }
+	{ .47, .7 },
+	{ .13, .3 },
+	{ .43, 0 }
     };
     point2d_t verts3[] = {
 	{ -.1, .1 },
