@@ -105,22 +105,58 @@ bu_identify_magic(register unsigned long magic)
 	    return ("rt_arb_internal");
 	case RT_ARS_INTERNAL_MAGIC:
 	    return ("rt_ars_internal");
+	case RT_BINUNIF_INTERNAL_MAGIC:
+	    return ("rt_binuf_internal");
 	case RT_BOT_INTERNAL_MAGIC:
 	    return ("rt_bot_internal");
 	case RT_BREP_INTERNAL_MAGIC:
 	    return ("rt_brep_internal");
+	case RT_CLINE_INTERNAL_MAGIC:
+	    return ("rt_cline_internal");
+	case RT_DSP_INTERNAL_MAGIC:
+	    return ("rt_dsp_internal");
 	case RT_EBM_INTERNAL_MAGIC:
 	    return ("rt_ebm_internal");
+	case RT_EHY_INTERNAL_MAGIC:
+	    return ("rt_ehy_internal");
 	case RT_ELL_INTERNAL_MAGIC:
 	    return ("rt_ell_internal");
+	case RT_EPA_INTERNAL_MAGIC:
+	    return ("rt_epa_internal");
+	case RT_ETO_INTERNAL_MAGIC:
+	    return ("rt_eto_internal");
+	case RT_EXTRUDE_INTERNAL_MAGIC:
+	    return ("rt_extrude_internal");
+	case RT_GRIP_INTERNAL_MAGIC:
+	    return ("rt_grip_internal");
 	case RT_HALF_INTERNAL_MAGIC:
 	    return ("rt_half_internal");
+	case RT_HF_INTERNAL_MAGIC:
+	    return ("rt_hf_internal");
+	case RT_METABALL_INTERNAL_MAGIC:
+	    return ("rt_metaball_internal");
+	case RT_NURB_INTERNAL_MAGIC:
+	    return ("rt_nurb_internal");
 	case RT_PART_INTERNAL_MAGIC:
 	    return ("rt_part_internal");
 	case RT_PG_INTERNAL_MAGIC:
 	    return ("rt_pg_internal");
 	case RT_PIPE_INTERNAL_MAGIC:
 	    return ("rt_pipe_internal");
+	case RT_PNTS_INTERNAL_MAGIC:
+	    return ("rt_pnts_internal");
+	case RT_REVOLVE_INTERNAL_MAGIC:
+	    return ("rt_revolve_internal");
+	case RT_RHC_INTERNAL_MAGIC:
+	    return ("rt_rhc_internal");
+	case RT_RPC_INTERNAL_MAGIC:
+	    return ("rt_rpc_internal");
+	case RT_SKETCH_INTERNAL_MAGIC:
+	    return ("rt_sketch_internal");
+	case RT_SUBMODEL_INTERNAL_MAGIC:
+	    return ("rt_submodel_internal");
+	case RT_SUPERELL_INTERNAL_MAGIC:
+	    return ("rt_superell_internal");
 	case RT_TGC_INTERNAL_MAGIC:
 	    return ("rt_tgc_internal");
 	case RT_TOR_INTERNAL_MAGIC:
