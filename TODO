@@ -440,6 +440,11 @@ THESE ARE LOWER PRIORITY OR FOR FUTURE RELEASES
 * implement tools for generating springs and gears, improve bolt/nut
   tool support
 
+* SVG renderer.  go straight from 3D model to a 2D vector image for a
+  given view.  similar to the plot/postscript wireframe view saves,
+  this would need to store projected contours (ala rtedge) and filled
+  color regions.
+
 
 LIBPC
 -----
