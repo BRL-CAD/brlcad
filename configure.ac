@@ -2454,7 +2454,7 @@ AC_SUBST(STEP_VERSION)
 AC_MSG_CHECKING(whether to build NIST Step Class Libraries)
 if test ! "x$bc_build_step" = "xno" ; then
     STEP=""
-    build_brlcad_step=no
+    build_brlcad_step=yes
     AC_MSG_RESULT(no)
 else
     build_brlcad_step=no
