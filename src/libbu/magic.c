@@ -207,10 +207,20 @@ bu_identify_magic(register unsigned long magic)
 	    return ("loop");
 	case NMG_MODEL_MAGIC:
 	    return ("model");
+	case NMG_RADIAL_MAGIC:
+	    return ("radial");
+	case NMG_RAY_DATA_MAGIC:
+	    return ("ray_data");
 	case NMG_REGION_A_MAGIC:
 	    return ("region_a");
 	case NMG_REGION_MAGIC:
 	    return ("region");
+	case NMG_RT_HIT_MAGIC:
+	    return ("rt_hit");
+	case NMG_RT_HIT_SUB_MAGIC:
+	    return ("rt_hit_sub");
+	case NMG_RT_MISS_MAGIC:
+	    return ("rt_miss");
 	case NMG_SHELL_A_MAGIC:
 	    return ("shell_a");
 	case NMG_SHELL_MAGIC:
