@@ -239,6 +239,8 @@ bu_identify_magic(register unsigned long magic)
 	    /*
 	     * Raytracing
 	     */
+	case RT_ANP_MAGIC:
+	    return "librt Aprp";
 	case RT_AP_MAGIC:
 	    return "librt application";
 	case RT_COMB_MAGIC:
@@ -247,6 +249,10 @@ bu_identify_magic(register unsigned long magic)
 	    return "librt rt_constraint_internal";
 	case RT_CTS_MAGIC:
 	    return "librt combined_tree_state";
+	case RT_DBTR_MAGIC:
+	    return "librt dbtr";
+	case RT_DBTS_MAGIC:
+	    return "librt dbts";
 	case RT_DB_INTERNAL_MAGIC:
 	    return ("rt_db_internal");
 	case RT_DIR_MAGIC:
@@ -257,6 +263,10 @@ bu_identify_magic(register unsigned long magic)
 	    return "librt hit";
 	case RT_HTBL_MAGIC:
 	    return "rt_htbl";
+	case RT_PIECELIST_MAGIC:
+	    return "librt piecelist";
+	case RT_PIECESTATE_MAGIC:
+	    return "librt piecestate";
 	case RT_RAY_MAGIC:
 	    return "librt xray";
 	case RT_REGION_MAGIC:
@@ -265,6 +275,8 @@ bu_identify_magic(register unsigned long magic)
 	    return ("librt seg");
 	case RT_SOLTAB_MAGIC:
 	    return ("librt soltab");
+	case RT_SOLTAB2_MAGIC:
+	    return ("librt soltab2");
 	case RT_TESS_TOL_MAGIC:
 	    return ("rt_tess_tol");
 	case RT_TREE_MAGIC:
@@ -277,14 +289,32 @@ bu_identify_magic(register unsigned long magic)
 	     */
 	case ANIMATE_MAGIC:
 	    return ("librt animate");
+	case CURVE_BEZIER_MAGIC:
+	    return ("curve_bezier");
+	case CURVE_CARC_MAGIC:
+	    return ("curve_carc");
+	case CURVE_LSEG_MAGIC:
+	    return ("curve_lseg");
+	case CURVE_NURB_MAGIC:
+	    return ("curve_nurb");
+	case DB5_RAW_INTERNAL_MAGIC:
+	    return ("db5 raw internal");
 	case DBI_MAGIC:
 	    return ("librt db_i");
 	case DB_FULL_PATH_MAGIC:
 	    return "librt db_full_path";
 	case FB_MAGIC:
 	    return ("fb.h fb_magic");
+	case LIGHT_MAGIC:
+	    return ("light magic");
+	case MF_MAGIC:
+	    return ("mf magic");
 	case PIXEL_EXT_MAGIC:
 	    return "librt pixel_ext";
+	case PL_MAGIC:
+	    return ("pl magic");
+	case PT_HD_MAGIC:
+	    return ("pt_hd magic");
 	case PT_MAGIC:
 	    return ("librt partition");
 	case RESOURCE_MAGIC:
@@ -292,7 +322,11 @@ bu_identify_magic(register unsigned long magic)
 	case RTI_MAGIC:
 	    return ("rt_i");
 	case SPM_MAGIC:
-	    return "spm.h spm_map_t";
+	    return ("spm.h spm_map_t");
+	case VERT_TREE_MAGIC:
+	    return ("vert_tree");
+	case WDB_METABALLPT_MAGIC:
+	    return ("wdb metaball pt");
 	case WDB_PIPESEG_MAGIC:
 	    return ("wdb.h wdb_pipeseg_magic");
 	case WMEMBER_MAGIC:
