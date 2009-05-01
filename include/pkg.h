@@ -190,7 +190,7 @@ PKG_EXPORT PKG_EXTERN(int pkg_send, (int type, const char *buf, size_t len, stru
  * Exactly like pkg_send, except user's data is located in two
  * disjoint buffers, rather than one.  Fiendishly useful!
  */
-PKG_EXPORT PKG_EXTERN(int pkg_2send, (int type, char *buf1, size_t len1, char *buf2, size_t len2, struct pkg_conn* pc));
+PKG_EXPORT PKG_EXTERN(int pkg_2send, (int type, const char *buf1, size_t len1, const char *buf2, size_t len2, struct pkg_conn* pc));
 
 /**
  * Send a message that doesn't need a push.

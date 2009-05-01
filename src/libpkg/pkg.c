@@ -1032,7 +1032,7 @@ pkg_send(int type, const char *buf, size_t len, register struct pkg_conn *pc)
 
 
 int
-pkg_2send(int type, char *buf1, size_t len1, char *buf2, size_t len2, register struct pkg_conn *pc)
+pkg_2send(int type, const char *buf1, size_t len1, const char *buf2, size_t len2, register struct pkg_conn *pc)
 {
 #ifdef HAVE_WRITEV
     static struct iovec cmdvec[3];
