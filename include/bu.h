@@ -2722,16 +2722,10 @@ BU_EXPORT BU_EXTERN(void bu_mm_cvt,
 	    ((((short)((_cp)[0])) << 8) | \
 		       (_cp)[1] )
 
-BU_EXPORT BU_EXTERN(unsigned short bu_gshort,
-		    (const unsigned char *msgp));
-BU_EXPORT BU_EXTERN(unsigned long bu_glong,
-		    (const unsigned char *msgp));
-BU_EXPORT BU_EXTERN(unsigned char *bu_pshort,
-		    (unsigned char *msgp,
-		     int s));
-BU_EXPORT BU_EXTERN(unsigned char *bu_plong,
-		    (unsigned char *msgp,
-		     unsigned long l));
+BU_EXPORT BU_EXTERN(unsigned short bu_gshort, (const unsigned char *msgp));
+BU_EXPORT BU_EXTERN(unsigned long bu_glong, (const unsigned char *msgp));
+BU_EXPORT BU_EXTERN(unsigned char *bu_pshort, (unsigned char *msgp, int s));
+BU_EXPORT BU_EXTERN(unsigned char *bu_plong, (unsigned char *msgp, unsigned long l));
 
 /** @} */
 
