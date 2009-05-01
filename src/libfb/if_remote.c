@@ -27,7 +27,7 @@
  * server (fbserv).
  *
  * Note that internal errors are returned as -2 and below, because
- * most remote errors (unpacked by fbgetlong) will be -1 (although
+ * most remote errors (unpacked by bu_glong) will be -1 (although
  * they could be anything).
  *
  */
@@ -52,6 +52,7 @@
 #  include <sys/socket.h>
 #endif
 
+#include "bu.h"
 #include "pkg.h"
 #include "fb.h"
 #include "fbmsg.h"
@@ -136,10 +137,6 @@ FBIO remote_interface = {
 
 void	pkg_queue(), flush_queue();
 
-/* from getput.c */
-extern unsigned short fbgetshort(char *msgp);
-extern unsigned long fbgetlong(char *msgp);
-extern char *fbputshort(register short unsigned int s, register char *msgp), *fbputlong(register long unsigned int l, register char *msgp);
 
 /* True if the non-null string s is all digits */
 HIDDEN int
@@ -278,7 +275,7 @@ rem_open(register FBIO *ifp, register char *file, int width, int height)
 {
     register int	i;
     struct pkg_conn *pc;
-    char	buf[128] = {0};
+    char buf[128] = {0};
     char	hostname[MAX_HOSTNAME] = {0};
     char	portname[MAX_HOSTNAME] = {0};
     char	device[MAX_HOSTNAME] = {0};
@@ -328,8 +325,8 @@ rem_open(register FBIO *ifp, register char *file, int width, int height)
     }
 #endif
     
-    (void)fbputlong( width, &buf[0*NET_LONG_LEN] );
-    (void)fbputlong( height, &buf[1*NET_LONG_LEN] );
+    (void)bu_plong((unsigned char *)&buf[0*NET_LONG_LEN], width);
+    (void)bu_plong((unsigned char *)&buf[1*NET_LONG_LEN], height);
     bu_strlcpy(&buf[2*NET_LONG_LEN], device, 128-2*NET_LONG_LEN);
 
     i = strlen(device)+2*NET_LONG_LEN;
@@ -340,12 +337,12 @@ rem_open(register FBIO *ifp, register char *file, int width, int height)
     if ( pkg_waitfor( MSG_RETURN, buf, sizeof(buf), pc ) < 5*NET_LONG_LEN )
 	return -6;
 
-    ifp->if_max_width = fbgetlong( &buf[1*NET_LONG_LEN] );
-    ifp->if_max_height = fbgetlong( &buf[2*NET_LONG_LEN] );
-    ifp->if_width = fbgetlong( &buf[3*NET_LONG_LEN] );
-    ifp->if_height = fbgetlong( &buf[4*NET_LONG_LEN] );
+    ifp->if_max_width = bu_glong((unsigned char *)&buf[1*NET_LONG_LEN] );
+    ifp->if_max_height = bu_glong((unsigned char *)&buf[2*NET_LONG_LEN] );
+    ifp->if_width = bu_glong((unsigned char *)&buf[3*NET_LONG_LEN] );
+    ifp->if_height = bu_glong((unsigned char *)&buf[4*NET_LONG_LEN] );
 
-    if ( fbgetlong( &buf[0*NET_LONG_LEN] ) != 0 )
+    if ( bu_glong((unsigned char *)&buf[0*NET_LONG_LEN] ) != 0 )
 	return -7;		/* fail */
 
     return( 0 );		/* OK */
@@ -354,10 +351,10 @@ rem_open(register FBIO *ifp, register char *file, int width, int height)
 HIDDEN int
 rem_close(FBIO *ifp)
 {
-    char	buf[NET_LONG_LEN+1];
+    unsigned char buf[NET_LONG_LEN+1];
 
     /* send a close package to remote */
-    if ( pkg_send( MSG_FBCLOSE, (char *)0, 0, PCP(ifp) ) < 0 )
+    if ( pkg_send( MSG_FBCLOSE, (const char *)0, 0, PCP(ifp) ) < 0 )
 	return	-2;
     /*
      *  When some libfb interfaces with a "linger mode" window
@@ -368,32 +365,32 @@ rem_close(FBIO *ifp)
      *  an error, clean up and declare this a successful close()
      *  operation.
      */
-    if ( pkg_waitfor( MSG_RETURN, buf, NET_LONG_LEN, PCP(ifp) ) < 1*NET_LONG_LEN )  {
+    if ( pkg_waitfor( MSG_RETURN, (char *)buf, NET_LONG_LEN, PCP(ifp) ) < 1*NET_LONG_LEN )  {
 	pkg_close( PCP(ifp) );
 	return	0;
     }
     pkg_close( PCP(ifp) );
-    return( fbgetlong( &buf[0*NET_LONG_LEN] ) );
+    return( bu_glong( &buf[0*NET_LONG_LEN] ) );
 }
 
 HIDDEN int
 rem_free(FBIO *ifp)
 {
-    char	buf[NET_LONG_LEN+1];
+    unsigned char buf[NET_LONG_LEN+1];
 
     /* send a free package to remote */
-    if ( pkg_send( MSG_FBFREE, (char *)0, 0, PCP(ifp) ) < 0 )
+    if ( pkg_send( MSG_FBFREE, (const char *)0, 0, PCP(ifp) ) < 0 )
 	return	-2;
-    if ( pkg_waitfor( MSG_RETURN, buf, NET_LONG_LEN, PCP(ifp) ) < 1*NET_LONG_LEN )
+    if ( pkg_waitfor( MSG_RETURN, (char *)buf, NET_LONG_LEN, PCP(ifp) ) < 1*NET_LONG_LEN )
 	return	-3;
     pkg_close( PCP(ifp) );
-    return( fbgetlong( &buf[0*NET_LONG_LEN] ) );
+    return( bu_glong( &buf[0*NET_LONG_LEN] ) );
 }
 
 HIDDEN int
 rem_clear(FBIO *ifp, unsigned char *bgpp)
 {
-    char	buf[NET_LONG_LEN+1];
+    unsigned char buf[NET_LONG_LEN+1];
 
     /* send a clear package to remote */
     if ( bgpp == PIXEL_NULL )  {
@@ -403,11 +400,11 @@ rem_clear(FBIO *ifp, unsigned char *bgpp)
 	buf[1] = (bgpp)[GRN];
 	buf[2] = (bgpp)[BLU];
     }
-    if ( pkg_send( MSG_FBCLEAR, buf, 3, PCP(ifp) ) < 3 )
+    if ( pkg_send( MSG_FBCLEAR, (const char *)buf, 3, PCP(ifp) ) < 3 )
 	return	-2;
-    if ( pkg_waitfor( MSG_RETURN, buf, NET_LONG_LEN, PCP(ifp) ) < 1*NET_LONG_LEN )
+    if ( pkg_waitfor( MSG_RETURN, (char *)buf, NET_LONG_LEN, PCP(ifp) ) < 1*NET_LONG_LEN )
 	return	-3;
-    return( fbgetlong( buf ) );
+    return( bu_glong( buf ) );
 }
 
 /*
@@ -417,15 +414,15 @@ HIDDEN int
 rem_read(register FBIO *ifp, int x, int y, unsigned char *pixelp, int num)
 {
     int	ret;
-    char	buf[3*NET_LONG_LEN+1];
+    unsigned char buf[3*NET_LONG_LEN+1];
 
     if ( num <= 0 )
 	return(0);
     /* Send Read Command */
-    (void)fbputlong( x, &buf[0*NET_LONG_LEN] );
-    (void)fbputlong( y, &buf[1*NET_LONG_LEN] );
-    (void)fbputlong( num, &buf[2*NET_LONG_LEN] );
-    if ( pkg_send( MSG_FBREAD, buf, 3*NET_LONG_LEN, PCP(ifp) ) < 3*NET_LONG_LEN )
+    (void)bu_plong(&buf[0*NET_LONG_LEN], x);
+    (void)bu_plong(&buf[1*NET_LONG_LEN], y);
+    (void)bu_plong(&buf[2*NET_LONG_LEN], num);
+    if ( pkg_send( MSG_FBREAD, (const char *)buf, 3*NET_LONG_LEN, PCP(ifp) ) < 3*NET_LONG_LEN )
 	return	-2;
 
     /* Get response;  0 len means failure */
@@ -446,17 +443,17 @@ HIDDEN int
 rem_write(register FBIO *ifp, int x, int y, const unsigned char *pixelp, int num)
 {
     int	ret;
-    char	buf[3*NET_LONG_LEN+1];
+    unsigned char buf[3*NET_LONG_LEN+1];
 
     if ( num <= 0 )  return	num;
 
     /* Send Write Command */
-    (void)fbputlong( x, &buf[0*NET_LONG_LEN] );
-    (void)fbputlong( y, &buf[1*NET_LONG_LEN] );
-    (void)fbputlong( num, &buf[2*NET_LONG_LEN] );
+    (void)bu_plong(&buf[0*NET_LONG_LEN], x);
+    (void)bu_plong(&buf[1*NET_LONG_LEN], y);
+    (void)bu_plong(&buf[2*NET_LONG_LEN], num);
     ret = pkg_2send( MSG_FBWRITE+MSG_NORETURN,
-		     buf, 3*NET_LONG_LEN,
-		     (char *)pixelp, num*sizeof(RGBpixel),
+		     (const char *)buf, 3*NET_LONG_LEN,
+		     (const char *)pixelp, num*sizeof(RGBpixel),
 		     PCP(ifp) );
     ret -= 3*NET_LONG_LEN;
     if ( ret < 0 )
@@ -473,17 +470,17 @@ rem_readrect(FBIO *ifp, int xmin, int ymin, int width, int height, unsigned char
 {
     int	num;
     int	ret;
-    char	buf[4*NET_LONG_LEN+1];
+    unsigned char buf[4*NET_LONG_LEN+1];
 
     num = width*height;
     if ( num <= 0 )
 	return(0);
     /* Send Read Command */
-    (void)fbputlong( xmin, &buf[0*NET_LONG_LEN] );
-    (void)fbputlong( ymin, &buf[1*NET_LONG_LEN] );
-    (void)fbputlong( width, &buf[2*NET_LONG_LEN] );
-    (void)fbputlong( height, &buf[3*NET_LONG_LEN] );
-    if ( pkg_send( MSG_FBREADRECT, buf, 4*NET_LONG_LEN, PCP(ifp) ) < 4*NET_LONG_LEN )
+    (void)bu_plong( &buf[0*NET_LONG_LEN] , xmin);
+    (void)bu_plong( &buf[1*NET_LONG_LEN] , ymin);
+    (void)bu_plong( &buf[2*NET_LONG_LEN] , width);
+    (void)bu_plong( &buf[3*NET_LONG_LEN] , height);
+    if ( pkg_send( MSG_FBREADRECT, (const char *)buf, 4*NET_LONG_LEN, PCP(ifp) ) < 4*NET_LONG_LEN )
 	return	-2;
 
     /* Get response;  0 len means failure */
@@ -505,20 +502,20 @@ rem_writerect(FBIO *ifp, int xmin, int ymin, int width, int height, const unsign
 {
     int	num;
     int	ret;
-    char	buf[4*NET_LONG_LEN+1];
+    unsigned char buf[4*NET_LONG_LEN+1];
 
     num = width*height;
     if ( num <= 0 )
 	return(0);
 
     /* Send Write Command */
-    (void)fbputlong( xmin, &buf[0*NET_LONG_LEN] );
-    (void)fbputlong( ymin, &buf[1*NET_LONG_LEN] );
-    (void)fbputlong( width, &buf[2*NET_LONG_LEN] );
-    (void)fbputlong( height, &buf[3*NET_LONG_LEN] );
+    (void)bu_plong( &buf[0*NET_LONG_LEN] , xmin);
+    (void)bu_plong( &buf[1*NET_LONG_LEN] , ymin);
+    (void)bu_plong( &buf[2*NET_LONG_LEN] , width);
+    (void)bu_plong( &buf[3*NET_LONG_LEN] , height);
     ret = pkg_2send( MSG_FBWRITERECT+MSG_NORETURN,
-		     buf, 4*NET_LONG_LEN,
-		     (char *)pp, num*sizeof(RGBpixel),
+		     (const char *)buf, 4*NET_LONG_LEN,
+		     (const char *)pp, num*sizeof(RGBpixel),
 		     PCP(ifp) );
     ret -= 4*NET_LONG_LEN;
     if ( ret < 0 )
@@ -537,17 +534,17 @@ rem_bwreadrect(FBIO *ifp, int xmin, int ymin, int width, int height, unsigned ch
 {
     int	num;
     int	ret;
-    char	buf[4*NET_LONG_LEN+1];
+    unsigned char buf[4*NET_LONG_LEN+1];
 
     num = width*height;
     if ( num <= 0 )
 	return(0);
     /* Send Read Command */
-    (void)fbputlong( xmin, &buf[0*NET_LONG_LEN] );
-    (void)fbputlong( ymin, &buf[1*NET_LONG_LEN] );
-    (void)fbputlong( width, &buf[2*NET_LONG_LEN] );
-    (void)fbputlong( height, &buf[3*NET_LONG_LEN] );
-    if ( pkg_send( MSG_FBBWREADRECT, buf, 4*NET_LONG_LEN, PCP(ifp) ) < 4*NET_LONG_LEN )
+    (void)bu_plong( &buf[0*NET_LONG_LEN] , xmin);
+    (void)bu_plong( &buf[1*NET_LONG_LEN] , ymin);
+    (void)bu_plong( &buf[2*NET_LONG_LEN] , width);
+    (void)bu_plong( &buf[3*NET_LONG_LEN] , height);
+    if ( pkg_send( MSG_FBBWREADRECT, (const char *)buf, 4*NET_LONG_LEN, PCP(ifp) ) < 4*NET_LONG_LEN )
 	return	-2;
 
     /* Get response;  0 len means failure */
@@ -568,20 +565,20 @@ rem_bwwriterect(FBIO *ifp, int xmin, int ymin, int width, int height, const unsi
 {
     int	num;
     int	ret;
-    char	buf[4*NET_LONG_LEN+1];
+    unsigned char buf[4*NET_LONG_LEN+1];
 
     num = width*height;
     if ( num <= 0 )
 	return(0);
 
     /* Send Write Command */
-    (void)fbputlong( xmin, &buf[0*NET_LONG_LEN] );
-    (void)fbputlong( ymin, &buf[1*NET_LONG_LEN] );
-    (void)fbputlong( width, &buf[2*NET_LONG_LEN] );
-    (void)fbputlong( height, &buf[3*NET_LONG_LEN] );
+    (void)bu_plong( &buf[0*NET_LONG_LEN] , xmin);
+    (void)bu_plong( &buf[1*NET_LONG_LEN] , ymin);
+    (void)bu_plong( &buf[2*NET_LONG_LEN] , width);
+    (void)bu_plong( &buf[3*NET_LONG_LEN] , height);
     ret = pkg_2send( MSG_FBBWWRITERECT+MSG_NORETURN,
-		     buf, 4*NET_LONG_LEN,
-		     (char *)pp, num,
+		     (const char *)buf, 4*NET_LONG_LEN,
+		     (const char *)pp, num,
 		     PCP(ifp) );
     ret -= 4*NET_LONG_LEN;
     if ( ret < 0 )
@@ -596,17 +593,17 @@ rem_bwwriterect(FBIO *ifp, int xmin, int ymin, int width, int height, const unsi
 HIDDEN int
 rem_cursor(FBIO *ifp, int mode, int x, int y)
 {
-    char	buf[3*NET_LONG_LEN+1];
+    unsigned char buf[3*NET_LONG_LEN+1];
 
     /* Send Command */
-    (void)fbputlong( mode, &buf[0*NET_LONG_LEN] );
-    (void)fbputlong( x, &buf[1*NET_LONG_LEN] );
-    (void)fbputlong( y, &buf[2*NET_LONG_LEN] );
-    if ( pkg_send( MSG_FBCURSOR, buf, 3*NET_LONG_LEN, PCP(ifp) ) < 3*NET_LONG_LEN )
+    (void)bu_plong( &buf[0*NET_LONG_LEN] , mode);
+    (void)bu_plong( &buf[1*NET_LONG_LEN] , x);
+    (void)bu_plong( &buf[2*NET_LONG_LEN] , y);
+    if ( pkg_send( MSG_FBCURSOR, (const char *)buf, 3*NET_LONG_LEN, PCP(ifp) ) < 3*NET_LONG_LEN )
 	return	-2;
-    if ( pkg_waitfor( MSG_RETURN, buf, NET_LONG_LEN, PCP(ifp) ) < 1*NET_LONG_LEN )
+    if ( pkg_waitfor( MSG_RETURN, (char *)buf, NET_LONG_LEN, PCP(ifp) ) < 1*NET_LONG_LEN )
 	return	-3;
-    return( fbgetlong( buf ) );
+    return( bu_glong( buf ) );
 }
 
 /*
@@ -614,19 +611,19 @@ rem_cursor(FBIO *ifp, int mode, int x, int y)
 HIDDEN int
 rem_getcursor(FBIO *ifp, int *mode, int *x, int *y)
 {
-    char	buf[4*NET_LONG_LEN+1];
+    unsigned char buf[4*NET_LONG_LEN+1];
 
     /* Send Command */
     if ( pkg_send( MSG_FBGETCURSOR, (char *)0, 0, PCP(ifp) ) < 0 )
 	return	-2;
 
     /* return code, xcenter, ycenter, xzoom, yzoom as longs */
-    if ( pkg_waitfor( MSG_RETURN, buf, sizeof(buf), PCP(ifp) ) < 4*NET_LONG_LEN )
+    if ( pkg_waitfor( MSG_RETURN, (char *)buf, sizeof(buf), PCP(ifp) ) < 4*NET_LONG_LEN )
 	return	-3;
-    *mode = fbgetlong( &buf[1*NET_LONG_LEN] );
-    *x = fbgetlong( &buf[2*NET_LONG_LEN] );
-    *y = fbgetlong( &buf[3*NET_LONG_LEN] );
-    if ( fbgetlong( &buf[0*NET_LONG_LEN] ) != 0 )
+    *mode = bu_glong( &buf[1*NET_LONG_LEN] );
+    *x = bu_glong( &buf[2*NET_LONG_LEN] );
+    *y = bu_glong( &buf[3*NET_LONG_LEN] );
+    if ( bu_glong( &buf[0*NET_LONG_LEN] ) != 0 )
 	return	-4;		/* fail */
     return( 0 );			/* OK */
 }
@@ -643,26 +640,26 @@ rem_getcursor(FBIO *ifp, int *mode, int *x, int *y)
 HIDDEN int
 rem_setcursor(FBIO *ifp, const unsigned char *bits, int xbits, int ybits, int xorig, int yorig)
 {
-    char	buf[4*NET_LONG_LEN+1];
+    unsigned char buf[4*NET_LONG_LEN+1];
     int	ret;
 
-    (void)fbputlong( xbits, &buf[0*NET_LONG_LEN] );
-    (void)fbputlong( ybits, &buf[1*NET_LONG_LEN] );
-    (void)fbputlong( xorig, &buf[2*NET_LONG_LEN] );
-    (void)fbputlong( yorig, &buf[3*NET_LONG_LEN] );
+    (void)bu_plong( &buf[0*NET_LONG_LEN] , xbits);
+    (void)bu_plong( &buf[1*NET_LONG_LEN] , ybits);
+    (void)bu_plong( &buf[2*NET_LONG_LEN] , xorig);
+    (void)bu_plong( &buf[3*NET_LONG_LEN] , yorig);
 
     ret = pkg_2send( MSG_FBSETCURSOR+MSG_NORETURN,
-		     buf, 4*NET_LONG_LEN,
-		     (char *)bits, (xbits*ybits+7)>>3,
+		     (const char *)buf, 4*NET_LONG_LEN,
+		     (const char *)bits, (xbits*ybits+7)>>3,
 		     PCP(ifp) );
     ret -= 4*NET_LONG_LEN;
     if ( ret < 0 )
 	return	-1;	/* Error from libpkg */
 
 #if 0
-    if ( pkg_waitfor( MSG_RETURN, buf, NET_LONG_LEN, PCP(ifp) ) < 1*NET_LONG_LEN )
+    if ( pkg_waitfor( MSG_RETURN, (char *)buf, NET_LONG_LEN, PCP(ifp) ) < 1*NET_LONG_LEN )
 	return	-2;
-    return( fbgetlong( buf ) );
+    return( bu_glong( buf ) );
 #else
     /* Since this call got somehow overlooked until Release 4.3,
      * older 'fbserv' programs won't have support for this request.
@@ -679,18 +676,18 @@ rem_setcursor(FBIO *ifp, const unsigned char *bits, int xbits, int ybits, int xo
 HIDDEN int
 rem_view(FBIO *ifp, int xcenter, int ycenter, int xzoom, int yzoom)
 {
-    char	buf[4*NET_LONG_LEN+1];
+    unsigned char buf[4*NET_LONG_LEN+1];
 
     /* Send Command */
-    (void)fbputlong( xcenter, &buf[0*NET_LONG_LEN] );
-    (void)fbputlong( ycenter, &buf[1*NET_LONG_LEN] );
-    (void)fbputlong( xzoom, &buf[2*NET_LONG_LEN] );
-    (void)fbputlong( yzoom, &buf[3*NET_LONG_LEN] );
-    if ( pkg_send( MSG_FBVIEW, buf, 4*NET_LONG_LEN, PCP(ifp) ) < 4*NET_LONG_LEN )
+    (void)bu_plong( &buf[0*NET_LONG_LEN] , xcenter);
+    (void)bu_plong( &buf[1*NET_LONG_LEN] , ycenter);
+    (void)bu_plong( &buf[2*NET_LONG_LEN] , xzoom);
+    (void)bu_plong( &buf[3*NET_LONG_LEN] , yzoom);
+    if ( pkg_send( MSG_FBVIEW, (const char *)buf, 4*NET_LONG_LEN, PCP(ifp) ) < 4*NET_LONG_LEN )
 	return	-2;
-    if ( pkg_waitfor( MSG_RETURN, buf, NET_LONG_LEN, PCP(ifp) ) < 1*NET_LONG_LEN )
+    if ( pkg_waitfor( MSG_RETURN, (char *)buf, NET_LONG_LEN, PCP(ifp) ) < 1*NET_LONG_LEN )
 	return	-3;
-    return( fbgetlong( buf ) );
+    return( bu_glong( buf ) );
 }
 
 /*
@@ -698,20 +695,20 @@ rem_view(FBIO *ifp, int xcenter, int ycenter, int xzoom, int yzoom)
 HIDDEN int
 rem_getview(FBIO *ifp, int *xcenter, int *ycenter, int *xzoom, int *yzoom)
 {
-    char	buf[5*NET_LONG_LEN+1];
+    unsigned char buf[5*NET_LONG_LEN+1];
 
     /* Send Command */
     if ( pkg_send( MSG_FBGETVIEW, (char *)0, 0, PCP(ifp) ) < 0 )
 	return	-2;
 
     /* return code, xcenter, ycenter, xzoom, yzoom as longs */
-    if ( pkg_waitfor( MSG_RETURN, buf, sizeof(buf), PCP(ifp) ) < 5*NET_LONG_LEN )
+    if ( pkg_waitfor( MSG_RETURN, (char *)buf, sizeof(buf), PCP(ifp) ) < 5*NET_LONG_LEN )
 	return	-3;
-    *xcenter = fbgetlong( &buf[1*NET_LONG_LEN] );
-    *ycenter = fbgetlong( &buf[2*NET_LONG_LEN] );
-    *xzoom = fbgetlong( &buf[3*NET_LONG_LEN] );
-    *yzoom = fbgetlong( &buf[4*NET_LONG_LEN] );
-    if ( fbgetlong( &buf[0*NET_LONG_LEN] ) != 0 )
+    *xcenter = bu_glong( &buf[1*NET_LONG_LEN] );
+    *ycenter = bu_glong( &buf[2*NET_LONG_LEN] );
+    *xzoom = bu_glong( &buf[3*NET_LONG_LEN] );
+    *yzoom = bu_glong( &buf[4*NET_LONG_LEN] );
+    if ( bu_glong( &buf[0*NET_LONG_LEN] ) != 0 )
 	return	-4;		/* fail */
     return( 0 );			/* OK */
 }
@@ -722,45 +719,45 @@ HIDDEN int
 rem_rmap(register FBIO *ifp, register ColorMap *cmap)
 {
     register int	i;
-    char	buf[NET_LONG_LEN+1];
-    char	cm[REM_CMAP_BYTES+4];
+    unsigned char buf[NET_LONG_LEN+1];
+    unsigned char cm[REM_CMAP_BYTES+4];
 
-    if ( pkg_send( MSG_FBRMAP, (char *)0, 0, PCP(ifp) ) < 0 )
+    if ( pkg_send( MSG_FBRMAP, (const char *)0, 0, PCP(ifp) ) < 0 )
 	return	-2;
-    if ( pkg_waitfor( MSG_DATA, cm, REM_CMAP_BYTES, PCP(ifp) ) < REM_CMAP_BYTES )
+    if ( pkg_waitfor( MSG_DATA, (char *)cm, REM_CMAP_BYTES, PCP(ifp) ) < REM_CMAP_BYTES )
 	return	-3;
     for ( i = 0; i < 256; i++ ) {
-	cmap->cm_red[i] = fbgetshort( cm+2*(0+i) );
-	cmap->cm_green[i] = fbgetshort( cm+2*(256+i) );
-	cmap->cm_blue[i] = fbgetshort( cm+2*(512+i) );
+	cmap->cm_red[i] = bu_gshort( cm+2*(0+i) );
+	cmap->cm_green[i] = bu_gshort( cm+2*(256+i) );
+	cmap->cm_blue[i] = bu_gshort( cm+2*(512+i) );
     }
-    if ( pkg_waitfor( MSG_RETURN, buf, NET_LONG_LEN, PCP(ifp) ) < 1*NET_LONG_LEN )
+    if ( pkg_waitfor( MSG_RETURN, (char *)buf, NET_LONG_LEN, PCP(ifp) ) < 1*NET_LONG_LEN )
 	return	-4;
-    return( fbgetlong( &buf[0*NET_LONG_LEN] ) );
+    return( bu_glong( &buf[0*NET_LONG_LEN] ) );
 }
 
 HIDDEN int
 rem_wmap(register FBIO *ifp, const ColorMap *cmap)
 {
     register int	i;
-    char	buf[NET_LONG_LEN+1];
-    char	cm[REM_CMAP_BYTES+4];
+    unsigned char buf[NET_LONG_LEN+1];
+    unsigned char cm[REM_CMAP_BYTES+4];
 
     if ( cmap == COLORMAP_NULL ) {
-	if ( pkg_send( MSG_FBWMAP, (char *)0, 0, PCP(ifp) ) < 0 )
+	if ( pkg_send( MSG_FBWMAP, (const char *)0, 0, PCP(ifp) ) < 0 )
 	    return	-2;
     } else {
 	for ( i = 0; i < 256; i++ ) {
-	    (void)fbputshort( cmap->cm_red[i], cm+2*(0+i) );
-	    (void)fbputshort( cmap->cm_green[i], cm+2*(256+i) );
-	    (void)fbputshort( cmap->cm_blue[i], cm+2*(512+i) );
+	    (void)bu_pshort(cm+2*(0+i), cmap->cm_red[i]);
+	    (void)bu_pshort(cm+2*(256+i), cmap->cm_green[i]);
+	    (void)bu_pshort(cm+2*(512+i), cmap->cm_blue[i]);
 	}
-	if ( pkg_send( MSG_FBWMAP, cm, REM_CMAP_BYTES, PCP(ifp) ) < REM_CMAP_BYTES )
+	if ( pkg_send( MSG_FBWMAP, (const char *)cm, REM_CMAP_BYTES, PCP(ifp) ) < REM_CMAP_BYTES )
 	    return	-3;
     }
-    if ( pkg_waitfor( MSG_RETURN, buf, NET_LONG_LEN, PCP(ifp) ) < 1*NET_LONG_LEN )
+    if ( pkg_waitfor( MSG_RETURN, (char *)buf, NET_LONG_LEN, PCP(ifp) ) < 1*NET_LONG_LEN )
 	return	-4;
-    return( fbgetlong( &buf[0*NET_LONG_LEN] ) );
+    return( bu_glong( &buf[0*NET_LONG_LEN] ) );
 }
 
 /*
@@ -781,14 +778,14 @@ rem_poll(FBIO *ifp)
 HIDDEN int
 rem_flush(FBIO *ifp)
 {
-    char	buf[NET_LONG_LEN+1];
+    unsigned char buf[NET_LONG_LEN+1];
 
     /* send a flush package to remote */
-    if ( pkg_send( MSG_FBFLUSH, (char *)0, 0, PCP(ifp) ) < 0 )
+    if ( pkg_send( MSG_FBFLUSH, (const char *)0, 0, PCP(ifp) ) < 0 )
 	return	-2;
-    if ( pkg_waitfor( MSG_RETURN, buf, NET_LONG_LEN, PCP(ifp) ) < 1*NET_LONG_LEN )
+    if ( pkg_waitfor( MSG_RETURN, (char *)buf, NET_LONG_LEN, PCP(ifp) ) < 1*NET_LONG_LEN )
 	return	-3;
-    return( fbgetlong( &buf[0*NET_LONG_LEN] ) );
+    return( bu_glong( &buf[0*NET_LONG_LEN] ) );
 }
 
 /*
@@ -797,17 +794,17 @@ rem_flush(FBIO *ifp)
 HIDDEN int
 rem_help(FBIO *ifp)
 {
-    char	buf[1*NET_LONG_LEN+1];
+    unsigned char buf[1*NET_LONG_LEN+1];
 
     fb_log( "Remote Interface:\n" );
 
     /* Send Command */
-    (void)fbputlong( 0L, &buf[0*NET_LONG_LEN] );
-    if ( pkg_send( MSG_FBHELP, buf, 1*NET_LONG_LEN, PCP(ifp) ) < 1*NET_LONG_LEN )
+    (void)bu_plong( &buf[0*NET_LONG_LEN] , 0L);
+    if ( pkg_send( MSG_FBHELP, (const char *)buf, 1*NET_LONG_LEN, PCP(ifp) ) < 1*NET_LONG_LEN )
 	return	-2;
-    if ( pkg_waitfor( MSG_RETURN, buf, NET_LONG_LEN, PCP(ifp) ) < 1*NET_LONG_LEN )
+    if ( pkg_waitfor( MSG_RETURN, (char *)buf, NET_LONG_LEN, PCP(ifp) ) < 1*NET_LONG_LEN )
 	return	-3;
-    return( fbgetlong( &buf[0*NET_LONG_LEN] ) );
+    return( bu_glong( &buf[0*NET_LONG_LEN] ) );
 }
 
 /*
