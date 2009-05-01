@@ -40,7 +40,6 @@ libfb_la_SOURCES = \
 	fb_rect.c \
 	fb_util.c \
 	fbserv_obj.c \
-	getput.c \
 	if_X.c \
 	if_X24.c \
 	if_ab.c \
