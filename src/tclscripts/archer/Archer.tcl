@@ -3757,11 +3757,17 @@ package provide Archer 1.0
 	return
     }
 
-    initEdit
+#    initEdit
 
     foreach dname {ul ur ll lr} {
 	set win [$itk_component(ged) component $dname]
-	bind $win <1> "$itk_component(ged) pane_oscale_mode $dname $obj %x %y; break"
+
+	if {$GeometryEditFrame::mEditCommand != ""} {
+	    bind $win <1> "$itk_component(ged) pane_$GeometryEditFrame::mEditCommand\_mode $dname $obj $GeometryEditFrame::mEditParam1 %x %y; break"
+	} else {
+	    bind $win <1> "$itk_component(ged) pane_oscale_mode $dname $obj %x %y; break"
+	}
+
 	bind $win <ButtonRelease-1> "[::itcl::code $this endObjScale $dname $obj]; break"
     }
 }

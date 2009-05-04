@@ -32,14 +32,6 @@
     constructor {args} {}
     destructor {}
 
-    # Methods used by the constructor
-    protected {
-	# override methods in GeometryEditFrame
-	method buildUpperPanel
-	method buildLowerPanel
-	method buildValuePanel
-    }
-
     public {
 	# Override what's in GeometryEditFrame
 	method initGeometry {gdata}
@@ -48,6 +40,11 @@
     }
 
     protected {
+	common setA 1
+	common setB 2
+	common setC 3
+	common setA,B,C 4
+
 	variable mVx ""
 	variable mVy ""
 	variable mVz ""
@@ -61,8 +58,18 @@
 	variable mCy ""
 	variable mCz ""
 
+	# Methods used by the constructor
+	# override methods in GeometryEditFrame
+	method buildUpperPanel
+	method buildLowerPanel
+	method buildValuePanel
+
+	method updateValuePanel {}
+
 	# Override what's in GeometryEditFrame
 	method updateGeometryIfMod {}
+
+	method initValuePanel {}
     }
 
     private {}
@@ -76,6 +83,74 @@
 ::itcl::body EllEditFrame::constructor {args} {
     eval itk_initialize $args
 }
+
+# ------------------------------------------------------------
+#                        OPTIONS
+# ------------------------------------------------------------
+
+
+# ------------------------------------------------------------
+#                      PUBLIC METHODS
+# ------------------------------------------------------------
+
+## - initGeometry
+#
+# Initialize the variables containing the object's specification.
+#
+::itcl::body EllEditFrame::initGeometry {gdata} {
+    set _V [bu_get_value_by_keyword V $gdata]
+    set mVx [lindex $_V 0]
+    set mVy [lindex $_V 1]
+    set mVz [lindex $_V 2]
+    set _A [bu_get_value_by_keyword A $gdata]
+    set mAx [lindex $_A 0]
+    set mAy [lindex $_A 1]
+    set mAz [lindex $_A 2]
+    set _B [bu_get_value_by_keyword B $gdata]
+    set mBx [lindex $_B 0]
+    set mBy [lindex $_B 1]
+    set mBz [lindex $_B 2]
+    set _C [bu_get_value_by_keyword C $gdata]
+    set mCx [lindex $_C 0]
+    set mCy [lindex $_C 1]
+    set mCz [lindex $_C 2]
+
+    GeometryEditFrame::initGeometry $gdata
+}
+
+::itcl::body EllEditFrame::updateGeometry {} {
+    if {$itk_option(-mged) == "" ||
+	$itk_option(-geometryObject) == ""} {
+	return
+    }
+
+    $itk_option(-mged) adjust $itk_option(-geometryObject) \
+	V [list $mVx $mVy $mVz] \
+	A [list $mAx $mAy $mAz] \
+	B [list $mBx $mBy $mBz] \
+	C [list $mCx $mCy $mCz]
+
+    if {$itk_option(-geometryChangedCallback) != ""} {
+	$itk_option(-geometryChangedCallback)
+    }
+}
+
+::itcl::body EllEditFrame::createGeometry {obj} {
+    if {![GeometryEditFrame::createGeometry $obj]} {
+	return
+    }
+
+    $itk_option(-mged) put $obj ell \
+	V [list $mCenterX $mCenterY $mCenterZ] \
+	A [list $mDelta 0 0] \
+	B [list 0 $mDelta 0] \
+	C [list 0 0 $mDelta]
+}
+
+
+# ------------------------------------------------------------
+#                      PROTECTED METHODS
+# ------------------------------------------------------------
 
 ::itcl::body EllEditFrame::buildUpperPanel {} {
     set parent [$this childsite]
@@ -135,6 +210,7 @@
     } {}
     itk_component add ellAL {
 	::ttk::label $parent.ellAL \
+	    -state disabled \
 	    -text "A:" \
 	    -anchor e
     } {}
@@ -166,6 +242,7 @@
     } {}
     itk_component add ellBL {
 	::ttk::label $parent.ellBL \
+	    -state disabled \
 	    -text "B:" \
 	    -anchor e
     } {}
@@ -197,6 +274,7 @@
     } {}
     itk_component add ellCL {
 	::ttk::label $parent.ellCL \
+	    -state disabled \
 	    -text "C:" \
 	    -anchor e
     } {}
@@ -294,79 +372,29 @@
 }
 
 ::itcl::body EllEditFrame::buildLowerPanel {} {
+    set parent [$this childsite lower]
+
+    foreach attribute {A B C A,B,C} {
+	itk_component add set$attribute {
+	    ::ttk::radiobutton $parent.set_$attribute \
+		-variable [::itcl::scope mEditMode] \
+		-value [subst $[subst set$attribute]] \
+		-text "Set $attribute" \
+		-command [::itcl::code $this initValuePanel]
+	} {}
+
+	pack $itk_component(set$attribute) \
+	    -anchor w \
+	    -expand yes
+    }
 }
 
 ::itcl::body EllEditFrame::buildValuePanel {} {
 }
 
-
-# ------------------------------------------------------------
-#                        OPTIONS
-# ------------------------------------------------------------
-
-
-# ------------------------------------------------------------
-#                      PUBLIC METHODS
-# ------------------------------------------------------------
-
-## - initGeometry
-#
-# Initialize the variables containing the object's specification.
-#
-::itcl::body EllEditFrame::initGeometry {gdata} {
-    set _V [bu_get_value_by_keyword V $gdata]
-    set mVx [lindex $_V 0]
-    set mVy [lindex $_V 1]
-    set mVz [lindex $_V 2]
-    set _A [bu_get_value_by_keyword A $gdata]
-    set mAx [lindex $_A 0]
-    set mAy [lindex $_A 1]
-    set mAz [lindex $_A 2]
-    set _B [bu_get_value_by_keyword B $gdata]
-    set mBx [lindex $_B 0]
-    set mBy [lindex $_B 1]
-    set mBz [lindex $_B 2]
-    set _C [bu_get_value_by_keyword C $gdata]
-    set mCx [lindex $_C 0]
-    set mCy [lindex $_C 1]
-    set mCz [lindex $_C 2]
-
-    GeometryEditFrame::initGeometry $gdata
+::itcl::body EllEditFrame::updateValuePanel {} {
 }
 
-::itcl::body EllEditFrame::updateGeometry {} {
-    if {$itk_option(-mged) == "" ||
-	$itk_option(-geometryObject) == ""} {
-	return
-    }
-
-    $itk_option(-mged) adjust $itk_option(-geometryObject) \
-	V [list $mVx $mVy $mVz] \
-	A [list $mAx $mAy $mAz] \
-	B [list $mBx $mBy $mBz] \
-	C [list $mCx $mCy $mCz]
-
-    if {$itk_option(-geometryChangedCallback) != ""} {
-	$itk_option(-geometryChangedCallback)
-    }
-}
-
-::itcl::body EllEditFrame::createGeometry {obj} {
-    if {![GeometryEditFrame::createGeometry $obj]} {
-	return
-    }
-
-    $itk_option(-mged) put $obj ell \
-	V [list $mCenterX $mCenterY $mCenterZ] \
-	A [list $mDelta 0 0] \
-	B [list 0 $mDelta 0] \
-	C [list 0 0 $mDelta]
-}
-
-
-# ------------------------------------------------------------
-#                      PROTECTED METHODS
-# ------------------------------------------------------------
 
 ::itcl::body EllEditFrame::updateGeometryIfMod {} {
     if {$itk_option(-mged) == "" ||
@@ -437,6 +465,38 @@
 	updateGeometry
     }
 }
+
+::itcl::body EllEditFrame::initValuePanel {} {
+    switch -- $mEditMode \
+	$setA { \
+	    set mEditCommand scale_ell; \
+	    set mEditClass $EDIT_CLASS_SCALE; \
+	    set mEditParam1 a; \
+	    configure -valueUnits "mm"; \
+	} \
+	$setB { \
+	    set mEditCommand scale_ell; \
+	    set mEditClass $EDIT_CLASS_SCALE; \
+	    set mEditParam1 b; \
+	    configure -valueUnits "mm"; \
+	} \
+	$setC { \
+	    set mEditCommand scale_ell; \
+	    set mEditClass $EDIT_CLASS_SCALE; \
+	    set mEditParam1 c; \
+	    configure -valueUnits "mm"; \
+	} \
+	$setA,B,C { \
+	    set mEditCommand scale_ell; \
+	    set mEditClass $EDIT_CLASS_SCALE; \
+	    set mEditParam1 3; \
+	    configure -valueUnits "mm"; \
+	}
+
+    GeometryEditFrame::initValuePanel
+    updateValuePanel
+}
+
 
 # Local Variables:
 # mode: Tcl

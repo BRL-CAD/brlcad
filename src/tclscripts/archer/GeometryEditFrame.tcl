@@ -399,10 +399,12 @@
 }
 
 ::itcl::body GeometryEditFrame::initValuePanel {} {
-    if {$mEditClass == $EDIT_CLASS_TRANS} {
-	$::ArcherCore::application setDefaultBindingMode $mEditLastTransMode
-    } else {
+    if {$mEditClass == $EDIT_CLASS_ROT} {
 	$::ArcherCore::application setDefaultBindingMode $::ArcherCore::OBJECT_ROTATE_MODE
+    } elseif {$mEditClass == $EDIT_CLASS_SCALE} {
+	$::ArcherCore::application setDefaultBindingMode $::ArcherCore::OBJECT_SCALE_MODE
+    } elseif {$mEditClass == $EDIT_CLASS_TRANS} {
+	$::ArcherCore::application setDefaultBindingMode $mEditLastTransMode
     }
 }
 

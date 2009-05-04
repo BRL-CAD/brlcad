@@ -172,6 +172,7 @@ libged_nil_la_SOURCES = \
 	savekey.c \
 	saveview.c \
 	scale.c \
+	scale_ell.c \
 	search.c \
 	set_output_script.c \
 	set_transparency.c \
