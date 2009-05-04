@@ -33,21 +33,6 @@
     constructor {args} {}
     destructor {}
 
-    # Methods used by the constructor
-    protected {
-	method buildMoveEdgePanel {parent}
-	method buildMoveFacePanel {parent}
-	method buildRotateFacePanel {parent}
-
-	# override methods in GeometryEditFrame
-	method buildUpperPanel
-	method buildLowerPanel
-	method buildValuePanel
-
-	common mRotationPointDialog ""
-	common mRotationPointCB ""
-    }
-
     public {
 	# Override what's in GeometryEditFrame
 	method initGeometry {gdata}
@@ -60,6 +45,9 @@
     }
 
     protected {
+	common mRotationPointDialog ""
+	common mRotationPointCB ""
+
 	variable mValueX ""
 	variable mValueY ""
 	variable mValueZ ""
@@ -112,6 +100,15 @@
 	variable rotateFace2376 22
 	variable rotateFace1265 23
 	variable rotateFace4378 24
+
+	# Methods used by the constructor
+	method buildMoveEdgePanel {parent}
+	method buildMoveFacePanel {parent}
+	method buildRotateFacePanel {parent}
+	# Override methods in GeometryEditFrame
+	method buildUpperPanel
+	method buildLowerPanel
+	method buildValuePanel
 
 	# Override what's in GeometryEditFrame
 	method updateUpperPanel {normal disabled}
