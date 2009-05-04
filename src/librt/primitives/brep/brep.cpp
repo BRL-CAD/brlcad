@@ -242,7 +242,7 @@ brep_preprocess_trims(const ON_BrepFace& face, SurfaceTree* tree) {
 	 * trimmed, we must account for it.
 	 */
 	bb->m_trimmed = false; // XXX - ack, hardcode for now
-    } 
+    }
 }
 
 int
@@ -797,6 +797,10 @@ utah_isTrimmed(ON_2dPoint uv, const ON_BrepFace *face) {
             continue;
         }
         // for each trim
+        ON_3dPoint closestPoint;
+        ON_3dVector tangent, kappa;
+        double currentDistance = -10000.0;;
+        ON_3dPoint hitPoint(uv.x, uv.y, 0.0);
         for( int lti = 0; lti < loop->TrimCount(); lti++ ) {
             const ON_BrepTrim* trim = loop->Trim( lti );
             if (0 == trim )
@@ -805,43 +809,59 @@ utah_isTrimmed(ON_2dPoint uv, const ON_BrepFace *face) {
             if (trimCurve == 0) {
                 continue;
             }
+
             double closestT;
-            double currentDistance;
-            double shortestDistance;
-            double t;
-            ON_3dPoint hitPoint(uv.x, uv.y, 0.0);
-            ON_3dPoint closestPoint;
-            // trimCurve->GetClosestPoint(hitPoint, &closestT); This isn't working...
-            ON_Interval domain = trimCurve->Domain();
-            double step = (domain.m_t[1]-domain.m_t[0])/(double)MAX_NUMBEROFPOINTS;
-            if (!curveApproximated[trim->m_c2i]) {
-                curveApproximated[trim->m_c2i] = true;
-                t = domain.m_t[0];
+            bool gotClosest = trimCurve->GetClosestPoint(hitPoint, &closestT);
+            if (!gotClosest) {
+                // Someone needs to work on GetClosestPoint not to fail
+                // It is failing on nurbs curves that aren't rational
+                // For now if it fails we will use the approx. approach
+                double currentDistance;
+                double shortestDistance;
+                double t;
+                ON_Interval domain = trimCurve->Domain();
+                double step = (domain.m_t[1] - domain.m_t[0]) / (double) MAX_NUMBEROFPOINTS;
+                if (!curveApproximated[trim->m_c2i]) {
+                    curveApproximated[trim->m_c2i] = true;
+                    t = domain.m_t[0];
+                    for (int i = 0; i < MAX_NUMBEROFPOINTS; i++) {
+                        curveApproximations[trim->m_c2i][i] = trimCurve->PointAt(t);
+                        t += step;
+                    }
+                }
+                closestT = t = domain.m_t[0];
+                closestPoint = curveApproximations[trim->m_c2i][0];
+                currentDistance = shortestDistance = closestPoint.DistanceTo(hitPoint);
                 for (int i = 0; i < MAX_NUMBEROFPOINTS; i++) {
-                    curveApproximations[trim->m_c2i][i] = trimCurve->PointAt(t);
+                    closestPoint = curveApproximations[trim->m_c2i][i];
+                    currentDistance = closestPoint.DistanceTo(hitPoint);
+                    if (currentDistance < shortestDistance) {
+                        closestT = t;
+                        shortestDistance = currentDistance;
+                    }
                     t += step;
                 }
             }
-            closestT = t = domain.m_t[0];
-            closestPoint = curveApproximations[trim->m_c2i][0];
-            currentDistance = shortestDistance = closestPoint.DistanceTo(hitPoint);
-            for (int i = 0; i < MAX_NUMBEROFPOINTS; i++) {
-                closestPoint = curveApproximations[trim->m_c2i][i];
-                currentDistance = closestPoint.DistanceTo(hitPoint);
-                if (currentDistance < shortestDistance) {
-                    closestT = t;
-                    shortestDistance = currentDistance;
-                }
-                t += step;
+            ON_3dPoint testClosestPoint;
+            ON_3dVector testTangent, testKappa;
+            double testDistance;
+            trimCurve->EvCurvature(closestT, testClosestPoint, testTangent, testKappa);
+            testDistance = testClosestPoint.DistanceTo(hitPoint);
+            if ((currentDistance < 0.0) || (testDistance < currentDistance))
+            {
+                closestPoint = testClosestPoint;
+                tangent = testTangent;
+                kappa = testKappa;
+                currentDistance = testDistance;
             }
-            ON_3dVector tangent, kappa;
-            trimCurve->EvCurvature(closestT, closestPoint, tangent, kappa);
+        }
+        if (currentDistance >= 0.0)
+        {
             ON_3dVector hitDirection(hitPoint.x-closestPoint.x, hitPoint.y-closestPoint.y, hitPoint.z-closestPoint.z);
-            ON_3dVector normal = ON_CrossProduct(tangent, kappa);
             double dot = (hitDirection * kappa);
             //printf("closestT=%lf dot=%lf closestPoint=(%lf, %lf, %lf) hitPoint=(%lf, %lf, %lf) tangent=(%lf, %lf, %lf) kappa=(%lf, %lf, %lf) normal=(%lf, %lf, %lf) hitDirection=(%lf, %lf, %lf)\n", closestT, dot, closestPoint.x, closestPoint.y, closestPoint.z, hitPoint.x, hitPoint.y, hitPoint.z, tangent.x, tangent.y, tangent.z, kappa.x, kappa.y, kappa.z, normal.x, normal.y, normal.z, hitDirection.x, hitDirection.y, hitDirection.z);
             if (((li == 0) && (dot < 0.0)) ||
-		((li > 0) && (dot > 0.0))) {
+                ((li > 0) && (dot > 0.0))) {
                 return true;
             }
         }
@@ -1397,7 +1417,7 @@ rt_brep_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_t
     TRACE1("rt_brep_plot");
     struct rt_brep_internal* bi;
     int i, j, k;
-    
+
     RT_CK_DB_INTERNAL(ip);
     bi = (struct rt_brep_internal*)ip->idb_ptr;
     RT_BREP_CK_MAGIC(bi);
@@ -1470,7 +1490,7 @@ rt_brep_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_t
 
     /* Routine to iterate over the surfaces in the BREP and plot lines corresponding
      * to their projections into 3-space.  Very crude walk method - doesn't properly
-     * handle drawing in the case of trims - but it illustrates how to go straight 
+     * handle drawing in the case of trims - but it illustrates how to go straight
      * from uv parameter space to real space coordinates.
      * Needs to become proper tesselation routine.
      */
@@ -1497,7 +1517,7 @@ rt_brep_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_t
 		}
 	    }
 	}
-    }	
+    }
     */
 
     return 0;
