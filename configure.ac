@@ -2448,10 +2448,10 @@ AC_SUBST(OPENNURBS_CPPFLAGS)
 
 dnl *** NIST STEP Class Libraries ***
 dnl figure out whether we need to build NIST STEP Class Libraries
-STEP_CPPFLAGS='-I${top_srcdir}/src/other/step/src/clstepcore -I${top_srcdir}/src/other/step/src/cleditor -I${top_srcdir}/src/other/step/src/cldai  -I${top_srcdir}/src/other/step/src/clutils -I${top_srcdir}/src/other/step/include'
 STEP_VERSION="3.2.0"
 AC_SUBST(STEP_VERSION)
 AC_MSG_CHECKING(whether to build NIST Step Class Libraries)
+STEP_CPPFLAGS='-I${top_srcdir}/src/other/step/include -I${top_srcdir}/src/other/step/src/cleditor -I${top_srcdir}/src/other/step/src/clstepcore -I${top_srcdir}/src/other/step/src/clutils -I${top_srcdir}/src/other/step/src/cldai -I${top_srcdir}/src/other/step/src/test'
 if test ! "x$bc_build_step" = "xno" ; then
     STEP=""
     build_brlcad_step=yes
@@ -3570,6 +3570,18 @@ TERMIO='${top_builddir}/src/libtermio/libtermio.la'
 WDB='${top_builddir}/src/libwdb/libwdb.la'
 BRLCAD='${top_builddir}/src/libbrlcad.la'
 
+STEPCORE='${top_builddir}/src/other/step/src/clstepcore/libstepcore.la'
+STEPDAI='${top_builddir}/src/other/step/src/cldai/libstepdai.la'
+STEPEDITOR='${top_builddir}/src/other/step/src/cleditor/libstepeditor.la'
+STEPUTILS='${top_builddir}/src/other/step/src/clutils/libsteputils.la'
+STEPEXPRESS='${top_builddir}/src/other/step/src/express/libexpress.la'
+STEPEXPPP='${top_builddir}/src/other/step/src/exppp/libexppp.la'
+STEP_LIBS="${STEPCORE} ${STEPDAI} ${STEPEDITOR} ${STEPUTILS} ${STEPEXPRESS}"
+STEP_FEDEX='${top_builddir}/src/other/step/src/express/fedex'
+STEP_FEDEX_PLUS='${top_builddir}/src/other/step/src/fedex_plus/fedex_plus'
+STEP_EXPPP='${top_builddir}/src/other/step/src/exppp/exppp'
+STEP_AP203='${top_srcdir}/src/other/step/data/ap203/203wseds.exp'
+
 ORLE_LIBS=
 PKG_LIBS="${LIBSOCKET} ${LIBNSL}"
 SYSV_LIBS=
@@ -3609,6 +3621,18 @@ AC_SUBST(TCLCAD)
 AC_SUBST(TERMIO)
 AC_SUBST(WDB)
 AC_SUBST(BRLCAD)
+
+AC_SUBST(STEPCORE)
+AC_SUBST(STEPDAI)
+AC_SUBST(STEPEDITOR)
+AC_SUBST(STEPUTILS)
+AC_SUBST(STEPEXPRESS)
+AC_SUBST(STEPEXPPP)
+AC_SUBST(STEP_LIBS)
+AC_SUBST(STEP_FEDEX)
+AC_SUBST(STEP_FEDEX_PLUS)
+AC_SUBST(STEP_EXPPP)
+AC_SUBST(STEP_AP203)
 
 AC_SUBST(BN_LIBS)
 AC_SUBST(BU_LIBS)
