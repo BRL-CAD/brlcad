@@ -815,11 +815,11 @@ rt_arbn_import(struct rt_db_internal *ip, const struct bu_external *ep, register
 	/* unitize the plane equation first */
 	factor = 1.0 / MAGNITUDE( aip->eqn[i] );
 	VSCALE( aip->eqn[i], aip->eqn[i], factor );
-	aip->eqn[i][3] = aip->eqn[i][3] * factor;
+	aip->eqn[i][W] = aip->eqn[i][W] * factor;
 
 
 	/* Pick a point on the original halfspace */
-	VSCALE( orig_pt, aip->eqn[i], aip->eqn[i][3] );
+	VSCALE( orig_pt, aip->eqn[i], aip->eqn[i][W] );
 
 	/* Transform the point, and the normal */
 	MAT4X3VEC( norm, mat, aip->eqn[i] );
@@ -828,7 +828,7 @@ rt_arbn_import(struct rt_db_internal *ip, const struct bu_external *ep, register
 	/* Measure new distance from origin to new point */
 	VUNITIZE( norm );
 	VMOVE( aip->eqn[i], norm );
-	aip->eqn[i][3] = VDOT( pt, norm );
+	aip->eqn[i][W] = VDOT( pt, norm );
     }
 
     return(0);
@@ -878,7 +878,7 @@ rt_arbn_export(struct bu_external *ep, const struct rt_db_internal *ip, double l
 	*sp++ = aip->eqn[i][X];
 	*sp++ = aip->eqn[i][Y];
 	*sp++ = aip->eqn[i][Z];
-	*sp++ = aip->eqn[i][3] * local2mm;
+	*sp++ = aip->eqn[i][W] * local2mm;
     }
 
     htond( (unsigned char *)&rec[1], (unsigned char *)sbuf, aip->neqn * 4 );
@@ -936,10 +936,10 @@ rt_arbn_import5(struct rt_db_internal *ip, const struct bu_external *ep, registe
 	    /* unitize the plane equation first */
 	    factor = 1.0 / MAGNITUDE( aip->eqn[i] );
 	    VSCALE( aip->eqn[i], aip->eqn[i], factor );
-	    aip->eqn[i][3] = aip->eqn[i][3] * factor;
+	    aip->eqn[i][W] = aip->eqn[i][W] * factor;
 
 	    /* Pick a point on the original halfspace */
-	    VSCALE( orig_pt, aip->eqn[i], aip->eqn[i][3] );
+	    VSCALE( orig_pt, aip->eqn[i], aip->eqn[i][W] );
 
 	    /* Transform the point, and the normal */
 	    MAT4X3VEC( norm, mat, aip->eqn[i] );
@@ -948,7 +948,7 @@ rt_arbn_import5(struct rt_db_internal *ip, const struct bu_external *ep, registe
 	    /* Measure new distance from origin to new point */
 	    VUNITIZE( norm );
 	    VMOVE( aip->eqn[i], norm );
-	    aip->eqn[i][3] = VDOT( pt, norm );
+	    aip->eqn[i][W] = VDOT( pt, norm );
 	}
     }
 
@@ -991,7 +991,7 @@ rt_arbn_export5(struct bu_external *ep, const struct rt_db_internal *ip, double 
 	*sp++ = aip->eqn[i][X];
 	*sp++ = aip->eqn[i][Y];
 	*sp++ = aip->eqn[i][Z];
-	*sp++ = aip->eqn[i][3] * local2mm;
+	*sp++ = aip->eqn[i][W] * local2mm;
     }
 
     /* Convert from internal (host) to database (network) format */
@@ -1029,7 +1029,7 @@ rt_arbn_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbos
 		INTCLAMP(aip->eqn[i][X]),		/* should have unit length */
 		INTCLAMP(aip->eqn[i][Y]),
 		INTCLAMP(aip->eqn[i][Z]),
-		INTCLAMP(aip->eqn[i][3] * mm2local) );
+		INTCLAMP(aip->eqn[i][W] * mm2local) );
 	bu_vls_strcat( str, buf );
     }
     return(0);

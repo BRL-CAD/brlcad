@@ -3472,7 +3472,7 @@ edge_can_be_decimated( struct rt_bot_internal *bot,
 	    VSUB2( v02, &vertices[vc*3], &vertices[va*3] );
 	    VCROSS( plb, v01, v02 );
 	    VUNITIZE( plb );
-	    plb[3] = VDOT( &vertices[va*3], plb );
+	    plb[W] = VDOT( &vertices[va*3], plb );
 
 	    /* do the same using the working face list */
 	    va = faces[faces_affected[i]];
@@ -3490,7 +3490,7 @@ edge_can_be_decimated( struct rt_bot_internal *bot,
 	    VSUB2( v02, &vertices[vc*3], &vertices[va*3] );
 	    VCROSS( pla, v01, v02 );
 	    VUNITIZE( pla );
-	    pla[3] = VDOT( &vertices[va*3], pla );
+	    pla[W] = VDOT( &vertices[va*3], pla );
 
 	    /* max_normal_error is actually a minimum dot product */
 	    dot = VDOT( pla, plb );

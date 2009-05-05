@@ -150,9 +150,9 @@ arbin(struct ged		*gedp,
     if ( cgtype != 7 )
     {
 	for (i=0; i<nface; i++) {
-	    if ( (planes[i][3] - VDOT(center_pt, &planes[i][0])) > 0.0 )
+	    if ( (planes[i][W] - VDOT(center_pt, &planes[i][0])) > 0.0 )
 		thick[i] *= -1.0;
-	    planes[i][3] += thick[i];
+	    planes[i][W] += thick[i];
 	}
     }
 

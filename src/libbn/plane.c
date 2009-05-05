@@ -508,13 +508,13 @@ bn_isect_2planes(fastf_t *pt,
     if ( abs_dir[X] >= abs_dir[Y] )  {
 	if ( abs_dir[X] >= abs_dir[Z] )  {
 	    VSET( pl, 1, 0, 0 );	/* X */
-	    pl[3] = rpp_min[X];
+	    pl[W] = rpp_min[X];
 	    if ( dir[X] < 0 )  {
 		VREVERSE( dir, dir );
 	    }
 	} else {
 	    VSET( pl, 0, 0, 1 );	/* Z */
-	    pl[3] = rpp_min[Z];
+	    pl[W] = rpp_min[Z];
 	    if ( dir[Z] < 0 )  {
 		VREVERSE( dir, dir );
 	    }
@@ -522,13 +522,13 @@ bn_isect_2planes(fastf_t *pt,
     } else {
 	if ( abs_dir[Y] >= abs_dir[Z] )  {
 	    VSET( pl, 0, 1, 0 );	/* Y */
-	    pl[3] = rpp_min[Y];
+	    pl[W] = rpp_min[Y];
 	    if ( dir[Y] < 0 )  {
 		VREVERSE( dir, dir );
 	    }
 	} else {
 	    VSET( pl, 0, 0, 1 );	/* Z */
-	    pl[3] = rpp_min[Z];
+	    pl[W] = rpp_min[Z];
 	    if ( dir[Z] < 0 )  {
 		VREVERSE( dir, dir );
 	    }
@@ -2427,9 +2427,9 @@ bn_does_ray_isect_tri(
     if ( NEAR_ZERO( NdotDir, SMALL_FASTF ) )
 	return( 0 );
 
-    pl[3] = VDOT( pl, V );
+    pl[W] = VDOT( pl, V );
 
-    dist = (pl[3] - VDOT( pl, pt ))/NdotDir;
+    dist = (pl[W] - VDOT( pl, pt ))/NdotDir;
     VJOIN1( inter, pt, dist, dir );
 
     /* determine if point is within triangle */

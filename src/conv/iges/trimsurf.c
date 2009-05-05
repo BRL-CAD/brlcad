@@ -1193,8 +1193,8 @@ find_intersections( fu, mid_pt, ray_dir, hit_list )
 
     bn_vec_ortho( pl2, ray_dir );
     VCROSS( pl1, pl2, ray_dir );
-    pl1[3] = VDOT( mid_pt, pl1 );
-    pl2[3] = VDOT( mid_pt, pl2 );
+    pl1[W] = VDOT( mid_pt, pl1 );
+    pl2[W] = VDOT( mid_pt, pl2 );
 
     BU_LIST_INIT( &bezier );
 

@@ -589,7 +589,7 @@ nmg_isect2d_prep(struct nmg_inter_struct *is, const unsigned long *assoc_use)
 	is->twod = (long *)&f1->l.magic;
 	if ( f1->flip )  {
 	    VREVERSE( n, fg->N );
-	    n[3] = -fg->N[3];
+	    n[W] = -fg->N[W];
 	} else {
 	    HMOVE( n, fg->N );
 	}
@@ -611,7 +611,7 @@ nmg_isect2d_prep(struct nmg_inter_struct *is, const unsigned long *assoc_use)
 	bn_mat_fromto( is->proj, n, to );
 	VADD2SCALE( centroid, f1->max_pt, f1->min_pt, 0.5 );
 	MAT4X3PNT( centroid_proj, is->proj, centroid );
-	centroid_proj[Z] = n[3];	/* pull dist from origin off newZ */
+	centroid_proj[Z] = n[W];	/* pull dist from origin off newZ */
 	MAT_DELTAS_VEC_NEG( is->proj, centroid_proj );
     } else if ( *assoc_use == NMG_EDGEUSE_MAGIC )  {
 	struct edgeuse	*eu1 = (struct edgeuse *)assoc_use;
@@ -1856,7 +1856,7 @@ nmg_isect_wireedge3p_face3p(struct nmg_inter_struct *is, struct edgeuse *eu1, st
 	/*  Ray does not strike plane.
 	 *  See if start point lies on plane.
 	 */
-	dist = VDOT( start_pt, n2 ) - n2[3];
+	dist = VDOT( start_pt, n2 ) - n2[W];
 	if ( !NEAR_ZERO( dist, is->tol.dist ) )
 	    goto out;		/* No geometric intersection */
 
@@ -7137,7 +7137,7 @@ nmg_faces_can_be_intersected(struct nmg_inter_struct *bs, const struct faceuse *
     one_over_dir_len = 1.0/sqrt( dir_len_sq );
     VSCALE( bs->dir, bs->dir, one_over_dir_len );
     VMOVE( tmp_pl, bs->dir );
-    tmp_pl[3] = VDOT( tmp_pl, min_pt );
+    tmp_pl[W] = VDOT( tmp_pl, min_pt );
 
     if ( bn_mkpoint_3planes( bs->pt, tmp_pl, pl1, pl2 ) )
 	return( 0 );
@@ -7307,8 +7307,8 @@ nmg_isect_two_generic_faces(struct faceuse *fu1, struct faceuse *fu2, const stru
 	bu_log("\nnmg_isect_two_generic_faces(fu1=x%x, fu2=x%x)\n", fu1, fu2);
 
 	bu_log("Planes\t%gx + %gy + %gz = %g\n\t%gx + %gy + %gz = %g\n",
-	       pl1[0], pl1[1], pl1[2], pl1[3],
-	       pl2[0], pl2[1], pl2[2], pl2[3]);
+	       pl1[X], pl1[Y], pl1[Z], pl1[W],
+	       pl2[X], pl2[Y], pl2[Z], pl2[W]);
 	bu_log( "Cosine of angle between planes = %g\n", VDOT( pl1, pl2 ) );
 	bu_log( "fu1:\n" );
 	nmg_pr_fu_briefly( fu1, "\t" );

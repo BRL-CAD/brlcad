@@ -831,7 +831,7 @@ nmg_patch_coplanar_face_merge(struct shell *s, int *face_count, struct patch_fac
 		NMG_GET_FU_PLANE(n2, fu2);
 
 		/* Compare distances from origin */
-		dist = n1[3] - n2[3];
+		dist = n1[W] - n2[W];
 		if (!NEAR_ZERO(dist, tol->dist))  continue;
 
 		/*
@@ -2131,10 +2131,10 @@ proc_wedge(int cnt)
 			for (i=0; i < 5; i++) {
 			    point_t tmp_pt, new_pt;
 
-			    VSCALE(tmp_pt, planes[i], planes[i][3])
+			    VSCALE(tmp_pt, planes[i], planes[i][W])
 				VJOIN1(new_pt, tmp_pt, in[k].rsurf_thick, planes[i])
 
-				planes[i][3] = VDOT(planes[i], new_pt);
+				planes[i][W] = VDOT(planes[i], new_pt);
 			}
 
 	    /* Find new vertices of interior arb6 using
@@ -2242,7 +2242,7 @@ proc_wedge(int cnt)
 			for (i=0; i < 5; i++) {
 			    point_t tmp_pt, new_pt;
 
-			    VSCALE(tmp_pt, planes[i], planes[i][3])
+			    VSCALE(tmp_pt, planes[i], planes[i][W])
 				VJOIN1(new_pt, tmp_pt, in[k].rsurf_thick, planes[i])
 
 				planes[i][3] = VDOT(planes[i], new_pt);

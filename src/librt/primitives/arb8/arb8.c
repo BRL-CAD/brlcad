@@ -448,7 +448,7 @@ rt_arb_add_pt(register pointp_t point, const char *title, struct prep_arb *pap, 
 	    } else {
 		pap->pa_clockwise[pap->pa_faces] = 0;
 	    }
-	    afp->peqn[3] = VDOT( afp->peqn, afp->A );
+	    afp->peqn[W] = VDOT( afp->peqn, afp->A );
 	    return(0);				/* OK */
 	default:
 	    /* Merely validate 4th and subsequent points */
@@ -797,7 +797,7 @@ rt_arb_shot(struct soltab *stp, register struct xray *rp, struct application *ap
 
 	/* XXX some of this math should be prep work
 	 * (including computing dxbdn/dn ?) *$*/
-	dxbdn = VDOT( afp->peqn, rp->r_pt ) - afp->peqn[3];
+	dxbdn = VDOT( afp->peqn, rp->r_pt ) - afp->peqn[W];
 	dn = -VDOT( afp->peqn, rp->r_dir );
 
 	if (RT_G_DEBUG & DEBUG_ARB8) {
@@ -896,7 +896,7 @@ rt_arb_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, str
 		continue; /* faces of this ARB are done */
 
 	    dxbdn = VDOT( arbp->arb_face[j].peqn, rp[i]->r_pt ) -
-		arbp->arb_face[j].peqn[3];
+		arbp->arb_face[j].peqn[W];
 	    if ( (dn = -VDOT( arbp->arb_face[j].peqn, rp[i]->r_dir )) < -SQRT_SMALL_FASTF )  {
 		/* exit point, when dir.N < 0.  out = min(out,s) */
 		if ( segp[i].seg_out.hit_dist > (s = dxbdn/dn) )  {

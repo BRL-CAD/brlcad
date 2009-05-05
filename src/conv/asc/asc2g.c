@@ -1599,7 +1599,7 @@ arbnbld(void)
     for (i = 0; i < neqn; i++) {
 	bu_fgets(buf, BUFSIZE, ifp);
 	(void)sscanf(buf, "%200s %le %le %le %le", type, /* TYPE_LEN */
-		     &eqn[i][X], &eqn[i][Y], &eqn[i][Z], &eqn[i][3]);
+		     &eqn[i][X], &eqn[i][Y], &eqn[i][Z], &eqn[i][W]);
     }
 
     /*bu_log("sending info to mk_arbn\n");

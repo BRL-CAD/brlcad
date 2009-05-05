@@ -346,7 +346,7 @@ ged_anal_face(struct ged *gedp, int face, fastf_t *center_pt, const struct rt_ar
      * fallback angles so that they always give the outward
      * pointing normal vector.
      */
-    if ( (plane[3] - VDOT(center_pt, &plane[0])) < 0.0 ) {
+    if ( (plane[W] - VDOT(center_pt, &plane[0])) < 0.0 ) {
 	for ( i=0; i<4; i++ )
 	    plane[i] *= -1.0;
     }
@@ -382,8 +382,8 @@ ged_anal_face(struct ged *gedp, int face, fastf_t *center_pt, const struct rt_ar
     bu_vls_printf(&gedp->ged_result_str, "| %4d |", prface[type][face]);
     bu_vls_printf(&gedp->ged_result_str, " %6.8f %6.8f | %6.8f %6.8f %6.8f %11.8f |",
 		  angles[3], angles[4],
-		  plane[0], plane[1], plane[2],
-		  plane[3]*gedp->ged_wdbp->dbip->dbi_base2local);
+		  plane[X], plane[Y], plane[Z],
+		  plane[W]*gedp->ged_wdbp->dbip->dbi_base2local);
     bu_vls_printf(&gedp->ged_result_str, "   %13.8f  |\n",
 		  (area[0]+area[1])*gedp->ged_wdbp->dbip->dbi_base2local*gedp->ged_wdbp->dbip->dbi_base2local);
     return face_area;
@@ -446,7 +446,7 @@ ged_find_vol(int loc, struct rt_arb_internal *arb, struct bn_tol *tol)
 	return 0.0;
 
     /* have a good arb4 - find its volume */
-    height = fabs(plane[3] - VDOT(&plane[0], arb->pt[d]));
+    height = fabs(plane[W] - VDOT(&plane[0], arb->pt[d]));
     VSUB2(v_temp, arb->pt[b], arb->pt[a]);
     len[0] = MAGNITUDE(v_temp);
     VSUB2(v_temp, arb->pt[c], arb->pt[a]);

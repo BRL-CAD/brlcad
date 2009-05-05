@@ -1125,9 +1125,9 @@ nmg_hollow_shell(struct shell *s, const fastf_t thick, const int approximate, co
 	    if ( NMG_INDEX_TEST_AND_SET( flags, fg_p ) )
 	    {
 		if ( fu->f_p->flip )
-		    fg_p->N[3] += thick;
+		    fg_p->N[W] += thick;
 		else
-		    fg_p->N[3] -= thick;
+		    fg_p->N[W] -= thick;
 	    }
 	}
 
@@ -1347,9 +1347,9 @@ nmg_extrude_shell(struct shell *s, const fastf_t dist, const int normal_ward, co
 	    if ( NMG_INDEX_TEST_AND_SET( flags, fg_p ) )
 	    {
 		if ( along_normal ^ fu->f_p->flip )
-		    fg_p->N[3] += thick;
+		    fg_p->N[W] += thick;
 		else
-		    fg_p->N[3] -= thick;
+		    fg_p->N[W] -= thick;
 	    }
 	}
 

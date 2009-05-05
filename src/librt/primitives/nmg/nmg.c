@@ -1119,7 +1119,7 @@ rt_nmg_edisk(genptr_t op, genptr_t ip, struct nmg_exp_counts *ecnt, int index, d
 		PUTMAGIC(DISK_FACE_G_PLANE_MAGIC);
 		INDEXL(d, fg, f_hd);
 		VMOVE(plane, fg->N);
-		plane[3] = fg->N[3] * local2mm;
+		plane[W] = fg->N[W] * local2mm;
 		htond(d->N, (unsigned char *)plane, 4);
 	    }
 	    return;

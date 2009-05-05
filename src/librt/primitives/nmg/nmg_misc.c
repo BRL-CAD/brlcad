@@ -195,7 +195,7 @@ nmg_snurb_fu_eval(const struct faceuse *fu, const fastf_t u, const fastf_t v, fa
     {
 	double f;
 
-	f = 1.0 / tmp_pt[3];
+	f = 1.0 / tmp_pt[W];
 	VSCALE(pt_on_srf, tmp_pt, f);
     }
     else
@@ -1538,7 +1538,7 @@ nmg_loop_plane_area(const struct loopuse *lu, fastf_t *pl)
 
     VSCALE(plane, plane, vect_mag_inv);
 
-    /* calculate plane[3] as average distance to plane */
+    /* calculate plane[W] as average distance to plane */
     for (BU_LIST_FOR (eu, edgeuse, &lu->down_hd))
     {
 	pt_dot_plane += VDOT(plane, eu->vu_p->v_p->vg_p->coord);
@@ -1549,7 +1549,7 @@ nmg_loop_plane_area(const struct loopuse *lu, fastf_t *pl)
     if (pt_count < 3)
 	return((fastf_t)(-1.0));
 
-    plane[3] = pt_dot_plane/pt_count;
+    plane[W] = pt_dot_plane/pt_count;
     HMOVE(pl, plane);
 
     return(area);
@@ -5461,7 +5461,7 @@ nmg_simple_vertex_solve(struct vertex *new_v, const struct bu_ptbl *faces, const
 		VCROSS(pl1, fp1->g.plane_p->N, fp2->g.plane_p->N);
 
 		VUNITIZE(pl1);
-		pl1[3] = VDOT(vg->coord, pl1);
+		pl1[W] = VDOT(vg->coord, pl1);
 		if (bn_mkpoint_3planes(vg->coord, fp1->g.plane_p->N, fp2->g.plane_p->N, pl1))
 		{
 		    bu_log("nmg_simple_vertex_solve: Cannot find new coords for two planes\n");
@@ -7060,7 +7060,7 @@ nmg_dist_to_cross(const struct intersect_fus *i_fus, const struct intersect_fus 
 		    NMG_GET_FU_PLANE(pl1, j_fus->fu[1]);
 		    NMG_GET_FU_PLANE(pl2, i_fus->fu[0]);
 		    VCROSS(pl3, pl1, pl2);
-		    pl3[3] = VDOT(pl3, i_fus->vp->vg_p->coord);
+		    pl3[W] = VDOT(pl3, i_fus->vp->vg_p->coord);
 		    bn_mkpoint_3planes(new_pt, pl1, pl2, pl3);
 
 		    return(dist[0]);
@@ -7493,7 +7493,7 @@ nmg_complex_vertex_solve(struct vertex *new_v, const struct bu_ptbl *faces, cons
 		fastf_t dot;
 
 		dot = VDOT(planes[i], new_v->vg_p->coord);
-		bu_log("\tVDOT(#%d, new_v) - dist = %g\n", i, dot-planes[i][3]);
+		bu_log("\tVDOT(#%d, new_v) - dist = %g\n", i, dot-planes[i][W]);
 
 		for (j=0; j<BU_PTBL_END(faces); j++)
 		{
@@ -7535,7 +7535,7 @@ nmg_complex_vertex_solve(struct vertex *new_v, const struct bu_ptbl *faces, cons
 		    VCROSS(planes[plane_count], fu_norm, eu_free->g.lseg_p->e_dir);
 		    VUNITIZE(planes[plane_count]);
 
-		    planes[plane_count][3] = VDOT(planes[plane_count], new_v->vg_p->coord);
+		    planes[plane_count][W] = VDOT(planes[plane_count], new_v->vg_p->coord);
 
 		    if (rt_g.NMG_debug & DEBUG_BASIC)
 			bu_log("\t added plane #%d: %g %g %g %g\n", plane_count, V4ARGS(planes[plane_count]));
@@ -7959,7 +7959,7 @@ nmg_move_edge_thru_pt(struct edgeuse *mv_eu, const fastf_t *pt, const struct bn_
 		/* this is an acceptable plane */
 		mag = 1.0/mag;
 		VSCALE(plane, plane, mag);
-		plane[3] = VDOT(plane, pt);
+		plane[W] = VDOT(plane, pt);
 
 		/* assign this plane to the face */
 		if (fu->orientation == OT_SAME)
@@ -11645,7 +11645,7 @@ nmg_edge_collapse(struct model *m, const struct bn_tol *tol, const fastf_t tol_c
 		if (fu->orientation == OT_SAME)
 		{
 		    VUNITIZE(normb)
-			normb[3] = VDOT(normb, v2->vg_p->coord);
+			normb[W] = VDOT(normb, v2->vg_p->coord);
 
 		    dist = fabs(DIST_PT_PLANE(v1->vg_p->coord, normb));
 #if EDGE_COLLAPSE_DEBUG
@@ -11738,7 +11738,7 @@ nmg_edge_collapse(struct model *m, const struct bn_tol *tol, const fastf_t tol_c
 		if (fu->orientation == OT_SAME)
 		{
 		    VUNITIZE(normb)
-			normb[3] = VDOT(normb, v1->vg_p->coord);
+			normb[W] = VDOT(normb, v1->vg_p->coord);
 
 		    dist = fabs(DIST_PT_PLANE(v2->vg_p->coord, normb));
 #if EDGE_COLLAPSE_DEBUG

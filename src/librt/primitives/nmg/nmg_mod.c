@@ -161,7 +161,7 @@ nmg_shell_coplanar_face_merge(struct shell *s, const struct bn_tol *tol, const i
 		NMG_GET_FU_PLANE( n2, fu2 );
 
 		/* Compare distances from origin */
-		dist = n1[3] - n2[3];
+		dist = n1[W] - n2[W];
 		if ( !NEAR_ZERO(dist, tol->dist) ) continue;
 
 		/*

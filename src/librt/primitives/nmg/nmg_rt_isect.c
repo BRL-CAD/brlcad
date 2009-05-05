@@ -1826,8 +1826,8 @@ isect_ray_snurb_face(struct ray_data *rd, struct faceuse *fu, struct face_g_snur
     /* calculate two orthogonal planes that intersect along ray */
     bn_vec_ortho( pl2, rd->rp->r_dir );
     VCROSS( pl1, pl2, rd->rp->r_dir );
-    pl1[3] = VDOT( rd->rp->r_pt, pl1 );
-    pl2[3] = VDOT( rd->rp->r_pt, pl2 );
+    pl1[W] = VDOT( rd->rp->r_pt, pl1 );
+    pl2[W] = VDOT( rd->rp->r_pt, pl2 );
 
     BU_LIST_INIT( &bezier );
     BU_LIST_INIT( &hit_list );
@@ -1893,7 +1893,7 @@ isect_ray_snurb_face(struct ray_data *rd, struct faceuse *fu, struct face_g_snur
 	    VSUB2( v_dir, ctl_pt[2], ctl_pt[0] );
 	    VCROSS( pl, u_dir, v_dir );
 	    VUNITIZE( pl );
-	    pl[3] = VDOT( pl, ctl_pt[0] );
+	    pl[W] = VDOT( pl, ctl_pt[0] );
 	    hp = (struct rt_nurb_uv_hit *)NULL;
 	    if ( bn_isect_line3_plane( &dist,  rd->rp->r_pt,  rd->rp->r_dir, pl, rd->tol ) <= 0 )
 	    {
@@ -2004,7 +2004,7 @@ isect_ray_snurb_face(struct ray_data *rd, struct faceuse *fu, struct face_g_snur
 		{
 		    fastf_t inv_homo;
 
-		    inv_homo = 1.0/homo_hit[3];
+		    inv_homo = 1.0/homo_hit[W];
 		    VSCALE( myhit->hit.hit_point, homo_hit, inv_homo )
 			}
 		else

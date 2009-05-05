@@ -1878,7 +1878,7 @@ get_thru_faces_length( tag_t feat_tag,
 
 	VSETALLN( pl, 0.0, 4 );
 	pl[i] = 1.0;
-	pl[3] = bb[i+3];
+	pl[W] = bb[i+3];
 	DO_INDENT;
 	bu_log( "\tChecking plane (%g %g %g %g)\n", V4ARGS( pl ) );
 	ret = bn_isect_line3_plane( &dist, base, dir, pl, &tol );
@@ -1897,7 +1897,7 @@ get_thru_faces_length( tag_t feat_tag,
 
 	VSETALLN( pl, 0.0, 4 );
 	pl[i] = -1.0;
-	pl[3] = -bb[i];
+	pl[W] = -bb[i];
 	DO_INDENT;
 	bu_log( "\tChecking plane (%g %g %g %g)\n", V4ARGS( pl ) );
 	ret = bn_isect_line3_plane( &dist, base, dir, pl, &tol );
@@ -1945,7 +1945,7 @@ get_thru_faces_length( tag_t feat_tag,
 
 	    VSETALLN( pl, 0.0, 4 );
 	    pl[i] = 1.0;
-	    pl[3] = bb[i+3];
+	    pl[W] = bb[i+3];
 	    ret = bn_isect_line3_plane( &dist, base, dir, pl, &tol );
 	    /* 1 - exit, 2 - entrance, else miss */
 	    if ( ret == 1 ) {
@@ -1960,7 +1960,7 @@ get_thru_faces_length( tag_t feat_tag,
 
 	    VSETALLN( pl, 0.0, 4 );
 	    pl[i] = -1.0;
-	    pl[3] = -bb[i];
+	    pl[W] = -bb[i];
 	    ret = bn_isect_line3_plane( &dist, base, dir, pl, &tol );
 	    /* 1 - exit, 2 - entrance, else miss */
 	    if ( ret == 1 ) {

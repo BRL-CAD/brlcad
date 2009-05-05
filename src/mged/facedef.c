@@ -339,7 +339,7 @@ get_pleqn(fastf_t *plane, char **argv)
     for (i=0; i<4; i++)
 	plane[i]= atof(argv[i]);
     VUNITIZE( &plane[0] );
-    plane[3] *= local2base;
+    plane[W] *= local2base;
     return;
 }
 
@@ -407,12 +407,12 @@ get_rotfb(fastf_t *plane, char **argv, const struct rt_arb_internal *arb)
       	/* vertex given */
 	/* strip off 'v', subtract 1 */
 	temp = atoi(argv[2]+1) - 1;
-	plane[3]= VDOT(&plane[0], arb->pt[temp]);
+	plane[W]= VDOT(&plane[0], arb->pt[temp]);
     } else {
 	/* definite point given */
 	for (i=0; i<3; i++)
 	    pt[i]=atof(argv[2+i]) * local2base;
-	plane[3]=VDOT(&plane[0], pt);
+	plane[W]=VDOT(&plane[0], pt);
     }
 }
 
@@ -434,7 +434,7 @@ get_nupnt(fastf_t *plane, char **argv)
 
     for (i=0; i<3; i++)
 	pt[i] = atof(argv[i]) * local2base;
-    plane[3] = VDOT(&plane[0], pt);
+    plane[W] = VDOT(&plane[0], pt);
 }
 
 /*

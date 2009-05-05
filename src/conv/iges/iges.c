@@ -1550,7 +1550,7 @@ write_plane_entity( plane, fp_dir, fp_param )
 
     bu_vls_init( &str );
 
-    VSCALE( pt_on_plane, plane, plane[3] );
+    VSCALE( pt_on_plane, plane, plane[W] );
 
     bu_vls_printf( &str, "190,%d,%d;" ,
 		   write_point_entity( pt_on_plane, fp_dir, fp_param ),

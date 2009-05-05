@@ -78,7 +78,7 @@ main(void)
 	if ( scanf( "%d %f %f %f %f", &face_no, &a, &b, &c, &d ) == EOF )
 	    bu_exit(1, "Unexpected EOF\n" );
 	VSET( pl, a, b, c );
-	pl[3] = d;
+	pl[W] = d;
 
 	if ( ident != old_id )
 	{
