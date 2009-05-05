@@ -198,7 +198,7 @@ package provide Archer 1.0
 	method initMode {{_updateFractions 0}}
 
 	# Object Edit Section
-	method initEdit {}
+	method initEdit {{_initEditMode 1}}
 
 	# Object Edit VIA Mouse Section
 	method beginObjRotate {}
@@ -3557,7 +3557,7 @@ package provide Archer 1.0
 ################################### Object Edit Section ###################################
 
 
-::itcl::body Archer::initEdit {} {
+::itcl::body Archer::initEdit {{_initEditMode 1}} {
     if {![info exists itk_component(ged)]} {
 	return
     }
@@ -3570,8 +3570,9 @@ package provide Archer 1.0
 	set odata ""
     }
 
-    if {[info exists GeometryEditFrame::mEditCommand]} {
+    if {$_initEditMode && [info exists GeometryEditFrame::mEditCommand]} {
 	set GeometryEditFrame::mEditMode 0
+	set GeometryEditFrame::mEditClass $GeometryEditFrame::EDIT_CLASS_NONE
 	set GeometryEditFrame::mEditCommand ""
 	set GeometryEditFrame::mEditParam1 0
 	set GeometryEditFrame::mEditParam2 0
@@ -3729,7 +3730,9 @@ package provide Archer 1.0
 	return
     }
 
-#    initEdit
+    if {$GeometryEditFrame::mEditClass != $GeometryEditFrame::EDIT_CLASS_ROT} {
+	initEdit
+    }
 
     foreach dname {ul ur ll lr} {
 	set win [$itk_component(ged) component $dname]
@@ -3757,7 +3760,9 @@ package provide Archer 1.0
 	return
     }
 
-#    initEdit
+    if {$GeometryEditFrame::mEditClass != $GeometryEditFrame::EDIT_CLASS_SCALE} {
+	initEdit
+    }
 
     foreach dname {ul ur ll lr} {
 	set win [$itk_component(ged) component $dname]
@@ -3783,6 +3788,10 @@ package provide Archer 1.0
 	set mDefaultBindingMode $ROTATE_MODE
 	beginViewRotate
 	return
+    }
+
+    if {$GeometryEditFrame::mEditClass != $GeometryEditFrame::EDIT_CLASS_TRANS} {
+	initEdit
     }
 
     set ::GeometryEditFrame::mEditLastTransMode $OBJECT_TRANSLATE_MODE
@@ -3813,6 +3822,10 @@ package provide Archer 1.0
 	return
     }
 
+    if {$GeometryEditFrame::mEditClass != $GeometryEditFrame::EDIT_CLASS_TRANS} {
+	initEdit
+    }
+
     set ::GeometryEditFrame::mEditLastTransMode $OBJECT_CENTER_MODE
 
     foreach dname {ul ur ll lr} {
@@ -3831,6 +3844,8 @@ package provide Archer 1.0
     set mNeedSave 1
     updateSaveMode
 
+    initEdit 0
+
     set center [$itk_component(ged) ocenter $obj]
     addHistory "ocenter $center"
 }
@@ -3843,6 +3858,8 @@ package provide Archer 1.0
     $itk_component(ged) pane_idle_mode $dname
     set mNeedSave 1
     updateSaveMode
+
+    initEdit 0
 
     #XXX Need code to track overall transformation
     if {[info exists itk_component(ged)]} {
@@ -3859,6 +3876,8 @@ package provide Archer 1.0
     set mNeedSave 1
     updateSaveMode
 
+    initEdit 0
+
     #XXX Need code to track overall transformation
     if {[info exists itk_component(ged)]} {
 	#addHistory "oscale obj sf"
@@ -3874,10 +3893,10 @@ package provide Archer 1.0
     set mNeedSave 1
     updateSaveMode
 
+    initEdit 0
+
     #XXX Need code to track overall transformation
-    if {[info exists itk_component(ged)]} {
-	#addHistory "otranslate obj dx dy dz"
-    }
+    #addHistory "otranslate obj dx dy dz"
 }
 
 ::itcl::body Archer::handleObjCenter {obj x y} {
@@ -3900,7 +3919,7 @@ package provide Archer 1.0
     set ocenter [vscale [eval gedCmd v2m_point $vcenter] [gedCmd base2local]]
 
     if {$GeometryEditFrame::mEditCommand != ""} {
-	set gdata [$GeometryEditFrame::mEditCommand $obj $GeometryEditFrame::mEditParam1 $ocenter]
+	$GeometryEditFrame::mEditCommand $obj $GeometryEditFrame::mEditParam1 $ocenter
 #	eval adjust $mSelectedObj $gdata
     } else {
 	eval archerWrapper ocenter 0 0 0 0 $obj $ocenter
@@ -3914,6 +3933,7 @@ package provide Archer 1.0
 #    }
 
     redrawObj $obj 0
+    initEdit 0
 }
 
 ::itcl::body Archer::handleObjRotate {obj rx ry rz kx ky kz} {
@@ -3927,6 +3947,7 @@ package provide Archer 1.0
     }
 
     redrawObj $obj 0
+    initEdit 0
 }
 
 ::itcl::body Archer::handleObjScale {obj sf kx ky kz} {
@@ -3940,6 +3961,7 @@ package provide Archer 1.0
     }
 
     redrawObj $obj 0
+    initEdit 0
 }
 
 ::itcl::body Archer::handleObjTranslate {obj dx dy dz} {
@@ -3953,6 +3975,7 @@ package provide Archer 1.0
     }
 
     redrawObj $obj 0
+    initEdit 0
 }
 
 

@@ -52,9 +52,10 @@
 	common mEditParam2 1
 	common mEditLastTransMode $::ArcherCore::OBJECT_CENTER_MODE
 
-	common EDIT_CLASS_ROT 0
-	common EDIT_CLASS_SCALE 1
-	common EDIT_CLASS_TRANS 2
+	common EDIT_CLASS_NONE 0
+	common EDIT_CLASS_ROT 1
+	common EDIT_CLASS_SCALE 2
+	common EDIT_CLASS_TRANS 3
 
 	proc validateDigit {d}
 	proc validateDigitMax100 {d}
