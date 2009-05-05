@@ -2966,8 +2966,9 @@ go_mouse_move_arb_edge(struct ged	*gedp,
 	dy = gdvp->gdv_view->gv_maxMouseDelta;
 
     inv_width = 1.0 / (fastf_t)gdvp->gdv_dmp->dm_width;
-    dx *= inv_width * gdvp->gdv_view->gv_size;
-    dy *= inv_width * gdvp->gdv_view->gv_size;
+    /* ged_move_arb_edge expects things to be in local units */
+    dx *= inv_width * gdvp->gdv_view->gv_size * gedp->ged_wdbp->dbip->dbi_base2local;
+    dy *= inv_width * gdvp->gdv_view->gv_size * gedp->ged_wdbp->dbip->dbi_base2local;
     VSET(view, dx, dy, 0.0);
     bn_mat_inv(inv_rot, gdvp->gdv_view->gv_rotation);
     MAT4X3PNT(model, inv_rot, view);
@@ -3062,8 +3063,9 @@ go_mouse_move_arb_face(struct ged	*gedp,
 	dy = gdvp->gdv_view->gv_maxMouseDelta;
 
     inv_width = 1.0 / (fastf_t)gdvp->gdv_dmp->dm_width;
-    dx *= inv_width * gdvp->gdv_view->gv_size;
-    dy *= inv_width * gdvp->gdv_view->gv_size;
+    /* ged_move_arb_face expects things to be in local units */
+    dx *= inv_width * gdvp->gdv_view->gv_size * gedp->ged_wdbp->dbip->dbi_base2local;
+    dy *= inv_width * gdvp->gdv_view->gv_size * gedp->ged_wdbp->dbip->dbi_base2local;
     VSET(view, dx, dy, 0.0);
     bn_mat_inv(inv_rot, gdvp->gdv_view->gv_rotation);
     MAT4X3PNT(model, inv_rot, view);
@@ -3357,8 +3359,9 @@ go_mouse_otranslate(struct ged		*gedp,
 	dy = gdvp->gdv_view->gv_maxMouseDelta;
 
     inv_width = 1.0 / (fastf_t)gdvp->gdv_dmp->dm_width;
-    dx *= inv_width * gdvp->gdv_view->gv_size;
-    dy *= inv_width * gdvp->gdv_view->gv_size;
+    /* ged_otranslate expects things to be in local units */
+    dx *= inv_width * gdvp->gdv_view->gv_size * gedp->ged_wdbp->dbip->dbi_base2local;
+    dy *= inv_width * gdvp->gdv_view->gv_size * gedp->ged_wdbp->dbip->dbi_base2local;
     VSET(view, dx, dy, 0.0);
     bn_mat_inv(inv_rot, gdvp->gdv_view->gv_rotation);
     MAT4X3PNT(model, inv_rot, view);
