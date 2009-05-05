@@ -161,6 +161,8 @@ ged_move_arb_face(struct ged *gedp, int argc, const char *argv[])
 	return BRLCAD_ERROR;
     }
 
+    VSCALE(pt, pt, gedp->ged_wdbp->dbip->dbi_local2base);
+
     if (rflag) {
 	int arb_pt_index;
 
