@@ -29,6 +29,10 @@ THESE SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 THESE ARE LOWER PRIORITY OR FOR FUTURE RELEASES
 -----------------------------------------------
 
+* mged inconsistently ignores signals.  initially allowing mged to be
+  backgrounded, but then later ignores them.  needs to consistently
+  ignore or not ignore them, ideally the latter.
+
 * libfb needs to have the fb_open/close_existing functions refactored
   into the function table and hav the #ifdef sections removed.
 
