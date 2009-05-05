@@ -265,16 +265,16 @@ typedef enum bn_matrix_component_ {
  *
  * A plane is defined by a unit-length outward pointing normal vector
  * (N), and the perpendicular (shortest) distance from the origin to
- * the plane (in element N[3]).
+ * the plane (in element N[W]).
  *
  * The plane consists of all points P=(x, y, z) such that
- *@n	VDOT(P, N) - N[3] == 0
+ *@n	VDOT(P, N) - N[W] == 0
  *@n that is,
- *@n	N[X]*x + N[Y]*y + N[Z]*z - N[3] == 0
+ *@n	N[X]*x + N[Y]*y + N[Z]*z - N[W] == 0
  *
  * The inside of the halfspace bounded by the plane
  * consists of all points P such that
- *@n	VDOT(P, N) - N[3] <= 0
+ *@n	VDOT(P, N) - N[W] <= 0
  *
  * A ray with direction D is classified w.r.t. the plane by
  *
@@ -297,7 +297,7 @@ typedef fastf_t	plane_t[ELEMENTS_PER_PLANE];
 
 
 /** @brief Compute distance from a point to a plane. */
-#define DIST_PT_PLANE(_pt, _pl) (VDOT(_pt, _pl) - (_pl)[H])
+#define DIST_PT_PLANE(_pt, _pl) (VDOT(_pt, _pl) - (_pl)[W])
 
 /** @brief Compute distance between two points. */
 #define DIST_PT_PT(a, b)		sqrt( \
@@ -1193,10 +1193,10 @@ typedef fastf_t	plane_t[ELEMENTS_PER_PLANE];
 /**
  * @brief Quaternion math definitions.
  *
- * Note that the W component will be put in the last [3] place rather
- * than the first [0] place, so that the X, Y, Z elements will be
- * compatible with vectors.  Only QUAT_FROM_VROT macros depend on
- * component locations, however.
+ * Note that the [W] component will be put in the last (i.e., third)
+ * place rather than the first [X] (i.e., [0]) place, so that the X,
+ * Y, and Z elements will be compatible with vectors.  Only
+ * QUAT_FROM_VROT macros depend on component locations, however.
  */
 
 /**
