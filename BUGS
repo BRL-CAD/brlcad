@@ -15,6 +15,9 @@ on-going issues.
 Recent Bugs
 -----------
 
+* nirt -e "xyz val val val" doesn't work due to the space after the -e
+  and how the nirt/rt commands parse quoted args.
+
 * tab completion in classic/command mode sometimes doesn't work
   (presumably if mged can't find tcl resources).  was finally able to
   reproduce this with the result given as:
