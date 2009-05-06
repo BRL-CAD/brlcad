@@ -14,6 +14,8 @@ changes made.  See document footer for additional details.
 --- 2009-05-XX  Release 7.14.7                                     ---
 ----------------------------------------------------------------------
 
+* fixed crash in raytracing of pipe when duplicate hit points returned
+        - Cliff Yapp, Sean Morrison
 * mged 'dbconcat' command no longer requires an affix - Bob Parker
 * added 'l' describe support for the pnts primitive - Richard Weiss
 * restored mged mirror command trailing axis options - Sean Morrison
