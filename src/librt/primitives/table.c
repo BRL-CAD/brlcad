@@ -115,6 +115,8 @@ const struct bu_structparse rt_nul_parse[] = {
 			struct resource *resp)); \
 	BU_EXTERN(int rt_##name##_params, (struct pc_pc_set *ps, \
 			const struct rt_db_internal *ip)); \
+	BU_EXTERN(int rt_##name##_mirror, (struct rt_db_internal *ip, \
+			const plane_t *plane)); \
 	extern const struct bu_structparse rt_##name##_parse[];
 
 
