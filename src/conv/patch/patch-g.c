@@ -23,16 +23,16 @@
  *
  * This version assumes the following FASTGEN primitives:
  *
- *	0 - triangle (< 0.99" thick for plate mode)
- *	1 - triangle (< 1.99" thick but > 0.99")
- *	2 - triangle (< 2.99" thick but > 1.99")
- *	3 - triangle (< 3.99" thick but > 2.99")
- *	4 - donut / torus (changed from type 3 by rpatch)
- *	5 - wedge
- *	6 - sphere
- *	7 - box
- *	8 - cylinder (24pt type-4's converted by rpatch)
- *	9 - rod
+ * 0 - triangle (< 0.99" thick for plate mode)
+ * 1 - triangle (< 1.99" thick but > 0.99")
+ * 2 - triangle (< 2.99" thick but > 1.99")
+ * 3 - triangle (< 3.99" thick but > 2.99")
+ * 4 - donut / torus (changed from type 3 by rpatch)
+ * 5 - wedge
+ * 6 - sphere
+ * 7 - box
+ * 8 - cylinder (24pt type-4's converted by rpatch)
+ * 9 - rod
  *
  * The target is also assumed to be pointing forward along the
  * positive X-axis and positive Y on the left side of the target.
@@ -105,7 +105,7 @@ int pt_inside(point_t a, point_t base, point_t top, double rad1, double rad2);
 
 
 /**
- *			M A I N
+ * M A I N
  */
 int
 main(int argc, char **argv)
@@ -143,7 +143,9 @@ main(int argc, char **argv)
 
     scratch_num = 0;
 
-    /*     This section checks usage options given at run command time.   */
+    /* This section checks usage options given at run command
+     * time.
+     */
 
     /* Get command line arguments. */
     while ((c = bu_getopt(argc, argv, "6A:T:x:X:pf:i:m:anu:t:o:rc:d:")) != EOF) {
@@ -212,8 +214,8 @@ main(int argc, char **argv)
 		nflg = 0;
 		break;
 
-	    case 'u':  /* specify number of union operations
-			* to put in a region
+	    case 'u':  /* specify number of union operations to put in
+			* a region
 			*/
 
 		if ((num_unions = atoi(bu_optarg)) <= 0) {
@@ -276,8 +278,10 @@ main(int argc, char **argv)
 	bu_log("librt rt_g.NMG_debug = 0x%x\n", rt_g.NMG_debug);
     }
 
-    /*     This section opens input files - the data file defaults to standard
-	   input,  both files provide error checking for failure to open.      */
+    /* This section opens input files - the data file defaults to
+     * standard input, both files provide error checking for failure
+     * to open.
+     */
 
     if (patchfile != (char *)0) {
 	if ((fd = open(patchfile, 0664)) < 0) {
@@ -303,22 +307,23 @@ main(int argc, char **argv)
 	}
     }
 
-    /*     This is the primary processing section to input fastgen data and
-	   manufacture related mged elements.  Previous editions of PATCH failed
-	   to process the final element after hitting EOF so I moved the read
-	   statement into the for loop and made a check flag "done" to verify
-	   that all elements are processed prior to falling out of the "for".      */
+    /* This is the primary processing section to input fastgen data
+     * and manufacture related mged elements.  Previous editions of
+     * PATCH failed to process the final element after hitting EOF so
+     * I moved the read statement into the for loop and made a check
+     * flag "done" to verify that all elements are processed prior to
+     * falling out of the "for".
+     */
 
     MAT_IDN(m);
 
     /* FASTGEN targets are always in inches */
     mk_id_units(outfp, title, "in");
 
-    /*
-     *      This section loads the label file into an array
-     *       needed to label processed solids, regions, and groups.
-     *       The file should be limited to a 4 digit component number and two
-     *       group labels (<15 characters) separated by "white space".
+    /* This section loads the label file into an array needed to label
+     * processed solids, regions, and groups.  The file should be
+     * limited to a 4 digit component number and two group labels (<15
+     * characters) separated by "white space".
      */
     done = 1;
     if (labelfile != NULL) {
@@ -342,13 +347,14 @@ main(int argc, char **argv)
     }
 
     /* Read the material codes file, which is a component code list
-       with equivalent los % and material code at the end of the line.
-       Non-conforming and blank lines should already have been stripped,
-       since minimal error checking is done.
-       Line format is "%6d%66c%3d%5d".
-       Example:
-       8215  COMPONENT WIDGET                                 95    5
-    */
+     * with equivalent los % and material code at the end of the line.
+     * Non-conforming and blank lines should already have been
+     * stripped, since minimal error checking is done.
+     *
+     * Line format is "%6d%66c%3d%5d".
+     * Example:
+     * 8215  COMPONENT WIDGET                                 95    5
+     */
     if (mfp) {
 	int eqlos, matcode;
 
@@ -368,7 +374,7 @@ main(int argc, char **argv)
 	nread = read(fd, buf, sizeof(buf));     /* read one line of file into a buffer */
 
 	if (nread > 0) {
-	    /*  For valid reads, assign values to the input array */
+	    /* For valid reads, assign values to the input array */
 
 	    sscanf(buf, "%lf %lf %lf %c %d %d %d %d %d %d %d %d %d %d %d %d %d %d",
 		   &in[i].x, &in[i].y, &in[i].z, &in[i].surf_mode, &in[i].surf_type,
@@ -377,7 +383,7 @@ main(int argc, char **argv)
 		   &in[i].ept[3], &in[i].ept[4], &in[i].ept[5],
 		   &in[i].ept[6], &in[i].ept[7], &in[i].mirror, &in[i].vc);
 
-	    /*  Perform english to metric conversions.  */
+	    /* Perform english to metric conversions.  */
 	    in[i].x = mmtin*in[i].x;
 	    in[i].y = mmtin*in[i].y;
 	    in[i].z = mmtin*in[i].z;
@@ -395,7 +401,7 @@ main(int argc, char **argv)
 	    in[i].cc = abs(in[i].cc);
 	    in[i].surf_type = abs(in[i].surf_type);
 
-	    /*  Regurgitate data just loaded for debugging */
+	    /* Regurgitate data just loaded for debugging */
 	    if (debug > 0) {
 		bu_log("%lf %lf %lf %c %d %d %d %d %d %d %d %d %d %d %d %d %d %d\n",
 		       in[i].x, in[i].y, in[i].z, in[i].surf_mode, in[i].surf_type,
@@ -409,7 +415,7 @@ main(int argc, char **argv)
 		in[i].cc = -1;
 	    }
 	} else {
-	    /*  Read hit EOF, set flag and process one last time.    */
+	    /* Read hit EOF, set flag and process one last time.    */
 	    if (nread < 0) {
 		perror("READ ERROR");
 	    }
@@ -418,7 +424,8 @@ main(int argc, char **argv)
 	}
 
 	/* Process a component code number series when the structure
-	   type changes or when a new component code number is found. */
+	 * type changes or when a new component code number is found.
+	 */
 
 	if (i == 0)
 	    continue;
@@ -489,8 +496,9 @@ main(int argc, char **argv)
 
 	    }       /* end switch */
 
-	    /* If the component code number has changed, call
-	       the subroutine for making groups from regions.   */
+	    /* If the component code number has changed, call the
+	     * subroutine for making groups from regions.
+	     */
 
 	    if ((in[i].cc != in[i-1].cc) && (in[i].cc != 0)) {
 		proc_label(labelfile);
@@ -502,8 +510,9 @@ main(int argc, char **argv)
 		(void) mk_addmember(name, &heade.l, NULL, WMOP_UNION);
 	    }
 
-	    /* We have already read the first record of the
-	       next element, let's put it in the first position. */
+	    /* We have already read the first record of the next
+	     * element, let's put it in the first position.
+	     */
 
 	    in[0] = in[i];
 	    i = 0;
@@ -615,46 +624,46 @@ make_inside_trc(fastf_t *base, fastf_t *top, fastf_t rbase, fastf_t rtop, fastf_
     vect_t unit_h;
     vect_t new_h;
 
-    VMOVE(new_base, base)
-	VMOVE(new_top, top)
-	*new_rtop = rtop;
+    VMOVE(new_base, base);
+    VMOVE(new_top, top);
+    *new_rtop = rtop;
     *new_rbase = rbase;
 
     if ((!do_base && !do_top && !do_sides) || thick == 0.0)
 	return(0);
 
-    VSUB2(h, new_top, new_base)
-	magh = MAGNITUDE(h);
+    VSUB2(h, new_top, new_base);
+    magh = MAGNITUDE(h);
     inv_magh = 1.0/magh;
-    VSCALE(unit_h, h, inv_magh)
+    VSCALE(unit_h, h, inv_magh);
 
-	VMOVE(new_h, h)
-	l = hypot((double)magh, (rbase - rtop));
+    VMOVE(new_h, h);
+    l = hypot((double)magh, (rbase - rtop));
     sin_ang = fabs(magh / l);
     delta_r = thick / sin_ang;
 
     if (do_base) {
 	/* move base up by thickness */
-	VJOIN1(new_base, new_base, thick, unit_h)
+	VJOIN1(new_base, new_base, thick, unit_h);
 
-	    /* adjust radius at new base */
-	    *new_rbase = *new_rbase + (thick/magh) * (*new_rtop - *new_rbase);
+	/* adjust radius at new base */
+	*new_rbase = *new_rbase + (thick/magh) * (*new_rtop - *new_rbase);
 
 	/* recalculate height */
-	VSUB2(new_h, new_top, new_base)
-	    magh = MAGNITUDE(new_h);
+	VSUB2(new_h, new_top, new_base);
+	magh = MAGNITUDE(new_h);
     }
 
     if (do_top) {
 	/* move top down by thickness */
-	VJOIN1(new_top, top, -thick, unit_h)
+	VJOIN1(new_top, top, -thick, unit_h);
 
-	    /* adjust radius at new top */
-	    *new_rtop = *new_rtop + (thick/magh) * (*new_rbase - *new_rtop);
+	/* adjust radius at new top */
+	*new_rtop = *new_rtop + (thick/magh) * (*new_rbase - *new_rtop);
 
 	/* recalculate height */
-	VSUB2(new_h, new_top, new_base)
-	    magh = MAGNITUDE(new_h);
+	VSUB2(new_h, new_top, new_base);
+	magh = MAGNITUDE(new_h);
     }
 
     /* if height has reversed direction, we can't make an inside solid */
@@ -676,27 +685,28 @@ make_inside_trc(fastf_t *base, fastf_t *top, fastf_t rbase, fastf_t rtop, fastf_
 	if (*new_rtop <= 0.0) {
 	    /* adjust height (move top towards base) */
 	    magh = magh * (*new_rbase) / (*new_rbase - *new_rtop);
-	    VJOIN1(new_top, new_base, magh, unit_h)
-		VSUB2(new_h, new_top, new_base)
+	    VJOIN1(new_top, new_base, magh, unit_h);
+	    VSUB2(new_h, new_top, new_base);
 
-		/* set new top radius to approximate zero */
-		*new_rtop = 0.00001;
+	    /* set new top radius to approximate zero */
+	    *new_rtop = 0.00001;
 	} else if (*new_rbase <= 0.0) {
 	    /* adjust base (move towards top) */
 	    magh = magh * (*new_rtop) / (*new_rtop - *new_rbase);
-	    VJOIN1(new_base, new_top, -magh, unit_h)
-		VSUB2(new_h, new_top, new_base)
+	    VJOIN1(new_base, new_top, -magh, unit_h);
+	    VSUB2(new_h, new_top, new_base);
 
-		/* set new bottom radius to approximate zero */
-		*new_rbase = 0.00001;
+	    /* set new bottom radius to approximate zero */
+	    *new_rbase = 0.00001;
 	}
     }
     return(0);
 }
 
-/*
- *     This subroutine generates solid names with annotations for sidedness as
- *      required.
+
+/**
+ * This subroutine generates solid names with annotations for
+ * sidedness as required.
  */
 char *
 proc_sname(char shflg, char mrflg, int cnt, char ctflg)
@@ -740,22 +750,22 @@ proc_sname(char shflg, char mrflg, int cnt, char ctflg)
 
 
 /*
- *			N M G _ P A T C H _ C O P L A N A R _ F A C E _ M E R G E
+ * N M G _ P A T C H _ C O P L A N A R _ F A C E _ M E R G E
  *
- *  A geometric routine to
- *  find all pairs of faces in a shell that have the same plane equation
- *  (to within the given tolerance), and combine them into a single face.
+ * A geometric routine to find all pairs of faces in a shell that have
+ * the same plane equation (to within the given tolerance), and
+ * combine them into a single face.
  *
- *  Note that this may result in some of the verticies being very slightly
- *  off the plane equation, but the geometry routines need to be prepared
- *  for this in any case.
- *  If the "simplify" flag is set, pairs of loops in the face that touch
- *  will be combined into a single loop where possible.
+ * Note that this may result in some of the verticies being very
+ * slightly off the plane equation, but the geometry routines need to
+ * be prepared for this in any case.
  *
- *  XXX Perhaps should be recast as "nmg_shell_shared_face_merge()", leaving
- *  XXX all the geometric calculations to the code in nmg_fuse.c ?
+ * If the "simplify" flag is set, pairs of loops in the face that
+ * touch will be combined into a single loop where possible.
+ *
+ * XXX Perhaps should be recast as "nmg_shell_shared_face_merge()", leaving
+ * XXX all the geometric calculations to the code in nmg_fuse.c ?
  */
-
 static void
 nmg_patch_coplanar_face_merge(struct shell *s, int *face_count, struct patch_faces *p_faces, struct bn_tol *tol, int simplify)
 {
@@ -835,9 +845,9 @@ nmg_patch_coplanar_face_merge(struct shell *s, int *face_count, struct patch_fac
 		if (!NEAR_ZERO(dist, tol->dist))  continue;
 
 		/*
-		 *  Compare angle between normals.
-		 *  Can't just use BN_VECT_ARE_PARALLEL here,
-		 *  because they must point in the same direction.
+		 * Compare angle between normals.  Can't just use
+		 * BN_VECT_ARE_PARALLEL here, because they must point
+		 * in the same direction.
 		 */
 		dist = VDOT(n1, n2);
 		if (!(dist >= tol->para))  continue;
@@ -858,11 +868,9 @@ nmg_patch_coplanar_face_merge(struct shell *s, int *face_count, struct patch_fac
 	    if (p_faces[face1_no].thick != p_faces[face2_no].thick)
 		continue;
 
-	    /*
-	     * Plane equations are the same, within tolerance,
-	     * or by shared fg topology.
-	     * Move everything into fu1, and
-	     * kill now empty faceuse, fumate, and face
+	    /* Plane equations are the same, within tolerance, or by
+	     * shared fg topology.  Move everything into fu1, and kill
+	     * now empty faceuse, fumate, and face
 	     */
 	    {
 		struct faceuse *prev_fu;
@@ -885,8 +893,8 @@ nmg_patch_coplanar_face_merge(struct shell *s, int *face_count, struct patch_fac
 		}
 	    }
 
-	    /* There is now the option of simplifying the face,
-	     * by removing unnecessary edges.
+	    /* There is now the option of simplifying the face, by
+	     * removing unnecessary edges.
 	     */
 	    if (simplify) {
 		struct loopuse *lu;
@@ -933,7 +941,9 @@ Build_solid(int l, char *name, char *mirror_name, int plate_mode, fastf_t *centr
     if (debug)
 	bu_log("%s\n", name);
 
-    /* Make an array of patch_verts to hold the vertices and coordinates */
+    /* Make an array of patch_verts to hold the vertices and
+     * coordinates.
+     */
     verts = (struct patch_verts *)bu_calloc(l, sizeof(struct patch_verts), "patch-g: verts array");
     for (k=1; k<l; k++) {
 	verts[k].vp = (struct vertex *)NULL;
@@ -950,14 +960,11 @@ Build_solid(int l, char *name, char *mirror_name, int plate_mode, fastf_t *centr
 
 	for (k=1; k<l-3; k++) {
 	    if (!bn_3pts_distinct (verts[k].coord, verts[k+1].coord, verts[k+2].coord, tol)) {
-
 		;	/* do nothing */
 		/* bu_log("Repeated Vertice, no face made\n"); */
 	    } else if (bn_3pts_collinear(verts[k].coord, verts[k+1].coord, verts[k+2].coord, tol)) {
-
 		;	/* do nothing */
 		/* bu_log("%s: collinear points, face not made.\n", name); */
-
 	    } else {
 		vect_t v1, v2, norm;
 
@@ -1005,7 +1012,9 @@ Build_solid(int l, char *name, char *mirror_name, int plate_mode, fastf_t *centr
     /* initialize the list of faces, for later use by nmg_gluefaces */
     bu_ptbl(&faces, BU_PTBL_INIT, NULL);
 
-    /* make an array of patch_faces to hold faceuses and the desired thickness of each face */
+    /* make an array of patch_faces to hold faceuses and the desired
+     * thickness of each face.
+     */
     p_faces = (struct patch_faces *)bu_calloc(2*l, sizeof(struct patch_faces), "build_solid: patch_faces");
 
     /* loop through all the vertices, making faces as we go */
@@ -1016,14 +1025,11 @@ Build_solid(int l, char *name, char *mirror_name, int plate_mode, fastf_t *centr
 	    continue;
 
 	if (!bn_3pts_distinct (verts[k].coord, verts[k+1].coord, verts[k+2].coord, tol)) {
-
 	    ;	/* do nothing */
 	    /* bu_log("Repeated Vertice, no face made\n"); */
 	} else if (bn_3pts_collinear(verts[k].coord, verts[k+1].coord, verts[k+2].coord, tol)) {
-
 	    ;	/* do nothing */
 	    /* bu_log("%s: collinear points, face not made.\n", name); */
-
 	} else {
 	    struct vertex **vert_p[3];
 	    int found_verts=0;
@@ -1145,8 +1151,8 @@ Build_solid(int l, char *name, char *mirror_name, int plate_mode, fastf_t *centr
     /* fuse vertices */
     (void)nmg_model_vertex_fuse(m, tol);
 
-    /* FASTGEN targets may have vertices that should be part of
-     * an adjoining edge. Use nmg_break_long_edges to fix this
+    /* FASTGEN targets may have vertices that should be part of an
+     * adjoining edge. Use nmg_break_long_edges to fix this
      */
     i = nmg_break_edges(&m->magic, tol);
     if (debug > 2)
@@ -1203,8 +1209,9 @@ Build_solid(int l, char *name, char *mirror_name, int plate_mode, fastf_t *centr
 	return(0);
     }
 
-    /* Next section is to fix the normals of the shell
-     * Can't use nmg_fix_normals, because shell may not be closed */
+    /* Next section is to fix the normals of the shell Can't use
+     * nmg_fix_normals, because shell may not be closed.
+     */
 
     /* get the shell and the first face from our list */
     s = BU_LIST_FIRST(shell, &r->s_hd);
@@ -1244,7 +1251,9 @@ Build_solid(int l, char *name, char *mirror_name, int plate_mode, fastf_t *centr
     /* free the memory for the face list */
     bu_ptbl(&faces, BU_PTBL_RST, NULL);
 
-    /* Create a flags array for the model to make sure each face gets its orientation set */
+    /* Create a flags array for the model to make sure each face gets
+     * its orientation set.
+     */
     flags = (long *)bu_calloc(m->maxindex, sizeof(long), "patch-g: flags");
 
     /* loop to catch all faces */
@@ -1386,9 +1395,9 @@ Build_solid(int l, char *name, char *mirror_name, int plate_mode, fastf_t *centr
 	for (BU_LIST_FOR (lu, loopuse, &fu->lu_hd)) {
 	    NMG_CK_LOOPUSE(lu);
 	    if (BU_LIST_FIRST_MAGIC(&lu->down_hd) == NMG_VERTEXUSE_MAGIC) {
-		/* the vertex in a loop of one vertex
-		 * must show up in an edgeuse somewhere,
-		 * so don't mess with it here */
+		/* the vertex in a loop of one vertex must show up in
+		 * an edgeuse somewhere, so don't mess with it here.
+		 */
 		continue;
 	    }
 
@@ -1473,8 +1482,9 @@ Build_solid(int l, char *name, char *mirror_name, int plate_mode, fastf_t *centr
 #if 0
     if (debug)
 	bu_log("Recalculate plane equations\n");
-    /* recalculate plane equations, since some of the vertices we calculated
-     * may not be exactly on the plane */
+    /* recalculate plane equations, since some of the vertices we
+     * calculated may not be exactly on the plane.
+     */
     for (BU_LIST_FOR (s, shell, &r->s_hd)) {
 	for (BU_LIST_FOR (fu, faceuse, &s->fu_hd)) {
 	    if (fu->orientation == OT_SAME) {
@@ -1555,13 +1565,14 @@ Build_solid(int l, char *name, char *mirror_name, int plate_mode, fastf_t *centr
 }
 
 
-/*
- *     This subroutine takes previously generated solid names and combines them
- *	into a common region identity.  Format of the make_region command call
- *	requires in order: output file name, input region name, link file of solids,
- *	region/group flag, material name, material parameters, RGB color assignment, region id #,
- *	aircode, material code, LOS, and inheritance flag.  The region is then
- *	added to a hold file for combination into groups in another process.
+/**
+ * This subroutine takes previously generated solid names and combines
+ * them into a common region identity.  Format of the make_region
+ * command call requires in order: output file name, input region
+ * name, link file of solids, region/group flag, material name,
+ * material parameters, RGB color assignment, region id #, aircode,
+ * material code, LOS, and inheritance flag.  The region is then added
+ * to a hold file for combination into groups in another process.
  */
 void
 proc_region(char *name1)
@@ -1618,7 +1629,7 @@ proc_region(char *name1)
 }
 
 /*
- *	 Process Volume Mode triangular facetted solids
+ * Process Volume Mode triangular facetted solids
  */
 void
 proc_triangle(int cnt)
@@ -1657,7 +1668,9 @@ proc_triangle(int cnt)
 	}
     }
 
-    /* Everything is sequenced, but separated, compress into single array here */
+    /* Everything is sequenced, but separated, compress into single
+     * array here.
+     */
     l = 1;
 
     for (k=1; k<10000; k++) {
@@ -1821,8 +1834,8 @@ Get_ave_plane(fastf_t *pl, int num_pts, fastf_t *x, fastf_t *y, fastf_t *z)
 	int y_same=1;
 	int z_same=1;
 
-	/* singular matrix, may occur if all vertices have the same zero
-	 * component.
+	/* singular matrix, may occur if all vertices have the same
+	 * zero component.
 	 */
 	x0 = x[0];
 	y0 = y[0];
@@ -1861,7 +1874,7 @@ Get_ave_plane(fastf_t *pl, int num_pts, fastf_t *x, fastf_t *y, fastf_t *z)
 }
 
 /*
- *	 Process Plate Mode triangular surfaces
+ * Process Plate Mode triangular surfaces
  */
 void
 proc_plate(int cnt)
@@ -1939,7 +1952,9 @@ proc_plate(int cnt)
 	    }
 	}
 
-	/* Everything is sequenced, but separated, compress into single array here */
+	/* Everything is sequenced, but separated, compress into
+	 * single array here.
+	 */
 	l = 1;
 
 	for (k=1; k<10000; k++) {
@@ -2034,7 +2049,7 @@ proc_plate(int cnt)
 }
 
 /*
- *	Process fastgen wedge shape - also process hollow wedges.
+ * Process fastgen wedge shape - also process hollow wedges.
  */
 void
 proc_wedge(int cnt)
@@ -2099,46 +2114,48 @@ proc_wedge(int cnt)
 	    bu_strlcpy(name, proc_sname(shflg, mrflg, count, ctflg), sizeof(name));
 
 	    /* Create planes for arb6. Planes will be formed with
-	       normal pointing inward for creation of inner arb6 */
+	     * normal pointing inward for creation of inner arb6.
+	     */
 
-	    VSETALL(interior, 0.0)
-		for (i=0; i<8; i++)
-		    VJOIN1(interior, interior, join_scale,  pt8[i])
-			ret = bn_mk_plane_3pts(planes[0], pt8[0], pt8[3], pt8[2], tols);
-	    VSUB2(diff, interior, pt8[0])
-		if (VDOT(diff, planes[0]) < 0.0)
-		    HREVERSE(planes[0], planes[0])
-			ret = ret | bn_mk_plane_3pts(planes[1], pt8[2], pt8[3], pt8[6], tols);
-	    VSUB2(diff, interior, pt8[2])
-		if (VDOT(diff, planes[1]) < 0.0)
-		    HREVERSE(planes[1], planes[1])
-			ret = ret | bn_mk_plane_3pts(planes[2], pt8[6], pt8[3], pt8[0], tols);
-	    VSUB2(diff, interior, pt8[6])
-		if (VDOT(diff, planes[2]) < 0.0)
-		    HREVERSE(planes[2], planes[2])
-			ret = ret | bn_mk_plane_3pts(planes[3], pt8[4], pt8[0], pt8[1], tols);
-	    VSUB2(diff, interior, pt8[4])
-		if (VDOT(diff, planes[3]) < 0.0)
-		    HREVERSE(planes[3], planes[3])
-			ret = ret | bn_mk_plane_3pts(planes[4], pt8[1], pt8[2], pt8[6], tols);
-	    VSUB2(diff, interior, pt8[1])
-		if (VDOT(diff, planes[4]) < 0.0)
-		    HREVERSE(planes[4], planes[4])
+	    VSETALL(interior, 0.0);
+	    for (i=0; i<8; i++)
+		VJOIN1(interior, interior, join_scale,  pt8[i]);
+	    ret = bn_mk_plane_3pts(planes[0], pt8[0], pt8[3], pt8[2], tols);
+	    VSUB2(diff, interior, pt8[0]);
+	    if (VDOT(diff, planes[0]) < 0.0)
+		HREVERSE(planes[0], planes[0]);
+	    ret = ret | bn_mk_plane_3pts(planes[1], pt8[2], pt8[3], pt8[6], tols);
+	    VSUB2(diff, interior, pt8[2]);
+	    if (VDOT(diff, planes[1]) < 0.0)
+		HREVERSE(planes[1], planes[1]);
+	    ret = ret | bn_mk_plane_3pts(planes[2], pt8[6], pt8[3], pt8[0], tols);
+	    VSUB2(diff, interior, pt8[6]);
+	    if (VDOT(diff, planes[2]) < 0.0)
+		HREVERSE(planes[2], planes[2]);
+	    ret = ret | bn_mk_plane_3pts(planes[3], pt8[4], pt8[0], pt8[1], tols);
+	    VSUB2(diff, interior, pt8[4]);
+	    if (VDOT(diff, planes[3]) < 0.0)
+		HREVERSE(planes[3], planes[3]);
+	    ret = ret | bn_mk_plane_3pts(planes[4], pt8[1], pt8[2], pt8[6], tols);
+	    VSUB2(diff, interior, pt8[1]);
+	    if (VDOT(diff, planes[4]) < 0.0)
+		HREVERSE(planes[4], planes[4]);
 
 
-			/* Moves planes inward by normal thickness */
+	    /* Moves planes inward by normal thickness */
 
-			for (i=0; i < 5; i++) {
-			    point_t tmp_pt, new_pt;
+	    for (i=0; i < 5; i++) {
+		point_t tmp_pt, new_pt;
 
-			    VSCALE(tmp_pt, planes[i], planes[i][W])
-				VJOIN1(new_pt, tmp_pt, in[k].rsurf_thick, planes[i])
+		VSCALE(tmp_pt, planes[i], planes[i][W]);
+		VJOIN1(new_pt, tmp_pt, in[k].rsurf_thick, planes[i]);
 
-				planes[i][W] = VDOT(planes[i], new_pt);
-			}
+		planes[i][W] = VDOT(planes[i], new_pt);
+	    }
 
 	    /* Find new vertices of interior arb6 using
-	       intersection of 3 planes subroutine */
+	     * intersection of 3 planes subroutine.
+	     */
 
 	    ret = ret | bn_mkpoint_3planes(inpt8[0], planes[0], planes[3], planes[2]);
 	    ret = ret | bn_mkpoint_3planes(inpt8[1], planes[0], planes[3], planes[4]);
@@ -2172,7 +2189,7 @@ proc_wedge(int cnt)
     if ((count % num_unions) != 0)
 	proc_region(name);
 
-    /*   Mirror Processing - duplicates above code!   */
+    /* Mirror Processing - duplicates above code!   */
     ret = 0;
     for (k=0; k <= (cnt-1) && in[k].mirror != 0; k+=4) {
 
@@ -2210,46 +2227,48 @@ proc_wedge(int cnt)
 	    bu_strlcpy(name, proc_sname(shflg, mrflg, count, ctflg), sizeof(name));
 
 	    /* Create planes for arb6. Planes will be formed with
-	       normal pointing inward for creation of inner arb6 */
+	     * normal pointing inward for creation of inner arb6.
+	     */
 
-	    VSETALL(interior, 0.0)
-		for (i=0; i<8; i++)
-		    VJOIN1(interior, interior, join_scale,  pt8[i])
-			ret = bn_mk_plane_3pts(planes[0], pt8[0], pt8[3], pt8[2], tols);
-	    VSUB2(diff, interior, pt8[0])
-		if (VDOT(diff, planes[0]) < 0.0)
-		    HREVERSE(planes[0], planes[0])
-			ret = ret | bn_mk_plane_3pts(planes[1], pt8[2], pt8[3], pt8[6], tols);
-	    VSUB2(diff, interior, pt8[2])
-		if (VDOT(diff, planes[1]) < 0.0)
-		    HREVERSE(planes[1], planes[1])
-			ret = ret | bn_mk_plane_3pts(planes[2], pt8[6], pt8[3], pt8[0], tols);
-	    VSUB2(diff, interior, pt8[6])
-		if (VDOT(diff, planes[2]) < 0.0)
-		    HREVERSE(planes[2], planes[2])
-			ret = ret | bn_mk_plane_3pts(planes[3], pt8[4], pt8[0], pt8[1], tols);
-	    VSUB2(diff, interior, pt8[4])
-		if (VDOT(diff, planes[3]) < 0.0)
-		    HREVERSE(planes[3], planes[3])
-			ret = ret | bn_mk_plane_3pts(planes[4], pt8[1], pt8[2], pt8[6], tols);
-	    VSUB2(diff, interior, pt8[1])
-		if (VDOT(diff, planes[4]) < 0.0)
-		    HREVERSE(planes[4], planes[4])
+	    VSETALL(interior, 0.0);
+	    for (i=0; i<8; i++)
+		VJOIN1(interior, interior, join_scale,  pt8[i]);
+	    ret = bn_mk_plane_3pts(planes[0], pt8[0], pt8[3], pt8[2], tols);
+	    VSUB2(diff, interior, pt8[0]);
+	    if (VDOT(diff, planes[0]) < 0.0)
+		HREVERSE(planes[0], planes[0]);
+	    ret = ret | bn_mk_plane_3pts(planes[1], pt8[2], pt8[3], pt8[6], tols);
+	    VSUB2(diff, interior, pt8[2]);
+	    if (VDOT(diff, planes[1]) < 0.0)
+		HREVERSE(planes[1], planes[1]);
+	    ret = ret | bn_mk_plane_3pts(planes[2], pt8[6], pt8[3], pt8[0], tols);
+	    VSUB2(diff, interior, pt8[6]);
+	    if (VDOT(diff, planes[2]) < 0.0)
+		HREVERSE(planes[2], planes[2]);
+	    ret = ret | bn_mk_plane_3pts(planes[3], pt8[4], pt8[0], pt8[1], tols);
+	    VSUB2(diff, interior, pt8[4]);
+	    if (VDOT(diff, planes[3]) < 0.0)
+		HREVERSE(planes[3], planes[3]);
+	    ret = ret | bn_mk_plane_3pts(planes[4], pt8[1], pt8[2], pt8[6], tols);
+	    VSUB2(diff, interior, pt8[1]);
+	    if (VDOT(diff, planes[4]) < 0.0)
+		HREVERSE(planes[4], planes[4]);
 
 
-			/* Moves planes inward by normal thickness */
+	    /* Moves planes inward by normal thickness */
 
-			for (i=0; i < 5; i++) {
-			    point_t tmp_pt, new_pt;
+	    for (i=0; i < 5; i++) {
+		point_t tmp_pt, new_pt;
 
-			    VSCALE(tmp_pt, planes[i], planes[i][W])
-				VJOIN1(new_pt, tmp_pt, in[k].rsurf_thick, planes[i])
+		VSCALE(tmp_pt, planes[i], planes[i][W]);
+		VJOIN1(new_pt, tmp_pt, in[k].rsurf_thick, planes[i]);
 
-				planes[i][3] = VDOT(planes[i], new_pt);
-			}
+		planes[i][3] = VDOT(planes[i], new_pt);
+	    }
 
-	    /* Find new vertices of interior arb6 using
-	       intersection of 3 planes subroutine */
+	    /* Find new vertices of interior arb6 using intersection
+	     * of 3 planes subroutine.
+	     */
 
 	    ret = ret | bn_mkpoint_3planes(inpt8[0], planes[0], planes[3], planes[2]);
 	    ret = ret | bn_mkpoint_3planes(inpt8[1], planes[0], planes[3], planes[4]);
@@ -2282,8 +2301,7 @@ proc_wedge(int cnt)
 }
 
 /*
- *
- *	 Process fastgen spheres - can handle hollowness
+ * Process fastgen spheres - can handle hollowness
  */
 void
 proc_sphere(int cnt)
@@ -2323,7 +2341,8 @@ proc_sphere(int cnt)
 
 
 	    /* Check if hollow (i.e. plate mode) subract sphere with
-	       radius R1 - thickness */
+	     * radius R1 - thickness.
+	     */
 
 	    if (in[i].surf_mode== '-') {
 
@@ -2372,8 +2391,9 @@ proc_sphere(int cnt)
 
 	    (void) mk_addmember(name, &head.l, NULL, WMOP_UNION);
 
-	    /* Check if mirrored surface is hollow (i.e. plate mode) subract
-	       sphere with radius R1 - thickness */
+	    /* Check if mirrored surface is hollow (i.e. plate mode)
+	     * subract sphere with radius R1 - thickness.
+	     */
 
 	    if (in[i].surf_mode== '-') {
 
@@ -2404,7 +2424,7 @@ proc_sphere(int cnt)
 }
 
 /*
- *	Process fastgen box code
+ * Process fastgen box code
  */
 void
 proc_box(int cnt)
@@ -2516,7 +2536,7 @@ proc_box(int cnt)
 	proc_region(name);
 
 
-    /*   Mirror Processing - duplicates above code!   */
+    /* Mirror Processing - duplicates above code!   */
 
     for (k=0; k <= (cnt-1) && in[k].mirror != 0; k+=4) {
 	VSET(pt8[0], in[k].x, -in[k].y, in[k].z);
@@ -2600,11 +2620,12 @@ proc_box(int cnt)
 }
 
 /*
- *	Donuts
+ * Donuts
  *
- *	These are specific combinations of two sort of "cones".
- *	Handled by creating two to eight TGC's and combining appropriately.
- *	In order to use "donuts", rpatch must have been invoked with the "-D" option.
+ * These are specific combinations of two sort of "cones".  Handled by
+ * creating two to eight TGC's and combining appropriately.  In order
+ * to use "donuts", rpatch must have been invoked with the "-D"
+ * option.
  */
 void
 proc_donut(int cnt)
@@ -2644,8 +2665,8 @@ proc_donut(int cnt)
 	VSET(base2, in[k+3].x, in[k+3].y, in[k+3].z);
 	VSET(top2, in[k+4].x, in[k+4].y, in[k+4].z);
 
-	/* get radii and bottom and top of each TRC
-	 * BRL-CAD insists on non-zero radii
+	/* get radii and bottom and top of each TRC. BRL-CAD insists
+	 * on non-zero radii
 	 */
 	rbase1 = in[k+2].x;
 	if (rbase1 < tol.dist)
@@ -2674,24 +2695,26 @@ proc_donut(int cnt)
 	/* calculate height vectors for the two basic TRC's */
 	VSUB2(h1, top1, base1);
 
-	/* calculate height vectors for the 'end' TRC's
-	 * (when inner and outer TRC ends are not the same)
+	/* calculate height vectors for the 'end' TRC's (when inner
+	 * and outer TRC ends are not the same)
 	 */
 	VSUB2(h3, base1, base2);
 	magh3 = MAGNITUDE(h3);
 	VSUB2(h4, top1, top2);
 	magh4 = MAGNITUDE(h4);
 
-	/* If inner and outer TRC ends are nearly the same, make them the same */
+	/* If inner and outer TRC ends are nearly the same, make them
+	 * the same.
+	 */
 	if (magh3 < tol.dist) {
 	    magh3 = 0.0;
-	    VMOVE(base1, base2)
-		}
+	    VMOVE(base1, base2);
+	}
 
 	if (magh4 < tol.dist) {
 	    magh4 = 0.0;
-	    VMOVE(top1, top2)
-		}
+	    VMOVE(top1, top2);
+	}
 
 	/* get end code */
 	end_code = (int)(in[k+5].z/mmtin);
@@ -3077,8 +3100,8 @@ process_plate_cylin(int j, int k, char shflg, char mrflg, char ctflg, int count,
 		    if (new_ht <= 0.0)
 			(void)mk_addmember(name, &headf.l, NULL, WMOP_UNION);
 		    else {
-			VJOIN1(sbase, stop, new_ht, unit_h)
-			    srad1 = 0.00001;
+			VJOIN1(sbase, stop, new_ht, unit_h);
+			srad1 = 0.00001;
 			mk_trc_top(outfp, name, sbase, stop, srad1, srad2);
 			(void)mk_addmember(name, &head.l, NULL, WMOP_SUBTRACT);
 		    }
@@ -3089,8 +3112,8 @@ process_plate_cylin(int j, int k, char shflg, char mrflg, char ctflg, int count,
 		    if (new_ht >= ht)
 			(void)mk_addmember(name, &headf.l, NULL, WMOP_UNION);
 		    else {
-			VJOIN1(stop, top, new_ht, unit_h)
-			    srad2 = 0.00001;
+			VJOIN1(stop, top, new_ht, unit_h);
+			srad2 = 0.00001;
 			mk_trc_top(outfp, name, base, stop, srad1, srad2);
 			(void)mk_addmember(name, &head.l, NULL, WMOP_SUBTRACT);
 		    }
@@ -3167,15 +3190,15 @@ process_plate_cylin(int j, int k, char shflg, char mrflg, char ctflg, int count,
 
 
 /*
- *	Cylinder Fastgen Support:
- *	Cylinders have the added complexity of being plate or volume mode,
- *	and closed vs. open ends. This makes things a bit ugly.
+ * Cylinder Fastgen Support: Cylinders have the added complexity of
+ * being plate or volume mode, and closed vs. open ends. This makes
+ * things a bit ugly.
  *
- *	NOTE:	This handles plate mode subtractions. It also handles a
- *		subset of the allowable volume mode subtractions, in that
- *		it will correctly hollow cylinders in a pairwise manner.
- *		If cylinder1 *completely* encloses cylinder2, then cylinder2
- *		will be subtracted from cylinder1.
+ * NOTE: This handles plate mode subtractions. It also handles a
+ * subset of the allowable volume mode subtractions, in that it will
+ * correctly hollow cylinders in a pairwise manner.  If cylinder1
+ * *completely* encloses cylinder2, then cylinder2 will be subtracted
+ * from cylinder1.
  *
  */
 void
@@ -3218,7 +3241,9 @@ proc_cylin(int cnt)
 
 	count++;
 
-	/* Test for a cylinder with no length, all conditions must be true to fail. */
+	/* Test for a cylinder with no length, all conditions must be
+	 * true to fail.
+	 */
 
 	if (!((in[k].x==in[k+1].x)&&(in[k].y==in[k+1].y)&&(in[k].z==in[k+1].z))) {
 
@@ -3266,7 +3291,7 @@ proc_cylin(int cnt)
     if ((count % num_unions) != 0 && (BU_LIST_NEXT_NOT_HEAD(&head, &head.l)))
 	proc_region(name);
 
-    /*    Mirror Processing - duplicates above code!   */
+    /* Mirror Processing - duplicates above code!   */
 
     for (k=0; k < (cnt-1); k+=3) {
 
@@ -3279,7 +3304,9 @@ proc_cylin(int cnt)
 
 	mir_count++;
 
-	/* Test for a cylinder with no length, all conditions must be true to fail. */
+	/* Test for a cylinder with no length, all conditions must be
+	 * true to fail.
+	 */
 
 	if (!((in[k].x==in[k+1].x)&&(in[k].y==in[k+1].y)&&(in[k].z==in[k+1].z))) {
 
@@ -3331,7 +3358,7 @@ proc_cylin(int cnt)
 }
 
 /*
- *	Process fastgen rod mode
+ * Process fastgen rod mode
  */
 void
 proc_rod(int cnt)
@@ -3375,8 +3402,8 @@ proc_rod(int cnt)
 	}
     }
 
-    /* Everything is sequenced, but separated, compress into single array here */
-    /* list[0] will not hold anything, so don't look */
+    /* Everything is sequenced, but separated, compress into single
+     * array here. list[0] will not hold anything, so don't look */
 
     l = 0;
     for (k=1; k<10000; k++) {
@@ -3443,7 +3470,7 @@ proc_rod(int cnt)
 	proc_region(name);
     }
 
-    /*    Mirror Processing - duplicates above code!    */
+    /* Mirror Processing - duplicates above code!    */
 
     for (k=1; k < (l-1); k++) {
 
@@ -3492,8 +3519,8 @@ proc_rod(int cnt)
 }
 
 /*
- *  Find the single outward pointing normal for a polygon.
- *  Assumes all points are coplanar (they better be!).
+ * Find the single outward pointing normal for a polygon.  Assumes all
+ * points are coplanar (they better be!).
  */
 void
 pnorms(fastf_t (*norms)[3], fastf_t (*verts)[3], fastf_t *centroid, int npts, int inv) {
@@ -3506,24 +3533,9 @@ pnorms(fastf_t (*norms)[3], fastf_t (*verts)[3], fastf_t *centroid, int npts, in
     VCROSS(n, ab, ac);
     VUNITIZE(n);
 
-    /*	VSUB2(out, verts[0], centroid);
-	if (VDOT(n, out) < 0) {
-	VREVERSE(n, n);
-	}
-    */
-
-    /*	VSUB2(out, centroid, verts[0]);
-	VADD3(tmp, verts[0], out, n);
-    */
-
     if ((inv % 2)!= 0) {
 	VREVERSE(n, n);
     }
-
-    /*	for (i=0; i<npts; i++) {
-	VMOVE(norms[i], n);
-	}
-    */
 
     for (i=0; i<npts; i++) {
 	VMOVE(norms[i], n);
@@ -3531,13 +3543,13 @@ pnorms(fastf_t (*norms)[3], fastf_t (*verts)[3], fastf_t *centroid, int npts, in
 }
 
 /*
- *     This subroutine reads a "group label file" and assembles regions and
- *	groups from that file.
+ * This subroutine reads a "group label file" and assembles regions
+ * and groups from that file.
  *
- *	heada == linked list of components on one side or not mirrored
- *	headb == linked list of mirrored components
- *	headd == linked list of this thousand series
- *	heade == linked list of over-all group
+ * heada == linked list of components on one side or not mirrored
+ * headb == linked list of mirrored components
+ * headd == linked list of this thousand series
+ * heade == linked list of over-all group
  */
 void
 proc_label(char *labelfile)
@@ -3581,10 +3593,12 @@ proc_label(char *labelfile)
 
 }
 
-/*			S E T _ C O L O R
+/**
+ * S E T _ C O L O R
  *
- * Given a color_map entry (for the thousand series) for the combination being
- * made, set the rgb color array for the upcoming call to make combinations.
+ * Given a color_map entry (for the thousand series) for the
+ * combination being made, set the rgb color array for the upcoming
+ * call to make combinations.
  */
 void
 set_color(int color)
@@ -3677,16 +3691,16 @@ set_color(int color)
     }
 }
 
-/*			I N S I D E _ C Y L
+/* I N S I D E _ C Y L
  *
  * Returns 1 if the cylinder starting at in[j] is inside (for solid
  * subtraction) the cylinder described at in[i], 0 otherwise.
  *
- * This is not a foolproof determination. We only check to see whether the
- * endpoints of the supposed inside cylinder lie within the first cylinder
- * and that the radii of the second cylinder are <= those of the first
- * cylinder. We don't actually see whether the entire second cylinder lies
- * within the first.
+ * This is not a foolproof determination. We only check to see whether
+ * the endpoints of the supposed inside cylinder lie within the first
+ * cylinder and that the radii of the second cylinder are <= those of
+ * the first cylinder. We don't actually see whether the entire second
+ * cylinder lies within the first.
  */
 int
 inside_cyl(int i, int j)
@@ -3714,22 +3728,22 @@ inside_cyl(int i, int j)
 	return(1);
 }
 
-/*			P T _ I N S I D E
+/* P T _ I N S I D E
  *
- * Returns 1 if point a is inside the cylinder defined by base, top, rad1, rad2.
- * Returns 0 if not.
+ * Returns 1 if point a is inside the cylinder defined by base, top,
+ * rad1, rad2.  Returns 0 if not.
  */
 int
 pt_inside(point_t a, point_t base, point_t top, double rad1, double rad2)
 {
-    vect_t bt, ba;		/* bt: base to top, ba: base to a */
+    vect_t bt, ba;	/* bt: base to top, ba: base to a */
     fastf_t mag_bt,
-	dist,		/* distance to the normal between the axis
-			 * and the point
+	dist,		/* distance to the normal between the axis and
+			 * the point.
 			 */
 	radius,		/* radius of cylinder at above distance */
-	pt_radsq;	/* sqare of radial distance from the axis
-			 * to point
+	pt_radsq;	/* sqare of radial distance from the axis to
+			 * point.
 			 */
 
     VSUB2(bt, top, base);
@@ -3762,14 +3776,15 @@ pt_inside(point_t a, point_t base, point_t top, double rad1, double rad2)
 }
 
 
-/* 			M K _ C Y L A D D M E M B E R
+/**
+ * M K _ C Y L A D D M E M B E R
  *
  * For the cylinder given by 'name1', determine whether it has any
  * volume mode subtractions from it by looking at the subtraction list
- * for this component number. If we find that this cylinder is one
- * of the subtracting cylinders inside, don't do anything. Otherwise,
- * add this cylinder onto the region list along with the subtractions
- * of cylinders determined from the subtraction list. Assume that the
+ * for this component number. If we find that this cylinder is one of
+ * the subtracting cylinders inside, don't do anything. Otherwise, add
+ * this cylinder onto the region list along with the subtractions of
+ * cylinders determined from the subtraction list. Assume that the
  * subtracted solids will be eventually be made.
  */
 void
@@ -3807,17 +3822,19 @@ mk_cyladdmember(char *name1, struct wmember *head, struct subtract_list *slist, 
 }
 
 
-/*			G E T _ S U B T R A C T
+/**
+ * G E T _ S U B T R A C T
  *
  * Make up the list of subtracted volume mode solids for this group of
- * cylinders. Go through the cylinder list and, for each solid, see whether
- * any of the other solid records following qualify as volume mode subtracted
- * solids. Record the number of the outside cylinder and the number of
- * the inside cylinder in the subtraction list, along with the mirror
- * flag value of the inside solid (for naming convention reasons).
+ * cylinders. Go through the cylinder list and, for each solid, see
+ * whether any of the other solid records following qualify as volume
+ * mode subtracted solids. Record the number of the outside cylinder
+ * and the number of the inside cylinder in the subtraction list,
+ * along with the mirror flag value of the inside solid (for naming
+ * convention reasons).
  *
- * Plate mode for a cylinder disqualifies it for any role as a volume mode
- * subtracting cylinder.
+ * Plate mode for a cylinder disqualifies it for any role as a volume
+ * mode subtracting cylinder.
  */
 struct subtract_list *
 get_subtract(int cnt)
@@ -3846,9 +3863,11 @@ get_subtract(int cnt)
 }
 
 
-/*			A D D _ T O _ L I S T
+/**
+ * A D D _ T O _ L I S T
  *
- * Add the inside, outside cylinder numbers to the subtraction list slist.
+ * Add the inside, outside cylinder numbers to the subtraction list
+ * slist.
  */
 struct subtract_list *
 add_to_list(struct subtract_list *slist, int outsolid, int insolid, int inmirror)
