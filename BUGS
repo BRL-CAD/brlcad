@@ -15,6 +15,12 @@ on-going issues.
 Recent Bugs
 -----------
 
+* tab completion in classic/command mode sometimes doesn't work
+  (presumably if mged can't find tcl resources).  was finally able to
+  reproduce this with the result given as:
+
+  invalid command name "bind"
+
 * The nmg objects are raytracing VERY slowly, more than an order of
   magnitude slower than tracing that nmg converted to an equivalent
   bot.  There appears to be major resource contention and/or thread
