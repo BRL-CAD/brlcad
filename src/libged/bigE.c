@@ -64,14 +64,14 @@ union E_tree *build_etree(union tree *tp, struct ged_client_data *dgcdp);
 
 /* stolen from g_half.c */
 struct half_specific {
-    plane_t half_eqn;               /* Plane equation, outward normal */
+    plane_t half_eqn;              /* Plane equation, outward normal */
     vect_t half_Xbase;             /* "X" basis direction */
     vect_t half_Ybase;             /* "Y" basis direction */
 };
 #define HALF_NULL       ((struct half_specific *)0)
 
-/* structures for building a tree corresponding to the region to be drawn
- * uses the same "op" values as "union tree"
+/* structures for building a tree corresponding to the region to be
+ * drawn uses the same "op" values as "union tree"
  */
 union E_tree {
     long magic;
@@ -88,12 +88,15 @@ union E_tree {
 	/* the leaf nodes */
 	long magic;
 	int op;
-	struct model *m;		/* NMG version of this leaf solid */
-	struct bu_list seghead;		/* head of list of segments for this leaf solid */
-	struct bu_ptbl edge_list;	/* list of edges from above NMG */
-	struct soltab *stp;		/* the usual soltab pointer */
-	unsigned char do_not_free_model; /* A flag indicating that the NMG model pointer is a reference to the
-					  * NMG model in the soltab structure */
+	struct model *m;		 /* NMG version of this leaf solid */
+	struct bu_list seghead;		 /* head of list of segments for this leaf solid */
+	struct bu_ptbl edge_list;	 /* list of edges from above NMG */
+	struct soltab *stp;		 /* the usual soltab pointer */
+	unsigned char do_not_free_model; /* A flag indicating that the
+					  * NMG model pointer is a
+					  * reference to the NMG model
+					  * in the soltab structure.
+					  */
     } l;
 };
 
@@ -352,8 +355,8 @@ eliminate_overlaps(struct bu_list *seghead,
     }
 }
 
-/* perform the intersection of two segments
- * the result is assigned the provided type
+/* perform the intersection of two segments the result is assigned the
+ * provided type
  */
 HIDDEN void
 do_intersect(struct seg *A,
@@ -394,8 +397,8 @@ do_intersect(struct seg *A,
     return;
 }
 
-/* perform the subtraction of one segment from another
- * the result is assigned the type from segment A
+/* perform the subtraction of one segment from another the result is
+ * assigned the type from segment A
  */
 HIDDEN void
 do_subtract(struct seg *A,
@@ -446,8 +449,8 @@ do_subtract(struct seg *A,
     }
 }
 
-/* perform the union of two segments
- * the types of A and B should be the same
+/* perform the union of two segments the types of A and B should be
+ * the same
  */
 HIDDEN void
 do_union(struct seg *A,
@@ -734,11 +737,11 @@ eval_op(struct bu_list *A,
 	    }
 
 	    /* A - B:
-	     *	keep segments:
-	     *			ON_A - IN_B
-	     * 			ON_A - ON_B
-	     *			ON_B + IN_A
-	     *			IN_A - IN_B
+	     * keep segments:
+	     * ON_A - IN_B
+	     * ON_A - ON_B
+	     * ON_B + IN_A
+	     * IN_A - IN_B
 	     */
 	    for (BU_LIST_FOR (sega, seg, A)) {
 		for (BU_LIST_FOR (segb, seg, B)) {
@@ -779,8 +782,10 @@ eval_op(struct bu_list *A,
 		return(A);
 	    }
 	    /* A + B
-	     *	This is merely the intersection of segments from A with those from B
-	     *	The two different calls to "do_intersect" get the types (IN, ON) right
+	     *
+	     * This is merely the intersection of segments from A with
+	     * those from B.  The two different calls to
+	     * "do_intersect" get the types (IN, ON) right
 	     */
 	    for (BU_LIST_FOR (sega, seg, A)) {
 		for (BU_LIST_FOR (segb, seg, B)) {
@@ -827,16 +832,16 @@ eval_op(struct bu_list *A,
 		return(A);
 	    }
 	    /* A u B:
-	     *	keep segments:
-	     *		ON_A - IN_B (ON)
-	     *		IN_B + ON_A (IN)
-	     *		ON_B - IN_A (ON)
-	     *		IN_A + ON_B (IN)
-	     * 		all remaining unique ON or IN segments
+	     * keep segments:
+	     * ON_A - IN_B (ON)
+	     * IN_B + ON_A (IN)
+	     * ON_B - IN_A (ON)
+	     * IN_A + ON_B (IN)
+	     * all remaining unique ON or IN segments
 	     */
 
-	    /* create two new lists, one with all the ON segments,
-	     * the other with all the IN segments
+	    /* create two new lists, one with all the ON segments, the
+	     * other with all the IN segments
 	     */
 	    BU_LIST_INIT(&ons);
 	    BU_LIST_INIT(&ins);
@@ -852,8 +857,8 @@ eval_op(struct bu_list *A,
 		}
 	    }
 
-	    /* insert the B operand segments in the lists (maintaining order from smaller starting
-	     * hit distance to larger
+	    /* insert the B operand segments in the lists (maintaining
+	     * order from smaller starting hit distance to larger
 	     */
 	    while (BU_LIST_WHILE (segb, seg, B)) {
 		int inserted;
@@ -1159,9 +1164,9 @@ classify_seg(struct seg *seg, struct soltab *shoot, struct xray *rp, struct ged_
     return ret;
 }
 
-/* Shoot rays (corresponding to possible edges in the result)
- * at the solids, put the results in the E-tree leaves as type IN_SOL.
- * Call eval_etree() and plot the results
+/* Shoot rays (corresponding to possible edges in the result) at the
+ * solids, put the results in the E-tree leaves as type IN_SOL.  Call
+ * eval_etree() and plot the results
  */
 HIDDEN void
 shoot_and_plot(point_t start_pt,
@@ -1189,15 +1194,15 @@ shoot_and_plot(point_t start_pt,
     BU_GETSTRUCT(rd.seghead, seg);
     BU_LIST_INIT(&rd.seghead->l);
 
-    VMOVE(rp.r_pt, start_pt)
-	VMOVE(rp.r_dir, dir)
-	/* Compute the inverse of the direction cosines */
-	if (!NEAR_ZERO(rp.r_dir[X], SQRT_SMALL_FASTF)) {
-	    rd.rd_invdir[X]=1.0/rp.r_dir[X];
-	} else {
-	    rd.rd_invdir[X] = INFINITY;
-	    rp.r_dir[X] = 0.0;
-	}
+    VMOVE(rp.r_pt, start_pt);
+    VMOVE(rp.r_dir, dir);
+    /* Compute the inverse of the direction cosines */
+    if (!NEAR_ZERO(rp.r_dir[X], SQRT_SMALL_FASTF)) {
+	rd.rd_invdir[X]=1.0/rp.r_dir[X];
+    } else {
+	rd.rd_invdir[X] = INFINITY;
+	rp.r_dir[X] = 0.0;
+    }
     if (!NEAR_ZERO(rp.r_dir[Y], SQRT_SMALL_FASTF)) {
 	rd.rd_invdir[Y]=1.0/rp.r_dir[Y];
     } else {
@@ -1219,8 +1224,8 @@ shoot_and_plot(point_t start_pt,
     rd.classifying_ray = 0;
     rd.hitmiss = (struct hitmiss **)NULL;
 
-    /* shoot this ray at every leaf solid except the one this edge came from
-     * (or the two that this intersection line came from
+    /* shoot this ray at every leaf solid except the one this edge
+     * came from (or the two that this intersection line came from
      */
     for (shoot_leaf=0; shoot_leaf < BU_PTBL_END(&dgcdp->leaf_list); shoot_leaf++) {
 	union E_tree *shoot;
@@ -1233,7 +1238,9 @@ shoot_and_plot(point_t start_pt,
 	}
 	BU_LIST_INIT(&shoot->l.seghead);
 
-	/* don't shoot rays at the leaves that were the source of this possible edge */
+	/* don't shoot rays at the leaves that were the source of this
+	 * possible edge.
+	 */
 	if (shoot_leaf == skip_leaf1 || shoot_leaf == skip_leaf2)
 	    dont_shoot = 1;
 	else {
@@ -1291,7 +1298,9 @@ shoot_and_plot(point_t start_pt,
 	if (dont_shoot) {
 	    struct seg *seg;
 
-	    /* put entire edge in seg list and mark it as ON the surface */
+	    /* put entire edge in seg list and mark it as ON the
+	     * surface.
+	     */
 	    RT_GET_SEG(seg, dgcdp->ap->a_resource);
 	    seg->l.magic = RT_SEG_MAGIC;
 	    seg->seg_in.hit_dist = 0.0;
@@ -1308,7 +1317,9 @@ shoot_and_plot(point_t start_pt,
 
 	rd.stp = shoot->l.stp;
 
-	/* actually shoot the ray, assign segments to the leaf, and mark them as IN_SOL */
+	/* actually shoot the ray, assign segments to the leaf, and
+	 * mark them as IN_SOL.
+	 */
 	if (rt_in_rpp(&rp, rd.rd_invdir, shoot->l.stp->st_min, shoot->l.stp->st_max)) {
 	    if (rt_functab[shoot->l.stp->st_id].ft_shot && rt_functab[shoot->l.stp->st_id].ft_shot(shoot->l.stp, &rp, dgcdp->ap, rd.seghead)) {
 		struct seg *seg;
@@ -1332,8 +1343,8 @@ shoot_and_plot(point_t start_pt,
 	}
     }
 
-    /* Evaluate the Boolean tree to get the "final" segments
-     * which are to be plotted.
+    /* Evaluate the Boolean tree to get the "final" segments which are
+     * to be plotted.
      */
 #ifdef debug
     bu_log("EVALUATING ETREE:\n");
@@ -1353,7 +1364,9 @@ shoot_and_plot(point_t start_pt,
 	for (BU_LIST_FOR (seg, seg, final_segs)) {
 	    point_t pt;
 
-	    /* only plot the resulting segments that are ON the SURFace */
+	    /* only plot the resulting segments that are ON the
+	     * SURFace.
+	     */
 	    if (seg->seg_stp != ON_SURF)
 		continue;
 
