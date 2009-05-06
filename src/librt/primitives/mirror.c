@@ -52,19 +52,21 @@ rt_mirror(struct db_i *dbip,
 {
     register int i, j;
     int id;
-    mat_t rmat;
-    mat_t mirmat;
-    mat_t temp;
-    vect_t xvec;
-    vect_t nvec;
     fastf_t ang;
+    mat_t mirmat;
+    mat_t rmat;
+    mat_t temp;
+    vect_t nvec;
+    vect_t xvec;
     static fastf_t tol_dist_sq = 0.005 * 0.005;
     static point_t origin = {0.0, 0.0, 0.0};
+    plane_t plane;	
+    fastf_t dist;
+    fastf_t dot;
+    point_t pnt;
 
     RT_CK_DBI(dbip);
     RT_CK_DB_INTERNAL(ip);
-
-    VUNITIZE(mirror_dir);
 
     if (!NEAR_ZERO(MAGSQ(mirror_dir) - 1.0, tol_dist_sq)) {
 	bu_log("ERROR: mirror direction is invalid\n");
@@ -75,8 +77,42 @@ rt_mirror(struct db_i *dbip,
 	resp=&rt_uniresource;
     }
 
-    /* FIXME: not the best, but consistent until v6 */
+    /* not the best, but consistent until v6 */
     id = ip->idb_type;
+
+
+#if 0
+    bu_log("XXX Mirroring about (%lf, %lf, %lf) -> (%lf, %lf, %lf)\n",
+	   mirror_pt[X],
+	   mirror_pt[Y],
+	   mirror_pt[Z],
+	   mirror_dir[X],
+	   mirror_dir[Y],
+	   mirror_dir[Z]);
+
+    /* set up the plane direction */
+    VUNITIZE(mirror_dir);
+    VMOVE(plane, mirror_dir);
+
+    /* determine the plane offset */
+    plane[W] = VDOT(mirror_pt, mirror_dir);
+
+    bu_log("XXX Mirror eqn is (%lf, %lf, %lf) -> (%lf)\n",
+	   plane[X],
+	   plane[Y],
+	   plane[Z],
+	   plane[W]);
+
+    switch (id) {
+	case ID_TOR: {
+	    int err = rt_tor_mirror(ip, plane);
+
+	    bu_log("XXX err is %d\n", err);
+
+	    return err ? NULL : ip;
+	}
+    }
+#endif
 
     MAT_IDN(mirmat);
 
@@ -439,10 +475,10 @@ rt_mirror(struct db_i *dbip,
 		    /* unitize the plane equation first */
 		    factor = 1.0 / MAGNITUDE(arbn->eqn[i]);
 		    VSCALE(arbn->eqn[i], arbn->eqn[i], factor);
-		    arbn->eqn[i][3] = arbn->eqn[i][3] * factor;
+		    arbn->eqn[i][W] = arbn->eqn[i][W] * factor;
 
 		    /* Pick a point on the original halfspace */
-		    VSCALE(orig_pt, arbn->eqn[i], arbn->eqn[i][3]);
+		    VSCALE(orig_pt, arbn->eqn[i], arbn->eqn[i][W]);
 
 		    /* Transform the point, and the normal */
 		    MAT4X3VEC(norm, mirmat, arbn->eqn[i]);
@@ -451,7 +487,7 @@ rt_mirror(struct db_i *dbip,
 		    /* Measure new distance from origin to new point */
 		    VUNITIZE(norm);
 		    VMOVE(arbn->eqn[i], norm);
-		    arbn->eqn[i][3] = VDOT(pt, norm);
+		    arbn->eqn[i][W] = VDOT(pt, norm);
 		}
 
 		break;
