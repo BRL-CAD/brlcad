@@ -35,24 +35,21 @@
 #include "./vegitation.h"
 
 #ifndef HAVE_DRAND48
-#  if !defined(_WIN32) || defined(__CYGWIN__)
-/* simulate drand48() --  using 31-bit random() -- assumed to exist */
-static double drand48() {
-    extern long random();
-    return (double)random() / 2147483648.0; /* range [0, 1) */
-}
-#  else
-static double drand48() {
-    unsigned int randVal;
+/* Simulate drand48() using 31-bit random() assumed to exist (e.g. in 4BSD): */
 
-    if (rand_s(&randVal))
-	randVal = 0;
-
-    return (double)randVal/(double)UINT_MAX;
+#ifndef drand48
+double
+drand48()
+{
+#ifdef HAVE_RANDOM
+    return (double)random() / 2147483648.0;	/* range [0, 1) */
+#else
+    return (double)rand() / (double)RAND_MAX;	/* range [0, 1) */
+#endif
 }
-#  endif
 #endif
 
+#endif
 
 static void ageStructure(structure_t *structure) {
     int i;
