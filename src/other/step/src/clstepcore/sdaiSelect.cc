@@ -176,7 +176,7 @@ bool SCLP23(Select)::exists() const
 {
   // instead of returning the address as 'true' or NULL as false, lets reduce
   // this down to a bool.
-  return underlying_type != 0;
+  return underlying_type != NULL;
 }
 
 void SCLP23(Select)::nullify() 
