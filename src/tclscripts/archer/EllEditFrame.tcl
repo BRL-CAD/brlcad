@@ -62,13 +62,9 @@
 	# override methods in GeometryEditFrame
 	method buildUpperPanel
 	method buildLowerPanel
-	method buildValuePanel
-
-	method updateValuePanel {}
 
 	# Override what's in GeometryEditFrame
 	method updateGeometryIfMod {}
-
 	method initValuePanel {}
     }
 
@@ -388,13 +384,6 @@
 	    -expand yes
     }
 }
-
-::itcl::body EllEditFrame::buildValuePanel {} {
-}
-
-::itcl::body EllEditFrame::updateValuePanel {} {
-}
-
 
 ::itcl::body EllEditFrame::updateGeometryIfMod {} {
     if {$itk_option(-mged) == "" ||

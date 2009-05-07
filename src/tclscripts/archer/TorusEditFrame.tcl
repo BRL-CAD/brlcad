@@ -33,14 +33,6 @@
     constructor {args} {}
     destructor {}
 
-    # Methods used by the constructor
-    protected {
-	# override methods in GeometryEditFrame
-	method buildUpperPanel
-	method buildLowerPanel
-	method buildValuePanel
-    }
-
     public {
 	# Override what's in GeometryEditFrame
 	method initGeometry {gdata}
@@ -49,6 +41,9 @@
     }
 
     protected {
+	common setA 1
+	common setH 2
+
 	variable mVx ""
 	variable mVy ""
 	variable mVz ""
@@ -58,8 +53,14 @@
 	variable mR_a ""
 	variable mR_h ""
 
+	# Methods used by the constructor
+	# override methods in GeometryEditFrame
+	method buildUpperPanel
+	method buildLowerPanel
+
 	# Override what's in GeometryEditFrame
 	method updateGeometryIfMod {}
+	method initValuePanel {}
     }
 
     private {}
@@ -253,9 +254,21 @@
 
 
 ::itcl::body TorusEditFrame::buildLowerPanel {} {
-}
+    set parent [$this childsite lower]
 
-::itcl::body TorusEditFrame::buildValuePanel {} {
+    foreach attribute {A H} {
+	itk_component add set$attribute {
+	    ::ttk::radiobutton $parent.set_$attribute \
+		-variable [::itcl::scope mEditMode] \
+		-value [subst $[subst set$attribute]] \
+		-text "Set $attribute" \
+		-command [::itcl::code $this initValuePanel]
+	} {}
+
+	pack $itk_component(set$attribute) \
+	    -anchor w \
+	    -expand yes
+    }
 }
 
 # ------------------------------------------------------------
@@ -372,6 +385,26 @@
 	updateGeometry
     }
 }
+
+::itcl::body TorusEditFrame::initValuePanel {} {
+    switch -- $mEditMode \
+	$setA { \
+	    set mEditCommand scale_tor; \
+	    set mEditClass $EDIT_CLASS_SCALE; \
+	    set mEditParam1 a; \
+	    configure -valueUnits "mm"; \
+	} \
+	$setH { \
+	    set mEditCommand scale_tor; \
+	    set mEditClass $EDIT_CLASS_SCALE; \
+	    set mEditParam1 h; \
+	    configure -valueUnits "mm"; \
+	}
+
+    GeometryEditFrame::initValuePanel
+    updateValuePanel
+}
+
 
 # Local Variables:
 # mode: Tcl

@@ -228,6 +228,7 @@ package provide cadwidgets::Ged 1.0
 	method mouse_rotate_arb_face {args}
 	method mouse_scale {args}
 	method mouse_scale_ell {args}
+	method mouse_scale_tor {args}
 	method mouse_trans {args}
 	method move_arb_edge {args}
 	method move_arb_edge_mode {args}
@@ -283,6 +284,7 @@ package provide cadwidgets::Ged 1.0
 	method pane_mouse_rotate_arb_face {_pane args}
 	method pane_mouse_scale {_pane args}
 	method pane_mouse_scale_ell {_pane args}
+	method pane_mouse_scale_tor {_pane args}
 	method pane_mouse_trans {_pane args}
 	method pane_nirt {_pane args}
 	method pane_orient {_pane args}
@@ -318,6 +320,7 @@ package provide cadwidgets::Ged 1.0
 	method pane_saveview {_pane args}
 	method pane_sca {_pane args}
 	method pane_scale_ell_mode {_pane args}
+	method pane_scale_tor_mode {_pane args}
 	method pane_scale_mode {_pane args}
 	method pane_set_coord {_pane args}
 	method pane_set_fb_mode {_pane args}
@@ -391,6 +394,8 @@ package provide cadwidgets::Ged 1.0
 	method sca {args}
 	method scale_ell {args}
 	method scale_ell_mode {args}
+	method scale_tor {args}
+	method scale_tor_mode {args}
 	method scale_mode {args}
 	method screen2view {args}
 	method set_coord {args}
@@ -1259,6 +1264,10 @@ package provide cadwidgets::Ged 1.0
     eval $mGed mouse_scale_ell $itk_component($itk_option(-pane)) $args
 }
 
+::itcl::body cadwidgets::Ged::mouse_scale_tor {args} {
+    eval $mGed mouse_scale_tor $itk_component($itk_option(-pane)) $args
+}
+
 ::itcl::body cadwidgets::Ged::mouse_trans {args} {
     eval $mGed mouse_trans $itk_component($itk_option(-pane)) $args
 }
@@ -1479,6 +1488,10 @@ package provide cadwidgets::Ged 1.0
     eval $mGed mouse_scale_ell $itk_component($_pane) $args
 }
 
+::itcl::body cadwidgets::Ged::pane_mouse_scale_tor {_pane args} {
+    eval $mGed mouse_scale_tor $itk_component($_pane) $args
+}
+
 ::itcl::body cadwidgets::Ged::pane_mouse_trans {_pane args} {
     eval $mGed mouse_trans $itk_component($_pane) $args
 }
@@ -1617,6 +1630,10 @@ package provide cadwidgets::Ged 1.0
 
 ::itcl::body cadwidgets::Ged::pane_scale_ell_mode {_pane args} {
     eval $mGed scale_ell_mode $itk_component($_pane) $args
+}
+
+::itcl::body cadwidgets::Ged::pane_scale_tor_mode {_pane args} {
+    eval $mGed scale_tor_mode $itk_component($_pane) $args
 }
 
 ::itcl::body cadwidgets::Ged::pane_scale_mode {_pane args} {
@@ -1936,6 +1953,14 @@ package provide cadwidgets::Ged 1.0
 
 ::itcl::body cadwidgets::Ged::scale_ell_mode {args} {
     eval $mGed scale_ell_mode $itk_component($itk_option(-pane)) $args
+}
+
+::itcl::body cadwidgets::Ged::scale_tor {args} {
+    eval $mGed scale_tor $args
+}
+
+::itcl::body cadwidgets::Ged::scale_tor_mode {args} {
+    eval $mGed scale_tor_mode $itk_component($itk_option(-pane)) $args
 }
 
 ::itcl::body cadwidgets::Ged::scale_mode {args} {
