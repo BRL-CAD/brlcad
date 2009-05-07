@@ -65,6 +65,7 @@
  */
 
 #define HAS_OPENGL		1
+#define HAVE_DRAND48		1
 #define HAVE_FCNTL_H		1
 #define HAVE_PUTENV     	1
 #define HAVE_GETHOSTNAME	1
