@@ -87,7 +87,7 @@ class SCLP23_NAME(Select) {
   // from SDAI binding
         SCLP23_NAME(String) UnderlyingTypeName () const;
 	const TypeDescriptor * CurrentUnderlyingType() const;
-	long exists() const;
+	bool exists() const;
 	void nullify();
 
 	Severity SelectValidLevel(const char *attrValue, ErrorDescriptor *err, 

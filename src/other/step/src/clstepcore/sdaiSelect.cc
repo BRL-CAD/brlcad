@@ -172,9 +172,11 @@ SCLP23(Select)::SetUnderlyingType (const TypeDescriptor * td)
   return underlying_type = td;
 }
 
-long SCLP23(Select)::exists() const 
+bool SCLP23(Select)::exists() const 
 {
-  return (long) underlying_type;
+  // instead of returning the address as 'true' or NULL as false, lets reduce
+  // this down to a bool.
+  return underlying_type != 0;
 }
 
 void SCLP23(Select)::nullify() 
