@@ -90,16 +90,12 @@ void Fatal(FBIO *fbiop, const char *format, ...);
 
 
 #ifndef HAVE_DRAND48
-/* Simulate drand48() using 31-bit random() assumed to exist (e.g. in 4BSD): */
-
-#ifndef drand48
 double
 drand48()
 {
+    /* Simulate drand48() using 31-bit random() assumed to exist (e.g. in 4BSD): */
     return (double)rand() / (double)RAND_MAX;	/* range [0, 1) */
 }
-#endif
-
 #endif
 
 
