@@ -902,6 +902,14 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\src\libged\scale_ell.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\src\libged\scale_tor.c"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\src\libged\search.c"
 				>
 			</File>
