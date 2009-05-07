@@ -3369,6 +3369,8 @@ RT_EXPORT BU_EXTERN(void rt_vls_pipept,
 		     int seg_no,
 		     const struct rt_db_internal *ip,
 		     double mm2local));
+RT_EXPORT BU_EXTERN(void rt_pipept_print,
+		    ());		/* needs wdb_pipept for arg */
 RT_EXPORT BU_EXTERN(int rt_pipe_ck,
 		    (const struct bu_list *headp));
 
@@ -3379,6 +3381,8 @@ RT_EXPORT BU_EXTERN(void rt_vls_metaballpt,
 		     const int pt_no,
 		     const struct rt_db_internal *ip,
 		     const double mm2local));
+RT_EXPORT BU_EXTERN(void rt_metaballpt_print,
+		    ());		/* needs wdb_metaballpt for arg */
 RT_EXPORT BU_EXTERN(int rt_metaball_ck,
 		    (const struct bu_list *headp));
 RT_EXPORT BU_EXTERN(fastf_t rt_metaball_point_value,
