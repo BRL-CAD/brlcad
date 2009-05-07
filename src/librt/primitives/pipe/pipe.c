@@ -1186,7 +1186,7 @@ rt_pipe_elim_dups(struct hit *hit, int *nh, register struct xray *rp, struct sol
             for( i=hitNo ; i<*nh ; i++ ) {
                 hit[i] = hit[i+1];
             }
-            *nh--;
+            (*nh)--;
         } else {
             hitNo++;
         }
