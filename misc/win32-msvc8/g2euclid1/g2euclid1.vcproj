@@ -222,7 +222,7 @@
 			Filter="cpp;c;cxx;rc;def;r;odl;idl;hpj;bat;f90;for;f;fpp"
 			>
 			<File
-				RelativePath="..\..\..\src\conv\g-euclid1.c"
+				RelativePath="..\..\..\src\conv\euclid\g-euclid1.c"
 				>
 			</File>
 		</Filter>
