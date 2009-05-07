@@ -1,11 +1,14 @@
 EXTRA_PROGRAMS = step-g
 
+AM_CPPFLAGS = ${STEP_CPPFLAGS} ${TCL_CPPFLAGS} ${OPENNURBS_CPPFLAGS}
+
 step_g_SOURCES = \
 	AdvancedBrepShapeRepresentation.cpp \
 	BRLCADWrapper.cpp \
 	STEPWrapper.cpp \
 	needFunc.cc \
-	step-g.cpp
+	step-g.cpp \
+	$(fedex_srcs)
 
 fedex_hdrs = \
 	SdaiCONFIG_CONTROL_DESIGN.h \
@@ -40,7 +43,7 @@ step_g_LDADD = \
 	${BU} \
 	${WDB} \
 	${RT} \
-	${STEP}
+	${STEP_LIBS}
 
 $(fedex_srcs):
 	echo "Building fedex sources: ${fedex_srcs} ${fedex_hdrs}"
@@ -49,9 +52,9 @@ $(fedex_srcs):
 $(fedex_hdrs): ${fedex_srcs}
 
 
-# $(step_g_OBJECTS): $(fedex_srcs)
+$(step_g_OBJECTS): $(fedex_srcs)
 
-# CLEANFILES = $(fedex_srcs)
+CLEANFILES = $(fedex_srcs) $(fedex_hdrs)
 
 include $(top_srcdir)/misc/Makefile.defs
 
