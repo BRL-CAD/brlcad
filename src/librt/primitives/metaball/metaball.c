@@ -245,6 +245,9 @@ fastf_t
 rt_metaball_point_value_metaball(const point_t *p, const struct bu_list *points)
 {
     bu_exit(1, "rt_metaball_point_value_metaball() No implemented");
+
+    /* Makes the compiler happy */
+    return 0.0;
 }
 
 fastf_t
