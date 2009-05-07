@@ -54,20 +54,22 @@ int nsurf = 0;
 struct rt_wdb *outfp;
 
 #ifndef HAVE_DRAND48
-/* Simulate drand48() using 31-bit random() assumed to exist (e.g. in 4BSD): */
-
-#ifndef drand48
-double
-drand48()
-{
-#ifdef HAVE_RANDOM
-    return (double)random() / 2147483648.0;	/* range [0, 1) */
-#else
-    return (double)rand() / (double)RAND_MAX;	/* range [0, 1) */
-#endif
+#  if !defined(_WIN32) || defined(__CYGWIN__)
+/* simulate drand48() --  using 31-bit random() -- assumed to exist */
+double drand48() {
+    extern long random();
+    return (double)random() / 2147483648.0; /* range [0, 1) */
 }
-#endif
+#  else
+double drand48() {
+    unsigned int randVal;
 
+    if (rand_s(&randVal))
+	randVal = 0;
+
+    return (double)randVal/(double)UINT_MAX;
+}
+#  endif
 #endif
 
 int
@@ -109,6 +111,7 @@ main(int argc, char **argv)
 	for ( j = 0; j < 10; j++)
 	{
 	    fastf_t		v;
+	    fastf_t		drand48(void);
 
 	    v = (hscale * drand48()) + 10.0;
 
