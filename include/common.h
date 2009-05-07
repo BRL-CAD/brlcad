@@ -42,7 +42,7 @@
  * should not use config defines)
  */
 #if defined(BRLCADBUILD) && defined(HAVE_CONFIG_H)
-#  ifdef _WIN32
+#  if defined(_WIN32) && !defined(__CYGWIN__)
 #    include "config_win.h"
 #  else
 #    include "brlcad_config.h"
