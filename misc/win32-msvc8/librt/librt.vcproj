@@ -448,7 +448,7 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\src\librt\mirror.c"
+				RelativePath="..\..\..\src\librt\primitives\mirror.c"
 				>
 			</File>
 			<File
@@ -728,7 +728,7 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\src\librt\table.c"
+				RelativePath="..\..\..\src\librt\primitives\table.c"
 				>
 			</File>
 			<File
