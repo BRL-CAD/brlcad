@@ -3,7 +3,7 @@ EXTRA_PROGRAMS = step-g
 # FIXME: these AM_CPPFLAGS are redundant with step_g_CFLAGS and the
 # latter should be preferred unless there's an overriding convenience
 # (like dozens all with the same flags in this dir)
-AM_CPPFLAGS = ${STEP_CPPFLAGS} ${TCL_CPPFLAGS} ${OPENNURBS_CPPFLAGS}
+#AM_CPPFLAGS = ${STEP_CPPFLAGS} ${TCL_CPPFLAGS} ${OPENNURBS_CPPFLAGS}
 
 step_g_SOURCES = \
 	AdvancedBrepShapeRepresentation.cpp \
@@ -36,7 +36,7 @@ noinst_HEADERS = \
 	needFunc.h
 
 # per-program CPPFLAGS wasn't added until automake 1.7
-step_g_CFLAGS = \
+step_g_CXXFLAGS = \
 	${OPENNURBS_CPPFLAGS} \
 	${STEP_CPPFLAGS} \
 	${TCL_CPPFLAGS}
@@ -60,9 +60,9 @@ $(fedex_srcs):
 $(fedex_hdrs): ${fedex_srcs}
 
 
-$(step_g_OBJECTS): $(fedex_srcs)
+##$(step_g_OBJECTS): $(fedex_srcs)
 
-CLEANFILES = $(fedex_srcs) $(fedex_hdrs)
+##CLEANFILES = $(fedex_srcs) $(fedex_hdrs)
 
 include $(top_srcdir)/misc/Makefile.defs
 
