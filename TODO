@@ -1,33 +1,33 @@
 BRL-CAD To Do List
 ==================
 
-Included below is a list of things that are scheduled or desirable to
-be done at some point.  Most recently added items are on top, older
-topics are on the bottom.  This is not an official list, it's more a
-scratch pad for the developers to use for tracking development ideas
-and informal plans.
+This document contains a collection of desirable BRL-CAD development
+tasks.  Included is a list of the tasks expected for the current
+monthly development release iteration, tasks that will hopefully be
+completed within two iterations, and a remaining "backlog" of
+unscheduled development tasks.
 
-The items listed for release should not ever hinder, stop, or
-otherwise delay a release from being made.  The items listed are
-merely to give an estimate of what was expected to be done.  See the
-project task tracker for more to do items and future planning efforts.
-http://sf.net/pm/?group_id=105292
+This is not an official list of tasks that will be completed.  Instead
+it's more like a developer scratch pad for recording ideas and
+coordinating release tasks.  At the beginning of each month,
+developers add the tasks they expect to complete and then remove those
+tasks as they are completed.
 
 
-THESE SHOULD HAPPEN BEFORE THE NEXT RELEASE
--------------------------------------------
+THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
+-------------------------------------------------
 
 * just do it.
 
 
-THESE SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
--------------------------------------------------
+THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
+-------------------------------------------------------
 
 * tbd.
 
 
-THESE ARE LOWER PRIORITY OR FOR FUTURE RELEASES
------------------------------------------------
+THESE ARE UNSCHEDULED BACKLOG TASKS
+-----------------------------------
 
 * mged inconsistently ignores signals.  initially allowing mged to be
   backgrounded, but then later ignores them.  needs to consistently
@@ -571,7 +571,7 @@ DOCUMENTATION
 
 
 ---
-See the project task tracker for more to do items and future planning
-efforts.  http://sf.net/pm/?group_id=105292
+See the feature request and bug trackers for more tasks and future
+planning efforts: https://sourceforge.net/tracker/?group_id=105292
 
 TODO items should be formatted to column 70 (M-q in emacs), no tabs.
