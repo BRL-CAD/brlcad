@@ -198,7 +198,11 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
 * make rtarea display a cross-hair and perhaps coordinates for the
   center of area if run from within mged.
 
-* ADRT: remove MySQL code, fix ISST callbacks, re-enable RISE, cleanup
+* remove MySQL code from ADRT
+
+* fix ISST callbacks within ADRT
+
+* re-enable RISE client in ADRT
 
 * test homovulgaris' root solver patch that puts coefficients in the
   right order
