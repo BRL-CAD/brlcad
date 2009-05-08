@@ -139,6 +139,7 @@ set(LIBGED_SOURCES
     prefix.c
     preview.c
     ps.c
+    pscale.c
     push.c
     put.c
     put_comb.c
