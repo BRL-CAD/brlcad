@@ -375,7 +375,8 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
 
 * test for USE_FORKED_THREADS in configure
 
-* optimize CSG structures automatically, automatic simplification.
+* optimize CSG structures automatically: automatic simplification,
+  tree contraction, null object detection.
 
 * option to mged make command or new command that enters solid edit
   mode, "med", "smake", "makes", "msed", etc.  same for cp command.
