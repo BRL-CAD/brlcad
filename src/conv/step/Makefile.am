@@ -10,8 +10,7 @@ step_g_SOURCES = \
 	BRLCADWrapper.cpp \
 	STEPWrapper.cpp \
 	needFunc.cc \
-	step-g.cpp \
-	$(fedex_srcs)
+	step-g.cpp
 
 fedex_hdrs = \
 	SdaiCONFIG_CONTROL_DESIGN.h \
