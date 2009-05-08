@@ -367,9 +367,6 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
 
 * Mac OS X SGI dial knobs support
 
-* merge old and 'new' tops behavior into one, preserving compatibility
-  where it makes sense.
-
 * ability to "unpush" objects, translating them to a new position and
   applying the correct matrix (using either bounding box or center of
   mass, for example)
