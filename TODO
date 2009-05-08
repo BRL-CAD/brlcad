@@ -330,7 +330,9 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
 
 * run indent.sh on directories (one at a time, validating results)
 
-* add support for arbitrary matrix transformations to torus primitive
+* add support for arbitrary matrix transformations to torus primitive.
+  store non-uniform scaling matrices as an attribute for
+  backwards-compatible support until v6.
 
 * add configuration checks and build system support to disable C++
   outright if necessary, e.g. an --enable-c++ option
@@ -512,6 +514,11 @@ THESE BREAK PROTOCOL OR ARE BACKWARDS-INCOMPATIBLE
 
 * remove the storage of the never-implemented keypoint parameter for
   extrude objects.
+
+* have all primitives record a transformation matrix so that they may
+  retain a local coordinate system even after pushed matrices.  this
+  also will allow primitives like the torus to support non-uniform
+  scaling.
 
 
 FUNCTIONALITY NEEDED TO SPEED UP RAYTRACING
