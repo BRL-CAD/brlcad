@@ -458,25 +458,25 @@
 ::itcl::body EllEditFrame::initValuePanel {} {
     switch -- $mEditMode \
 	$setA { \
-	    set mEditCommand scale_ell; \
+	    set mEditCommand pscale; \
 	    set mEditClass $EDIT_CLASS_SCALE; \
 	    set mEditParam1 a; \
 	    configure -valueUnits "mm"; \
 	} \
 	$setB { \
-	    set mEditCommand scale_ell; \
+	    set mEditCommand pscale; \
 	    set mEditClass $EDIT_CLASS_SCALE; \
 	    set mEditParam1 b; \
 	    configure -valueUnits "mm"; \
 	} \
 	$setC { \
-	    set mEditCommand scale_ell; \
+	    set mEditCommand pscale; \
 	    set mEditClass $EDIT_CLASS_SCALE; \
 	    set mEditParam1 c; \
 	    configure -valueUnits "mm"; \
 	} \
 	$setA,B,C { \
-	    set mEditCommand scale_ell; \
+	    set mEditCommand pscale; \
 	    set mEditClass $EDIT_CLASS_SCALE; \
 	    set mEditParam1 3; \
 	    configure -valueUnits "mm"; \

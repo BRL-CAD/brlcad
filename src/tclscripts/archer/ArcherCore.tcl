@@ -197,6 +197,7 @@ namespace eval ArcherCore {
 	method oscale		   {args}
 	method otranslate	   {args}
 	method prefix              {args}
+	method pscale              {args}
 	method push                {args}
 	method put                 {args}
 	method put_comb            {args}
@@ -209,7 +210,6 @@ namespace eval ArcherCore {
 	method rm                  {args}
 	method rmater              {args}
 	method rotate_arb_face     {args}
-	method scale_ell           {args}
 	method shader              {args}
 	method shells              {args}
 	method tire                {args}
@@ -392,9 +392,9 @@ namespace eval ArcherCore {
 					   in inside item kill killall killrefs killtree ls \
 					   make make_bb mater mirror move move_arb_edge move_arb_face \
 					   mv mvall nmg_collapse nmg_simplify \
-					   ocenter orotate oscale otranslate packTree prefix push \
+					   ocenter orotate oscale otranslate packTree prefix pscale push \
 					   put put_comb putmat pwd r rcodes red rfarb rm rmater \
-					   rotate_arb_face scale_ell shader shells tire title track \
+					   rotate_arb_face shader shells tire title track \
 					   unhide units unpackTree \
 					   vmake wmater xpush Z zap
 	}
@@ -3781,6 +3781,10 @@ Popup Menu    Right or Ctrl-Left
     eval gedWrapper prefix 0 0 1 1 $args
 }
 
+::itcl::body ArcherCore::pscale {args} {
+    eval gedWrapper pscale 0 0 1 0 $args
+}
+
 ::itcl::body ArcherCore::push {args} {
     eval gedWrapper push 0 1 1 0 $args
 }
@@ -3827,10 +3831,6 @@ Popup Menu    Right or Ctrl-Left
 
 ::itcl::body ArcherCore::rotate_arb_face {args} {
     eval gedWrapper rotate_arb_face 0 0 1 0 $args
-}
-
-::itcl::body ArcherCore::scale_ell {args} {
-    eval gedWrapper scale_ell 0 0 1 0 $args
 }
 
 ::itcl::body ArcherCore::shader {args} {

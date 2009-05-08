@@ -80,8 +80,7 @@ __BEGIN_DECLS
 #define GED_MOVE_ARB_EDGE_MODE 9
 #define GED_MOVE_ARB_FACE_MODE 10
 #define GED_ROTATE_ARB_FACE_MODE 11
-#define GED_SCALE_ELL_MODE 12
-#define GED_SCALE_TOR_MODE 13
+#define GED_PSCALE_MODE 12
 
 /**
  * S E M A P H O R E S
@@ -2227,6 +2226,14 @@ GED_EXPORT BU_EXTERN(int ged_preview, (struct ged *gedp, int argc, const char *a
 GED_EXPORT BU_EXTERN(int ged_ps, (struct ged *gedp, int argc, const char *argv[]));
 
 /**
+ * Scale obj's attributes by sf.
+ *
+ * Usage:
+ *     pscale obj attribute sf
+ */
+GED_EXPORT BU_EXTERN(int ged_pscale, (struct ged *gedp, int argc, const char *argv[]));
+
+/**
  * Push objects' path transformations to  primitives
  *
  * Usage:
@@ -2465,22 +2472,6 @@ GED_EXPORT BU_EXTERN(int ged_saveview, (struct ged *gedp, int argc, const char *
  */
 GED_EXPORT BU_EXTERN(int ged_scale_args, (struct ged *gedp, int argc, const char *argv[], fastf_t *sf));
 GED_EXPORT BU_EXTERN(int ged_scale, (struct ged *gedp, int argc, const char *argv[]));
-
-/**
- * Scale ellipsoid attributes by sf.
- *
- * Usage:
- *     scale_ell ell a|b|c|3 sf
- */
-GED_EXPORT BU_EXTERN(int ged_scale_ell, (struct ged *gedp, int argc, const char *argv[]));
-
-/**
- * Scale torus attributes by sf.
- *
- * Usage:
- *     scale_tor tor a|h sf
- */
-GED_EXPORT BU_EXTERN(int ged_scale_tor, (struct ged *gedp, int argc, const char *argv[]));
 
 /**
  * Get/set the output handler script

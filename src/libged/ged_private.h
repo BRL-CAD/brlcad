@@ -331,6 +331,21 @@ BU_EXTERN (void ged_wait_status,
 	   (struct bu_vls *log,
 	    int status));
 
+/* defined in scale_ell.c */
+BU_EXTERN (int ged_scale_ell,
+	   (struct ged *gedp,
+	    struct rt_ell_internal *ell,
+	    char *attribute,
+	    fastf_t sf,
+	    matp_t mat));
+
+/* defined in scale_tor.c */
+BU_EXTERN (int ged_scale_tor,
+	   (struct ged *gedp,
+	    struct rt_tor_internal *tor,
+	    char *attribute,
+	    fastf_t sf,
+	    matp_t mat));
 
 /* defined in tops.c */
 struct directory **

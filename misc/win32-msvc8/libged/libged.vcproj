@@ -786,6 +786,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\src\libged\pscale.c"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\src\libged\push.c"
 				>
 			</File>

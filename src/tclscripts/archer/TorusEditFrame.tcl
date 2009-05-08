@@ -389,13 +389,13 @@
 ::itcl::body TorusEditFrame::initValuePanel {} {
     switch -- $mEditMode \
 	$setA { \
-	    set mEditCommand scale_tor; \
+	    set mEditCommand pscale; \
 	    set mEditClass $EDIT_CLASS_SCALE; \
 	    set mEditParam1 a; \
 	    configure -valueUnits "mm"; \
 	} \
 	$setH { \
-	    set mEditCommand scale_tor; \
+	    set mEditCommand pscale; \
 	    set mEditClass $EDIT_CLASS_SCALE; \
 	    set mEditParam1 h; \
 	    configure -valueUnits "mm"; \
