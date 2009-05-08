@@ -40,6 +40,9 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 
 * restored support for split-view cutting planes within ADRT
 
+* implement necessary routines for generating a NURBS bounding
+  box tree, needed for "good" initial guesses when raytracing
+  a NURBS surface. (per Abert et. al. 2006)
 
 THESE ARE UNSCHEDULED BACKLOG TASKS
 -----------------------------------

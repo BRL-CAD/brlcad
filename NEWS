@@ -14,7 +14,7 @@ changes made.  See document footer for additional details.
 --- 2009-05-08  Release 7.14.8                                     ---
 ----------------------------------------------------------------------
 
-* fix trimming bug  in tire tread - Cliff Yapp
+* fix trimming bug in tire tread - Cliff Yapp
 * archer interactive edit support for arb8, tor, and ell - Bob Parker
 * improved asc2g handling of large BoT conversions - Keith Bowman
 * conversion of mged and archer to use new ttk widgets - Bob Parker
