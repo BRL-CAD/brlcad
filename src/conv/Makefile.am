@@ -338,6 +338,8 @@ dist_man_MANS = \
 	nmg/g-nmg.1 \
 	nmg/nmg-bot.1 \
 	nmg/nmg-rib.1 \
+	patch/patch-g.1 \
+	patch/rpatch.1 \
 	ply-g.1 \
 	poly-bot.1 \
 	proe-g.1 \
