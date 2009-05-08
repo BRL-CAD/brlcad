@@ -43,6 +43,7 @@ extern uint64_t	tienet_master_get_rays_fired();
 extern int	tienet_master_active_slaves;
 extern int	tienet_master_socket_num;
 extern uint64_t	tienet_master_transfer;
+extern int	tienet_master_verbose;
 
 #endif
 
