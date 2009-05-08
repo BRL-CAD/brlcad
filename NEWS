@@ -14,6 +14,7 @@ changes made.  See document footer for additional details.
 --- 2009-05-XX  Release 7.14.7                                     ---
 ----------------------------------------------------------------------
 
+* improved asc2g handling of large BoT conversions - Keith Bowman
 * conversion of mged and archer to use new ttk widgets - Bob Parker
 * fixed crash in raytracing of pipe when duplicate hit points returned
         - Cliff Yapp, Sean Morrison
