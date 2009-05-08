@@ -132,9 +132,9 @@ rt_mirror(struct db_i *dbip,
     bn_mat_mul(mirmat, temp, rmat);
 
     /* Add the translation to mirmat */
-    mirmat[3 + X*4] += mirror_pt[X] * mirror_dir[X];
-    mirmat[3 + Y*4] += mirror_pt[Y] * mirror_dir[Y];
-    mirmat[3 + Z*4] += mirror_pt[Z] * mirror_dir[Z];
+    mirmat[3 + X*4] += 2.0 * mirror_pt[X] * mirror_dir[X];
+    mirmat[3 + Y*4] += 2.0 * mirror_pt[Y] * mirror_dir[Y];
+    mirmat[3 + Z*4] += 2.0 * mirror_pt[Z] * mirror_dir[Z];
 
     switch (id) {
 	case ID_TOR:
