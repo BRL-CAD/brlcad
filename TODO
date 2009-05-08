@@ -334,9 +334,6 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
   store non-uniform scaling matrices as an attribute for
   backwards-compatible support until v6.
 
-* add configuration checks and build system support to disable C++
-  outright if necessary, e.g. an --enable-c++ option
-
 * configure support to enable/disable framebuffers, display
   managers, geometry converters, and image converters.  consider
   apache's module management as an example.
