@@ -17,17 +17,36 @@ tasks as they are completed.
 THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 -------------------------------------------------
 
-* just do it.
+* if you're reading this, then they're all done!
 
 
 THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 -------------------------------------------------------
 
-* tbd.
+* implement file input support for the pnts primitive
+
+* display cross-hair in mged when rtarea reports center
+
+* initial step-g with basic file parsing capability but without
+  creation of .g geometry just yet
+
+* improved archer interactive editing support for all primitives
+
+* refactor rt_functab accessors to go through an api call or calls so
+  that the array is not accessed directly.  either an rt_eval() style
+  interface with data-driven keys to tell it with function(s) to call,
+  or simply have an rt_*() for each function (e.g., rt_mirror(),
+  rt_shot(), rt_describe(), etc).
+
+* restored support for split-view cutting planes within ADRT
 
 
 THESE ARE UNSCHEDULED BACKLOG TASKS
 -----------------------------------
+
+* restored support for shotline region reporting within ADRT
+
+* make color and vectors on pnts work
 
 * mged inconsistently ignores signals.  initially allowing mged to be
   backgrounded, but then later ignores them.  needs to consistently
@@ -35,12 +54,6 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
 
 * libfb needs to have the fb_open/close_existing functions refactored
   into the function table and hav the #ifdef sections removed.
-
-* refactor rt_functab accessors to go through an api call or calls so
-  that the array is not accessed directly.  either an rt_eval() style
-  interface with data-driven keys to tell it with function(s) to call,
-  or simply have an rt_*() for each function (e.g., rt_mirror(),
-  rt_shot(), rt_describe(), etc).
 
 * optimization of NMG ray tracing.  the hitmiss bookkeeping presently
   used has a malloc/free occuring per shot().  allocations need to
@@ -109,10 +122,6 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
   framebuffer was changed (back) to request a direct rendering
   context.  presumably that is triggering other code that is failing
   to redraw.
-
-* implement file input support for the pnts primitive
-
-* make color and vectors on pnts work
 
 * segregate the nmg routines out of librt back into their own library
 
