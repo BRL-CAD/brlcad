@@ -59,9 +59,9 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
   used has a malloc/free occuring per shot().  allocations need to
   occur during prep only.
 
-* implement a routine to convert an NMG NURBS object to the newer
-  openNURBS BREP object type to facilitate tool migration. could be
-  useful to allow conversion of polygonal NMGs tool.
+* implement a routine to convert an NMG object (whether polygonal or
+  old bspline/nurbs) to the newer openNURBS BREP object type to
+  facilitate tool migration.
 
 * implement primitive-to-brep routines for all primitives (partially
   completed) so that each implicit can describe themselves as a NURBS
@@ -115,8 +115,6 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
 
 * make sure news2tracker.sh is not missing recent news items.  several
   were missing from a recent report generated (unverified).
-
-* rewrite the tables command to not suck
 
 * fix framebuffer refresh bug.  problem was caused when the if_ogl
   framebuffer was changed (back) to request a direct rendering
@@ -279,8 +277,6 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
 * windows smp support
 
 * modify the new tree traversal code to be generic
-
-* expose nmg_fix_normals through a set of mesh repair routines
 
 * add high dynamic range image support to the framebuffers
 
