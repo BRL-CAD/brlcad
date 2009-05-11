@@ -279,7 +279,7 @@ BC_ARG_ENABLE([build_urt], [urt-build], [Build the included Utah Raster Toolkit]
 BC_ARG_ENABLE([build_opennurbs], [opennurbs-build], [Build the included openNURBS library], [auto])
 
 # force enable/disable building of NIST STEP Class Libraries 
-BC_ARG_ENABLE([build_step], [step-build], [Build the included STEP Class Libraries], [yes])
+BC_ARG_ENABLE([build_step], [step-build], [Build the included STEP Class Libraries], [auto])
 
 # force enable/disable building of termlib
 BC_ARG_ENABLE([build_termlib], [termlib-build], [Build the included termlib library], [auto])
@@ -2109,11 +2109,17 @@ else
 fi
 AC_MSG_CHECKING([whether we have the essentials to make parsers])
 if test "x$build_parsers" = "xyes" ; then
-    AC_DEFINE(BC_WITH_PARSERS, 1, [Define to enable compilation of parsers])
     AC_MSG_RESULT(yes)
+    AC_DEFINE(BC_WITH_PARSERS, 1, [Define to enable compilation of parsers])
 else
-    bc_build_step="no"
     AC_MSG_RESULT(no)
+    if test "x$bc_build_step" = "xyes" ; then
+	AC_MSG_NOTICE([STEP was enabled, but no system lexer/parser was found])
+	AC_MSG_NOTICE([}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}])
+	AC_MSG_NOTICE([Try adding --disable-step-build])
+	AC_MSG_ERROR([*** Building STEP support was enabled, yet no system lexer/parser was found ***])
+    fi
+    bc_build_step="no"
 fi
 
 
