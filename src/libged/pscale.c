@@ -108,6 +108,9 @@ ged_pscale(struct ged *gedp, int argc, const char *argv[])
     }
 
     switch (intern.idb_minor_type) {
+    case DB5_MINORTYPE_BRLCAD_EHY:
+	ret = ged_scale_ehy(gedp, (struct rt_ell_internal *)intern.idb_ptr, argv[2], sf);
+	break;
     case DB5_MINORTYPE_BRLCAD_ELL:
 	ret = ged_scale_ell(gedp, (struct rt_ell_internal *)intern.idb_ptr, argv[2], sf);
 	break;

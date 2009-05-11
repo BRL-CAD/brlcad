@@ -332,6 +332,13 @@ BU_EXTERN (void ged_wait_status,
 	   (struct bu_vls *log,
 	    int status));
 
+/* defined in scale_ehy.c */
+BU_EXTERN (int ged_scale_ehy,
+	   (struct ged *gedp,
+	    struct rt_ehy_internal *ehy,
+	    char *attribute,
+	    fastf_t sf));
+
 /* defined in scale_ell.c */
 BU_EXTERN (int ged_scale_ell,
 	   (struct ged *gedp,
