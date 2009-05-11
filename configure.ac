@@ -2087,8 +2087,8 @@ if test "x$ac_cv_prog_LEX" != "x" ; then
 	build_parsers=yes
     else
 	AC_MSG_NOTICE([}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}])
-	AC_MSG_WARN([A YACC-style parser was not found so dependant portions])
-	AC_MSG_WARN([of the package (various MGED commands) will be disabled.])
+	AC_MSG_WARN([A YACC-style parser was not found so dependant portions of the package])
+	AC_MSG_WARN([(various MGED commands and STEP conversion support) will be disabled.])
 	AC_MSG_NOTICE([Installation of GNU Bison or Yacc before continuing is recommended.])
 	AC_MSG_NOTICE([{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{])
 	sleep 5
@@ -2096,8 +2096,8 @@ if test "x$ac_cv_prog_LEX" != "x" ; then
 else
     AC_MSG_NOTICE([}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}])
     if test "x$ac_cv_prog_YACC" != "x" ; then
-	AC_MSG_WARN([A LEX-style scanner was not found so dependant portions])
-	AC_MSG_WARN([of the package (various MGED commands) will be disabled.])
+	AC_MSG_WARN([A LEX-style scanner was not found so dependant portions of the package])
+	AC_MSG_WARN([(various MGED commands and STEP conversion support) will be disabled.])
 	AC_MSG_NOTICE([Installation of GNU Flex or Lex before continuing is recommended.])
     else
 	AC_MSG_WARN([Neither a YACC-style parser or a LEX-style scanner was found.])
@@ -2112,6 +2112,7 @@ if test "x$build_parsers" = "xyes" ; then
     AC_DEFINE(BC_WITH_PARSERS, 1, [Define to enable compilation of parsers])
     AC_MSG_RESULT(yes)
 else
+    bc_build_step="no"
     AC_MSG_RESULT(no)
 fi
 
