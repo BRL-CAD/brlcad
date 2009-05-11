@@ -2538,13 +2538,7 @@ Popup Menu    Right or Ctrl-Left
 	set mRenderMode 2
     }
 
-    set mPrevSelectedObjPath $mSelectedObjPath
-    set mPrevSelectedObj $mSelectedObj
-    set mSelectedObjPath $node
-    set mSelectedObj [$itk_component(tree) query -text $element]
-
-    $itk_component(tree) selection clear
-    $itk_component(tree) selection set $snode
+    $itk_component(tree) toggle $snode
 
     if {$nodeType == "leaf"} {
 	$menu add radiobutton -label "Wireframe" \
