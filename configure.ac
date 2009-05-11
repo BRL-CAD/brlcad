@@ -3710,12 +3710,12 @@ dnl configure enigma
 AC_CONFIG_SUBDIRS([misc/enigma])
 
 dnl configure step
-if test "x$bc_build_step" = "xyes" ; then
+if test "x$build_brlcad_step" = "xyes" ; then
     AC_CONFIG_SUBDIRS([src/other/step])
 fi
 
 dnl configure tkhtml3
-if test "x$bc_build_tkhtml3" = "xyes" ; then
+if test "x$build_brlcad_tkhtml3" = "xyes" ; then
     AC_CONFIG_SUBDIRS([src/other/tkhtml3])
 fi
 
