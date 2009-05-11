@@ -982,15 +982,15 @@ significant items added since the previous release.
 2) All existing manual pages and the TODO file are updated with the
 latest changes.
 
-3) Update the ChangeLog with entries since the last release; commit
+3) Update or verify the version numbers minimally in the include/conf
+version files, NEWS, and README.  See the above VERSION NUMBERS &
+COMPATIBILITY section.  Commit the changes to the source repository.
+
+4) Update the ChangeLog with entries since the last release; commit
 the updated ChangeLog.  Use the YYYY-MM-DD of the previous release.
 Get the date from the NEWS file.
 
     svn2cl --break-before-msg --include-rev --stdout -r HEAD:{YYYY-MM-DD} > ChangeLog
-
-4) Update or verify the version numbers minimally in the include/conf
-version files, NEWS, and README.  See the above VERSION NUMBERS &
-COMPATIBILITY section.  Commit the changes to the source repository.
 
 5) "sh autogen.sh && ./configure && make" completes successfully on
 all platforms.  "sh autogen.sh && ./configure --enable-all && make"
