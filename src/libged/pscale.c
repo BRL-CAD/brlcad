@@ -97,8 +97,8 @@ ged_pscale(struct ged *gedp, int argc, const char *argv[])
 	return BRLCAD_ERROR;
     }
 
-    if (wdb_import_from_path2(&gedp->ged_result_str, &intern, argv[1], gedp->ged_wdbp, mat) == BRLCAD_ERROR)
-	return BRLCAD_ERROR;
+    GED_DB_GET_INTERNAL(gedp, &intern, dp, (matp_t)NULL, &rt_uniresource, BRLCAD_ERROR);
+    RT_CK_DB_INTERNAL(&intern);
 
     if (intern.idb_major_type != DB5_MAJORTYPE_BRLCAD) {
 	bu_vls_printf(&gedp->ged_result_str, "Object not eligible for scaling.");
@@ -109,10 +109,10 @@ ged_pscale(struct ged *gedp, int argc, const char *argv[])
 
     switch (intern.idb_minor_type) {
     case DB5_MINORTYPE_BRLCAD_ELL:
-	ret = ged_scale_ell(gedp, (struct rt_ell_internal *)intern.idb_ptr, argv[2], sf, mat);
+	ret = ged_scale_ell(gedp, (struct rt_ell_internal *)intern.idb_ptr, argv[2], sf);
 	break;
     case DB5_MINORTYPE_BRLCAD_TOR:
-	ret = ged_scale_tor(gedp, (struct rt_tor_internal *)intern.idb_ptr, argv[2], sf, mat);
+	ret = ged_scale_tor(gedp, (struct rt_tor_internal *)intern.idb_ptr, argv[2], sf);
 	break;
     default:
 	bu_vls_printf(&gedp->ged_result_str, "Object not yet supported.");

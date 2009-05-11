@@ -36,7 +36,7 @@
 
 
 int
-ged_scale_tor(struct ged *gedp, struct rt_tor_internal *tor, char *attribute, fastf_t sf, matp_t mat)
+ged_scale_tor(struct ged *gedp, struct rt_tor_internal *tor, char *attribute, fastf_t sf)
 {
     RT_TOR_CK_MAGIC(tor);
 

@@ -32,6 +32,7 @@
 
 #include "db.h"
 #include "mater.h"
+#include "rtgeom.h"
 #include "ged.h"
 
 __BEGIN_DECLS
@@ -336,16 +337,14 @@ BU_EXTERN (int ged_scale_ell,
 	   (struct ged *gedp,
 	    struct rt_ell_internal *ell,
 	    char *attribute,
-	    fastf_t sf,
-	    matp_t mat));
+	    fastf_t sf));
 
 /* defined in scale_tor.c */
 BU_EXTERN (int ged_scale_tor,
 	   (struct ged *gedp,
 	    struct rt_tor_internal *tor,
 	    char *attribute,
-	    fastf_t sf,
-	    matp_t mat));
+	    fastf_t sf));
 
 /* defined in tops.c */
 struct directory **

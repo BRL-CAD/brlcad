@@ -42,7 +42,7 @@
 #include "./ged_private.h"
 
 int
-ged_scale_ell(struct ged *gedp, struct rt_ell_internal *ell, char *attribute, fastf_t sf, matp_t mat)
+ged_scale_ell(struct ged *gedp, struct rt_ell_internal *ell, char *attribute, fastf_t sf)
 {
     fastf_t ma, mb;
 
