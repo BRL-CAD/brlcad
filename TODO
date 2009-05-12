@@ -463,6 +463,10 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
   this would need to store projected contours (ala rtedge) and filled
   color regions.
 
+* see if it is possible to use tec/ehy primitives to create a proc-db
+  for airfoil/wing shapes.  Interesting possibilities with boolean combinations
+  of these primitives, provided their continuity at the ends ensures
+  continuity all along "seams" - something to consider.
 
 LIBPC
 -----
