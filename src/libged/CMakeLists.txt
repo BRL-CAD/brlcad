@@ -169,6 +169,7 @@ set(LIBGED_SOURCES
     savekey.c
     saveview.c
     scale.c
+    scale_ehy.c
     scale_ell.c
     scale_tor.c
     search.c
