@@ -172,7 +172,10 @@ rt_shootray( struct application *ap )
     if ( !rt_in_rpp( &ap->a_ray, inv_dir, rtip->mdl_min, rtip->mdl_max )  ||
 	 ap->a_ray.r_max < 0.0 )  {
 	rtip->nmiss_model++;
-	ret = ap->a_miss( ap );
+	if (ap->a_miss)
+	    ret = ap->a_miss( ap );
+	else
+	    ret = 0;
 	status = "MISS model";
 	goto out;
     }
@@ -242,7 +245,10 @@ rt_shootray( struct application *ap )
      * Ray has finally left known space.
      */
     if ( InitialPart.pt_forw == &InitialPart )  {
-	ret = ap->a_miss( ap );
+	if (ap->a_miss)
+	    ret = ap->a_miss( ap );
+	else
+	    ret = 0;
 	status = "MISSed all primitives";
 	goto freeup;
     }
@@ -256,7 +262,10 @@ rt_shootray( struct application *ap )
 		  regionbits, ap);
 
     if ( FinalPart.pt_forw == &FinalPart )  {
-	ret = ap->a_miss( ap );
+	if (ap->a_miss)
+	    ret = ap->a_miss( ap );
+	else
+	    ret = 0;
 	status = "MISS bool";
 	goto freeup;
     }
@@ -276,7 +285,10 @@ rt_shootray( struct application *ap )
  hitit:
     if (RT_G_DEBUG&DEBUG_SHOOT)  rt_pr_partitions(rtip, &FinalPart, "a_hit()");
 
-    ret = ap->a_hit( ap, &FinalPart );
+    if (ap->a_hit)
+	ret = ap->a_hit( ap, &FinalPart );
+    else
+	ret = 0;
     status = "HIT";
 
     /*

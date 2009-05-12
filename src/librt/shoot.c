@@ -1117,7 +1117,10 @@ rt_shootray(register struct application *ap)
 	    goto start_cell;
 	}
 	resp->re_nmiss_model++;
-	ap->a_return = ap->a_miss( ap );
+	if (ap->a_miss)
+	    ap->a_return = ap->a_miss( ap );
+	else
+	    ap->a_return = 0;
 	status = "MISS model";
 	goto out;
     }
@@ -1512,7 +1515,10 @@ rt_shootray(register struct application *ap)
 
     /* finished_segs chain now has all segments hit by this ray */
     if ( BU_LIST_IS_EMPTY( &(finished_segs.l) ) )  {
-	ap->a_return = ap->a_miss( ap );
+	if (ap->a_miss)
+	    ap->a_return = ap->a_miss( ap );
+	else
+	    ap->a_return = 0;
 	status = "MISS primitives";
 	goto out;
     }
@@ -1526,7 +1532,10 @@ rt_shootray(register struct application *ap)
 			regionbits, ap, solidbits);
 
     if ( FinalPart.pt_forw == &FinalPart )  {
-	ap->a_return = ap->a_miss( ap );
+	if (ap->a_miss)
+	    ap->a_return = ap->a_miss( ap );
+	else
+	    ap->a_return = 0;
 	status = "MISS bool";
 	RT_FREE_PT_LIST( &InitialPart, resp );
 	RT_FREE_SEG_LIST( &finished_segs, resp );

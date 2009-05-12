@@ -250,7 +250,10 @@ rt_shootray_bundle(register struct application *ap, struct xray *rays, int nrays
     if ( !rt_in_rpp( &ap->a_ray, ss.inv_dir, rtip->mdl_min, rtip->mdl_max )  ||
 	 ap->a_ray.r_max < 0.0 )  {
 	resp->re_nmiss_model++;
-	ap->a_return = ap->a_miss( ap );
+	if (ap->a_miss)
+	    ap->a_return = ap->a_miss( ap );
+	else
+	    ap->a_return = 0;
 	status = "MISS model";
 	goto out;
     }
@@ -449,7 +452,10 @@ rt_shootray_bundle(register struct application *ap, struct xray *rays, int nrays
 
     /* finished_segs chain now has all segments hit by this ray */
     if ( BU_LIST_IS_EMPTY( &(finished_segs.l) ) )  {
-	ap->a_return = ap->a_miss( ap );
+	if (ap->a_miss)
+	    ap->a_return = ap->a_miss( ap );
+	else
+	    ap->a_return = 0;
 	status = "MISS primitives";
 	goto out;
     }
@@ -463,7 +469,10 @@ rt_shootray_bundle(register struct application *ap, struct xray *rays, int nrays
 			regionbits, ap, solidbits);
 
     if ( FinalPart.pt_forw == &FinalPart )  {
-	ap->a_return = ap->a_miss( ap );
+	if (ap->a_miss)
+	    ap->a_return = ap->a_miss( ap );
+	else
+	    ap->a_return = 0;
 	status = "MISS bool";
 	RT_FREE_PT_LIST( &InitialPart, resp );
 	RT_FREE_SEG_LIST( &finished_segs, resp );
@@ -497,7 +506,10 @@ rt_shootray_bundle(register struct application *ap, struct xray *rays, int nrays
      *  which don't follow the traditional solid modeling paradigm.
      */
     if (RT_G_DEBUG&DEBUG_ALLHITS) rt_pr_partitions(rtip, &FinalPart, "Parition list passed to a_hit() routine");
-    ap->a_return = ap->a_hit( ap, &FinalPart, &finished_segs );
+    if (ap->a_hit)
+	ap->a_return = ap->a_hit( ap, &FinalPart, &finished_segs );
+    else
+	ap->a_return = 0;
     status = "HIT";
 
     RT_FREE_SEG_LIST( &finished_segs, resp );
