@@ -218,7 +218,6 @@ const struct bu_structparse rt_part_parse[] = {
     { {'\0', '\0', '\0', '\0'}, 0, (char *)NULL, 0, BU_STRUCTPARSE_FUNC_NULL }
 };
 
-BU_EXTERN( void rt_part_ifree, (struct rt_db_internal *ip) );
 
 /**
  *  			R T _ P A R T _ P R E P
@@ -1768,9 +1767,14 @@ rt_part_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbos
  *  Free the storage associated with the rt_db_internal version of this solid.
  */
 void
-rt_part_ifree(struct rt_db_internal *ip)
+rt_part_ifree(struct rt_db_internal *ip, struct resource *resp)
 {
     RT_CK_DB_INTERNAL(ip);
+
+    if (!resp) {
+	resp = &rt_uniresource;
+    }
+
     bu_free( ip->idb_ptr, "particle ifree" );
     ip->idb_ptr = GENPTR_NULL;
 }

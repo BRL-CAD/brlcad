@@ -848,11 +848,16 @@ rt_ebm_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose
  *  Free the storage associated with the rt_db_internal version of this solid.
  */
 void
-rt_ebm_ifree(struct rt_db_internal *ip)
+rt_ebm_ifree(struct rt_db_internal *ip, struct resource *resp)
 {
     register struct rt_ebm_internal	*eip;
 
     RT_CK_DB_INTERNAL(ip);
+
+    if (!resp) {
+	resp = &rt_uniresource;
+    }
+
     eip = (struct rt_ebm_internal *)ip->idb_ptr;
     RT_EBM_CK_MAGIC(eip);
 

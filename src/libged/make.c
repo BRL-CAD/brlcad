@@ -266,27 +266,27 @@ ged_make(struct ged *gedp, int argc, const char *argv[])
 	arbn_ip->eqn = (plane_t *)bu_calloc(arbn_ip->neqn,
 					    sizeof(plane_t), "arbn plane eqns");
 	VSET(arbn_ip->eqn[0], 1, 0, 0);
-	arbn_ip->eqn[0][3] = 0.5*scale;
+	arbn_ip->eqn[0][W] = 0.5*scale;
 	VSET(arbn_ip->eqn[1], -1, 0, 0);
-	arbn_ip->eqn[1][3] = 0.5*scale;
+	arbn_ip->eqn[1][W] = 0.5*scale;
 	VSET(arbn_ip->eqn[2], 0, 1, 0);
-	arbn_ip->eqn[2][3] = 0.5*scale;
+	arbn_ip->eqn[2][W] = 0.5*scale;
 	VSET(arbn_ip->eqn[3], 0, -1, 0);
-	arbn_ip->eqn[3][3] = 0.5*scale;
+	arbn_ip->eqn[3][W] = 0.5*scale;
 	VSET(arbn_ip->eqn[4], 0, 0, 1);
-	arbn_ip->eqn[4][3] = 0.5*scale;
+	arbn_ip->eqn[4][W] = 0.5*scale;
 	VSET(arbn_ip->eqn[5], 0, 0, -1);
-	arbn_ip->eqn[5][3] = 0.5*scale;
+	arbn_ip->eqn[5][W] = 0.5*scale;
 	VSET(arbn_ip->eqn[6], 0.57735, 0.57735, 0.57735);
-	arbn_ip->eqn[6][3] = 0.5*scale;
+	arbn_ip->eqn[6][W] = 0.5*scale;
 	VSET(arbn_ip->eqn[7], -0.57735, -0.57735, -0.57735);
-	arbn_ip->eqn[7][3] = 0.5*scale;
+	arbn_ip->eqn[7][W] = 0.5*scale;
 	VSET(view_center,
 	     origin[X],
 	     origin[Y],
 	     origin[Z]);
 	for (i=0; i<arbn_ip->neqn; i++) {
-	    arbn_ip->eqn[i][3] +=
+	    arbn_ip->eqn[i][W] +=
 		VDOT(view_center, arbn_ip->eqn[i]);
 	}
     } else if (strcmp(argv[bu_optind+1], "ars") == 0) {
@@ -472,7 +472,7 @@ ged_make(struct ged *gedp, int argc, const char *argv[])
 	half_ip = (struct rt_half_internal *)internal.idb_ptr;
 	half_ip->magic = RT_HALF_INTERNAL_MAGIC;
 	VSET(half_ip->eqn, 0.0, 0.0, 1.0);
-	half_ip->eqn[3] = (origin[Z]);
+	half_ip->eqn[W] = (origin[Z]);
     } else if (strcmp(argv[bu_optind+1], "rpc") == 0) {
 	internal.idb_major_type = DB5_MAJORTYPE_BRLCAD;
 	internal.idb_type = ID_RPC;

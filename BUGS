@@ -15,6 +15,31 @@ on-going issues.
 Recent Bugs
 -----------
 
+* nirt -e "xyz val val val" doesn't work due to the space after the -e
+  and how the nirt/rt commands parse quoted args.
+
+* tab completion in classic/command mode sometimes doesn't work
+  (presumably if mged can't find tcl resources).  was finally able to
+  reproduce this with the result given as:
+
+  invalid command name "bind"
+
+* The nmg objects are raytracing VERY slowly, more than an order of
+  magnitude slower than tracing that nmg converted to an equivalent
+  bot.  There appears to be major resource contention and/or thread
+  locking on SMP machines resulting in nearly serialized performance,
+  though the trace is still slow with -P1.  Confirmed with a simple
+  test case of a sphere converted to an nmg:
+
+    make sph sph ; facetize -n sph.nmg sph
+
+  Looks like bots are fine and problem is independent of framebuffer
+  and image size.  Problem seems to be the way the ray_data structure
+  is used to track hitmiss data.  It is horribly inefficient with a
+  large per-shot calloc/free occurring.  Quick timing test showed
+  eliminating the calloc/free alone should result in approximately a
+  3x increase.
+
 * mged 'facetize -n' command is giving many errors:
     ERROR: color index out of range (-128 > 255)
   and it shouldn't.  seems to be happening on 3-manifold surfaces but
@@ -27,9 +52,10 @@ Recent Bugs
 * Windows MSVC build files seem to have the project dependencies all
   jacked up as it doesn't seem to compile things in the right order.
 
-* rtwizard reportedly won't display a line overlay if you line object
-  is obscured by another.  Example being to display a vehicle as
-  ghost, crew as solid, and crew as line.
+* rtwizard won't display a line overlay if you line object is obscured
+  by another.  Example being to display a vehicle as ghost, crew as
+  solid, and crew as line.  confirmed even when using the other line
+  occlusion settings.
 
 * fbserv is receiving image data very slowly if the framebuffer is a
   remote X24 interface.  could reproduce on mac with the following:
@@ -242,8 +268,6 @@ Recent Bugs
   and object close to surface (e.g. moss.g; select plane, light, and
   cone for ghost; select cone for insert and lines.)
 
-* rtwizard doesn't work with perspective
-
 * mged's solid illuminate doesn't work when Lighting is turned on
 
 * raytrace of -s64 and -F/dev/X crashes inside a memcpy during
@@ -264,8 +288,6 @@ Recent Bugs
 * on os x, the -fast option results in an odd optimization/aliasing
   bug where rtip contents are lost in rt after returning from
   rt_gettrees().
-
-* report of rtwizard hanging at 40% on Debian (from binary distro)
 
 * tra in console mode outputs a warning about mged_players
 

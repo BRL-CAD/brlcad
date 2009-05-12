@@ -47,11 +47,13 @@ extern "C++" {
     class dvec_unop {
     public:
 	virtual double operator()(double a) const = 0;
+	virtual ~dvec_unop() {}
     };
 
     class dvec_op {
     public:
 	virtual double operator()(double a, double b) const = 0;
+	virtual ~dvec_op() {}
     };
 
     template<int LEN>

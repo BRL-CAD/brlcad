@@ -82,7 +82,7 @@ proc ::swidgets::togglearrow {args} {
 ::itcl::body swidgets::Togglearrow::constructor {args} {
 
     itk_component add frame {
-	frame $itk_interior.frame
+	::frame $itk_interior.frame
     } {
 	usual
 	keep -borderwidth -relief

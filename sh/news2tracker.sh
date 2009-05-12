@@ -364,7 +364,7 @@ echo "DATE IS $_date"
     _today="`days`"
     _added="`days $_date`"
     if [ $(($_today - $_added)) -gt $CLOSED ] ; then
-	break
+	break;
     fi
     
     [ $VERBOSE -gt 2 ] && echo "$_revision was added $(($_today - $_added)) days ago"

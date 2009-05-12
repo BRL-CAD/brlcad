@@ -63,10 +63,10 @@
 	variable tireWidth 215
 	variable tireAspect 70
 	variable treadPattern 1
-	variable treadPatternString Small
+	variable treadPatternString Car
 	variable treadPatternCount 30
 	variable treadType 1
-	variable treadTypeString "Car"
+	variable treadTypeString Small
 	variable treadDepth 8
 	variable createWheel 1
 
@@ -76,8 +76,11 @@
 
 	method addWizardAttrs {obj {onlyTop 1}}
 
-	method setTreadPattern {_pattern _string}
-	method setTreadType {_type _string}
+	method setTreadPattern {}
+	method setTreadType {}
+
+	method setTreadPatternString {}
+	method setTreadTypeString {}
     }
 
     private {
@@ -139,6 +142,9 @@
 	    set $vname $val
 	}
     }
+
+    setTreadPatternString
+    setTreadTypeString
 }
 
 ::itcl::body TireWizard::buildParameter {parent} {
@@ -154,165 +160,138 @@
 	    -hscrollmode dynamic \
 	    -vscrollmode dynamic
     } {}
+    $itk_component(paramScroll) configure -background $ArcherCore::LABEL_BACKGROUND_COLOR
     set newParent [$itk_component(paramScroll) childsite]
 
     # Create frame for stuff not in a toggle arrow
     itk_component add paramNonArrowF {
-	::frame $newParent.nonArrowF
+	::ttk::frame $newParent.nonArrowF
     } {}
 
     # Create name entry field
     itk_component add paramNameL {
-	::label $itk_component(paramNonArrowF).nameL \
+	::ttk::label $itk_component(paramNonArrowF).nameL \
 	    -text "Name:" \
 	    -anchor e
     } {}
     itk_component add paramNameE {
-	::entry $itk_component(paramNonArrowF).nameE \
-	    -borderwidth 1 \
+	::ttk::entry $itk_component(paramNonArrowF).nameE \
 	    -textvariable [::itcl::scope wizardTop]
     } {}
 
     # Create rim diameter entry field
     itk_component add paramRimDiameterL {
-	::label $itk_component(paramNonArrowF).rimDiameterL \
+	::ttk::label $itk_component(paramNonArrowF).rimDiameterL \
 	    -text "Rim Diameter (in):" \
 	    -anchor e
     } {}
     itk_component add paramRimDiameterE {
-	::entry $itk_component(paramNonArrowF).rimDiameterE \
-	    -borderwidth 1 \
+	::ttk::entry $itk_component(paramNonArrowF).rimDiameterE \
 	    -textvariable [::itcl::scope rimDiameter]
     } {}
 
     # Create rim width entry field
     itk_component add paramRimWidthL {
-	::label $itk_component(paramNonArrowF).rimWidthL \
+	::ttk::label $itk_component(paramNonArrowF).rimWidthL \
 	    -text "Rim Width (in):" \
 	    -anchor e
     } {}
     itk_component add paramRimWidthE {
-	::entry $itk_component(paramNonArrowF).rimWidthE \
-	    -borderwidth 1 \
+	::ttk::entry $itk_component(paramNonArrowF).rimWidthE \
 	    -textvariable [::itcl::scope rimWidth]
     } {}
 
     # Create tire aspect entry field
     itk_component add paramTireAspectL {
-	::label $itk_component(paramNonArrowF).tireAspectL \
+	::ttk::label $itk_component(paramNonArrowF).tireAspectL \
 	    -text "Tire Aspect (%):" \
 	    -anchor e
     } {}
     itk_component add paramTireAspectE {
-	::entry $itk_component(paramNonArrowF).tireAspectE \
-	    -borderwidth 1 \
+	::ttk::entry $itk_component(paramNonArrowF).tireAspectE \
 	    -textvariable [::itcl::scope tireAspect]
     } {}
 
     # Create tire thickness entry field
     itk_component add paramTireThicknessL {
-	::label $itk_component(paramNonArrowF).tireThicknessL \
+	::ttk::label $itk_component(paramNonArrowF).tireThicknessL \
 	    -text "Tire Thickness (mm):" \
 	    -anchor e
     } {}
     itk_component add paramTireThicknessE {
-	::entry $itk_component(paramNonArrowF).tireThicknessE \
-	    -borderwidth 1 \
+	::ttk::entry $itk_component(paramNonArrowF).tireThicknessE \
 	    -textvariable [::itcl::scope tireThickness]
     } {}
 
     # Create tire width entry field
     itk_component add paramTireWidthL {
-	::label $itk_component(paramNonArrowF).tireWidthL \
+	::ttk::label $itk_component(paramNonArrowF).tireWidthL \
 	    -text "Tire Width (mm):" \
 	    -anchor e
     } {}
     itk_component add paramTireWidthE {
-	::entry $itk_component(paramNonArrowF).tireWidthE \
-	    -borderwidth 1 \
+	::ttk::entry $itk_component(paramNonArrowF).tireWidthE \
 	    -textvariable [::itcl::scope tireWidth]
     } {}
 
     # Create tread depth entry field
     itk_component add paramTreadDepthL {
-	::label $itk_component(paramNonArrowF).treadDepthL \
+	::ttk::label $itk_component(paramNonArrowF).treadDepthL \
 	    -text "Tread Depth (mm):" \
 	    -anchor e
     } {}
     itk_component add paramTreadDepthE {
-	::entry $itk_component(paramNonArrowF).treadDepthE \
-	    -borderwidth 1 \
+	::ttk::entry $itk_component(paramNonArrowF).treadDepthE \
 	    -textvariable [::itcl::scope treadDepth]
     } {}
 
     # Create tread count entry field
     itk_component add paramTreadCountL {
-	::label $itk_component(paramNonArrowF).treadCountL \
+	::ttk::label $itk_component(paramNonArrowF).treadCountL \
 	    -text "Tread Count:" \
 	    -anchor e
     } {}
     itk_component add paramTreadCountE {
-	::entry $itk_component(paramNonArrowF).treadCountE \
-	    -borderwidth 1 \
+	::ttk::entry $itk_component(paramNonArrowF).treadCountE \
 	    -textvariable [::itcl::scope treadPatternCount]
     } {}
 
     # Create tread pattern entry field
     itk_component add paramTreadPatternL {
-	::label $itk_component(paramNonArrowF).treadPatternL \
+	::ttk::label $itk_component(paramNonArrowF).treadPatternL \
 	    -text "Tread Pattern:" \
 	    -anchor e
     } {}
     itk_component add paramTreadPatternCB {
-	cadwidgets::ComboBox $itk_component(paramNonArrowF).treadPatternCB \
-	    -entryvariable [::itcl::scope treadPatternString] \
-	    -state disabled
+	::ttk::combobox $itk_component(paramNonArrowF).treadPatternCB \
+	    -textvariable [::itcl::scope treadPatternString] \
+	    -state readonly \
+	    -values {Car Truck}
     } {}
-    $itk_component(paramTreadPatternCB) add command \
-	-command "[::itcl::code $this setTreadPattern] 1 Small" \
-	-label Small
-    $itk_component(paramTreadPatternCB) add command \
-	-command "[::itcl::code $this setTreadPattern] 2 Large" \
-	-label Large
-    $itk_component(paramTreadPatternCB) entryConfigure -disabledforeground #000000
-    grid forget [$itk_component(paramTreadPatternCB) component label]
-    [$itk_component(paramTreadPatternCB) component entry] configure -borderwidth 1
-    [$itk_component(paramTreadPatternCB) component frame] configure -borderwidth 1
-    [$itk_component(paramTreadPatternCB) component menubutton] configure -borderwidth 1
 
     # Create tread type radiobox
     itk_component add paramTreadTypeL {
-	::label $itk_component(paramNonArrowF).treadTypeL \
+	::ttk::label $itk_component(paramNonArrowF).treadTypeL \
 	    -text "Tread Type:" \
 	    -anchor e
     } {}
     itk_component add paramTreadTypeCB {
-	cadwidgets::ComboBox $itk_component(paramNonArrowF).treadTypeCB \
-	    -entryvariable [::itcl::scope treadTypeString] \
-	    -state disabled
+	::ttk::combobox $itk_component(paramNonArrowF).treadTypeCB \
+	    -textvariable [::itcl::scope treadTypeString] \
+	    -state readonly \
+	    -values {Small Large}
     } {}
-    $itk_component(paramTreadTypeCB) add command \
-	-command "[::itcl::code $this setTreadType] 1 Car" \
-	-label Car
-    $itk_component(paramTreadTypeCB) add command \
-	-command "[::itcl::code $this setTreadType] 2 Truck" \
-	-label Truck
-    $itk_component(paramTreadTypeCB) entryConfigure -disabledforeground #000000
-    grid forget [$itk_component(paramTreadTypeCB) component label]
-    [$itk_component(paramTreadTypeCB) component entry] configure -borderwidth 1
-    [$itk_component(paramTreadTypeCB) component frame] configure -borderwidth 1
-    [$itk_component(paramTreadTypeCB) component menubutton] configure -borderwidth 1
 
     # Create empty label
     itk_component add emptyL {
-	::label $itk_component(paramNonArrowF).emptyL \
+	::ttk::label $itk_component(paramNonArrowF).emptyL \
 	    -text "" \
 	    -anchor e
     } {}
 
     # Create "Create Wheel" checkbutton
     itk_component add paramCreateWheelCB {
-	::checkbutton $itk_component(paramNonArrowF).createWheelCB \
+	::ttk::checkbutton $itk_component(paramNonArrowF).createWheelCB \
 	    -text "Create Wheel" \
 	    -variable [::itcl::scope createWheel]
     } {}
@@ -355,19 +334,9 @@
 	-row $row -stick nsew
     grid columnconfigure $itk_component(paramNonArrowF) 1 -weight 1
 
-    itk_component add paramEmpty {
-	frame $newParent.paramEmpty
-    } {
-	usual
-    }
-
     set row 0
     grid $itk_component(paramNonArrowF) \
 	-row $row -column 0 -sticky nsew
-    incr row
-    grid $itk_component(paramEmpty) \
-	-row $row -column 0 -sticky nsew
-    grid rowconfigure $newParent $row -weight 1
     grid columnconfigure $newParent 0 -weight 1
 
     grid $itk_component(paramScroll) -row 0 -column 0 -sticky nsew
@@ -391,14 +360,48 @@
     }
 }
 
-::itcl::body TireWizard::setTreadPattern {_pattern _string} {
-    set treadPattern $_pattern
-    set treadPatternString $_string
+::itcl::body TireWizard::setTreadPattern {} {
+    switch -- $treadPatternString {
+	Car {
+	    set treadPattern 1
+	}
+	Truck {
+	    set treadPattern 2
+	}
+    }
 }
 
-::itcl::body TireWizard::setTreadType {_type _string} {
-    set treadType $_type
-    set treadTypeString $_string
+::itcl::body TireWizard::setTreadType {} {
+    switch -- $treadTypeString {
+	Small {
+	    set treadType 1
+	}
+	Large {
+	    set treadType 2
+	}
+    }
+}
+
+::itcl::body TireWizard::setTreadPatternString {} {
+    switch -- $treadPattern {
+	1 {
+	    set treadPatternString Car
+	}
+	2 {
+	    set treadPatternString Truck
+	}
+    }
+}
+
+::itcl::body TireWizard::setTreadTypeString {} {
+    switch -- $treadType {
+	1 {
+	    set treadTypeString Small
+	}
+	2 {
+	    set treadTypeString Large
+	}
+    }
 }
 
 ::itcl::body TireWizard::drawTire {} {
@@ -409,7 +412,10 @@
 }
 
 ::itcl::body TireWizard::buildTire {} {
-    SetWaitCursor
+    SetWaitCursor $archer
+
+    setTreadPattern
+    setTreadType
 
     $archer pluginUpdateStatusBar "Building Tire..."
     $archer pluginUpdateSaveMode 1
@@ -431,7 +437,6 @@
 	     treadPatternCount $treadPatternCount \
 	     treadType $treadType \
 	     createWheel $createWheel]
-
     $archersGed tire \
 	-s $maxSideWallRadius \
 	-D $rimDiameter \
@@ -456,7 +461,7 @@
     after 50
     $archer pluginUpdateProgressBar 1.0
 
-    SetNormalCursor
+    SetNormalCursor $archer
 
     $archer pluginUpdateProgressBar 0.0
     $archer pluginUpdateStatusBar ""

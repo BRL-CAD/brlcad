@@ -1689,11 +1689,7 @@ wdb_showmats_cmd(struct rt_wdb *wdbp,
 	if (comb->tree)
 	    db_tree_funcleaf(wdbp->dbip, comb, comb->tree, Do_showmats,
 			     (genptr_t)&sm_data, (genptr_t)NULL, (genptr_t)NULL);
-#if USE_RT_COMB_IFREE
-	rt_comb_ifree(&intern, &rt_uniresource);
-#else
 	rt_db_free_internal(&intern, &rt_uniresource);
-#endif
 
 	if (!sm_data.smd_count) {
 	    Tcl_AppendResult(interp, sm_data.smd_child, " is not a member of ",
@@ -4811,11 +4807,7 @@ wdb_rmap_cmd(struct rt_wdb *wdbp,
 		BU_LIST_INSERT(&itnp->headName.l, &inp->l);
 	    }
 
-#if USE_RT_COMB_IFREE
-	    rt_comb_ifree(&intern, &rt_uniresource);
-#else
 	    rt_db_free_internal(&intern, &rt_uniresource);
-#endif
 	}
     }
 
@@ -4992,11 +4984,7 @@ wdb_which_cmd(struct rt_wdb *wdbp,
 		}
 	    }
 
-#if USE_RT_COMB_IFREE
-	    rt_comb_ifree(&intern, &rt_uniresource);
-#else
 	    rt_db_free_internal(&intern, &rt_uniresource);
-#endif
 	}
     }
 
@@ -6390,11 +6378,8 @@ Copy_comb(struct db_i *dbip,
     if (rt_db_put_internal(found, dbip, &intern, &rt_uniresource) < 0) {
 	Tcl_AppendResult(interp, "rt_db_put_internal failed for ", dp->d_namep,
 			 "\n", (char *)NULL);
-#if USE_RT_COMB_IFREE
-	rt_comb_ifree(&intern, &rt_uniresource);
-#else
 	rt_db_free_internal(&intern, &rt_uniresource);
-#endif
+
 	return(DIR_NULL);
     }
 
@@ -6517,11 +6502,7 @@ wdb_xpush_cmd(struct rt_wdb *wdbp,
 	    if (comb->tree)
 		db_tree_funcleaf(wdbp->dbip, comb, comb->tree, Do_ref_incr,
 				 (genptr_t)NULL, (genptr_t)NULL, (genptr_t)NULL);
-#if USE_RT_COMB_IFREE
-	    rt_comb_ifree(&intern, &rt_uniresource);
-#else
 	    rt_db_free_internal(&intern, &rt_uniresource);
-#endif
 	}
     }
 
@@ -6590,11 +6571,7 @@ wdb_xpush_cmd(struct rt_wdb *wdbp,
     if (rt_db_put_internal(old_dp, wdbp->dbip, &intern, &rt_uniresource) < 0) {
 	Tcl_AppendResult(interp, "rt_db_put_internal failed for ", old_dp->d_namep,
 			 "\n", (char *)NULL);
-#if USE_RT_COMB_IFREE
-	rt_comb_ifree(&intern, &rt_uniresource);
-#else
 	rt_db_free_internal(&intern, &rt_uniresource);
-#endif
 	Free_uses(wdbp->dbip);
 	return TCL_ERROR;
     }
@@ -6656,11 +6633,7 @@ wdb_whatid_cmd(struct rt_wdb *wdbp,
 
     bu_vls_init(&vls);
     bu_vls_printf(&vls, "%d", comb->region_id);
-#if USE_RT_COMB_IFREE
-    rt_comb_ifree(&intern, &rt_uniresource);
-#else
     rt_db_free_internal(&intern, &rt_uniresource);
-#endif
     Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
     bu_vls_free(&vls);
 

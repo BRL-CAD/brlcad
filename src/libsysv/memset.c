@@ -35,14 +35,14 @@ static const int unused = 0;
 #ifndef HAVE_MEMSET
 #include "sysv.h"
 
-char *
-memset(char *s, register char c, register int n)
+void *
+memset(void *s, register int c, register size_t n)
 {
-    register char *p=s;
+    register unsigned char *p=(char *)s;
 
     if (p) {
 	while (n-- > 0) {
-	    *p++ = c;
+	    *p++ = (unsigned char)c;
 	}
     }
 

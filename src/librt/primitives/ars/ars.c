@@ -51,7 +51,6 @@ extern int rt_bot_minpieces;
 
 /* from g_bot.c */
 extern int rt_bot_prep( struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip );
-extern void rt_bot_ifree( struct rt_db_internal *ip );
 
 int rt_ars_tess( struct nmgregion **r, struct model *m, struct rt_db_internal *ip,
 		 const struct rt_tess_tol *ttol, const struct bn_tol *tol );
@@ -419,12 +418,13 @@ rt_ars_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose
  *  Free the storage associated with the rt_db_internal version of this solid.
  */
 void
-rt_ars_ifree(struct rt_db_internal *ip)
+rt_ars_ifree(struct rt_db_internal *ip, struct resource *resp)
 {
     register struct rt_ars_internal	*arip;
     register int			i;
 
     RT_CK_DB_INTERNAL(ip);
+    if (!resp) resp = &rt_uniresource;
     arip = (struct rt_ars_internal *)ip->idb_ptr;
     RT_ARS_CK_MAGIC(arip);
 
@@ -473,7 +473,7 @@ rt_ars_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 	nmg_km( m );
 	return( -1 );
     }
-    rt_ars_ifree( ip );
+    rt_ars_ifree( ip, NULL );
 
     s = BU_LIST_FIRST( shell, &r->s_hd );
     bot = nmg_bot( s, &rtip->rti_tol );
@@ -495,7 +495,7 @@ rt_ars_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 
     ret = rt_bot_prep( stp, &intern, rtip );
 
-    rt_bot_ifree( &intern );
+    rt_bot_ifree( &intern, NULL );
 
     return( ret );
 #else
@@ -608,7 +608,7 @@ rt_ars_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 
     rt_bot_prep_pieces(bot, stp, ntri, tol);
 
-    rt_ars_ifree( ip );
+    rt_ars_ifree( ip, NULL );
 
 
     return(0);		/* OK */
@@ -748,27 +748,26 @@ rt_ars_shot(struct soltab *stp, register struct xray *rp, struct application *ap
 	register int i, j;
 
 	if ( nhits )
-	    RT_HIT_NORM( &hits[0], stp, 0 )
+	    RT_HIT_NORMAL(NULL, &hits[0], stp, 0, 0);
 
-		for ( i=0; i<nhits-1; i++ )
-		{
-		    fastf_t dist;
+	for ( i=0; i<nhits-1; i++ ) {
+	    fastf_t dist;
 
-		    RT_HIT_NORM( &hits[i+1], stp, 0 )
-			dist = hits[i].hit_dist - hits[i+1].hit_dist;
-		    if ( NEAR_ZERO( dist, ap->a_rt_i->rti_tol.dist ) &&
-			 VDOT( hits[i].hit_normal, rp->r_dir ) *
-			 VDOT( hits[i+1].hit_normal, rp->r_dir) > 0)
-		    {
-			for ( j=i; j<nhits-1; j++ )
-			    hits[j] = hits[j+1];
-			nhits--;
-			i--;
-		    }
-		}
+	    RT_HIT_NORMAL(NULL, &hits[i+1], stp, 0, 0);
+	    dist = hits[i].hit_dist - hits[i+1].hit_dist;
+	    if ( NEAR_ZERO( dist, ap->a_rt_i->rti_tol.dist ) &&
+		 VDOT( hits[i].hit_normal, rp->r_dir ) *
+		 VDOT( hits[i+1].hit_normal, rp->r_dir) > 0)
+	    {
+		for ( j=i; j<nhits-1; j++ )
+		    hits[j] = hits[j+1];
+		nhits--;
+		i--;
+	    }
+	}
     }
 
-    if ( nhits&1 )  {
+    if (nhits&1) {
 	register int i;
 	/*
 	 * If this condition exists, it is almost certainly due to

@@ -277,7 +277,7 @@ fr_miss(struct application *ap)
  *
  * In order to save storage, and copying time, frshot() saved only the
  * minimum amount of data required.  Here, the hit and xray structures
- * are reconstructed, suitable for passing to RT_HIT_NORM.
+ * are reconstructed, suitable for passing to RT_HIT_NORMAL.
  */
 void
 BU_FORTRAN(frnorm, FRNORM)(double		*normal,	/* output only */

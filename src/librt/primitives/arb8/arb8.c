@@ -120,7 +120,6 @@ static const struct arb_info rt_arb_info[6] = {
     { "4378", {7, 6, 2, 3} }
 };
 
-BU_EXTERN(void rt_arb_ifree, (struct rt_db_internal *) );
 
 const struct bu_structparse rt_arb_parse[] = {
     { "%f", 3, "V1", bu_offsetof(struct rt_arb_internal, pt[0][X]), BU_STRUCTPARSE_FUNC_NULL },
@@ -449,7 +448,7 @@ rt_arb_add_pt(register pointp_t point, const char *title, struct prep_arb *pap, 
 	    } else {
 		pap->pa_clockwise[pap->pa_faces] = 0;
 	    }
-	    afp->peqn[3] = VDOT( afp->peqn, afp->A );
+	    afp->peqn[W] = VDOT( afp->peqn, afp->A );
 	    return(0);				/* OK */
 	default:
 	    /* Merely validate 4th and subsequent points */
@@ -798,7 +797,7 @@ rt_arb_shot(struct soltab *stp, register struct xray *rp, struct application *ap
 
 	/* XXX some of this math should be prep work
 	 * (including computing dxbdn/dn ?) *$*/
-	dxbdn = VDOT( afp->peqn, rp->r_pt ) - afp->peqn[3];
+	dxbdn = VDOT( afp->peqn, rp->r_pt ) - afp->peqn[W];
 	dn = -VDOT( afp->peqn, rp->r_dir );
 
 	if (RT_G_DEBUG & DEBUG_ARB8) {
@@ -897,7 +896,7 @@ rt_arb_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, str
 		continue; /* faces of this ARB are done */
 
 	    dxbdn = VDOT( arbp->arb_face[j].peqn, rp[i]->r_pt ) -
-		arbp->arb_face[j].peqn[3];
+		arbp->arb_face[j].peqn[W];
 	    if ( (dn = -VDOT( arbp->arb_face[j].peqn, rp[i]->r_dir )) < -SQRT_SMALL_FASTF )  {
 		/* exit point, when dir.N < 0.  out = min(out,s) */
 		if ( segp[i].seg_out.hit_dist > (s = dxbdn/dn) )  {
@@ -1398,9 +1397,10 @@ rt_arb_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose
  * solid.
  */
 void
-rt_arb_ifree(struct rt_db_internal *ip)
+rt_arb_ifree(struct rt_db_internal *ip, struct resource *resp)
 {
     RT_CK_DB_INTERNAL(ip);
+    if (!resp) resp = &rt_uniresource;
     bu_free( ip->idb_ptr, "arb ifree" );
     ip->idb_ptr = (genptr_t)NULL;
 }

@@ -1315,9 +1315,11 @@ rt_ell_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose
  *  Free the storage associated with the rt_db_internal version of this solid.
  */
 void
-rt_ell_ifree(struct rt_db_internal *ip)
+rt_ell_ifree(struct rt_db_internal *ip, struct resource *resp)
 {
     RT_CK_DB_INTERNAL(ip);
+    if (!resp) resp = &rt_uniresource;
+
     bu_free( ip->idb_ptr, "ell ifree" );
     ip->idb_ptr = GENPTR_NULL;
 }

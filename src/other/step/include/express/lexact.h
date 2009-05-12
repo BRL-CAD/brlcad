@@ -164,7 +164,7 @@ SCANnextchar(char* buffer)
 #endif
 	buffer[0] = *(SCANcurrent++);
 	if (!isascii(buffer[0])) {
-	    ERRORreport_with_line(ERROR_nonascii_char,expyylineno,
+	    ERRORreport_with_line(ERROR_nonascii_char,yylineno,
 				  0xff & buffer[0]);
 	    buffer[0] = ' ';	/* substitute space */
 	}

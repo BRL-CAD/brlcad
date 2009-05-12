@@ -156,10 +156,10 @@ rt_extrude_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip
     /* calculate plane equations of top and bottom planes */
     VCROSS(extr->pl1, eip->u_vec, eip->v_vec);
     VUNITIZE(extr->pl1);
-    extr->pl1[3] = VDOT(extr->pl1, eip->V);
+    extr->pl1[W] = VDOT(extr->pl1, eip->V);
     VMOVE(extr->pl2, extr->pl1);
     VADD2(tmp, eip->V, eip->h);
-    extr->pl2[3] = VDOT(extr->pl2, tmp);
+    extr->pl2[W] = VDOT(extr->pl2, tmp);
 
     vert_count = skt->vert_count;
     /* count how many additional vertices we will need for arc centers */
@@ -196,7 +196,7 @@ rt_extrude_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip
     /* calculate the rotated pl1 */
     VCROSS(extr->pl1_rot, extr->u_vec, extr->v_vec);
     VUNITIZE(extr->pl1_rot);
-    extr->pl1_rot[3] = VDOT(extr->pl1_rot, extr->verts[0]);
+    extr->pl1_rot[W] = VDOT(extr->pl1_rot, extr->verts[0]);
 
     VSET(tmp, 0, 0, 1)
 	tmp_f = VDOT(tmp, extr->unit_h);
@@ -1978,12 +1978,12 @@ rt_extrude_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip
 	for (BU_LIST_FOR (vlp, bn_vlist, &vhead)) {
 	    for (j=1; j<vlp->nused; j++) {
 		if (vlp->cmd[j] == BN_VLIST_LINE_DRAW) {
-		    pl[3] += VDOT(pl, vlp->pt[j]);
+		    pl[W] += VDOT(pl, vlp->pt[j]);
 		    pt_count++;
 		}
 	    }
 	}
-	pl[3] /= pt_count;
+	pl[W] /= pt_count;
 
 	dot = -VDOT(pl, extrude_ip->h);
 	rev = 0;
@@ -2299,12 +2299,17 @@ rt_extrude_describe(struct bu_vls *str, const struct rt_db_internal *ip, int ver
  *  Free the storage associated with the rt_db_internal version of this solid.
  */
 void
-rt_extrude_ifree(struct rt_db_internal *ip)
+rt_extrude_ifree(struct rt_db_internal *ip, struct resource *resp)
 {
     register struct rt_extrude_internal *extrude_ip;
     struct rt_db_internal tmp_ip;
 
     RT_CK_DB_INTERNAL(ip);
+
+    if (!resp) {
+	resp = &rt_uniresource;
+    }
+
     extrude_ip = (struct rt_extrude_internal *)ip->idb_ptr;
     RT_EXTRUDE_CK_MAGIC(extrude_ip);
     if (extrude_ip->skt) {
@@ -2313,7 +2318,7 @@ rt_extrude_ifree(struct rt_db_internal *ip)
 	tmp_ip.idb_type = ID_SKETCH;
 	tmp_ip.idb_ptr = (genptr_t)extrude_ip->skt;
 	tmp_ip.idb_meth = &rt_functab[ID_SKETCH];
-	rt_sketch_ifree(&tmp_ip);
+	tmp_ip.idb_meth->ft_ifree(&tmp_ip, resp);
     }
     extrude_ip->magic = 0;			/* sanity */
 

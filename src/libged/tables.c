@@ -308,14 +308,14 @@ ged_new_tables(struct ged *gedp, struct directory *dp, struct bu_ptbl *cur_path,
 	db_non_union_push( comb->tree, &rt_uniresource );
 	if ( db_ck_v4gift_tree( comb->tree ) < 0 ) {
 	    bu_vls_printf(&gedp->ged_result_str, "Cannot flatten tree for editing\n");
-	    rt_comb_ifree( &intern, &rt_uniresource );
+	    intern.idb_meth->ft_ifree( &intern, &rt_uniresource );
 	    return;
 	}
     }
 
     if (!comb->tree) {
 	/* empty combination */
-	rt_comb_ifree( &intern, &rt_uniresource );
+	intern.idb_meth->ft_ifree( &intern, &rt_uniresource );
 	return;
     }
 
@@ -450,7 +450,7 @@ ged_new_tables(struct ged *gedp, struct directory *dp, struct bu_ptbl *cur_path,
 
  out:
     bu_free( (char *)tree_list, "new_tables: tree_list" );
-    rt_comb_ifree( &intern, &rt_uniresource );
+    intern.idb_meth->ft_ifree( &intern, &rt_uniresource );
     return;
 }
 

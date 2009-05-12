@@ -113,11 +113,9 @@ ged_trace(register struct directory	*dp,
 	if (comb->tree)
 	    db_tree_funcleaf(gtdp->gtd_gedp->ged_wdbp->dbip, comb, comb->tree, ged_do_trace,
 			     (genptr_t)&pathpos, (genptr_t)old_xlate, (genptr_t)gtdp);
-#if USE_RT_COMB_IFREE
-	rt_comb_ifree(&intern, &rt_uniresource);
-#else
+
 	rt_db_free_internal(&intern, &rt_uniresource);
-#endif
+
 	return;
     }
 

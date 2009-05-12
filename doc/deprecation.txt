@@ -50,9 +50,10 @@ new names should be listed for reference.
 
 7.14
 ----
+include/fb.h
+        FB_WPIXEL -> fb_wpixel [deprecated 7.14]
 src/gtools
 	g_[toolname] -> g[toolname] [deprecated 7.14]
-
 src/other/jove
 	jove -> emacs [deprecated 7.14]
 include/raytrace.h
@@ -103,6 +104,8 @@ src/librt/bomb.c
 
 pre 7.0
 -------
+include/wdb.h
+	mk_fastgen_region() -> mk_comb()
 include/raytrace.h
 	db_free_external -> db_free_external [deprecated pre-7.0]
 	RT_HIT_NORM -> RT_HIT_NORMAL [deprecated pre-7.0]
@@ -144,6 +147,16 @@ include/raytrace.h
 	removed iterator from NMG_CK_HITMISS_LIST
 include/bu.h
 	BU_QFLSTR -> BU_FLSTR
+
+7.12.2
+------
+include/wdb.h
+	mk_trc() -> mk_trc_h() and mk_trc_top() [deprecated pre-7.0]
+	mk_bsolid() [deprecated pre-7.0]
+	mk_bsurf() [deprecated pre-7.0]
+	mk_strsol() -> mk_dsp(), mk_ebm(), mk_vol(), mk_submodel() [deprecated pre-7.0]
+	mk_rcomb(), mk_fcomb(), mk_memb() -> mk_lcomb() and mk_addmember() [deprecated pre-7.0]
+	mk_fwrite_internal() [deprecated pre-7.0]
 
 7.12.0
 ------

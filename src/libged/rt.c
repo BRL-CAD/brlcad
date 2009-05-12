@@ -28,6 +28,7 @@
 #include <stdlib.h>
 #include "bio.h"
 
+#include "tcl.h"
 #include "cmd.h"
 #include "solid.h"
 
@@ -396,34 +397,12 @@ ged_rt_output_handler(ClientData	clientData,
 	aborted = run_rtp->aborted;
 #endif
 
-#if 0
-	/*XXX Still need to address this */
-	if (drcdp->gedp->ged_gdp->gd_outputHandler != NULL) {
-	    struct bu_vls vls;
-
-	    bu_vls_init(&vls);
-
-	    if (aborted)
-		bu_vls_printf(&vls, "%s \"Raytrace aborted.\n\"",
-			      drcdp->gedp->ged_gdp->gd_outputHandler);
-	    else if (retcode)
-		bu_vls_printf(&vls, "%s \"Raytrace failed.\n\"",
-			      drcdp->gedp->ged_gdp->gd_outputHandler);
-	    else
-		bu_vls_printf(&vls, "%s \"Raytrace complete.\n\"",
-			      drcdp->gedp->ged_gdp->gd_outputHandler);
-
-	    Tcl_Eval(drcdp->interp, bu_vls_addr(&vls));
-	    bu_vls_free(&vls);
-	} else {
-	    if (aborted)
-		bu_log("Raytrace aborted.\n");
-	    else if (retcode)
-		bu_log("Raytrace failed.\n");
-	    else
-		bu_log("Raytrace complete.\n");
-	}
-#endif
+	if (aborted)
+	    bu_log("Raytrace aborted.\n");
+	else if (retcode)
+	    bu_log("Raytrace failed.\n");
+	else
+	    bu_log("Raytrace complete.\n");
 
 	if (drcdp->gedp->ged_gdp->gd_rtCmdNotify != (void (*)())0)
 	    drcdp->gedp->ged_gdp->gd_rtCmdNotify();

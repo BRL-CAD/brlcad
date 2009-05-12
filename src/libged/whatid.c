@@ -72,11 +72,7 @@ ged_whatid(struct ged *gedp, int argc, const char *argv[])
     comb = (struct rt_comb_internal *)intern.idb_ptr;
 
     bu_vls_printf(&gedp->ged_result_str, "%d", comb->region_id);
-#if USE_RT_COMB_IFREE
-    rt_comb_ifree(&intern, &rt_uniresource);
-#else
     rt_db_free_internal(&intern, &rt_uniresource);
-#endif
 
     return BRLCAD_OK;
 }

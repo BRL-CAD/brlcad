@@ -32,6 +32,7 @@
 
 #include "db.h"
 #include "mater.h"
+#include "rtgeom.h"
 #include "ged.h"
 
 __BEGIN_DECLS
@@ -46,17 +47,10 @@ __BEGIN_DECLS
 #define GED_LISTEVAL	2
 #define GED_EVAL_ONLY	3
 
-/*
- * rt_comb_ifree() should NOT be used here because
- * it doesn't know how to free attributes.
- * rt_db_free_internal() should be used instead.
- */
-#define USE_RT_COMB_IFREE 0
-
-#define GED_WIREFRAME 0
+#define GED_WIREFRAME        0
 #define GED_SHADED_MODE_BOTS 1
-#define GED_SHADED_MODE_ALL 2
-#define GED_BOOL_EVAL 3
+#define GED_SHADED_MODE_ALL  2
+#define GED_BOOL_EVAL        3
 
 struct ged_id_names {
     struct bu_list l;
@@ -338,6 +332,26 @@ BU_EXTERN (void ged_wait_status,
 	   (struct bu_vls *log,
 	    int status));
 
+/* defined in scale_ehy.c */
+BU_EXTERN (int ged_scale_ehy,
+	   (struct ged *gedp,
+	    struct rt_ehy_internal *ehy,
+	    char *attribute,
+	    fastf_t sf));
+
+/* defined in scale_ell.c */
+BU_EXTERN (int ged_scale_ell,
+	   (struct ged *gedp,
+	    struct rt_ell_internal *ell,
+	    char *attribute,
+	    fastf_t sf));
+
+/* defined in scale_tor.c */
+BU_EXTERN (int ged_scale_tor,
+	   (struct ged *gedp,
+	    struct rt_tor_internal *tor,
+	    char *attribute,
+	    fastf_t sf));
 
 /* defined in tops.c */
 struct directory **

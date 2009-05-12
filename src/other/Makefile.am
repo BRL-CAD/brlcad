@@ -138,6 +138,7 @@ SUBDIRS = \
 	${IWIDGETSDIR} \
 	${TERMLIBDIR} \
 	${JOVEDIR} \
+	${STEPDIR} \
 	${TKHTML3DIR} \
 	${TKIMGDIR} \
 	${OPENNURBSDIR} \
@@ -153,6 +154,7 @@ endif
 EXTRA_DIST = \
 	boost
 
+# FIXME: need to only traverse tcl/tk if configured
 DIST_SUBDIRS = \
 	URToolkit \
 	awf \

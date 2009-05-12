@@ -32,14 +32,6 @@
     constructor {args} {}
     destructor {}
 
-    # Methods used by the constructor
-    protected {
-	# override methods in GeometryEditFrame
-	method buildUpperPanel
-	method buildLowerPanel
-	method buildValuePanel
-    }
-
     public {
 	# Override what's in GeometryEditFrame
 	method initGeometry {gdata}
@@ -48,6 +40,11 @@
     }
 
     protected {
+	common setA 1
+	common setB 2
+	common setC 3
+	common setA,B,C 4
+
 	variable mVx ""
 	variable mVy ""
 	variable mVz ""
@@ -61,8 +58,14 @@
 	variable mCy ""
 	variable mCz ""
 
+	# Methods used by the constructor
+	# override methods in GeometryEditFrame
+	method buildUpperPanel
+	method buildLowerPanel
+
 	# Override what's in GeometryEditFrame
 	method updateGeometryIfMod {}
+	method initValuePanel {}
     }
 
     private {}
@@ -76,288 +79,6 @@
 ::itcl::body EllEditFrame::constructor {args} {
     eval itk_initialize $args
 }
-
-::itcl::body EllEditFrame::buildUpperPanel {} {
-    set parent [$this childsite]
-    itk_component add ellType {
-	::label $parent.elltype \
-	    -text "Ellipsoid:" \
-	    -anchor e
-    } {
-	rename -font -boldLabelFont boldLabelFont Font
-    }
-    itk_component add ellName {
-	::label $parent.ellname \
-	    -textvariable [::itcl::scope itk_option(-geometryObject)] \
-	    -anchor w
-    } {
-	rename -font -boldLabelFont boldLabelFont Font
-    }
-
-    # Create header labels
-    itk_component add ellXL {
-	::label $parent.ellXL \
-	    -text "X"
-    } {
-	rename -font -boldLabelFont boldLabelFont Font
-    }
-    itk_component add ellYL {
-	::label $parent.ellYL \
-	    -text "Y"
-    } {
-	rename -font -boldLabelFont boldLabelFont Font
-    }
-    itk_component add ellZL {
-	::label $parent.ellZL \
-	    -text "Z"
-    } {
-	rename -font -boldLabelFont boldLabelFont Font
-    }
-
-    # create widgets for vertices and vectors
-    itk_component add ellVL {
-	::label $parent.ellVL \
-	    -text "V:" \
-	    -anchor e
-    } {
-	rename -font -labelFont labelFont Font
-    }
-    itk_component add ellVxE {
-	::entry $parent.ellVxE \
-	    -textvariable [::itcl::scope mVx] \
-	    -validate key \
-	    -validatecommand {GeometryEditFrame::validateDouble %P}
-    } {
-	rename -font -entryFont entryFont Font
-    }
-    itk_component add ellVyE {
-	::entry $parent.ellVyE \
-	    -textvariable [::itcl::scope mVy] \
-	    -validate key \
-	    -validatecommand {GeometryEditFrame::validateDouble %P}
-    } {
-	rename -font -entryFont entryFont Font
-    }
-    itk_component add ellVzE {
-	::entry $parent.ellVzE \
-	    -textvariable [::itcl::scope mVz] \
-	    -validate key \
-	    -validatecommand {GeometryEditFrame::validateDouble %P}
-    } {
-	rename -font -entryFont entryFont Font
-    }
-    itk_component add ellVUnitsL {
-	::label $parent.ellVUnitsL \
-	    -textvariable [::itcl::scope itk_option(-units)] \
-	    -anchor e
-    } {
-	rename -font -labelFont labelFont Font
-    }
-    itk_component add ellAL {
-	::label $parent.ellAL \
-	    -text "A:" \
-	    -anchor e
-    } {
-	rename -font -labelFont labelFont Font
-    }
-    itk_component add ellAxE {
-	::entry $parent.ellAxE \
-	    -textvariable [::itcl::scope mAx] \
-	    -state disabled \
-	    -disabledforeground black \
-	    -validate key \
-	    -validatecommand {GeometryEditFrame::validateDouble %P}
-    } {
-	rename -font -entryFont entryFont Font
-    }
-    itk_component add ellAyE {
-	::entry $parent.ellAyE \
-	    -textvariable [::itcl::scope mAy] \
-	    -state disabled \
-	    -disabledforeground black \
-	    -validate key \
-	    -validatecommand {GeometryEditFrame::validateDouble %P}
-    } {
-	rename -font -entryFont entryFont Font
-    }
-    itk_component add ellAzE {
-	::entry $parent.ellAzE \
-	    -textvariable [::itcl::scope mAz] \
-	    -state disabled \
-	    -disabledforeground black \
-	    -validate key \
-	    -validatecommand {GeometryEditFrame::validateDouble %P}
-    } {
-	rename -font -entryFont entryFont Font
-    }
-    itk_component add ellAUnitsL {
-	::label $parent.ellAUnitsL \
-	    -textvariable [::itcl::scope itk_option(-units)] \
-	    -anchor e
-    } {
-	rename -font -labelFont labelFont Font
-    }
-    itk_component add ellBL {
-	::label $parent.ellBL \
-	    -text "B:" \
-	    -anchor e
-    } {
-	rename -font -labelFont labelFont Font
-    }
-    itk_component add ellBxE {
-	::entry $parent.ellBxE \
-	    -textvariable [::itcl::scope mBx] \
-	    -state disabled \
-	    -disabledforeground black \
-	    -validate key \
-	    -validatecommand {GeometryEditFrame::validateDouble %P}
-    } {
-	rename -font -entryFont entryFont Font
-    }
-    itk_component add ellByE {
-	::entry $parent.ellByE \
-	    -textvariable [::itcl::scope mBy] \
-	    -state disabled \
-	    -disabledforeground black \
-	    -validate key \
-	    -validatecommand {GeometryEditFrame::validateDouble %P}
-    } {
-	rename -font -entryFont entryFont Font
-    }
-    itk_component add ellBzE {
-	::entry $parent.ellBzE \
-	    -textvariable [::itcl::scope mBz] \
-	    -state disabled \
-	    -disabledforeground black \
-	    -validate key \
-	    -validatecommand {GeometryEditFrame::validateDouble %P}
-    } {
-	rename -font -entryFont entryFont Font
-    }
-    itk_component add ellBUnitsL {
-	::label $parent.ellBUnitsL \
-	    -textvariable [::itcl::scope itk_option(-units)] \
-	    -anchor e
-    } {
-	rename -font -labelFont labelFont Font
-    }
-    itk_component add ellCL {
-	::label $parent.ellCL \
-	    -text "C:" \
-	    -anchor e
-    } {
-	rename -font -labelFont labelFont Font
-    }
-    itk_component add ellCxE {
-	::entry $parent.ellCxE \
-	    -textvariable [::itcl::scope mCx] \
-	    -state disabled \
-	    -disabledforeground black \
-	    -validate key \
-	    -validatecommand {GeometryEditFrame::validateDouble %P}
-    } {
-	rename -font -entryFont entryFont Font
-    }
-    itk_component add ellCyE {
-	::entry $parent.ellCyE \
-	    -textvariable [::itcl::scope mCy] \
-	    -state disabled \
-	    -disabledforeground black \
-	    -validate key \
-	    -validatecommand {GeometryEditFrame::validateDouble %P}
-    } {
-	rename -font -entryFont entryFont Font
-    }
-    itk_component add ellCzE {
-	::entry $parent.ellCzE \
-	    -textvariable [::itcl::scope mCz] \
-	    -state disabled \
-	    -disabledforeground black \
-	    -validate key \
-	    -validatecommand {GeometryEditFrame::validateDouble %P}
-    } {
-	rename -font -entryFont entryFont Font
-    }
-    itk_component add ellCUnitsL {
-	::label $parent.ellCUnitsL \
-	    -textvariable [::itcl::scope itk_option(-units)] \
-	    -anchor e
-    } {
-	rename -font -labelFont labelFont Font
-    }
-
-    set row 0
-    grid $itk_component(ellType) \
-	-row $row \
-	-column 0 \
-	-sticky nsew
-    grid $itk_component(ellName) \
-	-row $row \
-	-column 1 \
-	-columnspan 3 \
-	-sticky nsew
-    incr row
-    grid x $itk_component(ellXL) \
-	$itk_component(ellYL) \
-	$itk_component(ellZL)
-    incr row
-    grid $itk_component(ellVL) \
-	$itk_component(ellVxE) \
-	$itk_component(ellVyE) \
-	$itk_component(ellVzE) \
-	$itk_component(ellVUnitsL) \
-	-row $row \
-	-sticky nsew
-    incr row
-    grid $itk_component(ellAL) \
-	$itk_component(ellAxE) \
-	$itk_component(ellAyE) \
-	$itk_component(ellAzE) \
-	$itk_component(ellAUnitsL) \
-	-row $row \
-	-sticky nsew
-    incr row
-    grid $itk_component(ellBL) \
-	$itk_component(ellBxE) \
-	$itk_component(ellByE) \
-	$itk_component(ellBzE) \
-	$itk_component(ellBUnitsL) \
-	-row $row \
-	-sticky nsew
-    incr row
-    grid $itk_component(ellCL) \
-	$itk_component(ellCxE) \
-	$itk_component(ellCyE) \
-	$itk_component(ellCzE) \
-	$itk_component(ellCUnitsL) \
-	-row $row \
-	-sticky nsew
-    grid columnconfigure $parent 1 -weight 1
-    grid columnconfigure $parent 2 -weight 1
-    grid columnconfigure $parent 3 -weight 1
-    pack $parent -expand yes -fill x -anchor n
-
-    # Set up bindings
-    bind $itk_component(ellVxE) <Return> [::itcl::code $this updateGeometryIfMod]
-    bind $itk_component(ellVyE) <Return> [::itcl::code $this updateGeometryIfMod]
-    bind $itk_component(ellVzE) <Return> [::itcl::code $this updateGeometryIfMod]
-    bind $itk_component(ellAxE) <Return> [::itcl::code $this updateGeometryIfMod]
-    bind $itk_component(ellAyE) <Return> [::itcl::code $this updateGeometryIfMod]
-    bind $itk_component(ellAzE) <Return> [::itcl::code $this updateGeometryIfMod]
-    bind $itk_component(ellBxE) <Return> [::itcl::code $this updateGeometryIfMod]
-    bind $itk_component(ellByE) <Return> [::itcl::code $this updateGeometryIfMod]
-    bind $itk_component(ellBzE) <Return> [::itcl::code $this updateGeometryIfMod]
-    bind $itk_component(ellCxE) <Return> [::itcl::code $this updateGeometryIfMod]
-    bind $itk_component(ellCyE) <Return> [::itcl::code $this updateGeometryIfMod]
-    bind $itk_component(ellCzE) <Return> [::itcl::code $this updateGeometryIfMod]
-}
-
-::itcl::body EllEditFrame::buildLowerPanel {} {
-}
-
-::itcl::body EllEditFrame::buildValuePanel {} {
-}
-
 
 # ------------------------------------------------------------
 #                        OPTIONS
@@ -426,6 +147,243 @@
 # ------------------------------------------------------------
 #                      PROTECTED METHODS
 # ------------------------------------------------------------
+
+::itcl::body EllEditFrame::buildUpperPanel {} {
+    set parent [$this childsite]
+    itk_component add ellType {
+	::ttk::label $parent.elltype \
+	    -text "Ellipsoid:" \
+	    -anchor e
+    } {}
+    itk_component add ellName {
+	::ttk::label $parent.ellname \
+	    -textvariable [::itcl::scope itk_option(-geometryObject)] \
+	    -anchor w
+    } {}
+
+    # Create header labels
+    itk_component add ellXL {
+	::ttk::label $parent.ellXL \
+	    -text "X"
+    } {}
+    itk_component add ellYL {
+	::ttk::label $parent.ellYL \
+	    -text "Y"
+    } {}
+    itk_component add ellZL {
+	::ttk::label $parent.ellZL \
+	    -text "Z"
+    } {}
+
+    # create widgets for vertices and vectors
+    itk_component add ellVL {
+	::ttk::label $parent.ellVL \
+	    -text "V:" \
+	    -anchor e
+    } {}
+    itk_component add ellVxE {
+	::ttk::entry $parent.ellVxE \
+	    -textvariable [::itcl::scope mVx] \
+	    -validate key \
+	    -validatecommand {GeometryEditFrame::validateDouble %P}
+    } {}
+    itk_component add ellVyE {
+	::ttk::entry $parent.ellVyE \
+	    -textvariable [::itcl::scope mVy] \
+	    -validate key \
+	    -validatecommand {GeometryEditFrame::validateDouble %P}
+    } {}
+    itk_component add ellVzE {
+	::ttk::entry $parent.ellVzE \
+	    -textvariable [::itcl::scope mVz] \
+	    -validate key \
+	    -validatecommand {GeometryEditFrame::validateDouble %P}
+    } {}
+    itk_component add ellVUnitsL {
+	::ttk::label $parent.ellVUnitsL \
+	    -textvariable [::itcl::scope itk_option(-units)] \
+	    -anchor e
+    } {}
+    itk_component add ellAL {
+	::ttk::label $parent.ellAL \
+	    -state disabled \
+	    -text "A:" \
+	    -anchor e
+    } {}
+    itk_component add ellAxE {
+	::ttk::entry $parent.ellAxE \
+	    -textvariable [::itcl::scope mAx] \
+	    -state disabled \
+	    -validate key \
+	    -validatecommand {GeometryEditFrame::validateDouble %P}
+    } {}
+    itk_component add ellAyE {
+	::ttk::entry $parent.ellAyE \
+	    -textvariable [::itcl::scope mAy] \
+	    -state disabled \
+	    -validate key \
+	    -validatecommand {GeometryEditFrame::validateDouble %P}
+    } {}
+    itk_component add ellAzE {
+	::ttk::entry $parent.ellAzE \
+	    -textvariable [::itcl::scope mAz] \
+	    -state disabled \
+	    -validate key \
+	    -validatecommand {GeometryEditFrame::validateDouble %P}
+    } {}
+    itk_component add ellAUnitsL {
+	::ttk::label $parent.ellAUnitsL \
+	    -textvariable [::itcl::scope itk_option(-units)] \
+	    -anchor e
+    } {}
+    itk_component add ellBL {
+	::ttk::label $parent.ellBL \
+	    -state disabled \
+	    -text "B:" \
+	    -anchor e
+    } {}
+    itk_component add ellBxE {
+	::ttk::entry $parent.ellBxE \
+	    -textvariable [::itcl::scope mBx] \
+	    -state disabled \
+	    -validate key \
+	    -validatecommand {GeometryEditFrame::validateDouble %P}
+    } {}
+    itk_component add ellByE {
+	::ttk::entry $parent.ellByE \
+	    -textvariable [::itcl::scope mBy] \
+	    -state disabled \
+	    -validate key \
+	    -validatecommand {GeometryEditFrame::validateDouble %P}
+    } {}
+    itk_component add ellBzE {
+	::ttk::entry $parent.ellBzE \
+	    -textvariable [::itcl::scope mBz] \
+	    -state disabled \
+	    -validate key \
+	    -validatecommand {GeometryEditFrame::validateDouble %P}
+    } {}
+    itk_component add ellBUnitsL {
+	::ttk::label $parent.ellBUnitsL \
+	    -textvariable [::itcl::scope itk_option(-units)] \
+	    -anchor e
+    } {}
+    itk_component add ellCL {
+	::ttk::label $parent.ellCL \
+	    -state disabled \
+	    -text "C:" \
+	    -anchor e
+    } {}
+    itk_component add ellCxE {
+	::ttk::entry $parent.ellCxE \
+	    -textvariable [::itcl::scope mCx] \
+	    -state disabled \
+	    -validate key \
+	    -validatecommand {GeometryEditFrame::validateDouble %P}
+    } {}
+    itk_component add ellCyE {
+	::ttk::entry $parent.ellCyE \
+	    -textvariable [::itcl::scope mCy] \
+	    -state disabled \
+	    -validate key \
+	    -validatecommand {GeometryEditFrame::validateDouble %P}
+    } {}
+    itk_component add ellCzE {
+	::ttk::entry $parent.ellCzE \
+	    -textvariable [::itcl::scope mCz] \
+	    -state disabled \
+	    -validate key \
+	    -validatecommand {GeometryEditFrame::validateDouble %P}
+    } {}
+    itk_component add ellCUnitsL {
+	::ttk::label $parent.ellCUnitsL \
+	    -textvariable [::itcl::scope itk_option(-units)] \
+	    -anchor e
+    } {}
+
+    set row 0
+    grid $itk_component(ellType) \
+	-row $row \
+	-column 0 \
+	-sticky nsew
+    grid $itk_component(ellName) \
+	-row $row \
+	-column 1 \
+	-columnspan 3 \
+	-sticky nsew
+    incr row
+    grid x $itk_component(ellXL) \
+	$itk_component(ellYL) \
+	$itk_component(ellZL)
+    incr row
+    grid $itk_component(ellVL) \
+	$itk_component(ellVxE) \
+	$itk_component(ellVyE) \
+	$itk_component(ellVzE) \
+	$itk_component(ellVUnitsL) \
+	-row $row \
+	-sticky nsew
+    incr row
+    grid $itk_component(ellAL) \
+	$itk_component(ellAxE) \
+	$itk_component(ellAyE) \
+	$itk_component(ellAzE) \
+	$itk_component(ellAUnitsL) \
+	-row $row \
+	-sticky nsew
+    incr row
+    grid $itk_component(ellBL) \
+	$itk_component(ellBxE) \
+	$itk_component(ellByE) \
+	$itk_component(ellBzE) \
+	$itk_component(ellBUnitsL) \
+	-row $row \
+	-sticky nsew
+    incr row
+    grid $itk_component(ellCL) \
+	$itk_component(ellCxE) \
+	$itk_component(ellCyE) \
+	$itk_component(ellCzE) \
+	$itk_component(ellCUnitsL) \
+	-row $row \
+	-sticky nsew
+    grid columnconfigure $parent 1 -weight 1
+    grid columnconfigure $parent 2 -weight 1
+    grid columnconfigure $parent 3 -weight 1
+    pack $parent -expand yes -fill x -anchor n
+
+    # Set up bindings
+    bind $itk_component(ellVxE) <Return> [::itcl::code $this updateGeometryIfMod]
+    bind $itk_component(ellVyE) <Return> [::itcl::code $this updateGeometryIfMod]
+    bind $itk_component(ellVzE) <Return> [::itcl::code $this updateGeometryIfMod]
+    bind $itk_component(ellAxE) <Return> [::itcl::code $this updateGeometryIfMod]
+    bind $itk_component(ellAyE) <Return> [::itcl::code $this updateGeometryIfMod]
+    bind $itk_component(ellAzE) <Return> [::itcl::code $this updateGeometryIfMod]
+    bind $itk_component(ellBxE) <Return> [::itcl::code $this updateGeometryIfMod]
+    bind $itk_component(ellByE) <Return> [::itcl::code $this updateGeometryIfMod]
+    bind $itk_component(ellBzE) <Return> [::itcl::code $this updateGeometryIfMod]
+    bind $itk_component(ellCxE) <Return> [::itcl::code $this updateGeometryIfMod]
+    bind $itk_component(ellCyE) <Return> [::itcl::code $this updateGeometryIfMod]
+    bind $itk_component(ellCzE) <Return> [::itcl::code $this updateGeometryIfMod]
+}
+
+::itcl::body EllEditFrame::buildLowerPanel {} {
+    set parent [$this childsite lower]
+
+    foreach attribute {A B C A,B,C} {
+	itk_component add set$attribute {
+	    ::ttk::radiobutton $parent.set_$attribute \
+		-variable [::itcl::scope mEditMode] \
+		-value [subst $[subst set$attribute]] \
+		-text "Set $attribute" \
+		-command [::itcl::code $this initValuePanel]
+	} {}
+
+	pack $itk_component(set$attribute) \
+	    -anchor w \
+	    -expand yes
+    }
+}
 
 ::itcl::body EllEditFrame::updateGeometryIfMod {} {
     if {$itk_option(-mged) == "" ||
@@ -496,6 +454,38 @@
 	updateGeometry
     }
 }
+
+::itcl::body EllEditFrame::initValuePanel {} {
+    switch -- $mEditMode \
+	$setA { \
+	    set mEditCommand pscale; \
+	    set mEditClass $EDIT_CLASS_SCALE; \
+	    set mEditParam1 a; \
+	    configure -valueUnits "mm"; \
+	} \
+	$setB { \
+	    set mEditCommand pscale; \
+	    set mEditClass $EDIT_CLASS_SCALE; \
+	    set mEditParam1 b; \
+	    configure -valueUnits "mm"; \
+	} \
+	$setC { \
+	    set mEditCommand pscale; \
+	    set mEditClass $EDIT_CLASS_SCALE; \
+	    set mEditParam1 c; \
+	    configure -valueUnits "mm"; \
+	} \
+	$setA,B,C { \
+	    set mEditCommand pscale; \
+	    set mEditClass $EDIT_CLASS_SCALE; \
+	    set mEditParam1 3; \
+	    configure -valueUnits "mm"; \
+	}
+
+    GeometryEditFrame::initValuePanel
+    updateValuePanel
+}
+
 
 # Local Variables:
 # mode: Tcl

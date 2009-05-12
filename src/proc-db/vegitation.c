@@ -19,40 +19,20 @@
  */
 /** @file vegitation.c
  *
- *      This is for a program that generages geometry that resembles or
- *      approximates a plant.  More specifically, the generator is geared
- *      towards generating trees and shrubbery.  The plants are generated
- *      based on specification of growth parameters such as growth and
- *      branching rates.
+ * This is for a program that generages geometry that resembles or
+ * approximates a plant.  More specifically, the generator is geared
+ * towards generating trees and shrubbery.  The plants are generated
+ * based on specification of growth parameters such as growth and
+ * branching rates.
  *
- *      The plant is composed of a number of "particle" primitives (which
- *      is effectively branch growth segments and curved ball joints). The
- *      plant is generated recursively with random probabilities (there is
- *      a seed that may be set for repeatability) and growth parameters.
+ * The plant is composed of a number of "particle" primitives (which
+ * is effectively branch growth segments and curved ball joints). The
+ * plant is generated recursively with random probabilities (there is
+ * a seed that may be set for repeatability) and growth parameters.
  *
  */
 
 #include "./vegitation.h"
-
-#ifndef HAVE_DRAND48
-#  if !defined(_WIN32) || defined(__CYGWIN__)
-/* simulate drand48() --  using 31-bit random() -- assumed to exist */
-static double drand48() {
-    extern long random();
-    return (double)random() / 2147483648.0; /* range [0, 1) */
-}
-#  else
-static double drand48() {
-    unsigned int randVal;
-
-    if (rand_s(&randVal))
-	randVal = 0;
-
-    return (double)randVal/(double)UINT_MAX;
-}
-#  endif
-#endif
-
 
 static void ageStructure(structure_t *structure) {
     int i;
@@ -95,7 +75,7 @@ static int getSegmentCount(structure_t *structure, unsigned int minAge, unsigned
 /* used
  * http://geometryalgorithms.com/Archive/algorithm_0106/algorithm_0106.htm#dist3D_Segment_to_Segment()
  * as reference */
-static float segmentToSegmentDistance( const point_t S1P0, const point_t S1P1, const point_t S2P0, const point_t S2P1) {
+static float segmentToSegmentDistance(const point_t S1P0, const point_t S1P1, const point_t S2P0, const point_t S2P1) {
     vect_t u;
     vect_t v;
     vect_t w;
@@ -251,7 +231,7 @@ static segmentList_t *findIntersectors(const growthSegment_t * const segment, co
 
 	    for (skip = j = 0; (j < exemptList->count) && (skip == 0); j++) {
 		if (structure->segment[i]->id == exemptList->segment[j]->id) {
-		    /*	  printf("Found exempt segment with id %ld\n", exemptList->segment[j]->id); */
+		    /* printf("Found exempt segment with id %ld\n", exemptList->segment[j]->id); */
 		    skip = 1;
 		    continue;
 		}
@@ -337,15 +317,15 @@ static int branchWithProbability(plant_t *plant, structure_t* structure, unsigne
 			*/
 
 			/* detect increasing branches
-			 *  if (structure->segment[i]->startRadius > structure->segment[i]->endRadius) {
-			 *  minRadius = structure->segment[i]->endRadius;
-			 *  maxRadius = structure->segment[i]->startRadius;
+			 * if (structure->segment[i]->startRadius > structure->segment[i]->endRadius) {
+			 * minRadius = structure->segment[i]->endRadius;
+			 * maxRadius = structure->segment[i]->startRadius;
 			 *  } else {
-			 *  minRadius = structure->segment[i]->startRadius;
-			 *  maxRadius = structure->segment[i]->endRadius;
+			 * minRadius = structure->segment[i]->startRadius;
+			 * maxRadius = structure->segment[i]->endRadius;
 			 *  }
 			 */
-			/*	    branchPointRadius = ((branchPoint / structure->segment[i]->length) * (maxRadius - minRadius)) + minRadius; */
+			/* branchPointRadius = ((branchPoint / structure->segment[i]->length) * (maxRadius - minRadius)) + minRadius; */
 			branchPointRadius = ((branchPoint / structure->segment[i]->length) * (structure->segment[i]->endRadius - structure->segment[i]->startRadius)) + structure->segment[i]->startRadius;
 			/*
 			  printf("branch point radius: %f (between %f and %f)\n", branchPointRadius, structure->segment[i]->startRadius, structure->segment[i]->endRadius);
@@ -369,7 +349,7 @@ static int branchWithProbability(plant_t *plant, structure_t* structure, unsigne
 		    newGrowthPoint->growthEnergy = plant->characteristic->growthEnergy;
 
 		    /* length and radius is based off of the segment we grew off of -- random initial length */
-		    /* !!! just  use the prior length  until working !!! */
+		    /* !!! just use the prior length until working !!! */
 		    newGrowthPoint->length = structure->segment[i]->length - (structure->segment[i]->length * plant->characteristic->lengthDecayRate); /* * drand48(); */
 
 		    /* starting radius is exactly in line with where on the segment we start from */
@@ -544,7 +524,7 @@ static void growPlant(plant_t *plant) {
 		point->direction[Y] += (drand48() * newGrowthDirection[Y]) + plant->characteristic->dirMinVariation[Y];
 		point->direction[Z] += (drand48() * newGrowthDirection[Z]) + plant->characteristic->dirMinVariation[Z];
 		VUNITIZE(point->direction);
-		/*	VPRINT("Point direction: ", point->direction); */
+		/* VPRINT("Point direction: ", point->direction); */
 	    }
 
 	    segment->endRadius = point->radius;
@@ -561,7 +541,7 @@ static void growPlant(plant_t *plant) {
 	    included = findIntersectors(segment, plant->structure, excluded);
 
 	    if (included == NULL || included->count > 0) {
-		/* test for failure and try to retry  */
+		/* test for failure and try to retry */
 		for (retryCount = 0; retryCount < plant->characteristic->regrowthAttempts; retryCount++) {
 
 		    VMOVE(segment->direction, point->direction);
@@ -582,7 +562,7 @@ static void growPlant(plant_t *plant) {
 			point->direction[Y] += (drand48() * newGrowthDirection[Y]) + plant->characteristic->dirMinVariation[Y];
 			point->direction[Z] += (drand48() * newGrowthDirection[Z]) + plant->characteristic->dirMinVariation[Z];
 			VUNITIZE(point->direction);
-			/*	VPRINT("Point direction: ", point->direction); */
+			/* VPRINT("Point direction: ", point->direction); */
 		    }
 
 		    if (included != NULL) {
@@ -648,7 +628,7 @@ static void growPlant(plant_t *plant) {
 	    }
 
 	    /* add segment to list of segments for this growth point structure*/
-	    if ( point->structure->segmentCount >= point->structure->segmentCapacity ) {
+	    if (point->structure->segmentCount >= point->structure->segmentCapacity ) {
 		point->structure->segment = (growthSegment_t **)bu_realloc(point->structure->segment, (point->structure->segmentCapacity + 10) * sizeof(growthSegment_t *), "point->structure->segment");
 		point->structure->segmentCapacity+=10;
 	    }
@@ -726,7 +706,7 @@ static plant_t *createPlant(unsigned int age, vect_t position, double radius, ve
 	printf("plant age is %d\n", plant->age);
 	/* recursive call to build the tree per time step */
 	growPlant(plant);
-	/*  trimPlant(plant);  */ /* kill off dead limbs */
+	/* trimPlant(plant);  */ /* kill off dead limbs */
     }
 
     return plant;
@@ -739,11 +719,11 @@ static int writeStructureToDisk(struct rt_wdb *fp, structure_t *structure, outpu
 
     for (i=0; i < structure->segmentCount; i++) {
 	snprintf(oc->name, MAX_STRING_LENGTH, "seg%d_%d.s", oc->combinations, oc->primitives);
-	/*    if (mk_cone(fp, oc->name, structure->segment[i]->position, structure->segment[i]->direction, structure->segment[i]->length, structure->segment[i]->startRadius, structure->segment[i]->endRadius) != 0) { */
+	/* if (mk_cone(fp, oc->name, structure->segment[i]->position, structure->segment[i]->direction, structure->segment[i]->length, structure->segment[i]->startRadius, structure->segment[i]->endRadius) != 0) { */
 	VSCALE(height, structure->segment[i]->direction, structure->segment[i]->length);
 
 	/* error check for bad primitive creation */
-	if ( (structure->segment[i]->startRadius < 0.0) || (structure->segment[i]->endRadius < 0.0) || VNEAR_ZERO(height, ZERO_TOLERANCE) ) {
+	if ((structure->segment[i]->startRadius < 0.0) || (structure->segment[i]->endRadius < 0.0) || VNEAR_ZERO(height, ZERO_TOLERANCE) ) {
 	    fprintf(stderr, "Negative radius or height\n");
 	}
 

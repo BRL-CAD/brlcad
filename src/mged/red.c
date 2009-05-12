@@ -254,7 +254,7 @@ make_tree(struct rt_comb_internal *comb, struct directory *dp, int node_count, c
 	    if (db_delete(dbip, dp) || db_dirdelete(dbip, dp)) {
 		Tcl_AppendResult(interp, "ERROR: Unable to delete directory entry for ",
 				 old_name, "\n", (char *)NULL);
-		rt_comb_ifree(&intern, &rt_uniresource);
+		intern.idb_ptr->idb_meth->ft_ifree(&intern, &rt_uniresource);
 		return(1);
 	    }
 	}
@@ -262,7 +262,7 @@ make_tree(struct rt_comb_internal *comb, struct directory *dp, int node_count, c
 	if ((dp=db_diradd(dbip, new_name, -1L, 0, flags, (genptr_t)&intern.idb_type)) == DIR_NULL) {
 	    Tcl_AppendResult(interp, "Cannot add ", new_name,
 			     " to directory, no changes made\n", (char *)NULL);
-	    rt_comb_ifree(&intern, &rt_uniresource);
+	    intern.idb_ptr->idb_meth->ft_ifree(&intern, &rt_uniresource);
 	    return(1);
 	}
     } else if ( dp == DIR_NULL ) {
@@ -276,7 +276,7 @@ make_tree(struct rt_comb_internal *comb, struct directory *dp, int node_count, c
 	if ((dp=db_diradd(dbip, new_name, -1L, 0, flags, (genptr_t)&intern.idb_type)) == DIR_NULL) {
 	    Tcl_AppendResult(interp, "Cannot add ", new_name,
 			     " to directory, no changes made\n", (char *)NULL);
-	    rt_comb_ifree( &intern, &rt_uniresource );
+	    intern.idb_ptr->idb_meth->ft_ifree(&intern, &rt_uniresource);
 	    return(1);
 	}
     } else {
@@ -1628,7 +1628,7 @@ f_red(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 		/* Do some quick checking on the edited file */
 		Tcl_AppendResult(interp, "Error in edited region, no changes made\n", (char *)NULL);
 		if (comb)
-		    rt_comb_ifree(&intern, &rt_uniresource);
+		    intern.idb_ptr->idb_meth->ft_ifree(&intern, &rt_uniresource);
 		(void)unlink(red_tmpfil);
 		return TCL_ERROR;
 	    }
@@ -1637,7 +1637,7 @@ f_red(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 		if (save_comb(dp)) {
 		    /* Save combination to a temp name */
 		    Tcl_AppendResult(interp, "No changes made\n", (char *)NULL);
-		    rt_comb_ifree(&intern, &rt_uniresource);
+		    intern.idb_ptr->idb_meth->ft_ifree(&intern, &rt_uniresource);
 		    (void)unlink(red_tmpfil);
 		    return TCL_OK;
 		}
@@ -1649,7 +1649,7 @@ f_red(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 		if (comb) {
 		    restore_comb(dp);
 		    Tcl_AppendResult(interp, "\toriginal restored\n", (char *)NULL);
-		    rt_comb_ifree(&intern, &rt_uniresource);
+		    intern.idb_ptr->idb_meth->ft_ifree(&intern, &rt_uniresource);
 		}
 
 		(void)unlink(red_tmpfil);

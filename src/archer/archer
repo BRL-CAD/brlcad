@@ -58,6 +58,9 @@ done
 #\
 exec $WISH $0 $@
 
+# Set ttk theme
+::ttk::style theme use clam
+
 # normalize ARCHER_HOME
 if {[info exists env(ARCHER_HOME)]} {
     set dir [file normalize $env(ARCHER_HOME)]
@@ -66,13 +69,13 @@ if {[info exists env(ARCHER_HOME)]} {
 }
 set env(ARCHER_HOME) $dir
 
-# Decide on a parent class for Archer
-#namespace eval Archer {
-#    if {1} {
+# Decide on a parent class for ArcherCore
+#namespace eval ArcherCore {
+#    if {0} {
 #	set parentClass itk::Toplevel
 #	set inheritFromToplevel 1
 #    } else {
-#	set parentClass TabWindow
+#	set parentClass itk::Widget
 #	set inheritFromToplevel 0
 #    }
 #}

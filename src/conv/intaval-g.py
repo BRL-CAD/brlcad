@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python
 #
 # usage:  intaval-g.py intaval_file mged_cmds
 #

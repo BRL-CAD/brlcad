@@ -54,7 +54,6 @@
 	variable mBy ""
 	variable mBz ""
 	variable mS ""
-	variable mK ""
 
 	# Override what's in GeometryEditFrame
 	method updateGeometryIfMod {}
@@ -71,245 +70,162 @@
 ::itcl::body ExtrudeEditFrame::constructor {args} {
     set parent [$this childsite]
     itk_component add extrudeType {
-	::label $parent.extrudetype \
+	::ttk::label $parent.extrudetype \
 	    -text "Extrude:" \
 	    -anchor e
-    } {
-	rename -font -boldLabelFont boldLabelFont Font
-    }
+    } {}
     itk_component add extrudeName {
-	::label $parent.extrudename \
+	::ttk::label $parent.extrudename \
 	    -textvariable [::itcl::scope itk_option(-geometryObject)] \
 	    -anchor w
-    } {
-	rename -font -boldLabelFont boldLabelFont Font
-    }
+    } {}
 
     # Create header labels
     itk_component add extrudeXL {
-	::label $parent.extrudeXL \
+	::ttk::label $parent.extrudeXL \
 	    -text "X"
-    } {
-	rename -font -boldLabelFont boldLabelFont Font
-    }
+    } {}
     itk_component add extrudeYL {
-	::label $parent.extrudeYL \
+	::ttk::label $parent.extrudeYL \
 	    -text "Y"
-    } {
-	rename -font -boldLabelFont boldLabelFont Font
-    }
+    } {}
     itk_component add extrudeZL {
-	::label $parent.extrudeZL \
+	::ttk::label $parent.extrudeZL \
 	    -text "Z"
-    } {
-	rename -font -boldLabelFont boldLabelFont Font
-    }
+    } {}
 
     # create widgets for vertices
     itk_component add extrudeVL {
-	::label $parent.extrudeVL \
+	::ttk::label $parent.extrudeVL \
 	    -text "V:" \
 	    -anchor e
-    } {
-	rename -font -labelFont labelFont Font
-    }
+    } {}
     itk_component add extrudeVxE {
-	::entry $parent.extrudeVxE \
+	::ttk::entry $parent.extrudeVxE \
 	    -textvariable [::itcl::scope mVx] \
 	    -validate key \
 	    -validatecommand {GeometryEditFrame::validateDouble %P}
-    } {
-	rename -font -entryFont entryFont Font
-    }
+    } {}
     itk_component add extrudeVyE {
-	::entry $parent.extrudeVyE \
+	::ttk::entry $parent.extrudeVyE \
 	    -textvariable [::itcl::scope mVy] \
 	    -validate key \
 	    -validatecommand {GeometryEditFrame::validateDouble %P}
-    } {
-	rename -font -entryFont entryFont Font
-    }
+    } {}
     itk_component add extrudeVzE {
-	::entry $parent.extrudeVzE \
+	::ttk::entry $parent.extrudeVzE \
 	    -textvariable [::itcl::scope mVz] \
 	    -validate key \
 	    -validatecommand {GeometryEditFrame::validateDouble %P}
-    } {
-	rename -font -entryFont entryFont Font
-    }
+    } {}
     itk_component add extrudeVUnitsL {
-	::label $parent.extrudeVUnitsL \
+	::ttk::label $parent.extrudeVUnitsL \
 	    -textvariable [::itcl::scope itk_option(-units)] \
 	    -anchor e
-    } {
-	rename -font -labelFont labelFont Font
-    }
+    } {}
     itk_component add extrudeHL {
-	::label $parent.extrudeHL \
+	::ttk::label $parent.extrudeHL \
 	    -text "H:" \
 	    -anchor e
-    } {
-	rename -font -labelFont labelFont Font
-    }
+    } {}
     itk_component add extrudeHxE {
-	::entry $parent.extrudeHxE \
+	::ttk::entry $parent.extrudeHxE \
 	    -textvariable [::itcl::scope mHx] \
 	    -validate key \
 	    -validatecommand {GeometryEditFrame::validateDouble %P}
-    } {
-	rename -font -entryFont entryFont Font
-    }
+    } {}
     itk_component add extrudeHyE {
-	::entry $parent.extrudeHyE \
+	::ttk::entry $parent.extrudeHyE \
 	    -textvariable [::itcl::scope mHy] \
 	    -validate key \
 	    -validatecommand {GeometryEditFrame::validateDouble %P}
-    } {
-	rename -font -entryFont entryFont Font
-    }
+    } {}
     itk_component add extrudeHzE {
-	::entry $parent.extrudeHzE \
+	::ttk::entry $parent.extrudeHzE \
 	    -textvariable [::itcl::scope mHz] \
 	    -validate key \
 	    -validatecommand {GeometryEditFrame::validateDouble %P}
-    } {
-	rename -font -entryFont entryFont Font
-    }
+    } {}
     itk_component add extrudeHUnitsL {
-	::label $parent.extrudeHUnitsL \
+	::ttk::label $parent.extrudeHUnitsL \
 	    -textvariable [::itcl::scope itk_option(-units)] \
 	    -anchor e
-    } {
-	rename -font -labelFont labelFont Font
-    }
+    } {}
     itk_component add extrudeAL {
-	::label $parent.extrudeAL \
+	::ttk::label $parent.extrudeAL \
 	    -text "A:" \
 	    -anchor e
-    } {
-	rename -font -labelFont labelFont Font
-    }
+    } {}
     itk_component add extrudeAxE {
-	::entry $parent.extrudeAxE \
+	::ttk::entry $parent.extrudeAxE \
 	    -textvariable [::itcl::scope mAx] \
 	    -state disabled \
-	    -disabledforeground black \
 	    -validate key \
 	    -validatecommand {GeometryEditFrame::validateDouble %P}
-    } {
-	rename -font -entryFont entryFont Font
-    }
+    } {}
     itk_component add extrudeAyE {
-	::entry $parent.extrudeAyE \
+	::ttk::entry $parent.extrudeAyE \
 	    -textvariable [::itcl::scope mAy] \
 	    -state disabled \
-	    -disabledforeground black \
 	    -validate key \
 	    -validatecommand {GeometryEditFrame::validateDouble %P}
-    } {
-	rename -font -entryFont entryFont Font
-    }
+    } {}
     itk_component add extrudeAzE {
-	::entry $parent.extrudeAzE \
+	::ttk::entry $parent.extrudeAzE \
 	    -textvariable [::itcl::scope mAz] \
 	    -state disabled \
-	    -disabledforeground black \
 	    -validate key \
 	    -validatecommand {GeometryEditFrame::validateDouble %P}
-    } {
-	rename -font -entryFont entryFont Font
-    }
+    } {}
     itk_component add extrudeAUnitsL {
-	::label $parent.extrudeAUnitsL \
+	::ttk::label $parent.extrudeAUnitsL \
 	    -anchor e
-    } {
-	rename -font -labelFont labelFont Font
-    }
+    } {}
     itk_component add extrudeBL {
-	::label $parent.extrudeBL \
+	::ttk::label $parent.extrudeBL \
 	    -text "B:" \
 	    -anchor e
-    } {
-	rename -font -labelFont labelFont Font
-    }
+    } {}
     itk_component add extrudeBxE {
-	::entry $parent.extrudeBxE \
+	::ttk::entry $parent.extrudeBxE \
 	    -textvariable [::itcl::scope mBx] \
 	    -state disabled \
-	    -disabledforeground black \
 	    -validate key \
 	    -validatecommand {GeometryEditFrame::validateDouble %P}
-    } {
-	rename -font -entryFont entryFont Font
-    }
+    } {}
     itk_component add extrudeByE {
-	::entry $parent.extrudeByE \
+	::ttk::entry $parent.extrudeByE \
 	    -textvariable [::itcl::scope mBy] \
 	    -state disabled \
-	    -disabledforeground black \
 	    -validate key \
 	    -validatecommand {GeometryEditFrame::validateDouble %P}
-    } {
-	rename -font -entryFont entryFont Font
-    }
+    } {}
     itk_component add extrudeBzE {
-	::entry $parent.extrudeBzE \
+	::ttk::entry $parent.extrudeBzE \
 	    -textvariable [::itcl::scope mBz] \
 	    -state disabled \
-	    -disabledforeground black \
 	    -validate key \
 	    -validatecommand {GeometryEditFrame::validateDouble %P}
-    } {
-	rename -font -entryFont entryFont Font
-    }
+    } {}
     itk_component add extrudeBUnitsL {
-	::label $parent.extrudeBUnitsL \
+	::ttk::label $parent.extrudeBUnitsL \
 	    -anchor e
-    } {
-	rename -font -labelFont labelFont Font
-    }
+    } {}
     itk_component add extrudeSL {
-	::label $parent.extrudeSL \
+	::ttk::label $parent.extrudeSL \
 	    -text "S:" \
 	    -anchor e
-    } {
-	rename -font -labelFont labelFont Font
-    }
+    } {}
     itk_component add extrudeSE {
-	::entry $parent.extrudeSE \
+	::ttk::entry $parent.extrudeSE \
 	    -textvariable [::itcl::scope mS] \
 	    -validate key \
 	    -validatecommand {GeometryEditFrame::validateDouble %P}
-    } {
-	rename -font -entryFont entryFont Font
-    }
+    } {}
     itk_component add extrudeSUnitsL {
-	::label $parent.extrudeSUnitsL \
+	::ttk::label $parent.extrudeSUnitsL \
 	    -anchor e
-    } {
-	rename -font -labelFont labelFont Font
-    }
-    itk_component add extrudeKL {
-	::label $parent.extrudeKL \
-	    -text "K:" \
-	    -anchor e
-    } {
-	rename -font -labelFont labelFont Font
-    }
-    itk_component add extrudeKE {
-	::entry $parent.extrudeKE \
-	    -textvariable [::itcl::scope mK] \
-	    -validate key \
-	    -validatecommand {GeometryEditFrame::validateDouble %P}
-    } {
-	rename -font -entryFont entryFont Font
-    }
-    itk_component add extrudeKUnitsL {
-	::label $parent.extrudeKUnitsL \
-	    -anchor e
-    } {
-	rename -font -labelFont labelFont Font
-    }
+    } {}
 
     set row 0
     grid $itk_component(extrudeType) \
@@ -365,14 +281,6 @@
 	-row $row \
 	-column 4 \
 	-sticky nsew
-    incr row
-    grid $itk_component(extrudeKL) $itk_component(extrudeKE) \
-	-row $row \
-	-sticky nsew
-    grid $itk_component(extrudeKUnitsL) \
-	-row $row \
-	-column 4 \
-	-sticky nsew
     grid columnconfigure $parent 1 -weight 1
     grid columnconfigure $parent 2 -weight 1
     grid columnconfigure $parent 3 -weight 1
@@ -392,7 +300,6 @@
     bind $itk_component(extrudeByE) <Return> [::itcl::code $this updateGeometryIfMod]
     bind $itk_component(extrudeBzE) <Return> [::itcl::code $this updateGeometryIfMod]
     bind $itk_component(extrudeSE) <Return> [::itcl::code $this updateGeometryIfMod]
-    bind $itk_component(extrudeKE) <Return> [::itcl::code $this updateGeometryIfMod]
 
     eval itk_initialize $args
 }
@@ -429,7 +336,6 @@
     set mBy [lindex $_B 1]
     set mBz [lindex $_B 2]
     set mS [bu_get_value_by_keyword S $gdata]
-    set mK [bu_get_value_by_keyword K $gdata]
 
     GeometryEditFrame::initGeometry $gdata
 }
@@ -445,8 +351,7 @@
 	H [list $mHx $mHy $mHz] \
 	A [list $mAx $mAy $mAz] \
 	B [list $mBx $mBy $mBz] \
-	S $mS \
-	K $mK
+	S $mS
 
     if {$itk_option(-geometryChangedCallback) != ""} {
 	$itk_option(-geometryChangedCallback)
@@ -463,8 +368,7 @@
 	H [list 0 0 $mDelta] \
 	A [list $mDelta 0 0] \
 	B [list 0 $mDelta 0] \
-	S "none" \
-	K $mDelta
+	S "none"
 }
 
 
@@ -498,7 +402,6 @@
     set _By [lindex $_B 1]
     set _Bz [lindex $_B 2]
     set _S [bu_get_value_by_keyword S $gdata]
-    set _K [bu_get_value_by_keyword K $gdata]
 
     if {$mVx == ""  ||
 	$mVx == "-" ||
@@ -523,9 +426,7 @@
 	$mBy == ""  ||
 	$mBy == "-" ||
 	$mBz == ""  ||
-	$mBz == "-" ||
-	$mK  == ""  ||
-	$mK  == "-"} {
+	$mBz == "-"} {
 	# Not valid
 	return
     }
@@ -542,8 +443,7 @@
 	$_Bx != $mBx ||
 	$_By != $mBy ||
 	$_Bz != $mBz ||
-	$_S != $mS  ||
-	$_K != $mK} {
+	$_S != $mS} {
 	updateGeometry
     }
 }

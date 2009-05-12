@@ -1196,7 +1196,7 @@ hit(register struct application *ap_p, struct partition *PartHeadp, struct seg *
 	/*  Find hit point of entering ray.  */
 	hitp = pp->pt_inhit;
 	stp = pp->pt_inseg->seg_stp;
-	RT_HIT_NORM(hitp, stp, &(ap_p->a_ray));
+	RT_HIT_NORMAL(hitp->hit_normal, hitp, stp, &(ap_p->a_ray), pp->pt_inflip);
 	enterpt[X] = hitp->hit_point[X];
 	enterpt[Y] = hitp->hit_point[Y];
 	enterpt[Z] = hitp->hit_point[Z];
@@ -1296,7 +1296,8 @@ hit(register struct application *ap_p, struct partition *PartHeadp, struct seg *
 	/*  Find hit point of leaving ray.  */
 	hitp = pp->pt_outhit;
 	stp = pp->pt_outseg->seg_stp;
-	RT_HIT_NORM(hitp, stp, &(ap_p->a_ray));
+	RT_HIT_NORMAL(hitp->hit_normal, hitp, stp, &(ap_p->a_ray), pp->pt_outflip);
+
 	leavept[X] = hitp->hit_point[X];
 	leavept[Y] = hitp->hit_point[Y];
 	leavept[Z] = hitp->hit_point[Z];

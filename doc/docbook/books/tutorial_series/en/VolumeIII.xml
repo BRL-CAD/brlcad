@@ -1550,11 +1550,11 @@ mvall oldname newname
 		  </entry>
 		  <entry>
 		    Creates a duplicate primitive shape, region, or assembly and locates it across 
-		    the x, y, or z axis.
+		    the x axis, y axis, z axis, or an arbitrary axis specified by a point and a direction.
 		  </entry>
 		  <entry>
 		    Takes advantage of previously defined measurements and locations; can mirror across 
-		    only one axis at a time at the axis 0 point.
+		    only one axis at a time but across any point along that axis.
 		  </entry>
 		  <entry>
 		    Command line

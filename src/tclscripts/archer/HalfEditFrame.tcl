@@ -61,106 +61,77 @@
 ::itcl::body HalfEditFrame::constructor {args} {
     set parent [$this childsite]
     itk_component add halfType {
-	::label $parent.halftype \
+	::ttk::label $parent.halftype \
 	    -text "Half:" \
 	    -anchor e
-    } {
-	rename -font -boldLabelFont boldLabelFont Font
-    }
+    } {}
     itk_component add halfName {
-	::label $parent.halfname \
+	::ttk::label $parent.halfname \
 	    -textvariable [::itcl::scope itk_option(-geometryObject)] \
 	    -anchor w
-    } {
-	rename -font -boldLabelFont boldLabelFont Font
-    }
+    } {}
 
     # Create header labels
     itk_component add halfXL {
-	::label $parent.halfXL \
+	::ttk::label $parent.halfXL \
 	    -text "X"
-    } {
-	rename -font -boldLabelFont boldLabelFont Font
-    }
+    } {}
     itk_component add halfYL {
-	::label $parent.halfYL \
+	::ttk::label $parent.halfYL \
 	    -text "Y"
-    } {
-	rename -font -boldLabelFont boldLabelFont Font
-    }
+    } {}
     itk_component add halfZL {
-	::label $parent.halfZL \
+	::ttk::label $parent.halfZL \
 	    -text "Z"
-    } {
-	rename -font -boldLabelFont boldLabelFont Font
-    }
+    } {}
 
     # create widgets for vertices
     itk_component add halfNL {
-	::label $parent.halfNL \
+	::ttk::label $parent.halfNL \
 	    -text "N:" \
 	    -anchor e
-    } {
-	rename -font -labelFont labelFont Font
-    }
+    } {}
     itk_component add halfNxE {
-	::entry $parent.halfNxE \
+	::ttk::entry $parent.halfNxE \
 	    -textvariable [::itcl::scope mNx] \
 	    -state disabled \
-	    -disabledforeground black \
 	    -validate key \
 	    -validatecommand {GeometryEditFrame::validateDouble %P}
-    } {
-	rename -font -entryFont entryFont Font
-    }
+    } {}
     itk_component add halfNyE {
-	::entry $parent.halfNyE \
+	::ttk::entry $parent.halfNyE \
 	    -textvariable [::itcl::scope mNy] \
 	    -state disabled \
-	    -disabledforeground black \
 	    -validate key \
 	    -validatecommand {GeometryEditFrame::validateDouble %P}
-    } {
-	rename -font -entryFont entryFont Font
-    }
+    } {}
     itk_component add halfNzE {
-	::entry $parent.halfNzE \
+	::ttk::entry $parent.halfNzE \
 	    -textvariable [::itcl::scope mNz] \
 	    -state disabled \
-	    -disabledforeground black \
 	    -validate key \
 	    -validatecommand {GeometryEditFrame::validateDouble %P}
-    } {
-	rename -font -entryFont entryFont Font
-    }
+    } {}
     itk_component add halfNUnitsL {
-	::label $parent.halfNUnitsL \
+	::ttk::label $parent.halfNUnitsL \
 	    -anchor e
-    } {
-	rename -font -labelFont labelFont Font
-    }
+    } {}
     itk_component add halfDL {
-	::label $parent.halfDL \
+	::ttk::label $parent.halfDL \
 	    -text "d:" \
 	    -anchor e
-    } {
-	rename -font -labelFont labelFont Font
-    }
+    } {}
     itk_component add halfDE {
-	::entry $parent.halfDE \
+	::ttk::entry $parent.halfDE \
 	    -textvariable [::itcl::scope mD] \
 	    -validate key \
 	    -validatecommand {GeometryEditFrame::validateDouble %P}
-    } {
-	rename -font -entryFont entryFont Font
-    }
+    } {}
     itk_component add halfDUnitsL {
-	::label $parent.halfDUnitsL \
+	::ttk::label $parent.halfDUnitsL \
 	    -textvariable [::itcl::scope itk_option(-units)] \
 	    -anchor e
-    } {
-	rename -font -labelFont labelFont Font
-    }
+    } {}
 
     set row 0
     grid $itk_component(halfType) \

@@ -50,6 +50,7 @@ man1DOCBOOK = \
 	autoview.xml \
 	bev.xml \
 	bo.xml \
+	bolt.xml \
 	bot_condense.xml \
 	bot_decimate.xml \
 	bot_face_fuse.xml \
@@ -72,15 +73,29 @@ man1DOCBOOK = \
 	db.xml \
 	db_glob.xml \
 	dbconcat.xml \
+	debugbu.xml \
+	debugdir.xml \
+	debuglib.xml \
+	debugmem.xml \
+	debugnmg.xml \
+	decompose.xml \
+	delay.xml \
+	dm.xml \
+	gastank.xml \
 	gqa.xml \
+	handle.xml \
 	mged.xml \
 	nirt.xml \
+	picket_fence.xml \
 	rt.xml \
 	rtarea.xml \
 	rtcheck.xml \
 	rtedge.xml \
 	search.xml \
-	tire.xml
+	tire.xml \
+	window.xml \
+	window_frame.xml \
+	wire.xml
 
 man1INTRO = \
 	Introduction.xml

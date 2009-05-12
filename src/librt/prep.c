@@ -287,8 +287,8 @@ rt_prep_parallel(register struct rt_i *rtip, int ncpu)
 	RT_VISIT_ALL_SOLTABS_START( stp, rtip )  {
 	    bu_log("solid %s ", stp->st_name);
 	    bu_pr_ptbl( "st_regions", &stp->st_regions, 1 );
-	} RT_VISIT_ALL_SOLTABS_END
-	      }
+	} RT_VISIT_ALL_SOLTABS_END;
+    }
 
     /*  Space for array of soltab pointers indexed by solid bit number.
      *  Include enough extra space for an extra bitv_t's worth of bits,
@@ -316,10 +316,10 @@ rt_prep_parallel(register struct rt_i *rtip, int ncpu)
 	BU_ASSERT_PTR(*ssp, ==, SOLTAB_NULL);
 	*ssp = stp;
 	rtip->rti_nsol_by_type[stp->st_id]++;
-    } RT_VISIT_ALL_SOLTABS_END
+    } RT_VISIT_ALL_SOLTABS_END;
 
-	  /* Find solid type with maximum length (for rt_shootray) */
-	  rtip->rti_maxsol_by_type = 0;
+    /* Find solid type with maximum length (for rt_shootray) */
+    rtip->rti_maxsol_by_type = 0;
     for ( i=0; i <= ID_MAX_SOLID; i++ )  {
 	if ( rtip->rti_nsol_by_type[i] > rtip->rti_maxsol_by_type )
 	    rtip->rti_maxsol_by_type = rtip->rti_nsol_by_type[i];
@@ -338,18 +338,18 @@ rt_prep_parallel(register struct rt_i *rtip, int ncpu)
 	register int	id;
 	id = stp->st_id;
 	rtip->rti_sol_by_type[id][rtip->rti_nsol_by_type[id]++] = stp;
-    } RT_VISIT_ALL_SOLTABS_END
-	  if ( RT_G_DEBUG & (DEBUG_DB|DEBUG_SOLIDS) )  {
-	      bu_log("rt_prep_parallel(%s,%d) printing number of primitives by type\n",
-		     rtip->rti_dbip->dbi_filename,
-		     rtip->rti_dbip->dbi_uses);
-	      for ( i=1; i <= ID_MAX_SOLID; i++ )  {
-		  bu_log("%5d %s (%d)\n",
-			 rtip->rti_nsol_by_type[i],
-			 rt_functab[i].ft_name,
-			 i );
-	      }
-	  }
+    } RT_VISIT_ALL_SOLTABS_END;
+    if ( RT_G_DEBUG & (DEBUG_DB|DEBUG_SOLIDS) )  {
+	bu_log("rt_prep_parallel(%s,%d) printing number of primitives by type\n",
+	       rtip->rti_dbip->dbi_filename,
+	       rtip->rti_dbip->dbi_uses);
+	for ( i=1; i <= ID_MAX_SOLID; i++ )  {
+	    bu_log("%5d %s (%d)\n",
+		   rtip->rti_nsol_by_type[i],
+		   rt_functab[i].ft_name,
+		   i );
+	}
+    }
 
     /* If region-id expression file exists, process it */
     rt_regionfix(rtip);
@@ -389,20 +389,20 @@ rt_prep_parallel(register struct rt_i *rtip, int ncpu)
 	    bu_free( (char *)stp->st_piece_rpps, "st_piece_rpps[]" );
 	    stp->st_piece_rpps = NULL;
 	}
-    } RT_VISIT_ALL_SOLTABS_END
+    } RT_VISIT_ALL_SOLTABS_END;
 
-	  /* Plot bounding RPPs */
-	  if ( (RT_G_DEBUG&DEBUG_PLOTBOX) )  {
-	      FILE	*plotfp;
+    /* Plot bounding RPPs */
+    if ( (RT_G_DEBUG&DEBUG_PLOTBOX) )  {
+	FILE	*plotfp;
 
-	      plotfp = fopen("rtrpp.plot", "wb");
-	      if (plotfp != NULL) {
-		  /* Plot solid bounding boxes, in white */
-		  pl_color( plotfp, 255, 255, 255 );
-		  rt_plot_all_bboxes( plotfp, rtip );
-		  (void)fclose(plotfp);
-	      }
-	  }
+	plotfp = fopen("rtrpp.plot", "wb");
+	if (plotfp != NULL) {
+	    /* Plot solid bounding boxes, in white */
+	    pl_color( plotfp, 255, 255, 255 );
+	    rt_plot_all_bboxes( plotfp, rtip );
+	    (void)fclose(plotfp);
+	}
+    }
 
     /* Plot solid outlines */
     if ( (RT_G_DEBUG&DEBUG_PLOTSOLIDS) )  {
@@ -454,8 +454,8 @@ rt_plot_all_bboxes(FILE *fp, struct rt_i *rtip)
 	if ( stp->st_aradius >= INFINITY )
 	    continue;
 	pdv_3box( fp, stp->st_min, stp->st_max );
-    } RT_VISIT_ALL_SOLTABS_END
-	  }
+    } RT_VISIT_ALL_SOLTABS_END;
+}
 
 /*
  *			R T _ P L O T _ A L L _ S O L I D S
@@ -481,8 +481,8 @@ rt_plot_all_solids(
 	    continue;
 
 	(void)rt_plot_solid( fp, rtip, stp, resp );
-    } RT_VISIT_ALL_SOLTABS_END
-	  }
+    } RT_VISIT_ALL_SOLTABS_END;
+}
 
 /*
  *			R T _ V L I S T _ S O L I D
@@ -1154,12 +1154,12 @@ rt_ck(register struct rt_i *rtip)
 
     RT_VISIT_ALL_SOLTABS_START( stp, rtip )  {
 	RT_CK_SOLTAB(stp);
-    } RT_VISIT_ALL_SOLTABS_END
+    } RT_VISIT_ALL_SOLTABS_END;
 
-	  for ( BU_LIST_FOR( regp, region, &(rtip->HeadRegion) ) )  {
-	      RT_CK_REGION(regp);
-	      db_ck_tree(regp->reg_treetop);
-	  }
+    for ( BU_LIST_FOR( regp, region, &(rtip->HeadRegion) ) )  {
+	RT_CK_REGION(regp);
+	db_ck_tree(regp->reg_treetop);
+    }
     /* rti_CutHead */
 
 }
@@ -1789,16 +1789,16 @@ rt_reprep( struct rt_i *rtip, struct rt_reprep_obj_list *objs, struct resource *
 	rtip->rti_Solids[bitno] = stp;
 	bitno++;
 
-    } RT_VISIT_ALL_SOLTABS_END
+    } RT_VISIT_ALL_SOLTABS_END;
 
-	  for ( i=0; i<BU_PTBL_LEN( &rtip->rti_new_solids ); i++ ) {
-	      stp = (struct soltab * )BU_PTBL_GET( &rtip->rti_new_solids, i );
-	      if ( stp->st_aradius >= INFINITY ) {
-		  insert_in_bsp( stp, &rtip->rti_inf_box );
-	      } else {
-		  insert_in_bsp( stp, &rtip->rti_CutHead );
-	      }
-	  }
+    for ( i=0; i<BU_PTBL_LEN( &rtip->rti_new_solids ); i++ ) {
+	stp = (struct soltab * )BU_PTBL_GET( &rtip->rti_new_solids, i );
+	if ( stp->st_aradius >= INFINITY ) {
+	    insert_in_bsp( stp, &rtip->rti_inf_box );
+	} else {
+	    insert_in_bsp( stp, &rtip->rti_CutHead );
+	}
+    }
 
     bu_ptbl_free( &rtip->rti_new_solids );
 

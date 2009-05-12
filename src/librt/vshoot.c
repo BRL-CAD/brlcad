@@ -267,7 +267,7 @@ rt_shootray( struct application *ap )
      * pt_inhit and pt_outhit have been computed yet.  To compute both
      * hit_point and hit_normal, use the
      *
-     * RT_HIT_NORM( hitp, stp, rayp )
+     * RT_HIT_NORMAL(NULL, hitp, stp, rayp, 0);
      *
      * macro.  To compute just hit_point, use
      *

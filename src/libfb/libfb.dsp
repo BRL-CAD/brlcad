@@ -124,10 +124,6 @@ SOURCE=.\fbserv_obj.c
 # End Source File
 # Begin Source File
 
-SOURCE=.\getput.c
-# End Source File
-# Begin Source File
-
 SOURCE=.\if_debug.c
 # End Source File
 # Begin Source File

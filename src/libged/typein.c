@@ -513,6 +513,7 @@ static char *p_revolve[] = {
 };
 
 static char *p_pnts[] = {
+    "Are points in a file (yes/no)? ",
     "Enter number of points (-1 for auto): ",
     "Are the points orientated (yes/no)? ",
     "Do the points have color values (yes/no)? ",
@@ -527,7 +528,10 @@ static char *p_pnts[] = {
     "Enter R, G, B color values (0 to 255)",
     "Enter G component color value",
     "Enter B component color value",
-    "Enter point size (>= 0.0, -1 for default)"
+    "Enter point size (>= 0.0, -1 for default)",
+    "Enter point file path and name: ",
+    "Enter file data format (px,py,pz,cr,cg,cb,s,nx,ny,nz): ",
+    "Enter file data units ([mm|cm|m|in|ft]): "
 };
 
 
@@ -1034,10 +1038,10 @@ arbn_in(struct ged *gedp, int argc, const char **argv, struct rt_db_internal *in
 
     /* Normal is unscaled, should have unit length; d is scaled */
     for ( i=0; i<arbn->neqn; i++ ) {
-	arbn->eqn[i][0] = atof( argv[4+i*4] );
-	arbn->eqn[i][1] = atof( argv[4+i*4+1] );
-	arbn->eqn[i][2] = atof( argv[4+i*4+2] );
-	arbn->eqn[i][3] = atof( argv[4+i*4+3] ) * gedp->ged_wdbp->dbip->dbi_local2base;
+	arbn->eqn[i][X] = atof( argv[4+i*4] );
+	arbn->eqn[i][Y] = atof( argv[4+i*4+1] );
+	arbn->eqn[i][Z] = atof( argv[4+i*4+2] );
+	arbn->eqn[i][W] = atof( argv[4+i*4+3] ) * gedp->ged_wdbp->dbip->dbi_local2base;
     }
 
     return BRLCAD_OK;
@@ -2401,45 +2405,96 @@ pnts_in(struct ged *gedp, int argc, const char **argv, struct rt_db_internal *in
     int nextPrompt;
 
     double local2base = gedp->ged_wdbp->dbip->dbi_local2base;
-    
-    /* prompt for numPoints if not entered */
+
+    /* prompt if points file */
     if (argc < 4) {
-	bu_vls_printf(&gedp->ged_result_str, "%s", prompt[0]);
+        bu_vls_printf(&gedp->ged_result_str, "%s", prompt[0]);
+        return BRLCAD_MORE_ARGS;
+    }
+
+    /* if points are in a file */
+    if ((strcmp( argv[3], "yes" ) == 0) || (strcmp( argv[3], "y" ) == 0)) {
+
+        /* prompt for point file path and name */
+        if (argc < 5) {
+            bu_vls_printf(&gedp->ged_result_str, "%s", prompt[16]);
+            return BRLCAD_MORE_ARGS;
+        }
+
+        /* prompt for file data format */
+        if (argc < 6) {
+            bu_vls_printf(&gedp->ged_result_str, "%s", prompt[17]);
+            return BRLCAD_MORE_ARGS;
+        }
+
+        /* prompt for file data units */
+        if (argc < 7) {
+            bu_vls_printf(&gedp->ged_result_str, "%s", prompt[18]);
+            return BRLCAD_MORE_ARGS;
+        }
+
+        /* prompt for default point size */
+        if (argc < 8) {
+            bu_vls_printf(&gedp->ged_result_str, "%s", prompt[5]);
+            return BRLCAD_MORE_ARGS;
+        }
+
+        /* call function(s) to validate 'point file data format string' and return the
+         * point-cloud type.
+         */
+
+        /* call function(s) to validate the units string and return the converion factor to
+         * milimeters.
+         */
+
+        /* call function(s) to read point cloud data and save into database.
+         */
+
+        bu_log("The ability to create a pnts primitive from a data file is not yet implemented.\n");
+
+        return BRLCAD_ERROR;
+
+    } /* endif to process point data file */
+
+
+    /* prompt for numPoints if not entered */
+    if (argc < 5) {
+	bu_vls_printf(&gedp->ged_result_str, "%s", prompt[1]);
 	return BRLCAD_MORE_ARGS;
     }
-    numPoints = atol(argv[3]);
+    numPoints = atol(argv[4]);
     if (numPoints < 0) {
 	/* negative means automatically figure out how many points */
 	numPoints = -1;
     }
 
     /* prompt for orientation */
-    if (argc < 5) {
-	bu_vls_printf(&gedp->ged_result_str, "%s", prompt[1]);
-	return BRLCAD_MORE_ARGS;
-    }
-    oriented = booleanize(argv[4]);
-
-    /* prompt for color */
     if (argc < 6) {
 	bu_vls_printf(&gedp->ged_result_str, "%s", prompt[2]);
 	return BRLCAD_MORE_ARGS;
     }
-    hasColor = booleanize(argv[5]);
+    oriented = booleanize(argv[5]);
 
-    /* prompt for uniform scale */
+    /* prompt for color */
     if (argc < 7) {
 	bu_vls_printf(&gedp->ged_result_str, "%s", prompt[3]);
 	return BRLCAD_MORE_ARGS;
     }
-    hasScale = booleanize(argv[6]); /* has scale if not uniform */
+    hasColor = booleanize(argv[6]);
 
-    /* prompt for size of points if not entered */
+    /* prompt for uniform scale */
     if (argc < 8) {
 	bu_vls_printf(&gedp->ged_result_str, "%s", prompt[4]);
 	return BRLCAD_MORE_ARGS;
     }
-    defaultSize = atof(argv[7]);
+    hasScale = booleanize(argv[7]); /* has scale if not uniform */
+
+    /* prompt for size of points if not entered */
+    if (argc < 9) {
+	bu_vls_printf(&gedp->ged_result_str, "%s", prompt[5]);
+	return BRLCAD_MORE_ARGS;
+    }
+    defaultSize = atof(argv[8]);
     if (defaultSize < 0.0) {
 	defaultSize = 0.0;
 	bu_log("WARNING: default point size must be non-negative, using zero\n");
@@ -2465,8 +2520,8 @@ pnts_in(struct ged *gedp, int argc, const char **argv, struct rt_db_internal *in
     }
 
     /* reset argc/argv to be just point data */
-    argc -= 8;
-    argv += 8;
+    argc -= 9;
+    argv += 9;
     nextPrompt = argc % valuesPerPoint;
 
     if (numPoints < 0) {
@@ -2486,7 +2541,7 @@ pnts_in(struct ged *gedp, int argc, const char **argv, struct rt_db_internal *in
     
     /* prompt for X, Y, Z of points */
     if (argc < numPoints * valuesPerPoint) {
-	int nextAsk = nextPrompt + 5;
+	int nextAsk = nextPrompt + 6;
 	struct bu_vls vls;
         bu_vls_init(&vls);
 

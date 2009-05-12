@@ -149,20 +149,6 @@ mged_fb_open(void)
 
 
 void
-mged_fb_close(void)
-{
-    struct bu_vls vls;
-
-    bu_vls_init(&vls);
-    bu_vls_printf(&vls, "fb_close_existing %lu", fbp);
-    (void)Tcl_Eval(interp, bu_vls_addr(&vls));
-    bu_vls_free(&vls);
-
-    fbp = (FBIO *)0;
-}
-
-
-void
 mged_slider_init_vls(struct dm_list *p)
 {
     bu_vls_init(&p->dml_fps_name);
@@ -227,7 +213,8 @@ release(char *name, int need_close)
 	}
 
 	/* release framebuffer resources */
-	mged_fb_close();
+	fb_close_existing(fbp);
+	fbp = (FBIO *)NULL;
     }
 
     /*

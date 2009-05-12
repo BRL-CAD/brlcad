@@ -584,7 +584,7 @@
     $help add make_bb	{{bbname object(s)} {make a bounding box (rpp) around the specified objects}}
     $help add match	{{exp} {returns all database objects matching the given expression}}
     $help add mater	{{region shader R G B inherit} {modify region's material information}}
-    $help add mirror	{{[-d dir] [-o origin] [-p scalar_pt] old new}	{mirror object along the specified axis}}
+    $help add mirror	{{[-p point] [-d dir] [-x] [-y] [-z] [-o offset] old new}	{mirror object along the specified axis}}
     $help add move_arb_edge	{{arb edge pt} {move an arb's edge through pt}}
     $help add move_arb_face	{{arb face pt} {move an arb's face through pt}}
     $help add mv	{{old new} {rename object}}

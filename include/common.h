@@ -42,7 +42,7 @@
  * should not use config defines)
  */
 #if defined(BRLCADBUILD) && defined(HAVE_CONFIG_H)
-#  ifdef _WIN32
+#  if defined(_WIN32) && !defined(__CYGWIN__)
 #    include "config_win.h"
 #  else
 #    include "brlcad_config.h"
@@ -93,6 +93,15 @@
 
 #define FMAX(a, b)	(((a)>(b))?(a):(b))
 #define FMIN(a, b)	(((a)<(b))?(a):(b))
+
+/**
+ *  Simulates drand48() functionality using rand() which
+ *  is assumed to exist everywhere. The range is [0, 1).
+ */
+#ifndef HAVE_DRAND48
+#  define HAVE_DRAND48 1
+#  define drand48() ((double)rand() / (double)(RAND_MAX + 1))
+#endif
 
 #endif  /* __COMMON_H__ */
 /** @} */

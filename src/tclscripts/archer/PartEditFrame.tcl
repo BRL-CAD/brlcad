@@ -65,161 +65,119 @@
 ::itcl::body PartEditFrame::constructor {args} {
     set parent [$this childsite]
     itk_component add partType {
-	::label $parent.parttype \
+	::ttk::label $parent.parttype \
 	    -text "Part:" \
 	    -anchor e
-    } {
-	rename -font -boldLabelFont boldLabelFont Font
-    }
+    } {}
     itk_component add partName {
-	::label $parent.partname \
+	::ttk::label $parent.partname \
 	    -textvariable [::itcl::scope itk_option(-geometryObject)] \
 	    -anchor w
-    } {
-	rename -font -boldLabelFont boldLabelFont Font
-    }
+    } {}
 
     # Create header labels
     itk_component add partXL {
-	::label $parent.partXL \
+	::ttk::label $parent.partXL \
 	    -text "X"
-    } {
-	rename -font -boldLabelFont boldLabelFont Font
-    }
+    } {}
     itk_component add partYL {
-	::label $parent.partYL \
+	::ttk::label $parent.partYL \
 	    -text "Y"
-    } {
-	rename -font -boldLabelFont boldLabelFont Font
-    }
+    } {}
     itk_component add partZL {
-	::label $parent.partZL \
+	::ttk::label $parent.partZL \
 	    -text "Z"
-    } {
-	rename -font -boldLabelFont boldLabelFont Font
-    }
+    } {}
 
     # create widgets for vertices
     itk_component add partVL {
-	::label $parent.partVL \
+	::ttk::label $parent.partVL \
 	    -text "V:" \
 	    -anchor e
-    } {
-	rename -font -labelFont labelFont Font
-    }
+    } {}
     itk_component add partVxE {
-	::entry $parent.partVxE \
+	::ttk::entry $parent.partVxE \
 	    -textvariable [::itcl::scope mVx] \
 	    -validate key \
 	    -validatecommand {GeometryEditFrame::validateDouble %P}
-    } {
-	rename -font -entryFont entryFont Font
-    }
+    } {}
     itk_component add partVyE {
-	::entry $parent.partVyE \
+	::ttk::entry $parent.partVyE \
 	    -textvariable [::itcl::scope mVy] \
 	    -validate key \
 	    -validatecommand {GeometryEditFrame::validateDouble %P}
-    } {
-	rename -font -entryFont entryFont Font
-    }
+    } {}
     itk_component add partVzE {
-	::entry $parent.partVzE \
+	::ttk::entry $parent.partVzE \
 	    -textvariable [::itcl::scope mVz] \
 	    -validate key \
 	    -validatecommand {GeometryEditFrame::validateDouble %P}
-    } {
-	rename -font -entryFont entryFont Font
-    }
+    } {}
     itk_component add partVUnitsL {
-	::label $parent.partVUnitsL \
+	::ttk::label $parent.partVUnitsL \
 	    -textvariable [::itcl::scope itk_option(-units)] \
 	    -anchor e
-    } {
-	rename -font -labelFont labelFont Font
-    }
+    } {}
     itk_component add partHL {
-	::label $parent.partHL \
+	::ttk::label $parent.partHL \
 	    -text "H:" \
 	    -anchor e
-    } {
-	rename -font -labelFont labelFont Font
-    }
+    } {}
     itk_component add partHxE {
-	::entry $parent.partHxE \
+	::ttk::entry $parent.partHxE \
 	    -textvariable [::itcl::scope mHx] \
 	    -validate key \
 	    -validatecommand {GeometryEditFrame::validateDouble %P}
-    } {
-	rename -font -entryFont entryFont Font
-    }
+    } {}
     itk_component add partHyE {
-	::entry $parent.partHyE \
+	::ttk::entry $parent.partHyE \
 	    -textvariable [::itcl::scope mHy] \
 	    -validate key \
 	    -validatecommand {GeometryEditFrame::validateDouble %P}
-    } {
-	rename -font -entryFont entryFont Font
-    }
+    } {}
     itk_component add partHzE {
-	::entry $parent.partHzE \
+	::ttk::entry $parent.partHzE \
 	    -textvariable [::itcl::scope mHz] \
 	    -validate key \
 	    -validatecommand {GeometryEditFrame::validateDouble %P}
-    } {
-	rename -font -entryFont entryFont Font
-    }
+    } {}
     itk_component add partHUnitsL {
-	::label $parent.partHUnitsL \
+	::ttk::label $parent.partHUnitsL \
 	    -textvariable [::itcl::scope itk_option(-units)] \
 	    -anchor e
-    } {
-	rename -font -labelFont labelFont Font
-    }
+    } {}
     itk_component add partR_vL {
-	::label $parent.partR_vL \
+	::ttk::label $parent.partR_vL \
 	    -text "r_v:" \
 	    -anchor e
-    } {
-	rename -font -labelFont labelFont Font
-    }
+    } {}
     itk_component add partR_vE {
-	::entry $parent.partR_vE \
+	::ttk::entry $parent.partR_vE \
 	    -textvariable [::itcl::scope mR_v] \
 	    -validate key \
 	    -validatecommand {GeometryEditFrame::validateDouble %P}
-    } {
-	rename -font -entryFont entryFont Font
-    }
+    } {}
     itk_component add partR_vUnitsL {
-	::label $parent.partR_vUnitsL \
+	::ttk::label $parent.partR_vUnitsL \
 	    -textvariable [::itcl::scope itk_option(-units)] \
 	    -anchor e
-    } {
-	rename -font -labelFont labelFont Font
-    }
+    } {}
     itk_component add partR_hL {
-	::label $parent.partR_hL \
+	::ttk::label $parent.partR_hL \
 	    -text "r_h:" \
 	    -anchor e
-    } {
-	rename -font -labelFont labelFont Font
-    }
+    } {}
     itk_component add partR_hE {
-	::entry $parent.partR_hE \
+	::ttk::entry $parent.partR_hE \
 	    -textvariable [::itcl::scope mR_h] \
 	    -validate key \
 	    -validatecommand {GeometryEditFrame::validateDouble %P}
-    } {
-	rename -font -entryFont entryFont Font
-    }
+    } {}
     itk_component add partR_hUnitsL {
-	::label $parent.partR_hUnitsL \
+	::ttk::label $parent.partR_hUnitsL \
 	    -textvariable [::itcl::scope itk_option(-units)] \
 	    -anchor e
-    } {
-	rename -font -labelFont labelFont Font
-    }
+    } {}
 
     set row 0
     grid $itk_component(partType) \

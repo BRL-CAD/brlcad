@@ -85,6 +85,17 @@
       </listitem>
     </varlistentry>
     <varlistentry>
+      <term><option>-l</option></term>
+      <listitem>
+	<para>
+	  Instructs the coil tool to create a "left handed" coil (default
+	  is "right handed").  I.e. - from the starting point of the coil,
+	  the coil winding will proceed in the -x direction for a left
+	  handed coil, and in the +x direction for a right handed coil.
+	</para>
+      </listitem>
+    </varlistentry>
+    <varlistentry>
       <term><option>-d outer_diameter</option></term>
       <listitem>
 	<para>

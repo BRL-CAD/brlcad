@@ -234,7 +234,7 @@ int get_args( int argc, register char **argv )
 		}
 		f = 1.0 /f;
 		VSCALE( kut_plane, kut_plane, f );
-		kut_plane[3] *= f;
+		kut_plane[W] *= f;
 		break;
 	    }
 	    case '.':

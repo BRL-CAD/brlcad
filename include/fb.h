@@ -83,6 +83,7 @@
 FB_EXPORT extern void 	fb_configureWindow(FBIO *, int, int);
 FB_EXPORT extern FBIO	*fb_open(char *file, int _width, int _height);
 FB_EXPORT extern int	fb_close(FBIO *ifp);
+FB_EXPORT extern int	fb_close_existing(FBIO *ifp);
 FB_EXPORT extern int	fb_genhelp(void);
 FB_EXPORT extern int	fb_ioinit(FBIO *ifp);
 FB_EXPORT extern int	fb_seek(FBIO *ifp, int x, int y);
@@ -116,9 +117,6 @@ FB_EXPORT extern int	fb_scursor(FBIO *ifp, int mode, int x, int y);
  * Some functions and variables we couldn't hide.
  * Not for general consumption.
  */
-FB_EXPORT extern int	_fb_pgin();
-FB_EXPORT extern int	_fb_pgout();
-FB_EXPORT extern int	_fb_pgflush();
 FB_EXPORT extern int	_fb_disk_enable;
 FB_EXPORT extern int	fb_sim_readrect(FBIO *ifp, int xmin, int ymin, int _width, int _height, unsigned char *pp);
 FB_EXPORT extern int	fb_sim_writerect(FBIO *ifp, int xmin, int ymin, int _width, int _height, const unsigned char *pp);
@@ -128,6 +126,8 @@ FB_EXPORT extern int	fb_sim_view(FBIO *ifp, int xcenter, int ycenter, int xzoom,
 FB_EXPORT extern int	fb_sim_getview(FBIO *ifp, int *xcenter, int *ycenter, int *xzoom, int *yzoom);
 FB_EXPORT extern int	fb_sim_cursor(FBIO *ifp, int mode, int x, int y);
 FB_EXPORT extern int	fb_sim_getcursor(FBIO *ifp, int *mode, int *x, int *y);
+
+/* FIXME:  these IF_* sections need to die.  they don't belong in a public header. */
 
 #ifdef IF_X
 FB_EXPORT extern int _X24_open_existing();
@@ -152,14 +152,9 @@ FB_EXPORT extern int wgl_close_existing();
 			   (to)[BLU]=(from)[BLU]; }
 
 /**
- * A fast inline version of fb_wpixel.  This one does NOT check for errors,
- *  nor "return" a value.  For reasons of C syntax it needs the basename
- *  of an RGBpixel rather than a pointer to one.
+ * DEPRECATED: use fb_wpixel() instead.
  */
-#define	FB_WPIXEL(ifp, pp) {if((ifp)->if_pno==-1)_fb_pgin((ifp),(ifp)->if_pixcur/(ifp)->if_ppixels);\
-	(*((ifp)->if_pcurp+0))=(pp)[0];(*((ifp)->if_pcurp+1))=(pp)[1];(*((ifp)->if_pcurp+2))=(pp)[2];\
-	(ifp)->if_pcurp+=3;(ifp)->if_pixcur++;(ifp)->if_pdirty=1;\
-	if ((ifp)->if_pcurp>=(ifp)->if_pendp) {_fb_pgout((ifp));(ifp)->if_pno= -1;}}
+#define	FB_WPIXEL(ifp, pp) fb_wpixel(ifp, pp)
 
 /* Debug Bitvector Definition */
 #define	FB_DEBUG_BIO	1	/* Buffered io calls (less r/wpixel) */

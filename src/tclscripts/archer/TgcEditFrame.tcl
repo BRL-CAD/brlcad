@@ -87,293 +87,211 @@
 ::itcl::body TgcEditFrame::buildUpperPanel {} {
     set parent [$this childsite]
     itk_component add tgcType {
-	::label $parent.tgctype \
+	::ttk::label $parent.tgctype \
 	    -text "Tgc:" \
 	    -anchor e
-    } {
-	rename -font -boldLabelFont boldLabelFont Font
-    }
+    } {}
     itk_component add tgcName {
-	::label $parent.tgcname \
+	::ttk::label $parent.tgcname \
 	    -textvariable [::itcl::scope itk_option(-geometryObject)] \
 	    -anchor w
-    } {
-	rename -font -boldLabelFont boldLabelFont Font
-    }
+    } {}
 
     # Create header labels
     itk_component add tgcXL {
-	::label $parent.tgcXL \
+	::ttk::label $parent.tgcXL \
 	    -text "X"
-    } {
-	rename -font -boldLabelFont boldLabelFont Font
-    }
+    } {}
     itk_component add tgcYL {
-	::label $parent.tgcYL \
+	::ttk::label $parent.tgcYL \
 	    -text "Y"
-    } {
-	rename -font -boldLabelFont boldLabelFont Font
-    }
+    } {}
     itk_component add tgcZL {
-	::label $parent.tgcZL \
+	::ttk::label $parent.tgcZL \
 	    -text "Z"
-    } {
-	rename -font -boldLabelFont boldLabelFont Font
-    }
+    } {}
 
     # create widgets for vertices
     itk_component add tgcVL {
-	::label $parent.tgcVL \
+	::ttk::label $parent.tgcVL \
 	    -text "V:" \
 	    -anchor e
-    } {
-	rename -font -labelFont labelFont Font
-    }
+    } {}
     itk_component add tgcVxE {
-	::entry $parent.tgcVxE \
+	::ttk::entry $parent.tgcVxE \
 	    -textvariable [::itcl::scope mVx] \
 	    -validate key \
 	    -validatecommand {GeometryEditFrame::validateDouble %P}
-    } {
-	rename -font -entryFont entryFont Font
-    }
+    } {}
     itk_component add tgcVyE {
-	::entry $parent.tgcVyE \
+	::ttk::entry $parent.tgcVyE \
 	    -textvariable [::itcl::scope mVy] \
 	    -validate key \
 	    -validatecommand {GeometryEditFrame::validateDouble %P}
-    } {
-	rename -font -entryFont entryFont Font
-    }
+    } {}
     itk_component add tgcVzE {
-	::entry $parent.tgcVzE \
+	::ttk::entry $parent.tgcVzE \
 	    -textvariable [::itcl::scope mVz] \
 	    -validate key \
 	    -validatecommand {GeometryEditFrame::validateDouble %P}
-    } {
-	rename -font -entryFont entryFont Font
-    }
+    } {}
     itk_component add tgcVUnitsL {
-	::label $parent.tgcVUnitsL \
+	::ttk::label $parent.tgcVUnitsL \
 	    -textvariable [::itcl::scope itk_option(-units)] \
 	    -anchor e
-    } {
-	rename -font -labelFont labelFont Font
-    }
+    } {}
     itk_component add tgcHL {
-	::label $parent.tgcHL \
+	::ttk::label $parent.tgcHL \
 	    -text "H:" \
 	    -anchor e
-    } {
-	rename -font -labelFont labelFont Font
-    }
+    } {}
     itk_component add tgcHxE {
-	::entry $parent.tgcHxE \
+	::ttk::entry $parent.tgcHxE \
 	    -textvariable [::itcl::scope mHx] \
 	    -validate key \
 	    -validatecommand {GeometryEditFrame::validateDouble %P}
-    } {
-	rename -font -entryFont entryFont Font
-    }
+    } {}
     itk_component add tgcHyE {
-	::entry $parent.tgcHyE \
+	::ttk::entry $parent.tgcHyE \
 	    -textvariable [::itcl::scope mHy] \
 	    -validate key \
 	    -validatecommand {GeometryEditFrame::validateDouble %P}
-    } {
-	rename -font -entryFont entryFont Font
-    }
+    } {}
     itk_component add tgcHzE {
-	::entry $parent.tgcHzE \
+	::ttk::entry $parent.tgcHzE \
 	    -textvariable [::itcl::scope mHz] \
 	    -validate key \
 	    -validatecommand {GeometryEditFrame::validateDouble %P}
-    } {
-	rename -font -entryFont entryFont Font
-    }
+    } {}
     itk_component add tgcHUnitsL {
-	::label $parent.tgcHUnitsL \
+	::ttk::label $parent.tgcHUnitsL \
 	    -textvariable [::itcl::scope itk_option(-units)] \
 	    -anchor e
-    } {
-	rename -font -labelFont labelFont Font
-    }
+    } {}
     itk_component add tgcAL {
-	::label $parent.tgcAL \
+	::ttk::label $parent.tgcAL \
 	    -text "A:" \
 	    -anchor e
-    } {
-	rename -font -labelFont labelFont Font
-    }
+    } {}
     itk_component add tgcAxE {
-	::entry $parent.tgcAxE \
+	::ttk::entry $parent.tgcAxE \
 	    -textvariable [::itcl::scope mAx] \
 	    -state disabled \
-	    -disabledforeground black \
 	    -validate key \
 	    -validatecommand {GeometryEditFrame::validateDouble %P}
-    } {
-	rename -font -entryFont entryFont Font
-    }
+    } {}
     itk_component add tgcAyE {
-	::entry $parent.tgcAyE \
+	::ttk::entry $parent.tgcAyE \
 	    -textvariable [::itcl::scope mAy] \
 	    -state disabled \
-	    -disabledforeground black \
 	    -validate key \
 	    -validatecommand {GeometryEditFrame::validateDouble %P}
-    } {
-	rename -font -entryFont entryFont Font
-    }
+    } {}
     itk_component add tgcAzE {
-	::entry $parent.tgcAzE \
+	::ttk::entry $parent.tgcAzE \
 	    -textvariable [::itcl::scope mAz] \
 	    -state disabled \
-	    -disabledforeground black \
 	    -validate key \
 	    -validatecommand {GeometryEditFrame::validateDouble %P}
-    } {
-	rename -font -entryFont entryFont Font
-    }
+    } {}
     itk_component add tgcAUnitsL {
-	::label $parent.tgcAUnitsL \
+	::ttk::label $parent.tgcAUnitsL \
 	    -textvariable [::itcl::scope itk_option(-units)] \
 	    -anchor e
-    } {
-	rename -font -labelFont labelFont Font
-    }
+    } {}
     itk_component add tgcBL {
-	::label $parent.tgcBL \
+	::ttk::label $parent.tgcBL \
 	    -text "B:" \
 	    -anchor e
-    } {
-	rename -font -labelFont labelFont Font
-    }
+    } {}
     itk_component add tgcBxE {
-	::entry $parent.tgcBxE \
+	::ttk::entry $parent.tgcBxE \
 	    -textvariable [::itcl::scope mBx] \
 	    -state disabled \
-	    -disabledforeground black \
 	    -validate key \
 	    -validatecommand {GeometryEditFrame::validateDouble %P}
-    } {
-	rename -font -entryFont entryFont Font
-    }
+    } {}
     itk_component add tgcByE {
-	::entry $parent.tgcByE \
+	::ttk::entry $parent.tgcByE \
 	    -textvariable [::itcl::scope mBy] \
 	    -state disabled \
-	    -disabledforeground black \
 	    -validate key \
 	    -validatecommand {GeometryEditFrame::validateDouble %P}
-    } {
-	rename -font -entryFont entryFont Font
-    }
+    } {}
     itk_component add tgcBzE {
-	::entry $parent.tgcBzE \
+	::ttk::entry $parent.tgcBzE \
 	    -textvariable [::itcl::scope mBz] \
 	    -state disabled \
-	    -disabledforeground black \
 	    -validate key \
 	    -validatecommand {GeometryEditFrame::validateDouble %P}
-    } {
-	rename -font -entryFont entryFont Font
-    }
+    } {}
     itk_component add tgcBUnitsL {
-	::label $parent.tgcBUnitsL \
+	::ttk::label $parent.tgcBUnitsL \
 	    -textvariable [::itcl::scope itk_option(-units)] \
 	    -anchor e
-    } {
-	rename -font -labelFont labelFont Font
-    }
+    } {}
     itk_component add tgcCL {
-	::label $parent.tgcCL \
+	::ttk::label $parent.tgcCL \
 	    -text "C:" \
 	    -anchor e
-    } {
-	rename -font -labelFont labelFont Font
-    }
+    } {}
     itk_component add tgcCxE {
-	::entry $parent.tgcCxE \
+	::ttk::entry $parent.tgcCxE \
 	    -textvariable [::itcl::scope mCx] \
 	    -state disabled \
-	    -disabledforeground black \
 	    -validate key \
 	    -validatecommand {GeometryEditFrame::validateDouble %P}
-    } {
-	rename -font -entryFont entryFont Font
-    }
+    } {}
     itk_component add tgcCyE {
-	::entry $parent.tgcCyE \
+	::ttk::entry $parent.tgcCyE \
 	    -textvariable [::itcl::scope mCy] \
 	    -state disabled \
-	    -disabledforeground black \
 	    -validate key \
 	    -validatecommand {GeometryEditFrame::validateDouble %P}
-    } {
-	rename -font -entryFont entryFont Font
-    }
+    } {}
     itk_component add tgcCzE {
-	::entry $parent.tgcCzE \
+	::ttk::entry $parent.tgcCzE \
 	    -textvariable [::itcl::scope mCz] \
 	    -state disabled \
-	    -disabledforeground black \
 	    -validate key \
 	    -validatecommand {GeometryEditFrame::validateDouble %P}
-    } {
-	rename -font -entryFont entryFont Font
-    }
+    } {}
     itk_component add tgcCUnitsL {
-	::label $parent.tgcCUnitsL \
+	::ttk::label $parent.tgcCUnitsL \
 	    -textvariable [::itcl::scope itk_option(-units)] \
 	    -anchor e
-    } {
-	rename -font -labelFont labelFont Font
-    }
+    } {}
     itk_component add tgcDL {
-	::label $parent.tgcDL \
+	::ttk::label $parent.tgcDL \
 	    -text "D:" \
 	    -anchor e
-    } {
-	rename -font -labelFont labelFont Font
-    }
+    } {}
     itk_component add tgcDxE {
-	::entry $parent.tgcDxE \
+	::ttk::entry $parent.tgcDxE \
 	    -textvariable [::itcl::scope mDx] \
 	    -state disabled \
-	    -disabledforeground black \
 	    -validate key \
 	    -validatecommand {GeometryEditFrame::validateDouble %P}
-    } {
-	rename -font -entryFont entryFont Font
-    }
+    } {}
     itk_component add tgcDyE {
-	::entry $parent.tgcDyE \
+	::ttk::entry $parent.tgcDyE \
 	    -textvariable [::itcl::scope mDy] \
 	    -state disabled \
-	    -disabledforeground black \
 	    -validate key \
 	    -validatecommand {GeometryEditFrame::validateDouble %P}
-    } {
-	rename -font -entryFont entryFont Font
-    }
+    } {}
     itk_component add tgcDzE {
-	::entry $parent.tgcDzE \
+	::ttk::entry $parent.tgcDzE \
 	    -textvariable [::itcl::scope mDz] \
 	    -state disabled \
-	    -disabledforeground black \
 	    -validate key \
 	    -validatecommand {GeometryEditFrame::validateDouble %P}
-    } {
-	rename -font -entryFont entryFont Font
-    }
+    } {}
     itk_component add tgcDUnitsL {
-	::label $parent.tgcDUnitsL \
+	::ttk::label $parent.tgcDUnitsL \
 	    -textvariable [::itcl::scope itk_option(-units)] \
 	    -anchor e
-    } {
-	rename -font -labelFont labelFont Font
-    }
+    } {}
 
     set row 0
     grid $itk_component(tgcType) \

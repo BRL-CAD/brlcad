@@ -114,8 +114,6 @@ extern int rt_retrieve_binunif(struct rt_db_internal *intern,
 			       const struct db_i	*dbip,
 			       const char *name);
 
-extern void rt_binunif_ifree( struct rt_db_internal	*ip );
-
 
 #define dlog if (RT_G_DEBUG & DEBUG_HF) bu_log
 
@@ -4543,7 +4541,7 @@ rt_dsp_describe(struct bu_vls		*str,
  *  Free the storage associated with the rt_db_internal version of this solid.
  */
 void
-rt_dsp_ifree(struct rt_db_internal *ip)
+rt_dsp_ifree(struct rt_db_internal *ip, struct resource *resp)
 {
     register struct rt_dsp_internal	*dsp_ip;
 
@@ -4551,6 +4549,11 @@ rt_dsp_ifree(struct rt_db_internal *ip)
 	bu_log("rt_dsp_ifree()\n");
 
     RT_CK_DB_INTERNAL(ip);
+
+    if (!resp) {
+	resp = &rt_uniresource;
+    }
+
     dsp_ip = (struct rt_dsp_internal *)ip->idb_ptr;
     RT_DSP_CK_MAGIC(dsp_ip);
 
@@ -4560,7 +4563,7 @@ rt_dsp_ifree(struct rt_db_internal *ip)
     }
 
     if (dsp_ip->dsp_bip) {
-	rt_binunif_ifree( (struct rt_db_internal *) dsp_ip->dsp_bip);
+	dsp_ip->dsp_bip->idb_meth->ft_ifree((struct rt_db_internal *) dsp_ip->dsp_bip, resp);
     }
 
     dsp_ip->magic = 0;			/* sanity */

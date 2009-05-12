@@ -34,7 +34,6 @@ set(LIBRT_SOURCES
     many.c
     mater.c
     memalloc.c
-    mirror.c
     mkbundle.c
     opennurbs_ext.cpp
     oslo_calc.c
@@ -83,6 +82,7 @@ set(LIBRT_SOURCES
     primitives/hf/hf.c
     primitives/hyp/hyp.c
     primitives/metaball/metaball.c
+    primitives/mirror.c
     primitives/nmg/nmg.c
     primitives/nmg/nmg_bool.c
     primitives/nmg/nmg_ck.c
@@ -94,6 +94,7 @@ set(LIBRT_SOURCES
     primitives/nmg/nmg_index.c
     primitives/nmg/nmg_info.c
     primitives/nmg/nmg_inter.c
+    primitives/nmg/nmg_junk.c
     primitives/nmg/nmg_manif.c
     primitives/nmg/nmg_mesh.c
     primitives/nmg/nmg_misc.c
@@ -118,15 +119,16 @@ set(LIBRT_SOURCES
     primitives/sph/sph.c
     primitives/submodel/submodel.c
     primitives/superell/superell.c
+    primitives/table.c
     primitives/tgc/tgc.c
     primitives/tor/tor.c
+    primitives/tor/tor_mirror.c
     primitives/vol/vol.c
     regionfix.c
     roots.c
     shoot.c
     spectrum.c
     storage.c
-    table.c
     tcl.c
     transform.c
     tree.c

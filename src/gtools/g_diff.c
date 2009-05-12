@@ -50,7 +50,6 @@
 #include "wdb.h"
 #include "mater.h"
 #include "ged.h"
-#include "sysv.h"
 
 
 static struct mater *mater_hd1 = MATER_NULL;
@@ -213,7 +212,7 @@ compare_external(struct directory *dp1, struct directory *dp2)
 	kill = 1;
     }
 
-    if (bcmp((void *)ext1.ext_buf, (void *)ext2.ext_buf, ext1.ext_nbytes)) {
+    if (memcmp((void *)ext1.ext_buf, (void *)ext2.ext_buf, ext1.ext_nbytes)) {
 	printf("Byte value(s) are different on %s (has no Tcl list representation)\n", dp1->d_namep);
 	kill = 1;
     }

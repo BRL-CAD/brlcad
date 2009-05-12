@@ -137,11 +137,12 @@ package provide Archer 1.0
 	method pluginUpdateStatusBar {msg}
 
 	method importFg4Sections   {_slist _wlist _delta}
-	method purgeHistory        {}
+	method setDefaultBindingMode {_mode}
 
 	# ArcherCore Override Section
 	method Load                {_target}
 	method updateTheme {}
+	method kill                {args}
     }
 
     protected {
@@ -160,14 +161,13 @@ package provide Archer 1.0
 	method initDefaultBindings {{_comp ""}}
 	method initGed {}
 	method selectNode {_tags {_rflag 1}}
-	method toggleTreeView {_state}
+	method updateSaveMode {}
 
 	# Miscellaneous Section
 	method archerWrapper {_cmd _eflag _hflag _sflag _tflag args}
 	method buildAboutDialog {}
 	method buildBackgroundColor {_parent}
 	method buildDisplayPreferences {}
-	method buildEmbeddedMenubar {}
 	method buildGeneralPreferences {}
 	method buildGroundPlanePreferences {}
 	method buildInfoDialogs {}
@@ -183,32 +183,22 @@ package provide Archer 1.0
 	method launchDisplayMenuEnd {}
 	method menuStatusCB {_w}
 	method updateCreationButtons {_on}
-	method updateModesMenu {}
+	method updatePrimaryToolbar {}
+
+	method buildEmbeddedMenubar {}
+	method buildEmbeddedFileMenu {}
+	method buildEmbeddedDisplayMenu {}
+	method buildEmbeddedModesMenu {}
+	method buildEmbeddedRaytraceMenu {}
+	method buildEmbeddedHelpMenu {}
+
+	method buildModesMenu {}
 
 	# Modes Section
-	method setAdvancedMode {}
-	method setBasicMode {}
-	method setIntermediateMode {}
-	method setMode {{_updateFractions 0}}
-	method updateCopyMode {}
-	method updateCutMode {}
-	method updatePasteMode {}
-	method updateViewToolbarForEdit {}
+	method initMode {{_updateFractions 0}}
 
 	# Object Edit Section
-	method applyEdit {}
-	method copyObj {}
-	method cutObj {}
-	method initEdit {}
-	method finalizeObjEdit {_obj _path}
-	method gotoNextObj {}
-	method gotoPrevObj {}
-	method pasteObj {}
-	method purgeObjHistory {obj}
-	method resetEdit {}
-	method updateNextObjButton {_obj}
-	method updateObjHistory {_obj}
-	method updatePrevObjButton {_obj}
+	method initEdit {{_initEditMode 1}}
 
 	# Object Edit VIA Mouse Section
 	method beginObjRotate {}
@@ -270,9 +260,7 @@ package provide Archer 1.0
 	method initHalfEditView {_odata}
 	method initNoWizard {_parent _msg}
 	method initObjAttrView {}
-	method initObjEdit {_obj}
 	method initObjEditView {}
-	method initObjHistory {_obj}
 	method initObjWizard {_obj _wizardLoaded}
 	method initPartEditView {_odata}
 	method initPipeEditView {_odata}
@@ -349,7 +337,7 @@ package provide Archer 1.0
 # ------------------------------------------------------------
 ::itcl::body Archer::constructor {{_viewOnly 0} {_noCopy 0} args} {
     # Append a few more commands
-    lappend mgedCommands importFg4Sections purgeHistory
+    lappend mgedCommands importFg4Sections
 
     if {!$mViewOnly} {
 	if {$ArcherCore::inheritFromToplevel} {
@@ -360,323 +348,12 @@ package provide Archer 1.0
 	    pack $itk_component(menubar) -side top -fill x -padx 1
 	}
 
-    # Populate the primary toolbar
-    $itk_component(primaryToolbar) insert 0 button new \
-	-balloonstr "Create a new geometry file" \
-	-helpstr "Create a new geometry file" \
-	-relief flat \
-	-overrelief raised \
-	-command [::itcl::code $this newDb]
-
-    #    $itk_component(primaryToolbar) add button open \
-	-balloonstr "Open an existing geometry file" \
-	-helpstr "Open an existing geometry file" \
-	-relief flat \
-	-overrelief raised \
-	-command [::itcl::code $this openDb]
-
-    #    $itk_component(primaryToolbar) add button save \
-	-balloonstr "Save the current geometry file" \
-	-helpstr "Save the current geometry file" \
-	-relief flat \
-	-overrelief raised \
-	-command [::itcl::code $this saveDb]
-
-    #    $itk_component(primaryToolbar) add button close \
-	-image [image create photo \
-		    -file [file join $mImgDir Themes $mTheme closeall.png]] \
-	-balloonstr "Close the current geometry file" \
-	-helpstr "Close the current geometry file" \
-	-relief flat \
-	-overrelief raised \
-	-command [::itcl::code $this closeDb]
-
-    # half-size spacer
-    $itk_component(primaryToolbar) add frame sep1 \
-	-relief sunken \
-	-width 2
-
-    $itk_component(primaryToolbar) add button cut \
-	-balloonstr "Cut current object" \
-	-helpstr "Cut current object" \
-	-relief flat \
-	-overrelief raised \
-	-command [::itcl::code $this cutObj]
-
-    $itk_component(primaryToolbar) add button copy \
-	-balloonstr "Copy current object" \
-	-helpstr "Copy current object" \
-	-relief flat \
-	-overrelief raised \
-	-command [::itcl::code $this copyObj]
-
-    $itk_component(primaryToolbar) add button paste \
-	-balloonstr "Paste object" \
-	-helpstr "Paste object" \
-	-relief flat \
-	-overrelief raised \
-	-command [::itcl::code $this pasteObj]
-
-    # half-size spacer
-    $itk_component(primaryToolbar) add frame sep2 \
-	-relief sunken \
-	-width 2
-
-    $itk_component(primaryToolbar) add button preferences \
-	-balloonstr "Set application preferences" \
-	-helpstr "Set application preferences" \
-	-relief flat \
-	-overrelief raised \
-	-command [::itcl::code $this doPreferences]
-
-    # half-size spacer
-    $itk_component(primaryToolbar) add frame sep3 \
-	-relief sunken \
-	-width 2
-
-    $itk_component(primaryToolbar) add button arb6 \
-	-balloonstr "Create an arb6" \
-	-helpstr "Create an arb6" \
-	-relief flat \
-	-overrelief raised \
-	-command [::itcl::code $this createObj arb6]
-
-    $itk_component(primaryToolbar) add button arb8 \
-	-balloonstr "Create an arb8" \
-	-helpstr "Create an arb8" \
-	-relief flat \
-	-overrelief raised \
-	-command [::itcl::code $this createObj arb8]
-
-    $itk_component(primaryToolbar) add button cone \
-	-balloonstr "Create a tgc" \
-	-helpstr "Create a tgc" \
-	-relief flat \
-	-overrelief raised \
-	-command [::itcl::code $this createObj tgc]
-
-    $itk_component(primaryToolbar) add button sphere \
-	-balloonstr "Create a sphere" \
-	-helpstr "Create a sphere" \
-	-relief flat \
-	-overrelief raised \
-	-command [::itcl::code $this createObj sph]
-
-    $itk_component(primaryToolbar) add button torus \
-	-balloonstr "Create a torus" \
-	-helpstr "Create a torus" \
-	-relief flat \
-	-overrelief raised \
-	-command [::itcl::code $this createObj tor]
-
-    #    $itk_component(primaryToolbar) add button pipe \
-	-balloonstr "Create a pipe" \
-	-helpstr "Create a pipe" \
-	-relief flat \
-	-overrelief raised \
-	-command [::itcl::code $this createObj pipe]
-
-    $itk_component(primaryToolbar) add menubutton other \
-	-balloonstr "Create other primitives" \
-	-helpstr "Create other primitives" \
-	-relief flat
-
-    # half-size spacer
-    $itk_component(primaryToolbar) add frame sep4 \
-	-relief sunken \
-	-width 2
-
-    $itk_component(primaryToolbar) add button comb \
-	-state disabled \
-	-balloonstr "Create a combination" \
-	-helpstr "Create a combination" \
-	-relief flat \
-	-overrelief raised \
-	-command [::itcl::code $this createObj comb]
-
-    if {$::Archer::plugins != ""} {
-	# half-size spacer
-	$itk_component(primaryToolbar) add frame sep5 \
-	    -relief sunken \
-	    -width 2
+	updatePrimaryToolbar
     }
-
-    buildWizardMenu
-
-    set parent [$itk_component(primaryToolbar) component other]
-    itk_component add primitiveMenu {
-	::menu $parent.menu
-    } {
-	keep -background
-    }
-    itk_component add arbMenu {
-	::menu $itk_component(primitiveMenu).arbmenu
-    } {
-	keep -background
-    }
-    $itk_component(arbMenu) add command \
-	-label arb4 \
-	-command [::itcl::code $this createObj arb4]
-    $itk_component(arbMenu) add command \
-	-label arb5 \
-	-command [::itcl::code $this createObj arb5]
-    $itk_component(arbMenu) add command \
-	-label arb6 \
-	-command [::itcl::code $this createObj arb6]
-    $itk_component(arbMenu) add command \
-	-label arb7 \
-	-command [::itcl::code $this createObj arb7]
-    $itk_component(arbMenu) add command \
-	-label arb8 \
-	-command [::itcl::code $this createObj arb8]
-
-    $itk_component(primitiveMenu) add cascade \
-	-label Arbs \
-	-menu $itk_component(arbMenu)
-    #    $itk_component(primitiveMenu) add command \
-	-label bot \
-	-command [::itcl::code $this createObj bot]
-    #    $itk_component(primitiveMenu) add command \
-	-label comb \
-	-command [::itcl::code $this createObj comb]
-    #    $itk_component(primitiveMenu) add command \
-	-label ehy \
-	-command [::itcl::code $this createObj ehy]
-    #    $itk_component(primitiveMenu) add command \
-	-label ell \
-	-command [::itcl::code $this createObj ell]
-    #    $itk_component(primitiveMenu) add command \
-	-label epa \
-	-command [::itcl::code $this createObj epa]
-    #    $itk_component(primitiveMenu) add command \
-	-label eto \
-	-command [::itcl::code $this createObj eto]
-    #    $itk_component(primitiveMenu) add command \
-	-label extrude \
-	-command [::itcl::code $this createObj extrude]
-    #    $itk_component(primitiveMenu) add command \
-	-label grip \
-	-command [::itcl::code $this createObj grip]
-    #    $itk_component(primitiveMenu) add command \
-	-label half \
-	-command [::itcl::code $this createObj half]
-    #    $itk_component(primitiveMenu) add command \
-	-label part \
-	-command [::itcl::code $this createObj part]
-    #    $itk_component(primitiveMenu) add command \
-	-label pipe \
-	-command [::itcl::code $this createObj pipe]
-    #    $itk_component(primitiveMenu) add command \
-	-label rhc \
-	-command [::itcl::code $this createObj rhc]
-    #    $itk_component(primitiveMenu) add command \
-	-label rpc \
-	-command [::itcl::code $this createObj rpc]
-    #    $itk_component(primitiveMenu) add command \
-	-label sketch \
-	-command [::itcl::code $this createObj sketch]
-    $itk_component(primitiveMenu) add command \
-	-label sph \
-	-command [::itcl::code $this createObj sph]
-    $itk_component(primitiveMenu) add command \
-	-label tgc \
-	-command [::itcl::code $this createObj tgc]
-    $itk_component(primitiveMenu) add command \
-	-label tor \
-	-command [::itcl::code $this createObj tor]
-
-    set parent [$itk_component(primaryToolbar) component other]
-    $parent configure \
-	-menu $itk_component(primitiveMenu) \
-	-indicator on \
-	-activebackground [$parent cget -background]
-
-    #    $itk_component(primaryToolbar) add button ehy \
-	-balloonstr "Create an ehy" \
-	-helpstr "Create an ehy" \
-	-relief flat \
-	-overrelief raised \
-	-command [::itcl::code $this createObj ehy]
-
-    #    $itk_component(primaryToolbar) add button epa \
-	-balloonstr "Create an epa" \
-	-helpstr "Create an epa" \
-	-relief flat \
-	-overrelief raised \
-	-command [::itcl::code $this createObj epa]
-
-    #    $itk_component(primaryToolbar) add button rpc \
-	-balloonstr "Create an rpc" \
-	-helpstr "Create an rpc" \
-	-relief flat \
-	-overrelief raised \
-	-command [::itcl::code $this createObj rpc]
-
-    #    $itk_component(primaryToolbar) add button rhc \
-	-balloonstr "Create an rhc" \
-	-helpstr "Create an rhc" \
-	-relief flat \
-	-overrelief raised \
-	-command [::itcl::code $this createObj rhc]
-
-    #    $itk_component(primaryToolbar) add button ell \
-	-balloonstr "Create an ellipsoid" \
-	-helpstr "Create an ellipsoid" \
-	-relief flat \
-	-overrelief raised \
-	-command [::itcl::code $this createObj ell]
-
-    #    $itk_component(primaryToolbar) add button eto \
-	-balloonstr "Create an eto" \
-	-helpstr "Create an eto" \
-	-relief flat \
-	-overrelief raised \
-	-command [::itcl::code $this createObj eto]
-
-    #    $itk_component(primaryToolbar) add button half \
-	-balloonstr "Create a half space" \
-	-helpstr "Create a half space" \
-	-relief flat \
-	-overrelief raised \
-	-command [::itcl::code $this createObj half]
-
-    #    $itk_component(primaryToolbar) add button part \
-	-balloonstr "Create a particle" \
-	-helpstr "Create a particle" \
-	-relief flat \
-	-overrelief raised \
-	-command [::itcl::code $this createObj part]
-
-    #    $itk_component(primaryToolbar) add button grip \
-	-balloonstr "Create a grip" \
-	-helpstr "Create a grip" \
-	-relief flat \
-	-overrelief raised \
-	-command [::itcl::code $this createObj grip]
-
-    #    $itk_component(primaryToolbar) add button extrude \
-	-balloonstr "Create an extrusion" \
-	-helpstr "Create an extrusion" \
-	-relief flat \
-	-overrelief raised \
-	-command [::itcl::code $this createObj extrude]
-
-    #    $itk_component(primaryToolbar) add button sketch \
-	-balloonstr "Create a sketch" \
-	-helpstr "Create a sketch" \
-	-relief flat \
-	-overrelief raised \
-	-command [::itcl::code $this createObj sketch]
-
-    #    $itk_component(primaryToolbar) add button bot \
-	-balloonstr "Create a bot" \
-	-helpstr "Create a bot" \
-	-relief flat \
-	-overrelief raised \
-	-command [::itcl::code $this createObj bot]
-    }
-
+	
     eval itk_initialize $args
+
+    $this configure -background $LABEL_BACKGROUND_COLOR
 
     if {!$mViewOnly} {
 	buildInfoDialogs
@@ -689,22 +366,12 @@ package provide Archer 1.0
 	buildObjEditView
 
 	# set initial toggle variables
-	switch -- $mMode {
-	    0 {
-		set mVPaneToggle1 $mVPaneFraction1
-	    }
-	    default {
-		set mVPaneToggle3 $mVPaneFraction3
-		set mVPaneToggle5 $mVPaneFraction5
-	    }
-	}
+	set mVPaneToggle3 $mVPaneFraction3
+	set mVPaneToggle5 $mVPaneFraction5
 
 	readPreferences
 	updateCreationButtons 0
 	updateSaveMode
-	updateCutMode
-	updateCopyMode
-	updatePasteMode
     } else {
 	backgroundColor [lindex $mBackground 0] \
 	    [lindex $mBackground 1] \
@@ -835,6 +502,8 @@ package provide Archer 1.0
 
 	incr i
     }
+
+    $dialog configure -background $LABEL_BACKGROUND_COLOR
 
     pack $sf -padx 2 -pady 2 -expand yes -fill both
 
@@ -1101,28 +770,17 @@ package provide Archer 1.0
     }
 }
 
+::itcl::body Archer::kill {args} {
+    eval gedWrapper kill 1 0 1 1 $args
 
-::itcl::body Archer::purgeHistory {} {
-    if {![info exists itk_component(ged)]} {
-	return
+    if {$mSelectedObj != "" && [lsearch $args $mSelectedObj] != -1} {
+	set tops [$itk_component(ged) tops]
+	if {[llength $tops]} {
+	    set obj [lindex $tops 0]
+	    set obj [regsub -all {/} $obj ""]
+	    selectNode [$itk_component(tree) find $obj] 0
+	}
     }
-
-    foreach obj [$itk_component(ged) ls] {
-	set obj [regsub {(/)|(/R)} $obj ""]
-	purgeObjHistory $obj
-    }
-
-    updatePrevObjButton ""
-    updateNextObjButton ""
-
-    set selNode [$itk_component(tree) query -selected]
-    if {$selNode != ""} {
-	set selNodePath [$itk_component(tree) query -path $selNode]
-	toggleTreePath $selNodePath
-    }
-
-    set mNeedSave 1
-    updateSaveMode
 }
 
 ::itcl::body Archer::Load {_target} {
@@ -1187,10 +845,6 @@ package provide Archer 1.0
 	}
     }
 
-#    setColorOption gedCmd -primitiveLabelColor $mPrimitiveLabelColor
-#    setColorOption gedCmd -scaleColor $mScaleColor
-#    setColorOption gedCmd -viewingParamsColor $mViewingParamsColor
-
     set mDbTitle [$itk_component(ged) title]
     set mDbUnits [$itk_component(ged) units]
 
@@ -1198,7 +852,6 @@ package provide Archer 1.0
 	initDbAttrView $mTarget
 	applyPreferences
 	doLighting
-	updateModesMenu
 	updateWizardMenu
 	updateUtilityMenu
 	deleteTargetOldCopy
@@ -1207,13 +860,13 @@ package provide Archer 1.0
 
 	buildGroundPlane
 	showGroundPlane
-
-	# refresh tree contents
-	refreshTree 0
     } else {
 	applyPreferences
 	doLighting
     }
+
+    # refresh tree contents
+    refreshTree 0
 
     if {$mBindingMode == 0} {
 	set mDefaultBindingMode $ROTATE_MODE
@@ -1239,15 +892,6 @@ package provide Archer 1.0
 	$itk_component(primaryToolbar) itemconfigure preferences \
 	    -image [image create photo \
 			-file [file join $dir configure.png]]
-	$itk_component(primaryToolbar) itemconfigure cut \
-	    -image [image create photo \
-			-file [file join $dir edit_cut.png]]
-	$itk_component(primaryToolbar) itemconfigure copy \
-	    -image [image create photo \
-			-file [file join $dir edit_copy.png]]
-	$itk_component(primaryToolbar) itemconfigure paste \
-	    -image [image create photo \
-			-file [file join $dir edit_paste.png]]
 	$itk_component(primaryToolbar) itemconfigure comb \
 	    -image [image create photo \
 			-file [file join $dir combination.png]]
@@ -1272,6 +916,26 @@ package provide Archer 1.0
 	$itk_component(primaryToolbar) itemconfigure other \
 	    -image [image create photo \
 			-file [file join $dir primitive_list.png]]
+
+	# View Toolbar
+	$itk_component(primaryToolbar) itemconfigure rotate \
+	    -image [image create photo \
+			-file [file join $dir view_rotate.png]]
+	$itk_component(primaryToolbar) itemconfigure translate \
+	    -image [image create photo \
+			-file [file join $dir view_translate.png]]
+	$itk_component(primaryToolbar) itemconfigure scale \
+	    -image [image create photo \
+			-file [file join $dir view_scale.png]]
+	$itk_component(primaryToolbar) itemconfigure center \
+	    -image [image create photo \
+			-file [file join $dir view_select.png]]
+	$itk_component(primaryToolbar) itemconfigure cpick \
+	    -image [image create photo \
+			-file [file join $dir compSelect.png]]
+	$itk_component(primaryToolbar) itemconfigure measure \
+	    -image [image create photo \
+			-file [file join $dir measure.png]]
 
 	# We catch this because the item may not exist
 	catch {$itk_component(primaryToolbar) itemconfigure wizards \
@@ -1316,16 +980,16 @@ package provide Archer 1.0
 			-file [file join $dir primitive_bot.png]]
 
 	catch {
-	    $itk_component(viewToolbar) itemconfigure edit_rotate \
+	    $itk_component(primaryToolbar) itemconfigure edit_rotate \
 		-image [image create photo \
 			    -file [file join $dir edit_rotate.png]]
-	    $itk_component(viewToolbar) itemconfigure edit_translate \
+	    $itk_component(primaryToolbar) itemconfigure edit_translate \
 		-image [image create photo \
 			    -file [file join $dir edit_translate.png]]
-	    $itk_component(viewToolbar) itemconfigure edit_scale \
+	    $itk_component(primaryToolbar) itemconfigure edit_scale \
 		-image [image create photo \
 			    -file [file join $dir edit_scale.png]]
-	    $itk_component(viewToolbar) itemconfigure edit_center \
+	    $itk_component(primaryToolbar) itemconfigure edit_center \
 		-image [image create photo \
 			    -file [file join $dir edit_select.png]]
 	}
@@ -1337,16 +1001,36 @@ package provide Archer 1.0
 	$itk_component(objViewToolbar) itemconfigure objEditView \
 	    -image [image create photo \
 			-file [file join $dir option_tree.png]]
-
-	# Object Edit Toolbar
-	$itk_component(objEditToolbar) itemconfigure prev \
-	    -image [image create photo \
-			-file [file join $dir arrow_back.png]]
-	$itk_component(objEditToolbar) itemconfigure next \
-	    -image [image create photo \
-			-file [file join $dir arrow_forward.png]]
     }
 }
+
+::itcl::body Archer::setDefaultBindingMode {_mode} {
+    set saved_mode $mDefaultBindingMode
+
+    if {[::ArcherCore::setDefaultBindingMode $_mode]} {
+	return
+    }
+
+    switch -- $mDefaultBindingMode \
+	$OBJECT_ROTATE_MODE { \
+	    beginObjRotate
+	} \
+	$OBJECT_TRANSLATE_MODE { \
+	    beginObjTranslate
+	} \
+	$OBJECT_SCALE_MODE { \
+	    beginObjScale
+	} \
+	$OBJECT_CENTER_MODE { \
+	    if {$saved_mode == $OBJECT_TRANSLATE_MODE} { \
+		set mDefaultBindingMode $saved_mode
+		beginObjTranslate
+	    } else { \
+		beginObjCenter
+	    } \
+	}
+}
+
 
 ################################### End Public Section ###################################
 
@@ -1386,12 +1070,6 @@ package provide Archer 1.0
     $itk_component(tree) selection clear
     $itk_component(tree) selection set $tags
 
-    if {!$mViewOnly} {
-	updateCutMode
-	updateCopyMode
-	updatePasteMode
-    }
-
     switch -- $type {
 	"leaf"   -
 	"branch" {renderComp $node}
@@ -1410,11 +1088,16 @@ package provide Archer 1.0
 
     ArcherCore::initDefaultBindings $_comp
 
-    if {!$mViewOnly} {
-	foreach dname {ul ur ll lr} {
-	    set dm [$_comp component $dname]
-	    set win [$dm component dm]
+    foreach dname {ul ur ll lr} {
+	set dm [$_comp component $dname]
+	set win [$dm component dm]
 
+	if {$mViewOnly} {
+	    bind $win <Control-ButtonPress-1> \
+		"[::itcl::code $this launchDisplayMenuBegin $dm [$itk_component(canvas_menu) component view-menu] %X %Y]; break"
+	    bind $win <3> \
+		"[::itcl::code $this launchDisplayMenuBegin $dm [$itk_component(canvas_menu) component view-menu] %X %Y]; break"
+	} else {
 	    if {$ArcherCore::inheritFromToplevel} {
 		bind $win <Control-ButtonPress-1> \
 		    "[::itcl::code $this launchDisplayMenuBegin $dm $itk_component(displaymenu) %X %Y]; break"
@@ -1429,12 +1112,10 @@ package provide Archer 1.0
 	}
     }
 
-    if {$mMode != 0} {
-	$itk_component(viewToolbar) itemconfigure edit_rotate -state normal
-	$itk_component(viewToolbar) itemconfigure edit_translate -state normal
-	$itk_component(viewToolbar) itemconfigure edit_scale -state normal
-	$itk_component(viewToolbar) itemconfigure edit_center -state normal
-    }
+    $itk_component(primaryToolbar) itemconfigure edit_rotate -state normal
+    $itk_component(primaryToolbar) itemconfigure edit_translate -state normal
+    $itk_component(primaryToolbar) itemconfigure edit_scale -state normal
+    $itk_component(primaryToolbar) itemconfigure edit_center -state normal
 }
 
 ::itcl::body Archer::initGed {} {
@@ -1443,36 +1124,31 @@ package provide Archer 1.0
     if {!$mViewOnly} {
 	if {$ArcherCore::inheritFromToplevel} {
 	    $itk_component(filemenu) entryconfigure "Raytrace Control Panel..." -state normal
-	    #$itk_component(filemenu) entryconfigure "Export Geometry to PNG..." -state normal
-	    #$itk_component(filemenu) entryconfigure "Compact" -state disabled
-	    catch {$itk_component(filemenu) delete "Compact"}
 
-	    $itk_component(filemenu) insert "Import" command \
-		-label "Purge History" \
-		-command [::itcl::code $this purgeHistory]
-
-	    $itk_component(filemenu) entryconfigure "Import" -state disabled
-	    $itk_component(filemenu) entryconfigure "Export" -state disabled
 	    $itk_component(displaymenu) entryconfigure "Standard Views" -state normal
 	    $itk_component(displaymenu) entryconfigure "Reset" -state normal
 	    $itk_component(displaymenu) entryconfigure "Autoview" -state normal
 	    $itk_component(displaymenu) entryconfigure "Center..." -state normal
-	    $itk_component(modesmenu) entryconfigure "View Axes" -state normal
-	    $itk_component(modesmenu) entryconfigure "Model Axes" -state normal
 	    $itk_component(displaymenu) entryconfigure "Clear" -state normal
 	    $itk_component(displaymenu) entryconfigure "Refresh" -state normal
+
+	    $itk_component(modesmenu) entryconfigure "Active Pane" -state normal
+	    $itk_component(modesmenu) entryconfigure "Quad View" -state normal
+	    $itk_component(modesmenu) entryconfigure "View Axes" -state normal
+	    $itk_component(modesmenu) entryconfigure "Model Axes" -state normal
+	    $itk_component(modesmenu) entryconfigure "Ground Plane" -state normal
+	    $itk_component(modesmenu) entryconfigure "Primitive Labels" -state normal
+	    $itk_component(modesmenu) entryconfigure "Viewing Parameters" -state normal
+	    $itk_component(modesmenu) entryconfigure "Scale" -state normal
+	    $itk_component(modesmenu) entryconfigure "Lighting" -state normal
+
+	    $itk_component(raytracemenu) entryconfigure "rt" -state normal
+	    $itk_component(raytracemenu) entryconfigure "rtcheck" -state normal
+	    $itk_component(raytracemenu) entryconfigure "rtedge" -state normal
+	    $itk_component(raytracemenu) entryconfigure "nirt" -state normal
 	} else {
-	    $itk_component(menubar) menuconfigure .file.rt  -state normal
-	    #$itk_component(menubar) menuconfigure .file.png -state normal
-	    #$itk_component(menubar) menuconfigure .file.compact -state disabled
-	    catch {$itk_component(menubar) delete .file.compact}
+	    $itk_component(menubar) menuconfigure .file.rt -state normal
 
-	    $itk_component(menubar) insert .file.import command purgeHist \
-		-label "Purge History" \
-		-helpstr "Remove all object history"
-
-	    $itk_component(menubar) menuconfigure .file.import -state disabled
-	    $itk_component(menubar) menuconfigure .file.export -state disabled
 	    $itk_component(menubar) menuconfigure .display.standard -state normal
 	    $itk_component(menubar) menuconfigure .display.reset -state normal
 	    $itk_component(menubar) menuconfigure .display.autoview -state normal
@@ -1480,8 +1156,20 @@ package provide Archer 1.0
 	    $itk_component(menubar) menuconfigure .display.clear -state normal
 	    $itk_component(menubar) menuconfigure .display.refresh -state normal
 
-	    $itk_component(menubar) menuconfigure .file.purgeHist \
-		-command [::itcl::code $this purgeHistory]
+	    $itk_component(menubar) menuconfigure .modes.activepane -state normal
+	    $itk_component(menubar) menuconfigure .modes.quad -state normal
+	    $itk_component(menubar) menuconfigure .modes.vaxes -state normal
+	    $itk_component(menubar) menuconfigure .modes.maxes -state normal
+	    $itk_component(menubar) menuconfigure .modes.gplane -state normal
+	    $itk_component(menubar) menuconfigure .modes.plabels -state normal
+	    $itk_component(menubar) menuconfigure .modes.vparams -state normal
+	    $itk_component(menubar) menuconfigure .modes.scale -state normal
+	    $itk_component(menubar) menuconfigure .modes.light -state normal
+
+	    $itk_component(menubar) menuconfigure .raytrace.rt -state normal
+	    $itk_component(menubar) menuconfigure .raytrace.rtcheck -state normal
+	    $itk_component(menubar) menuconfigure .raytrace.rtedge -state normal
+	    $itk_component(menubar) menuconfigure .raytrace.nirt -state normal
 	}
     }
 }
@@ -1564,126 +1252,35 @@ package provide Archer 1.0
 
     $itk_component(tree) selection clear
     $itk_component(tree) selection set $element
-
-    if {!$mViewOnly} {
-	updateCutMode
-	updateCopyMode
-	updatePasteMode
-    }
 }
 
 
-::itcl::body Archer::toggleTreeView {state} {
-    # pre-move stuff
-    set fractions [$itk_component(vpane) fraction]
-    switch -- $state {
-	"open" {
-	    switch -- $mMode {
-		0 {}
-		default {
-		    # need to get attr pane in case it has changed size
-		    if {[$itk_component(attr_expand) cget -state] == "disabled"} {
-			set mVPaneToggle5 [lindex $fractions 2]
-		    }
-		}
-	    }
-	}
-	"close" {
-	    # store fractions
-	    switch -- $mMode {
-		0 {set mVPaneToggle1 [lindex $fractions 0]}
-		default {
-		    set mVPaneToggle3 [lindex $fractions 0]
-		    # need to get attr pane in case it has changed size
-		    if {[$itk_component(attr_expand) cget -state] == "disabled"} {
-			set mVPaneToggle5 [lindex $fractions 2]
-		    }
-		}
-	    }
-	}
+::itcl::body Archer::updateSaveMode {} {
+    ArcherCore::updateSaveMode
+
+    if {$mViewOnly} {
+	return
     }
 
-    switch -- $mMode {
-	0 {
-	    # BASIC mode
-	    switch -- $state {
-		"open" {
-		    $itk_component(vpane) paneconfigure hierarchyView \
-			-minimum 200
-		    set fraction1 $mVPaneToggle1
-		    set fraction2 [expr 100 - $fraction1]
-		}
-		"close" {
-		    $itk_component(vpane) paneconfigure hierarchyView \
-			-minimum 0
-		    set fraction1 0
-		    set fraction2 100
-		}
+    catch {
+	if {!$mDbNoCopy && !$mDbReadOnly && $mNeedSave} {
+	    if {$ArcherCore::inheritFromToplevel} {
+		$itk_component(filemenu) entryconfigure "Save" -state normal
+	    } else {
+		$itk_component(menubar) menuconfigure .file.save \
+		    -state normal
 	    }
-	    # How screwed up is this?
-	    $itk_component(vpane) fraction $fraction1 $fraction2
-	    update
-	    after idle $itk_component(vpane) fraction  $fraction1 $fraction2
-	}
-	1 -
-	2 {
-	    # INTERMEDIATE & ADVANCED mode
-	    switch -- $state {
-		"open" {
-		    set fraction1 $mVPaneToggle3
-
-		    # check state of attribute pane
-		    switch -- [$itk_component(attr_expand) cget -state] {
-			"normal" {
-			    set fraction2 [expr 100 - $fraction1]
-			    set fraction3 0
-			}
-			"disabled" {
-			    set fraction3 $mVPaneToggle5
-			    set fraction2 [expr 100 - $fraction1 - $fraction3]
-			}
-		    }
-		}
-		"close" {
-		    set fraction1 0
-
-		    # check state of attribute pane
-		    switch -- [$itk_component(attr_expand) cget -state] {
-			"normal" {
-			    set fraction2 100
-			    set fraction3 0
-			}
-			"disabled" {
-			    set fraction3 $mVPaneToggle5
-			    set fraction2 [expr 100 - $fraction3]
-			}
-		    }
-		}
+	} else {
+	    if {$ArcherCore::inheritFromToplevel} {
+		$itk_component(filemenu) entryconfigure "Save" -state disabled
+	    } else {
+		$itk_component(menubar) menuconfigure .file.save \
+		    -state disabled
 	    }
-
-	    # How screwed up is this?
-	    $itk_component(vpane) fraction $fraction1 $fraction2 $fraction3
-	    update
-	    after idle $itk_component(vpane) fraction $fraction1 $fraction2 $fraction3
-	}
-    }
-
-    # post-move stuff
-    switch -- $state {
-	"open" {
-	    $itk_component(tree_expand) configure -image [image create photo -file \
-							      [file join $mImgDir Themes $mTheme "pane_blank.png"]] \
-		-state disabled
-	    #	    $itk_component(vpane) show hierarchyView
-	}
-	"close" {
-	    $itk_component(tree_expand) configure -image [image create photo -file \
-							      [file join $mImgDir Themes $mTheme "pane_expand.png"]] \
-		-state normal
-	    #	    $itk_component(vpane) hide hierarchyView
 	}
     }
 }
+
 
 
 ################################### Miscellaneous Section ###################################
@@ -1760,13 +1357,13 @@ package provide Archer 1.0
     set parent [$itk_component(aboutDialog) childsite]
 
     itk_component add aboutDialogTabs {
-	ttk::notebook $parent.tabs
+	::ttk::notebook $parent.tabs
     } {}
 
     # About Info
     set aboutImg [image create photo -file [file join $brlcadDataPath tclscripts archer images aboutArcher.png]]
     itk_component add aboutInfo {
-	::label $itk_component(aboutDialogTabs).aboutInfo \
+	::ttk::label $itk_component(aboutDialogTabs).aboutInfo \
 	    -image $aboutImg
     } {}
 
@@ -1803,19 +1400,20 @@ package provide Archer 1.0
     $itk_component(ackInfo) insert 0.0 $mAckInfo
     $itk_component(ackInfo) configure -state disabled
 
-    $itk_component(aboutDialogTabs) add $itk_component(aboutInfo) -text "About"
+    $itk_component(aboutDialogTabs) add $itk_component(aboutInfo) -text "About" -stick ns
     $itk_component(aboutDialogTabs) add $itk_component(brlcadLicenseInfo) -text "License"
     $itk_component(aboutDialogTabs) add $itk_component(ackInfo) -text "Acknowledgements"
 
     # Version Info
     itk_component add versionInfo {
-	::label $parent.versionInfo \
+	::ttk::label $parent.versionInfo \
 	    -text "Version: $mArcherVersion" \
-	    -pady 0 \
-	    -borderwidth 0 \
+	    -padding 0 \
 	    -font $mFontText \
 	    -anchor se
     } {}
+
+    $itk_component(aboutDialog) configure -background $LABEL_BACKGROUND_COLOR
 
     pack $itk_component(versionInfo) \
 	-expand yes \
@@ -1832,48 +1430,44 @@ package provide Archer 1.0
 
 ::itcl::body Archer::buildBackgroundColor {parent} {
     itk_component add backgroundRedL {
-	::label $parent.redl \
+	::ttk::label $parent.redl \
 	    -anchor e \
 	    -text "Red:"
     } {}
 
-    set hbc [$itk_component(backgroundRedL) cget -background]
     itk_component add backgroundRedE {
-	::entry $parent.rede \
+	::ttk::entry $parent.rede \
 	    -width 3 \
 	    -background $SystemWindow \
-	    -highlightbackground $hbc \
 	    -textvariable [::itcl::scope mBackgroundRedPref] \
 	    -validate key \
-	    -vcmd [::itcl::code $this validateColorComp %P]
+	    -validatecommand [::itcl::code $this validateColorComp %P]
     } {}
     itk_component add backgroundGreenL {
-	::label $parent.greenl \
+	::ttk::label $parent.greenl \
 	    -anchor e \
 	    -text "Green:"
     } {}
     itk_component add backgroundGreenE {
-	::entry $parent.greene \
+	::ttk::entry $parent.greene \
 	    -width 3 \
 	    -background $SystemWindow \
-	    -highlightbackground $hbc \
 	    -textvariable [::itcl::scope mBackgroundGreenPref] \
 	    -validate key \
-	    -vcmd [::itcl::code $this validateColorComp %P]
+	    -validatecommand [::itcl::code $this validateColorComp %P]
     } {}
     itk_component add backgroundBlueL {
-	::label $parent.bluel \
+	::ttk::label $parent.bluel \
 	    -anchor e \
 	    -text "Blue:"
     } {}
     itk_component add backgroundBlueE {
-	::entry $parent.bluee \
+	::ttk::entry $parent.bluee \
 	    -width 3 \
 	    -background $SystemWindow \
-	    -highlightbackground $hbc \
 	    -textvariable [::itcl::scope mBackgroundBluePref] \
 	    -validate key \
-	    -vcmd [::itcl::code $this validateColorComp %P]
+	    -validatecommand [::itcl::code $this validateColorComp %P]
     } {}
 
     set row 0
@@ -1891,31 +1485,22 @@ package provide Archer 1.0
 
 
 ::itcl::body Archer::buildDisplayPreferences {} {
-    itk_component add displayLF {
-	::iwidgets::Labeledframe $itk_component(preferenceTabs).displayLF \
-	    -labeltext "Display Settings" \
-	    -labelpos nw \
-	    -borderwidth 2 \
-	    -relief groove
-    } {}
-
-    set oglParent [$itk_component(displayLF) childsite]
-
+    set oglParent $itk_component(preferenceTabs)
     itk_component add displayF {
-	::frame $oglParent.displayF
+	::ttk::frame $oglParent.displayF
     } {}
 
     set parent $itk_component(displayF)
 
     itk_component add zclipL {
-	::label $parent.zclipL \
+	::ttk::label $parent.zclipL \
 	    -text "Viewing Cube:"
     } {}
 
     set i 0
     set mZClipMode $i
     itk_component add smallZClipRB {
-	::radiobutton $parent.smallZClipRB \
+	::ttk::radiobutton $parent.smallZClipRB \
 	    -text "Small (Default)" \
 	    -value $i \
 	    -variable [::itcl::scope mZClipModePref]
@@ -1923,7 +1508,7 @@ package provide Archer 1.0
 
     incr i
     itk_component add mediumZClipRB {
-	::radiobutton $parent.mediumZClipRB \
+	::ttk::radiobutton $parent.mediumZClipRB \
 	    -text "Medium" \
 	    -value $i \
 	    -variable [::itcl::scope mZClipModePref]
@@ -1931,7 +1516,7 @@ package provide Archer 1.0
 
     incr i
     itk_component add largeZClipRB {
-	::radiobutton $parent.largeZClipRB \
+	::ttk::radiobutton $parent.largeZClipRB \
 	    -text "Large" \
 	    -value $i \
 	    -variable [::itcl::scope mZClipModePref]
@@ -1939,7 +1524,7 @@ package provide Archer 1.0
 
     incr i
     itk_component add infiniteZClipRB {
-	::radiobutton $parent.infiniteZClipRB \
+	::ttk::radiobutton $parent.infiniteZClipRB \
 	    -text "Infinite" \
 	    -value $i \
 	    -variable [::itcl::scope mZClipModePref]
@@ -1965,263 +1550,25 @@ package provide Archer 1.0
     grid rowconfigure $oglParent 0 -weight 1
     grid columnconfigure $oglParent 0 -weight 1
 
-    $itk_component(preferenceTabs) add $itk_component(displayLF) -text "Display"
+    $itk_component(preferenceTabs) add $itk_component(displayF) -text "Display"
 }
 
-
-::itcl::body Archer::buildEmbeddedMenubar {} {
-    # menubar
-    itk_component add menubar {
-	::iwidgets::menubar $itk_interior.menubar \
-	    -helpvariable [::itcl::scope mStatusStr] \
-	    -font $mFontText \
-	    -activebackground $SystemHighlight \
-	    -activeforeground $SystemHighlightText
-    } {
-	keep -background
-    }
-
-    $itk_component(menubar) component menubar configure \
-	-relief flat
-
-    # File
-    $itk_component(menubar) add menubutton file \
-	-text "File" -menu {
-	    options -tearoff 1
-
-	    command new \
-		-label "New..." \
-		-helpstr "Open target description"
-	    command open \
-		-label "Open..." \
-		-helpstr "Open target description"
-	    command save \
-		-label "Save" \
-		-helpstr "Save target description"
-	    #	command compact \
-		-label "Compact" \
-		-helpstr "Compact the target description"
-	    cascade import \
-		-label "Import" \
-		-menu {
-		    command importFg4 \
-			-label "Fastgen 4 Import..." \
-			-helpstr "Import from Fastgen 4"
-		    command importStlDir \
-			-label "STL Import Directory..." \
-			-helpstr "Import from STL"
-		    command importStlFile \
-			-label "STL Import File..." \
-			-helpstr "Import from STL"
-		}
-	    cascade export \
-		-label "Export" \
-		-menu {
-		    command exportFg4 \
-			-label "Fastgen 4 Export..." \
-			-helpstr "Export to Fastgen 4"
-		    command exportStl \
-			-label "STL Export..." \
-			-helpstr "Export to STL"
-		    command exportVrml \
-			-label "VRML Export..." \
-			-helpstr "Export to VRML"
-		}
-	    separator sep0
-	    command rt -label "Raytrace Control Panel..." \
-		-helpstr "Launch Ray Trace Panel"
-	    #	command png -label "Export Geometry to PNG..." \
-		-helpstr "Launch PNG Export Panel"
-	    #	separator sep1
-	    command pref \
-		-label "Preferences..." \
-		-command [::itcl::code $this doPreferences] \
-		-helpstr "Set application preferences"
-	    separator sep2
-	    command exit \
-		-label "Quit" \
-		-helpstr "Exit Archer"
-	}
-    $itk_component(menubar) menuconfigure .file.new \
-	-command [::itcl::code $this newDb]
-    $itk_component(menubar) menuconfigure .file.open \
-	-command [::itcl::code $this openDb]
-    $itk_component(menubar) menuconfigure .file.save \
-	-command [::itcl::code $this saveDb]
-    #    $itk_component(menubar) menuconfigure .file.compact \
-	-command [::itcl::code $this compact] \
-	-state disabled
-    $itk_component(menubar) menuconfigure .file.import \
-	-state disabled
-    $itk_component(menubar) menuconfigure .file.import.importFg4 \
-	-command [::itcl::code $this importFg4]
-    $itk_component(menubar) menuconfigure .file.import.importStlDir \
-	-command [::itcl::code $this importStl 1]
-    $itk_component(menubar) menuconfigure .file.import.importStlFile \
-	-command [::itcl::code $this importStl 0]
-    $itk_component(menubar) menuconfigure .file.export \
-	-state disabled
-    $itk_component(menubar) menuconfigure .file.export.exportFg4 \
-	-command [::itcl::code $this exportFg4]
-    $itk_component(menubar) menuconfigure .file.export.exportStl \
-	-command [::itcl::code $this exportStl]
-    $itk_component(menubar) menuconfigure .file.export.exportVrml \
-	-command [::itcl::code $this exportVrml]
-    $itk_component(menubar) menuconfigure .file.rt \
-	-command [::itcl::code $this raytracePanel] \
-	-state disabled
-    #    $itk_component(menubar) menuconfigure .file.png \
-	-command [::itcl::code $this doPng] \
-	-state disabled
-    $itk_component(menubar) menuconfigure .file.pref \
-	-command [::itcl::code $this doPreferences]
-    $itk_component(menubar) menuconfigure .file.exit \
-	-command [::itcl::code $this Close]
-
-    # View Menu
-    $itk_component(menubar) add menubutton display \
-	-text "Display" -menu {
-	    options -tearoff 1
-
-	    command reset -label "Reset" \
-		-helpstr "Set view to default"
-	    command autoview -label "Autoview" \
-		-helpstr "Set view size and center according to what's being displayed"
-	    command center -label "Center..." \
-		-helpstr "Set the view center"
-
-	    cascade standard -label "Standard Views" -menu {
-		command front -label "Front" \
-		    -helpstr "Set view to front"
-		command rear -label "Rear" \
-		    -helpstr "Set view to rear"
-		command port -label "Port" \
-		    -helpstr "Set view to port/left"
-		command starboard -label "Starboard" \
-		    -helpstr "Set view to starboard/right"
-		command top -label "Top" \
-		    -helpstr "Set view to top"
-		command bottom -label "Bottom" \
-		    -helpstr "Set view to bottom"
-		separator sep0
-		command 35,25 -label "35,25" \
-		    -helpstr "Set view to az=35, el=25"
-		command 45,45 -label "45,45" \
-		    -helpstr "Set view to az=45, el=45"
-	    }
-
-	    command clear -label "Clear" \
-		-helpstr "Clear the display"
-	    command refresh -label "Refresh" \
-		-helpstr "Refresh the display"
-	    separator sep1
-	    cascade toolbars -label "Toolbars" -menu {
-		#	    checkbutton primary -label "Primary" \
-							  -helpstr "Toggle on/off primary toolbar"
-							  checkbutton views -label "View Controls" \
-							      -helpstr "Toggle on/off view toolbar"
-						      }
-
-	    checkbutton statusbar -label "Status Bar" \
-		-helpstr "Toggle on/off status bar"
-	}
-    $itk_component(menubar) menuconfigure .display.standard \
-	-state disabled
-    $itk_component(menubar) menuconfigure .display.reset \
-	-command [::itcl::code $this doViewReset] \
-	-state disabled
-    $itk_component(menubar) menuconfigure .display.autoview \
-	-command [::itcl::code $this doAutoview] \
-	-state disabled
-    $itk_component(menubar) menuconfigure .display.center \
-	-command [::itcl::code $this doViewCenter] \
-	-state disabled
-    $itk_component(menubar) menuconfigure .display.standard.front \
-	-command [::itcl::code $this doAe 0 0]
-    $itk_component(menubar) menuconfigure .display.standard.rear \
-	-command [::itcl::code $this doAe 180 0]
-    $itk_component(menubar) menuconfigure .display.standard.port \
-	-command [::itcl::code $this doAe 90 0]
-    $itk_component(menubar) menuconfigure .display.standard.starboard \
-	-command [::itcl::code $this doAe -90 0]
-    $itk_component(menubar) menuconfigure .display.standard.top \
-	-command [::itcl::code $this doAe 0 90]
-    $itk_component(menubar) menuconfigure .display.standard.bottom \
-	-command [::itcl::code $this doAe 0 -90]
-    $itk_component(menubar) menuconfigure .display.standard.35,25 \
-	-command [::itcl::code $this doAe 35 25]
-    $itk_component(menubar) menuconfigure .display.standard.45,45 \
-	-command [::itcl::code $this doAe 45 45]
-    $itk_component(menubar) menuconfigure .display.clear \
-	-command [::itcl::code $this clear] \
-	-state disabled
-    $itk_component(menubar) menuconfigure .display.refresh \
-	-command [::itcl::code $this refreshDisplay] \
-	-state disabled
-    #    $itk_component(menubar) menuconfigure .display.toolbars.primary -offvalue 0 -onvalue 1 \
-	-variable [::itcl::scope itk_option(-primaryToolbar)] \
-	-command [::itcl::code $this doPrimaryToolbar]
-    $itk_component(menubar) menuconfigure .display.toolbars.views -offvalue 0 -onvalue 1 \
-	-variable [::itcl::scope itk_option(-viewToolbar)] \
-	-command [::itcl::code $this doViewToolbar]
-    $itk_component(menubar) menuconfigure .display.statusbar -offvalue 0 -onvalue 1 \
-	-variable [::itcl::scope itk_option(-statusbar)] \
-	-command [::itcl::code $this doStatusbar]
-
-    # Modes Menu
-    $itk_component(menubar) add menubutton modes \
-	-text "Modes" \
-
-    updateModesMenu
-    updateUtilityMenu
-
-    # Help Menu
-    $itk_component(menubar) add menubutton help \
-	-text "Help" \
-	-menu {
-	    options -tearoff 1
-	    command archerHelp -label "Archer Help..." \
-		-helpstr "Archer's User Manual"
-	    separator sep0
-	    command aboutPlugins -label "About Plug-ins..." \
-		-helpstr "Info about Plug-ins"
-	    command aboutArcher -label "About Archer..." \
-		-helpstr "Info about Archer"
-
-	    #	    command overrides -label "Mouse Mode Overrides..." \
-		-helpstr "Mouse mode override definitions"
-	}
-    $itk_component(menubar) menuconfigure .help.archerHelp \
-	-command [::itcl::code $this doArcherHelp]
-    $itk_component(menubar) menuconfigure .help.aboutPlugins \
-	-command "::Archer::pluginDialog [namespace tail $this]"
-    $itk_component(menubar) menuconfigure .help.aboutArcher \
-	-command [::itcl::code $this doAboutArcher]
-    #    $itk_component(menubar) menuconfigure .help.overrides \
-	-command [::itcl::code $this doMouseOverrides]
-}
 
 ::itcl::body Archer::buildGeneralPreferences {} {
-    itk_component add generalLF {
-	::iwidgets::Labeledframe $itk_component(preferenceTabs).generalLF \
-	    -labeltext "User Interface" \
-	    -labelpos nw -borderwidth 2 -relief groove
-    }
-
-    set parent [$itk_component(generalLF) childsite]
+    set parent $itk_component(preferenceTabs)
     itk_component add generalF {
-	::frame $parent.generalF
+	::ttk::frame $parent.generalF
     } {}
 
     itk_component add bindingL {
-	::label $itk_component(generalF).bindingL \
+	::ttk::label $itk_component(generalF).bindingL \
 	    -text "Display Bindings:"
     } {}
 
     set i 0
     set mBindingMode $i
     itk_component add defaultBindingRB {
-	::radiobutton $itk_component(generalF).defaultBindingRB \
+	::ttk::radiobutton $itk_component(generalF).defaultBindingRB \
 	    -text "Default" \
 	    -value $i \
 	    -variable [::itcl::scope mBindingModePref]
@@ -2229,21 +1576,21 @@ package provide Archer 1.0
 
     incr i
     itk_component add brlcadBindingRB {
-	::radiobutton $itk_component(generalF).brlcadBindingRB \
+	::ttk::radiobutton $itk_component(generalF).brlcadBindingRB \
 	    -text "BRL-CAD" \
 	    -value $i \
 	    -variable [::itcl::scope mBindingModePref]
     } {}
 
     itk_component add measuringL {
-	::label $itk_component(generalF).measuringL \
+	::ttk::label $itk_component(generalF).measuringL \
 	    -text "Measuring Stick Mode:"
     } {}
 
     set i 0
     set mMeasuringStickMode $i
     itk_component add topMeasuringStickRB {
-	::radiobutton $itk_component(generalF).topMeasuringStickRB \
+	::ttk::radiobutton $itk_component(generalF).topMeasuringStickRB \
 	    -text "Default (Top)" \
 	    -value $i \
 	    -variable [::itcl::scope mMeasuringStickModePref]
@@ -2251,18 +1598,18 @@ package provide Archer 1.0
 
     incr i
     itk_component add embeddedMeasuringStickRB {
-	::radiobutton $itk_component(generalF).embeddedMeasuringStickRB \
+	::ttk::radiobutton $itk_component(generalF).embeddedMeasuringStickRB \
 	    -text "Embedded" \
 	    -value $i \
 	    -variable [::itcl::scope mMeasuringStickModePref]
     } {}
 
     itk_component add backgroundColorL {
-	::label $itk_component(generalF).backgroundColorL \
+	::ttk::label $itk_component(generalF).backgroundColorL \
 	    -text "Background Color:"
-    }
+    } {}
     itk_component add backgroundColorF {
-	::frame $itk_component(generalF).backgroundColorF
+	::ttk::frame $itk_component(generalF).backgroundColorF
     } {}
     buildBackgroundColor $itk_component(backgroundColorF)
 
@@ -2313,7 +1660,7 @@ package provide Archer 1.0
 	$themes
 
     itk_component add bigEMenuItemCB {
-	::checkbutton $itk_component(generalF).bigECB \
+	::ttk::checkbutton $itk_component(generalF).bigECB \
 	    -text "Enable Evaluate Menu Item (Experimental)" \
 	    -variable [::itcl::scope mEnableBigEPref]
     } {}
@@ -2360,62 +1707,48 @@ package provide Archer 1.0
     grid rowconfigure $parent 0 -weight 1
     grid columnconfigure $parent 0 -weight 1
 
-    $itk_component(preferenceTabs) add $itk_component(generalLF) -text "General"
+    $itk_component(preferenceTabs) add $itk_component(generalF) -text "General"
 }
 
 
 ::itcl::body Archer::buildGroundPlanePreferences {} {
-    itk_component add groundPlaneLF {
-	::iwidgets::Labeledframe $itk_component(preferenceTabs).groundPlaneLF \
-	    -labeltext "Ground Plane Settings" \
-	    -labelpos nw \
-	    -borderwidth 2 \
-	    -relief groove
-    }
-
-    set parent [$itk_component(groundPlaneLF) childsite]
+    set parent $itk_component(preferenceTabs)
     itk_component add groundPlaneF {
-	::frame $parent.groundPlaneF
+	::ttk::frame $parent.groundPlaneF
     } {}
 
     itk_component add groundPlaneSizeL {
-	::label $itk_component(groundPlaneF).sizeL \
+	::ttk::label $itk_component(groundPlaneF).sizeL \
 	    -anchor e \
 	    -text "Square Size:"
     } {}
-    set hbc [$itk_component(groundPlaneSizeL) cget -background]
     itk_component add groundPlaneSizeE {
-	::entry $itk_component(groundPlaneF).sizeE \
+	::ttk::entry $itk_component(groundPlaneF).sizeE \
 	    -width 12 \
-	    -background $SystemWindow \
-	    -highlightbackground $hbc \
 	    -textvariable [::itcl::scope mGroundPlaneSizePref] \
 	    -validate key \
-	    -vcmd [::itcl::code $this validateDouble %P]
+	    -validatecommand [::itcl::code $this validateDouble %P]
     } {}
     itk_component add groundPlaneSizeUnitsL {
-	::label $itk_component(groundPlaneF).sizeUnitsL \
+	::ttk::label $itk_component(groundPlaneF).sizeUnitsL \
 	    -anchor e \
 	    -text "mm"
     } {}
 
     itk_component add groundPlaneIntervalL {
-	::label $itk_component(groundPlaneF).intervalL \
+	::ttk::label $itk_component(groundPlaneF).intervalL \
 	    -anchor e \
 	    -text "Line Interval:"
     } {}
-    set hbc [$itk_component(groundPlaneIntervalL) cget -background]
     itk_component add groundPlaneIntervalE {
-	::entry $itk_component(groundPlaneF).intervalE \
+	::ttk::entry $itk_component(groundPlaneF).intervalE \
 	    -width 12 \
-	    -background $SystemWindow \
-	    -highlightbackground $hbc \
 	    -textvariable [::itcl::scope mGroundPlaneIntervalPref] \
 	    -validate key \
-	    -vcmd [::itcl::code $this validateDouble %P]
+	    -validatecommand [::itcl::code $this validateDouble %P]
     } {}
     itk_component add groundPlaneIntervalUnitsL {
-	::label $itk_component(groundPlaneF).intervalUnitsL \
+	::ttk::label $itk_component(groundPlaneF).intervalUnitsL \
 	    -anchor e \
 	    -text "mm"
     } {}
@@ -2455,7 +1788,7 @@ package provide Archer 1.0
     grid rowconfigure $parent 0 -weight 1
     grid columnconfigure $parent 0 -weight 1
 
-    $itk_component(preferenceTabs) add $itk_component(groundPlaneLF) -text "Ground Plane"
+    $itk_component(preferenceTabs) add $itk_component(groundPlaneF) -text "Ground Plane"
 }
 
 
@@ -2486,48 +1819,41 @@ package provide Archer 1.0
 
 ::itcl::body Archer::buildModelAxesPosition {parent} {
     itk_component add modelAxesPositionXL {
-	::label $parent.xl \
+	::ttk::label $parent.xl \
 	    -anchor e \
 	    -text "Position X:"
     } {}
 
-    set hbc [$itk_component(modelAxesPositionXL) cget -background]
     itk_component add modelAxesPositionXE {
-	::entry $parent.xe \
+	::ttk::entry $parent.xe \
 	    -width 12 \
-	    -background $SystemWindow \
-	    -highlightbackground $hbc \
 	    -textvariable [::itcl::scope mModelAxesPositionXPref] \
 	    -validate key \
-	    -vcmd [::itcl::code $this validateDouble %P]
+	    -validatecommand [::itcl::code $this validateDouble %P]
     } {}
     itk_component add modelAxesPositionYL {
-	::label $parent.yl \
+	::ttk::label $parent.yl \
 	    -anchor e \
 	    -text "Position Y:"
     } {}
     itk_component add modelAxesPositionYE {
-	::entry $parent.ye \
+	::ttk::entry $parent.ye \
 	    -width 12 \
-	    -background $SystemWindow \
-	    -highlightbackground $hbc \
 	    -textvariable [::itcl::scope mModelAxesPositionYPref] \
 	    -validate key \
-	    -vcmd [::itcl::code $this validateDouble %P]
+	    -validatecommand [::itcl::code $this validateDouble %P]
     } {}
     itk_component add modelAxesPositionZL {
-	::label $parent.zl \
+	::ttk::label $parent.zl \
 	    -anchor e \
 	    -text "Position Z:"
     } {}
     itk_component add modelAxesPositionZE {
-	::entry $parent.ze \
+	::ttk::entry $parent.ze \
 	    -width 12 \
-	    -background $SystemWindow \
-	    -highlightbackground $hbc \
 	    -textvariable [::itcl::scope mModelAxesPositionZPref] \
 	    -validate key \
-	    -vcmd [::itcl::code $this validateDouble %P]
+	    -validatecommand [::itcl::code $this validateDouble %P]
     } {}
 
     #    set row 0
@@ -2545,17 +1871,9 @@ package provide Archer 1.0
 
 
 ::itcl::body Archer::buildModelAxesPreferences {} {
-    itk_component add modelAxesLF {
-	::iwidgets::Labeledframe $itk_component(preferenceTabs).modelAxesLF \
-	    -labeltext "Model Axes Settings" \
-	    -labelpos nw \
-	    -borderwidth 2 \
-	    -relief groove
-    }
-
-    set parent [$itk_component(modelAxesLF) childsite]
+    set parent $itk_component(preferenceTabs)
     itk_component add modelAxesF {
-	::frame $parent.modelAxesF
+	::ttk::frame $parent.modelAxesF
     } {}
 
     buildComboBox $itk_component(modelAxesF) \
@@ -2598,17 +1916,15 @@ package provide Archer 1.0
 	$mColorListNoTriple
 
     itk_component add modelAxesTickIntervalL {
-	::label $itk_component(modelAxesF).tickIntervalL \
+	::ttk::label $itk_component(modelAxesF).tickIntervalL \
 	    -text "Tick Interval:"
     } {}
-    set hbc [$itk_component(modelAxesTickIntervalL) cget -background]
+
     itk_component add modelAxesTickIntervalE {
-	::entry $itk_component(modelAxesF).tickIntervalE \
+	::ttk::entry $itk_component(modelAxesF).tickIntervalE \
 	    -textvariable [::itcl::scope mModelAxesTickIntervalPref] \
 	    -validate key \
-	    -validatecommand [::itcl::code $this validateTickInterval %P] \
-	    -background $SystemWindow \
-	    -highlightbackground $hbc
+	    -validatecommand [::itcl::code $this validateTickInterval %P]
     } {}
 
     buildComboBox $itk_component(modelAxesF) \
@@ -2705,7 +2021,7 @@ package provide Archer 1.0
     grid rowconfigure $parent 0 -weight 1
     grid columnconfigure $parent 0 -weight 1
 
-    $itk_component(preferenceTabs) add $itk_component(modelAxesLF) -text "Model Axes"
+    $itk_component(preferenceTabs) add $itk_component(modelAxesF) -text "Model Axes"
 }
 
 
@@ -2735,65 +2051,67 @@ package provide Archer 1.0
     set parent [$itk_component(mouseOverridesDialog) childsite]
 
     itk_component add mouseOverridesTranL1 {
-	::label $parent.tranl1 \
+	::ttk::label $parent.tranl1 \
 	    -text "Translate: " \
 	    -font $mFontText \
 	    -anchor e
     } {}
     itk_component add mouseOverridesTranL2 {
-	::label $parent.tranl2 \
+	::ttk::label $parent.tranl2 \
 	    -text "Shift-Right" \
 	    -font $mFontText \
 	    -anchor w
     } {}
     itk_component add mouseOverridesRotateL1 {
-	::label $parent.rotateL1 \
+	::ttk::label $parent.rotateL1 \
 	    -text "Rotate: " \
 	    -font $mFontText \
 	    -anchor e
     } {}
     itk_component add mouseOverridesRotateL2 {
-	::label $parent.rotateL2 \
+	::ttk::label $parent.rotateL2 \
 	    -text "Shift-Left" \
 	    -font $mFontText \
 	    -anchor w
     } {}
     itk_component add mouseOverridesScaleL1 {
-	::label $parent.scaleL1 \
+	::ttk::label $parent.scaleL1 \
 	    -text "Scale: " \
 	    -font $mFontText \
 	    -anchor e
     } {}
     itk_component add mouseOverridesScaleL2 {
-	::label $parent.scaleL2 \
+	::ttk::label $parent.scaleL2 \
 	    -text "Shift-Middle" \
 	    -font $mFontText \
 	    -anchor w
     } {}
     itk_component add mouseOverridesCenterL1 {
-	::label $parent.centerL1 \
+	::ttk::label $parent.centerL1 \
 	    -text "Center: " \
 	    -font $mFontText \
 	    -anchor e
     } {}
     itk_component add mouseOverridesCenterL2 {
-	::label $parent.centerL2 \
+	::ttk::label $parent.centerL2 \
 	    -text "Shift-Ctrl-Right" \
 	    -font $mFontText \
 	    -anchor w
     } {}
     itk_component add mouseOverridesPopupL1 {
-	::label $parent.popupL1 \
+	::ttk::label $parent.popupL1 \
 	    -text "Popup Menu: " \
 	    -font $mFontText \
 	    -anchor e
     } {}
     itk_component add mouseOverridesPopupL2 {
-	::label $parent.popupL2 \
+	::ttk::label $parent.popupL2 \
 	    -text "Right or Ctrl-Left" \
 	    -font $mFontText \
 	    -anchor w
     } {}
+
+    $itk_component(mouseOverridesDialog) configure -background $LABEL_BACKGROUND_COLOR
 
     set row 0
     grid $itk_component(mouseOverridesTranL1) \
@@ -2855,7 +2173,7 @@ package provide Archer 1.0
 
     set parent [$itk_component(preferencesDialog) childsite]
     itk_component add preferenceTabs {
-	ttk::notebook $parent.tabs
+	::ttk::notebook $parent.tabs
     } {}
 
     buildGeneralPreferences
@@ -2864,6 +2182,8 @@ package provide Archer 1.0
     buildGroundPlanePreferences
     buildDisplayPreferences
 
+    $itk_component(preferencesDialog) configure -background $LABEL_BACKGROUND_COLOR
+
     pack $itk_component(preferenceTabs) -expand yes -fill both
 
     wm geometry $itk_component(preferencesDialog) 450x500
@@ -2871,7 +2191,7 @@ package provide Archer 1.0
 
 ::itcl::body Archer::buildToplevelMenubar {} {
     itk_component add menubar {
-	menu $itk_interior.menubar \
+	::menu $itk_interior.menubar \
 	    -tearoff 0
     } {
 	keep -background
@@ -2880,44 +2200,10 @@ package provide Archer 1.0
     # File
     itk_component add filemenu {
 	::menu $itk_component(menubar).filemenu \
-	    -tearoff 1
+	    -tearoff 0
     } {
 	keep -background
     }
-    # Import
-    itk_component add importMenu {
-	::menu $itk_component(filemenu).importMenu \
-	    -tearoff 1
-    } {
-	keep -background
-    }
-
-    $itk_component(importMenu) add command \
-	-label "Fastgen 4 Import..." \
-	-command [::itcl::code $this importFg4]
-    $itk_component(importMenu) add command \
-	-label "STL Import Directory..." \
-	-command [::itcl::code $this importStl 1]
-    $itk_component(importMenu) add command \
-	-label "STL Import File..." \
-	-command [::itcl::code $this importStl 0]
-
-    # Export
-    itk_component add exportMenu {
-	::menu $itk_component(filemenu).exportMenu \
-	    -tearoff 1
-    } {
-	keep -background
-    }
-    $itk_component(exportMenu) add command \
-	-label "Fastgen 4 Export..." \
-	-command [::itcl::code $this exportFg4]
-    $itk_component(exportMenu) add command \
-	-label "STL Export..." \
-	-command [::itcl::code $this exportStl]
-    $itk_component(exportMenu) add command \
-	-label "VRML Export..." \
-	-command [::itcl::code $this exportVrml]
 
     # Populate File menu
     $itk_component(filemenu) add command \
@@ -2928,29 +2214,13 @@ package provide Archer 1.0
 	-command [::itcl::code $this openDb]
     $itk_component(filemenu) add command \
 	-label "Save" \
-	-command [::itcl::code $this saveDb]
-    #    $itk_component(filemenu) add command \
-	-label "Compact" \
-	-command [::itcl::code $this compact] \
-	-state disabled
-    $itk_component(filemenu) add cascade \
-	-label "Import" \
-	-menu $itk_component(importMenu) \
-	-state disabled
-    $itk_component(filemenu) add cascade \
-	-label "Export" \
-	-menu $itk_component(exportMenu) \
+	-command [::itcl::code $this saveDb] \
 	-state disabled
     $itk_component(filemenu) add separator
     $itk_component(filemenu) add command \
 	-label "Raytrace Control Panel..." \
 	-command [::itcl::code $this raytracePanel] \
 	-state disabled
-    #    $itk_component(filemenu) add command \
-	-label "Export Geometry to PNG..." \
-	-command [::itcl::code $this doPng] \
-	-state disabled
-    #    $itk_component(filemenu) add separator
     $itk_component(filemenu) add command \
 	-label "Preferences..." \
 	-command [::itcl::code $this doPreferences]
@@ -2960,11 +2230,9 @@ package provide Archer 1.0
 	-command [::itcl::code $this Close]
 
     itk_component add displaymenu {
-	menu $itk_component(menubar).displaymenu \
-	    -tearoff 1
+	::menu $itk_component(menubar).displaymenu \
+	    -tearoff 0
     } {
-	#	rename -font -menuFont menuFont MenuFont
-	#	keep -font
 	keep -background
     }
     $itk_component(displaymenu) add command \
@@ -2979,12 +2247,37 @@ package provide Archer 1.0
 	-label "Center..." \
 	-command [::itcl::code $this doViewCenter] \
 	-state disabled
-    itk_component add stdviewsmenu {
-	menu $itk_component(displaymenu).stdviewsmenu \
-	    -tearoff 1
+
+    itk_component add backgroundmenu {
+	::menu $itk_component(displaymenu).backgroundmenu \
+	    -tearoff 0
     } {
-	#	rename -font -menuFont menuFont MenuFont
-	#	keep -font
+	keep -background
+    }
+    $itk_component(backgroundmenu) add command \
+	-label "Black" \
+	-command [::itcl::code $this backgroundColor 0 0 0]
+    $itk_component(backgroundmenu) add command \
+	-label "Grey" \
+	-command [::itcl::code $this backgroundColor 100 100 100]
+    $itk_component(backgroundmenu) add command \
+	-label "White" \
+	-command [::itcl::code $this backgroundColor 255 255 255]
+    $itk_component(backgroundmenu) add command \
+	-label "Cyan" \
+	-command [::itcl::code $this backgroundColor 0 200 200]
+    $itk_component(backgroundmenu) add command \
+	-label "Blue" \
+	-command [::itcl::code $this backgroundColor 0 0 160]
+    $itk_component(displaymenu) add cascade \
+	-label "Background Color" \
+	-menu $itk_component(backgroundmenu) \
+	-state normal
+
+    itk_component add stdviewsmenu {
+	::menu $itk_component(displaymenu).stdviewsmenu \
+	    -tearoff 0
+    } {
 	keep -background
     }
     $itk_component(stdviewsmenu) add command \
@@ -3024,86 +2317,89 @@ package provide Archer 1.0
 	-label "Refresh" \
 	-command [::itcl::code $this refreshDisplay] \
 	-state disabled
-    $itk_component(displaymenu) add separator
-    itk_component add toolbarsmenu {
-	menu $itk_component(displaymenu).toolbarsmenu \
-	    -tearoff 1
-    } {
-	#	rename -font -menuFont menuFont MenuFont
-	#	keep -font
-	keep -background
-    }
-    #    $itk_component(toolbarsmenu) add checkbutton \
-	-label "Primary" \
-	-offvalue 0 \
-	-onvalue 1 \
-	-variable  [::itcl::scope itk_option(-primaryToolbar)] \
-	-command [::itcl::code $this doPrimaryToolbar]
-    $itk_component(toolbarsmenu) add checkbutton \
-	-label "View Controls" \
-	-offvalue 0 \
-	-onvalue 1 \
-	-variable [::itcl::scope itk_option(-viewToolbar)] \
-	-command [::itcl::code $this doViewToolbar]
-    $itk_component(displaymenu) add cascade \
-	-label "Toolbars" \
-	-menu $itk_component(toolbarsmenu)
-    $itk_component(displaymenu) add checkbutton \
-	-label "Status Bar" \
-	-offvalue 0 \
-	-onvalue 1 \
-	-variable [::itcl::scope itk_option(-statusbar)] \
-	-command [::itcl::code $this doStatusbar]
 
-    itk_component add modesmenu {
-	menu $itk_component(menubar).modesmenu \
-	    -tearoff 1
-    } {
-	#	rename -font -menuFont menuFont MenuFont
-	#	keep -font
-	keep -background
-    }
-
-    itk_component add activepanemenu {
-	menu $itk_component(modesmenu).activepanemenu \
-	    -tearoff 1
-    } {
-	#	rename -font -menuFont menuFont MenuFont
-	#	keep -font
-	keep -background
-    }
-    set i 0
-    $itk_component(activepanemenu) add radiobutton \
-	-label "Upper Left" \
-	-value $i \
-	-variable [::itcl::scope mActivePane] \
-	-command [::itcl::code $this setActivePane ul]
-    incr i
-    $itk_component(activepanemenu) add radiobutton \
-	-label "Upper Right" \
-	-value $i \
-	-variable [::itcl::scope mActivePane] \
-	-command [::itcl::code $this setActivePane ur]
-    set mActivePane $i
-    incr i
-    $itk_component(activepanemenu) add radiobutton \
-	-label "Lower Left" \
-	-value $i \
-	-variable [::itcl::scope mActivePane] \
-	-command [::itcl::code $this setActivePane ll]
-    incr i
-    $itk_component(activepanemenu) add radiobutton \
-	-label "Lower Right" \
-	-value $i \
-	-variable [::itcl::scope mActivePane] \
-	-command [::itcl::code $this setActivePane lr]
-
-    updateModesMenu
+    buildModesMenu
     updateUtilityMenu
 
+    itk_component add raytracemenu {
+	::menu $itk_component(menubar).raytracemenu \
+	    -tearoff 0
+    } {
+	keep -background
+    }
+
+    itk_component add rtmenu {
+	::menu $itk_component(raytracemenu).rtmenu \
+	    -tearoff 0
+    } {
+	keep -background
+    }
+    $itk_component(rtmenu) add command \
+	-label "512x512" \
+	-command [::itcl::code $this launchRtApp rt 512]
+    $itk_component(rtmenu) add command \
+	-label "1024x1024" \
+	-command [::itcl::code $this launchRtApp rt 1024]
+    $itk_component(rtmenu) add command \
+	-label "Window Size" \
+	-command [::itcl::code $this launchRtApp rt window]
+
+    itk_component add rtcheckmenu {
+	::menu $itk_component(raytracemenu).rtcheckmenu \
+	    -tearoff 0
+    } {
+	keep -background
+    }
+    $itk_component(rtcheckmenu) add command \
+	-label "50x50" \
+	-command [::itcl::code $this launchRtApp rtcheck 50]
+    $itk_component(rtcheckmenu) add command \
+	-label "100x100" \
+	-command [::itcl::code $this launchRtApp rtcheck 100]
+    $itk_component(rtcheckmenu) add command \
+	-label "256x256" \
+	-command [::itcl::code $this launchRtApp rtcheck 256]
+    $itk_component(rtcheckmenu) add command \
+	-label "512x512" \
+	-command [::itcl::code $this launchRtApp rtcheck 512]
+
+    itk_component add rtedgemenu {
+	::menu $itk_component(raytracemenu).rtedgemenu \
+	    -tearoff 0
+    } {
+	keep -background
+    }
+    $itk_component(rtedgemenu) add command \
+	-label "512x512" \
+	-command [::itcl::code $this launchRtApp rtedge 512]
+    $itk_component(rtedgemenu) add command \
+	-label "1024x1024" \
+	-command [::itcl::code $this launchRtApp rtedge 1024]
+    $itk_component(rtedgemenu) add command \
+	-label "Window Size" \
+	-command [::itcl::code $this launchRtApp rtedge window]
+
+    $itk_component(raytracemenu) add cascade \
+	-label "rt" \
+	-menu $itk_component(rtmenu) \
+	-state disabled
+    $itk_component(raytracemenu) add cascade \
+	-label "rtcheck" \
+	-menu $itk_component(rtcheckmenu) \
+	-state disabled
+    $itk_component(raytracemenu) add cascade \
+	-label "rtedge" \
+	-menu $itk_component(rtedgemenu) \
+	-state disabled
+    $itk_component(raytracemenu) add separator
+    $itk_component(raytracemenu) add command \
+	-label "nirt" \
+	-command [::itcl::code $this launchNirt] \
+	-state disabled
+
     itk_component add helpmenu {
-	menu $itk_component(menubar).helpmenu \
-	    -tearoff 1
+	::menu $itk_component(menubar).helpmenu \
+	    -tearoff 0
     } {
 	#	rename -font -menuFont menuFont MenuFont
 	#	keep -font
@@ -3137,16 +2433,19 @@ package provide Archer 1.0
 	-menu $itk_component(modesmenu) \
 
     $itk_component(menubar) add cascade \
+	-label "Raytrace" \
+	-menu $itk_component(raytracemenu) \
+
+    $itk_component(menubar) add cascade \
 	-label "Help" \
 	-menu $itk_component(helpmenu)
 
     # set up bindings for status
     bind $itk_component(filemenu) <<MenuSelect>> [::itcl::code $this menuStatusCB %W]
-    bind $itk_component(importMenu) <<MenuSelect>> [::itcl::code $this menuStatusCB %W]
-    bind $itk_component(exportMenu) <<MenuSelect>> [::itcl::code $this menuStatusCB %W]
+#    bind $itk_component(importMenu) <<MenuSelect>> [::itcl::code $this menuStatusCB %W]
+#    bind $itk_component(exportMenu) <<MenuSelect>> [::itcl::code $this menuStatusCB %W]
     bind $itk_component(displaymenu) <<MenuSelect>> [::itcl::code $this menuStatusCB %W]
     bind $itk_component(stdviewsmenu) <<MenuSelect>> [::itcl::code $this menuStatusCB %W]
-    bind $itk_component(toolbarsmenu) <<MenuSelect>> [::itcl::code $this menuStatusCB %W]
     bind $itk_component(modesmenu) <<MenuSelect>> [::itcl::code $this menuStatusCB %W]
     bind $itk_component(activepanemenu) <<MenuSelect>> [::itcl::code $this menuStatusCB %W]
     bind $itk_component(helpmenu) <<MenuSelect>> [::itcl::code $this menuStatusCB %W]
@@ -3154,17 +2453,9 @@ package provide Archer 1.0
 
 
 ::itcl::body Archer::buildViewAxesPreferences {} {
-    itk_component add viewAxesLF {
-	::iwidgets::Labeledframe $itk_component(preferenceTabs).viewAxesLF \
-	    -labeltext "View Axes Settings" \
-	    -labelpos nw \
-	    -borderwidth 2 \
-	    -relief groove
-    }
-
-    set parent [$itk_component(viewAxesLF) childsite]
+    set parent $itk_component(preferenceTabs)
     itk_component add viewAxesF {
-	::frame $parent.viewAxesF
+	::ttk::frame $parent.viewAxesF
     } {}
 
     buildComboBox $itk_component(viewAxesF) \
@@ -3224,7 +2515,7 @@ package provide Archer 1.0
     grid rowconfigure $parent 0 -weight 1
     grid columnconfigure $parent 0 -weight 1
 
-    $itk_component(preferenceTabs) add $itk_component(viewAxesLF) -text "View Axes"
+    $itk_component(preferenceTabs) add $itk_component(viewAxesF) -text "View Axes"
 }
 
 
@@ -3425,284 +2716,808 @@ package provide Archer 1.0
     }
 }
 
-::itcl::body Archer::updateModesMenu {} {
-    if {$ArcherCore::inheritFromToplevel} {
-	catch {
-	    $itk_component(modesmenu) delete 0 end
-	}
+::itcl::body Archer::updatePrimaryToolbar {} {
+    # Populate the primary toolbar
+    $itk_component(primaryToolbar) insert 0 button new \
+	-balloonstr "Create a new geometry file" \
+	-helpstr "Create a new geometry file" \
+	-relief flat \
+	-overrelief raised \
+	-command [::itcl::code $this newDb]
 
-	set i 0
-	$itk_component(modesmenu) add radiobutton \
-	    -label "Basic" \
-	    -value $i \
-	    -variable [::itcl::scope mMode] \
-	    -command [::itcl::code $this setMode 1]
-	incr i
-	$itk_component(modesmenu) add radiobutton \
-	    -label "Intermediate" \
-	    -value $i \
-	    -variable [::itcl::scope mMode] \
-	    -command [::itcl::code $this setMode 1]
-	incr i
-	$itk_component(modesmenu) add radiobutton \
-	    -label "Advanced" \
-	    -value $i \
-	    -variable [::itcl::scope mMode] \
-	    -command [::itcl::code $this setMode 1]
+    # half-size spacer
+    $itk_component(primaryToolbar) insert rotate frame sep2 \
+	-relief sunken \
+	-width 2
 
-	if {[info exists itk_component(ged)] && $mMode != 0} {
-	    $itk_component(modesmenu) add separator
-	    $itk_component(modesmenu) add cascade \
-		-label "Active Pane" \
-		-menu $itk_component(activepanemenu)
-	    $itk_component(modesmenu) add checkbutton \
-		-label "Quad View" \
-		-offvalue 0 \
-		-onvalue 1 \
-		-variable [::itcl::scope mMultiPane] \
-		-command [::itcl::code $this doMultiPane]
-	}
+    $itk_component(primaryToolbar) insert rotate button preferences \
+	-balloonstr "Set application preferences" \
+	-helpstr "Set application preferences" \
+	-relief flat \
+	-overrelief raised \
+	-command [::itcl::code $this doPreferences]
 
-	$itk_component(modesmenu) add separator
+    # half-size spacer
+    $itk_component(primaryToolbar) insert rotate frame sep3 \
+	-relief sunken \
+	-width 2
 
-	$itk_component(modesmenu) add checkbutton \
-	    -label "View Axes" \
-	    -offvalue 0 \
-	    -onvalue 1 \
-	    -variable [::itcl::scope mShowViewAxes] \
-	    -command [::itcl::code $this showViewAxes]
-	$itk_component(modesmenu) add checkbutton \
-	    -label "Model Axes" \
-	    -offvalue 0 \
-	    -onvalue 1 \
-	    -variable [::itcl::scope mShowModelAxes] \
-	    -command [::itcl::code $this showModelAxes]
-	$itk_component(modesmenu) add checkbutton \
-	    -label "Ground Plane" \
-	    -offvalue 0 \
-	    -onvalue 1 \
-	    -variable [::itcl::scope mShowGroundPlane] \
-	    -command [::itcl::code $this showGroundPlane]
-	$itk_component(modesmenu) add checkbutton \
-	    -label "Primitive Labels" \
-	    -offvalue 0 \
-	    -onvalue 1 \
-	    -variable [::itcl::scope mShowPrimitiveLabels] \
-	    -command [::itcl::code $this showPrimitiveLabels]
-	$itk_component(modesmenu) add checkbutton \
-	    -label "Viewing Parameters" \
-	    -offvalue 0 \
-	    -onvalue 1 \
-	    -variable [::itcl::scope mShowViewingParams] \
-	    -command [::itcl::code $this showViewParams]
-	$itk_component(modesmenu) add checkbutton \
-	    -label "Scale" \
-	    -offvalue 0 \
-	    -onvalue 1 \
-	    -variable [::itcl::scope mShowScale] \
-	    -command [::itcl::code $this showScale]
-	$itk_component(modesmenu) add checkbutton \
-	    -label "Lighting" \
-	    -offvalue 0 \
-	    -onvalue 2 \
-	    -variable [::itcl::scope mLighting] \
-	    -command [::itcl::code $this doLighting]
+    $itk_component(primaryToolbar) insert rotate button arb6 \
+	-balloonstr "Create an arb6" \
+	-helpstr "Create an arb6" \
+	-relief flat \
+	-overrelief raised \
+	-command [::itcl::code $this createObj arb6]
 
-	if {![info exists itk_component(ged)]} {
-	    # Disable a few entries until we read a database
-	    #$itk_component(modesmenu) entryconfigure "Active Pane" -state disabled
-	    $itk_component(modesmenu) entryconfigure "View Axes" -state disabled
-	    $itk_component(modesmenu) entryconfigure "Model Axes" -state disabled
-	}
-    } else {
-	if {[info exists itk_component(ged)] && $mMode != 0} {
-	    $itk_component(menubar) menuconfigure .modes \
-		-text "Modes" \
-		-menu {
-		    options -tearoff 1
-		    radiobutton basic \
-			-label "Basic" \
-			-helpstr "Basic user mode"
-		    radiobutton intermediate \
-			-label "Intermediate" \
-			-helpstr "Intermediate user mode"
-		    radiobutton advanced \
-			-label "Advanced" \
-			-helpstr "Advanced user mode"
+    $itk_component(primaryToolbar) insert rotate button arb8 \
+	-balloonstr "Create an arb8" \
+	-helpstr "Create an arb8" \
+	-relief flat \
+	-overrelief raised \
+	-command [::itcl::code $this createObj arb8]
 
-		    separator sep1
+    $itk_component(primaryToolbar) insert rotate button cone \
+	-balloonstr "Create a tgc" \
+	-helpstr "Create a tgc" \
+	-relief flat \
+	-overrelief raised \
+	-command [::itcl::code $this createObj tgc]
 
-		    cascade activePane -label "Active Pane" -menu {
-			radiobutton ul -label "Upper Left" \
-			    -helpstr "Set the active pane to the upper left pane"
-			radiobutton ur -label "Upper Right" \
-			    -helpstr "Set the active pane to the upper right pane"
-			radiobutton ll -label "Lower Left" \
-			    -helpstr "Set the active pane to the lower left pane"
-			radiobutton lr -label "Lower Right" \
-			    -helpstr "Set the active pane to the lower right pane"
+    $itk_component(primaryToolbar) insert rotate button sphere \
+	-balloonstr "Create a sphere" \
+	-helpstr "Create a sphere" \
+	-relief flat \
+	-overrelief raised \
+	-command [::itcl::code $this createObj sph]
 
-		    }
-		    checkbutton quadview -label "Quad View" \
-			-helpstr "Hide/Show multiple (4) views"
+    $itk_component(primaryToolbar) insert rotate button torus \
+	-balloonstr "Create a torus" \
+	-helpstr "Create a torus" \
+	-relief flat \
+	-overrelief raised \
+	-command [::itcl::code $this createObj tor]
 
-		    separator sep2
+    #    $itk_component(primaryToolbar) insert rotate button pipe \
+	-balloonstr "Create a pipe" \
+	-helpstr "Create a pipe" \
+	-relief flat \
+	-overrelief raised \
+	-command [::itcl::code $this createObj pipe]
 
-		    checkbutton viewaxes -label "View Axes" \
-			-helpstr "Hide/Show View Axes"
-		    checkbutton modelaxes -label "Model Axes" \
-			-helpstr "Hide/Show model Axes"
-		    checkbutton groundplane -label "Ground Plane" \
-			-helpstr "Hide/Show ground plane"
-		    checkbutton primitiveLabels -label "Primitive Labels" \
-			-helpstr "Hide/Show primitive labels"
-		    checkbutton viewingParams -label "Viewing Parameters" \
-			-helpstr "Hide/Show viewing parameters"
-		    checkbutton scale -label "Scale" \
-			-helpstr "Hide/Show scale"
-		    checkbutton lighting -label "Two Sided Lighting" \
-			-helpstr "Light front and back of polygons"
-		}
-	} else {
-	    $itk_component(menubar) menuconfigure .modes \
-		-text "Modes" \
-		-menu {
-		    options -tearoff 1
-		    radiobutton basic \
-			-label "Basic" \
-			-helpstr "Basic user mode"
-		    radiobutton intermediate \
-			-label "Intermediate" \
-			-helpstr "Intermediate user mode"
-		    radiobutton advanced \
-			-label "Advanced" \
-			-helpstr "Advanced user mode"
+    $itk_component(primaryToolbar) insert rotate menubutton other \
+	-balloonstr "Create other primitives" \
+	-helpstr "Create other primitives" \
+	-relief flat
 
-		    separator sep2
+    # half-size spacer
+    $itk_component(primaryToolbar) insert rotate frame sep4 \
+	-relief sunken \
+	-width 2
 
-		    checkbutton viewaxes -label "View Axes" \
-			-helpstr "Hide/Show View Axes"
-		    checkbutton modelaxes -label "Model Axes" \
-			-helpstr "Hide/Show model Axes"
-		    checkbutton groundplane -label "Ground Plane" \
-			-helpstr "Hide/Show ground plane"
-		    checkbutton primitiveLabels -label "Primitive Labels" \
-			-helpstr "Hide/Show primitive labels"
-		    checkbutton viewingParams -label "Viewing Parameters" \
-			-helpstr "Hide/Show viewing parameters"
-		    checkbutton scale -label "Scale" \
-			-helpstr "Hide/Show scale"
-		    checkbutton lighting -label "Two Sided Lighting" \
-			-helpstr "Light front and back of polygons"
-		}
-	}
+    $itk_component(primaryToolbar) insert rotate button comb \
+	-state disabled \
+	-balloonstr "Create a combination" \
+	-helpstr "Create a combination" \
+	-relief flat \
+	-overrelief raised \
+	-command [::itcl::code $this createObj comb]
 
-	set i 0
-	$itk_component(menubar) menuconfigure .modes.basic \
-	    -value $i \
-	    -variable [::itcl::scope mMode] \
-	    -command [::itcl::code $this setMode 1]
-	incr i
-	$itk_component(menubar) menuconfigure .modes.intermediate \
-	    -value $i \
-	    -variable [::itcl::scope mMode] \
-	    -command [::itcl::code $this setMode 1]
-	incr i
-	$itk_component(menubar) menuconfigure .modes.advanced \
-	    -value $i \
-	    -variable [::itcl::scope mMode] \
-	    -command [::itcl::code $this setMode 1]
-
-	if {[info exists itk_component(ged)] && $mMode != 0} {
-	    set i 0
-	    $itk_component(menubar) menuconfigure .modes.activePane.ul \
-		-value $i \
-		-variable [::itcl::scope mActivePane] \
-		-command [::itcl::code $this setActivePane ul]
-	    incr i
-	    $itk_component(menubar) menuconfigure .modes.activePane.ur \
-		-value $i \
-		-variable [::itcl::scope mActivePane] \
-		-command [::itcl::code $this setActivePane ur]
-	    set mActivePane $i
-	    incr i
-	    $itk_component(menubar) menuconfigure .modes.activePane.ll \
-		-value $i \
-		-variable [::itcl::scope mActivePane] \
-		-command [::itcl::code $this setActivePane ll]
-	    incr i
-	    $itk_component(menubar) menuconfigure .modes.activePane.lr \
-		-value $i \
-		-variable [::itcl::scope mActivePane] \
-		-command [::itcl::code $this setActivePane lr]
-	    $itk_component(menubar) menuconfigure .modes.quadview \
-		-offvalue 0 \
-		-onvalue 1 \
-		-variable [::itcl::scope mMultiPane] \
-		-command [::itcl::code $this doMultiPane]
-	}
-
-	if {![info exists itk_component(ged)]} {
-	    $itk_component(menubar) menuconfigure .modes.viewaxes \
-		-offvalue 0 \
-		-onvalue 1 \
-		-variable [::itcl::scope mShowViewAxes] \
-		-command [::itcl::code $this showViewAxes] \
-		-state disabled
-	    $itk_component(menubar) menuconfigure .modes.modelaxes \
-		-offvalue 0 \
-		-onvalue 1 \
-		-variable [::itcl::scope mShowModelAxes] \
-		-command [::itcl::code $this showModelAxes] \
-		-state disabled
-	} else {
-	    $itk_component(menubar) menuconfigure .modes.viewaxes \
-		-offvalue 0 \
-		-onvalue 1 \
-		-variable [::itcl::scope mShowViewAxes] \
-		-command [::itcl::code $this showViewAxes]
-	    $itk_component(menubar) menuconfigure .modes.modelaxes \
-		-offvalue 0 \
-		-onvalue 1 \
-		-variable [::itcl::scope mShowModelAxes] \
-		-command [::itcl::code $this showModelAxes]
-	}
-	$itk_component(menubar) menuconfigure .modes.groundplane \
-	    -offvalue 0 \
-	    -onvalue 1 \
-	    -variable [::itcl::scope mShowGroundPlane] \
-	    -command [::itcl::code $this showGroundPlane]
-	$itk_component(menubar) menuconfigure .modes.primitiveLabels \
-	    -offvalue 0 \
-	    -onvalue 1 \
-	    -variable [::itcl::scope mShowPrimitiveLabels] \
-	    -command [::itcl::code $this showPrimitiveLabels]
-	$itk_component(menubar) menuconfigure .modes.viewingParams \
-	    -offvalue 0 \
-	    -onvalue 1 \
-	    -variable [::itcl::scope mShowViewingParams] \
-	    -command [::itcl::code $this showViewParams]
-	$itk_component(menubar) menuconfigure .modes.scale \
-	    -offvalue 0 \
-	    -onvalue 1 \
-	    -variable [::itcl::scope mShowScale] \
-	    -command [::itcl::code $this showScale]
-	$itk_component(menubar) menuconfigure .modes.lighting \
-	    -offvalue 1 \
-	    -onvalue 2 \
-	    -variable [::itcl::scope mLighting] \
-	    -command [::itcl::code $this doLighting]
+    if {$::Archer::plugins != ""} {
+	# half-size spacer
+	$itk_component(primaryToolbar) insert rotate frame sep5 \
+	    -relief sunken \
+	    -width 2
     }
+
+    buildWizardMenu
+
+    set parent [$itk_component(primaryToolbar) component other]
+    itk_component add primitiveMenu {
+	::menu $parent.menu \
+	    -tearoff 0
+    } {
+	keep -background
+    }
+    itk_component add arbMenu {
+	::menu $itk_component(primitiveMenu).arbmenu \
+	    -tearoff 0
+    } {
+	keep -background
+    }
+    $itk_component(arbMenu) add command \
+	-label arb4 \
+	-command [::itcl::code $this createObj arb4]
+    $itk_component(arbMenu) add command \
+	-label arb5 \
+	-command [::itcl::code $this createObj arb5]
+    $itk_component(arbMenu) add command \
+	-label arb6 \
+	-command [::itcl::code $this createObj arb6]
+    $itk_component(arbMenu) add command \
+	-label arb7 \
+	-command [::itcl::code $this createObj arb7]
+    $itk_component(arbMenu) add command \
+	-label arb8 \
+	-command [::itcl::code $this createObj arb8]
+
+    $itk_component(primitiveMenu) add cascade \
+	-label Arbs \
+	-menu $itk_component(arbMenu)
+    #    $itk_component(primitiveMenu) add command \
+	-label bot \
+	-command [::itcl::code $this createObj bot]
+    #    $itk_component(primitiveMenu) add command \
+	-label comb \
+	-command [::itcl::code $this createObj comb]
+    #    $itk_component(primitiveMenu) add command \
+	-label ehy \
+	-command [::itcl::code $this createObj ehy]
+    #    $itk_component(primitiveMenu) add command \
+	-label ell \
+	-command [::itcl::code $this createObj ell]
+    #    $itk_component(primitiveMenu) add command \
+	-label epa \
+	-command [::itcl::code $this createObj epa]
+    #    $itk_component(primitiveMenu) add command \
+	-label eto \
+	-command [::itcl::code $this createObj eto]
+    #    $itk_component(primitiveMenu) add command \
+	-label extrude \
+	-command [::itcl::code $this createObj extrude]
+    #    $itk_component(primitiveMenu) add command \
+	-label grip \
+	-command [::itcl::code $this createObj grip]
+    #    $itk_component(primitiveMenu) add command \
+	-label half \
+	-command [::itcl::code $this createObj half]
+    #    $itk_component(primitiveMenu) add command \
+	-label part \
+	-command [::itcl::code $this createObj part]
+    #    $itk_component(primitiveMenu) add command \
+	-label pipe \
+	-command [::itcl::code $this createObj pipe]
+    #    $itk_component(primitiveMenu) add command \
+	-label rhc \
+	-command [::itcl::code $this createObj rhc]
+    #    $itk_component(primitiveMenu) add command \
+	-label rpc \
+	-command [::itcl::code $this createObj rpc]
+    #    $itk_component(primitiveMenu) add command \
+	-label sketch \
+	-command [::itcl::code $this createObj sketch]
+    $itk_component(primitiveMenu) add command \
+	-label sph \
+	-command [::itcl::code $this createObj sph]
+    $itk_component(primitiveMenu) add command \
+	-label tgc \
+	-command [::itcl::code $this createObj tgc]
+    $itk_component(primitiveMenu) add command \
+	-label tor \
+	-command [::itcl::code $this createObj tor]
+
+    set parent [$itk_component(primaryToolbar) component other]
+    $parent configure \
+	-menu $itk_component(primitiveMenu) \
+	-activebackground [$parent cget -background]
+
+#    $itk_component(primaryToolbar) insert rotate button ehy \
+	-balloonstr "Create an ehy" \
+	-helpstr "Create an ehy" \
+	-relief flat \
+	-overrelief raised \
+	-command [::itcl::code $this createObj ehy]
+
+#    $itk_component(primaryToolbar) insert rotate button epa \
+	-balloonstr "Create an epa" \
+	-helpstr "Create an epa" \
+	-relief flat \
+	-overrelief raised \
+	-command [::itcl::code $this createObj epa]
+
+#    $itk_component(primaryToolbar) insert rotate button rpc \
+	-balloonstr "Create an rpc" \
+	-helpstr "Create an rpc" \
+	-relief flat \
+	-overrelief raised \
+	-command [::itcl::code $this createObj rpc]
+
+#    $itk_component(primaryToolbar) insert rotate button rhc \
+	-balloonstr "Create an rhc" \
+	-helpstr "Create an rhc" \
+	-relief flat \
+	-overrelief raised \
+	-command [::itcl::code $this createObj rhc]
+
+#    $itk_component(primaryToolbar) insert rotate button ell \
+	-balloonstr "Create an ellipsoid" \
+	-helpstr "Create an ellipsoid" \
+	-relief flat \
+	-overrelief raised \
+	-command [::itcl::code $this createObj ell]
+
+#    $itk_component(primaryToolbar) insert rotate button eto \
+	-balloonstr "Create an eto" \
+	-helpstr "Create an eto" \
+	-relief flat \
+	-overrelief raised \
+	-command [::itcl::code $this createObj eto]
+
+#    $itk_component(primaryToolbar) insert rotate button half \
+	-balloonstr "Create a half space" \
+	-helpstr "Create a half space" \
+	-relief flat \
+	-overrelief raised \
+	-command [::itcl::code $this createObj half]
+
+#    $itk_component(primaryToolbar) insert rotate button part \
+	-balloonstr "Create a particle" \
+	-helpstr "Create a particle" \
+	-relief flat \
+	-overrelief raised \
+	-command [::itcl::code $this createObj part]
+
+#    $itk_component(primaryToolbar) insert rotate button grip \
+	-balloonstr "Create a grip" \
+	-helpstr "Create a grip" \
+	-relief flat \
+	-overrelief raised \
+	-command [::itcl::code $this createObj grip]
+
+#    $itk_component(primaryToolbar) insert rotate button extrude \
+	-balloonstr "Create an extrusion" \
+	-helpstr "Create an extrusion" \
+	-relief flat \
+	-overrelief raised \
+	-command [::itcl::code $this createObj extrude]
+
+#    $itk_component(primaryToolbar) insert rotate button sketch \
+	-balloonstr "Create a sketch" \
+	-helpstr "Create a sketch" \
+	-relief flat \
+	-overrelief raised \
+	-command [::itcl::code $this createObj sketch]
+
+#    $itk_component(primaryToolbar) insert rotate button bot \
+	-balloonstr "Create a bot" \
+	-helpstr "Create a bot" \
+	-relief flat \
+	-overrelief raised \
+	-command [::itcl::code $this createObj bot]
+
+    # half-size spacer
+    $itk_component(primaryToolbar) insert rotate frame fill1 \
+	-relief flat \
+	-width 5
+    $itk_component(primaryToolbar) insert rotate frame sep6 \
+	-relief sunken \
+	-width 2
+    $itk_component(primaryToolbar) insert rotate frame fill2 \
+	-relief flat \
+	-width 5
+
+    # add spacer
+    $itk_component(primaryToolbar) add frame fill3 \
+	-relief flat \
+	-width 5
+    $itk_component(primaryToolbar) add frame sep7 \
+	-relief sunken \
+	-width 2
+    $itk_component(primaryToolbar) add frame fill4 \
+	-relief flat \
+	-width 5
+    $itk_component(primaryToolbar) add radiobutton edit_rotate \
+	-balloonstr "Rotate selected object" \
+	-helpstr "Rotate selected object" \
+	-variable [::itcl::scope mDefaultBindingMode] \
+	-value $OBJECT_ROTATE_MODE \
+	-command [::itcl::code $this beginObjRotate] \
+	-image [image create photo \
+		    -file [file join $mImgDir Themes $mTheme edit_rotate.png]]
+    $itk_component(primaryToolbar) add radiobutton edit_translate \
+	-balloonstr "Translate selected object" \
+	-helpstr "Translate selected object" \
+	-variable [::itcl::scope mDefaultBindingMode] \
+	-value $OBJECT_TRANSLATE_MODE \
+	-command [::itcl::code $this beginObjTranslate] \
+	-image [image create photo \
+		    -file [file join $mImgDir Themes $mTheme edit_translate.png]]
+    $itk_component(primaryToolbar) add radiobutton edit_scale \
+	-balloonstr "Scale selected object" \
+	-helpstr "Scale selected object" \
+	-variable [::itcl::scope mDefaultBindingMode] \
+	-value $OBJECT_SCALE_MODE \
+	-command [::itcl::code $this beginObjScale] \
+	-image [image create photo \
+		    -file [file join $mImgDir Themes $mTheme edit_scale.png]]
+    $itk_component(primaryToolbar) add radiobutton edit_center \
+	-balloonstr "Center selected object" \
+	-helpstr "Center selected object" \
+	-variable [::itcl::scope mDefaultBindingMode] \
+	-value $OBJECT_CENTER_MODE \
+	-command [::itcl::code $this beginObjCenter] \
+	-image [image create photo \
+		    -file [file join $mImgDir Themes $mTheme edit_select.png]]
+
+    $itk_component(primaryToolbar) itemconfigure edit_rotate -state disabled
+    $itk_component(primaryToolbar) itemconfigure edit_translate -state disabled
+    $itk_component(primaryToolbar) itemconfigure edit_scale -state disabled
+    $itk_component(primaryToolbar) itemconfigure edit_center -state disabled
+}
+
+
+::itcl::body Archer::buildEmbeddedMenubar {} {
+    itk_component add menubar {
+	::iwidgets::menubar $itk_interior.menubar \
+	    -helpvariable [::itcl::scope mStatusStr] \
+	    -font $mFontText \
+	    -activebackground $SystemHighlight \
+	    -activeforeground $SystemHighlightText
+    } {
+	keep -background
+    }
+
+    $itk_component(menubar) component menubar configure \
+	-relief flat
+
+    buildEmbeddedFileMenu
+    buildEmbeddedDisplayMenu
+    buildEmbeddedModesMenu
+    buildEmbeddedRaytraceMenu
+    updateUtilityMenu
+    buildEmbeddedHelpMenu
+}
+
+::itcl::body Archer::buildEmbeddedFileMenu {} {
+    $itk_component(menubar) add menubutton file \
+	-text "File" -menu {
+	    options -tearoff 0
+
+	    command new \
+		-label "New..." \
+		-helpstr "Open target description"
+	    command open \
+		-label "Open..." \
+		-helpstr "Open target description"
+	    command save \
+		-label "Save" \
+		-helpstr "Save target description"
+	    separator sep0
+	    command rt -label "Raytrace Control Panel..." \
+		-helpstr "Launch Ray Trace Panel"
+	    command pref \
+		-label "Preferences..." \
+		-helpstr "Set application preferences"
+	    separator sep1
+	    command exit \
+		-label "Quit" \
+		-helpstr "Exit Archer"
+	}
+    $itk_component(menubar) menuconfigure .file.new \
+	-command [::itcl::code $this newDb]
+    $itk_component(menubar) menuconfigure .file.open \
+	-command [::itcl::code $this openDb]
+    $itk_component(menubar) menuconfigure .file.save \
+	-command [::itcl::code $this saveDb] \
+	-state disabled
+    $itk_component(menubar) menuconfigure .file.rt \
+	-command [::itcl::code $this raytracePanel] \
+	-state disabled
+    $itk_component(menubar) menuconfigure .file.pref \
+	-command [::itcl::code $this doPreferences]
+    $itk_component(menubar) menuconfigure .file.exit \
+	-command [::itcl::code $this Close]
+}
+
+::itcl::body Archer::buildEmbeddedDisplayMenu {} {
+    $itk_component(menubar) add menubutton display \
+	-text "Display" -menu {
+	    options -tearoff 0
+
+	    command reset -label "Reset" \
+		-helpstr "Set view to default"
+	    command autoview -label "Autoview" \
+		-helpstr "Set view size and center according to what's being displayed"
+	    command center -label "Center..." \
+		-helpstr "Set the view center"
+
+	    cascade background -label "Background Color" -menu {
+		command black -label "Black" \
+		    -helpstr "Set display background to black"
+		command grey -label "Grey" \
+		    -helpstr "Set display background to grey"
+		command white -label "White" \
+		    -helpstr "Set display background to white"
+		command cyan -label "Cyan" \
+		    -helpstr "Set display background to cyan"
+		command blue -label "Blue" \
+		    -helpstr "Set display background to blue"
+	    }
+
+	    cascade standard -label "Standard Views" -menu {
+		command front -label "Front" \
+		    -helpstr "Set view to front"
+		command rear -label "Rear" \
+		    -helpstr "Set view to rear"
+		command port -label "Port" \
+		    -helpstr "Set view to port/left"
+		command starboard -label "Starboard" \
+		    -helpstr "Set view to starboard/right"
+		command top -label "Top" \
+		    -helpstr "Set view to top"
+		command bottom -label "Bottom" \
+		    -helpstr "Set view to bottom"
+		separator sep0
+		command 35,25 -label "35,25" \
+		    -helpstr "Set view to az=35, el=25"
+		command 45,45 -label "45,45" \
+		    -helpstr "Set view to az=45, el=45"
+	    }
+
+	    command clear -label "Clear" \
+		-helpstr "Clear the display"
+	    command refresh -label "Refresh" \
+		-helpstr "Refresh the display"
+	}
+
+    $itk_component(menubar) menuconfigure .display.standard \
+	-state disabled
+    $itk_component(menubar) menuconfigure .display.reset \
+	-command [::itcl::code $this doViewReset] \
+	-state disabled
+    $itk_component(menubar) menuconfigure .display.autoview \
+	-command [::itcl::code $this doAutoview] \
+	-state disabled
+    $itk_component(menubar) menuconfigure .display.center \
+	-command [::itcl::code $this doViewCenter] \
+	-state disabled
+    $itk_component(menubar) menuconfigure .display.background.black \
+	-command [::itcl::code $this backgroundColor 0 0 0]
+    $itk_component(menubar) menuconfigure .display.background.grey \
+	-command [::itcl::code $this backgroundColor 100 100 100]
+    $itk_component(menubar) menuconfigure .display.background.white \
+	-command [::itcl::code $this backgroundColor 255 255 255]
+    $itk_component(menubar) menuconfigure .display.background.cyan \
+	-command [::itcl::code $this backgroundColor 0 200 200]
+    $itk_component(menubar) menuconfigure .display.background.blue \
+	-command [::itcl::code $this backgroundColor 0 0 160]
+    $itk_component(menubar) menuconfigure .display.standard.front \
+	-command [::itcl::code $this doAe 0 0]
+    $itk_component(menubar) menuconfigure .display.standard.rear \
+	-command [::itcl::code $this doAe 180 0]
+    $itk_component(menubar) menuconfigure .display.standard.port \
+	-command [::itcl::code $this doAe 90 0]
+    $itk_component(menubar) menuconfigure .display.standard.starboard \
+	-command [::itcl::code $this doAe -90 0]
+    $itk_component(menubar) menuconfigure .display.standard.top \
+	-command [::itcl::code $this doAe 0 90]
+    $itk_component(menubar) menuconfigure .display.standard.bottom \
+	-command [::itcl::code $this doAe 0 -90]
+    $itk_component(menubar) menuconfigure .display.standard.35,25 \
+	-command [::itcl::code $this doAe 35 25]
+    $itk_component(menubar) menuconfigure .display.standard.45,45 \
+	-command [::itcl::code $this doAe 45 45]
+    $itk_component(menubar) menuconfigure .display.clear \
+	-command [::itcl::code $this clear] \
+	-state disabled
+    $itk_component(menubar) menuconfigure .display.refresh \
+	-command [::itcl::code $this refreshDisplay] \
+	-state disabled
+}
+
+::itcl::body Archer::buildEmbeddedHelpMenu {} {
+    $itk_component(menubar) add menubutton help \
+	-text "Help" \
+	-menu {
+	    options -tearoff 1
+	    command archerHelp -label "Archer Help..." \
+		-helpstr "Archer's User Manual"
+	    separator sep0
+	    command aboutPlugins -label "About Plug-ins..." \
+		-helpstr "Info about Plug-ins"
+	    command aboutArcher -label "About Archer..." \
+		-helpstr "Info about Archer"
+
+	    #	    command overrides -label "Mouse Mode Overrides..." \
+		-helpstr "Mouse mode override definitions"
+	}
+    $itk_component(menubar) menuconfigure .help.archerHelp \
+	-command [::itcl::code $this doArcherHelp]
+    $itk_component(menubar) menuconfigure .help.aboutPlugins \
+	-command "::Archer::pluginDialog [namespace tail $this]"
+    $itk_component(menubar) menuconfigure .help.aboutArcher \
+	-command [::itcl::code $this doAboutArcher]
+    #    $itk_component(menubar) menuconfigure .help.overrides \
+	-command [::itcl::code $this doMouseOverrides]
+}
+
+::itcl::body Archer::buildEmbeddedModesMenu {} {
+    $itk_component(menubar) add menubutton modes \
+	-text "Modes" -menu {
+	    options -tearoff 0
+
+	    cascade activepane -label "Active Pane" -menu {
+		radiobutton ul -label "Upper Left" \
+		    -helpstr "Set active pane to upper left"
+		radiobutton ur -label "Upper Right" \
+		    -helpstr "Set active pane to upper right"
+		radiobutton ll -label "Lower Left" \
+		    -helpstr "Set active pane to lower left"
+		radiobutton lr -label "Lower Right" \
+		    -helpstr "Set active pane to lower right"
+	    }
+	    checkbutton quad -label "Quad View" \
+		-helpstr "Toggle between single and quad display."
+	    separator sep1
+	    checkbutton vaxes -label "View Axes" \
+		-helpstr "Toggle display of the view axes."
+	    checkbutton maxes -label "Model Axes" \
+		-helpstr "Toggle display of the model axes."
+	    checkbutton gplane -label "Ground Plane" \
+		-helpstr "Toggle display of the ground plane."
+	    checkbutton plabels -label "Primitive Labels" \
+		-helpstr "Toggle display of the primitive labels."
+	    checkbutton vparams -label "Viewing Parameters" \
+		-helpstr "Toggle display of the viewing parameters."
+	    checkbutton scale -label "Scale" \
+		-helpstr "Toggle display of the view scale."
+	    checkbutton light -label "Lighting" \
+		-helpstr "Toggle lighting on/off."
+	}
+    $itk_component(menubar) menuconfigure .modes.activepane \
+	-state disabled
+    set i 0
+    $itk_component(menubar) menuconfigure .modes.activepane.ul \
+	-value $i \
+	-variable [::itcl::scope mActivePane] \
+	-command [::itcl::code $this setActivePane ul]
+    incr i
+    $itk_component(menubar) menuconfigure .modes.activepane.ur \
+	-value $i \
+	-variable [::itcl::scope mActivePane] \
+	-command [::itcl::code $this setActivePane ur]
+    incr i
+    $itk_component(menubar) menuconfigure .modes.activepane.ll \
+	-value $i \
+	-variable [::itcl::scope mActivePane] \
+	-command [::itcl::code $this setActivePane ll]
+    incr i
+    $itk_component(menubar) menuconfigure .modes.activepane.lr \
+	-value $i \
+	-variable [::itcl::scope mActivePane] \
+	-command [::itcl::code $this setActivePane lr]
+    $itk_component(menubar) menuconfigure .modes.quad \
+	-command [::itcl::code $this doMultiPane] \
+	-offvalue 0 \
+	-onvalue 1 \
+	-variable [::itcl::scope mMultiPane] \
+	-state disabled
+    $itk_component(menubar) menuconfigure .modes.vaxes \
+	-offvalue 0 \
+	-onvalue 1 \
+	-variable [::itcl::scope mShowViewAxes] \
+	-command [::itcl::code $this showViewAxes] \
+	-state disabled
+    $itk_component(menubar) menuconfigure .modes.maxes \
+	-offvalue 0 \
+	-onvalue 1 \
+	-variable [::itcl::scope mShowModelAxes] \
+	-command [::itcl::code $this showModelAxes] \
+	-state disabled
+    $itk_component(menubar) menuconfigure .modes.gplane \
+	-offvalue 0 \
+	-onvalue 1 \
+	-variable [::itcl::scope mShowGroundPlane] \
+	-command [::itcl::code $this showGroundPlane] \
+	-state disabled
+    $itk_component(menubar) menuconfigure .modes.plabels \
+	-offvalue 0 \
+	-onvalue 1 \
+	-variable [::itcl::scope mShowPrimitiveLabels] \
+	-command [::itcl::code $this showPrimitiveLabels] \
+	-state disabled
+    $itk_component(menubar) menuconfigure .modes.vparams \
+	-offvalue 0 \
+	-onvalue 1 \
+	-variable [::itcl::scope mShowViewingParams] \
+	-command [::itcl::code $this showViewParams] \
+	-state disabled
+    $itk_component(menubar) menuconfigure .modes.scale \
+	-offvalue 0 \
+	-onvalue 1 \
+	-variable [::itcl::scope mShowScale] \
+	-command [::itcl::code $this showScale] \
+	-state disabled
+    $itk_component(menubar) menuconfigure .modes.light \
+	-offvalue 0 \
+	-onvalue 1 \
+	-variable [::itcl::scope mLighting] \
+	-command [::itcl::code $this doLighting] \
+	-state disabled
+}
+
+::itcl::body Archer::buildEmbeddedRaytraceMenu {} {
+    $itk_component(menubar) add menubutton raytrace \
+	-text "Raytrace" -menu {
+	    options -tearoff 0
+
+	    cascade rt -label "rt" -menu {
+		command rt512 -label "512x512" \
+		    -helpstr "Render the current view with rt -s 512."
+		command rt1024 -label "1024x1024" \
+		    -helpstr "Render the current view with rt -s 1024."
+		command rtwinsize -label "Window Size" \
+		    -helpstr "Render the current view with rt using the window size."
+	    }
+
+	    cascade rtcheck -label "rtcheck" -menu {
+		command rtcheck50 -label "50x50" \
+		    -helpstr "Run rtcheck -s 50."
+		command rtcheck100 -label "100x100" \
+		    -helpstr "Run rtcheck -s 100."
+		command rtcheck256 -label "256x256" \
+		    -helpstr "Run rtcheck -s 256."
+		command rtcheck512 -label "512x512" \
+		    -helpstr "Run rtcheck -s 512."
+	    }
+
+	    cascade rtedge -label "rtedge" -menu {
+		command rtedge512 -label "512x512" \
+		    -helpstr "Render the current view with rtedge -s 512."
+		command rtedge1024 -label "1024x1024" \
+		    -helpstr "Render the current view with rtedge -s 1024."
+		command rtedgewinsize -label "Window Size" \
+		    -helpstr "Render the current view with rtedge using the window size."
+	    }
+
+	    command nirt -label "nirt" \
+		-helpstr "Fire nirt at current view."
+	}
+
+    $itk_component(menubar) menuconfigure .raytrace.rt \
+	-state disabled
+    $itk_component(menubar) menuconfigure .raytrace.rt.rt512 \
+	-command [::itcl::code $this launchRtApp rt 512]
+    $itk_component(menubar) menuconfigure .raytrace.rt.rt1024 \
+	-command [::itcl::code $this launchRtApp rt 1024]
+    $itk_component(menubar) menuconfigure .raytrace.rt.rtwinsize \
+	-command [::itcl::code $this launchRtApp rt window]
+
+    $itk_component(menubar) menuconfigure .raytrace.rtcheck \
+	-state disabled
+    $itk_component(menubar) menuconfigure .raytrace.rtcheck.rtcheck50 \
+	-command [::itcl::code $this launchRtApp rtcheck 50]
+    $itk_component(menubar) menuconfigure .raytrace.rtcheck.rtcheck100 \
+	-command [::itcl::code $this launchRtApp rtcheck 100]
+    $itk_component(menubar) menuconfigure .raytrace.rtcheck.rtcheck256 \
+	-command [::itcl::code $this launchRtApp rtcheck 256]
+    $itk_component(menubar) menuconfigure .raytrace.rtcheck.rtcheck512 \
+	-command [::itcl::code $this launchRtApp rtcheck 512]
+
+    $itk_component(menubar) menuconfigure .raytrace.rtedge \
+	-state disabled
+    $itk_component(menubar) menuconfigure .raytrace.rtedge.rtedge512 \
+	-command [::itcl::code $this launchRtApp rtedge 512]
+    $itk_component(menubar) menuconfigure .raytrace.rtedge.rtedge1024 \
+	-command [::itcl::code $this launchRtApp rtedge 1024]
+    $itk_component(menubar) menuconfigure .raytrace.rtedge.rtedgewinsize \
+	-command [::itcl::code $this launchRtApp rtedge window]
+
+    $itk_component(menubar) menuconfigure .raytrace.nirt \
+	-command [::itcl::code $this launchNirt] \
+	-state disabled
+}
+
+::itcl::body Archer::buildModesMenu {} {
+    itk_component add modesmenu {
+	menu $itk_component(menubar).modesmenu \
+	    -tearoff 0
+    } {
+	keep -background
+    }
+
+    itk_component add activepanemenu {
+	menu $itk_component(modesmenu).activepanemenu \
+	    -tearoff 0
+    } {
+	keep -background
+    }
+    set i 0
+    $itk_component(activepanemenu) add radiobutton \
+	-label "Upper Left" \
+	-value $i \
+	-variable [::itcl::scope mActivePane] \
+	-command [::itcl::code $this setActivePane ul]
+    incr i
+    $itk_component(activepanemenu) add radiobutton \
+	-label "Upper Right" \
+	-value $i \
+	-variable [::itcl::scope mActivePane] \
+	-command [::itcl::code $this setActivePane ur]
+    set mActivePane $i
+    incr i
+    $itk_component(activepanemenu) add radiobutton \
+	-label "Lower Left" \
+	-value $i \
+	-variable [::itcl::scope mActivePane] \
+	-command [::itcl::code $this setActivePane ll]
+    incr i
+    $itk_component(activepanemenu) add radiobutton \
+	-label "Lower Right" \
+	-value $i \
+	-variable [::itcl::scope mActivePane] \
+	-command [::itcl::code $this setActivePane lr]
+
+    $itk_component(modesmenu) add cascade \
+	-label "Active Pane" \
+	-menu $itk_component(activepanemenu) \
+	-state disabled
+    $itk_component(modesmenu) add checkbutton \
+	-label "Quad View" \
+	-offvalue 0 \
+	-onvalue 1 \
+	-variable [::itcl::scope mMultiPane] \
+	-command [::itcl::code $this doMultiPane] \
+	-state disabled
+    $itk_component(modesmenu) add separator
+    $itk_component(modesmenu) add checkbutton \
+	-label "View Axes" \
+	-offvalue 0 \
+	-onvalue 1 \
+	-variable [::itcl::scope mShowViewAxes] \
+	-command [::itcl::code $this showViewAxes] \
+	-state disabled
+    $itk_component(modesmenu) add checkbutton \
+	-label "Model Axes" \
+	-offvalue 0 \
+	-onvalue 1 \
+	-variable [::itcl::scope mShowModelAxes] \
+	-command [::itcl::code $this showModelAxes] \
+	-state disabled
+    $itk_component(modesmenu) add checkbutton \
+	-label "Ground Plane" \
+	-offvalue 0 \
+	-onvalue 1 \
+	-variable [::itcl::scope mShowGroundPlane] \
+	-command [::itcl::code $this showGroundPlane] \
+	-state disabled
+    $itk_component(modesmenu) add checkbutton \
+	-label "Primitive Labels" \
+	-offvalue 0 \
+	-onvalue 1 \
+	-variable [::itcl::scope mShowPrimitiveLabels] \
+	-command [::itcl::code $this showPrimitiveLabels] \
+	-state disabled
+    $itk_component(modesmenu) add checkbutton \
+	-label "Viewing Parameters" \
+	-offvalue 0 \
+	-onvalue 1 \
+	-variable [::itcl::scope mShowViewingParams] \
+	-command [::itcl::code $this showViewParams] \
+	-state disabled
+    $itk_component(modesmenu) add checkbutton \
+	-label "Scale" \
+	-offvalue 0 \
+	-onvalue 1 \
+	-variable [::itcl::scope mShowScale] \
+	-command [::itcl::code $this showScale] \
+	-state disabled
+    $itk_component(modesmenu) add checkbutton \
+	-label "Lighting" \
+	-offvalue 0 \
+	-onvalue 2 \
+	-variable [::itcl::scope mLighting] \
+	-command [::itcl::code $this doLighting] \
+	-state disabled
 }
 
 
 ################################### Modes Section ###################################
 
-::itcl::body Archer::setAdvancedMode {} {
-    grid $itk_component(attr_expand) -row 0 -column 2 -sticky e
-
-    set itk_option(-primaryToolbar) 1
-    doPrimaryToolbar
+::itcl::body Archer::initMode {{updateFractions 0}} {
+    if {$updateFractions} {
+	updateHPaneFractions
+	updateVPaneFractions
+    }
 
     if {$ArcherCore::inheritFromToplevel == 0} {
 	pack forget $itk_component(menubar)
@@ -3710,19 +3525,17 @@ package provide Archer 1.0
 	buildEmbeddedMenubar
 	pack $itk_component(menubar) -side top -fill x -padx 1 -before $itk_component(south)
     } else {
-	updateModesMenu
 	updateUtilityMenu
     }
 
     updateWizardMenu
-    updateViewToolbarForEdit
 
     if {$mTarget != "" &&
 	$mBindingMode == 0} {
-	$itk_component(viewToolbar) itemconfigure edit_rotate -state normal
-	$itk_component(viewToolbar) itemconfigure edit_translate -state normal
-	$itk_component(viewToolbar) itemconfigure edit_scale -state normal
-	$itk_component(viewToolbar) itemconfigure edit_center -state normal
+	$itk_component(primaryToolbar) itemconfigure edit_rotate -state normal
+	$itk_component(primaryToolbar) itemconfigure edit_translate -state normal
+	$itk_component(primaryToolbar) itemconfigure edit_scale -state normal
+	$itk_component(primaryToolbar) itemconfigure edit_center -state normal
     }
 
     $itk_component(hpane) show bottomView
@@ -3731,17 +3544,6 @@ package provide Archer 1.0
 
     set toggle3 $mVPaneToggle3
     set toggle5 $mVPaneToggle5
-    if {$mVPaneFraction3 == 0} {
-	toggleTreeView "close"
-    } else {
-	toggleTreeView "open"
-    }
-
-    if {$mVPaneFraction5 == 0} {
-	toggleAttrView "close"
-    } else {
-	toggleAttrView "open"
-    }
     set mVPaneToggle3 $toggle3
     set mVPaneToggle5 $toggle5
 
@@ -3749,361 +3551,13 @@ package provide Archer 1.0
     $itk_component(vpane) fraction $mVPaneFraction3 $mVPaneFraction4 $mVPaneFraction5
     update
     after idle $itk_component(vpane) fraction $mVPaneFraction3 $mVPaneFraction4 $mVPaneFraction5
-}
-
-
-::itcl::body Archer::setBasicMode {} {
-    grid forget $itk_component(attr_expand)
-
-    #catch {$itk_component(displaymenu) delete "Command Window"}
-    set itk_option(-primaryToolbar) 0
-    doPrimaryToolbar
-
-    catch {
-	if {$mMultiPane} {
-	    set mMultiPane 0
-	    doMultiPane
-	}
-    }
-
-    if {$ArcherCore::inheritFromToplevel == 0} {
-	pack forget $itk_component(menubar)
-	::itcl::delete object $itk_component(menubar)
-	buildEmbeddedMenubar
-	pack $itk_component(menubar) -side top -fill x -padx 1 -before $itk_component(south)
-    } else {
-	updateModesMenu
-	updateUtilityMenu
-    }
-
-    updateWizardMenu
-
-    $itk_component(hpane) hide bottomView
-    $itk_component(vpane) hide attrView
-
-    catch {
-	$itk_component(viewToolbar) delete fill1
-	$itk_component(viewToolbar) delete sep1
-	$itk_component(viewToolbar) delete fill2
-	$itk_component(viewToolbar) delete edit_rotate
-	$itk_component(viewToolbar) delete edit_translate
-	$itk_component(viewToolbar) delete edit_scale
-	$itk_component(viewToolbar) delete edit_center
-    }
-
-    set toggle1 $mVPaneToggle1
-    if {$mVPaneFraction1 == 0} {
-	toggleTreeView "close"
-    } else {
-	toggleTreeView "open"
-    }
-    set mVPaneToggle1 $toggle1
-
-    # How screwed up is this?
-    $itk_component(vpane) fraction $mVPaneFraction1 $mVPaneFraction2
-    update
-    after idle $itk_component(vpane) fraction  $mVPaneFraction1 $mVPaneFraction2
-
-    if {$mTarget != "" &&
-	$mBindingMode == 0 &&
-	$CENTER_MODE < $mDefaultBindingMode} {
-	set mDefaultBindingMode $ROTATE_MODE
-	beginViewRotate
-    }
-}
-
-
-::itcl::body Archer::setIntermediateMode {} {
-    grid $itk_component(attr_expand) -row 0 -column 2 -sticky e
-
-    #catch {$itk_component(displaymenu) delete "Command Window"}
-    set itk_option(-primaryToolbar) 1
-    doPrimaryToolbar
-
-    # DRH: hack to make sure it doesn't crash in Crossbow
-    if {$ArcherCore::inheritFromToplevel == 0} {
-	pack forget $itk_component(menubar)
-	::itcl::delete object $itk_component(menubar)
-	buildEmbeddedMenubar
-	pack $itk_component(menubar) -side top -fill x -padx 1 -before $itk_component(south)
-    } else {
-	updateModesMenu
-	updateUtilityMenu
-    }
-
-    updateWizardMenu
-    updateViewToolbarForEdit
-
-    if {$mTarget != "" &&
-	$mBindingMode == 0} {
-	$itk_component(viewToolbar) itemconfigure edit_rotate -state normal
-	$itk_component(viewToolbar) itemconfigure edit_translate -state normal
-	$itk_component(viewToolbar) itemconfigure edit_scale -state normal
-	$itk_component(viewToolbar) itemconfigure edit_center -state normal
-    }
-
-    $itk_component(hpane) hide bottomView
-    $itk_component(vpane) show attrView
-
-    set toggle3 $mVPaneToggle3
-    set toggle5 $mVPaneToggle5
-    if {$mVPaneFraction3 == 0} {
-	toggleTreeView "close"
-    } else {
-	toggleTreeView "open"
-    }
-
-    if {$mVPaneFraction5 == 0} {
-	toggleAttrView "close"
-    } else {
-	toggleAttrView "open"
-    }
-    set mVPaneToggle3 $toggle3
-    set mVPaneToggle5 $toggle5
-
-    # How screwed up is this?
-    $itk_component(vpane) fraction $mVPaneFraction3 $mVPaneFraction4 $mVPaneFraction5
-    update
-    after idle $itk_component(vpane) fraction $mVPaneFraction3 $mVPaneFraction4 $mVPaneFraction5
-}
-
-
-::itcl::body Archer::updateCopyMode {} {
-    if {1} {
-	#XXX For now, always set to disabled
-	$itk_component(primaryToolbar) itemconfigure copy \
-	    -state disabled
-    } else {
-	if {!$mDbNoCopy && !$mDbReadOnly && $mSelectedObj != ""} {
-	    $itk_component(primaryToolbar) itemconfigure copy \
-		-state normal
-	} else {
-	    $itk_component(primaryToolbar) itemconfigure copy \
-		-state disabled
-	}
-    }
-}
-
-
-::itcl::body Archer::updateCutMode {} {
-    if {1} {
-	#XXX For now, always set to disabled
-	$itk_component(primaryToolbar) itemconfigure cut \
-	    -state disabled
-    } else {
-	if {!$mDbNoCopy && !$mDbReadOnly && $mSelectedObj != ""} {
-	    $itk_component(primaryToolbar) itemconfigure cut \
-		-state normal
-	} else {
-	    $itk_component(primaryToolbar) itemconfigure cut \
-		-state disabled
-	}
-    }
-}
-
-
-::itcl::body Archer::updatePasteMode {} {
-    if {1} {
-	#XXX For now, always set to disabled
-	$itk_component(primaryToolbar) itemconfigure paste \
-	    -state disabled
-    } else {
-	if {!$mDbNoCopy && !$mDbReadOnly && $mSelectedObj != "" && $mPasteActive} {
-	    $itk_component(primaryToolbar) itemconfigure paste \
-		-state normal
-	} else {
-	    $itk_component(primaryToolbar) itemconfigure paste \
-		-state disabled
-	}
-    }
-}
-
-
-::itcl::body Archer::updateViewToolbarForEdit {} {
-    catch {
-	# add spacer
-	$itk_component(viewToolbar) add frame fill1 \
-	    -borderwidth 1 \
-	    -relief flat \
-	    -height 5
-	$itk_component(viewToolbar) add frame sep1 \
-	    -borderwidth 1 \
-	    -relief sunken \
-	    -height 2
-	$itk_component(viewToolbar) add frame fill2 \
-	    -borderwidth 1 \
-	    -relief flat \
-	    -height 5
-	$itk_component(viewToolbar) add radiobutton edit_rotate \
-	    -balloonstr "Rotate selected object" \
-	    -helpstr "Rotate selected object" \
-	    -variable [::itcl::scope mDefaultBindingMode] \
-	    -value $OBJECT_ROTATE_MODE \
-	    -command [::itcl::code $this beginObjRotate] \
-	    -image [image create photo \
-			-file [file join $mImgDir Themes $mTheme edit_rotate.png]]
-	$itk_component(viewToolbar) add radiobutton edit_translate \
-	    -balloonstr "Translate selected object" \
-	    -helpstr "Translate selected object" \
-	    -variable [::itcl::scope mDefaultBindingMode] \
-	    -value $OBJECT_TRANSLATE_MODE \
-	    -command [::itcl::code $this beginObjTranslate] \
-	    -image [image create photo \
-			-file [file join $mImgDir Themes $mTheme edit_translate.png]]
-	$itk_component(viewToolbar) add radiobutton edit_scale \
-	    -balloonstr "Scale selected object" \
-	    -helpstr "Scale selected object" \
-	    -variable [::itcl::scope mDefaultBindingMode] \
-	    -value $OBJECT_SCALE_MODE \
-	    -command [::itcl::code $this beginObjScale] \
-	    -image [image create photo \
-			-file [file join $mImgDir Themes $mTheme edit_scale.png]]
-	$itk_component(viewToolbar) add radiobutton edit_center \
-	    -balloonstr "Center selected object" \
-	    -helpstr "Center selected object" \
-	    -variable [::itcl::scope mDefaultBindingMode] \
-	    -value $OBJECT_CENTER_MODE \
-	    -command [::itcl::code $this beginObjCenter] \
-	    -image [image create photo \
-			-file [file join $mImgDir Themes $mTheme edit_select.png]]
-
-	$itk_component(viewToolbar) itemconfigure edit_rotate -state disabled
-	$itk_component(viewToolbar) itemconfigure edit_translate -state disabled
-	$itk_component(viewToolbar) itemconfigure edit_scale -state disabled
-	$itk_component(viewToolbar) itemconfigure edit_center -state disabled
-    }
-}
-
-
-::itcl::body Archer::setMode {{updateFractions 0}} {
-    if {$updateFractions} {
-	updateHPaneFractions
-	updateVPaneFractions
-    }
-
-    switch -- $mMode {
-	0 {
-	    setBasicMode
-	}
-	1 {
-	    setIntermediateMode
-	}
-	2 {
-	    setAdvancedMode
-	}
-    }
 }
 
 
 ################################### Object Edit Section ###################################
 
-::itcl::body Archer::applyEdit {} {
-    set doRefreshTree 0
-    switch -- $mSelectedObjType {
-	"arb4" {
-	    $itk_component(arb4View) updateGeometry
-	}
-	"arb5" {
-	    $itk_component(arb5View) updateGeometry
-	}
-	"arb6" {
-	    $itk_component(arb6View) updateGeometry
-	}
-	"arb7" {
-	    $itk_component(arb7View) updateGeometry
-	}
-	"arb8" {
-	    $itk_component(arb8View) updateGeometry
-	}
-	"bot" {
-	    $itk_component(botView) updateGeometry
-	}
-	"comb" {
-	    $itk_component(combView) updateGeometry
-	    set doRefreshTree 1
-	}
-	"ell" {
-	    $itk_component(ellView) updateGeometry
-	}
-	"ehy" {
-	    $itk_component(ehyView) updateGeometry
-	}
-	"epa" {
-	    $itk_component(epaView) updateGeometry
-	}
-	"eto" {
-	    $itk_component(etoView) updateGeometry
-	}
-	"extrude" {
-	    $itk_component(extrudeView) updateGeometry
-	}
-	"grip" {
-	    $itk_component(gripView) updateGeometry
-	}
-	"half" {
-	    $itk_component(halfView) updateGeometry
-	}
-	"part" {
-	    $itk_component(partView) updateGeometry
-	}
-	"pipe" {
-	    $itk_component(pipeView) updateGeometry
-	}
-	"rpc" {
-	    $itk_component(rpcView) updateGeometry
-	}
-	"rhc" {
-	    $itk_component(rhcView) updateGeometry
-	}
-	"sketch" {
-	    $itk_component(sketchView) updateGeometry
-	}
-	"sph" {
-	    $itk_component(sphView) updateGeometry
-	}
-	"tgc" {
-	    $itk_component(tgcView) updateGeometry
-	}
-	"tor" {
-	    $itk_component(torView) updateGeometry
-	}
-    }
 
-    updateObjHistory $mSelectedObj
-    if {$doRefreshTree} {
-	refreshTree
-    }
-
-    set mNeedSave 1
-    updateSaveMode
-
-    # Disable the "apply" and "reset" buttons
-    $itk_component(objEditToolbar) itemconfigure apply \
-	-state disabled
-    $itk_component(objEditToolbar) itemconfigure reset \
-	-state disabled
-}
-
-
-::itcl::body Archer::copyObj {} {
-    if {$mDbNoCopy || $mDbReadOnly} {
-	return
-    }
-
-    set mPasteActive 1
-    updatePasteMode
-}
-
-::itcl::body Archer::cutObj {} {
-    if {$mDbNoCopy || $mDbReadOnly} {
-	return
-    }
-
-    set mPasteActive 1
-    updatePasteMode
-}
-
-::itcl::body Archer::initEdit {} {
+::itcl::body Archer::initEdit {{_initEditMode 1}} {
     if {![info exists itk_component(ged)]} {
 	return
     }
@@ -4116,10 +3570,18 @@ package provide Archer 1.0
 	set odata ""
     }
 
+    if {$_initEditMode && [info exists GeometryEditFrame::mEditCommand]} {
+	set GeometryEditFrame::mEditMode 0
+	set GeometryEditFrame::mEditClass $GeometryEditFrame::EDIT_CLASS_NONE
+	set GeometryEditFrame::mEditCommand ""
+	set GeometryEditFrame::mEditParam1 0
+	set GeometryEditFrame::mEditParam2 0
+    }
+
     switch -- $mSelectedObjType {
 	"arb4" {
 	    if {![info exists itk_component(arb4View)]} {
-		buildArb4_edit_view
+		buildArb4EditView
 	    }
 	    initArb4EditView $odata
 	}
@@ -4253,313 +3715,6 @@ package provide Archer 1.0
 }
 
 
-::itcl::body Archer::finalizeObjEdit {obj path} {
-    if {$obj == "" ||
-	[catch {gedCmd get_type $obj} stuff]} {
-	return
-    }
-
-    if {[catch {gedCmd attr get $obj history} hname]} {
-	set hname ""
-    }
-
-    # No history
-    if {$hname == "" ||
-	[catch {gedCmd get_type $hname} stuff]} {
-	return
-    }
-
-    # Presumably, by the time we get here the
-    # user has either saved or refused to save
-    # any pending edits and so the history list
-    # contains the only known valid version of
-    # the object. We now copy the valid version
-    # in place of the object.
-    set renderData [gedCmd how -b $path]
-    set renderMode [lindex $renderData 0]
-    set renderTrans [lindex $renderData 1]
-    gedCmd configure -autoViewEnable 0
-    gedCmd kill $obj
-    gedCmd cp $hname $obj
-    gedCmd unhide $obj
-    gedCmd attr rm $obj previous
-    gedCmd attr rm $obj next
-    render $path $renderMode $renderTrans 0
-    gedCmd configure -autoViewEnable 1
-}
-
-::itcl::body Archer::gotoNextObj {} {
-    set obj $mSelectedObj
-
-    if {$obj == "" ||
-	[catch {gedCmd get_type $obj} stuff]} {
-	return
-    }
-
-    if {[catch {gedCmd attr get $obj history} hname]} {
-	set hname ""
-    }
-
-    if {$hname == "" ||
-	[catch {gedCmd get_type $hname} stuff]} {
-	return
-    }
-
-    if {[catch {gedCmd attr get $hname next} next]} {
-	set next ""
-    }
-
-    if {$next == "" ||
-	[catch {gedCmd get_type $next} stuff]} {
-	return
-    }
-
-    updateObjEdit $next 1 1
-    updatePrevObjButton $obj
-    updateNextObjButton $obj
-
-    if {$mSelectedObjType == "comb"} {
-	refreshTree
-    }
-}
-
-::itcl::body Archer::gotoPrevObj {} {
-    set obj $mSelectedObj
-
-    if {$obj == "" ||
-	[catch {gedCmd get_type $obj} stuff]} {
-	return
-    }
-
-    if {[catch {gedCmd attr get $obj history} hname]} {
-	set hname ""
-    }
-
-    if {$hname == "" ||
-	[catch {gedCmd get_type $hname} stuff]} {
-	return
-    }
-
-    if {[catch {gedCmd attr get $hname previous} previous]} {
-	set previous ""
-    }
-
-    if {$previous == "" ||
-	[catch {gedCmd get_type $previous} stuff]} {
-	return
-    }
-
-    updateObjEdit $previous 1 1
-    updatePrevObjButton $obj
-    updateNextObjButton $obj
-
-    if {$mSelectedObjType == "comb"} {
-	refreshTree
-    }
-}
-
-::itcl::body Archer::pasteObj {} {
-    if {$mDbNoCopy || $mDbReadOnly} {
-	return
-    }
-
-    #    set mPasteActive 0
-    #    updatePasteMode
-}
-
-::itcl::body Archer::purgeObjHistory {obj} {
-    # Nothing to do
-    if {[catch {gedCmd attr get $obj history} hobj]} {
-	return
-    }
-
-    # Remove obj's history attribute
-    $itk_component(ged) attr rm $obj history
-
-    # March backwards in the list removing obj's history
-    if {![catch {gedCmd attr get $hobj previous} prev]} {
-	while {$prev != ""} {
-	    if {[catch {gedCmd attr get $prev previous} pprev]} {
-		set pprev ""
-	    }
-
-	    $itk_component(ged) kill $prev
-	    set prev $pprev
-	}
-    }
-
-    # March forward in the list removing obj's history
-    if {![catch {gedCmd attr get $hobj next} next]} {
-	while {$next != ""} {
-	    if {[catch {gedCmd attr get $next next} nnext]} {
-		set nnext ""
-	    }
-
-	    $itk_component(ged) kill $next
-	    set next $nnext
-	}
-    }
-
-    $itk_component(ged) kill $hobj
-}
-
-
-::itcl::body Archer::resetEdit {} {
-    set obj $mSelectedObj
-
-    if {$obj == "" ||
-	[catch {gedCmd get_type $obj} stuff]} {
-	return
-    }
-
-    if {[catch {gedCmd attr get $obj history} hname]} {
-	set hname ""
-    }
-
-    if {$hname == "" ||
-	[catch {gedCmd get_type $hname} stuff]} {
-	return
-    }
-
-    updateObjEdit $hname 1 0
-
-    # Disable the apply and reset buttons
-    $itk_component(objEditToolbar) itemconfigure apply \
-	-state disabled
-    $itk_component(objEditToolbar) itemconfigure reset \
-	-state disabled
-}
-
-
-::itcl::body Archer::updateNextObjButton {obj} {
-    if {$obj == "" ||
-	[catch {gedCmd get_type $obj} stuff]} {
-	$itk_component(objEditToolbar) itemconfigure next \
-	    -state disabled
-
-	return
-    }
-
-    if {[catch {gedCmd attr get $obj history} hname]} {
-	set hname ""
-    }
-
-    if {$hname == "" ||
-	[catch {gedCmd get_type $hname} stuff]} {
-	$itk_component(objEditToolbar) itemconfigure next \
-	    -state disabled
-
-	return
-    }
-
-    if {[catch {gedCmd attr get $hname next} next]} {
-	set next ""
-    }
-
-    if {$next == "" ||
-	[catch {gedCmd get_type $next} stuff]} {
-	$itk_component(objEditToolbar) itemconfigure next \
-	    -state disabled
-    } else {
-	$itk_component(objEditToolbar) itemconfigure next \
-	    -state normal
-    }
-}
-
-::itcl::body Archer::updateObjHistory {obj} {
-    if {$obj == "" ||
-	[catch {gedCmd get_type $obj} stuff]} {
-	return
-    }
-
-    gedCmd make_name -s 1
-    set new_hname [gedCmd make_name $obj.version]
-    gedCmd cp $obj $new_hname
-    gedCmd hide $new_hname
-
-    if {[catch {gedCmd attr get $obj history} old_hname]} {
-	set old_hname ""
-    }
-
-    if {$old_hname != "" &&
-	![catch {gedCmd get_type $old_hname} stuff]} {
-	# Insert into the history list
-
-	if {[catch {gedCmd attr get $old_hname next} next]} {
-	    set next ""
-	}
-
-	# Delete the future
-	if {$next != "" &&
-	    ![catch {gedCmd get_type $next} stuff]} {
-
-	    while {$next != ""} {
-		set deadObj $next
-
-		if {[catch {gedCmd attr get $next next} next]} {
-		    set next ""
-		} elseif {[catch {gedCmd get_type $next} stuff]} {
-		    set next ""
-		}
-
-		gedCmd kill $deadObj
-	    }
-	}
-
-	gedCmd attr set $old_hname next $new_hname
-	gedCmd attr set $new_hname previous $old_hname
-    } else {
-	# Initialize the history list
-	# Note - we shouldn't get here
-
-	gedCmd attr set $new_hname previous ""
-	gedCmd attr set $new_hname history $new_hname
-    }
-
-    gedCmd attr set $new_hname next ""
-    gedCmd attr set $new_hname history $new_hname
-    gedCmd attr set $obj history $new_hname
-    updatePrevObjButton $obj
-    updateNextObjButton $obj
-}
-
-::itcl::body Archer::updatePrevObjButton {obj} {
-    if {$obj == "" ||
-	[catch {gedCmd get_type $obj} stuff]} {
-	$itk_component(objEditToolbar) itemconfigure prev \
-	    -state disabled
-
-	return
-    }
-
-    if {[catch {gedCmd attr get $obj history} hname]} {
-	set hname ""
-    }
-
-    if {$hname == "" ||
-	[catch {gedCmd get_type $hname} stuff]} {
-	$itk_component(objEditToolbar) itemconfigure prev \
-	    -state disabled
-
-	return
-    }
-
-    if {[catch {gedCmd attr get $hname previous} previous]} {
-	set previous ""
-    }
-
-    if {$previous == "" ||
-	[catch {gedCmd get_type $previous} stuff]} {
-	$itk_component(objEditToolbar) itemconfigure prev \
-	    -state disabled
-    } else {
-	$itk_component(objEditToolbar) itemconfigure prev \
-	    -state normal
-    }
-}
-
-
-
 ################################### Object Edit via Mouse Section ###################################
 
 ::itcl::body Archer::beginObjRotate {} {
@@ -4575,9 +3730,19 @@ package provide Archer 1.0
 	return
     }
 
+    if {$GeometryEditFrame::mEditClass != $GeometryEditFrame::EDIT_CLASS_ROT} {
+	initEdit
+    }
+
     foreach dname {ul ur ll lr} {
 	set win [$itk_component(ged) component $dname]
-	bind $win <1> "$itk_component(ged) pane_orotate_mode $dname $obj %x %y; break"
+
+	if {$GeometryEditFrame::mEditCommand != ""} {
+	    bind $win <1> "$itk_component(ged) pane_$GeometryEditFrame::mEditCommand\_mode $dname $obj $GeometryEditFrame::mEditParam1 $GeometryEditFrame::mEditParam2 %x %y; break"
+	} else {
+	    bind $win <1> "$itk_component(ged) pane_orotate_mode $dname $obj %x %y; break"
+	}
+
 	bind $win <ButtonRelease-1> "[::itcl::code $this endObjRotate $dname $obj]; break"
     }
 }
@@ -4595,9 +3760,19 @@ package provide Archer 1.0
 	return
     }
 
+    if {$GeometryEditFrame::mEditClass != $GeometryEditFrame::EDIT_CLASS_SCALE} {
+	initEdit
+    }
+
     foreach dname {ul ur ll lr} {
 	set win [$itk_component(ged) component $dname]
-	bind $win <1> "$itk_component(ged) pane_oscale_mode $dname $obj %x %y; break"
+
+	if {$GeometryEditFrame::mEditCommand != ""} {
+	    bind $win <1> "$itk_component(ged) pane_$GeometryEditFrame::mEditCommand\_mode $dname $obj $GeometryEditFrame::mEditParam1 %x %y; break"
+	} else {
+	    bind $win <1> "$itk_component(ged) pane_oscale_mode $dname $obj %x %y; break"
+	}
+
 	bind $win <ButtonRelease-1> "[::itcl::code $this endObjScale $dname $obj]; break"
     }
 }
@@ -4615,9 +3790,21 @@ package provide Archer 1.0
 	return
     }
 
+    if {$GeometryEditFrame::mEditClass != $GeometryEditFrame::EDIT_CLASS_TRANS} {
+	initEdit
+    }
+
+    set ::GeometryEditFrame::mEditLastTransMode $OBJECT_TRANSLATE_MODE
+
     foreach dname {ul ur ll lr} {
 	set win [$itk_component(ged) component $dname]
-	bind $win <1> "$itk_component(ged) pane_otranslate_mode $dname $obj %x %y; break"
+
+	if {$GeometryEditFrame::mEditCommand != ""} {
+	    bind $win <1> "$itk_component(ged) pane_$GeometryEditFrame::mEditCommand\_mode $dname $obj $GeometryEditFrame::mEditParam1 %x %y; break"
+	} else {
+	    bind $win <1> "$itk_component(ged) pane_otranslate_mode $dname $obj %x %y; break"
+	}
+
 	bind $win <ButtonRelease-1> "[::itcl::code $this endObjTranslate $dname $obj]; break"
     }
 }
@@ -4635,6 +3822,12 @@ package provide Archer 1.0
 	return
     }
 
+    if {$GeometryEditFrame::mEditClass != $GeometryEditFrame::EDIT_CLASS_TRANS} {
+	initEdit
+    }
+
+    set ::GeometryEditFrame::mEditLastTransMode $OBJECT_CENTER_MODE
+
     foreach dname {ul ur ll lr} {
 	set win [$itk_component(ged) component $dname]
 	bind $win <1> "[::itcl::code $this handleObjCenter $obj %x %y]; break"
@@ -4651,6 +3844,8 @@ package provide Archer 1.0
     set mNeedSave 1
     updateSaveMode
 
+    initEdit 0
+
     set center [$itk_component(ged) ocenter $obj]
     addHistory "ocenter $center"
 }
@@ -4663,6 +3858,8 @@ package provide Archer 1.0
     $itk_component(ged) pane_idle_mode $dname
     set mNeedSave 1
     updateSaveMode
+
+    initEdit 0
 
     #XXX Need code to track overall transformation
     if {[info exists itk_component(ged)]} {
@@ -4679,6 +3876,8 @@ package provide Archer 1.0
     set mNeedSave 1
     updateSaveMode
 
+    initEdit 0
+
     #XXX Need code to track overall transformation
     if {[info exists itk_component(ged)]} {
 	#addHistory "oscale obj sf"
@@ -4694,21 +3893,22 @@ package provide Archer 1.0
     set mNeedSave 1
     updateSaveMode
 
+    initEdit 0
+
     #XXX Need code to track overall transformation
-    if {[info exists itk_component(ged)]} {
-	#addHistory "otranslate obj dx dy dz"
-    }
+    #addHistory "otranslate obj dx dy dz"
 }
 
 ::itcl::body Archer::handleObjCenter {obj x y} {
-    if {[info exists itk_component(ged)]} {
-	set ocenter [gedCmd ocenter $obj]
-    } else {
-	set savePwd [pwd]
-	cd /
-	set ocenter [gedCmd ocenter $obj]
-    }
+#    if {[info exists itk_component(ged)]} {
+#	set ocenter [gedCmd ocenter $obj]
+#    } else {
+#	set savePwd [pwd]
+#	cd /
+#	set ocenter [gedCmd ocenter $obj]
+#    }
 
+    set ocenter [gedCmd ocenter $obj]
     set ocenter [vscale $ocenter [gedCmd local2base]]
     set ovcenter [eval gedCmd m2v_point $ocenter]
 
@@ -4718,14 +3918,22 @@ package provide Archer 1.0
 
     set ocenter [vscale [eval gedCmd v2m_point $vcenter] [gedCmd base2local]]
 
-    if {[info exists itk_component(ged)]} {
-	eval archerWrapper ocenter 0 0 0 0 $obj $ocenter
+    if {$GeometryEditFrame::mEditCommand != ""} {
+	$GeometryEditFrame::mEditCommand $obj $GeometryEditFrame::mEditParam1 $ocenter
+#	eval adjust $mSelectedObj $gdata
     } else {
 	eval archerWrapper ocenter 0 0 0 0 $obj $ocenter
-	cd $savePwd
     }
 
+#    if {[info exists itk_component(ged)]} {
+#	eval archerWrapper ocenter 0 0 0 0 $obj $ocenter
+#    } else {
+#	eval archerWrapper ocenter 0 0 0 0 $obj $ocenter
+#	cd $savePwd
+#    }
+
     redrawObj $obj 0
+    initEdit 0
 }
 
 ::itcl::body Archer::handleObjRotate {obj rx ry rz kx ky kz} {
@@ -4739,6 +3947,7 @@ package provide Archer 1.0
     }
 
     redrawObj $obj 0
+    initEdit 0
 }
 
 ::itcl::body Archer::handleObjScale {obj sf kx ky kz} {
@@ -4752,6 +3961,7 @@ package provide Archer 1.0
     }
 
     redrawObj $obj 0
+    initEdit 0
 }
 
 ::itcl::body Archer::handleObjTranslate {obj dx dy dz} {
@@ -4765,6 +3975,7 @@ package provide Archer 1.0
     }
 
     redrawObj $obj 0
+    initEdit 0
 }
 
 
@@ -4832,60 +4043,60 @@ package provide Archer 1.0
 
 ::itcl::body Archer::buildDbAttrView {} {
     set parent [$itk_component(vpane) childsite attrView]
-    $parent configure -borderwidth 1 -relief sunken
+    $parent configure \
+	-borderwidth 1 \
+	-relief sunken
 
     itk_component add dbAttrView {
 	::iwidgets::scrolledframe $parent.dbattrview \
 	    -vscrollmode dynamic \
-	    -hscrollmode dynamic
+	    -hscrollmode dynamic \
+	    -background $LABEL_BACKGROUND_COLOR
     } {}
 
     set parent [$itk_component(dbAttrView) childsite]
 
     itk_component add dbnamekey {
-	::label $parent.namekey \
+	::ttk::label $parent.namekey \
 	    -font $mFontTextBold \
 	    -text "Database:" -anchor e
     } {}
 
     itk_component add dbnameval {
-	::label $parent.nameval \
+	::ttk::label $parent.nameval \
 	    -font $mFontText \
 	    -textvariable [::itcl::scope mDbName] \
 	    -anchor w \
-	    -borderwidth 1 \
 	    -relief flat
 	#	    -fg #7e7e7e
     } {}
 
     itk_component add dbtitlekey {
-	::label $parent.titlekey \
+	::ttk::label $parent.titlekey \
 	    -font $mFontTextBold \
 	    -text "Title:" -anchor e
     } {}
 
     itk_component add dbtitleval {
-	::label $parent.titleval \
+	::ttk::label $parent.titleval \
 	    -font $mFontText \
 	    -textvariable [::itcl::scope mDbTitle] \
 	    -anchor w \
-	    -borderwidth 1 \
 	    -relief flat
 	#	    -fg #7e7e7e
     } {}
 
     itk_component add dbunitskey {
-	::label $parent.unitskey \
+	::ttk::label $parent.unitskey \
 	    -font $mFontTextBold \
 	    -text "Units:" -anchor e
     } {}
 
     itk_component add dbunitsval {
-	::label $parent.unitsval \
+	::ttk::label $parent.unitsval \
 	    -font $mFontText \
 	    -textvariable [::itcl::scope mDbUnits] \
 	    -anchor w \
-	    -borderwidth 1 \
 	    -relief flat
 	#	    -fg #7e7e7e
     } {}
@@ -4961,7 +4172,7 @@ package provide Archer 1.0
 ::itcl::body Archer::buildObjAttrView {} {
     set parent [$itk_component(vpane) childsite attrView]
     itk_component add objAttrView {
-	::frame $parent.objattrview
+	::ttk::frame $parent.objattrview
     } {}
 
     itk_component add objAttrText {
@@ -4971,7 +4182,8 @@ package provide Archer 1.0
 	    -wrap none \
 	    -state disabled \
 	    -borderwidth 1 \
-	    -relief sunken
+	    -relief sunken \
+	    -background $LABEL_BACKGROUND_COLOR
     } {}
 
     pack $itk_component(objAttrText) -expand yes -fill both
@@ -4980,63 +4192,10 @@ package provide Archer 1.0
 ::itcl::body Archer::buildObjEditView {} {
     set parent [$itk_component(vpane) childsite attrView]
     itk_component add objEditView {
-	::frame $parent.objeditview \
+	::ttk::frame $parent.objeditview \
 	    -borderwidth 1 \
 	    -relief sunken
     } {}
-
-    itk_component add objEditToolbarF {
-	::frame $parent.objEditToolbarF \
-	    -borderwidth 1 \
-	    -relief sunken
-    } {}
-
-    itk_component add objEditToolbar {
-	::iwidgets::toolbar $itk_component(objEditToolbarF).objEditToolbar \
-	    -helpvariable [::itcl::scope mStatusStr] \
-	    -balloonfont "{CG Times} 8" \
-	    -balloonbackground \#ffffdd \
-	    -borderwidth 1 \
-	    -orient horizontal \
-	    -font $mFontText
-    } {
-	# XXX If uncommented, the following line hoses things
-	#usual
-    }
-
-    $itk_component(objEditToolbar) add button prev \
-	-text $mLeftArrow \
-	-helpstr "Go to the previous object state" \
-	-balloonstr "Go to the previous object state" \
-	-pady 0 \
-	-command [::itcl::code $this gotoPrevObj]
-    $itk_component(objEditToolbar) add button apply \
-	-text Apply \
-	-helpstr "Apply the current edits" \
-	-balloonstr "Apply the current edits" \
-	-pady 0 \
-	-command [::itcl::code $this applyEdit]
-    $itk_component(objEditToolbar) add button reset \
-	-text Reset \
-	-helpstr "Delete the current edits" \
-	-balloonstr "Delete the current edits" \
-	-pady 0 \
-	-command [::itcl::code $this resetEdit]
-    $itk_component(objEditToolbar) add button next \
-	-text $mRightArrow \
-	-helpstr "Go to the next object state" \
-	-balloonstr "Go to the next object state" \
-	-pady 0 \
-	-command [::itcl::code $this gotoNextObj]
-
-    # Configure the font here so that the font actually gets
-    # applied to the button. Sheesh!!!
-    $itk_component(objEditToolbar) itemconfigure prev \
-	-font $mFontArrowsName
-    $itk_component(objEditToolbar) itemconfigure next \
-	-font $mFontArrowsName
-
-    pack $itk_component(objEditToolbar) -expand yes
 }
 
 ::itcl::body Archer::buildObjViewToolbar {} {
@@ -5047,7 +4206,8 @@ package provide Archer 1.0
 	    -balloonfont "{CG Times} 8" \
 	    -balloonbackground \#ffffdd \
 	    -borderwidth 1 \
-	    -orient horizontal
+	    -orient horizontal \
+	    -background $LABEL_BACKGROUND_COLOR
     } {
 	# XXX If uncommented, the following line hoses things
 	#usual
@@ -5141,6 +4301,7 @@ package provide Archer 1.0
 ::itcl::body Archer::initArb4EditView {odata} {
     $itk_component(arb4View) configure \
 	-geometryObject $mSelectedObj \
+	-geometryObjectPath $mSelectedObjPath \
 	-geometryChangedCallback [::itcl::code $this updateObjEditView] \
 	-mged $itk_component(ged) \
 	-labelFont $mFontText \
@@ -5156,6 +4317,7 @@ package provide Archer 1.0
 ::itcl::body Archer::initArb5EditView {odata} {
     $itk_component(arb5View) configure \
 	-geometryObject $mSelectedObj \
+	-geometryObjectPath $mSelectedObjPath \
 	-geometryChangedCallback [::itcl::code $this updateObjEditView] \
 	-mged $itk_component(ged) \
 	-labelFont $mFontText \
@@ -5171,6 +4333,7 @@ package provide Archer 1.0
 ::itcl::body Archer::initArb6EditView {odata} {
     $itk_component(arb6View) configure \
 	-geometryObject $mSelectedObj \
+	-geometryObjectPath $mSelectedObjPath \
 	-geometryChangedCallback [::itcl::code $this updateObjEditView] \
 	-mged $itk_component(ged) \
 	-labelFont $mFontText \
@@ -5186,6 +4349,7 @@ package provide Archer 1.0
 ::itcl::body Archer::initArb7EditView {odata} {
     $itk_component(arb7View) configure \
 	-geometryObject $mSelectedObj \
+	-geometryObjectPath $mSelectedObjPath \
 	-geometryChangedCallback [::itcl::code $this updateObjEditView] \
 	-mged $itk_component(ged) \
 	-labelFont $mFontText \
@@ -5201,6 +4365,7 @@ package provide Archer 1.0
 ::itcl::body Archer::initArb8EditView {odata} {
     $itk_component(arb8View) configure \
 	-geometryObject $mSelectedObj \
+	-geometryObjectPath $mSelectedObjPath \
 	-geometryChangedCallback [::itcl::code $this updateObjEditView] \
 	-mged $itk_component(ged) \
 	-labelFont $mFontText \
@@ -5255,7 +4420,6 @@ package provide Archer 1.0
     catch {pack forget $itk_component(objViewToolbar)}
     catch {pack forget $itk_component(objAttrView)}
     catch {pack forget $itk_component(objEditView)}
-    catch {pack forget $itk_component(objEditToolbarF)}
     catch {pack forget $itk_component(noWizard)}
     set mNoWizardActive 0
 
@@ -5276,7 +4440,6 @@ package provide Archer 1.0
     set mSelectedObj ""
     set mSelectedObjType ""
     set mPasteActive 0
-    set mPendingEdits 0
 
     # The scrollmode options are needed so that the
     # scrollbars dynamically appear/disappear. Sheesh!
@@ -5396,7 +4559,7 @@ package provide Archer 1.0
 ::itcl::body Archer::initNoWizard {parent msg} {
     if {![info exists itk_component(noWizard)]} {
 	itk_component add noWizard {
-	    ::label $parent.noWizard
+	    ::ttk::label $parent.noWizard
 	} {}
     }
 
@@ -5420,18 +4583,12 @@ package provide Archer 1.0
 	return
     }
 
-    if {$mWizardClass == "" &&
-	!$mNoWizardActive &&
-	$mPrevObjViewMode == $OBJ_EDIT_VIEW_MODE} {
-	finalizeObjEdit $mPrevSelectedObj $mPrevSelectedObjPath
-    }
     set mPrevObjViewMode $mObjViewMode
 
     catch {pack forget $itk_component(dbAttrView)}
     catch {pack forget $itk_component(objViewToolbar)}
     catch {pack forget $itk_component(objAttrView)}
     catch {pack forget $itk_component(objEditView)}
-    catch {pack forget $itk_component(objEditToolbarF)}
     catch {pack forget $itk_component(noWizard)}
     set mNoWizardActive 0
 
@@ -5462,25 +4619,6 @@ package provide Archer 1.0
     pack $itk_component(objAttrView) -expand yes -fill both -anchor n
 }
 
-::itcl::body Archer::initObjEdit {obj} {
-    if {![info exists itk_component(ged)]} {
-	return
-    }
-
-    set mPendingEdits 0
-
-    initObjHistory $obj
-
-    updatePrevObjButton $obj
-    updateNextObjButton $obj
-
-    # Disable the apply and reset buttons
-    $itk_component(objEditToolbar) itemconfigure apply \
-	-state disabled
-    $itk_component(objEditToolbar) itemconfigure reset \
-	-state disabled
-}
-
 ::itcl::body Archer::initObjEditView {} {
     if {![info exists itk_component(ged)]} {
 	return
@@ -5498,16 +4636,12 @@ package provide Archer 1.0
 	return
     }
 
-    if {$mPendingEdits} {
-	finalizeObjEdit $mPrevSelectedObj $mPrevSelectedObjPath
-    }
     set mPrevObjViewMode $mObjViewMode
 
     catch {pack forget $itk_component(dbAttrView)}
     catch {pack forget $itk_component(objViewToolbar)}
     catch {pack forget $itk_component(objAttrView)}
     catch {pack forget $itk_component(objEditView)}
-    catch {pack forget $itk_component(objEditToolbarF)}
     catch {pack forget $itk_component(noWizard)}
     set mNoWizardActive 0
 
@@ -5530,8 +4664,6 @@ package provide Archer 1.0
     }
 
     if {$mWizardClass == ""} {
-	initObjEdit $mSelectedObj
-
 	# free the current primitive view if any
 	set _slaves [pack slaves $itk_component(objEditView)]
 	catch {eval pack forget $_slaves}
@@ -5541,43 +4673,14 @@ package provide Archer 1.0
 	if {[info exists itk_component(ged)]} {
 	    pack $itk_component(objViewToolbar) -expand no -fill x -anchor n
 	    pack $itk_component(objEditView) -expand yes -fill both -anchor n
-	    pack $itk_component(objEditToolbarF) -expand no -fill x -anchor s
 	}
     } else {
 	if {[pluginQuery $mWizardClass] == -1} {
 	    # the wizard plugin has not been loaded
-	    initObjQizard $mSelectedObj 0
+	    initObjWizard $mSelectedObj 0
 	} else {
 	    initObjWizard $mSelectedObj 1
 	}
-    }
-}
-
-::itcl::body Archer::initObjHistory {obj} {
-    if {$obj == "" ||
-	[catch {gedCmd get_type $obj} stuff]} {
-	return
-    }
-
-    if {[catch {gedCmd attr get $obj history} hname]} {
-	set hname ""
-    }
-
-    # The history list is non-existent or
-    # the link to it is broken, so create
-    # a new one.
-    if {$hname == "" ||
-	[catch {gedCmd get_type $hname} stuff]} {
-	gedCmd make_name -s 1
-	set hname [gedCmd make_name $obj.version]
-	#gedCmd attr set $obj history $hname
-
-	gedCmd cp $obj $hname
-	gedCmd hide $hname
-	gedCmd attr set $hname previous ""
-	gedCmd attr set $hname next ""
-	gedCmd attr set $hname history $hname
-	gedCmd attr set $obj history $hname
     }
 }
 
@@ -5630,7 +4733,7 @@ package provide Archer 1.0
 
 	    # create the update button
 	    itk_component add wizardUpdate {
-		::button $parent.wizardUpdate \
+		::ttk::button $parent.wizardUpdate \
 		    -text "Update" \
 		    -command [::itcl::code $this invokeWizardUpdate \
 				  $itk_component($mWizardClass) $action \
@@ -5795,14 +4898,7 @@ package provide Archer 1.0
 }
 
 ::itcl::body Archer::updateObjEditView {} {
-    set mPendingEdits 1
     redrawObj $mSelectedObjPath
-
-    # Enable the apply and reset buttons
-    $itk_component(objEditToolbar) itemconfigure apply \
-	-state normal
-    $itk_component(objEditToolbar) itemconfigure reset \
-	-state normal
 }
 
 
@@ -5813,7 +4909,7 @@ package provide Archer 1.0
 	# Utility
 	itk_component add utilityMenu {
 	    ::menu $itk_component(menubar).utilityMenu \
-		-tearoff 1
+		-tearoff 0
 	} {
 	    #	rename -font -menuFont menuFont MenuFont
 	    #	keep -font
@@ -5831,21 +4927,21 @@ package provide Archer 1.0
 }
 
 ::itcl::body Archer::buildWizardMenu {} {
-    $itk_component(primaryToolbar) add menubutton wizards \
+    $itk_component(primaryToolbar) insert rotate menubutton wizards \
 	-balloonstr "Wizard Plugins" \
 	-helpstr "Wizard Plugins" \
 	-relief flat
 
     set parent [$itk_component(primaryToolbar) component wizards]
     itk_component add wizardMenu {
-	::menu $parent.menu
+	::menu $parent.menu \
+	    -tearoff 0
     } {
 	keep -background
     }
 
     $parent configure \
 	-menu $itk_component(wizardMenu) \
-	-indicatoron on \
 	-activebackground [$parent cget -background]
 }
 
@@ -5914,6 +5010,8 @@ package provide Archer 1.0
 	return
     }
 
+    $dialog configure -background $LABEL_BACKGROUND_COLOR
+
     set row 0
     grid $utility -row $row -stick nsew
     grid rowconfigure $parent $row -weight 1
@@ -5981,6 +5079,8 @@ package provide Archer 1.0
     set parent [$dialog childsite]
     set wizard [$class $parent.\#auto $this $name "" $origin $units]
 
+    $dialog configure -background $LABEL_BACKGROUND_COLOR
+
     set row 0
     grid $wizard -row $row -stick nsew
     grid rowconfigure $parent $row -weight 1
@@ -6014,7 +5114,7 @@ package provide Archer 1.0
     }
 
     gedCmd erase $oname
-    gedCmd killtree $oname
+    gedCmd killtree -a $oname
     gedCmd configure -autoViewEnable 0
     set obj [$wizard $action]
     gedCmd configure -autoViewEnable 1
@@ -6086,24 +5186,6 @@ package provide Archer 1.0
 	if {[regexp {utility_dialog} $dialog]} {
 	    catch {rename $dialog ""}
 	}
-    }
-
-    if {$mMode == 0} {
-	if {$ArcherCore::inheritFromToplevel} {
-	    if {[info exists itk_component(utilityMenu)]} {
-		$itk_component(menubar) delete "Utilities"
-		set umenu $itk_component(utilityMenu)
-		itk_component delete utilityMenu
-		rename $umenu ""
-	    }
-	} else {
-	    if {[info exists itk_component(utilityMenu)]} {
-		$itk_component(menubar) delete utilities
-		unset itk_component(utilityMenu)
-	    }
-	}
-
-	return
     }
 
     # Look for appropriate utility plugins
@@ -6271,17 +5353,14 @@ package provide Archer 1.0
 
     if {$mPrimitiveLabelColor != $mPrimitiveLabelColorPref} {
 	set mPrimitiveLabelColor $mPrimitiveLabelColorPref
-#	setColorOption gedCmd -primitiveLabelColor $mPrimitiveLabelColor
     }
 
     if {$mViewingParamsColor != $mViewingParamsColorPref} {
 	set mViewingParamsColor $mViewingParamsColorPref
-#	setColorOption gedCmd -viewingParamsColor $mViewingParamsColor
     }
 
     if {$mScaleColor != $mScaleColorPref} {
 	set mScaleColor $mScaleColorPref
-#	setColorOption gedCmd -scaleColor $mScaleColor
     }
 
     if {$mMeasuringStickColor != $mMeasuringStickColorPref} {
@@ -6417,18 +5496,10 @@ package provide Archer 1.0
 
     if {$mModelAxesColorPref != $mModelAxesColor} {
 	set mModelAxesColor $mModelAxesColorPref
-
-#	if {[info exists itk_component(ged)]} {
-#	    setColorOption gedCmd -modelAxesColor $mModelAxesColor -modelAxesTripleColor
-#	}
     }
 
     if {$mModelAxesLabelColorPref != $mModelAxesLabelColor} {
 	set mModelAxesLabelColor $mModelAxesLabelColorPref
-
-#	if {[info exists itk_component(ged)]} {
-#	    setColorOption gedCmd -modelAxesLabelColor $mModelAxesLabelColor
-#	}
     }
 
     if {$mModelAxesTickIntervalPref != $mModelAxesTickInterval} {
@@ -6473,18 +5544,10 @@ package provide Archer 1.0
 
     if {$mModelAxesTickColorPref != $mModelAxesTickColor} {
 	set mModelAxesTickColor $mModelAxesTickColorPref
-
-#	if {[info exists itk_component(ged)]} {
-#	    setColorOption gedCmd -modelAxesTickColor $mModelAxesTickColor
-#	}
     }
 
     if {$mModelAxesTickMajorColorPref != $mModelAxesTickMajorColor} {
 	set mModelAxesTickMajorColor $mModelAxesTickMajorColorPref
-
-#	if {[info exists itk_component(ged)]} {
-#	    setColorOption gedCmd -modelAxesTickMajorColor $mModelAxesTickMajorColor
-#	}
     }
 }
 
@@ -6667,18 +5730,10 @@ package provide Archer 1.0
 
     if {$mViewAxesColorPref != $mViewAxesColor} {
 	set mViewAxesColor $mViewAxesColorPref
-
-#	if {[info exists itk_component(ged)]} {
-#	    setColorOption gedCmd -viewAxesColor $mViewAxesColor -viewAxesTripleColor
-#	}
     }
 
     if {$mViewAxesLabelColorPref != $mViewAxesLabelColor} {
 	set mViewAxesLabelColor $mViewAxesLabelColorPref
-
-#	if {[info exists itk_component(ged)]} {
-#	    setColorOption gedCmd -viewAxesLabelColor $mViewAxesLabelColor
-#	}
     }
 }
 
@@ -6763,12 +5818,9 @@ package provide Archer 1.0
     backgroundColor [lindex $mBackground 0] \
 	[lindex $mBackground 1] \
 	[lindex $mBackground 2]
-#    setColorOption gedCmd -primitiveLabelColor $mPrimitiveLabelColor
-#    setColorOption gedCmd -viewingParamsColor $mViewingParamsColor
-#    setColorOption gedCmd -scaleColor $mScaleColor
 
     update
-    setMode
+    initMode
     updateTheme
     updateToggleMode
 }
@@ -6835,7 +5887,6 @@ package provide Archer 1.0
 	puts $pfile "set mModelAxesTickMajorColor \"$mModelAxesTickMajorColor\""
 
 	puts $pfile "set mLastSelectedDir \"$mLastSelectedDir\""
-	puts $pfile "set mMode $mMode"
 	puts $pfile "set mZClipMode $mZClipMode"
 
 	puts $pfile "set mHPaneFraction1 $mHPaneFraction1"

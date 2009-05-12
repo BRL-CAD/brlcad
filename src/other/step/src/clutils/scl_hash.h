@@ -1,4 +1,3 @@
-
 #ifndef SCL_HASH_H
 #define SCL_HASH_H
 
@@ -134,6 +133,7 @@ extern "C" {
 #endif
 
 struct Hash_Table	*HASHcreate(unsigned);
+void            HASHinitialize(void);
 void		*HASHfind(struct Hash_Table *,  char *);
 void		HASHinsert(struct Hash_Table *, char *,void *);
 void		HASHdestroy(struct Hash_Table *);

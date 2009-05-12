@@ -279,7 +279,7 @@ BC_ARG_ENABLE([build_urt], [urt-build], [Build the included Utah Raster Toolkit]
 BC_ARG_ENABLE([build_opennurbs], [opennurbs-build], [Build the included openNURBS library], [auto])
 
 # force enable/disable building of NIST STEP Class Libraries 
-BC_ARG_ENABLE([build_step], [step-build], [Build the included STEP Class Libraries], [yes])
+BC_ARG_ENABLE([build_step], [step-build], [Build the included STEP Class Libraries], [auto])
 
 # force enable/disable building of termlib
 BC_ARG_ENABLE([build_termlib], [termlib-build], [Build the included termlib library], [auto])
@@ -1999,7 +1999,6 @@ AC_TYPE_SIGNAL
 AC_CHECK_FUNCS(\
 	XQueryExtension \
 	alarm \
-	bcmp \
 	dlopen \
 	drand48 \
 	fchmod \
@@ -2088,8 +2087,8 @@ if test "x$ac_cv_prog_LEX" != "x" ; then
 	build_parsers=yes
     else
 	AC_MSG_NOTICE([}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}])
-	AC_MSG_WARN([A YACC-style parser was not found so dependant portions])
-	AC_MSG_WARN([of the package (various MGED commands) will be disabled.])
+	AC_MSG_WARN([A YACC-style parser was not found so dependant portions of the package])
+	AC_MSG_WARN([(various MGED commands and STEP conversion support) will be disabled.])
 	AC_MSG_NOTICE([Installation of GNU Bison or Yacc before continuing is recommended.])
 	AC_MSG_NOTICE([{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{])
 	sleep 5
@@ -2097,8 +2096,8 @@ if test "x$ac_cv_prog_LEX" != "x" ; then
 else
     AC_MSG_NOTICE([}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}])
     if test "x$ac_cv_prog_YACC" != "x" ; then
-	AC_MSG_WARN([A LEX-style scanner was not found so dependant portions])
-	AC_MSG_WARN([of the package (various MGED commands) will be disabled.])
+	AC_MSG_WARN([A LEX-style scanner was not found so dependant portions of the package])
+	AC_MSG_WARN([(various MGED commands and STEP conversion support) will be disabled.])
 	AC_MSG_NOTICE([Installation of GNU Flex or Lex before continuing is recommended.])
     else
 	AC_MSG_WARN([Neither a YACC-style parser or a LEX-style scanner was found.])
@@ -2110,10 +2109,17 @@ else
 fi
 AC_MSG_CHECKING([whether we have the essentials to make parsers])
 if test "x$build_parsers" = "xyes" ; then
-    AC_DEFINE(BC_WITH_PARSERS, 1, [Define to enable compilation of parsers])
     AC_MSG_RESULT(yes)
+    AC_DEFINE(BC_WITH_PARSERS, 1, [Define to enable compilation of parsers])
 else
     AC_MSG_RESULT(no)
+    if test "x$bc_build_step" = "xyes" ; then
+	AC_MSG_NOTICE([STEP was enabled, but no system lexer/parser was found])
+	AC_MSG_NOTICE([}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}])
+	AC_MSG_NOTICE([Try adding --disable-step-build])
+	AC_MSG_ERROR([*** Building STEP support was enabled, yet no system lexer/parser was found ***])
+    fi
+    bc_build_step="no"
 fi
 
 
@@ -2452,16 +2458,18 @@ dnl figure out whether we need to build NIST STEP Class Libraries
 STEP_VERSION="3.2.0"
 AC_SUBST(STEP_VERSION)
 AC_MSG_CHECKING(whether to build NIST Step Class Libraries)
+STEP_CPPFLAGS='-I${top_srcdir}/src/other/step/include -I${top_srcdir}/src/other/step/src/cleditor -I${top_srcdir}/src/other/step/src/clstepcore -I${top_srcdir}/src/other/step/src/clutils -I${top_srcdir}/src/other/step/src/cldai -I${top_srcdir}/src/other/step/src/test'
 if test ! "x$bc_build_step" = "xno" ; then
+    STEP=""
     build_brlcad_step=yes
-    AC_MSG_RESULT(yes)
+    AC_MSG_RESULT(no)
 else
     build_brlcad_step=no
     STEP=""
     AC_MSG_RESULT(no)
 fi
 AC_SUBST(STEP)
-
+AC_SUBST(STEP_CPPFLAGS)
 
 
 dnl *** Tcl ***
@@ -3406,6 +3414,8 @@ if test "x$bc_build_docs" != "xno" ; then
     if test "x$APACHEFOP" != "x" ; then
 	docbook_pdf_processing=yes
         docbook_processing="yes (man/html/pdf)"
+		# set FOP_OPTS to avoid dock bounce on osX
+	APACHEFOP="FOP_OPTS=-Djava.awt.headless=true $APACHEFOP"
     else
         docbook_processing="yes (man/html only)"
 	docbook_pdf_processing="no"
@@ -3567,6 +3577,18 @@ TERMIO='${top_builddir}/src/libtermio/libtermio.la'
 WDB='${top_builddir}/src/libwdb/libwdb.la'
 BRLCAD='${top_builddir}/src/libbrlcad.la'
 
+STEPCORE='${top_builddir}/src/other/step/src/clstepcore/libstepcore.la'
+STEPDAI='${top_builddir}/src/other/step/src/cldai/libstepdai.la'
+STEPEDITOR='${top_builddir}/src/other/step/src/cleditor/libstepeditor.la'
+STEPUTILS='${top_builddir}/src/other/step/src/clutils/libsteputils.la'
+STEPEXPRESS='${top_builddir}/src/other/step/src/express/libexpress.la'
+STEPEXPPP='${top_builddir}/src/other/step/src/exppp/libexppp.la'
+STEP_LIBS="${STEPCORE} ${STEPDAI} ${STEPEDITOR} ${STEPUTILS} ${STEPEXPRESS}"
+STEP_FEDEX='${top_builddir}/src/other/step/src/express/fedex'
+STEP_FEDEX_PLUS='${top_builddir}/src/other/step/src/fedex_plus/fedex_plus'
+STEP_EXPPP='${top_builddir}/src/other/step/src/exppp/exppp'
+STEP_AP203='${top_srcdir}/src/other/step/data/ap203/203wseds.exp'
+
 ORLE_LIBS=
 PKG_LIBS="${LIBSOCKET} ${LIBNSL}"
 SYSV_LIBS=
@@ -3606,6 +3628,18 @@ AC_SUBST(TCLCAD)
 AC_SUBST(TERMIO)
 AC_SUBST(WDB)
 AC_SUBST(BRLCAD)
+
+AC_SUBST(STEPCORE)
+AC_SUBST(STEPDAI)
+AC_SUBST(STEPEDITOR)
+AC_SUBST(STEPUTILS)
+AC_SUBST(STEPEXPRESS)
+AC_SUBST(STEPEXPPP)
+AC_SUBST(STEP_LIBS)
+AC_SUBST(STEP_FEDEX)
+AC_SUBST(STEP_FEDEX_PLUS)
+AC_SUBST(STEP_EXPPP)
+AC_SUBST(STEP_AP203)
 
 AC_SUBST(BN_LIBS)
 AC_SUBST(BU_LIBS)
@@ -3676,12 +3710,12 @@ dnl configure enigma
 AC_CONFIG_SUBDIRS([misc/enigma])
 
 dnl configure step
-if test "x$bc_build_step" = "xyes" ; then
+if test "x$build_brlcad_step" = "xyes" ; then
     AC_CONFIG_SUBDIRS([src/other/step])
 fi
 
 dnl configure tkhtml3
-if test "x$bc_build_tkhtml3" = "xyes" ; then
+if test "x$build_brlcad_tkhtml3" = "xyes" ; then
     AC_CONFIG_SUBDIRS([src/other/tkhtml3])
 fi
 
@@ -3809,7 +3843,6 @@ AC_CONFIG_FILES([
 	src/adrt/libtie/Makefile
 	src/adrt/libtienet/Makefile
 	src/adrt/master/Makefile
-	src/adrt/misc/Makefile
 	src/adrt/rise/Makefile
 	src/adrt/scripts/Makefile
 	src/adrt/slave/Makefile
@@ -3829,14 +3862,9 @@ AC_CONFIG_FILES([
 	src/bwish/Makefile
 	src/canon/Makefile
 	src/conv/Makefile
-	src/conv/comgeom/Makefile
-	src/conv/dxf/Makefile
 	src/conv/iges/Makefile
+	src/conv/step/Makefile
 	src/conv/intaval/Makefile
-	src/conv/jack/Makefile
-	src/conv/off/Makefile
-	src/conv/patch/Makefile
-	src/conv/3dm/Makefile
 	src/external/Makefile
 	src/external/Cubit/Makefile
 	src/external/EndgameFramework/Makefile

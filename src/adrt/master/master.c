@@ -367,6 +367,9 @@ master_networking (void *ptr)
     addrlen = sizeof(observer_addr);
     master.active_connections = 0;
 
+    if (tienet_master_verbose)
+	printf("Now listening\n");
+
     while (master.alive || master.active_connections)
     {
 	/* wait for some network activity */

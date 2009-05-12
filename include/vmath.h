@@ -265,16 +265,16 @@ typedef enum bn_matrix_component_ {
  *
  * A plane is defined by a unit-length outward pointing normal vector
  * (N), and the perpendicular (shortest) distance from the origin to
- * the plane (in element N[3]).
+ * the plane (in element N[W]).
  *
  * The plane consists of all points P=(x, y, z) such that
- *@n	VDOT(P, N) - N[3] == 0
+ *@n	VDOT(P, N) - N[W] == 0
  *@n that is,
- *@n	N[X]*x + N[Y]*y + N[Z]*z - N[3] == 0
+ *@n	N[X]*x + N[Y]*y + N[Z]*z - N[W] == 0
  *
  * The inside of the halfspace bounded by the plane
  * consists of all points P such that
- *@n	VDOT(P, N) - N[3] <= 0
+ *@n	VDOT(P, N) - N[W] <= 0
  *
  * A ray with direction D is classified w.r.t. the plane by
  *
@@ -297,7 +297,7 @@ typedef fastf_t	plane_t[ELEMENTS_PER_PLANE];
 
 
 /** @brief Compute distance from a point to a plane. */
-#define DIST_PT_PLANE(_pt, _pl) (VDOT(_pt, _pl) - (_pl)[H])
+#define DIST_PT_PLANE(_pt, _pl) (VDOT(_pt, _pl) - (_pl)[W])
 
 /** @brief Compute distance between two points. */
 #define DIST_PT_PT(a, b)		sqrt( \
@@ -1052,7 +1052,7 @@ typedef fastf_t	plane_t[ELEMENTS_PER_PLANE];
 
 /**
  * @brief Apply a 4x4 matrix to a 3-tuple which is an absolute Point
- * in space.
+ * in space.  Output and input points should be separate arrays.
  */
 #define MAT4X3PNT(o, m, i) { \
 	register double _f; \
@@ -1062,7 +1062,10 @@ typedef fastf_t	plane_t[ELEMENTS_PER_PLANE];
 	(o)[Z]=((m)[8]*(i)[X] + (m)[9]*(i)[Y] + (m)[10]*(i)[Z] + (m)[11])* _f; \
 }
 
-/** @brief Multiply an Absolute 3-Point by a full 4x4 matrix. */
+/**
+ * @brief Multiply an Absolute 3-Point by a full 4x4 matrix.  Output
+ * and input points should be separate arrays.
+ */
 #define PNT3X4MAT(o, i, m) { \
 	register double _f; \
 	_f = 1.0/((i)[X]*(m)[3] + (i)[Y]*(m)[7] + (i)[Z]*(m)[11] + (m)[15]); \
@@ -1072,8 +1075,8 @@ typedef fastf_t	plane_t[ELEMENTS_PER_PLANE];
 }
 
 /**
- * @brief Multiply an Absolute hvect_t 4-Point by a full 4x4
- * matrix.
+ * @brief Multiply an Absolute hvect_t 4-Point by a full 4x4 matrix.
+ * Output and input points should be separate arrays.
  */
 #define MAT4X4PNT(o, m, i) { \
 	(o)[X]=(m)[ 0]*(i)[X] + (m)[ 1]*(i)[Y] + (m)[ 2]*(i)[Z] + (m)[ 3]*(i)[H]; \
@@ -1084,8 +1087,8 @@ typedef fastf_t	plane_t[ELEMENTS_PER_PLANE];
 
 /**
  * @brief Apply a 4x4 matrix to a 3-tuple which is a relative Vector
- * in space This macro can scale the length of the vector if [15] !=
- * 1.0.
+ * in space. This macro can scale the length of the vector if [15] !=
+ * 1.0.  Output and input vectors should be separate arrays.
  */
 #define MAT4X3VEC(o, m, i) { \
 	register double _f; \
@@ -1099,7 +1102,10 @@ typedef fastf_t	plane_t[ELEMENTS_PER_PLANE];
 	(o) = (i) / (m)[15]; \
 }
 
-/** @brief Multiply a Relative 3-Vector by most of a 4x4 matrix. */
+/**
+ * @brief Multiply a Relative 3-Vector by most of a 4x4 matrix.
+ * Output and input vectors should be separate arrays.
+ */
 #define VEC3X4MAT(o, i, m) { \
 	register double _f; \
 	_f = 1.0/((m)[15]); \
@@ -1187,10 +1193,10 @@ typedef fastf_t	plane_t[ELEMENTS_PER_PLANE];
 /**
  * @brief Quaternion math definitions.
  *
- * Note that the W component will be put in the last [3] place rather
- * than the first [0] place, so that the X, Y, Z elements will be
- * compatible with vectors.  Only QUAT_FROM_VROT macros depend on
- * component locations, however.
+ * Note that the [W] component will be put in the last (i.e., third)
+ * place rather than the first [X] (i.e., [0]) place, so that the X,
+ * Y, and Z elements will be compatible with vectors.  Only
+ * QUAT_FROM_VROT macros depend on component locations, however.
  */
 
 /**

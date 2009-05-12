@@ -85,8 +85,6 @@ if {$missingFile} {
 set tclVersion "8.5"
 set itclVersion "3.4"
 set iwidgetsVersion "4.0.2"
-set bltVersion "2.4"
-
 
 # Set BRL-CAD's version
 set fd [open [file join $rootDir include conf MAJOR] "r"]
@@ -193,8 +191,6 @@ file copy [file join $rootDir include] $installDir
 
 
 # Copy files to the lib directory
-puts "copy [file join $rootDir src other blt library] [file join $installDir lib blt$bltVersion]"
-file copy [file join $rootDir src other blt library] [file join $installDir lib blt$bltVersion]
 puts "copy [file join $rootDir src other tcl library] [file join $installDir lib tcl$tclVersion]"
 file copy [file join $rootDir src other tcl library] [file join $installDir lib tcl$tclVersion]
 puts "copy [file join $rootDir src other tk library] [file join $installDir lib tk$tclVersion]"
@@ -277,8 +273,6 @@ file copy [file join $rootDir src nirt sfiles] [file join $shareDir nirt]
 # Remove undesired directories/files as a result of wholesale copies
 file delete -force [file join $installDir include .cvsignore]
 file delete -force [file join $installDir include conf .cvsignore]
-file delete -force [file join $installDir lib blt$bltVersion Makefile.am]
-file delete -force [file join $installDir lib blt$bltVersion dd_protocols Makefile.am]
 file delete -force [file join $installDir lib itcl$itclVersion Makefile.am]
 file delete -force [file join $installDir lib itk$itclVersion Makefile.am]
 file delete -force [file join $installDir lib iwidgets$iwidgetsVersion Makefile.am]

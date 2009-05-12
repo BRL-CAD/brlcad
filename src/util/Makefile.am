@@ -555,7 +555,6 @@ yuv_pix_LDADD = ${FB} ${BN} ${BU}
 
 
 man_MANS = \
-	alias-pix.1 \
 	ap-pix.1 \
 	asc-pl.1 \
 	azel.1 \
@@ -576,7 +575,6 @@ man_MANS = \
 	bwmod.1 \
 	bwrect.1 \
 	bwrot.1 \
-	bwscale.1 \
 	bwshrink.1 \
 	bwstat.1 \
 	bwthresh.1 \

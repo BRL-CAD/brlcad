@@ -635,26 +635,26 @@ Do_view( m, view_vis_list, entno, x, y, ang )
 	    Get_plane( clip[i], clip_de[i] );
 	else
 	{
-	    clip[i][3] = MAX_FASTF;
+	    clip[i][W] = MAX_FASTF;
 	    switch ( i )
 	    {
 		case 0:
-		    clip[i][0] = (-1.0);
+		    clip[i][X] = (-1.0);
 		    break;
 		case 1:
-		    clip[i][1] = 1.0;
+		    clip[i][Y] = 1.0;
 		    break;
 		case 2:
-		    clip[i][0] = 1.0;
+		    clip[i][X] = 1.0;
 		    break;
 		case 3:
-		    clip[i][1] = (-1.0);
+		    clip[i][Y] = (-1.0);
 		    break;
 		case 4:
-		    clip[i][2] = (-1.0);
+		    clip[i][Z] = (-1.0);
 		    break;
 		case 5:
-		    clip[i][2] = 1.0;
+		    clip[i][Z] = 1.0;
 		    break;
 	    }
 	}

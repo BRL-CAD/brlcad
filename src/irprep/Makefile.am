@@ -56,7 +56,6 @@ shapefact_SOURCES = shapefact.c
 shapefact_LDADD = ${RT}
 
 man_MANS = \
-	all_sf.1 \
 	showtherm.1 \
 	firpass.1 \
 	${IRDISP_MAN} \

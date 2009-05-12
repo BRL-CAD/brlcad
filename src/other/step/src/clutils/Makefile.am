@@ -3,6 +3,7 @@ noinst_LTLIBRARIES = libsteputils_nil.la
 
 libsteputils_nil_la_SOURCES = \
 	Str.cc \
+	dirobj.cc \
 	gennode.cc \
 	gennodelist.cc \
 	gennodearray.cc \
@@ -36,7 +37,6 @@ noinst_HEADERS = \
 
 
 EXTRA_DIST = \
-	dirobj.cc \
 	README
 
 include $(top_srcdir)/misc/Makefile.defs

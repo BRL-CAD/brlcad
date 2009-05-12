@@ -186,11 +186,11 @@ static struct bu_cmdtab dmo_cmds[] = {
 };
 
 /*
- *			D M _ C M D
+ * D M _ C M D
  *
  * Generic interface for display manager object routines.
  * Usage:
- *        objname cmd ?args?
+ * objname cmd ?args?
  *
  * Returns: result of DM command.
  */
@@ -237,14 +237,14 @@ dmo_deleteProc(ClientData clientData)
  * Close a display manager object.
  *
  * Usage:
- *	  objname close
+ * objname close
  */
 static int
 dmo_close_tcl(clientData, interp, argc, argv)
-    ClientData	clientData;
-    Tcl_Interp	*interp;
-    int	argc;
-    char	**argv;
+    ClientData clientData;
+    Tcl_Interp *interp;
+    int argc;
+    char **argv;
 {
     struct bu_vls vls;
     struct dm_obj *dmop = (struct dm_obj *)clientData;
@@ -268,17 +268,17 @@ dmo_close_tcl(clientData, interp, argc, argv)
  * Open/create a display manager object.
  *
  * Usage:
- *	  dm_open [name type [args]]
+ * dm_open [name type [args]]
  */
 static int
 dmo_open_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
-    struct dm_obj		*dmop;
-    struct dm		*dmp;
-    struct bu_vls		vls;
-    int			name_index = 1;
-    int			type = DM_TYPE_BAD;
-    Tcl_Obj			*obj;
+    struct dm_obj *dmop;
+    struct dm *dmp;
+    struct bu_vls vls;
+    int name_index = 1;
+    int type = DM_TYPE_BAD;
+    Tcl_Obj *obj;
 
     obj = Tcl_GetObjResult(interp);
     if (Tcl_IsShared(obj))
@@ -547,14 +547,14 @@ dmo_parseAxesArgs(Tcl_Interp *interp,
  * Draw the view axes.
  *
  * Usage:
- *	  objname drawViewAxes args
+ * objname drawViewAxes args
  *
  */
 static int
-dmo_drawViewAxes_tcl(ClientData	clientData,
-		     Tcl_Interp	*interp,
-		     int	argc,
-		     char	**argv)
+dmo_drawViewAxes_tcl(ClientData clientData,
+		     Tcl_Interp *interp,
+		     int argc,
+		     char **argv)
 {
     point_t axesPos;
     fastf_t viewSize;
@@ -607,14 +607,14 @@ dmo_drawViewAxes_tcl(ClientData	clientData,
  * Draw the center dot.
  *
  * Usage:
- *	  drawCenterDot color
+ * drawCenterDot color
  *
  */
 static int
-dmo_drawCenterDot_cmd(struct dm_obj	*dmop,
-		      Tcl_Interp	*interp,
-		      int		argc,
-		      char 		**argv)
+dmo_drawCenterDot_cmd(struct dm_obj *dmop,
+		      Tcl_Interp *interp,
+		      int argc,
+		      char **argv)
 {
     int color[3];
 
@@ -670,14 +670,14 @@ dmo_drawCenterDot_cmd(struct dm_obj	*dmop,
  * Draw the center dot.
  *
  * Usage:
- *	  objname drawCenterDot color
+ * objname drawCenterDot color
  *
  */
 static int
-dmo_drawCenterDot_tcl(ClientData	clientData,
-		      Tcl_Interp	*interp,
-		      int		argc,
-		      char		**argv)
+dmo_drawCenterDot_tcl(ClientData clientData,
+		      Tcl_Interp *interp,
+		      int argc,
+		      char **argv)
 {
     struct dm_obj *dmop = (struct dm_obj *)clientData;
 
@@ -758,15 +758,15 @@ dmo_parseDataAxesArgs(Tcl_Interp *interp,
  * Draw the data axes.
  *
  * Usage:
- *	  objname drawDataAxes args
+ * objname drawDataAxes args
  *
  *XXX This needs to be modified to handle an array/list of data points
  */
 static int
-dmo_drawDataAxes_tcl(ClientData	clientData,
-		     Tcl_Interp	*interp,
-		     int	argc,
-		     char	**argv)
+dmo_drawDataAxes_tcl(ClientData clientData,
+		     Tcl_Interp *interp,
+		     int argc,
+		     char **argv)
 {
     point_t modelAxesPos;
     point_t viewAxesPos;
@@ -817,14 +817,13 @@ dmo_drawDataAxes_tcl(ClientData	clientData,
     dm_draw_data_axes(dmop->dmo_dmp,
 		      viewSize,
 		      rmat,
-#if 1
 		      &gas);
-#else
-		      viewAxesPos,
-		      axesSize,
-		      axesColor,
-		      lineWidth);
-#endif
+
+/*     viewAxesPos, */
+/* 	axesSize, */
+/* 	axesColor, */
+/* 	lineWidth); */
+
 
     bu_vls_free(&vls);
     return TCL_OK;
@@ -865,67 +864,67 @@ dmo_parseModelAxesArgs(Tcl_Interp *interp,
 	return TCL_ERROR;
     }
 
-    /* parse tick enable flag */
+/* parse tick enable flag */
     if (sscanf(argv[12], "%d", tickEnable) != 1) {
 	bu_vls_printf(vlsp, "parseModelAxesArgs: bad tick enable flag - %s\n", argv[12]);
 	return TCL_ERROR;
     }
 
-    /* validate tick enable flag */
+/* validate tick enable flag */
     if (*tickEnable < 0) {
 	bu_vls_printf(vlsp, "parseModelAxesArgs: tick enable flag must be >= 0\n");
 	return TCL_ERROR;
     }
 
-    /* parse tick length */
+/* parse tick length */
     if (sscanf(argv[13], "%d", tickLength) != 1) {
 	bu_vls_printf(vlsp, "parseModelAxesArgs: bad tick length - %s\n", argv[13]);
 	return TCL_ERROR;
     }
 
-    /* validate tick length */
+/* validate tick length */
     if (*tickLength < 1) {
 	bu_vls_printf(vlsp, "parseModelAxesArgs: tick length must be >= 1\n");
 	return TCL_ERROR;
     }
 
-    /* parse major tick length */
+/* parse major tick length */
     if (sscanf(argv[14], "%d", majorTickLength) != 1) {
 	bu_vls_printf(vlsp, "parseModelAxesArgs: bad major tick length - %s\n", argv[14]);
 	return TCL_ERROR;
     }
 
-    /* validate major tick length */
+/* validate major tick length */
     if (*majorTickLength < 1) {
 	bu_vls_printf(vlsp, "parseModelAxesArgs: major tick length must be >= 1\n");
 	return TCL_ERROR;
     }
 
-    /* parse tick interval */
+/* parse tick interval */
     if (sscanf(argv[15], "%lf", tickInterval) != 1) {
 	bu_vls_printf(vlsp, "parseModelAxesArgs: tick interval must be > 0");
 	return TCL_ERROR;
     }
 
-    /* validate tick interval */
+/* validate tick interval */
     if (*tickInterval <= 0) {
 	bu_vls_printf(vlsp, "parseModelAxesArgs: tick interval must be > 0");
 	return TCL_ERROR;
     }
 
-    /* parse ticks per major */
+/* parse ticks per major */
     if (sscanf(argv[16], "%d", ticksPerMajor) != 1) {
 	bu_vls_printf(vlsp, "parseModelAxesArgs: bad ticks per major - %s\n", argv[16]);
 	return TCL_ERROR;
     }
 
-    /* validate ticks per major */
+/* validate ticks per major */
     if (*ticksPerMajor < 0) {
 	bu_vls_printf(vlsp, "parseModelAxesArgs: ticks per major must be >= 0\n");
 	return TCL_ERROR;
     }
 
-    /* parse tick color */
+/* parse tick color */
     if (sscanf(argv[17], "%d %d %d",
 	       &tickColor[0],
 	       &tickColor[1],
@@ -935,7 +934,7 @@ dmo_parseModelAxesArgs(Tcl_Interp *interp,
 	return TCL_ERROR;
     }
 
-    /* validate tick color */
+/* validate tick color */
     if (tickColor[0] < 0 || 255 < tickColor[0] ||
 	tickColor[1] < 0 || 255 < tickColor[1] ||
 	tickColor[2] < 0 || 255 < tickColor[2]) {
@@ -944,7 +943,7 @@ dmo_parseModelAxesArgs(Tcl_Interp *interp,
 	return TCL_ERROR;
     }
 
-    /* parse major tick color */
+/* parse major tick color */
     if (sscanf(argv[18], "%d %d %d",
 	       &majorTickColor[0],
 	       &majorTickColor[1],
@@ -954,7 +953,7 @@ dmo_parseModelAxesArgs(Tcl_Interp *interp,
 	return TCL_ERROR;
     }
 
-    /* validate tick color */
+/* validate tick color */
     if (majorTickColor[0] < 0 || 255 < majorTickColor[0] ||
 	majorTickColor[1] < 0 || 255 < majorTickColor[1] ||
 	majorTickColor[2] < 0 || 255 < majorTickColor[2]) {
@@ -963,13 +962,13 @@ dmo_parseModelAxesArgs(Tcl_Interp *interp,
 	return TCL_ERROR;
     }
 
-    /* parse tick threshold */
+/* parse tick threshold */
     if (sscanf(argv[19], "%d", tickThreshold) != 1) {
 	bu_vls_printf(vlsp, "parseModelAxesArgs: bad tick threshold - %s\n", argv[19]);
 	return TCL_ERROR;
     }
 
-    /* validate tick threshold */
+/* validate tick threshold */
     if (*tickThreshold <= 0) {
 	bu_vls_printf(vlsp, "parseModelAxesArgs: tick threshold must be > 0\n");
 	return TCL_ERROR;
@@ -982,14 +981,14 @@ dmo_parseModelAxesArgs(Tcl_Interp *interp,
  * Draw the model axes.
  *
  * Usage:
- *	  objname drawModelAxes args
+ * objname drawModelAxes args
  *
  */
 static int
-dmo_drawModelAxes_tcl(ClientData	clientData,
-		      Tcl_Interp	*interp,
-		      int		argc,
-		      char		**argv)
+dmo_drawModelAxes_tcl(ClientData clientData,
+		      Tcl_Interp *interp,
+		      int argc,
+		      char **argv)
 {
     point_t modelAxesPos;
     point_t viewAxesPos;
@@ -1068,7 +1067,7 @@ dmo_drawModelAxes_tcl(ClientData	clientData,
  * Begin the draw cycle.
  *
  * Usage:
- *	  objname drawBegin
+ * objname drawBegin
  *
  */
 static int
@@ -1091,7 +1090,7 @@ dmo_drawEnd_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv
  * End the draw cycle.
  *
  * Usage:
- *	  objname drawEnd
+ * objname drawEnd
  *
  */
 static int
@@ -1110,7 +1109,7 @@ dmo_clear_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
  * Clear the display.
  *
  * Usage:
- *	  objname clear
+ * objname clear
  *
  */
 static int
@@ -1125,15 +1124,15 @@ dmo_normal_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
  * Reset the viewing transform.
  *
  * Usage:
- *	  objname normal
+ * objname normal
  *
  */
 static int
 dmo_loadmat_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
-    struct dm_obj	*dmop = (struct dm_obj *)clientData;
-    mat_t		mat;
-    int		which_eye;
+    struct dm_obj *dmop = (struct dm_obj *)clientData;
+    mat_t mat;
+    int which_eye;
 
     if (argc != 4) {
 	struct bu_vls vls;
@@ -1150,7 +1149,7 @@ dmo_loadmat_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv
 	return TCL_ERROR;
 
     if (sscanf(argv[3], "%d", &which_eye) != 1) {
-	Tcl_Obj		*obj;
+	Tcl_Obj *obj;
 
 	obj = Tcl_GetObjResult(interp);
 	if (Tcl_IsShared(obj))
@@ -1170,7 +1169,7 @@ dmo_loadmat_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv
  * Draw a string on the display.
  *
  * Usage:
- *	  objname drawString args
+ * objname drawString args
  *
  */
 static int
@@ -1203,8 +1202,8 @@ dmo_drawString_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **a
 static int
 dmo_drawPoint_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
-    struct dm_obj	*dmop = (struct dm_obj *)clientData;
-    fastf_t		x, y;
+    struct dm_obj *dmop = (struct dm_obj *)clientData;
+    fastf_t x, y;
 
     if (argc != 4) {
 	struct bu_vls vls;
@@ -1227,7 +1226,7 @@ dmo_drawPoint_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **ar
  * Draw the line.
  *
  * Usage:
- *	  objname drawLine x1 y1 x2 y2
+ * objname drawLine x1 y1 x2 y2
  *
  */
 static int
@@ -1259,7 +1258,7 @@ dmo_drawLine_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **arg
  * Draw the vlist.
  *
  * Usage:
- *	  objname drawVList vid
+ * objname drawVList vid
  */
 static int
 dmo_drawVList_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
@@ -1278,7 +1277,7 @@ dmo_drawVList_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **ar
     }
 
     if (sscanf(argv[2], "%lu", (unsigned long *)&vp) != 1) {
-	Tcl_Obj	*obj;
+	Tcl_Obj *obj;
 
 	obj = Tcl_GetObjResult(interp);
 	if (Tcl_IsShared(obj))
@@ -1296,8 +1295,8 @@ dmo_drawVList_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **ar
 }
 
 static void
-dmo_drawSolid(struct dm_obj	*dmop,
-	      struct solid	*sp)
+dmo_drawSolid(struct dm_obj *dmop,
+	      struct solid *sp)
 {
     if (sp->s_iflag == UP)
 	DM_SET_FGCOLOR(dmop->dmo_dmp, 255, 255, 255, 0, sp->s_transparency);
@@ -1314,14 +1313,14 @@ dmo_drawSolid(struct dm_obj	*dmop,
  * Draw a scale.
  *
  * Usage:
- *       drawScale vsize color
+ * drawScale vsize color
  *
  */
 int
-dmo_drawScale_cmd(struct dm_obj	*dmop,
-		  Tcl_Interp	*interp,
-		  int		argc,
-		  char 		**argv)
+dmo_drawScale_cmd(struct dm_obj *dmop,
+		  Tcl_Interp *interp,
+		  int argc,
+		  char **argv)
 {
     int color[3];
     int soffset;
@@ -1380,13 +1379,13 @@ dmo_drawScale_cmd(struct dm_obj	*dmop,
 
 /*
  * Usage:
- *	  objname drawScale vsize color
+ * objname drawScale vsize color
  */
 static int
 dmo_drawScale_tcl(ClientData clientData,
 		  Tcl_Interp *interp,
-		  int	     argc,
-		  char	     **argv)
+		  int argc,
+		  char **argv)
 {
     struct dm_obj *dmop = (struct dm_obj *)clientData;
 
@@ -1395,11 +1394,11 @@ dmo_drawScale_tcl(ClientData clientData,
 
 /*
  * Usage:
- *	  objname drawSList hsp
+ * objname drawSList hsp
  */
 static int
-dmo_drawSList(struct dm_obj	*dmop,
-	      struct bu_list	*hsp)
+dmo_drawSList(struct dm_obj *dmop,
+	      struct bu_list *hsp)
 {
     struct solid *sp;
     int linestyle = -1;
@@ -1454,13 +1453,13 @@ dmo_drawSList(struct dm_obj	*dmop,
 
 /*
  * Usage:
- *	  objname drawSList sid
+ * objname drawSList sid
  */
 static int
 dmo_drawSList_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
-    struct dm_obj	*dmop = (struct dm_obj *)clientData;
-    struct bu_list	*hsp;
+    struct dm_obj *dmop = (struct dm_obj *)clientData;
+    struct bu_list *hsp;
 
     if (argc != 3) {
 	struct bu_vls vls;
@@ -1473,7 +1472,7 @@ dmo_drawSList_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **ar
     }
 
     if (sscanf(argv[2], "%lu", (unsigned long *)&hsp) != 1) {
-	Tcl_Obj	*obj;
+	Tcl_Obj *obj;
 
 	obj = Tcl_GetObjResult(interp);
 	if (Tcl_IsShared(obj))
@@ -1494,7 +1493,7 @@ dmo_drawSList_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **ar
  * Draw "drawable geometry" objects.
  *
  * Usage:
- *	  objname drawGeom dg_obj(s)
+ * objname drawGeom dg_obj(s)
  */
 static int
 dmo_drawGeom_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
@@ -1531,13 +1530,13 @@ dmo_drawGeom_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **arg
  * Draw labels for the specified dg_obj's primitive object(s).
  *
  * Usage:
- *	  objname drawLabels dg_obj color primitive(s)
+ * objname drawLabels dg_obj color primitive(s)
  */
 static int
-dmo_drawLabels_tcl(ClientData	clientData,
-		   Tcl_Interp	*interp,
-		   int		argc,
-		   char		**argv)
+dmo_drawLabels_tcl(ClientData clientData,
+		   Tcl_Interp *interp,
+		   int argc,
+		   char **argv)
 {
     struct dm_obj *dmop = (struct dm_obj *)clientData;
     struct dg_obj *dgop;
@@ -1593,15 +1592,15 @@ dmo_drawLabels_tcl(ClientData	clientData,
  * Get/set the display manager's foreground color.
  *
  * Usage:
- *	  objname fg [rgb]
+ * objname fg [rgb]
  */
 static int
 dmo_fg_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
-    struct dm_obj	*dmop = (struct dm_obj *)clientData;
-    struct bu_vls	vls;
-    int		r, g, b;
-    Tcl_Obj		*obj;
+    struct dm_obj *dmop = (struct dm_obj *)clientData;
+    struct bu_vls vls;
+    int r, g, b;
+    Tcl_Obj *obj;
 
     obj = Tcl_GetObjResult(interp);
     if (Tcl_IsShared(obj))
@@ -1660,15 +1659,15 @@ dmo_fg_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
  * Get/set the display manager's background color.
  *
  * Usage:
- *	  objname bg [rgb]
+ * objname bg [rgb]
  */
 static int
 dmo_bg_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
-    struct dm_obj	*dmop = (struct dm_obj *)clientData;
-    struct bu_vls	vls;
-    int		r, g, b;
-    Tcl_Obj		*obj;
+    struct dm_obj *dmop = (struct dm_obj *)clientData;
+    struct bu_vls vls;
+    int r, g, b;
+    Tcl_Obj *obj;
 
     obj = Tcl_GetObjResult(interp);
     if (Tcl_IsShared(obj))
@@ -1726,15 +1725,15 @@ dmo_bg_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
  * Get/set the display manager's linewidth.
  *
  * Usage:
- *	  objname linewidth [n]
+ * objname linewidth [n]
  */
 static int
 dmo_lineWidth_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
-    struct dm_obj	*dmop = (struct dm_obj *)clientData;
-    struct bu_vls	vls;
-    int		lineWidth;
-    Tcl_Obj		*obj;
+    struct dm_obj *dmop = (struct dm_obj *)clientData;
+    struct bu_vls vls;
+    int lineWidth;
+    Tcl_Obj *obj;
 
     obj = Tcl_GetObjResult(interp);
     if (Tcl_IsShared(obj))
@@ -1784,15 +1783,15 @@ dmo_lineWidth_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **ar
  * Get/set the display manager's linestyle.
  *
  * Usage:
- *	  objname linestyle [0|1]
+ * objname linestyle [0|1]
  */
 static int
 dmo_lineStyle_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
-    struct dm_obj	*dmop = (struct dm_obj *)clientData;
-    struct bu_vls	vls;
-    int		linestyle;
-    Tcl_Obj		*obj;
+    struct dm_obj *dmop = (struct dm_obj *)clientData;
+    struct bu_vls vls;
+    int linestyle;
+    Tcl_Obj *obj;
 
     obj = Tcl_GetObjResult(interp);
     if (Tcl_IsShared(obj))
@@ -1843,13 +1842,13 @@ dmo_lineStyle_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **ar
  * called as a result of a ConfigureNotify event.
  *
  * Usage:
- *	  objname configure
+ * objname configure
  */
 static int
 dmo_configure_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
-    struct dm_obj	*dmop = (struct dm_obj *)clientData;
-    int		status;
+    struct dm_obj *dmop = (struct dm_obj *)clientData;
+    int status;
 
     if (argc != 2) {
 	struct bu_vls vls;
@@ -1879,15 +1878,15 @@ dmo_configure_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **ar
  * Get/set the display manager's zclip flag.
  *
  * Usage:
- *	  objname zclip [0|1]
+ * objname zclip [0|1]
  */
 static int
 dmo_zclip_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
-    struct dm_obj	*dmop = (struct dm_obj *)clientData;
-    struct bu_vls	vls;
-    int		zclip;
-    Tcl_Obj		*obj;
+    struct dm_obj *dmop = (struct dm_obj *)clientData;
+    struct bu_vls vls;
+    int zclip;
+    Tcl_Obj *obj;
 
     obj = Tcl_GetObjResult(interp);
     if (Tcl_IsShared(obj))
@@ -1928,15 +1927,15 @@ dmo_zclip_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
  * Get/set the display manager's zbuffer flag.
  *
  * Usage:
- *	  objname zbuffer [0|1]
+ * objname zbuffer [0|1]
  */
 static int
 dmo_zbuffer_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
-    struct dm_obj	*dmop = (struct dm_obj *)clientData;
-    struct bu_vls	vls;
-    int		zbuffer;
-    Tcl_Obj		*obj;
+    struct dm_obj *dmop = (struct dm_obj *)clientData;
+    struct bu_vls vls;
+    int zbuffer;
+    Tcl_Obj *obj;
 
     obj = Tcl_GetObjResult(interp);
     if (Tcl_IsShared(obj))
@@ -1977,15 +1976,15 @@ dmo_zbuffer_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv
  * Get/set the display manager's light flag.
  *
  * Usage:
- *	  objname light [0|1]
+ * objname light [0|1]
  */
 static int
 dmo_light_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
-    struct dm_obj	*dmop = (struct dm_obj *)clientData;
-    struct bu_vls	vls;
-    int		light;
-    Tcl_Obj		*obj;
+    struct dm_obj *dmop = (struct dm_obj *)clientData;
+    struct bu_vls vls;
+    int light;
+    Tcl_Obj *obj;
 
     obj = Tcl_GetObjResult(interp);
     if (Tcl_IsShared(obj))
@@ -2027,18 +2026,18 @@ dmo_light_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
  * Get/set the display manager's transparency flag.
  *
  * Usage:
- *	  objname transparency [0|1]
+ * objname transparency [0|1]
  */
 static int
-dmo_transparency_tcl(ClientData	clientData,
-		     Tcl_Interp	*interp,
-		     int	argc,
-		     char	**argv)
+dmo_transparency_tcl(ClientData clientData,
+		     Tcl_Interp *interp,
+		     int argc,
+		     char **argv)
 {
-    struct dm_obj	*dmop = (struct dm_obj *)clientData;
-    struct bu_vls	vls;
-    int		transparency;
-    Tcl_Obj		*obj;
+    struct dm_obj *dmop = (struct dm_obj *)clientData;
+    struct bu_vls vls;
+    int transparency;
+    Tcl_Obj *obj;
 
     obj = Tcl_GetObjResult(interp);
     if (Tcl_IsShared(obj))
@@ -2080,18 +2079,18 @@ dmo_transparency_tcl(ClientData	clientData,
  * Get/set the display manager's depth mask flag.
  *
  * Usage:
- *	  objname depthMask [0|1]
+ * objname depthMask [0|1]
  */
 static int
-dmo_depthMask_tcl(ClientData	clientData,
-		  Tcl_Interp	*interp,
-		  int	argc,
-		  char	**argv)
+dmo_depthMask_tcl(ClientData clientData,
+		  Tcl_Interp *interp,
+		  int argc,
+		  char **argv)
 {
-    struct dm_obj	*dmop = (struct dm_obj *)clientData;
-    struct bu_vls	vls;
-    int		depthMask;
-    Tcl_Obj		*obj;
+    struct dm_obj *dmop = (struct dm_obj *)clientData;
+    struct bu_vls vls;
+    int depthMask;
+    Tcl_Obj *obj;
 
     obj = Tcl_GetObjResult(interp);
     if (Tcl_IsShared(obj))
@@ -2133,15 +2132,15 @@ dmo_depthMask_tcl(ClientData	clientData,
  * Get/set the display manager's window bounds.
  *
  * Usage:
- *	  objname bounds ["xmin xmax ymin ymax zmin zmax"]
+ * objname bounds ["xmin xmax ymin ymax zmin zmax"]
  */
 static int
 dmo_bounds_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
-    struct dm_obj	*dmop = (struct dm_obj *)clientData;
-    struct bu_vls	vls;
-    vect_t		clipmin, clipmax;
-    Tcl_Obj		*obj;
+    struct dm_obj *dmop = (struct dm_obj *)clientData;
+    struct bu_vls vls;
+    vect_t clipmin, clipmax;
+    Tcl_Obj *obj;
 
     obj = Tcl_GetObjResult(interp);
     if (Tcl_IsShared(obj))
@@ -2206,15 +2205,15 @@ dmo_bounds_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
  * Get/set the display manager's perspective mode.
  *
  * Usage:
- *	  objname perspective [n]
+ * objname perspective [n]
  */
 static int
 dmo_perspective_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
-    struct dm_obj	*dmop = (struct dm_obj *)clientData;
-    struct bu_vls	vls;
-    int		perspective;
-    Tcl_Obj		*obj;
+    struct dm_obj *dmop = (struct dm_obj *)clientData;
+    struct bu_vls vls;
+    int perspective;
+    Tcl_Obj *obj;
 
     obj = Tcl_GetObjResult(interp);
     if (Tcl_IsShared(obj))
@@ -2280,10 +2279,10 @@ dmo_perspective_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **
 #endif
 
 static int
-dmo_png_cmd(struct dm_obj	*dmop,
-	    Tcl_Interp		*interp,
-	    int			argc,
-	    char 		**argv)
+dmo_png_cmd(struct dm_obj *dmop,
+	    Tcl_Interp *interp,
+	    int argc,
+	    char **argv)
 {
     FILE *fp;
     png_structp png_p;
@@ -2602,16 +2601,16 @@ dmo_png_cmd(struct dm_obj	*dmop,
  * Write the pixels to a file in png format.
  *
  * Usage:
- *	  objname png args
+ * objname png args
  *
  */
 static int
-dmo_png_tcl(ClientData	clientData,
-	    Tcl_Interp	*interp,
-	    int		argc,
-	    char	**argv)
+dmo_png_tcl(ClientData clientData,
+	    Tcl_Interp *interp,
+	    int argc,
+	    char **argv)
 {
-    struct dm_obj	*dmop = (struct dm_obj *)clientData;
+    struct dm_obj *dmop = (struct dm_obj *)clientData;
 
     return dmo_png_cmd(dmop, interp, argc-1, argv+1);
 }
@@ -2621,18 +2620,18 @@ dmo_png_tcl(ClientData	clientData,
  * Get/set the clearBufferAfter flag.
  *
  * Usage:
- *	  objname clearBufferAfter [flag]
+ * objname clearBufferAfter [flag]
  *
  */
 static int
-dmo_clearBufferAfter_tcl(ClientData	clientData,
-			 Tcl_Interp	*interp,
-			 int		argc,
-			 char           **argv) {
-    struct dm_obj	*dmop = (struct dm_obj *)clientData;
-    struct bu_vls	vls;
-    int		clearBufferAfter;
-    Tcl_Obj		*obj;
+dmo_clearBufferAfter_tcl(ClientData clientData,
+			 Tcl_Interp *interp,
+			 int argc,
+			 char **argv) {
+    struct dm_obj *dmop = (struct dm_obj *)clientData;
+    struct bu_vls vls;
+    int clearBufferAfter;
+    Tcl_Obj *obj;
 
     obj = Tcl_GetObjResult(interp);
     if (Tcl_IsShared(obj))
@@ -2674,15 +2673,15 @@ dmo_clearBufferAfter_tcl(ClientData	clientData,
  * Get/set the display manager's debug level.
  *
  * Usage:
- *	  objname debug [n]
+ * objname debug [n]
  */
 static int
 dmo_debug_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
-    struct dm_obj	*dmop = (struct dm_obj *)clientData;
-    struct bu_vls	vls;
-    int		level;
-    Tcl_Obj		*obj;
+    struct dm_obj *dmop = (struct dm_obj *)clientData;
+    struct bu_vls vls;
+    int level;
+    Tcl_Obj *obj;
 
     obj = Tcl_GetObjResult(interp);
     if (Tcl_IsShared(obj))
@@ -2725,8 +2724,8 @@ dmo_debug_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
  */
 static int
 dmo_openFb(dmop, interp)
-    struct dm_obj	*dmop;
-    Tcl_Interp		*interp;
+    struct dm_obj *dmop;
+    Tcl_Interp *interp;
 {
 
     /* already open */
@@ -2735,7 +2734,7 @@ dmo_openFb(dmop, interp)
 
     /* don't use bu_calloc so we can fail slightly more gradefully */
     if ((dmop->dmo_fbs.fbs_fbp = (FBIO *)calloc(sizeof(FBIO), 1)) == FBIO_NULL) {
-	Tcl_Obj	*obj;
+	Tcl_Obj *obj;
 
 	obj = Tcl_GetObjResult(interp);
 	if (Tcl_IsShared(obj))
@@ -2849,7 +2848,7 @@ dmo_openFb(dmop, interp)
  * Draw the point.
  *
  * Usage:
- *	  objname drawPoint x y
+ * objname drawPoint x y
  *
  */
 static int
@@ -2859,7 +2858,7 @@ dmo_closeFb(dmop)
     if (dmop->dmo_fbs.fbs_fbp == FBIO_NULL)
 	return TCL_OK;
 
-    _fb_pgflush(dmop->dmo_fbs.fbs_fbp);
+    fb_flush(dmop->dmo_fbs.fbs_fbp);
 
     switch (dmop->dmo_dmp->dm_type) {
 #ifdef DM_X
@@ -2901,15 +2900,15 @@ dmo_closeFb(dmop)
  * Close/de-activate the display managers framebuffer.
  *
  * Usage:
- *	  objname closefb
+ * objname closefb
  *
  */
 static int
 dmo_closeFb_tcl(clientData, interp, argc, argv)
     ClientData clientData;
     Tcl_Interp *interp;
-    int     argc;
-    char    **argv;
+    int argc;
+    char **argv;
 {
     struct dm_obj *dmop = (struct dm_obj *)clientData;
 
@@ -2921,21 +2920,21 @@ dmo_closeFb_tcl(clientData, interp, argc, argv)
  * Set/get the port used to listen for framebuffer clients.
  *
  * Usage:
- *	  objname listen [port]
+ * objname listen [port]
  *
  * Returns the port number actually used.
  *
  */
 static int
 dmo_listen_tcl(clientData, interp, argc, argv)
-    ClientData	clientData;
-    Tcl_Interp	*interp;
-    int	argc;
-    char	**argv;
+    ClientData clientData;
+    Tcl_Interp *interp;
+    int argc;
+    char **argv;
 {
-    struct dm_obj	*dmop = (struct dm_obj *)clientData;
-    struct bu_vls	vls;
-    Tcl_Obj		*obj;
+    struct dm_obj *dmop = (struct dm_obj *)clientData;
+    struct bu_vls vls;
+    Tcl_Obj *obj;
 
     obj = Tcl_GetObjResult(interp);
     if (Tcl_IsShared(obj))
@@ -2995,21 +2994,21 @@ dmo_listen_tcl(clientData, interp, argc, argv)
  * Refresh the display managers framebuffer.
  *
  * Usage:
- *	  objname refresh
+ * objname refresh
  *
  */
 static int
 dmo_refreshFb_tcl(clientData, interp, argc, argv)
-    ClientData	clientData;
-    Tcl_Interp	*interp;
-    int	argc;
-    char	**argv;
+    ClientData clientData;
+    Tcl_Interp *interp;
+    int argc;
+    char **argv;
 {
-    struct dm_obj	*dmop = (struct dm_obj *)clientData;
-    struct bu_vls	vls;
+    struct dm_obj *dmop = (struct dm_obj *)clientData;
+    struct bu_vls vls;
 
     if (dmop->dmo_fbs.fbs_fbp == FBIO_NULL) {
-	Tcl_Obj	*obj;
+	Tcl_Obj *obj;
 
 	obj = Tcl_GetObjResult(interp);
 	if (Tcl_IsShared(obj))
@@ -3035,7 +3034,7 @@ dmo_refreshFb_tcl(clientData, interp, argc, argv)
  * Flush the output buffer.
  *
  * Usage:
- *	  objname flush
+ * objname flush
  *
  */
 static int
@@ -3054,14 +3053,14 @@ dmo_flush_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
  * Flush the output buffer and process all events.
  *
  * Usage:
- *	  objname sync
+ * objname sync
  *
  */
 static int
 dmo_sync_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
 #ifdef DM_X
-    struct dm_obj	*dmop = (struct dm_obj *)clientData;
+    struct dm_obj *dmop = (struct dm_obj *)clientData;
 
     XSync(((struct dm_xvars *)dmop->dmo_dmp->dm_vars.pub_vars)->dpy, 0);
 #endif
@@ -3073,15 +3072,15 @@ dmo_sync_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
  * Set/get window size.
  *
  * Usage:
- *	  objname size [width [height]]
+ * objname size [width [height]]
  *
  */
 static int
 dmo_size_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
-    struct dm_obj	*dmop = (struct dm_obj *)clientData;
-    struct bu_vls	vls;
-    Tcl_Obj		*obj;
+    struct dm_obj *dmop = (struct dm_obj *)clientData;
+    struct bu_vls vls;
+    Tcl_Obj *obj;
 
     obj = Tcl_GetObjResult(interp);
     if (Tcl_IsShared(obj))
@@ -3133,15 +3132,15 @@ dmo_size_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
  * Get window aspect ratio (i.e. width / height)
  *
  * Usage:
- *	  objname get_aspect
+ * objname get_aspect
  *
  */
 static int
 dmo_get_aspect_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
-    struct dm_obj	*dmop = (struct dm_obj *)clientData;
-    struct bu_vls	vls;
-    Tcl_Obj		*obj;
+    struct dm_obj *dmop = (struct dm_obj *)clientData;
+    struct bu_vls vls;
+    Tcl_Obj *obj;
 
     if (argc != 2) {
 	bu_vls_init(&vls);
@@ -3168,7 +3167,7 @@ dmo_get_aspect_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **a
  * Attach/detach observers to/from list.
  *
  * Usage:
- *	  objname observer cmd [args]
+ * objname observer cmd [args]
  *
  */
 static int
@@ -3203,10 +3202,10 @@ dmo_fbs_callback(clientData)
 #endif
 
 static int
-dmo_getDrawLabelsHook_cmd(struct dm_obj	*dmop,
-			  Tcl_Interp	*interp,
-			  int		argc,
-			  char 		**argv)
+dmo_getDrawLabelsHook_cmd(struct dm_obj *dmop,
+			  Tcl_Interp *interp,
+			  int argc,
+			  char **argv)
 {
     char buf[64];
     Tcl_DString ds;
@@ -3234,8 +3233,8 @@ dmo_getDrawLabelsHook_cmd(struct dm_obj	*dmop,
 static int
 dmo_getDrawLabelsHook_tcl(ClientData clientData,
 			  Tcl_Interp *interp,
-			  int	     argc,
-			  char	     **argv)
+			  int argc,
+			  char **argv)
 {
     struct dm_obj *dmop = (struct dm_obj *)clientData;
 
@@ -3243,10 +3242,10 @@ dmo_getDrawLabelsHook_tcl(ClientData clientData,
 }
 
 static int
-dmo_setDrawLabelsHook_cmd(struct dm_obj	*dmop,
-			  Tcl_Interp	*interp,
-			  int		argc,
-			  char 		**argv)
+dmo_setDrawLabelsHook_cmd(struct dm_obj *dmop,
+			  Tcl_Interp *interp,
+			  int argc,
+			  char **argv)
 {
     unsigned long hook;
     unsigned long clientData;
@@ -3296,8 +3295,8 @@ dmo_setDrawLabelsHook_cmd(struct dm_obj	*dmop,
 static int
 dmo_setDrawLabelsHook_tcl(ClientData clientData,
 			  Tcl_Interp *interp,
-			  int	     argc,
-			  char	     **argv)
+			  int argc,
+			  char **argv)
 {
     struct dm_obj *dmop = (struct dm_obj *)clientData;
 

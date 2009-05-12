@@ -3574,7 +3574,7 @@ sedit(void)
 		    VMOVE(work, es_para);
 		}
 		/* change D of planar equation */
-		es_peqn[es_menu][3]=VDOT(&es_peqn[es_menu][0], work);
+		es_peqn[es_menu][W]=VDOT(&es_peqn[es_menu][0], work);
 		/* find new vertices, put in record in vector notation */
 		(void)rt_arb_calc_points(arb, es_type, es_peqn, &mged_tol);
 	    }
@@ -3678,7 +3678,7 @@ sedit(void)
 
 		/* set D of planar equation to anchor at fixed vertex */
 		/* es_menu == plane of interest */
-		es_peqn[es_menu][3]=VDOT(eqp, tempvec);
+		es_peqn[es_menu][W]=VDOT(eqp, tempvec);
 
 		/*  Clear out solid rotation */
 		MAT_IDN(modelchanges);
@@ -3696,7 +3696,7 @@ sedit(void)
 
 		/* set D of planar equation to anchor at fixed vertex */
 		/* es_menu == plane of interest */
-		es_peqn[es_menu][3]=VDOT(eqp, tempvec);
+		es_peqn[es_menu][W]=VDOT(eqp, tempvec);
 	    }
 
 	    (void)rt_arb_calc_points(arb, es_type, es_peqn, &mged_tol);
@@ -5173,7 +5173,7 @@ sedit(void)
 		VSET(view_dir, 0.0, 0.0, 1.0);
 		MAT4X3VEC(view_pl, view_state->vs_gvp->gv_view2model, view_dir);
 		VUNITIZE(view_pl);
-		view_pl[3] = VDOT(view_pl, &ars->curves[es_ars_crv][es_ars_col*3]);
+		view_pl[W] = VDOT(view_pl, &ars->curves[es_ars_crv][es_ars_col*3]);
 
 		/* project es_mparam onto the plane */
 		dist = DIST_PT_PLANE(es_mparam, view_pl);
@@ -5226,7 +5226,7 @@ sedit(void)
 		VSET(view_dir, 0.0, 0.0, 1.0);
 		MAT4X3VEC(view_pl, view_state->vs_gvp->gv_view2model, view_dir);
 		VUNITIZE(view_pl);
-		view_pl[3] = VDOT(view_pl, &ars->curves[es_ars_crv][es_ars_col*3]);
+		view_pl[W] = VDOT(view_pl, &ars->curves[es_ars_crv][es_ars_col*3]);
 
 		/* project es_mparam onto the plane */
 		dist = DIST_PT_PLANE(es_mparam, view_pl);
@@ -5278,7 +5278,7 @@ sedit(void)
 		VSET(view_dir, 0.0, 0.0, 1.0);
 		MAT4X3VEC(view_pl, view_state->vs_gvp->gv_view2model, view_dir);
 		VUNITIZE(view_pl);
-		view_pl[3] = VDOT(view_pl, &ars->curves[es_ars_crv][es_ars_col*3]);
+		view_pl[W] = VDOT(view_pl, &ars->curves[es_ars_crv][es_ars_col*3]);
 
 		/* project es_mparam onto the plane */
 		dist = DIST_PT_PLANE(es_mparam, view_pl);
@@ -5765,7 +5765,7 @@ sedit_mouse(const vect_t mousevec)
 	    MAT4X3PNT(temp, view_state->vs_gvp->gv_view2model, pos_view);
 	    MAT4X3PNT(pos_model, es_invmat, temp);
 	    /* change D of planar equation */
-	    es_peqn[es_menu][3]=VDOT(&es_peqn[es_menu][0], pos_model);
+	    es_peqn[es_menu][W]=VDOT(&es_peqn[es_menu][0], pos_model);
 	    /* calculate new vertices, put in record as vectors */
 	    {
 		struct rt_arb_internal *arb=
@@ -6122,7 +6122,7 @@ sedit_trans(fastf_t *tvec)
 	    MAT4X3PNT(pos_model, es_invmat, temp);
 
 	    /* change D of planar equation */
-	    es_peqn[es_menu][3]=VDOT(&es_peqn[es_menu][0], pos_model);
+	    es_peqn[es_menu][W]=VDOT(&es_peqn[es_menu][0], pos_model);
 
 	    /* calculate new vertices, put in record as vectors */
 	    {
@@ -7756,7 +7756,7 @@ f_eqn(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
     VUNITIZE(&es_peqn[es_menu][0]);
 
     VMOVE(tempvec, arb->pt[fixv]);
-    es_peqn[es_menu][3]=VDOT(es_peqn[es_menu], tempvec);
+    es_peqn[es_menu][W]=VDOT(es_peqn[es_menu], tempvec);
     if (rt_arb_calc_points(arb, es_type, es_peqn, &mged_tol))
 	return CMD_BAD;
 

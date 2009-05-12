@@ -214,6 +214,45 @@ Create_Ell1_Mat(fastf_t **mat, fastf_t dytred, fastf_t dztred, fastf_t d1, fastf
 /**
  * Create General Conic Matrix for Ellipse describing the top part of
  * the tire side
+ * 
+ * Note:  zside1 is the z height of the maximum tire width
+ * 
+ * This is the most complex of the required solutions.  There are four
+ * constraints used that result in five equations:
+ * 1.  Equality of the new ellipse with the ellipse defining the top surface
+ *     at the intersection, 
+ * 2.  Equality of the partial derivative of the new ellipse with the 
+ *     partial derivative of the top surface ellipse at
+ *     the point of intersection,
+ * 3.  The new ellipse must intersect the point zside1, dyside1/2
+ * 4.  The new ellipse must have its maximum y value equal to dyside1/2.
+ *
+ * The last constraint does not directly provide an instance of the
+ * general conic equation that can be used, but we use the fact that
+ * an ellipse is symmetric about that point plus the fact that conditions
+ * one and two give us a point and a partial derivative on the ellipse
+ * allow for the definition of two more equations.  First, the symmetric
+ * intersection point's y and z values must be found.  The y value is the
+ * same y value as the y value at intersection.  To find that value, we
+ * first define the magnitude of the z component of the distance from 
+ * the intersection point to the max point as:
+ *
+ *       ztire - dztread - zside1
+ *
+ * That will place the symmetric point at twice this distance down the
+ * z axis from the intersection point:
+ *
+ *       (ztire - dztread) - 2 * (ztire - dztread - zside1)
+ *
+ * Simplifying, that gives the expression:
+ *
+ *       2 * zside1 - ztire + dztread
+ *
+ * Knowing this point must be on the ellipse, and the partial derivative
+ * is constrained to be the negative of the partial derivative at the
+ * intersection point, five equations are now known and the conic equation
+ * coefficients can be found.
+ *  
  */
 static void
 Create_Ell2_Mat(fastf_t **mat, fastf_t dytred, fastf_t dztred,
@@ -254,7 +293,14 @@ Create_Ell2_Mat(fastf_t **mat, fastf_t dytred, fastf_t dztred,
 
 /**
  * Create General Conic Matrix for Ellipse describing the bottom part
- * of the tire side
+ * of the tire side.
+ *
+ * This ellipse is used to define the surface for both sides of the
+ * tire, so it uses symmetry about the z axis to define four of its points.
+ * The fifth is defined by mandating that the point at dyside1/2, zside1 be
+ * a maximum, and using the additional symmetry requirements.  This ensures
+ * both that the maximum tire width is respected and that the transition from
+ * the top ellipse(s) to the bottom one is smooth.
  */
 static void
 Create_Ell3_Mat(fastf_t **mat, fastf_t dytred, fastf_t dztred,
@@ -1035,9 +1081,9 @@ MakeTreadPattern1(struct rt_wdb (*file), char *suffix, fastf_t dwidth,
 	{ -.15, 1 },
 
 	{ 0.05, 1 },
-	{ .44, .7 },
-	{ .1, .3 },
-	{ .4, 0 }
+	{ .47, .7 },
+	{ .13, .3 },
+	{ .43, 0 }
     };
     point2d_t verts3[] = {
 	{ -.1, .1 },
@@ -1465,13 +1511,13 @@ MakeTreadSolid(struct rt_wdb (*file), char *suffix,
     mk_eto(file, bu_vls_addr(&str), origin, normal, C, ell2treadcadparams[1], ell2treadcadparams[4]);
 
     VSET(vertex, 0, -ell1treadcadparams[2] - ell1treadcadparams[2] * .01, 0);
-    VSET(height, 0, ell2treadcadparams[3] + ell1treadcadparams[2] * .01 , 0);
+    VSET(height, 0, ell1treadcadparams[2] - dytred/2 + ell1treadcadparams[2] * .01 , 0);
     bu_vls_trunc(&str, 0);
     bu_vls_printf(&str, "TopTreadClipL%s.s", suffix);
     mk_rcc(file, bu_vls_addr(&str), vertex, height, ztire - dztred);
 
     VSET(vertex, 0, ell1treadcadparams[2] + ell1treadcadparams[2] * .01, 0);
-    VSET(height, 0, -ell2treadcadparams[3] - ell1treadcadparams[2] * .01, 0);
+    VSET(height, 0, -ell1treadcadparams[2] + dytred/2 - ell1treadcadparams[2] * .01, 0);
     bu_vls_trunc(&str, 0);
     bu_vls_printf(&str, "TopTreadClipR%s.s", suffix);
     mk_rcc(file, bu_vls_addr(&str), vertex, height, ztire - dztred);

@@ -269,8 +269,8 @@ adrt_slave_work(tienet_buffer_t *work, tienet_buffer_t *result)
 	    rm = work->data[ind];
 	    ind += 1;
 
-	    if (rm != adrt_workspace_list[wid].camera.rm || rm & 1<<7) {
-		rm = rm & ((1<<7)-1);
+	    if (rm != adrt_workspace_list[wid].camera.rm || ADRT_MESSAGE_MODE_CHANGEP(rm)) {
+		rm = ADRT_MESSAGE_MODE(rm);
 
 		adrt_workspace_list[wid].camera.render.free (&adrt_workspace_list[wid].camera.render);
 

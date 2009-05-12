@@ -176,8 +176,7 @@ noinst_HEADERS = \
 
 man_MANS = \
 	cad_boundp.1 \
-	cad_parea.1 \
-	mged.1
+	cad_parea.1
 
 INCLUDES = \
 	${X_CFLAGS} \

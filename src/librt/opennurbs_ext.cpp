@@ -45,7 +45,7 @@
 #define RANGE_LO 0.45
 #define UNIVERSAL_SAMPLE_COUNT 1001
 
-#define BBOX_GROW 1e-4
+#define BBOX_GROW 1.0
 
 
 namespace brlcad {
@@ -223,8 +223,6 @@ namespace brlcad {
     {
 	ON_3dVector normals[8];
 
-	bool fail = false;
-
 	if (surf->IsAtSingularity(u.Min(), v.Min()) ||
 	    surf->IsAtSingularity(u.Max(), v.Min()) ||
 	    surf->IsAtSingularity(u.Max(), v.Max()) ||
@@ -379,7 +377,6 @@ namespace brlcad {
 	ON_Interval u, v;
 	ON_2dPoint est = a_tree->getClosestPointEstimate(point, u, v);
 	pt2d_t uv = { est[0], est[1] };
-	pt2d_t orig_uv = {est[0],est[1]};
 
 	// do the newton iterations
 	// terminates on 1 of 3 conditions:

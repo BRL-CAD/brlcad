@@ -12,8 +12,6 @@ brlcad_m4 = \
 
 EXTRA_DIST = \
 	$(brlcad_m4) \
-	mkdirp.m4 \
-	python.m4 \
-	sdl.m4
+	mkdirp.m4
 
 include $(top_srcdir)/misc/Makefile.defs

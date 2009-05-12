@@ -270,13 +270,13 @@ and
 elements, they are not computed by
 .IR rt_shootray .
 If these are needed, they can be filled in by using the
-.I RT_HIT_NORM\^
+.I RT_HIT_NORMAL\^
 macro;
 if surface curvature information is needed,
 it can be obtained by using the
 .I RT_CURVE\^
 macro after
-.IR RT_HIT_NORM ;
+.IR RT_HIT_NORMAL ;
 if only the
 .I hit_point
 is needed,
@@ -390,17 +390,10 @@ struct partition *PartHeadp;
 	for( pp = PartHeadp\->pt_forw; pp != PartHeadp; pp = pp\->pt_forw )  {
 
 		/* Fill in all inhit info, but just the exit location for outhit. */
-		RT_HIT_NORM( pp\->pt_inhit, pp\->pt_inseg\->seg_stp, &ap\->a_ray );
+		RT_HIT_NORMAL(pp\->pt_inhit\->hit_normal, pp\->pt_inhit, pp\->pt_inseg\->seg_stp, &ap\->a_ray, pp\->pt_inflip);
 		RT_CURVE( &incurv, pp\->pt_inhit, pp\->pt_inseg\->seg_stp );
 		VJOIN1( pp\->pt_outhit\->hit_point, ap\->a_ray.r_pt,
 				pp\->pt_outhit\->hit_dist, ap\->a_ray.r_dir );
-
-		/* Check for flipped normal and fix (if you intend to use it). */
-		if( pp\->pt_inflip )  {
-			VREVERSE( pp\->pt_inhit\->hit_normal,
-					pp\->pt_inhit\->hit_normal );
-			pp\->pt_inflip = 0;
-		}
 
 		/* Do something based on information in partition structure
 		 *	such as output a shotline component data record.

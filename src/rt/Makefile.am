@@ -175,11 +175,7 @@ noinst_HEADERS = \
 
 man_MANS = \
 	reshoot.1 \
-	rt.1 \
 	rt_bot_faces.1 \
-	rtarea.1 \
-	rtcheck.1 \
-	rtedge.1 \
 	rtg3.1 \
 	rthide.1 \
 	rtpp.1 \

@@ -243,8 +243,9 @@ rt_db_free_internal( struct rt_db_internal *ip, struct resource *resp )
 {
     RT_CK_DB_INTERNAL( ip );
 
-    /* meth is not required since may be asked to free something
-     * that was never set.
+    /* meth is not required since may be asked to free something that
+     * was never set.  resp is not checked, since most ifree's don't
+     * use it (combinations use it).  leave it up to ft_ifree to check
      */
     if (ip->idb_meth) {
 	RT_CK_FUNCTAB(ip->idb_meth);
@@ -253,10 +254,7 @@ rt_db_free_internal( struct rt_db_internal *ip, struct resource *resp )
 	}
     }
 
-    /* resp is not checked, since most ifree's don't take/need it
-     * (only combinations use it) -- leave it up to ft_ifree to check it
-     */
-    if ( ip->idb_ptr )  {
+    if ( ip->idb_ptr ) {
 	ip->idb_ptr = NULL;		/* sanity.  Should be handled by INIT, below */
     }
     if ( ip->idb_avs.magic == BU_AVS_MAGIC ) {

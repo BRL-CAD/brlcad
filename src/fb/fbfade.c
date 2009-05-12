@@ -1,4 +1,4 @@
-/*                        F B F A D E . C
+/* F B F A D E . C
  * BRL-CAD
  *
  * Copyright (c) 2004-2009 United States Government as represented by
@@ -19,13 +19,8 @@
  *
  */
 /** @file fbfade.c
- * fbfade -- "twinkle" fade in or out a frame buffer image
  *
- * Typical compilation:	cc -O -I/usr/include/brlcad -o fbfade \
- * fbfade.c /usr/brlcad/lib/libfb.a
- * Add -DNO_DRAND48, -DNO_VFPRINTF, or -DNO_STRRCHR if drand48(),
- * vfprintf(), or strrchr() are not present in your C library
- * (e.g. on 4BSD-based systems).
+ * fade in or out a frame buffer image
  *
  * This program displays a frame buffer image gradually, randomly
  * selecting the pixel display sequence.  (Suggested by Gary Moss.)
@@ -33,28 +28,28 @@
  *
  * Options:
  *
- * -h		assumes 1024x1024 default input size instead of 512x512
+ * "-h" assumes 1024x1024 default input size instead of 512x512
  *
- * -f in_fb_file	reads from the specified frame buffer file instead
+ * "-f in_fb_file" reads from the specified frame buffer file instead
  * of assuming constant black ("fade out") value
  *
- * -s size		input size (width & height)
+ * "-s size" is the input size (width & height)
  *
- * -w width	input width
+ * "-w width" is the input width
  *
- * -n height	input height
+ * "-n height" is the input height
  *
- * -F out_fb_file	writes to the specified frame buffer file instead
- * of the one specified by the FB_FILE environment
- * variable (the default frame buffer, if no FB_FILE)
+ * "-F out_fb_file" writes to the specified frame buffer file instead of
+ * the one specified by the FB_FILE environment variable (the default
+ * frame buffer, if no FB_FILE)
  *
- * -S size		output size (width & height)
+ * "-S size" is the output size (width & height)
  *
- * -W width	output width
+ * "-W width" is the output width
  *
- * -N height	output height
+ * "-N height" is the output height
  *
- * out_fb_file	same as -F out_fb_file, for convenience
+ * "out_fb_file" is the same as -F out_fb_file, for convenience
  */
 
 #include "common.h"
@@ -70,43 +65,28 @@
 #include "pkg.h"
 
 
-#define	USAGE1 "fbfade [ -s size ] [ -w width ] [ -n height ] [ -f in_fb_file ]"
-#define	USAGE2	\
+#define USAGE1 "fbfade [ -s size ] [ -w width ] [ -n height ] [ -f in_fb_file ]"
+#define USAGE2	\
 	"\t[ -h ] [ -S size ] [ -W width ] [ -N height ] [ [ -F ] out_fb_file ]"
-#define	OPTSTR	"f:F:hn:N:s:S:w:W:"
+#define OPTSTR	"f:F:hn:N:s:S:w:W:"
 
 
 typedef int bool_t;
 
-static bool_t	hires = 0;		/* set for 1Kx1K; clear for 512x512 */
-static char	*in_fb_file = NULL;	/* input image name */
-static char	*out_fb_file = NULL;	/* output frame buffer name */
-static FBIO	*fbp = FBIO_NULL;	/* libfb input/output handle */
-static int	src_width = 0,
-    src_height = 0;		/* input image size */
-static int	dst_width = 0,
-    dst_height = 0;		/* output frame buffer size */
-static RGBpixel	*pix;			/* input image */
-static RGBpixel	bg = { 0, 0, 0 };	/* background */
+static bool_t hires = 0;		/* set for 1Kx1K; clear for 512x512 */
+static char *in_fb_file = NULL;		/* input image name */
+static char *out_fb_file = NULL;	/* output frame buffer name */
+static FBIO *fbp = FBIO_NULL;		/* libfb input/output handle */
+static int src_width = 0,
+    src_height = 0;			/* input image size */
+static int dst_width = 0,
+    dst_height = 0;			/* output frame buffer size */
+static RGBpixel *pix;			/* input image */
+static RGBpixel bg = { 0, 0, 0 };	/* background */
 
 /* in ioutil.c */
 void Message(const char *format, ...);
 void Fatal(FBIO *fbiop, const char *format, ...);
-
-
-#ifndef HAVE_DRAND48
-/* Simulate drand48() using 31-bit random() assumed to exist (e.g. in 4BSD): */
-
-double
-drand48()
-{
-#ifdef HAVE_RANDOM
-    return (double)random() / 2147483648.0;	/* range [0, 1) */
-#else
-    return (double)rand() / (double)RAND_MAX;	/* range [0, 1) */
-#endif
-}
-#endif
 
 
 static void
@@ -124,26 +104,26 @@ main(int argc, char **argv)
 {
     /* Plant signal catcher. */
     {
-	static int	getsigs[] =	/* signals to catch */
-	    {
+	/* signals to catch */
+	static int getsigs[] = {
 #ifdef SIGHUP
-		SIGHUP,			/* hangup */
+	    SIGHUP,			/* hangup */
 #endif
 #ifdef SIGINT
-		SIGINT,			/* interrupt */
+	    SIGINT,			/* interrupt */
 #endif
 #ifdef SIGQUIT
-		SIGQUIT,		/* quit */
+	    SIGQUIT,		/* quit */
 #endif
 #ifdef SIGPIPE
-		SIGPIPE,		/* write on a broken pipe */
+	    SIGPIPE,		/* write on a broken pipe */
 #endif
 #ifdef SIGTERM
-		SIGTERM,		/* software termination signal */
+	    SIGTERM,		/* software termination signal */
 #endif
-		0
-	    };
-	register int	i;
+	    0
+	};
+	register int i;
 
 	for (i = 0; getsigs[i] != 0; ++i)
 	    if (signal(getsigs[i], SIG_IGN) != SIG_IGN)
@@ -152,12 +132,11 @@ main(int argc, char **argv)
 
     /* Process arguments. */
     {
-	register int	c;
-	register bool_t	errors = 0;
+	register int c;
+	register bool_t errors = 0;
 
 	while ((c = bu_getopt(argc, argv, OPTSTR)) != EOF)
-	    switch (c)
-	    {
+	    switch (c) {
 		default:	/* '?': invalid option */
 		    errors = 1;
 		    break;
@@ -187,17 +166,13 @@ main(int argc, char **argv)
 		    break;
 
 		case 's':	/* -s size */
-		    if ((src_height = src_width = atoi(bu_optarg))
-			<= 0
-			)
+		    if ((src_height = src_width = atoi(bu_optarg)) <= 0)
 			errors = 1;
 
 		    break;
 
 		case 'S':	/* -S size */
-		    if ((dst_height = dst_width = atoi(bu_optarg))
-			<= 0
-			)
+		    if ((dst_height = dst_width = atoi(bu_optarg)) <= 0)
 			errors = 1;
 
 		    break;
@@ -219,10 +194,9 @@ main(int argc, char **argv)
 	    Fatal(fbp, "Usage: %s\n%s", USAGE1, USAGE2);
     }
 
-    if (bu_optind < argc)		/* out_fb_file */
-    {
-	if (bu_optind < argc - 1 || out_fb_file != NULL)
-	{
+    if (bu_optind < argc) {
+	/* out_fb_file */
+	if (bu_optind < argc - 1 || out_fb_file != NULL) {
 	    Message("Usage: %s\n%s", USAGE1, USAGE2);
 	    Fatal(fbp, "Can't handle multiple output frame buffers!");
 	}
@@ -240,14 +214,12 @@ main(int argc, char **argv)
 
     if (in_fb_file != NULL) {
 
-	if ((fbp = fb_open(in_fb_file, src_width, src_height))
-	    == FBIO_NULL
-	    )
+	if ((fbp = fb_open(in_fb_file, src_width, src_height)) == FBIO_NULL)
 	    Fatal(fbp, "Couldn't open input frame buffer");
-	else	{
-	    register int	y;
-	    register int	wt = fb_getwidth(fbp);
-	    register int	ht = fb_getheight(fbp);
+	else {
+	    register int y;
+	    register int wt = fb_getwidth(fbp);
+	    register int ht = fb_getheight(fbp);
 
 	    /* Use smaller actual input size instead of request. */
 
@@ -257,23 +229,15 @@ main(int argc, char **argv)
 	    if (ht < src_height)
 		src_height = ht;
 
-	    if ((pix = (RGBpixel *)malloc((size_t)src_width
-					  * (size_t)src_height
-					  * sizeof(RGBpixel)
-		     )
-		    ) == NULL
-		)
+	    if ((pix = (RGBpixel *)malloc((size_t)src_width * (size_t)src_height * sizeof(RGBpixel) ) ) == NULL)
 		Fatal(fbp, "Not enough memory for pixel array");
 
-	    for (y = 0; y < src_height; ++y)
-		if (fb_read(fbp, 0, y, pix[y * src_width],
-			    src_width
-			) == -1
-		    )
+	    for (y = 0; y < src_height; ++y) {
+		if (fb_read(fbp, 0, y, pix[y * src_width], src_width) == -1)
 		    Fatal(fbp, "Error reading raster");
+	    }
 
-	    if (fb_close(fbp) == -1)
-	    {
+	    if (fb_close(fbp) == -1) {
 		fbp = FBIO_NULL;	/* avoid second try */
 		Fatal(fbp, "Error closing input frame buffer");
 	    }
@@ -291,8 +255,8 @@ main(int argc, char **argv)
     if ((fbp = fb_open(out_fb_file, dst_width, dst_height)) == FBIO_NULL)
 	Fatal(fbp, "Couldn't open output frame buffer");
     else {
-	register int	wt = fb_getwidth(fbp);
-	register int	ht = fb_getheight(fbp);
+	register int wt = fb_getwidth(fbp);
+	register int ht = fb_getheight(fbp);
 
 	/* Use smaller actual frame buffer size for output. */
 
@@ -311,14 +275,16 @@ main(int argc, char **argv)
 	    dst_height = src_height;
     }
 
-    /* The following is probably an optimally fast shuffling algorithm;
-       unfortunately, it requires a huge auxiliary array.  The way it
-       works is to start with an array of all pixel indices, then repeat:
-       select an entry at random from the array, output that index, replace
-       that entry with the last array entry, then reduce the array size. */
+    /* The following is probably an optimally fast shuffling
+     * algorithm; unfortunately, it requires a huge auxiliary array.
+     * The way it works is to start with an array of all pixel
+     * indices, then repeat: select an entry at random from the array,
+     * output that index, replace that entry with the last array
+     * entry, then reduce the array size.
+     */
     {
-	register long	*loc;		/* keeps track of pixel shuffling */
-	register long	wxh = (long)dst_width * (long)dst_height;
+	register long *loc;		/* keeps track of pixel shuffling */
+	register long wxh = (long)dst_width * (long)dst_height;
 	/* down-counter */
 
 	if ((loc = (long *)malloc((size_t)wxh * sizeof(long))) == NULL)
@@ -329,21 +295,18 @@ main(int argc, char **argv)
 	while (--wxh >= 0L)
 	    loc[wxh] = wxh;
 
-	/* Select a pixel at random, paint it, and adjust the location array. */
+	/* Select a pixel at random, paint it, and adjust the location
+	 * array.
+	 */
 
-	for (wxh = (long)dst_width * (long)dst_height; --wxh >= 0L;)
-	{
-	    register long	r = (long)((double)wxh * drand48());
-	    register long	x = loc[r] % dst_width;
-	    register long	y = loc[r] / dst_width;
+	for (wxh = (long)dst_width * (long)dst_height; --wxh >= 0L;) {
+	    register long r = (long)((double)wxh * drand48());
+	    register long x = loc[r] % dst_width;
+	    register long y = loc[r] / dst_width;
 
-	    if (fb_write(fbp, (int)x, (int)y,
-			 in_fb_file == NULL ? bg
-			 : pix[x + y * src_width],
-			 1
-		    ) == -1
-		)
+	    if (fb_write(fbp, (int)x, (int)y, in_fb_file == NULL ? bg : pix[x + y * src_width], 1) == -1) {
 		Fatal(fbp, "Error writing pixel");
+	    }
 
 	    loc[r] = loc[wxh];	/* track the shuffle */
 	}

@@ -838,10 +838,10 @@ read_arbn(char *name)
 		   sol_work);
 	    return(-1);
 	}
-	eqn[cur_eq][0] = getdouble( scard, 10+0*10, 10 );
-	eqn[cur_eq][1] = getdouble( scard, 10+1*10, 10 );
-	eqn[cur_eq][2] = getdouble( scard, 10+2*10, 10 );
-	eqn[cur_eq][3] = getdouble( scard, 10+3*10, 10 );
+	eqn[cur_eq][X] = getdouble( scard, 10+0*10, 10 );
+	eqn[cur_eq][Y] = getdouble( scard, 10+1*10, 10 );
+	eqn[cur_eq][Z] = getdouble( scard, 10+2*10, 10 );
+	eqn[cur_eq][W] = getdouble( scard, 10+3*10, 10 );
 	scale = MAGNITUDE(eqn[cur_eq]);
 	if ( scale < SMALL )  {
 	    printf("arbn plane normal too small\n");
@@ -849,7 +849,7 @@ read_arbn(char *name)
 	}
 	scale = 1/scale;
 	VSCALE( eqn[cur_eq], eqn[cur_eq], scale );
-	eqn[cur_eq][3] *= scale;
+	eqn[cur_eq][W] *= scale;
 	cur_eq++;
     }
 
@@ -881,7 +881,7 @@ read_arbn(char *name)
 	    } else {
 		VMOVE( pt, &input_points[((vert_no)-1)*3] );
 	    }
-	    eqn[cur_eq][3] = VDOT(pt, eqn[cur_eq]);
+	    eqn[cur_eq][W] = VDOT(pt, eqn[cur_eq]);
 	    cur_eq++;
 	}
     }
@@ -903,7 +903,7 @@ read_arbn(char *name)
     for ( i=0; i<nface; i++ )  {
 	double	dist;
 
-	dist = VDOT( eqn[i], cent ) - eqn[i][3];
+	dist = VDOT( eqn[i], cent ) - eqn[i][W];
 	/* If dist is negative, 'cent' is inside halfspace */
 #define DIST_TOL	(1.0e-8)
 #define DIST_TOL_SQ	(1.0e-10)
@@ -911,7 +911,7 @@ read_arbn(char *name)
 	if ( dist > DIST_TOL )  {
 	    /* Flip halfspace over */
 	    VREVERSE( eqn[i], eqn[i] );
-	    eqn[i][3] = -eqn[i][3];
+	    eqn[i][W] = -eqn[i][W];
 	} else {
 	    /* Centroid lies on this face */
 	    printf("arbn centroid lies on face\n");
@@ -953,7 +953,7 @@ read_arbn(char *name)
 		/* See if point is outside arb */
 		for ( m=0; m<nface; m++ )  {
 		    if ( i==m || j==m || k==m )  continue;
-		    if ( VDOT(pt, eqn[m])-eqn[m][3] > DIST_TOL )
+		    if ( VDOT(pt, eqn[m]) - eqn[m][W] > DIST_TOL )
 			goto next_k;
 		}
 		/* See if vertex already was found */

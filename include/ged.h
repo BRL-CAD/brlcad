@@ -77,6 +77,10 @@ __BEGIN_DECLS
 #define GED_OROTATE_MODE 6
 #define GED_OSCALE_MODE 7
 #define GED_OTRANSLATE_MODE 8
+#define GED_MOVE_ARB_EDGE_MODE 9
+#define GED_MOVE_ARB_FACE_MODE 10
+#define GED_ROTATE_ARB_FACE_MODE 11
+#define GED_PSCALE_MODE 12
 
 /**
  * S E M A P H O R E S
@@ -1967,7 +1971,7 @@ GED_EXPORT BU_EXTERN(int ged_mater, (struct ged *gedp, int argc, const char *arg
  * Mirror the primitive or combination along the specified axis.
  *
  * Usage:
- *     mirror [-d dir] [-o origin] [-p scalar_pt] [-x] [-y] [-z] old new
+ *     mirror [-p point] [-d dir] [-x] [-y] [-z] [-o offset] old new
  *
  */
 GED_EXPORT BU_EXTERN(int ged_mirror, (struct ged *gedp, int argc, const char *argv[]));
@@ -2220,6 +2224,14 @@ GED_EXPORT BU_EXTERN(int ged_preview, (struct ged *gedp, int argc, const char *a
  *     ps [-c creator] [-f font] [-s size] [-t title] [-x offset] [-y offset] file.ps
  */
 GED_EXPORT BU_EXTERN(int ged_ps, (struct ged *gedp, int argc, const char *argv[]));
+
+/**
+ * Scale obj's attributes by sf.
+ *
+ * Usage:
+ *     pscale obj attribute sf
+ */
+GED_EXPORT BU_EXTERN(int ged_pscale, (struct ged *gedp, int argc, const char *argv[]));
 
 /**
  * Push objects' path transformations to  primitives

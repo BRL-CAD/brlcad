@@ -7,7 +7,6 @@ SUBDIRS = \
 	libtienet \
 	librender \
 	master \
-	misc \
 	rise \
 	scripts \
 	slave

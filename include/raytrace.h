@@ -154,9 +154,9 @@ __BEGIN_DECLS
  * product of zero, i.e., the angle is effectively zero.  This is used
  * to check vectors that should be perpendicular.
  *
- * asin(0.1   ) = 5.73917 degrees
- * asin(0.01  ) = 0.572967
- * asin(0.001 ) = 0.0572958 degrees
+ * asin(0.1) = 5.73917 degrees
+ * asin(0.01) = 0.572967 degrees
+ * asin(0.001) = 0.0572958 degrees
  * asin(0.0001) = 0.00572958 degrees
  *
  * sin(0.01 degrees) = sin(0.000174 radians) = 0.000174533
@@ -203,7 +203,7 @@ struct rt_db_internal  {
     struct bu_attribute_value_set idb_avs;
 };
 #define idb_type		idb_minor_type
-#define RT_INIT_DB_INTERNAL(_p)	{ \
+#define RT_INIT_DB_INTERNAL(_p) { \
 	(_p)->idb_magic = RT_DB_INTERNAL_MAGIC; \
 	(_p)->idb_major_type = -1; \
 	(_p)->idb_minor_type = -1; \
@@ -224,10 +224,12 @@ struct db_full_path {
     int			fp_maxlen;
     struct directory **	fp_names;	/**< @brief array of dir pointers */
 };
-#define DB_FULL_PATH_POP(_pp)	{(_pp)->fp_len--;}
-#define DB_FULL_PATH_CUR_DIR(_pp)	((_pp)->fp_names[(_pp)->fp_len-1])
-#define DB_FULL_PATH_GET(_pp, _i)	((_pp)->fp_names[(_i)])
-#define RT_CK_FULL_PATH(_p)	BU_CKMAG(_p, DB_FULL_PATH_MAGIC, "db_full_path")
+#define DB_FULL_PATH_POP(_pp) { \
+	(_pp)->fp_len--; \
+}
+#define DB_FULL_PATH_CUR_DIR(_pp) ((_pp)->fp_names[(_pp)->fp_len-1])
+#define DB_FULL_PATH_GET(_pp, _i) ((_pp)->fp_names[(_i)])
+#define RT_CK_FULL_PATH(_p)       BU_CKMAG(_p, DB_FULL_PATH_MAGIC, "db_full_path")
 
 /**
  * X R A Y
@@ -276,13 +278,15 @@ struct hit {
  *
  * Only the hit_dist field of pt_inhit and pt_outhit are valid when
  * a_hit() is called; to compute both hit_point and hit_normal, use
- * RT_HIT_NORM() macro; to compute just hit_point, use
- * VJOIN1( hitp->hit_point, rp->r_pt, hitp->hit_dist, rp->r_dir );
+ * RT_HIT_NORMAL() macro; to compute just hit_point, use
+ * VJOIN1(hitp->hit_point, rp->r_pt, hitp->hit_dist, rp->r_dir);
  */
-#define RT_HIT_NORM( _hitp, _stp, _unused )  { \
+#define RT_HIT_NORM(_hitp, _stp, _unused) { \
 	RT_CK_HIT(_hitp); \
 	RT_CK_SOLTAB(_stp); \
-	(_stp)->st_meth->ft_norm(_hitp, _stp, (_hitp)->hit_rayp); }
+	RT_CK_FUNCTAB((_stp)->st_meth); \
+	(_stp)->st_meth->ft_norm(_hitp, _stp, (_hitp)->hit_rayp); \
+}
 
 /**
  * New macro: Compute normal into (_hitp)->hit_normal, but leave it
@@ -293,20 +297,22 @@ struct hit {
  *
  * Return the post-boolean normal into caller-provided _normal vector.
  */
-#define RT_HIT_NORMAL( _normal, _hitp, _stp, _unused, _flipflag )  { \
+#define RT_HIT_NORMAL(_normal, _hitp, _stp, _unused, _flipflag) { \
 	RT_CK_HIT(_hitp); \
 	RT_CK_SOLTAB(_stp); \
 	RT_CK_FUNCTAB((_stp)->st_meth); \
 	(_stp)->st_meth->ft_norm(_hitp, _stp, (_hitp)->hit_rayp); \
-	if ( _flipflag )  { \
-		VREVERSE( _normal, (_hitp)->hit_normal ); \
-	} else { \
-		VMOVE( _normal, (_hitp)->hit_normal ); \
+	if (_normal) { \
+		if (_flipflag) { \
+			VREVERSE((fastf_t *)_normal, (_hitp)->hit_normal); \
+		} else { \
+			VMOVE((fastf_t *)_normal, (_hitp)->hit_normal); \
+		} \
 	} \
  }
 
 /* A more powerful interface would be: */
-/* RT_GET_NORMAL( _normal, _partition, inhit/outhit flag, ap ) */
+/* RT_GET_NORMAL(_normal, _partition, inhit/outhit flag, ap) */
 
 
 /**
@@ -334,12 +340,12 @@ struct curvature {
  * In Release 4.4 and earlier, this was called RT_CURVE().  When the
  * extra argument was added the name was changed.
  */
-#define RT_CURVATURE( _curvp, _hitp, _flipflag, _stp )  { \
+#define RT_CURVATURE(_curvp, _hitp, _flipflag, _stp) { \
 	RT_CK_HIT(_hitp); \
 	RT_CK_SOLTAB(_stp); \
 	RT_CK_FUNCTAB((_stp)->st_meth); \
-	(_stp)->st_meth->ft_curve( _curvp, _hitp, _stp ); \
-	if ( _flipflag )  { \
+	(_stp)->st_meth->ft_curve(_curvp, _hitp, _stp); \
+	if (_flipflag) { \
 		(_curvp)->crv_c1 = - (_curvp)->crv_c1; \
 		(_curvp)->crv_c2 = - (_curvp)->crv_c2; \
 	} \
@@ -359,11 +365,11 @@ struct uvcoord {
     fastf_t uv_du;	/**< @brief delta in u */
     fastf_t uv_dv;	/**< @brief delta in v */
 };
-#define RT_HIT_UVCOORD( ap, _stp, _hitp, uvp )  { \
+#define RT_HIT_UVCOORD(ap, _stp, _hitp, uvp) { \
 	RT_CK_HIT(_hitp); \
 	RT_CK_SOLTAB(_stp); \
 	RT_CK_FUNCTAB((_stp)->st_meth); \
-	(_stp)->st_meth->ft_uv( ap, _stp, _hitp, uvp ); }
+	(_stp)->st_meth->ft_uv(ap, _stp, _hitp, uvp); }
 
 /* A more powerful interface would be: */
 /* RT_GET_UVCOORD(_uvp, _partition, inhit/outhit flag, ap) */
@@ -390,30 +396,33 @@ struct seg {
 #define RT_CHECK_SEG(_p)	BU_CKMAG(_p, RT_SEG_MAGIC, "struct seg")
 #define RT_CK_SEG(_p)		BU_CKMAG(_p, RT_SEG_MAGIC, "struct seg")
 
-#define RT_GET_SEG(p, res)    { \
-	while ( !BU_LIST_WHILE((p), seg, &((res)->re_seg)) || !(p) ) \
+#define RT_GET_SEG(p, res) { \
+	while (!BU_LIST_WHILE((p), seg, &((res)->re_seg)) || !(p)) \
 		rt_get_seg(res); \
-	BU_LIST_DEQUEUE( &((p)->l) ); \
+	BU_LIST_DEQUEUE(&((p)->l)); \
 	(p)->l.forw = (p)->l.back = BU_LIST_NULL; \
 	(p)->seg_in.hit_magic = (p)->seg_out.hit_magic = RT_HIT_MAGIC; \
-	res->re_segget++; }
+	res->re_segget++; \
+}
 
-#define RT_FREE_SEG(p, res)  { \
+#define RT_FREE_SEG(p, res) { \
 	RT_CHECK_SEG(p); \
-	BU_LIST_INSERT( &((res)->re_seg), &((p)->l) ); \
-	res->re_segfree++; }
+	BU_LIST_INSERT(&((res)->re_seg), &((p)->l)); \
+	res->re_segfree++; \
+}
 
 /**
  * This could be
- *	BU_LIST_INSERT_LIST( &((_res)->re_seg), &((_segheadp)->l) )
+ *	BU_LIST_INSERT_LIST(&((_res)->re_seg), &((_segheadp)->l))
  * except for security of checking & counting each element this way.
  */
-#define RT_FREE_SEG_LIST( _segheadp, _res )	{ \
+#define RT_FREE_SEG_LIST(_segheadp, _res) { \
 	register struct seg *_a; \
-	while ( BU_LIST_WHILE( _a, seg, &((_segheadp)->l) ) )  { \
-		BU_LIST_DEQUEUE( &(_a->l) ); \
-		RT_FREE_SEG( _a, _res ); \
-	} }
+	while (BU_LIST_WHILE(_a, seg, &((_segheadp)->l))) { \
+		BU_LIST_DEQUEUE(&(_a->l)); \
+		RT_FREE_SEG(_a, _res); \
+	} \
+}
 
 /**
  * Macros to operate on Right Rectangular Parallelpipeds (RPPs).
@@ -458,8 +467,8 @@ struct soltab {
 #define RT_SOLTAB_NULL	((struct soltab *)0)
 #define	SOLTAB_NULL	RT_SOLTAB_NULL		/**< @brief backwards compat */
 
-#define RT_CHECK_SOLTAB(_p)	BU_CKMAG( _p, RT_SOLTAB_MAGIC, "struct soltab")
-#define RT_CK_SOLTAB(_p)	BU_CKMAG( _p, RT_SOLTAB_MAGIC, "struct soltab")
+#define RT_CHECK_SOLTAB(_p)	BU_CKMAG(_p, RT_SOLTAB_MAGIC, "struct soltab")
+#define RT_CK_SOLTAB(_p)	BU_CKMAG(_p, RT_SOLTAB_MAGIC, "struct soltab")
 
 /*
  * Values for Solid ID.
@@ -572,7 +581,7 @@ struct region  {
  * Not changed to a bu_list for backwards compatability, but you can
  * iterate the whole list by writing:
  *
- * for ( BU_LIST_FOR( pp, partition, (struct bu_list *)PartHeadp ) )
+ * for (BU_LIST_FOR(pp, partition, (struct bu_list *)PartHeadp))
  */
 
 struct partition {
@@ -603,43 +612,43 @@ struct partition {
 #define RT_PT_MIDDLE_LEN(p) \
 	(((char *)&(p)->RT_PT_MIDDLE_END) - ((char *)&(p)->RT_PT_MIDDLE_START))
 
-#define RT_DUP_PT(ip, new, old, res)	{ \
+#define RT_DUP_PT(ip, new, old, res) { \
 	GET_PT(ip, new, res); \
 	memcpy((char *)(&(new)->RT_PT_MIDDLE_START), (char *)(&(old)->RT_PT_MIDDLE_START), RT_PT_MIDDLE_LEN(old)); \
 	(new)->pt_overlap_reg = NULL; \
-	bu_ptbl_cat( &(new)->pt_seglist, &(old)->pt_seglist );  }
+	bu_ptbl_cat(&(new)->pt_seglist, &(old)->pt_seglist);  }
 
 /** Clear out the pointers, empty the hit list */
-#define GET_PT_INIT(ip, p, res)	{\
+#define GET_PT_INIT(ip, p, res) {\
 	GET_PT(ip, p, res); \
 	memset(((char *) &(p)->RT_PT_MIDDLE_START), 0, RT_PT_MIDDLE_LEN(p)); }
 
-#define GET_PT(ip, p, res)   { \
-	if ( BU_LIST_NON_EMPTY_P(p, partition, &res->re_parthead) )  { \
+#define GET_PT(ip, p, res) { \
+	if (BU_LIST_NON_EMPTY_P(p, partition, &res->re_parthead)) { \
 		BU_LIST_DEQUEUE((struct bu_list *)(p)); \
-		bu_ptbl_reset( &(p)->pt_seglist ); \
+		bu_ptbl_reset(&(p)->pt_seglist); \
 	} else { \
 		(p) = (struct partition *)bu_calloc(1, sizeof(struct partition), "struct partition"); \
 		(p)->pt_magic = PT_MAGIC; \
-		bu_ptbl_init( &(p)->pt_seglist, 42, "pt_seglist ptbl" ); \
+		bu_ptbl_init(&(p)->pt_seglist, 42, "pt_seglist ptbl"); \
 		(res)->re_partlen++; \
 	} \
 	res->re_partget++; }
 
-#define FREE_PT(p, res)  { \
-	BU_LIST_APPEND( &(res->re_parthead), (struct bu_list *)(p) ); \
-	if ( (p)->pt_overlap_reg )  { \
-		bu_free( (genptr_t)((p)->pt_overlap_reg), "pt_overlap_reg" );\
+#define FREE_PT(p, res) { \
+	BU_LIST_APPEND(&(res->re_parthead), (struct bu_list *)(p)); \
+	if ((p)->pt_overlap_reg) { \
+		bu_free((genptr_t)((p)->pt_overlap_reg), "pt_overlap_reg");\
 		(p)->pt_overlap_reg = NULL; \
 	} \
 	res->re_partfree++; }
 
-#define RT_FREE_PT_LIST( _headp, _res )		{ \
+#define RT_FREE_PT_LIST(_headp, _res) { \
 		register struct partition *_pp, *_zap; \
-		for ( _pp = (_headp)->pt_forw; _pp != (_headp);  )  { \
+		for (_pp = (_headp)->pt_forw; _pp != (_headp);) { \
 			_zap = _pp; \
 			_pp = _pp->pt_forw; \
-			BU_LIST_DEQUEUE( (struct bu_list *)(_zap) ); \
+			BU_LIST_DEQUEUE((struct bu_list *)(_zap)); \
 			FREE_PT(_zap, _res); \
 		} \
 		(_headp)->pt_forw = (_headp)->pt_back = (_headp); \
@@ -846,15 +855,15 @@ struct directory  {
 #define LOOKUP_NOISY	1
 #define LOOKUP_QUIET	0
 
-#define FOR_ALL_DIRECTORY_START(_dp, _dbip)	{ int _i; \
-	for ( _i = RT_DBNHASH-1; _i >= 0; _i-- )  { \
-		for ( (_dp) = (_dbip)->dbi_Head[_i]; (_dp); (_dp) = (_dp)->d_forw )  {
+#define FOR_ALL_DIRECTORY_START(_dp, _dbip) { int _i; \
+	for (_i = RT_DBNHASH-1; _i >= 0; _i--) { \
+		for ((_dp) = (_dbip)->dbi_Head[_i]; (_dp); (_dp) = (_dp)->d_forw) {
 
 #define FOR_ALL_DIRECTORY_END	}}}
 
-#define RT_DIR_SET_NAMEP(_dp, _name)	{ \
-	if ( strlen(_name) < sizeof((_dp)->d_shortname) )  {\
-		bu_strlcpy( (_dp)->d_shortname, (_name), sizeof((_dp)->d_shortname) ); \
+#define RT_DIR_SET_NAMEP(_dp, _name) { \
+	if (strlen(_name) < sizeof((_dp)->d_shortname)) {\
+		bu_strlcpy((_dp)->d_shortname, (_name), sizeof((_dp)->d_shortname)); \
 		(_dp)->d_namep = (_dp)->d_shortname; \
 	} else { \
 		(_dp)->d_namep = bu_strdup(_name); /* Calls bu_malloc() */ \
@@ -865,8 +874,8 @@ struct directory  {
  * Use this macro to free the d_namep member, which is sometimes not
  * dynamic.
  */
-#define RT_DIR_FREE_NAMEP(_dp)	{ \
-	if ( (_dp)->d_namep != (_dp)->d_shortname )  \
+#define RT_DIR_FREE_NAMEP(_dp) { \
+	if ((_dp)->d_namep != (_dp)->d_shortname)  \
 		bu_free((_dp)->d_namep, "d_namep"); \
 	(_dp)->d_namep = NULL; }
 
@@ -875,8 +884,8 @@ struct directory  {
  * allocate and link in a new directory entry to the resource
  * structure's freelist
  */
-#define RT_GET_DIRECTORY(_p, _res)    { \
-	while ( ((_p) = (_res)->re_directory_hd) == NULL ) \
+#define RT_GET_DIRECTORY(_p, _res) { \
+	while (((_p) = (_res)->re_directory_hd) == NULL) \
 		db_get_directory(_res); \
 	(_res)->re_directory_hd = (_p)->d_forw; \
 	(_p)->d_forw = NULL; }
@@ -907,9 +916,9 @@ struct rt_comb_internal  {
     struct bu_vls	material;
     char		inherit;
 };
-#define RT_CHECK_COMB(_p)		BU_CKMAG( _p, RT_COMB_MAGIC, "rt_comb_internal" )
+#define RT_CHECK_COMB(_p)		BU_CKMAG(_p, RT_COMB_MAGIC, "rt_comb_internal")
 #define RT_CK_COMB(_p)			RT_CHECK_COMB(_p)
-#define RT_CHECK_COMB_TCL(_interp, _p)	BU_CKMAG_TCL(interp, _p, RT_COMB_MAGIC, "rt_comb_internal" )
+#define RT_CHECK_COMB_TCL(_interp, _p)	BU_CKMAG_TCL(interp, _p, RT_COMB_MAGIC, "rt_comb_internal")
 #define RT_CK_COMB_TCL(_interp, _p)	RT_CHECK_COMB_TCL(_interp, _p)
 
 
@@ -936,10 +945,10 @@ struct rt_binunif_internal {
 	unsigned long	*uint64;
     } u;
 };
-#define RT_CHECK_BINUNIF(_p)		BU_CKMAG( _p, RT_BINUNIF_INTERNAL_MAGIC, "rt_binunif_internal" )
-#define RT_CK_BINUNIF(_p)		RT_CHECK_BINUNIF(_p)
-#define RT_CHECK_BINUNIF_TCL(_interp, _p)	BU_CKMAG_TCL(interp, _p, RT_BINUNIF_MAGIC, "rt_binunif_internal" )
-#define RT_CK_BINUNIF_TCL(_interp, _p)	RT_CHECK_BINUNIF_TCL(_interp, _p)
+#define RT_CHECK_BINUNIF(_p)			BU_CKMAG(_p, RT_BINUNIF_INTERNAL_MAGIC, "rt_binunif_internal")
+#define RT_CK_BINUNIF(_p)			RT_CHECK_BINUNIF(_p)
+#define RT_CHECK_BINUNIF_TCL(_interp, _p)	BU_CKMAG_TCL(interp, _p, RT_BINUNIF_MAGIC, "rt_binunif_internal")
+#define RT_CK_BINUNIF_TCL(_interp, _p)		RT_CHECK_BINUNIF_TCL(_interp, _p)
 
 
 /**
@@ -953,7 +962,7 @@ struct rt_constraint_internal {
     int type;
 };
 
-#define RT_CHECK_CONSTRAINT(_p)		BU_CKMAG( _p, PC_CONSTRAINT_MAGIC, "pc_constraint_internal" )
+#define RT_CHECK_CONSTRAINT(_p)		BU_CKMAG(_p, PC_CONSTRAINT_MAGIC, "pc_constraint_internal")
 #define RT_CK_CONSTRAINT(_p)		PC_CHECK_CONSTRAINT(_p)
 
 
@@ -1371,17 +1380,17 @@ RT_EXPORT extern struct resource rt_uniresource;	/**< @brief  default.  Defined 
 #define RT_CK_RESOURCE(_p)	BU_CKMAG(_p, RESOURCE_MAGIC, "struct resource")
 
 /** More malloc-efficient replacement for BU_GETUNION(tp, tree) */
-#define RT_GET_TREE(_tp, _res)	{ \
-	if ( ((_tp) = (_res)->re_tree_hd) != TREE_NULL )  { \
+#define RT_GET_TREE(_tp, _res) { \
+	if (((_tp) = (_res)->re_tree_hd) != TREE_NULL) { \
 		(_res)->re_tree_hd = (_tp)->tr_b.tb_left; \
 		(_tp)->tr_b.tb_left = TREE_NULL; \
 		(_res)->re_tree_get++; \
 	} else { \
-		BU_GETUNION( _tp, tree ); \
+		BU_GETUNION(_tp, tree); \
 		(_res)->re_tree_malloc++; \
 	}\
 	}
-#define RT_FREE_TREE(_tp, _res)  { \
+#define RT_FREE_TREE(_tp, _res) { \
 		(_tp)->tr_b.tb_left = (_res)->re_tree_hd; \
 		(_tp)->tr_b.tb_right = TREE_NULL; \
 		(_res)->re_tree_hd = (_tp); \
@@ -1479,9 +1488,9 @@ struct pixel_ext {
  *  initialization, you should create a zeroed-out structure, and then
  *  assign the intended values at runtime.  A zeroed structure can be
  *  obtained at compile time with "static struct application
- *  zero_ap;", or at run time by using "memset( (char *)ap, 0,
- *  sizeof(struct application) );" or bu_calloc( 1, sizeof(struct
- *  application), "application" ); While this practice may not work on
+ *  zero_ap;", or at run time by using "memset((char *)ap, 0,
+ *  sizeof(struct application));" or bu_calloc(1, sizeof(struct
+ *  application), "application"); While this practice may not work on
  *  machines where "all bits off" does not signify a floating point
  *  zero, BRL-CAD does not support any such machines, so this is a
  *  moot issue.
@@ -1490,17 +1499,17 @@ struct application  {
     unsigned long	a_magic;
     /* THESE ELEMENTS ARE MANDATORY */
     struct xray		a_ray;		/**< @brief  Actual ray to be shot */
-    int			(*a_hit)BU_ARGS( (struct application *, struct partition *, struct seg *));	/**< @brief  called when shot hits model */
-    int			(*a_miss)BU_ARGS( (struct application *));	/**< @brief  called when shot misses */
+    int			(*a_hit)BU_ARGS((struct application *, struct partition *, struct seg *));	/**< @brief  called when shot hits model */
+    int			(*a_miss)BU_ARGS((struct application *));	/**< @brief  called when shot misses */
     int			a_onehit;	/**< @brief  flag to stop on first hit */
     fastf_t		a_ray_length;	/**< @brief  distance from ray start to end intersections */
     struct rt_i	*	a_rt_i;		/**< @brief  this librt instance */
     int			a_zero1;	/**< @brief  must be zero (sanity check) */
     /* THESE ELEMENTS ARE USED BY THE LIBRARY, BUT MAY BE LEFT ZERO */
     struct resource *	a_resource;	/**< @brief  dynamic memory resources */
-    int			(*a_overlap)BU_ARGS( (struct application *, struct partition *, struct region *, struct region *, struct partition *) );	/**< @brief  DEPRECATED */
-    void		(*a_multioverlap)BU_ARGS( (struct application *, struct partition *, struct bu_ptbl *, struct partition *) );	/**< @brief  called to resolve overlaps */
-    void		(*a_logoverlap)BU_ARGS( (struct application *, const struct partition *, const struct bu_ptbl *, const struct partition *) );	/**< @brief  called to log overlaps */
+    int			(*a_overlap)BU_ARGS((struct application *, struct partition *, struct region *, struct region *, struct partition *));	/**< @brief  DEPRECATED */
+    void		(*a_multioverlap)BU_ARGS((struct application *, struct partition *, struct bu_ptbl *, struct partition *));	/**< @brief  called to resolve overlaps */
+    void		(*a_logoverlap)BU_ARGS((struct application *, const struct partition *, const struct bu_ptbl *, const struct partition *));	/**< @brief  called to log overlaps */
     int			a_level;	/**< @brief  recursion level (for printing) */
     int			a_x;		/**< @brief  Screen X of ray, if applicable */
     int			a_y;		/**< @brief  Screen Y of ray, if applicable */
@@ -1538,7 +1547,7 @@ struct application  {
 #define RT_CK_AP(_p)	BU_CKMAG(_p, RT_AP_MAGIC, "struct application")
 #define RT_CK_APPLICATION(_p)	BU_CKMAG(_p, RT_AP_MAGIC, "struct application")
 #define RT_CK_AP_TCL(_interp, _p)	BU_CKMAG_TCL(_interp, _p, RT_AP_MAGIC, "struct application")
-#define RT_APPLICATION_INIT(_p)	{ \
+#define RT_APPLICATION_INIT(_p) { \
 		memset((char *)(_p), 0, sizeof(struct application)); \
 		(_p)->a_magic = RT_AP_MAGIC; \
 	}
@@ -1548,7 +1557,7 @@ struct application  {
 #  define RT_AP_CHECK(_ap)
 #else
 #  define RT_AP_CHECK(_ap)	\
-	{if((_ap)->a_zero1||(_ap)->a_zero2) \
+	{if ((_ap)->a_zero1||(_ap)->a_zero2) \
 		bu_bomb("corrupt application struct"); }
 #endif
 
@@ -1595,7 +1604,7 @@ RT_EXPORT extern struct rt_g rt_g;
 #define RT_SEM_RESULTS	(RT_SEM_STATS+1)
 #define RT_SEM_MODEL	(RT_SEM_RESULTS+1)
 
-#define RT_SEM_LAST	(RT_SEM_MODEL+1)	/**< @brief  Call bu_semaphore_init( RT_SEM_LAST ); */
+#define RT_SEM_LAST	(RT_SEM_MODEL+1)	/**< @brief  Call bu_semaphore_init(RT_SEM_LAST); */
 
 
 /**
@@ -1704,14 +1713,14 @@ struct rt_i {
 /**
  * Macros to painlessly visit all the active solids.  Serving suggestion:
  *
- * RT_VISIT_ALL_SOLTABS_START( stp, rtip )  {
- *	rt_pr_soltab( stp );
+ * RT_VISIT_ALL_SOLTABS_START(stp, rtip) {
+ *	rt_pr_soltab(stp);
  * } RT_VISIT_ALL_SOLTABS_END
  */
-#define RT_VISIT_ALL_SOLTABS_START(_s, _rti)	{ \
+#define RT_VISIT_ALL_SOLTABS_START(_s, _rti) { \
 	register struct bu_list	*_head = &((_rti)->rti_solidheads[0]); \
-	for (; _head < &((_rti)->rti_solidheads[RT_DBNHASH]); _head++ ) \
-		for ( BU_LIST_FOR( _s, soltab, _head ) )  {
+	for (; _head < &((_rti)->rti_solidheads[RT_DBNHASH]); _head++) \
+		for (BU_LIST_FOR(_s, soltab, _head)) {
 
 #define RT_VISIT_ALL_SOLTABS_END	} }
 
@@ -1719,7 +1728,7 @@ struct rt_i {
  * Applications that are going to use RT_ADD_VLIST and RT_GET_VLIST
  * are required to execute this macro once, first:
  *
- * BU_LIST_INIT( &rt_g.rtg_vlfree );
+ * BU_LIST_INIT(&rt_g.rtg_vlfree);
  *
  * Note that RT_GET_VLIST and RT_FREE_VLIST are non-PARALLEL.
  */
@@ -1737,7 +1746,7 @@ struct rt_i {
 #undef V2PRINT
 #undef VPRINT
 #undef HPRINT
-#define V2PRINT(a, b)	bu_log("%s (%g, %g)\n", a, (b)[0], (b)[1] );
+#define V2PRINT(a, b)	bu_log("%s (%g, %g)\n", a, (b)[0], (b)[1]);
 #define VPRINT(a, b)	bu_log("%s (%g, %g, %g)\n", a, (b)[0], (b)[1], (b)[2])
 #define HPRINT(a, b)	bu_log("%s (%g, %g, %g, %g)\n", a, (b)[0], (b)[1], (b)[2], (b)[3])
 
@@ -1793,7 +1802,7 @@ struct carc_seg		/**< @brief  circular arc segment */
     unsigned long	magic;
     int			start, end;	/**< @brief  indices */
     fastf_t		radius;		/**< @brief  radius < 0.0 -> full circle with start point on
-						 * circle and "end" at center */
+					 * circle and "end" at center */
     int			center_is_left;	/**< @brief  flag indicating where center of curvature is.
 					 * If non-zero, then center is to left of vector
 					 * from start to end */
@@ -1846,11 +1855,11 @@ struct rt_functab {
     int ft_use_rpp;
     int (*ft_prep) BU_ARGS((struct soltab * /**< @brief stp*/,
 			    struct rt_db_internal * /**< @brief ip*/,
-			    struct rt_i * /**< @brief rtip*/ ));
+			    struct rt_i * /**< @brief rtip*/));
     int (*ft_shot) BU_ARGS((struct soltab * /**< @brief stp*/,
 			    struct xray * /**< @brief rp*/,
 			    struct application * /**< @brief ap*/,	/**< @brief  has resource */
-			    struct seg * /**< @brief seghead*/ ));
+			    struct seg * /**< @brief seghead*/));
     void (*ft_print) BU_ARGS((const struct soltab * /**< @brief stp*/));
     void (*ft_norm) BU_ARGS((struct hit * /**< @brief hitp*/,
 			     struct soltab * /**< @brief stp*/,
@@ -1883,7 +1892,7 @@ struct rt_functab {
     void (*ft_vshot) BU_ARGS((struct soltab * /*stp*/[],
 			      struct xray *[] /*rp*/,
 			      struct seg [] /*segp*/, int /*n*/,
-			      struct application * /*ap*/ ));
+			      struct application * /*ap*/));
     int (*ft_tessellate) BU_ARGS((struct nmgregion ** /*r*/,
 				  struct model * /*m*/,
 				  struct rt_db_internal * /*ip*/,
@@ -1941,12 +1950,12 @@ struct rt_functab {
 
     void (*ft_make) BU_ARGS((const struct rt_functab *,
 			     struct rt_db_internal *, double /*diameter*/));
-    int (*ft_params) BU_ARGS((struct pc_pc_set *,const struct rt_db_internal */*ip*/));
+    int (*ft_params) BU_ARGS((struct pc_pc_set *, const struct rt_db_internal */*ip*/));
 };
 
 RT_EXPORT extern const struct rt_functab rt_functab[];
 
-#define RT_CK_FUNCTAB(_p)	BU_CKMAG(_p, RT_FUNCTAB_MAGIC, "functab" );
+#define RT_CK_FUNCTAB(_p)	BU_CKMAG(_p, RT_FUNCTAB_MAGIC, "functab");
 
 #define RT_CLASSIFY_UNIMPLEMENTED	BN_CLASSIFY_UNIMPLEMENTED
 #define RT_CLASSIFY_INSIDE		BN_CLASSIFY_INSIDE
@@ -1984,17 +1993,17 @@ struct rt_shootray_status {
 };
 
 #define NUGRID_T_SETUP(_ax, _cval, _cno) \
-	if ( ssp->rstep[_ax] > 0 ) { \
+	if (ssp->rstep[_ax] > 0) { \
 		ssp->tv[_ax] = t0 + (nu_axis[_ax][_cno].nu_epos - _cval) * \
 					    ssp->inv_dir[_ax]; \
-	} else if ( ssp->rstep[_ax] < 0 ) { \
+	} else if (ssp->rstep[_ax] < 0) { \
 		ssp->tv[_ax] = t0 + (nu_axis[_ax][_cno].nu_spos - _cval) * \
 					    ssp->inv_dir[_ax]; \
 	} else { \
 		ssp->tv[_ax] = INFINITY; \
 	}
 #define NUGRID_T_ADV(_ax, _cno) \
-	if ( ssp->rstep[_ax] != 0 )  { \
+	if (ssp->rstep[_ax] != 0) { \
 		ssp->tv[_ax] += nu_axis[_ax][_cno].nu_width * \
 			ssp->abs_inv_dir[_ax]; \
 	}
@@ -2173,17 +2182,17 @@ struct ray_data {
 
 
 #define NMG_GET_HITMISS(_p, _ap) { \
-	(_p) = BU_LIST_FIRST( hitmiss, &((_ap)->a_resource->re_nmgfree) ); \
-	if ( BU_LIST_IS_HEAD( (_p), &((_ap)->a_resource->re_nmgfree ) ) ) \
-		(_p) = (struct hitmiss *)bu_calloc(1, sizeof( struct hitmiss ), "hitmiss "BU_FLSTR ); \
+	(_p) = BU_LIST_FIRST(hitmiss, &((_ap)->a_resource->re_nmgfree)); \
+	if (BU_LIST_IS_HEAD((_p), &((_ap)->a_resource->re_nmgfree))) \
+		(_p) = (struct hitmiss *)bu_calloc(1, sizeof(struct hitmiss), "hitmiss "BU_FLSTR); \
 	else \
-		BU_LIST_DEQUEUE( &((_p)->l) ); \
-	}
+		BU_LIST_DEQUEUE(&((_p)->l)); \
+}
 
 #define NMG_FREE_HITLIST(_p, _ap) { \
-	BU_CK_LIST_HEAD( (_p) ); \
-	BU_LIST_APPEND_LIST( &((_ap)->a_resource->re_nmgfree), (_p) ); \
-	}
+	BU_CK_LIST_HEAD((_p)); \
+	BU_LIST_APPEND_LIST(&((_ap)->a_resource->re_nmgfree), (_p)); \
+}
 
 #define HIT 1	/**< @brief  a hit on a face */
 #define MISS 0	/**< @brief  a miss on the face */
@@ -2200,7 +2209,8 @@ struct ray_data {
 	rt_g.NMG_debug |= DEBUG_NMGRT; \
 	nmg_isect_ray_model(rd); \
 	(void) nmg_ray_segs(rd); \
-	bu_bomb("Should have bombed before this\n"); }
+	bu_bomb("Should have bombed before this\n"); \
+   }
 #endif
 
 
@@ -2537,6 +2547,12 @@ RT_EXPORT BU_EXTERN(int wdb_import_from_path,
 		     struct rt_db_internal *ip,
 		     const char *path,
 		     struct rt_wdb *wdb));
+RT_EXPORT BU_EXTERN(int wdb_import_from_path2,
+		    (struct bu_vls *logstr,
+		     struct rt_db_internal *ip,
+		     const char *path,
+		     struct rt_wdb *wdb,
+		     matp_t matp));
 
 
 /* db_anim.c */
@@ -2611,8 +2627,8 @@ RT_EXPORT BU_EXTERN(int db_argv_to_path,
 RT_EXPORT BU_EXTERN(void db_free_full_path,
 		    (struct db_full_path *pp));
 RT_EXPORT BU_EXTERN(int db_identical_full_paths,
-		    ( const struct db_full_path *a,
-		      const struct db_full_path *b));
+		    (const struct db_full_path *a,
+		     const struct db_full_path *b));
 RT_EXPORT BU_EXTERN(int db_full_path_subset,
 		    (const struct db_full_path *a,
 		     const struct db_full_path *b));
@@ -2805,9 +2821,6 @@ RT_EXPORT BU_EXTERN(void db_comb_describe,
 		     int		verbose,
 		     double		mm2local,
 		     struct resource	*resp));
-RT_EXPORT BU_EXTERN(void rt_comb_ifree,
-		    (struct rt_db_internal *ip,
-		     struct resource *resp));
 RT_EXPORT BU_EXTERN(int rt_comb_describe,
 		    (struct bu_vls	*str,
 		     const struct rt_db_internal *ip,
@@ -2868,7 +2881,7 @@ RT_EXPORT BU_EXTERN(int db_fwrite_external,
 /* malloc & read records */
 RT_EXPORT BU_EXTERN(union record *db_getmrec,
 		    (const struct db_i *,
-		     const struct directory *dp ));
+		     const struct directory *dp));
 /* get several records from db */
 RT_EXPORT BU_EXTERN(int db_get,
 		    (const struct db_i *,
@@ -3195,8 +3208,8 @@ RT_EXPORT BU_EXTERN(int db_walk_tree,
 		     union tree *(*leaf_func) (struct db_tree_state * /*tsp*/,
 					       struct db_full_path * /*pathp*/,
 					       struct rt_db_internal * /*ip*/,
-					       genptr_t client_data ),
-		     genptr_t client_data ));
+					       genptr_t client_data),
+		     genptr_t client_data));
 RT_EXPORT BU_EXTERN(int db_path_to_mat,
 		    (struct db_i		*dbip,
 		     struct db_full_path	*pathp,
@@ -3273,13 +3286,11 @@ RT_EXPORT BU_EXTERN(void db_functree,
 		     genptr_t client_data));
 
 /* mirror.c */
-RT_EXPORT BU_EXTERN(struct directory *rt_mirror,
+RT_EXPORT BU_EXTERN(struct rt_db_internal *rt_mirror,
 		    (struct db_i *dpip,
-		     const char	*from,
-		     const char *to,
-		     point_t mirror_origin,
+		     struct rt_db_internal *ip,
+		     point_t mirror_pt,
 		     vect_t mirror_dir,
-		     fastf_t mirror_pt,
 		     struct resource *resp));
 
 /*
@@ -3337,6 +3348,12 @@ RT_EXPORT extern short earb7[12][18];
 RT_EXPORT extern short earb6[10][18];
 RT_EXPORT extern short earb5[9][18];
 RT_EXPORT extern short earb4[5][18];
+
+RT_EXPORT extern short arb8_edge_vertex_mapping[12][2];
+RT_EXPORT extern short arb7_edge_vertex_mapping[12][2];
+RT_EXPORT extern short arb6_edge_vertex_mapping[10][2];
+RT_EXPORT extern short arb5_edge_vertex_mapping[9][2];
+RT_EXPORT extern short arb4_edge_vertex_mapping[5][2];
 
 /* epa.c */
 RT_EXPORT BU_EXTERN(void rt_ell,
@@ -3667,8 +3684,6 @@ RT_EXPORT BU_EXTERN(void rt_label_vlist_verts,
 
 #ifdef __RTGEOM_H__
 /* sketch.c */
-RT_EXPORT BU_EXTERN(void rt_sketch_ifree,
-		    (struct rt_db_internal	*ip));
 RT_EXPORT BU_EXTERN(int curve_to_vlist,
 		    (struct bu_list		*vhead,
 		     const struct rt_tess_tol	*ttol,
@@ -5858,21 +5873,6 @@ RT_EXPORT BU_EXTERN(int rt_mk_binunif,
 		     const char *file_name,
 		     unsigned int minor_type,
 		     long max_count));
-
-/* XXX do not rely on *_ifree() functions, why are these needed? */
-#ifdef _RT_DECL_IFREE
-/* defined in dsp.c */
-RT_EXPORT BU_EXTERN(void rt_dsp_ifree,
-		    (struct rt_db_internal *ip));
-
-/* defined in ebm.c */
-RT_EXPORT BU_EXTERN(void rt_ebm_ifree,
-		    (struct rt_db_internal *ip));
-
-/* defined in vol.c */
-RT_EXPORT BU_EXTERN(void rt_vol_ifree,
-		    (struct rt_db_internal *ip));
-#endif
 
 /* defined in db5_bin.c */
 RT_EXPORT BU_EXTERN(void rt_binunif_free,

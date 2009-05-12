@@ -143,6 +143,7 @@ libged_nil_la_SOURCES = \
 	prefix.c \
 	preview.c \
 	ps.c \
+	pscale.c \
 	push.c \
 	put.c \
 	put_comb.c \
@@ -172,6 +173,9 @@ libged_nil_la_SOURCES = \
 	savekey.c \
 	saveview.c \
 	scale.c \
+	scale_ehy.c \
+	scale_ell.c \
+	scale_tor.c \
 	search.c \
 	set_output_script.c \
 	set_transparency.c \

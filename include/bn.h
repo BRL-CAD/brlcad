@@ -23,10 +23,10 @@
  *
  * Header file for the BRL-CAD Numerical Computation Library, LIBBN.
  *
- * The library provides a broad assortment of numerical algorithms
- * and computational routines, including random number generation,
- * vector math, matrix math, quaternion math, complex math,
- * synthetic division, root finding, etc.
+ * The library provides a broad assortment of numerical algorithms and
+ * computational routines, including random number generation, vector
+ * math, matrix math, quaternion math, complex math, synthetic
+ * division, root finding, etc.
  *
  */
 
@@ -54,9 +54,9 @@ __BEGIN_DECLS
 #  endif
 #endif
 
-#define BN_AZIMUTH 0
+#define BN_AZIMUTH   0
 #define BN_ELEVATION 1
-#define BN_TWIST 2
+#define BN_TWIST     2
 /** @} */
 
 /** @addtogroup tol */
@@ -97,19 +97,19 @@ __BEGIN_DECLS
  @endcode
  *
  *@note
- *    tol->dist_sq = tol->dist * tol->dist;
- *@n  tol->para = 1 - tol->perp;
+ * tol->dist_sq = tol->dist * tol->dist;
+ *@n tol->para = 1 - tol->perp;
  */
 struct bn_tol {
-    unsigned long	magic;
-    double		dist;			/**< @brief >= 0 */
-    double		dist_sq;		/**< @brief dist * dist */
-    double		perp;			/**< @brief nearly 0 */
-    double		para;			/**< @brief nearly 1 */
+    unsigned long magic;
+    double dist;		/**< @brief >= 0 */
+    double dist_sq;		/**< @brief dist * dist */
+    double perp;		/**< @brief nearly 0 */
+    double para;		/**< @brief nearly 1 */
 };
 #define BN_CK_TOL(_p)	BU_CKMAG(_p, BN_TOL_MAGIC, "bn_tol")
 
-#define	BN_VECT_ARE_PARALLEL(_dot, _tol)		\
+#define BN_VECT_ARE_PARALLEL(_dot, _tol)		\
 	(((_dot) < 0) ? ((-(_dot))>=(_tol)->para) : ((_dot) >= (_tol)->para))
 #define BN_VECT_ARE_PERP(_dot, _tol)		\
 	(((_dot) < 0) ? ((-(_dot))<=(_tol)->perp) : ((_dot) <= (_tol)->perp))
@@ -192,7 +192,7 @@ BN_EXPORT BU_EXTERN(void anim_dirn2mat,
 		     const vect_t dx,
 		     const vect_t dn));
 BN_EXPORT BU_EXTERN(int anim_steer_mat,
-		    (mat_t  mat,
+		    (mat_t mat,
 		     vect_t point,
 		     int end));
 BN_EXPORT BU_EXTERN(void anim_add_trans,
@@ -262,16 +262,16 @@ BN_EXPORT BU_EXTERN(void bn_tcl_mat_print,
 
 /* "complex number" data type: */
 typedef struct bn_complex {
-    double		re;		/**< @brief real part */
-    double		im;		/**< @brief imaginary part */
+    double re;		/**< @brief real part */
+    double im;		/**< @brief imaginary part */
 }  bn_complex_t;
 
 /* functions that are efficiently done as macros: */
 
-#define	bn_cx_copy(ap, bp) {*(ap) = *(bp);}
-#define	bn_cx_neg(cp) { (cp)->re = -((cp)->re);(cp)->im = -((cp)->im);}
-#define	bn_cx_real(cp)		(cp)->re
-#define	bn_cx_imag(cp)		(cp)->im
+#define bn_cx_copy(ap, bp) {*(ap) = *(bp);}
+#define bn_cx_neg(cp) { (cp)->re = -((cp)->re);(cp)->im = -((cp)->im);}
+#define bn_cx_real(cp)		(cp)->re
+#define bn_cx_imag(cp)		(cp)->im
 
 #define bn_cx_add(ap, bp) { (ap)->re += (bp)->re; (ap)->im += (bp)->im;}
 #define bn_cx_ampl(cp)		hypot((cp)->re, (cp)->im)
@@ -304,7 +304,7 @@ BN_EXPORT BU_EXTERN(void bn_cx_sqrt,
 /*
  * 4x4 Matrix math
  */
-BN_EXPORT extern const mat_t 	bn_mat_identity;
+BN_EXPORT extern const mat_t bn_mat_identity;
 
 BN_EXPORT BU_EXTERN(void bn_mat_print,
 		    (const char *title,
@@ -329,7 +329,7 @@ BN_EXPORT BU_EXTERN(double bn_atan2,
 	(_m)[8] = (_m)[9] = (_m)[10] = (_m)[11] = \
 	(_m)[12] = (_m)[13] = (_m)[14] = (_m)[15] = 0.0; }
 /*
-  #define	bn_mat_zero(_m)	(void)memset((void *)_m, 0, sizeof(mat_t))
+  #define bn_mat_zero(_m)	(void)memset((void *)_m, 0, sizeof(mat_t))
 */
 #define bn_mat_idn(_m) { \
 	bu_log("%s:%d bn_mat_idn() is deprecated, use MAT_IDN()\n", \
@@ -379,11 +379,11 @@ BN_EXPORT BU_EXTERN(void bn_mat_mul3,
 		     const mat_t b,
 		     const mat_t c));
 BN_EXPORT BU_EXTERN(void bn_mat_mul4,
-		    (mat_t		o,
-		     const mat_t	a,
-		     const mat_t	b,
-		     const mat_t	c,
-		     const mat_t	d));
+		    (mat_t o,
+		     const mat_t a,
+		     const mat_t b,
+		     const mat_t c,
+		     const mat_t d));
 BN_EXPORT BU_EXTERN(void bn_matXvec,
 		    (register hvect_t ov,
 		     register const mat_t im,
@@ -411,7 +411,7 @@ BN_EXPORT BU_EXTERN(void bn_ae_vec,
 		    (fastf_t *azp,
 		     fastf_t *elp,
 		     const vect_t v));
-BN_EXPORT BU_EXTERN(void  bn_aet_vec,
+BN_EXPORT BU_EXTERN(void bn_aet_vec,
 		    (fastf_t *az,
 		     fastf_t *el,
 		     fastf_t *twist,
@@ -517,11 +517,11 @@ BN_EXPORT BU_EXTERN(void bn_wrt_point_direc,
 
 struct bn_unif {
     unsigned long magic;
-    long	msr_seed;
-    int	msr_double_ptr;
-    double	*msr_doubles;
-    int	msr_long_ptr;
-    long	*msr_longs;
+    long msr_seed;
+    int msr_double_ptr;
+    double *msr_doubles;
+    int msr_long_ptr;
+    long *msr_longs;
 };
 
 #define BN_CK_UNIF(_p)  BU_CKMAG(_p, BN_UNIF_MAGIC, "bn_unif")
@@ -534,12 +534,12 @@ struct bn_unif {
  * msr_gauss_fill.
  */
 struct bn_gauss {
-    unsigned long	magic;
-    long	msr_gauss_seed;
-    int	msr_gauss_dbl_ptr;
-    double	*msr_gauss_doubles;
-    int	msr_gauss_ptr;
-    double	*msr_gausses;
+    unsigned long magic;
+    long msr_gauss_seed;
+    int msr_gauss_dbl_ptr;
+    double *msr_gauss_doubles;
+    int msr_gauss_ptr;
+    double *msr_gausses;
 };
 
 BN_EXPORT BU_EXTERN(struct bn_unif *bn_unif_init,
@@ -559,7 +559,7 @@ BN_EXPORT BU_EXTERN(void bn_gauss_free,
 BN_EXPORT BU_EXTERN(double bn_gauss_fill,
 		    (struct bn_gauss *p));
 
-#define	BN_UNIF_LONG(_p)	\
+#define BN_UNIF_LONG(_p)	\
 	 (((_p)->msr_long_ptr) ? \
 		(_p)->msr_longs[--(_p)->msr_long_ptr] : \
 		bn_unif_long_fill(_p))
@@ -575,7 +575,7 @@ BN_EXPORT BU_EXTERN(double bn_gauss_fill,
 		(_r) = (_x)*(_x)+(_y)*(_y); \
 	} while ((_r) >= 1.0);  }
 
-#define	BN_UNIF_SPHERE(_p, _x, _y, _z, _r) { \
+#define BN_UNIF_SPHERE(_p, _x, _y, _z, _r) { \
 	do { \
 		(_x) = 2.0*BN_UNIF_DOUBLE(_p); \
 		(_y) = 2.0*BN_UNIF_DOUBLE(_p); \
@@ -583,7 +583,7 @@ BN_EXPORT BU_EXTERN(double bn_gauss_fill,
 		(_r) = (_x)*(_x)+(_y)*(_y)+(_z)*(_z);\
 	} while ((_r) >= 1.0) }
 
-#define	BN_GAUSS_DOUBLE(_p)	\
+#define BN_GAUSS_DOUBLE(_p)	\
 	(((_p)->msr_gauss_ptr) ? \
 		(_p)->msr_gausses[--(_p)->msr_gauss_ptr] : \
 		bn_gauss_fill(_p))
@@ -813,7 +813,7 @@ BN_EXPORT BU_EXTERN(double bn_angle_measure,
 		     const vect_t x_dir,
 		     const vect_t y_dir));
 BN_EXPORT BU_EXTERN(double bn_dist_pt3_along_line3,
-		    (const point_t	p,
+		    (const point_t p,
 		     const vect_t d,
 		     const point_t x));
 BN_EXPORT BU_EXTERN(double bn_dist_pt2_along_line2,
@@ -831,16 +831,16 @@ BN_EXPORT BU_EXTERN(int bn_does_ray_isect_tri,
 		     const point_t V,
 		     const point_t A,
 		     const point_t B,
-		     point_t	inter));
+		     point_t inter));
 BN_EXPORT BU_EXTERN(int bn_hlf_class,
 		    (const plane_t half_eqn,
 		     const vect_t min, const vect_t max,
 		     const struct bn_tol *tol));
 
-#define BN_CLASSIFY_UNIMPLEMENTED	0x0000
-#define BN_CLASSIFY_OVERLAPPING		0x0002
-#define BN_CLASSIFY_INSIDE		0x0001
-#define BN_CLASSIFY_OUTSIDE		0x0003
+#define BN_CLASSIFY_UNIMPLEMENTED 0x0000
+#define BN_CLASSIFY_OVERLAPPING   0x0002
+#define BN_CLASSIFY_INSIDE        0x0001
+#define BN_CLASSIFY_OUTSIDE       0x0003
 
 BN_EXPORT BU_EXTERN(int bn_isect_planes,
 		    (point_t pt,
@@ -853,17 +853,17 @@ BN_EXPORT BU_EXTERN(int bn_isect_planes,
 /** @{ */
 
 /* This could be larger, or even dynamic... */
-#define BN_MAX_POLY_DEGREE	4	/* Maximum Poly Order */
+#define BN_MAX_POLY_DEGREE 4	/* Maximum Poly Order */
 /**
  * Polynomial data type
  */
-typedef  struct bn_poly {
-    unsigned long	magic;
-    int		dgr;
-    double		cf[BN_MAX_POLY_DEGREE+1];
+typedef struct bn_poly {
+    unsigned long magic;
+    int dgr;
+    double cf[BN_MAX_POLY_DEGREE+1];
 }  bn_poly_t;
-#define BN_CK_POLY(_p)	BU_CKMAG(_p, BN_POLY_MAGIC, "struct bn_poly")
-#define BN_POLY_NULL	((struct bn_poly *)NULL)
+#define BN_CK_POLY(_p) BU_CKMAG(_p, BN_POLY_MAGIC, "struct bn_poly")
+#define BN_POLY_NULL   ((struct bn_poly *)NULL)
 
 BN_EXPORT BU_EXTERN(struct bn_poly *bn_poly_mul,
 		    (struct bn_poly *product,
@@ -878,25 +878,25 @@ BN_EXPORT BU_EXTERN(struct bn_poly *bn_poly_add,
 		     const struct bn_poly *poly2));
 BN_EXPORT BU_EXTERN(struct bn_poly *bn_poly_sub,
 		    (struct bn_poly *diff,
-		     const struct bn_poly	*poly1,
-		     const struct bn_poly	*poly2));
+		     const struct bn_poly *poly1,
+		     const struct bn_poly *poly2));
 BN_EXPORT BU_EXTERN(void bn_poly_synthetic_division,
 		    (struct bn_poly *quo,
 		     struct bn_poly *rem,
-		     const struct bn_poly	*dvdend,
-		     const struct bn_poly	*dvsor));
+		     const struct bn_poly *dvdend,
+		     const struct bn_poly *dvsor));
 BN_EXPORT BU_EXTERN(int bn_poly_quadratic_roots,
-		    (struct bn_complex	roots[],
-		     const struct bn_poly	*quadrat));
+		    (struct bn_complex roots[],
+		     const struct bn_poly *quadrat));
 BN_EXPORT BU_EXTERN(int bn_poly_cubic_roots,
-		    (struct bn_complex	roots[],
-		     const struct bn_poly	*eqn));
+		    (struct bn_complex roots[],
+		     const struct bn_poly *eqn));
 BN_EXPORT BU_EXTERN(int bn_poly_quartic_roots,
-		    (struct bn_complex	roots[],
-		     const struct bn_poly	*eqn));
+		    (struct bn_complex roots[],
+		     const struct bn_poly *eqn));
 BN_EXPORT BU_EXTERN(void bn_pr_poly,
 		    (const char *title,
-		     const struct bn_poly	*eqn));
+		     const struct bn_poly *eqn));
 BN_EXPORT BU_EXTERN(void bn_pr_roots,
 		    (const char *title,
 		     const struct bn_complex roots[],
@@ -990,7 +990,7 @@ BN_EXPORT extern const float bn_rand_table[BN_RAND_TABSIZE];
 #define BN_RANDHALF(_i) (bn_rand_table[ _i = (_i+1) % BN_RAND_TABSIZE ]-0.5)
 #define BN_RANDHALF_INIT(_p) _p = bn_rand_table
 
-#define BN_RANDHALFTABSIZE	16535	/* Powers of two give streaking */
+#define BN_RANDHALFTABSIZE 16535	/* Powers of two give streaking */
 BN_EXPORT extern int bn_randhalftabsize;
 BN_EXPORT extern float bn_rand_halftab[BN_RANDHALFTABSIZE];
 
@@ -1018,7 +1018,7 @@ BN_EXPORT extern float bn_rand_halftab[BN_RANDHALFTABSIZE];
  */
 #define bn_rand0to1(_q)	(bn_rand_half(_q)+0.5)
 
-#define	BN_SINTABSIZE		2048
+#define BN_SINTABSIZE 2048
 BN_EXPORT extern double bn_sin_scale;
 #define bn_tab_sin(_a)	(((_a) > 0) ? \
 	(bn_sin_table[(int)((0.5+ (_a)*bn_sin_scale))&(BN_SINTABSIZE-1)]) :\
@@ -1050,14 +1050,16 @@ BN_EXPORT extern void bn_mathtab_constant();
  *
  */
 
-extern  double  bn_randmt();
-extern  void    bn_randmt_seed(unsigned long seed);
+extern double bn_randmt();
+extern void bn_randmt_seed(unsigned long seed);
 
 
 /*----------------------------------------------------------------------*/
 /* wavelet.c */
 
-#define CK_POW_2(dimen) { register unsigned long j; register int ok;\
+#define CK_POW_2(dimen) { \
+	register unsigned long j; \
+	register int ok; \
 	for (ok=0, j=0; j < sizeof(unsigned long) * 8; j++) { \
 		if ((unsigned long)(1<<j) == dimen) { ok = 1;  break; } \
 	} \
@@ -1065,7 +1067,7 @@ extern  void    bn_randmt_seed(unsigned long seed);
 		bu_log("%s:%d value %d should be power of 2 (2^%d)\n", \
 			__FILE__, __LINE__, dimen, j); \
 		bu_bomb("CK_POW_2"); \
-	}\
+	} \
 }
 
 BN_EXPORT BU_EXTERN(void bn_wlt_haar_1d_double_decompose,
@@ -1380,13 +1382,11 @@ BN_EXPORT extern const double bn_radtodeg;
  * increase wavelength sampling density around "important"
  * frequencies.
  *
- * See Also -
- *	spectrum.h, spectrum.c
  */
 struct bn_table {
-    unsigned long	magic;
-    int		nx;
-    fastf_t		x[1];	/**< @brief array of nx+1 wavelengths, dynamically sized */
+    unsigned long magic;
+    int nx;
+    fastf_t x[1];	/**< @brief array of nx+1 wavelengths, dynamically sized */
 };
 #define BN_CK_TABLE(_p)	BU_CKMAG(_p, BN_TABLE_MAGIC, "bn_table")
 #define BN_TABLE_NULL	((struct bn_table *)NULL)
@@ -1410,10 +1410,10 @@ struct bn_table {
 #endif
 
 struct bn_tabdata {
-    unsigned long	magic;
-    int		ny;
+    unsigned long magic;
+    int ny;
     const struct bn_table *table;	/**< @brief Up pointer to definition of X axis */
-    fastf_t		y[1];		/**< @brief array of ny samples, dynamically sized */
+    fastf_t y[1];			/**< @brief array of ny samples, dynamically sized */
 };
 #define BN_CK_TABDATA(_p)	BU_CKMAG(_p, BN_TABDATA_MAGIC, "bn_tabdata")
 #define BN_TABDATA_NULL		((struct bn_tabdata *)NULL)
@@ -1582,7 +1582,7 @@ BN_EXPORT BU_EXTERN(struct bn_tabdata *bn_tabdata_mk_linear_filter,
 
 /*----------------------------------------------------------------------*/
 /* vlist.c */
-#define BN_VLIST_CHUNK	35		/**< @brief  32-bit mach => just less than 1k */
+#define BN_VLIST_CHUNK 35		/**< @brief 32-bit mach => just less than 1k */
 /**
  * B N _ V L I S T
  *
@@ -1598,7 +1598,7 @@ BN_EXPORT BU_EXTERN(struct bn_tabdata *bn_tabdata_mk_linear_filter,
  * head.
  *
  * To visit all the elements in the vlist:
- *	for (BU_LIST_FOR (vp, rt_vlist, hp)) {
+ *	for (BU_LIST_FOR(vp, rt_vlist, hp)) {
  *		register int	i;
  *		register int	nused = vp->nused;
  *		register int	*cmd = vp->cmd;
@@ -1610,28 +1610,30 @@ BN_EXPORT BU_EXTERN(struct bn_tabdata *bn_tabdata_mk_linear_filter,
  *	}
  */
 struct bn_vlist  {
-    struct bu_list	l;			/**< @brief  magic, forw, back */
-    int		nused;			/**< @brief  elements 0..nused active */
-    int		cmd[BN_VLIST_CHUNK];	/**< @brief  VL_CMD_* */
-    point_t		pt[BN_VLIST_CHUNK];	/**< @brief  associated 3-point/vect */
+    struct bu_list l;		/**< @brief magic, forw, back */
+    int nused;			/**< @brief elements 0..nused active */
+    int cmd[BN_VLIST_CHUNK];	/**< @brief VL_CMD_* */
+    point_t pt[BN_VLIST_CHUNK];	/**< @brief associated 3-point/vect */
 };
 #define BN_VLIST_NULL	((struct bn_vlist *)0)
 #define BN_CK_VLIST(_p) BU_CKMAG((_p), BN_VLIST_MAGIC, "bn_vlist")
 #define BN_CK_VLIST_TCL(_interp, _p) BU_CKMAG_TCL(_interp, (_p), BN_VLIST_MAGIC, "bn_vlist")
 
+/* should these be enum? -Erik */
 /* Values for cmd[] */
 #define BN_VLIST_LINE_MOVE	0
 #define BN_VLIST_LINE_DRAW	1
-#define BN_VLIST_POLY_START	2	/**< @brief  pt[] has surface normal */
-#define BN_VLIST_POLY_MOVE	3	/**< @brief  move to first poly vertex */
-#define BN_VLIST_POLY_DRAW	4	/**< @brief  subsequent poly vertex */
-#define BN_VLIST_POLY_END	5	/**< @brief  last vert (repeats 1st), draw poly */
-#define BN_VLIST_POLY_VERTNORM	6	/**< @brief  per-vertex normal, for interpoloation */
+#define BN_VLIST_POLY_START	2	/**< @brief pt[] has surface normal */
+#define BN_VLIST_POLY_MOVE	3	/**< @brief move to first poly vertex */
+#define BN_VLIST_POLY_DRAW	4	/**< @brief subsequent poly vertex */
+#define BN_VLIST_POLY_END	5	/**< @brief last vert (repeats 1st), draw poly */
+#define BN_VLIST_POLY_VERTNORM	6	/**< @brief per-vertex normal, for interpoloation */
+#define BN_VLIST_POINT_DRAW	7	/**< @brief  Draw a single point */
 
 /**
  * Applications that are going to use BN_ADD_VLIST and BN_GET_VLIST
  * are required to execute this macro once, on their _free_hd:
- *		BU_LIST_INIT(&_free_hd);
+ * BU_LIST_INIT(&_free_hd);
  *
  * Note that BN_GET_VLIST and BN_FREE_VLIST are non-PARALLEL.
  */
@@ -1671,12 +1673,12 @@ struct bn_vlist  {
  * blocks of vlists, each with an associated color.
  */
 struct bn_vlblock {
-    unsigned long	magic;
-    int		nused;
-    int		max;
-    long		*rgb;		/**< @brief  rgb[max] variable size array */
-    struct bu_list	*head;		/**< @brief  head[max] variable size array */
-    struct bu_list	*free_vlist_hd;	/**< @brief  where to get/put free vlists */
+    unsigned long magic;
+    int nused;
+    int max;
+    long *rgb;		/**< @brief rgb[max] variable size array */
+    struct bu_list *head;		/**< @brief head[max] variable size array */
+    struct bu_list *free_vlist_hd;	/**< @brief where to get/put free vlists */
 };
 #define BN_CK_VLBLOCK(_p)	BU_CKMAG((_p), BN_VLBLOCK_MAGIC, "bn_vlblock")
 
@@ -1708,19 +1710,19 @@ BN_EXPORT BU_EXTERN(void bn_vlist_2string,
  */
 struct vert_root {
     unsigned long magic;
-    int tree_type;			/**< @brief  vertices or vertices with normals */
-    union vert_tree *the_tree;	/**< @brief  the actual vertex tree */
-    fastf_t *the_array;		/**< @brief  the array of vertices */
-    unsigned long curr_vert;	/**< @brief  the number of vertices currently in the array */
-    unsigned long max_vert;		/**< @brief  the current maximum capacity of the array */
+    int tree_type;			/**< @brief vertices or vertices with normals */
+    union vert_tree *the_tree;	/**< @brief the actual vertex tree */
+    fastf_t *the_array;		/**< @brief the array of vertices */
+    unsigned long curr_vert;	/**< @brief the number of vertices currently in the array */
+    unsigned long max_vert;		/**< @brief the current maximum capacity of the array */
 };
 
-#define TREE_TYPE_VERTS			1
-#define TREE_TYPE_VERTS_AND_NORMS	2
+#define TREE_TYPE_VERTS 1
+#define TREE_TYPE_VERTS_AND_NORMS 2
 
-#define VERT_BLOCK 512			/**< @brief  number of vertices to malloc per call when building the array */
+#define VERT_BLOCK 512			/**< @brief number of vertices to malloc per call when building the array */
 
-#define BN_CK_VERT_TREE(_p)	BU_CKMAG(_p, VERT_TREE_MAGIC, "vert_tree")
+#define BN_CK_VERT_TREE(_p) BU_CKMAG(_p, VERT_TREE_MAGIC, "vert_tree")
 
 BN_EXPORT BU_EXTERN(struct vert_root *create_vert_tree,
 		    ());
@@ -1748,8 +1750,7 @@ BN_EXPORT BU_EXTERN(void clean_vert_tree,
 
 /*----------------------------------------------------------------------*/
 /* vectfont.c */
-BN_EXPORT BU_EXTERN(void tp_setup,
-		    ());
+BN_EXPORT BU_EXTERN(void tp_setup, ());
 
 /**
  * report version information about LIBBN
@@ -1769,56 +1770,54 @@ __END_DECLS
 
 /* from src/librt/plane.h. */
 
-#define MAXPTS	4			/* All we need are 4 points */
-#define pl_A	pl_points[0]		/* Synonym for A point */
+#define MAXPTS 4			/* All we need are 4 points */
+#define pl_A pl_points[0]		/* Synonym for A point */
 
 struct plane_specific  {
-    int	pl_npts;		/* number of points on plane */
-    point_t	pl_points[MAXPTS];	/* Actual points on plane */
-    vect_t	pl_Xbasis;		/* X (B-A) vector (for 2d coords) */
-    vect_t	pl_Ybasis;		/* Y (C-A) vector (for 2d coords) */
-    vect_t	pl_N;			/* Unit-length Normal (outward) */
-    fastf_t	pl_NdotA;		/* Normal dot A */
-    fastf_t	pl_2d_x[MAXPTS];	/* X 2d-projection of points */
-    fastf_t	pl_2d_y[MAXPTS];	/* Y 2d-projection of points */
-    fastf_t	pl_2d_com[MAXPTS];	/* pre-computed common-term */
+    int pl_npts;			/* number of points on plane */
+    point_t pl_points[MAXPTS];		/* Actual points on plane */
+    vect_t pl_Xbasis;			/* X (B-A) vector (for 2d coords) */
+    vect_t pl_Ybasis;			/* Y (C-A) vector (for 2d coords) */
+    vect_t pl_N;			/* Unit-length Normal (outward) */
+    fastf_t pl_NdotA;			/* Normal dot A */
+    fastf_t pl_2d_x[MAXPTS];		/* X 2d-projection of points */
+    fastf_t pl_2d_y[MAXPTS];		/* Y 2d-projection of points */
+    fastf_t pl_2d_com[MAXPTS];		/* pre-computed common-term */
     struct plane_specific *pl_forw;	/* Forward link */
-    char	pl_code[MAXPTS+1];	/* Face code string.  Decorative. */
+    char pl_code[MAXPTS+1];		/* Face code string.  Decorative. */
 };
 
 /*
  * Describe the tri_specific structure.
  */
 struct tri_specific  {
-    point_t	tri_A;			/* triangle vertex (A) */
-    vect_t	tri_BA;			/* B - A (second point) */
-    vect_t	tri_CA;			/* C - A (third point) */
-    vect_t	tri_wn;			/* facet normal (non-unit) */
-    vect_t	tri_N;			/* unit normal vector */
+    point_t tri_A;			/* triangle vertex (A) */
+    vect_t tri_BA;			/* B - A (second point) */
+    vect_t tri_CA;			/* C - A (third point) */
+    vect_t tri_wn;			/* facet normal (non-unit) */
+    vect_t tri_N;			/* unit normal vector */
     fastf_t *tri_normals;		/* unit vertex normals A, B, C  (this is malloced storage) */
-    int	tri_surfno;		/* solid specific surface number */
+    int tri_surfno;			/* solid specific surface number */
     struct tri_specific *tri_forw;	/* Next facet */
 };
 
 typedef struct tri_specific tri_specific_double;
 
 /*
- *	A more memory conservative version
+ * A more memory conservative version
  */
 struct tri_float_specific  {
-    float	tri_A[3];			/* triangle vertex (A) */
-    float	tri_BA[3];			/* B - A (second point) */
-    float	tri_CA[3];			/* C - A (third point) */
-    float	tri_wn[3];			/* facet normal (non-unit) */
-    float	tri_N[3];			/* unit normal vector */
+    float tri_A[3];			/* triangle vertex (A) */
+    float tri_BA[3];			/* B - A (second point) */
+    float tri_CA[3];			/* C - A (third point) */
+    float tri_wn[3];			/* facet normal (non-unit) */
+    float tri_N[3];			/* unit normal vector */
     signed char *tri_normals;		/* unit vertex normals A, B, C  (this is malloced storage) */
-    int	tri_surfno;		/* solid specific surface number */
-    struct tri_float_specific *tri_forw;	/* Next facet */
+    int tri_surfno;			/* solid specific surface number */
+    struct tri_float_specific *tri_forw;/* Next facet */
 };
 
 typedef struct tri_float_specific tri_specific_float;
-
-
 
 #endif /* __BN_H__ */
 

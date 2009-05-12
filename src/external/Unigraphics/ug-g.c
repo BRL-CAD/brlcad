@@ -196,6 +196,7 @@ char *conv_features( tag_t solid_tag, char *part_name, char *refset_name, char *
 		     double units_conv, int make_region );
 static void do_suppressions( tag_t node );
 
+
 void
 add_to_obj_list( char *name )
 {
@@ -1434,7 +1435,7 @@ conv_extrusion( tag_t feat_tag, char *part_name, char *refset_name, char *inst_n
 	    intern.idb_meth = &rt_functab[ID_SKETCH];
 	    intern.idb_ptr = (genptr_t)skt;
 	    bu_avs_init_empty( &intern.idb_avs );
-	    rt_sketch_ifree( &intern );
+	    intern.idb_meth->ft_ifree( &intern, NULL );
 	    UF_MODL_delete_list( &sketch_list );
 	    UF_free( curves );
 	    return( (char *)NULL );
@@ -1473,7 +1474,7 @@ conv_extrusion( tag_t feat_tag, char *part_name, char *refset_name, char *inst_n
 		    intern.idb_meth = &rt_functab[ID_SKETCH];
 		    intern.idb_ptr = (genptr_t)skt;
 		    bu_avs_init_empty( &intern.idb_avs );
-		    rt_sketch_ifree( &intern );
+		    intern.idb_meth->ft_ifree( &intern, NULL );
 		    UF_MODL_delete_list( &sketch_list );
 		    UF_free( curves );
 		    return( (char *)NULL );
@@ -1546,7 +1547,7 @@ conv_extrusion( tag_t feat_tag, char *part_name, char *refset_name, char *inst_n
 		    intern.idb_meth = &rt_functab[ID_SKETCH];
 		    intern.idb_ptr = (genptr_t)skt;
 		    bu_avs_init_empty( &intern.idb_avs );
-		    rt_sketch_ifree( &intern );
+		    intern.idb_meth->ft_ifree( &intern, NULL );
 		    UF_MODL_delete_list( &sketch_list );
 		    UF_free( curves );
 		    return( (char *)NULL );
@@ -1568,7 +1569,7 @@ conv_extrusion( tag_t feat_tag, char *part_name, char *refset_name, char *inst_n
 		intern.idb_meth = &rt_functab[ID_SKETCH];
 		intern.idb_ptr = (genptr_t)skt;
 		bu_avs_init_empty( &intern.idb_avs );
-		rt_sketch_ifree( &intern );
+		intern.idb_meth->ft_ifree( &intern, NULL );
 		UF_MODL_delete_list( &sketch_list );
 		UF_free( curves );
 		return( (char *)NULL );
@@ -1600,7 +1601,7 @@ conv_extrusion( tag_t feat_tag, char *part_name, char *refset_name, char *inst_n
 	    intern.idb_meth = &rt_functab[ID_SKETCH];
 	    intern.idb_ptr = (genptr_t)skt;
 	    bu_avs_init_empty( &intern.idb_avs );
-	    rt_sketch_ifree( &intern );
+	    intern.idb_meth->ft_ifree( &intern, NULL );
 	    return( (char *)NULL );
 	}
 
@@ -1643,7 +1644,7 @@ conv_extrusion( tag_t feat_tag, char *part_name, char *refset_name, char *inst_n
 	intern.idb_meth = &rt_functab[ID_SKETCH];
 	intern.idb_ptr = (genptr_t)skt;
 	bu_avs_init_empty( &intern.idb_avs );
-	rt_sketch_ifree( &intern );
+	intern.idb_meth->ft_ifree( &intern, NULL );
 	return( (char *)NULL );
     }
     add_to_obj_list( sketch_name );
@@ -1877,7 +1878,7 @@ get_thru_faces_length( tag_t feat_tag,
 
 	VSETALLN( pl, 0.0, 4 );
 	pl[i] = 1.0;
-	pl[3] = bb[i+3];
+	pl[W] = bb[i+3];
 	DO_INDENT;
 	bu_log( "\tChecking plane (%g %g %g %g)\n", V4ARGS( pl ) );
 	ret = bn_isect_line3_plane( &dist, base, dir, pl, &tol );
@@ -1896,7 +1897,7 @@ get_thru_faces_length( tag_t feat_tag,
 
 	VSETALLN( pl, 0.0, 4 );
 	pl[i] = -1.0;
-	pl[3] = -bb[i];
+	pl[W] = -bb[i];
 	DO_INDENT;
 	bu_log( "\tChecking plane (%g %g %g %g)\n", V4ARGS( pl ) );
 	ret = bn_isect_line3_plane( &dist, base, dir, pl, &tol );
@@ -1944,7 +1945,7 @@ get_thru_faces_length( tag_t feat_tag,
 
 	    VSETALLN( pl, 0.0, 4 );
 	    pl[i] = 1.0;
-	    pl[3] = bb[i+3];
+	    pl[W] = bb[i+3];
 	    ret = bn_isect_line3_plane( &dist, base, dir, pl, &tol );
 	    /* 1 - exit, 2 - entrance, else miss */
 	    if ( ret == 1 ) {
@@ -1959,7 +1960,7 @@ get_thru_faces_length( tag_t feat_tag,
 
 	    VSETALLN( pl, 0.0, 4 );
 	    pl[i] = -1.0;
-	    pl[3] = -bb[i];
+	    pl[W] = -bb[i];
 	    ret = bn_isect_line3_plane( &dist, base, dir, pl, &tol );
 	    /* 1 - exit, 2 - entrance, else miss */
 	    if ( ret == 1 ) {

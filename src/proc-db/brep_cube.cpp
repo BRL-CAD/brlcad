@@ -417,7 +417,7 @@ printPoints(struct rt_brep_internal* bi)
 	    bv.Dump(tl);
 	}
     } else {
-	fprintf(stderr, "brep was NULL!\n");
+	bu_log("brep was NULL!\n");
     }
 }
 
@@ -434,34 +434,37 @@ main(int argc, char** argv)
 
     ON::Begin();
 
-    if (argc > 1) {
-	printf("Writing a twisted cube b-rep...\n");
-	outfp = wdb_fopen("brep_cube1.g");
-	mk_id(outfp, id_name);
-	brep = MakeTwistedCube(error_log);
-	mk_brep(outfp, geom_name, brep);
+    /* export brep to file */
+    bu_log("Writing a twisted cube b-rep...\n");
+    outfp = wdb_fopen("brep_cube.g");
+    mk_id(outfp, id_name);
+    brep = MakeTwistedCube(error_log);
+    mk_brep(outfp, geom_name, brep);
 
-	//mk_comb1(outfp, "cube.r", geom_name, 1);
-	unsigned char rgb[] = {255,255,255};
-	mk_region1(outfp, "cube.r", geom_name, "plastic", "", rgb);
+    //mk_comb1(outfp, "cube.r", geom_name, 1);
+    unsigned char rgb[] = {255,255,255};
+    mk_region1(outfp, "cube.r", geom_name, "plastic", "", rgb);
 
-	wdb_close(outfp);
-	delete brep;
+    wdb_close(outfp);
+    delete brep;
+
+    /* reread from file to make sure brep import is working okay */
+    bu_log("Reading a twisted cube b-rep...\n");
+    struct db_i* dbip = db_open("brep_cube.g", "r");
+    if (!dbip) {
+	bu_exit(1, "Unable to find brep_cube.g geometry file.");
     }
-
-    printf("Reading a twisted cube b-rep...\n");
-    struct db_i* dbip = db_open("brep_cube1.g", "r");
     db_dirbuild(dbip);
     struct directory* dirp;
     if ((dirp = db_lookup(dbip, "cube.s", 0)) != DIR_NULL) {
-	printf("\tfound cube.s\n");
+	bu_log("\tfound cube.s\n");
 	struct rt_db_internal ip;
 	mat_t mat;
 	MAT_IDN(mat);
 	if (rt_db_get_internal(&ip, dirp, dbip, mat, &rt_uniresource) >= 0) {
 	    printPoints((struct rt_brep_internal*)ip.idb_ptr);
 	} else {
-	    fprintf(stderr, "problem getting internal object rep\n");
+	    bu_log("problem getting internal object rep\n");
 	}
     }
     db_close(dbip);
@@ -476,7 +479,7 @@ main(int argc, char** argv)
 int
 main(int argc, char *argv[])
 {
-    printf("ERROR: Boundary Representation object support is not available with\n"
+    bu_log("ERROR: Boundary Representation object support is not available with\n"
 	   "       this compilation of BRL-CAD.\n");
     return 1;
 }

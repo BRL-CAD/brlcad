@@ -842,11 +842,9 @@ rt_tgc_shot(struct soltab *stp, register struct xray *rp, struct application *ap
     }
 
     if ( npts != 0 && npts != 2 && npts != 4 ) {
-	bu_log("tgc(%s):  %d intersects != {0, 2, 4}\n",
-	       stp->st_name, npts );
-	bu_log( "\tray: pt = (%g %g %g), dir = (%g %g %g)\n",
-		V3ARGS( ap->a_ray.r_pt ),
-		V3ARGS( ap->a_ray.r_dir ) );
+	/* these are printed in 'mm' regardless of local units */
+	bu_log("tgc(%s):  %d intersects != {0, 2, 4}\n", stp->st_name, npts );
+	bu_log( "\tray: pt = (%g %g %g), dir = (%g %g %g), units in mm\n", V3ARGS( ap->a_ray.r_pt ), V3ARGS( ap->a_ray.r_dir ) );
 	for ( i=0; i<npts; i++ ) {
 	    bu_log( "\t%g", k[i]*t_scale );
 	}
@@ -1760,9 +1758,14 @@ rt_tgc_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose
  *  Free the storage associated with the rt_db_internal version of this solid.
  */
 void
-rt_tgc_ifree(struct rt_db_internal *ip)
+rt_tgc_ifree(struct rt_db_internal *ip, struct resource *resp)
 {
     RT_CK_DB_INTERNAL(ip);
+
+    if (!resp) {
+	resp = &rt_uniresource;
+    }
+
     bu_free( ip->idb_ptr, "tgc ifree" );
     ip->idb_ptr = GENPTR_NULL;
 }

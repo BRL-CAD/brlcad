@@ -47,7 +47,7 @@
 extern void init_qray(void);
 extern void mged_global_variable_setup(Tcl_Interp *interp);
 
-struct cmdtab mged_cmdtab[] = {
+static struct cmdtab mged_cmdtab[] = {
     {"%", f_comm, GED_FUNC_PTR_NULL},
     {"35, 25", bv_35_25, GED_FUNC_PTR_NULL},
     {"3ptarb", cmd_ged_more_wrapper, ged_3ptarb},
@@ -201,7 +201,7 @@ struct cmdtab mged_cmdtab[] = {
     {"mged_update", f_update, GED_FUNC_PTR_NULL},
     {"mged_wait", f_wait, GED_FUNC_PTR_NULL},
     {"mirface", f_mirface, GED_FUNC_PTR_NULL},
-    {"mirror", cmd_ged_edit_wrapper, ged_mirror},
+    {"mirror", cmd_ged_plain_wrapper, ged_mirror},
     {"mmenu_get", cmd_mmenu_get, GED_FUNC_PTR_NULL},
     {"mmenu_set", cmd_nop, GED_FUNC_PTR_NULL},
     {"model2grid_lu", cmd_ged_plain_wrapper, ged_model2grid_lu},

@@ -63,11 +63,11 @@ db_open_inmem(void)
     dbip->dbi_fp = NULL;
     dbip->dbi_mf = NULL;
 
-   /* XXX it "should" be safe and recommended to set this to 1 as it
-    * merely toggles whether the data can be written to _disk_.  the
-    * various uses, however, haven't been exhaustively checked so
-    * leave it off for now.
-    */
+    /* XXX it "should" be safe and recommended to set this to 1 as it
+     * merely toggles whether the data can be written to _disk_.  the
+     * various uses, however, haven't been exhaustively checked so
+     * leave it off for now.
+     */
     dbip->dbi_read_only = 0;
 
     /* Initialize fields */

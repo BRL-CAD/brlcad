@@ -800,7 +800,7 @@ rt_pixel_footprint(const struct application *ap, const struct hit *hitp, const s
      *  Find the 4 corners of the footprint on this perpendicular plane.
      */
     bn_vec_perp( perp, ap->a_ray.r_dir );
-    perp[3] = VDOT( perp, hitp->hit_point );
+    perp[W] = VDOT( perp, hitp->hit_point );
 
     h_radius = ap->a_rbeam + hitp->hit_dist * ap->a_diverge;
     v_radius = ap->a_rbeam + hitp->hit_dist * ap->a_diverge * cell_width / cell_height;
@@ -816,7 +816,7 @@ rt_pixel_footprint(const struct application *ap, const struct hit *hitp, const s
 
     /* Approximate surface at hit point by a (tangent) plane */
     VMOVE( surf_tan, normal );
-    surf_tan[3] = VDOT( surf_tan, hitp->hit_point );
+    surf_tan[W] = VDOT( surf_tan, hitp->hit_point );
 
     /*
      *  Form a line from ray start point to each corner point,

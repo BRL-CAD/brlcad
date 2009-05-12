@@ -155,7 +155,7 @@ printcodes(struct ged *gedp, FILE *fp, struct directory *dp, int pathpos)
 	for (i=0; i < pathpos; i++)
 	    fprintf(fp, "/%s", path[i]->d_namep);
 	fprintf(fp, "/%s\n", dp->d_namep);
-	rt_comb_ifree(&intern, &rt_uniresource);
+	intern.idb_meth->ft_ifree( &intern, &rt_uniresource );
 	return BRLCAD_OK;
     }
 
@@ -165,7 +165,7 @@ printcodes(struct ged *gedp, FILE *fp, struct directory *dp, int pathpos)
 			 (genptr_t)fp, (genptr_t)&pathpos, (genptr_t)gedp);
     }
 
-    rt_comb_ifree(&intern, &rt_uniresource);
+    intern.idb_meth->ft_ifree( &intern, &rt_uniresource );
     return BRLCAD_OK;
 }
 

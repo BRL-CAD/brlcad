@@ -139,6 +139,7 @@ set(LIBGED_SOURCES
     prefix.c
     preview.c
     ps.c
+    pscale.c
     push.c
     put.c
     put_comb.c
@@ -168,6 +169,8 @@ set(LIBGED_SOURCES
     savekey.c
     saveview.c
     scale.c
+    scale_ell.c
+    scale_tor.c
     search.c
     set_output_script.c
     set_transparency.c

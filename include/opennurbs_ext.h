@@ -162,7 +162,11 @@ namespace brlcad {
     template<class BV>
     inline
     BVNode<BV>::BVNode(const BV& node) : m_node(node) {
+#if defined(_WIN32) && !defined(__CYGWIN__)
 	for (int i = 0; i < 3; i++) {
+#else
+	for (size_t i = 0; i < 3; i++) {
+#endif
 	    double d = m_node.m_max[i] - m_node.m_min[i];
 	    if (ON_NearZero(d, ON_ZERO_TOLERANCE)) {
 		m_node.m_min[i] -= 0.001;
@@ -175,7 +179,11 @@ namespace brlcad {
     inline
     BVNode<BV>::~BVNode() {
 	// delete the children
+#if defined(_WIN32) && !defined(__CYGWIN__)
 	for (int i = 0; i < m_children.size(); i++) {
+#else
+	for (size_t i = 0; i < m_children.size(); i++) {
+#endif
 	    delete m_children[i];
 	}
     }
@@ -225,7 +233,11 @@ namespace brlcad {
     BVNode<BV>::intersectedBy(ON_Ray& ray, double* tnear_opt, double* tfar_opt) {
 	double tnear = -real.infinity();
 	double tfar = real.infinity();
+#if defined(_WIN32) && !defined(__CYGWIN__)
 	for (int i = 0; i < 3; i++) {
+#else
+	for (size_t i = 0; i < 3; i++) {
+#endif
 	    if (ON_NearZero(ray.m_dir[i])) {
 		if (ray.m_origin[i] < m_node.m_min[i] || ray.m_origin[i] > m_node.m_max[i])
 		    return false;
@@ -256,7 +268,11 @@ namespace brlcad {
 //       for (std::list<BVNode<BV>*>::iterator j = m_children.begin(); j != m_children.end(); j++) {
 // 	(*j)->intersectsHierarchy(ray, results_opt);
 //       }
+#if defined(_WIN32) && !defined(__CYGWIN__)
 	    for (int i = 0; i < m_children.size(); i++) {
+#else
+	    for (size_t i = 0; i < m_children.size(); i++) {
+#endif
 		m_children[i]->intersectsHierarchy(ray, results_opt);
 	    }
 	}
@@ -268,7 +284,11 @@ namespace brlcad {
     int
     BVNode<BV>::depth() {
 	int d = 0;
+#if defined(_WIN32) && !defined(__CYGWIN__)
 	for (int i = 0; i < m_children.size(); i++) {
+#else
+	for (size_t i = 0; i < m_children.size(); i++) {
+#endif
 	    d = 1 + max(d, m_children[i]->depth());
 	}
 	return d;
@@ -278,7 +298,11 @@ namespace brlcad {
     void
     BVNode<BV>::getLeaves(list<BVNode<BV>*>& out_leaves) {
 	if (m_children.size() > 0) {
+#if defined(_WIN32) && !defined(__CYGWIN__)
 	    for (int i = 0; i < m_children.size(); i++) {
+#else
+	    for (size_t i = 0; i < m_children.size(); i++) {
+#endif
 		m_children[i]->getLeaves(out_leaves);
 	    }
 	} else {
@@ -310,7 +334,11 @@ namespace brlcad {
 	TRACE("getClosestPointEstimate(" << PT(pt) << ")");
 	if (m_children.size() > 0) {
 	    BBNode* closestNode = m_children[0];
+#if defined(_WIN32) && !defined(__CYGWIN__)
 	    for (int i = 1; i < m_children.size(); i++) {
+#else
+	    for (size_t i = 1; i < m_children.size(); i++) {
+#endif
 		closestNode = closer(pt, closestNode, m_children[i]);
 		TRACE("\t" << PT(closestNode->m_estimate));
 	    }
@@ -380,7 +408,11 @@ namespace brlcad {
 	int mini = 0;
 	double mindist = pt.DistanceTo(corners[mini]);
 	double tmpdist;
+#if defined(_WIN32) && !defined(__CYGWIN__)
 	for (int i = 1; i < 5; i++) {
+#else
+	for (size_t i = 1; i < 5; i++) {
+#endif
 	    tmpdist = pt.DistanceTo(corners[i]);
 	    TRACE("\t" << mindist << " < " << tmpdist);
 	    if (tmpdist < mindist) {

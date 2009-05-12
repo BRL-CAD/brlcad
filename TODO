@@ -1,40 +1,107 @@
 BRL-CAD To Do List
 ==================
 
-Included below is a list of things that are scheduled or desirable to
-be done at some point.  Most recently added items are on top, older
-topics are on the bottom.  This is not an official list, it's more a
-scratch pad for the developers to use for tracking development ideas
-and informal plans.
+This document contains a collection of desirable BRL-CAD development
+tasks.  Included is a list of the tasks expected for the current
+monthly development release iteration, tasks that will hopefully be
+completed within two iterations, and a remaining "backlog" of
+unscheduled development tasks.
 
-The items listed for release should not ever hinder, stop, or
-otherwise delay a release from being made.  The items listed are
-merely to give an estimate of what was expected to be done.  See the
-project task tracker for more to do items and future planning efforts.
-http://sf.net/pm/?group_id=105292
-
-
-THESE SHOULD HAPPEN BEFORE THE NEXT RELEASE
--------------------------------------------
-
-* test and release
+This is not an official list of tasks that will be completed.  Instead
+it's more like a developer scratch pad for recording ideas and
+coordinating release tasks.  At the beginning of each month,
+developers add the tasks they expect to complete and then remove those
+tasks as they are completed.
 
 
-THESE SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
+THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 -------------------------------------------------
 
-* make mged 'mirror' command work with three args like before with
-  last being an axis in order to preserve backwards compatibility
+* if you're reading this, then they're all done!
 
 
-THESE ARE LOWER PRIORITY OR FOR FUTURE RELEASES
------------------------------------------------
+THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
+-------------------------------------------------------
+
+* implement file input support for the pnts primitive
+
+* display cross-hair in mged when rtarea reports center
+
+* initial step-g with basic file parsing capability but without
+  creation of .g geometry just yet
+
+* improved archer interactive editing support for all primitives
+
+* refactor rt_functab accessors to go through an api call or calls so
+  that the array is not accessed directly.  either an rt_eval() style
+  interface with data-driven keys to tell it with function(s) to call,
+  or simply have an rt_*() for each function (e.g., rt_mirror(),
+  rt_shot(), rt_describe(), etc).
+
+* restored support for split-view cutting planes within ADRT
+
+* implement necessary routines for generating a NURBS bounding
+  box tree, needed for "good" initial guesses when raytracing
+  a NURBS surface. (per Abert et. al. 2006)
+
+THESE ARE UNSCHEDULED BACKLOG TASKS
+-----------------------------------
+
+* g_qa (gqa in mged) needs to be more informative when it runs - 
+  needs a header letting you know what it's doing, and if possible
+  a "progress report" for longer runs that provides some notion of
+  how much of the total job is done.
+
+* restored support for shotline region reporting within ADRT
+
+* make color and vectors on pnts work
+
+* mged inconsistently ignores signals.  initially allowing mged to be
+  backgrounded, but then later ignores them.  needs to consistently
+  ignore or not ignore them, ideally the latter.
+
+* libfb needs to have the fb_open/close_existing functions refactored
+  into the function table and hav the #ifdef sections removed.
+
+* optimization of NMG ray tracing.  the hitmiss bookkeeping presently
+  used has a malloc/free occuring per shot().  allocations need to
+  occur during prep only.
+
+* implement a routine to convert an NMG object (whether polygonal or
+  old bspline/nurbs) to the newer openNURBS BREP object type to
+  facilitate tool migration.
+
+* implement primitive-to-brep routines for all primitives (partially
+  completed) so that each implicit can describe themselves as a NURBS
+  surface or set of trimmed NURBS surfaces.
+
+* integrate library tester into regression suite that validates
+  exported library symbols published in headers.  make sure they at
+  least exist and maybe even try to ensure they will run with null
+  arguments without crashing.
 
 * 3D plot objects for v5 geometry files.  very closely related to
   other ideas about having 3d wireframe objects, but these would
   probably be non-geometric in nature.  basically the plot3 files that
   are stored out to disk being stored as objects in the database with
-  support for the overlay command to  import, export, display them.
+  support for the overlay command to import, export, display them.
+
+  minimally should probably support the basic drafting elements
+  (predominantly from collada, dxf, iges, and step specifications):
+
+        point := x, y, z
+        line := start point, end point
+        polyline := various (closed, open, paired, modified, etc)
+        circle := center point, radius
+        ellipse := center point, major radius, minor radius
+        hyperbola := center point, major radius, minor radius
+        parabola := center point, focal length
+        arc := center point, radius, start angle, end angle
+        spline := degree, control points, knot values
+        text := string, insertion point, size, style, alignment
+
+* make _plot() callbacks fill in plot objects instead of returning
+  line segments.
 
 * image objects (tbd objects) for v5 geometry files
 
@@ -57,16 +124,10 @@ THESE ARE LOWER PRIORITY OR FOR FUTURE RELEASES
 * make sure news2tracker.sh is not missing recent news items.  several
   were missing from a recent report generated (unverified).
 
-* rewrite the tables command to not suck
-
 * fix framebuffer refresh bug.  problem was caused when the if_ogl
   framebuffer was changed (back) to request a direct rendering
   context.  presumably that is triggering other code that is failing
   to redraw.
-
-* implement file input support for the pnts primitive
-
-* make color and vectors on pnts work
 
 * segregate the nmg routines out of librt back into their own library
 
@@ -133,13 +194,21 @@ THESE ARE LOWER PRIORITY OR FOR FUTURE RELEASES
 
 * move analyze logic into librt (with their respective primitives).
 
+* implement tessellation support for the new BREP primitive.
+
 * implement make, ted, edsol, mirror, and analyze for revolve
   primitive.  implement tess() too.
 
-* (re)verify rtarea CPA results (see diff history for patch, fix
-  naming convention for presented/exposed area
+* fix/change naming convention for presented/exposed area
 
-* ADRT: remove MySQL code, fix ISST callbacks, re-enable RISE, cleanup
+* make rtarea display a cross-hair and perhaps coordinates for the
+  center of area if run from within mged.
+
+* remove MySQL code from ADRT
+
+* fix ISST callbacks within ADRT
+
+* re-enable RISE client in ADRT
 
 * test homovulgaris' root solver patch that puts coefficients in the
   right order
@@ -217,8 +286,6 @@ THESE ARE LOWER PRIORITY OR FOR FUTURE RELEASES
 
 * modify the new tree traversal code to be generic
 
-* expose nmg_fix_normals through a set of mesh repair routines
-
 * add high dynamic range image support to the framebuffers
 
 * add alpha channel support to the framebuffers
@@ -271,10 +338,9 @@ THESE ARE LOWER PRIORITY OR FOR FUTURE RELEASES
 
 * run indent.sh on directories (one at a time, validating results)
 
-* add support for arbitrary matrix transformations to torus primitive
-
-* add configuration checks and build system support to disable C++
-  outright if necessary, e.g. an --enable-c++ option
+* add support for arbitrary matrix transformations to torus primitive.
+  store non-uniform scaling matrices as an attribute for
+  backwards-compatible support until v6.
 
 * configure support to enable/disable framebuffers, display
   managers, geometry converters, and image converters.  consider
@@ -309,9 +375,6 @@ THESE ARE LOWER PRIORITY OR FOR FUTURE RELEASES
 
 * Mac OS X SGI dial knobs support
 
-* merge old and 'new' tops behavior into one, preserving compatibility
-  where it makes sense.
-
 * ability to "unpush" objects, translating them to a new position and
   applying the correct matrix (using either bounding box or center of
   mass, for example)
@@ -320,7 +383,8 @@ THESE ARE LOWER PRIORITY OR FOR FUTURE RELEASES
 
 * test for USE_FORKED_THREADS in configure
 
-* optimize CSG structures automatically, automatic simplification.
+* optimize CSG structures automatically: automatic simplification,
+  tree contraction, null object detection.
 
 * option to mged make command or new command that enters solid edit
   mode, "med", "smake", "makes", "msed", etc.  same for cp command.
@@ -394,6 +458,11 @@ THESE ARE LOWER PRIORITY OR FOR FUTURE RELEASES
 * implement tools for generating springs and gears, improve bolt/nut
   tool support
 
+* SVG renderer.  go straight from 3D model to a 2D vector image for a
+  given view.  similar to the plot/postscript wireframe view saves,
+  this would need to store projected contours (ala rtedge) and filled
+  color regions.
+
 
 LIBPC
 -----
@@ -448,6 +517,11 @@ THESE BREAK PROTOCOL OR ARE BACKWARDS-INCOMPATIBLE
 
 * remove the storage of the never-implemented keypoint parameter for
   extrude objects.
+
+* have all primitives record a transformation matrix so that they may
+  retain a local coordinate system even after pushed matrices.  this
+  also will allow primitives like the torus to support non-uniform
+  scaling.
 
 
 FUNCTIONALITY NEEDED TO SPEED UP RAYTRACING
@@ -516,7 +590,7 @@ DOCUMENTATION
 
 
 ---
-See the project task tracker for more to do items and future planning
-efforts.  http://sf.net/pm/?group_id=105292
+See the feature request and bug trackers for more tasks and future
+planning efforts: https://sourceforge.net/tracker/?group_id=105292
 
 TODO items should be formatted to column 70 (M-q in emacs), no tabs.

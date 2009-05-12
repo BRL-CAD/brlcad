@@ -11,6 +11,28 @@ changes made.  See document footer for additional details.
 
 
 ----------------------------------------------------------------------
+--- 2009-05-11  Release 7.14.8                                     ---
+----------------------------------------------------------------------
+
+* fix trimming bug in tire tread for wide tires - Cliff Yapp
+* archer interactive edit support for arb8, tor, ell, ehy - Bob Parker
+* improved asc2g handling of large BoT conversions - Keith Bowman
+* conversion of mged and archer to use new ttk widgets - Bob Parker
+* fixed crash in raytracing of pipe when duplicate hit points returned
+        - Cliff Yapp, Sean Morrison
+* mged 'dbconcat' command no longer requires an affix - Bob Parker
+* added 'l' describe support for the pnts primitive - Richard Weiss
+* restored mged mirror command trailing axis options - Sean Morrison
+* swapped meaning of -p and -o arguments to 'mirror' - Sean Morrison
+* major overhaul of archer's appearance and layout - Bob Parker
+* removal of archer's separate experience modes - Bob Parker
+* add a left handed winding flag to the coil tool - Cliff Yapp
+* add a clear command to MGED's command line - Cliff Yapp, Bob Parker
+* initial implementation of a new 'pnts' primitive for point clouds
+	- Nicholas Reed, Sean Morrison
+
+
+----------------------------------------------------------------------
 --- 2009-04-03  Release 7.14.6                                     ---
 ----------------------------------------------------------------------
 

@@ -33,9 +33,9 @@
  *
  * The inside of the halfspace bounded by the plane
  * consists of all points P such that
- *	VDOT(P, N) - N[3] <= 0,
+ *	VDOT(P, N) - N[W] <= 0,
  *
- * where N[3] stores the value d.
+ * where N[W] stores the value d.
  * See the remarks in h/vmath.h for more details.
  *
  */
@@ -63,7 +63,7 @@ struct half_specific  {
 
 const struct bu_structparse rt_hlf_parse[] = {
     { "%f", 3, "N", bu_offsetof(struct rt_half_internal, eqn[X]), BU_STRUCTPARSE_FUNC_NULL },
-    { "%f", 1, "d", bu_offsetof(struct rt_half_internal, eqn[3]), BU_STRUCTPARSE_FUNC_NULL },
+    { "%f", 1, "d", bu_offsetof(struct rt_half_internal, eqn[W]), BU_STRUCTPARSE_FUNC_NULL },
     { {'\0', '\0', '\0', '\0'}, 0, (char *)NULL, 0, BU_STRUCTPARSE_FUNC_NULL }
 };
 /**
@@ -86,10 +86,10 @@ rt_hlf_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
     stp->st_specific = (genptr_t)halfp;
 
     VMOVE( halfp->half_eqn, hip->eqn );
-    halfp->half_eqn[3] = hip->eqn[3];
+    halfp->half_eqn[W] = hip->eqn[W];
 
     /* Select one point on the halfspace as the "center" */
-    VSCALE( stp->st_center, halfp->half_eqn, halfp->half_eqn[3] );
+    VSCALE( stp->st_center, halfp->half_eqn, halfp->half_eqn[W] );
 
     /* X and Y basis for uv map */
     bn_vec_perp( halfp->half_Xbase, halfp->half_eqn );
@@ -120,7 +120,7 @@ rt_hlf_print(register const struct soltab *stp)
 	return;
     }
     VPRINT( "Normal", halfp->half_eqn );
-    bu_log( "d = %f\n", halfp->half_eqn[3] );
+    bu_log( "d = %f\n", halfp->half_eqn[W] );
     VPRINT( "Xbase", halfp->half_Xbase );
     VPRINT( "Ybase", halfp->half_Ybase );
 }
@@ -152,7 +152,7 @@ rt_hlf_shot(struct soltab *stp, register struct xray *rp, struct application *ap
 	fastf_t	slant_factor;	/* Direction dot Normal */
 	fastf_t	norm_dist;
 
-	norm_dist = VDOT( halfp->half_eqn, rp->r_pt ) - halfp->half_eqn[3];
+	norm_dist = VDOT( halfp->half_eqn, rp->r_pt ) - halfp->half_eqn[W];
 	if ( (slant_factor = -VDOT( halfp->half_eqn, rp->r_dir )) < -1.0e-10 )  {
 	    /* exit point, when dir.N < 0.  out = min(out, s) */
 	    out = norm_dist/slant_factor;
@@ -218,7 +218,7 @@ rt_hlf_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, str
 	in = -INFINITY;
 	out = INFINITY;
 
-	norm_dist = VDOT(halfp->half_eqn, rp[i]->r_pt) - halfp->half_eqn[3];
+	norm_dist = VDOT(halfp->half_eqn, rp[i]->r_pt) - halfp->half_eqn[W];
 
 	if ((slant_factor = -VDOT(halfp->half_eqn, rp[i]->r_dir)) <
 	    -1.0e-10) {
@@ -437,7 +437,7 @@ rt_hlf_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
     RT_HALF_CK_MAGIC(hip);
 
     /* Invent a "center" point on the plane -- point closets to origin */
-    VSCALE( cent, hip->eqn, hip->eqn[3] );
+    VSCALE( cent, hip->eqn, hip->eqn[W] );
 
     /* The use of "x" and "y" here is not related to the axis */
     bn_vec_perp( xbase, &hip->eqn[0] );
@@ -513,7 +513,7 @@ rt_hlf_xform(
      * The transformed normal is all that is required.
      * The new distance is found from the transforemd point on the plane.
      */
-    hop->eqn[3] = VDOT( pt, hop->eqn );
+    hop->eqn[W] = VDOT( pt, hop->eqn );
 
     /* Now some safety.  Verify that the normal has unit length */
     f = MAGNITUDE( hop->eqn);
@@ -526,7 +526,7 @@ rt_hlf_xform(
 	/* Restore normal to unit length */
 	f = 1/f;
 	VSCALE( hop->eqn, hop->eqn, f );
-	hip->eqn[3] *= f;
+	hip->eqn[W] *= f;
     }
     return 0;
 }
@@ -576,7 +576,7 @@ rt_hlf_import(struct rt_db_internal *ip, const struct bu_external *ep, const fas
      *  The transformed normal is all that is required.
      *  The new distance is found from the transformed point on the plane.
      */
-    hip->eqn[3] = VDOT( pt, hip->eqn );
+    hip->eqn[W] = VDOT( pt, hip->eqn );
 
     /* Verify that normal has unit length */
     f = MAGNITUDE( hip->eqn );
@@ -589,7 +589,7 @@ rt_hlf_import(struct rt_db_internal *ip, const struct bu_external *ep, const fas
 	/* Restore normal to unit length */
 	f = 1/f;
 	VSCALE( hip->eqn, hip->eqn, f );
-	hip->eqn[3] *= f;
+	hip->eqn[W] *= f;
     }
     return(0);			/* OK */
 }
@@ -616,7 +616,7 @@ rt_hlf_export(struct bu_external *ep, const struct rt_db_internal *ip, double lo
     rec->s.s_id = ID_SOLID;
     rec->s.s_type = HALFSPACE;
     VMOVE( rec->s.s_values, hip->eqn );
-    rec->s.s_values[3] = hip->eqn[3] * local2mm;
+    rec->s.s_values[W] = hip->eqn[W] * local2mm;
 
     return(0);
 }
@@ -651,7 +651,7 @@ rt_hlf_import5(struct rt_db_internal *ip, const struct bu_external *ep, register
     /* to apply modeling transformations, create a temporary
      * normal vector and point on the plane
      */
-    VSCALE( tmp_pt, tmp_plane, tmp_plane[3] );
+    VSCALE( tmp_pt, tmp_plane, tmp_plane[W] );
 
     /* transform both the point and the vector */
     if (mat == NULL) mat = bn_mat_identity;
@@ -659,7 +659,7 @@ rt_hlf_import5(struct rt_db_internal *ip, const struct bu_external *ep, register
     MAT4X3PNT( new_pt, mat, tmp_pt );
 
     /* and calculate the new distance */
-    hip->eqn[3] = VDOT( hip->eqn, new_pt );
+    hip->eqn[W] = VDOT( hip->eqn, new_pt );
 
     /* Verify that normal has unit length */
     f = MAGNITUDE( hip->eqn );
@@ -672,7 +672,7 @@ rt_hlf_import5(struct rt_db_internal *ip, const struct bu_external *ep, register
 	/* Restore normal to unit length */
 	f = 1/f;
 	VSCALE( hip->eqn, hip->eqn, f );
-	hip->eqn[3] *= f;
+	hip->eqn[W] *= f;
     }
     return(0);			/* OK */
 }
@@ -696,7 +696,7 @@ rt_hlf_export5(struct bu_external *ep, const struct rt_db_internal *ip, double l
     ep->ext_buf = (genptr_t)bu_malloc( ep->ext_nbytes, "half external" );
 
     /* only the distance needs to be scaled */
-    scaled_dist = hip->eqn[3] * local2mm;
+    scaled_dist = hip->eqn[W] * local2mm;
 
     /* Convert from internal (host) to database (network) format */
     /* the normal */
@@ -727,7 +727,7 @@ rt_hlf_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose
 
     sprintf(buf, "\tN (%g, %g, %g) d=%g\n",
 	    V3INTCLAMPARGS(hip->eqn),		/* should have unit length */
-	    INTCLAMP(hip->eqn[3] * mm2local) );
+	    INTCLAMP(hip->eqn[W] * mm2local) );
     bu_vls_strcat( str, buf );
 
     return(0);
@@ -739,9 +739,14 @@ rt_hlf_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose
  *  Free the storage associated with the rt_db_internal version of this solid.
  */
 void
-rt_hlf_ifree(struct rt_db_internal *ip)
+rt_hlf_ifree(struct rt_db_internal *ip, struct resource *resp)
 {
     RT_CK_DB_INTERNAL(ip);
+
+    if (!resp) {
+	resp = &rt_uniresource;
+    }
+
     bu_free( ip->idb_ptr, "hlf ifree" );
     ip->idb_ptr = GENPTR_NULL;
 }

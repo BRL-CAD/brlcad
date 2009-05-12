@@ -99,440 +99,248 @@
 ::itcl::body Arb7EditFrame::buildUpperPanel {} {
     set parent [$this childsite upper]
     itk_component add arb7Type {
-	::label $parent.arb7type \
+	::ttk::label $parent.arb7type \
 	    -text "Arb7:" \
 	    -anchor e
-    } {
-	rename -font -boldLabelFont boldLabelFont Font
-    }
+    } {}
     itk_component add arb7Name {
-	::label $parent.arb7name \
+	::ttk::label $parent.arb7name \
 	    -textvariable [::itcl::scope itk_option(-geometryObject)] \
 	    -anchor w
-    } {
-	rename -font -boldLabelFont boldLabelFont Font
-    }
+    } {}
 
     # Create header labels
     itk_component add arb7XL {
-	::label $parent.arb7XL \
+	::ttk::label $parent.arb7XL \
 	    -text "X"
-    } {
-	rename -font -boldLabelFont boldLabelFont Font
-    }
+    } {}
     itk_component add arb7YL {
-	::label $parent.arb7YL \
+	::ttk::label $parent.arb7YL \
 	    -text "Y"
-    } {
-	rename -font -boldLabelFont boldLabelFont Font
-    }
+    } {}
     itk_component add arb7ZL {
-	::label $parent.arb7ZL \
+	::ttk::label $parent.arb7ZL \
 	    -text "Z"
-    } {
-	rename -font -boldLabelFont boldLabelFont Font
-    }
+    } {}
 
     # create widgets for vertices
     itk_component add arb7V1L {
-	::radiobutton $parent.arb7V1L \
+	::ttk::label $parent.arb7V1L \
 	    -text "V1:" \
-	    -indicatoron 0 \
-	    -variable [::itcl::scope mVIndex] \
-	    -value 1 \
-	    -relief flat \
-	    -overrelief raised \
-	    -offrelief flat \
-	    -borderwidth 1 \
-	    -padx 0 \
-	    -highlightthickness 0 \
-	    -state disabled \
 	    -anchor e
-    } {
-	rename -font -labelFont labelFont Font
-    }
-    $itk_component(arb7V1L) configure \
-	-disabledforeground [$itk_component(arb7V1L) cget -foreground] \
-	-selectcolor  [$itk_component(arb7V1L) cget -background]
+    } {}
     itk_component add arb7V1xE {
-	::entry $parent.arb7V1xE \
+	::ttk::entry $parent.arb7V1xE \
 	    -textvariable [::itcl::scope mV1x] \
 	    -state disabled \
-	    -disabledforeground black \
 	    -validate key \
 	    -validatecommand {GeometryEditFrame::validateDouble %P}
-    } {
-	rename -font -entryFont entryFont Font
-    }
+    } {}
     itk_component add arb7V1yE {
-	::entry $parent.arb7V1yE \
+	::ttk::entry $parent.arb7V1yE \
 	    -textvariable [::itcl::scope mV1y] \
 	    -state disabled \
-	    -disabledforeground black \
 	    -validate key \
 	    -validatecommand {GeometryEditFrame::validateDouble %P}
-    } {
-	rename -font -entryFont entryFont Font
-    }
+    } {}
     itk_component add arb7V1zE {
-	::entry $parent.arb7V1zE \
+	::ttk::entry $parent.arb7V1zE \
 	    -textvariable [::itcl::scope mV1z] \
 	    -state disabled \
-	    -disabledforeground black \
 	    -validate key \
 	    -validatecommand {GeometryEditFrame::validateDouble %P}
-    } {
-	rename -font -entryFont entryFont Font
-    }
+    } {}
     itk_component add arb7V1UnitsL {
-	::label $parent.arb7V1UnitsL \
+	::ttk::label $parent.arb7V1UnitsL \
 	    -textvariable [::itcl::scope itk_option(-units)] \
 	    -anchor e
-    } {
-	rename -font -labelFont labelFont Font
-    }
+    } {}
     itk_component add arb7V2L {
-	::radiobutton $parent.arb7V2L \
+	::ttk::label $parent.arb7V2L \
 	    -text "V2:" \
-	    -indicatoron 0 \
-	    -variable [::itcl::scope mVIndex] \
-	    -value 2 \
-	    -relief flat \
-	    -overrelief raised \
-	    -offrelief flat \
-	    -borderwidth 1 \
-	    -padx 0 \
-	    -highlightthickness 0 \
-	    -state disabled \
 	    -anchor e
-    } {
-	rename -font -labelFont labelFont Font
-    }
-    $itk_component(arb7V2L) configure \
-	-disabledforeground [$itk_component(arb7V2L) cget -foreground] \
-	-selectcolor  [$itk_component(arb7V2L) cget -background]
+    } {}
     itk_component add arb7V2xE {
-	::entry $parent.arb7V2xE \
+	::ttk::entry $parent.arb7V2xE \
 	    -textvariable [::itcl::scope mV2x] \
 	    -state disabled \
-	    -disabledforeground black \
 	    -validate key \
 	    -validatecommand {GeometryEditFrame::validateDouble %P}
-    } {
-	rename -font -entryFont entryFont Font
-    }
+    } {}
     itk_component add arb7V2yE {
-	::entry $parent.arb7V2yE \
+	::ttk::entry $parent.arb7V2yE \
 	    -textvariable [::itcl::scope mV2y] \
 	    -state disabled \
-	    -disabledforeground black \
 	    -validate key \
 	    -validatecommand {GeometryEditFrame::validateDouble %P}
-    } {
-	rename -font -entryFont entryFont Font
-    }
+    } {}
     itk_component add arb7V2zE {
-	::entry $parent.arb7V2zE \
+	::ttk::entry $parent.arb7V2zE \
 	    -textvariable [::itcl::scope mV2z] \
 	    -state disabled \
-	    -disabledforeground black \
 	    -validate key \
 	    -validatecommand {GeometryEditFrame::validateDouble %P}
-    } {
-	rename -font -entryFont entryFont Font
-    }
+    } {}
     itk_component add arb7V2UnitsL {
-	::label $parent.arb7V2UnitsL \
+	::ttk::label $parent.arb7V2UnitsL \
 	    -textvariable [::itcl::scope itk_option(-units)] \
 	    -anchor e
-    } {
-	rename -font -labelFont labelFont Font
-    }
+    } {}
     itk_component add arb7V3L {
-	::radiobutton $parent.arb7V3L \
+	::ttk::label $parent.arb7V3L \
 	    -text "V3:" \
-	    -indicatoron 0 \
-	    -variable [::itcl::scope mVIndex] \
-	    -value 3 \
-	    -relief flat \
-	    -overrelief raised \
-	    -offrelief flat \
-	    -borderwidth 1 \
-	    -padx 0 \
-	    -highlightthickness 0 \
-	    -state disabled \
 	    -anchor e
-    } {
-	rename -font -labelFont labelFont Font
-    }
-    $itk_component(arb7V3L) configure \
-	-disabledforeground [$itk_component(arb7V3L) cget -foreground] \
-	-selectcolor  [$itk_component(arb7V3L) cget -background]
+    } {}
     itk_component add arb7V3xE {
-	::entry $parent.arb7V3xE \
+	::ttk::entry $parent.arb7V3xE \
 	    -textvariable [::itcl::scope mV3x] \
 	    -state disabled \
-	    -disabledforeground black \
 	    -validate key \
 	    -validatecommand {GeometryEditFrame::validateDouble %P}
-    } {
-	rename -font -entryFont entryFont Font
-    }
+    } {}
     itk_component add arb7V3yE {
-	::entry $parent.arb7V3yE \
+	::ttk::entry $parent.arb7V3yE \
 	    -textvariable [::itcl::scope mV3y] \
 	    -state disabled \
-	    -disabledforeground black \
 	    -validate key \
 	    -validatecommand {GeometryEditFrame::validateDouble %P}
-    } {
-	rename -font -entryFont entryFont Font
-    }
+    } {}
     itk_component add arb7V3zE {
-	::entry $parent.arb7V3zE \
+	::ttk::entry $parent.arb7V3zE \
 	    -textvariable [::itcl::scope mV3z] \
 	    -state disabled \
-	    -disabledforeground black \
 	    -validate key \
 	    -validatecommand {GeometryEditFrame::validateDouble %P}
-    } {
-	rename -font -entryFont entryFont Font
-    }
+    } {}
     itk_component add arb7V3UnitsL {
-	::label $parent.arb7V3UnitsL \
+	::ttk::label $parent.arb7V3UnitsL \
 	    -textvariable [::itcl::scope itk_option(-units)] \
 	    -anchor e
-    } {
-	rename -font -labelFont labelFont Font
-    }
+    } {}
     itk_component add arb7V4L {
-	::radiobutton $parent.arb7V4L \
+	::ttk::label $parent.arb7V4L \
 	    -text "V4:" \
-	    -indicatoron 0 \
-	    -variable [::itcl::scope mVIndex] \
-	    -value 4 \
-	    -relief flat \
-	    -overrelief raised \
-	    -offrelief flat \
-	    -borderwidth 1 \
-	    -padx 0 \
-	    -highlightthickness 0 \
-	    -state disabled \
 	    -anchor e
-    } {
-	rename -font -labelFont labelFont Font
-    }
-    $itk_component(arb7V4L) configure \
-	-disabledforeground [$itk_component(arb7V4L) cget -foreground] \
-	-selectcolor  [$itk_component(arb7V4L) cget -background]
+    } {}
     itk_component add arb7V4xE {
-	::entry $parent.arb7V4xE \
+	::ttk::entry $parent.arb7V4xE \
 	    -textvariable [::itcl::scope mV4x] \
 	    -state disabled \
-	    -disabledforeground black \
 	    -validate key \
 	    -validatecommand {GeometryEditFrame::validateDouble %P}
-    } {
-	rename -font -entryFont entryFont Font
-    }
+    } {}
     itk_component add arb7V4yE {
-	::entry $parent.arb7V4yE \
+	::ttk::entry $parent.arb7V4yE \
 	    -textvariable [::itcl::scope mV4y] \
 	    -state disabled \
-	    -disabledforeground black \
 	    -validate key \
 	    -validatecommand {GeometryEditFrame::validateDouble %P}
-    } {
-	rename -font -entryFont entryFont Font
-    }
+    } {}
     itk_component add arb7V4zE {
-	::entry $parent.arb7V4zE \
+	::ttk::entry $parent.arb7V4zE \
 	    -textvariable [::itcl::scope mV4z] \
 	    -state disabled \
-	    -disabledforeground black \
 	    -validate key \
 	    -validatecommand {GeometryEditFrame::validateDouble %P}
-    } {
-	rename -font -entryFont entryFont Font
-    }
+    } {}
     itk_component add arb7V4UnitsL {
-	::label $parent.arb7V4UnitsL \
+	::ttk::label $parent.arb7V4UnitsL \
 	    -textvariable [::itcl::scope itk_option(-units)] \
 	    -anchor e
-    } {
-	rename -font -labelFont labelFont Font
-    }
+    } {}
     itk_component add arb7V5L {
-	::radiobutton $parent.arb7V5L \
+	::ttk::label $parent.arb7V5L \
 	    -text "V5:" \
-	    -indicatoron 0 \
-	    -variable [::itcl::scope mVIndex] \
-	    -value 5 \
-	    -relief flat \
-	    -overrelief raised \
-	    -offrelief flat \
-	    -borderwidth 1 \
-	    -padx 0 \
-	    -highlightthickness 0 \
-	    -state disabled \
 	    -anchor e
-    } {
-	rename -font -labelFont labelFont Font
-    }
-    $itk_component(arb7V5L) configure \
-	-disabledforeground [$itk_component(arb7V5L) cget -foreground] \
-	-selectcolor  [$itk_component(arb7V5L) cget -background]
+    } {}
     itk_component add arb7V5xE {
-	::entry $parent.arb7V5xE \
+	::ttk::entry $parent.arb7V5xE \
 	    -textvariable [::itcl::scope mV5x] \
 	    -state disabled \
-	    -disabledforeground black \
 	    -validate key \
 	    -validatecommand {GeometryEditFrame::validateDouble %P}
-    } {
-	rename -font -entryFont entryFont Font
-    }
+    } {}
     itk_component add arb7V5yE {
-	::entry $parent.arb7V5yE \
+	::ttk::entry $parent.arb7V5yE \
 	    -textvariable [::itcl::scope mV5y] \
 	    -state disabled \
-	    -disabledforeground black \
 	    -validate key \
 	    -validatecommand {GeometryEditFrame::validateDouble %P}
-    } {
-	rename -font -entryFont entryFont Font
-    }
+    } {}
     itk_component add arb7V5zE {
-	::entry $parent.arb7V5zE \
+	::ttk::entry $parent.arb7V5zE \
 	    -textvariable [::itcl::scope mV5z] \
 	    -state disabled \
-	    -disabledforeground black \
 	    -validate key \
 	    -validatecommand {GeometryEditFrame::validateDouble %P}
-    } {
-	rename -font -entryFont entryFont Font
-    }
+    } {}
     itk_component add arb7V5UnitsL {
-	::label $parent.arb7V5UnitsL \
+	::ttk::label $parent.arb7V5UnitsL \
 	    -textvariable [::itcl::scope itk_option(-units)] \
 	    -anchor e
-    } {
-	rename -font -labelFont labelFont Font
-    }
+    } {}
     itk_component add arb7V6L {
-	::radiobutton $parent.arb7V6L \
+	::ttk::label $parent.arb7V6L \
 	    -text "V6:" \
-	    -indicatoron 0 \
-	    -variable [::itcl::scope mVIndex] \
-	    -value 6 \
-	    -relief flat \
-	    -overrelief raised \
-	    -offrelief flat \
-	    -borderwidth 1 \
-	    -padx 0 \
-	    -highlightthickness 0 \
-	    -state disabled \
 	    -anchor e
-    } {
-	rename -font -labelFont labelFont Font
-    }
-    $itk_component(arb7V6L) configure \
-	-disabledforeground [$itk_component(arb7V6L) cget -foreground] \
-	-selectcolor  [$itk_component(arb7V6L) cget -background]
+    } {}
     itk_component add arb7V6xE {
-	::entry $parent.arb7V6xE \
+	::ttk::entry $parent.arb7V6xE \
 	    -textvariable [::itcl::scope mV6x] \
 	    -state disabled \
-	    -disabledforeground black \
 	    -validate key \
 	    -validatecommand {GeometryEditFrame::validateDouble %P}
-    } {
-	rename -font -entryFont entryFont Font
-    }
+    } {}
     itk_component add arb7V6yE {
-	::entry $parent.arb7V6yE \
+	::ttk::entry $parent.arb7V6yE \
 	    -textvariable [::itcl::scope mV6y] \
 	    -state disabled \
-	    -disabledforeground black \
 	    -validate key \
 	    -validatecommand {GeometryEditFrame::validateDouble %P}
-    } {
-	rename -font -entryFont entryFont Font
-    }
+    } {}
     itk_component add arb7V6zE {
-	::entry $parent.arb7V6zE \
+	::ttk::entry $parent.arb7V6zE \
 	    -textvariable [::itcl::scope mV6z] \
 	    -state disabled \
-	    -disabledforeground black \
 	    -validate key \
 	    -validatecommand {GeometryEditFrame::validateDouble %P}
-    } {
-	rename -font -entryFont entryFont Font
-    }
+    } {}
     itk_component add arb7V6UnitsL {
-	::label $parent.arb7V6UnitsL \
+	::ttk::label $parent.arb7V6UnitsL \
 	    -textvariable [::itcl::scope itk_option(-units)] \
 	    -anchor e
-    } {
-	rename -font -labelFont labelFont Font
-    }
+    } {}
     itk_component add arb7V7L {
-	::radiobutton $parent.arb7V7L \
+	::ttk::label $parent.arb7V7L \
 	    -text "V7:" \
-	    -indicatoron 0 \
-	    -variable [::itcl::scope mVIndex] \
-	    -value 7 \
-	    -relief flat \
-	    -overrelief raised \
-	    -offrelief flat \
-	    -borderwidth 1 \
-	    -padx 0 \
-	    -highlightthickness 0 \
-	    -state disabled \
 	    -anchor e
-    } {
-	rename -font -labelFont labelFont Font
-    }
-    $itk_component(arb7V7L) configure \
-	-disabledforeground [$itk_component(arb7V7L) cget -foreground] \
-	-selectcolor  [$itk_component(arb7V7L) cget -background]
+    } {}
     itk_component add arb7V7xE {
-	::entry $parent.arb7V7xE \
+	::ttk::entry $parent.arb7V7xE \
 	    -textvariable [::itcl::scope mV7x] \
 	    -state disabled \
-	    -disabledforeground black \
 	    -validate key \
 	    -validatecommand {GeometryEditFrame::validateDouble %P}
-    } {
-	rename -font -entryFont entryFont Font
-    }
+    } {}
     itk_component add arb7V7yE {
-	::entry $parent.arb7V7yE \
+	::ttk::entry $parent.arb7V7yE \
 	    -textvariable [::itcl::scope mV7y] \
 	    -state disabled \
-	    -disabledforeground black \
 	    -validate key \
 	    -validatecommand {GeometryEditFrame::validateDouble %P}
-    } {
-	rename -font -entryFont entryFont Font
-    }
+    } {}
     itk_component add arb7V7zE {
-	::entry $parent.arb7V7zE \
+	::ttk::entry $parent.arb7V7zE \
 	    -textvariable [::itcl::scope mV7z] \
 	    -state disabled \
-	    -disabledforeground black \
 	    -validate key \
 	    -validatecommand {GeometryEditFrame::validateDouble %P}
-    } {
-	rename -font -entryFont entryFont Font
-    }
+    } {}
     itk_component add arb7V7UnitsL {
-	::label $parent.arb7V7UnitsL \
+	::ttk::label $parent.arb7V7UnitsL \
 	    -textvariable [::itcl::scope itk_option(-units)] \
 	    -anchor e
-    } {
-	rename -font -labelFont labelFont Font
-    }
+    } {}
 
     set row 0
     grid $itk_component(arb7Type) \
@@ -762,7 +570,7 @@
 ::itcl::body Arb7EditFrame::buildMoveEdgePanel {parent} {
     foreach edge {12 23 34 14 15 26 56 67 37 57 45} {
 	itk_component add moveEdge$edge {
-	    ::radiobutton $parent.me$edge \
+	    ::ttk::radiobutton $parent.me$edge \
 		-variable [::itcl::scope mEditMode] \
 		-value [subst $[subst moveEdge$edge]] \
 		-text "Move edge $edge" \
@@ -776,7 +584,7 @@
 
     foreach point {5} {
 	itk_component add movePoint$point {
-	    ::radiobutton $parent.me$point \
+	    ::ttk::radiobutton $parent.me$point \
 		-variable [::itcl::scope mEditMode] \
 		-value [subst $[subst movePoint$point]] \
 		-text "Move point $point" \
@@ -792,7 +600,7 @@
 ::itcl::body Arb7EditFrame::buildMoveFacePanel {parent} {
     foreach face {1234 2376} {
 	itk_component add moveFace$face {
-	    ::radiobutton $parent.mf$face \
+	    ::ttk::radiobutton $parent.mf$face \
 		-variable [::itcl::scope mEditMode] \
 		-value [subst $[subst moveFace$face]] \
 		-text "Move face $face" \
@@ -808,7 +616,7 @@
 ::itcl::body Arb7EditFrame::buildRotateFacePanel {parent} {
     foreach face {1234 567 145 2376 1265 4375} {
 	itk_component add rotateFace$face {
-	    ::radiobutton $parent.rf$face \
+	    ::ttk::radiobutton $parent.rf$face \
 		-variable [::itcl::scope mEditMode] \
 		-value [subst $[subst rotateFace$face]] \
 		-text "Rotate face $face" \
@@ -925,16 +733,12 @@
 	}
     }
 
-    set gdata [$itk_option(-mged) move_arb_edge \
-		   $itk_option(-geometryObject) \
-		   $edgeIndex \
-		   [list $mValueX $mValueY $mValueZ]]
+    $itk_option(-mged) move_arb_edge \
+	$itk_option(-geometryObjectPath) \
+	$edgeIndex \
+	[list $mValueX $mValueY $mValueZ]
 
-    eval $itk_option(-mged) adjust \
-	$itk_option(-geometryObject) \
-	$gdata
-
-    initGeometry $gdata
+    initGeometry [lrange [$itk_option(-mged) get $itk_option(-geometryObject)] 1 end]
 
     if {$itk_option(-geometryChangedCallback) != ""} {
 	$itk_option(-geometryChangedCallback)
@@ -951,16 +755,12 @@
 	}
     }
 
-    set gdata [$itk_option(-mged) move_arb_face \
-		   $itk_option(-geometryObject) \
-		   $faceIndex \
-		   [list $mValueX $mValueY $mValueZ]]
+    $itk_option(-mged) move_arb_face \
+	$itk_option(-geometryObjectPath) \
+	$faceIndex \
+	[list $mValueX $mValueY $mValueZ]
 
-    eval $itk_option(-mged) adjust \
-	$itk_option(-geometryObject) \
-	$gdata
-
-    initGeometry $gdata
+    initGeometry [lrange [$itk_option(-mged) get $itk_option(-geometryObject)] 1 end]
 
     if {$itk_option(-geometryChangedCallback) != ""} {
 	$itk_option(-geometryChangedCallback)
@@ -989,17 +789,13 @@
 	}
     }
 
-    set gdata [$itk_option(-mged) rotate_arb_face \
-		   $itk_option(-geometryObject) \
-		   $faceIndex \
-		   $mVIndex \
-		   [list $mValueX $mValueY $mValueZ]]
+    $itk_option(-mged) rotate_arb_face \
+	$itk_option(-geometryObjectPath) \
+	$faceIndex \
+	$mEditParam2 \
+	[list $mValueX $mValueY $mValueZ]
 
-    eval $itk_option(-mged) adjust \
-	$itk_option(-geometryObject) \
-	$gdata
-
-    initGeometry $gdata
+    initGeometry [lrange [$itk_option(-mged) get $itk_option(-geometryObject)] 1 end]
 
     if {$itk_option(-geometryChangedCallback) != ""} {
 	$itk_option(-geometryChangedCallback)
@@ -1127,106 +923,155 @@
 ::itcl::body Arb7EditFrame::initValuePanel {} {
     switch -- $mEditMode \
 	$moveEdge12 { \
-			  set mVIndex 0; \
+			  set mEditCommand move_arb_edge; \
+			  set mEditClass $EDIT_CLASS_TRANS; \
+			  set mEditParam1 1; \
 			  configure -valueUnits "mm"; \
 			  updateUpperPanel {} {1 2 3 4 5 6 7} \
 		      } \
 	$moveEdge23 { \
-			  set mVIndex 0; \
+			  set mEditCommand move_arb_edge; \
+			  set mEditClass $EDIT_CLASS_TRANS; \
+			  set mEditParam1 2; \
 			  configure -valueUnits "mm"; \
 			  updateUpperPanel {} {1 2 3 4 5 6 7} \
 		      } \
 	$moveEdge34 { \
-			  set mVIndex 0; \
+			  set mEditCommand move_arb_edge; \
+			  set mEditClass $EDIT_CLASS_TRANS; \
+			  set mEditParam1 3; \
 			  configure -valueUnits "mm"; \
 			  updateUpperPanel {} {1 2 3 4 5 6 7} \
 		      } \
 	$moveEdge14 { \
-			  set mVIndex 0; \
+			  set mEditCommand move_arb_edge; \
+			  set mEditClass $EDIT_CLASS_TRANS; \
+			  set mEditParam1 4; \
 			  configure -valueUnits "mm"; \
 			  updateUpperPanel {} {1 2 3 4 5 6 7} \
 		      } \
 	$moveEdge15 { \
-			  set mVIndex 0; \
+			  set mEditCommand move_arb_edge; \
+			  set mEditClass $EDIT_CLASS_TRANS; \
+			  set mEditParam1 5; \
 			  configure -valueUnits "mm"; \
 			  updateUpperPanel {} {1 2 3 4 5 6 7} \
 		      } \
 	$moveEdge26 { \
-			  set mVIndex 0; \
+			  set mEditCommand move_arb_edge; \
+			  set mEditClass $EDIT_CLASS_TRANS; \
+			  set mEditParam1 6; \
 			  configure -valueUnits "mm"; \
 			  updateUpperPanel {} {1 2 3 4 5 6 7} \
 		      } \
 	$moveEdge56 { \
-			  set mVIndex 0; \
+			  set mEditCommand move_arb_edge; \
+			  set mEditClass $EDIT_CLASS_TRANS; \
+			  set mEditParam1 7; \
 			  configure -valueUnits "mm"; \
 			  updateUpperPanel {} {1 2 3 4 5 6 7} \
 		      } \
 	$moveEdge67 { \
-			  set mVIndex 0; \
+			  set mEditCommand move_arb_edge; \
+			  set mEditClass $EDIT_CLASS_TRANS; \
+			  set mEditParam1 8; \
 			  configure -valueUnits "mm"; \
 			  updateUpperPanel {} {1 2 3 4 5 6 7} \
 		      } \
 	$moveEdge37 { \
-			  set mVIndex 0; \
+			  set mEditCommand move_arb_edge; \
+			  set mEditClass $EDIT_CLASS_TRANS; \
+			  set mEditParam1 9; \
 			  configure -valueUnits "mm"; \
 			  updateUpperPanel {} {1 2 3 4 5 6 7} \
 		      } \
 	$moveEdge57 { \
-			  set mVIndex 0; \
+			  set mEditCommand move_arb_edge; \
+			  set mEditClass $EDIT_CLASS_TRANS; \
+			  set mEditParam1 10; \
 			  configure -valueUnits "mm"; \
 			  updateUpperPanel {} {1 2 3 4 5 6 7} \
 		      } \
 	$moveEdge45 { \
-			  set mVIndex 0; \
+			  set mEditCommand move_arb_edge; \
+			  set mEditClass $EDIT_CLASS_TRANS; \
+			  set mEditParam1 11; \
 			  configure -valueUnits "mm"; \
 			  updateUpperPanel {} {1 2 3 4 5 6 7} \
 		      } \
 	$movePoint5 { \
-			  set mVIndex 0; \
+			  set mEditCommand move_arb_edge; \
+			  set mEditClass $EDIT_CLASS_TRANS; \
+			  set mEditParam1 12; \
 			  configure -valueUnits "mm"; \
 			  updateUpperPanel {} {1 2 3 4 5 6 7} \
 		      } \
 	$moveFace1234 { \
-			    set mVIndex 0; \
+			    set mEditCommand move_arb_face; \
+			    set mEditClass $EDIT_CLASS_TRANS; \
+			    set mEditParam1 1; \
 			    configure -valueUnits "mm"; \
 			    updateUpperPanel {} {1 2 3 4 5 6 7} \
 			} \
 	$moveFace2376 { \
-			    set mVIndex 0; \
+			    set mEditCommand move_arb_face; \
+			    set mEditClass $EDIT_CLASS_TRANS; \
+			    set mEditParam1 4; \
 			    configure -valueUnits "mm"; \
 			    updateUpperPanel {} {1 2 3 4 5 6 7} \
 			} \
 	$rotateFace1234 { \
-			      set mVIndex 1; \
+			      set mEditCommand rotate_arb_face; \
+			      set mEditClass $EDIT_CLASS_ROT; \
+			      set mEditParam1 1; \
+			      set mEditParam2 1; \
+			      invokeRotationPointDialog {1 2 3 4}; \
 			      configure -valueUnits "deg"; \
 			      updateUpperPanel {1 2 3 4} {5 6 7} \
 			  } \
 	$rotateFace567 { \
-			     set mVIndex 5; \
+			     set mEditCommand rotate_arb_face; \
+			     set mEditClass $EDIT_CLASS_ROT; \
+			     set mEditParam1 2; \
+			     set mEditParam2 5; \
 			     configure -valueUnits "deg"; \
 			     updateUpperPanel {5} {1 2 3 4 6 7} \
 			 } \
 	$rotateFace145 { \
-			     set mVIndex 5; \
+			     set mEditCommand rotate_arb_face; \
+			     set mEditClass $EDIT_CLASS_ROT; \
+			     set mEditParam1 3; \
+			     set mEditParam2 5; \
 			     configure -valueUnits "deg"; \
 			     updateUpperPanel {5} {1 2 3 4 6 7} \
 			 } \
 	$rotateFace2376 { \
-			      set mVIndex 2; \
+			      set mEditCommand rotate_arb_face; \
+			      set mEditClass $EDIT_CLASS_ROT; \
+			      set mEditParam1 4; \
+			      set mEditParam2 2; \
+			      invokeRotationPointDialog {2 3 6 7}; \
 			      configure -valueUnits "deg"; \
 			      updateUpperPanel {2 3 6 7} {1 4 5} \
 			  } \
 	$rotateFace1265 { \
-			      set mVIndex 5; \
+			      set mEditCommand rotate_arb_face; \
+			      set mEditClass $EDIT_CLASS_ROT; \
+			      set mEditParam1 5; \
+			      set mEditParam2 5; \
 			      configure -valueUnits "deg"; \
 			      updateUpperPanel {5} {1 2 3 4 6 7} \
 			  } \
 	$rotateFace4375 { \
-			      set mVIndex 5; \
+			      set mEditCommand rotate_arb_face; \
+			      set mEditClass $EDIT_CLASS_ROT; \
+			      set mEditParam1 6; \
+			      set mEditParam2 5; \
 			      configure -valueUnits "deg"; \
 			      updateUpperPanel {5} {1 2 3 4 6 7} \
 			  }
 
+    GeometryEditFrame::initValuePanel
     updateValuePanel
 }
 
