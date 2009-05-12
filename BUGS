@@ -14,6 +14,8 @@ on-going issues.
 
 Recent Bugs
 -----------
+* coil -S ... generates bad pipes with values previously known to
+  work (see man page for one example).
 
 * nirt -e "xyz val val val" doesn't work due to the space after the -e
   and how the nirt/rt commands parse quoted args.
