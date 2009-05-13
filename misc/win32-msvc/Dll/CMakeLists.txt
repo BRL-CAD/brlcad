@@ -47,6 +47,7 @@ set(BRLCAD_SOURCES
     TclDummies.c
     ../../../../rt^3/src/coreInterface/Arb8.cpp
     ../../../../rt^3/src/coreInterface/Combination.cpp
+    ../../../../rt^3/src/coreInterface/Cone.cpp
     ../../../../rt^3/src/coreInterface/ConstDatabase.cpp
     ../../../../rt^3/src/coreInterface/Database.cpp
     ../../../../rt^3/src/coreInterface/Ellipsoid.cpp
