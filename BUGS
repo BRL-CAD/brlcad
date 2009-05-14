@@ -14,6 +14,12 @@ on-going issues.
 
 Recent Bugs
 -----------
+
+* fastgen plate mode bots are reporting invalid shotline segments.
+  depending on whether you shoot from the front or back can result in
+  bogus lists visiable with nirt in mged, entirely missing the bot, or
+  mismatched entry/exit/overlap segments.
+
 * coil -S ... generates bad pipes with values previously known to
   work (see man page for one example).
 
