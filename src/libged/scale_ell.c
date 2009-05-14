@@ -20,14 +20,6 @@
 /** @file scale_ell.c
  *
  * The scale_ell command.
- *
- * FIXME: This command really probably shouldn't exist.  The way MGED
- * currently handles scaling is to pass a transformation matrix to
- * transform_editing_solid(), which simply calls
- * rt_matrix_transform().  The primitives already know how to apply an
- * arbitrary matrix transform to their data making the need for
- * primitive-specific editing commands such as this one unnecessary.
- *
  */
 
 #include "common.h"
@@ -42,7 +34,7 @@
 #include "./ged_private.h"
 
 int
-ged_scale_ell(struct ged *gedp, struct rt_ell_internal *ell, char *attribute, fastf_t sf)
+ged_scale_ell(struct ged *gedp, struct rt_ell_internal *ell, const char *attribute, fastf_t sf)
 {
     fastf_t ma, mb;
 

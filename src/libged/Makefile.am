@@ -175,6 +175,8 @@ libged_nil_la_SOURCES = \
 	scale.c \
 	scale_ehy.c \
 	scale_ell.c \
+	scale_epa.c \
+	scale_part.c \
 	scale_tor.c \
 	search.c \
 	set_output_script.c \

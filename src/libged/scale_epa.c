@@ -1,4 +1,4 @@
-/*                         S C A L E _ T O R . C
+/*                         S C A L E _ E P A . C
  * BRL-CAD
  *
  * Copyright (c) 2008-2009 United States Government as represented by
@@ -17,10 +17,9 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file scale_tor.c
+/** @file scale_epa.c
  *
- * The scale_tor command.
- *
+ * The scale_epa command.
  */
 
 #include "common.h"
@@ -34,27 +33,30 @@
 
 #include "./ged_private.h"
 
-
 int
-ged_scale_tor(struct ged *gedp, struct rt_tor_internal *tor, const char *attribute, fastf_t sf)
+ged_scale_epa(struct ged *gedp, struct rt_epa_internal *epa, const char *attribute, fastf_t sf)
 {
-    RT_TOR_CK_MAGIC(tor);
+    fastf_t ma, mb;
+
+    RT_EPA_CK_MAGIC(epa);
 
     switch (attribute[0]) {
-    case 'a':
-    case 'A':
-	tor->r_a *= sf;
-	if (tor->r_a < SMALL)
-	    tor->r_a = 4*SMALL;
-	break;
     case 'h':
     case 'H':
-	tor->r_h *= sf;
-	if (tor->r_h < SMALL)
-	    tor->r_h = 4*SMALL;
+	VSCALE(epa->epa_H, epa->epa_H, sf);
+	break;
+    case 'a':
+    case 'A':
+	if (epa->epa_r1 * sf >= epa->epa_r2)
+	    epa->epa_r1 *= sf;
+	break;
+    case 'b':
+    case 'B':
+	if (epa->epa_r2 * sf <= epa->epa_r1)
+	    epa->epa_r2 *= sf;
 	break;
     default:
-	bu_vls_printf(&gedp->ged_result_str, "bad tor attribute - %s", attribute);
+	bu_vls_printf(&gedp->ged_result_str, "bad epa attribute - %s", attribute);
 	return BRLCAD_ERROR;
     }
 

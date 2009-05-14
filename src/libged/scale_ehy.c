@@ -17,9 +17,9 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file scale_ell.c
+/** @file scale_ehy.c
  *
- * The scale_ell command.
+ * The scale_ehy command.
  *
  * FIXME: This command really probably shouldn't exist.  The way MGED
  * currently handles scaling is to pass a transformation matrix to
@@ -42,7 +42,7 @@
 #include "./ged_private.h"
 
 int
-ged_scale_ehy(struct ged *gedp, struct rt_ehy_internal *ehy, char *attribute, fastf_t sf)
+ged_scale_ehy(struct ged *gedp, struct rt_ehy_internal *ehy, const char *attribute, fastf_t sf)
 {
     fastf_t ma, mb;
 

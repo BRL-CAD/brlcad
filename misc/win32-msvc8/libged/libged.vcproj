@@ -906,7 +906,19 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\src\libged\scale_ehy.c"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\src\libged\scale_ell.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\src\libged\scale_epa.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\src\libged\scale_part.c"
 				>
 			</File>
 			<File

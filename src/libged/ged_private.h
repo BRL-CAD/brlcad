@@ -336,21 +336,35 @@ BU_EXTERN (void ged_wait_status,
 BU_EXTERN (int ged_scale_ehy,
 	   (struct ged *gedp,
 	    struct rt_ehy_internal *ehy,
-	    char *attribute,
+	    const char *attribute,
 	    fastf_t sf));
 
 /* defined in scale_ell.c */
 BU_EXTERN (int ged_scale_ell,
 	   (struct ged *gedp,
 	    struct rt_ell_internal *ell,
-	    char *attribute,
+	    const char *attribute,
+	    fastf_t sf));
+
+/* defined in scale_epa.c */
+BU_EXTERN (int ged_scale_epa,
+	   (struct ged *gedp,
+	    struct rt_epa_internal *epa,
+	    const char *attribute,
+	    fastf_t sf));
+
+/* defined in scale_part.c */
+BU_EXTERN (int ged_scale_part,
+	   (struct ged *gedp,
+	    struct rt_part_internal *part,
+	    const char *attribute,
 	    fastf_t sf));
 
 /* defined in scale_tor.c */
 BU_EXTERN (int ged_scale_tor,
 	   (struct ged *gedp,
 	    struct rt_tor_internal *tor,
-	    char *attribute,
+	    const char *attribute,
 	    fastf_t sf));
 
 /* defined in tops.c */
