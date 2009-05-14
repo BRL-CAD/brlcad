@@ -158,6 +158,8 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
 
 * implement -exec support for 'search' command
 
+* implement -param support for 'search' command
+
 * make ged command names aware of object arguments for automatic
   globbing and regular expression expansion:
 	attr set t 1 [regex .*\.r]
