@@ -6,10 +6,16 @@ Linux distributions.
 
 Table of Contents
 -----------------
+64-bit Compile
 Arch Linux
 Ubuntu/Debian
 PPC64 Linux
 
+64-bit Compile
+--------------
+Supply configure options as follows:
+
+./configure CFLAGS=-m64 CXXFLAGS=-m64 LDFLAGS=-m64 --enable-64bit-build --enable-optimized --enable-all --prefix=/usr/brlcad/rel-MAJOR.MINOR.PATCH
 
 Arch Linux
 ----------
