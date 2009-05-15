@@ -20,14 +20,6 @@
 /** @file scale_ehy.c
  *
  * The scale_ehy command.
- *
- * FIXME: This command really probably shouldn't exist.  The way MGED
- * currently handles scaling is to pass a transformation matrix to
- * transform_editing_solid(), which simply calls
- * rt_matrix_transform().  The primitives already know how to apply an
- * arbitrary matrix transform to their data making the need for
- * primitive-specific editing commands such as this one unnecessary.
- *
  */
 
 #include "common.h"

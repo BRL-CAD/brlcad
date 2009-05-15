@@ -77,6 +77,9 @@ ged_get_type(struct ged *gedp, int argc, const char *argv[])
 	case DB5_MINORTYPE_BRLCAD_ELL:
 	    bu_vls_printf(&gedp->ged_result_str, "ell");
 	    break;
+	case DB5_MINORTYPE_BRLCAD_SUPERELL:
+	    bu_vls_printf(&gedp->ged_result_str, "superell");
+	    break;
 	case DB5_MINORTYPE_BRLCAD_ARB8:
 	    type = rt_arb_std_type(&intern, &gedp->ged_wdbp->wdb_tol);
 

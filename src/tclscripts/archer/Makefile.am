@@ -30,6 +30,7 @@ scripts = \
 	RpcEditFrame.tcl \
 	ShaderEdit.tcl \
 	SphereEditFrame.tcl \
+	SuperellEditFrame.tcl \
 	tabwindow.itk \
 	TgcEditFrame.tcl \
 	TorusEditFrame.tcl \

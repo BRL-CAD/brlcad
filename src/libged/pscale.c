@@ -17,17 +17,9 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file scale_ell.c
+/** @file pscale.c
  *
- * The scale_ell command.
- *
- * FIXME: This command really probably shouldn't exist.  The way MGED
- * currently handles scaling is to pass a transformation matrix to
- * transform_editing_solid(), which simply calls
- * rt_matrix_transform().  The primitives already know how to apply an
- * arbitrary matrix transform to their data making the need for
- * primitive-specific editing commands such as this one unnecessary.
- *
+ * The pscale command.
  */
 
 #include "common.h"
@@ -122,6 +114,15 @@ ged_pscale(struct ged *gedp, int argc, const char *argv[])
 	break;
     case DB5_MINORTYPE_BRLCAD_TOR:
 	ret = ged_scale_tor(gedp, (struct rt_tor_internal *)intern.idb_ptr, argv[2], sf);
+	break;
+    case DB5_MINORTYPE_BRLCAD_RHC:
+	ret = ged_scale_rhc(gedp, (struct rt_rhc_internal *)intern.idb_ptr, argv[2], sf);
+	break;
+    case DB5_MINORTYPE_BRLCAD_RPC:
+	ret = ged_scale_rpc(gedp, (struct rt_rpc_internal *)intern.idb_ptr, argv[2], sf);
+	break;
+    case DB5_MINORTYPE_BRLCAD_SUPERELL:
+	ret = ged_scale_superell(gedp, (struct rt_superell_internal *)intern.idb_ptr, argv[2], sf);
 	break;
     default:
 	bu_vls_printf(&gedp->ged_result_str, "Object not yet supported.");

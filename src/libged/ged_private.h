@@ -367,6 +367,27 @@ BU_EXTERN (int ged_scale_tor,
 	    const char *attribute,
 	    fastf_t sf));
 
+/* defined in scale_rhc.c */
+BU_EXTERN (int ged_scale_rhc,
+	   (struct ged *gedp,
+	    struct rt_rhc_internal *rhc,
+	    const char *attribute,
+	    fastf_t sf));
+
+/* defined in scale_rpc.c */
+BU_EXTERN (int ged_scale_rpc,
+	   (struct ged *gedp,
+	    struct rt_rpc_internal *rpc,
+	    const char *attribute,
+	    fastf_t sf));
+
+/* defined in scale_superell.c */
+BU_EXTERN (int ged_scale_superell,
+	   (struct ged *gedp,
+	    struct rt_superell_internal *superell,
+	    const char *attribute,
+	    fastf_t sf));
+
 /* defined in tops.c */
 struct directory **
 ged_dir_getspace(struct db_i	*dbip,

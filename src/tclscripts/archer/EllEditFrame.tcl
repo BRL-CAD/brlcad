@@ -58,6 +58,8 @@
 	variable mCy ""
 	variable mCz ""
 
+	variable mCurrentGridRow 0
+
 	# Methods used by the constructor
 	# override methods in GeometryEditFrame
 	method buildUpperPanel
@@ -301,51 +303,50 @@
 	    -anchor e
     } {}
 
-    set row 0
     grid $itk_component(ellType) \
-	-row $row \
+	-row $mCurrentGridRow \
 	-column 0 \
 	-sticky nsew
     grid $itk_component(ellName) \
-	-row $row \
+	-row $mCurrentGridRow \
 	-column 1 \
 	-columnspan 3 \
 	-sticky nsew
-    incr row
+    incr mCurrentGridRow
     grid x $itk_component(ellXL) \
 	$itk_component(ellYL) \
 	$itk_component(ellZL)
-    incr row
+    incr mCurrentGridRow
     grid $itk_component(ellVL) \
 	$itk_component(ellVxE) \
 	$itk_component(ellVyE) \
 	$itk_component(ellVzE) \
 	$itk_component(ellVUnitsL) \
-	-row $row \
+	-row $mCurrentGridRow \
 	-sticky nsew
-    incr row
+    incr mCurrentGridRow
     grid $itk_component(ellAL) \
 	$itk_component(ellAxE) \
 	$itk_component(ellAyE) \
 	$itk_component(ellAzE) \
 	$itk_component(ellAUnitsL) \
-	-row $row \
+	-row $mCurrentGridRow \
 	-sticky nsew
-    incr row
+    incr mCurrentGridRow
     grid $itk_component(ellBL) \
 	$itk_component(ellBxE) \
 	$itk_component(ellByE) \
 	$itk_component(ellBzE) \
 	$itk_component(ellBUnitsL) \
-	-row $row \
+	-row $mCurrentGridRow \
 	-sticky nsew
-    incr row
+    incr mCurrentGridRow
     grid $itk_component(ellCL) \
 	$itk_component(ellCxE) \
 	$itk_component(ellCyE) \
 	$itk_component(ellCzE) \
 	$itk_component(ellCUnitsL) \
-	-row $row \
+	-row $mCurrentGridRow \
 	-sticky nsew
     grid columnconfigure $parent 1 -weight 1
     grid columnconfigure $parent 2 -weight 1

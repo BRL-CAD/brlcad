@@ -240,6 +240,7 @@ package provide Archer 1.0
 	method buildRpcEditView {}
 	method buildSketchEditView {}
 	method buildSphereEditView {}
+	method buildSuperellEditView {}
 	method buildTgcEditView {}
 	method buildTorusEditView {}
 
@@ -268,6 +269,7 @@ package provide Archer 1.0
 	method initRpcEditView {_odata}
 	method initSketchEditView {_odata}
 	method initSphereEditView {_odata}
+	method initSuperellEditView {_odata}
 	method initTgcEditView {_odata}
 	method initTorusEditView {_odata}
 
@@ -322,6 +324,7 @@ package provide Archer 1.0
 	method createRpc {_name}
 	method createSketch {_name}
 	method createSphere {_name}
+	method createSuperell {_name}
 	method createTgc {_name}
 	method createTorus {_name}
     }
@@ -3699,6 +3702,12 @@ package provide Archer 1.0
 	    }
 	    initSphereEditView $odata
 	}
+	"superell" {
+	    if {![info exists itk_component(superellView)]} {
+		buildSuperellEditView
+	    }
+	    initSuperellEditView $odata
+	}
 	"tgc" {
 	    if {![info exists itk_component(tgcView)]} {
 		buildTgcEditView
@@ -4282,6 +4291,14 @@ package provide Archer 1.0
     } {}
 }
 
+::itcl::body Archer::buildSuperellEditView {} {
+    set parent $itk_component(objEditView)
+    itk_component add superellView {
+	SuperellEditFrame $parent.superellview \
+	    -units "mm"
+    } {}
+}
+
 ::itcl::body Archer::buildTgcEditView {} {
     set parent $itk_component(objEditView)
     itk_component add tgcView {
@@ -4839,6 +4856,21 @@ package provide Archer 1.0
     $itk_component(sphView) initGeometry $odata
 
     pack $itk_component(sphView) \
+	-expand yes \
+	-fill both
+}
+
+::itcl::body Archer::initSuperellEditView {odata} {
+    $itk_component(superellView) configure \
+	-geometryObject $mSelectedObj \
+	-geometryChangedCallback [::itcl::code $this updateObjEditView] \
+	-mged $itk_component(ged) \
+	-labelFont $mFontText \
+	-boldLabelFont $mFontTextBold \
+	-entryFont $mFontText
+    $itk_component(superellView) initGeometry $odata
+
+    pack $itk_component(superellView) \
 	-expand yes \
 	-fill both
 }
@@ -6001,6 +6033,10 @@ package provide Archer 1.0
 	    set name [gedCmd make_name "sph."]
 	    createSphere $name
 	}
+	"superell" {
+	    set name [gedCmd make_name "ell."]
+	    createSuperell $name
+	}
 	"tgc" {
 	    set name [gedCmd make_name "tgc."]
 	    createTgc $name
@@ -6216,6 +6252,15 @@ package provide Archer 1.0
 	    -mged $itk_component(ged)
     }
     $itk_component(sphView) createGeometry $name
+}
+
+::itcl::body Archer::createSuperell {name} {
+    if {![info exists itk_component(superellView)]} {
+	buildSuperellEditView
+	$itk_component(superellView) configure \
+	    -mged $itk_component(ged)
+    }
+    $itk_component(superellView) createGeometry $name
 }
 
 ::itcl::body Archer::createTgc {name} {
