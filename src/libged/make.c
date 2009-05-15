@@ -108,7 +108,7 @@ ged_make(struct ged *gedp, int argc, const char *argv[])
 	    case 't':
 	    case 'T':
 		if (argc == 2) {
-		    bu_vls_printf(&gedp->ged_result_str, "arb8 arb7 arb6 arb5 arb4 arbn ars bot ehy ell ell1 epa eto extrude grip half nmg part pipe pnts rcc rec rhc rpc rpp sketch sph tec tgc tor trc superell metaball");
+		    bu_vls_printf(&gedp->ged_result_str, "arb8 arb7 arb6 arb5 arb4 arbn ars bot ehy ell ell1 epa eto extrude grip half hyp nmg part pipe pnts rcc rec rhc rpc rpp sketch sph tec tgc tor trc superell metaball");
 		    return BRLCAD_HELP;
 		}
 
