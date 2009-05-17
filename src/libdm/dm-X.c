@@ -217,6 +217,7 @@ X_open_dm(Tcl_Interp *interp, int argc, char **argv)
     struct bu_vls init_proc_vls;
     struct dm *dmp = (struct dm *)NULL;
     Tk_Window tkwin;
+    Screen *screen;
 
     struct dm_xvars *pubvars = NULL;
     struct x_vars *privars = NULL;
@@ -335,6 +336,20 @@ X_open_dm(Tcl_Interp *interp, int argc, char **argv)
 
     /* make sure there really is a display before proceeding. */
     if (!pubvars->dpy) {
+	bu_log("ERROR: Unable to attach to display (%s)\n", bu_vls_addr(&dmp->dm_pathName));
+	(void)X_close_dm(dmp);
+	return DM_NULL;
+    }
+
+    screen = DefaultScreen(pubvars->dpy);
+    if (!screen) {
+	/* failed to get a default screen, try harder */
+	screen = Tk_Screen(pubvars->top);
+    }
+
+    /* make sure there really is a screen before proceesing. */
+    if (!screen) {
+	bu_log("ERROR: Unable to attach to screen (%s)\n", bu_vls_addr(&dmp->dm_pathName));
 	(void)X_close_dm(dmp);
 	return DM_NULL;
     }
