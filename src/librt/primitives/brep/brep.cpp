@@ -1413,6 +1413,19 @@ plot_bbnode(BBNode* node, struct bu_list* vhead) {
 
 /**
  * R T _ B R E P _ P L O T
+ *
+ * There are several ways to visualize NURBS surfaces, depending on
+ * the purpose.  For "normal" wireframe viewing, the ideal approach
+ * is to do a tesselation of the NURBS surface and show that wireframe.
+ * The quicker and simpler approach is to visualize the edges, although
+ * that can sometimes generate less than ideal/useful results (for example,
+ * a revolved edge that forms a sphere will have a wireframe consisting of a
+ * 2D arc in MGED when only edges are used.)  A third approach is to walk
+ * the uv space for each surface, find 3space points at uv intervals, and
+ * draw lines between the results - this is slightly more comprehensive
+ * when it comes to showing where surfaces are in 3space but looks blocky
+ * and crude.  For now, edge-only wireframes are the default.
+ * 
  */
 int
 rt_brep_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol)
@@ -1459,15 +1472,6 @@ rt_brep_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_t
 
     point_t pt1, pt2;
 
-//   Routine to draw the bounding boxes in the surface
-//   tree.
-//
-//         for (int i = 0; i < brep->m_F.Count(); i++) {
-//           ON_BrepFace& f = brep->m_F[i];
-//           SurfaceTree st(&f);
-//           plot_bbnode(st.getRootNode(), vhead);
-//         }
-
     for (i = 0; i < bi->brep->m_E.Count(); i++) {
 	ON_BrepEdge& e = brep->m_E[i];
 	const ON_Curve* crv = e.EdgeCurveOf();
@@ -1493,6 +1497,20 @@ rt_brep_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_t
 	    }
 	}
     }
+
+    
+/*
+ * DEBUGGING WIREFRAMES
+ */
+    
+//   Routine to draw the bounding boxes in the surface
+//   tree.
+//
+//         for (int i = 0; i < brep->m_F.Count(); i++) {
+//           ON_BrepFace& f = brep->m_F[i];
+//           SurfaceTree st(&f);
+//           plot_bbnode(st.getRootNode(), vhead);
+//         }
 
 
     /* Routine to iterate over the surfaces in the BREP and plot lines corresponding
