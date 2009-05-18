@@ -918,7 +918,27 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\src\libged\scale_eto.c"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\src\libged\scale_part.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\src\libged\scale_rhc.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\src\libged\scale_rpc.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\src\libged\scale_superell.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\src\libged\scale_tgc.c"
 				>
 			</File>
 			<File

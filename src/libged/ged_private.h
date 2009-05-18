@@ -353,17 +353,17 @@ BU_EXTERN (int ged_scale_epa,
 	    const char *attribute,
 	    fastf_t sf));
 
+/* defined in scale_eto.c */
+BU_EXTERN (int ged_scale_eto,
+	   (struct ged *gedp,
+	    struct rt_eto_internal *eto,
+	    const char *attribute,
+	    fastf_t sf));
+
 /* defined in scale_part.c */
 BU_EXTERN (int ged_scale_part,
 	   (struct ged *gedp,
 	    struct rt_part_internal *part,
-	    const char *attribute,
-	    fastf_t sf));
-
-/* defined in scale_tor.c */
-BU_EXTERN (int ged_scale_tor,
-	   (struct ged *gedp,
-	    struct rt_tor_internal *tor,
 	    const char *attribute,
 	    fastf_t sf));
 
@@ -385,6 +385,20 @@ BU_EXTERN (int ged_scale_rpc,
 BU_EXTERN (int ged_scale_superell,
 	   (struct ged *gedp,
 	    struct rt_superell_internal *superell,
+	    const char *attribute,
+	    fastf_t sf));
+
+/* defined in scale_tgc.c */
+BU_EXTERN (int ged_scale_tgc,
+	   (struct ged *gedp,
+	    struct rt_tgc_internal *tgc,
+	    const char *attribute,
+	    fastf_t sf));
+
+/* defined in scale_tor.c */
+BU_EXTERN (int ged_scale_tor,
+	   (struct ged *gedp,
+	    struct rt_tor_internal *tor,
 	    const char *attribute,
 	    fastf_t sf));
 
