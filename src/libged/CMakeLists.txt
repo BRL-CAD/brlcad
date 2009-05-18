@@ -174,6 +174,9 @@ set(LIBGED_SOURCES
     scale_epa.c
     scale_part.c
     scale_tor.c
+    scale_rhc.c
+    scale_rpc.c
+    scale_superell.c
     search.c
     set_output_script.c
     set_transparency.c
