@@ -479,7 +479,7 @@
 	$setA,B,C { \
 	    set mEditCommand pscale; \
 	    set mEditClass $EDIT_CLASS_SCALE; \
-	    set mEditParam1 3; \
+	    set mEditParam1 abc; \
 	    configure -valueUnits "mm"; \
 	}
 

@@ -43,7 +43,32 @@ ged_scale_ell(struct ged *gedp, struct rt_ell_internal *ell, const char *attribu
     switch (attribute[0]) {
     case 'a':
     case 'A':
-	VSCALE(ell->a, ell->a, sf);
+	switch (attribute[1]) {
+	case '\0':
+	    VSCALE(ell->a, ell->a, sf);
+	    break;
+	case 'b':
+	case 'B':
+	    if ((attribute[2] == 'c' || attribute[2] == 'C') &&
+		attribute[3] == '\0') {
+		/* set A, B, and C lengths the same */
+		VSCALE(ell->a, ell->a, sf);
+		ma = MAGNITUDE(ell->a);
+		mb = MAGNITUDE(ell->b);
+		VSCALE(ell->b, ell->b, ma/mb);
+		mb = MAGNITUDE(ell->c);
+		VSCALE(ell->c, ell->c, ma/mb);
+	    } else {
+		bu_vls_printf(&gedp->ged_result_str, "bad ell attribute - %s", attribute);
+		return BRLCAD_ERROR;
+	    }
+
+	    break;
+	default:
+	    bu_vls_printf(&gedp->ged_result_str, "bad ell attribute - %s", attribute);
+	    return BRLCAD_ERROR;
+	}
+
 	break;
     case 'b':
     case 'B':
@@ -51,11 +76,6 @@ ged_scale_ell(struct ged *gedp, struct rt_ell_internal *ell, const char *attribu
 	break;
     case 'c':
     case 'C':
-	VSCALE(ell->c, ell->c, sf);
-	break;
-    case '3':
-	VSCALE(ell->a, ell->a, sf);
-	VSCALE(ell->b, ell->b, sf);
 	VSCALE(ell->c, ell->c, sf);
 	break;
     default:

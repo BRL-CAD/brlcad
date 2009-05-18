@@ -43,7 +43,32 @@ ged_scale_superell(struct ged *gedp, struct rt_superell_internal *superell, cons
     switch (attribute[0]) {
     case 'a':
     case 'A':
-	VSCALE(superell->a, superell->a, sf);
+	switch (attribute[1]) {
+	case '\0':
+	    VSCALE(superell->a, superell->a, sf);
+	    break;
+	case 'b':
+	case 'B':
+	    if ((attribute[2] == 'c' || attribute[2] == 'C') &&
+		attribute[3] == '\0') {
+		/* set A, B, and C lengths the same */
+		VSCALE(superell->a, superell->a, sf);
+		ma = MAGNITUDE(superell->a);
+		mb = MAGNITUDE(superell->b);
+		VSCALE(superell->b, superell->b, ma/mb);
+		mb = MAGNITUDE(superell->c);
+		VSCALE(superell->c, superell->c, ma/mb);
+	    } else {
+		bu_vls_printf(&gedp->ged_result_str, "bad ell attribute - %s", attribute);
+		return BRLCAD_ERROR;
+	    }
+
+	    break;
+	default:
+	    bu_vls_printf(&gedp->ged_result_str, "bad ell attribute - %s", attribute);
+	    return BRLCAD_ERROR;
+	}
+
 	break;
     case 'b':
     case 'B':
@@ -51,11 +76,6 @@ ged_scale_superell(struct ged *gedp, struct rt_superell_internal *superell, cons
 	break;
     case 'c':
     case 'C':
-	VSCALE(superell->c, superell->c, sf);
-	break;
-    case '3':
-	VSCALE(superell->a, superell->a, sf);
-	VSCALE(superell->b, superell->b, sf);
 	VSCALE(superell->c, superell->c, sf);
 	break;
     default:
