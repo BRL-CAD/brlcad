@@ -1373,7 +1373,10 @@ rt_brep_free(register struct soltab *stp)
     brep_specific_delete(bs);
 }
 
-
+//
+//  Given surface tree bounding box information, plot the bounding box
+//  as a wireframe in mged.
+//
 void
 plot_bbnode(BBNode* node, struct bu_list* vhead) {
     ON_3dPoint min = node->m_node.m_min;
@@ -1455,11 +1458,15 @@ rt_brep_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_t
     ON_Brep* brep = bi->brep;
 
     point_t pt1, pt2;
-    //     for (int i = 0; i < brep->m_F.Count(); i++) {
-    //       ON_BrepFace& f = brep->m_F[i];
-    //       SurfaceTree st(&f);
-    //       plot_bbnode(st.getRootNode(), vhead);
-    //     }
+
+//   Routine to draw the bounding boxes in the surface
+//   tree.
+//
+//         for (int i = 0; i < brep->m_F.Count(); i++) {
+//           ON_BrepFace& f = brep->m_F[i];
+//           SurfaceTree st(&f);
+//           plot_bbnode(st.getRootNode(), vhead);
+//         }
 
     for (i = 0; i < bi->brep->m_E.Count(); i++) {
 	ON_BrepEdge& e = brep->m_E[i];
