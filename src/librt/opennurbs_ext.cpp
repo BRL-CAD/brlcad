@@ -180,10 +180,21 @@ namespace brlcad {
 	    quads[1] = subdivideSurface(u.ParameterAt(second), v.ParameterAt(first),  depth+1);
 	    quads[2] = subdivideSurface(u.ParameterAt(second), v.ParameterAt(second), depth+1);
 	    quads[3] = subdivideSurface(u.ParameterAt(first),  v.ParameterAt(second), depth+1);
-
+    
 	    for (int i = 0; i < 4; i++)
 		parent->addChild(quads[i]);
 
+	    for (int i = 0; i < 4; i++) {
+		for (int j = 0; j < 3; j++) {
+		    if (parent->m_node.m_min[j] > quads[i]->m_node.m_min[j]) {
+    			parent->m_node.m_min[j] = quads[i]->m_node.m_min[j];
+    		    }
+    		    if (parent->m_node.m_max[j] < quads[i]->m_node.m_max[j]) {
+    			parent->m_node.m_max[j] = quads[i]->m_node.m_max[j];
+    		    }
+		}
+	    }
+	    
 	    return parent;
 	}
     }
