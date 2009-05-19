@@ -23,6 +23,7 @@ scripts = \
 	GeometryEditFrame.tcl \
 	GripEditFrame.tcl \
 	HalfEditFrame.tcl \
+	HypEditFrame.tcl \
 	LoadArcherLibs.tcl \
 	PartEditFrame.tcl \
 	Plugin.tcl \

@@ -922,6 +922,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\src\libged\scale_hyp.c"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\src\libged\scale_part.c"
 				>
 			</File>

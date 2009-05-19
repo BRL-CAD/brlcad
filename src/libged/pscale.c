@@ -106,6 +106,9 @@ ged_pscale(struct ged *gedp, int argc, const char *argv[])
     case DB5_MINORTYPE_BRLCAD_ETO:
 	ret = ged_scale_eto(gedp, (struct rt_eto_internal *)intern.idb_ptr, argv[2], sf);
 	break;
+    case DB5_MINORTYPE_BRLCAD_HYP:
+	ret = ged_scale_hyp(gedp, (struct rt_hyp_internal *)intern.idb_ptr, argv[2], sf);
+	break;
     case DB5_MINORTYPE_BRLCAD_PARTICLE:
 	ret = ged_scale_part(gedp, (struct rt_part_internal *)intern.idb_ptr, argv[2], sf);
 	break;

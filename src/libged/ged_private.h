@@ -360,6 +360,13 @@ BU_EXTERN (int ged_scale_eto,
 	    const char *attribute,
 	    fastf_t sf));
 
+/* defined in scale_hyp.c */
+BU_EXTERN (int ged_scale_hyp,
+	   (struct ged *gedp,
+	    struct rt_hyp_internal *hyp,
+	    const char *attribute,
+	    fastf_t sf));
+
 /* defined in scale_part.c */
 BU_EXTERN (int ged_scale_part,
 	   (struct ged *gedp,

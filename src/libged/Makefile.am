@@ -177,6 +177,7 @@ libged_nil_la_SOURCES = \
 	scale_ell.c \
 	scale_epa.c \
 	scale_eto.c \
+	scale_hyp.c \
 	scale_part.c \
 	scale_rhc.c \
 	scale_rpc.c \

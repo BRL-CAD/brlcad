@@ -231,6 +231,7 @@ package provide Archer 1.0
 	method buildExtrudeEditView {}
 	method buildGripEditView {}
 	method buildHalfEditView {}
+	method buildHypEditView {}
 	method buildObjAttrView {}
 	method buildObjEditView {}
 	method buildObjViewToolbar {}
@@ -259,6 +260,7 @@ package provide Archer 1.0
 	method initExtrudeEditView {_odata}
 	method initGripEditView {_odata}
 	method initHalfEditView {_odata}
+	method initHypEditView {_odata}
 	method initNoWizard {_parent _msg}
 	method initObjAttrView {}
 	method initObjEditView {}
@@ -318,6 +320,7 @@ package provide Archer 1.0
 	method createExtrude {_name}
 	method createGrip {_name}
 	method createHalf {_name}
+	method createHyp {_name}
 	method createPart {_name}
 	method createPipe {_name}
 	method createRhc {_name}
@@ -981,6 +984,15 @@ package provide Archer 1.0
 	#$itk_component(primaryToolbar) itemconfigure bot \
 	    -image [image create photo \
 			-file [file join $dir primitive_bot.png]]
+	#$itk_component(primaryToolbar) itemconfigure tgc \
+	    -image [image create photo \
+			-file [file join $dir primitive_tgc.png]]
+	#$itk_component(primaryToolbar) itemconfigure superell \
+	    -image [image create photo \
+			-file [file join $dir primitive_superell.png]]
+	#$itk_component(primaryToolbar) itemconfigure hyp \
+	    -image [image create photo \
+			-file [file join $dir primitive_hyp.png]]
 
 	catch {
 	    $itk_component(primaryToolbar) itemconfigure edit_rotate \
@@ -3666,6 +3678,12 @@ package provide Archer 1.0
 	    }
 	    initHalfEditView $odata
 	}
+	"hyp" {
+	    if {![info exists itk_component(hypView)]} {
+		buildHypEditView
+	    }
+	    initHypEditView $odata
+	}
 	"part" {
 	    if {![info exists itk_component(partView)]} {
 		buildPartEditView
@@ -4178,6 +4196,14 @@ package provide Archer 1.0
     } {}
 }
 
+::itcl::body Archer::buildHypEditView {} {
+    set parent $itk_component(objEditView)
+    itk_component add hypView {
+	HypEditFrame $parent.hypview \
+	    -units "mm"
+    } {}
+}
+
 ::itcl::body Archer::buildObjAttrView {} {
     set parent [$itk_component(vpane) childsite attrView]
     itk_component add objAttrView {
@@ -4569,6 +4595,21 @@ package provide Archer 1.0
     $itk_component(halfView) initGeometry $odata
 
     pack $itk_component(halfView) \
+	-expand yes \
+	-fill both
+}
+
+::itcl::body Archer::initHypEditView {odata} {
+    $itk_component(hypView) configure \
+	-geometryObject $mSelectedObj \
+	-geometryChangedCallback [::itcl::code $this updateObjEditView] \
+	-mged $itk_component(ged) \
+	-labelFont $mFontText \
+	-boldLabelFont $mFontTextBold \
+	-entryFont $mFontText
+    $itk_component(hypView) initGeometry $odata
+
+    pack $itk_component(hypView) \
 	-expand yes \
 	-fill both
 }
@@ -6006,6 +6047,10 @@ package provide Archer 1.0
 	    set name [gedCmd make_name "half."]
 	    createHalf $name
 	}
+	"hyp" {
+	    set name [gedCmd make_name "hyp."]
+	    createHyp $name
+	}
 	"part" {
 	    set name [gedCmd make_name "part."]
 	    createPart $name
@@ -6195,6 +6240,15 @@ package provide Archer 1.0
 	    -mged $itk_component(ged)
     }
     $itk_component(halfView) createGeometry $name
+}
+
+::itcl::body Archer::createHyp {name} {
+    if {![info exists itk_component(hypView)]} {
+	buildHypEditView
+	$itk_component(hypView) configure \
+	    -mged $itk_component(ged)
+    }
+    $itk_component(hypView) createGeometry $name
 }
 
 ::itcl::body Archer::createPart {name} {

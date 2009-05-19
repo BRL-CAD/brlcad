@@ -111,6 +111,9 @@ ged_get_type(struct ged *gedp, int argc, const char *argv[])
 	case DB5_MINORTYPE_BRLCAD_HALF:
 	    bu_vls_printf(&gedp->ged_result_str, "half");
 	    break;
+	case DB5_MINORTYPE_BRLCAD_HYP:
+	    bu_vls_printf(&gedp->ged_result_str, "hyp");
+	    break;
 	case DB5_MINORTYPE_BRLCAD_REC:
 	    bu_vls_printf(&gedp->ged_result_str, "rec");
 	    break;

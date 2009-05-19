@@ -44,6 +44,7 @@ dist_tcl_DATA = \
 	primitive_extrude.png \
 	primitive_grip.png \
 	primitive_half.png \
+	primitive_hyp.png \
 	primitive_list.png \
 	primitive_other.png \
 	primitive_part.png \
@@ -52,6 +53,8 @@ dist_tcl_DATA = \
 	primitive_rpc.png \
 	primitive_sketch.png \
 	primitive_sph.png \
+	primitive_superell.png \
+	primitive_tgc.png \
 	primitive_tor.png \
 	refresh.png \
 	run.png \
