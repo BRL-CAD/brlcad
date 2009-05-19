@@ -45,7 +45,7 @@
 #define RANGE_LO 0.45
 #define UNIVERSAL_SAMPLE_COUNT 1001
 
-#define BBOX_GROW 1.0
+#define BBOX_GROW 0.0
 
 
 namespace brlcad {
@@ -121,10 +121,10 @@ namespace brlcad {
 	VSETALL(max, -MAX_FASTF);
 	for (int i = 0; i < 9; i++)
 	    VMINMAX(min,max,((double*)corners[i]));
-	vect_t grow;
-	VSETALL(grow,0.5); // grow the box a bit
-	VSUB2(min, min, grow);
-	VADD2(max, max, grow);
+//	vect_t grow;
+//	VSETALL(grow,0.5); // grow the box a bit
+//	VSUB2(min, min, grow);
+//	VADD2(max, max, grow);
 
 	// calculate the estimate point on the surface: i.e. use the point
 	// on the surface defined by (u.Mid(), v.Mid()) as a heuristic for
