@@ -239,9 +239,16 @@ namespace brlcad {
 #else
 	for (size_t i = 0; i < 3; i++) {
 #endif
+	
+	    cout << "m_node.m_min[" << i << "]: " << m_node.m_min[i] << "\n";
+	    cout << "m_node.m_max[" << i << "]: " << m_node.m_max[i] << "\n";
 	    if (ON_NearZero(ray.m_dir[i])) {
-		if (ray.m_origin[i] < m_node.m_min[i] || ray.m_origin[i] > m_node.m_max[i])
+		if (ray.m_origin[i] < m_node.m_min[i] || ray.m_origin[i] > m_node.m_max[i]) {
+//		    cout << "ray.m_origin[" << i << "]: " << ray.m_origin[i] << "\n";
+//		    cout << "m_node.m_min[" << i << "]: " << m_node.m_min[i] << "\n";
+//		    cout << "m_node.m_max[" << i << "]: " << m_node.m_max[i] << "\n\n";
 		    return false;
+		}
 	    }
 	    else {
 		double t1 = (m_node.m_min[i]-ray.m_origin[i]) / ray.m_dir[i];
