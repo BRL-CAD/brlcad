@@ -891,8 +891,8 @@ utah_brep_intersect(const SubsurfaceBBNode* sbv, const ON_BrepFace* face, const 
      * if (converged && (t > 1.e-2) && (t < t_min) && (!utah_isTrimmed(ouv, face))) hit = true;
      *
      */
-//    if (converged && (t > 1.e-2) && (!utah_isTrimmed(ouv, face))) hit = true;
-    if (converged && (t > 1.e-2)) hit = true;
+    if (converged && (t > 1.e-2) && (!utah_isTrimmed(ouv, face))) hit = true;
+//    if (converged && (t > 1.e-2)) hit = true;
 
     uv[0] = ouv.x;
     uv[1] = ouv.y;
@@ -1507,11 +1507,11 @@ rt_brep_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_t
 //   Routine to draw the bounding boxes in the surface
 //   tree.
 //
-         for (int i = 0; i < brep->m_F.Count(); i++) {
-           ON_BrepFace& f = brep->m_F[i];
-           SurfaceTree st(&f);
-           plot_bbnode(st.getRootNode(), vhead, 0, 1, 8);
-         }
+//         for (int i = 0; i < brep->m_F.Count(); i++) {
+//           ON_BrepFace& f = brep->m_F[i];
+//           SurfaceTree st(&f);
+//           plot_bbnode(st.getRootNode(), vhead, 0, 1, 8);
+//         }
 
 
     /* Routine to iterate over the surfaces in the BREP and plot lines corresponding
@@ -1521,7 +1521,7 @@ rt_brep_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_t
      * Needs to become proper tesselation routine.
      */
 
-    for (i = 0; i < bi->brep->m_F.Count(); i++) {
+/*    for (i = 0; i < bi->brep->m_F.Count(); i++) {
 	ON_BrepFace *f = &(bi->brep->m_F[i]);
 	const ON_Surface *s = bi->brep->m_F[i].SurfaceOf();
 	int foundfirst = 0;
@@ -1541,7 +1541,7 @@ rt_brep_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_t
     		    }
 	    }
 	}
-    }
+    }*/
 
 
     return 0;
