@@ -53,7 +53,7 @@ set mged_help_data(attach)	{{[-d display_string] [-i init_script] [-n name]
 set mged_help_data(attr)        $helplib_data(wdb_attr)
 set mged_help_data(autoview)	{{}	{set view size and center so that all displayed solids are in view}}
 set mged_help_data(B)		$helplib_data(dgo_blast)
-set mged_help_data(bev)		{{"[-t] [-P#] new_obj obj1 op obj2 op obj3 op ..."}	{boolean evaluation of objects via NMG's}}
+set mged_help_data(bev)		{{[-t] [-P#] new_obj obj1 op obj2 op obj3 op ...}	{boolean evaluation of objects via NMG's}}
 set mged_help_data(bo)	{{{-i major_type minor_type | -o} dest source}
     {manipulate opaque objects.
 	Must specify one of -i (for creating or adjusting objects (input))
@@ -133,7 +133,7 @@ set mged_help_data(e)		$helplib_data(dgo_draw)
 set mged_help_data(e_id)	{{ident[-ident] ...} {Edits object(s) with the specified ident number or within the hyphenated ident ranges.
 
 Example: e_id 1000 2000 3000-4000}}
-set mged_help_data(em)          {{"[-C#/#/#] value [value value...]"} {display all regions with attribute "MUVES_Component" set to any of the specified values}}
+set mged_help_data(em)          {{[-C#/#/#] value [value value...]} {display all regions with attribute "MUVES_Component" set to any of the specified values}}
 set mged_help_data(eac)		{{air_code(s)}	{display all regions with given air code}}
 set mged_help_data(echo)	{{[text]}	{echo arguments back}}
 set mged_help_data(edcodes)	{{object(s)}	{edit region ident codes}}
@@ -145,12 +145,12 @@ set mged_help_data(erase_all)	{{<objects>}	{remove all occurrences of object(s) 
 set mged_help_data(ev)		$helplib_data(dgo_ev)
 set mged_help_data(eqn)		{{A B C}	{planar equation coefficients}}
 set mged_help_data(exit)	{{}	{exit}}
-set mged_help_data(extrude)	{{"#### distance"}	{extrude dist from face}}
+set mged_help_data(extrude)	{{#### distance}	{extrude dist from face}}
 set mged_help_data(expand)	$helplib_data(wdb_expand)
 set mged_help_data(eye_pt)	$helplib_data(vo_eye)
 set mged_help_data(e_muves)	{{MUVES_component_1 MUVES_component2 ...}	{display listed MUVES components/systems}}
-set mged_help_data(facedef)	{{"####"}	{define new face for an arb}}
-set mged_help_data(facetize)	{{"[-ntT] [-P#] new_obj old_obj(s)"}	{convert objects to faceted BOT objects (or NMG for -n option) at current tol}}
+set mged_help_data(facedef)	{{####}	{define new face for an arb}}
+set mged_help_data(facetize)	{{[-ntT] [-P#] new_obj old_obj(s)}	{convert objects to faceted BOT objects (or NMG for -n option) at current tol}}
 set mged_help_data(form)	$helplib_data(wdb_form)
 set mged_help_data(fracture)	{{NMGsolid [prefix]}	{fracture an NMG solid into many NMG solids, each containing one face}}
 set mged_help_data(g)		$helplib_data(wdb_group)
@@ -193,9 +193,9 @@ set mged_help_data(make)	{{-t | name <arb8|arb7|arb6|arb5|arb4|arbn|ars|bot|ehy|
 set mged_help_data(make_bb)	$helplib_data(wdb_make_bb)
 set mged_help_data(match)	$helplib_data(wdb_match)
 set mged_help_data(mater)	{{comb [material]}	{assign/delete material to combination}}
-set mged_help_data(matpick)	{{"# or a/b"}	{select arc which has matrix to be edited, in O_PATH state}}
+set mged_help_data(matpick)	{{# | a/b}	{select arc which has matrix to be edited, in O_PATH state}}
 set mged_help_data(memprint)	{{}	{print memory maps}}
-set mged_help_data(mirface)	{{"#### axis"}	{mirror an ARB face}}
+set mged_help_data(mirface)	{{#### of axis}	{mirror an ARB face}}
 set mged_help_data(mirror)	{{[-p point] [-d dir] [-x] [-y] [-z] [-o offset] old new}	{mirror primitive or combination along the specified axis}}
 set mged_help_data(mrot)	$helplib_data(vo_mrot)
 set mged_help_data(mv)		$helplib_data(wdb_move)
