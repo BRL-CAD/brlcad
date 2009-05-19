@@ -84,6 +84,8 @@ set mged_help_data(cat)		$helplib_data(wdb_cat)
 set mged_help_data(center)	$helplib_data(vo_center)
 set mged_help_data(closedb)	{{}	{close any open database}}
 set mged_help_data(clone)	{{[-abhimnprtv] <object>}	{clone allows user to quickly create copies of objects
+
+Options:
 	-a <n> <x> <y> <z>	- Specifies a translation split between n copies.
 	-b <n> <x> <y> <z>	- Specifies a rotation around x, y, and z axes
 				  split between n copies.
@@ -128,6 +130,9 @@ set mged_help_data(dump)	$helplib_data(wdb_dump)
 set mged_help_data(dup)		$helplib_data(wdb_dup)
 set mged_help_data(E)		$helplib_data(dgo_E)
 set mged_help_data(e)		$helplib_data(dgo_draw)
+set mged_help_data(e_id)	{{ident[-ident] ...} {Edits object(s) with the specified ident number or within the hyphenated ident ranges.
+
+Example: e_id 1000 2000 3000-4000}}
 set mged_help_data(em)          {{"[-C#/#/#] value [value value...]"} {display all regions with attribute "MUVES_Component" set to any of the specified values}}
 set mged_help_data(eac)		{{air_code(s)}	{display all regions with given air code}}
 set mged_help_data(echo)	{{[text]}	{echo arguments back}}
