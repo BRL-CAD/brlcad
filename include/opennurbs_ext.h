@@ -54,10 +54,11 @@ static std::numeric_limits<double> real;
 #define PT2(p) ON_PRINT2(p)
 #define IVAL(_ival) "[" << (_ival).m_t[0] << "," << (_ival).m_t[1] << "]"
 #define TRACE(s)
-//#define TRACE(s) std::cerr << s << std::endl;
-#define TRACE2(s) std::cerr << s << std::endl;
 #define TRACE1(s)
-//#define TRACE(s)
+#define TRACE1(s)
+//#define TRACE(s) std::cerr << s << std::endl;
+//#define TRACE1(s) std::cerr << s << std::endl;
+//#define TRACE2(s) std::cerr << s << std::endl;
 
 namespace brlcad {
 
