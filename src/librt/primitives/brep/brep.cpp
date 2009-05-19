@@ -891,8 +891,8 @@ utah_brep_intersect(const SubsurfaceBBNode* sbv, const ON_BrepFace* face, const 
      * if (converged && (t > 1.e-2) && (t < t_min) && (!utah_isTrimmed(ouv, face))) hit = true;
      *
      */
-    if (converged && (t > 1.e-2) && (!utah_isTrimmed(ouv, face))) hit = true;
-    //if (converged && (t > 1.e-2)) hit = true;
+//    if (converged && (t > 1.e-2) && (!utah_isTrimmed(ouv, face))) hit = true;
+    if (converged && (t > 1.e-2)) hit = true;
 
     uv[0] = ouv.x;
     uv[1] = ouv.y;
@@ -960,13 +960,13 @@ brep_intersect(const SubsurfaceBBNode* sbv, const ON_BrepFace* face, const ON_Su
 	}
 
 
-	if (sbv->doTrimming() && brep_pt_trimmed(uv, *face)) {
-	    hits.back().trimmed = true;
-	    TRACE1("Should be TRIMMED!");
-	    // if the point was trimmed, see if it is close to the edge before removing it
-	    return brep_edge_check(BREP_INTERSECT_TRIMMED, sbv, face, surf, ray, hits);
-	    //return BREP_INTERSECT_TRIMMED;
-	}
+//	if (sbv->doTrimming() && brep_pt_trimmed(uv, *face)) {
+//	    hits.back().trimmed = true;
+//	    TRACE1("Should be TRIMMED!");
+//	    // if the point was trimmed, see if it is close to the edge before removing it
+//	    return brep_edge_check(BREP_INTERSECT_TRIMMED, sbv, face, surf, ray, hits);
+//	    //return BREP_INTERSECT_TRIMMED;
+//	}
     }
 
     return found;
@@ -1378,7 +1378,7 @@ rt_brep_free(register struct soltab *stp)
 //  as a wireframe in mged.
 //
 void
-plot_bbnode(BBNode* node, struct bu_list* vhead) {
+plot_bbnode(BBNode* node, struct bu_list* vhead, int depth, int start, int limit) {
     ON_3dPoint min = node->m_node.m_min;
     ON_3dPoint max = node->m_node.m_max;
     point_t verts[] = {{min[0], min[1], min[2]},
@@ -1390,8 +1390,8 @@ plot_bbnode(BBNode* node, struct bu_list* vhead) {
 		       {max[0], max[1], max[2]},
 		       {max[0], min[1], max[2]}};
 
-    if (node->isLeaf()) {
-
+//    if (node->isLeaf()) {
+    if (depth >= start && depth<=limit) {
 	for (int i = 0; i <= 4; i++) {
 	    RT_ADD_VLIST(vhead, verts[i%4], (i == 0) ? BN_VLIST_LINE_MOVE : BN_VLIST_LINE_DRAW);
 	}
@@ -1406,7 +1406,8 @@ plot_bbnode(BBNode* node, struct bu_list* vhead) {
     }
 
     for (size_t i = 0; i < node->m_children.size(); i++) {
-	plot_bbnode(node->m_children[i], vhead);
+	if (i < 1)
+	plot_bbnode(node->m_children[i], vhead, depth+1, start, limit);
     }
 }
 
@@ -1506,11 +1507,11 @@ rt_brep_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_t
 //   Routine to draw the bounding boxes in the surface
 //   tree.
 //
-//         for (int i = 0; i < brep->m_F.Count(); i++) {
-//           ON_BrepFace& f = brep->m_F[i];
-//           SurfaceTree st(&f);
-//           plot_bbnode(st.getRootNode(), vhead);
-//         }
+         for (int i = 0; i < brep->m_F.Count(); i++) {
+           ON_BrepFace& f = brep->m_F[i];
+           SurfaceTree st(&f);
+           plot_bbnode(st.getRootNode(), vhead, 0, 1, 8);
+         }
 
 
     /* Routine to iterate over the surfaces in the BREP and plot lines corresponding
@@ -1519,7 +1520,7 @@ rt_brep_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_t
      * from uv parameter space to real space coordinates.
      * Needs to become proper tesselation routine.
      */
-   /*
+
     for (i = 0; i < bi->brep->m_F.Count(); i++) {
 	ON_BrepFace *f = &(bi->brep->m_F[i]);
 	const ON_Surface *s = bi->brep->m_F[i].SurfaceOf();
@@ -1530,7 +1531,6 @@ rt_brep_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_t
 		ON_3dPoint plotpt;
 		uv.x = s->Domain(0).ParameterAt((double)j/20);
 		uv.y = s->Domain(1).ParameterAt((double)k/20);
-		if (!(utah_isTrimmed(uv,f))) {
 		    s->EvPoint(uv.x,uv.y,plotpt,0,0);
 		    VMOVE(pt1, plotpt);
 		    if (j == 0 || foundfirst == 0) {
@@ -1539,11 +1539,10 @@ rt_brep_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_t
 		    } else {
     			RT_ADD_VLIST(vhead, pt1, BN_VLIST_LINE_DRAW);
     		    }
-		}
 	    }
 	}
     }
-    */
+
 
     return 0;
 }
