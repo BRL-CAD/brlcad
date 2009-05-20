@@ -152,6 +152,7 @@ librt_nil_la_SOURCES = \
 	primitives/superell/superell.c \
 	primitives/table.c \
 	primitives/tgc/tgc.c \
+	primitives/tgc/tgc_mirror.c \
 	primitives/tor/tor.c \
 	primitives/tor/tor_mirror.c \
 	primitives/vol/vol.c \
