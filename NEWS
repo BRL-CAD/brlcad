@@ -17,6 +17,7 @@ changes made.  See document footer for additional details.
 * changed mged 'help' output formatting - Sean Morrison
 * improved 'e_id' mged command help - Sean Morrison
 * archer interactive editing support for most primitives - Bob Parker
+* added '-v' to mged for version information - Erik Greenwald
 
 
 ----------------------------------------------------------------------
@@ -212,11 +213,11 @@ to supply their own rim.  A number of small but visual flaws in the
 tread geometry definitions were also corrected.
 
 MGED's dbconcat command works again without needing to specifying an
-affix for object names when importing geometry from one database to 
+affix for object names when importing geometry from one database to
 another.  Primitive selection via the Edit menu is working again
 thanks to the fixing of the solid_illum bug. The pipe primitive's
 performance problems during raytracing, due to unnecessary memory
-allocations, are now fixed.  The extrude primitive's handling of 
+allocations, are now fixed.  The extrude primitive's handling of
 invalid geometry is now more robust.
 
 * renamed mged binary command to bo for binary objects - Sean Morrison
@@ -318,7 +319,7 @@ code repository with a move from CVS to Subversion recently completed.
 The conversion was successfully completed with the entire history of
 BRL-CAD development preserved, accounting for nearly 25 years of
 continuous active development.
- 
+
 * automatic redraw updates after Geometry Browser edits - Bob Parker
 * improved Geometry Browser mouse behavior in mged - Bob Parker
 * make fast4-g use GIFT_material=1 and los=100 - Sean Morrison
@@ -326,7 +327,7 @@ continuous active development.
 * removed ogl framebuffer multiple window 'm' option - Sean Morrison
 * tree -d option in mged for limiting tree display depth - Cliff Yapp
 * added mouse color query support to OpenGL framebuffer - Bob Parker
-* fixed X11 framebuffer colormapping bug - Bob Parker 
+* fixed X11 framebuffer colormapping bug - Bob Parker
 * libpng updated to 1.2.25 - Erik Greenwald
 * fixed several mged I/O bugs for stdin/stdout/stderr - Bob Parker
 * nirt now uses bounding sphere for -b backout option - Erik Greenwald
@@ -375,7 +376,7 @@ continuous active development.
 * fixed garbled output during parallel crash reports - Sean Morrison
 * fixed memory deallocation bug in the raytracers - Bob Parker
 * renamed 'hd' hexadecimal dump utility to 'hex' - Sean Morrison
-* renamed procedural 'wall' generator to 'masonry' - Sean Morrison 
+* renamed procedural 'wall' generator to 'masonry' - Sean Morrison
 * mged 'tol' command now accepts multiple tolerances - Sean Morrison
 * TCL and TK updated to 8.5b1. itcl/itk to dev 3.4. - Erik Greenwald
 * fixed non-normalized vector bugs with ARBN objects - John Anderson

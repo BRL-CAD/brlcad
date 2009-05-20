@@ -310,7 +310,7 @@ main(int argc, char **argv)
 	bu_semaphore_init( RT_SEM_LAST );
     }
 
-    while ((c = bu_getopt(argc, argv, "d:hbicnrx:X:")) != EOF) {
+    while ((c = bu_getopt(argc, argv, "d:hbicnrx:X:v")) != EOF) {
 	switch ( c ) {
 	    case 'd':
 		dpy_string = bu_optarg;
@@ -332,6 +332,16 @@ main(int argc, char **argv)
 		break;
 	    case 'b':
 		run_in_foreground = 0;  /* run in background */
+		break;
+	    case 'v':	/* print a lot of version information */
+		printf("%s%s%s%s%s%s\n",
+		    brlcad_ident("MGED Geometry Editor"),
+		    dm_version(),
+		    fb_version(),
+		    rt_version(),
+		    bn_version(),
+		    bu_version());
+		return EXIT_SUCCESS;
 		break;
 	    default:
 		bu_log("Unrecognized option (%c)\n", c );
