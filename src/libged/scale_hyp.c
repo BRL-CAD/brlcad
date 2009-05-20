@@ -39,13 +39,29 @@ int
 ged_scale_hyp(struct ged *gedp, struct rt_hyp_internal *hyp, const char *attribute, fastf_t sf)
 {
     fastf_t f;
+    point_t old_top;
 
     RT_HYP_CK_MAGIC(hyp);
 
     switch (attribute[0]) {
     case 'h':
     case 'H':
-	VSCALE(hyp->hyp_Hi, hyp->hyp_Hi, sf);    
+	switch (attribute[1]) {
+	case '\0':
+	    VSCALE(hyp->hyp_Hi, hyp->hyp_Hi, sf);
+	    break;
+	case 'v':
+	case 'V':
+	    /* Scale H move V */
+	    VADD2(old_top, hyp->hyp_Vi, hyp->hyp_Hi);
+	    VSCALE(hyp->hyp_Hi, hyp->hyp_Hi, sf);
+	    VSUB2(hyp->hyp_Vi, old_top, hyp->hyp_Hi);
+
+	    break;
+	default:
+	    bu_vls_printf(&gedp->ged_result_str, "bad hyp attribute - %s", attribute);
+	return BRLCAD_ERROR;
+	}
 	break;
     case 'a':
     case 'A':

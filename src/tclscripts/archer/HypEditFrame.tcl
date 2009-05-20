@@ -40,11 +40,12 @@
     }
 
     protected {
-	common setH 1
-	common setA 2
-	common setB 3
-	common setC 4
-	common rotH 5
+	common setH  1
+	common setHV 2
+	common setA  3
+	common setB  4
+	common setC  5
+	common rotH  6
 
 	variable mVx ""
 	variable mVy ""
@@ -375,7 +376,8 @@
 ::itcl::body HypEditFrame::buildLowerPanel {} {
     set parent [$this childsite lower]
 
-    foreach {attribute op opLabel} {H set Set A set Set B set Set C set Set} {
+    set alist [list H set Set HV set Set A set Set B set Set C set Set]
+    foreach {attribute op opLabel} $alist {
 	itk_component add $op$attribute {
 	    ::ttk::radiobutton $parent.$op\_$attribute \
 		-variable [::itcl::scope mEditMode] \
@@ -461,6 +463,12 @@
 	    set mEditCommand pscale; \
 	    set mEditClass $EDIT_CLASS_SCALE; \
 	    set mEditParam1 h; \
+	    configure -valueUnits "mm"; \
+	} \
+	$setHV { \
+	    set mEditCommand pscale; \
+	    set mEditClass $EDIT_CLASS_SCALE; \
+	    set mEditParam1 hv; \
 	    configure -valueUnits "mm"; \
 	} \
 	$setA { \
