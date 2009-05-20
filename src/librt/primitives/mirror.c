@@ -102,8 +102,9 @@ rt_mirror(struct db_i *dbip,
 	   plane[Y],
 	   plane[Z],
 	   plane[W]);
+#endif
 
-#if 1
+
     switch (id) {
 	case ID_TOR: {
 	    err = rt_tor_mirror(ip, plane);
@@ -210,8 +211,6 @@ rt_mirror(struct db_i *dbip,
 	}
 #endif
     }
-
-#endif
 
     MAT_IDN(mirmat);
 
