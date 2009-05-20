@@ -53,7 +53,6 @@ rt_tor_mirror(struct rt_db_internal *ip, register const plane_t *plane)
     vect_t nvec;
     vect_t xvec;
 
-    static fastf_t tol_dist_sq = 0.005 * 0.005;
     static point_t origin = {0.0, 0.0, 0.0};
 
     RT_CK_DB_INTERNAL(ip);
