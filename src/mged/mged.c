@@ -235,9 +235,9 @@ notify_parent_done(int parent) {
 
 void
 mgedInvalidParameterHandler(const wchar_t* expression,
-			    const wchar_t* function, 
-			    const wchar_t* file, 
-			    unsigned int line, 
+			    const wchar_t* function,
+			    const wchar_t* file,
+			    unsigned int line,
 			    unsigned int *pReserved)
 {
 /*
@@ -347,7 +347,7 @@ main(int argc, char **argv)
 		bu_log("Unrecognized option (%c)\n", c );
 		/* Fall through to help */
 	    case 'h':
-		bu_exit(1, "Usage:  %s [-b] [-c] [-d display] [-h] [-r] [-x#] [-X#] [database [command]]\n", argv[0]);
+		bu_exit(1, "Usage:  %s [-b] [-c] [-d display] [-h] [-r] [-x#] [-X#] [-v] [database [command]]\n", argv[0]);
 	}
     }
 
@@ -371,7 +371,7 @@ main(int argc, char **argv)
 	result = select(fileno(stdin)+1, &read_set, NULL, NULL, &timeout);
 	if (bu_debug > 0)
 	    fprintf(out, "DEBUG: select result: %d, stdin read: %d\n", result, FD_ISSET(fileno(stdin), &read_set));
-    
+
 	if (result > 0 && FD_ISSET(fileno(stdin), &read_set)) {
 	    /* stdin pending, probably not interactive */
 	    interactive = 0;
@@ -382,7 +382,7 @@ main(int argc, char **argv)
 	    result = select(fileno(stdin)+1, NULL, NULL, &exception_set, &timeout);
 	    if (bu_debug > 0)
 		fprintf(out, "DEBUG: select result: %d, stdin exception: %d\n", result, FD_ISSET(fileno(stdin), &exception_set));
-	
+
 	    /* see if there's valid input waiting (more reliable than select) */
 	    if (result > 0 && FD_ISSET(fileno(stdin), &exception_set)) {
 #ifdef HAVE_POLL_H
@@ -409,7 +409,7 @@ main(int argc, char **argv)
 	    }
 	} /* read_set */
 
-	if (bu_debug && out != stdout) { 
+	if (bu_debug && out != stdout) {
 	    fflush(out);
 	    fclose(out);
 	}
@@ -593,7 +593,7 @@ main(int argc, char **argv)
 	    /* identify */
 
 	    bu_log("%s\n", brlcad_ident("Geometry Editor (MGED)"));
-	    
+
 #if !defined(_WIN32) || defined(__CYGWIN__)
 	    if (isatty(fileno(stdin)) && isatty(fileno(stdout))) {
 		/* Set up for character-at-a-time terminal IO. */
@@ -608,7 +608,7 @@ main(int argc, char **argv)
 	    int status;
 	    struct bu_vls vls;
 	    struct bu_vls error;
-	    
+
 	    bu_vls_init(&vls);
 	    bu_vls_init(&error);
 	    if (dpy_string != (char *)NULL)
@@ -828,8 +828,8 @@ main(int argc, char **argv)
 	    HANDLE handle[2];
 	    SECURITY_ATTRIBUTES saAttr;
 
-	    saAttr.nLength = sizeof(SECURITY_ATTRIBUTES); 
-	    saAttr.bInheritHandle = FALSE; 
+	    saAttr.nLength = sizeof(SECURITY_ATTRIBUTES);
+	    saAttr.bInheritHandle = FALSE;
 	    saAttr.lpSecurityDescriptor = NULL;
 
 	    if (CreatePipe(&handle[0], &handle[1], &saAttr, 0)) {

@@ -60,6 +60,7 @@
       <arg choice='opt'>-r </arg>
       <arg choice='opt'>-x#</arg>
       <arg choice='opt'>-X#</arg>
+      <arg choice='opt'>-v</arg>
       <arg choice='opt'><replaceable>database.g</replaceable></arg>
       <arg choice='opt'><replaceable>mged_command</replaceable></arg>
     </cmdsynopsis>
@@ -165,6 +166,14 @@
 	<listitem>
 	  <para>
 	    Specify the debug level of libbu.
+	  </para>
+	</listitem>
+      </varlistentry>
+      <varlistentry>
+	<term><option>-v</option></term>
+	<listitem>
+	  <para>
+	    Display the version and exit.
 	  </para>
 	</listitem>
       </varlistentry>
