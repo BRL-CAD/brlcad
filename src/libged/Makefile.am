@@ -143,6 +143,7 @@ libged_nil_la_SOURCES = \
 	prefix.c \
 	preview.c \
 	ps.c \
+	protate.c \
 	pscale.c \
 	push.c \
 	put.c \
@@ -166,6 +167,9 @@ libged_nil_la_SOURCES = \
 	rot_point.c \
 	rotate_about.c \
 	rotate_arb_face.c \
+	rotate_eto.c \
+	rotate_hyp.c \
+	rotate_tgc.c \
 	rrt.c \
 	rt.c \
 	rtabort.c \

@@ -782,6 +782,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\src\libged\protate.c"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\src\libged\ps.c"
 				>
 			</File>
@@ -875,6 +879,18 @@
 			</File>
 			<File
 				RelativePath="..\..\..\src\libged\rotate_arb_face.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\src\libged\rotate_eto.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\src\libged\rotate_hyp.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\src\libged\rotate_tgc.c"
 				>
 			</File>
 			<File

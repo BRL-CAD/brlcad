@@ -383,7 +383,7 @@
 		-command [::itcl::code $this initValuePanel]
 	} {}
 
-	pack $itk_component(set$attribute) \
+	pack $itk_component($op$attribute) \
 	    -anchor w \
 	    -expand yes
     }

@@ -376,7 +376,7 @@
 ::itcl::body HypEditFrame::buildLowerPanel {} {
     set parent [$this childsite lower]
 
-    set alist [list H set Set HV set Set A set Set B set Set C set Set]
+    set alist [list H set Set HV set Set A set Set B set Set C set Set H rot Rotate]
     foreach {attribute op opLabel} $alist {
 	itk_component add $op$attribute {
 	    ::ttk::radiobutton $parent.$op\_$attribute \
@@ -386,7 +386,7 @@
 		-command [::itcl::code $this initValuePanel]
 	} {}
 
-	pack $itk_component(set$attribute) \
+	pack $itk_component($op$attribute) \
 	    -anchor w \
 	    -expand yes
     }

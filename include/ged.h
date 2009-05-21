@@ -80,7 +80,8 @@ __BEGIN_DECLS
 #define GED_MOVE_ARB_EDGE_MODE 9
 #define GED_MOVE_ARB_FACE_MODE 10
 #define GED_ROTATE_ARB_FACE_MODE 11
-#define GED_PSCALE_MODE 12
+#define GED_PROTATE_MODE 12
+#define GED_PSCALE_MODE 13
 
 /**
  * S E M A P H O R E S
@@ -2224,6 +2225,14 @@ GED_EXPORT BU_EXTERN(int ged_preview, (struct ged *gedp, int argc, const char *a
  *     ps [-c creator] [-f font] [-s size] [-t title] [-x offset] [-y offset] file.ps
  */
 GED_EXPORT BU_EXTERN(int ged_ps, (struct ged *gedp, int argc, const char *argv[]));
+
+/**
+ * Rotate obj's attributes by rvec.
+ *
+ * Usage:
+ *     protate obj attribute rvec
+ */
+GED_EXPORT BU_EXTERN(int ged_protate, (struct ged *gedp, int argc, const char *argv[]));
 
 /**
  * Scale obj's attributes by sf.

@@ -197,6 +197,7 @@ namespace eval ArcherCore {
 	method oscale		   {args}
 	method otranslate	   {args}
 	method prefix              {args}
+	method protate             {args}
 	method pscale              {args}
 	method push                {args}
 	method put                 {args}
@@ -392,7 +393,7 @@ namespace eval ArcherCore {
 					   in inside item kill killall killrefs killtree ls \
 					   make make_bb mater mirror move move_arb_edge move_arb_face \
 					   mv mvall nmg_collapse nmg_simplify \
-					   ocenter orotate oscale otranslate packTree prefix pscale push \
+					   ocenter orotate oscale otranslate packTree prefix protate pscale push \
 					   put put_comb putmat pwd r rcodes red rfarb rm rmater \
 					   rotate_arb_face shader shells tire title track \
 					   unhide units unpackTree \
@@ -3773,6 +3774,10 @@ Popup Menu    Right or Ctrl-Left
 
 ::itcl::body ArcherCore::prefix {args} {
     eval gedWrapper prefix 0 0 1 1 $args
+}
+
+::itcl::body ArcherCore::protate {args} {
+    eval gedWrapper protate 0 0 1 0 $args
 }
 
 ::itcl::body ArcherCore::pscale {args} {

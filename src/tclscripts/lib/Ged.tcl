@@ -227,6 +227,7 @@ package provide cadwidgets::Ged 1.0
 	method mouse_rot {args}
 	method mouse_rotate_arb_face {args}
 	method mouse_scale {args}
+	method mouse_protate {args}
 	method mouse_pscale {args}
 	method mouse_trans {args}
 	method move_arb_edge {args}
@@ -282,6 +283,7 @@ package provide cadwidgets::Ged 1.0
 	method pane_mouse_rot {_pane args}
 	method pane_mouse_rotate_arb_face {_pane args}
 	method pane_mouse_scale {_pane args}
+	method pane_mouse_protate {_pane args}
 	method pane_mouse_pscale {_pane args}
 	method pane_mouse_trans {_pane args}
 	method pane_nirt {_pane args}
@@ -317,6 +319,7 @@ package provide cadwidgets::Ged 1.0
 	method pane_savekey {_pane args}
 	method pane_saveview {_pane args}
 	method pane_sca {_pane args}
+	method pane_protate_mode {_pane args}
 	method pane_pscale_mode {_pane args}
 	method pane_scale_mode {_pane args}
 	method pane_set_coord {_pane args}
@@ -389,6 +392,8 @@ package provide cadwidgets::Ged 1.0
 	method savekey {args}
 	method saveview {args}
 	method sca {args}
+	method protate {args}
+	method protate_mode {args}
 	method pscale {args}
 	method pscale_mode {args}
 	method scale_mode {args}
@@ -1255,6 +1260,10 @@ package provide cadwidgets::Ged 1.0
     eval $mGed mouse_scale $itk_component($itk_option(-pane)) $args
 }
 
+::itcl::body cadwidgets::Ged::mouse_protate {args} {
+    eval $mGed mouse_protate $itk_component($itk_option(-pane)) $args
+}
+
 ::itcl::body cadwidgets::Ged::mouse_pscale {args} {
     eval $mGed mouse_pscale $itk_component($itk_option(-pane)) $args
 }
@@ -1475,6 +1484,10 @@ package provide cadwidgets::Ged 1.0
     eval $mGed mouse_scale $itk_component($_pane) $args
 }
 
+::itcl::body cadwidgets::Ged::pane_mouse_protate {_pane args} {
+    eval $mGed mouse_protate $itk_component($_pane) $args
+}
+
 ::itcl::body cadwidgets::Ged::pane_mouse_pscale {_pane args} {
     eval $mGed mouse_pscale $itk_component($_pane) $args
 }
@@ -1613,6 +1626,10 @@ package provide cadwidgets::Ged 1.0
 
 ::itcl::body cadwidgets::Ged::pane_sca {_pane args} {
     eval $mGed sca $itk_component($_pane) $args
+}
+
+::itcl::body cadwidgets::Ged::pane_protate_mode {_pane args} {
+    eval $mGed protate_mode $itk_component($_pane) $args
 }
 
 ::itcl::body cadwidgets::Ged::pane_pscale_mode {_pane args} {
@@ -1928,6 +1945,14 @@ package provide cadwidgets::Ged 1.0
 
 ::itcl::body cadwidgets::Ged::screen2view {args} {
     eval $mGed screen2view $itk_component($itk_option(-pane)) $args
+}
+
+::itcl::body cadwidgets::Ged::protate {args} {
+    eval $mGed protate $args
+}
+
+::itcl::body cadwidgets::Ged::protate_mode {args} {
+    eval $mGed protate_mode $itk_component($itk_option(-pane)) $args
 }
 
 ::itcl::body cadwidgets::Ged::pscale {args} {

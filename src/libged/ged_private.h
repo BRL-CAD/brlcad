@@ -332,6 +332,27 @@ BU_EXTERN (void ged_wait_status,
 	   (struct bu_vls *log,
 	    int status));
 
+/* defined in rotate_eto.c */
+BU_EXTERN (int ged_rotate_eto,
+	   (struct ged *gedp,
+	    struct rt_eto_internal *eto,
+	    const char *attribute,
+	    matp_t rmat));
+
+/* defined in rotate_hyp.c */
+BU_EXTERN (int ged_rotate_hyp,
+	   (struct ged *gedp,
+	    struct rt_hyp_internal *hyp,
+	    const char *attribute,
+	    matp_t rmat));
+
+/* defined in rotate_tgc.c */
+BU_EXTERN (int ged_rotate_tgc,
+	   (struct ged *gedp,
+	    struct rt_tgc_internal *tgc,
+	    const char *attribute,
+	    matp_t rmat));
+
 /* defined in scale_ehy.c */
 BU_EXTERN (int ged_scale_ehy,
 	   (struct ged *gedp,

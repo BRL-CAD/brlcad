@@ -478,9 +478,12 @@
 ::itcl::body TgcEditFrame::buildLowerPanel {} {
     set parent [$this childsite lower]
 
-    set alist [list A set Set B set Set C set Set D set Set \
-	       AB set Set CD set Set ABCD set Set \
-	       H set Set HV set Set HVAB set Set HCD set Set]
+    set alist [list \
+		   A set Set B set Set C set Set D set Set \
+		   AB set Set CD set Set ABCD set Set \
+		   H set Set HV set Set HVAB set Set HCD set Set \
+		   H rot Rotate HAB rot Rotate \
+		  ]
 
     foreach {attribute op opLabel} $alist {
 	itk_component add $op$attribute {
@@ -491,7 +494,7 @@
 		-command [::itcl::code $this initValuePanel]
 	} {}
 
-	pack $itk_component(set$attribute) \
+	pack $itk_component($op$attribute) \
 	    -anchor w \
 	    -expand yes
     }

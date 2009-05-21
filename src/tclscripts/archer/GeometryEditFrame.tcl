@@ -45,17 +45,17 @@
     destructor {}
 
     public {
-	common mEditMode 0
-	common mEditCommand ""
-	common mEditClass ""
-	common mEditParam1 1
-	common mEditParam2 1
-	common mEditLastTransMode $::ArcherCore::OBJECT_CENTER_MODE
-
 	common EDIT_CLASS_NONE 0
 	common EDIT_CLASS_ROT 1
 	common EDIT_CLASS_SCALE 2
 	common EDIT_CLASS_TRANS 3
+
+	common mEditMode 0
+	common mEditClass $EDIT_CLASS_NONE
+	common mEditCommand ""
+	common mEditParam1 0
+	common mEditParam2 0
+	common mEditLastTransMode $::ArcherCore::OBJECT_CENTER_MODE
 
 	proc validateDigit {d}
 	proc validateDigitMax100 {d}

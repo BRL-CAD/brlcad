@@ -3765,7 +3765,11 @@ package provide Archer 1.0
 	set win [$itk_component(ged) component $dname]
 
 	if {$GeometryEditFrame::mEditCommand != ""} {
-	    bind $win <1> "$itk_component(ged) pane_$GeometryEditFrame::mEditCommand\_mode $dname $obj $GeometryEditFrame::mEditParam1 $GeometryEditFrame::mEditParam2 %x %y; break"
+	    if {$GeometryEditFrame::mEditParam2 != 0} {
+		bind $win <1> "$itk_component(ged) pane_$GeometryEditFrame::mEditCommand\_mode $dname $obj $GeometryEditFrame::mEditParam1 $GeometryEditFrame::mEditParam2 %x %y; break"
+	    } else {
+		bind $win <1> "$itk_component(ged) pane_$GeometryEditFrame::mEditCommand\_mode $dname $obj $GeometryEditFrame::mEditParam1 %x %y; break"
+	    }
 	} else {
 	    bind $win <1> "$itk_component(ged) pane_orotate_mode $dname $obj %x %y; break"
 	}
