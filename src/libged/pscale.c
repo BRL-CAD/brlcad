@@ -64,7 +64,7 @@ ged_pscale(struct ged *gedp, int argc, const char *argv[])
 
     if (sscanf(argv[3], "%lf", &sf) != 1 ||
 	sf <= SQRT_SMALL_FASTF) {
-	bu_vls_printf(&gedp->ged_result_str, "bad scale factor - %s", argv[3]);
+	bu_vls_printf(&gedp->ged_result_str, "%s: bad scale factor - %s", argv[0], argv[3]);
 	return BRLCAD_ERROR;
     }
 
@@ -74,12 +74,12 @@ ged_pscale(struct ged *gedp, int argc, const char *argv[])
 	++last;
 
     if (last[0] == '\0') {
-	bu_vls_printf(&gedp->ged_result_str, "illegal input - %s", argv[1]);
+	bu_vls_printf(&gedp->ged_result_str, "%s: illegal input - %s", argv[0], argv[1]);
 	return BRLCAD_ERROR;
     }
 
     if ((dp = db_lookup(gedp->ged_wdbp->dbip, last, LOOKUP_QUIET)) == DIR_NULL) {
-	bu_vls_printf(&gedp->ged_result_str, "%s not found", argv[1]);
+	bu_vls_printf(&gedp->ged_result_str, "%s: %s not found", argv[0], argv[1]);
 	return BRLCAD_ERROR;
     }
 
@@ -87,7 +87,7 @@ ged_pscale(struct ged *gedp, int argc, const char *argv[])
     RT_CK_DB_INTERNAL(&intern);
 
     if (intern.idb_major_type != DB5_MAJORTYPE_BRLCAD) {
-	bu_vls_printf(&gedp->ged_result_str, "Object not eligible for scaling.");
+	bu_vls_printf(&gedp->ged_result_str, "%s: Object not eligible for scaling.", argv[0]);
 	rt_db_free_internal(&intern, &rt_uniresource);
 
 	return BRLCAD_ERROR;
@@ -128,7 +128,7 @@ ged_pscale(struct ged *gedp, int argc, const char *argv[])
 	ret = ged_scale_tor(gedp, (struct rt_tor_internal *)intern.idb_ptr, argv[2], sf);
 	break;
     default:
-	bu_vls_printf(&gedp->ged_result_str, "Object not yet supported.");
+	bu_vls_printf(&gedp->ged_result_str, "%s: Object not yet supported.", argv[0]);
 	rt_db_free_internal(&intern, &rt_uniresource);
 
 	return BRLCAD_ERROR;
