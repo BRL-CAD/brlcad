@@ -775,6 +775,9 @@ utah_isTrimmed(ON_2dPoint uv, const ON_BrepFace *face) {
     static bool curveApproximated[MAX_CURVES];
     static ON_3dPoint curveApproximations[MAX_CURVES][MAX_NUMBEROFPOINTS];
 
+    ON_wString curveinfo;
+    ON_TextLog log(curveinfo);
+
     if (!approximationsInit) {
         approximationsInit = true;
         for (int i = 0; i < MAX_CURVES; i++) {
@@ -810,6 +813,14 @@ utah_isTrimmed(ON_2dPoint uv, const ON_BrepFace *face) {
                 continue;
             }
 
+	    // Uncomment the following to get a look at the summary report
+	    // of a given trimming curve
+	    /* trimCurve->Dump(log);
+	       ON_String cinfo = ON_String(curveinfo);
+	       const char *info = cinfo.Array();
+	       bu_log("%s\n", info);
+	    */
+	    
             double closestT;
             bool gotClosest = trimCurve->GetClosestPoint(hitPoint, &closestT);
             if (!gotClosest) {
