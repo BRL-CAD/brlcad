@@ -1,4 +1,4 @@
-/*                    T O R _ M I R R O R . C
+/*                    E L L _ M I R R O R . C
  * BRL-CAD
  *
  * Copyright (c) 2009 United States Government as represented by
@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file tor_mirror.c
+/** @file ell_mirror.c
  *
  * mirror support
  *
@@ -30,15 +30,15 @@
 
 
 /**
- * R T _ T O R _ M I R R O R
+ * R T _ E L L _ M I R R O R
  *
  * Given a pointer to an internal GED database object, mirror the
  * object's values about the given transformation matrix.
  */
 int
-rt_tor_mirror(struct rt_db_internal *ip, register const plane_t *plane)
+rt_ell_mirror(struct rt_db_internal *ip, register const plane_t *plane)
 {
-    struct rt_tor_internal *tor;
+    struct rt_ell_internal *ell;
 
     mat_t mat;
     mat_t mirmat;
@@ -51,15 +51,15 @@ rt_tor_mirror(struct rt_db_internal *ip, register const plane_t *plane)
 
     point_t pt;
     fastf_t ang;
-    vect_t h;
+    vect_t a, b, c;
     vect_t n;
 
     static point_t origin = {0.0, 0.0, 0.0};
 
     RT_CK_DB_INTERNAL(ip);
 
-    tor = (struct rt_tor_internal *)ip->idb_ptr;
-    RT_TOR_CK_MAGIC(tor);
+    ell = (struct rt_ell_internal *)ip->idb_ptr;
+    RT_ELL_CK_MAGIC(ell);
 
     MAT_IDN(mirmat);
 
@@ -86,17 +86,35 @@ rt_tor_mirror(struct rt_db_internal *ip, register const plane_t *plane)
     mirmat[3 + Y*4] += mirror_pt[Y] * mirror_dir[Y];
     mirmat[3 + Z*4] += mirror_pt[Z] * mirror_dir[Z];
 
-    VMOVE(pt, tor->v);
-    MAT4X3PNT(tor->v, mirmat, pt);
+    VMOVE(pt, ell->v);
+    MAT4X3PNT(ell->v, mirmat, pt);
 
-    VMOVE(h, tor->h);
-    VUNITIZE(h);
-
-    VCROSS(n, mirror_dir, tor->h);
+    VMOVE(a, ell->a);
+    VUNITIZE(a);
+    VCROSS(n, mirror_dir, ell->a);
     VUNITIZE(n);
-    ang = M_PI_2 - acos(VDOT(h, mirror_dir));
+    ang = M_PI_2 - acos(VDOT(a, mirror_dir));
     bn_mat_arb_rot(mat, origin, n, ang*2);
-    MAT4X3VEC(tor->h, mat, h);
+    VMOVE(a, ell->a);
+    MAT4X3VEC(ell->a, mat, a);
+
+    VMOVE(b, ell->b);
+    VUNITIZE(b);
+    VCROSS(n, mirror_dir, ell->b);
+    VUNITIZE(n);
+    ang = M_PI_2 - acos(VDOT(b, mirror_dir));
+    bn_mat_arb_rot(mat, origin, n, ang*2);
+    VMOVE(b, ell->b);
+    MAT4X3VEC(ell->b, mat, b);
+
+    VMOVE(c, ell->c);
+    VUNITIZE(c);
+    VCROSS(n, mirror_dir, ell->c);
+    VUNITIZE(n);
+    ang = M_PI_2 - acos(VDOT(c, mirror_dir));
+    bn_mat_arb_rot(mat, origin, n, ang*2);
+    VMOVE(c, ell->c);
+    MAT4X3VEC(ell->c, mat, c);
 
     return 0;
 }

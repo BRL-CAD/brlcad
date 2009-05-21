@@ -74,6 +74,7 @@ set(LIBRT_SOURCES
     primitives/ebm/ebm.c
     primitives/ehy/ehy.c
     primitives/ell/ell.c
+    primitives/ell/ell_mirror.c
     primitives/epa/epa.c
     primitives/eto/eto.c
     primitives/extrude/extrude.c
@@ -121,6 +122,7 @@ set(LIBRT_SOURCES
     primitives/superell/superell.c
     primitives/table.c
     primitives/tgc/tgc.c
+    primitives/tgc/tgc_mirror.c
     primitives/tor/tor.c
     primitives/tor/tor_mirror.c
     primitives/vol/vol.c

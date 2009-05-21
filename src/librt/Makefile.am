@@ -105,6 +105,7 @@ librt_nil_la_SOURCES = \
 	primitives/ebm/ebm.c \
 	primitives/ehy/ehy.c \
 	primitives/ell/ell.c \
+	primitives/ell/ell_mirror.c \
 	primitives/epa/epa.c \
 	primitives/eto/eto.c \
 	primitives/extrude/extrude.c \

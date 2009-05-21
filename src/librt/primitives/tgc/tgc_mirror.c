@@ -40,19 +40,20 @@ rt_tgc_mirror(struct rt_db_internal *ip, register const plane_t *plane)
 {
     struct rt_tgc_internal *tgc;
 
-    fastf_t ang;
     mat_t mat;
     mat_t mirmat;
     mat_t rmat;
     mat_t temp;
+    vect_t nvec;
+    vect_t xvec;
     vect_t mirror_dir;
     point_t mirror_pt;
+
     point_t pt;
+    fastf_t ang;
     vect_t h;
     vect_t a, b, c, d;
     vect_t n;
-    vect_t nvec;
-    vect_t xvec;
 
     static point_t origin = {0.0, 0.0, 0.0};
 

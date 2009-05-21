@@ -115,12 +115,12 @@ rt_mirror(struct db_i *dbip,
 	    err = rt_tgc_mirror(ip, plane);
 	    return err ? NULL : ip;
 	}
-#if 0
 	case ID_ELL:
 	case ID_SPH: {
 	    err = rt_ell_mirror(ip, plane);
 	    return err ? NULL : ip;
 	}
+#if 0
 	case ID_ARB8: {
 	    err = rt_arb8_mirror(ip, plane);
 	    return err ? NULL : ip;
@@ -235,50 +235,6 @@ rt_mirror(struct db_i *dbip,
     mirmat[3 + Z*4] += 2.0 * mirror_pt[Z] * mirror_dir[Z];
 
     switch (id) {
-	case ID_ELL:
-	case ID_SPH: {
-	    struct rt_ell_internal *ell;
-	    point_t pt;
-	    vect_t a, b, c;
-	    vect_t n;
-	    fastf_t ang;
-	    mat_t mat;
-
-	    ell = (struct rt_ell_internal *)ip->idb_ptr;
-	    RT_ELL_CK_MAGIC(ell);
-
-	    VMOVE(pt, ell->v);
-	    MAT4X3PNT(ell->v, mirmat, pt);
-
-	    VMOVE(a, ell->a);
-	    VUNITIZE(a);
-	    VCROSS(n, mirror_dir, ell->a);
-	    VUNITIZE(n);
-	    ang = M_PI_2 - acos(VDOT(a, mirror_dir));
-	    bn_mat_arb_rot(mat, origin, n, ang*2);
-	    VMOVE(a, ell->a);
-	    MAT4X3VEC(ell->a, mat, a);
-
-	    VMOVE(b, ell->b);
-	    VUNITIZE(b);
-	    VCROSS(n, mirror_dir, ell->b);
-	    VUNITIZE(n);
-	    ang = M_PI_2 - acos(VDOT(b, mirror_dir));
-	    bn_mat_arb_rot(mat, origin, n, ang*2);
-	    VMOVE(b, ell->b);
-	    MAT4X3VEC(ell->b, mat, b);
-
-	    VMOVE(c, ell->c);
-	    VUNITIZE(c);
-	    VCROSS(n, mirror_dir, ell->c);
-	    VUNITIZE(n);
-	    ang = M_PI_2 - acos(VDOT(c, mirror_dir));
-	    bn_mat_arb_rot(mat, origin, n, ang*2);
-	    VMOVE(c, ell->c);
-	    MAT4X3VEC(ell->c, mat, c);
-
-	    break;
-	}
 	case ID_ARB8: {
 	    struct rt_arb_internal *arb;
 
