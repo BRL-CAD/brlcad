@@ -47,10 +47,10 @@ libexpress_nil_la_SOURCES = \
 	$(COMMON)
 
 libexpress_nil_la_LDFLAGS =
-libexpress_nil_la_LIBADD = 
+libexpress_nil_la_LIBADD = -avoid-version -no-undefined
 
 libexpress_la_SOURCES = 
-libexpress_la_LDFLAGS =
+libexpress_la_LDFLAGS = -avoid-version -no-undefined
 libexpress_la_LIBADD = \
 	libexpress_nil.la
 

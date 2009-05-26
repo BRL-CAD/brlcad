@@ -11,12 +11,12 @@ libstepdai_nil_la_SOURCES = \
 	sdaiModel_contents.cc \
 	sdaiModel_contents_list.cc 
 
-libstepdai_nil_la_LDFLAGS =
+libstepdai_nil_la_LDFLAGS = -avoid-version -no-undefined
 libstepdai_nil_la_LIBADD = 
 libstepdai_nil_la_CXXFLAGS = -I$(top_srcdir)/src/clstepcore -I$(top_srcdir)/src/clutils
 
 libstepdai_la_SOURCES = 
-libstepdai_la_LDFLAGS =
+libstepdai_la_LDFLAGS = -avoid-version -no-undefined
 libstepdai_la_LIBADD = \
 	libstepdai_nil.la \
 	${LIBSTDCXX}
