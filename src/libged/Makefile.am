@@ -145,6 +145,7 @@ libged_nil_la_SOURCES = \
 	ps.c \
 	protate.c \
 	pscale.c \
+	ptranslate.c \
 	push.c \
 	put.c \
 	put_comb.c \
@@ -210,6 +211,7 @@ libged_nil_la_SOURCES = \
 	tra.c \
 	trace.c \
 	track.c \
+	translate_tgc.c \
 	tree.c \
 	typein.c \
 	unhide.c \

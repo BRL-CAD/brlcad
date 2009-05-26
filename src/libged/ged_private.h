@@ -442,6 +442,14 @@ BU_EXTERN (void ged_trace,
 	    const mat_t			old_xlate,
 	    struct ged_trace_data	*gtdp));
 
+/* defined in translate_tgc.c */
+BU_EXTERN (int ged_translate_tgc,
+	   (struct ged *gedp,
+	    struct rt_tgc_internal *tgc,
+	    const char *attribute,
+	    vect_t tvec,
+	    int rflag));
+
 /* defined in vutil.c */
 BU_EXTERN (void ged_view_update,
 	   (struct ged_view *gvp));

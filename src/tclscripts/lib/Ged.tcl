@@ -229,6 +229,7 @@ package provide cadwidgets::Ged 1.0
 	method mouse_scale {args}
 	method mouse_protate {args}
 	method mouse_pscale {args}
+	method mouse_ptranslate {args}
 	method mouse_trans {args}
 	method move_arb_edge {args}
 	method move_arb_edge_mode {args}
@@ -285,6 +286,7 @@ package provide cadwidgets::Ged 1.0
 	method pane_mouse_scale {_pane args}
 	method pane_mouse_protate {_pane args}
 	method pane_mouse_pscale {_pane args}
+	method pane_mouse_ptranslate {_pane args}
 	method pane_mouse_trans {_pane args}
 	method pane_nirt {_pane args}
 	method pane_orient {_pane args}
@@ -299,7 +301,10 @@ package provide cadwidgets::Ged 1.0
 	method pane_png {_pane args}
 	method pane_pov {_pane args}
 	method pane_preview {_pane args}
+	method pane_protate_mode {_pane args}
 	method pane_ps {_pane args}
+	method pane_pscale_mode {_pane args}
+	method pane_ptranslate_mode {_pane args}
 	method pane_quat {_pane args}
 	method pane_qvrot {_pane args}
 	method pane_rect {_pane args}
@@ -319,8 +324,6 @@ package provide cadwidgets::Ged 1.0
 	method pane_savekey {_pane args}
 	method pane_saveview {_pane args}
 	method pane_sca {_pane args}
-	method pane_protate_mode {_pane args}
-	method pane_pscale_mode {_pane args}
 	method pane_scale_mode {_pane args}
 	method pane_set_coord {_pane args}
 	method pane_set_fb_mode {_pane args}
@@ -396,6 +399,8 @@ package provide cadwidgets::Ged 1.0
 	method protate_mode {args}
 	method pscale {args}
 	method pscale_mode {args}
+	method ptranslate {args}
+	method ptranslate_mode {args}
 	method scale_mode {args}
 	method screen2view {args}
 	method set_coord {args}
@@ -1268,6 +1273,10 @@ package provide cadwidgets::Ged 1.0
     eval $mGed mouse_pscale $itk_component($itk_option(-pane)) $args
 }
 
+::itcl::body cadwidgets::Ged::mouse_ptranslate {args} {
+    eval $mGed mouse_ptranslate $itk_component($itk_option(-pane)) $args
+}
+
 ::itcl::body cadwidgets::Ged::mouse_trans {args} {
     eval $mGed mouse_trans $itk_component($itk_option(-pane)) $args
 }
@@ -1492,6 +1501,10 @@ package provide cadwidgets::Ged 1.0
     eval $mGed mouse_pscale $itk_component($_pane) $args
 }
 
+::itcl::body cadwidgets::Ged::pane_mouse_ptranslate {_pane args} {
+    eval $mGed mouse_ptranslate $itk_component($_pane) $args
+}
+
 ::itcl::body cadwidgets::Ged::pane_mouse_trans {_pane args} {
     eval $mGed mouse_trans $itk_component($_pane) $args
 }
@@ -1548,8 +1561,20 @@ package provide cadwidgets::Ged 1.0
     eval $mGed preview $itk_component($_pane) $args
 }
 
+::itcl::body cadwidgets::Ged::pane_protate_mode {_pane args} {
+    eval $mGed protate_mode $itk_component($_pane) $args
+}
+
 ::itcl::body cadwidgets::Ged::pane_ps {_pane args} {
     eval $mGed ps $itk_component($_pane) $args
+}
+
+::itcl::body cadwidgets::Ged::pane_pscale_mode {_pane args} {
+    eval $mGed pscale_mode $itk_component($_pane) $args
+}
+
+::itcl::body cadwidgets::Ged::pane_ptranslate_mode {_pane args} {
+    eval $mGed ptranslate_mode $itk_component($_pane) $args
 }
 
 ::itcl::body cadwidgets::Ged::pane_quat {_pane args} {
@@ -1628,12 +1653,8 @@ package provide cadwidgets::Ged 1.0
     eval $mGed sca $itk_component($_pane) $args
 }
 
-::itcl::body cadwidgets::Ged::pane_protate_mode {_pane args} {
-    eval $mGed protate_mode $itk_component($_pane) $args
-}
-
-::itcl::body cadwidgets::Ged::pane_pscale_mode {_pane args} {
-    eval $mGed pscale_mode $itk_component($_pane) $args
+::itcl::body cadwidgets::Ged::pane_scale_mode {_pane args} {
+    eval $mGed scale_mode $itk_component($_pane) $args
 }
 
 ::itcl::body cadwidgets::Ged::pane_scale_mode {_pane args} {
@@ -1961,6 +1982,14 @@ package provide cadwidgets::Ged 1.0
 
 ::itcl::body cadwidgets::Ged::pscale_mode {args} {
     eval $mGed pscale_mode $itk_component($itk_option(-pane)) $args
+}
+
+::itcl::body cadwidgets::Ged::ptranslate {args} {
+    eval $mGed ptranslate $args
+}
+
+::itcl::body cadwidgets::Ged::ptranslate_mode {args} {
+    eval $mGed ptranslate_mode $itk_component($itk_option(-pane)) $args
 }
 
 ::itcl::body cadwidgets::Ged::scale_mode {args} {

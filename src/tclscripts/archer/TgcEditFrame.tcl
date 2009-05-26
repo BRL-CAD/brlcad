@@ -55,7 +55,7 @@
 	common rotH    12
 	common rotHAB  13
 	common moveH   14
-	common moveHRT 15
+	common moveHH  15
 
 	variable mVx ""
 	variable mVy ""
@@ -482,7 +482,7 @@
 		   A set Set B set Set C set Set D set Set \
 		   AB set Set CD set Set ABCD set Set \
 		   H set Set HV set Set HVAB set Set HCD set Set \
-		   H rot Rotate HAB rot Rotate \
+		   H rot Rotate HAB rot Rotate H move Move HH move Move \
 		  ]
 
     foreach {attribute op opLabel} $alist {
@@ -677,15 +677,15 @@
 	    configure -valueUnits "mm"; \
 	} \
 	$moveH { \
-	    set mEditCommand pmove; \
-	    set mEditClass $EDIT_CLASS_TRAN; \
+	    set mEditCommand ptranslate; \
+	    set mEditClass $EDIT_CLASS_TRANS; \
 	    set mEditParam1 h; \
 	    configure -valueUnits "mm"; \
 	} \
-	$moveHRT { \
-	    set mEditCommand pmove; \
-	    set mEditClass $EDIT_CLASS_TRAN; \
-	    set mEditParam1 hrt; \
+	$moveHH { \
+	    set mEditCommand ptranslate; \
+	    set mEditClass $EDIT_CLASS_TRANS; \
+	    set mEditParam1 hh; \
 	    configure -valueUnits "mm"; \
 	}
 

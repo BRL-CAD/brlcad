@@ -290,6 +290,12 @@ static int go_mouse_pscale(struct ged	*gedp,
 			   ged_func_ptr	func,
 			   const char	*usage,
 			   int		maxargs);
+static int go_mouse_ptranslate(struct ged	*gedp,
+			       int		argc,
+			       const char	*argv[],
+			       ged_func_ptr	func,
+			       const char	*usage,
+			       int		maxargs);
 static int go_mouse_trans(struct ged	*gedp,
 			  int		argc,
 			  const char	*argv[],
@@ -386,6 +392,12 @@ static int go_pscale_mode(struct ged	*gedp,
 			  ged_func_ptr	func,
 			  const char	*usage,
 			  int		maxargs);
+static int go_ptranslate_mode(struct ged	*gedp,
+			      int		argc,
+			      const char	*argv[],
+			      ged_func_ptr	func,
+			      const char	*usage,
+			      int		maxargs);
 static int go_scale_mode(struct ged	*gedp,
 			 int		argc,
 			 const char	*argv[],
@@ -667,6 +679,7 @@ static struct go_cmdtab go_cmds[] = {
     {"mouse_scale",	"vname x y", MAXARGS, go_mouse_scale, GED_FUNC_PTR_NULL},
     {"mouse_protate",	"vname obj attribute x y", MAXARGS, go_mouse_protate, GED_FUNC_PTR_NULL},
     {"mouse_pscale",	"vname obj attribute x y", MAXARGS, go_mouse_pscale, GED_FUNC_PTR_NULL},
+    {"mouse_ptranslate",	"vname obj attribute x y", MAXARGS, go_mouse_ptranslate, GED_FUNC_PTR_NULL},
     {"mouse_trans",	"vname x y", MAXARGS, go_mouse_trans, GED_FUNC_PTR_NULL},
     {"mv",	(char *)0, MAXARGS, go_pass_through_func, ged_move},
     {"mvall",	(char *)0, MAXARGS, go_pass_through_func, ged_move_all},
@@ -702,6 +715,8 @@ static struct go_cmdtab go_cmds[] = {
     {"protate_mode",	"vname obj attribute x y", MAXARGS, go_protate_mode, GED_FUNC_PTR_NULL},
     {"pscale",	(char *)0, MAXARGS, go_pass_through_func, ged_pscale},
     {"pscale_mode",	"vname obj attribute x y", MAXARGS, go_pscale_mode, GED_FUNC_PTR_NULL},
+    {"ptranslate",	(char *)0, MAXARGS, go_pass_through_func, ged_ptranslate},
+    {"ptranslate_mode",	"vname obj attribute x y", MAXARGS, go_ptranslate_mode, GED_FUNC_PTR_NULL},
     {"push",	(char *)0, MAXARGS, go_pass_through_func, ged_push},
     {"put",	(char *)0, MAXARGS, go_pass_through_func, ged_put},
     {"put_comb",	(char *)0, MAXARGS, go_pass_through_func, ged_put_comb},
@@ -3775,8 +3790,8 @@ go_mouse_protate(struct ged	*gedp,
     fastf_t dx, dy;
     point_t model;
     point_t view;
-    mat_t inv_rot;
     fastf_t inv_width;
+    mat_t inv_rot;
     struct bu_vls mrot_vls;
     struct ged_dm_view *gdvp;
 
@@ -3940,6 +3955,103 @@ go_mouse_pscale(struct ged	*gedp,
 
     ret = ged_pscale(gedp, 4, (const char **)av);
     bu_vls_free(&sf_vls);
+
+    if (ret == BRLCAD_OK) {
+	av[0] = "draw";
+	av[1] = (char *)argv[2];
+	av[2] = (char *)0;
+	go_autoview_func(gedp, 2, (const char **)av, ged_draw, (char *)0, MAXARGS);
+    }
+
+    return BRLCAD_OK;
+}
+
+static int
+go_mouse_ptranslate(struct ged		*gedp,
+		    int			argc,
+		    const char		*argv[],
+		    ged_func_ptr	func,
+		    const char		*usage,
+		    int			maxargs)
+{
+    int ret;
+    char *av[6];
+    fastf_t x, y;
+    fastf_t dx, dy;
+    point_t model;
+    point_t view;
+    fastf_t inv_width;
+    mat_t inv_rot;
+    struct bu_vls tvec_vls;
+    struct ged_dm_view *gdvp;
+
+    /* initialize result */
+    bu_vls_trunc(&gedp->ged_result_str, 0);
+
+    /* must be wanting help */
+    if (argc == 1) {
+	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	return BRLCAD_HELP;
+    }
+
+    if (argc != 6) {
+	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	return BRLCAD_ERROR;
+    }
+
+    for (BU_LIST_FOR(gdvp, ged_dm_view, &go_current_gop->go_head_views.l)) {
+	if (!strcmp(bu_vls_addr(&gdvp->gdv_name), argv[1]))
+	    break;
+    }
+
+    if (BU_LIST_IS_HEAD(&gdvp->l, &go_current_gop->go_head_views.l)) {
+	bu_vls_printf(&gedp->ged_result_str, "View not found - %s", argv[1]);
+	return BRLCAD_ERROR;
+    }
+
+    if (sscanf(argv[4], "%lf", &x) != 1 ||
+	sscanf(argv[5], "%lf", &y) != 1) {
+	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	return BRLCAD_ERROR;
+    }
+
+    dx = x - gdvp->gdv_view->gv_prevMouseX;
+    dy = gdvp->gdv_view->gv_prevMouseY - y;
+
+    gdvp->gdv_view->gv_prevMouseX = x;
+    gdvp->gdv_view->gv_prevMouseY = y;
+
+    if (dx < gdvp->gdv_view->gv_minMouseDelta)
+	dx = gdvp->gdv_view->gv_minMouseDelta;
+    else if (gdvp->gdv_view->gv_maxMouseDelta < dx)
+	dx = gdvp->gdv_view->gv_maxMouseDelta;
+
+    if (dy < gdvp->gdv_view->gv_minMouseDelta)
+	dy = gdvp->gdv_view->gv_minMouseDelta;
+    else if (gdvp->gdv_view->gv_maxMouseDelta < dy)
+	dy = gdvp->gdv_view->gv_maxMouseDelta;
+
+    inv_width = 1.0 / (fastf_t)gdvp->gdv_dmp->dm_width;
+    /* ged_ptranslate expects things to be in local units */
+    dx *= inv_width * gdvp->gdv_view->gv_size * gedp->ged_wdbp->dbip->dbi_base2local;
+    dy *= inv_width * gdvp->gdv_view->gv_size * gedp->ged_wdbp->dbip->dbi_base2local;
+    VSET(view, dx, dy, 0.0);
+    bn_mat_inv(inv_rot, gdvp->gdv_view->gv_rotation);
+    MAT4X3PNT(model, inv_rot, view);
+
+    bu_vls_init(&tvec_vls);
+    bu_vls_printf(&tvec_vls, "%lf %lf %lf", V3ARGS(model));
+
+    gedp->ged_gvp = gdvp->gdv_view;
+    av[0] = "ptranslate";
+    av[1] = "-r";
+    av[2] = (char *)argv[2];
+    av[3] = (char *)argv[3];
+    av[4] = bu_vls_addr(&tvec_vls);
+    av[5] = (char *)0;
+
+    ret = ged_ptranslate(gedp, 5, (const char **)av);
+    bu_vls_free(&tvec_vls);
 
     if (ret == BRLCAD_OK) {
 	av[0] = "draw";
@@ -4962,6 +5074,65 @@ go_pscale_mode(struct ged	*gedp,
 
     bu_vls_init(&bindings);
     bu_vls_printf(&bindings, "bind %V <Motion> {%V mouse_pscale %V %s %s %%x %%y}",
+		  &gdvp->gdv_dmp->dm_pathName,
+		  &go_current_gop->go_name,
+		  &gdvp->gdv_name,
+		  argv[2],
+		  argv[3]);
+    Tcl_Eval(go_current_gop->go_interp, bu_vls_addr(&bindings));
+    bu_vls_free(&bindings);
+
+    return BRLCAD_OK;
+}
+
+static int
+go_ptranslate_mode(struct ged	*gedp,
+		   int		argc,
+		   const char	*argv[],
+		   ged_func_ptr	func,
+		   const char	*usage,
+		   int		maxargs)
+{
+    fastf_t x, y;
+    struct bu_vls bindings;
+    struct ged_dm_view *gdvp;
+
+    /* initialize result */
+    bu_vls_trunc(&gedp->ged_result_str, 0);
+
+    /* must be wanting help */
+    if (argc == 1) {
+	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	return BRLCAD_HELP;
+    }
+
+    if (argc != 6) {
+	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	return BRLCAD_ERROR;
+    }
+
+    for (BU_LIST_FOR(gdvp, ged_dm_view, &go_current_gop->go_head_views.l)) {
+	if (!strcmp(bu_vls_addr(&gdvp->gdv_name), argv[1]))
+	    break;
+    }
+
+    if (BU_LIST_IS_HEAD(&gdvp->l, &go_current_gop->go_head_views.l)) {
+	bu_vls_printf(&gedp->ged_result_str, "View not found - %s", argv[1]);
+	return BRLCAD_ERROR;
+    }
+
+    if (sscanf(argv[4], "%lf", &x) != 1 ||
+	sscanf(argv[5], "%lf", &y) != 1) {
+	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	return BRLCAD_ERROR;
+    }
+
+    gdvp->gdv_view->gv_prevMouseX = x;
+    gdvp->gdv_view->gv_prevMouseY = y;
+    gdvp->gdv_view->gv_mode = GED_PTRANSLATE_MODE;
+
+    bu_vls_init(&bindings);
+    bu_vls_printf(&bindings, "bind %V <Motion> {%V mouse_ptranslate %V %s %s %%x %%y}",
 		  &gdvp->gdv_dmp->dm_pathName,
 		  &go_current_gop->go_name,
 		  &gdvp->gdv_name,

@@ -82,6 +82,7 @@ __BEGIN_DECLS
 #define GED_ROTATE_ARB_FACE_MODE 11
 #define GED_PROTATE_MODE 12
 #define GED_PSCALE_MODE 13
+#define GED_PTRANSLATE_MODE 14
 
 /**
  * S E M A P H O R E S
@@ -2241,6 +2242,14 @@ GED_EXPORT BU_EXTERN(int ged_protate, (struct ged *gedp, int argc, const char *a
  *     pscale obj attribute sf
  */
 GED_EXPORT BU_EXTERN(int ged_pscale, (struct ged *gedp, int argc, const char *argv[]));
+
+/**
+ * Translate obj's attributes by tvec.
+ *
+ * Usage:
+ *     ptranslate obj attribute tvec
+ */
+GED_EXPORT BU_EXTERN(int ged_ptranslate, (struct ged *gedp, int argc, const char *argv[]));
 
 /**
  * Push objects' path transformations to  primitives
