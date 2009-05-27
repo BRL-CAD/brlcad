@@ -86,7 +86,6 @@
 
 	method buildUpperPanel {}
 	method buildLowerPanel {}
-	method buildValuePanel {}
 
 	method updateUpperPanel {normal disabled}
 	method updateValuePanel {}
@@ -163,59 +162,13 @@
 	}
     }
 
-    itk_component add valueSeparator {
-	::ttk::frame $itk_interior.valueSeparator \
-	    -height 2 \
-	    -relief raised \
-	    -borderwidth 1
-    } {}
-    itk_component add value {
-	::ttk::frame $itk_interior.value
-    } {}
-    itk_component add valueL {
-	::ttk::label $itk_component(value).valueL \
-	    -text "Enter a value:" \
-	    -anchor e
-    } {}
-    itk_component add valueCS {
-	::ttk::frame $itk_component(value).valueCS
-    } {}
-    itk_component add valueUnitsL {
-	::ttk::label $itk_component(value).valueUnitsL \
-	    -textvariable [::itcl::scope itk_option(-valueUnits)] \
-	    -anchor e
-    } {
-	rename -font -labelFont labelFont Font
-    }
-
     # These are no-ops unless overridden in a subclass
     buildUpperPanel
     buildLowerPanel
-    buildValuePanel
 
     pack $itk_component(upper) -expand yes -fill both
     pack $itk_component(lower) -expand yes -fill both
     pack $itk_component(pane) -expand yes -fill both
-
-    pack $itk_component(valueL) \
-	-side left \
-	-anchor e
-    pack $itk_component(valueUnitsL) \
-	-side right
-    pack $itk_component(valueCS) \
-	-side right \
-	-expand yes \
-	-fill x
-    pack $itk_component(value) \
-	-side bottom \
-	-anchor w \
-	-fill x \
-	-padx 2 \
-	-pady 2
-    pack $itk_component(valueSeparator) \
-	-side bottom \
-	-anchor w \
-	-fill x
 
     eval itk_initialize $args
 }
@@ -323,9 +276,6 @@
 
 ::itcl::body GeometryEditFrame::childsite {{site upper}} {
     switch -- $site {
-	"value" {
-	    return $itk_component(valueCS)
-	}
 	"lower" {
 	    if {1} {
 		return $itk_component(lower)
@@ -353,12 +303,12 @@
 ::itcl::body GeometryEditFrame::initGeometry {gdata} {
     # The scrollmode options are needed so that the
     # scrollbars dynamically appear/disappear. Sheesh!
-    update
+#    update
     #after idle $this configure \
 	-vscrollmode dynamic \
 	-hscrollmode none
 
-    updateValuePanel
+#    updateValuePanel
 }
 
 ::itcl::body GeometryEditFrame::updateGeometry {} {
@@ -385,9 +335,6 @@
 }
 
 ::itcl::body GeometryEditFrame::buildLowerPanel {} {
-}
-
-::itcl::body GeometryEditFrame::buildValuePanel {} {
 }
 
 ::itcl::body GeometryEditFrame::updateUpperPanel {normal disabled} {

@@ -108,7 +108,6 @@
 	# Override methods in GeometryEditFrame
 	method buildUpperPanel
 	method buildLowerPanel
-	method buildValuePanel
 
 	# Override what's in GeometryEditFrame
 	method updateUpperPanel {normal disabled}
@@ -732,42 +731,6 @@
     incr row
     grid $itk_component(rotateFace) -row $row -column 0 -sticky nsew
     grid columnconfigure $parent 0 -weight 1
-}
-
-::itcl::body Arb8EditFrame::buildValuePanel {} {
-    set parent [$this childsite value]
-    itk_component add valueX {
-	::ttk::entry $parent.valueX \
-	    -textvariable [::itcl::scope mValueX] \
-	    -validate key \
-	    -validatecommand {GeometryEditFrame::validateDouble %P}
-    } {}
-    itk_component add valueY {
-	::ttk::entry $parent.valueY \
-	    -textvariable [::itcl::scope mValueY] \
-	    -validate key \
-	    -validatecommand {GeometryEditFrame::validateDouble %P}
-    } {}
-    itk_component add valueZ {
-	::ttk::entry $parent.valueZ \
-	    -textvariable [::itcl::scope mValueZ] \
-	    -validate key \
-	    -validatecommand {GeometryEditFrame::validateDouble %P}
-    } {}
-
-    set row 0
-    grid $itk_component(valueX) \
-	$itk_component(valueY) \
-	$itk_component(valueZ) \
-	-row $row \
-	-sticky nsew
-    grid columnconfigure $parent 0 -weight 1
-    grid columnconfigure $parent 1 -weight 1
-    grid columnconfigure $parent 2 -weight 1
-
-    bind $itk_component(valueX) <Return> [::itcl::code $this editGeometry]
-    bind $itk_component(valueY) <Return> [::itcl::code $this editGeometry]
-    bind $itk_component(valueZ) <Return> [::itcl::code $this editGeometry]
 }
 
 
