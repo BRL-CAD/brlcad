@@ -88,10 +88,9 @@
 	method buildLowerPanel {}
 
 	method updateUpperPanel {normal disabled}
-	method updateValuePanel {}
 	method updateGeometryIfMod {}
 
-	method initValuePanel {}
+	method initEditState {}
 
 	method buildComboBox {parent name1 name2 varName text listOfChoices}
 	method buildArrow {parent prefix text buildViewFunc}
@@ -122,45 +121,27 @@
     $itk_component(pane) add upper
     $itk_component(pane) add lower
 
-    if {1} {
-	set parent [$itk_component(pane) childsite upper]
-	itk_component add upper {
-	    ::ttk::frame $parent.upper
-	} {}
+    set parent [$itk_component(pane) childsite upper]
+    itk_component add upper {
+	::ttk::frame $parent.upper
+    } {}
 
-	# Repack parent so it's anchor to the north
-	pack $parent \
-	    -expand yes \
-	    -fill x \
-	    -anchor n
+    # Repack parent so it's anchor to the north
+    pack $parent \
+	-expand yes \
+	-fill x \
+	-anchor n
 
-	set parent [$itk_component(pane) childsite lower]
-	itk_component add lower {
-	    ::ttk::frame $parent.lower
-	} {}
+    set parent [$itk_component(pane) childsite lower]
+    itk_component add lower {
+	::ttk::frame $parent.lower
+    } {}
 
-	# Repack parent so it's anchor to the north
-	pack $parent \
-	    -expand yes \
-	    -fill x \
-	    -anchor n
-    } else {
-	set parent [$itk_component(pane) childsite upper]
-	itk_component add upper {
-	    ::iwidgets::Scrolledframe $parent.upper
-	} {
-	    keep -vscrollmode
-	    keep -hscrollmode
-	}
-
-	set parent [$itk_component(pane) childsite lower]
-	itk_component add lower {
-	    ::iwidgets::Scrolledframe $parent.lower
-	} {
-	    keep -vscrollmode
-	    keep -hscrollmode
-	}
-    }
+    # Repack parent so it's anchor to the north
+    pack $parent \
+	-expand yes \
+	-fill x \
+	-anchor n
 
     # These are no-ops unless overridden in a subclass
     buildUpperPanel
@@ -277,19 +258,11 @@
 ::itcl::body GeometryEditFrame::childsite {{site upper}} {
     switch -- $site {
 	"lower" {
-	    if {1} {
-		return $itk_component(lower)
-	    } else {
-		return [$itk_component(lower) childsite]
-	    }
+	    return $itk_component(lower)
 	}
 	default -
 	"upper" {
-	    if {1} {
-		return $itk_component(upper)
-	    } else {
-		return [$itk_component(upper) childsite]
-	    }
+	    return $itk_component(upper)
 	}
     }
 }
@@ -307,8 +280,6 @@
     #after idle $this configure \
 	-vscrollmode dynamic \
 	-hscrollmode none
-
-#    updateValuePanel
 }
 
 ::itcl::body GeometryEditFrame::updateGeometry {} {
@@ -340,13 +311,10 @@
 ::itcl::body GeometryEditFrame::updateUpperPanel {normal disabled} {
 }
 
-::itcl::body GeometryEditFrame::updateValuePanel {} {
-}
-
 ::itcl::body GeometryEditFrame::updateGeometryIfMod {} {
 }
 
-::itcl::body GeometryEditFrame::initValuePanel {} {
+::itcl::body GeometryEditFrame::initEditState {} {
     if {$mEditClass == $EDIT_CLASS_ROT} {
 	$::ArcherCore::application setDefaultBindingMode $::ArcherCore::OBJECT_ROTATE_MODE
     } elseif {$mEditClass == $EDIT_CLASS_SCALE} {

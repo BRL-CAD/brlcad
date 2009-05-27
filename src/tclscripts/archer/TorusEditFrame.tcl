@@ -60,7 +60,7 @@
 
 	# Override what's in GeometryEditFrame
 	method updateGeometryIfMod {}
-	method initValuePanel {}
+	method initEditState {}
     }
 
     private {}
@@ -262,7 +262,7 @@
 		-variable [::itcl::scope mEditMode] \
 		-value [subst $[subst set$attribute]] \
 		-text "Set $attribute" \
-		-command [::itcl::code $this initValuePanel]
+		-command [::itcl::code $this initEditState]
 	} {}
 
 	pack $itk_component(set$attribute) \
@@ -386,7 +386,7 @@
     }
 }
 
-::itcl::body TorusEditFrame::initValuePanel {} {
+::itcl::body TorusEditFrame::initEditState {} {
     switch -- $mEditMode \
 	$setA { \
 	    set mEditCommand pscale; \
@@ -401,8 +401,7 @@
 	    configure -valueUnits "mm"; \
 	}
 
-    GeometryEditFrame::initValuePanel
-    updateValuePanel
+    GeometryEditFrame::initEditState
 }
 
 

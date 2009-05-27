@@ -47,10 +47,6 @@
 	# Override what's in GeometryEditFrame
 	method updateGeometry {}
 	method createGeometry {obj}
-
-	method moveEdge {edge}
-	method moveFace {face}
-	method rotateFace {face}
     }
 
     protected {
@@ -69,11 +65,8 @@
 
 	# Override what's in Arb8EditFrame
 	method updateUpperPanel {normal disabled}
-	method updateValuePanel {}
 
-	method initValuePanel {}
-
-	method editGeometry {}
+	method initEditState {}
     }
 
     private {}
@@ -386,7 +379,7 @@
 		-variable [::itcl::scope mEditMode] \
 		-value [subst $[subst movePoint$point]] \
 		-text "Move point $point" \
-		-command [::itcl::code $this initValuePanel]
+		-command [::itcl::code $this initEditState]
 	} {}
 
 	pack $itk_component(movePoint$point) \
@@ -402,7 +395,7 @@
 		-variable [::itcl::scope mEditMode] \
 		-value [subst $[subst moveFace$face]] \
 		-text "Move face $face" \
-		-command [::itcl::code $this initValuePanel]
+		-command [::itcl::code $this initEditState]
 	} {}
 
 	pack $itk_component(moveFace$face) \
@@ -418,7 +411,7 @@
 		-variable [::itcl::scope mEditMode] \
 		-value [subst $[subst rotateFace$face]] \
 		-text "Rotate face $face" \
-		-command [::itcl::code $this initValuePanel]
+		-command [::itcl::code $this initEditState]
 	} {}
 
 	pack $itk_component(rotateFace$face) \
@@ -497,91 +490,6 @@
 	V8 [list $mXmax $mYmax $mZmin]
 }
 
-::itcl::body Arb4EditFrame::moveEdge {edge} {
-    switch -- $edge {
-	"1" {
-	    set edgeIndex 1
-	}
-	"2" {
-	    set edgeIndex 2
-	}
-	"3" {
-	    set edgeIndex 3
-	}
-	"5" {
-	    set edgeIndex 5
-	}
-    }
-
-    $itk_option(-mged) move_arb_edge \
-	$itk_option(-geometryObjectPath) \
-	$edgeIndex \
-	[list $mValueX $mValueY $mValueZ]
-
-    initGeometry [lrange [$itk_option(-mged) get $itk_option(-geometryObject)] 1 end]
-
-    if {$itk_option(-geometryChangedCallback) != ""} {
-	$itk_option(-geometryChangedCallback)
-    }
-}
-
-::itcl::body Arb4EditFrame::moveFace {face} {
-    switch -- $face {
-	"123" {
-	    set faceIndex 1
-	}
-	"124" {
-	    set faceIndex 2
-	}
-	"234" {
-	    set faceIndex 3
-	}
-	"134" {
-	    set faceIndex 4
-	}
-    }
-
-    $itk_option(-mged) move_arb_face \
-	$itk_option(-geometryObjectPath) \
-	$faceIndex \
-	[list $mValueX $mValueY $mValueZ]
-
-    initGeometry [lrange [$itk_option(-mged) get $itk_option(-geometryObject)] 1 end]
-
-    if {$itk_option(-geometryChangedCallback) != ""} {
-	$itk_option(-geometryChangedCallback)
-    }
-}
-
-::itcl::body Arb4EditFrame::rotateFace {face} {
-    switch -- $face {
-	"123" {
-	    set faceIndex 1
-	}
-	"124" {
-	    set faceIndex 2
-	}
-	"234" {
-	    set faceIndex 3
-	}
-	"134" {
-	    set faceIndex 4
-	}
-    }
-
-    $itk_option(-mged) rotate_arb_face \
-	$itk_option(-geometryObjectPath) \
-	$faceIndex \
-	$mEditParam2 \
-	[list $mValueX $mValueY $mValueZ]
-
-    initGeometry [lrange [$itk_option(-mged) get $itk_option(-geometryObject)] 1 end]
-
-    if {$itk_option(-geometryChangedCallback) != ""} {
-	$itk_option(-geometryChangedCallback)
-    }
-}
-
 
 # ------------------------------------------------------------
 #                      PROTECTED METHODS
@@ -597,71 +505,7 @@
     }
 }
 
-::itcl::body Arb4EditFrame::updateValuePanel {} {
-    switch -- $mEditMode \
-	$movePoint1 { \
-			  set mValueX $mV1x; \
-			  set mValueY $mV1y; \
-			  set mValueZ $mV1z \
-		      } \
-	$movePoint2 { \
-			  set mValueX $mV2x; \
-			  set mValueY $mV2y; \
-			  set mValueZ $mV2z \
-		      } \
-	$movePoint3 { \
-			  set mValueX $mV3x; \
-			  set mValueY $mV3y; \
-			  set mValueZ $mV3z \
-		      } \
-	$movePoint4 { \
-			  set mValueX $mV5x; \
-			  set mValueY $mV5y; \
-			  set mValueZ $mV5z \
-		      } \
-	$moveFace123 { \
-			   set mValueX $mV1x; \
-			   set mValueY $mV1y; \
-			   set mValueZ $mV1z \
-		       } \
-	$moveFace124 { \
-			   set mValueX $mV1x; \
-			   set mValueY $mV1y; \
-			   set mValueZ $mV1z \
-		       } \
-	$moveFace234 { \
-			   set mValueX $mV2x; \
-			   set mValueY $mV2y; \
-			   set mValueZ $mV2z \
-		       } \
-	$moveFace134 { \
-			   set mValueX $mV1x; \
-			   set mValueY $mV1y; \
-			   set mValueZ $mV1z \
-		       } \
-	$rotateFace123 { \
-			     set mValueX 0; \
-			     set mValueY 0; \
-			     set mValueZ 0 \
-			 } \
-	$rotateFace124 { \
-			     set mValueX 0; \
-			     set mValueY 0; \
-			     set mValueZ 0 \
-			 } \
-	$rotateFace234 { \
-			     set mValueX 0; \
-			     set mValueY 0; \
-			     set mValueZ 0 \
-			 } \
-	$rotateFace134 { \
-			     set mValueX 0; \
-			     set mValueY 0; \
-			     set mValueZ 0 \
-			 }
-}
-
-::itcl::body Arb4EditFrame::initValuePanel {} {
+::itcl::body Arb4EditFrame::initEditState {} {
     switch -- $mEditMode \
 	$movePoint1 { \
 			  set mEditCommand move_arb_edge; \
@@ -756,25 +600,9 @@
 			     updateUpperPanel {1 3 4} {2} \
 			 }
 
-    GeometryEditFrame::initValuePanel
-    updateValuePanel
+    GeometryEditFrame::initEditState
 }
 
-::itcl::body Arb4EditFrame::editGeometry {} {
-    switch -- $mEditMode \
-	$movePoint1 {moveEdge 1} \
-	$movePoint2 {moveEdge 2} \
-	$movePoint3 {moveEdge 3} \
-	$movePoint4 {moveEdge 5} \
-	$moveFace123 {moveFace 123} \
-	$moveFace124 {moveFace 124} \
-	$moveFace234 {moveFace 234} \
-	$moveFace134 {moveFace 134} \
-	$rotateFace123 {rotateFace 123} \
-	$rotateFace124 {rotateFace 124} \
-	$rotateFace234 {rotateFace 234} \
-	$rotateFace134 {rotateFace 134}
-}
 
 # Local Variables:
 # mode: Tcl

@@ -64,7 +64,7 @@
 
 	# Override what's in GeometryEditFrame.
 	method updateGeometryIfMod {}
-	method initValuePanel {}
+	method initEditState {}
     }
 
     private {}
@@ -380,7 +380,7 @@
 		-variable [::itcl::scope mEditMode] \
 		-value [subst $[subst $op$attribute]] \
 		-text "$opLabel $attribute" \
-		-command [::itcl::code $this initValuePanel]
+		-command [::itcl::code $this initEditState]
 	} {}
 
 	pack $itk_component($op$attribute) \
@@ -454,7 +454,7 @@
     }
 }
 
-::itcl::body EtoEditFrame::initValuePanel {} {
+::itcl::body EtoEditFrame::initEditState {} {
     switch -- $mEditMode \
 	$setr { \
 	    set mEditCommand pscale; \
@@ -481,7 +481,7 @@
 	    configure -valueUnits "mm"; \
 	}
 
-    GeometryEditFrame::initValuePanel
+    GeometryEditFrame::initEditState
 }
 
 

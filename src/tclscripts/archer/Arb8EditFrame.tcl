@@ -38,19 +38,12 @@
 	method initGeometry {gdata}
 	method updateGeometry {}
 	method createGeometry {obj}
-
-	method moveEdge {edge}
-	method moveFace {face}
-	method rotateFace {face}
     }
 
     protected {
 	common mRotationPointDialog ""
 	common mRotationPointCB ""
 
-	variable mValueX ""
-	variable mValueY ""
-	variable mValueZ ""
 	variable mV1x ""
 	variable mV1y ""
 	variable mV1z ""
@@ -111,12 +104,9 @@
 
 	# Override what's in GeometryEditFrame
 	method updateUpperPanel {normal disabled}
-	method updateValuePanel {}
 	method updateGeometryIfMod {}
 
-	method initValuePanel {}
-
-	method editGeometry {}
+	method initEditState {}
 
 	method buildRotationPointDialog {}
 	method invokeRotationPointDialog {_choices}
@@ -676,7 +666,7 @@
 		-variable [::itcl::scope mEditMode] \
 		-value [subst $[subst moveEdge$edge]] \
 		-text "Move edge $edge" \
-		-command [::itcl::code $this initValuePanel]
+		-command [::itcl::code $this initEditState]
 	} {}
 
 	pack $itk_component(moveEdge$edge) \
@@ -692,7 +682,7 @@
 		-variable [::itcl::scope mEditMode] \
 		-value [subst $[subst moveFace$face]] \
 		-text "Move face $face" \
-		-command [::itcl::code $this initValuePanel]
+		-command [::itcl::code $this initEditState]
 	} {}
 
 	pack $itk_component(moveFace$face) \
@@ -708,7 +698,7 @@
 		-variable [::itcl::scope mEditMode] \
 		-value [subst $[subst rotateFace$face]] \
 		-text "Rotate face $face" \
-		-command [::itcl::code $this initValuePanel]
+		-command [::itcl::code $this initEditState]
 	} {}
 
 	pack $itk_component(rotateFace$face) \
@@ -821,126 +811,6 @@
 	V8 [list $mXmin $mYmax $mZmax]
 }
 
-::itcl::body Arb8EditFrame::moveEdge {edge} {
-    switch -- $edge {
-	"12" {
-	    set edgeIndex 1
-	}
-	"23" {
-	    set edgeIndex 2
-	}
-	"34" {
-	    set edgeIndex 3
-	}
-	"14" {
-	    set edgeIndex 4
-	}
-	"15" {
-	    set edgeIndex 5
-	}
-	"26" {
-	    set edgeIndex 6
-	}
-	"56" {
-	    set edgeIndex 7
-	}
-	"67" {
-	    set edgeIndex 8
-	}
-	"78" {
-	    set edgeIndex 9
-	}
-	"58" {
-	    set edgeIndex 10
-	}
-	"37" {
-	    set edgeIndex 11
-	}
-	"48" {
-	    set edgeIndex 12
-	}
-    }
-
-    $itk_option(-mged) move_arb_edge \
-	$itk_option(-geometryObjectPath) \
-	$edgeIndex \
-	[list $mValueX $mValueY $mValueZ]
-
-    initGeometry [lrange [$itk_option(-mged) get $itk_option(-geometryObject)] 1 end]
-
-    if {$itk_option(-geometryChangedCallback) != ""} {
-	$itk_option(-geometryChangedCallback)
-    }
-}
-
-::itcl::body Arb8EditFrame::moveFace {face} {
-    switch -- $face {
-	"1234" {
-	    set faceIndex 1
-	}
-	"5678" {
-	    set faceIndex 2
-	}
-	"1584" {
-	    set faceIndex 3
-	}
-	"2376" {
-	    set faceIndex 4
-	}
-	"1265" {
-	    set faceIndex 5
-	}
-	"4378" {
-	    set faceIndex 6
-	}
-    }
-
-    $itk_option(-mged) move_arb_face \
-	$itk_option(-geometryObjectPath) \
-	$faceIndex \
-	[list $mValueX $mValueY $mValueZ]
-
-    initGeometry [lrange [$itk_option(-mged) get $itk_option(-geometryObject)] 1 end]
-
-    if {$itk_option(-geometryChangedCallback) != ""} {
-	$itk_option(-geometryChangedCallback)
-    }
-}
-
-::itcl::body Arb8EditFrame::rotateFace {face} {
-    switch -- $face {
-	"1234" {
-	    set faceIndex 1
-	}
-	"5678" {
-	    set faceIndex 2
-	}
-	"1584" {
-	    set faceIndex 3
-	}
-	"2376" {
-	    set faceIndex 4
-	}
-	"1265" {
-	    set faceIndex 5
-	}
-	"4378" {
-	    set faceIndex 6
-	}
-    }
-
-    $itk_option(-mged) rotate_arb_face \
-	$itk_option(-geometryObjectPath) \
-	$faceIndex \
-	$mEditParam2 \
-	[list $mValueX $mValueY $mValueZ]
-
-    initGeometry [lrange [$itk_option(-mged) get $itk_option(-geometryObject)] 1 end]
-
-    if {$itk_option(-geometryChangedCallback) != ""} {
-	$itk_option(-geometryChangedCallback)
-    }
-}
 
 # ------------------------------------------------------------
 #                      PROTECTED METHODS
@@ -954,130 +824,6 @@
     foreach rb $disabled {
 	$itk_component(arb8V$rb\L) configure -state disabled
     }
-}
-
-::itcl::body Arb8EditFrame::updateValuePanel {} {
-    switch -- $mEditMode \
-	$moveEdge12 { \
-			  set mValueX $mV1x; \
-			  set mValueY $mV1y; \
-			  set mValueZ $mV1z \
-		      } \
-	$moveEdge23 { \
-			  set mValueX $mV2x; \
-			  set mValueY $mV2y; \
-			  set mValueZ $mV2z \
-		      } \
-	$moveEdge34 { \
-			  set mValueX $mV3x; \
-			  set mValueY $mV3y; \
-			  set mValueZ $mV3z \
-		      } \
-	$moveEdge14 { \
-			  set mValueX $mV1x; \
-			  set mValueY $mV1y; \
-			  set mValueZ $mV1z \
-		      } \
-	$moveEdge15 { \
-			  set mValueX $mV1x; \
-			  set mValueY $mV1y; \
-			  set mValueZ $mV1z \
-		      } \
-	$moveEdge26 { \
-			  set mValueX $mV2x; \
-			  set mValueY $mV2y; \
-			  set mValueZ $mV2z \
-		      } \
-	$moveEdge56 { \
-			  set mValueX $mV5x; \
-			  set mValueY $mV5y; \
-			  set mValueZ $mV5z \
-		      } \
-	$moveEdge67 { \
-			  set mValueX $mV6x; \
-			  set mValueY $mV6y; \
-			  set mValueZ $mV6z \
-		      } \
-	$moveEdge78 { \
-			  set mValueX $mV7x; \
-			  set mValueY $mV7y; \
-			  set mValueZ $mV7z \
-		      } \
-	$moveEdge58 { \
-			  set mValueX $mV5x; \
-			  set mValueY $mV5y; \
-			  set mValueZ $mV5z \
-		      } \
-	$moveEdge37 { \
-			  set mValueX $mV3x; \
-			  set mValueY $mV3y; \
-			  set mValueZ $mV3z \
-		      } \
-	$moveEdge48 { \
-			  set mValueX $mV4x; \
-			  set mValueY $mV4y; \
-			  set mValueZ $mV4z \
-		      } \
-	$moveFace1234 { \
-			    set mValueX $mV1x; \
-			    set mValueY $mV1y; \
-			    set mValueZ $mV1z \
-			} \
-	$moveFace5678 { \
-			    set mValueX $mV5x; \
-			    set mValueY $mV5y; \
-			    set mValueZ $mV5z \
-			} \
-	$moveFace1584 { \
-			    set mValueX $mV1x; \
-			    set mValueY $mV1y; \
-			    set mValueZ $mV1z \
-			} \
-	$moveFace2376 { \
-			    set mValueX $mV2x; \
-			    set mValueY $mV2y; \
-			    set mValueZ $mV2z \
-			} \
-	$moveFace1265 { \
-			    set mValueX $mV1x; \
-			    set mValueY $mV1y; \
-			    set mValueZ $mV1z \
-			} \
-	$moveFace4378 { \
-			    set mValueX $mV4x; \
-			    set mValueY $mV4y; \
-			    set mValueZ $mV4z \
-			} \
-	$rotateFace1234 { \
-			      set mValueX 0; \
-			      set mValueY 0; \
-			      set mValueZ 0 \
-			  } \
-	$rotateFace5678 { \
-			      set mValueX 0; \
-			      set mValueY 0; \
-			      set mValueZ 0 \
-			  } \
-	$rotateFace1584 { \
-			      set mValueX 0; \
-			      set mValueY 0; \
-			      set mValueZ 0 \
-			  } \
-	$rotateFace2376 { \
-			      set mValueX 0; \
-			      set mValueY 0; \
-			      set mValueZ 0 \
-			  } \
-	$rotateFace1265 { \
-			      set mValueX 0; \
-			      set mValueY 0; \
-			      set mValueZ 0 \
-			  } \
-	$rotateFace4378 { \
-			      set mValueX 0; \
-			      set mValueY 0; \
-			      set mValueZ 0 \
-			  }
 }
 
 ::itcl::body Arb8EditFrame::updateGeometryIfMod {} {
@@ -1202,7 +948,7 @@
     }
 }
 
-::itcl::body Arb8EditFrame::initValuePanel {} {
+::itcl::body Arb8EditFrame::initEditState {} {
     switch -- $mEditMode \
 	$moveEdge12 { \
 			  set mEditCommand move_arb_edge; \
@@ -1385,36 +1131,7 @@
 			      updateUpperPanel {3 4 7 8} {1 2 5 6} \
 			  }
 
-    GeometryEditFrame::initValuePanel
-    updateValuePanel
-}
-
-::itcl::body Arb8EditFrame::editGeometry {} {
-    switch -- $mEditMode \
-	$moveEdge12 {moveEdge 12} \
-	$moveEdge23 {moveEdge 23} \
-	$moveEdge34 {moveEdge 34} \
-	$moveEdge14 {moveEdge 14} \
-	$moveEdge15 {moveEdge 15} \
-	$moveEdge26 {moveEdge 26} \
-	$moveEdge56 {moveEdge 56} \
-	$moveEdge67 {moveEdge 67} \
-	$moveEdge78 {moveEdge 78} \
-	$moveEdge58 {moveEdge 58} \
-	$moveEdge37 {moveEdge 37} \
-	$moveEdge48 {moveEdge 48} \
-	$moveFace1234 {moveFace 1234} \
-	$moveFace5678 {moveFace 5678} \
-	$moveFace1584 {moveFace 1584} \
-	$moveFace2376 {moveFace 2376} \
-	$moveFace1265 {moveFace 1265} \
-	$moveFace4378 {moveFace 4378} \
-	$rotateFace1234 {rotateFace 1234} \
-	$rotateFace5678 {rotateFace 5678} \
-	$rotateFace1584 {rotateFace 1584} \
-	$rotateFace2376 {rotateFace 2376} \
-	$rotateFace1265 {rotateFace 1265} \
-	$rotateFace4378 {rotateFace 4378}
+    GeometryEditFrame::initEditState
 }
 
 ::itcl::body Arb8EditFrame::buildRotationPointDialog {} {
