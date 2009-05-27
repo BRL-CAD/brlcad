@@ -18,11 +18,11 @@ exppp_SOURCES = \
 exppp_LDADD = ${EXPRESS} libexppp.la $(top_builddir)/src/express/fedex.o
 
 libexppp_nil_la_SOURCES = $(COMMON)
-libexppp_nil_la_LDFLAGS = -avoid-version -no-undefined
+libexppp_nil_la_LDFLAGS = -avoid-version 
 libexppp_nil_la_LIBADD = 
 
 libexppp_la_SOURCES =
-libexppp_la_LDFLAGS = -avoid-version -no-undefined
+libexppp_la_LDFLAGS = -avoid-version 
 libexppp_la_LIBADD = libexppp_nil.la
 
 EXTRA_DIST = \

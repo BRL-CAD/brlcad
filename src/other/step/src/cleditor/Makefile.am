@@ -15,12 +15,12 @@ libstepeditor_nil_la_SOURCES = \
 	STEPfile.inline.cc
 
 
-libstepeditor_nil_la_LDFLAGS = -avoid-version -no-undefined
+libstepeditor_nil_la_LDFLAGS = -avoid-version
 libstepeditor_nil_la_LIBADD = 
 libstepeditor_nil_la_CXXFLAGS = -I$(top_srcdir)/src/clstepcore -I$(top_srcdir)/src/clutils -I$(top_srcdir)/src/cldai
 
 libstepeditor_la_SOURCES = 
-libstepeditor_la_LDFLAGS = -avoid-version -no-undefined
+libstepeditor_la_LDFLAGS = -avoid-version
 libstepeditor_la_LIBADD = \
 	libstepeditor_nil.la \
 	${LIBSTDCXX}
