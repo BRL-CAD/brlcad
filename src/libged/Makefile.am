@@ -169,6 +169,7 @@ libged_nil_la_SOURCES = \
 	rotate_about.c \
 	rotate_arb_face.c \
 	rotate_eto.c \
+	rotate_extrude.c \
 	rotate_hyp.c \
 	rotate_tgc.c \
 	rrt.c \
@@ -182,6 +183,7 @@ libged_nil_la_SOURCES = \
 	scale_ell.c \
 	scale_epa.c \
 	scale_eto.c \
+	scale_extrude.c \
 	scale_hyp.c \
 	scale_part.c \
 	scale_rhc.c \
@@ -211,6 +213,7 @@ libged_nil_la_SOURCES = \
 	tra.c \
 	trace.c \
 	track.c \
+	translate_extrude.c \
 	translate_tgc.c \
 	tree.c \
 	typein.c \

@@ -99,6 +99,9 @@ ged_protate(struct ged *gedp, int argc, const char *argv[])
     case DB5_MINORTYPE_BRLCAD_ETO:
 	ret = ged_rotate_eto(gedp, (struct rt_eto_internal *)intern.idb_ptr, argv[2], rmat);
 	break;
+    case DB5_MINORTYPE_BRLCAD_EXTRUDE:
+	ret = ged_rotate_extrude(gedp, (struct rt_extrude_internal *)intern.idb_ptr, argv[2], rmat);
+	break;
     case DB5_MINORTYPE_BRLCAD_HYP:
 	ret = ged_rotate_hyp(gedp, (struct rt_hyp_internal *)intern.idb_ptr, argv[2], rmat);
 	break;

@@ -794,6 +794,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\src\libged\ptranslate.c"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\src\libged\push.c"
 				>
 			</File>
@@ -886,6 +890,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\src\libged\rotate_extrude.c"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\src\libged\rotate_hyp.c"
 				>
 			</File>
@@ -935,6 +943,10 @@
 			</File>
 			<File
 				RelativePath="..\..\..\src\libged\scale_eto.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\src\libged\scale_extrude.c"
 				>
 			</File>
 			<File
@@ -1051,6 +1063,10 @@
 			</File>
 			<File
 				RelativePath="..\..\..\src\libged\track.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\src\libged\translate_extrude.c"
 				>
 			</File>
 			<File

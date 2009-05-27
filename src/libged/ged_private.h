@@ -339,6 +339,13 @@ BU_EXTERN (int ged_rotate_eto,
 	    const char *attribute,
 	    matp_t rmat));
 
+/* defined in rotate_extrude.c */
+BU_EXTERN (int ged_rotate_extrude,
+	   (struct ged *gedp,
+	    struct rt_extrude_internal *extrude,
+	    const char *attribute,
+	    matp_t rmat));
+
 /* defined in rotate_hyp.c */
 BU_EXTERN (int ged_rotate_hyp,
 	   (struct ged *gedp,
@@ -378,6 +385,13 @@ BU_EXTERN (int ged_scale_epa,
 BU_EXTERN (int ged_scale_eto,
 	   (struct ged *gedp,
 	    struct rt_eto_internal *eto,
+	    const char *attribute,
+	    fastf_t sf));
+
+/* defined in scale_extrude.c */
+BU_EXTERN (int ged_scale_extrude,
+	   (struct ged *gedp,
+	    struct rt_extrude_internal *extrude,
 	    const char *attribute,
 	    fastf_t sf));
 
@@ -441,6 +455,14 @@ BU_EXTERN (void ged_trace,
 	    int				pathpos,
 	    const mat_t			old_xlate,
 	    struct ged_trace_data	*gtdp));
+
+/* defined in translate_extrude.c */
+BU_EXTERN (int ged_translate_extrude,
+	   (struct ged *gedp,
+	    struct rt_extrude_internal *extrude,
+	    const char *attribute,
+	    vect_t tvec,
+	    int rflag));
 
 /* defined in translate_tgc.c */
 BU_EXTERN (int ged_translate_tgc,
