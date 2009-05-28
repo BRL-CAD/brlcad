@@ -138,9 +138,10 @@ set(LIBGED_SOURCES
     prcolor.c
     prefix.c
     preview.c
-    ps.c
     protate.c
+    ps.c
     pscale.c
+    ptranslate.c
     push.c
     put.c
     put_comb.c
@@ -164,6 +165,7 @@ set(LIBGED_SOURCES
     rotate_about.c
     rotate_arb_face.c
     rotate_eto.c
+    rotate_extrude.c
     rotate_hyp.c
     rotate_tgc.c
     rrt.c
@@ -177,6 +179,7 @@ set(LIBGED_SOURCES
     scale_ell.c
     scale_epa.c
     scale_eto.c
+    scale_extrude.c
     scale_hyp.c
     scale_part.c
     scale_rhc.c
@@ -206,6 +209,8 @@ set(LIBGED_SOURCES
     tra.c
     trace.c
     track.c
+    translate_extrude.c
+    translate_tgc.c
     tree.c
     typein.c
     unhide.c
