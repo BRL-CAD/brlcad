@@ -1,12 +1,20 @@
-# write brlcadrc_defines.h
+# write brlcadversion.h
 file(READ ../../../include/conf/MAJOR majorVersionNumber)
 file(READ ../../../include/conf/MINOR minorVersionNumber)
 file(READ ../../../include/conf/PATCH patchVersionNumber)
 
-file(WRITE brlcadrc_defines.h
-    "#define BRLCAD_DLL_RC_MAJOR ${majorVersionNumber}"
-    "#define BRLCAD_DLL_RC_MINOR ${minorVersionNumber}"
-    "#define BRLCAD_DLL_RC_PATCH ${patchVersionNumber}"
+set(brlcadVersionContent
+    "#define BRLCAD_LIB_MAJOR ${majorVersionNumber}"
+    "#define BRLCAD_LIB_MINOR ${minorVersionNumber}"
+    "#define BRLCAD_LIB_PATCH ${patchVersionNumber}"
+)
+
+file(WRITE brlcadversion.h
+    ${brlcadVersionContent}
+)
+
+file(WRITE ../../../../rt^3/include/brlcad/brlcadversion.h
+    ${brlcadVersionContent}
 )
 
 
