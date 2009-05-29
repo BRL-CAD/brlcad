@@ -15,6 +15,14 @@ on-going issues.
 Recent Bugs
 -----------
 
+* infinite light sources close to objects result in unexpected/bad
+  light behavior.  example is a 1m sph light about 5m from a box about
+  1k x 1k x 1k in size.  setting make each light be red, green, and
+  blue respectively, set to infinite (and fraction 10) and sides to
+  the cube will render sides with a fixed color (green, blue) and top
+  magenta.  On one test with all lights at fraction 1.0 and only one
+  inf, was getting interleaved partial flat/no color all around cube.
+
 * fastgen plate mode bots are reporting invalid shotline segments.
   depending on whether you shoot from the front or back can result in
   bogus lists visiable with nirt in mged, entirely missing the bot, or
