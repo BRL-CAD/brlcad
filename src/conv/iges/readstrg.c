@@ -40,8 +40,7 @@
 #include "./iges_extern.h"
 
 void
-Readstrg( id )
-    char *id;
+Readstrg(char *id)
 {
     int i=(-1), length=0, done=0, lencard;
     char num[80];
@@ -61,6 +60,10 @@ Readstrg( id )
 
     if ( counter > lencard )
 	Readrec( ++currec );
+
+    if (!id) {
+	return;
+    }
 
     if ( *id != '\0' )
 	bu_log( "%s", id );
