@@ -359,14 +359,14 @@ int get_args( int argc, register char **argv )
 	    case 's':
 		/* Square size */
 		i = atoi( bu_optarg );
-		if ( i < 2 || i > MAX_WIDTH )
+		if ( i < 1 || i > MAX_WIDTH )
 		    fprintf(stderr, "squaresize=%d out of range\n", i);
 		else
 		    width = height = i;
 		break;
 	    case 'n':
 		i = atoi( bu_optarg );
-		if ( i < 2 || i > MAX_WIDTH )
+		if ( i < 1 || i > MAX_WIDTH )
 		    fprintf(stderr, "height=%d out of range\n", i);
 		else
 		    height = i;
@@ -377,7 +377,7 @@ int get_args( int argc, register char **argv )
 		break;
 	    case 'w':
 		i = atoi( bu_optarg );
-		if ( i < 2 || i > MAX_WIDTH )
+		if ( i < 1 || i > MAX_WIDTH )
 		    fprintf(stderr, "width=%d out of range\n", i);
 		else
 		    width = i;
