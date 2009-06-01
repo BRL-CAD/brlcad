@@ -3053,8 +3053,8 @@ X24_blit(ifp, x1, y1, w, h, flags)
 		 * Calculate the beginning of the line where we are going
 		 * to be outputing pixels.
 		 */
-		opix = &(xi->xi_pix[oy * xi->xi_image->bytes_per_line + ox *
-				    (xi->xi_image->bits_per_pixel/8)]);
+		opix = &(xi->xi_pix[oy * xi->xi_image->bytes_per_line]);
+		/* + ox * (xi->xi_image->bits_per_pixel/8)]); */
 
 #if BLIT_DBG_PIX
 		if (opix < xi->xi_pix) {
@@ -3066,8 +3066,7 @@ X24_blit(ifp, x1, y1, w, h, flags)
 		/*
 		 * Our source of pixels in packed RGB order
 		 */
-		irgb = &(xi->xi_mem[(y1 * xi->xi_iwidth + x1) * sizeof
-				    (RGBpixel)]);
+		irgb = &(xi->xi_mem[(y1 * xi->xi_iwidth + x1) * sizeof(RGBpixel)]);
 
 		/* General case, zooming in effect */
 
@@ -3200,18 +3199,18 @@ X24_blit(ifp, x1, y1, w, h, flags)
 			line_irgb += sizeof (RGBpixel);
 		    }
 		    /*
-		     * Remember where we put all those bytes.
+		     * Remember where we put all those bytes for line
+		     * duplication.
 		     */
 		    holdit = (unsigned char *)opix;
 
+#if 0
 		    /*
 		     * If we are zoomed, we need to duplicate all
 		     * that work from above, or we can just copy
 		     * that one line to N others.
 		     */
 		    while (pyht-- > 1) {
-			unsigned char *src = NULL;
-
 			/*
 			 * move to the beginning of the next
 			 * line up in the X server.
@@ -3227,15 +3226,12 @@ X24_blit(ifp, x1, y1, w, h, flags)
 			}
 #endif
 			/*
-			 * Go to the place where we stored pixels
-			 * on the first line output.
+			 * copy the first line
 			 */
-			src = (unsigned char *)holdit;
-			/*
-			 * and copy that line to where we are now.
-			 */
-			memcpy(p, src, xi->xi_image->bytes_per_line);
+			memcpy(p, holdit, xi->xi_image->bytes_per_line);
 		    }
+#endif
+
 		    /*
 		     * And again, move to the beginning of the next
 		     * line up in the X server.
