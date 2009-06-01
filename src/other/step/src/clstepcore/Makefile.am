@@ -53,10 +53,11 @@ noinst_HEADERS = \
 	STEPcomplex.h \
 	STEPundefined.h
 
-
 libstepcore_nil_la_LDFLAGS = -avoid-version -Wc,${FEXCEPTIONS}
-libstepcore_nil_la_LIBADD = 
-libstepcore_nil_la_CXXFLAGS = -I$(top_srcdir)/src/cldai -I$(top_srcdir)/src/clutils -I$(top_srcdir)/src/cleditor
+libstepcore_nil_la_CXXFLAGS = \
+	-I$(top_srcdir)/src/cldai \
+	-I$(top_srcdir)/src/cleditor \
+	-I$(top_srcdir)/src/clutils
 
 libstepcore_la_SOURCES = 
 libstepcore_la_LDFLAGS = -avoid-version -Wc,${FEXCEPTIONS}
@@ -65,6 +66,10 @@ libstepcore_la_LIBADD = \
 	${CLUTILS} \
 	${EXPRESS} \
 	${LIBSTDCXX}
+
+# FIXME: cyclic dependencies that need squashing
+#	${CLDAI}
+#	${CLEDITOR}
 
 EXTRA_DIST = \
 	ExpDict.h.s \

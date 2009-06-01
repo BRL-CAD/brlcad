@@ -38,20 +38,14 @@ fedex_plus_SOURCES = \
 	write.cc \
 	print.cc
 
-fedex_os_LDADD = \
+fedex_libs = \
 	${EXPRESS} \
 	${EXPPP} \
 	$(top_builddir)/src/express/fedex.o
 
-fedex_idl_LDADD = \
-	${EXPRESS} \
-	${EXPPP} \
-	$(top_builddir)/src/express/fedex.o
-
-fedex_plus_LDADD = \
-	${EXPRESS} \
-	${EXPPP} \
-	$(top_builddir)/src/express/fedex.o
+fedex_os_LDADD = $(fedex_libs)
+fedex_idl_LDADD = $(fedex_libs)
+fedex_plus_LDADD = $(fedex_libs)
 
 noinst_HEADERS = \
 	classes.h \

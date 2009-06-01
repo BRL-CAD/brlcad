@@ -15,10 +15,11 @@ libstepeditor_nil_la_SOURCES = \
 	s_HEADER_SCHEMA.cc \
 	s_HEADER_SCHEMA.init.cc
 
-
 libstepeditor_nil_la_LDFLAGS = -avoid-version -no-undefined -Wc,${FEXCEPTIONS}
-libstepeditor_nil_la_LIBADD = 
-libstepeditor_nil_la_CXXFLAGS = -I$(top_srcdir)/src/clstepcore -I$(top_srcdir)/src/clutils -I$(top_srcdir)/src/cldai
+libstepeditor_nil_la_CXXFLAGS = \
+	-I$(top_srcdir)/src/clstepcore \
+	-I$(top_srcdir)/src/clutils \
+	-I$(top_srcdir)/src/cldai
 
 libstepeditor_la_SOURCES = 
 libstepeditor_la_LDFLAGS = -avoid-version -no-undefined -Wc,${FEXCEPTIONS}
