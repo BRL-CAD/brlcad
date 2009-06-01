@@ -1309,9 +1309,17 @@ fi
 
 EXPRESS='${top_builddir}/src/express/libexpress.la'
 EXPPP='${top_builddir}/src/exppp/libexppp.la'
+CLUTILS='${top_builddir}/src/clutils/libsteputils.la'
+CLDAI='${top_builddir}/src/cldai/libstepdai.la'
+CLEDITOR='${top_builddir}/src/cleditor/libstepeditor.la'
+CLSTEPCORE='${top_builddir}/src/clstepcore/libstepcore.la'
 
 AC_SUBST(EXPRESS)
 AC_SUBST(EXPPP)
+AC_SUBST(CLUTILS)
+AC_SUBST(CLDAI)
+AC_SUBST(CLEDITOR)
+AC_SUBST(CLSTEPCORE)
 
 # if compiling with the MIPSpro 7.3 compiler, there is a bug when
 # trying to link using an rpath longer than 256 that causes the linker
