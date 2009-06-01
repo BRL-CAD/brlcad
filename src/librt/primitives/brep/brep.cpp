@@ -1422,7 +1422,21 @@ plot_bbnode(BBNode* node, struct bu_list* vhead, int depth, int start, int limit
     }
 }
 
-
+double
+find_next_point(const ON_Curve* crv, double startdomval, double increment, double tolerance) {
+    double inc = increment;
+    if (startdomval + increment > 1.0) inc = 1.0 - startdomval;
+    ON_Interval dom = crv->Domain();
+    ON_3dPoint prev_pt = crv->PointAt(dom.ParameterAt(startdomval));
+    ON_3dPoint next_pt = crv->PointAt(dom.ParameterAt(startdomval+inc));
+    if (prev_pt.DistanceTo(next_pt) > tolerance) {
+	inc = inc / 2;
+	return find_next_point(crv, startdomval, inc, tolerance);
+    } else {
+	return startdomval + inc;
+    }
+}
+    
 /**
  * R T _ B R E P _ P L O T
  *
@@ -1497,15 +1511,27 @@ rt_brep_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_t
 	    RT_ADD_VLIST(vhead, pt2, BN_VLIST_LINE_DRAW);
 	} else {
 	    ON_Interval dom = crv->Domain();
-	    // XXX todo: dynamically sample the curve
-	    for (int i = 0; i <= 10; i++) {
-		ON_3dPoint p = crv->PointAt(dom.ParameterAt((double)i/10.0));
+	    double domainval = 0.0;
+	    // Insert first point.
+	    ON_3dPoint p = crv->PointAt(dom.ParameterAt(domainval));
+	    VMOVE(pt1, p);
+	    RT_ADD_VLIST(vhead, pt1, BN_VLIST_LINE_MOVE);
+	    
+	    // Dynamic sampling approach - start with an initial guess for the
+	    // next point of one tenth of the domain length further down
+	    // the domain from the previous value.  Set a maximum physical
+	    // distance between points of 100 times the model tolerance.
+	    // Reduce the increment until the tolerance is satisfied, then
+	    // add the point and use it as the starting point for the next
+	    // calculation until the whole domain is finished.
+	    // Perhaps it would be more ideal to base the tolerance on some
+	    // fraction of the curve bounding box dimensions?
+	    double initialguess = 0.1;	
+	    while (domainval < 1.0) {
+		domainval = find_next_point(crv, domainval, 0.1, tol->dist*100);
+		ON_3dPoint p = crv->PointAt(dom.ParameterAt(domainval));
 		VMOVE(pt1, p);
-		if (i == 0) {
-		    RT_ADD_VLIST(vhead, pt1, BN_VLIST_LINE_MOVE);
-		} else {
-		    RT_ADD_VLIST(vhead, pt1, BN_VLIST_LINE_DRAW);
-		}
+		RT_ADD_VLIST(vhead, pt1, BN_VLIST_LINE_DRAW);
 	    }
 	}
     }
