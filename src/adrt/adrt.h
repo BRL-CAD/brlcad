@@ -34,7 +34,7 @@
 #define	ADRT_PIXEL_FMT		0
 
 /* these are contained in an ADRT_NETOP_WORK message */
-#define ADRT_WORK_BASE 10
+#define ADRT_WORK_BASE 0x10
 enum
 {
     ADRT_WORK_INIT = ADRT_WORK_BASE,
@@ -47,7 +47,7 @@ enum
     ADRT_WORK_MINMAX,
     ADRT_WORK_END
 };
-static char *adrt_work_table[40] = {
+static char *adrt_work_table[20] = {
     "ADRT_WORK_INIT",
     "ADRT_WORK_STATUS",
     "ADRT_WORK_FRAME_ATTR",
@@ -60,7 +60,7 @@ static char *adrt_work_table[40] = {
 
 
 
-#define ADRT_NETOP_BASE 50
+#define ADRT_NETOP_BASE 0x20
 /* top level messages */
 enum
 {
@@ -74,7 +74,7 @@ enum
     ADRT_NETOP_SHUTDOWN,
     ADRT_NETOP_END
 };
-static char *adrt_netop_table[40] = {
+static char *adrt_netop_table[20] = {
     "ADRT_NETOP_NOP",
     "ADRT_NETOP_INIT",
     "ADRT_NETOP_REQWID",
