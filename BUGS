@@ -286,17 +286,11 @@ Recent Bugs
 
 * mged's solid illuminate doesn't work when Lighting is turned on
 
-* raytrace of -s64 and -F/dev/X crashes inside a memcpy during
-  fb_write().  seems to only occur on an unbuffered render to a X24
-  framebuffer, incremental/buffered works fine.  Seems to happen for
-  most image sizes smaller than 128.  This reproduces it:
+* raytrace of zoomed images (e.g., -s64) doesn't work for if_X24
+  framebuffers.  zooming logic seems to be broken (was crashing in
+  memcpy, but that was fixed) for at least -s96 and smaller:
 
   ./libtool --mode=execute gdb --args src/rt/rt -F/dev/X -P1 -s64 db/moss.g all.g
-
-  Crashes on if_X24.c:3237 in the memcpy of the second thread.  The
-  src array doesn't have xi->xi_image->bytes_per_line bytes available
-  to be read (happened consistently during testing on a second thread
-  blitting x1=2 (third pixel)).
 
 * g2asc exports attr lines but will not grok them on asc2g
 
