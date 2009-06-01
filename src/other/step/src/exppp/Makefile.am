@@ -21,10 +21,7 @@ exppp_LDADD = \
 	$(top_builddir)/src/express/fedex.o
 
 libexppp_nil_la_SOURCES = $(COMMON)
-libexppp_nil_la_LDFLAGS = -avoid-version -no-undefined
-libexppp_nil_la_LIBADD = \
-	${EXPRESS} \
-	libexppp_nil.la
+libexppp_nil_la_LDFLAGS = -avoid-version
 
 libexppp_la_SOURCES =
 libexppp_la_LDFLAGS = -avoid-version -no-undefined
