@@ -1526,7 +1526,6 @@ rt_brep_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_t
 	    // calculation until the whole domain is finished.
 	    // Perhaps it would be more ideal to base the tolerance on some
 	    // fraction of the curve bounding box dimensions?
-	    double initialguess = 0.1;	
 	    while (domainval < 1.0) {
 		domainval = find_next_point(crv, domainval, 0.1, tol->dist*100);
 		ON_3dPoint p = crv->PointAt(dom.ParameterAt(domainval));
