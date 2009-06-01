@@ -46,11 +46,11 @@ symlink_LDADD = libexpress.la fedex.o
 libexpress_nil_la_SOURCES = \
 	$(COMMON)
 
-libexpress_nil_la_LDFLAGS = -avoid-version 
+libexpress_nil_la_LDFLAGS = -avoid-version -no-undefined
 libexpress_nil_la_LIBADD =
 
 libexpress_la_SOURCES = 
-libexpress_la_LDFLAGS = -avoid-version 
+libexpress_la_LDFLAGS = -avoid-version -no-undefined
 libexpress_la_LIBADD = \
 	libexpress_nil.la
 

@@ -54,14 +54,16 @@ noinst_HEADERS = \
 	STEPundefined.h
 
 
-libstepcore_nil_la_LDFLAGS = -avoid-version 
+libstepcore_nil_la_LDFLAGS = -avoid-version -Wc,${FEXCEPTIONS}
 libstepcore_nil_la_LIBADD = 
 libstepcore_nil_la_CXXFLAGS = -I$(top_srcdir)/src/cldai -I$(top_srcdir)/src/clutils -I$(top_srcdir)/src/cleditor
 
 libstepcore_la_SOURCES = 
-libstepcore_la_LDFLAGS = -avoid-version 
+libstepcore_la_LDFLAGS = -avoid-version -Wc,${FEXCEPTIONS}
 libstepcore_la_LIBADD = \
 	libstepcore_nil.la \
+	${CLUTILS} \
+	${EXPRESS} \
 	${LIBSTDCXX}
 
 EXTRA_DIST = \
