@@ -87,10 +87,7 @@ ged_3ptarb(struct ged *gedp, int argc, const char *argv[])
 	return GED_MORE;
     }
 
-    if ( db_lookup( gedp->ged_wdbp->dbip, argv[1], LOOKUP_QUIET) != DIR_NULL ) {
-	bu_vls_printf(&gedp->ged_result_str, "%s: %s already exists\n", argv[0], argv[1]);
-	return GED_ERROR;
-    }
+    GED_CHECK_EXISTS(gedp, argv[1], LOOKUP_QUIET, GED_ERROR);
 
     /* read the three points */
     prompts = &p_arb3pt[0];
@@ -256,18 +253,9 @@ ged_3ptarb(struct ged *gedp, int argc, const char *argv[])
 	VJOIN1( aip->pt[i+4], aip->pt[i], thick, norm );
     }
 
-    if ( (dp = db_diradd( gedp->ged_wdbp->dbip, argv[1], -1L, 0, DIR_SOLID, (genptr_t)&internal.idb_type)) == DIR_NULL )
-    {
-	bu_vls_printf(&gedp->ged_result_str, "%s: Cannot add %s to the directory\n", argv[0], argv[1]);
-	return GED_ERROR;
-    }
+    GED_DB_DIRADD(gedp, dp, argv[1], -1L, 0, DIR_SOLID, (genptr_t)&internal.idb_type, GED_ERROR);
 
-    if ( rt_db_put_internal( dp, gedp->ged_wdbp->dbip, &internal, &rt_uniresource ) < 0 )
-    {
-	rt_db_free_internal( &internal, &rt_uniresource );
-	bu_vls_printf(&gedp->ged_result_str, "%s: Database write error, aborting\n", argv[0]);
-	return GED_ERROR;
-    }
+    GED_DB_PUT_INTERNAL(gedp, dp, &internal, &rt_uniresource, GED_ERROR);
 
     return GED_OK;
 }
