@@ -157,10 +157,7 @@ ged_binary(struct ged *gedp, int argc, const char *argv[])
 	}
 
 	obj_name = (char *)*argv;
-	if (db_lookup(gedp->ged_wdbp->dbip, obj_name, LOOKUP_QUIET) != DIR_NULL) {
-	    bu_vls_printf(&gedp->ged_result_str, "Object %s already exists", obj_name);
-	    return GED_ERROR;
-	}
+	GED_CHECK_EXISTS(gedp, obj_name, LOOKUP_QUIET, GED_ERROR);
 
 	argc--;
 	argv++;
