@@ -28,7 +28,6 @@
 #include "common.h"
 
 #include "bio.h"
-#include "opennurbs_ext.h"
 #include <assert.h>
 #include <vector>
 #include <limits>
@@ -39,6 +38,7 @@
 #include "vmath.h"
 #include "bu.h"
 #include "vector.h"
+#include "opennurbs_ext.h"
 
 
 #define RANGE_HI 0.55
@@ -49,6 +49,286 @@
 
 
 namespace brlcad {
+
+	//--------------------------------------------------------------------------------
+	// CurveTree
+	CurveTree::CurveTree(ON_BrepFace* face)
+	: m_face(face)
+	{
+		m_root = initialLoopBBox();
+		
+		for (int i = 0; i < face->LoopCount(); i++) {
+			bool innerLoop = (i > 0) ? true : false;
+			ON_BrepLoop* loop = face->Loop(i);
+			// for each trim
+			for (int j = 0; j < loop->m_ti.Count(); j++) {
+				ON_BrepTrim& trim = face->Brep()->m_T[loop->m_ti[j]];
+				const ON_Curve* trimCurve = trim.TrimCurveOf();
+				double min,max;
+				(void)trimCurve->GetDomain(&min, &max);
+				ON_Interval t(min,max);
+				
+				if (false) { // (trimCurve->IsLinear()) {
+					ON_3dPoint points[2];
+					points[0] = trimCurve->PointAtStart();
+					points[1] = trimCurve->PointAtEnd();
+					point_t minpt, maxpt;
+					VSETALL(minpt, MAX_FASTF);
+					VSETALL(maxpt, -MAX_FASTF);
+					for (int i = 0; i < 2; i++)
+						VMINMAX(minpt,maxpt,((double*)points[i]));
+					points[0]=ON_3dPoint(minpt);
+					points[1]=ON_3dPoint(maxpt);
+					ON_BoundingBox bb(points[0],points[1]);
+					TRACE("linear no need to subdivide");
+					m_root->addChild(curveBBox(trimCurve,t,true,innerLoop,bb));
+				} else {
+					TRACE("need to subdivide");
+					// divide on param interval
+					m_root->addChild(subdivideCurve(trimCurve,min,max,innerLoop,0)); //subdivideCurve(const ON_Interval& u, const ON_Interval& v,int depth);
+				}
+				}
+			}
+		getLeaves(m_sortedX);
+		m_sortedX.sort(sortX);
+		getLeaves(m_sortedY);
+		m_sortedY.sort(sortY);
+		
+		return;
+	}
+	
+	CurveTree::~CurveTree() {
+		delete m_root;
+	}
+
+	BRNode*
+	CurveTree::getRootNode() const {
+	return m_root;
+	}
+
+	int
+	CurveTree::depth() {
+	return m_root->depth();
+	}
+
+	ON_2dPoint
+	CurveTree::getClosestPointEstimate(const ON_3dPoint& pt) {
+	return m_root->getClosestPointEstimate(pt);
+	}
+
+	ON_2dPoint
+	CurveTree::getClosestPointEstimate(const ON_3dPoint& pt, ON_Interval& u, ON_Interval& v) {
+	return m_root->getClosestPointEstimate(pt, u, v);
+	}
+
+	void
+	CurveTree::getLeaves(list<BRNode*>& out_leaves) {
+	m_root->getLeaves(out_leaves);
+	}
+
+	void
+	CurveTree::getLeavesAbove(list<BRNode*>& out_leaves, const ON_Interval& u, const ON_Interval& v) {
+	    point_t bmin,bmax;
+	    double dist;
+	    for (list<BRNode*>::iterator i = m_sortedX.begin(); i != m_sortedX.end(); i++) {
+		SubcurveBRNode* br = dynamic_cast<SubcurveBRNode*>(*i);
+		br->GetBBox(bmin,bmax);
+		dist = 0.03*DIST_PT_PT(bmin,bmax);
+		if (bmax[X]+dist < u[0])
+		    continue;
+		if (bmin[X]-dist < u[1]) {
+		    if (bmax[Y]+dist > v[0]) {
+			out_leaves.push_back(br);
+		    }
+		}
+	    }
+	}
+
+	void
+	CurveTree::getLeavesRight(list<BRNode*>& out_leaves, const ON_Interval& u, const ON_Interval& v) {
+	    point_t bmin,bmax;
+	    double dist;
+	    for (list<BRNode*>::iterator i = m_sortedX.begin(); i != m_sortedX.end(); i++) {
+		SubcurveBRNode* br = dynamic_cast<SubcurveBRNode*>(*i);
+		br->GetBBox(bmin,bmax);
+	        dist = 0.03*DIST_PT_PT(bmin,bmax);
+		if (bmax[Y]+dist < v[0])
+		    continue;
+		if (bmin[Y]-dist < v[1]) {
+		    if (bmax[X]+dist > u[0]) {
+			out_leaves.push_back(br);
+		    }
+		}
+	    }
+	}
+
+	BRNode*
+	CurveTree::curveBBox(const ON_Curve* curve, ON_Interval& t, bool isLeaf, bool innerTrim, const ON_BoundingBox& bb)
+	{
+	BRNode* node;
+	if (isLeaf) {
+		TRACE("creating leaf: u(" << u.Min() << "," << u.Max() <<
+		  ") v(" << v.Min() << "," << v.Max() << ")");
+		node = new SubcurveBRNode(curve,bb,m_face,t,innerTrim);
+	}
+	else
+		node = new BRNode(bb);
+
+
+	return node;
+
+	}
+
+	BRNode* CurveTree::initialLoopBBox()
+	{
+	double min[3];
+	double max[3];
+	ON_BoundingBox bb;
+    for (int i = 0; i < m_face->LoopCount(); i++) {
+		ON_BrepLoop* loop = m_face->Loop(i);
+		if (loop->m_type == ON_BrepLoop::outer ) {
+		 if (loop->GetBBox(bb[0],bb[1],FALSE)) {
+			TRACE("BBox for Loop min<" << bb[0][0] << "," << bb[0][1] "," << bb[0][2] << ">" );
+			TRACE("BBox for Loop max<" << bb[1][0] << "," << bb[1][1] "," << bb[1][2] << ">" );
+		 }
+		 break;
+		}
+	}
+	BRNode* node = new BRNode(bb);
+	return node;
+	}
+
+	BRNode*
+	CurveTree::subdivideCurve(const ON_Curve* curve,double min,
+				  double max, bool innerTrim,
+				  int depth)
+	{
+		ON_Interval dom = curve->Domain();
+		ON_3dPoint points[2];
+		points[0] = curve->PointAt(min);
+		points[1] = curve->PointAt(max);
+        point_t minpt, maxpt;
+		VSETALL(minpt, MAX_FASTF);
+		VSETALL(maxpt, -MAX_FASTF);
+		for (int i = 0; i < 2; i++)
+			VMINMAX(minpt,maxpt,((double*)points[i]));
+		points[0]=ON_3dPoint(minpt);
+		points[1]=ON_3dPoint(maxpt);
+		ON_BoundingBox bb(points[0],points[1]);
+		
+        ON_Interval t(min,max);
+		if (isLinear(curve, min, max) || depth >= BREP_MAX_LN_DEPTH) {
+			//	    ON_3dPoint mid = curve->PointAt((max + min)/2.0);
+			double delta = (max - min)/(BREP_BB_CRV_PNT_CNT-1);
+			point_t points[BREP_BB_CRV_PNT_CNT];
+			ON_3dPoint pnt;
+			for(int i=0;i<BREP_BB_CRV_PNT_CNT-1;i++){
+				pnt = curve->PointAt(min + delta*i);
+				VSET(points[i],pnt[0],pnt[1],pnt[2]);
+			}
+			pnt = curve->PointAt(max);
+			VSET(points[BREP_BB_CRV_PNT_CNT-1],pnt[0],pnt[1],pnt[2]);
+			
+			point_t minpt, maxpt;
+			VSETALL(minpt, MAX_FASTF);
+			VSETALL(maxpt, -MAX_FASTF);
+			for (int i = 0; i < BREP_BB_CRV_PNT_CNT; i++)
+				VMINMAX(minpt,maxpt,((double*)points[i]));
+			double dd = DIST_PT_PT(minpt,maxpt);
+			
+			//vect_t grow;
+			//VSETALL(grow,0.0); // grow the box a bit
+			//grow[0]= grow[1] = 0.03*dd; // grow the box a bit
+			//VSUB2(minpt, minpt, grow);
+			//VADD2(maxpt, maxpt, grow);
+			VMOVE(pnt,minpt);
+			bb.Set(pnt,false);
+			VMOVE(pnt,maxpt);
+			bb.Set(pnt,true);
+			//bb = ON_PointListBoundingBox(3,0,BREP_BB_CRV_PNT_CNT,3,(double*)points);
+			//for(int i=1; i<4; i++) {
+			//    bb.Set(points[i],true); //grow bound to encompass midpoint
+			//}
+			return curveBBox(curve,t,true,innerTrim,bb);
+		} else {
+			//subdivide
+			BRNode* parent = curveBBox(curve,t,false,innerTrim,bb);
+			ON_Curve* left;
+			ON_Curve* right;
+			double mid = (max+min)/2.0;
+			BRNode* l = subdivideCurve(curve,min,mid,innerTrim,depth+1);
+			BRNode* r = subdivideCurve(curve,mid,max,innerTrim,depth+1);
+			parent->addChild(l);
+			parent->addChild(r);
+			return parent;
+		}
+		
+		return NULL;
+	}
+
+	/**
+	 * Determine whether a given curve segment is linear 
+     */
+
+	bool
+	CurveTree::isLinear(const ON_Curve* curve, double min, double max)
+	{
+		double mid = (max + min)/2.0;
+		double qtr = (max - min)/4.0;
+		ON_3dPoint  pmin = curve->PointAt(min);
+		ON_3dPoint  pmax = curve->PointAt(max);
+		
+		const ON_Surface* surf = m_face->SurfaceOf();
+		ON_Interval u = surf->Domain(0);
+		ON_Interval v = surf->Domain(1);
+		point_t a,b;
+		VSET(a,u[0],v[0],0.0);
+		VSET(b,u[1],v[1],0.0);
+		double dd = DIST_PT_PT(a,b);
+		double cd = DIST_PT_PT(pmin,pmax);
+		
+		if (cd > BREP_TRIM_SUB_FACTOR*dd )
+			return false;
+		
+		double delta = (max - min)/(BREP_BB_CRV_PNT_CNT-1);
+		ON_3dPoint points[BREP_BB_CRV_PNT_CNT];
+		for(int i=0;i<BREP_BB_CRV_PNT_CNT-1;i++){
+			points[i] = curve->PointAt(min + delta*i);
+		}
+		points[BREP_BB_CRV_PNT_CNT-1] = curve->PointAt(max);
+
+		//double l2w = fabs((pmax.x - pmin.x)/(pmax.y - pmin.y));
+		
+		//	if ((l2w > 1.5) || (l2w < 1/.75))
+		//	    return false;
+		
+		ON_3dVector A;
+		ON_3dVector B;
+		double vdot = 1.0;
+		A = points[BREP_BB_CRV_PNT_CNT-1] - points[0];
+		A.Unitize();
+		for(int i=1;i<BREP_BB_CRV_PNT_CNT-1;i++){
+			B = points[i] - points[0];
+			B.Unitize();
+			vdot = vdot * ( A * B );
+			if ( vdot < BREP_CURVE_FLATNESS )
+				return false; //already failed
+		}
+		
+		//ON_3dVector tmin = curve->TangentAt(min);
+		//ON_3dVector tmax = curve->TangentAt(max);
+		//ON_3dVector tmid = curve->TangentAt(mid);
+		
+		//	if ( ((l2w > 1.5) || (l2w < 1/1.5)) &&
+		//	     ( SIGN(tmin.y/tmin.x) != SIGN(tmax.y/tmax.x)))
+		//	    return false;
+		
+		//double tangdot = (tmin * tmax) * (tmin * tmid) * (tmid * tmax);
+		
+		//return  (tangdot >= 0.9 ) && (vdot >= 0.9);
+		return  (vdot >= BREP_CURVE_FLATNESS);
+	}
+
 
     //--------------------------------------------------------------------------------
     // SurfaceTree
@@ -169,7 +449,17 @@ namespace brlcad {
 				  int depth)
     {
 	const ON_Surface* surf = m_face->SurfaceOf();
-	if (isFlat(surf, u, v) || depth >= BREP_MAX_FT_DEPTH) {
+	ON_Interval usurf = surf->Domain(0);
+	ON_Interval vsurf = surf->Domain(1);
+	point_t a,b;
+	VSET(a,usurf[0],vsurf[0],0.0);
+	VSET(b,usurf[1],vsurf[1],0.0);
+	double dsurf = DIST_PT_PT(a,b);
+	VSET(a,u[0],v[0],0.0);
+	VSET(b,u[1],v[1],0.0);
+	double dsubsurf = DIST_PT_PT(a,b);
+
+	if ( (dsubsurf/dsurf < BREP_SURF_SUB_FACTOR) && (isFlat(surf, u, v) || depth >= BREP_MAX_FT_DEPTH)) {
 	    return surfaceBBox(true, u, v);
 	} else {
 	    BBNode* parent = (depth == 0) ? initialBBox(surf) : surfaceBBox(false, u, v);
@@ -180,7 +470,7 @@ namespace brlcad {
 	    quads[1] = subdivideSurface(u.ParameterAt(second), v.ParameterAt(first),  depth+1);
 	    quads[2] = subdivideSurface(u.ParameterAt(second), v.ParameterAt(second), depth+1);
 	    quads[3] = subdivideSurface(u.ParameterAt(first),  v.ParameterAt(second), depth+1);
-    
+
 	    for (int i = 0; i < 4; i++)
 		parent->addChild(quads[i]);
 
@@ -194,7 +484,7 @@ namespace brlcad {
     		    }
 		}
 	    }
-	    
+
 	    return parent;
 	}
     }
@@ -741,8 +1031,32 @@ namespace brlcad {
 	// step 2 - interpolate the samples
 	return interpolateCurve(data);
     }
+    bool sortX (BRNode* first, BRNode* second)
+    {
+	point_t first_min,second_min;
+	point_t first_max,second_max;
 
+	first->GetBBox(first_min,first_max);
+	second->GetBBox(second_min,second_max);
 
+	if ( first_min[X] < second_min[X] )
+	    return true;
+	else 
+	    return false;
+    }
+    bool sortY (BRNode* first, BRNode* second)
+    {
+	point_t first_min,second_min;
+	point_t first_max,second_max;
+
+	first->GetBBox(first_min,first_max);
+	second->GetBBox(second_min,second_max);
+
+	if ( first_min[Y] < second_min[Y] )
+	    return true;
+	else 
+	    return false;
+    }
 }
 
 // Local Variables:

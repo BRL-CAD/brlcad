@@ -197,21 +197,70 @@ brep_pt_trimmed(pt2d_t pt, const ON_BrepFace& face) {
 
     return retVal;
 }
+#define PLOTTING 1
+#if PLOTTING
+
+#include "plot3.h"
+
+static int pcount = 0;
+static FILE* plot = NULL;
+static FILE*
+plot_file()
+{
+    if (plot == NULL) {
+	plot = fopen("out.pl","w");
+	point_t min, max;
+	VSET(min,-2048,-2048,-2048);
+	VSET(max, 2048, 2048, 2048);
+	pdv_3space(plot, min, max);
+    }
+    return plot;
+}
+
+#define COLOR_PLOT(r, g, b) pl_color(plot_file(),(r),(g),(b))
+#define PT_PLOT(p) 	{ 		\
+    point_t 	pp; 			\
+    VSCALE(pp, p, 1.001); 		\
+    pdv_3box(plot_file(), p, pp); 	\
+}
+#define LINE_PLOT(p1, p2) pdv_3move(plot_file(), p1); pdv_3line(plot_file(), p1, p2)
+#define BB_PLOT(p1, p2) pdv_3box(plot_file(), p1, p2)
+
+#endif /* PLOTTING */
 
 /* XXX - most of this function is broken :-(except for the bezier span
  * caching need to fix it! - could provide real performance
  * benefits...
  */
 void
-brep_preprocess_trims(const ON_BrepFace& face, SurfaceTree* tree) {
-
+brep_preprocess_trims(ON_BrepFace& face, SurfaceTree* tree) {
+    double min[3],max[3];
+	
+	CurveTree* ct = new CurveTree(&face);
+	if (false) {
+		list<BRNode*> curvelets;
+		ct->getLeaves(curvelets);
+		
+		for (list<BRNode*>::iterator i = curvelets.begin(); i != curvelets.end(); i++) {
+			SubcurveBRNode* br = dynamic_cast<SubcurveBRNode*>(*i);
+			if (br->m_XIncreasing) {
+				COLOR_PLOT( 255, 255, 0 );
+			} else {
+				COLOR_PLOT( 0, 255, 0 );
+			}
+			br->GetBBox(min,max);
+			BB_PLOT(min,max);
+		}
+		curvelets.clear();
+	}
+	
     list<BBNode*> leaves;
     tree->getLeaves(leaves);
-
+	
     for (list<BBNode*>::iterator i = leaves.begin(); i != leaves.end(); i++) {
-	SubsurfaceBBNode* bb = dynamic_cast<SubsurfaceBBNode*>(*i);
-
-/*
+		SubsurfaceBBNode* bb = dynamic_cast<SubsurfaceBBNode*>(*i);
+		bb->prepTrims(ct);
+		/*
 	// check to see if the bbox encloses a trim
 	ON_3dPoint uvmin(bb->m_u.Min(), bb->m_v.Min(), 0);
 	ON_3dPoint uvmax(bb->m_u.Max(), bb->m_v.Max(), 0);
@@ -233,7 +282,7 @@ brep_preprocess_trims(const ON_BrepFace& face, SurfaceTree* tree) {
 	    }
 	}
 */
-	bb->m_checkTrim = true; // XXX - ack, hardcode for now
+	//bb->m_checkTrim = true; // XXX - ack, hardcode for now
 
 	/* for this node to be completely trimmed, all four corners
 	 * must be trimmed and the depth of the tree needs to be > 0,
@@ -241,8 +290,72 @@ brep_preprocess_trims(const ON_BrepFace& face, SurfaceTree* tree) {
 	 * "internal" outer loops will be make a single node seem
 	 * trimmed, we must account for it.
 	 */
-	bb->m_trimmed = false; // XXX - ack, hardcode for now
+	//bb->m_trimmed = false; // XXX - ack, hardcode for now
     }
+}
+
+void plotsurfaceleafs(SurfaceTree* surf) {
+    double min[3],max[3];
+    list<BBNode*> leaves;
+    surf->getLeaves(leaves);
+
+    for (list<BBNode*>::iterator i = leaves.begin(); i != leaves.end(); i++) {
+		SubsurfaceBBNode* bb = dynamic_cast<SubsurfaceBBNode*>(*i);
+		if (bb->m_trimmed) {
+			COLOR_PLOT(255, 0, 0);
+		} else if (bb->m_checkTrim) {
+			COLOR_PLOT(0, 0, 255); 
+		} else {
+			COLOR_PLOT(255, 0, 255); 
+		}
+		
+		if (true) {
+			bb->GetBBox(min,max);
+		} else {
+			VSET(min,bb->m_u[0]+0.025,bb->m_v[0]+0.025,0.0);
+			VSET(max,bb->m_u[1]-0.025,bb->m_v[1]-0.025,0.0);
+		}
+		BB_PLOT(min,max);
+    }
+    return;
+}
+
+void plottrim(ON_BrepFace &face ) {
+    const ON_Surface* surf = face.SurfaceOf();
+    double umin, umax;
+    double pt1[3],pt2[3];
+    ON_2dPoint from, to;
+    COLOR_PLOT( 0, 255, 255); 
+    surf->GetDomain(0, &umin, &umax);
+    for (int i = 0; i < face.LoopCount(); i++) {
+	ON_BrepLoop* loop = face.Loop(i);
+	// for each trim
+	for (int j = 0; j < loop->m_ti.Count(); j++) {
+	    ON_BrepTrim& trim = face.Brep()->m_T[loop->m_ti[j]];
+	    const ON_Curve* trimCurve = trim.TrimCurveOf();
+
+	if (trimCurve->IsLinear()) {
+	    ON_BrepVertex& v1 = face.Brep()->m_V[trim.m_vi[0]];
+	    ON_BrepVertex& v2 = face.Brep()->m_V[trim.m_vi[1]];
+	    VMOVE(pt1, v1.Point());
+	    VMOVE(pt2, v2.Point());
+	    LINE_PLOT(pt1,pt2);
+	} else {
+	    ON_Interval dom = trimCurve->Domain();
+	    // XXX todo: dynamically sample the curve
+	    for (int i = 0; i <= 10000; i++) {
+		ON_3dPoint p = trimCurve->PointAt(dom.ParameterAt((double)i/10000.0));
+		VMOVE(pt2, p);
+		if (true) { //(i != 0) {
+		    LINE_PLOT(pt1,pt2);
+		} 
+		VMOVE(pt1,p);
+	    }
+	}
+
+	}
+    }
+    return;
 }
 
 int
@@ -251,34 +364,47 @@ brep_build_bvh(struct brep_specific* bs, struct rt_brep_internal* bi)
     ON_TextLog tl(stderr);
     ON_Brep* brep = bs->brep;
     if (brep == NULL || !brep->IsValid(&tl)) {
-	bu_log("brep is NOT valid");
-	return -1;
+		bu_log("brep is NOT valid");
+		return -1;
     }
-
+	
     bs->bvh = new BBNode(brep->BoundingBox());
-
+	
     /* need to extract faces, and build bounding boxes for each face,
-     * then combine the face BBs back up, combining them together to
-     * better split the hierarchy
-     */
+		* then combine the face BBs back up, combining them together to
+		* better split the hierarchy
+		*/
     std::list<SurfaceTree*> surface_trees;
     ON_BrepFaceArray& faces = brep->m_F;
     for (int i = 0; i < faces.Count(); i++) {
+		surface_trees.clear();
         TRACE1("Face: " << i);
-	ON_BrepFace& face = faces[i];
-
-	SurfaceTree* st = new SurfaceTree(&face);
-	face.m_face_user.p = st;
-	brep_preprocess_trims(face, st);
-
-	/* add the surface bounding volumes to a list, so we can build
-	 * down a hierarchy from the brep bounding volume
-	 */
-	surface_trees.push_back(st);
-    }
-
-    brep_bvh_subdivide(bs->bvh, surface_trees);
-
+		bu_log("Prepping Face: %d of %d\n", i+1, faces.Count());
+		ON_BrepFace& face = faces[i];
+#if 0 // debugging hacks to look at specific faces
+		if ((i > 0) && ((i <= 6) ||(i >= 5))) {
+#endif
+		SurfaceTree* st = new SurfaceTree(&face);
+		face.m_face_user.p = st;
+		brep_preprocess_trims(face, st);
+		/* add the surface bounding volumes to a list, so we can build
+		* down a hierarchy from the brep bounding volume
+		*/
+		surface_trees.push_back(st);
+#if 0 // debugging hacks to look at specific faces
+			
+			if (false) { //plotting hacks i==0) {
+				plottrim(face);
+				plotsurfaceleafs(st);
+			}
+			
+		}
+#endif
+		brep_bvh_subdivide(bs->bvh, surface_trees);
+	}
+#if 0 // debugging hacks to look at specific faces
+    (void)fclose(plot_file());
+#endif
     return 0;
 }
 
@@ -902,8 +1028,8 @@ utah_brep_intersect(const SubsurfaceBBNode* sbv, const ON_BrepFace* face, const 
      * if (converged && (t > 1.e-2) && (t < t_min) && (!utah_isTrimmed(ouv, face))) hit = true;
      *
      */
-    if (converged && (t > 1.e-2) && (!utah_isTrimmed(ouv, face))) hit = true;
-//    if (converged && (t > 1.e-2)) hit = true;
+    //if (converged && (t > 1.e-2) && (!utah_isTrimmed(ouv, face))) hit = true;
+    if (converged && (t > 1.e-2)) hit = true;
 
     uv[0] = ouv.x;
     uv[1] = ouv.y;
@@ -1016,38 +1142,6 @@ sign(double val)
 {
     return (val >= 0.0) ? 1 : -1;
 }
-
-
-#define PLOTTING 1
-#if PLOTTING
-
-#include "plot3.h"
-
-static int pcount = 0;
-static FILE* plot = NULL;
-static FILE*
-plot_file()
-{
-    if (plot == NULL) {
-	plot = fopen("out.pl","w");
-	point_t min, max;
-	VSET(min,-2048,-2048,-2048);
-	VSET(max, 2048, 2048, 2048);
-	pdv_3space(plot, min, max);
-    }
-    return plot;
-}
-
-#define COLOR_PLOT(r, g, b) pl_color(plot_file(),(r),(g),(b))
-#define PT_PLOT(p) 	{ 		\
-    point_t 	pp; 			\
-    VSCALE(pp, p, 1.001); 		\
-    pdv_3box(plot_file(), p, pp); 	\
-}
-#define LINE_PLOT(p1, p2) pdv_3move(plot_file(), p1); pdv_3line(plot_file(), p1, p2)
-#define BB_PLOT(p1, p2) pdv_3box(plot_file(), p1, p2)
-
-#endif /* PLOTTING */
 
 
 /**
@@ -1279,11 +1373,17 @@ rt_brep_shot(struct soltab *stp, register struct xray *rp, struct application *a
 
     bool hit = false;
     if (hits.size() > 0) {
+#if 1 //ugly debugging hack to raytrace single surface and not worry about odd hits
+	if (hits.size() > 0 ) { 
+#else
 	if (hits.size() % 2 == 0) {
+#endif
 	    // take each pair as a segment
 	    for (HitList::iterator i = hits.begin(); i != hits.end(); ++i) {
 		brep_hit& in = *i;
+#if 0  //ugly debugging hack to raytrace single surface and not worry about odd hits
 		i++;
+#endif
 		brep_hit& out = *i;
 
 		register struct seg* segp;
@@ -1292,7 +1392,11 @@ rt_brep_shot(struct soltab *stp, register struct xray *rp, struct application *a
 
 		VMOVE(segp->seg_in.hit_point, in.point);
 		VMOVE(segp->seg_in.hit_normal, in.normal);
+#if 1 //ugly debugging hack to raytrace single surface and not worry about odd hits
+		segp->seg_in.hit_dist = 0.01;
+#else
 		segp->seg_in.hit_dist = DIST_PT_PT(rp->r_pt, in.point);
+#endif
 		segp->seg_in.hit_surfno = in.face.m_face_index;
 		VSET(segp->seg_in.hit_vpriv, in.uv[0], in.uv[1], 0.0);
 
@@ -1511,6 +1615,7 @@ rt_brep_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_t
 	    RT_ADD_VLIST(vhead, pt2, BN_VLIST_LINE_DRAW);
 	} else {
 	    ON_Interval dom = crv->Domain();
+
 	    double domainval = 0.0;
 	    // Insert first point.
 	    ON_3dPoint p = crv->PointAt(dom.ParameterAt(domainval));
