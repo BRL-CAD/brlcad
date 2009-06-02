@@ -63,10 +63,7 @@ ged_arb(struct ged *gedp, int argc, const char *argv[])
 	return GED_ERROR;
     }
 
-    if ( db_lookup( gedp->ged_wdbp->dbip,  argv[1], LOOKUP_QUIET ) != DIR_NULL )  {
-	bu_vls_printf(&gedp->ged_result_str, "%s: %s already exists", argv[0], argv[1]);
-	return GED_ERROR;
-    }
+    GED_CHECK_EXISTS(gedp, argv[1], LOOKUP_QUIET, GED_ERROR);
 
     /* get rotation angle */
     if (sscanf(argv[2], "%lf", &rota) != 1) {
@@ -124,19 +121,8 @@ ged_arb(struct ged *gedp, int argc, const char *argv[])
     for ( i=0; i<4; i++ )
 	VJOIN1( arb->pt[i+4], arb->pt[i], -50.8, norm1 );
 
-    if ( (dp=db_diradd( gedp->ged_wdbp->dbip, argv[1], -1L, 0, DIR_SOLID, (genptr_t)&internal.idb_type)) == DIR_NULL )
-    {
-	rt_db_free_internal( &internal, &rt_uniresource );
-	bu_vls_printf(&gedp->ged_result_str, "%s: Cannot add %s to directory\n", argv[0], argv[1]);
-	return GED_ERROR;
-    }
-
-    if ( rt_db_put_internal( dp, gedp->ged_wdbp->dbip, &internal, &rt_uniresource ) < 0 )
-    {
-	rt_db_free_internal( &internal, &rt_uniresource );
-	bu_vls_printf(&gedp->ged_result_str, "%s: Database write error, aborting\n", argv[0]);
-	return GED_ERROR;
-    }
+    GED_DB_DIRADD(gedp, argv[1], -1L, 0, DIR_SOLID, (genptr_t)&internal.idb_type, GED_ERROR);
+    GED_DB_PUT_INTERNAL(gedp, dp, &internal, &rt_uniresource, GED_ERROR);
 
     return GED_OK;
 }
