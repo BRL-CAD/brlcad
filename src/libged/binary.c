@@ -1,4 +1,4 @@
-/*                         B I N A R Y . C
+/*                             B O . C
  * BRL-CAD
  *
  * Copyright (c) 2008-2009 United States Government as represented by
@@ -17,9 +17,10 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file binary.c
+/** @file bo.c
  *
- * The binary command.
+ * The 'bo' binary object command, used for importing and exporting
+ * between files and binary objects stored in a geometry database.
  *
  */
 
@@ -33,7 +34,7 @@
 
 
 int
-ged_binary(struct ged *gedp, int argc, const char *argv[])
+ged_bo(struct ged *gedp, int argc, const char *argv[])
 {
     int c;
     unsigned int minor_type=0;

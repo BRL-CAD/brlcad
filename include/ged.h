@@ -1245,7 +1245,7 @@ GED_EXPORT BU_EXTERN(int ged_autoview, (struct ged *gedp, int argc, const char *
 GED_EXPORT BU_EXTERN(int ged_bev, (struct ged *gedp, int argc, const char *argv[]));
 
 /**
- * Manipulate opaque objects.
+ * Manipulate opaque binary objects.
  * Must specify one of -i (for creating or adjusting objects (input))
  * or -o for extracting objects (output).
  * If the major type is "u" the minor type must be one of:
@@ -1266,7 +1266,7 @@ GED_EXPORT BU_EXTERN(int ged_bev, (struct ged *gedp, int argc, const char *argv[
  * Usage:
  *     binary {-i major_type minor_type | -o} dest source
  */
-GED_EXPORT BU_EXTERN(int ged_binary, (struct ged *gedp, int argc, const char *argv[]));
+GED_EXPORT BU_EXTERN(int ged_bo, (struct ged *gedp, int argc, const char *argv[]));
 
 /**
  * Erase all currently displayed geometry and draw the specified object(s)
