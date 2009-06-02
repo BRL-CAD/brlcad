@@ -54,8 +54,8 @@ ged_red(struct ged *gedp, int argc, const char *argv[])
     int node_count;
     static const char *usage = "comb";
 
-    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
-    GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
+    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
+    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
 
     /* initialize result */
     bu_vls_trunc(&gedp->ged_result_str, 0);
@@ -63,26 +63,26 @@ ged_red(struct ged *gedp, int argc, const char *argv[])
     /* must be wanting help */
     if (argc == 1) {
 	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return BRLCAD_HELP;
+	return GED_HELP;
     }
 
     if (argc != 2) {
 	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return BRLCAD_ERROR;
+	return GED_ERROR;
     }
 
-    GED_DB_LOOKUP(gedp, dp, argv[1], LOOKUP_QUIET, BRLCAD_ERROR);
-    GED_CHECK_COMB(gedp, dp, BRLCAD_ERROR);
+    GED_DB_LOOKUP(gedp, dp, argv[1], LOOKUP_QUIET, GED_ERROR);
+    GED_CHECK_COMB(gedp, dp, GED_ERROR);
 
     bu_strlcpy(ged_tmpcomb, ged_tmpcomb_init, sizeof(ged_tmpcomb));
 
     if (dp != DIR_NULL) {
 	if (!(dp->d_flags & DIR_COMB)) {
 	    bu_vls_printf(&gedp->ged_result_str, "%s: %s must be a combination to use this command\n", argv[0], argv[1]);
-	    return BRLCAD_ERROR;
+	    return GED_ERROR;
 	}
 
-	GED_DB_GET_INTERNAL(gedp, &intern, dp, (fastf_t *)NULL, &rt_uniresource, BRLCAD_ERROR);
+	GED_DB_GET_INTERNAL(gedp, &intern, dp, (fastf_t *)NULL, &rt_uniresource, GED_ERROR);
 	comb = (struct rt_comb_internal *)intern.idb_ptr;
 
 	/* Make a file for the text editor */
@@ -91,14 +91,14 @@ ged_red(struct ged *gedp, int argc, const char *argv[])
 	if (fp == (FILE *)0) {
 	    bu_vls_printf(&gedp->ged_result_str, "%s: unable to edit %s\n", argv[0], argv[1]);
 	    bu_vls_printf(&gedp->ged_result_str, "%s: unable to create %s\n", argv[0], ged_tmpfil);
-	    return BRLCAD_ERROR;
+	    return GED_ERROR;
 	}
 
 	/* Write the combination components to the file */
 	if (ged_write_comb(gedp, comb, dp->d_namep)) {
 	    bu_vls_printf(&gedp->ged_result_str, "%s: unable to edit %s\n", argv[0], argv[1]);
 	    unlink(ged_tmpfil);
-	    return BRLCAD_ERROR;
+	    return GED_ERROR;
 	}
     } else {
 	comb = (struct rt_comb_internal *)NULL;
@@ -109,14 +109,14 @@ ged_red(struct ged *gedp, int argc, const char *argv[])
 	if (fp == (FILE *)0) {
 	    bu_vls_printf(&gedp->ged_result_str, "%s: unable to edit %s\n", argv[0], argv[1]);
 	    bu_vls_printf(&gedp->ged_result_str, "%s: unable to create %s\n", argv[0], ged_tmpfil);
-	    return BRLCAD_ERROR;
+	    return GED_ERROR;
 	}
 
 	/* Write the combination components to the file */
 	if (ged_write_comb(gedp, comb, argv[1])) {
 	    bu_vls_printf(&gedp->ged_result_str, "%s: unable to edit %s\n", argv[0], argv[1]);
 	    unlink(ged_tmpfil);
-	    return BRLCAD_ERROR;
+	    return GED_ERROR;
 	}
     }
 
@@ -135,7 +135,7 @@ ged_red(struct ged *gedp, int argc, const char *argv[])
 		if (comb)
 		    intern.idb_meth->ft_ifree( &intern, &rt_uniresource );
 		(void)unlink(ged_tmpfil);
-		return BRLCAD_ERROR;
+		return GED_ERROR;
 	    }
 
 	    if (comb) {
@@ -144,7 +144,7 @@ ged_red(struct ged *gedp, int argc, const char *argv[])
 		    bu_vls_printf(&gedp->ged_result_str, "%s: No changes made\n");
 		    intern.idb_meth->ft_ifree( &intern, &rt_uniresource );
 		    (void)unlink(ged_tmpfil);
-		    return BRLCAD_OK;
+		    return GED_OK;
 		}
 	    }
 
@@ -157,7 +157,7 @@ ged_red(struct ged *gedp, int argc, const char *argv[])
 		}
 
 		(void)unlink(ged_tmpfil);
-		return BRLCAD_ERROR;
+		return GED_ERROR;
 	    } else if (comb) {
 		/* eliminate the temporary combination */
 		char *av[3];
@@ -173,7 +173,7 @@ ged_red(struct ged *gedp, int argc, const char *argv[])
     }
 
     unlink(ged_tmpfil);
-    return BRLCAD_OK;
+    return GED_OK;
 }
 
 static char *
@@ -490,7 +490,7 @@ ged_make_tree(struct ged *gedp, struct rt_comb_internal *comb, struct directory 
 	    if (db_delete(gedp->ged_wdbp->dbip, dp) || db_dirdelete(gedp->ged_wdbp->dbip, dp)) {
 		bu_vls_printf(&gedp->ged_result_str, "ged_make_tree: Unable to delete directory entry for %s\n", old_name);
 		intern.idb_meth->ft_ifree( &intern, &rt_uniresource );
-		return BRLCAD_ERROR;
+		return GED_ERROR;
 	    }
 	}
 
@@ -510,7 +510,7 @@ ged_make_tree(struct ged *gedp, struct rt_comb_internal *comb, struct directory 
 	if ((dp=db_diradd(gedp->ged_wdbp->dbip, new_name, -1L, 0, flags, (genptr_t)&intern.idb_type)) == DIR_NULL) {
 	    bu_vls_printf(&gedp->ged_result_str, "ged_make_tree: Cannot add %s to directory, no changes made\n", new_name);
 	    intern.idb_meth->ft_ifree( &intern, &rt_uniresource );
-	    return BRLCAD_ERROR;
+	    return GED_ERROR;
 	}
     } else {
 	if (comb->region_flag)
@@ -521,10 +521,10 @@ ged_make_tree(struct ged *gedp, struct rt_comb_internal *comb, struct directory 
 
     if (rt_db_put_internal(dp, gedp->ged_wdbp->dbip, &intern, &rt_uniresource) < 0) {
 	bu_vls_printf(&gedp->ged_result_str, "ged_make_tree: Unable to write new combination into database.\n");
-	return BRLCAD_ERROR;
+	return GED_ERROR;
     }
 
-    return BRLCAD_OK;
+    return GED_OK;
 }
 
 static int
@@ -551,7 +551,7 @@ ged_build_comb(struct ged *gedp, struct rt_comb_internal *comb, struct directory
     int ret=0;
 
     if (gedp->ged_wdbp->dbip == DBI_NULL)
-	return BRLCAD_OK;
+	return GED_OK;
 
     if (comb) {
 	RT_CK_COMB(comb);
@@ -560,7 +560,7 @@ ged_build_comb(struct ged *gedp, struct rt_comb_internal *comb, struct directory
 
     if ((fp=fopen(ged_tmpfil, "r")) == NULL) {
 	bu_vls_printf(&gedp->ged_result_str, "ged_build_comb: Cannot open edited file: %s\n", ged_tmpfil);
-	return BRLCAD_ERROR;
+	return GED_ERROR;
     }
 
     /* empty the existing combination */
@@ -862,7 +862,7 @@ ged_write_comb(struct ged *gedp, const struct rt_comb_internal *comb, const char
     if ((fp=fopen(ged_tmpfil, "w")) == NULL) {
 	perror("MGED");
 	bu_vls_printf(&gedp->ged_result_str, "ged_write_comb: Cannot open temporary file for writing\n");
-	return BRLCAD_ERROR;
+	return GED_ERROR;
     }
 
     if (!comb) {
@@ -877,14 +877,14 @@ ged_write_comb(struct ged *gedp, const struct rt_comb_internal *comb, const char
 	fprintf(fp, "INHERIT=No\n");
 	fprintf(fp, "COMBINATION:\n");
 	fclose(fp);
-	return BRLCAD_OK;
+	return GED_OK;
     }
 
     if (comb->tree && db_ck_v4gift_tree(comb->tree) < 0) {
 	db_non_union_push(comb->tree, &rt_uniresource);
 	if (db_ck_v4gift_tree(comb->tree) < 0) {
 	    bu_vls_printf(&gedp->ged_result_str, "ged_write_comb: Cannot flatten tree for editing\n");
-	    return BRLCAD_ERROR;
+	    return GED_ERROR;
 	}
     }
     node_count = db_tree_nleaves(comb->tree);
@@ -949,19 +949,19 @@ ged_write_comb(struct ged *gedp, const struct rt_comb_internal *comb, const char
 	    default:
 		bu_vls_printf(&gedp->ged_result_str, "ged_write_comb: Illegal op code in tree\n");
 		fclose(fp);
-		return BRLCAD_ERROR;
+		return GED_ERROR;
 	}
 	if (fprintf(fp, " %c %s", op, rt_tree_array[i].tl_tree->tr_l.tl_name) <= 0) {
 	    bu_vls_printf(&gedp->ged_result_str, "ged_write_comb: Cannot write to temporary file (%s). Aborting edit\n",
 			  ged_tmpfil);
 	    fclose(fp);
-	    return BRLCAD_ERROR;
+	    return GED_ERROR;
 	}
 	ged_print_matrix(fp, rt_tree_array[i].tl_tree->tr_l.tl_mat);
 	fprintf(fp, "\n");
     }
     fclose(fp);
-    return BRLCAD_OK;
+    return GED_OK;
 }
 
 void
@@ -1012,20 +1012,20 @@ ged_save_comb(struct ged *gedp, struct directory *dpold)
 
     if ( rt_db_get_internal( &intern, dpold, gedp->ged_wdbp->dbip, (fastf_t *)NULL, &rt_uniresource ) < 0 ) {
 	bu_vls_printf(&gedp->ged_result_str, "ged_save_comb: Database read error, aborting\n");
-	return BRLCAD_ERROR;
+	return GED_ERROR;
     }
 
     if ( (dp=db_diradd( gedp->ged_wdbp->dbip, ged_tmpcomb, -1L, 0, dpold->d_flags, (genptr_t)&intern.idb_type)) == DIR_NULL )  {
 	bu_vls_printf(&gedp->ged_result_str, "ged_save_comb: Cannot save copy of %s, no changed made\n", dpold->d_namep);
-	return BRLCAD_ERROR;
+	return GED_ERROR;
     }
 
     if (rt_db_put_internal(dp, gedp->ged_wdbp->dbip, &intern, &rt_uniresource) < 0) {
 	bu_vls_printf(&gedp->ged_result_str, "ged_save_comb: Cannot save copy of %s, no changed made\n", dpold->d_namep);
-	return BRLCAD_ERROR;
+	return GED_ERROR;
     }
 
-    return BRLCAD_OK;
+    return GED_OK;
 }
 
 /* restore a combination that was saved in "ged_tmpcomb" */

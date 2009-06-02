@@ -104,9 +104,9 @@ ged_loadview(struct ged *gedp, int argc, const char *argv[])
     int prevPerspective;
     static const char *usage = "filename";
 
-    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
-    GED_CHECK_VIEW(gedp, BRLCAD_ERROR);
-    GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
+    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
+    GED_CHECK_VIEW(gedp, GED_ERROR);
+    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
 
     /* initialize result */
     bu_vls_trunc(&gedp->ged_result_str, 0);
@@ -114,19 +114,19 @@ ged_loadview(struct ged *gedp, int argc, const char *argv[])
     /* must be wanting help */
     if (argc == 1) {
 	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return BRLCAD_HELP;
+	return GED_HELP;
     }
 
     /* make sure the file exists */
     if (!bu_file_exists(argv[1])) {
 	bu_log("Error: File %s does not exist\n", argv[1]);
-	return BRLCAD_ERROR;
+	return GED_ERROR;
     }
 
     /* open the file for reading */
     if ((fp = fopen( argv[1], "r")) == NULL) {
 	perror(argv[1]);
-	return BRLCAD_ERROR;
+	return GED_ERROR;
     }
 
     prevPerspective =  gedp->ged_gvp->gv_perspective;
@@ -178,7 +178,7 @@ ged_loadview(struct ged *gedp, int argc, const char *argv[])
 		/* restore state before leaving */
 		gedp->ged_gvp->gv_perspective = prevPerspective;
 
-		return BRLCAD_ERROR;
+		return GED_ERROR;
 	    }
 
 	    /* get rid of anything that may be displayed, since we
@@ -201,7 +201,7 @@ ged_loadview(struct ged *gedp, int argc, const char *argv[])
 		editArgv[0] = "draw";
 		editArgv[1] = objects;
 		editArgv[2] = (char *)NULL;
-		if (ged_draw(gedp, 2, (const char **)editArgv) != BRLCAD_OK) {
+		if (ged_draw(gedp, 2, (const char **)editArgv) != GED_OK) {
 		    bu_vls_printf(&gedp->ged_result_str, "Unable to load object: %s\n", objects);
 		}
 
@@ -241,7 +241,7 @@ ged_loadview(struct ged *gedp, int argc, const char *argv[])
     MAT_DELTAS_VEC_NEG(gedp->ged_gvp->gv_center, ged_eye_model);
     ged_view_update(gedp->ged_gvp);
 
-    return BRLCAD_OK;
+    return GED_OK;
 }
 
 

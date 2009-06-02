@@ -56,9 +56,9 @@ ged_nmg_simplify(struct ged *gedp, int argc, const char *argv[])
 
     static const char *usage = "[arb|tgc|ell|poly] new_prim nmg_prim";
 
-    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
-    GED_CHECK_READ_ONLY(gedp, BRLCAD_ERROR);
-    GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
+    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
+    GED_CHECK_READ_ONLY(gedp, GED_ERROR);
+    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
 
     /* initialize result */
     bu_vls_trunc(&gedp->ged_result_str, 0);
@@ -66,12 +66,12 @@ ged_nmg_simplify(struct ged *gedp, int argc, const char *argv[])
     /* must be wanting help */
     if (argc == 1) {
 	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return BRLCAD_HELP;
+	return GED_HELP;
     }
 
     if (argc < 3 || 4 < argc) {
 	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return BRLCAD_ERROR;
+	return GED_ERROR;
     }
 
     RT_INIT_DB_INTERNAL(&new_intern);
@@ -86,7 +86,7 @@ ged_nmg_simplify(struct ged *gedp, int argc, const char *argv[])
 	    do_poly = 1;
 	else {
 	    bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	    return BRLCAD_ERROR;
+	    return GED_ERROR;
 	}
 
 	new_name = (char *)argv[2];
@@ -98,23 +98,23 @@ ged_nmg_simplify(struct ged *gedp, int argc, const char *argv[])
 
     if (db_lookup(gedp->ged_wdbp->dbip, new_name, LOOKUP_QUIET) != DIR_NULL) {
 	bu_vls_printf(&gedp->ged_result_str, "%s already exists\n", new_name);
-	return BRLCAD_ERROR;
+	return GED_ERROR;
     }
 
     if ((dp=db_lookup(gedp->ged_wdbp->dbip, nmg_name, LOOKUP_QUIET)) == DIR_NULL) {
 	bu_vls_printf(&gedp->ged_result_str, "%s does not exist\n", nmg_name);
-	return BRLCAD_ERROR;
+	return GED_ERROR;
     }
 
     if (rt_db_get_internal(&nmg_intern, dp, gedp->ged_wdbp->dbip, bn_mat_identity, &rt_uniresource) < 0) {
 	bu_vls_printf(&gedp->ged_result_str, "rt_db_get_internal() error\n");
-	return BRLCAD_ERROR;
+	return GED_ERROR;
     }
 
     if (nmg_intern.idb_type != ID_NMG) {
 	bu_vls_printf(&gedp->ged_result_str, "%s is not an NMG solid\n", nmg_name);
 	rt_db_free_internal(&nmg_intern, &rt_uniresource);
-	return BRLCAD_ERROR;
+	return GED_ERROR;
     }
 
     m = (struct model *)nmg_intern.idb_ptr;
@@ -128,7 +128,7 @@ ged_nmg_simplify(struct ged *gedp, int argc, const char *argv[])
 	    bu_vls_printf(&gedp->ged_result_str,
 			  "%s cannot be applied to \"%s\" because it has non-planar faces\n",
 			  argv[0], nmg_name);
-	    return BRLCAD_ERROR;
+	    return GED_ERROR;
 	}
     }
     bu_ptbl_free(&faces);
@@ -171,7 +171,7 @@ ged_nmg_simplify(struct ged *gedp, int argc, const char *argv[])
 	    if (!success) {
 		rt_db_free_internal( &nmg_intern, &rt_uniresource );
 		bu_vls_printf(&gedp->ged_result_str, "Failed to construct an ARB equivalent to %s\n", nmg_name);
-		return BRLCAD_OK;
+		return GED_OK;
 	    }
 	}
     }
@@ -190,7 +190,7 @@ ged_nmg_simplify(struct ged *gedp, int argc, const char *argv[])
 	} else if (do_tgc) {
 	    rt_db_free_internal( &nmg_intern, &rt_uniresource );
 	    bu_vls_printf(&gedp->ged_result_str, "Failed to construct an TGC equivalent to %s\n", nmg_name);
-	    return BRLCAD_OK;
+	    return GED_OK;
 	}
     }
 
@@ -217,7 +217,7 @@ ged_nmg_simplify(struct ged *gedp, int argc, const char *argv[])
 	    else if (do_arb) {
 		rt_db_free_internal( &nmg_intern, &rt_uniresource );
 		bu_vls_printf(&gedp->ged_result_str, "Failed to construct an ARB equivalent to %s\n", nmg_name);
-		return BRLCAD_OK;
+		return GED_OK;
 	    }
 	}
     }
@@ -237,7 +237,7 @@ ged_nmg_simplify(struct ged *gedp, int argc, const char *argv[])
 	else if (do_poly) {
 	    rt_db_free_internal( &nmg_intern, &rt_uniresource );
 	    bu_vls_printf(&gedp->ged_result_str, "%s is not a closed surface, cannot make a polysolid\n", nmg_name);
-	    return BRLCAD_OK;
+	    return GED_OK;
 	}
     }
 
@@ -258,19 +258,19 @@ ged_nmg_simplify(struct ged *gedp, int argc, const char *argv[])
 
 	if ((dp=db_diradd(gedp->ged_wdbp->dbip, new_name, -1L, 0, DIR_SOLID, (genptr_t)&new_intern.idb_type)) == DIR_NULL) {
 	    bu_vls_printf(&gedp->ged_result_str, "Cannot add %s to directory\n", new_name);
-	    return BRLCAD_ERROR;
+	    return GED_ERROR;
 	}
 
 	if (rt_db_put_internal(dp, gedp->ged_wdbp->dbip, &new_intern, &rt_uniresource) < 0) {
 	    rt_db_free_internal( &new_intern, &rt_uniresource );
 	    bu_vls_printf(&gedp->ged_result_str, "Database write error, aborting.\n");
-	    return BRLCAD_ERROR;
+	    return GED_ERROR;
 	}
-	return BRLCAD_OK;
+	return GED_OK;
     }
 
     bu_vls_printf(&gedp->ged_result_str, "simplification to %s is not yet supported\n", argv[1]);
-    return BRLCAD_OK;
+    return GED_OK;
 }
 
 

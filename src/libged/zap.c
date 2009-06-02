@@ -46,16 +46,16 @@ ged_zap(struct ged *gedp, int argc, const char *argv[])
     register struct solid *nsp;
     struct directory *dp;
 
-    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
-    GED_CHECK_DRAWABLE(gedp, BRLCAD_ERROR);
-    GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
+    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
+    GED_CHECK_DRAWABLE(gedp, GED_ERROR);
+    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
 
     /* initialize result */
     bu_vls_trunc(&gedp->ged_result_str, 0);
 
     if (argc != 1) {
 	bu_vls_printf(&gedp->ged_result_str, "Usage: %s", argv[0]);
-	return BRLCAD_ERROR;
+	return GED_ERROR;
     }
 
     sp = BU_LIST_NEXT(solid, &gedp->ged_gdp->gd_headSolid);
@@ -74,7 +74,7 @@ ged_zap(struct ged *gedp, int argc, const char *argv[])
 	sp = nsp;
     }
 
-    return BRLCAD_OK;
+    return GED_OK;
 }
 
 

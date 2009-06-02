@@ -46,17 +46,17 @@ ged_rt(struct ged *gedp, int argc, const char *argv[])
     const char *bin;
     char rt[256] = {0};
 
-    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
-    GED_CHECK_DRAWABLE(gedp, BRLCAD_ERROR);
-    GED_CHECK_VIEW(gedp, BRLCAD_ERROR);
-    GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
+    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
+    GED_CHECK_DRAWABLE(gedp, GED_ERROR);
+    GED_CHECK_VIEW(gedp, GED_ERROR);
+    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
 
     /* initialize result */
     bu_vls_trunc(&gedp->ged_result_str, 0);
 
     if (MAXARGS < argc) {
 	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return BRLCAD_ERROR;
+	return GED_ERROR;
     }
 
     bin = bu_brlcad_root("bin", 1);
@@ -119,7 +119,7 @@ ged_rt(struct ged *gedp, int argc, const char *argv[])
     }
     (void)ged_run_rt(gedp);
 
-    return BRLCAD_OK;
+    return GED_OK;
 }
 
 

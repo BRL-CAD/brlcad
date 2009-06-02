@@ -77,7 +77,7 @@ ged_decode_dbip(const char *dbip_string, struct db_i **dbipp)
     /* Could core dump */
     RT_CK_DBI(*dbipp);
 
-    return BRLCAD_OK;
+    return GED_OK;
 }
 
 void
@@ -250,7 +250,7 @@ ged_open(const char *dbtype, const char *filename, int existing_only)
     } else {
 	struct db_i	*dbip;
 
-	if (ged_decode_dbip(filename, &dbip) != BRLCAD_OK) {
+	if (ged_decode_dbip(filename, &dbip) != GED_OK) {
 	    /* Restore RT's material head */
 	    rt_new_material_head(save_materp);
 

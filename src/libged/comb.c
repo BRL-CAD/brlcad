@@ -42,9 +42,9 @@ ged_comb(struct ged *gedp, int argc, const char *argv[])
     char oper;
     static const char *usage = "comb_name <operation solid>";
 
-    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
-    GED_CHECK_READ_ONLY(gedp, BRLCAD_ERROR);
-    GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
+    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
+    GED_CHECK_READ_ONLY(gedp, GED_ERROR);
+    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
 
     /* initialize result */
     bu_vls_trunc(&gedp->ged_result_str, 0);
@@ -52,18 +52,18 @@ ged_comb(struct ged *gedp, int argc, const char *argv[])
     /* must be wanting help */
     if (argc == 1) {
 	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return BRLCAD_HELP;
+	return GED_HELP;
     }
 
     if (argc < 4 || MAXARGS < argc) {
 	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return BRLCAD_ERROR;
+	return GED_ERROR;
     }
 
     /* Check for odd number of arguments */
     if (argc & 01) {
 	bu_vls_printf(&gedp->ged_result_str, "error in number of args!");
-	return BRLCAD_ERROR;
+	return GED_ERROR;
     }
 
     /* Save combination name, for use inside loop */
@@ -71,7 +71,7 @@ ged_comb(struct ged *gedp, int argc, const char *argv[])
     if ((dp=db_lookup(gedp->ged_wdbp->dbip, comb_name, LOOKUP_QUIET)) != DIR_NULL) {
 	if (!(dp->d_flags & DIR_COMB)) {
 	    bu_vls_printf(&gedp->ged_result_str, "ERROR: %s is not a combination", comb_name);
-	    return BRLCAD_ERROR;
+	    return GED_ERROR;
 	}
     }
 
@@ -95,16 +95,16 @@ ged_comb(struct ged *gedp, int argc, const char *argv[])
 
 	if (ged_combadd(gedp, dp, comb_name, 0, oper, 0, 0) == DIR_NULL) {
 	    bu_vls_printf(&gedp->ged_result_str, "error in combadd");
-	    return BRLCAD_ERROR;
+	    return GED_ERROR;
 	}
     }
 
     if (db_lookup(gedp->ged_wdbp->dbip, comb_name, LOOKUP_QUIET) == DIR_NULL) {
 	bu_vls_printf(&gedp->ged_result_str, "Error: %s not created", comb_name);
-	return BRLCAD_ERROR;
+	return GED_ERROR;
     }
 
-    return BRLCAD_OK;
+    return GED_OK;
 }
 
 /*

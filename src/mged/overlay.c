@@ -76,7 +76,7 @@ cmd_overlay(ClientData	clientData,
     Tcl_DStringAppend(&ds, bu_vls_addr(&gedp->ged_result_str), -1);
     Tcl_DStringResult(interp, &ds);
 
-    if (ret != BRLCAD_OK)
+    if (ret != GED_OK)
 	return TCL_ERROR;
 
     update_views = 1;

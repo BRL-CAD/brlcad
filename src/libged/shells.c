@@ -46,9 +46,9 @@ ged_shells(struct ged *gedp, int argc, const char *argv[])
     long **trans_tbl;
     static const char *usage = "nmg_model";
 
-    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
-    GED_CHECK_READ_ONLY(gedp, BRLCAD_ERROR);
-    GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
+    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
+    GED_CHECK_READ_ONLY(gedp, GED_ERROR);
+    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
 
     /* initialize result */
     bu_vls_trunc(&gedp->ged_result_str, 0);
@@ -56,25 +56,25 @@ ged_shells(struct ged *gedp, int argc, const char *argv[])
     /* must be wanting help */
     if (argc == 1) {
 	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return BRLCAD_HELP;
+	return GED_HELP;
     }
 
     if (argc != 2) {
 	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return BRLCAD_ERROR;
+	return GED_ERROR;
     }
 
     if ((old_dp = db_lookup(gedp->ged_wdbp->dbip,  argv[1], LOOKUP_NOISY)) == DIR_NULL)
-	return BRLCAD_ERROR;
+	return GED_ERROR;
 
     if (rt_db_get_internal(&old_intern, old_dp, gedp->ged_wdbp->dbip, bn_mat_identity, &rt_uniresource) < 0) {
 	bu_vls_printf(&gedp->ged_result_str, "rt_db_get_internal() error\n");
-	return BRLCAD_ERROR;
+	return GED_ERROR;
     }
 
     if (old_intern.idb_type != ID_NMG) {
 	bu_vls_printf(&gedp->ged_result_str, "Object is not an NMG!!!\n");
-	return BRLCAD_ERROR;
+	return GED_ERROR;
     }
 
     m = (struct model *)old_intern.idb_ptr;
@@ -112,7 +112,7 @@ ged_shells(struct ged *gedp, int argc, const char *argv[])
 	    if ((new_dp=db_diradd(gedp->ged_wdbp->dbip, bu_vls_addr(&shell_name), -1, 0,
 				  DIR_SOLID, (genptr_t)&new_intern.idb_type)) == DIR_NULL) {
 		bu_vls_printf(&gedp->ged_result_str, "An error has occured while adding a new object to the database.\n");
-		return BRLCAD_ERROR;
+		return GED_ERROR;
 	    }
 
 	    /* make sure the geometry/bounding boxes are up to date */
@@ -122,7 +122,7 @@ ged_shells(struct ged *gedp, int argc, const char *argv[])
 		/* Free memory */
 		nmg_km(m_tmp);
 		bu_vls_printf(&gedp->ged_result_str, "rt_db_put_internal() failure\n");
-		return BRLCAD_ERROR;
+		return GED_ERROR;
 	    }
 	    /* Internal representation has been freed by rt_db_put_internal */
 	    new_intern.idb_ptr = (genptr_t)NULL;
@@ -130,7 +130,7 @@ ged_shells(struct ged *gedp, int argc, const char *argv[])
     }
     bu_vls_free(&shell_name);
 
-    return BRLCAD_OK;
+    return GED_OK;
 }
 
 

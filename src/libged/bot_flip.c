@@ -44,9 +44,9 @@ ged_bot_flip(struct ged *gedp, int argc, const char *argv[])
     struct rt_bot_internal *bot;
     static const char *usage = "bot [bot2 bot3 ...]";
 
-    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
-    GED_CHECK_READ_ONLY(gedp, BRLCAD_ERROR);
-    GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
+    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
+    GED_CHECK_READ_ONLY(gedp, GED_ERROR);
+    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
 
     /* initialize result */
     bu_vls_trunc(&gedp->ged_result_str, 0);
@@ -54,7 +54,7 @@ ged_bot_flip(struct ged *gedp, int argc, const char *argv[])
     /* must be wanting help */
     if (argc == 1) {
 	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return BRLCAD_HELP;
+	return GED_HELP;
     }
 
     for (i=1; i < argc; ++i) {
@@ -65,7 +65,7 @@ ged_bot_flip(struct ged *gedp, int argc, const char *argv[])
 
 	if (rt_db_get_internal(&intern, dp, gedp->ged_wdbp->dbip, bn_mat_identity, &rt_uniresource) < 0) {
 	    bu_vls_printf(&gedp->ged_result_str, "%s: rt_db_get_internal(%s) error\n", argv[0], argv[i]);
-	    return BRLCAD_ERROR;
+	    return GED_ERROR;
 	}
 
 	if (intern.idb_type != ID_BOT) {
@@ -81,11 +81,11 @@ ged_bot_flip(struct ged *gedp, int argc, const char *argv[])
 			  "Failed to write BOT (%s) to database!!!",
 			  dp->d_namep);
 	    rt_db_free_internal(&intern, gedp->ged_wdbp->wdb_resp);
-	    return BRLCAD_ERROR;
+	    return GED_ERROR;
 	}
     }
 
-    return BRLCAD_OK;
+    return GED_OK;
 }
 
 /*

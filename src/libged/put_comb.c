@@ -56,9 +56,9 @@ ged_put_comb(struct ged *gedp, int argc, const char *argv[])
     int save_comb_flag = 0;
     static const char *usage = "comb_name is_Region id air material los color shader inherit boolean_expr";
 
-    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
-    GED_CHECK_READ_ONLY(gedp, BRLCAD_ERROR);
-    GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
+    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
+    GED_CHECK_READ_ONLY(gedp, GED_ERROR);
+    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
 
     /* initialize result */
     bu_vls_trunc(&gedp->ged_result_str, 0);
@@ -66,12 +66,12 @@ ged_put_comb(struct ged *gedp, int argc, const char *argv[])
     /* must be wanting help */
     if (argc == 1) {
 	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return BRLCAD_HELP;
+	return GED_HELP;
     }
 
     if (argc < 7 || 11 < argc) {
 	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return BRLCAD_ERROR;
+	return GED_ERROR;
     }
 
     bu_strlcpy(ged_tmpcomb, ged_tmpcomb_init, sizeof(ged_tmpcomb));
@@ -79,12 +79,12 @@ ged_put_comb(struct ged *gedp, int argc, const char *argv[])
     if (dp != DIR_NULL) {
 	if (!(dp->d_flags & DIR_COMB)) {
 	    bu_vls_printf(&gedp->ged_result_str, "%s: %s is not a combination, so cannot be edited this way\n", argv[0], argv[1]);
-	    return BRLCAD_ERROR;
+	    return GED_ERROR;
 	}
 
 	if (rt_db_get_internal(&intern, dp, gedp->ged_wdbp->dbip, (fastf_t *)NULL, &rt_uniresource) < 0) {
 	    bu_vls_printf(&gedp->ged_result_str, "%s: Database read error, aborting\n", argv[0]);
-	    return BRLCAD_ERROR;
+	    return GED_ERROR;
 	}
 
 	comb = (struct rt_comb_internal *)intern.idb_ptr;
@@ -128,7 +128,7 @@ ged_put_comb(struct ged *gedp, int argc, const char *argv[])
     if (comb->region_flag) {
 	if (argc != 11) {
 	    bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	    return BRLCAD_ERROR;
+	    return GED_ERROR;
 	}
 
 	comb->region_id = atoi(argv[3]);
@@ -140,7 +140,7 @@ ged_put_comb(struct ged *gedp, int argc, const char *argv[])
     } else {
 	if (argc != 7) {
 	    bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	    return BRLCAD_ERROR;
+	    return GED_ERROR;
 	}
 	offset = 2;
     }
@@ -153,13 +153,13 @@ ged_put_comb(struct ged *gedp, int argc, const char *argv[])
     else
 	comb->inherit = 0;
 
-    if (ged_put_tree_into_comb(gedp, comb, dp, argv[1], new_name, argv[offset + 4]) == BRLCAD_ERROR) {
+    if (ged_put_tree_into_comb(gedp, comb, dp, argv[1], new_name, argv[offset + 4]) == GED_ERROR) {
 	if (comb) {
 	    ged_restore_comb(gedp, dp);
 	    bu_vls_printf(&gedp->ged_result_str, "%s: \toriginal restored\n", argv[0]);
 	}
 	(void)unlink(ged_tmpfil);
-	return BRLCAD_ERROR;
+	return GED_ERROR;
     } else if (save_comb_flag) {
 	/* eliminate the temporary combination */
 	char *av[3];
@@ -171,7 +171,7 @@ ged_put_comb(struct ged *gedp, int argc, const char *argv[])
     }
 
     (void)unlink(ged_tmpfil);
-    return BRLCAD_OK;
+    return GED_OK;
 }
 
 static int
@@ -193,7 +193,7 @@ ged_put_tree_into_comb(struct ged *gedp, struct rt_comb_internal *comb, struct d
     char *str;
 
     if (imstr == (char *)NULL)
-	return BRLCAD_ERROR;
+	return GED_ERROR;
 
     BU_LIST_INIT(&HeadLines.l);
 
@@ -215,7 +215,7 @@ ged_put_tree_into_comb(struct ged *gedp, struct rt_comb_internal *comb, struct d
 	    bu_vls_free(&vls);
 	    bu_list_free(&HeadLines.l);
 	    bu_free(str, "dealloc bu_strdup str");
-	    return BRLCAD_ERROR;
+	    return GED_ERROR;
 	} else if (n > 0) {
 	    BU_GETSTRUCT(llp, line_list);
 	    BU_LIST_INSERT(&HeadLines.l, &llp->l);
@@ -263,7 +263,7 @@ ged_put_tree_into_comb(struct ged *gedp, struct rt_comb_internal *comb, struct d
 		    bu_free((char *)rt_tree_array, "red: tree list");
 		bu_log("no name specified\n");
 		bu_free(str, "dealloc bu_strdup str");
-		return BRLCAD_ERROR;
+		return GED_ERROR;
 	    }
 	    name = ptr;
 
@@ -300,7 +300,7 @@ ged_put_tree_into_comb(struct ged *gedp, struct rt_comb_internal *comb, struct d
 			    bu_free((char *)rt_tree_array, "red: tree list");
 			bu_list_free(&HeadLines.l);
 			bu_free(str, "dealloc bu_strdup str");
-			return BRLCAD_ERROR;
+			return GED_ERROR;
 		    }
 		    matrix[k] = atof(ptr);
 		}

@@ -44,9 +44,9 @@ ged_qvrot(struct ged *gedp, int argc, const char *argv[])
     double	theta;
     static const char *usage = "x y z angle";
 
-    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
-    GED_CHECK_VIEW(gedp, BRLCAD_ERROR);
-    GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
+    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
+    GED_CHECK_VIEW(gedp, GED_ERROR);
+    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
 
     /* initialize result */
     bu_vls_trunc(&gedp->ged_result_str, 0);
@@ -54,38 +54,38 @@ ged_qvrot(struct ged *gedp, int argc, const char *argv[])
     /* must be wanting help */
     if (argc == 1) {
 	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return BRLCAD_HELP;
+	return GED_HELP;
     }
 
     if (argc != 5) {
 	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return BRLCAD_ERROR;
+	return GED_ERROR;
     }
 
     if (sscanf(argv[1], "%lf", &dx) != 1) {
 	bu_vls_printf(&gedp->ged_result_str, "%s: bad X value - %s\n", argv[0], argv[1]);
-	return BRLCAD_ERROR;
+	return GED_ERROR;
     }
 
     if (sscanf(argv[2], "%lf", &dy) != 1) {
 	bu_vls_printf(&gedp->ged_result_str, "%s: bad Y value - %s\n", argv[0], argv[1]);
-	return BRLCAD_ERROR;
+	return GED_ERROR;
     }
 
     if (sscanf(argv[3], "%lf", &dz) != 1) {
 	bu_vls_printf(&gedp->ged_result_str, "%s: bad Z value - %s\n", argv[0], argv[1]);
-	return BRLCAD_ERROR;
+	return GED_ERROR;
     }
 
     if (sscanf(argv[4], "%lf", &theta) != 1) {
 	bu_vls_printf(&gedp->ged_result_str, "%s: bad angle - %s\n", argv[0], argv[1]);
-	return BRLCAD_ERROR;
+	return GED_ERROR;
     }
 
     if (NEAR_ZERO(dy, 0.00001) && NEAR_ZERO(dx, 0.00001)) {
 	if (NEAR_ZERO(dz, 0.00001)) {
 	    bu_vls_printf(&gedp->ged_result_str, "%s: (dx, dy, dz) may not be the zero vector\n", argv[0]);
-	    return BRLCAD_ERROR;
+	    return GED_ERROR;
 	}
 	az = 0.0;
     } else
@@ -97,7 +97,7 @@ ged_qvrot(struct ged *gedp, int argc, const char *argv[])
     ged_usejoy(gedp, 0.0, 0.0, theta*bn_degtorad);
     ged_view_update(gedp->ged_gvp);
 
-    return BRLCAD_OK;
+    return GED_OK;
 }
 
 /*

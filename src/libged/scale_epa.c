@@ -57,10 +57,10 @@ ged_scale_epa(struct ged *gedp, struct rt_epa_internal *epa, const char *attribu
 	break;
     default:
 	bu_vls_printf(&gedp->ged_result_str, "bad epa attribute - %s", attribute);
-	return BRLCAD_ERROR;
+	return GED_ERROR;
     }
 
-    return BRLCAD_OK;
+    return GED_OK;
 }
 
 

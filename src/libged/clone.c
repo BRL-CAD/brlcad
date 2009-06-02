@@ -405,7 +405,7 @@ copy_v5_solid(struct db_i *dbip, struct directory *proto, struct ged_clone_state
 	argv[2] = bu_vls_addr(name);
 	argv[3] = (char *)0;
 	ret = ged_copy(state->gedp, 3, (const char **)argv);
-	if (ret != BRLCAD_OK)
+	if (ret != GED_OK)
 	    bu_vls_printf(&state->gedp->ged_result_str, "WARNING: failure cloning \"%s\" to \"%s\"\n", proto->d_namep, name);
 
 	/* get the original objects matrix */
@@ -861,7 +861,7 @@ get_args(struct ged *gedp, int argc, char **argv, struct ged_clone_state *state)
 		break;
 	    case 'h':
 		print_usage(gedp);
-		return BRLCAD_ERROR;
+		return GED_ERROR;
 		break;
 	    case 'i':
 		state->incr = atoi(bu_optarg);
@@ -893,11 +893,11 @@ get_args(struct ged *gedp, int argc, char **argv, struct ged_clone_state *state)
 		break;
 	    case 'v':
 		bu_vls_printf(&gedp->ged_result_str, CLONE_VERSION);
-		return BRLCAD_ERROR;
+		return GED_ERROR;
 		break;
 	    default:
 		print_usage(gedp);
-		return BRLCAD_ERROR;
+		return GED_ERROR;
 	}
     }
 
@@ -905,28 +905,28 @@ get_args(struct ged *gedp, int argc, char **argv, struct ged_clone_state *state)
     if ((argc - bu_optind) == 0) {
 	bu_vls_printf(&gedp->ged_result_str, "Need to specify an <object> to be cloned.\n");
 	print_usage(gedp);
-	return BRLCAD_ERROR;
+	return GED_ERROR;
     } else if (bu_optind + 1 < argc) {
 	bu_vls_printf(&gedp->ged_result_str, "clone:  Can only clone exactly one <object> at a time right now.\n");
 	print_usage(gedp);
-	return BRLCAD_ERROR;
+	return GED_ERROR;
     }
 
     /* sanity */
     if (!argv[bu_optind])
-	return BRLCAD_ERROR;
+	return GED_ERROR;
 
     state->src = db_lookup(gedp->ged_wdbp->dbip, argv[bu_optind], LOOKUP_QUIET);
     if (!state->src) {
 	bu_vls_printf(&gedp->ged_result_str, "clone:  Cannot find source object\n");
-	return BRLCAD_ERROR;
+	return GED_ERROR;
     }
 
     VSCALE(state->trans, state->trans, gedp->ged_wdbp->dbip->dbi_local2base);
     VSCALE(state->rpnt, state->rpnt, gedp->ged_wdbp->dbip->dbi_local2base);
     state->mirpos *= gedp->ged_wdbp->dbip->dbi_local2base;
 
-    return BRLCAD_OK;
+    return GED_OK;
 }
 
 int
@@ -936,9 +936,9 @@ ged_clone(struct ged *gedp, int argc, const char *argv[])
     struct directory *copy;
     static const char *usage = "";
 
-    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
-    GED_CHECK_READ_ONLY(gedp, BRLCAD_ERROR);
-    GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
+    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
+    GED_CHECK_READ_ONLY(gedp, GED_ERROR);
+    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
 
     /* initialize result */
     bu_vls_trunc(&gedp->ged_result_str, 0);
@@ -946,17 +946,17 @@ ged_clone(struct ged *gedp, int argc, const char *argv[])
     /* must be wanting help */
     if (argc == 1) {
 	print_usage(gedp);
-	return BRLCAD_HELP;
+	return GED_HELP;
     }
 
     /* validate user options */
-    if (get_args(gedp, argc, (char **)argv, &state) == BRLCAD_ERROR)
-	return BRLCAD_ERROR;
+    if (get_args(gedp, argc, (char **)argv, &state) == GED_ERROR)
+	return GED_ERROR;
 
     if ((copy = deep_copy_object(&rt_uniresource, &state)) != (struct directory *)NULL)
 	bu_vls_printf(&gedp->ged_result_str, "%s", copy->d_namep);
 
-    return BRLCAD_OK;
+    return GED_OK;
 }
 
 

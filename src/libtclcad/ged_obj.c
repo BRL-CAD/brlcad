@@ -913,7 +913,7 @@ go_cmd(ClientData	clientData,
     Tcl_DStringAppend(&ds, bu_vls_addr(&gop->go_gedp->ged_result_str), -1);
     Tcl_DStringResult(interp, &ds);
 
-    if (ret == BRLCAD_ERROR)
+    if (ret & GED_ERROR)
 	return TCL_ERROR;
 
     return TCL_OK;
@@ -1169,7 +1169,7 @@ go_bg(struct ged	*gedp,
     /* must be wanting help */
     if (argc == 1) {
 	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return BRLCAD_HELP;
+	return GED_HELP;
     }
 
     if (argc != 2 && argc != 5) {
@@ -1234,7 +1234,7 @@ go_blast(struct ged	*gedp,
 
     ret = ged_blast(gedp, argc, argv);
 
-    if (ret != BRLCAD_OK)
+    if (ret != GED_OK)
 	return ret;
 
     go_autoview_all_views(go_current_gop);
@@ -1260,7 +1260,7 @@ go_bounds(struct ged	*gedp,
     /* must be wanting help */
     if (argc == 1) {
 	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return BRLCAD_HELP;
+	return GED_HELP;
     }
 
     if (argc != 2 && argc != 3) {
@@ -1398,7 +1398,7 @@ go_constrain_rmode(struct ged	*gedp,
     /* must be wanting help */
     if (argc == 1) {
 	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return BRLCAD_HELP;
+	return GED_HELP;
     }
 
     if (argc != 5) {
@@ -1463,7 +1463,7 @@ go_constrain_tmode(struct ged	*gedp,
     /* must be wanting help */
     if (argc == 1) {
 	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return BRLCAD_HELP;
+	return GED_HELP;
     }
 
     if (argc != 5) {
@@ -1721,7 +1721,7 @@ go_init_view_bindings(struct ged	*gedp,
     /* must be wanting help */
     if (argc == 1) {
 	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return BRLCAD_HELP;
+	return GED_HELP;
     }
 
     if (argc != 2) {
@@ -1760,7 +1760,7 @@ go_delete_view(struct ged	*gedp,
     /* must be wanting help */
     if (argc == 1) {
 	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return BRLCAD_HELP;
+	return GED_HELP;
     }
 
     if (argc != 2) {
@@ -1800,7 +1800,7 @@ go_faceplate(struct ged		*gedp,
     /* must be wanting help */
     if (argc == 1) {
 	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return BRLCAD_HELP;
+	return GED_HELP;
     }
 
     if (argc < 4 || 7 < argc)
@@ -1998,7 +1998,7 @@ go_idle_mode(struct ged		*gedp,
     /* must be wanting help */
     if (argc == 1) {
 	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return BRLCAD_HELP;
+	return GED_HELP;
     }
 
     if (argc != 2) {
@@ -2057,7 +2057,7 @@ go_light(struct ged	*gedp,
     /* must be wanting help */
     if (argc == 1) {
 	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return BRLCAD_HELP;
+	return GED_HELP;
     }
 
     if (3 < argc) {
@@ -2138,7 +2138,7 @@ go_listen(struct ged	*gedp,
     /* must be wanting help */
     if (argc == 1) {
 	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return BRLCAD_HELP;
+	return GED_HELP;
     }
 
     if (3 < argc) {
@@ -2219,7 +2219,7 @@ go_make(struct ged	*gedp,
 
     ret = ged_make(gedp, argc, argv);
 
-    if (ret == BRLCAD_OK) {
+    if (ret == GED_OK) {
 	av[0] = "draw";
 	av[1] = (char *)argv[argc-2];
 	av[2] = (char *)0;
@@ -2242,7 +2242,7 @@ go_mirror(struct ged	*gedp,
 
     ret = ged_mirror(gedp, argc, argv);
 
-    if (ret == BRLCAD_OK) {
+    if (ret == GED_OK) {
 	av[0] = "draw";
 	av[1] = (char *)argv[argc-1];
 	av[2] = (char *)0;
@@ -2677,7 +2677,7 @@ go_model_axes(struct ged	*gedp,
     /* must be wanting help */
     if (argc == 1) {
 	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return BRLCAD_HELP;
+	return GED_HELP;
     }
 
     if (argc < 3 || 6 < argc) {
@@ -2749,7 +2749,7 @@ go_mouse_constrain_rot(struct ged	*gedp,
     /* must be wanting help */
     if (argc == 1) {
 	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return BRLCAD_HELP;
+	return GED_HELP;
     }
 
     if (argc != 5) {
@@ -2821,7 +2821,7 @@ go_mouse_constrain_rot(struct ged	*gedp,
     ret = ged_rot(gedp, ac, (const char **)av);
     bu_vls_free(&rot_vls);
 
-    if (ret == BRLCAD_OK)
+    if (ret == GED_OK)
 	go_refresh_view(gdvp);
 
     return BRLCAD_OK;
@@ -2851,7 +2851,7 @@ go_mouse_constrain_trans(struct ged	*gedp,
     /* must be wanting help */
     if (argc == 1) {
 	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return BRLCAD_HELP;
+	return GED_HELP;
     }
 
     if (argc != 5) {
@@ -2924,7 +2924,7 @@ go_mouse_constrain_trans(struct ged	*gedp,
     ret = ged_tra(gedp, ac, (const char **)av);
     bu_vls_free(&tran_vls);
 
-    if (ret == BRLCAD_OK)
+    if (ret == GED_OK)
 	go_refresh_view(gdvp);
 
     return BRLCAD_OK;
@@ -2955,7 +2955,7 @@ go_mouse_move_arb_edge(struct ged	*gedp,
     /* must be wanting help */
     if (argc == 1) {
 	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return BRLCAD_HELP;
+	return GED_HELP;
     }
 
     if (argc != 6) {
@@ -3017,7 +3017,7 @@ go_mouse_move_arb_edge(struct ged	*gedp,
     ret = ged_move_arb_edge(gedp, 5, (const char **)av);
     bu_vls_free(&pt_vls);
 
-    if (ret == BRLCAD_OK) {
+    if (ret == GED_OK) {
 	av[0] = "draw";
 	av[1] = (char *)argv[2];
 	av[2] = (char *)0;
@@ -3052,7 +3052,7 @@ go_mouse_move_arb_face(struct ged	*gedp,
     /* must be wanting help */
     if (argc == 1) {
 	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return BRLCAD_HELP;
+	return GED_HELP;
     }
 
     if (argc != 6) {
@@ -3114,7 +3114,7 @@ go_mouse_move_arb_face(struct ged	*gedp,
     ret = ged_move_arb_face(gedp, 5, (const char **)av);
     bu_vls_free(&pt_vls);
 
-    if (ret == BRLCAD_OK) {
+    if (ret == GED_OK) {
 	av[0] = "draw";
 	av[1] = (char *)argv[2];
 	av[2] = (char *)0;
@@ -3150,7 +3150,7 @@ go_mouse_orotate(struct ged	*gedp,
     /* must be wanting help */
     if (argc == 1) {
 	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return BRLCAD_HELP;
+	return GED_HELP;
     }
 
     if (argc != 5) {
@@ -3217,7 +3217,7 @@ go_mouse_orotate(struct ged	*gedp,
     bu_vls_free(&rot_y_vls);
     bu_vls_free(&rot_z_vls);
 
-    if (ret == BRLCAD_OK) {
+    if (ret == GED_OK) {
 	av[0] = "draw";
 	av[1] = (char *)argv[2];
 	av[2] = (char *)0;
@@ -3250,7 +3250,7 @@ go_mouse_oscale(struct ged	*gedp,
     /* must be wanting help */
     if (argc == 1) {
 	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return BRLCAD_HELP;
+	return GED_HELP;
     }
 
     if (argc != 5) {
@@ -3311,7 +3311,7 @@ go_mouse_oscale(struct ged	*gedp,
     ret = ged_oscale(gedp, 3, (const char **)av);
     bu_vls_free(&sf_vls);
 
-    if (ret == BRLCAD_OK) {
+    if (ret == GED_OK) {
 	av[0] = "draw";
 	av[1] = (char *)argv[2];
 	av[2] = (char *)0;
@@ -3348,7 +3348,7 @@ go_mouse_otranslate(struct ged		*gedp,
     /* must be wanting help */
     if (argc == 1) {
 	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return BRLCAD_HELP;
+	return GED_HELP;
     }
 
     if (argc != 5) {
@@ -3416,7 +3416,7 @@ go_mouse_otranslate(struct ged		*gedp,
     bu_vls_free(&tran_y_vls);
     bu_vls_free(&tran_z_vls);
 
-    if (ret == BRLCAD_OK) {
+    if (ret == GED_OK) {
 	av[0] = "draw";
 	av[1] = (char *)argv[2];
 	av[2] = (char *)0;
@@ -3454,7 +3454,7 @@ go_mouse_ray(struct ged		*gedp,
     /* must be wanting help */
     if (argc == 1) {
 	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return BRLCAD_HELP;
+	return GED_HELP;
     }
 
     if (argc != 4) {
@@ -3501,7 +3501,7 @@ go_mouse_ray(struct ged		*gedp,
     }
 #endif
 
-    if (ret == BRLCAD_OK)
+    if (ret == GED_OK)
 	go_refresh_view(gdvp);
 
 #endif
@@ -3530,7 +3530,7 @@ go_mouse_rot(struct ged		*gedp,
     /* must be wanting help */
     if (argc == 1) {
 	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return BRLCAD_HELP;
+	return GED_HELP;
     }
 
     if (argc != 4) {
@@ -3586,7 +3586,7 @@ go_mouse_rot(struct ged		*gedp,
     ret = ged_rot(gedp, ac, (const char **)av);
     bu_vls_free(&rot_vls);
 
-    if (ret == BRLCAD_OK)
+    if (ret == GED_OK)
 	go_refresh_view(gdvp);
 
     return BRLCAD_OK;
@@ -3616,7 +3616,7 @@ go_mouse_rotate_arb_face(struct ged	*gedp,
     /* must be wanting help */
     if (argc == 1) {
 	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return BRLCAD_HELP;
+	return GED_HELP;
     }
 
     if (argc != 7) {
@@ -3677,7 +3677,7 @@ go_mouse_rotate_arb_face(struct ged	*gedp,
     ret = ged_rotate_arb_face(gedp, 5, (const char **)av);
     bu_vls_free(&pt_vls);
 
-    if (ret == BRLCAD_OK) {
+    if (ret == GED_OK) {
 	av[0] = "draw";
 	av[1] = (char *)argv[2];
 	av[2] = (char *)0;
@@ -3710,7 +3710,7 @@ go_mouse_scale(struct ged	*gedp,
     /* must be wanting help */
     if (argc == 1) {
 	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return BRLCAD_HELP;
+	return GED_HELP;
     }
 
     if (argc != 4) {
@@ -3770,7 +3770,7 @@ go_mouse_scale(struct ged	*gedp,
     ret = ged_zoom(gedp, 2, (const char **)av);
     bu_vls_free(&zoom_vls);
 
-    if (ret == BRLCAD_OK)
+    if (ret == GED_OK)
 	go_refresh_view(gdvp);
 
     return BRLCAD_OK;
@@ -3801,7 +3801,7 @@ go_mouse_protate(struct ged	*gedp,
     /* must be wanting help */
     if (argc == 1) {
 	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return BRLCAD_HELP;
+	return GED_HELP;
     }
 
     if (argc != 6) {
@@ -3861,7 +3861,7 @@ go_mouse_protate(struct ged	*gedp,
     ret = ged_protate(gedp, 4, (const char **)av);
     bu_vls_free(&mrot_vls);
 
-    if (ret == BRLCAD_OK) {
+    if (ret == GED_OK) {
 	av[0] = "draw";
 	av[1] = (char *)argv[2];
 	av[2] = (char *)0;
@@ -3894,7 +3894,7 @@ go_mouse_pscale(struct ged	*gedp,
     /* must be wanting help */
     if (argc == 1) {
 	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return BRLCAD_HELP;
+	return GED_HELP;
     }
 
     if (argc != 6) {
@@ -3956,7 +3956,7 @@ go_mouse_pscale(struct ged	*gedp,
     ret = ged_pscale(gedp, 4, (const char **)av);
     bu_vls_free(&sf_vls);
 
-    if (ret == BRLCAD_OK) {
+    if (ret == GED_OK) {
 	av[0] = "draw";
 	av[1] = (char *)argv[2];
 	av[2] = (char *)0;
@@ -3991,7 +3991,7 @@ go_mouse_ptranslate(struct ged		*gedp,
     /* must be wanting help */
     if (argc == 1) {
 	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return BRLCAD_HELP;
+	return GED_HELP;
     }
 
     if (argc != 6) {
@@ -4053,7 +4053,7 @@ go_mouse_ptranslate(struct ged		*gedp,
     ret = ged_ptranslate(gedp, 5, (const char **)av);
     bu_vls_free(&tvec_vls);
 
-    if (ret == BRLCAD_OK) {
+    if (ret == GED_OK) {
 	av[0] = "draw";
 	av[1] = (char *)argv[2];
 	av[2] = (char *)0;
@@ -4086,7 +4086,7 @@ go_mouse_trans(struct ged	*gedp,
     /* must be wanting help */
     if (argc == 1) {
 	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return BRLCAD_HELP;
+	return GED_HELP;
     }
 
     if (argc != 4) {
@@ -4143,7 +4143,7 @@ go_mouse_trans(struct ged	*gedp,
     ret = ged_tra(gedp, ac, (const char **)av);
     bu_vls_free(&trans_vls);
 
-    if (ret == BRLCAD_OK)
+    if (ret == GED_OK)
 	go_refresh_view(gdvp);
 
     return BRLCAD_OK;
@@ -4176,7 +4176,7 @@ go_move_arb_edge_mode(struct ged	*gedp,
     /* must be wanting help */
     if (argc == 1) {
 	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return BRLCAD_HELP;
+	return GED_HELP;
     }
 
     if (argc != 6) {
@@ -4235,7 +4235,7 @@ go_move_arb_face_mode(struct ged	*gedp,
     /* must be wanting help */
     if (argc == 1) {
 	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return BRLCAD_HELP;
+	return GED_HELP;
     }
 
     if (argc != 6) {
@@ -4297,7 +4297,7 @@ go_new_view(struct ged		*gedp,
     /* must be wanting help */
     if (argc == 1) {
 	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return BRLCAD_HELP;
+	return GED_HELP;
     }
 
     if (argc < 3) {
@@ -4425,7 +4425,7 @@ go_orotate_mode(struct ged	*gedp,
     /* must be wanting help */
     if (argc == 1) {
 	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return BRLCAD_HELP;
+	return GED_HELP;
     }
 
     if (argc != 5) {
@@ -4483,7 +4483,7 @@ go_oscale_mode(struct ged	*gedp,
     /* must be wanting help */
     if (argc == 1) {
 	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return BRLCAD_HELP;
+	return GED_HELP;
     }
 
     if (argc != 5) {
@@ -4541,7 +4541,7 @@ go_otranslate_mode(struct ged	*gedp,
     /* must be wanting help */
     if (argc == 1) {
 	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return BRLCAD_HELP;
+	return GED_HELP;
     }
 
     if (argc != 5) {
@@ -4597,7 +4597,7 @@ go_paint_rect_area(struct ged	*gedp,
     /* must be wanting help */
     if (argc == 1) {
 	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return BRLCAD_HELP;
+	return GED_HELP;
     }
     if (argc < 2 || 7 < argc) {
 	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
@@ -4682,7 +4682,7 @@ go_refresh(struct ged	*gedp,
     /* must be wanting help */
     if (argc == 1) {
 	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return BRLCAD_HELP;
+	return GED_HELP;
     }
 
     if (argc != 2) {
@@ -4745,7 +4745,7 @@ go_rotate_arb_face_mode(struct ged	*gedp,
     /* must be wanting help */
     if (argc == 1) {
 	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return BRLCAD_HELP;
+	return GED_HELP;
     }
 
     if (argc != 7) {
@@ -4805,7 +4805,7 @@ go_rotate_mode(struct ged	*gedp,
     /* must be wanting help */
     if (argc == 1) {
 	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return BRLCAD_HELP;
+	return GED_HELP;
     }
 
     if (argc != 4) {
@@ -4895,7 +4895,7 @@ go_rt_gettrees(struct ged	*gedp,
     /* must be wanting help */
     if (argc == 1) {
 	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return BRLCAD_HELP;
+	return GED_HELP;
     }
 
     if (argc < 3) {
@@ -4985,7 +4985,7 @@ go_protate_mode(struct ged	*gedp,
     /* must be wanting help */
     if (argc == 1) {
 	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return BRLCAD_HELP;
+	return GED_HELP;
     }
 
     if (argc != 6) {
@@ -5044,7 +5044,7 @@ go_pscale_mode(struct ged	*gedp,
     /* must be wanting help */
     if (argc == 1) {
 	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return BRLCAD_HELP;
+	return GED_HELP;
     }
 
     if (argc != 6) {
@@ -5103,7 +5103,7 @@ go_ptranslate_mode(struct ged	*gedp,
     /* must be wanting help */
     if (argc == 1) {
 	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return BRLCAD_HELP;
+	return GED_HELP;
     }
 
     if (argc != 6) {
@@ -5162,7 +5162,7 @@ go_scale_mode(struct ged	*gedp,
     /* must be wanting help */
     if (argc == 1) {
 	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return BRLCAD_HELP;
+	return GED_HELP;
     }
 
     if (argc != 4) {
@@ -5223,7 +5223,7 @@ go_screen2model(struct ged	*gedp,
     /* must be wanting help */
     if (argc == 1) {
 	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return BRLCAD_HELP;
+	return GED_HELP;
     }
 
     if (argc != 4) {
@@ -5281,7 +5281,7 @@ go_screen2view(struct ged	*gedp,
     /* must be wanting help */
     if (argc == 1) {
 	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return BRLCAD_HELP;
+	return GED_HELP;
     }
 
     if (argc != 4) {
@@ -5333,7 +5333,7 @@ go_set_coord(struct ged		*gedp,
     /* must be wanting help */
     if (argc == 1) {
 	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return BRLCAD_HELP;
+	return GED_HELP;
     }
 
     if (3 < argc) {
@@ -5385,7 +5385,7 @@ go_set_fb_mode(struct ged	*gedp,
     /* must be wanting help */
     if (argc == 1) {
 	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return BRLCAD_HELP;
+	return GED_HELP;
     }
 
     if (3 < argc) {
@@ -5444,7 +5444,7 @@ go_translate_mode(struct ged	*gedp,
     /* must be wanting help */
     if (argc == 1) {
 	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return BRLCAD_HELP;
+	return GED_HELP;
     }
 
     if (argc != 4) {
@@ -5500,7 +5500,7 @@ go_transparency(struct ged	*gedp,
     /* must be wanting help */
     if (argc == 1) {
 	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return BRLCAD_HELP;
+	return GED_HELP;
     }
 
     if (argc != 2 && argc != 3) {
@@ -5554,7 +5554,7 @@ go_view_axes(struct ged		*gedp,
     /* must be wanting help */
     if (argc == 1) {
 	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return BRLCAD_HELP;
+	return GED_HELP;
     }
 
     if (argc < 3 || 6 < argc) {
@@ -5592,7 +5592,7 @@ go_view_win_size(struct ged	*gedp,
     /* must be wanting help */
     if (argc < 2) {
 	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return BRLCAD_HELP;
+	return GED_HELP;
     }
 
     if (argc > 4) {
@@ -5656,7 +5656,7 @@ go_vmake(struct ged	*gedp,
     /* must be wanting help */
     if (argc == 1) {
 	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return BRLCAD_HELP;
+	return GED_HELP;
     }
 
     if (argc != 4) {
@@ -5697,7 +5697,7 @@ go_vmake(struct ged	*gedp,
 
 	ret = ged_make(gedp, 7, (const char **)av);
 
-	if (ret == BRLCAD_OK) {
+	if (ret == GED_OK) {
 	    av[0] = "draw";
 	    av[1] = (char *)argv[2];
 	    av[2] = (char *)0;
@@ -5731,7 +5731,7 @@ go_vslew(struct ged	*gedp,
     /* must be wanting help */
     if (argc == 1) {
 	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return BRLCAD_HELP;
+	return GED_HELP;
     }
 
     if (argc != 4) {
@@ -5771,7 +5771,7 @@ go_vslew(struct ged	*gedp,
     ret = ged_slew(gedp, ac, (const char **)av);
     bu_vls_free(&slew_vec);
 
-    if (ret == BRLCAD_OK) {
+    if (ret == GED_OK) {
 	if (gdvp->gdv_view->gv_grid.ggs_snap) {
 	    char *av[3];
 
@@ -5804,7 +5804,7 @@ go_zbuffer(struct ged	*gedp,
     /* must be wanting help */
     if (argc == 1) {
 	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return BRLCAD_HELP;
+	return GED_HELP;
     }
 
     if (3 < argc) {
@@ -5862,7 +5862,7 @@ go_zclip(struct ged	*gedp,
     /* must be wanting help */
     if (argc == 1) {
 	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return BRLCAD_HELP;
+	return GED_HELP;
     }
 
     if (3 < argc) {
@@ -5922,12 +5922,12 @@ go_autoview_func(struct ged	*gedp,
     av[1] = (char *)0;
     ret = ged_who(gedp, 1, (const char **)av);
 
-    if (ret == BRLCAD_OK && strlen(bu_vls_addr(&gedp->ged_result_str)) == 0)
+    if (ret == GED_OK && strlen(bu_vls_addr(&gedp->ged_result_str)) == 0)
 	aflag = 1;
 
     ret = (*func)(gedp, argc, (const char **)argv);
 
-    if (ret == BRLCAD_OK) {
+    if (ret == GED_OK) {
 	if (aflag)
 	    go_autoview_all_views(go_current_gop);
 	else
@@ -5961,7 +5961,7 @@ go_more_args_func(struct ged	*gedp,
 	av[i] = bu_strdup((char *)argv[i]);
     av[ac] = (char *)0;
 
-    while ((ret = (*func)(gedp, ac, (const char **)av)) == BRLCAD_MORE_ARGS) {
+    while ((ret = (*func)(gedp, ac, (const char **)av)) & GED_MORE) {
 	int n;
 	int ac_more;
 	const char **avmp;
@@ -6053,7 +6053,7 @@ go_pass_through_and_refresh_func(struct ged	*gedp,
 
     ret = (*func)(gedp, argc, argv);
 
-    if (ret == BRLCAD_OK)
+    if (ret == GED_OK)
 	go_refresh_all_views(go_current_gop);
 
     return ret;
@@ -6079,7 +6079,7 @@ go_view_func(struct ged		*gedp,
     /* must be wanting help */
     if (argc == 1) {
 	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return BRLCAD_HELP;
+	return GED_HELP;
     }
 
     if (MAXARGS < maxargs || maxargs < argc) {
@@ -6110,7 +6110,7 @@ go_view_func(struct ged		*gedp,
     /* Keep the view's perspective in sync with its corresponding display manager */
     gdvp->gdv_dmp->dm_perspective = gdvp->gdv_view->gv_perspective;
 
-    if (ret == BRLCAD_OK)
+    if (ret == GED_OK)
 	go_refresh_view(gdvp);
 
     return ret;
@@ -6621,7 +6621,7 @@ go_autoview_view(struct ged_dm_view *gdvp)
     av[1] = (char *)0;
     ret = ged_autoview(gdvp->gdv_gop->go_gedp, 1, (const char **)av);
 
-    if (ret == BRLCAD_OK)
+    if (ret == GED_OK)
 	go_refresh_view(gdvp);
 }
 

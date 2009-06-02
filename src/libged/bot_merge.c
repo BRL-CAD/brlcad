@@ -45,9 +45,9 @@ ged_bot_merge(struct ged *gedp, int argc, const char *argv[])
     int avail_vert, avail_face, face;
     static const char *usage = "bot_dest bot1_src [botn_src]";
 
-    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
-    GED_CHECK_READ_ONLY(gedp, BRLCAD_ERROR);
-    GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
+    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
+    GED_CHECK_READ_ONLY(gedp, GED_ERROR);
+    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
 
     /* initialize result */
     bu_vls_trunc(&gedp->ged_result_str, 0);
@@ -55,12 +55,12 @@ ged_bot_merge(struct ged *gedp, int argc, const char *argv[])
     /* must be wanting help */
     if (argc == 1) {
 	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return BRLCAD_HELP;
+	return GED_HELP;
     }
 
     bots = bu_calloc(sizeof(struct rt_bot_internal), argc, "bot internal");
 
-    retval = BRLCAD_OK;
+    retval = GED_OK;
 
     /* create a new bot */
     BU_GETSTRUCT(bots[0], rt_bot_internal);
@@ -88,13 +88,13 @@ ged_bot_merge(struct ged *gedp, int argc, const char *argv[])
 
 	if ( rt_db_get_internal( &intern, dp, gedp->ged_wdbp->dbip, bn_mat_identity, &rt_uniresource ) < 0 ) {
 	    bu_vls_printf(&gedp->ged_result_str, "%s: rt_db_get_internal(%s) error\n", argv[0], argv[i]);
-	    retval = BRLCAD_ERROR;
+	    retval = GED_ERROR;
 	    continue;
 	}
 
 	if ( intern.idb_type != ID_BOT ) 	{
 	    bu_vls_printf(&gedp->ged_result_str, "%s: %s is not a BOT solid!!!  skipping\n", argv[0], argv[i]);
-	    retval = BRLCAD_ERROR;
+	    retval = GED_ERROR;
 	    continue;
 	}
 
@@ -110,7 +110,7 @@ ged_bot_merge(struct ged *gedp, int argc, const char *argv[])
 	idx++;
     }
 
-    if (idx == 1) return BRLCAD_ERROR;
+    if (idx == 1) return GED_ERROR;
 
 
     for (i=1; i < idx; i++ ) {
@@ -192,19 +192,19 @@ ged_bot_merge(struct ged *gedp, int argc, const char *argv[])
     if ( (new_dp=db_diradd( gedp->ged_wdbp->dbip, argv[1], -1L, 0, DIR_SOLID, (genptr_t)&intern.idb_type)) == DIR_NULL )
     {
 	bu_vls_printf(&gedp->ged_result_str, "%s: Cannot add %s to directory\n", argv[0], argv[1]);
-	return BRLCAD_ERROR;
+	return GED_ERROR;
     }
 
     if ( rt_db_put_internal( new_dp, gedp->ged_wdbp->dbip, &intern, &rt_uniresource ) < 0 )
     {
 	rt_db_free_internal( &intern, &rt_uniresource );
 	bu_vls_printf(&gedp->ged_result_str, "%s: Database write error, aborting\n", argv[0]);
-	return BRLCAD_ERROR;
+	return GED_ERROR;
     }
 
     bu_free(bots, "bots");
 
-    return BRLCAD_OK;
+    return GED_OK;
 }
 
 /*

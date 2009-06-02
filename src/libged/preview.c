@@ -262,9 +262,9 @@ ged_preview(struct ged *gedp, int argc, const char *argv[])
     vect_t temp;
     static const char *usage = "[-v] [-d sec_delay] [-D start frame] [-K last frame] rt_script_file";
 
-    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
-    GED_CHECK_DRAWABLE(gedp, BRLCAD_ERROR);
-    GED_CHECK_VIEW(gedp, BRLCAD_ERROR);
+    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
+    GED_CHECK_DRAWABLE(gedp, GED_ERROR);
+    GED_CHECK_VIEW(gedp, GED_ERROR);
 
     /* initialize result */
     bu_vls_trunc(&gedp->ged_result_str, 0);
@@ -272,12 +272,12 @@ ged_preview(struct ged *gedp, int argc, const char *argv[])
     /* must be wanting help */
     if (argc == 1) {
 	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return BRLCAD_HELP;
+	return GED_HELP;
     }
 
     if (argc < 2) {
 	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return BRLCAD_ERROR;
+	return GED_ERROR;
     }
 
     preview_delay = 0;			/* Full speed, by default */
@@ -319,7 +319,7 @@ ged_preview(struct ged *gedp, int argc, const char *argv[])
 
     if ((fp = fopen(argv[1], "r")) == NULL) {
 	perror(argv[1]);
-	return BRLCAD_ERROR;
+	return GED_ERROR;
     }
 
     /* Build list of top-level objects in view, in ged_current_gedp->ged_gdp->gd_rt_cmd[] */
@@ -360,7 +360,7 @@ ged_preview(struct ged *gedp, int argc, const char *argv[])
     }
     db_free_anim(gedp->ged_wdbp->dbip);	/* Forget any anim commands */
 
-    return BRLCAD_OK;
+    return GED_OK;
 }
 
 

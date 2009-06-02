@@ -52,9 +52,9 @@ ged_saveview(struct ged *gedp, int argc, const char *argv[])
     char inputg[255] = {0};
     static const char *usage = "[-e] [-i] [-l] [-o] filename [args]";
 
-    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
-    GED_CHECK_VIEW(gedp, BRLCAD_ERROR);
-    GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
+    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
+    GED_CHECK_VIEW(gedp, GED_ERROR);
+    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
 
     /* initialize result */
     bu_vls_trunc(&gedp->ged_result_str, 0);
@@ -62,7 +62,7 @@ ged_saveview(struct ged *gedp, int argc, const char *argv[])
     /* must be wanting help */
     if (argc == 1) {
 	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return BRLCAD_HELP;
+	return GED_HELP;
     }
 
     bu_optind = 1;
@@ -83,7 +83,7 @@ ged_saveview(struct ged *gedp, int argc, const char *argv[])
 	    default: {
 		bu_vls_printf(&gedp->ged_result_str, "Option '%c' unknown\n", c);
 		bu_vls_printf(&gedp->ged_result_str, "help saveview");
-		return BRLCAD_ERROR;
+		return GED_ERROR;
 	    }
 	}
     }
@@ -92,23 +92,23 @@ ged_saveview(struct ged *gedp, int argc, const char *argv[])
 
     if (argc < 2) {
 	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return BRLCAD_ERROR;
+	return GED_ERROR;
     }
 
     if ( (fp = fopen( argv[1], "a")) == NULL )  {
 	perror(argv[1]);
-	return BRLCAD_ERROR;
+	return GED_ERROR;
     }
     (void)bu_fchmod(fp, 0755);	/* executable */
 
     if (!gedp->ged_wdbp->dbip->dbi_filename) {
 	bu_log("Error: geometry file is not specified\n");
-	return BRLCAD_ERROR;
+	return GED_ERROR;
     }
 
     if (!bu_file_exists(gedp->ged_wdbp->dbip->dbi_filename)) {
 	bu_log("Error: %s does not exist\n", gedp->ged_wdbp->dbip->dbi_filename);
-	return BRLCAD_ERROR;
+	return GED_ERROR;
     }
 
     base = ged_basename_without_suffix( argv[1], ".sh" );
@@ -169,7 +169,7 @@ ged_saveview(struct ged *gedp, int argc, const char *argv[])
     FOR_ALL_SOLIDS(sp, &gedp->ged_gdp->gd_headSolid)
 	sp->s_wflag = DOWN;
 
-    return BRLCAD_OK;
+    return GED_OK;
 }
 
 /**

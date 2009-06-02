@@ -43,9 +43,9 @@ ged_kill(struct ged *gedp, int argc, const char *argv[])
     int force = 0;
     static const char *usage = "object(s)";
 
-    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
-    GED_CHECK_READ_ONLY(gedp, BRLCAD_ERROR);
-    GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
+    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
+    GED_CHECK_READ_ONLY(gedp, GED_ERROR);
+    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
 
     /* initialize result */
     bu_vls_trunc(&gedp->ged_result_str, 0);
@@ -53,12 +53,12 @@ ged_kill(struct ged *gedp, int argc, const char *argv[])
     /* must be wanting help */
     if (argc == 1) {
 	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return BRLCAD_HELP;
+	return GED_HELP;
     }
 
     if (MAXARGS < argc) {
 	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return BRLCAD_ERROR;
+	return GED_ERROR;
     }
 
     /* skip past "-f" */
@@ -95,12 +95,12 @@ ged_kill(struct ged *gedp, int argc, const char *argv[])
 		db_dirdelete(gedp->ged_wdbp->dbip, dp) < 0) {
 		/* Abort kill processing on first error */
 		bu_vls_printf(&gedp->ged_result_str, "an error occurred while deleting %s", argv[i]);
-		return BRLCAD_ERROR;
+		return GED_ERROR;
 	    }
 	}
     }
 
-    return BRLCAD_OK;
+    return GED_OK;
 }
 
 

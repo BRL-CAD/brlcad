@@ -56,7 +56,7 @@ ged_translate_extrude(struct ged *gedp, struct rt_extrude_internal *extrude, con
 	/* check for zero H vector */
 	if (MAGNITUDE(hvec) <= SQRT_SMALL_FASTF) {
 	    bu_vls_printf(&gedp->ged_result_str, "Zero H vector not allowed.");
-	    return BRLCAD_ERROR;
+	    return GED_ERROR;
 	}
 
 	VMOVE(extrude->h, hvec);
@@ -64,10 +64,10 @@ ged_translate_extrude(struct ged *gedp, struct rt_extrude_internal *extrude, con
 	break;
     default:
 	bu_vls_printf(&gedp->ged_result_str, "bad extrude attribute - %s", attribute);
-	return BRLCAD_ERROR;
+	return GED_ERROR;
     }
 
-    return BRLCAD_OK;
+    return GED_OK;
 }
 
 

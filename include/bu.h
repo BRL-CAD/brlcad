@@ -59,10 +59,9 @@ __BEGIN_DECLS
 #  endif
 #endif
 
+/* NOTE: do not rely on these values */
 #define BRLCAD_OK 0
-#define BRLCAD_HELP 1
-#define BRLCAD_ERROR 2
-#define BRLCAD_MORE_ARGS 3
+#define BRLCAD_ERROR 1
 
 /**
  * Flag for non-case-sensitive searching

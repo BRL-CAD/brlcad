@@ -1135,7 +1135,7 @@ wdb_put_cmd(struct rt_wdb *wdbp,
 
 	bu_vls_init(&log);
 
-	if (!ftp->ft_adjust || ftp->ft_adjust(&log, &intern, argc-3, argv+3, &rt_uniresource) == BRLCAD_ERROR) {
+	if (!ftp->ft_adjust || ftp->ft_adjust(&log, &intern, argc-3, argv+3, &rt_uniresource) == GED_ERROR) {
 	    Tcl_AppendResult(interp, bu_vls_addr(&log), (char *)NULL);
 	    bu_vls_free(&log);
 	    rt_db_free_internal(&intern, &rt_uniresource);
@@ -1233,7 +1233,7 @@ wdb_adjust_cmd(struct rt_wdb *wdbp,
 
 	status = intern.idb_meth->ft_adjust(&log, &intern, argc-2, argv+2, &rt_uniresource);
 
-	if (status == BRLCAD_OK && wdb_put_internal(wdbp, name, &intern, 1.0) < 0) {
+	if (status == GED_OK && wdb_put_internal(wdbp, name, &intern, 1.0) < 0) {
 	    Tcl_AppendResult(interp, bu_vls_addr(&log), (char *)NULL);
 	    bu_vls_free(&log);
 	    Tcl_AppendResult(interp, "wdb_export(", name,
@@ -10405,12 +10405,12 @@ wdb_newcmds_tcl(ClientData clientData,
     if (ctp->ct_name == (char *)0) {
 	bu_vls_trunc(&ged.ged_result_str, 0);
 	bu_vls_printf(&ged.ged_result_str, "%s not found", argv[1]);
-	ret = BRLCAD_ERROR;
+	ret = GED_ERROR;
     }
 
     Tcl_DStringInit(&ds);
 
-    if (ret == BRLCAD_HELP)
+    if (ret == GED_HELP)
 	Tcl_DStringAppendElement(&ds, "1");
     else
 	Tcl_DStringAppendElement(&ds, "0");
@@ -10418,7 +10418,7 @@ wdb_newcmds_tcl(ClientData clientData,
     Tcl_DStringAppendElement(&ds, bu_vls_addr(&ged.ged_result_str));
     Tcl_DStringResult(interp, &ds);
 
-    if (ret == BRLCAD_ERROR)
+    if (ret == GED_ERROR)
 	return TCL_ERROR;
 
     return TCL_OK;

@@ -39,9 +39,9 @@ ged_orient(struct ged *gedp, int argc, const char *argv[])
     quat_t quat;
     static const char *usage = "quat";
 
-    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
-    GED_CHECK_VIEW(gedp, BRLCAD_ERROR);
-    GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
+    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
+    GED_CHECK_VIEW(gedp, GED_ERROR);
+    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
 
     /* initialize result */
     bu_vls_trunc(&gedp->ged_result_str, 0);
@@ -49,19 +49,19 @@ ged_orient(struct ged *gedp, int argc, const char *argv[])
     /* must be wanting help */
     if (argc == 1) {
 	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return BRLCAD_HELP;
+	return GED_HELP;
     }
 
     if (argc != 2 && argc != 5) {
 	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return BRLCAD_ERROR;
+	return GED_ERROR;
     }
 
     /* set view orientation */
     if (argc == 2) {
 	if (bn_decode_quat(quat, argv[1]) != 4) {
 	    bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	    return BRLCAD_ERROR;
+	    return GED_ERROR;
 	}
     } else {
 	register int i;
@@ -69,14 +69,14 @@ ged_orient(struct ged *gedp, int argc, const char *argv[])
 	for (i = 1; i < 5; ++i)
 	    if (sscanf(argv[i], "%lf", &quat[i-1]) != 1) {
 		bu_vls_printf(&gedp->ged_result_str, "ged_orient: bad value - %s\n", argv[i-1]);
-		return BRLCAD_ERROR;
+		return GED_ERROR;
 	    }
     }
 
     quat_quat2mat(gedp->ged_gvp->gv_rotation, quat);
     ged_view_update(gedp->ged_gvp);
 
-    return BRLCAD_OK;
+    return GED_OK;
 }
 
 

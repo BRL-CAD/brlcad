@@ -44,9 +44,9 @@ ged_pscale(struct ged *gedp, int argc, const char *argv[])
     struct directory *dp;
     static const char *usage = "obj attribute sf";
 
-    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
-    GED_CHECK_READ_ONLY(gedp, BRLCAD_ERROR);
-    GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
+    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
+    GED_CHECK_READ_ONLY(gedp, GED_ERROR);
+    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
 
     /* initialize result */
     bu_vls_trunc(&gedp->ged_result_str, 0);
@@ -54,18 +54,18 @@ ged_pscale(struct ged *gedp, int argc, const char *argv[])
     /* must be wanting help */
     if (argc == 1) {
 	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return BRLCAD_HELP;
+	return GED_HELP;
     }
 
     if (argc != 4) {
 	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return BRLCAD_ERROR;
+	return GED_ERROR;
     }
 
     if (sscanf(argv[3], "%lf", &sf) != 1 ||
 	sf <= SQRT_SMALL_FASTF) {
 	bu_vls_printf(&gedp->ged_result_str, "%s: bad scale factor - %s", argv[0], argv[3]);
-	return BRLCAD_ERROR;
+	return GED_ERROR;
     }
 
     if ((last = strrchr(argv[1], '/')) == NULL)
@@ -75,22 +75,22 @@ ged_pscale(struct ged *gedp, int argc, const char *argv[])
 
     if (last[0] == '\0') {
 	bu_vls_printf(&gedp->ged_result_str, "%s: illegal input - %s", argv[0], argv[1]);
-	return BRLCAD_ERROR;
+	return GED_ERROR;
     }
 
     if ((dp = db_lookup(gedp->ged_wdbp->dbip, last, LOOKUP_QUIET)) == DIR_NULL) {
 	bu_vls_printf(&gedp->ged_result_str, "%s: %s not found", argv[0], argv[1]);
-	return BRLCAD_ERROR;
+	return GED_ERROR;
     }
 
-    GED_DB_GET_INTERNAL(gedp, &intern, dp, (matp_t)NULL, &rt_uniresource, BRLCAD_ERROR);
+    GED_DB_GET_INTERNAL(gedp, &intern, dp, (matp_t)NULL, &rt_uniresource, GED_ERROR);
     RT_CK_DB_INTERNAL(&intern);
 
     if (intern.idb_major_type != DB5_MAJORTYPE_BRLCAD) {
 	bu_vls_printf(&gedp->ged_result_str, "%s: Object not eligible for scaling.", argv[0]);
 	rt_db_free_internal(&intern, &rt_uniresource);
 
-	return BRLCAD_ERROR;
+	return GED_ERROR;
     }
 
     switch (intern.idb_minor_type) {
@@ -134,12 +134,12 @@ ged_pscale(struct ged *gedp, int argc, const char *argv[])
 	bu_vls_printf(&gedp->ged_result_str, "%s: Object not yet supported.", argv[0]);
 	rt_db_free_internal(&intern, &rt_uniresource);
 
-	return BRLCAD_ERROR;
+	return GED_ERROR;
     }
 
-    if (ret == BRLCAD_OK) {
-	GED_DB_PUT_INTERNAL(gedp, dp, &intern, &rt_uniresource, BRLCAD_ERROR);
-    } else if (ret == BRLCAD_ERROR) {
+    if (ret == GED_OK) {
+	GED_DB_PUT_INTERNAL(gedp, dp, &intern, &rt_uniresource, GED_ERROR);
+    } else if (ret == GED_ERROR) {
 	rt_db_free_internal(&intern, &rt_uniresource);
     }
 

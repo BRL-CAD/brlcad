@@ -93,7 +93,7 @@ cmd_rt(ClientData	clientData,
     Tcl_DStringAppend(&ds, bu_vls_addr(&gedp->ged_result_str), -1);
     Tcl_DStringResult(interp, &ds);
 
-    if (ret == BRLCAD_OK)
+    if (ret == GED_OK)
 	return TCL_OK;
 
     return TCL_ERROR;
@@ -136,7 +136,7 @@ cmd_rrt(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
     Tcl_DStringAppend(&ds, bu_vls_addr(&gedp->ged_result_str), -1);
     Tcl_DStringResult(interp, &ds);
 
-    if (ret == BRLCAD_OK)
+    if (ret == GED_OK)
 	return TCL_OK;
 
     return TCL_ERROR;
@@ -385,7 +385,7 @@ f_nirt(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
     Tcl_DStringAppend(&ds, bu_vls_addr(&gedp->ged_result_str), -1);
     Tcl_DStringResult(interp, &ds);
 
-    if (ret == BRLCAD_OK)
+    if (ret == GED_OK)
 	return TCL_OK;
 
     return TCL_ERROR;
@@ -412,7 +412,7 @@ f_vnirt(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
     Tcl_DStringAppend(&ds, bu_vls_addr(&gedp->ged_result_str), -1);
     Tcl_DStringResult(interp, &ds);
 
-    if (ret == BRLCAD_OK)
+    if (ret == GED_OK)
 	return TCL_OK;
 
     return TCL_ERROR;

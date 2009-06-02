@@ -59,7 +59,7 @@ ged_translate_tgc(struct ged *gedp, struct rt_tgc_internal *tgc, const char *att
 	    /* check for zero H vector */
 	    if (MAGNITUDE(hvec) <= SQRT_SMALL_FASTF) {
 		bu_vls_printf(&gedp->ged_result_str, "Zero H vector not allowed.");
-		return BRLCAD_ERROR;
+		return GED_ERROR;
 	    }
 
 	    VMOVE(tgc->h, hvec);
@@ -89,7 +89,7 @@ ged_translate_tgc(struct ged *gedp, struct rt_tgc_internal *tgc, const char *att
 	case 'H':
 	    if (attribute[2] != '\0') {
 		bu_vls_printf(&gedp->ged_result_str, "bad tgc attribute - %s", attribute);
-		return BRLCAD_ERROR;
+		return GED_ERROR;
 	    }
 
 	    if (rflag) {
@@ -101,7 +101,7 @@ ged_translate_tgc(struct ged *gedp, struct rt_tgc_internal *tgc, const char *att
 	    /* check for zero H vector */
 	    if (MAGNITUDE(hvec) <= SQRT_SMALL_FASTF) {
 		bu_vls_printf(&gedp->ged_result_str, "Zero H vector not allowed.");
-		return BRLCAD_ERROR;
+		return GED_ERROR;
 	    }
 
 	    VMOVE(tgc->h, hvec);
@@ -109,16 +109,16 @@ ged_translate_tgc(struct ged *gedp, struct rt_tgc_internal *tgc, const char *att
 	    break;
 	default:
 	    bu_vls_printf(&gedp->ged_result_str, "bad tgc attribute - %s", attribute);
-	    return BRLCAD_ERROR;
+	    return GED_ERROR;
 	}
 
 	break;
     default:
 	bu_vls_printf(&gedp->ged_result_str, "bad tgc attribute - %s", attribute);
-	return BRLCAD_ERROR;
+	return GED_ERROR;
     }
 
-    return BRLCAD_OK;
+    return GED_OK;
 }
 
 

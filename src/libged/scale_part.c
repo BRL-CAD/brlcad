@@ -50,10 +50,10 @@ ged_scale_part(struct ged *gedp, struct rt_part_internal *part, const char *attr
 	break;
     default:
 	bu_vls_printf(&gedp->ged_result_str, "bad part attribute - %s", attribute);
-	return BRLCAD_ERROR;
+	return GED_ERROR;
     }
 
-    return BRLCAD_OK;
+    return GED_OK;
 }
 
 

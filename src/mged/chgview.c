@@ -149,7 +149,7 @@ cmd_center(ClientData	clientData,
     Tcl_DStringAppend(&ds, bu_vls_addr(&gedp->ged_result_str), -1);
     Tcl_DStringResult(interp, &ds);
 
-    if (ret != BRLCAD_OK)
+    if (ret != GED_OK)
 	return TCL_ERROR;
 
     if (argc > 1) {
@@ -204,7 +204,7 @@ cmd_size(ClientData	clientData,
     Tcl_DStringAppend(&ds, bu_vls_addr(&gedp->ged_result_str), -1);
     Tcl_DStringResult(interp, &ds);
 
-    if (ret == BRLCAD_OK) {
+    if (ret == GED_OK) {
 	view_state->vs_absolute_scale = 1.0 - view_state->vs_gvp->gv_scale / view_state->vs_i_Viewscale;
 	if (view_state->vs_absolute_scale < 0.0)
 	    view_state->vs_absolute_scale /= 9.0;
@@ -370,7 +370,7 @@ edit_com(int	argc,
 	new_argv = (char **)bu_calloc( max_count+1, sizeof( char *), "edit_com new_argv" );
 	new_argc = bu_argv_from_string( new_argv, max_count, bu_vls_addr( &vls ) );
 
-	if ((ret = ged_draw(gedp, new_argc, (const char **)new_argv)) != BRLCAD_OK) {
+	if ((ret = ged_draw(gedp, new_argc, (const char **)new_argv)) != GED_OK) {
 	    bu_log("ERROR: %s\n", bu_vls_addr(&gedp->ged_result_str));
 	    bu_vls_free( &vls );
 	    bu_free( (char *)new_argv, "edit_com new_argv" );
@@ -392,7 +392,7 @@ edit_com(int	argc,
 		ret = ged_ev(gedp, argc, (const char **)argv);
 		break;
 	}
-	if (ret != BRLCAD_OK) {
+	if (ret != GED_OK) {
 	    bu_log("ERROR: %s\n", bu_vls_addr(&gedp->ged_result_str));
 	    return TCL_ERROR;
 	}
@@ -2709,7 +2709,7 @@ mged_zoom(double val)
     Tcl_DStringAppend(&ds, bu_vls_addr(&gedp->ged_result_str), -1);
     Tcl_DStringResult(interp, &ds);
 
-    if (ret != BRLCAD_OK)
+    if (ret != GED_OK)
 	return TCL_ERROR;
 
     view_state->vs_absolute_scale = 1.0 - view_state->vs_gvp->gv_scale / view_state->vs_i_Viewscale;
@@ -2821,7 +2821,7 @@ cmd_setview(ClientData	clientData,
     Tcl_DStringAppend(&ds, bu_vls_addr(&gedp->ged_result_str), -1);
     Tcl_DStringResult(interp, &ds);
 
-    if (ret != BRLCAD_OK)
+    if (ret != GED_OK)
 	return TCL_ERROR;
 
     if (view_state->vs_absolute_tran[X] != 0.0 ||
@@ -2857,7 +2857,7 @@ f_slewview(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
     Tcl_DStringAppend(&ds, bu_vls_addr(&gedp->ged_result_str), -1);
     Tcl_DStringResult(interp, &ds);
 
-    if (ret != BRLCAD_OK)
+    if (ret != GED_OK)
 	return TCL_ERROR;
 
     view_state->vs_flag = 1;
@@ -3917,7 +3917,7 @@ cmd_mrot(ClientData	clientData,
 	}
 
 	/* We're only interested in getting rmat set */
-	if (ged_rot_args(gedp, argc, (const char **)argv, &coord, rmat) != BRLCAD_OK) {
+	if (ged_rot_args(gedp, argc, (const char **)argv, &coord, rmat) != GED_OK) {
 	    Tcl_DStringInit(&ds);
 	    Tcl_DStringAppend(&ds, bu_vls_addr(&gedp->ged_result_str), -1);
 	    Tcl_DStringResult(interp, &ds);
@@ -3935,7 +3935,7 @@ cmd_mrot(ClientData	clientData,
 	Tcl_DStringAppend(&ds, bu_vls_addr(&gedp->ged_result_str), -1);
 	Tcl_DStringResult(interp, &ds);
 
-	if (ret != BRLCAD_OK)
+	if (ret != GED_OK)
 	    return TCL_ERROR;
 
 	view_state->vs_flag = 1;
@@ -4052,7 +4052,7 @@ cmd_vrot(ClientData	clientData,
     Tcl_DStringAppend(&ds, bu_vls_addr(&gedp->ged_result_str), -1);
     Tcl_DStringResult(interp, &ds);
 
-    if (ret != BRLCAD_OK)
+    if (ret != GED_OK)
 	return TCL_ERROR;
 
     view_state->vs_flag = 1;
@@ -4077,7 +4077,7 @@ cmd_rot(ClientData	clientData,
 	char coord;
 	mat_t rmat;
 
-	if (ged_rot_args(gedp, argc, (const char **)argv, &coord, rmat) != BRLCAD_OK) {
+	if (ged_rot_args(gedp, argc, (const char **)argv, &coord, rmat) != GED_OK) {
 	    Tcl_DStringInit(&ds);
 	    Tcl_DStringAppend(&ds, bu_vls_addr(&gedp->ged_result_str), -1);
 	    Tcl_DStringResult(interp, &ds);
@@ -4095,7 +4095,7 @@ cmd_rot(ClientData	clientData,
 	Tcl_DStringAppend(&ds, bu_vls_addr(&gedp->ged_result_str), -1);
 	Tcl_DStringResult(interp, &ds);
 
-	if (ret != BRLCAD_OK)
+	if (ret != GED_OK)
 	    return TCL_ERROR;
 
 	view_state->vs_flag = 1;
@@ -4120,7 +4120,7 @@ cmd_arot(ClientData	clientData,
 	mged_variables->mv_transform == 'e') {
 	mat_t rmat;
 
-	if (ged_arot_args(gedp, argc, (const char **)argv, rmat) != BRLCAD_OK) {
+	if (ged_arot_args(gedp, argc, (const char **)argv, rmat) != GED_OK) {
 	    Tcl_DStringInit(&ds);
 	    Tcl_DStringAppend(&ds, bu_vls_addr(&gedp->ged_result_str), -1);
 	    Tcl_DStringResult(interp, &ds);
@@ -4138,7 +4138,7 @@ cmd_arot(ClientData	clientData,
 	Tcl_DStringAppend(&ds, bu_vls_addr(&gedp->ged_result_str), -1);
 	Tcl_DStringResult(interp, &ds);
 
-	if (ret != BRLCAD_OK)
+	if (ret != GED_OK)
 	    return TCL_ERROR;
 
 	view_state->vs_flag = 1;
@@ -4285,7 +4285,7 @@ cmd_tra(ClientData	clientData,
 	char coord;
 	vect_t tvec;
 
-	if (ged_tra_args(gedp, argc, (const char **)argv, &coord, tvec) != BRLCAD_OK) {
+	if (ged_tra_args(gedp, argc, (const char **)argv, &coord, tvec) != GED_OK) {
 	    Tcl_DStringInit(&ds);
 	    Tcl_DStringAppend(&ds, bu_vls_addr(&gedp->ged_result_str), -1);
 	    Tcl_DStringResult(interp, &ds);
@@ -4303,7 +4303,7 @@ cmd_tra(ClientData	clientData,
 	Tcl_DStringAppend(&ds, bu_vls_addr(&gedp->ged_result_str), -1);
 	Tcl_DStringResult(interp, &ds);
 
-	if (ret != BRLCAD_OK)
+	if (ret != GED_OK)
 	    return TCL_ERROR;
 
 	view_state->vs_flag = 1;
@@ -4458,7 +4458,7 @@ cmd_sca(ClientData	clientData,
 	mged_variables->mv_transform == 'e') {
 	fastf_t sf;
 
-	if (ged_scale_args(gedp, argc, (const char **)argv, &sf) != BRLCAD_OK) {
+	if (ged_scale_args(gedp, argc, (const char **)argv, &sf) != GED_OK) {
 	    Tcl_DStringInit(&ds);
 	    Tcl_DStringAppend(&ds, bu_vls_addr(&gedp->ged_result_str), -1);
 	    Tcl_DStringResult(interp, &ds);
@@ -4479,7 +4479,7 @@ cmd_sca(ClientData	clientData,
 	Tcl_DStringAppend(&ds, bu_vls_addr(&gedp->ged_result_str), -1);
 	Tcl_DStringResult(interp, &ds);
 
-	if (ret != BRLCAD_OK)
+	if (ret != GED_OK)
 	    return TCL_ERROR;
 
 	f = view_state->vs_gvp->gv_scale / view_state->vs_i_Viewscale;
@@ -4517,7 +4517,7 @@ cmd_pov(ClientData	clientData,
     Tcl_DStringAppend(&ds, bu_vls_addr(&gedp->ged_result_str), -1);
     Tcl_DStringResult(interp, &ds);
 
-    if (ret != BRLCAD_OK)
+    if (ret != GED_OK)
 	return TCL_ERROR;
 
     mged_variables->mv_perspective = view_state->vs_gvp->gv_perspective;

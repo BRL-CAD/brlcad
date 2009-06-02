@@ -39,9 +39,9 @@ ged_quat(struct ged *gedp, int argc, const char *argv[])
     quat_t quat;
     static const char *usage = "a b c d";
 
-    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
-    GED_CHECK_VIEW(gedp, BRLCAD_ERROR);
-    GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
+    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
+    GED_CHECK_VIEW(gedp, GED_ERROR);
+    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
 
     /* initialize result */
     bu_vls_trunc(&gedp->ged_result_str, 0);
@@ -50,12 +50,12 @@ ged_quat(struct ged *gedp, int argc, const char *argv[])
     if (argc == 1) {
 	quat_mat2quat(quat, gedp->ged_gvp->gv_rotation);
 	bu_vls_printf(&gedp->ged_result_str, "%.12g %.12g %.12g %.12g", V4ARGS(quat));
-	return BRLCAD_OK;
+	return GED_OK;
     }
 
     if (argc != 6) {
 	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return BRLCAD_ERROR;
+	return GED_ERROR;
     }
 
     /* Set the view orientation given a quaternion */
@@ -66,13 +66,13 @@ ged_quat(struct ged *gedp, int argc, const char *argv[])
 
 	bu_vls_printf(&gedp->ged_result_str, "%s quat: bad value detected - %s %s %s %s",
 		      argv[0], argv[2], argv[3], argv[4], argv[5]);
-	return BRLCAD_ERROR;
+	return GED_ERROR;
     }
 
     quat_quat2mat(gedp->ged_gvp->gv_rotation, quat);
     ged_view_update(gedp->ged_gvp);
 
-    return BRLCAD_OK;
+    return GED_OK;
 }
 
 /*

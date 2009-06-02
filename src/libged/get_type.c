@@ -40,8 +40,8 @@ ged_get_type(struct ged *gedp, int argc, const char *argv[])
     int type;
     static const char *usage = "object";
 
-    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
-    GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
+    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
+    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
 
     /* initialize result */
     bu_vls_trunc(&gedp->ged_result_str, 0);
@@ -49,22 +49,22 @@ ged_get_type(struct ged *gedp, int argc, const char *argv[])
     /* must be wanting help */
     if (argc == 1) {
 	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return BRLCAD_HELP;
+	return GED_HELP;
     }
 
     if (argc != 2) {
 	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return BRLCAD_ERROR;
+	return GED_ERROR;
     }
 
-    if (wdb_import_from_path(&gedp->ged_result_str, &intern, argv[1], gedp->ged_wdbp) == BRLCAD_ERROR)
-	return BRLCAD_ERROR;
+    if (wdb_import_from_path(&gedp->ged_result_str, &intern, argv[1], gedp->ged_wdbp) == GED_ERROR)
+	return GED_ERROR;
 
     if (intern.idb_major_type != DB5_MAJORTYPE_BRLCAD) {
 	bu_vls_printf(&gedp->ged_result_str, "unknown");
 	rt_db_free_internal(&intern, &rt_uniresource);
 
-	return BRLCAD_OK;
+	return GED_OK;
     }
 
     switch (intern.idb_minor_type) {
@@ -195,7 +195,7 @@ ged_get_type(struct ged *gedp, int argc, const char *argv[])
     }
 
     rt_db_free_internal(&intern, &rt_uniresource);
-    return BRLCAD_OK;
+    return GED_OK;
 }
 
 

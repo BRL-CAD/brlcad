@@ -44,9 +44,9 @@ ged_move_all(struct ged *gedp, int argc, const char *argv[])
     struct bu_ptbl		stack;
     static const char *usage = "from to";
 
-    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
-    GED_CHECK_READ_ONLY(gedp, BRLCAD_ERROR);
-    GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
+    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
+    GED_CHECK_READ_ONLY(gedp, GED_ERROR);
+    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
 
     /* initialize result */
     bu_vls_trunc(&gedp->ged_result_str, 0);
@@ -54,26 +54,26 @@ ged_move_all(struct ged *gedp, int argc, const char *argv[])
     /* must be wanting help */
     if (argc == 1) {
 	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return BRLCAD_HELP;
+	return GED_HELP;
     }
 
     if (argc != 3) {
 	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return BRLCAD_ERROR;
+	return GED_ERROR;
     }
 
     if (gedp->ged_wdbp->dbip->dbi_version < 5 && (int)strlen(argv[2]) > NAMESIZE) {
 	bu_vls_printf(&gedp->ged_result_str, "ERROR: name length limited to %d characters in v4 databases\n");
-	return BRLCAD_ERROR;
+	return GED_ERROR;
     }
 
     /* rename the record itself */
     if ((dp = db_lookup(gedp->ged_wdbp->dbip, argv[1], LOOKUP_NOISY )) == DIR_NULL)
-	return BRLCAD_ERROR;
+	return GED_ERROR;
 
     if (db_lookup(gedp->ged_wdbp->dbip, argv[2], LOOKUP_QUIET) != DIR_NULL) {
 	bu_vls_printf(&gedp->ged_result_str, "%s: already exists", argv[2]);
-	return BRLCAD_ERROR;
+	return GED_ERROR;
     }
 
     /* if this was a sketch, we need to look for all the extrude
@@ -118,18 +118,18 @@ ged_move_all(struct ged *gedp, int argc, const char *argv[])
     /*  Change object name in the directory. */
     if (db_rename(gedp->ged_wdbp->dbip, dp, argv[2]) < 0) {
 	bu_vls_printf(&gedp->ged_result_str, "error in rename to %s, aborting", argv[2]);
-	return BRLCAD_ERROR;
+	return GED_ERROR;
     }
 
     /* Change name in the file */
     if (rt_db_get_internal(&intern, dp, gedp->ged_wdbp->dbip, (fastf_t *)NULL, &rt_uniresource) < 0) {
 	bu_vls_printf(&gedp->ged_result_str, "Database read error, aborting");
-	return BRLCAD_ERROR;
+	return GED_ERROR;
     }
 
     if (rt_db_put_internal(dp, gedp->ged_wdbp->dbip, &intern, &rt_uniresource) < 0) {
 	bu_vls_printf(&gedp->ged_result_str, "Database write error, aborting");
-	return BRLCAD_ERROR;
+	return GED_ERROR;
     }
 
     bu_ptbl_init(&stack, 64, "combination stack for wdb_mvall_cmd");
@@ -183,7 +183,7 @@ ged_move_all(struct ged *gedp, int argc, const char *argv[])
 		    bu_ptbl_free( &stack );
 		    rt_db_free_internal( &intern, &rt_uniresource );
 		    bu_vls_printf(&gedp->ged_result_str, "Database write error, aborting");
-		    return BRLCAD_ERROR;
+		    return GED_ERROR;
 		}
 	    }
 	    else
@@ -193,7 +193,7 @@ ged_move_all(struct ged *gedp, int argc, const char *argv[])
 
     bu_ptbl_free(&stack);
 
-    return BRLCAD_OK;
+    return GED_OK;
 }
 
 

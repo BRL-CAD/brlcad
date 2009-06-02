@@ -60,7 +60,7 @@ ged_scale_hyp(struct ged *gedp, struct rt_hyp_internal *hyp, const char *attribu
 	    break;
 	default:
 	    bu_vls_printf(&gedp->ged_result_str, "bad hyp attribute - %s", attribute);
-	return BRLCAD_ERROR;
+	return GED_ERROR;
 	}
 	break;
     case 'a':
@@ -80,10 +80,10 @@ ged_scale_hyp(struct ged *gedp, struct rt_hyp_internal *hyp, const char *attribu
     break;
     default:
 	bu_vls_printf(&gedp->ged_result_str, "bad hyp attribute - %s", attribute);
-	return BRLCAD_ERROR;
+	return GED_ERROR;
     }
 
-    return BRLCAD_OK;
+    return GED_OK;
 }
 
 

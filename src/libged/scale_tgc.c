@@ -73,19 +73,19 @@ ged_scale_tgc(struct ged *gedp, struct rt_tgc_internal *tgc, const char *attribu
 		    VSCALE(tgc->d, tgc->d, ma/mb);
 		} else {
 		    bu_vls_printf(&gedp->ged_result_str, "bad tgc attribute - %s", attribute);
-		    return BRLCAD_ERROR;
+		    return GED_ERROR;
 		}
 
 		break;
 	    default:
 		bu_vls_printf(&gedp->ged_result_str, "bad tgc attribute - %s", attribute);
-		return BRLCAD_ERROR;
+		return GED_ERROR;
 	    }
 
 	    break;
 	default:
 	    bu_vls_printf(&gedp->ged_result_str, "bad tgc attribute - %s", attribute);
-	    return BRLCAD_ERROR;
+	    return GED_ERROR;
 	}
 
 	break;
@@ -108,7 +108,7 @@ ged_scale_tgc(struct ged *gedp, struct rt_tgc_internal *tgc, const char *attribu
 	    break;
 	default:
 	    bu_vls_printf(&gedp->ged_result_str, "bad tgc attribute - %s", attribute);
-	    return BRLCAD_ERROR;
+	    return GED_ERROR;
 	}
 
 	break;
@@ -150,7 +150,7 @@ ged_scale_tgc(struct ged *gedp, struct rt_tgc_internal *tgc, const char *attribu
 		}
 	    } else {
 		bu_vls_printf(&gedp->ged_result_str, "bad tgc attribute - %s", attribute);
-		return BRLCAD_ERROR;
+		return GED_ERROR;
 	    }
 
 	    break;
@@ -198,28 +198,28 @@ ged_scale_tgc(struct ged *gedp, struct rt_tgc_internal *tgc, const char *attribu
 		    }
 		} else {
 		    bu_vls_printf(&gedp->ged_result_str, "bad tgc attribute - %s", attribute);
-		    return BRLCAD_ERROR;
+		    return GED_ERROR;
 		}
 
 		break;
 	    default:
 		bu_vls_printf(&gedp->ged_result_str, "bad tgc attribute - %s", attribute);
-		return BRLCAD_ERROR;
+		return GED_ERROR;
 	    } /* switch (attribute[2]) */
 
 	    break;
 	default:
 	    bu_vls_printf(&gedp->ged_result_str, "bad tgc attribute - %s", attribute);
-	    return BRLCAD_ERROR;
+	    return GED_ERROR;
 	} /* switch (attribute[1]) */
 
 	break;
     default:
 	bu_vls_printf(&gedp->ged_result_str, "bad tgc attribute - %s", attribute);
-	return BRLCAD_ERROR;
+	return GED_ERROR;
     } /* switch (attribute[0]) */
 
-    return BRLCAD_OK;
+    return GED_OK;
 }
 
 

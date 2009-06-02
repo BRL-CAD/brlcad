@@ -41,16 +41,16 @@ ged_who(struct ged *gedp, int argc, const char *argv[])
     int skip_real, skip_phony;
     static const char *usage = "[r(eal)|p(hony)|b(oth)]";
 
-    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
-    GED_CHECK_DRAWABLE(gedp, BRLCAD_ERROR);
-    GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
+    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
+    GED_CHECK_DRAWABLE(gedp, GED_ERROR);
+    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
 
     /* initialize result */
     bu_vls_trunc(&gedp->ged_result_str, 0);
 
     if (2 < argc) {
 	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return BRLCAD_ERROR;
+	return GED_ERROR;
     }
 
     skip_real = 0;
@@ -71,7 +71,7 @@ ged_who(struct ged *gedp, int argc, const char *argv[])
 		break;
 	    default:
 		bu_vls_printf(&gedp->ged_result_str, "ged_who: argument not understood\n", (char *)NULL);
-		return BRLCAD_ERROR;
+		return GED_ERROR;
 	}
     }
 
@@ -101,7 +101,7 @@ ged_who(struct ged *gedp, int argc, const char *argv[])
     FOR_ALL_SOLIDS(sp, &gedp->ged_gdp->gd_headSolid)
 	sp->s_flag = DOWN;
 
-    return BRLCAD_OK;
+    return GED_OK;
 }
 
 

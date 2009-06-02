@@ -44,9 +44,9 @@ ged_savekey(struct ged *gedp, int argc, const char *argv[])
     vect_t temp;
     static const char *usage = "file [time]";
 
-    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
-    GED_CHECK_VIEW(gedp, BRLCAD_ERROR);
-    GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
+    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
+    GED_CHECK_VIEW(gedp, GED_ERROR);
+    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
 
     /* initialize result */
     bu_vls_trunc(&gedp->ged_result_str, 0);
@@ -54,12 +54,12 @@ ged_savekey(struct ged *gedp, int argc, const char *argv[])
     /* must be wanting help */
     if (argc == 1) {
 	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return BRLCAD_HELP;
+	return GED_HELP;
     }
 
     if (argc < 2 || 3 < argc) {
 	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return BRLCAD_ERROR;
+	return GED_ERROR;
     }
 
     if ( (fp = fopen( argv[1], "a")) == NULL )  {
@@ -78,7 +78,7 @@ ged_savekey(struct ged *gedp, int argc, const char *argv[])
     ged_rt_oldwrite(gedp, fp, eye_model);
     (void)fclose(fp);
 
-    return BRLCAD_OK;
+    return GED_OK;
 }
 
 /**

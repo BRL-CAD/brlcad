@@ -36,15 +36,15 @@
 int
 ged_dbip(struct ged *gedp, int argc, const char *argv[])
 {
-    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
-    GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
+    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
+    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
 
     /* initialize result */
     bu_vls_trunc(&gedp->ged_result_str, 0);
 
     if (argc != 1) {
 	bu_vls_printf(&gedp->ged_result_str, "Usage: %s", argv[0]);
-	return BRLCAD_ERROR;
+	return GED_ERROR;
     }
 
     /* FIXME: there be a hack here!
@@ -54,7 +54,7 @@ ged_dbip(struct ged *gedp, int argc, const char *argv[])
     /* oh my gawd, no you didn't.. this code needs to die. */
     bu_vls_printf(&gedp->ged_result_str, "%ld", (long)(*((void**)&(gedp->ged_wdbp->dbip))));
 
-    return BRLCAD_OK;
+    return GED_OK;
 }
 
 

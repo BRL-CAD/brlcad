@@ -44,22 +44,22 @@ ged_shaded_mode(struct ged *gedp, int argc, const char *argv[])
 {
     static const char *usage = "[0|1|2]";
 
-    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
-    GED_CHECK_DRAWABLE(gedp, BRLCAD_ERROR);
-    GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
+    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
+    GED_CHECK_DRAWABLE(gedp, GED_ERROR);
+    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
 
     /* initialize result */
     bu_vls_trunc(&gedp->ged_result_str, 0);
 
     if (argc > 2) {
 	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return BRLCAD_ERROR;
+	return GED_ERROR;
     }
 
     /* get shaded mode */
     if (argc == 1) {
 	bu_vls_printf(&gedp->ged_result_str, "%d", gedp->ged_gdp->gd_shaded_mode);
-	return BRLCAD_OK;
+	return GED_OK;
     }
 
     /* set shaded mode */
@@ -73,12 +73,12 @@ ged_shaded_mode(struct ged *gedp, int argc, const char *argv[])
 	    goto bad;
 
 	gedp->ged_gdp->gd_shaded_mode = shaded_mode;
-	return BRLCAD_OK;
+	return GED_OK;
     }
 
  bad:
     bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-    return BRLCAD_ERROR;
+    return GED_ERROR;
 }
 
 

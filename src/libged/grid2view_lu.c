@@ -43,9 +43,9 @@ ged_grid2view_lu(struct ged *gedp, int argc, const char *argv[])
     point_t diff;
     static const char *usage = "u v";
 
-    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
-    GED_CHECK_VIEW(gedp, BRLCAD_ERROR);
-    GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
+    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
+    GED_CHECK_VIEW(gedp, GED_ERROR);
+    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
 
     /* initialize result */
     bu_vls_trunc(&gedp->ged_result_str, 0);
@@ -65,11 +65,11 @@ ged_grid2view_lu(struct ged *gedp, int argc, const char *argv[])
     VADD2(view_pt, mo_view_pt, diff);
     bn_encode_vect(&gedp->ged_result_str, view_pt);
 
-    return BRLCAD_OK;
+    return GED_OK;
 
 bad:
     bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-    return BRLCAD_ERROR;
+    return GED_ERROR;
 }
 
 

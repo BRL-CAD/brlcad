@@ -43,9 +43,9 @@ ged_region(struct ged *gedp, int argc, const char *argv[])
     char			oper;
     static const char *usage = "object(s)";
 
-    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
-    GED_CHECK_READ_ONLY(gedp, BRLCAD_ERROR);
-    GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
+    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
+    GED_CHECK_READ_ONLY(gedp, GED_ERROR);
+    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
 
     /* initialize result */
     bu_vls_trunc(&gedp->ged_result_str, 0);
@@ -53,12 +53,12 @@ ged_region(struct ged *gedp, int argc, const char *argv[])
     /* must be wanting help */
     if (argc == 1) {
 	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return BRLCAD_HELP;
+	return GED_HELP;
     }
 
     if (argc < 4 || MAXARGS < argc) {
 	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return BRLCAD_ERROR;
+	return GED_ERROR;
     }
 
     ident = gedp->ged_wdbp->wdb_item_default;
@@ -67,7 +67,7 @@ ged_region(struct ged *gedp, int argc, const char *argv[])
     /* Check for even number of arguments */
     if (argc & 01) {
 	bu_vls_printf(&gedp->ged_result_str, "error in number of args!");
-	return BRLCAD_ERROR;
+	return GED_ERROR;
     }
 
     if (db_lookup(gedp->ged_wdbp->dbip, argv[1], LOOKUP_QUIET) == DIR_NULL) {
@@ -104,7 +104,7 @@ ged_region(struct ged *gedp, int argc, const char *argv[])
 
 	if (ged_combadd(gedp, dp, (char *)argv[1], 1, oper, ident, air) == DIR_NULL) {
 	    bu_vls_printf(&gedp->ged_result_str, "error in combadd");
-	    return BRLCAD_ERROR;
+	    return GED_ERROR;
 	}
     }
 
@@ -112,10 +112,10 @@ ged_region(struct ged *gedp, int argc, const char *argv[])
 	/* failed to create region */
 	if (gedp->ged_wdbp->wdb_item_default > 1)
 	    gedp->ged_wdbp->wdb_item_default--;
-	return BRLCAD_ERROR;
+	return GED_ERROR;
     }
 
-    return BRLCAD_OK;
+    return GED_OK;
 }
 
 

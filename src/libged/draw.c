@@ -688,7 +688,7 @@ ged_drawtrees(struct ged *gedp, int argc, const char *argv[], int kind, struct g
 		{
 		    bu_vls_printf(&gedp->ged_result_str, "unrecognized option - %c\n", c);
 		    bu_free((genptr_t)dgcdp, "ged_drawtrees: dgcdp");
-		    return BRLCAD_ERROR;
+		    return GED_ERROR;
 		}
 	    }
 	}
@@ -1078,9 +1078,9 @@ ged_draw_guts(struct ged *gedp, int argc, const char *argv[], int kind)
 {
     static const char *usage = "[-R -A -o -C#/#/# -s] <objects | attribute name/value pairs>";
 
-    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
-    GED_CHECK_DRAWABLE(gedp, BRLCAD_ERROR);
-    GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
+    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
+    GED_CHECK_DRAWABLE(gedp, GED_ERROR);
+    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
 
     /* initialize result */
     bu_vls_trunc(&gedp->ged_result_str, 0);
@@ -1088,7 +1088,7 @@ ged_draw_guts(struct ged *gedp, int argc, const char *argv[], int kind)
     /* must be wanting help */
     if (argc == 1) {
 	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return BRLCAD_HELP;
+	return GED_HELP;
     }
 
     /* skip past cmd */
@@ -1102,7 +1102,7 @@ ged_draw_guts(struct ged *gedp, int argc, const char *argv[], int kind)
     ged_drawtrees(gedp, argc, argv, kind, (struct ged_client_data *)0);
     ged_color_soltab((struct solid *)&gedp->ged_gdp->gd_headSolid);
 
-    return BRLCAD_OK;
+    return GED_OK;
 }
 
 int

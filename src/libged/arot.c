@@ -40,9 +40,9 @@ ged_arot_args(struct ged *gedp, int argc, const char *argv[], mat_t rmat)
     fastf_t angle;
     static const char *usage = "x y z angle";
 
-    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
-    GED_CHECK_VIEW(gedp, BRLCAD_ERROR);
-    GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
+    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
+    GED_CHECK_VIEW(gedp, GED_ERROR);
+    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
 
     /* initialize result */
     bu_vls_trunc(&gedp->ged_result_str, 0);
@@ -50,39 +50,39 @@ ged_arot_args(struct ged *gedp, int argc, const char *argv[], mat_t rmat)
     /* must be wanting help */
     if (argc == 1) {
 	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return BRLCAD_HELP;
+	return GED_HELP;
     }
 
     if (argc != 5) {
 	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return BRLCAD_ERROR;
+	return GED_ERROR;
     }
 
     if (sscanf(argv[1], "%lf", &axis[X]) != 1) {
 	bu_vls_printf(&gedp->ged_result_str, "%s: bad X value - %s\n", argv[0], argv[1]);
-	return BRLCAD_ERROR;
+	return GED_ERROR;
     }
 
     if (sscanf(argv[2], "%lf", &axis[Y]) != 1) {
 	bu_vls_printf(&gedp->ged_result_str, "%s: bad Y value - %s\n", argv[0], argv[2]);
-	return BRLCAD_ERROR;
+	return GED_ERROR;
     }
 
     if (sscanf(argv[3], "%lf", &axis[Z]) != 1) {
 	bu_vls_printf(&gedp->ged_result_str, "%s: bad Z value - %s\n", argv[0], argv[3]);
-	return BRLCAD_ERROR;
+	return GED_ERROR;
     }
 
     if (sscanf(argv[4], "%lf", &angle) != 1) {
 	bu_vls_printf(&gedp->ged_result_str, "%s: bad angle - %s\n", argv[0], argv[4]);
-	return BRLCAD_ERROR;
+	return GED_ERROR;
     }
 
     VSETALL(pt, 0.0);
     VUNITIZE(axis);
     bn_mat_arb_rot(rmat, pt, axis, angle*bn_degtorad);
 
-    return BRLCAD_OK;
+    return GED_OK;
 }
 
 int
@@ -91,7 +91,7 @@ ged_arot(struct ged *gedp, int argc, const char *argv[])
     int ret;
     mat_t rmat;
 
-    if ((ret = ged_arot_args(gedp, argc, argv, rmat)) != BRLCAD_OK)
+    if ((ret = ged_arot_args(gedp, argc, argv, rmat)) != GED_OK)
 	return ret;
 
     return ged_do_rot(gedp, gedp->ged_gvp->gv_coord, rmat, (int (*)())0);

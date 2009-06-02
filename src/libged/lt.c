@@ -43,8 +43,8 @@ ged_lt(struct ged *gedp, int argc, const char *argv[])
     register struct directory *dp;
     static const char *usage = "object";
 
-    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
-    GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
+    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
+    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
 
     /* initialize result */
     bu_vls_trunc(&gedp->ged_result_str, 0);
@@ -52,17 +52,17 @@ ged_lt(struct ged *gedp, int argc, const char *argv[])
     /* must be wanting help */
     if (argc == 1) {
 	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return BRLCAD_HELP;
+	return GED_HELP;
     }
 
     if (argc != 2) {
 	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return BRLCAD_ERROR;
+	return GED_ERROR;
     }
 
     if ((dp = db_lookup(gedp->ged_wdbp->dbip, argv[1], LOOKUP_NOISY)) == DIR_NULL) {
 	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return BRLCAD_ERROR;
+	return GED_ERROR;
     }
 
     return ged_list_children(gedp, dp);
@@ -77,11 +77,11 @@ ged_list_children(struct ged			*gedp,
     struct rt_comb_internal		*comb;
 
     if (!(dp->d_flags & DIR_COMB))
-	return BRLCAD_OK;
+	return GED_OK;
 
     if (rt_db_get_internal(&intern, dp, gedp->ged_wdbp->dbip, (fastf_t *)NULL, &rt_uniresource) < 0) {
 	bu_vls_printf(&gedp->ged_result_str, "Database read error, aborting");
-	return BRLCAD_ERROR;
+	return GED_ERROR;
     }
     comb = (struct rt_comb_internal *)intern.idb_ptr;
 
@@ -95,7 +95,7 @@ ged_list_children(struct ged			*gedp,
 	    db_non_union_push(comb->tree, &rt_uniresource);
 	    if (db_ck_v4gift_tree(comb->tree) < 0) {
 		bu_vls_printf(&gedp->ged_result_str, "Cannot flatten tree for listing");
-		return BRLCAD_ERROR;
+		return GED_ERROR;
 	    }
 	}
 	node_count = db_tree_nleaves(comb->tree);
@@ -140,7 +140,7 @@ ged_list_children(struct ged			*gedp,
     }
     rt_db_free_internal(&intern, &rt_uniresource);
 
-    return BRLCAD_OK;
+    return GED_OK;
 }
 
 

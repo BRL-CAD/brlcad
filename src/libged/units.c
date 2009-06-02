@@ -41,15 +41,15 @@ ged_units(struct ged *gedp, int argc, const char *argv[])
     int sflag = 0;
     static const char *usage = "[-s] [mm|cm|m|in|ft|...]";
 
-    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
-    GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
+    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
+    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
 
     /* initialize result */
     bu_vls_trunc(&gedp->ged_result_str, 0);
 
     if (argc > 2) {
 	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return BRLCAD_ERROR;
+	return GED_ERROR;
     }
 
     if (argc == 2 && strcmp(argv[1], "-s") == 0) {
@@ -70,7 +70,7 @@ ged_units(struct ged *gedp, int argc, const char *argv[])
 	    bu_vls_printf(&gedp->ged_result_str, "You are editing in '%s'.  1 %s = %g mm \n",
 			  str, str, gedp->ged_wdbp->dbip->dbi_local2base);
 
-	return BRLCAD_OK;
+	return GED_OK;
     }
 
     /* Set units */
@@ -79,7 +79,7 @@ ged_units(struct ged *gedp, int argc, const char *argv[])
 	bu_vls_printf(&gedp->ged_result_str,
 		      "%s: unrecognized unit\nvalid units: <um|mm|cm|m|km|in|ft|yd|mi>\n",
 		      argv[1]);
-	return BRLCAD_ERROR;
+	return GED_ERROR;
     }
 
     if (db_update_ident(gedp->ged_wdbp->dbip, gedp->ged_wdbp->dbip->dbi_title, loc2mm) < 0) {
@@ -94,7 +94,7 @@ ged_units(struct ged *gedp, int argc, const char *argv[])
     bu_vls_printf(&gedp->ged_result_str, "You are now editing in '%s'.  1 %s = %g mm \n",
 		  str, str, gedp->ged_wdbp->dbip->dbi_local2base);
 
-    return BRLCAD_OK;
+    return GED_OK;
 }
 
 

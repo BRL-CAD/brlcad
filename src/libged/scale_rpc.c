@@ -55,10 +55,10 @@ ged_scale_rpc(struct ged *gedp, struct rt_rpc_internal *rpc, const char *attribu
 	break;
     default:
 	bu_vls_printf(&gedp->ged_result_str, "bad rpc attribute - %s", attribute);
-	return BRLCAD_ERROR;
+	return GED_ERROR;
     }
 
-    return BRLCAD_OK;
+    return GED_OK;
 }
 
 

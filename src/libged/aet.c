@@ -40,9 +40,9 @@ ged_aet(struct ged *gedp, int argc, const char *argv[])
     int iflag = 0;
     static const char *usage = "[[-i] az el [tw]]";
 
-    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
-    GED_CHECK_VIEW(gedp, BRLCAD_ERROR);
-    GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
+    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
+    GED_CHECK_VIEW(gedp, GED_ERROR);
+    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
 
     /* initialize result */
     bu_vls_trunc(&gedp->ged_result_str, 0);
@@ -50,7 +50,7 @@ ged_aet(struct ged *gedp, int argc, const char *argv[])
     /* get aet */
     if (argc == 1) {
 	bn_encode_vect(&gedp->ged_result_str, gedp->ged_gvp->gv_aet);
-	return BRLCAD_OK;
+	return GED_OK;
     }
 
     /* Check for -i option */
@@ -68,7 +68,7 @@ ged_aet(struct ged *gedp, int argc, const char *argv[])
 	    aet[2] = 0;
 	else if (n != 3) {
 	    bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	    return BRLCAD_ERROR;
+	    return GED_ERROR;
 	}
 
 	if (iflag) {
@@ -79,24 +79,24 @@ ged_aet(struct ged *gedp, int argc, const char *argv[])
 	ged_mat_aet(gedp->ged_gvp);
 	ged_view_update(gedp->ged_gvp);
 
-	return BRLCAD_OK;
+	return GED_OK;
     }
 
     if (argc == 3 || argc == 4) {
 	if (sscanf(argv[1], "%lf", &aet[X]) != 1) {
 	    bu_vls_printf(&gedp->ged_result_str, "ged_aet: bad azimuth - %s\n", argv[1]);
-	    return BRLCAD_ERROR;
+	    return GED_ERROR;
 	}
 
 	if (sscanf(argv[2], "%lf", &aet[Y]) != 1) {
 	    bu_vls_printf(&gedp->ged_result_str, "ged_aet: bad elevation - %s\n", argv[2]);
-	    return BRLCAD_ERROR;
+	    return GED_ERROR;
 	}
 
 	if (argc == 4) {
 	    if (sscanf(argv[3], "%lf", &aet[Z]) != 1) {
 		bu_vls_printf(&gedp->ged_result_str, "ged_aet: bad twist - %s\n", argv[3]);
-		return BRLCAD_ERROR;
+		return GED_ERROR;
 	    }
 	} else
 	    aet[Z] = 0.0;
@@ -109,11 +109,11 @@ ged_aet(struct ged *gedp, int argc, const char *argv[])
 	ged_mat_aet(gedp->ged_gvp);
 	ged_view_update(gedp->ged_gvp);
 
-	return BRLCAD_OK;
+	return GED_OK;
     }
 
     bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-    return BRLCAD_ERROR;
+    return GED_ERROR;
 }
 
 

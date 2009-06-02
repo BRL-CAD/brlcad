@@ -46,8 +46,8 @@ ged_pathlist(struct ged *gedp, int argc, const char *argv[])
 {
     static const char *usage = "name";
 
-    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
-    GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
+    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
+    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
 
     /* initialize result */
     bu_vls_trunc(&gedp->ged_result_str, 0);
@@ -55,12 +55,12 @@ ged_pathlist(struct ged *gedp, int argc, const char *argv[])
     /* must be wanting help */
     if (argc == 1) {
 	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return BRLCAD_HELP;
+	return GED_HELP;
     }
 
     if (3 < argc) {
 	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return BRLCAD_ERROR;
+	return GED_ERROR;
     }
 
     pathListNoLeaf = 0;
@@ -77,10 +77,10 @@ ged_pathlist(struct ged *gedp, int argc, const char *argv[])
 		     &gedp->ged_wdbp->wdb_initial_tree_state,
 		     0, 0, ged_pathlist_leaf_func, (genptr_t)gedp) < 0) {
 	bu_vls_printf(&gedp->ged_result_str, "ged_pathlist: db_walk_tree() error");
-	return BRLCAD_ERROR;
+	return GED_ERROR;
     }
 
-    return BRLCAD_OK;
+    return GED_OK;
 }
 
 /*

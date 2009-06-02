@@ -58,11 +58,11 @@ ged_solids_on_ray(struct ged *gedp, int argc, const char *argv[])
     vect_t			unit_H, unit_V;
     static const char *usage = "[h v]";
 
-    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
-    GED_CHECK_READ_ONLY(gedp, BRLCAD_ERROR);
-    GED_CHECK_DRAWABLE(gedp, BRLCAD_ERROR);
-    GED_CHECK_VIEW(gedp, BRLCAD_ERROR);
-    GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
+    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
+    GED_CHECK_READ_ONLY(gedp, GED_ERROR);
+    GED_CHECK_DRAWABLE(gedp, GED_ERROR);
+    GED_CHECK_VIEW(gedp, GED_ERROR);
+    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
 
     /* initialize result */
     bu_vls_trunc(&gedp->ged_result_str, 0);
@@ -70,24 +70,24 @@ ged_solids_on_ray(struct ged *gedp, int argc, const char *argv[])
     /* must be wanting help */
     if (argc == 1) {
 	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return BRLCAD_HELP;
+	return GED_HELP;
     }
 
     if (argc != 1 && argc != 3) {
 	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return BRLCAD_ERROR;
+	return GED_ERROR;
     }
 
     if (argc == 3 &&
 	(sscanf(argv[1], "%d", &h) != 1 ||
 	 sscanf(argv[2], "%d", &v) != 1)) {
 	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return BRLCAD_ERROR;
+	return GED_ERROR;
     }
 
     if ((int)GED_VMIN > h || h > (int)GED_VMAX || (int)GED_VMIN > v || v > (int)GED_VMAX) {
 	bu_vls_printf(&gedp->ged_result_str, "Screen coordinates out of range\nMust be between +/-2048");
-	return BRLCAD_ERROR;
+	return GED_ERROR;
     }
 
     VSET(ray_orig, -gedp->ged_gvp->gv_center[MDX],
@@ -158,7 +158,7 @@ ged_solids_on_ray(struct ged *gedp, int argc, const char *argv[])
 
     if (snames == 0) {
 	bu_vls_printf(&gedp->ged_result_str, "Error executing ged_skewer_solids: ");
-	return (BRLCAD_ERROR);
+	return (GED_ERROR);
     }
 
     for (i = 0; snames[i] != 0; ++i)
@@ -166,7 +166,7 @@ ged_solids_on_ray(struct ged *gedp, int argc, const char *argv[])
 
     bu_free((genptr_t) snames, "solid names");
 
-    return BRLCAD_OK;
+    return GED_OK;
 }
 
 

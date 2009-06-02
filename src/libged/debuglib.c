@@ -39,15 +39,15 @@ ged_debuglib(struct ged *gedp, int argc, const char *argv[])
     fastf_t size;
     static const char *usage = "[hex_code]";
 
-    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
-    GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
+    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
+    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
 
     /* initialize result */
     bu_vls_trunc(&gedp->ged_result_str, 0);
 
     if (argc > 2) {
 	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return BRLCAD_ERROR;
+	return GED_ERROR;
     }
 
     /* get librt's debug bit vector */
@@ -58,7 +58,7 @@ ged_debuglib(struct ged *gedp, int argc, const char *argv[])
 	/* set librt's debug bit vector */
 	if (sscanf(argv[1], "%x", (unsigned int *)&rt_g.debug) != 1) {
 	    bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	    return BRLCAD_ERROR;
+	    return GED_ERROR;
 	}
 
 	if (RT_G_DEBUG) bu_debug |= BU_DEBUG_COREDUMP;
@@ -67,7 +67,7 @@ ged_debuglib(struct ged *gedp, int argc, const char *argv[])
     bu_vls_printb(&gedp->ged_result_str, "librt RT_G_DEBUG", RT_G_DEBUG, DEBUG_FORMAT);
     bu_vls_printf(&gedp->ged_result_str, "\n");
 
-    return BRLCAD_OK;
+    return GED_OK;
 }
 
 

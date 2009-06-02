@@ -108,10 +108,10 @@ ged_rtcheck(struct ged *gedp, int argc, const char *argv[])
     const char *bin;
     char rtcheck[256] = {0};
 
-    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
-    GED_CHECK_DRAWABLE(gedp, BRLCAD_ERROR);
-    GED_CHECK_VIEW(gedp, BRLCAD_ERROR);
-    GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
+    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
+    GED_CHECK_DRAWABLE(gedp, GED_ERROR);
+    GED_CHECK_VIEW(gedp, GED_ERROR);
+    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
 
     /* initialize result */
     bu_vls_trunc(&gedp->ged_result_str, 0);
@@ -220,7 +220,7 @@ ged_rtcheck(struct ged *gedp, int argc, const char *argv[])
 			  ged_rtcheck_output_handler,
 			  (ClientData)rtcop);
 
-    return BRLCAD_OK;
+    return GED_OK;
 #else
     /* _WIN32 */
     vp = &gedp->ged_gdp->gd_rt_cmd[0];
@@ -361,7 +361,7 @@ ged_rtcheck(struct ged *gedp, int argc, const char *argv[])
 			     TCL_READABLE,
 			     ged_rtcheck_output_handler,
 			     (ClientData)rtcop);
-    return BRLCAD_OK;
+    return GED_OK;
 #endif
 }
 

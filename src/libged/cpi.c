@@ -45,9 +45,9 @@ ged_cpi(struct ged *gedp, int argc, const char *argv[])
     int id;
     static const char *usage = "from to";
 
-    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
-    GED_CHECK_READ_ONLY(gedp, BRLCAD_ERROR);
-    GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
+    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
+    GED_CHECK_READ_ONLY(gedp, GED_ERROR);
+    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
 
     /* initialize result */
     bu_vls_trunc(&gedp->ged_result_str, 0);
@@ -55,34 +55,34 @@ ged_cpi(struct ged *gedp, int argc, const char *argv[])
     /* must be wanting help */
     if (argc == 1) {
 	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return BRLCAD_HELP;
+	return GED_HELP;
     }
 
     if (argc != 3) {
 	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return BRLCAD_ERROR;
+	return GED_ERROR;
     }
 
     if ( (proto = db_lookup( gedp->ged_wdbp->dbip,  argv[1], LOOKUP_NOISY )) == DIR_NULL ) {
 	bu_vls_printf(&gedp->ged_result_str, "%s: %s does not exist!!\n", argv[0], argv[1]);
-	return BRLCAD_ERROR;
+	return GED_ERROR;
     }
 
     if ( db_lookup( gedp->ged_wdbp->dbip,  argv[2], LOOKUP_QUIET ) != DIR_NULL )  {
 	bu_vls_printf(&gedp->ged_result_str, "%s: %s already exists!!\n", argv[0], argv[2]);
-	return BRLCAD_ERROR;
+	return GED_ERROR;
     }
 
     if ( (id = rt_db_get_internal( &internal, proto, gedp->ged_wdbp->dbip, (fastf_t *)NULL, &rt_uniresource )) < 0 )  {
 	bu_vls_printf(&gedp->ged_result_str, "%s: Database read error, aborting\n", argv[0]);
-	return BRLCAD_ERROR;
+	return GED_ERROR;
     }
     /* make sure it is a TGC */
     if ( id != ID_TGC )
     {
 	bu_vls_printf(&gedp->ged_result_str, "%s: %s is not a cylinder\n", argv[0], argv[1]);
 	rt_db_free_internal( &internal, &rt_uniresource );
-	return BRLCAD_ERROR;
+	return GED_ERROR;
     }
     tgc_ip = (struct rt_tgc_internal *)internal.idb_ptr;
 
@@ -91,15 +91,15 @@ ged_cpi(struct ged *gedp, int argc, const char *argv[])
 
     if ( (dp = db_diradd( gedp->ged_wdbp->dbip, argv[2], -1L, 0, proto->d_flags, &proto->d_minor_type)) == DIR_NULL )  {
 	bu_vls_printf(&gedp->ged_result_str, "%s: An error has occured while adding a new object to the database.\n", argv[0]);
-	return BRLCAD_ERROR;
+	return GED_ERROR;
     }
 
     if ( rt_db_put_internal( dp, gedp->ged_wdbp->dbip, &internal, &rt_uniresource ) < 0 )  {
 	bu_vls_printf(&gedp->ged_result_str, "%s: Database write error, aborting\n", argv[0]);
-	return BRLCAD_ERROR;
+	return GED_ERROR;
     }
 
-    return BRLCAD_OK;
+    return GED_OK;
 }
 
 /*

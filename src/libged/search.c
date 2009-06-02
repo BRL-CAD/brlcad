@@ -297,14 +297,14 @@ int
 c_openparen(char *ignore, char ***ignored, int unused, PLAN **resultplan)
 {
     (*resultplan) = (palloc(N_OPENPAREN, (int (*)(PLAN *, struct db_full_path *, struct rt_wdb *))-1));
-    return BRLCAD_OK;
+    return GED_OK;
 }
 
 int
 c_closeparen(char *ignore, char ***ignored, int unused, PLAN **resultplan)
 {
     (*resultplan) = (palloc(N_CLOSEPAREN, (int (*)(PLAN *, struct db_full_path *, struct rt_wdb *))-1));
-    return BRLCAD_OK;
+    return GED_OK;
 }
 
 
@@ -328,7 +328,7 @@ int
 c_not(char *ignore, char ***ignored, int unused, PLAN **resultplan)
 {
     (*resultplan) =  (palloc(N_NOT, f_not));
-    return BRLCAD_OK;
+    return GED_OK;
 }
 
 
@@ -371,7 +371,7 @@ int
 c_above(char *ignore, char ***ignored, int unused, PLAN **resultplan)
 {
     (*resultplan) =  (palloc(N_ABOVE, f_above));
-    return BRLCAD_OK;
+    return GED_OK;
 }
 
 
@@ -576,7 +576,7 @@ int
 c_below(char *ignore, char ***ignored, int unused, PLAN **resultplan)
 {
     (*resultplan) =  (palloc(N_BELOW, f_below));
-    return BRLCAD_OK;
+    return GED_OK;
 }
 
 
@@ -607,7 +607,7 @@ int
 c_or(char *ignore, char ***ignored, int unused, PLAN **resultplan)
 {
     (*resultplan) = (palloc(N_OR, f_or));
-    return BRLCAD_OK;
+    return GED_OK;
 }
 
 
@@ -631,7 +631,7 @@ c_name(char *pattern, char ***ignored, int unused, PLAN **resultplan)
     new = palloc(N_NAME, f_name);
     new->c_data = pattern;
     (*resultplan) = new;
-    return BRLCAD_OK;
+    return GED_OK;
 }
 
 
@@ -655,7 +655,7 @@ c_iname(char *pattern, char ***ignored, int unused, PLAN **resultplan)
     new = palloc(N_INAME, f_iname);
     new->ci_data = pattern;
     (*resultplan) = new;
-    return BRLCAD_OK;
+    return GED_OK;
 }
 
 
@@ -687,13 +687,13 @@ c_regex_common(enum ntype type, char *regexp, int icase, PLAN **resultplan)
     }
     if (rv != 0) {
 	bu_log("Error - regex compile did not succeed: %s\n", regexp);
-	return BRLCAD_ERROR;
+	return GED_ERROR;
     }
     new = palloc(type, f_regex);
     new->regexp_data = reg;
     (*resultplan) = new;
     regfree(&reg);
-    return BRLCAD_OK;
+    return GED_OK;
 }
 
 int
@@ -959,7 +959,7 @@ c_attr(char *pattern, char ***ignored, int unused, PLAN **resultplan)
     new = palloc(N_ATTR, f_attr);
     new->attr_data = pattern;
     (*resultplan) = new;
-    return BRLCAD_OK;
+    return GED_OK;
 }
 
 
@@ -1018,7 +1018,7 @@ c_stdattr(char *pattern, char ***ignored, int unused, PLAN **resultplan)
 
     new = palloc(N_STDATTR, f_stdattr);
     (*resultplan) = new;
-    return BRLCAD_OK;
+    return GED_OK;
 }
 
 
@@ -1185,7 +1185,7 @@ c_type(char *pattern, char ***ignored, int unused, PLAN **resultplan)
     new = palloc(N_TYPE, f_type);
     new->type_data = pattern;
     (*resultplan) = new;
-    return BRLCAD_OK;
+    return GED_OK;
 }
 
 /*
@@ -1218,7 +1218,7 @@ c_maxdepth(char *pattern, char ***ignored, int unused, PLAN **resultplan)
     new = palloc(N_MAXDEPTH, f_maxdepth);
     new->max_data = atoi(pattern);
     (*resultplan) = new;
-    return BRLCAD_OK;
+    return GED_OK;
 }
 
 /*
@@ -1251,7 +1251,7 @@ c_mindepth(char *pattern, char ***ignored, int unused, PLAN **resultplan)
     new = palloc(N_MINDEPTH, f_mindepth);
     new->min_data = atoi(pattern);
     (*resultplan) = new;
-    return BRLCAD_OK;
+    return GED_OK;
 }
 
 
@@ -1377,7 +1377,7 @@ c_nnodes(char *pattern, char ***ignored, int unused, PLAN **resultplan)
     new = palloc(N_NNODES, f_nnodes);
     new->node_data = pattern;
    (*resultplan) = new;
-    return BRLCAD_OK;
+    return GED_OK;
 }
 
 
@@ -1403,7 +1403,7 @@ c_path(char *pattern, char ***ignored, int unused, PLAN **resultplan)
     new = palloc(N_PATH, f_path);
     new->path_data = pattern;
     (*resultplan) = new;
-    return BRLCAD_OK;
+    return GED_OK;
 }
 
 
@@ -1436,7 +1436,7 @@ c_print(char *ignore, char ***ignored, int unused, PLAN **resultplan)
     isoutput = 1;
 
     (*resultplan) = palloc(N_PRINT, f_print);
-    return BRLCAD_OK;
+    return GED_OK;
 }
 
 int
@@ -1445,7 +1445,7 @@ c_print0(char *ignore, char ***ignored, int unused, PLAN **resultplan)
     isoutput = 1;
 
     (*resultplan) = palloc(N_PRINT0, f_print0);
-    return BRLCAD_OK;
+    return GED_OK;
 }
 
 
@@ -1468,12 +1468,12 @@ find_create(char ***argvp, PLAN **resultplan)
 
     if ((p = option(*argv)) == NULL) {
 	bu_log("%s: unknown option passed to find_create\n", *argv);
-	return BRLCAD_ERROR;
+	return GED_ERROR;
     }
     ++argv;
     if (p->flags & (O_ARGV|O_ARGVP) && !*argv) {
 	bu_log("%s: requires additional arguments\n", *--argv);
-	return BRLCAD_ERROR;
+	return GED_ERROR;
     }
     switch(p->flags) {
 	case O_NONE:
@@ -1489,11 +1489,11 @@ find_create(char ***argvp, PLAN **resultplan)
 	    (p->create)(NULL, &argv, p->token == N_OK, &new);
 	    break;
 	default:
-	    return BRLCAD_OK;
+	    return GED_OK;
     }
     *argvp = argv;
     (*resultplan) = new;
-    return BRLCAD_OK;
+    return GED_OK;
 }
 
 OPTION *
@@ -1543,12 +1543,12 @@ yankexpr(PLAN **planp, PLAN **resultplan)          /* pointer to top of plan (mo
     PLAN *tail;             /* pointer to tail of subplan */
     PLAN *subplan;          /* pointer to head of ( ) expression */
     extern int f_expr(PLAN *, struct db_full_path *, struct rt_wdb *);
-    int error_return = BRLCAD_OK;
+    int error_return = GED_OK;
 
     /* first pull the top node from the plan */
     if ((node = yanknode(planp)) == NULL) {
 	(*resultplan) = NULL;
-	return BRLCAD_OK;
+	return GED_OK;
     }
     /*
      * If the node is an '(' then we recursively slurp up expressions
@@ -1558,10 +1558,10 @@ yankexpr(PLAN **planp, PLAN **resultplan)          /* pointer to top of plan (mo
      */
     if (node->type == N_OPENPAREN)
 	for (tail = subplan = NULL;;) {
-	    if ((error_return = yankexpr(planp, &next)) != BRLCAD_OK) return BRLCAD_ERROR;
+	    if ((error_return = yankexpr(planp, &next)) != GED_OK) return GED_ERROR;
 	    if (next == NULL) {
 		bu_log("(: missing closing ')'\n");
-		return BRLCAD_ERROR;
+		return GED_ERROR;
 	    }
 	    /*
 	     * If we find a closing ')' we store the collected
@@ -1573,7 +1573,7 @@ yankexpr(PLAN **planp, PLAN **resultplan)          /* pointer to top of plan (mo
 	    if (next->type == N_CLOSEPAREN) {
 		if (subplan == NULL) {
 		    bu_log("(): empty inner expression");
-		    return BRLCAD_ERROR;
+		    return GED_ERROR;
 		}
 		node->p_data[0] = subplan;
 		node->type = N_EXPR;
@@ -1590,10 +1590,10 @@ yankexpr(PLAN **planp, PLAN **resultplan)          /* pointer to top of plan (mo
 	    }
 	}
     (*resultplan) = node;
-    if (!(error_return == BRLCAD_OK)) {
-	return BRLCAD_ERROR;
+    if (!(error_return == GED_OK)) {
+	return GED_ERROR;
     } else {
-	return BRLCAD_OK;
+	return GED_OK;
     }
 }
 
@@ -1615,7 +1615,7 @@ paren_squish(PLAN *plan, PLAN **resultplan)                /* plan with ( ) node
      * the basic idea is to have yankexpr do all our work and just
      * collect it's results together.
      */
-    if (yankexpr(&plan, &expr) != BRLCAD_OK) return BRLCAD_ERROR;
+    if (yankexpr(&plan, &expr) != GED_OK) return GED_ERROR;
     while (expr != NULL) {
 	/*
 	 * if we find an unclaimed ')' it means there is a missing
@@ -1623,7 +1623,7 @@ paren_squish(PLAN *plan, PLAN **resultplan)                /* plan with ( ) node
 	 */
 	if (expr->type == N_CLOSEPAREN) {
 	    bu_log("): no beginning '('");
-	    return BRLCAD_ERROR;
+	    return GED_ERROR;
 	}
 
 	/* add the expression to our result plan */
@@ -1634,10 +1634,10 @@ paren_squish(PLAN *plan, PLAN **resultplan)                /* plan with ( ) node
 	    tail = expr;
 	}
 	tail->next = NULL;
-	if (yankexpr(&plan, &expr) != BRLCAD_OK) return BRLCAD_ERROR;
+	if (yankexpr(&plan, &expr) != GED_OK) return GED_ERROR;
     }
     (*resultplan) = result;
-    return BRLCAD_OK;
+    return GED_OK;
 }
 
 /*
@@ -1660,7 +1660,7 @@ not_squish(PLAN *plan, PLAN **resultplan)          /* plan to process */
 	 * the expr subplan.
 	 */
 	if (next->type == N_EXPR)
-	    if (not_squish(next->p_data[0], &(next->p_data[0])) != BRLCAD_OK) return BRLCAD_ERROR;
+	    if (not_squish(next->p_data[0], &(next->p_data[0])) != GED_OK) return GED_ERROR;
 
 	/*
 	 * if we encounter a not, then snag the next node and place
@@ -1677,14 +1677,14 @@ not_squish(PLAN *plan, PLAN **resultplan)          /* plan to process */
 	    }
 	    if (node == NULL) {
 		bu_log("!: no following expression");
-		return BRLCAD_ERROR;
+		return GED_ERROR;
 	    }
 	    if (node->type == N_OR) {
 		bu_log("!: nothing between ! and -o");
-		return BRLCAD_ERROR;
+		return GED_ERROR;
 	    }
 	    if (node->type == N_EXPR)
-		if (not_squish(node, &node) != BRLCAD_OK) return BRLCAD_ERROR;
+		if (not_squish(node, &node) != GED_OK) return GED_ERROR;
 	    if (notlevel % 2 != 1)
 		next = node;
 	    else
@@ -1701,7 +1701,7 @@ not_squish(PLAN *plan, PLAN **resultplan)          /* plan to process */
 	tail->next = NULL;
     }
     (*resultplan) = result;
-    return BRLCAD_OK;
+    return GED_OK;
 }
 
 
@@ -1725,7 +1725,7 @@ above_squish(PLAN *plan, PLAN **resultplan)          /* plan to process */
 	 * the expr subplan.
 	 */
 	if (next->type == N_EXPR)
-	    if (above_squish(next->ab_data[0], &(next->ab_data[0])) != BRLCAD_OK) return BRLCAD_ERROR;
+	    if (above_squish(next->ab_data[0], &(next->ab_data[0])) != GED_OK) return GED_ERROR;
 
 	/*
 	 * if we encounter an above, then snag the next node and place
@@ -1736,18 +1736,18 @@ above_squish(PLAN *plan, PLAN **resultplan)          /* plan to process */
 	    node = yanknode(&plan);
 	    if (node != NULL && node->type == N_ABOVE) {
 		bu_log("Error - repeated -above node in plan.\n");
-		return BRLCAD_ERROR;
+		return GED_ERROR;
 	    }
 	    if (node == NULL) {
 		bu_log("-above: no following expression");
-		return BRLCAD_ERROR;
+		return GED_ERROR;
 	    }
 	    if (node->type == N_OR) {
 		bu_log("-above: nothing between -above and -o");
-		return BRLCAD_ERROR;
+		return GED_ERROR;
 	    }
 	    if (node->type == N_EXPR)
-		if (above_squish(node, &node) != BRLCAD_OK) return BRLCAD_ERROR;
+		if (above_squish(node, &node) != GED_OK) return GED_ERROR;
 	    /*Made it*/
 	    next->ab_data[0] = node;
 	}
@@ -1762,7 +1762,7 @@ above_squish(PLAN *plan, PLAN **resultplan)          /* plan to process */
 	tail->next = NULL;
     }
     (*resultplan) = result;
-    return BRLCAD_OK;
+    return GED_OK;
 }
 
 /*
@@ -1785,7 +1785,7 @@ below_squish(PLAN *plan, PLAN **resultplan)          /* plan to process */
 	 * the expr subplan.
 	 */
 	if (next->type == N_EXPR)
-	    if (below_squish(next->bl_data[0], &(next->bl_data[0])) != BRLCAD_OK) return BRLCAD_ERROR;
+	    if (below_squish(next->bl_data[0], &(next->bl_data[0])) != GED_OK) return GED_ERROR;
 
 	/*
 	 * if we encounter a not, then snag the next node and place
@@ -1796,18 +1796,18 @@ below_squish(PLAN *plan, PLAN **resultplan)          /* plan to process */
 	    node = yanknode(&plan);
 	    if (node != NULL && node->type == N_BELOW) {
 		bu_log("Error - repeated -below node in plan.\n");
-		return BRLCAD_ERROR;
+		return GED_ERROR;
 	    }
 	    if (node == NULL) {
 		bu_log("-below: no following expression");
-		return BRLCAD_ERROR;
+		return GED_ERROR;
 	    }
 	    if (node->type == N_OR) {
 		bu_log("-below: nothing between -below and -o");
-		return BRLCAD_ERROR;
+		return GED_ERROR;
 	    }
 	    if (node->type == N_EXPR)
-		if (below_squish(node, &node) != BRLCAD_OK) return BRLCAD_ERROR;
+		if (below_squish(node, &node) != GED_OK) return GED_ERROR;
 	    /* Made it */
 	    next->bl_data[0] = node;
 	}
@@ -1822,7 +1822,7 @@ below_squish(PLAN *plan, PLAN **resultplan)          /* plan to process */
 	tail->next = NULL;
     }
     (*resultplan) = result;
-    return BRLCAD_OK;
+    return GED_OK;
 }
 
 
@@ -1845,11 +1845,11 @@ or_squish(PLAN *plan, PLAN **resultplan)           /* plan with ors to be squish
 	 * the expr subplan.
 	 */
 	if (next->type == N_EXPR)
-	    if(or_squish(next->p_data[0], &(next->p_data[0])) != BRLCAD_OK) return BRLCAD_ERROR;
+	    if(or_squish(next->p_data[0], &(next->p_data[0])) != GED_OK) return GED_ERROR;
 
 	/* if we encounter a not then look for not's in the subplan */
 	if (next->type == N_NOT)
-	    if(or_squish(next->p_data[0], &(next->p_data[0])) != BRLCAD_OK) return BRLCAD_ERROR;
+	    if(or_squish(next->p_data[0], &(next->p_data[0])) != GED_OK) return GED_ERROR;
 
 	/*
 	 * if we encounter an or, then place our collected plan in the
@@ -1859,16 +1859,16 @@ or_squish(PLAN *plan, PLAN **resultplan)           /* plan with ors to be squish
 	if (next->type == N_OR) {
 	    if (result == NULL) {
 		bu_log("-o: no expression before -o");
-		return BRLCAD_ERROR;
+		return GED_ERROR;
 	    }
 	    next->p_data[0] = result;
-	    if(or_squish(plan, &(next->p_data[1]))  != BRLCAD_OK) return BRLCAD_ERROR;
+	    if(or_squish(plan, &(next->p_data[1]))  != GED_OK) return GED_ERROR;
 	    if (next->p_data[1] == NULL) {
 		bu_log("-o: no expression after -o");
-		return BRLCAD_ERROR;
+		return GED_ERROR;
 	    }
 	    (*resultplan) = next;
-	    return BRLCAD_OK;
+	    return GED_OK;
 	}
 
 	/* add the node to our result plan */
@@ -1881,7 +1881,7 @@ or_squish(PLAN *plan, PLAN **resultplan)           /* plan with ors to be squish
 	tail->next = NULL;
     }
     (*resultplan) = result;
-    return BRLCAD_OK;
+    return GED_OK;
 }
 
 
@@ -1912,7 +1912,7 @@ find_formplan(char **argv, PLAN **resultplan)
      * plan->next pointer.
      */
     for (plan = tail = NULL; *argv;) {
-	if (find_create(&argv, &new) != BRLCAD_OK) return BRLCAD_ERROR;
+	if (find_create(&argv, &new) != GED_OK) return GED_ERROR;
 	if (!(new))
 	    continue;
 	if (plan == NULL)
@@ -1968,13 +1968,13 @@ find_formplan(char **argv, PLAN **resultplan)
      * operators are handled in order of precedence.
      */
 
-    if(paren_squish(plan, &plan) != BRLCAD_OK) return BRLCAD_ERROR;              /* ()'s */
-    if(above_squish(plan, &plan) != BRLCAD_OK) return BRLCAD_ERROR;                /* above's */
-    if(below_squish(plan, &plan) != BRLCAD_OK) return BRLCAD_ERROR;                /* below's */
-    if(not_squish(plan, &plan) != BRLCAD_OK) return BRLCAD_ERROR;                /* !'s */
-    if(or_squish(plan, &plan) != BRLCAD_OK) return BRLCAD_ERROR;                 /* -o's */
+    if(paren_squish(plan, &plan) != GED_OK) return GED_ERROR;              /* ()'s */
+    if(above_squish(plan, &plan) != GED_OK) return GED_ERROR;                /* above's */
+    if(below_squish(plan, &plan) != GED_OK) return GED_ERROR;                /* below's */
+    if(not_squish(plan, &plan) != GED_OK) return GED_ERROR;                /* !'s */
+    if(or_squish(plan, &plan) != GED_OK) return GED_ERROR;                 /* -o's */
     (*resultplan) = plan;
-    return BRLCAD_OK;
+    return GED_OK;
 }
 
 void
@@ -2046,7 +2046,7 @@ wdb_search_cmd(struct rt_wdb      *wdbp,
 		return TCL_ERROR;
 	    }
 	    isoutput = 0;
-	    if (find_formplan(&argv[2], &dbplan) != BRLCAD_OK) {
+	    if (find_formplan(&argv[2], &dbplan) != GED_OK) {
 		Tcl_AppendResult(interp, "Failed to build find plan.\n", (char *)NULL);
 		db_free_full_path(&dfp);
 		return TCL_ERROR;
@@ -2056,7 +2056,7 @@ wdb_search_cmd(struct rt_wdb      *wdbp,
 	} else {
 	    if (strcmp(argv[1],".") == 0) {
 		isoutput = 0;
-		if (find_formplan(&argv[2], &dbplan) != BRLCAD_OK) {
+		if (find_formplan(&argv[2], &dbplan) != GED_OK) {
 		    Tcl_AppendResult(interp, "Failed to build find plan.\n", (char *)NULL);
 		    return TCL_ERROR;
 		} else {
@@ -2069,14 +2069,14 @@ wdb_search_cmd(struct rt_wdb      *wdbp,
 			    db_string_to_path(&dfp, wdbp->dbip, dp->d_namep);
 			    isoutput = 0;
 			    if ( (argv[1][0] == '-') || (argv[1][0] == '!')  || (argv[1][0] == '(') ) {
-				if (find_formplan(&argv[1], &dbplan) != BRLCAD_OK) {
+				if (find_formplan(&argv[1], &dbplan) != GED_OK) {
 				    Tcl_AppendResult(interp, "Failed to build find plan.\n", (char *)NULL);
 				    return TCL_ERROR;
 				} else {
 				    find_execute(dbplan, &dfp, wdbp, 0);
 				}
 			    } else {
-				if (find_formplan(&argv[2], &dbplan) != BRLCAD_OK) {
+				if (find_formplan(&argv[2], &dbplan) != GED_OK) {
 				    Tcl_AppendResult(interp, "Failed to build find plan.\n", (char *)NULL);
 				    return TCL_ERROR;
 				} else {

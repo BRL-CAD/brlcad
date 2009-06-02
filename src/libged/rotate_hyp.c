@@ -44,7 +44,7 @@ ged_rotate_hyp(struct ged *gedp, struct rt_hyp_internal *hyp, const char *attrib
 
     if (attribute[1] != '\0') {
 	bu_vls_printf(&gedp->ged_result_str, "bad hyp attribute - %s", attribute);
-	return BRLCAD_ERROR;
+	return GED_ERROR;
     }
 
     switch (attribute[0]) {
@@ -54,10 +54,10 @@ ged_rotate_hyp(struct ged *gedp, struct rt_hyp_internal *hyp, const char *attrib
 	break;
     default:
 	bu_vls_printf(&gedp->ged_result_str, "bad hyp attribute - %s", attribute);
-	return BRLCAD_ERROR;
+	return GED_ERROR;
     }
 
-    return BRLCAD_OK;
+    return GED_OK;
 }
 
 

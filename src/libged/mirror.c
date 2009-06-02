@@ -44,9 +44,9 @@ ged_mirror(struct ged *gedp, int argc, const char *argv[])
     struct rt_db_internal internal;
     register struct directory *dp;
 
-    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
-    GED_CHECK_READ_ONLY(gedp, BRLCAD_ERROR);
-    GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
+    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
+    GED_CHECK_READ_ONLY(gedp, GED_ERROR);
+    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
 
     /* initialize result */
     bu_vls_trunc(&gedp->ged_result_str, 0);
@@ -54,7 +54,7 @@ ged_mirror(struct ged *gedp, int argc, const char *argv[])
     /* must be wanting help */
     if (argc == 1) {
 	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return BRLCAD_HELP;
+	return GED_HELP;
     }
 
     bu_optind = 1;
@@ -67,7 +67,7 @@ ged_mirror(struct ged *gedp, int argc, const char *argv[])
 			   &mirror_pt[Y],
 			   &mirror_pt[Z]) != 3) {
 		    bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-		    return BRLCAD_ERROR;
+		    return GED_ERROR;
 		}
 		break;
 	    case 'd':
@@ -77,14 +77,14 @@ ged_mirror(struct ged *gedp, int argc, const char *argv[])
 			   &mirror_dir[Y],
 			   &mirror_dir[Z]) != 3) {
 		    bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-		    return BRLCAD_ERROR;
+		    return GED_ERROR;
 		}
 		break;
 	    case 'o':
 	    case 'O':
 		if (sscanf(bu_optarg, "%lf", &mirror_offset) != 1) {
 		    bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-		    return BRLCAD_ERROR;
+		    return GED_ERROR;
 		}
 		break;
 	    case 'x':
@@ -102,10 +102,10 @@ ged_mirror(struct ged *gedp, int argc, const char *argv[])
 	    case 'h':
 	    case 'H':
 		bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-		return BRLCAD_HELP;
+		return GED_HELP;
 	    default:
 		bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-		return BRLCAD_ERROR;
+		return GED_ERROR;
 		break;
 	}
     }
@@ -114,7 +114,7 @@ ged_mirror(struct ged *gedp, int argc, const char *argv[])
 
     if (argc < 2 || argc > 4) {
 	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return BRLCAD_ERROR;
+	return GED_ERROR;
     } else if (argc == 3) {
 	/* support a trailing x|y|z option as classic command
 	 * behavior.  THIS IS INTENTIONALLY UNDOCUMENTED.  if users
@@ -135,7 +135,7 @@ ged_mirror(struct ged *gedp, int argc, const char *argv[])
 		break;
 	    default:
 		bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-		return BRLCAD_ERROR;
+		return GED_ERROR;
 		break;
 	}
     }
@@ -143,20 +143,20 @@ ged_mirror(struct ged *gedp, int argc, const char *argv[])
     /* make sure object mirroring to does not already exist */
     if (db_lookup(gedp->ged_wdbp->dbip, argv[bu_optind+1], LOOKUP_QUIET) != DIR_NULL) {
 	bu_vls_printf(&gedp->ged_result_str, "%s already exists\n", argv[bu_optind+1]);
-	return BRLCAD_ERROR;
+	return GED_ERROR;
     }
 
     /* look up the object being mirrored */
     if ((dp = db_lookup(gedp->ged_wdbp->dbip, argv[bu_optind], LOOKUP_NOISY)) == DIR_NULL) {
 	bu_vls_printf(&gedp->ged_result_str, "Unable to find solid [%s]\n", argv[bu_optind]);
-	return BRLCAD_ERROR;
+	return GED_ERROR;
     }
 
     /* get object being mirrored */
     ret = rt_db_get_internal(&internal, dp, gedp->ged_wdbp->dbip, NULL, gedp->ged_wdbp->wdb_resp);
     if (ret < 0) {
 	bu_vls_printf(&gedp->ged_result_str, "Unable to load solid [%s]\n", argv[bu_optind]);
-	return BRLCAD_ERROR;
+	return GED_ERROR;
     }
 
     mirror_offset *= gedp->ged_wdbp->dbip->dbi_local2base;
@@ -171,18 +171,18 @@ ged_mirror(struct ged *gedp, int argc, const char *argv[])
 		   gedp->ged_wdbp->wdb_resp);
     if (ip == NULL) {
 	bu_vls_printf(&gedp->ged_result_str, "Unable to mirror [%s]", argv[bu_optind]);
-	return BRLCAD_ERROR;
+	return GED_ERROR;
     }
 
     /* add the mirrored object to the directory */
     if ((dp = db_diradd(gedp->ged_wdbp->dbip, argv[bu_optind+1], -1L, 0, dp->d_flags, (genptr_t)&ip->idb_type)) == DIR_NULL) {
 	bu_vls_printf(&gedp->ged_result_str, "Unable to add [%s] to the database directory", argv[bu_optind+1]);
-	return BRLCAD_ERROR;
+	return GED_ERROR;
     }
     /* save the mirrored object to disk */
     if (rt_db_put_internal(dp, gedp->ged_wdbp->dbip, ip, gedp->ged_wdbp->wdb_resp) < 0) {
 	bu_vls_printf(&gedp->ged_result_str, "Unable to store [%s] to the database", argv[bu_optind+1]);
-	return BRLCAD_ERROR;
+	return GED_ERROR;
     }
 
     /* draw the new object */
@@ -196,7 +196,7 @@ ged_mirror(struct ged *gedp, int argc, const char *argv[])
 	ged_view_update(gedp->ged_gvp);
     }
 
-    return BRLCAD_OK;
+    return GED_OK;
 }
 
 
