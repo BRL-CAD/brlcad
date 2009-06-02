@@ -158,11 +158,11 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\src\libged\binary.c"
+				RelativePath="..\..\..\src\libged\blast.c"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\src\libged\blast.c"
+				RelativePath="..\..\..\src\libged\bo.c"
 				>
 			</File>
 			<File

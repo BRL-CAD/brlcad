@@ -16,8 +16,8 @@ libged_nil_la_SOURCES = \
 	autoview.c \
 	bev.c \
 	bigE.c \
-	binary.c \
 	blast.c \
+	bo.c \
 	bot_condense.c \
 	bot_decimate.c \
 	bot_dump.c \
