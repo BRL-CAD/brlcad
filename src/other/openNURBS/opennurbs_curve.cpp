@@ -17,7 +17,10 @@
 #include "opennurbs.h"
 #include <assert.h>
 #include <list>
+
+/* FIXME: (assumedly) temporary for debugging purposes */
 #include "opennurbs_ext.h"
+
 
 ON_VIRTUAL_OBJECT_IMPLEMENT(ON_Curve,ON_Geometry,"4ED7D4D7-E947-11d3-BFE5-0010830122F0");
 
