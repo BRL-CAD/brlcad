@@ -559,7 +559,7 @@ static struct go_cmdtab go_cmds[] = {
     {"base2local",	(char *)0, MAXARGS, go_base2local, GED_FUNC_PTR_NULL},
     {"bg",	"vname [r g b]", MAXARGS, go_bg, GED_FUNC_PTR_NULL},
     {"blast",	(char *)0, MAXARGS, go_blast, GED_FUNC_PTR_NULL},
-    {"bo",	(char *)0, MAXARGS, go_pass_through_func, ged_binary},
+    {"bo",	(char *)0, MAXARGS, go_pass_through_func, ged_bo},
     {"bot_condense",	(char *)0, MAXARGS, go_pass_through_func, ged_bot_condense},
     {"bot_decimate",	(char *)0, MAXARGS, go_pass_through_func, ged_bot_decimate},
     {"bot_dump",	(char *)0, MAXARGS, go_pass_through_func, ged_bot_dump},
