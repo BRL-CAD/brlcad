@@ -119,10 +119,7 @@ ged_bev(struct ged *gedp, int argc, const char *argv[])
 	return GED_ERROR;
     }
 
-    if ( db_lookup( gedp->ged_wdbp->dbip, newname, LOOKUP_QUIET ) != DIR_NULL )  {
-	bu_vls_printf(&gedp->ged_result_str, "%s: solid '%s' already exists, aborting\n", cmdname, newname);
-	return GED_ERROR;
-    }
+    GED_CHECK_EXISTS(gedp, newname, LOOKUP_QUIET, GED_ERROR);
 
     bu_vls_printf(&gedp->ged_result_str,
 		  "%s:  tessellating primitives with tolerances a=%g, r=%g, n=%g\n",
@@ -279,17 +276,8 @@ ged_bev(struct ged *gedp, int argc, const char *argv[])
     intern.idb_ptr = (genptr_t)ged_nmg_model;
     ged_nmg_model = (struct model *)NULL;
 
-    if ( (dp=db_diradd( gedp->ged_wdbp->dbip, newname, -1L, 0, DIR_SOLID, (genptr_t)&intern.idb_type)) == DIR_NULL ) {
-	bu_vls_printf(&gedp->ged_result_str, "%s: Cannot add %s to directory\n", cmdname, newname);
-	return GED_ERROR;
-    }
-
-    if ( rt_db_put_internal( dp, gedp->ged_wdbp->dbip, &intern, &rt_uniresource ) < 0 )
-    {
-	rt_db_free_internal( &intern, &rt_uniresource );
-	bu_vls_printf(&gedp->ged_result_str, "%s: Database write error, aborting\n", cmdname);
-	return GED_ERROR;
-    }
+    GED_DB_DIRADD(gedp, dp, newname, -1L, 0, DIR_SOLID, (genptr_t)&intern.idb_type, GED_ERROR);
+    GED_DB_PUT_INTERNAL(gedp, dp, &intern, &rt_uniresource, GED_ERROR);
 
     tmp_tree->tr_d.td_r = (struct nmgregion *)NULL;
 

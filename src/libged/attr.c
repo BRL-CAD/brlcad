@@ -62,15 +62,9 @@ ged_attr(struct ged *gedp, int argc, const char *argv[])
 
     /* Verify that this wdb supports lookup operations
        (non-null dbip) */
-    if (gedp->ged_wdbp->dbip == 0) {
-	bu_vls_printf(&gedp->ged_result_str, "db does not support lookup operations");
-	return GED_ERROR;
-    }
+    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
 
-    if ((dp=db_lookup(gedp->ged_wdbp->dbip, argv[2], LOOKUP_QUIET)) == DIR_NULL) {
-	bu_vls_printf(&gedp->ged_result_str, "%s does not exist\n", argv[2]);
-	return GED_ERROR;
-    }
+    GED_DB_LOOKUP(gedp, dp, argv[2], LOOKUP_QUIET, GED_ERROR);
 
     bu_avs_init_empty(&avs);
     if (db5_get_attributes(gedp->ged_wdbp->dbip, &avs, dp)) {

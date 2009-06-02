@@ -84,6 +84,7 @@ ged_arced(struct ged *gedp, int argc, const char *argv[])
 	bu_vls_printf(&gedp->ged_result_str, "%s: not a combination", dp->d_namep);
 	return GED_ERROR;
     }
+    /* GED_DB_GET_INTERNAL(gedp, &intern, (fastf_t *)NULL, &rt_uniresource, GED_ERROR); */
     if (rt_db_get_internal(&intern, dp, gedp->ged_wdbp->dbip, (fastf_t *)NULL, &rt_uniresource) < 0) {
 	db_free_1anim(anp);
 	bu_vls_printf(&(gedp)->ged_result_str, "Database read error, aborting");
