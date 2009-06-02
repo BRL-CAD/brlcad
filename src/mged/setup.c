@@ -68,7 +68,7 @@ static struct cmdtab mged_cmdtab[] = {
     {"attr", cmd_ged_plain_wrapper, ged_attr},
     {"autoview", cmd_autoview, GED_FUNC_PTR_NULL},
     {"bev", cmd_ged_plain_wrapper, ged_bev},
-    {"bo", cmd_ged_plain_wrapper, ged_binary},
+    {"bo", cmd_ged_plain_wrapper, ged_bo},
 #if 0
     {"import_body", cmd_import_body, GED_FUNC_PTR_NULL},
     {"export_body", cmd_export_body, GED_FUNC_PTR_NULL},
