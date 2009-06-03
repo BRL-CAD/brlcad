@@ -237,7 +237,8 @@ brep_preprocess_trims(ON_BrepFace& face, SurfaceTree* tree) {
     double min[3],max[3];
 	
 	CurveTree* ct = new CurveTree(&face);
-	if (false) {
+//#define KCURVELETS
+#ifdef KCURVELETS
 		list<BRNode*> curvelets;
 		ct->getLeaves(curvelets);
 		
@@ -252,7 +253,7 @@ brep_preprocess_trims(ON_BrepFace& face, SurfaceTree* tree) {
 			BB_PLOT(min,max);
 		}
 		curvelets.clear();
-	}
+#endif
 	
     list<BBNode*> leaves;
     tree->getLeaves(leaves);
@@ -309,7 +310,7 @@ void plotsurfaceleafs(SurfaceTree* surf) {
 			COLOR_PLOT(255, 0, 255); 
 		}
 		
-		if (true) {
+		if (false) {
 			bb->GetBBox(min,max);
 		} else {
 			VSET(min,bb->m_u[0]+0.025,bb->m_v[0]+0.025,0.0);
@@ -381,8 +382,9 @@ brep_build_bvh(struct brep_specific* bs, struct rt_brep_internal* bi)
         TRACE1("Face: " << i);
 		bu_log("Prepping Face: %d of %d\n", i+1, faces.Count());
 		ON_BrepFace& face = faces[i];
-#if 0 // debugging hacks to look at specific faces
-		if ((i > 0) && ((i <= 6) ||(i >= 5))) {
+//#undefine KPLOT
+#ifdef KPLOT // debugging hacks to look at specific faces
+		if ((i == 0)) { // && ((i <= 6) ||(i >= 5))) {
 #endif
 		SurfaceTree* st = new SurfaceTree(&face);
 		face.m_face_user.p = st;
@@ -391,9 +393,9 @@ brep_build_bvh(struct brep_specific* bs, struct rt_brep_internal* bi)
 		* down a hierarchy from the brep bounding volume
 		*/
 		surface_trees.push_back(st);
-#if 0 // debugging hacks to look at specific faces
+#ifdef KPLOT // debugging hacks to look at specific faces
 			
-			if (false) { //plotting hacks i==0) {
+			if (true) { //plotting hacks i==0) {
 				plottrim(face);
 				plotsurfaceleafs(st);
 			}
@@ -402,7 +404,7 @@ brep_build_bvh(struct brep_specific* bs, struct rt_brep_internal* bi)
 #endif
 		brep_bvh_subdivide(bs->bvh, surface_trees);
 	}
-#if 0 // debugging hacks to look at specific faces
+#ifdef KPLOT // debugging hacks to look at specific faces
     (void)fclose(plot_file());
 #endif
     return 0;
@@ -1029,6 +1031,7 @@ utah_brep_intersect(const SubsurfaceBBNode* sbv, const ON_BrepFace* face, const 
      *
      */
     //if (converged && (t > 1.e-2) && (!utah_isTrimmed(ouv, face))) hit = true;
+    //if (converged && (t > 1.e-2) && (!((SubsurfaceBBNode*)sbv)->isTrimmed(ouv))) hit = true;
     if (converged && (t > 1.e-2)) hit = true;
 
     uv[0] = ouv.x;

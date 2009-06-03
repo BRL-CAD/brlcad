@@ -166,10 +166,12 @@ namespace brlcad {
 	CurveTree::curveBBox(const ON_Curve* curve, ON_Interval& t, bool isLeaf, bool innerTrim, const ON_BoundingBox& bb)
 	{
 	BRNode* node;
+	fastf_t vdot = 1.0;
+	
 	if (isLeaf) {
 		TRACE("creating leaf: u(" << u.Min() << "," << u.Max() <<
 		  ") v(" << v.Min() << "," << v.Max() << ")");
-		node = new SubcurveBRNode(curve,bb,m_face,t,innerTrim);
+		node = new SubcurveBRNode(curve,bb,m_face,t,vdot,innerTrim);
 	}
 	else
 		node = new BRNode(bb);

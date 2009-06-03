@@ -144,16 +144,18 @@ namespace brlcad {
 		SubcurveBANode(const ON_Curve* curve, const BA& node,
 					   const ON_BrepFace* face,
 					   const ON_Interval& t,
+					   fastf_t vdot,
 					   bool innerTrim = false,
 					   bool checkTrim = true,
 					   bool trimmed = false);
 		
 		bool intersectedBy(ON_Ray& ray, double* tnear = 0, double* tfar = 0);
 		bool isLeaf() const;
+		bool isTrimmed(const ON_2dPoint& uv) const;
 		bool doTrimming() const;
 		ON_2dPoint getClosestPointEstimate(const ON_3dPoint& pt);
 		ON_2dPoint getClosestPointEstimate(const ON_3dPoint& pt, ON_Interval& u, ON_Interval& v);
-		
+		fastf_t getLinearEstimateOfV( fastf_t u );
 		const ON_BrepFace* m_face;
 		const ON_Curve* m_trim;
 		/* curve domain */
@@ -165,6 +167,12 @@ namespace brlcad {
 		bool m_trimmed;
 		bool m_XIncreasing;
         bool m_innerTrim;
+	private:
+		fastf_t m_slope;
+		fastf_t m_vdot;
+		fastf_t m_bb_diag;
+		ON_3dPoint m_start;
+		ON_3dPoint m_end;
 	};
 
 	typedef BANode<ON_BoundingBox> BRNode;
@@ -375,17 +383,21 @@ namespace brlcad {
 	inline SubcurveBANode<BA>::SubcurveBANode(const ON_Curve* curve, const BA& node,
 						  const ON_BrepFace* face,
 						  const ON_Interval& t,
+						  fastf_t vdot,
 						  bool innerTrim,
 						  bool checkTrim,
 						  bool trimmed)
 	    : BANode<BA>(node), m_face(face), m_t(t), m_innerTrim(innerTrim), m_checkTrim(checkTrim), m_trimmed(trimmed) { 
-			double start = m_t[0];
-			double end = m_t[1];
-			if ( (curve->PointAt(end)[X] - curve->PointAt(start)[X]) > 0.0 ) {
+			m_start = curve->PointAt(m_t[0]);
+			m_end = curve->PointAt(m_t[1]);
+			if ( (m_end[X] - m_start[X]) > 0.0 ) {
 				m_XIncreasing = true;
 			} else {
 				m_XIncreasing = false;
 			}
+			m_slope = (m_end[Y] - m_start[Y])/(m_end[X] - m_start[X]);
+			m_bb_diag = DIST_PT_PT(m_start,m_end);
+			
 		}
 
 	template<class BA>
@@ -398,6 +410,31 @@ namespace brlcad {
 	inline bool
 	SubcurveBANode<BA>::isLeaf() const {
 	return true;
+	}
+
+	template<class BA>
+	inline bool
+	SubcurveBANode<BA>::isTrimmed(const ON_2dPoint& uv) const {
+	    if (m_checkTrim) {
+			fastf_t v = m_start[Y] + m_slope*(m_start[X] - uv[X]);
+			if (uv[Y] < v) {
+				if (m_XIncreasing) {
+					return true;
+				} else {
+					return false;
+				}
+			} else if (uv[Y] > v) {
+				if (!m_XIncreasing) {
+					return true;
+				} else {
+					return false;
+				}
+			} else {
+				return true;
+				}
+		} else {
+			return false;
+		}
 	}
 
 	template<class BA>
@@ -455,7 +492,14 @@ namespace brlcad {
 	TRACE("Closest: " << mindist << "; " << PT2(uvs[mini]));
 	return ON_2dPoint(uvs[mini][0], uvs[mini][1]);
 	}
-
+	
+	template<class BA>
+	fastf_t 
+	SubcurveBANode<BA>::getLinearEstimateOfV( fastf_t u ) {
+		fastf_t v = m_start[Y] + m_slope*(m_start[X] - u);
+		return v;
+	}
+	
     //--------------------------------------------------------------------------------
     // Bounding volume hierarchy classes
 
@@ -574,9 +618,11 @@ namespace brlcad {
 
 	bool intersectedBy(ON_Ray& ray, double* tnear = 0, double* tfar = 0);
 	bool isLeaf() const;
+	bool isTrimmed(const ON_2dPoint& uv);
 	bool doTrimming() const;
 	ON_2dPoint getClosestPointEstimate(const ON_3dPoint& pt);
 	ON_2dPoint getClosestPointEstimate(const ON_3dPoint& pt, ON_Interval& u, ON_Interval& v);
+	void getTrimsAbove(const ON_2dPoint& uv, list<BRNode*>& out_leaves);
 	bool prepTrims(CurveTree *ct);
 
 	const ON_BrepFace* m_face;
@@ -814,6 +860,46 @@ namespace brlcad {
 	return true;
     }
 
+	template<class BV>
+    inline bool
+    SubsurfaceBVNode<BV>::isTrimmed(const ON_2dPoint& uv) {
+		SubcurveBRNode* br;
+		list<BRNode*> trims;
+		point_t bmin,bmax;
+		
+		getTrimsAbove(uv,trims);
+		
+		if (trims.empty()) {
+			return true;
+		} else if (trims.size() == 1) {
+			br = dynamic_cast<SubcurveBRNode*>(*trims.begin());
+			return br->isTrimmed(uv);
+		} else {//find closest BB
+			list<BRNode*>::iterator i;
+			SubcurveBRNode* closest = NULL;
+			fastf_t dist;
+			for( i=trims.begin();i!=trims.end();i++) {
+				br = dynamic_cast<SubcurveBRNode*>(*i);
+				if (i == trims.begin()) {
+					dist = uv[Y] - br->getLinearEstimateOfV(uv[X]);
+					if (dist >= 0.0)
+						closest = br;
+				} else {
+					fastf_t v = uv[Y] - br->getLinearEstimateOfV(uv[X]);
+					if ((v >= 0.0) && (v < dist)) {
+						dist = v;
+						closest = br;
+					}
+				}
+			}
+			if (closest == NULL) {
+				return true;
+			} else {
+				return closest->isTrimmed(uv);
+			}
+		}
+	}
+
     template<class BV>
     inline bool
     SubsurfaceBVNode<BV>::doTrimming() const {
@@ -825,6 +911,21 @@ namespace brlcad {
     SubsurfaceBVNode<BV>::getClosestPointEstimate(const ON_3dPoint& pt) {
 	ON_Interval u, v;
 	return getClosestPointEstimate(pt, u, v);
+    }
+
+    template<class BV>
+    void
+    SubsurfaceBVNode<BV>::getTrimsAbove(const ON_2dPoint& uv, list<BRNode*>& out_leaves) {
+	    point_t bmin,bmax;
+	    double dist;
+	    for (list<BRNode*>::iterator i = m_trims_above.begin(); i != m_trims_above.end(); i++) {
+			SubcurveBRNode* br = dynamic_cast<SubcurveBRNode*>(*i);
+			br->GetBBox(bmin,bmax);
+			dist = 0.03*DIST_PT_PT(bmin,bmax);
+			if ((uv[X] > bmin[X]-dist) && (uv[X] < bmax[X]+dist))
+				out_leaves.push_back(br);
+	    }
+		
     }
 
     template<class BV>
