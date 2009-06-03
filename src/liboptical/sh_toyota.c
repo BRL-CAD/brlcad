@@ -2426,6 +2426,7 @@ toyota_render(register struct application *ap, struct partition *pp, struct shad
 	refl_ap.a_hit = toyota_render;	/* XXX is this right */
 #endif
 	refl_ap.a_miss = toyota_miss;
+	refl_ap.a_logoverlap = ap->a_logoverlap;
 	(void)rt_shootray( &refl_ap );
 	/* a_return or a_user to hold hit/miss flag? */
 #else
