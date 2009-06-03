@@ -143,7 +143,7 @@ void BuildTree(struct Photon *EList, int ESize, struct PNode *Root) {
     }
 
     /* Store the Median Photon into the KD-Tree. */
-    /* bu_log("insertKD: %.3f,%.3f,%.3f\n", EList[MedianIndex].Pos[0], EList[MedianIndex].Pos[1], EList[MedianIndex].Pos[2]);*/
+    /* bu_log("insertKD: %.3f, %.3f, %.3f\n", EList[MedianIndex].Pos[0], EList[MedianIndex].Pos[1], EList[MedianIndex].Pos[2]);*/
     Root->P = EList[MedianIndex];
     Root->P.Axis = Axis;
     Root->C = 0;
@@ -215,14 +215,14 @@ void Store(point_t Pos, vect_t Dir, vect_t Normal, int Map) {
 	*/
 	/*
 	  if (Map == PM_IMPORTANCE)
-	  bu_log("Map: %d, Size: %d, [%.3f,%.3f,%.3f] [%.3f,%.3f,%.3f]\n", Map, PMap[Map]->StoredPhotons, Pos[0], Pos[1], Pos[2], CurPh.Power[0], CurPh.Power[1], CurPh.Power[2]);
+	  bu_log("Map: %d, Size: %d, [%.3f, %.3f, %.3f] [%.3f, %.3f, %.3f]\n", Map, PMap[Map]->StoredPhotons, Pos[0], Pos[1], Pos[2], CurPh.Power[0], CurPh.Power[1], CurPh.Power[2]);
 	*/
     }
 
     /*
-      bu_log("[%d][%d][%.3f,%.3f,%.3f]\n", Map, PMap[Map]->StoredPhotons, CurPh.Power[0], CurPh.Power[1], CurPh.Power[2]);
+      bu_log("[%d][%d][%.3f, %.3f, %.3f]\n", Map, PMap[Map]->StoredPhotons, CurPh.Power[0], CurPh.Power[1], CurPh.Power[2]);
       if (!(PMap[Map]->StoredPhotons % 64))
-      bu_log("[%d][%d][%.3f,%.3f,%.3f]\n", Map, PMap[Map]->StoredPhotons, Pos[0], Pos[1], Pos[2]);
+      bu_log("[%d][%d][%.3f, %.3f, %.3f]\n", Map, PMap[Map]->StoredPhotons, Pos[0], Pos[1], Pos[2]);
     */
 }
 
@@ -415,9 +415,9 @@ int HitRef(struct application *ap, struct partition *PartHeadp, struct seg *fini
 
     if (Refract(ap->a_ray.r_dir, normal, refi, 1.0)) {
 	/*
-	  bu_log("1D: %d, [%.3f,%.3f,%.3f], [%.3f,%.3f,%.3f], [%.3f,%.3f,%.3f]\n", Depth, pt[0], pt[1], pt[2], ap->a_ray.r_dir[0], ap->a_ray.r_dir[1], ap->a_ray.r_dir[2], normal[0], normal[1], normal[2]);
-	  bu_log("p1: [%.3f,%.3f,%.3f]\n", part->pt_inhit->hit_point[0], part->pt_inhit->hit_point[1], part->pt_inhit->hit_point[2]);
-	  bu_log("p2: [%.3f,%.3f,%.3f]\n", part->pt_outhit->hit_point[0], part->pt_outhit->hit_point[1], part->pt_outhit->hit_point[2]);
+	  bu_log("1D: %d, [%.3f, %.3f, %.3f], [%.3f, %.3f, %.3f], [%.3f, %.3f, %.3f]\n", Depth, pt[0], pt[1], pt[2], ap->a_ray.r_dir[0], ap->a_ray.r_dir[1], ap->a_ray.r_dir[2], normal[0], normal[1], normal[2]);
+	  bu_log("p1: [%.3f, %.3f, %.3f]\n", part->pt_inhit->hit_point[0], part->pt_inhit->hit_point[1], part->pt_inhit->hit_point[2]);
+	  bu_log("p2: [%.3f, %.3f, %.3f]\n", part->pt_outhit->hit_point[0], part->pt_outhit->hit_point[1], part->pt_outhit->hit_point[2]);
 	*/
 	Depth++;
 	rt_shootray(ap);
@@ -445,7 +445,7 @@ int PHit(struct application *ap, struct partition *PartHeadp, struct seg *finish
 	if (part != PartHeadp) {
 	    hit++;
 	    VJOIN1(pt, ap->a_ray.r_pt, part->pt_inhit->hit_dist, ap->a_ray.r_dir);
-	    /* printf("pt[%d][%d]: --- [%.3f,%.3f,%.3f], %s\n", hit, CheckMaterial("light", part->pt_regionp->reg_mater.ma_shader), pt[0], pt[1], pt[2], part->pt_regionp->reg_mater.ma_shader);*/
+	    /* printf("pt[%d][%d]: --- [%.3f, %.3f, %.3f], %s\n", hit, CheckMaterial("light", part->pt_regionp->reg_mater.ma_shader), pt[0], pt[1], pt[2], part->pt_regionp->reg_mater.ma_shader);*/
 
 	    if (!CheckMaterial("light", part->pt_regionp->reg_mater.ma_shader)) {
 		/* bu_log("  Found object!\n");*/
@@ -492,7 +492,7 @@ int PHit(struct application *ap, struct partition *PartHeadp, struct seg *finish
 
     /* Fetch Material */
     GetMaterial(part->pt_regionp->reg_mater.ma_shader, spec, &refi, &transmit);
-    /* bu_log("Spec: [%.3f,%.3f,%.3f], Refi: %.3f\n", spec[0], spec[1], spec[2], refi);*/
+    /* bu_log("Spec: [%.3f, %.3f, %.3f], Refi: %.3f\n", spec[0], spec[1], spec[2], refi);*/
 
 
     /* Compute Diffuse, Specular, and Caustics */
@@ -509,7 +509,7 @@ int PHit(struct application *ap, struct partition *PartHeadp, struct seg *finish
     prob = drand48();
 #endif
 
-    /* bu_log("pr: %.3f, pd: %.3f, [%.3f,%.3f,%.3f] [%.3f,%.3f,%.3f]\n", prob_ref, prob_diff, color[0], color[1], color[2], spec[0], spec[1], spec[2]);*/
+    /* bu_log("pr: %.3f, pd: %.3f, [%.3f, %.3f, %.3f] [%.3f, %.3f, %.3f]\n", prob_ref, prob_diff, color[0], color[1], color[2], spec[0], spec[1], spec[2]);*/
     /* bu_log("prob: %.3f, prob_diff: %.3f, pd+ps: %.3f\n", prob, prob_diff, prob_diff+prob_spec);*/
 
     if (prob < 1.0 - transmit) {
@@ -594,10 +594,10 @@ int PHit(struct application *ap, struct partition *PartHeadp, struct seg *finish
 		ap->a_hit = HitRef;
 
 		/*
-		  bu_log("dir: [%.3f,%.3f,%.3f]\n", ap->a_ray.r_dir[0], ap->a_ray.r_dir[1], ap->a_ray.r_dir[2]);
-		  bu_log("ref: [%.3f,%.3f,%.3f]\n", ap->a_ray.r_dir[0], ap->a_ray.r_dir[1], ap->a_ray.r_dir[2]);
-		  bu_log("nor: [%.3f,%.3f,%.3f]\n", normal[0], normal[1], normal[2]);
-		  bu_log("p0: [%.3f,%.3f,%.3f],[%.3f,%.3f,%.3f]\n", pt[0], pt[1], pt[2], ap->a_ray.r_dir[0], ap->a_ray.r_dir[1], ap->a_ray.r_dir[2]);
+		  bu_log("dir: [%.3f, %.3f, %.3f]\n", ap->a_ray.r_dir[0], ap->a_ray.r_dir[1], ap->a_ray.r_dir[2]);
+		  bu_log("ref: [%.3f, %.3f, %.3f]\n", ap->a_ray.r_dir[0], ap->a_ray.r_dir[1], ap->a_ray.r_dir[2]);
+		  bu_log("nor: [%.3f, %.3f, %.3f]\n", normal[0], normal[1], normal[2]);
+		  bu_log("p0: [%.3f, %.3f, %.3f], [%.3f, %.3f, %.3f]\n", pt[0], pt[1], pt[2], ap->a_ray.r_dir[0], ap->a_ray.r_dir[1], ap->a_ray.r_dir[2]);
 		*/
 		ap->a_onehit = 0;
 	    } else {
@@ -609,7 +609,7 @@ int PHit(struct application *ap, struct partition *PartHeadp, struct seg *finish
 	    ap->a_ray.r_pt[1] = pt[1];
 	    ap->a_ray.r_pt[2] = pt[2];
 
-	    /* bu_log("2D: %d, [%.3f,%.3f,%.3f], [%.3f,%.3f,%.3f], [%.3f,%.3f,%.3f]\n", Depth, pt[0], pt[1], pt[2], ap->a_ray.r_dir[0], ap->a_ray.r_dir[1], ap->a_ray.r_dir[2], normal[0], normal[1], normal[2]);*/
+	    /* bu_log("2D: %d, [%.3f, %.3f, %.3f], [%.3f, %.3f, %.3f], [%.3f, %.3f, %.3f]\n", Depth, pt[0], pt[1], pt[2], ap->a_ray.r_dir[0], ap->a_ray.r_dir[1], ap->a_ray.r_dir[2], normal[0], normal[1], normal[2]);*/
 	    Depth++;
 	    rt_shootray(ap);
 	}
@@ -687,7 +687,7 @@ void EmitPhotonsRandom(struct application *ap, double ScaleIndirect) {
     ldir[2] = -1;
     /*
       for (i = 0; i < 8; i++)
-      bu_log("sample points: [%.3f,%.3f,%.3f]\n", lp->lt_sample_pts[i].lp_pt[0], lp->lt_sample_pts[i].lp_pt[1], lp->lt_sample_pts[i].lp_pt[2]);
+      bu_log("sample points: [%.3f, %.3f, %.3f]\n", lp->lt_sample_pts[i].lp_pt[0], lp->lt_sample_pts[i].lp_pt[1], lp->lt_sample_pts[i].lp_pt[2]);
     */
     while (1) {
 	for (BU_LIST_FOR(lp, light_specific, &(LightHead.l))) {
@@ -719,7 +719,7 @@ void EmitPhotonsRandom(struct application *ap, double ScaleIndirect) {
 
 
 	    /* Shoot Photon into Scene, (4.0) is used to align phong's attenuation with photonic energies, it's a heuristic */
-	    /*bu_log("Shooting Ray: [%.3f,%.3f,%.3f] [%.3f,%.3f,%.3f]\n", lp->lt_pos[0], lp->lt_pos[1], lp->lt_pos[2], x, y, z);*/
+	    /*bu_log("Shooting Ray: [%.3f, %.3f, %.3f] [%.3f, %.3f, %.3f]\n", lp->lt_pos[0], lp->lt_pos[1], lp->lt_pos[2], x, y, z);*/
 	    CurPh.Power[0] = 1000.0 * ScaleIndirect * lp->lt_intensity * lp->lt_color[0];
 	    CurPh.Power[1] = 1000.0 * ScaleIndirect * lp->lt_intensity * lp->lt_color[1];
 	    CurPh.Power[2] = 1000.0 * ScaleIndirect * lp->lt_intensity * lp->lt_color[2];
@@ -743,7 +743,7 @@ void SanityCheck(struct PNode *Root, int LR) {
     if (!Root)
 	return;
 
-    bu_log("Pos[%d]: [%.3f,%.3f,%.3f]\n", LR, Root->P.Pos[0], Root->P.Pos[1], Root->P.Pos[2]);
+    bu_log("Pos[%d]: [%.3f, %.3f, %.3f]\n", LR, Root->P.Pos[0], Root->P.Pos[1], Root->P.Pos[2]);
     SanityCheck(Root->L, 1);
     SanityCheck(Root->R, 2);
 }
@@ -841,10 +841,10 @@ void Irradiance(int pid, struct Photon *P, struct application *ap) {
 	    /* Utilize the purpose pointer as a pointer to the Irradiance Color */
 	    lap->a_purpose = (void*)P->Irrad;
 
-	    /* bu_log("Vec: [%.3f,%.3f,%.3f]\n", ap->a_ray.r_dir[0], ap->a_ray.r_dir[1], ap->a_ray.r_dir[2]);*/
+	    /* bu_log("Vec: [%.3f, %.3f, %.3f]\n", ap->a_ray.r_dir[0], ap->a_ray.r_dir[1], ap->a_ray.r_dir[2]);*/
 	    rt_shootray(lap);
 
-	    /* bu_log("[%.3f,%.3f,%.3f] [%.3f,%.3f,%.3f] [%.3f,%.3f,%.3f]\n", P.Pos[0], P.Pos[1], P.Pos[2], P.Normal[0], P.Normal[1], P.Normal[2], IMColor[0], IMColor[1], IMColor[2]);*/
+	    /* bu_log("[%.3f, %.3f, %.3f] [%.3f, %.3f, %.3f] [%.3f, %.3f, %.3f]\n", P.Pos[0], P.Pos[1], P.Pos[2], P.Normal[0], P.Normal[1], P.Normal[2], IMColor[0], IMColor[1], IMColor[2]);*/
 	}
     }
 
@@ -962,8 +962,8 @@ int LoadFile(char *pmfile) {
 	bu_log("Reading Global: %d\n", I1);
 	for (i = 0; i < I1; i++) {
 	    fread(&Emit[PM_GLOBAL][i], sizeof(struct Photon), 1, FH);
-	    /* bu_log("Pos: [%.3f,%.3f,%.3f], Power: [%.3f,%.3f,%.3f]\n", Emit[PM_GLOBAL][i].Pos[0], Emit[PM_GLOBAL][i].Pos[1], Emit[PM_GLOBAL][i].Pos[2], Emit[PM_GLOBAL][i].Power[0], Emit[PM_GLOBAL][i].Power[1], Emit[PM_GLOBAL][i].Power[2]);*/
-	    /* bu_log("Pos: [%.3f,%.3f,%.3f], Irrad: [%.3f,%.3f,%.3f]\n", Emit[PM_GLOBAL][i].Pos[0], Emit[PM_GLOBAL][i].Pos[1], Emit[PM_GLOBAL][i].Pos[2], Emit[PM_GLOBAL][i].Irrad[0], Emit[PM_GLOBAL][i].Irrad[1], Emit[PM_GLOBAL][i].Irrad[2]);*/
+	    /* bu_log("Pos: [%.3f, %.3f, %.3f], Power: [%.3f, %.3f, %.3f]\n", Emit[PM_GLOBAL][i].Pos[0], Emit[PM_GLOBAL][i].Pos[1], Emit[PM_GLOBAL][i].Pos[2], Emit[PM_GLOBAL][i].Power[0], Emit[PM_GLOBAL][i].Power[1], Emit[PM_GLOBAL][i].Power[2]);*/
+	    /* bu_log("Pos: [%.3f, %.3f, %.3f], Irrad: [%.3f, %.3f, %.3f]\n", Emit[PM_GLOBAL][i].Pos[0], Emit[PM_GLOBAL][i].Pos[1], Emit[PM_GLOBAL][i].Pos[2], Emit[PM_GLOBAL][i].Irrad[0], Emit[PM_GLOBAL][i].Irrad[1], Emit[PM_GLOBAL][i].Irrad[2]);*/
 	}
 
 	fread(&C1, sizeof(char), 1, FH);
@@ -1057,8 +1057,8 @@ void BuildPhotonMap(struct application *ap, point_t eye_pos, int cpus, int width
        otherwise utilize the file to push the resulting irradiance cache data into for future use. */
     if (!LoadFile(pmfile)) {
 	/*
-	  bu_log("pos: [%.3f,%.3f,%.3f]\n", eye_pos[0], eye_pos[1], eye_pos[2]);
-	  bu_log("I, V, Imp, H: %.3f,%d,%d,%d\n", LightIntensity, VisualizeIrradiance, ImportanceMapping, IrradianceHypersampling);
+	  bu_log("pos: [%.3f, %.3f, %.3f]\n", eye_pos[0], eye_pos[1], eye_pos[2]);
+	  bu_log("I, V, Imp, H: %.3f, %d, %d, %d\n", LightIntensity, VisualizeIrradiance, ImportanceMapping, IrradianceHypersampling);
 	*/
 	bu_log("Building Photon Map:\n");
 
@@ -1124,7 +1124,7 @@ void BuildPhotonMap(struct application *ap, point_t eye_pos, int cpus, int width
 	/* Generate Scale Factor */
 	ScaleFactor = MaxFloat(BBMax[0]-BBMin[0], BBMax[1]-BBMin[1], BBMax[2]-BBMin[2]);
 
-	bu_log("HitGB: %d,%d\n", HitG, HitB);
+	bu_log("HitGB: %d, %d\n", HitG, HitB);
 	bu_log("Scale Factor: %.3f\n", ScaleFactor);
 	ratio = (double)HitG/((double)(HitG+HitB));
 	bu_log("EPL: %d, Adjusted EPL: %d\n", (int)EPL, (int)(EPL*ratio));
@@ -1137,7 +1137,7 @@ void BuildPhotonMap(struct application *ap, point_t eye_pos, int cpus, int width
 
 	/*
 	  for (i = 0; i < PMap->StoredPhotons; i++)
-	  bu_log("insertLS[%d]: %.3f,%.3f,%.3f\n", i, Emit[i].Pos[0], Emit[i].Pos[1], Emit[i].Pos[2]);
+	  bu_log("insertLS[%d]: %.3f, %.3f, %.3f\n", i, Emit[i].Pos[0], Emit[i].Pos[1], Emit[i].Pos[2]);
 	*/
 
 
@@ -1173,7 +1173,7 @@ void BuildPhotonMap(struct application *ap, point_t eye_pos, int cpus, int width
 	}
 
 	/* Allocate Memory for Irradiance Cache and Initialize Pixel Map */
-	/* bu_log("Image Size: %d,%d\n", width, height);*/
+	/* bu_log("Image Size: %d, %d\n", width, height);*/
 	if (GPM_IH) {
 	    Map = (char*)bu_calloc(width*height, sizeof(char), "Map");
 	    IC = (struct IrradCache*)bu_malloc(sizeof(struct IrradCache)*width*height, "IrradCache");
@@ -1213,11 +1213,11 @@ void Swap(struct PSN *a, struct PSN *b) {
       b->P = c.P;
       b->Dist = c.Dist;
     */
-    /* bu_log("  SWAP_IN: %.3f,%.3f\n", a->Dist, b->Dist);*/
+    /* bu_log("  SWAP_IN: %.3f, %.3f\n", a->Dist, b->Dist);*/
     memcpy(&c, a, sizeof(struct PSN));
     memcpy(a, b, sizeof(struct PSN));
     memcpy(b, &c, sizeof(struct PSN));
-    /* bu_log("  SWAP_OT: %.3f,%.3f\n", a->Dist, b->Dist);*/
+    /* bu_log("  SWAP_OT: %.3f, %.3f\n", a->Dist, b->Dist);*/
 }
 
 
@@ -1234,9 +1234,9 @@ void HeapUp(struct PhotonSearch *S, int ind) {
     i = ((ind+1)-(ind+1)%2)/2-1;
     /* bu_log("  CHECK: %.3f > %.3f :: [%d] > [%d]\n", S->List[ind].Dist, S->List[i].Dist, ind, i);*/
     if (S->List[ind].Dist > S->List[i].Dist) {
-	/* bu_log("SWAP_A: %.3f,%.3f\n", S->List[i].Dist, S->List[ind].Dist);*/
+	/* bu_log("SWAP_A: %.3f, %.3f\n", S->List[i].Dist, S->List[ind].Dist);*/
 	Swap(&S->List[i], &S->List[ind]);
-	/* bu_log("SWAP_B: %.3f,%.3f\n", S->List[i].Dist, S->List[ind].Dist);*/
+	/* bu_log("SWAP_B: %.3f, %.3f\n", S->List[i].Dist, S->List[ind].Dist);*/
     }
     HeapUp(S, i);
 }
@@ -1257,9 +1257,9 @@ void HeapDown(struct PhotonSearch *S, int ind) {
     /* bu_log(" c: %d\n", c);*/
 
     if (S->List[c].Dist > S->List[ind].Dist) {
-	/* bu_log("SWAP_C: %.3f,%.3f :: %d,%d :: %d\n", S->List[c].Dist, S->List[ind].Dist, c, ind, S->Found);*/
+	/* bu_log("SWAP_C: %.3f, %.3f :: %d, %d :: %d\n", S->List[c].Dist, S->List[ind].Dist, c, ind, S->Found);*/
 	Swap(&S->List[c], &S->List[ind]);
-	/* bu_log("SWAP_D: %.3f,%.3f :: %d,%d :: %d\n", S->List[c].Dist, S->List[ind].Dist, c, ind, S->Found);*/
+	/* bu_log("SWAP_D: %.3f, %.3f :: %d, %d :: %d\n", S->List[c].Dist, S->List[ind].Dist, c, ind, S->Found);*/
     }
     HeapDown(S, c);
 }
@@ -1270,7 +1270,7 @@ void Push(struct PhotonSearch *S, struct PSN P) {
     HeapUp(S, S->Found++);
     /*
       for (i = 0; i < S->Found; i++)
-      bu_log("Push[%d]: %.3f :: %d,%d\n", i, S->List[i].Dist, S->Found, S->Max);
+      bu_log("Push[%d]: %.3f :: %d, %d\n", i, S->List[i].Dist, S->Found, S->Max);
     */
 }
 
@@ -1281,7 +1281,7 @@ void Pop(struct PhotonSearch *S) {
     HeapDown(S, 0);
     /*
       for (i = 0; i < S->Found; i++)
-      bu_log("Pop [%d]: %.3f :: %d,%d\n", i, S->List[i].Dist, S->Found, S->Max);
+      bu_log("Pop [%d]: %.3f :: %d, %d\n", i, S->List[i].Dist, S->Found, S->Max);
     */
 }
 
@@ -1361,12 +1361,12 @@ fastf_t Dist(point_t a, point_t b) {
 
 
 fastf_t GaussFilter(fastf_t dist, fastf_t rad) {
-    return( 0.918 * (1.0 - (1.0 - exp(-1.953*dist*dist/(2.0*rad*rad)))/(1.0 - exp(-1.953))) );
+    return(0.918 * (1.0 - (1.0 - exp(-1.953*dist*dist/(2.0*rad*rad)))/(1.0 - exp(-1.953))));
 }
 
 
 fastf_t ConeFilter(fastf_t dist, fastf_t rad) {
-    return( 1.0 - dist/rad );
+    return(1.0 - dist/rad);
 }
 
 
@@ -1402,8 +1402,8 @@ void IrradianceEstimate(struct application *ap, vect_t irrad, point_t pos, vect_
     Search.Pos[1] = pos[1];
     Search.Pos[2] = pos[2];
 
-    /* NP.RadSq = (ScaleFactor/(10.0*pow(2,(log(PMap[PM_GLOBAL]->MaxPhotons/2)/log(4))))) * (ScaleFactor/(10.0*pow(2,(log(PMap[PM_GLOBAL]->MaxPhotons/2)/log(4)))));*/
-    /* bu_log("SF: %.3f\n",(ScaleFactor/(10.0*pow(2,(log(PMap[PM_GLOBAL]->MaxPhotons/2)/log(4))))));*/
+    /* NP.RadSq = (ScaleFactor/(10.0*pow(2, (log(PMap[PM_GLOBAL]->MaxPhotons/2)/log(4))))) * (ScaleFactor/(10.0*pow(2, (log(PMap[PM_GLOBAL]->MaxPhotons/2)/log(4)))));*/
+    /* bu_log("SF: %.3f\n", (ScaleFactor/(10.0*pow(2, (log(PMap[PM_GLOBAL]->MaxPhotons/2)/log(4))))));*/
     /* bu_log("SF: %.3f\n", ScaleFactor/pow(PMap[PM_GLOBAL]->MaxPhotons, 0.5));*/
 
     /*
@@ -1463,7 +1463,7 @@ void IrradianceEstimate(struct application *ap, vect_t irrad, point_t pos, vect_
     bu_free(Search.List, "Search.List");
 
     /* GetEstimate(cirrad, pos, normal, (int)(ScaleFactor/100.0), PMap[PM_CAUSTIC]->MaxPhotons/50, PM_CAUSTIC, 1, 0);*/
-    /* GetEstimate(cirrad, pos, normal,(int)(ScaleFactor/pow(2,(log(PMap[PM_CAUSTIC]->MaxPhotons/2)/log(4)))), PMap[PM_CAUSTIC]->MaxPhotons / 50, PM_CAUSTIC, 0, 0);*/
+    /* GetEstimate(cirrad, pos, normal, (int)(ScaleFactor/pow(2, (log(PMap[PM_CAUSTIC]->MaxPhotons/2)/log(4)))), PMap[PM_CAUSTIC]->MaxPhotons / 50, PM_CAUSTIC, 0, 0);*/
     GetEstimate(cirrad, pos, normal, ScaleFactor/1024.0, PMap[PM_CAUSTIC]->MaxPhotons / 100, PM_CAUSTIC, ScaleFactor/128.0, 1, 15);
 
     irrad[0] += cirrad[0];
@@ -1607,7 +1607,7 @@ void GetEstimate(vect_t irrad, point_t pos, vect_t normal, fastf_t rad, int np, 
       irrad[2] *= (1.0/M_PI)/NP.RadSq;
     */
     bu_free(Search.List, "Search.List");
-    /* bu_log("Radius: %.3f, Max Phot: %d, Found: %d, Power: [%.4f,%.4f,%.4f], Pos: [%.3f,%.3f,%.3f]\n", sqrt(NP.RadSq), NP.Max, NP.Found, irrad[0], irrad[1], irrad[2], pos[0], pos[1], pos[2]);*/
+    /* bu_log("Radius: %.3f, Max Phot: %d, Found: %d, Power: [%.4f, %.4f, %.4f], Pos: [%.3f, %.3f, %.3f]\n", sqrt(NP.RadSq), NP.Max, NP.Found, irrad[0], irrad[1], irrad[2], pos[0], pos[1], pos[2]);*/
 }
 
 /*
