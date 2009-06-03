@@ -210,7 +210,9 @@
     $itk_component(text) tag configure oldcmd -foreground $itk_option(-oldcmd_color)
     $itk_component(text) tag configure result -foreground $itk_option(-result_color)
 
-    rename ::gets ::tcl_gets
+    if {[catch {info body ::gets}] == 1} {
+        rename ::gets ::tcl_gets
+    }
 }
 
 ::itcl::body Command::destructor {} {
