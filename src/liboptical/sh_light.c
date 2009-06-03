@@ -501,6 +501,7 @@ light_gen_sample_pts(struct application *upap,
     ap.a_onehit = 0;
     ap.a_hit = light_gen_sample_pts_hit;
     ap.a_miss = light_gen_sample_pts_miss;
+    ap.a_logoverlap = upap->a_logoverlap;
     ap.a_uptr = (genptr_t)lsp;
 
     /* get the bounding box of the light source */
@@ -1562,7 +1563,8 @@ light_vis(struct light_obs_stuff *los, char *flags)
 
     sub_ap.a_hit = light_hit;
     sub_ap.a_miss = light_miss;
-    sub_ap.a_user = -1;		/* sanity */
+    sub_ap.a_logoverlap = los->ap->a_logoverlap;
+    sub_ap.a_user = -1; /* sanity */
     sub_ap.a_uptr = (genptr_t)los->lsp;	/* so we can tell.. */
     sub_ap.a_level = 0;
     /* Will need entry & exit pts, for filter glass ==> 2 */
