@@ -1031,8 +1031,8 @@ utah_brep_intersect(const SubsurfaceBBNode* sbv, const ON_BrepFace* face, const 
      *
      */
     //if (converged && (t > 1.e-2) && (!utah_isTrimmed(ouv, face))) hit = true;
-    //if (converged && (t > 1.e-2) && (!((SubsurfaceBBNode*)sbv)->isTrimmed(ouv))) hit = true;
-    if (converged && (t > 1.e-2)) hit = true;
+      if (converged && (t > 1.e-2) && (!((SubsurfaceBBNode*)sbv)->isTrimmed(ouv))) hit = true;
+//    if (converged && (t > 1.e-2)) hit = true;
 
     uv[0] = ouv.x;
     uv[1] = ouv.y;

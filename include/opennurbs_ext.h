@@ -881,9 +881,8 @@ namespace brlcad {
 			for( i=trims.begin();i!=trims.end();i++) {
 				br = dynamic_cast<SubcurveBRNode*>(*i);
 				if (i == trims.begin()) {
-					dist = uv[Y] - br->getLinearEstimateOfV(uv[X]);
-					if (dist >= 0.0)
-						closest = br;
+				    dist = uv[Y] - br->getLinearEstimateOfV(uv[X]);
+				    closest = br;
 				} else {
 					fastf_t v = uv[Y] - br->getLinearEstimateOfV(uv[X]);
 					if ((v >= 0.0) && (v < dist)) {
@@ -893,7 +892,7 @@ namespace brlcad {
 				}
 			}
 			if (closest == NULL) {
-				return true;
+				return false;
 			} else {
 				return closest->isTrimmed(uv);
 			}
