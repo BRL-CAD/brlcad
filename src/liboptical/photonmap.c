@@ -1100,12 +1100,13 @@ void BuildPhotonMap(struct application *ap, point_t eye_pos, int cpus, int width
 
 	/* Populate Application Structure */
 	/* Set Recursion Level, Magic Number, Hit/Miss Callbacks, and Purpose */
-	ap->a_level= 1;
-	ap->a_onehit= 0;
-	ap->a_ray.magic= RT_RAY_MAGIC;
-	ap->a_hit= PHit;
-	ap->a_miss= PMiss;
-	ap->a_purpose= "Importance Mapping";
+	ap->a_level = 1;
+	ap->a_onehit = 0;
+	ap->a_ray.magic = RT_RAY_MAGIC;
+	ap->a_hit = PHit;
+	ap->a_miss = PMiss;
+	ap->a_logoverlap = rt_silent_logoverlap;
+	ap->a_purpose = "Importance Mapping";
 
 
 	if (ImportanceMapping) {
@@ -1149,12 +1150,13 @@ void BuildPhotonMap(struct application *ap, point_t eye_pos, int cpus, int width
 
 	bu_semaphore_init(PM_SEM_INIT);
 	bu_log("  Building Irradiance Cache...\n");
-	ap->a_level= 1;
-	ap->a_onehit= 0;
-	ap->a_ray.magic= RT_RAY_MAGIC;
-	ap->a_hit= ICHit;
-	ap->a_miss= ICMiss;
-	ICSize= 0;
+	ap->a_level = 1;
+	ap->a_onehit = 0;
+	ap->a_ray.magic = RT_RAY_MAGIC;
+	ap->a_hit = ICHit;
+	ap->a_miss = ICMiss;
+	ap->a_logoverlap = rt_silent_logoverlap;
+	ICSize = 0;
 
 	if (cpus > 1) {
 	    GPM_RTAB= (struct resource*)bu_calloc(cpus, sizeof(struct resource), "resource");
