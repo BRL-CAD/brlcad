@@ -303,6 +303,7 @@ rr_render(register struct application *ap,
     do_inside:
 	sub_ap.a_hit =  rr_hit;
 	sub_ap.a_miss = rr_miss;
+	sub_ap.a_logoverlap = ap->a_logoverlap;
 	sub_ap.a_onehit = 3;
 	sub_ap.a_rbeam = ap->a_rbeam + swp->sw_hit.hit_dist * ap->a_diverge;
 	sub_ap.a_diverge = 0.0;
@@ -429,6 +430,7 @@ vdraw open rr;vdraw params c 00ff00; vdraw write n 0 %g %g %g; vdraw wwrite n 1 
 	 */
 	sub_ap.a_hit =  ap->a_hit;
 	sub_ap.a_miss = ap->a_miss;
+	sub_ap.a_logoverlap = ap->a_logoverlap;
 	sub_ap.a_onehit = ap->a_onehit;
 	sub_ap.a_level = ap->a_level+1;
 	sub_ap.a_uptr = ap->a_uptr;
