@@ -102,6 +102,7 @@ set(OPENNURBS_LINKLIBRARIES
 include_directories(
     ../../../include
     ../libz
+    ../tcl/generic
 )
 
 add_definitions(
