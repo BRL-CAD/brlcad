@@ -156,7 +156,7 @@ namespace brlcad {
 		ON_2dPoint getClosestPointEstimate(const ON_3dPoint& pt);
 		ON_2dPoint getClosestPointEstimate(const ON_3dPoint& pt, ON_Interval& u, ON_Interval& v);
 		fastf_t getLinearEstimateOfV( fastf_t u );
-		fastf_t getCurveEstimateOfV( fastf_t u, fastf_t tol ) const;
+		fastf_t getCurveEstimateOfV( const ON_2dPoint& uv, fastf_t tol ) const;
 		const ON_BrepFace* m_face;
 		const ON_Curve* m_trim;
 		/* curve domain */
@@ -418,7 +418,7 @@ namespace brlcad {
 	SubcurveBANode<BA>::isTrimmed(const ON_2dPoint& uv) const {
 	    if (m_checkTrim) {
 			fastf_t v = m_start[Y] + m_slope*(uv[X] - m_start[X]);
-			v = getCurveEstimateOfV(uv[X],0.0000001);
+			v = getCurveEstimateOfV(uv,0.0000001);
 			if (uv[Y] < v) {
 				if (m_XIncreasing) {
 					return true;
@@ -501,10 +501,12 @@ namespace brlcad {
 		fastf_t v = m_start[Y] + m_slope*(u - m_start[X]);
 		return v;
 	}
+
+
 	
 	template<class BA>
 	fastf_t 
-	SubcurveBANode<BA>::getCurveEstimateOfV( fastf_t u, fastf_t tol ) const {
+	SubcurveBANode<BA>::getCurveEstimateOfV(const ON_2dPoint& uv, fastf_t tol ) const {
 	        ON_3dVector tangent;
 		point_t A,B;
 		double  Ta,Tb;
@@ -516,12 +518,12 @@ namespace brlcad {
 
 		fastf_t dU = B[X] - A[X];
 		fastf_t dT = Tb - Ta;
-		fastf_t guess = Ta + (u - A[X]) * dT/dU;
+		fastf_t guess = Ta + (uv[X] - A[X]) * dT/dU;
 		ON_3dPoint p = m_trim->PointAt(guess);
 
 		int cnt=0;
-		while ((cnt < 50) && (!NEAR_ZERO(p[X]-u,tol))) {
-		    if (p[X] < u) {
+		while ((cnt < 50) && (!NEAR_ZERO(p[X]-uv[X],tol))) {
+		    if (p[X] < uv[X]) {
 			Ta = guess;
 			VMOVE(A,p);
 		    } else {
@@ -530,7 +532,7 @@ namespace brlcad {
 		    }
 		    dU = B[X] - A[X];
 		    dT = Tb - Ta;
-		    guess = Ta + (u - A[X]) * dT/dU;
+		    guess = Ta + (uv[X] - A[X]) * dT/dU;
 		    p = m_trim->PointAt(guess);
 		    cnt++;
 		}
@@ -925,12 +927,12 @@ namespace brlcad {
 				//if (i == trims.begin()) {
 				//	//double le,ce;
 				//	//le = br->getLinearEstimateOfV(uv[X]);
-				////	//ce = br->getCurveEstimateOfV(uv[X],0.0001);
+				////	//ce = br->getCurveEstimateOfV(uv,0.0001);
 				//	dist = uv[Y] - br->getLinearEstimateOfV(uv[X]);
 				//    closest = br;
 				//} else {
 				fastf_t v = br->getLinearEstimateOfV(uv[X]); // - uv[Y];
-				//v = br->getCurveEstimateOfV(uv[X],0.0001);
+				//v = br->getCurveEstimateOfV(uv,0.0001);
 					br->GetBBox(bmin,bmax);
 					if ((v > uv[Y]) && ((v <= bmax[Y]) && (v >= bmin[Y]))) {
 					    if (closest == NULL){
