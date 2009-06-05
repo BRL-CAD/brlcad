@@ -48,7 +48,7 @@
 #define BREP_FCP_ROOT_EPSILON 1e-5
 /* trim curve point sampling count for isLinear() check and possibly growing bounding box*/
 #define BREP_BB_CRV_PNT_CNT 10
-#define BREP_CURVE_FLATNESS 0.9
+#define BREP_CURVE_FLATNESS 0.95
 
 /* subdivision size factors */
 #define BREP_SURF_SUB_FACTOR 0.1
@@ -417,7 +417,7 @@ namespace brlcad {
 	inline bool
 	SubcurveBANode<BA>::isTrimmed(const ON_2dPoint& uv) const {
 	    if (m_checkTrim) {
-			fastf_t v = m_start[Y] + m_slope*(m_start[X] - uv[X]);
+			fastf_t v = m_start[Y] + m_slope*(uv[X] - m_start[X]);
 			//v = getCurveEstimateOfV(uv[X],0.0000001);
 			if (uv[Y] < v) {
 				if (m_XIncreasing) {
@@ -505,15 +505,16 @@ namespace brlcad {
 	template<class BA>
 	fastf_t 
 	SubcurveBANode<BA>::getCurveEstimateOfV( fastf_t u, fastf_t tol ) const {
+	    ON_3dVector tangent;
 		fastf_t dU = m_end[X] - m_start[X];
 		fastf_t dT = m_t[1] - m_t[0];
-		fastf_t guess = m_t[0] + (m_start[X] - u) * dT/dU;
+		fastf_t guess = m_t[0] + (u - m_start[X]) * dT/dU;
 		ON_3dPoint p = m_trim->PointAt(guess);
 		int cnt=0;
 		while ((cnt < 50) && (!NEAR_ZERO(p[X]-u,tol))) {
-			ON_3dVector tangent = m_trim->TangentAt(guess);
+			tangent = m_trim->TangentAt(guess);
 			guess = guess + (u - p[X])*tangent[0];
-			ON_3dPoint p = m_trim->PointAt(guess);
+			p = m_trim->PointAt(guess);
 			cnt++;
 		}
 		return p[Y];
@@ -892,31 +893,41 @@ namespace brlcad {
 		
 		if (trims.empty()) {
 			return true;
+#if 0
 		} else if (trims.size() == 1) {
 			br = dynamic_cast<SubcurveBRNode*>(*trims.begin());
 			return br->isTrimmed(uv);
+#endif
 		} else {//find closest BB
 			list<BRNode*>::iterator i;
 			SubcurveBRNode* closest = NULL;
-			fastf_t dist;
+			fastf_t currHeight; //=999999.9;
+			point_t min,max;
 			for( i=trims.begin();i!=trims.end();i++) {
 				br = dynamic_cast<SubcurveBRNode*>(*i);
-				if (i == trims.begin()) {
-					//double le,ce;
-					//le = br->getLinearEstimateOfV(uv[X]);
-					//ce = br->getCurveEstimateOfV(uv[X],0.0001);
-					dist = uv[Y] - br->getLinearEstimateOfV(uv[X]);
-				    closest = br;
-				} else {
-					fastf_t v = uv[Y] - br->getLinearEstimateOfV(uv[X]);
-					if ((v >= 0.0) && (v < dist)) {
-						dist = v;
+				//if (i == trims.begin()) {
+				//	//double le,ce;
+				//	//le = br->getLinearEstimateOfV(uv[X]);
+				////	//ce = br->getCurveEstimateOfV(uv[X],0.0001);
+				//	dist = uv[Y] - br->getLinearEstimateOfV(uv[X]);
+				//    closest = br;
+				//} else {
+				fastf_t v = br->getLinearEstimateOfV(uv[X]); // - uv[Y];
+				//v = br->getCurveEstimateOfV(uv[X],0.0001);
+					br->GetBBox(bmin,bmax);
+					if ((v > uv[Y]) && ((v <= bmax[Y]) && (v >= bmin[Y]))) {
+					    if (closest == NULL){
+						currHeight = v;
 						closest = br;
+					    } else if (v < currHeight ) {
+						currHeight = v;
+						closest = br;
+					    }
 					}
-				}
+				//}
 			}
 			if (closest == NULL) {
-				return false;
+				return true;
 			} else {
 				return closest->isTrimmed(uv);
 			}

@@ -382,9 +382,9 @@ brep_build_bvh(struct brep_specific* bs, struct rt_brep_internal* bi)
         TRACE1("Face: " << i);
 		bu_log("Prepping Face: %d of %d\n", i+1, faces.Count());
 		ON_BrepFace& face = faces[i];
-//#undefine KPLOT
+//#define KPLOT
 #ifdef KPLOT // debugging hacks to look at specific faces
-		if ((i == 0)) { // && ((i <= 6) ||(i >= 5))) {
+		if ((i == 4)) { // && ((i <= 6) ||(i >= 5))) {
 #endif
 		SurfaceTree* st = new SurfaceTree(&face);
 		face.m_face_user.p = st;
@@ -395,7 +395,7 @@ brep_build_bvh(struct brep_specific* bs, struct rt_brep_internal* bi)
 		surface_trees.push_back(st);
 #ifdef KPLOT // debugging hacks to look at specific faces
 			
-			if (true) { //plotting hacks i==0) {
+			if (true) { //plotting utah_brep_intersecthacks i==0) {
 				plottrim(face);
 				plotsurfaceleafs(st);
 			}
@@ -405,7 +405,7 @@ brep_build_bvh(struct brep_specific* bs, struct rt_brep_internal* bi)
 		brep_bvh_subdivide(bs->bvh, surface_trees);
 	}
 #ifdef KPLOT // debugging hacks to look at specific faces
-    (void)fclose(plot_file());
+//    (void)fclose(plot_file());
 #endif
     return 0;
 }
@@ -1031,8 +1031,30 @@ utah_brep_intersect(const SubsurfaceBBNode* sbv, const ON_BrepFace* face, const 
      *
      */
     //if (converged && (t > 1.e-2) && (!utah_isTrimmed(ouv, face))) hit = true;
-      if (converged && (t > 1.e-2) && (!((SubsurfaceBBNode*)sbv)->isTrimmed(ouv))) hit = true;
-//    if (converged && (t > 1.e-2)) hit = true;
+	//if (converged && (t > 1.e-2) && (!((SubsurfaceBBNode*)sbv)->isTrimmed(ouv))) hit = true;
+	
+	if (converged && (t > 1.e-2)) {
+		if  (!((SubsurfaceBBNode*)sbv)->isTrimmed(ouv)) {
+			hit = true;
+//#define KHITPLOT
+#ifdef KHITPLOT
+			double min[3],max[3];
+			COLOR_PLOT(255, 200, 200);
+			VSET(min,ouv[0]-0.01,ouv[1]-0.01,0.0);
+			VSET(max,ouv[0]+0.01,ouv[1]+0.01,0.0);
+			BB_PLOT(min,max);
+		} else {
+			double min[3],max[3];
+			COLOR_PLOT(200, 255, 200);
+			VSET(min,ouv[0]-0.01,ouv[1]-0.01,0.0);
+			VSET(max,ouv[0]+0.01,ouv[1]+0.01,0.0);
+			BB_PLOT(min,max);
+		}
+#else
+	        }
+#endif
+	}
+	//    if (converged && (t > 1.e-2)) hit = true;
 
     uv[0] = ouv.x;
     uv[1] = ouv.y;
@@ -1376,7 +1398,8 @@ rt_brep_shot(struct soltab *stp, register struct xray *rp, struct application *a
 
     bool hit = false;
     if (hits.size() > 0) {
-#if 1 //ugly debugging hack to raytrace single surface and not worry about odd hits
+//#define KODDHIT
+#ifdef KODDHIT //ugly debugging hack to raytrace single surface and not worry about odd hits
 	if (hits.size() > 0 ) { 
 #else
 	if (hits.size() % 2 == 0) {
@@ -1384,7 +1407,7 @@ rt_brep_shot(struct soltab *stp, register struct xray *rp, struct application *a
 	    // take each pair as a segment
 	    for (HitList::iterator i = hits.begin(); i != hits.end(); ++i) {
 		brep_hit& in = *i;
-#if 0  //ugly debugging hack to raytrace single surface and not worry about odd hits
+#ifndef KODDHIT  //ugly debugging hack to raytrace single surface and not worry about odd hits
 		i++;
 #endif
 		brep_hit& out = *i;
@@ -1395,7 +1418,7 @@ rt_brep_shot(struct soltab *stp, register struct xray *rp, struct application *a
 
 		VMOVE(segp->seg_in.hit_point, in.point);
 		VMOVE(segp->seg_in.hit_normal, in.normal);
-#if 1 //ugly debugging hack to raytrace single surface and not worry about odd hits
+#ifdef KODDHIT //ugly debugging hack to raytrace single surface and not worry about odd hits
 		segp->seg_in.hit_dist = 0.01;
 #else
 		segp->seg_in.hit_dist = DIST_PT_PT(rp->r_pt, in.point);
