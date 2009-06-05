@@ -11,7 +11,6 @@ adrt_master_SOURCES = \
 adrt_master_CFLAGS = \
 	-I${top_srcdir}/src/adrt \
 	-I${top_srcdir}/src/adrt/libtie \
-	-I${top_srcdir}/src/adrt/libtienet \
 	-I${top_srcdir}/src/adrt/libtexture \
 	-I${top_srcdir}/src/adrt/librender \
 	${TCL_CPPFLAGS} \
@@ -19,7 +18,6 @@ adrt_master_CFLAGS = \
 
 adrt_master_LDADD = \
 	${top_builddir}/src/adrt/libtie/libtie.la \
-	${top_builddir}/src/adrt/libtienet/libtienet.la \
 	${BU} \
 	${LIBTHREAD} \
 	${LIBM} \

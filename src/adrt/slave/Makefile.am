@@ -12,7 +12,6 @@ adrt_slave_SOURCES = \
 adrt_slave_CFLAGS = \
 	-I${top_srcdir}/src/adrt \
 	-I${top_srcdir}/src/adrt/libtie \
-	-I${top_srcdir}/src/adrt/libtienet \
 	-I${top_srcdir}/src/adrt/libtexture \
 	-I${top_srcdir}/src/adrt/librender \
 	${LIBZ_CPPFLAGS} \
@@ -23,7 +22,6 @@ adrt_slave_LDADD = \
 	${top_builddir}/src/adrt/librender/librender.la \
 	${LIBM} \
 	${top_builddir}/src/adrt/libtexture/libtexture.la \
-	${top_builddir}/src/adrt/libtienet/libtienet.la \
 	${top_builddir}/src/adrt/libtie/libtie.la \
 	${LIBZ}
 

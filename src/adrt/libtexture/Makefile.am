@@ -7,7 +7,6 @@ libtexture_la_LDFLAGS = -static
 AM_CFLAGS = \
 	-I${top_srcdir}/src/adrt \
 	-I${top_srcdir}/src/adrt/libtie \
-	-I${top_srcdir}/src/adrt/libtienet \
 	-I${top_srcdir}/src/adrt/libcommon \
 	-I${top_srcdir}/src/adrt/librender \
 	${TCL_CPPFLAGS}

@@ -18,7 +18,6 @@ librender_la_SOURCES = \
 	surfel.c
 
 librender_la_LIBADD = \
-	${top_builddir}/src/adrt/libtienet/libtienet.la \
 	${top_builddir}/src/adrt/libtie/libtie.la \
 	${BN} \
 	${BU} \
@@ -27,7 +26,6 @@ librender_la_LIBADD = \
 AM_CFLAGS = \
 	-I${top_srcdir}/src/adrt \
 	-I${top_srcdir}/src/adrt/libtie \
-	-I${top_srcdir}/src/adrt/libtienet \
 	-I${top_srcdir}/src/adrt/libcommon \
 	-I${top_srcdir}/src/adrt/libtexture \
 	${TCL_CPPFLAGS}
