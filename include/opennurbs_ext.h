@@ -418,7 +418,7 @@ namespace brlcad {
 	SubcurveBANode<BA>::isTrimmed(const ON_2dPoint& uv) const {
 	    if (m_checkTrim) {
 			fastf_t v = m_start[Y] + m_slope*(uv[X] - m_start[X]);
-			v = getCurveEstimateOfV(uv,0.0000001);
+			if (fabs(uv[Y] - v) < 0.1) v = getCurveEstimateOfV(uv,0.000000001);
 			if (uv[Y] < v) {
 				if (m_XIncreasing) {
 					return true;
@@ -502,8 +502,43 @@ namespace brlcad {
 		return v;
 	}
 
-
-	
+	template<class BA>
+	fastf_t
+	SubcurveBANode<BA>::getCurveEstimateOfV(const ON_2dPoint& uv, fastf_t tol ) const {
+	    double guess = m_t[0] + (m_t[1] - m_t[0])/2;
+	    double guess_old = m_t[0];
+	    double x,y,xp,yp,xpp,ypp,dp,dpp;
+	    ON_3dPoint p;
+	    ON_3dVector d1;
+	    ON_3dVector d2;
+	    m_trim->Ev2Der(guess, p, d1, d2);
+	    int cnt = 0;
+	    int MAX_CNT = 10;
+	    while ((cnt < MAX_CNT) && !NEAR_ZERO(guess-guess_old,tol)) {
+		guess_old = guess;
+		m_trim->Ev2Der(guess, p, d1, d2);
+    		y = p[Y] - uv[Y];
+    		x = p[X] - uv[X];
+    		yp = d1[1];
+    		xp = d1[0];
+    		ypp = d2[1];
+    		xpp = d2[0];
+    		dp = (2*yp*y+2*xp*x)/(2*sqrt(y*y+x*x));
+    		dpp = (2*ypp*y+2*xpp*x+2*yp*yp+2*xp*xp)/(2*sqrt(y*y+x*x))-((2*yp*y+2*xp*x)*(2*yp*y+2*xp*x))/((4*y*y+4*x*x)*sqrt(4*y*y+4*x*x));
+		guess = guess - dp/dpp;
+		cnt++;
+	    }
+	    if (cnt == MAX_CNT) {
+	    	bu_log("Iteration didn't converge.  Using linear test.\n");
+		ON_3dPoint pstart = m_trim->PointAt(m_t[0]);
+		ON_3dPoint pend = m_trim->PointAt(m_t[1]);
+		bu_log("pstart[X]: %f, pstart[Y]: %f, pend[X]: %f, pend[Y]: %f, uv[X]: %f, p[X]: %f, uv[Y]: %f, p[Y]: %f, linear_test_y: %f\n", pstart[0], pstart[1], pend[0], pend[1], uv[X], p[X], uv[Y], p[Y],  m_start[Y] + m_slope*(uv[X] - m_start[X]) );
+		return m_start[Y] + m_slope*(uv[X] - m_start[X]);	
+	    } else {
+	        return p[Y];
+	    }
+	}
+/*	
 	template<class BA>
 	fastf_t 
 	SubcurveBANode<BA>::getCurveEstimateOfV(const ON_2dPoint& uv, fastf_t tol ) const {
@@ -538,7 +573,7 @@ namespace brlcad {
 		}
 		return p[Y];
 	}
-		
+*/		
     //--------------------------------------------------------------------------------
     // Bounding volume hierarchy classes
 
