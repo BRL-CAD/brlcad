@@ -2541,8 +2541,6 @@ Popup Menu    Right or Ctrl-Left
 	set mRenderMode 2
     }
 
-    $itk_component(tree) toggle $snode
-
     if {$nodeType == "leaf"} {
 	$menu add radiobutton -label "Wireframe" \
 	    -indicatoron 1 -value 0 -variable [::itcl::scope mRenderMode] \
