@@ -13,7 +13,7 @@ libtienet_la_SOURCES = load.c load_g.c load_MySQL.c tienet_master.c tienet_slave
 libtienet_la_LIBADD = ${BU} ${BU_LIBS} ${top_builddir}/src/adrt/libtie/libtie.la
 
 tieincludedir = $(includedir)/tie
-tieinclude_HEADERS = load.h tienet.h tienet_define.h tienet_util.h tienet_master.h tienet_slave.h tienet_util.h
+tieinclude_HEADERS = load.h tienet.h tienet_define.h tienet_master.h tienet_slave.h tienet_util.h
 
 #g_adrt_SOURCES = g-adrt.c
 #g_adrt_LDADD = libtienet.la
