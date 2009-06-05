@@ -418,7 +418,7 @@ namespace brlcad {
 	SubcurveBANode<BA>::isTrimmed(const ON_2dPoint& uv) const {
 	    if (m_checkTrim) {
 			fastf_t v = m_start[Y] + m_slope*(uv[X] - m_start[X]);
-			if (fabs(uv[Y] - v) < 0.1) v = getCurveEstimateOfV(uv,0.000000001);
+			if (fabs(uv[Y] - v) < fabs(m_start[Y]-m_end[Y])*0.001) v = getCurveEstimateOfV(uv,0.0001);
 			if (uv[Y] < v) {
 				if (m_XIncreasing) {
 					return true;
@@ -513,9 +513,12 @@ namespace brlcad {
 	    ON_3dVector d2;
 	    m_trim->Ev2Der(guess, p, d1, d2);
 	    int cnt = 0;
-	    int MAX_CNT = 10;
-	    while ((cnt < MAX_CNT) && !NEAR_ZERO(guess-guess_old,tol)) {
-		guess_old = guess;
+	    double d_old = 0;
+	    double d = fabs(uv[1]-p[1]);
+	    bu_log("Called Curve Estimation Routine.\n");
+	    int MAX_CNT = 1000;
+	    while ((cnt < MAX_CNT) && !NEAR_ZERO(d_old-d,tol)) {
+		d_old = d;
 		m_trim->Ev2Der(guess, p, d1, d2);
     		y = p[Y] - uv[Y];
     		x = p[X] - uv[X];
@@ -523,6 +526,7 @@ namespace brlcad {
     		xp = d1[0];
     		ypp = d2[1];
     		xpp = d2[0];
+		d = fabs(uv[1]-p[1]);
     		dp = (2*yp*y+2*xp*x)/(2*sqrt(y*y+x*x));
     		dpp = (2*ypp*y+2*xpp*x+2*yp*yp+2*xp*xp)/(2*sqrt(y*y+x*x))-((2*yp*y+2*xp*x)*(2*yp*y+2*xp*x))/((4*y*y+4*x*x)*sqrt(4*y*y+4*x*x));
 		guess = guess - dp/dpp;
