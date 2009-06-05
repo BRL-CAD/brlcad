@@ -24,6 +24,6 @@ EXTRA_DIST = \
 	AUTHORS \
 	README
 
-DEPS = src/libbu
+DEPS = src/libbn
 
 include $(top_srcdir)/misc/Makefile.defs
