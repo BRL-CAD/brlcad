@@ -49,7 +49,6 @@ man_MANS = \
 	hilbert_i2c.3 \
 	inv_cmap.3 \
 	librle.3 \
-	librle.3 \
 	libutahrle.3 \
 	make_square.3 \
 	rgb_to_bw.3 \
