@@ -226,7 +226,7 @@ static void tie_kdtree_prep_head(tie_t *tie, tie_tri_t *tri_list, unsigned int t
     }
 }
 
-static int tie_kdtree_tri_box_overlap(TIE_3 *center, TIE_3 *half_size, TIE_3 triverts[3]) 
+static int tie_kdtree_tri_box_overlap(TIE_3 *center, TIE_3 *half_size, TIE_3 triverts[3])
 {
 /*
  * use separating axis theorem to test overlap between triangle and box
@@ -315,7 +315,7 @@ static int tie_kdtree_tri_box_overlap(TIE_3 *center, TIE_3 *half_size, TIE_3 tri
     return t >= d ? 1 : 0;
 }
 
-static void tie_kdtree_build(tie_t *tie, tie_kdtree_t *node, unsigned int depth, TIE_3 min, TIE_3 max) 
+static void tie_kdtree_build(tie_t *tie, tie_kdtree_t *node, unsigned int depth, TIE_3 min, TIE_3 max)
 {
     tie_geom_t *child[2], *node_gd = (tie_geom_t *)(node->data);
     TIE_3 cmin[2], cmax[2], center[2], half_size[2];

@@ -96,7 +96,7 @@ void render_cut_init(render_t *render, TIE_3 ray_pos, TIE_3 ray_dir) {
 
     VADD2SCALE(list[4].v, ray_pos.v, ray_dir.v, LENGTH);
     list[4].v[2] += THICKNESS;
-    
+
     VMOVE(list[5].v, ray_pos.v);
     list[5].v[2] -= THICKNESS;
 

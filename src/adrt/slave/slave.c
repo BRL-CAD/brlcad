@@ -50,8 +50,8 @@ typedef struct adrt_slave_project_s {
 uint32_t adrt_slave_threads;
 adrt_slave_project_t adrt_workspace_list[ADRT_MAX_WORKSPACE_NUM];
 
-void 
-adrt_slave_free() 
+void
+adrt_slave_free()
 {
     uint16_t i;
 
@@ -110,7 +110,7 @@ adrt_slave_work(tienet_buffer_t *work, tienet_buffer_t *result)
 	    printf ("load average: %f\n", loadavg);
 	}
 	break;
- 
+
 	case ADRT_WORK_SELECT:
 	{
 	    uint8_t c;
@@ -147,7 +147,7 @@ adrt_slave_work(tienet_buffer_t *work, tienet_buffer_t *result)
 
 	    /* zero length result */
 	    result->ind = 0;
-	}  
+	}
 	break;
 
 	case ADRT_WORK_SHOTLINE:
@@ -389,13 +389,13 @@ adrt_slave_work(tienet_buffer_t *work, tienet_buffer_t *result)
 	struct timeval	tv;
 	static int      adrt_slave_completed = 0;
 	static time_t	adrt_slave_startsec = 0;
-	
+
 	if(adrt_slave_startsec == 0) adrt_slave_startsec = time(NULL);
 
 	gettimeofday(&tv, NULL);
-	printf("\t[Work Units Completed: %.6d  Rays: %.5d k/sec %lld]\n", 
-		++adrt_slave_completed, 
-		(int) ((tfloat) adrt_workspace_list[wid].tie.rays_fired / (tfloat) (1000 * (tv.tv_sec - adrt_slave_startsec + 1))), 
+	printf("\t[Work Units Completed: %.6d  Rays: %.5d k/sec %lld]\n",
+		++adrt_slave_completed,
+		(int) ((tfloat) adrt_workspace_list[wid].tie.rays_fired / (tfloat) (1000 * (tv.tv_sec - adrt_slave_startsec + 1))),
 		adrt_workspace_list[wid].tie.rays_fired);
 	fflush(stdout);
     }
@@ -404,8 +404,8 @@ adrt_slave_work(tienet_buffer_t *work, tienet_buffer_t *result)
     return;
 }
 
-void 
-adrt_slave(int port, char *host, int threads) 
+void
+adrt_slave(int port, char *host, int threads)
 {
     int i;
     adrt_slave_threads = threads;
@@ -419,7 +419,7 @@ adrt_slave(int port, char *host, int threads)
 }
 
 #if 0
-void adrt_slave_mesg(void *mesg, unsigned int mesg_len) 
+void adrt_slave_mesg(void *mesg, unsigned int mesg_len)
 {
     short		op;
     TIE_3		foo;

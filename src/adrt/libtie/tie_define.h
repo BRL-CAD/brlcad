@@ -38,7 +38,7 @@
 #define TIE_SINGLE_PRECISION 0
 #define TIE_DOUBLE_PRECISION 1
 
-/* 
+/*
  * define which precision to use, 0 is 'float' and 1 is 'double'.
  * Default to double precision to protect those not familiar.
  * Horrible macros wrap functions and values to build a library

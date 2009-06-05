@@ -1,6 +1,6 @@
 
 ### bin_PROGRAMS = adrt_bench
-### 
+###
 ### adrt_bench_CFLAGS = \
 ### 	-D__STRICT_ANSI__ \
 ### 	-I.. \
@@ -13,11 +13,11 @@
 ### 	-I${top_srcdir}/src/adrt/libutil \
 ### 	${LIBZ_CPPFLAGS} \
 ### 	${TCL_CPPFLAGS}
-### 
+###
 ### adrt_bench_SOURCES = \
 ### 	bench.c \
 ### 	main.c
-### 
+###
 ### adrt_bench_LDADD = \
 ### 	${top_builddir}/src/adrt/libcommon/libcommon.la \
 ### 	${top_builddir}/src/adrt/librender/librender.la \
@@ -28,13 +28,13 @@
 ### 	${LIBTHREAD} \
 ### 	${LIBM} \
 ### 	${LIBZ}
-### 
+###
 ### #noinst_HEADERS = \
 ### #	dispatcher.h
-### 
+###
 ### noinst_HEADERS = \
 ### 	bench.h
-### 
+###
 ### DEPS=src/libbu
 
 EXTRA_DIST = bench.c bench.h main.c

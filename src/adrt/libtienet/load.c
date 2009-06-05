@@ -60,7 +60,7 @@ slave_load_free ()
 int
 slave_load_region (tie_t *tie, char *data)
 {
-    /* 
+    /*
      * data contains a region name and the triangle soup.
      * Meant to be called several times, with slave_load_kdtree called at the
      * end to finally prep it up.
@@ -100,7 +100,7 @@ slave_load (tie_t *tie, void *data, uint32_t dlen)
 	    fprintf(stderr, "Unknown load format\n");
 	    return 1;
     }
-    return -1; 
+    return -1;
 }
 
 /*

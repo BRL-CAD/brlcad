@@ -42,7 +42,7 @@
 # include <stdint.h>
 #endif
 
-#define TIE_DEGENERATE_THRESHOLD 0.0001 
+#define TIE_DEGENERATE_THRESHOLD 0.0001
 TIE_VAL(int tie_check_degenerate) = 1;
 
 /*************************************************************
@@ -407,7 +407,7 @@ TIE_FUNC(void tie_push, tie_t *tie, TIE_3 **tlist, unsigned int tnum, void *plis
 /* expand the tri buffer if needed */
     if (tnum + tie->tri_num > tie->tri_num_alloc) {
 	tie->tri_list = (tie_tri_t *)bu_realloc(
-	    tie->tri_list, 
+	    tie->tri_list,
 	    sizeof(tie_tri_t) * (tie->tri_num + tnum),
 	    "tri_list during tie_push");
 	tie->tri_num_alloc += tnum;

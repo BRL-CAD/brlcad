@@ -29,19 +29,19 @@
 #include "hit.h"
 #include "adrt_struct.h"
 
-void 
+void
 render_phong_init(render_t *render) {
     render->work = render_phong_work;
     render->free = render_phong_free;
     return;
 }
 
-void 
+void
 render_phong_free(render_t *render) {
     return;
 }
 
-void 
+void
 render_phong_work(render_t *render, tie_t *tie, tie_ray_t *ray, TIE_3 *pixel) {
     tie_id_t		id;
     adrt_mesh_t		*mesh;
@@ -53,7 +53,7 @@ render_phong_work(render_t *render, tie_t *tie, tie_ray_t *ray, TIE_3 *pixel) {
 
 	if (mesh->texture)
 	    mesh->texture->work(mesh->texture, mesh, ray, &id, pixel);
-	
+
 	VSUB2(vec.v,  ray->pos.v,  id.pos.v);
 	VUNITIZE(vec.v);
 	VSCALE((*pixel).v, (*pixel).v, VDOT( vec.v,  id.norm.v));

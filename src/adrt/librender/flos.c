@@ -62,7 +62,7 @@ void render_flos_work(render_t *render, tie_t *tie, tie_ray_t *ray, TIE_3 *pixel
     TIE_3 vec;
     tfloat angle;
     render_flos_t *rd;
-   
+
     rd = (render_flos_t *)render->data;
 
     if ((mesh = (adrt_mesh_t *)tie_work(tie, ray, &id, render_hit, NULL))) {
