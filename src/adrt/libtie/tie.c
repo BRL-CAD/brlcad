@@ -195,7 +195,8 @@ TIE_FUNC(void* tie_work, tie_t *tie, tie_ray_t *ray, tie_id_t *id, void *(*hitfu
     tie_geom_t *data;
     tie_kdtree_t *node_aligned, *temp[2];
     tfloat near, far, dirinv[3], dist;
-    int i, n, ab[3], split, stack_ind, hit_count;
+    unsigned int i, n, hit_count;
+    int ab[3], split, stack_ind;
     void *result;
 
 
