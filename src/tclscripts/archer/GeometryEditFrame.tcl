@@ -56,6 +56,7 @@
 	common mEditParam1 0
 	common mEditParam2 0
 	common mEditLastTransMode $::ArcherCore::OBJECT_CENTER_MODE
+	common mEditPCommand ""
 
 	proc validateDigit {d}
 	proc validateDigitMax100 {d}
@@ -68,6 +69,8 @@
 	method initGeometry {gdata}
 	method updateGeometry {}
 	method createGeometry {obj}
+
+	method p {obj args}
     }
 
     protected {
@@ -297,6 +300,8 @@
     return 1
 }
 
+::itcl::body GeometryEditFrame::p {obj args} {
+}
 
 # ------------------------------------------------------------
 #                      PROTECTED METHODS

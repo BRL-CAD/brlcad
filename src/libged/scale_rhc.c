@@ -34,7 +34,7 @@
 #include "./ged_private.h"
 
 int
-ged_scale_rhc(struct ged *gedp, struct rt_rhc_internal *rhc, const char *attribute, fastf_t sf)
+ged_scale_rhc(struct ged *gedp, struct rt_rhc_internal *rhc, const char *attribute, fastf_t sf, int rflag)
 {
     fastf_t ma, mb;
 
@@ -43,19 +43,33 @@ ged_scale_rhc(struct ged *gedp, struct rt_rhc_internal *rhc, const char *attribu
     switch (attribute[0]) {
     case 'b':
     case 'B':
+	if (!rflag)
+	    sf /= MAGNITUDE(rhc->rhc_B);
+
 	VSCALE(rhc->rhc_B, rhc->rhc_B, sf);
 	break;
     case 'h':
     case 'H':
+	if (!rflag)
+	    sf /= MAGNITUDE(rhc->rhc_H);
+
 	VSCALE(rhc->rhc_H, rhc->rhc_H, sf);
 	break;
     case 'c':
     case 'C':
-	rhc->rhc_c *= sf;
+	if (rflag)
+	    rhc->rhc_c *= sf;
+	else
+	    rhc->rhc_c = sf;
+
 	break;
     case 'r':
     case 'R':
-	rhc->rhc_r *= sf;
+	if (rflag)
+	    rhc->rhc_r *= sf;
+	else
+	    rhc->rhc_r = sf;
+
 	break;
     default:
 	bu_vls_printf(&gedp->ged_result_str, "bad rhc attribute - %s", attribute);

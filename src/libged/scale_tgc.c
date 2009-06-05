@@ -36,7 +36,7 @@
 
 
 int
-ged_scale_tgc(struct ged *gedp, struct rt_tgc_internal *tgc, const char *attribute, fastf_t sf)
+ged_scale_tgc(struct ged *gedp, struct rt_tgc_internal *tgc, const char *attribute, fastf_t sf, int rflag)
 {
     fastf_t ma, mb;
 
@@ -45,6 +45,9 @@ ged_scale_tgc(struct ged *gedp, struct rt_tgc_internal *tgc, const char *attribu
     switch (attribute[0]) {
     case 'a':
     case 'A':
+	if (!rflag)
+	    sf /= MAGNITUDE(tgc->a);
+
 	switch (attribute[1]) {
 	case '\0':
 	    VSCALE(tgc->a, tgc->a, sf);
@@ -91,10 +94,16 @@ ged_scale_tgc(struct ged *gedp, struct rt_tgc_internal *tgc, const char *attribu
 	break;
     case 'b':
     case 'B':
+	if (!rflag)
+	    sf /= MAGNITUDE(tgc->b);
+
 	VSCALE(tgc->b, tgc->b, sf);
 	break;
     case 'c':
     case 'C':
+	if (!rflag)
+	    sf /= MAGNITUDE(tgc->c);
+
 	switch (attribute[1]) {
 	case '\0':
 	    VSCALE(tgc->c, tgc->c, sf);
@@ -114,10 +123,16 @@ ged_scale_tgc(struct ged *gedp, struct rt_tgc_internal *tgc, const char *attribu
 	break;
     case 'd':
     case 'D':
+	if (!rflag)
+	    sf /= MAGNITUDE(tgc->d);
+
 	VSCALE(tgc->d, tgc->d, sf);
 	break;
     case 'h':
     case 'H':
+	if (!rflag)
+	    sf /= MAGNITUDE(tgc->h);
+
 	switch (attribute[1]) {
 	case '\0':
 	    VSCALE(tgc->h, tgc->h, sf);

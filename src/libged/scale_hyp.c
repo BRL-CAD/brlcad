@@ -36,7 +36,7 @@
 
 
 int
-ged_scale_hyp(struct ged *gedp, struct rt_hyp_internal *hyp, const char *attribute, fastf_t sf)
+ged_scale_hyp(struct ged *gedp, struct rt_hyp_internal *hyp, const char *attribute, fastf_t sf, int rflag)
 {
     fastf_t f;
     point_t old_top;
@@ -46,6 +46,9 @@ ged_scale_hyp(struct ged *gedp, struct rt_hyp_internal *hyp, const char *attribu
     switch (attribute[0]) {
     case 'h':
     case 'H':
+	if (!rflag)
+	    sf /= MAGNITUDE(hyp->hyp_Hi);
+
 	switch (attribute[1]) {
 	case '\0':
 	    VSCALE(hyp->hyp_Hi, hyp->hyp_Hi, sf);
@@ -65,19 +68,30 @@ ged_scale_hyp(struct ged *gedp, struct rt_hyp_internal *hyp, const char *attribu
 	break;
     case 'a':
     case 'A':
+	if (!rflag)
+	    sf /= MAGNITUDE(hyp->hyp_A);
+
 	VSCALE(hyp->hyp_A, hyp->hyp_A, sf);
 	break;
     case 'b':
     case 'B':
-	hyp->hyp_b *= sf;
+	if (rflag)
+	    hyp->hyp_b *= sf;
+	else
+	    hyp->hyp_b = sf;
+
 	break;
     case 'c':
     case 'C':
-	f = hyp->hyp_bnr * sf;
+	if (rflag)
+	    f = hyp->hyp_bnr * sf;
+	else
+	    f = sf;
+
 	if (f <= 1.0)
-	    hyp->hyp_bnr *= sf;
+	    hyp->hyp_bnr = f;
+
 	break;
-    break;
     default:
 	bu_vls_printf(&gedp->ged_result_str, "bad hyp attribute - %s", attribute);
 	return GED_ERROR;

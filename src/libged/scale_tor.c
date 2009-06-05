@@ -36,7 +36,7 @@
 
 
 int
-ged_scale_tor(struct ged *gedp, struct rt_tor_internal *tor, const char *attribute, fastf_t sf)
+ged_scale_tor(struct ged *gedp, struct rt_tor_internal *tor, const char *attribute, fastf_t sf, int rflag)
 {
     fastf_t newrad;
 
@@ -45,7 +45,11 @@ ged_scale_tor(struct ged *gedp, struct rt_tor_internal *tor, const char *attribu
     switch (attribute[0]) {
     case 'a':
     case 'A':
-	newrad = tor->r_a * sf;
+	if (rflag)
+	    newrad = tor->r_a * sf;
+	else
+	    newrad = sf;
+
 	if (newrad < SMALL)
 	    newrad = 4*SMALL;
 	if (tor->r_h <= newrad)
@@ -53,7 +57,11 @@ ged_scale_tor(struct ged *gedp, struct rt_tor_internal *tor, const char *attribu
 	break;
     case 'h':
     case 'H':
-	newrad = tor->r_h * sf;
+	if (rflag)
+	    newrad = tor->r_h * sf;
+	else
+	    newrad = sf;
+
 	if (newrad < SMALL)
 	    newrad = 4*SMALL;
 	if (newrad <= tor->r_a)

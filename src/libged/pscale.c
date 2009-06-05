@@ -38,11 +38,12 @@ int
 ged_pscale(struct ged *gedp, int argc, const char *argv[])
 {
     int ret;
+    int rflag;
     struct rt_db_internal intern;
     fastf_t sf;
     char *last;
     struct directory *dp;
-    static const char *usage = "obj attribute sf";
+    static const char *usage = "[-r] obj attribute sf";
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
     GED_CHECK_READ_ONLY(gedp, GED_ERROR);
@@ -57,10 +58,22 @@ ged_pscale(struct ged *gedp, int argc, const char *argv[])
 	return GED_HELP;
     }
 
-    if (argc != 4) {
+    if (argc < 4 || argc > 5) {
 	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_ERROR;
     }
+
+    if (argc == 5) {
+	if (argv[1][0] == '-' && argv[1][1] == 'r' && argv[1][2] == '\0') {
+	    rflag = 1;
+	    --argc;
+	    ++argv;
+	} else {
+	    bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	    return BRLCAD_ERROR;
+	}
+    } else 
+	rflag = 0;
 
     if (sscanf(argv[3], "%lf", &sf) != 1 ||
 	sf <= SQRT_SMALL_FASTF) {
@@ -95,40 +108,40 @@ ged_pscale(struct ged *gedp, int argc, const char *argv[])
 
     switch (intern.idb_minor_type) {
     case DB5_MINORTYPE_BRLCAD_EHY:
-	ret = ged_scale_ehy(gedp, (struct rt_ehy_internal *)intern.idb_ptr, argv[2], sf);
+	ret = ged_scale_ehy(gedp, (struct rt_ehy_internal *)intern.idb_ptr, argv[2], sf, rflag);
 	break;
     case DB5_MINORTYPE_BRLCAD_ELL:
-	ret = ged_scale_ell(gedp, (struct rt_ell_internal *)intern.idb_ptr, argv[2], sf);
+	ret = ged_scale_ell(gedp, (struct rt_ell_internal *)intern.idb_ptr, argv[2], sf, rflag);
 	break;
     case DB5_MINORTYPE_BRLCAD_EPA:
-	ret = ged_scale_epa(gedp, (struct rt_epa_internal *)intern.idb_ptr, argv[2], sf);
+	ret = ged_scale_epa(gedp, (struct rt_epa_internal *)intern.idb_ptr, argv[2], sf, rflag);
 	break;
     case DB5_MINORTYPE_BRLCAD_ETO:
-	ret = ged_scale_eto(gedp, (struct rt_eto_internal *)intern.idb_ptr, argv[2], sf);
+	ret = ged_scale_eto(gedp, (struct rt_eto_internal *)intern.idb_ptr, argv[2], sf, rflag);
 	break;
     case DB5_MINORTYPE_BRLCAD_EXTRUDE:
-	ret = ged_scale_extrude(gedp, (struct rt_extrude_internal *)intern.idb_ptr, argv[2], sf);
+	ret = ged_scale_extrude(gedp, (struct rt_extrude_internal *)intern.idb_ptr, argv[2], sf, rflag);
 	break;
     case DB5_MINORTYPE_BRLCAD_HYP:
-	ret = ged_scale_hyp(gedp, (struct rt_hyp_internal *)intern.idb_ptr, argv[2], sf);
+	ret = ged_scale_hyp(gedp, (struct rt_hyp_internal *)intern.idb_ptr, argv[2], sf, rflag);
 	break;
     case DB5_MINORTYPE_BRLCAD_PARTICLE:
-	ret = ged_scale_part(gedp, (struct rt_part_internal *)intern.idb_ptr, argv[2], sf);
+	ret = ged_scale_part(gedp, (struct rt_part_internal *)intern.idb_ptr, argv[2], sf, rflag);
 	break;
     case DB5_MINORTYPE_BRLCAD_RHC:
-	ret = ged_scale_rhc(gedp, (struct rt_rhc_internal *)intern.idb_ptr, argv[2], sf);
+	ret = ged_scale_rhc(gedp, (struct rt_rhc_internal *)intern.idb_ptr, argv[2], sf, rflag);
 	break;
     case DB5_MINORTYPE_BRLCAD_RPC:
-	ret = ged_scale_rpc(gedp, (struct rt_rpc_internal *)intern.idb_ptr, argv[2], sf);
+	ret = ged_scale_rpc(gedp, (struct rt_rpc_internal *)intern.idb_ptr, argv[2], sf, rflag);
 	break;
     case DB5_MINORTYPE_BRLCAD_SUPERELL:
-	ret = ged_scale_superell(gedp, (struct rt_superell_internal *)intern.idb_ptr, argv[2], sf);
+	ret = ged_scale_superell(gedp, (struct rt_superell_internal *)intern.idb_ptr, argv[2], sf, rflag);
 	break;
     case DB5_MINORTYPE_BRLCAD_TGC:
-	ret = ged_scale_tgc(gedp, (struct rt_tgc_internal *)intern.idb_ptr, argv[2], sf);
+	ret = ged_scale_tgc(gedp, (struct rt_tgc_internal *)intern.idb_ptr, argv[2], sf, rflag);
 	break;
     case DB5_MINORTYPE_BRLCAD_TOR:
-	ret = ged_scale_tor(gedp, (struct rt_tor_internal *)intern.idb_ptr, argv[2], sf);
+	ret = ged_scale_tor(gedp, (struct rt_tor_internal *)intern.idb_ptr, argv[2], sf, rflag);
 	break;
     default:
 	bu_vls_printf(&gedp->ged_result_str, "%s: Object not yet supported.", argv[0]);

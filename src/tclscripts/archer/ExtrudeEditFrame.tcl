@@ -38,6 +38,7 @@
 	method initGeometry {gdata}
 	method updateGeometry {}
 	method createGeometry {obj}
+	method p {obj args}
     }
 
     protected {
@@ -146,6 +147,44 @@
 	A [list $mDelta 0 0] \
 	B [list 0 $mDelta 0] \
 	S "none"
+}
+
+::itcl::body ExtrudeEditFrame::p {obj args} {
+    switch -- $GeometryEditFrame::mEditClass \
+	$GeometryEditFrame::EDIT_CLASS_SCALE {
+	    if {[llength $args] != 1 || ![string is double $args]} {
+		return "Usage: p sf"
+	    }
+	} \
+	$GeometryEditFrame::EDIT_CLASS_ROT {
+	    if {[llength $args] != 3 ||
+		![string is double [lindex $args 0]] ||
+		![string is double [lindex $args 1]] ||
+		![string is double [lindex $args 2]]} {
+		return "Usage: p rx ry rz"
+	    }
+	} \
+	$GeometryEditFrame::EDIT_CLASS_TRANS {
+	    if {[llength $args] != 3 ||
+		![string is double [lindex $args 0]] ||
+		![string is double [lindex $args 1]] ||
+		![string is double [lindex $args 2]]} {
+		return "Usage: p tx ty tz"
+	    }
+	}
+
+    switch -- $mEditMode \
+	$setH {
+	    $::ArcherCore::application pscale $obj h $args
+	} \
+	$moveH {
+	    $::ArcherCore::application ptranslate $obj h $args
+	} \
+	$rotH {
+	    $::ArcherCore::application protate $obj h $args
+	}
+
+    return ""
 }
 
 
@@ -481,24 +520,24 @@
 }
 
 ::itcl::body ExtrudeEditFrame::initEditState {} {
+    set mEditPCommand [::itcl::code $this p]
+    configure -valueUnits "mm"
+
     switch -- $mEditMode \
-	$setH { \
-	    set mEditCommand pscale; \
-	    set mEditClass $EDIT_CLASS_SCALE; \
-	    set mEditParam1 h; \
-	    configure -valueUnits "mm"; \
+	$setH {
+	    set mEditCommand pscale
+	    set mEditClass $EDIT_CLASS_SCALE
+	    set mEditParam1 h
 	} \
-	$moveH { \
-	    set mEditCommand ptranslate; \
-	    set mEditClass $EDIT_CLASS_TRANS; \
-	    set mEditParam1 h; \
-	    configure -valueUnits "mm"; \
+	$moveH {
+	    set mEditCommand ptranslate
+	    set mEditClass $EDIT_CLASS_TRANS
+	    set mEditParam1 h
         } \
-	$rotH { \
-	    set mEditCommand protate; \
-	    set mEditClass $EDIT_CLASS_ROT; \
-	    set mEditParam1 h; \
-	    configure -valueUnits "mm"; \
+	$rotH {
+	    set mEditCommand protate
+	    set mEditClass $EDIT_CLASS_ROT
+	    set mEditParam1 h
 	}
 
     GeometryEditFrame::initEditState

@@ -36,7 +36,7 @@
 
 
 int
-ged_scale_eto(struct ged *gedp, struct rt_eto_internal *eto, const char *attribute, fastf_t sf)
+ged_scale_eto(struct ged *gedp, struct rt_eto_internal *eto, const char *attribute, fastf_t sf, int rflag)
 {
     fastf_t newrad;
 
@@ -49,9 +49,14 @@ ged_scale_eto(struct ged *gedp, struct rt_eto_internal *eto, const char *attribu
 	fastf_t ch, cv, dh, newrad;
 	vect_t Nu;
 
-	newrad = eto->eto_r * sf;
+	if (rflag)
+	    newrad = eto->eto_r * sf;
+	else
+	    newrad = sf;
+
 	if (newrad < SMALL)
 	    newrad = 4*SMALL;
+
 	VMOVE(Nu, eto->eto_N);
 	VUNITIZE(Nu);
 
@@ -73,7 +78,11 @@ ged_scale_eto(struct ged *gedp, struct rt_eto_internal *eto, const char *attribu
 	fastf_t dh, newrad, work;
 	vect_t Nu;
 
-	newrad = eto->eto_rd * sf;
+	if (rflag)
+	    newrad = eto->eto_rd * sf;
+	else
+	    newrad = sf;
+
 	if (newrad < SMALL)
 	    newrad = 4*SMALL;
 	work = MAGNITUDE(eto->eto_C);
@@ -92,6 +101,9 @@ ged_scale_eto(struct ged *gedp, struct rt_eto_internal *eto, const char *attribu
     {
 	fastf_t ch, cv;
 	vect_t Nu, Work;
+
+	if (!rflag)
+	    sf /= MAGNITUDE(eto->eto_C);
 
 	if (sf * MAGNITUDE(eto->eto_C) >= eto->eto_rd) {
 	    VMOVE(Nu, eto->eto_N);

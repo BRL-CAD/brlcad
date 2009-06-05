@@ -196,6 +196,7 @@ namespace eval ArcherCore {
 	method orotate		   {args}
 	method oscale		   {args}
 	method otranslate	   {args}
+	method p                   {args}
 	method prefix              {args}
 	method protate             {args}
 	method pscale              {args}
@@ -394,7 +395,7 @@ namespace eval ArcherCore {
 					   in inside item kill killall killrefs killtree ls \
 					   make make_bb mater mirror move move_arb_edge move_arb_face \
 					   mv mvall nmg_collapse nmg_simplify \
-					   ocenter orotate oscale otranslate packTree prefix protate pscale ptranslate \
+					   ocenter orotate oscale otranslate p packTree prefix protate pscale ptranslate \
 					   push put put_comb putmat pwd r rcodes red rfarb rm rmater \
 					   rotate_arb_face shader shells tire title track \
 					   unhide units unpackTree \
@@ -3715,6 +3716,10 @@ Popup Menu    Right or Ctrl-Left
     }
 
     return $result
+}
+
+::itcl::body ArcherCore::p {args} {
+    # Nothing for now
 }
 
 ::itcl::body ArcherCore::packTree {data} {

@@ -38,6 +38,7 @@
 	method initGeometry {gdata}
 	method updateGeometry {}
 	method createGeometry {obj}
+	method p {obj args}
     }
 
     protected {
@@ -107,7 +108,7 @@
     set mAy [lindex $_A 1]
     set mAz [lindex $_A 2]
     set mR_1 [bu_get_value_by_keyword r_1 $gdata]
-    set mR_2 [bu_get_value_by_keyword r_1 $gdata]
+    set mR_2 [bu_get_value_by_keyword r_2 $gdata]
 
     GeometryEditFrame::initGeometry $gdata
 }
@@ -143,6 +144,24 @@
 	r_2 $mDelta
 }
 
+::itcl::body EpaEditFrame::p {obj args} {
+    if {[llength $args] != 1 || ![string is double $args]} {
+	return "Usage: p sf"
+    }
+
+    switch -- $mEditMode \
+	$setH {
+	    $::ArcherCore::application pscale $obj h $args
+	} \
+	$setA {
+	    $::ArcherCore::application pscale $obj a $args
+	} \
+	$setB {
+	    $::ArcherCore::application pscale $obj b $args
+	}
+
+    return ""
+}
 
 # ------------------------------------------------------------
 #                      PROTECTED METHODS
@@ -456,24 +475,20 @@
 }
 
 ::itcl::body EpaEditFrame::initEditState {} {
+    set mEditCommand pscale
+    set mEditClass $EDIT_CLASS_SCALE
+    set mEditPCommand [::itcl::code $this p]
+    configure -valueUnits "mm"
+
     switch -- $mEditMode \
-	$setH { \
-	    set mEditCommand pscale; \
-	    set mEditClass $EDIT_CLASS_SCALE; \
-	    set mEditParam1 h; \
-	    configure -valueUnits "mm"; \
+	$setH {
+	    set mEditParam1 h
 	} \
-	$setA { \
-	    set mEditCommand pscale; \
-	    set mEditClass $EDIT_CLASS_SCALE; \
-	    set mEditParam1 a; \
-	    configure -valueUnits "mm"; \
+	$setA {
+	    set mEditParam1 a
 	} \
-	$setB { \
-	    set mEditCommand pscale; \
-	    set mEditClass $EDIT_CLASS_SCALE; \
-	    set mEditParam1 b; \
-	    configure -valueUnits "mm"; \
+	$setB {
+	    set mEditParam1 b
 	}
 
     GeometryEditFrame::initEditState

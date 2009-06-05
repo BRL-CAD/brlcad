@@ -34,19 +34,30 @@
 #include "./ged_private.h"
 
 int
-ged_scale_part(struct ged *gedp, struct rt_part_internal *part, const char *attribute, fastf_t sf)
+ged_scale_part(struct ged *gedp, struct rt_part_internal *part, const char *attribute, fastf_t sf, int rflag)
 {
     RT_PART_CK_MAGIC(part);
 
     switch (attribute[0]) {
     case 'H':
+	if (!rflag)
+	    sf /= MAGNITUDE(part->part_H);
+
 	VSCALE(part->part_H, part->part_H, sf);
 	break;
     case 'v':
-	part->part_vrad *= sf;
+	if (rflag)
+	    part->part_vrad *= sf;
+	else
+	    part->part_vrad = sf;
+
 	break;
     case 'h':
-	part->part_hrad *= sf;
+	if (rflag)
+	    part->part_hrad *= sf;
+	else
+	    part->part_hrad = sf;
+
 	break;
     default:
 	bu_vls_printf(&gedp->ged_result_str, "bad part attribute - %s", attribute);

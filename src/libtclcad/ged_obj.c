@@ -3948,12 +3948,13 @@ go_mouse_pscale(struct ged	*gedp,
 
     gedp->ged_gvp = gdvp->gdv_view;
     av[0] = "pscale";
-    av[1] = (char *)argv[2];
-    av[2] = (char *)argv[3];
-    av[3] = bu_vls_addr(&sf_vls);
-    av[4] = (char *)0;
+    av[1] = "-r";
+    av[2] = (char *)argv[2];
+    av[3] = (char *)argv[3];
+    av[4] = bu_vls_addr(&sf_vls);
+    av[5] = (char *)0;
 
-    ret = ged_pscale(gedp, 4, (const char **)av);
+    ret = ged_pscale(gedp, 5, (const char **)av);
     bu_vls_free(&sf_vls);
 
     if (ret == GED_OK) {

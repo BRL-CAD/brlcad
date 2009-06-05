@@ -34,7 +34,7 @@
 #include "./ged_private.h"
 
 int
-ged_scale_rpc(struct ged *gedp, struct rt_rpc_internal *rpc, const char *attribute, fastf_t sf)
+ged_scale_rpc(struct ged *gedp, struct rt_rpc_internal *rpc, const char *attribute, fastf_t sf, int rflag)
 {
     fastf_t ma, mb;
 
@@ -43,15 +43,25 @@ ged_scale_rpc(struct ged *gedp, struct rt_rpc_internal *rpc, const char *attribu
     switch (attribute[0]) {
     case 'b':
     case 'B':
+	if (!rflag)
+	    sf /= MAGNITUDE(rpc->rpc_B);
+
 	VSCALE(rpc->rpc_B, rpc->rpc_B, sf);
 	break;
     case 'h':
     case 'H':
+	if (!rflag)
+	    sf /= MAGNITUDE(rpc->rpc_H);
+
 	VSCALE(rpc->rpc_H, rpc->rpc_H, sf);
 	break;
     case 'r':
     case 'R':
-	rpc->rpc_r *= sf;
+	if (rflag)
+	    rpc->rpc_r *= sf;
+	else
+	    rpc->rpc_r = sf;
+
 	break;
     default:
 	bu_vls_printf(&gedp->ged_result_str, "bad rpc attribute - %s", attribute);

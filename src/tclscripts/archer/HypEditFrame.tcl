@@ -37,6 +37,7 @@
 	method initGeometry {gdata}
 	method updateGeometry {}
 	method createGeometry {obj}
+	method p {obj args}
     }
 
     protected {
@@ -143,6 +144,45 @@
 	A [list 0 [expr {$mDelta * 0.5}] 0] \
 	b [expr {$mDelta * 0.25} \
 	bnr [expr {$mDelta * 0.1}]
+}
+
+::itcl::body HypEditFrame::p {obj args} {
+    switch -- $GeometryEditFrame::mEditClass \
+	$GeometryEditFrame::EDIT_CLASS_SCALE {
+	    if {[llength $args] != 1 || ![string is double $args]} {
+		return "Usage: p sf"
+	    }
+	} \
+	$GeometryEditFrame::EDIT_CLASS_ROT {
+	    if {[llength $args] != 3 ||
+		![string is double [lindex $args 0]] ||
+		![string is double [lindex $args 1]] ||
+		![string is double [lindex $args 2]]} {
+		return "Usage: p rx ry rz"
+	    }
+	}
+
+    switch -- $mEditMode \
+	$setA {
+	    $::ArcherCore::application pscale $obj a $args
+	} \
+	$setB {
+	    $::ArcherCore::application pscale $obj b $args
+	} \
+	$setC {
+	    $::ArcherCore::application pscale $obj c $args
+	} \
+	$setH {
+	    $::ArcherCore::application pscale $obj h $args
+	} \
+	$setHV {
+	    $::ArcherCore::application pscale $obj hv $args
+	} \
+	$rotH {
+	    $::ArcherCore::application protate $obj h $args
+	}
+
+    return ""
 }
 
 
@@ -458,42 +498,39 @@
 }
 
 ::itcl::body HypEditFrame::initEditState {} {
+    set mEditPCommand [::itcl::code $this p]
+    configure -valueUnits "mm"
+
     switch -- $mEditMode \
-	$setH { \
-	    set mEditCommand pscale; \
-	    set mEditClass $EDIT_CLASS_SCALE; \
-	    set mEditParam1 h; \
-	    configure -valueUnits "mm"; \
+	$setA {
+	    set mEditCommand pscale
+	    set mEditClass $EDIT_CLASS_SCALE
+	    set mEditParam1 a
 	} \
-	$setHV { \
-	    set mEditCommand pscale; \
-	    set mEditClass $EDIT_CLASS_SCALE; \
-	    set mEditParam1 hv; \
-	    configure -valueUnits "mm"; \
+	$setB {
+	    set mEditCommand pscale
+	    set mEditClass $EDIT_CLASS_SCALE
+	    set mEditParam1 b
 	} \
-	$setA { \
-	    set mEditCommand pscale; \
-	    set mEditClass $EDIT_CLASS_SCALE; \
-	    set mEditParam1 a; \
-	    configure -valueUnits "mm"; \
+	$setC {
+	    set mEditCommand pscale
+	    set mEditClass $EDIT_CLASS_SCALE
+	    set mEditParam1 c
 	} \
-	$setB { \
-	    set mEditCommand pscale; \
-	    set mEditClass $EDIT_CLASS_SCALE; \
-	    set mEditParam1 b; \
-	    configure -valueUnits "mm"; \
+	$setH {
+	    set mEditCommand pscale
+	    set mEditClass $EDIT_CLASS_SCALE
+	    set mEditParam1 h
 	} \
-	$setC { \
-	    set mEditCommand pscale; \
-	    set mEditClass $EDIT_CLASS_SCALE; \
-	    set mEditParam1 c; \
-	    configure -valueUnits "mm"; \
+	$setHV {
+	    set mEditCommand pscale
+	    set mEditClass $EDIT_CLASS_SCALE
+	    set mEditParam1 hv
 	} \
-	$rotH { \
-	    set mEditCommand protate; \
-	    set mEditClass $EDIT_CLASS_ROT; \
-	    set mEditParam1 h; \
-	    configure -valueUnits "mm"; \
+	$rotH {
+	    set mEditCommand protate
+	    set mEditClass $EDIT_CLASS_ROT
+	    set mEditParam1 h
 	}
 
     GeometryEditFrame::initEditState

@@ -36,7 +36,7 @@
 
 
 int
-ged_scale_extrude(struct ged *gedp, struct rt_extrude_internal *extrude, const char *attribute, fastf_t sf)
+ged_scale_extrude(struct ged *gedp, struct rt_extrude_internal *extrude, const char *attribute, fastf_t sf, int rflag)
 {
     vect_t hvec;
 
@@ -45,6 +45,9 @@ ged_scale_extrude(struct ged *gedp, struct rt_extrude_internal *extrude, const c
     switch (attribute[0]) {
     case 'h':
     case 'H':
+	if (!rflag)
+	    sf /= MAGNITUDE(extrude->h);
+
 	VSCALE(hvec, extrude->h, sf);
 
 	/* Make sure hvec is not zero length */

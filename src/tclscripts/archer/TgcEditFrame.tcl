@@ -38,6 +38,7 @@
 	method initGeometry {gdata}
 	method updateGeometry {}
 	method createGeometry {obj}
+	method p {obj args}
     }
 
     protected {
@@ -173,6 +174,79 @@
 	D {0.0 0.0 0.0}
 }
 
+::itcl::body TgcEditFrame::p {obj args} {
+    switch -- $GeometryEditFrame::mEditClass \
+	$GeometryEditFrame::EDIT_CLASS_SCALE {
+	    if {[llength $args] != 1 || ![string is double $args]} {
+		return "Usage: p sf"
+	    }
+	} \
+	$GeometryEditFrame::EDIT_CLASS_ROT {
+	    if {[llength $args] != 3 ||
+		![string is double [lindex $args 0]] ||
+		![string is double [lindex $args 1]] ||
+		![string is double [lindex $args 2]]} {
+		return "Usage: p rx ry rz"
+	    }
+	} \
+	$GeometryEditFrame::EDIT_CLASS_TRANS {
+	    if {[llength $args] != 3 ||
+		![string is double [lindex $args 0]] ||
+		![string is double [lindex $args 1]] ||
+		![string is double [lindex $args 2]]} {
+		return "Usage: p tx ty tz"
+	    }
+	}
+
+    switch -- $mEditMode \
+	$setA {
+	    $::ArcherCore::application pscale $obj a $args
+	} \
+	$setB {
+	    $::ArcherCore::application pscale $obj b $args
+	} \
+	$setC {
+	    $::ArcherCore::application pscale $obj c $args
+	} \
+	$setD {
+	    $::ArcherCore::application pscale $obj d $args
+	} \
+	$setAB {
+	    $::ArcherCore::application pscale $obj ab $args
+	} \
+	$setCD {
+	    $::ArcherCore::application pscale $obj cd $args
+	} \
+	$setABCD {
+	    $::ArcherCore::application pscale $obj abcd $args
+	} \
+	$setH {
+	    $::ArcherCore::application pscale $obj h $args
+	} \
+	$setHCD {
+	    $::ArcherCore::application pscale $obj hcd $args
+	} \
+	$setHV {
+	    $::ArcherCore::application pscale $obj hv $args
+	} \
+	$setHVAB {
+	    $::ArcherCore::application pscale $obj hvab $args
+	} \
+	$rotH {
+	    $::ArcherCore::application protate $obj h $args
+	} \
+	$rotHAB {
+	    $::ArcherCore::application protate $obj hab $args
+	} \
+	$moveH {
+	    $::ArcherCore::application ptranslate $obj h $args
+	} \
+	$moveHH {
+	    $::ArcherCore::application ptranslate $obj hh $args
+	}
+
+    return ""
+}
 
 # ------------------------------------------------------------
 #                      PROTECTED METHODS
@@ -597,96 +671,98 @@
 }
 
 ::itcl::body TgcEditFrame::initEditState {} {
+    set mEditPCommand [::itcl::code $this p]
+
     switch -- $mEditMode \
-	$setA { \
-	    set mEditCommand pscale; \
-	    set mEditClass $EDIT_CLASS_SCALE; \
-	    set mEditParam1 a; \
-	    configure -valueUnits "mm"; \
+	$setA {
+	    set mEditCommand pscale
+	    set mEditClass $EDIT_CLASS_SCALE
+	    set mEditParam1 a
+	    configure -valueUnits "mm"
 	} \
-	$setB { \
-	    set mEditCommand pscale; \
-	    set mEditClass $EDIT_CLASS_SCALE; \
-	    set mEditParam1 b; \
-	    configure -valueUnits "mm"; \
+	$setB {
+	    set mEditCommand pscale
+	    set mEditClass $EDIT_CLASS_SCALE
+	    set mEditParam1 b
+	    configure -valueUnits "mm"
 	} \
-	$setC { \
-	    set mEditCommand pscale; \
-	    set mEditClass $EDIT_CLASS_SCALE; \
-	    set mEditParam1 c; \
-	    configure -valueUnits "mm"; \
+	$setC {
+	    set mEditCommand pscale
+	    set mEditClass $EDIT_CLASS_SCALE
+	    set mEditParam1 c
+	    configure -valueUnits "mm"
 	} \
-	$setD { \
-	    set mEditCommand pscale; \
-	    set mEditClass $EDIT_CLASS_SCALE; \
-	    set mEditParam1 d; \
-	    configure -valueUnits "mm"; \
+	$setD {
+	    set mEditCommand pscale
+	    set mEditClass $EDIT_CLASS_SCALE
+	    set mEditParam1 d
+	    configure -valueUnits "mm"
 	} \
-	$setAB { \
-	    set mEditCommand pscale; \
-	    set mEditClass $EDIT_CLASS_SCALE; \
-	    set mEditParam1 ab; \
-	    configure -valueUnits "mm"; \
+	$setAB {
+	    set mEditCommand pscale
+	    set mEditClass $EDIT_CLASS_SCALE
+	    set mEditParam1 ab
+	    configure -valueUnits "mm"
 	} \
-	$setCD { \
-	    set mEditCommand pscale; \
-	    set mEditClass $EDIT_CLASS_SCALE; \
-	    set mEditParam1 cd; \
-	    configure -valueUnits "mm"; \
+	$setCD {
+	    set mEditCommand pscale
+	    set mEditClass $EDIT_CLASS_SCALE
+	    set mEditParam1 cd
+	    configure -valueUnits "mm"
 	} \
-	$setABCD { \
-	    set mEditCommand pscale; \
-	    set mEditClass $EDIT_CLASS_SCALE; \
-	    set mEditParam1 abcd; \
-	    configure -valueUnits "mm"; \
+	$setABCD {
+	    set mEditCommand pscale
+	    set mEditClass $EDIT_CLASS_SCALE
+	    set mEditParam1 abcd
+	    configure -valueUnits "mm"
 	} \
-	$setH { \
-	    set mEditCommand pscale; \
-	    set mEditClass $EDIT_CLASS_SCALE; \
-	    set mEditParam1 h; \
-	    configure -valueUnits "mm"; \
+	$setH {
+	    set mEditCommand pscale
+	    set mEditClass $EDIT_CLASS_SCALE
+	    set mEditParam1 h
+	    configure -valueUnits "mm"
 	} \
-	$setHCD { \
-	    set mEditCommand pscale; \
-	    set mEditClass $EDIT_CLASS_SCALE; \
-	    set mEditParam1 hcd; \
-	    configure -valueUnits "mm"; \
+	$setHCD {
+	    set mEditCommand pscale
+	    set mEditClass $EDIT_CLASS_SCALE
+	    set mEditParam1 hcd
+	    configure -valueUnits "mm"
 	} \
-	$setHV { \
-	    set mEditCommand pscale; \
-	    set mEditClass $EDIT_CLASS_SCALE; \
-	    set mEditParam1 hv; \
-	    configure -valueUnits "mm"; \
+	$setHV {
+	    set mEditCommand pscale
+	    set mEditClass $EDIT_CLASS_SCALE
+	    set mEditParam1 hv
+	    configure -valueUnits "mm"
 	} \
-	$setHVAB { \
-	    set mEditCommand pscale; \
-	    set mEditClass $EDIT_CLASS_SCALE; \
-	    set mEditParam1 hvab; \
-	    configure -valueUnits "mm"; \
+	$setHVAB {
+	    set mEditCommand pscale
+	    set mEditClass $EDIT_CLASS_SCALE
+	    set mEditParam1 hvab
+	    configure -valueUnits "mm"
 	} \
-	$rotH { \
-	    set mEditCommand protate; \
-	    set mEditClass $EDIT_CLASS_ROT; \
-	    set mEditParam1 h; \
-	    configure -valueUnits "mm"; \
+	$rotH {
+	    set mEditCommand protate
+	    set mEditClass $EDIT_CLASS_ROT
+	    set mEditParam1 h
+	    configure -valueUnits "mm"
 	} \
-	$rotHAB { \
-	    set mEditCommand protate; \
-	    set mEditClass $EDIT_CLASS_ROT; \
-	    set mEditParam1 hab; \
-	    configure -valueUnits "mm"; \
+	$rotHAB {
+	    set mEditCommand protate
+	    set mEditClass $EDIT_CLASS_ROT
+	    set mEditParam1 hab
+	    configure -valueUnits "mm"
 	} \
-	$moveH { \
-	    set mEditCommand ptranslate; \
-	    set mEditClass $EDIT_CLASS_TRANS; \
-	    set mEditParam1 h; \
-	    configure -valueUnits "mm"; \
+	$moveH {
+	    set mEditCommand ptranslate
+	    set mEditClass $EDIT_CLASS_TRANS
+	    set mEditParam1 h
+	    configure -valueUnits "mm"
 	} \
-	$moveHH { \
-	    set mEditCommand ptranslate; \
-	    set mEditClass $EDIT_CLASS_TRANS; \
-	    set mEditParam1 hh; \
-	    configure -valueUnits "mm"; \
+	$moveHH {
+	    set mEditCommand ptranslate
+	    set mEditClass $EDIT_CLASS_TRANS
+	    set mEditParam1 hh
+	    configure -valueUnits "mm"
 	}
 
     GeometryEditFrame::initEditState

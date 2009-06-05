@@ -34,7 +34,7 @@
 #include "./ged_private.h"
 
 int
-ged_scale_superell(struct ged *gedp, struct rt_superell_internal *superell, const char *attribute, fastf_t sf)
+ged_scale_superell(struct ged *gedp, struct rt_superell_internal *superell, const char *attribute, fastf_t sf, int rflag)
 {
     fastf_t ma, mb;
 
@@ -43,6 +43,9 @@ ged_scale_superell(struct ged *gedp, struct rt_superell_internal *superell, cons
     switch (attribute[0]) {
     case 'a':
     case 'A':
+	if (!rflag)
+	    sf /= MAGNITUDE(superell->a);
+
 	switch (attribute[1]) {
 	case '\0':
 	    VSCALE(superell->a, superell->a, sf);
@@ -72,10 +75,16 @@ ged_scale_superell(struct ged *gedp, struct rt_superell_internal *superell, cons
 	break;
     case 'b':
     case 'B':
+	if (!rflag)
+	    sf /= MAGNITUDE(superell->b);
+
 	VSCALE(superell->b, superell->b, sf);
 	break;
     case 'c':
     case 'C':
+	if (!rflag)
+	    sf /= MAGNITUDE(superell->c);
+
 	VSCALE(superell->c, superell->c, sf);
 	break;
     default:

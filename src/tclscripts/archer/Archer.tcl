@@ -143,6 +143,7 @@ package provide Archer 1.0
 	method Load                {_target}
 	method updateTheme {}
 	method kill                {args}
+	method p                   {args}
     }
 
     protected {
@@ -343,7 +344,7 @@ package provide Archer 1.0
 # ------------------------------------------------------------
 ::itcl::body Archer::constructor {{_viewOnly 0} {_noCopy 0} args} {
     # Append a few more commands
-    lappend mgedCommands importFg4Sections
+    lappend mArcherCoreCommands importFg4Sections
 
     if {!$mViewOnly} {
 	if {$ArcherCore::inheritFromToplevel} {
@@ -787,6 +788,65 @@ package provide Archer 1.0
 	    selectNode [$itk_component(tree) find $obj] 0
 	}
     }
+}
+
+::itcl::body Archer::p {args} {
+    if {$mSelectedObj == ""} {
+	return
+    }
+
+    set ret ""
+
+    if {$GeometryEditFrame::mEditPCommand != ""} {
+	set ret [eval $GeometryEditFrame::mEditPCommand $mSelectedObj $args]
+    } else {
+	switch -- $mDefaultBindingMode \
+	    $OBJECT_ROTATE_MODE {
+		if {[llength $args] != 3 ||
+		    ![string is double [lindex $args 0]] ||
+		    ![string is double [lindex $args 1]] ||
+		    ![string is double [lindex $args 2]]} {
+		    return "Usage: p rx ry rz"
+		}
+
+		set ret [eval orotate $mSelectedObj $args]
+	    } \
+	    $OBJECT_TRANSLATE_MODE {
+		if {[llength $args] != 3 ||
+		    ![string is double [lindex $args 0]] ||
+		    ![string is double [lindex $args 1]] ||
+		    ![string is double [lindex $args 2]]} {
+		    return "Usage: p tx ty tz"
+		}
+
+		set ret [eval otranslate $mSelectedObj $args]
+	    } \
+	    $OBJECT_SCALE_MODE {
+		if {[llength $args] != 1 || ![string is double $args]} {
+		    return "Usage: p sf"
+		}
+
+		set ret [eval oscale $mSelectedObj $args]
+	    } \
+	    $OBJECT_CENTER_MODE {
+		if {[llength $args] != 3 ||
+		    ![string is double [lindex $args 0]] ||
+		    ![string is double [lindex $args 1]] ||
+		    ![string is double [lindex $args 2]]} {
+		    return "Usage: p cx cy cz"
+		}
+
+		set ret [eval ocenter $mSelectedObj $args]
+	    } \
+	    default {
+		return "Nothing appropriate."
+	    }
+    }
+
+    redrawObj $mSelectedObjPath
+    initEdit 0
+
+    return $ret
 }
 
 ::itcl::body Archer::Load {_target} {
@@ -3591,6 +3651,7 @@ package provide Archer 1.0
 	set GeometryEditFrame::mEditCommand ""
 	set GeometryEditFrame::mEditParam1 0
 	set GeometryEditFrame::mEditParam2 0
+	set GeometryEditFrame::mEditPCommand ""
     }
 
     switch -- $mSelectedObjType {

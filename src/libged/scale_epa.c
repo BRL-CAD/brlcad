@@ -34,26 +34,40 @@
 #include "./ged_private.h"
 
 int
-ged_scale_epa(struct ged *gedp, struct rt_epa_internal *epa, const char *attribute, fastf_t sf)
+ged_scale_epa(struct ged *gedp, struct rt_epa_internal *epa, const char *attribute, fastf_t sf, int rflag)
 {
     fastf_t ma, mb;
+    fastf_t newrad;
 
     RT_EPA_CK_MAGIC(epa);
 
     switch (attribute[0]) {
     case 'h':
     case 'H':
+	if (!rflag)
+	    sf /= MAGNITUDE(epa->epa_H);
+
 	VSCALE(epa->epa_H, epa->epa_H, sf);
 	break;
     case 'a':
     case 'A':
-	if (epa->epa_r1 * sf >= epa->epa_r2)
-	    epa->epa_r1 *= sf;
+	if (rflag)
+	    newrad = epa->epa_r1 * sf;
+	else
+	    newrad = sf;
+
+	if (newrad >= epa->epa_r2)
+	    epa->epa_r1 = newrad;
 	break;
     case 'b':
     case 'B':
-	if (epa->epa_r2 * sf <= epa->epa_r1)
-	    epa->epa_r2 *= sf;
+	if (rflag)
+	    newrad = epa->epa_r2 * sf;
+	else
+	    newrad = sf;
+
+	if (newrad <= epa->epa_r1)
+	    epa->epa_r2 = newrad;
 	break;
     default:
 	bu_vls_printf(&gedp->ged_result_str, "bad epa attribute - %s", attribute);

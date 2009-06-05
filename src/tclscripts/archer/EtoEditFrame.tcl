@@ -37,11 +37,12 @@
 	method initGeometry {gdata}
 	method updateGeometry {}
 	method createGeometry {obj}
+	method p {obj args}
     }
 
     protected {
 	common setr 1
-	common setD 2
+	common setr_d 2
 	common setC 3
 	common rotC 4
 
@@ -141,6 +142,39 @@
 	C [list $mDelta 0 0] \
 	r $mDelta \
 	r_d [expr {$mDelta * 0.1}]
+}
+
+::itcl::body EtoEditFrame::p {obj args} {
+    switch -- $GeometryEditFrame::mEditClass \
+	$GeometryEditFrame::EDIT_CLASS_SCALE {
+	    if {[llength $args] != 1 || ![string is double $args]} {
+		return "Usage: p sf"
+	    }
+	} \
+	$GeometryEditFrame::EDIT_CLASS_ROT {
+	    if {[llength $args] != 3 ||
+		![string is double [lindex $args 0]] ||
+		![string is double [lindex $args 1]] ||
+		![string is double [lindex $args 2]]} {
+		return "Usage: p rx ry rz"
+	    }
+	}
+
+    switch -- $mEditMode \
+	$setr {
+	    $::ArcherCore::application pscale $obj r $args
+	} \
+	$setr_d {
+	    $::ArcherCore::application pscale $obj d $args
+	} \
+	$setC {
+	    $::ArcherCore::application pscale $obj c $args
+	} \
+	$rotC {
+	    $::ArcherCore::application protate $obj c $args
+	}
+
+    return ""
 }
 
 
@@ -374,7 +408,7 @@
 ::itcl::body EtoEditFrame::buildLowerPanel {} {
     set parent [$this childsite lower]
 
-    foreach {attribute op opLabel} {r set Set D set Set C set Set C rot Rotate} {
+    foreach {attribute op opLabel} {r set Set r_d set Set C set Set C rot Rotate} {
 	itk_component add $op$attribute {
 	    ::ttk::radiobutton $parent.$op\_$attribute \
 		-variable [::itcl::scope mEditMode] \
@@ -455,30 +489,29 @@
 }
 
 ::itcl::body EtoEditFrame::initEditState {} {
+    set mEditPCommand [::itcl::code $this p]
+    configure -valueUnits "mm"
+
     switch -- $mEditMode \
-	$setr { \
-	    set mEditCommand pscale; \
-	    set mEditClass $EDIT_CLASS_SCALE; \
-	    set mEditParam1 r; \
-	    configure -valueUnits "mm"; \
+	$setr {
+	    set mEditCommand pscale
+	    set mEditClass $EDIT_CLASS_SCALE
+	    set mEditParam1 r
 	} \
-	$setD { \
-	    set mEditCommand pscale; \
-	    set mEditClass $EDIT_CLASS_SCALE; \
-	    set mEditParam1 d; \
-	    configure -valueUnits "mm"; \
+	$setr_d {
+	    set mEditCommand pscale
+	    set mEditClass $EDIT_CLASS_SCALE
+	    set mEditParam1 d
 	} \
-	$setC { \
-	    set mEditCommand pscale; \
-	    set mEditClass $EDIT_CLASS_SCALE; \
-	    set mEditParam1 c; \
-	    configure -valueUnits "mm"; \
+	$setC {
+	    set mEditCommand pscale
+	    set mEditClass $EDIT_CLASS_SCALE
+	    set mEditParam1 c
 	} \
-	$rotC { \
-	    set mEditCommand protate; \
-	    set mEditClass $EDIT_CLASS_ROT; \
-	    set mEditParam1 c; \
-	    configure -valueUnits "mm"; \
+	$rotC {
+	    set mEditCommand protate
+	    set mEditClass $EDIT_CLASS_ROT
+	    set mEditParam1 c
 	}
 
     GeometryEditFrame::initEditState

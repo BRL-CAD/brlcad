@@ -37,13 +37,14 @@
 	method initGeometry {gdata}
 	method updateGeometry {}
 	method createGeometry {obj}
+	method p {obj args}
     }
 
     protected {
 	common setA 1
 	common setB 2
 	common setC 3
-	common setA,B,C 4
+	common setABC 4
 
 	variable mVx ""
 	variable mVy ""
@@ -143,6 +144,28 @@
 	A [list $mDelta 0 0] \
 	B [list 0 $mDelta 0] \
 	C [list 0 0 $mDelta]
+}
+
+::itcl::body EllEditFrame::p {obj args} {
+    if {[llength $args] != 1 || ![string is double $args]} {
+	return "Usage: p sf"
+    }
+
+    switch -- $mEditMode \
+	$setA {
+	    $::ArcherCore::application pscale $obj a $args
+	} \
+	$setB {
+	    $::ArcherCore::application pscale $obj b $args
+	} \
+	$setC {
+	    $::ArcherCore::application pscale $obj c $args
+	} \
+	$setABC {
+	    $::ArcherCore::application pscale $obj abc $args
+	}
+
+    return ""
 }
 
 
@@ -371,7 +394,7 @@
 ::itcl::body EllEditFrame::buildLowerPanel {} {
     set parent [$this childsite lower]
 
-    foreach attribute {A B C A,B,C} {
+    foreach attribute {A B C ABC} {
 	itk_component add set$attribute {
 	    ::ttk::radiobutton $parent.set_$attribute \
 		-variable [::itcl::scope mEditMode] \
@@ -457,30 +480,23 @@
 }
 
 ::itcl::body EllEditFrame::initEditState {} {
+    set mEditCommand pscale
+    set mEditClass $EDIT_CLASS_SCALE
+    set mEditPCommand [::itcl::code $this p]
+    configure -valueUnits "mm"
+
     switch -- $mEditMode \
-	$setA { \
-	    set mEditCommand pscale; \
-	    set mEditClass $EDIT_CLASS_SCALE; \
-	    set mEditParam1 a; \
-	    configure -valueUnits "mm"; \
+	$setA {
+	    set mEditParam1 a
 	} \
-	$setB { \
-	    set mEditCommand pscale; \
-	    set mEditClass $EDIT_CLASS_SCALE; \
-	    set mEditParam1 b; \
-	    configure -valueUnits "mm"; \
+	$setB {
+	    set mEditParam1 b
 	} \
-	$setC { \
-	    set mEditCommand pscale; \
-	    set mEditClass $EDIT_CLASS_SCALE; \
-	    set mEditParam1 c; \
-	    configure -valueUnits "mm"; \
+	$setC {
+	    set mEditParam1 c
 	} \
-	$setA,B,C { \
-	    set mEditCommand pscale; \
-	    set mEditClass $EDIT_CLASS_SCALE; \
-	    set mEditParam1 abc; \
-	    configure -valueUnits "mm"; \
+	$setABC {
+	    set mEditParam1 abc
 	}
 
     GeometryEditFrame::initEditState

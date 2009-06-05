@@ -38,6 +38,7 @@
 	method initGeometry {gdata}
 	method updateGeometry {}
 	method createGeometry {obj}
+	method p {obj args}
     }
 
     protected {
@@ -136,6 +137,24 @@
 	r_h $r2
 }
 
+::itcl::body PartEditFrame::p {obj args} {
+    if {[llength $args] != 1 || ![string is double $args]} {
+	return "Usage: p sf"
+    }
+
+    switch -- $mEditMode \
+	$setH {
+	    $::ArcherCore::application pscale $obj H $args
+	} \
+	$setr_v {
+	    $::ArcherCore::application pscale $obj v $args
+	} \
+	$setr_h {
+	    $::ArcherCore::application pscale $obj h $args
+	}
+
+    return ""
+}
 
 # ------------------------------------------------------------
 #                      PROTECTED METHODS
@@ -392,24 +411,20 @@
 }
 
 ::itcl::body PartEditFrame::initEditState {} {
+    set mEditCommand pscale
+    set mEditClass $EDIT_CLASS_SCALE
+    set mEditPCommand [::itcl::code $this p]
+    configure -valueUnits "mm"
+
     switch -- $mEditMode \
-	$setH { \
-	    set mEditCommand pscale; \
-	    set mEditClass $EDIT_CLASS_SCALE; \
-	    set mEditParam1 H; \
-	    configure -valueUnits "mm"; \
+	$setH {
+	    set mEditParam1 H
 	} \
-	$setr_v { \
-	    set mEditCommand pscale; \
-	    set mEditClass $EDIT_CLASS_SCALE; \
-	    set mEditParam1 v; \
-	    configure -valueUnits "mm"; \
+	$setr_v {
+	    set mEditParam1 v
 	} \
-	$setr_h { \
-	    set mEditCommand pscale; \
-	    set mEditClass $EDIT_CLASS_SCALE; \
-	    set mEditParam1 h; \
-	    configure -valueUnits "mm"; \
+	$setr_h {
+	    set mEditParam1 h
 	}
 
     GeometryEditFrame::initEditState

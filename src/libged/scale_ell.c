@@ -34,7 +34,7 @@
 #include "./ged_private.h"
 
 int
-ged_scale_ell(struct ged *gedp, struct rt_ell_internal *ell, const char *attribute, fastf_t sf)
+ged_scale_ell(struct ged *gedp, struct rt_ell_internal *ell, const char *attribute, fastf_t sf, int rflag)
 {
     fastf_t ma, mb;
 
@@ -43,6 +43,9 @@ ged_scale_ell(struct ged *gedp, struct rt_ell_internal *ell, const char *attribu
     switch (attribute[0]) {
     case 'a':
     case 'A':
+	if (!rflag)
+	    sf /= MAGNITUDE(ell->a);
+
 	switch (attribute[1]) {
 	case '\0':
 	    VSCALE(ell->a, ell->a, sf);
@@ -72,10 +75,16 @@ ged_scale_ell(struct ged *gedp, struct rt_ell_internal *ell, const char *attribu
 	break;
     case 'b':
     case 'B':
+	if (!rflag)
+	    sf /= MAGNITUDE(ell->b);
+
 	VSCALE(ell->b, ell->b, sf);
 	break;
     case 'c':
     case 'C':
+	if (!rflag)
+	    sf /= MAGNITUDE(ell->c);
+
 	VSCALE(ell->c, ell->c, sf);
 	break;
     default:

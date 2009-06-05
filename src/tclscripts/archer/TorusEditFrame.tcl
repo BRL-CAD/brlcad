@@ -38,11 +38,12 @@
 	method initGeometry {gdata}
 	method updateGeometry {}
 	method createGeometry {obj}
+	method p {obj args}
     }
 
     protected {
-	common setA 1
-	common setH 2
+	common setr_a 1
+	common setr_h 2
 
 	variable mVx ""
 	variable mVy ""
@@ -256,7 +257,7 @@
 ::itcl::body TorusEditFrame::buildLowerPanel {} {
     set parent [$this childsite lower]
 
-    foreach attribute {A H} {
+    foreach attribute {r_a r_h} {
 	itk_component add set$attribute {
 	    ::ttk::radiobutton $parent.set_$attribute \
 		-variable [::itcl::scope mEditMode] \
@@ -328,6 +329,21 @@
 	r_h [expr {$mDelta * 0.1}]
 }
 
+::itcl::body TorusEditFrame::p {obj args} {
+    if {[llength $args] != 1 || ![string is double $args]} {
+	return "Usage: p sf"
+    }
+
+    switch -- $mEditMode \
+	$setr_a {
+	    $::ArcherCore::application pscale $obj a $args
+	} \
+	$setr_h {
+	    $::ArcherCore::application pscale $obj h $args
+	}
+
+    return ""
+}
 
 # ------------------------------------------------------------
 #                      PROTECTED METHODS
@@ -387,18 +403,17 @@
 }
 
 ::itcl::body TorusEditFrame::initEditState {} {
+    set mEditCommand pscale
+    set mEditClass $EDIT_CLASS_SCALE
+    set mEditPCommand [::itcl::code $this p]
+    configure -valueUnits "mm"
+
     switch -- $mEditMode \
-	$setA { \
-	    set mEditCommand pscale; \
-	    set mEditClass $EDIT_CLASS_SCALE; \
-	    set mEditParam1 a; \
-	    configure -valueUnits "mm"; \
+	$setr_a {
+	    set mEditParam1 a
 	} \
-	$setH { \
-	    set mEditCommand pscale; \
-	    set mEditClass $EDIT_CLASS_SCALE; \
-	    set mEditParam1 h; \
-	    configure -valueUnits "mm"; \
+	$setr_h {
+	    set mEditParam1 h
 	}
 
     GeometryEditFrame::initEditState
