@@ -32,7 +32,6 @@ dist_tcl_DATA = \
 	option_tree.png \
 	pane_blank.png \
 	pane_collapse.png \
-	pane_collapse.png \
 	pane_expand.png \
 	primitive_arb6.png \
 	primitive_arb8.png \
