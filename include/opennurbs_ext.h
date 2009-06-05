@@ -418,7 +418,7 @@ namespace brlcad {
 	SubcurveBANode<BA>::isTrimmed(const ON_2dPoint& uv) const {
 	    if (m_checkTrim) {
 			fastf_t v = m_start[Y] + m_slope*(uv[X] - m_start[X]);
-			//v = getCurveEstimateOfV(uv[X],0.0000001);
+			v = getCurveEstimateOfV(uv[X],0.0000001);
 			if (uv[Y] < v) {
 				if (m_XIncreasing) {
 					return true;
@@ -505,17 +505,34 @@ namespace brlcad {
 	template<class BA>
 	fastf_t 
 	SubcurveBANode<BA>::getCurveEstimateOfV( fastf_t u, fastf_t tol ) const {
-	    ON_3dVector tangent;
-		fastf_t dU = m_end[X] - m_start[X];
-		fastf_t dT = m_t[1] - m_t[0];
-		fastf_t guess = m_t[0] + (u - m_start[X]) * dT/dU;
+	        ON_3dVector tangent;
+		point_t A,B;
+		double  Ta,Tb;
+
+		VMOVE(A,m_start);
+		VMOVE(B,m_end);
+		Ta = m_t[0];
+		Tb = m_t[1];
+
+		fastf_t dU = B[X] - A[X];
+		fastf_t dT = Tb - Ta;
+		fastf_t guess = Ta + (u - A[X]) * dT/dU;
 		ON_3dPoint p = m_trim->PointAt(guess);
+
 		int cnt=0;
 		while ((cnt < 50) && (!NEAR_ZERO(p[X]-u,tol))) {
-			tangent = m_trim->TangentAt(guess);
-			guess = guess + (u - p[X])*tangent[0];
-			p = m_trim->PointAt(guess);
-			cnt++;
+		    if (p[X] < u) {
+			Ta = guess;
+			VMOVE(A,p);
+		    } else {
+			Tb = guess;
+			VMOVE(B,p);
+		    }
+		    dU = B[X] - A[X];
+		    dT = Tb - Ta;
+		    guess = Ta + (u - A[X]) * dT/dU;
+		    p = m_trim->PointAt(guess);
+		    cnt++;
 		}
 		return p[Y];
 	}
