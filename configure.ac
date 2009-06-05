@@ -3836,15 +3836,6 @@ AC_CONFIG_FILES([
 	sh/Makefile
 	src/Makefile
 	src/adrt/Makefile
-	src/adrt/bench/Makefile
-	src/adrt/doc/Makefile
-	src/adrt/librender/Makefile
-	src/adrt/libtexture/Makefile
-	src/adrt/libtie/Makefile
-	src/adrt/master/Makefile
-	src/adrt/rise/Makefile
-	src/adrt/scripts/Makefile
-	src/adrt/slave/Makefile
 	src/anim/Makefile
 	src/archer/Makefile
 	src/archer/plugins/Commands/Makefile
