@@ -30,7 +30,6 @@
 #include "bio.h"
 #include "adrt.h"
 #include "master.h"
-#include "tienet.h"
 
 #include "bu.h"
 

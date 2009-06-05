@@ -4,7 +4,6 @@ SUBDIRS = \
 	doc \
 	libtexture \
 	libtie \
-	libtienet \
 	librender \
 	master \
 	rise \

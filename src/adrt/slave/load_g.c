@@ -36,8 +36,6 @@
 
 #include "bu.h"
 
-#include "tienet.h"
-
 #include "load.h"
 
 int

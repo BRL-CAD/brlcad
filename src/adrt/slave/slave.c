@@ -29,12 +29,12 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/time.h>
+#include <pthread.h>
 
 #include "adrt.h"
 #include "camera.h"
 #include "adrt.h"
 #include "tie.h"
-#include "tienet.h"
 #include "render_util.h"
 
 #include "slave.h"

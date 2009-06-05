@@ -36,7 +36,6 @@
 
 #include "adrt.h"
 #include "slave.h"
-#include "tienet.h"
 
 
 #ifdef HAVE_GETOPT_LONG

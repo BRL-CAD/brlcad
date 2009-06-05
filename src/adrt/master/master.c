@@ -35,7 +35,8 @@
 #include "compnet.h"		/* Component Networking, Sends Component Names via Network */
 #include "adrt.h"		/* adrt Defines */
 #include "adrt_struct.h"	/* adrt common structs */
-#include "tienet.h"		/* Networking stuff */
+#include "tienet_master.h"
+
 /* Networking Includes */
 #include <sys/types.h>
 #include <sys/socket.h>

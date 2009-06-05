@@ -3841,7 +3841,6 @@ AC_CONFIG_FILES([
 	src/adrt/librender/Makefile
 	src/adrt/libtexture/Makefile
 	src/adrt/libtie/Makefile
-	src/adrt/libtienet/Makefile
 	src/adrt/master/Makefile
 	src/adrt/rise/Makefile
 	src/adrt/scripts/Makefile

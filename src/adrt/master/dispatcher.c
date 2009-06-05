@@ -21,15 +21,18 @@
  *
  */
 
-#include "dispatcher.h"
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <pthread.h>
+
+#include "dispatcher.h"
 #include "camera.h"
-#include "tienet.h"
 
 #ifdef HAVE_SYS_SYSINFO_H
 #include <sys/sysinfo.h>
 #elif defined(HAVE_SYS_SYSCTL_H)
+#include <sys/types.h>
 #include <sys/sysctl.h>
 #endif
 

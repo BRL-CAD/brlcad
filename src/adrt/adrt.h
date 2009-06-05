@@ -17,6 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
+
 /** @file adrt.h
  *
  * Brief description
@@ -108,6 +109,68 @@ static char *adrt_netop_table[20] = {
 #define ADRT_LOAD_FORMAT_G 42
 #define ADRT_LOAD_FORMAT_REG 43
 #define ADRT_LOAD_FORMAT_KDTREE 44
+
+
+/*************************** tienet stuff ***********************************/
+
+
+#define	TN_COMPRESSION		0		/* 0 = off, 1 = on.  Compress the result buffer */
+
+#define	TN_MASTER_PORT		1980
+#define	TN_SLAVE_PORT		1981
+
+#define	TN_OP_PREP		0x0010
+#define	TN_OP_REQWORK		0x0011
+#define	TN_OP_SENDWORK		0x0012
+#define	TN_OP_RESULT		0x0013
+#define	TN_OP_COMPLETE		0x0014
+#define	TN_OP_SHUTDOWN		0x0015
+#define TN_OP_OKAY		0x0016
+#define	TN_OP_MESSAGE		0x0017
+
+
+#define TIENET_BUFFER_INIT(_b) { \
+	_b.data = NULL; \
+	_b.size = 0; \
+	_b.ind = 0; }
+
+#define TIENET_BUFFER_FREE(_b) bu_free(_b.data, "tienet buffer");
+
+#define TIENET_BUFFER_SIZE(_b, _s) { \
+	if (_s > _b.size) { \
+	  _b.data = bu_realloc(_b.data, _s, "tienet buffer size"); \
+	  _b.size = _s; \
+        } }
+
+typedef struct tienet_buffer_s {
+    uint8_t *data;
+    uint32_t size;
+    uint32_t ind;
+} tienet_buffer_t;
+
+#include <unistd.h>
+#include <sys/select.h>
+
+#define TIENET_OP(name,cmd)  \
+static int tienet_##name(int socket, void* data, size_t size) \
+{ \
+    fd_set	set; \
+    int		ind = 0, r; \
+\
+    FD_ZERO(&set); \
+    FD_SET(socket, &set); \
+\
+    do { \
+	select(socket+1, NULL, &set, NULL, NULL); \
+	ind += r = cmd(socket, &((char*)data)[ind], size-ind); \
+	if (r <= 0) return(1);	/* Error, socket is probably dead */ \
+    } while (ind < size); \
+\
+    return(0); \
+}
+
+TIENET_OP(send,write)
+TIENET_OP(recv,read)
 
 #endif
 

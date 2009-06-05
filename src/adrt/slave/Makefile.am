@@ -2,8 +2,12 @@
 bin_PROGRAMS = adrt_slave
 
 adrt_slave_SOURCES = \
+	load.c \
+	load_MySQL.c \
+	load_g.c \
 	main.c \
-	slave.c
+	slave.c \
+	tienet_slave.c
 
 adrt_slave_CFLAGS = \
 	-I${top_srcdir}/src/adrt \
@@ -23,6 +27,11 @@ adrt_slave_LDADD = \
 	${top_builddir}/src/adrt/libtie/libtie.la \
 	${LIBZ}
 
-noinst_HEADERS = slave.h
+noinst_HEADERS = \
+	load.h \
+	slave.h \
+	tienet_slave.h
+
+EXTRA_DIST = g-adrt.c
 
 include $(top_srcdir)/misc/Makefile.defs

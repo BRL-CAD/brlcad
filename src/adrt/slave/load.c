@@ -31,8 +31,6 @@
 
 #include "load.h"
 
-#include "tienet.h"
-
 uint32_t slave_load_mesh_num;
 adrt_mesh_t *slave_load_mesh_list;
 

@@ -4,6 +4,7 @@ bin_PROGRAMS = adrt_master
 adrt_master_SOURCES = \
 	compnet.c \
 	dispatcher.c \
+	tienet_master.c \
 	master.c \
 	main.c
 
@@ -27,6 +28,7 @@ adrt_master_LDADD = \
 noinst_HEADERS = \
 	compnet.h \
 	dispatcher.h \
+	tienet_master.h \
 	master.h
 
 include $(top_srcdir)/misc/Makefile.defs

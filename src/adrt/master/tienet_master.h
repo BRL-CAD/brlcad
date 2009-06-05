@@ -27,8 +27,11 @@
 #ifndef _TIENET_MASTER_H
 #define _TIENET_MASTER_H
 
-#include <inttypes.h>
-#include "tienet_util.h"
+typedef struct tienet_sem_s {
+    int val;
+    pthread_mutex_t mut;
+    pthread_cond_t cond;
+} tienet_sem_t;
 
 extern void   	tienet_master_init(int port, void fcb_result(tienet_buffer_t *result), char *list, char *exec, int buffer_size, int ver_key, int verbose);
 extern void	tienet_master_free();

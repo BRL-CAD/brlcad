@@ -31,8 +31,6 @@
 
 #include "bu.h"
 
-#include "tienet.h"
-
 #include "load.h"
 
 #ifdef HAVE_MYSQL

@@ -24,7 +24,6 @@
  *
  */
 
-#include "tienet_slave.h"
 #include <stdlib.h>
 #include <sys/socket.h>
 #include <sys/select.h>
@@ -35,8 +34,10 @@
 
 #include "bio.h"
 #include "tie.h"
-#include "tienet_define.h"
-#include "tienet_util.h"
+#include "adrt.h"
+
+#include "tienet_slave.h"
+
 #if TN_COMPRESSION
 # include <zlib.h>
 #endif

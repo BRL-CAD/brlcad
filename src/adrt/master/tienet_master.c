@@ -24,7 +24,6 @@
  *
  */
 
-#include "tienet_master.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -35,17 +34,54 @@
 #include <arpa/inet.h>
 #include <netdb.h>
 
+#include <inttypes.h>
+
+#include "adrt.h"
+#include "tienet_master.h"
+
 #include "bio.h"
 
 #include "tie.h"
-#include "tienet_define.h"
-#include "tienet_util.h"
 
 #include "bu.h"
 
 #if TN_COMPRESSION
 # include <zlib.h>
 #endif
+
+
+
+void tienet_sem_init(tienet_sem_t *sem, int val)
+{
+    pthread_mutex_init(&sem->mut, 0);
+    pthread_cond_init(&sem->cond, 0);
+    sem->val = val;
+}
+
+void tienet_sem_free(tienet_sem_t *sem)
+{
+    pthread_mutex_destroy(&sem->mut);
+    pthread_cond_destroy(&sem->cond);
+}
+
+void tienet_sem_post(tienet_sem_t *sem)
+{
+    pthread_mutex_lock(&sem->mut);
+    sem->val++;
+    pthread_cond_signal(&sem->cond);
+    pthread_mutex_unlock(&sem->mut);
+}
+
+void tienet_sem_wait(tienet_sem_t *sem)
+{
+    pthread_mutex_lock(&sem->mut);
+    if (!sem->val)
+        pthread_cond_wait(&sem->cond, &sem->mut);
+    sem->val--;
+    pthread_mutex_unlock(&sem->mut);
+}
+
+
 
 
 typedef struct tienet_master_data_s {
