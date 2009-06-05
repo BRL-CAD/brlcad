@@ -78,9 +78,8 @@ slave_load_kdtree (tie_t *tie, char *data)
 }
 
 int
-slave_load (tie_t *tie, struct adrt_load_info *li, uint32_t dlen)
+slave_load (tie_t *tie, void *data, uint32_t dlen)
 {
-    void *data = (void *)li;
     TIE_VAL(tie_check_degenerate) = 0;
 
     switch ( *(char *)data) {
