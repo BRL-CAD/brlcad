@@ -116,7 +116,7 @@ __BEGIN_DECLS
 #define	GED_CHECK_COMB(_gedp, _dp, _flags) \
     if (((_dp)->d_flags & DIR_COMB) == 0) { \
 	if (!((_flags) & GED_QUIET)) { \
-	    bu_vls_printf(&(_gedp)->ged_result_str, "%s: not a combination", (_dp)->d_namep); \
+	    bu_vls_printf(&(_gedp)->ged_result_str, "%s is not a combination", (_dp)->d_namep); \
 	} \
 	return (_flags); \
     }
@@ -140,7 +140,7 @@ __BEGIN_DECLS
     if (_gedp->ged_gdp == GED_DRAWABLE_NULL) { \
 	if (!((_flags) & GED_QUIET)) { \
 	    bu_vls_trunc(&(_gedp)->ged_result_str, 0); \
-	    bu_vls_printf(&(_gedp)->ged_result_str, "A drawable does not exist!"); \
+	    bu_vls_printf(&(_gedp)->ged_result_str, "A drawable does not exist."); \
 	} \
 	return (_flags); \
     }
@@ -150,7 +150,7 @@ __BEGIN_DECLS
     if (_gedp->ged_gvp == GED_VIEW_NULL) { \
 	if (!((_flags) & GED_QUIET)) { \
 	    bu_vls_trunc(&(_gedp)->ged_result_str, 0); \
-	    bu_vls_printf(&(_gedp)->ged_result_str, "A view does not exist!"); \
+	    bu_vls_printf(&(_gedp)->ged_result_str, "A view does not exist."); \
 	} \
 	return (_flags); \
     }
@@ -178,7 +178,7 @@ __BEGIN_DECLS
 #define	GED_CHECK_REGION(_gedp, _dp, _flags) \
     if (((_dp)->d_flags & DIR_REGION) == 0) { \
 	if (!((_flags) & GED_QUIET)) { \
-	    bu_vls_printf(&(_gedp)->ged_result_str, "%s: not a region", (_dp)->d_namep); \
+	    bu_vls_printf(&(_gedp)->ged_result_str, "%s is not a region.", (_dp)->d_namep); \
 	} \
 	return (_flags); \
     }
@@ -188,7 +188,7 @@ __BEGIN_DECLS
     if ((_argc) < 1) { \
 	if (!((_flags) & GED_QUIET)) { \
 	    bu_vls_trunc(&(_gedp)->ged_result_str, 0); \
-	    bu_vls_printf(&(_gedp)->ged_result_str, "ERROR: command name not provided (%s:%d)", __FILE__, __LINE__); \
+	    bu_vls_printf(&(_gedp)->ged_result_str, "Command name not provided (%s:%d)", __FILE__, __LINE__); \
 	} \
 	return (_flags); \
     }
@@ -206,7 +206,7 @@ __BEGIN_DECLS
 #define GED_DB_LOOKUP(_gedp, _dp, _name, _noisy, _flags) \
     if (((_dp) = db_lookup((_gedp)->ged_wdbp->dbip, (_name), (_noisy))) == DIR_NULL) { \
 	if (!((_flags) & GED_QUIET)) { \
-	    bu_vls_printf(&(_gedp)->ged_result_str, "%s: not found", (_name)); \
+	    bu_vls_printf(&(_gedp)->ged_result_str, "Unable to find %s in the database.", (_name)); \
 	} \
 	return (_flags); \
     }
@@ -215,7 +215,7 @@ __BEGIN_DECLS
 #define GED_DB_GET_INTERNAL(_gedp, _intern, _dp, _mat, _resource, _flags) \
     if (rt_db_get_internal((_intern), (_dp), (_gedp)->ged_wdbp->dbip, (_mat), (_resource)) < 0) { \
 	if (!((_flags) & GED_QUIET)) { \
-	    bu_vls_printf(&(_gedp)->ged_result_str, "Database read error, aborting"); \
+	    bu_vls_printf(&(_gedp)->ged_result_str, "Database read failure."); \
 	} \
 	return (_flags); \
     }
@@ -224,7 +224,7 @@ __BEGIN_DECLS
 #define GED_DB_PUT_INTERNAL(_gedp, _dp, _intern, _resource, _flags) \
     if (rt_db_put_internal((_dp), (_gedp)->ged_wdbp->dbip, (_intern), (_resource)) < 0) { \
 	if (!((_flags) & GED_QUIET)) { \
-	    bu_vls_printf(&(_gedp)->ged_result_str, "Database write error, aborting"); \
+	    bu_vls_printf(&(_gedp)->ged_result_str, "Database write failure."); \
 	} \
 	return (_flags); \
     }
