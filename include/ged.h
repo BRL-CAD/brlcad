@@ -159,7 +159,7 @@ __BEGIN_DECLS
 #define GED_CHECK_EXISTS(_gedp, _name, _noisy, _flags) \
     if (db_lookup((_gedp)->ged_wdbp->dbip, (_name), (_noisy)) != DIR_NULL) { \
 	if (!((_flags) & GED_QUIET)) { \
-	    bu_vls_printf(&(_gedp)->ged_result_str, "%s already exists", (_name)); \
+	    bu_vls_printf(&(_gedp)->ged_result_str, "%s already exists.", (_name)); \
 	} \
 	return (_flags); \
     }
@@ -169,7 +169,7 @@ __BEGIN_DECLS
     if ((_gedp)->ged_wdbp->dbip->dbi_read_only) { \
 	if (!((_flags) & GED_QUIET)) { \
 	    bu_vls_trunc(&(_gedp)->ged_result_str, 0); \
-	    bu_vls_printf(&(_gedp)->ged_result_str, "Sorry, this database is READ-ONLY"); \
+	    bu_vls_printf(&(_gedp)->ged_result_str, "Sorry, this database is READ-ONLY."); \
 	} \
 	return (_flags); \
     }
@@ -188,7 +188,7 @@ __BEGIN_DECLS
     if ((_argc) < 1) { \
 	if (!((_flags) & GED_QUIET)) { \
 	    bu_vls_trunc(&(_gedp)->ged_result_str, 0); \
-	    bu_vls_printf(&(_gedp)->ged_result_str, "Command name not provided (%s:%d)", __FILE__, __LINE__); \
+	    bu_vls_printf(&(_gedp)->ged_result_str, "Command name not provided on (%s:%d).", __FILE__, __LINE__); \
 	} \
 	return (_flags); \
     }
