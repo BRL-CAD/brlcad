@@ -24,6 +24,8 @@
  *
  */
 
+#include <stdint.h>
+
 #ifndef _ADRT_H
 #define _ADRT_H
 
