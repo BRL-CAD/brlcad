@@ -197,7 +197,7 @@ __BEGIN_DECLS
 #define GED_DB_DIRADD(_gedp, _dp, _name, _laddr, _len, _dirflags, _ptr, _flags) \
     if (((_dp) = db_diradd((_gedp)->ged_wdbp->dbip, (_name), (_laddr), (_len), (_dirflags), (_ptr))) == DIR_NULL) { \
 	if (!((_flags) & GED_QUIET)) { \
-	    bu_vls_printf(&(_gedp)->ged_result_str, "An error has occurred while adding a new object to the database."); \
+	    bu_vls_printf(&(_gedp)->ged_result_str, "Unable to add %s to the database.", (_name)); \
 	} \
 	return (_flags); \
     }
