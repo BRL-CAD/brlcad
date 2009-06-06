@@ -105,23 +105,14 @@ ged_bot_decimate(struct ged *gedp, int argc, const char *argv[])
     argv += bu_optind;
 
     /* make sure new solid does not already exist */
-    if ( (dp=db_lookup( gedp->ged_wdbp->dbip, argv[0], LOOKUP_QUIET ) ) != DIR_NULL ) {
-	bu_vls_printf(&gedp->ged_result_str, "%s already exists!!\n", argv[0]);
-	return GED_ERROR;
-    }
+    GED_CHECK_EXISTS(gedp, argv[0], LOOKUP_QUIET, GED_ERROR);
 
     /* make sure current solid does exist */
-    if ( (dp=db_lookup( gedp->ged_wdbp->dbip, argv[1], LOOKUP_QUIET ) ) == DIR_NULL ) {
-	bu_vls_printf(&gedp->ged_result_str, "%s does not exist\n", argv[1]);
-	return GED_ERROR;
-    }
+    GED_DB_LOOKUP(gedp, dp, argv[1], LOOKUP_QUIET, GED_ERROR);
 
     /* import the current solid */
     RT_INIT_DB_INTERNAL( &intern );
-    if ( rt_db_get_internal( &intern, dp, gedp->ged_wdbp->dbip, NULL, gedp->ged_wdbp->wdb_resp ) < 0 ) {
-	bu_vls_printf(&gedp->ged_result_str, "Failed to get internal form of %s\n", argv[1]);
-	return GED_ERROR;
-    }
+    GED_DB_GET_INTERNAL(gedp, &intern, dp, NULL, gedp->ged_wdbp->wdb_resp, GED_ERROR);
 
     /* make sure this is a BOT solid */
     if ( intern.idb_major_type != DB5_MAJORTYPE_BRLCAD ||
