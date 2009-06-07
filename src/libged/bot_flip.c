@@ -63,26 +63,17 @@ ged_bot_flip(struct ged *gedp, int argc, const char *argv[])
 	    continue;
 	}
 
-	if (rt_db_get_internal(&intern, dp, gedp->ged_wdbp->dbip, bn_mat_identity, &rt_uniresource) < 0) {
-	    bu_vls_printf(&gedp->ged_result_str, "%s: rt_db_get_internal(%s) error\n", argv[0], argv[i]);
-	    return GED_ERROR;
-	}
+	GED_DB_GET_INTERNAL(gedp, &intern, dp, bn_mat_identity, &rt_uniresource, GED_ERROR);
 
-	if (intern.idb_type != ID_BOT) {
-	    bu_vls_printf(&gedp->ged_result_str, "%s: %s is not a BOT solid!!!\n", argv[0], argv[i]);
+	if (intern.idb_major_type != DB5_MAJORTYPE_BRLCAD || intern.idb_minor_type != DB5_MINORTYPE_BRLCAD_BOT) {
+	    bu_vls_printf(&gedp->ged_result_str, "%s: %s is not a BOT solid!\n", argv[0], argv[i]);
 	    continue;
 	}
 
 	bot = (struct rt_bot_internal *)intern.idb_ptr;
 	rt_bot_flip(bot);
 
-	if (rt_db_put_internal(dp, gedp->ged_wdbp->dbip, &intern, gedp->ged_wdbp->wdb_resp)) {
-	    bu_vls_printf(&gedp->ged_result_str,
-			  "Failed to write BOT (%s) to database!!!",
-			  dp->d_namep);
-	    rt_db_free_internal(&intern, gedp->ged_wdbp->wdb_resp);
-	    return GED_ERROR;
-	}
+	GED_DB_PUT_INTERNAL(gedp, dp, &intern, gedp->ged_wdbp->wdb_resp, GED_ERROR);
     }
 
     return GED_OK;

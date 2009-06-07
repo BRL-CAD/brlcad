@@ -41,7 +41,7 @@ ged_bot_merge(struct ged *gedp, int argc, const char *argv[])
     struct directory *dp, *new_dp;
     struct rt_db_internal intern;
     struct rt_bot_internal **bots;
-    int i, idx, retval;
+    int i, idx;
     int avail_vert, avail_face, face;
     static const char *usage = "bot_dest bot1_src [botn_src]";
 
@@ -59,8 +59,6 @@ ged_bot_merge(struct ged *gedp, int argc, const char *argv[])
     }
 
     bots = bu_calloc(sizeof(struct rt_bot_internal), argc, "bot internal");
-
-    retval = GED_OK;
 
     /* create a new bot */
     BU_GETSTRUCT(bots[0], rt_bot_internal);
@@ -86,15 +84,10 @@ ged_bot_merge(struct ged *gedp, int argc, const char *argv[])
 	    continue;
 	}
 
-	if ( rt_db_get_internal( &intern, dp, gedp->ged_wdbp->dbip, bn_mat_identity, &rt_uniresource ) < 0 ) {
-	    bu_vls_printf(&gedp->ged_result_str, "%s: rt_db_get_internal(%s) error\n", argv[0], argv[i]);
-	    retval = GED_ERROR;
-	    continue;
-	}
+	GED_DB_GET_INTERNAL(gedp, &intern, dp, bn_mat_identity, &rt_uniresource, GED_ERROR);
 
-	if ( intern.idb_type != ID_BOT ) 	{
-	    bu_vls_printf(&gedp->ged_result_str, "%s: %s is not a BOT solid!!!  skipping\n", argv[0], argv[i]);
-	    retval = GED_ERROR;
+	if (intern.idb_major_type != DB5_MAJORTYPE_BRLCAD || intern.idb_minor_type != DB5_MINORTYPE_BRLCAD_BOT) {
+	    bu_vls_printf(&gedp->ged_result_str, "%s: %s is not a BOT solid!  Skipping.\n", argv[0], argv[i]);
 	    continue;
 	}
 
@@ -189,18 +182,8 @@ ged_bot_merge(struct ged *gedp, int argc, const char *argv[])
     intern.idb_meth = &rt_functab[ID_BOT];
     intern.idb_ptr = (genptr_t)bots[0];
 
-    if ( (new_dp=db_diradd( gedp->ged_wdbp->dbip, argv[1], -1L, 0, DIR_SOLID, (genptr_t)&intern.idb_type)) == DIR_NULL )
-    {
-	bu_vls_printf(&gedp->ged_result_str, "%s: Cannot add %s to directory\n", argv[0], argv[1]);
-	return GED_ERROR;
-    }
-
-    if ( rt_db_put_internal( new_dp, gedp->ged_wdbp->dbip, &intern, &rt_uniresource ) < 0 )
-    {
-	rt_db_free_internal( &intern, &rt_uniresource );
-	bu_vls_printf(&gedp->ged_result_str, "%s: Database write error, aborting\n", argv[0]);
-	return GED_ERROR;
-    }
+    GED_DB_DIRADD(gedp, new_dp, argv[1], -1L, 0, DIR_SOLID, (genptr_t)&intern.idb_type, GED_ERROR);
+    GED_DB_PUT_INTERNAL(gedp, new_dp, &intern, &rt_uniresource, GED_ERROR);
 
     bu_free(bots, "bots");
 

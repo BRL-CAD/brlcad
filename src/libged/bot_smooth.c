@@ -43,12 +43,13 @@ ged_bot_smooth(struct ged *gedp, int argc, const char *argv[])
     struct rt_db_internal intern;
     fastf_t tolerance_angle=180.0;
     int arg_index=1;
-    int id;
     static const char *usage = "[-t ntol] new_bot old_bot";
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
     GED_CHECK_READ_ONLY(gedp, GED_ERROR);
     GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
+
+    dp_old = dp_new = DIR_NULL;
 
     /* initialize result */
     bu_vls_trunc(&gedp->ged_result_str, 0);
@@ -90,27 +91,17 @@ ged_bot_smooth(struct ged *gedp, int argc, const char *argv[])
     new_bot_name = (char *)argv[arg_index++];
     old_bot_name = (char *)argv[arg_index];
 
-    if ( (dp_old=db_lookup( gedp->ged_wdbp->dbip, old_bot_name, LOOKUP_QUIET ) ) == DIR_NULL ) {
-	bu_vls_printf(&gedp->ged_result_str, "%s does not exist!!\n", old_bot_name);
-	return GED_ERROR;
-    }
+    GED_DB_LOOKUP(gedp, dp_old, old_bot_name, LOOKUP_QUIET, GED_ERROR);
 
     if ( strcmp( old_bot_name, new_bot_name ) ) {
-
-	if ( (dp_new=db_lookup( gedp->ged_wdbp->dbip, new_bot_name, LOOKUP_QUIET ) ) != DIR_NULL ) {
-	    bu_vls_printf(&gedp->ged_result_str, "%s already exists!!\n", new_bot_name);
-	    return GED_ERROR;
-	}
+	GED_CHECK_EXISTS(gedp, new_bot_name, LOOKUP_QUIET, GED_ERROR);
     } else {
 	dp_new = dp_old;
     }
 
-    if ( (id=rt_db_get_internal( &intern, dp_old, gedp->ged_wdbp->dbip, NULL, gedp->ged_wdbp->wdb_resp ) ) < 0 ) {
-	bu_vls_printf(&gedp->ged_result_str, "Failed to get internal form of %s\n", old_bot_name);
-	return GED_ERROR;
-    }
+    GED_DB_GET_INTERNAL(gedp, &intern, dp_old, NULL, gedp->ged_wdbp->wdb_resp, GED_ERROR);
 
-    if ( id != ID_BOT ) {
+    if (intern.idb_major_type != DB5_MAJORTYPE_BRLCAD || intern.idb_minor_type != DB5_MINORTYPE_BRLCAD_BOT) {
 	bu_vls_printf(&gedp->ged_result_str, "%s is not a BOT primitive\n", old_bot_name);
 	rt_db_free_internal( &intern, gedp->ged_wdbp->wdb_resp );
 	return GED_ERROR;
@@ -126,25 +117,14 @@ ged_bot_smooth(struct ged *gedp, int argc, const char *argv[])
     }
 
     if ( dp_new == DIR_NULL ) {
-	if ( (dp_new=db_diradd( gedp->ged_wdbp->dbip, new_bot_name, -1L, 0, DIR_SOLID,
-				(genptr_t)&intern.idb_type)) == DIR_NULL ) {
-	    rt_db_free_internal(&intern, gedp->ged_wdbp->wdb_resp);
-	    bu_vls_printf(&gedp->ged_result_str, "Cannot add %s to directory\n", new_bot_name);
-	    return GED_ERROR;
-	}
+	GED_DB_DIRADD(gedp, dp_new, new_bot_name, -1L, 0, DIR_SOLID, (genptr_t)&intern.idb_type, GED_ERROR);
     }
 
-    if ( rt_db_put_internal( dp_new, gedp->ged_wdbp->dbip, &intern, gedp->ged_wdbp->wdb_resp ) < 0 ) {
-	rt_db_free_internal(&intern, gedp->ged_wdbp->wdb_resp);
-	bu_vls_printf(&gedp->ged_result_str, "Database write error, aborting.\n");
-	return GED_ERROR;
-    }
-
+    GED_DB_PUT_INTERNAL(gedp, dp_new, &intern, gedp->ged_wdbp->wdb_resp, GED_ERROR);
     rt_db_free_internal( &intern, gedp->ged_wdbp->wdb_resp );
 
     return GED_OK;
 }
-
 
 /*
  * Local Variables:

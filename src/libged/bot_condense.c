@@ -65,9 +65,8 @@ ged_bot_condense(struct ged *gedp, int argc, const char *argv[])
     GED_DB_LOOKUP(gedp, old_dp, argv[2], LOOKUP_NOISY, GED_ERROR & GED_QUIET);
     GED_DB_GET_INTERNAL(gedp, &intern,  old_dp, bn_mat_identity, &rt_uniresource, GED_ERROR);
 
-    if ( intern.idb_type != ID_BOT )
-    {
-	bu_vls_printf(&gedp->ged_result_str, "%s: %s is not a BOT solid!!!\n", argv[0], argv[2]);
+    if (intern.idb_major_type != DB5_MAJORTYPE_BRLCAD || intern.idb_minor_type != DB5_MINORTYPE_BRLCAD_BOT) {
+	bu_vls_printf(&gedp->ged_result_str, "%s: %s is not a BOT solid!\n", argv[0], argv[2]);
 	return GED_ERROR;
     }
 

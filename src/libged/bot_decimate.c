@@ -115,8 +115,7 @@ ged_bot_decimate(struct ged *gedp, int argc, const char *argv[])
     GED_DB_GET_INTERNAL(gedp, &intern, dp, NULL, gedp->ged_wdbp->wdb_resp, GED_ERROR);
 
     /* make sure this is a BOT solid */
-    if ( intern.idb_major_type != DB5_MAJORTYPE_BRLCAD ||
-	 intern.idb_minor_type != DB5_MINORTYPE_BRLCAD_BOT ) {
+    if (intern.idb_major_type != DB5_MAJORTYPE_BRLCAD || intern.idb_minor_type != DB5_MINORTYPE_BRLCAD_BOT) {
 	bu_vls_printf(&gedp->ged_result_str, "%s is not a BOT solid\n", argv[1]);
 	rt_db_free_internal( &intern, gedp->ged_wdbp->wdb_resp );
 	return GED_ERROR;

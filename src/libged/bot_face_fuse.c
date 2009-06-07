@@ -61,18 +61,12 @@ ged_bot_face_fuse(struct ged *gedp, int argc, const char *argv[])
 	return GED_ERROR;
     }
 
-    if ( (old_dp = db_lookup( gedp->ged_wdbp->dbip, argv[2], LOOKUP_NOISY )) == DIR_NULL )
-	return GED_ERROR;
-
-    if ( rt_db_get_internal( &intern, old_dp, gedp->ged_wdbp->dbip, bn_mat_identity, &rt_uniresource ) < 0 )
-    {
-	bu_vls_printf(&gedp->ged_result_str, "%s: rt_db_get_internal() error\n", argv[0]);
-	return GED_ERROR;
-    }
+    GED_DB_LOOKUP(gedp, old_dp, argv[2], LOOKUP_NOISY, GED_ERROR & GED_QUIET);
+    GED_DB_GET_INERNAL(gedp, &intern, old_dp, bn_mat_identity, &rt_uniresource, GED_ERROR);
 
     if ( intern.idb_type != ID_BOT )
     {
-	bu_vls_printf(&gedp->ged_result_str, "%s: %s is not a BOT solid!!!\n", argv[0], argv[2]);
+	bu_vls_printf(&gedp->ged_result_str, "%s: %s is not a BOT solid!\n", argv[0], argv[2]);
 	return GED_ERROR;
     }
 
@@ -81,18 +75,8 @@ ged_bot_face_fuse(struct ged *gedp, int argc, const char *argv[])
 
     (void) rt_bot_face_fuse( bot );
 
-    if ( (new_dp=db_diradd( gedp->ged_wdbp->dbip, argv[1], -1L, 0, DIR_SOLID, (genptr_t)&intern.idb_type)) == DIR_NULL )
-    {
-	bu_vls_printf(&gedp->ged_result_str, "%s: Cannot add %s to directory\n", argv[0], argv[1]);
-	return GED_ERROR;
-    }
-
-    if ( rt_db_put_internal( new_dp, gedp->ged_wdbp->dbip, &intern, &rt_uniresource ) < 0 )
-    {
-	rt_db_free_internal( &intern, &rt_uniresource );
-	bu_vls_printf(&gedp->ged_result_str, "%s: Database write error, aborting\n", argv[0]);
-	return GED_ERROR;
-    }
+    GED_DB_DIRADD(gedp, new_dp, argv[1], -1L, 0, DIR_SOLID, (genptr_t)&intern.idb_type, GED_ERROR);
+    GED_DB_PUT_INTERNAL(gedp, new_dp, &intern, &rt_uniresource, GED_ERROR);
 
     return GED_OK;
 }

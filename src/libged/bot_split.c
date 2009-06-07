@@ -68,18 +68,11 @@ ged_bot_split(struct ged *gedp, int argc, const char *argv[])
 
     bots = bu_calloc(sizeof(struct rt_bot_internal), bot_count, "bot internal");
 
-    if ((dp = db_lookup(gedp->ged_wdbp->dbip, argv[1], LOOKUP_NOISY)) == DIR_NULL) {
-	return GED_ERROR;
-    }
+    GED_DB_LOOKUP(gedp, dp, argv[1], LOOKUP_NOISY, GED_ERROR & GED_QUIET);
+    GED_DB_GET_INTERNAL(gedp, &intern, dp, bn_mat_identity, &rt_uniresource, GED_ERROR);
 
-    if ( rt_db_get_internal( &intern, dp, gedp->ged_wdbp->dbip, bn_mat_identity, &rt_uniresource ) < 0 ) {
-	bu_vls_printf(&gedp->ged_result_str, "%s: rt_db_get_internal(%s) error\n", argv[0], argv[1]);
-	return GED_ERROR;
-
-    }
-
-    if ( intern.idb_type != ID_BOT ) 	{
-	bu_vls_printf(&gedp->ged_result_str, "%s: %s is not a BOT solid!!!\n", argv[0], argv[1]);
+    if (intern.idb_major_type != DB5_MAJORTYPE_BRLCAD || intern.idb_minor_type != DB5_MINORTYPE_BRLCAD_BOT) {
+	bu_vls_printf(&gedp->ged_result_str, "%s: %s is not a BOT solid!\n", argv[0], argv[1]);
 	return GED_ERROR;
     }
 

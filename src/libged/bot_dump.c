@@ -763,7 +763,6 @@ ged_bot_dump(struct ged *gedp, int argc, const char *argv[])
 
 	    /* get the internal form */
 	    i=rt_db_get_internal(&intern, dp, gedp->ged_wdbp->dbip, mat, &rt_uniresource);
-
 	    if (i < 0) {
 		fprintf(stderr, "%s: rt_get_internal failure %d on %s\n", cmd_name, i, dp->d_namep);
 		continue;
