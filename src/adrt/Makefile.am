@@ -147,7 +147,6 @@ EXTRA_DIST = \
 	doc/ChangeLog \
 	doc/binary_spec.txt \
 	doc/rise.txt \
-	g-adrt.c \
 	rise/master/dispatcher.c \
 	rise/master/dispatcher.h \
 	rise/master/main.c \
