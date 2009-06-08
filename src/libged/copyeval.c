@@ -69,10 +69,7 @@ ged_copyeval(struct ged *gedp, int argc, const char *argv[])
     gtd.gtd_prflag = 0;
 
     /* check if new solid name already exists in description */
-    if (db_lookup(gedp->ged_wdbp->dbip, argv[1], LOOKUP_QUIET) != DIR_NULL) {
-	bu_vls_printf(&gedp->ged_result_str, "%s: alread exists\n", argv[1]);
-	return GED_ERROR;
-    }
+    GED_CHECK_EXISTS(gedp, argv[1], LOOKUP_QUIET, GED_ERROR);
 
     MAT_IDN(start_mat);
 
@@ -84,14 +81,13 @@ ged_copyeval(struct ged *gedp, int argc, const char *argv[])
 
 	tok = strtok((char *)argv[2], "/");
 	while (tok) {
-	    if ((gtd.gtd_obj[endpos++] = db_lookup(gedp->ged_wdbp->dbip, tok, LOOKUP_NOISY)) == DIR_NULL)
-		return GED_ERROR;
+	    GED_DB_LOOKUP(gedp, gtd.gtd_obj[endpos], tok, LOOKUP_NOISY, GED_ERROR & GED_QUIET);
+	    endpos++;
 	    tok = strtok((char *)NULL, "/");
 	}
     } else {
 	for (i=2; i<argc; i++) {
-	    if ((gtd.gtd_obj[i-2] = db_lookup(gedp->ged_wdbp->dbip, argv[i], LOOKUP_NOISY)) == DIR_NULL)
-		return GED_ERROR;
+	    GED_DB_LOOKUP(gedp, gtd.gtd_obj[i-2], argv[i], LOOKUP_NOISY, GED_ERROR & GED_QUIET);
 	}
 	endpos = argc - 2;
     }
@@ -99,14 +95,11 @@ ged_copyeval(struct ged *gedp, int argc, const char *argv[])
     gtd.gtd_objpos = endpos - 1;
 
     /* Make sure that final component in path is a solid */
-    if ((id = rt_db_get_internal(&internal, gtd.gtd_obj[endpos - 1], gedp->ged_wdbp->dbip, bn_mat_identity, &rt_uniresource)) < 0) {
-	bu_vls_printf(&gedp->ged_result_str, "import failure on %s\n", argv[argc-1]);
-	return GED_ERROR;
-    }
+    GED_DB_GET_INTERNAL(gedp, &internal, gtd.gtd_obj[endpos - 1], bn_mat_identity, &rt_uniresource, GED_ERROR);
 
-    if (id >= ID_COMBINATION) {
+    if (internal.idb_type == ID_COMBINATION) {
 	rt_db_free_internal(&internal, &rt_uniresource);
-	bu_vls_printf(&gedp->ged_result_str, "final component on path must be a primitive!!!\n");
+	bu_vls_printf(&gedp->ged_result_str, "final component on path must be a primitive!\n");
 	return GED_ERROR;
     }
 
@@ -135,6 +128,9 @@ ged_copyeval(struct ged *gedp, int argc, const char *argv[])
 	return GED_ERROR;
     }
 
+    /* should call GED_DB_DIRADD() but need to deal with freeing the
+     * internals on failure.
+     */
     if ((dp=db_diradd(gedp->ged_wdbp->dbip, argv[1], -1L, 0,
 		      gtd.gtd_obj[endpos-1]->d_flags,
 		      (genptr_t)&new_int.idb_type)) == DIR_NULL) {
@@ -144,6 +140,9 @@ ged_copyeval(struct ged *gedp, int argc, const char *argv[])
 	return GED_ERROR;
     }
 
+    /* should call GED_DB_DIRADD() but need to deal with freeing the
+     * internals on failure.
+     */
     if (rt_db_put_internal(dp, gedp->ged_wdbp->dbip, &new_int, &rt_uniresource) < 0) {
 	rt_db_free_internal(&internal, &rt_uniresource);
 	rt_db_free_internal(&new_int, &rt_uniresource);

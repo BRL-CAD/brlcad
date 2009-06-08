@@ -60,23 +60,16 @@ ged_copy(struct ged *gedp, int argc, const char *argv[])
     }
 
 
-    if ((proto = db_lookup(gedp->ged_wdbp->dbip,  argv[1], LOOKUP_NOISY)) == DIR_NULL)
-	return GED_ERROR;
+    GED_DB_LOOKUP(gedp, proto, argv[1], LOOKUP_NOISY, GED_ERROR & GED_QUIET);
 
-    if (db_lookup(gedp->ged_wdbp->dbip, argv[2], LOOKUP_QUIET) != DIR_NULL) {
-	bu_vls_printf(&gedp->ged_result_str, "%s: already exists", argv[2]);
-	return GED_ERROR;
-    }
+    GED_CHECK_EXISTS(gedp, argv[2], LOOKUP_QUIET, GED_ERROR);
 
     if (db_get_external(&external, proto, gedp->ged_wdbp->dbip)) {
 	bu_vls_printf(&gedp->ged_result_str, "Database read error, aborting\n");
 	return GED_ERROR;
     }
 
-    if ((dp=db_diradd(gedp->ged_wdbp->dbip, argv[2], -1, 0, proto->d_flags, (genptr_t)&proto->d_minor_type)) == DIR_NULL ) {
-	bu_vls_printf(&gedp->ged_result_str, "An error has occured while adding a new object to the database.");
-	return GED_ERROR;
-    }
+    GED_DB_DIRADD(gedp, dp, argv[2], -1, 0, proto->d_flags, (genptr_t)&proto->d_minor_type, GED_ERROR);
 
     if (db_put_external(&external, dp, gedp->ged_wdbp->dbip) < 0) {
 	bu_free_external(&external);

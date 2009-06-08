@@ -916,11 +916,7 @@ get_args(struct ged *gedp, int argc, char **argv, struct ged_clone_state *state)
     if (!argv[bu_optind])
 	return GED_ERROR;
 
-    state->src = db_lookup(gedp->ged_wdbp->dbip, argv[bu_optind], LOOKUP_QUIET);
-    if (!state->src) {
-	bu_vls_printf(&gedp->ged_result_str, "clone:  Cannot find source object\n");
-	return GED_ERROR;
-    }
+    GED_DB_LOOKUP(gedp, state->src, argv[bu_optind], LOOKUP_QUIET, GED_ERROR);
 
     VSCALE(state->trans, state->trans, gedp->ged_wdbp->dbip->dbi_local2base);
     VSCALE(state->rpnt, state->rpnt, gedp->ged_wdbp->dbip->dbi_local2base);

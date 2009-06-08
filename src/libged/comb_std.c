@@ -432,7 +432,7 @@ ged_comb_std(struct ged *gedp, int argc, const char *argv[])
     char *comb_name;
     int ch;
     int region_flag = -1;
-    register struct directory *dp;
+    register struct directory *dp = DIR_NULL;
     struct rt_db_internal intern;
     struct rt_comb_internal *comb = NULL;
     struct tokens tok_hd;
@@ -491,18 +491,14 @@ ged_comb_std(struct ged *gedp, int argc, const char *argv[])
 	/*
 	 *	Set/Reset the REGION flag of an existing combination
 	 */
-	if ((dp = db_lookup(gedp->ged_wdbp->dbip, comb_name, LOOKUP_NOISY)) == DIR_NULL)
-	    return GED_ERROR;
+	GED_DB_LOOKUP(gedp, dp, comb_name, LOOKUP_NOISY, GED_ERROR & GED_QUIET);
 
 	if (!(dp->d_flags & DIR_COMB)) {
 	    bu_vls_printf(&gedp->ged_result_str, "%s is not a combination\n", comb_name);
 	    return GED_ERROR;
 	}
 
-	if (rt_db_get_internal(&intern, dp, gedp->ged_wdbp->dbip, (fastf_t *)NULL, &rt_uniresource) < 0) {
-	    bu_vls_printf(&gedp->ged_result_str, "Database read error, aborting\n");
-	    return GED_ERROR;
-	}
+	GED_DB_GET_INTERNAL(gedp, &intern, dp, (fastf_t *)NULL, &rt_uniresource, GED_ERROR);
 	comb = (struct rt_comb_internal *)intern.idb_ptr;
 	RT_CK_COMB(comb);
 
@@ -519,11 +515,7 @@ ged_comb_std(struct ged *gedp, int argc, const char *argv[])
 	else
 	    comb->region_flag = 0;
 
-	if (rt_db_put_internal(dp, gedp->ged_wdbp->dbip, &intern, &rt_uniresource) < 0) {
-	    rt_db_free_internal(&intern, &rt_uniresource);
-	    bu_vls_printf(&gedp->ged_result_str, "Database write error, aborting\n");
-	    return GED_ERROR;
-	}
+	GED_DB_PUT_INTERNAL(gedp, dp, &intern, &rt_uniresource, GED_ERROR);
 
 	return GED_OK;
     }
@@ -536,11 +528,8 @@ ged_comb_std(struct ged *gedp, int argc, const char *argv[])
      *	Otherwise, make sure to set its c_flags according to region_flag.
      */
 
-    dp = db_lookup( gedp->ged_wdbp->dbip, comb_name, LOOKUP_QUIET );
-    if (dp != DIR_NULL) {
-	bu_vls_printf(&gedp->ged_result_str, "ERROR: %s already exists\n", comb_name);
-	return GED_ERROR;
-    }
+    GED_CHECK_EXISTS(gedp, comb_name, LOOKUP_QUIET, GED_ERROR);
+    dp = DIR_NULL;
 
     /* parse Boolean expression */
     BU_LIST_INIT(&tok_hd.l);
@@ -640,11 +629,7 @@ ged_comb_std(struct ged *gedp, int argc, const char *argv[])
 		case GED_TOK_TREE:
 		    if (!strcmp(tok->tp->tr_l.tl_name, comb_name)) {
 			db_free_tree( tok->tp, &rt_uniresource );
-			if (rt_db_get_internal(&intern1, dp, gedp->ged_wdbp->dbip, (fastf_t *)NULL, &rt_uniresource) < 0) {
-			    bu_vls_printf(&gedp->ged_result_str, "Cannot get records for %s\n", comb_name);
-			    bu_vls_printf(&gedp->ged_result_str, "Database read error, aborting\n");
-			    return GED_ERROR;
-			}
+			GED_DB_GET_INTERNAL(gedp, &intern1, dp, (fastf_t *)NULL, &rt_uniresource, GED_ERROR);
 			comb1 = (struct rt_comb_internal *)intern1.idb_ptr;
 			RT_CK_COMB(comb1);
 
@@ -697,15 +682,8 @@ ged_comb_std(struct ged *gedp, int argc, const char *argv[])
 	intern.idb_meth = &rt_functab[ID_COMBINATION];
 	intern.idb_ptr = (genptr_t)comb;
 
-	if ((dp=db_diradd(gedp->ged_wdbp->dbip, comb_name, -1L, 0, flags, (genptr_t)&intern.idb_type)) == DIR_NULL) {
-	    bu_vls_printf(&gedp->ged_result_str, "Failed to add %s to directory, aborting\n", comb_name);
-	    return GED_ERROR;
-	}
-
-	if (rt_db_put_internal(dp, gedp->ged_wdbp->dbip, &intern, &rt_uniresource) < 0) {
-	    bu_vls_printf(&gedp->ged_result_str, "Failed to write %s", dp->d_namep);
-	    return GED_ERROR;
-	}
+	GED_DB_DIRADD(gedp, dp, comb_name, -1L, 0, flags, (genptr_t)&intern.idb_type, GED_ERROR);
+	GED_DB_PUT_INTERNAL(gedp, dp, &intern, &rt_uniresource, GED_ERROR);
     } else {
 	db_delete(gedp->ged_wdbp->dbip, dp);
 
@@ -714,10 +692,7 @@ ged_comb_std(struct ged *gedp, int argc, const char *argv[])
 	db_free_tree(comb->tree, &rt_uniresource);
 	comb->tree = final_tree;
 
-	if (rt_db_put_internal(dp, gedp->ged_wdbp->dbip, &intern, &rt_uniresource) < 0) {
-	    bu_vls_printf(&gedp->ged_result_str, "Failed to write %s", dp->d_namep);
-	    return GED_ERROR;
-	}
+	GED_DB_PUT_INTERNAL(gedp, dp, &intern, &rt_uniresource, GED_ERROR);
     }
 
     return GED_OK;

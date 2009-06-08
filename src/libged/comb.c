@@ -99,10 +99,7 @@ ged_comb(struct ged *gedp, int argc, const char *argv[])
 	}
     }
 
-    if (db_lookup(gedp->ged_wdbp->dbip, comb_name, LOOKUP_QUIET) == DIR_NULL) {
-	bu_vls_printf(&gedp->ged_result_str, "Error: %s not created", comb_name);
-	return GED_ERROR;
-    }
+    GED_DB_LOOKUP(gedp, dp, comb_name, LOOKUP_QUIET, GED_ERROR);
 
     return GED_OK;
 }
@@ -149,13 +146,8 @@ ged_combadd(struct ged			*gedp,
 	intern.idb_type = ID_COMBINATION;
 	intern.idb_meth = &rt_functab[ID_COMBINATION];
 
-	/* Update the in-core directory */
-	if ((dp = db_diradd(gedp->ged_wdbp->dbip, combname, -1, 0, flags, (genptr_t)&intern.idb_type)) == DIR_NULL)  {
-	    bu_vls_printf(&gedp->ged_result_str,
-			  "An error has occured while adding '%s' to the database.\n",
-			  combname);
-	    return DIR_NULL;
-	}
+	/* Update the in-core directory (DIR_NULL happens to work since it's a zero-value) */
+	GED_DB_DIRADD(gedp, dp, combname, -1, 0, flags, (genptr_t)&intern.idb_type, (int)DIR_NULL);
 
 	BU_GETSTRUCT(comb, rt_comb_internal);
 	intern.idb_ptr = (genptr_t)comb;
@@ -186,10 +178,8 @@ ged_combadd(struct ged			*gedp,
 	tp->tr_l.tl_mat = (matp_t)NULL;
 	comb->tree = tp;
 
-	if (rt_db_put_internal(dp, gedp->ged_wdbp->dbip, &intern, &rt_uniresource) < 0) {
-	    bu_vls_printf(&gedp->ged_result_str, "Failed to write %s", dp->d_namep);
-	    return DIR_NULL;
-	}
+	/* DIR_NULL happens to work as the macro flag because it's a zero value */
+	GED_DB_PUT_INTERNAL(gedp, dp, &intern, &rt_uniresource, (int)DIR_NULL);
 	return dp;
     } else if (!(dp->d_flags & DIR_COMB)) {
 	bu_vls_printf(&gedp->ged_result_str, "%s exists, but is not a combination\n");
@@ -197,10 +187,8 @@ ged_combadd(struct ged			*gedp,
     }
 
     /* combination exists, add a new member */
-    if (rt_db_get_internal(&intern, dp, gedp->ged_wdbp->dbip, (fastf_t *)NULL, &rt_uniresource) < 0) {
-	bu_vls_printf(&gedp->ged_result_str, "read error, aborting\n");
-	return DIR_NULL;
-    }
+    /* DIR_NULL happens to work as the macro flag because it's a zero value */
+    GED_DB_GET_INTERNAL(gedp, &intern, dp, (fastf_t *)NULL, &rt_uniresource, (int)DIR_NULL);
 
     comb = (struct rt_comb_internal *)intern.idb_ptr;
     RT_CK_COMB(comb);
@@ -260,10 +248,8 @@ ged_combadd(struct ged			*gedp,
     comb->tree = (union tree *)db_mkgift_tree( tree_list, node_count, &rt_uniresource );
 
     /* and finally, write it out */
-    if (rt_db_put_internal(dp, gedp->ged_wdbp->dbip, &intern, &rt_uniresource) < 0) {
-	bu_vls_printf(&gedp->ged_result_str, "Failed to write %s", dp->d_namep);
-	return DIR_NULL;
-    }
+    /* DIR_NULL happens to work as the macro flag because it's a zero value */
+    GED_DB_PUT_INTERNAL(gedp, dp, &intern, &rt_uniresource, (int)DIR_NULL);
 
     bu_free((char *)tree_list, "combadd: tree_list");
 
