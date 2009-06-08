@@ -85,7 +85,25 @@ namespace brlcad {
 				} else {
 					TRACE("need to subdivide");
 					// divide on param interval
-					m_root->addChild(subdivideCurve(trimCurve,min,max,innerLoop,0)); //subdivideCurve(const ON_Interval& u, const ON_Interval& v,int depth);
+//#define KTANGENTBREAK
+#ifdef KTANGENTBREAK
+					int knotcnt = trimCurve->SpanCount();
+					double *knots = new double[knotcnt+1];
+					trimCurve->GetSpanVector(knots);
+
+					for(int i=1;i<=knotcnt;i++) {
+					    list<double> splitlist;
+					    ON_Interval t(knots[i-1],knots[i]);
+
+					    getHVTangents(trimCurve,t,splitlist);
+					    for( list<double>::iterator l=splitlist.begin();l != splitlist.end();l++) {
+						double xmax = *l;
+						m_root->addChild(subdivideCurve(trimCurve,min,xmax,innerLoop,0));
+						min = xmax;
+					    }
+					}
+#endif
+					m_root->addChild(subdivideCurve(trimCurve,min,max,innerLoop,0));
 				}
 				}
 			}
@@ -133,7 +151,7 @@ namespace brlcad {
 	    for (list<BRNode*>::iterator i = m_sortedX.begin(); i != m_sortedX.end(); i++) {
 		SubcurveBRNode* br = dynamic_cast<SubcurveBRNode*>(*i);
 		br->GetBBox(bmin,bmax);
-		dist = 0.03*DIST_PT_PT(bmin,bmax);
+		dist = 0.000001;//0.03*DIST_PT_PT(bmin,bmax);
 		if (bmax[X]+dist < u[0])
 		    continue;
 		if (bmin[X]-dist < u[1]) {
@@ -151,7 +169,7 @@ namespace brlcad {
 	    for (list<BRNode*>::iterator i = m_sortedX.begin(); i != m_sortedX.end(); i++) {
 		SubcurveBRNode* br = dynamic_cast<SubcurveBRNode*>(*i);
 		br->GetBBox(bmin,bmax);
-	        dist = 0.03*DIST_PT_PT(bmin,bmax);
+	        dist = 0.000001; //0.03*DIST_PT_PT(bmin,bmax);
 		if (bmax[Y]+dist < v[0])
 		    continue;
 		if (bmin[Y]-dist < v[1]) {
@@ -162,6 +180,116 @@ namespace brlcad {
 	    }
 	}
 
+
+fastf_t
+CurveTree::getVerticalTangent(const ON_Curve *curve,fastf_t min,fastf_t max) {
+    fastf_t mid;
+    ON_3dVector tangent;
+    bool tanmin;
+
+    tangent = curve->TangentAt(min);
+    tanmin = (tangent[X] < 0.0);
+    while ( (max-min) > 0.00001 ) {
+	mid = (max + min)/2.0;
+	tangent = curve->TangentAt(mid);
+	if (NEAR_ZERO(tangent[X], 0.00001)) {
+	    return mid;
+	}
+	if ( (tangent[X] < 0.0) == tanmin ) {
+	    min = mid;
+	} else {
+	    max = mid;
+	}
+    }
+    return min;
+}
+
+fastf_t
+CurveTree::getHorizontalTangent(const ON_Curve *curve,fastf_t min,fastf_t max) {
+    fastf_t mid;
+    ON_3dVector tangent;
+    bool tanmin;
+
+    tangent = curve->TangentAt(min);
+    tanmin = (tangent[Y] < 0.0);
+    while ( (max-min) > 0.00001 ) {
+	mid = (max + min)/2.0;
+	tangent = curve->TangentAt(mid);
+	if (NEAR_ZERO(tangent[Y], 0.00001)) {
+	    return mid;
+	}
+	if ( (tangent[Y] < 0.0) == tanmin ) {
+	    min = mid;
+	} else {
+	    max = mid;
+	}
+    }
+    return min;
+}
+
+bool
+CurveTree::getHVTangents(const ON_Curve* curve, ON_Interval& t, list<fastf_t>& list) {
+    bool tanx1,tanx2,tanx_changed;
+    bool tany1,tany2,tany_changed;
+    bool tan_changed;
+    ON_3dVector tangent1,tangent2;
+    ON_3dPoint p1,p2;
+
+    tangent1 = curve->TangentAt(t[0]);
+    tangent2 = curve->TangentAt(t[1]);
+    
+    tanx1 = (tangent1[X] < 0.0);
+    tanx2 = (tangent2[X] < 0.0);
+    tany1 = (tangent1[Y] < 0.0);
+    tany2 = (tangent2[Y] < 0.0);
+
+    tanx_changed =(tanx1 != tanx2);
+    tany_changed =(tany1 != tany2);
+
+    tan_changed = tanx_changed || tany_changed;
+    
+    if ( tan_changed ) {
+	if (tanx_changed && tany_changed) {//horz & vert simply split
+	    double midpoint = (t[1]+t[0])/2.0;
+	    ON_Interval left(t[0],midpoint);
+	    ON_Interval right(midpoint,t[1]);
+	    getHVTangents(curve, left, list);
+	    getHVTangents(curve, right, list);
+	    return true;
+	} else if (tanx_changed) {//find horz
+	    double x = getVerticalTangent(curve,t[0],t[1]);
+	    list.push_back(x);
+	} else { //find vert
+	    double x = getHorizontalTangent(curve,t[0],t[1]);
+	    list.push_back(x);
+	}
+    } else { // check point slope for change
+	bool slopex,slopex_changed;
+	bool slopey,slopey_changed;
+	bool slope_changed;
+	
+	p1 = curve->PointAt(t[0]);
+	p2 = curve->PointAt(t[1]);
+	
+	slopex = ((p2[X] - p1[X]) < 0.0);
+	slopey = ((p2[Y] - p1[Y]) < 0.0);
+	
+	slopex_changed = (slopex != tanx1);
+	slopey_changed = (slopey != tany1);
+
+	slope_changed = slopex_changed || slopey_changed;
+			
+	if (slope_changed) {  //2 horz or 2 vert changes simply split
+	    double midpoint = (t[1]+t[0])/2.0;
+	    ON_Interval left(t[0],midpoint);
+	    ON_Interval right(midpoint,t[1]);
+	    getHVTangents(curve, left, list);
+	    getHVTangents(curve, right, list);
+	    return true;
+	}
+    }
+    return true;
+}
 	BRNode*
 	CurveTree::curveBBox(const ON_Curve* curve, ON_Interval& t, bool isLeaf, bool innerTrim, const ON_BoundingBox& bb)
 	{

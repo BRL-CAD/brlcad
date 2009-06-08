@@ -217,7 +217,47 @@ plot_file()
     return plot;
 }
 
+#define BLUEVIOLET 138,43,226
+#define CADETBLUE 95,159,159
+#define CORNFLOWERBLUE 66,66,111
+#define LIGHTBLUE 173,216,230
+#define DARKGREEN 0,100,0
+#define KHAKI 189,183,107
+#define FORESTGREEN 34,139,34
+#define LIMEGREEN 124,252,0
+#define PALEGREEN 152,251,152
+#define DARKORANGE 255,140,0
+#define DARKSALMON 233,150,122
+#define LIGHTCORAL 240,128,128
+#define PEACH 255,218,185
+#define DEEPPINK 255,20,147
+#define HOTPINK 255,105,180
+#define INDIANRED 205,92,92
+#define DARKVIOLET 148,0,211
+#define MAROON 139,28,98
+#define GOLDENROD 218,165,32
+#define DARKGOLDENROD 184,134,11
+#define LIGHTGOLDENROD 238,221,130
+#define DARKYELLOW 155,155,52
+#define LIGHTYELLOW 255,255,224
+#define RED 255,0,0
+#define GREEN 0,255,0
+#define BLUE 0,0,255
+#define YELLOW 255,255,0
+#define MAGENTA 255,0,255
+#define CYAN 0,255,255
+#define BLACK 0,0,0
+
+#define M_COLOR_PLOT(c) pl_color(plot_file(), c)
 #define COLOR_PLOT(r, g, b) pl_color(plot_file(),(r),(g),(b))
+#define M_PT_PLOT(p) 	{ 		\
+    point_t pp,ppp;		        \
+    vect_t grow;                        \
+    VSETALL(grow,0.1);                  \
+    VADD2(pp, p, grow);                 \
+    VSUB2(ppp, p, grow);                \
+    pdv_3box(plot_file(), pp, ppp); 	\
+}
 #define PT_PLOT(p) 	{ 		\
     point_t 	pp; 			\
     VSCALE(pp, p, 1.001); 		\
@@ -228,6 +268,245 @@ plot_file()
 
 #endif /* PLOTTING */
 
+
+void plotsurfaceleafs(SurfaceTree* surf) {
+    double min[3],max[3];
+    list<BBNode*> leaves;
+    surf->getLeaves(leaves);
+
+    for (list<BBNode*>::iterator i = leaves.begin(); i != leaves.end(); i++) {
+		SubsurfaceBBNode* bb = dynamic_cast<SubsurfaceBBNode*>(*i);
+		if (bb->m_trimmed) {
+			COLOR_PLOT(255, 0, 0);
+		} else if (bb->m_checkTrim) {
+			COLOR_PLOT(0, 0, 255); 
+		} else {
+			COLOR_PLOT(255, 0, 255); 
+		}
+		
+		if (false) {
+			bb->GetBBox(min,max);
+		} else {
+			VSET(min,bb->m_u[0]+0.001,bb->m_v[0]+0.001,0.0);
+			VSET(max,bb->m_u[1]-0.001,bb->m_v[1]-0.001,0.0);
+		}
+		BB_PLOT(min,max);
+    }
+    return;
+}
+
+void plottrim(ON_BrepFace &face ) {
+    const ON_Surface* surf = face.SurfaceOf();
+    double umin, umax;
+    double pt1[3],pt2[3];
+    ON_2dPoint from, to;
+    COLOR_PLOT( 0, 255, 255); 
+    surf->GetDomain(0, &umin, &umax);
+    for (int i = 0; i < face.LoopCount(); i++) {
+	ON_BrepLoop* loop = face.Loop(i);
+	// for each trim
+	for (int j = 0; j < loop->m_ti.Count(); j++) {
+	    ON_BrepTrim& trim = face.Brep()->m_T[loop->m_ti[j]];
+	    const ON_Curve* trimCurve = trim.TrimCurveOf();
+
+	if (trimCurve->IsLinear()) {
+	    ON_BrepVertex& v1 = face.Brep()->m_V[trim.m_vi[0]];
+	    ON_BrepVertex& v2 = face.Brep()->m_V[trim.m_vi[1]];
+	    VMOVE(pt1, v1.Point());
+	    VMOVE(pt2, v2.Point());
+	    LINE_PLOT(pt1,pt2);
+	} else {
+	    ON_Interval dom = trimCurve->Domain();
+	    // XXX todo: dynamically sample the curve
+	    for (int i = 0; i <= 10000; i++) {
+		ON_3dPoint p = trimCurve->PointAt(dom.ParameterAt((double)i/10000.0));
+		VMOVE(pt2, p);
+		if (true) { //(i != 0) {
+		    LINE_PLOT(pt1,pt2);
+		} 
+		VMOVE(pt1,p);
+	    }
+	}
+
+	}
+    }
+    return;
+}
+void plottrim(const ON_Curve &curve, double from, double to ) {
+    point_t pt1,pt2;
+    // XXX todo: dynamically sample the curve
+    for (int i = 0; i <= 10000; i++) {
+	ON_3dPoint p = curve.PointAt(from + (to-from)*(double)i/10000.0);//dom.ParameterAt((double)i/10000.0));
+	VMOVE(pt2, p);
+	if (i != 0) {
+	    LINE_PLOT(pt1,pt2);
+	} 
+	VMOVE(pt1,p);
+    }
+}
+void plottrim(ON_Curve &curve ) {
+    point_t pt1,pt2;
+    // XXX todo: dynamically sample the curve
+    ON_Interval dom = curve.Domain();
+    for (int i = 0; i <= 10000; i++) {
+	ON_3dPoint p = curve.PointAt(dom.ParameterAt((double)i/10000.0));
+	VMOVE(pt2, p);
+	if (i != 0) {
+	    LINE_PLOT(pt1,pt2);
+	} 
+	VMOVE(pt1,p);
+    }
+}
+
+double
+getVerticalTangent(const ON_Curve *curve,double min,double max) {
+    double mid;
+    ON_3dVector tangent;
+    bool tanmin;
+
+    tangent = curve->TangentAt(min);
+    tanmin = (tangent[X] < 0.0);
+    while ( (max-min) > 0.00001 ) {
+	mid = (max + min)/2.0;
+	tangent = curve->TangentAt(mid);
+	if (NEAR_ZERO(tangent[X], 0.00001)) {
+	    return mid;
+	}
+	if ( (tangent[X] < 0.0) == tanmin ) {
+	    min = mid;
+	} else {
+	    max = mid;
+	}
+    }
+    return min;
+}
+
+double
+getHorizontalTangent(const ON_Curve *curve,double min,double max) {
+    double mid;
+    ON_3dVector tangent;
+    bool tanmin;
+
+    tangent = curve->TangentAt(min);
+    tanmin = (tangent[Y] < 0.0);
+    while ( (max-min) > 0.00001 ) {
+	mid = (max + min)/2.0;
+	tangent = curve->TangentAt(mid);
+	if (NEAR_ZERO(tangent[Y], 0.00001)) {
+	    return mid;
+	}
+	if ( (tangent[Y] < 0.0) == tanmin ) {
+	    min = mid;
+	} else {
+	    max = mid;
+	}
+    }
+    return min;
+}
+
+bool
+split_trims_hv_tangent(const ON_Curve* curve, ON_Interval& t, list<double>& list) {
+    bool tanx1,tanx2,tanx_changed;
+    bool tany1,tany2,tany_changed;
+    bool tan_changed;
+    ON_3dVector tangent1,tangent2;
+    ON_3dPoint p1,p2;
+
+    tangent1 = curve->TangentAt(t[0]);
+    tangent2 = curve->TangentAt(t[1]);
+    
+    tanx1 = (tangent1[X] < 0.0);
+    tanx2 = (tangent2[X] < 0.0);
+    tany1 = (tangent1[Y] < 0.0);
+    tany2 = (tangent2[Y] < 0.0);
+
+    tanx_changed =(tanx1 != tanx2);
+    tany_changed =(tany1 != tany2);
+
+    tan_changed = tanx_changed || tany_changed;
+    
+    if ( tan_changed ) {
+	if (tanx_changed && tany_changed) {//horz & vert simply split
+#if 1
+	    double midpoint = (t[1]+t[0])/2.0;
+	    ON_Interval left(t[0],midpoint);
+	    ON_Interval right(midpoint,t[1]);
+	    split_trims_hv_tangent(curve, left, list);
+	    split_trims_hv_tangent(curve, right, list);
+	    return true;
+#else
+	    M_COLOR_PLOT( RED );
+#endif
+	} else if (tanx_changed) {//find horz
+#if 1
+	    double x = getVerticalTangent(curve,t[0],t[1]);
+/*
+	    point_t p;
+
+	    p1 = curve->PointAt(x);
+	    M_COLOR_PLOT( RED );
+	    VMOVE(p,p1);
+	    M_PT_PLOT(p);
+*/
+	    M_COLOR_PLOT( DARKORANGE );
+	    list.push_back(x);
+#else	    
+	    M_COLOR_PLOT( DARKORANGE );
+#endif
+	} else { //find vert
+#if 1
+	    double x = getHorizontalTangent(curve,t[0],t[1]);
+/*
+	    point_t p;
+
+	    p1 = curve->PointAt(x);
+	    M_COLOR_PLOT( RED );
+	    VMOVE(p,p1);
+	    M_PT_PLOT(p);
+*/
+	    M_COLOR_PLOT( MAGENTA );
+	    list.push_back(x);
+#else
+	    M_COLOR_PLOT( MAGENTA );
+#endif
+	}
+    } else { // check point slope for change
+	bool slopex,slopex_changed;
+	bool slopey,slopey_changed;
+	bool slope_changed;
+	
+	p1 = curve->PointAt(t[0]);
+	p2 = curve->PointAt(t[1]);
+	
+	slopex = ((p2[X] - p1[X]) < 0.0);
+	slopey = ((p2[Y] - p1[Y]) < 0.0);
+	
+	slopex_changed = (slopex != tanx1);
+	slopey_changed = (slopey != tany1);
+
+	slope_changed = slopex_changed || slopey_changed;
+			
+	if (slope_changed) {  //2 horz or 2 vert changes simply split
+#if 1
+	    double midpoint = (t[1]+t[0])/2.0;
+	    ON_Interval left(t[0],midpoint);
+	    ON_Interval right(midpoint,t[1]);
+	    split_trims_hv_tangent(curve, left, list);
+	    split_trims_hv_tangent(curve, right, list);
+	    return true;
+#else
+	    M_COLOR_PLOT( BLUE );
+#endif
+	} else {
+	    M_COLOR_PLOT( DARKGREEN );
+	}
+    }
+    //plot color coded segment
+    plottrim(*curve,t[0],t[1]);
+
+    return true;
+}
+
 /* XXX - most of this function is broken :-(except for the bezier span
  * caching need to fix it! - could provide real performance
  * benefits...
@@ -237,9 +516,141 @@ brep_preprocess_trims(ON_BrepFace& face, SurfaceTree* tree) {
     double min[3],max[3];
 	
 	CurveTree* ct = new CurveTree(&face);
+//#define KDISCONTS
+#ifdef KDISCONTS
+	for (int i = 0; i < face.LoopCount(); i++) {
+	    bool innerLoop = (i > 0) ? true : false;
+	    ON_BrepLoop* loop = face.Loop(i);
+	    // for each trim
+	    for (int j = 0; j < loop->m_ti.Count(); j++) {
+		ON_BrepTrim& trim = face.Brep()->m_T[loop->m_ti[j]];
+		const ON_Curve* trimCurve = trim.TrimCurveOf();
+		double min,max;
+		(void)trimCurve->GetDomain(&min, &max);
+		ON_Interval t(min,max);
+		double t_dis;
+		int hint=0;
+		int dtype=0;
+		double cos_angle_tolerance=0.0000001;
+		double curvature_tolerance=0.0000001;
+		ON_3dPoint p1,p2,p3;
+		vect_t grow;
+		VSETALL(grow,0.1); // grow the box a bit
+		int knotcnt = trimCurve->SpanCount();
+		double *knots = new double[knotcnt+1];
+		trimCurve->GetSpanVector(knots);
+		ON_3dVector tangent1,tangent2;
+
+		bool tanx1,tanx2,tanx_changed;
+		bool tany1,tany2,tany_changed;
+		bool tan_changed;
+		for(int i=1;i<=knotcnt;i++) {
+		    list<double> splitlist;
+		    ON_Interval t(knots[i-1],knots[i]);
+
+//		    tangent1 = trimCurve->TangentAt(knots[i-1]);
+//		    tangent2 = trimCurve->TangentAt(knots[i]);
+		    split_trims_hv_tangent(trimCurve,t,splitlist);
+		    for( list<double>::iterator l=splitlist.begin();l != splitlist.end();l++) {
+			double x = *l;
+			point_t p;
+
+			p1 = trimCurve->PointAt(x);
+			M_COLOR_PLOT( RED );
+			VMOVE(p,p1);
+			M_PT_PLOT(p);
+		    }
+/*		    tanx1 = (tangent1[X] < 0.0);
+		    tanx2 = (tangent2[X] < 0.0);
+		    tany1 = (tangent1[Y] < 0.0);
+		    tany2 = (tangent2[Y] < 0.0);
+
+		    tanx_changed =(tanx1 != tanx2);
+		    tany_changed =(tany1 != tany2);
+
+    		    tan_changed = tanx_changed || tany_changed;
+
+		    if ( tan_changed ) {
+			if (tanx_changed && tany_changed) {//horz & vert simply split
+			    M_COLOR_PLOT( RED );
+			} else if (tanx_changed) {//find horz
+			    M_COLOR_PLOT( YELLOW );
+			} else { //find vert
+			    M_COLOR_PLOT( MAGENTA );
+			}
+		    } else { // check point slope for change
+			bool slopex,slopex_changed;
+			bool slopey,slopey_changed;
+			bool slope_changed;
+
+			p1 = trimCurve->PointAt(knots[i-1]);
+			p2 = trimCurve->PointAt(knots[i]);
+
+			slopex = ((p2[X] - p1[X]) < 0.0);
+			slopey = ((p2[Y] - p1[Y]) < 0.0);
+
+			slopex_changed = (slopex != tanx1);
+			slopey_changed = (slopey != tany1);
+
+			slope_changed = slopex_changed || slopey_changed;
+			
+			if (slope_changed) {  //2 horz or 2 vert changes simply split
+			    M_COLOR_PLOT( BLUE );
+			} else {
+			    M_COLOR_PLOT( DARKGREEN );
+			}
+		    }
+		    //plot color coded segment
+		    plottrim(*trimCurve,knots[i-1],knots[i]);
+
+		    //plot knots
+		    if (i == 0) {
+			COLOR_PLOT( 255, 0, 0 );
+		    } else if (i == knotcnt) {
+			COLOR_PLOT( 255, 0, 255 );
+		    } else {
+			COLOR_PLOT( 0, 255, 0 );
+		    }
+		    p1 = trimCurve->PointAt(knots[i]);
+		    VADD2(p2, p1, grow);
+		    VSUB2(p3, p1, grow);
+		    BB_PLOT(p2,p3);
+		    LINE_PLOT(p2,p3);
+		    grow[X]=grow[X]*-1.0;
+		    VADD2(p2, p1, grow);
+		    VSUB2(p3, p1, grow);
+		    LINE_PLOT(p2,p3);
+*/
+		}
+		for(int i=0;i<=knotcnt;i++) {
+		    p1 = trimCurve->PointAt(knots[i]);
+		    M_COLOR_PLOT(HOTPINK);
+		    M_PT_PLOT(p1);
+		}
+/*
+		while ( trimCurve->GetNextDiscontinuity( 
+			    ON::G2_continuous,
+			    min,max,&t_dis,
+			    &hint,&dtype) ) {
+
+		    COLOR_PLOT( 255, 255, 255 );
+		    p1 = trimCurve->PointAt(t_dis);
+		    VADD2(p2, p1, grow);
+		    VSUB2(p1, p1, grow);
+		    BB_PLOT(p1,p2);
+		    min=t_dis;
+		}
+*/
+	    }
+	}		
+
+#endif
 //#define KCURVELETS
 #ifdef KCURVELETS
 		list<BRNode*> curvelets;
+		//ct->getLeaves(curvelets);
+		ON_Interval u(-5.4375,-4.53125);
+		ON_Interval v(-5.4375,-4.53125);
 		ct->getLeaves(curvelets);
 		
 		for (list<BRNode*>::iterator i = curvelets.begin(); i != curvelets.end(); i++) {
@@ -295,70 +706,6 @@ brep_preprocess_trims(ON_BrepFace& face, SurfaceTree* tree) {
     }
 }
 
-void plotsurfaceleafs(SurfaceTree* surf) {
-    double min[3],max[3];
-    list<BBNode*> leaves;
-    surf->getLeaves(leaves);
-
-    for (list<BBNode*>::iterator i = leaves.begin(); i != leaves.end(); i++) {
-		SubsurfaceBBNode* bb = dynamic_cast<SubsurfaceBBNode*>(*i);
-		if (bb->m_trimmed) {
-			COLOR_PLOT(255, 0, 0);
-		} else if (bb->m_checkTrim) {
-			COLOR_PLOT(0, 0, 255); 
-		} else {
-			COLOR_PLOT(255, 0, 255); 
-		}
-		
-		if (false) {
-			bb->GetBBox(min,max);
-		} else {
-			VSET(min,bb->m_u[0]+0.025,bb->m_v[0]+0.025,0.0);
-			VSET(max,bb->m_u[1]-0.025,bb->m_v[1]-0.025,0.0);
-		}
-		BB_PLOT(min,max);
-    }
-    return;
-}
-
-void plottrim(ON_BrepFace &face ) {
-    const ON_Surface* surf = face.SurfaceOf();
-    double umin, umax;
-    double pt1[3],pt2[3];
-    ON_2dPoint from, to;
-    COLOR_PLOT( 0, 255, 255); 
-    surf->GetDomain(0, &umin, &umax);
-    for (int i = 0; i < face.LoopCount(); i++) {
-	ON_BrepLoop* loop = face.Loop(i);
-	// for each trim
-	for (int j = 0; j < loop->m_ti.Count(); j++) {
-	    ON_BrepTrim& trim = face.Brep()->m_T[loop->m_ti[j]];
-	    const ON_Curve* trimCurve = trim.TrimCurveOf();
-
-	if (trimCurve->IsLinear()) {
-	    ON_BrepVertex& v1 = face.Brep()->m_V[trim.m_vi[0]];
-	    ON_BrepVertex& v2 = face.Brep()->m_V[trim.m_vi[1]];
-	    VMOVE(pt1, v1.Point());
-	    VMOVE(pt2, v2.Point());
-	    LINE_PLOT(pt1,pt2);
-	} else {
-	    ON_Interval dom = trimCurve->Domain();
-	    // XXX todo: dynamically sample the curve
-	    for (int i = 0; i <= 10000; i++) {
-		ON_3dPoint p = trimCurve->PointAt(dom.ParameterAt((double)i/10000.0));
-		VMOVE(pt2, p);
-		if (true) { //(i != 0) {
-		    LINE_PLOT(pt1,pt2);
-		} 
-		VMOVE(pt1,p);
-	    }
-	}
-
-	}
-    }
-    return;
-}
-
 int
 brep_build_bvh(struct brep_specific* bs, struct rt_brep_internal* bi)
 {
@@ -384,7 +731,7 @@ brep_build_bvh(struct brep_specific* bs, struct rt_brep_internal* bi)
 		ON_BrepFace& face = faces[i];
 //#define KPLOT
 #ifdef KPLOT // debugging hacks to look at specific faces
-		if ((i == 4)) { // && ((i <= 6) ||(i >= 5))) {
+		if ((i == 5)) { // && ((i <= 6) ||(i >= 5))) {
 #endif
 		SurfaceTree* st = new SurfaceTree(&face);
 		face.m_face_user.p = st;
@@ -396,8 +743,8 @@ brep_build_bvh(struct brep_specific* bs, struct rt_brep_internal* bi)
 #ifdef KPLOT // debugging hacks to look at specific faces
 			
 			if (true) { //plotting utah_brep_intersecthacks i==0) {
-				plottrim(face);
-				plotsurfaceleafs(st);
+			    plottrim(face);
+			    plotsurfaceleafs(st);
 			}
 			
 		}
@@ -405,7 +752,7 @@ brep_build_bvh(struct brep_specific* bs, struct rt_brep_internal* bi)
 		brep_bvh_subdivide(bs->bvh, surface_trees);
 	}
 #ifdef KPLOT // debugging hacks to look at specific faces
-//    (void)fclose(plot_file());
+    //(void)fclose(plot_file());
 #endif
     return 0;
 }
@@ -1033,6 +1380,9 @@ utah_brep_intersect(const SubsurfaceBBNode* sbv, const ON_BrepFace* face, const 
     //if (converged && (t > 1.e-2) && (!utah_isTrimmed(ouv, face))) hit = true;
 	//if (converged && (t > 1.e-2) && (!((SubsurfaceBBNode*)sbv)->isTrimmed(ouv))) hit = true;
 	
+	if ( (sbv->m_u[0] < ouv[0]) && (sbv->m_u[1] > ouv[0]) &&
+			(sbv->m_v[0] < ouv[1]) && (sbv->m_v[1] > ouv[1])) {
+			
 	if (converged && (t > 1.e-2)) {
 		if  (!((SubsurfaceBBNode*)sbv)->isTrimmed(ouv)) {
 			hit = true;
@@ -1053,6 +1403,7 @@ utah_brep_intersect(const SubsurfaceBBNode* sbv, const ON_BrepFace* face, const 
 #else
 	        }
 #endif
+	}
 	}
 	//    if (converged && (t > 1.e-2)) hit = true;
 
@@ -1400,6 +1751,7 @@ rt_brep_shot(struct soltab *stp, register struct xray *rp, struct application *a
     if (hits.size() > 0) {
 //#define KODDHIT
 #ifdef KODDHIT //ugly debugging hack to raytrace single surface and not worry about odd hits
+	static fastf_t diststep = 0.0;
 	if (hits.size() > 0 ) { 
 #else
 	if (hits.size() % 2 == 0) {
@@ -1419,7 +1771,7 @@ rt_brep_shot(struct soltab *stp, register struct xray *rp, struct application *a
 		VMOVE(segp->seg_in.hit_point, in.point);
 		VMOVE(segp->seg_in.hit_normal, in.normal);
 #ifdef KODDHIT //ugly debugging hack to raytrace single surface and not worry about odd hits
-		segp->seg_in.hit_dist = 0.01;
+		segp->seg_in.hit_dist = diststep + 1.0;
 #else
 		segp->seg_in.hit_dist = DIST_PT_PT(rp->r_pt, in.point);
 #endif

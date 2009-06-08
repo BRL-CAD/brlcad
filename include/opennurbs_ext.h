@@ -156,7 +156,7 @@ namespace brlcad {
 		ON_2dPoint getClosestPointEstimate(const ON_3dPoint& pt);
 		ON_2dPoint getClosestPointEstimate(const ON_3dPoint& pt, ON_Interval& u, ON_Interval& v);
 		fastf_t getLinearEstimateOfV( fastf_t u );
-		fastf_t getCurveEstimateOfV( const ON_2dPoint& uv, fastf_t tol ) const;
+		fastf_t getCurveEstimateOfV( fastf_t u, fastf_t tol ) const;
 		const ON_BrepFace* m_face;
 		const ON_Curve* m_trim;
 		/* curve domain */
@@ -418,7 +418,7 @@ namespace brlcad {
 	SubcurveBANode<BA>::isTrimmed(const ON_2dPoint& uv) const {
 	    if (m_checkTrim) {
 			fastf_t v = m_start[Y] + m_slope*(uv[X] - m_start[X]);
-			if (fabs(uv[Y] - v) < fabs(m_start[Y]-m_end[Y])*0.001) v = getCurveEstimateOfV(uv,0.0001);
+			v = getCurveEstimateOfV(uv[X],0.0000001);
 			if (uv[Y] < v) {
 				if (m_XIncreasing) {
 					return true;
@@ -501,51 +501,10 @@ namespace brlcad {
 		fastf_t v = m_start[Y] + m_slope*(u - m_start[X]);
 		return v;
 	}
-
-	template<class BA>
-	fastf_t
-	SubcurveBANode<BA>::getCurveEstimateOfV(const ON_2dPoint& uv, fastf_t tol ) const {
-	    double guess = m_t[0] + (m_t[1] - m_t[0])/2;
-	    double guess_old = m_t[0];
-	    double x,y,xp,yp,xpp,ypp,dp,dpp;
-	    ON_3dPoint p;
-	    ON_3dVector d1;
-	    ON_3dVector d2;
-	    m_trim->Ev2Der(guess, p, d1, d2);
-	    int cnt = 0;
-	    double d_old = 0;
-	    double d = fabs(uv[1]-p[1]);
-	    bu_log("Called Curve Estimation Routine.\n");
-	    int MAX_CNT = 1000;
-	    while ((cnt < MAX_CNT) && !NEAR_ZERO(d_old-d,tol)) {
-		d_old = d;
-		m_trim->Ev2Der(guess, p, d1, d2);
-    		y = p[Y] - uv[Y];
-    		x = p[X] - uv[X];
-    		yp = d1[1];
-    		xp = d1[0];
-    		ypp = d2[1];
-    		xpp = d2[0];
-		d = fabs(uv[1]-p[1]);
-    		dp = (2*yp*y+2*xp*x)/(2*sqrt(y*y+x*x));
-    		dpp = (2*ypp*y+2*xpp*x+2*yp*yp+2*xp*xp)/(2*sqrt(y*y+x*x))-((2*yp*y+2*xp*x)*(2*yp*y+2*xp*x))/((4*y*y+4*x*x)*sqrt(4*y*y+4*x*x));
-		guess = guess - dp/dpp;
-		cnt++;
-	    }
-	    if (cnt == MAX_CNT) {
-	    	bu_log("Iteration didn't converge.  Using linear test.\n");
-		ON_3dPoint pstart = m_trim->PointAt(m_t[0]);
-		ON_3dPoint pend = m_trim->PointAt(m_t[1]);
-		bu_log("pstart[X]: %f, pstart[Y]: %f, pend[X]: %f, pend[Y]: %f, uv[X]: %f, p[X]: %f, uv[Y]: %f, p[Y]: %f, linear_test_y: %f\n", pstart[0], pstart[1], pend[0], pend[1], uv[X], p[X], uv[Y], p[Y],  m_start[Y] + m_slope*(uv[X] - m_start[X]) );
-		return m_start[Y] + m_slope*(uv[X] - m_start[X]);	
-	    } else {
-	        return p[Y];
-	    }
-	}
-/*	
+	
 	template<class BA>
 	fastf_t 
-	SubcurveBANode<BA>::getCurveEstimateOfV(const ON_2dPoint& uv, fastf_t tol ) const {
+	SubcurveBANode<BA>::getCurveEstimateOfV( fastf_t u, fastf_t tol ) const {
 	        ON_3dVector tangent;
 		point_t A,B;
 		double  Ta,Tb;
@@ -557,12 +516,12 @@ namespace brlcad {
 
 		fastf_t dU = B[X] - A[X];
 		fastf_t dT = Tb - Ta;
-		fastf_t guess = Ta + (uv[X] - A[X]) * dT/dU;
+		fastf_t guess = Ta + (u - A[X]) * dT/dU;
 		ON_3dPoint p = m_trim->PointAt(guess);
 
 		int cnt=0;
-		while ((cnt < 50) && (!NEAR_ZERO(p[X]-uv[X],tol))) {
-		    if (p[X] < uv[X]) {
+		while ((cnt < 50) && (!NEAR_ZERO(p[X]-u,tol))) {
+		    if (p[X] < u) {
 			Ta = guess;
 			VMOVE(A,p);
 		    } else {
@@ -571,13 +530,13 @@ namespace brlcad {
 		    }
 		    dU = B[X] - A[X];
 		    dT = Tb - Ta;
-		    guess = Ta + (uv[X] - A[X]) * dT/dU;
+		    guess = Ta + (u - A[X]) * dT/dU;
 		    p = m_trim->PointAt(guess);
 		    cnt++;
 		}
 		return p[Y];
 	}
-*/		
+		
     //--------------------------------------------------------------------------------
     // Bounding volume hierarchy classes
 
@@ -673,6 +632,9 @@ namespace brlcad {
 	int depth();
 
     private:
+	fastf_t getVerticalTangent(const ON_Curve *curve,fastf_t min,fastf_t max);
+	fastf_t getHorizontalTangent(const ON_Curve *curve,fastf_t min,fastf_t max);
+	bool getHVTangents(const ON_Curve* curve, ON_Interval& t, list<fastf_t>& list);
 	bool isLinear(const ON_Curve* curve, double min, double max);
 	BRNode* subdivideCurve(const ON_Curve* curve, double min, double max, bool innerTrim, int depth);
 	BRNode* curveBBox(const ON_Curve* curve, ON_Interval& t,bool leaf, bool innerTrim, const ON_BoundingBox& bb);
@@ -966,12 +928,12 @@ namespace brlcad {
 				//if (i == trims.begin()) {
 				//	//double le,ce;
 				//	//le = br->getLinearEstimateOfV(uv[X]);
-				////	//ce = br->getCurveEstimateOfV(uv,0.0001);
+				////	//ce = br->getCurveEstimateOfV(uv[X],0.0001);
 				//	dist = uv[Y] - br->getLinearEstimateOfV(uv[X]);
 				//    closest = br;
 				//} else {
 				fastf_t v = br->getLinearEstimateOfV(uv[X]); // - uv[Y];
-				//v = br->getCurveEstimateOfV(uv,0.0001);
+				//v = br->getCurveEstimateOfV(uv[X],0.0001);
 					br->GetBBox(bmin,bmax);
 					if ((v > uv[Y]) && ((v <= bmax[Y]) && (v >= bmin[Y]))) {
 					    if (closest == NULL){
@@ -1016,7 +978,7 @@ namespace brlcad {
 	    for (list<BRNode*>::iterator i = m_trims_above.begin(); i != m_trims_above.end(); i++) {
 			SubcurveBRNode* br = dynamic_cast<SubcurveBRNode*>(*i);
 			br->GetBBox(bmin,bmax);
-			dist = 0.03*DIST_PT_PT(bmin,bmax);
+			dist = 0.000001; //0.03*DIST_PT_PT(bmin,bmax);
 			if ((uv[X] > bmin[X]-dist) && (uv[X] < bmax[X]+dist))
 				out_leaves.push_back(br);
 	    }
@@ -1091,7 +1053,7 @@ namespace brlcad {
 			i = m_trims_above.begin();
 			br = dynamic_cast<SubcurveBRNode*>(*i);
 			br->GetBBox(curvemin,curvemax);
-			dist = 0.03*DIST_PT_PT(curvemin,curvemax);
+			dist = 0.000001; //0.03*DIST_PT_PT(curvemin,curvemax);
 			if (curvemin[Y]-dist > m_v[1]) {
 				i++;
 				if (i == m_trims_above.end()) { //easy only trim in above list
