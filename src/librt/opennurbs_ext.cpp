@@ -85,7 +85,7 @@ namespace brlcad {
 				} else {
 					TRACE("need to subdivide");
 					// divide on param interval
-//#define KTANGENTBREAK
+#define KTANGENTBREAK
 #ifdef KTANGENTBREAK
 					int knotcnt = trimCurve->SpanCount();
 					double *knots = new double[knotcnt+1];
@@ -267,12 +267,20 @@ CurveTree::getHVTangents(const ON_Curve* curve, ON_Interval& t, list<fastf_t>& l
 	bool slopex,slopex_changed;
 	bool slopey,slopey_changed;
 	bool slope_changed;
+	fastf_t xdelta,ydelta;
 	
 	p1 = curve->PointAt(t[0]);
 	p2 = curve->PointAt(t[1]);
 	
-	slopex = ((p2[X] - p1[X]) < 0.0);
-	slopey = ((p2[Y] - p1[Y]) < 0.0);
+	xdelta = (p2[X] - p1[X]);
+	slopex = (xdelta < 0.0);
+	ydelta = (p2[Y] - p1[Y]);
+	slopey = (ydelta < 0.0);
+	
+	if ( NEAR_ZERO(xdelta, 0.000001) ||
+			NEAR_ZERO(ydelta, 0.000001)) {
+			return true;
+			}
 	
 	slopex_changed = (slopex != tanx1);
 	slopey_changed = (slopey != tany1);

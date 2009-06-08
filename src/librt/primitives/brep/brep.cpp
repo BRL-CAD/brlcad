@@ -544,13 +544,26 @@ brep_preprocess_trims(ON_BrepFace& face, SurfaceTree* tree) {
 		bool tanx1,tanx2,tanx_changed;
 		bool tany1,tany2,tany_changed;
 		bool tan_changed;
+		for(int i=0;i<=knotcnt;i++) {
+			point_t p;
+
+			p1 = trimCurve->PointAt(knots[i]);
+			if (i == 0) {
+			M_COLOR_PLOT( RED );
+			} else if (i == knotcnt) {
+			M_COLOR_PLOT( GREEN );
+			} else {
+			M_COLOR_PLOT( YELLOW );
+			}
+			VMOVE(p,p1);
+			M_PT_PLOT(p);
+		}
+#if 0
 		for(int i=1;i<=knotcnt;i++) {
 		    list<double> splitlist;
 		    ON_Interval t(knots[i-1],knots[i]);
 
-//		    tangent1 = trimCurve->TangentAt(knots[i-1]);
-//		    tangent2 = trimCurve->TangentAt(knots[i]);
-		    split_trims_hv_tangent(trimCurve,t,splitlist);
+		    //split_trims_hv_tangent(trimCurve,t,splitlist);
 		    for( list<double>::iterator l=splitlist.begin();l != splitlist.end();l++) {
 			double x = *l;
 			point_t p;
@@ -560,73 +573,13 @@ brep_preprocess_trims(ON_BrepFace& face, SurfaceTree* tree) {
 			VMOVE(p,p1);
 			M_PT_PLOT(p);
 		    }
-/*		    tanx1 = (tangent1[X] < 0.0);
-		    tanx2 = (tangent2[X] < 0.0);
-		    tany1 = (tangent1[Y] < 0.0);
-		    tany2 = (tangent2[Y] < 0.0);
-
-		    tanx_changed =(tanx1 != tanx2);
-		    tany_changed =(tany1 != tany2);
-
-    		    tan_changed = tanx_changed || tany_changed;
-
-		    if ( tan_changed ) {
-			if (tanx_changed && tany_changed) {//horz & vert simply split
-			    M_COLOR_PLOT( RED );
-			} else if (tanx_changed) {//find horz
-			    M_COLOR_PLOT( YELLOW );
-			} else { //find vert
-			    M_COLOR_PLOT( MAGENTA );
-			}
-		    } else { // check point slope for change
-			bool slopex,slopex_changed;
-			bool slopey,slopey_changed;
-			bool slope_changed;
-
-			p1 = trimCurve->PointAt(knots[i-1]);
-			p2 = trimCurve->PointAt(knots[i]);
-
-			slopex = ((p2[X] - p1[X]) < 0.0);
-			slopey = ((p2[Y] - p1[Y]) < 0.0);
-
-			slopex_changed = (slopex != tanx1);
-			slopey_changed = (slopey != tany1);
-
-			slope_changed = slopex_changed || slopey_changed;
-			
-			if (slope_changed) {  //2 horz or 2 vert changes simply split
-			    M_COLOR_PLOT( BLUE );
-			} else {
-			    M_COLOR_PLOT( DARKGREEN );
-			}
-		    }
-		    //plot color coded segment
-		    plottrim(*trimCurve,knots[i-1],knots[i]);
-
-		    //plot knots
-		    if (i == 0) {
-			COLOR_PLOT( 255, 0, 0 );
-		    } else if (i == knotcnt) {
-			COLOR_PLOT( 255, 0, 255 );
-		    } else {
-			COLOR_PLOT( 0, 255, 0 );
-		    }
-		    p1 = trimCurve->PointAt(knots[i]);
-		    VADD2(p2, p1, grow);
-		    VSUB2(p3, p1, grow);
-		    BB_PLOT(p2,p3);
-		    LINE_PLOT(p2,p3);
-		    grow[X]=grow[X]*-1.0;
-		    VADD2(p2, p1, grow);
-		    VSUB2(p3, p1, grow);
-		    LINE_PLOT(p2,p3);
-*/
 		}
 		for(int i=0;i<=knotcnt;i++) {
 		    p1 = trimCurve->PointAt(knots[i]);
 		    M_COLOR_PLOT(HOTPINK);
 		    M_PT_PLOT(p1);
 		}
+#endif
 /*
 		while ( trimCurve->GetNextDiscontinuity( 
 			    ON::G2_continuous,
@@ -752,7 +705,7 @@ brep_build_bvh(struct brep_specific* bs, struct rt_brep_internal* bi)
 		brep_bvh_subdivide(bs->bvh, surface_trees);
 	}
 #ifdef KPLOT // debugging hacks to look at specific faces
-    //(void)fclose(plot_file());
+    (void)fclose(plot_file());
 #endif
     return 0;
 }
