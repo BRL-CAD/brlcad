@@ -62,7 +62,7 @@ ged_bot_face_fuse(struct ged *gedp, int argc, const char *argv[])
     }
 
     GED_DB_LOOKUP(gedp, old_dp, argv[2], LOOKUP_NOISY, GED_ERROR & GED_QUIET);
-    GED_DB_GET_INERNAL(gedp, &intern, old_dp, bn_mat_identity, &rt_uniresource, GED_ERROR);
+    GED_DB_GET_INTERNAL(gedp, &intern, old_dp, bn_mat_identity, &rt_uniresource, GED_ERROR);
 
     if ( intern.idb_type != ID_BOT )
     {
