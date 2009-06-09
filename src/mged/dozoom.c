@@ -356,7 +356,7 @@ dozoom(int which_eye)
 		/* Non-stereo case */
 		mat = view_state->vs_gvp->gv_model2view;
 		/* XXX hack */
-		// if ( mged_variables->mv_faceplate > 0 )
+		/* if ( mged_variables->mv_faceplate > 0 ) */
 		if ( 1 ) {
 		    if ( view_state->vs_gvp->gv_eye_pos[Z] == 1.0 )  {
 			/* This way works, with reasonable Z-clipping */
