@@ -273,6 +273,47 @@ struct ExpressionGrammar : public boost::spirit::grammar<ExpressionGrammar,Stack
 			]
 		    ]
 		;
+	    bitwise_expr
+	    	= binary_op_p(equality_expr, bitwise_op)[bitwise_expr.stack = arg1];
+	    equality_expr
+	    	= binary_op_p(compare_expr,equality_op)[equality_expr.stack = arg1];
+	    compare_expr
+	    	= binary_op_p(shift_expr, compare_op)[compare_expr.stack = arg1];
+	    shift_expr
+	    	= binary_op_p(add_expr, shift_op)[shift_expr.stack = arg1];
+	    add_expr
+	    	= binary_op_p(mult_expr, add_op)[add_expr.stack = arg1];
+	    mult_expr
+	    	= binary_op_p(expr_atom, mult_op)[mult_expr.stack = arg1];
+	    expr_atom
+	    	= number
+		  [
+		  	expr_atom.stack = arg1
+		  ]
+		| func
+		  [
+		  	expr_atom.stack = arg1
+		  ]
+		| ('(' >>
+		  expr
+		  [
+		  	expr_atom.stack = arg1
+		  ]
+		  >> ')')
+		| unary_expr
+		  [
+		  	expr_atom.stack = arg1
+		  ]
+		;
+	    unary_expr = unary_op >> expr_atom;
+	    number = real_p;
+	    func = name;
+	    arg = expr
+	    	  [
+		  	func.arity +=1,
+			func.stack += arg1
+		  ]
+		;
 	}
 
 	typedef boost::spirit::rule<ScannerT> RuleT;
