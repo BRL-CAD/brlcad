@@ -66,8 +66,8 @@ adrt_slave_SOURCES = \
 	slave/load.c \
 	slave/load_MySQL.c \
 	slave/load_g.c \
-	slave/smain.c \
 	slave/slave.c \
+	slave/smain.c \
 	slave/tienet_slave.c
 
 adrt_slave_LDADD = \
@@ -166,7 +166,8 @@ EXTRA_DIST = \
 	scripts/drawBSP.py \
 	scripts/makemovie.pl \
 	scripts/ptcloud.c \
-	scripts/ptcloud.py
+	scripts/ptcloud.py \
+	slave/g-adrt.c
 
 DEPS = src/libbn
 
