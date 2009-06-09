@@ -256,6 +256,27 @@ private:
     boost::shared_ptr<MathFunction> fp;
 };
 
+struct OrNode : public FunctionNode
+{
+    OrNode(Stack const &);
+    boost::shared_ptr<Node> clone () const;
+
+    MathFunction const & func() const;
+    std::size_t nbranches() const;
+    Stack * branch(std::size_t);
+private:
+    struct OrFunc : public MathFunction {
+    	OrFunc(Stack const &);
+
+	std::size_t arity() const;
+	double evalp(std::vector<double> const & params) const;
+
+	Stack rhs_stack_;
+    };
+
+    OrFunc func_;
+};
+
 struct BranchNode : public FunctionNode
 {
     BranchNode(Stack const & stack1, Stack const & stack2);

@@ -243,6 +243,36 @@ struct ExpressionGrammar : public boost::spirit::grammar<ExpressionGrammar,Stack
 							conditional_expr_helper.stack2))
 		  ]
 		;
+	    logical_expr
+	    	= bitwise_expr
+		  [
+		  	logical_expr.stack = arg1
+		  ]
+		>> *(logical_expr_helper
+		     [
+		     	logical_expr.stack +=arg1
+		     ]
+		    )
+		;
+	    logical_expr_helper
+	    	= boolean_op
+		  [
+		  	logical_expr_helper.or_op = arg1
+		  ]
+		>> bitwise_expr
+		   [
+		   	if_(logical_expr_helper.or_op)
+			[
+			   push_back(logical_expr_helper.stack,new_<OrNode>(arg1))
+			]
+			.else_
+			[
+			   logical_expr_helper.stack = arg1,
+			   push_back(logical_expr_helper.stack,
+			   		new_<sysFunctionNode>(checked_find(self.functions, "logical_and")))
+			]
+		    ]
+		;
 	}
 
 	typedef boost::spirit::rule<ScannerT> RuleT;
@@ -258,7 +288,7 @@ struct ExpressionGrammar : public boost::spirit::grammar<ExpressionGrammar,Stack
 		logical_expr, number, or_expr, or_op, mult_expr, shift_expr;
 	FRuleT unary_expr, func;
 	CRuleT conditional_expr_helper;
-	LRuleT lobical_expr_helper;
+	LRuleT logical_expr_helper;
 	NameGrammar name;
 	boost::spirit::symbols<bool> boolean_op;
 	FunctionTable and_op, add_op, bitwise_op, compare_op, equality_op,\
@@ -351,4 +381,4 @@ struct VariableGrammar : public boost::spirit::grammar<VariableGrammar, StackClo
  * c-file-style: "stroustrup"
  * End:
  * ex: shiftwidth=4 tabstop=8
- */ 
+ */
