@@ -2234,6 +2234,26 @@ find_next_point(const ON_Curve* crv, double startdomval, double increment, doubl
 	return startdomval + inc;
     }
 }
+
+double
+find_next_trimming_point(const ON_Curve* crv, const ON_Surface* s, double startdomval, double increment, double tolerance, int stepcount) {
+    double inc = increment;
+    if (startdomval + increment > 1.0) inc = 1.0 - startdomval;
+    ON_Interval dom = crv->Domain();
+    ON_3dPoint prev_pt = crv->PointAt(dom.ParameterAt(startdomval));
+    ON_3dPoint next_pt = crv->PointAt(dom.ParameterAt(startdomval+inc));
+    ON_3dPoint prev_3d_pt, next_3d_pt;
+    s->EvPoint(prev_pt[0],prev_pt[1],prev_3d_pt,0,0);
+    s->EvPoint(next_pt[0],next_pt[1],next_3d_pt,0,0);
+    if (prev_3d_pt.DistanceTo(next_3d_pt) > tolerance) {
+	stepcount++;
+	inc = inc / 2;
+	return find_next_trimming_point(crv, s, startdomval, inc, tolerance, stepcount);
+    } else {
+	if (stepcount > 5) return 0.0;
+	return startdomval + inc;
+    }
+}
     
 /**
  * R T _ B R E P _ P L O T
@@ -2384,6 +2404,48 @@ rt_brep_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_t
 	    }
 	}
     }*/
+
+
+    /* Routine to iterate over the surfaces in the BREP and plot lines corresponding
+     * to the trimming curve positions in 3-space.  Normally, this will correspond pretty
+     * well to edges, but will show some cases where two surfaces are intended to join
+     * without an edge
+     */
+/*
+    for (i = 0; i < bi->brep->m_F.Count(); i++) {
+	ON_BrepFace *f = &(bi->brep->m_F[i]);
+	const ON_Surface *s = bi->brep->m_F[i].SurfaceOf();
+        for (j = 0; j < f->LoopCount(); j++) {
+	    ON_BrepLoop* loop = f->Loop(j);
+	    int foundfirst = 0;
+    		for (int k = 0; k < loop->m_ti.Count(); k++) {
+    		    ON_BrepTrim& trim = f->Brep()->m_T[loop->m_ti[k]];
+    		    const ON_Curve* trimCurve = trim.TrimCurveOf();
+		    ON_Interval dom = trimCurve->Domain();
+		    double domainval = 0.0;
+		    double olddomainval = 1.0;
+		    int crudestep = 0;
+		    ON_3dPoint trimpoint2d = trimCurve->PointAt(dom.ParameterAt(domainval));
+		    ON_3dPoint trimpoint3d;
+		    s->EvPoint(trimpoint2d[0],trimpoint2d[1],trimpoint3d,0,0);
+		    VMOVE(pt1, trimpoint3d);
+		    RT_ADD_VLIST(vhead, pt1, BN_VLIST_LINE_MOVE);
+		    while (domainval < 1.0 && crudestep <= 100) {
+			olddomainval = domainval;
+			if (crudestep == 0) domainval = find_next_trimming_point(trimCurve, s, domainval, 0.1, tol->dist*100, 0);
+			if (crudestep >= 1 || domainval == 0.0) {
+			    crudestep++;
+			    domainval =  olddomainval + (1.0 - olddomainval)/100*crudestep;
+			}
+			trimpoint2d = trimCurve->PointAt(dom.ParameterAt(domainval));
+			s->EvPoint(trimpoint2d[0],trimpoint2d[1],trimpoint3d,0,0);
+			VMOVE(pt1, trimpoint3d);
+			RT_ADD_VLIST(vhead, pt1, BN_VLIST_LINE_DRAW);
+		    }
+		}
+	}
+    }
+*/		
 
 
     return 0;
