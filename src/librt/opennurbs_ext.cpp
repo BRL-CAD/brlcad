@@ -87,6 +87,7 @@ namespace brlcad {
 					// divide on param interval
 #define KTANGENTBREAK
 #ifdef KTANGENTBREAK
+					if (!trimCurve->IsLinear()) {
 					int knotcnt = trimCurve->SpanCount();
 					double *knots = new double[knotcnt+1];
 					trimCurve->GetSpanVector(knots);
@@ -101,6 +102,7 @@ namespace brlcad {
 						m_root->addChild(subdivideCurve(trimCurve,min,xmax,innerLoop,0));
 						min = xmax;
 					    }
+					}
 					}
 #endif
 					m_root->addChild(subdivideCurve(trimCurve,min,max,innerLoop,0));

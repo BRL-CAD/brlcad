@@ -93,6 +93,8 @@ rt_brep_params(struct pc_pc_set *, const struct rt_db_internal *ip);
 /* FIXME: fugly */
 static int hit_count = 0;
 
+//debugging
+static int icount = 0;
 
 /********************************************************************************
  * Auxiliary functions
@@ -216,6 +218,19 @@ plot_file()
     }
     return plot;
 }
+static FILE*
+plot_file(const char *pname)
+{
+    if (plot != NULL) 
+		(void)fclose(plot_file());
+	plot = fopen(pname,"w");
+	point_t min, max;
+	VSET(min,-2048,-2048,-2048);
+	VSET(max, 2048, 2048, 2048);
+	pdv_3space(plot, min, max);
+    
+    return plot;
+}
 
 #define BLUEVIOLET 138,43,226
 #define CADETBLUE 95,159,159
@@ -292,6 +307,70 @@ void plotsurfaceleafs(SurfaceTree* surf) {
 		}
 		BB_PLOT(min,max);
     }
+    return;
+}
+void plotleaf3d(SubsurfaceBBNode* bb) {
+    double min[3],max[3];
+	double u,v;
+
+	if (bb->m_trimmed) {
+		COLOR_PLOT(255, 0, 0);
+	} else if (bb->m_checkTrim) {
+		COLOR_PLOT(0, 0, 255); 
+	} else {
+		COLOR_PLOT(255, 0, 255); 
+	}
+	
+	if (true) {
+		bb->GetBBox(min,max);
+	} else {
+		VSET(min,bb->m_u[0]+0.001,bb->m_v[0]+0.001,0.0);
+		VSET(max,bb->m_u[1]-0.001,bb->m_v[1]-0.001,0.0);
+	}
+	BB_PLOT(min,max);
+	
+	M_COLOR_PLOT(YELLOW);
+	bool start=true;
+	point_t a,b;
+	ON_3dPoint p;
+	const ON_BrepFace* f = bb->m_face;
+	const ON_Surface* surf = f->SurfaceOf();
+	for(u=bb->m_u[0];u<=bb->m_u[1];u=u+(bb->m_u[1] - bb->m_u[0])/100) {
+		for(v=bb->m_v[0];v<=bb->m_v[1];v=v+(bb->m_v[1] - bb->m_v[0])/100) {
+			if (start) {
+				start=false;
+				p = surf->PointAt(u,v);
+				VMOVE(b,p);
+			} else {
+				VMOVE(a,b);
+				p = surf->PointAt(u,v);
+				VMOVE(b,p);
+				LINE_PLOT(a,b);
+			}
+		}
+	}
+	
+    return;
+}
+void plotleafuv(SubsurfaceBBNode* bb) {
+    double min[3],max[3];
+
+	if (bb->m_trimmed) {
+		COLOR_PLOT(255, 0, 0);
+	} else if (bb->m_checkTrim) {
+		COLOR_PLOT(0, 0, 255); 
+	} else {
+		COLOR_PLOT(255, 0, 255); 
+	}
+	
+	if (false) {
+		bb->GetBBox(min,max);
+	} else {
+		VSET(min,bb->m_u[0]+0.001,bb->m_v[0]+0.001,0.0);
+		VSET(max,bb->m_u[1]-0.001,bb->m_v[1]-0.001,0.0);
+	}
+	BB_PLOT(min,max);
+	
     return;
 }
 
@@ -1051,6 +1130,9 @@ utah_ray_planes(const ON_Ray &r, ON_3dVector &p1, double &p1d, ON_3dVector &p2, 
 	p1 = ON_3dVector(rdy, -rdx, 0);
     else
 	p1 = ON_3dVector(0, rdz, -rdy);
+	// keith test
+	p1.Unitize();
+	//keith
     p2 = ON_CrossProduct(p1, rdir);
 
     p1d = -(p1 * ro);
@@ -1087,8 +1169,189 @@ utah_pushBack(const ON_Surface* surf, ON_2dPoint &uv)
 }
 
 
+
+int
+utah_newton_4corner_solver(const SubsurfaceBBNode* sbv, const ON_Surface* surf, const ON_Ray& r, ON_2dPoint* ouv, double* t, ON_3dVector* N, bool& converged)
+{
+    int i;
+	int intersects = 0;
+    double j11, j12, j21, j22;
+    double f, g;
+    double rootdist, oldrootdist;
+    double J, invdetJ;
+	double du,dv;
+
+    ON_3dVector p1, p2;
+    double p1d = 0, p2d = 0;
+    converged = false;
+    utah_ray_planes(r, p1, p1d, p2, p2d);
+
+    ON_3dPoint S;
+    ON_3dVector Su, Sv;
+    ON_2dPoint uv;
+	
+	for( int iu = 0; iu < 2; iu++) {
+		for( int iv = 0; iv < 2; iv++) {
+
+			uv.x = sbv->m_u[iu];
+			uv.y = sbv->m_v[iv];
+			
+			ON_2dPoint uv0(uv);
+			surf->Ev1Der(uv.x, uv.y, S, Su, Sv);
+			
+			utah_F(S, p1, p1d, p2, p2d, f, g);
+			rootdist = fabs(f) + fabs(g);
+			
+			for (i = 0; i < BREP_MAX_ITERATIONS; i++) {
+				utah_Fu(Su, p1, p2, j11, j21);
+				utah_Fv(Sv, p1, p2, j12, j22);
+				
+				J = (j11 * j22 - j12 * j21);
+				
+				if (NEAR_ZERO(J, BREP_INTERSECTION_ROOT_EPSILON)) {
+					// perform jittered perturbation in parametric domain....
+					uv.x = uv.x + .1 * drand48() * (uv0.x - uv.x);
+					uv.y = uv.y + .1 * drand48() * (uv0.y - uv.y);
+					continue;
+				}
+				
+				invdetJ = 1. / J;
+				
+				
+				du = -invdetJ * (j22 * f - j12 * g);
+				dv = -invdetJ * (j11 * g - j21 * f);
+				
+
+				if ( i == 0 ) {
+					if (((iu == 0) && (du < 0.0)) ||
+						((iu==1) && (du > 0.0)))
+						break; //head out of U bounds
+					if (((iv == 0) && (dv < 0.0)) ||
+						((iv==1) && (dv > 0.0)))
+						break; //head out of V bounds
+				}
+				
+				
+				uv.x -= invdetJ * (j22 * f - j12 * g);
+				uv.y -= invdetJ * (j11 * g - j21 * f);
+				
+				utah_pushBack(surf, uv);
+				
+				surf->Ev1Der(uv.x, uv.y, S, Su, Sv);
+				utah_F(S, p1, p1d, p2, p2d, f, g);
+				oldrootdist = rootdist;
+				rootdist = fabs(f) + fabs(g);
+				
+				if (oldrootdist < rootdist) break;
+				
+				if (rootdist < ROOT_TOL) {
+					if (sbv->m_u.Includes(uv.x) && sbv->m_v.Includes(uv.y)) {
+						bool new_point = true;
+						for(int j=0;j<intersects;j++) {
+							if (NEAR_ZERO(uv.x - ouv[j].x, 0.0001) && NEAR_ZERO(uv.y - ouv[j].y, 0.0001)) {
+								new_point = false;
+							} 
+						}
+						if (new_point) {
+							//bu_log("New Hit Point:(%f %f %f) uv(%f,%f)\n",S.x,S.y,S.z,uv.x,uv.y);
+							t[intersects] = utah_calc_t(r, S);
+							N[intersects] = ON_CrossProduct(Su, Sv);
+							N[intersects].Unitize();
+							ouv[intersects].x = uv.x;
+							ouv[intersects].y = uv.y;
+							intersects++;
+							converged = true;
+						}
+					} //else {
+						//bu_log("OOB Point Hit:(%f %f %f) uv(%f,%f)\n",S.x,S.y,S.z,uv.x,uv.y);
+					//}
+					break;
+				}
+			}
+		}
+	}
+	if (!converged) {
+		uv.x = sbv->m_u.Mid();
+		uv.y = sbv->m_v.Mid();
+		
+		ON_2dPoint uv0(uv);
+		surf->Ev1Der(uv.x, uv.y, S, Su, Sv);
+		
+		utah_F(S, p1, p1d, p2, p2d, f, g);
+		rootdist = fabs(f) + fabs(g);
+		
+		for (i = 0; i < BREP_MAX_ITERATIONS; i++) {
+			utah_Fu(Su, p1, p2, j11, j21);
+			utah_Fv(Sv, p1, p2, j12, j22);
+			
+			J = (j11 * j22 - j12 * j21);
+			
+			if (NEAR_ZERO(J, BREP_INTERSECTION_ROOT_EPSILON)) {
+				// perform jittered perturbation in parametric domain....
+				uv.x = uv.x + .1 * drand48() * (uv0.x - uv.x);
+				uv.y = uv.y + .1 * drand48() * (uv0.y - uv.y);
+				continue;
+			}
+			
+			invdetJ = 1. / J;
+			
+			/*
+			 du = -invdetJ * (j22 * f - j12 * g);
+			 dv = -invdetJ * (j11 * g - j21 * f);
+			 
+			 
+			 if ( i == 0 ) {
+				 if (((iu == 0) && (du < 0.0)) ||
+					 ((iu==1) && (du > 0.0)))
+					 break; //head out of U bounds
+				 if (((iv == 0) && (dv < 0.0)) ||
+					 ((iv==1) && (dv > 0.0)))
+					 break; //head out of V bounds
+			 }
+			 */
+			
+			uv.x -= invdetJ * (j22 * f - j12 * g);
+			uv.y -= invdetJ * (j11 * g - j21 * f);
+			
+			utah_pushBack(surf, uv);
+			
+			surf->Ev1Der(uv.x, uv.y, S, Su, Sv);
+			utah_F(S, p1, p1d, p2, p2d, f, g);
+			oldrootdist = rootdist;
+			rootdist = fabs(f) + fabs(g);
+			
+			if (oldrootdist < rootdist) break;
+			
+			if (rootdist < ROOT_TOL) {
+				if (sbv->m_u.Includes(uv.x) && sbv->m_v.Includes(uv.y)) {
+					bool new_point = true;
+					for(int j=0;j<intersects;j++) {
+						if (NEAR_ZERO(uv.x - ouv[j].x, 0.0001) && NEAR_ZERO(uv.y - ouv[j].y, 0.0001)) {
+							new_point = false;
+						} 
+					}
+					if (new_point) {
+						//bu_log("New Hit Point:(%f %f %f) uv(%f,%f)\n",S.x,S.y,S.z,uv.x,uv.y);
+						t[intersects] = utah_calc_t(r, S);
+						N[intersects] = ON_CrossProduct(Su, Sv);
+						N[intersects].Unitize();
+						ouv[intersects].x = uv.x;
+						ouv[intersects].y = uv.y;
+						intersects++;
+						converged = true;
+					}
+				} //else {
+				  //bu_log("OOB Point Hit:(%f %f %f) uv(%f,%f)\n",S.x,S.y,S.z,uv.x,uv.y);
+				  //}
+				break;
+			}
+		}
+	}
+	return intersects;
+}
+
 void
-utah_newton_solver(const ON_Surface* surf, const ON_Ray& r, ON_2dPoint &uv, double& t, ON_3dVector &N, bool& converged)
+utah_newton_solver(const SubsurfaceBBNode* sbv, const ON_Surface* surf, const ON_Ray& r, ON_2dPoint &uv, double& t, ON_3dVector &N, bool& converged)
 {
     int i;
     double j11, j12, j21, j22;
@@ -1310,6 +1573,73 @@ utah_isTrimmed(ON_2dPoint uv, const ON_BrepFace *face) {
 
 
 int
+utah_brep_intersect_test(const SubsurfaceBBNode* sbv, const ON_BrepFace* face, const ON_Surface* surf, pt2d_t uv, ON_Ray& ray, HitList& hits)
+{
+    ON_3dVector N[2];
+    bool hit = false;
+    double t[2];
+    ON_2dPoint ouv[2];
+    int found = BREP_INTERSECT_ROOT_DIVERGED;
+    bool converged = false;
+	int numhits;
+
+    numhits = utah_newton_4corner_solver( sbv, surf, ray, ouv, t, N, converged);
+//utah_newton_4corner_solver(const SubsurfaceBBNode* sbv, const ON_Surface* surf, const ON_Ray& r, ON_2dPoint* ouv, double* t, ON_3dVector* &N, bool& converged)
+    /*
+     * DDR.  The utah people are using this t_min which represents the
+     * last point hit along the ray to ensure we are looking at points
+     * futher down the ray.  I haven't implemented this I'm not sure
+     * we need it
+     *
+     * if (converged && (t > 1.e-2) && (t < t_min) && (!utah_isTrimmed(ouv, face))) hit = true;
+     *
+     */
+    //if (converged && (t > 1.e-2) && (!utah_isTrimmed(ouv, face))) hit = true;
+	//if (converged && (t > 1.e-2) && (!((SubsurfaceBBNode*)sbv)->isTrimmed(ouv))) hit = true;
+
+    for(int i=0;i < numhits;i++) {
+	
+	if (converged && (t[i] > 1.e-2)) {
+		if  (!((SubsurfaceBBNode*)sbv)->isTrimmed(ouv[i])) {
+			hit = true;
+//#define KHITPLOT
+#ifdef KHITPLOT
+			double min[3],max[3];
+			COLOR_PLOT(255, 200, 200);
+			VSET(min,ouv[0]-0.01,ouv[1]-0.01,0.0);
+			VSET(max,ouv[0]+0.01,ouv[1]+0.01,0.0);
+			BB_PLOT(min,max);
+		} else {
+			double min[3],max[3];
+			COLOR_PLOT(200, 255, 200);
+			VSET(min,ouv[0]-0.01,ouv[1]-0.01,0.0);
+			VSET(max,ouv[0]+0.01,ouv[1]+0.01,0.0);
+			BB_PLOT(min,max);
+		}
+#else
+	        }
+#endif
+	}
+	//    if (converged && (t > 1.e-2)) hit = true;
+
+    uv[0] = ouv[i].x;
+    uv[1] = ouv[i].y;
+
+    if (hit) {
+        ON_3dPoint _pt;
+        ON_3dVector _norm(N[i]);
+        _pt = ray.m_origin + (ray.m_dir*t[i]);
+        if (face->m_bRev) _norm.Reverse();
+        hit_count += 1;
+        hits.push_back(brep_hit(*face,(const fastf_t*)ray.m_origin,(const fastf_t*)_pt,(const fastf_t*)_norm, uv));
+        hits.back().sbv = sbv;
+        found = BREP_INTERSECT_FOUND;
+    }
+	}
+    return found;
+}
+
+int
 utah_brep_intersect(const SubsurfaceBBNode* sbv, const ON_BrepFace* face, const ON_Surface* surf, pt2d_t uv, ON_Ray& ray, HitList& hits)
 {
     ON_3dVector N;
@@ -1319,8 +1649,7 @@ utah_brep_intersect(const SubsurfaceBBNode* sbv, const ON_BrepFace* face, const 
     int found = BREP_INTERSECT_ROOT_DIVERGED;
     bool converged = false;
 
-    utah_newton_solver(surf, ray, ouv, t, N, converged);
-
+    utah_newton_solver( sbv, surf, ray, ouv, t, N, converged);
     /*
      * DDR.  The utah people are using this t_min which represents the
      * last point hit along the ray to ensure we are looking at points
@@ -1394,9 +1723,12 @@ brep_intersect(const SubsurfaceBBNode* sbv, const ON_BrepFace* face, const ON_Su
     for (int i = 0; i < BREP_MAX_ITERATIONS; i++) {
 	brep_r(surf, pr, uv, pt, su, sv, Rcurr);
 	//fastf_t d = v2mag(Rcurr);
-	fastf_t d = DIST_PT_PT(pt, ray.m_origin);
+	//keith fastf_t d = DIST_PT_PT(pt, ray.m_origin);
+	fastf_t d = v2mag(Rcurr);
+	//keith
 	//if (d < BREP_INTERSECTION_ROOT_EPSILON) {
-	if (NEAR_ZERO(d-Dlast, BREP_INTERSECTION_ROOT_EPSILON)) {
+	//keith if (NEAR_ZERO(d-Dlast, BREP_INTERSECTION_ROOT_EPSILON)) {
+	if (d < BREP_INTERSECTION_ROOT_EPSILON) {
 	    TRACE1("R:"<<ON_PRINT2(Rcurr));
 	    found = BREP_INTERSECT_FOUND; break;
 	} else if (d > Dlast) {
@@ -1410,7 +1742,7 @@ brep_intersect(const SubsurfaceBBNode* sbv, const ON_BrepFace* face, const ON_Su
 	move(uv, new_uv);
 	Dlast = d;
     }
-    if (found > 0) {
+    if ((found > 0) &&  (!((SubsurfaceBBNode*)sbv)->isTrimmed(uv))) {
 	ON_3dPoint _pt;
 	ON_3dVector _norm;
 	surf->EvNormal(uv[0], uv[1],_pt,_norm);
@@ -1497,6 +1829,23 @@ rt_brep_shot(struct soltab *stp, register struct xray *rp, struct application *a
 
     if (inters.size() == 0) return 0; // MISS
     TRACE1("bboxes: " << inters.size());
+	
+//#define KDEBUGMISS
+	int boxcnt=0;
+#ifdef KDEBUGMISS
+	char buffer[80];
+	icount++;
+	if (icount > 1) return 0;
+	sprintf(buffer,"Shot%d.pl",icount);
+	plot_file((const char *)buffer);
+	ON_3dPoint p = r.m_origin + (r.m_dir*20.0);
+	point_t a,b;
+	VMOVE(a,r.m_origin);
+	VMOVE(b,p);
+	COLOR_PLOT( 255, 255, 255 );
+	LINE_PLOT(a,b);
+	(void)fclose(plot_file());
+#endif
 
     // find all the hits (XXX very inefficient right now!)
     HitList all_hits; // record all hits
@@ -1505,11 +1854,20 @@ rt_brep_shot(struct soltab *stp, register struct xray *rp, struct application *a
     hit_count = 0;
     for (BBNode::IsectList::iterator i = inters.begin(); i != inters.end(); i++) {
 	const SubsurfaceBBNode* sbv = dynamic_cast<SubsurfaceBBNode*>((*i).m_node);
+	
+	boxcnt++;
+#ifdef KDEBUGMISS
+	sprintf(buffer,"N%d.pl",boxcnt);
+	plot_file((const char *)buffer);
+	plotleaf3d((SubsurfaceBBNode*)sbv);
+	(void)fclose(plot_file());
+#endif
+
 	const ON_BrepFace* f = sbv->m_face;
 	const ON_Surface* surf = f->SurfaceOf();
 	pt2d_t uv = {sbv->m_u.Mid(), sbv->m_v.Mid()};
 	TRACE1("surface: " << s);
-	int status = utah_brep_intersect(sbv, f, surf, uv, r, all_hits);
+	int status = utah_brep_intersect_test(sbv, f, surf, uv, r, all_hits);
 	if (status == BREP_INTERSECT_FOUND) {
 	    TRACE("INTERSECTION: " << PT(all_hits.back().point) << all_hits.back().trimmed << ", " << all_hits.back().closeToEdge << ", " << all_hits.back().oob);
 	} else {
@@ -1529,6 +1887,9 @@ rt_brep_shot(struct soltab *stp, register struct xray *rp, struct application *a
 	s++;
     }
 
+#ifdef KDEBUGMISS
+	//(void)fclose(plot_file());
+#endif
     HitList hits = all_hits;
 
     // sort the hits
