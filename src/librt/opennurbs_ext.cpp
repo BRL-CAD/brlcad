@@ -45,7 +45,7 @@
 #define RANGE_LO 0.45
 #define UNIVERSAL_SAMPLE_COUNT 1001
 
-#define BBOX_GROW 0.0
+#define BBOX_GROW 0.1
 
 
 namespace brlcad {
@@ -88,24 +88,28 @@ namespace brlcad {
 #define KTANGENTBREAK
 #ifdef KTANGENTBREAK
 					if (!trimCurve->IsLinear()) {
-					int knotcnt = trimCurve->SpanCount();
-					double *knots = new double[knotcnt+1];
-					trimCurve->GetSpanVector(knots);
+					    int knotcnt = trimCurve->SpanCount();
+					    double *knots = new double[knotcnt+1];
 
-					for(int i=1;i<=knotcnt;i++) {
+					    trimCurve->GetSpanVector(knots);
 					    list<double> splitlist;
-					    ON_Interval t(knots[i-1],knots[i]);
+					    for(int i=1;i<=knotcnt;i++) {
+						ON_Interval t(knots[i-1],knots[i]);
 
-					    getHVTangents(trimCurve,t,splitlist);
+						getHVTangents(trimCurve,t,splitlist);
+					    }
 					    for( list<double>::iterator l=splitlist.begin();l != splitlist.end();l++) {
 						double xmax = *l;
-						m_root->addChild(subdivideCurve(trimCurve,min,xmax,innerLoop,0));
+						if (!NEAR_ZERO(xmax-min,0.000001)) {
+						    m_root->addChild(subdivideCurve(trimCurve,min,xmax,innerLoop,0));
+						}
 						min = xmax;
 					    }
 					}
-					}
 #endif
-					m_root->addChild(subdivideCurve(trimCurve,min,max,innerLoop,0));
+					if (!NEAR_ZERO(max-min,0.000001)) {
+						m_root->addChild(subdivideCurve(trimCurve,min,max,innerLoop,0));
+					}
 				}
 				}
 			}
@@ -189,7 +193,14 @@ CurveTree::getVerticalTangent(const ON_Curve *curve,fastf_t min,fastf_t max) {
     ON_3dVector tangent;
     bool tanmin;
 
+	// first lets check end points
+    tangent = curve->TangentAt(max);
+	if (NEAR_ZERO(tangent.x,0.00001) )
+		return max;
     tangent = curve->TangentAt(min);
+	if (NEAR_ZERO(tangent.x,0.00001) )
+		return min;
+		
     tanmin = (tangent[X] < 0.0);
     while ( (max-min) > 0.00001 ) {
 	mid = (max + min)/2.0;
@@ -212,19 +223,26 @@ CurveTree::getHorizontalTangent(const ON_Curve *curve,fastf_t min,fastf_t max) {
     ON_3dVector tangent;
     bool tanmin;
 
-    tangent = curve->TangentAt(min);
+	// first lets check end points
+    tangent = curve->TangentAt(max);
+	if (NEAR_ZERO(tangent.y,0.00001) )
+		return max;
+	tangent = curve->TangentAt(min);
+	if (NEAR_ZERO(tangent.y,0.00001) )
+		return min;
+	
     tanmin = (tangent[Y] < 0.0);
     while ( (max-min) > 0.00001 ) {
-	mid = (max + min)/2.0;
-	tangent = curve->TangentAt(mid);
-	if (NEAR_ZERO(tangent[Y], 0.00001)) {
-	    return mid;
-	}
-	if ( (tangent[Y] < 0.0) == tanmin ) {
-	    min = mid;
-	} else {
-	    max = mid;
-	}
+		mid = (max + min)/2.0;
+		tangent = curve->TangentAt(mid);
+		if (NEAR_ZERO(tangent[Y], 0.00001)) {
+			return mid;
+		}
+		if ( (tangent[Y] < 0.0) == tanmin ) {
+			min = mid;
+		} else {
+			max = mid;
+		}
     }
     return min;
 }

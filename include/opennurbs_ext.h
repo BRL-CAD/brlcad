@@ -933,7 +933,7 @@ namespace brlcad {
 				//    closest = br;
 				//} else {
 				fastf_t v = br->getLinearEstimateOfV(uv[X]); // - uv[Y];
-				//v = br->getCurveEstimateOfV(uv[X],0.0001);
+				v = br->getCurveEstimateOfV(uv[X],0.0000001);
 					br->GetBBox(bmin,bmax);
 					if ((v > uv[Y]) && ((v <= bmax[Y]) && (v >= bmin[Y]))) {
 					    if (closest == NULL){

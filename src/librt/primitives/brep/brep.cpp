@@ -299,7 +299,7 @@ void plotsurfaceleafs(SurfaceTree* surf) {
 			COLOR_PLOT(255, 0, 255); 
 		}
 		
-		if (false) {
+		if (true) {
 			bb->GetBBox(min,max);
 		} else {
 			VSET(min,bb->m_u[0]+0.001,bb->m_v[0]+0.001,0.0);
@@ -594,6 +594,15 @@ void
 brep_preprocess_trims(ON_BrepFace& face, SurfaceTree* tree) {
     double min[3],max[3];
 	
+//#define KCONTROLPNTS
+#ifdef KCONTROLPNTS
+	const ON_Surface* surf = face.SurfaceOf();
+	int uknotcnt = surf->SpanCount(0);
+	bu_log("Surf SpanCount(0): %d\n",knotcnt);
+	int vknotcnt = surf->SpanCount(1);
+	bu_log("Surf SpanCount(1): %d\n",knotcnt);
+	
+#endif
 	CurveTree* ct = new CurveTree(&face);
 //#define KDISCONTS
 #ifdef KDISCONTS
@@ -763,7 +772,10 @@ brep_build_bvh(struct brep_specific* bs, struct rt_brep_internal* bi)
 		ON_BrepFace& face = faces[i];
 //#define KPLOT
 #ifdef KPLOT // debugging hacks to look at specific faces
-		if ((i == 5)) { // && ((i <= 6) ||(i >= 5))) {
+		if (true) { //(i == 0)) { // && ((i <= 6) ||(i >= 5))) {
+	char buffer[80];
+	sprintf(buffer,"Face%d.pl",i+1);
+	plot_file((const char *)buffer);
 #endif
 		SurfaceTree* st = new SurfaceTree(&face);
 		face.m_face_user.p = st;
@@ -775,7 +787,7 @@ brep_build_bvh(struct brep_specific* bs, struct rt_brep_internal* bi)
 #ifdef KPLOT // debugging hacks to look at specific faces
 			
 			if (true) { //plotting utah_brep_intersecthacks i==0) {
-			    plottrim(face);
+			    //plottrim(face);
 			    plotsurfaceleafs(st);
 			}
 			
@@ -1270,7 +1282,7 @@ utah_newton_4corner_solver(const SubsurfaceBBNode* sbv, const ON_Surface* surf, 
 			}
 		}
 	}
-	if (!converged) {
+	if (true) {
 		uv.x = sbv->m_u.Mid();
 		uv.y = sbv->m_v.Mid();
 		
