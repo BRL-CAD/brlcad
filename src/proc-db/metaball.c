@@ -63,13 +63,13 @@ int
 bitronic(struct rt_wdb *outfp, int method, fastf_t threshold, int nframes)
 {
     /*
-    char buf[BUFSIZ];
+      char buf[BUFSIZ];
     */
     char fmt[FMTSIZ];
     fastf_t step;
     struct rt_metaball_internal *mb;
 
-    BU_GETSTRUCT( mb, rt_metaball_internal );
+    BU_GETSTRUCT(mb, rt_metaball_internal);
     mb->magic = RT_METABALL_INTERNAL_MAGIC;
     mb->threshold = threshold > 0 ? threshold : 1.0;
     mb->method = method >= 0 ? method : 0;	/* default to Blinn blob */
@@ -82,17 +82,17 @@ bitronic(struct rt_wdb *outfp, int method, fastf_t threshold, int nframes)
     bleh[0].l->next = &bleh[1];
     bleh[1].l->next = NULL;
 
-    while(nframes--) {
+    while (nframes--) {
 	struct wdb_metaballpt *mbpt;
 	snprintf(buf, BUFSIZ, fmt, nframes);
-#define PT(B, X,Y,Z,FLDSTR,GOO)	B.type = WDB_METABALLPT_TYPE_POINT; B.fldstr = FLDSTR; B.sweat = GOO; VSET(B.coord, X, Y, Z);
-	BU_GETSTRUCT( mbpt, wdb_metaballpt );
+#define PT(B, X, Y, Z, FLDSTR, GOO)	B.type = WDB_METABALLPT_TYPE_POINT; B.fldstr = FLDSTR; B.sweat = GOO; VSET(B.coord, X, Y, Z);
+	BU_GETSTRUCT(mbpt, wdb_metaballpt);
 	PT(bleh[0], - ((double)nframes) * step, 0, 0, 1, 1);
 	PT(bleh[1], ((double)nframes) * step, 0, 0, 1, 1);
 #undef PT
-	BU_LIST_INSERT( &mb->metaball_ctrl_head, &mbpt->l );
+	BU_LIST_INSERT(&mb->metaball_ctrl_head, &mbpt->l);
 	/*
-	mk_metaball(outfp, buf, 2, method, threshold, bleh);
+	  mk_metaball(outfp, buf, 2, method, threshold, bleh);
 	*/
 	printf("%s\t%f %f\n", buf, - ((double)nframes) * step, ((double)nframes) * step);
     }
@@ -108,11 +108,11 @@ gravotronic(struct rt_wdb *outfp, int method, fastf_t threshold, int nframes, in
     mkfmt(fmt, "mball", ".s", nframes);
     snprintf(buf, BUFSIZ, fmt, nframes);
     /* probably need a list or something
-    BU_LIST_INIT( &head.l );
+       BU_LIST_INIT(&head.l);
     */
     
     /* do something
-    mk_lfcomb( outfp, "mball.g", &head, 0 );
+       mk_lfcomb(outfp, "mball.g", &head, 0);
     */
 
     return EXIT_FAILURE;
@@ -127,7 +127,7 @@ main(int argc, char **argv)
     int nframes = 1, method = 1, optc, gravotron = 0, count = 0, retval = EXIT_SUCCESS;
     struct rt_wdb *outfp;
 
-    while ( (optc = bu_getopt( argc, argv, "Hhm:n:o:t:" )) != -1 )
+    while ((optc = bu_getopt(argc, argv, "Hhm:n:o:t:")) != -1)
 	switch (optc) {
 	    case 'n' :
 		nframes = atoi(bu_optarg);
@@ -156,34 +156,34 @@ main(int argc, char **argv)
 
     /* sanity checking on the various parameters */
 
-    if(count && !gravotron) {
+    if (count && !gravotron) {
 	fprintf(stderr, "Count only works in gravotronic mode. Turning on the gravitrons.\n");
 	++gravotron;
     }
 	
     /* prepare for DB generation */
 
-    outfp = wdb_fopen( outfile );
-    if( outfp == RT_WDB_NULL ) {
+    outfp = wdb_fopen(outfile);
+    if (outfp == RT_WDB_NULL) {
 	perror("Failed to open file for writing. Aborting.\n");
 	return EXIT_FAILURE;
     }
-    mk_id( outfp, title );
+    mk_id(outfp, title);
 
     /* here we go! */
 
-    if(gravotron)
+    if (gravotron)
 	retval = gravotronic(outfp, method, 1.0, nframes, count);
     else
 	retval = bitronic(outfp, method, 1.0, nframes);
 
-    /* and clean up  */
+    /* and clean up */
 
     wdb_close(outfp);
 
-    if(retval != EXIT_SUCCESS) {
+    if (retval != EXIT_SUCCESS) {
 	fprintf(stderr, "Removing \"%s\".\n", outfile);
-	if(unlink(outfile) == -1)
+	if (unlink(outfile) == -1)
 	    perror("Failure removing: ");
     }
 
