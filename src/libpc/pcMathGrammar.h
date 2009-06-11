@@ -305,9 +305,60 @@ struct ExpressionGrammar : public boost::spirit::grammar<ExpressionGrammar,Stack
 		  	expr_atom.stack = arg1
 		  ]
 		;
-	    unary_expr = unary_op >> expr_atom;
-	    number = real_p;
-	    func = name;
+	    unary_expr
+		= unary_op
+		  [
+			unary_expr.function_ptr = arg1
+		  ]
+		>> expr_atom
+		   [
+			unary_expr.stack = arg1,
+			if_(unary_expr.function_ptr != FunctionPointer())
+			[
+				push_back(unary_expr.stack,
+					new_<sysFunctionNode>(unary_expr.function_ptr))
+			]
+		   ]
+		;
+
+	    number
+		= real_p
+		  [
+			push_back(number.stack,new_<ConstantNode>(arg1))
+		  ]
+		| self.local_vars
+		  [
+			push_back(number.stack,
+					new_<VariableNode>(address_of(arg1)))
+		  ]
+		| self.global_vars
+		  [
+			push_back(number.stack,
+					new_<VariableNode>(address_of(arg1)))
+		  ]
+		;
+	    func
+		= name
+		  [
+			func.arity = 0,
+			func.name = construct_<std::string>(arg1,arg2)
+		  ]
+		>> ('(' >> !list_p(arg,',') >> ')')
+		   [
+			func.function_ptr
+				= checked_find_(var(self.functions),
+						mangled_name(func.name, func.arity))
+		   ]
+		>> if_p(func.function_ptr != FunctionPointer())
+		   [
+			epsilon_p
+			[
+				push_back(func.stack,
+					new_<sysFunctionNode>(func.function_ptr))
+			]
+		   ]
+		   .else_p[nothing_p]
+		;
 	    arg = expr
 	    	  [
 		  	func.arity +=1,

@@ -140,6 +140,23 @@ struct reset_impl {
     }
 };
 phoenix::function<reset_impl> const reset = reset_impl();
+
+
+/**
+ * Lazy function wrapper for boost::reference_wrapper<double>::get_pointer.
+ */
+struct address_of_impl {
+    template <typename T>
+    struct result {
+	typedef double * type;
+    };
+    double * const operator()(boost::reference_wrapper<double> const & ref) const
+    {
+	return ref.get_pointer();
+    }
+};
+phoenix::function<address_of_impl> const address_of = address_of_impl();
+
 #endif
 /** @} */
 /*
