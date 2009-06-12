@@ -1972,9 +1972,11 @@ rt_brep_shot(struct soltab *stp, register struct xray *rp, struct application *a
     //     hits.erase(new_end, hits.end());
 
     if (hits.size() > 1 && (hits.size() % 2) != 0) {
-        cerr << "**** ERROR odd number of hits: " << hits.size() << " hit_count: " << hit_count << "\n";
+        cerr << "**** ERROR odd number of hits: " << hits.size() << "\n";
+        bu_log("xyz %f %f %f \n", rp->r_pt[0], rp->r_pt[1], rp->r_pt[2]);
+	bu_log("dir %f %f %f \n", rp->r_dir[0], rp->r_dir[1], rp->r_dir[2]);
+	
         point_t last_point;
-        TRACE2("ray origin: " << rp->r_pt[0] << "," << rp->r_pt[1] << "," << rp->r_pt[2]);
         int hitCount = 0;
         for (HitList::iterator i = hits.begin(); i != hits.end(); ++i) {
             if (hitCount == 0) {
