@@ -58,7 +58,6 @@ bin_PROGRAMS = \
 	euclid_unformat \
 	fast4-g \
 	g-acad \
-	g-adrt \
 	g-dxf \
 	g-euclid \
 	g-euclid1 \
@@ -190,9 +189,6 @@ g5_g4_LDADD = ${WDB}
 
 g_acad_SOURCES = g-acad.c
 g_acad_LDADD = ${WDB}
-
-g_adrt_SOURCES = g-adrt.c
-g_adrt_LDADD = ${WDB}
 
 g_dxf_SOURCES = dxf/g-dxf.c
 g_dxf_LDADD = ${WDB} ${GCV}
