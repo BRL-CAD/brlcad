@@ -1183,7 +1183,7 @@ utah_pushBack(const ON_Surface* surf, ON_2dPoint &uv)
 
 
 int
-utah_newton_4corner_solver(const SubsurfaceBBNode* sbv, const ON_Surface* surf, const ON_Ray& r, ON_2dPoint* ouv, double* t, ON_3dVector* N, bool& converged)
+utah_newton_4corner_solver(const SubsurfaceBBNode* sbv, const ON_Surface* surf, const ON_Ray& r, ON_2dPoint* ouv, double* t, ON_3dVector* N, bool& converged, int docorners)
 {
     int i;
 	int intersects = 0;
@@ -1201,7 +1201,8 @@ utah_newton_4corner_solver(const SubsurfaceBBNode* sbv, const ON_Surface* surf, 
     ON_3dPoint S;
     ON_3dVector Su, Sv;
     ON_2dPoint uv;
-	
+
+    if (docorners) {    
 	for( int iu = 0; iu < 2; iu++) {
 		for( int iv = 0; iv < 2; iv++) {
 
@@ -1282,6 +1283,10 @@ utah_newton_4corner_solver(const SubsurfaceBBNode* sbv, const ON_Surface* surf, 
 			}
 		}
 	}
+
+        }
+
+	
 	if (true) {
 		uv.x = sbv->m_u.Mid();
 		uv.y = sbv->m_v.Mid();
@@ -1594,8 +1599,18 @@ utah_brep_intersect_test(const SubsurfaceBBNode* sbv, const ON_BrepFace* face, c
     int found = BREP_INTERSECT_ROOT_DIVERGED;
     bool converged = false;
 	int numhits;
-
-    numhits = utah_newton_4corner_solver( sbv, surf, ray, ouv, t, N, converged);
+    
+    ON_3dPoint center_pt;
+    ON_3dVector normal;
+    surf->EvNormal(sbv->m_u.Mid(), sbv->m_v.Mid(), center_pt, normal);
+    
+    double grazing_float = normal * ray.m_dir;
+    
+    if (fabs(grazing_float) < 0.1) {
+	numhits = utah_newton_4corner_solver( sbv, surf, ray, ouv, t, N, converged, 1);
+    } else {
+	numhits = utah_newton_4corner_solver( sbv, surf, ray, ouv, t, N, converged, 0);
+    }
 //utah_newton_4corner_solver(const SubsurfaceBBNode* sbv, const ON_Surface* surf, const ON_Ray& r, ON_2dPoint* ouv, double* t, ON_3dVector* &N, bool& converged)
     /*
      * DDR.  The utah people are using this t_min which represents the
