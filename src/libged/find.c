@@ -136,7 +136,7 @@ ged_find_ref(struct db_i		*dbip,
 
     comb_name = (char *)comb_name_ptr;
 
-    bu_vls_printf(&gedp->ged_result_str, "%s", comb_name);
+    bu_vls_printf(&gedp->ged_result_str, "%s ", comb_name);
 }
 
 
