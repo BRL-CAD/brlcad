@@ -670,6 +670,12 @@ namespace brlcad {
 	ON_Interval m_v;
 	bool m_checkTrim;
 	bool m_trimmed;
+	
+	//testing bb box growth
+	bool m_xgrow;
+	bool m_ygrow;
+	bool m_zgrow;
+	
     private:
 	list<BRNode*> m_trims_above;
 	list<BRNode*> m_trims_right;

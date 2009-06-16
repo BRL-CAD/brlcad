@@ -45,7 +45,9 @@
 #define RANGE_LO 0.45
 #define UNIVERSAL_SAMPLE_COUNT 1001
 
-#define BBOX_GROW 0.1
+#define BBOX_GROW 0.0
+// grows 3D BBox along each axis by this factor
+#define BBOX_GROW_3D 0.1
 
 
 namespace brlcad {
@@ -537,20 +539,21 @@ CurveTree::getHVTangents(const ON_Curve* curve, ON_Interval& t, list<fastf_t>& l
     SurfaceTree::surfaceBBox(bool isLeaf, const ON_Interval& u, const ON_Interval& v)
     {
 	ON_3dPoint corners[9];
+	ON_3dVector normals[9];
 	const ON_Surface* surf = m_face->SurfaceOf();
 
 	double uq = u.Length()*0.25;
 	double vq = v.Length()*0.25;
-	if (!surf->EvPoint(u.Min()-BBOX_GROW,v.Min()-BBOX_GROW,corners[0]) ||
-	    !surf->EvPoint(u.Max()+BBOX_GROW,v.Min()-BBOX_GROW,corners[1]) ||
-	    !surf->EvPoint(u.Max()+BBOX_GROW,v.Max()+BBOX_GROW,corners[2]) ||
-	    !surf->EvPoint(u.Min()-BBOX_GROW,v.Max()+BBOX_GROW,corners[3]) ||
+	if (!surf->EvNormal(u.Min()-BBOX_GROW,v.Min()-BBOX_GROW,corners[0],normals[0]) ||
+	    !surf->EvNormal(u.Max()+BBOX_GROW,v.Min()-BBOX_GROW,corners[1],normals[1]) ||
+	    !surf->EvNormal(u.Max()+BBOX_GROW,v.Max()+BBOX_GROW,corners[2],normals[2]) ||
+	    !surf->EvNormal(u.Min()-BBOX_GROW,v.Max()+BBOX_GROW,corners[3],normals[3]) ||
 
-	    !surf->EvPoint(u.Mid(),v.Mid(),corners[4]) ||
-	    !surf->EvPoint(u.Mid()-uq,v.Mid()-vq,corners[5]) ||
-	    !surf->EvPoint(u.Mid()-uq,v.Mid()+vq,corners[6]) ||
-	    !surf->EvPoint(u.Mid()+uq,v.Mid()-vq,corners[7]) ||
-	    !surf->EvPoint(u.Mid()+uq,v.Mid()+vq,corners[8])) {
+	    !surf->EvNormal(u.Mid(),v.Mid(),corners[4],normals[4]) ||
+	    !surf->EvNormal(u.Mid()-uq,v.Mid()-vq,corners[5],normals[5]) ||
+	    !surf->EvNormal(u.Mid()-uq,v.Mid()+vq,corners[6],normals[6]) ||
+	    !surf->EvNormal(u.Mid()+uq,v.Mid()-vq,corners[7],normals[7]) ||
+	    !surf->EvNormal(u.Mid()+uq,v.Mid()+vq,corners[8],normals[8])) {
 	    bu_bomb("Could not evaluate a point on surface"); // XXX fix this message
 	}
 
@@ -575,12 +578,41 @@ CurveTree::getHVTangents(const ON_Curve* curve, ON_Interval& t, list<fastf_t>& l
 	}
 	BBNode* node;
 	if (isLeaf) {
+		vect_t delta;
+		
+		VSUB2(delta,max,min);
+		VSCALE(delta,delta,BBOX_GROW_3D);
+		VSUB2(min,min,delta);
+		VADD2(max,max,delta);
+	/*
+		bool ycross,xcross,zcross;
+		vect_t xcenter,ycenter,zcenter;
+		vect_t tangent,middir;
+
+		xcenter[0] = (max[0] + min[0])/2.0;
+		ycenter[1] = (max[1] + min[1])/2.0;
+		zcenter[2] = (max[2] + min[2])/2.0;
+		for (int i = 0; i < 4; i++) {
+			xcenter[1] = corner[i][1];
+			xcenter[2] = corner[i][2];
+			ycenter[0] = corner[i][0];
+			ycenter[2] = corner[i][2];
+			zcenter[0] = corner[i][0];
+			zcenter[1] = corner[i][1];
+			
+			VSUB2(middir,xcenter,corner[i]);
+			VCROSS(tangent,normal[i],middir);
+			VCROSS(tangent,tangent,normal[i]);
+			
+		}
+		*/
 	    TRACE("creating leaf: u(" << u.Min() << "," << u.Max() <<
 		  ") v(" << v.Min() << "," << v.Max() << ")");
 	    node = new SubsurfaceBBNode(ON_BoundingBox(ON_3dPoint(min),
 						       ON_3dPoint(max)),
 					m_face,
 					u, v);
+					
 	}
 	else
 	    node = new BBNode(ON_BoundingBox(ON_3dPoint(min),
@@ -678,7 +710,7 @@ CurveTree::getHVTangents(const ON_Curve* curve, ON_Interval& t, list<fastf_t>& l
      */
 
     bool
-    SurfaceTree::isFlat(const ON_Surface* surf, const ON_Interval& u, const ON_Interval& v)
+    SurfaceTree::isFlat(const ON_Surface* surf, const ON_Interval& u, const ON_Interval& v )
     {
 	ON_3dVector normals[8];
 

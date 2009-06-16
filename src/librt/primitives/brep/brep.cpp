@@ -262,13 +262,14 @@ plot_file(const char *pname)
 #define MAGENTA 255,0,255
 #define CYAN 0,255,255
 #define BLACK 0,0,0
+#define WHITE 255,255,255
 
 #define M_COLOR_PLOT(c) pl_color(plot_file(), c)
 #define COLOR_PLOT(r, g, b) pl_color(plot_file(),(r),(g),(b))
 #define M_PT_PLOT(p) 	{ 		\
     point_t pp,ppp;		        \
     vect_t grow;                        \
-    VSETALL(grow,0.1);                  \
+    VSETALL(grow,0.01);                  \
     VADD2(pp, p, grow);                 \
     VSUB2(ppp, p, grow);                \
     pdv_3box(plot_file(), pp, ppp); 	\
@@ -298,7 +299,17 @@ void plotsurfaceleafs(SurfaceTree* surf) {
 		} else {
 			COLOR_PLOT(255, 0, 255); 
 		}
-		
+		/*
+		if (bb->m_xgrow) {
+			M_COLOR_PLOT(RED); 
+		} else if (bb->m_ygrow) {
+			M_COLOR_PLOT(GREEN); 
+		} else if (bb->m_zgrow) {
+			M_COLOR_PLOT(BLUE); 
+		} else {
+			COLOR_PLOT(100, 100, 100); 
+		}
+		*/
 		if (true) {
 			bb->GetBBox(min,max);
 		} else {
@@ -598,9 +609,98 @@ brep_preprocess_trims(ON_BrepFace& face, SurfaceTree* tree) {
 #ifdef KCONTROLPNTS
 	const ON_Surface* surf = face.SurfaceOf();
 	int uknotcnt = surf->SpanCount(0);
-	bu_log("Surf SpanCount(0): %d\n",knotcnt);
+	bu_log("Surf SpanCount(0): %d\n",uknotcnt);
 	int vknotcnt = surf->SpanCount(1);
-	bu_log("Surf SpanCount(1): %d\n",knotcnt);
+	bu_log("Surf SpanCount(1): %d\n",vknotcnt);
+
+	double *uknots = new double[(uknotcnt+1)];
+	double *vknots = new double[(vknotcnt+1)];
+
+	surf->GetSpanVector(0,uknots);
+	surf->GetSpanVector(1,vknots);
+
+	ON_3dPoint p; // = surf->PointAt(uknots[i],vknots[j]);
+	ON_3dVector n;
+	double u;
+	double v;
+	point_t point;
+	point_t end;
+	vect_t dir;
+	point_t prevpoint;
+	vect_t prevdir;
+	vect_t diff;
+
+	u = uknots[0];
+	v = vknots[0];
+	if (surf->EvNormal( u, v, p, n )) {
+	    M_COLOR_PLOT(MAGENTA);
+	    VMOVE(prevpoint,p);
+	    VMOVE(prevdir,n);
+	    VSCALE(end,prevdir,1.0);
+	    VADD2(prevpoint,prevpoint,end);
+	    VADD2(end,prevpoint,end);
+	    M_PT_PLOT(prevpoint);
+	    LINE_PLOT(prevpoint,end);
+	}
+	u = uknots[1];
+	v = vknots[0];
+	if (surf->EvNormal( u, v, p, n )) {
+	    M_COLOR_PLOT(WHITE);
+	    VMOVE(prevpoint,p);
+	    VMOVE(prevdir,n);
+	    VSCALE(end,prevdir,1.0);
+	    VADD2(prevpoint,prevpoint,end);
+	    VADD2(end,prevpoint,end);
+	    M_PT_PLOT(prevpoint);
+	    LINE_PLOT(prevpoint,end);
+	}
+	bool pxdir,pydir,pzdir;
+	bool xdir,ydir,zdir;
+	vect_t cp;
+	fastf_t dp;
+	    for(int j=0;j<=vknotcnt;j++) {
+	for(int i=0;i<=uknotcnt;i++) {
+		if ((i==0)&&(j==0)) {
+		    VMOVE(point,prevpoint);
+		    VMOVE(dir,prevdir)
+		    pxdir = pydir = pzdir = true;
+		} else {
+		    u = uknots[i];
+		    v = vknots[j];
+		    if (surf->EvNormal( u, v, p, n )) {
+			VMOVE(point,p);
+			VMOVE(dir,n);
+		    }
+		}
+		VCROSS(cp,dir,prevdir);
+		dp = VDOT(dir,prevdir);
+		//bu_log( "VCROSS <%g,%g,%g>\n",cp[X],cp[Y],cp[Z] );
+		//bu_log( "VDOT  - %g\n",dp );
+		VSUB2(diff,dir,prevdir);
+		xdir = !(diff[0] < 0.0);
+		ydir = !(diff[1] < 0.0);
+		zdir = !(diff[2] < 0.0);
+		VSCALE(end,dir,dp);
+		VADD2(end,point,end);
+		if (xdir!=pxdir){
+		    M_COLOR_PLOT(RED);
+		} else if (pydir!=ydir){
+		    M_COLOR_PLOT(GREEN);
+		} else if (pzdir!=zdir){
+		    M_COLOR_PLOT(BLUE);
+		} else {
+		    M_COLOR_PLOT(YELLOW);
+		}
+		pxdir = xdir;
+		pydir = ydir;
+		pzdir = zdir;
+		VMOVE(prevdir,dir);
+		VMOVE(prevpoint,point);
+		M_PT_PLOT(point);
+		LINE_PLOT(point,end);
+	    }
+	}
+
 	
 #endif
 	CurveTree* ct = new CurveTree(&face);
@@ -772,7 +872,7 @@ brep_build_bvh(struct brep_specific* bs, struct rt_brep_internal* bi)
 		ON_BrepFace& face = faces[i];
 //#define KPLOT
 #ifdef KPLOT // debugging hacks to look at specific faces
-		if (true) { //(i == 0)) { // && ((i <= 6) ||(i >= 5))) {
+		if (i == 5) { //(i == 0)) { // && ((i <= 6) ||(i >= 5))) {
 	char buffer[80];
 	sprintf(buffer,"Face%d.pl",i+1);
 	plot_file((const char *)buffer);
