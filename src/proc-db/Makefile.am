@@ -14,6 +14,7 @@ bin_PROGRAMS = \
 	contours \
 	globe \
 	human \
+	brepintersect \
 	kurt \
 	lens \
 	masonry \
@@ -42,11 +43,13 @@ bottest_SOURCES = bottest.c
 brep_cube_SOURCES = brep_cube.cpp
 brep_simple_SOURCES = brep_simple.cpp
 breplicator_SOURCES = breplicator.cpp
+brepintersect_SOURCES = brepintersect.cpp
 
 # per-target CPPFLAGS not available until automake 1.7+
 brep_cube_CXXFLAGS = -DOBJ_BREP=1 ${OPENNURBS_CPPFLAGS}
 brep_simple_CXXFLAGS = -DOBJ_BREP=1 ${OPENNURBS_CPPFLAGS}
 breplicator_CXXFLAGS = -DOBJ_BREP=1 ${OPENNURBS_CPPFLAGS}
+brepintersect_CXXFLAGS = -DOBJ_BREP=1 ${OPENNURBS_CPPFLAGS}
 
 brep_cube_LDADD = \
 	${proc_db_libs} \
@@ -55,6 +58,9 @@ brep_simple_LDADD = \
 	${proc_db_libs} \
 	${OPENNURBS}
 breplicator_LDADD = \
+	${proc_db_libs} \
+	${OPENNURBS}
+brepintersect_LDADD = \
 	${proc_db_libs} \
 	${OPENNURBS}
 
@@ -109,6 +115,7 @@ FAST_OBJECTS = \
 	$(contours_OBJECTS) \
 	$(globe_OBJECTS) \
 	$(human_OBJECTS) \
+	$(brepintersect_OBJECTS) \
 	$(kurt_OBJECTS) \
 	$(lens_OBJECTS) \
 	$(masonry_OBJECTS) \
