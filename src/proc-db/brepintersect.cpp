@@ -268,6 +268,7 @@ int SegmentTriangleIntersect(
 
     double normal[3];
     VCROSS(normal, b - a, c - a);
+    VUNITIZE(normal);
 
     ON_3dPoint P0 = a; /* could be b or c*/
 
@@ -278,12 +279,12 @@ int SegmentTriangleIntersect(
      * We know that when u is correct:
      * normal dot (q + u * (q-p) = N dot P0
      *		   N dot (P0 - p)
-     * so u =  --------------
+     * so u =      --------------
      *		   N dot (q - p)
      */
 
     if (VDOT(normal, (p-q))) {/* if this is 0 it indicates the line and plane are parallel*/
-	double u = -VDOT(normal, (P0 - p))/VDOT(normal, (p - q));
+	double u = VDOT(normal, (P0 - p))/VDOT(normal, (q - p));
 	if (u < 0.0 || u > 1.0)	/* this means we're on the line but not the line segment*/
 	    return 0;		/* so we can return early*/
 	ON_3dPoint P = p + u * (q - p);
@@ -291,7 +292,8 @@ int SegmentTriangleIntersect(
 	if (PointInTriangle(a, b, c, P, tol)) {
 	    out[0] = P;
 	    return 1;
-	}
+	} else 
+	    return 0;
     } else {/* If we're here it means that the line and plane are parallel*/
 	if (VDOT( (ON_3dPoint) normal, p-P0) == 0) {/* yahtzee!!*/
 	    /* The line segment is in the same plane as the triangle*/
@@ -454,12 +456,12 @@ int main()
 	    ON_3dPoint tmpb = B;
 	    ON_3dPoint tmpc = C;
 	    ON_3dPoint tmpq = Q;
-	    for (k=0; k<5; k++) {
+	    for (k=0; k<2; k++) {
 		MAT4X3PNT(A, rotX, tmpa);
 		MAT4X3PNT(B, rotX, tmpb);
 		MAT4X3PNT(C, rotX, tmpc);
 		MAT4X3PNT(Q, rotX, tmpq);
-		for (l=0; l<5; l++) {
+		for (l=0; l<2; l++) {
 		    tmpa = A;
 		    tmpb = B;
 		    tmpc = C;
@@ -468,7 +470,7 @@ int main()
 		    MAT4X3PNT(B, rotY, tmpb);
 		    MAT4X3PNT(C, rotY, tmpc);
 		    MAT4X3PNT(Q, rotY, tmpq);
-		    for (m=0; m<5; m++) {
+		    for (m=0; m<2; m++) {
 			tmpa = A;
 			tmpb = B;
 			tmpc = C;
@@ -494,8 +496,8 @@ int main()
     ON_3dPoint out[2];
     failed = total = 0;
     for (i=0; i<8; i+=2) {
-	for (j=0; j<8; j+=2) {
-	    int rv = SegmentSegmentIntersect(points[i], points[i+1], points[j], points[j+1], out, VUNITIZE_TOL);
+	for (j=0; j<3; j++) {
+	    int rv = SegmentSegmentIntersect(points[i], points[i+1], points[(i + (2 * j)) % 8], points[(i + 1 + (2 * j)) % 8], out, VUNITIZE_TOL);
 	    total++;
 	    if (!VNEAR_ZERO(out[0], VUNITIZE_TOL) || rv != 1) {
 		failed++;
@@ -505,6 +507,80 @@ int main()
     bu_log("Failed: %i of %i tests in SegmentSegmentIntersect\n", failed, total);
 
     /* SegmentTriangleIntersect Tests */
+    failed = total = 0;
+    a = ON_3dPoint(0.0, 0.0, 0.0);
+    b = ON_3dPoint(100.0, 0.0, 0.0);
+    c = ON_3dPoint(0.0, 100.0, 0.0);
+    ON_3dPoint p = ON_3dPoint(0.0, 0.0, 100.0);
+    ON_3dPoint q = ON_3dPoint(0.0, 0.0, -100.0);
+    ON_3dPoint Q;
+    for (i=0; i<101; i++) {
+	for (j=0; j<101; j++) {
+	    ON_3dPoint P = ON_3dPoint(p.x + i, p.y + j, p.z);
+	    ON_3dPoint Q = ON_3dPoint(q.x + i, q.y + j, q.z);
+	    ON_3dPoint ANSWER = ON_3dPoint(P.x, P.y, 0.0);
+	    ON_3dPoint A = a;
+	    ON_3dPoint B = b;
+	    ON_3dPoint C = c;
+	    ON_3dPoint tmpa = A;
+	    ON_3dPoint tmpb = B;
+	    ON_3dPoint tmpc = C;
+	    ON_3dPoint tmpans = ANSWER;
+	    ON_3dPoint tmpp = P;
+	    ON_3dPoint tmpq = Q;
+	    for (k=0; k<2; k++) {
+		MAT4X3PNT(A, rotX, tmpa);
+		MAT4X3PNT(B, rotX, tmpb);
+		MAT4X3PNT(C, rotX, tmpc);
+		MAT4X3PNT(P, rotX, tmpp);
+		MAT4X3PNT(Q, rotX, tmpq);
+		MAT4X3PNT(ANSWER, rotX, tmpans);
+		for (l=0; l<2; l++) {
+		    tmpa = A;
+		    tmpb = B;
+		    tmpc = C;
+		    tmpans = ANSWER;
+		    tmpp = P;
+		    tmpq = Q;
+		    MAT4X3PNT(A, rotY, tmpa);
+		    MAT4X3PNT(B, rotY, tmpb);
+		    MAT4X3PNT(C, rotY, tmpc);
+		    MAT4X3PNT(P, rotY, tmpp);
+		    MAT4X3PNT(Q, rotY, tmpq);
+		    MAT4X3PNT(ANSWER, rotY, tmpans);
+		    for (m=0; m<2; m++) {
+			tmpa = A;
+			tmpb = B;
+			tmpc = C;
+			tmpans = ANSWER;
+			tmpp = P;
+			tmpq = Q;
+			MAT4X3PNT(A, rotZ, tmpa);
+			MAT4X3PNT(B, rotZ, tmpb);
+			MAT4X3PNT(C, rotZ, tmpc);
+			MAT4X3PNT(P, rotX, tmpp);
+			MAT4X3PNT(Q, rotZ, tmpq);
+			MAT4X3PNT(ANSWER, rotZ, tmpans);
+			int rv = SegmentTriangleIntersect(A, B, C, P, Q, out, DBL_EPSILON);
+			total++;
+			if (i + j < 101) {
+			    if (rv != 1 || !VAPPROXEQUAL(ANSWER, out[0], DBL_EPSILON)) {
+				bu_log("Failed with i = %i and j = %i \n", i, j);
+				failed++;
+			    }
+			} else {
+			    if (rv != 0) {
+				bu_log("Failed with i = %i and j = %i \n", i, j);
+				failed++;
+			    }
+			}
+		    }
+		}
+	    }
+	}
+    }
+    bu_log("Failed: %i of %i tests in SegmentTriangleIntersect\n", failed, total);
+
     return 0;
 }
 
