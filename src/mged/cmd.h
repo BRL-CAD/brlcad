@@ -104,6 +104,7 @@ BU_EXTERN(int cmd_list, (ClientData clientData, Tcl_Interp *interp, int argc, ch
 BU_EXTERN(int cmd_lm, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
 BU_EXTERN(int cmd_lookat, (ClientData clientData, Tcl_Interp *interp, int argc, const char **argv));
 BU_EXTERN(int cmd_ls, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
+BU_EXTERN(int cmd_lscon, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
 BU_EXTERN(int cmd_lt, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
 BU_EXTERN(int cmd_make_bb, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
 BU_EXTERN(int cmd_make_name, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
