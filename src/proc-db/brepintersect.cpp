@@ -33,7 +33,9 @@
 #include "brepintersect.h"
 
 
-/* tests whether a point is inside of a triangle using vector math*/
+/* tests whether a point is inside of the triangle using vector math 
+ * the point has to be in the same plane as the triangle, otherwise
+ * it returns false. */
 bool PointInTriangle(
 	const ON_3dPoint& a,
 	const ON_3dPoint& b,
@@ -42,6 +44,14 @@ bool PointInTriangle(
 	double tol
 	)
 {
+    /* First we check to make sure that the point is in the plane */
+    double normal[3];
+    VCROSS(normal, b - a, c - a);
+    VUNITIZE(normal);
+
+    if (!NEAR_ZERO(VDOT(normal, P-a), tol))
+	return false;
+
     /* we have a point that we know is in the plane,
      * but we need to check that it's in the triangle
      * the cleanest way to check this is to check that
@@ -437,6 +447,7 @@ int main()
     ON_3dPoint b = ON_3dPoint(100.0, 0.0, 0.0);
     ON_3dPoint c = ON_3dPoint(0.0, 100.0, 0.0);
     ON_3dPoint P = ON_3dPoint(0.0, 0.0, 0.0);
+    ON_3dPoint out[2];
 
     double cos = -0.737368878;
     double sin = -0.675490294;
@@ -445,7 +456,7 @@ int main()
     mat_t rotZ = {cos, sin, 0.0, 0.0, -sin, cos, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0};
 
     int i, j, k, l, m, failed = 0, total = 0;
-
+    /* 
     for (i=0; i<101; i++) {
 	for (j=0; j<101; j++) {
 	    ON_3dPoint Q = ON_3dPoint(P.x + i, P.y + j, P.z);
@@ -489,11 +500,10 @@ int main()
 	    }
 	}
     }
-    bu_log("Failed: %i of %i tests in PointInTriangle\n", failed, total);
+    bu_log("Failed: %i of %i tests in PointInTriangle\n", failed, total); */
 
     /* SegmentSegmentIntersect Tests */
-    ON_3dPoint points[8] = {ON_3dPoint(1.0, 1.0, 1.0), ON_3dPoint(-1.0, -1.0, -1.0), ON_3dPoint(1.0, 1.0, -1.0), ON_3dPoint(-1.0, -1.0, 1.0), ON_3dPoint(1.0, -1.0, -1.0), ON_3dPoint(-1.0, 1.0, 1.0), ON_3dPoint(1.0, -1.0, 1.0), ON_3dPoint(-1.0, 1.0, -1.0)};
-    ON_3dPoint out[2];
+    /* ON_3dPoint points[8] = {ON_3dPoint(1.0, 1.0, 1.0), ON_3dPoint(-1.0, -1.0, -1.0), ON_3dPoint(1.0, 1.0, -1.0), ON_3dPoint(-1.0, -1.0, 1.0), ON_3dPoint(1.0, -1.0, -1.0), ON_3dPoint(-1.0, 1.0, 1.0), ON_3dPoint(1.0, -1.0, 1.0), ON_3dPoint(-1.0, 1.0, -1.0)};
     failed = total = 0;
     for (i=0; i<8; i+=2) {
 	for (j=0; j<3; j++) {
@@ -504,7 +514,7 @@ int main()
 	    }
 	}
     }
-    bu_log("Failed: %i of %i tests in SegmentSegmentIntersect\n", failed, total);
+    bu_log("Failed: %i of %i tests in SegmentSegmentIntersect\n", failed, total); */
 
     /* SegmentTriangleIntersect Tests */
     failed = total = 0;
