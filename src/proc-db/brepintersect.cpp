@@ -451,6 +451,8 @@ int main()
 
     double cos = -0.737368878;
     double sin = -0.675490294;
+    /* double cos = 0.6;
+    double sin = 0.8; */
     mat_t rotX = {1.0, 0.0, 0.0, 0.0, 0.0, cos, sin, 0.0, 0.0, -sin, cos, 0.0, 0.0, 0.0, 0.0, 1.0};
     mat_t rotY = {cos, 0.0, -sin, 0.0, 0.0, 1.0, 0.0, 0.0, sin, 0.0, cos, 0.0, 0.0, 0.0, 0.0, 1.0};
     mat_t rotZ = {cos, sin, 0.0, 0.0, -sin, cos, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0};
@@ -538,14 +540,14 @@ int main()
 	    ON_3dPoint tmpans = ANSWER;
 	    ON_3dPoint tmpp = P;
 	    ON_3dPoint tmpq = Q;
-	    for (k=0; k<2; k++) {
+	    for (k=0; k<10; k++) {
 		MAT4X3PNT(A, rotX, tmpa);
 		MAT4X3PNT(B, rotX, tmpb);
 		MAT4X3PNT(C, rotX, tmpc);
 		MAT4X3PNT(P, rotX, tmpp);
 		MAT4X3PNT(Q, rotX, tmpq);
 		MAT4X3PNT(ANSWER, rotX, tmpans);
-		for (l=0; l<2; l++) {
+		for (l=0; l<10; l++) {
 		    tmpa = A;
 		    tmpb = B;
 		    tmpc = C;
@@ -558,7 +560,7 @@ int main()
 		    MAT4X3PNT(P, rotY, tmpp);
 		    MAT4X3PNT(Q, rotY, tmpq);
 		    MAT4X3PNT(ANSWER, rotY, tmpans);
-		    for (m=0; m<2; m++) {
+		    for (m=0; m<10; m++) {
 			tmpa = A;
 			tmpb = B;
 			tmpc = C;
@@ -568,13 +570,13 @@ int main()
 			MAT4X3PNT(A, rotZ, tmpa);
 			MAT4X3PNT(B, rotZ, tmpb);
 			MAT4X3PNT(C, rotZ, tmpc);
-			MAT4X3PNT(P, rotX, tmpp);
+			MAT4X3PNT(P, rotZ, tmpp);
 			MAT4X3PNT(Q, rotZ, tmpq);
 			MAT4X3PNT(ANSWER, rotZ, tmpans);
-			int rv = SegmentTriangleIntersect(A, B, C, P, Q, out, DBL_EPSILON);
+			int rv = SegmentTriangleIntersect(A, B, C, P, Q, out, 1.0e-10);
 			total++;
 			if (i + j < 101) {
-			    if (rv != 1 || !VAPPROXEQUAL(ANSWER, out[0], DBL_EPSILON)) {
+			    if (rv != 1 || !VAPPROXEQUAL(ANSWER, out[0], 1.0e-10)) {
 				bu_log("Failed with i = %i and j = %i \n", i, j);
 				failed++;
 			    }
