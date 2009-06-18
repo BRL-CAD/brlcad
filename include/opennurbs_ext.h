@@ -167,6 +167,7 @@ namespace brlcad {
 		bool m_checkTrim;
 		bool m_trimmed;
 		bool m_XIncreasing;
+		bool m_Vertical;
         bool m_innerTrim;
 	private:
 		fastf_t m_slope;
@@ -391,12 +392,25 @@ namespace brlcad {
 	    : m_trim(curve),BANode<BA>(node), m_face(face), m_t(t), m_innerTrim(innerTrim), m_checkTrim(checkTrim), m_trimmed(trimmed) { 
 			m_start = curve->PointAt(m_t[0]);
 			m_end = curve->PointAt(m_t[1]);
-			if ( (m_end[X] - m_start[X]) > 0.0 ) {
-				m_XIncreasing = true;
-			} else {
+			// check for vertical segments they can be removed
+			// from trims above (can't tell direction and don't
+			// need
+			if ( NEAR_ZERO(m_end[X]-m_start[X], DBL_EPSILON) ) {
+			    m_Vertical = true;
+			    if (m_innerTrim) {
 				m_XIncreasing = false;
+			    } else {
+				m_XIncreasing = true;
+			    }
+			} else {
+			    m_Vertical = false;
+			    if ( (m_end[X] - m_start[X]) > 0.0 ) {
+				m_XIncreasing = true;
+			    } else {
+				m_XIncreasing = false;
+			    }
+			    m_slope = (m_end[Y] - m_start[Y])/(m_end[X] - m_start[X]);
 			}
-			m_slope = (m_end[Y] - m_start[Y])/(m_end[X] - m_start[X]);
 			m_bb_diag = DIST_PT_PT(m_start,m_end);
 			
 		}
@@ -678,6 +692,7 @@ namespace brlcad {
 	
     private:
 	list<BRNode*> m_trims_above;
+	list<BRNode*> m_trims_vertical;
 	list<BRNode*> m_trims_right;
     };
 
@@ -938,6 +953,8 @@ namespace brlcad {
 				//	dist = uv[Y] - br->getLinearEstimateOfV(uv[X]);
 				//    closest = br;
 				//} else {
+				if (br->m_Vertical)
+				    continue;
 				fastf_t v = br->getLinearEstimateOfV(uv[X]); // - uv[Y];
 				v = br->getCurveEstimateOfV(uv[X],0.0000001);
 					br->GetBBox(bmin,bmax);
@@ -1042,6 +1059,7 @@ namespace brlcad {
 		//	point_t surfmin,surfmax;
 		point_t curvemin,curvemax;
 		double dist; 
+		bool trim_already_assigned = false;
 		
 		//	BVNode<BV>::GetBBox(surfmin,surfmax);
 		
@@ -1052,30 +1070,36 @@ namespace brlcad {
 		m_trims_above.sort(sortY);
 		m_trims_right.sort(sortX);
 		
-		if ( m_trims_above.empty() || m_trims_right.empty()) {
-			m_trimmed = true;
-			m_checkTrim = false;
-		} else if (!m_trims_above.empty()) {//trimmed above check contains
+		if (!m_trims_above.empty()) {
 			i = m_trims_above.begin();
-			br = dynamic_cast<SubcurveBRNode*>(*i);
-			br->GetBBox(curvemin,curvemax);
-			dist = 0.000001; //0.03*DIST_PT_PT(curvemin,curvemax);
-			if (curvemin[Y]-dist > m_v[1]) {
-				i++;
-				if (i == m_trims_above.end()) { //easy only trim in above list
-					if (br->m_XIncreasing) {
-						m_trimmed=true;
-						m_checkTrim=false;
-					} else {
-						m_trimmed=false;
-						m_checkTrim=false;
-					} 
-				} else { //check for trim bbox overlap TODO: look for multiple overlaps
-					SubcurveBRNode* bs;
-					bs = dynamic_cast<SubcurveBRNode*>(*i);
-					point_t smin,smax;
-					bs->GetBBox(smin,smax);
-					if ((smin[Y] >= curvemax[Y]) || (smin[X] >= curvemax[X]) || (smax[X] <= curvemin[X])) { //can determine inside/outside without closer inspection
+			while (i != m_trims_above.end()) {
+				br = dynamic_cast<SubcurveBRNode*>(*i);
+				if (br->m_Vertical) { // check V to see if trim possibly overlaps
+					br->GetBBox(curvemin,curvemax);
+					if (curvemin[Y]-dist <= m_v[1]) { //possibly contains trim can't rule out check closer
+						m_checkTrim = true;
+						trim_already_assigned = true;
+					}
+					i = m_trims_above.erase(i);
+				} else {
+					i++;
+				}
+			}
+		}
+		
+		if (!trim_already_assigned) { // already contains possible vertical trim
+			if ( m_trims_above.empty() || m_trims_right.empty()) {
+				m_trimmed = true;
+				m_checkTrim = false;
+			} else if (!m_trims_above.empty()) {//trimmed above check contains
+				i = m_trims_above.begin();
+				br = dynamic_cast<SubcurveBRNode*>(*i);
+				br->GetBBox(curvemin,curvemax);
+				dist = 0.000001; //0.03*DIST_PT_PT(curvemin,curvemax);
+				if (curvemin[Y]-dist > m_v[1]) {
+					i++;
+										
+					if (i == m_trims_above.end()) { //easy only trim in above list
 						if (br->m_XIncreasing) {
 							m_trimmed=true;
 							m_checkTrim=false;
@@ -1083,15 +1107,31 @@ namespace brlcad {
 							m_trimmed=false;
 							m_checkTrim=false;
 						} 
+					} else { //check for trim bbox overlap TODO: look for multiple overlaps
+						SubcurveBRNode* bs;
+						bs = dynamic_cast<SubcurveBRNode*>(*i);
+						point_t smin,smax;
+						bs->GetBBox(smin,smax);
+						if ((smin[Y] >= curvemax[Y]) || (smin[X] >= curvemax[X]) || (smax[X] <= curvemin[X])) { //can determine inside/outside without closer inspection
+							if (br->m_XIncreasing) {
+								m_trimmed=true;
+								m_checkTrim=false;
+							} else {
+								m_trimmed=false;
+								m_checkTrim=false;
+							} 
+						} else {
+							m_checkTrim=true;
+						}
 					}
+				} else {
+					//m_contains_trim = true; //will have to check for trim at shotline
+					m_checkTrim = true;
 				}
-			} else {
-				//m_contains_trim = true; //will have to check for trim at shotline
-				m_checkTrim = true;
+			} else {// something wrong here
+				bu_log("Error prepping trims");
+				return false;
 			}
-		} else {// something wrong here
-			bu_log("Error prepping trims");
-			return false;
 		}
 		return true;
     }

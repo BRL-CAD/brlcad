@@ -107,6 +107,20 @@ namespace brlcad {
 						}
 						min = xmax;
 					    }
+						delete knots;
+					} else {
+					    int knotcnt = trimCurve->SpanCount();
+					    double *knots = new double[knotcnt+1];
+
+					    trimCurve->GetSpanVector(knots);
+					    for(int i=1;i<=knotcnt;i++) {
+							double xmax = knots[i];
+							if (!NEAR_ZERO(xmax-min,0.000001)) {
+								m_root->addChild(subdivideCurve(trimCurve,min,xmax,innerLoop,0));
+							}
+							min = xmax;
+					    }
+						delete knots;
 					}
 #endif
 					if (!NEAR_ZERO(max-min,0.000001)) {
@@ -156,9 +170,16 @@ namespace brlcad {
 	CurveTree::getLeavesAbove(list<BRNode*>& out_leaves, const ON_Interval& u, const ON_Interval& v) {
 	    point_t bmin,bmax;
 	    double dist;
-	    for (list<BRNode*>::iterator i = m_sortedX.begin(); i != m_sortedX.end(); i++) {
+		/*
+		if ((u[0] >= 0.12) && (v[0] >= -1.0) && //between min
+		    (u[1] <= 0.188) && (v[1] <= 19.0)) {
+		    bu_log("we're here\n");
+		}
+		*/
+		for (list<BRNode*>::iterator i = m_sortedX.begin(); i != m_sortedX.end(); i++) {
 		SubcurveBRNode* br = dynamic_cast<SubcurveBRNode*>(*i);
 		br->GetBBox(bmin,bmax);
+
 		dist = 0.000001;//0.03*DIST_PT_PT(bmin,bmax);
 		if (bmax[X]+dist < u[0])
 		    continue;

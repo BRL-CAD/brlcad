@@ -310,13 +310,17 @@ void plotsurfaceleafs(SurfaceTree* surf) {
 			COLOR_PLOT(100, 100, 100); 
 		}
 		*/
-		if (true) {
+		if ((!bb->m_trimmed) && (!bb->m_checkTrim)) {
+		if (false) {
 			bb->GetBBox(min,max);
 		} else {
-			VSET(min,bb->m_u[0]+0.001,bb->m_v[0]+0.001,0.0);
-			VSET(max,bb->m_u[1]-0.001,bb->m_v[1]-0.001,0.0);
+		    //VSET(min,bb->m_u[0]+0.001,bb->m_v[0]+0.001,0.0);
+		    //VSET(max,bb->m_u[1]-0.001,bb->m_v[1]-0.001,0.0);
+			VSET(min,bb->m_u[0],bb->m_v[0],0.0);
+			VSET(max,bb->m_u[1],bb->m_v[1],0.0);
 		}
 		BB_PLOT(min,max);
+		}
     }
     return;
 }
@@ -400,11 +404,26 @@ void plottrim(ON_BrepFace &face ) {
 	    const ON_Curve* trimCurve = trim.TrimCurveOf();
 
 	if (trimCurve->IsLinear()) {
+	/*
 	    ON_BrepVertex& v1 = face.Brep()->m_V[trim.m_vi[0]];
 	    ON_BrepVertex& v2 = face.Brep()->m_V[trim.m_vi[1]];
 	    VMOVE(pt1, v1.Point());
 	    VMOVE(pt2, v2.Point());
 	    LINE_PLOT(pt1,pt2);
+		*/
+
+		int knotcnt = trimCurve->SpanCount();
+		double *knots = new double[knotcnt+1];
+
+		trimCurve->GetSpanVector(knots);
+		for(int i=1;i<=knotcnt;i++) {
+			ON_3dPoint p = trimCurve->PointAt(knots[i-1]);
+			VMOVE(pt1, p);
+			p = trimCurve->PointAt(knots[i]);
+			VMOVE(pt2, p);
+			LINE_PLOT(pt1,pt2);
+		}
+
 	} else {
 	    ON_Interval dom = trimCurve->Domain();
 	    // XXX todo: dynamically sample the curve
@@ -789,9 +808,9 @@ brep_preprocess_trims(ON_BrepFace& face, SurfaceTree* tree) {
 //#define KCURVELETS
 #ifdef KCURVELETS
 		list<BRNode*> curvelets;
-		//ct->getLeaves(curvelets);
-		ON_Interval u(-5.4375,-4.53125);
-		ON_Interval v(-5.4375,-4.53125);
+		ct->getLeaves(curvelets);
+		//ON_Interval u(-5.4375,-4.53125);
+		//ON_Interval v(-5.4375,-4.53125);
 		ct->getLeaves(curvelets);
 		
 		for (list<BRNode*>::iterator i = curvelets.begin(); i != curvelets.end(); i++) {
@@ -872,7 +891,7 @@ brep_build_bvh(struct brep_specific* bs, struct rt_brep_internal* bi)
 		ON_BrepFace& face = faces[i];
 //#define KPLOT
 #ifdef KPLOT // debugging hacks to look at specific faces
-		if (i == 5) { //(i == 0)) { // && ((i <= 6) ||(i >= 5))) {
+		if (i == 196) { //(i == 0)) { // && ((i <= 6) ||(i >= 5))) {
 	char buffer[80];
 	sprintf(buffer,"Face%d.pl",i+1);
 	plot_file((const char *)buffer);
@@ -887,7 +906,7 @@ brep_build_bvh(struct brep_specific* bs, struct rt_brep_internal* bi)
 #ifdef KPLOT // debugging hacks to look at specific faces
 			
 			if (true) { //plotting utah_brep_intersecthacks i==0) {
-			    //plottrim(face);
+			    plottrim(face);
 			    plotsurfaceleafs(st);
 			}
 			
@@ -1988,6 +2007,18 @@ rt_brep_shot(struct soltab *stp, register struct xray *rp, struct application *a
 	plot_file((const char *)buffer);
 	plotleaf3d((SubsurfaceBBNode*)sbv);
 	(void)fclose(plot_file());
+	if (boxcnt == 1) { //plotting utah_brep_intersecthacks i==0) {
+		const ON_BrepFace *face = sbv->m_face;
+		sprintf(buffer,"Face%d_N%d.pl",face->m_face_index,boxcnt);
+		plot_file((const char *)buffer);
+		plottrim((ON_BrepFace&)*sbv->m_face);
+		(void)fclose(plot_file());
+		sprintf(buffer,"Tree%d_N%d.pl",face->m_face_index,boxcnt);
+		plot_file((const char *)buffer);
+		SurfaceTree* st = (SurfaceTree*)face->m_face_user.p;
+		plotsurfaceleafs(st);
+		(void)fclose(plot_file());
+	}
 #endif
 
 	const ON_BrepFace* f = sbv->m_face;
