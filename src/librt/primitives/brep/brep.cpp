@@ -1744,9 +1744,9 @@ utah_brep_intersect_test(const SubsurfaceBBNode* sbv, const ON_BrepFace* face, c
 	//if (converged && (t > 1.e-2) && (!((SubsurfaceBBNode*)sbv)->isTrimmed(ouv))) hit = true;
 
     for(int i=0;i < numhits;i++) {
-	
+	int trim_status = ((SubsurfaceBBNode*)sbv)->isTrimmed(ouv[i]);
 	if (converged && (t[i] > 1.e-2)) {
-		if  (!((SubsurfaceBBNode*)sbv)->isTrimmed(ouv[i])) {
+		if  (trim_status != 1) {
 			hit = true;
 //#define KHITPLOT
 #ifdef KHITPLOT
@@ -1810,9 +1810,9 @@ utah_brep_intersect(const SubsurfaceBBNode* sbv, const ON_BrepFace* face, const 
 	
 	if ( (sbv->m_u[0] < ouv[0]) && (sbv->m_u[1] > ouv[0]) &&
 			(sbv->m_v[0] < ouv[1]) && (sbv->m_v[1] > ouv[1])) {
-			
+	int trim_status = ((SubsurfaceBBNode*)sbv)->isTrimmed(ouv);	
 	if (converged && (t > 1.e-2)) {
-		if  (!((SubsurfaceBBNode*)sbv)->isTrimmed(ouv)) {
+		if  (trim_status != 1) {
 			hit = true;
 //#define KHITPLOT
 #ifdef KHITPLOT
@@ -1888,7 +1888,8 @@ brep_intersect(const SubsurfaceBBNode* sbv, const ON_BrepFace* face, const ON_Su
 	move(uv, new_uv);
 	Dlast = d;
     }
-    if ((found > 0) &&  (!((SubsurfaceBBNode*)sbv)->isTrimmed(uv))) {
+    int trim_status = ((SubsurfaceBBNode*)sbv)->isTrimmed(uv);
+    if ((found > 0) &&  (trim_status != 1)) {
 	ON_3dPoint _pt;
 	ON_3dVector _norm;
 	surf->EvNormal(uv[0], uv[1],_pt,_norm);

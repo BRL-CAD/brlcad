@@ -151,7 +151,7 @@ namespace brlcad {
 		
 		bool intersectedBy(ON_Ray& ray, double* tnear = 0, double* tfar = 0);
 		bool isLeaf() const;
-		bool isTrimmed(const ON_2dPoint& uv) const;
+		int isTrimmed(const ON_2dPoint& uv) const;
 		bool doTrimming() const;
 		ON_2dPoint getClosestPointEstimate(const ON_3dPoint& pt);
 		ON_2dPoint getClosestPointEstimate(const ON_3dPoint& pt, ON_Interval& u, ON_Interval& v);
@@ -428,28 +428,32 @@ namespace brlcad {
 	}
 
 	template<class BA>
-	inline bool
+	int
 	SubcurveBANode<BA>::isTrimmed(const ON_2dPoint& uv) const {
 	    if (m_checkTrim) {
 			fastf_t v = m_start[Y] + m_slope*(uv[X] - m_start[X]);
 			v = getCurveEstimateOfV(uv[X],0.0000001);
 			if (uv[Y] < v) {
 				if (m_XIncreasing) {
-					return true;
+					return 1;
 				} else {
-					return false;
+					return 0;
 				}
 			} else if (uv[Y] > v) {
 				if (!m_XIncreasing) {
-					return true;
+					return 1;
 				} else {
-					return false;
+					return 0;
 				}
 			} else {
-				return true;
+				return 1;
 				}
 		} else {
-			return m_trimmed;
+		    if (m_trimmed) {
+			return 1;
+		    } else {
+			return 0;
+		    }
 		}
 	}
 
@@ -672,7 +676,7 @@ namespace brlcad {
 
 	bool intersectedBy(ON_Ray& ray, double* tnear = 0, double* tfar = 0);
 	bool isLeaf() const;
-	bool isTrimmed(const ON_2dPoint& uv);
+	int isTrimmed(const ON_2dPoint& uv);
 	bool doTrimming() const;
 	ON_2dPoint getClosestPointEstimate(const ON_3dPoint& pt);
 	ON_2dPoint getClosestPointEstimate(const ON_3dPoint& pt, ON_Interval& u, ON_Interval& v);
@@ -922,7 +926,7 @@ namespace brlcad {
     }
 
 	template<class BV>
-    inline bool
+    int
     SubsurfaceBVNode<BV>::isTrimmed(const ON_2dPoint& uv) {
 		SubcurveBRNode* br;
 		list<BRNode*> trims;
@@ -933,7 +937,7 @@ namespace brlcad {
 		getTrimsAbove(uv,trims);
 		
 		if (trims.empty()) {
-			return true;
+			return 1;
 #if 0
 		} else if (trims.size() == 1) {
 			br = dynamic_cast<SubcurveBRNode*>(*trims.begin());
@@ -970,13 +974,17 @@ namespace brlcad {
 				//}
 			}
 			if (closest == NULL) {
-				return true;
+				return 1;
 			} else {
 				return closest->isTrimmed(uv);
 			}
 		}
 		} else {
-		return m_trimmed;
+		    if (m_trimmed) {
+			return 1;
+		    } else {
+			return 0;
+		    }
 		}
 	}
 
