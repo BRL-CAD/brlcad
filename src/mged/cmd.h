@@ -60,6 +60,7 @@ BU_EXTERN(int cmd_bot_decimate, (ClientData clientData, Tcl_Interp *interp, int 
 BU_EXTERN(int cmd_bot_face_sort, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
 BU_EXTERN(int cmd_bot_smooth, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
 BU_EXTERN(int cmd_cat, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
+BU_EXTERN(int cmd_cc, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
 BU_EXTERN(int cmd_center, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
 BU_EXTERN(int cmd_cmd_win, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
 BU_EXTERN(int cmd_color, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));

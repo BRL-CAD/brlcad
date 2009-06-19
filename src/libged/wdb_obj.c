@@ -290,6 +290,7 @@ static int pathListNoLeaf = 0;
 
 static struct bu_cmdtab wdb_newcmds[] = {
     {"arced",		ged_arced},
+    {"cc",		ged_cc},
     {"color",		ged_color},
     {"comb_color",	ged_comb_color},
     {"edcomb",		ged_edcomb},

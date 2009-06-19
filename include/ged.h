@@ -1375,6 +1375,14 @@ GED_EXPORT BU_EXTERN(int ged_bot_vertex_fuse, (struct ged *gedp, int argc, const
 GED_EXPORT BU_EXTERN(int ged_cat, (struct ged *gedp, int argc, const char *argv[]));
 
 /**
+ * Create constraint object
+ *
+ * Usage:
+ *     cc expression
+ */
+GED_EXPORT BU_EXTERN(int ged_cc, (struct ged *gedp, int argc, const char *argv[]));
+
+/**
  * Get or set the view center.
  *
  * Usage:

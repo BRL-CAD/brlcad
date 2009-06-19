@@ -87,6 +87,7 @@ static struct cmdtab mged_cmdtab[] = {
     {"bottom",	bv_bottom, GED_FUNC_PTR_NULL},
     {"c", cmd_ged_plain_wrapper, ged_comb_std},
     {"cat", cmd_ged_plain_wrapper, ged_cat},
+    {"cc", cmd_ged_plain_wrapper, ged_cc},
     {"center", cmd_center, GED_FUNC_PTR_NULL},
     {"clone", cmd_ged_edit_wrapper, ged_clone},
     {"closedb", f_closedb, GED_FUNC_PTR_NULL},
