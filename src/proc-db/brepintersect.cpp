@@ -49,7 +49,7 @@ bool PointInTriangle(
     VCROSS(normal, b - a, c - a);
     VUNITIZE(normal);
 
-    if (!NEAR_ZERO(VDOT(normal, P-a), tol))
+    if (!NEAR_ZERO(VDOT(normal, P - a), tol))
 	return false;
 
     /* we have a point that we know is in the plane,
@@ -59,19 +59,19 @@ bool PointInTriangle(
      * The reader could try to prove this if s/he were ambitious
      */
     double v1[3];
-    VCROSS(v1, b-a, P-a);
+    VCROSS(v1, b - a, P - a);
     if (VNEAR_ZERO(v1, tol)) {
 	VSETALL(v1, 0.0);
     } else
 	VUNITIZE(v1);
     double v2[3];
-    VCROSS(v2, c-b, P-b);
+    VCROSS(v2, c - b, P - b);
     if (VNEAR_ZERO(v2, tol)) {
 	VSETALL(v2, 0.0);
     } else
 	VUNITIZE(v2);
     double v3[3];
-    VCROSS(v3, a-c, P-c);
+    VCROSS(v3, a - c, P - c);
     if (VNEAR_ZERO(v3, tol)) {
 	VSETALL(v3, 0.0);
     } else
@@ -242,7 +242,7 @@ int SegmentSegmentIntersect(
 	double t = VDOT(negCXA, BXA)/MAGSQ(BXA);
 	/* now we need to perform some tests to make sure we're not
 	 * outside these bounds by tiny little amounts */
-	if (-tol<=s && s<=1.0+tol && -tol<=t && t<=1.0+tol) {
+	if (-tol <= s && s <= 1.0 + tol && -tol <= t && t <= 1.0 + tol) {
 	    ON_3dPoint Ps = x1 + s * (x2 - x1); /* The answer according to equation P*/
 	    ON_3dPoint Qt = x3 + t * (x4 - x3); /* The answer according to equation Q*/
 	    assert(VAPPROXEQUAL(Ps, Qt, tol)); /* check to see if they agree, just a sanity check*/
@@ -341,7 +341,7 @@ int SegmentTriangleIntersect(
 		int i;
 		int points_found = 0;
 		int rv;
-		for (i=0; i<3; i++) {
+		for (i = 0; i < 3; i++) {
 		    rv = SegmentSegmentIntersect(triangle[i], triangle[(i+1)%3], p, q, x, tol);
 		    if (rv == 1) {
 			if (points_found == 0 || !VAPPROXEQUAL(out[0], x[0], tol)) { /* in rare cases we can get the same point twice*/
@@ -363,73 +363,69 @@ int SegmentTriangleIntersect(
 }
 
 
-/* intersects triangle ABC with triangle DEF
- * return values:
- *				   -1: degenerate (triangles are coincident or an edge of 1 triangle incident on the other triangle)
- *					0: no intersection
- *					1: the triangles intersect in a point
- *					2: the triangles intersect in a line
+/* intersects triangle abc with triangle def
+ * returns the number of intersections found [0-6]
+ * more accurately it returns the number of points needed
+ * to describe the intersection so 6 points indicates intersection
+ * in a hexagon.
+ * Although it's never explicitly tested the points returned will be within
+ * the tolerance of planar
  */
 int TriangleTriangleIntersect(
-	const ON_3dPoint T1[3],
-	const ON_3dPoint T2[3],
-	ON_Line& out,
+	const ON_3dPoint a,
+	const ON_3dPoint b,
+	const ON_3dPoint c,
+	const ON_3dPoint d,
+	const ON_3dPoint e,
+	const ON_3dPoint f,
+	ON_3dPoint out[6],
 	double tol
 	)
 {
-    double abc[2][3];
-    double t[2];
+    ON_3dPoint abc[3] = {a, b, c};
+    ON_3dPoint def[3] = {d, e, f};
+    ON_3dPoint result[2];
     int rv;
     ON_3dPoint p1, p2;
     int number_found = 0; /* number_found <= 2*/
-    /* intersect the edges of triangle 1 with triangle 2*/
-    for (int i = 0; i<3; i++) {
-	rv = ON_LineTriangleIntersect(T2[0], T2[1], T2[2], T1[i], T1[(i+1)%3], abc, t, tol);
-	if (rv == 2)
-	    /* for the time being we'll consider this as a degenerate case*/
-	    return -1;
-	else if (rv == 1) {
-	    /* now we're in business the line intersects the triangle at one point*/
-	    if (number_found == 0) {
-		p1 = abc[0];
-		number_found++;
-	    } else if (number_found == 1)
-		if(p1 != ON_3dPoint(abc[0])) { /* this should use tolerance does it?*/
-		    p2 = abc[0];
-		    number_found++;
+    int i, j, k; /* iterators */
+    /* intersect the edges of triangle abc with triangle def*/
+    for (i = 0; i < 3; i++) {
+	rv = SegmentTriangleIntersect(d, e, f, abc[i], abc[(i+1)%3], result, tol);
+	for (j = 0; i < rv; i++) {
+	    ON_3dPoint P = result[0];
+	    bool dup = false;
+	    for (k = 0; k < number_found; k++) {
+		if (VAPPROXEQUAL(out[k], P, tol)) {
+		    dup = true;
 		    break;
 		}
+	    }
+	    if (!dup)
+		out[number_found] = P;
 	}
+	number_found += rv;
     }
-    for (int i = 0; i<3; i++) {
-	/* now we intersect the edges of triangle 2 with triangle 1*/
-	rv = ON_LineTriangleIntersect(T1[0], T1[1], T1[2], T2[i], T2[(i+1)%3], abc, t, tol);
-	if (rv == 2)
-	    /* again degenerate*/
-	    return -1;
-	else if (rv == 1) {
-	    if (number_found == 0) {
-		p1 = abc[0];
-		number_found++;
-	    } else if (number_found == 1)
-		if (p1 != ON_3dPoint(abc[0])) {
-		    p2 = abc[0];
-		    number_found++;
+
+    /* intersect the edges of triangle def with triangle abc*/
+    for (i = 0; i < 3; i++) {
+	rv = SegmentTriangleIntersect(a, b, c, def[i], def[(i + 1) % 3], result, tol);
+	for (j = 0; i < rv; i++) {
+	    ON_3dPoint P = result[0];
+	    bool dup = false;
+	    for (k = 0; k < number_found; k++) {
+		if (VAPPROXEQUAL(out[k], P, tol)) {
+		    dup = true;
 		    break;
 		}
+	    }
+	    if (!dup)
+		out[number_found] = P;
 	}
+	number_found += rv;
     }
-    if (number_found == 0)
-	return 0; /* we didn't find anything*/
-    else if (number_found == 1) {
-	out.from = p1;
-	return 1;
-    } else if (number_found == 2) {
-	out.from = p1;
-	out.to = p2;
-	return 2;
-    }
-    return 0;
+
+    return number_found;
 }
 
 int TriangleBrepIntersect(
@@ -444,6 +440,10 @@ int TriangleBrepIntersect(
 
 int main()
 {
+    ON_3dPoint T1[3];
+    ON_Brep brep;
+    ON_PolyCurve outcurve;
+    TriangleBrepIntersect(T1, brep, outcurve, 1.0);
     /* Tests for PointInTriangle */
     ON_3dPoint a = ON_3dPoint(0.0, 0.0, 0.0);
     ON_3dPoint b = ON_3dPoint(100.0, 0.0, 0.0);
