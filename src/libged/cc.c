@@ -45,7 +45,7 @@
 int
 ged_cc(struct ged *gedp, int argc, const char *argv[])
 {
-    static const char *usage = "constraint_expression";
+    static const char *usage = "name constraint_expression";
 
     struct rt_db_internal	internal;
     struct rt_constraint_internal	*con_ip;
@@ -57,7 +57,7 @@ ged_cc(struct ged *gedp, int argc, const char *argv[])
 
     /* initialize result */
     bu_vls_trunc(&gedp->ged_result_str, 0);
-    if (argc != 2) {
+    if (argc != 3) {
 	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_HELP;
     }
@@ -69,6 +69,10 @@ ged_cc(struct ged *gedp, int argc, const char *argv[])
     internal.idb_ptr = (genptr_t)bu_malloc(sizeof(struct rt_constraint_internal), "rt_constraint_internal");
     con_ip = (struct rt_constraint_internal *)internal.idb_ptr;
     con_ip->magic = RT_CONSTRAINT_MAGIC;
+    con_ip->id = 324;
+    con_ip->type = 4;
+    bu_vls_init(&(con_ip->expression));
+    bu_vls_strcat(&(con_ip->expression),"x=y=5");
 
     GED_DB_DIRADD(gedp,dp,"test-constraint", -1L, 0, DIR_NON_GEOM , (genptr_t)&internal.idb_type,GED_ERROR);
     GED_DB_PUT_INTERNAL(gedp, dp, &internal, &rt_uniresource, GED_ERROR);

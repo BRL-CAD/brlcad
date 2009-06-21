@@ -81,7 +81,7 @@ set mged_help_data(bot_vertex_fuse) {{new_bot_solid old_bot_solid} {fuse duplica
 set mged_help_data(build_region) {{[-a region_number] tag start end} {build a region from solids matching RE "tag.s*"}}
 set mged_help_data(c)		$helplib_data(wdb_comb_std)
 set mged_help_data(cat)		$helplib_data(wdb_cat)
-set mged_help_data(cc)		{{constraint_expression} {create a constraint based on the expression}}
+set mged_help_data(cc)		{{name constraint_expression} {create a constraint based on the expression}}
 set mged_help_data(center)	$helplib_data(vo_center)
 set mged_help_data(closedb)	{{}	{close any open database}}
 set mged_help_data(clone)	{{[-abhimnprtv] <object>}	{clone allows user to quickly create copies of objects
