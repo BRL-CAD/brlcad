@@ -28,6 +28,8 @@
 #include <string.h>
 #include "bio.h"
 
+#include "raytrace.h"
+#include "wdb.h"
 #include "cmd.h"
 
 #include "./ged_private.h"
@@ -45,6 +47,10 @@ ged_cc(struct ged *gedp, int argc, const char *argv[])
 {
     static const char *usage = "constraint_expression";
 
+    struct rt_db_internal	internal;
+    struct rt_constraint_internal	*con_ip;
+    register struct directory	*dp;
+
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
     GED_CHECK_READ_ONLY(gedp, GED_ERROR);
     GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
@@ -56,6 +62,17 @@ ged_cc(struct ged *gedp, int argc, const char *argv[])
 	return GED_HELP;
     }
     
+    RT_INIT_DB_INTERNAL(&internal);
+    internal.idb_major_type = DB5_MAJORTYPE_BRLCAD;
+    internal.idb_type = ID_CONSTRAINT;
+    internal.idb_meth=&rt_functab[ID_CONSTRAINT];
+    internal.idb_ptr = (genptr_t)bu_malloc(sizeof(struct rt_constraint_internal), "rt_constraint_internal");
+    con_ip = (struct rt_constraint_internal *)internal.idb_ptr;
+    con_ip->magic = RT_CONSTRAINT_MAGIC;
+
+    GED_DB_DIRADD(gedp,dp,"test-constraint", -1L, 0, DIR_NON_GEOM , (genptr_t)&internal.idb_type,GED_ERROR);
+    GED_DB_PUT_INTERNAL(gedp, dp, &internal, &rt_uniresource, GED_ERROR);
+
     bu_vls_printf(&gedp->ged_result_str, "Constraint expression to be analyzed (not implemented)");
     return GED_OK;
 }
