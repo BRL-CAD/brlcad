@@ -275,7 +275,6 @@ namespace eval ArcherCore {
 	variable mProgressBarHeight ""
 	#variable mProgressString ""
 	variable mNeedSave 0
-	variable mBackupObj ""
 	variable mPrevSelectedObjPath ""
 	variable mPrevSelectedObj ""
 	variable mSelectedObjPath ""

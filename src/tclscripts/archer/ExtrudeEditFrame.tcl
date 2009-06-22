@@ -175,13 +175,13 @@
 
     switch -- $mEditMode \
 	$setH {
-	    $::ArcherCore::application pscale $obj h $args
+	    $::ArcherCore::application p_pscale $obj h $args
 	} \
 	$moveH {
-	    $::ArcherCore::application ptranslate $obj h $args
+	    $::ArcherCore::application p_ptranslate $obj h $args
 	} \
 	$rotH {
-	    $::ArcherCore::application protate $obj h $args
+	    $::ArcherCore::application p_protate $obj h $args
 	}
 
     return ""

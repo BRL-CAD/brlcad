@@ -624,64 +624,64 @@
 
     switch -- $mEditMode \
 	$moveEdge12 {
-	    $::ArcherCore::application move_arb_edge $obj 1 $args
+	    $::ArcherCore::application p_move_arb_edge $obj 1 $args
 	} \
 	$moveEdge23 {
-	    $::ArcherCore::application move_arb_edge $obj 2 $args
+	    $::ArcherCore::application p_move_arb_edge $obj 2 $args
 	} \
 	$moveEdge34 {
-	    $::ArcherCore::application move_arb_edge $obj 3 $args
+	    $::ArcherCore::application p_move_arb_edge $obj 3 $args
 	} \
 	$moveEdge14 {
-	    $::ArcherCore::application move_arb_edge $obj 4 $args
+	    $::ArcherCore::application p_move_arb_edge $obj 4 $args
 	} \
 	$moveEdge15 {
-	    $::ArcherCore::application move_arb_edge $obj 5 $args
+	    $::ArcherCore::application p_move_arb_edge $obj 5 $args
 	} \
 	$moveEdge25 {
-	    $::ArcherCore::application move_arb_edge $obj 6 $args
+	    $::ArcherCore::application p_move_arb_edge $obj 6 $args
 	} \
 	$moveEdge36 {
-	    $::ArcherCore::application move_arb_edge $obj 7 $args
+	    $::ArcherCore::application p_move_arb_edge $obj 7 $args
 	} \
 	$moveEdge46 {
-	    $::ArcherCore::application move_arb_edge $obj 8 $args
+	    $::ArcherCore::application p_move_arb_edge $obj 8 $args
 	} \
 	$movePoint5 {
-	    $::ArcherCore::application move_arb_edge $obj 9 $args
+	    $::ArcherCore::application p_move_arb_edge $obj 9 $args
 	} \
 	$movePoint6 {
-	    $::ArcherCore::application move_arb_edge $obj 10 $args
+	    $::ArcherCore::application p_move_arb_edge $obj 10 $args
 	} \
 	$moveFace1234 {
-	    $::ArcherCore::application move_arb_face $obj 1 $args
+	    $::ArcherCore::application p_move_arb_face $obj 1 $args
 	} \
 	$moveFace2365 {
-	    $::ArcherCore::application move_arb_face $obj 2 $args
+	    $::ArcherCore::application p_move_arb_face $obj 2 $args
 	} \
 	$moveFace1564 {
-	    $::ArcherCore::application move_arb_face $obj 3 $args
+	    $::ArcherCore::application p_move_arb_face $obj 3 $args
 	} \
 	$moveFace125 {
-	    $::ArcherCore::application move_arb_face $obj 4 $args
+	    $::ArcherCore::application p_move_arb_face $obj 4 $args
 	} \
 	$moveFace346 {
-	    $::ArcherCore::application move_arb_face $obj 5 $args
+	    $::ArcherCore::application p_move_arb_face $obj 5 $args
 	} \
 	$rotateFace1234 {
-	    $::ArcherCore::application rotate_arb_face $obj 1 $mEditParam2 $args
+	    $::ArcherCore::application p_rotate_arb_face $obj 1 $mEditParam2 $args
 	} \
 	$rotateFace2365 {
-	    $::ArcherCore::application rotate_arb_face $obj 2 $mEditParam2 $args
+	    $::ArcherCore::application p_rotate_arb_face $obj 2 $mEditParam2 $args
 	} \
 	$rotateFace1564 {
-	    $::ArcherCore::application rotate_arb_face $obj 3 $mEditParam2 $args
+	    $::ArcherCore::application p_rotate_arb_face $obj 3 $mEditParam2 $args
 	} \
 	$rotateFace125 {
-	    $::ArcherCore::application rotate_arb_face $obj 4 $mEditParam2 $args
+	    $::ArcherCore::application p_rotate_arb_face $obj 4 $mEditParam2 $args
 	} \
 	$rotateFace346 {
-	    $::ArcherCore::application rotate_arb_face $obj 5 $mEditParam2 $args
+	    $::ArcherCore::application p_rotate_arb_face $obj 5 $mEditParam2 $args
 	}
 
     return ""

@@ -6,6 +6,7 @@ dist_tcl_DATA = \
 	arrow_forward.png \
 	blank.png \
 	bug.png \
+	checkpoint.png \
 	closeall.png \
 	combination.png \
 	command.png \
@@ -27,7 +28,9 @@ dist_tcl_DATA = \
 	folder_open.png \
 	folder_open_small.png \
 	folder_open_small_disabled.png \
+	global_undo.png \
 	measure.png \
+	object_undo.png \
 	open.png \
 	option_text.png \
 	option_tree.png \
@@ -58,6 +61,7 @@ dist_tcl_DATA = \
 	primitive_tgc.png \
 	primitive_tor.png \
 	refresh.png \
+	revert.png \
 	run.png \
 	save.png \
 	view_left_right_small.png \

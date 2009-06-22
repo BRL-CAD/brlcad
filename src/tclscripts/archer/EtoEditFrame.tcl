@@ -162,16 +162,16 @@
 
     switch -- $mEditMode \
 	$setr {
-	    $::ArcherCore::application pscale $obj r $args
+	    $::ArcherCore::application p_pscale $obj r $args
 	} \
 	$setr_d {
-	    $::ArcherCore::application pscale $obj d $args
+	    $::ArcherCore::application p_pscale $obj d $args
 	} \
 	$setC {
-	    $::ArcherCore::application pscale $obj c $args
+	    $::ArcherCore::application p_pscale $obj c $args
 	} \
 	$rotC {
-	    $::ArcherCore::application protate $obj c $args
+	    $::ArcherCore::application p_protate $obj c $args
 	}
 
     return ""

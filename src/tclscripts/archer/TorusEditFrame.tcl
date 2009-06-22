@@ -336,10 +336,10 @@
 
     switch -- $mEditMode \
 	$setr_a {
-	    $::ArcherCore::application pscale $obj a $args
+	    $::ArcherCore::application p_pscale $obj a $args
 	} \
 	$setr_h {
-	    $::ArcherCore::application pscale $obj h $args
+	    $::ArcherCore::application p_pscale $obj h $args
 	}
 
     return ""

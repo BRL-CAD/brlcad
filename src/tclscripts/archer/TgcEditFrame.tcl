@@ -200,49 +200,49 @@
 
     switch -- $mEditMode \
 	$setA {
-	    $::ArcherCore::application pscale $obj a $args
+	    $::ArcherCore::application p_pscale $obj a $args
 	} \
 	$setB {
-	    $::ArcherCore::application pscale $obj b $args
+	    $::ArcherCore::application p_pscale $obj b $args
 	} \
 	$setC {
-	    $::ArcherCore::application pscale $obj c $args
+	    $::ArcherCore::application p_pscale $obj c $args
 	} \
 	$setD {
-	    $::ArcherCore::application pscale $obj d $args
+	    $::ArcherCore::application p_pscale $obj d $args
 	} \
 	$setAB {
-	    $::ArcherCore::application pscale $obj ab $args
+	    $::ArcherCore::application p_pscale $obj ab $args
 	} \
 	$setCD {
-	    $::ArcherCore::application pscale $obj cd $args
+	    $::ArcherCore::application p_pscale $obj cd $args
 	} \
 	$setABCD {
-	    $::ArcherCore::application pscale $obj abcd $args
+	    $::ArcherCore::application p_pscale $obj abcd $args
 	} \
 	$setH {
-	    $::ArcherCore::application pscale $obj h $args
+	    $::ArcherCore::application p_pscale $obj h $args
 	} \
 	$setHCD {
-	    $::ArcherCore::application pscale $obj hcd $args
+	    $::ArcherCore::application p_pscale $obj hcd $args
 	} \
 	$setHV {
-	    $::ArcherCore::application pscale $obj hv $args
+	    $::ArcherCore::application p_pscale $obj hv $args
 	} \
 	$setHVAB {
-	    $::ArcherCore::application pscale $obj hvab $args
+	    $::ArcherCore::application p_pscale $obj hvab $args
 	} \
 	$rotH {
-	    $::ArcherCore::application protate $obj h $args
+	    $::ArcherCore::application p_protate $obj h $args
 	} \
 	$rotHAB {
-	    $::ArcherCore::application protate $obj hab $args
+	    $::ArcherCore::application p_protate $obj hab $args
 	} \
 	$moveH {
-	    $::ArcherCore::application ptranslate $obj h $args
+	    $::ArcherCore::application p_ptranslate $obj h $args
 	} \
 	$moveHH {
-	    $::ArcherCore::application ptranslate $obj hh $args
+	    $::ArcherCore::application p_ptranslate $obj hh $args
 	}
 
     return ""

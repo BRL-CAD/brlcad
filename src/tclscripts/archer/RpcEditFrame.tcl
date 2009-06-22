@@ -147,13 +147,13 @@
 
     switch -- $mEditMode \
 	$setB {
-	    $::ArcherCore::application pscale $obj b $args
+	    $::ArcherCore::application p_pscale $obj b $args
 	} \
 	$setH {
-	    $::ArcherCore::application pscale $obj h $args
+	    $::ArcherCore::application p_pscale $obj h $args
 	} \
 	$setr {
-	    $::ArcherCore::application pscale $obj r $args
+	    $::ArcherCore::application p_pscale $obj r $args
 	}
 }
 
