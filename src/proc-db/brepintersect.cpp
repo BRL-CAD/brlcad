@@ -429,9 +429,9 @@ int TriangleTriangleIntersect(
     return number_found;
 }
 
-int TriangleMeshIntersect(
-	const ON_3dPoint T[3],
-	const ON_Mesh mesh,
+int MeshMeshIntersect(
+	const ON_Mesh mesh1,
+	const ON_Mesh mesh2,
 	ON_SimpleArray<ON_Polyline>& out,
 	double tol
 	)
@@ -442,31 +442,52 @@ int TriangleMeshIntersect(
      *   -either we're going to get that point back anyways when we get the lines on either side of it back
      *   -or it's an intersection of just a point and we can ignore it. */
     ON_SimpleArray<ON_Line> segments;
-    int i,j;
-    for (i = 0; i < mesh.FaceCount(); i++) {
-	ON_MeshFace face = mesh.m_F[i];
+    int i,j,k;
+    for (i = 0; i < mesh1.FaceCount(); i++) {
+	ON_MeshFace face = mesh1.m_F[i];
 	ON_3dPoint result[6];
-	int n_triangles;
-	ON_3dPoint triangles[2][3]; /* we may need room for two triangles */
+	int n_triangles1;
+	ON_3dPoint triangles1[2][3];
 	if (face.IsTriangle()) {
-	    n_triangles = 1;
+	    n_triangles1 = 1;
 	    for (j = 0; j < 3; j++) { /* load the points from the mesh */
-		triangles[0][j] = (const ON_3dPoint&) (face.vi[j]);
+		triangles1[0][j] = (const ON_3dPoint&) (face.vi[j]);
 	    }
 	} else { /* we have a quad which we need to treat as two triangles */
-	    n_triangles = 2;
+	    n_triangles1 = 2;
 	    for (j = 0; j < 3; j++) {
-		triangles[0][j] = (const ON_3dPoint&) face.vi[j];
-		triangles[1][j] = (const ON_3dPoint&) face.vi[(j + 2) % 4];
+		triangles1[0][j] = (const ON_3dPoint&) face.vi[j];
+		triangles1[1][j] = (const ON_3dPoint&) face.vi[(j + 2) % 4];
 	    }
 	}
-	for (j = 0; j < n_triangles; j++) {
-	    int rv = TriangleTriangleIntersect(T[0], T[1], T[2], triangles[j][0], triangles[j][1], triangles[j][2], result, tol);
-	    if (rv == 2) {
-		ON_Line segment;
-		segment[0] = result[0];
-		segment[1] = result[1];
-		segments.Append(segment);
+	for (i = 0; i < n_triangles1; j++) {
+	    ON_3dPoint T[3] = {triangles1[i][0], triangles1[i][1], triangles1[i][2]};
+	    for (j = 0; j < mesh2.FaceCount(); j++) {
+		ON_MeshFace face = mesh2.m_F[j];
+		ON_3dPoint result[6];
+		int n_triangles2;
+		ON_3dPoint triangles[2][3]; /* we may need room for two triangles */
+		if (face.IsTriangle()) {
+		    n_triangles2 = 1;
+		    for (k = 0; k < 3; k++) { /* load the points from the mesh */
+			triangles[0][k] = (const ON_3dPoint&) (face.vi[k]);
+		    }
+		} else { /* we have a quad which we need to treat as two triangles */
+		    n_triangles2 = 2;
+		    for (k = 0; k < 3; k++) {
+			triangles[0][k] = (const ON_3dPoint&) face.vi[k];
+			triangles[1][k] = (const ON_3dPoint&) face.vi[(k + 2) % 4];
+		    }
+		}
+		for (k = 0; k < n_triangles2; k++) {
+		    int rv = TriangleTriangleIntersect(T[0], T[1], T[2], triangles[k][0], triangles[k][1], triangles[k][2], result, tol);
+		    if (rv == 2) {
+			ON_Line segment;
+			segment[0] = result[0];
+			segment[1] = result[1];
+			segments.Append(segment);
+		    }
+		}
 	    }
 	}
     }
