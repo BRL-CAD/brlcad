@@ -47,6 +47,8 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 THESE ARE UNSCHEDULED BACKLOG TASKS
 -----------------------------------
 
+* Impliment procedural human geometry generator
+
 * fix the shaders.sh regression test case, failing dues to changes
   with mged's view initialization.
 
