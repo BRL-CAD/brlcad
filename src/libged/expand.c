@@ -112,11 +112,13 @@ ged_expand(struct ged *gedp, int argc, const char *argv[])
 		++thismatch;
 	    }
 	}
+#if 0
 	if (thismatch == 0) {
 	    if (nummatch > 0)
 		bu_vls_printf(&gedp->ged_result_str, " ");
 	    ged_scrape_escapes_AppendResult(&gedp->ged_result_str, argv[whicharg]);
 	}
+#endif
     }
 
     return GED_OK;
