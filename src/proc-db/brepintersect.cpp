@@ -370,6 +370,7 @@ int SegmentTriangleIntersect(
  * in a hexagon.
  * Although it's never explicitly tested the points returned will be within
  * the tolerance of planar
+ * TODO: make sure that the edges are outputted in an order representative of the polygonal intersection
  */
 int TriangleTriangleIntersect(
 	const ON_3dPoint a,
@@ -428,22 +429,82 @@ int TriangleTriangleIntersect(
     return number_found;
 }
 
-int TriangleBrepIntersect(
-	const ON_3dPoint T1[3],
-	const ON_Brep brep,
-	ON_Curve& out,
+int TriangleMeshIntersect(
+	const ON_3dPoint T[3],
+	const ON_Mesh mesh,
+	ON_SimpleArray<ON_Polyline>& out,
 	double tol
 	)
 {
-    return 0;
+    /* First we go through and intersect the meshes triangle by triangle.
+     * Then we take all the lines we get back and store them in an array.
+     * If we get a point back from an intersection we can ignore that because:
+     *   -either we're going to get that point back anyways when we get the lines on either side of it back
+     *   -or it's an intersection of just a point and we can ignore it. */
+    ON_SimpleArray<ON_Line> segments;
+    int i,j;
+    for (i = 0; i < mesh.FaceCount(); i++) {
+	ON_MeshFace face = mesh.m_F[i];
+	ON_3dPoint result[6];
+	int n_triangles;
+	ON_3dPoint triangles[2][3]; /* we may need room for two triangles */
+	if (face.IsTriangle()) {
+	    n_triangles = 1;
+	    for (j = 0; j < 3; j++) { /* load the points from the mesh */
+		triangles[0][j] = (const ON_3dPoint&) (face.vi[j]);
+	    }
+	} else { /* we have a quad which we need to treat as two triangles */
+	    n_triangles = 2;
+	    for (j = 0; j < 3; j++) {
+		triangles[0][j] = (const ON_3dPoint&) face.vi[j];
+		triangles[1][j] = (const ON_3dPoint&) face.vi[(j + 2) % 4];
+	    }
+	}
+	for (j = 0; j < n_triangles; j++) {
+	    int rv = TriangleTriangleIntersect(T[0], T[1], T[2], triangles[j][0], triangles[j][1], triangles[j][2], result, tol);
+	    if (rv == 2) {
+		ON_Line segment;
+		segment[0] = result[0];
+		segment[1] = result[1];
+		segments.Append(segment);
+	    }
+	}
+    }
+    /* Now we have all the lines in an array, but we need to arrange them in some Polylines 
+     * Remember two meshes could intersect in two entirely distinct polylines */
+    for (i = 0; segments.Count() > 0; i++) { /* We're going to fill in the ith polyline */
+	out[i].Empty();
+	out[i].Append(segments.First()->from);
+	out[i].Append(segments.First()->to);
+	segments.Remove(0);
+	while (!out[i].IsClosed(tol)) {
+	    for (j = 0; j < segments.Count(); j++) {
+		ON_Line segment = segments[j];
+		if (VAPPROXEQUAL(segment.from, *out[i].First(), tol)) {
+		    out[i].Insert(0, segment[1]);
+		    segments.Remove(j);
+		    break;
+		} else if (VAPPROXEQUAL(segment.from, *out[i].Last(), tol)) {
+		    out[i].Append(segment[1]);
+		    segments.Remove(j);
+		    break;
+		} else if (VAPPROXEQUAL(segment.to, *out[i].First(), tol)) {
+		    out[i].Insert(0, segment[0]);
+		    segments.Remove(j);
+		    break;
+		} else if (VAPPROXEQUAL(segment.to, *out[i].Last(), tol)) {
+		    out[i].Append(segment[0]);
+		    segments.Remove(j);
+		    break;
+		}
+	    }
+	}
+    }
+    return i + 1;
 }
 
 int main()
 {
-    ON_3dPoint T1[3];
-    ON_Brep brep;
-    ON_PolyCurve outcurve;
-    TriangleBrepIntersect(T1, brep, outcurve, 1.0);
     /* Tests for PointInTriangle */
     ON_3dPoint a = ON_3dPoint(0.0, 0.0, 0.0);
     ON_3dPoint b = ON_3dPoint(100.0, 0.0, 0.0);

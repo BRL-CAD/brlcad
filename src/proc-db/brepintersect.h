@@ -29,6 +29,7 @@
 #include "../../include/bn.h"
 #include "../../include/bu.h"
 #include "../../include/vmath.h"
+#include "../src/other/openNURBS/opennurbs_array.h"
 
 
 bool PointInTriangle(
