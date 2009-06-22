@@ -284,7 +284,7 @@ plot_file(const char *pname)
 #define LINE_PLOT(p1, p2) pdv_3move(plot_file(), p1); pdv_3line(plot_file(), p1, p2)
 #define BB_PLOT(p1, p2) pdv_3box(plot_file(), p1, p2)
 
-#endif /* PLOTTING */
+
 
 
 void plotsurfaceleafs(SurfaceTree* surf) {
@@ -468,6 +468,7 @@ void plottrim(ON_Curve &curve ) {
 	VMOVE(pt1,p);
     }
 }
+#endif /* PLOTTING */
 
 double
 getVerticalTangent(const ON_Curve *curve,double min,double max) {
@@ -1056,15 +1057,15 @@ brep_get_plane_ray(ON_Ray& r, plane_ray& pr)
 class brep_hit {
 public:
 
-    enum type {
+    enum hit_type {
 	CLEAN_HIT,
 	CLEAN_MISS,
 	NEAR_HIT,
 	NEAR_MISS,
     };
-    enum direction {
-	INCOMING,
-	OUTGOING,
+    enum hit_direction {
+	ENTERING,
+	LEAVING,
     };
 
     const ON_BrepFace& face;
@@ -1075,6 +1076,8 @@ public:
     bool    trimmed;
     bool    closeToEdge;
     bool    oob;
+	enum hit_type hit;
+	enum hit_direction direction;
     // XXX - calculate the dot of the dir with the normal here!
     SubsurfaceBBNode const * sbv;
 
@@ -1107,6 +1110,8 @@ public:
 	closeToEdge = h.closeToEdge;
 	oob = h.oob;
 	sbv = h.sbv;
+	hit = h.hit;
+	direction = h.direction;
 
         return *this;
     }
@@ -1740,63 +1745,61 @@ utah_brep_intersect_test(const SubsurfaceBBNode* sbv, const ON_BrepFace* face, c
     
     double grazing_float = normal * ray.m_dir;
     
-    if (fabs(grazing_float) < 0.1) {
-	numhits = utah_newton_4corner_solver( sbv, surf, ray, ouv, t, N, converged, 1);
+    if (fabs(grazing_float) < 0.2) {
+		numhits = utah_newton_4corner_solver( sbv, surf, ray, ouv, t, N, converged, 1);
     } else {
-	numhits = utah_newton_4corner_solver( sbv, surf, ray, ouv, t, N, converged, 0);
+		numhits = utah_newton_4corner_solver( sbv, surf, ray, ouv, t, N, converged, 0);
     }
-//utah_newton_4corner_solver(const SubsurfaceBBNode* sbv, const ON_Surface* surf, const ON_Ray& r, ON_2dPoint* ouv, double* t, ON_3dVector* &N, bool& converged)
-    /*
-     * DDR.  The utah people are using this t_min which represents the
-     * last point hit along the ray to ensure we are looking at points
-     * futher down the ray.  I haven't implemented this I'm not sure
-     * we need it
-     *
-     * if (converged && (t > 1.e-2) && (t < t_min) && (!utah_isTrimmed(ouv, face))) hit = true;
-     *
-     */
-    //if (converged && (t > 1.e-2) && (!utah_isTrimmed(ouv, face))) hit = true;
-	//if (converged && (t > 1.e-2) && (!((SubsurfaceBBNode*)sbv)->isTrimmed(ouv))) hit = true;
-
+	
     for(int i=0;i < numhits;i++) {
-	fastf_t closesttrim;
-	int trim_status = ((SubsurfaceBBNode*)sbv)->isTrimmed(ouv[i],closesttrim);
-	if (converged && (t[i] > 1.e-2)) {
-		if  (trim_status != 1) {
-			hit = true;
-//#define KHITPLOT
-#ifdef KHITPLOT
-			double min[3],max[3];
-			COLOR_PLOT(255, 200, 200);
-			VSET(min,ouv[0]-0.01,ouv[1]-0.01,0.0);
-			VSET(max,ouv[0]+0.01,ouv[1]+0.01,0.0);
-			BB_PLOT(min,max);
-		} else {
-			double min[3],max[3];
-			COLOR_PLOT(200, 255, 200);
-			VSET(min,ouv[0]-0.01,ouv[1]-0.01,0.0);
-			VSET(max,ouv[0]+0.01,ouv[1]+0.01,0.0);
-			BB_PLOT(min,max);
+		fastf_t closesttrim;
+		int trim_status = ((SubsurfaceBBNode*)sbv)->isTrimmed(ouv[i],closesttrim);
+		if (converged && (t[i] > 1.e-2)) {
+			if  (trim_status != 1) {
+				ON_3dPoint _pt;
+				ON_3dVector _norm(N[i]);
+				_pt = ray.m_origin + (ray.m_dir*t[i]);
+				if (face->m_bRev) _norm.Reverse();
+				hit_count += 1;
+				uv[0] = ouv[i].x;
+				uv[1] = ouv[i].y;
+				brep_hit bh(*face,(const fastf_t*)ray.m_origin,(const fastf_t*)_pt,(const fastf_t*)_norm, uv);
+				bh.trimmed = false;
+				if (fabs(closesttrim) < BREP_EDGE_MISS_TOLERANCE) {
+					bh.closeToEdge = true;
+					bh.hit = brep_hit::NEAR_HIT;
+				} else {
+					bh.closeToEdge = false;
+					bh.hit = brep_hit::CLEAN_HIT;
+				}
+				if (VDOT(ray.m_dir,_norm) < 0.0 )
+					bh.direction = brep_hit::ENTERING;
+				else
+					bh.direction = brep_hit::LEAVING;
+				bh.sbv = sbv;
+				hits.push_back(bh);
+				found = BREP_INTERSECT_FOUND;
+			} else if (fabs(closesttrim) < BREP_EDGE_MISS_TOLERANCE) {
+				ON_3dPoint _pt;
+				ON_3dVector _norm(N[i]);
+				_pt = ray.m_origin + (ray.m_dir*t[i]);
+				if (face->m_bRev) _norm.Reverse();
+				hit_count += 1;
+				uv[0] = ouv[i].x;
+				uv[1] = ouv[i].y;
+				brep_hit bh(*face,(const fastf_t*)ray.m_origin,(const fastf_t*)_pt,(const fastf_t*)_norm, uv);
+				bh.trimmed = true;
+				bh.closeToEdge = true;
+				bh.hit = brep_hit::NEAR_MISS;
+				if (VDOT(ray.m_dir,_norm) < 0.0 )
+					bh.direction = brep_hit::ENTERING;
+				else
+					bh.direction = brep_hit::LEAVING;
+				bh.sbv = sbv;
+				hits.push_back(bh);
+				found = BREP_INTERSECT_FOUND;
+			}
 		}
-#else
-	        }
-#endif
-	}
-	//    if (converged && (t > 1.e-2)) hit = true;
-
-    uv[0] = ouv[i].x;
-    uv[1] = ouv[i].y;
-
-    if (hit) {
-        ON_3dPoint _pt;
-        ON_3dVector _norm(N[i]);
-        _pt = ray.m_origin + (ray.m_dir*t[i]);
-        if (face->m_bRev) _norm.Reverse();
-        hit_count += 1;
-        hits.push_back(brep_hit(*face,(const fastf_t*)ray.m_origin,(const fastf_t*)_pt,(const fastf_t*)_norm, uv));
-        hits.back().sbv = sbv;
-        found = BREP_INTERSECT_FOUND;
-    }
 	}
     return found;
 }
@@ -2036,7 +2039,7 @@ rt_brep_shot(struct soltab *stp, register struct xray *rp, struct application *a
 	TRACE1("surface: " << s);
 	int status = utah_brep_intersect_test(sbv, f, surf, uv, r, all_hits);
 #ifdef KDEBUGMISS
-	if (status > 0) { //plotting utah_brep_intersecthacks i==0) {
+	if (true) { //(status > 0) { //plotting utah_brep_intersecthacks i==0) {
 		const ON_BrepFace *face = sbv->m_face;
 		sprintf(buffer,"Box%d_N%d.pl",face->m_face_index,boxcnt);
 		plot_file((const char *)buffer);

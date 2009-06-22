@@ -935,11 +935,11 @@ namespace brlcad {
 		list<BRNode*> trims;
 		point_t bmin,bmax;
 		
+		closesttrim = -1.0;
 		if (m_checkTrim) {
 		
 		getTrimsAbove(uv,trims);
 		
-		closesttrim = -1.0;
 		if (trims.empty()) {
 		    return 1;
 		} else {//find closest BB
