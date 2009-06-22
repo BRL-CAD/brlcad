@@ -1076,8 +1076,8 @@ public:
     bool    trimmed;
     bool    closeToEdge;
     bool    oob;
-	enum hit_type hit;
-	enum hit_direction direction;
+    enum hit_type hit;
+    enum hit_direction direction;
     // XXX - calculate the dot of the dir with the normal here!
     SubsurfaceBBNode const * sbv;
 
@@ -2153,6 +2153,16 @@ rt_brep_shot(struct soltab *stp, register struct xray *rp, struct application *a
 
     if (hits.size() > 1 && (hits.size() % 2) != 0) {
         cerr << "**** ERROR odd number of hits: " << hits.size() << "\n";
+	for (HitList::iterator i = hits.begin(); i != hits.end(); ++i) {
+	    cerr << "(";
+	    if (i->hit == brep_hit::CLEAN_HIT) cerr << "H";
+	    if ( (i->hit == brep_hit::NEAR_HIT) || (i->hit == brep_hit::NEAR_MISS) ) cerr << "c";
+	    if (i->direction == brep_hit::ENTERING) cerr << "+";
+	    if (i->direction == brep_hit::LEAVING) cerr << "-";
+	    cerr << ")";
+	}
+	cerr << "\n";
+	    
         bu_log("xyz %f %f %f \n", rp->r_pt[0], rp->r_pt[1], rp->r_pt[2]);
 	bu_log("dir %f %f %f \n", rp->r_dir[0], rp->r_dir[1], rp->r_dir[2]);
 	
