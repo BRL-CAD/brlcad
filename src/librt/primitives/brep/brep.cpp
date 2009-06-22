@@ -221,8 +221,10 @@ plot_file()
 static FILE*
 plot_file(const char *pname)
 {
-    if (plot != NULL) 
-		(void)fclose(plot_file());
+    if (plot != NULL) {
+		(void)fclose(plot);
+		plot = NULL;
+    }
 	plot = fopen(pname,"w");
 	point_t min, max;
 	VSET(min,-2048,-2048,-2048);
@@ -314,10 +316,10 @@ void plotsurfaceleafs(SurfaceTree* surf) {
 		if (false) {
 			bb->GetBBox(min,max);
 		} else {
-		    //VSET(min,bb->m_u[0]+0.001,bb->m_v[0]+0.001,0.0);
-		    //VSET(max,bb->m_u[1]-0.001,bb->m_v[1]-0.001,0.0);
-			VSET(min,bb->m_u[0],bb->m_v[0],0.0);
-			VSET(max,bb->m_u[1],bb->m_v[1],0.0);
+		    VSET(min,bb->m_u[0]+0.001,bb->m_v[0]+0.001,0.0);
+		    VSET(max,bb->m_u[1]-0.001,bb->m_v[1]-0.001,0.0);
+		    //VSET(min,bb->m_u[0],bb->m_v[0],0.0);
+		    //VSET(max,bb->m_u[1],bb->m_v[1],0.0);
 		}
 		BB_PLOT(min,max);
 		}
@@ -891,7 +893,7 @@ brep_build_bvh(struct brep_specific* bs, struct rt_brep_internal* bi)
 		ON_BrepFace& face = faces[i];
 //#define KPLOT
 #ifdef KPLOT // debugging hacks to look at specific faces
-		if (i == 196) { //(i == 0)) { // && ((i <= 6) ||(i >= 5))) {
+		if (true) { //(i == 0)) { // && ((i <= 6) ||(i >= 5))) {
 	char buffer[80];
 	sprintf(buffer,"Face%d.pl",i+1);
 	plot_file((const char *)buffer);
@@ -916,6 +918,7 @@ brep_build_bvh(struct brep_specific* bs, struct rt_brep_internal* bi)
 	}
 #ifdef KPLOT // debugging hacks to look at specific faces
     (void)fclose(plot_file());
+		plot = NULL;
 #endif
     return 0;
 }
@@ -1052,6 +1055,18 @@ brep_get_plane_ray(ON_Ray& r, plane_ray& pr)
 
 class brep_hit {
 public:
+
+    enum type {
+	CLEAN_HIT,
+	CLEAN_MISS,
+	NEAR_HIT,
+	NEAR_MISS,
+    };
+    enum direction {
+	INCOMING,
+	OUTGOING,
+    };
+
     const ON_BrepFace& face;
     point_t origin;
     point_t point;
@@ -1717,7 +1732,7 @@ utah_brep_intersect_test(const SubsurfaceBBNode* sbv, const ON_BrepFace* face, c
     ON_2dPoint ouv[2];
     int found = BREP_INTERSECT_ROOT_DIVERGED;
     bool converged = false;
-	int numhits;
+    int numhits;
     
     ON_3dPoint center_pt;
     ON_3dVector normal;
@@ -1744,7 +1759,8 @@ utah_brep_intersect_test(const SubsurfaceBBNode* sbv, const ON_BrepFace* face, c
 	//if (converged && (t > 1.e-2) && (!((SubsurfaceBBNode*)sbv)->isTrimmed(ouv))) hit = true;
 
     for(int i=0;i < numhits;i++) {
-	int trim_status = ((SubsurfaceBBNode*)sbv)->isTrimmed(ouv[i]);
+	fastf_t closesttrim;
+	int trim_status = ((SubsurfaceBBNode*)sbv)->isTrimmed(ouv[i],closesttrim);
 	if (converged && (t[i] > 1.e-2)) {
 		if  (trim_status != 1) {
 			hit = true;
@@ -1794,6 +1810,7 @@ utah_brep_intersect(const SubsurfaceBBNode* sbv, const ON_BrepFace* face, const 
     ON_2dPoint ouv(uv[0], uv[1]);
     int found = BREP_INTERSECT_ROOT_DIVERGED;
     bool converged = false;
+    fastf_t closesttrim;
 
     utah_newton_solver( sbv, surf, ray, ouv, t, N, converged);
     /*
@@ -1810,7 +1827,7 @@ utah_brep_intersect(const SubsurfaceBBNode* sbv, const ON_BrepFace* face, const 
 	
 	if ( (sbv->m_u[0] < ouv[0]) && (sbv->m_u[1] > ouv[0]) &&
 			(sbv->m_v[0] < ouv[1]) && (sbv->m_v[1] > ouv[1])) {
-	int trim_status = ((SubsurfaceBBNode*)sbv)->isTrimmed(ouv);	
+	    int trim_status = ((SubsurfaceBBNode*)sbv)->isTrimmed(ouv,closesttrim);	
 	if (converged && (t > 1.e-2)) {
 		if  (trim_status != 1) {
 			hit = true;
@@ -1865,6 +1882,7 @@ brep_intersect(const SubsurfaceBBNode* sbv, const ON_BrepFace* face, const ON_Su
     ON_3dVector su;
     ON_3dVector sv;
     plane_ray pr;
+    fastf_t closesttrim;
     brep_get_plane_ray(ray, pr);
     for (int i = 0; i < BREP_MAX_ITERATIONS; i++) {
 	brep_r(surf, pr, uv, pt, su, sv, Rcurr);
@@ -1888,7 +1906,7 @@ brep_intersect(const SubsurfaceBBNode* sbv, const ON_BrepFace* face, const ON_Su
 	move(uv, new_uv);
 	Dlast = d;
     }
-    int trim_status = ((SubsurfaceBBNode*)sbv)->isTrimmed(uv);
+    int trim_status = ((SubsurfaceBBNode*)sbv)->isTrimmed(uv,closesttrim);
     if ((found > 0) &&  (trim_status != 1)) {
 	ON_3dPoint _pt;
 	ON_3dVector _norm;
@@ -1982,7 +2000,7 @@ rt_brep_shot(struct soltab *stp, register struct xray *rp, struct application *a
 #ifdef KDEBUGMISS
 	char buffer[80];
 	icount++;
-	if (icount > 1) return 0;
+	//if (icount == 1) return 0;
 	sprintf(buffer,"Shot%d.pl",icount);
 	plot_file((const char *)buffer);
 	ON_3dPoint p = r.m_origin + (r.m_dir*20.0);
@@ -1992,6 +2010,7 @@ rt_brep_shot(struct soltab *stp, register struct xray *rp, struct application *a
 	COLOR_PLOT( 255, 255, 255 );
 	LINE_PLOT(a,b);
 	(void)fclose(plot_file());
+		plot = NULL;
 #endif
 
     // find all the hits (XXX very inefficient right now!)
@@ -2008,18 +2027,7 @@ rt_brep_shot(struct soltab *stp, register struct xray *rp, struct application *a
 	plot_file((const char *)buffer);
 	plotleaf3d((SubsurfaceBBNode*)sbv);
 	(void)fclose(plot_file());
-	if (boxcnt == 1) { //plotting utah_brep_intersecthacks i==0) {
-		const ON_BrepFace *face = sbv->m_face;
-		sprintf(buffer,"Face%d_N%d.pl",face->m_face_index,boxcnt);
-		plot_file((const char *)buffer);
-		plottrim((ON_BrepFace&)*sbv->m_face);
-		(void)fclose(plot_file());
-		sprintf(buffer,"Tree%d_N%d.pl",face->m_face_index,boxcnt);
-		plot_file((const char *)buffer);
-		SurfaceTree* st = (SurfaceTree*)face->m_face_user.p;
-		plotsurfaceleafs(st);
-		(void)fclose(plot_file());
-	}
+		plot = NULL;
 #endif
 
 	const ON_BrepFace* f = sbv->m_face;
@@ -2027,6 +2035,27 @@ rt_brep_shot(struct soltab *stp, register struct xray *rp, struct application *a
 	pt2d_t uv = {sbv->m_u.Mid(), sbv->m_v.Mid()};
 	TRACE1("surface: " << s);
 	int status = utah_brep_intersect_test(sbv, f, surf, uv, r, all_hits);
+#ifdef KDEBUGMISS
+	if (status > 0) { //plotting utah_brep_intersecthacks i==0) {
+		const ON_BrepFace *face = sbv->m_face;
+		sprintf(buffer,"Box%d_N%d.pl",face->m_face_index,boxcnt);
+		plot_file((const char *)buffer);
+		plotleaf3d((SubsurfaceBBNode*)sbv);
+		(void)fclose(plot_file());
+		plot = NULL;
+		sprintf(buffer,"Face%d_N%d.pl",face->m_face_index,boxcnt);
+		plot_file((const char *)buffer);
+		plottrim((ON_BrepFace&)*sbv->m_face);
+		(void)fclose(plot_file());
+		plot = NULL;
+		sprintf(buffer,"Tree%d_N%d.pl",face->m_face_index,boxcnt);
+		plot_file((const char *)buffer);
+		SurfaceTree* st = (SurfaceTree*)face->m_face_user.p;
+		plotsurfaceleafs(st);
+		(void)fclose(plot_file());
+		plot = NULL;
+	}
+#endif
 	if (status == BREP_INTERSECT_FOUND) {
 	    TRACE("INTERSECTION: " << PT(all_hits.back().point) << all_hits.back().trimmed << ", " << all_hits.back().closeToEdge << ", " << all_hits.back().oob);
 	} else {
@@ -2048,6 +2077,7 @@ rt_brep_shot(struct soltab *stp, register struct xray *rp, struct application *a
 
 #ifdef KDEBUGMISS
 	//(void)fclose(plot_file());
+	//	plot = NULL;
 #endif
     HitList hits = all_hits;
 
