@@ -37,6 +37,17 @@
 #include "nurb.h"
 
 
+/* FIXME: temporary until all mirror functions are migrated and the
+ * functab is utilized.
+ */
+#define RT_DECLARE_MIRROR(name) BU_EXTERN(int rt_##name##_mirror, (struct rt_db_internal *ip, const plane_t plane));
+
+RT_DECLARE_MIRROR(tor);
+RT_DECLARE_MIRROR(tgc);
+RT_DECLARE_MIRROR(ell);
+RT_DECLARE_MIRROR(arb);
+
+
 /**
  * Mirror an object about some axis at a specified point on the axis.
  * It is the caller's responsibility to retain and free the internal.
@@ -61,10 +72,7 @@ rt_mirror(struct db_i *dbip,
     vect_t xvec;
     static fastf_t tol_dist_sq = 0.005 * 0.005;
     static point_t origin = {0.0, 0.0, 0.0};
-    plane_t plane;	
-    fastf_t dist;
-    fastf_t dot;
-    point_t pnt;
+    plane_t plane;
 
     RT_CK_DBI(dbip);
     RT_CK_DB_INTERNAL(ip);
@@ -120,89 +128,89 @@ rt_mirror(struct db_i *dbip,
 	    err = rt_ell_mirror(ip, plane);
 	    return err ? NULL : ip;
 	}
-#if 0
 	case ID_ARB8: {
-	    err = rt_arb8_mirror(ip, plane);
+	    err = rt_arb_mirror(ip, plane);
 	    return err ? NULL : ip;
 	}
+#if 0
 	case ID_HALF: {
-	    err = rt_half_mirror(ip, plane);
+	    err = rt_half_mirror(ip, &plane);
 	    return err ? NULL : ip;
 	}
 	case ID_GRIP: {
-	    err = rt_grip_mirror(ip, plane);
+	    err = rt_grip_mirror(ip, &plane);
 	    return err ? NULL : ip;
 	}
 	case ID_POLY: {
-	    err = rt_poly_mirror(ip, plane);
+	    err = rt_poly_mirror(ip, &plane);
 	    return err ? NULL : ip;
 	}
 	case ID_BSPLINE: {
-	    err = rt_nurb_mirror(ip, plane);
+	    err = rt_nurb_mirror(ip, &plane);
 	    return err ? NULL : ip;
 	}
 	case ID_ARBN: {
-	    err = rt_arbn_mirror(ip, plane);
+	    err = rt_arbn_mirror(ip, &plane);
 	    return err ? NULL : ip;
 	}
 	case ID_PIPE: {
-	    err = rt_pipe_mirror(ip, plane);
+	    err = rt_pipe_mirror(ip, &plane);
 	    return err ? NULL : ip;
 	}
 	case ID_PARTICLE: {
-	    err = rt_particle_mirror(ip, plane);
+	    err = rt_particle_mirror(ip, &plane);
 	    return err ? NULL : ip;
 	}
 	case ID_RPC: {
-	    err = rt_rpc_mirror(ip, plane);
+	    err = rt_rpc_mirror(ip, &plane);
 	    return err ? NULL : ip;
 	}
 	case ID_RHC: {
-	    err = rt_rhc_mirror(ip, plane);
+	    err = rt_rhc_mirror(ip, &plane);
 	    return err ? NULL : ip;
 	}
 	case ID_EPA: {
-	    err = rt_epa_mirror(ip, plane);
+	    err = rt_epa_mirror(ip, &plane);
 	    return err ? NULL : ip;
 	}
 	case ID_ETO: {
-	    err = rt_eto_mirror(ip, plane);
+	    err = rt_eto_mirror(ip, &plane);
 	    return err ? NULL : ip;
 	}
 	case ID_HYP: {
-	    err = rt_hyp_mirror(ip, plane);
+	    err = rt_hyp_mirror(ip, &plane);
 	    return err ? NULL : ip;
 	}
 	case ID_NMG: {
-	    err = rt_nmg_mirror(ip, plane);
+	    err = rt_nmg_mirror(ip, &plane);
 	    return err ? NULL : ip;
 	}
 	case ID_ARS: {
-	    err = rt_ars_mirror(ip, plane);
+	    err = rt_ars_mirror(ip, &plane);
 	    return err ? NULL : ip;
 	}
 	case ID_EBM: {
-	    err = rt_ebm_mirror(ip, plane);
+	    err = rt_ebm_mirror(ip, &plane);
 	    return err ? NULL : ip;
 	}
 	case ID_DSP: {
-	    err = rt_dsp_mirror(ip, plane);
+	    err = rt_dsp_mirror(ip, &plane);
 	    return err ? NULL : ip;
 	}
 	case ID_VOL: {
-	    err = rt_vol_mirror(ip, plane);
+	    err = rt_vol_mirror(ip, &plane);
 	    return err ? NULL : ip;
 	}
 	case ID_SUPERELL: {
-	    err = rt_superell_mirror(ip, plane);
+	    err = rt_superell_mirror(ip, &plane);
 	    return err ? NULL : ip;
 	}
 	case ID_COMBINATION: {
-	    err = rt_comb_mirror(ip, plane);
+	    err = rt_comb_mirror(ip, &plane);
 	    return err ? NULL : ip;
 	}
 	case ID_BOT: {
-	    err = rt_bot_mirror(ip, plane);
+	    err = rt_bot_mirror(ip, &plane);
 	    return err ? NULL : ip;
 	}
 	default: {
@@ -235,22 +243,6 @@ rt_mirror(struct db_i *dbip,
     mirmat[3 + Z*4] += 2.0 * mirror_pt[Z] * mirror_dir[Z];
 
     switch (id) {
-	case ID_ARB8: {
-	    struct rt_arb_internal *arb;
-
-	    arb = (struct rt_arb_internal *)ip->idb_ptr;
-	    RT_ARB_CK_MAGIC(arb);
-
-	    /* mirror each vertex */
-	    for (i=0; i<8; i++) {
-		point_t pt;
-
-		VMOVE(pt, arb->pt[i]);
-		MAT4X3PNT(arb->pt[i], mirmat, pt);
-	    }
-
-	    break;
-	}
 	case ID_HALF: {
 	    struct rt_half_internal *haf;
 	    vect_t n1;

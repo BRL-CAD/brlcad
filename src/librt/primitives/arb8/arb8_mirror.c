@@ -1,4 +1,4 @@
-/*                    T O R _ M I R R O R . C
+/*                   A R B 8 _ M I R R O R . C
  * BRL-CAD
  *
  * Copyright (c) 2009 United States Government as represented by
@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file tor_mirror.c
+/** @file arb8_mirror.c
  *
  * mirror support
  *
@@ -30,15 +30,15 @@
 
 
 /**
- * R T _ T O R _ M I R R O R
+ * R T _ A R B _ M I R R O R
  *
  * Given a pointer to an internal GED database object, mirror the
  * object's values about the given transformation matrix.
  */
 int
-rt_tor_mirror(struct rt_db_internal *ip, register const plane_t plane)
+rt_arb_mirror(struct rt_db_internal *ip, register const plane_t plane)
 {
-    struct rt_tor_internal *tor;
+    struct rt_arb_internal *arb;
 
     mat_t mirmat;
     mat_t rmat;
@@ -50,16 +50,14 @@ rt_tor_mirror(struct rt_db_internal *ip, register const plane_t plane)
     fastf_t ang;
 
     point_t pt;
-    mat_t mat;
-    vect_t h;
-    vect_t n;
+    int i;
 
     static point_t origin = {0.0, 0.0, 0.0};
 
     RT_CK_DB_INTERNAL(ip);
 
-    tor = (struct rt_tor_internal *)ip->idb_ptr;
-    RT_TOR_CK_MAGIC(tor);
+    arb = (struct rt_arb_internal *)ip->idb_ptr;
+    RT_ARB_CK_MAGIC(arb);
 
     MAT_IDN(mirmat);
 
@@ -86,17 +84,11 @@ rt_tor_mirror(struct rt_db_internal *ip, register const plane_t plane)
     mirmat[3 + Y*4] += mirror_pt[Y] * mirror_dir[Y];
     mirmat[3 + Z*4] += mirror_pt[Z] * mirror_dir[Z];
 
-    VMOVE(pt, tor->v);
-    MAT4X3PNT(tor->v, mirmat, pt);
-
-    VMOVE(h, tor->h);
-    VUNITIZE(h);
-
-    VCROSS(n, mirror_dir, tor->h);
-    VUNITIZE(n);
-    ang = M_PI_2 - acos(VDOT(h, mirror_dir));
-    bn_mat_arb_rot(mat, origin, n, ang*2);
-    MAT4X3VEC(tor->h, mat, h);
+    /* mirror each vertex */
+    for (i=0; i<8; i++) {
+	VMOVE(pt, arb->pt[i]);
+	MAT4X3PNT(arb->pt[i], mirmat, pt);
+    }
 
     return 0;
 }

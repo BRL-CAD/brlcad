@@ -36,11 +36,10 @@
  * object's values about the given transformation matrix.
  */
 int
-rt_ell_mirror(struct rt_db_internal *ip, register const plane_t *plane)
+rt_ell_mirror(struct rt_db_internal *ip, register const plane_t plane)
 {
     struct rt_ell_internal *ell;
 
-    mat_t mat;
     mat_t mirmat;
     mat_t rmat;
     mat_t temp;
@@ -48,9 +47,10 @@ rt_ell_mirror(struct rt_db_internal *ip, register const plane_t *plane)
     vect_t xvec;
     vect_t mirror_dir;
     point_t mirror_pt;
-
-    point_t pt;
     fastf_t ang;
+
+    mat_t mat;
+    point_t pt;
     vect_t a, b, c;
     vect_t n;
 
@@ -63,8 +63,8 @@ rt_ell_mirror(struct rt_db_internal *ip, register const plane_t *plane)
 
     MAT_IDN(mirmat);
 
-    VMOVE(mirror_dir, *plane);
-    VSCALE(mirror_pt, *plane, (*plane)[W]);
+    VMOVE(mirror_dir, plane);
+    VSCALE(mirror_pt, plane, plane[W]);
 
     /* Build mirror transform matrix, for those who need it. */
     /* First, perform a mirror down the X axis */
