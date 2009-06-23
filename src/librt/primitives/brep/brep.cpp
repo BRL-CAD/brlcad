@@ -1097,6 +1097,12 @@ public:
 	VMOVE(point, h.point);
 	VMOVE(normal, h.normal);
 	move(uv, h.uv);
+	trimmed = h.trimmed;
+	closeToEdge = h.closeToEdge;
+	oob = h.oob;
+	sbv = h.sbv;
+	hit = h.hit;
+	direction = h.direction;
     }
 
     brep_hit& operator=(const brep_hit& h)
@@ -2086,7 +2092,21 @@ rt_brep_shot(struct soltab *stp, register struct xray *rp, struct application *a
 
     // sort the hits
     hits.sort();
-
+////////////////////////
+    if (hits.size() > 1) {
+        bu_log("**** Hits: %d\n",hits.size());
+	for (HitList::iterator i = hits.begin(); i != hits.end(); ++i) {
+	    brep_hit&out = *i;
+	    bu_log("(");
+	    if (out.hit == brep_hit::CLEAN_HIT) bu_log("H");
+	    if ( (out.hit == brep_hit::NEAR_HIT) || (out.hit == brep_hit::NEAR_MISS) ) bu_log("c");
+	    if (out.direction == brep_hit::ENTERING) bu_log("+");
+	    if (out.direction == brep_hit::LEAVING) bu_log("-");
+	    bu_log(")");
+	}
+	bu_log("\n**********************\n");
+    }
+////////////////////////
     TRACE("---");
     int num = 0;
     for (HitList::iterator i = hits.begin(); i != hits.end(); ++i) {
@@ -2152,16 +2172,17 @@ rt_brep_shot(struct soltab *stp, register struct xray *rp, struct application *a
     //     hits.erase(new_end, hits.end());
 
     if (hits.size() > 1 && (hits.size() % 2) != 0) {
-        cerr << "**** ERROR odd number of hits: " << hits.size() << "\n";
+        bu_log("**** ERROR odd number of hits: %d\n",hits.size());
 	for (HitList::iterator i = hits.begin(); i != hits.end(); ++i) {
-	    cerr << "(";
-	    if (i->hit == brep_hit::CLEAN_HIT) cerr << "H";
-	    if ( (i->hit == brep_hit::NEAR_HIT) || (i->hit == brep_hit::NEAR_MISS) ) cerr << "c";
-	    if (i->direction == brep_hit::ENTERING) cerr << "+";
-	    if (i->direction == brep_hit::LEAVING) cerr << "-";
-	    cerr << ")";
+	    brep_hit&out = *i;
+	    bu_log("(");
+	    if (out.hit == brep_hit::CLEAN_HIT) bu_log("H");
+	    if ( (out.hit == brep_hit::NEAR_HIT) || (out.hit == brep_hit::NEAR_MISS) ) bu_log("c");
+	    if (out.direction == brep_hit::ENTERING) bu_log("+");
+	    if (out.direction == brep_hit::LEAVING) bu_log("-");
+	    bu_log(")");
 	}
-	cerr << "\n";
+	bu_log("\n");
 	    
         bu_log("xyz %f %f %f \n", rp->r_pt[0], rp->r_pt[1], rp->r_pt[2]);
 	bu_log("dir %f %f %f \n", rp->r_dir[0], rp->r_dir[1], rp->r_dir[2]);
