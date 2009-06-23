@@ -250,12 +250,41 @@ ged_open(const char *dbtype, const char *filename, int existing_only)
     } else {
 	struct db_i	*dbip;
 
-	if (ged_decode_dbip(filename, &dbip) != GED_OK) {
+	if (sscanf(filename, "%ul", (unsigned long *)&dbip) != 1) {
 	    /* Restore RT's material head */
 	    rt_new_material_head(save_materp);
 
 	    return GED_NULL;
 	}
+
+	if (dbip == DBI_NULL) {
+	    register int i;
+
+	    BU_GETSTRUCT(dbip, db_i);
+	    dbip->dbi_eof = -1L;
+	    dbip->dbi_fp = NULL;
+	    dbip->dbi_mf = NULL;
+	    dbip->dbi_read_only = 0;
+
+	    /* Initialize fields */
+	    for (i=0; i<RT_DBNHASH; i++) {
+		dbip->dbi_Head[i] = DIR_NULL;
+	    }
+
+	    dbip->dbi_local2base = 1.0;		/* mm */
+	    dbip->dbi_base2local = 1.0;
+	    dbip->dbi_title = bu_strdup("Untitled BRL-CAD Database");
+	    dbip->dbi_uses = 1;
+	    dbip->dbi_filename = NULL;
+	    dbip->dbi_filepath = NULL;
+	    dbip->dbi_version = 5;
+
+	    bu_ptbl_init(&dbip->dbi_clients, 128, "dbi_clients[]");
+	    dbip->dbi_magic = DBI_MAGIC;		/* Now it's valid */
+	}
+
+	/* Could core dump */
+	RT_CK_DBI(dbip);
 
 	if (strcmp(dbtype, "disk" ) == 0)
 	    wdbp = wdb_dbopen(dbip, RT_WDB_TYPE_DB_DISK);
