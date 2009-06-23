@@ -45,78 +45,30 @@ const struct bu_structparse rt_nul_parse[] = {
     {""}
 };
 
-# define RT_DECLARE_INTERFACE(name)	\
-	BU_EXTERN(int rt_##name##_prep, (struct soltab *stp, \
-			struct rt_db_internal *ip, struct rt_i *rtip )); \
-	BU_EXTERN(int rt_##name##_shot, (struct soltab *stp, \
-			register struct xray *rp, \
-			struct application *ap, struct seg *seghead )); \
-	BU_EXTERN(int rt_##name##_piece_shot, (\
-			struct rt_piecestate *psp, \
-			struct rt_piecelist *plp, \
-			double dist_corr, \
-			struct xray *rp, \
-			struct application *ap, \
-			struct seg *seghead )); \
-	BU_EXTERN(void rt_##name##_piece_hitsegs, (\
-			struct rt_piecestate *psp, \
-			struct seg *seghead, \
-			struct application *ap)); \
+#define RT_DECLARE_INTERFACE(name) \
+	BU_EXTERN(int rt_##name##_prep, (struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip )); \
+	BU_EXTERN(int rt_##name##_shot, (struct soltab *stp, register struct xray *rp, struct application *ap, struct seg *seghead )); \
+	BU_EXTERN(int rt_##name##_piece_shot, (struct rt_piecestate *psp, struct rt_piecelist *plp, double dist_corr, struct xray *rp, struct application *ap, struct seg *seghead )); \
+	BU_EXTERN(void rt_##name##_piece_hitsegs, (struct rt_piecestate *psp, struct seg *seghead, struct application *ap)); \
 	BU_EXTERN(void rt_##name##_print, (const struct soltab *stp)); \
-	BU_EXTERN(void rt_##name##_norm, (struct hit *hitp, \
-			struct soltab *stp, struct xray *rp)); \
-	BU_EXTERN(void rt_##name##_uv, (struct application *ap, \
-			struct soltab *stp, struct hit *hitp, \
-			struct uvcoord *uvp)); \
-	BU_EXTERN(void rt_##name##_curve, (struct curvature *cvp, \
-			struct hit *hitp, struct soltab *stp)); \
+	BU_EXTERN(void rt_##name##_norm, (struct hit *hitp, struct soltab *stp, struct xray *rp)); \
+	BU_EXTERN(void rt_##name##_uv, (struct application *ap, struct soltab *stp, struct hit *hitp, struct uvcoord *uvp)); \
+	BU_EXTERN(void rt_##name##_curve, (struct curvature *cvp, struct hit *hitp, struct soltab *stp)); \
 	BU_EXTERN(int rt_##name##_class, ()); \
 	BU_EXTERN(void rt_##name##_free, (struct soltab *stp)); \
-	BU_EXTERN(int rt_##name##_plot, (struct bu_list *vhead, \
-			struct rt_db_internal *ip, \
-			const struct rt_tess_tol *ttol, \
-			const struct bn_tol *tol)); \
-	BU_EXTERN(void rt_##name##_vshot, (struct soltab *stp[], \
-			struct xray *rp[], \
-			struct seg segp[], int n, struct application *ap )); \
-	BU_EXTERN(int rt_##name##_tess, (struct nmgregion **r, \
-			struct model *m, struct rt_db_internal *ip, \
-			const struct rt_tess_tol *ttol, \
-			const struct bn_tol *tol)); \
-	BU_EXTERN(int rt_##name##_tnurb, (struct nmgregion **r, \
-			struct model *m, struct rt_db_internal *ip, \
-			const struct bn_tol *tol)); \
-	BU_EXTERN(int rt_##name##_import5, (struct rt_db_internal *ip, \
-			const struct bu_external *ep, const mat_t mat, \
-			const struct db_i *dbip, struct resource *resp, const int minor_type )); \
-	BU_EXTERN(int rt_##name##_export5, (struct bu_external *ep, \
-			const struct rt_db_internal *ip, \
-			double local2mm, const struct db_i *dbip, \
-			struct resource *resp, \
-			const int minor_type)); \
-	BU_EXTERN(int rt_##name##_import, (struct rt_db_internal *ip, \
-			const struct bu_external *ep, const mat_t mat, \
-			const struct db_i *dbip, struct resource *resp )); \
-	BU_EXTERN(int rt_##name##_export, (struct bu_external *ep, \
-			const struct rt_db_internal *ip, \
-			double local2mm, const struct db_i *dbip, \
-			struct resource *resp )); \
-	BU_EXTERN(void rt_##name##_ifree, (struct rt_db_internal *ip, \
-			struct resource *resp)); \
-	BU_EXTERN(int rt_##name##_describe, (struct bu_vls *str, \
-			const struct rt_db_internal *ip, \
-			int verbose, \
-			double mm2local, \
-			struct resource *resp, \
-			struct db_i *db_i)); \
-	BU_EXTERN(int rt_##name##_xform, (struct rt_db_internal *op, \
-			const mat_t mat, struct rt_db_internal *ip, \
-			int free, struct db_i *dbip, \
-			struct resource *resp)); \
-	BU_EXTERN(int rt_##name##_params, (struct pc_pc_set *ps, \
-			const struct rt_db_internal *ip)); \
-	BU_EXTERN(int rt_##name##_mirror, (struct rt_db_internal *ip, \
-			const plane_t *plane)); \
+	BU_EXTERN(int rt_##name##_plot, (struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol)); \
+	BU_EXTERN(void rt_##name##_vshot, (struct soltab *stp[], struct xray *rp[], struct seg segp[], int n, struct application *ap )); \
+	BU_EXTERN(int rt_##name##_tess, (struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol)); \
+	BU_EXTERN(int rt_##name##_tnurb, (struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct bn_tol *tol)); \
+	BU_EXTERN(int rt_##name##_import5, (struct rt_db_internal *ip, const struct bu_external *ep, const mat_t mat, const struct db_i *dbip, struct resource *resp, const int minor_type)); \
+	BU_EXTERN(int rt_##name##_export5, (struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip, struct resource *resp, const int minor_type)); \
+	BU_EXTERN(int rt_##name##_import, (struct rt_db_internal *ip, const struct bu_external *ep, const mat_t mat, const struct db_i *dbip, struct resource *resp)); \
+	BU_EXTERN(int rt_##name##_export, (struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip, struct resource *resp )); \
+	BU_EXTERN(void rt_##name##_ifree, (struct rt_db_internal *ip, struct resource *resp)); \
+	BU_EXTERN(int rt_##name##_describe, (struct bu_vls *str, const struct rt_db_internal *ip, int verbose, double mm2local, struct resource *resp, struct db_i *db_i)); \
+	BU_EXTERN(int rt_##name##_xform, (struct rt_db_internal *op, const mat_t mat, struct rt_db_internal *ip, int free, struct db_i *dbip, struct resource *resp)); \
+	BU_EXTERN(int rt_##name##_params, (struct pc_pc_set *ps, const struct rt_db_internal *ip)); \
+	BU_EXTERN(int rt_##name##_mirror, (struct rt_db_internal *ip, const plane_t *plane)); \
 	extern const struct bu_structparse rt_##name##_parse[];
 
 
@@ -222,11 +174,11 @@ RT_DECLARE_INTERFACE(revolve);
 RT_DECLARE_INTERFACE(constraint);
 
 /*
-#define rt_binunif_xform rt_generic_xform
-RT_DECLARE_INTERFACE(binunif);
+  #define rt_binunif_xform rt_generic_xform
+  RT_DECLARE_INTERFACE(binunif);
 
-#define rt_binexpm_xform rt_generic_xform
-RT_DECLARE_INTERFACE(binexpm);
+  #define rt_binexpm_xform rt_generic_xform
+  RT_DECLARE_INTERFACE(binexpm);
 */
 
 #define rt_pnts_xform rt_generic_xform
@@ -241,17 +193,17 @@ RT_DECLARE_INTERFACE(brep);
 /* from db5_comb.c */
 BU_EXTERN(int rt_comb_export5, (struct bu_external *ep,
 				const struct rt_db_internal *ip,
-				double			local2mm,
-				const struct db_i	*dbip,
-				struct resource		*resp,
-				const int		minor_type));
+				double local2mm,
+				const struct db_i *dbip,
+				struct resource *resp,
+				const int minor_type));
 
 BU_EXTERN(int rt_comb_import5, (struct rt_db_internal *ip,
 				const struct bu_external *ep,
-				const mat_t		mat,
-				const struct db_i	*dbip,
-				struct resource		*resp,
-				const int		minor_type));
+				const mat_t mat,
+				const struct db_i *dbip,
+				struct resource *resp,
+				const int minor_type));
 
 /* from db5_bin.c */
 BU_EXTERN(int rt_binexpm_import5, (struct rt_db_internal * ip,
@@ -292,17 +244,17 @@ BU_EXTERN(void rt_binunif_ifree, (struct rt_db_internal *ip,
 BU_EXTERN(int rt_binunif_describe, (struct bu_vls *str,
 				    const struct rt_db_internal *ip, int verbose,
 				    double mm2local, struct resource *resp, struct db_i *db_i));
-BU_EXTERN( void rt_binunif_make, (const struct rt_functab *ftp,
-				  struct rt_db_internal	*intern,
-				  double diameter ) );
-BU_EXTERN( int rt_binunif_get, (struct bu_vls *log,
-				   const struct rt_db_internal *intern,
-				   const char *attr ) );
+BU_EXTERN(void rt_binunif_make, (const struct rt_functab *ftp,
+				 struct rt_db_internal *intern,
+				 double diameter ) );
+BU_EXTERN(int rt_binunif_get, (struct bu_vls *log,
+			       const struct rt_db_internal *intern,
+			       const char *attr ) );
 BU_EXTERN(int rt_binunif_adjust, (struct bu_vls *log,
-				     struct rt_db_internal *intern,
-				     int argc,
-				     char **argv,
-				     struct resource *resp ) );
+				  struct rt_db_internal *intern,
+				  int argc,
+				  char **argv,
+				  struct resource *resp ) );
 
 /* from tcl.c */
 BU_EXTERN(int rt_comb_get, (struct bu_vls *log,
@@ -352,12 +304,12 @@ BU_EXTERN(int rt_ars_adjust, (struct bu_vls *log,
 /* DSP solid */
 extern int rt_dsp_get(struct bu_vls *log,
 		      const struct rt_db_internal *intern,
-		      const char		     *attr);
+		      const char *attr);
 
 extern int rt_dsp_adjust(struct bu_vls *log,
 			 struct rt_db_internal *intern,
-			 int		argc,
-			 char	**argv,
+			 int argc,
+			 char **argv,
 			 struct resource *resp);
 BU_EXTERN(void rt_dsp_make, (const struct rt_functab *,	struct rt_db_internal *,
 			     double /*diameter*/));
@@ -429,11 +381,11 @@ BU_EXTERN(int rt_generic_xform, (struct rt_db_internal *op,
 				 int free, struct db_i *dbip, struct resource *resp));
 
 /* Stub Tcl interfaces */
-int rt_nul_get(struct bu_vls *log, const struct rt_db_internal *intern, const char *attr)  {
+int rt_nul_get(struct bu_vls *log, const struct rt_db_internal *intern, const char *attr) {
     bu_vls_printf(log, "rt_nul_get");
     return BRLCAD_ERROR;
 }
-int rt_nul_adjust(struct bu_vls *log, struct rt_db_internal *intern, int argc, char **argv, struct resource *resp)  {
+int rt_nul_adjust(struct bu_vls *log, struct rt_db_internal *intern, int argc, char **argv, struct resource *resp) {
     RT_CK_RESOURCE(resp);
     bu_vls_printf(log, "rt_nul_adjust");
     return BRLCAD_ERROR;
@@ -870,7 +822,7 @@ const struct rt_functab rt_functab[] = {
     },
 
     {RT_FUNCTAB_MAGIC, "ID_BOT", "bot",
-     0,		/* 30  Bag o' Triangles */
+     0,		/* 30 Bag o' Triangles */
      rt_bot_prep,	rt_bot_shot,	rt_bot_print,	rt_bot_norm,
      rt_bot_piece_shot, rt_bot_piece_hitsegs,
      rt_bot_uv,	rt_bot_curve,	rt_bot_class,	rt_bot_free,
@@ -944,7 +896,7 @@ const struct rt_functab rt_functab[] = {
     },
 
     {RT_FUNCTAB_MAGIC, "ID_SUPERELL", "superell",
-     1,		/* 35 but "should" be 31 Superquadratic Ellipsoid  */
+     1,		/* 35 but "should" be 31 Superquadratic Ellipsoid */
      rt_superell_prep,	rt_superell_shot,	rt_superell_print,	rt_superell_norm,
      rt_nul_piece_shot, rt_nul_piece_hitsegs,
      rt_superell_uv,	rt_superell_curve,	rt_superell_class,	rt_superell_free,
@@ -958,7 +910,7 @@ const struct rt_functab rt_functab[] = {
     },
 
     {RT_FUNCTAB_MAGIC, "ID_METABALL", "metaball",
-     1,		/* 36 but "should" be 32 Metaball  */
+     1,		/* 36 but "should" be 32 Metaball */
      rt_metaball_prep,	rt_metaball_shot,	rt_metaball_print,	rt_metaball_norm,
      rt_nul_piece_shot,	rt_nul_piece_hitsegs,
      rt_metaball_uv,		rt_metaball_curve,	rt_metaball_class,	rt_metaball_free,
@@ -1002,7 +954,7 @@ const struct rt_functab rt_functab[] = {
 #endif
 
     {RT_FUNCTAB_MAGIC, "ID_HYP", "hyp",
-     1,		/* 38 but "should" be 34 Hyperboloid  */
+     1,		/* 38 but "should" be 34 Hyperboloid */
      rt_hyp_prep,	rt_hyp_shot,	rt_hyp_print,	rt_hyp_norm,
      rt_nul_piece_shot,	rt_nul_piece_hitsegs,
      rt_hyp_uv,		rt_hyp_curve,	rt_hyp_class,	rt_hyp_free,
@@ -1074,7 +1026,7 @@ const struct rt_functab rt_functab[] = {
 
 
 /*
- *  Hooks for unimplemented routines
+ * Hooks for unimplemented routines
  */
 #define DEF(func, args)	func BU_ARGS(args) { \
 	bu_log(#func " unimplemented\n"); return; }
@@ -1208,10 +1160,10 @@ rt_id_solid(struct bu_external *ep)
     register union record *rec;
     register int id;
 
-    BU_CK_EXTERNAL( ep );
+    BU_CK_EXTERNAL(ep );
     rec = (union record *)ep->ext_buf;
 
-    switch ( rec->u_id )  {
+    switch (rec->u_id ) {
 	case ID_SOLID:
 	    id = idmap[(int)(rec->s.s_type)];
 	    break;
@@ -1226,19 +1178,19 @@ rt_id_solid(struct bu_external *ep)
 	    break;
 	case DBID_STRSOL:
 	    /* XXX This really needs to be some kind of table */
-	    if ( strcmp( rec->ss.ss_keyword, "ebm" ) == 0 )  {
+	    if (strcmp(rec->ss.ss_keyword, "ebm" ) == 0 ) {
 		id = ID_EBM;
 		break;
-	    } else if ( strcmp( rec->ss.ss_keyword, "vol" ) == 0 )  {
+	    } else if (strcmp(rec->ss.ss_keyword, "vol" ) == 0 ) {
 		id = ID_VOL;
 		break;
-	    } else if ( strcmp( rec->ss.ss_keyword, "hf" ) == 0 )  {
+	    } else if (strcmp(rec->ss.ss_keyword, "hf" ) == 0 ) {
 		id = ID_HF;
 		break;
-	    } else if ( strcmp( rec->ss.ss_keyword, "dsp" ) == 0 )  {
+	    } else if (strcmp(rec->ss.ss_keyword, "dsp" ) == 0 ) {
 		id = ID_DSP;
 		break;
-	    } else if ( strcmp( rec->ss.ss_keyword, "submodel" ) == 0 )  {
+	    } else if (strcmp(rec->ss.ss_keyword, "submodel" ) == 0 ) {
 		id = ID_SUBMODEL;
 		break;
 	    }
@@ -1275,7 +1227,7 @@ rt_id_solid(struct bu_external *ep)
 	    id = ID_NULL;		/* BAD */
 	    break;
     }
-    if ( id < ID_NULL || id > ID_MAX_SOLID )  {
+    if (id < ID_NULL || id > ID_MAX_SOLID ) {
 	bu_log("rt_id_solid: internal error, id=%d?\n", id);
 	id = ID_NULL;		/* very BAD */
     }
@@ -1291,10 +1243,10 @@ rt_id_solid(struct bu_external *ep)
 const struct rt_functab *
 rt_get_functab_by_label(const char *label)
 {
-    register const struct rt_functab	*ftp;
+    register const struct rt_functab *ftp;
 
-    for ( ftp = rt_functab; ftp->magic != 0; ftp++ )  {
-	if ( strncmp( label, ftp->ft_label, 8 ) == 0 )
+    for (ftp = rt_functab; ftp->magic != 0; ftp++ ) {
+	if (strncmp(label, ftp->ft_label, 8 ) == 0 )
 	    return ftp;
     }
     return NULL;
@@ -1309,26 +1261,25 @@ rt_get_functab_by_label(const char *label)
  * released.  If "os" is same as "is", storage for the original solid
  * is overwritten with the new, transformed solid.
  *
- *
  * Returns -
- *	-1	FAIL
- *	 0	OK
+ * -1 FAIL
+ *  0 OK
  */
 int
 rt_generic_xform(
-    struct rt_db_internal	*op,
-    const mat_t		mat,
-    struct rt_db_internal	*ip,
-    int			free,
-    struct db_i		*dbip,
-    struct resource		*resp)
+    struct rt_db_internal *op,
+    const mat_t mat,
+    struct rt_db_internal *ip,
+    int free,
+    struct db_i *dbip,
+    struct resource *resp)
 {
-    struct bu_external	ext;
-    int			id;
+    struct bu_external ext;
+    int id;
     struct bu_attribute_value_set avs;
 
 
-    RT_CK_DB_INTERNAL( ip );
+    RT_CK_DB_INTERNAL(ip );
     RT_CK_DBI(dbip);
     RT_CK_RESOURCE(resp);
 
@@ -1337,15 +1288,15 @@ rt_generic_xform(
     /* Scale change on export is 1.0 -- no change */
     switch (dbip->dbi_version) {
 	case 4:
-	    if ( rt_functab[id].ft_export( &ext, ip, 1.0, dbip, resp ) < 0 )  {
+	    if (rt_functab[id].ft_export(&ext, ip, 1.0, dbip, resp ) < 0 ) {
 		bu_log("rt_generic_xform():  %s export failure\n",
 		       rt_functab[id].ft_name);
 		return -1;			/* FAIL */
 	    }
-	    if ( (free || op == ip) )  rt_db_free_internal(ip, resp);
+	    if ((free || op == ip) )  rt_db_free_internal(ip, resp);
 
 	    RT_INIT_DB_INTERNAL(op);
-	    if ( rt_functab[id].ft_import( op, &ext, mat, dbip, resp ) < 0 )  {
+	    if (rt_functab[id].ft_import(op, &ext, mat, dbip, resp ) < 0 ) {
 		bu_log("rt_generic_xform():  solid import failure\n");
 		return -1;			/* FAIL */
 	    }
@@ -1353,48 +1304,48 @@ rt_generic_xform(
 	case 5:
 	    avs.magic = -1;
 
-	    if ( rt_functab[id].ft_export5( &ext, ip, 1.0, dbip, resp, 0 ) < 0 )  {
+	    if (rt_functab[id].ft_export5(&ext, ip, 1.0, dbip, resp, 0 ) < 0 ) {
 		bu_log("rt_generic_xform():  %s export failure\n",
 		       rt_functab[id].ft_name);
 		return -1;			/* FAIL */
 	    }
 
-	    if ( (free || op == ip) ) {
-		if ( ip->idb_avs.magic == BU_AVS_MAGIC ) {
+	    if ((free || op == ip) ) {
+		if (ip->idb_avs.magic == BU_AVS_MAGIC ) {
 		    /* grab the attributes before they are lost
 		     * by rt_db_free_internal or RT_INIT_DB_INTERNAL
 		     */
-		    bu_avs_init( &avs, ip->idb_avs.count, "avs" );
-		    bu_avs_merge( &avs, &ip->idb_avs );
+		    bu_avs_init(&avs, ip->idb_avs.count, "avs" );
+		    bu_avs_merge(&avs, &ip->idb_avs );
 		}
 		rt_db_free_internal(ip, resp);
 	    }
 
 	    RT_INIT_DB_INTERNAL(op);
 
-	    if ( !free && op != ip ) {
+	    if (!free && op != ip ) {
 		/* just copy the attributes from ip to op */
-		if ( ip->idb_avs.magic == BU_AVS_MAGIC ) {
-		    bu_avs_init( &op->idb_avs, ip->idb_avs.count, "avs" );
-		    bu_avs_merge( &op->idb_avs, &ip->idb_avs );
+		if (ip->idb_avs.magic == BU_AVS_MAGIC ) {
+		    bu_avs_init(&op->idb_avs, ip->idb_avs.count, "avs" );
+		    bu_avs_merge(&op->idb_avs, &ip->idb_avs );
 		}
-	    } else if ( avs.magic == BU_AVS_MAGIC ) {
+	    } else if (avs.magic == BU_AVS_MAGIC ) {
 		/* put the saved attributes in the output */
-		bu_avs_init( &op->idb_avs, avs.count, "avs" );
-		bu_avs_merge( &op->idb_avs, &avs );
-		bu_avs_free( &avs );
+		bu_avs_init(&op->idb_avs, avs.count, "avs" );
+		bu_avs_merge(&op->idb_avs, &avs );
+		bu_avs_free(&avs );
 	    }
 
-	    if ( rt_functab[id].ft_import5( op, &ext, mat, dbip, resp, 0 ) < 0 )  {
+	    if (rt_functab[id].ft_import5(op, &ext, mat, dbip, resp, 0 ) < 0 ) {
 		bu_log("rt_generic_xform():  solid import failure\n");
 		return -1;			/* FAIL */
 	    }
 	    break;
     }
 
-    bu_free_external( &ext );
+    bu_free_external(&ext );
 
-    RT_CK_DB_INTERNAL( op );
+    RT_CK_DB_INTERNAL(op );
     return 0;				/* OK */
 }
 
