@@ -14,6 +14,7 @@ changes made.  See document footer for additional details.
 --- 2009-06-XX  Release 7.14.10                                    ---
 ----------------------------------------------------------------------
 
+* initial undo support for Archer - Bob Parker
 * raytracers respect secondary ray overlap reporting - Sean Morrison
 * add dynamic sampling for NURBS wireframe drawing - Cliff Yapp
 * changed mged 'help' output formatting - Sean Morrison
