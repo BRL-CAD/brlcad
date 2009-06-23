@@ -334,6 +334,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\src\libged\cc.c"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\src\libged\center.c"
 				>
 			</File>
@@ -627,6 +631,10 @@
 			</File>
 			<File
 				RelativePath="..\..\..\src\libged\ls.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\src\libged\lscon.c"
 				>
 			</File>
 			<File
