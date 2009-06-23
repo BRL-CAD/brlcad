@@ -287,6 +287,12 @@ void makeLeftHand(struct rt_wdb *file, fastf_t standing_height, fastf_t leftWris
 
 	VSET(handPoint, x, y, leftWrist);
 	mk_sph(file, "LeftHand.s", handPoint, handWidth);
+	if(showBoxes){
+		point_t p1, p2;
+		VSET(p1, -handWidth, -handWidth+y, leftWrist-handWidth);  
+		VSET(p2, handWidth, handWidth+y, leftWrist+handWidth);
+		mk_rpp(file, "LeftHandBox.s", p1, p2);
+	}
 }
 
 void makeRightHand(struct rt_wdb *file, fastf_t standing_height, fastf_t RightWrist, fastf_t showBoxes)
@@ -299,6 +305,12 @@ void makeRightHand(struct rt_wdb *file, fastf_t standing_height, fastf_t RightWr
 	y = -1 * (standing_height / 6) * IN2MM;
 	VSET(handPoint, x, y, RightWrist);
 	mk_sph(file, "RightHand.s", handPoint, handWidth);
+        if(showBoxes){
+                point_t p1, p2;
+                VSET(p1, -handWidth, -handWidth+y, RightWrist-handWidth);
+                VSET(p2, handWidth, handWidth+y, RightWrist+handWidth);
+                mk_rpp(file, "RightHandBox.s", p1, p2);
+        }
 }
 
 fastf_t makeLeftThigh(struct rt_wdb *file, fastf_t standing_height, fastf_t lowerTorso, fastf_t showBoxes)
