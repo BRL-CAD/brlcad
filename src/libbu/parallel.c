@@ -519,6 +519,10 @@ bu_get_load_average(void)
  * If the number in the file is negative, it means "all but that many."
  *
  * Returns the number of processors presently available for "public" use.
+ *
+ * DEPRECATED: this routine's use of a temporary file is deprecated
+ * and should not be relied upon.  a future implementation will
+ * utilize environment variables instead of temporary files.
  */
 #ifndef _WIN32
 #  define PUBLIC_CPUS1 "/var/tmp/public_cpus"
@@ -548,6 +552,7 @@ bu_get_public_cpus(void)
 	(fp = fopen(PUBLIC_CPUS2, "wb")) != NULL)
     {
 	fprintf(fp, "%d\n", avail_cpus);
+	bu_fchmod(fp, 0666);
 	fclose(fp);
     }
 #endif
