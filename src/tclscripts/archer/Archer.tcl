@@ -435,7 +435,6 @@ package provide Archer 1.0
 
     if {$mTargetLedger != ""} {
 	catch {rename $mLedger ""}
-	catch {file delete -force $mTargetLedger}
     }
 }
 
@@ -6708,7 +6707,6 @@ package provide Archer 1.0
     # Delete previous ledger
     if {$mTargetLedger != ""} {
 	catch {rename $mLedger ""}
-	catch {file delete -force $mTargetLedger}
     }
 
     set mTargetLedger "$mTarget\.ledger"
@@ -6720,7 +6718,7 @@ package provide Archer 1.0
 
     set mLedgerGID 0
     set mLedger "ledger"
-    go_open $mLedger db $mTargetLedger
+    go_open $mLedger inmem 0
 }
 
 ::itcl::body Archer::global_undo {} {
