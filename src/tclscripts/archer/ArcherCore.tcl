@@ -886,20 +886,6 @@ Popup Menu    Right or Ctrl-Left
 	set expandedArgs $args
     }
 
-    if {$hflag} {
-	set obj [lindex $expandedArgs 0]
-	if {$obj != ""} {
-	    # First, apply the command to hobj if necessary.
-	    # Note - we're making the (ass)umption that the object
-	    #        name is the first item in the "expandedArgs" list.
-	    if {![catch {gedCmd attr get $obj history} hobj] &&
-		$obj != $hobj} {
-		set tmpArgs [lreplace $expandedArgs 0 0 $hobj]
-		catch {eval gedCmd $cmd $options $tmpArgs}
-	    }
-	}
-    }
-
     if {[catch {eval gedCmd $cmd $options $expandedArgs} ret]} {
 	SetNormalCursor $this
 	return $ret

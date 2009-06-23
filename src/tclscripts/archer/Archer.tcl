@@ -1269,19 +1269,7 @@ package provide Archer 1.0
 	set expandedArgs $args
     }
 
-    if {$hflag} {
-	set obj [lindex $expandedArgs 0]
-	if {$obj != ""} {
-	    # First, apply the command to hobj if necessary.
-	    # Note - we're making the (ass)umption that the object
-	    #        name is the first item in the "expandedArgs" list.
-	    if {![catch {gedCmd attr get $obj history} hobj] &&
-		$obj != $hobj} {
-		set tmpArgs [lreplace $expandedArgs 0 0 $hobj]
-		catch {eval gedCmd $cmd $options $tmpArgs}
-	    }
-	}
-    }
+    set obj [lindex $expandedArgs 0]
 
     if {$sflag} {
 	checkpoint $obj
