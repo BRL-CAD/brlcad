@@ -95,9 +95,9 @@ fastf_t makeNeck(struct rt_wdb *file, fastf_t standing_height, fastf_t headRadiu
 	neckHeight = standing_height / 22;
 	neckHeight *= IN2MM;
 	VSET(neckLength, 0.0, 0.0, (neckHeight*-1));
-	bu_log("%f\n%f\n", standing_height*IN2MM, headRadius);
+/*	bu_log("%f\n%f\n", standing_height*IN2MM, headRadius);*/
 	neckSpot = (standing_height*IN2MM) - (2 * headRadius);
-	bu_log("%f\n", neckSpot);
+/*	bu_log("%f\n", neckSpot);*/
 	VSET(neckPoint, 0.0, 0.0, neckSpot);
 	neckEnd = neckSpot - neckHeight;
 	mk_rcc(file, "Neck.s", neckPoint, neckLength, neckRadius);
@@ -133,7 +133,7 @@ fastf_t makeUpperTorso(struct rt_wdb *file, fastf_t standing_height, fastf_t nec
 		point_t p1, p2;
 		VSET(p1, -topTorsoWidthTop, -topTorsoWidthTop, torsoTop);
 		VSET(p2, topTorsoWidthTop, topTorsoWidthTop, topTorsoMid);
-		mk_rpp(file, "TopTorsoBox.s", p1, p2);
+		mk_rpp(file, "UpperTorsoBox.s", p1, p2);
 	}
 
 	return topTorsoMid;
@@ -452,10 +452,9 @@ fastf_t makeLeftFoot(struct rt_wdb *file, fastf_t standing_height, fastf_t leftA
 	if(showBoxes){
 		point_t p1, p2;
 		VSET(p1, -ankleRadius, -toeRadius+y, 0);
-		VSET(p2, footLength+toeRadius, toeRadius+y, toeRadius);
+		VSET(p2, footLength+toeRadius, toeRadius+y, toeRadius*2);
 		mk_rpp(file, "LeftFootBox.s", p1, p2);
 	}
-
 	return 0;
 }
 
@@ -480,10 +479,9 @@ fastf_t makeRightFoot(struct rt_wdb *file, fastf_t standing_height, fastf_t righ
         if(showBoxes){
                 point_t p1, p2;
                 VSET(p1, -ankleRadius, -toeRadius+y, 0);
-                VSET(p2, footLength+toeRadius, toeRadius+y, toeRadius);
+                VSET(p2, footLength+toeRadius, toeRadius+y, toeRadius*2);
                 mk_rpp(file, "RightFootBox.s", p1, p2);
         }
-
 	return 0;
 }
 
@@ -532,7 +530,7 @@ void print_human_info(char *name)
 }
 
 /**
- * Help message printed when -h option is supplied
+ * Help message printed when -h/-? option is supplied
  */
 void show_help(const char *name, const char *optstr)
 {
@@ -629,6 +627,7 @@ int main(int ac, char *av[])
 {
     struct rt_wdb *db_fp;
     struct wmember human;
+    struct wmember boxes;
 
     progname = *av;
     
@@ -651,24 +650,71 @@ int main(int ac, char *av[])
 
     makeBody(db_fp, standing_height, showBoxes);
 
-
-/****************/
-
-    /* Final top level assembly of human */
+/**** Make the Regions of the body ****/
+/* Make the .r for the realbody */
+    int is_region = 0;
+    unsigned char rgb[3], rgb2[3];
+    
     BU_LIST_INIT(&human.l);
-    bu_vls_trunc(&str, 0);
-    bu_vls_printf(&str, "%s_shoulders", bu_vls_addr(&name));
-    (void)mk_addmember(bu_vls_addr(&str), &human.l, NULL, WMOP_UNION);
-    bu_vls_trunc(&str, 0);
-    bu_vls_printf(&str, "%s_thorax", bu_vls_addr(&name));
-    (void)mk_addmember(bu_vls_addr(&str), &human.l, NULL, WMOP_UNION);
-    bu_vls_trunc(&str, 0);
-    bu_vls_printf(&str, "%s_abdomen", bu_vls_addr(&name));
-    (void)mk_addmember(bu_vls_addr(&str), &human.l, NULL, WMOP_UNION);
-    bu_vls_trunc(&str, 0);
-    bu_vls_printf(&str, "%s_pelvis", bu_vls_addr(&name));
-    (void)mk_addmember(bu_vls_addr(&str), &human.l, NULL, WMOP_UNION);
-    mk_lcomb(db_fp, bu_vls_addr(&name), &human, 0,  NULL, NULL, NULL, 0);
+    (void)mk_addmember("Head.s", &human.l, NULL, WMOP_UNION);
+    (void)mk_addmember("Neck.s", &human.l, NULL, WMOP_UNION);
+    (void)mk_addmember("UpperTorso.s", &human.l, NULL, WMOP_UNION);
+    (void)mk_addmember("LowerTorso.s", &human.l, NULL, WMOP_UNION);
+    (void)mk_addmember("LeftUpperArm.s", &human.l, NULL, WMOP_UNION);
+    (void)mk_addmember("RightUpperArm.s", &human.l, NULL, WMOP_UNION);
+    (void)mk_addmember("LeftLowerArm.s", &human.l, NULL, WMOP_UNION);
+    (void)mk_addmember("RightLowerArm.s", &human.l, NULL, WMOP_UNION);
+    (void)mk_addmember("LeftHand.s", &human.l, NULL, WMOP_UNION);
+    (void)mk_addmember("RightHand.s", &human.l, NULL, WMOP_UNION);
+    (void)mk_addmember("LeftThigh.s", &human.l, NULL, WMOP_UNION);
+    (void)mk_addmember("RightThigh.s", &human.l, NULL, WMOP_UNION);
+    (void)mk_addmember("LeftCalf.s", &human.l, NULL, WMOP_UNION);
+    (void)mk_addmember("RightCalf.s", &human.l, NULL, WMOP_UNION);
+    (void)mk_addmember("LeftFoot.s", &human.l, NULL, WMOP_UNION);
+    (void)mk_addmember("RightFoot.s", &human.l, NULL, WMOP_UNION);
+
+    is_region = 1;
+    VSET(rgb, 128, 255, 128); /*some wonky bright green color */
+    mk_lcomb(db_fp,
+	     "Body.r",
+	     &human,
+	     is_region,
+	     "plastic",
+	     "di=.99 sp=.01",
+	     rgb,
+	     0);
+
+/* make the .r for the bounding boxes */
+    if(showBoxes){
+    BU_LIST_INIT(&boxes.l)
+    (void)mk_addmember("HeadBox.s", &boxes.l, NULL, WMOP_UNION);
+    (void)mk_addmember("NeckBox.s", &boxes.l, NULL, WMOP_UNION);
+    (void)mk_addmember("UpperTorsoBox.s", &boxes.l, NULL, WMOP_UNION);
+    (void)mk_addmember("LowerTorsoBox.s", &boxes.l, NULL, WMOP_UNION);
+    (void)mk_addmember("LeftUpperArmBox.s", &boxes.l, NULL, WMOP_UNION);
+    (void)mk_addmember("RightUpperArmBox.s", &boxes.l, NULL, WMOP_UNION);
+    (void)mk_addmember("LeftLowerArmBox.s", &boxes.l, NULL, WMOP_UNION);
+    (void)mk_addmember("RightLowerArmBox.s", &boxes.l, NULL, WMOP_UNION);
+    (void)mk_addmember("LeftHandBox.s", &boxes.l, NULL, WMOP_UNION);
+    (void)mk_addmember("RightHandBox.s", &boxes.l, NULL, WMOP_UNION);
+    (void)mk_addmember("LeftThighBox.s", &boxes.l, NULL, WMOP_UNION);
+    (void)mk_addmember("RightThighBox.s", &boxes.l, NULL, WMOP_UNION);
+    (void)mk_addmember("LeftCalfBox.s", &boxes.l, NULL, WMOP_UNION);
+    (void)mk_addmember("RightCalfBox.s", &boxes.l, NULL, WMOP_UNION);
+    (void)mk_addmember("LeftFootBox.s", &boxes.l, NULL, WMOP_UNION);
+    (void)mk_addmember("RightFootBox.s", &boxes.l, NULL, WMOP_UNION);
+    
+    is_region = 1;
+    VSET(rgb2, 255, 128, 128); /* redish color */
+        mk_lcomb(db_fp,   
+             "Boxes.r",
+             &boxes,
+             is_region,
+             "glass",
+             "di=0.5 sp=0.5 tr=0.55",
+             rgb2,
+             0);
+    }
 
     /* Close database */
     wdb_close(db_fp);
@@ -678,7 +724,6 @@ int main(int ac, char *av[])
 
     return 0;
 }
-
 
 /*
  * Local Variables:
