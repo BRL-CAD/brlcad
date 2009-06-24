@@ -395,7 +395,7 @@ namespace brlcad {
 			// check for vertical segments they can be removed
 			// from trims above (can't tell direction and don't
 			// need
-			if ( NEAR_ZERO(m_end[X]-m_start[X], DBL_EPSILON) ) {
+			if ( NEAR_ZERO(m_end[X]-m_start[X], 0.000001) ) {
 			    m_Vertical = true;
 			    if (m_innerTrim) {
 				m_XIncreasing = false;

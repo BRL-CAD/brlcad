@@ -46,6 +46,7 @@
 #include "raytrace.h"
 #include "rtgeom.h"
 
+#define fastf_t double
 
 #ifdef __cplusplus
 extern "C" {
@@ -312,8 +313,8 @@ void plotsurfaceleafs(SurfaceTree* surf) {
 			COLOR_PLOT(100, 100, 100); 
 		}
 		*/
-		if ((!bb->m_trimmed) && (!bb->m_checkTrim)) {
-		if (false) {
+		//if ((!bb->m_trimmed) && (!bb->m_checkTrim)) {
+		if (true) {
 			bb->GetBBox(min,max);
 		} else {
 		    VSET(min,bb->m_u[0]+0.001,bb->m_v[0]+0.001,0.0);
@@ -322,13 +323,18 @@ void plotsurfaceleafs(SurfaceTree* surf) {
 		    //VSET(max,bb->m_u[1],bb->m_v[1],0.0);
 		}
 		BB_PLOT(min,max);
-		}
+		//}
     }
     return;
 }
 void plotleaf3d(SubsurfaceBBNode* bb) {
     double min[3],max[3];
 	double u,v;
+	ON_2dPoint uv[2];
+	int trim1_status;
+	int trim2_status;
+	double closesttrim1;
+	double closesttrim2;
 
 	if (bb->m_trimmed) {
 		COLOR_PLOT(255, 0, 0);
@@ -352,15 +358,22 @@ void plotleaf3d(SubsurfaceBBNode* bb) {
 	ON_3dPoint p;
 	const ON_BrepFace* f = bb->m_face;
 	const ON_Surface* surf = f->SurfaceOf();
-	for(u=bb->m_u[0];u<=bb->m_u[1];u=u+(bb->m_u[1] - bb->m_u[0])/100) {
-		for(v=bb->m_v[0];v<=bb->m_v[1];v=v+(bb->m_v[1] - bb->m_v[0])/100) {
-			if (start) {
-				start=false;
-				p = surf->PointAt(u,v);
-				VMOVE(b,p);
-			} else {
-				VMOVE(a,b);
-				p = surf->PointAt(u,v);
+	fastf_t uinc = (bb->m_u[1] - bb->m_u[0])/100.0;
+	fastf_t vinc = (bb->m_v[1] - bb->m_v[0])/100.0;
+	for(u=bb->m_u[0];u<bb->m_u[1];u=u+uinc) {
+		for(v=bb->m_v[0];v<bb->m_v[1];v=v+vinc) {
+			uv[0].x = u;
+			uv[0].y = v;
+			uv[1].x = u+uinc;
+			uv[1].y = v+vinc;
+			trim1_status = bb->isTrimmed(uv[0],closesttrim1);
+			trim2_status = bb->isTrimmed(uv[1],closesttrim2);
+			
+			if (((trim1_status != 1) || (closesttrim1 < BREP_EDGE_MISS_TOLERANCE)) &&
+				((trim2_status != 1) || (closesttrim2 < BREP_EDGE_MISS_TOLERANCE))) {
+				p = surf->PointAt(uv[0].x,uv[0].y);
+				VMOVE(a,p);
+				p = surf->PointAt(uv[1].x,uv[1].y);
 				VMOVE(b,p);
 				LINE_PLOT(a,b);
 			}
@@ -894,7 +907,7 @@ brep_build_bvh(struct brep_specific* bs, struct rt_brep_internal* bi)
 		ON_BrepFace& face = faces[i];
 //#define KPLOT
 #ifdef KPLOT // debugging hacks to look at specific faces
-		if (true) { //(i == 0)) { // && ((i <= 6) ||(i >= 5))) {
+		if (i == 428) { // && ((i <= 6) ||(i >= 5))) {
 	char buffer[80];
 	sprintf(buffer,"Face%d.pl",i+1);
 	plot_file((const char *)buffer);
@@ -1062,6 +1075,7 @@ public:
 	CLEAN_MISS,
 	NEAR_HIT,
 	NEAR_MISS,
+	CRACK_HIT, //applied to first point of two near_miss points with same normal direction, second point removed
     };
     enum hit_direction {
 	ENTERING,
@@ -1785,7 +1799,9 @@ utah_brep_intersect_test(const SubsurfaceBBNode* sbv, const ON_BrepFace* face, c
 				bh.sbv = sbv;
 				hits.push_back(bh);
 				found = BREP_INTERSECT_FOUND;
-			} else if (fabs(closesttrim) < BREP_EDGE_MISS_TOLERANCE) {
+			}
+#if 1
+			 else if (fabs(closesttrim) < BREP_EDGE_MISS_TOLERANCE) {
 				ON_3dPoint _pt;
 				ON_3dVector _norm(N[i]);
 				_pt = ray.m_origin + (ray.m_dir*t[i]);
@@ -1805,6 +1821,7 @@ utah_brep_intersect_test(const SubsurfaceBBNode* sbv, const ON_BrepFace* face, c
 				hits.push_back(bh);
 				found = BREP_INTERSECT_FOUND;
 			}
+#endif
 		}
 	}
     return found;
@@ -1978,6 +1995,29 @@ sign(double val)
     return (val >= 0.0) ? 1 : -1;
 }
 
+bool
+containsNearMiss(HitList *hits) 
+{ 
+	for (HitList::iterator i = hits->begin(); i != hits->end(); ++i) {
+		brep_hit&out = *i;
+		if (out.hit == brep_hit::NEAR_MISS) {
+			return true;
+		}
+	}
+	return false;
+}
+
+bool
+containsNearHit(HitList *hits) 
+{ 
+	for (HitList::iterator i = hits->begin(); i != hits->end(); ++i) {
+		brep_hit&out = *i;
+		if (out.hit == brep_hit::NEAR_HIT) {
+			return true;
+		}
+	}
+	return false;
+}
 
 /**
  * R T _ B R E P _ S H O T
@@ -2092,20 +2132,239 @@ rt_brep_shot(struct soltab *stp, register struct xray *rp, struct application *a
 
     // sort the hits
     hits.sort();
+	HitList orig = hits;
 ////////////////////////
-    if (hits.size() > 1) {
-        bu_log("**** Hits: %d\n",hits.size());
+    if ((hits.size() > 1) && containsNearMiss(&hits) ) { //&& ((hits.size() % 2) != 0)) {
+/*
+        bu_log("**** Before Pass1 Hits: %d\n",hits.size());
+
 	for (HitList::iterator i = hits.begin(); i != hits.end(); ++i) {
-	    brep_hit&out = *i;
+		point_t prev;
+		
+		brep_hit &out = *i;
+
+		if (i != hits.begin() ) {
+			bu_log("<%g>",DIST_PT_PT(out.point, prev));
+		}
 	    bu_log("(");
-	    if (out.hit == brep_hit::CLEAN_HIT) bu_log("H");
-	    if ( (out.hit == brep_hit::NEAR_HIT) || (out.hit == brep_hit::NEAR_MISS) ) bu_log("c");
+	    if (out.hit == brep_hit::CLEAN_HIT) bu_log("-CH-(%d)",out.face.m_face_index);
+	    if (out.hit == brep_hit::NEAR_HIT) bu_log("_NH_(%d)",out.face.m_face_index);
+	    if (out.hit == brep_hit::NEAR_MISS) bu_log("_NM_(%d)",out.face.m_face_index);
 	    if (out.direction == brep_hit::ENTERING) bu_log("+");
 	    if (out.direction == brep_hit::LEAVING) bu_log("-");
+		VMOVE(prev,out.point);
 	    bu_log(")");
 	}
+*/
+	HitList::iterator prev;
+	HitList::iterator next;
+	HitList::iterator curr = hits.begin();
+	while (curr != hits.end()) {
+		brep_hit &curr_hit = *curr;
+		if (curr_hit.hit == brep_hit::NEAR_MISS) {
+			prev = curr;
+			prev--;
+			if (prev != hits.end()) {
+				brep_hit &prev_hit = (*prev);
+				if ((prev_hit.hit != brep_hit::NEAR_MISS) && (prev_hit.direction == curr_hit.direction)) {
+					//remove current miss
+					curr=hits.erase(curr);
+					continue;
+				}
+			}
+			next=curr;
+			next++;
+			if (next != hits.end()) {
+				brep_hit &next_hit = (*next);
+				if ((next_hit.hit != brep_hit::NEAR_MISS) && ( next_hit.direction == curr_hit.direction )) {
+					//remove current miss
+					curr=hits.erase(curr);
+					continue;
+				}
+			}
+		}
+		curr++;
+	}
+/*
+    bu_log("**** After Pass1 Hits: %d\n",hits.size());
+
+	for (HitList::iterator i = hits.begin(); i != hits.end(); ++i) {
+		point_t prev;
+		
+		brep_hit &out = *i;
+
+		if (i != hits.begin() ) {
+			bu_log("<%g>",DIST_PT_PT(out.point, prev));
+		}
+	    bu_log("(");
+	    if (out.hit == brep_hit::CLEAN_HIT) bu_log("_CH_(%d)",out.face.m_face_index);
+	    if (out.hit == brep_hit::NEAR_HIT) bu_log("_NH_(%d)",out.face.m_face_index);
+	    if (out.hit == brep_hit::NEAR_MISS) bu_log("_NM_(%d)",out.face.m_face_index);
+	    if (out.direction == brep_hit::ENTERING) bu_log("+");
+	    if (out.direction == brep_hit::LEAVING) bu_log("-");
+		VMOVE(prev,out.point);
+	    bu_log(")");
+	}
+*/
+	curr = hits.begin();
+	while (curr != hits.end()) {
+		brep_hit &curr_hit = *curr;
+		if (curr_hit.hit == brep_hit::NEAR_MISS) {
+			prev = curr;
+			prev--;
+			if (prev != hits.end()) {
+				brep_hit &prev_hit = (*prev);
+				if ((prev_hit.hit == brep_hit::NEAR_MISS) && (prev_hit.direction == curr_hit.direction)) {
+					//remove current miss
+					prev_hit.hit = brep_hit::CRACK_HIT;
+					curr=hits.erase(curr);
+					continue;
+				}
+			}
+		}
+		curr++;
+	}
+//    bu_log("**** After Pass2 Hits: %d\n",hits.size());
+	
+	if ((hits.size() > 0) && ( (hits.size() % 2) != 0)) {
+		brep_hit &curr_hit = hits.back();
+		if (curr_hit.hit == brep_hit::NEAR_MISS) {
+				hits.pop_back();
+		}
+	}
+/*
+    bu_log("**** After Pass3 Hits: %d\n",hits.size());
+
+	for (HitList::iterator i = hits.begin(); i != hits.end(); ++i) {
+		point_t prev;
+		
+		brep_hit &out = *i;
+
+		if (i != hits.begin() ) {
+			bu_log("<%g>",DIST_PT_PT(out.point, prev));
+		}
+	    bu_log("(");
+	    if (out.hit == brep_hit::CRACK_HIT) bu_log("_CRACK_(%d)",out.face.m_face_index);
+	    if (out.hit == brep_hit::CLEAN_HIT) bu_log("_CH_(%d)",out.face.m_face_index);
+	    if (out.hit == brep_hit::NEAR_HIT) bu_log("_NH_(%d)",out.face.m_face_index);
+	    if (out.hit == brep_hit::NEAR_MISS) bu_log("_NM_(%d)",out.face.m_face_index);
+	    if (out.direction == brep_hit::ENTERING) bu_log("+");
+	    if (out.direction == brep_hit::LEAVING) bu_log("-");
+		VMOVE(prev,out.point);
+	    bu_log(")");
+	}
+
 	bu_log("\n**********************\n");
+*/
+	}
+	///////////// handle near hit
+    if ((hits.size() > 1) && containsNearHit(&hits) ) { //&& ((hits.size() % 2) != 0)) {
+		HitList::iterator prev;
+		HitList::iterator next;
+		HitList::iterator curr = hits.begin();
+		while (curr != hits.end()) {
+			brep_hit &curr_hit = *curr;
+			if (curr_hit.hit == brep_hit::NEAR_HIT) {
+				prev = curr;
+				prev--;
+				if (prev != hits.end()) {
+					brep_hit &prev_hit = (*prev);
+					if ((prev_hit.hit != brep_hit::NEAR_HIT) && (prev_hit.direction == curr_hit.direction)) {
+						//remove current miss
+						curr=hits.erase(curr);
+						continue;
+					}
+				}
+				next=curr;
+				next++;
+				if (next != hits.end()) {
+					brep_hit &next_hit = (*next);
+					if ((next_hit.hit != brep_hit::NEAR_HIT) && ( next_hit.direction == curr_hit.direction )) {
+						//remove current miss
+						curr=hits.erase(curr);
+						continue;
+					}
+				}
+			}
+			curr++;
+		}
+		curr = hits.begin();
+		while (curr != hits.end()) {
+			brep_hit &curr_hit = *curr;
+			if (curr_hit.hit == brep_hit::NEAR_HIT) {
+				prev = curr;
+				prev--;
+				if (prev != hits.end()) {
+					brep_hit &prev_hit = (*prev);
+					if ((prev_hit.hit == brep_hit::NEAR_HIT) && (prev_hit.direction == curr_hit.direction)) {
+						//remove current near hit
+						prev_hit.hit = brep_hit::CRACK_HIT;
+						curr=hits.erase(curr);
+						continue;
+					}
+				}
+			}
+			curr++;
+		}
+		//    bu_log("**** After Pass2 Hits: %d\n",hits.size());
+		
+		if ((hits.size() > 0) && ( (hits.size() % 2) != 0)) {
+			brep_hit &curr_hit = hits.back();
+			if (curr_hit.hit == brep_hit::NEAR_HIT) {
+				hits.pop_back();
+			}
+		}
+	}
+	///////////// near hit end
+    if (false) { //((hits.size() % 2) != 0 ) {
+    bu_log("**** After Pass3 Hits: %d\n",hits.size());
+
+	for (HitList::iterator i = hits.begin(); i != hits.end(); ++i) {
+		point_t prev;
+		
+		brep_hit &out = *i;
+
+		if (i != hits.begin() ) {
+			bu_log("<%g>",DIST_PT_PT(out.point, prev));
+		}
+	    bu_log("(");
+	    if (out.hit == brep_hit::CRACK_HIT) bu_log("_CRACK_(%d)",out.face.m_face_index);
+	    if (out.hit == brep_hit::CLEAN_HIT) bu_log("_CH_(%d)",out.face.m_face_index);
+	    if (out.hit == brep_hit::NEAR_HIT) bu_log("_NH_(%d)",out.face.m_face_index);
+	    if (out.hit == brep_hit::NEAR_MISS) bu_log("_NM_(%d)",out.face.m_face_index);
+	    if (out.direction == brep_hit::ENTERING) bu_log("+");
+	    if (out.direction == brep_hit::LEAVING) bu_log("-");
+		VMOVE(prev,out.point);
+	    bu_log(")");
+	}
+    bu_log("**** Orig Hits: %d\n",orig.size());
+
+	for (HitList::iterator i = orig.begin(); i != orig.end(); ++i) {
+		point_t prev;
+		
+		brep_hit &out = *i;
+
+		if (i != orig.begin() ) {
+			bu_log("<%g>",DIST_PT_PT(out.point, prev));
+		}
+	    bu_log("(");
+	    if (out.hit == brep_hit::CRACK_HIT) bu_log("_CRACK_(%d)",out.face.m_face_index);
+	    if (out.hit == brep_hit::CLEAN_HIT) bu_log("_CH_(%d)",out.face.m_face_index);
+	    if (out.hit == brep_hit::NEAR_HIT) bu_log("_NH_(%d)",out.face.m_face_index);
+	    if (out.hit == brep_hit::NEAR_MISS) bu_log("_NM_(%d)",out.face.m_face_index);
+	    if (out.direction == brep_hit::ENTERING) bu_log("+");
+	    if (out.direction == brep_hit::LEAVING) bu_log("-");
+		VMOVE(prev,out.point);
+	    bu_log(")");
+	}
+
+	bu_log("\n**********************\n");
+	
     }
+
+    all_hits.clear();
+	all_hits = hits;
+
 ////////////////////////
     TRACE("---");
     int num = 0;
@@ -2186,6 +2445,51 @@ rt_brep_shot(struct soltab *stp, register struct xray *rp, struct application *a
 	    
         bu_log("xyz %f %f %f \n", rp->r_pt[0], rp->r_pt[1], rp->r_pt[2]);
 	bu_log("dir %f %f %f \n", rp->r_dir[0], rp->r_dir[1], rp->r_dir[2]);
+    if ((hits.size() % 2) != 0 ) {
+    bu_log("**** Current Hits: %d\n",hits.size());
+
+	for (HitList::iterator i = hits.begin(); i != hits.end(); ++i) {
+		point_t prev;
+		
+		brep_hit &out = *i;
+
+		if (i != hits.begin() ) {
+			bu_log("<%g>",DIST_PT_PT(out.point, prev));
+		}
+	    bu_log("(");
+	    if (out.hit == brep_hit::CRACK_HIT) bu_log("_CRACK_(%d)",out.face.m_face_index);
+	    if (out.hit == brep_hit::CLEAN_HIT) bu_log("_CH_(%d)",out.face.m_face_index);
+	    if (out.hit == brep_hit::NEAR_HIT) bu_log("_NH_(%d)",out.face.m_face_index);
+	    if (out.hit == brep_hit::NEAR_MISS) bu_log("_NM_(%d)",out.face.m_face_index);
+	    if (out.direction == brep_hit::ENTERING) bu_log("+");
+	    if (out.direction == brep_hit::LEAVING) bu_log("-");
+		VMOVE(prev,out.point);
+	    bu_log(")");
+	}
+    bu_log("**** Orig Hits: %d\n",orig.size());
+
+	for (HitList::iterator i = orig.begin(); i != orig.end(); ++i) {
+		point_t prev;
+		
+		brep_hit &out = *i;
+
+		if (i != orig.begin() ) {
+			bu_log("<%g>",DIST_PT_PT(out.point, prev));
+		}
+	    bu_log("(");
+	    if (out.hit == brep_hit::CRACK_HIT) bu_log("_CRACK_(%d)",out.face.m_face_index);
+	    if (out.hit == brep_hit::CLEAN_HIT) bu_log("_CH_(%d)",out.face.m_face_index);
+	    if (out.hit == brep_hit::NEAR_HIT) bu_log("_NH_(%d)",out.face.m_face_index);
+	    if (out.hit == brep_hit::NEAR_MISS) bu_log("_NM_(%d)",out.face.m_face_index);
+	    if (out.direction == brep_hit::ENTERING) bu_log("+");
+	    if (out.direction == brep_hit::LEAVING) bu_log("-");
+		VMOVE(prev,out.point);
+	    bu_log(")");
+	}
+
+	bu_log("\n**********************\n");
+	
+    }
 	
         point_t last_point;
         int hitCount = 0;
@@ -2541,7 +2845,7 @@ rt_brep_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_t
 
     point_t pt1, pt2;
 
-    for (i = 0; i < bi->brep->m_E.Count(); i++) {
+	for (i = 0; i < bi->brep->m_E.Count(); i++) {
 	ON_BrepEdge& e = brep->m_E[i];
 	const ON_Curve* crv = e.EdgeCurveOf();
 
@@ -2636,7 +2940,7 @@ rt_brep_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_t
      * well to edges, but will show some cases where two surfaces are intended to join
      * without an edge
      */
-/*
+	/*
     for (i = 0; i < bi->brep->m_F.Count(); i++) {
 	ON_BrepFace *f = &(bi->brep->m_F[i]);
 	const ON_Surface *s = bi->brep->m_F[i].SurfaceOf();
@@ -2670,7 +2974,7 @@ rt_brep_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_t
 		}
 	}
     }
-*/		
+		*/
 
 
     return 0;
