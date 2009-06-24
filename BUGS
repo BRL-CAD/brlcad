@@ -15,6 +15,10 @@ on-going issues.
 Recent Bugs
 -----------
 
+* rtedge fills in nearly entire faces of an object when executing on a
+  model that is in perspective mode. Effects really bad on small sized
+  renders, and gets better the larger the render size
+
 * shaders.sh regression test is failing because mged's view
   initialization has changed.  this causes the first shaders.txt
   projection shader to have bad/changed eye_pt and orientation values:
