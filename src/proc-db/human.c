@@ -628,6 +628,7 @@ int main(int ac, char *av[])
     struct rt_wdb *db_fp;
     struct wmember human;
     struct wmember boxes;
+    struct wmember hollow;
 
     progname = *av;
     
@@ -650,10 +651,10 @@ int main(int ac, char *av[])
 
     makeBody(db_fp, standing_height, showBoxes);
 
-/**** Make the Regions of the body ****/
+/** Make the Regions of the body */
 /* Make the .r for the realbody */
     int is_region = 0;
-    unsigned char rgb[3], rgb2[3];
+    unsigned char rgb[3], rgb2[3], rgb3[3];
     
     BU_LIST_INIT(&human.l);
     (void)mk_addmember("Head.s", &human.l, NULL, WMOP_UNION);
@@ -674,7 +675,7 @@ int main(int ac, char *av[])
     (void)mk_addmember("RightFoot.s", &human.l, NULL, WMOP_UNION);
 
     is_region = 1;
-    VSET(rgb, 128, 255, 128); /*some wonky bright green color */
+    VSET(rgb, 128, 255, 128); /* some wonky bright green color */
     mk_lcomb(db_fp,
 	     "Body.r",
 	     &human,
@@ -686,6 +687,12 @@ int main(int ac, char *av[])
 
 /* make the .r for the bounding boxes */
     if(showBoxes){
+
+    /*
+     * Create opaque bounding boxes for representaions of where the person model
+     * may lay up next to another model
+     */
+
     BU_LIST_INIT(&boxes.l)
     (void)mk_addmember("HeadBox.s", &boxes.l, NULL, WMOP_UNION);
     (void)mk_addmember("NeckBox.s", &boxes.l, NULL, WMOP_UNION);
@@ -710,11 +717,78 @@ int main(int ac, char *av[])
              "Boxes.r",
              &boxes,
              is_region,
-             "glass",
-             "di=0.5 sp=0.5 tr=0.55",
+             "plastic",
+             "di=0.5 sp=0.5",
              rgb2,
              0);
+
+    /*
+     * Creating a hollow box that would allow for a person to see inside the
+     * bounding boxes to the actual body representation inside.
+     */
+
+    BU_LIST_INIT(&hollow.l)
+    (void)mk_addmember("HeadBox.s", &hollow.l, NULL, WMOP_UNION);
+    (void)mk_addmember("Head.s", &hollow.l, NULL, WMOP_SUBTRACT);
+
+    (void)mk_addmember("NeckBox.s", &hollow.l, NULL, WMOP_UNION);
+    (void)mk_addmember("Neck.s", &hollow.l, NULL, WMOP_SUBTRACT);   
+
+    (void)mk_addmember("UpperTorsoBox.s", &hollow.l, NULL, WMOP_UNION);
+    (void)mk_addmember("UpperTorso.s", &hollow.l, NULL, WMOP_SUBTRACT);
+
+    (void)mk_addmember("LowerTorsoBox.s", &hollow.l, NULL, WMOP_UNION);
+    (void)mk_addmember("LowerTorso.s", &hollow.l, NULL, WMOP_SUBTRACT);
+    
+    (void)mk_addmember("LeftUpperArmBox.s", &hollow.l, NULL, WMOP_UNION);
+    (void)mk_addmember("LeftUpperArm.s", &hollow.l, NULL, WMOP_SUBTRACT);
+    
+    (void)mk_addmember("RightUpperArmBox.s", &hollow.l, NULL, WMOP_UNION);
+    (void)mk_addmember("RightUpperArm.s", &hollow.l, NULL, WMOP_SUBTRACT);
+    
+    (void)mk_addmember("LeftLowerArmBox.s", &hollow.l, NULL, WMOP_UNION);
+    (void)mk_addmember("LeftLowerArm.s", &hollow.l, NULL, WMOP_SUBTRACT);
+    
+    (void)mk_addmember("RightLowerArmBox.s", &hollow.l, NULL, WMOP_UNION);
+    (void)mk_addmember("RightLowerArm.s", &hollow.l, NULL, WMOP_SUBTRACT);
+    
+    (void)mk_addmember("LeftHandBox.s", &hollow.l, NULL, WMOP_UNION);
+    (void)mk_addmember("LeftHand.s", &hollow.l, NULL, WMOP_SUBTRACT);
+    
+    (void)mk_addmember("RightHandBox.s", &hollow.l, NULL, WMOP_UNION);
+    (void)mk_addmember("RightHand.s", &hollow.l, NULL, WMOP_SUBTRACT);
+    
+    (void)mk_addmember("LeftThighBox.s", &hollow.l, NULL, WMOP_UNION);
+    (void)mk_addmember("LeftThigh.s", &hollow.l, NULL, WMOP_SUBTRACT);
+    
+    (void)mk_addmember("RightThighBox.s", &hollow.l, NULL, WMOP_UNION);
+    (void)mk_addmember("RightThigh.s", &hollow.l, NULL, WMOP_SUBTRACT);
+    
+    (void)mk_addmember("LeftCalfBox.s", &hollow.l, NULL, WMOP_UNION);
+    (void)mk_addmember("LeftCalf.s", &hollow.l, NULL, WMOP_SUBTRACT);
+    
+    (void)mk_addmember("RightCalfBox.s", &hollow.l, NULL, WMOP_UNION);
+    (void)mk_addmember("RightCalf.s", &hollow.l, NULL, WMOP_SUBTRACT);
+    
+    (void)mk_addmember("LeftFootBox.s", &hollow.l, NULL, WMOP_UNION);
+    (void)mk_addmember("LeftFoot.s", &hollow.l, NULL, WMOP_SUBTRACT);
+    
+    (void)mk_addmember("RightFootBox.s", &hollow.l, NULL, WMOP_UNION);
+    (void)mk_addmember("RightFoot.s", &hollow.l, NULL, WMOP_SUBTRACT);
+
+    is_region = 1;
+    VSET(rgb3, 128, 128, 255); /* blueish color */
+        mk_lcomb(db_fp,
+             "Hollow.r",
+             &hollow,
+             is_region,
+             "glass",
+             "di=0.5 sp=0.5 tr=0.95 ri=1",
+             rgb3,
+             0);
     }
+
+
 
     /* Close database */
     wdb_close(db_fp);
