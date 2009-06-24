@@ -2853,7 +2853,7 @@ ged_in(struct ged *gedp, int argc, const char *argv[])
 		rt_db_free_internal( &internal, &rt_uniresource );
 		return GED_ERROR;
 	    case GED_MORE:
-		return GED_ERROR;
+		return GED_MORE;
 	}
 	goto do_new_update;
     } else if ( strcmp( argv[2], "metaball" ) == 0 ) {
@@ -2863,7 +2863,7 @@ ged_in(struct ged *gedp, int argc, const char *argv[])
 		rt_db_free_internal( &internal, &rt_uniresource );
 		return GED_ERROR;
 	    case GED_MORE:
-		return GED_ERROR;
+		return GED_MORE;
 	}
 	goto do_new_update;
     } else if ( strcmp( argv[2], "ars" ) == 0 )  {
@@ -2873,7 +2873,7 @@ ged_in(struct ged *gedp, int argc, const char *argv[])
 		rt_db_free_internal( &internal, &rt_uniresource );
 		return GED_ERROR;
 	    case GED_MORE:
-		return GED_ERROR;
+		return GED_MORE;
 	}
 	goto do_new_update;
     } else if ( strcmp( argv[2], "half" ) == 0 )  {
