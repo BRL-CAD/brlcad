@@ -1341,9 +1341,10 @@ utah_pushBack(const ON_Surface* surf, ON_2dPoint &uv)
 
 
 int
-utah_newton_solver_test(const SubsurfaceBBNode* sbv, const ON_Surface* surf, const ON_Ray& r, ON_2dPoint* ouv, double* t, ON_3dVector* N, bool& converged, ON_2dPoint* suv, int intersects, int iu, int iv)
+utah_newton_solver_test(const SubsurfaceBBNode* sbv, const ON_Surface* surf, const ON_Ray& r, ON_2dPoint* ouv, double* t, ON_3dVector* N, bool& converged, ON_2dPoint* suv, int iu, int iv)
 {
     int i;
+    int intersects = 0;
     double j11, j12, j21, j22;
     double f, g;
     double rootdist, oldrootdist;
@@ -1444,7 +1445,7 @@ utah_newton_4corner_solver(const SubsurfaceBBNode* sbv, const ON_Surface* surf, 
 		ON_2dPoint uv;
 		uv.x = sbv->m_u[iu];
 		uv.y = sbv->m_v[iv];
-		intersects += utah_newton_solver_test(sbv, surf, r, ouv, t, N, converged, &uv, intersects, iu, iv);
+		intersects += utah_newton_solver_test(sbv, surf, r, ouv, t, N, converged, &uv, iu, iv);
 	    }
         }
     }
@@ -1452,7 +1453,7 @@ utah_newton_4corner_solver(const SubsurfaceBBNode* sbv, const ON_Surface* surf, 
     ON_2dPoint uv;
     uv.x = sbv->m_u.Mid();
     uv.y = sbv->m_v.Mid();
-    intersects += utah_newton_solver_test( sbv, surf, r, ouv, t, N, converged, &uv, intersects, -1, -1);
+    intersects += utah_newton_solver_test( sbv, surf, r, ouv, t, N, converged, &uv,  -1, -1);
     return intersects;
 }
 
