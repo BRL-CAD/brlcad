@@ -1340,6 +1340,99 @@ utah_pushBack(const ON_Surface* surf, ON_2dPoint &uv)
 }
 
 
+int
+utah_newton_solver_test(const SubsurfaceBBNode* sbv, const ON_Surface* surf, const ON_Ray& r, ON_2dPoint* ouv, double* t, ON_3dVector* N, bool& converged, ON_2dPoint* suv, int iu, int iv)
+{
+    int i;
+	int intersects = 0;
+    double j11, j12, j21, j22;
+    double f, g;
+    double rootdist, oldrootdist;
+    double J, invdetJ;
+	double du,dv;
+
+    ON_3dVector p1, p2;
+    double p1d = 0, p2d = 0;
+    converged = false;
+    utah_ray_planes(r, p1, p1d, p2, p2d);
+
+    ON_3dPoint S;
+    ON_3dVector Su, Sv;
+
+    ON_2dPoint uv;
+
+    uv.x = suv->x;
+    uv.y = suv->y;
+    
+    ON_2dPoint uv0(uv);
+    surf->Ev1Der(uv.x, uv.y, S, Su, Sv);
+    
+    utah_F(S, p1, p1d, p2, p2d, f, g);
+    rootdist = fabs(f) + fabs(g);
+    
+    for (i = 0; i < BREP_MAX_ITERATIONS; i++) {
+	utah_Fu(Su, p1, p2, j11, j21);
+	utah_Fv(Sv, p1, p2, j12, j22);
+	
+	J = (j11 * j22 - j12 * j21);
+	
+	if (NEAR_ZERO(J, BREP_INTERSECTION_ROOT_EPSILON)) {
+	    // perform jittered perturbation in parametric domain....
+	    uv.x = uv.x + .1 * drand48() * (uv0.x - uv.x);
+	    uv.y = uv.y + .1 * drand48() * (uv0.y - uv.y);
+	    continue;
+	}
+	
+	invdetJ = 1. / J;
+	
+	
+	du = -invdetJ * (j22 * f - j12 * g);
+	dv = -invdetJ * (j11 * g - j21 * f);
+
+	if ( i == 0 ) {
+	    if (((iu == 0) && (du < 0.0)) || ((iu==1) && (du > 0.0))) break; //head out of U bounds
+	    if (((iv == 0) && (dv < 0.0)) || ((iv==1) && (dv > 0.0))) break; //head out of V bounds
+	}
+
+	uv.x -= invdetJ * (j22 * f - j12 * g);
+	uv.y -= invdetJ * (j11 * g - j21 * f);
+	
+	utah_pushBack(surf, uv);
+	
+	surf->Ev1Der(uv.x, uv.y, S, Su, Sv);
+	utah_F(S, p1, p1d, p2, p2d, f, g);
+	oldrootdist = rootdist;
+	rootdist = fabs(f) + fabs(g);
+	
+	if (oldrootdist < rootdist) break;
+	
+	if (rootdist < ROOT_TOL) {
+	    if (sbv->m_u.Includes(uv.x) && sbv->m_v.Includes(uv.y)) {
+		bool new_point = true;
+		for(int j=0;j<intersects;j++) {
+		    if (NEAR_ZERO(uv.x - ouv[j].x, 0.0001) && NEAR_ZERO(uv.y - ouv[j].y, 0.0001)) {
+			new_point = false;
+		    } 
+		}
+		if (new_point) {
+		    //bu_log("New Hit Point:(%f %f %f) uv(%f,%f)\n",S.x,S.y,S.z,uv.x,uv.y);
+		    t[intersects] = utah_calc_t(r, S);
+		    N[intersects] = ON_CrossProduct(Su, Sv);
+		    N[intersects].Unitize();
+		    ouv[intersects].x = uv.x;
+		    ouv[intersects].y = uv.y;
+		    intersects++;
+		    converged = true;
+		}
+	    } //else {
+	    //bu_log("OOB Point Hit:(%f %f %f) uv(%f,%f)\n",S.x,S.y,S.z,uv.x,uv.y);
+	    //}
+	break;
+	}
+    }
+    return intersects;
+}
+
 
 int
 utah_newton_4corner_solver(const SubsurfaceBBNode* sbv, const ON_Surface* surf, const ON_Ray& r, ON_2dPoint* ouv, double* t, ON_3dVector* N, bool& converged, int docorners)
@@ -1361,169 +1454,20 @@ utah_newton_4corner_solver(const SubsurfaceBBNode* sbv, const ON_Surface* surf, 
     ON_3dVector Su, Sv;
     ON_2dPoint uv;
 
-    if (docorners) {    
+    if (docorners) {
 	for( int iu = 0; iu < 2; iu++) {
-		for( int iv = 0; iv < 2; iv++) {
-
-			uv.x = sbv->m_u[iu];
-			uv.y = sbv->m_v[iv];
-			
-			ON_2dPoint uv0(uv);
-			surf->Ev1Der(uv.x, uv.y, S, Su, Sv);
-			
-			utah_F(S, p1, p1d, p2, p2d, f, g);
-			rootdist = fabs(f) + fabs(g);
-			
-			for (i = 0; i < BREP_MAX_ITERATIONS; i++) {
-				utah_Fu(Su, p1, p2, j11, j21);
-				utah_Fv(Sv, p1, p2, j12, j22);
-				
-				J = (j11 * j22 - j12 * j21);
-				
-				if (NEAR_ZERO(J, BREP_INTERSECTION_ROOT_EPSILON)) {
-					// perform jittered perturbation in parametric domain....
-					uv.x = uv.x + .1 * drand48() * (uv0.x - uv.x);
-					uv.y = uv.y + .1 * drand48() * (uv0.y - uv.y);
-					continue;
-				}
-				
-				invdetJ = 1. / J;
-				
-				
-				du = -invdetJ * (j22 * f - j12 * g);
-				dv = -invdetJ * (j11 * g - j21 * f);
-				
-
-				if ( i == 0 ) {
-					if (((iu == 0) && (du < 0.0)) ||
-						((iu==1) && (du > 0.0)))
-						break; //head out of U bounds
-					if (((iv == 0) && (dv < 0.0)) ||
-						((iv==1) && (dv > 0.0)))
-						break; //head out of V bounds
-				}
-				
-				
-				uv.x -= invdetJ * (j22 * f - j12 * g);
-				uv.y -= invdetJ * (j11 * g - j21 * f);
-				
-				utah_pushBack(surf, uv);
-				
-				surf->Ev1Der(uv.x, uv.y, S, Su, Sv);
-				utah_F(S, p1, p1d, p2, p2d, f, g);
-				oldrootdist = rootdist;
-				rootdist = fabs(f) + fabs(g);
-				
-				if (oldrootdist < rootdist) break;
-				
-				if (rootdist < ROOT_TOL) {
-					if (sbv->m_u.Includes(uv.x) && sbv->m_v.Includes(uv.y)) {
-						bool new_point = true;
-						for(int j=0;j<intersects;j++) {
-							if (NEAR_ZERO(uv.x - ouv[j].x, 0.0001) && NEAR_ZERO(uv.y - ouv[j].y, 0.0001)) {
-								new_point = false;
-							} 
-						}
-						if (new_point) {
-							//bu_log("New Hit Point:(%f %f %f) uv(%f,%f)\n",S.x,S.y,S.z,uv.x,uv.y);
-							t[intersects] = utah_calc_t(r, S);
-							N[intersects] = ON_CrossProduct(Su, Sv);
-							N[intersects].Unitize();
-							ouv[intersects].x = uv.x;
-							ouv[intersects].y = uv.y;
-							intersects++;
-							converged = true;
-						}
-					} //else {
-						//bu_log("OOB Point Hit:(%f %f %f) uv(%f,%f)\n",S.x,S.y,S.z,uv.x,uv.y);
-					//}
-					break;
-				}
-			}
-		}
-	}
-
+	    for( int iv = 0; iv < 2; iv++) {
+		uv.x = sbv->m_u[iu];
+		uv.y = sbv->m_v[iv];
+		intersects += utah_newton_solver_test( sbv, surf, r, ouv, t, N, converged, &uv, iu, iv);
+	    }
         }
+    }
 
-	
-	if (true) {
-		uv.x = sbv->m_u.Mid();
-		uv.y = sbv->m_v.Mid();
-		
-		ON_2dPoint uv0(uv);
-		surf->Ev1Der(uv.x, uv.y, S, Su, Sv);
-		
-		utah_F(S, p1, p1d, p2, p2d, f, g);
-		rootdist = fabs(f) + fabs(g);
-		
-		for (i = 0; i < BREP_MAX_ITERATIONS; i++) {
-			utah_Fu(Su, p1, p2, j11, j21);
-			utah_Fv(Sv, p1, p2, j12, j22);
-			
-			J = (j11 * j22 - j12 * j21);
-			
-			if (NEAR_ZERO(J, BREP_INTERSECTION_ROOT_EPSILON)) {
-				// perform jittered perturbation in parametric domain....
-				uv.x = uv.x + .1 * drand48() * (uv0.x - uv.x);
-				uv.y = uv.y + .1 * drand48() * (uv0.y - uv.y);
-				continue;
-			}
-			
-			invdetJ = 1. / J;
-			
-			/*
-			 du = -invdetJ * (j22 * f - j12 * g);
-			 dv = -invdetJ * (j11 * g - j21 * f);
-			 
-			 
-			 if ( i == 0 ) {
-				 if (((iu == 0) && (du < 0.0)) ||
-					 ((iu==1) && (du > 0.0)))
-					 break; //head out of U bounds
-				 if (((iv == 0) && (dv < 0.0)) ||
-					 ((iv==1) && (dv > 0.0)))
-					 break; //head out of V bounds
-			 }
-			 */
-			
-			uv.x -= invdetJ * (j22 * f - j12 * g);
-			uv.y -= invdetJ * (j11 * g - j21 * f);
-			
-			utah_pushBack(surf, uv);
-			
-			surf->Ev1Der(uv.x, uv.y, S, Su, Sv);
-			utah_F(S, p1, p1d, p2, p2d, f, g);
-			oldrootdist = rootdist;
-			rootdist = fabs(f) + fabs(g);
-			
-			if (oldrootdist < rootdist) break;
-			
-			if (rootdist < ROOT_TOL) {
-				if (sbv->m_u.Includes(uv.x) && sbv->m_v.Includes(uv.y)) {
-					bool new_point = true;
-					for(int j=0;j<intersects;j++) {
-						if (NEAR_ZERO(uv.x - ouv[j].x, 0.0001) && NEAR_ZERO(uv.y - ouv[j].y, 0.0001)) {
-							new_point = false;
-						} 
-					}
-					if (new_point) {
-						//bu_log("New Hit Point:(%f %f %f) uv(%f,%f)\n",S.x,S.y,S.z,uv.x,uv.y);
-						t[intersects] = utah_calc_t(r, S);
-						N[intersects] = ON_CrossProduct(Su, Sv);
-						N[intersects].Unitize();
-						ouv[intersects].x = uv.x;
-						ouv[intersects].y = uv.y;
-						intersects++;
-						converged = true;
-					}
-				} //else {
-				  //bu_log("OOB Point Hit:(%f %f %f) uv(%f,%f)\n",S.x,S.y,S.z,uv.x,uv.y);
-				  //}
-				break;
-			}
-		}
-	}
-	return intersects;
+    uv.x = sbv->m_u.Mid();
+    uv.y = sbv->m_v.Mid();
+    intersects += utah_newton_solver_test( sbv, surf, r, ouv, t, N, converged, &uv, -1, -1);
+    return intersects;
 }
 
 void
