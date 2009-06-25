@@ -432,7 +432,7 @@ int TriangleTriangleIntersect(
 int MeshMeshIntersect(
 	const ON_Mesh *mesh1,
 	const ON_Mesh *mesh2,
-	ON_SimpleArray<ON_Polyline>& out,
+	ON_ClassArray<ON_Polyline> out,
 	double tol
 	)
 {
@@ -493,30 +493,31 @@ int MeshMeshIntersect(
     /* Now we have all the lines in an array, but we need to arrange them in some Polylines 
      * Remember two meshes could intersect in arbitrarily many entirely distinct polylines */
     out.Empty();
-    ON_Polyline answer;
     while (segments.Count() > 0) {
-	answer.Empty();
-	answer.Append(segments.First()->from); /* initialize the Polyline with the first segment */
-	answer.Append(segments.First()->to);
+	out.AppendNew();
+	ON_Polyline *answer = out.Last();
+	answer->Empty();
+	answer->Append(segments.First()->from); /* initialize the Polyline with the first segment */
+	answer->Append(segments.First()->to);
 	segments.Remove(0);
 	/* now we look for segments attached to our base Polyline */
-	while (!answer.IsClosed(tol)) { 
+	while (!answer->IsClosed(tol)) { 
 	    for (j = 0; j < segments.Count(); j++) {
 		ON_Line segment = segments[j];
-		if (VAPPROXEQUAL(segment.from, *answer.First(), tol)) {
-		    answer.Insert(0, segment.to);
+		if (VAPPROXEQUAL(segment.from, *answer->First(), tol)) {
+		    answer->Insert(0, segment.to);
 		    segments.Remove(j);
 		    break;
-		} else if (VAPPROXEQUAL(segment.from, *answer.Last(), tol)) {
-		    answer.Append(segment.to);
+		} else if (VAPPROXEQUAL(segment.from, *answer->Last(), tol)) {
+		    answer->Append(segment.to);
 		    segments.Remove(j);
 		    break;
-		} else if (VAPPROXEQUAL(segment.to, *answer.First(), tol)) {
-		    answer.Insert(0, segment.from);
+		} else if (VAPPROXEQUAL(segment.to, *answer->First(), tol)) {
+		    answer->Insert(0, segment.from);
 		    segments.Remove(j);
 		    break;
-		} else if (VAPPROXEQUAL(segment.to, *answer.Last(), tol)) {
-		    answer.Append(segment.from);
+		} else if (VAPPROXEQUAL(segment.to, *answer->Last(), tol)) {
+		    answer->Append(segment.from);
 		    segments.Remove(j);
 		    break;
 		}
@@ -527,9 +528,8 @@ int MeshMeshIntersect(
 	    if (j == segments.Count())
 		break;
 	}
-	out.Append(answer);
     }
-    return i + 1;
+    return 2;
 }
 
 int main()
@@ -596,7 +596,7 @@ int main()
     mesh2.m_F.Append(adhe);
     mesh2.m_F.Append(bfgc);
     /* and now for the action */
-    ON_SimpleArray<ON_Polyline> out;
+    ON_ClassArray<ON_Polyline> out;
     int rv = MeshMeshIntersect(&mesh1, &mesh2, out, 1.0e-10);
     assert(rv == 2);
 }
