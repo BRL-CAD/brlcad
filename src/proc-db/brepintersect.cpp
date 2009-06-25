@@ -393,7 +393,7 @@ int TriangleTriangleIntersect(
     /* intersect the edges of triangle abc with triangle def*/
     for (i = 0; i < 3; i++) {
 	rv = SegmentTriangleIntersect(d, e, f, abc[i], abc[(i+1)%3], result, tol);
-	for (j = 0; i < rv; i++) {
+	for (j = 0; j < rv; j++) {
 	    ON_3dPoint P = result[0];
 	    bool dup = false;
 	    for (k = 0; k < number_found; k++) {
@@ -411,7 +411,7 @@ int TriangleTriangleIntersect(
     /* intersect the edges of triangle def with triangle abc*/
     for (i = 0; i < 3; i++) {
 	rv = SegmentTriangleIntersect(a, b, c, def[i], def[(i + 1) % 3], result, tol);
-	for (j = 0; i < rv; i++) {
+	for (j = 0; j < rv; j++) {
 	    ON_3dPoint P = result[0];
 	    bool dup = false;
 	    for (k = 0; k < number_found; k++) {
@@ -430,8 +430,8 @@ int TriangleTriangleIntersect(
 }
 
 int MeshMeshIntersect(
-	const ON_Mesh mesh1,
-	const ON_Mesh mesh2,
+	const ON_Mesh *mesh1,
+	const ON_Mesh *mesh2,
 	ON_SimpleArray<ON_Polyline>& out,
 	double tol
 	)
@@ -442,10 +442,9 @@ int MeshMeshIntersect(
      *   -either we're going to get that point back anyways when we get the lines on either side of it back
      *   -or it's an intersection of just a point and we can ignore it. */
     ON_SimpleArray<ON_Line> segments;
-    int i,j,k;
-    for (i = 0; i < mesh1.FaceCount(); i++) {
-	ON_MeshFace face = mesh1.m_F[i];
-	ON_3dPoint result[6];
+    int i,j,k,l;
+    for (i = 0; i < mesh1->FaceCount(); i++) {
+	ON_MeshFace face = mesh1->m_F[i];
 	int n_triangles1;
 	ON_3dPoint triangles1[2][3];
 	if (face.IsTriangle()) {
@@ -456,31 +455,31 @@ int MeshMeshIntersect(
 	} else { /* we have a quad which we need to treat as two triangles */
 	    n_triangles1 = 2;
 	    for (j = 0; j < 3; j++) {
-		triangles1[0][j] = (const ON_3dPoint&) face.vi[j];
-		triangles1[1][j] = (const ON_3dPoint&) face.vi[(j + 2) % 4];
+		triangles1[0][j] = ON_3dPoint(mesh1->m_V[face.vi[j]]);
+		triangles1[1][j] = ON_3dPoint(mesh1->m_V[face.vi[(j + 2) % 4]]);
 	    }
 	}
-	for (i = 0; i < n_triangles1; j++) {
-	    ON_3dPoint T[3] = {triangles1[i][0], triangles1[i][1], triangles1[i][2]};
-	    for (j = 0; j < mesh2.FaceCount(); j++) {
-		ON_MeshFace face = mesh2.m_F[j];
+	for (j = 0; j < n_triangles1; j++) {
+	    ON_3dPoint T[3] = {triangles1[j][0], triangles1[j][1], triangles1[j][2]};
+	    for (k = 0; k < mesh2->FaceCount(); k++) {
+		ON_MeshFace face = mesh2->m_F[k];
 		ON_3dPoint result[6];
 		int n_triangles2;
-		ON_3dPoint triangles[2][3]; /* we may need room for two triangles */
+		ON_3dPoint triangles2[2][3]; /* we may need room for two triangles */
 		if (face.IsTriangle()) {
 		    n_triangles2 = 1;
-		    for (k = 0; k < 3; k++) { /* load the points from the mesh */
-			triangles[0][k] = (const ON_3dPoint&) (face.vi[k]);
+		    for (l = 0; l < 3; l++) { /* load the points from the mesh */
+			triangles2[0][l] = (const ON_3dPoint&) (face.vi[l]);
 		    }
 		} else { /* we have a quad which we need to treat as two triangles */
 		    n_triangles2 = 2;
-		    for (k = 0; k < 3; k++) {
-			triangles[0][k] = (const ON_3dPoint&) face.vi[k];
-			triangles[1][k] = (const ON_3dPoint&) face.vi[(k + 2) % 4];
+		    for (l = 0; l < 3; l++) {
+			triangles2[0][l] = ON_3dPoint(mesh2->m_V[face.vi[l]]);
+			triangles2[1][l] = ON_3dPoint(mesh2->m_V[face.vi[(l + 2) % 4]]);
 		    }
 		}
-		for (k = 0; k < n_triangles2; k++) {
-		    int rv = TriangleTriangleIntersect(T[0], T[1], T[2], triangles[k][0], triangles[k][1], triangles[k][2], result, tol);
+		for (l = 0; l < n_triangles2; l++) {
+		    int rv = TriangleTriangleIntersect(T[0], T[1], T[2], triangles2[l][0], triangles2[l][1], triangles2[l][2], result, tol);
 		    if (rv == 2) {
 			ON_Line segment;
 			segment[0] = result[0];
@@ -492,268 +491,115 @@ int MeshMeshIntersect(
 	}
     }
     /* Now we have all the lines in an array, but we need to arrange them in some Polylines 
-     * Remember two meshes could intersect in two entirely distinct polylines */
-    for (i = 0; segments.Count() > 0; i++) { /* We're going to fill in the ith polyline */
-	out[i].Empty();
-	out[i].Append(segments.First()->from);
-	out[i].Append(segments.First()->to);
+     * Remember two meshes could intersect in arbitrarily many entirely distinct polylines */
+    out.Empty();
+    ON_Polyline answer;
+    while (segments.Count() > 0) {
+	answer.Empty();
+	answer.Append(segments.First()->from); /* initialize the Polyline with the first segment */
+	answer.Append(segments.First()->to);
 	segments.Remove(0);
-	while (!out[i].IsClosed(tol)) {
+	/* now we look for segments attached to our base Polyline */
+	while (!answer.IsClosed(tol)) { 
 	    for (j = 0; j < segments.Count(); j++) {
 		ON_Line segment = segments[j];
-		if (VAPPROXEQUAL(segment.from, *out[i].First(), tol)) {
-		    out[i].Insert(0, segment[1]);
+		if (VAPPROXEQUAL(segment.from, *answer.First(), tol)) {
+		    answer.Insert(0, segment.to);
 		    segments.Remove(j);
 		    break;
-		} else if (VAPPROXEQUAL(segment.from, *out[i].Last(), tol)) {
-		    out[i].Append(segment[1]);
+		} else if (VAPPROXEQUAL(segment.from, *answer.Last(), tol)) {
+		    answer.Append(segment.to);
 		    segments.Remove(j);
 		    break;
-		} else if (VAPPROXEQUAL(segment.to, *out[i].First(), tol)) {
-		    out[i].Insert(0, segment[0]);
+		} else if (VAPPROXEQUAL(segment.to, *answer.First(), tol)) {
+		    answer.Insert(0, segment.from);
 		    segments.Remove(j);
 		    break;
-		} else if (VAPPROXEQUAL(segment.to, *out[i].Last(), tol)) {
-		    out[i].Append(segment[0]);
+		} else if (VAPPROXEQUAL(segment.to, *answer.Last(), tol)) {
+		    answer.Append(segment.from);
 		    segments.Remove(j);
 		    break;
 		}
 	    }
+	    /* This breaks if we complete a loop which only happens if we don't find anything, which means we won't
+	     * ever find anything. Or this breaks if we try to do a loop with segments.Count() == 0. In which case
+	     * there's nothing to find. */
+	    if (j == segments.Count())
+		break;
 	}
+	out.Append(answer);
     }
     return i + 1;
 }
 
 int main()
 {
-    /* Tests for PointInTriangle */
-    ON_3dPoint a = ON_3dPoint(0.0, 0.0, 0.0);
-    ON_3dPoint b = ON_3dPoint(100.0, 0.0, 0.0);
-    ON_3dPoint c = ON_3dPoint(0.0, 100.0, 0.0);
-    /* ON_3dPoint P = ON_3dPoint(0.0, 0.0, 0.0); */
-    ON_3dPoint out[2];
-
-    /* double cos = -0.737368878;
-    double sin = -0.675490294; */
-    double cos = 0.6;
-    double sin = 0.8;
-    mat_t rotX = {1.0, 0.0, 0.0, 0.0, 0.0, cos, sin, 0.0, 0.0, -sin, cos, 0.0, 0.0, 0.0, 0.0, 1.0};
-    mat_t rotY = {cos, 0.0, -sin, 0.0, 0.0, 1.0, 0.0, 0.0, sin, 0.0, cos, 0.0, 0.0, 0.0, 0.0, 1.0};
-    mat_t rotZ = {cos, sin, 0.0, 0.0, -sin, cos, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0};
-
-    int i, j, k, l, m, failed = 0, total = 0;
-    /* 
-    for (i=0; i<101; i++) {
-	for (j=0; j<101; j++) {
-	    ON_3dPoint Q = ON_3dPoint(P.x + i, P.y + j, P.z);
-	    ON_3dPoint A = a;
-	    ON_3dPoint B = b;
-	    ON_3dPoint C = c;
-	    ON_3dPoint tmpa = A;
-	    ON_3dPoint tmpb = B;
-	    ON_3dPoint tmpc = C;
-	    ON_3dPoint tmpq = Q;
-	    for (k=0; k<2; k++) {
-		MAT4X3PNT(A, rotX, tmpa);
-		MAT4X3PNT(B, rotX, tmpb);
-		MAT4X3PNT(C, rotX, tmpc);
-		MAT4X3PNT(Q, rotX, tmpq);
-		for (l=0; l<2; l++) {
-		    tmpa = A;
-		    tmpb = B;
-		    tmpc = C;
-		    tmpq = Q;
-		    MAT4X3PNT(A, rotY, tmpa);
-		    MAT4X3PNT(B, rotY, tmpb);
-		    MAT4X3PNT(C, rotY, tmpc);
-		    MAT4X3PNT(Q, rotY, tmpq);
-		    for (m=0; m<2; m++) {
-			tmpa = A;
-			tmpb = B;
-			tmpc = C;
-			tmpq = Q;
-			MAT4X3PNT(A, rotZ, tmpa);
-			MAT4X3PNT(B, rotZ, tmpb);
-			MAT4X3PNT(C, rotZ, tmpc);
-			MAT4X3PNT(Q, rotZ, tmpq);
-			bool rv = PointInTriangle(A, B, C, Q, 1.0e-10);
-			total++;
-			if ((i + j < 101 && !rv) || (i + j >= 101 && rv)) {
-			    failed++;
-			}
-		    }
-		}
-	    }
-	}
-    }
-    bu_log("Failed: %i of %i tests in PointInTriangle\n", failed, total); */
-
-    /* SegmentSegmentIntersect Tests */
-    /* {
-	ON_3dPoint a = ON_3dPoint(-50.0, 0.0, 0.0);
-	ON_3dPoint b = ON_3dPoint(50.0, 0.0, 0.0);
-	ON_3dPoint c = ON_3dPoint(0.0, 0.0, 0.0);
-	ON_3dPoint d = ON_3dPoint(0.0, 100.0, 100.0);
-	ON_3dPoint out[2];
-	int rv = SegmentSegmentIntersect(a, b, c, d, out, 1.0e-10);
-	if (! (rv == 1 && VAPPROXEQUAL(c, out[0], 1.0e-10))) 
-	    bu_log("Failed \n");
-    } */
-
-    /* SegmentTriangleIntersect Tests */
-    failed = total = 0;
-    a = ON_3dPoint(0.0, 0.0, 0.0);
-    b = ON_3dPoint(100.0, 0.0, 0.0);
-    c = ON_3dPoint(0.0, 100.0, 0.0);
-    ON_3dPoint p = ON_3dPoint(0.0, 0.0, 100.0);
-    ON_3dPoint q = ON_3dPoint(0.0, 0.0, -100.0);
-    ON_3dPoint p2 = ON_3dPoint(50.0, 0.0, 0.0);
-    ON_3dPoint q2 = ON_3dPoint(0.0, 50.0, 0.0);
-    ON_3dPoint p3 = ON_3dPoint(55.0, -5.0, 0.0);
-    ON_3dPoint q3 = ON_3dPoint(-5.0, 55.0, 0.0);
-    ON_3dPoint p4 = ON_3dPoint(-100.0, -100.0, 0.0);
-    ON_3dPoint q4 = ON_3dPoint(100.0, 100.0, 0.0);
-    ON_3dPoint p5 = ON_3dPoint(-5.0, 0.0, 0.0);
-    ON_3dPoint q5 = ON_3dPoint(105.0, 0.0, 0.0);
-    /* ON_3dPoint Q; */
-    /* for (i=0; i<101; i++) {
-	for (j=0; j<101; j++) { */
-	    ON_3dPoint P = ON_3dPoint(p.x + i, p.y + j, p.z);
-	    ON_3dPoint Q = ON_3dPoint(q.x + i, q.y + j, q.z);
-	    ON_3dPoint ANSWER = ON_3dPoint(50.0, 50.0, 0.0);
-	    ON_3dPoint A = a;
-	    ON_3dPoint B = b;
-	    ON_3dPoint C = c;
-	    ON_3dPoint tmpa = A;
-	    ON_3dPoint tmpb = B;
-	    ON_3dPoint tmpc = C;
-	    ON_3dPoint tmpans = ANSWER;
-	    ON_3dPoint tmpp = P;
-	    ON_3dPoint tmpq = Q;
-	    ON_3dPoint tmpp2 = p2;
-	    ON_3dPoint tmpq2 = q2;
-	    ON_3dPoint tmpp3 = p3;
-	    ON_3dPoint tmpq3 = q3;
-	    ON_3dPoint tmpp4 = p4;
-	    ON_3dPoint tmpq4 = q4;
-	    ON_3dPoint tmpp5 = p5;
-	    ON_3dPoint tmpq5 = q5;
-	    for (k=0; k<10; k++) {
-		MAT4X3PNT(A, rotX, tmpa);
-		MAT4X3PNT(B, rotX, tmpb);
-		MAT4X3PNT(C, rotX, tmpc);
-		MAT4X3PNT(P, rotX, tmpp);
-		MAT4X3PNT(Q, rotX, tmpq);
-		MAT4X3PNT(p2, rotX, tmpp2);
-		MAT4X3PNT(q2, rotX, tmpq2);
-		MAT4X3PNT(p3, rotX, tmpp3);
-		MAT4X3PNT(q3, rotX, tmpq3);
-		MAT4X3PNT(p4, rotX, tmpp4);
-		MAT4X3PNT(q4, rotX, tmpq4);
-		MAT4X3PNT(p5, rotX, tmpp5);
-		MAT4X3PNT(q5, rotX, tmpq5);
-		MAT4X3PNT(ANSWER, rotX, tmpans);
-		for (l=0; l<10; l++) {
-		    tmpa = A;
-		    tmpb = B;
-		    tmpc = C;
-		    tmpans = ANSWER;
-		    tmpp = P;
-		    tmpq = Q;
-		    tmpp2 = p2;
-		    tmpq2 = q2;
-		    tmpp3 = p3;
-		    tmpq3 = q3;
-		    tmpp4 = p4;
-		    tmpq4 = q4;
-		    tmpp5 = p5;
-		    tmpq5 = q5;
-		    MAT4X3PNT(A, rotY, tmpa);
-		    MAT4X3PNT(B, rotY, tmpb);
-		    MAT4X3PNT(C, rotY, tmpc);
-		    MAT4X3PNT(P, rotY, tmpp);
-		    MAT4X3PNT(Q, rotY, tmpq);
-		    MAT4X3PNT(p2, rotY, tmpp2);
-		    MAT4X3PNT(q2, rotY, tmpq2);
-		    MAT4X3PNT(p3, rotY, tmpp3);
-		    MAT4X3PNT(q3, rotY, tmpq3);
-		    MAT4X3PNT(p4, rotY, tmpp4);
-		    MAT4X3PNT(q4, rotY, tmpq4);
-		    MAT4X3PNT(p5, rotY, tmpp5);
-		    MAT4X3PNT(q5, rotY, tmpq5);
-		    MAT4X3PNT(ANSWER, rotY, tmpans);
-		    for (m=0; m<10; m++) {
-			tmpa = A;
-			tmpb = B;
-			tmpc = C;
-			tmpans = ANSWER;
-			tmpp = P;
-			tmpq = Q;
-			tmpp2 = p2;
-			tmpq2 = q2;
-			tmpp3 = p3;
-			tmpq3 = q3;
-			tmpp4 = p4;
-			tmpq4 = q4;
-			tmpp5 = p5;
-			tmpq5 = q5;
-			MAT4X3PNT(A, rotZ, tmpa);
-			MAT4X3PNT(B, rotZ, tmpb);
-			MAT4X3PNT(C, rotZ, tmpc);
-			MAT4X3PNT(P, rotZ, tmpp);
-			MAT4X3PNT(Q, rotZ, tmpq);
-			MAT4X3PNT(p2, rotZ, tmpp2);
-			MAT4X3PNT(q2, rotZ, tmpq2);
-			MAT4X3PNT(p3, rotZ, tmpp3);
-			MAT4X3PNT(q3, rotZ, tmpq3);
-			MAT4X3PNT(p4, rotZ, tmpp4);
-			MAT4X3PNT(q4, rotZ, tmpq4);
-			MAT4X3PNT(p5, rotZ, tmpp5);
-			MAT4X3PNT(q5, rotZ, tmpq5);
-			MAT4X3PNT(ANSWER, rotZ, tmpans);
-			int rv;
-			/* rv = SegmentTriangleIntersect(A, B, C, P, Q, out, 1.0e-10);
-			total++;
-			if (i + j < 101) {
-			    if (rv != 1 || !VAPPROXEQUAL(ANSWER, out[0], 1.0e-10)) {
-				bu_log("Failed with i = %i and j = %i \n", i, j);
-				failed++;
-			    }
-			} else {
-			    if (rv != 0) {
-				bu_log("Failed with i = %i and j = %i \n", i, j);
-				failed++;
-			    }
-			} */
-			/* rv = SegmentTriangleIntersect(A, B, C, p3, q3, out, 1.0e-10);
-			total++;
-			if (!(rv == 2 && ((VAPPROXEQUAL(p2, out[0], 1.0e-10) && VAPPROXEQUAL(q2, out[1], 1.0e-10)) || (VAPPROXEQUAL(q2, out[0], 1.0e-10) && VAPPROXEQUAL(p2, out[1], 1.0e-10))))) {
-			    bu_log("Failed with k = %i, l = %i, m = %i \n", k, l, m);
-			    failed++;
-			} */
-			/* rv = SegmentTriangleIntersect(A, B, C, p4, q4, out, 1.0e-10);
-			total++;
-			if (!(rv == 2 && ((VAPPROXEQUAL(A, out[0], 1.0e-10) && VAPPROXEQUAL(ANSWER, out[1], 1.0e-10)) || (VAPPROXEQUAL(ANSWER, out[0], 1.0e-10) && VAPPROXEQUAL(A, out[1], 1.0e-10))))) {
-			    bu_log("Failed with k = %i, l = %i, m = %i \n", k, l, m);
-			    failed++;
-			} */
-			rv = SegmentTriangleIntersect(A, B, C, p5, q5, out, 1.0e-10);
-			total++;
-			if (!(rv == 2 && ((VAPPROXEQUAL(A, out[0], 1.0e-10) && VAPPROXEQUAL(B, out[1], 1.0e-10)) || (VAPPROXEQUAL(B, out[0], 1.0e-10) && VAPPROXEQUAL(A, out[1], 1.0e-10))))) {
-			    bu_log("Failed with k = %i, l = %i, m = %i \n", k, l, m);
-			    failed++;
-			} 
-		    }
-		}
-	    }
-	/* }
-    } */
-    bu_log("Failed: %i of %i tests in SegmentTriangleIntersect\n", failed, total);
-
-    return 0;
+    /* create the points */
+    ON_3fPoint a1 = ON_3fPoint(1.0, 1.0, -1.0);
+    ON_3fPoint b1 = ON_3fPoint(1.0, 1.0, 1.0);
+    ON_3fPoint c1 = ON_3fPoint(-1.0, 1.0, 1.0);
+    ON_3fPoint d1 = ON_3fPoint(-1.0, 1.0, -1.0);
+    ON_3fPoint e1 = ON_3fPoint(1.0, -1.0, -1.0);
+    ON_3fPoint f1 = ON_3fPoint(1.0, -1.0, 1.0);
+    ON_3fPoint g1 = ON_3fPoint(-1.0, -1.0, 1.0);
+    ON_3fPoint h1 = ON_3fPoint(-1.0, -1.0, -1.0);
+    ON_3fPoint a2 = ON_3fPoint(0.5, 2.0, -0.5);
+    ON_3fPoint b2 = ON_3fPoint(0.5, 2.0, 0.5);
+    ON_3fPoint c2 = ON_3fPoint(-0.5, 2.0, 0.5);
+    ON_3fPoint d2 = ON_3fPoint(-0.5, 2.0, -0.5);
+    ON_3fPoint e2 = ON_3fPoint(0.5, -2.0, -0.5);
+    ON_3fPoint f2 = ON_3fPoint(0.5, -2.0, 0.5);
+    ON_3fPoint g2 = ON_3fPoint(-0.5, -2.0, 0.5);
+    ON_3fPoint h2 = ON_3fPoint(-0.5, -2.0, -0.5);
+    /* create the meshes */
+    ON_Mesh mesh1;
+    mesh1.m_V.Empty();
+    mesh1.m_F.Empty();
+    ON_Mesh mesh2;
+    mesh2.m_V.Empty();
+    mesh2.m_F.Empty();
+    /* put the points in the meshes */
+    mesh1.m_V.Append(a1);
+    mesh1.m_V.Append(b1);
+    mesh1.m_V.Append(c1);
+    mesh1.m_V.Append(d1);
+    mesh1.m_V.Append(e1);
+    mesh1.m_V.Append(f1);
+    mesh1.m_V.Append(g1);
+    mesh1.m_V.Append(h1);
+    mesh2.m_V.Append(a2);
+    mesh2.m_V.Append(b2);
+    mesh2.m_V.Append(c2);
+    mesh2.m_V.Append(d2);
+    mesh2.m_V.Append(e2);
+    mesh2.m_V.Append(f2);
+    mesh2.m_V.Append(g2);
+    mesh2.m_V.Append(h2);
+    /* create the faces  */
+    ON_MeshFace abcd = {0, 1, 2, 3};
+    ON_MeshFace efba = {4, 5, 1, 0};
+    ON_MeshFace ehgf = {4, 7, 6, 5};
+    ON_MeshFace dcgh = {3, 2, 6, 7};
+    ON_MeshFace adhe = {0, 3, 7, 4};
+    ON_MeshFace bfgc = {1, 5, 6, 2};
+    /* put the faces in the meshes */
+    mesh1.m_F.Append(abcd);
+    mesh1.m_F.Append(efba);
+    mesh1.m_F.Append(ehgf);
+    mesh1.m_F.Append(dcgh);
+    mesh1.m_F.Append(adhe);
+    mesh1.m_F.Append(bfgc);
+    mesh2.m_F.Append(abcd);
+    mesh2.m_F.Append(efba);
+    mesh2.m_F.Append(ehgf);
+    mesh2.m_F.Append(dcgh);
+    mesh2.m_F.Append(adhe);
+    mesh2.m_F.Append(bfgc);
+    /* and now for the action */
+    ON_SimpleArray<ON_Polyline> out;
+    int rv = MeshMeshIntersect(&mesh1, &mesh2, out, 1.0e-10);
+    assert(rv == 2);
 }
-
-
 /** @} */
 /*
  * Local Variables:
