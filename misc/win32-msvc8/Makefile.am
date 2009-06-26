@@ -59,7 +59,6 @@ EXTRA_DIST= \
 	fbzoom/fbzoom.vcproj \
 	fence/fence.vcproj \
 	g2acad/g2acad.vcproj \
-	g2adrt/g2adrt.vcproj \
 	g2asc/g2asc.vcproj \
 	g2dxf/g2dxf.vcproj \
 	g2euclid/g2euclid.vcproj \
