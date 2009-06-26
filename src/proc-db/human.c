@@ -38,8 +38,8 @@
 /* Pi */
 #define PI 3.1415926536
 
-/**
- *Default height is 5 feet, 8 inches, arbitrarily
+/*
+ * Default height is 5 feet, 8 inches, arbitrarily
  */
 #define DEFAULT_HEIGHT_INCHES 68.0 
 #define DEFAULT_HEAD_RADIUS 6
@@ -52,9 +52,50 @@
 char *progname = "Human Model";
 char filename[MAXLENGTH]=DEFAULT_FILENAME;
 
+
+/**
+ * This function takes in a vector, then applies a new direction to it
+ * using x, y, and z degrees, and exports it to resultVect, and returns
+ * the distance of the vector.
+ */
+
+fastf_t setDirection(vect_t inVect, vect_t *resultVect, fastf_t x, fastf_t y, fastf_t z)
+{
+	vect_t outVect;
+	mat_t rotMatrix;
+	fastf_t radX, radY, radZ;
+
+	/* 
+	 * x, y, z will be change (in degrees) in that direction
+	 * converted to radians
+	 */
+	
+	radX = ((PI) / 180)*x;
+	radY = ((PI) / 180)*y;
+	radZ = ((PI) / 180)*z;
+	bu_log("X=%f \nY=%f \nZ=%f \n", x, y, z);
+	bu_log("radX=%f \nradY=%f \nradZ=%f \n", radX, radY, radZ);
+	/*
+	 * x y z placed inside rotation matrix and applied to vector.
+         * bn_mat_angles_rad(rotMatrix, alpha, beta, gamma) matrix rot in rads
+	 * MAT3X3VEC(outVect, rotMatrix, inVect);
+	 */
+	bn_mat_angles_rad(rotMatrix, radX, radY, radZ);
+	MAT3X3VEC(outVect, rotMatrix, inVect);
+
+	VMOVE(*resultVect, outVect);
+	return MAGNITUDE(outVect);
+}
+
 /******************************************/
 /***** Body Parts, from the head down *****/
 /******************************************/
+
+/* TODO:
+ * Modify all body parts to accept direction vectors and points for determining
+ * position and direction for their direction and location in 3-space. 
+ * Also include part widths that are used for multiple body-parts.
+ */
 
 fastf_t makeHead(struct rt_wdb (*file), fastf_t standing_height, fastf_t showBoxes)
 {
@@ -69,6 +110,8 @@ fastf_t makeHead(struct rt_wdb (*file), fastf_t standing_height, fastf_t showBox
 	
 	headRadius *= IN2MM;
 	headHeight *= IN2MM;
+
+	VSET(headCenter, 0.0, 0.0, headHeight);
 	
 	if(showBoxes){
 		/*make points around head*/
@@ -77,11 +120,8 @@ fastf_t makeHead(struct rt_wdb (*file), fastf_t standing_height, fastf_t showBox
 		mk_rpp(file, "HeadBox.s", p1, p2); 
 	}
 
-	VSET(headCenter, 0.0, 0.0, headHeight);
 	mk_sph(file, "Head.s", headCenter, headRadius);
 
-/*	makeNeck(file, standing_height, headRadius, showBoxes); */
-/*	fastf_t num = makeNeck(fastf_t standing_height); */
 	return headRadius;
 }
 
@@ -95,9 +135,7 @@ fastf_t makeNeck(struct rt_wdb *file, fastf_t standing_height, fastf_t headRadiu
 	neckHeight = standing_height / 22;
 	neckHeight *= IN2MM;
 	VSET(neckLength, 0.0, 0.0, (neckHeight*-1));
-/*	bu_log("%f\n%f\n", standing_height*IN2MM, headRadius);*/
 	neckSpot = (standing_height*IN2MM) - (2 * headRadius);
-/*	bu_log("%f\n", neckSpot);*/
 	VSET(neckPoint, 0.0, 0.0, neckSpot);
 	neckEnd = neckSpot - neckHeight;
 	mk_rcc(file, "Neck.s", neckPoint, neckLength, neckRadius);
@@ -163,6 +201,16 @@ fastf_t makeLowerTorso(struct rt_wdb *file, fastf_t standing_height, fastf_t top
 	return lowerTorso;
 }
 
+fastf_t makeLeftShoulder(struct rt_wdb *file, fastf_t standing_height, fastf_t showBoxes)
+{
+
+}
+
+fastf_t makeRightShoulder(struct rt_wdb *file, fastf_t standing_height, fastf_t showBoxes)
+{
+
+}
+
 fastf_t makeLeftUpperArm(struct rt_wdb *file, fastf_t standing_height, fastf_t neckEnd, fastf_t showBoxes)
 {
 	fastf_t leftElbow, upperArmLength, upperArmWidth, x, y, armLength;
@@ -180,14 +228,14 @@ fastf_t makeLeftUpperArm(struct rt_wdb *file, fastf_t standing_height, fastf_t n
 	VSET(shoulderJoint, x, y, neckEnd);
 	VSET(elbowJoint, x, y, armLength);
 
+	mk_trc_top(file, "LeftUpperArm.s", shoulderJoint, elbowJoint, upperArmWidth, leftElbow);
+
 	if(showBoxes){
 		point_t p1, p2;
 		VSET(p1, -upperArmWidth, -upperArmWidth+y, armLength);		
 		VSET(p2, upperArmWidth, upperArmWidth+y, neckEnd);
 		mk_rpp(file, "LeftUpperArmBox.s", p1, p2);
 	}
-
-	mk_trc_top(file, "LeftUpperArm.s", shoulderJoint, elbowJoint, upperArmWidth, leftElbow);
 
 	return armLength;
 }
@@ -209,14 +257,14 @@ fastf_t makeRightUpperArm(struct rt_wdb *file, fastf_t standing_height, fastf_t 
 	VSET(shoulderJoint, x, y, neckEnd);
 	VSET(elbowJoint, x, y, armLength);
 	
+	mk_trc_top(file, "RightUpperArm.s", shoulderJoint, elbowJoint, upperArmWidth, rightElbow);
+
 	if(showBoxes){
 		point_t p1, p2;
 		VSET(p1, -upperArmWidth, -upperArmWidth+y, armLength);
 		VSET(p2, upperArmWidth, upperArmWidth+y, neckEnd);
 		mk_rpp(file, "RightUpperArmBox.s", p1, p2);
 	}	
-
-	mk_trc_top(file, "RightUpperArm.s", shoulderJoint, elbowJoint, upperArmWidth, rightElbow);
 
 	return armLength;
 }
@@ -238,13 +286,15 @@ fastf_t makeLeftLowerArm(struct rt_wdb *file, fastf_t standing_height, fastf_t a
 	VSET(elbowJoint, x, y, armLength);
 	VSET(wristJoint, x, y, leftWrist);
 
-	if(showBoxes){
-		point_t p1, p2;
-		VSET(p1, -lowerArmWidth, -lowerArmWidth+y, leftWrist);
-		VSET(p2, lowerArmWidth, lowerArmWidth+y, armLength);
-		mk_rpp(file, "LeftLowerArmBox.s", p1, p2);
-	}
 	mk_trc_top(file, "LeftLowerArm.s", elbowJoint, wristJoint, lowerArmWidth, wristWidth);
+
+        if(showBoxes){
+                point_t p1, p2;
+                VSET(p1, -lowerArmWidth, -lowerArmWidth+y, leftWrist);
+                VSET(p2, lowerArmWidth, lowerArmWidth+y, armLength);
+                mk_rpp(file, "LeftLowerArmBox.s", p1, p2);
+        }
+
 	return leftWrist;
 }
 
@@ -287,6 +337,7 @@ void makeLeftHand(struct rt_wdb *file, fastf_t standing_height, fastf_t leftWris
 
 	VSET(handPoint, x, y, leftWrist);
 	mk_sph(file, "LeftHand.s", handPoint, handWidth);
+
 	if(showBoxes){
 		point_t p1, p2;
 		VSET(p1, -handWidth, -handWidth+y, leftWrist-handWidth);  
@@ -305,6 +356,7 @@ void makeRightHand(struct rt_wdb *file, fastf_t standing_height, fastf_t RightWr
 	y = -1 * (standing_height / 6) * IN2MM;
 	VSET(handPoint, x, y, RightWrist);
 	mk_sph(file, "RightHand.s", handPoint, handWidth);
+
         if(showBoxes){
                 point_t p1, p2;
                 VSET(p1, -handWidth, -handWidth+y, RightWrist-handWidth);
@@ -331,6 +383,7 @@ fastf_t makeLeftThigh(struct rt_wdb *file, fastf_t standing_height, fastf_t lowe
 	VSET(kneeJoint, x, y, leftKnee);
 
 	mk_trc_top(file, "LeftThigh.s", thighJoint, kneeJoint, thighWidth, kneeWidth);
+
 	if(showBoxes)
 	{
 		point_t p1, p2;
@@ -392,6 +445,7 @@ fastf_t makeLeftCalf(struct rt_wdb *file, fastf_t standing_height, fastf_t leftK
 	VSET(ankleJoint, x, y, leftAnkle);
 
 	mk_trc_top(file, "LeftCalf.s", kneeJoint, ankleJoint, kneeWidth, ankleRadius);
+
 	if(showBoxes){
 		point_t p1, p2;
 		VSET(p1, -kneeWidth, -kneeWidth+y, leftKnee);
@@ -422,7 +476,8 @@ fastf_t makeRightCalf(struct rt_wdb *file, fastf_t standing_height, fastf_t righ
         VSET(ankleJoint, x, y, rightAnkle);
 
         mk_trc_top(file, "RightCalf.s", kneeJoint, ankleJoint, kneeWidth, ankleRadius);
-        if(showBoxes){
+        
+	if(showBoxes){
                 point_t p1, p2;
                 VSET(p1, -kneeWidth, -kneeWidth+y, rightKnee);
                 VSET(p2, kneeWidth, kneeWidth+y, rightAnkle);
@@ -491,6 +546,9 @@ void makeBody(struct rt_wdb (*file), fastf_t standing_height, fastf_t showBoxes)
 	fastf_t leftKnee, rightKnee, leftAnkle, rightAnkle; 
 
 	/* pass off important variables to their respective functions */
+	/* Make sure that vectors, points, and widths are sent to each function 
+         * Eventually for direction, location, and correct sizing.
+	 */
 	headRadius = makeHead(file, standing_height, showBoxes);
 	neckEnd = makeNeck(file, standing_height, headRadius, showBoxes);
 	midTorso = makeUpperTorso(file, standing_height, neckEnd, showBoxes);
@@ -648,6 +706,26 @@ int main(int ac, char *av[])
 /*    read_args(ac, av, &standing_height, &l_foot_bend_angle, &l_knee_bend_angle, &l_pelvis_bend_angle_x, &l_pelvis_bend_angle_y, &l_elbow_bend_angle, &l_shoulder_bend_angle_x, &l_shoulder_bend_angle_y, &r_foot_bend_angle, &r_knee_bend_angle, &r_pelvis_bend_angle_x, &r_pelvis_bend_angle_y, &r_elbow_bend_angle, &r_shoulder_bend_angle_x, &r_shoulder_bend_angle_y, &neck_bend_angle_x, &neck_bend_angle_y, &age); */
     read_args(ac, av, &standing_height, &showBoxes);
     db_fp = wdb_fopen(filename);
+
+    vect_t test1, test2;
+    fastf_t x=0, y=0, z=0;
+
+    VSET(test1, 0, 0, 100);
+    /*
+     * This code here takes a direction vector, and then redirects it based on the angles given
+     * so it is as follows : startingVector, resultVector, xdegrees, ydegrees, zdegrees.
+     * and this will be used to position the arms and legs so they are joined yet flexable.
+     */
+    setDirection(test1, &test2, 180, 0, 0);
+    point_t testpoint;
+    VSET(testpoint, 0.0, 0.0, 0.0);
+    
+    bu_log("%f, %f, %f\n", test1[X], test1[Y], test1[Z]);
+    bu_log("%f, %f, %f\n", test2[X], test2[Y], test2[Z]);
+
+    mk_rcc(db_fp, "NormalTest.s", testpoint, test1, (5*IN2MM));
+    mk_rcc(db_fp, "ChangeTest.s", testpoint, test2, (5*IN2MM));
+
 
     makeBody(db_fp, standing_height, showBoxes);
 
