@@ -1042,18 +1042,18 @@ package provide Archer 1.0
 
     if {!$mViewOnly} {
 	# Primary 
+	$itk_component(primaryToolbar) itemconfigure checkpoint \
+	    -image [image create photo \
+			-file [file join $dir checkpoint.png]]
+	$itk_component(primaryToolbar) itemconfigure object_undo \
+	    -image [image create photo \
+			-file [file join $dir object_undo.png]]
 	$itk_component(primaryToolbar) itemconfigure new \
 	    -image [image create photo \
 			-file [file join $dir file_new.png]]
 	$itk_component(primaryToolbar) itemconfigure global_undo \
 	    -image [image create photo \
 			-file [file join $dir global_undo.png]]
-	$itk_component(primaryToolbar) itemconfigure object_undo \
-	    -image [image create photo \
-			-file [file join $dir object_undo.png]]
-	$itk_component(primaryToolbar) itemconfigure checkpoint \
-	    -image [image create photo \
-			-file [file join $dir checkpoint.png]]
 	$itk_component(primaryToolbar) itemconfigure revert \
 	    -image [image create photo \
 			-file [file join $dir revert.png]]
@@ -2999,24 +2999,17 @@ package provide Archer 1.0
 	-overrelief raised \
 	-command [::itcl::code $this newDb]
 
+    $itk_component(primaryToolbar) insert rotate button preferences \
+	-balloonstr "Set application preferences" \
+	-helpstr "Set application preferences" \
+	-relief flat \
+	-overrelief raised \
+	-command [::itcl::code $this doPreferences]
+
     # half-size spacer
     $itk_component(primaryToolbar) insert rotate frame sep2 \
 	-relief sunken \
 	-width 2
-
-    $itk_component(primaryToolbar) insert rotate button global_undo \
-	-balloonstr "Global undo" \
-	-helpstr "Global undo" \
-	-relief flat \
-	-overrelief raised \
-	-command [::itcl::code $this global_undo]
-
-    $itk_component(primaryToolbar) insert rotate button object_undo \
-	-balloonstr "Object undo" \
-	-helpstr "Object undo" \
-	-relief flat \
-	-overrelief raised \
-	-command [::itcl::code $this object_undo]
 
     $itk_component(primaryToolbar) insert rotate button checkpoint \
 	-balloonstr "Create checkpoint" \
@@ -3025,6 +3018,20 @@ package provide Archer 1.0
 	-overrelief raised \
 	-command [::itcl::code $this object_checkpoint]
 
+    $itk_component(primaryToolbar) insert rotate button object_undo \
+	-balloonstr "Object undo" \
+	-helpstr "Object undo" \
+	-relief flat \
+	-overrelief raised \
+	-command [::itcl::code $this object_undo]
+
+    $itk_component(primaryToolbar) insert rotate button global_undo \
+	-balloonstr "Global undo" \
+	-helpstr "Global undo" \
+	-relief flat \
+	-overrelief raised \
+	-command [::itcl::code $this global_undo]
+
     $itk_component(primaryToolbar) insert rotate button revert \
 	-balloonstr "Revert database" \
 	-helpstr "Revert database" \
@@ -3032,18 +3039,16 @@ package provide Archer 1.0
 	-overrelief raised \
 	-command [::itcl::code $this revert]
 
-    # half-size spacer
-    $itk_component(primaryToolbar) insert rotate frame sep3 \
-	-relief sunken \
-	-width 2
 
-    $itk_component(primaryToolbar) insert rotate button preferences \
-	-balloonstr "Set application preferences" \
-	-helpstr "Set application preferences" \
-	-relief flat \
-	-overrelief raised \
-	-command [::itcl::code $this doPreferences]
+   if {$::Archer::plugins != ""} {
+	# half-size spacer
+	$itk_component(primaryToolbar) insert rotate frame sep6 \
+	    -relief sunken \
+	    -width 2
+    }
 
+    buildWizardMenu
+    
     # half-size spacer
     $itk_component(primaryToolbar) insert rotate frame sep4 \
 	-relief sunken \
@@ -3109,14 +3114,7 @@ package provide Archer 1.0
 	-overrelief raised \
 	-command [::itcl::code $this createObj comb]
 
-    if {$::Archer::plugins != ""} {
-	# half-size spacer
-	$itk_component(primaryToolbar) insert rotate frame sep6 \
-	    -relief sunken \
-	    -width 2
-    }
-
-    buildWizardMenu
+ 
 
     set parent [$itk_component(primaryToolbar) component other]
     itk_component add primitiveMenu {
