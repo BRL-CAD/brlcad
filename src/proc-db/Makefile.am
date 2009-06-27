@@ -93,6 +93,7 @@ vegitation_SOURCES = vegitation.c
 wdb_example_SOURCES = wdb_example.c
 
 noinst_HEADERS = \
+	brepintersect.h \
 	ducks.h \
 	patches.h \
 	tea.h \
