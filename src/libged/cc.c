@@ -50,6 +50,7 @@ ged_cc(struct ged *gedp, int argc, const char *argv[])
     struct rt_db_internal	internal;
     struct rt_constraint_internal	*con_ip;
     register struct directory	*dp;
+    int save_bu_optind;
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
     GED_CHECK_READ_ONLY(gedp, GED_ERROR);
@@ -62,6 +63,9 @@ ged_cc(struct ged *gedp, int argc, const char *argv[])
 	return GED_HELP;
     }
     
+    GED_CHECK_EXISTS(gedp, argv[1], LOOKUP_QUIET, GED_ERROR);
+    GED_CHECK_EXISTS(gedp, argv[2], LOOKUP_QUIET, GED_ERROR);
+
     RT_INIT_DB_INTERNAL(&internal);
     internal.idb_major_type = DB5_MAJORTYPE_BRLCAD;
     internal.idb_type = ID_CONSTRAINT;
@@ -72,12 +76,12 @@ ged_cc(struct ged *gedp, int argc, const char *argv[])
     con_ip->id = 324;
     con_ip->type = 4;
     bu_vls_init(&(con_ip->expression));
-    bu_vls_strcat(&(con_ip->expression),"x=y=5");
+    bu_vls_strcat(&(con_ip->expression),argv[2]);
 
-    GED_DB_DIRADD(gedp,dp,"test-constraint", -1L, 0, DIR_NON_GEOM , (genptr_t)&internal.idb_type,GED_ERROR);
+    GED_DB_DIRADD(gedp,dp,argv[1], -1L, 0, DIR_NON_GEOM , (genptr_t)&internal.idb_type,GED_ERROR);
     GED_DB_PUT_INTERNAL(gedp, dp, &internal, &rt_uniresource, GED_ERROR);
 
-    bu_vls_printf(&gedp->ged_result_str, "Constraint expression to be analyzed (not implemented)");
+    bu_vls_printf(&gedp->ged_result_str, "Constraint saved");
     return GED_OK;
 }
 
