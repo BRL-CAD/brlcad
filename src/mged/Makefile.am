@@ -134,7 +134,6 @@ mged_CFLAGS = \
 	-I$(top_srcdir)/src/other/tk/generic \
 	-I$(top_srcdir)/src/other/tk/unix
 
-mged_LINK = $(LIBTOOL) --mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) $(AM_LDFLAGS) -o $@
 mged_LDADD = \
 	${POINTS_LDADD} \
 	${TERMIO} \
