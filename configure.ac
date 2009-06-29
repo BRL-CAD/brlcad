@@ -1374,7 +1374,8 @@ if test "x$bc_with_opengl" != "xno" ; then
 	for bc_dir in "$ac_x_libraries" `echo "$ac_x_includes $ac_x_header_dirs" |
 		sed s/include/lib/g` ; do
 
-	    LDFLAGS="$PRELDFLAGS -L$bc_dir"
+	    GL_LDFLAGS="-L$bc_dir"
+	    LDFLAGS="$PRELDFLAGS $GL_LDFLAGS"
 	    LIBS="$PRELIBS -lGL"
 	    AC_LINK_IFELSE([AC_LANG_CALL([],[glEnable])],
 		gl_link_works=yes ; LIBGL="-L$bc_dir -lGL" ; break)
@@ -1384,6 +1385,28 @@ if test "x$bc_with_opengl" != "xno" ; then
 	done
 	LDFLAGS="$PRELDFLAGS"
 	LIBS="$PRELIBS"
+    fi
+
+    # Mac OS X 10.5 has a linker bug resulting in the following error:
+    #   ld: cycle in dylib re-exports with /usr/X11/lib/libGL.dylib
+    #
+    # This fixes that error by forcing the GL exports specified in the
+    # /usr/X11/lib dylib to use the framework dylib instead of being a
+    # cyclic dependency due to search paths.  Fugly workaround.
+
+    if test "x$gl_link_works" = "xno" ; then
+	unset ac_cv_lib_GL_glEnable # disable cache result
+	PRELDFLAGS="$LDFLAGS"
+	GL_LDFLAGS="-Wl,-dylib_file -Wl,/System/Library/Frameworks/OpenGL.framework/Versions/A/Libraries/libGL.dylib:/System/Library/Frameworks/OpenGL.framework/Versions/A/Libraries/libGL.dylib"
+	LDFLAGS="$PRELDFLAGS $GL_LDFLAGS"
+	LIBGL=-lGL
+	AC_CHECK_LIB(GL, glEnable, gl_link_works=yes)
+	# leave LDFLAGS set with this gl workaround
+	# LDFLAGS="$PRELDFLAGS"
+	if test "x$gl_link_works" = "xno" ; then
+	    GL_LDFLAGS=""
+	    LIBGL=""
+	fi
     fi
 fi
 
@@ -3293,8 +3316,10 @@ if test "x$bc_with_opengl" != "xno" ; then
     opengl_works=no
     PRELIBS="$LIBS"
     PRECPPFLAGS="$CPPFLAGS"
+    PRELDFLAGS="$LDFLAGS"
     LIBS="$LIBS $LIBGL"
     CPPFLAGS="$CPPFLAGS $GL_CPPFLAGS"
+    LDFLAGS="$LDFLAGS $GL_LDFLAGS"
     AC_TRY_RUN([
 #ifdef HAVE_GL_GL_H
 #  include <GL/gl.h>
@@ -3312,6 +3337,7 @@ main(int argc, char *argv[]) {
     ], [opengl_works=yes])
     LIBS="$PRELIBS"
     CPPFLAGS="$PRECPPFLAGS"
+    LDFLAGS="$PRELDFLAGS"
     AC_MSG_RESULT($opengl_works)
 
     dnl figure out whether we need to build against opengl
