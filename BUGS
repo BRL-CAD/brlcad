@@ -15,6 +15,9 @@ on-going issues.
 Recent Bugs
 -----------
 
+* mged rotation halts after a few events and after zooming in/out at
+  least once (Mac OS X 10.5)
+
 * rtedge fills in nearly entire faces of an object when executing on a
   model that is in perspective mode. Effects really bad on small sized
   renders, and gets better the larger the render size. Does not happen
