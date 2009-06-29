@@ -15,6 +15,9 @@ on-going issues.
 Recent Bugs
 -----------
 
+* kill command in archer deletes object but then reports a failure and
+  mouse is stuck in a busy state.
+
 * mged rotation halts after a few events and after zooming in/out at
   least once (Mac OS X 10.5)
 
