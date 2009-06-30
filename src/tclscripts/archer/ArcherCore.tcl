@@ -148,12 +148,12 @@ namespace eval ArcherCore {
 	method color               {args}
 	method comb                {args}
 	method comb_color          {args}
-	method concat              {args}
 	method copy                {args}
 	method copyeval            {args}
 	method copymat             {args}
 	method cp                  {args}
 	method cpi                 {args}
+	method dbconcat            {args}
 	method dbExpand	           {args}
 	method decompose           {args}
 	method delete              {args}
@@ -387,8 +387,8 @@ namespace eval ArcherCore {
 					   3ptarb adjust arced attr bev blast bo \
 					   bot2pipe bot_condense bot_decimate bot_face_fuse \
 					   bot_face_sort bot_merge bot_smooth bot_split bot_vertex_fuse \
-					   c cd clear clone color comb comb_color concat copy copyeval copymat \
-					   cp cpi dbExpand decompose delete draw E edcodes edcomb \
+					   c cd clear clone color comb comb_color copy copyeval copymat \
+					   cp cpi dbconcat dbExpand decompose delete draw E edcodes edcomb \
 					   edmater erase_all ev exit facetize fracture \
 					   g group hide i importFg4Section \
 					   in inside item kill killall killrefs killtree ls \
@@ -3343,10 +3343,6 @@ Popup Menu    Right or Ctrl-Left
     eval gedWrapper comb_color 0 1 1 1 $args
 }
 
-::itcl::body ArcherCore::concat {args} {
-    eval gedWrapper concat 0 0 1 1 $args
-}
-
 ::itcl::body ArcherCore::copy {args} {
     eval gedWrapper cp 0 0 1 1 $args
 }
@@ -3365,6 +3361,10 @@ Popup Menu    Right or Ctrl-Left
 
 ::itcl::body ArcherCore::cpi {args} {
     eval gedWrapper cpi 0 0 1 1 $args
+}
+
+::itcl::body ArcherCore::dbconcat {args} {
+    eval gedWrapper dbconcat 0 0 1 1 $args
 }
 
 ::itcl::body ArcherCore::dbExpand {args} {
@@ -3830,7 +3830,7 @@ Popup Menu    Right or Ctrl-Left
 }
 
 ::itcl::body ArcherCore::shells {args} {
-    eval gedWrapper shells 0 0 1 0 $args
+    eval gedWrapper shells 0 0 1 1 $args
 }
 
 ::itcl::body ArcherCore::tire {args} {
@@ -3904,11 +3904,11 @@ Popup Menu    Right or Ctrl-Left
 }
 
 ::itcl::body ArcherCore::wmater {args} {
-    eval gedWrapper wmater 0 0 1 1 $args
+    eval gedWrapper wmater 0 0 0 0 $args
 }
 
 ::itcl::body ArcherCore::xpush {args} {
-    eval gedWrapper wmater 0 1 1 0 $args
+    eval gedWrapper xpush 0 0 1 0 $args
 }
 
 ::itcl::body ArcherCore::Z {args} {

@@ -137,7 +137,6 @@ package provide cadwidgets::Ged 1.0
 	method color {args}
 	method comb {args}
 	method comb_color {args}
-	method concat {args}
 	method configure_win {args}
 	method constrain_rmode {args}
 	method constrain_tmode {args}
@@ -145,6 +144,8 @@ package provide cadwidgets::Ged 1.0
 	method copymat {args}
 	method cp {args}
 	method cpi {args}
+	method dbconcat {args}
+	method dbfind {args}
 	method dbip {args}
 	method decompose {args}
 	method delay {args}
@@ -166,7 +167,6 @@ package provide cadwidgets::Ged 1.0
 	method eye_pos {args}
 	method faceplate {args}
 	method facetize {args}
-	method find {args}
 	method form {args}
 	method fracture {args}
 	method g {args}
@@ -896,10 +896,6 @@ package provide cadwidgets::Ged 1.0
     eval $mGed comb_color $args
 }
 
-::itcl::body cadwidgets::Ged::concat {args} {
-    eval $mGed concat $args
-}
-
 ::itcl::body cadwidgets::Ged::configure_win {args} {
     eval $mGed configure $args
 }
@@ -926,6 +922,14 @@ package provide cadwidgets::Ged 1.0
 
 ::itcl::body cadwidgets::Ged::cpi {args} {
     eval $mGed cpi $args
+}
+
+::itcl::body cadwidgets::Ged::dbconcat {args} {
+    eval $mGed dbconcat $args
+}
+
+::itcl::body cadwidgets::Ged::dbfind {args} {
+    eval $mGed dbfind $args
 }
 
 ::itcl::body cadwidgets::Ged::dbip {args} {
@@ -1013,10 +1017,6 @@ package provide cadwidgets::Ged 1.0
 
 ::itcl::body cadwidgets::Ged::facetize {args} {
     eval $mGed facetize $args
-}
-
-::itcl::body cadwidgets::Ged::find {args} {
-    eval $mGed find $args
 }
 
 ::itcl::body cadwidgets::Ged::form {args} {
@@ -2872,11 +2872,12 @@ package provide cadwidgets::Ged 1.0
     $help add color		{{low high r g b str} {make color entry}}
     $help add comb		{{comb_name <operation solid>} {create or extend combination w/booleans}}
     $help add comb_color 	{{comb R G B} {set combination's color}}
-    $help add concat		{{file [prefix]} {concatenate 'file' onto end of present database.  Run 'dup file' first.}}
     $help add copyeval		{{new_solid path_to_old_solid}	{copy an 'evaluated' path solid}}
     $help add copymat		{{a/b c/d}	{copy matrix from one combination's arc to another's}}
     $help add cp		{{from to} {copy [duplicate] object}}
     $help add cpi		{{from to}	{copy cylinder and position at end of original cylinder}}
+    $help add dbconcat		{{file [prefix]} {concatenate 'file' onto end of present database.  Run 'dup file' first.}}
+    $help add dbfind		{{[-s] <objects>} {find all references to objects}}
     $help add dbip		{{} {get dbip}}
     $help add decompose		{{nmg_solid [prefix]}	{decompose nmg_solid into maximally connected shells}}
     $help add delay		{{sec usec} {delay processing for the specified amount of time}}
@@ -2897,7 +2898,6 @@ package provide cadwidgets::Ged 1.0
     $help add eye		{{mx my mz} {set eye point to given model coordinates}}
     $help add eye_pos		{{mx my mz} {set eye position to given model coordinates}}
     $help add facetize		{{[-n] [-t] [-T] new_obj old_obj [old_obj2 old_obj3 ...]} {create a new bot object by facetizing the specified objects}}
-    $help add find		{{[-s] <objects>} {find all references to objects}}
     $help add form		{{objType} {returns form of objType}}
     $help add fracture		{{} {}}
     $help add g			{{groupname <objects>} {group objects}}

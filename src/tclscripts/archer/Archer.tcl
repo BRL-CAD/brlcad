@@ -142,7 +142,44 @@ package provide Archer 1.0
 	method setDefaultBindingMode {_mode}
 
 	# ArcherCore Override Section
+	method 3ptarb              {args}
+	method bo                  {args}
+	method bot_condense        {args}
+	method bot_decimate        {args}
+	method bot_face_fuse       {args}
+	method bot_merge           {args}
+	method bot_smooth          {args}
+	method bot_split           {args}
+	method bot_vertex_fuse     {args}
+	method c                   {args}
+	method clone               {args}
+	method color               {args}
+	method comb                {args}
+	method cp                  {args}
+	method cpi                 {args}
+	method copyeval            {args}
+	method copymat             {args}
+	method dbconcat            {args}
+	method decompose           {args}
+	method edcodes             {args}
+	method edmater             {args}
+	method facetize            {args}
+	method fracture            {args}
+	method g                   {args}
+	method i                   {args}
+	method in                  {args}
+	method inside              {args}
 	method kill                {args}
+	method killall             {args}
+	method killrefs            {args}
+	method killtree            {args}
+	method make                {args}
+	method make_bb             {args}
+	method mirror              {args}
+	method mv                  {args}
+	method mvall               {args}
+	method nmg_collapse        {args}
+	method nmg_simplify        {args}
 	method p                   {args}
 	method p_protate           {args}
 	method p_pscale            {args}
@@ -150,8 +187,22 @@ package provide Archer 1.0
 	method p_move_arb_edge     {args}
 	method p_move_arb_face     {args}
 	method p_rotate_arb_face   {args}
+	method prefix              {args}
+	method push                {args}
+	method put                 {args}
+	method putmat              {args}
 	method Load                {_target}
+	method r                   {args}
+	method rcodes              {args}
+	method rfarb               {args}
+	method rmater              {args}
 	method saveDb              {}
+	method shells              {args}
+	method tire                {args}
+	method title               {args}
+	method track               {args}
+	method units               {args}
+	method vmake               {args}
 	method updateTheme         {}
 
 	# Object Edit Management
@@ -187,7 +238,9 @@ package provide Archer 1.0
 
 	# ArcherCore Override Section
 	method dblClick {_tags}
+	method combWrapper {_cmd _minArgs args}
 	method gedWrapper {_cmd _eflag _hflag _sflag _tflag args}
+	method gedWrapper2 {_cmd _oindex _pindex _eflag _hflag _sflag _tflag args}
 	method initDefaultBindings {{_comp ""}}
 	method initGed {}
 	method selectNode {_tags {_rflag 1}}
@@ -812,8 +865,127 @@ package provide Archer 1.0
     }
 }
 
+::itcl::body Archer::3ptarb {args} {
+    eval ArcherCore::gedWrapper 3ptarb 0 0 1 1 $args
+}
+
+::itcl::body Archer::bo {args} {
+    eval ArcherCore::gedWrapper bo 0 0 1 1 $args
+}
+
+::itcl::body Archer::bot_condense {args} {
+    eval ArcherCore::gedWrapper bot_condense 0 0 1 1 $args
+}
+
+::itcl::body Archer::bot_decimate {args} {
+    eval ArcherCore::gedWrapper bot_decimate 0 0 1 1 $args
+}
+
+::itcl::body Archer::bot_face_fuse {args} {
+    eval ArcherCore::gedWrapper bot_face_fuse 0 0 1 1 $args
+}
+
+::itcl::body Archer::bot_merge {args} {
+    eval ArcherCore::gedWrapper bot_merge 1 0 1 1 $args
+}
+
+::itcl::body Archer::bot_smooth {args} {
+    eval ArcherCore::gedWrapper bot_smooth 0 0 1 1 $args
+}
+
+::itcl::body Archer::bot_split {args} {
+    eval ArcherCore::gedWrapper bot_split 0 0 1 1 $args
+}
+
+::itcl::body Archer::bot_vertex_fuse {args} {
+    eval ArcherCore::gedWrapper bot_vertex_fuse 0 0 1 1 $args
+}
+
+#
+# Create a combination.
+#
+::itcl::body Archer::c {args} {
+    eval ArcherCore::gedWrapper c 0 0 1 1 $args
+}
+
+::itcl::body Archer::clone {args} {
+    eval ArcherCore::gedWrapper clone 0 0 1 1 $args
+}
+
+::itcl::body Archer::color {args} {
+    eval ArcherCore::gedWrapper color 0 0 1 1 $args
+}
+
+#
+# Create a combination or modify an existing one.
+#
+::itcl::body Archer::comb {args} {
+    eval combWrapper g 3 $args
+}
+
+::itcl::body Archer::cp {args} {
+    eval ArcherCore::gedWrapper cp 0 0 1 1 $args
+}
+
+::itcl::body Archer::cpi {args} {
+    eval ArcherCore::gedWrapper cpi 0 0 1 1 $args
+}
+
+::itcl::body Archer::copyeval {args} {
+    eval ArcherCore::gedWrapper copyeval 0 0 1 1 $args
+}
+
+::itcl::body Archer::copymat {args} {
+    eval gedWrapper2 copymat 1 0 0 0 1 1 $args
+}
+
+::itcl::body Archer::dbconcat {args} {
+    eval ArcherCore::gedWrapper dbconcat 0 0 1 1 $args
+}
+
+::itcl::body Archer::decompose {args} {
+    eval ArcherCore::gedWrapper decompose 0 0 1 1 $args
+}
+
+# Needs an edWrapper to create checkpoints for each object
+::itcl::body Archer::edcodes {args} {
+    eval ArcherCore::gedWrapper edcodes 0 0 1 1 $args
+}
+
+# Needs an edWrapper to create checkpoints for each object
+::itcl::body Archer::edmater {args} {
+    eval ArcherCore::gedWrapper edmater 0 0 1 1 $args
+}
+
+::itcl::body Archer::facetize {args} {
+    eval ArcherCore::gedWrapper facetize 0 0 1 1 $args
+}
+
+::itcl::body Archer::fracture {args} {
+    eval ArcherCore::gedWrapper fracture 0 0 1 1 $args
+}
+
+#
+# Create a group or modify an existing one.
+#
+::itcl::body Archer::g {args} {
+    eval combWrapper g 2 $args
+}
+
+::itcl::body Archer::i {args} {
+    eval gedWrapper2 i 1 0 0 0 1 1 $args
+}
+
+::itcl::body Archer::in {args} {
+    eval ArcherCore::gedWrapper in 0 0 1 1 $args
+}
+
+::itcl::body Archer::inside {args} {
+    eval ArcherCore::gedWrapper inside 0 0 1 1 $args
+}
+
 ::itcl::body Archer::kill {args} {
-    eval gedWrapper kill 1 0 1 1 $args
+    eval ArcherCore::gedWrapper kill 1 0 1 1 $args
 
     if {$mSelectedObj != "" && [lsearch $args $mSelectedObj] != -1} {
 	set tops [$itk_component(ged) tops]
@@ -823,6 +995,46 @@ package provide Archer 1.0
 	    selectNode [$itk_component(tree) find $obj] 0
 	}
     }
+}
+
+::itcl::body Archer::killall {args} {
+    eval ArcherCore::gedWrapper killall 0 0 1 1 $args
+}
+
+::itcl::body Archer::killrefs {args} {
+    eval ArcherCore::gedWrapper killrefs 0 0 1 1 $args
+}
+
+::itcl::body Archer::killtree {args} {
+    eval ArcherCore::gedWrapper killtree 0 0 1 1 $args
+}
+
+::itcl::body Archer::make {args} {
+    eval ArcherCore::gedWrapper make 0 0 1 1 $args
+}
+
+::itcl::body Archer::make_bb {args} {
+    eval ArcherCore::gedWrapper make_bb 0 0 1 1 $args
+}
+
+::itcl::body Archer::mirror {args} {
+    eval ArcherCore::gedWrapper mirror 0 0 1 1 $args
+}
+
+::itcl::body Archer::mv {args} {
+    eval ArcherCore::gedWrapper mv 0 0 1 1 $args
+}
+
+::itcl::body Archer::mvall {args} {
+    eval ArcherCore::gedWrapper mvall 0 0 1 1 $args
+}
+
+::itcl::body Archer::nmg_collapse {args} {
+    eval ArcherCore::gedWrapper nmg_collapse 0 0 1 1 $args
+}
+
+::itcl::body Archer::nmg_simplify {args} {
+    eval ArcherCore::gedWrapper nmg_simplify 0 0 1 1 $args
 }
 
 ::itcl::body Archer::p {args} {
@@ -922,6 +1134,22 @@ package provide Archer 1.0
     return $ret
 }
 
+::itcl::body Archer::prefix {args} {
+    eval ArcherCore::gedWrapper prefix 0 0 1 1 $args
+}
+
+::itcl::body Archer::push {args} {
+    eval ArcherCore::gedWrapper push 0 0 1 1 $args
+}
+
+::itcl::body Archer::put {args} {
+    eval ArcherCore::gedWrapper put 0 0 1 1 $args
+}
+
+::itcl::body Archer::putmat {args} {
+    eval gedWrapper2 putmat 0 0 0 0 1 1 $args
+}
+
 ::itcl::body Archer::Load {_target} {
     SetWaitCursor $this
     if {$mNeedSave} {
@@ -1016,6 +1244,29 @@ package provide Archer 1.0
     SetNormalCursor $this
 }
 
+#
+# Create a region or modify an existing one.
+#
+::itcl::body Archer::r {args} {
+    eval combWrapper r 3 $args
+}
+
+# XXX libged's rcodes needs to return the objects affected
+# The affected objects would be added to the ledger.
+::itcl::body Archer::rcodes {args} {
+    eval ArcherCore::gedWrapper rcodes 0 0 1 1 $args
+}
+
+::itcl::body Archer::rfarb {args} {
+    eval ArcherCore::gedWrapper rfarb 0 0 1 1 $args
+}
+
+# XXX libged's rmater needs to return the objects affected
+# The affected objects would be added to the ledger.
+::itcl::body Archer::rmater {args} {
+    eval ArcherCore::gedWrapper rmater 0 0 1 1 $args
+}
+
 ::itcl::body Archer::saveDb {} {
     ArcherCore::saveDb
     createTargetLedger
@@ -1029,6 +1280,32 @@ package provide Archer 1.0
     updateUndoMode
 
     checkpoint $mSelectedObj
+}
+
+::itcl::body Archer::shells {args} {
+    eval ArcherCore::gedWrapper shells 0 0 1 1 $args
+}
+
+::itcl::body Archer::tire {args} {
+    eval ArcherCore::gedWrapper tire 0 0 1 1 $args
+}
+
+::itcl::body Archer::title {args} {
+    eval ArcherCore::gedWrapper title 0 0 1 0 $args
+}
+
+# XXX libged's track needs to return the objects affected
+# The affected objects would be added to the ledger.
+::itcl::body Archer::track {args} {
+    eval ArcherCore::gedWrapper track 0 0 1 0 $args
+}
+
+::itcl::body Archer::units {args} {
+    eval ArcherCore::gedWrapper units 0 0 1 0 $args
+}
+
+::itcl::body Archer::vmake {args} {
+    eval ArcherCore::gedWrapper vmake 0 0 1 1 $args
 }
 
 ::itcl::body Archer::updateTheme {} {
@@ -1253,7 +1530,41 @@ package provide Archer 1.0
     }
 }
 
+#
+# Create a combination or modify an existing one.
+#
+::itcl::body Archer::combWrapper {_cmd _minArgs args} {
+    set alen [llength $args]
+    if {$alen < $_minArgs} {
+	eval ArcherCore::gedWrapper $_cmd 0 0 1 1 $args
+	return
+    }
+
+    set obj [lindex $args 0]
+    set l [gedCmd expand $obj*]
+    set len [llength $l]
+
+    if {$len == 0} {
+	# Create a new combination
+	eval ArcherCore::gedWrapper $_cmd 0 0 1 1 $args
+    } else {
+	set i [lsearch -exact $l $obj]
+
+	if {$i == -1} {
+	    # Create a new combination
+	    eval ArcherCore::gedWrapper $_cmd 0 0 1 1 $args
+	} else {
+	    # Modifying an existing combination
+	    eval gedWrapper $_cmd 0 0 1 1 $args
+	}
+    }
+}
+
 ::itcl::body Archer::gedWrapper {cmd eflag hflag sflag tflag args} {
+    eval gedWrapper2 $cmd 0 -1 $eflag $hflag $sflag $tflag $args
+}
+
+::itcl::body Archer::gedWrapper2 {cmd oindex pindex eflag hflag sflag tflag args} {
     if {![info exists itk_component(ged)]} {
 	return
     }
@@ -1269,7 +1580,23 @@ package provide Archer 1.0
 	set expandedArgs $args
     }
 
-    set obj [lindex $expandedArgs 0]
+    set obj [lindex $expandedArgs $oindex]
+    if {$pindex >= 0} {
+	set l [split $obj /]
+	set len [llength $l]
+
+	if {$pindex < $len} {
+	    set obj [lindex $l $pindex]
+	}
+    }
+
+    # Must be wanting help
+    if {$obj == ""} {
+	catch {eval gedCmd $cmd $options $expandedArgs} ret
+	SetNormalCursor $this
+
+	return $ret
+    }
 
     if {$sflag} {
 	checkpoint $obj
@@ -1300,19 +1627,26 @@ package provide Archer 1.0
 	    # Checkpoint again in case the user starts interacting via the mouse
 	    checkpoint $obj
 	} else {
-	    set oflag 0
-	    updateUndoMode $oflag
+	    updateUndoMode 0
 	}
 
 	updateSaveMode
 
 	# Possibly draw the updated object
+	set ditem ""
 	foreach item [gedCmd report 0] {
-	    regexp {/([^/]+$)} $item all last
-
-	    if {$last == $obj} {
-		redrawObj $item
+	    set l [split $item /]
+	    set i [lsearch -exact $l $obj]
+	    if {$i != -1} {
+		for {set j 1} {$j <= $i} {incr j} {
+		    append ditem / [lindex $l $j]
+		}
+		break
 	    }
+	}
+
+	if {$ditem != ""} {
+	    redrawObj $ditem
 	}
     }
 
@@ -5199,6 +5533,7 @@ package provide Archer 1.0
 }
 
 ::itcl::body Archer::updateObjEditView {} {
+    updateObjSave
     redrawObj $mSelectedObjPath
 }
 

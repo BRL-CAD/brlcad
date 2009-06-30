@@ -544,7 +544,7 @@ struct go_cmdtab {
 };
 
 static struct go_cmdtab go_cmds[] = {
-    {"3ptarb",	(char *)0, MAXARGS, go_pass_through_func, ged_3ptarb},
+    {"3ptarb",	(char *)0, MAXARGS, go_more_args_func, ged_3ptarb},
     {"adc",	"vname args", 7, go_view_func, ged_adc},
     {"adjust",	(char *)0, MAXARGS, go_pass_through_func, ged_adjust},
     {"ae2dir",	(char *)0, MAXARGS, go_pass_through_func, ged_ae2dir},
@@ -578,7 +578,6 @@ static struct go_cmdtab go_cmds[] = {
     {"color",	(char *)0, MAXARGS, go_pass_through_func, ged_color},
     {"comb",	(char *)0, MAXARGS, go_pass_through_func, ged_comb},
     {"comb_color",	(char *)0, MAXARGS, go_pass_through_func, ged_comb_color},
-    {"concat",	(char *)0, MAXARGS, go_pass_through_func, ged_concat},
     {"configure",	"vname", MAXARGS, go_configure, GED_FUNC_PTR_NULL},
     {"constrain_rmode",	"vname x|y|z x y", MAXARGS, go_constrain_rmode, GED_FUNC_PTR_NULL},
     {"constrain_tmode",	"vname x|y|z x y", MAXARGS, go_constrain_tmode, GED_FUNC_PTR_NULL},
@@ -588,6 +587,8 @@ static struct go_cmdtab go_cmds[] = {
     {"cpi",	(char *)0, MAXARGS, go_pass_through_func, ged_cpi},
     {"d",	(char *)0, MAXARGS, go_pass_through_and_refresh_func, ged_erase},
     {"dall",	(char *)0, MAXARGS, go_pass_through_and_refresh_func, ged_erase_all},
+    {"dbconcat",	(char *)0, MAXARGS, go_pass_through_func, ged_concat},
+    {"dbfind",	(char *)0, MAXARGS, go_pass_through_func, ged_find},
     {"dbip",	(char *)0, MAXARGS, go_pass_through_func, ged_dbip},
     {"decompose",	(char *)0, MAXARGS, go_pass_through_func, ged_decompose},
     {"delay",	(char *)0, MAXARGS, go_pass_through_func, ged_delay},
@@ -611,7 +612,6 @@ static struct go_cmdtab go_cmds[] = {
     {"eye_pos",	"vname [x y z]", 5, go_view_func, ged_eye_pos},
     {"faceplate",	"vname center_dot|prim_labels|view_params|view_scale color|draw [val(s)]", MAXARGS, go_faceplate, GED_FUNC_PTR_NULL},
     {"facetize",	(char *)0, MAXARGS, go_pass_through_func, ged_facetize},
-    {"find",	(char *)0, MAXARGS, go_pass_through_func, ged_find},
     {"form",	(char *)0, MAXARGS, go_pass_through_func, ged_form},
     {"fracture",	(char *)0, MAXARGS, go_pass_through_func, ged_fracture},
     {"g",	(char *)0, MAXARGS, go_pass_through_func, ged_group},
