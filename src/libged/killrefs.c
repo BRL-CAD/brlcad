@@ -17,9 +17,9 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file killall.c
+/** @file killrefs.c
  *
- * The killall command.
+ * The killrefs command.
  *
  */
 
