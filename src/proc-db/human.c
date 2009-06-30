@@ -364,29 +364,36 @@ fastf_t makeCalf(struct rt_wdb *file, char *name, fastf_t standing_height, fastf
 	return ankleRadius;
 }
 
-fastf_t makeLeftFoot(struct rt_wdb *file, fastf_t standing_height, fastf_t leftAnkle, fastf_t showBoxes)
+fastf_t makeAnkle(struct rt_wdb *file, char *name, fastf_t *ankleJoint, fastf_t ankleRadius)
 {
-	fastf_t footLength, toeRadius, ankleRadius, x, y;
-	vect_t footVector;
-	point_t footPoint;
+	mk_sph(file, name, ankleJoint, ankleRadius);
+	return ankleRadius;
+}
+
+fastf_t makeFoot(struct rt_wdb *file, char *name, fastf_t standing_height, fastf_t ankleRadius, fastf_t *ankleJoint, fastf_t *direction, fastf_t showBoxes)
+{
+	fastf_t footLength, toeRadius;
+	vect_t startVector, footVector;
 	
 	footLength = (standing_height / 8) * IN2MM;
-	ankleRadius = leftAnkle;
 	toeRadius = ankleRadius * 1.2;
 
-	x=0;
-	y=ankleRadius;
-	
-	VSET(footPoint, x, y, ankleRadius);
-	VSET(footVector, footLength, 0.0, 0.0)
+	VSET(startVector, 0, 0, footLength);
 
-	mk_particle(file, "LeftFoot.s", footPoint, footVector, ankleRadius, toeRadius);	
+        setDirection(startVector, &footVector, direction[X], direction[Y], direction[Z]);
+	
+	/*
+	 * VADD2(ankleJoint, kneeJoint, footVector);
+	 */
+	mk_particle(file, name, ankleJoint, footVector, ankleRadius, toeRadius);
 
 	if(showBoxes){
-		point_t p1, p2;
-		VSET(p1, -ankleRadius, -toeRadius+y, 0);
-		VSET(p2, footLength+toeRadius, toeRadius+y, toeRadius*2);
-		mk_rpp(file, "LeftFootBox.s", p1, p2);
+	/*
+	 *	point_t p1, p2;
+	 *	VSET(p1, -ankleRadius, -toeRadius+y, 0);
+	 *	VSET(p2, footLength+toeRadius, toeRadius+y, toeRadius*2);
+	 *	mk_rpp(file, "LeftFootBox.s", p1, p2);
+	 */
 	}
 	return 0;
 }
@@ -457,19 +464,13 @@ void makeLeg(struct rt_wdb (*file), int isLeft, fastf_t standing_height, fastf_t
                 bu_strlcpy(footName, "RightFoot.s", MAXLENGTH);
         }
 
-	VSET(direction, 0, -180, 0);
+	VSET(direction, 0, 180, 0);
 	kneeWidth = makeThigh(file, thighName, standing_height, thighJoint, kneeJoint, direction, showBoxes);
 	makeKnee(file, kneeName, kneeJoint, kneeWidth);
 	ankleWidth = makeCalf(file, calfName, standing_height, kneeJoint, ankleJoint, direction, showBoxes);
-/*
- *	ankleWidth = makeCalf(file, ankleName, standing_height, kneeJoint, ankleJoint, showBoxes);
- */
-
-/*
- *      rightAnkle = makeRightCalf(file, standing_height, rightKnee, showBoxes);
- *      makeLeftFoot(file, standing_height, leftAnkle, showBoxes);
- *      makeRightFoot(file, standing_height, rightAnkle, showBoxes);
- */
+	makeAnkle(file, ankleName, ankleJoint, ankleWidth);
+	VSET(direction, 0, 90, 0);
+	makeFoot(file, footName, standing_height, ankleWidth, ankleJoint, direction, showBoxes);
 }
 
 void makeBody(struct rt_wdb (*file), fastf_t standing_height, fastf_t showBoxes)
@@ -514,13 +515,6 @@ void makeBody(struct rt_wdb (*file), fastf_t standing_height, fastf_t showBoxes)
 	VSET(rightThighJoint, 0, -120, lowTorso);
 	makeLeg(file, 1, standing_height, legLength, leftThighJoint, showBoxes);
 	makeLeg(file, 0, standing_height, legLength, rightThighJoint, showBoxes);
-/*
- *	rightKnee = makeRightThigh(file, standing_height, lowTorso, showBoxes);
- *	leftAnkle = makeLeftCalf(file, standing_height, leftKnee, showBoxes);
- *	rightAnkle = makeRightCalf(file, standing_height, rightKnee, showBoxes);
- *	makeLeftFoot(file, standing_height, leftAnkle, showBoxes);
- *	makeRightFoot(file, standing_height, rightAnkle, showBoxes);
- */
 }	
 
 
