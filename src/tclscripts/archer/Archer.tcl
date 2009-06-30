@@ -141,6 +141,9 @@ package provide Archer 1.0
 	method importFg4Sections   {_slist _wlist _delta}
 	method setDefaultBindingMode {_mode}
 
+	# General
+	method askToRevert {}
+
 	# ArcherCore Override Section
 	method 3ptarb              {args}
 	method bo                  {args}
@@ -259,7 +262,7 @@ package provide Archer 1.0
 	method buildModelAxesPreferences {}
 	method buildMouseOverridesDialog {}
 	method buildPreferencesDialog {}
-	method buildSaveObjDialog {}
+	method buildRevertDialog {}
 	method buildToplevelMenubar {}
 	method buildViewAxesPreferences {}
 	method doAboutArcher {}
@@ -446,7 +449,7 @@ package provide Archer 1.0
     if {!$mViewOnly} {
 	buildInfoDialogs
 	buildSaveDialog
-	buildSaveObjDialog
+	buildRevertDialog
 	buildViewCenterDialog
 	buildPreferencesDialog
 	buildDbAttrView
@@ -1153,10 +1156,7 @@ package provide Archer 1.0
 ::itcl::body Archer::Load {_target} {
     SetWaitCursor $this
     if {$mNeedSave} {
-	$itk_component(saveDialog) center [namespace tail $this]
-	if {[$itk_component(saveDialog) activate]} {
-	    saveDb
-	} else {
+	if {![askToSave]} {
 	    set mNeedSave 0
 	    updateSaveMode
 	    updateUndoMode
@@ -1491,6 +1491,20 @@ package provide Archer 1.0
 
 
 ################################### Protected Section ###################################
+
+::itcl::body Archer::askToRevert {} {
+    if {!$mNeedSave} {
+	return 0
+    }
+
+    $itk_component(revertDialog) center [namespace tail $this]
+    if {[$itk_component(revertDialog) activate]} {
+	revert
+	return 1
+    }
+
+    return 0
+}
 
 ################################### ArcherCore Override Section ###################################
 
@@ -1861,17 +1875,29 @@ package provide Archer 1.0
 
     catch {
 	if {!$mDbNoCopy && !$mDbReadOnly && $mNeedSave} {
+	    $itk_component(primaryToolbar) itemconfigure revert \
+		-state normal
+
 	    if {$ArcherCore::inheritFromToplevel} {
 		$itk_component(filemenu) entryconfigure "Save" -state normal
+		$itk_component(filemenu) entryconfigure "Revert" -state normal
 	    } else {
 		$itk_component(menubar) menuconfigure .file.save \
 		    -state normal
+		$itk_component(menubar) menuconfigure .file.revert \
+		    -state normal
 	    }
 	} else {
+	    $itk_component(primaryToolbar) itemconfigure revert \
+		-state disabled
+
 	    if {$ArcherCore::inheritFromToplevel} {
 		$itk_component(filemenu) entryconfigure "Save" -state disabled
+		$itk_component(filemenu) entryconfigure "Revert" -state disabled
 	    } else {
 		$itk_component(menubar) menuconfigure .file.save \
+		    -state disabled
+		$itk_component(menubar) menuconfigure .file.revert \
 		    -state disabled
 	    }
 	}
@@ -1886,8 +1912,6 @@ package provide Archer 1.0
     if {!$mDbNoCopy && !$mDbReadOnly && $mNeedGlobalUndo} {
 	$itk_component(primaryToolbar) itemconfigure global_undo \
 	    -state normal
-	$itk_component(primaryToolbar) itemconfigure revert \
-	    -state normal
 
 	if {$_oflag} {
 	    if {$mNeedObjUndo} {
@@ -1900,8 +1924,6 @@ package provide Archer 1.0
 	}
     } else {
 	$itk_component(primaryToolbar) itemconfigure global_undo \
-	    -state disabled
-	$itk_component(primaryToolbar) itemconfigure revert \
 	    -state disabled
 
 	if {$_oflag} {
@@ -2775,24 +2797,24 @@ package provide Archer 1.0
     wm geometry $itk_component(preferencesDialog) 450x500
 }
 
-::itcl::body Archer::buildSaveObjDialog {} {
-    buildInfoDialog saveObjDialog \
-	"Save Object?" \
-	"Save the edits for object?" \
+::itcl::body Archer::buildRevertDialog {} {
+    buildInfoDialog revertDialog \
+	"Revert Database?" \
+	"Do you wish to revert the database?" \
 	450x85 none application
 
-    $itk_component(saveObjDialog) show 2
-    $itk_component(saveObjDialog) buttonconfigure 0 \
+    $itk_component(revertDialog) show 2
+    $itk_component(revertDialog) buttonconfigure 0 \
 	-defaultring yes \
 	-defaultringpad 3 \
 	-borderwidth 1 \
 	-pady 0 \
 	-text Yes
-    $itk_component(saveObjDialog) buttonconfigure 2 \
+    $itk_component(revertDialog) buttonconfigure 2 \
 	-borderwidth 1 \
 	-pady 0 \
 	-text No
-    $itk_component(saveObjDialogInfo) configure \
+    $itk_component(revertDialogInfo) configure \
 	-vscrollmode none \
 	-hscrollmode none
 }
@@ -2822,7 +2844,11 @@ package provide Archer 1.0
 	-command [::itcl::code $this openDb]
     $itk_component(filemenu) add command \
 	-label "Save" \
-	-command [::itcl::code $this saveDb] \
+	-command [::itcl::code $this askToSave] \
+	-state disabled
+    $itk_component(filemenu) add command \
+	-label "Revert" \
+	-command [::itcl::code $this askToRevert] \
 	-state disabled
     $itk_component(filemenu) add separator
     $itk_component(filemenu) add command \
@@ -3371,7 +3397,7 @@ package provide Archer 1.0
 	-helpstr "Revert database" \
 	-relief flat \
 	-overrelief raised \
-	-command [::itcl::code $this revert]
+	-command [::itcl::code $this askToRevert]
 
 
    if {$::Archer::plugins != ""} {
@@ -3736,7 +3762,10 @@ package provide Archer 1.0
     $itk_component(menubar) menuconfigure .file.open \
 	-command [::itcl::code $this openDb]
     $itk_component(menubar) menuconfigure .file.save \
-	-command [::itcl::code $this saveDb] \
+	-command [::itcl::code $this askToSave] \
+	-state disabled
+    $itk_component(menubar) menuconfigure .file.revert \
+	-command [::itcl::code $this askToRevert] \
 	-state disabled
     $itk_component(menubar) menuconfigure .file.rt \
 	-command [::itcl::code $this raytracePanel] \
@@ -7233,8 +7262,18 @@ package provide Archer 1.0
 }
 
 ::itcl::body Archer::revert {} {
+# Code to capture the display list
+#    set rlist [gedCmd report 0]
+#    set rlen [llength $rlist]
+
     set mNeedSave 0
     Load $mTarget
+
+# Code to redraw the captured display list
+#    if {$rlen > 0} {
+#	set rlist [regsub -all "\n" $rlist " "]
+#	eval draw $rlist
+#    }
 
     set mLedgerGID 0
 

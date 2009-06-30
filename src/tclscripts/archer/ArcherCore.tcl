@@ -1514,7 +1514,7 @@ Popup Menu    Right or Ctrl-Left
 	    -helpstr "Save the current geometry file" \
 	    -relief flat \
 	    -overrelief raised \
-	    -command [::itcl::code $this saveDb]
+	    -command [::itcl::code $this askToSave]
     }
 
     $itk_component(primaryToolbar) add radiobutton rotate \
@@ -2657,10 +2657,7 @@ Popup Menu    Right or Ctrl-Left
 ::itcl::body ArcherCore::Load {target} {
     SetWaitCursor $this
     if {$mNeedSave} {
-	$itk_component(saveDialog) center [namespace tail $this]
-	if {[$itk_component(saveDialog) activate]} {
-	    saveDb
-	} else {
+	if {![askToSave]} {
 	    set mNeedSave 0
 	    updateSaveMode
 	}
@@ -2761,12 +2758,17 @@ Popup Menu    Right or Ctrl-Left
 }
 
 ::itcl::body ArcherCore::askToSave {} {
-    if {$mNeedSave} {
-	$itk_component(saveDialog) center [namespace tail $this]
-	if {[$itk_component(saveDialog) activate]} {
-	    saveDb
-	}
+    if {!$mNeedSave} {
+	return 0
     }
+
+    $itk_component(saveDialog) center [namespace tail $this]
+    if {[$itk_component(saveDialog) activate]} {
+	saveDb
+	return 1
+    }
+
+    return 0
 }
 
 ::itcl::body ArcherCore::menuStatusCB {w} {
@@ -3991,8 +3993,8 @@ Popup Menu    Right or Ctrl-Left
 
 ::itcl::body ArcherCore::buildSaveDialog {} {
     buildInfoDialog saveDialog \
-	"Save Target?" \
-	"Do you wish to save the current target?" \
+	"Save Database?" \
+	"Do you wish to save the current database?" \
 	450x85 none application
 
     $itk_component(saveDialog) show 2
