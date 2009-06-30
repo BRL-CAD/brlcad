@@ -206,109 +206,59 @@ fastf_t makeLowerTorso(struct rt_wdb *file, fastf_t standing_height, fastf_t top
 	return lowerTorso;
 }
 
-fastf_t makeLeftShoulder(struct rt_wdb *file, fastf_t standing_height, fastf_t showBoxes)
+fastf_t makeShoulder(struct rt_wdb *file, char *partName, fastf_t standing_height, fastf_t showBoxes)
 {
 	return 1;
 }
 
-fastf_t makeRightShoulder(struct rt_wdb *file, fastf_t standing_height, fastf_t showBoxes)
+fastf_t makeUpperArm(struct rt_wdb *file, char *partName, fastf_t standing_height, fastf_t *ShoulderJoint, fastf_t *ElbowJoint, fastf_t *direction, fastf_t showBoxes)
 {
-	return 1;
-}
-
-fastf_t makeLeftUpperArm(struct rt_wdb *file, fastf_t standing_height, fastf_t *leftShoulderJoint, fastf_t *leftElbowJoint, fastf_t *leftArmDirection, fastf_t *direction, fastf_t showBoxes)
-{
-	fastf_t leftElbow, upperArmLength, upperArmWidth, x, y;
-	vect_t startVector, armVector, leftDirection;
+	fastf_t elbowWidth, upperArmLength, upperArmWidth;
+	vect_t startVector, armVector;
 
 	upperArmLength = (standing_height / 4.5) * IN2MM;
 	upperArmWidth = upperArmLength / 6;
-	leftElbow = upperArmLength / 7;
-
-	x = 0;
-	y = ((standing_height / 7) * IN2MM)+upperArmWidth;
+	elbowWidth = upperArmLength / 7;
 
 	VSET(startVector, 0, 0, upperArmLength);
 
 	setDirection(startVector, &armVector, direction[X], direction[Y], direction[Z]); /* set y to 180 to point down */
-	VADD2(leftElbowJoint, leftShoulderJoint, armVector);
-	mk_trc_h(file, "LeftUpperArmV.s", leftShoulderJoint, armVector, upperArmWidth, leftElbow);
-
-	VMOVE(leftDirection, armVector);
-/*	VUNITIZE(leftDirection); */
-	VMOVE(leftArmDirection, leftDirection);
+	VADD2(ElbowJoint, ShoulderJoint, armVector);
+	mk_trc_h(file, partName, ShoulderJoint, armVector, upperArmWidth, elbowWidth);
 
 	if(showBoxes){
 	/*
 	 *	point_t p1, p2;
 	 *	VSET(p1, -upperArmWidth, -upperArmWidth+y, armLength);		
 	 *	VSET(p2, upperArmWidth, upperArmWidth+y, neckEnd);
-	 *	mk_rpp(file, "LeftUpperArmBox.s", p1, p2);
+	 *	mk_rpp(file, partName + bu_strlcat(Box), p1, p2);
 	 */
 	}
 
-	return leftElbow;
+	return elbowWidth;
 }
 
-fastf_t makeRightUpperArm(struct rt_wdb *file, fastf_t standing_height, fastf_t neckEnd, fastf_t showBoxes)
+fastf_t makeElbow(struct rt_wdb *file, char *name, fastf_t *elbowJoint, fastf_t radius)
 {
-	fastf_t rightElbow, upperArmLength, upperArmWidth, x, y, armLength;
-	point_t shoulderJoint, elbowJoint;
-
-	upperArmLength = (standing_height / 4.5) * IN2MM;	
-	upperArmWidth = upperArmLength / 6;
-	rightElbow = upperArmLength/7;
-
-	armLength = neckEnd - upperArmLength;
-
-	x = 0;
-	y = -1 * (((standing_height / 7) * IN2MM)+upperArmWidth);
-
-	VSET(shoulderJoint, x, y, neckEnd);
-	VSET(elbowJoint, x, y, armLength);
-	
-	mk_trc_top(file, "RightUpperArm.s", shoulderJoint, elbowJoint, upperArmWidth, rightElbow);
-
-	if(showBoxes){
-		point_t p1, p2;
-		VSET(p1, -upperArmWidth, -upperArmWidth+y, armLength);
-		VSET(p2, upperArmWidth, upperArmWidth+y, neckEnd);
-		mk_rpp(file, "RightUpperArmBox.s", p1, p2);
-	}	
-
-	return armLength;
-}
-
-fastf_t makeLeftElbow(struct rt_wdb *file, fastf_t *leftElbowJoint, fastf_t radius)
-{
-	mk_sph(file, "LeftElbow.s", leftElbowJoint, radius);
+	mk_sph(file, name, elbowJoint, radius);
 	return radius;
 }
 
-fastf_t makeRightElbow(struct rt_wdb *file, fastf_t *rightElbowJoint, fastf_t radius)
+fastf_t makeLowerArm(struct rt_wdb *file, char *name, fastf_t standing_height, fastf_t *elbowJoint, fastf_t *wristJoint, fastf_t *direction, fastf_t showBoxes)
 {
-        mk_sph(file, "RightElbow.s", rightElbowJoint, radius);
-        return radius;
-}
-
-fastf_t makeLeftLowerArm(struct rt_wdb *file, fastf_t standing_height, fastf_t *leftElbowJoint, fastf_t *leftWristJoint, fastf_t *leftArmDirection, fastf_t *direction, fastf_t showBoxes)
-{
-	fastf_t lowerArmLength, lowerArmWidth, x, y, wristWidth;
+	fastf_t lowerArmLength, lowerArmWidth, wristWidth;
 	vect_t startVector, armVector;
 
 	lowerArmLength = (standing_height / 4.5) * IN2MM;
 	lowerArmWidth = lowerArmLength / 6;
 	wristWidth = lowerArmLength / 7;
 	
-	x=0;
-	y=((standing_height / 7)*IN2MM) + lowerArmWidth;
-
 	VSET(startVector, 0, 0, lowerArmLength);
 
 	setDirection(startVector, &armVector, direction[X], direction[Y], direction[Z]);
 
-	VADD2(leftWristJoint, leftElbowJoint, armVector);
-	mk_trc_h(file, "LeftLowerArmV.s", leftElbowJoint, armVector, lowerArmWidth, wristWidth);
+	VADD2(wristJoint, elbowJoint, armVector);
+	mk_trc_h(file, name, elbowJoint, armVector, lowerArmWidth, wristWidth);
 
         if(showBoxes){
 	/*
@@ -322,47 +272,13 @@ fastf_t makeLeftLowerArm(struct rt_wdb *file, fastf_t standing_height, fastf_t *
 	return wristWidth;
 }
 
-fastf_t makeRightLowerArm(struct rt_wdb *file, fastf_t standing_height, fastf_t armLength, fastf_t showBoxes)
+fastf_t makeWrist(struct rt_wdb *file, char *name, fastf_t *wristJoint, fastf_t radius)
 {
-	fastf_t rightWrist, lowerArmLength, lowerArmWidth, x, y, wristWidth;
-	point_t elbowJoint, wristJoint;
-
-	lowerArmLength = (standing_height / 4.5) * IN2MM;
-	lowerArmWidth = lowerArmLength / 6;
-	wristWidth = lowerArmLength / 7;
-
-	rightWrist = armLength - lowerArmLength;
-	x=0;
-	y=(((standing_height / 7) * IN2MM) + lowerArmWidth) * -1;
-
-	VSET(elbowJoint, x, y, armLength);
-	VSET(wristJoint, x, y, rightWrist);
-
-	mk_trc_top(file, "RightLowerArm.s", elbowJoint, wristJoint, lowerArmWidth, wristWidth);
-
-        if(showBoxes){
-                point_t p1, p2;
-                VSET(p1, -lowerArmWidth, -lowerArmWidth+y, rightWrist);
-                VSET(p2, lowerArmWidth, lowerArmWidth+y, armLength);
-                mk_rpp(file, "RightLowerArmBox.s", p1, p2);
-        }
-
-	return rightWrist;
-}
-
-fastf_t makeLeftWrist(struct rt_wdb *file, fastf_t *leftWristJoint, fastf_t radius)
-{
-	mk_sph(file, "LeftWrist.s", leftWristJoint, radius);
+	mk_sph(file, name, wristJoint, radius);
 	return radius;
 }
 
-fastf_t makeRightWrist(struct rt_wdb *file, fastf_t *RightWristJoint, fastf_t radius)
-{
-        mk_sph(file, "RightWrist.s", RightWristJoint, radius);
-	return radius;
-}
-
-void makeLeftHand(struct rt_wdb *file, fastf_t standing_height, fastf_t *leftWristJoint, fastf_t showBoxes)
+void makeHand(struct rt_wdb *file, char *name, fastf_t standing_height, fastf_t *wristJoint, fastf_t showBoxes)
 {
 	fastf_t handLength, handWidth, x, y;
 	handLength = (standing_height / 16) * IN2MM;
@@ -370,8 +286,8 @@ void makeLeftHand(struct rt_wdb *file, fastf_t standing_height, fastf_t *leftWri
 	x = 0;
 	y = (standing_height / 6) * IN2MM;
 
-	/* VSET(handPoint, x, y, leftWrist); */
-	mk_sph(file, "LeftHand.s", leftWristJoint, handWidth);
+	/* VSET(handPoint, x, y, wrist); */
+	mk_sph(file, name, wristJoint, handWidth);
 
 	if(showBoxes){
 	/*
@@ -381,25 +297,6 @@ void makeLeftHand(struct rt_wdb *file, fastf_t standing_height, fastf_t *leftWri
 	 *	mk_rpp(file, "LeftHandBox.s", p1, p2);
 	 */
 	}
-}
-
-void makeRightHand(struct rt_wdb *file, fastf_t standing_height, fastf_t RightWrist, fastf_t showBoxes)
-{
-	fastf_t handLength, handWidth, x, y;
-	point_t handPoint;
-	handLength = (standing_height / 16) * IN2MM;
-	handWidth = (standing_height / 32) * IN2MM;
-	x = 0;
-	y = -1 * (standing_height / 6) * IN2MM;
-	VSET(handPoint, x, y, RightWrist);
-	mk_sph(file, "RightHand.s", handPoint, handWidth);
-
-        if(showBoxes){
-                point_t p1, p2;
-                VSET(p1, -handWidth, -handWidth+y, RightWrist-handWidth);
-                VSET(p2, handWidth, handWidth+y, RightWrist+handWidth);
-                mk_rpp(file, "RightHandBox.s", p1, p2);
-        }
 }
 
 fastf_t makeLeftThigh(struct rt_wdb *file, fastf_t standing_height, fastf_t lowerTorso, fastf_t showBoxes)
@@ -584,14 +481,45 @@ void makeLeftArm(struct rt_wdb (*file), fastf_t standing_height, fastf_t armLeng
 {
 	fastf_t leftShoulderWidth, leftElbowWidth, leftWristWidth; 
 	point_t leftElbowJoint, leftWristJoint;
-	vect_t leftArmDirection, direction;
+	vect_t direction;
+	char upperArmName[20] = "LeftUpperArm.s";
+	char elbowName[20] ="LeftElbow.s";
+	char lowerArmName[20] = "LeftLowerArm.s";
+	char wristName[20] = "LeftWrist.s";
+	char handName[20] = "LeftHand.s";
 
-	VSET(direction, -90, 90, 0);
-        leftElbowWidth = makeLeftUpperArm(file, standing_height, leftShoulderJoint, leftElbowJoint, leftArmDirection, direction, showBoxes);
-        makeLeftElbow(file, leftElbowJoint, leftElbowWidth);
-        leftWristWidth = makeLeftLowerArm(file, standing_height, leftElbowJoint, leftWristJoint, leftArmDirection, direction, showBoxes);
-        makeLeftWrist(file, leftWristJoint, leftWristWidth);
-        makeLeftHand(file, standing_height, leftWristJoint, showBoxes);
+	/* direction is the direction that the arm will be pointing at the shoulder. */
+	VSET(direction, 0, 160, 0);
+        leftElbowWidth = makeUpperArm(file, upperArmName, standing_height, leftShoulderJoint, leftElbowJoint, direction, showBoxes);
+        makeElbow(file, elbowName, leftElbowJoint, leftElbowWidth);
+	VSET(direction, 0, 70, 0);
+        leftWristWidth = makeLowerArm(file, lowerArmName, standing_height, leftElbowJoint, leftWristJoint, direction, showBoxes);
+        makeWrist(file, wristName, leftWristJoint, leftWristWidth);
+        makeHand(file, handName, standing_height, leftWristJoint, showBoxes);
+}
+
+/**
+ * Right arm
+ */
+void makeRightArm(struct rt_wdb (*file), fastf_t standing_height, fastf_t armLength, fastf_t *rightShoulderJoint, fastf_t showBoxes)
+{
+        fastf_t rightShoulderWidth, rightElbowWidth, rightWristWidth;
+        point_t rightElbowJoint, rightWristJoint;
+        vect_t direction;
+	char upperArmName[20] = "RightUpperArm.s";
+	char elbowName[20] = "RightElbow.s";
+	char lowerArmName[20] = "RightLowerArm.s";
+	char wristName[20] = "RightWrist.s";
+	char handName[20] = "RightHand.s";
+
+        /* direction is the direction that the arm will be pointing at the shoulder. */
+        VSET(direction, 0, 90, 0);
+        rightElbowWidth = makeUpperArm(file, upperArmName, standing_height, rightShoulderJoint, rightElbowJoint, direction, showBoxes);
+        makeElbow(file, elbowName, rightElbowJoint, rightElbowWidth);
+        VSET(direction, 0, 70, 0);
+        rightWristWidth = makeLowerArm(file, lowerArmName, standing_height, rightElbowJoint, rightWristJoint, direction, showBoxes);
+	makeWrist(file, wristName, rightWristJoint, rightWristWidth);
+        makeHand(file, handName, standing_height, rightWristJoint, showBoxes);
 }
 
 void makeBody(struct rt_wdb (*file), fastf_t standing_height, fastf_t showBoxes)
@@ -621,13 +549,11 @@ void makeBody(struct rt_wdb (*file), fastf_t standing_height, fastf_t showBoxes)
 	/**
 	 * Arm Parts
 	 */
-	VSET(leftShoulderJoint, 0, 320, neckEnd); /* arbitrary positioning of left shoulder */
+	VSET(leftShoulderJoint, 0, 320, neckEnd); /* arbitrary positioning of left shoulder and thus, the left arm*/
+	VSET(rightShoulderJoint, 0, -320, neckEnd); /* arbitrary positioning of right shoulder and thus, the right arm*/
 
 	makeLeftArm(file, standing_height, armLength, leftShoulderJoint, showBoxes);
-
-	rightElbow = makeRightUpperArm(file, standing_height, neckEnd, showBoxes);
-	rightWrist = makeRightLowerArm(file, standing_height, rightElbow, showBoxes);
-	makeRightHand(file, standing_height, rightWrist, showBoxes);
+	makeRightArm(file, standing_height, armLength, rightShoulderJoint, showBoxes);
 
 	/**
 	 * Leg Parts
