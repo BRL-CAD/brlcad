@@ -40,6 +40,7 @@
 #include <boost/spirit/phoenix.hpp>
 #include <boost/spirit/dynamic/if.hpp>
 #include <string>
+#include <vector>
 
 /*#include <boost/spirit/core.hpp>
 #include <boost/spirit/phoenix.hpp>
@@ -388,6 +389,40 @@ struct ExpressionGrammar : public boost::spirit::grammar<ExpressionGrammar,Stack
     };
 };
 
+/**
+ *
+ * FunctionGrammar implementation
+ * Function closure is attached to the grammar itself
+ */
+struct FunctionClosure : boost::spirit::closure<FunctionClosure, std::string, std::vector<std::string>, boost::shared_ptr<boost::spirit::symbols<double> >, std::string, boost::shared_ptr<ExpressionGrammar> >
+{
+   member1 name;
+   member2 args;
+   member3 local_vars;
+   member4 expr;
+};
+
+struct FunctionGrammar : public boost::spirit::grammar<FunctionGrammar,StackClosure::context_t>
+{
+    boost::spirit::symbols<boost::shared_ptr<MathFunction> > & functions;
+    boost::spirit::symbols<double> const & globalvars;
+
+    FunctionGrammar(boost::spirit::symbols<boost::shared_ptr<MathFunction> > & f, boost::spirit::symbols<double> const & v) : functions(f), globalvars(v)
+    {}
+
+    template <typename ScannerT>
+    struct definition {
+	definition(FunctionGrammar const & self)
+	{
+	    top = funcdef;
+	}
+    boost::spirit::rule<ScannerT> const & start() const { return top; }
+    private:
+        boost::spirit::rule<ScannerT> top, funcdecl;
+    	boost::spirit::rule<ScannerT, FunctionClosure::context_t> funcdef;
+	NameGrammar name;
+    };
+};
 /**
  * VariableGrammar implementation
  * Stack closure is attached to the grammar itself
