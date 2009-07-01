@@ -10,6 +10,7 @@ set(LIBGED_SOURCES
     arot.c
     attr.c
     autoview.c
+    bbsize.c
     bev.c
     bigE.c
     blast.c

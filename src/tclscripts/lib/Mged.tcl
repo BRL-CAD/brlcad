@@ -46,6 +46,7 @@ option add *Mged.height 400 widgetDefault
 	method adjust {args}
 	method arced {args}
 	method attr {args}
+	method bbsize {args}
 	method binary {args}
 	method blast {args}
 	method c {args}
@@ -523,6 +524,10 @@ option add *Mged.height 400 widgetDefault
 	    return [lindex $result 1]
 	}
     }
+}
+
+::itcl::body Mged::bbsize {args} {
+    eval $db bbsize $args
 }
 
 ::itcl::body Mged::make_bb {name args} {

@@ -555,6 +555,7 @@ static struct go_cmdtab go_cmds[] = {
     {"arot",	"vname x y z angle", 6, go_view_func, ged_arot},
     {"attr",	(char *)0, MAXARGS, go_pass_through_func, ged_attr},
     {"autoview",	"vname", MAXARGS, go_autoview, GED_FUNC_PTR_NULL},
+    {"bbsize",	(char *)0, MAXARGS, go_pass_through_func, ged_bbsize},
     {"bev",	(char *)0, MAXARGS, go_pass_through_func, ged_bev},
     {"base2local",	(char *)0, MAXARGS, go_base2local, GED_FUNC_PTR_NULL},
     {"bg",	"vname [r g b]", MAXARGS, go_bg, GED_FUNC_PTR_NULL},
