@@ -65,6 +65,21 @@ namespace brlcad {
 			// for each trim
 			for (int j = 0; j < loop->m_ti.Count(); j++) {
 				ON_BrepTrim& trim = face->Brep()->m_T[loop->m_ti[j]];
+				ON_BrepEdge& edge = face->Brep()->m_E[trim.m_ei];
+				//if (edge.m_ti.Count() == 2) {
+					//bu_log("Face(%d,%d) %d->%d\n",face->m_face_index+1,j+1, face->Brep()->m_T[edge.m_ti[0]].FaceIndexOf(),face->Brep()->m_T[edge.m_ti[1]].FaceIndexOf());
+				//} else {
+				if (edge.m_ti.Count() == 1) {
+					m_adj_face_index = face->Brep()->m_T[edge.m_ti[0]].FaceIndexOf();
+				} else if (edge.m_ti.Count() == 2) {
+					if (face->m_face_index == face->Brep()->m_T[edge.m_ti[0]].FaceIndexOf()) {
+						m_adj_face_index = face->Brep()->m_T[edge.m_ti[1]].FaceIndexOf();
+					} else {
+						m_adj_face_index = face->Brep()->m_T[edge.m_ti[0]].FaceIndexOf();
+					}
+				} else if (edge.m_ti.Count() > 2) {
+					bu_log("Edge should have only 1 or 2 adjacent faces, right? # of Faces - %d\n",edge.m_ti.Count());
+				}
 				const ON_Curve* trimCurve = trim.TrimCurveOf();
 				double min,max;
 				(void)trimCurve->GetDomain(&min, &max);

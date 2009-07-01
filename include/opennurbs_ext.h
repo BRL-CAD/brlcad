@@ -662,6 +662,7 @@ namespace brlcad {
 	BRNode* initialLoopBBox();
 	
 	ON_BrepFace* m_face;
+	int m_adj_face_index;
 	BRNode* m_root;
 	list<BRNode*> m_sortedX;
 	list<BRNode*> m_sortedY;
@@ -679,7 +680,7 @@ namespace brlcad {
 
 	bool intersectedBy(ON_Ray& ray, double* tnear = 0, double* tfar = 0);
 	bool isLeaf() const;
-	int isTrimmed(const ON_2dPoint& uv,fastf_t &closesttrim);
+	int isTrimmed(const ON_2dPoint& uv,SubcurveBRNode* closest,fastf_t &closesttrim);
 	bool doTrimming() const;
 	ON_2dPoint getClosestPointEstimate(const ON_3dPoint& pt);
 	ON_2dPoint getClosestPointEstimate(const ON_3dPoint& pt, ON_Interval& u, ON_Interval& v);
@@ -691,7 +692,7 @@ namespace brlcad {
 	ON_Interval m_v;
 	bool m_checkTrim;
 	bool m_trimmed;
-	
+
 	//testing bb box growth
 	bool m_xgrow;
 	bool m_ygrow;
@@ -930,7 +931,7 @@ namespace brlcad {
 
 	template<class BV>
     int
-	    SubsurfaceBVNode<BV>::isTrimmed(const ON_2dPoint& uv,fastf_t &closesttrim) {
+	    SubsurfaceBVNode<BV>::isTrimmed(const ON_2dPoint& uv,SubcurveBRNode* closest,fastf_t &closesttrim) {
 		SubcurveBRNode* br;
 		list<BRNode*> trims;
 		point_t bmin,bmax;
@@ -944,7 +945,8 @@ namespace brlcad {
 		    return 1;
 		} else {//find closest BB
 			list<BRNode*>::iterator i;
-			SubcurveBRNode* closest = NULL;
+			SubcurveBRNode* vclosest = NULL;
+			SubcurveBRNode* uclosest = NULL;
 			fastf_t currHeight;
 			bool currTrimStatus;
 			point_t min,max;
@@ -952,6 +954,7 @@ namespace brlcad {
 			bool underTrim = false;
 			double vdist;
 			double udist;
+			
 			for( i=trims.begin();i!=trims.end();i++) {
 				br = dynamic_cast<SubcurveBRNode*>(*i);
 				if (br->m_Vertical) {
@@ -960,9 +963,13 @@ namespace brlcad {
 					if (!verticalTrim) { //haven't seen vertical trim yet
 					    verticalTrim = true;
 					    vdist = dist;
+						vclosest = br;
 					} else {
 					    if (dist < vdist)
-						vdist = dist;
+						{
+							vdist = dist;
+							vclosest = br;
+						}
 					}
 					
 				    }
@@ -985,20 +992,34 @@ namespace brlcad {
 				    if (!underTrim) {
 					underTrim = true;
 					udist = dist;
+					uclosest = br;
 				    } else {
 					if (dist < udist)
 					    udist = dist;
+						uclosest = br;
 				    }
 				}
 			}
 			if (closest == NULL) {
+			    if (verticalTrim) {
+					closesttrim = vdist;
+					closest = vclosest;
+				}
+			    if ((underTrim) && (!verticalTrim || (udist < closesttrim))) {
+					closesttrim = udist;
+					closest = uclosest;
+				}
 				return 1;
 			} else {
 			    closesttrim = currHeight;
-			    if ((verticalTrim) && (vdist < closesttrim))
-				closesttrim = vdist;
-			    if ((underTrim) && (udist < closesttrim))
-				closesttrim = udist;
+			    if ((verticalTrim) && (vdist < closesttrim)) {
+					closesttrim = vdist;
+					closest = vclosest;
+				}
+			    if ((underTrim) && (udist < closesttrim)) {
+					closesttrim = udist;
+					closest = uclosest;
+				}
 			    return currTrimStatus;
 			}
 		}

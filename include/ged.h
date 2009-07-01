@@ -1375,6 +1375,14 @@ GED_EXPORT BU_EXTERN(int ged_bot_sync, (struct ged *gedp, int argc, const char *
 GED_EXPORT BU_EXTERN(int ged_bot_vertex_fuse, (struct ged *gedp, int argc, const char *argv[]));
 
 /**
+ * BREP utility command
+ *
+ * Usage:
+ *     brep [command]
+ */
+GED_EXPORT BU_EXTERN(int ged_brep, (struct ged *gedp, int argc, const char *argv[]));
+
+/**
  * List attributes (brief).
  *
  * Usage:

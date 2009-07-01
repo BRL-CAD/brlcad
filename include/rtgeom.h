@@ -193,6 +193,8 @@ struct rt_brep_internal {
 };
 
 #define RT_BREP_CK_MAGIC( _p) BU_CKMAG(_p, RT_BREP_INTERNAL_MAGIC, "rt_brep_internal");
+#define RT_BREP_TEST_MAGIC( _p) ((_p) && (*((unsigned long *)(_p)) == (unsigned long)(RT_BREP_INTERNAL_MAGIC)))
+
 
 /*
  * ID_NMG

@@ -77,6 +77,7 @@ librt_nil_la_SOURCES = \
 	primitives/ars/ars.c \
 	primitives/bot/bot.c \
 	primitives/brep/brep.cpp \
+	primitives/brep/brep_debug.cpp \
 	primitives/bspline/bspline.c \
 	primitives/bspline/nurb_basis.c \
 	primitives/bspline/nurb_bezier.c \
