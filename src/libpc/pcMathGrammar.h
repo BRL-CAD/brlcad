@@ -39,6 +39,7 @@
 #include <boost/spirit.hpp>
 #include <boost/spirit/phoenix.hpp>
 #include <boost/spirit/dynamic/if.hpp>
+#include <boost/spirit/dynamic/lazy.hpp>
 #include <string>
 #include <vector>
 
@@ -414,7 +415,42 @@ struct FunctionGrammar : public boost::spirit::grammar<FunctionGrammar,StackClos
     struct definition {
 	definition(FunctionGrammar const & self)
 	{
+	    using phoenix::arg1;
+	    using phoenix::arg2;
+	    using phoenix::construct_;
+	    using phoenix::new_;
+	    using phoenix::var;
+
+	    using boost::spirit::ch_p;
+	    using boost::spirit::lazy_p;
+	    using boost::spirit::list_p;
+
 	    top = funcdef;
+
+	    typedef boost::shared_ptr<boost::spirit::symbols<double> > sharedsymptr;
+	    funcdef
+	    	=  funcdecl
+		>> '='
+		;
+	    funcdecl
+	    	=  name
+		   [
+		   	funcdef.name = construct_<std::string>(arg1,arg2)
+		   ]
+		>> ch_p('(')
+		   [
+		   	reset(funcdef.localvars, new_<boost::spirit::symbols<double> >() )
+		   ]
+		>> !list_p((name - lazy_p(*funcdef.localvars))
+			   [
+			   	push_back(funcdef.args,
+					construct_<std::string>(arg1,arg2)),
+				add_symbol(*funcdef.localvars,
+					construct_<std::string>(arg1,arg2))
+			   ]
+			, ',')  
+		>> ')'
+		;
 	}
     boost::spirit::rule<ScannerT> const & start() const { return top; }
     private:
