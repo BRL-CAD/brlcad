@@ -32,7 +32,6 @@
 	method adjust {args}
 	method arced {args}
 	method attr {args}
-	method bbsize {name args}
 	method binary {args}
 	method c {args}
 	method cat {args}
@@ -457,10 +456,6 @@
     eval $db make $args
 }
 
-::itcl::body Db::bbsize {name args} {
-    eval $db bbsize $name $args
-}
-
 ::itcl::body Db::make_bb {name args} {
     eval $db make_bb $name $args
 }
@@ -536,7 +531,6 @@
 	    for the "get" subcommand, the arguments are attribute names
 	    for the "rm" subcommand, the arguments are attribute names
 	    for the "append" subcommand, the arguments are attribute name/value pairs } }
-    $help add bbsize    {{object} {Report the size of the bounding box containing the specified object}}
     $help add binary	{{(-i|-o) major_type minor_type dest source}
 	{manipulate opaque objects.
 	    Must specify one of -i (for creating or adjusting objects (input))
