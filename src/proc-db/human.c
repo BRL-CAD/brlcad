@@ -102,57 +102,47 @@ fastf_t setDirection(vect_t inVect, vect_t *resultVect, fastf_t x, fastf_t y, fa
  * Also include part widths that are used for multiple body-parts.
  */
 
-fastf_t makeHead(struct rt_wdb (*file), fastf_t standing_height, fastf_t showBoxes)
+fastf_t makeHead(struct rt_wdb (*file), char *name, fastf_t standing_height, fastf_t headSize, fastf_t *headJoint, fastf_t *direction, fastf_t showBoxes)
 {
-	/** TODO: Make it where there's a center point, instead of 0,0,0 for the center */
-	fastf_t headRadius, headHeight;
-	point_t headCenter;
-	/* for square hitbox outline */
-	point_t p1, p2;
+	fastf_t headRadius = headSize / 2;
 
-	headRadius = (standing_height / 8) / 2; /* Head is 1/8 of height */
-	headHeight = standing_height - headRadius;
-	
-	headRadius *= IN2MM;
-	headHeight *= IN2MM;
+	mk_sph(file, name, headJoint, headRadius);
 
-	VSET(headCenter, 0.0, 0.0, headHeight);
-	
 	if(showBoxes){
-		/*make points around head*/
-		VSET(p1, (-headRadius), (-headRadius), (headHeight-headRadius));
-		VSET(p2, (headRadius), (headRadius), (headHeight+headRadius));
-		mk_rpp(file, "HeadBox.s", p1, p2); 
+	/*
+	 *	point_t p1, p2;
+	 *	VSET(p1, (-headRadius), (-headRadius), (headHeight-headRadius));
+	 *	VSET(p2, (headRadius), (headRadius), (headHeight+headRadius));
+	 *	mk_rpp(file, "HeadBox.s", p1, p2); 
+	 */
 	}
 
-	mk_sph(file, "Head.s", headCenter, headRadius);
-
-	return headRadius;
+	return headSize;
 }
 
-fastf_t makeNeck(struct rt_wdb *file, fastf_t standing_height, fastf_t headRadius, fastf_t showBoxes)
+fastf_t makeNeck(struct rt_wdb *file, char *name, fastf_t standing_height, fastf_t headSize, fastf_t neckSize, fastf_t *headJoint, fastf_t *neckJoint,
+ fastf_t *direction, fastf_t showBoxes)
 {
-	fastf_t neckRadius, neckHeight, neckSpot, neckEnd;
-	vect_t	neckLength;
-	point_t neckPoint;
+	fastf_t neckWidth;
+	vect_t startVector, neckVector;
 
-	neckRadius = headRadius / 2;
-	neckHeight = standing_height / 22;
-	neckHeight *= IN2MM;
-	VSET(neckLength, 0.0, 0.0, (neckHeight*-1));
-	neckSpot = (standing_height*IN2MM) - (2 * headRadius);
-	VSET(neckPoint, 0.0, 0.0, neckSpot);
-	neckEnd = neckSpot - neckHeight;
-	mk_rcc(file, "Neck.s", neckPoint, neckLength, neckRadius);
+	neckWidth = headSize / 4;
+
+	VSET(startVector, 0, 0, neckSize);
+	setDirection(startVector, &neckVector, direction[X], direction[Y], direction[Z]);
+	VADD2(neckJoint, headJoint, neckVector);
+
+	mk_rcc(file, name, headJoint, neckVector, neckWidth);
 
 	if(showBoxes){
-		point_t p1, p2;
-		VSET(p1, -neckRadius, -neckRadius, neckEnd);
-		VSET(p2, neckRadius, neckRadius, neckSpot);
-		mk_rpp(file, "NeckBox.s", p1, p2);
+	/*
+	 *	point_t p1, p2;
+	 *	VSET(p1, -neckRadius, -neckRadius, neckEnd);
+	 *	VSET(p2, neckRadius, neckRadius, neckSpot);
+	 *	mk_rpp(file, "NeckBox.s", p1, p2);
+	 */
 	}
-
-	return neckEnd;
+	return neckWidth;
 }
 
 fastf_t makeUpperTorso(struct rt_wdb *file, char *name, fastf_t standing_height, fastf_t topTorsoLength, fastf_t shoulderWidth, fastf_t abWidth,
@@ -180,7 +170,6 @@ fastf_t makeUpperTorso(struct rt_wdb *file, char *name, fastf_t standing_height,
 	 *	mk_rpp(file, "UpperTorsoBox.s", p1, p2);
 	 */
 	}
-
 	return abWidth;
 }
 
@@ -198,15 +187,8 @@ fastf_t makeLowerTorso(struct rt_wdb *file, char *name, fastf_t standing_height,
 	VSET(rightVector, 0, ((pelvisWidth/2)*-1), 0);
 	VADD2(leftThighJoint, pelvisJoint, leftVector);
 	VADD2(rightThighJoint, pelvisJoint, rightVector);
-/*
-	VSET(leftThighJoint, pelvisJoint[X], pelvisJoint[Y], pelvisJoint[Z]);
-	VSET(rightThighJoint, pelvisJoint[X], pelvisJoint[Y], pelvisJoint[Z]);
-*/
-	mk_trc_h(file, name, abdomenJoint, lowTorsoVector, abWidth, pelvisWidth);
 
-	/*
-	 * mk_trc_top(file, "LowerTorso.s", midJoint, lowerJoint, midTorsoWidth, lowerTorsoWidth);
-	 */
+	mk_trc_h(file, name, abdomenJoint, lowTorsoVector, abWidth, pelvisWidth);
 
 	if(showBoxes){
 	/*
@@ -406,6 +388,20 @@ fastf_t makeFoot(struct rt_wdb *file, char *name, fastf_t standing_height, fastf
 	return 0;
 }
 
+void makeProfile(struct rt_wdb (*file), fastf_t standing_height, fastf_t ProfileSize, fastf_t *headJoint, fastf_t *neckJoint, fastf_t *direction, fastf_t showBoxes)
+{
+	fastf_t headSize, neckSize;
+	char headName[MAXLENGTH]="Head.s";
+	char neckName[MAXLENGTH]="Neck.s";
+
+	headSize = ProfileSize;
+	neckSize = ProfileSize / 2;
+
+	headSize = makeHead(file, headName, standing_height, headSize, headJoint, direction, showBoxes);
+	makeNeck(file, neckName, standing_height, headSize, neckSize, headJoint, neckJoint, direction, showBoxes);
+}
+
+
 void makeTorso(struct rt_wdb (*file), fastf_t standing_height, fastf_t torsoLength, fastf_t *neckJoint, fastf_t *leftShoulderJoint, fastf_t *rightShoulderJoint,
 fastf_t *leftThighJoint, fastf_t *rightThighJoint, fastf_t *direction, fastf_t showBoxes)
 {
@@ -423,8 +419,9 @@ fastf_t *leftThighJoint, fastf_t *rightThighJoint, fastf_t *direction, fastf_t s
 	shoulderWidth = (standing_height / 7) *IN2MM;
 	abWidth=(standing_height / 9) * IN2MM;
 	pelvisWidth=(standing_height / 8) * IN2MM;
-	VSET(neckJoint, 0, 0, (standing_height - (standing_height / 8))*IN2MM);
-
+/*
+ *	VSET(neckJoint, 0, 0, (standing_height - (standing_height / 8))*IN2MM);
+ */
         abWidth = makeUpperTorso(file, upperTorsoName, standing_height, topTorsoLength, shoulderWidth, abWidth, neckJoint, abdomenJoint,
  leftShoulderJoint, rightShoulderJoint, direction, showBoxes);
 
@@ -477,7 +474,6 @@ void makeArm(struct rt_wdb (*file), int isLeft, fastf_t standing_height, fastf_t
 
 /**
  * Create the leg to be length 'legLength' by making a thigh, calf, and foot to meet requirements.
- * 
  */
 void makeLeg(struct rt_wdb (*file), int isLeft, fastf_t standing_height, fastf_t legLength, fastf_t *thighJoint, fastf_t *direction, fastf_t showBoxes)
 {
@@ -516,13 +512,17 @@ void makeLeg(struct rt_wdb (*file), int isLeft, fastf_t standing_height, fastf_t
 	makeKnee(file, kneeName, kneeJoint, kneeWidth);
 	ankleWidth = makeCalf(file, calfName, standing_height, calfLength, kneeJoint, ankleJoint, direction, showBoxes);
 	makeAnkle(file, ankleName, ankleJoint, ankleWidth);
-	VSET(footDirection, 0, 90, 0);
+	setDirection(direction, &footDirection, 60, 0, 0);
 	makeFoot(file, footName, standing_height, ankleWidth, ankleJoint, footDirection, showBoxes);
 }
 
+/**
+ * Make the head, shoulders knees and toes, so to speak.
+ * Head, neck, torso, arms, legs.
+ */
 void makeBody(struct rt_wdb (*file), fastf_t standing_height, fastf_t showBoxes)
 {
-	fastf_t headRadius, neckEnd;
+	fastf_t headSize = (standing_height / 8) * IN2MM;
 	fastf_t armLength = (standing_height / 2) * IN2MM;
 	fastf_t legLength = ((standing_height*4) / 8) * IN2MM;
 	fastf_t torsoLength = ((standing_height*3) / 8) * IN2MM;
@@ -535,20 +535,20 @@ void makeBody(struct rt_wdb (*file), fastf_t standing_height, fastf_t showBoxes)
 
 	/* 
 	 * Make sure that vectors, points, and widths are sent to each function 
-         * for direction, location, and correct sizing.
+         * for direction, location, and correct sizing, respectivly.
 	 */
+	VSET(headJoint, 0, 0, ((standing_height*IN2MM)-(headSize/2)));
 	VSET(direction, 0, 180, 0); /*Make the body build down, from head to toe. Or else it's upsidedown */
 
 	/**
 	 * Head Parts
 	 */
-	headRadius = makeHead(file, standing_height, showBoxes);
-	neckEnd = makeNeck(file, standing_height, headRadius, showBoxes);
+	/*makeProfile makes the head and the neck */
+	makeProfile(file, standing_height, headSize, headJoint, neckJoint, direction, showBoxes);
 
 	/**
 	 * Torso Parts
 	 */
-	VSET(neckJoint, 0, -180, 0);
 	makeTorso(file, standing_height, torsoLength, neckJoint, leftShoulderJoint, rightShoulderJoint, leftThighJoint, rightThighJoint, direction, showBoxes);
 
 	/**
@@ -566,7 +566,6 @@ void makeBody(struct rt_wdb (*file), fastf_t standing_height, fastf_t showBoxes)
 	makeLeg(file, 0, standing_height, legLength, rightThighJoint, direction, showBoxes);
 }	
 
-
 /* human_data (will eventually) hold most/all data needed to make a person */
 
 enum Genders { male, female } gender;
@@ -576,6 +575,9 @@ struct human_data_t
 	fastf_t height;		/* Height of person standing */
 	int age;		/* Age of person */
 	enum gender;		/* Gender of person */
+	fastf_t legLength;
+	fastf_t torsoLength;
+	fastf_t armLength;
 	/*etc*/	
 };
 
