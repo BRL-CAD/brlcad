@@ -15,6 +15,13 @@ on-going issues.
 Recent Bugs
 -----------
 
+* mged command mode doesn't display the output of multiple
+  semicolon-separated commands.  Only the output of the very last mged
+  command is displayed.  Example:
+
+  mged -c moss.g "tops ; title"
+  mged -c moss.g "puts OK ; tops ; puts OK2 ; title ; puts DONE"
+
 * mged crashes inside X_choose_visual() with default /dev/X libdm
   interface on Mac OS X 10.5  (fbserv starts up fine)
 
