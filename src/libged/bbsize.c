@@ -43,6 +43,10 @@ ged_bbsize(struct ged *gedp, int argc, const char *argv[])
     int	use_air = 0;
     static const char *usage = "object";
     const char *str;
+    double xlen;
+    double ylen;
+    double zlen;
+    double vol;
     
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
     GED_CHECK_READ_ONLY(gedp, GED_ERROR);
@@ -77,11 +81,11 @@ ged_bbsize(struct ged *gedp, int argc, const char *argv[])
     str = bu_units_string(gedp->ged_wdbp->dbip->dbi_local2base);
     if (!str) str = "Unknown_unit";
     bu_vls_printf(&gedp->ged_result_str, "Object %s Bounding Box Dimensions:\n", argv[1]);
-    double xlen = fabs(rpp_max[X] - rpp_min[X])*gedp->ged_wdbp->dbip->dbi_base2local;
-    double ylen = fabs(rpp_max[Y] - rpp_min[Y])*gedp->ged_wdbp->dbip->dbi_base2local;
-    double zlen = fabs(rpp_max[Z] - rpp_min[Z])*gedp->ged_wdbp->dbip->dbi_base2local;
+    xlen = fabs(rpp_max[X] - rpp_min[X])*gedp->ged_wdbp->dbip->dbi_base2local;
+    ylen = fabs(rpp_max[Y] - rpp_min[Y])*gedp->ged_wdbp->dbip->dbi_base2local;
+    zlen = fabs(rpp_max[Z] - rpp_min[Z])*gedp->ged_wdbp->dbip->dbi_base2local;
     bu_vls_printf(&gedp->ged_result_str, "X Length: %.1f %s\nY Length: %.1f %s\nZ Length: %.1f %s\n", xlen, str, ylen, str, zlen, str); 
-    double vol = xlen * ylen * zlen;
+    vol = xlen * ylen * zlen;
     bu_vls_printf(&gedp->ged_result_str, "Bounding Box Volume: %.1f %s^3\n", vol, str);
    
     return GED_OK;
