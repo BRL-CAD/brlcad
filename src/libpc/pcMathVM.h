@@ -298,6 +298,27 @@ private:
     BranchFunc func_;
 };
 
+struct UserFuncExpression
+{
+    UserFuncExpression(std::vector<std::string> const & arnam, \
+    	boost::shared_ptr<boost::spirit::symbols<double> > const & locvar,
+	Stack const & s)
+    	: argnames(arnam), localvars(locvar), stack(s)
+	{}
+    std::vector<std::string> argnames;
+    boost::shared_ptr<boost::spirit::symbols<double> > localvars;
+    Stack stack;
+};
+
+struct FuncDefNode : public Node
+{
+    FuncDefNode();
+    boost::shared_ptr<Node> clone() const;
+private:
+    boost::shared_ptr<MathFunction> funcptr_;
+    UserFuncExpression value_;
+};
+
 #endif
 /** @} */
 /*

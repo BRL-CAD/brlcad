@@ -427,10 +427,28 @@ struct FunctionGrammar : public boost::spirit::grammar<FunctionGrammar,StackClos
 
 	    top = funcdef;
 
-	    typedef boost::shared_ptr<boost::spirit::symbols<double> > sharedsymptr;
 	    funcdef
 	    	=  funcdecl
+		   [
+		   	add_symbol(var(self.functions), funcdef.name,\
+					construct_<UserFunction>( \
+						funcdef.name, \
+						size(funcdef.args))),
+			/* create expression grammar for the function */
+			reset(funcdef.expr,new_<ExpressionGrammar>(
+						var(self.functions),\
+						var(self.globalvars),\
+						*funcdef.localvars))
+		   ]
 		>> '='
+		>> lazy_p(*funcdef.expr)
+		   [
+		   	/* add node to the stack */
+			push_bakc(self.stack, \
+				new_<FuncDefNode>(
+					*find_symbol(var(self.functions), funcdef.name), \
+					construct_<UserFuncExpression>(funcdef.args, funcdef.localvars, arg1)))
+		   ]
 		;
 	    funcdecl
 	    	=  name
