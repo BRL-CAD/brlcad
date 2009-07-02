@@ -26,6 +26,7 @@ set(LIBGED_SOURCES
     bot_split.c
     bot_sync.c
     bot_vertex_fuse.c
+    brep.c
     cat.c
     cc.c
     center.c
