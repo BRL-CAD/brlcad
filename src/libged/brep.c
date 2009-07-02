@@ -125,7 +125,7 @@ ged_brep(struct ged *gedp, int argc, const char *argv[])
 	    char *part = argv[3];
 	    char *strindex = argv[4];
 	    if (strcmp(strindex,"?") == 0) {
-		//printout indedx options
+		/* printout indedx options */
 		bu_vls_printf(&gedp->ged_result_str, "\tinfo S [index] - return information for specific BREP 'surface'\n");
 		bu_vls_printf(&gedp->ged_result_str, "\tinfo F [index] - return information for specific BREP 'face'\n");
 	    } else {
@@ -153,7 +153,7 @@ ged_brep(struct ged *gedp, int argc, const char *argv[])
 	    char *part = argv[3];
 	    char *strindex = argv[4];
 	    if (strcmp(strindex,"?") == 0) {
-		//printout indedx options
+		/* printout indedx options */
 		bu_vls_printf(&gedp->ged_result_str, "\tplot S [index] - plot specific BREP 'surface'\n");
 		bu_vls_printf(&gedp->ged_result_str, "\tplot F [index] - plot specific BREP 'face'\n");
 		brep_info(bs, &gedp->ged_result_str);
