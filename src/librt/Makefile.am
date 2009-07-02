@@ -192,6 +192,7 @@ nurb_example_LDADD = \
 
 noinst_HEADERS = \
 	primitives/fixpt.h \
+	primitives/brep/brep_debug.h \
 	primitives/revolve/revolve.h \
 	primitives/xxx/xxx.h
 
