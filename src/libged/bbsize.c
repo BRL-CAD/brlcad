@@ -38,7 +38,6 @@
 int
 ged_bbsize(struct ged *gedp, int argc, const char *argv[])
 {
-    register int i;
     point_t rpp_min, rpp_max;
     int	use_air = 0;
     static const char *usage = "object";
@@ -66,13 +65,9 @@ ged_bbsize(struct ged *gedp, int argc, const char *argv[])
 	return GED_ERROR;
     }
 
-    i = 1;
-
     /* look for a USEAIR option */
-    if ( ! strcmp(argv[i], "-u") ) {
+    if ( ! strcmp(argv[1], "-u") )
 	use_air = 1;
-	i++;
-    }
 
     if (ged_get_obj_bounds(gedp, argc-1, (const char **)argv+1, use_air, rpp_min, rpp_max) == GED_ERROR)
 	return GED_ERROR;
