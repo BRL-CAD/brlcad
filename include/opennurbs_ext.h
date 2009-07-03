@@ -148,7 +148,7 @@ namespace brlcad {
 					   bool innerTrim = false,
 					   bool checkTrim = true,
 					   bool trimmed = false);
-		
+
 		bool intersectedBy(ON_Ray& ray, double* tnear = 0, double* tfar = 0);
 		bool isLeaf() const;
 	        int isTrimmed(const ON_2dPoint& uv,fastf_t &trimdist) const;
@@ -389,7 +389,7 @@ namespace brlcad {
 						  bool innerTrim,
 						  bool checkTrim,
 						  bool trimmed)
-	    : m_trim(curve),BANode<BA>(node), m_face(face), m_t(t), m_innerTrim(innerTrim), m_checkTrim(checkTrim), m_trimmed(trimmed) { 
+	    : m_trim(curve),BANode<BA>(node), m_face(face), m_t(t), m_innerTrim(innerTrim), m_checkTrim(checkTrim), m_trimmed(trimmed) {
 			m_start = curve->PointAt(m_t[0]);
 			m_end = curve->PointAt(m_t[1]);
 			// check for vertical segments they can be removed
@@ -412,7 +412,7 @@ namespace brlcad {
 			    m_slope = (m_end[Y] - m_start[Y])/(m_end[X] - m_start[X]);
 			}
 			m_bb_diag = DIST_PT_PT(m_start,m_end);
-			
+
 		}
 
 	template<class BA>
@@ -515,16 +515,16 @@ namespace brlcad {
 	TRACE("Closest: " << mindist << "; " << PT2(uvs[mini]));
 	return ON_2dPoint(uvs[mini][0], uvs[mini][1]);
 	}
-	
+
 	template<class BA>
-	fastf_t 
+	fastf_t
 	SubcurveBANode<BA>::getLinearEstimateOfV( fastf_t u ) {
 		fastf_t v = m_start[Y] + m_slope*(u - m_start[X]);
 		return v;
 	}
-	
+
 	template<class BA>
-	fastf_t 
+	fastf_t
 	SubcurveBANode<BA>::getCurveEstimateOfV( fastf_t u, fastf_t tol ) const {
 	        ON_3dVector tangent;
 		point_t A,B;
@@ -557,7 +557,7 @@ namespace brlcad {
 		}
 		return p[Y];
 	}
-		
+
     //--------------------------------------------------------------------------------
     // Bounding volume hierarchy classes
 
@@ -660,7 +660,7 @@ namespace brlcad {
 	BRNode* subdivideCurve(const ON_Curve* curve, double min, double max, bool innerTrim, int depth);
 	BRNode* curveBBox(const ON_Curve* curve, ON_Interval& t,bool leaf, bool innerTrim, const ON_BoundingBox& bb);
 	BRNode* initialLoopBBox();
-	
+
 	ON_BrepFace* m_face;
 	int m_adj_face_index;
 	BRNode* m_root;
@@ -697,7 +697,7 @@ namespace brlcad {
 	bool m_xgrow;
 	bool m_ygrow;
 	bool m_zgrow;
-	
+
     private:
 	list<BRNode*> m_trims_above;
 	list<BRNode*> m_trims_vertical;
@@ -935,12 +935,12 @@ namespace brlcad {
 		SubcurveBRNode* br;
 		list<BRNode*> trims;
 		point_t bmin,bmax;
-		
+
 		closesttrim = -1.0;
 		if (m_checkTrim) {
-		
+
 		getTrimsAbove(uv,trims);
-		
+
 		if (trims.empty()) {
 		    return 1;
 		} else {//find closest BB
@@ -954,7 +954,7 @@ namespace brlcad {
 			bool underTrim = false;
 			double vdist;
 			double udist;
-			
+
 			for( i=trims.begin();i!=trims.end();i++) {
 				br = dynamic_cast<SubcurveBRNode*>(*i);
 				if (br->m_Vertical) {
@@ -971,7 +971,7 @@ namespace brlcad {
 							vclosest = br;
 						}
 					}
-					
+
 				    }
 				    continue;
 				}
@@ -1057,7 +1057,7 @@ namespace brlcad {
 			if ((uv[X] > bmin[X]-dist) && (uv[X] < bmax[X]+dist))
 				out_leaves.push_back(br);
 	    }
-		
+
     }
 
     template<class BV>
@@ -1110,18 +1110,18 @@ namespace brlcad {
 		SubcurveBRNode* br;
 		//	point_t surfmin,surfmax;
 		point_t curvemin,curvemax;
-		double dist; 
+		double dist = 0.000001;
 		bool trim_already_assigned = false;
-		
+
 		//	BVNode<BV>::GetBBox(surfmin,surfmax);
-		
+
 		m_trims_above.clear();
 		m_trims_right.clear();
 		ct->getLeavesAbove( m_trims_above,m_u,m_v);
 		ct->getLeavesRight( m_trims_right,m_u,m_v);
 		m_trims_above.sort(sortY);
 		m_trims_right.sort(sortX);
-		
+
 		if (!m_trims_above.empty()) {
 			i = m_trims_above.begin();
 			while (i != m_trims_above.end()) {
@@ -1139,7 +1139,7 @@ namespace brlcad {
 				}
 			}
 		}
-		
+
 		if (!trim_already_assigned) { // already contains possible vertical trim
 			if ( m_trims_above.empty() || m_trims_right.empty()) {
 				m_trimmed = true;
@@ -1151,7 +1151,7 @@ namespace brlcad {
 				dist = 0.000001; //0.03*DIST_PT_PT(curvemin,curvemax);
 				if (curvemin[Y]-dist > m_v[1]) {
 					i++;
-										
+
 					if (i == m_trims_above.end()) { //easy only trim in above list
 						if (br->m_XIncreasing) {
 							m_trimmed=true;
@@ -1159,7 +1159,7 @@ namespace brlcad {
 						} else {
 							m_trimmed=false;
 							m_checkTrim=false;
-						} 
+						}
 					} else { //check for trim bbox overlap TODO: look for multiple overlaps
 						SubcurveBRNode* bs;
 						bs = dynamic_cast<SubcurveBRNode*>(*i);
@@ -1172,7 +1172,7 @@ namespace brlcad {
 							} else {
 								m_trimmed=false;
 								m_checkTrim=false;
-							} 
+							}
 						} else {
 							m_checkTrim=true;
 						}
