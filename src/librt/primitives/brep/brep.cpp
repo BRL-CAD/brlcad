@@ -1904,9 +1904,9 @@ rt_brep_shot(struct soltab *stp, register struct xray *rp, struct application *a
 	while (curr != hits.end()) {
 		brep_hit &curr_hit = *curr;
 		if (curr_hit.hit == brep_hit::NEAR_MISS) {
-			prev = curr;
-			prev--;
-			if (prev != hits.end()) {
+			if (curr != hits.begin()) {
+				prev = curr;
+				prev--;
 				brep_hit &prev_hit = (*prev);
 				if ((prev_hit.hit != brep_hit::NEAR_MISS) && (prev_hit.direction == curr_hit.direction)) {
 					//remove current miss
@@ -1952,9 +1952,9 @@ rt_brep_shot(struct soltab *stp, register struct xray *rp, struct application *a
 	while (curr != hits.end()) {
 		brep_hit &curr_hit = *curr;
 		if (curr_hit.hit == brep_hit::NEAR_MISS) {
-			prev = curr;
-			prev--;
-			if (prev != hits.end()) {
+			if (curr != hits.begin()) {
+				prev = curr;
+				prev--;
 				brep_hit &prev_hit = (*prev);
 				if ((prev_hit.hit == brep_hit::NEAR_MISS) && (prev_hit.direction == curr_hit.direction)) {
 					//remove current miss
@@ -2043,9 +2043,9 @@ rt_brep_shot(struct soltab *stp, register struct xray *rp, struct application *a
 		while (curr != hits.end()) {
 			brep_hit &curr_hit = *curr;
 			if (curr_hit.hit == brep_hit::NEAR_HIT) {
-				prev = curr;
-				prev--;
-				if (prev != hits.end()) {
+				if (curr != hits.begin()) {
+					prev = curr;
+					prev--;
 					brep_hit &prev_hit = (*prev);
 					if ((prev_hit.hit != brep_hit::NEAR_HIT) && (prev_hit.direction == curr_hit.direction)) {
 						//remove current miss
@@ -2070,9 +2070,9 @@ rt_brep_shot(struct soltab *stp, register struct xray *rp, struct application *a
 		while (curr != hits.end()) {
 			brep_hit &curr_hit = *curr;
 			if (curr_hit.hit == brep_hit::NEAR_HIT) {
-				prev = curr;
-				prev--;
-				if (prev != hits.end()) {
+				if (curr != hits.begin()) {
+					prev = curr;
+					prev--;
 					brep_hit &prev_hit = (*prev);
 					if ((prev_hit.hit == brep_hit::NEAR_HIT) && (prev_hit.direction == curr_hit.direction)) {
 						//remove current near hit
