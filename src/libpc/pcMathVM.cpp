@@ -265,6 +265,16 @@ UserFunction::UserFunction(UserFunction const & other)
     updateStack(stack, localvariables_, other.localvariables_, argnames);
 }
 
+UserFunction & UserFunction::operator=(UserFuncExpression const & ufe)
+{
+    BOOST_ASSERT(ufe.argnames.size() == arity_ && ufe.localvars.get());
+    argnames = ufe.argnames;
+    localvariables_ = *ufe.localvars;
+    stack = ufe.stack;
+    updateStack(stack, localvariables_, *ufe.localvars, argnames);
+    return *this;
+}
+
 /** Arity return method */
 std::size_t UserFunction::arity() const
 {
@@ -359,6 +369,26 @@ MathFunction const & sysFunctionNode::func() const
 {
     return *fp;
 }
+
+/** FuncDefNode methods */
+
+FuncDefNode::FuncDefNode(boost::shared_ptr<MathFunction> const & funcptr, UserFuncExpression const & value)
+	: funcptr_(funcptr), value_(value)
+{}
+
+boost::shared_ptr<Node> FuncDefNode::clone() const
+{
+    return boost::shared_ptr<Node>(new FuncDefNode(*this));
+}
+
+void FuncDefNode::assign() const
+{
+    BOOST_ASSERT(funcptr_.get());
+    UserFunction * func = funcptr_->asUserFunction();
+    BOOST_ASSERT(func);
+    *func = value_;
+}
+
 /** BranchNode Methods */
 
 BranchNode::BranchNode(Stack const & stack1, Stack const & stack2)

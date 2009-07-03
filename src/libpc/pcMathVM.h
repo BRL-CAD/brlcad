@@ -183,7 +183,7 @@ private:
 };
 
 /** UserFunction Defintion */
-struct UserFunctionExpression;
+struct UserFuncExpression;
 struct UserFunction : public MathFunction
 {
     typedef boost::spirit::symbols<double> symboltable;
@@ -193,6 +193,7 @@ struct UserFunction : public MathFunction
     UserFunction();
     UserFunction(std::string const & name, std::size_t const farity);
     UserFunction(UserFunction const & other);
+    UserFunction & operator=(UserFuncExpression const & ufe);
 
     /** Data access methods */
     UserFunction * asUserFunction();
@@ -201,11 +202,13 @@ struct UserFunction : public MathFunction
     /** Arity return method */
     std::size_t arity() const;
 private:
+    /** XXX standardize underscoring variables */
     double evalp(std::vector<double> const & args) const;
     std::size_t arity_;
     std::vector<std::string> argnames;
     symboltable localvariables_;
     Stack stack;
+    UserFunction & operator=(UserFunction const &);
 };
 
 /** Node Implementations */
@@ -312,8 +315,10 @@ struct UserFuncExpression
 
 struct FuncDefNode : public Node
 {
-    FuncDefNode();
+    FuncDefNode(boost::shared_ptr<MathFunction> const & funcptr,\
+    		UserFuncExpression const & value);
     boost::shared_ptr<Node> clone() const;
+    void assign() const;
 private:
     boost::shared_ptr<MathFunction> funcptr_;
     UserFuncExpression value_;
