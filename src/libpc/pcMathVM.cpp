@@ -396,6 +396,46 @@ MathFunction const & sysFunctionNode::func() const
     return *fp;
 }
 
+/** OrNode methods */
+
+OrNode::OrNode(Stack const & stack)
+	: func_(stack)
+{}
+
+boost::shared_ptr<Node> OrNode::clone() const
+{
+    return boost::shared_ptr<Node>(new OrNode(*this));
+}
+
+MathFunction const & OrNode::func() const
+{
+    return func_;
+}
+
+std::size_t OrNode::nbranches() const
+{
+    return 1;
+}
+
+Stack * OrNode::branch(std::size_t i)
+{
+    return i == 0 ? &func_.rhs_stack_ : 0;
+}
+
+OrNode::OrFunc::OrFunc(Stack const & stack)
+	: MathFunction("or"), rhs_stack_(stack)
+{}
+
+std::size_t OrNode::OrFunc::arity() const
+{
+    return 1;
+}
+
+double OrNode::OrFunc::evalp(std::vector<double> const & params) const
+{
+    return bool (params[0]) ? true : bool(evaluate(rhs_stack_));
+}
+
 /** FuncDefNode methods */
 
 FuncDefNode::FuncDefNode(boost::shared_ptr<MathFunction> const & funcptr, UserFuncExpression const & value)
