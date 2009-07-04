@@ -32,7 +32,7 @@
 
 #include <string>
 #include <iostream>
-#include <boost/spirit.hpp>
+#include <boost/spirit.hpp>	/* deprecated header */
 
 #include "pcVCSet.h"
 #include "pcGenerator.h"

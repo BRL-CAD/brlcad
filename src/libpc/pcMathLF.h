@@ -30,9 +30,9 @@
 
 #include "pcMathVM.h"
 
-#include <boost/spirit/symbols/symbols.hpp>
+#include <boost/spirit/symbols/symbols.hpp>	/* deprecated header */
 
-#include <boost/spirit/phoenix/functions.hpp>
+#include <boost/spirit/phoenix/functions.hpp>	/* deprecated header */
 #include <boost/shared_ptr.hpp>
 
 #include <string>

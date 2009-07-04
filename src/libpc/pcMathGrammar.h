@@ -36,9 +36,9 @@
 #include "pcMathLF.h"
 #include "pcMathVM.h"
 
-#include <boost/spirit.hpp>
-#include <boost/spirit/phoenix.hpp>
-#include <boost/spirit/dynamic/if.hpp>
+#include <boost/spirit.hpp>		/* deprecated header */
+#include <boost/spirit/phoenix.hpp>	/* deprecated header */
+#include <boost/spirit/dynamic/if.hpp>	/* deprecated header */
 #include <boost/spirit/dynamic/lazy.hpp>
 #include <string>
 #include <vector>

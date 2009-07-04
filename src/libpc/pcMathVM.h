@@ -34,7 +34,7 @@
 
 #include <boost/shared_ptr.hpp>
 #include <boost/iterator/indirect_iterator.hpp>
-#include <boost/spirit/symbols/symbols.hpp>
+#include <boost/spirit/symbols/symbols.hpp>	/* deprecated header */
 
 #include <iostream>
 #include <string>
