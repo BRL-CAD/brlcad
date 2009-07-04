@@ -415,6 +415,18 @@ void FuncDefNode::assign() const
     *func = value_;
 }
 
+/** AssignNode Methods */
+
+boost::shared_ptr<Node> AssignNode::clone() const
+{
+    return boost::shared_ptr<Node>(new AssignNode(*this));
+}
+
+void AssignNode::assign(double & var, double val) const
+{
+    var = val;
+}
+
 /** BranchNode Methods */
 
 BranchNode::BranchNode(Stack const & stack1, Stack const & stack2)
@@ -497,15 +509,33 @@ double evaluate(Stack s)
 
     Stack::iterator i = s.begin();
     while (i != s.end()) {
-	if (FunctionNode const * f = dynamic_cast<FunctionNode const *>(&*i)) {
+	if (FunctionNode const * f = dynamic_cast<FunctionNode const *>(&*i))
+	{
 	    MathFunction const & funct = f->func();
 
+	    /** arity must be a signed type (boost::prior) */
 	    Stack::difference_type const arity = funct.arity();
 	    Stack::iterator j = boost::prior(i,arity);
 	    double const result = funct.eval(makeArgList(j,i));
 
 	    i = s.erase(j,boost::next(i));
 	    s.insert(i, new ConstantNode(result));
+	    continue;
+	}
+
+	if (AssignNode const * a = dynamic_cast<AssignNode const *>(&*i))
+	{
+	    Stack::iterator vali = boost::prior(i);
+	    Stack::iterator vari = boost::prior(vali);
+	    a->assign(getVariableNode(vari)->getVar(), getNumberNode(vali)->getValue());
+	    i = s.erase(vari, boost::next(i));
+	    continue;
+	}
+
+	if (FuncDefNode const * f = dynamic_cast<FuncDefNode const *>(&*i))
+	{
+	    f->assign();
+	    i = s.erase(i);
 	    continue;
 	}
 
