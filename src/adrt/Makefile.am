@@ -5,11 +5,11 @@ AM_CFLAGS = \
 	-I${top_srcdir}/src/adrt/libtie \
 	-I${top_srcdir}/src/adrt/libcommon \
 	-I${top_srcdir}/src/adrt/librender \
-	-I${top_srcdir}/src/adrt/libtexture \
+	-I${top_srcdir}/src/adrt/librender \
 	${TCL_CPPFLAGS}
 
 bin_PROGRAMS = adrt_master adrt_slave
-lib_LTLIBRARIES = libtie.la libtexture.la librender.la
+lib_LTLIBRARIES = libtie.la librender.la
 
 libtie_la_LIBADD = libtie0.la libtie1.la ${BU} ${BU_LIBS}
 libtie_la_SOURCES =
@@ -22,9 +22,6 @@ libtie0_la_CFLAGS = -DTIE_PRECISION=0
 libtie1_la_CFLAGS = -DTIE_PRECISION=1
 
 noinst_LTLIBRARIES = libtie0.la libtie1.la
-
-libtexture_la_SOURCES = libtexture/texture_blend.c libtexture/texture_bump.c libtexture/texture_camo.c libtexture/texture_checker.c libtexture/texture_clouds.c libtexture/texture_gradient.c libtexture/texture_image.c libtexture/texture_mix.c libtexture/texture_perlin.c libtexture/texture_stack.c
-libtexture_la_LDFLAGS = -static
 
 librender_la_SOURCES = \
 	librender/camera.c \
@@ -40,7 +37,17 @@ librender_la_SOURCES = \
 	librender/phong.c \
 	librender/render_util.c \
 	librender/spall.c \
-	librender/surfel.c
+	librender/surfel.c \
+	librender/texture_blend.c \
+	librender/texture_bump.c \
+	librender/texture_camo.c \
+	librender/texture_checker.c \
+	librender/texture_clouds.c \
+	librender/texture_gradient.c \
+	librender/texture_image.c \
+	librender/texture_mix.c \
+	librender/texture_perlin.c \
+	librender/texture_stack.c
 
 librender_la_LIBADD = \
 	libtie.la \
@@ -74,7 +81,6 @@ adrt_slave_LDADD = \
 	${LIBTHREAD} \
 	librender.la \
 	${LIBM} \
-	libtexture.la \
 	libtie.la \
 	${LIBZ}
 
@@ -98,18 +104,18 @@ tieinclude_HEADERS = \
 	librender/render_util.h \
 	librender/spall.h \
 	librender/surfel.h \
-	libtexture/texture.h \
-	libtexture/texture_blend.h \
-	libtexture/texture_bump.h \
-	libtexture/texture_camo.h \
-	libtexture/texture_checker.h \
-	libtexture/texture_clouds.h \
-	libtexture/texture_gradient.h \
-	libtexture/texture_image.h \
-	libtexture/texture_internal.h \
-	libtexture/texture_mix.h \
-	libtexture/texture_perlin.h \
-	libtexture/texture_stack.h \
+	librender/texture.h \
+	librender/texture_blend.h \
+	librender/texture_bump.h \
+	librender/texture_camo.h \
+	librender/texture_checker.h \
+	librender/texture_clouds.h \
+	librender/texture_gradient.h \
+	librender/texture_image.h \
+	librender/texture_internal.h \
+	librender/texture_mix.h \
+	librender/texture_perlin.h \
+	librender/texture_stack.h \
 	libtie/tie.h \
 	libtie/tie_define.h \
 	libtie/tie_kdtree.h \
