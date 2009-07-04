@@ -32,6 +32,15 @@
 #include <cassert>
 #include <map>
 
+void copyStack(Stack::container_t & lhs, Stack::container_t const & rhs)
+{
+    lhs.clear();
+    Stack::container_t::const_iterator i = rhs.begin();
+    Stack::container_t::const_iterator const end = rhs.end();
+    for(;i !=end; ++i)
+	lhs.push_back((*i)->clone());
+}
+
 /**
  * 				Stack Object Methods
  */
@@ -76,6 +85,23 @@ void Stack::push_back(Node * n)
 void Stack::clear()
 {
     data.clear();
+}
+
+/** Stack operator = overloading */
+Stack & Stack::operator=(Stack const & other)
+{
+    if(&other != this)
+	copyStack(data,other.data);
+    return *this;
+}
+
+/** Stack operator += overloading */
+Stack & Stack::operator+=(Stack const & other)
+{
+    container_t otherdata;
+    copyStack(otherdata, other.data);
+    data.insert(data.end(), otherdata.begin(), otherdata.end());
+    return *this;
 }
 
 /**
@@ -490,7 +516,7 @@ double evaluate(Stack s)
 	return 0.0;
     
     /* If stack size = 1 */
-    assert(s.size() == 1) ;
+    BOOST_ASSERT(s.size() == 1) ;
     return getNumberNode(s.begin())->getValue();
 }
 

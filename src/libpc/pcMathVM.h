@@ -90,6 +90,10 @@ public:
 
     iterator insert(iterator location, Node * n);
 
+    /** Operator overloading */
+    Stack & operator=(Stack const & other);
+    Stack & operator+=(Stack const & other);
+
 private:
     container_t data;
     void copy(Stack::container_t const &);
