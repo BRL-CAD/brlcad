@@ -59,6 +59,7 @@ bin_PROGRAMS = \
 	fast4-g \
 	g-acad \
 	g-dxf \
+	g-egg \
 	g-euclid \
 	g-euclid1 \
 	g-jack \
@@ -193,6 +194,9 @@ g_acad_LDADD = ${WDB}
 g_dxf_SOURCES = dxf/g-dxf.c
 g_dxf_LDADD = ${WDB} ${GCV}
 
+g_egg_SOURCES = g-egg.c
+g_egg_LDADD = ${WDB} ${GCV}
+
 g_euclid1_SOURCES = euclid/g-euclid1.c
 g_euclid1_LDADD = ${RT}
 
@@ -323,6 +327,7 @@ dist_man_MANS = \
 	euclid/g-euclid.1 \
 	fast4-g.1 \
 	g-acad.1 \
+	g-egg.1 \
 	g-nff.1 \
 	g-obj.1 \
 	g-shell.rect.1 \
@@ -391,6 +396,7 @@ FAST_OBJECTS = \
 	$(g_acad_OBJECTS) \
 	$(g_adrt_OBJECTS) \
 	$(g_dxf_OBJECTS) \
+	$(g_egg) \
 	$(g_euclid1_OBJECTS) \
 	$(g_euclid_OBJECTS) \
 	$(g_jack_OBJECTS) \
