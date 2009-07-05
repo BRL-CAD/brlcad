@@ -664,7 +664,7 @@ EXTRA_DIST = \
 	${PL_X_EXTRA} \
 	rtwizard.bat
 
-DEPS=src/liborle src/libdm src/libfb
+DEPS=src/liborle src/libdm src/libfb src/libpc
 
 include $(top_srcdir)/misc/Makefile.defs
 
