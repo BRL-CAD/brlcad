@@ -40,7 +40,6 @@ ged_title(struct ged *gedp, int argc, const char *argv[])
     static const char *usage = "description";
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
-    GED_CHECK_READ_ONLY(gedp, GED_ERROR);
     GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
 
     /* initialize result */
@@ -51,6 +50,8 @@ ged_title(struct ged *gedp, int argc, const char *argv[])
 	bu_vls_printf(&gedp->ged_result_str, "%s", gedp->ged_wdbp->dbip->dbi_title);
 	return GED_OK;
     }
+
+    GED_CHECK_READ_ONLY(gedp, GED_ERROR);
 
     if (MAXARGS < argc) {
 	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
