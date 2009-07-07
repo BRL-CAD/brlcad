@@ -178,6 +178,7 @@ package provide Archer 1.0
 	method killtree            {args}
 	method make                {args}
 	method make_bb             {args}
+	method make_pnts           {args}
 	method mirror              {args}
 	method mv                  {args}
 	method mvall               {args}
@@ -1018,6 +1019,10 @@ package provide Archer 1.0
 
 ::itcl::body Archer::make_bb {args} {
     eval ArcherCore::gedWrapper make_bb 0 0 1 1 $args
+}
+
+::itcl::body Archer::make_pnts {args} {
+    eval ArcherCore::gedWrapper make_pnts 0 0 1 1 $args
 }
 
 ::itcl::body Archer::mirror {args} {

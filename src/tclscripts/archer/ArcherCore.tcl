@@ -184,6 +184,7 @@ namespace eval ArcherCore {
 	method ls                  {args}
 	method make		   {args}
 	method make_bb             {args}
+	method make_pnts           {args}
 	method mater               {args}
 	method mirror              {args}
 	method move                {args}
@@ -393,7 +394,7 @@ namespace eval ArcherCore {
 					   edmater erase_all ev exit facetize fracture \
 					   g group hide i importFg4Section \
 					   in inside item kill killall killrefs killtree ls \
-					   make make_bb mater mirror move move_arb_edge move_arb_face \
+					   make make_bb make_pnts mater mirror move move_arb_edge move_arb_face \
 					   mv mvall nmg_collapse nmg_simplify \
 					   ocenter orotate oscale otranslate p packTree prefix protate pscale ptranslate \
 					   push put put_comb putmat pwd r rcodes red rfarb rm rmater \
@@ -3628,6 +3629,10 @@ Popup Menu    Right or Ctrl-Left
 
 ::itcl::body ArcherCore::make_bb {args} {
     eval gedWrapper make_bb 0 0 1 1 $args
+}
+
+::itcl::body ArcherCore::make_pnts {args} {
+    eval gedWrapper make_pnts 0 1 1 1 $args
 }
 
 ::itcl::body ArcherCore::mater {args} {

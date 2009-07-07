@@ -658,6 +658,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\src\libged\make_pnts.c"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\src\libged\match.c"
 				>
 			</File>

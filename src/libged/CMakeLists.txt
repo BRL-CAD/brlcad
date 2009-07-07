@@ -109,6 +109,7 @@ set(LIBGED_SOURCES
     make.c
     make_bb.c
     make_name.c
+    make_pnts.c
     match.c
     mater.c
     mirror.c

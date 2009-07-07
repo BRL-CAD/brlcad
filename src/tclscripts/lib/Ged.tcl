@@ -212,6 +212,7 @@ package provide cadwidgets::Ged 1.0
 	method make {args}
 	method make_bb {name args}
 	method make_name {args}
+	method make_pnts {args}
 	method match {args}
 	method mater {args}
 	method mirror {args}
@@ -1201,6 +1202,10 @@ package provide cadwidgets::Ged 1.0
 
 ::itcl::body cadwidgets::Ged::make_name {args} {
     eval $mGed make_name $args
+}
+
+::itcl::body cadwidgets::Ged::make_pnts {args} {
+    eval $mGed make_pnts $args
 }
 
 ::itcl::body cadwidgets::Ged::match {args} {
@@ -2946,6 +2951,7 @@ package provide cadwidgets::Ged 1.0
     $help add make		{{-t | object type} {make an object/primitive of the specified type}}
     $help add make_bb		{{bbname object(s)} {make a bounding box (rpp) around the specified objects}}
     $help add make_name		{{template | -s [num]} {make a unique name}}
+    $help add make_pnts		{{object_name path_and_filename file_format units_or_conv_factor default_diameter} {creates a point-cloud}}
     $help add match		{{exp} {returns all database objects matching the given expression}}
     $help add mater		{{region shader R G B inherit} {modify region's material information}}
     $help add mirror		{{[-p point] [-d dir] [-x] [-y] [-z] [-o offset] old new}	{mirror object along the specified axis}}

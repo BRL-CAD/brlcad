@@ -2007,6 +2007,19 @@ GED_EXPORT BU_EXTERN(int ged_m2v_point, (struct ged *gedp, int argc, const char 
 GED_EXPORT BU_EXTERN(int ged_make, (struct ged *gedp, int argc, const char *argv[]));
 
 /**
+ * Creates a point-cloud (pnts) given the following:
+ *   1)   object name
+ *   2)   path and filename to point data file
+ *   3)   point data file format (xyzrgbsijk?)
+ *   4)   point data file units or conversion factor to mm
+ *   5)   default diameter of each point
+ *
+ * Usage:
+ *     make_pnts object_name path_and_filename file_format units_or_conv_factor default_diameter
+ */
+GED_EXPORT BU_EXTERN(int ged_make_pnts, (struct ged *gedp, int argc, const char *argv[]));
+
+/**
  * Make a bounding box (rpp) around the specified objects
  *
  * Usage:

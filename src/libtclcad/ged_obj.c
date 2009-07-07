@@ -657,6 +657,7 @@ static struct go_cmdtab go_cmds[] = {
     {"make",	(char *)0, MAXARGS, go_make, GED_FUNC_PTR_NULL},
     {"make_bb",	(char *)0, MAXARGS, go_pass_through_func, ged_make_bb},
     {"make_name",	(char *)0, MAXARGS, go_pass_through_func, ged_make_name},
+    {"make_pnts",	(char *)0, MAXARGS, go_more_args_func, ged_make_pnts},
     {"match",	(char *)0, MAXARGS, go_pass_through_func, ged_match},
     {"mater",	(char *)0, MAXARGS, go_pass_through_func, ged_mater},
     {"mirror",	(char *)0, MAXARGS, go_mirror, GED_FUNC_PTR_NULL},
