@@ -86,7 +86,7 @@ static struct cmdtab mged_cmdtab[] = {
     {"bot_sync", cmd_ged_plain_wrapper, ged_bot_sync},
     {"bot_vertex_fuse", cmd_ged_plain_wrapper, ged_bot_vertex_fuse},
     {"bottom",	bv_bottom, GED_FUNC_PTR_NULL},
-    {"brep",	cmd_ged_plain_wrapper, ged_brep},
+    {"brep",	cmd_ged_view_wrapper, ged_brep},
     {"c", cmd_ged_plain_wrapper, ged_comb_std},
     {"cat", cmd_ged_plain_wrapper, ged_cat},
     {"cc", cmd_ged_plain_wrapper, ged_cc},
