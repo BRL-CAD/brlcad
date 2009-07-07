@@ -24,9 +24,6 @@ Recent Bugs
   mged -c moss.g "tops ; title"
   mged -c moss.g "puts OK ; tops ; puts OK2 ; title ; puts DONE"
 
-* mged crashes inside X_choose_visual() with default /dev/X libdm
-  interface on Mac OS X 10.5  (fbserv starts up fine)
-
 * kill command in archer deletes object but then reports a failure and
   mouse is stuck in a busy state.
 
