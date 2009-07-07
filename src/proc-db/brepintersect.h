@@ -31,6 +31,7 @@
 #include "../../include/vmath.h"
 #include "../src/other/openNURBS/opennurbs_array.h"
 
+#define FARAWAYPOINT ON_3dPoint(FLT_MAX / 1E+9, FLT_MAX / 1E+9, FLT_MAX / 1E+9)
 
 bool PointInTriangle(
 	const ON_3dPoint& a,

@@ -489,6 +489,76 @@ int TriangleTriangleIntersect(
     return number_found;
 }
 
+/* int PolylinePolylineInternal(ON_Polyline, ON_Polyline, double):
+ * checks whether two Polylines are inside one another.
+ * XXX It's the caller's responsibility to make sure the polylines are coplanar
+ * Returns:
+ *  1 if the first is inside the second
+ *  -1 if the second is inside the first
+ *  0 if the two intersect at some point or one of them isn't closed
+ */
+int PolylinePolylineInternal(
+	ON_Polyline P,
+	ON_Polyline Q,
+	double tol
+	)
+{
+    if (!P.IsClosed(tol) || !P.IsClosed(tol)) {
+	/* if one of the Polylines isn't closed then there's no internal slash external to speak of */
+	return 0;
+    }
+    ON_3dPoint x[2]; /* we're not going to look at this but we still need to give it somewhere to write to */
+    int i,j;
+    for (i = 0; i < P.Count(); i++) {
+	for (j = 0; j < Q.Count(); j++) {
+	    if (SegmentSegmentIntersect(P[i], P[(i + 1) % P.Count()], Q[j], Q[(j + 1) % Q.Count()], x, tol) != 0) {
+		/* we have an intersection no one's internal */
+		return 0;
+	    }
+	}
+    }
+    bool internal = false;
+    bool error;
+    int rv;
+    /* XXX refactor note, these two loops can be rewritten as one by putting the two Polylines in an array */
+    for (i = 0; i < P.Count(); i++) {
+	error = false;
+	for (j = 0; j < Q.Count(); j++) {
+	    rv = SegmentSegmentIntersect(P[i], FARAWAYPOINT, Q[j], Q[j + 1], x, tol);
+	    if (rv == 2) {
+		/* if our edges on top of each other then this test actually doesn't tell us anything
+		 * fortunately this is rare enough that we can just try with a new point and hope it doesn't happen again
+		 * it's possible that it happens w/ every point in which case we fail, but that's really rare */
+		error = true;
+		break;
+	    } else if (rv == 1) {
+		internal = !internal;
+	    }
+	}
+	if (!error && internal == true) {
+	    return 1;
+	}
+    }
+    for (i = 0; i < Q.Count(); i++) {
+	error = false;
+	for (j = 0; j < P.Count(); j++) {
+	    rv = SegmentSegmentIntersect(Q[i], FARAWAYPOINT, P[j], P[j + 1], x, tol);
+	    if (rv == 2) {
+		/* if our edges on top of each other then this test actually doesn't tell us anything
+		 * fortunately this is rare enough that we can just try with a new point and hope it doesn't happen again
+		 * it's possible that it happens w/ every point in which case we fail, but that's really rare */
+		error = true;
+		break;
+	    } else if (rv == 1) {
+		internal = !internal;
+	    }
+	}
+	if (!error && internal == true) {
+	    return 1;
+	}
+    }
+}
+
 /* class TriEdgeIntersections
  * This class has the responsibility of keeping track of the points that intersect the edges and
  * eventually chopping the edges up into little lines for the intersected mesh this is actually
@@ -527,19 +597,22 @@ class TriIntersections {
     ON_Polyline edges[3];
     ON_SimpleArray<char> dir[3];
     ON_SimpleArray<ON_Line> intersections;
+    double tol;
     public:
-    TriIntersections(ON_3dPoint, ON_3dPoint, ON_3dPoint);
+    TriIntersections(ON_3dPoint, ON_3dPoint, ON_3dPoint, double);
     int InsertPoint(ON_3dPoint, uint8_t, EdgeIndex);
     int AddLine(ON_Line);
-    int Faces(ON_ClassArray<ON_Polyline>);
+    int Faces(ON_ClassArray<ON_3dPoint[3]>);
 };
 
 TriIntersections::TriIntersections(
 	ON_3dPoint A, 
 	ON_3dPoint B, 
-	ON_3dPoint C
+	ON_3dPoint C,
+	double tolerance
 	)
 {
+    tol = tolerance;
     ON_3dPoint points[3] = {A, B, C};
     for (int i = 0; i < 3; i++) {
 	edges[i].Append(points[i]);
@@ -579,11 +652,79 @@ int TriIntersections::AddLine(
 }
 
 int TriIntersections::Faces(
-	ON_ClassArray<ON_Polyline> faces
+	ON_ClassArray<ON_3dPoint[3]> faces
 	)
 {
-    faces.Empty();
-    ON_SimpleArray<ON_Line> segments = intersections;
+    if (intersections.Count() == 0) {
+	return 0;
+    }
+    /* first we get an array of all the segments we can use to make our faces */
+    ON_SimpleArray<ON_Line> segments; /*the segments we have to make faces */
+    ON_SimpleArray<bool> flippable; /* whether or not the segment has direction */
+    ON_SimpleArray<bool> external; /* whether or not the segment is from the edge */
+    for (int i = 0; i < intersections.Count(); i++) {
+	segments.Append(intersections[i]);
+	segments.Append(intersections[i]);
+	flippable.Append(false);
+	flippable.Append(false);
+	external.Append(false);
+	external.Append(false);
+    }
+    for (int i = 0; i < 3; i++) {
+	if (edges[i].Count() == 2) { /* the edge was never intersected */ 
+	    segments.Append(ON_Line(edges[i][0], edges[i][0]));
+	    flippable.Append(true);
+	    external.Append(true);
+	} else {
+	    for (int j = 0; j < (edges[i].Count() - 1); j++) {
+		if (dir[i][j] == dir[i][j + 1]) {
+		    /* this indicates an error in the intersection data */
+		    return -1;
+		} else if (dir[i][j] == 0 || dir[i][j+1] == 1) {
+		    segments.Append(ON_Line(edges[i][j], edges[i][j+1]));
+		    flippable.Append(false);
+		    external.Append(true);
+		} else {
+		    segments.Append(ON_Line(edges[i][j+1], edges[i][j]));
+		    flippable.Append(false);
+		    external.Append(true);
+		}
+	    }
+	}
+    }
+    /* Now that the segments are all set up it's time to make them into faces */
+    ON_ClassArray<ON_Polyline> outlines;
+    ON_SimpleArray<bool> internal; /* stores whether each polyline is internal */
+    ON_Polyline outline;
+    while(segments.Count() != 0) {
+	outline.Append(segments[0].from);
+	outline.Append(segments[0].to);
+	segments.Remove(0);
+	int i = 0;
+	while (!outline.IsClosed(tol)) {
+	    if (i >= segments.Count()) {
+		return -1;
+	    } else if (VAPPROXEQUAL(segments[i].from, outline[outline.Count() - 1], tol)) {
+		outline.Append(segments[i].to);
+	    } else if (VAPPROXEQUAL(segments[i].to, outline[0], tol)) {
+		outline.Insert(0, segments[i].from);
+	    } else if (VAPPROXEQUAL(segments[i].from, outline[0], tol) && flippable[i]) {
+		outline.Insert(0, segments[i].to);
+	    } else if (VAPPROXEQUAL(segments[i].to, outline[outline.Count() - 1], tol) && flippable[i]) {
+		outline.Append(segments[i].from);
+	    } else {
+		i++;
+		continue;
+	    }
+	    /* onle executed when we append edge i */
+	    segments.Remove(i);
+	    flippable.Remove(i);
+	    external.Remove(i);
+	    i = 0;
+	}
+	outlines.Append(outline);
+    }
+    /* now we need to setup the ternality tree for the paths */
 }
 
 /* Class: PointIndex
