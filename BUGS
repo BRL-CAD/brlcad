@@ -15,6 +15,8 @@ on-going issues.
 Recent Bugs
 -----------
 
+* tkhtml build/install is not respecting the installation prefix
+
 * mgeg segfaults when drawing lots of solids at once (e.g. draw *.s)
 
 * mged command mode doesn't display the output of multiple
