@@ -523,16 +523,18 @@ int TriangleTriangleIntersect(
  * 0 indicates an outgoing line
  * 1 indicates an incoming line 
  */
-class TriEdgeIntersections {
-    ON_Polyline lines[3];
+class TriIntersections {
+    ON_Polyline edges[3];
     ON_SimpleArray<char> dir[3];
+    ON_SimpleArray<ON_Line> intersections;
     public:
-    TriEdgeIntersections(ON_3dPoint, ON_3dPoint, ON_3dPoint);
+    TriIntersections(ON_3dPoint, ON_3dPoint, ON_3dPoint);
     int InsertPoint(ON_3dPoint, uint8_t, EdgeIndex);
-    int AppendLines(ON_SimpleArray<ON_Line>);
+    int AddLine(ON_Line);
+    int Faces(ON_ClassArray<ON_Polyline>);
 };
 
-TriEdgeIntersections::TriEdgeIntersections(
+TriIntersections::TriIntersections(
 	ON_3dPoint A, 
 	ON_3dPoint B, 
 	ON_3dPoint C
@@ -540,14 +542,14 @@ TriEdgeIntersections::TriEdgeIntersections(
 {
     ON_3dPoint points[3] = {A, B, C};
     for (int i = 0; i < 3; i++) {
-	lines[i].Append(points[i]);
-	lines[i].Append(points[(i + 1) % 3]);
+	edges[i].Append(points[i]);
+	edges[i].Append(points[(i + 1) % 3]);
 	dir[i].Append(-1);
 	dir[i].Append(-1);
     }
 }
 
-int TriEdgeIntersections::InsertPoint(
+int TriIntersections::InsertPoint(
 	ON_3dPoint P,
 	uint8_t direction,
 	EdgeIndex ei
@@ -555,24 +557,68 @@ int TriEdgeIntersections::InsertPoint(
 {
     /* first check to see if the point is on the other side of the starting/ending point
      * and return an error if it is */
-    if ((VDOT((P - lines[ei][0]), (lines[ei][1] - lines[ei][0])) < 0) || (VDOT((P - *lines[ei].Last()), (lines[ei][0] - *lines[ei].Last())) < 0)) {
+    if ((VDOT((P - edges[ei][0]), (edges[ei][1] - edges[ei][0])) < 0) || (VDOT((P - *edges[ei].Last()), (edges[ei][0] - *edges[ei].Last())) < 0)) {
 	return -1;
     }
-    double valtobeat = MAGSQ(P - lines[ei][0]);
-    for (int i = 1; i < lines[ei].Count(); i++) {
-	if (MAGSQ(lines[ei][i] - lines[ei][0]) > valtobeat) {
-	    lines[ei].Insert(i, P);
+    double valtobeat = MAGSQ(P - edges[ei][0]);
+    for (int i = 1; i < edges[ei].Count(); i++) {
+	if (MAGSQ(edges[ei][i] - edges[ei][0]) > valtobeat) {
+	    edges[ei].Insert(i, P);
 	    dir[ei].Insert(i, direction);
 	    return i;
 	}
     }
 }
 
-int TriEdgeIntersections::AppendLines(
-	ON_SimpleArray<ON_Line> segments
+int TriIntersections::AddLine(
+	ON_Line line
 	)
 {
+    intersections.Append(line);
+    return intersections.Count();
+}
 
+int TriIntersections::Faces(
+	ON_ClassArray<ON_Polyline> faces
+	)
+{
+    faces.Empty();
+    ON_SimpleArray<ON_Line> segments = intersections;
+}
+
+/* Class: PointIndex
+ * the point index is responsible for keeping track of the points we put into a mesh
+ * if we give it a point it doesn't have it puts it in the array and returns the index
+ * in the mesh where it put it
+ * if it does have the point then it just returns the index of the point
+ */
+class PointIndex{
+    ON_Mesh *mesh;
+    double tol;
+    public:
+    PointIndex(ON_Mesh*);
+    int InsertPoint(ON_3dPoint);
+};
+
+PointIndex::PointIndex(
+	ON_Mesh *m
+	)
+{
+    mesh = m;
+}
+
+int PointIndex::InsertPoint(
+	ON_3dPoint P
+	)
+{
+    /* This will eventually be implemented in a much more efficient way */
+    for (int i = 0; i < mesh->m_V.Count(); i++) {
+	if (VAPPROXEQUAL(mesh->m_V[i], P, tol)) {
+	    return i;
+	}
+    }
+    mesh->m_V.Append(ON_3fPoint(P));
+    return mesh->m_V.Count();
 }
 
 /* GenerateFaceConnectivityList
