@@ -45,6 +45,15 @@ typedef struct texture_s {
     void *data;
 } texture_t;
 
+/* _a is transformed vertex, _b is input vertex, _c is 4x4 transformation matrix */
+#define MATH_VEC_TRANSFORM(_a, _b, _c) { \
+	tfloat  w; \
+	_a.v[0] = (_b.v[0] * _c[0]) + (_b.v[1] * _c[4]) + (_b.v[2] * _c[8]) + _c[12]; \
+	_a.v[1] = (_b.v[0] * _c[1]) + (_b.v[1] * _c[5]) + (_b.v[2] * _c[9]) + _c[13]; \
+	_a.v[2] = (_b.v[0] * _c[2]) + (_b.v[1] * _c[6]) + (_b.v[2] * _c[10]) + _c[14]; \
+	w = (_b.v[0] * _c[3]) + (_b.v[1] * _c[7]) + (_b.v[2] * _c[11]) + _c[15]; \
+	w = w ? 1/w : 1.0; \
+	_a.v[0] *= w; _a.v[1] *= w; _a.v[2] *= w; }
 
 #endif
 
