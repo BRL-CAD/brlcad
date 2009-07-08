@@ -280,7 +280,8 @@ int
 str2mm(const char *units_string, double *conv_factor)
 {
     double tmp_value = 0.0;
-    char *tmp_ptr = (char *)NULL;
+    char *temp_char_ptr = (char *)NULL;
+
     char *endp = (char *)NULL;
     int units_string_length = 0;
     int ret = GED_OK;
@@ -294,7 +295,7 @@ str2mm(const char *units_string, double *conv_factor)
         units_string_length = strlen(units_string);
         temp_string = (char*)bu_malloc(units_string_length+1, "str2mm: temp_string");
 
-        tmp_ptr = strcpy(temp_string, units_string);
+        temp_char_ptr = strcpy(temp_string, units_string);
 
         remove_whitespace(temp_string);
 
@@ -336,19 +337,22 @@ report_import_error_location(unsigned long int num_doubles_read, int num_doubles
 }
 
 
+/*
+ *  MGED/ARCHER command 'make_pnts' to import point-cloud data into 'pnts' primitive.
+ *
+ *  Input values:
+ *  argv[1] object name
+ *  argv[2] filename with path
+ *  argv[3] point data file format string
+ *  argv[4] point data file units string or conversion factor to millimeters
+ *  argv[5] default size of each point
+ *
+ */
 int
 ged_make_pnts(struct ged *gedp, int argc, const char *argv[])
 {
-    const char *obj_name;
-    const char *filename;
-    const char *format_string;
-    const char *units_str;
-    const char *default_point_size_str;
-#if 0
-    struct rt_db_internal *intern;    /* old */
-#endif
     struct directory *dp;
-    struct rt_db_internal internal;   /* new from 3ptarb, allocates structure, not just pointer */
+    struct rt_db_internal internal;
 
     rt_pnt_type type;
     double local2base;
@@ -372,6 +376,7 @@ ged_make_pnts(struct ged *gedp, int argc, const char *argv[])
     int done_processing_format_string = 0; /* flag indicating if loop processing format string should be exited */
 
     char *temp_char_ptr = (char *)NULL;
+
     int buf = 0; /* raw character read from file */
     double temp_double = 0.0;
     char temp_string[1024];
@@ -379,16 +384,17 @@ ged_make_pnts(struct ged *gedp, int argc, const char *argv[])
                                   /* it is expected that the character representation of a double will never exceed this size string */
     char *endp = (char *)NULL;
 
+    char *format_string = (char *)NULL;
     int format_string_index = 0; /* index into format_string */
     int format_string_length = 0; /* number of characters in format_string, NOT including null terminator character */
+    int raw_format_string_length = 0; /* number of characters in raw_format_string, NOT including null terminator character */
 
     int num_doubles_per_point = 0;
 
     void *point;
 
-    char **prompt; /* new from 3ptarb */
+    char **prompt;
 
-/* new from 3ptarb */
     static const char *usage = "point_cloud_name filename_with_path file_format file_data_units default_point_size";
 
     prompt = &p_make_pnts[0];
@@ -411,10 +417,7 @@ ged_make_pnts(struct ged *gedp, int argc, const char *argv[])
         return GED_MORE;
     }
 
-    if ( db_lookup( gedp->ged_wdbp->dbip, argv[1], LOOKUP_QUIET) != DIR_NULL ) {
-        bu_vls_printf(&gedp->ged_result_str, "%s: %s already exists\n", argv[0], argv[1]);
-        return GED_ERROR;
-    }
+    GED_CHECK_EXISTS(gedp, argv[1], LOOKUP_QUIET, GED_ERROR);
 
     /* prompt for data file name with path */
     if (argc < 3) {
@@ -440,59 +443,46 @@ ged_make_pnts(struct ged *gedp, int argc, const char *argv[])
         return GED_MORE;
     }
 
-    obj_name = argv[1];
-    filename = argv[2];
-    format_string = argv[3];
-    units_str = argv[4];
-    default_point_size_str = argv[5];
-
-#if 0
-argv[0] command name (i.e. make_pnts)
-argv[1] name of point-cloud
-argv[2] data file name with path
-argv[3] data file format 
-argv[4] data file units
-argv[5] default point size
-#endif
-
-/* start here 6/26/09 */
-
-    format_string_length = strlen(format_string);
-
-    bu_log("the format string length is: '%i'\n", format_string_length);
-
-
-    bu_log("Entered function 'ged_make_pnts'.\n");
-
-    bu_log("filename string: '%s'\n", filename);
-    bu_log("format string: '%s'\n", format_string);
-    bu_log("units string: '%s'\n", units_str);
-    bu_log("default point size string: '%s'\n", default_point_size_str);
-
-    defaultSize = atof(default_point_size_str);
+    defaultSize = atof(argv[5]);
     if (defaultSize < 0.0) {
         defaultSize = 0.0;
         bu_log("WARNING: default point size must be non-negative, using zero\n");
     }
 
-    /* Validate 'point file data format string' and return the
-     * point-cloud type.
-     */
-    if (str2type(format_string, &type) == GED_ERROR) {
+    raw_format_string_length = strlen(argv[3]);
+
+    /* debug output */
+    bu_log("filename string: '%s'\n", argv[2]);
+    bu_log("raw format string: '%s'\n", argv[3]);
+    bu_log("raw format string length: '%i'\n", raw_format_string_length);
+    bu_log("units string: '%s'\n", argv[4]);
+    bu_log("default point size string: '%s'\n", argv[5]);
+
+    /* Validate 'point file data format string' and return point-cloud type. */
+    if (str2type(argv[3], &type) == GED_ERROR) {
+        bu_vls_printf(&gedp->ged_result_str, "%s: Invalid data file format string.\n", argv[0]);
         return GED_ERROR;
     }
 
-    /* Validate the unit string and return the converion factor
-     * to millimeters.
-     */
-    if (str2mm(units_str, &local2base) == GED_ERROR) {
+    /* Validate the unit string and return conversion factor to millimeters. */
+    if (str2mm(argv[4], &local2base) == GED_ERROR) {
+        bu_vls_printf(&gedp->ged_result_str, "%s: Invalid data file units string.\n", argv[0]);
         return GED_ERROR;
     }
+
+    format_string = (char*)bu_malloc(raw_format_string_length+1, "ged_make_pnts: format_string");
+    temp_char_ptr = strcpy(format_string, argv[3]);
 
     remove_whitespace(format_string);
 
+    format_string_length = strlen(format_string);
+
+    /* debug output */
+    bu_log("format string: '%s'\n", format_string);
+    bu_log("format string length: '%i'\n", format_string_length);
+
     /* init database structure */
-    RT_INIT_DB_INTERNAL( &internal );  /* new from 3ptarb */
+    RT_INIT_DB_INTERNAL( &internal );
     internal.idb_major_type = DB5_MAJORTYPE_BRLCAD;
     internal.idb_type = ID_PNTS;
     internal.idb_meth = &rt_functab[ID_PNTS];
@@ -505,7 +495,6 @@ argv[5] default point size
     pnts->type = type;
     pnts->count = numPoints;  /* set again later */
     pnts->point = NULL;
-
 
     /* empty list head */
     switch (type) {
@@ -552,10 +541,8 @@ argv[5] default point size
     }    
     pnts->point = headPoint;
 
-    bu_log("About to execute 'open file'.\n");
-
-    if ((fp=fopen(filename, "rb")) == NULL) {
-        bu_log("ERROR: Could not open file '%s'\n", filename);
+    if ((fp=fopen(argv[2], "rb")) == NULL) {
+        bu_log("ERROR: Could not open file '%s'\n", argv[2]);
         /* may need to do some cleanup before exit here on error */
         return GED_ERROR;
     }
@@ -627,12 +614,7 @@ argv[5] default point size
                     }
                 }
 
-                /* case logic 1 */
                 if (previous_character_double && current_character_double) {
-#if 0
-                    bu_log("processing case logic 1 --- previous_character_double='%i' current_character_double='%i'\n",
-                           previous_character_double, current_character_double);
-#endif
                     if (temp_string_index >= temp_string_size) {
                         bu_log("ERROR: String representing double too large, exceeds '%d' character limit.\n", temp_string_size - 1);
                         report_import_error_location(num_doubles_read, num_doubles_per_point, start_offset_of_current_double,
@@ -644,12 +626,7 @@ argv[5] default point size
                     temp_string_index++;
                 }
 
-                /* case logic 2 */
                 if (previous_character_double && !current_character_double) {
-#if 0
-                    bu_log("processing case logic 2 --- previous_character_double='%i' current_character_double='%i'\n",
-                           previous_character_double, current_character_double);
-#endif
                     if (temp_string_index >= temp_string_size) {
                         bu_log("ERROR: String representing double too large, exceeds '%d' character limit.\n", temp_string_size - 1);
                         report_import_error_location(num_doubles_read, num_doubles_per_point, start_offset_of_current_double,
@@ -673,38 +650,7 @@ argv[5] default point size
                     previous_character_double = current_character_double;
                 }
 
-#if 0
-                /* logic not needed, 'case logic 2' handles this case */
-                /* case logic 3 */
-                if (previous_character_double && found_eof) {
-                    bu_log("processing case logic 3 --- previous_character_double='%i' found_eof='%i'\n",
-                           previous_character_double, found_eof);
-                    if (temp_string_index >= temp_string_size) {
-                        bu_log("ERROR: String representing double too large, exceeds '%d' character limit.\n", temp_string_size - 1);
-                        report_import_error_location(num_doubles_read, num_doubles_per_point, start_offset_of_current_double);
-                        /* do structure deallocate? */
-                        return GED_ERROR;
-                    }
-                    temp_string[temp_string_index] = (char)NULL;
-                    num_doubles_read++;
-
-                    temp_double = strtod(temp_string, &endp);
-                    if (!((temp_string != endp) && (*endp == '\0'))) {
-                        bu_log("ERROR: Unable to convert string '%s' to double.\n", temp_string);
-                        report_import_error_location(num_doubles_read, num_doubles_per_point, start_offset_of_current_double);
-                        /* do structure deallocate? */
-                        return GED_ERROR;
-                    }
-                    found_double = 1;
-                }
-#endif
-
-                /* case logic 5 */
                 if (!previous_character_double && current_character_double) {
-#if 0
-                    bu_log("processing case logic 5 --- previous_character_double='%i' current_character_double='%i'\n",
-                           previous_character_double, current_character_double);
-#endif
                     temp_string[temp_string_index] = (char)buf;
                     temp_string_index++;
                     start_offset_of_current_double = num_characters_read_from_file;
@@ -816,7 +762,7 @@ argv[5] default point size
     GED_DB_DIRADD(gedp, dp, argv[1], -1L, 0, DIR_SOLID, (genptr_t)&internal.idb_type, GED_ERROR);
     GED_DB_PUT_INTERNAL(gedp, dp, &internal, &rt_uniresource, GED_ERROR);
 
-    bu_log("About to exit function 'ged_make_pnts'.\n");
+    bu_free(format_string, "ged_make_pnts: format_string");
 
     return GED_OK;
 }
