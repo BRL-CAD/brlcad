@@ -153,15 +153,6 @@ brep_bvh_subdivide(BBNode* parent, const std::list<SurfaceTree*>& face_trees)
     }
 }
 
-inline void
-distribute(const int count, const ON_3dVector* v, double x[], double y[], double z[])
-{
-    for (int i = 0; i < count; i++) {
-	x[i] = v[i].x;
-	y[i] = v[i].y;
-	z[i] = v[i].z;
-    }
-}
 
 bool
 brep_pt_trimmed(pt2d_t pt, const ON_BrepFace& face) {

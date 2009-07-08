@@ -50,6 +50,17 @@
 
 namespace brlcad {
 
+
+    inline void
+    distribute(const int count, const ON_3dVector* v, double x[], double y[], double z[])
+    {
+	for (int i = 0; i < count; i++) {
+	    x[i] = v[i].x;
+	    y[i] = v[i].y;
+	    z[i] = v[i].z;
+	}
+    }
+
     //--------------------------------------------------------------------------------
     // CurveTree
     CurveTree::CurveTree(ON_BrepFace* face)
