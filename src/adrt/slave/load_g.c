@@ -150,6 +150,8 @@ some_intermediate_function(char *filename, char *region)
     double percent;
     int i;
 
+    printf("Give me my cheesypoofs! %s %s\n", filename, region);
+
     tree_state = rt_initial_tree_state;	/* struct copy */
     tree_state.ts_tol = &tol;
     tree_state.ts_ttol = &ttol;
@@ -206,7 +208,23 @@ some_intermediate_function(char *filename, char *region)
 int
 slave_load_g (tie_t *tie, char *data)
 {
-    return some_intermediate_function(data, data+strlen(data)+1);
+    int i = 0;
+    char *p = data;
+
+    while(i<16 && data[i])
+	i++;
+
+    while(*p && *p != ':')
+	++p;
+
+    if(*p == ':')
+	*p=0;
+    else
+	bu_bomb("No colon in file:region identifier\n");
+    
+    p++;
+
+    return some_intermediate_function(data, p);
 }
 
 /*
