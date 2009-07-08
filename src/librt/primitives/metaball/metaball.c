@@ -23,8 +23,23 @@
  *
  * Intersect a ray with a metaball implicit surface.
  *
- * NOTICE: this primitive is incomplete and should be considered
- * experimental.
+ * Algorithm:
+ *
+ * The heart of it is the set of point evaluation functions. These are
+ * different for each "type" of blobby object (metaballs, blinn blobs,
+ * and iso-potential contours). All are simple summation formulas at
+ * the moment.
+ *
+ * Plot merely draws sphere type objects around the control points,
+ * with size related to each points 'strength' and the primitives
+ * threshold.
+ *
+ * Ray-tracing is incredibly hackish. The ray is walked in a fairly
+ * coarse matter until the point evaluation crosses the threshold
+ * value, then a basic binary search is done to refine the
+ * approximated hit point.
+ *
+ * THIS PRIMITIVE IS INCOMPLETE AND SHOULD BE CONSIDERED EXPERIMENTAL.
  *
  */
 /** @} */
@@ -47,24 +62,6 @@
 
 
 #define SQ(a) ((a)*(a))
-/*
- * Algorithm:
- * completely punted at the moment :D
- *
- * The heart of it is the set of point evaluation functions. These are
- * different for each "type" of blobby object (metaballs, blinn blobs,
- * and iso-potential contours). All are simple summation formulas at
- * the moment.
- *
- * Plot merely draws sphere type objects around the control points,
- * with size related to each points 'strength' and the primitives
- * threshold.
- *
- * Ray-tracing is incredibly hackish. The ray is walked in a fairly
- * coarse matter until the point evaluation crosses the threshold
- * value, then a basic binary search is done to refine the
- * approximated hit point.
- */
 
 #define PLOT_THE_BIG_BOUNDING_SPHERE 0
 
@@ -154,6 +151,7 @@ fastf_t rt_metaball_get_bounding_sphere(point_t *center, fastf_t threshold, stru
     return 1.02*r;
 }
 
+
 /**
  * R T _ M E T A B A L L _ P R E P
  *
@@ -203,6 +201,7 @@ rt_metaball_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rti
     return 0;
 }
 
+
 /**
  * R T _ M E T A B A L L _ P R I N T
  */
@@ -213,8 +212,6 @@ rt_metaball_print(register const struct soltab *stp)
     struct rt_metaball_internal *mb;
     struct wdb_metaballpt *mbpt;
 
-    if (stp==NULL) {
-	bu_log("soltab is null\n"); return; }
     mb = (struct rt_metaball_internal *)stp->st_specific;
     RT_METABALL_CK_MAGIC(mb);
     for (BU_LIST_FOR(mbpt, wdb_metaballpt, &mb->metaball_ctrl_head)) ++metaball_count;
@@ -224,6 +221,7 @@ rt_metaball_print(register const struct soltab *stp)
 	bu_log("\t%d: %g field strength at (%g, %g, %g) and 'goo' of %g\n", ++metaball_count, mbpt->fldstr, V3ARGS(mbpt->coord), mbpt->sweat);
     return;
 }
+
 
 /**
  * R T _ M E T A B A L L P T _ P R I N T
@@ -243,7 +241,7 @@ rt_metaballpt_print(const struct wdb_metaballpt *metaball, double mm2local)
 fastf_t
 rt_metaball_point_value_metaball(const point_t *p, const struct bu_list *points)
 {
-    bu_log("ERROR: rt_metaball_point_value_metaball() NOT implemented");
+    bu_log("ERROR: rt_metaball_point_value_metaball() is not implemented");
 
     /* Makes the compiler happy */
     return 0.0;
@@ -357,6 +355,7 @@ rt_metaball_shot(struct soltab *stp, register struct xray *rp, struct applicatio
     return retval;
 }
 
+
 /**
  * R T _ M E T A B A L L _ N O R M
  *
@@ -373,7 +372,7 @@ rt_metaball_norm(register struct hit *hitp, struct soltab *stp, register struct 
     VSETALL(hitp->hit_normal, 0.0);
 
     switch (mb->method) {
-	case METABALL_METABALL: bu_log("strict metaballs not implemented yet\n");
+	case METABALL_METABALL: bu_log("Sorry, strict metaballs are not yet implemented\n");
 	    break;
 	case METABALL_ISOPOTENTIAL:
 	    for (BU_LIST_FOR(mbpt, wdb_metaballpt, &mb->metaball_ctrl_head)) {
@@ -395,6 +394,7 @@ rt_metaball_norm(register struct hit *hitp, struct soltab *stp, register struct 
     return;
 }
 
+
 /**
  * R T _ M E T A B A L L _ C U R V E
  *
@@ -403,9 +403,10 @@ rt_metaball_norm(register struct hit *hitp, struct soltab *stp, register struct 
 void
 rt_metaball_curve(register struct curvature *cvp, register struct hit *hitp, struct soltab *stp)
 {
-    bu_log("called rt_metaball_curve!\n");
+    bu_log("ERROR: rt_metaball_curve() is not implemented\n");
     return;
 }
+
 
 /**
  * R T _ M E T A B A L L _ U V
@@ -419,9 +420,10 @@ rt_metaball_curve(register struct curvature *cvp, register struct hit *hitp, str
 void
 rt_metaball_uv(struct application *ap, struct soltab *stp, register struct hit *hitp, register struct uvcoord *uvp)
 {
-    bu_log("called rt_metaball_uv!\n");
+    bu_log("ERROR: rt_metaball_uv() is not implemented\n");
     return;
 }
+
 
 /**
  * R T _ M E T A B A L L _ F R E E
@@ -429,17 +431,19 @@ rt_metaball_uv(struct application *ap, struct soltab *stp, register struct hit *
 void
 rt_metaball_free(register struct soltab *stp)
 {
-    /* seems to be unused? */
-    bu_log("rt_metaball_free called\n");
-    return;
+    register struct rt_metaball_internal *metaball =
+	(struct rt_metaball_internal *)stp->st_specific;
+
+    bu_free((char *)metaball, "rt_metaball_internal");
 }
 
-/* I have no clue what this function is supposed to do */
+
 int
 rt_metaball_class(void)
 {
-    return RT_CLASSIFY_UNIMPLEMENTED;	/* "assume the worst" */
+    return RT_CLASSIFY_UNIMPLEMENTED;	/* unused */
 }
+
 
 void
 rt_metaball_plot_sph(struct bu_list *vhead, point_t *center, fastf_t radius)
@@ -462,6 +466,7 @@ rt_metaball_plot_sph(struct bu_list *vhead, point_t *center, fastf_t radius)
     RT_ADD_VLIST(vhead, &middle[15*ELEMENTS_PER_VECT], BN_VLIST_LINE_MOVE);
     for (i=0; i<16; i++) RT_ADD_VLIST(vhead, &middle[i*ELEMENTS_PER_VECT], BN_VLIST_LINE_DRAW);
 }
+
 
 /**
  * R T _ M E T A B A L L _ P L O T
@@ -489,6 +494,7 @@ rt_metaball_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct 
     return 0;
 }
 
+
 /**
  * R T _ M E T A B A L L _ T E S S
  *
@@ -497,9 +503,10 @@ rt_metaball_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct 
 int
 rt_metaball_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol)
 {
-    bu_log("rt_metaball_tess called!\n");
+    bu_log("ERROR: rt_metaball_tess called() is not implemented\n");
     return -1;
 }
+
 
 /**
  * R T _ M E T A B A L L _ I M P O R T 5
@@ -544,6 +551,7 @@ rt_metaball_import5(struct rt_db_internal *ip, const struct bu_external *ep, reg
     bu_free((genptr_t)buf, "rt_metaball_import5: buf");
     return 0;		/* OK */
 }
+
 
 /**
  * R T _ M E T A B A L L _ E X P O R T 5
@@ -599,6 +607,7 @@ rt_metaball_export5(struct bu_external *ep, const struct rt_db_internal *ip, dou
     return 0;
 }
 
+
 /**
  * R T _ M E T A B A L L _ D E S C R I B E
  *
@@ -645,6 +654,7 @@ rt_metaball_describe(struct bu_vls *str, const struct rt_db_internal *ip, int ve
     return 0;
 }
 
+
 /**
  * R T _ M E T A B A L L _ I F R E E
  *
@@ -675,22 +685,22 @@ rt_metaball_ifree(struct rt_db_internal *ip, struct resource *resp)
     ip->idb_ptr = GENPTR_NULL;
 }
 
+
 /**
  * R T _ M E T A B A L L _ T N U R B
  */
 int
 rt_metaball_tnurb(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct bn_tol *tol)
 {
-    bu_log("rt_metaball_tnurb called!\n");
+    bu_log("ERROR: rt_metaball_tnurb() is not implemented\n");
     return 0;
 }
+
 
 /**
  * R T _ M E T A B A L L _ A D D _ P O I N T
  *
- * Add a single point to an existing metaball, recomputing the
- * bounding sphere and box after. (should there be a matrix in this
- * mix?)
+ * Add a single point to an existing metaball.
  */
 int
 rt_metaball_add_point (struct rt_metaball_internal *mb, const point_t *loc, const fastf_t fldstr, const fastf_t goo)
@@ -703,10 +713,6 @@ rt_metaball_add_point (struct rt_metaball_internal *mb, const point_t *loc, cons
     mbpt->fldstr = fldstr;
     mbpt->sweat = goo;
     BU_LIST_INSERT(&mb->metaball_ctrl_head, &mbpt->l);
-
-    /* TODO: some punty way to get the soltab so we can call prep, or
-     * something. This is OKish for writing at the moment.
-     */
 
     return 0;
 }
