@@ -210,6 +210,7 @@ EXTRA_DIST = \
         CMakeLists.txt \
 	brep_test.cpp \
 	namegen.c \
+	opennurbs_cleanup.cpp \
 	parse.c \
 	pmalloc.c \
 	primitives/bot/g_bot_include.c \

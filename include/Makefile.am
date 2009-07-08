@@ -82,6 +82,7 @@ noinst_HEADERS = \
 
 EXTRA_DIST = \
 	on_nurb.h \
+	opennurbs_cleanup.h \
 	sed4
 
 if ONLY_BENCHMARK
