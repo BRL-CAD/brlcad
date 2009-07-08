@@ -78,26 +78,32 @@ slave_load_kdtree (tie_t *tie, char *data)
 int
 slave_load (tie_t *tie, void *data, uint32_t dlen)
 {
+    char *meh = (char *)data;
+
     TIE_VAL(tie_check_degenerate) = 0;
 
-    switch ( *(char *)data) {
+    meh += 3;	/* advance to the opcode */
+
+    switch ( *meh ) {
 	case ADRT_LOAD_FORMAT_MYSQL_F:	/* mysql float */
 #if HAVE_MYSQL
-	    return slave_load_MySQL ( *((uint32_t *)data + 1), tie, (char *)data + 9);
+	    /* pid tie hostname */
+	    return slave_load_MySQL ( *(uint32_t *)(meh + 1), tie, meh + 6);
 #else
 	    printf("Not compiled to support MySQL.\n");
 	    return -1;
 #endif
 	case ADRT_LOAD_FORMAT_G:	/* given a filename and 1 toplevel region, recursively load from a .g file */
-	    return slave_load_g ( tie, (char *)data + 1 );
+	    return slave_load_g ( tie, meh + 1 );
 	case ADRT_LOAD_FORMAT_REG:	/* special magic for catching data on the pipe */
-	    return slave_load_region (tie, (char *)data + 1);
+	    return slave_load_region (tie, meh + 1);
 	case ADRT_LOAD_FORMAT_KDTREE:	/* more special magic */
-	    return slave_load_kdtree (tie, (char *)data + 1);
+	    return slave_load_kdtree (tie, meh + 1);
 	default:
 	    fprintf(stderr, "Unknown load format\n");
 	    return 1;
     }
+
     return -1;
 }
 
