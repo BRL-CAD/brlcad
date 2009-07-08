@@ -63,11 +63,6 @@
  * binary search is done to refine the approximated hit point.
  */
 
-/* these three defines are used with the method field */
-#define METABALL_METABALL	0
-#define METABALL_ISOPOTENTIAL	1
-#define METABALL_BLOB		2
-
 #define PLOT_THE_BIG_BOUNDING_SPHERE 0
 
 const char *metaballnames[] =

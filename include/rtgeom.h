@@ -109,6 +109,10 @@ struct rt_superell_internal {
  */
 struct rt_metaball_internal {
     unsigned long magic;
+    /* these three defines are used with the method field */
+#define METABALL_METABALL       0
+#define METABALL_ISOPOTENTIAL   1
+#define METABALL_BLOB           2
     int	method;
     fastf_t	threshold;
     struct bu_list	metaball_ctrl_head;
