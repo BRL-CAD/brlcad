@@ -5090,7 +5090,7 @@ nmg_unbreak_handler(long int *eup, genptr_t state, int after)
 
     eg = eu1->g.lseg_p;
     if (!eg) {
-	bu_log("nmg_unbreak_handler: no geomtry for edge x%x\n", e);
+	bu_log("nmg_unbreak_handler: no geometry for edge x%x\n", e);
 	return;
     }
     NMG_CK_EDGE_G_EITHER(eg);
