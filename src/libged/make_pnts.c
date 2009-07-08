@@ -188,91 +188,84 @@ remove_whitespace(char *input_string)
  * if null pointers were passed to the function.
  */
 int
-str2type(char *format_string, rt_pnt_type *pnt_type)
+str2type(const char *format_string, rt_pnt_type *pnt_type)
 {
     int format_string_length = 0;
     int index = 0;
     int index2 = 0;
+    int ret = GED_OK;
+    char* temp_string;
 
     if ((format_string == (char *)NULL) || (pnt_type == (rt_pnt_type *)NULL)) {
         bu_log("ERROR: NULL pointer(s) passed to function 'str2type'.\n");
-        return GED_ERROR;
+        ret = GED_ERROR;
     }
+    else {
+        format_string_length = strlen(format_string);
+        temp_string = (char*)bu_malloc(format_string_length+1, "str2type: temp_string");
 
-    format_string_length = strlen(format_string);
-    char temp_string[format_string_length+1];
-
-    /* remove any '?' from format string before testing for point-cloud type */
-    for (index = 0 ; index < format_string_length ; index++) {
-        if (format_string[index] != '?') {
-            temp_string[index2] = format_string[index];
-            index2++;
+        /* remove any '?' from format string before testing for point-cloud type */
+        for (index = 0 ; index < format_string_length ; index++) {
+            if (format_string[index] != '?') {
+                temp_string[index2] = format_string[index];
+                index2++;
+            }
         }
-    }
-    temp_string[index2] = (char)NULL;
+        temp_string[index2] = (char)NULL;
 
-    remove_whitespace(temp_string);
+        remove_whitespace(temp_string);
 
-    qsort(temp_string, strlen(temp_string), sizeof(char), (int (*)(const void *a, const void *b))compare_char);
+        qsort(temp_string, strlen(temp_string), sizeof(char), (int (*)(const void *a, const void *b))compare_char);
 
-    if (strcmp(temp_string, "xyz") == 0) {
-        *pnt_type = RT_PNT_TYPE_PNT;
-        bu_log("Set point-cloud type to 'RT_PNT_TYPE_PNT'.\n");
-        bu_log("Sorted format string: '%s'\n", temp_string);
-        return GED_OK;
-    }
+        if (strcmp(temp_string, "xyz") == 0) {
+            *pnt_type = RT_PNT_TYPE_PNT;
+            bu_log("Set point-cloud type to 'RT_PNT_TYPE_PNT'.\n");
+            bu_log("Sorted format string: '%s'\n", temp_string);
+        }
+        else if (strcmp(temp_string, "bgrxyz") == 0) {
+            *pnt_type = RT_PNT_TYPE_COL;
+            bu_log("Set point-cloud type to 'RT_PNT_TYPE_COL'.\n");
+            bu_log("Sorted format string: '%s'\n", temp_string);
+        }
+        else if (strcmp(temp_string, "sxyz") == 0) {
+            *pnt_type = RT_PNT_TYPE_SCA;
+            bu_log("Set point-cloud type to 'RT_PNT_TYPE_SCA'.\n");
+            bu_log("Sorted format string: '%s'\n", temp_string);
+        }
+        else if (strcmp(temp_string, "ijkxyz") == 0) {
+            *pnt_type = RT_PNT_TYPE_NRM;
+            bu_log("Set point-cloud type to 'RT_PNT_TYPE_NRM'.\n");
+            bu_log("Sorted format string: '%s'\n", temp_string);
+        }
+        else if (strcmp(temp_string, "bgrsxyz") == 0) {
+            *pnt_type = RT_PNT_TYPE_COL_SCA;
+            bu_log("Set point-cloud type to 'RT_PNT_TYPE_COL_SCA'.\n");
+            bu_log("Sorted format string: '%s'\n", temp_string);
+        }
+        else if (strcmp(temp_string, "bgijkrxyz") == 0) {
+            *pnt_type = RT_PNT_TYPE_COL_NRM;
+            bu_log("Set point-cloud type to 'RT_PNT_TYPE_COL_NRM'.\n");
+            bu_log("Sorted format string: '%s'\n", temp_string);
+        }
+        else if (strcmp(temp_string, "ijksxyz") == 0) {
+            *pnt_type = RT_PNT_TYPE_SCA_NRM;
+            bu_log("Set point-cloud type to 'RT_PNT_TYPE_SCA_NRM'.\n");
+            bu_log("Sorted format string: '%s'\n", temp_string);
+        }
+        else if (strcmp(temp_string, "bgijkrsxyz") == 0) {
+            *pnt_type = RT_PNT_TYPE_COL_SCA_NRM;
+            bu_log("Set point-cloud type to 'RT_PNT_TYPE_COL_SCA_NRM'.\n");
+            bu_log("Sorted format string: '%s'\n", temp_string);
+        }
+        else {
+            bu_log("Invalid format string: '%s'\n", format_string);
+            ret = GED_ERROR;
+        }
 
-    if (strcmp(temp_string, "bgrxyz") == 0) {
-        *pnt_type = RT_PNT_TYPE_COL;
-        bu_log("Set point-cloud type to 'RT_PNT_TYPE_COL'.\n");
-        bu_log("Sorted format string: '%s'\n", temp_string);
-        return GED_OK;
-    }
-
-    if (strcmp(temp_string, "sxyz") == 0) {
-        *pnt_type = RT_PNT_TYPE_SCA;
-        bu_log("Set point-cloud type to 'RT_PNT_TYPE_SCA'.\n");
-        bu_log("Sorted format string: '%s'\n", temp_string);
-        return GED_OK;
-    }
-
-    if (strcmp(temp_string, "ijkxyz") == 0) {
-        *pnt_type = RT_PNT_TYPE_NRM;
-        bu_log("Set point-cloud type to 'RT_PNT_TYPE_NRM'.\n");
-        bu_log("Sorted format string: '%s'\n", temp_string);
-        return GED_OK;
-    }
-
-    if (strcmp(temp_string, "bgrsxyz") == 0) {
-        *pnt_type = RT_PNT_TYPE_COL_SCA;
-        bu_log("Set point-cloud type to 'RT_PNT_TYPE_COL_SCA'.\n");
-        bu_log("Sorted format string: '%s'\n", temp_string);
-        return GED_OK;
-    }
-
-    if (strcmp(temp_string, "bgijkrxyz") == 0) {
-        *pnt_type = RT_PNT_TYPE_COL_NRM;
-        bu_log("Set point-cloud type to 'RT_PNT_TYPE_COL_NRM'.\n");
-        bu_log("Sorted format string: '%s'\n", temp_string);
-        return GED_OK;
-    }
-
-    if (strcmp(temp_string, "ijksxyz") == 0) {
-        *pnt_type = RT_PNT_TYPE_SCA_NRM;
-        bu_log("Set point-cloud type to 'RT_PNT_TYPE_SCA_NRM'.\n");
-        bu_log("Sorted format string: '%s'\n", temp_string);
-        return GED_OK;
+        bu_free(temp_string, "str2type: temp_string");
     }
 
-    if (strcmp(temp_string, "bgijkrsxyz") == 0) {
-        *pnt_type = RT_PNT_TYPE_COL_SCA_NRM;
-        bu_log("Set point-cloud type to 'RT_PNT_TYPE_COL_SCA_NRM'.\n");
-        bu_log("Sorted format string: '%s'\n", temp_string);
-        return GED_OK;
-    }
-
-    bu_log("Invalid format string: '%s'\n", format_string);
-    return GED_ERROR;
+    return ret;
 }
 
 
@@ -284,43 +277,48 @@ str2type(char *format_string, rt_pnt_type *pnt_type)
  * string is invalid or if null pointers were passed to the function.
  */
 int
-str2mm(char *units_string, double *conv_factor)
+str2mm(const char *units_string, double *conv_factor)
 {
     double tmp_value = 0.0;
     char *tmp_ptr = (char *)NULL;
     char *endp = (char *)NULL;
     int units_string_length = 0;
+    int ret = GED_OK;
+    char* temp_string;
 
     if ((units_string == (char *)NULL) || (conv_factor == (double *)NULL)) {
         bu_log("ERROR: NULL pointer(s) passed to function 'str2mm'.\n");
-        return GED_ERROR;
+        ret = GED_ERROR;
+    }
+    else {
+        units_string_length = strlen(units_string);
+        temp_string = (char*)bu_malloc(units_string_length+1, "str2mm: temp_string");
+
+        tmp_ptr = strcpy(temp_string, units_string);
+
+        remove_whitespace(temp_string);
+
+        tmp_value = strtod(temp_string, &endp);
+        if ((temp_string != endp) && (*endp == '\0')) {
+            /* convert to double success */
+            *conv_factor = tmp_value;
+            bu_log("Using custom conversion factor '%lf'\n", *conv_factor);
+            bu_log("User entered units string: '%s'\n", units_string);
+        }
+        else if ((tmp_value = bu_mm_value(temp_string)) > 0.0) {
+            *conv_factor = tmp_value;
+            bu_log("Using units string '%s', conversion factor '%lf'\n", temp_string, *conv_factor);
+            bu_log("User entered units string: '%s'\n", units_string);
+        }
+        else {
+            bu_log("Invalid units string: '%s'\n", units_string);
+            ret = GED_ERROR;
+        }
+
+        bu_free(temp_string, "str2mm: temp_string");
     }
 
-    units_string_length = strlen(units_string);
-    char temp_string[units_string_length+1];
-
-    tmp_ptr = strcpy(temp_string, units_string);
-
-    remove_whitespace(temp_string);
-
-    tmp_value = strtod(temp_string, &endp);
-    if ((temp_string != endp) && (*endp == '\0')) {
-        /* convert to double success */
-        *conv_factor = tmp_value;
-        bu_log("Using custom conversion factor '%lf'\n", *conv_factor);
-        bu_log("User entered units string: '%s'\n", units_string);
-        return GED_OK;
-    }
-
-    if ((tmp_value = bu_mm_value(temp_string)) > 0.0) {
-        *conv_factor = tmp_value;
-        bu_log("Using units string '%s', conversion factor '%lf'\n", temp_string, *conv_factor);
-        bu_log("User entered units string: '%s'\n", units_string);
-        return GED_OK;
-    }
-
-    bu_log("Invalid units string: '%s'\n", units_string);
-    return GED_ERROR;
+    return ret;
 }
 
 
@@ -341,11 +339,11 @@ report_import_error_location(unsigned long int num_doubles_read, int num_doubles
 int
 ged_make_pnts(struct ged *gedp, int argc, const char *argv[])
 {
-    char *obj_name;
-    char *filename;
-    char *format_string;
-    char *units_str;
-    char *default_point_size_str;
+    const char *obj_name;
+    const char *filename;
+    const char *format_string;
+    const char *units_str;
+    const char *default_point_size_str;
 #if 0
     struct rt_db_internal *intern;    /* old */
 #endif
