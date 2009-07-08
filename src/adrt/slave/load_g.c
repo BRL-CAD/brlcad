@@ -189,7 +189,7 @@ some_intermediate_function(char *filename, char *region)
     BN_CK_TOL(tree_state.ts_tol);
     RT_CK_TESS_TOL(tree_state.ts_ttol);
 
-    (void) db_walk_tree(dbip, 1, region,
+    (void) db_walk_tree(dbip, 1, &region,
 			1,			/* ncpu */
 			&tree_state,
 			0,			/* take all regions */
