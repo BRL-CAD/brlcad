@@ -239,7 +239,7 @@ rt_metaballpt_print( const struct wdb_metaballpt *metaball, double mm2local )
 fastf_t
 rt_metaball_point_value_metaball(const point_t *p, const struct bu_list *points)
 {
-    bu_exit(1, "rt_metaball_point_value_metaball() No implemented");
+    bu_log("ERROR: rt_metaball_point_value_metaball() NOT implemented");
 
     /* Makes the compiler happy */
     return 0.0;
@@ -324,27 +324,27 @@ rt_metaball_shot(struct soltab *stp, register struct xray *rp, struct applicatio
 		    if (ap->a_onehit != 0 && segsleft <= 0)
 			return retval;
 		} else
-		    STEPBACK
-			} else
-			    if (rt_metaball_point_value((const point_t *)&p, mb) > mb->threshold )
-				if (step<=finalstep) {
-				    RT_GET_SEG(segp, ap->a_resource);
-				    segp->seg_stp = stp;
-				    STEPIN(in);
-				    segp->seg_out.hit_dist = segp->seg_in.hit_dist + 1; /* cope with silliness */
-                                    segp->seg_in.hit_surfno = 0;
-                                    segp->seg_out.hit_surfno = 0;
-				    BU_LIST_INSERT( &(seghead->l), &(segp->l) );
-				    if (segsleft == 0)	/* exit now if we're one-hit (like visual rendering) */
-					return retval;
-				    /* reset the ray-walk shtuff */
-				    stat = 1;
-				    VSUB2(p, p, inc);
-				    VSCALE(inc, rp->r_dir, step);
-				    step = initstep;
-				} else
-				    STEPBACK
-					}
+		    STEPBACK;
+	} else
+	    if (rt_metaball_point_value((const point_t *)&p, mb) > mb->threshold )
+		if (step<=finalstep) {
+		    RT_GET_SEG(segp, ap->a_resource);
+		    segp->seg_stp = stp;
+		    STEPIN(in);
+		    segp->seg_out.hit_dist = segp->seg_in.hit_dist + 1; /* cope with silliness */
+		    segp->seg_in.hit_surfno = 0;
+		    segp->seg_out.hit_surfno = 0;
+		    BU_LIST_INSERT( &(seghead->l), &(segp->l) );
+		    if (segsleft == 0)	/* exit now if we're one-hit (like visual rendering) */
+			return retval;
+		    /* reset the ray-walk shtuff */
+		    stat = 1;
+		    VSUB2(p, p, inc);
+		    VSCALE(inc, rp->r_dir, step);
+		    step = initstep;
+		} else
+		    STEPBACK;
+    }
 #undef STEPBACK
 #undef STEPIN
     return retval;
@@ -630,7 +630,7 @@ rt_metaball_describe(struct bu_vls *str, const struct rt_db_internal *ip, int ve
 		     ++metaball_count, mbpt->fldstr, V3ARGS(mbpt->coord), mbpt->sweat);
 		break;
 	    default:
-		bu_exit(-1, "Bad metaball method");	/* asplode */
+		bu_bomb("Bad metaball method");	/* asplode */
 	}
 	bu_vls_strcat(str, buf);
     }
