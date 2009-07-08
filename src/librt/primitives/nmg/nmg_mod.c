@@ -72,11 +72,13 @@ nmg_merge_regions(struct nmgregion *r1, struct nmgregion *r2, const struct bn_to
     nmg_rebound(m, tol);
 }
 
+
 /************************************************************************
  *									*
  *				SHELL Routines				*
  *									*
  ************************************************************************/
+
 
 /**
  * N M G _ S H E L L _ C O P L A N A R _ F A C E _ M E R G E
@@ -211,6 +213,7 @@ nmg_shell_coplanar_face_merge(struct shell *s, const struct bn_tol *tol, const i
     }
 }
 
+
 /**
  * N M G _ S I M P L I F Y _ S H E L L
  *
@@ -245,6 +248,7 @@ nmg_simplify_shell(struct shell *s)
 
     return(ret_val);
 }
+
 
 /**
  * N M G _ R M _ R E D U N D A N C I E S
@@ -600,6 +604,7 @@ nmg_rm_redundancies(struct shell *s, const struct bn_tol *tol)
     }
 }
 
+
 /**
  * N M G _ S A N I T I Z E _ S _ L V
  *
@@ -680,6 +685,7 @@ nmg_sanitize_s_lv(struct shell *s, int orient)
 	bu_log("nmg_sanitize_s_lv(s=x%x, orient=%d)\n",	s, orient);
     }
 }
+
 
 /**
  * N M G _ S _ S P L I T _ T O U C H I N G L O O P S
@@ -964,11 +970,13 @@ nmg_invert_shell(struct shell *s)
     bu_free(tags, "nmg_invert_shell() tags[]");
 }
 
+
 /************************************************************************
  *									*
  *				FACE Routines				*
  *									*
  ************************************************************************/
+
 
 /**
  * N M G _ C M F A C E
@@ -1763,11 +1771,6 @@ nmg_face_fix_radial_parity(fu, tol)
 	    if (sbefore->up.lu_p->up.fu_p->orientation == OT_SAME)
 		continue;
 
-#if 0
-	    bu_log("sbefore eu=x%x, before=x%x, eu=x%x, eumate=x%x, after=x%x\n",
-		   sbefore, before, eu, eumate, after);
-	    nmg_pr_fu_around_eu(eu, tol);
-#endif
 	    /*
 	     * Rearrange order to be: before, eumate, eu, after.
 	     * NOTE: do NOT use sbefore here.
@@ -1782,14 +1785,6 @@ nmg_face_fix_radial_parity(fu, tol)
 		bu_log("nmg_face_fix_radial_parity() exchanging eu=x%x & eumate=x%x on edge x%x\n",
 		       eu, eumate, eu->e_p);
 	    }
-#if 0
-	    /* Can't do this incrementally, it blows up after 1st "fix" */
-	    if (rt_g.NMG_debug) {
-		nmg_pr_fu_around_eu(eu, tol);
-		if (nmg_check_radial(eu, tol))
-		    bu_bomb("nmg_face_fix_radial_parity(): nmg_check_radial failed\n");
-	    }
-#endif
 	}
     }
 
@@ -2043,6 +2038,7 @@ nmg_dup_face(struct faceuse *fu, struct shell *s)
  *									*
  ************************************************************************/
 
+
 /**
  * N M G _ J L
  *
@@ -2243,6 +2239,7 @@ nmg_join_2loops(struct vertexuse *vu1, struct vertexuse *vu2)
 
 /* XXX These should be included in nmg_join_2loops, or be called by it */
 
+
 /**
  * N M G _ J O I N _ S I N G V U _ L O O P
  *
@@ -2343,7 +2340,8 @@ nmg_join_2singvu_loops(struct vertexuse *vu1, struct vertexuse *vu2)
 }
 
 
-/** N M G _ C U T _ L O O P
+/**
+ * N M G _ C U T _ L O O P
  *
  * Divide a loop of edges between two vertexuses.
  *
@@ -2888,11 +2886,7 @@ nmg_join_touchingloops(struct loopuse *lu)
 	    tlu = teu->up.lu_p;
 	    NMG_CK_LOOPUSE(tlu);
 	    if (tlu == lu) {
-/* We touch ourselves at another vu? */
-#if 0
-		bu_log("INFO: nmg_join_touchingloops() lu=x%x touches itself at vu1=x%x, vu2=x%x, skipping\n",
-		       lu, vu, tvu);
-#endif
+		/* We touch ourselves at another vu? */
 		continue;
 	    }
 	    if (*tlu->up.magic_p != NMG_FACEUSE_MAGIC)  continue;
@@ -2916,11 +2910,13 @@ nmg_join_touchingloops(struct loopuse *lu)
     return count;
 }
 
+
 /* jaunt status flags used in the jaunt_status array */
 #define JS_UNKNOWN 0
 #define JS_SPLIT 1
 #define JS_JAUNT 2
 #define JS_TOUCHING_JAUNT 3
+
 
 /**
  * N M G _ G E T _ T O U C H I N G _ J A U N T S
@@ -5090,6 +5086,7 @@ nmg_mv_eu_between_shells(struct shell *dest, register struct shell *src, registe
  *				VERTEX Routines				*
  *									*
  ************************************************************************/
+
 
 /**
  * N M G _ M V _ V U _ B E T W E E N _ S H E L L S
