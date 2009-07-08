@@ -138,13 +138,13 @@ nmg_to_adrt_internal(struct nmgregion *r, struct db_full_path *pathp, int region
 	}
     }
 
+    printf("Region %s polys: %d\n", region_name, region_polys);
+
     bu_free(region_name, "region name");
 }
 
 int
-some_intermediate_function(argc, argv)
-    int argc;
-    char *argv[];
+some_intermediate_function(char *filename, char *region)
 {
     register int c;
     double percent;
@@ -177,55 +177,23 @@ some_intermediate_function(argc, argv)
     the_model = nmg_mm();
     BU_LIST_INIT(&rt_g.rtg_vlfree);	/* for vlist macros */
 
-    if ((dbip = db_open(argv[0], "r")) == DBI_NULL) {
-	perror(argv[0]);
-	bu_exit(1, "Unable to open geometry file (%s)\n", argv[0]);
+    if ((dbip = db_open(filename, "r")) == DBI_NULL) {
+	perror(filename);
+	bu_exit(1, "Unable to open geometry file (%s)\n", filename);
     }
-    if (db_dirbuild(dbip)) {
+    if (db_dirbuild(dbip))
 	bu_exit(1, "ERROR: db_dirbuild failed\n");
-    }
 
     BN_CK_TOL(tree_state.ts_tol);
     RT_CK_TESS_TOL(tree_state.ts_ttol);
 
-    if (verbose) {
-	bu_log("Model: %s\n", argv[0]);
-	bu_log("Objects:");
-	for (i=1; i<argc; i++)
-	    bu_log(" %s", argv[i]);
-	bu_log("\nTesselation tolerances:\n\tabs = %g mm\n\trel = %g\n\tnorm = %g\n",
-	       tree_state.ts_ttol->abs, tree_state.ts_ttol->rel, tree_state.ts_ttol->norm);
-	bu_log("Calculational tolerances:\n\tdist = %g mm perp = %g\n",
-	       tree_state.ts_tol->dist, tree_state.ts_tol->perp);
-    }
-
-    while (--argc) {
-	(void) db_walk_tree(dbip, 1, ++argv,
-			    1,			/* ncpu */
-			    &tree_state,
-			    0,			/* take all regions */
-			    gcv_region_end,
-			    nmg_booltree_leaf_tess,
-			    (genptr_t)nmg_to_adrt_internal);
-    }
-
-    percent = 0;
-    if (regions_tried>0) {
-	percent = ((double)regions_converted * 100) / regions_tried;
-	if (verbose)
-	    bu_log("Tried %d regions, %d converted to NMG's successfully.  %g%%\n",
-		   regions_tried, regions_converted, percent);
-    }
-    percent = 0;
-
-    if (regions_tried > 0) {
-	percent = ((double)regions_written * 100) / regions_tried;
-	if (verbose)
-	    bu_log("                  %d triangulated successfully. %g%%\n",
-		   regions_written, percent);
-    }
-
-    bu_log("%ld triangles written\n", tot_polygons);
+    (void) db_walk_tree(dbip, 1, region,
+			1,			/* ncpu */
+			&tree_state,
+			0,			/* take all regions */
+			gcv_region_end,
+			nmg_booltree_leaf_tess,
+			(genptr_t)nmg_to_adrt_internal);
 
     /* Release dynamic storage */
     nmg_km(the_model);
@@ -238,11 +206,7 @@ some_intermediate_function(argc, argv)
 int
 slave_load_g (tie_t *tie, char *data)
 {
-    char *filename, *region;
-    filename = data;
-    region = data + strlen(filename) + 1;
-    printf("Want to read %s from %s\n", region, filename);
-    return -1;
+    return some_intermediate_function(data, data+strlen(data)+1);
 }
 
 /*
