@@ -30,6 +30,8 @@
 # define TIE_PRECISION 0
 #endif
 
+#include "common.h"
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -37,6 +39,201 @@
 #include "bu.h"
 
 #include "load.h"
+
+#include "gcv.h"
+
+/* interface headers */
+#include "vmath.h"
+#include "nmg.h"
+#include "rtgeom.h"
+#include "raytrace.h"
+
+static struct db_i *dbip;
+static struct model *the_model;
+static struct rt_tess_tol ttol;		/* tesselation tolerance in mm */
+static struct bn_tol tol;		/* calculation tolerance */
+static struct db_tree_state tree_state;	/* includes tol & model */
+
+static int regions_tried = 0;
+static int regions_converted = 0;
+static int regions_written = 0;
+static unsigned int tot_polygons = 0;
+
+static int verbose = 0;
+
+/* load the region into the tie image */
+static void
+nmg_to_adrt_internal(struct nmgregion *r, struct db_full_path *pathp, int region_id, int material_id, float color[3])
+{
+    struct model *m;
+    struct shell *s;
+    struct vertex *v;
+    char *region_name;
+    int region_polys=0;
+
+    NMG_CK_REGION(r);
+    RT_CK_FULL_PATH(pathp);
+
+    region_name = db_path_to_string(pathp);
+
+    m = r->m_p;
+    NMG_CK_MODEL(m);
+
+    /* triangulate model */
+    nmg_triangulate_model(m, &tol);
+
+    /* Check triangles */
+    for (BU_LIST_FOR (s, shell, &r->s_hd))
+    {
+	struct faceuse *fu;
+
+	NMG_CK_SHELL(s);
+
+	for (BU_LIST_FOR (fu, faceuse, &s->fu_hd))
+	{
+	    struct loopuse *lu;
+	    vect_t facet_normal;
+
+	    NMG_CK_FACEUSE(fu);
+
+	    if (fu->orientation != OT_SAME)
+		continue;
+
+	    /* Grab the face normal and save it for all the vertex loops */
+	    NMG_GET_FU_NORMAL(facet_normal, fu);
+
+	    for (BU_LIST_FOR (lu, loopuse, &fu->lu_hd))
+	    {
+		struct edgeuse *eu;
+		int vert_count=0;
+
+		NMG_CK_LOOPUSE(lu);
+
+		if (BU_LIST_FIRST_MAGIC(&lu->down_hd) != NMG_EDGEUSE_MAGIC)
+		    continue;
+
+		/* check vertex numbers for each triangle */
+		for (BU_LIST_FOR (eu, edgeuse, &lu->down_hd))
+		{
+		    NMG_CK_EDGEUSE(eu);
+
+		    vert_count++;
+
+		    v = eu->vu_p->v_p;
+		    NMG_CK_VERTEX(v);
+		    /* add facet_normal and v->vg_p->coord */
+		}
+		if (vert_count > 3)
+		{
+		    bu_free(region_name, "region name");
+		    bu_log("lu x%x has %d vertices!\n", lu, vert_count);
+		    bu_exit(1, "ERROR: LU is not a triangle");
+		}
+		else if (vert_count < 3)
+		    continue;
+
+		tot_polygons++;
+		region_polys++;
+	    }
+	}
+    }
+
+    bu_free(region_name, "region name");
+}
+
+int
+some_intermediate_function(argc, argv)
+    int argc;
+    char *argv[];
+{
+    register int c;
+    double percent;
+    int i;
+
+    tree_state = rt_initial_tree_state;	/* struct copy */
+    tree_state.ts_tol = &tol;
+    tree_state.ts_ttol = &ttol;
+    tree_state.ts_m = &the_model;
+
+    /* Set up tesselation tolerance defaults */
+    ttol.magic = RT_TESS_TOL_MAGIC;
+    /* Defaults, updated by command line options. */
+    ttol.abs = 0.0;
+    ttol.rel = 0.01;
+    ttol.norm = 0.0;
+
+    /* Set up calculation tolerance defaults */
+    /* XXX These need to be improved */
+    tol.magic = BN_TOL_MAGIC;
+    tol.dist = 0.005;
+    tol.dist_sq = tol.dist * tol.dist;
+    tol.perp = 1e-5;
+    tol.para = 1 - tol.perp;
+
+    /* init resources we might need */
+    rt_init_resource(&rt_uniresource, 0, NULL);
+
+    /* make empty NMG model */
+    the_model = nmg_mm();
+    BU_LIST_INIT(&rt_g.rtg_vlfree);	/* for vlist macros */
+
+    if ((dbip = db_open(argv[0], "r")) == DBI_NULL) {
+	perror(argv[0]);
+	bu_exit(1, "Unable to open geometry file (%s)\n", argv[0]);
+    }
+    if (db_dirbuild(dbip)) {
+	bu_exit(1, "ERROR: db_dirbuild failed\n");
+    }
+
+    BN_CK_TOL(tree_state.ts_tol);
+    RT_CK_TESS_TOL(tree_state.ts_ttol);
+
+    if (verbose) {
+	bu_log("Model: %s\n", argv[0]);
+	bu_log("Objects:");
+	for (i=1; i<argc; i++)
+	    bu_log(" %s", argv[i]);
+	bu_log("\nTesselation tolerances:\n\tabs = %g mm\n\trel = %g\n\tnorm = %g\n",
+	       tree_state.ts_ttol->abs, tree_state.ts_ttol->rel, tree_state.ts_ttol->norm);
+	bu_log("Calculational tolerances:\n\tdist = %g mm perp = %g\n",
+	       tree_state.ts_tol->dist, tree_state.ts_tol->perp);
+    }
+
+    while (--argc) {
+	(void) db_walk_tree(dbip, 1, ++argv,
+			    1,			/* ncpu */
+			    &tree_state,
+			    0,			/* take all regions */
+			    gcv_region_end,
+			    nmg_booltree_leaf_tess,
+			    (genptr_t)nmg_to_adrt_internal);
+    }
+
+    percent = 0;
+    if (regions_tried>0) {
+	percent = ((double)regions_converted * 100) / regions_tried;
+	if (verbose)
+	    bu_log("Tried %d regions, %d converted to NMG's successfully.  %g%%\n",
+		   regions_tried, regions_converted, percent);
+    }
+    percent = 0;
+
+    if (regions_tried > 0) {
+	percent = ((double)regions_written * 100) / regions_tried;
+	if (verbose)
+	    bu_log("                  %d triangulated successfully. %g%%\n",
+		   regions_written, percent);
+    }
+
+    bu_log("%ld triangles written\n", tot_polygons);
+
+    /* Release dynamic storage */
+    nmg_km(the_model);
+    rt_vlist_cleanup();
+    db_close(dbip);
+
+    return 0;
+}
 
 int
 slave_load_g (tie_t *tie, char *data)
@@ -48,3 +245,12 @@ slave_load_g (tie_t *tie, char *data)
     return -1;
 }
 
+/*
+ * Local Variables:
+ * mode: C
+ * tab-width: 8
+ * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */

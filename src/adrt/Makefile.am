@@ -79,10 +79,11 @@ adrt_slave_SOURCES = \
 
 adrt_slave_LDADD = \
 	${LIBTHREAD} \
-	librender.la \
+	${LIBZ} \
 	${LIBM} \
+	librender.la \
 	libtie.la \
-	${LIBZ}
+	${RT} ${GCV}
 
 tieincludedir = $(includedir)/tie
 tieinclude_HEADERS = \
