@@ -3955,6 +3955,15 @@ rt_dsp_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 	nmg_kill_cracks(s);
     }
 
+    /* Mark edges as real */
+    (void)nmg_mark_edges_real(&s->l.magic);
+
+    /* Compute "geometry" for region and shell */
+    nmg_region_a(*r, tol);
+
+    /* sanity check */
+    nmg_make_faces_within_tol(s, tol);
+
     return(0);
 }
 
