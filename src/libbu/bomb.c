@@ -193,7 +193,12 @@ bu_bomb(const char *str)
  * stack trace, exiting with the specified status after printing the
  * given message.  It's okay for this routine to use the stack,
  * contrary to bu_bomb's behavior since it should be called for
- * expected termination situations.  This routine should never return.
+ * expected termination situations.
+ *
+ * This routine should generally not be called within a library.  Use
+ * bu_bomb or (better) cascade the error back up to the application.
+ *
+ * This routine should never return.
  */
 void
 bu_exit(int status, const char *fmt, ...)
