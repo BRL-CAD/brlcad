@@ -281,6 +281,33 @@ int SegmentSegmentIntersect(
     }
 }
 
+/* SegmentPolylineIntersect 
+ * uses iteration of SegmentSegmentIntersect
+ * returns the number of intersections it finds
+ */
+int SegmentPolylineIntersect(
+	const ON_3dPoint& P,
+	const ON_3dPoint& Q,
+	const ON_Polyline& pline,
+	ON_SimpleArray<ON_3dPoint> out,
+	double tol
+	)
+{
+    int rv;
+    int my_rv; /* what this function will return at the end */
+    ON_3dPoint result[2];
+    for (int i = 0; i < (pline.Count() - 1); i++) {
+	rv = SegmentSegmentIntersect(P, Q, pline[i], pline[i+1], result, tol);
+	if (out) { /* the output field can be made null to use the function to check for intersections but not return them */
+	    for (int j = 0; j < rv; j++) {
+		out.Append(result[j]);
+	    }
+	}
+	my_rv += rv;
+    }
+    return my_rv;
+}
+
 /* intersects a triangle ABC with a line PQ
  * return values:
  * -1: error
@@ -559,6 +586,44 @@ int PolylinePolylineInternal(
     }
 }
 
+/* int Triangulate(ON_ClassArray<ON_Polyline>, ON_SimpleArray<ON_3dPoint[3]>)
+ * takes an array of PolyLines and gives the resulting polygon triangulated
+ * there are a number of contraints on the input which are the callers responsibility
+ * the points must all lie within the same plane, none of the Polylines can intersect all polyline must be closed
+ * one another all paths must be within the first path and no path can be inside of 2 paths
+ */
+int Triangulate(
+	ON_ClassArray<ON_Polyline> paths,
+	ON_SimpleArray<ON_3dPoint[3]> triangles
+	)
+{
+    /* first we need to link the paths together */
+    int i, j, k, l;
+    while (paths.Count() > 1) {
+	/* we're going to merge paths[1] with some other path */
+	for (i = 0; i < paths.Count(); i++) {
+	    if (i == 1) {
+		continue; /* we can't merge a path with itself */
+	    }
+	    for (j = 0; j < paths[1].Count(); j++) { /* try connecting each point in paths[1] */
+		for (k = 0; k < paths[i].Count(); k++) { /* with each point in paths[i] */
+		    /* now we need to check that this line doesn't intersect any other polyline */
+		    for (l = 0; l < paths.Count(); l++) {
+			if (SegmentPolylineIntersect(paths[1][j], paths[i][k], paths[l], NULL, 1E-9) == 0) {
+			    /* merge them */
+
+			    /* after we merge two paths we need to exit all the way up to the outer while loop 
+			     * this goto simply takes us out of all 4 for loops in one fell swoop. That's all */
+			    goto breakall;
+			}
+		    }
+		}
+	    }
+	}
+        breakall:;
+    }
+}
+
 /* class TriEdgeIntersections
  * This class has the responsibility of keeping track of the points that intersect the edges and
  * eventually chopping the edges up into little lines for the intersected mesh this is actually
@@ -661,20 +726,20 @@ int TriIntersections::Faces(
     /* first we get an array of all the segments we can use to make our faces */
     ON_SimpleArray<ON_Line> segments; /*the segments we have to make faces */
     ON_SimpleArray<bool> flippable; /* whether or not the segment has direction */
-    ON_SimpleArray<bool> external; /* whether or not the segment is from the edge */
+    ON_SimpleArray<bool> segexternal; /* whether or not the segment is from the edge */
     for (int i = 0; i < intersections.Count(); i++) {
 	segments.Append(intersections[i]);
 	segments.Append(intersections[i]);
 	flippable.Append(false);
 	flippable.Append(false);
-	external.Append(false);
-	external.Append(false);
+	segexternal.Append(false);
+	segexternal.Append(false);
     }
     for (int i = 0; i < 3; i++) {
 	if (edges[i].Count() == 2) { /* the edge was never intersected */ 
 	    segments.Append(ON_Line(edges[i][0], edges[i][0]));
 	    flippable.Append(true);
-	    external.Append(true);
+	    segexternal.Append(true);
 	} else {
 	    for (int j = 0; j < (edges[i].Count() - 1); j++) {
 		if (dir[i][j] == dir[i][j + 1]) {
@@ -683,24 +748,25 @@ int TriIntersections::Faces(
 		} else if (dir[i][j] == 0 || dir[i][j+1] == 1) {
 		    segments.Append(ON_Line(edges[i][j], edges[i][j+1]));
 		    flippable.Append(false);
-		    external.Append(true);
+		    segexternal.Append(true);
 		} else {
 		    segments.Append(ON_Line(edges[i][j+1], edges[i][j]));
 		    flippable.Append(false);
-		    external.Append(true);
+		    segexternal.Append(true);
 		}
 	    }
 	}
     }
     /* Now that the segments are all set up it's time to make them into faces */
     ON_ClassArray<ON_Polyline> outlines;
-    ON_SimpleArray<bool> internal; /* stores whether each polyline is internal */
+    ON_SimpleArray<bool> line_external; /* stores whether each polyline is internal */
     ON_Polyline outline;
     while(segments.Count() != 0) {
 	outline.Append(segments[0].from);
 	outline.Append(segments[0].to);
 	segments.Remove(0);
 	int i = 0;
+	bool ext = false; /* keeps track of the ternality of the path we're assembling */
 	while (!outline.IsClosed(tol)) {
 	    if (i >= segments.Count()) {
 		return -1;
@@ -716,13 +782,15 @@ int TriIntersections::Faces(
 		i++;
 		continue;
 	    }
-	    /* onle executed when we append edge i */
+	    /* only executed when we append edge i */
 	    segments.Remove(i);
 	    flippable.Remove(i);
-	    external.Remove(i);
+	    ext = ext && segexternal[i];
+	    segexternal.Remove(i);
 	    i = 0;
 	}
 	outlines.Append(outline);
+	line_external.Append(ext);
     }
     /* now we need to setup the ternality tree for the paths */
 }
