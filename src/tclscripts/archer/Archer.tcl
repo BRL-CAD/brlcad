@@ -146,6 +146,7 @@ package provide Archer 1.0
 
 	# ArcherCore Override Section
 	method 3ptarb              {args}
+	method attr                {args}
 	method bo                  {args}
 	method bot_condense        {args}
 	method bot_decimate        {args}
@@ -211,6 +212,7 @@ package provide Archer 1.0
 
 	# Object Edit Management
 	method checkpoint {_obj}
+	method checkpoint_olist {_olist}
 	method createTargetLedger {}
 	method global_undo {}
 	method ledger_cleanup {}
@@ -871,6 +873,26 @@ package provide Archer 1.0
 
 ::itcl::body Archer::3ptarb {args} {
     eval ArcherCore::gedWrapper 3ptarb 0 0 1 1 $args
+}
+
+::itcl::body Archer::attr {args} {
+    set len [llength $args]
+    if {$len < 4} {
+	return [eval gedWrapper2 attr 1 0 0 0 0 0 $args]
+    }
+
+    set cmd [lindex $args 0]
+    switch -- $cmd {
+	"append" -
+	"rm" -
+	"set" {
+	    return [eval gedWrapper2 attr 1 0 0 0 1 0 $args]
+	}
+	"get" -
+	"show" {
+	    return [eval gedWrapper2 attr 1 0 0 0 0 0 $args]
+	}
+    }
 }
 
 ::itcl::body Archer::bo {args} {
@@ -1636,36 +1658,40 @@ package provide Archer 1.0
 	set l [lsort -dictionary $l]
 	set le [lindex $l end]
 
-	# Assumed to have mods after the command invocation above
-	$mLedger attr set $le $HAVE_MODS 1
-
-	set mNeedSave 1
-	set mNeedGlobalUndo 1
-
-	if {$obj == $mSelectedObj} {
-	    # Checkpoint again in case the user starts interacting via the mouse
-	    checkpoint $obj
+	if {$le == ""} {
+	    puts "No ledger entry found for $obj."
 	} else {
-	    updateUndoMode 0
-	}
+	    # Assumed to have mods after the command invocation above
+	    $mLedger attr set $le $HAVE_MODS 1
 
-	updateSaveMode
+	    set mNeedSave 1
+	    set mNeedGlobalUndo 1
 
-	# Possibly draw the updated object
-	set ditem ""
-	foreach item [gedCmd report 0] {
-	    set l [split $item /]
-	    set i [lsearch -exact $l $obj]
-	    if {$i != -1} {
-		for {set j 1} {$j <= $i} {incr j} {
-		    append ditem / [lindex $l $j]
-		}
-		break
+	    if {$obj == $mSelectedObj} {
+		# Checkpoint again in case the user starts interacting via the mouse
+		checkpoint $obj
+	    } else {
+		updateUndoMode 0
 	    }
-	}
 
-	if {$ditem != ""} {
-	    redrawObj $ditem
+	    updateSaveMode
+
+	    # Possibly draw the updated object
+	    set ditem ""
+	    foreach item [gedCmd report 0] {
+		set l [split $item /]
+		set i [lsearch -exact $l $obj]
+		if {$i != -1} {
+		    for {set j 1} {$j <= $i} {incr j} {
+			append ditem / [lindex $l $j]
+		    }
+		    break
+		}
+	    }
+
+	    if {$ditem != ""} {
+		redrawObj $ditem
+	    }
 	}
     }
 
@@ -6935,34 +6961,18 @@ package provide Archer 1.0
 
 ################################### Begin Object Edit Management ###################################
 
-# Create toolbar buttons for the following
-#     Global Undo
-#         Undo the latest entry
-#             Copy the entries attributes to its corresponding object
-#             Kill/remove the entry from the ledger
-#     Undo
-#         Undo the latest entry for the selected object
-#             Copy the entries attributes to its corresponding object
-#             Kill/remove the entry from the ledger
-#     Apply/Checkpoint
-#         Create ledger entry for the selected object
-#         (i.e. GGGG_OOOO_object, GGGG - global number, OOOO - object number)
-#     Simple Revert
-#         Go back to the state of the original file
-#         Clear out the ledger
-#         Reset the save button
-#
-# When opening a database 
-#     Destroy the ledger.g for the previous db
-#     Create a unique ledger.g
-# 
-# When saving a database
-#     Destroy the ledger and recreate an empty one
-#     Reset all toolbar buttons associated with object edit management
-#
-
 ::itcl::body Archer::checkpoint {_obj} {
     if {$_obj == "" || $mLedger == ""} {
+	return
+    }
+
+    #XXX Need to have a binary copy of an object from one database
+    #    to another. That would take care of the lossiness of get
+    #    and put. It would also handle copying attributes.
+
+    # This "get" fails for objects like _GLOBAL. So until the binary
+    # copy gets implemented, objects like _GLOBAL cannot be checkpointed.
+    if {[catch {gedCmd get $_obj} gdata]} {
 	return
     }
 
@@ -7018,7 +7028,6 @@ package provide Archer 1.0
     incr mLedgerGID
 
     # Create the ledger entry
-    set gdata [gedCmd get $_obj]
     set lname $mLedgerGID\_$oid\_$_obj
     eval $mLedger put $lname $gdata
 
@@ -7043,6 +7052,88 @@ package provide Archer 1.0
 		set mNeedObjUndo 0
 	    } else {
 		set mNeedObjUndo 1
+	    }
+
+	    set oflag 1
+
+	    set mNeedCheckpoint 0
+	    updateCheckpointMode
+	} else {
+	    set oflag 0
+	}
+    }
+
+    updateUndoMode $oflag
+}
+
+##
+# This method also needs to use a binary copy
+# of objects between databases instead of "get" and "put".
+#
+::itcl::body Archer::checkpoint_olist {_olist} {
+    set olen [llength $_olist]
+    if {$olen == 0 || $mLedger == ""} {
+	return
+    }
+
+    incr mLedgerGID
+    set oid 0
+    set ouflag 0
+    set foundSelectedObj 0
+
+    # Create the ledger entries
+    foreach obj $_olist {
+	if {[catch {gedCmd get $obj} gdata]} {
+	    continue
+	}
+
+	if {$obj == $mSelectedObj} {
+	    set foundSelectedObj 1
+
+	    # Get all ledger entries related to mSelectedObj
+	    set l [$mLedger expand *_*_$mSelectedObj]
+	    set len [llength $l]
+
+	    if {$len} {
+		set l [lsort -dictionary $l]
+		set le [lindex $l end]
+
+		if {![$mLedger attr get $le $HAVE_MODS]} {
+		    $mLedger kill $le
+
+		    if {$len > 1} {
+			set ouflag 1
+		    }
+		}
+	    }
+	}
+
+	set lname $mLedgerGID\_$oid\_$_obj
+	eval $mLedger put $lname $gdata
+
+	# No mods yet
+	$mLedger attr set $lname $HAVE_MODS 0
+    }
+
+    set l [$mLedger ls -A $HAVE_MODS 1]
+    set len [llength $l]
+    if {$len == 0} {
+	set mNeedGlobalUndo 0
+	set mNeedObjUndo 0
+
+	set mNeedCheckpoint 0
+	updateCheckpointMode
+
+	set oflag 1
+    } else {
+	set mNeedGlobalUndo 1
+
+	if {$foundSelectedObj} {
+
+	    if {$ouflag} {
+		set mNeedObjUndo 1
+	    } else {
+		set mNeedObjUndo 0
 	    }
 
 	    set oflag 1
