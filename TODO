@@ -53,6 +53,9 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 THESE ARE UNSCHEDULED BACKLOG TASKS
 -----------------------------------
 
+* make db_open modes behave the same as the fopen() modes (i.e.,
+  create the .g if one doesn't exist when write mode)
+
 * Impliment procedural human geometry generator
 
 * fix the shaders.sh regression test case, failing dues to changes
