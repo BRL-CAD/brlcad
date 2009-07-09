@@ -45,6 +45,7 @@
 #include <limits>
 #include <iostream>
 #include "vmath.h"
+#include "vector.h"
 
 /* Maximum limits for the depth of leaves in surface and curve trees */
 #define BREP_MAX_FT_DEPTH 8
@@ -67,6 +68,17 @@ static std::numeric_limits<double> real;
 
 namespace brlcad {
 
+
+  inline void
+      distribute(const int count, const ON_3dVector* v, double x[], double y[], double z[]) {
+	   for (int i = 0; i < count; i++) {
+	       x[i] = v[i].x;
+	       y[i] = v[i].y;
+	       z[i] = v[i].z;
+	   }
+      }
+
+    
   using namespace std;
   
   /**********************************************************************
