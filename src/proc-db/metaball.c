@@ -47,6 +47,8 @@ make_meatballs(struct rt_wdb *fp, const char *name, int count)
     int i;
     fastf_t **pts;
 
+    RT_CK_WDB(fp);
+
     bn_rand_init(ctx, rand());
     bu_log("Creating [%s] with %d random points\n", name, count);
 
@@ -65,7 +67,7 @@ make_meatballs(struct rt_wdb *fp, const char *name, int count)
 
 	VSET(pts[i], x, y, z);
 	pts[i][3] = field_strength; /* something blobbly random */
-	pts[i][4] = 0.0; /* not sweaty */
+	pts[i][4] = 0.0; /* not sweaty, unused with iso method */
     }
 
     /* pack the meat */
@@ -80,9 +82,12 @@ make_meatballs(struct rt_wdb *fp, const char *name, int count)
 
 
 static void
-mix_balls(struct rt_wdb *fp, const char *name, int ac, const char *av[])
+mix_balls(struct db_i *dbip, const char *name, int ac, const char *av[])
 {
     int i;
+
+    RT_CK_DBI(dbip);
+
     bu_log("Combining together the following metaballs:\n");
     for (i = 0; i < ac; i++) {
 	bu_log("\t%s\n", av[i]);
@@ -94,13 +99,37 @@ mix_balls(struct rt_wdb *fp, const char *name, int ac, const char *av[])
 
 
 static void
-make_spaghetti(struct rt_wdb *fp, const char *name)
+make_spaghetti(const char *filename, const char *name)
 {
     const char *balls[3] = {"someballs.s", "moreballs.s", NULL};
+    const char title[BUFSIZ] = "metaball";
+    struct rt_wdb *fp;
+    struct db_i *dbip;
+
+    /* get a write-only handle */
+    fp = wdb_fopen(filename);
+    if (fp == RT_WDB_NULL) {
+	bu_exit(EXIT_FAILURE, "ERROR: unable to open file for writing.\n");
+    }
+
+    mk_id(fp, title);
+
     make_meatballs(fp, balls[0], 100);
     make_meatballs(fp, balls[1], 100);
 
-    mix_balls(fp, name, 2, balls);
+    wdb_close(fp);
+
+    /* done with the write-only, now begins read/write */
+    dbip = db_open(filename, "rw");
+    if (dbip == DBI_NULL) {
+	perror("ERROR");
+	bu_exit(EXIT_FAILURE, "Failed to open geometry file [%s].  Aborting.\n", filename);
+    }
+
+    mix_balls(dbip, name, 2, balls);
+
+    /* and clean up */
+    db_close(dbip);
 }
 
 
@@ -115,9 +144,8 @@ Usage:\n\
 \t-o file\tFile to write out\n\
 \n";
 
-    char title[BUFSIZ] = "metaball", outfile[MAXPATHLEN] = "metaball.g";
+    char outfile[MAXPATHLEN] = "metaball.g";
     int optc = 0, retval = EXIT_SUCCESS;
-    struct rt_wdb *outfp;
 
     while ((optc = bu_getopt(argc, argv, "Hho:")) != -1)
 	switch (optc) {
@@ -135,19 +163,8 @@ Usage:\n\
 	bu_exit(EXIT_FAILURE, "ERROR: %s already exists.  Remove file and try again.", outfile);
     }
 
-    /* prepare for guests */
-    outfp = wdb_fopen(outfile);
-    if (outfp == RT_WDB_NULL) {
-	perror("Failed to open file for writing.  Aborting.\n");
-	return EXIT_FAILURE;
-    }
-    mk_id(outfp, title);
-
     /* make dinner */
-    make_spaghetti(outfp, "meatballs.s");
-
-    /* and clean up */
-    wdb_close(outfp);
+    make_spaghetti(outfile, "meatballs.s");
 
     return retval;
 }
