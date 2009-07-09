@@ -148,7 +148,7 @@ fastf_t rt_metaball_get_bounding_sphere(point_t *center, fastf_t threshold, stru
 	if (dist > r)
 	    r = dist;
     }
-    return 1.02*r;
+    return r;
 }
 
 
@@ -192,8 +192,10 @@ rt_metaball_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rti
     stp->st_bradius = stp->st_aradius * 1.01;
 
     /* XXX magic numbers, increase if scalloping is observed. :( */
-    nmb->initstep = stp->st_aradius / ( minfstr * 10.0);
-    nmb->finalstep = stp->st_aradius / ( minfstr * 1e7);
+    nmb->initstep = minfstr / 2;
+    if (nmb->initstep < (stp->st_aradius / 200.0))
+	nmb->initstep = (stp->st_aradius / 200.0);
+    nmb->finalstep = /*stp->st_aradius * */minfstr / 1e5;
 
     /* generate a bounding box around the sphere...
      * XXX this can be optimized greatly to reduce the BSP presense... */
