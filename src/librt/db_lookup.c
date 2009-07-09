@@ -224,10 +224,6 @@ db_lookup(const struct db_i *dbip, register const char *name, int noisy)
 
     RT_CK_DBI(dbip);
 
-    /* save the caller from having to dirbuild */
-    if (dbip->dbi_nrec == 0)
-	db_dirbuild(dbip)
-
     dp = dbip->dbi_Head[db_dirhash(name)];
     for (; dp != DIR_NULL; dp=dp->d_forw) {
 	register char	*this;
