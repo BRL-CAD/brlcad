@@ -85,7 +85,7 @@ static struct bu_rb_node *_rb_extreme (struct bu_rb_node *root, int order, int s
  * (min or max).  On success, bu_rb_extreme() returns a pointer to the
  * data in the extreme node.  Otherwise it returns NULL.
  */
-void *bu_rb_extreme (bu_rb_tree *tree, int order, int sense)
+void *bu_rb_extreme(bu_rb_tree *tree, int order, int sense)
 {
     struct bu_rb_node	*node;
 
@@ -93,8 +93,8 @@ void *bu_rb_extreme (bu_rb_tree *tree, int order, int sense)
     BU_RB_CKORDER(tree, order);
 
     if ((sense != SENSE_MIN) && (sense != SENSE_MAX)) {
-	bu_exit(EXIT_FAILURE, "ERROR: bu_rb_extreme(): invalid sense %d, file %s, line %d\n",
-		sense, __FILE__, __LINE__);
+	bu_log("ERROR: bu_rb_extreme(): invalid sense %d, file %s, line %d\n", sense, __FILE__, __LINE__);
+	return NULL;
     }
 
     /* Wade throught the tree */
@@ -102,7 +102,7 @@ void *bu_rb_extreme (bu_rb_tree *tree, int order, int sense)
 		       bu_rb_null(tree));
 
     if (node == bu_rb_null(tree))
-	return (NULL);
+	return NULL;
     else
 	return (bu_rb_data(node, order));
 }
@@ -161,7 +161,7 @@ struct bu_rb_node *_rb_neighbor (struct bu_rb_node *node, int order, int sense)
  * in the specified direction, if that node exists.  Otherwise,
  * it returns NULL.
  */
-void *bu_rb_neighbor (bu_rb_tree *tree, int order, int sense)
+void *bu_rb_neighbor(bu_rb_tree *tree, int order, int sense)
 {
     struct bu_rb_node	*node;
 
@@ -169,15 +169,15 @@ void *bu_rb_neighbor (bu_rb_tree *tree, int order, int sense)
     BU_RB_CKORDER(tree, order);
 
     if ((sense != SENSE_MIN) && (sense != SENSE_MAX)) {
-	bu_exit(EXIT_FAILURE, "ERROR: bu_rb_neighbor(): invalid sense %d, file %s, line %d\n",
-		sense, __FILE__, __LINE__);
+	bu_log("ERROR: bu_rb_neighbor(): invalid sense %d, file %s, line %d\n", sense, __FILE__, __LINE__);
+	return NULL;
     }
 
     /* Wade through the tree */
     node = _rb_neighbor(bu_rb_current(tree), order, sense);
 
     if (node == bu_rb_null(tree))
-	return (NULL);
+	return NULL;
     else
     {
 	/* Record the node with which we've been working */

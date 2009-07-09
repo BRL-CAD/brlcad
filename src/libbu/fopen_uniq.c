@@ -81,10 +81,11 @@ bu_fopen_uniq(const char *outfmt, const char *namefmt, int n)
 
     snprintf(filename, MAXPATHLEN, namefmt, n);
     if ((fd = open(filename, O_RDWR|O_CREAT|O_EXCL, 0600)) < 0) {
-	bu_exit(-1, "Cannot open %s, %s\n", filename, strerror(errno));
+	fprintf(stderr, "Cannot open %s, %s\n", filename, strerror(errno));
+	return NULL;
     }
     if ((fp=fdopen(fd, "w")) == (FILE *)NULL) {
-	bu_exit(-1, "%s", strerror(errno));
+	fprintf(stderr, "%s", strerror(errno));
     }
 
     if (outfmt)
