@@ -146,7 +146,7 @@ namespace brlcad {
 	bool m_XIncreasing;
 	bool m_innerTrim;
 	
-	int isTrimmed(const ON_2dPoint& uv,fastf_t &trimdist);
+	int isTrimmed(const ON_2dPoint& uv, double &trimdist);
 	
 	fastf_t getLinearEstimateOfV( fastf_t u );
 	fastf_t getCurveEstimateOfV( fastf_t u, fastf_t tol ) const;
@@ -328,7 +328,7 @@ namespace brlcad {
     }
 
   template<class BH>
-      int BANode<BH>::isTrimmed(const ON_2dPoint& uv,fastf_t &trimdist) {
+      int BANode<BH>::isTrimmed(const ON_2dPoint& uv, double &trimdist) {
 	  point_t bmin,bmax;
 	  BANode<BH>::GetBBox(bmin,bmax);
 	  if ((bmin[X] <= uv[X]) && (uv[X] <= bmax[X])) { //if check trim and in BBox
@@ -413,9 +413,9 @@ namespace brlcad {
   template<class BH>
     class BVNode {
       public:
+	BVNode(const ON_Brep* brep);
 	BVNode(const ON_BrepFace* face, const ON_Surface* surface,
 	    ON_Interval& u, ON_Interval& v, CurveTree* ctree);
-	
 	BVNode(const ON_BrepFace* face, const ON_Surface* surface,
 	    ON_Interval& u, ON_Interval& v, CurveTree* ctree,
 	    ON_3dVector& n0, ON_3dVector& n2, ON_3dVector& n6, 
@@ -482,7 +482,7 @@ namespace brlcad {
 	// below the current node that intersect the ray.  If the
 	// current node is a leaf node and intersects, return self.
 	bool intersectedBy(ON_Ray& ray, double* tnear = 0, double* tfar = 0);
-        bool intersectsHierarchy(ON_Ray& ray, std::list<BVNode<BH> >* results = 0);
+        bool intersectsHierarchy(ON_Ray& ray, list<BVNode<ON_BoundingBox>*>& results = 0);
 
 	// Need to rework getClosestPointEstimate to handle the new
 	// tree structure where leaf nodes aren't special cased...
@@ -513,7 +513,12 @@ namespace brlcad {
 #define SE 2
 #define NW 3
 #define NE 4
- 
+
+  template<class BH>
+     inline BVNode<BH>::BVNode(const ON_Brep* brep) {
+	this->m_BBox = brep->BoundingBox();
+     }
+
   template<class BH>
     inline BVNode<BH>::BVNode(const ON_BrepFace* face, const ON_Surface* surface,
 	ON_Interval& u, ON_Interval& v, CurveTree* ctree) 
@@ -669,11 +674,11 @@ namespace brlcad {
     }
   
     template<class BH>
-      bool BVNode<BH>::intersectsHierarchy(ON_Ray& ray, std::list<BVNode<BH> >* results_opt) {
+      bool BVNode<BH>::intersectsHierarchy(ON_Ray& ray, list<BBNode*>& results_opt) {
 	double tnear, tfar;
 	bool intersects = intersectedBy(ray, &tnear, &tfar);
 	if (intersects && this->isLeaf()) {
-	  if (results_opt != 0) results_opt->push_back(this);
+	  results_opt.push_back(this);
 	} else if (intersects) {
 	  for (int i = 0; i < this->m_children.size(); i++) {
 	    this->m_children[i]->intersectsHierarchy(ray, results_opt);
@@ -841,7 +846,7 @@ namespace brlcad {
 	point_t bmin,bmax;
 	double dist;
 	for (list<BRNode*>::iterator i = m_trims_above.begin(); i != m_trims_above.end(); i++) {
-	  BBNode* br = dynamic_cast<BBNode*>(*i);
+	  BRNode* br = dynamic_cast<BRNode*>(*i);
 	  br->GetBBox(bmin,bmax);
 	  dist = 0.000001; //0.03*DIST_PT_PT(bmin,bmax);
 	  if ((uv[X] > bmin[X]-dist) && (uv[X] < bmax[X]+dist))
@@ -854,6 +859,7 @@ namespace brlcad {
 	BRNode* br;
 	list<BRNode*> trims;
 	point_t bmin,bmax;
+	double trimdist;
 	
 	if (m_checkTrim) {       
 	  getTrimsAbove(uv,trims);
@@ -882,7 +888,7 @@ namespace brlcad {
 	    if (closest == NULL) {
 	      return true;
 	    } else {
-	      return closest->isTrimmed(uv);
+	      return closest->isTrimmed(uv, trimdist);
 	    }
 	  }
 	} else {

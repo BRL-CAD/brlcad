@@ -214,6 +214,9 @@ EXTRA_DIST = \
 	parse.c \
 	pmalloc.c \
 	primitives/bot/g_bot_include.c \
+	primitives/brep/brep_cleanup.cpp \
+	primitives/brep/brep_debug_cleanup.cpp \
+	primitives/brep/brep_debug_cleanup.h	
 	primitives/ell/ell_brep.cpp \
 	primitives/nmg/nmg_brep.cpp \
 	primitives/sph/sph_brep.cpp \

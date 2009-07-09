@@ -118,8 +118,6 @@ namespace brlcad {
 		// Build m_root bbox from child nodes
 		ParentBBBuild(m_root);
 	    }
-	    getLeaves(m_sortedX);
-	    m_sortedX.sort(sortX);
 	    getLeaves(m_sortedY);
 	    m_sortedY.sort(sortY);
 	    return;
