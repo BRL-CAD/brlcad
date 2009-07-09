@@ -115,6 +115,7 @@ struct rt_metaball_internal {
 #define METABALL_BLOB           2
     int	method;
     fastf_t	threshold;
+    fastf_t	initstep, finalstep;	/* for raytrace stepping. */
     struct bu_list	metaball_ctrl_head;
 };
 #define RT_METABALL_CK_MAGIC(_p)        BU_CKMAG(_p, RT_METABALL_INTERNAL_MAGIC, "rt_metaball_internal")

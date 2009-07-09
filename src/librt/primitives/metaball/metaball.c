@@ -164,6 +164,7 @@ rt_metaball_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rti
     struct rt_metaball_internal *mb, *nmb;
     struct wdb_metaballpt *mbpt, *nmbpt;
     int i;
+    fastf_t minfstr = +INFINITY;
 
     mb = ip->idb_ptr;
     RT_METABALL_CK_MAGIC(mb);
@@ -179,6 +180,8 @@ rt_metaball_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rti
     for (BU_LIST_FOR(mbpt, wdb_metaballpt, &mb->metaball_ctrl_head)) {
 	nmbpt = (struct wdb_metaballpt *)bu_malloc(sizeof(struct wdb_metaballpt), "rt_metaball_prep: nmbpt");
 	nmbpt->fldstr = mbpt->fldstr;
+	if(mbpt->fldstr < minfstr)
+	    minfstr = mbpt->fldstr;
 	nmbpt->sweat = mbpt->sweat;
 	VMOVE(nmbpt->coord, mbpt->coord);
 	BU_LIST_INSERT(&nmb->metaball_ctrl_head, &nmbpt->l);
@@ -187,6 +190,11 @@ rt_metaball_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rti
     /* find the bounding sphere */
     stp->st_aradius = rt_metaball_get_bounding_sphere(&stp->st_center, mb->threshold, mb);
     stp->st_bradius = stp->st_aradius * 1.01;
+
+    /* XXX magic numbers, increase if scalloping is observed. :( */
+    nmb->initstep = stp->st_aradius / ( minfstr * 10.0);
+    nmb->finalstep = stp->st_aradius / ( minfstr * 1e7);
+
     /* generate a bounding box around the sphere...
      * XXX this can be optimized greatly to reduce the BSP presense... */
     VSET(stp->st_min,
@@ -307,7 +315,9 @@ rt_metaball_shot(struct soltab *stp, register struct xray *rp, struct applicatio
     struct rt_metaball_internal *mb = (struct rt_metaball_internal *)stp->st_specific;
     struct seg *segp = NULL;
     point_t p, inc, delta;
-    fastf_t initstep = stp->st_aradius / 20.0, finalstep = stp->st_aradius / 1e8, step = initstep, distleft = (rp->r_max-rp->r_min);
+    fastf_t step, distleft = (rp->r_max-rp->r_min);
+
+    step = mb->initstep;
 
     VJOIN1(p, rp->r_pt, rp->r_min, rp->r_dir);
     VSCALE(inc, rp->r_dir, step); /* assume it's normalized and we want to creep at step */
@@ -323,7 +333,7 @@ rt_metaball_shot(struct soltab *stp, register struct xray *rp, struct applicatio
 	VADD2(p, p, inc);
 	if (stat == 1) {
 	    if (rt_metaball_point_value((const point_t *)&p, mb) < mb->threshold)
-		if (step<=finalstep) {
+		if (step<=mb->finalstep) {
 		    STEPIN(out);
 		    stat = 0;
 		    if (ap->a_onehit != 0 && segsleft <= 0)
@@ -332,7 +342,7 @@ rt_metaball_shot(struct soltab *stp, register struct xray *rp, struct applicatio
 		    STEPBACK;
 	} else
 	    if (rt_metaball_point_value((const point_t *)&p, mb) > mb->threshold)
-		if (step<=finalstep) {
+		if (step<=mb->finalstep) {
 		    RT_GET_SEG(segp, ap->a_resource);
 		    segp->seg_stp = stp;
 		    STEPIN(in);
@@ -346,7 +356,7 @@ rt_metaball_shot(struct soltab *stp, register struct xray *rp, struct applicatio
 		    stat = 1;
 		    VSUB2(p, p, inc);
 		    VSCALE(inc, rp->r_dir, step);
-		    step = initstep;
+		    step = mb->initstep;
 		} else
 		    STEPBACK;
     }
