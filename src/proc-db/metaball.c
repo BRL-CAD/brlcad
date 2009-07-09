@@ -33,6 +33,7 @@
 
 #include "vmath.h"
 #include "raytrace.h"
+#include "rtgeom.h"
 #include "wdb.h"
 
 
@@ -85,16 +86,51 @@ static void
 mix_balls(struct db_i *dbip, const char *name, int ac, const char *av[])
 {
     int i;
+    struct directory *dp;
+    struct rt_metaball_internal *newmp;
 
     RT_CK_DBI(dbip);
 
+    /* manually create a metaballl instead of calling mk_metaball just
+     * to show a different creation approach.
+     */
+    BU_GETSTRUCT(newmp, rt_metaball_internal);
+    newmp->magic = RT_METABALL_INTERNAL_MAGIC;
+    newmp->threshold = 1.0;
+    newmp->method = 1;
+    BU_LIST_INIT(&newmp->metaball_ctrl_head);
+
     bu_log("Combining together the following metaballs:\n");
     for (i = 0; i < ac; i++) {
-	bu_log("\t%s\n", av[i]);
-    }
-    bu_log("Joining balls together and creating [%s]\n", name);
+	struct rt_db_internal dir;
+	struct rt_metaball_internal *mp;
+	struct wdb_metaballpt *mpt;
 
-    /* TODO: show how to load and join metaballs together */
+	bu_log("\t%s\n", av[i]);
+	dp = db_lookup(dbip, av[i], 1);
+	if (!dp) {
+	    bu_log("Unable to find %s\n", av[i]);
+	}
+
+	if (rt_db_get_internal(&dir, dp, dbip, NULL, &rt_uniresource) < 0) {
+	    bu_log("Unable to load %s\n", av[i]);
+	    continue;
+	}
+
+	/* get the primitive-specific internal structure */
+	mp = (struct rt_metaball_internal *)dir.idb_ptr;
+	RT_METABALL_CK_MAGIC(mp);
+
+	/* iterate over each point and add it to our new metaball */
+	for (BU_LIST_FOR(mpt, wdb_metaballpt, &mp->metaball_ctrl_head)) {
+	    bu_log("Adding point (%lf %lf %lf)\n", V3ARGS(mpt->coord));
+	    rt_metaball_add_point(newmp, &(mpt->coord), mpt->fldstr, mpt->sweat);
+	}
+    }
+
+    bu_log("Joining balls together and creating [%s]\n", name);
+    dbip->dbi_wdbp = wdb_dbopen(dbip, RT_WDB_TYPE_DB_DISK);
+    wdb_export(dbip->dbi_wdbp, name, newmp, ID_METABALL, 1.0);
 }
 
 
@@ -125,6 +161,7 @@ make_spaghetti(const char *filename, const char *name)
 	perror("ERROR");
 	bu_exit(EXIT_FAILURE, "Failed to open geometry file [%s].  Aborting.\n", filename);
     }
+    db_dirbuild(dbip);
 
     mix_balls(dbip, name, 2, balls);
 
