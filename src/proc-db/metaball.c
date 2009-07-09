@@ -19,7 +19,14 @@
  */
 /** @file metaball.c
  *
- * Some fun at dinner.
+ * This is an example of how to programmatically create and combine
+ * metaball primitives together.
+ *
+ * This example uses two specific techniques for creating the
+ * metaballs, one using libwdb (i.e., the mk_metaball() function) and
+ * another using librt (i.e., creating an rt_metaball_internal
+ * directly).  The librt approach shows how points can be read from
+ * existing metaballs to be combined into a new "mega metaball".
  *
  */
 
@@ -37,6 +44,10 @@
 #include "wdb.h"
 
 
+/**
+ * Creates one metaball object with 'count' random points using
+ * LIBWDB's mk_metaball() interface.  
+ */
 static void
 make_meatballs(struct rt_wdb *fp, const char *name, int count)
 {
@@ -51,27 +62,33 @@ make_meatballs(struct rt_wdb *fp, const char *name, int count)
     RT_CK_WDB(fp);
 
     bn_rand_init(ctx, rand());
-    bu_log("Creating [%s] with %d random points\n", name, count);
+    bu_log("Creating [%s] object with %d random points\n", name, count);
 
+    /* allocate a dynamic array of pointers to points.  this may be
+     * subject to change but is presently the format mk_metaball()
+     * wants.
+     */
     pts = (fastf_t **)bu_calloc(count, sizeof(fastf_t*), "alloc metaball pts array");
     for (i=0; i < count; i++) {
 	pts[i] = (fastf_t *)bu_malloc(sizeof(fastf_t)*5, "alloc metaball point");
     }
 
-    /* create random metaball points */
+    /* create random metaball point values positioned randomly within
+     * a cube with random field strengths.
+     */
     for (i=0; i < count; i++) {
 	/* just for explicit clarity */
 	fastf_t x = bn_rand_half(ctx) * SZ;
 	fastf_t y = bn_rand_half(ctx) * SZ;
 	fastf_t z = bn_rand_half(ctx) * SZ;
-	fastf_t field_strength = bn_rand0to1(ctx) * SZ / sqrt(count);
+	fastf_t field_strength = bn_rand0to1(ctx) * SZ / (2.0 * sqrt(count));
 
 	VSET(pts[i], x, y, z);
 	pts[i][3] = field_strength; /* something blobbly random */
-	pts[i][4] = 0.0; /* not sweaty, unused with iso method */
+	pts[i][4] = 0.0; /* sweat/goo field is unused with iso method */
     }
 
-    /* pack the meat */
+    /* pack the meat, create the metaball */
     mk_metaball(fp, name, count, method, threshold, pts);
 
     /* free up our junk */
@@ -82,6 +99,12 @@ make_meatballs(struct rt_wdb *fp, const char *name, int count)
 }
 
 
+/**
+ * Creates one metaball object that includes all points from an
+ * existing list (in 'av') of named metaballs.  This routine creates
+ * an rt_metaball_internal object directly via LIBRT given it requires
+ * reading existing metaballs from the database.
+ */
 static void
 mix_balls(struct db_i *dbip, const char *name, int ac, const char *av[])
 {
@@ -91,8 +114,9 @@ mix_balls(struct db_i *dbip, const char *name, int ac, const char *av[])
 
     RT_CK_DBI(dbip);
 
-    /* manually create a metaballl instead of calling mk_metaball just
-     * to show a different creation approach.
+    /* allocate a struct rt_metaball_internal object that we'll
+     * manually fill in with points from the other metaballs being
+     * joined together.
      */
     BU_GETSTRUCT(newmp, rt_metaball_internal);
     newmp->magic = RT_METABALL_INTERNAL_MAGIC;
@@ -101,43 +125,54 @@ mix_balls(struct db_i *dbip, const char *name, int ac, const char *av[])
     BU_LIST_INIT(&newmp->metaball_ctrl_head);
 
     bu_log("Combining together the following metaballs:\n");
+
     for (i = 0; i < ac; i++) {
 	struct rt_db_internal dir;
 	struct rt_metaball_internal *mp;
 	struct wdb_metaballpt *mpt;
 
+	/* get a handle on the existing database object */
 	bu_log("\t%s\n", av[i]);
 	dp = db_lookup(dbip, av[i], 1);
 	if (!dp) {
 	    bu_log("Unable to find %s\n", av[i]);
 	}
 
+	/* load the existing database object */
 	if (rt_db_get_internal(&dir, dp, dbip, NULL, &rt_uniresource) < 0) {
 	    bu_log("Unable to load %s\n", av[i]);
 	    continue;
 	}
 
-	/* get the primitive-specific internal structure */
+	/* access the metaball-specific internal structure */
 	mp = (struct rt_metaball_internal *)dir.idb_ptr;
 	RT_METABALL_CK_MAGIC(mp);
 
-	/* iterate over each point and add it to our new metaball */
+	/* iterate over each point in that database objct and add it
+	 * to our new metaball.
+	 */
 	for (BU_LIST_FOR(mpt, wdb_metaballpt, &mp->metaball_ctrl_head)) {
 	    bu_log("Adding point (%lf %lf %lf)\n", V3ARGS(mpt->coord));
-	    rt_metaball_add_point(newmp, &(mpt->coord), mpt->fldstr, mpt->sweat);
+	    rt_metaball_add_point(newmp, &mpt->coord, mpt->fldstr, mpt->sweat);
 	}
     }
 
-    bu_log("Joining balls together and creating [%s]\n", name);
+    bu_log("Joining balls together and creating [%s] object\n", name);
+
+    /* write out new "mega metaball" out to disk */
     dbip->dbi_wdbp = wdb_dbopen(dbip, RT_WDB_TYPE_DB_DISK);
     wdb_export(dbip->dbi_wdbp, name, newmp, ID_METABALL, 1.0);
 }
 
 
+/**
+ * main driver logic that creates the various random metaballs and
+ * then creates another that combines them all into one.
+ */
 static void
 make_spaghetti(const char *filename, const char *name)
 {
-    const char *balls[3] = {"someballs.s", "moreballs.s", NULL};
+    const char *balls[4] = {"someballs.s", "moreballs.s", "manyballs.s", NULL};
     const char title[BUFSIZ] = "metaball";
     struct rt_wdb *fp;
     struct db_i *dbip;
@@ -150,8 +185,10 @@ make_spaghetti(const char *filename, const char *name)
 
     mk_id(fp, title);
 
-    make_meatballs(fp, balls[0], 100);
-    make_meatballs(fp, balls[1], 100);
+    /* create individual metaballs with random points using LIBWDB */
+    make_meatballs(fp, balls[0], 5);
+    make_meatballs(fp, balls[1], 50);
+    make_meatballs(fp, balls[2], 500);
 
     wdb_close(fp);
 
@@ -161,9 +198,12 @@ make_spaghetti(const char *filename, const char *name)
 	perror("ERROR");
 	bu_exit(EXIT_FAILURE, "Failed to open geometry file [%s].  Aborting.\n", filename);
     }
+
+    /* load a database directory */
     db_dirbuild(dbip);
 
-    mix_balls(dbip, name, 2, balls);
+    /* combine all metaballs into one "mega metaball" */
+    mix_balls(dbip, name, 3, balls);
 
     /* and clean up */
     db_close(dbip);
@@ -173,16 +213,10 @@ make_spaghetti(const char *filename, const char *name)
 int
 main(int argc, char *argv[])
 {
-    static const char usage[] = "\
-Usage:\n\
-\t%s [-h] [-o outfile]\n\
-\n\
-\t-h\tShow help\n\
-\t-o file\tFile to write out\n\
-\n";
+    static const char usage[] = "Usage:\n\t%s [-h] [-o outfile]\n\n\t-h\tShow help\n\t-o file\tFile to write out\n\n";
 
     char outfile[MAXPATHLEN] = "metaball.g";
-    int optc = 0, retval = EXIT_SUCCESS;
+    int optc = 0;
 
     while ((optc = bu_getopt(argc, argv, "Hho:")) != -1)
 	switch (optc) {
@@ -200,10 +234,14 @@ Usage:\n\
 	bu_exit(EXIT_FAILURE, "ERROR: %s already exists.  Remove file and try again.", outfile);
     }
 
+    bu_log("Writing metaballs out to [%s]\n", outfile);
+
     /* make dinner */
     make_spaghetti(outfile, "meatballs.s");
 
-    return retval;
+    bu_log("BRL-CAD geometry database file [%s] created.\nDone.\n", outfile);
+
+    return EXIT_SUCCESS;
 }
 
 /*
