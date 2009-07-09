@@ -325,15 +325,15 @@ str2mm(const char *units_string, double *conv_factor)
 
 void
 report_import_error_location(unsigned long int num_doubles_read, int num_doubles_per_point, 
-                                  unsigned long int start_offset_of_current_double, char field)
+                             unsigned long int start_offset_of_current_double, char field, struct bu_vls *ged_result_str)
 {
     /* The num_doubles_read is the number of doubles successfully read. This error
      * report is for the double where the error occurred, i.e. the next double.
      */
     unsigned long int point_number =  ceil((num_doubles_read + 1) / (double)num_doubles_per_point);
 
-    bu_log("ERROR: Failed reading point %lu field %c at file byte offset %lu\n",
-            point_number, field, start_offset_of_current_double);
+    bu_vls_printf(ged_result_str, "Failed reading point %lu field %c at file byte offset %lu\n",
+                  point_number, field, start_offset_of_current_double);
 }
 
 
@@ -358,6 +358,7 @@ ged_make_pnts(struct ged *gedp, int argc, const char *argv[])
     double local2base;
     unsigned long numPoints = 0;
     struct rt_pnts_internal *pnts;
+
     double defaultSize = 0.0;
     void *headPoint;
 
@@ -542,8 +543,9 @@ ged_make_pnts(struct ged *gedp, int argc, const char *argv[])
     pnts->point = headPoint;
 
     if ((fp=fopen(argv[2], "rb")) == NULL) {
-        bu_log("ERROR: Could not open file '%s'\n", argv[2]);
-        /* may need to do some cleanup before exit here on error */
+        bu_vls_printf(&gedp->ged_result_str, "Could not open file '%s'\n", argv[2]);
+        bu_free(format_string, "ged_make_pnts: format_string");
+        rt_db_free_internal(&internal, &rt_uniresource);
         return GED_ERROR;
     }
 
@@ -587,9 +589,10 @@ ged_make_pnts(struct ged *gedp, int argc, const char *argv[])
                 if (feof(fp)) {
                     if (ferror(fp)) {
                         perror("ERROR: Problem reading file, system error message");
-                        bu_log("ERROR: Unable to read file at byte '%d'.\n", num_characters_read_from_file);
                         fclose(fp);
-                        /* do structure deallocate? */
+                        bu_vls_printf(&gedp->ged_result_str, "Unable to read file at byte '%d'.\n", num_characters_read_from_file);
+                        bu_free(format_string, "ged_make_pnts: format_string");
+                        rt_db_free_internal(&internal, &rt_uniresource);
                         return GED_ERROR;
                     } else {
                         found_eof = 1;
@@ -601,8 +604,9 @@ ged_make_pnts(struct ged *gedp, int argc, const char *argv[])
                     fclose(fp);
                     current_character_double = 0;
                     if (num_doubles_read == 0) {
-                        bu_log("ERROR: No data in file.\n");
-                        /* do structure deallocate? */
+                        bu_vls_printf(&gedp->ged_result_str, "No data in file.\n");
+                        bu_free(format_string, "ged_make_pnts: format_string");
+                        rt_db_free_internal(&internal, &rt_uniresource);
                         return GED_ERROR;
                     }
                 } else {
@@ -616,10 +620,11 @@ ged_make_pnts(struct ged *gedp, int argc, const char *argv[])
 
                 if (previous_character_double && current_character_double) {
                     if (temp_string_index >= temp_string_size) {
-                        bu_log("ERROR: String representing double too large, exceeds '%d' character limit.\n", temp_string_size - 1);
                         report_import_error_location(num_doubles_read, num_doubles_per_point, start_offset_of_current_double,
-                                                          format_string[format_string_index]);
-                        /* do structure deallocate? */
+                                                     format_string[format_string_index], &gedp->ged_result_str);
+                        bu_vls_printf(&gedp->ged_result_str, "String representing double too large, exceeds '%d' character limit.\n", temp_string_size - 1);
+                        bu_free(format_string, "ged_make_pnts: format_string");
+                        rt_db_free_internal(&internal, &rt_uniresource);
                         return GED_ERROR;
                     }
                     temp_string[temp_string_index] = (char)buf;
@@ -628,20 +633,22 @@ ged_make_pnts(struct ged *gedp, int argc, const char *argv[])
 
                 if (previous_character_double && !current_character_double) {
                     if (temp_string_index >= temp_string_size) {
-                        bu_log("ERROR: String representing double too large, exceeds '%d' character limit.\n", temp_string_size - 1);
                         report_import_error_location(num_doubles_read, num_doubles_per_point, start_offset_of_current_double,
-                                                          format_string[format_string_index]);
-                        /* do structure deallocate? */
+                                                     format_string[format_string_index], &gedp->ged_result_str);
+                        bu_vls_printf(&gedp->ged_result_str, "String representing double too large, exceeds '%d' character limit.\n", temp_string_size - 1);
+                        bu_free(format_string, "ged_make_pnts: format_string");
+                        rt_db_free_internal(&internal, &rt_uniresource);
                         return GED_ERROR;
                     }
                     temp_string[temp_string_index] = (char)NULL;
 
                     temp_double = strtod(temp_string, &endp);
                     if (!((temp_string != endp) && (*endp == '\0'))) {
-                        bu_log("ERROR: Unable to convert string '%s' to double.\n", temp_string);
                         report_import_error_location(num_doubles_read, num_doubles_per_point, start_offset_of_current_double,
-                                                          format_string[format_string_index]);
-                        /* do structure deallocate? */
+                                                     format_string[format_string_index], &gedp->ged_result_str);
+                        bu_vls_printf(&gedp->ged_result_str, "Unable to convert string '%s' to double.\n", temp_string);
+                        bu_free(format_string, "ged_make_pnts: format_string");
+                        rt_db_free_internal(&internal, &rt_uniresource);
                         return GED_ERROR;
                     }
                     num_doubles_read++;
@@ -744,14 +751,16 @@ ged_make_pnts(struct ged *gedp, int argc, const char *argv[])
     } /* loop exits when eof encountered */
 
     if (num_doubles_read < num_doubles_per_point) {
-        bu_log("ERROR: Number of values read inconsistent with point-cloud type.\n");
-        /* do structure deallocate? */
+        bu_vls_printf(&gedp->ged_result_str, "Number of values read inconsistent with point-cloud type.\n");
+        bu_free(format_string, "ged_make_pnts: format_string");
+        rt_db_free_internal(&internal, &rt_uniresource);
         return GED_ERROR;  /* aborts point-cloud creation */
     }
 
     if (num_doubles_read % num_doubles_per_point) {
-        bu_log("ERROR: Number of values read inconsistent with point-cloud type.\n");
-        /* do structure deallocate? */
+        bu_vls_printf(&gedp->ged_result_str, "Number of values read inconsistent with point-cloud type.\n");
+        bu_free(format_string, "ged_make_pnts: format_string");
+        rt_db_free_internal(&internal, &rt_uniresource);
         return GED_ERROR;  /* aborts point-cloud creation */
     }
 
