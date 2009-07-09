@@ -726,6 +726,7 @@ mk_metaball(
     mb->magic = RT_METABALL_INTERNAL_MAGIC;
     mb->threshold = threshold > 0 ? threshold : 1.0;
     mb->method = method >= 0 ? method : 2;	/* default to Blinn blob */
+    BU_LIST_INIT(&mb->metaball_ctrl_head);
 
     for (i = 0; i < nctlpt; i++) {
 	if( rt_metaball_add_point (mb, (const point_t *)verts[i], verts[i][3], verts[i][4]) != 0 ) {
