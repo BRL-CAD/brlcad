@@ -2013,10 +2013,7 @@ BU_EXPORT BU_EXTERN(const char *bu_which, (const char *cmd));
 BU_EXPORT BU_EXTERN(const char *bu_whereis, (const char *cmd));
 
 /* fopen_uniq */
-BU_EXPORT BU_EXTERN(FILE *bu_fopen_uniq,
-		    (const char *outfmt,
-		     const char *namefmt,
-		     int n));
+BU_EXPORT BU_EXTERN(FILE *bu_fopen_uniq, (const char *outfmt, const char *namefmt, int n)); /**< DEPRECATED */
 
 /* temp.c */
 BU_EXPORT BU_EXTERN(FILE *bu_temp_file, (char *filepath, size_t len));

@@ -2847,8 +2847,13 @@ rt_dsp_norm(register struct hit *hitp, struct soltab *stp, register struct xray 
     len = MAGNITUDE(t);
 
     if (RT_G_DEBUG & DEBUG_HF) {
-	fd = bu_fopen_uniq("plotting normals in %s",
-			   "dsp_gourand%02d.pl", plot_file_num++);
+	struct bu_vls str;
+
+	bu_vls_init(&str);
+	bu_vls_printf(&str, "dsp_gourand%02d.pl", plot_file_num++);
+	bu_log("plotting normals in %s", bu_vls_addr(&str));
+	fd = fopen(bu_vls_addr(&str), "w");
+	bu_vls_free(&str);
 
 	/* plot the ray */
 	pl_color(fd, 255, 0, 0);
