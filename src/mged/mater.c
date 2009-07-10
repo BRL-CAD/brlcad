@@ -129,47 +129,7 @@ color_zaprec(register struct mater *mp)
 void
 color_soltab(void)
 {
-    register struct solid *sp;
-    register struct mater *mp;
-
-    FOR_ALL_SOLIDS( sp, &gedp->ged_gdp->gd_headSolid )  {
-	sp->s_cflag = 0;
-
-	/* the user specified the color, so use it */
-	if ( sp->s_uflag ) {
-	    sp->s_color[0] = sp->s_basecolor[0];
-	    sp->s_color[1] = sp->s_basecolor[1];
-	    sp->s_color[2] = sp->s_basecolor[2];
-	    goto done;
-	}
-
-	for ( mp = rt_material_head(); mp != MATER_NULL; mp = mp->mt_forw )  {
-	    if ( sp->s_regionid <= mp->mt_high &&
-		 sp->s_regionid >= mp->mt_low ) {
-		sp->s_color[0] = mp->mt_r;
-		sp->s_color[1] = mp->mt_g;
-		sp->s_color[2] = mp->mt_b;
-		goto done;
-	    }
-	}
-
-	/*
-	 *  There is no region-id-based coloring entry in the
-	 *  table, so use the combination-record ("mater"
-	 *  command) based color if one was provided. Otherwise,
-	 *  use the default wireframe color.
-	 *  This is the "new way" of coloring things.
-	 */
-
-	/* use wireframe_default_color */
-	if (sp->s_dflag)
-	    sp->s_cflag = 1;
-	/* Be conservative and copy color anyway, to avoid black */
-	sp->s_color[0] = sp->s_basecolor[0];
-	sp->s_color[1] = sp->s_basecolor[1];
-	sp->s_color[2] = sp->s_basecolor[2];
-    done: ;
-    }
+    ged_color_soltab(&gedp->ged_gdp->gd_headDisplay);
     update_views = 1;		/* re-write control list with new colors */
 }
 

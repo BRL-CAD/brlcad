@@ -45,6 +45,8 @@
 int
 ged_plot(struct ged *gedp, int argc, const char *argv[])
 {
+    register struct ged_display_list *gdlp;
+    register struct ged_display_list *next_gdlp;
     register struct solid		*sp;
     register struct bn_vlist	*vp;
     register FILE *fp;
@@ -149,21 +151,30 @@ ged_plot(struct ged *gedp, int argc, const char *argv[])
 		  -gedp->ged_gvp->gv_center[MDZ] + gedp->ged_gvp->gv_scale);
 	Dashing = 0;
 	pl_linmod(fp, "solid");
-	FOR_ALL_SOLIDS(sp, &gedp->ged_gdp->gd_headSolid) {
-	    /* Could check for differences from last color */
-	    pl_color(fp,
-		     sp->s_color[0],
-		     sp->s_color[1],
-		     sp->s_color[2]);
-	    if (Dashing != sp->s_soldash)  {
-		if (sp->s_soldash)
-		    pl_linmod(fp, "dotdashed");
-		else
-		    pl_linmod(fp, "solid");
-		Dashing = sp->s_soldash;
+
+	gdlp = BU_LIST_NEXT(ged_display_list, &gedp->ged_gdp->gd_headDisplay);
+	while (BU_LIST_NOT_HEAD(gdlp, &gedp->ged_gdp->gd_headDisplay)) {
+	    next_gdlp = BU_LIST_PNEXT(ged_display_list, gdlp);
+
+	    FOR_ALL_SOLIDS(sp, &gdlp->gdl_headSolid) {
+		/* Could check for differences from last color */
+		pl_color(fp,
+			 sp->s_color[0],
+			 sp->s_color[1],
+			 sp->s_color[2]);
+		if (Dashing != sp->s_soldash)  {
+		    if (sp->s_soldash)
+			pl_linmod(fp, "dotdashed");
+		    else
+			pl_linmod(fp, "solid");
+		    Dashing = sp->s_soldash;
+		}
+		rt_vlist_to_uplot(fp, &(sp->s_vlist));
 	    }
-	    rt_vlist_to_uplot(fp, &(sp->s_vlist));
+
+	    gdlp = next_gdlp;
 	}
+
 	goto out;
     }
 
@@ -192,63 +203,71 @@ ged_plot(struct ged *gedp, int argc, const char *argv[])
     pl_erase(fp);
     Dashing = 0;
     pl_linmod(fp, "solid");
-    FOR_ALL_SOLIDS(sp, &gedp->ged_gdp->gd_headSolid)  {
-	if (Dashing != sp->s_soldash)  {
-	    if (sp->s_soldash)
-		pl_linmod(fp, "dotdashed");
-	    else
-		pl_linmod(fp, "solid");
-	    Dashing = sp->s_soldash;
-	}
-	for (BU_LIST_FOR(vp, bn_vlist, &(sp->s_vlist)))  {
-	    register int	i;
-	    register int	nused = vp->nused;
-	    register int	*cmd = vp->cmd;
-	    register point_t *pt = vp->pt;
-	    for (i = 0; i < nused; i++, cmd++, pt++)  {
-		switch (*cmd)  {
-		case BN_VLIST_POLY_START:
-		case BN_VLIST_POLY_VERTNORM:
-		    continue;
-		case BN_VLIST_POLY_MOVE:
-		case BN_VLIST_LINE_MOVE:
-		    /* Move, not draw */
-		    MAT4X3PNT(last, gedp->ged_gvp->gv_model2view, *pt);
-		    continue;
-		case BN_VLIST_POLY_DRAW:
-		case BN_VLIST_POLY_END:
-		case BN_VLIST_LINE_DRAW:
-		    /* draw */
-		    MAT4X3PNT(fin, gedp->ged_gvp->gv_model2view, *pt);
-		    VMOVE(start, last);
-		    VMOVE(last, fin);
-		    break;
-		}
-		if (ged_vclip(start, fin, clipmin, clipmax) == 0)
-		    continue;
 
-		if (Three_D)  {
-		    /* Could check for differences from last color */
-		    pl_color(fp,
-			     sp->s_color[0],
-			     sp->s_color[1],
-			     sp->s_color[2]);
-		    pl_3line(fp,
-			     (int)(start[X] * DG_GED_MAX),
-			     (int)(start[Y] * DG_GED_MAX),
-			     (int)(start[Z] * DG_GED_MAX),
-			     (int)(fin[X] * DG_GED_MAX),
-			     (int)(fin[Y] * DG_GED_MAX),
-			     (int)(fin[Z] * DG_GED_MAX));
-		}  else  {
-		    pl_line(fp,
-			    (int)(start[0] * DG_GED_MAX),
-			    (int)(start[1] * DG_GED_MAX),
-			    (int)(fin[0] * DG_GED_MAX),
-			    (int)(fin[1] * DG_GED_MAX));
+    gdlp = BU_LIST_NEXT(ged_display_list, &gedp->ged_gdp->gd_headDisplay);
+    while (BU_LIST_NOT_HEAD(gdlp, &gedp->ged_gdp->gd_headDisplay)) {
+	next_gdlp = BU_LIST_PNEXT(ged_display_list, gdlp);
+
+	FOR_ALL_SOLIDS(sp, &gdlp->gdl_headSolid) {
+	    if (Dashing != sp->s_soldash)  {
+		if (sp->s_soldash)
+		    pl_linmod(fp, "dotdashed");
+		else
+		    pl_linmod(fp, "solid");
+		Dashing = sp->s_soldash;
+	    }
+	    for (BU_LIST_FOR(vp, bn_vlist, &(sp->s_vlist)))  {
+		register int	i;
+		register int	nused = vp->nused;
+		register int	*cmd = vp->cmd;
+		register point_t *pt = vp->pt;
+		for (i = 0; i < nused; i++, cmd++, pt++)  {
+		    switch (*cmd)  {
+		    case BN_VLIST_POLY_START:
+		    case BN_VLIST_POLY_VERTNORM:
+			continue;
+		    case BN_VLIST_POLY_MOVE:
+		    case BN_VLIST_LINE_MOVE:
+			/* Move, not draw */
+			MAT4X3PNT(last, gedp->ged_gvp->gv_model2view, *pt);
+			continue;
+		    case BN_VLIST_POLY_DRAW:
+		    case BN_VLIST_POLY_END:
+		    case BN_VLIST_LINE_DRAW:
+			/* draw */
+			MAT4X3PNT(fin, gedp->ged_gvp->gv_model2view, *pt);
+			VMOVE(start, last);
+			VMOVE(last, fin);
+			break;
+		    }
+		    if (ged_vclip(start, fin, clipmin, clipmax) == 0)
+			continue;
+
+		    if (Three_D)  {
+			/* Could check for differences from last color */
+			pl_color(fp,
+				 sp->s_color[0],
+				 sp->s_color[1],
+				 sp->s_color[2]);
+			pl_3line(fp,
+				 (int)(start[X] * DG_GED_MAX),
+				 (int)(start[Y] * DG_GED_MAX),
+				 (int)(start[Z] * DG_GED_MAX),
+				 (int)(fin[X] * DG_GED_MAX),
+				 (int)(fin[Y] * DG_GED_MAX),
+				 (int)(fin[Z] * DG_GED_MAX));
+		    }  else  {
+			pl_line(fp,
+				(int)(start[0] * DG_GED_MAX),
+				(int)(start[1] * DG_GED_MAX),
+				(int)(fin[0] * DG_GED_MAX),
+				(int)(fin[1] * DG_GED_MAX));
+		    }
 		}
 	    }
 	}
+
+	gdlp = next_gdlp;
     }
 out:
     if (is_pipe)

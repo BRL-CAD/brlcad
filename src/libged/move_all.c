@@ -37,6 +37,7 @@
 int
 ged_move_all(struct ged *gedp, int argc, const char *argv[])
 {
+    register struct ged_display_list *gdlp;
     register int	i;
     register struct directory *dp;
     struct rt_db_internal	intern;
@@ -192,6 +193,45 @@ ged_move_all(struct ged *gedp, int argc, const char *argv[])
     }
 
     bu_ptbl_free(&stack);
+
+    /* Change object name anywhere in the display list path. */
+    for (BU_LIST_FOR(gdlp, ged_display_list, &gedp->ged_gdp->gd_headDisplay)) {
+	register int first = 1;
+	register int found = 0;
+	struct bu_vls new_path;
+	char *dup = strdup(bu_vls_addr(&gdlp->gdl_path));
+	char *tok = strtok(dup, "/");
+
+	bu_vls_init(&new_path);
+
+	while (tok) {
+	    if (!strcmp(tok, argv[1])) {
+		found = 1;
+
+		if (first) {
+		    first = 0;
+		    bu_vls_printf(&new_path, "%s", argv[2]);
+		} else
+		    bu_vls_printf(&new_path, "/%s", argv[2]);
+	    } else {
+		if (first) {
+		    first = 0;
+		    bu_vls_printf(&new_path, "%s", tok);
+		} else
+		    bu_vls_printf(&new_path, "/%s", tok);
+	    }
+
+	    tok = strtok((char *)NULL, "/");
+	}
+
+	if (found) {
+	    bu_vls_free(&gdlp->gdl_path);
+	    bu_vls_printf(&gdlp->gdl_path, "%S", &new_path);
+	}
+
+	free((void *)dup);
+	bu_vls_free(&new_path);
+    }
 
     return GED_OK;
 }

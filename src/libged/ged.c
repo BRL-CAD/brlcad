@@ -96,7 +96,7 @@ ged_drawable_init(struct ged_drawable *gdp)
     if (gdp == GED_DRAWABLE_NULL)
 	return;
 
-    BU_LIST_INIT(&gdp->gd_headSolid);
+    BU_LIST_INIT(&gdp->gd_headDisplay);
     BU_LIST_INIT(&gdp->gd_headVDraw);
 #if 0
     BU_LIST_INIT(&gdp->gd_observers.l);

@@ -151,20 +151,31 @@ f_copy_inv(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 struct solid *
 find_solid_with_path(register struct db_full_path *pathp)
 {
+    register struct ged_display_list *gdlp;
+    register struct ged_display_list *next_gdlp;
     register struct solid	*sp;
     int			count = 0;
     struct solid		*ret = (struct solid *)NULL;
 
     RT_CK_FULL_PATH(pathp);
 
-    FOR_ALL_SOLIDS(sp, &gedp->ged_gdp->gd_headSolid)  {
-	if ( !db_identical_full_paths( pathp, &sp->s_fullpath ) )  continue;
+    gdlp = BU_LIST_NEXT(ged_display_list, &gedp->ged_gdp->gd_headDisplay);
+    while (BU_LIST_NOT_HEAD(gdlp, &gedp->ged_gdp->gd_headDisplay)) {
+	next_gdlp = BU_LIST_PNEXT(ged_display_list, gdlp);
 
-	/* Paths are the same */
-	ret = sp;
-	count++;
+	FOR_ALL_SOLIDS(sp, &gdlp->gdl_headSolid) {
+	    if ( !db_identical_full_paths( pathp, &sp->s_fullpath ) )  continue;
+
+	    /* Paths are the same */
+	    illum_gdlp = gdlp;
+	    ret = sp;
+	    count++;
+	}
+
+	gdlp = next_gdlp;
     }
-    if ( count > 1 ) {
+
+    if (count > 1) {
 	struct bu_vls tmp_vls;
 
 	bu_vls_init(&tmp_vls);
@@ -190,11 +201,14 @@ find_solid_with_path(register struct db_full_path *pathp)
 int
 cmd_oed(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
+    register struct ged_display_list *gdlp;
+    register struct ged_display_list *next_gdlp;
     struct db_full_path	lhs;
     struct db_full_path	rhs;
     struct db_full_path	both;
     char			*new_argv[4];
     char			number[32];
+    int is_empty = 1;
 
     CHECK_DBI_NULL;
 
@@ -211,7 +225,21 @@ cmd_oed(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
     if ( not_state( ST_VIEW, "Object Illuminate" ) )  {
 	return TCL_ERROR;
     }
-    if (BU_LIST_IS_EMPTY(&gedp->ged_gdp->gd_headSolid)) {
+
+    /* Common part of illumination */
+    gdlp = BU_LIST_NEXT(ged_display_list, &gedp->ged_gdp->gd_headDisplay);
+    while (BU_LIST_NOT_HEAD(gdlp, &gedp->ged_gdp->gd_headDisplay)) {
+	next_gdlp = BU_LIST_PNEXT(ged_display_list, gdlp);
+
+	if (BU_LIST_NON_EMPTY(&gdlp->gdl_headSolid)) {
+	    is_empty = 0;
+	    break;
+	}
+
+	gdlp = next_gdlp;
+    }
+
+    if (is_empty) {
 	Tcl_AppendResult(interp, "no solids in view", (char *)NULL);
 	return TCL_ERROR;
     }
@@ -237,7 +265,8 @@ cmd_oed(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
     db_append_full_path( &both, &rhs );
 
     /* Patterned after  ill_common() ... */
-    illump = BU_LIST_NEXT(solid, &gedp->ged_gdp->gd_headSolid);/* any valid solid would do */
+    illum_gdlp = gdlp;
+    illump = BU_LIST_NEXT(solid, &gdlp->gdl_headSolid);/* any valid solid would do */
     edobj = 0;		/* sanity */
     movedir = 0;		/* No edit modes set */
     MAT_IDN( modelchanges );	/* No changes yet */
@@ -253,6 +282,7 @@ cmd_oed(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	db_free_full_path( &rhs );
 	db_free_full_path( &both );
 	Tcl_AppendResult(interp, "Unable to find solid matching path", (char *)NULL);
+	illum_gdlp = GED_DISPLAY_LIST_NULL;
 	illump = 0;
 	(void)chg_state( ST_O_PICK, ST_VIEW, "error recovery");
 	return TCL_ERROR;

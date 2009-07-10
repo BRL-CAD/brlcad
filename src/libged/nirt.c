@@ -70,6 +70,8 @@ extern void ged_cvt_vlblock_to_solids(struct ged *gedp, struct bn_vlblock *vbp, 
 int
 ged_nirt(struct ged *gedp, int argc, const char *argv[])
 {
+    register struct ged_display_list *gdlp;
+    register struct ged_display_list *next_gdlp;
     register char **vp;
     FILE *fp_in;
     FILE *fp_out, *fp_err;
@@ -569,8 +571,15 @@ ged_nirt(struct ged *gedp, int argc, const char *argv[])
 
 #endif
 
-    FOR_ALL_SOLIDS(sp, &gedp->ged_gdp->gd_headSolid)
-	sp->s_wflag = DOWN;
+    gdlp = BU_LIST_NEXT(ged_display_list, &gedp->ged_gdp->gd_headDisplay);
+    while (BU_LIST_NOT_HEAD(gdlp, &gedp->ged_gdp->gd_headDisplay)) {
+	next_gdlp = BU_LIST_PNEXT(ged_display_list, gdlp);
+
+	FOR_ALL_SOLIDS(sp, &gdlp->gdl_headSolid)
+	    sp->s_wflag = DOWN;
+
+	gdlp = next_gdlp;
+    }
 
     return GED_OK;
 }

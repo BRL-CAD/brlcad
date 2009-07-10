@@ -37,7 +37,7 @@
 int
 ged_who(struct ged *gedp, int argc, const char *argv[])
 {
-    register struct solid *sp;
+    register struct ged_display_list *gdlp;
     int skip_real, skip_phony;
     static const char *usage = "[r(eal)|p(hony)|b(oth)]";
 
@@ -75,31 +75,15 @@ ged_who(struct ged *gedp, int argc, const char *argv[])
 	}
     }
 
-
-    /* Find all unique top-level entries.
-     *  Mark ones already done with s_flag == UP
-     */
-    FOR_ALL_SOLIDS(sp, &gedp->ged_gdp->gd_headSolid)
-	sp->s_flag = DOWN;
-    FOR_ALL_SOLIDS(sp, &gedp->ged_gdp->gd_headSolid) {
-	register struct solid *forw;	/* XXX */
-
-	if (sp->s_flag == UP)
-	    continue;
-	if (FIRST_SOLID(sp)->d_addr == RT_DIR_PHONY_ADDR) {
+    for (BU_LIST_FOR(gdlp, ged_display_list, &gedp->ged_gdp->gd_headDisplay)) {
+	if (gdlp->gdl_dp->d_addr == RT_DIR_PHONY_ADDR) {
 	    if (skip_phony) continue;
 	} else {
 	    if (skip_real) continue;
 	}
-	bu_vls_printf(&gedp->ged_result_str, "%s ", FIRST_SOLID(sp)->d_namep);
-	sp->s_flag = UP;
-	FOR_REST_OF_SOLIDS(forw, sp, &gedp->ged_gdp->gd_headSolid) {
-	    if (FIRST_SOLID(forw) == FIRST_SOLID(sp))
-		forw->s_flag = UP;
-	}
+
+	bu_vls_printf(&gedp->ged_result_str, "%s ", bu_vls_addr(&gdlp->gdl_path));
     }
-    FOR_ALL_SOLIDS(sp, &gedp->ged_gdp->gd_headSolid)
-	sp->s_flag = DOWN;
 
     return GED_OK;
 }

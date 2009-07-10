@@ -256,11 +256,13 @@ edit_com(int	argc,
 	 int	kind,
 	 int	catch_sigint)
 {
+    register struct ged_display_list *gdlp;
+    register struct ged_display_list *next_gdlp;
     register struct dm_list *dmlp;
     register struct dm_list *save_dmlp;
     register struct cmd_list *save_cmd_list;
     int	ret;
-    int	initial_blank_screen;
+    int	initial_blank_screen = 1;
 
     int	flag_A_attr=0;
     int flag_R_noresize=0;
@@ -272,7 +274,18 @@ edit_com(int	argc,
 
     CHECK_DBI_NULL;
 
-    initial_blank_screen = BU_LIST_IS_EMPTY(&gedp->ged_gdp->gd_headSolid);
+    /* Common part of illumination */
+    gdlp = BU_LIST_NEXT(ged_display_list, &gedp->ged_gdp->gd_headDisplay);
+    while (BU_LIST_NOT_HEAD(gdlp, &gedp->ged_gdp->gd_headDisplay)) {
+	next_gdlp = BU_LIST_PNEXT(ged_display_list, gdlp);
+
+	if (BU_LIST_NON_EMPTY(&gdlp->gdl_headSolid)) {
+	    initial_blank_screen = 0;
+	    break;
+	}
+
+	gdlp = next_gdlp;
+    }
 
     /* check args for "-A" (attributes) and "-o" and "-R" */
     bu_vls_init( &vls );
@@ -410,6 +423,8 @@ edit_com(int	argc,
     save_dmlp = curr_dm_list;
     save_cmd_list = curr_cmd_list;
     FOR_ALL_DISPLAYS(dmlp, &head_dm_list.l) {
+	int non_empty = 0; /* start out empty */
+
 	curr_dm_list = dmlp;
 	if (curr_dm_list->dml_tie)
 	    curr_cmd_list = curr_dm_list->dml_tie;
@@ -418,9 +433,20 @@ edit_com(int	argc,
 
 	gedp->ged_gvp = view_state->vs_gvp;
 
+	gdlp = BU_LIST_NEXT(ged_display_list, &gedp->ged_gdp->gd_headDisplay);
+	while (BU_LIST_NOT_HEAD(gdlp, &gedp->ged_gdp->gd_headDisplay)) {
+	    next_gdlp = BU_LIST_PNEXT(ged_display_list, gdlp);
+
+	    if (BU_LIST_NON_EMPTY(&gdlp->gdl_headSolid)) {
+		non_empty = 1;
+		break;
+	    }
+
+	    gdlp = next_gdlp;
+	}
+
 	/* If we went from blank screen to non-blank, resize */
-	if (mged_variables->mv_autosize && initial_blank_screen &&
-	    BU_LIST_NON_EMPTY(&gedp->ged_gdp->gd_headSolid)) {
+	if (mged_variables->mv_autosize && initial_blank_screen && non_empty) {
 	    struct view_ring *vrp;
 	    char *av[2];
 
@@ -673,6 +699,8 @@ mged_freemem(void)
 int
 cmd_zap(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 {
+    register struct ged_display_list *gdlp;
+    register struct ged_display_list *next_gdlp;
     char *av[2] = {"zap", (char *)0};
 
     CHECK_DBI_NULL;
@@ -683,9 +711,15 @@ cmd_zap(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
     if (state != ST_VIEW)
 	button(BE_REJECT);
 
-    freeDListsAll(BU_LIST_FIRST(solid, &gedp->ged_gdp->gd_headSolid)->s_dlist,
-		  BU_LIST_LAST(solid, &gedp->ged_gdp->gd_headSolid)->s_dlist -
-		  BU_LIST_FIRST(solid, &gedp->ged_gdp->gd_headSolid)->s_dlist + 1);
+    gdlp = BU_LIST_NEXT(ged_display_list, &gedp->ged_gdp->gd_headDisplay);
+    while (BU_LIST_NOT_HEAD(gdlp, &gedp->ged_gdp->gd_headDisplay)) {
+	next_gdlp = BU_LIST_PNEXT(ged_display_list, gdlp);
+	freeDListsAll(BU_LIST_FIRST(solid, &gdlp->gdl_headSolid)->s_dlist,
+		      BU_LIST_LAST(solid, &gdlp->gdl_headSolid)->s_dlist -
+		      BU_LIST_FIRST(solid, &gdlp->gdl_headSolid)->s_dlist + 1);
+
+	gdlp = next_gdlp;
+    }
 
     ged_zap(gedp, 1, (const char **)av);
 
@@ -825,116 +859,6 @@ f_refresh(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
     return TCL_OK;
 }
 
-
-
-/*
- *			E R A S E O B J A L L
- *
- * This routine goes through the solid table and deletes all solids
- * from the solid list which contain the specified object anywhere in their 'path'
- */
-void
-eraseobjall(register struct directory **dpp)
-    /* this is a partial path spec. XXX should be db_full_path? */
-{
-    register struct directory **tmp_dpp;
-    register struct solid *sp;
-    register struct solid *nsp;
-    struct db_full_path	subpath;
-
-    if (dbip == DBI_NULL)
-	return;
-
-    update_views = 1;
-
-    db_full_path_init(&subpath);
-    for (tmp_dpp = dpp; *tmp_dpp != DIR_NULL; ++tmp_dpp)  {
-	RT_CK_DIR(*tmp_dpp);
-	db_add_node_to_full_path(&subpath, *tmp_dpp);
-    }
-
-    sp = BU_LIST_NEXT(solid, &gedp->ged_gdp->gd_headSolid);
-    while (BU_LIST_NOT_HEAD(sp, &gedp->ged_gdp->gd_headSolid)) {
-	nsp = BU_LIST_PNEXT(solid, sp);
-
-	if ( db_full_path_subset( &sp->s_fullpath, &subpath ) )  {
-	    freeDListsAll(sp->s_dlist, 1);
-
-	    if (state != ST_VIEW && illump == sp)
-		button(BE_REJECT);
-
-	    BU_LIST_DEQUEUE(&sp->l);
-	    FREE_SOLID(sp, &MGED_FreeSolid.l);
-	}
-	sp = nsp;
-    }
-
-    if ((*dpp)->d_addr == RT_DIR_PHONY_ADDR) {
-	if (db_dirdelete(dbip, *dpp) < 0) {
-	    Tcl_AppendResult(interp, "eraseobjall: db_dirdelete failed\n", (char *)NULL);
-	}
-    }
-
-    db_free_full_path(&subpath);
-}
-
-
-/*
- *			E R A S E O B J
- *
- * This routine goes through the solid table and deletes all solids
- * from the solid list which contain the specified object at the
- * beginning of their 'path'
- */
-void
-eraseobj(register struct directory **dpp)
-    /* this is a partial path spec. XXX should be db_full_path? */
-{
-    register struct directory **tmp_dpp;
-    register struct solid *sp;
-    register struct solid *nsp;
-    struct db_full_path	subpath;
-
-    if (dbip == DBI_NULL)
-	return;
-
-    if (*dpp == DIR_NULL)
-	return;
-
-    update_views = 1;
-
-    db_full_path_init(&subpath);
-    for (tmp_dpp = dpp; *tmp_dpp != DIR_NULL; ++tmp_dpp)  {
-	RT_CK_DIR(*tmp_dpp);
-	db_add_node_to_full_path(&subpath, *tmp_dpp);
-    }
-
-    sp = BU_LIST_FIRST(solid, &gedp->ged_gdp->gd_headSolid);
-    while (BU_LIST_NOT_HEAD(sp, &gedp->ged_gdp->gd_headSolid)) {
-	nsp = BU_LIST_PNEXT(solid, sp);
-
-	if ( db_full_path_subset( &sp->s_fullpath, &subpath ) )  {
-	    freeDListsAll(sp->s_dlist, 1);
-
-	    if (state != ST_VIEW && illump == sp)
-		button( BE_REJECT );
-
-	    BU_LIST_DEQUEUE(&sp->l);
-	    FREE_SOLID(sp, &MGED_FreeSolid.l);
-	}
-	sp = nsp;
-    }
-
-    if ((*dpp)->d_addr == RT_DIR_PHONY_ADDR ) {
-	if (db_dirdelete(dbip, *dpp) < 0) {
-	    Tcl_AppendResult(interp, "eraseobj: db_dirdelete failed\n", (char *)NULL);
-	}
-    }
-
-    db_free_full_path(&subpath);
-}
-
-
 /*
  *			P R _ S C H A I N
  *
@@ -1038,6 +962,8 @@ static char ** path_parse (char *path);
 int
 f_ill(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 {
+    register struct ged_display_list *gdlp;
+    register struct ged_display_list *next_gdlp;
     register struct directory *dp;
     register struct solid *sp;
     struct solid *lastfound = SOLID_NULL;
@@ -1165,30 +1091,37 @@ f_ill(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 	goto bail_out;
     }
 
-    FOR_ALL_SOLIDS(sp, &gedp->ged_gdp->gd_headSolid) {
-	int	a_new_match;
+    gdlp = BU_LIST_NEXT(ged_display_list, &gedp->ged_gdp->gd_headDisplay);
+    while (BU_LIST_NOT_HEAD(gdlp, &gedp->ged_gdp->gd_headDisplay)) {
+	next_gdlp = BU_LIST_PNEXT(ged_display_list, gdlp);
+
+	FOR_ALL_SOLIDS(sp, &gdlp->gdl_headSolid) {
+	    int	a_new_match;
 
 /* XXX Could this make use of db_full_path_subset()? */
-	if (nmatch == 0 || nmatch != ri) {
-	    i = sp -> s_fullpath.fp_len-1;
-	    if (DB_FULL_PATH_GET(&sp->s_fullpath, i) == dp) {
-		a_new_match = 1;
-		j = nm_pieces - 1;
-		for (; a_new_match && (i >= 0) && (j >= 0); --i, --j) {
-		    sname = DB_FULL_PATH_GET(&sp->s_fullpath, i)->d_namep;
-		    if ((*sname != *(path_piece[j]))
-			|| strcmp(sname, path_piece[j]))
-			a_new_match = 0;
-		}
+	    if (nmatch == 0 || nmatch != ri) {
+		i = sp -> s_fullpath.fp_len-1;
+		if (DB_FULL_PATH_GET(&sp->s_fullpath, i) == dp) {
+		    a_new_match = 1;
+		    j = nm_pieces - 1;
+		    for (; a_new_match && (i >= 0) && (j >= 0); --i, --j) {
+			sname = DB_FULL_PATH_GET(&sp->s_fullpath, i)->d_namep;
+			if ((*sname != *(path_piece[j]))
+			    || strcmp(sname, path_piece[j]))
+			    a_new_match = 0;
+		    }
 
-		if (a_new_match && ((i >= 0) || (j < 0))) {
-		    lastfound = sp;
-		    ++nmatch;
+		    if (a_new_match && ((i >= 0) || (j < 0))) {
+			lastfound = sp;
+			++nmatch;
+		    }
 		}
 	    }
+
+	    sp->s_iflag = DOWN;
 	}
 
-	sp->s_iflag = DOWN;
+	gdlp = next_gdlp;
     }
 
     if (nmatch == 0) {
@@ -1265,6 +1198,10 @@ f_ill(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 int
 f_sed(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 {
+    register struct ged_display_list *gdlp;
+    register struct ged_display_list *next_gdlp;
+    int is_empty = 1;
+
     CHECK_DBI_NULL;
     CHECK_READ_ONLY;
 
@@ -1280,7 +1217,21 @@ f_sed(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 
     if ( not_state( ST_VIEW, "keyboard solid edit start") )
 	return TCL_ERROR;
-    if (BU_LIST_IS_EMPTY(&gedp->ged_gdp->gd_headSolid)) {
+
+    /* Common part of illumination */
+    gdlp = BU_LIST_NEXT(ged_display_list, &gedp->ged_gdp->gd_headDisplay);
+    while (BU_LIST_NOT_HEAD(gdlp, &gedp->ged_gdp->gd_headDisplay)) {
+	next_gdlp = BU_LIST_PNEXT(ged_display_list, gdlp);
+
+	if (BU_LIST_NON_EMPTY(&gdlp->gdl_headSolid)) {
+	    is_empty = 0;
+	    break;
+	}
+
+	gdlp = next_gdlp;
+    }
+
+    if (is_empty) {
 	Tcl_AppendResult(interp, "no solids being displayed\n",  (char *)NULL);
 	return TCL_ERROR;
     }

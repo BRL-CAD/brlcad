@@ -248,6 +248,7 @@ extern void stop_catching_output(struct bu_vls *vp);
  * Pointer to solid in solid table to be illuminated. - defined in
  * usepen.c
  */
+extern struct ged_display_list *illum_gdlp;
 extern struct solid *illump;/* == 0 if none, else points to ill. solid */
 extern int sedraw;		/* apply solid editing changes */
 
@@ -642,7 +643,7 @@ void add_solid_path_to_result(
 
 /* dozoom.c */
 void createDList(struct solid *sp);
-void createDLists(struct bu_list *hsp);
+void createDLists(struct bu_list *hdlp);
 void createDListALL(struct solid *sp);
 void createDListsAll(struct bu_list *hsp);
 void freeDListsAll(unsigned int dlist, int range);

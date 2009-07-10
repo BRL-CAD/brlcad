@@ -285,6 +285,8 @@ ged_rt_write(struct ged *gedp,
 	     FILE	*fp,
 	     vect_t	eye_model)
 {
+    register struct ged_display_list *gdlp;
+    register struct ged_display_list *next_gdlp;
     register int	i;
     quat_t		quat;
     register struct solid *sp;
@@ -296,28 +298,51 @@ ged_rt_write(struct ged *gedp,
 		  eye_model[X], eye_model[Y], eye_model[Z] );
 
     (void)fprintf(fp, "start 0; clean;\n");
-    FOR_ALL_SOLIDS (sp, &gedp->ged_gdp->gd_headSolid) {
-	for (i=0;i<sp->s_fullpath.fp_len;i++) {
-	    DB_FULL_PATH_GET(&sp->s_fullpath, i)->d_flags &= ~DIR_USED;
-	}
-    }
-    FOR_ALL_SOLIDS(sp, &gedp->ged_gdp->gd_headSolid) {
-	for (i=0; i<sp->s_fullpath.fp_len; i++ ) {
-	    if (!(DB_FULL_PATH_GET(&sp->s_fullpath, i)->d_flags & DIR_USED)) {
-		register struct animate *anp;
-		for (anp = DB_FULL_PATH_GET(&sp->s_fullpath, i)->d_animate; anp;
-		     anp=anp->an_forw) {
-		    db_write_anim(fp, anp);
-		}
-		DB_FULL_PATH_GET(&sp->s_fullpath, i)->d_flags |= DIR_USED;
+
+    gdlp = BU_LIST_NEXT(ged_display_list, &gedp->ged_gdp->gd_headDisplay);
+    while (BU_LIST_NOT_HEAD(gdlp, &gedp->ged_gdp->gd_headDisplay)) {
+	next_gdlp = BU_LIST_PNEXT(ged_display_list, gdlp);
+
+	FOR_ALL_SOLIDS(sp, &gdlp->gdl_headSolid) {
+	    for (i=0;i<sp->s_fullpath.fp_len;i++) {
+		DB_FULL_PATH_GET(&sp->s_fullpath, i)->d_flags &= ~DIR_USED;
 	    }
 	}
+
+	gdlp = next_gdlp;
     }
 
-    FOR_ALL_SOLIDS(sp, &gedp->ged_gdp->gd_headSolid) {
-	for (i=0;i< sp->s_fullpath.fp_len;i++) {
-	    DB_FULL_PATH_GET(&sp->s_fullpath, i)->d_flags &= ~DIR_USED;
+    gdlp = BU_LIST_NEXT(ged_display_list, &gedp->ged_gdp->gd_headDisplay);
+    while (BU_LIST_NOT_HEAD(gdlp, &gedp->ged_gdp->gd_headDisplay)) {
+	next_gdlp = BU_LIST_PNEXT(ged_display_list, gdlp);
+
+	FOR_ALL_SOLIDS(sp, &gdlp->gdl_headSolid) {
+	    for (i=0; i<sp->s_fullpath.fp_len; i++ ) {
+		if (!(DB_FULL_PATH_GET(&sp->s_fullpath, i)->d_flags & DIR_USED)) {
+		    register struct animate *anp;
+		    for (anp = DB_FULL_PATH_GET(&sp->s_fullpath, i)->d_animate; anp;
+			 anp=anp->an_forw) {
+			db_write_anim(fp, anp);
+		    }
+		    DB_FULL_PATH_GET(&sp->s_fullpath, i)->d_flags |= DIR_USED;
+		}
+	    }
 	}
+
+	gdlp = next_gdlp;
+    }
+
+    gdlp = BU_LIST_NEXT(ged_display_list, &gedp->ged_gdp->gd_headDisplay);
+    while (BU_LIST_NOT_HEAD(gdlp, &gedp->ged_gdp->gd_headDisplay)) {
+	next_gdlp = BU_LIST_PNEXT(ged_display_list, gdlp);
+
+	FOR_ALL_SOLIDS(sp, &gdlp->gdl_headSolid) {
+	    for (i=0;i< sp->s_fullpath.fp_len;i++) {
+		DB_FULL_PATH_GET(&sp->s_fullpath, i)->d_flags &= ~DIR_USED;
+	    }
+	}
+
+	gdlp = next_gdlp;
     }
     (void)fprintf(fp, "end;\n");
 }
@@ -436,35 +461,21 @@ ged_build_tops(struct ged	*gedp,
 	       char		**start,
 	       register char	**end)
 {
+    struct ged_display_list *gdlp;
     register char **vp = start;
-    register struct solid *sp;
 
-    /*
-     * Find all unique top-level entries.
-     * Mark ones already done with s_flag == UP
-     */
-    FOR_ALL_SOLIDS(sp, &gedp->ged_gdp->gd_headSolid)
-	sp->s_flag = DOWN;
-    FOR_ALL_SOLIDS(sp, &gedp->ged_gdp->gd_headSolid) {
-	register struct solid *forw;
-	struct directory *dp = FIRST_SOLID(sp);
-
-	if (sp->s_flag == UP)
+    for (BU_LIST_FOR(gdlp, ged_display_list, &gedp->ged_gdp->gd_headDisplay)) {
+	if (gdlp->gdl_dp->d_addr == RT_DIR_PHONY_ADDR)
 	    continue;
-	if (dp->d_addr == RT_DIR_PHONY_ADDR)
-	    continue;	/* Ignore overlays, predictor, etc */
+
 	if (vp < end)
-	    *vp++ = dp->d_namep;
+	    *vp++ = bu_vls_addr(&gdlp->gdl_path);
 	else  {
-	    bu_vls_printf(&gedp->ged_result_str, "libged: ran out of command vector space at %s\n", dp->d_namep);
+	    bu_vls_printf(&gedp->ged_result_str, "libged: ran out of command vector space at %s\n", gdlp->gdl_dp->d_namep);
 	    break;
 	}
-	sp->s_flag = UP;
-	for (BU_LIST_PFOR(forw, sp, solid, &gedp->ged_gdp->gd_headSolid)) {
-	    if (FIRST_SOLID(forw) == dp)
-		forw->s_flag = UP;
-	}
     }
+
     *vp = (char *) 0;
     return vp-start;
 }
@@ -481,6 +492,8 @@ ged_rt_set_eye_model(struct ged *gedp,
 	MAT4X3PNT(eye_model, gedp->ged_gvp->gv_view2model, temp);
     } else {
 	/* not doing zclipping, so back out of geometry */
+	register struct ged_display_list *gdlp;
+	register struct ged_display_list *next_gdlp;
 	register struct solid *sp;
 	register int i;
 	vect_t  direction;
@@ -495,16 +508,24 @@ ged_rt_set_eye_model(struct ged *gedp,
 	    extremum[1][i] = -INFINITY;
 	}
 
-	FOR_ALL_SOLIDS (sp, &gedp->ged_gdp->gd_headSolid) {
-	    minus[X] = sp->s_center[X] - sp->s_size;
-	    minus[Y] = sp->s_center[Y] - sp->s_size;
-	    minus[Z] = sp->s_center[Z] - sp->s_size;
-	    VMIN( extremum[0], minus );
-	    plus[X] = sp->s_center[X] + sp->s_size;
-	    plus[Y] = sp->s_center[Y] + sp->s_size;
-	    plus[Z] = sp->s_center[Z] + sp->s_size;
-	    VMAX( extremum[1], plus );
+	gdlp = BU_LIST_NEXT(ged_display_list, &gedp->ged_gdp->gd_headDisplay);
+	while (BU_LIST_NOT_HEAD(gdlp, &gedp->ged_gdp->gd_headDisplay)) {
+	    next_gdlp = BU_LIST_PNEXT(ged_display_list, gdlp);
+
+	    FOR_ALL_SOLIDS(sp, &gdlp->gdl_headSolid) {
+		minus[X] = sp->s_center[X] - sp->s_size;
+		minus[Y] = sp->s_center[Y] - sp->s_size;
+		minus[Z] = sp->s_center[Z] - sp->s_size;
+		VMIN( extremum[0], minus );
+		plus[X] = sp->s_center[X] + sp->s_size;
+		plus[Y] = sp->s_center[Y] + sp->s_size;
+		plus[Z] = sp->s_center[Z] + sp->s_size;
+		VMAX( extremum[1], plus );
+	    }
+
+	    gdlp = next_gdlp;
 	}
+
 	VMOVEN(direction, gedp->ged_gvp->gv_rotation + 8, 3);
 	for (i = 0; i < 3; ++i)
 	    if (NEAR_ZERO(direction[i], 1e-10))

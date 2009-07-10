@@ -57,10 +57,13 @@ ged_killall(struct ged *gedp, int argc, const char *argv[])
 	return GED_ERROR;
     }
 
+    gedp->ged_internal_call = 1;
     if ((ret = ged_killrefs(gedp, argc, argv)) != GED_OK) {
+	gedp->ged_internal_call = 0;
 	bu_vls_printf(&gedp->ged_result_str, "KILL skipped because of earlier errors.\n");
 	return ret;
     }
+    gedp->ged_internal_call = 0;
 
     /* ALL references removed...now KILL the object[s] */
     /* reuse argv[] */

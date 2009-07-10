@@ -90,6 +90,8 @@ struct rt_imexport vertex_desc[] = {
 int
 f_polybinout(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
+    register struct ged_display_list *gdlp;
+    register struct ged_display_list *next_gdlp;
     register struct solid		*sp;
     register struct bn_vlist	*vp;
     FILE	*fp;
@@ -115,15 +117,19 @@ f_polybinout(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	return TCL_ERROR;
     }
 
-    FOR_ALL_SOLIDS(sp, &gedp->ged_gdp->gd_headSolid)  {
-	for ( BU_LIST_FOR( vp, bn_vlist, &(sp->s_vlist) ) )  {
-	    register int	i;
-	    register int	nused = vp->nused;
-	    register int	*cmd = vp->cmd;
-	    register point_t *pt = vp->pt;
-	    for ( i = 0; i < nused; i++, cmd++, pt++ )  {
-		/* For each polygon, spit it out.  Ignore vectors */
-		switch ( *cmd )  {
+    gdlp = BU_LIST_NEXT(ged_display_list, &gedp->ged_gdp->gd_headDisplay);
+    while (BU_LIST_NOT_HEAD(gdlp, &gedp->ged_gdp->gd_headDisplay)) {
+	next_gdlp = BU_LIST_PNEXT(ged_display_list, gdlp);
+
+	FOR_ALL_SOLIDS(sp, &gdlp->gdl_headSolid) {
+	    for ( BU_LIST_FOR( vp, bn_vlist, &(sp->s_vlist) ) )  {
+		register int	i;
+		register int	nused = vp->nused;
+		register int	*cmd = vp->cmd;
+		register point_t *pt = vp->pt;
+		for ( i = 0; i < nused; i++, cmd++, pt++ )  {
+		    /* For each polygon, spit it out.  Ignore vectors */
+		    switch ( *cmd )  {
 		    case BN_VLIST_LINE_MOVE:
 			/* Move, start line */
 			break;
@@ -202,10 +208,14 @@ f_polybinout(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 			db_free_external( &obuf );
 			ph.npts = 0;		/* sanity */
 			break;
+		    }
 		}
 	    }
 	}
+
+	gdlp = next_gdlp;
     }
+
     fclose( fp );
     return TCL_OK;
 }

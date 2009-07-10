@@ -36,6 +36,7 @@
 int
 ged_move(struct ged *gedp, int argc, const char *argv[])
 {
+    register struct ged_display_list *gdlp;
     register struct directory	*dp;
     struct rt_db_internal		intern;
     static const char *usage = "from to";
@@ -82,6 +83,40 @@ ged_move(struct ged *gedp, int argc, const char *argv[])
     if (rt_db_put_internal(dp, gedp->ged_wdbp->dbip, &intern, &rt_uniresource) < 0) {
 	bu_vls_printf(&gedp->ged_result_str, "Database write error, aborting");
 	return GED_ERROR;
+    }
+
+    /* Change object name if it matches the first element in the display list path. */
+    for (BU_LIST_FOR(gdlp, ged_display_list, &gedp->ged_gdp->gd_headDisplay)) {
+	register int first = 1;
+	register int found = 0;
+	struct bu_vls new_path;
+	char *dup = strdup(bu_vls_addr(&gdlp->gdl_path));
+	char *tok = strtok(dup, "/");
+
+	bu_vls_init(&new_path);
+
+	while (tok) {
+	    if (first) {
+		first = 0;
+
+		if (!strcmp(tok, argv[1])) {
+		    found = 1;
+		    bu_vls_printf(&new_path, "%s", argv[2]);
+		} else
+		    break; /* no need to go further */
+	    } else
+		bu_vls_printf(&new_path, "/%s", tok);
+
+	    tok = strtok((char *)NULL, "/");
+	}
+
+	if (found) {
+	    bu_vls_free(&gdlp->gdl_path);
+	    bu_vls_printf(&gdlp->gdl_path, "%S", &new_path);
+	}
+
+	free((void *)dup);
+	bu_vls_free(&new_path);
     }
 
     return GED_OK;

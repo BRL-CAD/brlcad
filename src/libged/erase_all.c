@@ -43,8 +43,7 @@
 int
 ged_erase_all(struct ged *gedp, int argc, const char *argv[])
 {
-    int found = 0;
-    int illum = 1;
+    register int i;
     static const char *usage = "objects(s)";
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
@@ -60,7 +59,8 @@ ged_erase_all(struct ged *gedp, int argc, const char *argv[])
 	return GED_HELP;
     }
 
-    ged_eraseobjpath(gedp, argc-1, argv+1, LOOKUP_QUIET, 1);
+    for (i = 1; i < argc; ++i)
+	ged_eraseAllPathsFromDisplay(gedp, argv[i], 0);
 
     return GED_OK;
 }

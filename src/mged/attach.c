@@ -491,7 +491,7 @@ mged_attach(
     share_dlist(curr_dm_list);
 
     if (displaylist && mged_variables->mv_dlist && !dlist_state->dl_active) {
-	createDLists(&gedp->ged_gdp->gd_headSolid);
+	createDLists(&gedp->ged_gdp->gd_headDisplay);
 	dlist_state->dl_active = 1;
     }
 

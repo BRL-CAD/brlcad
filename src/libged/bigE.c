@@ -2080,6 +2080,7 @@ fix_halfs(struct ged_client_data *dgcdp)
 int
 ged_E(struct ged *gedp, int argc, const char *argv[])
 {
+    register int i;
     register int c;
     struct ged_client_data *dgcdp;
     static const char *usage = "[-C#/#/# -s] objects(s)";
@@ -2151,7 +2152,10 @@ ged_E(struct ged *gedp, int argc, const char *argv[])
     argc -= bu_optind;
     argv += bu_optind;
 
-    ged_eraseobjpath(gedp, argc-1, argv+1, LOOKUP_QUIET, 0);
+    for (i = 0; i < argc; ++i) {
+	ged_erasePathFromDisplay(gedp, argv[i]);
+	ged_addToDisplay(gedp, argv[i]);
+    }
 
 #if 0
     gedp->ged_wdbp->wdb_ttol.magic = RT_TESS_TOL_MAGIC;
@@ -2217,7 +2221,7 @@ ged_E(struct ged *gedp, int argc, const char *argv[])
 	bu_free((char *)dgcdp->rtip, "rt_i structure for 'E'");
     }
 
-    ged_color_soltab((struct solid *)&gedp->ged_gdp->gd_headSolid);
+    ged_color_soltab(&gedp->ged_gdp->gd_headDisplay);
     (void)time(&dgcdp->etime);
 
     /* free leaf_list */

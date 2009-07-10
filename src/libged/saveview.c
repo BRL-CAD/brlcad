@@ -41,6 +41,8 @@ static char *ged_basename_without_suffix(register const char *p1, register const
 int
 ged_saveview(struct ged *gedp, int argc, const char *argv[])
 {
+    register struct ged_display_list *gdlp;
+    register struct ged_display_list *next_gdlp;
     register struct solid *sp;
     register int i;
     register FILE *fp;
@@ -134,25 +136,13 @@ ged_saveview(struct ged *gedp, int argc, const char *argv[])
     }
     (void)fprintf(fp, " %s\\\n ", inputg);
 
-    /* Find all unique top-level entries.
-     *  Mark ones already done with s_wflag == UP
-     */
-    FOR_ALL_SOLIDS(sp, &gedp->ged_gdp->gd_headSolid)
-	sp->s_wflag = DOWN;
-    FOR_ALL_SOLIDS(sp, &gedp->ged_gdp->gd_headSolid)  {
-	register struct solid *forw;	/* XXX */
-	struct directory *dp = FIRST_SOLID(sp);
-
-	if ( sp->s_wflag == UP )
-	    continue;
-	if (dp->d_addr == RT_DIR_PHONY_ADDR) continue;
-	(void)fprintf(fp, "'%s' ", dp->d_namep);
-	sp->s_wflag = UP;
-	for (BU_LIST_PFOR(forw, sp, solid, &gedp->ged_gdp->gd_headSolid)) {
-	    if ( FIRST_SOLID(forw) == dp )
-		forw->s_wflag = UP;
-	}
+    gdlp = BU_LIST_NEXT(ged_display_list, &gedp->ged_gdp->gd_headDisplay);
+    while (BU_LIST_NOT_HEAD(gdlp, &gedp->ged_gdp->gd_headDisplay)) {
+	next_gdlp = BU_LIST_PNEXT(ged_display_list, gdlp);
+	(void)fprintf(fp, "'%s' ", bu_vls_addr(&gdlp->gdl_path));
+	gdlp = next_gdlp;
     }
+
     (void)fprintf(fp, "\\\n 2>> %s\\\n", outlog);
     (void)fprintf(fp, " <<EOF\n");
 
@@ -165,9 +155,6 @@ ged_saveview(struct ged *gedp, int argc, const char *argv[])
 
     (void)fprintf(fp, "\nEOF\n");
     (void)fclose( fp );
-
-    FOR_ALL_SOLIDS(sp, &gedp->ged_gdp->gd_headSolid)
-	sp->s_wflag = DOWN;
 
     return GED_OK;
 }

@@ -84,8 +84,6 @@ ged_killtree(struct ged *gedp, int argc, const char *argv[])
 	gktd.killrefs = 0;
 
     for (i=1; i<argc; i++) {
-	struct directory *dpp[2];
-
 	if ((dp = db_lookup(gedp->ged_wdbp->dbip, argv[i], LOOKUP_NOISY)) == DIR_NULL)
 	    continue;
 
@@ -93,17 +91,15 @@ ged_killtree(struct ged *gedp, int argc, const char *argv[])
 	if (dp->d_addr == RT_DIR_PHONY_ADDR)
 	    continue;
 
-	dpp[0] = dp;
-	dpp [1] = DIR_NULL;
-	ged_eraseobjall(gedp, dpp);
-
 	db_functree(gedp->ged_wdbp->dbip, dp,
 		    ged_killtree_callback, ged_killtree_callback,
 		    gedp->ged_wdbp->wdb_resp, (genptr_t)&gktd);
     }
 
     if (gktd.killrefs && gktd.ac > 1) {
+	gedp->ged_internal_call = 1;
 	(void)ged_killrefs(gedp, gktd.ac, (const char **)gktd.av);
+	gedp->ged_internal_call = 0;
 
 	for (i=1; i<gktd.ac; i++) {
 	    bu_vls_printf(&gedp->ged_result_str, "Freeing %s\n", gktd.av[i]);
@@ -122,10 +118,13 @@ ged_killtree_callback(struct db_i		*dbip,
 		      register struct directory *dp,
 		      genptr_t			ptr)
 {
+    struct directory *dpp[2];
     struct ged_killtree_data *gktdp = (struct ged_killtree_data *)ptr;
 
     if (dbip == DBI_NULL)
 	return;
+
+    ged_eraseAllNamesFromDisplay(gktdp->gedp, dp->d_namep, 0);
 
     bu_vls_printf(&gktdp->gedp->ged_result_str, "KILL %s:  %s\n",
 		  (dp->d_flags & DIR_COMB) ? "COMB" : "Solid",

@@ -71,6 +71,7 @@ __BEGIN_DECLS
 #define INV_4096_V 0.000244140625
 
 #define GED_NULL (struct ged *)0
+#define GED_DISPLAY_LIST_NULL (struct ged_display_list *)0
 #define GED_DRAWABLE_NULL (struct ged_drawable *)0
 #define GED_VIEW_NULL (struct ged_view *)0
 
@@ -339,9 +340,16 @@ struct ged_qray_fmt {
     struct bu_vls fmt;
 };
 
+struct ged_display_list {
+    struct bu_list	l;
+    struct directory	*gdl_dp;
+    struct bu_vls	gdl_path;
+    struct bu_list	gdl_headSolid;		/**< @brief  head of solid list for this object */
+};
+
 struct ged_drawable {
     struct bu_list		l;
-    struct bu_list		gd_headSolid;		/**< @brief  head of solid list */
+    struct bu_list		gd_headDisplay;		/**< @brief  head of display list */
     struct bu_list		gd_headVDraw;		/**< @brief  head of vdraw list */
     struct vd_curve		*gd_currVHead;		/**< @brief  current vdraw head */
     struct solid		*gd_freeSolids;		/**< @brief  ptr to head of free solid list */
@@ -430,6 +438,8 @@ struct ged {
     void			(*ged_refresh_handler)();	/**< @brief  function for handling refresh requests */
     void			(*ged_output_handler)();	/**< @brief  function for handling output */
     char			*ged_output_script;		/**< @brief  script for use by the outputHandler */
+
+    int 			ged_internal_call;
 };
 
 typedef int (*ged_func_ptr)(struct ged *, int, const char *[]);
@@ -510,7 +520,7 @@ GED_EXPORT BU_EXTERN(int ged_inside_internal,
 		     (struct ged *gedp,
 		      struct rt_db_internal *ip,
 		      int argc,
-		      char *argv[],
+		      const char *argv[],
 		      int arg,
 		      char *o_name));
 

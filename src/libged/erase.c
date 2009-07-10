@@ -44,8 +44,7 @@
 int
 ged_erase(struct ged *gedp, int argc, const char *argv[])
 {
-    int found = 0;
-    int illum = 1;
+    register int i;
     static const char *usage = "objects(s)";
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
@@ -61,233 +60,197 @@ ged_erase(struct ged *gedp, int argc, const char *argv[])
 	return GED_HELP;
     }
 
-    ged_eraseobjpath(gedp, argc-1, argv+1, LOOKUP_QUIET, 0);
+    for (i = 1; i < argc; ++i)
+	ged_erasePathFromDisplay(gedp, argv[i]);
 
     return GED_OK;
 }
 
-
 /*
- * Builds an array of directory pointers from argv and calls
- * either ged_eraseobj or ged_eraseobjall.
+ * Erase/remove the display list item from headDisplay if path matches the list item's path.
+ *
  */
 void
-ged_eraseobjpath(struct ged	*gedp,
-		 int		argc,
-		 const char	*argv[],
-		 int		noisy,
-		 int		all)
+ged_erasePathFromDisplay(struct ged *gedp,
+			 const char *path)
 {
-    register struct directory *dp;
-    register int i;
+    register struct ged_display_list *gdlp;
+    register struct ged_display_list *next_gdlp;
+    register struct solid *sp;
+    struct directory *dp;
 
-    for (i = 0; i < argc; i++) {
-	int j;
-	int ac, ac_orig;
-	char **av, **av_orig;
-	struct directory **dpp = (struct directory **)0;
+    gdlp = BU_LIST_NEXT(ged_display_list, &gedp->ged_gdp->gd_headDisplay);
+    while (BU_LIST_NOT_HEAD(gdlp, &gedp->ged_gdp->gd_headDisplay)) {
+	next_gdlp = BU_LIST_PNEXT(ged_display_list, gdlp);
 
-	ac_orig = 1;
+	if (!strcmp(path, bu_vls_addr(&gdlp->gdl_path))) {
+	    /* Free up the solids list associated with this display list */
+	    while (BU_LIST_WHILE(sp, solid, &gdlp->gdl_headSolid)) {
+		dp = FIRST_SOLID(sp);
+		RT_CK_DIR(dp);
+		if (dp->d_addr == RT_DIR_PHONY_ADDR) {
+		    if (db_dirdelete(gedp->ged_wdbp->dbip, dp) < 0) {
+			bu_vls_printf(&gedp->ged_result_str, "ged_zap: db_dirdelete failed\n");
+		    }
+		}
 
-	{
-	    char *begin;
-	    char *end;
-	    char *newstr = strdup(argv[i]);
-	    int n;
-
-	    /* First count the number of '/' */
-	    begin = newstr;
-	    while ((end = strchr(begin, '/')) != NULL) {
-		begin = end + 1;
-		++ac_orig;
+		BU_LIST_DEQUEUE(&sp->l);
+		FREE_SOLID(sp, &FreeSolid.l);
 	    }
-	    av_orig = (char **)bu_calloc(ac_orig+1, sizeof(char *), "ged_eraseobjpath");
 
-	    begin = newstr;
-	    n = 0;
-	    while ((end = strchr(begin, '/')) != NULL) {
-		*end = '\0';
-		av_orig[n++] = bu_strdup(begin);
-		begin = end + 1;
-	    }
-	    av_orig[n++] = bu_strdup(begin);
-	    av_orig[n] = (char *)0;
-	    free((void *)newstr);
+	    BU_LIST_DEQUEUE(&gdlp->l);
+	    bu_vls_free(&gdlp->gdl_path);
+	    free((void *)gdlp);
+
+	    break;
 	}
 
-	/* make sure we will not dereference null */
-	if ((ac_orig == 0) || (av_orig == 0) || (*av_orig == 0)) {
-	    bu_vls_printf(&gedp->ged_result_str, "WARNING: Asked to look up a null-named database object\n");
-	    goto end;
-	}
-
-	/* skip first element if empty */
-	ac = ac_orig;
-	av = av_orig;
-
-	if (*av[0] == '\0') {
-	    --ac;
-	    ++av;
-	}
-
-	/* ignore last element if empty */
-	if (*av[ac-1] == '\0')
-	    --ac;
-
-	dpp = bu_calloc(ac+1, sizeof(struct directory *), "ged_eraseobjpath: directory pointers");
-	for (j = 0; j < ac; ++j)
-	    if ((dp = db_lookup(gedp->ged_wdbp->dbip, av[j], noisy)) != DIR_NULL)
-		dpp[j] = dp;
-	    else
-		goto end;
-
-	dpp[j] = DIR_NULL;
-
-	if (all)
-	    ged_eraseobjall(gedp, dpp);
-	else
-	    ged_eraseobj(gedp, dpp);
-
-    end:
-	bu_free((genptr_t)dpp, "ged_eraseobjpath: directory pointers");
-	bu_free_argv(ac_orig, (char **)av_orig);
+	gdlp = next_gdlp;
     }
 }
 
-
 /*
- *			E R A S E O B J A L L
+ * Erase/remove display list item from headDisplay if name is found anywhere along item's path with
+ * the exception that the first path element is skipped if skip_first is true.
  *
- * This routine goes through the solid table and deletes all solids
- * from the solid list which contain the specified object anywhere in their 'path'
+ * Note - name is not expected to contain path separators.
+ * 
  */
 void
-ged_eraseobjall(struct ged			*gedp,
-		register struct directory	**dpp)
+ged_eraseAllNamesFromDisplay(struct ged *gedp,
+			     const char *name,
+			     const int skip_first)
 {
-    register struct directory **tmp_dpp;
+    register struct ged_display_list *gdlp;
+    register struct ged_display_list *next_gdlp;
+
+    gdlp = BU_LIST_NEXT(ged_display_list, &gedp->ged_gdp->gd_headDisplay);
+    while (BU_LIST_NOT_HEAD(gdlp, &gedp->ged_gdp->gd_headDisplay)) {
+	char *dup;
+	char *tok;
+	int first = 1;
+	int found = 0;
+
+	next_gdlp = BU_LIST_PNEXT(ged_display_list, gdlp);
+
+	dup = strdup(bu_vls_addr(&gdlp->gdl_path));
+	tok = strtok(dup, "/");
+	while (tok) {
+	    if (first) {
+		first = 0;
+
+		if (skip_first) {
+		    tok = strtok((char *)NULL, "/");
+		    continue;
+		}
+	    }
+
+	    if (!strcmp(tok, name)) {
+		ged_freeDisplayListItem(gedp, gdlp);
+		found = 1;
+
+		break;
+	    }
+
+	    tok = strtok((char *)NULL, "/");
+	}
+
+	/* Look for name in solids list */
+	if (!found) {
+	    struct db_full_path subpath;
+
+	    if (db_string_to_path(&subpath, gedp->ged_wdbp->dbip, name) == 0) {
+		ged_eraseAllSubpathsFromSolidList(gedp, gdlp, &subpath, skip_first);
+		db_free_full_path(&subpath);
+	    }
+	}
+
+	free((void *)dup);
+	gdlp = next_gdlp;
+    }
+}
+
+/*
+ * Erase/remove display list item from headDisplay if path is a subset of item's path.
+ */
+void
+ged_eraseAllPathsFromDisplay(struct ged *gedp,
+			     const char *path,
+			     const int skip_first)
+{
+    register struct ged_display_list *gdlp;
+    register struct ged_display_list *next_gdlp;
+    register struct solid *sp;
+    struct directory *dp;
+    struct db_full_path fullpath, subpath;
+
+    if (db_string_to_path(&subpath, gedp->ged_wdbp->dbip, path) == 0) {
+	gdlp = BU_LIST_NEXT(ged_display_list, &gedp->ged_gdp->gd_headDisplay);
+	while (BU_LIST_NOT_HEAD(gdlp, &gedp->ged_gdp->gd_headDisplay)) {
+	    next_gdlp = BU_LIST_PNEXT(ged_display_list, gdlp);
+
+	    if (db_string_to_path(&fullpath, gedp->ged_wdbp->dbip, bu_vls_addr(&gdlp->gdl_path)) == 0) {
+		if (db_full_path_subset(&fullpath, &subpath, skip_first)) {
+		    ged_freeDisplayListItem(gedp, gdlp);
+		} else {
+		    ged_eraseAllSubpathsFromSolidList(gedp, gdlp, &subpath, skip_first);
+		}
+
+		db_free_full_path(&fullpath);
+	    }
+
+	    gdlp = next_gdlp;
+	}
+
+	db_free_full_path(&subpath);
+    }
+}
+
+void
+ged_eraseAllSubpathsFromSolidList(struct ged *gedp,
+				  struct ged_display_list *gdlp,
+				  struct db_full_path *subpath,
+				  const int skip_first)
+{
     register struct solid *sp;
     register struct solid *nsp;
-    struct db_full_path	subpath;
 
-    if (gedp->ged_wdbp->dbip == DBI_NULL)
-	return;
-
-    if (*dpp == DIR_NULL)
-	return;
-
-    db_full_path_init(&subpath);
-    for (tmp_dpp = dpp; *tmp_dpp != DIR_NULL; ++tmp_dpp)  {
-	RT_CK_DIR(*tmp_dpp);
-	db_add_node_to_full_path(&subpath, *tmp_dpp);
-    }
-
-    sp = BU_LIST_NEXT(solid, &gedp->ged_gdp->gd_headSolid);
-    while (BU_LIST_NOT_HEAD(sp, &gedp->ged_gdp->gd_headSolid)) {
+    sp = BU_LIST_NEXT(solid, &gdlp->gdl_headSolid);
+    while (BU_LIST_NOT_HEAD(sp, &gdlp->gdl_headSolid)) {
 	nsp = BU_LIST_PNEXT(solid, sp);
-	if ( db_full_path_subset( &sp->s_fullpath, &subpath ) )  {
+	if (db_full_path_subset(&sp->s_fullpath, subpath, skip_first)) {
 	    BU_LIST_DEQUEUE(&sp->l);
 	    FREE_SOLID(sp, &FreeSolid.l);
 	}
 	sp = nsp;
     }
-
-    if ((*dpp)->d_addr == RT_DIR_PHONY_ADDR) {
-	if (db_dirdelete(gedp->ged_wdbp->dbip, *dpp) < 0) {
-	    bu_vls_printf(&gedp->ged_result_str, "ged_eraseobjall: db_dirdelete failed\n");
-	}
-    }
-    db_free_full_path(&subpath);
 }
 
-/*
- *			E R A S E O B J
- *
- * This routine goes through the solid table and deletes all solids
- * from the solid list which contain the specified object at the
- * beginning of their 'path'
- */
 void
-ged_eraseobj(struct ged			*gedp,
-	     register struct directory	**dpp)
+ged_freeDisplayListItem (struct ged *gedp,
+			 struct ged_display_list *gdlp)
 {
-#if 1
-    /*XXX
-     * Temporarily put back the old behavior (as seen in Brlcad5.3),
-     * as the behavior after the #else is identical to ged_eraseobjall.
-     */
-    register struct directory **tmp_dpp;
     register struct solid *sp;
-    register struct solid *nsp;
-    register int i;
+    struct directory *dp;
 
-    if (gedp->ged_wdbp->dbip == DBI_NULL)
-	return;
-
-    if (*dpp == DIR_NULL)
-	return;
-
-    for (tmp_dpp = dpp; *tmp_dpp != DIR_NULL; ++tmp_dpp)
-	RT_CK_DIR(*tmp_dpp);
-
-    sp = BU_LIST_FIRST(solid, &gedp->ged_gdp->gd_headSolid);
-    while (BU_LIST_NOT_HEAD(sp, &gedp->ged_gdp->gd_headSolid)) {
-	nsp = BU_LIST_PNEXT(solid, sp);
-	for (i = 0, tmp_dpp = dpp;
-	     i < sp->s_fullpath.fp_len && *tmp_dpp != DIR_NULL;
-	     ++i, ++tmp_dpp)
-	    if (sp->s_fullpath.fp_names[i] != *tmp_dpp)
-		goto end;
-
-	if (*tmp_dpp != DIR_NULL)
-	    goto end;
+    /* Free up the solids list associated with this display list */
+    while (BU_LIST_WHILE(sp, solid, &gdlp->gdl_headSolid)) {
+	dp = FIRST_SOLID(sp);
+	RT_CK_DIR(dp);
+	if (dp->d_addr == RT_DIR_PHONY_ADDR) {
+	    if (db_dirdelete(gedp->ged_wdbp->dbip, dp) < 0) {
+		bu_vls_printf(&gedp->ged_result_str, "ged_zap: db_dirdelete failed\n");
+	    }
+	}
 
 	BU_LIST_DEQUEUE(&sp->l);
 	FREE_SOLID(sp, &FreeSolid.l);
-    end:
-	sp = nsp;
     }
 
-    if ((*dpp)->d_addr == RT_DIR_PHONY_ADDR ) {
-	if (db_dirdelete(gedp->ged_wdbp->dbip, *dpp) < 0) {
-	    bu_vls_printf(&gedp->ged_result_str, "ged_eraseobj: db_dirdelete failed\n");
-	}
-    }
-#else
-    register struct directory **tmp_dpp;
-    register struct solid *sp;
-    register struct solid *nsp;
-    struct db_full_path	subpath;
-
-    if (gedp->ged_wdbp->dbip == DBI_NULL)
-	return;
-
-    if (*dpp == DIR_NULL)
-	return;
-
-    db_full_path_init(&subpath);
-    for (tmp_dpp = dpp; *tmp_dpp != DIR_NULL; ++tmp_dpp)  {
-	RT_CK_DIR(*tmp_dpp);
-	db_add_node_to_full_path(&subpath, *tmp_dpp);
-    }
-
-    sp = BU_LIST_FIRST(solid, &gedp->ged_gdp->gd_headSolid);
-    while (BU_LIST_NOT_HEAD(sp, &gedp->ged_gdp->gd_headSolid)) {
-	nsp = BU_LIST_PNEXT(solid, sp);
-	if ( db_full_path_subset( &sp->s_fullpath, &subpath ) )  {
-	    BU_LIST_DEQUEUE(&sp->l);
-	    FREE_SOLID(sp, &FreeSolid.l);
-	}
-	sp = nsp;
-    }
-
-    if ((*dpp)->d_addr == RT_DIR_PHONY_ADDR ) {
-	if (db_dirdelete(gedp->ged_wdbp->dbip, *dpp) < 0) {
-	    bu_vls_printf(&gedp->ged_result_str, "ged_eraseobj: db_dirdelete failed\n");
-	}
-    }
-    db_free_full_path(&subpath);
-#endif
+    /* Free up the display list */
+    BU_LIST_DEQUEUE(&gdlp->l);
+    bu_vls_free(&gdlp->gdl_path);
+    free((void *)gdlp);
 }
 
 /*

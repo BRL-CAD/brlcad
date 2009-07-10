@@ -589,9 +589,6 @@ ged_vdraw_send(struct ged *gedp, int argc, const char *argv[])
 			     &(gedp->ged_gdp->gd_currVHead->vdc_vhd),
 			     gedp->ged_gdp->gd_currVHead->vdc_rgb,
 			     1, 0.0, 0);
-#if 0
-    dgo_notify(dgop, interp);
-#endif
 
     bu_vls_printf(&gedp->ged_result_str, "%d", index);
 

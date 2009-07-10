@@ -37,7 +37,10 @@
 int
 ged_get_autoview(struct ged *gedp, int argc, const char *argv[])
 {
+    register struct ged_display_list *gdlp;
+    register struct ged_display_list *next_gdlp;
     register struct solid	*sp;
+    register int is_empty = 1;
     vect_t		min, max;
     vect_t		minus, plus;
     vect_t		center;
@@ -77,25 +80,34 @@ ged_get_autoview(struct ged *gedp, int argc, const char *argv[])
     VSETALL(min,  INFINITY);
     VSETALL(max, -INFINITY);
 
-    FOR_ALL_SOLIDS(sp, &gedp->ged_gdp->gd_headSolid) {
-	/* Skip psuedo-solids unless pflag is set */
-	if (!pflag &&
-	    sp->s_fullpath.fp_names != (struct directory **)0 &&
-	    sp->s_fullpath.fp_names[0] != (struct directory *)0 &&
-	    sp->s_fullpath.fp_names[0]->d_addr == RT_DIR_PHONY_ADDR)
-	    continue;
+    gdlp = BU_LIST_NEXT(ged_display_list, &gedp->ged_gdp->gd_headDisplay);
+    while (BU_LIST_NOT_HEAD(gdlp, &gedp->ged_gdp->gd_headDisplay)) {
+	next_gdlp = BU_LIST_PNEXT(ged_display_list, gdlp);
 
-	minus[X] = sp->s_center[X] - sp->s_size;
-	minus[Y] = sp->s_center[Y] - sp->s_size;
-	minus[Z] = sp->s_center[Z] - sp->s_size;
-	VMIN(min, minus);
-	plus[X] = sp->s_center[X] + sp->s_size;
-	plus[Y] = sp->s_center[Y] + sp->s_size;
-	plus[Z] = sp->s_center[Z] + sp->s_size;
-	VMAX(max, plus);
+	FOR_ALL_SOLIDS(sp, &gdlp->gdl_headSolid) {
+	    /* Skip psuedo-solids unless pflag is set */
+	    if (!pflag &&
+		sp->s_fullpath.fp_names != (struct directory **)0 &&
+		sp->s_fullpath.fp_names[0] != (struct directory *)0 &&
+		sp->s_fullpath.fp_names[0]->d_addr == RT_DIR_PHONY_ADDR)
+		continue;
+
+	    minus[X] = sp->s_center[X] - sp->s_size;
+	    minus[Y] = sp->s_center[Y] - sp->s_size;
+	    minus[Z] = sp->s_center[Z] - sp->s_size;
+	    VMIN(min, minus);
+	    plus[X] = sp->s_center[X] + sp->s_size;
+	    plus[Y] = sp->s_center[Y] + sp->s_size;
+	    plus[Z] = sp->s_center[Z] + sp->s_size;
+	    VMAX(max, plus);
+
+	    is_empty = 0;
+	}
+
+	gdlp = next_gdlp;
     }
 
-    if (BU_LIST_IS_EMPTY(&gedp->ged_gdp->gd_headSolid)) {
+    if (is_empty) {
 	/* Nothing is in view */
 	VSETALL(center, 0.0);
 	VSETALL(radial, 1000.0);	/* 1 meter */

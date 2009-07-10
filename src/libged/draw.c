@@ -123,7 +123,7 @@ ged_drawH_part2(int dashflag, struct bu_list *vhead, struct db_full_path *pathp,
 	GET_SOLID(sp, &FreeSolid.l);
 	/* NOTICE:  The structure is dirty & not initialized for you! */
 
-	sp->s_dlist = BU_LIST_LAST(solid, &dgcdp->gedp->ged_gdp->gd_headSolid)->s_dlist + 1;
+	sp->s_dlist = BU_LIST_LAST(solid, &dgcdp->gdlp->gdl_headSolid)->s_dlist + 1;
     } else {
 	/* Just updating an existing solid.
 	 *  'tsp' and 'pathpos' will not be used
@@ -179,22 +179,9 @@ ged_drawH_part2(int dashflag, struct bu_list *vhead, struct db_full_path *pathp,
 
 	/* Add to linked list of solid structs */
 	bu_semaphore_acquire(RT_SEM_MODEL);
-	BU_LIST_APPEND(dgcdp->gedp->ged_gdp->gd_headSolid.back, &sp->l);
+	BU_LIST_APPEND(dgcdp->gdlp->gdl_headSolid.back, &sp->l);
 	bu_semaphore_release(RT_SEM_MODEL);
     }
-
-#if 0
-    /* Solid is successfully drawn */
-    if (!existing_sp) {
-	/* Add to linked list of solid structs */
-	bu_semaphore_acquire(RT_SEM_MODEL);
-	BU_LIST_APPEND(dgcdp->gedp->ged_gdp->gd_headSolid.back, &sp->l);
-	bu_semaphore_release(RT_SEM_MODEL);
-    } else {
-	/* replacing existing solid -- struct already linked in */
-	sp->s_flag = UP;
-    }
-#endif
 }
 
 
@@ -558,11 +545,16 @@ ged_drawtrees(struct ged *gedp, int argc, const char *argv[], int kind, struct g
     int dgo_enable_fastpath = 0;
     struct model *dgo_nmg_model;
     struct ged_client_data *dgcdp;
+    register int  i;
+    int  ac = 1;
+    char *av[2];
 
     RT_CHECK_DBI(gedp->ged_wdbp->dbip);
 
     if (argc <= 0)
 	return(-1);	/* FAIL */
+
+    av[1] = (char *)0;
 
     /* options are already parsed into _dgcdp */
     if (_dgcdp != (struct ged_client_data *)0) {
@@ -719,6 +711,10 @@ ged_drawtrees(struct ged *gedp, int argc, const char *argv[], int kind, struct g
 	    bu_free((genptr_t)dgcdp, "ged_drawtrees: dgcdp");
 	    return(-1);
 	case 1:		/* Wireframes */
+	{
+	    union tree *(*reg_end_func) (struct db_tree_state *, struct db_full_path *, union tree *, genptr_t);
+	    union tree *(*leaf_func) (struct db_tree_state *, struct db_full_path *, struct rt_db_internal *, genptr_t);
+
 	    /*
 	     * If asking for wireframe and in shaded_mode and no shaded mode override,
 	     * or asking for wireframe and shaded mode is being overridden with a value
@@ -731,43 +727,31 @@ ged_drawtrees(struct ged *gedp, int argc, const char *argv[], int kind, struct g
 	     * are drawn as shaded polygons.
 	     */
 	    if (GED_SHADED_MODE_BOTS <= dgcdp->dmode && dgcdp->dmode <= GED_SHADED_MODE_ALL) {
-		int  i;
-		int  ac = 1;
-		char *av[2];
-#if 0
-		struct directory *dp;
-#endif
+		reg_end_func = ged_bot_check_region_end;
+		leaf_func = ged_bot_check_leaf;
+	    } else {
+		reg_end_func = ged_wireframe_region_end;
+		leaf_func = ged_wireframe_leaf;
+	    }
 
-		av[1] = (char *)0;
+	    for (i = 0; i < argc; ++i) {
+		dgcdp->gdlp = ged_addToDisplay(gedp, argv[i]);
 
-		for (i = 0; i < argc; ++i) {
-#if 0
-		    if ((dp = db_lookup(gedp->ged_wdbp->dbip, argv[i], LOOKUP_NOISY)) == DIR_NULL)
-			continue;
-#endif
+		if (dgcdp->gdlp == GED_DISPLAY_LIST_NULL)
+		    continue;
 
-		    av[0] = (char *)argv[i];
-
-		    ret = db_walk_tree(gedp->ged_wdbp->dbip,
-				       ac,
-				       (const char **)av,
-				       ncpu,
-				       &gedp->ged_wdbp->wdb_initial_tree_state,
-				       0,
-				       ged_bot_check_region_end,
-				       ged_bot_check_leaf,
-				       (genptr_t)dgcdp);
-		}
-	    } else
+		av[0] = (char *)argv[i];
 		ret = db_walk_tree(gedp->ged_wdbp->dbip,
-				   argc,
-				   (const char **)argv,
+				   ac,
+				   (const char **)av,
 				   ncpu,
 				   &gedp->ged_wdbp->wdb_initial_tree_state,
-				   0,			/* take all regions */
-				   ged_wireframe_region_end,
-				   ged_wireframe_leaf,
+				   0,
+				   reg_end_func,
+				   leaf_func,
 				   (genptr_t)dgcdp);
+	    }
+	}
 	    break;
 	case 2:		/* Big-E */
 	    bu_vls_printf(&gedp->ged_result_str, "drawtrees:  can't do big-E here\n");
@@ -783,13 +767,23 @@ ged_drawtrees(struct ged *gedp, int argc, const char *argv[], int kind, struct g
 		dgcdp->draw_edge_uses_vbp = rt_vlblock_init();
 	    }
 
-	    ret = db_walk_tree(gedp->ged_wdbp->dbip, argc, (const char **)argv,
-			       ncpu,
-			       &gedp->ged_wdbp->wdb_initial_tree_state,
-			       dgo_enable_fastpath ? ged_nmg_region_start : 0,
-			       ged_nmg_region_end,
-			       dgo_nmg_use_tnurbs ? nmg_booltree_leaf_tnurb : nmg_booltree_leaf_tess,
-			       (genptr_t)dgcdp);
+	    for (i = 0; i < argc; ++i) {
+		dgcdp->gdlp = ged_addToDisplay(gedp, argv[i]);
+
+		if (dgcdp->gdlp == GED_DISPLAY_LIST_NULL)
+		    continue;
+
+		av[0] = (char *)argv[i];
+		ret = db_walk_tree(gedp->ged_wdbp->dbip,
+				   ac,
+				   (const char **)av,
+				   ncpu,
+				   &gedp->ged_wdbp->wdb_initial_tree_state,
+				   dgo_enable_fastpath ? ged_nmg_region_start : 0,
+				   ged_nmg_region_end,
+				   dgo_nmg_use_tnurbs ? nmg_booltree_leaf_tnurb : nmg_booltree_leaf_tess,
+				   (genptr_t)dgcdp);
+	    }
 
 	    if (dgcdp->draw_edge_uses) {
 		ged_cvt_vlblock_to_solids(gedp, dgcdp->draw_edge_uses_vbp, "_EDGEUSES_", 0);
@@ -953,9 +947,9 @@ ged_invent_solid(struct ged	*gedp,
 		 int		dmode)
 {
     register struct directory	*dp;
-    struct directory		*dpp[2] = {DIR_NULL, DIR_NULL};
-    register struct solid		*sp;
-    unsigned char			type='0';
+    register struct solid	*sp;
+    struct ged_display_list	*gdlp;
+    unsigned char		type='0';
 
     if (gedp->ged_wdbp->dbip == DBI_NULL)
 	return 0;
@@ -971,8 +965,7 @@ ged_invent_solid(struct ged	*gedp,
 	 * Name exists from some other overlay,
 	 * zap any associated solids
 	 */
-	dpp[0] = dp;
-	ged_eraseobjall(gedp, dpp);
+	ged_erasePathFromDisplay(gedp, name);
     }
     /* Need to enter phony name in directory structure */
     dp = db_diradd(gedp->ged_wdbp->dbip, name, RT_DIR_PHONY_ADDR, 0, DIR_SOLID, (genptr_t)&type);
@@ -993,6 +986,8 @@ ged_invent_solid(struct ged	*gedp,
     /* set path information -- this is a top level node */
     db_add_node_to_full_path( &sp->s_fullpath, dp );
 
+    gdlp = ged_addToDisplay(gedp, name);
+
     sp->s_iflag = DOWN;
     sp->s_soldash = 0;
     sp->s_Eflag = 1;		/* Can't be solid edited! */
@@ -1000,7 +995,7 @@ ged_invent_solid(struct ged	*gedp,
     sp->s_color[1] = sp->s_basecolor[1] = (rgb>> 8) & 0xFF;
     sp->s_color[2] = sp->s_basecolor[2] = (rgb    ) & 0xFF;
     sp->s_regionid = 0;
-    sp->s_dlist = BU_LIST_LAST(solid, &gedp->ged_gdp->gd_headSolid)->s_dlist + 1;
+    sp->s_dlist = BU_LIST_LAST(solid, &gdlp->gdl_headSolid)->s_dlist + 1;
 
     sp->s_uflag = 0;
     sp->s_dflag = 0;
@@ -1011,7 +1006,7 @@ ged_invent_solid(struct ged	*gedp,
     sp->s_dmode = dmode;
 
     /* Solid successfully drawn, add to linked list of solid structs */
-    BU_LIST_APPEND(gedp->ged_gdp->gd_headSolid.back, &sp->l);
+    BU_LIST_APPEND(gdlp->gdl_headSolid.back, &sp->l);
 
     return (0);		/* OK */
 }
@@ -1024,51 +1019,60 @@ ged_invent_solid(struct ged	*gedp,
  *  mater structure.
  */
 void
-ged_color_soltab(struct solid *hsp)
+ged_color_soltab(struct bu_list *hdlp)
 {
+    register struct ged_display_list *gdlp;
+    register struct ged_display_list *next_gdlp;
     register struct solid *sp;
     register const struct mater *mp;
 
-    FOR_ALL_SOLIDS(sp, &hsp->l) {
-	sp->s_cflag = 0;
+    gdlp = BU_LIST_NEXT(ged_display_list, hdlp);
+    while (BU_LIST_NOT_HEAD(gdlp, hdlp)) {
+	next_gdlp = BU_LIST_PNEXT(ged_display_list, gdlp);
 
-	/* the user specified the color, so use it */
-	if (sp->s_uflag) {
+	FOR_ALL_SOLIDS(sp, &gdlp->gdl_headSolid) {
+	    sp->s_cflag = 0;
+
+	    /* the user specified the color, so use it */
+	    if (sp->s_uflag) {
+		sp->s_color[0] = sp->s_basecolor[0];
+		sp->s_color[1] = sp->s_basecolor[1];
+		sp->s_color[2] = sp->s_basecolor[2];
+
+		continue;
+	    }
+
+	    for (mp = rt_material_head(); mp != MATER_NULL; mp = mp->mt_forw) {
+		if (sp->s_regionid <= mp->mt_high &&
+		    sp->s_regionid >= mp->mt_low) {
+		    sp->s_color[0] = mp->mt_r;
+		    sp->s_color[1] = mp->mt_g;
+		    sp->s_color[2] = mp->mt_b;
+
+		    goto done;
+		}
+	    }
+
+	    /*
+	     *  There is no region-id-based coloring entry in the
+	     *  table, so use the combination-record ("mater"
+	     *  command) based color if one was provided. Otherwise,
+	     *  use the default wireframe color.
+	     *  This is the "new way" of coloring things.
+	     */
+
+	    /* use wireframe_default_color */
+	    if (sp->s_dflag)
+		sp->s_cflag = 1;
+	    /* Be conservative and copy color anyway, to avoid black */
 	    sp->s_color[0] = sp->s_basecolor[0];
 	    sp->s_color[1] = sp->s_basecolor[1];
 	    sp->s_color[2] = sp->s_basecolor[2];
 
-	    continue;
+	done: ;
 	}
 
-	for (mp = rt_material_head(); mp != MATER_NULL; mp = mp->mt_forw) {
-	    if (sp->s_regionid <= mp->mt_high &&
-		sp->s_regionid >= mp->mt_low) {
-		sp->s_color[0] = mp->mt_r;
-		sp->s_color[1] = mp->mt_g;
-		sp->s_color[2] = mp->mt_b;
-
-		goto done;
-	    }
-	}
-
-	/*
-	 *  There is no region-id-based coloring entry in the
-	 *  table, so use the combination-record ("mater"
-	 *  command) based color if one was provided. Otherwise,
-	 *  use the default wireframe color.
-	 *  This is the "new way" of coloring things.
-	 */
-
-	/* use wireframe_default_color */
-	if (sp->s_dflag)
-	    sp->s_cflag = 1;
-	/* Be conservative and copy color anyway, to avoid black */
-	sp->s_color[0] = sp->s_basecolor[0];
-	sp->s_color[1] = sp->s_basecolor[1];
-	sp->s_color[2] = sp->s_basecolor[2];
-
-    done: ;
+	gdlp = next_gdlp;
     }
 }
 
@@ -1076,6 +1080,7 @@ ged_color_soltab(struct solid *hsp)
 int
 ged_draw_guts(struct ged *gedp, int argc, const char *argv[], int kind)
 {
+    register int i;
     static const char *usage = "[-R -A -o -C#/#/# -s] <objects | attribute name/value pairs>";
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
@@ -1098,9 +1103,17 @@ ged_draw_guts(struct ged *gedp, int argc, const char *argv[], int kind)
     /*  First, delete any mention of these objects.
      *  Silently skip any leading options (which start with minus signs).
      */
-    ged_eraseobjpath(gedp, argc, argv, LOOKUP_QUIET, 0);
+
+    for (i = 0; i < argc; ++i) {
+	/* Skip any options */
+	if (argv[i][0] == '-')
+	    continue;
+
+	ged_erasePathFromDisplay(gedp, argv[i]);
+    }
+
     ged_drawtrees(gedp, argc, argv, kind, (struct ged_client_data *)0);
-    ged_color_soltab((struct solid *)&gedp->ged_gdp->gd_headSolid);
+    ged_color_soltab(&gedp->ged_gdp->gd_headDisplay);
 
     return GED_OK;
 }
@@ -1115,6 +1128,35 @@ int
 ged_ev(struct ged *gedp, int argc, const char *argv[])
 {
     return ged_draw_guts(gedp, argc, argv, 3);
+}
+
+
+struct ged_display_list *
+ged_addToDisplay(struct ged *gedp,
+		 const char *name)
+{
+    register int i;
+    struct directory *dp;
+    register struct ged_display_list *gdlp;
+    char *cp;
+
+    cp = strrchr(name, '/');
+    if (cp == '\0')
+	cp = (char *)name;
+    else
+	++cp;
+
+    if ((dp = db_lookup(gedp->ged_wdbp->dbip, cp, LOOKUP_NOISY)) == DIR_NULL)
+	return GED_DISPLAY_LIST_NULL;
+
+    BU_GETSTRUCT(gdlp, ged_display_list);
+    BU_LIST_INSERT(&gedp->ged_gdp->gd_headDisplay, &gdlp->l);
+    BU_LIST_INIT(&gdlp->gdl_headSolid);
+    gdlp->gdl_dp = dp;
+    bu_vls_init(&gdlp->gdl_path);
+    bu_vls_printf(&gdlp->gdl_path, name);
+
+    return gdlp;
 }
 
 

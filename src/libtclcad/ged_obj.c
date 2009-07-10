@@ -511,7 +511,7 @@ static int go_view_func(struct ged	*gedp,
 
 /* Utility Functions */
 static void go_drawSolid(struct dm *dmp, struct solid *sp);
-static int go_drawSList(struct dm *dmp, struct bu_list *hsp);
+static int go_drawDList(struct dm *dmp, struct bu_list *hsp);
 
 static int go_close_fbs(struct ged_dm_view *gdvp);
 static void go_fbs_callback();
@@ -6135,54 +6135,77 @@ go_drawSolid(struct dm *dmp, struct solid *sp)
     DM_DRAW_VLIST(dmp, (struct bn_vlist *)&sp->s_vlist);
 }
 
-/* Draw all solids in the list */
+/* Draw all display lists */
 static int
-go_drawSList(struct dm *dmp, struct bu_list *hsp)
+go_drawDList(struct dm *dmp, struct bu_list *hdlp)
 {
+    register struct ged_display_list *gdlp;
+    register struct ged_display_list *next_gdlp;
     struct solid *sp;
     int line_style = -1;
 
     if (dmp->dm_transparency) {
 	/* First, draw opaque stuff */
-	FOR_ALL_SOLIDS(sp, hsp) {
-	    if (sp->s_transparency < 1.0)
-		continue;
+	gdlp = BU_LIST_NEXT(ged_display_list, hdlp);
+	while (BU_LIST_NOT_HEAD(gdlp, hdlp)) {
+	    next_gdlp = BU_LIST_PNEXT(ged_display_list, gdlp);
 
-	    if (line_style != sp->s_soldash) {
-		line_style = sp->s_soldash;
-		DM_SET_LINE_ATTR(dmp, dmp->dm_lineWidth, line_style);
+	    FOR_ALL_SOLIDS(sp, &gdlp->gdl_headSolid) {
+		if (sp->s_transparency < 1.0)
+		    continue;
+
+		if (line_style != sp->s_soldash) {
+		    line_style = sp->s_soldash;
+		    DM_SET_LINE_ATTR(dmp, dmp->dm_lineWidth, line_style);
+		}
+
+		go_drawSolid(dmp, sp);
 	    }
 
-	    go_drawSolid(dmp, sp);
+	    gdlp = next_gdlp;
 	}
 
 	/* disable write to depth buffer */
 	DM_SET_DEPTH_MASK(dmp, 0);
 
 	/* Second, draw transparent stuff */
-	FOR_ALL_SOLIDS(sp, hsp) {
-	    /* already drawn above */
-	    if (sp->s_transparency == 1.0)
-		continue;
+	gdlp = BU_LIST_NEXT(ged_display_list, hdlp);
+	while (BU_LIST_NOT_HEAD(gdlp, hdlp)) {
+	    next_gdlp = BU_LIST_PNEXT(ged_display_list, gdlp);
 
-	    if (line_style != sp->s_soldash) {
-		line_style = sp->s_soldash;
-		DM_SET_LINE_ATTR(dmp, dmp->dm_lineWidth, line_style);
+	    FOR_ALL_SOLIDS(sp, &gdlp->gdl_headSolid) {
+		/* already drawn above */
+		if (sp->s_transparency == 1.0)
+		    continue;
+
+		if (line_style != sp->s_soldash) {
+		    line_style = sp->s_soldash;
+		    DM_SET_LINE_ATTR(dmp, dmp->dm_lineWidth, line_style);
+		}
+
+		go_drawSolid(dmp, sp);
 	    }
 
-	    go_drawSolid(dmp, sp);
+	    gdlp = next_gdlp;
 	}
 
 	/* re-enable write to depth buffer */
 	DM_SET_DEPTH_MASK(dmp, 1);
     } else {
-	FOR_ALL_SOLIDS(sp, hsp) {
-	    if (line_style != sp->s_soldash) {
-		line_style = sp->s_soldash;
-		DM_SET_LINE_ATTR(dmp, dmp->dm_lineWidth, line_style);
+	gdlp = BU_LIST_NEXT(ged_display_list, hdlp);
+	while (BU_LIST_NOT_HEAD(gdlp, hdlp)) {
+	    next_gdlp = BU_LIST_PNEXT(ged_display_list, gdlp);
+
+	    FOR_ALL_SOLIDS(sp, &gdlp->gdl_headSolid) {
+		if (line_style != sp->s_soldash) {
+		    line_style = sp->s_soldash;
+		    DM_SET_LINE_ATTR(dmp, dmp->dm_lineWidth, line_style);
+		}
+
+		go_drawSolid(dmp, sp);
 	    }
 
-	    go_drawSolid(dmp, sp);
+	    gdlp = next_gdlp;
 	}
     }
 
@@ -6417,7 +6440,7 @@ go_draw(struct ged_dm_view *gdvp)
     }
 
     DM_LOADMATRIX(gdvp->gdv_dmp, mat, 0);
-    go_drawSList(gdvp->gdv_dmp, &gdvp->gdv_gop->go_gedp->ged_gdp->gd_headSolid);
+    go_drawDList(gdvp->gdv_dmp, &gdvp->gdv_gop->go_gedp->ged_gdp->gd_headDisplay);
 }
 
 static void

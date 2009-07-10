@@ -281,6 +281,8 @@ ged_draw_png_solid(struct ged *gedp, unsigned char **image, struct solid *sp, ma
 static void
 ged_draw_png_body(struct ged *gedp, unsigned char **image)
 {
+    register struct ged_display_list *gdlp;
+    register struct ged_display_list *next_gdlp;
     mat_t new;
     matp_t mat;
     mat_t perspective_mat;
@@ -309,8 +311,15 @@ ged_draw_png_body(struct ged *gedp, unsigned char **image)
 	mat = new;
     }
 
-    FOR_ALL_SOLIDS(sp, &gedp->ged_gdp->gd_headSolid) {
-	ged_draw_png_solid(gedp, image, sp, mat);
+    gdlp = BU_LIST_NEXT(ged_display_list, &gedp->ged_gdp->gd_headDisplay);
+    while (BU_LIST_NOT_HEAD(gdlp, &gedp->ged_gdp->gd_headDisplay)) {
+	next_gdlp = BU_LIST_PNEXT(ged_display_list, gdlp);
+
+	FOR_ALL_SOLIDS(sp, &gdlp->gdl_headSolid) {
+	    ged_draw_png_solid(gedp, image, sp, mat);
+	}
+
+	gdlp = next_gdlp;
     }
 }
 

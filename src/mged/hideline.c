@@ -124,6 +124,8 @@ hit_overlap(struct application *ap, struct partition *ph, struct region *r1, str
 int
 f_hideline(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
+    register struct ged_display_list *gdlp;
+    register struct ged_display_list *next_gdlp;
     FILE 	*plotfp;
     char 	visible;
     int 	i, numobjs;
@@ -160,13 +162,21 @@ f_hideline(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 
     /*  Build list of objects being viewed */
     numobjs = 0;
-    FOR_ALL_SOLIDS(sp, &gedp->ged_gdp->gd_headSolid) {
-	for (i = 0; i < numobjs; i++) {
-	    if (objname[i] == FIRST_SOLID(sp)->d_namep)
-		break;
+
+    gdlp = BU_LIST_NEXT(ged_display_list, &gedp->ged_gdp->gd_headDisplay);
+    while (BU_LIST_NOT_HEAD(gdlp, &gedp->ged_gdp->gd_headDisplay)) {
+	next_gdlp = BU_LIST_PNEXT(ged_display_list, gdlp);
+
+	FOR_ALL_SOLIDS(sp, &gdlp->gdl_headSolid) {
+	    for (i = 0; i < numobjs; i++) {
+		if (objname[i] == FIRST_SOLID(sp)->d_namep)
+		    break;
+	    }
+	    if (i == numobjs)
+		objname[numobjs++] = FIRST_SOLID(sp)->d_namep;
 	}
-	if (i == numobjs)
-	    objname[numobjs++] = FIRST_SOLID(sp)->d_namep;
+
+	gdlp = next_gdlp;
     }
 
     Tcl_AppendResult(interp, "Generating hidden-line drawing of the following regions:\n",
@@ -210,21 +220,25 @@ f_hideline(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
     MAT4X3VEC(a.a_ray.r_dir, view_state->vs_gvp->gv_view2model, temp);
     VUNITIZE(a.a_ray.r_dir);
 
-    FOR_ALL_SOLIDS(sp, &gedp->ged_gdp->gd_headSolid) {
+    gdlp = BU_LIST_NEXT(ged_display_list, &gedp->ged_gdp->gd_headDisplay);
+    while (BU_LIST_NOT_HEAD(gdlp, &gedp->ged_gdp->gd_headDisplay)) {
+	next_gdlp = BU_LIST_PNEXT(ged_display_list, gdlp);
 
-	ratio = sp->s_size / VIEWSIZE;		/* ignore if small or big */
-	if (ratio >= dmp->dm_bound || ratio < 0.001)
-	    continue;
+	FOR_ALL_SOLIDS(sp, &gdlp->gdl_headSolid) {
 
-	Tcl_AppendResult(interp, "Primitive\n", (char *)NULL);
-	for (BU_LIST_FOR(vp, bn_vlist, &(sp->s_vlist))) {
-	    register int	i;
-	    register int	nused = vp->nused;
-	    register int	*cmd = vp->cmd;
-	    register point_t *pt = vp->pt;
-	    for (i = 0; i < nused; i++, cmd++, pt++) {
-		Tcl_AppendResult(interp, "\tVector\n", (char *)NULL);
-		switch (*cmd) {
+	    ratio = sp->s_size / VIEWSIZE;		/* ignore if small or big */
+	    if (ratio >= dmp->dm_bound || ratio < 0.001)
+		continue;
+
+	    Tcl_AppendResult(interp, "Primitive\n", (char *)NULL);
+	    for (BU_LIST_FOR(vp, bn_vlist, &(sp->s_vlist))) {
+		register int	i;
+		register int	nused = vp->nused;
+		register int	*cmd = vp->cmd;
+		register point_t *pt = vp->pt;
+		for (i = 0; i < nused; i++, cmd++, pt++) {
+		    Tcl_AppendResult(interp, "\tVector\n", (char *)NULL);
+		    switch (*cmd) {
 		    case BN_VLIST_POLY_START:
 		    case BN_VLIST_POLY_VERTNORM:
 			break;
@@ -270,10 +284,14 @@ f_hideline(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 			if (visible)
 			    DRAW(aim_point);
 			VMOVE(last, *pt); /* new last vertex */
+		    }
 		}
 	    }
 	}
+
+	gdlp = next_gdlp;
     }
+
     fclose(plotfp);
     return TCL_OK;
 }

@@ -43,6 +43,7 @@
 double	degtorad =  0.01745329251994329573;
 double	radtodeg = 57.29577951308232098299;
 
+struct ged_display_list *illum_gdlp = GED_DISPLAY_LIST_NULL;
 struct solid	*illump = SOLID_NULL;	/* == 0 if none, else points to ill. solid */
 int		ipathpos = 0;	/* path index of illuminated element */
 				/* set by e9.c, cleared here */
@@ -274,6 +275,8 @@ f_mouse(
  */
 static void
 illuminate(int y) {
+    register struct ged_display_list *gdlp;
+    register struct ged_display_list *next_gdlp;
     register int count;
     register struct solid *sp;
 
@@ -284,17 +287,25 @@ illuminate(int y) {
      */
     count = ((fastf_t)y + GED_MAX) * ndrawn / GED_RANGE;
 
-    FOR_ALL_SOLIDS(sp, &gedp->ged_gdp->gd_headSolid)  {
-	/* Only consider solids which are presently in view */
-	if ( sp->s_flag == UP )  {
-	    if ( count-- == 0 ) {
-		sp->s_iflag = UP;
-		illump = sp;
-	    }  else  {
-		/* All other solids have s_iflag set DOWN */
-		sp->s_iflag = DOWN;
+    gdlp = BU_LIST_NEXT(ged_display_list, &gedp->ged_gdp->gd_headDisplay);
+    while (BU_LIST_NOT_HEAD(gdlp, &gedp->ged_gdp->gd_headDisplay)) {
+	next_gdlp = BU_LIST_PNEXT(ged_display_list, gdlp);
+
+	FOR_ALL_SOLIDS(sp, &gdlp->gdl_headSolid) {
+	    /* Only consider solids which are presently in view */
+	    if ( sp->s_flag == UP )  {
+		if ( count-- == 0 ) {
+		    sp->s_iflag = UP;
+		    illump = sp;
+		    illum_gdlp = gdlp;
+		}  else  {
+		    /* All other solids have s_iflag set DOWN */
+		    sp->s_iflag = DOWN;
+		}
 	    }
 	}
+
+	gdlp = next_gdlp;
     }
 
     update_views = 1;
@@ -312,6 +323,7 @@ f_aip(
     int argc,
     char **argv)
 {
+    register struct ged_display_list *gdlp;
     register struct solid *sp;
 
     if (argc < 1 || 2 < argc) {
@@ -344,17 +356,31 @@ f_aip(
 	    return TCL_ERROR;
 	}
     } else {
+	gdlp = illum_gdlp;
 	sp = illump;
 	sp->s_iflag = DOWN;
 	if (argc == 1 || *argv[1] == 'f') {
-	    if (BU_LIST_NEXT_IS_HEAD(sp, &gedp->ged_gdp->gd_headSolid))
-		sp = BU_LIST_NEXT(solid, &gedp->ged_gdp->gd_headSolid);
-	    else
+	    if (BU_LIST_NEXT_IS_HEAD(sp, &gdlp->gdl_headSolid)) {
+		/* Advance the gdlp (i.e. display list) */
+		if (BU_LIST_NEXT_IS_HEAD(gdlp, &gedp->ged_gdp->gd_headDisplay))
+		    gdlp = BU_LIST_NEXT(ged_display_list, &gedp->ged_gdp->gd_headDisplay);
+		else
+		    gdlp = BU_LIST_PNEXT(ged_display_list, gdlp);
+
+
+		sp = BU_LIST_NEXT(solid, &gdlp->gdl_headSolid);
+	    } else
 		sp = BU_LIST_PNEXT(solid, sp);
 	} else if (*argv[1] == 'b') {
-	    if (BU_LIST_PREV_IS_HEAD(sp, &gedp->ged_gdp->gd_headSolid))
-		sp = BU_LIST_PREV(solid, &gedp->ged_gdp->gd_headSolid);
-	    else
+	    if (BU_LIST_PREV_IS_HEAD(sp, &gdlp->gdl_headSolid)) {
+		/* Advance the gdlp (i.e. display list) */
+		if (BU_LIST_PREV_IS_HEAD(gdlp, &gedp->ged_gdp->gd_headDisplay))
+		    gdlp = BU_LIST_PREV(ged_display_list, &gedp->ged_gdp->gd_headDisplay);
+		else
+		    gdlp = BU_LIST_PLAST(ged_display_list, gdlp);
+
+		sp = BU_LIST_PREV(solid, &gdlp->gdl_headSolid);
+	    } else
 		sp = BU_LIST_PLAST(solid, sp);
 	} else {
 	    Tcl_AppendResult(interp, "aip: bad parameter - ", argv[1], "\n", (char *)NULL);
@@ -363,6 +389,7 @@ f_aip(
 
 	sp->s_iflag = UP;
 	illump = sp;
+	illum_gdlp = gdlp;
     }
 
     update_views = 1;
@@ -472,6 +499,8 @@ f_matpick(
     int	argc,
     char	**argv)
 {
+    register struct ged_display_list *gdlp;
+    register struct ged_display_list *next_gdlp;
     register struct solid	*sp;
     char			*cp;
     register int		j;
@@ -534,17 +563,24 @@ f_matpick(
     }
  got:
     /* Include all solids with same tree top */
-    FOR_ALL_SOLIDS(sp, &gedp->ged_gdp->gd_headSolid)  {
-	for ( j = 0; j <= ipathpos; j++ )  {
-	    if ( DB_FULL_PATH_GET(&sp->s_fullpath, j) !=
-		 DB_FULL_PATH_GET(&illump->s_fullpath, j) )
-		break;
+    gdlp = BU_LIST_NEXT(ged_display_list, &gedp->ged_gdp->gd_headDisplay);
+    while (BU_LIST_NOT_HEAD(gdlp, &gedp->ged_gdp->gd_headDisplay)) {
+	next_gdlp = BU_LIST_PNEXT(ged_display_list, gdlp);
+
+	FOR_ALL_SOLIDS(sp, &gdlp->gdl_headSolid) {
+	    for ( j = 0; j <= ipathpos; j++ )  {
+		if ( DB_FULL_PATH_GET(&sp->s_fullpath, j) !=
+		     DB_FULL_PATH_GET(&illump->s_fullpath, j) )
+		    break;
+	    }
+	    /* Only accept if top of tree is identical */
+	    if ( j == ipathpos+1 )
+		sp->s_iflag = UP;
+	    else
+		sp->s_iflag = DOWN;
 	}
-	/* Only accept if top of tree is identical */
-	if ( j == ipathpos+1 )
-	    sp->s_iflag = UP;
-	else
-	    sp->s_iflag = DOWN;
+
+	gdlp = next_gdlp;
     }
 
     if (!illum_only) {

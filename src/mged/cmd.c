@@ -231,7 +231,7 @@ cmd_ged_gqa(ClientData clientData, Tcl_Interp *interp, int argc, const char *arg
     vp = &gedp->ged_gdp->gd_rt_cmd[0];
 
     /* Grab command name and any options */
-    *vp++ = argv[0];
+    *vp++ = (char *)argv[0];
     for (i=1; i < argc; i++) {
 	if (argv[i][0] != '-')
 	    break;
@@ -266,7 +266,7 @@ cmd_ged_gqa(ClientData clientData, Tcl_Interp *interp, int argc, const char *arg
 						       &gedp->ged_gdp->gd_rt_cmd[MAXARGS]);
     }
 
-    ret = (*ctp->ged_func)(gedp, gedp->ged_gdp->gd_rt_cmd_len, gedp->ged_gdp->gd_rt_cmd);
+    ret = (*ctp->ged_func)(gedp, gedp->ged_gdp->gd_rt_cmd_len, (const char **)gedp->ged_gdp->gd_rt_cmd);
     Tcl_DStringInit(&ds);
     Tcl_DStringAppend(&ds, bu_vls_addr(&gedp->ged_result_str), -1);
     Tcl_DStringResult(interp, &ds);

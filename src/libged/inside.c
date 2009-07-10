@@ -906,7 +906,7 @@ nmgin(struct ged *gedp, struct rt_db_internal *ip, fastf_t thick)
 }
 
 int
-ged_inside_internal(struct ged *gedp, struct rt_db_internal *ip, int argc, char *argv[], int arg, char *o_name)
+ged_inside_internal(struct ged *gedp, struct rt_db_internal *ip, int argc, const char *argv[], int arg, char *o_name)
 {
     register int i;
     struct directory	*dp;

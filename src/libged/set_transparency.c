@@ -42,6 +42,8 @@
 int
 ged_set_transparency(struct ged *gedp, int argc, const char *argv[])
 {
+    register struct ged_display_list *gdlp;
+    register struct ged_display_list *next_gdlp;
     register struct solid *sp;
     int i;
     struct directory **dpp;
@@ -77,19 +79,26 @@ ged_set_transparency(struct ged *gedp, int argc, const char *argv[])
 	return GED_OK;
     }
 
-    FOR_ALL_SOLIDS(sp, &gedp->ged_gdp->gd_headSolid) {
-	for (i = 0, tmp_dpp = dpp;
-	     i < sp->s_fullpath.fp_len && *tmp_dpp != DIR_NULL;
-	     ++i, ++tmp_dpp) {
-	    if (sp->s_fullpath.fp_names[i] != *tmp_dpp)
-		break;
+    gdlp = BU_LIST_NEXT(ged_display_list, &gedp->ged_gdp->gd_headDisplay);
+    while (BU_LIST_NOT_HEAD(gdlp, &gedp->ged_gdp->gd_headDisplay)) {
+	next_gdlp = BU_LIST_PNEXT(ged_display_list, gdlp);
+
+	FOR_ALL_SOLIDS(sp, &gdlp->gdl_headSolid) {
+	    for (i = 0, tmp_dpp = dpp;
+		 i < sp->s_fullpath.fp_len && *tmp_dpp != DIR_NULL;
+		 ++i, ++tmp_dpp) {
+		if (sp->s_fullpath.fp_names[i] != *tmp_dpp)
+		    break;
+	    }
+
+	    if (*tmp_dpp != DIR_NULL)
+		continue;
+
+	    /* found a match */
+	    sp->s_transparency = transparency;
 	}
 
-	if (*tmp_dpp != DIR_NULL)
-	    continue;
-
-	/* found a match */
-	sp->s_transparency = transparency;
+	gdlp = next_gdlp;
     }
 
     if (dpp != (struct directory **)NULL)

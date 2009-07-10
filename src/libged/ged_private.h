@@ -64,32 +64,33 @@ struct ged_id_to_names {
 };
 
 struct ged_client_data {
-    struct ged	       	*gedp;
-    int			wireframe_color_override;
-    int			wireframe_color[3];
-    int			draw_nmg_only;
-    int			nmg_triangulate;
-    int			draw_wireframes;
-    int			draw_normals;
-    int			draw_solid_lines_only;
-    int			draw_no_surfaces;
-    int			shade_per_vertex_normals;
-    int			draw_edge_uses;
-    int			fastpath_count;			/* statistics */
-    int			do_not_draw_nmg_solids_during_debugging;
-    struct bn_vlblock	*draw_edge_uses_vbp;
-    int			shaded_mode_override;
-    fastf_t		transparency;
-    int			dmode;
+    struct ged			*gedp;
+    struct ged_display_list	*gdlp;
+    int				wireframe_color_override;
+    int				wireframe_color[3];
+    int				draw_nmg_only;
+    int				nmg_triangulate;
+    int				draw_wireframes;
+    int				draw_normals;
+    int				draw_solid_lines_only;
+    int				draw_no_surfaces;
+    int				shade_per_vertex_normals;
+    int				draw_edge_uses;
+    int				fastpath_count;			/* statistics */
+    int				do_not_draw_nmg_solids_during_debugging;
+    struct bn_vlblock		*draw_edge_uses_vbp;
+    int				shaded_mode_override;
+    fastf_t			transparency;
+    int				dmode;
     /* bigE related members */
-    struct application	*ap;
-    struct bu_ptbl	leaf_list;
-    struct rt_i		*rtip;
-    time_t		start_time;
-    time_t		etime;
-    long		nvectors;
-    int			do_polysolids;
-    int			num_halfs;
+    struct application		*ap;
+    struct bu_ptbl		leaf_list;
+    struct rt_i			*rtip;
+    time_t			start_time;
+    time_t			etime;
+    long			nvectors;
+    int				do_polysolids;
+    int				num_halfs;
 };
 
 struct ged_rt_client_data {
@@ -157,7 +158,7 @@ BU_EXTERN (struct directory *ged_combadd,
 
 /* defined in draw.c */
 BU_EXTERN (void ged_color_soltab,
-	   (struct solid *hsp));
+	   (struct bu_list *hdlp));
 
 BU_EXTERN (void ged_cvt_vlblock_to_solids,
 	   (struct ged *gedp,
@@ -178,6 +179,9 @@ BU_EXTERN (int ged_drawtrees,
 	    const char *argv[],
 	    int kind,
 	    struct ged_client_data *_dgcdp));
+BU_EXTERN (struct ged_display_list *ged_addToDisplay,
+	   (struct ged *gedp,
+	    const char *name));
 
 
 /* defined in erase.c */
@@ -185,14 +189,37 @@ BU_EXTERN (void ged_eraseobjpath,
 	   (struct ged	*gedp,
 	    int		argc,
 	    const char	*argv[],
-	    int		noisy,
-	    int		all));
+	    const int	noisy,
+	    const int	all,
+	    const int	skip_first));
 BU_EXTERN (void ged_eraseobjall,
 	   (struct ged			*gedp,
-	    register struct directory	**dpp));
+	    register struct directory	**dpp,
+	    int				skip_first));
 BU_EXTERN (void ged_eraseobj,
 	   (struct ged			*gedp,
-	    register struct directory	**dpp));
+	    register struct directory	**dpp,
+	    int				skip_first));
+BU_EXTERN (void ged_erasePathFromDisplay,
+	   (struct ged			*gedp,
+	    const char			*path));
+BU_EXTERN (void ged_eraseAllNamesFromDisplay,
+	   (struct ged			*gedp,
+	    const char			*name,
+	    int				skip_first));
+BU_EXTERN (void ged_eraseAllPathsFromDisplay,
+	   (struct ged			*gedp,
+	    const char			*path,
+	    int				skip_first));
+BU_EXTERN (void ged_eraseAllSubpathsFromSolidList,
+	   (struct ged			*gedp,
+	    struct ged_display_list	*gdlp,
+	    struct db_full_path		*subpath,
+	    const int			skip_first));
+BU_EXTERN (void ged_freeDisplayListItem,
+	   (struct ged			*gedp,
+	    struct ged_display_list *gdlp));
+
 
 /* defined in get_comb.c */
 BU_EXTERN(void ged_vls_print_matrix,

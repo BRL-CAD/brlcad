@@ -133,9 +133,8 @@ ged_cm_end(int argc, char **argv)
 	av[1] = NULL;
 
 	(void)ged_zap(ged_current_gedp, 1, av );
-	ged_eraseobjpath(ged_current_gedp, ged_current_gedp->ged_gdp->gd_rt_cmd_len, (const char **)ged_current_gedp->ged_gdp->gd_rt_cmd, LOOKUP_QUIET, 0);
 	ged_drawtrees(ged_current_gedp, ged_current_gedp->ged_gdp->gd_rt_cmd_len, (const char **)ged_current_gedp->ged_gdp->gd_rt_cmd, preview_mode, (struct ged_client_data *)0);
-	ged_color_soltab((struct solid *)&ged_current_gedp->ged_gdp->gd_headSolid);
+	ged_color_soltab(&ged_current_gedp->ged_gdp->gd_headDisplay);
     }
 
     if (ged_current_gedp->ged_refresh_handler != GED_REFRESH_CALLBACK_PTR_NULL)

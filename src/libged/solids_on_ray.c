@@ -101,19 +101,7 @@ ged_solids_on_ray(struct ged *gedp, int argc, const char *argv[])
 	extremum[0][i] = INFINITY;
 	extremum[1][i] = -INFINITY;
     }
-#if 0
-    FOR_ALL_SOLIDS (sp, &gedp->ged_gdp->gd_headSolid)
-    {
-	minus[X] = sp->s_center[X] - sp->s_size;
-	minus[Y] = sp->s_center[Y] - sp->s_size;
-	minus[Z] = sp->s_center[Z] - sp->s_size;
-	VMIN(extremum[0], minus);
-	plus[X] = sp->s_center[X] + sp->s_size;
-	plus[Y] = sp->s_center[Y] + sp->s_size;
-	plus[Z] = sp->s_center[Z] + sp->s_size;
-	VMAX(extremum[1], plus);
-    }
-#endif
+
     VMOVEN(ray_dir, gedp->ged_gvp->gv_rotation + 8, 3);
     VSCALE(ray_dir, ray_dir, -1.0);
     for (i = 0; i < 3; ++i)

@@ -369,6 +369,8 @@ ged_rtcheck(struct ged *gedp, int argc, const char *argv[])
 static void
 ged_rtcheck_vector_handler(ClientData clientData, int mask)
 {
+    register struct ged_display_list *gdlp;
+    register struct ged_display_list *next_gdlp;
     int value;
     struct solid *sp;
     struct ged_rtcheck *rtcp = (struct ged_rtcheck *)clientData;
@@ -381,8 +383,15 @@ ged_rtcheck_vector_handler(ClientData clientData, int mask)
 	Tcl_DeleteFileHandler(rtcp->fd);
 	fclose(rtcp->fp);
 
-	FOR_ALL_SOLIDS(sp, &rtcp->gedp->ged_gdp->gd_headSolid)
-	    sp->s_flag = DOWN;
+	gdlp = BU_LIST_NEXT(ged_display_list, &rtcp->gedp->ged_gdp->gd_headDisplay);
+	while (BU_LIST_NOT_HEAD(gdlp, &rtcp->gedp->ged_gdp->gd_headDisplay)) {
+	    next_gdlp = BU_LIST_PNEXT(ged_display_list, gdlp);
+
+	    FOR_ALL_SOLIDS(sp, &gdlp->gdl_headSolid)
+		sp->s_flag = DOWN;
+
+	    gdlp = next_gdlp;
+	}
 
 	/* Add overlay */
 	ged_cvt_vlblock_to_solids(rtcp->gedp, rtcp->vbp, "OVERLAPS", 0);
@@ -447,6 +456,8 @@ ged_rtcheck_output_handler(ClientData clientData, int mask)
 void
 ged_rtcheck_vector_handler(ClientData clientData, int mask)
 {
+    register struct ged_display_list *gdlp;
+    register struct ged_display_list *next_gdlp;
     int value;
     struct solid *sp;
     struct ged_rtcheck *rtcp = (struct ged_rtcheck *)clientData;
@@ -458,8 +469,15 @@ ged_rtcheck_vector_handler(ClientData clientData, int mask)
 				 (ClientData)rtcp);
 	Tcl_Close(rtcp->interp, rtcp->chan);
 
-	FOR_ALL_SOLIDS(sp, &rtcp->gedp->ged_gdp->gd_headSolid)
-	    sp->s_flag = DOWN;
+	gdlp = BU_LIST_NEXT(ged_display_list, &rtcp->gedp->ged_gdp->gd_headDisplay);
+	while (BU_LIST_NOT_HEAD(gdlp, &rtcp->gedp->ged_gdp->gd_headDisplay)) {
+	    next_gdlp = BU_LIST_PNEXT(ged_display_list, gdlp);
+
+	    FOR_ALL_SOLIDS(sp, &gdlp->gdl_headSolid)
+		sp->s_flag = DOWN;
+
+	    gdlp = next_gdlp;
+	}
 
 	/* Add overlay */
 	ged_cvt_vlblock_to_solids(rtcp->gedp, rtcp->vbp, "OVERLAPS", 0);
