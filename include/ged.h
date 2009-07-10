@@ -515,6 +515,18 @@ GED_EXPORT BU_EXTERN(struct ged *ged_open,
 GED_EXPORT BU_EXTERN(void ged_view_init,
 		     (struct ged_view *gvp));
 
+/* defined in draw.c */
+GED_EXPORT BU_EXTERN (void ged_color_soltab,
+		      (struct bu_list *hdlp));
+GED_EXPORT BU_EXTERN (struct ged_display_list *ged_addToDisplay,
+		      (struct ged *gedp,
+		       const char *name));
+
+/* defined in erase.c */
+GED_EXPORT BU_EXTERN (void ged_erasePathFromDisplay,
+		      (struct ged	*gedp,
+		       const char	*path));
+
 /* defined in inside.c */
 GED_EXPORT BU_EXTERN(int ged_inside_internal,
 		     (struct ged *gedp,

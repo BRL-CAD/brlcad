@@ -47,11 +47,16 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-int brep_info(struct brep_specific* bs,struct bu_vls *vls);
-int brep_face_info(struct brep_specific* bs,struct bu_vls *vls,int si);
-int brep_surface_info(struct brep_specific* bs,struct bu_vls *vls,int si);
-int brep_surface_plot(struct ged *gedp, struct brep_specific* bs, struct rt_brep_internal* bi, struct bn_vlblock *vbp,int index);
-int brep_facetrim_plot(struct ged *gedp, struct brep_specific* bs, struct rt_brep_internal* bi, struct bn_vlblock *vbp,int index);
+RT_EXPORT BU_EXTERN(int brep_info,
+		    (struct brep_specific* bs,struct bu_vls *vls));
+RT_EXPORT BU_EXTERN(int brep_face_info,
+		    (struct brep_specific* bs,struct bu_vls *vls,int si));
+RT_EXPORT BU_EXTERN(int brep_surface_info,
+		    (struct brep_specific* bs,struct bu_vls *vls,int si));
+RT_EXPORT BU_EXTERN(int brep_surface_plot,
+		    (struct ged *gedp, struct brep_specific* bs, struct rt_brep_internal* bi, struct bn_vlblock *vbp,int index));
+RT_EXPORT BU_EXTERN(int brep_facetrim_plot,
+		    (struct ged *gedp, struct brep_specific* bs, struct rt_brep_internal* bi, struct bn_vlblock *vbp,int index));
 #ifdef __cplusplus
 }
 #endif

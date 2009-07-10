@@ -157,9 +157,6 @@ BU_EXTERN (struct directory *ged_combadd,
 	    int				air));
 
 /* defined in draw.c */
-BU_EXTERN (void ged_color_soltab,
-	   (struct bu_list *hdlp));
-
 BU_EXTERN (void ged_cvt_vlblock_to_solids,
 	   (struct ged *gedp,
 	    struct bn_vlblock *vbp,
@@ -179,9 +176,6 @@ BU_EXTERN (int ged_drawtrees,
 	    const char *argv[],
 	    int kind,
 	    struct ged_client_data *_dgcdp));
-BU_EXTERN (struct ged_display_list *ged_addToDisplay,
-	   (struct ged *gedp,
-	    const char *name));
 
 
 /* defined in erase.c */
@@ -200,9 +194,6 @@ BU_EXTERN (void ged_eraseobj,
 	   (struct ged			*gedp,
 	    register struct directory	**dpp,
 	    int				skip_first));
-BU_EXTERN (void ged_erasePathFromDisplay,
-	   (struct ged			*gedp,
-	    const char			*path));
 BU_EXTERN (void ged_eraseAllNamesFromDisplay,
 	   (struct ged			*gedp,
 	    const char			*name,

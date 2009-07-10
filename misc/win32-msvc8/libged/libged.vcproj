@@ -52,7 +52,7 @@
 				Name="VCCLCompilerTool"
 				Optimization="2"
 				InlineFunctionExpansion="1"
-				AdditionalIncludeDirectories="../../../include;../../../src/libged;../../../src/other/libregex;../../../src/other/tcl/generic;../../../src/other/tcl/win;../../../src/other/libz;../../../src/other/opennurbs;../../../src/other/tnt;../../../src/other/libpng"
+				AdditionalIncludeDirectories="../../../include;../../../src/libged;../../../src/other/libregex;../../../src/other/tcl/generic;../../../src/other/tcl/win;../../../src/other/libz;../../../src/other/opennurbs;../../../src/other/tnt;../../../src/other/libpng;../../../src/librt/primitives/brep"
 				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;__win32;ON_DLL_IMPORTS;GED_EXPORT_DLL;BRLCAD_DLL;HAVE_CONFIG_H;BRLCADBUILD;OBJ_BREP=1;TCL_THREADS=1;_CRT_SECURE_NO_WARNINGS"
 				StringPooling="true"
 				BasicRuntimeChecks="0"
@@ -270,6 +270,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\src\libged\bbsize.c"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\src\libged\bev.c"
 				>
 			</File>
@@ -327,6 +331,10 @@
 			</File>
 			<File
 				RelativePath="..\..\..\src\libged\bot_vertex_fuse.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\src\libged\brep.c"
 				>
 			</File>
 			<File

@@ -29,7 +29,20 @@
 
 #include "./ged_private.h"
 
+#if 1
+RT_EXPORT BU_EXTERN(int brep_info,
+		    (struct brep_specific* bs,struct bu_vls *vls));
+RT_EXPORT BU_EXTERN(int brep_face_info,
+		    (struct brep_specific* bs,struct bu_vls *vls,int si));
+RT_EXPORT BU_EXTERN(int brep_surface_info,
+		    (struct brep_specific* bs,struct bu_vls *vls,int si));
+RT_EXPORT BU_EXTERN(int brep_surface_plot,
+		    (struct ged *gedp, struct brep_specific* bs, struct rt_brep_internal* bi, struct bn_vlblock *vbp,int index));
+RT_EXPORT BU_EXTERN(int brep_facetrim_plot,
+		    (struct ged *gedp, struct brep_specific* bs, struct rt_brep_internal* bi, struct bn_vlblock *vbp,int index));
+#else
 extern int brep_surface_plot(struct ged *gedp, struct brep_specific* bs, struct rt_brep_internal* bi, struct bn_vlblock *vbp,int index);
+#endif
 
 int
 ged_brep(struct ged *gedp, int argc, const char *argv[])
