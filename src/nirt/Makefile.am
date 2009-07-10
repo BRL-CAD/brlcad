@@ -34,8 +34,7 @@ noinst_HEADERS = \
 
 EXTRA_DIST = \
 	$(man_MANS) \
-	dist_def.c \
-	nirt.dsp
+	dist_def.c
 
 include $(top_srcdir)/misc/Makefile.defs
 
