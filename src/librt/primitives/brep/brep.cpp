@@ -2146,7 +2146,9 @@ rt_brep_shot(struct soltab *stp, register struct xray *rp, struct application *a
 	    }
 	    i = hits.erase(i);
 
-	    if (i != hits.begin())
+            if (i == hits.end())
+                break;
+	    else if (i != hits.begin())
 		--i;
 
 	    continue;
