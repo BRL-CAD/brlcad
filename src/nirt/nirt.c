@@ -408,12 +408,6 @@ main (int argc, char **argv)
     int             	   if_hit(struct application *ap, struct partition *part_head, struct seg *finished_segs);
     int             	   if_miss(struct application *ap);
 
-#if defined(_WIN32) && !defined(__CYGWIN__)
-    setmode(fileno(stdin), O_BINARY);
-    setmode(fileno(stdout), O_BINARY);
-    setmode(fileno(stderr), O_BINARY);
-#endif
-
     BU_LIST_INIT(&script_list);
 
     ocname[OVLP_RESOLVE] = "resolve";
