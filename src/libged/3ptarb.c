@@ -244,6 +244,7 @@ ged_3ptarb(struct ged *gedp, int argc, const char *argv[])
 	    break;
 
 	default:
+	    bu_free((genptr_t)internal.idb_ptr, "rt_arb_internal");
 	    bu_vls_printf(&gedp->ged_result_str, "%s: bad coordinate to solve for\n", argv[0]);
 	    return GED_ERROR;
     }
