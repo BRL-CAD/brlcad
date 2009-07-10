@@ -64,6 +64,10 @@
 /* subdivision size factors */
 #define BREP_TRIM_SUB_FACTOR 0.01
 
+// grows 3D BBox along each axis by this factor
+#define BBOX_GROW_3D 0.1
+
+
 static std::numeric_limits<double> real;
 
 namespace brlcad {
@@ -418,6 +422,8 @@ namespace brlcad {
 	    ON_Interval& u, ON_Interval& v, CurveTree* ctree);
 	BVNode(const ON_BrepFace* face, const ON_Surface* surface,
 	    ON_Interval& u, ON_Interval& v, CurveTree* ctree,
+	    ON_3dPoint& p0, ON_3dPoint& p2, ON_3dPoint& p6, 
+	    ON_3dPoint& p10, ON_3dPoint& p12,
 	    ON_3dVector& n0, ON_3dVector& n2, ON_3dVector& n6, 
 	    ON_3dVector& n10, ON_3dVector& n12);
 	~BVNode();
@@ -463,9 +469,10 @@ namespace brlcad {
 	// the center of the parametric domain
 	ON_3dPoint m_estimate;
 
-	// Array holding normal information needed at
+	// Array holding point and normal information needed at
 	// each node - for leaf nodes not all of these
 	// normals will need to be evaluated.
+	ON_3dPoint m_corners[13];
 	ON_3dVector m_normals[13];
 	
 	// Report if a given uv point is within the uv boundardies
@@ -523,38 +530,78 @@ namespace brlcad {
     inline BVNode<BH>::BVNode(const ON_BrepFace* face, const ON_Surface* surface,
 	ON_Interval& u, ON_Interval& v, CurveTree* ctree) 
     : m_face(face), m_surface(surface), m_u(u), m_v(v), m_ctree(ctree) { 
-	surface->EvNormal(m_u.Min(),m_v.Min(),m_normals[0], SW);
-        surface->EvNormal(m_u.Max(),m_v.Min(), m_normals[2], SE);
-	surface->EvNormal(m_u.ParameterAt(0.25), m_v.ParameterAt(0.25), m_normals[3], SW);
-	surface->EvNormal(m_u.ParameterAt(0.75), m_v.ParameterAt(0.25), m_normals[4], SE);
-	surface->EvNormal(m_u.ParameterAt(0.5), m_v.ParameterAt(0.5), m_normals[6], 0);
-	surface->EvNormal(m_u.ParameterAt(0.25), m_v.ParameterAt(0.75), m_normals[8], NW);
-	surface->EvNormal(m_u.ParameterAt(0.75), m_v.ParameterAt(0.75), m_normals[9], NE);
-	surface->EvNormal(m_u.Min(), m_v.Max(), m_normals[10], NW);
-	surface->EvNormal(m_u.Max(), m_v.Max(), m_normals[12], NE);
+	point_t min, max;
+	vect_t delta;
+	VSETALL(min, MAX_FASTF);
+	VSETALL(max, -MAX_FASTF);
+	surface->EvNormal(m_u.Min(),m_v.Min(), m_corners[0], m_normals[0]);
+        surface->EvNormal(m_u.Max(),m_v.Min(), m_corners[2], m_normals[2]);
+	surface->EvNormal(m_u.ParameterAt(0.25), m_v.ParameterAt(0.25), m_corners[3], m_normals[3]);
+	surface->EvNormal(m_u.ParameterAt(0.75), m_v.ParameterAt(0.25), m_corners[4], m_normals[4]);
+	surface->EvNormal(m_u.ParameterAt(0.5), m_v.ParameterAt(0.5), m_corners[6], m_normals[6]);
+	surface->EvNormal(m_u.ParameterAt(0.25), m_v.ParameterAt(0.75), m_corners[8], m_normals[8]);
+	surface->EvNormal(m_u.ParameterAt(0.75), m_v.ParameterAt(0.75), m_corners[9], m_normals[9]);
+	surface->EvNormal(m_u.Min(), m_v.Max(), m_corners[10], m_normals[10]);
+	surface->EvNormal(m_u.Max(), m_v.Max(), m_corners[12], m_normals[12]);
 	surface->EvPoint(u.Mid(),v.Mid(),m_estimate);
-	this->m_BBox = surface->BoundingBox();
+        VMINMAX(min, max, ((double*)m_corners[0]));
+        VMINMAX(min, max, ((double*)m_corners[2]));
+        VMINMAX(min, max, ((double*)m_corners[3]));
+        VMINMAX(min, max, ((double*)m_corners[4]));
+        VMINMAX(min, max, ((double*)m_corners[6]));
+        VMINMAX(min, max, ((double*)m_corners[8]));
+        VMINMAX(min, max, ((double*)m_corners[9]));
+        VMINMAX(min, max, ((double*)m_corners[10]));
+        VMINMAX(min, max, ((double*)m_corners[12]));
+	VSUB2(delta, max, min);
+	VSCALE(delta, delta, BBOX_GROW_3D);
+	VSUB2(min, min, delta);
+	VADD2(max, max, delta);
+	this->m_BBox = ON_BoundingBox(ON_3dPoint(min),ON_3dPoint(max));
 	m_trims_above.clear();
 	m_ctree->getLeavesAbove(m_trims_above, m_u, m_v);
 	m_trims_above.sort(sortY);
     }
    
   template<class BH>
-    inline BVNode<BH>::BVNode(const ON_BrepFace* face, const ON_Surface* surface, ON_Interval& u,
-	    ON_Interval& v, CurveTree* ctree, ON_3dVector& n0, ON_3dVector& n2, 
-	    ON_3dVector& n6, ON_3dVector& n10, ON_3dVector& n12)
+    inline BVNode<BH>::BVNode(const ON_BrepFace* face, const ON_Surface* surface, ON_Interval& u, ON_Interval& v, CurveTree* ctree, 
+	    ON_3dPoint& p0, ON_3dPoint& p2, ON_3dPoint& p6, ON_3dPoint& p10, ON_3dPoint& p12,
+	    ON_3dVector& n0, ON_3dVector& n2, ON_3dVector& n6, ON_3dVector& n10, ON_3dVector& n12
+	    )
     : m_face(face), m_surface(surface), m_u(u), m_v(v), m_ctree(ctree) {
+	m_corners[0] = p0;
+	m_corners[2] = p2;
+	m_corners[6] = p6;
+	m_corners[10] = p10;
+	m_corners[12] = p12;
 	m_normals[0] = n0;
 	m_normals[2] = n2;
 	m_normals[6] = n6;
 	m_normals[10] = n10;
 	m_normals[12] = n12;
-	surface->EvNormal(m_u.ParameterAt(0.25), m_v.ParameterAt(0.25), m_normals[3], SW);
-	surface->EvNormal(m_u.ParameterAt(0.75), m_v.ParameterAt(0.25), m_normals[4], SE);
-	surface->EvNormal(m_u.ParameterAt(0.25), m_v.ParameterAt(0.75), m_normals[8], NW);
-	surface->EvNormal(m_u.ParameterAt(0.75), m_v.ParameterAt(0.75), m_normals[9], NE);
+	point_t min, max;
+	vect_t delta;
+	VSETALL(min, MAX_FASTF);
+	VSETALL(max, -MAX_FASTF);
+	surface->EvNormal(m_u.ParameterAt(0.25), m_v.ParameterAt(0.25), m_corners[3], m_normals[3]);
+	surface->EvNormal(m_u.ParameterAt(0.75), m_v.ParameterAt(0.25), m_corners[4], m_normals[4]);
+	surface->EvNormal(m_u.ParameterAt(0.25), m_v.ParameterAt(0.75), m_corners[8], m_normals[8]);
+	surface->EvNormal(m_u.ParameterAt(0.75), m_v.ParameterAt(0.75), m_corners[9], m_normals[9]);
 	surface->EvPoint(u.Mid(),v.Mid(),m_estimate);
-	this->m_BBox = surface->BoundingBox();
+	VMINMAX(min, max, ((double*)m_corners[0]));
+        VMINMAX(min, max, ((double*)m_corners[2]));
+        VMINMAX(min, max, ((double*)m_corners[3]));
+        VMINMAX(min, max, ((double*)m_corners[4]));
+        VMINMAX(min, max, ((double*)m_corners[6]));
+        VMINMAX(min, max, ((double*)m_corners[8]));
+        VMINMAX(min, max, ((double*)m_corners[9]));
+        VMINMAX(min, max, ((double*)m_corners[10]));
+        VMINMAX(min, max, ((double*)m_corners[12]));
+	VSUB2(delta, max, min);
+	VSCALE(delta, delta, BBOX_GROW_3D);
+	VSUB2(min, min, delta);
+	VADD2(max, max, delta);
+	this->m_BBox = ON_BoundingBox(ON_3dPoint(min),ON_3dPoint(max));
 	m_trims_above.clear();
 	m_ctree->getLeavesAbove(m_trims_above, m_u, m_v);
 	m_trims_above.sort(sortY);

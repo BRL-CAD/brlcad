@@ -405,6 +405,7 @@ namespace brlcad {
 	if (!(m_root->isFlat())) {
 	    GetBVChildren(m_root,1);
 	}
+	BuildBBox(m_root);
     }
 
     SurfaceTree::~SurfaceTree() {
@@ -453,22 +454,31 @@ namespace brlcad {
 	ON_Interval usecond = parent->m_u.ParameterAt(second);
 	ON_Interval vsecond = parent->m_v.ParameterAt(second);
 	CurveTree* ctree = parent->m_ctree;
-	parent->m_surface->EvNormal(parent->m_u.ParameterAt(0.5),parent->m_v.Min(),parent->m_normals[1],0);
-	parent->m_surface->EvNormal(parent->m_u.Min(),parent->m_v.ParameterAt(0.5),parent->m_normals[5],0);
-	parent->m_surface->EvNormal(parent->m_u.Max(),parent->m_v.ParameterAt(0.5),parent->m_normals[7],0);
-	parent->m_surface->EvNormal(parent->m_u.ParameterAt(0.5),parent->m_v.Max(),parent->m_normals[11],0);
-	quads[0] = new BBNode(parent->m_face,parent->m_surface,ufirst,vfirst, ctree, parent->m_normals[0], parent->m_normals[1], parent->m_normals[3], parent->m_normals[5], parent->m_normals[6]);
-	quads[1] = new BBNode(parent->m_face,parent->m_surface,usecond,vfirst, ctree, parent->m_normals[1], parent->m_normals[2], parent->m_normals[4], parent->m_normals[6], parent->m_normals[7]);
-	quads[2] = new BBNode(parent->m_face,parent->m_surface,ufirst,vsecond, ctree, parent->m_normals[5], parent->m_normals[6], parent->m_normals[8], parent->m_normals[10], parent->m_normals[11]);
-	quads[3] = new BBNode(parent->m_face,parent->m_surface,usecond,vsecond, ctree, parent->m_normals[6], parent->m_normals[7], parent->m_normals[9], parent->m_normals[11], parent->m_normals[12]);
+	parent->m_surface->EvNormal(parent->m_u.ParameterAt(0.5),parent->m_v.Min(),parent->m_corners[1],parent->m_normals[1]);
+	parent->m_surface->EvNormal(parent->m_u.Min(),parent->m_v.ParameterAt(0.5),parent->m_corners[5],parent->m_normals[5]);
+	parent->m_surface->EvNormal(parent->m_u.Max(),parent->m_v.ParameterAt(0.5),parent->m_corners[7],parent->m_normals[7]);
+	parent->m_surface->EvNormal(parent->m_u.ParameterAt(0.5),parent->m_v.Max(),parent->m_corners[11],parent->m_normals[11]);
+	quads[0] = new BBNode(parent->m_face,parent->m_surface,ufirst,vfirst, ctree, 
+		parent->m_corners[0], parent->m_corners[1], parent->m_corners[3], parent->m_corners[5], parent->m_corners[6],
+		parent->m_normals[0], parent->m_normals[1], parent->m_normals[3], parent->m_normals[5], parent->m_normals[6]);
+	quads[1] = new BBNode(parent->m_face,parent->m_surface,usecond,vfirst, ctree, 
+		parent->m_corners[1], parent->m_corners[2], parent->m_corners[4], parent->m_corners[6], parent->m_corners[7],
+		parent->m_normals[1], parent->m_normals[2], parent->m_normals[4], parent->m_normals[6], parent->m_normals[7]);
+	quads[2] = new BBNode(parent->m_face,parent->m_surface,ufirst,vsecond, ctree, 
+		parent->m_corners[5], parent->m_corners[6], parent->m_corners[8], parent->m_corners[10], parent->m_corners[11],
+		parent->m_normals[5], parent->m_normals[6], parent->m_normals[8], parent->m_normals[10], parent->m_normals[11]);
+	quads[3] = new BBNode(parent->m_face,parent->m_surface,usecond,vsecond, ctree, 
+		parent->m_corners[6], parent->m_corners[7], parent->m_corners[9], parent->m_corners[11], parent->m_corners[12],
+		parent->m_normals[6], parent->m_normals[7], parent->m_normals[9], parent->m_normals[11], parent->m_normals[12]);
 	
 	for (int i = 0; i < 4; i++) {
-	    if ((quads[i]->NodeTrimmed() != 1) && !(quads[i]->isFlat())) {
-		GetBVChildren(quads[i],depth++);
+	    //if ((quads[i]->NodeTrimmed() != 1) && !(quads[i]->isFlat())) {
+	    if (depth < 8) {
+		GetBVChildren(quads[i],depth+1);
 	    }
-	    if (!(quads[i]->m_trimmed)) {
+	//    if (!(quads[i]->m_trimmed)) {
 		parent->addChild(quads[i]);
-	    }
+	  //  }
 	}
 	BuildBBox(parent);
     }
