@@ -452,6 +452,9 @@ namespace brlcad {
 
 	// Get 2 points defining bounding box
 	void GetBBox(double* min, double* max);
+
+	// (Re)build bounding box based on child bounding boxes
+	void BuildBBox();
  
 	// Surface Information
 	const ON_BrepFace* m_face;
@@ -677,6 +680,32 @@ namespace brlcad {
       max[2] = m_BBox.m_max[2];
     }
 
+  template<class BH>
+      void BVNode<BH>::BuildBBox() {
+	  if (m_children.size() > 0) {
+	      for (vector<BBNode*>::iterator childnode = m_children.begin(); childnode != m_children.end(); childnode++) {
+		if (childnode == m_children.begin()) {
+   		    m_BBox.m_min[0] = (*childnode)->m_BBox.m_min[0];
+   		    m_BBox.m_min[1] = (*childnode)->m_BBox.m_min[1];
+   		    m_BBox.m_min[2] = (*childnode)->m_BBox.m_min[2];
+		    m_BBox.m_max[0] = (*childnode)->m_BBox.m_max[0];
+   		    m_BBox.m_max[1] = (*childnode)->m_BBox.m_max[1];
+   		    m_BBox.m_max[2] = (*childnode)->m_BBox.m_max[2];
+		} else {
+   		    for (int j = 0; j < 3; j++) {
+   			if (m_BBox.m_min[j] > (*childnode)->m_BBox.m_min[j]) {
+   			    m_BBox.m_min[j] = (*childnode)->m_BBox.m_min[j];
+   			}
+   			if (m_BBox.m_max[j] < (*childnode)->m_BBox.m_max[j]) {
+   			    m_BBox.m_max[j] = (*childnode)->m_BBox.m_max[j];
+			}
+		    }
+		}
+	      }
+	  }
+      }
+ 
+		  
 
   template<class BH>
     bool BVNode<BH>::containsUV(const ON_2dPoint& uv) {
@@ -1028,7 +1057,6 @@ namespace brlcad {
 
     private:
       void GetBVChildren(BBNode* parent, int depth);
-      void BuildBBox(BBNode* currentnode);
       const ON_BrepFace* m_face;
       CurveTree* m_ctree;
       BBNode* m_root;

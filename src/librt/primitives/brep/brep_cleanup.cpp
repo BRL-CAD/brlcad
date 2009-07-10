@@ -733,6 +733,7 @@ brep_build_bvh(struct brep_specific* bs, struct rt_brep_internal* bi)
     (void)fclose(plot_file());
 		plot = NULL;
 #endif
+    bs->bvh->BuildBBox();
     return 0;
 }
 
@@ -2504,8 +2505,8 @@ plot_bbnode(BBNode* node, struct bu_list* vhead, int depth, int start, int limit
 		       {max[0], max[1], max[2]},
 		       {max[0], min[1], max[2]}};
 
-    if (node->isLeaf()) {
-//    if (depth >= start && depth<=limit) {
+//    if (node->isLeaf()) {
+    if (depth >= start && depth<=limit) {
 	for (int i = 0; i <= 4; i++) {
 	    RT_ADD_VLIST(vhead, verts[i%4], (i == 0) ? BN_VLIST_LINE_MOVE : BN_VLIST_LINE_DRAW);
 	}
@@ -2519,9 +2520,11 @@ plot_bbnode(BBNode* node, struct bu_list* vhead, int depth, int start, int limit
 
     }
 
-    for (size_t i = 0; i < node->m_children.size(); i++) {
-	//if (i < 1)
-	plot_bbnode(node->m_children[i], vhead, depth+1, start, limit);
+    if (depth < limit) {
+    	for (size_t i = 0; i < node->m_children.size(); i++) {
+    	    //if (i < 1)
+		plot_bbnode(node->m_children[i], vhead, depth+1, start, limit);
+    	}
     }
 }
 
@@ -2676,12 +2679,11 @@ rt_brep_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_t
 //   tree.
 //
 
-         brep = bi->brep;
          for (int i = 0; i < brep->m_F.Count(); i++) {
            ON_BrepFace& f = brep->m_F[i];
            CurveTree* ct = new CurveTree(&f);
 	   SurfaceTree* st = new SurfaceTree(&f, ct);
-           plot_bbnode(st->getRootNode(), vhead, 0, 1, 8);
+           plot_bbnode(st->getRootNode(), vhead, 0, 0, 2);
          }
 
 

@@ -404,8 +404,8 @@ namespace brlcad {
 	m_root = new BBNode(m_face,surf,d1,d2,m_ctree);
 	if (!(m_root->isFlat())) {
 	    GetBVChildren(m_root,1);
+	    m_root->BuildBBox();
 	}
-	BuildBBox(m_root);
     }
 
     SurfaceTree::~SurfaceTree() {
@@ -472,40 +472,15 @@ namespace brlcad {
 		parent->m_normals[6], parent->m_normals[7], parent->m_normals[9], parent->m_normals[11], parent->m_normals[12]);
 	
 	for (int i = 0; i < 4; i++) {
-	    //if ((quads[i]->NodeTrimmed() != 1) && !(quads[i]->isFlat())) {
-	    if (depth < 8) {
+	    if (/*(quads[i]->NodeTrimmed() != 1) &&*/ !(quads[i]->isFlat()) && depth < BREP_MAX_FT_DEPTH) {
 		GetBVChildren(quads[i],depth+1);
 	    }
 	//    if (!(quads[i]->m_trimmed)) {
 		parent->addChild(quads[i]);
 	  //  }
 	}
-	BuildBBox(parent);
+	parent->BuildBBox();
     }
-
-    void SurfaceTree::BuildBBox(BBNode* currentnode) {
-	for (vector<BBNode*>::iterator childnode = currentnode->m_children.begin(); childnode != currentnode->m_children.end(); childnode++) {
-	    if (childnode == currentnode->m_children.begin()) {
-		currentnode->m_BBox.m_min[0] = (*childnode)->m_BBox.m_min[0];
-		currentnode->m_BBox.m_min[1] = (*childnode)->m_BBox.m_min[1];
-		currentnode->m_BBox.m_min[2] = (*childnode)->m_BBox.m_min[2];
-		currentnode->m_BBox.m_max[0] = (*childnode)->m_BBox.m_max[0];
-		currentnode->m_BBox.m_max[1] = (*childnode)->m_BBox.m_max[1];
-		currentnode->m_BBox.m_max[2] = (*childnode)->m_BBox.m_max[2];
-	    } else {
-    		for (int j = 0; j < 3; j++) {
-    		    if (currentnode->m_BBox.m_min[j] > (*childnode)->m_BBox.m_min[j]) {
-    			currentnode->m_BBox.m_min[j] = (*childnode)->m_BBox.m_min[j];
-    		    }
-    		    if (currentnode->m_BBox.m_max[j] < (*childnode)->m_BBox.m_max[j]) {
-    			currentnode->m_BBox.m_max[j] = (*childnode)->m_BBox.m_max[j];
-    		    }
-    		}
-    	    }
-    	}
-	    
-    }
-    
     
     bool sortY (BRNode* first, BRNode* second) { 
     	point_t first_min,second_min;
