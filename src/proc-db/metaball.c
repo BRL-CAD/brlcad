@@ -49,20 +49,20 @@
  * LIBWDB's mk_metaball() interface.  
  */
 static void
-make_meatballs(struct rt_wdb *fp, const char *name, int count)
+make_meatballs(struct rt_wdb *fp, const char *name, long count)
 {
     static float *ctx; /* random context */
     static const int method = 1; /* 1==ISO */
     static const fastf_t threshold = 1.0;
     static const fastf_t SZ = 1000.0;
 
-    int i;
+    long i;
     fastf_t **pts;
 
     RT_CK_WDB(fp);
 
     bn_rand_init(ctx, rand());
-    bu_log("Creating [%s] object with %d random points\n", name, count);
+    bu_log("Creating [%s] object with %ld random point%s\n", name, count, count > 1 ? "s" : "");
 
     /* allocate a dynamic array of pointers to points.  this may be
      * subject to change but is presently the format mk_metaball()
@@ -170,12 +170,14 @@ mix_balls(struct db_i *dbip, const char *name, int ac, const char *av[])
  * then creates another that combines them all into one.
  */
 static void
-make_spaghetti(const char *filename, const char *name)
+make_spaghetti(const char *filename, const char *name, long count)
 {
     const char *balls[4] = {"someballs.s", "moreballs.s", "manyballs.s", NULL};
     const char title[BUFSIZ] = "metaball";
     struct rt_wdb *fp;
     struct db_i *dbip;
+
+    long some, more, many;
 
     /* get a write-only handle */
     fp = wdb_fopen(filename);
@@ -185,10 +187,15 @@ make_spaghetti(const char *filename, const char *name)
 
     mk_id(fp, title);
 
+    /* just to make things interesting, make varying sized sets */
+    some = (long)ceil((double)count * (1.0 / 111.0));
+    more = (long)ceil((double)count * (10.0 / 111.0));
+    many = (long)ceil((double)count * (100.0 / 111.0));
+
     /* create individual metaballs with random points using LIBWDB */
-    make_meatballs(fp, balls[0], 5);
-    make_meatballs(fp, balls[1], 50);
-    make_meatballs(fp, balls[2], 500);
+    make_meatballs(fp, balls[0], some);
+    make_meatballs(fp, balls[1], more);
+    make_meatballs(fp, balls[2], many);
 
     wdb_close(fp);
 
@@ -213,15 +220,19 @@ make_spaghetti(const char *filename, const char *name)
 int
 main(int argc, char *argv[])
 {
-    static const char usage[] = "Usage:\n\t%s [-h] [-o outfile]\n\n\t-h\tShow help\n\t-o file\tFile to write out\n\n";
+    static const char usage[] = "Usage:\n%s [-h] [-o outfile] [-n count]\n\n  -h      \tShow help\n  -o file \tFile to write out (default: metaball.g)\n  -n count\tTotal metaball point count (default 555)\n\n";
 
     char outfile[MAXPATHLEN] = "metaball.g";
     int optc = 0;
+    long count = 555;
 
-    while ((optc = bu_getopt(argc, argv, "Hho:")) != -1)
+    while ((optc = bu_getopt(argc, argv, "Hho:n:")) != -1) {
 	switch (optc) {
 	    case 'o':
 		snprintf(outfile, MAXPATHLEN, "%s", bu_optarg);;
+		break;
+	    case 'n':
+		count = atoi(bu_optarg);
 		break;
 	    case 'h' :
 	    case 'H' :
@@ -229,6 +240,11 @@ main(int argc, char *argv[])
 		printf(usage, *argv);
 		return optc == '?' ? EXIT_FAILURE : EXIT_SUCCESS;
 	}
+    }
+
+    if (count <= 0) {
+	bu_exit(EXIT_FAILURE, "ERROR: count must be greater than zero");
+    }
 
     if (bu_file_exists(outfile)) {
 	bu_exit(EXIT_FAILURE, "ERROR: %s already exists.  Remove file and try again.", outfile);
@@ -237,7 +253,7 @@ main(int argc, char *argv[])
     bu_log("Writing metaballs out to [%s]\n", outfile);
 
     /* make dinner */
-    make_spaghetti(outfile, "meatballs.s");
+    make_spaghetti(outfile, "meatballs.s", count);
 
     bu_log("BRL-CAD geometry database file [%s] created.\nDone.\n", outfile);
 
