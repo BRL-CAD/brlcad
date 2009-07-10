@@ -216,6 +216,11 @@ fastf_t makeLowerTorso(struct rt_wdb *file, char *name, fastf_t standing_height,
 	return pelvisWidth;
 }
 
+fastf_t makeShoulderJoint(struct rt_wdb *file, char *name, fastf_t *shoulderJoint, fastf_t shoulderWidth)
+{
+	mk_sph(file, name, shoulderJoint, shoulderWidth);
+	return shoulderWidth;
+}
 fastf_t makeShoulder(struct rt_wdb *file, fastf_t isLeft, char *partName, fastf_t standing_height, fastf_t showBoxes)
 {
 	return 1;
@@ -469,6 +474,7 @@ void makeArm(struct rt_wdb (*file), char *suffix, int isLeft, fastf_t standing_h
 	elbowWidth = armLength / 13;
 	wristWidth = armLength / 15;
 
+	char shoulderJointName[MAXLENGTH];
 	char upperArmName[MAXLENGTH];
 	char elbowName[MAXLENGTH];
 	char lowerArmName[MAXLENGTH];
@@ -476,6 +482,7 @@ void makeArm(struct rt_wdb (*file), char *suffix, int isLeft, fastf_t standing_h
 	char handName[MAXLENGTH];
 
         if(isLeft){
+		bu_strlcpy(shoulderJointName, "LeftShoulderJoint.s", MAXLENGTH);
                 bu_strlcpy(upperArmName, "LeftUpperArm.s", MAXLENGTH);
                 bu_strlcpy(elbowName, "LeftElbow.s", MAXLENGTH);
                 bu_strlcpy(lowerArmName, "LeftLowerArm.s", MAXLENGTH);
@@ -483,6 +490,7 @@ void makeArm(struct rt_wdb (*file), char *suffix, int isLeft, fastf_t standing_h
                 bu_strlcpy(handName, "LeftHand.s", MAXLENGTH);
         }
         else{
+		bu_strlcpy(shoulderJointName, "RightShoulderJoint.s", MAXLENGTH);
                 bu_strlcpy(upperArmName, "RightUpperArm.s", MAXLENGTH);
                 bu_strlcpy(elbowName, "RightElbow.s", MAXLENGTH);
                 bu_strlcpy(lowerArmName, "RightLowerArm.s", MAXLENGTH);
@@ -490,18 +498,17 @@ void makeArm(struct rt_wdb (*file), char *suffix, int isLeft, fastf_t standing_h
                 bu_strlcpy(handName, "RightHand.s", MAXLENGTH);
         }
 
+	bu_strlcat(shoulderJointName, suffix, MAXLENGTH);
 	bu_strlcat(upperArmName, suffix, MAXLENGTH);
 	bu_strlcat(elbowName, suffix, MAXLENGTH);
 	bu_strlcat(lowerArmName, suffix, MAXLENGTH);
 	bu_strlcat(wristName, suffix, MAXLENGTH);
 	bu_strlcat(handName, suffix, MAXLENGTH);
-/*
-	vect_t armDirection;
-	setDirection(direction, armDirection, 0, 0, 0);
-*/
+
 	/* direction is the direction that the arm will be pointing at the shoulder. */
 	/* armDirection is the derivative of that, and can be adjusted to fit a pose */
-        makeUpperArm(file, upperArmName, standing_height, upperArmWidth, elbowWidth, shoulderJoint, elbowJoint, armDirection, showBoxes);
+        makeShoulderJoint(file, shoulderJointName, shoulderJoint, upperArmWidth);
+	makeUpperArm(file, upperArmName, standing_height, upperArmWidth, elbowWidth, shoulderJoint, elbowJoint, armDirection, showBoxes);
         makeElbow(file, elbowName, elbowJoint, elbowWidth);
 
         makeLowerArm(file, lowerArmName, standing_height, elbowWidth, wristWidth, elbowJoint, wristJoint, elbowDirection, showBoxes);
@@ -724,8 +731,8 @@ void setStance(fastf_t stance, struct human_data_t *dude)
 		break;
 	case 2:
 		bu_log("Making it Drive\n"); /* it's like sitting, but with the arms extended */
-		VMOVE(dude->lArmDirection, mover2);
-		VMOVE(dude->rArmDirection, mover2);
+		VMOVE(dude->lArmDirection, mover);
+		VMOVE(dude->rArmDirection, mover);
                 VMOVE(dude->lElbowDirection, mover2);
                 VMOVE(dude->rElbowDirection, mover2);
                 VMOVE(dude->lWristDirection, mover2);
@@ -738,16 +745,46 @@ void setStance(fastf_t stance, struct human_data_t *dude)
                 VMOVE(dude->rFootDirection, mover2);
 		break;
 	case 3:
-
+		bu_log("Making arms out (standing)\n");
+                VMOVE(dude->lArmDirection, mover4);
+                VMOVE(dude->rArmDirection, mover3);
+                VMOVE(dude->lElbowDirection, mover4);
+                VMOVE(dude->rElbowDirection, mover3);
+                VMOVE(dude->lWristDirection, mover4);
+                VMOVE(dude->rWristDirection, mover3);
+                VMOVE(dude->lLegDirection, mover);
+                VMOVE(dude->rLegDirection, mover);
+                VMOVE(dude->lKneeDirection, mover);
+                VMOVE(dude->rKneeDirection, mover);
+                VMOVE(dude->lFootDirection, mover2);
+                VMOVE(dude->rFootDirection, mover2);		
 		break;
 	case 4:
-
+		bu_log("Making the Letterman\n");
+		vect_t larm, rarm;
+		VSET(larm, -32, 135, 0);
+		VSET(rarm, 32, 135, 0);
+                VMOVE(dude->lArmDirection, larm);
+                VMOVE(dude->rArmDirection, rarm);
+                VMOVE(dude->lElbowDirection, larm);
+                VMOVE(dude->rElbowDirection, rarm);
+                VMOVE(dude->lWristDirection, larm);
+                VMOVE(dude->rWristDirection, rarm);
+		vect_t lleg;
+		VSET(lleg, 0, 75, 0);
+                VMOVE(dude->lLegDirection, lleg);
+                VMOVE(dude->rLegDirection, mover2);
+		vect_t knee;
+		VSET(knee, 90, 5, 0);
+                VMOVE(dude->lKneeDirection, knee);
+                VMOVE(dude->rKneeDirection, mover);
+                VMOVE(dude->lFootDirection, mover2);
+                VMOVE(dude->rFootDirection, mover2);
 		break;
 	case 999:
 		/* interactive position-setter-thingermajiger */
 		break;
 	default:
-
 		break;
 	}
 	bu_log("Exiting stance maker\n");
