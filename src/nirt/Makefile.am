@@ -34,6 +34,7 @@ noinst_HEADERS = \
 
 EXTRA_DIST = \
 	$(man_MANS) \
+	CMakeLists.txt \
 	dist_def.c
 
 include $(top_srcdir)/misc/Makefile.defs
