@@ -56,7 +56,7 @@ char filename[MAXLENGTH]=DEFAULT_FILENAME;
  * using x, y, and z degrees, and exports it to resultVect, and returns
  * the distance of the vector.
  */
-/* human_data (will eventually) hold most/all data needed to make a person */
+
 enum genders { male, female };
 struct human_data_t
 {
@@ -67,6 +67,9 @@ struct human_data_t
         fastf_t legLength;
         fastf_t torsoLength;
         fastf_t armLength; 
+
+	/*struct arms*/
+	/*struct legs*/
                                 /* Arm direction Vectors */
         vect_t lArmDirection;
         vect_t rArmDirection;
@@ -81,6 +84,16 @@ struct human_data_t
         vect_t rKneeDirection;
         vect_t lFootDirection;
         vect_t rFootDirection;
+};
+
+struct arms
+{
+        vect_t lArmDirection;
+        vect_t rArmDirection;
+        vect_t lElbowDirection;
+        vect_t rElbowDirection;
+        vect_t lWristDirection;
+        vect_t rWristDirection;
 };
 
 fastf_t setDirection(fastf_t *inVect, fastf_t *resultVect, fastf_t x, fastf_t y, fastf_t z)
@@ -98,16 +111,37 @@ fastf_t setDirection(fastf_t *inVect, fastf_t *resultVect, fastf_t x, fastf_t y,
 	MAT4X3VEC(outVect, rotMatrix, inVect);
 
 /* Print rotation matrix
-	int i=0;
-	for(i=1; i<=16; i++){
-		bu_log("%3.4f\t", rotMatrix[(i-1)]);
-		if(i%4==0)
-			bu_log("\n");
-	}
-*/
+ *	int i=0;
+ *	for(i=1; i<=16; i++){
+ *		bu_log("%3.4f\t", rotMatrix[(i-1)]);
+ *		if(i%4==0)
+ *			bu_log("\n");
+ *	}
+ */
 	VMOVE(resultVect, outVect);
-
 	return MAGNITUDE(outVect);
+}
+
+void vectorTest(struct rt_wdb *file)
+{
+    /*
+     * This code here takes a direction vector, and then redirects it based on the angles given
+     * so it is as follows : startingVector, resultVector, xdegrees, ydegrees, zdegrees.
+     * and this will be used to position the arms and legs so they are joined yet flexable.
+     * Just a test with an rcc.
+     */
+
+    /*Vector shape modifying test */
+    vect_t test1, test2;
+    point_t testpoint;
+    VSET(testpoint, 0.0, 0.0, 0.0);
+    VSET(test1, 0, 0, 200);
+    setDirection(test1, test2, 0, 90, 0);
+    bu_log("%f, %f, %f\n", test1[X], test1[Y], test1[Z]);
+    bu_log("%f, %f, %f\n", test2[X], test2[Y], test2[Z]);
+    mk_rcc(file, "NormalTest.s", testpoint, test1, (5*IN2MM));
+    mk_rcc(file, "ChangeTest.s", testpoint, test2, (5*IN2MM));
+    /* See, now wasn't that easy? */
 }
 
 /******************************************/
@@ -117,9 +151,7 @@ fastf_t setDirection(fastf_t *inVect, fastf_t *resultVect, fastf_t x, fastf_t y,
 fastf_t makeHead(struct rt_wdb (*file), char *name, fastf_t standing_height, fastf_t headSize, fastf_t *headJoint, fastf_t *direction, fastf_t showBoxes)
 {
 	fastf_t headRadius = headSize / 2;
-
 	mk_sph(file, name, headJoint, headRadius);
-
 	if(showBoxes){
 		point_t p1[8];
 		VSET(p1[0], (-headRadius), (-headRadius), (headJoint[Z]-headRadius));
@@ -132,7 +164,6 @@ fastf_t makeHead(struct rt_wdb (*file), char *name, fastf_t standing_height, fas
 		VSET(p1[7], (headRadius), (headRadius), (headJoint[Z]-headRadius));	
 		mk_arb8(file, "HeadBox.s", &p1[0][X]); 
 	}
-
 	return headSize;
 }
 
@@ -141,15 +172,12 @@ fastf_t makeNeck(struct rt_wdb *file, char *name, fastf_t standing_height, fastf
 {
 	fastf_t neckWidth;
 	vect_t startVector, neckVector;
-
 	neckWidth = headSize / 4;
-
 	VSET(startVector, 0, 0, neckSize);
 	setDirection(startVector, neckVector, direction[X], direction[Y], direction[Z]);
 	VADD2(neckJoint, headJoint, neckVector);
-
 	mk_rcc(file, name, headJoint, neckVector, neckWidth);
-
+	
 	if(showBoxes){
 	/*TODO: add bounding boxes to neck, and other stuff, and make them fit the roational scheme*/
 	}
@@ -231,11 +259,8 @@ fastf_t makeUpperArm(struct rt_wdb *file, char *partName, fastf_t standing_heigh
 {
 	fastf_t upperArmLength;
 	vect_t startVector, armVector;
-
 	upperArmLength = (standing_height / 4.5) * IN2MM;
-
 	VSET(startVector, 0, 0, upperArmLength);
-
 	setDirection(startVector, armVector, direction[X], direction[Y], direction[Z]); /* set y to 180 to point down */
 	VADD2(ElbowJoint, ShoulderJoint, armVector);
 	mk_trc_h(file, partName, ShoulderJoint, armVector, upperArmWidth, elbowWidth);
@@ -262,13 +287,9 @@ fastf_t makeLowerArm(struct rt_wdb *file, char *name, fastf_t standing_height, f
 {
 	fastf_t lowerArmLength;
 	vect_t startVector, armVector;
-
 	lowerArmLength = (standing_height / 4.5) * IN2MM;
-	
 	VSET(startVector, 0, 0, lowerArmLength);
-
 	setDirection(startVector, armVector, direction[X], direction[Y], direction[Z]);
-
 	VADD2(wristJoint, elbowJoint, armVector);
 	mk_trc_h(file, name, elbowJoint, armVector, elbowWidth, wristWidth);
 
@@ -291,13 +312,9 @@ fastf_t makeWrist(struct rt_wdb *file, char *name, fastf_t *wristJoint, fastf_t 
 
 void makeHand(struct rt_wdb *file, char *name, fastf_t standing_height, fastf_t wristWidth, fastf_t *wristJoint, fastf_t *wristDirection, fastf_t showBoxes)
 {
-	fastf_t handLength, handWidth, x, y;
+	fastf_t handLength, handWidth;
 	handLength = (standing_height / 16) * IN2MM;
 	handWidth = (standing_height / 32) * IN2MM;
-	x = 0;
-	y = (standing_height / 6) * IN2MM;
-
-	/* VSET(handPoint, x, y, wrist); */
 	mk_sph(file, name, wristJoint, wristWidth);
 
 	if(showBoxes){
@@ -320,9 +337,7 @@ fastf_t makeThigh(struct rt_wdb *file, char *name, fastf_t standing_height, fast
  fastf_t *thighJoint, fastf_t *kneeJoint, fastf_t *direction, fastf_t showBoxes)
 {
 	vect_t startVector, thighVector;
-
 	VSET(startVector, 0, 0, thighLength);
-	
 	setDirection(startVector, thighVector, direction[X], direction[Y], direction[Z]);
 	VADD2(kneeJoint, thighJoint, thighVector);
 	mk_trc_h(file, name, thighJoint, thighVector, thighWidth, kneeWidth);
@@ -349,16 +364,12 @@ fastf_t makeCalf(struct rt_wdb *file, char *name, fastf_t standing_height, fastf
  fastf_t *kneeJoint, fastf_t *ankleJoint, fastf_t *calfDirection, fastf_t showBoxes)
 {
 	vect_t startVector, calfVector;
-	
 	VSET(startVector, 0, 0, calfLength);
-
 	if(ankleJoint[Y] <= 0){
                 ankleJoint[Y] = ankleWidth;
         }
-
 	setDirection(startVector, calfVector, calfDirection[X], calfDirection[Y], calfDirection[Z]);
         VADD2(ankleJoint, kneeJoint, calfVector);
-
 	mk_trc_h(file, name, kneeJoint, calfVector, kneeWidth, ankleWidth);
 
 	if(showBoxes){
@@ -381,18 +392,11 @@ fastf_t makeAnkle(struct rt_wdb *file, char *name, fastf_t *ankleJoint, fastf_t 
 fastf_t makeFoot(struct rt_wdb *file, char *name, fastf_t standing_height, fastf_t ankleRadius, fastf_t *ankleJoint, fastf_t *direction, fastf_t showBoxes)
 {
 	fastf_t footLength, toeRadius;
-	vect_t startVector, footVector;
-	
+	vect_t startVector, footVector;	
 	footLength = ankleRadius * 3;
 	toeRadius = ankleRadius * 1.2;
-
 	VSET(startVector, 0, 0, footLength);
-
         setDirection(startVector, footVector, direction[X], direction[Y], direction[Z]);
-	
-	/*
-	 * VADD2(ankleJoint, kneeJoint, footVector);
-	 */
 	mk_particle(file, name, ankleJoint, footVector, ankleRadius, toeRadius);
 
 	if(showBoxes){
@@ -414,13 +418,10 @@ void makeProfile(struct rt_wdb (*file), char *suffix, fastf_t standing_height, f
 	fastf_t headSize, neckSize;
 	char headName[MAXLENGTH]="Head.s";
 	char neckName[MAXLENGTH]="Neck.s";
-
 	bu_strlcat(headName, suffix, MAXLENGTH);
 	bu_strlcat(neckName, suffix, MAXLENGTH);
-
 	headSize = ProfileSize;
 	neckSize = ProfileSize / 2;
-
 	headSize = makeHead(file, headName, standing_height, headSize, headJoint, direction, showBoxes);
 	makeNeck(file, neckName, standing_height, headSize, neckSize, headJoint, neckJoint, direction, showBoxes);
 }
@@ -559,7 +560,6 @@ void makeLeg(struct rt_wdb (*file), char *suffix, int isLeft, fastf_t standing_h
 	/* divvy up the length of the leg to the leg parts */
 	thighLength = legLength / 2;
 	calfLength = legLength / 2;
-
 	thighWidth = thighLength / 4;
 	kneeWidth = thighLength / 6;
 	ankleWidth = calfLength / 8;
@@ -576,7 +576,7 @@ void makeLeg(struct rt_wdb (*file), char *suffix, int isLeft, fastf_t standing_h
  * Make the head, shoulders knees and toes, so to speak.
  * Head, neck, torso, arms, legs.
  */
-void makeBody(struct rt_wdb (*file), char *suffix, struct human_data_t *dude, fastf_t standing_height, fastf_t *location, fastf_t showBoxes)
+void makeBody(struct rt_wdb (*file), char *suffix, struct human_data_t dude, fastf_t standing_height, fastf_t *location, fastf_t showBoxes)
 {
 	fastf_t headSize = (standing_height / 8) * IN2MM;
 	fastf_t armLength = (standing_height / 2) * IN2MM;
@@ -585,9 +585,7 @@ void makeBody(struct rt_wdb (*file), char *suffix, struct human_data_t *dude, fa
 	point_t leftShoulderJoint, rightShoulderJoint;
 	point_t leftThighJoint, rightThighJoint;
 	point_t neckJoint, headJoint;
-	vect_t direction, lArmDirection, rArmDirection, lLegDirection, rLegDirection;
-	vect_t lKneeDirection, rKneeDirection, lFootDirection, rFootDirection;
-	/* pass off important variables to their respective functions */
+	vect_t direction;
 
 	/* 
 	 * Make sure that vectors, points, and widths are sent to each function 
@@ -611,48 +609,21 @@ void makeBody(struct rt_wdb (*file), char *suffix, struct human_data_t *dude, fa
 	 * Arm Parts
 	 */
 	/*The second argument is whether or not it is the left side, 1 = yes, 0 = no) */
-
-	/* Arm sway, buy use of relative direction */
-	setDirection(direction, lArmDirection, 0, 0, 0);
-	setDirection(direction, rArmDirection, 0, 0, 0);
-
-/* Arm Sway, by use of absolute direction
- *	VSET(lArmDirection, 0, 150, 0);
- *	VSET(rArmDirection, 0, 210, 0);
- */
-	makeArm(file, suffix, 1, standing_height, armLength, leftShoulderJoint, dude->lArmDirection, dude->lElbowDirection, dude->lWristDirection, showBoxes);
-	makeArm(file, suffix, 0, standing_height, armLength, rightShoulderJoint, dude->rArmDirection, dude->rElbowDirection, dude->rWristDirection, showBoxes);
+	makeArm(file, suffix, 1, standing_height, armLength, leftShoulderJoint, dude.lArmDirection, dude.lElbowDirection, dude.lWristDirection, showBoxes);
+	makeArm(file, suffix, 0, standing_height, armLength, rightShoulderJoint, dude.rArmDirection, dude.rElbowDirection, dude.rWristDirection, showBoxes);
 	
 	/**
 	 * Leg Parts
 	 */
-
-	/*left and right legs */
-	setDirection(direction, lLegDirection, 0, 0, 0);
-	setDirection(direction, rLegDirection, 0, 0, 0);
-	
-	/* Leg Sway */
-/*
-*	setDirection(lLegDirection, lLegDirection, 0, 0, 45);
-*	setDirection(rLegDirection, rLegDirection, 0, 0, 45);
-*/
-/*
-*	VSET(lLegDirection, 0, 90, 0);
-*	VSET(lKneeDirection, 0, 180, 0);
-*	VSET(lFootDirection, 0, 90, 0);
-*	VSET(rLegDirection, 0, 90, 0);
-*	VSET(rKneeDirection, 0, 180, 0);
-*	VSET(rFootDirection, 0, 90, 0);
-*/
-	makeLeg(file, suffix, 1, standing_height, legLength, leftThighJoint, dude->lLegDirection, dude->lKneeDirection, dude->lFootDirection, showBoxes);
-	makeLeg(file, suffix, 0, standing_height, legLength, rightThighJoint, dude->rLegDirection, dude->rKneeDirection, dude->rFootDirection, showBoxes);
+	makeLeg(file, suffix, 1, standing_height, legLength, leftThighJoint, dude.lLegDirection, dude.lKneeDirection, dude.lFootDirection, showBoxes);
+	makeLeg(file, suffix, 0, standing_height, legLength, rightThighJoint, dude.rLegDirection, dude.rKneeDirection, dude.rFootDirection, showBoxes);
 }	
 
 /**
  * MakeArmy makes a square of persons n by n large, where n is the number of persons entered using -N
  * if N is large (>= 20) Parts start disapearing, oddly enough.
  */
-void makeArmy(struct rt_wdb (*file), fastf_t standing_height, int number, fastf_t showBoxes)
+void makeArmy(struct rt_wdb (*file), struct human_data_t dude, fastf_t standing_height, int number, fastf_t showBoxes)
 {
 	point_t locations;
 	VSET(locations, 0, 0, 0); /* Starting location */
@@ -660,7 +631,6 @@ void makeArmy(struct rt_wdb (*file), fastf_t standing_height, int number, fastf_
 	int y = 0;
 	int num;
 	char testname[10]={'0'};
-	
 	num = 0.0;
 	char suffix[MAXLENGTH];
 
@@ -668,7 +638,7 @@ void makeArmy(struct rt_wdb (*file), fastf_t standing_height, int number, fastf_
 		for(y=0; y<number; y++){
 			sprintf(testname, "%d", num);
 			bu_strlcpy(suffix, testname, MAXLENGTH);
-			/* makeBody(file, suffix, standing_height, locations, showBoxes); */
+			makeBody(file, suffix, dude, standing_height, locations, showBoxes); 
 			VSET(locations, (locations[X]-(48*IN2MM)), locations[Y], 0);
 			num++;
 		}
@@ -679,7 +649,7 @@ void makeArmy(struct rt_wdb (*file), fastf_t standing_height, int number, fastf_
 /* position limbs to fit stance input in command line (or just default to standing) */
 void setStance(fastf_t stance, struct human_data_t *dude)
 {
-	vect_t mover, mover2, mover3, mover4; /* generic vectors for holding temp values */
+	vect_t downVect, forwardVect, rightVect, leftVect; /* generic vectors for holding temp values */
 
 	/**
 	 * The stances are the way the body is positioned via
@@ -689,75 +659,76 @@ void setStance(fastf_t stance, struct human_data_t *dude)
 	 * 2: Driving
 	 * 3: Arms Out
 	 * 4: The Letterman
-	 * 999: Custom (done interactivly)
+	 * #: and more as needed
+	 * 999: Custom (done interactivly, in time)
 	 */
 
-	VSET(mover, 0, 180, 0); /*straight down*/
-	VSET(mover2, 0, 90, 0); /*forwards, down X axis */
-	VSET(mover3, 90, 0, 0); /*Left, down Y axis */
-	VSET(mover4, -90, 0, 0); /*Right, up Y axis */
+	VSET(downVect, 0, 180, 0); /*straight down*/
+	VSET(forwardVect, 0, 90, 0); /*forwards, down X axis */
+	VSET(rightVect, 90, 0, 0); /*Right, down Y axis */
+	VSET(leftVect, -90, 0, 0); /*Left, up Y axis */
 
 	switch((int)stance)
 	{
 	case 0:
 		bu_log("Making it stand\n");
-		VMOVE(dude->lArmDirection, mover);
-		VMOVE(dude->rArmDirection, mover);
-		VMOVE(dude->lElbowDirection, mover);
-		VMOVE(dude->rElbowDirection, mover);
-		VMOVE(dude->lWristDirection, mover);
-		VMOVE(dude->rWristDirection, mover);
-		VMOVE(dude->lLegDirection, mover);
-		VMOVE(dude->rLegDirection, mover);
-		VMOVE(dude->lKneeDirection, mover);
-		VMOVE(dude->rKneeDirection, mover);		
-		VMOVE(dude->lFootDirection, mover2);
-		VMOVE(dude->rFootDirection, mover2);
+		VMOVE(dude->lArmDirection, downVect);
+		VMOVE(dude->rArmDirection, downVect);
+		VMOVE(dude->lElbowDirection, downVect);
+		VMOVE(dude->rElbowDirection, downVect);
+		VMOVE(dude->lWristDirection, downVect);
+		VMOVE(dude->rWristDirection, downVect);
+		VMOVE(dude->lLegDirection, downVect);
+		VMOVE(dude->rLegDirection, downVect);
+		VMOVE(dude->lKneeDirection, downVect);
+		VMOVE(dude->rKneeDirection, downVect);		
+		VMOVE(dude->lFootDirection, forwardVect);
+		VMOVE(dude->rFootDirection, forwardVect);
 		break;
 	case 1:
 		bu_log("Making it sit\n");
-		VMOVE(dude->lArmDirection, mover);
-		VMOVE(dude->rArmDirection, mover);
-                VMOVE(dude->lElbowDirection, mover);
-                VMOVE(dude->rElbowDirection, mover);
-                VMOVE(dude->lWristDirection, mover);
-                VMOVE(dude->rWristDirection, mover);
-		VMOVE(dude->lLegDirection, mover2);
-		VMOVE(dude->rLegDirection, mover2);
-		VMOVE(dude->lKneeDirection, mover);
-		VMOVE(dude->rKneeDirection, mover);
-		VMOVE(dude->lFootDirection, mover2);
-		VMOVE(dude->rFootDirection, mover2);
+		VMOVE(dude->lArmDirection, downVect);
+		VMOVE(dude->rArmDirection, downVect);
+                VMOVE(dude->lElbowDirection, downVect);
+                VMOVE(dude->rElbowDirection, downVect);
+                VMOVE(dude->lWristDirection, downVect);
+                VMOVE(dude->rWristDirection, downVect);
+		VMOVE(dude->lLegDirection, forwardVect);
+		VMOVE(dude->rLegDirection, forwardVect);
+		VMOVE(dude->lKneeDirection, downVect);
+		VMOVE(dude->rKneeDirection, downVect);
+		VMOVE(dude->lFootDirection, forwardVect);
+		VMOVE(dude->rFootDirection, forwardVect);
 		break;
 	case 2:
 		bu_log("Making it Drive\n"); /* it's like sitting, but with the arms extended */
-		VMOVE(dude->lArmDirection, mover);
-		VMOVE(dude->rArmDirection, mover);
-                VMOVE(dude->lElbowDirection, mover2);
-                VMOVE(dude->rElbowDirection, mover2);
-                VMOVE(dude->lWristDirection, mover2);
-                VMOVE(dude->rWristDirection, mover2);
-                VMOVE(dude->lLegDirection, mover2);
-                VMOVE(dude->rLegDirection, mover2);
-                VMOVE(dude->lKneeDirection, mover);
-                VMOVE(dude->rKneeDirection, mover);
-                VMOVE(dude->lFootDirection, mover2);
-                VMOVE(dude->rFootDirection, mover2);
+		VMOVE(dude->lArmDirection, downVect);
+		VMOVE(dude->rArmDirection, downVect);
+                VMOVE(dude->lElbowDirection, forwardVect);
+                VMOVE(dude->rElbowDirection, forwardVect);
+                VMOVE(dude->lWristDirection, forwardVect);
+                VMOVE(dude->rWristDirection, forwardVect);
+                VMOVE(dude->lLegDirection, forwardVect);
+                VMOVE(dude->rLegDirection, forwardVect);
+                VMOVE(dude->lKneeDirection, downVect);
+                VMOVE(dude->rKneeDirection, downVect);
+                VMOVE(dude->lFootDirection, forwardVect);
+                VMOVE(dude->rFootDirection, forwardVect);
 		break;
 	case 3:
 		bu_log("Making arms out (standing)\n");
-                VMOVE(dude->lArmDirection, mover4);
-                VMOVE(dude->rArmDirection, mover3);
-                VMOVE(dude->lElbowDirection, mover4);
-                VMOVE(dude->rElbowDirection, mover3);
-                VMOVE(dude->lWristDirection, mover4);
-                VMOVE(dude->rWristDirection, mover3);
-                VMOVE(dude->lLegDirection, mover);
-                VMOVE(dude->rLegDirection, mover);
-                VMOVE(dude->lKneeDirection, mover);
-                VMOVE(dude->rKneeDirection, mover);
-                VMOVE(dude->lFootDirection, mover2);
-                VMOVE(dude->rFootDirection, mover2);		
+                VMOVE(dude->lArmDirection, leftVect);
+                VMOVE(dude->rArmDirection, rightVect);
+                VMOVE(dude->lElbowDirection, leftVect);
+                VMOVE(dude->rElbowDirection, rightVect);
+                VMOVE(dude->lWristDirection, leftVect);
+                VMOVE(dude->rWristDirection, rightVect);
+                VMOVE(dude->lLegDirection, downVect);
+                VMOVE(dude->rLegDirection, downVect);
+                VMOVE(dude->lKneeDirection, downVect);
+                VMOVE(dude->rKneeDirection, downVect);
+                VMOVE(dude->lFootDirection, forwardVect);
+                VMOVE(dude->rFootDirection, forwardVect);		
 		break;
 	case 4:
 		bu_log("Making the Letterman\n");
@@ -773,16 +744,17 @@ void setStance(fastf_t stance, struct human_data_t *dude)
 		vect_t lleg;
 		VSET(lleg, 0, 75, 0);
                 VMOVE(dude->lLegDirection, lleg);
-                VMOVE(dude->rLegDirection, mover2);
+                VMOVE(dude->rLegDirection, forwardVect);
 		vect_t knee;
 		VSET(knee, 90, 5, 0);
                 VMOVE(dude->lKneeDirection, knee);
-                VMOVE(dude->rKneeDirection, mover);
-                VMOVE(dude->lFootDirection, mover2);
-                VMOVE(dude->rFootDirection, mover2);
+                VMOVE(dude->rKneeDirection, downVect);
+                VMOVE(dude->lFootDirection, forwardVect);
+                VMOVE(dude->rFootDirection, forwardVect);
 		break;
 	case 999:
 		/* interactive position-setter-thingermajiger */
+		/* manual() */
 		break;
 	default:
 		break;
@@ -847,12 +819,6 @@ int read_args(int argc, char **argv, fastf_t *standing_height, fastf_t *stance, 
     fflush(stdout);
     while ((c=bu_getopt(argc, argv, options)) != EOF) {
 	switch (c) {
-/*	    case 'a':
- *
- *		sscanf(bu_optarg, "%d", age);
- *		int i = age;
- *		break;
- */
 	    case 'A':
 		bu_log("AutoMode, making average man\n");
 		*standing_height = DEFAULT_HEIGHT_INCHES;
@@ -948,7 +914,6 @@ int read_args(int argc, char **argv, fastf_t *standing_height, fastf_t *stance, 
 	}
     }
     fflush(stdout);
-    
     return(bu_optind);
 }
 
@@ -958,26 +923,17 @@ int main(int ac, char *av[])
     struct wmember human;
     struct wmember boxes;
     struct wmember hollow;
-
     progname = *av;
-    
     struct bu_vls name;
     struct bu_vls str;
-
-    struct human_data_t *human_data;
-    
+    struct human_data_t human_data;
     fastf_t standing_height = DEFAULT_HEIGHT_INCHES;
-    fastf_t showBoxes = 0;
-    fastf_t troops = 0;
-    fastf_t stance = 0;
+    fastf_t showBoxes = 0, troops = 0, stance = 0;
     char suffix[MAXLENGTH]= "";
-
     point_t location;
     VSET(location, 0, 0, 0); /* Default standing location */
-
     bu_vls_init(&name);
     bu_vls_trunc(&name, 0);
-
     bu_vls_init(&str);
     bu_vls_trunc(&str, 0);
 
@@ -985,66 +941,20 @@ int main(int ac, char *av[])
     read_args(ac, av, &standing_height, &stance, &troops, &showBoxes);
     db_fp = wdb_fopen(filename);
 
-    /*
-     * This code here takes a direction vector, and then redirects it based on the angles given
-     * so it is as follows : startingVector, resultVector, xdegrees, ydegrees, zdegrees.
-     * and this will be used to position the arms and legs so they are joined yet flexable.
-     * Just a test with an rcc.
-     */  
-
- /*    Vector shape modifying test */
-/*
-    vect_t test1, test2;
-    point_t testpoint;
-    VSET(testpoint, 0.0, 0.0, 0.0);
-	
-    VSET(test1, 0, 0, 200);
-    setDirection(test1, test2, 0, 90, 0);
-    
-    bu_log("%f, %f, %f\n", test1[X], test1[Y], test1[Z]);
-    bu_log("%f, %f, %f\n", test2[X], test2[Y], test2[Z]);
-   
-    mk_rcc(db_fp, "NormalTest.s", testpoint, test1, (5*IN2MM));
-    mk_rcc(db_fp, "ChangeTest.s", testpoint, test2, (5*IN2MM));
-*/
-
-/* See, now wasn't that easy? */
-
-/*
-    char testsuffix[MAXLENGTH]="test";
-    point_t testJoint;
-    VSET(testJoint, 0.0, 0.0, 0.0);
-    vect_t testLeg, testKnee, testFoot;
-
-    VSET(testLeg, 0.0, 0.0, 90.0);
-    bu_log("Knee\n");
-
-    setDirection(testLeg, testKnee, 0, -90, 0);
-
-    bu_log("%f\t%f\t%f\n", testLeg[X], testLeg[Y], testLeg[Z]);
-    bu_log("%f\t%f\t%f\n", testKnee[X], testKnee[Y], testKnee[Z]);
-
-    bu_log("Foot\n");
-    setDirection(testKnee, testFoot, 0.0, 90.0, 0.0);
-
-    makeLeg(db_fp, testsuffix, 0, 5*IN2MM, 10*IN2MM, testJoint, testLeg, testKnee, testFoot, 0); 
-*/
+    human_data.height = standing_height;
 
 /******MAGIC******/
- 
-    setStance(stance, human_data); 
-
+/*Magically set pose, and apply pose to human geometry*/ 
+    setStance(stance, &human_data); 
     if(!troops){
-    	makeBody(db_fp, suffix, human_data, standing_height, location, showBoxes);
+    	makeBody(db_fp, suffix, human_data, human_data.height, location, showBoxes);
     }
     if(troops){
-	makeArmy(db_fp, standing_height, troops, showBoxes);
+	makeArmy(db_fp, human_data, human_data.height, troops, showBoxes);
     }
-
 /****End Magic****/
 
 /** Make the Regions (.r's) of the body */
-
 /* Make the .r for the real body */
     int is_region = 0;
     unsigned char rgb[3], rgb2[3], rgb3[3];
@@ -1080,12 +990,10 @@ int main(int ac, char *av[])
 
 /* make the .r for the bounding boxes */
     if(showBoxes){
-
     /*
      * Create opaque bounding boxes for representaions of where the person model
      * may lay up next to another model
      */
-
     BU_LIST_INIT(&boxes.l)
     (void)mk_addmember("HeadBox.s", &boxes.l, NULL, WMOP_UNION);
     (void)mk_addmember("NeckBox.s", &boxes.l, NULL, WMOP_UNION);
@@ -1102,8 +1010,7 @@ int main(int ac, char *av[])
     (void)mk_addmember("LeftCalfBox.s", &boxes.l, NULL, WMOP_UNION);
     (void)mk_addmember("RightCalfBox.s", &boxes.l, NULL, WMOP_UNION);
     (void)mk_addmember("LeftFootBox.s", &boxes.l, NULL, WMOP_UNION);
-    (void)mk_addmember("RightFootBox.s", &boxes.l, NULL, WMOP_UNION);
-    
+    (void)mk_addmember("RightFootBox.s", &boxes.l, NULL, WMOP_UNION); 
     is_region = 1;
     VSET(rgb2, 255, 128, 128); /* redish color */
         mk_lcomb(db_fp,   
@@ -1114,7 +1021,6 @@ int main(int ac, char *av[])
              "di=0.5 sp=0.5",
              rgb2,
              0);
-
     /*
      * Creating a hollow box that would allow for a person to see inside the
      * bounding boxes to the actual body representation inside.
