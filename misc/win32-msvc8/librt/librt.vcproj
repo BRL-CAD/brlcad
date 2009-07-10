@@ -272,6 +272,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\src\librt\primitives\brep\brep_debug.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\src\librt\primitives\bspline\bspline.c"
 				>
 			</File>
@@ -792,6 +796,10 @@
 			Name="Header Files"
 			Filter="h;hpp;hxx;hm;inl;fi;fd"
 			>
+			<File
+				RelativePath="..\..\..\src\librt\primitives\brep\brep_debug.h"
+				>
+			</File>
 		</Filter>
 		<Filter
 			Name="Resource Files"
