@@ -15,11 +15,6 @@ on-going issues.
 Recent Bugs
 -----------
 
-* metaballs seem to have some ray-tracing / evaluation bug causing
-  render abnormalities on the outside grazing edges (causing
-  clover-leaf "chewed" patterns).  Run src/proc-db/metaball to
-  reproduce.
-
 * ogl display manager still crashes on attach in mged on Mac OS X 10.5
 
 * tkhtml build/install is not respecting the installation prefix
