@@ -476,6 +476,25 @@ namespace brlcad {
 	for (int i = 0; i < 4; i++) {
 	    if (/*(quads[i]->NodeTrimmed() != 1) &&*/ !(quads[i]->isFlat()) && depth < BREP_MAX_FT_DEPTH) {
 		GetBVChildren(quads[i],depth+1);
+	    } else {
+	        point_t min, max;
+		vect_t delta;
+		VSETALL(min, MAX_FASTF);
+		VSETALL(max, -MAX_FASTF);
+		VMINMAX(min, max, ((double*)quads[i]->m_corners[0]));
+	        VMINMAX(min, max, ((double*)quads[i]->m_corners[2]));
+        	VMINMAX(min, max, ((double*)quads[i]->m_corners[3]));
+        	VMINMAX(min, max, ((double*)quads[i]->m_corners[4]));
+	        VMINMAX(min, max, ((double*)quads[i]->m_corners[6]));
+        	VMINMAX(min, max, ((double*)quads[i]->m_corners[8]));
+	        VMINMAX(min, max, ((double*)quads[i]->m_corners[9]));
+        	VMINMAX(min, max, ((double*)quads[i]->m_corners[10]));
+	        VMINMAX(min, max, ((double*)quads[i]->m_corners[12]));
+		VSUB2(delta, max, min);
+		VSCALE(delta, delta, BBOX_GROW_3D);
+		VSUB2(min, min, delta);
+		VADD2(max, max, delta);
+		quads[i]->m_BBox = ON_BoundingBox(ON_3dPoint(min),ON_3dPoint(max));
 	    }
 	//    if (!(quads[i]->m_trimmed)) {
 		parent->addChild(quads[i]);

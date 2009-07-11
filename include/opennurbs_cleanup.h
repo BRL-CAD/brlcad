@@ -549,20 +549,6 @@ namespace brlcad {
 	surface->EvNormal(m_u.Min(), m_v.Max(), m_corners[10], m_normals[10]);
 	surface->EvNormal(m_u.Max(), m_v.Max(), m_corners[12], m_normals[12]);
 	surface->EvPoint(u.Mid(),v.Mid(),m_estimate);
-        VMINMAX(min, max, ((double*)m_corners[0]));
-        VMINMAX(min, max, ((double*)m_corners[2]));
-        VMINMAX(min, max, ((double*)m_corners[3]));
-        VMINMAX(min, max, ((double*)m_corners[4]));
-        VMINMAX(min, max, ((double*)m_corners[6]));
-        VMINMAX(min, max, ((double*)m_corners[8]));
-        VMINMAX(min, max, ((double*)m_corners[9]));
-        VMINMAX(min, max, ((double*)m_corners[10]));
-        VMINMAX(min, max, ((double*)m_corners[12]));
-	VSUB2(delta, max, min);
-	VSCALE(delta, delta, BBOX_GROW_3D);
-	VSUB2(min, min, delta);
-	VADD2(max, max, delta);
-	this->m_BBox = ON_BoundingBox(ON_3dPoint(min),ON_3dPoint(max));
 	m_trims_above.clear();
 	m_ctree->getLeavesAbove(m_trims_above, m_u, m_v);
 	m_trims_above.sort(sortY);
@@ -596,20 +582,6 @@ namespace brlcad {
 	surface->EvNormal(m_u.Min() + uq, m_v.Max() - vq, m_corners[8], m_normals[8]);
 	surface->EvNormal(m_u.Max() - uq, m_v.Max() - vq, m_corners[9], m_normals[9]);
 	surface->EvPoint(u.Mid(),v.Mid(),m_estimate);
-	VMINMAX(min, max, ((double*)m_corners[0]));
-        VMINMAX(min, max, ((double*)m_corners[2]));
-        VMINMAX(min, max, ((double*)m_corners[3]));
-        VMINMAX(min, max, ((double*)m_corners[4]));
-        VMINMAX(min, max, ((double*)m_corners[6]));
-        VMINMAX(min, max, ((double*)m_corners[8]));
-        VMINMAX(min, max, ((double*)m_corners[9]));
-        VMINMAX(min, max, ((double*)m_corners[10]));
-        VMINMAX(min, max, ((double*)m_corners[12]));
-	VSUB2(delta, max, min);
-	VSCALE(delta, delta, BBOX_GROW_3D);
-	VSUB2(min, min, delta);
-	VADD2(max, max, delta);
-	this->m_BBox = ON_BoundingBox(ON_3dPoint(min),ON_3dPoint(max));
 	m_trims_above.clear();
 	m_ctree->getLeavesAbove(m_trims_above, m_u, m_v);
 	m_trims_above.sort(sortY);
@@ -690,12 +662,7 @@ namespace brlcad {
 	  if (m_children.size() > 0) {
 	      for (vector<BBNode*>::iterator childnode = m_children.begin(); childnode != m_children.end(); childnode++) {
 		if (childnode == m_children.begin()) {
-   		    m_BBox.m_min[0] = (*childnode)->m_BBox.m_min[0];
-   		    m_BBox.m_min[1] = (*childnode)->m_BBox.m_min[1];
-   		    m_BBox.m_min[2] = (*childnode)->m_BBox.m_min[2];
-		    m_BBox.m_max[0] = (*childnode)->m_BBox.m_max[0];
-   		    m_BBox.m_max[1] = (*childnode)->m_BBox.m_max[1];
-   		    m_BBox.m_max[2] = (*childnode)->m_BBox.m_max[2];
+   		    m_BBox = ON_BoundingBox((*childnode)->m_BBox.m_min,(*childnode)->m_BBox.m_max);
 		} else {
    		    for (int j = 0; j < 3; j++) {
    			if (m_BBox.m_min[j] > (*childnode)->m_BBox.m_min[j]) {
