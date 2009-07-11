@@ -449,15 +449,17 @@ namespace brlcad {
 	BBNode* quads[4];
 	ON_Interval first(0,0.5);
 	ON_Interval second(0.5,1.0);
+	double uq = parent->m_u.Length()*0.25;
+	double vq = parent->m_v.Length()*0.25;
 	ON_Interval ufirst = parent->m_u.ParameterAt(first);
 	ON_Interval vfirst = parent->m_v.ParameterAt(first);
 	ON_Interval usecond = parent->m_u.ParameterAt(second);
 	ON_Interval vsecond = parent->m_v.ParameterAt(second);
 	CurveTree* ctree = parent->m_ctree;
-	parent->m_surface->EvNormal(parent->m_u.ParameterAt(0.5),parent->m_v.Min(),parent->m_corners[1],parent->m_normals[1]);
-	parent->m_surface->EvNormal(parent->m_u.Min(),parent->m_v.ParameterAt(0.5),parent->m_corners[5],parent->m_normals[5]);
-	parent->m_surface->EvNormal(parent->m_u.Max(),parent->m_v.ParameterAt(0.5),parent->m_corners[7],parent->m_normals[7]);
-	parent->m_surface->EvNormal(parent->m_u.ParameterAt(0.5),parent->m_v.Max(),parent->m_corners[11],parent->m_normals[11]);
+	parent->m_surface->EvNormal(parent->m_u.Min() + 2*uq, parent->m_v.Min(),parent->m_corners[1],parent->m_normals[1]);
+	parent->m_surface->EvNormal(parent->m_u.Min(),parent->m_v.Min() + 2*vq, parent->m_corners[5],parent->m_normals[5]);
+	parent->m_surface->EvNormal(parent->m_u.Max(),parent->m_v.Min() + 2*vq, parent->m_corners[7],parent->m_normals[7]);
+	parent->m_surface->EvNormal(parent->m_u.Min() + 2*uq, parent->m_v.Max(),parent->m_corners[11],parent->m_normals[11]);
 	quads[0] = new BBNode(parent->m_face,parent->m_surface,ufirst,vfirst, ctree, 
 		parent->m_corners[0], parent->m_corners[1], parent->m_corners[3], parent->m_corners[5], parent->m_corners[6],
 		parent->m_normals[0], parent->m_normals[1], parent->m_normals[3], parent->m_normals[5], parent->m_normals[6]);

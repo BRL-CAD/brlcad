@@ -535,15 +535,17 @@ namespace brlcad {
     : m_face(face), m_surface(surface), m_u(u), m_v(v), m_ctree(ctree) { 
 	point_t min, max;
 	vect_t delta;
+	double uq = m_u.Length()*0.25;
+	double vq = m_v.Length()*0.25;
 	VSETALL(min, MAX_FASTF);
 	VSETALL(max, -MAX_FASTF);
 	surface->EvNormal(m_u.Min(),m_v.Min(), m_corners[0], m_normals[0]);
         surface->EvNormal(m_u.Max(),m_v.Min(), m_corners[2], m_normals[2]);
-	surface->EvNormal(m_u.ParameterAt(0.25), m_v.ParameterAt(0.25), m_corners[3], m_normals[3]);
-	surface->EvNormal(m_u.ParameterAt(0.75), m_v.ParameterAt(0.25), m_corners[4], m_normals[4]);
-	surface->EvNormal(m_u.ParameterAt(0.5), m_v.ParameterAt(0.5), m_corners[6], m_normals[6]);
-	surface->EvNormal(m_u.ParameterAt(0.25), m_v.ParameterAt(0.75), m_corners[8], m_normals[8]);
-	surface->EvNormal(m_u.ParameterAt(0.75), m_v.ParameterAt(0.75), m_corners[9], m_normals[9]);
+	surface->EvNormal(m_u.Min() + uq, m_v.Min() + vq, m_corners[3], m_normals[3]);
+	surface->EvNormal(m_u.Max() - uq, m_v.Min() + vq, m_corners[4], m_normals[4]);
+	surface->EvNormal(m_u.Min() + 2*uq, m_v.Min() + 2*vq, m_corners[6], m_normals[6]);
+	surface->EvNormal(m_u.Min() + uq, m_v.Max() - vq, m_corners[8], m_normals[8]);
+	surface->EvNormal(m_u.Max() - uq, m_v.Max() - vq, m_corners[9], m_normals[9]);
 	surface->EvNormal(m_u.Min(), m_v.Max(), m_corners[10], m_normals[10]);
 	surface->EvNormal(m_u.Max(), m_v.Max(), m_corners[12], m_normals[12]);
 	surface->EvPoint(u.Mid(),v.Mid(),m_estimate);
@@ -586,10 +588,13 @@ namespace brlcad {
 	vect_t delta;
 	VSETALL(min, MAX_FASTF);
 	VSETALL(max, -MAX_FASTF);
-	surface->EvNormal(m_u.ParameterAt(0.25), m_v.ParameterAt(0.25), m_corners[3], m_normals[3]);
-	surface->EvNormal(m_u.ParameterAt(0.75), m_v.ParameterAt(0.25), m_corners[4], m_normals[4]);
-	surface->EvNormal(m_u.ParameterAt(0.25), m_v.ParameterAt(0.75), m_corners[8], m_normals[8]);
-	surface->EvNormal(m_u.ParameterAt(0.75), m_v.ParameterAt(0.75), m_corners[9], m_normals[9]);
+	double uq = m_u.Length()*0.25;
+	double vq = m_v.Length()*0.25;
+
+	surface->EvNormal(m_u.Min() + uq, m_v.Min() + vq, m_corners[3], m_normals[3]);
+	surface->EvNormal(m_u.Max() - uq, m_v.Min() + vq, m_corners[4], m_normals[4]);
+	surface->EvNormal(m_u.Min() + uq, m_v.Max() - vq, m_corners[8], m_normals[8]);
+	surface->EvNormal(m_u.Max() - uq, m_v.Max() - vq, m_corners[9], m_normals[9]);
 	surface->EvPoint(u.Mid(),v.Mid(),m_estimate);
 	VMINMAX(min, max, ((double*)m_corners[0]));
         VMINMAX(min, max, ((double*)m_corners[2]));
