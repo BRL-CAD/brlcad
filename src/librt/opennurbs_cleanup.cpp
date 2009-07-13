@@ -495,6 +495,13 @@ namespace brlcad {
 		VSUB2(min, min, delta);
 		VADD2(max, max, delta);
 		quads[i]->m_BBox = ON_BoundingBox(ON_3dPoint(min),ON_3dPoint(max));
+		for (int j = 0; j < 3; j++) {
+		    double d = quads[i]->m_BBox.m_max[j] - quads[i]->m_BBox.m_min[j];
+		    if (ON_NearZero(d, ON_ZERO_TOLERANCE)) {
+			quads[i]->m_BBox.m_min[j] -= 0.001;
+			quads[i]->m_BBox.m_max[j] += 0.001;
+		    }
+		}
 	    }
 	//    if (!(quads[i]->m_trimmed)) {
 		parent->addChild(quads[i]);
