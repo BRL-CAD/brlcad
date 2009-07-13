@@ -73,26 +73,116 @@ namespace brlcad {
 	    ON_BrepLoop* loop = face->Loop(i);
 	    // for each trim
 	    for (int j = 0; j < loop->m_ti.Count(); j++) {
+				int adj_face_index = -99;
 		ON_BrepTrim& trim = face->Brep()->m_T[loop->m_ti[j]];
 
                 if (trim.m_ei != - 1) { // does not lie on a portion of a singular surface side
 		    ON_BrepEdge& edge = face->Brep()->m_E[trim.m_ei];
-		    //if (edge.m_ti.Count() == 2) {
-		    //bu_log("Face(%d, %d) %d->%d\n", face->m_face_index+1, j+1, face->Brep()->m_T[edge.m_ti[0]].FaceIndexOf(), face->Brep()->m_T[edge.m_ti[1]].FaceIndexOf());
-		    //} else {
-		    if (edge.m_ti.Count() == 1) {
-		        m_adj_face_index = face->Brep()->m_T[edge.m_ti[0]].FaceIndexOf();
-		    } else if (edge.m_ti.Count() == 2) {
+				switch ( trim.m_type ) {
+					case ON_BrepTrim::unknown:
+						bu_log("ON_BrepTrim::unknown on Face:%d\n",face->m_face_index);
+						break;
+					case ON_BrepTrim::boundary:
+						bu_log("ON_BrepTrim::boundary on Face:%d\n",face->m_face_index);
+						break;
+					case ON_BrepTrim::mated:
+						if (edge.m_ti.Count() == 2) {
 		        if (face->m_face_index == face->Brep()->m_T[edge.m_ti[0]].FaceIndexOf()) {
-			    m_adj_face_index = face->Brep()->m_T[edge.m_ti[1]].FaceIndexOf();
+								adj_face_index = face->Brep()->m_T[edge.m_ti[1]].FaceIndexOf();
 		        } else {
-			    m_adj_face_index = face->Brep()->m_T[edge.m_ti[0]].FaceIndexOf();
+								adj_face_index = face->Brep()->m_T[edge.m_ti[0]].FaceIndexOf();
 		        }
-		    } else if (edge.m_ti.Count() > 2) {
-		        bu_log("Edge should have only 1 or 2 adjacent faces, right? # of Faces - %d\n", edge.m_ti.Count());
+						} else {
+							bu_log("Mated Edge should have 2 adjacent faces, right?  Face(%d) has %d trim indexes\n",face->m_face_index,edge.m_ti.Count());
+						}
+						break;
+					case ON_BrepTrim::seam:
+						if (edge.m_ti.Count() == 2) {
+							if ((face->m_face_index == face->Brep()->m_T[edge.m_ti[0]].FaceIndexOf()) && 
+							(face->m_face_index == face->Brep()->m_T[edge.m_ti[1]].FaceIndexOf())) {
+								adj_face_index = face->m_face_index;
+							} else {
+								bu_log("Seamed Edge should have 1 faces sharing the trim so trim index should be one, right? Face(%d) has %d trim indexes\n",face->m_face_index,edge.m_ti.Count());
+								bu_log("Face(%d) has %d,%d trim indexes\n",face->m_face_index,face->Brep()->m_T[edge.m_ti[0]].FaceIndexOf(),face->Brep()->m_T[edge.m_ti[1]].FaceIndexOf());
+							}
+						} else if (edge.m_ti.Count() == 1) {
+							adj_face_index = face->m_face_index;
+						} else {
+							bu_log("Seamed Edge should have 1 faces sharing the trim so trim index should be one, right? Face(%d) has %d trim indexes\n",face->m_face_index,edge.m_ti.Count());
+						}
+						break;
+					case ON_BrepTrim::singular:
+						bu_log("ON_BrepTrim::singular on Face:%d\n",face->m_face_index);
+						break;
+					case ON_BrepTrim::crvonsrf:
+						bu_log("ON_BrepTrim::crvonsrf on Face:%d\n",face->m_face_index);
+						break;
+					case ON_BrepTrim::ptonsrf:
+						bu_log("ON_BrepTrim::ptonsrf on Face:%d\n",face->m_face_index);
+						break;
+					case ON_BrepTrim::slit:
+						bu_log("ON_BrepTrim::slit on Face:%d\n",face->m_face_index);
+						break;
+					default:
+						bu_log("ON_BrepTrim::default on Face:%d\n",face->m_face_index);
+
+				} 
+				/*/////////////////////////////////////////
+				switch ( trim.m_type ) {
+					case ON_BrepTrim::boundary:
+						bHasBoundary = true;
+						break;
+					case ON_BrepTrim::mated:
+					case ON_BrepTrim::seam:
+						// make sure we have a manifold join
+						if ( trim.m_ei >= 0 && trim.m_ei < brep_edge_count )
+						{
+							const ON_BrepEdge& edge = m_E[trim.m_ei];
+							if ( edge.m_ti.Count() != 2 ) {
+								bIsManifold = false;
+							}
+							else {
+								other_ti = edge.m_ti[0];
+								if ( other_ti == ti )
+									other_ti = edge.m_ti[1];
+								if ( other_ti == ti ) {
+									bIsManifold = false;
+								}
+								else {
+									const ON_BrepTrim& other_trim = m_T[other_ti];
+									
+									BOOL bFlipTrim = trim.m_bRev3d;
+									if ( m_F[m_L[trim.m_li].m_fi].m_bRev )
+										bFlipTrim = !bFlipTrim;
+									
+									BOOL bFlipOther = other_trim.m_bRev3d;
+									if ( m_F[m_L[other_trim.m_li].m_fi].m_bRev )
+										bFlipOther = !bFlipOther;
+									
+									if ( bFlipTrim && bFlipOther ) {
+										bIsOriented = false;
+									}
+									else if ( !bFlipTrim && !bFlipOther ) {
+										bIsOriented = false;
 		    }
                 }
 
+							}
+						}
+						else
+						{
+							ON_ERROR("Bogus trim.m_ei or trim.m_type value");
+						}
+						break;
+					case ON_BrepTrim::singular:
+						// nothing to check here
+						break;
+					default:
+						bIsManifold = false;
+						break;
+				}
+				/////////////////////////////////////////*/
+		}
 		const ON_Curve* trimCurve = trim.TrimCurveOf();
 		double min, max;
 		(void)trimCurve->GetDomain(&min, &max);
@@ -111,7 +201,7 @@ namespace brlcad {
 		    points[1]=ON_3dPoint(maxpt);
 		    ON_BoundingBox bb(points[0], points[1]);
 		    TRACE("linear no need to subdivide");
-		    m_root->addChild(curveBBox(trimCurve, t, true, innerLoop, bb));
+					m_root->addChild(curveBBox(trimCurve,adj_face_index,t,true,innerLoop,bb));
 		} else {
 		    TRACE("need to subdivide");
 		    // divide on param interval
@@ -131,7 +221,7 @@ namespace brlcad {
 			for (list<double>::iterator l=splitlist.begin();l != splitlist.end();l++) {
 			    double xmax = *l;
 			    if (!NEAR_ZERO(xmax-min, 0.000001)) {
-				m_root->addChild(subdivideCurve(trimCurve, min, xmax, innerLoop, 0));
+						    m_root->addChild(subdivideCurve(trimCurve,adj_face_index,min,xmax,innerLoop,0));
 			    }
 			    min = xmax;
 			}
@@ -144,7 +234,7 @@ namespace brlcad {
 			for (int i=1;i<=knotcnt;i++) {
 			    double xmax = knots[i];
 			    if (!NEAR_ZERO(xmax-min, 0.000001)) {
-				m_root->addChild(subdivideCurve(trimCurve, min, xmax, innerLoop, 0));
+								m_root->addChild(subdivideCurve(trimCurve,adj_face_index,min,xmax,innerLoop,0));
 			    }
 			    min = xmax;
 			}
@@ -152,7 +242,7 @@ namespace brlcad {
 		    }
 #endif
 		    if (!NEAR_ZERO(max-min, 0.000001)) {
-			m_root->addChild(subdivideCurve(trimCurve, min, max, innerLoop, 0));
+						m_root->addChild(subdivideCurve(trimCurve,adj_face_index,min,max,innerLoop,0));
 		    }
 		}
 	    }
@@ -370,7 +460,7 @@ namespace brlcad {
 	return true;
     }
     BRNode*
-    CurveTree::curveBBox(const ON_Curve* curve, ON_Interval& t, bool isLeaf, bool innerTrim, const ON_BoundingBox& bb)
+	CurveTree::curveBBox(const ON_Curve* curve, int adj_face_index, ON_Interval& t, bool isLeaf, bool innerTrim, const ON_BoundingBox& bb)
     {
 	BRNode* node;
 	fastf_t vdot = 1.0;
@@ -378,10 +468,10 @@ namespace brlcad {
 	if (isLeaf) {
 	    TRACE("creating leaf: u(" << u.Min() << ", " << u.Max() <<
 		  ") v(" << v.Min() << ", " << v.Max() << ")");
-	    node = new SubcurveBRNode(curve, bb, m_face, t, vdot, innerTrim);
+		node = new SubcurveBRNode(curve,adj_face_index,bb,m_face,t,vdot,innerTrim);
 	} else {
-	    node = new BRNode(bb);
-	}
+		node = new BRNode(bb);
+    }
 
 	return node;
 
@@ -407,7 +497,7 @@ namespace brlcad {
     }
 
     BRNode*
-    CurveTree::subdivideCurve(const ON_Curve* curve, double min,
+	CurveTree::subdivideCurve(const ON_Curve* curve,int adj_face_index,double min,
 			      double max, bool innerTrim,
 			      int depth)
     {
@@ -457,15 +547,15 @@ namespace brlcad {
 	    //for (int i=1; i<4; i++) {
 	    //    bb.Set(points[i], true); //grow bound to encompass midpoint
 	    //}
-	    return curveBBox(curve, t, true, innerTrim, bb);
+			return curveBBox(curve,adj_face_index,t,true,innerTrim,bb);
 	} else {
 	    //subdivide
-	    BRNode* parent = curveBBox(curve, t, false, innerTrim, bb);
+			BRNode* parent = curveBBox(curve,adj_face_index,t,false,innerTrim,bb);
 	    ON_Curve* left;
 	    ON_Curve* right;
 	    double mid = (max+min)/2.0;
-	    BRNode* l = subdivideCurve(curve, min, mid, innerTrim, depth+1);
-	    BRNode* r = subdivideCurve(curve, mid, max, innerTrim, depth+1);
+			BRNode* l = subdivideCurve(curve,adj_face_index,min,mid,innerTrim,depth+1);
+			BRNode* r = subdivideCurve(curve,adj_face_index,mid,max,innerTrim,depth+1);
 	    parent->addChild(l);
 	    parent->addChild(r);
 	    return parent;
