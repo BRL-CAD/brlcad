@@ -188,6 +188,7 @@ fastf_t makeUpperTorso(struct rt_wdb *file, char *name, fastf_t standing_height,
  fastf_t *neckJoint, fastf_t *abdomenJoint, fastf_t *leftShoulderJoint, fastf_t *rightShoulderJoint, fastf_t *direction, fastf_t showBoxes)
 {
 	vect_t startVector, topTorsoVector;
+	vect_t a, b, c, d;
 	vect_t leftVector, rightVector;
 
 	/* Set length of top torso portion */
@@ -202,9 +203,17 @@ fastf_t makeUpperTorso(struct rt_wdb *file, char *name, fastf_t standing_height,
 	VADD2(leftShoulderJoint, neckJoint, leftVector);
 	VADD2(rightShoulderJoint, neckJoint, rightVector);
 
+	/*Take shoulder width, and abWidth and convert values to vectors for tgc */
+	VSET(a, (shoulderWidth/2), 0, 0);
+	VSET(b, 0, shoulderWidth, 0);
+	VSET(c, (abWidth/2), 0, 0);
+	VSET(d, 0, (abWidth), 0);
+
 	/* Torso will be an ellipsoidal tgc eventually, not a cone */
-	mk_trc_h(file, name, neckJoint, topTorsoVector, shoulderWidth, abWidth);
-	
+	mk_tgc(file, name, neckJoint, topTorsoVector, a, b, c, d);
+/*
+*	mk_trc_h(file, name, neckJoint, topTorsoVector, shoulderWidth, abWidth);
+*/	
 	if(showBoxes){
 	/*
 	 *	point_t p1, p2;
@@ -220,6 +229,7 @@ fastf_t makeLowerTorso(struct rt_wdb *file, char *name, fastf_t standing_height,
  fastf_t *abdomenJoint, fastf_t *pelvisJoint, fastf_t *leftThighJoint, fastf_t *rightThighJoint, fastf_t *direction, fastf_t showBoxes)
 {
 	vect_t startVector, lowTorsoVector, leftVector, rightVector;
+	vect_t a, b, c, d;
 
 	VSET(startVector, 0, 0, lowTorsoLength);
 	setDirection(startVector, lowTorsoVector, direction[X], direction[Y], direction[Z]);
@@ -231,8 +241,16 @@ fastf_t makeLowerTorso(struct rt_wdb *file, char *name, fastf_t standing_height,
 	VADD2(leftThighJoint, pelvisJoint, leftVector);
 	VADD2(rightThighJoint, pelvisJoint, rightVector);
 
-	mk_trc_h(file, name, abdomenJoint, lowTorsoVector, abWidth, pelvisWidth);
+	VSET(a, (abWidth/2), 0, 0);
+	VSET(b, 0, abWidth, 0);
+	VSET(c, (pelvisWidth/2), 0, 0);
+	VSET(d, 0, pelvisWidth, 0);
 
+	mk_tgc(file, name, abdomenJoint, lowTorsoVector, a, b, c, d);
+
+/*
+*	mk_trc_h(file, name, abdomenJoint, lowTorsoVector, abWidth, pelvisWidth);
+*/
 	if(showBoxes){
 	/*
 	 *	point_t p1, p2;
@@ -259,10 +277,21 @@ fastf_t makeUpperArm(struct rt_wdb *file, char *partName, fastf_t standing_heigh
 {
 	fastf_t upperArmLength;
 	vect_t startVector, armVector;
+
 	upperArmLength = (standing_height / 4.5) * IN2MM;
 	VSET(startVector, 0, 0, upperArmLength);
 	setDirection(startVector, armVector, direction[X], direction[Y], direction[Z]); /* set y to 180 to point down */
 	VADD2(ElbowJoint, ShoulderJoint, armVector);
+
+/* Vectors and equations for making TGC arms 
+*	vect_t a, b, c, d;
+*	VSET(a, upperArmWidth, 0 , 0);
+*	VSET(b, 0, upperArmWidth, 0);
+*	VSET(c, ((elbowWidth*3)/4), 0, 0)
+*	VSET(d, 0, elbowWidth, 0);
+*	
+*	mk_tgc(file, partName, ShoulderJoint, armVector, a, b, c, d);
+*/
 	mk_trc_h(file, partName, ShoulderJoint, armVector, upperArmWidth, elbowWidth);
 
 	if(showBoxes){
@@ -278,7 +307,16 @@ fastf_t makeUpperArm(struct rt_wdb *file, char *partName, fastf_t standing_heigh
 
 fastf_t makeElbow(struct rt_wdb *file, char *name, fastf_t *elbowJoint, fastf_t radius)
 {
+	vect_t a, b, c;
+	
+	VSET(a, (radius), 0, 0);
+	VSET(b, 0, (radius), 0);
+	VSET(c, 0, 0, radius);
+	
+	mk_ell(file, name, elbowJoint, a, b, c);
+/*
 	mk_sph(file, name, elbowJoint, radius);
+*/
 	return radius;
 }
 
@@ -287,10 +325,22 @@ fastf_t makeLowerArm(struct rt_wdb *file, char *name, fastf_t standing_height, f
 {
 	fastf_t lowerArmLength;
 	vect_t startVector, armVector;
+
 	lowerArmLength = (standing_height / 4.5) * IN2MM;
 	VSET(startVector, 0, 0, lowerArmLength);
 	setDirection(startVector, armVector, direction[X], direction[Y], direction[Z]);
 	VADD2(wristJoint, elbowJoint, armVector);
+	
+	/* vectors for building a tgc arm (which looks weird when rotated) */
+/*	vect_t a, b, c, d;
+*
+*	VSET(a, ((elbowWidth*3)/4), 0, 0);
+*	VSET(b, 0, (elbowWidth), 0);
+*	VSET(c, wristWidth, 0, 0);
+*	VSET(d, 0, wristWidth, 0);
+*
+*	mk_tgc(file, name, elbowJoint, armVector, a, b, c, d);
+*/
 	mk_trc_h(file, name, elbowJoint, armVector, elbowWidth, wristWidth);
 
         if(showBoxes){
@@ -560,7 +610,7 @@ void makeLeg(struct rt_wdb (*file), char *suffix, int isLeft, fastf_t standing_h
 	/* divvy up the length of the leg to the leg parts */
 	thighLength = legLength / 2;
 	calfLength = legLength / 2;
-	thighWidth = thighLength / 4;
+	thighWidth = thighLength / 5;
 	kneeWidth = thighLength / 6;
 	ankleWidth = calfLength / 8;
 
