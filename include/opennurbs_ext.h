@@ -141,7 +141,7 @@ namespace brlcad {
 	template<class BA>
 	class SubcurveBANode : public BANode<BA> {
 	public:
-		SubcurveBANode(const ON_Curve* curve, const BA& node,
+		SubcurveBANode(const ON_Curve* curve, int m_adj_face_index, const BA& node,
 					   const ON_BrepFace* face,
 					   const ON_Interval& t,
 					   fastf_t vdot,
@@ -169,6 +169,7 @@ namespace brlcad {
 		bool m_XIncreasing;
 		bool m_Vertical;
         bool m_innerTrim;
+		int m_adj_face_index;
 	private:
 		fastf_t m_slope;
 		fastf_t m_vdot;
@@ -382,14 +383,14 @@ namespace brlcad {
 	}
 
 	template<class BA>
-	inline SubcurveBANode<BA>::SubcurveBANode(const ON_Curve* curve, const BA& node,
+	inline SubcurveBANode<BA>::SubcurveBANode(const ON_Curve* curve, int adj_face_index, const BA& node,
 						  const ON_BrepFace* face,
 						  const ON_Interval& t,
 						  fastf_t vdot,
 						  bool innerTrim,
 						  bool checkTrim,
 						  bool trimmed)
-	    : m_trim(curve),BANode<BA>(node), m_face(face), m_t(t), m_innerTrim(innerTrim), m_checkTrim(checkTrim), m_trimmed(trimmed) {
+	    : m_trim(curve),m_adj_face_index(adj_face_index),BANode<BA>(node), m_face(face), m_t(t), m_innerTrim(innerTrim), m_checkTrim(checkTrim), m_trimmed(trimmed) {
 			m_start = curve->PointAt(m_t[0]);
 			m_end = curve->PointAt(m_t[1]);
 			// check for vertical segments they can be removed
@@ -657,8 +658,8 @@ namespace brlcad {
 	fastf_t getHorizontalTangent(const ON_Curve *curve,fastf_t min,fastf_t max);
 	bool getHVTangents(const ON_Curve* curve, ON_Interval& t, list<fastf_t>& list);
 	bool isLinear(const ON_Curve* curve, double min, double max);
-	BRNode* subdivideCurve(const ON_Curve* curve, double min, double max, bool innerTrim, int depth);
-	BRNode* curveBBox(const ON_Curve* curve, ON_Interval& t,bool leaf, bool innerTrim, const ON_BoundingBox& bb);
+	BRNode* subdivideCurve(const ON_Curve* curve, int adj_face_index, double min, double max, bool innerTrim, int depth);
+	BRNode* curveBBox(const ON_Curve* curve, int adj_face_index, ON_Interval& t,bool leaf, bool innerTrim, const ON_BoundingBox& bb);
 	BRNode* initialLoopBBox();
 
 	ON_BrepFace* m_face;
