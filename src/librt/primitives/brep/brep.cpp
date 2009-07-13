@@ -688,6 +688,7 @@ brep_build_bvh(struct brep_specific* bs, struct rt_brep_internal* bi)
 		return -1;
     }
 	
+	int orientation = brep->SolidOrientation();
     bs->bvh = new BBNode(brep->BoundingBox());
 	
     /* need to extract faces, and build bounding boxes for each face,
@@ -893,6 +894,7 @@ public:
     bool    oob;
     enum hit_type hit;
     enum hit_direction direction;
+	int m_adj_face_index;
     // XXX - calculate the dot of the dir with the normal here!
     SubsurfaceBBNode const * sbv;
 
@@ -1510,12 +1512,20 @@ utah_brep_intersect_test(const SubsurfaceBBNode* sbv, const ON_BrepFace* face, c
 				ON_3dPoint _pt;
 				ON_3dVector _norm(N[i]);
 				_pt = ray.m_origin + (ray.m_dir*t[i]);
-				if (face->m_bRev) _norm.Reverse();
+				if (face->m_bRev) {
+					//bu_log("Reversing normal for Face:%d\n",face->m_face_index);
+					_norm.Reverse();
+				}
 				hit_count += 1;
 				uv[0] = ouv[i].x;
 				uv[1] = ouv[i].y;
 				brep_hit bh(*face,(const fastf_t*)ray.m_origin,(const fastf_t*)_pt,(const fastf_t*)_norm, uv);
 				bh.trimmed = false;
+				if (trimBR != NULL) {
+					bh.m_adj_face_index = trimBR->m_adj_face_index;
+				} else {
+					bh.m_adj_face_index = -99;
+				}
 				if (fabs(closesttrim) < BREP_EDGE_MISS_TOLERANCE) {
 					bh.closeToEdge = true;
 					bh.hit = brep_hit::NEAR_HIT;
@@ -1536,13 +1546,21 @@ utah_brep_intersect_test(const SubsurfaceBBNode* sbv, const ON_BrepFace* face, c
 				ON_3dPoint _pt;
 				ON_3dVector _norm(N[i]);
 				_pt = ray.m_origin + (ray.m_dir*t[i]);
-				if (face->m_bRev) _norm.Reverse();
+				if (face->m_bRev) {
+					//bu_log("Reversing normal for Face:%d\n",face->m_face_index);
+					_norm.Reverse();
+				}
 				hit_count += 1;
 				uv[0] = ouv[i].x;
 				uv[1] = ouv[i].y;
 				brep_hit bh(*face,(const fastf_t*)ray.m_origin,(const fastf_t*)_pt,(const fastf_t*)_norm, uv);
 				bh.trimmed = true;
 				bh.closeToEdge = true;
+				if (trimBR != NULL) {
+					bh.m_adj_face_index = trimBR->m_adj_face_index;
+				} else {
+					bh.m_adj_face_index = -99;
+				}
 				bh.hit = brep_hit::NEAR_MISS;
 				if (VDOT(ray.m_dir,_norm) < 0.0 )
 					bh.direction = brep_hit::ENTERING;
@@ -1902,6 +1920,7 @@ rt_brep_shot(struct soltab *stp, register struct xray *rp, struct application *a
 				if ((prev_hit.hit != brep_hit::NEAR_MISS) && (prev_hit.direction == curr_hit.direction)) {
 					//remove current miss
 					curr=hits.erase(curr);
+					curr=hits.begin(); //rewind and start again
 					continue;
 				}
 			}
@@ -1912,6 +1931,7 @@ rt_brep_shot(struct soltab *stp, register struct xray *rp, struct application *a
 				if ((next_hit.hit != brep_hit::NEAR_MISS) && ( next_hit.direction == curr_hit.direction )) {
 					//remove current miss
 					curr=hits.erase(curr);
+					curr=hits.begin(); //rewind and start again
 					continue;
 				}
 			}
@@ -1939,6 +1959,7 @@ rt_brep_shot(struct soltab *stp, register struct xray *rp, struct application *a
 	    bu_log(")");
 	}
 #endif
+	// check for crack hits between adjacent faces
 	curr = hits.begin();
 	while (curr != hits.end()) {
 		brep_hit &curr_hit = *curr;
@@ -1957,6 +1978,34 @@ rt_brep_shot(struct soltab *stp, register struct xray *rp, struct application *a
 					prev_hit.hit = brep_hit::CRACK_HIT;
 					(void)hits.erase(prev);
 					curr=hits.erase(curr);
+					continue;
+				}
+			}
+		}
+		curr++;
+	}
+	// check for CH double enter or double leave between adjacent faces(represents overlapping faces)
+	curr = hits.begin();
+	while (curr != hits.end()) {
+		brep_hit &curr_hit = *curr;
+		if (curr_hit.hit == brep_hit::CLEAN_HIT) {
+			if (curr != hits.begin()) {
+				prev = curr;
+				prev--;
+				brep_hit &prev_hit = (*prev);
+				if ((prev_hit.hit == brep_hit::CLEAN_HIT) && 
+						(prev_hit.direction == curr_hit.direction) && 
+						(prev_hit.face.m_face_index == curr_hit.m_adj_face_index)) {
+					// if "entering" remove first hit if "existing" remove second hit
+					// until we get good solids with known normal directions assume
+					// first hit direction is "entering" todo check solid status and normals
+					HitList::iterator first = hits.begin();
+					brep_hit &first_hit = *first;
+					if (first_hit.direction == curr_hit.direction) { // assume "entering"
+						curr=hits.erase(prev);
+					} else { // assume "exiting"
+						curr=hits.erase(curr);
+					}
 					continue;
 				}
 			}
@@ -2146,9 +2195,7 @@ rt_brep_shot(struct soltab *stp, register struct xray *rp, struct application *a
 	    }
 	    i = hits.erase(i);
 
-            if (i == hits.end())
-                break;
-	    else if (i != hits.begin())
+	    if (i != hits.begin())
 		--i;
 
 	    continue;
@@ -2185,6 +2232,53 @@ rt_brep_shot(struct soltab *stp, register struct xray *rp, struct application *a
 	    }
 	}
     }
+    // remove multiple "INs" in a row assume last "IN" is the actual entering hit, for
+    // multiple "OUTs" in a row assume first "OUT" is the actual exiting hit, remove unused 
+    // "INs/OUTs" from hit list.
+	//if ((hits.size() > 0) && ( (hits.size() % 2) != 0)) {
+    if (hits.size() > 0) {
+		// we should have "valid" points now, remove duplicates or grazes
+		HitList::iterator last = hits.begin();
+		HitList::iterator i = hits.begin();
+		++i;
+		int entering=1;
+		while (i != hits.end()) {
+			double lastDot = VDOT(last->normal, rp->r_dir);
+			double iDot = VDOT(i->normal, rp->r_dir);
+			
+			if (i == hits.begin() ) {
+				//take this as the entering sign for now, should be checking solid for
+				// inward or outward facing normals and make determination there but to
+				// much unsolid geom right now.
+				entering = sign(iDot);
+			}
+			if (sign(lastDot) == sign(iDot)) {
+				if (sign(iDot) == entering) {
+					i = hits.erase(last);
+					last = i;
+					if (i != hits.end())
+						++i;
+				} else { //exiting
+					i = hits.erase(i);
+				}
+				
+			} else {
+				last = i;
+				++i;
+			}
+		}
+	}
+	
+	if ((hits.size() > 1) && ( (hits.size() % 2) != 0)) {
+		brep_hit &first_hit = hits.front();
+		brep_hit &last_hit = hits.back();
+		double firstDot = VDOT(first_hit.normal, rp->r_dir);
+		double lastDot = VDOT(last_hit.normal, rp->r_dir);
+		if (sign(firstDot) == sign(lastDot)) {
+				hits.pop_back();
+		}
+	}
+	
 /*
     if (hits.size() > 1 && (hits.size() % 2) != 0) {
         HitList::iterator i = hits.end();
@@ -2282,6 +2376,8 @@ rt_brep_shot(struct soltab *stp, register struct xray *rp, struct application *a
 	    LINE_PLOT(rp->r_pt, ray);
 	}
 #endif
+    all_hits.clear();
+	all_hits = hits;
 
 	num = 0;
 	MissList::iterator m = misses.begin();
@@ -2360,7 +2456,56 @@ rt_brep_shot(struct soltab *stp, register struct xray *rp, struct application *a
     }
 
     bool hit = false;
-    if (hits.size() > 0) {
+    if (hits.size() > 1) {
+			if (false) {
+				//TRACE2("screen xy: " << ap->a_x << "," << ap->a_y);
+				bu_log("**** ERROR odd number of hits: %d\n",hits.size());
+				bu_log("xyz %g %g %g \n", rp->r_pt[0], rp->r_pt[1], rp->r_pt[2]);
+				bu_log("dir %g %g %g \n", rp->r_dir[0], rp->r_dir[1], rp->r_dir[2]);
+				bu_log("**** Current Hits: %d\n",hits.size());
+				
+				for (HitList::iterator i = hits.begin(); i != hits.end(); ++i) {
+					point_t prev;
+					
+					brep_hit &out = *i;
+					
+					if (i != hits.begin() ) {
+						bu_log("<%g>",DIST_PT_PT(out.point, prev));
+					}
+					bu_log("(");
+					if (out.hit == brep_hit::CRACK_HIT) bu_log("_CRACK_(%d)",out.face.m_face_index);
+					if (out.hit == brep_hit::CLEAN_HIT) bu_log("_CH_(%d)",out.face.m_face_index);
+					if (out.hit == brep_hit::NEAR_HIT) bu_log("_NH_(%d)",out.face.m_face_index);
+					if (out.hit == brep_hit::NEAR_MISS) bu_log("_NM_(%d)",out.face.m_face_index);
+					if (out.direction == brep_hit::ENTERING) bu_log("+");
+					if (out.direction == brep_hit::LEAVING) bu_log("-");
+					VMOVE(prev,out.point);
+					bu_log(")");
+				}
+				bu_log("\n**** Orig Hits: %d\n",orig.size());
+				
+				for (HitList::iterator i = orig.begin(); i != orig.end(); ++i) {
+					point_t prev;
+					
+					brep_hit &out = *i;
+					
+					if (i != orig.begin() ) {
+						bu_log("<%g>",DIST_PT_PT(out.point, prev));
+					}
+					bu_log("(");
+					if (out.hit == brep_hit::CRACK_HIT) bu_log("_CRACK_(%d)",out.face.m_face_index);
+					if (out.hit == brep_hit::CLEAN_HIT) bu_log("_CH_(%d)",out.face.m_face_index);
+					if (out.hit == brep_hit::NEAR_HIT) bu_log("_NH_(%d)",out.face.m_face_index);
+					if (out.hit == brep_hit::NEAR_MISS) bu_log("_NM_(%d)",out.face.m_face_index);
+					if (out.direction == brep_hit::ENTERING) bu_log("+");
+					if (out.direction == brep_hit::LEAVING) bu_log("-");
+					bu_log("<%d>",out.sbv->m_face->m_bRev);
+					VMOVE(prev,out.point);
+					bu_log(")");
+				}
+				
+				bu_log("\n**********************\n");
+			}
 //#define KODDHIT
 #ifdef KODDHIT //ugly debugging hack to raytrace single surface and not worry about odd hits
 		static fastf_t diststep = 0.0;
