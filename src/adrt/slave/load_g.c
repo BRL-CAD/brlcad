@@ -144,13 +144,24 @@ nmg_to_adrt_internal(struct nmgregion *r, struct db_full_path *pathp, int region
 }
 
 int
-some_intermediate_function(char *filename, char *region)
+slave_load_g (tie_t *tie, char *data)
 {
-    register int c;
+    int i = 0, c;
+    char *region = data;
     double percent;
-    int i;
 
-    printf("Give me my cheesypoofs! %s %s\n", filename, region);
+    while(i<16 && data[i])
+	i++;
+
+    while(*region && *region != ':')
+	++region;
+
+    if(*region == ':')
+	*region=0;
+    else
+	bu_bomb("No colon in file:region identifier\n");
+    
+    region++;
 
     tree_state = rt_initial_tree_state;	/* struct copy */
     tree_state.ts_tol = &tol;
@@ -179,12 +190,15 @@ some_intermediate_function(char *filename, char *region)
     the_model = nmg_mm();
     BU_LIST_INIT(&rt_g.rtg_vlfree);	/* for vlist macros */
 
-    if ((dbip = db_open(filename, "r")) == DBI_NULL) {
-	perror(filename);
-	bu_exit(1, "Unable to open geometry file (%s)\n", filename);
+    if ((dbip = db_open(data, "r")) == DBI_NULL) {
+	perror(data);
+	bu_log("Unable to open geometry file (%s)\n", data);
+	return -1;
     }
-    if (db_dirbuild(dbip))
-	bu_exit(1, "ERROR: db_dirbuild failed\n");
+    if (db_dirbuild(dbip)) {
+	bu_log("ERROR: db_dirbuild failed\n");
+	return -1;
+    }
 
     BN_CK_TOL(tree_state.ts_tol);
     RT_CK_TESS_TOL(tree_state.ts_ttol);
@@ -203,28 +217,6 @@ some_intermediate_function(char *filename, char *region)
     db_close(dbip);
 
     return 0;
-}
-
-int
-slave_load_g (tie_t *tie, char *data)
-{
-    int i = 0;
-    char *p = data;
-
-    while(i<16 && data[i])
-	i++;
-
-    while(*p && *p != ':')
-	++p;
-
-    if(*p == ':')
-	*p=0;
-    else
-	bu_bomb("No colon in file:region identifier\n");
-    
-    p++;
-
-    return some_intermediate_function(data, p);
 }
 
 /*
