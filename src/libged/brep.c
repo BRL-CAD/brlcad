@@ -37,7 +37,7 @@ RT_EXPORT BU_EXTERN(int brep_face_info,
 RT_EXPORT BU_EXTERN(int brep_surface_info,
 		    (struct brep_specific* bs,struct bu_vls *vls,int si));
 RT_EXPORT BU_EXTERN(int brep_surface_plot,
-		    (struct ged *gedp, struct brep_specific* bs, struct rt_brep_internal* bi, struct bn_vlblock *vbp,int index));
+		    (struct ged *gedp, struct brep_specific* bs, struct rt_brep_internal* bi, struct bn_vlblock *vbp,int index,int plotres));
 RT_EXPORT BU_EXTERN(int brep_facetrim_plot,
 		    (struct ged *gedp, struct brep_specific* bs, struct rt_brep_internal* bi, struct bn_vlblock *vbp,int index));
 #else
@@ -69,7 +69,7 @@ ged_brep(struct ged *gedp, int argc, const char *argv[])
     bu_vls_trunc(&gedp->ged_result_str, 0);
     
     /* must be wanting help */
-    if (argc == 1) {
+    if (argc <= 2) {
 	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	bu_vls_printf(&gedp->ged_result_str, "commands:\n");
 	bu_vls_printf(&gedp->ged_result_str, "\tinfo - return count information for specific BREP\n");
@@ -162,7 +162,7 @@ ged_brep(struct ged *gedp, int argc, const char *argv[])
 	} else if (argc == 3) {
 	    bu_vls_printf( &gedp->ged_result_str, "%s", usage);
 	    brep_info(bs, &gedp->ged_result_str);
-	} else if (argc == 5) {
+	} else if (argc >= 5) {
 	    char *part = argv[3];
 	    char *strindex = argv[4];
 	    if (strcmp(strindex,"?") == 0) {
@@ -172,11 +172,15 @@ ged_brep(struct ged *gedp, int argc, const char *argv[])
 		brep_info(bs, &gedp->ged_result_str);
 	    } else {
 		int index = atoi(strindex);
+		int plotres = 100;
 		if (strcmp(part,"S") == 0) {
 		    bu_vls_printf(&gedp->ged_result_str, "%s plot:", solid_name);
-		    
+		    if (argc == 6) {
+			char *strres = argv[5];
+			plotres = atoi(strres);
+		    }
 		    vbp = rt_vlblock_init();
-		    brep_surface_plot(gedp,bs,bi,vbp,index);
+		    brep_surface_plot(gedp,bs,bi,vbp,index,plotres);
 		    ged_cvt_vlblock_to_solids(gedp, vbp, "_SURF_", 0);
 		    rt_vlblock_free(vbp);
 		    vbp = (struct bn_vlblock *)NULL;

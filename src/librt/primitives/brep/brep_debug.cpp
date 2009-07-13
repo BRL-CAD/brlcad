@@ -54,7 +54,7 @@ RT_EXPORT BU_EXTERN(int brep_face_info,
 RT_EXPORT BU_EXTERN(int brep_surface_info,
 		    (struct brep_specific* bs,struct bu_vls *vls,int si));
 RT_EXPORT BU_EXTERN(int brep_surface_plot,
-		    (struct ged *gedp, struct brep_specific* bs, struct rt_brep_internal* bi, struct bn_vlblock *vbp,int index));
+		    (struct ged *gedp, struct brep_specific* bs, struct rt_brep_internal* bi, struct bn_vlblock *vbp,int index,int plotres));
 RT_EXPORT BU_EXTERN(int brep_facetrim_plot,
 		    (struct ged *gedp, struct brep_specific* bs, struct rt_brep_internal* bi, struct bn_vlblock *vbp,int index));
 #ifdef __cplusplus
@@ -315,8 +315,10 @@ void plottrim(ON_BrepFace &face, struct bn_vlblock *vbp) {
 				trimCurve->GetSpanVector(knots);
 				for(int i=1;i<=knotcnt;i++) {
 					ON_3dPoint p = trimCurve->PointAt(knots[i-1]);
+		    p = surf->PointAt(p.x,p.y);
 					VMOVE(pt1, p);
 					p = trimCurve->PointAt(knots[i]);
+		    p = surf->PointAt(p.x,p.y);
 					VMOVE(pt2, p);
 					RT_ADD_VLIST(vhead, pt1, BN_VLIST_LINE_MOVE);
 					RT_ADD_VLIST(vhead, pt2, BN_VLIST_LINE_DRAW);
@@ -327,8 +329,10 @@ void plottrim(ON_BrepFace &face, struct bn_vlblock *vbp) {
 				// XXX todo: dynamically sample the curve
 				for (int i = 1; i <= 10000; i++) {
 					ON_3dPoint p = trimCurve->PointAt(dom.ParameterAt((double)(i-1)/10000.0));
+		    p = surf->PointAt(p.x,p.y);
 					VMOVE(pt1, p);
 					p = trimCurve->PointAt(dom.ParameterAt((double)i/10000.0));
+		    p = surf->PointAt(p.x,p.y);
 					VMOVE(pt2, p);
 					RT_ADD_VLIST(vhead, pt1, BN_VLIST_LINE_MOVE);
 					RT_ADD_VLIST(vhead, pt2, BN_VLIST_LINE_DRAW);
@@ -340,7 +344,7 @@ void plottrim(ON_BrepFace &face, struct bn_vlblock *vbp) {
     return;
 }
 
-void plotsurface(ON_Surface &surf, struct bn_vlblock *vbp) {
+void plotsurface(ON_Surface &surf, struct bn_vlblock *vbp,int plotres) {
 	register struct bu_list *vhead;
     double umin, umax;
     double vmin, vmax;
@@ -352,7 +356,7 @@ void plotsurface(ON_Surface &surf, struct bn_vlblock *vbp) {
 	ON_Interval udom = surf.Domain(0);
 	ON_Interval vdom = surf.Domain(1);
 
-	int inc = 100;
+    int inc = plotres;
     for (int u = 0; u <= inc; u++) {
 		for (int v = 1; v <= inc; v++) {
 			ON_3dPoint p = surf.PointAt(udom.ParameterAt((double)u/(double)inc),vdom.ParameterAt((double)(v-1)/(double)inc));
@@ -497,7 +501,7 @@ brep_facetrim_plot(struct ged *gedp, struct brep_specific* bs, struct rt_brep_in
 }
 
 int
-brep_surface_plot(struct ged *gedp, struct brep_specific* bs, struct rt_brep_internal* bi, struct bn_vlblock *vbp,int index)
+brep_surface_plot(struct ged *gedp, struct brep_specific* bs, struct rt_brep_internal* bi, struct bn_vlblock *vbp,int index,int plotres)
 {
 	register struct bu_list *vhead;
 	struct bn_vlblock        *surface_leafs_vbp;
@@ -509,7 +513,7 @@ brep_surface_plot(struct ged *gedp, struct brep_specific* bs, struct rt_brep_int
         return -1;
     }
 	ON_Surface *surf = brep->m_S[index];
-    plotsurface(*surf,vbp);
+    plotsurface(*surf,vbp,plotres);
 	
     return 0;
 }
