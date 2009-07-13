@@ -61,14 +61,12 @@ struct jointInfo
 {
         point_t headJoint;
         point_t neckJoint;
-        point_t shoulderJoint; /* joint used when making arms, derived from left/right sides */
         point_t leftShoulderJoint;
         point_t rightShoulderJoint;
         point_t elbowJoint;
         point_t wristJoint;
         point_t abdomenJoint;
         point_t pelvisJoint;
-        point_t thighJoint;     /* joint used when making legs, derived from left/right sides */
         point_t leftThighJoint;
         point_t rightThighJoint;
         point_t kneeJoint;
@@ -327,10 +325,14 @@ fastf_t makeUpperArm(struct rt_wdb *file, fastf_t isLeft, char *partName, struct
 	if(isLeft){
 		setDirection(startVector, dude->arms.armVector, dude->arms.lArmDirection[X], dude->arms.lArmDirection[Y], dude->arms.lArmDirection[Z]); /* set y to 180 to point down */
 		VADD2(dude->joints.elbowJoint, dude->joints.leftShoulderJoint, dude->arms.armVector);
+		mk_trc_h(file, partName, dude->joints.leftShoulderJoint, dude->arms.armVector, dude->arms.upperArmWidth, dude->arms.elbowWidth);
+
 	}
 	else{
 		setDirection(startVector, dude->arms.armVector, dude->arms.rArmDirection[X], dude->arms.rArmDirection[Y], dude->arms.rArmDirection[Z]); /* set y to 180 to point down */
 		VADD2(dude->joints.elbowJoint, dude->joints.rightShoulderJoint, dude->arms.armVector);
+		mk_trc_h(file, partName, dude->joints.rightShoulderJoint, dude->arms.armVector, dude->arms.upperArmWidth, dude->arms.elbowWidth);
+
 	}	
 /* Vectors and equations for making TGC arms 
 *	vect_t a, b, c, d;
@@ -341,7 +343,6 @@ fastf_t makeUpperArm(struct rt_wdb *file, fastf_t isLeft, char *partName, struct
 *	
 *	mk_tgc(file, partName, ShoulderJoint, armVector, a, b, c, d);
 */
-	mk_trc_h(file, partName, dude->joints.shoulderJoint, dude->arms.armVector, dude->arms.upperArmWidth, dude->arms.elbowWidth);
 
 	if(showBoxes){
 	/*
@@ -432,9 +433,9 @@ void makeHand(struct rt_wdb *file, fastf_t isLeft, char *name, struct human_data
 fastf_t makeThighJoint(struct rt_wdb *file, fastf_t isLeft, char *name, struct human_data_t *dude)
 {
 	if(isLeft)
-		mk_sph(file, name, dude->joints.thighJoint, dude->legs.thighWidth);
+		mk_sph(file, name, dude->joints.leftThighJoint, dude->legs.thighWidth);
 	else
-		mk_sph(file, name, dude->joints.thighJoint, dude->legs.thighWidth);
+		mk_sph(file, name, dude->joints.rightThighJoint, dude->legs.thighWidth);
 
 	return dude->legs.thighWidth;
 }
@@ -444,13 +445,16 @@ fastf_t makeThigh(struct rt_wdb *file, fastf_t isLeft, char *name, struct human_
 	vect_t startVector;
 	VSET(startVector, 0, 0, dude->legs.thighLength);
 
-	if(isLeft)
+	if(isLeft){
 		setDirection(startVector, dude->legs.thighVector, dude->legs.lLegDirection[X], dude->legs.lLegDirection[Y], dude->legs.lLegDirection[Z]);
-	else
+		VADD2(dude->joints.kneeJoint, dude->joints.leftThighJoint, dude->legs.thighVector);
+		mk_trc_h(file, name, dude->joints.leftThighJoint, dude->legs.thighVector, dude->legs.thighWidth, dude->legs.kneeWidth);
+	}
+	else{
 		setDirection(startVector, dude->legs.thighVector, dude->legs.rLegDirection[X], dude->legs.rLegDirection[Y], dude->legs.rLegDirection[Z]);
-	
-	VADD2(dude->joints.kneeJoint, dude->joints.thighJoint, dude->legs.thighVector);
-	mk_trc_h(file, name, dude->joints.thighJoint, dude->legs.thighVector, dude->legs.thighWidth, dude->legs.kneeWidth);
+		VADD2(dude->joints.kneeJoint, dude->joints.rightThighJoint, dude->legs.thighVector);
+		mk_trc_h(file, name, dude->joints.rightThighJoint, dude->legs.thighVector, dude->legs.thighWidth, dude->legs.kneeWidth);
+	}
 
 	if(showBoxes)
 	{
