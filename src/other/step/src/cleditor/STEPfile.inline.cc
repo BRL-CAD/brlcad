@@ -17,6 +17,9 @@
 #include <s_HEADER_SCHEMA.h>
 #include <STEPaggregate.h>
 
+/* for strrchr */
+#include <cstring>
+
 //#ifdef __GNUG__
 //#ifdef __SUNCPLUSPLUS__
 //#ifdef __OBJECTCENTER__
@@ -115,7 +118,7 @@ STEPfile::SetFileType(FileTypeCode ft)
 const char*
 STEPfile::TruncFileName(const char* filename) const
 {
-    char* tmp = strrchr(filename,'/');
+    const char* tmp = strrchr(filename,'/');
     if (tmp) return tmp++;
     else return filename;
     
