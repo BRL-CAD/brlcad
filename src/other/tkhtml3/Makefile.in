@@ -77,8 +77,6 @@ datadir		= @datadir@
 mandir		= @mandir@
 includedir	= @includedir@
 
-DESTDIR		=
-
 PKG_DIR		= $(PACKAGE_NAME)$(PACKAGE_VERSION)
 pkgdatadir	= $(datadir)/$(PKG_DIR)
 pkglibdir	= $(libdir)/$(PKG_DIR)
