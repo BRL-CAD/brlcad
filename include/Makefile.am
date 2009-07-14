@@ -7,6 +7,7 @@ brlcadinclude_required = \
 	RtServerImpl.h \
 	bn.h \
 	brlcad_config.h \
+	brlcad_version.h \
 	bu.h \
 	common.h \
 	config_win.h \
@@ -73,7 +74,6 @@ brlcadinclude_wanted = \
 # headers used by multiple packages but still considered private.
 # public headers should NOT include these headers.
 noinst_HEADERS = \
-	brlcad_version.h \
 	bio.h \
 	conf.h \
 	fbmsg.h \
