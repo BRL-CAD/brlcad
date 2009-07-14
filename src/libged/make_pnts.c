@@ -297,7 +297,7 @@ str2mm(const char *units_string, double *conv_factor, struct bu_vls *ged_result_
 
 
 void
-report_import_error_location(unsigned long int num_doubles_read, int num_doubles_per_point, 
+report_import_error_location(unsigned long int num_doubles_read, unsigned int num_doubles_per_point, 
                              unsigned long int start_offset_of_current_double, char field, struct bu_vls *ged_result_str)
 {
     /* The num_doubles_read is the number of doubles successfully read. This error
