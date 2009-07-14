@@ -785,21 +785,20 @@ namespace brlcad {
      *    0-------------1------------2
      *                   U
      *
-     * The actual flatness test will use normals 0, 2, 3, 4, 6, 8, 9, 10 and 12.  
+     * The actual flatness test will use normals 0, 2, 3, 4, 8, 9, 10 and 12.  
      */
 
     template<class BH>
 	bool BVNode<BH>::isFlat() {
-	    ON_3dVector normals[9];
+	    ON_3dVector normals[8];
 	    normals[0] = m_normals[0];
 	    normals[1] = m_normals[2];
-	    normals[2] = m_normals[3];
-	    normals[3] = m_normals[4];
-	    normals[4] = m_normals[6];
-	    normals[5] = m_normals[8];
-	    normals[6] = m_normals[9];
-	    normals[7] = m_normals[10];
-	    normals[8] = m_normals[12];
+	    normals[2] = m_normals[10];
+	    normals[3] = m_normals[12];
+	    normals[4] = m_normals[3];
+	    normals[5] = m_normals[4];
+	    normals[6] = m_normals[8];
+	    normals[7] = m_normals[9];
 	    double product = 1.0;
 
 	    double ax[4] VEC_ALIGN;
