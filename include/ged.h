@@ -499,6 +499,25 @@ GED_EXPORT BU_EXTERN(int ged_vclip,
 		      register fastf_t *min,
 		      register fastf_t *max));
 
+/* defined in copy.c */
+GED_EXPORT BU_EXTERN(int ged_dbcopy,
+		     (struct ged *from_gedp,
+		      struct ged *to_gedp,
+		      const char *from,
+		      const char *to));
+
+/* defined in draw.c */
+GED_EXPORT BU_EXTERN (void ged_color_soltab,
+		      (struct bu_list *hdlp));
+GED_EXPORT BU_EXTERN (struct ged_display_list *ged_addToDisplay,
+		      (struct ged *gedp,
+		       const char *name));
+
+/* defined in erase.c */
+GED_EXPORT BU_EXTERN (void ged_erasePathFromDisplay,
+		      (struct ged	*gedp,
+		       const char	*path));
+
 /* defined in ged.c */
 GED_EXPORT BU_EXTERN(void ged_close,
 		     (struct ged *gedp));
@@ -514,18 +533,6 @@ GED_EXPORT BU_EXTERN(struct ged *ged_open,
 		      int existing_only));
 GED_EXPORT BU_EXTERN(void ged_view_init,
 		     (struct ged_view *gvp));
-
-/* defined in draw.c */
-GED_EXPORT BU_EXTERN (void ged_color_soltab,
-		      (struct bu_list *hdlp));
-GED_EXPORT BU_EXTERN (struct ged_display_list *ged_addToDisplay,
-		      (struct ged *gedp,
-		       const char *name));
-
-/* defined in erase.c */
-GED_EXPORT BU_EXTERN (void ged_erasePathFromDisplay,
-		      (struct ged	*gedp,
-		       const char	*path));
 
 /* defined in inside.c */
 GED_EXPORT BU_EXTERN(int ged_inside_internal,

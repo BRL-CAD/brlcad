@@ -36,9 +36,9 @@
 int
 ged_copy(struct ged *gedp, int argc, const char *argv[])
 {
-    register struct directory *proto;
-    register struct directory *dp;
+    register struct directory *from_dp;
     struct bu_external external;
+    int flags;
     static const char *usage = "from to";
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
@@ -59,23 +59,59 @@ ged_copy(struct ged *gedp, int argc, const char *argv[])
 	return GED_ERROR;
     }
 
-
-    GED_DB_LOOKUP(gedp, proto, argv[1], LOOKUP_NOISY, GED_ERROR & GED_QUIET);
-
+    GED_DB_LOOKUP(gedp, from_dp, argv[1], LOOKUP_NOISY, GED_ERROR & GED_QUIET);
     GED_CHECK_EXISTS(gedp, argv[2], LOOKUP_QUIET, GED_ERROR);
 
-    if (db_get_external(&external, proto, gedp->ged_wdbp->dbip)) {
+    if (db_get_external(&external, from_dp, gedp->ged_wdbp->dbip)) {
 	bu_vls_printf(&gedp->ged_result_str, "Database read error, aborting\n");
 	return GED_ERROR;
     }
 
-    GED_DB_DIRADD(gedp, dp, argv[2], -1, 0, proto->d_flags, (genptr_t)&proto->d_minor_type, GED_ERROR);
-
-    if (db_put_external(&external, dp, gedp->ged_wdbp->dbip) < 0) {
+    if (wdb_export_external(gedp->ged_wdbp, &external, argv[2],
+			    from_dp->d_flags,  from_dp->d_minor_type) < 0) {
 	bu_free_external(&external);
-	bu_vls_printf(&gedp->ged_result_str, "Database write error, aborting\n");
+	bu_vls_printf(&gedp->ged_result_str,
+		      "Failed to write new object (%s) to database - aborting!!\n",
+		      argv[2]);
 	return GED_ERROR;
     }
+
+    bu_free_external(&external);
+
+    return GED_OK;
+}
+
+int
+ged_dbcopy(struct ged *from_gedp, struct ged *to_gedp, const char *from, const char *to)
+{
+    register struct directory *from_dp;
+    struct bu_external external;
+
+    GED_CHECK_DATABASE_OPEN(from_gedp, GED_ERROR);
+    GED_CHECK_DATABASE_OPEN(to_gedp, GED_ERROR);
+    GED_CHECK_READ_ONLY(to_gedp, GED_ERROR);
+
+    /* initialize result */
+    bu_vls_trunc(&from_gedp->ged_result_str, 0);
+    bu_vls_trunc(&to_gedp->ged_result_str, 0);
+
+    GED_DB_LOOKUP(from_gedp, from_dp, from, LOOKUP_NOISY, GED_ERROR & GED_QUIET);
+    GED_CHECK_EXISTS(to_gedp, to, LOOKUP_QUIET, GED_ERROR);
+
+    if (db_get_external(&external, from_dp, from_gedp->ged_wdbp->dbip)) {
+	bu_vls_printf(&from_gedp->ged_result_str, "Database read error, aborting\n");
+	return GED_ERROR;
+    }
+
+    if (wdb_export_external(to_gedp->ged_wdbp, &external, to,
+			    from_dp->d_flags,  from_dp->d_minor_type) < 0) {
+	bu_free_external(&external);
+	bu_vls_printf(&from_gedp->ged_result_str,
+		      "Failed to write new object (%s) to database - aborting!!\n",
+		      to);
+	return GED_ERROR;
+    }
+
     bu_free_external(&external);
 
     return GED_OK;

@@ -134,6 +134,12 @@ static int go_constrain_tmode(struct ged	*gedp,
 			      ged_func_ptr	func,
 			      const char	*usage,
 			      int		maxargs);
+int go_copy(struct ged	*gedp,
+		   int		argc,
+		   const char	*argv[],
+		   ged_func_ptr	func,
+		   const char	*usage,
+		   int		maxargs);
 static int go_init_view_bindings(struct ged	*gedp,
 				 int		argc,
 				 const char	*argv[],
@@ -584,7 +590,7 @@ static struct go_cmdtab go_cmds[] = {
     {"constrain_tmode",	"vname x|y|z x y", MAXARGS, go_constrain_tmode, GED_FUNC_PTR_NULL},
     {"copyeval",	(char *)0, MAXARGS, go_pass_through_func, ged_copyeval},
     {"copymat",	(char *)0, MAXARGS, go_pass_through_func, ged_copymat},
-    {"cp",	(char *)0, MAXARGS, go_pass_through_func, ged_copy},
+    {"cp",	"[from_db:]obj [to_db:]obj", MAXARGS, go_copy, GED_FUNC_PTR_NULL},
     {"cpi",	(char *)0, MAXARGS, go_pass_through_func, ged_cpi},
     {"d",	(char *)0, MAXARGS, go_pass_through_and_refresh_func, ged_erase},
     {"dall",	(char *)0, MAXARGS, go_pass_through_and_refresh_func, ged_erase_all},
@@ -1510,6 +1516,119 @@ go_constrain_tmode(struct ged	*gedp,
     bu_vls_free(&bindings);
 
     return BRLCAD_OK;
+}
+
+int
+go_copy(struct ged	*gedp,
+	int		argc,
+	const char	*argv[],
+	ged_func_ptr	func,
+	const char	*usage,
+	int		maxargs)
+{
+    vect_t clipmin;
+    vect_t clipmax;
+    struct ged_dm_view *gdvp;
+    struct ged *from_gedp = GED_NULL;
+    struct ged *to_gedp = GED_NULL;
+    int ret;
+    char *cp;
+    struct ged_obj *gop;
+    struct bu_vls db_vls;
+    struct bu_vls from_vls;
+    struct bu_vls to_vls;
+
+    /* initialize result */
+    bu_vls_trunc(&gedp->ged_result_str, 0);
+
+    /* must be wanting help */
+    if (argc == 1) {
+	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	return GED_HELP;
+    }
+
+    if (argc != 3) {
+	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	return BRLCAD_ERROR;
+    }
+
+    bu_vls_init(&db_vls);
+    bu_vls_init(&from_vls);
+    bu_vls_init(&to_vls);
+
+    if ((cp = strchr(argv[1], ':'))) {
+	bu_vls_strncpy(&db_vls, argv[1], cp-argv[1]);
+	bu_vls_strcpy(&from_vls, cp+1);
+
+	for (BU_LIST_FOR(gop, ged_obj, &HeadGedObj.l)) {
+	    if (!strcmp(bu_vls_addr(&gop->go_name), bu_vls_addr(&db_vls))) {
+		from_gedp = gop->go_gedp;
+		break;
+	    }
+	}
+
+	bu_vls_free(&db_vls);
+
+	if (from_gedp == GED_NULL) {
+	    bu_vls_free(&from_vls);
+	    bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	    return BRLCAD_ERROR;
+	}
+    } else {
+	bu_vls_strcpy(&from_vls, argv[1]);
+	from_gedp = gedp;
+    }
+
+    if ((cp = strchr(argv[2], ':'))) {
+	bu_vls_trunc(&db_vls, 0);
+	bu_vls_strncpy(&db_vls, argv[2], cp-argv[2]);
+	bu_vls_strcpy(&to_vls, cp+1);
+
+	for (BU_LIST_FOR(gop, ged_obj, &HeadGedObj.l)) {
+	    if (!strcmp(bu_vls_addr(&gop->go_name), bu_vls_addr(&db_vls))) {
+		to_gedp = gop->go_gedp;
+		break;
+	    }
+	}
+
+	bu_vls_free(&db_vls);
+
+	if (to_gedp == GED_NULL) {
+	    bu_vls_free(&from_vls);
+	    bu_vls_free(&to_vls);
+	    bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	    return BRLCAD_ERROR;
+	}
+    } else {
+	bu_vls_strcpy(&to_vls, argv[2]);
+	to_gedp = gedp;
+    }
+
+    if (from_gedp == to_gedp) {
+	ret = ged_dbcopy(from_gedp, to_gedp,
+			 bu_vls_addr(&from_vls),
+			 bu_vls_addr(&to_vls));
+
+	if (ret != GED_OK && from_gedp != gedp)
+	    bu_vls_strcpy(&gedp->ged_result_str, bu_vls_addr(&from_gedp->ged_result_str));
+    } else {
+	ret = ged_dbcopy(from_gedp, to_gedp,
+			 bu_vls_addr(&from_vls),
+			 bu_vls_addr(&to_vls));
+
+	if (ret != GED_OK) {
+	    if (bu_vls_strlen((const struct bu_vls *)&from_gedp->ged_result_str)) {
+		if (from_gedp != gedp)
+		    bu_vls_strcpy(&gedp->ged_result_str, bu_vls_addr(&from_gedp->ged_result_str));
+	    } else if (to_gedp != gedp && bu_vls_strlen((const struct bu_vls *)&to_gedp))
+		bu_vls_strcpy(&gedp->ged_result_str, bu_vls_addr(&to_gedp->ged_result_str));
+	}
+    }
+
+    bu_vls_free(&from_vls);
+    bu_vls_free(&to_vls);
+
+    return ret;
 }
 
 static void
