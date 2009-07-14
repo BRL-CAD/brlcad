@@ -590,7 +590,7 @@ static struct go_cmdtab go_cmds[] = {
     {"constrain_tmode",	"vname x|y|z x y", MAXARGS, go_constrain_tmode, GED_FUNC_PTR_NULL},
     {"copyeval",	(char *)0, MAXARGS, go_pass_through_func, ged_copyeval},
     {"copymat",	(char *)0, MAXARGS, go_pass_through_func, ged_copymat},
-    {"cp",	"[from_db:]obj [to_db:]obj", MAXARGS, go_copy, GED_FUNC_PTR_NULL},
+    {"cp",	"[-f] [from_db:]obj [to_db:]obj", MAXARGS, go_copy, GED_FUNC_PTR_NULL},
     {"cpi",	(char *)0, MAXARGS, go_pass_through_func, ged_cpi},
     {"d",	(char *)0, MAXARGS, go_pass_through_and_refresh_func, ged_erase},
     {"dall",	(char *)0, MAXARGS, go_pass_through_and_refresh_func, ged_erase_all},
@@ -1537,6 +1537,7 @@ go_copy(struct ged	*gedp,
     struct bu_vls db_vls;
     struct bu_vls from_vls;
     struct bu_vls to_vls;
+    int fflag;
 
     /* initialize result */
     bu_vls_trunc(&gedp->ged_result_str, 0);
@@ -1547,10 +1548,24 @@ go_copy(struct ged	*gedp,
 	return GED_HELP;
     }
 
-    if (argc != 3) {
+    if (argc < 3 || 4 < argc) {
 	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return BRLCAD_ERROR;
     }
+
+    if (argc == 4) {
+	if (argv[1][0] != '-' || argv[1][1] != 'f' ||  argv[1][2] != '\0') {
+	    bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	    return BRLCAD_ERROR;
+	}
+
+	fflag = 1;
+
+	/* Advance past the -f option */
+	--argc;
+	++argv;
+    } else
+	fflag = 0;
 
     bu_vls_init(&db_vls);
     bu_vls_init(&from_vls);
@@ -1607,14 +1622,16 @@ go_copy(struct ged	*gedp,
     if (from_gedp == to_gedp) {
 	ret = ged_dbcopy(from_gedp, to_gedp,
 			 bu_vls_addr(&from_vls),
-			 bu_vls_addr(&to_vls));
+			 bu_vls_addr(&to_vls),
+			 fflag);
 
 	if (ret != GED_OK && from_gedp != gedp)
 	    bu_vls_strcpy(&gedp->ged_result_str, bu_vls_addr(&from_gedp->ged_result_str));
     } else {
 	ret = ged_dbcopy(from_gedp, to_gedp,
 			 bu_vls_addr(&from_vls),
-			 bu_vls_addr(&to_vls));
+			 bu_vls_addr(&to_vls),
+			 fflag);
 
 	if (ret != GED_OK) {
 	    if (bu_vls_strlen((const struct bu_vls *)&from_gedp->ged_result_str)) {

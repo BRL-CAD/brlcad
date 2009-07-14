@@ -504,7 +504,8 @@ GED_EXPORT BU_EXTERN(int ged_dbcopy,
 		     (struct ged *from_gedp,
 		      struct ged *to_gedp,
 		      const char *from,
-		      const char *to));
+		      const char *to,
+		      int fflag));
 
 /* defined in draw.c */
 GED_EXPORT BU_EXTERN (void ged_color_soltab,

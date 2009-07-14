@@ -1683,7 +1683,11 @@ package provide Archer 1.0
 		set i [lsearch -exact $l $obj]
 		if {$i != -1} {
 		    for {set j 1} {$j <= $i} {incr j} {
-			append ditem / [lindex $l $j]
+			if {$j == 1} {
+			    append ditem [lindex $l $j]
+			} else {
+			    append ditem / [lindex $l $j]
+			}
 		    }
 		    break
 		}
@@ -7029,7 +7033,7 @@ package provide Archer 1.0
 
     # Create the ledger entry
     set lname $mLedgerGID\_$oid\_$_obj
-    eval $mLedger put $lname $gdata
+    gedCmd cp $_obj $mLedger\:$lname
 
     # No mods yet
     $mLedger attr set $lname $HAVE_MODS 0
@@ -7109,7 +7113,7 @@ package provide Archer 1.0
 	}
 
 	set lname $mLedgerGID\_$oid\_$_obj
-	eval $mLedger put $lname $gdata
+	gedCmd cp $obj $mLedger\:$lname
 
 	# No mods yet
 	$mLedger attr set $lname $HAVE_MODS 0
@@ -7201,8 +7205,11 @@ package provide Archer 1.0
     set mLedgerGID $gid
 
     # Adjust the corresponding object according to the ledger entry
-    set gdata [lrange [$mLedger get $le] 1 end]
-    eval gedCmd adjust $gname $gdata
+#    set gdata [lrange [$mLedger get $le] 1 end]
+#    eval gedCmd adjust $gname $gdata
+#    gedCmd kill $gname
+    gedCmd cp -f $mLedger\:$le $gname
+    gedCmd attr rm $gname Have_Mods
 
     # Remove the ledger entry
     $mLedger kill $le
@@ -7311,8 +7318,11 @@ package provide Archer 1.0
     }
 
     # Adjust the corresponding object according to the ledger entry
-    set gdata [lrange [$mLedger get $le] 1 end]
-    eval gedCmd adjust $gname $gdata
+#    set gdata [lrange [$mLedger get $le] 1 end]
+#    eval gedCmd adjust $gname $gdata
+#    gedCmd kill $gname
+    gedCmd cp -f $mLedger\:$le $gname
+    gedCmd attr rm $gname Have_Mods
 
     # Remove the ledger entry
     $mLedger kill $le

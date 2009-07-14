@@ -82,10 +82,11 @@ ged_copy(struct ged *gedp, int argc, const char *argv[])
 }
 
 int
-ged_dbcopy(struct ged *from_gedp, struct ged *to_gedp, const char *from, const char *to)
+ged_dbcopy(struct ged *from_gedp, struct ged *to_gedp, const char *from, const char *to, int fflag)
 {
     register struct directory *from_dp;
     struct bu_external external;
+    int exists;
 
     GED_CHECK_DATABASE_OPEN(from_gedp, GED_ERROR);
     GED_CHECK_DATABASE_OPEN(to_gedp, GED_ERROR);
@@ -96,7 +97,14 @@ ged_dbcopy(struct ged *from_gedp, struct ged *to_gedp, const char *from, const c
     bu_vls_trunc(&to_gedp->ged_result_str, 0);
 
     GED_DB_LOOKUP(from_gedp, from_dp, from, LOOKUP_NOISY, GED_ERROR & GED_QUIET);
+#if 1
+    if (!fflag && db_lookup(to_gedp->ged_wdbp->dbip, to, LOOKUP_QUIET) != DIR_NULL) {
+	    bu_vls_printf(&from_gedp->ged_result_str, "%s already exists.", to);
+	    return GED_ERROR;
+    }
+#else
     GED_CHECK_EXISTS(to_gedp, to, LOOKUP_QUIET, GED_ERROR);
+#endif
 
     if (db_get_external(&external, from_dp, from_gedp->ged_wdbp->dbip)) {
 	bu_vls_printf(&from_gedp->ged_result_str, "Database read error, aborting\n");
