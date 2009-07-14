@@ -26,6 +26,8 @@
 #include <string.h>
 #include <pthread.h>
 
+#include "adrt.h"
+
 #include "tienet_master.h"
 #include "dispatcher.h"
 #include "camera.h"
