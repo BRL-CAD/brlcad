@@ -214,11 +214,11 @@ clone_get_name(struct directory *dp, struct ged_clone_state *state, int iter)
 
     /* Ugh. This needs much repair/cleanup. */
     if ( state->updpos == 0 ) {
-	sscanf(dp->d_namep, "%[!-/,:-~]%d%[!-/,:-~]%512s", &prefix, &num, &suffix, &suffix2); /* CLONE_BUFSIZE */
+	sscanf(dp->d_namep, "%[!-/,:-~]%d%[!-/,:-~]%512s", prefix, &num, suffix, &suffix2); /* CLONE_BUFSIZE */
 	snprintf(suffix, CLONE_BUFSIZE, "%s%s", suffix, suffix2);
     } else if ( state->updpos == 1 ) {
 	int num2 = 0;
-	sscanf(dp->d_namep, "%[!-/,:-~]%d%[!-/,:-~]%d%[!-/,:-~]", &prefix, &num2, &suffix2, &num, &suffix);
+	sscanf(dp->d_namep, "%[!-/,:-~]%d%[!-/,:-~]%d%[!-/,:-~]", prefix, &num2, suffix2, &num, suffix);
         if (num > 0) {
 	    snprintf(prefix, CLONE_BUFSIZE, "%s%d%s", prefix, num2, suffix2);
 	} else {

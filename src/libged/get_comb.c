@@ -108,7 +108,7 @@ ged_get_comb(struct ged *gedp, int argc, const char *argv[])
 
 	bu_vls_printf(&gedp->ged_result_str, "%s", dp->d_namep);
 	if (comb->region_flag) {
-	    bu_vls_printf(&gedp->ged_result_str, " Yes %d %d %d %d",
+	    bu_vls_printf(&gedp->ged_result_str, " Yes %ld %ld %ld %ld",
 			  comb->region_id, comb->aircode, comb->GIFTmater, comb->los);
 	} else {
 	    bu_vls_printf(&gedp->ged_result_str, " No");

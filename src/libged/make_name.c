@@ -23,8 +23,8 @@
  *
  */
 
+#include <string.h>
 #include "ged.h"
-
 
 int
 ged_make_name(struct ged *gedp, int argc, const char *argv[])

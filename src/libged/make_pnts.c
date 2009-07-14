@@ -211,7 +211,7 @@ str2type(const char *format_string, rt_pnt_type *pnt_type)
                 index2++;
             }
         }
-        temp_string[index2] = (char)NULL;
+        temp_string[index2] = '\0';
 
         remove_whitespace(temp_string);
 
@@ -390,7 +390,7 @@ ged_make_pnts(struct ged *gedp, int argc, const char *argv[])
     int format_string_length = 0; /* number of characters in format_string, NOT including null terminator character */
     int raw_format_string_length = 0; /* number of characters in raw_format_string, NOT including null terminator character */
 
-    int num_doubles_per_point = 0;
+    unsigned int num_doubles_per_point = 0;
 
     void *point;
 
@@ -581,7 +581,7 @@ ged_make_pnts(struct ged *gedp, int argc, const char *argv[])
                         perror("ERROR: Problem reading file, system error message");
                         fclose(fp);
                         bu_vls_printf(&gedp->ged_result_str, "Make '%s' failed. ", argv[1]);
-                        bu_vls_printf(&gedp->ged_result_str, "Unable to read file at byte '%d'.\n", num_characters_read_from_file);
+                        bu_vls_printf(&gedp->ged_result_str, "Unable to read file at byte '%lu'.\n", num_characters_read_from_file);
                         bu_free(format_string, "ged_make_pnts: format_string");
                         rt_db_free_internal(&internal, &rt_uniresource);
                         return GED_ERROR;
@@ -634,7 +634,7 @@ ged_make_pnts(struct ged *gedp, int argc, const char *argv[])
                         rt_db_free_internal(&internal, &rt_uniresource);
                         return GED_ERROR;
                     }
-                    temp_string[temp_string_index] = (char)NULL;
+                    temp_string[temp_string_index] = '\0';
 
                     /* do not convert string to double for format character '?' */
                     if (format_string[format_string_index] != '?') {

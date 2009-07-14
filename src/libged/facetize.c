@@ -245,7 +245,7 @@ ged_facetize(struct ged *gedp, int argc, const char *argv[])
 
     if ( (dp=db_diradd( dbip, newname, -1L, 0, DIR_SOLID, (genptr_t)&intern.idb_type)) == DIR_NULL )
     {
-	bu_vls_printf(&gedp->ged_result_str, "Cannot add ", newname, " to directory\n");
+	bu_vls_printf(&gedp->ged_result_str, "Cannot add %s to directory\n", newname);
 	return GED_ERROR;
     }
 

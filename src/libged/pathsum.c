@@ -109,7 +109,7 @@ ged_pathsum(struct ged *gedp, int argc, const char *argv[])
 	for (i=0; i<gtd.gtd_objpos; i++)
 	    bu_vls_printf(&gedp->ged_result_str, "/%s", gtd.gtd_obj[i]->d_namep);
 
-	bu_vls_printf(&gedp->ged_result_str, "  NOT FOUND\n", (char *)NULL);
+	bu_vls_printf(&gedp->ged_result_str, "  NOT FOUND\n");
     }
 
     return GED_OK;

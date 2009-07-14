@@ -471,7 +471,7 @@ ged_qray_data_to_vlist(struct ged		*gedp,
     register struct bu_list *vhead;
     register struct ged_qray_dataList *ndlp;
     vect_t in_pt, out_pt;
-    vect_t last_out_pt;
+    vect_t last_out_pt = { 0, 0, 0 };
 
     for (BU_LIST_FOR(ndlp, ged_qray_dataList, &headp->l)) {
 	if (do_overlaps)

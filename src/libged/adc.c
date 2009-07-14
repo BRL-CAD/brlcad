@@ -413,7 +413,7 @@ ged_adc(struct ged	*gedp,
 	    i = (int)user_pt[X];
 
 	    if (i < 0 || 2 < i) {
-		bu_vls_printf(&gedp->ged_result_str, "The '%s anchor_pos' parameter accepts values of 0, 1, or 2.");
+		bu_vls_printf(&gedp->ged_result_str, "The '%d anchor_pos' parameter accepts values of 0, 1, or 2.", i);
 		return GED_ERROR;
 	    }
 

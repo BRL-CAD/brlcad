@@ -23,9 +23,9 @@
  *
  */
 
+#include <string.h>
 #include "ged.h"
 #include "plot3.h"
-
 
 /*
  * Set/get the unix plot output mode

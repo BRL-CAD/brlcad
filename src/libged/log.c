@@ -23,8 +23,8 @@
  *
  */
 
+#include <string.h>
 #include "ged.h"
-
 
 /**
  * Get the output from bu_log and append it to clientdata vls.

@@ -188,7 +188,7 @@ ged_tables(struct ged *gedp, int argc, const char *argv[])
 	if ( (dp = db_lookup(gedp->ged_wdbp->dbip, argv[i], LOOKUP_NOISY)) != DIR_NULL )
 	    ged_new_tables(gedp, dp, &cur_path, (fastf_t *)bn_mat_identity, flag);
 	else
-	    bu_vls_printf(&gedp->ged_result_str, "%s:  skip this object\n");
+	    bu_vls_printf(&gedp->ged_result_str, "%s:  skip this object\n", argv[i]);
     }
 
     bu_vls_printf(&gedp->ged_result_str, "Summary written in: %s\n", argv[1]);

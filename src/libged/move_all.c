@@ -25,6 +25,7 @@
 
 #include "common.h"
 
+#include <stdlib.h>
 #include <string.h>
 #include "bio.h"
 
@@ -64,7 +65,7 @@ ged_move_all(struct ged *gedp, int argc, const char *argv[])
     }
 
     if (gedp->ged_wdbp->dbip->dbi_version < 5 && (int)strlen(argv[2]) > NAMESIZE) {
-	bu_vls_printf(&gedp->ged_result_str, "ERROR: name length limited to %d characters in v4 databases\n");
+	bu_vls_printf(&gedp->ged_result_str, "ERROR: name length limited to %d characters in v4 databases\n", strlen(argv[2]));
 	return GED_ERROR;
     }
 
@@ -226,7 +227,7 @@ ged_move_all(struct ged *gedp, int argc, const char *argv[])
 
 	if (found) {
 	    bu_vls_free(&gdlp->gdl_path);
-	    bu_vls_printf(&gdlp->gdl_path, "%S", &new_path);
+	    bu_vls_printf(&gdlp->gdl_path, "%s", bu_vls_addr(&new_path));
 	}
 
 	free((void *)dup);

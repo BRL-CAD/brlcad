@@ -25,8 +25,9 @@
  *
  */
 
-#include "ged.h"
+#include <unistd.h>
 
+#include "ged.h"
 
 int
 ged_edmater(struct ged *gedp, int argc, const char *argv[])

@@ -25,6 +25,8 @@
 
 #include "common.h"
 
+#include  <stdlib.h>
+
 #include "bio.h"
 
 #include "solid.h"

@@ -131,7 +131,7 @@ ged_rmap(struct ged *gedp, int argc, const char *argv[])
 	    bu_vls_free(&inp->name);
 	    bu_free((genptr_t)inp, "ged_rmap: inp");
 	}
-	bu_vls_printf(&gedp->ged_result_str, " } ", itnp->id);
+	bu_vls_printf(&gedp->ged_result_str, " } "); /* , itnp->id); */
 
 	BU_LIST_DEQUEUE(&itnp->l);
 	bu_free((genptr_t)itnp, "ged_rmap: itnp");

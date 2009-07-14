@@ -107,7 +107,7 @@ ged_copymat(struct ged *gedp, int argc, const char *argv[])
 	    else {
 		bu_vls_printf(&gedp->ged_result_str,
 			      "%s: Non-combination directory <x%lx> '%s' for combination rt_db_internal <x%lx>\nThis should not happen\n",
-			      argv[0], (long)dp, dp->d_namep, &intern);
+			      argv[0], (long)dp, dp->d_namep, (long)&intern);
 	    }
 	    /* Fall through this case */
 	default:

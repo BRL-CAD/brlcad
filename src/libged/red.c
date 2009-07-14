@@ -131,7 +131,7 @@ ged_red(struct ged *gedp, int argc, const char *argv[])
 	if (!gedp->ged_wdbp->dbip->dbi_read_only) {
 	    if ((node_count = ged_check_comb(gedp)) < 0) {
 		/* Do some quick checking on the edited file */
-		bu_vls_printf(&gedp->ged_result_str, "%s: Error in edited region, no changes made\n");
+		bu_vls_printf(&gedp->ged_result_str, "%s: Error in edited region, no changes made\n", *argv);
 		if (comb)
 		    intern.idb_meth->ft_ifree( &intern, &rt_uniresource );
 		(void)unlink(ged_tmpfil);
@@ -141,7 +141,7 @@ ged_red(struct ged *gedp, int argc, const char *argv[])
 	    if (comb) {
 		if (ged_save_comb(gedp, dp)) {
 		    /* Save combination to a temp name */
-		    bu_vls_printf(&gedp->ged_result_str, "%s: No changes made\n");
+		    bu_vls_printf(&gedp->ged_result_str, "%s: No changes made\n", *argv);
 		    intern.idb_meth->ft_ifree( &intern, &rt_uniresource );
 		    (void)unlink(ged_tmpfil);
 		    return GED_OK;
@@ -149,10 +149,10 @@ ged_red(struct ged *gedp, int argc, const char *argv[])
 	    }
 
 	    if (ged_build_comb(gedp, comb, dp, node_count, (char *)argv[1])) {
-		bu_vls_printf(&gedp->ged_result_str, "%s: Unable to construct new %s", dp->d_namep);
+		bu_vls_printf(&gedp->ged_result_str, "%s: Unable to construct new %s", *argv, dp->d_namep);
 		if (comb) {
 		    ged_restore_comb(gedp, dp);
-		    bu_vls_printf(&gedp->ged_result_str, "%s: \toriginal restored\n");
+		    bu_vls_printf(&gedp->ged_result_str, "%s: \toriginal restored\n", *argv);
 		    intern.idb_meth->ft_ifree( &intern, &rt_uniresource );
 		}
 
@@ -168,7 +168,7 @@ ged_red(struct ged *gedp, int argc, const char *argv[])
 		(void)ged_kill(gedp, 2, (const char **)av);
 	    }
 	} else {
-	    bu_vls_printf(&gedp->ged_result_str, "%s: Because the database is READ-ONLY no changes were made.\n");
+	    bu_vls_printf(&gedp->ged_result_str, "%s: Because the database is READ-ONLY no changes were made.\n", *argv);
 	}
     }
 
@@ -905,10 +905,10 @@ ged_write_comb(struct ged *gedp, const struct rt_comb_internal *comb, const char
     fprintf(fp, "NAME=%s\n", name);
     if (comb->region_flag) {
 	fprintf(fp, "REGION=Yes\n");
-	fprintf(fp, "REGION_ID=%d\n", comb->region_id);
-	fprintf(fp, "AIRCODE=%d\n", comb->aircode);
-	fprintf(fp, "GIFT_MATERIAL=%d\n", comb->GIFTmater);
-	fprintf(fp, "LOS=%d\n", comb->los);
+	fprintf(fp, "REGION_ID=%ld\n", comb->region_id);
+	fprintf(fp, "AIRCODE=%ld\n", comb->aircode);
+	fprintf(fp, "GIFT_MATERIAL=%ld\n", comb->GIFTmater);
+	fprintf(fp, "LOS=%ld\n", comb->los);
     } else {
 	fprintf(fp, "REGION=No\n");
 	fprintf(fp, "REGION_ID=\n");

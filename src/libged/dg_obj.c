@@ -33,6 +33,8 @@
 #include <string.h>
 #include <limits.h>
 #include <errno.h>
+#include <sys/types.h>
+#include <sys/wait.h>
 #include "bio.h"
 
 #include "tcl.h"

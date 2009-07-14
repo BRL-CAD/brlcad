@@ -1135,7 +1135,7 @@ ged_inside_internal(struct ged *gedp, struct rt_db_internal *ip, int argc, const
 
 	case ID_NMG:
 	    if (argc < arg+1) {
-		bu_vls_printf(&gedp->ged_result_str, "%s", p_nmgin);
+		bu_vls_printf(&gedp->ged_result_str, "%s", *p_nmgin);
 		return GED_MORE;
 	    }
 	    thick[0] = atof(argv[arg]) * gedp->ged_wdbp->dbip->dbi_local2base;

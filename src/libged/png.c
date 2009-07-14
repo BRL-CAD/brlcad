@@ -42,7 +42,7 @@
 static fastf_t ged_png_color_sf = 1.0/255.0;
 static unsigned int size = 512;
 static unsigned int half_size = 256;
-static linewidth = 2;
+static int linewidth = 2;
 
 static unsigned char bg_red = 255;
 static unsigned char bg_green = 255;

@@ -25,6 +25,9 @@
 
 #include "common.h"
 
+#include <stdlib.h>
+#include <string.h>
+
 #include "bio.h"
 
 #include "./ged_private.h"
@@ -47,10 +50,12 @@ extern int brep_surface_plot(struct ged *gedp, struct brep_specific* bs, struct 
 int
 ged_brep(struct ged *gedp, int argc, const char *argv[])
 {
-    int ret;
     struct bn_vlblock*vbp;
+    /* unused?
+    int ret;
     FILE *fp;
     double char_size;
+    */
     char *solid_name;
     char *command;
     static const char *usage = "brepsolidname [command]";
@@ -135,8 +140,8 @@ ged_brep(struct ged *gedp, int argc, const char *argv[])
 	} else if (argc == 3) {
 	    brep_info(bs, &gedp->ged_result_str);
 	} else if (argc == 5) {
-	    char *part = argv[3];
-	    char *strindex = argv[4];
+	    const char *part = argv[3];
+	    const char *strindex = argv[4];
 	    if (strcmp(strindex,"?") == 0) {
 		/* printout indedx options */
 		bu_vls_printf(&gedp->ged_result_str, "\tinfo S [index] - return information for specific BREP 'surface'\n");
@@ -163,8 +168,8 @@ ged_brep(struct ged *gedp, int argc, const char *argv[])
 	    bu_vls_printf( &gedp->ged_result_str, "%s", usage);
 	    brep_info(bs, &gedp->ged_result_str);
 	} else if (argc >= 5) {
-	    char *part = argv[3];
-	    char *strindex = argv[4];
+	    const char *part = argv[3];
+	    const char *strindex = argv[4];
 	    if (strcmp(strindex,"?") == 0) {
 		/* printout indedx options */
 		bu_vls_printf(&gedp->ged_result_str, "\tplot S [index] - plot specific BREP 'surface'\n");
@@ -176,7 +181,7 @@ ged_brep(struct ged *gedp, int argc, const char *argv[])
 		if (strcmp(part,"S") == 0) {
 		    bu_vls_printf(&gedp->ged_result_str, "%s plot:", solid_name);
 		    if (argc == 6) {
-			char *strres = argv[5];
+			const char *strres = argv[5];
 			plotres = atoi(strres);
 		    }
 		    vbp = rt_vlblock_init();

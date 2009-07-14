@@ -687,7 +687,7 @@ parse_args(int ac, char *av[])
 	    case 'U'	:
 		use_air = strtol(bu_optarg, (char **)NULL, 10);
 		if (errno == ERANGE || errno == EINVAL) {
-		    bu_vls_printf(&ged_current_gedp->ged_result_str, "error in air argument\n", bu_optarg);
+		    bu_vls_printf(&ged_current_gedp->ged_result_str, "error in air argument %s\n", bu_optarg);
 		    return -1;
 		}
 		break;

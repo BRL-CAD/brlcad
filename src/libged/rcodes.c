@@ -67,7 +67,7 @@ ged_rcodes(struct ged *gedp, int argc, const char *argv[])
     }
 
     if ((fp = fopen(argv[1], "r")) == NULL) {
-	bu_vls_printf(&gedp->ged_result_str, "%s: Failed to read file - %s", argv[1]);
+	bu_vls_printf(&gedp->ged_result_str, "%s: Failed to read file - %s", argv[0], argv[1]);
 	return GED_ERROR;
     }
 
