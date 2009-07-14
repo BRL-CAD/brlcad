@@ -126,7 +126,7 @@ nmg_to_adrt_internal(struct nmgregion *r, struct db_full_path *pathp, int region
 		if (vert_count > 3)
 		{
 		    bu_free(region_name, "region name");
-		    bu_log("lu x%x has %d vertices!\n", lu, vert_count);
+		    bu_log("lu x%x has %d vertices!\n", (unsigned int)lu, vert_count);
 		    bu_exit(1, "ERROR: LU is not a triangle");
 		}
 		else if (vert_count < 3)

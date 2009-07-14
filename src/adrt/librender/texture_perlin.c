@@ -28,6 +28,7 @@
 #include <stdlib.h>
 
 #include "bu.h"
+#include "bn.h"
 
 
 #define	B	0x100

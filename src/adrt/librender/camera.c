@@ -23,29 +23,6 @@
  *
  */
 
-/*                        C A M E R A . H
- * BRL-CAD / ADRT
- *
- * Copyright (c) 2007-2009 United States Government as represented by
- * the U.S. Army Research Laboratory.
- *
- * This library is free software; you can redistribute it and/or
- * modify it under the terms of the GNU Lesser General Public License
- * version 2.1 as published by the Free Software Foundation.
- *
- * This library is distributed in the hope that it will be useful, but
- * WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
- * Lesser General Public License for more details.
- *
- * You should have received a copy of the GNU Lesser General Public
- * License along with this file; see the file named COPYING for more
- * information.
- */
-/** @file camera.h
- *
- */
-
 #include <pthread.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -68,7 +45,8 @@ static void render_camera_prep_persp(render_camera_t *camera);
 static void render_camera_prep_persp_dof(render_camera_t *camera);
 
 
-void render_camera_init(render_camera_t *camera, int threads)
+void
+render_camera_init(render_camera_t *camera, int threads)
 {
     camera->type = RENDER_CAMERA_PERSPECTIVE;
 
@@ -91,14 +69,16 @@ void render_camera_init(render_camera_t *camera, int threads)
 }
 
 
-void render_camera_free(render_camera_t *camera)
+void
+render_camera_free(render_camera_t *camera)
 {
     if (camera->thread_num > 1)
 	bu_free(render_tlist, "render_tlist");
 }
 
 
-static void render_camera_prep_ortho(render_camera_t *camera)
+static void
+render_camera_prep_ortho(render_camera_t *camera)
 {
     TIE_3 look, up, side, temp;
     tfloat angle, s, c;
@@ -153,8 +133,8 @@ static void render_camera_prep_ortho(render_camera_t *camera)
     VSCALE(camera->view_list[0].step_y.v,  up.v,  (-camera->fov / (tfloat)camera->h));
 }
 
-
-static void render_camera_prep_persp(render_camera_t *camera)
+static void
+render_camera_prep_persp(render_camera_t *camera)
 {
     TIE_3 look, up, side, temp, topl, topr, botl;
     tfloat angle, s, c;
@@ -226,8 +206,8 @@ static void render_camera_prep_persp(render_camera_t *camera)
     return;
 }
 
-
-static void render_camera_prep_persp_dof(render_camera_t *camera)
+static void
+render_camera_prep_persp_dof(render_camera_t *camera)
 {
     TIE_3 look, up, side, dof_look, dof_up, dof_side, dof_topl, dof_topr, dof_botl, temp, step_x, step_y, topl, topr, botl;
     tfloat angle, mag, sfov, cfov, sdof, cdof;
@@ -376,8 +356,8 @@ static void render_camera_prep_persp_dof(render_camera_t *camera)
     }
 }
 
-
-void render_camera_prep(render_camera_t *camera)
+void
+render_camera_prep(render_camera_t *camera)
 {
     /* Generate an aspect ratio coefficient */
     camera->aspect = (tfloat)camera->w / (tfloat)camera->h;
@@ -403,7 +383,8 @@ void render_camera_prep(render_camera_t *camera)
 }
 
 
-void* render_camera_render_thread(void *ptr)
+void
+*render_camera_render_thread(void *ptr)
 {
     render_camera_thread_data_t *td;
     int d, n, res_ind, scanline, v_scanline;
@@ -411,10 +392,10 @@ void* render_camera_render_thread(void *ptr)
     tie_ray_t ray;
     tfloat view_inv;
 
+    VSETALL(v1.v, 0);
 
     td = (render_camera_thread_data_t *)ptr;
     view_inv = 1.0 / td->camera->view_num;
-
 
     res_ind = 0;
 /* row, vertical */
@@ -552,7 +533,8 @@ void* render_camera_render_thread(void *ptr)
 }
 
 
-void render_camera_render(render_camera_t *camera, tie_t *tie, camera_tile_t *tile, tienet_buffer_t *result)
+void
+render_camera_render(render_camera_t *camera, tie_t *tie, camera_tile_t *tile, tienet_buffer_t *result)
 {
     render_camera_thread_data_t td;
     unsigned int i, scanline, ind;
@@ -595,6 +577,8 @@ void render_camera_render(render_camera_t *camera, tie_t *tie, camera_tile_t *ti
 
     result->ind = ind;
     pthread_mutex_destroy(&td.mut);
+
+    return;
 }
 
 /*

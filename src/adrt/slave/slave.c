@@ -38,6 +38,7 @@
 #include "render_util.h"
 
 #include "slave.h"
+#include "tienet_slave.h"
 #include "load.h"
 
 typedef struct adrt_slave_project_s {

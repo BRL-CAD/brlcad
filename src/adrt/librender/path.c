@@ -35,6 +35,7 @@
 #include "adrt_struct.h"
 
 #include "bu.h"
+#include "bn.h"
 #include "vmath.h"
 
 
@@ -76,6 +77,7 @@ void render_path_work(render_t *render, tie_t *tie, tie_ray_t *ray, TIE_3 *pixel
     int i, n, propogate;
     render_path_t *rd;
 
+    VSETALL(new_pix.v, 0);
 
     rd = (render_path_t *)render->data;
 

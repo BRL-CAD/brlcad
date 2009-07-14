@@ -46,7 +46,7 @@ render_phong_work(render_t *render, tie_t *tie, tie_ray_t *ray, TIE_3 *pixel) {
     tie_id_t		id;
     adrt_mesh_t		*mesh;
 
-    if (mesh = (adrt_mesh_t*)tie_work(tie, ray, &id, render_hit, NULL)) {
+    if ((mesh = (adrt_mesh_t*)tie_work(tie, ray, &id, render_hit, NULL)) != NULL) {
 	TIE_3		vec;
 
 	*pixel = mesh->attributes->color;

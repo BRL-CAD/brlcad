@@ -156,15 +156,17 @@ typedef struct tienet_buffer_s {
 #define TIENET_OP(name,cmd)  \
 static int tienet_##name(int socket, void* data, size_t size) \
 { \
-    fd_set	set; \
-    int		ind = 0, r; \
+    fd_set	 set; \
+    unsigned int ind = 0; \
+    int		 r; \
 \
     FD_ZERO(&set); \
     FD_SET(socket, &set); \
 \
     do { \
 	select(socket+1, NULL, &set, NULL, NULL); \
-	ind += r = cmd(socket, &((char*)data)[ind], size-ind); \
+	r = cmd(socket, &((char*)data)[ind], size-ind); \
+	ind += r; \
 	if (r <= 0) return(1);	/* Error, socket is probably dead */ \
     } while (ind < size); \
 \
