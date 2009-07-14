@@ -174,8 +174,7 @@ namespace brlcad {
       inline BANode<BH>::BANode(const ON_BrepFace* face) : m_face(face) {
 	  FaceNode = true;
 	  LoopNode = false;
-      	  VSETALL(this->m_BBox.m_min,MAX_FASTF);
-	  VSETALL(this->m_BBox.m_max,-MAX_FASTF);
+	  m_face->GetBBox(m_BBox.m_min, m_BBox.m_max);
       }
  
   template<class BH>
@@ -183,8 +182,7 @@ namespace brlcad {
       : m_face(face), m_loop(loop), m_innerTrim(innerTrim) {
 	  FaceNode = false;
 	  LoopNode = true;
-	  VSETALL(this->m_BBox.m_min,MAX_FASTF);
-	  VSETALL(this->m_BBox.m_max,-MAX_FASTF);
+	  m_loop->GetBBox(m_BBox.m_min,m_BBox.m_max);
       } 
 
   template<class BH>
@@ -195,10 +193,8 @@ namespace brlcad {
 	  LoopNode = false;
 	  m_start = curve->PointAt(m_t[0]);
 	  m_end = curve->PointAt(m_t[1]);
-	  VSETALL(this->m_BBox.m_min,MAX_FASTF);
-	  VSETALL(this->m_BBox.m_max,-MAX_FASTF);
+	  m_curve->GetBBox(m_BBox.m_min,m_BBox.m_max);
 	  // check for vertical segments they can be removed from
-	  // w
 	  // trims above (can't tell direction and don't need
           if ( NEAR_ZERO(m_end[X]-m_start[X], DBL_EPSILON) ) {
 	      m_Vertical = true;
@@ -393,10 +389,12 @@ namespace brlcad {
         
         const ON_BrepFace* m_face;
         BRNode* m_root;
+        list<BRNode*> m_sortedX;
         list<BRNode*> m_sortedY;
     };
 
    // These functions are needed in other definitions, so declare them now.
+   extern bool sortX(BRNode* first, BRNode* second);
    extern bool sortY(BRNode* first, BRNode* second);
 
 

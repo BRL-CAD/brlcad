@@ -67,38 +67,79 @@ namespace brlcad {
 		const ON_BrepLoop* loop = face->Loop(i);
 		BRNode* loopnode = new BRNode(face,loop,innerLoop);
 		
-		m_root->addChild(loopnode);
 		// For each loop, break it down into trims and add
 		// the trims as children to the Loop Node.
 		for (int j = 0; j < loop->m_ti.Count(); j++) {
+		    int adj_face_index = -99;
 		    // Extract info on the particular trim
 		    ON_BrepTrim& trim = face->Brep()->m_T[loop->m_ti[j]];
+		    if (trim.m_ei != - 1) { // does not lie on a portion of a singular surface side
+			ON_BrepEdge& edge = face->Brep()->m_E[trim.m_ei];
+			switch ( trim.m_type ) {
+			    case ON_BrepTrim::unknown:
+				bu_log("ON_BrepTrim::unknown on Face:%d\n",face->m_face_index);
+				break;
+			    case ON_BrepTrim::boundary:
+				bu_log("ON_BrepTrim::boundary on Face:%d\n",face->m_face_index);
+				break;
+			    case ON_BrepTrim::mated:
+				if (edge.m_ti.Count() == 2) {
+				    if (face->m_face_index == face->Brep()->m_T[edge.m_ti[0]].FaceIndexOf()) {
+					adj_face_index = face->Brep()->m_T[edge.m_ti[1]].FaceIndexOf();
+				    } else {
+					adj_face_index = face->Brep()->m_T[edge.m_ti[0]].FaceIndexOf();
+				    }
+				} else {
+				    bu_log("Mated Edge should have 2 adjacent faces, right?  Face(%d) has %d trim indexes\n",face->m_face_index,edge.m_ti.Count());
+				}
+				break;
+			    case ON_BrepTrim::seam:
+				if (edge.m_ti.Count() == 2) {
+				    if ((face->m_face_index == face->Brep()->m_T[edge.m_ti[0]].FaceIndexOf()) &&
+					    (face->m_face_index == face->Brep()->m_T[edge.m_ti[1]].FaceIndexOf())) {
+					adj_face_index = face->m_face_index;
+				    } else {
+					bu_log("Seamed Edge should have 1 faces sharing the trim so trim index should be one, right? Face(%d) has %d trim indexes\n",
+						face->m_face_index,edge.m_ti.Count());
+					bu_log("Face(%d) has %d,%d trim indexes\n",face->m_face_index,face->Brep()->m_T[edge.m_ti[0]].FaceIndexOf(),
+						face->Brep()->m_T[edge.m_ti[1]].FaceIndexOf());
+				    }
+				} else if (edge.m_ti.Count() == 1) {
+				    adj_face_index = face->m_face_index;
+				} else {
+				    bu_log("Seamed Edge should have 1 faces sharing the trim so trim index should be one, right? Face(%d) has %d trim indexes\n",
+					    face->m_face_index,edge.m_ti.Count());
+				}
+				break;
+			    case ON_BrepTrim::singular:
+				bu_log("ON_BrepTrim::singular on Face:%d\n",face->m_face_index);
+				break;
+			    case ON_BrepTrim::crvonsrf:
+				bu_log("ON_BrepTrim::crvonsrf on Face:%d\n",face->m_face_index);
+				break;
+			    case ON_BrepTrim::ptonsrf:
+			        bu_log("ON_BrepTrim::ptonsrf on Face:%d\n",face->m_face_index);
+				break;
+			    case ON_BrepTrim::slit:
+			        bu_log("ON_BrepTrim::slit on Face:%d\n",face->m_face_index);
+				break;
+			    default:
+				bu_log("ON_BrepTrim::default on Face:%d\n",face->m_face_index);
+			}
+		    }
+		    
 		    const ON_Curve* trimCurve = trim.TrimCurveOf();
 		    double min,max;
 		    (void)trimCurve->GetDomain(&min, &max);
 		    ON_Interval t(min,max);
-		    BRNode* trimnode = new BRNode(face,loop,trimCurve,t,innerLoop);
+		  
 		    // Break up the trimming curve into managable sub-segments,
 		    // identify the knots and splice the curve into knot-to-knot
 		    // sub-intervals.
 		    int knotcnt = trimCurve->SpanCount();
 		    double *knots = new double[knotcnt+1];
 		    trimCurve->GetSpanVector(knots);
-		    // If Linear, simple - just walk the knots and add
-		    if (trimCurve->IsLinear()) {
-			for (int i = 1; i <= knotcnt; i++) {
-		           double xmax = knots[i];
-			   ON_Interval tc(min,xmax);
-	       		   if (!NEAR_ZERO(xmax-min,TOL)) {
-	    		      BRNode* childnode = new BRNode(face,loop,trimCurve,tc,innerLoop);
-			      TrimBBBuild(childnode);
-			      trimnode->addChild(childnode);
-       			   }
-			   min = xmax;
-			}
-			ParentBBBuild(trimnode);
-     			loopnode->addChild(trimnode);			
-		    } else {
+		    if (!trimCurve->IsLinear()) {
 			// Not Linear - walk the knot sub-intervals, split
 			// further based on horizontal and vertical tangents. 
 			list<double> splitlist;
@@ -111,25 +152,47 @@ namespace brlcad {
 			// sub-intervals at the leaves satisfying the linearity 
 			// criteria using trimnode as the tree root.  Once this 
 			// is done, add trimnode to the loopnode child list.
-			for( list<double>::iterator l=splitlist.begin();l != splitlist.end();l++) {
+			int knotinterval = 0;
+			for(list<double>::iterator l=splitlist.begin();l != splitlist.end();l++) {
 			    double xmax = *l;
+			    knotinterval++;
+			    ON_Interval t(knots[knotinterval-1],knots[knotinterval]);
 			    if (!NEAR_ZERO(xmax-min,TOL)) {
+				bu_log("min = %f, max = %f\n", min, xmax);
+		    		BRNode* trimnode = new BRNode(face,loop,trimCurve,t,innerLoop);
 				GetBAChildren(trimnode,1,min,xmax);
 				loopnode->addChild(trimnode);
 			    }
 			    min = xmax;
 			}
+		    	delete knots;
+		    } else {
+			for (int i=1;i<=knotcnt;i++) {
+			    double xmax = knots[i];
+			    ON_Interval t(knots[i-1],knots[i]);
+			    if (!NEAR_ZERO(xmax-min, TOL)) {
+				bu_log("min = %f, max = %f\n", min, xmax);
+			    	BRNode* trimnode = new BRNode(face,loop,trimCurve,t,innerLoop);
+				GetBAChildren(trimnode,1,min,xmax);
+				loopnode->addChild(trimnode);
+			    }
+			    min = xmax;
+			}
+			delete knots;
 		    }
-		    delete knots;
 		}
 	        // Build loopnode bbox from child nodes
 	        ParentBBBuild(loopnode);
+		m_root->addChild(loopnode);
 	    }
 	   // Build m_root bbox from child nodes
 	   ParentBBBuild(m_root);
+
+	   getLeaves(m_sortedX);
+	   m_sortedX.sort(sortX);
 	   getLeaves(m_sortedY);
-	    m_sortedY.sort(sortY);
-	    return;
+	   m_sortedY.sort(sortY);
+	   return;
 	}
 
 	CurveTree::~CurveTree() {
@@ -302,6 +365,7 @@ namespace brlcad {
 	
 	
 	void CurveTree::GetBAChildren(BRNode* parent, int depth, double min, double max) {
+//	    bu_log("depth: %d, min: %d,  max: %d\n", depth, min, max);
 	    double mid = (max + min) / 2.0;
 	    ON_Interval tl(min, mid);
 	    ON_Interval tr(mid, max);
@@ -309,6 +373,8 @@ namespace brlcad {
 	    BRNode* right = new BRNode(parent->m_face, parent->m_loop, parent->m_curve, tr, parent->m_innerTrim);
 	    TrimBBBuild(left);
 	    TrimBBBuild(right);
+//	    bu_log("left bbox:  m_min: (%f,%f,%f), m_max: (%f,%f,%f)\n", left->m_BBox.m_min[0], left->m_BBox.m_min[1], left->m_BBox.m_min[2], left->m_BBox.m_max[0], left->m_BBox.m_max[1], left->m_BBox.m_max[2]);
+//	    bu_log("right bbox:  m_min: (%f,%f,%f), m_max: (%f,%f,%f)\n", right->m_BBox.m_min[0], right->m_BBox.m_min[1], right->m_BBox.m_min[2], right->m_BBox.m_max[0], right->m_BBox.m_max[1], right->m_BBox.m_max[2]);
 	    if (!(isLinear(parent->m_curve, min, mid))) {
 		GetBAChildren(left, depth + 1, min, mid);
 	    }
@@ -356,6 +422,13 @@ namespace brlcad {
 	    node->m_BBox.Set(pnt,false);
 	    VMOVE(pnt,maxpt);
 	    node->m_BBox.Set(pnt,true);
+	    for (int i = 0; i < 3; i++) {
+		double d = node->m_BBox.m_max[i] - node->m_BBox.m_min[i];
+		if (ON_NearZero(d, ON_ZERO_TOLERANCE)) {
+		    node->m_BBox.m_min[i] -= 0.001;
+		    node->m_BBox.m_max[i] += 0.001;
+		}
+	    }
 	}
 	
 
@@ -519,7 +592,20 @@ namespace brlcad {
 	parent->BuildBBox();
     }
     
-    bool sortY (BRNode* first, BRNode* second) { 
+    bool sortX (BRNode* first, BRNode* second) { 
+    	point_t first_min,second_min;
+	point_t first_max,second_max;
+	
+	first->GetBBox(first_min,first_max);
+	second->GetBBox(second_min,second_max);
+	
+	if ( first_min[X] < second_min[X] )
+	    return true;
+	else 
+	    return false;
+    }
+
+   bool sortY (BRNode* first, BRNode* second) { 
     	point_t first_min,second_min;
 	point_t first_max,second_max;
 	
