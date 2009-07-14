@@ -9,6 +9,7 @@ set(LIBBN_SOURCES
     marker.c
     mat.c
     msr.c
+    multipoly.c
     noise.c
     plane.c
     plot3.c

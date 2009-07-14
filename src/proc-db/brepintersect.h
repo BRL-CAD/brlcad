@@ -21,6 +21,7 @@
  *
  */
 
+#include <stdint.h>
 #include "../../include/common.h"  /* someone tell me how to get rid of these stupid absolute paths, I'm sick of looking */
 
 #include "../../include/raytrace.h"
@@ -30,8 +31,6 @@
 #include "../../include/bu.h"
 #include "../../include/vmath.h"
 #include "../src/other/openNURBS/opennurbs_array.h"
-
-#define FARAWAYPOINT ON_3dPoint(FLT_MAX / 1E+9, FLT_MAX / 1E+9, FLT_MAX / 1E+9)
 
 bool PointInTriangle(
 	const ON_3dPoint& a,

@@ -901,6 +901,21 @@ BN_EXPORT BU_EXTERN(void bn_pr_roots,
 		    (const char *title,
 		     const struct bn_complex roots[],
 		     int n));
+/*----------------------------------------------------------------------*/
+/* multipoly.c */
+/** @addtogroup multipoly */
+/** @{ */
+
+/**
+ * Polynomial data type
+ */
+typedef struct bn_multipoly {
+    unsigned long magic;
+    int dgrx;
+    int dgry;
+    double **cf;
+}  bn_multipoly_t;
+
 /** @} */
 /*----------------------------------------------------------------------*/
 /* qmath.c */

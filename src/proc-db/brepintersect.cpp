@@ -28,6 +28,21 @@
 
 #include "brepintersect.h"
 
+int PolylineBBox(
+	const ON_Polyline& pline,
+	ON_BoundingBox* bbox
+	)
+{
+    ON_3dPoint min = pline[0], max = pline[0];
+    for (int i = 1; i < pline.Count(); i++) {
+	VMINMAX(min, max, pline[i]);
+    }
+
+    bbox->m_min = min;
+    bbox->m_max = max;
+    return 0;
+}
+
 /* tests whether a point is inside of the triangle using vector math 
  * the point has to be in the same plane as the triangle, otherwise
  * it returns false. */
@@ -103,6 +118,46 @@ bool PointInTriangle(
 	    return false;
     } else
 	return false;
+}
+
+bool PointInPolyline(
+	const ON_3dPoint& P,
+	const ON_Polyline pline,
+	double tol
+	)
+{
+    if (!pline.IsClosed(tol)) { /* no inside to speak of */
+	return false;
+    }
+    /* First we need to find a point that's in the plane and outside the polyline */
+    ON_BoundingBox bbox;
+    PolylineBBox(pline, &bbox);
+    ON_3dPoint adder;
+    int i;
+    for (i = 0; i < pline.Count(); i++) {
+	adder = P - pline[i];
+	if (!VNEAR_ZERO(adder, tol)) {
+	    break;
+	}
+    }
+    ON_3dPoint DistantPoint = P;
+    int multiplier = 2;
+    do {
+	DistantPoint += adder*multiplier;
+	multiplier = multiplier*multiplier;
+    } while (bbox.IsPointIn(DistantPoint, false));
+    bool inside = false;
+    int rv;
+    ON_3dPoint result[2];
+    for (i = 0; i < pline.Count() - 1; i++) {
+	rv = SegmentSegmentIntersect(P, DistantPoint, pline[i], pline[i + 1], result, tol);
+	if (rv == 1) {
+	    inside = !inside;
+	} else if (rv == 2) {
+	    bu_exit(-1, "This is very unlikely bug in PointInPolyline which needs to be fixed\n");
+	}
+    }
+    return inside;
 }
 
 /* PointInMesh:
@@ -530,59 +585,24 @@ int PolylinePolylineInternal(
 	double tol
 	)
 {
-    if (!P.IsClosed(tol) || !P.IsClosed(tol)) {
-	/* if one of the Polylines isn't closed then there's no internal slash external to speak of */
-	return 0;
-    }
-    ON_3dPoint x[2]; /* we're not going to look at this but we still need to give it somewhere to write to */
-    int i,j;
+    int i;
     for (i = 0; i < P.Count(); i++) {
-	for (j = 0; j < Q.Count(); j++) {
-	    if (SegmentSegmentIntersect(P[i], P[(i + 1) % P.Count()], Q[j], Q[(j + 1) % Q.Count()], x, tol) != 0) {
-		/* we have an intersection no one's internal */
-		return 0;
-	    }
+	if (!PointInPolyline(P[i], Q, tol)) {
+	    break;
 	}
     }
-    bool internal = false;
-    bool error;
-    int rv;
-    /* XXX refactor note, these two loops can be rewritten as one by putting the two Polylines in an array */
-    for (i = 0; i < P.Count(); i++) {
-	error = false;
-	for (j = 0; j < Q.Count(); j++) {
-	    rv = SegmentSegmentIntersect(P[i], FARAWAYPOINT, Q[j], Q[j + 1], x, tol);
-	    if (rv == 2) {
-		/* if our edges on top of each other then this test actually doesn't tell us anything
-		 * fortunately this is rare enough that we can just try with a new point and hope it doesn't happen again
-		 * it's possible that it happens w/ every point in which case we fail, but that's really rare */
-		error = true;
-		break;
-	    } else if (rv == 1) {
-		internal = !internal;
-	    }
-	}
-	if (!error && internal == true) {
-	    return 1;
-	}
+    if (i == P.Count()) {
+	return 1;
     }
     for (i = 0; i < Q.Count(); i++) {
-	error = false;
-	for (j = 0; j < P.Count(); j++) {
-	    rv = SegmentSegmentIntersect(Q[i], FARAWAYPOINT, P[j], P[j + 1], x, tol);
-	    if (rv == 2) {
-		/* if our edges on top of each other then this test actually doesn't tell us anything
-		 * fortunately this is rare enough that we can just try with a new point and hope it doesn't happen again
-		 * it's possible that it happens w/ every point in which case we fail, but that's really rare */
-		error = true;
-		break;
-	    } else if (rv == 1) {
-		internal = !internal;
-	    }
+	if (!PointInPolyline(Q[i], P, tol))  {
+	    break;
 	}
-	if (!error && internal == true) {
-	    return 1;
-	}
+    }
+    if (i == Q.Count()) {
+	return -1;
+    } else {
+	return 0;
     }
 }
 
@@ -593,34 +613,53 @@ int PolylinePolylineInternal(
  * one another all paths must be within the first path and no path can be inside of 2 paths
  */
 int Triangulate(
-	ON_ClassArray<ON_Polyline> paths,
-	ON_SimpleArray<ON_3dPoint[3]> triangles
+	ON_ClassArray<ON_Polyline>& paths,
+	ON_SimpleArray<ON_3dPoint[3]>& triangles
 	)
 {
     /* first we need to link the paths together */
-    int i, j, k, l;
+    int i, j, k, l, m;
+    bool intersectfree;
     while (paths.Count() > 1) {
-	/* we're going to merge paths[1] with some other path */
-	for (i = 0; i < paths.Count(); i++) {
-	    if (i == 1) {
-		continue; /* we can't merge a path with itself */
-	    }
-	    for (j = 0; j < paths[1].Count(); j++) { /* try connecting each point in paths[1] */
+	/* we're going to merge paths[0] with some other path */
+	for (i = 1; i < paths.Count(); i++) {
+	    for (j = 0; j < paths[0].Count(); j++) { /* try connecting each point in paths[1] */
 		for (k = 0; k < paths[i].Count(); k++) { /* with each point in paths[i] */
 		    /* now we need to check that this line doesn't intersect any other polyline */
+		    intersectfree = true;
 		    for (l = 0; l < paths.Count(); l++) {
-			if (SegmentPolylineIntersect(paths[1][j], paths[i][k], paths[l], NULL, 1E-9) == 0) {
-			    /* merge them */
-
-			    /* after we merge two paths we need to exit all the way up to the outer while loop 
-			     * this goto simply takes us out of all 4 for loops in one fell swoop. That's all */
-			    goto breakall;
+			if (SegmentPolylineIntersect(paths[0][j], paths[i][k], paths[l], NULL, 1E-9) != 0) {
+			    intersectfree = false;
+			    break;
 			}
+		    }
+		    if (intersectfree) {
+			for (l = 0; l < paths[0].Count(); l++) {
+			    paths[i].Insert(k + l, paths[0][(j + l) % paths[0].Count()]);
+			}
+		    } else {
+			break ;
 		    }
 		}
 	    }
 	}
-        breakall:;
+    }
+    /* Now we have one continous path and we need to triangulate it
+     * I'm pretty sure it's true that given a planer path there exist
+     * 3 consecutive points a,b,c s.t. ac doesn't intersect any line in
+     * the polyline, perhaps I'll include a proof in a bit, but for
+     * right now it seems pretty good.
+     */
+    while (paths[0].Count() > 4) { /* remember start pt is stored twice, so 4 indicates a triangle */
+	for (i = 0; i < (paths[0].Count() - 1); i++) {
+	    /* we check that the intersection is 4 because the segment shares end points with 4 different pline segments */
+	    ON_3dPoint mid = (paths[0][i] + paths[0][i + 2])/2;
+	    if (SegmentPolylineIntersect(paths[0][i], paths[0][(i + 2) % paths[0].Count()], paths[0], NULL, 1E-9) == 4 && PointInPolyline(mid, paths[0], 1E-9)) {
+		/* ON_3dPoint tri[3] = {paths[0][i], paths[i + 1], paths[(i + 2) % paths[0].Count()]};
+		triangles.Append(tri);
+		paths[0].Remove(i + 1); */
+	    }
+	}
     }
 }
 
@@ -793,6 +832,7 @@ int TriIntersections::Faces(
 	line_external.Append(ext);
     }
     /* now we need to setup the ternality tree for the paths */
+
 }
 
 /* Class: PointIndex
