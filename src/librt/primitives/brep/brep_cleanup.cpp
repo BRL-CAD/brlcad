@@ -2682,7 +2682,7 @@ rt_brep_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_t
            ON_BrepFace& f = brep->m_F[i];
            CurveTree* ct = new CurveTree(&f);
 	   SurfaceTree* st = new SurfaceTree(&f, ct);
-           plot_bbnode(st->getRootNode(), vhead, 0, 0, 2);
+           plot_bbnode(st->getRootNode(), vhead, 0, 0, 8);
          }
 
 

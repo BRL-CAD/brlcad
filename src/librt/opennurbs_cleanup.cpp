@@ -144,8 +144,8 @@ namespace brlcad {
 			// further based on horizontal and vertical tangents. 
 			list<double> splitlist;
 			for(int i=1;i<=knotcnt;i++) {
-			    ON_Interval t(knots[i-1],knots[i]);
-			    getHVTangents(trimCurve,t,splitlist);
+			    ON_Interval tk(knots[i-1],knots[i]);
+			    getHVTangents(trimCurve,tk,splitlist);
 			}
 			// Once split, pass each sub-interval to a routine that
 			// will build a tree containing nodes and leaves with 
@@ -156,11 +156,10 @@ namespace brlcad {
 			for(list<double>::iterator l=splitlist.begin();l != splitlist.end();l++) {
 			    double xmax = *l;
 			    knotinterval++;
-			    ON_Interval t(knots[knotinterval-1],knots[knotinterval]);
+			    ON_Interval tk(knots[knotinterval-1],knots[knotinterval]);
 			    if (!NEAR_ZERO(xmax-min,TOL)) {
-				bu_log("min = %f, max = %f\n", min, xmax);
-		    		BRNode* trimnode = new BRNode(face,loop,trimCurve,t,innerLoop);
-				GetBAChildren(trimnode,1,min,xmax);
+		    		BRNode* trimnode = new BRNode(face,loop,trimCurve,tk,innerLoop);
+				if (!(isLinear(trimCurve, min, xmax)))	GetBAChildren(trimnode,1,min,xmax);
 				loopnode->addChild(trimnode);
 			    }
 			    min = xmax;
@@ -169,17 +168,21 @@ namespace brlcad {
 		    } else {
 			for (int i=1;i<=knotcnt;i++) {
 			    double xmax = knots[i];
-			    ON_Interval t(knots[i-1],knots[i]);
+			    ON_Interval tk(knots[i-1],knots[i]);
 			    if (!NEAR_ZERO(xmax-min, TOL)) {
-				bu_log("min = %f, max = %f\n", min, xmax);
-			    	BRNode* trimnode = new BRNode(face,loop,trimCurve,t,innerLoop);
-				GetBAChildren(trimnode,1,min,xmax);
+			    	BRNode* trimnode = new BRNode(face,loop,trimCurve,tk,innerLoop);
+				if (!(isLinear(trimCurve, min, xmax)))	GetBAChildren(trimnode,1,min,xmax);
 				loopnode->addChild(trimnode);
 			    }
 			    min = xmax;
 			}
 			delete knots;
 		    }
+		    if (!NEAR_ZERO(max-min, TOL)) {
+			BRNode* trimnode = new BRNode(face,loop,trimCurve,t,innerLoop);
+			if (!(isLinear(trimCurve, min, max)))	GetBAChildren(trimnode,1,min,max);
+		    }
+			
 		}
 	        // Build loopnode bbox from child nodes
 	        ParentBBBuild(loopnode);
@@ -365,21 +368,25 @@ namespace brlcad {
 	
 	
 	void CurveTree::GetBAChildren(BRNode* parent, int depth, double min, double max) {
-//	    bu_log("depth: %d, min: %d,  max: %d\n", depth, min, max);
+	    //bu_log("%d %d %d\n", depth, min, max);
 	    double mid = (max + min) / 2.0;
 	    ON_Interval tl(min, mid);
 	    ON_Interval tr(mid, max);
 	    BRNode* left = new BRNode(parent->m_face, parent->m_loop, parent->m_curve, tl, parent->m_innerTrim);
 	    BRNode* right = new BRNode(parent->m_face, parent->m_loop, parent->m_curve, tr, parent->m_innerTrim);
-	    TrimBBBuild(left);
-	    TrimBBBuild(right);
+//	    TrimBBBuild(left);
+//	    TrimBBBuild(right);
 //	    bu_log("left bbox:  m_min: (%f,%f,%f), m_max: (%f,%f,%f)\n", left->m_BBox.m_min[0], left->m_BBox.m_min[1], left->m_BBox.m_min[2], left->m_BBox.m_max[0], left->m_BBox.m_max[1], left->m_BBox.m_max[2]);
 //	    bu_log("right bbox:  m_min: (%f,%f,%f), m_max: (%f,%f,%f)\n", right->m_BBox.m_min[0], right->m_BBox.m_min[1], right->m_BBox.m_min[2], right->m_BBox.m_max[0], right->m_BBox.m_max[1], right->m_BBox.m_max[2]);
-	    if (!(isLinear(parent->m_curve, min, mid))) {
+	    if (!(isLinear(parent->m_curve, min, mid)) && depth >= BREP_MAX_LN_DEPTH) {
 		GetBAChildren(left, depth + 1, min, mid);
+	    } else {
+		TrimBBBuild(left);
 	    }
 	    if (!(isLinear(parent->m_curve, mid, max))) {
 		GetBAChildren(right, depth + 1, mid, max);
+	    } else {
+		TrimBBBuild(right);
 	    }
 	    parent->addChild(left);
 	    parent->addChild(right);
@@ -556,7 +563,7 @@ namespace brlcad {
 		parent->m_normals[6], parent->m_normals[7], parent->m_normals[9], parent->m_normals[11], parent->m_normals[12]);
 	
 	for (int i = 0; i < 4; i++) {
-	    if (/*(quads[i]->NodeTrimmed() != 1) &&*/ !(quads[i]->isFlat()) && depth < BREP_MAX_FT_DEPTH) {
+	    if (/*(quads[i]->NodeTrimmed() != 1) && */ !(quads[i]->isFlat()) && depth < BREP_MAX_FT_DEPTH) {
 		GetBVChildren(quads[i],depth+1);
 	    } else {
 	        point_t min, max;
