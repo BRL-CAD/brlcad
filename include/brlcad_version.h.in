@@ -44,9 +44,7 @@
  * should be an unquoted integer
  */
 #ifndef BRLCAD_MAJOR
-static const int BRLCAD_MAJOR =
-#include "conf/MAJOR"
-;
+static const int BRLCAD_MAJOR = %%MAJOR%%;
 #endif
 
 /**
@@ -55,9 +53,7 @@ static const int BRLCAD_MAJOR =
  * should be an unquoted integer
  */
 #ifndef BRLCAD_MINOR
-static const int BRLCAD_MINOR =
-#include "conf/MINOR"
-;
+static const int BRLCAD_MINOR = %%MINOR%%;
 #endif
 
 /**
@@ -66,9 +62,7 @@ static const int BRLCAD_MINOR =
  * should be an unquoted integer
  */
 #ifndef BRLCAD_PATCH
-static const int BRLCAD_PATCH =
-#include "conf/PATCH"
-;
+static const int BRLCAD_PATCH = %%PATCH%%;
 #endif
 
 
@@ -80,9 +74,7 @@ static const int BRLCAD_PATCH =
  * should be an unquoted integer
  */
 #ifndef BRLCAD_COUNT
-static const int BRLCAD_COUNT =
-#include "conf/COUNT"
-;
+static const int BRLCAD_COUNT = %%COUNT%%;
 #endif
 
 /**
@@ -91,9 +83,7 @@ static const int BRLCAD_COUNT =
  * should be a quoted value
  */
 #ifndef BRLCAD_DATE
-static const char BRLCAD_DATE[256] = {
-#include "conf/DATE"
-};
+static const char BRLCAD_DATE[256] = { %%DATE%% };
 #endif
 
 /**
@@ -102,9 +92,7 @@ static const char BRLCAD_DATE[256] = {
  * should be a quoted value
  */
 #ifndef BRLCAD_HOST
-static const char BRLCAD_HOST[256] = {
-#include "conf/HOST"
-};
+static const char BRLCAD_HOST[256] = { %%HOST%% };
 #endif
 
 /**
@@ -112,9 +100,7 @@ static const char BRLCAD_HOST[256] = {
  * occurs.  should be a quoted value
  */
 #ifndef BRLCAD_PATH
-static const char BRLCAD_PATH[256] = {
-#include "conf/PATH"
-};
+static const char BRLCAD_PATH[256] = { %%PATH%% };
 #endif
 
 /**
@@ -122,9 +108,7 @@ static const char BRLCAD_PATH[256] = {
  * should be a quoted value
  */
 #ifndef BRLCAD_USER
-static const char BRLCAD_USER[256] = {
-#include "conf/USER"
-};
+static const char BRLCAD_USER[256] = { %%USER%% };
 #endif
 
 

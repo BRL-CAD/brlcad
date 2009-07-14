@@ -1,6 +1,19 @@
 
 SUBDIRS = conf
 
+MAJOR=$(shell cat ${srcdir}/conf/MAJOR)
+MINOR=$(shell cat ${srcdir}/conf/MINOR)
+PATCH=$(shell cat ${srcdir}/conf/PATCH)
+COUNT=$(shell cat ${builddir}/conf/COUNT)
+HOST= $(shell sed 's/"/\\"/g' ${builddir}/conf/HOST)
+BPATH=$(shell sed 's/"/\\"/g' ${builddir}/conf/PATH)
+DATE= $(shell sed 's/"/\\"/g' ${builddir}/conf/DATE)
+BUSER= $(shell sed 's/"/\\"/g' ${builddir}/conf/USER)
+
+brlcad_version.h: brlcad_version.h.in conf/MAJOR conf/MINOR conf/PATCH
+	sed "s+%%MAJOR%%+${MAJOR}+;s+%%MINOR%%+${MINOR}+;s+%%PATCH%%+${PATCH}+;s+%%COUNT%%+${COUNT}+;s+%%HOST%%+${HOST}+;s+%%PATH%%+${BPATH}+;s+%%DATE%%+${DATE}+;s+%%USER%%+${BUSER}+" \
+	${srcdir}/brlcad_version.h.in > ${builddir}/brlcad_version.h
+
 brlcadincludedir = $(includedir)/brlcad
 
 brlcadinclude_required = \
