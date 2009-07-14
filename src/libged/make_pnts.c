@@ -188,16 +188,16 @@ remove_whitespace(char *input_string)
  * if null pointers were passed to the function.
  */
 int
-str2type(const char *format_string, rt_pnt_type *pnt_type)
+str2type(const char *format_string, rt_pnt_type *pnt_type, struct bu_vls *ged_result_str)
 {
-    int format_string_length = 0;
+    char *temp_string = (char *)NULL;
     int index = 0;
     int index2 = 0;
+    int format_string_length = 0;
     int ret = GED_OK;
-    char* temp_string;
 
     if ((format_string == (char *)NULL) || (pnt_type == (rt_pnt_type *)NULL)) {
-        bu_log("ERROR: NULL pointer(s) passed to function 'str2type'.\n");
+        bu_vls_printf(ged_result_str, "NULL pointer(s) passed to function 'str2type'.\n");
         ret = GED_ERROR;
     }
     else {
@@ -219,46 +219,30 @@ str2type(const char *format_string, rt_pnt_type *pnt_type)
 
         if (strcmp(temp_string, "xyz") == 0) {
             *pnt_type = RT_PNT_TYPE_PNT;
-            bu_log("Set point-cloud type to 'RT_PNT_TYPE_PNT'.\n");
-            bu_log("Sorted format string: '%s'\n", temp_string);
         }
         else if (strcmp(temp_string, "bgrxyz") == 0) {
             *pnt_type = RT_PNT_TYPE_COL;
-            bu_log("Set point-cloud type to 'RT_PNT_TYPE_COL'.\n");
-            bu_log("Sorted format string: '%s'\n", temp_string);
         }
         else if (strcmp(temp_string, "sxyz") == 0) {
             *pnt_type = RT_PNT_TYPE_SCA;
-            bu_log("Set point-cloud type to 'RT_PNT_TYPE_SCA'.\n");
-            bu_log("Sorted format string: '%s'\n", temp_string);
         }
         else if (strcmp(temp_string, "ijkxyz") == 0) {
             *pnt_type = RT_PNT_TYPE_NRM;
-            bu_log("Set point-cloud type to 'RT_PNT_TYPE_NRM'.\n");
-            bu_log("Sorted format string: '%s'\n", temp_string);
         }
         else if (strcmp(temp_string, "bgrsxyz") == 0) {
             *pnt_type = RT_PNT_TYPE_COL_SCA;
-            bu_log("Set point-cloud type to 'RT_PNT_TYPE_COL_SCA'.\n");
-            bu_log("Sorted format string: '%s'\n", temp_string);
         }
         else if (strcmp(temp_string, "bgijkrxyz") == 0) {
             *pnt_type = RT_PNT_TYPE_COL_NRM;
-            bu_log("Set point-cloud type to 'RT_PNT_TYPE_COL_NRM'.\n");
-            bu_log("Sorted format string: '%s'\n", temp_string);
         }
         else if (strcmp(temp_string, "ijksxyz") == 0) {
             *pnt_type = RT_PNT_TYPE_SCA_NRM;
-            bu_log("Set point-cloud type to 'RT_PNT_TYPE_SCA_NRM'.\n");
-            bu_log("Sorted format string: '%s'\n", temp_string);
         }
         else if (strcmp(temp_string, "bgijkrsxyz") == 0) {
             *pnt_type = RT_PNT_TYPE_COL_SCA_NRM;
-            bu_log("Set point-cloud type to 'RT_PNT_TYPE_COL_SCA_NRM'.\n");
-            bu_log("Sorted format string: '%s'\n", temp_string);
         }
         else {
-            bu_log("Invalid format string: '%s'\n", format_string);
+            bu_vls_printf(ged_result_str, "Invalid format string '%s'", format_string);
             ret = GED_ERROR;
         }
 
@@ -271,48 +255,37 @@ str2type(const char *format_string, rt_pnt_type *pnt_type)
 
 /*
  * Validate points data file unit string and output conversion factor to
- * milimeters. If string is not a standard units identifier, the function
+ * millimeters. If string is not a standard units identifier, the function
  * assumes a custom conversion factor was specified. A valid null terminated
  * string is expected as input. The function returns GED_ERROR if the unit
  * string is invalid or if null pointers were passed to the function.
  */
 int
-str2mm(const char *units_string, double *conv_factor)
+str2mm(const char *units_string, double *conv_factor, struct bu_vls *ged_result_str)
 {
     double tmp_value = 0.0;
     char *temp_char_ptr = (char *)NULL;
-
     char *endp = (char *)NULL;
-    int units_string_length = 0;
+    char *temp_string = (char *)NULL;
     int ret = GED_OK;
-    char* temp_string;
 
     if ((units_string == (char *)NULL) || (conv_factor == (double *)NULL)) {
-        bu_log("ERROR: NULL pointer(s) passed to function 'str2mm'.\n");
+        bu_vls_printf(ged_result_str, "NULL pointer(s) passed to function 'str2mm'.\n");
         ret = GED_ERROR;
     }
     else {
-        units_string_length = strlen(units_string);
-        temp_string = (char*)bu_malloc(units_string_length+1, "str2mm: temp_string");
-
+        temp_string = (char*)bu_malloc(strlen(units_string)+1, "str2mm: temp_string");
         temp_char_ptr = strcpy(temp_string, units_string);
-
         remove_whitespace(temp_string);
 
         tmp_value = strtod(temp_string, &endp);
         if ((temp_string != endp) && (*endp == '\0')) {
             /* convert to double success */
             *conv_factor = tmp_value;
-            bu_log("Using custom conversion factor '%lf'\n", *conv_factor);
-            bu_log("User entered units string: '%s'\n", units_string);
-        }
-        else if ((tmp_value = bu_mm_value(temp_string)) > 0.0) {
+        } else if ((tmp_value = bu_mm_value(temp_string)) > 0.0) {
             *conv_factor = tmp_value;
-            bu_log("Using units string '%s', conversion factor '%lf'\n", temp_string, *conv_factor);
-            bu_log("User entered units string: '%s'\n", units_string);
-        }
-        else {
-            bu_log("Invalid units string: '%s'\n", units_string);
+        } else {
+            bu_vls_printf(ged_result_str, "Invalid units string '%s'\n", units_string);
             ret = GED_ERROR;
         }
 
@@ -332,7 +305,7 @@ report_import_error_location(unsigned long int num_doubles_read, int num_doubles
      */
     unsigned long int point_number =  ceil((num_doubles_read + 1) / (double)num_doubles_per_point);
 
-    bu_vls_printf(ged_result_str, "Failed reading point %lu field '%c' at file byte offset %lu.\n",
+    bu_vls_printf(ged_result_str, "Failed reading point %lu field '%c' at file byte %lu.\n",
                   point_number, field, start_offset_of_current_double);
 }
 
@@ -365,13 +338,13 @@ ged_make_pnts(struct ged *gedp, int argc, const char *argv[])
     FILE *fp;
 
     int temp_string_index = 0; /* index into temp_string, set to first character in temp_string, i.e. the start */
-    unsigned long int num_doubles_read = 0; /* counters of double read from file, use unsigned long int */
+    unsigned long int num_doubles_read = 0; /* counters of double read from file */
 
     int current_character_double = 0; /* flag indicating if current character read is part of a double or delimiter */
     int previous_character_double = 0; /* flag indicating if previously read character was part of a double or delimiter */
 
-    unsigned long int num_characters_read_from_file = 0;  /* counter of number of characters read from file, use unsigned long int */
-    unsigned long int start_offset_of_current_double = 0; /* character offset from start of file for current double, use unsigned long int */
+    unsigned long int num_characters_read_from_file = 0;  /* counter of number of characters read from file */
+    unsigned long int start_offset_of_current_double = 0; /* character offset from start of file for current double */
     int found_double = 0; /* flag indicating if double encountered in file and needs to be processed */
     int found_eof = 0; /* flag indicating if end-of-file encountered when reading file */
     int done_processing_format_string = 0; /* flag indicating if loop processing format string should be exited */
@@ -432,10 +405,20 @@ ged_make_pnts(struct ged *gedp, int argc, const char *argv[])
         return GED_MORE;
     }
 
+    /* Validate 'point file data format string' and return point-cloud type. */
+    if (str2type(argv[3], &type, &gedp->ged_result_str) == GED_ERROR) {
+        return GED_ERROR;
+    }
+
     /* prompt for data file units */
     if (argc < 5) {
         bu_vls_printf(&gedp->ged_result_str, "%s", prompt[3]);
         return GED_MORE;
+    }
+
+    /* Validate the unit string and return conversion factor to millimeters. */
+    if (str2mm(argv[4], &local2base, &gedp->ged_result_str) == GED_ERROR) {
+        return GED_ERROR;
     }
 
     /* prompt for default point size */
@@ -444,25 +427,19 @@ ged_make_pnts(struct ged *gedp, int argc, const char *argv[])
         return GED_MORE;
     }
 
-    defaultSize = atof(argv[5]);
-    if (defaultSize < 0.0) {
-        defaultSize = 0.0;
-        bu_log("WARNING: Default point size must be non-negative, using zero.\n");
+    defaultSize = strtod(argv[5], &endp);
+    if ((argv[5] != endp) && (*endp == '\0')) {
+        /* convert to double success */
+        if (defaultSize < 0.0) {
+            bu_vls_printf(&gedp->ged_result_str, "Default point size '%lf' must be non-negative.\n", defaultSize);
+            return GED_ERROR;
+        }
+    } else {
+        bu_vls_printf(&gedp->ged_result_str, "Invalid default point size '%s'\n", argv[5]);
+        return GED_ERROR;
     }
 
     raw_format_string_length = strlen(argv[3]);
-
-    /* Validate 'point file data format string' and return point-cloud type. */
-    if (str2type(argv[3], &type) == GED_ERROR) {
-        bu_vls_printf(&gedp->ged_result_str, "%s: Invalid data file format string.\n", argv[0]);
-        return GED_ERROR;
-    }
-
-    /* Validate the unit string and return conversion factor to millimeters. */
-    if (str2mm(argv[4], &local2base) == GED_ERROR) {
-        bu_vls_printf(&gedp->ged_result_str, "%s: Invalid data file units string.\n", argv[0]);
-        return GED_ERROR;
-    }
 
     format_string = (char*)bu_malloc(raw_format_string_length+1, "ged_make_pnts: format_string");
     temp_char_ptr = strcpy(format_string, argv[3]);
@@ -587,7 +564,6 @@ ged_make_pnts(struct ged *gedp, int argc, const char *argv[])
                         return GED_ERROR;
                     } else {
                         found_eof = 1;
-                        bu_log("End-of-file encountered.\n");
                     }
                 }
 
