@@ -51,6 +51,23 @@ dm_validXType(char *dpy_string, char *name)
 	return 0;
     }
 
+    if (strcmp(name, "rtgl")==0) {
+#ifdef DM_RTGL
+	Display *dpy;
+	int return_val;
+	if ((dpy = XOpenDisplay(dpy_string)) != NULL) {
+	    if (XQueryExtension(dpy, "GLX", &return_val, &return_val, &return_val)) {
+		XCloseDisplay(dpy);
+		return 1;
+	    }
+	    XCloseDisplay(dpy);
+	}
+#else
+	bu_log("Specified display type [%s] is not available in this compilation.", name);
+#endif /* DM_RTGL */
+	return 0;
+    }
+
     if (strcmp(name, "ogl")==0) {
 #ifdef DM_OGL
 	Display *dpy;
@@ -93,12 +110,31 @@ dm_validXType(char *dpy_string, char *name)
     return 0;
 }
 
+/** dm_bestXType determines what mged will normally
+  * use as the default display manager
+  */
+
 char *
 dm_bestXType(char *dpy_string)
 {
 #ifdef DM_WGL
     /* should probably make sure wgl works */
     return "wgl";
+#endif
+
+#ifdef DM_RTGL
+    {
+	Display *dpy;
+	int return_val;
+
+	if ((dpy = XOpenDisplay(dpy_string)) != NULL) {
+	    if (XQueryExtension(dpy, "GLX", &return_val, &return_val, &return_val)) {
+		XCloseDisplay(dpy);
+		return "rtgl";
+	    }
+	    XCloseDisplay(dpy);
+	}
+    }
 #endif
 
 #ifdef DM_OGL

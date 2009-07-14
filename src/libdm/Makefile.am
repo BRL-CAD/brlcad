@@ -22,6 +22,11 @@ DM_OGL_CFLAGS =
 DM_OGL_LIBS =
 endif
 
+# DM_RTGL_CFLAGS = -DDM_RTGL -DIF_RTGL $(GL_CFLAGS)
+# DM_RTGL_LIBS = ${LIBGL}
+DM_RTGL_CFLAGS = 
+DM_RTGL_LIBS = 
+
 if WITH_TK
 DM_TK_CFLAGS = -DDM_TK -DIF_TK
 else
@@ -38,6 +43,7 @@ libdm_la_SOURCES = \
 	dm-tk.c \
 	dm-generic.c \
 	dm-ogl.c \
+	dm-rtgl.c \
 	dm-plot.c \
 	dm-ps.c \
 	dm-wgl.c \
@@ -61,13 +67,15 @@ libdm_la_CFLAGS = \
 	${DM_TK_CFLAGS} \
 	${DM_WGL_CFLAGS} \
 	${DM_OGL_CFLAGS} \
+	${DM_RTGL_CFLAGS} \
 	${PNG_CPPFLAGS} \
 	${TCL_CPPFLAGS} \
 	${TK_CPPFLAGS}
 
 libdm_la_LIBADD = \
 	${DM_LIBS} \
-	${DM_OGL_LIBS}
+	${DM_OGL_LIBS} \
+	${DM_RTGL_LIBS}
 
 EXTRA_DIST = \
 	libdm.dsp

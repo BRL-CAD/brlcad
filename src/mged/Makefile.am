@@ -9,6 +9,10 @@ OGL_SRCS =
 OGL_CFLAGS =
 endif
 
+#RTGL_SRCS = dm-rtgl.c
+#RTGL_CFLAGS = -DDM_RTGL -DIF_RTGL $(GL_CFLAGS)
+RTGL_SRCS = 
+RTGL_CFLAGS = 
 
 if WITH_WGL
 WGL_SRCS = dm-wgl.c
@@ -72,6 +76,7 @@ mged_SOURCES = \
 	concat.c \
 	dir.c \
 	$(OGL_SRCS) \
+	$(RTGL_SRCS) \
 	$(WGL_SRCS) \
 	$(X11_SRCS) \
 	$(TK_SRCS) \
@@ -121,6 +126,7 @@ mged_SOURCES = \
 # per-program CPPFLAGS wasn't added until automake 1.7
 mged_CFLAGS = \
 	$(OGL_CFLAGS) \
+	$(RTGL_CFLAGS) \
 	$(WGL_CFLAGS) \
 	$(X11_CFLAGS) \
 	$(TK_CFLAGS) \
@@ -187,6 +193,7 @@ EXTRA_DIST = \
 	comb_bool_parse.y \
 	comb_bool_scan.l \
 	dm-ogl.c \
+	dm-rtgl.c \
 	dm-wgl.c \
 	dm-X.c \
 	dm-tk.c \

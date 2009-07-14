@@ -52,6 +52,7 @@
 #define NEED_GUI(_type) ( \
 	IS_DM_TYPE_WGL(_type) || \
 	IS_DM_TYPE_OGL(_type) || \
+	IS_DM_TYPE_RTGL(_type) || \
 	IS_DM_TYPE_GLX(_type) || \
 	IS_DM_TYPE_PEX(_type) || \
 	IS_DM_TYPE_TK(_type) || \
@@ -80,6 +81,11 @@ extern void Wgl_fb_open();
 extern int Ogl_dm_init();
 extern void Ogl_fb_open();
 #endif /* DM_OGL */
+
+#ifdef DM_RTGL
+extern int Rtgl_dm_init();
+extern void Rtgl_fb_open();
+#endif /* DM_RTGL */
 
 #ifdef DM_GLX
 extern int Glx_dm_init();
@@ -116,6 +122,9 @@ struct w_dm which_dm[] = {
 #ifdef DM_OGL
     { DM_TYPE_OGL, "ogl", Ogl_dm_init },
 #endif /* DM_OGL */
+#ifdef DM_RTGL
+    { DM_TYPE_RTGL, "rtgl", Rtgl_dm_init },
+#endif /* DM_RTGL */
 #ifdef DM_GLX
     { DM_TYPE_GLX, "glx", Glx_dm_init },
 #endif /* DM_GLX */
@@ -145,6 +154,10 @@ mged_fb_open(void)
     if (dmp->dm_type == DM_TYPE_OGL)
 	Ogl_fb_open();
 #endif /* DM_OGL */
+#ifdef DM_RTGL
+    if (dmp->dm_type == DM_TYPE_RTGL)
+	Rtgl_fb_open();
+#endif /* DM_RTGL */
 }
 
 
@@ -300,6 +313,10 @@ print_valid_dm(void)
     Tcl_AppendResult(interp, "ogl  ", (char *)NULL);
     i++;
 #endif /* DM_OGL */
+#ifdef DM_RTGL
+    Tcl_AppendResult(interp, "rtgl  ", (char *)NULL);
+    i++;
+#endif /* DM_RTGL */
 #ifdef DM_GLX
     Tcl_AppendResult(interp, "glx", (char *)NULL);
     i++;

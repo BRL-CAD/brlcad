@@ -30,6 +30,7 @@
 #include "vmath.h"
 #include "bn.h"
 #include "dg.h"
+#include "dm-rtgl.h"
 
 #include "./mged.h"
 #include "./sedit.h"
@@ -280,10 +281,10 @@ drawSolid(register struct solid *sp,
 	sp->s_flag = UP;
 	ndrawn++;
     } else {
-	if (DM_DRAW_VLIST(dmp, (struct bn_vlist *)&sp->s_vlist) == TCL_OK) {
-	    sp->s_flag = UP;
-	    ndrawn++;
-	}
+        if (DM_DRAW_VLIST(dmp, (struct bn_vlist *)&sp->s_vlist) == TCL_OK) {
+            sp->s_flag = UP;
+            ndrawn++;
+        }
     }
 }
 
@@ -393,6 +394,17 @@ dozoom(int which_eye)
     }
 
     DM_LOADMATRIX( dmp, mat, which_eye );
+
+    /* dm rtgl has it's own way of drawing */
+    if (IS_DM_TYPE_RTGL(dmp->dm_type)) {
+    
+        /* dm-rtgl needs database info for ray tracing */
+        ((struct rtgl_vars *)dmp->dm_vars.priv_vars)->mvars.gedp = gedp;
+
+        DM_DRAW_VLIST(dmp, (struct bn_vlist *)NULL);
+        
+        return;
+    }
 
     if (dmp->dm_transparency) {
 	/* First, draw opaque stuff */
