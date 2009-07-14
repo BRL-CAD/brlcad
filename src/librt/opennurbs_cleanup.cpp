@@ -41,8 +41,14 @@
 #include "opennurbs_ext.h"
 
 
-// grows 3D BBox along each axis by this factor
+/// grows 3D BBox along each axis by this factor
 #define BBOX_GROW_3D 0.1
+
+/// arbitrary calculation tolerance (need to try VDIVIDE_TOL or VUNITIZE_TOL to tighten the bounds)
+#define TOL 0.000001
+
+/// another arbitrary calculation tolerance (need to try VDIVIDE_TOL or VUNITIZE_TOL to tighten the bounds)
+#define TOL2 0.00001
 
 
 namespace brlcad {
@@ -83,7 +89,7 @@ namespace brlcad {
 			for (int i = 1; i <= knotcnt; i++) {
 		           double xmax = knots[i];
 			   ON_Interval tc(min,xmax);
-	       		   if (!NEAR_ZERO(xmax-min,0.000001)) {
+	       		   if (!NEAR_ZERO(xmax-min,TOL)) {
 	    		      BRNode* childnode = new BRNode(face,loop,trimCurve,tc,innerLoop);
 			      trimnode->addChild(childnode);
        			   }
@@ -104,7 +110,7 @@ namespace brlcad {
 			// is done, add trimnode to the loopnode child list.
 			for( list<double>::iterator l=splitlist.begin();l != splitlist.end();l++) {
 			    double xmax = *l;
-			    if (!NEAR_ZERO(xmax-min,0.000001)) {
+			    if (!NEAR_ZERO(xmax-min,TOL)) {
 				GetBAChildren(trimnode,1,min,xmax);
 				loopnode->addChild(trimnode);
 			    }
@@ -150,7 +156,7 @@ namespace brlcad {
 	    for (list<BRNode*>::iterator i = m_sortedX.begin(); i != m_sortedX.end(); i++) {
 		BRNode* br = dynamic_cast<BRNode*>(*i);
 		br->GetBBox(bmin,bmax);
-		dist = 0.000001;//0.03*DIST_PT_PT(bmin,bmax);
+		dist = TOL;//0.03*DIST_PT_PT(bmin,bmax);
 		if (bmax[X]+dist < u[0])
 		    continue;
 		if (bmin[X]-dist < u[1]) {
@@ -169,17 +175,17 @@ namespace brlcad {
 	    
     	    // first lets check end points
     	    tangent = curve->TangentAt(max);
-    	    if (NEAR_ZERO(tangent.x,0.00001) )
+    	    if (NEAR_ZERO(tangent.x,TOL2) )
 		return max;
 	    tangent = curve->TangentAt(min);
-    	    if (NEAR_ZERO(tangent.x,0.00001) )
+    	    if (NEAR_ZERO(tangent.x,TOL2) )
 		return min;
 	    
 	    tanmin = (tangent[X] < 0.0);
-	    while ( (max-min) > 0.00001 ) {
+	    while ( (max-min) > TOL2 ) {
 		mid = (max + min)/2.0;
 		tangent = curve->TangentAt(mid);
-		if (NEAR_ZERO(tangent[X], 0.00001)) {
+		if (NEAR_ZERO(tangent[X], TOL2)) {
 		    return mid;
 		}
 		if ( (tangent[X] < 0.0) == tanmin ) {
@@ -199,17 +205,17 @@ namespace brlcad {
 	    
     	    // first lets check end points
 	    tangent = curve->TangentAt(max);
-    	    if (NEAR_ZERO(tangent.y,0.00001) )
+    	    if (NEAR_ZERO(tangent.y,TOL2) )
 		return max;
     	    tangent = curve->TangentAt(min);
-    	    if (NEAR_ZERO(tangent.y,0.00001) )
+    	    if (NEAR_ZERO(tangent.y,TOL2) )
 		return min;
 	    
 	    tanmin = (tangent[Y] < 0.0);
-	    while ( (max-min) > 0.00001 ) {
+	    while ( (max-min) > TOL2 ) {
 		mid = (max + min)/2.0;
 		tangent = curve->TangentAt(mid);
-		if (NEAR_ZERO(tangent[Y], 0.00001)) {
+		if (NEAR_ZERO(tangent[Y], TOL2)) {
 		    return mid;
 		}
 		if ( (tangent[Y] < 0.0) == tanmin ) {
@@ -270,7 +276,7 @@ namespace brlcad {
 		ydelta = (p2[Y] - p1[Y]);
 		slopey = (ydelta < 0.0);
 		
-		if ( NEAR_ZERO(xdelta, 0.000001) || NEAR_ZERO(ydelta, 0.000001)) {
+		if ( NEAR_ZERO(xdelta, TOL) || NEAR_ZERO(ydelta, TOL)) {
 		    return true;
 		}
 		
@@ -498,8 +504,8 @@ namespace brlcad {
 		for (int j = 0; j < 3; j++) {
 		    double d = quads[i]->m_BBox.m_max[j] - quads[i]->m_BBox.m_min[j];
 		    if (ON_NearZero(d, ON_ZERO_TOLERANCE)) {
-			quads[i]->m_BBox.m_min[j] -= 0.001;
-			quads[i]->m_BBox.m_max[j] += 0.001;
+			quads[i]->m_BBox.m_min[j] -= ON_ZERO_TOLERANCE;
+			quads[i]->m_BBox.m_max[j] += ON_ZERO_TOLERANCE;
 		    }
 		}
 	    }

@@ -44,8 +44,15 @@
 #define UNIVERSAL_SAMPLE_COUNT 1001
 
 #define BBOX_GROW 0.0
-// grows 3D BBox along each axis by this factor
+
+/// grows 3D BBox along each axis by this factor
 #define BBOX_GROW_3D 0.1
+
+/// arbitrary calculation tolerance (need to try VDIVIDE_TOL or VUNITIZE_TOL to tighten the bounds)
+#define TOL 0.000001
+
+/// another arbitrary calculation tolerance (need to try VDIVIDE_TOL or VUNITIZE_TOL to tighten the bounds)
+#define TOL2 0.00001
 
 
 namespace brlcad {
@@ -220,7 +227,7 @@ namespace brlcad {
 			}
 			for (list<double>::iterator l=splitlist.begin();l != splitlist.end();l++) {
 			    double xmax = *l;
-			    if (!NEAR_ZERO(xmax-min, 0.000001)) {
+			    if (!NEAR_ZERO(xmax-min, TOL)) {
 						    m_root->addChild(subdivideCurve(trimCurve,adj_face_index,min,xmax,innerLoop,0));
 			    }
 			    min = xmax;
@@ -233,7 +240,7 @@ namespace brlcad {
 			trimCurve->GetSpanVector(knots);
 			for (int i=1;i<=knotcnt;i++) {
 			    double xmax = knots[i];
-			    if (!NEAR_ZERO(xmax-min, 0.000001)) {
+			    if (!NEAR_ZERO(xmax-min, TOL)) {
 								m_root->addChild(subdivideCurve(trimCurve,adj_face_index,min,xmax,innerLoop,0));
 			    }
 			    min = xmax;
@@ -241,7 +248,7 @@ namespace brlcad {
 			delete knots;
 		    }
 #endif
-		    if (!NEAR_ZERO(max-min, 0.000001)) {
+		    if (!NEAR_ZERO(max-min, TOL)) {
 						m_root->addChild(subdivideCurve(trimCurve,adj_face_index,min,max,innerLoop,0));
 		    }
 		}
@@ -298,7 +305,7 @@ namespace brlcad {
 	    SubcurveBRNode* br = dynamic_cast<SubcurveBRNode*>(*i);
 	    br->GetBBox(bmin, bmax);
 
-	    dist = 0.000001;//0.03*DIST_PT_PT(bmin, bmax);
+	    dist = TOL;//0.03*DIST_PT_PT(bmin, bmax);
 	    if (bmax[X]+dist < u[0])
 		continue;
 	    if (bmin[X]-dist < u[1]) {
@@ -316,7 +323,7 @@ namespace brlcad {
 	for (list<BRNode*>::iterator i = m_sortedX.begin(); i != m_sortedX.end(); i++) {
 	    SubcurveBRNode* br = dynamic_cast<SubcurveBRNode*>(*i);
 	    br->GetBBox(bmin, bmax);
-	    dist = 0.000001; //0.03*DIST_PT_PT(bmin, bmax);
+	    dist = TOL; //0.03*DIST_PT_PT(bmin, bmax);
 	    if (bmax[Y]+dist < v[0])
 		continue;
 	    if (bmin[Y]-dist < v[1]) {
@@ -336,17 +343,17 @@ namespace brlcad {
 
 	// first lets check end points
 	tangent = curve->TangentAt(max);
-	if (NEAR_ZERO(tangent.x, 0.00001))
+	if (NEAR_ZERO(tangent.x, TOL2))
 	    return max;
 	tangent = curve->TangentAt(min);
-	if (NEAR_ZERO(tangent.x, 0.00001))
+	if (NEAR_ZERO(tangent.x, TOL2))
 	    return min;
 		
 	tanmin = (tangent[X] < 0.0);
-	while ((max-min) > 0.00001) {
+	while ((max-min) > TOL2) {
 	    mid = (max + min)/2.0;
 	    tangent = curve->TangentAt(mid);
-	    if (NEAR_ZERO(tangent[X], 0.00001)) {
+	    if (NEAR_ZERO(tangent[X], TOL2)) {
 		return mid;
 	    }
 	    if ((tangent[X] < 0.0) == tanmin) {
@@ -366,17 +373,17 @@ namespace brlcad {
 
 	// first lets check end points
 	tangent = curve->TangentAt(max);
-	if (NEAR_ZERO(tangent.y, 0.00001))
+	if (NEAR_ZERO(tangent.y, TOL2))
 	    return max;
 	tangent = curve->TangentAt(min);
-	if (NEAR_ZERO(tangent.y, 0.00001))
+	if (NEAR_ZERO(tangent.y, TOL2))
 	    return min;
 	
 	tanmin = (tangent[Y] < 0.0);
-	while ((max-min) > 0.00001) {
+	while ((max-min) > TOL2) {
 	    mid = (max + min)/2.0;
 	    tangent = curve->TangentAt(mid);
-	    if (NEAR_ZERO(tangent[Y], 0.00001)) {
+	    if (NEAR_ZERO(tangent[Y], TOL2)) {
 		return mid;
 	    }
 	    if ((tangent[Y] < 0.0) == tanmin) {
@@ -438,8 +445,8 @@ namespace brlcad {
 	    ydelta = (p2[Y] - p1[Y]);
 	    slopey = (ydelta < 0.0);
 	
-	    if (NEAR_ZERO(xdelta, 0.000001) ||
-		NEAR_ZERO(ydelta, 0.000001)) {
+	    if (NEAR_ZERO(xdelta, TOL) ||
+		NEAR_ZERO(ydelta, TOL)) {
 		return true;
 	    }
 	
