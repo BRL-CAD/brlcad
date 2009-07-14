@@ -533,7 +533,6 @@ brep_preprocess_trims(ON_BrepFace& face, SurfaceTree* tree) {
 
 	
 #endif
-	CurveTree* ct = new CurveTree(&face);
 //#define KDISCONTS
 #ifdef KDISCONTS
 	for (int i = 0; i < face.LoopCount(); i++) {
@@ -2505,8 +2504,8 @@ plot_bbnode(BBNode* node, struct bu_list* vhead, int depth, int start, int limit
 		       {max[0], max[1], max[2]},
 		       {max[0], min[1], max[2]}};
 
-//    if (node->isLeaf()) {
-    if (depth >= start && depth<=limit) {
+    if (node->isLeaf()) {
+//    if (depth >= start && depth<=limit) {
 	for (int i = 0; i <= 4; i++) {
 	    RT_ADD_VLIST(vhead, verts[i%4], (i == 0) ? BN_VLIST_LINE_MOVE : BN_VLIST_LINE_DRAW);
 	}

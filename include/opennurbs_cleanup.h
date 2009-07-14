@@ -393,12 +393,10 @@ namespace brlcad {
         
         const ON_BrepFace* m_face;
         BRNode* m_root;
-        list<BRNode*> m_sortedX;
         list<BRNode*> m_sortedY;
     };
 
    // These functions are needed in other definitions, so declare them now.
-   extern bool sortX(BRNode* first, BRNode* second);
    extern bool sortY(BRNode* first, BRNode* second);
 
 

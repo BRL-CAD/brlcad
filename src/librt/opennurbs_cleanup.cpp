@@ -91,10 +91,13 @@ namespace brlcad {
 			   ON_Interval tc(min,xmax);
 	       		   if (!NEAR_ZERO(xmax-min,TOL)) {
 	    		      BRNode* childnode = new BRNode(face,loop,trimCurve,tc,innerLoop);
+			      TrimBBBuild(childnode);
 			      trimnode->addChild(childnode);
        			   }
 			   min = xmax;
-			}			   
+			}
+			ParentBBBuild(trimnode);
+     			loopnode->addChild(trimnode);			
 		    } else {
 			// Not Linear - walk the knot sub-intervals, split
 			// further based on horizontal and vertical tangents. 
@@ -118,13 +121,13 @@ namespace brlcad {
 			}
 		    }
 		    delete knots;
-		    // Build loopnode bbox from child nodes
-		    ParentBBBuild(loopnode);
 		}
-		// Build m_root bbox from child nodes
-		ParentBBBuild(m_root);
+	        // Build loopnode bbox from child nodes
+	        ParentBBBuild(loopnode);
 	    }
-	    getLeaves(m_sortedY);
+	   // Build m_root bbox from child nodes
+	   ParentBBBuild(m_root);
+	   getLeaves(m_sortedY);
 	    m_sortedY.sort(sortY);
 	    return;
 	}
@@ -153,7 +156,7 @@ namespace brlcad {
 	CurveTree::getLeavesAbove(list<BRNode*>& out_leaves, const ON_Interval& u, const ON_Interval& v) {
 	    point_t bmin,bmax;
 	    double dist;
-	    for (list<BRNode*>::iterator i = m_sortedX.begin(); i != m_sortedX.end(); i++) {
+	    for (list<BRNode*>::iterator i = m_sortedY.begin(); i != m_sortedY.end(); i++) {
 		BRNode* br = dynamic_cast<BRNode*>(*i);
 		br->GetBBox(bmin,bmax);
 		dist = TOL;//0.03*DIST_PT_PT(bmin,bmax);
@@ -509,9 +512,9 @@ namespace brlcad {
 		    }
 		}
 	    }
-	//    if (!(quads[i]->m_trimmed)) {
+	    if (!(quads[i]->m_trimmed)) {
 		parent->addChild(quads[i]);
-	  //  }
+	  }
 	}
 	parent->BuildBBox();
     }
