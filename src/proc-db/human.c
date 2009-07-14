@@ -203,7 +203,6 @@ void vectorTest(struct rt_wdb *file)
 
 fastf_t makeHead(struct rt_wdb (*file), char *name, struct human_data_t *dude, fastf_t *direction, fastf_t showBoxes)
 {
-	bu_log("HeadSize:%f\n", dude->head.headSize);
 	fastf_t head = dude->head.headSize / 2;
 	mk_sph(file, name, dude->joints.headJoint, head);
 	
@@ -584,7 +583,7 @@ void makeTorso(struct rt_wdb (*file), char *suffix, struct human_data_t *dude, f
  */
 void makeArm(struct rt_wdb (*file), char *suffix, int isLeft, struct human_data_t *dude, fastf_t showBoxes)
 {
-	dude->arms.upperArmWidth = dude->arms.armLength / 10;
+	dude->arms.upperArmWidth = dude->arms.armLength / 12;
 	dude->arms.elbowWidth = dude->arms.armLength / 13;
 	dude->arms.wristWidth = dude->arms.armLength / 15;
 
@@ -683,22 +682,17 @@ void makeLeg(struct rt_wdb (*file), char *suffix, int isLeft, struct human_data_
 /**
  * Make the head, shoulders knees and toes, so to speak.
  * Head, neck, torso, arms, legs.
+ * And dude, a very technical term, is the human_data in a shorter, more readable name
  */
 void makeBody(struct rt_wdb (*file), char *suffix, struct human_data_t *dude, fastf_t *location, fastf_t showBoxes)
 {
 	bu_log("Making Body\n");
 	vect_t direction;
 	dude->torso.torsoLength = 0;
-	bu_log("Height:%f\n", dude->height);
 	dude->head.headSize = (dude->height / 8) * IN2MM;
-	bu_log("Head:%f\n", dude->head.headSize);
 	dude->arms.armLength = (dude->height / 2) * IN2MM;
-	bu_log("Arms:%f\n", dude->arms.armLength);
 	dude->legs.legLength = ((dude->height * 4) / 8) * IN2MM;
-	bu_log("Legs:%f\n", dude->legs.legLength);
-	
 	dude->torso.torsoLength = ((dude->height * 3) / 8) * IN2MM;
-	bu_log("Torso:%f\n", dude->torso.torsoLength);
 
 	/* 
 	 * Make sure that vectors, points, and widths are sent to each function 
@@ -735,6 +729,7 @@ void makeBody(struct rt_wdb (*file), char *suffix, struct human_data_t *dude, fa
 	bu_log("Making Legs\n");
 	makeLeg(file, suffix, 1, dude, showBoxes);
 	makeLeg(file, suffix, 0, dude, showBoxes);
+	bu_log("Body Built\n");
 }	
 
 /**
@@ -762,6 +757,70 @@ void makeArmy(struct rt_wdb (*file), struct human_data_t dude, int number, fastf
 		}
 		VSET(locations, 0, (locations[Y]-(36*IN2MM)), 0);
 	}
+}
+void grabCoordinates(fastf_t *positions)
+{
+        printf("X: ");
+        scanf("%lf", &positions[X]);
+        fflush(stdin);
+        printf("Y: ");
+        scanf("%lf", &positions[Y]);
+        fflush(stdin);
+        printf("Z: ");
+        scanf("%lf", &positions[Z]);
+        fflush(stdin);
+}
+
+void manualPosition(struct human_data_t *dude)
+{
+	vect_t positions;
+	printf("Manually Setting All limb Positions in degrees\n");
+	printf("Remember, a 180 value for Y means pointing down\n");
+	printf("Head is always at standing height, at origin\n");
+
+	printf("Left Arm\n");
+	printf("Upper Arm\n");
+	grabCoordinates(positions);
+	VMOVE(dude->arms.lArmDirection, positions);
+	printf("Lower Arm\n");
+	grabCoordinates(positions);
+	VMOVE(dude->arms.lElbowDirection, positions);
+	printf("Hand\n");
+	grabCoordinates(positions);
+	VMOVE(dude->arms.lWristDirection, positions);
+
+	printf("Right Arm\n");	
+        printf("Upper Arm\n");
+        grabCoordinates(positions);
+        VMOVE(dude->arms.rArmDirection, positions);
+        printf("Lower Arm\n");
+        grabCoordinates(positions);
+        VMOVE(dude->arms.rElbowDirection, positions);
+        printf("Hand\n");
+        grabCoordinates(positions);
+        VMOVE(dude->arms.rWristDirection, positions);
+
+	printf("Left Leg\n");
+	printf("Thigh\n");
+	grabCoordinates(positions);
+	VMOVE(dude->legs.lLegDirection, positions);
+	printf("Calf\n");
+	grabCoordinates(positions);
+	VMOVE(dude->legs.lKneeDirection, positions);
+	printf("Foot\n");
+	grabCoordinates(positions);
+	VMOVE(dude->legs.lFootDirection, positions);
+
+	printf("Right Leg\n");	
+        printf("Thigh\n");
+        grabCoordinates(positions);
+        VMOVE(dude->legs.rLegDirection, positions);
+        printf("Calf\n");
+        grabCoordinates(positions);
+        VMOVE(dude->legs.rKneeDirection, positions);
+        printf("Foot\n");
+        grabCoordinates(positions);
+        VMOVE(dude->legs.rFootDirection, positions);
 }
 
 /* position limbs to fit stance input in command line (or just default to standing) */
@@ -873,7 +932,7 @@ void setStance(fastf_t stance, struct human_data_t *dude)
 		break;
 	case 999:
 		/* interactive position-setter-thingermajiger */
-		/* manual() */
+		manualPosition(dude);
 		break;
 	default:
 		break;
@@ -1065,9 +1124,11 @@ int main(int ac, char *av[])
     setStance(stance, &human_data); 
     if(!troops){
     	makeBody(db_fp, suffix, &human_data, location, showBoxes);
+	mk_id_units(db_fp, "A single Human", "in");
     }
     if(troops){
 	makeArmy(db_fp, human_data, troops, showBoxes);
+    	mk_id_units(db_fp, "An army of people", "in");	
     }
 /****End Magic****/
 
