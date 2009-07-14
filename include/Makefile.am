@@ -1,26 +1,12 @@
 
 SUBDIRS = conf
 
-MAJOR=$(shell cat ${srcdir}/conf/MAJOR)
-MINOR=$(shell cat ${srcdir}/conf/MINOR)
-PATCH=$(shell cat ${srcdir}/conf/PATCH)
-COUNT=$(shell cat ${builddir}/conf/COUNT)
-HOST= $(shell sed 's/"/\\"/g' ${builddir}/conf/HOST)
-BPATH=$(shell sed 's/"/\\"/g' ${builddir}/conf/PATH)
-DATE= $(shell sed 's/"/\\"/g' ${builddir}/conf/DATE)
-BUSER= $(shell sed 's/"/\\"/g' ${builddir}/conf/USER)
-
-brlcad_version.h: brlcad_version.h.in conf/MAJOR conf/MINOR conf/PATCH
-	sed "s+%%MAJOR%%+${MAJOR}+;s+%%MINOR%%+${MINOR}+;s+%%PATCH%%+${PATCH}+;s+%%COUNT%%+${COUNT}+;s+%%HOST%%+${HOST}+;s+%%PATH%%+${BPATH}+;s+%%DATE%%+${DATE}+;s+%%USER%%+${BUSER}+" \
-	${srcdir}/brlcad_version.h.in > ${builddir}/brlcad_version.h
-
 brlcadincludedir = $(includedir)/brlcad
 
 brlcadinclude_required = \
 	RtServerImpl.h \
 	bn.h \
 	brlcad_config.h \
-	brlcad_version.h \
 	bu.h \
 	common.h \
 	config_win.h \
@@ -87,6 +73,7 @@ brlcadinclude_wanted = \
 # headers used by multiple packages but still considered private.
 # public headers should NOT include these headers.
 noinst_HEADERS = \
+	brlcad_version.h \
 	bio.h \
 	conf.h \
 	fbmsg.h \
@@ -95,7 +82,6 @@ noinst_HEADERS = \
 
 EXTRA_DIST = \
 	on_nurb.h \
-	opennurbs_cleanup.h \
 	sed4
 
 if ONLY_BENCHMARK
