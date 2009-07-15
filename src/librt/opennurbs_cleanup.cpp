@@ -403,7 +403,7 @@ namespace brlcad {
 	}
 
 	void CurveTree::TrimBBBuild(BRNode* node, double min, double max) {
-	    double delta = (max + min)/(BREP_BB_CRV_PNT_CNT-1);
+	    double delta = (max - min)/(BREP_BB_CRV_PNT_CNT-1);
 	    point_t points[BREP_BB_CRV_PNT_CNT];
 	    ON_3dPoint pnt;
 	    for(int i=0;i<BREP_BB_CRV_PNT_CNT-1;i++){
