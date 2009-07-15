@@ -607,9 +607,9 @@ namespace brlcad {
 //		bu_log("m_trims_above: %d\n", quads[i]->m_trims_above.size());
 		quads[i]->NodeTrimmed();
 	    }
-//	    if (!(quads[i]->m_trimmed)) {
+	    if (!(quads[i]->m_trimmed)) {
 		parent->addChild(quads[i]);
-//  	    }
+  	    }
 	}
 	parent->BuildBBox();
     }

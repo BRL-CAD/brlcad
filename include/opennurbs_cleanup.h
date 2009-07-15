@@ -63,7 +63,7 @@
 
 /* subdivision size factors */
 #define BREP_TRIM_SUB_FACTOR 0.01
-#define BREP_SURF_SUB_FACTOR 0.1
+#define BREP_SURF_SUB_FACTOR 0.2
 
 // grows 3D BBox along each axis by this factor
 #define BBOX_GROW_3D 0.1
