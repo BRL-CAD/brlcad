@@ -911,8 +911,8 @@ BN_EXPORT BU_EXTERN(void bn_pr_roots,
  */
 typedef struct bn_multipoly {
     unsigned long magic;
-    int dgrx;
-    int dgry;
+    int dgrs;
+    int dgrt;
     double **cf;
 }  bn_multipoly_t;
 
