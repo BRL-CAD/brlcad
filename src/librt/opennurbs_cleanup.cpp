@@ -159,19 +159,21 @@ namespace brlcad {
 			    ON_Interval tk(knots[knotinterval-1],knots[knotinterval]);
 			    if (!NEAR_ZERO(xmax-min,TOL)) {
 		    		BRNode* trimnode = new BRNode(face,loop,trimCurve,tk,innerLoop);
-				if (!(isLinear(trimCurve, min, xmax)))	GetBAChildren(trimnode,1,min,xmax);
+				if (!(isLinear(trimCurve, min, xmax))) {
+				    GetBAChildren(trimnode,1,min,xmax);
+				}
 				loopnode->addChild(trimnode);
 			    }
 			    min = xmax;
 			}
 		    	delete knots;
 		    } else {
+			// If curve IS linear, walk down the knots and insert nodes
 			for (int i=1;i<=knotcnt;i++) {
 			    double xmax = knots[i];
 			    ON_Interval tk(knots[i-1],knots[i]);
 			    if (!NEAR_ZERO(xmax-min, TOL)) {
 			    	BRNode* trimnode = new BRNode(face,loop,trimCurve,tk,innerLoop);
-				if (!(isLinear(trimCurve, min, xmax)))	GetBAChildren(trimnode,1,min,xmax);
 				loopnode->addChild(trimnode);
 			    }
 			    min = xmax;
