@@ -376,7 +376,7 @@ namespace brlcad {
         void getLeavesAbove(list<BRNode*>& out_leaves, const ON_Interval& u, const ON_Interval& v);
 
 	void GetBAChildren(BRNode*, int depth, double min, double max);
-	void TrimBBBuild(BRNode*);
+	void TrimBBBuild(BRNode*, double min, double max);
 	void ParentBBBuild(BRNode*);
 
 	int depth();

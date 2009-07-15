@@ -368,25 +368,20 @@ namespace brlcad {
 	
 	
 	void CurveTree::GetBAChildren(BRNode* parent, int depth, double min, double max) {
-	    //bu_log("%d %d %d\n", depth, min, max);
 	    double mid = (max + min) / 2.0;
 	    ON_Interval tl(min, mid);
 	    ON_Interval tr(mid, max);
 	    BRNode* left = new BRNode(parent->m_face, parent->m_loop, parent->m_curve, tl, parent->m_innerTrim);
 	    BRNode* right = new BRNode(parent->m_face, parent->m_loop, parent->m_curve, tr, parent->m_innerTrim);
-//	    TrimBBBuild(left);
-//	    TrimBBBuild(right);
-//	    bu_log("left bbox:  m_min: (%f,%f,%f), m_max: (%f,%f,%f)\n", left->m_BBox.m_min[0], left->m_BBox.m_min[1], left->m_BBox.m_min[2], left->m_BBox.m_max[0], left->m_BBox.m_max[1], left->m_BBox.m_max[2]);
-//	    bu_log("right bbox:  m_min: (%f,%f,%f), m_max: (%f,%f,%f)\n", right->m_BBox.m_min[0], right->m_BBox.m_min[1], right->m_BBox.m_min[2], right->m_BBox.m_max[0], right->m_BBox.m_max[1], right->m_BBox.m_max[2]);
-	    if (!(isLinear(parent->m_curve, min, mid)) && depth >= BREP_MAX_LN_DEPTH) {
+	    if (!(isLinear(parent->m_curve, min, mid)) && depth < BREP_MAX_LN_DEPTH) {
 		GetBAChildren(left, depth + 1, min, mid);
 	    } else {
-		TrimBBBuild(left);
+		TrimBBBuild(left, min, mid);
 	    }
-	    if (!(isLinear(parent->m_curve, mid, max))) {
+	    if (!(isLinear(parent->m_curve, mid, max)) && depth < BREP_MAX_LN_DEPTH) {
 		GetBAChildren(right, depth + 1, mid, max);
 	    } else {
-		TrimBBBuild(right);
+		TrimBBBuild(right, mid, max);
 	    }
 	    parent->addChild(left);
 	    parent->addChild(right);
@@ -407,9 +402,7 @@ namespace brlcad {
 	    }
 	}
 
-	void CurveTree::TrimBBBuild(BRNode* node) {
-	    double min = node->m_t[0];
-	    double max = node->m_t[1];
+	void CurveTree::TrimBBBuild(BRNode* node, double min, double max) {
 	    double delta = (max + min)/(BREP_BB_CRV_PNT_CNT-1);
 	    point_t points[BREP_BB_CRV_PNT_CNT];
 	    ON_3dPoint pnt;
