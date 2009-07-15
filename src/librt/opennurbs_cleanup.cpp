@@ -224,7 +224,7 @@ namespace brlcad {
 	CurveTree::getLeavesAbove(list<BRNode*>& out_leaves, const ON_Interval& u, const ON_Interval& v) {
 	    point_t bmin,bmax;
 	    double dist;
-	    for (list<BRNode*>::iterator i = m_sortedY.begin(); i != m_sortedY.end(); i++) {
+	    for (list<BRNode*>::iterator i = m_sortedX.begin(); i != m_sortedX.end(); i++) {
 		BRNode* br = dynamic_cast<BRNode*>(*i);
 		br->GetBBox(bmin,bmax);
 		dist = TOL;//0.03*DIST_PT_PT(bmin,bmax);
@@ -489,6 +489,10 @@ namespace brlcad {
 	if (!(m_root->isFlat())) {
 	    GetBVChildren(m_root,1);
 	    m_root->BuildBBox();
+	} else {
+	    m_root->m_trims_above.clear();
+	    m_root->m_ctree->getLeavesAbove(m_root->m_trims_above, m_root->m_u, m_root->m_v);
+	    m_root->m_trims_above.sort(sortY);
 	}
     }
 
@@ -539,6 +543,15 @@ namespace brlcad {
 	ON_Interval vfirst = parent->m_v.ParameterAt(first);
 	ON_Interval usecond = parent->m_u.ParameterAt(second);
 	ON_Interval vsecond = parent->m_v.ParameterAt(second);
+	ON_Interval usurf = parent->m_surface->Domain(0);
+	ON_Interval vsurf = parent->m_surface->Domain(1);
+	point_t a, b;
+	VSET(a, usurf[0], vsurf[0], 0.0);
+	VSET(b, usurf[1], vsurf[1], 0.0);
+	double dsurf = DIST_PT_PT(a, b);
+	VSET(a, parent->m_u[0], parent->m_v[0], 0.0);
+	VSET(b, parent->m_u[1], parent->m_v[1], 0.0);
+	double dsubsurf = DIST_PT_PT(a, b);
 	CurveTree* ctree = parent->m_ctree;
 	parent->m_surface->EvNormal(parent->m_u.Min() + 2*uq, parent->m_v.Min(),parent->m_corners[1],parent->m_normals[1]);
 	parent->m_surface->EvNormal(parent->m_u.Min(),parent->m_v.Min() + 2*vq, parent->m_corners[5],parent->m_normals[5]);
@@ -558,7 +571,7 @@ namespace brlcad {
 		parent->m_normals[6], parent->m_normals[7], parent->m_normals[9], parent->m_normals[11], parent->m_normals[12]);
 	
 	for (int i = 0; i < 4; i++) {
-	    if (/*(quads[i]->NodeTrimmed() != 1) && */ !(quads[i]->isFlat()) && depth < BREP_MAX_FT_DEPTH) {
+	    if ((dsubsurf/dsurf >= BREP_SURF_SUB_FACTOR) && !(quads[i]->isFlat()) && depth < BREP_MAX_FT_DEPTH) {
 		GetBVChildren(quads[i],depth+1);
 	    } else {
 	        point_t min, max;
@@ -586,10 +599,13 @@ namespace brlcad {
 			quads[i]->m_BBox.m_max[j] += ON_ZERO_TOLERANCE;
 		    }
 		}
+		quads[i]->m_trims_above.clear();
+		quads[i]->m_ctree->getLeavesAbove(quads[i]->m_trims_above, quads[i]->m_u, quads[i]->m_v);
+		quads[i]->NodeTrimmed();
 	    }
 	    if (!(quads[i]->m_trimmed)) {
 		parent->addChild(quads[i]);
-	  }
+  	    }
 	}
 	parent->BuildBBox();
     }

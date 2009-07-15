@@ -63,6 +63,7 @@
 
 /* subdivision size factors */
 #define BREP_TRIM_SUB_FACTOR 0.01
+#define BREP_SURF_SUB_FACTOR 0.1
 
 // grows 3D BBox along each axis by this factor
 #define BBOX_GROW_3D 0.1
@@ -501,10 +502,11 @@ namespace brlcad {
 	bool isTrimmed(const ON_2dPoint& uv);
 	int NodeTrimmed();
 
+	// List of Trims above this node
+	list<BRNode*> m_trims_above;
 
      private:
 	BVNode<BH>* closer(const ON_3dPoint& pt, BVNode<BH>* left, BVNode<BH>* right);
-	list<BRNode*> m_trims_above;
     };
 
   // For the ON_BoundingBox definition see opennurbs_bounding_box.h lines 25-484. 
@@ -545,9 +547,6 @@ namespace brlcad {
 	surface->EvNormal(m_u.Min(), m_v.Max(), m_corners[10], m_normals[10]);
 	surface->EvNormal(m_u.Max(), m_v.Max(), m_corners[12], m_normals[12]);
 	surface->EvPoint(u.Mid(),v.Mid(),m_estimate);
-	m_trims_above.clear();
-	m_ctree->getLeavesAbove(m_trims_above, m_u, m_v);
-	m_trims_above.sort(sortY);
     }
    
   template<class BH>
@@ -578,9 +577,6 @@ namespace brlcad {
 	surface->EvNormal(m_u.Min() + uq, m_v.Max() - vq, m_corners[8], m_normals[8]);
 	surface->EvNormal(m_u.Max() - uq, m_v.Max() - vq, m_corners[9], m_normals[9]);
 	surface->EvPoint(u.Mid(),v.Mid(),m_estimate);
-	m_trims_above.clear();
-	m_ctree->getLeavesAbove(m_trims_above, m_u, m_v);
-	m_trims_above.sort(sortY);
     }
  
   template<class BH>
