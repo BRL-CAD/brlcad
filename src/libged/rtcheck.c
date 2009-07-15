@@ -26,8 +26,15 @@
 #include "common.h"
 
 #include <stdlib.h>
-#include <sys/types.h>
-#include <sys/wait.h>
+
+#ifdef HAVE_SYS_TYPES_H
+#   include <sys/types.h>
+#endif
+
+#ifdef HAVE_SYS_WAIT_H
+#   include <sys/wait.h>
+#endif
+
 #include "bio.h"
 
 #include "cmd.h"
@@ -401,7 +408,7 @@ ged_rtcheck_vector_handler(ClientData clientData, int mask)
 
 	/* wait for the forked process */
 	while ((rpid = wait(&retcode)) != rtcp->pid && rpid != -1) {
-	    
+
 	    ged_wait_status(&rtcp->gedp->ged_result_str, retcode);
 	}
 
