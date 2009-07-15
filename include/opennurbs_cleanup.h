@@ -105,7 +105,7 @@ namespace brlcad {
 	BANode(const ON_BrepFace* face);
 	BANode(const ON_BrepFace* face, const ON_BrepLoop* loop, bool innerTrim);
 	BANode(const ON_BrepFace* face, const ON_BrepLoop* loop,
-	       const ON_Curve* curve, ON_Interval& t, bool innerTrim);
+	       const ON_Curve* curve, ON_Interval& t, double min, double max, bool innerTrim);
 	~BANode();
 	
 	// List of all children of a given node
@@ -188,13 +188,25 @@ namespace brlcad {
 
   template<class BH>
       inline BANode<BH>::BANode(const ON_BrepFace* face, const ON_BrepLoop* loop, 
-	     const ON_Curve* curve, ON_Interval& t, bool innerTrim)
+	     const ON_Curve* curve, ON_Interval& t, double min, double max, bool innerTrim)
       : m_face(face), m_loop(loop), m_curve(curve),  m_t(t), m_innerTrim(innerTrim) {
 	  FaceNode = false;
 	  LoopNode = false;
 	  m_start = curve->PointAt(m_t[0]);
 	  m_end = curve->PointAt(m_t[1]);
-	  m_curve->GetBBox(m_BBox.m_min,m_BBox.m_max);
+	  ON_Interval dom = m_curve->Domain();
+	  ON_3dPoint points[2];
+	  points[0] = curve->PointAt(min);
+	  points[1] = curve->PointAt(max);
+	  point_t minpt, maxpt;
+	  VSETALL(minpt, MAX_FASTF);
+	  VSETALL(maxpt, -MAX_FASTF);
+	  for (int i = 0; i < 2; i++)
+	      VMINMAX(minpt, maxpt, ((double*)points[i]));
+	  points[0]=ON_3dPoint(minpt);
+	  points[1]=ON_3dPoint(maxpt);
+	  ON_BoundingBox bb(points[0], points[1]);
+	  m_BBox = bb;
 	  // check for vertical segments they can be removed from
 	  // trims above (can't tell direction and don't need
           if ( NEAR_ZERO(m_end[X]-m_start[X], DBL_EPSILON) ) {

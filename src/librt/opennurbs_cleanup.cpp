@@ -152,13 +152,11 @@ namespace brlcad {
 			// sub-intervals at the leaves satisfying the linearity 
 			// criteria using trimnode as the tree root.  Once this 
 			// is done, add trimnode to the loopnode child list.
-			int knotinterval = 0;
 			for(list<double>::iterator l=splitlist.begin();l != splitlist.end();l++) {
 			    double xmax = *l;
-			    knotinterval++;
-			    ON_Interval tk(knots[knotinterval-1],knots[knotinterval]);
+			    ON_Interval tk(min,xmax);
 			    if (!NEAR_ZERO(xmax-min,TOL)) {
-		    		BRNode* trimnode = new BRNode(face,loop,trimCurve,tk,innerLoop);
+		    		BRNode* trimnode = new BRNode(face,loop,trimCurve,tk,min,xmax,innerLoop);
 				if (!(isLinear(trimCurve, min, xmax))) {
 				    GetBAChildren(trimnode,1,min,xmax);
 				}
@@ -171,9 +169,9 @@ namespace brlcad {
 			// If curve IS linear, walk down the knots and insert nodes
 			for (int i=1;i<=knotcnt;i++) {
 			    double xmax = knots[i];
-			    ON_Interval tk(knots[i-1],knots[i]);
+			    ON_Interval tk(min,xmax);
 			    if (!NEAR_ZERO(xmax-min, TOL)) {
-			    	BRNode* trimnode = new BRNode(face,loop,trimCurve,tk,innerLoop);
+			    	BRNode* trimnode = new BRNode(face,loop,trimCurve,tk,min,xmax,innerLoop);
 				loopnode->addChild(trimnode);
 			    }
 			    min = xmax;
@@ -181,7 +179,7 @@ namespace brlcad {
 			delete knots;
 		    }
 		    if (!NEAR_ZERO(max-min, TOL)) {
-			BRNode* trimnode = new BRNode(face,loop,trimCurve,t,innerLoop);
+			BRNode* trimnode = new BRNode(face,loop,trimCurve,t,min,max,innerLoop);
 			if (!(isLinear(trimCurve, min, max)))	GetBAChildren(trimnode,1,min,max);
 		    }
 			
@@ -373,8 +371,8 @@ namespace brlcad {
 	    double mid = (max + min) / 2.0;
 	    ON_Interval tl(min, mid);
 	    ON_Interval tr(mid, max);
-	    BRNode* left = new BRNode(parent->m_face, parent->m_loop, parent->m_curve, tl, parent->m_innerTrim);
-	    BRNode* right = new BRNode(parent->m_face, parent->m_loop, parent->m_curve, tr, parent->m_innerTrim);
+	    BRNode* left = new BRNode(parent->m_face, parent->m_loop, parent->m_curve, tl, min, mid, parent->m_innerTrim);
+	    BRNode* right = new BRNode(parent->m_face, parent->m_loop, parent->m_curve, tr, mid, max, parent->m_innerTrim);
 	    if (!(isLinear(parent->m_curve, min, mid)) && depth < BREP_MAX_LN_DEPTH) {
 		GetBAChildren(left, depth + 1, min, mid);
 	    } else {
