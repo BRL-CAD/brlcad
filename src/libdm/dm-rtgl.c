@@ -181,6 +181,40 @@ extern float specularColor[4];
 extern float diffuseColor[4];
 extern float backColor[];
 
+/* ray trace vars */
+struct application app;
+struct rt_i *rtip;
+
+/* last trees drawn */
+char *oldTrees[RT_MAXARGS];
+int oldNumTrees = 0;
+
+/* number of points to draw at a time */
+#define DRAW_NUM  1000
+#define BUF_SIZE  3 * DRAW_NUM
+
+/* draw buffer */
+fastf_t drawBuffer[BUF_SIZE];
+int bufUsed = 0;             /* used space in buffer */
+
+/* list of hit points */
+struct pointList points;
+
+/* remove all points from points list */
+void freePoints(void) {
+
+    /* list cannot be empty */
+    if (points.l.forw != NULL && points.l.forw != &points) {
+
+	struct pointList *curr;
+	while (BU_LIST_WHILE(curr, pointList, &(points.l))) {
+	    BU_LIST_DEQUEUE(&(curr->l));
+	    bu_free(curr, "free pointList curr");
+	}
+    }
+}
+
+
 void
 rtgl_fogHint(struct dm *dmp, int fastfog)
 {
@@ -961,36 +995,6 @@ rtgl_loadMatrix(struct dm *dmp, fastf_t *mat, int which_eye)
     return TCL_OK;
 }
 
-/* ray trace vars */
-struct application app;
-struct rt_i *rtip;
-
-/* last database drawn */
-char *lastDB = NULL;
-
-/* last trees drawn */
-char *oldTrees[RT_MAXARGS];
-int oldNumTrees = 0;
-
-/* number of points to draw at a time */
-#define DRAW_NUM  1000
-#define BUF_SIZE  3 * DRAW_NUM
-
-/* draw buffer */
-fastf_t drawBuffer[BUF_SIZE];
-int bufUsed = 0;             /* used space in buffer */
-
-/* list of hit points */
-struct pointList points;
-
-void freePoints(void) {
-    struct pointList *curr;
-    while (BU_LIST_WHILE(curr, pointList, &(points.l))) {
-	BU_LIST_DEQUEUE(&(curr->l));
-	bu_free(curr, "free pointList curr");
-    }
-}
-
 /* add a hit point to points list */
 void addPoint(struct application *app, struct hit *hit) {
     point_t point;
@@ -1119,8 +1123,6 @@ rtgl_drawVList(struct dm *dmp, register struct bn_vlist *vp)
 	return TCL_OK;
     }
 
-    lastDB = 
-
     /* look for new trees in need of ray tracing */
     newTrees = 0;
     
@@ -1180,26 +1182,26 @@ rtgl_drawVList(struct dm *dmp, register struct bn_vlist *vp)
     
     for (BU_LIST_FOR(curr, pointList, &(points.l))) {
 
-        /* draw buffer when full */
-        if (bufUsed == BUF_SIZE) {
-            glDrawArrays(GL_POINTS, 0, bufUsed);
-            bufUsed = 0;
-        }
+	/* draw buffer when full */
+	if (bufUsed == BUF_SIZE) {
+	    glDrawArrays(GL_POINTS, 0, bufUsed);
+	    bufUsed = 0;
+	}
         
-        /* add next point to buffer */
+	/* add next point to buffer */
         else {
-            drawBuffer[bufUsed + X] = curr->pt[X];
-            drawBuffer[bufUsed + Y] = curr->pt[Y];
-            drawBuffer[bufUsed + Z] = curr->pt[Z];
+	    drawBuffer[bufUsed + X] = curr->pt[X];
+	    drawBuffer[bufUsed + Y] = curr->pt[Y];
+	    drawBuffer[bufUsed + Z] = curr->pt[Z];
             
-            bufUsed += 3;
-        }
+	    bufUsed += 3;
+	}
     }
 
     if (bufUsed > 0) {
 	/* draw remainder */
 	glDrawArrays(GL_POINTS, 0, bufUsed);
-	bufUsed = 0;
+        bufUsed = 0;
     }
 
     return TCL_OK;
