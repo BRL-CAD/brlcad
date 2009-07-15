@@ -192,21 +192,8 @@ namespace brlcad {
       : m_face(face), m_loop(loop), m_curve(curve),  m_t(t), m_innerTrim(innerTrim) {
 	  FaceNode = false;
 	  LoopNode = false;
-	  m_start = curve->PointAt(m_t[0]);
-	  m_end = curve->PointAt(m_t[1]);
-	  ON_Interval dom = m_curve->Domain();
-	  ON_3dPoint points[2];
-	  points[0] = curve->PointAt(min);
-	  points[1] = curve->PointAt(max);
-	  point_t minpt, maxpt;
-	  VSETALL(minpt, MAX_FASTF);
-	  VSETALL(maxpt, -MAX_FASTF);
-	  for (int i = 0; i < 2; i++)
-	      VMINMAX(minpt, maxpt, ((double*)points[i]));
-	  points[0]=ON_3dPoint(minpt);
-	  points[1]=ON_3dPoint(maxpt);
-	  ON_BoundingBox bb(points[0], points[1]);
-	  m_BBox = bb;
+	  m_start = m_curve->PointAt(m_t[0]);
+	  m_end = m_curve->PointAt(m_t[1]);
 	  // check for vertical segments they can be removed from
 	  // trims above (can't tell direction and don't need
           if ( NEAR_ZERO(m_end[X]-m_start[X], DBL_EPSILON) ) {

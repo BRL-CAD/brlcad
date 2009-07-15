@@ -368,7 +368,21 @@ namespace brlcad {
 	
 	
 	void CurveTree::GetBAChildren(BRNode* parent, int depth, double min, double max) {
-	    if ((isLinear(parent->m_curve, min, max)) || depth >= BREP_MAX_LN_DEPTH) {
+	    ON_Interval dom = parent->m_curve->Domain();
+	    ON_3dPoint bbpoints[2];
+	    bbpoints[0] = parent->m_curve->PointAt(min);
+	    bbpoints[1] = parent->m_curve->PointAt(max);
+	    point_t minpt, maxpt;
+	    VSETALL(minpt, MAX_FASTF);
+	    VSETALL(maxpt, -MAX_FASTF);
+	    for (int i = 0; i < 2; i++)
+	   	VMINMAX(minpt, maxpt, ((double*)bbpoints[i]));
+	    bbpoints[0]=ON_3dPoint(minpt);
+	    bbpoints[1]=ON_3dPoint(maxpt);
+	    ON_BoundingBox bb(bbpoints[0], bbpoints[1]);
+	    parent->m_BBox = bb;
+
+    if ((isLinear(parent->m_curve, min, max)) || depth >= BREP_MAX_LN_DEPTH) {
 		TrimBBBuild(parent, min, max);
     	//	bu_log("1 bbmin: %f %f %f bbmax: %f %f %f\n", parent->m_BBox.m_min[0], parent->m_BBox.m_min[1], parent->m_BBox.m_min[2], parent->m_BBox.m_max[0], parent->m_BBox.m_max[1], parent->m_BBox.m_max[2]);
 	    } else {
