@@ -560,7 +560,7 @@ namespace brlcad {
 		parent->m_normals[6], parent->m_normals[7], parent->m_normals[9], parent->m_normals[11], parent->m_normals[12]);
 	
 	for (int i = 0; i < 4; i++) {
-	    if ((dsubsurf/dsurf >= BREP_SURF_SUB_FACTOR) && !(quads[i]->isFlat()) && depth < BREP_MAX_FT_DEPTH) {
+	    if (((dsubsurf/dsurf >= BREP_SURF_SUB_FACTOR) || !(quads[i]->isFlat())) && depth < BREP_MAX_FT_DEPTH) {
 		GetBVChildren(quads[i],depth+1);
 	    } else {
 	        point_t min, max;
