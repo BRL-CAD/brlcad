@@ -486,14 +486,8 @@ namespace brlcad {
 	ON_Interval d1 = surf->Domain(0);
 	ON_Interval d2 = surf->Domain(1);
 	m_root = new BBNode(m_face,surf,d1,d2,m_ctree);
-	if (!(m_root->isFlat())) {
-	    GetBVChildren(m_root,1);
-	    m_root->BuildBBox();
-	} else {
-	    m_root->m_trims_above.clear();
-	    m_root->m_ctree->getLeavesAbove(m_root->m_trims_above, m_root->m_u, m_root->m_v);
-	    m_root->m_trims_above.sort(sortY);
-	}
+	GetBVChildren(m_root,1);
+	m_root->BuildBBox();
     }
 
     SurfaceTree::~SurfaceTree() {
@@ -603,9 +597,9 @@ namespace brlcad {
 		quads[i]->m_ctree->getLeavesAbove(quads[i]->m_trims_above, quads[i]->m_u, quads[i]->m_v);
 		quads[i]->NodeTrimmed();
 	    }
-	    if (!(quads[i]->m_trimmed)) {
+//	    if (!(quads[i]->m_trimmed)) {
 		parent->addChild(quads[i]);
-  	    }
+//  	    }
 	}
 	parent->BuildBBox();
     }
