@@ -76,39 +76,57 @@ namespace brlcad {
 	// Bounding area hierarchy classes
 
 	template<class BA>
-	class BANode;
+    	    class BANode;
 
 	using namespace std;
 
 	template<class BA>
-	class BANode {
-	public:
-	typedef vector<BANode<BA>*> ChildList;
+    	    class BANode {
+		public:
+	    	    BANode();
+	    	    BANode(const BA& node);
+	    	    virtual ~BANode();
 
-	ChildList m_children;
-	BA m_node;
-	ON_3dPoint m_estimate;
+		    // List of all children of a given node		      
+		    typedef vector<BANode<BA>*> ChildList;
+	    	    ChildList m_children;
 
-	BANode();
-	BANode(const BA& node);
-	virtual ~BANode();
+		    // Bounding Box
+		    BA m_node;
 
-	void addChild(const BA& child);
-	void addChild(BANode<BA>* child);
-	void removeChild(const BA& child);
-	void removeChild(BANode<BA>* child);
-	virtual bool isLeaf() const;
+		    // Node management functions
+	    	    void addChild(const BA& child);
+	    	    void addChild(BANode<BA>* child);
+	    	    void removeChild(const BA& child);
+	    	    void removeChild(BANode<BA>* child);
 
-	virtual int depth();
-	virtual void getLeaves(list<BANode<BA>*>& out_leaves);
-	virtual ON_2dPoint getClosestPointEstimate(const ON_3dPoint& pt);
-	virtual ON_2dPoint getClosestPointEstimate(const ON_3dPoint& pt, ON_Interval& u, ON_Interval& v);
-	void GetBBox(double* min, double* max) const;
+		    // Test if this node is a leaf node (i.e. m_children is empty)
+	    	    virtual bool isLeaf() const;
+		    
+		    // Return a list of all nodes below this node that are leaf nodes
+	    	    virtual void getLeaves(list<BANode<BA>*>& out_leaves);
+		    
+		    // Report the depth of this node in the hierarchy
+	    	    virtual int depth();
 
-
-	private:
-	BANode<BA>* closer(const ON_3dPoint& pt, BANode<BA>* left, BANode<BA>* right);
-	};
+	    	    // Get 2 points defining bounding box :
+		    //
+		    //       *----------------max
+		    //       |                 |
+		    //  v    |                 |
+		    //       |                 |
+		    //      min----------------*
+		    //                 u
+		    // 
+	    	    void GetBBox(double* min, double* max) const;
+		    
+		    ON_3dPoint m_estimate;
+		    virtual ON_2dPoint getClosestPointEstimate(const ON_3dPoint& pt);
+	    	    virtual ON_2dPoint getClosestPointEstimate(const ON_3dPoint& pt, ON_Interval& u, ON_Interval& v);
+		    
+		private:
+	    	    BANode<BA>* closer(const ON_3dPoint& pt, BANode<BA>* left, BANode<BA>* right);
+    	    };
 
 	template<class BA>
 	class SubcurveBANode : public BANode<BA> {
