@@ -507,116 +507,112 @@ namespace brlcad {
     // Bounding volume hierarchy classes
 
     template<class BV>
-    class BVNode;
-
-    template<class BV>
-    class BVSegment {
-    public:
-	BVNode<BV>* m_node;
-	double m_near;
-	double m_far;
-
-	BVSegment() {}
-	BVSegment(BVNode<BV>* node, double near, double far) :
-	    m_node(node), m_near(near), m_far(far) {}
-	BVSegment(const BVSegment& seg) : m_node(seg.m_node),
-	    m_near(seg.m_near),
-	    m_far(seg.m_far) {}
-	BVSegment& operator=(const BVSegment& seg) {
-	    m_node = seg.m_node;
-	    m_near = seg.m_near;
-	    m_far = seg.m_far;
-	    return *this;
-	}
-
-	bool operator<(const BVSegment<BV>& seg) {
-	    return m_near < seg.m_near;
-	}
-    };
+    	class BVNode;
 
     using namespace std;
 
     template<class BV>
-    class BVNode {
-    public:
-	typedef vector<BVNode<BV>*> ChildList;
-	typedef list<BVSegment<BV> > IsectList;
+    	class BVNode {
+	    public:
+		BVNode();
+		BVNode(const BV& node, const ON_BrepFace* face, const ON_Interval& u,
+			 const ON_Interval& v, bool checkTrim = false, bool trimmed = false);
 
-	ChildList m_children;
-	BV m_node;
-	ON_3dPoint m_estimate;
+		BVNode(const BV& node);
+		~BVNode();
 
-	BVNode();
-	BVNode(const BV& node);
-	virtual ~BVNode();
+		// List of all children of a given node
+		typedef vector<BVNode<BV>*> ChildList;
+		ChildList m_children;
 
-	void addChild(const BV& child);
-	void addChild(BVNode<BV>* child);
-	void removeChild(const BV& child);
-	void removeChild(BVNode<BV>* child);
-	virtual bool isLeaf() const;
+		// Bounding Box
+		BV m_node;
 
-	virtual int depth();
-	virtual void getLeaves(list<BVNode<BV>*>& out_leaves);
-	virtual ON_2dPoint getClosestPointEstimate(const ON_3dPoint& pt);
-	virtual ON_2dPoint getClosestPointEstimate(const ON_3dPoint& pt, ON_Interval& u, ON_Interval& v);
-	void GetBBox(double* min, double* max);
+		// Test if this node is a leaf node in the hierarchy
+		bool isLeaf();
 
-	virtual bool intersectedBy(ON_Ray& ray, double* tnear = 0, double* tfar = 0);
-	virtual bool intersectsHierarchy(ON_Ray& ray, std::list<BVSegment<BV> >* results = 0);
+		// Return all leaves below this node that are leaf nodes
+		void getLeaves(list<BVNode<BV>*>& out_leaves);
+		
+		// Functions to add and remove child nodes from this node.
+		void addChild(const BV& child);
+		void addChild(BVNode<BV>* child);
+		void removeChild(const BV& child);
+		void removeChild(BVNode<BV>* child);
+		
+		// Report the depth of this node in the hierarchy
+		int depth();
+		
+		// Get 2 points defining a bounding box
+		//
+		//                _  max  _
+		//        _   -       +      -  _
+		//     *  _           +         _  *
+		//     |      -   _   + _   -      |
+		//     |             *+            |
+		//     |             |+            |
+		//     |          _  |+   _        |
+		//     |  _   -      |       -  _  |
+		//     *  _          |          _  *
+		//            -   _  |  _   -      
+		//                  min
+		// 
+		void GetBBox(double* min, double* max);
 
-    private:
-	BVNode<BV>* closer(const ON_3dPoint& pt, BVNode<BV>* left, BVNode<BV>* right);
-    };
+		// Surface Information
+		const ON_BrepFace* m_face;
+		ON_Interval m_u;
+		ON_Interval m_v;
 
-    template<class BV>
-    class SubsurfaceBVNode : public BVNode<BV> {
-    public:
-	SubsurfaceBVNode(const BV& node,
-			 const ON_BrepFace* face,
-			 const ON_Interval& u,
-			 const ON_Interval& v,
-			 bool checkTrim = false,
-			 bool trimmed = false);
+		// Trimming Flags
+		bool m_checkTrim;
+		bool m_trimmed;
+		
+		// Point used for closeness testing - usually
+		// based on evaluation of the curve/surface at
+		// the center of the parametric domain
+		ON_3dPoint m_estimate;
 
-	bool intersectedBy(ON_Ray& ray, double* tnear = 0, double* tfar = 0);
-	bool isLeaf() const;
-	int isTrimmed(const ON_2dPoint& uv,BRNode* closest,fastf_t &closesttrim);
-	bool doTrimming() const;
-	ON_2dPoint getClosestPointEstimate(const ON_3dPoint& pt);
-	ON_2dPoint getClosestPointEstimate(const ON_3dPoint& pt, ON_Interval& u, ON_Interval& v);
-	void getTrimsAbove(const ON_2dPoint& uv, list<BRNode*>& out_leaves);
-	bool prepTrims(CurveTree *ct);
+		// Test whether a ray intersects the 3D bounding volume
+		// of the node - if so, and node is not a leaf node, query
+		// children.  If leaf node, and intersects, add to list.
+		bool intersectedBy(ON_Ray& ray, double* tnear = 0, double* tfar = 0);
+		bool intersectsHierarchy(ON_Ray& ray, list<BVNode<ON_BoundingBox>*>& results = 0);
+	
+		ON_2dPoint getClosestPointEstimate(const ON_3dPoint& pt);
+		ON_2dPoint getClosestPointEstimate(const ON_3dPoint& pt, ON_Interval& u, ON_Interval& v);
+		
+		int isTrimmed(const ON_2dPoint& uv,BRNode* closest,fastf_t &closesttrim);
+		bool doTrimming() const;
+		
+		void getTrimsAbove(const ON_2dPoint& uv, list<BRNode*>& out_leaves);
+		bool prepTrims(CurveTree *ct);
 
-	const ON_BrepFace* m_face;
-	ON_Interval m_u;
-	ON_Interval m_v;
-	bool m_checkTrim;
-	bool m_trimmed;
-
-	//testing bb box growth
-	bool m_xgrow;
-	bool m_ygrow;
-	bool m_zgrow;
-
-    private:
-	list<BRNode*> m_trims_above;
-	list<BRNode*> m_trims_vertical;
-	list<BRNode*> m_trims_right;
-    };
-
+	    private:
+		BVNode<BV>* closer(const ON_3dPoint& pt, BVNode<BV>* left, BVNode<BV>* right);
+		list<BRNode*> m_trims_above;
+		list<BRNode*> m_trims_vertical;
+		list<BRNode*> m_trims_right;
+	};
+    
     typedef BVNode<ON_BoundingBox> BBNode;
-    typedef SubsurfaceBVNode<ON_BoundingBox> SubsurfaceBBNode;
 
     //--------------------------------------------------------------------------------
     // Template Implementation
     template<class BV>
-    inline
-    BVNode<BV>::BVNode() { }
+    	inline
+    	BVNode<BV>::BVNode() { }
 
     template<class BV>
-    inline
-    BVNode<BV>::BVNode(const BV& node) : m_node(node) {
+    	inline 
+	BVNode<BV>::BVNode(const BV& node, const ON_BrepFace* face,
+	       	const ON_Interval& u, const ON_Interval& v, bool checkTrim, bool trimmed)
+	: m_node(node), m_face(face), m_u(u), m_v(v), m_checkTrim(checkTrim), 
+          m_trimmed(trimmed) { }
+
+    template<class BV>
+    	inline
+    	BVNode<BV>::BVNode(const BV& node) : m_node(node) {
 #if defined(_WIN32) && !defined(__CYGWIN__)
 	for (int i = 0; i < 3; i++) {
 #else
@@ -631,382 +627,347 @@ namespace brlcad {
     }
 
     template<class BV>
-    inline
-    BVNode<BV>::~BVNode() {
-	// delete the children
+    	inline
+    	BVNode<BV>::~BVNode() {
+    	    // delete the children
 #if defined(_WIN32) && !defined(__CYGWIN__)
-	for (int i = 0; i < m_children.size(); i++) {
+    	    for (int i = 0; i < m_children.size(); i++) {
 #else
-	for (size_t i = 0; i < m_children.size(); i++) {
+ 	    for (size_t i = 0; i < m_children.size(); i++) {
 #endif
-	    delete m_children[i];
+    		delete m_children[i];
+    	    }
+        }
+
+    template<class BV>
+    	inline void
+    	BVNode<BV>::addChild(const BV& child) {
+    	    m_children.push_back(new BVNode<BV>(child));
+    	}
+
+    template<class BV>
+    	inline void
+    	BVNode<BV>::addChild(BVNode<BV>* child) {
+    	    m_children.push_back(child);
+    	}
+
+    template<class BV>
+    	inline void
+    	BVNode<BV>::removeChild(const BV& child) {
+    	    // XXX implement
+        }
+
+    template<class BV>
+    	inline void
+    	BVNode<BV>::removeChild(BVNode<BV>* child) {
+    	    // XXX implement
+        }
+
+    template<class BV>
+    	inline bool
+    	BVNode<BV>::isLeaf() { 
+	    if (m_children.size() == 0) return true;
+	    return false;
+       	}
+
+    template<class BV>
+    	inline void
+    	BVNode<BV>::GetBBox(double* min, double* max) {
+    	    min[0] = m_node.m_min[0];
+    	    min[1] = m_node.m_min[1];
+    	    min[2] = m_node.m_min[2];
+    	    max[0] = m_node.m_max[0];
+    	    max[1] = m_node.m_max[1];
+    	    max[2] = m_node.m_max[2];
+    	}
+
+    template<class BV>
+    	inline bool
+    	BVNode<BV>::intersectedBy(ON_Ray& ray, double* tnear_opt, double* tfar_opt) {
+    	    double tnear = -real.infinity();
+    	    double tfar = real.infinity();
+	    bool untrimmedresult = true;
+#if defined(_WIN32) && !defined(__CYGWIN__)
+    	    for (int i = 0; i < 3; i++) {
+#else
+	    for (size_t i = 0; i < 3; i++) {
+#endif
+    		if (ON_NearZero(ray.m_dir[i])) {
+    		    if (ray.m_origin[i] < m_node.m_min[i] || ray.m_origin[i] > m_node.m_max[i]) {
+    			untrimmedresult = false;
+    		    }
+    		} else {
+    		    double t1 = (m_node.m_min[i]-ray.m_origin[i]) / ray.m_dir[i];
+    		    double t2 = (m_node.m_max[i]-ray.m_origin[i]) / ray.m_dir[i];
+    		    if (t1 > t2) { double tmp = t1; t1 = t2; t2 = tmp; } // swap
+    		    if (t1 > tnear) tnear = t1;
+    		    if (t2 < tfar) tfar = t2;
+    		    if (tnear > tfar) /* box is missed */ untrimmedresult = false;
+    		    if (tfar < 0) /* box is behind ray */ untrimmedresult = false;
+    		}
+    	    }
+  	    if (tnear_opt != 0 && tfar_opt != 0) { 
+		*tnear_opt = tnear; *tfar_opt = tfar; 
+	    }
+	    if (isLeaf()) {
+		return (!m_trimmed && untrimmedresult);
+	    } else {
+		return untrimmedresult;
+	    }
+        }
+
+    template<class BV>
+    	bool
+    	BVNode<BV>::intersectsHierarchy(ON_Ray& ray, list<BBNode*>& results_opt) {
+    	    double tnear, tfar;
+    	    bool intersects = intersectedBy(ray, &tnear, &tfar);
+    	    if (intersects && isLeaf()) {
+    		results_opt.push_back(this);
+    	    } else if (intersects) {
+		// XXX: bug in g++? had to typedef the below to get it to work!
+		//       for (std::list<BVNode<BV>*>::iterator j = m_children.begin(); j != m_children.end(); j++) {
+		// 	(*j)->intersectsHierarchy(ray, results_opt);
+		//       }
+#if defined(_WIN32) && !defined(__CYGWIN__)
+    		for (int i = 0; i < m_children.size(); i++) {
+#else
+	        for (size_t i = 0; i < m_children.size(); i++) {
+#endif
+    		    m_children[i]->intersectsHierarchy(ray, results_opt);
+    		}
+	    }
+	    return intersects; 
 	}
-    }
 
     template<class BV>
-    inline void
-    BVNode<BV>::addChild(const BV& child) {
-	m_children.push_back(new BVNode<BV>(child));
-    }
-
-    template<class BV>
-    inline void
-    BVNode<BV>::addChild(BVNode<BV>* child) {
-	m_children.push_back(child);
-    }
-
-    template<class BV>
-    inline void
-    BVNode<BV>::removeChild(const BV& child) {
-	// XXX implement
-    }
-
-    template<class BV>
-    inline void
-    BVNode<BV>::removeChild(BVNode<BV>* child) {
-	// XXX implement
-    }
-
-    template<class BV>
-    inline bool
-    BVNode<BV>::isLeaf() const { return false; }
-
-    template<class BV>
-    inline void
-    BVNode<BV>::GetBBox(double* min, double* max) {
-	min[0] = m_node.m_min[0];
-	min[1] = m_node.m_min[1];
-	min[2] = m_node.m_min[2];
-	max[0] = m_node.m_max[0];
-	max[1] = m_node.m_max[1];
-	max[2] = m_node.m_max[2];
-    }
-
-
-    template<class BV>
-    inline bool
-    BVNode<BV>::intersectedBy(ON_Ray& ray, double* tnear_opt, double* tfar_opt) {
-	double tnear = -real.infinity();
-	double tfar = real.infinity();
+    	int
+    	BVNode<BV>::depth() {
+    	    int d = 0;
 #if defined(_WIN32) && !defined(__CYGWIN__)
-	for (int i = 0; i < 3; i++) {
+    	    for (int i = 0; i < m_children.size(); i++) {
 #else
-	for (size_t i = 0; i < 3; i++) {
+	    for (size_t i = 0; i < m_children.size(); i++) {
 #endif
+    		d = 1 + max(d, m_children[i]->depth());
+    	    }
+    	    return d;
+        }
 
-	    //cout << "m_node.m_min[" << i << "]: " << m_node.m_min[i] << "\n";
-	    //cout << "m_node.m_max[" << i << "]: " << m_node.m_max[i] << "\n";
-	    if (ON_NearZero(ray.m_dir[i])) {
-		if (ray.m_origin[i] < m_node.m_min[i] || ray.m_origin[i] > m_node.m_max[i]) {
-//		    cout << "ray.m_origin[" << i << "]: " << ray.m_origin[i] << "\n";
-//		    cout << "m_node.m_min[" << i << "]: " << m_node.m_min[i] << "\n";
-//		    cout << "m_node.m_max[" << i << "]: " << m_node.m_max[i] << "\n\n";
-		    return false;
+    template<class BV>
+    	void
+    	BVNode<BV>::getLeaves(list<BVNode<BV>*>& out_leaves) {
+    	    if (m_children.size() > 0) {
+#if defined(_WIN32) && !defined(__CYGWIN__)
+    		for (int i = 0; i < m_children.size(); i++) {
+#else
+		for (size_t i = 0; i < m_children.size(); i++) {
+#endif
+    		    m_children[i]->getLeaves(out_leaves);
+    		}
+	    } else {
+    		out_leaves.push_back(this);
+    	    }
+	}
+
+
+    template<class BV>
+    	BVNode<BV>*
+    	BVNode<BV>::closer(const ON_3dPoint& pt, BVNode<BV>* left, BVNode<BV>* right) {
+    	    double ldist = pt.DistanceTo(left->m_estimate);
+    	    double rdist = pt.DistanceTo(right->m_estimate);
+    	    TRACE("\t" << ldist << " < " << rdist);
+    	    if (ldist < rdist) return left;
+    	    else return right;
+    	}
+
+    template<class BV>
+    	ON_2dPoint
+    	BVNode<BV>::getClosestPointEstimate(const ON_3dPoint& pt) {
+    	    ON_Interval u, v;
+    	    return getClosestPointEstimate(pt, u, v);
+    }
+
+    template<class BV>
+    	ON_2dPoint
+    	BVNode<BV>::getClosestPointEstimate(const ON_3dPoint& pt, ON_Interval& u, ON_Interval& v) {
+	    if (isLeaf()) {
+		double uvs[5][2] = {{m_u.Min(), m_v.Min()}, {m_u.Max(), m_v.Min()}, 
+		                    {m_u.Max(), m_v.Max()}, {m_u.Min(), m_v.Max()},
+				    {m_u.Mid(), m_v.Mid()}}; // include the estimate
+		ON_3dPoint corners[5];
+		const ON_Surface* surf = m_face->SurfaceOf();
+		
+		u = m_u;
+		v = m_v;
+		
+		// XXX - pass these in from SurfaceTree::surfaceBBox() to avoid this recalculation?
+	        if (!surf->EvPoint(uvs[0][0], uvs[0][1], corners[0]) ||
+	    		!surf->EvPoint(uvs[1][0], uvs[1][1], corners[1]) ||
+	    		!surf->EvPoint(uvs[2][0], uvs[2][1], corners[2]) ||
+	    		!surf->EvPoint(uvs[3][0], uvs[3][1], corners[3])) {
+		    throw new exception(); // XXX - fix this
 		}
-	    }
-	    else {
-		double t1 = (m_node.m_min[i]-ray.m_origin[i]) / ray.m_dir[i];
-		double t2 = (m_node.m_max[i]-ray.m_origin[i]) / ray.m_dir[i];
-		if (t1 > t2) { double tmp = t1; t1 = t2; t2 = tmp; } // swap
-		if (t1 > tnear) tnear = t1;
-		if (t2 < tfar) tfar = t2;
-		if (tnear > tfar) /* box is missed */ return false;
-		if (tfar < 0) /* box is behind ray */ return false;
-	    }
-	}
-	if (tnear_opt != 0 && tfar_opt != 0) { *tnear_opt = tnear; *tfar_opt = tfar; }
-	return true;
-    }
-
-    template<class BV>
-    bool
-    BVNode<BV>::intersectsHierarchy(ON_Ray& ray, std::list<BVSegment<BV> >* results_opt) {
-	double tnear, tfar;
-	bool intersects = intersectedBy(ray, &tnear, &tfar);
-	if (intersects && isLeaf()) {
-	    if (results_opt != 0) results_opt->push_back(BVSegment<BV>(this, tnear, tfar));
-	} else if (intersects) {
-// XXX: bug in g++? had to typedef the below to get it to work!
-//       for (std::list<BVNode<BV>*>::iterator j = m_children.begin(); j != m_children.end(); j++) {
-// 	(*j)->intersectsHierarchy(ray, results_opt);
-//       }
+		corners[4] = BVNode<BV>::m_estimate;
+		
+		// find the point on the surface closest to pt
+	        int mini = 0;
+		double mindist = pt.DistanceTo(corners[mini]);
+		double tmpdist;
 #if defined(_WIN32) && !defined(__CYGWIN__)
-	    for (int i = 0; i < m_children.size(); i++) {
+		for (int i = 1; i < 5; i++) {
 #else
-	    for (size_t i = 0; i < m_children.size(); i++) {
+	    	for (size_t i = 1; i < 5; i++) {
 #endif
-		m_children[i]->intersectsHierarchy(ray, results_opt);
-	    }
-	}
-
-	return intersects;
-    }
-
-    template<class BV>
-    int
-    BVNode<BV>::depth() {
-	int d = 0;
+		    tmpdist = pt.DistanceTo(corners[i]);
+		    TRACE("\t" << mindist << " < " << tmpdist);
+		    if (tmpdist < mindist) {
+			mini = i;
+			mindist = tmpdist;
+		    }
+		}
+		TRACE("Closest: " << mindist << "; " << PT2(uvs[mini]));
+		return ON_2dPoint(uvs[mini][0], uvs[mini][1]);
+		
+    	    } else {
+    		if (m_children.size() > 0) {
+    		    BBNode* closestNode = m_children[0];
 #if defined(_WIN32) && !defined(__CYGWIN__)
-	for (int i = 0; i < m_children.size(); i++) {
+    		    for (int i = 1; i < m_children.size(); i++) {
 #else
-	for (size_t i = 0; i < m_children.size(); i++) {
+	            for (size_t i = 1; i < m_children.size(); i++) {
 #endif
-	    d = 1 + max(d, m_children[i]->depth());
-	}
-	return d;
-    }
-
+    			closestNode = closer(pt, closestNode, m_children[i]);
+    			TRACE("\t" << PT(closestNode->m_estimate));
+    		    }
+		    return closestNode->getClosestPointEstimate(pt, u, v);
+	        }
+		throw new exception();
+ 	     }
+	 }
+	
     template<class BV>
-    void
-    BVNode<BV>::getLeaves(list<BVNode<BV>*>& out_leaves) {
-	if (m_children.size() > 0) {
-#if defined(_WIN32) && !defined(__CYGWIN__)
-	    for (int i = 0; i < m_children.size(); i++) {
-#else
-	    for (size_t i = 0; i < m_children.size(); i++) {
-#endif
-		m_children[i]->getLeaves(out_leaves);
-	    }
-	} else {
-	    out_leaves.push_back(this);
-	}
-    }
-
-
-    template<class BV>
-    BVNode<BV>*
-    BVNode<BV>::closer(const ON_3dPoint& pt, BVNode<BV>* left, BVNode<BV>* right) {
-	double ldist = pt.DistanceTo(left->m_estimate);
-	double rdist = pt.DistanceTo(right->m_estimate);
-	TRACE("\t" << ldist << " < " << rdist);
-	if (ldist < rdist) return left;
-	else return right;
-    }
-
-    template<class BV>
-    ON_2dPoint
-    BVNode<BV>::getClosestPointEstimate(const ON_3dPoint& pt) {
-	ON_Interval u, v;
-	return getClosestPointEstimate(pt, u, v);
-    }
-
-    template<class BV>
-    ON_2dPoint
-    BVNode<BV>::getClosestPointEstimate(const ON_3dPoint& pt, ON_Interval& u, ON_Interval& v) {
-	TRACE("getClosestPointEstimate(" << PT(pt) << ")");
-	if (m_children.size() > 0) {
-	    BBNode* closestNode = m_children[0];
-#if defined(_WIN32) && !defined(__CYGWIN__)
-	    for (int i = 1; i < m_children.size(); i++) {
-#else
-	    for (size_t i = 1; i < m_children.size(); i++) {
-#endif
-		closestNode = closer(pt, closestNode, m_children[i]);
-		TRACE("\t" << PT(closestNode->m_estimate));
-	    }
-	    return closestNode->getClosestPointEstimate(pt, u, v);
-	}
-	throw new exception();
-    }
-
-    template<class BV>
-    inline SubsurfaceBVNode<BV>::SubsurfaceBVNode(const BV& node,
-						  const ON_BrepFace* face,
-						  const ON_Interval& u,
-						  const ON_Interval& v,
-						  bool checkTrim,
-						  bool trimmed)
-	: BVNode<BV>(node), m_face(face), m_u(u), m_v(v), m_checkTrim(checkTrim), m_trimmed(trimmed) { }
-
-    template<class BV>
-    inline bool
-    SubsurfaceBVNode<BV>::intersectedBy(ON_Ray& ray, double *tnear, double *tfar) {
-	return !m_trimmed && BVNode<BV>::intersectedBy(ray, tnear, tfar);
-    }
-
-    template<class BV>
-    inline bool
-    SubsurfaceBVNode<BV>::isLeaf() const {
-	return true;
-    }
-
-	template<class BV>
-    int
-	    SubsurfaceBVNode<BV>::isTrimmed(const ON_2dPoint& uv,BRNode* closest,fastf_t &closesttrim) {
-		BRNode* br;
-		list<BRNode*> trims;
-		point_t bmin,bmax;
-
-		closesttrim = -1.0;
-		if (m_checkTrim) {
-
+    	int
+	BVNode<BV>::isTrimmed(const ON_2dPoint& uv,BRNode* closest,fastf_t &closesttrim) {
+	    BRNode* br;
+	    list<BRNode*> trims;
+	    point_t bmin,bmax;
+	    
+	    closesttrim = -1.0;
+	    if (m_checkTrim) {
 		getTrimsAbove(uv,trims);
-
 		if (trims.empty()) {
 		    return 1;
 		} else {//find closest BB
-			list<BRNode*>::iterator i;
-			BRNode* vclosest = NULL;
-			BRNode* uclosest = NULL;
-			fastf_t currHeight;
-			bool currTrimStatus;
-			point_t min,max;
-			bool verticalTrim = false;
-			bool underTrim = false;
-			double vdist;
-			double udist;
+		    list<BRNode*>::iterator i;
+		    BRNode* vclosest = NULL;
+		    BRNode* uclosest = NULL;
+		    fastf_t currHeight;
+		    bool currTrimStatus;
+		    point_t min,max;
+		    bool verticalTrim = false;
+		    bool underTrim = false;
+		    double vdist;
+		    double udist;
 
-			for( i=trims.begin();i!=trims.end();i++) {
-				br = dynamic_cast<BRNode*>(*i);
-				if (br->m_Vertical) {
-				    if ((br->m_v[0] <= uv[Y]) && (br->m_v[1] >= uv[Y])) {
-					double dist = fabs(uv[X] - br->m_v[0]);
-					if (!verticalTrim) { //haven't seen vertical trim yet
-					    verticalTrim = true;
-					    vdist = dist;
-						vclosest = br;
-					} else {
-					    if (dist < vdist)
-						{
-							vdist = dist;
-							vclosest = br;
-						}
-					}
-
-				    }
-				    continue;
-				}
-				fastf_t v;
-				int trimstatus = br->isTrimmed(uv,v);
-				if (v >= 0.0) {
-				    if (closest == NULL){
-					currHeight = v;
-					currTrimStatus = trimstatus;
-					closest = br;
-				    } else if (v < currHeight ) {
-					currHeight = v;
-					currTrimStatus = trimstatus;
-					closest = br;
-				    }
+		    for( i=trims.begin();i!=trims.end();i++) {
+			br = dynamic_cast<BRNode*>(*i);
+			if (br->m_Vertical) {
+			    if ((br->m_v[0] <= uv[Y]) && (br->m_v[1] >= uv[Y])) {
+				double dist = fabs(uv[X] - br->m_v[0]);
+				if (!verticalTrim) { //haven't seen vertical trim yet
+				    verticalTrim = true;
+				    vdist = dist;
+				    vclosest = br;
 				} else {
-				    double dist = fabs(v);
-				    if (!underTrim) {
-					underTrim = true;
-					udist = dist;
-					uclosest = br;
-				    } else {
-					if (dist < udist)
-					    udist = dist;
-						uclosest = br;
+				    if (dist < vdist) {
+					vdist = dist;
+					vclosest = br;
 				    }
 				}
+				
+			    }
+			    continue;
 			}
-			if (closest == NULL) {
-			    if (verticalTrim) {
-					closesttrim = vdist;
-					closest = vclosest;
-				}
-			    if ((underTrim) && (!verticalTrim || (udist < closesttrim))) {
-					closesttrim = udist;
-					closest = uclosest;
-				}
-				return 1;
+			fastf_t v;
+			int trimstatus = br->isTrimmed(uv,v);
+			if (v >= 0.0) {
+			    if (closest == NULL){
+				currHeight = v;
+				currTrimStatus = trimstatus;
+				closest = br;
+			    } else if (v < currHeight ) {
+				currHeight = v;
+				currTrimStatus = trimstatus;
+				closest = br;
+			    }
 			} else {
-			    closesttrim = currHeight;
-			    if ((verticalTrim) && (vdist < closesttrim)) {
-					closesttrim = vdist;
-					closest = vclosest;
-				}
-			    if ((underTrim) && (udist < closesttrim)) {
-					closesttrim = udist;
-					closest = uclosest;
-				}
-			    return currTrimStatus;
+			    double dist = fabs(v);
+			    if (!underTrim) {
+				underTrim = true;
+				udist = dist;
+				uclosest = br;
+			    } else {
+				if (dist < udist)
+				    udist = dist;
+				uclosest = br;
+			    }
 			}
-		}
-		} else {
-		    if (m_trimmed) {
+		    }
+		    if (closest == NULL) {
+			if (verticalTrim) {
+			    closesttrim = vdist;
+			    closest = vclosest;
+			}
+			if ((underTrim) && (!verticalTrim || (udist < closesttrim))) {
+			    closesttrim = udist;
+			    closest = uclosest;
+			}
 			return 1;
 		    } else {
-			return 0;
+			closesttrim = currHeight;
+			if ((verticalTrim) && (vdist < closesttrim)) {
+			    closesttrim = vdist;
+			    closest = vclosest;
+			}
+			if ((underTrim) && (udist < closesttrim)) {
+			    closesttrim = udist;
+			    closest = uclosest;
+			}
+			return currTrimStatus;
 		    }
 		}
+	    } else {
+		if (m_trimmed) {
+		    return 1;
+		} else {
+		    return 0;
+		}
+	    }
 	}
 
     template<class BV>
-    inline bool
-    SubsurfaceBVNode<BV>::doTrimming() const {
-	return m_checkTrim;
-    }
+    	inline bool
+    	BVNode<BV>::doTrimming() const {
+    	    return m_checkTrim;
+    	}
 
     template<class BV>
-    ON_2dPoint
-    SubsurfaceBVNode<BV>::getClosestPointEstimate(const ON_3dPoint& pt) {
-	ON_Interval u, v;
-	return getClosestPointEstimate(pt, u, v);
-    }
-
-    template<class BV>
-    void
-    SubsurfaceBVNode<BV>::getTrimsAbove(const ON_2dPoint& uv, list<BRNode*>& out_leaves) {
+    	void
+    	BVNode<BV>::getTrimsAbove(const ON_2dPoint& uv, list<BRNode*>& out_leaves) {
 	    point_t bmin,bmax;
 	    double dist;
 	    for (list<BRNode*>::iterator i = m_trims_above.begin(); i != m_trims_above.end(); i++) {
-			BRNode* br = dynamic_cast<BRNode*>(*i);
-			br->GetBBox(bmin,bmax);
-			dist = 0.000001; //0.03*DIST_PT_PT(bmin,bmax);
-			if ((uv[X] > bmin[X]-dist) && (uv[X] < bmax[X]+dist))
-				out_leaves.push_back(br);
-	    }
-
-    }
-
-    template<class BV>
-    ON_2dPoint
-    SubsurfaceBVNode<BV>::getClosestPointEstimate(const ON_3dPoint& pt, ON_Interval& u, ON_Interval& v) {
-	double uvs[5][2] = {{m_u.Min(), m_v.Min()},  // include the corners for an easy refinement
-			    {m_u.Max(), m_v.Min()},
-			    {m_u.Max(), m_v.Max()},
-			    {m_u.Min(), m_v.Max()},
-			    {m_u.Mid(), m_v.Mid()}}; // include the estimate
-	ON_3dPoint corners[5];
-	const ON_Surface* surf = m_face->SurfaceOf();
-
-	u = m_u;
-	v = m_v;
-
-	// XXX - pass these in from SurfaceTree::surfaceBBox() to avoid this recalculation?
-	if (!surf->EvPoint(uvs[0][0], uvs[0][1], corners[0]) ||
-	    !surf->EvPoint(uvs[1][0], uvs[1][1], corners[1]) ||
-	    !surf->EvPoint(uvs[2][0], uvs[2][1], corners[2]) ||
-	    !surf->EvPoint(uvs[3][0], uvs[3][1], corners[3])) {
-	    throw new exception(); // XXX - fix this
-	}
-	corners[4] = BVNode<BV>::m_estimate;
-
-	// find the point on the surface closest to pt
-	int mini = 0;
-	double mindist = pt.DistanceTo(corners[mini]);
-	double tmpdist;
-#if defined(_WIN32) && !defined(__CYGWIN__)
-	for (int i = 1; i < 5; i++) {
-#else
-	for (size_t i = 1; i < 5; i++) {
-#endif
-	    tmpdist = pt.DistanceTo(corners[i]);
-	    TRACE("\t" << mindist << " < " << tmpdist);
-	    if (tmpdist < mindist) {
-		mini = i;
-		mindist = tmpdist;
-	    }
-	}
-	TRACE("Closest: " << mindist << "; " << PT2(uvs[mini]));
-	return ON_2dPoint(uvs[mini][0], uvs[mini][1]);
-    }
+		BRNode* br = dynamic_cast<BRNode*>(*i);
+		br->GetBBox(bmin,bmax);
+		dist = 0.000001; //0.03*DIST_PT_PT(bmin,bmax);
+		if ((uv[X] > bmin[X]-dist) && (uv[X] < bmax[X]+dist))
+		    out_leaves.push_back(br);
+	    }	    
+    	}
 
     template<class BV>
-    inline bool
-    SubsurfaceBVNode<BV>::prepTrims(CurveTree *ct) {
+    	inline bool
+    	BVNode<BV>::prepTrims(CurveTree *ct) {
 		list<BRNode*>::iterator i;
 		BRNode* br;
 		//	point_t surfmin,surfmax;

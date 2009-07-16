@@ -172,7 +172,7 @@ void plotsurfaceleafs(SurfaceTree* surf) {
     surf->getLeaves(leaves);
 
     for (list<BBNode*>::iterator i = leaves.begin(); i != leaves.end(); i++) {
-		SubsurfaceBBNode* bb = dynamic_cast<SubsurfaceBBNode*>(*i);
+		BBNode* bb = dynamic_cast<BBNode*>(*i);
 		if (bb->m_trimmed) {
 			COLOR_PLOT(255, 0, 0);
 		} else if (bb->m_checkTrim) {
@@ -205,7 +205,7 @@ void plotsurfaceleafs(SurfaceTree* surf) {
     }
     return;
 }
-void plotleaf3d(SubsurfaceBBNode* bb) {
+void plotleaf3d(BBNode* bb) {
     double min[3],max[3];
 	double u,v;
 	ON_2dPoint uv[2];
@@ -261,7 +261,7 @@ void plotleaf3d(SubsurfaceBBNode* bb) {
 	
     return;
 }
-void plotleafuv(SubsurfaceBBNode* bb) {
+void plotleafuv(BBNode* bb) {
     double min[3],max[3];
 
 	if (bb->m_trimmed) {

@@ -113,8 +113,8 @@ using namespace brlcad;
 
 
 void plotsurfaceleafs(SurfaceTree* surf);
-void plotleaf3d(SubsurfaceBBNode* bb);
-void plotleafuv(SubsurfaceBBNode* bb);
+void plotleaf3d(BBNode* bb);
+void plotleafuv(BBNode* bb);
 void plottrim(ON_BrepFace &face, struct bn_vlblock *vbp);
 void plottrim(const ON_Curve &curve, double from, double to );
 void plottrim(ON_Curve &curve );

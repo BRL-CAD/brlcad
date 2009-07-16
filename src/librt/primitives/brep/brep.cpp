@@ -642,7 +642,7 @@ brep_preprocess_trims(ON_BrepFace& face, SurfaceTree* tree) {
     tree->getLeaves(leaves);
 	
     for (list<BBNode*>::iterator i = leaves.begin(); i != leaves.end(); i++) {
-		SubsurfaceBBNode* bb = dynamic_cast<SubsurfaceBBNode*>(*i);
+		BBNode* bb = dynamic_cast<BBNode*>(*i);
 		bb->prepTrims(ct);
 		/*
 	// check to see if the bbox encloses a trim
@@ -896,7 +896,7 @@ public:
     enum hit_direction direction;
 	int m_adj_face_index;
     // XXX - calculate the dot of the dir with the normal here!
-    SubsurfaceBBNode const * sbv;
+    BBNode const * sbv;
 
     brep_hit(const ON_BrepFace& f, const point_t orig, const point_t p, const vect_t n, const pt2d_t _uv)
 	: face(f), trimmed(false), closeToEdge(false), oob(false), sbv(NULL)
@@ -1022,7 +1022,7 @@ static const char* BREP_INTERSECT_REASON(brep_intersect_reason_t index)
 
 int
 brep_edge_check(int reason,
-		const SubsurfaceBBNode* sbv,
+		const BBNode* sbv,
 		const ON_BrepFace* face,
 		const ON_Surface* surf,
 		const ON_Ray& r,
@@ -1144,7 +1144,7 @@ utah_pushBack(const ON_Surface* surf, ON_2dPoint &uv)
 
 
 int
-utah_newton_solver_test(const SubsurfaceBBNode* sbv, const ON_Surface* surf, const ON_Ray& r, ON_2dPoint* ouv, double* t, ON_3dVector* N, bool& converged, ON_2dPoint* suv, int count, int iu, int iv)
+utah_newton_solver_test(const BBNode* sbv, const ON_Surface* surf, const ON_Ray& r, ON_2dPoint* ouv, double* t, ON_3dVector* N, bool& converged, ON_2dPoint* suv, int count, int iu, int iv)
 {
     int i;
     int intersects = 0;
@@ -1236,7 +1236,7 @@ utah_newton_solver_test(const SubsurfaceBBNode* sbv, const ON_Surface* surf, con
 
 
 int
-utah_newton_4corner_solver(const SubsurfaceBBNode* sbv, const ON_Surface* surf, const ON_Ray& r, ON_2dPoint* ouv, double* t, ON_3dVector* N, bool& converged, int docorners)
+utah_newton_4corner_solver(const BBNode* sbv, const ON_Surface* surf, const ON_Ray& r, ON_2dPoint* ouv, double* t, ON_3dVector* N, bool& converged, int docorners)
 {
     int intersects = 0;
     converged = false;
@@ -1259,7 +1259,7 @@ utah_newton_4corner_solver(const SubsurfaceBBNode* sbv, const ON_Surface* surf, 
 }
 
 void
-utah_newton_solver(const SubsurfaceBBNode* sbv, const ON_Surface* surf, const ON_Ray& r, ON_2dPoint &uv, double& t, ON_3dVector &N, bool& converged)
+utah_newton_solver(const BBNode* sbv, const ON_Surface* surf, const ON_Ray& r, ON_2dPoint &uv, double& t, ON_3dVector &N, bool& converged)
 {
     int i;
     double j11, j12, j21, j22;
@@ -1481,7 +1481,7 @@ utah_isTrimmed(ON_2dPoint uv, const ON_BrepFace *face) {
 
 
 int
-utah_brep_intersect_test(const SubsurfaceBBNode* sbv, const ON_BrepFace* face, const ON_Surface* surf, pt2d_t uv, ON_Ray& ray, HitList& hits)
+utah_brep_intersect_test(const BBNode* sbv, const ON_BrepFace* face, const ON_Surface* surf, pt2d_t uv, ON_Ray& ray, HitList& hits)
 {
     ON_3dVector N[2];
     bool hit = false;
@@ -1506,7 +1506,7 @@ utah_brep_intersect_test(const SubsurfaceBBNode* sbv, const ON_BrepFace* face, c
     for(int i=0;i < numhits;i++) {
 		fastf_t closesttrim;
 		BRNode* trimBR = NULL;
-		int trim_status = ((SubsurfaceBBNode*)sbv)->isTrimmed(ouv[i],trimBR,closesttrim);
+		int trim_status = ((BBNode*)sbv)->isTrimmed(ouv[i],trimBR,closesttrim);
 		if (converged && (t[i] > 1.e-2)) {
 			if  (trim_status != 1) {
 				ON_3dPoint _pt;
@@ -1577,7 +1577,7 @@ utah_brep_intersect_test(const SubsurfaceBBNode* sbv, const ON_BrepFace* face, c
 }
 
 int
-utah_brep_intersect(const SubsurfaceBBNode* sbv, const ON_BrepFace* face, const ON_Surface* surf, pt2d_t uv, ON_Ray& ray, HitList& hits)
+utah_brep_intersect(const BBNode* sbv, const ON_BrepFace* face, const ON_Surface* surf, pt2d_t uv, ON_Ray& ray, HitList& hits)
 {
     ON_3dVector N;
     bool hit = false;
@@ -1598,12 +1598,12 @@ utah_brep_intersect(const SubsurfaceBBNode* sbv, const ON_BrepFace* face, const 
      *
      */
     //if (converged && (t > 1.e-2) && (!utah_isTrimmed(ouv, face))) hit = true;
-	//if (converged && (t > 1.e-2) && (!((SubsurfaceBBNode*)sbv)->isTrimmed(ouv))) hit = true;
+	//if (converged && (t > 1.e-2) && (!((BBNode*)sbv)->isTrimmed(ouv))) hit = true;
 	
 	if ( (sbv->m_u[0] < ouv[0]) && (sbv->m_u[1] > ouv[0]) &&
 			(sbv->m_v[0] < ouv[1]) && (sbv->m_v[1] > ouv[1])) {
 		BRNode* trimBR = NULL;
-	    int trim_status = ((SubsurfaceBBNode*)sbv)->isTrimmed(ouv,trimBR,closesttrim);	
+	    int trim_status = ((BBNode*)sbv)->isTrimmed(ouv,trimBR,closesttrim);	
 	if (converged && (t > 1.e-2)) {
 		if  (trim_status != 1) {
 			hit = true;
@@ -1647,7 +1647,7 @@ utah_brep_intersect(const SubsurfaceBBNode* sbv, const ON_BrepFace* face, const 
 
 
 int
-brep_intersect(const SubsurfaceBBNode* sbv, const ON_BrepFace* face, const ON_Surface* surf, pt2d_t uv, ON_Ray& ray, HitList& hits)
+brep_intersect(const BBNode* sbv, const ON_BrepFace* face, const ON_Surface* surf, pt2d_t uv, ON_Ray& ray, HitList& hits)
 {
     int found = BREP_INTERSECT_ROOT_ITERATION_LIMIT;
     fastf_t Dlast = MAX_FASTF;
@@ -1683,7 +1683,7 @@ brep_intersect(const SubsurfaceBBNode* sbv, const ON_BrepFace* face, const ON_Su
 	Dlast = d;
     }
 	BRNode* trimBR = NULL;
-    int trim_status = ((SubsurfaceBBNode*)sbv)->isTrimmed(uv,trimBR,closesttrim);
+    int trim_status = ((BBNode*)sbv)->isTrimmed(uv,trimBR,closesttrim);
     if ((found > 0) &&  (trim_status != 1)) {
 	ON_3dPoint _pt;
 	ON_3dVector _norm;
@@ -1715,7 +1715,7 @@ brep_intersect(const SubsurfaceBBNode* sbv, const ON_BrepFace* face, const ON_Su
 
 #if 0
 static void
-opposite(const SubsurfaceBBNode* sbv, pt2d_t uv)
+opposite(const BBNode* sbv, pt2d_t uv)
 {
     if (uv[1] > sbv->m_v.Mid()) {
 	// quadrant I or II
@@ -1788,9 +1788,9 @@ rt_brep_shot(struct soltab *stp, register struct xray *rp, struct application *a
     struct brep_specific* bs = (struct brep_specific*)stp->st_specific;
 
     // check the hierarchy to see if we have a hit at a leaf node
-    BBNode::IsectList inters;
+    list<BBNode*> inters;
     ON_Ray r = toXRay(rp);
-    bs->bvh->intersectsHierarchy(r, &inters);
+    bs->bvh->intersectsHierarchy(r, inters);
 
     if (inters.size() == 0) return 0; // MISS
     TRACE1("bboxes: " << inters.size());
@@ -1818,14 +1818,14 @@ rt_brep_shot(struct soltab *stp, register struct xray *rp, struct application *a
     MissList misses; // XXX - get rid of this stuff (for debugging)
     int s = 0;
     hit_count = 0;
-    for (BBNode::IsectList::iterator i = inters.begin(); i != inters.end(); i++) {
-	const SubsurfaceBBNode* sbv = dynamic_cast<SubsurfaceBBNode*>((*i).m_node);
+    for (list<BBNode*>::iterator i = inters.begin(); i != inters.end(); i++) {
+        const BBNode* sbv = (*i);
 	
 	boxcnt++;
 #ifdef KDEBUGMISS
 	sprintf(buffer,"N%d.pl",boxcnt);
 	plot_file((const char *)buffer);
-	plotleaf3d((SubsurfaceBBNode*)sbv);
+	plotleaf3d((BBNode*)sbv);
 	(void)fclose(plot_file());
 		plot = NULL;
 #endif
@@ -1840,7 +1840,7 @@ rt_brep_shot(struct soltab *stp, register struct xray *rp, struct application *a
 		const ON_BrepFace *face = sbv->m_face;
 		sprintf(buffer,"Box%d_N%d.pl",face->m_face_index,boxcnt);
 		plot_file((const char *)buffer);
-		plotleaf3d((SubsurfaceBBNode*)sbv);
+		plotleaf3d((BBNode*)sbv);
 		(void)fclose(plot_file());
 		plot = NULL;
 		sprintf(buffer,"Face%d_N%d.pl",face->m_face_index,boxcnt);

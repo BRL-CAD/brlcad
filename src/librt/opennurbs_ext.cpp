@@ -753,7 +753,7 @@ namespace brlcad {
 	    */
 	    TRACE("creating leaf: u(" << u.Min() << ", " << u.Max() <<
 		  ") v(" << v.Min() << ", " << v.Max() << ")");
-	    node = new SubsurfaceBBNode(ON_BoundingBox(ON_3dPoint(min),
+	    node = new BBNode(ON_BoundingBox(ON_3dPoint(min),
 						       ON_3dPoint(max)),
 					m_face,
 					u, v);
