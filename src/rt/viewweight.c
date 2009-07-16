@@ -208,6 +208,7 @@ view_init(register struct application *ap, char *file, char *obj, int minus_o)
     if ( (densityfp=fopen( densityfile, "r" )) == (FILE *) 0 ) {
 	snprintf(densityfile, i, "%s/%s", homedir, DENSITY_FILE);
 	if ( (densityfp=fopen( densityfile, "r" )) == (FILE *) 0 ) {
+	    bu_log( "Unable to load density file \"%s\" for reading\n", densityfile);
 	    perror( densityfile );
 	    bu_exit( -1, NULL );
 	}
