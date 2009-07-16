@@ -121,7 +121,6 @@ namespace brlcad {
 					   bool checkTrim = true,
 					   bool trimmed = false);
 
-		bool intersectedBy(ON_Ray& ray, double* tnear = 0, double* tfar = 0);
 		bool isLeaf() const;
 	        int isTrimmed(const ON_2dPoint& uv,fastf_t &trimdist) const;
 		bool doTrimming() const;
@@ -328,12 +327,6 @@ namespace brlcad {
 			m_bb_diag = DIST_PT_PT(m_start,m_end);
 
 		}
-
-	template<class BA>
-	inline bool
-	SubcurveBANode<BA>::intersectedBy(ON_Ray& ray, double *tnear, double *tfar) {
-	return !m_trimmed && BANode<BA>::intersectedBy(ray, tnear, tfar);
-	}
 
 	template<class BA>
 	inline bool
