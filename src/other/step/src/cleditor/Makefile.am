@@ -22,7 +22,7 @@ libstepeditor_nil_la_CXXFLAGS = \
 	-I$(top_srcdir)/src/cldai
 
 libstepeditor_la_SOURCES = 
-libstepeditor_la_LDFLAGS = -avoid-version -no-undefined -Wc,${FEXCEPTIONS}
+libstepeditor_la_LDFLAGS = -no-undefined -Wc,${FEXCEPTIONS} -version-info 19:1
 libstepeditor_la_LIBADD = \
 	libstepeditor_nil.la \
 	${CLUTILS} \

@@ -4,6 +4,8 @@ noinst_LTLIBRARIES = libexpress_nil.la
 AM_CFLAGS = -I$(top_srcdir)/include/express
 AM_LFLAGS = -l
 
+libexpress_la_LDFLAGS = -version-info 19:1 -no-undefined -Wc,${FEXCEPTIONS}
+
 bin_PROGRAMS = \
 	fedex \
 	symlink
@@ -45,7 +47,7 @@ libexpress_nil_la_SOURCES = $(SRCS)
 libexpress_nil_la_LDFLAGS = -avoid-version
 
 libexpress_la_SOURCES = 
-libexpress_la_LDFLAGS = -avoid-version -no-undefined
+libexpress_la_LDFLAGS = -no-undefined -version-info 19:1
 libexpress_la_LIBADD = libexpress_nil.la
 
 noinst_HEADERS = \

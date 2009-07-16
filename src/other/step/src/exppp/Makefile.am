@@ -18,7 +18,7 @@ libexppp_nil_la_SOURCES = exppp.c
 libexppp_nil_la_LDFLAGS = -avoid-version
 
 libexppp_la_SOURCES =
-libexppp_la_LDFLAGS = -avoid-version -no-undefined
+libexppp_la_LDFLAGS = -no-undefined -version-info 19:1
 libexppp_la_LIBADD = \
 	${EXPRESS} \
 	libexppp_nil.la

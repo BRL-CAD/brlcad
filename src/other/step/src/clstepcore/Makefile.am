@@ -60,7 +60,7 @@ libstepcore_nil_la_CXXFLAGS = \
 	-I$(top_srcdir)/src/clutils
 
 libstepcore_la_SOURCES = 
-libstepcore_la_LDFLAGS = -avoid-version -Wc,${FEXCEPTIONS}
+libstepcore_la_LDFLAGS = -Wc,${FEXCEPTIONS} -version-info 19:1
 libstepcore_la_LIBADD = \
 	libstepcore_nil.la \
 	${CLUTILS} \

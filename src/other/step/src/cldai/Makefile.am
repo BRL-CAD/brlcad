@@ -17,7 +17,7 @@ libstepdai_nil_la_CXXFLAGS = \
 	-I$(top_srcdir)/src/clutils
 
 libstepdai_la_SOURCES = 
-libstepdai_la_LDFLAGS = -avoid-version -no-undefined -Wc,${FEXCEPTIONS}
+libstepdai_la_LDFLAGS = -no-undefined -Wc,${FEXCEPTIONS} -version-info 19:1
 libstepdai_la_LIBADD = \
 	libstepdai_nil.la \
 	${CLUTILS} \
