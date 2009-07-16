@@ -458,6 +458,51 @@ namespace brlcad {
 		return p[Y];
     	    }
 
+    extern bool sortX(BRNode* first, BRNode* second);
+    extern bool sortY(BRNode* first, BRNode* second);
+
+    //--------------------------------------------------------------------------------
+    // CurveTree declaration
+    class CurveTree {
+    public:
+	CurveTree(ON_BrepFace* face);
+	~CurveTree();
+
+	BRNode* getRootNode() const;
+
+	/**
+	 * Calculate, using the surface bounding volume hierarchy, a uv
+	 * estimate for the closest point on the surface to the point in
+	 * 3-space.
+	 */
+	ON_2dPoint getClosestPointEstimate(const ON_3dPoint& pt);
+	ON_2dPoint getClosestPointEstimate(const ON_3dPoint& pt, ON_Interval& u, ON_Interval& v);
+
+	/**
+	 * Return just the leaves of the surface tree
+	 */
+	void getLeaves(list<BRNode*>& out_leaves);
+	void getLeavesAbove(list<BRNode*>& out_leaves, const ON_Interval& u, const ON_Interval& v);
+	void getLeavesRight(list<BRNode*>& out_leaves, const ON_Interval& u, const ON_Interval& v);
+	int depth();
+
+    private:
+	fastf_t getVerticalTangent(const ON_Curve *curve,fastf_t min,fastf_t max);
+	fastf_t getHorizontalTangent(const ON_Curve *curve,fastf_t min,fastf_t max);
+	bool getHVTangents(const ON_Curve* curve, ON_Interval& t, list<fastf_t>& list);
+	bool isLinear(const ON_Curve* curve, double min, double max);
+	BRNode* subdivideCurve(const ON_Curve* curve, int adj_face_index, double min, double max, bool innerTrim, int depth);
+	BRNode* curveBBox(const ON_Curve* curve, int adj_face_index, ON_Interval& t,bool leaf, bool innerTrim, const ON_BoundingBox& bb);
+	BRNode* initialLoopBBox();
+
+	ON_BrepFace* m_face;
+	int m_adj_face_index;
+	BRNode* m_root;
+	list<BRNode*> m_sortedX;
+	list<BRNode*> m_sortedY;
+    };
+
+
     //--------------------------------------------------------------------------------
     // Bounding volume hierarchy classes
 
@@ -522,50 +567,6 @@ namespace brlcad {
 
     private:
 	BVNode<BV>* closer(const ON_3dPoint& pt, BVNode<BV>* left, BVNode<BV>* right);
-    };
-
-    extern bool sortX(BRNode* first, BRNode* second);
-    extern bool sortY(BRNode* first, BRNode* second);
-
-    //--------------------------------------------------------------------------------
-    // CurveTree declaration
-    class CurveTree {
-    public:
-	CurveTree(ON_BrepFace* face);
-	~CurveTree();
-
-	BRNode* getRootNode() const;
-
-	/**
-	 * Calculate, using the surface bounding volume hierarchy, a uv
-	 * estimate for the closest point on the surface to the point in
-	 * 3-space.
-	 */
-	ON_2dPoint getClosestPointEstimate(const ON_3dPoint& pt);
-	ON_2dPoint getClosestPointEstimate(const ON_3dPoint& pt, ON_Interval& u, ON_Interval& v);
-
-	/**
-	 * Return just the leaves of the surface tree
-	 */
-	void getLeaves(list<BRNode*>& out_leaves);
-	void getLeavesAbove(list<BRNode*>& out_leaves, const ON_Interval& u, const ON_Interval& v);
-	void getLeavesRight(list<BRNode*>& out_leaves, const ON_Interval& u, const ON_Interval& v);
-	int depth();
-
-    private:
-	fastf_t getVerticalTangent(const ON_Curve *curve,fastf_t min,fastf_t max);
-	fastf_t getHorizontalTangent(const ON_Curve *curve,fastf_t min,fastf_t max);
-	bool getHVTangents(const ON_Curve* curve, ON_Interval& t, list<fastf_t>& list);
-	bool isLinear(const ON_Curve* curve, double min, double max);
-	BRNode* subdivideCurve(const ON_Curve* curve, int adj_face_index, double min, double max, bool innerTrim, int depth);
-	BRNode* curveBBox(const ON_Curve* curve, int adj_face_index, ON_Interval& t,bool leaf, bool innerTrim, const ON_BoundingBox& bb);
-	BRNode* initialLoopBBox();
-
-	ON_BrepFace* m_face;
-	int m_adj_face_index;
-	BRNode* m_root;
-	list<BRNode*> m_sortedX;
-	list<BRNode*> m_sortedY;
     };
 
     template<class BV>
