@@ -515,15 +515,20 @@ namespace brlcad {
     	class BVNode {
 	    public:
 		BVNode();
-		BVNode(const BV& node, const ON_BrepFace* face, const ON_Interval& u,
+		BVNode(const BV& node);
+		BVNode(CurveTree* ct);
+		BVNode(CurveTree* ct, const BV& node);
+		BVNode(CurveTree* ct, const BV& node, const ON_BrepFace* face, const ON_Interval& u,
 			 const ON_Interval& v, bool checkTrim = false, bool trimmed = false);
 
-		BVNode(const BV& node);
 		~BVNode();
 
 		// List of all children of a given node
 		typedef vector<BVNode<BV>*> ChildList;
 		ChildList m_children;
+
+		// Curve Tree associated with the parent Surface Tree
+		CurveTree* m_ctree;
 
 		// Bounding Box
 		BV m_node;
@@ -586,7 +591,7 @@ namespace brlcad {
 		bool doTrimming() const;
 		
 		void getTrimsAbove(const ON_2dPoint& uv, list<BRNode*>& out_leaves);
-		bool prepTrims(CurveTree *ct);
+		bool prepTrims();
 
 	    private:
 		BVNode<BV>* closer(const ON_3dPoint& pt, BVNode<BV>* left, BVNode<BV>* right);
@@ -599,16 +604,9 @@ namespace brlcad {
 
     //--------------------------------------------------------------------------------
     // Template Implementation
-    template<class BV>
+   template<class BV>
     	inline
-    	BVNode<BV>::BVNode() { }
-
-    template<class BV>
-    	inline 
-	BVNode<BV>::BVNode(const BV& node, const ON_BrepFace* face,
-	       	const ON_Interval& u, const ON_Interval& v, bool checkTrim, bool trimmed)
-	: m_node(node), m_face(face), m_u(u), m_v(v), m_checkTrim(checkTrim), 
-          m_trimmed(trimmed) { }
+    	BVNode<BV>::BVNode(){ }
 
     template<class BV>
     	inline
@@ -625,6 +623,34 @@ namespace brlcad {
 	    }
 	}
     }
+
+    template<class BV>
+    	inline
+    	BVNode<BV>::BVNode(CurveTree* ct): m_ctree(ct) { }
+
+
+    template<class BV>
+    	inline
+    	BVNode<BV>::BVNode(CurveTree* ct, const BV& node) : m_ctree(ct), m_node(node) {
+#if defined(_WIN32) && !defined(__CYGWIN__)
+	for (int i = 0; i < 3; i++) {
+#else
+	for (size_t i = 0; i < 3; i++) {
+#endif
+	    double d = m_node.m_max[i] - m_node.m_min[i];
+	    if (ON_NearZero(d, ON_ZERO_TOLERANCE)) {
+		m_node.m_min[i] -= 0.001;
+		m_node.m_max[i] += 0.001;
+	    }
+	}
+    }
+
+    template<class BV>
+    	inline 
+	BVNode<BV>::BVNode(CurveTree* ct, const BV& node, const ON_BrepFace* face,
+	       	const ON_Interval& u, const ON_Interval& v, bool checkTrim, bool trimmed)
+	: m_ctree(ct), m_node(node), m_face(face), m_u(u), m_v(v), m_checkTrim(checkTrim), 
+          m_trimmed(trimmed) { }
 
     template<class BV>
     	inline
@@ -967,7 +993,8 @@ namespace brlcad {
 
     template<class BV>
     	inline bool
-    	BVNode<BV>::prepTrims(CurveTree *ct) {
+    	BVNode<BV>::prepTrims() {
+	    	CurveTree* ct = m_ctree;
 		list<BRNode*>::iterator i;
 		BRNode* br;
 		//	point_t surfmin,surfmax;
@@ -1057,6 +1084,8 @@ namespace brlcad {
     public:
 	SurfaceTree(ON_BrepFace* face);
 	~SurfaceTree();
+
+	CurveTree* ctree;
 
 	BBNode* getRootNode() const;
 

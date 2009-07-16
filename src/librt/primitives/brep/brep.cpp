@@ -643,7 +643,7 @@ brep_preprocess_trims(ON_BrepFace& face, SurfaceTree* tree) {
 	
     for (list<BBNode*>::iterator i = leaves.begin(); i != leaves.end(); i++) {
 		BBNode* bb = dynamic_cast<BBNode*>(*i);
-		bb->prepTrims(ct);
+//		bb->prepTrims(ct);
 		/*
 	// check to see if the bbox encloses a trim
 	ON_3dPoint uvmin(bb->m_u.Min(), bb->m_v.Min(), 0);

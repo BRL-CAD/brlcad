@@ -640,6 +640,8 @@ namespace brlcad {
     SurfaceTree::SurfaceTree(ON_BrepFace* face)
 	: m_face(face)
     {
+	// first, build the Curve Tree
+	ctree = new CurveTree(m_face);
 	// build the surface bounding volume hierarchy
 	const ON_Surface* surf = face->SurfaceOf();
 	TRACE("Creating surface tree for: " << face->m_face_index);
@@ -652,6 +654,7 @@ namespace brlcad {
     }
 
     SurfaceTree::~SurfaceTree() {
+	delete ctree;
 	delete m_root;
     }
 
@@ -753,13 +756,14 @@ namespace brlcad {
 	    */
 	    TRACE("creating leaf: u(" << u.Min() << ", " << u.Max() <<
 		  ") v(" << v.Min() << ", " << v.Max() << ")");
-	    node = new BBNode(ON_BoundingBox(ON_3dPoint(min),
+	    node = new BBNode(ctree,ON_BoundingBox(ON_3dPoint(min),
 						       ON_3dPoint(max)),
 					m_face,
 					u, v);
+	    node->prepTrims();
 					
 	} else {
-	    node = new BBNode(ON_BoundingBox(ON_3dPoint(min),
+	    node = new BBNode(ctree,ON_BoundingBox(ON_3dPoint(min),
 					     ON_3dPoint(max)));
 	}
 
@@ -767,10 +771,10 @@ namespace brlcad {
 	return node;
     }
 
-    BBNode* initialBBox(const ON_Surface* surf)
+    BBNode* initialBBox(CurveTree* ctree, const ON_Surface* surf)
     {
 	ON_BoundingBox bb = surf->BoundingBox();
-	BBNode* node = new BBNode(bb);
+	BBNode* node = new BBNode(ctree,bb);
 	ON_3dPoint estimate;
 	if (!surf->EvPoint(surf->Domain(0).Mid(), surf->Domain(1).Mid(), estimate)) {
 	    bu_bomb("Could not evaluate estimate point on surface");
@@ -798,7 +802,7 @@ namespace brlcad {
 	if ((dsubsurf/dsurf < BREP_SURF_SUB_FACTOR) && (isFlat(surf, u, v) || depth >= BREP_MAX_FT_DEPTH)) {
 	    return surfaceBBox(true, u, v);
 	} else {
-	    BBNode* parent = (depth == 0) ? initialBBox(surf) : surfaceBBox(false, u, v);
+	    BBNode* parent = (depth == 0) ? initialBBox(ctree,surf) : surfaceBBox(false, u, v);
 	    BBNode* quads[4];
 	    ON_Interval first(0, 0.5);
 	    ON_Interval second(0.5, 1.0);
@@ -807,20 +811,32 @@ namespace brlcad {
 	    quads[2] = subdivideSurface(u.ParameterAt(second), v.ParameterAt(second), depth+1);
 	    quads[3] = subdivideSurface(u.ParameterAt(first),  v.ParameterAt(second), depth+1);
 
-	    for (int i = 0; i < 4; i++)
-		parent->addChild(quads[i]);
-
 	    for (int i = 0; i < 4; i++) {
+		parent->addChild(quads[i]);
+	    }
+
+	    for (int i = 0; i < parent->m_children.size(); i++) {
 		for (int j = 0; j < 3; j++) {
-		    if (parent->m_node.m_min[j] > quads[i]->m_node.m_min[j]) {
-    			parent->m_node.m_min[j] = quads[i]->m_node.m_min[j];
+		    if (parent->m_node.m_min[j] > parent->m_children[i]->m_node.m_min[j]) {
+    			parent->m_node.m_min[j] = parent->m_children[i]->m_node.m_min[j];
     		    }
-    		    if (parent->m_node.m_max[j] < quads[i]->m_node.m_max[j]) {
-    			parent->m_node.m_max[j] = quads[i]->m_node.m_max[j];
+    		    if (parent->m_node.m_max[j] < parent->m_children[i]->m_node.m_max[j]) {
+    			parent->m_node.m_max[j] = parent->m_children[i]->m_node.m_max[j];
     		    }
 		}
 	    }
-
+	    /*
+	    for (int i = 0; i < parent->m_children.size(); i++) {
+		parent->m_trimmed = true;
+		parent->m_checkTrim = false;
+		if (!(parent->m_children[i]->m_trimmed)) {
+		    parent->m_trimmed = false;
+		}
+		if (parent->m_children[i]->m_checkTrim) {
+		    parent->m_checkTrim = true;
+		}
+	    }
+	    */
 	    return parent;
 	}
     }
