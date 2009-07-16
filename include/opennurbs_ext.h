@@ -78,38 +78,12 @@ namespace brlcad {
 	template<class BA>
 	class BANode;
 
-	template<class BA>
-	class BASegment {
-	public:
-	BANode<BA>* m_node;
-	double m_near;
-	double m_far;
-
-	BASegment() {}
-	BASegment(BANode<BA>* node, double near, double far) :
-		m_node(node), m_near(near), m_far(far) {}
-	BASegment(const BASegment& seg) : m_node(seg.m_node),
-		m_near(seg.m_near),
-		m_far(seg.m_far) {}
-	BASegment& operator=(const BASegment& seg) {
-		m_node = seg.m_node;
-		m_near = seg.m_near;
-		m_far = seg.m_far;
-		return *this;
-	}
-
-	bool operator<(const BASegment<BA>& seg) {
-		return m_near < seg.m_near;
-	}
-	};
-
 	using namespace std;
 
 	template<class BA>
 	class BANode {
 	public:
 	typedef vector<BANode<BA>*> ChildList;
-	typedef list<BASegment<BA> > IsectList;
 
 	ChildList m_children;
 	BA m_node;
@@ -131,8 +105,6 @@ namespace brlcad {
 	virtual ON_2dPoint getClosestPointEstimate(const ON_3dPoint& pt, ON_Interval& u, ON_Interval& v);
 	void GetBBox(double* min, double* max) const;
 
-	virtual bool intersectedBy(ON_Ray& ray, double* tnear = 0, double* tfar = 0);
-	virtual bool intersectsHierarchy(ON_Ray& ray, std::list<BASegment<BA> >* results = 0);
 
 	private:
 	BANode<BA>* closer(const ON_3dPoint& pt, BANode<BA>* left, BANode<BA>* right);
@@ -255,65 +227,6 @@ namespace brlcad {
 	max[2] = m_node.m_max[2];
 	}
 
-
-	template<class BA>
-	inline bool
-	BANode<BA>::intersectedBy(ON_Ray& ray, double* tnear_opt, double* tfar_opt) {
-	double tnear = -real.infinity();
-	double tfar = real.infinity();
-	#if defined(_WIN32) && !defined(__CYGWIN__)
-	for (int i = 0; i < 3; i++) {
-	#else
-	for (size_t i = 0; i < 3; i++) {
-	#endif
-
-		//cout << "m_node.m_min[" << i << "]: " << m_node.m_min[i] << "\n";
-		//cout << "m_node.m_max[" << i << "]: " << m_node.m_max[i] << "\n";
-		if (ON_NearZero(ray.m_dir[i])) {
-		if (ray.m_origin[i] < m_node.m_min[i] || ray.m_origin[i] > m_node.m_max[i]) {
-	//		    cout << "ray.m_origin[" << i << "]: " << ray.m_origin[i] << "\n";
-	//		    cout << "m_node.m_min[" << i << "]: " << m_node.m_min[i] << "\n";
-	//		    cout << "m_node.m_max[" << i << "]: " << m_node.m_max[i] << "\n\n";
-			return false;
-		}
-		}
-		else {
-		double t1 = (m_node.m_min[i]-ray.m_origin[i]) / ray.m_dir[i];
-		double t2 = (m_node.m_max[i]-ray.m_origin[i]) / ray.m_dir[i];
-		if (t1 > t2) { double tmp = t1; t1 = t2; t2 = tmp; } // swap
-		if (t1 > tnear) tnear = t1;
-		if (t2 < tfar) tfar = t2;
-		if (tnear > tfar) /* box is missed */ return false;
-		if (tfar < 0) /* box is behind ray */ return false;
-		}
-	}
-	if (tnear_opt != 0 && tfar_opt != 0) { *tnear_opt = tnear; *tfar_opt = tfar; }
-	return true;
-	}
-
-	template<class BA>
-	bool
-	BANode<BA>::intersectsHierarchy(ON_Ray& ray, std::list<BASegment<BA> >* results_opt) {
-	double tnear, tfar;
-	bool intersects = intersectedBy(ray, &tnear, &tfar);
-	if (intersects && isLeaf()) {
-		if (results_opt != 0) results_opt->push_back(BASegment<BA>(this, tnear, tfar));
-	} else if (intersects) {
-	// XXX: bug in g++? had to typedef the below to get it to work!
-	//       for (std::list<BANode<BA>*>::iterator j = m_children.begin(); j != m_children.end(); j++) {
-	// 	(*j)->intersectsHierarchy(ray, results_opt);
-	//       }
-	#if defined(_WIN32) && !defined(__CYGWIN__)
-		for (int i = 0; i < m_children.size(); i++) {
-	#else
-		for (size_t i = 0; i < m_children.size(); i++) {
-	#endif
-		m_children[i]->intersectsHierarchy(ray, results_opt);
-		}
-	}
-
-	return intersects;
-	}
 
 	template<class BA>
 	int
