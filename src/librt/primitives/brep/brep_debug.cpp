@@ -234,7 +234,7 @@ void plotleaf3d(SubsurfaceBBNode* bb) {
 	bool start=true;
 	point_t a,b;
 	ON_3dPoint p;
-	SubcurveBRNode* trimBR = NULL;
+	BRNode* trimBR = NULL;
 	const ON_BrepFace* f = bb->m_face;
 	const ON_Surface* surf = f->SurfaceOf();
 	fastf_t uinc = (bb->m_u[1] - bb->m_u[0])/100.0;

@@ -626,7 +626,7 @@ brep_preprocess_trims(ON_BrepFace& face, SurfaceTree* tree) {
 		ct->getLeaves(curvelets);
 		
 		for (list<BRNode*>::iterator i = curvelets.begin(); i != curvelets.end(); i++) {
-			SubcurveBRNode* br = dynamic_cast<SubcurveBRNode*>(*i);
+			BRNode* br = dynamic_cast<BRNode*>(*i);
 			if (br->m_XIncreasing) {
 				COLOR_PLOT( 255, 255, 0 );
 			} else {
@@ -1505,7 +1505,7 @@ utah_brep_intersect_test(const SubsurfaceBBNode* sbv, const ON_BrepFace* face, c
 	
     for(int i=0;i < numhits;i++) {
 		fastf_t closesttrim;
-		SubcurveBRNode* trimBR = NULL;
+		BRNode* trimBR = NULL;
 		int trim_status = ((SubsurfaceBBNode*)sbv)->isTrimmed(ouv[i],trimBR,closesttrim);
 		if (converged && (t[i] > 1.e-2)) {
 			if  (trim_status != 1) {
@@ -1602,7 +1602,7 @@ utah_brep_intersect(const SubsurfaceBBNode* sbv, const ON_BrepFace* face, const 
 	
 	if ( (sbv->m_u[0] < ouv[0]) && (sbv->m_u[1] > ouv[0]) &&
 			(sbv->m_v[0] < ouv[1]) && (sbv->m_v[1] > ouv[1])) {
-		SubcurveBRNode* trimBR = NULL;
+		BRNode* trimBR = NULL;
 	    int trim_status = ((SubsurfaceBBNode*)sbv)->isTrimmed(ouv,trimBR,closesttrim);	
 	if (converged && (t > 1.e-2)) {
 		if  (trim_status != 1) {
@@ -1682,7 +1682,7 @@ brep_intersect(const SubsurfaceBBNode* sbv, const ON_BrepFace* face, const ON_Su
 	move(uv, new_uv);
 	Dlast = d;
     }
-	SubcurveBRNode* trimBR = NULL;
+	BRNode* trimBR = NULL;
     int trim_status = ((SubsurfaceBBNode*)sbv)->isTrimmed(uv,trimBR,closesttrim);
     if ((found > 0) &&  (trim_status != 1)) {
 	ON_3dPoint _pt;

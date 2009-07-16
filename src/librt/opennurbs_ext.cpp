@@ -302,7 +302,7 @@ namespace brlcad {
 	  }
 	*/
 	for (list<BRNode*>::iterator i = m_sortedX.begin(); i != m_sortedX.end(); i++) {
-	    SubcurveBRNode* br = dynamic_cast<SubcurveBRNode*>(*i);
+	    BRNode* br = dynamic_cast<BRNode*>(*i);
 	    br->GetBBox(bmin, bmax);
 
 	    dist = TOL;//0.03*DIST_PT_PT(bmin, bmax);
@@ -321,7 +321,7 @@ namespace brlcad {
 	point_t bmin, bmax;
 	double dist;
 	for (list<BRNode*>::iterator i = m_sortedX.begin(); i != m_sortedX.end(); i++) {
-	    SubcurveBRNode* br = dynamic_cast<SubcurveBRNode*>(*i);
+	    BRNode* br = dynamic_cast<BRNode*>(*i);
 	    br->GetBBox(bmin, bmax);
 	    dist = TOL; //0.03*DIST_PT_PT(bmin, bmax);
 	    if (bmax[Y]+dist < v[0])
@@ -475,7 +475,7 @@ namespace brlcad {
 	if (isLeaf) {
 	    TRACE("creating leaf: u(" << u.Min() << ", " << u.Max() <<
 		  ") v(" << v.Min() << ", " << v.Max() << ")");
-		node = new SubcurveBRNode(curve,adj_face_index,bb,m_face,t,vdot,innerTrim);
+		node = new BRNode(curve,adj_face_index,bb,m_face,t,vdot,innerTrim);
 	} else {
 		node = new BRNode(bb);
     }
