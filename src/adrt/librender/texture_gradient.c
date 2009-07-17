@@ -24,7 +24,7 @@
  *
  */
 
-#include "texture_gradient.h"
+#include "texture.h"
 #include <stdlib.h>
 #include "adrt_struct.h"
 

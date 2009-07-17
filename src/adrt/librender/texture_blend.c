@@ -24,7 +24,7 @@
  *
  */
 
-#include "texture_blend.h"
+#include "texture.h"
 #include <stdlib.h>
 
 #include "bu.h"

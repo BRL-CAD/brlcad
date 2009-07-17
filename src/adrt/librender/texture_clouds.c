@@ -24,7 +24,7 @@
  *
  */
 
-#include "texture_clouds.h"
+#include "texture.h"
 #include <stdlib.h>
 #include "adrt_struct.h"
 

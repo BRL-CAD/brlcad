@@ -24,7 +24,7 @@
  *
  */
 
-#include "texture_perlin.h"
+#include "texture.h"
 #include <stdlib.h>
 
 #include "bu.h"

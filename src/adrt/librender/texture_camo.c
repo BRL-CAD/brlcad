@@ -17,14 +17,14 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file texture_camo.h
+/** @file texture.h
  *
  *  Comments -
  *      Texture Library - Applies a 3 color camoflauge
  *
  */
 
-#include "texture_camo.h"
+#include "texture.h"
 #include <stdlib.h>
 #include "adrt_struct.h"
 

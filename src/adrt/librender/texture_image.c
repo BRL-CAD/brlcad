@@ -25,7 +25,7 @@
  *
  */
 
-#include "texture_image.h"
+#include "texture.h"
 
 #include <stdlib.h>
 #include <string.h>

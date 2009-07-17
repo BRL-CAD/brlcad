@@ -24,7 +24,7 @@
  *
  */
 
-#include "texture_stack.h"
+#include "texture.h"
 #include <stdlib.h>
 
 #include "bu.h"
