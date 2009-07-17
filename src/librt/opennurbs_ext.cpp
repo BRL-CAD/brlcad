@@ -648,6 +648,7 @@ namespace brlcad {
 	ON_Interval u = surf->Domain(0);
 	ON_Interval v = surf->Domain(1);
 	m_root = subdivideSurface(u, v, 0);
+	m_root->BuildBBox();
 	TRACE("u: [" << u[0] << ", " << u[1] << "]");
 	TRACE("v: [" << v[0] << ", " << v[1] << "]");
 	TRACE("m_root: " << m_root);
@@ -810,35 +811,26 @@ namespace brlcad {
 	    quads[1] = subdivideSurface(u.ParameterAt(second), v.ParameterAt(first),  depth+1);
 	    quads[2] = subdivideSurface(u.ParameterAt(second), v.ParameterAt(second), depth+1);
 	    quads[3] = subdivideSurface(u.ParameterAt(first),  v.ParameterAt(second), depth+1);
-
+ 
+	    parent->m_trimmed = true;
+	    parent->m_checkTrim = false;
+	
 	    for (int i = 0; i < 4; i++) {
-		parent->addChild(quads[i]);
-	    }
-
-	    for (int i = 0; i < parent->m_children.size(); i++) {
-		for (int j = 0; j < 3; j++) {
-		    if (parent->m_node.m_min[j] > parent->m_children[i]->m_node.m_min[j]) {
-    			parent->m_node.m_min[j] = parent->m_children[i]->m_node.m_min[j];
-    		    }
-    		    if (parent->m_node.m_max[j] < parent->m_children[i]->m_node.m_max[j]) {
-    			parent->m_node.m_max[j] = parent->m_children[i]->m_node.m_max[j];
-    		    }
-		}
-	    }
-	    /*
-	    for (int i = 0; i < parent->m_children.size(); i++) {
-		parent->m_trimmed = true;
-		parent->m_checkTrim = false;
-		if (!(parent->m_children[i]->m_trimmed)) {
+		if (!(quads[i]->m_trimmed)) {
 		    parent->m_trimmed = false;
 		}
-		if (parent->m_children[i]->m_checkTrim) {
+		if (quads[i]->m_checkTrim) {
 		    parent->m_checkTrim = true;
 		}
 	    }
-	    */
+	    
+	    for (int i = 0; i < 4; i++) {
+		if (!(quads[i]->m_trimmed)) parent->addChild(quads[i]);
+	    }
+
+	    parent->BuildBBox();
 	    return parent;
-	}
+    	}
     }
 
 #define NE 1

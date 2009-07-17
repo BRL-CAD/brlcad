@@ -591,6 +591,7 @@ namespace brlcad {
 		bool doTrimming() const;
 		
 		void getTrimsAbove(const ON_2dPoint& uv, list<BRNode*>& out_leaves);
+		void BuildBBox();
 		bool prepTrims();
 
 	    private:
@@ -991,6 +992,28 @@ namespace brlcad {
 	    }	    
     	}
 
+template<class BH>
+    void BVNode<BH>::BuildBBox() {
+	if (m_children.size() > 0) {
+	    for (vector<BBNode*>::iterator childnode = m_children.begin(); childnode != m_children.end(); childnode++) {
+		if (childnode == m_children.begin()) {
+		    m_node = ON_BoundingBox((*childnode)->m_node.m_min,(*childnode)->m_node.m_max);
+		} else {
+		    for (int j = 0; j < 3; j++) {
+			if (m_node.m_min[j] > (*childnode)->m_node.m_min[j]) {
+			    m_node.m_min[j] = (*childnode)->m_node.m_min[j];
+			}
+			if (m_node.m_max[j] < (*childnode)->m_node.m_max[j]) {
+			    m_node.m_max[j] = (*childnode)->m_node.m_max[j];
+			}
+		    }
+		}
+	    }
+	}
+    }
+														 
+
+    
     template<class BV>
     	inline bool
     	BVNode<BV>::prepTrims() {

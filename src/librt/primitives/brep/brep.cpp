@@ -150,7 +150,8 @@ brep_bvh_subdivide(BBNode* parent, const std::list<SurfaceTree*>& face_trees)
     //     }
     for (std::list<SurfaceTree*>::const_iterator i = face_trees.begin(); i != face_trees.end(); i++) {
 	parent->addChild((*i)->getRootNode());
-    }
+   }
+   parent->BuildBBox();
 }
 
 
