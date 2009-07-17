@@ -7027,6 +7027,7 @@ package provide Archer 1.0
 	return
     }
 
+    # Check for the existence of _obj
     if {[catch {gedCmd attr show $_obj} adata]} {
 	return
     }
@@ -7124,8 +7125,12 @@ package provide Archer 1.0
 }
 
 ##
-# This method also needs to use a binary copy
-# of objects between databases instead of "get" and "put".
+# This method creates ledger entries for each object in _olist
+# using the same global ID and an object ID of zero.
+#
+# Note - this method is not currently being used. Before using this
+#        method the undo methods will need to accomodate multiple
+#        entries having the same global ID.
 #
 ::itcl::body Archer::checkpoint_olist {_olist} {
     set olen [llength $_olist]
