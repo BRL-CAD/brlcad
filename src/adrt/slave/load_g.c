@@ -138,8 +138,11 @@ nmg_to_adrt_internal(struct nmgregion *r, struct db_full_path *pathp, int region
 	}
     }
 
+    /* tie_push the buffer */
+
     printf("Region %s polys: %d\n", region_name, region_polys);
 
+    /* clean up */
     bu_free(region_name, "region name");
 }
 
@@ -150,9 +153,11 @@ slave_load_g (tie_t *tie, char *data)
     char *region = data;
     double percent;
 
+    /* O.o */
     while(i<16 && data[i])
 	i++;
 
+    /* convert this to strtok or something? better parsing, at least. */
     while(*region && *region != ':')
 	++region;
 
@@ -190,6 +195,9 @@ slave_load_g (tie_t *tie, char *data)
     the_model = nmg_mm();
     BU_LIST_INIT(&rt_g.rtg_vlfree);	/* for vlist macros */
 
+    /* 
+     * these should probably encode so the result can be passed back to client
+     */
     if ((dbip = db_open(data, "r")) == DBI_NULL) {
 	perror(data);
 	bu_log("Unable to open geometry file (%s)\n", data);
@@ -209,12 +217,14 @@ slave_load_g (tie_t *tie, char *data)
 			0,			/* take all regions */
 			gcv_region_end,
 			nmg_booltree_leaf_tess,
-			(genptr_t)nmg_to_adrt_internal);
+			(genptr_t)nmg_to_adrt_internal);    /* TODO: fix type */
 
     /* Release dynamic storage */
     nmg_km(the_model);
     rt_vlist_cleanup();
     db_close(dbip);
+
+    /* tie prep */
 
     return 0;
 }
