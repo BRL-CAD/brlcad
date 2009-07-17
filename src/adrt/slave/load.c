@@ -85,14 +85,6 @@ slave_load (tie_t *tie, void *data, uint32_t dlen)
     meh += 3;	/* advance to the opcode */
 
     switch ( *meh ) {
-	case ADRT_LOAD_FORMAT_MYSQL_F:	/* mysql float */
-#if HAVE_MYSQL
-	    /* pid tie hostname */
-	    return slave_load_MySQL ( *(uint32_t *)(meh + 1), tie, meh + 6);
-#else
-	    printf("Not compiled to support MySQL.\n");
-	    return -1;
-#endif
 	case ADRT_LOAD_FORMAT_G:	/* given a filename and 1 toplevel region, recursively load from a .g file */
 	    return slave_load_g ( tie, meh + 1 );
 	case ADRT_LOAD_FORMAT_REG:	/* special magic for catching data on the pipe */

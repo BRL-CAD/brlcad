@@ -71,7 +71,6 @@ adrt_master_LDADD = \
 
 adrt_slave_SOURCES = \
 	slave/load.c \
-	slave/load_MySQL.c \
 	slave/load_g.c \
 	slave/slave.c \
 	slave/smain.c \
