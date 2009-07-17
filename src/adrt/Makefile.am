@@ -153,22 +153,6 @@ EXTRA_DIST = \
 	bench/main.c \
 	doc/ChangeLog \
 	doc/binary_spec.txt \
-	doc/rise.txt \
-	rise/master/dispatcher.c \
-	rise/master/dispatcher.h \
-	rise/master/main.c \
-	rise/master/master.c \
-	rise/master/master.h \
-	rise/master/post.c \
-	rise/master/post.h \
-	rise/observer/main.c \
-	rise/observer/observer.c \
-	rise/observer/observer.h \
-	rise/rise.h \
-	rise/rise_struct.h \
-	rise/slave/main.c \
-	rise/slave/slave.c \
-	rise/slave/slave.h \
 	scripts/adrt.py \
 	scripts/drawBSP.py \
 	scripts/makemovie.pl \
