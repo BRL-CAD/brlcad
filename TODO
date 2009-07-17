@@ -53,6 +53,12 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 THESE ARE UNSCHEDULED BACKLOG TASKS
 -----------------------------------
 
+* make sure there are no getenv() non-NULL assumptions within the
+  code.  might want to see if there's a pattern of variables being
+  checked such that a libbu interface would be warranted (e.g.,
+  instead of checking HOME, having a bu_find_directory(BU_USER_HOME)
+  routine or similar facility) for finding common resource locations.
+
 * add support for a zoom/viewsize option to rt so you can adjust the
   image scale without having to feed a view script.
 
