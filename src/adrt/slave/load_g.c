@@ -149,13 +149,9 @@ nmg_to_adrt_internal(struct nmgregion *r, struct db_full_path *pathp, int region
 int
 slave_load_g (tie_t *tie, char *data)
 {
-    int i = 0, c;
+    int c;
     char *region = data;
     double percent;
-
-    /* O.o */
-    while(i<16 && data[i])
-	i++;
 
     /* convert this to strtok or something? better parsing, at least. */
     while(*region && *region != ':')
@@ -211,13 +207,15 @@ slave_load_g (tie_t *tie, char *data)
     BN_CK_TOL(tree_state.ts_tol);
     RT_CK_TESS_TOL(tree_state.ts_ttol);
 
-    (void) db_walk_tree(dbip, 1, &region,
+    (void) db_walk_tree(dbip, 
+			1,
+			(const char **)(&region),
 			1,			/* ncpu */
 			&tree_state,
 			0,			/* take all regions */
 			gcv_region_end,
 			nmg_booltree_leaf_tess,
-			(genptr_t)nmg_to_adrt_internal);    /* TODO: fix type */
+			(genptr_t)nmg_to_adrt_internal);
 
     /* Release dynamic storage */
     nmg_km(the_model);
