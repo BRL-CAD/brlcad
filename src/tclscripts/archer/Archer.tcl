@@ -166,6 +166,7 @@ package provide Archer 1.0
 	method dbconcat            {args}
 	method decompose           {args}
 	method edcodes             {args}
+	method edcolor             {args}
 	method edmater             {args}
 	method facetize            {args}
 	method fracture            {args}
@@ -213,6 +214,7 @@ package provide Archer 1.0
 	# Object Edit Management
 	method checkpoint {_obj}
 	method checkpoint_olist {_olist}
+	method clearTargetLedger {}
 	method createTargetLedger {}
 	method global_undo {}
 	method ledger_cleanup {}
@@ -228,7 +230,6 @@ package provide Archer 1.0
 	variable mNeedGlobalUndo 0
 	variable mNeedObjUndo 0
 	variable mNeedCheckpoint 0
-	variable mTargetLedger ""
 	variable mLedger ""
 	variable mLedgerGID 0
 
@@ -247,6 +248,7 @@ package provide Archer 1.0
 	method combWrapper {_cmd _minArgs args}
 	method gedWrapper {_cmd _eflag _hflag _sflag _tflag args}
 	method gedWrapper2 {_cmd _oindex _pindex _eflag _hflag _sflag _tflag args}
+	method globalWrapper {_cmd args}
 	method initDefaultBindings {{_comp ""}}
 	method initGed {}
 	method selectNode {_tags {_rflag 1}}
@@ -492,7 +494,7 @@ package provide Archer 1.0
 ::itcl::body Archer::destructor {} {
     writePreferences
 
-    if {$mTargetLedger != ""} {
+    if {$mLedger != ""} {
 	catch {rename $mLedger ""}
     }
 }
@@ -978,6 +980,10 @@ package provide Archer 1.0
     eval ArcherCore::gedWrapper edcodes 0 0 1 1 $args
 }
 
+::itcl::body Archer::edcolor {args} {
+    return [eval globalWrapper edcolor $args]
+}
+
 # Needs an edWrapper to create checkpoints for each object
 ::itcl::body Archer::edmater {args} {
     eval ArcherCore::gedWrapper edmater 0 0 1 1 $args
@@ -1219,6 +1225,10 @@ package provide Archer 1.0
 	createTargetCopy
     }
 
+    if {!$mViewOnly} {
+	createTargetLedger
+    }
+
     # Load MGED database
     if {[info exists itk_component(ged)]} {
 	if {$mDbShared} {
@@ -1250,7 +1260,7 @@ package provide Archer 1.0
 	updateWizardMenu
 	updateUtilityMenu
 	deleteTargetOldCopy
-	createTargetLedger
+#	createTargetLedger
 
 	updateCreationButtons 1
 
@@ -1296,7 +1306,8 @@ package provide Archer 1.0
 
 ::itcl::body Archer::saveDb {} {
     ArcherCore::saveDb
-    createTargetLedger
+    clearTargetLedger
+#    createTargetLedger
 
     set mNeedCheckpoint 0
     updateCheckpointMode
@@ -1318,7 +1329,7 @@ package provide Archer 1.0
 }
 
 ::itcl::body Archer::title {args} {
-    eval ArcherCore::gedWrapper title 0 0 1 0 $args
+    return [eval globalWrapper title $args]
 }
 
 # XXX libged's track needs to return the objects affected
@@ -1328,7 +1339,7 @@ package provide Archer 1.0
 }
 
 ::itcl::body Archer::units {args} {
-    eval ArcherCore::gedWrapper units 0 0 1 0 $args
+    return [eval globalWrapper units $args]
 }
 
 ::itcl::body Archer::vmake {args} {
@@ -1705,6 +1716,52 @@ package provide Archer 1.0
     }
     SetNormalCursor $this
 
+    return $ret
+}
+
+::itcl::body Archer::globalWrapper {_cmd args} {
+    if {$_cmd != "edcolor" && $args == {}} {
+	return [gedCmd $_cmd]
+    }
+
+    if {$_cmd == "units" && [llength $args] == 1 && [lindex $args 0] == "-s"} {
+	return [gedCmd units -s]
+    }
+
+    set old_units [gedCmd units -s]
+    set lname [checkpoint _GLOBAL]
+
+    if {[catch {eval gedCmd $_cmd $args} ret]} {
+	return $ret
+    }
+
+    set new_units [gedCmd units -s]
+
+    # Nothing else to do
+    if {$_cmd == "units" && $old_units == $new_units} {
+	ledger_cleanup
+	return ""
+    }
+
+    if {$lname == ""} {
+	return "No ledger entry found for _GLOBAL."
+    } else {
+	# Assumed to have mods after the command invocation above
+	$mLedger attr set $lname $HAVE_MODS 1
+	$mLedger attr set $lname UNITS $old_units
+    }
+
+    set lname [checkpoint _GLOBAL]
+    if {$lname == ""} {
+	return "No ledger entry found for _GLOBAL."
+    } else {
+	$mLedger attr set $lname UNITS $new_units
+    }
+
+    set mNeedSave 1
+    updateSaveMode
+
+    gedCmd refresh
     return $ret
 }
 
@@ -6970,13 +7027,7 @@ package provide Archer 1.0
 	return
     }
 
-    #XXX Need to have a binary copy of an object from one database
-    #    to another. That would take care of the lossiness of get
-    #    and put. It would also handle copying attributes.
-
-    # This "get" fails for objects like _GLOBAL. So until the binary
-    # copy gets implemented, objects like _GLOBAL cannot be checkpointed.
-    if {[catch {gedCmd get $_obj} gdata]} {
+    if {[catch {gedCmd attr show $_obj} adata]} {
 	return
     }
 
@@ -7023,7 +7074,7 @@ package provide Archer 1.0
 
 	    updateUndoMode $oflag
 
-	    return
+	    return $le
 	}
 
 	incr oid
@@ -7068,6 +7119,8 @@ package provide Archer 1.0
     }
 
     updateUndoMode $oflag
+
+    return $lname
 }
 
 ##
@@ -7087,7 +7140,7 @@ package provide Archer 1.0
 
     # Create the ledger entries
     foreach obj $_olist {
-	if {[catch {gedCmd get $obj} gdata]} {
+	if {[catch {gedCmd attr show $obj} adata]} {
 	    continue
 	}
 
@@ -7152,18 +7205,16 @@ package provide Archer 1.0
     updateUndoMode $oflag
 }
 
+::itcl::body Archer::clearTargetLedger {} {
+    set mLedgerGID 0
+    $mLedger
+}
+
 ::itcl::body Archer::createTargetLedger {} {
     # This belongs in the openDb and newDb
     # Delete previous ledger
-    if {$mTargetLedger != ""} {
+    if {$mLedger != ""} {
 	catch {rename $mLedger ""}
-    }
-
-    set mTargetLedger "$mTarget\.ledger"
-    set id 1
-    while {[file exists $mTargetLedger]} {
-	set mTargetLedger "$mTarget\.ledger.$id"
-	incr id
     }
 
     set mLedgerGID 0
@@ -7205,30 +7256,38 @@ package provide Archer 1.0
     set mLedgerGID $gid
 
     # Adjust the corresponding object according to the ledger entry
-#    set gdata [lrange [$mLedger get $le] 1 end]
-#    eval gedCmd adjust $gname $gdata
-#    gedCmd kill $gname
     gedCmd cp -f $mLedger\:$le $gname
     gedCmd attr rm $gname Have_Mods
+
+    if {$gname == "_GLOBAL"} {
+	gedCmd refresh
+    }
 
     # Remove the ledger entry
     $mLedger kill $le
 
     incr mLedgerGID -1
 
-    if {$gname == $mSelectedObj} {
-	set mNeedObjSave 0
-	redrawObj $mSelectedObjPath
-	initEdit 0
-    } else {
-	# Possibly draw the updated object
-	set stripped_le [regsub {[0-9]+_[0-9]+_} $le ""]
-	foreach item [gedCmd report 0] {
-	    regexp {/([^/]+$)} $item all last
+    if {$gname != "_GLOBAL"} {
+	if {$gname == $mSelectedObj} {
+	    set mNeedObjSave 0
+	    redrawObj $mSelectedObjPath
+	    initEdit 0
+	} else {
+	    # Possibly draw the updated object
+	    set stripped_le [regsub {[0-9]+_[0-9]+_} $le ""]
+	    foreach item [gedCmd report 0] {
+		regexp {/([^/]+$)} $item all last
 
-	    if {$last == $stripped_le} {
-		redrawObj $item
+		if {$last == $stripped_le} {
+		    redrawObj $item
+		}
 	    }
+	}
+
+	# Make sure the selected object has atleast one checkpoint
+	if {$gname == $mSelectedObj} {
+	    checkpoint $mSelectedObj
 	}
     }
 
@@ -7243,11 +7302,6 @@ package provide Archer 1.0
 	updateCheckpointMode
 	updateSaveMode
 	updateUndoMode
-    }
-
-    # Make sure the selected object has atleast one checkpoint
-    if {$gname == $mSelectedObj} {
-	checkpoint $mSelectedObj
     }
 }
 
@@ -7318,9 +7372,6 @@ package provide Archer 1.0
     }
 
     # Adjust the corresponding object according to the ledger entry
-#    set gdata [lrange [$mLedger get $le] 1 end]
-#    eval gedCmd adjust $gname $gdata
-#    gedCmd kill $gname
     gedCmd cp -f $mLedger\:$le $gname
     gedCmd attr rm $gname Have_Mods
 

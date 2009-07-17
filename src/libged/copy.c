@@ -122,6 +122,38 @@ ged_dbcopy(struct ged *from_gedp, struct ged *to_gedp, const char *from, const c
 
     bu_free_external(&external);
 
+    /* Need to do something extra for _GLOBAL */
+    if (to_gedp->ged_wdbp->dbip->dbi_version > 4 && !strcmp(to, DB5_GLOBAL_OBJECT_NAME)) {
+	register struct directory *to_dp;
+	struct bu_attribute_value_set avs;
+	const char *val;
+
+	GED_DB_LOOKUP(to_gedp, to_dp, to, LOOKUP_NOISY, GED_ERROR & GED_QUIET);
+
+	bu_avs_init_empty(&avs);
+	if (db5_get_attributes(to_gedp->ged_wdbp->dbip, &avs, to_dp)) {
+	    bu_vls_printf(&from_gedp->ged_result_str, "Cannot get attributes for object %s\n", to_dp->d_namep);
+	    return GED_ERROR;
+	}
+
+	if ((val = bu_avs_get(&avs, "title")) != NULL)
+	    to_gedp->ged_wdbp->dbip->dbi_title = strdup(val);
+
+	if ((val = bu_avs_get(&avs, "units")) != NULL) {
+	    double loc2mm;
+
+	    if ((loc2mm = bu_mm_value(val)) > 0) {
+		to_gedp->ged_wdbp->dbip->dbi_local2base = loc2mm;
+		to_gedp->ged_wdbp->dbip->dbi_base2local = 1.0 / loc2mm;
+	    }
+	}
+
+	if ((val = bu_avs_get(&avs, "regionid_colortable")) != NULL)
+	    db5_import_color_table(val);
+
+	bu_avs_free(&avs);
+    }
+
     return GED_OK;
 }
 

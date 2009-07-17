@@ -609,6 +609,7 @@ static struct go_cmdtab go_cmds[] = {
     {"eac",	(char *)0, MAXARGS, go_autoview_func, ged_eac},
     {"echo",	(char *)0, MAXARGS, go_pass_through_func, ged_echo},
     {"edcodes",	(char *)0, MAXARGS, go_pass_through_func, ged_edcodes},
+    {"edcolor",	(char *)0, MAXARGS, go_pass_through_func, ged_edcolor},
     {"edcomb",	(char *)0, MAXARGS, go_pass_through_func, ged_edcomb},
     {"edmater",	(char *)0, MAXARGS, go_pass_through_func, ged_edmater},
     {"erase",	(char *)0, MAXARGS, go_pass_through_and_refresh_func, ged_erase},

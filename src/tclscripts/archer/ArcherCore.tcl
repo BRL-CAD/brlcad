@@ -161,6 +161,7 @@ namespace eval ArcherCore {
 	method draw                {args}
 	method E                   {args}
 	method edcodes             {args}
+	method edcolor             {args}
 	method edcomb              {args}
 	method edmater             {args}
 	method erase               {args}
@@ -390,7 +391,7 @@ namespace eval ArcherCore {
 					   bot2pipe bot_condense bot_decimate bot_face_fuse \
 					   bot_face_sort bot_merge bot_smooth bot_split bot_vertex_fuse \
 					   c cd clear clone color comb comb_color copy copyeval copymat \
-					   cp cpi dbconcat dbExpand decompose delete draw E edcodes edcomb \
+					   cp cpi dbconcat dbExpand decompose delete draw E edcodes edcolor edcomb \
 					   edmater erase_all ev exit facetize fracture \
 					   g group hide i importFg4Section \
 					   in inside item kill killall killrefs killtree ls \
@@ -3499,6 +3500,10 @@ Popup Menu    Right or Ctrl-Left
 
 ::itcl::body ArcherCore::edcodes {args} {
     eval gedWrapper edcodes 0 0 1 0 $args
+}
+
+::itcl::body ArcherCore::edcolor {args} {
+    eval gedWrapper edcolor 0 0 1 0 $args
 }
 
 ::itcl::body ArcherCore::edcomb {args} {

@@ -158,6 +158,7 @@ package provide cadwidgets::Ged 1.0
 	method eac {args}
 	method echo {args}
 	method edcodes {args}
+	method edcolor {args}
 	method edcomb {args}
 	method edmater {args}
 	method erase {args}
@@ -980,6 +981,10 @@ package provide cadwidgets::Ged 1.0
 
 ::itcl::body cadwidgets::Ged::edcodes {args} {
     eval $mGed edcodes $args
+}
+
+::itcl::body cadwidgets::Ged::edcolor {args} {
+    eval $mGed edcolor $args
 }
 
 ::itcl::body cadwidgets::Ged::edcomb {args} {
@@ -2900,6 +2905,7 @@ package provide cadwidgets::Ged 1.0
     $help add eac		{{air_code(s)} {draw objects with the specified air codes}}
     $help add echo		{{args} {echo the specified args to the command window}}
     $help add edcodes		{{object(s)} {edit the various codes for the specified objects}}
+    $help add edcolor		{{} {edit the color table}}
     $help add edcomb		{{comb rflag rid air los mid} {modify combination record information}}
     $help add edmater		{{comb1 [comb2 ...]} {edit combination materials}}
     $help add erase		{{<objects>} {remove objects from the screen}}
