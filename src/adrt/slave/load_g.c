@@ -48,18 +48,8 @@
 #include "rtgeom.h"
 #include "raytrace.h"
 
-static struct db_i *dbip;
-static struct model *the_model;
-static struct rt_tess_tol ttol;		/* tesselation tolerance in mm */
 static struct bn_tol tol;		/* calculation tolerance */
-static struct db_tree_state tree_state;	/* includes tol & model */
-
-static int regions_tried = 0;
-static int regions_converted = 0;
-static int regions_written = 0;
-static unsigned int tot_polygons = 0;
-
-static int verbose = 0;
+static tie_t *cur_tie;
 
 /* load the region into the tie image */
 static void
@@ -70,6 +60,11 @@ nmg_to_adrt_internal(struct nmgregion *r, struct db_full_path *pathp, int region
     struct vertex *v;
     char *region_name;
     int region_polys=0;
+    int regions_tried = 0;
+    int regions_converted = 0;
+    int regions_written = 0;
+    unsigned int tot_polygons = 0;
+    TIE_3 buf[4096];	/* obviously. this is lame. */
 
     NMG_CK_REGION(r);
     RT_CK_FULL_PATH(pathp);
@@ -121,7 +116,7 @@ nmg_to_adrt_internal(struct nmgregion *r, struct db_full_path *pathp, int region
 
 		    v = eu->vu_p->v_p;
 		    NMG_CK_VERTEX(v);
-		    /* add facet_normal and v->vg_p->coord */
+		    VMOVE(buf[vert_count].v, v->vg_p->coord);
 		}
 		if (vert_count > 3)
 		{
@@ -132,18 +127,15 @@ nmg_to_adrt_internal(struct nmgregion *r, struct db_full_path *pathp, int region
 		else if (vert_count < 3)
 		    continue;
 
-		tot_polygons++;
 		region_polys++;
 	    }
 	}
     }
 
-    /* tie_push the buffer */
-
+    tot_polygons += region_polys;
+    /* region_name must not be freed until we're done with the tie engine. */
+    tie_push(cur_tie, (TIE_3 **)&buf, region_polys, region_name, 0);
     printf("Region %s polys: %d\n", region_name, region_polys);
-
-    /* clean up */
-    bu_free(region_name, "region name");
 }
 
 int
@@ -152,6 +144,10 @@ slave_load_g (tie_t *tie, char *data)
     int c;
     char *region = data;
     double percent;
+    struct db_i *dbip;
+    struct model *the_model;
+    struct rt_tess_tol ttol;		/* tesselation tolerance in mm */
+    struct db_tree_state tree_state;	/* includes tol & model */
 
     /* convert this to strtok or something? better parsing, at least. */
     while(*region && *region != ':')
@@ -163,6 +159,8 @@ slave_load_g (tie_t *tie, char *data)
 	bu_bomb("No colon in file:region identifier\n");
     
     region++;
+
+    cur_tie = tie;	/* blehhh, global... need locking. */
 
     tree_state = rt_initial_tree_state;	/* struct copy */
     tree_state.ts_tol = &tol;
@@ -207,6 +205,8 @@ slave_load_g (tie_t *tie, char *data)
     BN_CK_TOL(tree_state.ts_tol);
     RT_CK_TESS_TOL(tree_state.ts_ttol);
 
+    tie_init(cur_tie, 0, TIE_KDTREE_FAST);
+
     (void) db_walk_tree(dbip, 
 			1,
 			(const char **)(&region),
@@ -222,7 +222,7 @@ slave_load_g (tie_t *tie, char *data)
     rt_vlist_cleanup();
     db_close(dbip);
 
-    /* tie prep */
+    tie_prep(tie);
 
     return 0;
 }
