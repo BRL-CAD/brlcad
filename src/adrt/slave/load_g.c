@@ -133,9 +133,9 @@ nmg_to_adrt_internal(struct nmgregion *r, struct db_full_path *pathp, int region
     }
 
     tot_polygons += region_polys;
+    printf("Region %s polys: %d\n", region_name, region_polys);
     /* region_name must not be freed until we're done with the tie engine. */
     tie_push(cur_tie, (TIE_3 **)&buf, region_polys, region_name, 0);
-    printf("Region %s polys: %d\n", region_name, region_polys);
 }
 
 int
@@ -205,7 +205,7 @@ slave_load_g (tie_t *tie, char *data)
     BN_CK_TOL(tree_state.ts_tol);
     RT_CK_TESS_TOL(tree_state.ts_ttol);
 
-    tie_init(cur_tie, 0, TIE_KDTREE_FAST);
+    tie_init(cur_tie, 4096, TIE_KDTREE_FAST);
 
     (void) db_walk_tree(dbip, 
 			1,

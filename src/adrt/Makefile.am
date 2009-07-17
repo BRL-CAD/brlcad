@@ -105,6 +105,7 @@ tieinclude_HEADERS = \
 	librender/spall.h \
 	librender/surfel.h \
 	librender/texture.h \
+	librender/texture_internal.h \
 	libtie/tie.h \
 	libtie/tie_define.h \
 	libtie/tie_kdtree.h \
