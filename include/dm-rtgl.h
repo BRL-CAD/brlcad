@@ -73,9 +73,12 @@ struct rtgl_vars {
 
 extern void rtgl_fogHint();
 
+#define PTVECT_SIZE 3000
+
 struct pointList {
     struct bu_list l;
-    point_t pt;
+    int used;
+    fastf_t ptVect[PTVECT_SIZE];
 };
 
 #endif /* __DM_RTGL__ */

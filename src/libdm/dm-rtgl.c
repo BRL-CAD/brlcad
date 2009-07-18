@@ -189,22 +189,15 @@ struct rt_i *rtip;
 char *oldTrees[RT_MAXARGS];
 int oldNumTrees = 0;
 
-/* number of points to draw at a time */
-#define DRAW_NUM  1000
-#define BUF_SIZE  3 * DRAW_NUM
-
-/* draw buffer */
-fastf_t drawBuffer[BUF_SIZE];
-int bufUsed = 0;             /* used space in buffer */
-
 /* list of hit points */
 struct pointList points;
+struct pointList *currItem;
 
 /* remove all points from points list */
 void freePoints(void) {
 
     /* list cannot be empty */
-    if (points.l.forw != NULL && points.l.forw != &points) {
+    if (points.l.forw != NULL && (struct pointList *)points.l.forw != &points) {
 
 	struct pointList *curr;
 	while (BU_LIST_WHILE(curr, pointList, &(points.l))) {
@@ -213,7 +206,6 @@ void freePoints(void) {
 	}
     }
 }
-
 
 void
 rtgl_fogHint(struct dm *dmp, int fastfog)
@@ -998,15 +990,23 @@ rtgl_loadMatrix(struct dm *dmp, fastf_t *mat, int which_eye)
 /* add a hit point to points list */
 void addPoint(struct application *app, struct hit *hit) {
     point_t point;
-    struct pointList *newItem;
-    
+
     /* calculate intersection point */
     VJOIN1(point, app->a_ray.r_pt, hit->hit_dist, app->a_ray.r_dir);
     
+    /* get new vector if current is full */
+    if (currItem->used == PTVECT_SIZE) {
+	BU_GETSTRUCT(currItem, pointList);
+	BU_LIST_PUSH(&(points.l), currItem);
+	currItem->used = 0;
+    }
+
     /* add point to list */
-    BU_GETSTRUCT(newItem, pointList);
-    VMOVE(newItem->pt, point);
-    BU_LIST_PUSH(&(points.l), newItem);
+    currItem->ptVect[X + currItem->used] = point[X];
+    currItem->ptVect[Y + currItem->used] = point[Y];
+    currItem->ptVect[Z + currItem->used] = point[Z];
+
+    currItem->used += 3;
 }
 
 /* add all hit points to points list */
@@ -1040,8 +1040,8 @@ void shootGrid(vect_t min, vect_t max, int uAxis, int vAxis, int iAxis) {
     VSUB2(span, max, min);
 
     /* calculate firing intervals */
-    int uDivs = 100;
-    int vDivs = 100;
+    int uDivs = 1000;
+    int vDivs = 1000;
 
     fastf_t uWidth = span[uAxis] / uDivs;
     fastf_t vWidth = span[vAxis] / vDivs;
@@ -1106,9 +1106,15 @@ rtgl_drawVList(struct dm *dmp, register struct bn_vlist *vp)
     if (rtip == RTI_NULL)
         return TCL_ERROR;
     
-    /* initialize point list if needed */
     if (points.l.forw == BU_LIST_NULL) {
+	/* initialize head */
         BU_LIST_INIT(&(points.l));
+	points.used = 0;
+
+	/* get first list item */
+	BU_GETSTRUCT(currItem, pointList);
+	BU_LIST_PUSH(&(points.l), currItem);
+	currItem->used = 0;
     }
 
     /* get number and names of visible tree tops */
@@ -1147,9 +1153,6 @@ rtgl_drawVList(struct dm *dmp, register struct bn_vlist *vp)
         }
     }
 
-    /* prepare for drawing */
-    glColor3d(0, 1, 0);
-
     /* get points for new trees */
     if (newTrees) {
 
@@ -1176,32 +1179,12 @@ rtgl_drawVList(struct dm *dmp, register struct bn_vlist *vp)
     }
 
     /* draw points */
+    glColor3d(0, 1, 0);
     glEnableClientState(GL_VERTEX_ARRAY);
-    glVertexPointer(3, GL_DOUBLE, 0, &drawBuffer);
-    bufUsed = 0;
-    
-    for (BU_LIST_FOR(curr, pointList, &(points.l))) {
 
-	/* draw buffer when full */
-	if (bufUsed == BUF_SIZE) {
-	    glDrawArrays(GL_POINTS, 0, bufUsed);
-	    bufUsed = 0;
-	}
-        
-	/* add next point to buffer */
-        else {
-	    drawBuffer[bufUsed + X] = curr->pt[X];
-	    drawBuffer[bufUsed + Y] = curr->pt[Y];
-	    drawBuffer[bufUsed + Z] = curr->pt[Z];
-            
-	    bufUsed += 3;
-	}
-    }
-
-    if (bufUsed > 0) {
-	/* draw remainder */
-	glDrawArrays(GL_POINTS, 0, bufUsed);
-        bufUsed = 0;
+    for (BU_LIST_FOR(currItem, pointList, &(points.l))) {
+	glVertexPointer(3, GL_DOUBLE, 0, &(currItem->ptVect));
+	glDrawArrays(GL_POINTS, 0, currItem->used / 3);
     }
 
     return TCL_OK;
