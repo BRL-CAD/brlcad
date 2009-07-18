@@ -112,6 +112,9 @@ static void tie_tri_prep(tie_t *tie)
  * This needs to be called before any other libtie data structures are called.
  *
  * @param tie pointer to a struct tie_t
+ * @param tri_num initial number of triangles to allocate for. tie_push may
+ *		    expand the buffer, if needed
+ * @param kdmethod Either TIE_KDTREE_FAST or TIE_KDTREE_OPTIMAL
  * @return void
  */
 TIE_FUNC(void tie_init, tie_t *tie, unsigned int tri_num, unsigned int kdmethod)
@@ -120,7 +123,8 @@ TIE_FUNC(void tie_init, tie_t *tie, unsigned int tri_num, unsigned int kdmethod)
     tie->kdmethod = kdmethod;
     tie->tri_num = 0;
     tie->tri_num_alloc = tri_num;
-    tie->tri_list = (tie_tri_t *)bu_malloc(sizeof(tie_tri_t) * tri_num, "tie_init");
+	/* set to NULL if tri_num == 0. bu_malloc(0) causes issues. */
+    tie->tri_list = tri_num?(tie_tri_t *)bu_malloc(sizeof(tie_tri_t) * tri_num, "tie_init"):NULL;
     tie->stat = 0;
     tie->rays_fired = 0;
 }
