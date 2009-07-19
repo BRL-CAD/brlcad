@@ -2338,6 +2338,7 @@ rt_bot_adjust(struct bu_vls *log, struct rt_db_internal *intern, int argc, char 
 		}
 		bot->faces[i*3+2] = atoi( f_str );
 	    }
+	    bot_check_vertex_indices(log, bot);
 	}
 	else if ( argv[0][0] ==  'T' )
 	{
@@ -2508,6 +2509,25 @@ rt_bot_adjust(struct bu_vls *log, struct rt_db_internal *intern, int argc, char 
 
     return BRLCAD_OK;
 }
+
+int
+bot_check_vertex_indices(struct bu_vls *log, struct rt_bot_internal *bot)
+{
+    int badVertexCount = 0;
+    int i;
+    for (i=0 ; i<bot->num_faces ; i++) {
+	int k;
+	for (k=0 ; k<3 ; k++) {
+	    int vertex_no = bot->faces[i*3+k];
+	    if (vertex_no < 0 || vertex_no >= bot->num_vertices) {
+		bu_vls_printf(log, "WARNING: BOT has illegal vertex index (%d) in face #(%d)\n", vertex_no, i);
+		badVertexCount++;
+	    }
+	}
+    }
+    return badVertexCount;
+}
+
 
 int
 rt_bot_form(struct bu_vls *log, const struct rt_functab *ftp)
