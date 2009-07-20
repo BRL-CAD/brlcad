@@ -539,9 +539,9 @@ rt_bot_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     RT_BOT_CK_MAGIC(bot_ip);
 #if 1
     if ( bot_ip->mode == RT_BOT_PLATE || bot_ip->mode == RT_BOT_PLATE_NOCOS ) {
-        int maxFaces = 1024;
-        int faces[maxFaces];
-        plane_t planes[maxFaces];
+#       define RT_BOT_TESS_MAX_FACES 1024
+        int faces[RT_BOT_TESS_MAX_FACES];
+        plane_t planes[RT_BOT_TESS_MAX_FACES];
         fastf_t scale = 1.0;
 
         rt_bot_condense(bot_ip);
