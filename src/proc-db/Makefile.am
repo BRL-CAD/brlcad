@@ -8,13 +8,13 @@ bin_PROGRAMS = \
 	bottest \
 	brep_cube \
 	brep_simple \
+	brepintersect \
 	breplicator \
 	brickwall \
 	clutter \
 	contours \
 	globe \
 	human \
-	brepintersect \
 	kurt \
 	lens \
 	masonry \
@@ -30,6 +30,7 @@ bin_PROGRAMS = \
 	sketch \
 	sphflake \
 	spltest \
+	surfaceintersect \
 	tea \
 	tea_nmg \
 	terrain \
@@ -44,12 +45,14 @@ brep_cube_SOURCES = brep_cube.cpp
 brep_simple_SOURCES = brep_simple.cpp
 breplicator_SOURCES = breplicator.cpp
 brepintersect_SOURCES = brepintersect.cpp
+surfaceintersect_SOURCES = surfaceintersect.cpp
 
 # per-target CPPFLAGS not available until automake 1.7+
 brep_cube_CXXFLAGS = -DOBJ_BREP=1 ${OPENNURBS_CPPFLAGS}
 brep_simple_CXXFLAGS = -DOBJ_BREP=1 ${OPENNURBS_CPPFLAGS}
 breplicator_CXXFLAGS = -DOBJ_BREP=1 ${OPENNURBS_CPPFLAGS}
 brepintersect_CXXFLAGS = -DOBJ_BREP=1 ${OPENNURBS_CPPFLAGS}
+surfaceintersect_CXXFLAGS = -DOBJ_BREP=1 ${OPENNURBS_CPPFLAGS}
 
 brep_cube_LDADD = \
 	${proc_db_libs} \
@@ -61,6 +64,9 @@ breplicator_LDADD = \
 	${proc_db_libs} \
 	${OPENNURBS}
 brepintersect_LDADD = \
+	${proc_db_libs} \
+	${OPENNURBS}
+surfaceintersect_LDADD = \
 	${proc_db_libs} \
 	${OPENNURBS}
 
@@ -94,6 +100,7 @@ wdb_example_SOURCES = wdb_example.c
 
 noinst_HEADERS = \
 	brepintersect.h \
+	surfaceintersect.h \
 	ducks.h \
 	patches.h \
 	tea.h \
@@ -110,13 +117,13 @@ FAST_OBJECTS = \
 	$(bottest_OBJECTS) \
 	$(brep_simple_OBJECTS) \
 	$(brep_cube_OBJECTS) \
+	$(brepintersect_OBJECTS) \
 	$(breplicator_OBJECTS) \
 	$(brickwall_OBJECTS) \
 	$(clutter_OBJECTS) \
 	$(contours_OBJECTS) \
 	$(globe_OBJECTS) \
 	$(human_OBJECTS) \
-	$(brepintersect_OBJECTS) \
 	$(kurt_OBJECTS) \
 	$(lens_OBJECTS) \
 	$(masonry_OBJECTS) \
@@ -131,6 +138,7 @@ FAST_OBJECTS = \
 	$(sketch_OBJECTS) \
 	$(sphflake_OBJECTS) \
 	$(spltest_OBJECTS) \
+	$(surfaceintersect_OBJECTS) \
 	$(tea_OBJECTS) \
 	$(tea_nmg_OBJECTS) \
 	$(terrain_OBJECTS) \
