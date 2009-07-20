@@ -1127,9 +1127,9 @@ template<class BH>
 	int depth();
 
     private:
-	bool isFlat(const ON_Surface* surf, const ON_Interval& u, const ON_Interval& v);
-	BBNode* subdivideSurface(const ON_Interval& u, const ON_Interval& v, int depth);
-	BBNode* surfaceBBox(bool leaf, const ON_Interval& u, const ON_Interval& v);
+	bool isFlat(const ON_Surface* surf, ON_3dVector normals[], const ON_Interval& u, const ON_Interval& v);
+	BBNode* subdivideSurface(const ON_Interval& u, const ON_Interval& v, ON_3dPoint corners[], ON_3dVector normals[], int depth);
+	BBNode* surfaceBBox(bool leaf, ON_3dPoint corners[], const ON_Interval& u, const ON_Interval& v);
 
 	ON_BrepFace* m_face;
 	BBNode* m_root;

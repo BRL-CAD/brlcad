@@ -68,6 +68,22 @@ namespace brlcad {
 	}
     }
 
+    void printcorners(ON_3dPoint *corners) {
+	bu_log("corner  0: %f,%f,%f\n",corners[0][0],corners[0][1],corners[0][2]);
+	bu_log("corner  1: %f,%f,%f\n",corners[1][0],corners[1][1],corners[1][2]);
+	bu_log("corner  2: %f,%f,%f\n",corners[2][0],corners[2][1],corners[2][2]);
+	bu_log("corner  3: %f,%f,%f\n",corners[3][0],corners[3][1],corners[3][2]);
+	bu_log("corner  4: %f,%f,%f\n",corners[4][0],corners[4][1],corners[4][2]);
+	bu_log("corner  5: %f,%f,%f\n",corners[5][0],corners[5][1],corners[5][2]);
+	bu_log("corner  6: %f,%f,%f\n",corners[6][0],corners[6][1],corners[6][2]);
+	bu_log("corner  7: %f,%f,%f\n",corners[7][0],corners[7][1],corners[7][2]);
+	bu_log("corner  8: %f,%f,%f\n",corners[8][0],corners[8][1],corners[8][2]);
+	bu_log("corner  9: %f,%f,%f\n",corners[9][0],corners[9][1],corners[9][2]);
+	bu_log("corner 10: %f,%f,%f\n",corners[10][0],corners[10][1],corners[10][2]);
+	bu_log("corner 11: %f,%f,%f\n",corners[11][0],corners[11][1],corners[11][2]);
+	bu_log("corner 12: %f,%f,%f\n",corners[12][0],corners[12][1],corners[12][2]);
+    }
+    
     //--------------------------------------------------------------------------------
     // CurveTree
     CurveTree::CurveTree(ON_BrepFace* face)
@@ -647,7 +663,26 @@ namespace brlcad {
 	TRACE("Creating surface tree for: " << face->m_face_index);
 	ON_Interval u = surf->Domain(0);
 	ON_Interval v = surf->Domain(1);
-	m_root = subdivideSurface(u, v, 0);
+	// Populate initial corner and normal arrays for use in
+	// tree build
+	ON_3dPoint corners[13];
+	ON_3dVector normals[13];
+	double uq = u.Length()*0.25;
+	double vq = v.Length()*0.25;
+	surf->EvNormal(u.Min(),v.Min(), corners[0], normals[0]);
+	surf->EvNormal(u.Max(),v.Min(), corners[1], normals[1]);
+        surf->EvNormal(u.Max(),v.Max(), corners[2], normals[2]);
+	surf->EvNormal(u.Min(),v.Max(), corners[3], normals[3]);
+	surf->EvNormal(u.Mid(),v.Mid(), corners[4], normals[4]);
+	surf->EvNormal(u.Mid() - uq, v.Mid() - vq, corners[5], normals[5]);
+	surf->EvNormal(u.Mid() - uq, v.Mid() + vq, corners[6], normals[6]);
+	surf->EvNormal(u.Mid() + uq, v.Mid() - vq, corners[7], normals[7]);
+	surf->EvNormal(u.Mid() + uq, v.Mid() + vq, corners[8], normals[8]);
+	surf->EvNormal(u.Mid(), v.Mid() - vq, corners[9], normals[9]);
+	surf->EvNormal(u.Mid() + uq, v.Mid(), corners[10], normals[10]);
+	surf->EvNormal(u.Mid(), v.Mid() + vq, corners[11], normals[11]);
+	surf->EvNormal(u.Mid() - uq, v.Mid(), corners[12], normals[12]);
+	m_root = subdivideSurface(u, v, corners, normals, 0);
 	m_root->BuildBBox();
 	TRACE("u: [" << u[0] << ", " << u[1] << "]");
 	TRACE("v: [" << v[0] << ", " << v[1] << "]");
@@ -685,37 +720,16 @@ namespace brlcad {
     }
 
     BBNode*
-    SurfaceTree::surfaceBBox(bool isLeaf, const ON_Interval& u, const ON_Interval& v)
+    SurfaceTree::surfaceBBox(bool isLeaf, ON_3dPoint *m_corners, const ON_Interval& u, const ON_Interval& v)
     {
-	ON_3dPoint corners[9];
-	ON_3dVector normals[9];
 	const ON_Surface* surf = m_face->SurfaceOf();
-
-	double uq = u.Length()*0.25;
-	double vq = v.Length()*0.25;
-	if (!surf->EvNormal(u.Min()-BBOX_GROW, v.Min()-BBOX_GROW, corners[0], normals[0]) ||
-	    !surf->EvNormal(u.Max()+BBOX_GROW, v.Min()-BBOX_GROW, corners[1], normals[1]) ||
-	    !surf->EvNormal(u.Max()+BBOX_GROW, v.Max()+BBOX_GROW, corners[2], normals[2]) ||
-	    !surf->EvNormal(u.Min()-BBOX_GROW, v.Max()+BBOX_GROW, corners[3], normals[3]) ||
-
-	    !surf->EvNormal(u.Mid(), v.Mid(), corners[4], normals[4]) ||
-	    !surf->EvNormal(u.Mid()-uq, v.Mid()-vq, corners[5], normals[5]) ||
-	    !surf->EvNormal(u.Mid()-uq, v.Mid()+vq, corners[6], normals[6]) ||
-	    !surf->EvNormal(u.Mid()+uq, v.Mid()-vq, corners[7], normals[7]) ||
-	    !surf->EvNormal(u.Mid()+uq, v.Mid()+vq, corners[8], normals[8])) {
-	    bu_bomb("Could not evaluate a point on surface"); // XXX fix this message
-	}
 
 	point_t min, max;
 	VSETALL(min, MAX_FASTF);
 	VSETALL(max, -MAX_FASTF);
 	for (int i = 0; i < 9; i++)
-	    VMINMAX(min, max, ((double*)corners[i]));
-//	vect_t grow;
-//	VSETALL(grow, 0.5); // grow the box a bit
-//	VSUB2(min, min, grow);
-//	VADD2(max, max, grow);
-
+	    VMINMAX(min, max, ((double*)m_corners[i]));
+	
 	// calculate the estimate point on the surface: i.e. use the point
 	// on the surface defined by (u.Mid(), v.Mid()) as a heuristic for
 	// finding the uv domain bounding a portion of the surface close
@@ -733,28 +747,6 @@ namespace brlcad {
 	    VSCALE(delta, delta, BBOX_GROW_3D);
 	    VSUB2(min, min, delta);
 	    VADD2(max, max, delta);
-	    /*
-	      bool ycross, xcross, zcross;
-	      vect_t xcenter, ycenter, zcenter;
-	      vect_t tangent, middir;
-
-	      xcenter[0] = (max[0] + min[0])/2.0;
-	      ycenter[1] = (max[1] + min[1])/2.0;
-	      zcenter[2] = (max[2] + min[2])/2.0;
-	      for (int i = 0; i < 4; i++) {
-	      xcenter[1] = corner[i][1];
-	      xcenter[2] = corner[i][2];
-	      ycenter[0] = corner[i][0];
-	      ycenter[2] = corner[i][2];
-	      zcenter[0] = corner[i][0];
-	      zcenter[1] = corner[i][1];
-			
-	      VSUB2(middir, xcenter, corner[i]);
-	      VCROSS(tangent, normal[i], middir);
-	      VCROSS(tangent, tangent, normal[i]);
-			
-	      }
-	    */
 	    TRACE("creating leaf: u(" << u.Min() << ", " << u.Max() <<
 		  ") v(" << v.Min() << ", " << v.Max() << ")");
 	    node = new BBNode(ctree,ON_BoundingBox(ON_3dPoint(min),
@@ -787,6 +779,8 @@ namespace brlcad {
     BBNode*
     SurfaceTree::subdivideSurface(const ON_Interval& u,
 				  const ON_Interval& v,
+				  ON_3dPoint corners[],
+				  ON_3dVector normals[],
 				  int depth)
     {
 	const ON_Surface* surf = m_face->SurfaceOf();
@@ -799,19 +793,88 @@ namespace brlcad {
 	VSET(a, u[0], v[0], 0.0);
 	VSET(b, u[1], v[1], 0.0);
 	double dsubsurf = DIST_PT_PT(a, b);
-
-	if ((dsubsurf/dsurf < BREP_SURF_SUB_FACTOR) && (isFlat(surf, u, v) || depth >= BREP_MAX_FT_DEPTH)) {
-	    return surfaceBBox(true, u, v);
+	double uq = u.Length()*0.25;
+	double vq = v.Length()*0.25;
+	surf->EvNormal(u.Mid() - uq, v.Mid() - vq, corners[5], normals[5]);
+	surf->EvNormal(u.Mid() - uq, v.Mid() + vq, corners[6], normals[6]);
+	surf->EvNormal(u.Mid() + uq, v.Mid() - vq, corners[7], normals[7]);
+	surf->EvNormal(u.Mid() + uq, v.Mid() + vq, corners[8], normals[8]);
+	surf->EvNormal(u.Mid(), v.Mid() - vq, corners[9], normals[9]);
+	surf->EvNormal(u.Mid() + uq, v.Mid(), corners[10], normals[10]);
+	surf->EvNormal(u.Mid(), v.Mid() + vq, corners[11], normals[11]);
+	surf->EvNormal(u.Mid() - uq, v.Mid(), corners[12], normals[12]);
+/*
+	if (depth < 2) {
+	    bu_log("depth: %d\n", depth);
+	    printcorners(corners);
+	}
+	*/
+	if ((dsubsurf/dsurf < BREP_SURF_SUB_FACTOR) && (isFlat(surf, normals, u, v) || depth >= BREP_MAX_FT_DEPTH)) {
+	    return surfaceBBox(true, corners, u, v);
 	} else {
-	    BBNode* parent = (depth == 0) ? initialBBox(ctree,surf) : surfaceBBox(false, u, v);
+	    BBNode* parent = (depth == 0) ? initialBBox(ctree,surf) : surfaceBBox(false, corners, u, v);
 	    BBNode* quads[4];
 	    ON_Interval first(0, 0.5);
 	    ON_Interval second(0.5, 1.0);
-	    quads[0] = subdivideSurface(u.ParameterAt(first),  v.ParameterAt(first),  depth+1);
-	    quads[1] = subdivideSurface(u.ParameterAt(second), v.ParameterAt(first),  depth+1);
-	    quads[2] = subdivideSurface(u.ParameterAt(second), v.ParameterAt(second), depth+1);
-	    quads[3] = subdivideSurface(u.ParameterAt(first),  v.ParameterAt(second), depth+1);
- 
+	    
+	    ON_3dPoint *newcorners;
+	    ON_3dVector *newnormals;
+	    newcorners = (ON_3dPoint *)bu_malloc(13*sizeof(ON_3dPoint), "new corners");
+	    newnormals = (ON_3dVector *)bu_malloc(13*sizeof(ON_3dVector), "new normals");
+            newcorners[0] = corners[0];
+	    newnormals[0] = normals[0];
+	    surf->EvNormal(u.Mid(), v.Min(), newcorners[1], newnormals[1]);
+	    newcorners[2] = corners[4];
+	    newnormals[2] = normals[4];
+	    surf->EvNormal(u.Min(), v.Mid(), newcorners[3], newnormals[3]);
+	    newcorners[4] = corners[5];
+	    newnormals[4] = normals[5];
+    	    quads[0] = subdivideSurface(u.ParameterAt(first), v.ParameterAt(first), newcorners, newnormals, depth+1);
+	    bu_free(newcorners, "free subsurface corners array");
+	    bu_free(newnormals, "free subsurface normals array");
+	    
+	    newcorners = (ON_3dPoint *)bu_malloc(13*sizeof(ON_3dPoint), "new corners");
+	    newnormals = (ON_3dVector *)bu_malloc(13*sizeof(ON_3dVector), "new normals");
+	    surf->EvNormal(u.Mid(), v.Min(), newcorners[0], newnormals[0]);
+            newcorners[1] = corners[1];
+	    newnormals[1] = normals[1];
+	    surf->EvNormal(u.Max(), v.Mid(), newcorners[2], newnormals[2]);
+	    newcorners[3] = corners[4];
+	    newnormals[3] = normals[4];
+	    newcorners[4] = corners[7];
+	    newnormals[4] = normals[7];
+	    quads[1] = subdivideSurface(u.ParameterAt(second), v.ParameterAt(first), newcorners, newnormals, depth+1);
+	    bu_free(newcorners, "free subsurface corners array");
+	    bu_free(newnormals, "free subsurface normals array");
+
+	    newcorners = (ON_3dPoint *)bu_malloc(13*sizeof(ON_3dPoint), "new corners");
+	    newnormals = (ON_3dVector *)bu_malloc(13*sizeof(ON_3dVector), "new normals");
+	    newcorners[0] = corners[4];
+	    newnormals[0] = normals[4];
+	    surf->EvNormal(u.Max(), v.Mid(), newcorners[1], newnormals[1]);
+            newcorners[2] = corners[2];
+	    newnormals[2] = normals[2];
+	    surf->EvNormal(u.Mid(), v.Max(), newcorners[3], newnormals[3]);
+	    newcorners[4] = corners[8];
+	    newnormals[4] = normals[8];
+	    quads[2] = subdivideSurface(u.ParameterAt(second), v.ParameterAt(second), newcorners, newnormals, depth+1);
+	    bu_free(newcorners, "free subsurface corners array");
+	    bu_free(newnormals, "free subsurface normals array");
+
+	    newcorners = (ON_3dPoint *)bu_malloc(13*sizeof(ON_3dPoint), "new corners");
+	    newnormals = (ON_3dVector *)bu_malloc(13*sizeof(ON_3dVector), "new normals");
+	    surf->EvNormal(u.Min(), v.Mid(), newcorners[0], newnormals[0]);
+	    newcorners[1] = corners[4];
+	    newnormals[1] = normals[4];
+	    surf->EvNormal(u.Mid(), v.Max(), newcorners[2], newnormals[2]);
+            newcorners[3] = corners[3];
+	    newnormals[3] = normals[3];
+	    newcorners[4] = corners[6];
+	    newnormals[4] = normals[6];
+    	    quads[3] = subdivideSurface(u.ParameterAt(first), v.ParameterAt(second), newcorners, newnormals, depth+1);
+ 	    bu_free(newcorners, "free subsurface corners array");
+	    bu_free(newnormals, "free subsurface normals array");
+	    
 	    parent->m_trimmed = true;
 	    parent->m_checkTrim = false;
 	
@@ -832,11 +895,6 @@ namespace brlcad {
 	    return parent;
     	}
     }
-
-#define NE 1
-#define NW 2
-#define SW 3
-#define SE 4
 
     /**
      * Determine whether a given surface is flat enough, i.e. it falls
@@ -863,39 +921,53 @@ namespace brlcad {
      * The "+" indicates the normal sample.
      */
 
+#define NE 1
+#define NW 2
+#define SW 3
+#define SE 4
+
     bool
-    SurfaceTree::isFlat(const ON_Surface* surf, const ON_Interval& u, const ON_Interval& v)
+    SurfaceTree::isFlat(const ON_Surface* surf, ON_3dVector *m_normals, const ON_Interval& u, const ON_Interval& v)
     {
 	ON_3dVector normals[8];
-
-	if (surf->IsAtSingularity(u.Min(), v.Min()) ||
-	    surf->IsAtSingularity(u.Max(), v.Min()) ||
-	    surf->IsAtSingularity(u.Max(), v.Max()) ||
-	    surf->IsAtSingularity(u.Min(), v.Max())) {
-	    TRACE("singularity! --------------------------");
-	    TRACE("umin: " << u.Min());
-	    TRACE("umax: " << u.Max());
-	    TRACE("vmin: " << v.Min());
-	    TRACE("vmax: " << v.Max());
+	for (int i = 0; i < 4; i++) {
+	    normals[i] = m_normals[i];
+	}
+	for (int i = 4; i < 8; i++) {
+	    normals[i] = m_normals[i+5];
 	}
 
-	// corners
-	if (!surf->EvNormal(u.Min(), v.Min(), normals[0], SW) ||
-	    !surf->EvNormal(u.Max(), v.Min(), normals[1], SE) ||
-	    !surf->EvNormal(u.Max(), v.Max(), normals[2], NE) ||
-	    !surf->EvNormal(u.Min(), v.Max(), normals[3], NW) ||
-
-	    // interior
-	    !surf->EvNormal(u.ParameterAt(0.5), v.ParameterAt(0.25), normals[4], SW) ||
-	    !surf->EvNormal(u.ParameterAt(0.75), v.ParameterAt(0.5), normals[5], NE) ||
-	    !surf->EvNormal(u.ParameterAt(0.5), v.ParameterAt(0.75), normals[6], NE) ||
-	    !surf->EvNormal(u.ParameterAt(0.25), v.ParameterAt(0.5), normals[7], SW)) {
-	    bu_bomb("Could not evaluate a normal on the surface"); // XXX fix this
-	}
-
+/*
+         ON_3dVector normals[8];
+ 
+         if (surf->IsAtSingularity(u.Min(), v.Min()) ||
+             surf->IsAtSingularity(u.Max(), v.Min()) ||
+             surf->IsAtSingularity(u.Max(), v.Max()) ||
+             surf->IsAtSingularity(u.Min(), v.Max())) {
+             TRACE("singularity! --------------------------");
+             TRACE("umin: " << u.Min());
+             TRACE("umax: " << u.Max());
+             TRACE("vmin: " << v.Min());
+             TRACE("vmax: " << v.Max());
+         }
+ 
+         // corners
+         if (!surf->EvNormal(u.Min(), v.Min(), normals[0], SW) ||
+             !surf->EvNormal(u.Max(), v.Min(), normals[1], SE) ||
+             !surf->EvNormal(u.Max(), v.Max(), normals[2], NE) ||
+             !surf->EvNormal(u.Min(), v.Max(), normals[3], NW) ||
+ 
+             // interior
+             !surf->EvNormal(u.ParameterAt(0.5), v.ParameterAt(0.25), normals[4], SW) ||
+             !surf->EvNormal(u.ParameterAt(0.75), v.ParameterAt(0.5), normals[5], NE) ||
+             !surf->EvNormal(u.ParameterAt(0.5), v.ParameterAt(0.75), normals[6], NE) ||
+             !surf->EvNormal(u.ParameterAt(0.25), v.ParameterAt(0.5), normals[7], SW)) {
+             bu_bomb("Could not evaluate a normal on the surface"); // XXX fix this
+         }
+*/									
+	
 	double product = 1.0;
 
-#ifdef DO_VECTOR
 	double ax[4] VEC_ALIGN;
 	double ay[4] VEC_ALIGN;
 	double az[4] VEC_ALIGN;
@@ -932,12 +1004,6 @@ namespace brlcad {
 	    dvec<4> dots = xa * xb + ya * yb + za * zb;
 	    product *= dots.foldr(1, dvec<4>::mul(), 3);
 	}
-#else
-	for (int i = 0; i < 7; i++) {
-	    product *= (normals[i] * normals[i+1]);
-	}
-#endif
-
 	return product >= BREP_SURFACE_FLATNESS;
     }
 
