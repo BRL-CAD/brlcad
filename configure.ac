@@ -309,7 +309,7 @@ BC_ARG_ENABLE([build_tkimg], [tkimg-build], [Build the included tkImg], [auto])
 BC_ARG_ENABLE([build_tnt], [tnt-install], [Install the included Template Numerical Toolkit], [auto])
 
 # jove
-BC_ARG_ENABLE([build_jove], [jove-build], [Enable compilation of jove (optional)], [auto])
+BC_ARG_ENABLE([build_jove], [jove-build], [Enable compilation of jove (optional)], [no])
 
 # endgame framework simulation module
 BC_ARG_ENABLE([build_ef], [ef-build], [Enable compilation of Endgame Framework module (optional)], [no])
