@@ -1010,9 +1010,9 @@ void aeVect(fastf_t *aeVect, fastf_t *aet) {
     elRad = aet[Y] * DEG2RAD;
 
     /* calculate vector */
-    aeVect[X] = sin(azRad - M_PI_2);
+    aeVect[X] = cos(azRad);
     aeVect[Y] = sin(azRad);
-    aeVect[Z] = cos(elRad + M_PI_2);
+    aeVect[Z] = sin(elRad);
 }
 
 /* calculate and add hit-point info to info list */
@@ -1110,8 +1110,8 @@ void shootGrid(vect_t min, vect_t max, int uAxis, int vAxis, int iAxis) {
     VSUB2(span, max, min);
 
     /* calculate firing intervals */
-    int uDivs = 100;
-    int vDivs = 100;
+    int uDivs = 500;
+    int vDivs = 500;
 
     fastf_t uWidth = span[uAxis] / uDivs;
     fastf_t vWidth = span[vAxis] / vDivs;
@@ -1282,9 +1282,9 @@ rtgl_drawVList(struct dm *dmp, register struct bn_vlist *vp)
 	    cAngle = cosAngle(normal, view);
 
 	    /* visible elements have angle < 90 degrees */
-	    if (/*acos(cAngle) < M_PI_2*/ 1) {
+	    if (acos(cAngle) < M_PI_2) {
 		count++;
-
+		glColor3d(cAngle, cAngle, cAngle);
 		glArrayElement(i);
 	    }
 	}
