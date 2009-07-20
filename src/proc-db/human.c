@@ -660,17 +660,17 @@ void makeArm(struct rt_wdb (*file), char *suffix, int isLeft, struct human_data_
         if(isLeft){
 		bu_strlcpy(shoulderJointName, "LeftShoulderJoint.s", MAXLENGTH);
                 bu_strlcpy(upperArmName, "LeftUpperArm.s", MAXLENGTH);
-                bu_strlcpy(elbowName, "LeftElbow.s", MAXLENGTH);
+                bu_strlcpy(elbowName, "LeftElbowJoint.s", MAXLENGTH);
                 bu_strlcpy(lowerArmName, "LeftLowerArm.s", MAXLENGTH);
-                bu_strlcpy(wristName, "LeftWrist.s", MAXLENGTH);
+                bu_strlcpy(wristName, "LeftWristJoint.s", MAXLENGTH);
                 bu_strlcpy(handName, "LeftHand.s", MAXLENGTH);
         }
         else{
 		bu_strlcpy(shoulderJointName, "RightShoulderJoint.s", MAXLENGTH);
                 bu_strlcpy(upperArmName, "RightUpperArm.s", MAXLENGTH);
-                bu_strlcpy(elbowName, "RightElbow.s", MAXLENGTH);
+                bu_strlcpy(elbowName, "RightElbowJoint.s", MAXLENGTH);
                 bu_strlcpy(lowerArmName, "RightLowerArm.s", MAXLENGTH);
-                bu_strlcpy(wristName, "RightWrist.s", MAXLENGTH);
+                bu_strlcpy(wristName, "RightWristJoint.s", MAXLENGTH);
                 bu_strlcpy(handName, "RightHand.s", MAXLENGTH);
         }
 
@@ -707,17 +707,17 @@ void makeLeg(struct rt_wdb (*file), char *suffix, int isLeft, struct human_data_
 	if(isLeft){
 		bu_strlcpy(thighJointName, "LeftThighJoint.s", MAXLENGTH);
                 bu_strlcpy(thighName, "LeftThigh.s", MAXLENGTH);
-                bu_strlcpy(kneeName, "LeftKnee.s", MAXLENGTH);
+                bu_strlcpy(kneeName, "LeftKneeJoint.s", MAXLENGTH);
                 bu_strlcpy(calfName, "LeftCalf.s", MAXLENGTH);
-                bu_strlcpy(ankleName, "LeftAnkle.s", MAXLENGTH);
+                bu_strlcpy(ankleName, "LeftAnkleJoint.s", MAXLENGTH);
                 bu_strlcpy(footName, "LeftFoot.s", MAXLENGTH);
 	}
         else{
 		bu_strlcpy(thighJointName, "RightThighJoint.s", MAXLENGTH);
                 bu_strlcpy(thighName, "RightThigh.s", MAXLENGTH);
-                bu_strlcpy(kneeName, "RightKnee.s", MAXLENGTH);
+                bu_strlcpy(kneeName, "RightKneeJoint.s", MAXLENGTH);
                 bu_strlcpy(calfName, "RightCalf.s", MAXLENGTH);
-                bu_strlcpy(ankleName, "RightAnkle.s", MAXLENGTH);
+                bu_strlcpy(ankleName, "RightAnkleJoint.s", MAXLENGTH);
                 bu_strlcpy(footName, "RightFoot.s", MAXLENGTH);
 	}
 	bu_strlcat(thighJointName, suffix, MAXLENGTH);
@@ -974,27 +974,23 @@ void setStance(fastf_t stance, struct human_data_t *dude)
 		break;
 	case 4:
 		bu_log("Making the Letterman\n");
-		vect_t larm, rarm;
-		VSET(larm, -32, 135, 0);
-		VSET(rarm, 32, 135, 0);
-                VMOVE(dude->arms.lArmDirection, larm);
-                VMOVE(dude->arms.rArmDirection, rarm);
-                VMOVE(dude->arms.lElbowDirection, larm);
-                VMOVE(dude->arms.rElbowDirection, rarm);
-                VMOVE(dude->arms.lWristDirection, larm);
-                VMOVE(dude->arms.rWristDirection, rarm);
-		vect_t lleg;
-		VSET(lleg, 0, 75, 0);
-                VMOVE(dude->legs.lLegDirection, lleg);
+		vect_t larm4, rarm4, knee4, lleg4;
+		VSET(larm4, -32, 135, 0);
+		VSET(rarm4, 32, 135, 0);
+		VSET(knee4, 90, 5, 0);		VSET(lleg4, 0, 75, 0);
+                VMOVE(dude->arms.lArmDirection, larm4);
+                VMOVE(dude->arms.rArmDirection, rarm4);
+                VMOVE(dude->arms.lElbowDirection, larm4);
+                VMOVE(dude->arms.rElbowDirection, rarm4);
+                VMOVE(dude->arms.lWristDirection, larm4);
+                VMOVE(dude->arms.rWristDirection, rarm4);
+                VMOVE(dude->legs.lLegDirection, lleg4);
                 VMOVE(dude->legs.rLegDirection, forwardVect);
-		vect_t knee;
-		VSET(knee, 90, 5, 0);
-                VMOVE(dude->legs.lKneeDirection, knee);
+                VMOVE(dude->legs.lKneeDirection, knee4);
                 VMOVE(dude->legs.rKneeDirection, downVect);
                 VMOVE(dude->legs.lFootDirection, forwardVect);
                 VMOVE(dude->legs.rFootDirection, forwardVect);
 		break;
-
 	case 5:
 		bu_log("Making the Captain\n");
 		vect_t larm5, rarm5, llower5, rlower5;
@@ -1025,6 +1021,19 @@ void setStance(fastf_t stance, struct human_data_t *dude)
 		manualPosition(dude);
 		break;
 	default:
+                bu_log("Bad Input, defaulting to Stand\n");
+                VMOVE(dude->arms.lArmDirection, downVect);
+                VMOVE(dude->arms.rArmDirection, downVect);
+                VMOVE(dude->arms.lElbowDirection, downVect);
+                VMOVE(dude->arms.rElbowDirection, downVect);
+                VMOVE(dude->arms.lWristDirection, downVect);
+                VMOVE(dude->arms.rWristDirection, downVect);
+                VMOVE(dude->legs.lLegDirection, downVect);
+                VMOVE(dude->legs.rLegDirection, downVect);
+                VMOVE(dude->legs.lKneeDirection, downVect);
+                VMOVE(dude->legs.rKneeDirection, downVect);
+                VMOVE(dude->legs.lFootDirection, forwardVect);
+                VMOVE(dude->legs.rFootDirection, forwardVect);
 		break;
 	}
 	bu_log("Exiting stance maker\n");
@@ -1065,7 +1074,7 @@ void show_help(const char *name, const char *optstr)
 	   "\t-o\t\tSet output file name\n"
 	   "\t-b\t\tShow bounding Boxes\n"
 	   "\t-N\t\tNumber to make (square)\n"
-	   "\t-s\t\tStance to take 0-Stand 1-Sit 2-Drive 3-Arms out 4-Letterman 999-Custom\n"
+	   "\t-s\t\tStance to take 0-Stand 1-Sit 2-Drive 3-Arms out 4-Letterman 5-Captain 999-Custom\n"
 	);
 
     bu_vls_free(&str);
@@ -1140,43 +1149,7 @@ int read_args(int argc, char **argv, struct human_data_t *dude, fastf_t *stance,
 	    case 's':
 		sscanf(bu_optarg, "%d", &pose);
 		fflush(stdin);
-		switch(pose)
-		{
-			case 0:
-				bu_log("Standing\n");
-				*stance = pose;
-				break;
-			case 1:
-				bu_log("Sitting\n");
-				*stance = pose;
-				break;
-			case 2:
-				bu_log("Driving\n");
-				*stance = pose;
-				break;
-			case 3:
-				bu_log("Arms out\n");
-				*stance = pose;
-				break;
-			case 4:
-				bu_log("The Letterman\n");
-				*stance = pose;
-				break;
-			case 5:
-				bu_log("The Captain\n");
-				*stance = pose;
-				break;
-			/* Custom case */
-			case 999:
-				bu_log("Custom\n");
-				*stance = pose;
-				break;
-			default:
-				bu_log("Bad Pose number, default to stand\n");
-				pose=0;
-				*stance=0;
-				break;
-		}
+		*stance = pose;
 		break;
 	    default:
 		show_help(*argv, options);
@@ -1238,14 +1211,26 @@ int main(int ac, char *av[])
     (void)mk_addmember("LowerTorso.s", &human.l, NULL, WMOP_UNION);
     (void)mk_addmember("LeftUpperArm.s", &human.l, NULL, WMOP_UNION);
     (void)mk_addmember("RightUpperArm.s", &human.l, NULL, WMOP_UNION);
+    (void)mk_addmember("LeftShoulderJoint.s", &human.l, NULL, WMOP_UNION);
+    (void)mk_addmember("RightShoulderJoint.s", &human.l, NULL, WMOP_UNION);
+    (void)mk_addmember("LeftElbowJoint.s", &human.l, NULL, WMOP_UNION);
+    (void)mk_addmember("RightElbowJoint.s", &human.l, NULL, WMOP_UNION);
     (void)mk_addmember("LeftLowerArm.s",&human.l, NULL, WMOP_UNION);
     (void)mk_addmember("RightLowerArm.s", &human.l, NULL, WMOP_UNION);
+    (void)mk_addmember("LeftWristJoint.s", &human.l, NULL, WMOP_UNION);
+    (void)mk_addmember("RightWristJoint.s", &human.l, NULL, WMOP_UNION);
     (void)mk_addmember("LeftHand.s", &human.l, NULL, WMOP_UNION);
     (void)mk_addmember("RightHand.s", &human.l, NULL, WMOP_UNION);
     (void)mk_addmember("LeftThigh.s", &human.l, NULL, WMOP_UNION);
-    (void)mk_addmember("RightThigh.s", &human.l, NULL, WMOP_UNION);
+    (void)mk_addmember("RightThigh.s", &human.l, NULL, WMOP_UNION);   
+    (void)mk_addmember("LeftThighJoint.s", &human.l, NULL, WMOP_UNION);
+    (void)mk_addmember("RightThighJoint.s", &human.l, NULL, WMOP_UNION);
+    (void)mk_addmember("LeftKneeJoint.s", &human.l, NULL, WMOP_UNION);
+    (void)mk_addmember("RightKneeJoint.s", &human.l, NULL, WMOP_UNION);
     (void)mk_addmember("LeftCalf.s", &human.l, NULL, WMOP_UNION);
     (void)mk_addmember("RightCalf.s", &human.l, NULL, WMOP_UNION);
+    (void)mk_addmember("LeftAnkleJoint.s", &human.l, NULL, WMOP_UNION);
+    (void)mk_addmember("RightAnkleJoint.s", &human.l, NULL, WMOP_UNION);
     (void)mk_addmember("LeftFoot.s", &human.l, NULL, WMOP_UNION);
     (void)mk_addmember("RightFoot.s", &human.l, NULL, WMOP_UNION);
 
