@@ -140,8 +140,10 @@ printcodes(struct ged *gedp, FILE *fp, struct directory *dp, int pathpos)
 	return GED_ERROR;
     }
 
-    if (id != ID_COMBINATION)
+    if (id != ID_COMBINATION) {
+	intern.idb_meth->ft_ifree( &intern, &rt_uniresource );
 	return GED_OK;
+    }
 
     comb = (struct rt_comb_internal *)intern.idb_ptr;
     RT_CK_COMB(comb);
