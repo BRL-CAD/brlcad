@@ -203,6 +203,16 @@ void vectorTest(struct rt_wdb *file)
     /* See, now wasn't that easy? */
 }
 
+/* Find the hypotenuse of 2 lengths / length vectors */
+fastf_t findVector(fastf_t x, fastf_t y)
+{
+        fastf_t w;
+        fastf_t v;
+        v = x*x;
+        w = y*y;
+        return sqrt(v + w);
+}
+
 /** Create a bounding box around the individual part, this one has only 1 value for depth and width */
 void boundingBox(struct rt_wdb *file, char *name, fastf_t *startPoint, fastf_t *lengthVector, fastf_t partWidth, fastf_t *rotMatrix)
 {
@@ -223,8 +233,9 @@ void boundingBox(struct rt_wdb *file, char *name, fastf_t *startPoint, fastf_t *
 	VSET(points[1], (partWidth+startPoint[X]), (partWidth+startPoint[Y]), (startPoint[Z]));
 
 	mk_rpp(file, newName, points[1], points[0]);
-	/* Then rotate this shape to the rotmatrix */
+	/* Then rotate this shape to the rotmatrix, or just set the 8 points to the correct position using rotMatrix beforehand */
 }
+
 /** Create a bounding rectangle around the individual part, and this one has 2 separate values for depth and width */
 void boundingRectangle(struct rt_wdb *file, char *name, fastf_t *startPoint, fastf_t *lengthVector, fastf_t partWidth, fastf_t partDepth, fastf_t *rotMatrix)
 {
@@ -240,6 +251,11 @@ void boundingRectangle(struct rt_wdb *file, char *name, fastf_t *startPoint, fas
         bu_strlcat(newName, "Box", MAXLENGTH);
 
         VADD2(distance, startPoint, lengthVector);
+
+	/* Set first 4 points to be on the same plane as the starting point, and the last 4 points to be the distance vector point plane */
+
+	fastf_t length=findVector(partWidth, partWidth);
+	printf("The length is %f\n", length);
 
         VSET(points[0], (-partDepth+startPoint[X]), (-partWidth+startPoint[Y]), (distance[Z]));
         VSET(points[1], (partDepth+startPoint[X]), (partWidth+startPoint[Y]), (startPoint[Z]));
@@ -272,14 +288,15 @@ fastf_t makeHead(struct rt_wdb (*file), char *name, struct human_data_t *dude, f
 fastf_t makeNeck(struct rt_wdb *file, char *name, struct human_data_t *dude, fastf_t *direction, fastf_t showBoxes)
 {
 	vect_t startVector;
+	mat_t rotMatrix;
 	dude->head.neckWidth = dude->head.headSize / 4;
 	VSET(startVector, 0, 0, dude->head.neckSize);
-	setDirection(startVector, dude->head.neckVector, direction[X], direction[Y], direction[Z]);
+	*rotMatrix=setDirection(startVector, dude->head.neckVector, direction[X], direction[Y], direction[Z]);
 	VADD2(dude->joints.neckJoint, dude->joints.headJoint, dude->head.neckVector);
 	mk_rcc(file, name, dude->joints.headJoint, dude->head.neckVector, dude->head.neckWidth);
 	
 	if(showBoxes){
-	/*TODO: add bounding boxes to neck, and other stuff, and make them fit the roational scheme*/
+		boundingBox(file, name, dude->joints.headJoint, startVector, dude->head.neckWidth, rotMatrix);
 	}
 	return dude->head.neckWidth;
 }
@@ -355,7 +372,6 @@ fastf_t makeShoulderJoint(struct rt_wdb *file, fastf_t isLeft, char *name, struc
 		mk_sph(file, name, dude->joints.leftShoulderJoint, (dude->arms.upperArmWidth));
 	else
 		mk_sph(file, name, dude->joints.rightShoulderJoint, (dude->arms.upperArmWidth));
-
 	return dude->torso.shoulderWidth;
 }
 
@@ -375,13 +391,11 @@ fastf_t makeUpperArm(struct rt_wdb *file, fastf_t isLeft, char *partName, struct
 		*rotMatrix=setDirection(startVector, dude->arms.armVector, dude->arms.lArmDirection[X], dude->arms.lArmDirection[Y], dude->arms.lArmDirection[Z]); /* set y to 180 to point down */
 		VADD2(dude->joints.elbowJoint, dude->joints.leftShoulderJoint, dude->arms.armVector);
 		mk_trc_h(file, partName, dude->joints.leftShoulderJoint, dude->arms.armVector, dude->arms.upperArmWidth, dude->arms.elbowWidth);
-
 	}
 	else{
 		*rotMatrix=setDirection(startVector, dude->arms.armVector, dude->arms.rArmDirection[X], dude->arms.rArmDirection[Y], dude->arms.rArmDirection[Z]); /* set y to 180 to point down */
 		VADD2(dude->joints.elbowJoint, dude->joints.rightShoulderJoint, dude->arms.armVector);
 		mk_trc_h(file, partName, dude->joints.rightShoulderJoint, dude->arms.armVector, dude->arms.upperArmWidth, dude->arms.elbowWidth);
-
 	}	
 
 /* Vectors and equations for making TGC arms 
@@ -412,7 +426,7 @@ fastf_t makeElbow(struct rt_wdb *file, fastf_t isLeft, char *name, struct human_
 	
 	mk_ell(file, name, dude->joints.elbowJoint, a, b, c);
 /*
-*	mk_sph(file, name, elbowJoint, radius);
+*	mk_sph(file, name, dude->joints.elbowJoint, dude->arms.elbowWidth);
 */
 	return dude->arms.elbowWidth;
 }
@@ -463,17 +477,23 @@ fastf_t makeWrist(struct rt_wdb *file, fastf_t isLeft, char *name, struct human_
 
 void makeHand(struct rt_wdb *file, fastf_t isLeft, char *name, struct human_data_t *dude, fastf_t showBoxes)
 {
+	mat_t rotMatrix;
+	vect_t startVector;
 	dude->arms.handLength = (dude->height / 16) * IN2MM;
 	dude->arms.handWidth = (dude->height / 32) * IN2MM;
+	VSET(startVector, 0, 0, dude->arms.handLength);
+	if(isLeft){
+		*rotMatrix = setDirection(startVector, dude->arms.armVector, dude->arms.lWristDirection[X], dude->arms.lWristDirection[Y], dude->arms.lWristDirection[Z]);
+	}
+	else{
+		*rotMatrix = setDirection(startVector, dude->arms.armVector, dude->arms.rWristDirection[X], dude->arms.rWristDirection[Y], dude->arms.rWristDirection[Z]);
+	}
+
 	mk_sph(file, name, dude->joints.wristJoint, dude->arms.wristWidth);
 
-	if(showBoxes){
-	/*
-	 *	point_t p1, p2;
-	 *	VSET(p1, -handWidth, -handWidth+y, leftWrist-handWidth);  
-	 *	VSET(p2, handWidth, handWidth+y, leftWrist+handWidth);
-	 *	mk_rpp(file, "LeftHandBox.s", p1, p2);
-	 */
+	if(showBoxes)
+	{
+		boundingRectangle(file, name, dude->joints.wristJoint, startVector, dude->arms.handWidth, dude->arms.handLength, rotMatrix);
 	}
 }
 
@@ -879,6 +899,7 @@ void setStance(fastf_t stance, struct human_data_t *dude)
 	 * 2: Driving
 	 * 3: Arms Out
 	 * 4: The Letterman
+	 * 5: The Captain
 	 * #: and more as needed
 	 * 999: Custom (done interactivly)
 	 */
@@ -972,6 +993,29 @@ void setStance(fastf_t stance, struct human_data_t *dude)
                 VMOVE(dude->legs.rKneeDirection, downVect);
                 VMOVE(dude->legs.lFootDirection, forwardVect);
                 VMOVE(dude->legs.rFootDirection, forwardVect);
+		break;
+
+	case 5:
+		bu_log("Making the Captain\n");
+		vect_t larm5, rarm5, llower5, rlower5;
+		vect_t rthigh5;
+		VSET(larm5, 45, 180, 5);
+		VSET(rarm5, -45, 180, -5);
+		VSET(llower5, -45, 180, 5);
+		VSET(rlower5, 45, 180, -5);
+		VSET(rthigh5, 0, 85, 0);
+		VMOVE(dude->arms.lArmDirection, larm5);
+		VMOVE(dude->arms.lElbowDirection, llower5);
+		VMOVE(dude->arms.rArmDirection, rarm5);
+		VMOVE(dude->arms.rElbowDirection, rlower5);
+		VMOVE(dude->arms.lWristDirection, downVect);
+		VMOVE(dude->arms.rWristDirection, downVect);
+		VMOVE(dude->legs.lLegDirection, downVect);
+		VMOVE(dude->legs.rLegDirection, rthigh5);
+		VMOVE(dude->legs.lKneeDirection, downVect);
+		VMOVE(dude->legs.rKneeDirection, downVect);
+		VMOVE(dude->legs.lFootDirection, forwardVect);
+		VMOVE(dude->legs.rFootDirection, forwardVect);
 		break;
 
 	/* Additional Positions go here*/
@@ -1118,13 +1162,17 @@ int read_args(int argc, char **argv, struct human_data_t *dude, fastf_t *stance,
 				bu_log("The Letterman\n");
 				*stance = pose;
 				break;
+			case 5:
+				bu_log("The Captain\n");
+				*stance = pose;
+				break;
 			/* Custom case */
 			case 999:
 				bu_log("Custom\n");
 				*stance = pose;
 				break;
 			default:
-				bu_log("Bad Pose, default to stand\n");
+				bu_log("Bad Pose number, default to stand\n");
 				pose=0;
 				*stance=0;
 				break;
@@ -1219,22 +1267,22 @@ int main(int ac, char *av[])
      * may lay up next to another model
      */
     BU_LIST_INIT(&boxes.l)
-    (void)mk_addmember("HeadBox.s", &boxes.l, NULL, WMOP_UNION);
-    (void)mk_addmember("NeckBox.s", &boxes.l, NULL, WMOP_UNION);
-    (void)mk_addmember("UpperTorsoBox.s", &boxes.l, NULL, WMOP_UNION);
-    (void)mk_addmember("LowerTorsoBox.s", &boxes.l, NULL, WMOP_UNION);
-    (void)mk_addmember("LeftUpperArmBox.s", &boxes.l, NULL, WMOP_UNION);
-    (void)mk_addmember("RightUpperArmBox.s", &boxes.l, NULL, WMOP_UNION);
-    (void)mk_addmember("LeftLowerArmBox.s", &boxes.l, NULL, WMOP_UNION);
-    (void)mk_addmember("RightLowerArmBox.s", &boxes.l, NULL, WMOP_UNION);
-    (void)mk_addmember("LeftHandBox.s", &boxes.l, NULL, WMOP_UNION);
-    (void)mk_addmember("RightHandBox.s", &boxes.l, NULL, WMOP_UNION);
-    (void)mk_addmember("LeftThighBox.s", &boxes.l, NULL, WMOP_UNION);
-    (void)mk_addmember("RightThighBox.s", &boxes.l, NULL, WMOP_UNION);
-    (void)mk_addmember("LeftCalfBox.s", &boxes.l, NULL, WMOP_UNION);
-    (void)mk_addmember("RightCalfBox.s", &boxes.l, NULL, WMOP_UNION);
-    (void)mk_addmember("LeftFootBox.s", &boxes.l, NULL, WMOP_UNION);
-    (void)mk_addmember("RightFootBox.s", &boxes.l, NULL, WMOP_UNION); 
+    (void)mk_addmember("Head.sBox", &boxes.l, NULL, WMOP_UNION);
+    (void)mk_addmember("Neck.sBox", &boxes.l, NULL, WMOP_UNION);
+    (void)mk_addmember("UpperTorso.sBox", &boxes.l, NULL, WMOP_UNION);
+    (void)mk_addmember("LowerTorso.sBox", &boxes.l, NULL, WMOP_UNION);
+    (void)mk_addmember("LeftUpperArm.sBox", &boxes.l, NULL, WMOP_UNION);
+    (void)mk_addmember("RightUpperArm.sBox", &boxes.l, NULL, WMOP_UNION);
+    (void)mk_addmember("LeftLowerArm.sBox", &boxes.l, NULL, WMOP_UNION);
+    (void)mk_addmember("RightLowerArm.sBox", &boxes.l, NULL, WMOP_UNION);
+    (void)mk_addmember("LeftHand.sBox", &boxes.l, NULL, WMOP_UNION);
+    (void)mk_addmember("RightHand.sBox", &boxes.l, NULL, WMOP_UNION);
+    (void)mk_addmember("LeftThigh.sBox", &boxes.l, NULL, WMOP_UNION);
+    (void)mk_addmember("RightThigh.sBox", &boxes.l, NULL, WMOP_UNION);
+    (void)mk_addmember("LeftCalf.sBox", &boxes.l, NULL, WMOP_UNION);
+    (void)mk_addmember("RightCalf.sBox", &boxes.l, NULL, WMOP_UNION);
+    (void)mk_addmember("LeftFoot.sBox", &boxes.l, NULL, WMOP_UNION);
+    (void)mk_addmember("RightFoot.sBox", &boxes.l, NULL, WMOP_UNION); 
     is_region = 1;
     VSET(rgb2, 255, 128, 128); /* redish color */
         mk_lcomb(db_fp,   
@@ -1251,52 +1299,52 @@ int main(int ac, char *av[])
      */
 
     BU_LIST_INIT(&hollow.l)
-    (void)mk_addmember("HeadBox.s", &hollow.l, NULL, WMOP_UNION);
+    (void)mk_addmember("Head.sBox", &hollow.l, NULL, WMOP_UNION);
     (void)mk_addmember("Head.s", &hollow.l, NULL, WMOP_SUBTRACT);
 
-    (void)mk_addmember("NeckBox.s", &hollow.l, NULL, WMOP_UNION);
+    (void)mk_addmember("Neck.sBox", &hollow.l, NULL, WMOP_UNION);
     (void)mk_addmember("Neck.s", &hollow.l, NULL, WMOP_SUBTRACT);   
 
-    (void)mk_addmember("UpperTorsoBox.s", &hollow.l, NULL, WMOP_UNION);
+    (void)mk_addmember("UpperTorso.sBox", &hollow.l, NULL, WMOP_UNION);
     (void)mk_addmember("UpperTorso.s", &hollow.l, NULL, WMOP_SUBTRACT);
 
-    (void)mk_addmember("LowerTorsoBox.s", &hollow.l, NULL, WMOP_UNION);
+    (void)mk_addmember("LowerTorso.sBox", &hollow.l, NULL, WMOP_UNION);
     (void)mk_addmember("LowerTorso.s", &hollow.l, NULL, WMOP_SUBTRACT);
     
-    (void)mk_addmember("LeftUpperArmBox.s", &hollow.l, NULL, WMOP_UNION);
+    (void)mk_addmember("LeftUpperArm.sBox", &hollow.l, NULL, WMOP_UNION);
     (void)mk_addmember("LeftUpperArm.s", &hollow.l, NULL, WMOP_SUBTRACT);
     
-    (void)mk_addmember("RightUpperArmBox.s", &hollow.l, NULL, WMOP_UNION);
+    (void)mk_addmember("RightUpperArm.sBox", &hollow.l, NULL, WMOP_UNION);
     (void)mk_addmember("RightUpperArm.s", &hollow.l, NULL, WMOP_SUBTRACT);
     
-    (void)mk_addmember("LeftLowerArmBox.s", &hollow.l, NULL, WMOP_UNION);
+    (void)mk_addmember("LeftLowerArm.sBox", &hollow.l, NULL, WMOP_UNION);
     (void)mk_addmember("LeftLowerArm.s", &hollow.l, NULL, WMOP_SUBTRACT);
     
-    (void)mk_addmember("RightLowerArmBox.s", &hollow.l, NULL, WMOP_UNION);
+    (void)mk_addmember("RightLowerArm.sBox", &hollow.l, NULL, WMOP_UNION);
     (void)mk_addmember("RightLowerArm.s", &hollow.l, NULL, WMOP_SUBTRACT);
     
-    (void)mk_addmember("LeftHandBox.s", &hollow.l, NULL, WMOP_UNION);
+    (void)mk_addmember("LeftHand.sBox", &hollow.l, NULL, WMOP_UNION);
     (void)mk_addmember("LeftHand.s", &hollow.l, NULL, WMOP_SUBTRACT);
     
-    (void)mk_addmember("RightHandBox.s", &hollow.l, NULL, WMOP_UNION);
+    (void)mk_addmember("RightHand.sBox", &hollow.l, NULL, WMOP_UNION);
     (void)mk_addmember("RightHand.s", &hollow.l, NULL, WMOP_SUBTRACT);
     
-    (void)mk_addmember("LeftThighBox.s", &hollow.l, NULL, WMOP_UNION);
+    (void)mk_addmember("LeftThigh.sBox", &hollow.l, NULL, WMOP_UNION);
     (void)mk_addmember("LeftThigh.s", &hollow.l, NULL, WMOP_SUBTRACT);
     
-    (void)mk_addmember("RightThighBox.s", &hollow.l, NULL, WMOP_UNION);
+    (void)mk_addmember("RightThigh.sBox", &hollow.l, NULL, WMOP_UNION);
     (void)mk_addmember("RightThigh.s", &hollow.l, NULL, WMOP_SUBTRACT);
     
-    (void)mk_addmember("LeftCalfBox.s", &hollow.l, NULL, WMOP_UNION);
+    (void)mk_addmember("LeftCalf.sBox", &hollow.l, NULL, WMOP_UNION);
     (void)mk_addmember("LeftCalf.s", &hollow.l, NULL, WMOP_SUBTRACT);
     
-    (void)mk_addmember("RightCalfBox.s", &hollow.l, NULL, WMOP_UNION);
+    (void)mk_addmember("RightCalf.sBox", &hollow.l, NULL, WMOP_UNION);
     (void)mk_addmember("RightCalf.s", &hollow.l, NULL, WMOP_SUBTRACT);
     
-    (void)mk_addmember("LeftFootBox.s", &hollow.l, NULL, WMOP_UNION);
+    (void)mk_addmember("LeftFoot.sBox", &hollow.l, NULL, WMOP_UNION);
     (void)mk_addmember("LeftFoot.s", &hollow.l, NULL, WMOP_SUBTRACT);
     
-    (void)mk_addmember("RightFootBox.s", &hollow.l, NULL, WMOP_UNION);
+    (void)mk_addmember("RightFoot.sBox", &hollow.l, NULL, WMOP_UNION);
     (void)mk_addmember("RightFoot.s", &hollow.l, NULL, WMOP_SUBTRACT);
 
     is_region = 1;
