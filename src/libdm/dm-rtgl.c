@@ -190,19 +190,19 @@ char *oldTrees[RT_MAXARGS];
 int oldNumTrees = 0;
 
 /* list of hit points */
-struct pointList points;
-struct pointList *currItem;
+struct ptInfoList ptInfo;
+struct ptInfoList *currItem;
 
 /* remove all points from points list */
 void freePoints(void) {
 
     /* list cannot be empty */
-    if (points.l.forw != NULL && (struct pointList *)points.l.forw != &points) {
+    if (ptInfo.l.forw != NULL && (struct ptInfoList *)ptInfo.l.forw != &ptInfo) {
 
-	struct pointList *curr;
-	while (BU_LIST_WHILE(curr, pointList, &(points.l))) {
+	struct ptInfoList *curr;
+	while (BU_LIST_WHILE(curr, ptInfoList, &(ptInfo.l))) {
 	    BU_LIST_DEQUEUE(&(curr->l));
-	    bu_free(curr, "free pointList curr");
+	    bu_free(curr, "free ptInfoList curr");
 	}
     }
 }
@@ -987,40 +987,110 @@ rtgl_loadMatrix(struct dm *dmp, fastf_t *mat, int which_eye)
     return TCL_OK;
 }
 
-/* add a hit point to points list */
-void addPoint(struct application *app, struct hit *hit) {
+/* calculates cosine of angle between two vectors */
+fastf_t cosAngle(fastf_t *v, fastf_t *w) {
+    fastf_t vMag, wMag, dot;
+
+    if ((dot = VDOT(v, w)) == 0) {
+	return 0.0;
+    }
+
+    vMag = MAGNITUDE(v);
+    wMag = MAGNITUDE(w);
+
+    return (dot / (vMag * wMag));
+}
+
+/* converts degrees of azimuth / elevation into a vector */
+void aeVect(fastf_t *aeVect, fastf_t *aet) {
+    fastf_t azRad, elRad;
+
+    /* convert to radians */
+    azRad = aet[X] * DEG2RAD;
+    elRad = aet[Y] * DEG2RAD;
+
+    /* calculate vector */
+    aeVect[X] = sin(azRad - M_PI_2);
+    aeVect[Y] = sin(azRad);
+    aeVect[Z] = cos(elRad + M_PI_2);
+}
+
+/* calculate and add hit-point info to info list */
+void addInfo(struct application *app, struct hit *hit, struct soltab *soltab, char flip) {
     point_t point;
+    vect_t normal, light = {0, 0, -1};
+    fastf_t lightMag = MAGNITUDE(light);
 
     /* calculate intersection point */
     VJOIN1(point, app->a_ray.r_pt, hit->hit_dist, app->a_ray.r_dir);
-    
-    /* get new vector if current is full */
-    if (currItem->used == PTVECT_SIZE) {
-	BU_GETSTRUCT(currItem, pointList);
-	BU_LIST_PUSH(&(points.l), currItem);
+
+    /* hack fix for bad tgc surfaces */
+    if (strncmp("rec", soltab->st_meth->ft_label, 3) == 0 || strncmp("tgc", soltab->st_meth->ft_label, 3) == 0) {
+
+	/* correct invalid surface number */
+	if (hit->hit_surfno < 1 || hit->hit_surfno > 3) {
+	    hit->hit_surfno = 2;
+	}
+    }
+
+    /* calculate normal vector */
+    RT_HIT_NORMAL(normal, hit, soltab, &(app->a_ray), flip);
+
+    /* get new list item if current is full */
+    if (currItem->used == PT_ARRAY_SIZE) {
+	BU_GETSTRUCT(currItem, ptInfoList);
+	BU_LIST_PUSH(&(ptInfo.l), currItem);
 	currItem->used = 0;
     }
 
     /* add point to list */
-    currItem->ptVect[X + currItem->used] = point[X];
-    currItem->ptVect[Y + currItem->used] = point[Y];
-    currItem->ptVect[Z + currItem->used] = point[Z];
+    currItem->points[X + currItem->used] = point[X];
+    currItem->points[Y + currItem->used] = point[Y];
+    currItem->points[Z + currItem->used] = point[Z];
 
+    /* add normal to list */
+#if 1
+    currItem->norms[X + currItem->used] = normal[X];
+    currItem->norms[Y + currItem->used] = normal[Y];
+    currItem->norms[Z + currItem->used] = normal[Z];
+#else
+    /* add color to list */
+    fastf_t glColor, normMag, dot;
+
+    dot = VDOT(normal, light);
+    normMag = MAGNITUDE(normal);
+    glColor = dot / (normMag * lightMag);
+
+    glColor = fabs(glColor);
+
+    currItem->norms[X + currItem->used] = glColor;
+    currItem->norms[Y + currItem->used] = glColor;
+    currItem->norms[Z + currItem->used] = glColor;
+#endif
     currItem->used += 3;
+
 }
 
-/* add all hit points to points list */
+/* add all hit point info to info list */
 int recordHit(struct application *app, struct partition *partH, struct seg *segs)
 {
     struct partition *part;
-    
+    struct soltab *soltab;
+
     /* add all hit points */
     for (part = partH->pt_forw; part != partH; part = part->pt_forw) {
-	/* add "in" hit point */
-	addPoint(app, part->pt_inhit);
-        
-	/* add "out" hit point */
-	addPoint(app, part->pt_outhit);
+
+	/* add "in" hit point info */
+	soltab = part->pt_inseg->seg_stp;
+	addInfo(app, part->pt_inhit, soltab, part->pt_inflip);
+
+	/* add "out" hit point info */        
+	soltab = part->pt_inseg->seg_stp;
+
+	if (strncmp("half", soltab->st_meth->ft_label, 4) != 0) { /* don't attempt to calculate half-space out point */
+	
+	    addInfo(app, part->pt_outhit, soltab, part->pt_outflip);
+	}
     }
 
     return 1;
@@ -1031,7 +1101,7 @@ int ignoreMiss(struct application *app) {
     return 0;
 }
 
-/* shoot and even grid of rays from a principle plane */
+/* shoot an even grid of parallel rays in a principle direction */
 void shootGrid(vect_t min, vect_t max, int uAxis, int vAxis, int iAxis) {
     int i, j;
     vect_t span;
@@ -1040,8 +1110,8 @@ void shootGrid(vect_t min, vect_t max, int uAxis, int vAxis, int iAxis) {
     VSUB2(span, max, min);
 
     /* calculate firing intervals */
-    int uDivs = 1000;
-    int vDivs = 1000;
+    int uDivs = 100;
+    int vDivs = 100;
 
     fastf_t uWidth = span[uAxis] / uDivs;
     fastf_t vWidth = span[vAxis] / vDivs;
@@ -1086,7 +1156,7 @@ rtgl_drawVList(struct dm *dmp, register struct bn_vlist *vp)
 {
     int i, j, numTrees, new, newTrees;
     char *currTree, *trees[RT_MAXARGS];
-    struct pointList *curr;
+    struct ptInfoList *curr;
     
     /* get ged struct */
     struct ged *gedp = ((struct rtgl_vars *)dmp->dm_vars.priv_vars)->mvars.gedp;
@@ -1106,14 +1176,14 @@ rtgl_drawVList(struct dm *dmp, register struct bn_vlist *vp)
     if (rtip == RTI_NULL)
         return TCL_ERROR;
     
-    if (points.l.forw == BU_LIST_NULL) {
+    if (ptInfo.l.forw == BU_LIST_NULL) {
 	/* initialize head */
-        BU_LIST_INIT(&(points.l));
-	points.used = 0;
+        BU_LIST_INIT(&(ptInfo.l));
+	ptInfo.used = 0;
 
 	/* get first list item */
-	BU_GETSTRUCT(currItem, pointList);
-	BU_LIST_PUSH(&(points.l), currItem);
+	BU_GETSTRUCT(currItem, ptInfoList);
+	BU_LIST_PUSH(&(ptInfo.l), currItem);
 	currItem->used = 0;
     }
 
@@ -1178,13 +1248,47 @@ rtgl_drawVList(struct dm *dmp, register struct bn_vlist *vp)
 	shootGrid(min, max, Y, Z, X);
     }
 
+#if 0
+    glPointSize(5);
+    glBegin(GL_POINTS);
+    glColor3d(1, 0, 0);
+    glVertex3d(50, 50, 50);
+    glEnd();
+    glPointSize(1);
+#endif
+
     /* draw points */
     glColor3d(0, 1, 0);
     glEnableClientState(GL_VERTEX_ARRAY);
+    vect_t normal, view;
+    fastf_t cAngle;
+    int index, count = 0;
 
-    for (BU_LIST_FOR(currItem, pointList, &(points.l))) {
-	glVertexPointer(3, GL_DOUBLE, 0, &(currItem->ptVect));
-	glDrawArrays(GL_POINTS, 0, currItem->used / 3);
+    aeVect(view, gedp->ged_gvp->gv_aet);
+
+    for (BU_LIST_FOR(currItem, ptInfoList, &(ptInfo.l))) {
+	glVertexPointer(3, GL_DOUBLE, 0, &(currItem->points));
+	
+	glBegin(GL_POINTS);
+	for (i = 0; i < (currItem->used / 3); i++) {
+
+	    /* get normal */
+	    index = 3 * i;
+	    normal[X] = currItem->norms[index + X];
+	    normal[Y] = currItem->norms[index + Y];
+	    normal[Z] = currItem->norms[index + Z];
+	   
+	    /* cosine of angle between normal and view vectors */
+	    cAngle = cosAngle(normal, view);
+
+	    /* visible elements have angle < 90 degrees */
+	    if (/*acos(cAngle) < M_PI_2*/ 1) {
+		count++;
+
+		glArrayElement(i);
+	    }
+	}
+	glEnd();
     }
 
     return TCL_OK;
