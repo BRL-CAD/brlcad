@@ -1803,6 +1803,7 @@ package provide Archer 1.0
 	    # Possibly draw the updated object
 	    set ditem ""
 	    foreach item [gedCmd report 0] {
+		regexp {/([^/]+$)} $item all item
 		set l [split $item /]
 		set i [lsearch -exact $l $obj]
 		if {$i != -1} {
@@ -7368,7 +7369,8 @@ package provide Archer 1.0
 
 ::itcl::body Archer::clearTargetLedger {} {
     set mLedgerGID 0
-    $mLedger
+    set alist [$mLedger ls]
+    eval $mLedger kill $alist
 }
 
 ::itcl::body Archer::createTargetLedger {} {
