@@ -701,7 +701,7 @@ namespace brlcad {
     }
 
     BBNode*
-    SurfaceTree::surfaceBBox(bool isLeaf, ON_3dPoint *m_corners, const ON_Interval& u, const ON_Interval& v)
+    SurfaceTree::surfaceBBox(bool isLeaf, ON_3dPoint *m_corners, ON_3dVector *m_normals, const ON_Interval& u, const ON_Interval& v)
     {
 	const ON_Surface* surf = m_face->SurfaceOf();
 
@@ -717,9 +717,10 @@ namespace brlcad {
 	// to an arbitrary model-space point (see
 	// getClosestPointEstimate())
 	ON_3dPoint estimate;
-	if (!surf->EvPoint(u.Mid(), v.Mid(), estimate)) {
-	    bu_bomb("Could not evaluate estimate point on surface");
-	}
+	ON_3dVector normal;
+	estimate = m_corners[4];
+	normal = m_normals[4];
+	
 	BBNode* node;
 	if (isLeaf) {
 	    vect_t delta;
@@ -742,6 +743,7 @@ namespace brlcad {
 	}
 
 	node->m_estimate = estimate;
+	node->m_normal = normal;
 	return node;
     }
 
@@ -750,10 +752,12 @@ namespace brlcad {
 	ON_BoundingBox bb = surf->BoundingBox();
 	BBNode* node = new BBNode(ctree,bb);
 	ON_3dPoint estimate;
-	if (!surf->EvPoint(surf->Domain(0).Mid(), surf->Domain(1).Mid(), estimate)) {
+	ON_3dVector normal;
+	if (!surf->EvNormal(surf->Domain(0).Mid(), surf->Domain(1).Mid(), estimate, normal)) {
 	    bu_bomb("Could not evaluate estimate point on surface");
 	}
 	node->m_estimate = estimate;
+	node->m_normal = normal;
 	return node;
     }
 
@@ -782,9 +786,9 @@ namespace brlcad {
 	surf->EvNormal(u.Mid() + uq, v.Mid() + vq, corners[8], normals[8]);
 
 	if ((dsubsurf/dsurf < BREP_SURF_SUB_FACTOR) && (isFlat(surf, normals, u, v) || depth >= BREP_MAX_FT_DEPTH)) {
-	    return surfaceBBox(true, corners, u, v);
+	    return surfaceBBox(true, corners, normals, u, v);
 	} else {
-	    BBNode* parent = (depth == 0) ? initialBBox(ctree,surf) : surfaceBBox(false, corners, u, v);
+	    BBNode* parent = (depth == 0) ? initialBBox(ctree,surf) : surfaceBBox(false, corners, normals, u, v);
 	    BBNode* quads[4];
 	    ON_Interval first(0, 0.5);
 	    ON_Interval second(0.5, 1.0);

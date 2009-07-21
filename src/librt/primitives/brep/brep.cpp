@@ -135,26 +135,6 @@ brep_specific_delete(struct brep_specific* bs)
 //--------------------------------------------------------------------------------
 // prep
 
-/**
- * Given a list of face bounding volumes for an entire brep, build up
- * an appropriate hierarchy to make it efficient (binary may be a
- * reasonable choice, for example).
- */
-void
-brep_bvh_subdivide(BBNode* parent, const std::list<SurfaceTree*>& face_trees)
-{
-    // XXX this needs to handle a threshold and some reasonable space
-    // partitioning
-    //     for (BVList::const_iterator i = face_bvs.begin(); i != face_bvs.end(); i++) {
-    // 	parent->gs_insert(*i);
-    //     }
-    for (std::list<SurfaceTree*>::const_iterator i = face_trees.begin(); i != face_trees.end(); i++) {
-	parent->addChild((*i)->getRootNode());
-   }
-   parent->BuildBBox();
-}
-
-
 bool
 brep_pt_trimmed(pt2d_t pt, const ON_BrepFace& face) {
     bool retVal = false;
@@ -429,321 +409,47 @@ split_trims_hv_tangent(const ON_Curve* curve, ON_Interval& t, list<double>& list
     return true;
 }
 
-/* XXX - most of this function is broken :-(except for the bezier span
- * caching need to fix it! - could provide real performance
- * benefits...
- */
-void
-brep_preprocess_trims(ON_BrepFace& face, SurfaceTree* tree) {
-    double min[3],max[3];
-	
-//#define KCONTROLPNTS
-#ifdef KCONTROLPNTS
-	const ON_Surface* surf = face.SurfaceOf();
-	int uknotcnt = surf->SpanCount(0);
-	bu_log("Surf SpanCount(0): %d\n",uknotcnt);
-	int vknotcnt = surf->SpanCount(1);
-	bu_log("Surf SpanCount(1): %d\n",vknotcnt);
-
-	double *uknots = new double[(uknotcnt+1)];
-	double *vknots = new double[(vknotcnt+1)];
-
-	surf->GetSpanVector(0,uknots);
-	surf->GetSpanVector(1,vknots);
-
-	ON_3dPoint p; // = surf->PointAt(uknots[i],vknots[j]);
-	ON_3dVector n;
-	double u;
-	double v;
-	point_t point;
-	point_t end;
-	vect_t dir;
-	point_t prevpoint;
-	vect_t prevdir;
-	vect_t diff;
-
-	u = uknots[0];
-	v = vknots[0];
-	if (surf->EvNormal( u, v, p, n )) {
-	    M_COLOR_PLOT(MAGENTA);
-	    VMOVE(prevpoint,p);
-	    VMOVE(prevdir,n);
-	    VSCALE(end,prevdir,1.0);
-	    VADD2(prevpoint,prevpoint,end);
-	    VADD2(end,prevpoint,end);
-	    M_PT_PLOT(prevpoint);
-	    LINE_PLOT(prevpoint,end);
-	}
-	u = uknots[1];
-	v = vknots[0];
-	if (surf->EvNormal( u, v, p, n )) {
-	    M_COLOR_PLOT(WHITE);
-	    VMOVE(prevpoint,p);
-	    VMOVE(prevdir,n);
-	    VSCALE(end,prevdir,1.0);
-	    VADD2(prevpoint,prevpoint,end);
-	    VADD2(end,prevpoint,end);
-	    M_PT_PLOT(prevpoint);
-	    LINE_PLOT(prevpoint,end);
-	}
-	bool pxdir,pydir,pzdir;
-	bool xdir,ydir,zdir;
-	vect_t cp;
-	fastf_t dp;
-	    for(int j=0;j<=vknotcnt;j++) {
-	for(int i=0;i<=uknotcnt;i++) {
-		if ((i==0)&&(j==0)) {
-		    VMOVE(point,prevpoint);
-		    VMOVE(dir,prevdir)
-		    pxdir = pydir = pzdir = true;
-		} else {
-		    u = uknots[i];
-		    v = vknots[j];
-		    if (surf->EvNormal( u, v, p, n )) {
-			VMOVE(point,p);
-			VMOVE(dir,n);
-		    }
-		}
-		VCROSS(cp,dir,prevdir);
-		dp = VDOT(dir,prevdir);
-		//bu_log( "VCROSS <%g,%g,%g>\n",cp[X],cp[Y],cp[Z] );
-		//bu_log( "VDOT  - %g\n",dp );
-		VSUB2(diff,dir,prevdir);
-		xdir = !(diff[0] < 0.0);
-		ydir = !(diff[1] < 0.0);
-		zdir = !(diff[2] < 0.0);
-		VSCALE(end,dir,dp);
-		VADD2(end,point,end);
-		if (xdir!=pxdir){
-		    M_COLOR_PLOT(RED);
-		} else if (pydir!=ydir){
-		    M_COLOR_PLOT(GREEN);
-		} else if (pzdir!=zdir){
-		    M_COLOR_PLOT(BLUE);
-		} else {
-		    M_COLOR_PLOT(YELLOW);
-		}
-		pxdir = xdir;
-		pydir = ydir;
-		pzdir = zdir;
-		VMOVE(prevdir,dir);
-		VMOVE(prevpoint,point);
-		M_PT_PLOT(point);
-		LINE_PLOT(point,end);
-	    }
-	}
-
-	
-#endif
-	CurveTree* ct = new CurveTree(&face);
-//#define KDISCONTS
-#ifdef KDISCONTS
-	for (int i = 0; i < face.LoopCount(); i++) {
-	    bool innerLoop = (i > 0) ? true : false;
-	    ON_BrepLoop* loop = face.Loop(i);
-	    // for each trim
-	    for (int j = 0; j < loop->m_ti.Count(); j++) {
-		ON_BrepTrim& trim = face.Brep()->m_T[loop->m_ti[j]];
-		const ON_Curve* trimCurve = trim.TrimCurveOf();
-		double min,max;
-		(void)trimCurve->GetDomain(&min, &max);
-		ON_Interval t(min,max);
-		double t_dis;
-		int hint=0;
-		int dtype=0;
-		double cos_angle_tolerance=0.0000001;
-		double curvature_tolerance=0.0000001;
-		ON_3dPoint p1,p2,p3;
-		vect_t grow;
-		VSETALL(grow,0.1); // grow the box a bit
-		int knotcnt = trimCurve->SpanCount();
-		double *knots = new double[knotcnt+1];
-		trimCurve->GetSpanVector(knots);
-		ON_3dVector tangent1,tangent2;
-
-		bool tanx1,tanx2,tanx_changed;
-		bool tany1,tany2,tany_changed;
-		bool tan_changed;
-		for(int i=0;i<=knotcnt;i++) {
-			point_t p;
-
-			p1 = trimCurve->PointAt(knots[i]);
-			if (i == 0) {
-			M_COLOR_PLOT( RED );
-			} else if (i == knotcnt) {
-			M_COLOR_PLOT( GREEN );
-			} else {
-			M_COLOR_PLOT( YELLOW );
-			}
-			VMOVE(p,p1);
-			M_PT_PLOT(p);
-		}
-#if 0
-		for(int i=1;i<=knotcnt;i++) {
-		    list<double> splitlist;
-		    ON_Interval t(knots[i-1],knots[i]);
-
-		    //split_trims_hv_tangent(trimCurve,t,splitlist);
-		    for( list<double>::iterator l=splitlist.begin();l != splitlist.end();l++) {
-			double x = *l;
-			point_t p;
-
-			p1 = trimCurve->PointAt(x);
-			M_COLOR_PLOT( RED );
-			VMOVE(p,p1);
-			M_PT_PLOT(p);
-		    }
-		}
-		for(int i=0;i<=knotcnt;i++) {
-		    p1 = trimCurve->PointAt(knots[i]);
-		    M_COLOR_PLOT(HOTPINK);
-		    M_PT_PLOT(p1);
-		}
-#endif
-/*
-		while ( trimCurve->GetNextDiscontinuity( 
-			    ON::G2_continuous,
-			    min,max,&t_dis,
-			    &hint,&dtype) ) {
-
-		    COLOR_PLOT( 255, 255, 255 );
-		    p1 = trimCurve->PointAt(t_dis);
-		    VADD2(p2, p1, grow);
-		    VSUB2(p1, p1, grow);
-		    BB_PLOT(p1,p2);
-		    min=t_dis;
-		}
-*/
-	    }
-	}		
-
-#endif
-//#define KCURVELETS
-#ifdef KCURVELETS
-		list<BRNode*> curvelets;
-		ct->getLeaves(curvelets);
-		//ON_Interval u(-5.4375,-4.53125);
-		//ON_Interval v(-5.4375,-4.53125);
-		ct->getLeaves(curvelets);
-		
-		for (list<BRNode*>::iterator i = curvelets.begin(); i != curvelets.end(); i++) {
-			BRNode* br = dynamic_cast<BRNode*>(*i);
-			if (br->m_XIncreasing) {
-				COLOR_PLOT( 255, 255, 0 );
-			} else {
-				COLOR_PLOT( 0, 255, 0 );
-			}
-			br->GetBBox(min,max);
-			BB_PLOT(min,max);
-		}
-		curvelets.clear();
-#endif
-	
-    list<BBNode*> leaves;
-    tree->getLeaves(leaves);
-	
-    for (list<BBNode*>::iterator i = leaves.begin(); i != leaves.end(); i++) {
-		BBNode* bb = dynamic_cast<BBNode*>(*i);
-//		bb->prepTrims(ct);
-		/*
-	// check to see if the bbox encloses a trim
-	ON_3dPoint uvmin(bb->m_u.Min(), bb->m_v.Min(), 0);
-	ON_3dPoint uvmax(bb->m_u.Max(), bb->m_v.Max(), 0);
-	ON_BoundingBox bbox(uvmin, uvmax);
-	for (int i = 0; i < face.Brep()->m_L.Count(); i++) {
-	    ON_BrepLoop& loop = face.Brep()->m_L[i];
-	    // for each trim
-	    for (int j = 0; j < loop.m_ti.Count(); j++) {
-		ON_BrepTrim& trim = face.Brep()->m_T[loop.m_ti[j]];
-*/
-		/* tell the NURBS curves to cache their Bezier spans
-		 * (used in trimming routines, and not thread safe)
-		 */
-/*
-		const ON_Curve* c = trim.TrimCurveOf();
-		if (c->ClassId()->IsDerivedFrom(&ON_NurbsCurve::m_ON_NurbsCurve_class_id)) {
-		    ON_NurbsCurve::Cast(c)->CacheBezierSpans();
-		}
-	    }
-	}
-*/
-	//bb->m_checkTrim = true; // XXX - ack, hardcode for now
-
-	/* for this node to be completely trimmed, all four corners
-	 * must be trimmed and the depth of the tree needs to be > 0,
-	 * since 0 means there is just a single leaf - and since
-	 * "internal" outer loops will be make a single node seem
-	 * trimmed, we must account for it.
-	 */
-	//bb->m_trimmed = false; // XXX - ack, hardcode for now
-    }
-}
 
 int
 brep_build_bvh(struct brep_specific* bs, struct rt_brep_internal* bi)
 {
+    // First, run the openNURBS validity check on the brep in question
     ON_TextLog tl(stderr);
     ON_Brep* brep = bs->brep;
     if (brep == NULL || !brep->IsValid(&tl)) {
 		bu_log("brep is NOT valid");
 		return -1;
     }
-	
-	int orientation = brep->SolidOrientation();
+
+    // May want to do something about setting orientation?  not used,
+    // commented out for now CY 2009
+    // int orientation = brep->SolidOrientation();
+    
+    // Initialize the top level Bounding Box node for the entire surface
+    // tree.  The purpose of this node is to provide a parent node for
+    // the trees to be built on each BREP component surface.
     bs->bvh = new BBNode(brep->BoundingBox());
 	
-    /* need to extract faces, and build bounding boxes for each face,
-		* then combine the face BBs back up, combining them together to
-		* better split the hierarchy
-		*/
-    std::list<SurfaceTree*> surface_trees;
+    /* For each face in the brep, build its surface tree and add the root
+     * node of that tree as a child of the bvh master node defined above.
+     * A possible future refinement of this approach would be to build
+     * a tree structure on top of the collection of surface trees based
+     * on their 3D bounding volumes, as opposed to the current approach
+     * of simply having all surfaces be child nodes of the master node.
+     * This would allow a ray intersection to avoid checking every surface
+     * tree bounding box, but should probably be undertaken only if this
+     * step proves to be a bottleneck for raytracing.
+     */
     ON_BrepFaceArray& faces = brep->m_F;
     for (int i = 0; i < faces.Count(); i++) {
-		surface_trees.clear();
-        TRACE1("Face: " << i);
-		ON_BrepFace& face = faces[i];
-//#define KPREPLIMIT
-#ifdef KPREPLIMIT // debugging hacks to look at specific faces
-		if ((i == 196) || (i == 275) || (i == 366) || (i == 368)) {
-#endif
-		bu_log("Prepping Face: %d of %d\n", i+1, faces.Count());
-//#define KPLOT
-#ifdef KPLOT // debugging hacks to look at specific faces
-	char buffer[80];
-	sprintf(buffer,"Face%d.pl",i+1);
-	plot_file((const char *)buffer);
-#endif
-		SurfaceTree* st = new SurfaceTree(&face);
-		face.m_face_user.p = st;
-		brep_preprocess_trims(face, st);
-		/* add the surface bounding volumes to a list, so we can build
-		* down a hierarchy from the brep bounding volume
-		*/
-		surface_trees.push_back(st);
-#ifdef KPLOT // debugging hacks to look at specific faces
-			
-			if (true) { //plotting utah_brep_intersecthacks i==0) {
-			    plottrim(face);
-			    plotsurfaceleafs(st);
-			}
-
-#endif	
-#ifdef KPREPLIMIT		
-		}
-#endif
-		brep_bvh_subdivide(bs->bvh, surface_trees);
-	}
-#ifdef KPLOT // debugging hacks to look at specific faces
-    (void)fclose(plot_file());
-		plot = NULL;
-#endif
+	ON_BrepFace& face = faces[i];
+	bu_log("Prepping Face: %d of %d\n", i+1, faces.Count());
+	SurfaceTree* st = new SurfaceTree(&face);
+	face.m_face_user.p = st;
+	bs->bvh->addChild(st->getRootNode());
+    }
+    bs->bvh->BuildBBox();
     return 0;
-}
-
-void
-brep_calculate_cdbitems(struct brep_specific* bs, struct rt_brep_internal* bi)
-{
-
 }
 
 
@@ -764,11 +470,6 @@ rt_brep_prep(struct soltab *stp, struct rt_db_internal* ip, struct rt_i* rtip)
     /* This prepares the NURBS specific data structures to be used
      * during intersection... i.e. acceleration data structures and
      * whatever else is needed.
-     *
-     * Abert's paper (Direct and Fast Ray Tracing of NURBS Surfaces)
-     * suggests using a bounding volume hierarchy (instead of KD-tree)
-     * and building it down to a satisfactory flatness criterion
-     * (which they do not give information about).
      */
     struct rt_brep_internal* bi;
     struct brep_specific* bs;
@@ -784,10 +485,14 @@ rt_brep_prep(struct soltab *stp, struct rt_db_internal* ip, struct rt_i* rtip)
 	stp->st_specific = (genptr_t)bs;
     }
 
+    /* The workhorse routines of BREP prep are called by brep_build_bvh
+     */
     if (brep_build_bvh(bs, bi) < 0) {
 	return -1;
     }
 
+    /* Once a proper SurfaceTree is built, finalize the bounding
+     * volumes */
     point_t adjust;
     VSETALL(adjust, 1);
     bs->bvh->GetBBox(stp->st_min, stp->st_max);
@@ -802,9 +507,6 @@ rt_brep_prep(struct soltab *stp, struct rt_db_internal* ip, struct rt_i* rtip)
     V_MAX(f, work[Z]);
     stp->st_aradius = f;
     stp->st_bradius = MAGNITUDE(work);
-
-    brep_calculate_cdbitems(bs, bi);
-
 
     return 0;
 }
@@ -1492,11 +1194,7 @@ utah_brep_intersect_test(const BBNode* sbv, const ON_BrepFace* face, const ON_Su
     bool converged = false;
     int numhits;
     
-    ON_3dPoint center_pt;
-    ON_3dVector normal;
-    surf->EvNormal(sbv->m_u.Mid(), sbv->m_v.Mid(), center_pt, normal);
-    
-    double grazing_float = normal * ray.m_dir;
+    double grazing_float = sbv->m_normal * ray.m_dir;
     
     if (fabs(grazing_float) < 0.2) {
 		numhits = utah_newton_4corner_solver( sbv, surf, ray, ouv, t, N, converged, 1);
@@ -1784,95 +1482,29 @@ containsNearHit(HitList *hits)
 int
 rt_brep_shot(struct soltab *stp, register struct xray *rp, struct application *ap, struct seg *seghead)
 {
-    //TRACE1("rt_brep_shot origin:" << ON_PRINT3(rp->r_pt) << " dir:" << ON_PRINT3(rp->r_dir));
-    TRACE("^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^");
     struct brep_specific* bs = (struct brep_specific*)stp->st_specific;
 
-    // check the hierarchy to see if we have a hit at a leaf node
+    /* First, test for intersections between the Surface Tree
+     * hierarchy and the ray - if one or more leaf nodes are
+     * intersected, there is potentially a hit and more evaluation
+     * is needed.  Otherwise, return a miss.
+     */
     list<BBNode*> inters;
     ON_Ray r = toXRay(rp);
     bs->bvh->intersectsHierarchy(r, inters);
-
     if (inters.size() == 0) return 0; // MISS
-    TRACE1("bboxes: " << inters.size());
 	
-//#define KDEBUGMISS
-	int boxcnt=0;
-#ifdef KDEBUGMISS
-	char buffer[80];
-	icount++;
-	//if (icount == 1) return 0;
-	sprintf(buffer,"Shot%d.pl",icount);
-	plot_file((const char *)buffer);
-	ON_3dPoint p = r.m_origin + (r.m_dir*20.0);
-	point_t a,b;
-	VMOVE(a,r.m_origin);
-	VMOVE(b,p);
-	COLOR_PLOT( 255, 255, 255 );
-	LINE_PLOT(a,b);
-	(void)fclose(plot_file());
-		plot = NULL;
-#endif
-
     // find all the hits (XXX very inefficient right now!)
     HitList all_hits; // record all hits
-    MissList misses; // XXX - get rid of this stuff (for debugging)
+    MissList misses;
     int s = 0;
     hit_count = 0;
     for (list<BBNode*>::iterator i = inters.begin(); i != inters.end(); i++) {
         const BBNode* sbv = (*i);
-	
-	boxcnt++;
-#ifdef KDEBUGMISS
-	sprintf(buffer,"N%d.pl",boxcnt);
-	plot_file((const char *)buffer);
-	plotleaf3d((BBNode*)sbv);
-	(void)fclose(plot_file());
-		plot = NULL;
-#endif
-
 	const ON_BrepFace* f = sbv->m_face;
 	const ON_Surface* surf = f->SurfaceOf();
 	pt2d_t uv = {sbv->m_u.Mid(), sbv->m_v.Mid()};
-	TRACE1("surface: " << s);
 	int status = utah_brep_intersect_test(sbv, f, surf, uv, r, all_hits);
-#ifdef KDEBUGMISS
-	if (true) { //(status > 0) { //plotting utah_brep_intersecthacks i==0) {
-		const ON_BrepFace *face = sbv->m_face;
-		sprintf(buffer,"Box%d_N%d.pl",face->m_face_index,boxcnt);
-		plot_file((const char *)buffer);
-		plotleaf3d((BBNode*)sbv);
-		(void)fclose(plot_file());
-		plot = NULL;
-		sprintf(buffer,"Face%d_N%d.pl",face->m_face_index,boxcnt);
-		plot_file((const char *)buffer);
-		plottrim((ON_BrepFace&)*sbv->m_face);
-		(void)fclose(plot_file());
-		plot = NULL;
-		sprintf(buffer,"Tree%d_N%d.pl",face->m_face_index,boxcnt);
-		plot_file((const char *)buffer);
-		SurfaceTree* st = (SurfaceTree*)face->m_face_user.p;
-		plotsurfaceleafs(st);
-		(void)fclose(plot_file());
-		plot = NULL;
-	}
-#endif
-	if (status == BREP_INTERSECT_FOUND) {
-	    TRACE("INTERSECTION: " << PT(all_hits.back().point) << all_hits.back().trimmed << ", " << all_hits.back().closeToEdge << ", " << all_hits.back().oob);
-	} else {
-	    static int reasons = 0;
-	    if (reasons < 100) {
-		TRACE2(BREP_INTERSECT_REASON((brep_intersect_reason_t)status));
-		reasons++;
-	    } else {
-		static int quelled = 0;
-		if (!quelled) {
-		    TRACE2("Too many reasons.  Suppressing further output." << std::endl);
-		    quelled = 1;
-		}
-	    }
-	    misses.push_back(ip_t(all_hits.size()-1, status));
-	}
 	s++;
     }
 

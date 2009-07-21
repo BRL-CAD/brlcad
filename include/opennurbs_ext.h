@@ -578,12 +578,20 @@ namespace brlcad {
 		// the center of the parametric domain
 		ON_3dPoint m_estimate;
 
+		// Normal at the m_estiamte point
+		ON_3dVector m_normal;
+
 		// Test whether a ray intersects the 3D bounding volume
 		// of the node - if so, and node is not a leaf node, query
 		// children.  If leaf node, and intersects, add to list.
 		bool intersectedBy(ON_Ray& ray, double* tnear = 0, double* tfar = 0);
 		bool intersectsHierarchy(ON_Ray& ray, list<BVNode<ON_BoundingBox>*>& results = 0);
-	
+
+		// Report if a given uv point is within the uv boundardies
+		// defined by a node.
+		bool containsUV(const ON_2dPoint& uv);
+
+		
 		ON_2dPoint getClosestPointEstimate(const ON_3dPoint& pt);
 		ON_2dPoint getClosestPointEstimate(const ON_3dPoint& pt, ON_Interval& u, ON_Interval& v);
 		
@@ -766,6 +774,16 @@ namespace brlcad {
 	    return intersects; 
 	}
 
+    template<class BV>
+	 bool BVNode<BV>::containsUV(const ON_2dPoint& uv) {
+	     if ((uv[0] > m_u[0]) && (uv[0] < m_u[1]) && (uv[1] > m_v[0]) && (uv[1] < m_v[1])) {
+		 return true;
+	     } else {
+		 return false;
+	     }
+	 }
+
+	    
     template<class BV>
     	int
     	BVNode<BV>::depth() {
@@ -992,8 +1010,8 @@ namespace brlcad {
 	    }	    
     	}
 
-template<class BH>
-    void BVNode<BH>::BuildBBox() {
+template<class BV>
+    void BVNode<BV>::BuildBBox() {
 	if (m_children.size() > 0) {
 	    for (vector<BBNode*>::iterator childnode = m_children.begin(); childnode != m_children.end(); childnode++) {
 		if (childnode == m_children.begin()) {
@@ -1129,7 +1147,7 @@ template<class BH>
     private:
 	bool isFlat(const ON_Surface* surf, ON_3dVector normals[], const ON_Interval& u, const ON_Interval& v);
 	BBNode* subdivideSurface(const ON_Interval& u, const ON_Interval& v, ON_3dPoint corners[], ON_3dVector normals[], int depth);
-	BBNode* surfaceBBox(bool leaf, ON_3dPoint corners[], const ON_Interval& u, const ON_Interval& v);
+	BBNode* surfaceBBox(bool leaf, ON_3dPoint corners[], ON_3dVector normals[], const ON_Interval& u, const ON_Interval& v);
 
 	ON_BrepFace* m_face;
 	BBNode* m_root;
