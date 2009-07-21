@@ -68,22 +68,7 @@ namespace brlcad {
 	}
     }
 
-    void printcorners(ON_3dPoint *corners) {
-	bu_log("corner  0: %f,%f,%f\n",corners[0][0],corners[0][1],corners[0][2]);
-	bu_log("corner  1: %f,%f,%f\n",corners[1][0],corners[1][1],corners[1][2]);
-	bu_log("corner  2: %f,%f,%f\n",corners[2][0],corners[2][1],corners[2][2]);
-	bu_log("corner  3: %f,%f,%f\n",corners[3][0],corners[3][1],corners[3][2]);
-	bu_log("corner  4: %f,%f,%f\n",corners[4][0],corners[4][1],corners[4][2]);
-	bu_log("corner  5: %f,%f,%f\n",corners[5][0],corners[5][1],corners[5][2]);
-	bu_log("corner  6: %f,%f,%f\n",corners[6][0],corners[6][1],corners[6][2]);
-	bu_log("corner  7: %f,%f,%f\n",corners[7][0],corners[7][1],corners[7][2]);
-	bu_log("corner  8: %f,%f,%f\n",corners[8][0],corners[8][1],corners[8][2]);
-	bu_log("corner  9: %f,%f,%f\n",corners[9][0],corners[9][1],corners[9][2]);
-	bu_log("corner 10: %f,%f,%f\n",corners[10][0],corners[10][1],corners[10][2]);
-	bu_log("corner 11: %f,%f,%f\n",corners[11][0],corners[11][1],corners[11][2]);
-	bu_log("corner 12: %f,%f,%f\n",corners[12][0],corners[12][1],corners[12][2]);
-    }
-    
+   
     //--------------------------------------------------------------------------------
     // CurveTree
     CurveTree::CurveTree(ON_BrepFace* face)
@@ -331,7 +316,7 @@ namespace brlcad {
 	    }
 	}
     }
-
+/*
     void
     CurveTree::getLeavesRight(list<BRNode*>& out_leaves, const ON_Interval& u, const ON_Interval& v) {
 	point_t bmin, bmax;
@@ -349,7 +334,7 @@ namespace brlcad {
 	    }
 	}
     }
-
+*/
 
     fastf_t
     CurveTree::getVerticalTangent(const ON_Curve *curve, fastf_t min, fastf_t max) {

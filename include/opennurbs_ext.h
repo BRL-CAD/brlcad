@@ -483,7 +483,7 @@ namespace brlcad {
 	 */
 	void getLeaves(list<BRNode*>& out_leaves);
 	void getLeavesAbove(list<BRNode*>& out_leaves, const ON_Interval& u, const ON_Interval& v);
-	void getLeavesRight(list<BRNode*>& out_leaves, const ON_Interval& u, const ON_Interval& v);
+//	void getLeavesRight(list<BRNode*>& out_leaves, const ON_Interval& u, const ON_Interval& v);
 	int depth();
 
     private:
@@ -598,7 +598,7 @@ namespace brlcad {
 		BVNode<BV>* closer(const ON_3dPoint& pt, BVNode<BV>* left, BVNode<BV>* right);
 		list<BRNode*> m_trims_above;
 		list<BRNode*> m_trims_vertical;
-		list<BRNode*> m_trims_right;
+//		list<BRNode*> m_trims_right;
 	};
     
     typedef BVNode<ON_BoundingBox> BBNode;
@@ -1028,11 +1028,11 @@ template<class BH>
 		//	BVNode<BV>::GetBBox(surfmin,surfmax);
 
 		m_trims_above.clear();
-		m_trims_right.clear();
+		//m_trims_right.clear();
 		ct->getLeavesAbove( m_trims_above,m_u,m_v);
-		ct->getLeavesRight( m_trims_right,m_u,m_v);
+//		ct->getLeavesRight( m_trims_right,m_u,m_v);
 		m_trims_above.sort(sortY);
-		m_trims_right.sort(sortX);
+		//m_trims_right.sort(sortX);
 
 		if (!m_trims_above.empty()) {
 			i = m_trims_above.begin();
@@ -1053,7 +1053,7 @@ template<class BH>
 		}
 
 		if (!trim_already_assigned) { // already contains possible vertical trim
-			if ( m_trims_above.empty() || m_trims_right.empty()) {
+			if ( m_trims_above.empty() /*|| m_trims_right.empty()*/) {
 				m_trimmed = true;
 				m_checkTrim = false;
 			} else if (!m_trims_above.empty()) {//trimmed above check contains
