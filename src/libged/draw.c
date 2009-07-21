@@ -45,6 +45,8 @@ static union tree *ged_bot_check_leaf(struct db_tree_state *tsp,
 				      struct rt_db_internal *ip,
 				      genptr_t client_data);
 
+static int ged_drawtrees_depth = 0;
+
 
 /**
  * Compute the min, max, and center points of the solid.  Also finds
@@ -554,6 +556,7 @@ ged_drawtrees(struct ged *gedp, int argc, const char *argv[], int kind, struct g
     if (argc <= 0)
 	return(-1);	/* FAIL */
 
+    ++ged_drawtrees_depth;
     av[1] = (char *)0;
 
     /* options are already parsed into _dgcdp */
@@ -680,6 +683,7 @@ ged_drawtrees(struct ged *gedp, int argc, const char *argv[], int kind, struct g
 		{
 		    bu_vls_printf(&gedp->ged_result_str, "unrecognized option - %c\n", c);
 		    bu_free((genptr_t)dgcdp, "ged_drawtrees: dgcdp");
+		    --ged_drawtrees_depth;
 		    return GED_ERROR;
 		}
 	    }
@@ -709,6 +713,7 @@ ged_drawtrees(struct ged *gedp, int argc, const char *argv[], int kind, struct g
 	default:
 	    bu_vls_printf(&gedp->ged_result_str, "ERROR, bad kind\n");
 	    bu_free((genptr_t)dgcdp, "ged_drawtrees: dgcdp");
+	    --ged_drawtrees_depth;
 	    return(-1);
 	case 1:		/* Wireframes */
 	{
@@ -735,7 +740,8 @@ ged_drawtrees(struct ged *gedp, int argc, const char *argv[], int kind, struct g
 	    }
 
 	    for (i = 0; i < argc; ++i) {
-		dgcdp->gdlp = ged_addToDisplay(gedp, argv[i]);
+		if (ged_drawtrees_depth == 1)
+		    dgcdp->gdlp = ged_addToDisplay(gedp, argv[i]);
 
 		if (dgcdp->gdlp == GED_DISPLAY_LIST_NULL)
 		    continue;
@@ -756,6 +762,7 @@ ged_drawtrees(struct ged *gedp, int argc, const char *argv[], int kind, struct g
 	case 2:		/* Big-E */
 	    bu_vls_printf(&gedp->ged_result_str, "drawtrees:  can't do big-E here\n");
 	    bu_free((genptr_t)dgcdp, "ged_drawtrees: dgcdp");
+	    --ged_drawtrees_depth;
 	    return (-1);
 	case 3:
 	{
@@ -768,7 +775,8 @@ ged_drawtrees(struct ged *gedp, int argc, const char *argv[], int kind, struct g
 	    }
 
 	    for (i = 0; i < argc; ++i) {
-		dgcdp->gdlp = ged_addToDisplay(gedp, argv[i]);
+		if (ged_drawtrees_depth == 1)
+		    dgcdp->gdlp = ged_addToDisplay(gedp, argv[i]);
 
 		if (dgcdp->gdlp == GED_DISPLAY_LIST_NULL)
 		    continue;
@@ -796,6 +804,9 @@ ged_drawtrees(struct ged *gedp, int argc, const char *argv[], int kind, struct g
 	    break;
 	}
     }
+
+    --ged_drawtrees_depth;
+
     if (dgcdp->fastpath_count) {
 	bu_log("%d region%s rendered through polygon fastpath\n",
 	       dgcdp->fastpath_count, dgcdp->fastpath_count==1?"":"s");
