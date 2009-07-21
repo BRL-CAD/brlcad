@@ -27,6 +27,26 @@
  * This code is written and maintained by Joe Doliner jdoliner@gmail.com */
 
 #include "surfaceintersect.h"
+#define MIN(a, b) (((a) > (b)) ? (a) : (b))
+
+/**
+ *       ClosestValue
+ *
+ * @brief returns the value that is closest to the given value but in the given interval
+ */
+double ClosestValue(
+	double value,
+	ON_Interval interval
+	)
+{
+    if (interval.Includes(value, true)) {
+	return value;
+    } else if (value < interval.Min()) {
+	return interval.Min();
+    } else {
+	return interval.Max();
+    }
+}
 
 /**
  *        step
@@ -34,7 +54,7 @@
  * @brief advances s1, s2, t1, t2 along the curve of intersection of the two surfaces
  * by a distance of step size.
  */
-void Step(
+int Step(
 	ON_Surface *surf1,
 	ON_Surface *surf2,
 	double *s1,
@@ -76,9 +96,29 @@ void WalkIntersection(
 	)
 {
     ON_Polyline intersectionPoints;
+    double olds1, olds2, oldt1, oldt2;
     while (surf1->Domain(0).Includes(s1, true) && surf1->Domain(1).Includes(t1, true) && surf2->Domain(0).Includes(s2, true) && surf2->Domain(1).Includes(t2, true) && !intersectionPoints.IsClosed(stepsize)) {
 	intersectionPoints.Append(surf1->PointAt(s1, t1));
+	olds1 = s1;
+	olds2 = s2;
+	oldt1 = t1;
+	oldt2 = t2;
 	Step(surf1, surf2, &s1, &s2, &t1, &t2, stepsize);
+    }
+    if (!intersectionPoints.IsClosed(stepsize)) {
+	/* we stepped off the edge of our domain, we need to get a point right on the edge */
+	double news1, news2, newt1, newt2;
+	news1 = ClosestValue(s1, surf1->Domain(0));
+	news2 = ClosestValue(s2, surf2->Domain(1));
+	newt1 = ClosestValue(t1, surf1->Domain(0));
+	newt2 = ClosestValue(t2, surf2->Domain(1));
+	news1 = olds1 + MIN((news1 - olds1) / (s1 - olds1), (newt1 - oldt1) / (t1 - oldt1)) * (s1 - olds1);
+	news2 = olds2 + MIN((news2 - olds2) / (s2 - olds2), (newt2 - oldt2) / (t2 - oldt2)) * (s2 - olds2);
+	newt1 = oldt1 + MIN((news1 - olds1) / (s1 - olds1), (newt1 - oldt1) / (t1 - oldt1)) * (t1 - oldt1);
+	newt2 = oldt2 + MIN((news2 - olds2) / (s2 - olds2), (newt2 - oldt2) / (t2 - oldt2)) * (t2 - oldt2);
+	double newstep = MIN(surf1->PointAt(olds1, oldt1).DistanceTo(surf1->PointAt(news1, newt1)), surf2->PointAt(olds2, oldt2).DistanceTo(surf2->PointAt(news2, newt2)));
+	Step(surf1, surf2, &s1, &s2, &t1, &t2, newstep);
+	intersectionPoints.Append(surf1->PointAt(s1, t1));
     }
     *out = ON_BezierCurve(intersectionPoints);
 }
