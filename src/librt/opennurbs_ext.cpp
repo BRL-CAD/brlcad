@@ -665,8 +665,8 @@ namespace brlcad {
 	ON_Interval v = surf->Domain(1);
 	// Populate initial corner and normal arrays for use in
 	// tree build
-	ON_3dPoint corners[13];
-	ON_3dVector normals[13];
+	ON_3dPoint corners[9];
+	ON_3dVector normals[9];
 	double uq = u.Length()*0.25;
 	double vq = v.Length()*0.25;
 	surf->EvNormal(u.Min(),v.Min(), corners[0], normals[0]);
@@ -678,10 +678,6 @@ namespace brlcad {
 	surf->EvNormal(u.Mid() - uq, v.Mid() + vq, corners[6], normals[6]);
 	surf->EvNormal(u.Mid() + uq, v.Mid() - vq, corners[7], normals[7]);
 	surf->EvNormal(u.Mid() + uq, v.Mid() + vq, corners[8], normals[8]);
-	surf->EvNormal(u.Mid(), v.Mid() - vq, corners[9], normals[9]);
-	surf->EvNormal(u.Mid() + uq, v.Mid(), corners[10], normals[10]);
-	surf->EvNormal(u.Mid(), v.Mid() + vq, corners[11], normals[11]);
-	surf->EvNormal(u.Mid() - uq, v.Mid(), corners[12], normals[12]);
 	m_root = subdivideSurface(u, v, corners, normals, 0);
 	m_root->BuildBBox();
 	TRACE("u: [" << u[0] << ", " << u[1] << "]");
@@ -799,16 +795,7 @@ namespace brlcad {
 	surf->EvNormal(u.Mid() - uq, v.Mid() + vq, corners[6], normals[6]);
 	surf->EvNormal(u.Mid() + uq, v.Mid() - vq, corners[7], normals[7]);
 	surf->EvNormal(u.Mid() + uq, v.Mid() + vq, corners[8], normals[8]);
-	surf->EvNormal(u.Mid(), v.Mid() - vq, corners[9], normals[9]);
-	surf->EvNormal(u.Mid() + uq, v.Mid(), corners[10], normals[10]);
-	surf->EvNormal(u.Mid(), v.Mid() + vq, corners[11], normals[11]);
-	surf->EvNormal(u.Mid() - uq, v.Mid(), corners[12], normals[12]);
-/*
-	if (depth < 2) {
-	    bu_log("depth: %d\n", depth);
-	    printcorners(corners);
-	}
-	*/
+
 	if ((dsubsurf/dsurf < BREP_SURF_SUB_FACTOR) && (isFlat(surf, normals, u, v) || depth >= BREP_MAX_FT_DEPTH)) {
 	    return surfaceBBox(true, corners, u, v);
 	} else {
@@ -816,57 +803,57 @@ namespace brlcad {
 	    BBNode* quads[4];
 	    ON_Interval first(0, 0.5);
 	    ON_Interval second(0.5, 1.0);
+
+	    ON_3dPoint sharedcorners[4];
+	    ON_3dVector sharednormals[4];
+	    surf->EvNormal(u.Mid(), v.Min(), sharedcorners[0], sharednormals[0]);
+	    surf->EvNormal(u.Min(), v.Mid(), sharedcorners[1], sharednormals[1]);
+	    surf->EvNormal(u.Mid(), v.Max(), sharedcorners[2], sharednormals[2]);
+	    surf->EvNormal(u.Max(), v.Mid(), sharedcorners[3], sharednormals[3]);
 	    
 	    ON_3dPoint *newcorners;
 	    ON_3dVector *newnormals;
-	    newcorners = (ON_3dPoint *)bu_malloc(13*sizeof(ON_3dPoint), "new corners");
-	    newnormals = (ON_3dVector *)bu_malloc(13*sizeof(ON_3dVector), "new normals");
+	    newcorners = (ON_3dPoint *)bu_malloc(9*sizeof(ON_3dPoint), "new corners");
+	    newnormals = (ON_3dVector *)bu_malloc(9*sizeof(ON_3dVector), "new normals");
             newcorners[0] = corners[0];
 	    newnormals[0] = normals[0];
-	    surf->EvNormal(u.Mid(), v.Min(), newcorners[1], newnormals[1]);
+	    newcorners[1] = sharedcorners[0];
+	    newnormals[1] = sharednormals[0];
 	    newcorners[2] = corners[4];
 	    newnormals[2] = normals[4];
-	    surf->EvNormal(u.Min(), v.Mid(), newcorners[3], newnormals[3]);
+	    newcorners[3] = sharedcorners[1];
+	    newnormals[3] = sharednormals[1];
 	    newcorners[4] = corners[5];
 	    newnormals[4] = normals[5];
     	    quads[0] = subdivideSurface(u.ParameterAt(first), v.ParameterAt(first), newcorners, newnormals, depth+1);
-	    bu_free(newcorners, "free subsurface corners array");
-	    bu_free(newnormals, "free subsurface normals array");
-	    
-	    newcorners = (ON_3dPoint *)bu_malloc(13*sizeof(ON_3dPoint), "new corners");
-	    newnormals = (ON_3dVector *)bu_malloc(13*sizeof(ON_3dVector), "new normals");
-	    surf->EvNormal(u.Mid(), v.Min(), newcorners[0], newnormals[0]);
+	    newcorners[0] = sharedcorners[0];
+	    newnormals[0] = sharednormals[0];
             newcorners[1] = corners[1];
 	    newnormals[1] = normals[1];
-	    surf->EvNormal(u.Max(), v.Mid(), newcorners[2], newnormals[2]);
+	    newcorners[2] = sharedcorners[3];
+	    newnormals[2] = sharednormals[3];
 	    newcorners[3] = corners[4];
 	    newnormals[3] = normals[4];
 	    newcorners[4] = corners[7];
 	    newnormals[4] = normals[7];
 	    quads[1] = subdivideSurface(u.ParameterAt(second), v.ParameterAt(first), newcorners, newnormals, depth+1);
-	    bu_free(newcorners, "free subsurface corners array");
-	    bu_free(newnormals, "free subsurface normals array");
-
-	    newcorners = (ON_3dPoint *)bu_malloc(13*sizeof(ON_3dPoint), "new corners");
-	    newnormals = (ON_3dVector *)bu_malloc(13*sizeof(ON_3dVector), "new normals");
 	    newcorners[0] = corners[4];
 	    newnormals[0] = normals[4];
-	    surf->EvNormal(u.Max(), v.Mid(), newcorners[1], newnormals[1]);
+	    newcorners[1] = sharedcorners[3];
+	    newnormals[1] = sharednormals[3];
             newcorners[2] = corners[2];
 	    newnormals[2] = normals[2];
-	    surf->EvNormal(u.Mid(), v.Max(), newcorners[3], newnormals[3]);
+	    newcorners[3] = sharedcorners[2];
+	    newnormals[3] = sharednormals[2];
 	    newcorners[4] = corners[8];
 	    newnormals[4] = normals[8];
 	    quads[2] = subdivideSurface(u.ParameterAt(second), v.ParameterAt(second), newcorners, newnormals, depth+1);
-	    bu_free(newcorners, "free subsurface corners array");
-	    bu_free(newnormals, "free subsurface normals array");
-
-	    newcorners = (ON_3dPoint *)bu_malloc(13*sizeof(ON_3dPoint), "new corners");
-	    newnormals = (ON_3dVector *)bu_malloc(13*sizeof(ON_3dVector), "new normals");
-	    surf->EvNormal(u.Min(), v.Mid(), newcorners[0], newnormals[0]);
+	    newcorners[0] = sharedcorners[1];
+	    newnormals[0] = sharednormals[1];
 	    newcorners[1] = corners[4];
 	    newnormals[1] = normals[4];
-	    surf->EvNormal(u.Mid(), v.Max(), newcorners[2], newnormals[2]);
+	    newcorners[2] = sharedcorners[2];
+	    newnormals[2] = sharednormals[2];
             newcorners[3] = corners[3];
 	    newnormals[3] = normals[3];
 	    newcorners[4] = corners[6];
@@ -933,8 +920,9 @@ namespace brlcad {
 	for (int i = 0; i < 4; i++) {
 	    normals[i] = m_normals[i];
 	}
+	
 	for (int i = 4; i < 8; i++) {
-	    normals[i] = m_normals[i+5];
+	    normals[i] = m_normals[i+1];
 	}
 
 /*
