@@ -1091,6 +1091,11 @@ Popup Menu    Right or Ctrl-Left
 	return
     }
 
+    set dlist [gedCmd who]
+    if {[lsearch $dlist $obj] == -1} {
+	return
+    }
+
     set renderData [gedCmd how -b $obj]
 
     set renderMode [lindex $renderData 0]

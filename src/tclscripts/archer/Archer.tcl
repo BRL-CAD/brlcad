@@ -255,6 +255,7 @@ package provide Archer 1.0
 	method updateCheckpointMode {}
 	method updateSaveMode {}
 	method updateUndoMode {{_oflag 1}}
+	method updateUndoState {}
 
 	# Miscellaneous Section
 	method buildAboutDialog {}
@@ -975,9 +976,121 @@ package provide Archer 1.0
     eval ArcherCore::gedWrapper decompose 0 0 1 1 $args
 }
 
-# Needs an edWrapper to create checkpoints for each object
 ::itcl::body Archer::edcodes {args} {
-    eval ArcherCore::gedWrapper edcodes 0 0 1 1 $args
+    if {[llength $args] == 0} {
+	return [gedCmd edcodes]
+    }
+
+    set optionsAndArgs [eval dbExpand $args]
+    set options [lindex $optionsAndArgs 0]
+    set expandedArgs [lindex $optionsAndArgs 1]
+
+    switch [lindex $options 0] {
+	"-n" {
+	    return [eval gedCmd edcodes $options $expandedArgs]
+	}
+	default {
+	    set olist [gedCmd edcodes -n $expandedArgs]
+	}
+    }
+
+    if {[llength $olist] == 0} {
+	return
+    }
+
+    SetWaitCursor $this
+    set lnames [checkpoint_olist $olist]
+
+    if {[catch {eval gedCmd edcodes $options $expandedArgs} ret]} {
+	ledger_cleanup
+	SetNormalCursor $this
+	return $ret
+    }
+
+    set fflag 0
+    set gflag 0
+    set oflag 0
+    set new_olist {}
+
+    foreach oname $olist lname $lnames {
+	if {$oname == $mSelectedObj} {
+	    # Found selected object
+	    set fflag 1
+	}
+
+	# Compare region ids
+	set o_val [gedCmd get $oname id]
+	set l_val [$mLedger get $lname id]
+	if {$o_val != $l_val} {
+	    set gflag 1
+
+	    if {$oname == $mSelectedObj} {
+		set oflag 1
+	    }
+
+	    $mLedger attr set $lname $HAVE_MODS 1
+	    lappend new_olist $lname
+	    continue
+	}
+
+	# Compare air
+	set o_val [gedCmd get $oname air]
+	set l_val [$mLedger get $lname air]
+	if {$o_val != $l_val} {
+	    set gflag 1
+
+	    if {$oname == $mSelectedObj} {
+		set oflag 1
+	    }
+
+	    $mLedger attr set $lname $HAVE_MODS 1
+	    lappend new_olist $lname
+	    continue
+	}
+
+	# Compare gift material
+	set o_val [gedCmd get $oname GIFTmater]
+	set l_val [$mLedger get $lname GIFTmater]
+	if {$o_val != $l_val} {
+	    set gflag 1
+
+	    if {$oname == $mSelectedObj} {
+		set oflag 1
+	    }
+
+	    $mLedger attr set $lname $HAVE_MODS 1
+	    lappend new_olist $lname
+	    continue
+	}
+
+	# Compare los
+	set o_val [gedCmd get $oname los]
+	set l_val [$mLedger get $lname los]
+	if {$o_val != $l_val} {
+	    set gflag 1
+
+	    if {$oname == $mSelectedObj} {
+		set oflag 1
+	    }
+
+	    $mLedger attr set $lname $HAVE_MODS 1
+	    lappend new_olist $lname
+	    continue
+	}
+
+	# No mods found
+	$mLedger kill $lname
+    }
+
+    if {$oflag} {
+	# Checkpoint again in case the user starts interacting via the mouse
+	checkpoint $mSelectedObj
+    }
+
+    updateUndoState
+
+    SetNormalCursor $this
+#    eval ArcherCore::gedWrapper edcodes 0 0 1 1 $args
 }
 
 ::itcl::body Archer::edcolor {args} {
@@ -2025,6 +2138,46 @@ package provide Archer 1.0
     }
 }
 
+::itcl::body Archer::updateUndoState {} {
+    if {$mViewOnly} {
+	return
+    }
+
+    set l [$mLedger ls -A $HAVE_MODS 1]
+    set len [llength $l]
+    if {$len == 0} {
+	set mNeedSave 0
+	set mNeedGlobalUndo 0
+	set mNeedObjUndo 0
+    } else {
+	set mNeedSave 1
+	set mNeedGlobalUndo 1
+
+	# Get all ledger entries related to mSelectedObj
+	set l [$mLedger expand *_*_$mSelectedObj]
+	set len [llength $l]
+
+	if {$len} {
+	    set l [lsort -dictionary $l]
+	    set le [lindex $l end]
+
+	    if {$len > 1} {
+		set mNeedObjUndo 1
+	    } else {
+		if {[$mLedger attr get $le $HAVE_MODS]} {
+		    set mNeedObjUndo 1
+		} else {
+		    set mNeedObjUndo 0
+		}
+	    }
+	} else {
+	    set mNeedObjUndo 0
+	}
+    }
+
+    updateUndoMode 1
+    updateSaveMode
+}
 
 
 ################################### Miscellaneous Section ###################################
@@ -7142,6 +7295,7 @@ package provide Archer 1.0
     set oid 0
     set ouflag 0
     set foundSelectedObj 0
+    set lnames {}
 
     # Create the ledger entries
     foreach obj $_olist {
@@ -7170,7 +7324,8 @@ package provide Archer 1.0
 	    }
 	}
 
-	set lname $mLedgerGID\_$oid\_$_obj
+	set lname $mLedgerGID\_$oid\_$obj
+	lappend lnames $lname
 	gedCmd cp $obj $mLedger\:$lname
 
 	# No mods yet
@@ -7208,6 +7363,7 @@ package provide Archer 1.0
     }
 
     updateUndoMode $oflag
+    return $lnames
 }
 
 ::itcl::body Archer::clearTargetLedger {} {
@@ -7254,45 +7410,46 @@ package provide Archer 1.0
 
 	return
     }
+
     set l [lsort -dictionary $l]
     set le [lindex $l end]
-
     regexp {([0-9]+)_([0-9]+)_(.+)} $le all gid oid gname
     set mLedgerGID $gid
-
-    # Adjust the corresponding object according to the ledger entry
-    gedCmd cp -f $mLedger\:$le $gname
-    gedCmd attr rm $gname Have_Mods
-
-    if {$gname == "_GLOBAL"} {
-	gedCmd refresh
-    }
-
-    # Remove the ledger entry
-    $mLedger kill $le
-
     incr mLedgerGID -1
 
-    if {$gname != "_GLOBAL"} {
-	if {$gname == $mSelectedObj} {
-	    set mNeedObjSave 0
-	    redrawObj $mSelectedObjPath
-	    initEdit 0
-	} else {
-	    # Possibly draw the updated object
-	    set stripped_le [regsub {[0-9]+_[0-9]+_} $le ""]
-	    foreach item [gedCmd report 0] {
-		regexp {/([^/]+$)} $item all last
+    foreach lentry [$mLedger expand $gid\_$oid\_*] {
+	regexp {([0-9]+)_([0-9]+)_(.+)} $lentry all gid oid gname
 
-		if {$last == $stripped_le} {
-		    redrawObj $item
-		}
-	    }
+	# Adjust the corresponding object according to the ledger entry
+	gedCmd cp -f $mLedger\:$lentry $gname
+	gedCmd attr rm $gname Have_Mods
+
+	if {$gname == "_GLOBAL"} {
+	    gedCmd refresh
 	}
 
-	# Make sure the selected object has atleast one checkpoint
-	if {$gname == $mSelectedObj} {
-	    checkpoint $mSelectedObj
+	# Remove the ledger entry
+	$mLedger kill $lentry
+
+	if {$gname != "_GLOBAL"} {
+	    if {$gname == $mSelectedObj} {
+		set mNeedObjSave 0
+		redrawObj $mSelectedObjPath
+		initEdit 0
+
+		# Make sure the selected object has atleast one checkpoint
+		checkpoint $mSelectedObj
+	    } else {
+		# Possibly draw the updated object
+		set stripped_lentry [regsub {[0-9]+_[0-9]+_} $lentry ""]
+		foreach item [gedCmd report 0] {
+		    regexp {/([^/]+$)} $item all last
+
+		    if {$last == $stripped_lentry} {
+			redrawObj $item
+		    }
+		}
+	    }
 	}
     }
 
@@ -7362,30 +7519,34 @@ package provide Archer 1.0
     set l [lsort -dictionary $l]
     set le [lindex $l end]
 
-    regexp {([0-9]+)_([0-9]+)_(.+)} $le all gid oid gname
-
-    if {$oid == 0} {
-	set have_mods [$mLedger attr get $le $HAVE_MODS]
-	if {!$have_mods} {
-	    # No mods yet
-	    return
-	}
-
-	# There were mods and since we're about to undo them,
-        # mark it as not having mods.
-	$mLedger attr set $le $HAVE_MODS 0
+    if {![$mLedger attr get $le $HAVE_MODS]} {
+	# No mods yet
+	return
     }
 
-    # Adjust the corresponding object according to the ledger entry
-    gedCmd cp -f $mLedger\:$le $gname
-    gedCmd attr rm $gname Have_Mods
-
-    # Remove the ledger entry
-    $mLedger kill $le
+    regexp {([0-9]+)_([0-9]+)_(.+)} $le all gid oid gname
 
     # Also decrement mLedgerGID if the entry is the last one
     if {$gid == $mLedgerGID} {
 	incr mLedgerGID -1
+    }
+
+    foreach lentry [$mLedger expand $gid\_$oid\_*] {
+	regexp {([0-9]+)_([0-9]+)_(.+)} $lentry all gid oid gname
+
+#	if {$gname == $mSelectedObj && $oid == 0} {
+#	    if {![$mLedger attr get $lentry $HAVE_MODS]} {
+#		# No mods yet
+#		return
+#	    }
+#	}
+
+	# Adjust the corresponding object according to the ledger entry
+	gedCmd cp -f $mLedger\:$lentry $gname
+	gedCmd attr rm $gname Have_Mods
+
+	# Remove the ledger entry
+	$mLedger kill $lentry
     }
 
     set mNeedObjSave 0
@@ -7394,26 +7555,27 @@ package provide Archer 1.0
 
     set mNeedCheckpoint 0
 
-    set l [$mLedger ls -A $HAVE_MODS 1]
-    set len [llength $l]
-    if {$len == 0} {
-	set mNeedSave 0
-	set mNeedGlobalUndo 0
-	set mNeedObjUndo 0
-    } else {
-	set mNeedSave 1
-	set mNeedGlobalUndo 1
-
-	# Get all ledger entries related to mSelectedObj
-	set l [$mLedger expand *_*_$mSelectedObj]
-	set len [llength $l]
-
-	if {$len == 0} {
-	    set mNeedObjUndo 0
-	} else {
-	    set mNeedObjUndo 1
-	}
-    }
+    updateUndoState
+#    set l [$mLedger ls -A $HAVE_MODS 1]
+#    set len [llength $l]
+#    if {$len == 0} {
+#	set mNeedSave 0
+#	set mNeedGlobalUndo 0
+#	set mNeedObjUndo 0
+#    } else {
+#	set mNeedSave 1
+#	set mNeedGlobalUndo 1
+#
+#	# Get all ledger entries related to mSelectedObj
+#	set l [$mLedger expand *_*_$mSelectedObj]
+#	set len [llength $l]
+#
+#	if {$len == 0} {
+#	    set mNeedObjUndo 0
+#	} else {
+#	    set mNeedObjUndo 1
+#	}
+#    }
 
     # Make sure the selected object has atleast one checkpoint
     checkpoint $mSelectedObj
