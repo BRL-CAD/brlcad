@@ -987,20 +987,6 @@ rtgl_loadMatrix(struct dm *dmp, fastf_t *mat, int which_eye)
     return TCL_OK;
 }
 
-/* calculates cosine of angle between two vectors */
-fastf_t cosAngle(fastf_t *v, fastf_t *w) {
-    fastf_t vMag, wMag, dot;
-
-    if ((dot = VDOT(v, w)) == 0) {
-	return 0.0;
-    }
-
-    vMag = MAGNITUDE(v);
-    wMag = MAGNITUDE(w);
-
-    return (dot / (vMag * wMag));
-}
-
 /* converts degrees of azimuth / elevation into a vector */
 void aeVect(fastf_t *aeVect, fastf_t *aet) {
     fastf_t azRad, elRad;
@@ -1248,29 +1234,23 @@ rtgl_drawVList(struct dm *dmp, register struct bn_vlist *vp)
 	shootGrid(min, max, Y, Z, X);
     }
 
-#if 0
-    glPointSize(5);
-    glBegin(GL_POINTS);
-    glColor3d(1, 0, 0);
-    glVertex3d(50, 50, 50);
-    glEnd();
-    glPointSize(1);
-#endif
-
     /* draw points */
     glColor3d(0, 1, 0);
     glEnableClientState(GL_VERTEX_ARRAY);
     vect_t normal, view;
-    fastf_t cAngle;
-    int index, count = 0;
+    fastf_t cAngle, viewMag;
+    int used, index, count = 0;
 
     aeVect(view, gedp->ged_gvp->gv_aet);
+    viewMag = MAGNITUDE(view);
 
     for (BU_LIST_FOR(currItem, ptInfoList, &(ptInfo.l))) {
 	glVertexPointer(3, GL_DOUBLE, 0, &(currItem->points));
 	
+	used = (currItem->used / 3);
+
 	glBegin(GL_POINTS);
-	for (i = 0; i < (currItem->used / 3); i++) {
+	for (i = 0; i < used; i++) {
 
 	    /* get normal */
 	    index = 3 * i;
@@ -1279,10 +1259,10 @@ rtgl_drawVList(struct dm *dmp, register struct bn_vlist *vp)
 	    normal[Z] = currItem->norms[index + Z];
 	   
 	    /* cosine of angle between normal and view vectors */
-	    cAngle = cosAngle(normal, view);
+	    cAngle = ( VDOT(view, normal) / (MAGNITUDE(view) * MAGNITUDE(normal)) );
 
 	    /* visible elements have angle < 90 degrees */
-	    if (acos(cAngle) < M_PI_2) {
+	    if (!(cAngle < 0)) {
 		count++;
 		glColor3d(cAngle, cAngle, cAngle);
 		glArrayElement(i);
