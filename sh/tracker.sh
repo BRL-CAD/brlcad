@@ -178,6 +178,20 @@ days ( ) {
 }
 
 
+# encode1 {string}
+#
+# makes a single pass over a given string, encoding a subset of ISO
+# 10646 / ISO 8879 html entities and then providing the converted
+# string as output.
+encode1 ( ) {
+    echo "$1" | sed \
+	-e 's/,/\&#44;/g' \
+	-e 's/"/\&quot;/g' \
+	-e 's/&\#0*34;/\&quot;/g'
+    return 0;
+}
+
+
 # decode1 {string}
 #
 # makes a single pass over a given string, decoding a subset of ISO
@@ -185,8 +199,7 @@ days ( ) {
 # string as output.
 decode1 ( ) {
     echo "$1" | sed \
-	-e 's/&quot;/"/g' \
-	-e 's/&\#0*34;/"/g' \
+	-e 's/&quot;/\&#34;/g' \
 	-e 's/&amp;/\&/g' \
 	-e 's/&\#0*38;/\&/g' \
 	-e 's/&lt;/</g' \
@@ -205,6 +218,24 @@ decode1 ( ) {
 	-e 's/&#322;/Ō/g' \
 	-e 's/&#347;/ś/g' \
 	-e 's/&\#0*39;/'\''/g'
+    return 0;
+}
+
+
+# encode {string}
+#
+# makes multiple passes over an input string, encoding a subset of ISD
+# 10646 / ISO 8879 html entities.
+encode ( ) {
+    _old=""
+    _new="$1"
+    _limit=10
+    while [ "x$_old" != "x$_new" -a $_limit -gt 0 ] ; do
+	_old="$_new"
+	_new="`encode1 \"$_old\"`"
+	_limit=$(($_limit - 1))
+    done
+    echo "$_new"
     return 0;
 }
 
@@ -284,7 +315,8 @@ if ! isint $VERBOSE ; then
     VERBOSE=1
 fi
 
-_SFURL="${SITE}/projects/${PROJECT}/"
+_SFURL="${SITE}/projects/${PROJECT}/develop/"
+# _SFURL="${SITE}/projects/${PROJECT}/"
 _SID=$$
 _TTMP=/tmp/tracker.sh
 
@@ -397,7 +429,7 @@ fi
 [ $VERBOSE -gt 0 ] && echo "DETERMINING WHAT TRACKERS ARE AVAILABLE"
 
 # extract the tracker page from the main page data
-_trackerURL=`echo "$_main" | grep /tracker/ | grep Tracker | cut -d'"' -f2`
+_trackerURL=`echo "$_main" | grep /tracker/ | grep Tracker | cut -d'"' -f4`
 [ $VERBOSE -gt 1 ] && echo "tracker URL is $_trackerURL"
 
 # extract the project group id from the tracker page url
@@ -422,7 +454,7 @@ fi
 
 # extract the tracker urls from the tracker page data
 [ $VERBOSE -gt 1 ] && echo "echo \"\$_tracker\" | grep /tracker/ | grep browse | cut -d'\"' -f2 | sed 's/&amp;/\&/g'"
-_trackers="`echo \"$_tracker\" | grep /tracker/ | grep browse | cut -d'\"' -f2 | sed 's/&amp;/\&/g'`"
+_trackers="`echo \"$_tracker\" | grep /tracker/ | grep browse | cut -d'"' -f2 | sed 's/&amp;/\&/g'`"
 if [ $VERBOSE -gt 1 ] ; then
     echo "Tracker URLS:"
     printf "\t%s\n" $_trackers
@@ -446,7 +478,7 @@ for _track in $_trackers ; do
     while [ $_trackerPageCount -ge 0 ] ; do
 
 	[ $VERBOSE -gt 1 ] && echo "curl -d set=custom -d _status=100 -d offset=$_trackerPageCount $SITE/$_track 2>/dev/null"
-	_trackData="`curl -d set=custom -d _status=100 -d offset=$_trackerPageCount $SITE/$_track 2>/dev/null`"
+	_trackData="`curl -d limit=50 -d status=0 -d offset=$_trackerPageCount $SITE/$_track 2>/dev/null`"
 
 	# log the individual tracker group data
 	if [ $VERBOSE -gt 2 ] ; then
@@ -461,12 +493,12 @@ for _track in $_trackers ; do
 	fi
 
 	# extract the tracker title from the individual tracker data
-	_trackTitle="`echo \"$_trackData\" | grep '<title>' | cut -d: -f2 | sed 's/[ ]*<\/title>//' | sed 's/^[ ]*//'`"
+	_trackTitle="`echo \"$_trackData\" | grep '<title>' | cut -d: -f3 | sed 's/[ ]*<\/title>//' | sed 's/^[ ]*//'`"
 	[ $VERBOSE -gt 0 ] && echo "Processing $_trackTitle (tracker $_trackID)"
 
 	# get the item urls
 	[ $VERBOSE -gt 1 ] && echo "echo \"\$_trackData\" | grep /tracker/ | grep detail | cut -d'\"' -f2 | sed 's/&amp;/\&/g'"
-	_items="`echo \"$_trackData\" | grep /tracker/ | grep detail | cut -d'\"' -f2 | sed 's/&amp;/\&/g'`"
+	_items="`echo \"$_trackData\" | grep /tracker/ | grep detail | cut -d'"' -f2 | sed 's/&amp;/\&/g'`"
 	if [ $VERBOSE -gt 1 ] ; then
 	    echo "Item URLs for $_trackTitle:"
 	    printf "\t%s\n" $_items
@@ -504,6 +536,7 @@ count=0
 wrote=0
 _itemLine=""
 _itemLines=""
+
 for _item in $_itemURLS ; do
     count=$(($count + 1))
 
@@ -530,75 +563,80 @@ for _item in $_itemURLS ; do
     fi
 
     # extract the tracker title from the individual tracker data
-    _itemTitle="`echo \"$_itemData\" | grep '<title>' | sed 's/.*<title>SourceForge.net: Detail: \(.*\)<\/title>.*/\1/'`"
+    _itemTitle="`echo \"$_itemData\" | grep '<title>' | sed 's/.*<title>SourceForge.net: BRL-CAD: Detail: \(.*\)<\/title>.*/\1/' | cut -d- -f2- | sed 's/^[ ]*//'`"
+    _itemTitle="`encode \"$_itemTitle\"`"
     _itemTitle="`decode \"$_itemTitle\"`"
     [ $VERBOSE -gt 0 ] && echo "Processing $count of $_totalItemCount: $_itemTitle"
 
     # extract the category type
     _itemType="`echo \"$_itemData\" | grep -C1 "Tracker</a>" | head -n 3 | tail -n 1 | sed 's/.*<a[^>]*>\([^<]*\)<\/a>.*/\1/'`"
     [ $VERBOSE -gt 1 ] && echo "${_itemID}: Category is $_itemType"
-    _itemLine="$_itemLine,$_itemType"
+    _itemType="`encode \"$_itemType\"`"
+    _itemType="`decode \"$_itemType\"`"
+    _itemLine="$_itemLine,\"$_itemType\""
 
     # extract the description
-    _itemDesc="`echo \"$_itemData\" | grep $_itemID | grep '<h2>' | sed 's/.*<h2>.*] \(.*\)<\/h2>/\1/'`"
-    # clean up CSV output: replace double quote char with double double quotes, amp with &, quot with "", and #039 with '
-    _itemDesc="`decode \"$_itemDesc\"`"
-    _itemDesc="`echo \"$_itemDesc\" | sed 's/\"/\"\"/g'`"
-    _itemDesc="`echo \"$_itemDesc\" | sed 's/^[[:space:]]*//' | sed 's/[[:space:]]$//'`"
+    _itemDesc=$_itemTitle
     [ $VERBOSE -gt 1 ] && echo "${_itemID}: Description is $_itemDesc"
     _itemLine="$_itemLine,\"$_itemDesc\""
 
     # extract the priority
-    _itemPriority="`echo \"$_itemData\" | grep -C5 'Priority:'`"
-    _itemPriority="`echo $_itemPriority | sed 's/.*Priority: <a[^>]*>[^<]*<\/a><\/b> <br> \([0-9]\).*/\1/'`"
+    _itemPriority="`echo \"$_itemData\" | grep -C1 '<label>Priority:' | tail -n 1 | sed 's/^[ ]*//' | sed 's/<p>//' | sed 's/<\/p>//'`"
     [ $VERBOSE -gt 1 ] && echo "${_itemID}: Priority is $_itemPriority"
     _itemLine="$_itemLine,$_itemPriority"
 
     # extract the status
-    _itemStatus="`echo \"$_itemData\" | grep -C5 'Status:'`"
-    _itemStatus="`echo $_itemStatus | sed 's/.*Status: <a[^>]*>[^<]*<\/a><\/b> <br> \([[:alpha:]][[:alpha:]]*\)[^[:alpha:]].*/\1/'`"
+    _itemStatus="`echo \"$_itemData\" | grep -C1 '<label>Status:' | tail -n 1 | sed 's/^[ ]*//' | sed 's/<p>//' | sed 's/<\/p>//'`"
     [ $VERBOSE -gt 1 ] && echo "${_itemID}: Status is $_itemStatus"
-    _itemLine="$_itemLine,$_itemStatus"
+    _itemLine="$_itemLine,\"$_itemStatus\""
 
     # extract the assigned
-    _itemAssigned="`echo \"$_itemData\" | grep -C5 'Assigned To:'`"
-    _itemAssigned="`echo $_itemAssigned | sed 's/.*Assigned To: <a[^>]*>[^<]*<\/a><\/b> <br> \([^<][^<]*\)<.*/\1/'`"
+    _itemAssigned="`echo \"$_itemData\" | grep -C1 '<label>Assigned:' | tail -n 1 | sed 's/^[ ]*//' | sed 's/<p>//' | sed 's/<\/p>//'`"
+    _itemAssigned="`encode \"$_itemAssigned\"`"
     _itemAssigned="`decode \"$_itemAssigned\"`"
-    _itemAssigned="`echo \"$_itemAssigned\" | sed 's/^[[:space:]]*//' | sed 's/[[:space:]]$//'`"
     [ $VERBOSE -gt 1 ] && echo "${_itemID}: Assigned is $_itemAssigned"
     _itemLine="$_itemLine,\"$_itemAssigned\""
 
     # extract the submitter
-    _itemSubmitter="`echo \"$_itemData\" | grep -C5 'Submitted By:'`"
-    _itemSubmitter="`echo $_itemSubmitter | sed 's/.*Submitted By:<\/b> <br> \([^<][^<]*\)[[:space:]]*- <.*/\1/'`"
+    _itemSubmitter="`echo \"$_itemData\" | grep -C1 '<label>Submitted:' | tail -n 1 | sed 's/^[ ]*//' | sed 's/<p>//' | sed 's/<\/p>//'`"
+    _itemSubmitter="`echo \"$_itemSubmitter\" | cut -d'(' -f1 | sed 's/ *$//'`"
+    _itemSubmitter="`encode \"$_itemSubmitter\"`"
     _itemSubmitter="`decode \"$_itemSubmitter\"`"
     _itemSubmitter="`echo \"$_itemSubmitter\" | sed 's/^[[:space:]]*//' | sed 's/[[:space:]]$//'`"
     [ $VERBOSE -gt 1 ] && echo "${_itemID}: Submitter is $_itemSubmitter"
     _itemLine="$_itemLine,\"$_itemSubmitter\""
 
     # extract the date submitted
-    _itemDateSubmitted="`echo \"$_itemData\" | grep -C5 'Date Submitted:'`"
-    _itemDateSubmitted="`echo $_itemDateSubmitted | sed 's/.*Date Submitted:<\/b> <br> \([^<][^<]*\)<.*/\1/'`"
+    _itemDateSubmitted="`echo \"$_itemData\" | grep -C1 '<label>Submitted:' | tail -n 1 | sed 's/^[ ]*//' | sed 's/<p>//' | sed 's/<\/p>//'`"
+    _itemDateSubmitted="`echo $_itemDateSubmitted | cut -d')' -f2 | cut -d- -f2-4 | sed 's/^[ ]*//'`"
     [ $VERBOSE -gt 1 ] && echo "${_itemID}: Date Submitted is $_itemDateSubmitted"
     _itemLine="$_itemLine,$_itemDateSubmitted"
 
     # extract the date last updated
-    _itemDateLastUpdated="`echo \"$_itemData\" | grep -C5 'Date Last Updated:'`"
-    _itemDateLastUpdated="`echo $_itemDateLastUpdated | sed 's/.*Date Last Updated:<\/b> <br> \([^<][^<]*\)<.*/\1/'`"
+    _itemDateLastUpdated="`echo \"$_itemData\" | grep 'Date:' | grep '<br />' | sed 's/<br \/>//'`"
+    _itemDateLastUpdated="`echo \"$_itemDateLastUpdated\" | cut -d: -f2- | sed 's/^[ ]*//' | sort | tail -n 1`"
     [ $VERBOSE -gt 1 ] && echo "${_itemID}: Date Last Updated is $_itemDateLastUpdated"
     _itemLine="$_itemLine,$_itemDateLastUpdated"
 
     # extract the resolution
-    _itemResolution="`echo \"$_itemData\" | grep -C5 'Resolution:'`"
-    _itemResolution="`echo $_itemResolution | sed 's/.*Resolution: <a[^>]*>[^<]*<\/a><\/b> <br> \([^<][^<]*\)<.*/\1/'`"
+    _itemResolution="`echo \"$_itemData\" | grep -C1 '<label>Resolution:' | tail -n 1 | sed 's/^[ ]*//' | sed 's/<p>//' | sed 's/<\/p>//'`"
+    _itemResolution="`encode \"$_itemResolution\"`"
+    _itemResolution="`decode \"$_itemResolution\"`"
     [ $VERBOSE -gt 1 ] && echo "${_itemID}: Resolution is $_itemResolution"
-    _itemLine="$_itemLine,$_itemResolution"
+    _itemLine="$_itemLine,\"$_itemResolution\""
 
     # extract the long description as a comment
-    _itemComment="`echo \"$_itemData\" | perl -0777 -pi -e 's/.*?<td colspan="2">.*?<\/td>.*?<td colspan="2">(.*?)<\/td>.*/\1/s' | sed 's/<b>Add a Comment:<\/b>//g' | perl -0777 -pi -e 's/<[^>]*?>//gs' | perl -0777 -pi -e 's/[^[:print:][:space:][:punct:]]/?/gs'`"
-    if [ `echo "$_itemComment" | wc | awk '{print $3}'` -gt 1020 ] ; then
-	_itemComment="`echo \"$_itemComment\" | perl -0777 -pi -e 's/^(.{1020}).*/\1.../s'`"
-    fi
+    _highValue="`echo \"$_itemData\" | grep -n "<label>Submitted:" | head -n 1 | cut -d: -f1`"
+    _lowValue="`echo \"$_itemData\" | grep -n "<label>Details:" | head -n 1 | cut -d: -f1`"
+    _numLines="`expr $_highValue - $_lowValue - 3`"
+    _lastLine="`expr $_highValue - 3`"
+    _itemComment="`echo \"$_itemData\" | head -n $_lastLine | tail -n $_numLines`"
+    _itemComment="`echo \"$_itemComment\" | sed 's/<p><!-- google_ad_section_start -->//'`"
+    _itemComment="`echo \"$_itemComment\" | sed 's/<!-- google_ad_section_end --><\/p>//'`"
+    _itemComment="`echo \"$_itemComment\" | sed 's/^[ ]*//' | sed 's/<br \/>//'`"
+    _itemComment="`echo \"$_itemComment\" | tr '\n' ' ' | sed 's/\r/\&cr;/g'`"
+    _itemComment="`encode \"$_itemComment\"`"
+    _itemComment="`decode \"$_itemComment\"`"
     [ $VERBOSE -gt 1 ] && echo "${_itemID}: Comment is $_itemComment"
     _itemLine="$_itemLine,\"$_itemComment\""
 
