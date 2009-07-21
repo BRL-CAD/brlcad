@@ -126,7 +126,7 @@ class EntList {
     friend ostream & operator<< ( ostream &, MultList & );
 
   public:
-    EntList( JoinType j ) : join(j), prev(0), next(0), viable(UNKNOWN),
+    EntList( JoinType j ) : join(j), next(0), prev(0), viable(UNKNOWN),
                             level(0) {}
     virtual ~EntList() {}
     MatchType viableVal() { return viable; }
@@ -170,7 +170,7 @@ class SimpleList : public EntList {
     friend ostream & operator<< ( ostream &, SimpleList & );
 
   public:
-    SimpleList( const char *n ) : I_marked(NOMARK), EntList(SIMPLE)
+    SimpleList( const char *n ) : EntList(SIMPLE), I_marked(NOMARK)
         { strcpy( name, n ); }
     ~SimpleList() {}
     int operator== ( const char *nm )
@@ -285,7 +285,7 @@ class ComplexList {
     friend ostream & operator<< ( ostream &, ComplexList & );
 
   public:
-    ComplexList( AndList *alist = NULL ) : head(alist), list(0), next(0),
+    ComplexList( AndList *alist = NULL ) : list(0), head(alist), next(0),
                                          abstract(0), dependent(0),
                                          multSupers(0) {}
     ~ComplexList();
