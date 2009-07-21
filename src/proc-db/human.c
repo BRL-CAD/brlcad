@@ -154,7 +154,7 @@ struct human_data_t
  * using x, y, and z degrees, and exports it to resultVect, and returns
  * the distance of the vector.
  */
-fastf_t setDirection(fastf_t *inVect, fastf_t *resultVect, fastf_t x, fastf_t y, fastf_t z)
+fastf_t setDirection(fastf_t *inVect, fastf_t *resultVect, fastf_t *outMatrix, fastf_t x, fastf_t y, fastf_t z)
 {
 	vect_t outVect;
 	mat_t rotMatrix;
@@ -166,7 +166,7 @@ fastf_t setDirection(fastf_t *inVect, fastf_t *resultVect, fastf_t x, fastf_t y,
 	 * MAT4X3VEC(outVect, rotMatrix, inVect);
 	 */
 	bn_mat_angles(rotMatrix, x, y, z);
-	MAT4X3VEC(outVect, rotMatrix, inVect);
+	MAT3X3VEC(outVect, rotMatrix, inVect);
 
 /* Print rotation matrix
  *	int i=0;
@@ -178,6 +178,7 @@ fastf_t setDirection(fastf_t *inVect, fastf_t *resultVect, fastf_t x, fastf_t y,
  */
 	VMOVE(resultVect, outVect);
 	/*return MAGNITUDE(outVect);*/
+	MAT_COPY(outMatrix, rotMatrix);
 	return *rotMatrix;
 }
 
@@ -193,9 +194,10 @@ void vectorTest(struct rt_wdb *file)
     /*Vector shape modifying test */
     vect_t test1, test2;
     point_t testpoint;
+    mat_t rotMatrix;
     VSET(testpoint, 0.0, 0.0, 0.0);
     VSET(test1, 0, 0, 200);
-    setDirection(test1, test2, 0, 90, 0);
+    setDirection(test1, test2, rotMatrix, 0, 90, 0);
     bu_log("%f, %f, %f\n", test1[X], test1[Y], test1[Z]);
     bu_log("%f, %f, %f\n", test2[X], test2[Y], test2[Z]);
     mk_rcc(file, "NormalTest.s", testpoint, test1, (5*IN2MM));
@@ -220,20 +222,56 @@ void boundingBox(struct rt_wdb *file, char *name, fastf_t *startPoint, fastf_t *
 	 * And then rotate it to the current position as given in rotMatrix,
 	 * followed by naming it by taking name, and cat-ing BOX to the end of it.
 	 */
-	point_t points[8];
+	vect_t vects[8];
+	vect_t newVects[8];
+	point_t finalPoints[8];
 	vect_t distance;
 	char newName[MAXLENGTH] = "a";	
+	int i = 0;
 
 	bu_strlcpy(newName, name, MAXLENGTH);
 	bu_strlcat(newName, "Box", MAXLENGTH);
 
 	VADD2(distance, startPoint, lengthVector);
 
-	VSET(points[0], (-partWidth+startPoint[X]), (-partWidth+startPoint[Y]), (distance[Z]));
-	VSET(points[1], (partWidth+startPoint[X]), (partWidth+startPoint[Y]), (startPoint[Z]));
+	VSET(vects[0], (-partWidth+startPoint[X]), (-partWidth+startPoint[Y]), (startPoint[Z]));
+	VSET(vects[1], (-partWidth+startPoint[X]), (partWidth+startPoint[Y]), (startPoint[Z]));
+	VSET(vects[2], (partWidth+startPoint[X]), (partWidth+startPoint[Y]), (startPoint[Z]));
+	VSET(vects[3], (partWidth+startPoint[X]), (-partWidth+startPoint[Y]), (startPoint[Z]));
+	VSET(vects[4], (-partWidth+startPoint[X]), (-partWidth+startPoint[Y]), (distance[Z]));
+	VSET(vects[5], (-partWidth+startPoint[X]), (partWidth+startPoint[Y]), (distance[Z]));
+	VSET(vects[6], (partWidth+startPoint[X]), (partWidth+startPoint[Y]), (distance[Z]));
+ 	VSET(vects[7], (partWidth+startPoint[X]), (-partWidth+startPoint[Y]), (distance[Z]));
 
-	mk_rpp(file, newName, points[1], points[0]);
-	/* Then rotate this shape to the rotmatrix, or just set the 8 points to the correct position using rotMatrix beforehand */
+/* Print rotation matrix */
+	int w=0;
+	for(w=1; w<=16; w++){
+		bu_log("%3.4f\t", rotMatrix[(w-1)]);
+		if(w%4==0)
+			bu_log("\n");
+	}
+	/* MAT4X3VEC, rotate a vector about a center point, by a rotmatrix, MAT4X3VEC(new, rotmatrix, old) */
+/*	bu_log("Point\n"); */
+	for(i = 0; i < 8; i++){
+/*		bu_log("X:%f Y:%f Z:%f\n", vects[i][X], vects[i][Y], vects[i][Z]); */
+		MAT3X3VEC(newVects[i], rotMatrix, vects[i]);
+/*
+ *		VEC3X3MAT(newVects[i], vects[i], rotMatrix);
+ */
+	}
+
+	/* Set points to be at end of each vector */
+/*	bu_log("New Point\n"); */
+	for(i = 0; i < 8; i++){
+/*		bu_log("X:%f Y:%f Z:%f\n", newVects[i][X], newVects[i][Y], newVects[i][Z]); */
+		VADD2(finalPoints[i], startPoint, newVects[i]);
+	}
+/*	bu_log("Final Point\n"); */
+	for(i = 0; i < 8; i++){
+/*		bu_log("x:%f y:%f, z:%f\n", finalPoints[i][X], finalPoints[i][Y], finalPoints[i][Z]);*/
+	}
+
+	mk_arb8(file, newName, *finalPoints);
 }
 
 /** Create a bounding rectangle around the individual part, and this one has 2 separate values for depth and width */
@@ -276,7 +314,7 @@ fastf_t makeHead(struct rt_wdb (*file), char *name, struct human_data_t *dude, f
 	VSET(lengthVector, 0, 0, dude->head.headSize);
 	VSET(startVector, 0, 0, 0);
 	mat_t rotMatrix;
-	*rotMatrix = setDirection(startVector, dude->head.headVector, direction[X], direction[Y], direction[Z]);
+	setDirection(startVector, dude->head.headVector, rotMatrix, direction[X], direction[Y], direction[Z]);
 	mk_sph(file, name, dude->joints.headJoint, head);
 	
 	if(showBoxes){
@@ -291,7 +329,7 @@ fastf_t makeNeck(struct rt_wdb *file, char *name, struct human_data_t *dude, fas
 	mat_t rotMatrix;
 	dude->head.neckWidth = dude->head.headSize / 4;
 	VSET(startVector, 0, 0, dude->head.neckSize);
-	*rotMatrix=setDirection(startVector, dude->head.neckVector, direction[X], direction[Y], direction[Z]);
+	setDirection(startVector, dude->head.neckVector, rotMatrix, direction[X], direction[Y], direction[Z]);
 	VADD2(dude->joints.neckJoint, dude->joints.headJoint, dude->head.neckVector);
 	mk_rcc(file, name, dude->joints.headJoint, dude->head.neckVector, dude->head.neckWidth);
 	
@@ -310,7 +348,7 @@ fastf_t makeUpperTorso(struct rt_wdb *file, char *name, struct human_data_t *dud
 
 	/* Set length of top torso portion */
 	VSET(startVector, 0, 0, dude->torso.topTorsoLength);
-	*rotMatrix=setDirection(startVector, dude->torso.topTorsoVector, direction[X], direction[Y], direction[Z]);
+	setDirection(startVector, dude->torso.topTorsoVector, rotMatrix, direction[X], direction[Y], direction[Z]);
 	VADD2(dude->joints.abdomenJoint, dude->joints.neckJoint, dude->torso.topTorsoVector);
 	
 	/* change shoulder joints to match up to torso */
@@ -342,7 +380,7 @@ fastf_t makeLowerTorso(struct rt_wdb *file, char *name, struct human_data_t *dud
 	mat_t rotMatrix;
 
 	VSET(startVector, 0, 0, dude->torso.lowTorsoLength);
-	*rotMatrix=setDirection(startVector, dude->torso.lowTorsoVector, direction[X], direction[Y], direction[Z]);
+	setDirection(startVector, dude->torso.lowTorsoVector, rotMatrix, direction[X], direction[Y], direction[Z]);
 	VADD2(dude->joints.pelvisJoint, dude->joints.abdomenJoint, dude->torso.lowTorsoVector);
 
 	/* Set locations of legs */
@@ -388,12 +426,12 @@ fastf_t makeUpperArm(struct rt_wdb *file, fastf_t isLeft, char *partName, struct
 	dude->arms.upperArmLength = (dude->height / 4.5) * IN2MM;
 	VSET(startVector, 0, 0, dude->arms.upperArmLength);
 	if(isLeft){
-		*rotMatrix=setDirection(startVector, dude->arms.armVector, dude->arms.lArmDirection[X], dude->arms.lArmDirection[Y], dude->arms.lArmDirection[Z]); /* set y to 180 to point down */
+		setDirection(startVector, dude->arms.armVector, rotMatrix, dude->arms.lArmDirection[X], dude->arms.lArmDirection[Y], dude->arms.lArmDirection[Z]); /* set y to 180 to point down */
 		VADD2(dude->joints.elbowJoint, dude->joints.leftShoulderJoint, dude->arms.armVector);
 		mk_trc_h(file, partName, dude->joints.leftShoulderJoint, dude->arms.armVector, dude->arms.upperArmWidth, dude->arms.elbowWidth);
 	}
 	else{
-		*rotMatrix=setDirection(startVector, dude->arms.armVector, dude->arms.rArmDirection[X], dude->arms.rArmDirection[Y], dude->arms.rArmDirection[Z]); /* set y to 180 to point down */
+		setDirection(startVector, dude->arms.armVector, rotMatrix, dude->arms.rArmDirection[X], dude->arms.rArmDirection[Y], dude->arms.rArmDirection[Z]); /* set y to 180 to point down */
 		VADD2(dude->joints.elbowJoint, dude->joints.rightShoulderJoint, dude->arms.armVector);
 		mk_trc_h(file, partName, dude->joints.rightShoulderJoint, dude->arms.armVector, dude->arms.upperArmWidth, dude->arms.elbowWidth);
 	}	
@@ -439,11 +477,11 @@ fastf_t makeLowerArm(struct rt_wdb *file, fastf_t isLeft, char *name, struct hum
 	dude->arms.lowerArmLength = (dude->height / 4.5) * IN2MM;
 	VSET(startVector, 0, 0, dude->arms.lowerArmLength);
 	if(isLeft){
-		*rotMatrix=setDirection(startVector, dude->arms.armVector, dude->arms.lElbowDirection[X], dude->arms.lElbowDirection[Y], dude->arms.lElbowDirection[Z]);
+		setDirection(startVector, dude->arms.armVector, rotMatrix, dude->arms.lElbowDirection[X], dude->arms.lElbowDirection[Y], dude->arms.lElbowDirection[Z]);
 		VADD2(dude->joints.wristJoint, dude->joints.elbowJoint, dude->arms.armVector);
 	}
 	else{
-		*rotMatrix=setDirection(startVector, dude->arms.armVector, dude->arms.rElbowDirection[X], dude->arms.rElbowDirection[Y], dude->arms.rElbowDirection[Z]);
+		setDirection(startVector, dude->arms.armVector, rotMatrix, dude->arms.rElbowDirection[X], dude->arms.rElbowDirection[Y], dude->arms.rElbowDirection[Z]);
 		VADD2(dude->joints.wristJoint, dude->joints.elbowJoint, dude->arms.armVector);
 	}
 
@@ -483,10 +521,10 @@ void makeHand(struct rt_wdb *file, fastf_t isLeft, char *name, struct human_data
 	dude->arms.handWidth = (dude->height / 32) * IN2MM;
 	VSET(startVector, 0, 0, dude->arms.handLength);
 	if(isLeft){
-		*rotMatrix = setDirection(startVector, dude->arms.armVector, dude->arms.lWristDirection[X], dude->arms.lWristDirection[Y], dude->arms.lWristDirection[Z]);
+		setDirection(startVector, dude->arms.armVector, rotMatrix, dude->arms.lWristDirection[X], dude->arms.lWristDirection[Y], dude->arms.lWristDirection[Z]);
 	}
 	else{
-		*rotMatrix = setDirection(startVector, dude->arms.armVector, dude->arms.rWristDirection[X], dude->arms.rWristDirection[Y], dude->arms.rWristDirection[Z]);
+		setDirection(startVector, dude->arms.armVector, rotMatrix, dude->arms.rWristDirection[X], dude->arms.rWristDirection[Y], dude->arms.rWristDirection[Z]);
 	}
 
 	mk_sph(file, name, dude->joints.wristJoint, dude->arms.wristWidth);
@@ -514,12 +552,12 @@ fastf_t makeThigh(struct rt_wdb *file, fastf_t isLeft, char *name, struct human_
 	mat_t rotMatrix;
 
 	if(isLeft){
-		*rotMatrix=setDirection(startVector, dude->legs.thighVector, dude->legs.lLegDirection[X], dude->legs.lLegDirection[Y], dude->legs.lLegDirection[Z]);
+		setDirection(startVector, dude->legs.thighVector, rotMatrix, dude->legs.lLegDirection[X], dude->legs.lLegDirection[Y], dude->legs.lLegDirection[Z]);
 		VADD2(dude->joints.kneeJoint, dude->joints.leftThighJoint, dude->legs.thighVector);
 		mk_trc_h(file, name, dude->joints.leftThighJoint, dude->legs.thighVector, dude->legs.thighWidth, dude->legs.kneeWidth);
 	}
 	else{
-		*rotMatrix=setDirection(startVector, dude->legs.thighVector, dude->legs.rLegDirection[X], dude->legs.rLegDirection[Y], dude->legs.rLegDirection[Z]);
+		setDirection(startVector, dude->legs.thighVector, rotMatrix, dude->legs.rLegDirection[X], dude->legs.rLegDirection[Y], dude->legs.rLegDirection[Z]);
 		VADD2(dude->joints.kneeJoint, dude->joints.rightThighJoint, dude->legs.thighVector);
 		mk_trc_h(file, name, dude->joints.rightThighJoint, dude->legs.thighVector, dude->legs.thighWidth, dude->legs.kneeWidth);
 	}
@@ -551,9 +589,9 @@ fastf_t makeCalf(struct rt_wdb *file, fastf_t isLeft, char *name, struct human_d
 *        }
 */
 	if(isLeft)
-		*rotMatrix=setDirection(startVector, dude->legs.calfVector, dude->legs.lKneeDirection[X], dude->legs.lKneeDirection[Y], dude->legs.lKneeDirection[Z]);
+		setDirection(startVector, dude->legs.calfVector, rotMatrix, dude->legs.lKneeDirection[X], dude->legs.lKneeDirection[Y], dude->legs.lKneeDirection[Z]);
 	else
-		*rotMatrix=setDirection(startVector, dude->legs.calfVector, dude->legs.rKneeDirection[X], dude->legs.rKneeDirection[Y], dude->legs.rKneeDirection[Z]);
+		setDirection(startVector, dude->legs.calfVector, rotMatrix, dude->legs.rKneeDirection[X], dude->legs.rKneeDirection[Y], dude->legs.rKneeDirection[Z]);
 
         VADD2(dude->joints.ankleJoint, dude->joints.kneeJoint, dude->legs.calfVector);
 	mk_trc_h(file, name, dude->joints.kneeJoint, dude->legs.calfVector, dude->legs.kneeWidth, dude->legs.ankleWidth);
@@ -582,9 +620,9 @@ fastf_t makeFoot(struct rt_wdb *file, fastf_t isLeft, char *name, struct human_d
 	VSET(startVector, 0, 0, dude->legs.footLength);
 
 	if(isLeft)
-        	*rotMatrix=setDirection(startVector, dude->legs.footVector, dude->legs.lFootDirection[X], dude->legs.lFootDirection[Y], dude->legs.lFootDirection[Z]);
+        	setDirection(startVector, dude->legs.footVector, rotMatrix, dude->legs.lFootDirection[X], dude->legs.lFootDirection[Y], dude->legs.lFootDirection[Z]);
 	else
-        	*rotMatrix=setDirection(startVector, dude->legs.footVector, dude->legs.rFootDirection[X], dude->legs.rFootDirection[Y], dude->legs.rFootDirection[Z]);
+        	setDirection(startVector, dude->legs.footVector, rotMatrix, dude->legs.rFootDirection[X], dude->legs.rFootDirection[Y], dude->legs.rFootDirection[Z]);
 
 	mk_particle(file, name, dude->joints.ankleJoint, dude->legs.footVector, dude->legs.ankleWidth, dude->legs.toeWidth);
 
