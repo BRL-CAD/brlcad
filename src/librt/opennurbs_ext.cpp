@@ -883,13 +883,20 @@ namespace brlcad {
      * Would be a perfectly flat surface. Generally something in the range
      * 0.8-0.9 should suffice (according to Abert, 2005).
      *
+     * We're using a slightly different placement of the interior normal
+     * tests to save on calculations
+     * 
      *   +-------------------------+
-     *	 |           	           |
-     *	 |            +            |
      *	 |                         |
-     *  V|       +         +       |
      *	 |                         |
-     *	 |            +            |
+     *	 |      +            +     |
+     *	 |                         |
+     *	 |                         |
+     *  V|                         |
+     *	 |                         |
+     *	 |                         |
+     *	 |      +            +     |
+     *	 |                         |
      *	 |                         |
      *	 +-------------------------+
      *                  U
