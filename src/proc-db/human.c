@@ -227,12 +227,15 @@ void boundingBox(struct rt_wdb *file, char *name, fastf_t *startPoint, fastf_t *
 	point_t finalPoints[8];
 	vect_t distance;
 	char newName[MAXLENGTH] = "a";	
+	char debug[MAXLENGTH] = "a";
 	int i = 0;
-
 	bu_strlcpy(newName, name, MAXLENGTH);
+	bu_strlcpy(debug, name, MAXLENGTH);
 	bu_strlcat(newName, "Box", MAXLENGTH);
+	bu_strlcat(debug, "Joint", MAXLENGTH);
 
 	VADD2(distance, startPoint, lengthVector);
+	VSET(distance, distance[X], distance[Y], startPoint[Z]-lengthVector[Z]);
 
 	VSET(vects[0], (-partWidth+startPoint[X]), (-partWidth+startPoint[Y]), (startPoint[Z]));
 	VSET(vects[1], (-partWidth+startPoint[X]), (partWidth+startPoint[Y]), (startPoint[Z]));
@@ -246,31 +249,24 @@ void boundingBox(struct rt_wdb *file, char *name, fastf_t *startPoint, fastf_t *
 /* Print rotation matrix */
 	int w=0;
 	for(w=1; w<=16; w++){
+		if(w==1 || w==6 || w==11)
+			rotMatrix[(w-1)] = rotMatrix[(w-1)] * 1;
 		bu_log("%3.4f\t", rotMatrix[(w-1)]);
 		if(w%4==0)
 			bu_log("\n");
 	}
+
 	/* MAT4X3VEC, rotate a vector about a center point, by a rotmatrix, MAT4X3VEC(new, rotmatrix, old) */
-/*	bu_log("Point\n"); */
 	for(i = 0; i < 8; i++){
-/*		bu_log("X:%f Y:%f Z:%f\n", vects[i][X], vects[i][Y], vects[i][Z]); */
 		MAT3X3VEC(newVects[i], rotMatrix, vects[i]);
-/*
- *		VEC3X3MAT(newVects[i], vects[i], rotMatrix);
- */
 	}
+	point_t endPoint;
+	MAT4X3PNT(endPoint, rotMatrix, startPoint);
 
 	/* Set points to be at end of each vector */
-/*	bu_log("New Point\n"); */
 	for(i = 0; i < 8; i++){
-/*		bu_log("X:%f Y:%f Z:%f\n", newVects[i][X], newVects[i][Y], newVects[i][Z]); */
-		VADD2(finalPoints[i], startPoint, newVects[i]);
+		VMOVE(finalPoints[i], newVects[i]);
 	}
-/*	bu_log("Final Point\n"); */
-	for(i = 0; i < 8; i++){
-/*		bu_log("x:%f y:%f, z:%f\n", finalPoints[i][X], finalPoints[i][Y], finalPoints[i][Z]);*/
-	}
-
 	mk_arb8(file, newName, *finalPoints);
 }
 
