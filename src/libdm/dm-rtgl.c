@@ -1002,7 +1002,7 @@ void aeVect(fastf_t *aeVect, fastf_t *aet) {
 }
 
 /* calculate and add hit-point info to info list */
-void addInfo(struct application *app, struct hit *hit, struct soltab *soltab, char flip) {
+void addInfo(struct application *app, struct hit *hit, struct soltab *soltab, char flip, float *partColor) {
     point_t point;
     vect_t normal, light = {0, 0, -1};
     fastf_t lightMag = MAGNITUDE(light);
@@ -1035,24 +1035,15 @@ void addInfo(struct application *app, struct hit *hit, struct soltab *soltab, ch
     currItem->points[Z + currItem->used] = point[Z];
 
     /* add normal to list */
-#if 1
     currItem->norms[X + currItem->used] = normal[X];
     currItem->norms[Y + currItem->used] = normal[Y];
     currItem->norms[Z + currItem->used] = normal[Z];
-#else
+
     /* add color to list */
-    fastf_t glColor, normMag, dot;
+    currItem->colors[X + currItem->used] = partColor[X];
+    currItem->colors[Y + currItem->used] = partColor[Y];
+    currItem->colors[Z + currItem->used] = partColor[Z];
 
-    dot = VDOT(normal, light);
-    normMag = MAGNITUDE(normal);
-    glColor = dot / (normMag * lightMag);
-
-    glColor = fabs(glColor);
-
-    currItem->norms[X + currItem->used] = glColor;
-    currItem->norms[Y + currItem->used] = glColor;
-    currItem->norms[Z + currItem->used] = glColor;
-#endif
     currItem->used += 3;
 
 }
@@ -1062,20 +1053,23 @@ int recordHit(struct application *app, struct partition *partH, struct seg *segs
 {
     struct partition *part;
     struct soltab *soltab;
+    float *partColor;
 
     /* add all hit points */
     for (part = partH->pt_forw; part != partH; part = part->pt_forw) {
 
+	partColor = part->pt_regionp->reg_mater.ma_color;
+
 	/* add "in" hit point info */
 	soltab = part->pt_inseg->seg_stp;
-	addInfo(app, part->pt_inhit, soltab, part->pt_inflip);
+	addInfo(app, part->pt_inhit, soltab, part->pt_inflip, partColor);
 
 	/* add "out" hit point info */        
 	soltab = part->pt_inseg->seg_stp;
 
 	if (strncmp("half", soltab->st_meth->ft_label, 4) != 0) { /* don't attempt to calculate half-space out point */
 	
-	    addInfo(app, part->pt_outhit, soltab, part->pt_outflip);
+	    addInfo(app, part->pt_outhit, soltab, part->pt_outflip, partColor);
 	}
     }
 
@@ -1239,24 +1233,30 @@ rtgl_drawVList(struct dm *dmp, register struct bn_vlist *vp)
 
     /* calculate view vector and its magnitude */
     vect_t normal, view;
-    fastf_t cosAngle, viewMag;
+    fastf_t cosAngle, viewMag, color[3];
 
     aeVect(view, gedp->ged_gvp->gv_aet);
     viewMag = MAGNITUDE(view);
 
     /* draw points */
+    glPointSize(2);
     glEnableClientState(GL_VERTEX_ARRAY);
+#if 0
+    glEnableClientState(GL_COLOR_ARRAY);
+#endif
+    int elements, index, count = 0;
 
-    int used, index, count = 0;
-
-#if 1
     for (BU_LIST_FOR(currItem, ptInfoList, &(ptInfo.l))) {
 	glVertexPointer(3, GL_DOUBLE, 0, &(currItem->points));
-	
-	used = (currItem->used / 3);
 
+	elements = (currItem->used / 3);
+
+#if 0
+	glColorPointer(3, GL_DOUBLE, 0, &(currItem->colors));
+	glDrawArrays(GL_POINTS, 0, elements);
+#else
 	glBegin(GL_POINTS);
-	for (i = 0; i < used; i++) {
+	for (i = 0; i < elements; i++) {
 
 	    /* get normal */
 	    index = 3 * i;
@@ -1267,34 +1267,24 @@ rtgl_drawVList(struct dm *dmp, register struct bn_vlist *vp)
 	    /* cosine of angle between normal and view vectors */
 	    cosAngle = ( VDOT(view, normal) / (MAGNITUDE(view) * MAGNITUDE(normal)) );
 
+	    /* get color */
+	    color[X] = currItem->colors[index + X];
+	    color[Y] = currItem->colors[index + Y];
+	    color[Z] = currItem->colors[index + Z];
+
 	    /* visible elements have angle < 90 degrees, or cos(angle) > 0 */
 	    if (cosAngle > 0) {
 		count++;
-		glColor3d(cosAngle, cosAngle, cosAngle);
+		glColor3d(cosAngle * color[X], cosAngle * color[Y], cosAngle * color[Z]);
 		glArrayElement(i);
 	    }
 	}
 	glEnd();
-    }
-#else
-    glColor3d(0,1,0);
-    glBegin(GL_POLYGON);
-    glVertex3d(0,0,-1);
-    glVertex3d(1,0,-1);
-    glVertex3d(1,1,-1);
-    glVertex3d(0,1,-1);
-    glEnd();
-
-    glColor3d(1,0,0);
-    glBegin(GL_POLYGON);
-    glVertex3d(0,0,1);
-    glVertex3d(1,0,1);
-    glVertex3d(1,1,1);
-    glVertex3d(0,1,1);
-    glEnd();
 #endif
-
-    /*bu_log("points drawn: %d", count);*/
+    }
+#if 0
+    bu_log("points drawn: %d", count);
+#endif
     call++;
 
     return TCL_OK;
