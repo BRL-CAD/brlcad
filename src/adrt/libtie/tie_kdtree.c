@@ -674,7 +674,7 @@ static void tie_kdtree_build(tie_t *tie, tie_kdtree_t *node, unsigned int depth,
 	cmax[0].v[split] = min.v[split]*(1.0-split_coef) + max.v[split]*split_coef;
 	cmin[1].v[split] = cmax[0].v[split];
 	node->axis = cmax[0].v[split];
-    } else {
+    } else
 	bu_bomb("Illegal tie kdtree method\n");
 
 
