@@ -180,8 +180,6 @@ ged_eraseAllPathsFromDisplay(struct ged *gedp,
 {
     register struct ged_display_list *gdlp;
     register struct ged_display_list *next_gdlp;
-    register struct solid *sp;
-    struct directory *dp;
     struct db_full_path fullpath, subpath;
 
     if (db_string_to_path(&subpath, gedp->ged_wdbp->dbip, path) == 0) {
