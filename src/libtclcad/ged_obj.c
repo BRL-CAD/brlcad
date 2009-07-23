@@ -490,6 +490,12 @@ static int go_autoview_func(struct ged	*gedp,
 			   ged_func_ptr	func,
 			   const char	*usage,
 			   int		maxargs);
+static int go_edit_redraw_func(struct ged	*gedp,
+			       int		argc,
+			       const char	*argv[],
+			       ged_func_ptr	func,
+			       const char	*usage,
+			       int		maxargs);
 static int go_more_args_func(struct ged		*gedp,
 			     int		argc,
 			     const char		*argv[],
@@ -3160,7 +3166,7 @@ go_mouse_move_arb_edge(struct ged	*gedp,
 	av[0] = "draw";
 	av[1] = (char *)argv[2];
 	av[2] = (char *)0;
-	go_autoview_func(gedp, 2, (const char **)av, ged_draw, (char *)0, MAXARGS);
+	go_edit_redraw_func(gedp, 2, (const char **)av, ged_draw, (char *)0, MAXARGS);
     }
 
     return BRLCAD_OK;
@@ -3257,7 +3263,7 @@ go_mouse_move_arb_face(struct ged	*gedp,
 	av[0] = "draw";
 	av[1] = (char *)argv[2];
 	av[2] = (char *)0;
-	go_autoview_func(gedp, 2, (const char **)av, ged_draw, (char *)0, MAXARGS);
+	go_edit_redraw_func(gedp, 2, (const char **)av, ged_draw, (char *)0, MAXARGS);
     }
 
     return BRLCAD_OK;
@@ -3360,7 +3366,7 @@ go_mouse_orotate(struct ged	*gedp,
 	av[0] = "draw";
 	av[1] = (char *)argv[2];
 	av[2] = (char *)0;
-	go_autoview_func(gedp, 2, (const char **)av, ged_draw, (char *)0, MAXARGS);
+	go_edit_redraw_func(gedp, 2, (const char **)av, ged_draw, (char *)0, MAXARGS);
     }
 
     return BRLCAD_OK;
@@ -3454,7 +3460,7 @@ go_mouse_oscale(struct ged	*gedp,
 	av[0] = "draw";
 	av[1] = (char *)argv[2];
 	av[2] = (char *)0;
-	go_autoview_func(gedp, 2, (const char **)av, ged_draw, (char *)0, MAXARGS);
+	go_edit_redraw_func(gedp, 2, (const char **)av, ged_draw, (char *)0, MAXARGS);
     }
 
     return BRLCAD_OK;
@@ -3559,7 +3565,7 @@ go_mouse_otranslate(struct ged		*gedp,
 	av[0] = "draw";
 	av[1] = (char *)argv[2];
 	av[2] = (char *)0;
-	go_autoview_func(gedp, 2, (const char **)av, ged_draw, (char *)0, MAXARGS);
+	go_edit_redraw_func(gedp, 2, (const char **)av, ged_draw, (char *)0, MAXARGS);
     }
 
     return BRLCAD_OK;
@@ -3820,7 +3826,7 @@ go_mouse_rotate_arb_face(struct ged	*gedp,
 	av[0] = "draw";
 	av[1] = (char *)argv[2];
 	av[2] = (char *)0;
-	go_autoview_func(gedp, 2, (const char **)av, ged_draw, (char *)0, MAXARGS);
+	go_edit_redraw_func(gedp, 2, (const char **)av, ged_draw, (char *)0, MAXARGS);
     }
 
     return BRLCAD_OK;
@@ -4004,7 +4010,7 @@ go_mouse_protate(struct ged	*gedp,
 	av[0] = "draw";
 	av[1] = (char *)argv[2];
 	av[2] = (char *)0;
-	go_autoview_func(gedp, 2, (const char **)av, ged_draw, (char *)0, MAXARGS);
+	go_edit_redraw_func(gedp, 2, (const char **)av, ged_draw, (char *)0, MAXARGS);
     }
 
     return BRLCAD_OK;
@@ -4100,7 +4106,7 @@ go_mouse_pscale(struct ged	*gedp,
 	av[0] = "draw";
 	av[1] = (char *)argv[2];
 	av[2] = (char *)0;
-	go_autoview_func(gedp, 2, (const char **)av, ged_draw, (char *)0, MAXARGS);
+	go_edit_redraw_func(gedp, 2, (const char **)av, ged_draw, (char *)0, MAXARGS);
     }
 
     return BRLCAD_OK;
@@ -4197,7 +4203,7 @@ go_mouse_ptranslate(struct ged		*gedp,
 	av[0] = "draw";
 	av[1] = (char *)argv[2];
 	av[2] = (char *)0;
-	go_autoview_func(gedp, 2, (const char **)av, ged_draw, (char *)0, MAXARGS);
+	go_edit_redraw_func(gedp, 2, (const char **)av, ged_draw, (char *)0, MAXARGS);
     }
 
     return BRLCAD_OK;
@@ -6073,6 +6079,87 @@ go_autoview_func(struct ged	*gedp,
 	else
 	    go_refresh_all_views(go_current_gop);
     }
+
+    return ret;
+}
+
+static int
+go_edit_redraw_func(struct ged	*gedp,
+	       int		argc,
+	       const char	*argv[],
+	       ged_func_ptr	func,
+	       const char	*usage,
+	       int		maxargs)
+{
+    register int i;
+    register struct ged_display_list *gdlp;
+    register struct ged_display_list *next_gdlp;
+    struct db_full_path fullpath, subpath;
+    int ret = GED_OK;
+
+    if (argc != 2)
+	return GED_ERROR;
+
+    gdlp = BU_LIST_NEXT(ged_display_list, &gedp->ged_gdp->gd_headDisplay);
+    while (BU_LIST_NOT_HEAD(gdlp, &gedp->ged_gdp->gd_headDisplay)) {
+	gdlp->gdl_wflag = 0;
+	gdlp = BU_LIST_PNEXT(ged_display_list, gdlp);
+    }
+
+    if (db_string_to_path(&subpath, gedp->ged_wdbp->dbip, argv[1]) == 0) {
+	for (i = 0; i < subpath.fp_len; ++i) {
+	    gdlp = BU_LIST_NEXT(ged_display_list, &gedp->ged_gdp->gd_headDisplay);
+	    while (BU_LIST_NOT_HEAD(gdlp, &gedp->ged_gdp->gd_headDisplay)) {
+		next_gdlp = BU_LIST_PNEXT(ged_display_list, gdlp);
+
+		if (gdlp->gdl_wflag) {
+		    gdlp = next_gdlp;
+		    continue;
+		}
+
+		if (db_string_to_path(&fullpath, gedp->ged_wdbp->dbip, bu_vls_addr(&gdlp->gdl_path)) == 0) {
+		    if (db_full_path_search(&fullpath, subpath.fp_names[i])) {
+			register struct ged_display_list *last_gdlp;
+			register struct solid *sp;
+			char mflag[8];
+			char xflag[8];
+			char *av[5];
+
+			av[0] = (char *)argv[0];
+			av[1] = mflag;
+			av[2] = xflag;
+			av[3] = bu_vls_strdup(&gdlp->gdl_path);
+			av[4] = (char *)0;
+
+			sp = BU_LIST_NEXT(solid, &gdlp->gdl_headSolid);
+			snprintf(mflag, 7, "-m%d", sp->s_dmode);
+			snprintf(xflag, 7, "-x%.2g", sp->s_transparency);
+
+			ret = (*func)(gedp, 4, (const char **)av);
+			bu_free((genptr_t)av[3], "go_edit_redraw_func");
+
+			/* The function call above causes gdlp to be removed from the display
+                         * list. A new one is then created and appended to the end.
+			 * Here we put it back where it belongs (i.e. as specified by the user).
+			 * This also prevents an infinite loop.
+			 */
+			last_gdlp = BU_LIST_PREV(ged_display_list, &gedp->ged_gdp->gd_headDisplay);
+			BU_LIST_DEQUEUE(&last_gdlp->l);
+			BU_LIST_INSERT(&next_gdlp->l, &last_gdlp->l);
+			last_gdlp->gdl_wflag = 1;
+		    }
+
+		    db_free_full_path(&fullpath);
+		}
+
+		gdlp = next_gdlp;
+	    }
+	}
+
+	db_free_full_path(&subpath);
+    }
+
+    go_refresh_all_views(go_current_gop);
 
     return ret;
 }

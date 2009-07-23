@@ -345,6 +345,7 @@ struct ged_display_list {
     struct directory	*gdl_dp;
     struct bu_vls	gdl_path;
     struct bu_list	gdl_headSolid;		/**< @brief  head of solid list for this object */
+    int			gdl_wflag;
 };
 
 struct ged_drawable {

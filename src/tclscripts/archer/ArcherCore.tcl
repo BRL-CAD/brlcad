@@ -1092,22 +1092,27 @@ Popup Menu    Right or Ctrl-Left
     }
 
     set dlist [gedCmd who]
-    if {[lsearch $dlist $obj] == -1} {
-	return
+    foreach pelement [split $obj /] {
+	set new_dlist {}
+	set dlen [llength $dlist]
+	foreach ditem $dlist {
+	    if {[lsearch [split $ditem /] $pelement] != -1} {
+		set renderData [gedCmd how -b $ditem]
+		set renderMode [lindex $renderData 0]
+		set renderTrans [lindex $renderData 1]
+		render $ditem $renderMode $renderTrans 0 $wflag
+	    } else {
+		lappend new_dlist $ditem
+	    }
+	}
+
+	if {$new_dlist == {}} {
+	    break
+	}
+
+	set dlist $new_dlist
     }
-
-    set renderData [gedCmd how -b $obj]
-
-    set renderMode [lindex $renderData 0]
-    set renderTrans [lindex $renderData 1]
-
-    if {$renderMode == -1} {
-	return
-    }
-
-    render $obj $renderMode $renderTrans 0 $wflag
 }
-
 
 ::itcl::body ArcherCore::initTree {} {
     set parent [$itk_component(vpane) childsite hierarchyView]
@@ -2015,7 +2020,6 @@ Popup Menu    Right or Ctrl-Left
 	SetWaitCursor $this
     }
 
-    set savePwd ""
     set tnode [file tail $node]
     set saveGroundPlane 0
 
@@ -2076,12 +2080,7 @@ Popup Menu    Right or Ctrl-Left
 	    }
 	}
     }
-
-    # Change back to previous directory
-    if {$savePwd != ""} {
-	cd $savePwd
-    }
-
+ 
     # Turn ground plane back on if it was on before the draw
     if {$saveGroundPlane} {
 	set mShowGroundPlane 1
