@@ -735,7 +735,7 @@ typedef fastf_t	plane_t[ELEMENTS_PER_PLANE];
  * @brief Find the sum of two points, and scale the result.  Often
  * used to find the midpoint.
  */
-#define VADD2SCALE( o, a, b, s ) { \
+#define VADD2SCALE(o, a, b, s) { \
 			(o)[X] = ((a)[X] + (b)[X]) * (s); \
 			(o)[Y] = ((a)[Y] + (b)[Y]) * (s); \
 			(o)[Z] = ((a)[Z] + (b)[Z]) * (s); \
@@ -754,13 +754,13 @@ typedef fastf_t	plane_t[ELEMENTS_PER_PLANE];
  * @brief Find the difference between two points, and scale result.
  * Often used to compute bounding sphere radius given rpp points.
  */
-#define VSUB2SCALE( o, a, b, s ) { \
+#define VSUB2SCALE(o, a, b, s) { \
 			(o)[X] = ((a)[X] - (b)[X]) * (s); \
 			(o)[Y] = ((a)[Y] - (b)[Y]) * (s); \
 			(o)[Z] = ((a)[Z] - (b)[Z]) * (s); \
 }
 
-#define VSUB2SCALEN( o, a, b, n ) { \
+#define VSUB2SCALEN(o, a, b, n) { \
 	register int _vsub2scale; \
 	for ( _vsub2scale = 0; \
 	_vsub2scale < (n); \
@@ -879,6 +879,16 @@ typedef fastf_t	plane_t[ELEMENTS_PER_PLANE];
 	_vblend2++) { \
 		(a)[_vblend2] = (b) * (c)[_vblend2] + (d) * (e)[_vblend2]; \
 	} \
+}
+
+/**
+ * @brief Project vector `a' onto `b'
+ *   vector `c' is the component of `a' parallel   to `b'
+ *     "    `d' "   "     "      "   "  orthogonal "   "
+ */
+#define VPROJECT(a, b, c, d) { \
+    VSCALE(c, b, VDOT(a, b) / VDOT(b, b)); \
+    VSUB2(d, a, c); \
 }
 
 /** @brief Return scalar magnitude squared of vector at `a' */

@@ -49,12 +49,33 @@ double ClosestValue(
 }
 
 /**
- *        step
+ *        Pullback
+ *
+ * @brief updates s and t using an X,Y,Z vector
+ */
+double Pullback(
+	ON_Surface *surf,
+	double *s,
+	double *t,
+	ON_3dVector vec
+	)
+{
+    ON_3dVector ds, dt;
+    ON_3dPoint value;
+    assert(surf->Ev1Der(*s, *t, value, ds, dt));
+    double delta_s, delta_t;
+    ON_DecomposeVector(vec, ds, dt, &delta_s, &delta_t);
+    *s += delta_s;
+    *t += delta_t;
+}
+
+/**
+ *        Step
  *
  * @brief advances s1, s2, t1, t2 along the curve of intersection of the two surfaces
  * by a distance of step size.
  */
-int Step(
+void Step(
 	ON_Surface *surf1,
 	ON_Surface *surf2,
 	double *s1,
@@ -71,17 +92,36 @@ int Step(
     double vec[3] = {0.0, 0.0, 0.0};
     ON_3dVector stepscaled =  vec;
     ON_ArrayScale(3, sqrt(stepsize/Magnitude), step, stepscaled);
-    ON_3dPoint value1, value2;
-    ON_3dVector ds1, ds2, dt1, dt2; /* the partial derivatives */
-    assert(surf1->Ev1Der(*s1, *t1, value1, ds1, dt1));
-    assert(surf2->Ev1Der(*s2, *t2, value2, ds2, dt2));
-    double delta_s1, delta_s2, delta_t1, delta_t2;
-    ON_DecomposeVector(stepscaled, ds1, dt1, &delta_s1, &delta_t1);
-    ON_DecomposeVector(stepscaled, ds2, dt2, &delta_s2, &delta_t2);
-    *s1 += delta_s1;
-    *s2 += delta_s2;
-    *t1 += delta_t1;
-    *t2 += delta_t2;
+    Pullback(surf1, s1, t1, stepscaled);
+    Pullback(surf2, s2, t2, stepscaled);
+}
+
+/**
+ *        Jiggle
+ *
+ * @brief uses newtonesque method to jiggle the points on the surfaces about and find a closer
+ * point
+ */
+double Jiggle(
+	ON_Surface *surf1,
+	ON_Surface *surf2,
+	double *s1,
+	double *s2,
+	double *t1,
+	double *t2,
+	double stepsize
+	)
+{
+    ON_3dPoint p1 = surf1->PointAt(*s1, *t1);
+    ON_3dPoint p2 = surf2->PointAt(*s2, *t2);
+    ON_3dVector Norm1 = surf1->NormalAt(*s1, *t1);
+    ON_3dVector Norm2 = surf2->NormalAt(*s2, *t2);
+    ON_3dVector p1p2 = p2 - p1, p2p1 = p1 - p2;
+    ON_3dVector p1p2orth, p1p2prl, p2p1orth, p2p1prl;
+    VPROJECT(p1p2, Norm1, p1p2prl, p1p2orth);
+    VPROJECT(p2p1, Norm2, p2p1prl, p2p1orth);
+    VUNITIZE(p1p2orth);
+    VUNITIZE(p2p1orth);
 }
 
 void WalkIntersection(
