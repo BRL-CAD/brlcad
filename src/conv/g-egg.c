@@ -110,7 +110,7 @@ nmg_to_egg(struct nmgregion *r, struct db_full_path *pathp, int region_id, int m
 	    for (BU_LIST_FOR (lu, loopuse, &fu->lu_hd))
 	    {
 		struct edgeuse *eu;
-		int vert_count=0, vid = 0;
+		int vert_count=0;
 		float flts[12];
 		float *flt_ptr;
 		unsigned char vert_buffer[50];
@@ -131,8 +131,8 @@ nmg_to_egg(struct nmgregion *r, struct db_full_path *pathp, int region_id, int m
 
 		    v = eu->vu_p->v_p;
 		    NMG_CK_VERTEX(v);
-		    fprintf(fp, "    <Vertex> %d {\n      %lf %lf %lf\n      <Normal> { %lf %lf %lf }\n    }\n", 
-			    vid++,
+		    fprintf(fp, "    <Vertex> %d {\n      %lf %lf %lf\n      <Normal> { %lf %lf %lf }\n    }\n",
+			    tot_polygons,
 			    V3ARGS(facet_normal),
 			    V3ARGS(v->vg_p->coord));
 		}
@@ -145,7 +145,6 @@ nmg_to_egg(struct nmgregion *r, struct db_full_path *pathp, int region_id, int m
 		else if (vert_count < 3)
 		    continue;
 
-		tot_polygons++;
 		region_polys++;
 	    }
 	}
@@ -164,7 +163,6 @@ main(argc, argv)
     int argc;
     char *argv[];
 {
-    register int c;
     double percent;
     int i;
 
@@ -201,8 +199,8 @@ main(argc, argv)
     BU_LIST_INIT(&rt_g.rtg_vlfree);	/* for vlist macros */
 
     /* Get command line arguments. */
-    while ((c = bu_getopt(argc, argv, "a:bm:n:o:r:vx:D:P:X:i")) != EOF) {
-	switch (c) {
+    while ((i = bu_getopt(argc, argv, "a:bm:n:o:r:vx:D:P:X:i")) != EOF) {
+	switch (i) {
 	    case 'a':		/* Absolute tolerance. */
 		ttol.abs = atof(bu_optarg);
 		ttol.rel = 0.0;
@@ -293,13 +291,15 @@ main(argc, argv)
     /* Walk indicated tree(s).  Each region will be output separately */
     while (--argc) {
 	fprintf(fp, "<Group> %s {\n", *(argv+1));
-	(void) db_walk_tree(dbip, 1, ++argv,
+	(void) db_walk_tree(dbip,		/* db_i */
+			    1,			/* argc */
+			    ++argv,		/* argv */
 			    1,			/* ncpu */
-			    &tree_state,
-			    0,			/* take all regions */
-			    gcv_region_end,
-			    nmg_booltree_leaf_tess,
-			    (genptr_t)nmg_to_egg);
+			    &tree_state,	/* state */
+			    0,			/* start func */
+			    gcv_region_end,	/* end func */
+			    nmg_booltree_leaf_tess, /* leaf func */
+			    (genptr_t)nmg_to_egg);  /* client_data */
 	fprintf(fp, "}\n");
     }
 
