@@ -19,7 +19,7 @@
  */
 /** @file dm-rtgl.c
  *
- *  An Ray Tracing X11 OpenGL Display Manager.
+ *  A Ray Tracing X11 OpenGL Display Manager.
  *
  */
 
@@ -159,7 +159,7 @@ struct dm dm_rtgl = {
     0,				/* no transparency */
     1,				/* depth buffer is writable */
     1,				/* zbuffer */
-    0,				/* no zclipping */
+    1,				/* zclipping on by default */
     0,                          /* clear back buffer after drawing and swap */
     0				/* Tcl interpreter */
 };
@@ -170,8 +170,6 @@ extern double	ylim_view;
 
 /* lighting parameters */
 extern float amb_three[];
-
-
 extern float light0_direction[];
 extern float light0_position[];
 extern float light0_diffuse[];
@@ -194,7 +192,7 @@ struct ptInfoList ptInfo;
 struct ptInfoList *currItem;
 
 /* remove all points from points list */
-void freePoints(void) {
+void freeInfoList(void) {
 
     /* list cannot be empty */
     if (ptInfo.l.forw != NULL && (struct ptInfoList *)ptInfo.l.forw != &ptInfo) {
@@ -204,6 +202,8 @@ void freePoints(void) {
 	    BU_LIST_DEQUEUE(&(curr->l));
 	    bu_free(curr, "free ptInfoList curr");
 	}
+
+	ptInfo.l.forw = BU_LIST_NULL;
     }
 }
 
@@ -304,10 +304,10 @@ rtgl_open(Tcl_Interp *interp, int argc, char **argv)
     ((struct rtgl_vars *)dmp->dm_vars.priv_vars)->mvars.fogdensity = 1.0;
     ((struct rtgl_vars *)dmp->dm_vars.priv_vars)->mvars.lighting_on = dmp->dm_light;
     ((struct rtgl_vars *)dmp->dm_vars.priv_vars)->mvars.zbuffer_on = dmp->dm_zbuffer;
-    ((struct rtgl_vars *)dmp->dm_vars.priv_vars)->mvars.zclipping_on = dmp->dm_zclip;
     ((struct rtgl_vars *)dmp->dm_vars.priv_vars)->mvars.debug = dmp->dm_debugLevel;
     ((struct rtgl_vars *)dmp->dm_vars.priv_vars)->mvars.bound = dmp->dm_bound;
     ((struct rtgl_vars *)dmp->dm_vars.priv_vars)->mvars.boundFlag = dmp->dm_boundFlag;
+    ((struct rtgl_vars *)dmp->dm_vars.priv_vars)->mvars.zclipping_on = dmp->dm_zclip;
 
     /* this is important so that rtgl_configureWin knows to set the font */
     ((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct = NULL;
@@ -775,7 +775,7 @@ rtgl_close(struct dm *dmp)
     bu_free(dmp, "rtgl_close: dmp");
 
     /* free points list */
-    freePoints();
+    freeInfoList();
 
     return TCL_OK;
 }
@@ -1140,6 +1140,8 @@ void shootGrid(vect_t min, vect_t max, int uAxis, int vAxis, int iAxis) {
 HIDDEN int
 rtgl_drawVList(struct dm *dmp, register struct bn_vlist *vp)
 {
+    static int call;
+
     int i, j, numTrees, new, newTrees;
     char *currTree, *trees[RT_MAXARGS];
     struct ptInfoList *curr;
@@ -1180,7 +1182,7 @@ rtgl_drawVList(struct dm *dmp, register struct bn_vlist *vp)
     if (numTrees == 0) {
 
 	/* drop all display points */
-	freePoints();
+	freeInfoList();
 
 	return TCL_OK;
     }
@@ -1211,6 +1213,7 @@ rtgl_drawVList(struct dm *dmp, register struct bn_vlist *vp)
 
     /* get points for new trees */
     if (newTrees) {
+	call = 1;
 
         /* set up application */
         RT_APPLICATION_INIT(&app);
@@ -1234,16 +1237,19 @@ rtgl_drawVList(struct dm *dmp, register struct bn_vlist *vp)
 	shootGrid(min, max, Y, Z, X);
     }
 
-    /* draw points */
-    glColor3d(0, 1, 0);
-    glEnableClientState(GL_VERTEX_ARRAY);
+    /* calculate view vector and its magnitude */
     vect_t normal, view;
-    fastf_t cAngle, viewMag;
-    int used, index, count = 0;
+    fastf_t cosAngle, viewMag;
 
     aeVect(view, gedp->ged_gvp->gv_aet);
     viewMag = MAGNITUDE(view);
 
+    /* draw points */
+    glEnableClientState(GL_VERTEX_ARRAY);
+
+    int used, index, count = 0;
+
+#if 1
     for (BU_LIST_FOR(currItem, ptInfoList, &(ptInfo.l))) {
 	glVertexPointer(3, GL_DOUBLE, 0, &(currItem->points));
 	
@@ -1259,17 +1265,37 @@ rtgl_drawVList(struct dm *dmp, register struct bn_vlist *vp)
 	    normal[Z] = currItem->norms[index + Z];
 	   
 	    /* cosine of angle between normal and view vectors */
-	    cAngle = ( VDOT(view, normal) / (MAGNITUDE(view) * MAGNITUDE(normal)) );
+	    cosAngle = ( VDOT(view, normal) / (MAGNITUDE(view) * MAGNITUDE(normal)) );
 
-	    /* visible elements have angle < 90 degrees */
-	    if (!(cAngle < 0)) {
+	    /* visible elements have angle < 90 degrees, or cos(angle) > 0 */
+	    if (cosAngle > 0) {
 		count++;
-		glColor3d(cAngle, cAngle, cAngle);
+		glColor3d(cosAngle, cosAngle, cosAngle);
 		glArrayElement(i);
 	    }
 	}
 	glEnd();
     }
+#else
+    glColor3d(0,1,0);
+    glBegin(GL_POLYGON);
+    glVertex3d(0,0,-1);
+    glVertex3d(1,0,-1);
+    glVertex3d(1,1,-1);
+    glVertex3d(0,1,-1);
+    glEnd();
+
+    glColor3d(1,0,0);
+    glBegin(GL_POLYGON);
+    glVertex3d(0,0,1);
+    glVertex3d(1,0,1);
+    glVertex3d(1,1,1);
+    glVertex3d(0,1,1);
+    glEnd();
+#endif
+
+    /*bu_log("points drawn: %d", count);*/
+    call++;
 
     return TCL_OK;
 }
