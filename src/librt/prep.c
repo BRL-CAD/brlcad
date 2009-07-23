@@ -105,8 +105,6 @@ rt_new_rti(struct db_i *dbip)
     rtip->rti_ttol.rel = 0.01;
     rtip->rti_ttol.norm = 0;
 
-    rtip->rti_max_beam_radius = 175.0/2;	/* Largest Army bullet */
-
     /* This sets the space partitioning algorithm to Mike's original
      * non-uniform binary space paritioning tree.  If you change this
      * to anything else, you must also modify "rt_find_backing_dist()"
