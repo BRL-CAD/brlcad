@@ -1157,6 +1157,16 @@ ged_addToDisplay(struct ged *gedp,
     else
 	++cp;
 
+    /* Make sure name is not already in the list */
+    gdlp = BU_LIST_NEXT(ged_display_list, &gedp->ged_gdp->gd_headDisplay);
+    while (BU_LIST_NOT_HEAD(gdlp, &gedp->ged_gdp->gd_headDisplay)) {
+	if (!strcmp(name, bu_vls_addr(&gdlp->gdl_path))) {
+	    return gdlp;
+	}
+
+	gdlp = BU_LIST_PNEXT(ged_display_list, gdlp);
+    }
+
     if ((dp = db_lookup(gedp->ged_wdbp->dbip, cp, LOOKUP_NOISY)) == DIR_NULL)
 	return GED_DISPLAY_LIST_NULL;
 
