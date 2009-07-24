@@ -249,16 +249,27 @@ void boundingBox(struct rt_wdb *file, char *name, fastf_t *startPoint, fastf_t *
 /* Print rotation matrix */
 	int w=0;
 	for(w=1; w<=16; w++){
-		if(w==1 || w==6 || w==11)
-			rotMatrix[(w-1)] = rotMatrix[(w-1)] * 1;
+	/*X rotation matrix */
+//		if(w==1 || w==6 || w== 7 || w==10 || w==11)
+	/*Y rotation Matrix */
+		if(w==1 || w==3 || w== 6 || w==9 || w==11)
+	/*Z rotation Matrix */
+//		if(w==1 || w==2 || w== 5 || w== 6 || w==11)
+
+			rotMatrix[(w-1)] = rotMatrix[(w-1)] * -1;
+
 		bu_log("%3.4f\t", rotMatrix[(w-1)]);
 		if(w%4==0)
 			bu_log("\n");
 	}
+	bu_log("-------------------------------+\n");
 
 	/* MAT4X3VEC, rotate a vector about a center point, by a rotmatrix, MAT4X3VEC(new, rotmatrix, old) */
 	for(i = 0; i < 8; i++){
-		MAT3X3VEC(newVects[i], rotMatrix, vects[i]);
+	/*
+		MAT4X3VEC(newVects[i], rotMatrix, vects[i]);
+	*/
+		VEC3X3MAT(newVects[i], vects[i], rotMatrix);
 	}
 	point_t endPoint;
 	MAT4X3PNT(endPoint, rotMatrix, startPoint);
@@ -267,6 +278,7 @@ void boundingBox(struct rt_wdb *file, char *name, fastf_t *startPoint, fastf_t *
 	for(i = 0; i < 8; i++){
 		VMOVE(finalPoints[i], newVects[i]);
 	}
+//	mk_trc_h(file, debug, endPoint, lengthVector, 2, 2);
 	mk_arb8(file, newName, *finalPoints);
 }
 
@@ -287,15 +299,13 @@ void boundingRectangle(struct rt_wdb *file, char *name, fastf_t *startPoint, fas
         VADD2(distance, startPoint, lengthVector);
 
 	/* Set first 4 points to be on the same plane as the starting point, and the last 4 points to be the distance vector point plane */
-
-	fastf_t length=findVector(partWidth, partWidth);
-	printf("The length is %f\n", length);
-
+/*
+*	fastf_t length=findVector(partWidth, partWidth);
+*/
         VSET(points[0], (-partDepth+startPoint[X]), (-partWidth+startPoint[Y]), (distance[Z]));
         VSET(points[1], (partDepth+startPoint[X]), (partWidth+startPoint[Y]), (startPoint[Z]));
 
         mk_rpp(file, newName, points[1], points[0]);
-        /* Then rotate this shape to the rotmatrix */
 }
 
 /******************************************/
@@ -796,34 +806,30 @@ void makeBody(struct rt_wdb (*file), char *suffix, struct human_data_t *dude, fa
          * for direction, location, and correct sizing, respectivly.
 	 */
 	bu_log("Setting Direction\n");
-	VSET(dude->joints.headJoint, location[X], location[Y], ((dude->height*IN2MM)-(dude->head.headSize/2)));
+	VSET(dude->joints.headJoint, location[X], location[Y], (location[Z]+((dude->height*IN2MM)-(dude->head.headSize/2))));
 	VSET(direction, 180, 0, 0); /*Make the body build down, from head to toe. Or else it's upsidedown */
 
 	/**
 	 * Head Parts
 	 */
 	/*makeProfile makes the head and the neck */
-	bu_log("Making Head\n");
 	makeProfile(file, suffix, dude, direction, showBoxes);
 
 	/**
 	 * Torso Parts
 	 */
-	bu_log("Making Torso\n");
 	makeTorso(file, suffix, dude, direction, showBoxes);
 
 	/**
 	 * Arm Parts
 	 */
 	/*The second argument is whether or not it is the left side, 1 = yes, 0 = no) */
-	bu_log("Making Arms\n");
 	makeArm(file, suffix, 1, dude, showBoxes);
 	makeArm(file, suffix, 0, dude, showBoxes);
 	
 	/**
 	 * Leg Parts
 	 */
-	bu_log("Making Legs\n");
 	makeLeg(file, suffix, 1, dude, showBoxes);
 	makeLeg(file, suffix, 0, dude, showBoxes);
 	bu_log("Body Built\n");
@@ -1105,6 +1111,7 @@ void show_help(const char *name, const char *optstr)
 	   "\t-?\t\tShow help\n"
 	   "\t-A\t\tAutoMake defaults\n"
 	   "\t-H\t\tSet Height in inches\n"
+	   "\t-l\t\tSet Center Point, at feet\n"
 	   "\t-o\t\tSet output file name\n"
 	   "\t-b\t\tShow bounding Boxes\n"
 	   "\t-N\t\tNumber to make (square)\n"
@@ -1115,11 +1122,30 @@ void show_help(const char *name, const char *optstr)
     return;
 }
 
+void getLocation(fastf_t *location)
+{
+    fastf_t x, y, z;
+    bu_log("Enter center point, at feet\n");
+    bu_log("X: ");
+    scanf("%lf", &x);
+    fflush(stdin);
+    bu_log("Y: ");
+    scanf("%lf", &y);
+    fflush(stdin);
+    bu_log("Z: ");
+    scanf("%lf", &z);
+    fflush(stdin);
+    x*= IN2MM;
+    y*= IN2MM;
+    z*= IN2MM;
+    VSET(location, x, y, z);
+}
+
 /* Process command line arguments */
-int read_args(int argc, char **argv, struct human_data_t *dude, fastf_t *stance, fastf_t *troops, fastf_t *showBoxes)
+int read_args(int argc, char **argv, struct human_data_t *dude, fastf_t *location, fastf_t *stance, fastf_t *troops, fastf_t *showBoxes)
 {
     int c = 0;
-    char *options="H:N:h:O:o:a:b:s:A";
+    char *options="H:N:h:O:o:a:b:s:l:A";
     float height=0;
     int soldiers=0;
     int pose=0;
@@ -1183,8 +1209,15 @@ int read_args(int argc, char **argv, struct human_data_t *dude, fastf_t *stance,
 	    case 's':
 		sscanf(bu_optarg, "%d", &pose);
 		fflush(stdin);
+		if(pose < 0)
+			pose = 0;
 		*stance = pose;
 		break;
+
+	    case 'l':
+		getLocation(location);
+		break;
+
 	    default:
 		show_help(*argv, options);
 		bu_log("%s: illegal option -- %c\n", bu_getprogname(), c);
@@ -1217,9 +1250,10 @@ int main(int ac, char *av[])
     bu_vls_trunc(&str, 0);
 
     /* Process command line arguments */
-    read_args(ac, av, &human_data, &stance, &troops, &showBoxes);
+    read_args(ac, av, &human_data, location, &stance, &troops, &showBoxes);
     db_fp = wdb_fopen(filename);
 
+    bu_log("%f %f %f\n", location[X], location[Y], location[Z]);
 /******MAGIC******/
 /*Magically set pose, and apply pose to human geometry*/ 
     setStance(stance, &human_data); 
