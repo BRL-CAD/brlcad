@@ -133,7 +133,7 @@ struct dm dm_rtgl = {
     0,
     1,				/* has displaylist */
     0,                            /* no stereo by default */
-    1.0,				/* zoom-in limit */
+    1.0,				/* zoom-in limit, */
     1,				/* bound flag */
     "rtgl",
     "X Windows with OpenGL graphics",
@@ -159,7 +159,7 @@ struct dm dm_rtgl = {
     0,				/* no transparency */
     1,				/* depth buffer is writable */
     1,				/* zbuffer */
-    1,				/* zclipping on by default */
+    0,				/* no zclipping */
     0,                          /* clear back buffer after drawing and swap */
     0				/* Tcl interpreter */
 };
@@ -903,9 +903,25 @@ rtgl_drawEnd(struct dm *dmp)
 HIDDEN int
 rtgl_loadMatrix(struct dm *dmp, fastf_t *mat, int which_eye)
 {
-    register fastf_t *mptr;
     GLfloat gtmat[16];
     mat_t	newm;
+
+    static double max = 0;
+
+    /* get ged struct */
+    struct ged *gedp = ((struct rtgl_vars *)dmp->dm_vars.priv_vars)->mvars.gedp;
+
+    if (gedp == GED_NULL)
+	return TCL_ERROR;    
+
+    /* get view scale */
+    fastf_t scale = gedp->ged_gvp->gv_isize;
+
+    if (scale > max) {
+	max = scale;
+    }
+
+    bu_log("scale %3.2f", 1 / scale);
 
     if (dmp->dm_debugLevel) {
 	struct bu_vls tmp_vls;
@@ -943,53 +959,47 @@ rtgl_loadMatrix(struct dm *dmp, fastf_t *mat, int which_eye)
 	    break;
     }
 
-    if (!dmp->dm_zclip) {
-	mat_t       nozclip;
+    mat_t zclip;
+    MAT_IDN(zclip);
 
-	MAT_IDN( nozclip );
-	nozclip[10] = 1.0e-20;
-	bn_mat_mul( newm, nozclip, mat );
-	mptr = newm;
-    } else {
-	mat_t       nozclip;
+    /* use z-clipping */
+    if (dmp->dm_zclip) {
 
-	MAT_IDN(nozclip);
-	nozclip[10] = dmp->dm_bound;
-	bn_mat_mul(newm, nozclip, mat);
-	mptr = newm;
+	/* use custom clipping to control zbuffer precision */
+	if (dmp->dm_zbuffer) {
+
+	    /* [0, 1], smaller value imlies larger volume (less
+	     * clipping) in z direction, but less precision
+	     */
+	    zclip[10] = 1/* * (scale / max)*/;
+	}
+
+	/* use default z clipping */
+	else {
+	    zclip[10] = dmp->dm_bound;
+	}
+    }
+    
+    /* prevent z-clipping */
+    else {
+	zclip[10] = 1e-20;
     }
 
-    gtmat[0] = *(mptr++);
-    gtmat[4] = *(mptr++);
-    gtmat[8] = *(mptr++);
-    gtmat[12] = *(mptr++);
+    /* apply clip to view matrix */
+    bn_mat_mul(newm, zclip, mat);
 
-    gtmat[1] = *(mptr++) * dmp->dm_aspect;
-    gtmat[5] = *(mptr++) * dmp->dm_aspect;
-    gtmat[9] = *(mptr++) * dmp->dm_aspect;
-    gtmat[13] = *(mptr++) * dmp->dm_aspect;
-
-    gtmat[2] = *(mptr++);
-    gtmat[6] = *(mptr++);
-    gtmat[10] = *(mptr++);
-    gtmat[14] = *(mptr++);
-
-    gtmat[3] = *(mptr++);
-    gtmat[7] = *(mptr++);
-    gtmat[11] = *(mptr++);
-    gtmat[15] = *(mptr++);
 
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
 
     /* set light position now, so that it moves with the view */
     GLfloat mat_specular[] = { 1.0, 1.0, 1.0, 1.0 }; 
-    GLfloat mat_shininess[] = { 50.0 }; 
+    GLfloat mat_shininess[] = { 20.0 }; 
     GLfloat light_position[] = { 0.0, 0.0, 1.0, 0.0 }; 
     GLfloat white_light[] = { 1.0, 1.0, 1.0, 1.0 }; 
     GLfloat lmodel_ambient[] = { 0.1, 0.1, 0.1, 1.0 }; 
 
-    glShadeModel(GL_SMOOTH); 
+    glShadeModel(GL_FLAT); 
 
     glMaterialfv(GL_FRONT, GL_SPECULAR, mat_specular); 
     glMaterialfv(GL_FRONT, GL_SHININESS, mat_shininess); 
@@ -1004,8 +1014,15 @@ rtgl_loadMatrix(struct dm *dmp, fastf_t *mat, int which_eye)
     glEnable(GL_LIGHT0);     
 
     /* apply view */
-    glTranslatef( 0.0, 0.0, -1.0 );
-    glMultMatrixf( gtmat );
+    if (dmp->dm_zbuffer) {
+	/* more back surface clipping, less front surface clipping */
+	glTranslatef( 0.0, 0.0, -1.5 );
+    } else {
+	glTranslatef( 0.0, 0.0, -1.0 );
+    }
+
+    /* transpose to OpenGL format before applying */
+     glMultTransposeMatrixd(newm);
 
     return TCL_OK;
 }

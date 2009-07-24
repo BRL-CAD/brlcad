@@ -485,6 +485,26 @@ typedef fastf_t	plane_t[ELEMENTS_PER_PLANE];
 	(m)[0] = (m)[5] = (m)[10] = (m)[15] = 1.0; \
 }
 
+/** @brief set t to the transpose of matrix m */
+#define MAT_TRANSPOSE(t, m) { \
+	(t)[0] = (m)[0]; \
+	(t)[4] = (m)[1]; \
+	(t)[8] = (m)[2]; \
+	(t)[12] = (m)[3]; \
+	(t)[1] = (m)[4]; \
+	(t)[5] = (m)[5]; \
+	(t)[9] = (m)[6]; \
+	(t)[13] = (m)[7]; \
+	(t)[2] = (m)[8]; \
+	(t)[6] = (m)[9]; \
+	(t)[10] = (m)[10]; \
+	(t)[14] = (m)[11]; \
+	(t)[3] = (m)[12]; \
+	(t)[7] = (m)[13]; \
+	(t)[11] = (m)[14]; \
+	(t)[15] = (m)[15]; \
+}
+
 /** @brief Copy a matrix. */
 #define MAT_COPY( d, s ) { \
 	(d)[0] = (s)[0]; \
