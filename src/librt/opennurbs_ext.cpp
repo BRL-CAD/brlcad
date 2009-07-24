@@ -793,6 +793,68 @@ namespace brlcad {
 	    ON_Interval first(0, 0.5);
 	    ON_Interval second(0.5, 1.0);
 
+
+	    /*********************************************************************
+	     * In order to avoid fairly expensive re-calculation of 3d points at
+	     * uv coordinates, all values that are shared between children at
+	     * the same depth of a surface subdivision are pre-computed and 
+	     * passed as paramters.
+	     *
+	     * The majority of these points are already evaluated in the process
+	     * of testing whether a subdivision has produced a leaf node.  These
+	     * values are in the normals and corners arrays and have index values
+	     * corresponding to the values of the figure on the left below.  There
+	     * are four other shared values that are precomputed in the sharedcorners
+	     * and sharednormals arrays; their index values in those arrays are 
+	     * illustrated in the figure on the right:
+	     *
+	     * 
+	     *   3-------------------2      +---------2---------+      
+	     *   |                   |      |                   |
+     	     *	 |    6         8    |      |                   |
+     	     *	 |                   |      |                   |
+     	     *  V|         4         |      1                   3
+     	     *	 |                   |      |                   |
+     	     *	 |    5         7    |      |                   |
+     	     *	 |                   |      |                   |
+     	     *	 0-------------------1      +---------0---------+
+     	     *             U                          U         
+	     * 
+	     *   Values inherited from      Values pre-prepared in
+	     *   parent subdivision         shared arrays
+	     *
+	     *
+	     *   When the four subdivisions are made, the parent parameters are
+	     *   passed to the children as follows (values from the shared
+	     *   arrays are prefaced with an s):
+ 	     *
+	     *    3--------------S2     S2--------------2
+	     *    |               |     |               |
+	     *    |               |     |               |
+	     *  V |       6       |     |       8       |
+	     *    |               |     |               |
+	     *    |               |     |               |
+	     *    S1--------------4     4--------------S3
+	     *            U                     U         
+	     *
+	     *        Quadrant 3            Quadrant 2
+	     *
+	     *    S1--------------4     4--------------S3
+	     *    |               |     |               |
+	     *    |               |     |               |
+	     *  V |       5       |     |       7       |
+	     *    |               |     |               |
+	     *    |               |     |               |
+	     *    0--------------S0     S0--------------1
+	     *             U                         U         
+	     *
+	     *        Quadrant 0            Quadrant 1
+	     *
+	     *
+	     *
+	     **********************************************************************/
+
+	    
 	    ON_3dPoint sharedcorners[4];
 	    ON_3dVector sharednormals[4];
 	    surf->EvNormal(u.Mid(), v.Min(), sharedcorners[0], sharednormals[0]);
@@ -914,6 +976,8 @@ namespace brlcad {
      *	 0-------------------1
      *             U
      *
+     * The actual values used in the flatness test are 0, 1, 2, 3 and 
+     * 5, 6, 7, 8 - the center point is not used.
      * 
      */
 
@@ -934,35 +998,6 @@ namespace brlcad {
 	    normals[i] = m_normals[i+1];
 	}
 
-/*
-         ON_3dVector normals[8];
- 
-         if (surf->IsAtSingularity(u.Min(), v.Min()) ||
-             surf->IsAtSingularity(u.Max(), v.Min()) ||
-             surf->IsAtSingularity(u.Max(), v.Max()) ||
-             surf->IsAtSingularity(u.Min(), v.Max())) {
-             TRACE("singularity! --------------------------");
-             TRACE("umin: " << u.Min());
-             TRACE("umax: " << u.Max());
-             TRACE("vmin: " << v.Min());
-             TRACE("vmax: " << v.Max());
-         }
- 
-         // corners
-         if (!surf->EvNormal(u.Min(), v.Min(), normals[0], SW) ||
-             !surf->EvNormal(u.Max(), v.Min(), normals[1], SE) ||
-             !surf->EvNormal(u.Max(), v.Max(), normals[2], NE) ||
-             !surf->EvNormal(u.Min(), v.Max(), normals[3], NW) ||
- 
-             // interior
-             !surf->EvNormal(u.ParameterAt(0.5), v.ParameterAt(0.25), normals[4], SW) ||
-             !surf->EvNormal(u.ParameterAt(0.75), v.ParameterAt(0.5), normals[5], NE) ||
-             !surf->EvNormal(u.ParameterAt(0.5), v.ParameterAt(0.75), normals[6], NE) ||
-             !surf->EvNormal(u.ParameterAt(0.25), v.ParameterAt(0.5), normals[7], SW)) {
-             bu_bomb("Could not evaluate a normal on the surface"); // XXX fix this
-         }
-*/									
-	
 	double product = 1.0;
 
 	double ax[4] VEC_ALIGN;
