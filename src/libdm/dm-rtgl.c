@@ -981,6 +981,29 @@ rtgl_loadMatrix(struct dm *dmp, fastf_t *mat, int which_eye)
 
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
+
+    /* set light position now, so that it moves with the view */
+    GLfloat mat_specular[] = { 1.0, 1.0, 1.0, 1.0 }; 
+    GLfloat mat_shininess[] = { 50.0 }; 
+    GLfloat light_position[] = { 0.0, 0.0, 1.0, 0.0 }; 
+    GLfloat white_light[] = { 1.0, 1.0, 1.0, 1.0 }; 
+    GLfloat lmodel_ambient[] = { 0.1, 0.1, 0.1, 1.0 }; 
+
+    glShadeModel(GL_SMOOTH); 
+
+    glMaterialfv(GL_FRONT, GL_SPECULAR, mat_specular); 
+    glMaterialfv(GL_FRONT, GL_SHININESS, mat_shininess); 
+
+    glLightfv(GL_LIGHT0, GL_POSITION, light_position); 
+    glLightfv(GL_LIGHT0, GL_DIFFUSE, white_light); 
+    glLightfv(GL_LIGHT0, GL_SPECULAR, white_light); 
+
+    glLightModelfv(GL_LIGHT_MODEL_AMBIENT, lmodel_ambient); 
+
+    glEnable(GL_LIGHTING); 
+    glEnable(GL_LIGHT0);     
+
+    /* apply view */
     glTranslatef( 0.0, 0.0, -1.0 );
     glMultMatrixf( gtmat );
 
@@ -1231,57 +1254,102 @@ rtgl_drawVList(struct dm *dmp, register struct bn_vlist *vp)
 	shootGrid(min, max, Y, Z, X);
     }
 
-    /* calculate view vector and its magnitude */
-    vect_t normal, view;
-    fastf_t cosAngle, viewMag, color[3];
-
-    aeVect(view, gedp->ged_gvp->gv_aet);
-    viewMag = MAGNITUDE(view);
+#define OGL_LIGHT 1
+#define COLOR 0
 
     /* draw points */
     glPointSize(2);
     glEnableClientState(GL_VERTEX_ARRAY);
-#if 0
-    glEnableClientState(GL_COLOR_ARRAY);
-#endif
-    int elements, index, count = 0;
 
-    for (BU_LIST_FOR(currItem, ptInfoList, &(ptInfo.l))) {
-	glVertexPointer(3, GL_DOUBLE, 0, &(currItem->points));
-
-	elements = (currItem->used / 3);
-
-#if 0
-	glColorPointer(3, GL_DOUBLE, 0, &(currItem->colors));
-	glDrawArrays(GL_POINTS, 0, elements);
+#if OGL_LIGHT
+    glEnableClientState(GL_NORMAL_ARRAY);
 #else
-	glBegin(GL_POINTS);
-	for (i = 0; i < elements; i++) {
-
-	    /* get normal */
-	    index = 3 * i;
-	    normal[X] = currItem->norms[index + X];
-	    normal[Y] = currItem->norms[index + Y];
-	    normal[Z] = currItem->norms[index + Z];
-	   
-	    /* cosine of angle between normal and view vectors */
-	    cosAngle = ( VDOT(view, normal) / (MAGNITUDE(view) * MAGNITUDE(normal)) );
-
-	    /* get color */
-	    color[X] = currItem->colors[index + X];
-	    color[Y] = currItem->colors[index + Y];
-	    color[Z] = currItem->colors[index + Z];
-
-	    /* visible elements have angle < 90 degrees, or cos(angle) > 0 */
-	    if (cosAngle > 0) {
-		count++;
-		glColor3d(cosAngle * color[X], cosAngle * color[Y], cosAngle * color[Z]);
-		glArrayElement(i);
-	    }
-	}
-	glEnd();
+    glDisable(GL_LIGHTING);
+    
+    /* calculate view vector and its magnitude */
+    vect_t normal, view;
+    fastf_t cosAngle, viewMag;
+    
+    aeVect(view, gedp->ged_gvp->gv_aet);
+    viewMag = MAGNITUDE(view);    
 #endif
+
+    int numPoints, index, count = 0;
+    float color[3];
+    
+    for (BU_LIST_FOR(currItem, ptInfoList, &(ptInfo.l))) {
+	numPoints = currItem->used / 3;
+	count += numPoints;
+
+	glVertexPointer(3, GL_DOUBLE, 0, &(currItem->points));
+        
+#if !COLOR
+    #if OGL_LIGHT
+        glNormalPointer(GL_DOUBLE, 0, &(currItem->norms));
+	glDrawArrays(GL_POINTS, 0, numPoints);
+    #else /* COSINE LIGHT */
+        glBegin(GL_POINTS);
+	for (i = 0; i < numPoints; i++) {
+            index = 3 * i;
+
+            /* calculate cosine of angle between view and normal */
+            normal[X] = currItem->norms[X + index];
+            normal[Y] = currItem->norms[Y + index];
+            normal[Z] = currItem->norms[Z + index];
+            
+            cosAngle = VDOT(normal, view) / (MAGNITUDE(normal) * viewMag);            
+            
+            /* set shade color */
+            glColor3d(cosAngle, cosAngle, cosAngle);
+
+	    /* draw point */
+	    glArrayElement(i);
+	}
+	glEnd();            
+    #endif /* OGL_LIGHT */
+#else /* COLOR */
+    #if !OGL_LIGHT
+        glBegin(GL_POINTS);
+    #else
+        glNormalPointer(GL_DOUBLE, 0, &(currItem->norms));        
+    #endif
+	for (i = 0; i < numPoints; i++) {
+            index = 3 * i;
+            
+	    /* get color */
+	    color[X] = currItem->colors[X + index];
+	    color[Y] = currItem->colors[Y + index];
+	    color[Z] = currItem->colors[Z + index];            
+            
+    #if OGL_LIGHT
+            glMaterialfv(GL_FRONT, GL_AMBIENT_AND_DIFFUSE, color);
+    #else /* COSINE LIGHT */
+            /* calculate cosine of angle between view and normal */
+            normal[X] = currItem->norms[X + index];
+            normal[Y] = currItem->norms[Y + index];
+            normal[Z] = currItem->norms[Z + index];
+            
+            cosAngle = VDOT(normal, view) / (MAGNITUDE(normal) * viewMag);            
+            
+            glColor3d(color[X] * cosAngle, color[Y] * cosAngle, color[Z] * cosAngle);
+    #endif /* OGL_LIGHT */
+            
+	    /* draw point */
+    #if OGL_LIGHT
+            glBegin(GL_POINTS);
+            glArrayElement(i);
+            glEnd();
+    #else
+            glArrayElement(i);
+    #endif
+	}
+    #if !OGL_LIGHT
+        glEnd();            
+    #endif
+#endif /* !COLOR */
     }
+
+
 #if 0
     bu_log("points drawn: %d", count);
 #endif
