@@ -886,22 +886,35 @@ namespace brlcad {
      * We're using a slightly different placement of the interior normal
      * tests to save on calculations
      * 
-     *   +-------------------------+
-     *	 |                         |
-     *	 |                         |
-     *	 |      +            +     |
-     *	 |                         |
-     *	 |                         |
-     *  V|                         |
-     *	 |                         |
-     *	 |                         |
-     *	 |      +            +     |
-     *	 |                         |
-     *	 |                         |
-     *	 +-------------------------+
-     *                  U
+     *   +-------------------+
+     *	 |                   |
+     *	 |    +         +    |
+     *	 |                   |
+     *  V|                   |
+     *	 |                   |
+     *	 |    +         +    |
+     *	 |                   |
+     *	 +-------------------+
+     *             U
+     * 
      *
      * The "+" indicates the normal sample.
+     *
+     * The positions are stored in the corner and normal arrays according
+     * to the following index values:
+     *
+     *   3-------------------2
+     *	 |                   |
+     *	 |    6         8    |
+     *	 |                   |
+     *  V|         4         |
+     *	 |                   |
+     *	 |    5         7    |
+     *	 |                   |
+     *	 0-------------------1
+     *             U
+     *
+     * 
      */
 
 #define NE 1
