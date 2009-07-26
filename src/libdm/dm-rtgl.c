@@ -179,6 +179,10 @@ extern float specularColor[4];
 extern float diffuseColor[4];
 extern float backColor[];
 
+int glLighting = 1;
+int controlClip = 1;
+int controlLighting = 1;
+
 /* ray trace vars */
 struct application app;
 struct rt_i *rtip;
@@ -894,6 +898,8 @@ rtgl_drawEnd(struct dm *dmp)
     return TCL_OK;
 }
 
+double startScale = 1;
+
 /*
  *  			O G L _ L O A D M A T R I X
  *
@@ -906,22 +912,20 @@ rtgl_loadMatrix(struct dm *dmp, fastf_t *mat, int which_eye)
     GLfloat gtmat[16];
     mat_t	newm;
 
-    static double max = 0;
+    fastf_t clip, scale = 1;
 
     /* get ged struct */
     struct ged *gedp = ((struct rtgl_vars *)dmp->dm_vars.priv_vars)->mvars.gedp;
 
-    if (gedp == GED_NULL)
-	return TCL_ERROR;    
+    if (gedp != GED_NULL) {
 
-    /* get view scale */
-    fastf_t scale = gedp->ged_gvp->gv_isize;
+	/* calculate scale factor for clipping */
+	scale = 1 / gedp->ged_gvp->gv_isize;
 
-    if (scale > max) {
-	max = scale;
+	if (startScale == 1) {
+	    startScale = scale;
+	}
     }
-
-    bu_log("scale %3.2f", 1 / scale);
 
     if (dmp->dm_debugLevel) {
 	struct bu_vls tmp_vls;
@@ -966,12 +970,16 @@ rtgl_loadMatrix(struct dm *dmp, fastf_t *mat, int which_eye)
     if (dmp->dm_zclip) {
 
 	/* use custom clipping to control zbuffer precision */
-	if (dmp->dm_zbuffer) {
+	if (controlClip) {
+	    clip = scale / (2 * startScale) + .3;
 
-	    /* [0, 1], smaller value imlies larger volume (less
+	    if (clip > 1)
+		clip = 1;
+
+	    /* [0, 1], smaller value implies larger volume (less
 	     * clipping) in z direction, but less precision
 	     */
-	    zclip[10] = 1/* * (scale / max)*/;
+	    zclip[10] = clip;
 	}
 
 	/* use default z clipping */
@@ -988,52 +996,74 @@ rtgl_loadMatrix(struct dm *dmp, fastf_t *mat, int which_eye)
     /* apply clip to view matrix */
     bn_mat_mul(newm, zclip, mat);
 
-
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
 
-    /* set light position now, so that it moves with the view */
-    GLfloat mat_specular[] = { 1.0, 1.0, 1.0, 1.0 }; 
-    GLfloat mat_shininess[] = { 20.0 }; 
-    GLfloat light_position[] = { 0.0, 0.0, 1.0, 0.0 }; 
-    GLfloat white_light[] = { 1.0, 1.0, 1.0, 1.0 }; 
-    GLfloat lmodel_ambient[] = { 0.1, 0.1, 0.1, 1.0 }; 
+    if (!controlLighting || clip > .55)
+	glLighting = 1;
+    else
+	glLighting = 0;
 
-    glShadeModel(GL_FLAT); 
+    /* OpenGL lighting faster at low clipping */
+    if (glLighting) {
+	GLfloat mat_specular[] = {.8, .8, .8, .8}; 
+	GLfloat mat_shininess[] = { 5.0 }; 
+	GLfloat light_position[] = { 0.25, 0.5, 1.0, 0.0 }; 
+	GLfloat white_light[] = { .9, .9, .9, 1.0 }; 
+	GLfloat lmodel_ambient[] = { 0.1, 0.1, 0.1, 1.0 }; 
 
-    glMaterialfv(GL_FRONT, GL_SPECULAR, mat_specular); 
-    glMaterialfv(GL_FRONT, GL_SHININESS, mat_shininess); 
+	glShadeModel(GL_FLAT); 
+    
+	glMaterialfv(GL_FRONT, GL_SPECULAR, mat_specular); 
+	glMaterialfv(GL_FRONT, GL_SHININESS, mat_shininess); 
 
-    glLightfv(GL_LIGHT0, GL_POSITION, light_position); 
-    glLightfv(GL_LIGHT0, GL_DIFFUSE, white_light); 
-    glLightfv(GL_LIGHT0, GL_SPECULAR, white_light); 
+	/* set light position now, so that it moves with the view */
+	glLightfv(GL_LIGHT0, GL_POSITION, light_position); 
+	glLightfv(GL_LIGHT0, GL_DIFFUSE, white_light); 
+	glLightfv(GL_LIGHT0, GL_SPECULAR, white_light); 
 
-    glLightModelfv(GL_LIGHT_MODEL_AMBIENT, lmodel_ambient); 
+	glLightModelfv(GL_LIGHT_MODEL_AMBIENT, lmodel_ambient); 
 
-    glEnable(GL_LIGHTING); 
-    glEnable(GL_LIGHT0);     
+	glEnable(GL_LIGHTING); 
+	glEnable(GL_LIGHT0);
+	glLighting = 1;
+    }
+
+    /* cosine lighting better quality at high clipping */
+    else {
+	glDisable(GL_LIGHTING);
+	glEnable(GL_LIGHT0);
+	glLighting = 0;
+    }
 
     /* apply view */
-    if (dmp->dm_zbuffer) {
-	/* more back surface clipping, less front surface clipping */
-	glTranslatef( 0.0, 0.0, -1.5 );
-    } else {
+    if (controlClip) {
+	/*
+	bu_log("clip: %3.2f translate:%3.2f", clip, clip -2.0);
+	*/
+	/* move clipping volume when zooming-in
+	 * to prevent clipping front surfaces
+	 */
+	glTranslatef(0.0, 0.0, clip - 2.0);
+    }
+
+    else {
 	glTranslatef( 0.0, 0.0, -1.0 );
     }
 
-    /* transpose to OpenGL format before applying */
+    /* transpose to OpenGL format before applying view */
      glMultTransposeMatrixd(newm);
 
     return TCL_OK;
 }
 
-/* converts degrees of azimuth / elevation into a vector */
+/* converts degrees of azimuth/elevation into a vector */
 void aeVect(fastf_t *aeVect, fastf_t *aet) {
     fastf_t azRad, elRad;
 
     /* convert to radians */
-    azRad = aet[X] * DEG2RAD;
-    elRad = aet[Y] * DEG2RAD;
+    azRad = aet[0] * DEG2RAD;
+    elRad = aet[1] * DEG2RAD;
 
     /* calculate vector */
     aeVect[X] = cos(azRad);
@@ -1167,6 +1197,71 @@ void shootGrid(vect_t min, vect_t max, int uAxis, int vAxis, int iAxis) {
     }
 }
 
+void glLight() {
+    glPointSize(2);
+    glEnableClientState(GL_VERTEX_ARRAY);
+    glEnableClientState(GL_NORMAL_ARRAY);
+
+    int numPoints, index, count = 0;
+    
+    for (BU_LIST_FOR(currItem, ptInfoList, &(ptInfo.l))) {
+	numPoints = currItem->used / 3;
+	count += numPoints;
+
+	glVertexPointer(3, GL_DOUBLE, 0, &(currItem->points));
+        glNormalPointer(GL_DOUBLE, 0, &(currItem->norms));        
+	glDrawArrays(GL_POINTS, 0, numPoints);
+    }
+    glPointSize(1);
+}
+
+void cosLight(fastf_t *view) {
+    vect_t normal;
+    fastf_t cosAngle;
+
+    glPointSize(2);
+    glEnableClientState(GL_VERTEX_ARRAY);
+
+    int i, numPoints, index, count = 0;
+    float color[3];
+    
+    for (BU_LIST_FOR(currItem, ptInfoList, &(ptInfo.l))) {
+	numPoints = currItem->used / 3;
+	count += numPoints;
+
+	glVertexPointer(3, GL_DOUBLE, 0, &(currItem->points));
+        
+        glBegin(GL_POINTS);
+	for (i = 0; i < numPoints; i++) {
+
+	    index = i + i + i;      
+
+	    /* calculate cosine of angle between view and normal */
+	    normal[X] = currItem->norms[X + index];
+	    normal[Y] = currItem->norms[Y + index];
+	    normal[Z] = currItem->norms[Z + index];
+
+	    cosAngle = VDOT(normal, view);
+
+#if 0
+	    /* get color */
+	    color[X] = currItem->colors[X + index];
+	    color[Y] = currItem->colors[Y + index];
+	    color[Z] = currItem->colors[Z + index];            
+
+	    glColor3d(color[X] * cosAngle, color[Y] * cosAngle, color[Z] * cosAngle);
+#else
+	    glColor3d(cosAngle, cosAngle, cosAngle);
+#endif
+            
+	    /* draw point */
+	    glArrayElement(i);
+	}
+        glEnd();            
+    }
+    glPointSize(1);
+}
+
 /*
  *  			R T G L _ D R A W V L I S T
  *
@@ -1217,6 +1312,11 @@ rtgl_drawVList(struct dm *dmp, register struct bn_vlist *vp)
 
 	/* drop all display points */
 	freeInfoList();
+
+	/* reset for dynamic z-clipping */
+	if (dmp->dm_zbuffer) {
+	    startScale = 1;
+	}
 
 	return TCL_OK;
     }
@@ -1271,105 +1371,16 @@ rtgl_drawVList(struct dm *dmp, register struct bn_vlist *vp)
 	shootGrid(min, max, Y, Z, X);
     }
 
-#define OGL_LIGHT 1
-#define COLOR 0
-
     /* draw points */
-    glPointSize(2);
-    glEnableClientState(GL_VERTEX_ARRAY);
+    if (glLighting) {
+	glLight();
+    } else {
+	vect_t view;
+	aeVect(view, gedp->ged_gvp->gv_aet);
 
-#if OGL_LIGHT
-    glEnableClientState(GL_NORMAL_ARRAY);
-#else
-    glDisable(GL_LIGHTING);
-    
-    /* calculate view vector and its magnitude */
-    vect_t normal, view;
-    fastf_t cosAngle, viewMag;
-    
-    aeVect(view, gedp->ged_gvp->gv_aet);
-    viewMag = MAGNITUDE(view);    
-#endif
-
-    int numPoints, index, count = 0;
-    float color[3];
-    
-    for (BU_LIST_FOR(currItem, ptInfoList, &(ptInfo.l))) {
-	numPoints = currItem->used / 3;
-	count += numPoints;
-
-	glVertexPointer(3, GL_DOUBLE, 0, &(currItem->points));
-        
-#if !COLOR
-    #if OGL_LIGHT
-        glNormalPointer(GL_DOUBLE, 0, &(currItem->norms));
-	glDrawArrays(GL_POINTS, 0, numPoints);
-    #else /* COSINE LIGHT */
-        glBegin(GL_POINTS);
-	for (i = 0; i < numPoints; i++) {
-            index = 3 * i;
-
-            /* calculate cosine of angle between view and normal */
-            normal[X] = currItem->norms[X + index];
-            normal[Y] = currItem->norms[Y + index];
-            normal[Z] = currItem->norms[Z + index];
-            
-            cosAngle = VDOT(normal, view) / (MAGNITUDE(normal) * viewMag);            
-            
-            /* set shade color */
-            glColor3d(cosAngle, cosAngle, cosAngle);
-
-	    /* draw point */
-	    glArrayElement(i);
-	}
-	glEnd();            
-    #endif /* OGL_LIGHT */
-#else /* COLOR */
-    #if !OGL_LIGHT
-        glBegin(GL_POINTS);
-    #else
-        glNormalPointer(GL_DOUBLE, 0, &(currItem->norms));        
-    #endif
-	for (i = 0; i < numPoints; i++) {
-            index = 3 * i;
-            
-	    /* get color */
-	    color[X] = currItem->colors[X + index];
-	    color[Y] = currItem->colors[Y + index];
-	    color[Z] = currItem->colors[Z + index];            
-            
-    #if OGL_LIGHT
-            glMaterialfv(GL_FRONT, GL_AMBIENT_AND_DIFFUSE, color);
-    #else /* COSINE LIGHT */
-            /* calculate cosine of angle between view and normal */
-            normal[X] = currItem->norms[X + index];
-            normal[Y] = currItem->norms[Y + index];
-            normal[Z] = currItem->norms[Z + index];
-            
-            cosAngle = VDOT(normal, view) / (MAGNITUDE(normal) * viewMag);            
-            
-            glColor3d(color[X] * cosAngle, color[Y] * cosAngle, color[Z] * cosAngle);
-    #endif /* OGL_LIGHT */
-            
-	    /* draw point */
-    #if OGL_LIGHT
-            glBegin(GL_POINTS);
-            glArrayElement(i);
-            glEnd();
-    #else
-            glArrayElement(i);
-    #endif
-	}
-    #if !OGL_LIGHT
-        glEnd();            
-    #endif
-#endif /* !COLOR */
+	cosLight(view);
     }
 
-
-#if 0
-    bu_log("points drawn: %d", count);
-#endif
     call++;
 
     return TCL_OK;
