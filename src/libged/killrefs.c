@@ -40,15 +40,18 @@ ged_killrefs(struct ged *gedp, int argc, const char *argv[])
     register struct directory	*dp;
     struct rt_db_internal	intern;
     struct rt_comb_internal	*comb;
+    int				nflag;
     int				ret;
-    static const char *usage = "object(s)";
+    static const char *usage = "[-n] object(s)";
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
     GED_CHECK_READ_ONLY(gedp, GED_ERROR);
     GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
 
-    /* initialize result */
-    bu_vls_trunc(&gedp->ged_result_str, 0);
+    if (!gedp->ged_internal_call) {
+	/* initialize result */
+	bu_vls_trunc(&gedp->ged_result_str, 0);
+    }
 
     /* must be wanting help */
     if (argc == 1) {
@@ -61,7 +64,15 @@ ged_killrefs(struct ged *gedp, int argc, const char *argv[])
 	return GED_ERROR;
     }
 
-    if (!gedp->ged_internal_call) {
+    /* Process the -n option */
+    if (argc > 1 && argv[1][0] == '-' && argv[1][1] == 'n' && argv[1][2] == '\0') {
+	nflag = 1;
+	--argc;
+	++argv;
+    } else
+	nflag = 0;
+
+    if (!nflag && !gedp->ged_internal_call) {
 	for (k = 1; k < argc; k++)
 	    ged_eraseAllNamesFromDisplay(gedp, argv[k], 1);
     }
@@ -83,7 +94,7 @@ ged_killrefs(struct ged *gedp, int argc, const char *argv[])
 	for (k=1; k<argc; k++) {
 	    int	code;
 
-	    code = db_tree_del_dbleaf(&(comb->tree), argv[k], &rt_uniresource);
+	    code = db_tree_del_dbleaf(&(comb->tree), argv[k], &rt_uniresource, nflag);
 	    if (code == -1)
 		continue;	/* not found */
 	    if (code == -2)
@@ -92,7 +103,10 @@ ged_killrefs(struct ged *gedp, int argc, const char *argv[])
 		bu_vls_printf(&gedp->ged_result_str, "  ERROR_deleting %s/%s\n", dp->d_namep, argv[k]);
 		ret = GED_ERROR;
 	    } else {
-		bu_vls_printf(&gedp->ged_result_str, "deleted %s/%s\n", dp->d_namep, argv[k]);
+		if (nflag)
+		    bu_vls_printf(&gedp->ged_result_str, "%s ", dp->d_namep);
+		else
+		    bu_vls_printf(&gedp->ged_result_str, "deleted %s/%s\n", dp->d_namep, argv[k]);
 	    }
 	}
 

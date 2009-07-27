@@ -2651,7 +2651,7 @@ wdb_killall_cmd(struct rt_wdb *wdbp,
 	    for (k=1; k<argc; k++) {
 		int code;
 
-		code = db_tree_del_dbleaf(&(comb->tree), argv[k], &rt_uniresource);
+		code = db_tree_del_dbleaf(&(comb->tree), argv[k], &rt_uniresource, 0);
 		if (code == -1)
 		    continue;	/* not found */
 		if (code == -2)
@@ -4052,7 +4052,7 @@ wdb_remove_cmd(struct rt_wdb *wdbp,
     num_deleted = 0;
     ret = TCL_OK;
     for (i = 2; i < argc; i++) {
-	if (db_tree_del_dbleaf(&(comb->tree), argv[i], &rt_uniresource) < 0) {
+	if (db_tree_del_dbleaf(&(comb->tree), argv[i], &rt_uniresource, 0) < 0) {
 	    Tcl_AppendResult(interp, "  ERROR_deleting ",
 			     dp->d_namep, "/", argv[i],
 			     "\n", (char *)NULL);

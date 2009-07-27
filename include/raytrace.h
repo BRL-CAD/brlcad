@@ -3143,7 +3143,8 @@ RT_EXPORT BU_EXTERN(void db_tree_del_rhs,
 RT_EXPORT BU_EXTERN(int db_tree_del_dbleaf,
 		    (union tree **tp,
 		     const char *cp,
-		     struct resource *resp));
+		     struct resource *resp,
+		     int nflag));
 RT_EXPORT BU_EXTERN(void db_tree_mul_dbleaf,
 		    (union tree *tp,
 		     const mat_t mat));

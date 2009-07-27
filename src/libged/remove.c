@@ -82,7 +82,7 @@ ged_remove(struct ged *gedp, int argc, const char *argv[])
     num_deleted = 0;
     ret = TCL_OK;
     for (i = 2; i < argc; i++) {
-	if (db_tree_del_dbleaf( &(comb->tree), argv[i], &rt_uniresource ) < 0) {
+	if (db_tree_del_dbleaf( &(comb->tree), argv[i], &rt_uniresource, 0 ) < 0) {
 	    bu_vls_printf(&gedp->ged_result_str, "  ERROR_deleting %s/%s\n", dp->d_namep, argv[i]);
 	    ret = GED_ERROR;
 	} else {

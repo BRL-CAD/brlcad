@@ -36,8 +36,9 @@
 int
 ged_killall(struct ged *gedp, int argc, const char *argv[])
 {
+    int nflag;
     int ret;
-    static const char *usage = "object(s)";
+    static const char *usage = "[-n] object(s)";
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
     GED_CHECK_READ_ONLY(gedp, GED_ERROR);
@@ -57,6 +58,19 @@ ged_killall(struct ged *gedp, int argc, const char *argv[])
 	return GED_ERROR;
     }
 
+    /* Process the -n option */
+    if (argc > 1 && argv[1][0] == '-' && argv[1][1] == 'n' && argv[1][2] == '\0') {
+	register int i;
+	nflag = 1;
+
+	/* Objects that would be killed are in the first sublist */
+	bu_vls_printf(&gedp->ged_result_str, "{");
+	for (i = 2; i < argc; i++)
+	    bu_vls_printf(&gedp->ged_result_str, "%s ", argv[i]);
+	bu_vls_printf(&gedp->ged_result_str, "} {");
+    } else
+	nflag = 0;
+
     gedp->ged_internal_call = 1;
     if ((ret = ged_killrefs(gedp, argc, argv)) != GED_OK) {
 	gedp->ged_internal_call = 0;
@@ -64,6 +78,12 @@ ged_killall(struct ged *gedp, int argc, const char *argv[])
 	return ret;
     }
     gedp->ged_internal_call = 0;
+
+    if (nflag) {
+	/* Close the sublist of objects that reference the would-be killed objects. */
+	bu_vls_printf(&gedp->ged_result_str, "}");
+	return GED_OK;
+    }
 
     /* ALL references removed...now KILL the object[s] */
     /* reuse argv[] */

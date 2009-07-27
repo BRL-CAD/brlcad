@@ -106,7 +106,12 @@ package provide Archer 1.0
 
     public {
 	# Public Class Variables
-	common HAVE_MODS "Have_Mods"
+	common LEDGER_ENTRY_HAVE_MODS_ATTR "Ledger_Entry_Have_Mods"
+	common LEDGER_ENTRY_TYPE_ATTR "Ledger_Entry_Type"
+	common LEDGER_CREATE "Create"
+	common LEDGER_DESTROY "Destroy"
+	common LEDGER_MODIFY "Modify"
+	common LEDGER_RENAME "Rename"
 
 	common plugins ""
 	common pluginMajorTypeCore "Core"
@@ -212,8 +217,8 @@ package provide Archer 1.0
 	method updateTheme         {}
 
 	# Object Edit Management
-	method checkpoint {_obj}
-	method checkpoint_olist {_olist}
+	method checkpoint {_obj _type}
+	method checkpoint_olist {_olist _type}
 	method clearTargetLedger {}
 	method createTargetLedger {}
 	method global_undo {}
@@ -249,6 +254,7 @@ package provide Archer 1.0
 	method gedWrapper {_cmd _eflag _hflag _sflag _tflag args}
 	method gedWrapper2 {_cmd _oindex _pindex _eflag _hflag _sflag _tflag args}
 	method globalWrapper {_cmd args}
+	method killWrapper {_cmd args}
 	method initDefaultBindings {{_comp ""}}
 	method initGed {}
 	method selectNode {_tags {_rflag 1}}
@@ -977,6 +983,7 @@ package provide Archer 1.0
 }
 
 ::itcl::body Archer::edcodes {args} {
+    # Returns a help message
     if {[llength $args] == 0} {
 	return [gedCmd edcodes]
     }
@@ -984,6 +991,11 @@ package provide Archer 1.0
     set optionsAndArgs [eval dbExpand $args]
     set options [lindex $optionsAndArgs 0]
     set expandedArgs [lindex $optionsAndArgs 1]
+
+    # Returns a help message
+    if {[llength $expandedArgs] == 0} {
+	return [gedCmd edcodes]
+    }
 
     switch [lindex $options 0] {
 	"-n" {
@@ -999,7 +1011,7 @@ package provide Archer 1.0
     }
 
     SetWaitCursor $this
-    set lnames [checkpoint_olist $olist]
+    set lnames [checkpoint_olist $olist $LEDGER_MODIFY]
 
     if {[catch {eval gedCmd edcodes $options $expandedArgs} ret]} {
 	ledger_cleanup
@@ -1028,7 +1040,7 @@ package provide Archer 1.0
 		set oflag 1
 	    }
 
-	    $mLedger attr set $lname $HAVE_MODS 1
+	    $mLedger attr set $lname $LEDGER_ENTRY_HAVE_MODS_ATTR 1
 	    lappend new_olist $lname
 	    continue
 	}
@@ -1043,7 +1055,7 @@ package provide Archer 1.0
 		set oflag 1
 	    }
 
-	    $mLedger attr set $lname $HAVE_MODS 1
+	    $mLedger attr set $lname $LEDGER_ENTRY_HAVE_MODS_ATTR 1
 	    lappend new_olist $lname
 	    continue
 	}
@@ -1058,7 +1070,7 @@ package provide Archer 1.0
 		set oflag 1
 	    }
 
-	    $mLedger attr set $lname $HAVE_MODS 1
+	    $mLedger attr set $lname $LEDGER_ENTRY_HAVE_MODS_ATTR 1
 	    lappend new_olist $lname
 	    continue
 	}
@@ -1073,7 +1085,7 @@ package provide Archer 1.0
 		set oflag 1
 	    }
 
-	    $mLedger attr set $lname $HAVE_MODS 1
+	    $mLedger attr set $lname $LEDGER_ENTRY_HAVE_MODS_ATTR 1
 	    lappend new_olist $lname
 	    continue
 	}
@@ -1084,7 +1096,7 @@ package provide Archer 1.0
 
     if {$oflag} {
 	# Checkpoint again in case the user starts interacting via the mouse
-	checkpoint $mSelectedObj
+	checkpoint $mSelectedObj $LEDGER_MODIFY
     }
 
     updateUndoState
@@ -1130,28 +1142,65 @@ package provide Archer 1.0
 }
 
 ::itcl::body Archer::kill {args} {
-    eval ArcherCore::gedWrapper kill 1 0 1 1 $args
-
-    if {$mSelectedObj != "" && [lsearch $args $mSelectedObj] != -1} {
-	set tops [$itk_component(ged) tops]
-	if {[llength $tops]} {
-	    set obj [lindex $tops 0]
-	    set obj [regsub -all {/} $obj ""]
-	    selectNode [$itk_component(tree) find $obj] 0
-	}
-    }
+    eval killWrapper kill $args
 }
 
 ::itcl::body Archer::killall {args} {
-    eval ArcherCore::gedWrapper killall 0 0 1 1 $args
+    eval killWrapper killall $args
 }
 
 ::itcl::body Archer::killrefs {args} {
-    eval ArcherCore::gedWrapper killrefs 0 0 1 1 $args
+#    eval ArcherCore::gedWrapper killrefs 0 0 1 1 $args
+
+    # Returns a help message
+    if {[llength $args] == 0} {
+	return [gedCmd killrefs]
+    }
+
+    set optionsAndArgs [eval dbExpand $args]
+    set options [lindex $optionsAndArgs 0]
+    set expandedArgs [lindex $optionsAndArgs 1]
+
+    # Returns a help message
+    if {[llength $expandedArgs] == 0} {
+	return [gedCmd killrefs]
+    }
+
+    switch [lindex $options 0] {
+	"-n" {
+	    return [eval gedCmd killrefs $options $expandedArgs]
+	}
+	default {
+	    set olist [gedCmd killrefs -n $expandedArgs]
+	}
+    }
+
+    if {[llength $olist] == 0} {
+	return
+    }
+
+    SetWaitCursor $this
+    set lnames [checkpoint_olist $olist $LEDGER_MODIFY]
+
+    if {[catch {eval gedCmd killrefs $options $expandedArgs} ret]} {
+	ledger_cleanup
+	SetNormalCursor $this
+	return $ret
+    }
+
+    foreach lname $lnames {
+	$mLedger attr set $lname $LEDGER_ENTRY_HAVE_MODS_ATTR 1
+    }
+
+    refreshTree 1
+
+    checkpoint_olist $olist $LEDGER_MODIFY
+    updateUndoState
+    SetNormalCursor $this
 }
 
 ::itcl::body Archer::killtree {args} {
-    eval ArcherCore::gedWrapper killtree 0 0 1 1 $args
+    eval killWrapper killtree $args
 }
 
 ::itcl::body Archer::make {args} {
@@ -1191,7 +1240,7 @@ package provide Archer 1.0
 	return
     }
 
-    checkpoint $mSelectedObj
+    checkpoint $mSelectedObj $LEDGER_MODIFY
 
     set ret ""
 
@@ -1247,7 +1296,7 @@ package provide Archer 1.0
 	initEdit 0
 
 	# Checkpoint again in case the user starts interacting via the mouse
-	checkpoint $mSelectedObj
+	checkpoint $mSelectedObj $LEDGER_MODIFY
     }
 
     return $ret
@@ -1430,7 +1479,7 @@ package provide Archer 1.0
     set mNeedObjUndo 0
     updateUndoMode
 
-    checkpoint $mSelectedObj
+    checkpoint $mSelectedObj $LEDGER_MODIFY
 }
 
 ::itcl::body Archer::shells {args} {
@@ -1764,7 +1813,7 @@ package provide Archer 1.0
     }
 
     if {$sflag} {
-	checkpoint $obj
+	checkpoint $obj $LEDGER_MODIFY
     }
 
     if {[catch {eval gedCmd $cmd $options $expandedArgs} ret]} {
@@ -1786,14 +1835,14 @@ package provide Archer 1.0
 	    puts "No ledger entry found for $obj."
 	} else {
 	    # Assumed to have mods after the command invocation above
-	    $mLedger attr set $le $HAVE_MODS 1
+	    $mLedger attr set $le $LEDGER_ENTRY_HAVE_MODS_ATTR 1
 
 	    set mNeedSave 1
 	    set mNeedGlobalUndo 1
 
 	    if {$obj == $mSelectedObj} {
 		# Checkpoint again in case the user starts interacting via the mouse
-		checkpoint $obj
+		checkpoint $obj $LEDGER_MODIFY
 	    } else {
 		updateUndoMode 0
 	    }
@@ -1834,6 +1883,7 @@ package provide Archer 1.0
 }
 
 ::itcl::body Archer::globalWrapper {_cmd args} {
+    # Simply return the current value
     if {$_cmd != "edcolor" && $args == {}} {
 	return [gedCmd $_cmd]
     }
@@ -1843,7 +1893,7 @@ package provide Archer 1.0
     }
 
     set old_units [gedCmd units -s]
-    set lname [checkpoint _GLOBAL]
+    set lname [checkpoint _GLOBAL $LEDGER_MODIFY]
 
     if {[catch {eval gedCmd $_cmd $args} ret]} {
 	return $ret
@@ -1861,11 +1911,11 @@ package provide Archer 1.0
 	return "No ledger entry found for _GLOBAL."
     } else {
 	# Assumed to have mods after the command invocation above
-	$mLedger attr set $lname $HAVE_MODS 1
+	$mLedger attr set $lname $LEDGER_ENTRY_HAVE_MODS_ATTR 1
 	$mLedger attr set $lname UNITS $old_units
     }
 
-    set lname [checkpoint _GLOBAL]
+    set lname [checkpoint _GLOBAL $LEDGER_MODIFY]
     if {$lname == ""} {
 	return "No ledger entry found for _GLOBAL."
     } else {
@@ -1877,6 +1927,80 @@ package provide Archer 1.0
 
     gedCmd refresh
     return $ret
+}
+
+::itcl::body Archer::killWrapper {_cmd args} {
+    # Returns a help message.
+    if {[llength $args] == 0} {
+	return [gedCmd $_cmd]
+    }
+
+    set optionsAndArgs [eval dbExpand $args]
+    set options [lindex $optionsAndArgs 0]
+    set expandedArgs [lindex $optionsAndArgs 1]
+
+    # Returns a help message.
+    if {[llength $expandedArgs] == 0} {
+	return [gedCmd $_cmd]
+    }
+
+    # Get the list of killed and modified objects.
+    if {[lsearch $options -a] != -1} {
+	set alist [eval gedCmd $_cmd -a -n $expandedArgs]
+    } else {
+	set alist [eval gedCmd $_cmd -n $expandedArgs]
+    }
+
+    # The first sublist is for killed objects. The second is for modified.
+    set klist [lindex $alist 0]
+    set mlist [lindex $alist 1]
+
+    # If an item is in both sublists, remove it from mlist.
+    foreach item $klist {
+	set i [lsearch $mlist $item]
+	if {$i != -1} {
+	    # Delete the item (i.e. it no longer exists)
+	    set mlist [lreplace $mlist $i $i]
+	}
+    }
+
+    set nindex [lsearch $options "-n"]
+    if {$nindex == 0 || $nindex == 1} {
+	return [list $klist $mlist]
+    }
+
+    if {[llength $klist] == 0} {
+	return
+    }
+
+    SetWaitCursor $this
+
+    # Need to checkpoint before they're gone
+    checkpoint_olist $klist $LEDGER_DESTROY
+
+    # Back up the GID so that the modified
+    # objects below have the same GID.
+    incr mLedgerGID -1
+
+    # Also need to checkpoint the objects that used to reference
+    # the soon-to-be killed objects.
+    set lnames [checkpoint_olist $mlist $LEDGER_MODIFY]
+
+    if {[catch {eval gedCmd $_cmd $options $expandedArgs} ret]} {
+	ledger_cleanup
+	SetNormalCursor $this
+	return $ret
+    }
+
+    foreach lname $lnames {
+	$mLedger attr set $lname $LEDGER_ENTRY_HAVE_MODS_ATTR 1
+    }
+
+    refreshTree 1
+
+    checkpoint_olist $mlist $LEDGER_MODIFY
+    updateUndoState
+    SetNormalCursor $this
 }
 
 ::itcl::body Archer::initDefaultBindings {{_comp ""}} {
@@ -2144,7 +2268,7 @@ package provide Archer 1.0
 	return
     }
 
-    set l [$mLedger ls -A $HAVE_MODS 1]
+    set l [$mLedger ls -A $LEDGER_ENTRY_HAVE_MODS_ATTR 1]
     set len [llength $l]
     if {$len == 0} {
 	set mNeedSave 0
@@ -2165,7 +2289,7 @@ package provide Archer 1.0
 	    if {$len > 1} {
 		set mNeedObjUndo 1
 	    } else {
-		if {[$mLedger attr get $le $HAVE_MODS]} {
+		if {[$mLedger attr get $le $LEDGER_ENTRY_HAVE_MODS_ATTR]} {
 		    set mNeedObjUndo 1
 		} else {
 		    set mNeedObjUndo 0
@@ -7176,7 +7300,7 @@ package provide Archer 1.0
 
 ################################### Begin Object Edit Management ###################################
 
-::itcl::body Archer::checkpoint {_obj} {
+::itcl::body Archer::checkpoint {_obj _type} {
     if {$_obj == "" || $mLedger == ""} {
 	return
     }
@@ -7198,7 +7322,7 @@ package provide Archer 1.0
 	set le [lindex $l end]
 	regexp {([0-9]+)_([0-9]+)_(.+)} $le all gid oid gname
 
-	set have_mods [$mLedger attr get $le $HAVE_MODS]
+	set have_mods [$mLedger attr get $le $LEDGER_ENTRY_HAVE_MODS_ATTR]
 
 	# No need to checkpoint again (i.e. no mods since last checkpoint)
 	if {!$have_mods} {
@@ -7209,7 +7333,7 @@ package provide Archer 1.0
 		set mNeedObjUndo 0
 
 		# Check for other entries having mods
-		set l [$mLedger ls -A $HAVE_MODS 1]
+		set l [$mLedger ls -A $LEDGER_ENTRY_HAVE_MODS_ATTR 1]
 		set len [llength $l]
 
 		if {$len == 0} {
@@ -7241,10 +7365,20 @@ package provide Archer 1.0
     set lname $mLedgerGID\_$oid\_$_obj
     gedCmd cp $_obj $mLedger\:$lname
 
-    # No mods yet
-    $mLedger attr set $lname $HAVE_MODS 0
+    # Set the attributes
+    $mLedger attr set $lname $LEDGER_ENTRY_TYPE_ATTR $_type
+    switch $_type \
+	$LEDGER_CREATE - \
+	$LEDGER_DESTROY - \
+	$LEDGER_RENAME {
+	    $mLedger attr set $lname $LEDGER_ENTRY_HAVE_MODS_ATTR 1
+	} \
+	$LEDGER_MODIFY - \
+	default {
+	    $mLedger attr set $lname $LEDGER_ENTRY_HAVE_MODS_ATTR 0
+	}
 
-    set l [$mLedger ls -A $HAVE_MODS 1]
+    set l [$mLedger ls -A $LEDGER_ENTRY_HAVE_MODS_ATTR 1]
     set len [llength $l]
     if {$len == 0} {
 	set mNeedGlobalUndo 0
@@ -7286,7 +7420,7 @@ package provide Archer 1.0
 #        method the undo methods will need to accomodate multiple
 #        entries having the same global ID.
 #
-::itcl::body Archer::checkpoint_olist {_olist} {
+::itcl::body Archer::checkpoint_olist {_olist _type} {
     set olen [llength $_olist]
     if {$olen == 0 || $mLedger == ""} {
 	return
@@ -7315,7 +7449,7 @@ package provide Archer 1.0
 		set l [lsort -dictionary $l]
 		set le [lindex $l end]
 
-		if {![$mLedger attr get $le $HAVE_MODS]} {
+		if {![$mLedger attr get $le $LEDGER_ENTRY_HAVE_MODS_ATTR]} {
 		    $mLedger kill $le
 
 		    if {$len > 1} {
@@ -7325,15 +7459,26 @@ package provide Archer 1.0
 	    }
 	}
 
+	# Create the ledger entry
 	set lname $mLedgerGID\_$oid\_$obj
 	lappend lnames $lname
 	gedCmd cp $obj $mLedger\:$lname
 
-	# No mods yet
-	$mLedger attr set $lname $HAVE_MODS 0
+	# Set the attributes
+	$mLedger attr set $lname $LEDGER_ENTRY_TYPE_ATTR $_type
+	switch $_type \
+	    $LEDGER_CREATE - \
+	    $LEDGER_DESTROY - \
+	    $LEDGER_RENAME {
+		$mLedger attr set $lname $LEDGER_ENTRY_HAVE_MODS_ATTR 1
+	    } \
+	    $LEDGER_MODIFY - \
+	    default {
+		$mLedger attr set $lname $LEDGER_ENTRY_HAVE_MODS_ATTR 0
+	    }
     }
 
-    set l [$mLedger ls -A $HAVE_MODS 1]
+    set l [$mLedger ls -A $LEDGER_ENTRY_HAVE_MODS_ATTR 1]
     set len [llength $l]
     if {$len == 0} {
 	set mNeedGlobalUndo 0
@@ -7419,12 +7564,26 @@ package provide Archer 1.0
     set mLedgerGID $gid
     incr mLedgerGID -1
 
+    # Undo each object associated with this transaction
     foreach lentry [$mLedger expand $gid\_$oid\_*] {
 	regexp {([0-9]+)_([0-9]+)_(.+)} $lentry all gid oid gname
 
-	# Adjust the corresponding object according to the ledger entry
-	gedCmd cp -f $mLedger\:$lentry $gname
-	gedCmd attr rm $gname Have_Mods
+	set type [$mLedger attr get $lentry $LEDGER_ENTRY_TYPE_ATTR]
+	switch $type \
+	    $LEDGER_CREATE {
+		# Nothing yet
+	    } \
+	    $LEDGER_RENAME {
+		# Nothing yet
+	    } \
+	    $LEDGER_DESTROY - \
+	    $LEDGER_MODIFY - \
+	    default {
+		# Adjust the corresponding object according to the ledger entry
+		gedCmd cp -f $mLedger\:$lentry $gname
+		gedCmd attr rm $gname $LEDGER_ENTRY_HAVE_MODS_ATTR
+		gedCmd attr rm $gname $LEDGER_ENTRY_TYPE_ATTR
+	    }
 
 	if {$gname == "_GLOBAL"} {
 	    gedCmd refresh
@@ -7440,7 +7599,7 @@ package provide Archer 1.0
 		initEdit 0
 
 		# Make sure the selected object has atleast one checkpoint
-		checkpoint $mSelectedObj
+		checkpoint $mSelectedObj $LEDGER_MODIFY
 	    } else {
 		# Possibly draw the updated object
 		set stripped_lentry [regsub {[0-9]+_[0-9]+_} $lentry ""]
@@ -7455,7 +7614,7 @@ package provide Archer 1.0
 	}
     }
 
-    set l [$mLedger ls -A $HAVE_MODS 1]
+    set l [$mLedger ls -A $LEDGER_ENTRY_HAVE_MODS_ATTR 1]
     set len [llength $l]
     if {$len == 0} {
 	set mNeedCheckpoint 0
@@ -7474,14 +7633,14 @@ package provide Archer 1.0
 	return
     }
 
-    foreach le [$mLedger ls -A $HAVE_MODS 0] {
+    foreach le [$mLedger ls -A $LEDGER_ENTRY_HAVE_MODS_ATTR 0] {
 	set le [regsub {/$|/R$} $le ""]
 	$mLedger kill $le
     }
 }
 
 ::itcl::body Archer::object_checkpoint {} {
-    checkpoint $mSelectedObj
+    checkpoint $mSelectedObj $LEDGER_MODIFY
 }
 
 ::itcl::body Archer::object_undo {} {
@@ -7501,7 +7660,7 @@ package provide Archer 1.0
 	set mNeedObjUndo 0
 	set mNeedSave 0
 
-	set l [$mLedger ls -A $HAVE_MODS 1]
+	set l [$mLedger ls -A $LEDGER_ENTRY_HAVE_MODS_ATTR 1]
 	set len [llength $l]
 	if {$len == 0} {
 	    set mNeedGlobalUndo 0
@@ -7521,7 +7680,7 @@ package provide Archer 1.0
     set l [lsort -dictionary $l]
     set le [lindex $l end]
 
-    if {![$mLedger attr get $le $HAVE_MODS]} {
+    if {![$mLedger attr get $le $LEDGER_ENTRY_HAVE_MODS_ATTR]} {
 	# No mods yet
 	return
     }
@@ -7533,19 +7692,35 @@ package provide Archer 1.0
 	incr mLedgerGID -1
     }
 
+    # Undo each object associated with this transaction
     foreach lentry [$mLedger expand $gid\_$oid\_*] {
 	regexp {([0-9]+)_([0-9]+)_(.+)} $lentry all gid oid gname
 
 #	if {$gname == $mSelectedObj && $oid == 0} {
-#	    if {![$mLedger attr get $lentry $HAVE_MODS]} {
+#	    if {![$mLedger attr get $lentry $LEDGER_ENTRY_HAVE_MODS_ATTR]} {
 #		# No mods yet
 #		return
 #	    }
 #	}
 
-	# Adjust the corresponding object according to the ledger entry
-	gedCmd cp -f $mLedger\:$lentry $gname
-	gedCmd attr rm $gname Have_Mods
+	# Undo it (Note - the destroy transaction will never show up here)
+	set type [$mLedger attr get $lentry $LEDGER_ENTRY_TYPE_ATTR]
+	switch $type \
+	    $LEDGER_CREATE {
+		# Nothing yet
+	    } \
+	    $LEDGER_RENAME {
+		# Nothing yet
+	    } \
+	    $LEDGER_DESTROY - \
+	    $LEDGER_MODIFY - \
+	    default {
+		# Adjust the corresponding object according to the ledger entry
+		gedCmd cp -f $mLedger\:$lentry $gname
+		gedCmd attr rm $gname $LEDGER_ENTRY_HAVE_MODS_ATTR
+		gedCmd attr rm $gname $LEDGER_ENTRY_TYPE_ATTR
+	    }
+
 
 	# Remove the ledger entry
 	$mLedger kill $lentry
@@ -7556,31 +7731,10 @@ package provide Archer 1.0
     initEdit 0
 
     set mNeedCheckpoint 0
-
     updateUndoState
-#    set l [$mLedger ls -A $HAVE_MODS 1]
-#    set len [llength $l]
-#    if {$len == 0} {
-#	set mNeedSave 0
-#	set mNeedGlobalUndo 0
-#	set mNeedObjUndo 0
-#    } else {
-#	set mNeedSave 1
-#	set mNeedGlobalUndo 1
-#
-#	# Get all ledger entries related to mSelectedObj
-#	set l [$mLedger expand *_*_$mSelectedObj]
-#	set len [llength $l]
-#
-#	if {$len == 0} {
-#	    set mNeedObjUndo 0
-#	} else {
-#	    set mNeedObjUndo 1
-#	}
-#    }
 
     # Make sure the selected object has atleast one checkpoint
-    checkpoint $mSelectedObj
+    checkpoint $mSelectedObj $LEDGER_MODIFY
 
     updateCheckpointMode
     updateSaveMode
@@ -7624,7 +7778,7 @@ package provide Archer 1.0
     set l [$mLedger expand *_*_$_obj]
     set len [llength $l]
 
-    checkpoint $_obj
+    checkpoint $_obj $LEDGER_MODIFY
 }
 
 ::itcl::body Archer::updateObjSave {} {
@@ -7646,7 +7800,7 @@ package provide Archer 1.0
 	set le [lindex $l end]
     }
 
-    $mLedger attr set $le $HAVE_MODS 1
+    $mLedger attr set $le $LEDGER_ENTRY_HAVE_MODS_ATTR 1
 
     set mNeedCheckpoint 1
     set mNeedGlobalUndo 1
