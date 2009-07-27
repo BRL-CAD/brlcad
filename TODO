@@ -53,6 +53,11 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 THESE ARE UNSCHEDULED BACKLOG TASKS
 -----------------------------------
 
+* consider adding an option to reid/remat and edcodes (and others?) to
+  ignore negative regions (regions subtracted from regions or
+  intersected with them) since, while bad practice, are valid
+  geometrically.
+
 * implement some sort of archive/backup command in mged in order to
   save the currently open database out to a file.
 
