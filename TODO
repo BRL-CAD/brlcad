@@ -53,6 +53,16 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 THESE ARE UNSCHEDULED BACKLOG TASKS
 -----------------------------------
 
+* add an option to mv/mvall to take input from a mapping file.
+  relates to sf feature request 2827957 from butler.  should be
+  something along the lines of simple file parsing such as the
+  following:
+
+  # this line is a comment
+  foo bar
+  "big foo" "big bar"
+  foobar "foo bar"  # another comment, replacing foobar with 'foo bar'
+
 * consider adding an option to reid/remat and edcodes (and others?) to
   ignore negative regions (regions subtracted from regions or
   intersected with them) since, while bad practice, are valid
