@@ -49,11 +49,11 @@ double ClosestValue(
 }
 
 /**
- *        Pullback
+ *        Push
  *
  * @brief updates s and t using an X,Y,Z vector
  */
-double Pullback(
+void Push(
 	ON_Surface *surf,
 	double *s,
 	double *t,
@@ -92,15 +92,15 @@ void Step(
     double vec[3] = {0.0, 0.0, 0.0};
     ON_3dVector stepscaled =  vec;
     ON_ArrayScale(3, sqrt(stepsize/Magnitude), step, stepscaled);
-    Pullback(surf1, s1, t1, stepscaled);
-    Pullback(surf2, s2, t2, stepscaled);
+    Push(surf1, s1, t1, stepscaled);
+    Push(surf2, s2, t2, stepscaled);
 }
 
 /**
  *        Jiggle
  *
  * @brief uses newtonesque method to jiggle the points on the surfaces about and find a closer
- * point
+ * point returns the new distance between the points
  */
 double Jiggle(
 	ON_Surface *surf1,
@@ -120,8 +120,9 @@ double Jiggle(
     ON_3dVector p1p2orth, p1p2prl, p2p1orth, p2p1prl;
     VPROJECT(p1p2, Norm1, p1p2prl, p1p2orth);
     VPROJECT(p2p1, Norm2, p2p1prl, p2p1orth);
-    VUNITIZE(p1p2orth);
-    VUNITIZE(p2p1orth);
+    Push(surf1, s1, t1, p1p2orth / 2);
+    Push(surf2, s2, t2, p2p1orth / 2);
+    return surf1->PointAt(*s1, *t1).DistanceTo(surf2->PointAt(*s2, *t2));
 }
 
 void WalkIntersection(
@@ -161,6 +162,42 @@ void WalkIntersection(
 	intersectionPoints.Append(surf1->PointAt(s1, t1));
     }
     *out = ON_BezierCurve(intersectionPoints);
+}
+
+bool GetStartPoints(
+	ON_Surface *surf1,
+	ON_Surface *surf2,
+	ON_2dPointArray start_points1,
+	ON_2dPointArray start_points2,
+	double tol
+	)
+{
+    bool return_value;
+    if (surf1->BoundingBox().IsDisjoint(surf2->BoundingBox())) {
+	return_value = false;
+    } else if (surf1->IsPlanar(NULL, tol) && surf2->IsPlanar(NULL, tol)) {
+	if (!surf1->BoundingBox().IsDisjoint(surf2->BoundingBox())) {
+	    start_points1.Append(ON_2dPoint(surf1->Domain(0).Mid(), surf1->Domain(1).Mid()));
+	    start_points2.Append(ON_2dPoint(surf2->Domain(0).Mid(), surf2->Domain(1).Mid()));
+	} else {
+	    return_value = false;
+	}
+    } else {
+	ON_Surface *N1, *S1, *N2, *S2, *Parts1[4], *Parts2[4]; /* = {SW, SE, NW, NE} */
+	assert(surf1->Split(0, surf1->Domain(0).Mid(), S1, N1));
+	assert(surf2->Split(0, surf2->Domain(0).Mid(), S2, N2));
+	assert(S1->Split(1, S1->Domain(1).Mid(), Parts1[0], Parts1[1]));
+	assert(N1->Split(1, N1->Domain(1).Mid(), Parts1[2], Parts1[3]));
+	assert(S2->Split(1, S2->Domain(1).Mid(), Parts2[0], Parts2[1]));
+	assert(N2->Split(1, N2->Domain(1).Mid(), Parts2[2], Parts2[3]));
+	int i,j;
+	return_value = false;
+	for (i = 0; i < 4; i++) {
+	    for (j = 0; j < 4; j++) {
+		return_value = return_value && GetStartPoints(Parts1[i], Parts2[j], start_points1, start_points2, tol);
+	    }
+	}
+    }
 }
 
 int main()
