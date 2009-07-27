@@ -326,8 +326,6 @@ void boundingRectangle(struct rt_wdb *file, char *name, fastf_t *startPoint, fas
         VSET(vects[6], (partDepth+startPoint[X]), (partWidth+startPoint[Y]), (distance[Z]));
         VSET(vects[7], (partDepth+startPoint[X]), (-partWidth+startPoint[Y]), (distance[Z]));
 
-
-
         mk_arb8(file, newName, *vects);
 }
 
@@ -345,9 +343,12 @@ fastf_t makeHead(struct rt_wdb (*file), char *name, struct human_data_t *dude, f
 	mat_t rotMatrix;
 	setDirection(startVector, dude->head.headVector, rotMatrix, direction[X], direction[Y], direction[Z]);
 	mk_sph(file, name, dude->joints.headJoint, head);
+
+	point_t headFix;
+	VSET(headFix, dude->joints.headJoint[X], dude->joints.headJoint[Y], dude->joints.headJoint[Z]+head);
 	
 	if(showBoxes){
-		boundingBox(file, name, dude->joints.headJoint, lengthVector, (lengthVector[Z]/2), rotMatrix); 
+		boundingBox(file, name, headFix, lengthVector, (lengthVector[Z]/2), rotMatrix); 
 	}
 	return 0;
 }
@@ -433,12 +434,33 @@ fastf_t makeLowerTorso(struct rt_wdb *file, char *name, struct human_data_t *dud
 	return dude->torso.pelvisWidth;
 }
 
-fastf_t makeShoulderJoint(struct rt_wdb *file, fastf_t isLeft, char *name, struct human_data_t *dude)
+fastf_t makeShoulderJoint(struct rt_wdb *file, fastf_t isLeft, char *name, struct human_data_t *dude, fastf_t showBoxes)
 {
+	vect_t startVector, lengthVector;
+	VSET(startVector, 0, 0, dude->arms.upperArmWidth*2);
+	VSET(lengthVector, 0, 0, dude->arms.upperArmWidth);
+	mat_t rotMatrix;
+	fastf_t shoulder = dude->arms.upperArmWidth;
+
 	if(isLeft)
 		mk_sph(file, name, dude->joints.leftShoulderJoint, (dude->arms.upperArmWidth));
 	else
 		mk_sph(file, name, dude->joints.rightShoulderJoint, (dude->arms.upperArmWidth));
+
+ 	point_t leftFix, rightFix;
+
+	if(showBoxes){
+		if(isLeft){
+			setDirection(startVector, lengthVector, rotMatrix, dude->arms.lArmDirection[X], dude->arms.lArmDirection[Y], dude->arms.lArmDirection[Z]);
+			VSET(leftFix, dude->joints.leftShoulderJoint[X], dude->joints.leftShoulderJoint[Y], (dude->joints.leftShoulderJoint[Z]-shoulder));
+			boundingBox(file, name, leftFix, lengthVector, (lengthVector[Z]/2), rotMatrix); 
+		}
+		else{
+			setDirection(startVector, lengthVector, rotMatrix, dude->arms.rArmDirection[X], dude->arms.rArmDirection[Y], dude->arms.rArmDirection[Z]);
+			VSET(rightFix, dude->joints.rightShoulderJoint[X], dude->joints.rightShoulderJoint[Y], (dude->joints.rightShoulderJoint[Z]-shoulder));
+			boundingBox(file, name, rightFix, lengthVector, (lengthVector[Z]/2), rotMatrix);
+		}
+	} 
 	return dude->torso.shoulderWidth;
 }
 
@@ -751,7 +773,7 @@ void makeArm(struct rt_wdb (*file), char *suffix, int isLeft, struct human_data_
 
 	/* direction is the direction that the arm will be pointing at the shoulder. */
 	/* armDirection is the derivative of that, and can be adjusted to fit a pose */
-        makeShoulderJoint(file, isLeft, shoulderJointName, dude);
+        makeShoulderJoint(file, isLeft, shoulderJointName, dude, showBoxes);
 	makeUpperArm(file, isLeft, upperArmName, dude, showBoxes);
         makeElbow(file, isLeft, elbowName, dude);
 
@@ -1407,13 +1429,20 @@ int main(int ac, char *av[])
 
     (void)mk_addmember("Neck.sBox", &hollow.l, NULL, WMOP_UNION);
     (void)mk_addmember("Neck.s", &hollow.l, NULL, WMOP_SUBTRACT);   
+    (void)mk_addmember("Head.s", &hollow.l, NULL, WMOP_SUBTRACT);
 
     (void)mk_addmember("UpperTorso.sBox", &hollow.l, NULL, WMOP_UNION);
     (void)mk_addmember("UpperTorso.s", &hollow.l, NULL, WMOP_SUBTRACT);
 
     (void)mk_addmember("LowerTorso.sBox", &hollow.l, NULL, WMOP_UNION);
     (void)mk_addmember("LowerTorso.s", &hollow.l, NULL, WMOP_SUBTRACT);
-    
+
+    (void)mk_addmember("LeftShoulderJoint.sBox", &hollow.l, NULL, WMOP_UNION);
+    (void)mk_addmember("LeftShoulderJoint.s", &hollow.l, NULL, WMOP_SUBTRACT);
+
+    (void)mk_addmember("RightShoulderJoint.sBox", &hollow.l, NULL, WMOP_UNION);
+    (void)mk_addmember("RightShoulderJoint.s", &hollow.l, NULL, WMOP_SUBTRACT);
+   
     (void)mk_addmember("LeftUpperArm.sBox", &hollow.l, NULL, WMOP_UNION);
     (void)mk_addmember("LeftUpperArm.s", &hollow.l, NULL, WMOP_SUBTRACT);
     
