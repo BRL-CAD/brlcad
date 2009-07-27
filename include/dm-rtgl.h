@@ -80,7 +80,7 @@ struct ptInfoList {
     int used;
     fastf_t points[PT_ARRAY_SIZE];
     fastf_t norms[PT_ARRAY_SIZE];
-    fastf_t colors[PT_ARRAY_SIZE];
+    float color[3];
 };
 
 #endif /* __DM_RTGL__ */

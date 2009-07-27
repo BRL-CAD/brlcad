@@ -969,10 +969,12 @@ rtgl_loadMatrix(struct dm *dmp, fastf_t *mat, int which_eye)
 
 	/* use custom clipping to control zbuffer precision */
 	if (controlClip) {
-	    clip = scale / startScale + .001;
+	    clip = scale / startScale - .75;
 
 	    if (clip > 1)
 		clip = 1;
+	    if (clip < .001)
+		clip = .001;
 
 	    /* [0, 1], smaller value implies larger volume (less
 	     * clipping) in z direction, but less precision
@@ -1021,14 +1023,14 @@ rtgl_loadMatrix(struct dm *dmp, fastf_t *mat, int which_eye)
     glEnable(GL_RESCALE_NORMAL);
 
     /* apply view */
-    if (controlClip && startScale != 1) {
+    if (controlClip) {
 /*
-	bu_log("clip: %3.2f translate:%3.2f", clip, clip -2.0);
+	bu_log("clip: %3.2f translate:%3.2f", clip, clip - 1.25);
 */
 	/* move clipping volume when zooming-in
 	 * to prevent clipping front surfaces
 	 */
-	glTranslatef(0.0, 0.0, clip - 1.5);
+	glTranslatef(0.0, 0.0, clip - 1.75);
     }
 
     else {
@@ -1058,8 +1060,9 @@ void aeVect(fastf_t *aeVect, fastf_t *aet) {
 /* calculate and add hit-point info to info list */
 void addInfo(struct application *app, struct hit *hit, struct soltab *soltab, char flip, float *partColor) {
     point_t point;
-    vect_t normal, light = {0, 0, -1};
-    fastf_t lightMag = MAGNITUDE(light);
+    vect_t normal;
+    struct ptInfoList *start;
+    int newColor = 1;
 
     /* calculate intersection point */
     VJOIN1(point, app->a_ray.r_pt, hit->hit_dist, app->a_ray.r_dir);
@@ -1076,11 +1079,20 @@ void addInfo(struct application *app, struct hit *hit, struct soltab *soltab, ch
     /* calculate normal vector */
     RT_HIT_NORMAL(normal, hit, soltab, &(app->a_ray), flip);
 
-    /* get new list item if current is full */
-    if (currItem->used == PT_ARRAY_SIZE) {
+    /* get vector in the right color */
+    for (BU_LIST_FOR(currItem, ptInfoList, &(ptInfo.l))) {
+	if (VEQUAL(currItem->color, partColor) && currItem->used < PT_ARRAY_SIZE) {
+	    newColor = 0;
+	    break;
+	}
+    }    
+
+    /* get new list item if current is full or if starting a new color */
+    if (currItem->used == PT_ARRAY_SIZE || newColor) {
 	BU_GETSTRUCT(currItem, ptInfoList);
 	BU_LIST_PUSH(&(ptInfo.l), currItem);
 	currItem->used = 0;
+	VMOVE(currItem->color, partColor);
     }
 
     /* add point to list */
@@ -1092,11 +1104,6 @@ void addInfo(struct application *app, struct hit *hit, struct soltab *soltab, ch
     currItem->norms[X + currItem->used] = normal[X];
     currItem->norms[Y + currItem->used] = normal[Y];
     currItem->norms[Z + currItem->used] = normal[Z];
-
-    /* add color to list */
-    currItem->colors[X + currItem->used] = partColor[X];
-    currItem->colors[Y + currItem->used] = partColor[Y];
-    currItem->colors[Z + currItem->used] = partColor[Z];
 
     currItem->used += 3;
 
@@ -1191,6 +1198,8 @@ void drawPoints() {
     for (BU_LIST_FOR(currItem, ptInfoList, &(ptInfo.l))) {
 	numPoints = currItem->used / 3;
 	count += numPoints;
+
+	glMaterialfv(GL_FRONT, GL_AMBIENT_AND_DIFFUSE, (float *) &(currItem->color));
 
 	glVertexPointer(3, GL_DOUBLE, 0, &(currItem->points));
         glNormalPointer(GL_DOUBLE, 0, &(currItem->norms));        
