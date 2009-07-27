@@ -899,7 +899,7 @@ rtgl_drawEnd(struct dm *dmp)
 double startScale = 1;
 
 /*
- *  			O G L _ L O A D M A T R I X
+ *  		       R T G L _ L O A D M A T R I X
  *
  *  Load a new transformation matrix.  This will be followed by
  *  many calls to rtgl_drawVList().
@@ -1109,6 +1109,8 @@ void addInfo(struct application *app, struct hit *hit, struct soltab *soltab, ch
 
 }
 
+
+
 /* add all hit point info to info list */
 int recordHit(struct application *app, struct partition *partH, struct seg *segs)
 {
@@ -1208,6 +1210,31 @@ void drawPoints() {
     glPointSize(1);
 }
 
+struct objTree objects;
+
+void buildTree(struct ged *gedp) {
+    int i, len;
+    char *curr, *result, *name;
+
+    /* get names of tree tops */
+    ged_tops(gedp, 2, "tops -n");
+    result = bu_vls_strdup(&(gedp->ged_result_str));
+
+    /* extract individual names */
+    len = strcspn(result, "/ ");   /* num chars before '/' or ' ' */
+
+    name = malloc(sizeof(char) * (len + 1));
+    name[len] = '\0';
+
+    strncpy(name, result, len);
+
+    /* skip to  next name */
+    while(result[len] != ' ') len++;
+    while(result[len++] == ' ');
+
+    result = &(result[len]);
+}
+
 /*
  *  			R T G L _ D R A W V L I S T
  *
@@ -1217,8 +1244,8 @@ rtgl_drawVList(struct dm *dmp, register struct bn_vlist *vp)
 {
     static int call;
 
-    int i, j, numTrees, new, newTrees;
-    char *currTree, *trees[RT_MAXARGS];
+    int i, j, new, numVisible, numNew;
+    char *currTree, *visibleTrees[RT_MAXARGS];
     struct ptInfoList *curr;
     
     /* get ged struct */
@@ -1239,6 +1266,7 @@ rtgl_drawVList(struct dm *dmp, register struct bn_vlist *vp)
     if (rtip == RTI_NULL)
         return TCL_ERROR;
     
+    /* initialize list */
     if (ptInfo.l.forw == BU_LIST_NULL) {
 	/* initialize head */
         BU_LIST_INIT(&(ptInfo.l));
@@ -1248,13 +1276,20 @@ rtgl_drawVList(struct dm *dmp, register struct bn_vlist *vp)
 	BU_GETSTRUCT(currItem, ptInfoList);
 	BU_LIST_PUSH(&(ptInfo.l), currItem);
 	currItem->used = 0;
+
+	call = 1;
+    }
+
+    
+    if (call == 1) {
+	buildTree(gedp);
     }
 
     /* get number and names of visible tree tops */
-    numTrees = ged_build_tops(gedp, trees, &trees[RT_MAXARGS]);
+    numVisible = ged_build_tops(gedp, visibleTrees, &visibleTrees[RT_MAXARGS]);
 
     /* no objects are visible */
-    if (numTrees == 0) {
+    if (numVisible == 0) {
 
 	/* drop all display points */
 	freeInfoList();
@@ -1268,10 +1303,10 @@ rtgl_drawVList(struct dm *dmp, register struct bn_vlist *vp)
     }
 
     /* look for new trees in need of ray tracing */
-    newTrees = 0;
+    numNew = 0;
     
-    for (i = 0; i < numTrees; i++) {
-        currTree = trees[i];
+    for (i = 0; i < numVisible; i++) {
+        currTree = visibleTrees[i];
         new = 1;
         
         /* if this tree is in the old tree list, it's not new */
@@ -1286,14 +1321,13 @@ rtgl_drawVList(struct dm *dmp, register struct bn_vlist *vp)
                 return TCL_ERROR;
 
 	    /* add new tree to list of displayed */
-            newTrees++;
+            numNew++;
 	    oldTrees[oldNumTrees++] = currTree;
         }
     }
 
     /* get points for new trees */
-    if (newTrees) {
-	call = 1;
+    if (numNew > 0) {
 
         /* set up application */
         RT_APPLICATION_INIT(&app);

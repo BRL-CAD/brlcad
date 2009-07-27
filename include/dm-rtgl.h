@@ -83,6 +83,20 @@ struct ptInfoList {
     float color[3];
 };
 
+struct objTree {
+    char *treeName;
+    int numChildren;
+    struct objTree **children;
+    struct ptInfoList *ptInfo;
+};
+
+#define INIT_OBJTREE(p) { \
+(struct objTree *)(p)->name = NULL; \
+(struct objTree *)(p)->numChildren = 0; \
+(struct objTree *)(p)->children = NULL; \
+(struct objTree *)(p)->ptInfo = NULL; \
+}
+
 #endif /* __DM_RTGL__ */
 
 /** @} */
