@@ -179,9 +179,7 @@ extern float specularColor[4];
 extern float diffuseColor[4];
 extern float backColor[];
 
-int glLighting = 1;
 int controlClip = 1;
-int controlLighting = 1;
 
 /* ray trace vars */
 struct application app;
@@ -971,7 +969,7 @@ rtgl_loadMatrix(struct dm *dmp, fastf_t *mat, int which_eye)
 
 	/* use custom clipping to control zbuffer precision */
 	if (controlClip) {
-	    clip = scale / (2 * startScale) + .3;
+	    clip = scale / startScale + .001;
 
 	    if (clip > 1)
 		clip = 1;
@@ -999,52 +997,38 @@ rtgl_loadMatrix(struct dm *dmp, fastf_t *mat, int which_eye)
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
 
-    if (!controlLighting || clip > .55)
-	glLighting = 1;
-    else
-	glLighting = 0;
-
     /* OpenGL lighting faster at low clipping */
-    if (glLighting) {
-	GLfloat mat_specular[] = {.8, .8, .8, .8}; 
-	GLfloat mat_shininess[] = { 5.0 }; 
-	GLfloat light_position[] = { 0.25, 0.5, 1.0, 0.0 }; 
-	GLfloat white_light[] = { .9, .9, .9, 1.0 }; 
-	GLfloat lmodel_ambient[] = { 0.1, 0.1, 0.1, 1.0 }; 
+    GLfloat mat_specular[] = {.8, .8, .8, .8}; 
+    GLfloat mat_shininess[] = { 5.0 }; 
+    GLfloat light_position[] = { 0.25, 0.5, 1.0, 0.0 }; 
+    GLfloat white_light[] = { .9, .9, .9, 1.0 }; 
+    GLfloat lmodel_ambient[] = { 0.1, 0.1, 0.1, 1.0 }; 
 
-	glShadeModel(GL_FLAT); 
+    glShadeModel(GL_FLAT); 
     
-	glMaterialfv(GL_FRONT, GL_SPECULAR, mat_specular); 
-	glMaterialfv(GL_FRONT, GL_SHININESS, mat_shininess); 
+    glMaterialfv(GL_FRONT, GL_SPECULAR, mat_specular); 
+    glMaterialfv(GL_FRONT, GL_SHININESS, mat_shininess); 
 
-	/* set light position now, so that it moves with the view */
-	glLightfv(GL_LIGHT0, GL_POSITION, light_position); 
-	glLightfv(GL_LIGHT0, GL_DIFFUSE, white_light); 
-	glLightfv(GL_LIGHT0, GL_SPECULAR, white_light); 
+    /* set light position now, so that it moves with the view */
+    glLightfv(GL_LIGHT0, GL_POSITION, light_position); 
+    glLightfv(GL_LIGHT0, GL_DIFFUSE, white_light); 
+    glLightfv(GL_LIGHT0, GL_SPECULAR, white_light); 
 
-	glLightModelfv(GL_LIGHT_MODEL_AMBIENT, lmodel_ambient); 
+    glLightModelfv(GL_LIGHT_MODEL_AMBIENT, lmodel_ambient); 
 
-	glEnable(GL_LIGHTING); 
-	glEnable(GL_LIGHT0);
-	glLighting = 1;
-    }
-
-    /* cosine lighting better quality at high clipping */
-    else {
-	glDisable(GL_LIGHTING);
-	glEnable(GL_LIGHT0);
-	glLighting = 0;
-    }
+    glEnable(GL_LIGHTING); 
+    glEnable(GL_LIGHT0);
+    glEnable(GL_RESCALE_NORMAL);
 
     /* apply view */
-    if (controlClip) {
-	/*
+    if (controlClip && startScale != 1) {
+/*
 	bu_log("clip: %3.2f translate:%3.2f", clip, clip -2.0);
-	*/
+*/
 	/* move clipping volume when zooming-in
 	 * to prevent clipping front surfaces
 	 */
-	glTranslatef(0.0, 0.0, clip - 2.0);
+	glTranslatef(0.0, 0.0, clip - 1.5);
     }
 
     else {
@@ -1197,7 +1181,7 @@ void shootGrid(vect_t min, vect_t max, int uAxis, int vAxis, int iAxis) {
     }
 }
 
-void glLight() {
+void drawPoints() {
     glPointSize(2);
     glEnableClientState(GL_VERTEX_ARRAY);
     glEnableClientState(GL_NORMAL_ARRAY);
@@ -1211,53 +1195,6 @@ void glLight() {
 	glVertexPointer(3, GL_DOUBLE, 0, &(currItem->points));
         glNormalPointer(GL_DOUBLE, 0, &(currItem->norms));        
 	glDrawArrays(GL_POINTS, 0, numPoints);
-    }
-    glPointSize(1);
-}
-
-void cosLight(fastf_t *view) {
-    vect_t normal;
-    fastf_t cosAngle;
-
-    glPointSize(2);
-    glEnableClientState(GL_VERTEX_ARRAY);
-
-    int i, numPoints, index, count = 0;
-    float color[3];
-    
-    for (BU_LIST_FOR(currItem, ptInfoList, &(ptInfo.l))) {
-	numPoints = currItem->used / 3;
-	count += numPoints;
-
-	glVertexPointer(3, GL_DOUBLE, 0, &(currItem->points));
-        
-        glBegin(GL_POINTS);
-	for (i = 0; i < numPoints; i++) {
-
-	    index = i + i + i;      
-
-	    /* calculate cosine of angle between view and normal */
-	    normal[X] = currItem->norms[X + index];
-	    normal[Y] = currItem->norms[Y + index];
-	    normal[Z] = currItem->norms[Z + index];
-
-	    cosAngle = VDOT(normal, view);
-
-#if 0
-	    /* get color */
-	    color[X] = currItem->colors[X + index];
-	    color[Y] = currItem->colors[Y + index];
-	    color[Z] = currItem->colors[Z + index];            
-
-	    glColor3d(color[X] * cosAngle, color[Y] * cosAngle, color[Z] * cosAngle);
-#else
-	    glColor3d(cosAngle, cosAngle, cosAngle);
-#endif
-            
-	    /* draw point */
-	    glArrayElement(i);
-	}
-        glEnd();            
     }
     glPointSize(1);
 }
@@ -1371,15 +1308,7 @@ rtgl_drawVList(struct dm *dmp, register struct bn_vlist *vp)
 	shootGrid(min, max, Y, Z, X);
     }
 
-    /* draw points */
-    if (glLighting) {
-	glLight();
-    } else {
-	vect_t view;
-	aeVect(view, gedp->ged_gvp->gv_aet);
-
-	cosLight(view);
-    }
+    drawPoints();
 
     call++;
 
