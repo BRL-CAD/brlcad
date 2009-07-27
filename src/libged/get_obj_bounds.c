@@ -76,6 +76,7 @@ ged_get_obj_bounds(struct ged	*gedp,
 	    if (db_string_to_path(&tmp_path, rtip->rti_dbip, regp->reg_name)) {
 		bu_vls_printf(&gedp->ged_result_str, "db_string_to_path failed for %s\n", regp->reg_name);
 		rt_free_rti(rtip);
+		db_free_full_path(&path);
 		return GED_ERROR;
 	    }
 	    if (path.fp_names[0] == tmp_path.fp_names[0])
@@ -89,6 +90,7 @@ ged_get_obj_bounds(struct ged	*gedp,
 	if (!gottree && rt_gettree(rtip, path.fp_names[0]->d_namep)) {
 	    bu_vls_printf(&gedp->ged_result_str, "rt_gettree failed for %s\n", argv[i]);
 	    rt_free_rti(rtip);
+	    db_free_full_path(&path);
 	    return GED_ERROR;
 	}
 	db_free_full_path(&path);
