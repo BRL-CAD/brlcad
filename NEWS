@@ -15,7 +15,6 @@ changes made.  See document footer for additional details.
 ----------------------------------------------------------------------
 
 * make_bb now handles empty combinations correctly - Bob Parker
-* expand capabilities of bbsize command - Cliff Yapp
 * no more rtweight crashing when PWD or HOME are unset - Sean Morrison
 * fixed "Invalid NMG" empty output bug in g-stl - Sean Morrison
 * fixed Mac OS X 10.5 OGL and X11 display manager crash affecting mged
