@@ -14,6 +14,7 @@ changes made.  See document footer for additional details.
 --- 2009-06-XX  Release 7.14.10                                    ---
 ----------------------------------------------------------------------
 
+* fix rt_prep_parallel behavior when called on empty tree - Bob Parker
 * expand capabilities of bbsize command - Cliff Yapp
 * no more rtweight crashing when PWD or HOME are unset - Sean Morrison
 * fixed "Invalid NMG" empty output bug in g-stl - Sean Morrison
