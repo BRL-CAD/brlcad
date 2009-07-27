@@ -407,7 +407,10 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
 
 * ability to "unpush" objects, translating them to a new position and
   applying the correct matrix (using either bounding box or center of
-  mass, for example)
+  mass, for example).  would be useful to optionally allow the
+  creation of a parent combination that contains the unpushed matrix
+  so you could return primitives to local coordinates.  See sf feature
+  request 2826720 from cericole.
 
 * ensure successful build on mingw
 
