@@ -347,6 +347,8 @@ BC_ARG_ENABLE([build_warnings], [warnings], [Enable verbose compilation warnings
 # build progress status
 BC_ARG_ENABLE([build_progress], [progress], [Enable verbose compilation progress], [no])
 
+BC_ARG_ENABLE([rtgl], [rtgl], [Enable compilation of experimental Ray Trace OpenGL display manager], [no])
+
 
 dnl *** with options ***
 
@@ -838,6 +840,9 @@ AC_MSG_RESULT($bc_with_wgl)
 
 AC_MSG_CHECKING(whether to compile the Pro/ENGINEER plugin)
 AC_MSG_RESULT($bc_with_proe)
+
+AC_MSG_CHECKING(whether to compile experimental RTGL display manager)
+AC_MSG_RESULT($bc_rtgl)
 
 
 dnl **************************
@@ -2211,6 +2216,7 @@ fi
 AC_SUBST(PNG)
 AC_SUBST(PNG_CPPFLAGS)
 
+LDFLAGS="$LDFLAGS -Wl,-dylib_file -Wl,/System/Library/Frameworks/ApplicationServices.framework/Versions/A/Frameworks/ImageIO.framework/Versions/A/Resources/libPng.dylib:/System/Library/Frameworks/ApplicationServices.framework/Versions/A/Frameworks/ImageIO.framework/Versions/A/Resources/libPng.dylib"
 
 dnl *** libregex ***
 dnl See if regular expression support works
@@ -3415,6 +3421,22 @@ fi # bc_with_wgl
 AC_MSG_CHECKING(whether to build against WindowsGL)
 AC_MSG_RESULT($build_against_wgl)
 
+
+dnl *** RTGL interface compilation ***
+build_rtgl="no"
+if test "x$bc_rtgl" = "xyes" ; then
+    if test "x$build_against_opengl" = "xno" ; then
+	AC_MSG_NOTICE([RTGL was requested, but no system OpenGL libraries were found])
+	AC_MSG_NOTICE([}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}])
+	AC_MSG_NOTICE([Try adding --with-opengl])
+	AC_MSG_ERROR([*** Using RTGL was requested, yet no system OpenGL was found ***])
+    fi
+    build_rtgl="yes"
+fi # bc_with_rtgl
+AC_MSG_CHECKING(whether to build experimental RTGL display manager)
+AC_MSG_RESULT($build_rtgl)
+
+
 dnl *** Knobs availability ***
 dials_and_buttons=no
 AC_MSG_CHECKING(for SGI dials and buttons support)
@@ -3533,6 +3555,10 @@ AM_CONDITIONAL(WITH_WGL, [test "x$build_against_wgl" != "xno"])
 AM_CONDITIONAL(WITH_TK, [test "xyes" = "xno"])
 #AM_CONDITIONAL(WITH_TK, [test "x$build_against_tk" != "xno"])
 
+# XXX need to refactor the above fb/dm interfaces to have a better
+# separation of their external 'with' deps and the interfaces
+AM_CONDITIONAL(BUILD_RTGL, [test "x$build_rtgl" = "xyes"])
+
 AM_CONDITIONAL(WITH_JAVA, [test "x$build_against_java" != "xno"])
 AM_CONDITIONAL(WITH_PROE, [test "x$build_against_proe" != "xno"])
 AM_CONDITIONAL(WITH_PARSERS, [test "x$build_parsers" != "xno"])
@@ -3542,6 +3568,7 @@ AM_CONDITIONAL(BUILD_PDF_DOCS, [test "x$docbook_pdf_processing" != "xno"])
 AM_CONDITIONAL(INSTALL_MODELS, [test "x$bc_install_geometry" = "xyes"])
 AM_CONDITIONAL(ONLY_BENCHMARK, [test "x$bc_only_benchmark" != "xno"])
 AM_CONDITIONAL(ONLY_RTS, [test "x$bc_only_rts" != "xno"])
+
 
 
 dnl Any combination of the different optimizations listed below may individually be
