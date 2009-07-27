@@ -45,8 +45,8 @@
 #define DEFAULT_FILENAME "human.g"
 
 #define MAXLENGTH 64
-#define IN2MM	25.4
-#define CM2MM	10.0
+#define IN2MM	25.4	/*Convert an inch measurement to millimeters */
+#define CM2MM	10.0	/*Convert centimeters to millimeters */
 
 char *progname = "Human Model";
 char filename[MAXLENGTH]=DEFAULT_FILENAME;
@@ -246,16 +246,25 @@ void boundingBox(struct rt_wdb *file, char *name, fastf_t *startPoint, fastf_t *
 	VSET(vects[6], (partWidth+startPoint[X]), (partWidth+startPoint[Y]), (distance[Z]));
  	VSET(vects[7], (partWidth+startPoint[X]), (-partWidth+startPoint[Y]), (distance[Z]));
 
+	for(i = 0; i<8; i++)
+	{
+		vects[i][Y]*=-1;
+	//	vects[i][X]*=-1;
+	}
+
 /* Print rotation matrix */
 	int w=0;
 	for(w=1; w<=16; w++){
-	/*X rotation matrix */
-//		if(w==1 || w==6 || w== 7 || w==10 || w==11)
-	/*Y rotation Matrix */
-		if(w==1 || w==3 || w== 6 || w==9 || w==11)
-	/*Z rotation Matrix */
+	/*Z rotation matrix */
 //		if(w==1 || w==2 || w== 5 || w== 6 || w==11)
+//			rotMatrix[(w-1)] = rotMatrix[(w-1)] * -1;
 
+	/*Y rotation Matrix */
+//		if(w==1 || w==3 || w== 6 || w==9 || w==11)
+//			rotMatrix[(w-1)] = rotMatrix[(w-1)] * -1;
+
+	/*X rotation Matrix */
+		if(w==1 || w==6 || w== 7 || w==10 || w==11)
 			rotMatrix[(w-1)] = rotMatrix[(w-1)] * -1;
 
 		bu_log("%3.4f\t", rotMatrix[(w-1)]);
@@ -619,11 +628,12 @@ fastf_t makeAnkle(struct rt_wdb *file, fastf_t isLeft, char *name, struct human_
 
 fastf_t makeFoot(struct rt_wdb *file, fastf_t isLeft, char *name, struct human_data_t *dude, fastf_t showBoxes)
 {
-	vect_t startVector;
+	vect_t startVector, boxVector;
 	mat_t rotMatrix;
 	dude->legs.footLength = dude->legs.ankleWidth * 3;
 	dude->legs.toeWidth = dude->legs.ankleWidth * 1.2;
 	VSET(startVector, 0, 0, dude->legs.footLength);
+	VSET(boxVector, 0, 0, dude->legs.footLength + dude->legs.toeWidth);
 
 	if(isLeft)
         	setDirection(startVector, dude->legs.footVector, rotMatrix, dude->legs.lFootDirection[X], dude->legs.lFootDirection[Y], dude->legs.lFootDirection[Z]);
@@ -634,9 +644,9 @@ fastf_t makeFoot(struct rt_wdb *file, fastf_t isLeft, char *name, struct human_d
 
 	if(showBoxes){
                 if(isLeft)
-                        boundingBox(file, name, dude->joints.ankleJoint, startVector, dude->legs.toeWidth, rotMatrix);
+                        boundingBox(file, name, dude->joints.ankleJoint, boxVector, dude->legs.toeWidth, rotMatrix);
                 else  
-                        boundingBox(file, name, dude->joints.ankleJoint, startVector, dude->legs.toeWidth, rotMatrix);
+                        boundingBox(file, name, dude->joints.ankleJoint, boxVector, dude->legs.toeWidth, rotMatrix);
 	}
 	return 0;
 }
@@ -788,7 +798,7 @@ void makeLeg(struct rt_wdb (*file), char *suffix, int isLeft, struct human_data_
 
 /**
  * Make the head, shoulders knees and toes, so to speak.
- * Head, neck, torso, arms, legs.
+ * Head, neck, torso, arms, hands, legs, feet.
  * And dude, a very technical term, is the human_data in a shorter, more readable name
  */
 void makeBody(struct rt_wdb (*file), char *suffix, struct human_data_t *dude, fastf_t *location, fastf_t showBoxes)
@@ -1080,14 +1090,6 @@ void setStance(fastf_t stance, struct human_data_t *dude)
 }
 
 /**
- * Display input parameters when debugging
- */
-void print_human_info(char *name)
-{
-    bu_log("%s\n", name);
-}
-
-/**
  * Help message printed when -h/-? option is supplied
  */
 void show_help(const char *name, const char *optstr)
@@ -1111,7 +1113,7 @@ void show_help(const char *name, const char *optstr)
 	   "\t-?\t\tShow help\n"
 	   "\t-A\t\tAutoMake defaults\n"
 	   "\t-H\t\tSet Height in inches\n"
-	   "\t-l\t\tSet Center Point, at feet\n"
+	   "\t-l\t\tSet Center Point in inches, at feet (default 0 0 0)\n"
 	   "\t-o\t\tSet output file name\n"
 	   "\t-b\t\tShow bounding Boxes\n"
 	   "\t-N\t\tNumber to make (square)\n"
@@ -1125,7 +1127,7 @@ void show_help(const char *name, const char *optstr)
 void getLocation(fastf_t *location)
 {
     fastf_t x, y, z;
-    bu_log("Enter center point, at feet\n");
+    bu_log("Enter center point\n");
     bu_log("X: ");
     scanf("%lf", &x);
     fflush(stdin);
