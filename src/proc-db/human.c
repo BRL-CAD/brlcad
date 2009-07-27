@@ -44,7 +44,7 @@
 #define DEFAULT_HEIGHT_INCHES 68.0 
 #define DEFAULT_FILENAME "human.g"
 
-#define MAXLENGTH 64
+#define MAXLENGTH 64	/*Maxlength of things like object names, filenames */
 #define IN2MM	25.4	/*Convert an inch measurement to millimeters */
 #define CM2MM	10.0	/*Convert centimeters to millimeters */
 
@@ -299,6 +299,7 @@ void boundingRectangle(struct rt_wdb *file, char *name, fastf_t *startPoint, fas
          * followed by naming it by taking name, and cat-ing BOX to the end of it.
          */
         point_t points[8];
+	vect_t vects[8];
         vect_t distance;
         char newName[MAXLENGTH] = "a";
 
@@ -306,15 +307,28 @@ void boundingRectangle(struct rt_wdb *file, char *name, fastf_t *startPoint, fas
         bu_strlcat(newName, "Box", MAXLENGTH);
 
         VADD2(distance, startPoint, lengthVector);
+	VSET(distance, distance[X], distance[Y], startPoint[Z]-lengthVector[Z]);
 
 	/* Set first 4 points to be on the same plane as the starting point, and the last 4 points to be the distance vector point plane */
 /*
 *	fastf_t length=findVector(partWidth, partWidth);
 */
+/*
         VSET(points[0], (-partDepth+startPoint[X]), (-partWidth+startPoint[Y]), (distance[Z]));
         VSET(points[1], (partDepth+startPoint[X]), (partWidth+startPoint[Y]), (startPoint[Z]));
+*/
+        VSET(vects[0], (-partDepth+startPoint[X]), (-partWidth+startPoint[Y]), (startPoint[Z]));
+        VSET(vects[1], (-partDepth+startPoint[X]), (partWidth+startPoint[Y]), (startPoint[Z]));
+        VSET(vects[2], (partDepth+startPoint[X]), (partWidth+startPoint[Y]), (startPoint[Z]));
+        VSET(vects[3], (partDepth+startPoint[X]), (-partWidth+startPoint[Y]), (startPoint[Z]));
+        VSET(vects[4], (-partDepth+startPoint[X]), (-partWidth+startPoint[Y]), (distance[Z]));
+        VSET(vects[5], (-partDepth+startPoint[X]), (partWidth+startPoint[Y]), (distance[Z]));
+        VSET(vects[6], (partDepth+startPoint[X]), (partWidth+startPoint[Y]), (distance[Z]));
+        VSET(vects[7], (partDepth+startPoint[X]), (-partWidth+startPoint[Y]), (distance[Z]));
 
-        mk_rpp(file, newName, points[1], points[0]);
+
+
+        mk_arb8(file, newName, *vects);
 }
 
 /******************************************/
@@ -1064,6 +1078,33 @@ void setStance(fastf_t stance, struct human_data_t *dude)
 		VMOVE(dude->legs.rFootDirection, forwardVect);
 		break;
 
+	/*Following cases are tests */
+	case 10:
+		bu_log("Test1 15degree incs\n");
+		vect_t test1;
+		vect_t test2;
+		vect_t test3;
+		vect_t test4;
+		vect_t test5;
+		VSET(test1, 0, 0, 0);
+		VSET(test2, 0, 15, 0);
+		VSET(test3, 0, 30, 0);
+		VSET(test4, 0, 60, 0);
+		VSET(test5, 0, 90, 0);
+                VMOVE(dude->arms.lArmDirection, test1);
+                VMOVE(dude->arms.lElbowDirection, test1);
+                VMOVE(dude->arms.rArmDirection, test2);
+                VMOVE(dude->arms.rElbowDirection, test2);
+                VMOVE(dude->arms.lWristDirection, test1);
+                VMOVE(dude->arms.rWristDirection, test2);
+                VMOVE(dude->legs.lLegDirection, test3);
+                VMOVE(dude->legs.rLegDirection, test4);
+                VMOVE(dude->legs.lKneeDirection, test3);
+                VMOVE(dude->legs.rKneeDirection, test4);
+                VMOVE(dude->legs.lFootDirection, test5);
+                VMOVE(dude->legs.rFootDirection, test5);
+		break;
+
 	/* Additional Positions go here*/
 
 	case 999:
@@ -1161,6 +1202,7 @@ int read_args(int argc, char **argv, struct human_data_t *dude, fastf_t *locatio
 	    case 'A':
 		bu_log("AutoMode, making average man\n");
 		dude->height = DEFAULT_HEIGHT_INCHES;
+		fflush(stdin);
 		break;
 	
             case 'N':
@@ -1172,11 +1214,13 @@ int read_args(int argc, char **argv, struct human_data_t *dude, fastf_t *locatio
                 }
                 bu_log("Auto %d (squared) troop formation\n", soldiers);
                 *troops = (float)soldiers;
+		fflush(stdin);
                 break;
 
 	    case 'b':
 		*showBoxes = 1;
 		bu_log("Drawing bounding boxes\n");
+		fflush(stdin);
 		break;
 
 	    case 'H':
@@ -1194,6 +1238,7 @@ int read_args(int argc, char **argv, struct human_data_t *dude, fastf_t *locatio
 			dude->height = height;
 			bu_log("%.2f = height in inches\n", height);
 		}
+		fflush(stdin);
 		break;
 
 	    case 'h':
@@ -1214,10 +1259,12 @@ int read_args(int argc, char **argv, struct human_data_t *dude, fastf_t *locatio
 		if(pose < 0)
 			pose = 0;
 		*stance = pose;
+		fflush(stdin);
 		break;
 
 	    case 'l':
 		getLocation(location);
+		fflush(stdin);
 		break;
 
 	    default:
@@ -1256,6 +1303,7 @@ int main(int ac, char *av[])
     db_fp = wdb_fopen(filename);
 
     bu_log("%f %f %f\n", location[X], location[Y], location[Z]);
+
 /******MAGIC******/
 /*Magically set pose, and apply pose to human geometry*/ 
     setStance(stance, &human_data); 
@@ -1409,7 +1457,7 @@ int main(int ac, char *av[])
              &hollow,
              is_region,
              "glass",
-             "di=0.5 sp=0.5 tr=0.95 ri=1",
+             "di=0.5 sp=0.5 tr=0.75 ri=1",
              rgb3,
              0);
     }
