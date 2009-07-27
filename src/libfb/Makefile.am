@@ -59,7 +59,7 @@ libfb_la_LDFLAGS = -version-info 19:1 -no-undefined
 libfb_la_CFLAGS = \
 	-DIF_REMOTE \
 	-DIF_AB \
-	${GL_CFLAGS} \
+	${GL_CPPFLAGS} \
 	$(IF_X_CFLAGS) \
 	$(IF_TK_CFLAGS) \
 	$(IF_OGL_CFLAGS) \

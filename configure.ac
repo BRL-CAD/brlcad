@@ -1532,37 +1532,52 @@ if test "x$bc_with_dtrace" != "xno" ; then
     AC_CHECK_HEADER(sys/sdt.h,, [bc_with_dtrace=no])
 fi
 
-GL_CPPFLAGS=""
+GL_H_CPPFLAGS=""
+GLX_H_CPPFLAGS=""
+PRECPPFLAGS="$CPPFLAGS"
 # optionally check for OpenGL headers
 if test "x$bc_with_opengl" != "xno" -o "x$bc_with_wgl" != "xno" ; then
     gl_include_works=no
-
-    AC_COMPILE_IFELSE([AC_LANG_SOURCE([@%:@include <GL/gl.h>])],
-	[gl_include_works="yes"])
-    AC_COMPILE_IFELSE([AC_LANG_SOURCE([@%:@include <GL/glx.h>])],
-	[gl_include_works="yes"])
-
-    PRECPPFLAGS="$CPPFLAGS"
+    AC_CHECK_HEADER([GL/gl.h], [
+	AC_DEFINE(HAVE_GL_GL_H, 1, [Define to 1 if you have the <GL/gl.h> header file.])
+	gl_include_works="yes"
+    ], [unset ac_cv_header_GL_gl_h])
     if test "x$gl_include_works" = "xno" ; then
 	for bc_dir in "$ac_x_includes" `echo $ac_x_header_dirs` ; do
-	    CPPFLAGS="$PRECPPFLAGS -I$bc_dir"
-	    AC_COMPILE_IFELSE([AC_LANG_SOURCE([@%:@include <GL/gl.h>])],
-		[gl_include_works="yes"])
-	    AC_COMPILE_IFELSE([AC_LANG_SOURCE([@%:@include <GL/glx.h>])],
-		[gl_include_works="yes"])
-	    if test "x$gl_include_works" = "xyes" ; then
-		GL_CPPFLAGS="-I$bc_dir"
+	    GL_H_CPPFLAGS="-I$bc_dir"
+	    CPPFLAGS="$PRECPPFLAGS $GL_H_CPPFLAGS"
+	    AC_MSG_NOTICE([ .. looking in $bc_dir for gl.h])
+	    AC_CHECK_HEADER([GL/gl.h], [
+		AC_DEFINE(HAVE_GL_GL_H, 1, [Define to 1 if you have the <GL/gl.h> header file.])
+		gl_include_works="yes"
 		break
-	    fi
+	    ], [unset ac_cv_header_GL_gl_h])
 	done
     fi
-    AC_CHECK_HEADERS([GL/gl.h GL/glx.h])
     CPPFLAGS="$PRECPPFLAGS"
 
+    glx_include_works=no
+    AC_CHECK_HEADER([GL/glx.h], [
+	AC_DEFINE(HAVE_GL_GLX_H, 1, [Define to 1 if you have the <GL/glx.h> header file.])
+	glx_include_works="yes"
+    ], [unset ac_cv_header_GL_glx_h])
+    if test "x$glx_include_works" = "xno" ; then
+	for bc_dir in "$ac_x_includes" `echo $ac_x_header_dirs` ; do
+	    GLX_H_CPPFLAGS="-I$bc_dir"
+	    CPPFLAGS="$PRECPPFLAGS $GLX_H_CPPFLAGS"
+	    AC_MSG_NOTICE([ .. looking in $bc_dir for glx.h])
+	    AC_CHECK_HEADER([GL/glx.h], [
+	    	AC_DEFINE(HAVE_GL_GLX_H, 1, [Define to 1 if you have the <GL/glx.h> header file.])
+		glx_include_works="yes"
+		break
+	    ], [unset ac_cv_header_GL_glx_h])
+	done
+    fi
+    CPPFLAGS="$PRECPPFLAGS"
 fi # bc_with_opengl
+GL_CPPFLAGS="$GL_H_CPPFLAGS $GLX_H_CPPFLAGS"
+AC_SUBST(GL_CPPFLAGS)
 
-GL_CFLAGS=$GL_CPPFLAGS
-AC_SUBST(GL_CFLAGS)
 
 # optionally (yes or auto) check for vectorization headers for opennurbs
 if test "x$bc_build_opennurbs" != "xno" ; then
