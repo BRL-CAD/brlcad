@@ -53,6 +53,9 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 THESE ARE UNSCHEDULED BACKLOG TASKS
 -----------------------------------
 
+* implement some sort of archive/backup command in mged in order to
+  save the currently open database out to a file.
+
 * make sure there are no getenv() non-NULL assumptions within the
   code.  might want to see if there's a pattern of variables being
   checked such that a libbu interface would be warranted (e.g.,
