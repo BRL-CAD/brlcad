@@ -23,6 +23,9 @@ THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 -------------------------------------------------------
 
+* fix tcl/tk/itcl/itk installed library permissions; fix itcl/itk
+  pkgIndex.tcl files to point to the .so library
+
 * the binary windows installer is missing headers for our external
   dependencies (Tcl and OpenNURBS in particular as the likes of bu.h
   and raytrace.h requires them)
