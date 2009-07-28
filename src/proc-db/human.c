@@ -249,20 +249,19 @@ void boundingBox(struct rt_wdb *file, char *name, fastf_t *startPoint, fastf_t *
 	for(i = 0; i<8; i++)
 	{
 		vects[i][Y]*=-1;
-	//	vects[i][X]*=-1;
 	}
 
 /* Print rotation matrix */
 	int w=0;
 	for(w=1; w<=16; w++){
 	/*Z rotation matrix */
-//		if(w==1 || w==2 || w== 5 || w== 6 || w==11)
-//			rotMatrix[(w-1)] = rotMatrix[(w-1)] * -1;
-
+/*		if(w==1 || w==2 || w== 5 || w== 6 || w==11)
+			rotMatrix[(w-1)] = rotMatrix[(w-1)] * -1;
+*/
 	/*Y rotation Matrix */
-//		if(w==1 || w==3 || w== 6 || w==9 || w==11)
-//			rotMatrix[(w-1)] = rotMatrix[(w-1)] * -1;
-
+/*		if(w==1 || w==3 || w== 6 || w==9 || w==11)
+			rotMatrix[(w-1)] = rotMatrix[(w-1)] * -1;
+*/
 	/*X rotation Matrix */
 		if(w==1 || w==6 || w== 7 || w==10 || w==11)
 			rotMatrix[(w-1)] = rotMatrix[(w-1)] * -1;
@@ -287,7 +286,7 @@ void boundingBox(struct rt_wdb *file, char *name, fastf_t *startPoint, fastf_t *
 	for(i = 0; i < 8; i++){
 		VMOVE(finalPoints[i], newVects[i]);
 	}
-//	mk_trc_h(file, debug, endPoint, lengthVector, 2, 2);
+/*	mk_trc_h(file, debug, endPoint, lengthVector, 2, 2); */
 	mk_arb8(file, newName, *finalPoints);
 }
 
@@ -298,7 +297,6 @@ void boundingRectangle(struct rt_wdb *file, char *name, fastf_t *startPoint, fas
          * And then rotate it to the current position as given in rotMatrix,
          * followed by naming it by taking name, and cat-ing BOX to the end of it.
          */
-        point_t points[8];
 	vect_t vects[8];
         vect_t distance;
         char newName[MAXLENGTH] = "a";
@@ -312,10 +310,6 @@ void boundingRectangle(struct rt_wdb *file, char *name, fastf_t *startPoint, fas
 	/* Set first 4 points to be on the same plane as the starting point, and the last 4 points to be the distance vector point plane */
 /*
 *	fastf_t length=findVector(partWidth, partWidth);
-*/
-/*
-        VSET(points[0], (-partDepth+startPoint[X]), (-partWidth+startPoint[Y]), (distance[Z]));
-        VSET(points[1], (partDepth+startPoint[X]), (partWidth+startPoint[Y]), (startPoint[Z]));
 */
         VSET(vects[0], (-partDepth+startPoint[X]), (-partWidth+startPoint[Y]), (startPoint[Z]));
         VSET(vects[1], (-partDepth+startPoint[X]), (partWidth+startPoint[Y]), (startPoint[Z]));
@@ -1153,6 +1147,52 @@ void setStance(fastf_t stance, struct human_data_t *dude)
 }
 
 /**
+ * Goes through the human struct and sets all measurements to needed measurements,
+ * i.e. if certain percentile person is needed, those measurements are set. 
+ */
+void setMeasurements(struct human_data_t dude, fastf_t percentile)
+{
+	/* If percentile, load data from database or something */
+	/* And standing height from this point on will be derived from gathered values
+	*  so it will be a combination of leglength, torsolength, and headsize. So standing
+	*  height is now irrelevant
+	*/
+/*
+	dude->head.headSize=
+	dude->head.neckSize=
+	dude->head.neckWidth=
+
+
+	**-->Derived now dude->torso.torsoLength=
+	dude->torso.topTorsoLength=
+	dude->torso.lowTorsoLength=
+	dude->torso.shoulderWidth=
+	dude->torso.abWidth=
+	dude->torso.pelvisWidth=
+
+	** Derived dude->arms.armLength
+	dude->arms.upperArmWidth=
+	dude->arms.upperArmLength=
+	dude->arms.lowerArmLength=
+	dude->arms.elbowWidth=
+	dude->arms.wristWidth=
+	dude->arms.handLength=
+	dude->arms.handWidth=
+
+	** Derived dude->legs.legLength=
+	dude->legs.thighLength=
+	dude->legs.thighWidth=
+	dude->legs.calfLength=
+	dude->legs.kneeWidth=
+	dude->legs.footLength=
+	dude->legs.ankleWidth=
+	dude->legs.toeWidth=
+
+	dude.height=(dude->torso.topTorsoLength + dude->torso.lowTorsoLength + dude->legs.thighLength + dude->legs.calfLength);
+*/
+}	
+
+/**
  * Help message printed when -h/-? option is supplied
  */
 void show_help(const char *name, const char *optstr)
@@ -1181,6 +1221,7 @@ void show_help(const char *name, const char *optstr)
 	   "\t-b\t\tShow bounding Boxes\n"
 	   "\t-N\t\tNumber to make (square)\n"
 	   "\t-s\t\tStance to take 0-Stand 1-Sit 2-Drive 3-Arms out 4-Letterman 5-Captain 999-Custom\n"
+	   "\t-p\t\tSet Percentile (not implemented yet) 1-99\n"
 	);
 
     bu_vls_free(&str);
@@ -1207,13 +1248,14 @@ void getLocation(fastf_t *location)
 }
 
 /* Process command line arguments */
-int read_args(int argc, char **argv, struct human_data_t *dude, fastf_t *location, fastf_t *stance, fastf_t *troops, fastf_t *showBoxes)
+int read_args(int argc, char **argv, struct human_data_t *dude, fastf_t *percentile, fastf_t *location, fastf_t *stance, fastf_t *troops, fastf_t *showBoxes)
 {
     int c = 0;
-    char *options="H:N:h:O:o:a:b:s:l:A";
+    char *options="H:N:h:O:o:a:b:p:s:l:A";
     float height=0;
     int soldiers=0;
     int pose=0;
+    int percent=50;
 
     /* don't report errors */
     bu_opterr = 0;
@@ -1222,8 +1264,9 @@ int read_args(int argc, char **argv, struct human_data_t *dude, fastf_t *locatio
     while ((c=bu_getopt(argc, argv, options)) != EOF) {
 	switch (c) {
 	    case 'A':
-		bu_log("AutoMode, making average man\n");
+		bu_log("AutoMode, making 50 percentile man\n");
 		dude->height = DEFAULT_HEIGHT_INCHES;
+		*percentile=50;
 		fflush(stdin);
 		break;
 	
@@ -1275,6 +1318,16 @@ int read_args(int argc, char **argv, struct human_data_t *dude, fastf_t *locatio
 		bu_strlcpy(filename, bu_optarg, MAXLENGTH);
 		break;
 
+	    case 'p':
+		sscanf(bu_optarg, "%d", &percent);
+		if(percent < 1)
+			percent=1;
+		if(percent > 99)
+			percent=99;
+		*percentile=percent;
+		fflush(stdin);
+		break;
+
 	    case 's':
 		sscanf(bu_optarg, "%d", &pose);
 		fflush(stdin);
@@ -1311,7 +1364,7 @@ int main(int ac, char *av[])
     struct bu_vls str;
     struct human_data_t human_data;
     human_data.height = DEFAULT_HEIGHT_INCHES;
-    fastf_t showBoxes = 0, troops = 0, stance = 0;
+    fastf_t showBoxes = 0, troops = 0, stance = 0, percentile=50;
     char suffix[MAXLENGTH]= "";
     point_t location;
     VSET(location, 0, 0, 0); /* Default standing location */
@@ -1321,7 +1374,7 @@ int main(int ac, char *av[])
     bu_vls_trunc(&str, 0);
 
     /* Process command line arguments */
-    read_args(ac, av, &human_data, location, &stance, &troops, &showBoxes);
+    read_args(ac, av, &human_data, &percentile, location, &stance, &troops, &showBoxes);
     db_fp = wdb_fopen(filename);
 
     bu_log("%f %f %f\n", location[X], location[Y], location[Z]);
