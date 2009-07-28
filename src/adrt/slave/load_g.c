@@ -229,8 +229,6 @@ slave_load_g (tie_t *tie, char *data)
     rt_vlist_cleanup();
     db_close(dbip);
 
-    tie_prep(tie);
-
     return 0;
 }
 
