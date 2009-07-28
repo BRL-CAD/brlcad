@@ -45,6 +45,8 @@
 
 #include "bu.h"
 
+#include "master.h"
+
 #if TN_COMPRESSION
 # include <zlib.h>
 #endif
@@ -465,7 +467,7 @@ void* tienet_master_listener(void *ptr)
     tienet_master_highest_fd = master_socket;
 
     /* Listen for connections */
-    listen(master_socket, 3);
+    master_listener_result = listen(master_socket, 3);
 
     addrlen = sizeof(slave);
 

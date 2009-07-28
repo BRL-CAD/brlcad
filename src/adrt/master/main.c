@@ -43,6 +43,7 @@ static struct option longopts[] =
     { "exec",	required_argument,	NULL, 'e' },
     { "help",	no_argument,		NULL, 'h' },
     { "comp_host",	required_argument,	NULL, 'c' },
+    { "daemon",	no_argument,		NULL, 'd' },
     { "obs_port",	required_argument,	NULL, 'o' },
     { "port",	required_argument,	NULL, 'p' },
     { "build",	no_argument,		NULL, 'b' },
@@ -51,8 +52,11 @@ static struct option longopts[] =
 };
 #endif
 
-static char shortopts[] = "bc:e:i:ho:p:vl:";
+static char shortopts[] = "bc:de:i:ho:p:vl:";
 
+unsigned char go_daemon_mode = 0;
+unsigned int master_listener_result = 1;
+unsigned int observer_listener_result = 1;
 
 static void finish(int sig) {
     printf("Collected signal %d, aborting!\n", sig);
@@ -64,6 +68,7 @@ static void help() {
     printf("%s\n", "usage: adrt_master [options]\n\
   -h\t\tdisplay help.\n\
   -c\t\tconnect to component server.\n\
+  -d\t\tdaemon mode.\n\
   -e\t\tscript to execute that starts slaves.\n\
   -l\t\tfile containing list of slaves to use as compute nodes.\n\
   -o\t\tset observer port number.\n\
@@ -102,6 +107,10 @@ int main(int argc, char **argv) {
             case 'c':
 		strncpy(comp_host, optarg, 64-1);
 		comp_host[64-1] = '\0'; /* sanity */
+		break;
+
+	    case 'd':
+		go_daemon_mode = 1;
 		break;
 
             case 'h':
