@@ -140,8 +140,6 @@ EXTRA_DIST = \
 	bench/bench.c  \
 	bench/bench.h  \
 	bench/main.c \
-	doc/ChangeLog \
-	doc/binary_spec.txt \
 	scripts/adrt.py \
 	scripts/drawBSP.py \
 	scripts/makemovie.pl \
