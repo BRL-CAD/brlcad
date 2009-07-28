@@ -1988,7 +1988,7 @@ Popup Menu    Right or Ctrl-Left
     }
 
     # first remove any matrices
-    regsub -all {\{[0-9]+[^\}]+[0-9]+\}} $tlist "" tlist
+    regsub -all -- {\{-?[0-9]+[^\}]+-?[0-9]+\}} $tlist "" tlist
 
     # remove all other unwanted stuff
     regsub -all {^[lun!GXN^-] |\{[lun!GXN^-]|\}} $tlist "" tlist
