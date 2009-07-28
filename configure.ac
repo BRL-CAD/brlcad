@@ -1543,6 +1543,7 @@ PRECPPFLAGS="$CPPFLAGS"
 # optionally check for OpenGL headers
 if test "x$bc_with_opengl" != "xno" -o "x$bc_with_wgl" != "xno" ; then
     gl_include_works=no
+    unset ac_cv_header_GL_gl_h
     AC_CHECK_HEADER([GL/gl.h], [
 	AC_DEFINE(HAVE_GL_GL_H, 1, [Define to 1 if you have the <GL/gl.h> header file.])
 	gl_include_works="yes"
@@ -1562,6 +1563,7 @@ if test "x$bc_with_opengl" != "xno" -o "x$bc_with_wgl" != "xno" ; then
     CPPFLAGS="$PRECPPFLAGS"
 
     glx_include_works=no
+    unset ac_cv_header_GL_glx_h
     AC_CHECK_HEADER([GL/glx.h], [
 	AC_DEFINE(HAVE_GL_GLX_H, 1, [Define to 1 if you have the <GL/glx.h> header file.])
 	glx_include_works="yes"
