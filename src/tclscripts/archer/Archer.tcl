@@ -808,7 +808,7 @@ package provide Archer 1.0
 		    }
 
 		    # Add gmember only if its not already there
-		    set tmembers [regsub -all {(\{[ul] )|([{}]+)} $tree " "]
+		    regsub -all {(\{[ul] )|([{}]+)} $tree " " tmembers
 		    if {[lsearch $tmembers $gmember] == -1} {
 			$itk_component(ged) g $gname $gmember
 		    }
@@ -1206,7 +1206,30 @@ package provide Archer 1.0
 }
 
 ::itcl::body Archer::make {args} {
-    eval ArcherCore::gedWrapper make 0 0 1 1 $args
+    set alen [llength $args]
+
+    # Returns a help message.
+    if {$alen != 2} {
+	return [gedCmd make]
+    }
+
+    SetWaitCursor $this
+
+    if {[catch {eval gedCmd make $args} ret]} {
+	SetNormalCursor $this
+	return $ret
+    }
+
+    set new_name [lindex $args 0]
+
+    # Checkpoint the created object
+    set lnew_name [checkpoint $new_name $LEDGER_CREATE]
+
+    refreshTree 1
+
+    checkpoint $new_name $LEDGER_MODIFY
+    updateUndoState
+    SetNormalCursor $this
 }
 
 ::itcl::body Archer::make_bb {args} {
@@ -1291,7 +1314,13 @@ package provide Archer 1.0
 
     refreshTree 1
 
-    checkpoint $lnew_name $LEDGER_MODIFY
+    if {$old_name == $mSelectedObj} {
+	set mSelectedObj $new_name
+	regsub {([^/]+)$} $mSelectedObjPath $new_name mSelectedObjPath
+	initEdit 0
+    }
+
+    checkpoint $new_name $LEDGER_MODIFY
     checkpoint_olist $mlist $LEDGER_MODIFY
     updateUndoState
     SetNormalCursor $this
@@ -6143,7 +6172,7 @@ package provide Archer 1.0
 ::itcl::body Archer::invokeWizardDialog {class action wname} {
     gedCmd make_name -s 1
     set name [string tolower $class]
-    set name [regsub wizard $name ""]
+    regsub wizard $name "" name
     #XXX Temporary special case for TankWizardI
     #if {$class == "TankWizardI"} {
     #set name "simpleTank"
@@ -7634,6 +7663,7 @@ package provide Archer 1.0
     set mLedgerGID $gid
     incr mLedgerGID -1
 
+    set cflag 0
     set gnames {}
 
     # Undo each object associated with this transaction
@@ -7643,7 +7673,16 @@ package provide Archer 1.0
 	set type [$mLedger attr get $lentry $LEDGER_ENTRY_TYPE_ATTR]
 	switch $type \
 	    $LEDGER_CREATE {
-		# Nothing yet
+		gedCmd kill $gname
+
+		if {$gname == $mSelectedObj} {
+		    initDbAttrView $mTarget
+		}
+
+		set mSelectedObj ""
+		set mSelectedObjPath ""
+		set mSelectedObjType ""
+		set cflag 1
 	    } \
 	    $LEDGER_RENAME {
 		if {![catch {$mLedger attr get $lentry $LEDGER_ENTRY_MOVE_COMMAND} move_cmd]} {
@@ -7653,6 +7692,7 @@ package provide Archer 1.0
 		    set gname [lindex $move_cmd 2]
 		    if {$curr_name == $mSelectedObj} {
 			set mSelectedObj $gname
+			regsub {([^/]+)$} $mSelectedObjPath $gname mSelectedObjPath
 		    }
 		} else {
 		    puts "No old name found for $lentry"
@@ -7678,23 +7718,25 @@ package provide Archer 1.0
 	lappend gnames $gname
     }
 
-    foreach gname $gname {
-	if {$gname != "_GLOBAL"} {
-	    if {$gname == $mSelectedObj} {
-		set mNeedObjSave 0
-		redrawObj $mSelectedObjPath
-		initEdit 0
+    if {!$cflag} {
+	foreach gname $gnames {
+	    if {$gname != "_GLOBAL"} {
+		if {$gname == $mSelectedObj} {
+		    set mNeedObjSave 0
+		    redrawObj $mSelectedObjPath
+		    initEdit 0
 
-		# Make sure the selected object has atleast one checkpoint
-		checkpoint $mSelectedObj $LEDGER_MODIFY
-	    } else {
-		# Possibly draw the updated object
-		set stripped_lentry [regsub {[0-9]+_[0-9]+_} $lentry ""]
-		foreach item [gedCmd report 0] {
-		    regexp {/([^/]+$)} $item all last
+		    # Make sure the selected object has atleast one checkpoint
+		    checkpoint $mSelectedObj $LEDGER_MODIFY
+		} else {
+		    # Possibly draw the updated object
+		    regsub {[0-9]+_[0-9]+_} $lentry "" stripped_lentry
+		    foreach item [gedCmd report 0] {
+			regexp {/([^/]+$)} $item all last
 
-		    if {$last == $stripped_lentry} {
-			redrawObj $item
+			if {$last == $stripped_lentry} {
+			    redrawObj $item
+			}
 		    }
 		}
 	    }
@@ -7723,7 +7765,7 @@ package provide Archer 1.0
     }
 
     foreach le [$mLedger ls -A $LEDGER_ENTRY_OUT_OF_SYNC_ATTR 0] {
-	set le [regsub {/$|/R$} $le ""]
+	regsub {/$|/R$} $le "" le
 	$mLedger kill $le
     }
 }
@@ -7781,6 +7823,8 @@ package provide Archer 1.0
 	incr mLedgerGID -1
     }
 
+    set cflag 0
+
     # Undo each object associated with this transaction
     foreach lentry [$mLedger expand $gid\_$oid\_*] {
 	regexp {([0-9]+)_([0-9]+)_(.+)} $lentry all gid oid gname
@@ -7789,7 +7833,11 @@ package provide Archer 1.0
 	set type [$mLedger attr get $lentry $LEDGER_ENTRY_TYPE_ATTR]
 	switch $type \
 	    $LEDGER_CREATE {
-		# Nothing yet
+		gedCmd kill $gname
+		set mSelectedObj ""
+		set mSelectedObjPath ""
+		set mSelectedObjType ""
+		set cflag 1
 	    } \
 	    $LEDGER_RENAME {
 		if {![catch {$mLedger attr get $lentry $LEDGER_ENTRY_MOVE_COMMAND} move_cmd]} {
@@ -7799,6 +7847,7 @@ package provide Archer 1.0
 		    set gname [lindex $move_cmd 2]
 		    if {$curr_name == $mSelectedObj} {
 			set mSelectedObj $gname
+			regsub {([^/]+)$} $mSelectedObjPath $gname mSelectedObjPath
 		    }
 		} else {
 		    puts "No old name found for $lentry"
@@ -7820,8 +7869,13 @@ package provide Archer 1.0
     }
 
     set mNeedObjSave 0
-    redrawObj $mSelectedObjPath
-    initEdit 0
+
+    if {!$cflag} {
+	redrawObj $mSelectedObjPath
+	initEdit 0
+    } else {
+	initDbAttrView $mTarget
+    }
 
     set mNeedCheckpoint 0
     updateUndoState
@@ -7837,18 +7891,8 @@ package provide Archer 1.0
 }
 
 ::itcl::body Archer::revert {} {
-# Code to capture the display list
-#    set rlist [gedCmd report 0]
-#    set rlen [llength $rlist]
-
     set mNeedSave 0
     Load $mTarget
-
-# Code to redraw the captured display list
-#    if {$rlen > 0} {
-#	set rlist [regsub -all "\n" $rlist " "]
-#	eval draw $rlist
-#    }
 
     set mLedgerGID 0
 
