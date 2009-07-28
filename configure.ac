@@ -2216,8 +2216,6 @@ fi
 AC_SUBST(PNG)
 AC_SUBST(PNG_CPPFLAGS)
 
-LDFLAGS="$LDFLAGS -Wl,-dylib_file -Wl,/System/Library/Frameworks/ApplicationServices.framework/Versions/A/Frameworks/ImageIO.framework/Versions/A/Resources/libPng.dylib:/System/Library/Frameworks/ApplicationServices.framework/Versions/A/Frameworks/ImageIO.framework/Versions/A/Resources/libPng.dylib"
-
 dnl *** libregex ***
 dnl See if regular expression support works
 regex_works=no
