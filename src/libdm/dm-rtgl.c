@@ -1212,27 +1212,71 @@ void drawPoints() {
 
 struct objTree objects;
 
+char** getTops(struct ged *gedp, int *numTopsp) {
+    register struct directory *dp;
+    register int i, j;
+    struct directory **dirp;
+    struct directory **dirp0 = (struct directory **)NULL;
+    char **tops;
+    int c;
+
+    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
+
+    /* initialize result */
+    bu_vls_trunc(&gedp->ged_result_str, 0);
+
+    /* Can this be executed only sometimes?
+     *  Perhaps a "dirty bit" on the database? */
+    db_update_nref(gedp->ged_wdbp->dbip, &rt_uniresource);
+
+    /* Find number of possible entries and allocate memory  */
+    dirp = (struct directory **)ged_dir_getspace(gedp->ged_wdbp->dbip, 0);
+    dirp0 = dirp;
+
+    if (gedp->ged_wdbp->dbip->dbi_version < 5) {
+	for (i = 0; i < RT_DBNHASH; i++) {
+            for (dp = gedp->ged_wdbp->dbip->dbi_Head[i]; dp != DIR_NULL; dp = dp->d_forw)  {
+                if (dp->d_nref == 0) {
+                    *dirp++ = dp;
+
+		}
+            }
+	}
+    } else {
+        for (i = 0; i < RT_DBNHASH; i++) {
+            for (dp = gedp->ged_wdbp->dbip->dbi_Head[i]; dp != DIR_NULL; dp = dp->d_forw) {
+                if (dp->d_nref == 0 && !(dp->d_flags & DIR_HIDDEN) && (dp->d_addr != RT_DIR_PHONY_ADDR)) {
+
+                    /* add non-hidden real object */
+                    *dirp++ = dp;
+                }
+            }
+	}
+    }
+
+    int length, numTops = (int)(dirp - dirp0);
+    tops = bu_malloc(numTops * sizeof(char *), "dm-rtgl.c: getTops");
+
+    /* copy top names */
+    for (i = 0; i < numTops; i++) {
+	length = strlen(dirp0[i]->d_namep) + 1;
+
+	tops[i] = bu_malloc(length * sizeof(char), "dm-rtgl.c: getTops");
+	
+	for(j = 0; j < length; j++) {
+	    tops[i][j] = dirp0[i]->d_namep[j];
+	}
+    }
+
+    bu_free((genptr_t)dirp0, "wdb_tops_cmd: wdb_dir_getspace");
+
+    *numTopsp = numTops;
+
+    return (char **)tops;
+}
+
 void buildTree(struct ged *gedp) {
-    int i, len;
-    char *curr, *result, *name;
 
-    /* get names of tree tops */
-    ged_tops(gedp, 2, "tops -n");
-    result = bu_vls_strdup(&(gedp->ged_result_str));
-
-    /* extract individual names */
-    len = strcspn(result, "/ ");   /* num chars before '/' or ' ' */
-
-    name = malloc(sizeof(char) * (len + 1));
-    name[len] = '\0';
-
-    strncpy(name, result, len);
-
-    /* skip to  next name */
-    while(result[len] != ' ') len++;
-    while(result[len++] == ' ');
-
-    result = &(result[len]);
 }
 
 /*
@@ -1280,9 +1324,14 @@ rtgl_drawVList(struct dm *dmp, register struct bn_vlist *vp)
 	call = 1;
     }
 
-    
+    char **tops;
+    int length;
     if (call == 1) {
-	buildTree(gedp);
+	tops = getTops(gedp, &length);
+
+	for (i = 0; i < length; i++) {
+	    bu_log("%s", tops[i]);
+	}
     }
 
     /* get number and names of visible tree tops */
