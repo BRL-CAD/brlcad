@@ -638,6 +638,19 @@ manner as shown above for PATH.  Conversely, you can use the `brlman'
 command that is already preconfigured to locate the BRL-CAD manpages.
 
 
+Configuring permissions uniformly with group read/write access:
+
+find /usr/brlcad -type d -exec chmod ug+rwx {} \; -exec chmod o+rx {} \; -o -type f -exec chmod ug+rw {} \; -exec chmod o+r {} \;
+
+The above 'find' line will set up permissions across a /usr/brlcad
+rooted installation such that 'user' and 'group' will have read-write
+access and 'other' will have read access consistently across all
+files.  This is a common configuration used by BRL-CAD developers that
+allows shared management of installations amongst developers while
+having all users maintain read-only access.
+
+
+
 TESTING FUNCTIONALITY
 ---------------------
 
