@@ -147,6 +147,6 @@ EXTRA_DIST = \
 	scripts/ptcloud.py \
 	slave/g-adrt.c
 
-DEPS = src/libbn
+DEPS = src/libgcv
 
 include $(top_srcdir)/misc/Makefile.defs
