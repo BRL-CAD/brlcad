@@ -40,14 +40,14 @@
 #define ADRT_WORK_BASE 0x10
 enum
 {
-    ADRT_WORK_INIT = ADRT_WORK_BASE,
-    ADRT_WORK_STATUS,
-    ADRT_WORK_FRAME_ATTR,
-    ADRT_WORK_FRAME,
-    ADRT_WORK_SHOTLINE,
-    ADRT_WORK_SPALL,
-    ADRT_WORK_SELECT,
-    ADRT_WORK_MINMAX,
+    ADRT_WORK_INIT = ADRT_WORK_BASE,	/* 10 */
+    ADRT_WORK_STATUS,			/* 11 */
+    ADRT_WORK_FRAME_ATTR,		/* 12 */
+    ADRT_WORK_FRAME,			/* 13 */
+    ADRT_WORK_SHOTLINE,			/* 14 */
+    ADRT_WORK_SPALL,			/* 15 */
+    ADRT_WORK_SELECT,			/* 16 */
+    ADRT_WORK_MINMAX,			/* 17 */
     ADRT_WORK_END
 };
 static char *adrt_work_table[20] = {
@@ -67,14 +67,14 @@ static char *adrt_work_table[20] = {
 /* top level messages */
 enum
 {
-    ADRT_NETOP_NOP = ADRT_NETOP_BASE,
-    ADRT_NETOP_INIT,
-    ADRT_NETOP_REQWID,
-    ADRT_NETOP_LOAD,
-    ADRT_NETOP_WORK,
-    ADRT_NETOP_MESG,
-    ADRT_NETOP_QUIT,
-    ADRT_NETOP_SHUTDOWN,
+    ADRT_NETOP_NOP = ADRT_NETOP_BASE,	/* 20 */
+    ADRT_NETOP_INIT,			/* 21 */
+    ADRT_NETOP_REQWID,			/* 22 */
+    ADRT_NETOP_LOAD,			/* 23 */
+    ADRT_NETOP_WORK,			/* 24 */
+    ADRT_NETOP_MESG,			/* 25 */
+    ADRT_NETOP_QUIT,			/* 26 */
+    ADRT_NETOP_SHUTDOWN,		/* 27 */
     ADRT_NETOP_END
 };
 static char *adrt_netop_table[20] = {
