@@ -106,8 +106,9 @@ package provide Archer 1.0
 
     public {
 	# Public Class Variables
-	common LEDGER_ENTRY_HAVE_MODS_ATTR "Ledger_Entry_Have_Mods"
+	common LEDGER_ENTRY_OUT_OF_SYNC_ATTR "Ledger_Entry_Out_Of_Sync"
 	common LEDGER_ENTRY_TYPE_ATTR "Ledger_Entry_Type"
+	common LEDGER_ENTRY_MOVE_COMMAND "Ledger_Entry_Move_Command"
 	common LEDGER_CREATE "Create"
 	common LEDGER_DESTROY "Destroy"
 	common LEDGER_MODIFY "Modify"
@@ -255,6 +256,7 @@ package provide Archer 1.0
 	method gedWrapper2 {_cmd _oindex _pindex _eflag _hflag _sflag _tflag args}
 	method globalWrapper {_cmd args}
 	method killWrapper {_cmd args}
+	method moveWrapper {_cmd args}
 	method initDefaultBindings {{_comp ""}}
 	method initGed {}
 	method selectNode {_tags {_rflag 1}}
@@ -1040,7 +1042,7 @@ package provide Archer 1.0
 		set oflag 1
 	    }
 
-	    $mLedger attr set $lname $LEDGER_ENTRY_HAVE_MODS_ATTR 1
+	    $mLedger attr set $lname $LEDGER_ENTRY_OUT_OF_SYNC_ATTR 1
 	    lappend new_olist $lname
 	    continue
 	}
@@ -1055,7 +1057,7 @@ package provide Archer 1.0
 		set oflag 1
 	    }
 
-	    $mLedger attr set $lname $LEDGER_ENTRY_HAVE_MODS_ATTR 1
+	    $mLedger attr set $lname $LEDGER_ENTRY_OUT_OF_SYNC_ATTR 1
 	    lappend new_olist $lname
 	    continue
 	}
@@ -1070,7 +1072,7 @@ package provide Archer 1.0
 		set oflag 1
 	    }
 
-	    $mLedger attr set $lname $LEDGER_ENTRY_HAVE_MODS_ATTR 1
+	    $mLedger attr set $lname $LEDGER_ENTRY_OUT_OF_SYNC_ATTR 1
 	    lappend new_olist $lname
 	    continue
 	}
@@ -1085,7 +1087,7 @@ package provide Archer 1.0
 		set oflag 1
 	    }
 
-	    $mLedger attr set $lname $LEDGER_ENTRY_HAVE_MODS_ATTR 1
+	    $mLedger attr set $lname $LEDGER_ENTRY_OUT_OF_SYNC_ATTR 1
 	    lappend new_olist $lname
 	    continue
 	}
@@ -1189,7 +1191,7 @@ package provide Archer 1.0
     }
 
     foreach lname $lnames {
-	$mLedger attr set $lname $LEDGER_ENTRY_HAVE_MODS_ATTR 1
+	$mLedger attr set $lname $LEDGER_ENTRY_OUT_OF_SYNC_ATTR 1
     }
 
     refreshTree 1
@@ -1220,11 +1222,79 @@ package provide Archer 1.0
 }
 
 ::itcl::body Archer::mv {args} {
-    eval ArcherCore::gedWrapper mv 0 0 1 1 $args
+    eval moveWrapper mv $args
 }
 
 ::itcl::body Archer::mvall {args} {
-    eval ArcherCore::gedWrapper mvall 0 0 1 1 $args
+    eval moveWrapper mvall $args
+}
+
+::itcl::body Archer::moveWrapper {_cmd args} {
+    set alen [llength $args]
+
+    # Returns a help message.
+    if {$alen == 0} {
+	return [gedCmd $_cmd]
+    }
+
+    if {$alen == 3} {
+	# Must be using the -n option. If not, an error message
+	# containing the usage string will be returned.
+	return [eval gedCmd $_cmd $args]
+    }
+
+    # Get the list of potentially modified objects.
+    if {$_cmd == "mvall"} {
+	set mlist [eval gedCmd $_cmd -n $args]
+    } else {
+	set mlist {}
+    }
+
+    set mlen [llength $mlist]
+
+    set old_name [lindex $args 0]
+    set new_name [lindex $args 1]
+
+    SetWaitCursor $this
+
+    # Checkpoint the objects that used to reference
+    # the soon-to-be renamed objects.
+    if {$mlen} {
+	set lnames [checkpoint_olist $mlist $LEDGER_MODIFY]
+    } else {
+	set lnames {}
+    }
+
+    if {[catch {eval gedCmd $_cmd $args} ret]} {
+	ledger_cleanup
+	SetNormalCursor $this
+	return $ret
+    }
+
+    # Flag these as having mods
+    foreach lname $lnames {
+	$mLedger attr set $lname $LEDGER_ENTRY_OUT_OF_SYNC_ATTR 1
+    }
+
+    # Decrement the GID so that the renamed
+    # object below has the same GID as the
+    # modified objects above.
+    if {$mlen} {
+	incr mLedgerGID -1
+    }
+
+    # Checkpoint the renamed object
+    set lnew_name [checkpoint $new_name $LEDGER_RENAME]
+
+    # Save the command for moving things back
+    $mLedger attr set $lnew_name $LEDGER_ENTRY_MOVE_COMMAND "$_cmd $new_name $old_name"
+
+    refreshTree 1
+
+    checkpoint $lnew_name $LEDGER_MODIFY
+    checkpoint_olist $mlist $LEDGER_MODIFY
+    updateUndoState
+    SetNormalCursor $this
 }
 
 ::itcl::body Archer::nmg_collapse {args} {
@@ -1835,7 +1905,7 @@ package provide Archer 1.0
 	    puts "No ledger entry found for $obj."
 	} else {
 	    # Assumed to have mods after the command invocation above
-	    $mLedger attr set $le $LEDGER_ENTRY_HAVE_MODS_ATTR 1
+	    $mLedger attr set $le $LEDGER_ENTRY_OUT_OF_SYNC_ATTR 1
 
 	    set mNeedSave 1
 	    set mNeedGlobalUndo 1
@@ -1911,7 +1981,7 @@ package provide Archer 1.0
 	return "No ledger entry found for _GLOBAL."
     } else {
 	# Assumed to have mods after the command invocation above
-	$mLedger attr set $lname $LEDGER_ENTRY_HAVE_MODS_ATTR 1
+	$mLedger attr set $lname $LEDGER_ENTRY_OUT_OF_SYNC_ATTR 1
 	$mLedger attr set $lname UNITS $old_units
     }
 
@@ -1951,7 +2021,7 @@ package provide Archer 1.0
 	set alist [eval gedCmd $_cmd -n $expandedArgs]
     }
 
-    # The first sublist is for killed objects. The second is for modified.
+    # The first sublist is for killed objects. The second is for modified objects.
     set klist [lindex $alist 0]
     set mlist [lindex $alist 1]
 
@@ -1978,7 +2048,7 @@ package provide Archer 1.0
     # Need to checkpoint before they're gone
     checkpoint_olist $klist $LEDGER_DESTROY
 
-    # Back up the GID so that the modified
+    # Decrement the GID so that the modified
     # objects below have the same GID.
     incr mLedgerGID -1
 
@@ -1993,7 +2063,7 @@ package provide Archer 1.0
     }
 
     foreach lname $lnames {
-	$mLedger attr set $lname $LEDGER_ENTRY_HAVE_MODS_ATTR 1
+	$mLedger attr set $lname $LEDGER_ENTRY_OUT_OF_SYNC_ATTR 1
     }
 
     refreshTree 1
@@ -2268,7 +2338,7 @@ package provide Archer 1.0
 	return
     }
 
-    set l [$mLedger ls -A $LEDGER_ENTRY_HAVE_MODS_ATTR 1]
+    set l [$mLedger ls -A $LEDGER_ENTRY_OUT_OF_SYNC_ATTR 1]
     set len [llength $l]
     if {$len == 0} {
 	set mNeedSave 0
@@ -2289,7 +2359,7 @@ package provide Archer 1.0
 	    if {$len > 1} {
 		set mNeedObjUndo 1
 	    } else {
-		if {[$mLedger attr get $le $LEDGER_ENTRY_HAVE_MODS_ATTR]} {
+		if {[$mLedger attr get $le $LEDGER_ENTRY_OUT_OF_SYNC_ATTR]} {
 		    set mNeedObjUndo 1
 		} else {
 		    set mNeedObjUndo 0
@@ -7322,10 +7392,10 @@ package provide Archer 1.0
 	set le [lindex $l end]
 	regexp {([0-9]+)_([0-9]+)_(.+)} $le all gid oid gname
 
-	set have_mods [$mLedger attr get $le $LEDGER_ENTRY_HAVE_MODS_ATTR]
+	set oosync [$mLedger attr get $le $LEDGER_ENTRY_OUT_OF_SYNC_ATTR]
 
 	# No need to checkpoint again (i.e. no mods since last checkpoint)
-	if {!$have_mods} {
+	if {!$oosync} {
 	    if {$_obj == $mSelectedObj && $len > 1} {
 		set mNeedGlobalUndo 1
 		set mNeedObjUndo 1
@@ -7333,7 +7403,7 @@ package provide Archer 1.0
 		set mNeedObjUndo 0
 
 		# Check for other entries having mods
-		set l [$mLedger ls -A $LEDGER_ENTRY_HAVE_MODS_ATTR 1]
+		set l [$mLedger ls -A $LEDGER_ENTRY_OUT_OF_SYNC_ATTR 1]
 		set len [llength $l]
 
 		if {$len == 0} {
@@ -7371,14 +7441,14 @@ package provide Archer 1.0
 	$LEDGER_CREATE - \
 	$LEDGER_DESTROY - \
 	$LEDGER_RENAME {
-	    $mLedger attr set $lname $LEDGER_ENTRY_HAVE_MODS_ATTR 1
+	    $mLedger attr set $lname $LEDGER_ENTRY_OUT_OF_SYNC_ATTR 1
 	} \
 	$LEDGER_MODIFY - \
 	default {
-	    $mLedger attr set $lname $LEDGER_ENTRY_HAVE_MODS_ATTR 0
+	    $mLedger attr set $lname $LEDGER_ENTRY_OUT_OF_SYNC_ATTR 0
 	}
 
-    set l [$mLedger ls -A $LEDGER_ENTRY_HAVE_MODS_ATTR 1]
+    set l [$mLedger ls -A $LEDGER_ENTRY_OUT_OF_SYNC_ATTR 1]
     set len [llength $l]
     if {$len == 0} {
 	set mNeedGlobalUndo 0
@@ -7449,7 +7519,7 @@ package provide Archer 1.0
 		set l [lsort -dictionary $l]
 		set le [lindex $l end]
 
-		if {![$mLedger attr get $le $LEDGER_ENTRY_HAVE_MODS_ATTR]} {
+		if {![$mLedger attr get $le $LEDGER_ENTRY_OUT_OF_SYNC_ATTR]} {
 		    $mLedger kill $le
 
 		    if {$len > 1} {
@@ -7470,15 +7540,15 @@ package provide Archer 1.0
 	    $LEDGER_CREATE - \
 	    $LEDGER_DESTROY - \
 	    $LEDGER_RENAME {
-		$mLedger attr set $lname $LEDGER_ENTRY_HAVE_MODS_ATTR 1
+		$mLedger attr set $lname $LEDGER_ENTRY_OUT_OF_SYNC_ATTR 1
 	    } \
 	    $LEDGER_MODIFY - \
 	    default {
-		$mLedger attr set $lname $LEDGER_ENTRY_HAVE_MODS_ATTR 0
+		$mLedger attr set $lname $LEDGER_ENTRY_OUT_OF_SYNC_ATTR 0
 	    }
     }
 
-    set l [$mLedger ls -A $LEDGER_ENTRY_HAVE_MODS_ATTR 1]
+    set l [$mLedger ls -A $LEDGER_ENTRY_OUT_OF_SYNC_ATTR 1]
     set len [llength $l]
     if {$len == 0} {
 	set mNeedGlobalUndo 0
@@ -7564,6 +7634,8 @@ package provide Archer 1.0
     set mLedgerGID $gid
     incr mLedgerGID -1
 
+    set gnames {}
+
     # Undo each object associated with this transaction
     foreach lentry [$mLedger expand $gid\_$oid\_*] {
 	regexp {([0-9]+)_([0-9]+)_(.+)} $lentry all gid oid gname
@@ -7574,14 +7646,25 @@ package provide Archer 1.0
 		# Nothing yet
 	    } \
 	    $LEDGER_RENAME {
-		# Nothing yet
+		if {![catch {$mLedger attr get $lentry $LEDGER_ENTRY_MOVE_COMMAND} move_cmd]} {
+		    eval gedCmd $move_cmd
+
+		    set curr_name [lindex $move_cmd 1]
+		    set gname [lindex $move_cmd 2]
+		    if {$curr_name == $mSelectedObj} {
+			set mSelectedObj $gname
+		    }
+		} else {
+		    puts "No old name found for $lentry"
+		    continue
+		}
 	    } \
 	    $LEDGER_DESTROY - \
 	    $LEDGER_MODIFY - \
 	    default {
 		# Adjust the corresponding object according to the ledger entry
 		gedCmd cp -f $mLedger\:$lentry $gname
-		gedCmd attr rm $gname $LEDGER_ENTRY_HAVE_MODS_ATTR
+		gedCmd attr rm $gname $LEDGER_ENTRY_OUT_OF_SYNC_ATTR
 		gedCmd attr rm $gname $LEDGER_ENTRY_TYPE_ATTR
 	    }
 
@@ -7592,6 +7675,10 @@ package provide Archer 1.0
 	# Remove the ledger entry
 	$mLedger kill $lentry
 
+	lappend gnames $gname
+    }
+
+    foreach gname $gname {
 	if {$gname != "_GLOBAL"} {
 	    if {$gname == $mSelectedObj} {
 		set mNeedObjSave 0
@@ -7614,7 +7701,9 @@ package provide Archer 1.0
 	}
     }
 
-    set l [$mLedger ls -A $LEDGER_ENTRY_HAVE_MODS_ATTR 1]
+    refreshTree 1
+
+    set l [$mLedger ls -A $LEDGER_ENTRY_OUT_OF_SYNC_ATTR 1]
     set len [llength $l]
     if {$len == 0} {
 	set mNeedCheckpoint 0
@@ -7633,7 +7722,7 @@ package provide Archer 1.0
 	return
     }
 
-    foreach le [$mLedger ls -A $LEDGER_ENTRY_HAVE_MODS_ATTR 0] {
+    foreach le [$mLedger ls -A $LEDGER_ENTRY_OUT_OF_SYNC_ATTR 0] {
 	set le [regsub {/$|/R$} $le ""]
 	$mLedger kill $le
     }
@@ -7660,7 +7749,7 @@ package provide Archer 1.0
 	set mNeedObjUndo 0
 	set mNeedSave 0
 
-	set l [$mLedger ls -A $LEDGER_ENTRY_HAVE_MODS_ATTR 1]
+	set l [$mLedger ls -A $LEDGER_ENTRY_OUT_OF_SYNC_ATTR 1]
 	set len [llength $l]
 	if {$len == 0} {
 	    set mNeedGlobalUndo 0
@@ -7680,7 +7769,7 @@ package provide Archer 1.0
     set l [lsort -dictionary $l]
     set le [lindex $l end]
 
-    if {![$mLedger attr get $le $LEDGER_ENTRY_HAVE_MODS_ATTR]} {
+    if {![$mLedger attr get $le $LEDGER_ENTRY_OUT_OF_SYNC_ATTR]} {
 	# No mods yet
 	return
     }
@@ -7696,13 +7785,6 @@ package provide Archer 1.0
     foreach lentry [$mLedger expand $gid\_$oid\_*] {
 	regexp {([0-9]+)_([0-9]+)_(.+)} $lentry all gid oid gname
 
-#	if {$gname == $mSelectedObj && $oid == 0} {
-#	    if {![$mLedger attr get $lentry $LEDGER_ENTRY_HAVE_MODS_ATTR]} {
-#		# No mods yet
-#		return
-#	    }
-#	}
-
 	# Undo it (Note - the destroy transaction will never show up here)
 	set type [$mLedger attr get $lentry $LEDGER_ENTRY_TYPE_ATTR]
 	switch $type \
@@ -7710,14 +7792,25 @@ package provide Archer 1.0
 		# Nothing yet
 	    } \
 	    $LEDGER_RENAME {
-		# Nothing yet
+		if {![catch {$mLedger attr get $lentry $LEDGER_ENTRY_MOVE_COMMAND} move_cmd]} {
+		    eval gedCmd $move_cmd
+
+		    set curr_name [lindex $move_cmd 1]
+		    set gname [lindex $move_cmd 2]
+		    if {$curr_name == $mSelectedObj} {
+			set mSelectedObj $gname
+		    }
+		} else {
+		    puts "No old name found for $lentry"
+		    continue
+		}
 	    } \
 	    $LEDGER_DESTROY - \
 	    $LEDGER_MODIFY - \
 	    default {
 		# Adjust the corresponding object according to the ledger entry
 		gedCmd cp -f $mLedger\:$lentry $gname
-		gedCmd attr rm $gname $LEDGER_ENTRY_HAVE_MODS_ATTR
+		gedCmd attr rm $gname $LEDGER_ENTRY_OUT_OF_SYNC_ATTR
 		gedCmd attr rm $gname $LEDGER_ENTRY_TYPE_ATTR
 	    }
 
@@ -7732,6 +7825,8 @@ package provide Archer 1.0
 
     set mNeedCheckpoint 0
     updateUndoState
+
+    refreshTree 1
 
     # Make sure the selected object has atleast one checkpoint
     checkpoint $mSelectedObj $LEDGER_MODIFY
@@ -7800,7 +7895,7 @@ package provide Archer 1.0
 	set le [lindex $l end]
     }
 
-    $mLedger attr set $le $LEDGER_ENTRY_HAVE_MODS_ATTR 1
+    $mLedger attr set $le $LEDGER_ENTRY_OUT_OF_SYNC_ATTR 1
 
     set mNeedCheckpoint 1
     set mNeedGlobalUndo 1
