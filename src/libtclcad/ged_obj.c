@@ -6141,7 +6141,8 @@ go_edit_redraw_func(struct ged	*gedp,
 			/* The function call above causes gdlp to be removed from the display
                          * list. A new one is then created and appended to the end.
 			 * Here we put it back where it belongs (i.e. as specified by the user).
-			 * This also prevents an infinite loop.
+			 * This also prevents an infinite loop where the last and the second to
+			 * last list items play leap frog with the end of list.
 			 */
 			last_gdlp = BU_LIST_PREV(ged_display_list, &gedp->ged_gdp->gd_headDisplay);
 			BU_LIST_DEQUEUE(&last_gdlp->l);
