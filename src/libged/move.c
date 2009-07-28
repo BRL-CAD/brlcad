@@ -113,7 +113,7 @@ ged_move(struct ged *gedp, int argc, const char *argv[])
 
 	if (found) {
 	    bu_vls_free(&gdlp->gdl_path);
-	    bu_vls_printf(&gdlp->gdl_path, "%S", &new_path);
+	    bu_vls_printf(&gdlp->gdl_path, "%V", &new_path);
 	}
 
 	free((void *)dup);
