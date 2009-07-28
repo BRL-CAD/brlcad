@@ -84,17 +84,19 @@ struct ptInfoList {
 };
 
 struct objTree {
-    char *treeName;
+    char *name;
     int numChildren;
-    struct objTree **children;
+    struct objTree *children;
+    struct objTree *parent;
     struct ptInfoList *ptInfo;
 };
 
 #define INIT_OBJTREE(p) { \
-(struct objTree *)(p)->name = NULL; \
-(struct objTree *)(p)->numChildren = 0; \
-(struct objTree *)(p)->children = NULL; \
-(struct objTree *)(p)->ptInfo = NULL; \
+	((struct objTree *)(p))->name = NULL;	\
+	((struct objTree *)(p))->numChildren = 0;	\
+	((struct objTree *)(p))->children = NULL;	\
+	((struct objTree *)(p))->parent = NULL;		\
+	((struct objTree *)(p))->ptInfo = NULL;		\
 }
 
 #endif /* __DM_RTGL__ */

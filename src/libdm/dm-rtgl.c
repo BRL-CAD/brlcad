@@ -1210,14 +1210,15 @@ void drawPoints() {
     glPointSize(1);
 }
 
-struct objTree objects;
+int numTops;
+struct objTree *tops;
+struct objTree *currObj;
 
-char** getTops(struct ged *gedp, int *numTopsp) {
+int getTops(struct ged *gedp) {
     register struct directory *dp;
     register int i, j;
     struct directory **dirp;
     struct directory **dirp0 = (struct directory **)NULL;
-    char **tops;
     int c;
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
@@ -1235,7 +1236,7 @@ char** getTops(struct ged *gedp, int *numTopsp) {
 
     if (gedp->ged_wdbp->dbip->dbi_version < 5) {
 	for (i = 0; i < RT_DBNHASH; i++) {
-            for (dp = gedp->ged_wdbp->dbip->dbi_Head[i]; dp != DIR_NULL; dp = dp->d_forw)  {
+            for (dp = gedp->ged_wdbp->dbip->dbi_Head[i]; dp != RT_DIR_NULL; dp = dp->d_forw)  {
                 if (dp->d_nref == 0) {
                     *dirp++ = dp;
 
@@ -1245,7 +1246,7 @@ char** getTops(struct ged *gedp, int *numTopsp) {
     } else {
         for (i = 0; i < RT_DBNHASH; i++) {
             for (dp = gedp->ged_wdbp->dbip->dbi_Head[i]; dp != DIR_NULL; dp = dp->d_forw) {
-                if (dp->d_nref == 0 && !(dp->d_flags & DIR_HIDDEN) && (dp->d_addr != RT_DIR_PHONY_ADDR)) {
+                if (dp->d_nref == 0 && (dp->d_flags != RT_DIR_HIDDEN) && (dp->d_addr != RT_DIR_PHONY_ADDR)) {
 
                     /* add non-hidden real object */
                     *dirp++ = dp;
@@ -1255,28 +1256,116 @@ char** getTops(struct ged *gedp, int *numTopsp) {
     }
 
     int length, numTops = (int)(dirp - dirp0);
-    tops = bu_malloc(numTops * sizeof(char *), "dm-rtgl.c: getTops");
 
-    /* copy top names */
+    /* build top objects */
+    tops = bu_malloc(numTops * sizeof(struct objTree), "dm-rtgl.c: getTops");
+
     for (i = 0; i < numTops; i++) {
-	length = strlen(dirp0[i]->d_namep) + 1;
 
-	tops[i] = bu_malloc(length * sizeof(char), "dm-rtgl.c: getTops");
-	
-	for(j = 0; j < length; j++) {
-	    tops[i][j] = dirp0[i]->d_namep[j];
-	}
+	/* initialize this tree */
+	INIT_OBJTREE(&(tops[i]));
+
+	/* set tree name */
+	length = strlen(dirp0[i]->d_namep) + 1;
+	tops[i].name = bu_malloc(length * sizeof(char), "dm-rtgl.c: getTops");
+	strncpy(tops[i].name, dirp0[i]->d_namep, length);
     }
 
     bu_free((genptr_t)dirp0, "wdb_tops_cmd: wdb_dir_getspace");
 
-    *numTopsp = numTops;
-
-    return (char **)tops;
+    return numTops;
 }
 
-void buildTree(struct ged *gedp) {
+int getChildren(struct ged *gedp, struct objTree *tree) {
+    int i, node_count, actual_count;
+    struct directory *dp;
+    struct rt_db_internal intern;
+    struct rt_comb_internal *comb;
+    struct rt_tree_array *rt_tree_array;
 
+    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
+    GED_CHECK_DRAWABLE(gedp, GED_ERROR);
+
+    if ((dp = db_lookup(gedp->ged_wdbp->dbip, tree->name, LOOKUP_NOISY)) != DIR_NULL) {
+
+	if (dp->d_flags != RT_DIR_COMB)
+	    return 0;
+
+	/*                                                                                                                                              
+	 *  This node is a combination (a directory).
+	 *  Process all the arcs (directory members).
+	 */
+	if (rt_db_get_internal(&intern, dp, gedp->ged_wdbp->dbip, (fastf_t *)NULL, &rt_uniresource) < 0) {
+	    bu_vls_printf(&gedp->ged_result_str, "Database read error, aborting");
+	    return;
+	}
+	
+	comb = (struct rt_comb_internal *)intern.idb_ptr;
+	
+	if (comb->tree) {
+
+	    if (comb->tree && db_ck_v4gift_tree(comb->tree) < 0) {
+		db_non_union_push(comb->tree, &rt_uniresource);
+		
+		if (db_ck_v4gift_tree(comb->tree) < 0) {
+		    bu_vls_printf(&gedp->ged_result_str, "Cannot flatten tree for listing");
+		    return;
+		}
+	    }
+
+	    node_count = db_tree_nleaves(comb->tree);
+
+	    if (node_count > 0) {
+		rt_tree_array = (struct rt_tree_array *) bu_calloc(node_count, sizeof(struct rt_tree_array), "tree list");
+		actual_count = (struct rt_tree_array *) db_flatten_tree(rt_tree_array, comb->tree, OP_UNION, 1, &rt_uniresource) - rt_tree_array;
+		BU_ASSERT_PTR(actual_count, ==, node_count);
+		comb->tree = TREE_NULL;
+	    } else {
+		actual_count = 0;
+		rt_tree_array = NULL;
+	    }
+	    
+	    tree->numChildren = actual_count;
+	    tree->children = bu_malloc(actual_count * sizeof(struct objTree), "dm-rtgl.c: getChildren");
+
+	    for (i = 0; i < actual_count; i++) {
+
+		INIT_OBJTREE(&(tree->children[i]));
+
+		/* set child's parent */
+		tree->children[i].parent = tree;
+
+		/* set child's name */
+		int length = strlen(rt_tree_array[i].tl_tree->tr_l.tl_name) + 1;
+		tree->children[i].name = bu_malloc(length * sizeof(char), "dm-rtgl.c: getChildren");
+		strncpy(tree->children[i].name, rt_tree_array[i].tl_tree->tr_l.tl_name, length);
+
+		db_free_tree(rt_tree_array[i].tl_tree, &rt_uniresource);
+	    }
+	    
+	    if (rt_tree_array) {
+		bu_free((char *)rt_tree_array, "printnode: rt_tree_array");
+	    }
+	}
+	
+	rt_db_free_internal(&intern, &rt_uniresource);
+    }
+
+    return actual_count;
+}
+
+void buildTree(struct ged *gedp, struct objTree *tree) {
+    int i, newTrees;
+
+    /* get this tree's children */
+    newTrees = getChildren(gedp, tree);
+
+    /* build tree for each child */
+    if (newTrees > 0) {
+	for (i = 0; i < newTrees; i++) {
+	    buildTree(gedp, &(tree->children[i]));
+	}
+    }
 }
 
 /*
@@ -1324,13 +1413,12 @@ rtgl_drawVList(struct dm *dmp, register struct bn_vlist *vp)
 	call = 1;
     }
 
-    char **tops;
-    int length;
+    /* get names of all drawable objects */
     if (call == 1) {
-	tops = getTops(gedp, &length);
+	numTops = getTops(gedp);
 
-	for (i = 0; i < length; i++) {
-	    bu_log("%s", tops[i]);
+	for (i = 0; i < numTops; i++) {
+	    buildTree(gedp, &tops[i]);
 	}
     }
 
