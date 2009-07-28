@@ -73,7 +73,7 @@ struct jointInfo
 struct headInfo
 {
         fastf_t headSize;
-        fastf_t neckSize, neckWidth;
+        fastf_t neckLength, neckWidth;
 
 	vect_t headVector;
         vect_t neckVector;
@@ -265,10 +265,11 @@ void boundingBox(struct rt_wdb *file, char *name, fastf_t *startPoint, fastf_t *
 	/*X rotation Matrix */
 		if(w==1 || w==6 || w== 7 || w==10 || w==11)
 			rotMatrix[(w-1)] = rotMatrix[(w-1)] * -1;
-
+/*
 		bu_log("%3.4f\t", rotMatrix[(w-1)]);
 		if(w%4==0)
 			bu_log("\n");
+*/
 	}
 	bu_log("-------------------------------+\n");
 
@@ -352,7 +353,7 @@ fastf_t makeNeck(struct rt_wdb *file, char *name, struct human_data_t *dude, fas
 	vect_t startVector;
 	mat_t rotMatrix;
 	dude->head.neckWidth = dude->head.headSize / 4;
-	VSET(startVector, 0, 0, dude->head.neckSize);
+	VSET(startVector, 0, 0, dude->head.neckLength);
 	setDirection(startVector, dude->head.neckVector, rotMatrix, direction[X], direction[Y], direction[Z]);
 	VADD2(dude->joints.neckJoint, dude->joints.headJoint, dude->head.neckVector);
 	mk_rcc(file, name, dude->joints.headJoint, dude->head.neckVector, dude->head.neckWidth);
@@ -690,7 +691,7 @@ void makeProfile(struct rt_wdb (*file), char *suffix, struct human_data_t *dude,
 	char neckName[MAXLENGTH]="Neck.s";
 	bu_strlcat(headName, suffix, MAXLENGTH);
 	bu_strlcat(neckName, suffix, MAXLENGTH);
-	dude->head.neckSize = dude->head.headSize / 2;
+	dude->head.neckLength = dude->head.headSize / 2;
 	makeHead(file, headName, dude, direction, showBoxes);
 	makeNeck(file, neckName, dude, direction, showBoxes);
 }
@@ -765,8 +766,6 @@ void makeArm(struct rt_wdb (*file), char *suffix, int isLeft, struct human_data_
 	bu_strlcat(wristName, suffix, MAXLENGTH);
 	bu_strlcat(handName, suffix, MAXLENGTH);
 
-	/* direction is the direction that the arm will be pointing at the shoulder. */
-	/* armDirection is the derivative of that, and can be adjusted to fit a pose */
         makeShoulderJoint(file, isLeft, shoulderJointName, dude, showBoxes);
 	makeUpperArm(file, isLeft, upperArmName, dude, showBoxes);
         makeElbow(file, isLeft, elbowName, dude);
@@ -843,7 +842,7 @@ void makeBody(struct rt_wdb (*file), char *suffix, struct human_data_t *dude, fa
 
 	/* 
 	 * Make sure that vectors, points, and widths are sent to each function 
-         * for direction, location, and correct sizing, respectivly.
+	 * for direction, location, and correct sizing, respectivly.
 	 */
 	bu_log("Setting Direction\n");
 	VSET(dude->joints.headJoint, location[X], location[Y], (location[Z]+((dude->height*IN2MM)-(dude->head.headSize/2))));
@@ -1150,27 +1149,27 @@ void setStance(fastf_t stance, struct human_data_t *dude)
  * Goes through the human struct and sets all measurements to needed measurements,
  * i.e. if certain percentile person is needed, those measurements are set. 
  */
-void setMeasurements(struct human_data_t dude, fastf_t percentile)
+void setMeasurements(struct human_data_t *dude, fastf_t percentile)
 {
 	/* If percentile, load data from database or something */
-	/* And standing height from this point on will be derived from gathered values
-	*  so it will be a combination of leglength, torsolength, and headsize. So standing
-	*  height is now irrelevant
-	*/
-/*
-	dude->head.headSize=
-	dude->head.neckSize=
+
+	/* Standing height from this point on will be derived from gathered values
+	 * so it will be a combination of leglength, torsolength, and headsize. So standing
+	 * height is now mostly irrelevant
+	 */
+	bu_log("Setting %.0f percentile data\n", percentile);
+
+/*	dude->head.headSize=
+	dude->head.neckLength=
 	dude->head.neckWidth=
 
-
-	**-->Derived now dude->torso.torsoLength=
 	dude->torso.topTorsoLength=
 	dude->torso.lowTorsoLength=
 	dude->torso.shoulderWidth=
 	dude->torso.abWidth=
 	dude->torso.pelvisWidth=
+	dude->torso.torsoLength= dude->torso.topTorsoLength + dude->torso.lowTorsoLength;
 
-	** Derived dude->arms.armLength
 	dude->arms.upperArmWidth=
 	dude->arms.upperArmLength=
 	dude->arms.lowerArmLength=
@@ -1178,8 +1177,8 @@ void setMeasurements(struct human_data_t dude, fastf_t percentile)
 	dude->arms.wristWidth=
 	dude->arms.handLength=
 	dude->arms.handWidth=
+	dude->arms.armLength=dude->arms.upperArmLength + dude->arms.lowerArmLength + dude->arms.handLength;
 
-	** Derived dude->legs.legLength=
 	dude->legs.thighLength=
 	dude->legs.thighWidth=
 	dude->legs.calfLength=
@@ -1187,8 +1186,9 @@ void setMeasurements(struct human_data_t dude, fastf_t percentile)
 	dude->legs.footLength=
 	dude->legs.ankleWidth=
 	dude->legs.toeWidth=
+	dude->legs.legLength=dude->legs.thighLength + dude->legs.calfLength;
 
-	dude.height=(dude->torso.topTorsoLength + dude->torso.lowTorsoLength + dude->legs.thighLength + dude->legs.calfLength);
+	dude.height=(dude->torso.torsoLength + dude->legs.legLength + dude->head.headSize);
 */
 }	
 
@@ -1216,7 +1216,7 @@ void show_help(const char *name, const char *optstr)
 	   "\t-?\t\tShow help\n"
 	   "\t-A\t\tAutoMake defaults\n"
 	   "\t-H\t\tSet Height in inches\n"
-	   "\t-l\t\tSet Center Point in inches, at feet (default 0 0 0)\n"
+	   "\t-L\t\tSet Center Point in inches, at feet (default 0 0 0)\n"
 	   "\t-o\t\tSet output file name\n"
 	   "\t-b\t\tShow bounding Boxes\n"
 	   "\t-N\t\tNumber to make (square)\n"
@@ -1234,34 +1234,32 @@ void getLocation(fastf_t *location)
     bu_log("Enter center point\n");
     bu_log("X: ");
     scanf("%lf", &x);
-    fflush(stdin);
     bu_log("Y: ");
     scanf("%lf", &y);
-    fflush(stdin);
     bu_log("Z: ");
     scanf("%lf", &z);
-    fflush(stdin);
     x*= IN2MM;
     y*= IN2MM;
     z*= IN2MM;
     VSET(location, x, y, z);
+    fflush(stdin);
 }
 
 /* Process command line arguments */
 int read_args(int argc, char **argv, struct human_data_t *dude, fastf_t *percentile, fastf_t *location, fastf_t *stance, fastf_t *troops, fastf_t *showBoxes)
 {
-    int c = 0;
-    char *options="H:N:h:O:o:a:b:p:s:l:A";
+    char c = 'a';
+    char *options="AbH:hLlN:O:o:p:s:w";
     float height=0;
     int soldiers=0;
     int pose=0;
     int percent=50;
 
     /* don't report errors */
-    bu_opterr = 0;
+    //bu_opterr = 0;
 
-    fflush(stdout);
     while ((c=bu_getopt(argc, argv, options)) != EOF) {
+	bu_log("%c \n", c);
 	switch (c) {
 	    case 'A':
 		bu_log("AutoMode, making 50 percentile man\n");
@@ -1269,10 +1267,46 @@ int read_args(int argc, char **argv, struct human_data_t *dude, fastf_t *percent
 		*percentile=50;
 		fflush(stdin);
 		break;
-	
+
+            case 'b':
+                *showBoxes = 1;                                             
+                bu_log("Drawing bounding boxes\n");
+		fflush(stdin);
+                break;	
+
+            case 'H':
+                sscanf(bu_optarg, "%f", &height);
+                if(height <= 0.0)
+                {
+                        bu_log("Impossible height, setting default height!\n");
+                        height = DEFAULT_HEIGHT_INCHES;
+                        dude->height = DEFAULT_HEIGHT_INCHES;
+                        bu_log("%.2f = height in inches\n", height);
+                }
+                else
+                {
+                        dude->height = height;
+                        bu_log("%.2f = height in inches\n", height);
+                }
+		fflush(stdin);
+                break;
+
+            case 'h':
+            case '?':
+                show_help(*argv, options);
+                bu_exit(EXIT_SUCCESS, NULL);
+		fflush(stdin);
+                break;
+
+            case 'L':
+	    case 'l':
+		bu_log("Location\n");
+                getLocation(location);
+		fflush(stdin);
+                break;
+
             case 'N':
                 sscanf(bu_optarg, "%d", &soldiers);
-                fflush(stdin);
                 if(soldiers <= 1){
                         bu_log("Only 1 person. Making 16\n");
                         soldiers = 4;
@@ -1282,40 +1316,11 @@ int read_args(int argc, char **argv, struct human_data_t *dude, fastf_t *percent
 		fflush(stdin);
                 break;
 
-	    case 'b':
-		*showBoxes = 1;
-		bu_log("Drawing bounding boxes\n");
-		fflush(stdin);
-		break;
-
-	    case 'H':
-		sscanf(bu_optarg, "%f", &height);
-		fflush(stdin);
-		if(height <= 0.0)
-		{
-			bu_log("Impossible height, setting default height!\n");
-			height = DEFAULT_HEIGHT_INCHES;
-			dude->height = DEFAULT_HEIGHT_INCHES;
-			bu_log("%.2f = height in inches\n", height);
-		}
-		else
-		{
-			dude->height = height;
-			bu_log("%.2f = height in inches\n", height);
-		}
-		fflush(stdin);
-		break;
-
-	    case 'h':
-	    case '?':
-		show_help(*argv, options);
-		bu_exit(EXIT_SUCCESS, NULL);
-		break;
-
 	    case 'o':
 	    case 'O':
 		memset(filename, 0, MAXLENGTH);
 		bu_strlcpy(filename, bu_optarg, MAXLENGTH);
+		fflush(stdin);
 		break;
 
 	    case 'p':
@@ -1330,15 +1335,9 @@ int read_args(int argc, char **argv, struct human_data_t *dude, fastf_t *percent
 
 	    case 's':
 		sscanf(bu_optarg, "%d", &pose);
-		fflush(stdin);
 		if(pose < 0)
 			pose = 0;
-		*stance = pose;
-		fflush(stdin);
-		break;
-
-	    case 'l':
-		getLocation(location);
+		*stance = (float)pose;
 		fflush(stdin);
 		break;
 
@@ -1346,6 +1345,7 @@ int read_args(int argc, char **argv, struct human_data_t *dude, fastf_t *percent
 		show_help(*argv, options);
 		bu_log("%s: illegal option -- %c\n", bu_getprogname(), c);
 	    	bu_exit(EXIT_SUCCESS, NULL);
+		fflush(stdin);
 		break;
 	}
     }
@@ -1377,10 +1377,12 @@ int main(int ac, char *av[])
     read_args(ac, av, &human_data, &percentile, location, &stance, &troops, &showBoxes);
     db_fp = wdb_fopen(filename);
 
+    bu_log("Center Location: ");
     bu_log("%f %f %f\n", location[X], location[Y], location[Z]);
 
 /******MAGIC******/
 /*Magically set pose, and apply pose to human geometry*/ 
+    setMeasurements(&human_data, percentile);
     setStance(stance, &human_data); 
     if(!troops){
     	makeBody(db_fp, suffix, &human_data, location, showBoxes);
