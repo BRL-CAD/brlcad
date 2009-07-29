@@ -947,7 +947,7 @@ package provide Archer 1.0
 }
 
 ::itcl::body Archer::clone {args} {
-    eval ArcherCore::gedWrapper clone 0 0 1 1 $args
+    eval createWrapper clone $args
 }
 
 ::itcl::body Archer::color {args} {
@@ -963,7 +963,6 @@ package provide Archer 1.0
 
 ::itcl::body Archer::cp {args} {
     eval createWrapper cp $args
-#    eval ArcherCore::gedWrapper cp 0 0 1 1 $args
 }
 
 ::itcl::body Archer::cpi {args} {
@@ -1254,80 +1253,6 @@ package provide Archer 1.0
 
 ::itcl::body Archer::mvall {args} {
     eval moveWrapper mvall $args
-}
-
-::itcl::body Archer::moveWrapper {_cmd args} {
-    set alen [llength $args]
-
-    # Returns a help message.
-    if {$alen == 0} {
-	return [gedCmd $_cmd]
-    }
-
-    if {$alen == 3} {
-	# Must be using the -n option. If not, an error message
-	# containing the usage string will be returned.
-	return [eval gedCmd $_cmd $args]
-    }
-
-    # Get the list of potentially modified objects.
-    if {$_cmd == "mvall"} {
-	set mlist [eval gedCmd $_cmd -n $args]
-    } else {
-	set mlist {}
-    }
-
-    set mlen [llength $mlist]
-
-    set old_name [lindex $args 0]
-    set new_name [lindex $args 1]
-
-    SetWaitCursor $this
-
-    # Checkpoint the objects that used to reference
-    # the soon-to-be renamed objects.
-    if {$mlen} {
-	set lnames [checkpoint_olist $mlist $LEDGER_MODIFY]
-    } else {
-	set lnames {}
-    }
-
-    if {[catch {eval gedCmd $_cmd $args} ret]} {
-	ledger_cleanup
-	SetNormalCursor $this
-	return $ret
-    }
-
-    # Flag these as having mods
-    foreach lname $lnames {
-	$mLedger attr set $lname $LEDGER_ENTRY_OUT_OF_SYNC_ATTR 1
-    }
-
-    # Decrement the GID so that the renamed
-    # object below has the same GID as the
-    # modified objects above.
-    if {$mlen} {
-	incr mLedgerGID -1
-    }
-
-    # Checkpoint the renamed object
-    set lnew_name [checkpoint $new_name $LEDGER_RENAME]
-
-    # Save the command for moving things back
-    $mLedger attr set $lnew_name $LEDGER_ENTRY_MOVE_COMMAND "$_cmd $new_name $old_name"
-
-    refreshTree 1
-
-    if {$old_name == $mSelectedObj} {
-	set mSelectedObj $new_name
-	regsub {([^/]+)$} $mSelectedObjPath $new_name mSelectedObjPath
-	initEdit 0
-    }
-
-    checkpoint $new_name $LEDGER_MODIFY
-    checkpoint_olist $mlist $LEDGER_MODIFY
-    updateUndoState
-    SetNormalCursor $this
 }
 
 ::itcl::body Archer::nmg_collapse {args} {
@@ -1878,18 +1803,27 @@ package provide Archer 1.0
 }
 
 ::itcl::body Archer::createWrapper {_cmd args} {
-    # Returns a help message.
-    if {[llength $args] < 2} {
-	return [gedCmd $_cmd]
-    }
-
-    set options [lrange $args 0 end-2]
-    set expandedArgs [lrange $args end-1 end]
-
     # Get the list of created objects.
     switch -- $_cmd {
+	"clone" {
+	    # Returns a help message.
+	    if {[llength $args] == 0} {
+		return [gedCmd $_cmd]
+	    }
+
+	    set options [lrange $args 0 end-1]
+	    set expandedArgs [lrange $args end end]
+	}
 	"cp" -
 	"mirror" {
+	    # Returns a help message.
+	    if {[llength $args] < 2} {
+		return [gedCmd $_cmd]
+	    }
+
+	    set options [lrange $args 0 end-2]
+	    set expandedArgs [lrange $args end-1 end]
+
 	    if {[llength $expandedArgs] != 2} {
 		return [gedCmd $_cmd]
 	    }
@@ -1904,6 +1838,14 @@ package provide Archer 1.0
 	    set clist [lindex $expandedArgs 1]
 	}
 	"make" {
+	    # Returns a help message.
+	    if {[llength $args] < 2} {
+		return [gedCmd $_cmd]
+	    }
+
+	    set options [lrange $args 0 end-2]
+	    set expandedArgs [lrange $args end-1 end]
+
 	    if {[llength $expandedArgs] != 2} {
 		return [gedCmd $_cmd]
 	    }
@@ -1922,14 +1864,20 @@ package provide Archer 1.0
 	return $ret
     }
 
+    if {$_cmd == "clone"} {
+	set clist [lindex $ret 1]
+	set ret [lindex $ret 0]
+    }
+
     # Checkpoint the created object
     checkpoint_olist $clist $LEDGER_CREATE
 
     refreshTree 1
 
-    checkpoint_olist $clist $LEDGER_MODIFY
     updateUndoState
     SetNormalCursor $this
+
+    return $ret
 }
 
 ::itcl::body Archer::gedWrapper {cmd eflag hflag sflag tflag args} {
@@ -2159,7 +2107,91 @@ package provide Archer 1.0
 
     refreshTree 1
 
-    checkpoint_olist $mlist $LEDGER_MODIFY
+    if {[lsearch $klist $mSelectedObj] != -1} {
+	set mSelectedObj ""
+	set mSelectedObjPath ""
+	set mSelectedObjType ""
+    } elseif {[lsearch $mlist $mSelectedObj] != -1} {
+	checkpoint $mSelectedObj $LEDGER_MODIFY
+    }
+
+    updateUndoState
+    SetNormalCursor $this
+
+    return $ret
+}
+
+::itcl::body Archer::moveWrapper {_cmd args} {
+    set alen [llength $args]
+
+    # Returns a help message.
+    if {$alen == 0} {
+	return [gedCmd $_cmd]
+    }
+
+    if {$alen == 3} {
+	# Must be using the -n option. If not, an error message
+	# containing the usage string will be returned.
+	return [eval gedCmd $_cmd $args]
+    }
+
+    # Get the list of potentially modified objects.
+    if {$_cmd == "mvall"} {
+	set mlist [eval gedCmd $_cmd -n $args]
+    } else {
+	set mlist {}
+    }
+
+    set mlen [llength $mlist]
+
+    set old_name [lindex $args 0]
+    set new_name [lindex $args 1]
+
+    SetWaitCursor $this
+
+    # Checkpoint the objects that used to reference
+    # the soon-to-be renamed objects.
+    if {$mlen} {
+	set lnames [checkpoint_olist $mlist $LEDGER_MODIFY]
+    } else {
+	set lnames {}
+    }
+
+    if {[catch {eval gedCmd $_cmd $args} ret]} {
+	ledger_cleanup
+	SetNormalCursor $this
+	return $ret
+    }
+
+    # Flag these as having mods
+    foreach lname $lnames {
+	$mLedger attr set $lname $LEDGER_ENTRY_OUT_OF_SYNC_ATTR 1
+    }
+
+    # Decrement the GID so that the renamed
+    # object below has the same GID as the
+    # modified objects above.
+    if {$mlen} {
+	incr mLedgerGID -1
+    }
+
+    # Checkpoint the renamed object
+    set lnew_name [checkpoint $new_name $LEDGER_RENAME]
+
+    # Save the command for moving things back
+    $mLedger attr set $lnew_name $LEDGER_ENTRY_MOVE_COMMAND "$_cmd $new_name $old_name"
+
+    refreshTree 1
+
+    if {$old_name == $mSelectedObj} {
+	set mSelectedObj $new_name
+	regsub {([^/]+)$} $mSelectedObjPath $new_name mSelectedObjPath
+	initEdit 0
+	checkpoint $mSelectedObj $LEDGER_MODIFY
+    } elseif {[lsearch $mlist $mSelectedObj] != -1} {
+	checkpoint $mSelectedObj $LEDGER_MODIFY
+    }
+
     updateUndoState
     SetNormalCursor $this
 }
