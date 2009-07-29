@@ -1138,9 +1138,7 @@ if test "x$bc_with_x11" != "xno" ; then
     dnl find X11 libraries.  sets X_CFLAGS, X_LIBS, and X_EXTRA_LIBS
     BC_SEARCH_DIRECTORY([/usr/X11], [X11])
     AC_PATH_XTRA
-    if test "x$have_x" = "xyes" ; then
-	AC_DEFINE(HAVE_X11_XLIB_H, 1, Define to 1 if you have the <X11/Xlib.h> header file.)
-    fi
+    AC_CHECK_HEADER([X11/Xlib.h])
 
     dnl add X11 libraries that link to X_LIBS
     LIBX11=""
@@ -1549,6 +1547,7 @@ if test "x$bc_with_opengl" != "xno" -o "x$bc_with_wgl" != "xno" ; then
 	gl_include_works="yes"
     ], [unset ac_cv_header_GL_gl_h])
     if test "x$gl_include_works" = "xno" ; then
+	# this won't work for paths with spaces
 	for bc_dir in "$ac_x_includes" `echo $ac_x_header_dirs` ; do
 	    GL_H_CPPFLAGS="-I$bc_dir"
 	    CPPFLAGS="$PRECPPFLAGS $GL_H_CPPFLAGS"
@@ -1569,6 +1568,7 @@ if test "x$bc_with_opengl" != "xno" -o "x$bc_with_wgl" != "xno" ; then
 	glx_include_works="yes"
     ], [unset ac_cv_header_GL_glx_h])
     if test "x$glx_include_works" = "xno" ; then
+	# this won't work for paths with spaces
 	for bc_dir in "$ac_x_includes" `echo $ac_x_header_dirs` ; do
 	    GLX_H_CPPFLAGS="-I$bc_dir"
 	    CPPFLAGS="$PRECPPFLAGS $GLX_H_CPPFLAGS"
