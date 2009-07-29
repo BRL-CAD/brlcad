@@ -271,8 +271,8 @@ void boundingBox(struct rt_wdb *file, char *name, fastf_t *startPoint, fastf_t *
 			bu_log("\n");
 */
 	}
-	bu_log("-------------------------------+\n");
-
+/*	bu_log("-------------------------------+\n");
+*/
 	/* MAT4X3VEC, rotate a vector about a center point, by a rotmatrix, MAT4X3VEC(new, rotmatrix, old) */
 	for(i = 0; i < 8; i++){
 	/*
@@ -1256,10 +1256,10 @@ int read_args(int argc, char **argv, struct human_data_t *dude, fastf_t *percent
     int percent=50;
 
     /* don't report errors */
-    //bu_opterr = 0;
+    bu_opterr = 0;
 
     while ((c=bu_getopt(argc, argv, options)) != EOF) {
-	bu_log("%c \n", c);
+	/*bu_log("%c \n", c); Testing to see if args are getting read */
 	switch (c) {
 	    case 'A':
 		bu_log("AutoMode, making 50 percentile man\n");
@@ -1378,7 +1378,7 @@ int main(int ac, char *av[])
     db_fp = wdb_fopen(filename);
 
     bu_log("Center Location: ");
-    bu_log("%f %f %f\n", location[X], location[Y], location[Z]);
+    bu_log("%.2f %.2f %.2f\n", location[X], location[Y], location[Z]);
 
 /******MAGIC******/
 /*Magically set pose, and apply pose to human geometry*/ 
@@ -1398,7 +1398,8 @@ int main(int ac, char *av[])
 /* Make the .r for the real body */
     int is_region = 0;
     unsigned char rgb[3], rgb2[3], rgb3[3];
-    
+
+    if(!troops){    
     BU_LIST_INIT(&human.l);
     (void)mk_addmember("Head.s", &human.l, NULL, WMOP_UNION);
     (void)mk_addmember("Neck.s", &human.l, NULL, WMOP_UNION);
@@ -1544,6 +1545,53 @@ int main(int ac, char *av[])
              "di=0.5 sp=0.5 tr=0.75 ri=1",
              rgb3,
              0);
+    }
+    }
+    if(troops){
+	bu_log("Naming\n");
+    	/*Build body regions for each troop*/
+    	/*append number to end of part name, (Head.s0, LeftElbowJoint.s99, etc) */
+	int num=0;
+	int w=0;
+	int x=0;
+	char holder[10]={'0'};
+	char suffix[MAXLENGTH];	
+
+	for(w=0; w<(troops*troops); w++){
+
+        char names[MAXLENGTH][MAXLENGTH]={"Head.s", "Neck.s", "UpperTorso.s","LowerTorso.s","LeftUpperArm.s","LeftElbowJoint.s","LeftLowerArm.s","LeftWristJoint.s","LeftHand.s",
+                "RightUpperArm.s","RightElbowJoint.s","RightLowerArm.s","RightWristJoint.s","RightHand.s","LeftThighJoint.s","LeftThigh.s","LeftKneeJoint.s","LeftCalf.s",
+                "LeftAnkleJoint.s","LeftFoot.s","RightThighJoint.s","RightThigh.s","RightKneeJoint.s","RightCalf.s","RightAnkleJoint.s","RightFoot.s","0"};
+        char body[MAXLENGTH][MAXLENGTH]={"Body.r",};
+
+		bu_log("%d\n", w);
+
+		sprintf(holder, "%d", num);
+		bu_strlcpy(suffix, holder, MAXLENGTH);
+       	        bu_strlcat(body[0], suffix, MAXLENGTH);
+		bu_log("Adding Members\n");
+    		BU_LIST_INIT(&human.l);
+ 
+		while(x<26){
+			bu_log("%s : ", names[x]);
+			bu_strlcat(names[x], suffix, MAXLENGTH);
+			(void)mk_addmember(names[x], &human.l, NULL, WMOP_UNION);
+			x++;
+		}
+		x=0;
+		VSET(rgb, 128, 255, 128); /* some wonky bright green color */
+		bu_log("Combining\n");
+		is_region = 1;
+		mk_lcomb(db_fp,
+       		    body[0],
+		    &human,
+		    is_region,
+		    "plastic",
+		    "di=.99 sp=.01",
+		    rgb,
+		    0);
+		num++;
+	}
     }
 
     /* Close database */
