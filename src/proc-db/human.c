@@ -1563,19 +1563,28 @@ int main(int ac, char *av[])
                 "RightUpperArm.s","RightElbowJoint.s","RightLowerArm.s","RightWristJoint.s","RightHand.s","LeftThighJoint.s","LeftThigh.s","LeftKneeJoint.s","LeftCalf.s",
                 "LeftAnkleJoint.s","LeftFoot.s","RightThighJoint.s","RightThigh.s","RightKneeJoint.s","RightCalf.s","RightAnkleJoint.s","RightFoot.s","0"};
         char body[MAXLENGTH][MAXLENGTH]={"Body.r",};
+	char box[MAXLENGTH][MAXLENGTH]={"Box.r",};
 
 		bu_log("%d\n", w);
 
 		sprintf(holder, "%d", num);
 		bu_strlcpy(suffix, holder, MAXLENGTH);
        	        bu_strlcat(body[0], suffix, MAXLENGTH);
+		bu_strlcat(box[0], suffix, MAXLENGTH);
 		bu_log("Adding Members\n");
     		BU_LIST_INIT(&human.l);
+		if(showBoxes)
+			BU_LIST_INIT(&boxes.l);
  
 		while(x<26){
 			bu_log("%s : ", names[x]);
 			bu_strlcat(names[x], suffix, MAXLENGTH);
 			(void)mk_addmember(names[x], &human.l, NULL, WMOP_UNION);
+			if(showBoxes){
+				bu_strlcat(names[x], "Box", MAXLENGTH);
+				bu_log("%s : ", names[x]);
+				(void)mk_addmember(names[x], &boxes.l, NULL, WMOP_UNION);
+			}
 			x++;
 		}
 		x=0;
@@ -1590,6 +1599,17 @@ int main(int ac, char *av[])
 		    "di=.99 sp=.01",
 		    rgb,
 		    0);
+		if(showBoxes){
+			VSET(rgb2, 255, 128, 128); /* redish color */
+			mk_lcomb(db_fp,   
+             		box[0],
+             		&boxes,
+             		is_region,
+             		"plastic",
+             		"di=0.5 sp=0.5",
+             		rgb2,
+             		0);
+		}
 		num++;
 	}
     }
