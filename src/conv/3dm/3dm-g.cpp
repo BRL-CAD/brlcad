@@ -126,10 +126,12 @@ int main(int argc, char** argv) {
     else
 	dump->Print("Model is not valid.\n");
 
-    dump->Print("Number of NURBS objects read wass %d\n.", model.m_object_table.Count());
+    dump->Print("Number of NURBS objects read was %d\n.", model.m_object_table.Count());
     for (int i = 0; i < model.m_object_table.Count(); i++ ) {
 	dump->PushIndent();
 
+	dump->Print("\n\nObject %d of %d:\n\n", i + 1, model.m_object_table.Count());
+	
 	// object's attibutes
 	ON_3dmObjectAttributes myAttributes = model.m_object_table[i].m_attributes;
 	ON_String constr(myAttributes.m_name);
@@ -179,32 +181,46 @@ int main(int argc, char** argv) {
 		dump->PopIndent();
 	    } else if (pGeometry->HasBrepForm()) {
 		dump->Print("\n\n ***** HasBrepForm. ***** \n\n");
+		dump->PopIndent();
 	    } else if ((curve = const_cast<ON_Curve * >(ON_Curve::Cast(pGeometry)))) {
 		dump->Print("\n\n ***** ON_Curve. ***** \n\n");
+		dump->PopIndent();
 	    } else if ((surface = const_cast<ON_Surface * >(ON_Surface::Cast(pGeometry)))) {
 		dump->Print("\n\n ***** ON_Surface. ***** \n\n");
+		dump->PopIndent();
 	    } else if ((mesh = const_cast<ON_Mesh * >(ON_Mesh::Cast(pGeometry)))) {
 		dump->Print("\n\n ***** ON_Mesh. ***** \n\n");
+		dump->PopIndent();
 	    } else if ((revsurf = const_cast<ON_RevSurface * >(ON_RevSurface::Cast(pGeometry)))) {
 		dump->Print("\n\n ***** ON_RevSurface. ***** \n\n");
+		dump->PopIndent();
 	    } else if ((planesurf = const_cast<ON_PlaneSurface * >(ON_PlaneSurface::Cast(pGeometry)))) {
 		dump->Print("\n\n ***** ON_PlaneSurface. ***** \n\n");
+		dump->PopIndent();
 	    } else if ((instdef = const_cast<ON_InstanceDefinition * >(ON_InstanceDefinition::Cast(pGeometry)))) {
 		dump->Print("\n\n ***** ON_InstanceDefinition. ***** \n\n");
+		dump->PopIndent();
 	    } else if ((instref = const_cast<ON_InstanceRef * >(ON_InstanceRef::Cast(pGeometry)))) {
 		dump->Print("\n\n ***** ON_InstanceRef. ***** \n\n");
+		dump->PopIndent();
 	    } else if ((layer = const_cast<ON_Layer * >(ON_Layer::Cast(pGeometry)))) {
 		dump->Print("\n\n ***** ON_Layer. ***** \n\n");
+		dump->PopIndent();
 	    } else if ((light = const_cast<ON_Light * >(ON_Light::Cast(pGeometry)))) {
 		dump->Print("\n\n ***** ON_Light. ***** \n\n");
+		dump->PopIndent();
 	    } else if ((nurbscage = const_cast<ON_NurbsCage * >(ON_NurbsCage::Cast(pGeometry)))) {
 		dump->Print("\n\n ***** ON_NurbsCage. ***** \n\n");
+		dump->PopIndent();
 	    } else if ((morphctrl = const_cast<ON_MorphControl * >(ON_MorphControl::Cast(pGeometry)))) {
 		dump->Print("\n\n ***** ON_MorphControl. ***** \n\n");
+		dump->PopIndent();
 	    } else if ((group = const_cast<ON_Group * >(ON_Group::Cast(pGeometry)))) {
 		dump->Print("\n\n ***** ON_Group. ***** \n\n");
+		dump->PopIndent();
 	    } else if ((geom = const_cast<ON_Geometry * >(ON_Geometry::Cast(pGeometry)))) {
 		dump->Print("\n\n ***** ON_Geometry. ***** \n\n");
+		dump->PopIndent();
 	    } else {
 		dump->Print("\n\n ***** Got a different kind of object than geometry - investigate. ***** \n\n");
 	    }
