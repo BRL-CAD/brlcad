@@ -172,10 +172,15 @@ int main(int argc, char** argv) {
 	    ON_MorphControl *morphctrl;
 	    ON_Group *group;
 	    ON_Geometry *geom;
+	    int r,g,b;
+	    r = int(256*drand48() + 1.0);
+	    g = int(256*drand48() + 1.0);
+	    b = int(256*drand48() + 1.0);
+	    bu_log("Color: %d,%d,%d\n", r,g,b);
 	    if ((brep = const_cast<ON_Brep * >(ON_Brep::Cast(pGeometry)))) {
 		mk_id(outfp, id_name);
 		mk_brep(outfp, geom_name.c_str(), brep);
-		unsigned char rgb[] = {255,0,0};
+		unsigned char rgb[] = {r,g,b};
 		mk_region1(outfp, region_name.c_str(), geom_name.c_str(), "plastic", "", rgb);
 		//          brep->Dump(*dump);  // on if debug or verbose
 		dump->PopIndent();
