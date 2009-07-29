@@ -67,7 +67,7 @@ static struct cmdtab mged_cmdtab[] = {
     {"attach", f_attach, GED_FUNC_PTR_NULL},
     {"attr", cmd_ged_plain_wrapper, ged_attr},
     {"autoview", cmd_autoview, GED_FUNC_PTR_NULL},
-    {"bbsize", cmd_ged_plain_wrapper, ged_bbsize},
+    {"bb", cmd_ged_plain_wrapper, ged_bb},
     {"bev", cmd_ged_plain_wrapper, ged_bev},
     {"bo", cmd_ged_plain_wrapper, ged_bo},
 #if 0

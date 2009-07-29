@@ -48,7 +48,7 @@ man1DOCBOOK = \
 	attach.xml \
 	attr.xml \
 	autoview.xml \
-	bbsize.xml \
+	bb.xml \
 	bev.xml \
 	bo.xml \
 	bolt.xml \

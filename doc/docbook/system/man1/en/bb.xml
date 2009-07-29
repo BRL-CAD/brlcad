@@ -38,22 +38,22 @@
 <!-- SUCH DAMAGE.                                                       -->
 
 
-<refentry id='bbsize1'>
+<refentry id='bb1'>
   <refmeta>
-    <refentrytitle>BBSIZE</refentrytitle>
+    <refentrytitle>BB</refentrytitle>
     <manvolnum>1</manvolnum>
     <refmiscinfo class='source'>BRL-CAD</refmiscinfo>
     <refmiscinfo class='manual'>BRL-CAD User Commands</refmiscinfo>
   </refmeta>
   <refnamediv id='name'>
-    <refname>bbsize</refname>
+    <refname>bb</refname>
     <refpurpose>Report dimensional information about objects using Bounding Boxes</refpurpose>
   </refnamediv>
   
   <!-- body begins here -->
   <refsynopsisdiv id='synopsis'>
     <cmdsynopsis>
-      <command>bbsize</command>    
+      <command>bb</command>    
       <arg choice='opt' rep='repeat'><replaceable>options</replaceable></arg>
       <arg choice='plain' rep='repeat'><replaceable>objects</replaceable></arg>
     </cmdsynopsis>
@@ -62,11 +62,12 @@
   <refsect1 id='description'>
     <title>DESCRIPTION</title>
     <para>
-      <emphasis remap='I'>bbsize</emphasis> calculates an axis-aligned
+      <emphasis remap='I'>bb</emphasis> calculates an axis-aligned
       bounding box for an object or set of objects supplied as arguments,
       and reports information about bounding box dimensions at the MGED
       command prompt.  It supports various options, most of which control
-      the type of information reported.
+      the type of information reported.  It can optionally creat an ARB8
+      in a database corresponding to the bounding box of the object(s).
     </para>
       
     <para>
@@ -75,6 +76,22 @@
     </para>
     
     <variablelist remap='TP'>
+      <varlistentry>
+	<term><option>-c</option> bbox_object_name.s</term>
+	<listitem>
+	  <para>Create an ARB8 primitive in the current database with the dimensions of
+          the bounding box of the object(s) listed.</para>
+	</listitem>
+      </varlistentry>
+      <varlistentry>
+	<term><option>-e</option></term>
+	<listitem>
+	  <para>
+	   Report the extent of the bounding box using the min and max 3D points of the bounding
+           box.
+	  </para>
+	</listitem>
+      </varlistentry>
       <varlistentry>
 	<term><option>-d</option></term>
 	<listitem>
@@ -95,7 +112,7 @@
 	<listitem>
 	  <para>
 	    Quiet mode - disable printing of the header, which is on by default.  Useful when processing output from
-            bbsize.
+            bb.
 	  </para>
 	</listitem>
       </varlistentry>
@@ -127,7 +144,7 @@
       <title>Determine the size of the bounding box for a Havoc helicopter</title>
       
       <para>
-	<userinput>bbsize havoc</userinput>
+	<userinput>bb havoc</userinput>
 <literallayout>
 Bounding Box Dimensions, Object(s) havoc:
 X Length: 1988.4 cm
@@ -138,29 +155,58 @@ Bounding Box Volume: 2092246392.4 cm^3
       </para>
 
     </example>
-     <example>
+    <example>
       <title>Report only the min and max points of a bounding box</title>
       
       <para>
-	<userinput>bbsize -q -e havoc</userinput>
+	<userinput>bb -q -e havoc</userinput>
 <literallayout>
 min {-759.447479 -8437.866455 -890.000000} max {19124.621094 8397.693207 5360.000000}
 </literallayout>
       </para>
 
     </example>
-      <example>
+    <example>
       <title>Bounding Box for multiple components</title>
       
       <para>
-	<userinput>bbsize havoc_front havoc_middle havoc_tail</userinput>
+	<userinput>bb havoc_front havoc_middle havoc_tail</userinput>
 <literallayout>
-bbsize havoc_front havoc_middle havoc_tail
 Bounding Box Dimensions, Object(s) havoc_front,  havoc_middle,  havoc_tail:
 X Length: 1775.9 cm
 Y Length: 358.0 cm
 Z Length: 536.0 cm
 Bounding Box Volume: 340782488.9 cm^3
+</literallayout>
+      </para>
+
+    </example>
+    <example>
+      <title>Create Bounding Box ARB8 in database</title>
+      
+      <para>
+	<userinput>bb -c havoc_parts_bbox.s havoc_front havoc_middle havoc_tail</userinput>
+<literallayout>
+mged> bb -c havoc_parts_bbox.s havoc_front havoc_middle havoc_tail
+Bounding Box Dimensions, Object(s) havoc_front,  havoc_middle,  havoc_tail:
+X Length: 1775.9 cm
+Y Length: 358.0 cm
+Z Length: 536.0 cm
+Bounding Box Volume: 340782488.9 cm^3
+
+
+havoc havoc_tail havoc_middle havoc_parts_bbox.s havoc_front
+mged> l havoc_parts_bbox.s
+havoc_parts_bbox.s:  ARB8
+	1 (-75.9447, -158, -4.86374e-06)
+	2 (-75.9447, -158, 536)
+	3 (-75.9447, 200, 536)
+	4 (-75.9447, 200, -4.86374e-06)
+	5 (1700, -158, -4.86374e-06)
+	6 (1700, -158, 536)
+	7 (1700, 200, 536)
+	8 (1700, 200, -4.86374e-06)
+
 </literallayout>
       </para>
 

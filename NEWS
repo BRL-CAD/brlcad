@@ -21,7 +21,7 @@ changes made.  See document footer for additional details.
 	- Sean Morrison, Mike Tegtmeyer, Tim Myers
 * added experimental exporter to Panda3d EGG format - Erik Greenwald
 * fixed compilation support for Mac OS X 10.5 - Sean Morrison
-* add bbsize command to report bounding box size - Cliff Yapp
+* add bb command to report size of and create bounding boxes - C. Yapp
 * reordering of and additions to Archer button menu - Cliff Yapp
 * extensive NURBS raytracing improvements - Keith Bowman, Cliff Yapp
 * initial undo support for Archer - Bob Parker

@@ -17,10 +17,11 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file bbsize.c
+/** @file bb.c
  *
- * The bbsize command - report the dimensions of the bounding arb8
- * for a given object.
+ * The bb command - report the dimensions of the bounding arb8
+ * for a given object and optionally create an arb8 with those
+ * dimensions.
  *
  */
 
@@ -36,7 +37,7 @@
 
 
 int
-ged_bbsize(struct ged *gedp, int argc, const char *argv[])
+ged_bb(struct ged *gedp, int argc, const char *argv[])
 {
     point_t rpp_min, rpp_max;
     point_t obj_min, obj_max;
@@ -46,13 +47,15 @@ ged_bbsize(struct ged *gedp, int argc, const char *argv[])
     int print_rpp = 0;
     int print_dim = 0;
     int print_vol = 0;
+    int make_bb = 0;
     int i;
-    static const char *usage = "object";
+    static const char *usage = "[options] object1 [object2 object3 ...]";
     const char *str;
     double xlen;
     double ylen;
     double zlen;
     double vol;
+    char bbname[64];
     
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
     GED_CHECK_READ_ONLY(gedp, GED_ERROR);
@@ -73,8 +76,13 @@ ged_bbsize(struct ged *gedp, int argc, const char *argv[])
     }
 
     bu_optind = 1;      /* re-init bu_getopt() */
-    while ((c = bu_getopt(argc, (char * const *)argv, "dequv")) != EOF) {
+    while ((c = bu_getopt(argc, (char * const *)argv, "c:dequv")) != EOF) {
 	switch (c) {
+	    case 'c':
+		make_bb = 1;
+		memset(bbname, 0, 64);
+		bu_strlcpy(bbname, bu_optarg, 64);
+		break;
 	    case 'd':
 		print_dim = 1;
 		break;
@@ -105,6 +113,13 @@ ged_bbsize(struct ged *gedp, int argc, const char *argv[])
     /* skip options processed plus command name, should just leave object names */
     argc -= bu_optind;
     argv += bu_optind;
+
+    /* must be wanting help */
+    if (argc == 0) {
+	bu_vls_printf(&gedp->ged_result_str, "Usage: bb %s", usage);
+	return GED_HELP;
+    }
+
 
     VSETALL(rpp_min, MAX_FASTF);
     VSETALL(rpp_max, -MAX_FASTF);
@@ -149,6 +164,39 @@ ged_bbsize(struct ged *gedp, int argc, const char *argv[])
     	bu_vls_printf(&gedp->ged_result_str, "Bounding Box Volume: %.1f %s^3\n", vol, str);
     }
 
+    if (make_bb == 1) {
+	struct directory    *dp;
+	struct rt_arb_internal      *arb;
+	struct rt_db_internal       new_intern;
+	arb = (struct rt_arb_internal *)bu_malloc(sizeof(struct rt_arb_internal), "arb");
+   	VMOVE(arb->pt[0], rpp_min);
+   	VSET(arb->pt[1], rpp_min[X], rpp_min[Y], rpp_max[Z]);
+   	VSET(arb->pt[2], rpp_min[X], rpp_max[Y], rpp_max[Z]);
+   	VSET(arb->pt[3], rpp_min[X], rpp_max[Y], rpp_min[Z]);
+   	VSET(arb->pt[4], rpp_max[X], rpp_min[Y], rpp_min[Z]);
+   	VSET(arb->pt[5], rpp_max[X], rpp_min[Y], rpp_max[Z]);
+   	VMOVE(arb->pt[6], rpp_max);
+    	VSET(arb->pt[7], rpp_max[X], rpp_max[Y], rpp_min[Z]);
+   	arb->magic = RT_ARB_INTERNAL_MAGIC;
+       	
+   	/* set up internal structure */
+   	RT_INIT_DB_INTERNAL(&new_intern);
+   	new_intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
+   	new_intern.idb_type = ID_ARB8;
+   	new_intern.idb_meth = &rt_functab[ID_ARB8];
+   	new_intern.idb_ptr = (genptr_t)arb;
+       	
+   	if ((dp=db_diradd(gedp->ged_wdbp->dbip, bbname, -1L, 0, DIR_SOLID, (genptr_t)&new_intern.idb_type)) == DIR_NULL) {
+   	    bu_vls_printf(&gedp->ged_result_str, "Cannot add %s to directory\n", bbname);
+   	    return GED_ERROR;
+   	}
+       	
+   	if (rt_db_put_internal(dp, gedp->ged_wdbp->dbip, &new_intern, gedp->ged_wdbp->wdb_resp) < 0) {
+   	    rt_db_free_internal(&new_intern, gedp->ged_wdbp->wdb_resp);
+   	    bu_vls_printf(&gedp->ged_result_str, "Database write error, aborting.\n");
+	}
+    }
+    
     return GED_OK;
 }
 

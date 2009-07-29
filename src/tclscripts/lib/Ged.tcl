@@ -113,7 +113,7 @@ package provide cadwidgets::Ged 1.0
 	method autoview {args}
 	method autoview_all {args}
 	method base2local {}
-	method bbsize {args}
+	method bb {args}
 	method bev {args}
 	method bg {args}
 	method bg_all {args}
@@ -797,8 +797,8 @@ package provide cadwidgets::Ged 1.0
     eval $mGed base2local
 }
 
-::itcl::body cadwidgets::Ged::bbsize {args} {
-    eval $mGed bbsize $args
+::itcl::body cadwidgets::Ged::bb {args} {
+    eval $mGed bb $args
 }
 
 ::itcl::body cadwidgets::Ged::bev {args} {
@@ -2849,7 +2849,7 @@ package provide cadwidgets::Ged 1.0
 	    		for the "rm" subcommand, the arguments are attribute names
 	    		for the "append" subcommand, the arguments are attribute name/value pairs}}
     $help add autoview		{{view_obj} {set the view object's size and center}}
-    $help add bbsize		{{object} {Report the size of the bounding box (rpp) containing the specified object}}
+    $help add bb		{{object} {Report the size of the bounding box (rpp) containing the specified object}}
     $help add bev		{{[P|t] new_obj obj1 op obj2 ...} {boolean evaluation of objects via NMG's}}
     $help add blast		{{"-C#/#/# <objects>"} {clear screen, draw objects}}
     $help add bo		{{(-i|-o) major_type minor_type dest source}

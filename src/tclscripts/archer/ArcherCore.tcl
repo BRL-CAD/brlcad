@@ -130,7 +130,7 @@ namespace eval ArcherCore {
 	method adjust              {args}
 	method arced               {args}
 	method attr                {args}
-	method bbsize              {args}
+	method bb                  {args}
 	method bev                 {args}
 	method blast               {args}
 	method bo                  {args}
@@ -387,7 +387,7 @@ namespace eval ArcherCore {
 	# This is mostly a list of wrapped Ged commands. However, it also contains
 	# a few commands that are implemented here in ArcherCore.
 	variable mArcherCoreCommands { \
-					   3ptarb adjust arced attr bbsize bev blast bo \
+					   3ptarb adjust arced attr bb bev blast bo \
 					   bot2pipe bot_condense bot_decimate bot_face_fuse \
 					   bot_face_sort bot_merge bot_smooth bot_split bot_vertex_fuse \
 					   c cd clear clone color comb comb_color copy copyeval copymat \
@@ -3276,8 +3276,8 @@ Popup Menu    Right or Ctrl-Left
     eval gedWrapper attr 0 0 1 0 $args
 }
 
-::itcl::body ArcherCore::bbsize {args} {
-    eval gedWrapper bbsize 0 0 1 1 $args
+::itcl::body ArcherCore::bb {args} {
+    eval gedWrapper bb 0 0 1 1 $args
 }
 
 ::itcl::body ArcherCore::bev {args} {

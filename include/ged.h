@@ -1270,9 +1270,9 @@ GED_EXPORT BU_EXTERN(int ged_autoview, (struct ged *gedp, int argc, const char *
  * Report the size of the bounding box (rpp) around the specified object
  *
  * Usage:
- *     bbsize object
+ *     bb object
  */
-GED_EXPORT BU_EXTERN(int ged_bbsize, (struct ged *gedp, int argc, const char *argv[]));
+GED_EXPORT BU_EXTERN(int ged_bb, (struct ged *gedp, int argc, const char *argv[]));
 
 /**
  * Tesselates each operand object, then performs the
