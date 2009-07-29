@@ -83,6 +83,7 @@ struct ged_clone_state {
     fastf_t		mirpos;		/* Point on axis to mirror copy */
     int			autoview;	/* Execute autoview after drawing all objects */
     int			updpos;		/* Position of number to update (for -c) */
+    struct bu_vls	olist;          /* List of cloned object names */
 };
 
 struct name {
@@ -417,8 +418,8 @@ copy_v5_solid(struct db_i *dbip, struct directory *proto, struct ged_clone_state
 	RT_CK_DB_INTERNAL(&intern);
 	/* pull the new name */
 	dp = db_lookup(dbip, bu_vls_addr(name), LOOKUP_QUIET);
-	bu_vls_free(name);
 	if (!dp) {
+	    rt_db_free_internal(&intern, &rt_uniresource);
 	    bu_vls_free(name);
 	    continue;
 	}
@@ -426,7 +427,9 @@ copy_v5_solid(struct db_i *dbip, struct directory *proto, struct ged_clone_state
 	/* write the new matrix to the new object */
 	if (rt_db_put_internal(dp, dbip, &intern, &rt_uniresource) < 0)
 	    bu_vls_printf(&state->gedp->ged_result_str, "ERROR: clone internal error copying %s\n", proto->d_namep);
-	rt_db_free_internal(&intern, &rt_uniresource);
+
+	bu_vls_printf(&state->olist, "%V ", name);
+	bu_vls_free(name);
     } /* end make n copies */
 
     return;
@@ -629,6 +632,7 @@ copy_v5_comb(struct db_i *dbip, struct directory *proto, struct ged_clone_state 
 		bu_vls_free(name);
 		return NULL;
 	    }
+	    bu_vls_printf(&state->olist, "%V ", name);
 	    bu_vls_free(name);
 	    rt_db_free_internal(&dbintern, &rt_uniresource);
 	}
@@ -794,7 +798,7 @@ deep_copy_object(struct resource *resp, struct ged_clone_state *state)
 static void
 print_usage(struct ged *gedp)
 {
-    bu_vls_printf(&gedp->ged_result_str, "Usage: clone [-abhimnprtv] <object>\n\n");
+    bu_vls_printf(&gedp->ged_result_str, "Usage: clone [-abhimnprtv] object\n\n");
     bu_vls_printf(&gedp->ged_result_str, "-a <n> <x> <y> <z>\t- Specifies a translation split between n copies.\n");
     bu_vls_printf(&gedp->ged_result_str, "-b <n> <x> <y> <z>\t- Specifies a rotation around x, y, and z axes \n\t\t\t  split between n copies.\n");
     bu_vls_printf(&gedp->ged_result_str, "-c\t\t\t- Increment the second number in object names.\n");
@@ -930,7 +934,6 @@ ged_clone(struct ged *gedp, int argc, const char *argv[])
 {
     struct ged_clone_state state;
     struct directory *copy;
-    static const char *usage = "";
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
     GED_CHECK_READ_ONLY(gedp, GED_ERROR);
@@ -949,8 +952,13 @@ ged_clone(struct ged *gedp, int argc, const char *argv[])
     if (get_args(gedp, argc, (char **)argv, &state) == GED_ERROR)
 	return GED_ERROR;
 
+    bu_vls_init(&state.olist);
+
     if ((copy = deep_copy_object(&rt_uniresource, &state)) != (struct directory *)NULL)
 	bu_vls_printf(&gedp->ged_result_str, "%s", copy->d_namep);
+
+    bu_vls_printf(&gedp->ged_result_str, " {%V}", &state.olist);
+    bu_vls_free(&state.olist);
 
     return GED_OK;
 }
