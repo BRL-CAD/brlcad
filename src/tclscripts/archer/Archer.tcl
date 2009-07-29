@@ -252,6 +252,7 @@ package provide Archer 1.0
 	# ArcherCore Override Section
 	method dblClick {_tags}
 	method combWrapper {_cmd _minArgs args}
+	method createWrapper {_cmd args}
 	method gedWrapper {_cmd _eflag _hflag _sflag _tflag args}
 	method gedWrapper2 {_cmd _oindex _pindex _eflag _hflag _sflag _tflag args}
 	method globalWrapper {_cmd args}
@@ -961,7 +962,8 @@ package provide Archer 1.0
 }
 
 ::itcl::body Archer::cp {args} {
-    eval ArcherCore::gedWrapper cp 0 0 1 1 $args
+    eval createWrapper cp $args
+#    eval ArcherCore::gedWrapper cp 0 0 1 1 $args
 }
 
 ::itcl::body Archer::cpi {args} {
@@ -1136,7 +1138,32 @@ package provide Archer 1.0
 }
 
 ::itcl::body Archer::in {args} {
-    eval ArcherCore::gedWrapper in 0 0 1 1 $args
+    SetWaitCursor $this
+
+    if {[llength $args] == 0} {
+	set new_args [handleMoreArgs "Enter name of solid: "]
+	while {[llength $new_args] == 0} {
+	    set new_args [handleMoreArgs "Enter name of solid: "]
+	}
+
+	set args $new_args
+    }
+
+    set new_name [lindex $args 0]
+
+    if {[catch {eval gedCmd in $args} ret]} {
+	SetNormalCursor $this
+	return $ret
+    }
+
+    # Checkpoint the created object
+    set lnew_name [checkpoint $new_name $LEDGER_CREATE]
+
+    refreshTree 1
+
+    checkpoint $new_name $LEDGER_MODIFY
+    updateUndoState
+    SetNormalCursor $this
 }
 
 ::itcl::body Archer::inside {args} {
@@ -1206,30 +1233,7 @@ package provide Archer 1.0
 }
 
 ::itcl::body Archer::make {args} {
-    set alen [llength $args]
-
-    # Returns a help message.
-    if {$alen != 2} {
-	return [gedCmd make]
-    }
-
-    SetWaitCursor $this
-
-    if {[catch {eval gedCmd make $args} ret]} {
-	SetNormalCursor $this
-	return $ret
-    }
-
-    set new_name [lindex $args 0]
-
-    # Checkpoint the created object
-    set lnew_name [checkpoint $new_name $LEDGER_CREATE]
-
-    refreshTree 1
-
-    checkpoint $new_name $LEDGER_MODIFY
-    updateUndoState
-    SetNormalCursor $this
+    eval createWrapper make $args
 }
 
 ::itcl::body Archer::make_bb {args} {
@@ -1871,6 +1875,54 @@ package provide Archer 1.0
 	    eval gedWrapper $_cmd 0 0 1 1 $args
 	}
     }
+}
+
+::itcl::body Archer::createWrapper {_cmd args} {
+    set optionsAndArgs [eval dbExpand $args]
+    set options [lindex $optionsAndArgs 0]
+    set expandedArgs [lindex $optionsAndArgs 1]
+
+    # Returns a help message.
+    if {[llength $expandedArgs] == 0} {
+	return [gedCmd $_cmd]
+    }
+
+    # Get the list of created objects.
+    switch -- $_cmd {
+	"cp" {
+	    if {[llength $expandedArgs] != 2} {
+		return [gedCmd $_cmd]
+	    }
+
+	    set clist [lindex $expandedArgs 1]
+	}
+	"make" {
+	    if {[llength $expandedArgs] != 2} {
+		return [gedCmd $_cmd]
+	    }
+
+	    set clist [lindex $expandedArgs 0]
+	}
+	default {
+	    return "createWrapper: $_cmd not recognized."
+	}
+    }
+
+    SetWaitCursor $this
+
+    if {[catch {eval gedCmd $_cmd $options $expandedArgs} ret]} {
+	SetNormalCursor $this
+	return $ret
+    }
+
+    # Checkpoint the created object
+    checkpoint_olist $clist $LEDGER_CREATE
+
+    refreshTree 1
+
+    checkpoint_olist $clist $LEDGER_MODIFY
+    updateUndoState
+    SetNormalCursor $this
 }
 
 ::itcl::body Archer::gedWrapper {cmd eflag hflag sflag tflag args} {
