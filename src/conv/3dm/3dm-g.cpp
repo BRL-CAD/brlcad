@@ -160,6 +160,16 @@ int main(int argc, char** argv) {
 	    ON_Curve *curve;
 	    ON_Surface *surface;
 	    ON_Mesh *mesh;
+	    ON_RevSurface *revsurf;
+	    ON_PlaneSurface *planesurf;
+	    ON_InstanceDefinition *instdef;
+	    ON_InstanceRef *instref;
+	    ON_Layer *layer;
+	    ON_Light *light;
+	    ON_NurbsCage *nurbscage;
+	    ON_MorphControl *morphctrl;
+	    ON_Group *group;
+	    ON_Geometry *geom;
 	    if ((brep = const_cast<ON_Brep * >(ON_Brep::Cast(pGeometry)))) {
 		mk_id(outfp, id_name);
 		mk_brep(outfp, geom_name.c_str(), brep);
@@ -175,6 +185,26 @@ int main(int argc, char** argv) {
 		dump->Print("\n\n ***** ON_Surface. ***** \n\n");
 	    } else if ((mesh = const_cast<ON_Mesh * >(ON_Mesh::Cast(pGeometry)))) {
 		dump->Print("\n\n ***** ON_Mesh. ***** \n\n");
+	    } else if ((revsurf = const_cast<ON_RevSurface * >(ON_RevSurface::Cast(pGeometry)))) {
+		dump->Print("\n\n ***** ON_RevSurface. ***** \n\n");
+	    } else if ((planesurf = const_cast<ON_PlaneSurface * >(ON_PlaneSurface::Cast(pGeometry)))) {
+		dump->Print("\n\n ***** ON_PlaneSurface. ***** \n\n");
+	    } else if ((instdef = const_cast<ON_InstanceDefinition * >(ON_InstanceDefinition::Cast(pGeometry)))) {
+		dump->Print("\n\n ***** ON_InstanceDefinition. ***** \n\n");
+	    } else if ((instref = const_cast<ON_InstanceRef * >(ON_InstanceRef::Cast(pGeometry)))) {
+		dump->Print("\n\n ***** ON_InstanceRef. ***** \n\n");
+	    } else if ((layer = const_cast<ON_Layer * >(ON_Layer::Cast(pGeometry)))) {
+		dump->Print("\n\n ***** ON_Layer. ***** \n\n");
+	    } else if ((light = const_cast<ON_Light * >(ON_Light::Cast(pGeometry)))) {
+		dump->Print("\n\n ***** ON_Light. ***** \n\n");
+	    } else if ((nurbscage = const_cast<ON_NurbsCage * >(ON_NurbsCage::Cast(pGeometry)))) {
+		dump->Print("\n\n ***** ON_NurbsCage. ***** \n\n");
+	    } else if ((morphctrl = const_cast<ON_MorphControl * >(ON_MorphControl::Cast(pGeometry)))) {
+		dump->Print("\n\n ***** ON_MorphControl. ***** \n\n");
+	    } else if ((group = const_cast<ON_Group * >(ON_Group::Cast(pGeometry)))) {
+		dump->Print("\n\n ***** ON_Group. ***** \n\n");
+	    } else if ((geom = const_cast<ON_Geometry * >(ON_Geometry::Cast(pGeometry)))) {
+		dump->Print("\n\n ***** ON_Geometry. ***** \n\n");
 	    } else {
 		dump->Print("\n\n ***** Got a different kind of object than geometry - investigate. ***** \n\n");
 	    }
