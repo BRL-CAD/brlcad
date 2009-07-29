@@ -51,8 +51,8 @@
 #define BREP_CURVE_FLATNESS 0.95
 
 /* subdivision size factors */
-#define BREP_SURF_SUB_FACTOR 0.1
-#define BREP_TRIM_SUB_FACTOR 0.01
+#define BREP_SURF_SUB_FACTOR 1
+#define BREP_TRIM_SUB_FACTOR 1
 
 static std::numeric_limits<double> real;
 
