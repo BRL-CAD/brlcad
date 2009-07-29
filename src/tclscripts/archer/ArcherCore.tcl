@@ -3415,8 +3415,12 @@ Popup Menu    Right or Ctrl-Left
 	    # find indices of matching children
 	    set mi [lsearch -all $searchType $lsItems $child]
 
-	    foreach i $mi {
-		lappend tobjects [lindex $lsItems $i]
+	    if {[llength $mi] == 0} {
+		lappend tobjects $obj
+	    } else {
+		foreach i $mi {
+		    lappend tobjects [lindex $lsItems $i]
+		}
 	    }
 	} else {
 	    set path [file dirname $obj]
@@ -3433,8 +3437,12 @@ Popup Menu    Right or Ctrl-Left
 	    # find indices of matching children
 	    set mi [lsearch -all $searchType $children $child]
 
-	    foreach i $mi {
-		lappend tobjects "/$path/[lindex $children $i]"
+	    if {[llength $mi] == 0} {
+		lappend tobjects $obj
+	    } else {
+		foreach i $mi {
+		    lappend tobjects "/$path/[lindex $children $i]"
+		}
 	    }
 	}
     }
