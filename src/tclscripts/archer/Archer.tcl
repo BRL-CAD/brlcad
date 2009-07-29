@@ -1245,7 +1245,7 @@ package provide Archer 1.0
 }
 
 ::itcl::body Archer::mirror {args} {
-    eval ArcherCore::gedWrapper mirror 0 0 1 1 $args
+    eval createWrapper mirror $args
 }
 
 ::itcl::body Archer::mv {args} {
@@ -1878,19 +1878,26 @@ package provide Archer 1.0
 }
 
 ::itcl::body Archer::createWrapper {_cmd args} {
-    set optionsAndArgs [eval dbExpand $args]
-    set options [lindex $optionsAndArgs 0]
-    set expandedArgs [lindex $optionsAndArgs 1]
-
     # Returns a help message.
-    if {[llength $expandedArgs] == 0} {
+    if {[llength $args] < 2} {
 	return [gedCmd $_cmd]
     }
 
+    set options [lrange $args 0 end-2]
+    set expandedArgs [lrange $args end-1 end]
+
     # Get the list of created objects.
     switch -- $_cmd {
-	"cp" {
+	"cp" -
+	"mirror" {
 	    if {[llength $expandedArgs] != 2} {
+		return [gedCmd $_cmd]
+	    }
+
+	    set old [lindex $expandedArgs 0]
+
+	    # Check for the existence of old
+	    if {[catch {gedCmd attr show $old} adata]} {
 		return [gedCmd $_cmd]
 	    }
 
@@ -2108,10 +2115,13 @@ package provide Archer 1.0
 
     # If an item is in both sublists, remove it from mlist.
     foreach item $klist {
-	set i [lsearch $mlist $item]
-	if {$i != -1} {
-	    # Delete the item (i.e. it no longer exists)
-	    set mlist [lreplace $mlist $i $i]
+	set l [lsearch -all $mlist $item]
+	set l [lsort -decreasing $l]
+	if {$l != -1} {
+	    foreach i $l {
+		# Delete the item (i.e. it no longer exists)
+		set mlist [lreplace $mlist $i $i]
+	    }
 	}
     }
 
