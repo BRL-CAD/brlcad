@@ -1359,6 +1359,7 @@ int main(int ac, char *av[])
     struct wmember human;
     struct wmember boxes;
     struct wmember hollow;
+    struct wmember crowd;
     progname = *av;
     struct bu_vls name;
     struct bu_vls str;
@@ -1558,12 +1559,12 @@ int main(int ac, char *av[])
 	char suffix[MAXLENGTH];	
 
 	for(w=0; w<(troops*troops); w++){
-
-        char names[MAXLENGTH][MAXLENGTH]={"Head.s", "Neck.s", "UpperTorso.s","LowerTorso.s","LeftUpperArm.s","LeftElbowJoint.s","LeftLowerArm.s","LeftWristJoint.s","LeftHand.s",
-                "RightUpperArm.s","RightElbowJoint.s","RightLowerArm.s","RightWristJoint.s","RightHand.s","LeftThighJoint.s","LeftThigh.s","LeftKneeJoint.s","LeftCalf.s",
-                "LeftAnkleJoint.s","LeftFoot.s","RightThighJoint.s","RightThigh.s","RightKneeJoint.s","RightCalf.s","RightAnkleJoint.s","RightFoot.s","0"};
-        char body[MAXLENGTH][MAXLENGTH]={"Body.r",};
-	char box[MAXLENGTH][MAXLENGTH]={"Box.r",};
+        	char names[MAXLENGTH][MAXLENGTH]={"Head.s", "Neck.s", "UpperTorso.s","LowerTorso.s", "LeftShoulderJoint.s","LeftUpperArm.s","LeftElbowJoint.s",
+			"LeftLowerArm.s","LeftWristJoint.s","LeftHand.s","RightShoulderJoint.s","RightUpperArm.s","RightElbowJoint.s","RightLowerArm.s",
+			"RightWristJoint.s","RightHand.s","LeftThighJoint.s","LeftThigh.s","LeftKneeJoint.s","LeftCalf.s","LeftAnkleJoint.s","LeftFoot.s",
+			"RightThighJoint.s","RightThigh.s","RightKneeJoint.s","RightCalf.s","RightAnkleJoint.s","RightFoot.s","0"};
+        	char body[MAXLENGTH][MAXLENGTH]={"Body.r",};
+		char box[MAXLENGTH][MAXLENGTH]={"Box.r",};
 
 		bu_log("%d\n", w);
 
@@ -1573,10 +1574,13 @@ int main(int ac, char *av[])
 		bu_strlcat(box[0], suffix, MAXLENGTH);
 		bu_log("Adding Members\n");
     		BU_LIST_INIT(&human.l);
-		if(showBoxes)
+		BU_LIST_INIT(&crowd.l);
+		if(showBoxes){
 			BU_LIST_INIT(&boxes.l);
- 
-		while(x<26){
+		}
+ 		
+		/*This value is the number of items in char names */
+		while(x<28){
 			bu_log("%s : ", names[x]);
 			bu_strlcat(names[x], suffix, MAXLENGTH);
 			(void)mk_addmember(names[x], &human.l, NULL, WMOP_UNION);
@@ -1599,6 +1603,7 @@ int main(int ac, char *av[])
 		    "di=.99 sp=.01",
 		    rgb,
 		    0);
+
 		if(showBoxes){
 			VSET(rgb2, 255, 128, 128); /* redish color */
 			mk_lcomb(db_fp,   
@@ -1610,9 +1615,24 @@ int main(int ac, char *av[])
              		rgb2,
              		0);
 		}
+		bu_log("%s\n",body[0]);
 		num++;
 	}
+        is_region = 0;
+	int z=0;
+	char thing[10]="0";
+	char thing2[10]="0";
+	for(z=0; z<(troops*troops); z++){
+		char comber[MAXLENGTH]="Body.r";
+		sprintf(thing, "%d", z);
+                bu_strlcpy(thing2, thing, MAXLENGTH);
+                bu_strlcat(comber, thing2, MAXLENGTH);
+		(void)mk_addmember(comber, &crowd.l, NULL, WMOP_UNION);
+    	}
     }
+        	mk_lcomb(db_fp, "Crowd.c", &crowd, 0, NULL, NULL, NULL, 0);
+
+
 
     /* Close database */
     wdb_close(db_fp);
