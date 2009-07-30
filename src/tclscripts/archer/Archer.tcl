@@ -958,7 +958,7 @@ package provide Archer 1.0
 # Create a combination or modify an existing one.
 #
 ::itcl::body Archer::comb {args} {
-    eval combWrapper g 3 $args
+    eval combWrapper comb 3 $args
 }
 
 ::itcl::body Archer::cp {args} {
@@ -966,7 +966,7 @@ package provide Archer 1.0
 }
 
 ::itcl::body Archer::cpi {args} {
-    eval ArcherCore::gedWrapper cpi 0 0 1 1 $args
+    eval createWrapper cpi $args
 }
 
 ::itcl::body Archer::copyeval {args} {
@@ -1778,27 +1778,18 @@ package provide Archer 1.0
 ::itcl::body Archer::combWrapper {_cmd _minArgs args} {
     set alen [llength $args]
     if {$alen < $_minArgs} {
-	eval ArcherCore::gedWrapper $_cmd 0 0 1 1 $args
-	return
+	return [gedCmd $_cmd]
     }
 
     set obj [lindex $args 0]
-    set l [gedCmd expand $obj*]
-    set len [llength $l]
 
-    if {$len == 0} {
+    # Check for the existence of obj
+    if {[catch {gedCmd attr show $obj} adata]} {
 	# Create a new combination
-	eval ArcherCore::gedWrapper $_cmd 0 0 1 1 $args
+	eval createWrapper $_cmd $args
     } else {
-	set i [lsearch -exact $l $obj]
-
-	if {$i == -1} {
-	    # Create a new combination
-	    eval ArcherCore::gedWrapper $_cmd 0 0 1 1 $args
-	} else {
-	    # Modifying an existing combination
-	    eval gedWrapper $_cmd 0 0 1 1 $args
-	}
+	# Modifying an existing combination
+	eval gedWrapper $_cmd 0 0 1 1 $args
     }
 }
 
@@ -1815,6 +1806,7 @@ package provide Archer 1.0
 	    set expandedArgs [lrange $args end end]
 	}
 	"cp" -
+	"cpi" -
 	"mirror" {
 	    # Returns a help message.
 	    if {[llength $args] < 2} {
@@ -1850,6 +1842,18 @@ package provide Archer 1.0
 		return [gedCmd $_cmd]
 	    }
 
+	    set clist [lindex $expandedArgs 0]
+	}
+	"comb" -
+	"g" -
+	"r" {
+	    # Returns a help message.
+	    if {[llength $args] < 2} {
+		return [gedCmd $_cmd]
+	    }
+
+	    set options {}
+	    set expandedArgs $args
 	    set clist [lindex $expandedArgs 0]
 	}
 	default {
