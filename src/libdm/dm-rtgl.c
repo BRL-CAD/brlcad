@@ -999,24 +999,24 @@ rtgl_loadMatrix(struct dm *dmp, fastf_t *mat, int which_eye)
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
 
-    /* OpenGL lighting faster at low clipping */
+    /* Initial Material Properties */
     GLfloat mat_specular[] = {.8, .8, .8, .8}; 
     GLfloat mat_shininess[] = { 5.0 }; 
-    GLfloat light_position[] = { 0.25, 0.5, 1.0, 0.0 }; 
-    GLfloat white_light[] = { .9, .9, .9, 1.0 }; 
-    GLfloat lmodel_ambient[] = { 0.1, 0.1, 0.1, 1.0 }; 
-
-    glShadeModel(GL_FLAT); 
-    
     glMaterialfv(GL_FRONT, GL_SPECULAR, mat_specular); 
     glMaterialfv(GL_FRONT, GL_SHININESS, mat_shininess); 
 
     /* set light position now, so that it moves with the view */
+    GLfloat light_position[] = { 1.0, 1.0, 1.0, 0.0 }; 
+    GLfloat white_light[] = { .8, .8, .8, 1.0 }; 
     glLightfv(GL_LIGHT0, GL_POSITION, light_position); 
     glLightfv(GL_LIGHT0, GL_DIFFUSE, white_light); 
     glLightfv(GL_LIGHT0, GL_SPECULAR, white_light); 
 
+    glShadeModel(GL_FLAT); 
+    GLfloat lmodel_ambient[] = { 0.1, 0.1, 0.1, 1.0 }; 
     glLightModelfv(GL_LIGHT_MODEL_AMBIENT, lmodel_ambient); 
+    glLightModelf(GL_LIGHT_MODEL_LOCAL_VIEWER, GL_TRUE);
+    glLightModelf(GL_LIGHT_MODEL_COLOR_CONTROL, GL_SEPARATE_SPECULAR_COLOR);
 
     glEnable(GL_LIGHTING); 
     glEnable(GL_LIGHT0);
@@ -1044,17 +1044,51 @@ rtgl_loadMatrix(struct dm *dmp, fastf_t *mat, int which_eye)
 }
 
 /* converts degrees of azimuth/elevation into a vector */
-void aeVect(fastf_t *aeVect, fastf_t *aet) {
-    fastf_t azRad, elRad;
+void aeVect(fastf_t *aeVect, fastf_t *aet, fastf_t *center, double radius) {
+    fastf_t azRad, elRad, crossRad;
 
     /* convert to radians */
     azRad = aet[0] * DEG2RAD;
     elRad = aet[1] * DEG2RAD;
 
-    /* calculate vector */
-    aeVect[X] = cos(azRad);
-    aeVect[Y] = sin(azRad);
-    aeVect[Z] = sin(elRad);
+    /* calculate Z */
+    aeVect[Z] = radius * sin(elRad);
+
+    /* calculate radius of this cross-section */
+    crossRad = sqrt((radius * radius) - (aeVect[Z] * aeVect[Z]));
+
+    /* calculate X and Y for this cross-section */
+    aeVect[X] = crossRad * cos(azRad); 
+    aeVect[Y] = crossRad * sin(azRad);
+
+    /* apply center offset */
+    aeVect[X] += center[X];
+    aeVect[Y] += center[Y];
+    aeVect[Z] += center[Z];
+}
+
+void aeUniformVect(fastf_t *aeVect, fastf_t *aet, fastf_t *center, double radius) {
+    fastf_t azRad, elRad, crossRad, scale;
+
+    /* convert to radians */
+    azRad = aet[0] * DEG2RAD;
+    elRad = aet[1] * DEG2RAD;
+
+    /* calculate Z */
+    aeVect[Z] = radius * sin(elRad);
+
+    /* calculate radius of this cross-section */
+    crossRad = sqrt((radius * radius) - (aeVect[Z] * aeVect[Z]));
+
+    /* calculate X and Y for this cross-section */
+    scale = sqrt((radius * radius) - aeVect[Z] * (aeVect[Z]));
+    aeVect[X] = scale * cos(azRad); 
+    aeVect[Y] = scale * sin(azRad);
+
+    /* apply center offset */
+    aeVect[X] += center[X];
+    aeVect[Y] += center[Y];
+    aeVect[Z] += center[Z];
 }
 
 /* calculate and add hit-point info to info list */
@@ -1063,6 +1097,7 @@ void addInfo(struct application *app, struct hit *hit, struct soltab *soltab, ch
     vect_t normal;
     struct ptInfoList *start;
     int newColor = 1;
+    double dot;
 
     /* calculate intersection point */
     VJOIN1(point, app->a_ray.r_pt, hit->hit_dist, app->a_ray.r_dir);
@@ -1106,10 +1141,7 @@ void addInfo(struct application *app, struct hit *hit, struct soltab *soltab, ch
     currItem->norms[Z + currItem->used] = normal[Z];
 
     currItem->used += 3;
-
 }
-
-
 
 /* add all hit point info to info list */
 int recordHit(struct application *app, struct partition *partH, struct seg *segs)
@@ -1144,8 +1176,68 @@ int ignoreMiss(struct application *app) {
     return 0;
 }
 
+void randShots(fastf_t *center, fastf_t radius, int flag) {
+    int i, j;
+    vect_t view;
+    vect_t dir;
+    point_t pt;
+    view[2] = 0;
+
+    glDisable(GL_LIGHTING);
+
+    for (i = 0; i < 360; i += 1) {
+	for (j = 0; j < 90; j += 1) {
+	    view[0] = i;
+	    view[1] = j;
+	    
+	    /* use view vector for direction */
+	    aeVect(dir, view, center, radius);	    
+	    VMOVE(app.a_ray.r_pt, dir);
+	
+	    /* use opposite sphere point for origin */
+	    VSUB2(pt, dir, center);
+	    VREVERSE(pt, pt);
+	    VADD2(pt, pt, center);
+	    
+	    VMOVE(app.a_ray.r_dir, pt);
+	    
+	    
+	    if (RT_BADVEC(app.a_ray.r_dir)) {
+		VPRINT("bad dir:", app.a_ray.r_dir);
+	    }
+	    
+	    if (RT_BADVEC(app.a_ray.r_pt)) {
+		VPRINT("bad pt:", app.a_ray.r_pt);
+	    }
+	    
+	    else if (flag) {
+		/* shoot ray */
+		rt_shootray(&app);    
+	    }
+
+	    if (!flag) {
+		glPointSize(5);
+		glBegin(GL_POINTS);
+		glColor3d(0.0, 1.0, 0.0);
+		glVertex3dv(pt);
+		glColor3d(1.0, 0.0, 0.0);
+		glVertex3dv(dir);
+		glEnd();
+
+		glColor4d(0.0, 0.0, 1.0, .1);
+		glBegin(GL_LINES);
+		glVertex3dv(pt);
+		glVertex3dv(dir);
+		glEnd();
+	    }
+	}
+    }
+
+    glEnable(GL_LIGHTING);
+}
+
 /* shoot an even grid of parallel rays in a principle direction */
-void shootGrid(vect_t min, vect_t max, int uAxis, int vAxis, int iAxis) {
+void shootGrid(vect_t min, vect_t max, int pixels, int viewSize, int uAxis, int vAxis, int iAxis) {
     int i, j;
     vect_t span;
 
@@ -1153,8 +1245,15 @@ void shootGrid(vect_t min, vect_t max, int uAxis, int vAxis, int iAxis) {
     VSUB2(span, max, min);
 
     /* calculate firing intervals */
-    int uDivs = 500;
-    int vDivs = 500;
+    int uDivs = pixels * (span[uAxis] / viewSize);
+    int vDivs = pixels * (span[vAxis] / viewSize);
+
+#if 0
+    uDivs /= 2;
+    vDivs /= 2;
+#endif
+
+    bu_log("firing %d x %d grid", uDivs, vDivs);
 
     fastf_t uWidth = span[uAxis] / uDivs;
     fastf_t vWidth = span[vAxis] / vDivs;
@@ -1177,36 +1276,63 @@ void shootGrid(vect_t min, vect_t max, int uAxis, int vAxis, int iAxis) {
 
         for (j = 0; j < uDivs; j++) {
             u += uWidth;
-	    
+
 	    app.a_ray.r_pt[uAxis] = u;
 	    app.a_ray.r_pt[vAxis] = v;
-
+		
             /* points are drawn in hit routine */
-            rt_shootray(&app);
-        }
+	    rt_shootray(&app);
+	}
 
         /* reset u */
         u = uOff;
     }
 }
 
-void drawPoints() {
+void drawPoints(fastf_t *view) {
     glPointSize(2);
+
+#if 1 /* use vertex arrays */
     glEnableClientState(GL_VERTEX_ARRAY);
     glEnableClientState(GL_NORMAL_ARRAY);
+#endif
+    int i, numPoints, index, count = 0;
+    vect_t normal;
+    double dot;
 
-    int numPoints, index, count = 0;
-    
+
     for (BU_LIST_FOR(currItem, ptInfoList, &(ptInfo.l))) {
 	numPoints = currItem->used / 3;
 	count += numPoints;
 
 	glMaterialfv(GL_FRONT, GL_AMBIENT_AND_DIFFUSE, (float *) &(currItem->color));
 
+#if 0
+	glBegin(GL_POINTS);
+	for (i = 0; i < numPoints; i++) {
+	    index = i + i + i;
+	    
+	    normal[X] = currItem->norms[X + index];
+	    normal[Y] = currItem->norms[Y + index];
+	    normal[Z] = currItem->norms[Z + index];
+
+	    dot = VDOT(view, normal);
+
+	    if (0 && dot < 0) {
+		VREVERSE(normal, normal);
+	    }
+		glNormal3d(normal[X], normal[Y], normal[Z]);
+		glVertex3d(currItem->points[X + index], currItem->points[Y + index], currItem->points[Z + index]);
+	    
+	}
+	glEnd();
+#else
 	glVertexPointer(3, GL_DOUBLE, 0, &(currItem->points));
         glNormalPointer(GL_DOUBLE, 0, &(currItem->norms));        
 	glDrawArrays(GL_POINTS, 0, numPoints);
+#endif
     }
+    glColor3d(0.0, 1.0, 0.0);
     glPointSize(1);
 }
 
@@ -1368,6 +1494,10 @@ void buildTree(struct ged *gedp, struct objTree *tree) {
     }
 }
 
+vect_t min, max, span, center, view, vect;
+fastf_t radius;
+
+
 /*
  *  			R T G L _ D R A W V L I S T
  *
@@ -1377,7 +1507,7 @@ rtgl_drawVList(struct dm *dmp, register struct bn_vlist *vp)
 {
     static int call;
 
-    int i, j, new, numVisible, numNew;
+    int i, j, new, numVisible, numNew, maxPixels, viewSize;
     char *currTree, *visibleTrees[RT_MAXARGS];
     struct ptInfoList *curr;
     
@@ -1398,7 +1528,16 @@ rtgl_drawVList(struct dm *dmp, register struct bn_vlist *vp)
 
     if (rtip == RTI_NULL)
         return TCL_ERROR;
-    
+
+    /* get view dimension information */
+    if (dmp->dm_height > dmp->dm_width) {
+	maxPixels = dmp->dm_height;
+    } else {
+	maxPixels = dmp->dm_width;
+    }
+
+    viewSize = gedp->ged_gvp->gv_size;
+
     /* initialize list */
     if (ptInfo.l.forw == BU_LIST_NULL) {
 	/* initialize head */
@@ -1478,18 +1617,37 @@ rtgl_drawVList(struct dm *dmp, register struct bn_vlist *vp)
         rt_prep_parallel(rtip, 1);
         
         /* get min and max points of bounding box */
-        vect_t min, max;
         VMOVE(min, rtip->mdl_min);
         VMOVE(max, rtip->mdl_max);
+	VSUB2(span, max, min);
 
+	/* get parameters of bounding sphere */
+	radius = rtip->rti_radius * 2;
+
+	center[X] = (min[X] + max[X]) / 2;
+	center[Y] = (min[Y] + max[Y]) / 2;
+	center[Z] = (min[Z] + max[Z]) / 2;
+
+#if 1
 	/* shoot grid of rays in each principle direction */
-	shootGrid(min, max, X, Y, Z);
-	shootGrid(min, max, Z, X, Y);
-	shootGrid(min, max, Y, Z, X);
+	shootGrid(min, max, maxPixels, viewSize, X, Y, Z);
+	shootGrid(min, max, maxPixels, viewSize, Z, X, Y);
+	shootGrid(min, max, maxPixels, viewSize, Y, Z, X);
+#else
+
+	randShots(center, radius, 1);
+#endif
     }
 
-    drawPoints();
+    vect_t vCenter;
+    VSET(vCenter, 0, 0, 0);
+    aeVect(view, gedp->ged_gvp->gv_aet, vCenter, 1);
 
+    drawPoints(view);
+
+/*
+    randShots(center, radius, 0);
+*/
     call++;
 
     return TCL_OK;
