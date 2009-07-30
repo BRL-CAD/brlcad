@@ -42,8 +42,9 @@ ged_copyeval(struct ged *gedp, int argc, const char *argv[])
     int id;
     int i;
     int endpos;
+    char *tok;
     struct ged_trace_data gtd;
-    static const char *usage = "new_prim path_to_old_prim";
+    static const char *usage = "path_to_old_prim new_prim";
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
     GED_CHECK_READ_ONLY(gedp, GED_ERROR);
@@ -58,7 +59,7 @@ ged_copyeval(struct ged *gedp, int argc, const char *argv[])
 	return GED_HELP;
     }
 
-    if (argc < 3 || 27 < argc) {
+    if (argc != 3) {
 	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_ERROR;
     }
@@ -69,27 +70,24 @@ ged_copyeval(struct ged *gedp, int argc, const char *argv[])
     gtd.gtd_prflag = 0;
 
     /* check if new solid name already exists in description */
-    GED_CHECK_EXISTS(gedp, argv[1], LOOKUP_QUIET, GED_ERROR);
+    GED_CHECK_EXISTS(gedp, argv[2], LOOKUP_QUIET, GED_ERROR);
 
     MAT_IDN(start_mat);
 
     /* build directory pointer array for desired path */
-    if (argc == 3 && strchr(argv[2], '/')) {
-	char *tok;
-
+    if (strchr(argv[1], '/')) {
 	endpos = 0;
 
-	tok = strtok((char *)argv[2], "/");
+	tok = strtok((char *)argv[1], "/");
 	while (tok) {
 	    GED_DB_LOOKUP(gedp, gtd.gtd_obj[endpos], tok, LOOKUP_NOISY, GED_ERROR & GED_QUIET);
 	    endpos++;
 	    tok = strtok((char *)NULL, "/");
 	}
     } else {
-	for (i=2; i<argc; i++) {
-	    GED_DB_LOOKUP(gedp, gtd.gtd_obj[i-2], argv[i], LOOKUP_NOISY, GED_ERROR & GED_QUIET);
-	}
-	endpos = argc - 2;
+	endpos = 0;
+	GED_DB_LOOKUP(gedp, gtd.gtd_obj[endpos], argv[1], LOOKUP_NOISY, GED_ERROR & GED_QUIET);
+	endpos++;
     }
 
     gtd.gtd_objpos = endpos - 1;
@@ -131,7 +129,7 @@ ged_copyeval(struct ged *gedp, int argc, const char *argv[])
     /* should call GED_DB_DIRADD() but need to deal with freeing the
      * internals on failure.
      */
-    if ((dp=db_diradd(gedp->ged_wdbp->dbip, argv[1], -1L, 0,
+    if ((dp=db_diradd(gedp->ged_wdbp->dbip, argv[2], -1L, 0,
 		      gtd.gtd_obj[endpos-1]->d_flags,
 		      (genptr_t)&new_int.idb_type)) == DIR_NULL) {
 	rt_db_free_internal(&internal, &rt_uniresource);
