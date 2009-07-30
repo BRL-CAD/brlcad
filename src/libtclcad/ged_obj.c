@@ -596,7 +596,7 @@ static struct go_cmdtab go_cmds[] = {
     {"constrain_tmode",	"vname x|y|z x y", MAXARGS, go_constrain_tmode, GED_FUNC_PTR_NULL},
     {"copyeval",	(char *)0, MAXARGS, go_pass_through_func, ged_copyeval},
     {"copymat",	(char *)0, MAXARGS, go_pass_through_func, ged_copymat},
-    {"cp",	"[-f] [from_db:]obj [to_db:]obj", MAXARGS, go_copy, GED_FUNC_PTR_NULL},
+    {"cp",	"[-f] from to", MAXARGS, go_copy, GED_FUNC_PTR_NULL},
     {"cpi",	(char *)0, MAXARGS, go_pass_through_func, ged_cpi},
     {"d",	(char *)0, MAXARGS, go_pass_through_and_refresh_func, ged_erase},
     {"dall",	(char *)0, MAXARGS, go_pass_through_and_refresh_func, ged_erase_all},

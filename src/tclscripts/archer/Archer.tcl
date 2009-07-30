@@ -970,7 +970,7 @@ package provide Archer 1.0
 }
 
 ::itcl::body Archer::copyeval {args} {
-    eval ArcherCore::gedWrapper copyeval 0 0 1 1 $args
+    eval createWrapper copyeval $args
 }
 
 ::itcl::body Archer::copymat {args} {
@@ -1118,7 +1118,7 @@ package provide Archer 1.0
 }
 
 ::itcl::body Archer::facetize {args} {
-    eval ArcherCore::gedWrapper facetize 0 0 1 1 $args
+    eval createWrapper facetize $args
 }
 
 ::itcl::body Archer::fracture {args} {
@@ -1137,6 +1137,8 @@ package provide Archer 1.0
 }
 
 ::itcl::body Archer::in {args} {
+    return [eval createWrapper in $args]
+
     SetWaitCursor $this
 
     if {[llength $args] == 0} {
@@ -1166,7 +1168,7 @@ package provide Archer 1.0
 }
 
 ::itcl::body Archer::inside {args} {
-    eval ArcherCore::gedWrapper inside 0 0 1 1 $args
+    eval createWrapper inside $args
 }
 
 ::itcl::body Archer::kill {args} {
@@ -1796,7 +1798,8 @@ package provide Archer 1.0
 ::itcl::body Archer::createWrapper {_cmd args} {
     # Set the list of created objects (i.e. clist)
     switch -- $_cmd {
-	"c" {
+	"c" -
+	"facetize" {
 	    set optionsAndArgs [eval dbExpand $args]
 	    set options [lindex $optionsAndArgs 0]
 	    set expandedArgs [lindex $optionsAndArgs 1]
@@ -1820,6 +1823,7 @@ package provide Archer 1.0
 	    # Clone will return the clist info. Consequently,
 	    # clist is set after invoking clone below.
 	}
+	"copyeval" -
 	"cp" -
 	"cpi" -
 	"mirror" {
@@ -1838,11 +1842,28 @@ package provide Archer 1.0
 	    set old [lindex $expandedArgs 0]
 
 	    # Check for the existence of old
-	    if {[catch {gedCmd attr show $old} adata]} {
-		return [eval gedCmd $_cmd $expanedArgs]
-	    }
+#	    if {[catch {gedCmd attr show $old} adata]} {
+#		return [eval gedCmd $_cmd $expandedArgs]
+#	    }
 
 	    set clist [lindex $expandedArgs 1]
+	}
+	"in" -
+	"inside" {
+	    if {[llength $args] == 0} {
+		if {$_cmd == "in"} {
+		    set prompt "Enter name of solid: "
+		} else {
+		    set prompt "Enter name of outside solid: "
+		}
+
+		set new_args [handleMoreArgs $prompt]
+		while {[llength $new_args] == 0} {
+		    set new_args [handleMoreArgs $prompt]
+		}
+
+		set args $new_args
+	    }
 	}
 	"make" {
 	    # Returns a help message.
