@@ -28,6 +28,7 @@
 
 #include "surfaceintersect.h"
 #define MIN(a, b) (((a) > (b)) ? (a) : (b))
+#define safesqrt(x) (((x) >= 0) ? sqrt(x) : (-(sqrt(-x))))
 
 /**
  *       ClosestValue
@@ -91,7 +92,7 @@ void Step(
     double Magnitude = ON_ArrayMagnitude(3, step);
     double vec[3] = {0.0, 0.0, 0.0};
     ON_3dVector stepscaled =  vec;
-    ON_ArrayScale(3, sqrt(stepsize/Magnitude), step, stepscaled);
+    ON_ArrayScale(3, safesqrt(stepsize/Magnitude), step, stepscaled); /* XXX XXX XXX whoops gotta fix this so we don't sqrt negatives. */
     Push(surf1, s1, t1, stepscaled);
     Push(surf2, s2, t2, stepscaled);
 }
@@ -133,7 +134,7 @@ void WalkIntersection(
 	double t2,
 	double stepsize,
 	double tol,
-	ON_BezierCurve *out
+	ON_BezierCurve **out
 	)
 {
     ON_3dPointArray intersectionPoints;
@@ -186,14 +187,14 @@ void WalkIntersection(
 	    t2 = initt2;
 	}
     }
-    out = new ON_BezierCurve((ON_3dPointArray) intersectionPoints);
+    *out = new ON_BezierCurve((ON_3dPointArray) intersectionPoints);
 }
 
 bool GetStartPoints(
 	ON_Surface *surf1,
 	ON_Surface *surf2,
-	ON_2dPointArray start_points1,
-	ON_2dPointArray start_points2,
+	ON_2dPointArray& start_points1,
+	ON_2dPointArray& start_points2,
 	double tol
 	)
 {
@@ -208,6 +209,7 @@ bool GetStartPoints(
 	    } while (distance > tol);
 	    start_points1.Append(ON_2dPoint(s1, t1));
 	    start_points2.Append(ON_2dPoint(s2, t2));
+	    return_value = true;
 	} else {
 	    return_value = false;
 	}
@@ -227,6 +229,7 @@ bool GetStartPoints(
 	    }
 	}
     }
+    return return_value;
 }
 
 bool SurfaceSurfaceIntersect(
@@ -234,11 +237,12 @@ bool SurfaceSurfaceIntersect(
 	ON_Surface *surf2,
 	double stepsize,
 	double tol,
-	ON_SimpleArray<ON_BezierCurve>& curves
+	ON_ClassArray<ON_BezierCurve>& curves
 	)
 {
     ON_2dPointArray start_points1, start_points2;
-    if (!GetStartPoints(surf1, surf2, start_points1, start_points2, tol)) {
+    bool rv = GetStartPoints(surf1, surf2, start_points1, start_points2, tol);
+    if (!rv) {
 	return false;
     }
     int i, j;
@@ -247,7 +251,7 @@ bool SurfaceSurfaceIntersect(
     for (i = 0; i < start_points1.Count(); i++) {
 	start1 = *start_points1.First();
 	start2 = *start_points2.First();
-	WalkIntersection(surf1, surf2, start1[0], start2[0], start1[1], start2[1], stepsize, tol, out);
+	WalkIntersection(surf1, surf2, start1[0], start2[0], start1[1], start2[1], stepsize, tol, &out);
 	start_points1.Remove(0);
 	start_points2.Remove(0);
 	for (j = 1; j < start_points1.Count(); j++) {
@@ -265,8 +269,36 @@ bool SurfaceSurfaceIntersect(
     return true;
 }
 
+ON_Surface*
+Surface(const ON_3dPoint& SW, const ON_3dPoint& SE, const ON_3dPoint& NE, const ON_3dPoint& NW)
+{
+    ON_NurbsSurface* pNurbsSurface = new ON_NurbsSurface(3, // dimension
+							 FALSE, // not rational
+							 2, // u order
+							 2, // v order,
+							 2, // number of control vertices in u
+							 2 // number of control verts in v
+	);
+    pNurbsSurface->SetCV(0, 0, SW);
+    pNurbsSurface->SetCV(1, 0, SE);
+    pNurbsSurface->SetCV(1, 1, NE);
+    pNurbsSurface->SetCV(0, 1, NW);
+    // u knots
+    pNurbsSurface->SetKnot(0, 0, 0.0);
+    pNurbsSurface->SetKnot(0, 1, 1.0);
+    // v knots
+    pNurbsSurface->SetKnot(1, 0, 0.0);
+    pNurbsSurface->SetKnot(1, 1, 1.0);
+
+    return pNurbsSurface;
+}
+
 int main()
 {
+    ON_Surface *surf1 = Surface(ON_3dPoint(1.0, 1.0, 1.0), ON_3dPoint(-1.0, 1.0, 1.0), ON_3dPoint(-1.0, -1.0, -1.0), ON_3dPoint(1.0, -1.0, -1.0));
+    ON_Surface *surf2 = Surface(ON_3dPoint(1.0, -1.0, 1.0), ON_3dPoint(-1.0, -1.0, 1.0), ON_3dPoint(-1.0, 1.0, -1.0), ON_3dPoint(1.0, 1.0, -1.0));
+    ON_ClassArray<ON_BezierCurve> out;
+    SurfaceSurfaceIntersect(surf1, surf2, .01, 1.0e-9, out);
     return 0;
 }
 
