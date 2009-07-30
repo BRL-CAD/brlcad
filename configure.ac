@@ -3784,6 +3784,7 @@ fi
 
 dnl configure tkhtml3
 if test "x$build_brlcad_tkhtml3" = "xyes" ; then
+    ac_configure_args="$ac_configure_args --exec-prefix=\"$bc_prefix\""
     AC_CONFIG_SUBDIRS([src/other/tkhtml3])
 fi
 
