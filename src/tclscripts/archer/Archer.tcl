@@ -943,7 +943,7 @@ package provide Archer 1.0
 # Create a combination.
 #
 ::itcl::body Archer::c {args} {
-    eval ArcherCore::gedWrapper c 0 0 1 1 $args
+    eval combWrapper c 2 $args
 }
 
 ::itcl::body Archer::clone {args} {
@@ -1794,8 +1794,20 @@ package provide Archer 1.0
 }
 
 ::itcl::body Archer::createWrapper {_cmd args} {
-    # Get the list of created objects.
+    # Set the list of created objects (i.e. clist)
     switch -- $_cmd {
+	"c" {
+	    set optionsAndArgs [eval dbExpand $args]
+	    set options [lindex $optionsAndArgs 0]
+	    set expandedArgs [lindex $optionsAndArgs 1]
+
+	    # Returns a help message.
+	    if {[llength $expandedArgs] < 2} {
+		return [gedCmd $_cmd]
+	    }
+
+	    set clist [lindex $expandedArgs 0]
+	}
 	"clone" {
 	    # Returns a help message.
 	    if {[llength $args] == 0} {
@@ -1804,6 +1816,9 @@ package provide Archer 1.0
 
 	    set options [lrange $args 0 end-1]
 	    set expandedArgs [lrange $args end end]
+
+	    # Clone will return the clist info. Consequently,
+	    # clist is set after invoking clone below.
 	}
 	"cp" -
 	"cpi" -
@@ -1824,7 +1839,7 @@ package provide Archer 1.0
 
 	    # Check for the existence of old
 	    if {[catch {gedCmd attr show $old} adata]} {
-		return [gedCmd $_cmd]
+		return [eval gedCmd $_cmd $expanedArgs]
 	    }
 
 	    set clist [lindex $expandedArgs 1]
