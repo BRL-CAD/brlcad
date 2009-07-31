@@ -56,19 +56,48 @@
 	variable nodeIcon
 	variable mkillIcon
 
+# Variables for command line input
 	variable AutoMode 1
 	variable BoundingBoxes 0
-	variable Height 68
+	variable Height 68	#68 inches
 	variable Locationx 0
 	variable Locationy 0
 	variable Locationz 0
 	variable ManualMode 0
 	variable NumberSoldiers 1
-	variable output 0
-	variable outputString human.g
+#	variable output 0
+#	variable outputString human.g
 	variable percentile 50
 	variable Stancenumber 0
 	variable StanceString Standing
+
+#Variables for manual mode
+	variable headSize 0
+	variable neckLength 0
+	variable neckWidth 0
+	variable TopTorso 0
+	variable LowTorso 0
+	variable Shoulders 0
+	variable Abs 0
+	variable Pelvis 0
+	variable TorsoLength 0
+	variable UpperArmLength 0
+	variable UpperArmWidth 0
+	variable ElbowWidth 0
+	variable LowerArmLength 0
+	variable WristWidth 0
+	variable HandLength 0
+	variable HandWidth 0
+	variable ArmLength 0
+	variable ThighLength 0
+	variable ThighWidth 0
+	variable KneeWidth 0
+	variable CalfLength 0
+	variable AnkleWidth 0
+	variable FootLength 0
+	variable ToeWidth 0
+	variable LegLength 0
+	variable Height 0
 
 	method initWizardState {}
 	method buildParameter {parent}
@@ -177,107 +206,84 @@
 	    -textvariable [::itcl::scope wizardTop]
     } {}
 
-    # Create rim diameter entry field
-    itk_component add paramRimDiameterL {
-	::ttk::label $itk_component(paramNonArrowF).rimDiameterL \
-	    -text "Rim Diameter (in):" \
+    # Create Height entry field
+    itk_component add paramHeightL {
+	::ttk::label $itk_component(paramNonArrowF).HeightL \
+	    -text "Height (in):" \
 	    -anchor e
     } {}
-    itk_component add paramRimDiameterE {
-	::ttk::entry $itk_component(paramNonArrowF).rimDiameterE \
-	    -textvariable [::itcl::scope rimDiameter]
+    itk_component add paramHeightE {
+	::ttk::entry $itk_component(paramNonArrowF).HeightE \
+	    -textvariable [::itcl::scope Height]
     } {}
 
-    # Create rim width entry field
-    itk_component add paramRimWidthL {
-	::ttk::label $itk_component(paramNonArrowF).rimWidthL \
-	    -text "Rim Width (in):" \
+    # Create Location X entry field
+    itk_component add paramLocationxL {
+	::ttk::label $itk_component(paramNonArrowF).LocationxL \
+	    -text "Centerpoint x (in):" \
 	    -anchor e
     } {}
-    itk_component add paramRimWidthE {
-	::ttk::entry $itk_component(paramNonArrowF).rimWidthE \
-	    -textvariable [::itcl::scope rimWidth]
+    itk_component add LocationxE {
+	::ttk::entry $itk_component(paramNonArrowF).LocationxE \
+	    -textvariable [::itcl::scope Locationx]
     } {}
 
-    # Create human aspect entry field
-    itk_component add paramhumanAspectL {
-	::ttk::label $itk_component(paramNonArrowF).humanAspectL \
-	    -text "human Aspect (%):" \
+    # Create Location Y entry field
+    itk_component add LocationyL {
+	::ttk::label $itk_component(paramNonArrowF).LocationyL \
+	    -text "Centerpoint y (in):" \
 	    -anchor e
     } {}
-    itk_component add paramhumanAspectE {
-	::ttk::entry $itk_component(paramNonArrowF).humanAspectE \
-	    -textvariable [::itcl::scope humanAspect]
+    itk_component add LocationyE {
+	::ttk::entry $itk_component(paramNonArrowF).LocationyE \
+	    -textvariable [::itcl::scope Locationy]
     } {}
 
-    # Create human thickness entry field
-    itk_component add paramhumanThicknessL {
-	::ttk::label $itk_component(paramNonArrowF).humanThicknessL \
-	    -text "human Thickness (mm):" \
+    # Create Location Z entry field
+    itk_component add paramLocationzL {
+	::ttk::label $itk_component(paramNonArrowF).LocationzL \
+	    -text "Centerpoint z (in):" \
 	    -anchor e
     } {}
-    itk_component add paramhumanThicknessE {
-	::ttk::entry $itk_component(paramNonArrowF).humanThicknessE \
-	    -textvariable [::itcl::scope humanThickness]
+    itk_component add LocationzE {
+	::ttk::entry $itk_component(paramNonArrowF).LocationzE \
+	    -textvariable [::itcl::scope Locationz]
     } {}
 
-    # Create human width entry field
-    itk_component add paramhumanWidthL {
-	::ttk::label $itk_component(paramNonArrowF).humanWidthL \
-	    -text "human Width (mm):" \
+    # Create NumberSoldiers entry field
+    itk_component add paramNumberSoldiersL {
+	::ttk::label $itk_component(paramNonArrowF).NumberSoldiersL \
+	    -text "Number of soldiers (to be squard):" \
 	    -anchor e
     } {}
-    itk_component add paramhumanWidthE {
-	::ttk::entry $itk_component(paramNonArrowF).humanWidthE \
-	    -textvariable [::itcl::scope humanWidth]
+    itk_component add paramNumberSoldiersE {
+	::ttk::entry $itk_component(paramNonArrowF).NumberSoldiersE \
+	    -textvariable [::itcl::scope NumberSoldiers]
     } {}
 
-    # Create tread depth entry field
-    itk_component add paramTreadDepthL {
-	::ttk::label $itk_component(paramNonArrowF).treadDepthL \
-	    -text "Tread Depth (mm):" \
+    # Create percentile entry field
+    itk_component add paramPercentileL {
+	::ttk::label $itk_component(paramNonArrowF).PercentileL \
+	    -text "Enter percentile:" \
 	    -anchor e
     } {}
-    itk_component add paramTreadDepthE {
-	::ttk::entry $itk_component(paramNonArrowF).treadDepthE \
-	    -textvariable [::itcl::scope treadDepth]
+    itk_component add paramPercentileE {
+	::ttk::entry $itk_component(paramNonArrowF).PercentileE \
+	    -textvariable [::itcl::scope Percentile]
+    } {}
+	
+    # Create stance entry field
+    itk_component add paramStanceL {
+        ::ttk::label $itk_component(paramNonArrowF).StanceL \
+            -text "Stance:" \
+            -anchor e
     } {}
 
-    # Create tread count entry field
-    itk_component add paramTreadCountL {
-	::ttk::label $itk_component(paramNonArrowF).treadCountL \
-	    -text "Tread Count:" \
-	    -anchor e
-    } {}
-    itk_component add paramTreadCountE {
-	::ttk::entry $itk_component(paramNonArrowF).treadCountE \
-	    -textvariable [::itcl::scope treadPatternCount]
-    } {}
-
-    # Create tread pattern entry field
-    itk_component add paramTreadPatternL {
-	::ttk::label $itk_component(paramNonArrowF).treadPatternL \
-	    -text "Tread Pattern:" \
-	    -anchor e
-    } {}
     itk_component add paramStanceCB {
-	::ttk::combobox $itk_component(paramNonArrowF).StanceCB \
-	    -textvariable [::itcl::scope StanceString] \
-	    -state readonly \
-	    -values {Standing Sitting Driving ArmsOut FancySit Custom}
-    } {}
-
-    # Create tread type radiobox
-    itk_component add paramTreadTypeL {
-	::ttk::label $itk_component(paramNonArrowF).treadTypeL \
-	    -text "Tread Type:" \
-	    -anchor e
-    } {}
-    itk_component add paramTreadTypeCB {
-	::ttk::combobox $itk_component(paramNonArrowF).treadTypeCB \
-	    -textvariable [::itcl::scope treadTypeString] \
-	    -state readonly \
-	    -values {Small Large}
+        ::ttk::combobox $itk_component(paramNonArrowF).StanceCB \
+            -textvariable [::itcl::scope StanceString] \
+            -state readonly \
+            -values {Standing Sitting Driving ArmsOut FancySit Custom}
     } {}
 
     # Create empty label
@@ -301,42 +307,53 @@
             -variable [::itcl::scope createWheel]
     } {}
 
+    # Create "BoundingBoxes" checkbutton
+    itk_component add paramBoundingBoxCB {
+        ::ttk::checkbutton $itk_component(paramNonArrowF).BoundingBoxCB \
+            -text "BoundingBoxes" \
+            -variable [::itcl::scope createWheel]
+    } {}
+
     set row 0
     grid $itk_component(paramNameL) $itk_component(paramNameE) \
 	-row $row -stick nsew
     incr row
-    grid $itk_component(paramRimDiameterL) $itk_component(paramRimDiameterE) \
+    grid $itk_component(paramHeightL) $itk_component(paramHeightE) \
 	-row $row -stick nsew
     incr row
-    grid $itk_component(paramRimWidthL) $itk_component(paramRimWidthE) \
+    grid $itk_component(paramLocationxL) $itk_component(paramLocationxE) \
 	-row $row -stick nsew
     incr row
-    grid $itk_component(paramhumanAspectL) $itk_component(paramhumanAspectE) \
+    grid $itk_component(paramLocationyL) $itk_component(paramLocationyE) \
 	-row $row -stick nsew
     incr row
-    grid $itk_component(paramhumanThicknessL) $itk_component(paramhumanThicknessE) \
+    grid $itk_component(paramLocationzL) $itk_component(paramLocationzE) \
 	-row $row -stick nsew
     incr row
-    grid $itk_component(paramhumanWidthL) $itk_component(paramhumanWidthE) \
+    grid $itk_component(paramNumberSoldiersL) $itk_component(paramNumberSoldiersE) \
 	-row $row -stick nsew
     incr row
-    grid $itk_component(paramTreadDepthL) $itk_component(paramTreadDepthE) \
+    grid $itk_component(paramPercentileL) $itk_component(paramPercentileE) \
 	-row $row -stick nsew
     incr row
-    grid $itk_component(paramTreadCountL) $itk_component(paramTreadCountE) \
-	-row $row -stick nsew
-    incr row
-    grid $itk_component(paramTreadPatternL) $itk_component(paramTreadPatternCB) \
-	-row $row -stick nsew
-    incr row
-    grid $itk_component(paramTreadTypeL) $itk_component(paramTreadTypeCB) \
+    grid $itk_component(paramStanceL) $itk_component(paramStanceE) \
 	-row $row -stick nsew
     incr row
     grid $itk_component(emptyL) -columnspan 2 \
 	-row $row -stick nsew
     incr row
-    grid $itk_component(paramCreateWheelCB) -columnspan 2 \
+    grid $itk_component(paramAutoModeCB) -columnspan 2 \
 	-row $row -stick nsew
+    grid columnconfigure $itk_component(paramNonArrowF) 1 -weight 1
+
+    incr row
+    grid $itk_component(paramManualModeCB) -columnspan 2 \
+        -row $row -stick nsew
+    grid columnconfigure $itk_component(paramNonArrowF) 1 -weight 1
+
+    incr row
+    grid $itk_component(paramBoundingBoxCB) -columnspan 2 \
+        -row $row -stick nsew
     grid columnconfigure $itk_component(paramNonArrowF) 1 -weight 1
 
     set row 0
