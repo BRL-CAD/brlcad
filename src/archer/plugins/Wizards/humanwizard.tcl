@@ -25,23 +25,23 @@
 
 set brlcadDataPath [bu_brlcad_data "plugins"]
 # puts "pwd is [pwd], path is $brlcadDataPath"
-set filename [file join $brlcadDataPath archer Wizards humanwizard humanwizard.tcl]
+set filename [file join $brlcadDataPath archer Wizards humanwizard HumanWizard.tcl]
 if { ![file exists $filename] } {
     # non-tclscript resource, look in the source invocation path
     set brlcadDataPath [bu_brlcad_data "src"]
-    set filename [file join $brlcadDataPath archer plugins Wizards humanwizard humanwizard.tcl]
+    set filename [file join $brlcadDataPath archer plugins Wizards humanwizard HumanWizard.tcl]
 }
 if { ![file exists $filename] } {
-    puts "Could not load the humanwizard plugin, skipping $filename"
+    puts "Could not load the HumanWizard plugin, skipping $filename"
     return
 }
 source $filename
 
 # Load only once
-set pluginMajorType $humanwizard::wizardMajorType
-set pluginMinorType $humanwizard::wizardMinorType
-set pluginName $humanwizard::wizardName
-set pluginVersion $humanwizard::wizardVersion
+set pluginMajorType $HumanWizard::wizardMajorType
+set pluginMinorType $HumanWizard::wizardMinorType
+set pluginName $HumanWizard::wizardName
+set pluginVersion $HumanWizard::wizardVersion
 
 # check to see if already loaded
 set plugin [Archer::pluginQuery $pluginName]
@@ -59,7 +59,7 @@ Archer::pluginRegister $pluginMajorType \
     $pluginMinorType \
     $pluginName \
     "humanwizard" \
-    "humanwizard.tcl" \
+    "HumanWizard.tcl" \
     "Build human geometry." \
     $pluginVersion \
     "Army Research Laboratory" \
