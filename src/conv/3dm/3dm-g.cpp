@@ -155,8 +155,16 @@ int main(int argc, char** argv) {
 	dump->Print("primitive is %s.\n", geom_name.c_str());
 	dump->Print("region created is %s.\n", region_name.c_str());
 
-	// object definition
-	const ON_Geometry* pGeometry = ON_Geometry::Cast(model.m_object_table[i].m_object);
+	/* object definition
+        Ah - rather than pulling JUST the geometry from the opennurbs object here, need to
+        also get properties from ON_3dmObjectAttributes:
+        Everything looks like it is in there - m_name, m_layer_index, etc.
+        Will need to parse layers to get info for each object using a parent layer's settings
+        Long term, material objects and render objects should be implemented in BRL-CAD
+        to support conceptually similar breakouts of materials and shaders.  
+        */
+
+        const ON_Geometry* pGeometry = ON_Geometry::Cast(model.m_object_table[i].m_object);
 	if ( pGeometry ) {
 	    ON_Brep *brep;
 	    ON_Curve *curve;
