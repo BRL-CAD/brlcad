@@ -1546,9 +1546,10 @@ if test "x$bc_with_opengl" != "xno" -o "x$bc_with_wgl" != "xno" ; then
 	AC_DEFINE(HAVE_GL_GL_H, 1, [Define to 1 if you have the <GL/gl.h> header file.])
 	gl_include_works="yes"
     ], [unset ac_cv_header_GL_gl_h])
+    # didn't find header, try harder
     if test "x$gl_include_works" = "xno" ; then
 	# this won't work for paths with spaces
-	for bc_dir in "$ac_x_includes" `echo $ac_x_header_dirs` ; do
+	for bc_dir in "$ac_x_includes" `echo $ac_x_header_dirs` `echo $ac_x_libraries | sed 's/\/lib/\/include/g'`; do
 	    GL_H_CPPFLAGS="-I$bc_dir"
 	    CPPFLAGS="$PRECPPFLAGS $GL_H_CPPFLAGS"
 	    AC_MSG_NOTICE([ .. looking in $bc_dir for gl.h])
@@ -1567,9 +1568,10 @@ if test "x$bc_with_opengl" != "xno" -o "x$bc_with_wgl" != "xno" ; then
 	AC_DEFINE(HAVE_GL_GLX_H, 1, [Define to 1 if you have the <GL/glx.h> header file.])
 	glx_include_works="yes"
     ], [unset ac_cv_header_GL_glx_h])
+    # didn't find header, try harder
     if test "x$glx_include_works" = "xno" ; then
 	# this won't work for paths with spaces
-	for bc_dir in "$ac_x_includes" `echo $ac_x_header_dirs` ; do
+	for bc_dir in "$ac_x_includes" `echo $ac_x_header_dirs` `echo $ac_x_libraries | sed 's/\/lib/\/include/g'`; do
 	    GLX_H_CPPFLAGS="-I$bc_dir"
 	    CPPFLAGS="$PRECPPFLAGS $GLX_H_CPPFLAGS"
 	    AC_MSG_NOTICE([ .. looking in $bc_dir for glx.h])
@@ -2382,7 +2384,6 @@ main() {
 	fi
     fi
 fi
-AC_SUBST(X_PREFIX)
 AC_SUBST(X_CFLAGS)
 AC_SUBST(X_LIBS)
 AC_MSG_CHECKING(whether to build against X11)
