@@ -2,7 +2,14 @@
 this_dir = tclscripts/mged
 tcldir = $(BRLCAD_DATA)/$(this_dir)
 
+if BUILD_DOCS
+doc_scripts = man.tcl
+else
+doc_scripts =
+endif
+
 scripties = \
+	$(doc_scripts) \
 	accel.tcl \
 	adc.tcl \
 	anim.tcl \
@@ -47,7 +54,6 @@ scripties = \
 	lgt_mat.tcl \
 	list.tcl \
 	make_solid.tcl \
-	man.tcl \
 	menu.tcl \
 	mged.tcl \
 	mgedrc.tcl \
@@ -127,7 +133,8 @@ dist_tcl_DATA = \
 
 tcl_SCRIPTS = \
 	$(BUILT_SOURCES) \
-	$(scripties)
+	$(scripties) \
+	man.tcl
 
 BUILT_SOURCES = \
 	pkgIndex.tcl \
