@@ -65,15 +65,27 @@ else !BUILD_TERMLIB
 TERMLIBDIR=
 endif
 
+if BUILD_DOCS
 if BUILD_TKHTML3
 if WITH_X11
-TKHTML3DIR=tkhtml3
-else !WITH_X11
-TKHTML3DIR=
+TKHTML3_MAKE=$(MAKE)
+else
+TKHTML3_MAKE=:
 endif
-else !BUILD_TKHTML3
-TKHTML3DIR=
+else
+TKHTML3_MAKE=:
 endif
+else
+TKHTML3_MAKE=:
+endif
+
+tkhtml3:
+	cd tkhtml3 && ${TKHTML3_MAKE} LIBS="${X_LIBS} ${LIBS}"
+
+.PHONY : tkhtml3
+
+all-local: tkhtml3
+
 
 if BUILD_TKIMG
 if WITH_X11
@@ -139,7 +151,6 @@ SUBDIRS = \
 	${TERMLIBDIR} \
 	${JOVEDIR} \
 	${STEPDIR} \
-	${TKHTML3DIR} \
 	${TKIMGDIR} \
 	${OPENNURBSDIR} \
 	${TNTDIR} \
