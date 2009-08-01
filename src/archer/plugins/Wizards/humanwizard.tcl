@@ -65,8 +65,8 @@ Archer::pluginRegister $pluginMajorType \
     "Army Research Laboratory" \
     $iconPath \
     "Build a human object" \
-    "buildhuman" \
-    "buildhumanXML"
+    "buildHuman" \
+    "buildHumanXML"
 
 # Local Variables:
 # mode: Tcl

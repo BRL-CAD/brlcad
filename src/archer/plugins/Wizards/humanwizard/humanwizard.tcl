@@ -23,7 +23,7 @@
 #	 This is an Archer plugin for building human geometry.
 #
 
-::itcl::class humanWizard {
+::itcl::class HumanWizard {
     inherit Wizard
 
     constructor {_archer _wizardTop _wizardState _wizardOrigin _originUnits args} {}
@@ -33,16 +33,16 @@
 	# Override's for the Wizard class
 	common wizardMajorType $Archer::pluginMajorTypeWizard
 	common wizardMinorType $Archer::pluginMinorTypeMged
-	common wizardName "human Wizard"
+	common wizardName "Human Wizard"
 	common wizardVersion "0.1"
-	common wizardClass humanWizard
+	common wizardClass HumanWizard
 
 	# Methods that override Wizard methods
 	method setWizardState {_wizardState}
 
-	method drawhuman {}
-	method buildhuman {}
-	method buildhumanXML {}
+	method drawHuman {}
+	method buildHuman {}
+	method buildHumanXML {}
     }
 
     protected {
@@ -118,7 +118,7 @@
 #
 #
 #
-::itcl::body humanWizard::constructor {_archer _wizardTop _wizardState _wizardOrigin _originUnits args} {
+::itcl::body HumanWizard::constructor {_archer _wizardTop _wizardState _wizardOrigin _originUnits args} {
     global env
 
     itk_component add pane {
@@ -140,8 +140,8 @@
     set wizardTop $_wizardTop
     setWizardState $_wizardState
     set wizardOrigin $_wizardOrigin
-    set wizardAction buildhuman
-    set wizardXmlAction buildhumanXML
+    set wizardAction buildHuman
+    set wizardXmlAction buildHumanXML
     set wizardUnits in
 
     set savedUnits [$archersGed units -s]
@@ -154,16 +154,16 @@
     $archersGed units $savedUnits
 }
 
-::itcl::body humanWizard::destructor {} {
+::itcl::body HumanWizard::destructor {} {
     # nothing for now
 }
 
-::itcl::body humanWizard::setWizardState {_wizardState} {
+::itcl::body HumanWizard::setWizardState {_wizardState} {
     set wizardState $_wizardState
     initWizardState
 }
 
-::itcl::body humanWizard::initWizardState {} {
+::itcl::body HumanWizard::initWizardState {} {
     foreach {vname val} $wizardState {
 	if {[info exists $vname]} {
 	    set $vname $val
@@ -174,14 +174,14 @@
     setTreadTypeString
 }
 
-::itcl::body humanWizard::buildParameter {parent} {
+::itcl::body HumanWizard::buildParameter {parent} {
     buildParameterView $parent
 
     grid rowconfigure $parent 0 -weight 1
     grid columnconfigure $parent 0 -weight 1
 }
 
-::itcl::body humanWizard::buildParameterView {parent} {
+::itcl::body HumanWizard::buildParameterView {parent} {
     itk_component add paramScroll {
 	iwidgets::scrolledframe $parent.paramScroll \
 	    -hscrollmode dynamic \
@@ -366,7 +366,7 @@
     grid columnconfigure $parent 0 -weight 1
 }
 
-::itcl::body humanWizard::addWizardAttrs {obj {onlyTop 1}} {
+::itcl::body HumanWizard::addWizardAttrs {obj {onlyTop 1}} {
     if {$onlyTop} {
 	$archersGed attr set $obj \
 	    WizardTop $wizardTop
@@ -382,7 +382,7 @@
     }
 }
 
-::itcl::body humanWizard::setStance {} {
+::itcl::body HumanWizard::setStance {} {
     switch -- $StanceString {
 	Standing {
 	    set Stance 0
@@ -408,7 +408,7 @@
     }
 }
 
-::itcl::body humanWizard::setStanceString {} {
+::itcl::body HumanWizard::setStanceString {} {
     switch -- $treadPattern {
 	0 {
 	    set StanceString Standing
@@ -434,14 +434,14 @@
     }
 }
 
-::itcl::body humanWizard::drawhuman {} {
+::itcl::body HumanWizard::drawHuman {} {
     $archersGed configure -autoViewEnable 0
     $archersGed draw $wizardTop
     $archersGed refresh_all
     $archersGed configure -autoViewEnable 1
 }
 
-::itcl::body humanWizard::buildhuman {} {
+::itcl::body HumanWizard::buildHuman {} {
     SetWaitCursor $archer
 
     setStance
@@ -480,7 +480,7 @@
     # Add wizard attributes
     addWizardAttrs $wizardTop 0
 
-    drawhuman
+    drawHuman
     $archer pluginUpdateProgressBar 0.6
     after 50
     $archer pluginUpdateProgressBar 0.8
@@ -494,7 +494,7 @@
     return $wizardTop
 }
 
-::itcl::body humanWizard::buildhumanXML {} {
+::itcl::body HumanWizard::buildHumanXML {} {
 }
 
 # Local Variables:
