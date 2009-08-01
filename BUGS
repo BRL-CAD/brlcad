@@ -17,8 +17,6 @@ Recent Bugs
 
 * ogl display manager still crashes on attach in mged on Mac OS X 10.5
 
-* tkhtml build/install is not respecting the installation prefix
-
 * mged segfaults when drawing lots of solids at once (e.g. draw *.s)
 
 * mged command mode doesn't display the output of multiple
