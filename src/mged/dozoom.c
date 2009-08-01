@@ -30,7 +30,10 @@
 #include "vmath.h"
 #include "bn.h"
 #include "dg.h"
-#include "dm-rtgl.h"
+
+#ifdef DM_RTGL
+#  include "dm-rtgl.h"
+#endif
 
 #include "./mged.h"
 #include "./sedit.h"
@@ -395,6 +398,7 @@ dozoom(int which_eye)
 
     DM_LOADMATRIX( dmp, mat, which_eye );
 
+#ifdef DM_RTGL
     /* dm rtgl has it's own way of drawing */
     if (IS_DM_TYPE_RTGL(dmp->dm_type)) {
     
@@ -405,6 +409,7 @@ dozoom(int which_eye)
         
         return;
     }
+#endif
 
     if (dmp->dm_transparency) {
 	/* First, draw opaque stuff */
