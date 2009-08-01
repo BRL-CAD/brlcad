@@ -233,7 +233,7 @@ AM_CONFIG_HEADER([include/brlcad_config.h])
 builtin(include,src/other/tcl/unix/tcl.m4)
 
 # automatically enable and load our configure cache file if available
-BC_CONFIG_CACHE([config.cache.${host_os}.${ac_hostname}])
+BC_CONFIG_CACHE([config.cache.${host_os}.${ac_hostname}], [yes])
 
 
 dnl ***********************
@@ -4051,6 +4051,10 @@ AC_CONFIG_FILES([
 	src/vfont/Makefile
 ])
 
+# let the BC_CONFIG_CACHE know we completed successfully (must come before AC_OUTPUT)
+BC_CONFIG_COMPLETE
+
+# GENERATE EVERYTHING
 AC_OUTPUT
 
 # ac_top_builddir and other variables are modified after AC_OUTPUT so
