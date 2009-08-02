@@ -2,7 +2,7 @@
 documentationdir = $(BRLCAD_DATA)/plugins/archer/Wizards/humanwizard
 
 documentation_DATA = \
-	humanwizard.tcl
+	HumanWizard.tcl
 
 EXTRA_DIST = \
 	$(documentation_DATA)
