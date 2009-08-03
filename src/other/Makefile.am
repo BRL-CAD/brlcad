@@ -79,13 +79,28 @@ else
 TKHTML3_MAKE=:
 endif
 
-tkhtml3:
-	cd tkhtml3 && ${TKHTML3_MAKE} LIBS="${X_LIBS} ${LIBS}"
+tkhtml3-all:
+	cd tkhtml3 && ${TKHTML3_MAKE} $(AM_MAKEFLAGS) LIBS="${X_LIBS} ${LIBS}" all
 
-.PHONY : tkhtml3
+tkhtml3-install:
+	cd tkhtml3 && ${TKHTML3_MAKE} $(AM_MAKEFLAGS) LIBS="${X_LIBS} ${LIBS}" install
 
-all-local: tkhtml3
+tkhtml3-clean:
+	cd tkhtml3 && ${TKHTML3_MAKE} $(AM_MAKEFLAGS) LIBS="${X_LIBS} ${LIBS}" clean
 
+tkhtml3-distclean:
+	cd tkhtml3 && ${TKHTML3_MAKE} $(AM_MAKEFLAGS) LIBS="${X_LIBS} ${LIBS}" distclean
+
+tkhtml3-uninstall:
+	cd tkhtml3 && ${TKHTML3_MAKE} $(AM_MAKEFLAGS) LIBS="${X_LIBS} ${LIBS}" uninstall
+
+all-local: tkhtml3-all
+install-exec-local: tkhtml3-install
+clean-local: tkhtml3-clean
+distclean-local: tkhtml3-distclean
+uninstall-local: tkhtml3-uninstall
+
+.PHONY : tkhtml3-all tkhtml3-install tkhtml3-clean tkhtml3-distclean tkhtml3-uninstall
 
 if BUILD_TKIMG
 if WITH_X11
