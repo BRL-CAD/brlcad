@@ -737,7 +737,7 @@ install-binaries: binaries
 	    fi
 	@echo "Installing $(LIB_FILE) to $(LIB_INSTALL_DIR)/"
 	@@INSTALL_LIB@
-	@chmod 555 "$(LIB_INSTALL_DIR)"/$(LIB_FILE)
+	@chmod 775 "$(LIB_INSTALL_DIR)"/$(LIB_FILE)
 	@if test -f libtcl$(SHLIB_SUFFIX) ; then \
 	    $(INSTALL_LIBRARY) libtcl$(SHLIB_SUFFIX) $(LIB_INSTALL_DIR)/libtcl$(SHLIB_SUFFIX);\
 	    chmod 775 $(LIB_INSTALL_DIR)/libtcl$(SHLIB_SUFFIX) ; \
@@ -749,14 +749,17 @@ install-binaries: binaries
 	    fi
 	@echo "Installing tclsh as $(BIN_INSTALL_DIR)/tclsh$(VERSION)"
 	@$(INSTALL_PROGRAM) tclsh "$(BIN_INSTALL_DIR)"/tclsh$(VERSION)
+	@echo "Installing tclsh as $(BIN_INSTALL_DIR)/tclsh"
+	@$(INSTALL_PROGRAM) tclsh "$(BIN_INSTALL_DIR)"/tclsh
 	@echo "Installing tclConfig.sh to $(LIB_INSTALL_DIR)/"
 	@$(INSTALL_DATA) tclConfig.sh "$(LIB_INSTALL_DIR)"/tclConfig.sh
 	@if test "$(STUB_LIB_FILE)" != "" ; then \
 	    echo "Installing $(STUB_LIB_FILE) to $(LIB_INSTALL_DIR)/"; \
 	    @INSTALL_STUB_LIB@ ; \
+	    chmod 775 $(LIB_INSTALL_DIR)/$(STUB_LIB_FILE) ; \
 	    if test -f libtclstub.a ; then \
-	    $(INSTALL_LIBRARY) libtclstub.a $(LIB_INSTALL_DIR)/libtclstub.a ; \
-	    chmod 775 $(LIB_INSTALL_DIR)/libtclstub.a ; \
+		$(INSTALL_LIBRARY) libtclstub.a $(LIB_INSTALL_DIR)/libtclstub.a ; \
+		chmod 775 $(LIB_INSTALL_DIR)/libtclstub.a ; \
 	    fi ; \
 	fi
 	@EXTRA_INSTALL_BINARIES@

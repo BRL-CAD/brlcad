@@ -724,7 +724,7 @@ install-binaries: $(TK_LIB_FILE) $(TK_STUB_LIB_FILE) $(TK_BUILD_EXP_FILE) wish
 	    fi
 	@echo "Installing $(LIB_FILE) to $(LIB_INSTALL_DIR)/"
 	@@INSTALL_LIB@
-	@chmod 555 "$(LIB_INSTALL_DIR)"/$(LIB_FILE)
+	@chmod 775 "$(LIB_INSTALL_DIR)"/$(LIB_FILE)
 	if test -f libtk$(SHLIB_SUFFIX) ; then \
 	   $(INSTALL_LIBRARY) libtk$(SHLIB_SUFFIX) $(LIB_INSTALL_DIR)/libtk$(SHLIB_SUFFIX);\
 	   chmod 775 $(LIB_INSTALL_DIR)/libtk$(SHLIB_SUFFIX) ; \
@@ -736,14 +736,17 @@ install-binaries: $(TK_LIB_FILE) $(TK_STUB_LIB_FILE) $(TK_BUILD_EXP_FILE) wish
 	    fi
 	@echo "Installing wish as $(BIN_INSTALL_DIR)/wish$(VERSION)"
 	@$(INSTALL_PROGRAM) wish "$(BIN_INSTALL_DIR)"/wish$(VERSION)
+	@echo "Installing wish as $(BIN_INSTALL_DIR)/wish"
+	@$(INSTALL_PROGRAM) wish "$(BIN_INSTALL_DIR)"/wish
 	@echo "Installing tkConfig.sh to $(LIB_INSTALL_DIR)/"
 	@$(INSTALL_DATA) tkConfig.sh "$(LIB_INSTALL_DIR)"/tkConfig.sh
 	@if test "$(STUB_LIB_FILE)" != "" ; then \
 	    echo "Installing $(STUB_LIB_FILE) to $(LIB_INSTALL_DIR)/"; \
 	    @INSTALL_STUB_LIB@ ; \
+	    chmod 775 $(LIB_INSTALL_DIR)/$(STUB_LIB_FILE) ; \
 	    if test -f libtkstub.a ; then \
-	    $(INSTALL_LIBRARY) libtkstub.a $(LIB_INSTALL_DIR)/libtkstub.a ; \
-	    chmod 775 $(LIB_INSTALL_DIR)/libtkstub.a ; \
+		$(INSTALL_LIBRARY) libtkstub.a $(LIB_INSTALL_DIR)/libtkstub.a ; \
+		chmod 775 $(LIB_INSTALL_DIR)/libtkstub.a ; \
 	    fi;\
 	fi
 	@EXTRA_INSTALL_BINARIES@
