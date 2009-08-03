@@ -2839,12 +2839,22 @@ AC_SUBST(ITK_CPPFLAGS)
 AC_SUBST(LIBITCL)
 AC_SUBST(LIBITK)
 
-# XXX need incrTcl's configure for the proper .so/.dylib value
-ITCL_LIB_FILE="libitcl${ITCL_VERSION}.a"
-ITK_LIB_FILE="libitk${ITCL_VERSION}.a"
+# XXX hack until we can call incrTcl's configure to get the value
+case $host_os in
+    darwin*)
+	SHLIB_SUFFIX=".dylib"
+	;;
+    *)
+	SHLIB_SUFFIX=".so"
+	;;
+esac
+
+# XXX hack since we don't call incrTcl's configure for the proper
+# library name.
+ITCL_LIB_FILE="libitcl${ITCL_VERSION}${SHLIB_SUFFIX}"
+ITK_LIB_FILE="libitk${ITCL_VERSION}${SHLIB_SUFFIX}"
 AC_SUBST(ITCL_LIB_FILE)
 AC_SUBST(ITK_LIB_FILE)
-
 
 dnl *** iwidgets ***
 dnl See if the iwidgets are available
