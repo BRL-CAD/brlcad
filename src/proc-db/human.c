@@ -1389,12 +1389,12 @@ void getLocation(fastf_t *location)
 int read_args(int argc, char **argv, struct human_data_t *dude, fastf_t *percentile, fastf_t *location, fastf_t *stance, fastf_t *troops, fastf_t *showBoxes)
 {
     char c = 'a';
-    char *options="AbH:hLlmn:N:O:o:p:s:w";
+    char *options="AbH:hLlmn:N:O:o:p:s:w1:2:3:4:5:6:7:8:9:0:=:+:_:):(:*:&:^:%:$:#:@:";
     float height=0;
     int soldiers=0;
     int pose=0;
     int percent=50;
-    int man = 0;
+    fastf_t x = 0;
 
     /* don't report errors */
     bu_opterr = 0;
@@ -1494,6 +1494,124 @@ int read_args(int argc, char **argv, struct human_data_t *dude, fastf_t *percent
 		fflush(stdin);
 		break;
 
+	/* These 22 arguments are for the wizard program, allowing easy access to each variable.
+	 * as they will only be callable by using a number (eg 1 = head, 2=neck width, 3=neck height etc)
+	 * and should not be called otherwise
+	 */
+	    case '1':
+		sscanf(bu_optarg, "%lf", &x);
+		x*=IN2MM;
+		dude->head.headSize = x;
+		break;
+	    case '2':
+		sscanf(bu_optarg, "%lf", &x);
+		x*=IN2MM;
+		dude->head.neckLength = x;
+		break;
+	    case '3':
+		sscanf(bu_optarg, "%lf", &x);
+		x*=IN2MM;
+		dude->head.neckWidth = x;
+		break;
+	    case '4':
+		sscanf(bu_optarg, "%lf", &x);
+		x*=IN2MM;
+		dude->torso.topTorsoLength=x;
+		break;
+	    case '5':
+		sscanf(bu_optarg, "%lf", &x);
+		x*=IN2MM;
+		dude->torso.lowTorsoLength=x;
+		dude->torso.torsoLength = dude->torso.topTorsoLength + dude->torso.lowTorsoLength;
+		break;
+	    case '6':
+		sscanf(bu_optarg, "%lf", &x);
+		x*=IN2MM;
+		dude->torso.shoulderWidth=x;
+		break;
+	    case '7':
+		sscanf(bu_optarg, "%lf", &x);
+		x*=IN2MM;
+		dude->torso.abWidth=x;
+		break;
+	    case '8':
+		sscanf(bu_optarg, "%lf", &x);
+		x*=IN2MM;
+		dude->torso.pelvisWidth=x;
+		break;
+	    case '9':
+		sscanf(bu_optarg, "%lf", &x);
+		x*=IN2MM;
+		dude->arms.upperArmWidth=x;
+		break;
+	    case '0':
+		sscanf(bu_optarg, "%lf", &x);
+		x*=IN2MM;
+		dude->arms.upperArmLength=x;
+		break;
+	    case '=':
+		sscanf(bu_optarg, "%lf", &x);
+		x*=IN2MM;
+		dude->arms.lowerArmLength=x;
+		break;
+	    case '+':
+		sscanf(bu_optarg, "%lf", &x);
+		x*=IN2MM;
+		dude->arms.elbowWidth=x;
+		break;
+	    case '_':
+		sscanf(bu_optarg, "%lf", &x);
+		x*=IN2MM;
+		dude->arms.wristWidth=x;
+		break;
+	    case ')':
+		sscanf(bu_optarg, "%lf", &x);
+		x*=IN2MM;
+		dude->arms.handLength=x;
+		dude->arms.armLength=dude->arms.upperArmLength + dude->arms.lowerArmLength + dude->arms.handLength;
+		break;
+	    case '(':
+		sscanf(bu_optarg, "%lf", &x);
+		x*=IN2MM;
+		dude->arms.handWidth=x;
+		break;
+	    case '*':
+		sscanf(bu_optarg, "%lf", &x);
+		x*=IN2MM;
+		dude->legs.thighLength=x;
+		break;
+	    case '&':
+		sscanf(bu_optarg, "%lf", &x);
+		x*=IN2MM;
+		dude->legs.thighWidth=x;
+		break;
+	    case '^':
+		sscanf(bu_optarg, "%lf", &x);
+		x*=IN2MM;
+		dude->legs.calfLength=x;
+		dude->legs.legLength = dude->legs.thighLength + dude->legs.calfLength;
+		break;
+	    case '%':
+		sscanf(bu_optarg, "%lf", &x);
+		x*=IN2MM;
+		dude->legs.kneeWidth=x;
+		break;
+	    case '$':
+		sscanf(bu_optarg, "%lf", &x);
+		x*=IN2MM;
+		dude->legs.footLength=x;
+		break;
+	    case '#':
+		sscanf(bu_optarg, "%lf", &x);
+		x*=IN2MM;
+		dude->legs.ankleWidth=x;
+		break;
+	    case '@':
+		sscanf(bu_optarg, "%lf", &x);
+		x*=IN2MM;
+		dude->legs.toeWidth=x;
+		break;
+
 	    default:
 		show_help(*argv, options);
 		bu_log("%s: illegal option -- %c\n", bu_getprogname(), c);
@@ -1501,6 +1619,7 @@ int read_args(int argc, char **argv, struct human_data_t *dude, fastf_t *percent
 		fflush(stdin);
 		break;
 	}
+	dude->height = (dude->legs.legLength + dude->torso.torsoLength + dude->head.headSize) / IN2MM;
     }
     fflush(stdout);
     return(bu_optind);
