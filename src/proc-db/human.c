@@ -1359,9 +1359,11 @@ void show_help(const char *name, const char *optstr)
 	   "\t-L\t\tSet Center Point in inches, at feet (default 0 0 0)\n"
 	   "\t-o\t\tSet output file name\n"
 	   "\t-b\t\tShow bounding Boxes\n"
+	   "\t-n\t\tSet bounding region name, default Body.c\n"
 	   "\t-N\t\tNumber to make (square)\n"
 	   "\t-s\t\tStance to take 0-Stand 1-Sit 2-Drive 3-Arms out 4-Letterman 5-Captain 999-Custom\n"
 	   "\t-p\t\tSet Percentile (not implemented yet) 1-99\n"
+	   "\t 1 - 9, 0, Q, and special characters are used for wizard purposes\n"
 	);
 
     bu_vls_free(&str);
@@ -1388,7 +1390,7 @@ void getLocation(fastf_t *location)
 /* Process command line arguments */
 int read_args(int argc, char **argv, struct human_data_t *dude, fastf_t *percentile, fastf_t *location, fastf_t *stance, fastf_t *troops, fastf_t *showBoxes)
 {
-    char c = 'a';
+    char c = 'A';
     char *options="AbH:hLlmn:N:O:o:p:s:w1:2:3:4:5:6:7:8:9:0:=:+:_:*:^:%:$:#:@:!:Q:~:";
     float height=0;
     int soldiers=0;
@@ -1494,7 +1496,7 @@ int read_args(int argc, char **argv, struct human_data_t *dude, fastf_t *percent
 		fflush(stdin);
 		break;
 
-	/* These 22 arguments are for the wizard program, allowing easy access to each variable.
+	/* These following arguments are for the wizard program, allowing easy access to each variable.
 	 * as they will only be callable by using a number (eg 1 = head, 2=neck width, 3=neck height etc)
 	 * and should not be called otherwise
 	 */
