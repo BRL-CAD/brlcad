@@ -43,6 +43,7 @@
  */
 #define DEFAULT_HEIGHT_INCHES 68.0 
 #define DEFAULT_FILENAME "human.g"
+#define DEFAULT_HUMANNAME "Body.c"
 
 #define MAXLENGTH 64	/*Maxlength of things like object names, filenames */
 #define IN2MM	25.4	/*Convert an inch measurement to millimeters */
@@ -50,6 +51,7 @@
 
 char *progname = "Human Model";
 char filename[MAXLENGTH]=DEFAULT_FILENAME;
+char humanName[MAXLENGTH]=DEFAULT_HUMANNAME;
 
 /** Human information structures */
 /** Location of all joints on the body located here */
@@ -1387,7 +1389,7 @@ void getLocation(fastf_t *location)
 int read_args(int argc, char **argv, struct human_data_t *dude, fastf_t *percentile, fastf_t *location, fastf_t *stance, fastf_t *troops, fastf_t *showBoxes)
 {
     char c = 'a';
-    char *options="AbH:hLlmN:O:o:p:s:w";
+    char *options="AbH:hLlmn:N:O:o:p:s:w";
     float height=0;
     int soldiers=0;
     int pose=0;
@@ -1448,6 +1450,12 @@ int read_args(int argc, char **argv, struct human_data_t *dude, fastf_t *percent
 	    case 'm':
 		bu_log("Manual Mode\n");
 		Manual(dude);
+		break;
+
+	    case 'n':
+		memset(humanName, 0, MAXLENGTH);
+		bu_strlcpy(humanName, bu_optarg, MAXLENGTH);
+		fflush(stdin);
 		break;
 
             case 'N':
@@ -1579,7 +1587,7 @@ int main(int ac, char *av[])
     is_region = 1;
     VSET(rgb, 128, 255, 128); /* some wonky bright green color */
     mk_lcomb(db_fp,
-	     "Body.r",
+	     humanName,
 	     &human,
 	     is_region,
 	     "plastic",
