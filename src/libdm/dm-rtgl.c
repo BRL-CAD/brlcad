@@ -1183,11 +1183,18 @@ int ignoreMiss(struct application *app) {
     return 0;
 }
 
+double jitter(double range) {
+    if (rand() % 2)
+	return (fmod(rand(), range));
+
+    return (-1 *(fmod(rand(), range)));
+}
+
 void randShots(fastf_t *center, fastf_t radius, int flag) {
     int i, j;
-    vect_t view;
-    vect_t dir;
+    vect_t view, dir, jit, test;
     point_t pt;
+    double halfRad = radius / 2;
     view[2] = 0;
 
     glDisable(GL_LIGHTING);
@@ -1198,7 +1205,7 @@ void randShots(fastf_t *center, fastf_t radius, int flag) {
 	    view[1] = j;
 	    
 	    /* use view vector for direction */
-	    aeVect(dir, view, center, radius);	    
+	    aeVect(dir, view, center, radius);
 	    VMOVE(app.a_ray.r_pt, dir);
 	
 	    /* use opposite sphere point for origin */
@@ -1206,6 +1213,10 @@ void randShots(fastf_t *center, fastf_t radius, int flag) {
 	    VREVERSE(pt, pt);
 	    VADD2(pt, pt, center);
 	    
+	    /* jitter point */
+	    VSET(jit, jitter(halfRad), jitter(halfRad), jitter(halfRad));
+	    VADD2(pt, pt, jit);
+
 	    VMOVE(app.a_ray.r_dir, pt);
 	    
 	    
@@ -1245,6 +1256,80 @@ void randShots(fastf_t *center, fastf_t radius, int flag) {
 
 struct jobList jobs;
 struct jobList *currJob;
+
+void swapItems(struct bu_list *a, struct bu_list *b) {
+    struct bu_list temp;
+
+    /* fix surrounding links */
+    a->back->forw = b;
+    a->forw->back = b;
+
+    b->back->forw = a;
+    b->forw->back = a;
+
+    /* switch a and b links */
+    temp.forw = a->forw;
+    temp.back = a->back;
+
+    a->forw = b->forw;
+    a->back = b->back;
+
+    b->forw = temp.forw;
+    b->back = temp.back;
+}
+
+void shuffleJobs(void) {
+    time_t start = time(NULL);
+
+    int i, j, swap, numJobs = 0;
+    struct bu_list *pick, *curr;
+
+    pick = curr = NULL;
+
+    /* list cannot be empty */
+    if (jobs.l.forw != NULL && (struct jobList *)jobs.l.forw != &jobs) {
+
+	/* count list items */
+	for (BU_LIST_FOR(currJob, jobList, &(jobs.l))) {
+	    numJobs++;
+	}
+
+	/* randomize list (Fisher-Yates shuffle) */
+	for (i = numJobs - 1; i > 0; i--) {
+	   
+	    j = 0;
+	    swap = rand() % (i + 1);
+
+	    /* backwards so front is mixed first */
+	   for (BU_LIST_FOR_BACKWARDS(currJob, jobList, &(jobs.l))) {
+		/* element being set */
+		if (j == i) {
+		    curr = &(currJob->l);
+		}
+
+		/* random element to set it to*/
+		if (j == swap) {
+		    pick = &(currJob->l);
+		}
+
+		if (pick != NULL && curr != NULL) {
+		    break;
+		}
+
+		j++;
+	    }
+	    
+	    /* swap random element into position */
+	    swapItems(pick, curr);
+
+	    pick = curr = NULL;
+
+	    if (difftime(time(NULL), start) > (1/100))
+		return;
+	}
+    }
+}
+
 /* shoot an even grid of parallel rays in a principle direction */
 void shootGrid(vect_t min, vect_t max, int pixels, int viewSize, int uAxis, int vAxis, int iAxis) {
     int i, j;
@@ -1257,7 +1342,7 @@ void shootGrid(vect_t min, vect_t max, int pixels, int viewSize, int uAxis, int 
     int uDivs = pixels * (span[uAxis] / viewSize);
     int vDivs = pixels * (span[vAxis] / viewSize);
 
-#if 0
+#if 1
     uDivs /= 2;
     vDivs /= 2;
 #endif
@@ -1320,7 +1405,7 @@ int shootJobs(void) {
 	    BU_LIST_DEQUEUE(&(currJob->l));
 	    bu_free(currJob, "free jobs currJob");
 
-	    if (difftime(time(NULL), start) > (1/50))
+	    if (difftime(time(NULL), start) > (1/100))
 		return 0;
 
 	}
@@ -1332,7 +1417,7 @@ int shootJobs(void) {
 }
 
 void drawPoints(fastf_t *view) {
-    glPointSize(2);
+    glPointSize(4);
 
 #if 0 /* use vertex arrays */
     glEnableClientState(GL_VERTEX_ARRAY);
@@ -1359,14 +1444,17 @@ void drawPoints(fastf_t *view) {
 	    normal[Z] = currItem->norms[Z + index];
 
 	    dot = VDOT(view, normal);
-
+#if 0
 	    /* make all normals face front*/
 	    if (dot < 0) {
 		VREVERSE(normal, normal);
 	    }
+#endif
+	    /* draw if visible */
+	    if (dot > 0) {
 		glNormal3d(normal[X], normal[Y], normal[Z]);
 		glVertex3d(currItem->points[X + index], currItem->points[Y + index], currItem->points[Z + index]);
-	    
+	    }
 	}
 	glEnd();
 #else
@@ -1673,7 +1761,7 @@ rtgl_drawVList(struct dm *dmp, register struct bn_vlist *vp)
 	VSUB2(span, max, min);
 
 	/* get parameters of bounding sphere */
-	radius = rtip->rti_radius * 2;
+	radius = 100 + sqrt((span[X] * span[X]) + (span[Y] * span[Y]) + (span[Z] * span[Z]));
 
 	center[X] = (min[X] + max[X]) / 2;
 	center[Y] = (min[Y] + max[Y]) / 2;

@@ -405,20 +405,15 @@ dozoom(int which_eye)
         /* dm-rtgl needs database info for ray tracing */
         RTGL_GEDP = gedp;
 
+	/* normally blocking while jobs are left */
 	if (!RTGL_JOBSDONE) {
 	    RTGL_BLOCKING = 1;
-
-	    /* do jobs if user has been given time to trigger other events */
-	    if (difftime(time(NULL), RTGL_LASTJOBS) > 2) {
-		RTGL_DOJOBS = 1;
-		RTGL_LASTJOBS = time(NULL);
-	    }
 	}
 
 	/* draw, and possibly do ray tracing */
 	DM_DRAW_VLIST(dmp, (struct bn_vlist *)NULL);
 
-	/* force return to this code */
+	/* force return to this code if still blocking */
 	if (RTGL_BLOCKING) {
 	    dirty = 1;
 	}

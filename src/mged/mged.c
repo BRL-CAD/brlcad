@@ -1946,6 +1946,16 @@ event_check( int non_blocking )
 	}
 #ifdef DM_RTGL
 	if (DM_PRIV_VARS != NULL && RTGL_BLOCKING)  {
+
+	    /* prevent ray-tracing when other events need to be processed */
+	    if (non_blocking > 0 || handled > 10) {
+		RTGL_DOJOBS = 0;
+	    }
+
+	    else {
+		RTGL_DOJOBS = 1;
+	    }
+
 	    non_blocking++;
 	}
 #endif
