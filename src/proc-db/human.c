@@ -1389,7 +1389,7 @@ void getLocation(fastf_t *location)
 int read_args(int argc, char **argv, struct human_data_t *dude, fastf_t *percentile, fastf_t *location, fastf_t *stance, fastf_t *troops, fastf_t *showBoxes)
 {
     char c = 'a';
-    char *options="AbH:hLlmn:N:O:o:p:s:w1:2:3:4:5:6:7:8:9:0:=:+:_:):(:*:&:^:%:$:#:@:";
+    char *options="AbH:hLlmn:N:O:o:p:s:w1:2:3:4:5:6:7:8:9:0:=:+:_:*:^:%:$:#:@:!:Q:~:";
     float height=0;
     int soldiers=0;
     int pose=0;
@@ -1564,13 +1564,13 @@ int read_args(int argc, char **argv, struct human_data_t *dude, fastf_t *percent
 		x*=IN2MM;
 		dude->arms.wristWidth=x;
 		break;
-	    case ')':
+	    case 'Q':
 		sscanf(bu_optarg, "%lf", &x);
 		x*=IN2MM;
 		dude->arms.handLength=x;
 		dude->arms.armLength=dude->arms.upperArmLength + dude->arms.lowerArmLength + dude->arms.handLength;
 		break;
-	    case '(':
+	    case '~':
 		sscanf(bu_optarg, "%lf", &x);
 		x*=IN2MM;
 		dude->arms.handWidth=x;
@@ -1580,7 +1580,7 @@ int read_args(int argc, char **argv, struct human_data_t *dude, fastf_t *percent
 		x*=IN2MM;
 		dude->legs.thighLength=x;
 		break;
-	    case '&':
+	    case '!':
 		sscanf(bu_optarg, "%lf", &x);
 		x*=IN2MM;
 		dude->legs.thighWidth=x;
