@@ -15,6 +15,9 @@ on-going issues.
 Recent Bugs
 -----------
 
+* reported that mged -c invoked via python on windows prompts for the
+  attach device and fails to parse a script.
+
 * ogl display manager still crashes on attach in mged on Mac OS X 10.5
 
 * mged segfaults when drawing lots of solids at once (e.g. draw *.s)
