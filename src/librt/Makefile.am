@@ -4,6 +4,12 @@ noinst_LTLIBRARIES = \
 	librt_nil.la \
 	librt_xxx.la
 
+if BUILD_RTGL
+DM_RTGL_CPPFLAGS = -DDM_RTGL -DIF_RTGL $(GL_CPPFLAGS)
+else
+DM_RTGL_CPPFLAGS =
+endif
+
 BREP_TEST = brep_test
 BREP_CPPFLAGS = ${SSE} -DOBJ_BREP=1 ${TNT_CPPFLAGS} ${OPENNURBS_CPPFLAGS}
 BREP_LIBADD = ${OPENNURBS}
@@ -19,7 +25,8 @@ brep_test_LDADD = \
 AM_CPPFLAGS = \
 	${REGEX_CPPFLAGS} \
 	${TCL_CPPFLAGS} \
-	${BREP_CPPFLAGS}
+	${BREP_CPPFLAGS} \
+	${DM_RTGL_CPPFLAGS}
 
 noinst_PROGRAMS = \
 	comb \

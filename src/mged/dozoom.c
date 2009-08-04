@@ -403,10 +403,26 @@ dozoom(int which_eye)
     if (IS_DM_TYPE_RTGL(dmp->dm_type)) {
     
         /* dm-rtgl needs database info for ray tracing */
-        ((struct rtgl_vars *)dmp->dm_vars.priv_vars)->mvars.gedp = gedp;
+        RTGL_GEDP = gedp;
 
-        DM_DRAW_VLIST(dmp, (struct bn_vlist *)NULL);
-        
+	if (!RTGL_JOBSDONE) {
+	    RTGL_BLOCKING = 1;
+
+	    /* do jobs if user has been given time to trigger other events */
+	    if (difftime(time(NULL), RTGL_LASTJOBS) > 2) {
+		RTGL_DOJOBS = 1;
+		RTGL_LASTJOBS = time(NULL);
+	    }
+	}
+
+	/* draw, and possibly do ray tracing */
+	DM_DRAW_VLIST(dmp, (struct bn_vlist *)NULL);
+
+	/* force return to this code */
+	if (RTGL_BLOCKING) {
+	    dirty = 1;
+	}
+
         return;
     }
 #endif

@@ -81,6 +81,10 @@
 #include "./cmd.h"
 #include "brlcad_version.h"
 
+#ifdef DM_RTGL
+#  include "dm-rtgl.h"
+#endif
+
 #ifndef COMMAND_LINE_EDITING
 #  define COMMAND_LINE_EDITING 1
 #endif
@@ -1940,6 +1944,11 @@ event_check( int non_blocking )
 	    Tcl_Eval(interp, bu_vls_addr(&vls));
 	    bu_vls_free(&vls);
 	}
+#ifdef DM_RTGL
+	if (DM_PRIV_VARS != NULL && RTGL_BLOCKING)  {
+	    non_blocking++;
+	}
+#endif
 
 	curr_dm_list = save_dm_list;
     }

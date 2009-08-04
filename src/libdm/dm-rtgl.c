@@ -60,7 +60,6 @@
 #include "dm_xvars.h"
 #include "solid.h"
 
-
 #define VIEWFACTOR      (1.0/(*dmp->dm_vp))
 #define VIEWSIZE        (2.0*(*dmp->dm_vp))
 
@@ -181,6 +180,8 @@ extern float backColor[];
 
 int controlClip = 1;
 
+int calls;
+
 /* ray trace vars */
 struct application app;
 struct rt_i *rtip;
@@ -292,6 +293,8 @@ rtgl_open(Tcl_Interp *interp, int argc, char **argv)
     if (bu_vls_strlen(&init_proc_vls) == 0)
 	bu_vls_strcpy(&init_proc_vls, "bind_dm");
 
+    calls = 1;
+
     /* initialize dm specific variables */
     ((struct dm_xvars *)dmp->dm_vars.pub_vars)->devmotionnotify = LASTEvent;
     ((struct dm_xvars *)dmp->dm_vars.pub_vars)->devbuttonpress = LASTEvent;
@@ -300,6 +303,10 @@ rtgl_open(Tcl_Interp *interp, int argc, char **argv)
 
     /* initialize modifiable variables */
     ((struct rtgl_vars *)dmp->dm_vars.priv_vars)->mvars.gedp = GED_NULL;
+    ((struct rtgl_vars *)dmp->dm_vars.priv_vars)->mvars.blocking = 0;
+    ((struct rtgl_vars *)dmp->dm_vars.priv_vars)->mvars.lastJobs = 0;
+    ((struct rtgl_vars *)dmp->dm_vars.priv_vars)->mvars.jobsDone = 1;
+    ((struct rtgl_vars *)dmp->dm_vars.priv_vars)->mvars.doJobs = 0;
     ((struct rtgl_vars *)dmp->dm_vars.priv_vars)->mvars.rgb = 1;
     ((struct rtgl_vars *)dmp->dm_vars.priv_vars)->mvars.doublebuffer = 1;
     ((struct rtgl_vars *)dmp->dm_vars.priv_vars)->mvars.fastfog = 1;
@@ -913,7 +920,7 @@ rtgl_loadMatrix(struct dm *dmp, fastf_t *mat, int which_eye)
     fastf_t clip, scale = 1;
 
     /* get ged struct */
-    struct ged *gedp = ((struct rtgl_vars *)dmp->dm_vars.priv_vars)->mvars.gedp;
+    struct ged *gedp = RTGL_GEDP;
 
     if (gedp != GED_NULL) {
 
@@ -1236,6 +1243,8 @@ void randShots(fastf_t *center, fastf_t radius, int flag) {
     glEnable(GL_LIGHTING);
 }
 
+struct jobList jobs;
+struct jobList *currJob;
 /* shoot an even grid of parallel rays in a principle direction */
 void shootGrid(vect_t min, vect_t max, int pixels, int viewSize, int uAxis, int vAxis, int iAxis) {
     int i, j;
@@ -1252,8 +1261,6 @@ void shootGrid(vect_t min, vect_t max, int pixels, int viewSize, int uAxis, int 
     uDivs /= 2;
     vDivs /= 2;
 #endif
-
-    bu_log("firing %d x %d grid", uDivs, vDivs);
 
     fastf_t uWidth = span[uAxis] / uDivs;
     fastf_t vWidth = span[vAxis] / vDivs;
@@ -1280,8 +1287,16 @@ void shootGrid(vect_t min, vect_t max, int pixels, int viewSize, int uAxis, int 
 	    app.a_ray.r_pt[uAxis] = u;
 	    app.a_ray.r_pt[vAxis] = v;
 		
-            /* points are drawn in hit routine */
+#if 0
 	    rt_shootray(&app);
+#else
+	    /* make new job */
+	    BU_GETSTRUCT(currJob, jobList);
+	    BU_LIST_PUSH(&(jobs.l), currJob);
+	    
+	    VMOVE(currJob->pt, app.a_ray.r_pt);
+	    VMOVE(currJob->dir, app.a_ray.r_dir);
+#endif
 	}
 
         /* reset u */
@@ -1289,10 +1304,37 @@ void shootGrid(vect_t min, vect_t max, int pixels, int viewSize, int uAxis, int 
     }
 }
 
+/* return 1 if all jobs done, 0 if not */
+int shootJobs(void) {
+    time_t start = time(NULL);
+
+    /* list cannot be empty */
+    if (jobs.l.forw != NULL && (struct jobList *)jobs.l.forw != &jobs) {
+
+	while (BU_LIST_WHILE(currJob, jobList, &(jobs.l))) {
+	    VMOVE(app.a_ray.r_pt, currJob->pt);
+	    VMOVE(app.a_ray.r_dir, currJob->dir);
+
+	    rt_shootray(&app);
+
+	    BU_LIST_DEQUEUE(&(currJob->l));
+	    bu_free(currJob, "free jobs currJob");
+
+	    if (difftime(time(NULL), start) > (1/50))
+		return 0;
+
+	}
+
+	jobs.l.forw = BU_LIST_NULL;
+    }
+
+    return 1;
+}
+
 void drawPoints(fastf_t *view) {
     glPointSize(2);
 
-#if 1 /* use vertex arrays */
+#if 0 /* use vertex arrays */
     glEnableClientState(GL_VERTEX_ARRAY);
     glEnableClientState(GL_NORMAL_ARRAY);
 #endif
@@ -1307,7 +1349,7 @@ void drawPoints(fastf_t *view) {
 
 	glMaterialfv(GL_FRONT, GL_AMBIENT_AND_DIFFUSE, (float *) &(currItem->color));
 
-#if 0
+#if 1
 	glBegin(GL_POINTS);
 	for (i = 0; i < numPoints; i++) {
 	    index = i + i + i;
@@ -1318,7 +1360,8 @@ void drawPoints(fastf_t *view) {
 
 	    dot = VDOT(view, normal);
 
-	    if (0 && dot < 0) {
+	    /* make all normals face front*/
+	    if (dot < 0) {
 		VREVERSE(normal, normal);
 	    }
 		glNormal3d(normal[X], normal[Y], normal[Z]);
@@ -1332,6 +1375,7 @@ void drawPoints(fastf_t *view) {
 	glDrawArrays(GL_POINTS, 0, numPoints);
 #endif
     }
+    glDisable(GL_LIGHTING);
     glColor3d(0.0, 1.0, 0.0);
     glPointSize(1);
 }
@@ -1494,9 +1538,9 @@ void buildTree(struct ged *gedp, struct objTree *tree) {
     }
 }
 
+
 vect_t min, max, span, center, view, vect;
 fastf_t radius;
-
 
 /*
  *  			R T G L _ D R A W V L I S T
@@ -1505,14 +1549,12 @@ fastf_t radius;
 HIDDEN int
 rtgl_drawVList(struct dm *dmp, register struct bn_vlist *vp)
 {
-    static int call;
-
     int i, j, new, numVisible, numNew, maxPixels, viewSize;
     char *currTree, *visibleTrees[RT_MAXARGS];
     struct ptInfoList *curr;
     
     /* get ged struct */
-    struct ged *gedp = ((struct rtgl_vars *)dmp->dm_vars.priv_vars)->mvars.gedp;
+    struct ged *gedp = RTGL_GEDP;
 
     if (gedp == GED_NULL)
 	return TCL_ERROR;
@@ -1539,7 +1581,7 @@ rtgl_drawVList(struct dm *dmp, register struct bn_vlist *vp)
     viewSize = gedp->ged_gvp->gv_size;
 
     /* initialize list */
-    if (ptInfo.l.forw == BU_LIST_NULL) {
+    if (calls == 1 || ptInfo.l.forw == BU_LIST_NULL) {
 	/* initialize head */
         BU_LIST_INIT(&(ptInfo.l));
 	ptInfo.used = 0;
@@ -1548,12 +1590,10 @@ rtgl_drawVList(struct dm *dmp, register struct bn_vlist *vp)
 	BU_GETSTRUCT(currItem, ptInfoList);
 	BU_LIST_PUSH(&(ptInfo.l), currItem);
 	currItem->used = 0;
-
-	call = 1;
     }
 
     /* get names of all drawable objects */
-    if (call == 1) {
+    if (0) {
 	numTops = getTops(gedp);
 
 	for (i = 0; i < numTops; i++) {
@@ -1567,8 +1607,12 @@ rtgl_drawVList(struct dm *dmp, register struct bn_vlist *vp)
     /* no objects are visible */
     if (numVisible == 0) {
 
-	/* drop all display points */
+	/* drop previous work */
+	oldNumTrees = 0;
 	freeInfoList();
+
+	RTGL_JOBSDONE = 1;
+	RTGL_DOJOBS = 0;
 
 	/* reset for dynamic z-clipping */
 	if (dmp->dm_zbuffer) {
@@ -1602,8 +1646,15 @@ rtgl_drawVList(struct dm *dmp, register struct bn_vlist *vp)
         }
     }
 
+    if (RTGL_JOBSDONE) {
+	RTGL_BLOCKING = 0;
+    }
+
     /* get points for new trees */
     if (numNew > 0) {
+
+	/* initialize job list */
+	BU_LIST_INIT(&(jobs.l));
 
         /* set up application */
         RT_APPLICATION_INIT(&app);
@@ -1637,7 +1688,12 @@ rtgl_drawVList(struct dm *dmp, register struct bn_vlist *vp)
 
 	randShots(center, radius, 1);
 #endif
-    }
+
+	/* new jobs to do */
+	RTGL_DOJOBS = 1;
+	RTGL_BLOCKING = 1;
+
+    } /* numNew > 0 */
 
     vect_t vCenter;
     VSET(vCenter, 0, 0, 0);
@@ -1645,10 +1701,11 @@ rtgl_drawVList(struct dm *dmp, register struct bn_vlist *vp)
 
     drawPoints(view);
 
-/*
-    randShots(center, radius, 0);
-*/
-    call++;
+    calls++;
+    
+    if (calls > 1 && RTGL_DOJOBS) {
+	RTGL_JOBSDONE = shootJobs();
+    }
 
     return TCL_OK;
 }
