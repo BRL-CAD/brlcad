@@ -127,6 +127,10 @@ int main(int argc, char** argv) {
 	dump->Print("Model is not valid.\n");
 
     dump->Print("Number of NURBS objects read was %d\n.", model.m_object_table.Count());
+
+    struct wmember all_regions;
+    BU_LIST_INIT(&all_regions.l);
+
     for (int i = 0; i < model.m_object_table.Count(); i++ ) {
 	dump->PushIndent();
 
@@ -193,6 +197,7 @@ int main(int argc, char** argv) {
 		mk_brep(outfp, geom_name.c_str(), brep);
 		unsigned char rgb[] = {r,g,b};
 		mk_region1(outfp, region_name.c_str(), geom_name.c_str(), "plastic", "", rgb);
+                (void)mk_addmember(region_name.c_str(), &all_regions.l, NULL, WMOP_UNION);
 		//          brep->Dump(*dump);  // on if debug or verbose
 		dump->PopIndent();
 	    } else if (pGeometry->HasBrepForm()) {
@@ -242,7 +247,7 @@ int main(int argc, char** argv) {
 	    }
 	}
     }
-
+    mk_lcomb(outfp, outFileName, &all_regions, 0, NULL, NULL, NULL, 0);
     wdb_close(outfp);
 
     model.Destroy();
