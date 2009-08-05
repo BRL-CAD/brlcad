@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 2.6)
 
-project(brlcad)
+project(BRL-CAD)
 
 set(BUILD_SHARED_LIBS OFF)
 
