@@ -63,6 +63,7 @@ set(BRLCAD_SOURCES
     ../../../../rt^3/src/coreInterface/Halfspace.cpp
     ../../../../rt^3/src/coreInterface/MemoryDatabase.cpp
     ../../../../rt^3/src/coreInterface/Object.cpp
+    ../../../../rt^3/src/coreInterface/Particle.cpp
     ../../../../rt^3/src/coreInterface/Torus.cpp
     ../../../../rt^3/src/coreInterface/Unknown.cpp
     ../../../../rt^3/src/coreInterface/globals.cpp
