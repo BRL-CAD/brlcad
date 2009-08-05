@@ -181,10 +181,13 @@ int main(int argc, char** argv) {
 	    ON_Group *group;
 	    ON_Geometry *geom;
 	    int r,g,b;
-	    r = int(256*drand48() + 1.0);
+	 /*   r = int(256*drand48() + 1.0);
 	    g = int(256*drand48() + 1.0);
-	    b = int(256*drand48() + 1.0);
-	    bu_log("Color: %d,%d,%d\n", r,g,b);
+	    b = int(256*drand48() + 1.0); */
+            r = (model.WireframeColor(myAttributes) & 0xFF);
+	    g = ((model.WireframeColor(myAttributes)>>8) & 0xFF);
+	    b = ((model.WireframeColor(myAttributes)>>16) & 0xFF);
+            bu_log("Color: %d,%d,%d\n", r,g,b);
 	    if ((brep = const_cast<ON_Brep * >(ON_Brep::Cast(pGeometry)))) {
 		mk_id(outfp, id_name);
 		mk_brep(outfp, geom_name.c_str(), brep);
