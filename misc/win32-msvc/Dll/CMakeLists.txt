@@ -96,3 +96,9 @@ target_link_libraries(brlcad
 )
 
 set_property(TARGET brlcad PROPERTY LINK_INTERFACE_LIBRARIES "")
+
+install(TARGETS brlcad
+    RUNTIME DESTINATION bin
+    LIBRARY DESTINATION lib
+    ARCHIVE DESTINATION lib
+)
