@@ -1220,6 +1220,28 @@ typedef fastf_t	plane_t[ELEMENTS_PER_PLANE];
 #define VSCALE_2D(a, b, c)	V2SCALE(a, b, c)
 #define VJOIN1_2D(a, b, c, d) 	V2JOIN1(a, b, c, d)
 
+/** @brief Compare two vectors for EXACT equality.  Use carefully. 
+ *  Version for degree 2 vectors. 
+ */
+#define V2EQUAL(a, b)	((a)[X]==(b)[X] && (a)[Y]==(b)[Y])
+
+/**
+ * @brief Compare two vectors for approximate equality, within the
+ * specified absolute tolerance.
+ * Version for degree 2 vectors.
+ */
+#define V2APPROXEQUAL(a, b, tol)	( \
+	NEAR_ZERO( (a)[X]-(b)[X], tol ) && \
+	NEAR_ZERO( (a)[Y]-(b)[Y], tol ) )
+
+/** 
+ * @brief Test for all elements of `v' being smaller than `tol'. 
+ * Version for degree 2 vectors.
+ */
+#define V2NEAR_ZERO(v, tol)	( \
+	NEAR_ZERO(v[X], tol) && NEAR_ZERO(v[Y], tol) )
+
+
 /**
  * @brief Quaternion math definitions.
  *

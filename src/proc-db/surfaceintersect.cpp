@@ -55,7 +55,7 @@ double ClosestValue(
  * @brief updates s and t using an X,Y,Z vector
  */
 void Push(
-	ON_Surface *surf,
+	const ON_Surface *surf,
 	double *s,
 	double *t,
 	ON_3dVector vec
@@ -77,8 +77,8 @@ void Push(
  * by a distance of step size.
  */
 void Step(
-	ON_Surface *surf1,
-	ON_Surface *surf2,
+	const ON_Surface *surf1,
+	const ON_Surface *surf2,
 	double *s1,
 	double *s2,
 	double *t1,
@@ -92,7 +92,7 @@ void Step(
     double Magnitude = ON_ArrayMagnitude(3, step);
     double vec[3] = {0.0, 0.0, 0.0};
     ON_3dVector stepscaled =  vec;
-    ON_ArrayScale(3, safesqrt(stepsize/Magnitude), step, stepscaled); /* XXX XXX XXX whoops gotta fix this so we don't sqrt negatives. */
+    ON_ArrayScale(3, safesqrt(stepsize/Magnitude), step, stepscaled);
     Push(surf1, s1, t1, stepscaled);
     Push(surf2, s2, t2, stepscaled);
 }
@@ -104,8 +104,8 @@ void Step(
  * point returns the new distance between the points
  */
 double Jiggle(
-	ON_Surface *surf1,
-	ON_Surface *surf2,
+	const ON_Surface *surf1,
+	const ON_Surface *surf2,
 	double *s1,
 	double *s2,
 	double *t1,
@@ -125,6 +125,184 @@ double Jiggle(
     return surf1->PointAt(*s1, *t1).DistanceTo(surf2->PointAt(*s2, *t2));
 }
 
+/**
+ *         FaceLoopIntersect
+ *
+ * @brief Intersects a new curve in the face's domain with the
+ *  existing loops returns the number of intersections
+ */
+int FaceLoopIntersect(
+	ON_BrepFace& face,
+	ON_Curve *curve,
+	ON_SimpleArray<ON_X_EVENT>& x,
+	double tol
+	)
+{
+    int i, j;
+    int rv = 0;
+    for (i = 0; i < face.LoopCount(); i++) {
+	ON_BrepLoop* loop = face.Loop(i);
+	for (j = 0; j < loop->TrimCount(); j++) {
+	    ON_BrepTrim *trim = loop->Trim(j);
+	    rv += trim->IntersectCurve(curve, x, tol, tol);
+	}
+    }
+}
+
+
+
+/**
+ *        SplitTrim
+ *
+ * @brief Split's a trim at a point, and replaces the references to that trim
+ * with the pieces
+ */
+void SplitTrim(
+	ON_BrepTrim *trim,
+	double t
+	)
+{
+    ON_Curve *left, *right;
+    bool rv = trim->Split(t, left, right);
+    if (rv) {
+	trim->Brep()->AddTrimCurve(left);
+	trim->Brep()->AddTrimCurve(right);
+    }
+    /* now we need to remove the original trim */
+    /* it's not quite clear what we'll be doing after that at this point */
+}
+
+/**
+ *        TrimCompareStart
+ *
+ * @brief sorts the trims by their start points, uses a pretty convoluted method to get a 
+ * complete ordering on R^3, but you don't actually need to understand the ordering,
+ * any ordering would work just as well.
+ */
+int TrimCompareStart(
+	const ON_BrepTrim *a,
+	const ON_BrepTrim *b
+	)
+{
+    ON_3dVector A = ON_3dVector(a->Face()->SurfaceOf()->PointAt(a->PointAtStart().x, a->PointAtStart().y));
+    ON_3dVector B = ON_3dVector(b->Face()->SurfaceOf()->PointAt(b->PointAtStart().x, b->PointAtStart().y));
+    if (VAPPROXEQUAL(A, B, 1e-9)) {
+	return 0;
+    }
+    else if (A.x < B.x) {
+	return -1;
+    } else if (A.x > B.x) {
+	return 1;
+    } else if (A.y < B.y) {
+	return -1;
+    } else if (A.y > B.y) {
+	return 1;
+    } else if (A.z < B.z) {
+	return -1;
+    } else if (A.z > B.z) {
+	return 1;
+    } else {
+	return 0; /* we should have already done this... but just in case */
+    }
+}
+
+/**
+ *          TrimCompareEnd
+ *
+ * @brief same as the function above but this one does things with end points
+ * it's a bit :( that we need to duplicate this code.
+ */
+int TrimCompareEnd(
+	const ON_BrepTrim *a,
+	const ON_BrepTrim *b
+	)
+{
+    ON_3dVector A = ON_3dVector(a->Face()->SurfaceOf()->PointAt(a->PointAtEnd().x, a->PointAtEnd().y));
+    ON_3dVector B = ON_3dVector(b->Face()->SurfaceOf()->PointAt(b->PointAtEnd().x, b->PointAtEnd().y));
+    if (VAPPROXEQUAL(A, B, 1e-9)) {
+	return 0;
+    }
+    else if (A.x < B.x) {
+	return -1;
+    } else if (A.x > B.x) {
+	return 1;
+    } else if (A.y < B.y) {
+	return -1;
+    } else if (A.y > B.y) {
+	return 1;
+    } else if (A.z < B.z) {
+	return -1;
+    } else if (A.z > B.z) {
+	return 1;
+    } else {
+	return 0; /* we should have already done this... but just in case */
+    }
+}
+
+/**
+ *        MakeLoops
+ *
+ * @brief Makes loops out of the new trims
+ */
+void MakeLoops(
+	ON_SimpleArray<ON_BrepTrim> trims,
+	double tol
+	)
+{
+
+}
+
+/**
+ *        ReconstructX_Events
+ *
+ * @brief Walks an intersection list, the list should include every intersection the
+ * curve and its twin have with the trims of their respective faces
+ */
+void  ReconstructX_Events(
+	ON_SimpleArray<ON_X_EVENT>& x,
+	bool& isactive /* active points must map to active points in on both surfaces */
+	)
+{
+    int i;
+    for (i = 0; i < x.Count(); i++) {
+	if (isactive) {
+	} else {
+	}
+    }
+}
+
+/**
+ *        IsClosed
+ *
+ * @check if a 2dPointarrray is closed to be closed an array must have >2 points in it, have the first and last points within tol of one another
+ * and have at least one point not within tol of either of them.
+ */
+bool IsClosed(
+	const ON_2dPointArray l,
+	double tol
+	)
+{
+    if (l.Count() < 3) {
+	return false;
+    } else if (V2APPROXEQUAL(l[0], l[l.Count() - 1], tol)) {
+	int i;
+	for (i = 1; i < l.Count() - 1; i++) {
+	    if (!V2APPROXEQUAL(l[0], l[i], tol) && !V2APPROXEQUAL(l[l.Count() - 1], l[i], tol)) {
+		return true;
+	    }
+	}
+    } else {
+	return false;
+    }
+}
+
+/**
+ *        WalkIntersection
+ *
+ * @brief walks the intersection between 2 brepfaces,
+ * returns lines segmented by the trimming curves
+ */
+
 void WalkIntersection(
 	ON_Surface *surf1,
 	ON_Surface *surf2,
@@ -134,10 +312,11 @@ void WalkIntersection(
 	double t2,
 	double stepsize,
 	double tol,
-	ON_BezierCurve **out
+	ON_Curve **out1,
+	ON_Curve **out2
 	)
 {
-    ON_3dPointArray intersectionPoints;
+    ON_2dPointArray intersectionPoints1, intersectionPoints2;
     double olds1, olds2, oldt1, oldt2;
     double inits1 = s1, inits2 = s2, initt1 = t1, initt2 = t2;
     double distance;
@@ -147,11 +326,12 @@ void WalkIntersection(
        this means that if the intersection doesn't happen to be a loop,
        we need to walk both directions from the initial point. */
     for (passes = 0; passes < 2; passes++) {
-	while (surf1->Domain(0).Includes(s1, true) && surf1->Domain(1).Includes(t1, true) && surf2->Domain(0).Includes(s2, true) && surf2->Domain(1).Includes(t2, true) && !ON_Polyline(intersectionPoints).IsClosed(stepsize)) {
+	while (surf1->Domain(0).Includes(s1, true) && surf1->Domain(1).Includes(t1, true) && surf2->Domain(0).Includes(s2, true) && surf2->Domain(1).Includes(t2, true) && !(IsClosed(intersectionPoints1, stepsize) && IsClosed(intersectionPoints2, stepsize))) {
 	    do {
 		distance = Jiggle(surf1, surf2, &s1, &s2, &t1, &t2);
 	    } while (distance > tol);
-	    intersectionPoints.Append(surf1->PointAt(s1, t1));
+	    intersectionPoints1.Append(ON_2dPoint(s1, t1));
+	    intersectionPoints2.Append(ON_2dPoint(s2, t2));
 	    olds1 = s1;
 	    olds2 = s2;
 	    oldt1 = t1;
@@ -162,7 +342,7 @@ void WalkIntersection(
 		Step(surf1, surf2, &s1, &s2, &t1, &t2, -stepsize);
 	    }
 	}
-	if (!ON_Polyline(intersectionPoints).IsClosed(stepsize)) {
+	if (!(IsClosed(intersectionPoints1, stepsize) && IsClosed(intersectionPoints2, stepsize))) {
 	    /* we stepped off the edge of our domain, we need to get a point right on the edge */
 	    double news1, news2, newt1, newt2;
 	    news1 = ClosestValue(s1, surf1->Domain(0));
@@ -175,20 +355,30 @@ void WalkIntersection(
 	    newt2 = oldt2 + MIN((news2 - olds2) / (s2 - olds2), (newt2 - oldt2) / (t2 - oldt2)) * (t2 - oldt2);
 	    double newstep = MIN(surf1->PointAt(olds1, oldt1).DistanceTo(surf1->PointAt(news1, newt1)), surf2->PointAt(olds2, oldt2).DistanceTo(surf2->PointAt(news2, newt2)));
 	    Step(surf1, surf2, &s1, &s2, &t1, &t2, newstep);
-	    intersectionPoints.Append(surf1->PointAt(s1, t1));
+	    intersectionPoints1.Append(ON_2dPoint(s1, t1));
+	    intersectionPoints2.Append(ON_2dPoint(s2, t2));
 	}
-	if (ON_Polyline(intersectionPoints).IsClosed(stepsize)) {
+	if (IsClosed(intersectionPoints1, stepsize) && IsClosed(intersectionPoints2, stepsize)) {
 	    break; /* we're done, no second pass required */
 	} else {
-	    intersectionPoints.Reverse(); /* this is a bit cute, we are assured to hit this part on the second pass, so we either reverse 0 or 2 times */
+	    intersectionPoints1.Reverse(); /* this is a bit cute, we are assured to hit this part on the second pass, so we either reverse 0 or 2 times */
+	    intersectionPoints2.Reverse();
 	    s1 = inits1;
 	    s2 = inits2;
 	    t1 = initt1;
 	    t2 = initt2;
 	}
     }
-    *out = new ON_BezierCurve((ON_3dPointArray) intersectionPoints);
+    *out1 = (ON_Curve *) new ON_BezierCurve((ON_2dPointArray) intersectionPoints1);
+    *out2 = (ON_Curve *) new ON_BezierCurve((ON_2dPointArray) intersectionPoints2);
 }
+
+/**
+ *        GetStartPointsInternal
+ *
+ * @brief Subdibivides the surface recursively to zoom in on intersection
+ * points internal to the surfaces
+ */
 
 bool GetStartPoints(
 	ON_Surface *surf1,
@@ -232,12 +422,86 @@ bool GetStartPoints(
     return return_value;
 }
 
+/**
+ *        GetStartPointsEdges
+ *
+ * @brief Find starting points that are on the edges of the surfaces
+ */
+bool GetStartPointsEdges(
+	ON_Surface *surf1,
+	ON_Surface *surf2,
+	ON_2dPointArray& start_points1,
+	ON_2dPointArray& start_points2,
+	double tol
+	)
+{
+    bool rv = false;
+    ON_Interval intervals[4]; /* {s1, t1, s2, t2} */
+    intervals[0] = surf1->Domain(0);
+    intervals[1] = surf1->Domain(1);
+    intervals[2] = surf2->Domain(0);
+    intervals[3] = surf2->Domain(1);
+    ON_Surface *surfaces[2] = {surf1, surf2};
+    ON_2dPointArray out[2] = {start_points1, start_points2};
+    ON_SimpleArray<ON_X_EVENT> x;
+    surf1->IsoCurve(1, intervals[0].Min())->IntersectSurface(surf2, x, tol, tol);
+    surf1->IsoCurve(1, intervals[0].Max())->IntersectSurface(surf2, x, tol, tol);
+    surf1->IsoCurve(0, intervals[1].Min())->IntersectSurface(surf2, x, tol, tol);
+    surf1->IsoCurve(0, intervals[1].Max())->IntersectSurface(surf2, x, tol, tol);
+    surf2->IsoCurve(1, intervals[2].Min())->IntersectSurface(surf1, x, tol, tol);
+    surf2->IsoCurve(1, intervals[2].Max())->IntersectSurface(surf1, x, tol, tol);
+    surf2->IsoCurve(0, intervals[3].Min())->IntersectSurface(surf1, x, tol, tol);
+    surf2->IsoCurve(0, intervals[3].Max())->IntersectSurface(surf1, x, tol, tol);
+    int curve; /* the surface the curves come from */
+    int dir; /* the parameter that varies in the iso curve */
+    int min_or_max; /* 0 = min, 1 = max */
+    for (curve = 0; curve < 2; curve++) {
+	for (dir = 0; dir < 2; dir++) {
+	    for (min_or_max = 0; min_or_max < 2; min_or_max++) {
+		if (min_or_max == 0) {
+		    surfaces[curve]->IsoCurve(1 - dir, intervals[dir + (2 * curve)].Min())->IntersectSurface(surfaces[curve], x, tol, tol);
+		} else {
+		    surfaces[curve]->IsoCurve(1 - dir, intervals[dir + (2 * curve)].Max())->IntersectSurface(surfaces[curve], x, tol, tol);
+		}
+		int i;
+		for (i = 0; i < x.Count(); i++) {
+		    rv = true; /* if we get here it means we've found a point */
+		    if (dir == 0) {
+			if (min_or_max == 0) {
+			    out[curve].Append(ON_2dPoint(x[i].m_a[0], intervals[dir + (2 * curve)].Min()));
+			} else {
+			    out[curve].Append(ON_2dPoint(x[i].m_a[0], intervals[dir + (2 * curve)].Min()));
+			}
+		    }
+		    else {
+			if (min_or_max == 0) {
+			    out[curve].Append(ON_2dPoint(x[i].m_a[0], intervals[(1 - dir) + (2 * curve)].Min()));
+			} else {
+			    out[curve].Append(ON_2dPoint(x[i].m_a[0], intervals[(1 - dir) + (2 * curve)].Min()));
+			}
+		    }
+		    out[1 - curve].Append(ON_2dPoint(x[i].m_b[0], x[i].m_b[1])); 
+		}
+	    }
+	}
+    }
+    return rv;
+}
+
+
+/**
+ *        SurfaceSurfaceIntersect
+ *
+ * @brief finds, as bezier curves in the surfaces's parameter spaces the curves of intersection of the two surfaces
+ */
+
 bool SurfaceSurfaceIntersect(
 	ON_Surface *surf1,
 	ON_Surface *surf2,
 	double stepsize,
 	double tol,
-	ON_ClassArray<ON_BezierCurve>& curves
+	ON_ClassArray<ON_Curve>& curves1,
+	ON_ClassArray<ON_Curve>& curves2
 	)
 {
     ON_2dPointArray start_points1, start_points2;
@@ -246,25 +510,25 @@ bool SurfaceSurfaceIntersect(
 	return false;
     }
     int i, j;
-    ON_BezierCurve *out;
+    ON_Curve *out1, *out2;
     ON_2dPoint start1, start2;
     for (i = 0; i < start_points1.Count(); i++) {
 	start1 = *start_points1.First();
 	start2 = *start_points2.First();
-	WalkIntersection(surf1, surf2, start1[0], start2[0], start1[1], start2[1], stepsize, tol, &out);
+	WalkIntersection(surf1, surf2, start1[0], start2[0], start1[1], start2[1], stepsize, tol, &out1, &out2);
 	start_points1.Remove(0);
 	start_points2.Remove(0);
 	for (j = 1; j < start_points1.Count(); j++) {
 	    ON_3dPoint p1 = surf1->PointAt(start_points1[j][0], start_points1[j][1]);
 	    ON_3dPoint p2 = surf2->PointAt(start_points2[j][0], start_points2[j][1]);
 	    double dummy;
-	    if (out->GetClosestPoint(p1, &dummy, tol, NULL) || out->GetClosestPoint(p2, &dummy, tol, NULL)) {
+	    if (false /* we need to rewrite this test */) {
 		start_points1.Remove(j);
 		start_points2.Remove(j);
 		j--;
 	    }
 	}
-	curves.Append(*out);
+	/* append the found curves to curves1 and curves2 */
     }
     return true;
 }
@@ -297,8 +561,6 @@ int main()
 {
     ON_Surface *surf1 = Surface(ON_3dPoint(1.0, 1.0, 1.0), ON_3dPoint(-1.0, 1.0, 1.0), ON_3dPoint(-1.0, -1.0, -1.0), ON_3dPoint(1.0, -1.0, -1.0));
     ON_Surface *surf2 = Surface(ON_3dPoint(1.0, -1.0, 1.0), ON_3dPoint(-1.0, -1.0, 1.0), ON_3dPoint(-1.0, 1.0, -1.0), ON_3dPoint(1.0, 1.0, -1.0));
-    ON_ClassArray<ON_BezierCurve> out;
-    SurfaceSurfaceIntersect(surf1, surf2, .01, 1.0e-9, out);
     return 0;
 }
 
