@@ -48,6 +48,8 @@
 #include "rtgeom.h"
 #include "raytrace.h"
 
+#include "adrt_struct.h"
+
 static struct bn_tol tol;		/* calculation tolerance */
 static tie_t *cur_tie;
 
@@ -57,15 +59,12 @@ nmg_to_adrt_internal(struct nmgregion *r, struct db_full_path *pathp, int region
 {
     struct model *m;
     struct shell *s;
-    char *region_name;
     int region_polys=0;
     TIE_3 **buf;
+    struct adrt_mesh_s *mesh;
 
     NMG_CK_REGION(r);
     RT_CK_FULL_PATH(pathp);
-
-    region_name = db_path_to_string(pathp);
-    printf("Region: %s\n", region_name);
 
     m = r->m_p;
     NMG_CK_MODEL(m);
@@ -77,6 +76,13 @@ nmg_to_adrt_internal(struct nmgregion *r, struct db_full_path *pathp, int region
     buf[0] = (TIE_3 *)bu_malloc(sizeof(TIE_3) * 3, "triangle buffer");
     buf[1] = (TIE_3 *)bu_malloc(sizeof(TIE_3) * 3, "triangle buffer");
     buf[2] = (TIE_3 *)bu_malloc(sizeof(TIE_3) * 3, "triangle buffer");
+
+    mesh = (struct adrt_mesh_s *)bu_malloc(sizeof(struct adrt_mesh_s), "adrt mesh");
+    mesh->texture = NULL;
+    mesh->flags = 0;
+    mesh->attributes = (struct adrt_mesh_attributes_s *)bu_malloc(sizeof(struct adrt_mesh_attributes_s), "adrt mesh attributes");
+    strncpy(mesh->name, db_path_to_string(pathp), 255);
+    VSETALL( mesh->attributes->color.v, 0.8 );
 
     /* Check triangles */
     for (BU_LIST_FOR (s, shell, &r->s_hd))
@@ -118,26 +124,24 @@ nmg_to_adrt_internal(struct nmgregion *r, struct db_full_path *pathp, int region
 		    v = eu->vu_p->v_p;
 		    NMG_CK_VERTEX(v);
 
-		    VMOVE((*buf[vert_count]).v, v->vg_p->coord);
-		    vert_count++;
+		    /* convert mm to m */
+		    VSCALE((*buf[vert_count]).v, v->vg_p->coord, 1/1000);
 		}
 		if (vert_count > 3)
 		{
-		    bu_free(region_name, "region name");
 		    bu_log("lu x%x has %d vertices!\n", (unsigned int)lu, vert_count);
 		    bu_exit(1, "ERROR: LU is not a triangle");
 		}
 		else if (vert_count < 3)
 		    continue;
 
-			/* eventually this will be a useful region struct? */
-		tie_push(cur_tie, buf, 1, region_name, 0);
+		tie_push(cur_tie, buf, 1, mesh, 0);
 		region_polys++;
 	    }
 	}
     }
 
-    printf("\tpolys: %d\n", region_polys);
+    printf("%s\tpolys: %d\n", mesh->name, region_polys);
     bu_free(buf[0], "vert");
     bu_free(buf[1], "vert");
     bu_free(buf[2], "vert");
