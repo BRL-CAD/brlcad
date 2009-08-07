@@ -124,6 +124,7 @@ nmg_to_adrt_internal(struct nmgregion *r, struct db_full_path *pathp, int region
 		    v = eu->vu_p->v_p;
 		    NMG_CK_VERTEX(v);
 
+		    vert_count++;
 		    /* convert mm to m */
 		    VSCALE((*buf[vert_count]).v, v->vg_p->coord, 1/1000);
 		}
