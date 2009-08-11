@@ -33,9 +33,6 @@
 #include "adrt_struct.h"
 #include "hit.h"
 
-#define THICKNESS 0.02
-#define LENGTH 100
-
 void* render_cut_hit(tie_ray_t *ray, tie_id_t *id, tie_tri_t *tri, void *ptr);
 void render_cut(tie_t *tie, tie_ray_t *ray, TIE_3 *pixel);
 
@@ -52,7 +49,8 @@ void render_cut_init(render_t *render, TIE_3 ray_pos, TIE_3 ray_dir) {
     int i;
     render_cut_t *d;
     static TIE_3 list[6];
-    TIE_3 **tlist, normal, up;
+    TIE_3 **tlist, up;
+    fastf_t shot_len = 100, shot_width = .02;
 
     tlist = (TIE_3 **)bu_malloc(sizeof(TIE_3 *) * 6, "cutting plane triangles");
 
@@ -69,36 +67,43 @@ void render_cut_init(render_t *render, TIE_3 ray_pos, TIE_3 ray_dir) {
     d->ray_pos = ray_pos;
     d->ray_dir = ray_dir;
 
-    tie_init(&d->tie, 2, TIE_KDTREE_FAST);
-
     /* Calculate the normal to be used for the plane */
     VSET(up.v, 0, 0, 1);
-    VCROSS(normal.v,  ray_dir.v,  up.v);
-    VUNITIZE(normal.v);
+    VCROSS(d->plane,  ray_dir.v,  up.v);
+    VUNITIZE(d->plane);
 
     /* Construct the plane */
-    VMOVE(d->plane, normal.v);
-    d->plane[3] = -VDOT( normal.v,  ray_pos.v); /* up is really new ray_pos */
+    d->plane[3] = -VDOT( d->plane,  ray_pos.v); /* up is really new ray_pos */
+
+    /* generate the shtuff for the blue line */
+    tie_init(&d->tie, 2, TIE_KDTREE_FAST);
 
     /* Triangle 1 */
     VMOVE(list[0].v, ray_pos.v);
-    list[0].v[2] -= THICKNESS;
+    list[0].v[2] -= shot_width;
 
-    VADD2SCALE(list[1].v, ray_pos.v, ray_dir.v, LENGTH);
-    list[1].v[2] -= THICKNESS;
+    list[0].v[0] = ray_pos.v[0];
+    list[0].v[1] = ray_pos.v[1];
+    list[0].v[2] = ray_pos.v[2] - shot_width;
 
-    VADD2SCALE(list[2].v, ray_pos.v, ray_dir.v, LENGTH);
-    list[2].v[2] += THICKNESS;
+    list[1].v[0] = ray_pos.v[0] - shot_len*ray_dir.v[0];
+    list[1].v[1] = ray_pos.v[1] - shot_len*ray_dir.v[1];
+    list[1].v[2] = ray_pos.v[2] - shot_len*ray_dir.v[2] - shot_width;
+
+    list[2].v[0] = ray_pos.v[0] - shot_len*ray_dir.v[0];
+    list[2].v[1] = ray_pos.v[1] - shot_len*ray_dir.v[1];
+    list[2].v[2] = ray_pos.v[2] - shot_len*ray_dir.v[2] + shot_width;
 
     /* Triangle 2 */
     VMOVE(list[3].v, ray_pos.v);
-    list[3].v[2] -= THICKNESS;
+    list[3].v[2] -= shot_width;
 
-    VADD2SCALE(list[4].v, ray_pos.v, ray_dir.v, LENGTH);
-    list[4].v[2] += THICKNESS;
+    list[4].v[0] = ray_pos.v[0] - shot_len*ray_dir.v[0];
+    list[4].v[1] = ray_pos.v[1] - shot_len*ray_dir.v[1];
+    list[4].v[2] = ray_pos.v[2] - shot_len*ray_dir.v[2] + shot_width;
 
     VMOVE(list[5].v, ray_pos.v);
-    list[5].v[2] -= THICKNESS;
+    list[5].v[2] += shot_width;
 
     for(i=0;i<6;i++)
 	tlist[i] = &list[i];
