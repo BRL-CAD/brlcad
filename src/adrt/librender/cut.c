@@ -171,7 +171,9 @@ void render_cut_work(render_t *render, tie_t *tie, tie_ray_t *ray, TIE_3 *pixel)
     if (t > 0)
 	return;
 
-    VADD2SCALE(ray->pos.v, ray->pos.v, ray->dir.v, -t);
+    ray->pos.v[0] += -t * ray->dir.v[0];
+    ray->pos.v[1] += -t * ray->dir.v[1];
+    ray->pos.v[2] += -t * ray->dir.v[2];
     HMOVE(hit.plane, rd->plane);
 
     /* Render Geometry */
@@ -193,7 +195,7 @@ void render_cut_work(render_t *render, tie_t *tie, tie_ray_t *ray, TIE_3 *pixel)
 #if 0
 	VSET(color.v, 1.0, 1.0, 1.0);
 	VSCALE(color.v,  color.v,  3.0);
-	VADD2(color.v,  color.v,  hit.mesh->prop->color.v);
+	VADD2(color.v,  color.v,  hit.mesh->attributes->color.v);
 	VSCALE(color.v,  color.v,  0.125);
 #else
 	VSET(color.v, 0.8, 0.8, 0.7);
@@ -207,6 +209,8 @@ void render_cut_work(render_t *render, tie_t *tie, tie_ray_t *ray, TIE_3 *pixel)
 	VSCALE((*pixel).v,  color.v,  (dot*0.90));
 #if 0
     } else {
+	TIE_3 vec;
+	fastf_t angle;
 	/* shade solid */
 	VSUB2(vec.v,  ray->pos.v,  hit.id.pos.v);
 	VUNITIZE(vec.v);
@@ -215,7 +219,9 @@ void render_cut_work(render_t *render, tie_t *tie, tie_ray_t *ray, TIE_3 *pixel)
     }
 #endif
 
-    VSET(pixel->v, 0.1, 0.1, 0.1);
+    pixel->v[0] += 0.1;
+    pixel->v[1] += 0.1;
+    pixel->v[2] += 0.1;
 }
 
 /*
