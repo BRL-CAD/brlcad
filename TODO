@@ -42,8 +42,6 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
   or simply have an rt_*() for each function (e.g., rt_mirror(),
   rt_shot(), rt_describe(), etc).
 
-* restored support for split-view cutting planes within ADRT
-
 * implement necessary routines for generating a NURBS bounding
   box tree, needed for "good" initial guesses when raytracing
   a NURBS surface. (per Abert et. al. 2006)
