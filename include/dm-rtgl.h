@@ -44,14 +44,12 @@
 #define DM_PRIV_VARS (dmp->dm_vars.priv_vars)
 #define RTGL_GEDP ((struct rtgl_vars *)dmp->dm_vars.priv_vars)->mvars.gedp
 #define RTGL_LASTJOBS ((struct rtgl_vars *)dmp->dm_vars.priv_vars)->mvars.lastJobs
-#define RTGL_BLOCKING ((struct rtgl_vars *)dmp->dm_vars.priv_vars)->mvars.blocking
 #define RTGL_JOBSDONE ((struct rtgl_vars *)dmp->dm_vars.priv_vars)->mvars.jobsDone
 #define RTGL_DOJOBS ((struct rtgl_vars *)dmp->dm_vars.priv_vars)->mvars.doJobs
 
 struct modifiable_rtgl_vars {
     struct ged *gedp;  /* used to set up ray tracing */
     time_t lastJobs;
-    int blocking;
     int jobsDone;
     int doJobs;
     int cueing_on;

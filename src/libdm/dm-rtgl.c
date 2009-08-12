@@ -303,7 +303,6 @@ rtgl_open(Tcl_Interp *interp, int argc, char **argv)
 
     /* initialize modifiable variables */
     ((struct rtgl_vars *)dmp->dm_vars.priv_vars)->mvars.gedp = GED_NULL;
-    ((struct rtgl_vars *)dmp->dm_vars.priv_vars)->mvars.blocking = 0;
     ((struct rtgl_vars *)dmp->dm_vars.priv_vars)->mvars.lastJobs = 0;
     ((struct rtgl_vars *)dmp->dm_vars.priv_vars)->mvars.jobsDone = 1;
     ((struct rtgl_vars *)dmp->dm_vars.priv_vars)->mvars.doJobs = 0;
@@ -1254,8 +1253,8 @@ void randShots(fastf_t *center, fastf_t radius, int flag) {
     glEnable(GL_LIGHTING);
 }
 
-struct jobList jobs;
-struct jobList *currJob;
+static struct jobList jobs;
+static struct jobList *currJob;
 
 void swapItems(struct bu_list *a, struct bu_list *b) {
     struct bu_list temp;
@@ -1279,7 +1278,7 @@ void swapItems(struct bu_list *a, struct bu_list *b) {
 }
 
 void shuffleJobs(void) {
-    time_t start = time(NULL);
+    double elapsed_time;
 
     int i, j, swap, numJobs = 0;
     struct bu_list *pick, *curr;
@@ -1324,7 +1323,8 @@ void shuffleJobs(void) {
 
 	    pick = curr = NULL;
 
-	    if (difftime(time(NULL), start) > (1/100))
+	    (void)rt_get_timer( (struct bu_vls *)0, &elapsed_time);
+	    if (elapsed_time > 0.1) /* 100ms */
 		return;
 	}
     }
@@ -1335,6 +1335,8 @@ void shootGrid(vect_t min, vect_t max, int pixels, int viewSize, int uAxis, int 
     int i, j;
     vect_t span;
 
+    int skipCount = 0;
+
     /* calculate span in each dimension */
     VSUB2(span, max, min);
 
@@ -1342,9 +1344,12 @@ void shootGrid(vect_t min, vect_t max, int pixels, int viewSize, int uAxis, int 
     int uDivs = pixels * (span[uAxis] / viewSize);
     int vDivs = pixels * (span[vAxis] / viewSize);
 
-#if 1
+#if 0
     uDivs /= 2;
     vDivs /= 2;
+#else
+    uDivs *= 1.5;
+    vDivs *= 1.5;
 #endif
 
     fastf_t uWidth = span[uAxis] / uDivs;
@@ -1367,6 +1372,8 @@ void shootGrid(vect_t min, vect_t max, int pixels, int viewSize, int uAxis, int 
         v += vWidth;
 
         for (j = 0; j < uDivs; j++) {
+	    int forward = 0;
+	    struct jobList *jobEntry;
             u += uWidth;
 
 	    app.a_ray.r_pt[uAxis] = u;
@@ -1376,8 +1383,9 @@ void shootGrid(vect_t min, vect_t max, int pixels, int viewSize, int uAxis, int 
 	    rt_shootray(&app);
 #else
 	    /* make new job */
+	    jobEntry = &jobs;
 	    BU_GETSTRUCT(currJob, jobList);
-	    BU_LIST_PUSH(&(jobs.l), currJob);
+	    BU_LIST_PUSH(&(jobEntry->l), currJob);
 	    
 	    VMOVE(currJob->pt, app.a_ray.r_pt);
 	    VMOVE(currJob->dir, app.a_ray.r_dir);
@@ -1391,7 +1399,7 @@ void shootGrid(vect_t min, vect_t max, int pixels, int viewSize, int uAxis, int 
 
 /* return 1 if all jobs done, 0 if not */
 int shootJobs(void) {
-    time_t start = time(NULL);
+    double elapsed_time;
 
     /* list cannot be empty */
     if (jobs.l.forw != NULL && (struct jobList *)jobs.l.forw != &jobs) {
@@ -1405,9 +1413,9 @@ int shootJobs(void) {
 	    BU_LIST_DEQUEUE(&(currJob->l));
 	    bu_free(currJob, "free jobs currJob");
 
-	    if (difftime(time(NULL), start) > (1/100))
+	    (void)rt_get_timer( (struct bu_vls *)0, &elapsed_time);
+	    if (elapsed_time > 0.1) /* 100ms */
 		return 0;
-
 	}
 
 	jobs.l.forw = BU_LIST_NULL;
@@ -1417,7 +1425,7 @@ int shootJobs(void) {
 }
 
 void drawPoints(fastf_t *view) {
-    glPointSize(4);
+    glPointSize(1);
 
 #if 0 /* use vertex arrays */
     glEnableClientState(GL_VERTEX_ARRAY);
@@ -1734,10 +1742,6 @@ rtgl_drawVList(struct dm *dmp, register struct bn_vlist *vp)
         }
     }
 
-    if (RTGL_JOBSDONE) {
-	RTGL_BLOCKING = 0;
-    }
-
     /* get points for new trees */
     if (numNew > 0) {
 
@@ -1779,7 +1783,6 @@ rtgl_drawVList(struct dm *dmp, register struct bn_vlist *vp)
 
 	/* new jobs to do */
 	RTGL_DOJOBS = 1;
-	RTGL_BLOCKING = 1;
 
     } /* numNew > 0 */
 
@@ -1791,8 +1794,11 @@ rtgl_drawVList(struct dm *dmp, register struct bn_vlist *vp)
 
     calls++;
     
-    if (calls > 1 && RTGL_DOJOBS) {
+    if (RTGL_DOJOBS) {
 	RTGL_JOBSDONE = shootJobs();
+	if (RTGL_JOBSDONE) {
+	    RTGL_DOJOBS = 0;
+	}
     }
 
     return TCL_OK;

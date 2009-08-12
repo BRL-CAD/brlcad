@@ -272,6 +272,17 @@ pr_beep(void)
 void _set_invalid_parameter_handler(void *callback) { return; }
 #endif
 
+
+void idle_update(ClientData data)
+{
+#ifdef DM_RTGL
+    if (!RTGL_JOBSDONE) {
+	RTGL_DOJOBS = 1;
+    }
+#endif
+}
+
+
 /*
  *			M A I N
  */
@@ -867,6 +878,8 @@ main(int argc, char **argv)
     while (1) {
 	/* This test stops optimizers from complaining about an infinite loop */
 	if ( (rateflag = event_check( rateflag )) < 0 )  break;
+
+	Tcl_DoWhenIdle(idle_update, NULL);
 
 	/*
 	 * Cause the control portion of the displaylist to be
@@ -1653,8 +1666,8 @@ event_check( int non_blocking )
 	    handled++;
 	}
     } else {
-	/* Wait for an event, then handle it */
-	Tcl_DoOneEvent(TCL_ALL_EVENTS);
+	/* Wait for a non-idle event, then handle it */
+	Tcl_DoOneEvent(TCL_ALL_EVENTS & (!TCL_IDLE_EVENTS));
 
 	/* Handle any other events in the queue */
 	while (Tcl_DoOneEvent(TCL_ALL_EVENTS|TCL_DONT_WAIT)) {
@@ -1944,21 +1957,6 @@ event_check( int non_blocking )
 	    Tcl_Eval(interp, bu_vls_addr(&vls));
 	    bu_vls_free(&vls);
 	}
-#ifdef DM_RTGL
-	if (DM_PRIV_VARS != NULL && RTGL_BLOCKING)  {
-
-	    /* prevent ray-tracing when other events need to be processed */
-	    if (non_blocking > 0 || handled > 10) {
-		RTGL_DOJOBS = 0;
-	    }
-
-	    else {
-		RTGL_DOJOBS = 1;
-	    }
-
-	    non_blocking++;
-	}
-#endif
 
 	curr_dm_list = save_dm_list;
     }
