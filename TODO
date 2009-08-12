@@ -474,6 +474,9 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
 * rtedge-style tracer that outputs tool paths (splines/segments, etc)
   for CNC/CAM style toolpath cutting descriptions (g-code files).
 
+* rtedge shoots twice as many rays as it needs to (shoots the 'below'
+  ray for each primary, only reusing current scanline cells.
+
 * rt annotation support
 
 * support for fillets and chamfers as object/combination operations
