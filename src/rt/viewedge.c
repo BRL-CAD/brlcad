@@ -473,7 +473,9 @@ view_2init(struct application *ap)
 /**
  * end of each pixel
  */
-void view_pixel(struct application *ap) { }
+void view_pixel(struct application *ap)
+{
+}
 
 
 /**
@@ -672,10 +674,7 @@ void view_end(void) {
 int rayhit(struct application *ap, register struct partition *pt,
 	   struct seg *segp)
 {
-    if (handle_main_ray(ap, pt, segp))
-	ap->a_user = 1;
-    else
-	ap->a_user = 0;
+    handle_main_ray(ap, pt, segp);
     return 1;
 }
 
@@ -684,10 +683,7 @@ int rayhit(struct application *ap, register struct partition *pt,
  */
 int raymiss(struct application *ap)
 {
-    if (handle_main_ray(ap, NULL, NULL))
-	ap->a_user = 1;
-    else
-	ap->a_user = 0;
+    handle_main_ray(ap, NULL, NULL);
     return 0;
 }
 
@@ -789,7 +785,7 @@ handle_main_ray(struct application *ap, register struct partition *PartHeadp,
 
     cpu = ap->a_resource->re_cpu;
 
-    if (PartHeadp == NULL) {
+    if (PartHeadp == NULL || segp == NULL) {
 	/* The main shotline missed.  pack the application struct
 	 */
 	me.c_ishit    = 0;
