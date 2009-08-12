@@ -203,10 +203,10 @@ bu_bomb(const char *str)
 void
 bu_exit(int status, const char *fmt, ...)
 {
-    va_list ap;
-    struct bu_vls message;
-
     if (fmt && strlen(fmt) > 0) {
+	va_list ap;
+	struct bu_vls message;
+
 	va_start(ap, fmt);
 
 	bu_vls_init(&message);
