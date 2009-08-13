@@ -187,13 +187,13 @@ int Compare_X_Parameter(
 }
 
 /**
- *        Curve_X_Profile::Compare_start
+ *        Curve_Compare_start
  *
  * @Compares the start points of the curve profiles
  */
-int Curve_X_Profile::Compare_start(
-	const Curve_X_Profile *a,
-	const Curve_X_Profile *b
+int Curve_Compare_start(
+	const ON_Curve *a,
+	const ON_Curve *b
 	)
 {
     ON_3dVector A = ON_2dVector(a->PointAtStart().x, a->PointAtStart().y);
@@ -214,13 +214,13 @@ int Curve_X_Profile::Compare_start(
 }
 
 /**
- *        Curve_X_Profile::Compare_end
+ *        Curve_Compare_end
  *
  * @Compares the end points of the curve profiles
  */
-int Curve_X_Profile::Compare_end(
-	const Curve_X_Profile *a,
-	const Curve_X_Profile *b
+int Curve_Compare_end(
+	const ON_Curve *a,
+	const ON_Curve *b
 	)
 {
     ON_3dVector A = ON_2dVector(a->PointAtEnd().x, a->PointAtEnd().y);
@@ -637,21 +637,21 @@ bool GetStartPointsEdges(
 
 
 /**
- *        SurfaceSurfaceIntersect
+ *        FaceFaceIntersect
  *
- * @brief finds, as bezier curves in the surfaces's parameter spaces the curves of intersection of the two surfaces
+ * @brief finds the intersection curves of two faces and returns them as Face_X_Events
  */
 
-int SurfaceSurfaceIntersect(
-	const ON_Surface *surf1,
-	const ON_Surface *surf2,
+int FaceFaceIntersect(
+	ON_BrepFace *face1,
+	ON_BrepFace *face2,
 	double stepsize,
 	double tol,
-	ON_ClassArray<ON_Curve*>& curves1,
-	ON_ClassArray<ON_Curve*>& curves2
+	ON_ClassArray<Face_X_Event>& x
 	)
 {
-    int rv = 0;
+    int init_count = x.Count();
+    const ON_Surface *surf1 = face1->SurfaceOf(), *surf2 = face2->SurfaceOf();
     ON_2dPointArray start_points1, start_points2;
     bool rv_edges = GetStartPointsEdges(surf1, surf2, start_points1, start_points2, tol);
     bool rv_internal = GetStartPointsInternal(surf1, surf2, start_points1, start_points2, tol);
@@ -676,13 +676,10 @@ int SurfaceSurfaceIntersect(
 		j--;
 	    }
 	}
-	curves1.Append(out1);
-	curves2.Append(out2);
-	rv++;
+	x.Append(Face_X_Event(face1, face2, out1, out2));
     }
-    return rv;
+    return x.Count() - init_count;
 }
-
 
 /**
  *        BrepBrepIntersect
@@ -699,16 +696,12 @@ bool BrepBrepIntersect(
 	)
 {
     int i, j, k;
-    /* first we intersect all of the surfaces and record the intersectiosn in Surface_X_Events */
+    /* first we intersect all of the Faces and record the intersectiosn in Surface_X_Events */
     ON_ClassArray<Face_X_Event> x;
     for (i = 0; i < brep1->m_F.Count(); i++) {
 	for (j = 0; j < brep2->m_F.Count(); j++) {
-	    ON_ClassArray<ON_Curve*> curves1, curves2;
-	    int initCount1 = brep1->m_F.Count(), initCount2 = brep2->m_F.Count();
-	    int new_xs = SurfaceSurfaceIntersect(brep1->m_F[i].SurfaceOf(), brep2->m_F[j].SurfaceOf(), stepsize, tol, curves1, curves2);
-	    for (k = 0; k < new_xs; k++) {
-		x.Append(Face_X_Event(&brep1->m_F[i], &brep2->m_F[j], curves1[k], curves2[k]));
-	    }
+	    x.Empty();
+	    int new_xs = FaceFaceIntersect(&brep1->m_F[i], &brep2->m_F[j], stepsize, tol, x);
 	}
     }
     for (i = 0; i < x.Count(); i++) {
