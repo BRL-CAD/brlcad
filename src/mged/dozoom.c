@@ -405,11 +405,11 @@ dozoom(int which_eye)
         /* dm-rtgl needs database info for ray tracing */
         RTGL_GEDP = gedp;
 
-	/* draw, and possibly do ray tracing */
+	/* will ray trace visible objects and draw the intersection points */
 	DM_DRAW_VLIST(dmp, (struct bn_vlist *)NULL);
-
-	/* still more updates needed */
-	dirty = 1;
+      
+	/* force update if needed */
+	dirty = RTGL_DIRTY;
 
         return;
     }

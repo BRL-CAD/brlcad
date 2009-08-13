@@ -41,17 +41,13 @@
 
 #define Rtgl_MV_O(_m) offsetof(struct modifiable_rtgl_vars, _m)
 
-#define DM_PRIV_VARS (dmp->dm_vars.priv_vars)
-#define RTGL_GEDP ((struct rtgl_vars *)dmp->dm_vars.priv_vars)->mvars.gedp
-#define RTGL_LASTJOBS ((struct rtgl_vars *)dmp->dm_vars.priv_vars)->mvars.lastJobs
-#define RTGL_JOBSDONE ((struct rtgl_vars *)dmp->dm_vars.priv_vars)->mvars.jobsDone
-#define RTGL_DOJOBS ((struct rtgl_vars *)dmp->dm_vars.priv_vars)->mvars.doJobs
+#define RTGL_MVARS (((struct rtgl_vars *)dmp->dm_vars.priv_vars)->mvars)
+#define RTGL_GEDP      RTGL_MVARS.gedp
+#define RTGL_DIRTY     RTGL_MVARS.needRefresh
 
 struct modifiable_rtgl_vars {
     struct ged *gedp;  /* used to set up ray tracing */
-    time_t lastJobs;
-    int jobsDone;
-    int doJobs;
+    int needRefresh;
     int cueing_on;
     int zclipping_on;
     int zbuffer_on;
@@ -93,8 +89,8 @@ struct jobList {
 struct ptInfoList {
     struct bu_list l;
     int used;
-    fastf_t points[PT_ARRAY_SIZE];
-    fastf_t norms[PT_ARRAY_SIZE];
+    float points[PT_ARRAY_SIZE];
+    float norms[PT_ARRAY_SIZE];
     float color[3];
 };
 

@@ -179,8 +179,7 @@ extern float diffuseColor[4];
 extern float backColor[];
 
 int controlClip = 1;
-
-int calls;
+int calls, jobsDone;
 
 /* ray trace vars */
 struct application app;
@@ -294,6 +293,7 @@ rtgl_open(Tcl_Interp *interp, int argc, char **argv)
 	bu_vls_strcpy(&init_proc_vls, "bind_dm");
 
     calls = 1;
+    jobsDone = 1;
 
     /* initialize dm specific variables */
     ((struct dm_xvars *)dmp->dm_vars.pub_vars)->devmotionnotify = LASTEvent;
@@ -302,20 +302,18 @@ rtgl_open(Tcl_Interp *interp, int argc, char **argv)
     dmp->dm_aspect = 1.0;
 
     /* initialize modifiable variables */
-    ((struct rtgl_vars *)dmp->dm_vars.priv_vars)->mvars.gedp = GED_NULL;
-    ((struct rtgl_vars *)dmp->dm_vars.priv_vars)->mvars.lastJobs = 0;
-    ((struct rtgl_vars *)dmp->dm_vars.priv_vars)->mvars.jobsDone = 1;
-    ((struct rtgl_vars *)dmp->dm_vars.priv_vars)->mvars.doJobs = 0;
-    ((struct rtgl_vars *)dmp->dm_vars.priv_vars)->mvars.rgb = 1;
-    ((struct rtgl_vars *)dmp->dm_vars.priv_vars)->mvars.doublebuffer = 1;
-    ((struct rtgl_vars *)dmp->dm_vars.priv_vars)->mvars.fastfog = 1;
-    ((struct rtgl_vars *)dmp->dm_vars.priv_vars)->mvars.fogdensity = 1.0;
-    ((struct rtgl_vars *)dmp->dm_vars.priv_vars)->mvars.lighting_on = dmp->dm_light;
-    ((struct rtgl_vars *)dmp->dm_vars.priv_vars)->mvars.zbuffer_on = dmp->dm_zbuffer;
-    ((struct rtgl_vars *)dmp->dm_vars.priv_vars)->mvars.debug = dmp->dm_debugLevel;
-    ((struct rtgl_vars *)dmp->dm_vars.priv_vars)->mvars.bound = dmp->dm_bound;
-    ((struct rtgl_vars *)dmp->dm_vars.priv_vars)->mvars.boundFlag = dmp->dm_boundFlag;
-    ((struct rtgl_vars *)dmp->dm_vars.priv_vars)->mvars.zclipping_on = dmp->dm_zclip;
+    RTGL_MVARS.gedp = GED_NULL;
+    RTGL_MVARS.needRefresh = 0;
+    RTGL_MVARS.rgb = 1;
+    RTGL_MVARS.doublebuffer = 1;
+    RTGL_MVARS.fastfog = 1;
+    RTGL_MVARS.fogdensity = 1.0;
+    RTGL_MVARS.lighting_on = dmp->dm_light;
+    RTGL_MVARS.zbuffer_on = dmp->dm_zbuffer;
+    RTGL_MVARS.debug = dmp->dm_debugLevel;
+    RTGL_MVARS.bound = dmp->dm_bound;
+    RTGL_MVARS.boundFlag = dmp->dm_boundFlag;
+    RTGL_MVARS.zclipping_on = dmp->dm_zclip;
 
     /* this is important so that rtgl_configureWin knows to set the font */
     ((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct = NULL;
@@ -1213,9 +1211,10 @@ void randShots(fastf_t *center, fastf_t radius, int flag) {
 	    VADD2(pt, pt, center);
 	    
 	    /* jitter point */
+#if 0
 	    VSET(jit, jitter(halfRad), jitter(halfRad), jitter(halfRad));
 	    VADD2(pt, pt, jit);
-
+#endif
 	    VMOVE(app.a_ray.r_dir, pt);
 	    
 	    
@@ -1331,7 +1330,7 @@ void shuffleJobs(void) {
 }
 
 /* shoot an even grid of parallel rays in a principle direction */
-void shootGrid(vect_t min, vect_t max, int pixels, int viewSize, int uAxis, int vAxis, int iAxis) {
+void shootGrid(vect_t min, vect_t max, double maxSpan, int pixels, int uAxis, int vAxis, int iAxis) {
     int i, j;
     vect_t span;
 
@@ -1340,16 +1339,15 @@ void shootGrid(vect_t min, vect_t max, int pixels, int viewSize, int uAxis, int 
     /* calculate span in each dimension */
     VSUB2(span, max, min);
 
-    /* calculate firing intervals */
-    int uDivs = pixels * (span[uAxis] / viewSize);
-    int vDivs = pixels * (span[vAxis] / viewSize);
+    /* calculate firing intervals (trying to achieve pixel density) */
+    int uDivs = pixels * (span[uAxis] / maxSpan);
+    int vDivs = pixels * (span[vAxis] / maxSpan);
 
-#if 0
+    bu_log("adding %d x %d jobs", uDivs, vDivs);
+
+#if 1
     uDivs /= 2;
     vDivs /= 2;
-#else
-    uDivs *= 1.5;
-    vDivs *= 1.5;
 #endif
 
     fastf_t uWidth = span[uAxis] / uDivs;
@@ -1424,8 +1422,8 @@ int shootJobs(void) {
     return 1;
 }
 
-void drawPoints(fastf_t *view) {
-    glPointSize(1);
+void drawPoints(fastf_t *view, int pointSize) {
+    glPointSize(pointSize);
 
 #if 0 /* use vertex arrays */
     glEnableClientState(GL_VERTEX_ARRAY);
@@ -1635,8 +1633,9 @@ void buildTree(struct ged *gedp, struct objTree *tree) {
 }
 
 
-vect_t min, max, span, center, view, vect;
+vect_t min, max, center, view, vect;
 fastf_t radius;
+double maxSpan;
 
 /*
  *  			R T G L _ D R A W V L I S T
@@ -1646,6 +1645,7 @@ HIDDEN int
 rtgl_drawVList(struct dm *dmp, register struct bn_vlist *vp)
 {
     int i, j, new, numVisible, numNew, maxPixels, viewSize;
+    vect_t span;
     char *currTree, *visibleTrees[RT_MAXARGS];
     struct ptInfoList *curr;
     
@@ -1707,13 +1707,14 @@ rtgl_drawVList(struct dm *dmp, register struct bn_vlist *vp)
 	oldNumTrees = 0;
 	freeInfoList();
 
-	RTGL_JOBSDONE = 1;
-	RTGL_DOJOBS = 0;
+	RTGL_DIRTY = 0;
 
 	/* reset for dynamic z-clipping */
-	if (dmp->dm_zbuffer) {
+	if (dmp->dm_zclip) {
 	    startScale = 1;
 	}
+
+	maxSpan = 0.0;
 
 	return TCL_OK;
     }
@@ -1764,42 +1765,66 @@ rtgl_drawVList(struct dm *dmp, register struct bn_vlist *vp)
         VMOVE(max, rtip->mdl_max);
 	VSUB2(span, max, min);
 
-	/* get parameters of bounding sphere */
-	radius = 100 + sqrt((span[X] * span[X]) + (span[Y] * span[Y]) + (span[Z] * span[Z]));
+	maxSpan = span[X];
 
-	center[X] = (min[X] + max[X]) / 2;
-	center[Y] = (min[Y] + max[Y]) / 2;
-	center[Z] = (min[Z] + max[Z]) / 2;
+	if (span[Y] > maxSpan)
+	    maxSpan = span[Y];
+
+	if (span[Z] > maxSpan)
+	    maxSpan = span[Z];
 
 #if 1
 	/* shoot grid of rays in each principle direction */
-	shootGrid(min, max, maxPixels, viewSize, X, Y, Z);
-	shootGrid(min, max, maxPixels, viewSize, Z, X, Y);
-	shootGrid(min, max, maxPixels, viewSize, Y, Z, X);
+	shootGrid(min, max, maxSpan, maxPixels, X, Y, Z);
+	shootGrid(min, max, maxSpan, maxPixels, Z, X, Y);
+	shootGrid(min, max, maxSpan, maxPixels, Y, Z, X);
 #else
+        /* use length of bounding box's longest diagonal as radius of bounding sphere */
+	radius = sqrt((span[X] * span[X]) + (span[Y] * span[Y]) + (span[Z] * span[Z])); 
+
+	/* use center of bounding box as center of bounding sphere */
+	center[X] = (min[X] + max[X]) / 2;
+	center[Y] = (min[Y] + max[Y]) / 2;
+	center[Z] = (min[Z] + max[Z]) / 2;
 
 	randShots(center, radius, 1);
 #endif
 
 	/* new jobs to do */
-	RTGL_DOJOBS = 1;
+	jobsDone = 0;
 
     } /* numNew > 0 */
 
+    /* get view vector */
     vect_t vCenter;
     VSET(vCenter, 0, 0, 0);
     aeVect(view, gedp->ged_gvp->gv_aet, vCenter, 1);
 
-    drawPoints(view);
+    /* determine point size */
+    int pointSize = 4;
+
+    if (maxSpan != 0.0) {
+	double ratio = maxSpan / viewSize;
+
+	pointSize = 4 * ratio;
+
+	if (pointSize < 1)
+	    pointSize = 1;
+    }
+
+    drawPoints(view, pointSize);
+    
+    if (!jobsDone) {
+	RTGL_DIRTY = 1;
+    
+	if ((jobsDone = shootJobs())) {
+	    bu_log("jobs done");
+	}
+    } else {
+	RTGL_DIRTY = 0;
+    }
 
     calls++;
-    
-    if (RTGL_DOJOBS) {
-	RTGL_JOBSDONE = shootJobs();
-	if (RTGL_JOBSDONE) {
-	    RTGL_DOJOBS = 0;
-	}
-    }
 
     return TCL_OK;
 }
