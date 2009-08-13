@@ -69,7 +69,7 @@ extern "C" {
 
 
 /* Prevent enum conflict with vmath.h */
-namespace {    
+namespace {
 
 enum {
     A, B, C, D, E, F, G, H
