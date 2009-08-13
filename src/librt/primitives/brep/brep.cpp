@@ -2591,8 +2591,8 @@ rt_brep_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, c
     int nfaces;
 
     RT_CK_DB_INTERNAL(ip);
-    tip = (struct rt_brep_internal *)ip->idb_ptr;
-    RT_BREP_CK_MAGIC(tip);
+    bi = (struct rt_brep_internal *)ip->idb_ptr;
+    RT_BREP_CK_MAGIC(bi);
      
 }
 
