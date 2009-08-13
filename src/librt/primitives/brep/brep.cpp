@@ -2581,6 +2581,19 @@ int
 rt_brep_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol)
 {
     return -1;
+    struct rt_brep_internal *bi;
+
+    struct shell *s;
+    struct vertex **verts;
+    struct faceuse **faces;
+    fastf_t *norms;
+    struct vertex **vertp[4];
+    int nfaces;
+
+    RT_CK_DB_INTERNAL(ip);
+    tip = (struct rt_brep_internal *)ip->idb_ptr;
+    RT_BREP_CK_MAGIC(tip);
+     
 }
 
 
