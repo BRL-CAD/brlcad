@@ -1345,7 +1345,7 @@ void shootGrid(vect_t min, vect_t max, double maxSpan, int pixels, int uAxis, in
 
     bu_log("adding %d x %d jobs", uDivs, vDivs);
 
-#if 1
+#if 0
     uDivs /= 2;
     vDivs /= 2;
 #endif
@@ -1412,7 +1412,7 @@ int shootJobs(void) {
 	    bu_free(currJob, "free jobs currJob");
 
 	    (void)rt_get_timer( (struct bu_vls *)0, &elapsed_time);
-	    if (elapsed_time > 0.1) /* 100ms */
+	    if (elapsed_time > .1) /* 100ms */
 		return 0;
 	}
 
@@ -1422,7 +1422,7 @@ int shootJobs(void) {
     return 1;
 }
 
-void drawPoints(fastf_t *view, int pointSize) {
+void drawPoints(float *view, int pointSize) {
     glPointSize(pointSize);
 
 #if 0 /* use vertex arrays */
@@ -1430,8 +1430,8 @@ void drawPoints(fastf_t *view, int pointSize) {
     glEnableClientState(GL_NORMAL_ARRAY);
 #endif
     int i, numPoints, index, count = 0;
-    vect_t normal;
-    double dot;
+    float normal[3];
+    float dot;
 
 
     for (BU_LIST_FOR(currItem, ptInfoList, &(ptInfo.l))) {
@@ -1458,8 +1458,8 @@ void drawPoints(fastf_t *view, int pointSize) {
 #endif
 	    /* draw if visible */
 	    if (dot > 0) {
-		glNormal3d(normal[X], normal[Y], normal[Z]);
-		glVertex3d(currItem->points[X + index], currItem->points[Y + index], currItem->points[Z + index]);
+		glNormal3f(normal[X], normal[Y], normal[Z]);
+		glVertex3f(currItem->points[X + index], currItem->points[Y + index], currItem->points[Z + index]);
 	    }
 	}
 	glEnd();
@@ -1812,7 +1812,11 @@ rtgl_drawVList(struct dm *dmp, register struct bn_vlist *vp)
 	    pointSize = 1;
     }
 
-    drawPoints(view, pointSize);
+    float fview[3];
+
+    VMOVE(fview, view);
+
+    drawPoints(fview, pointSize);
     
     if (!jobsDone) {
 	RTGL_DIRTY = 1;
