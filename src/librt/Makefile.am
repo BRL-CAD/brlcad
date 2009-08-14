@@ -158,6 +158,7 @@ librt_nil_la_SOURCES = \
 	primitives/rpc/rpc.c \
 	primitives/sketch/sketch.c \
 	primitives/sph/sph.c \
+	primitives/sph/sph_brep.cpp \
 	primitives/submodel/submodel.c \
 	primitives/superell/superell.c \
 	primitives/table.c \
@@ -222,7 +223,6 @@ EXTRA_DIST = \
 	primitives/bot/g_bot_include.c \
 	primitives/ell/ell_brep.cpp \
 	primitives/nmg/nmg_brep.cpp \
-	primitives/sph/sph_brep.cpp \
 	primitives/tor/tor_brep.cpp \
 	timer-nt.c \
 	timer52brl.c \

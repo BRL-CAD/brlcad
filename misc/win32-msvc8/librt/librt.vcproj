@@ -728,6 +728,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\src\librt\primitives\sph\sph_brep.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\src\librt\storage.c"
 				>
 			</File>

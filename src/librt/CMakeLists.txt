@@ -120,6 +120,7 @@ set(LIBRT_SOURCES
     primitives/rpc/rpc.c
     primitives/sketch/sketch.c
     primitives/sph/sph.c
+    primitives/sph/sph_brep.cpp
     primitives/submodel/submodel.c
     primitives/superell/superell.c
     primitives/table.c
