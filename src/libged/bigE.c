@@ -1445,6 +1445,7 @@ Eplot(union E_tree *eptr,
 	if (!leaf_ptr->l.m)
 	    continue;
 
+	dgcdp->gdlp = ged_addToDisplay(dgcdp->gedp, leaf_ptr->l.stp->st_name);
 	/* do each edge of the current leaf solid */
 	for (edge_no=0; edge_no < BU_PTBL_END(&leaf_ptr->l.edge_list); edge_no++) {
 	    struct edge *e;
