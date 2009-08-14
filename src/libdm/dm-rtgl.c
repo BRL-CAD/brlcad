@@ -1258,31 +1258,58 @@ static struct jobList *currJob;
 void swapItems(struct bu_list *a, struct bu_list *b) {
     struct bu_list temp;
 
-    /* fix surrounding links */
-    a->back->forw = b;
-    a->forw->back = b;
+    /* a immediately followed by b */
+    if (a->forw == b) {
 
-    b->back->forw = a;
-    b->forw->back = a;
+	/* fix surrounding links */
+	a->back->forw = b;
+	b->forw->back = a;
 
-    /* switch a and b links */
-    temp.forw = a->forw;
-    temp.back = a->back;
+	/* fix a and b links */
+	a->forw = b->forw;
+	b->back = a->back;
+	a->back = b;
+	b->forw = a;
+    }
 
-    a->forw = b->forw;
-    a->back = b->back;
+    /* b immediately followed by a */
+    else if (b->forw == a) {
 
-    b->forw = temp.forw;
-    b->back = temp.back;
+	/* fix surrounding links */
+	b->back->forw = a;
+	a->forw->back = b;
+
+	/* fix a and b links */
+	b->forw = a->forw;
+	a->back = b->back;
+	b->back = a;
+	a->forw = b;
+    }
+
+    /* general case */
+    else {
+	/* fix surrounding links */
+	a->back->forw = b;
+	a->forw->back = b;
+	
+	b->back->forw = a;
+	b->forw->back = a;
+	
+	/* switch a and b links */
+	temp.forw = a->forw;
+	temp.back = a->back;
+	
+	a->forw = b->forw;
+	a->back = b->back;
+	
+	b->forw = temp.forw;
+	b->back = temp.back;
+    }
 }
 
 void shuffleJobs(void) {
-    double elapsed_time;
-
     int i, j, swap, numJobs = 0;
     struct bu_list *pick, *curr;
-
-    pick = curr = NULL;
 
     /* list cannot be empty */
     if (jobs.l.forw != NULL && (struct jobList *)jobs.l.forw != &jobs) {
@@ -1293,38 +1320,40 @@ void shuffleJobs(void) {
 	}
 
 	/* randomize list (Fisher-Yates shuffle) */
-	for (i = numJobs - 1; i > 0; i--) {
+	for (i = numJobs - 1; i > 1; i--) {
 	   
 	    j = 0;
-	    swap = rand() % (i + 1);
-
-	    /* backwards so front is mixed first */
-	   for (BU_LIST_FOR_BACKWARDS(currJob, jobList, &(jobs.l))) {
-		/* element being set */
-		if (j == i) {
-		    curr = &(currJob->l);
-		}
-
-		/* random element to set it to*/
-		if (j == swap) {
-		    pick = &(currJob->l);
-		}
-
-		if (pick != NULL && curr != NULL) {
-		    break;
-		}
-
-		j++;
-	    }
-	    
-	    /* swap random element into position */
-	    swapItems(pick, curr);
-
+	    swap = (rand() % i) + 1;
 	    pick = curr = NULL;
 
-	    (void)rt_get_timer( (struct bu_vls *)0, &elapsed_time);
-	    if (elapsed_time > 0.1) /* 100ms */
-		return;
+	    if (swap != i) {
+
+		for (BU_LIST_FOR(currJob, jobList, &(jobs.l))) {
+		    
+		    j++;
+		    
+		    /* element being set */
+		    if (j == i) {
+			curr = &(currJob->l);
+		    }
+		    
+		    /* random element to set it to*/
+		    if (j == swap) {
+			pick = &(currJob->l);
+		    }
+		    
+		    if (pick != NULL && curr != NULL) {
+			break;
+		    }
+		}
+		
+		/* swap random element into position */
+		if (pick != &(jobs.l) && curr != &(jobs.l)) {
+		    swapItems(pick, curr);
+		} else {
+		    bu_log("null");
+		}
+	    }
 	}
     }
 }
@@ -1334,8 +1363,6 @@ void shootGrid(vect_t min, vect_t max, double maxSpan, int pixels, int uAxis, in
     int i, j;
     vect_t span;
 
-    int skipCount = 0;
-
     /* calculate span in each dimension */
     VSUB2(span, max, min);
 
@@ -1343,12 +1370,12 @@ void shootGrid(vect_t min, vect_t max, double maxSpan, int pixels, int uAxis, in
     int uDivs = pixels * (span[uAxis] / maxSpan);
     int vDivs = pixels * (span[vAxis] / maxSpan);
 
-    bu_log("adding %d x %d jobs", uDivs, vDivs);
-
-#if 0
+#if 1
     uDivs /= 2;
     vDivs /= 2;
 #endif
+
+    bu_log("adding %d x %d jobs", uDivs, vDivs);
 
     fastf_t uWidth = span[uAxis] / uDivs;
     fastf_t vWidth = span[vAxis] / vDivs;
@@ -1365,49 +1392,53 @@ void shootGrid(vect_t min, vect_t max, double maxSpan, int pixels, int uAxis, in
 
     app.a_ray.r_pt[iAxis] = max[iAxis] + 100;
 
-    /* shoot grid */
     for (i = 0; i < vDivs; i++) {
-        v += vWidth;
-
-        for (j = 0; j < uDivs; j++) {
-	    int forward = 0;
-	    struct jobList *jobEntry;
-            u += uWidth;
-
+	v += vWidth;
+	
+	for (j = 0; j < uDivs; j++) {
+	    u += uWidth;
+	    
 	    app.a_ray.r_pt[uAxis] = u;
 	    app.a_ray.r_pt[vAxis] = v;
 		
-#if 0
-	    rt_shootray(&app);
-#else
-	    /* make new job */
-	    jobEntry = &jobs;
-	    BU_GETSTRUCT(currJob, jobList);
-	    BU_LIST_PUSH(&(jobEntry->l), currJob);
-	    
-	    VMOVE(currJob->pt, app.a_ray.r_pt);
-	    VMOVE(currJob->dir, app.a_ray.r_dir);
-#endif
-	}
+	    /* make new job if needed */
+	    if (currJob->used == JOB_ARRAY_SIZE) {
 
-        /* reset u */
-        u = uOff;
+		BU_GETSTRUCT(currJob, jobList);
+		BU_LIST_INSERT(jobs.l.back, (struct bu_list *)currJob);
+		currJob->used = 0;
+	    }
+	    
+	    VMOVE(currJob->jobs[currJob->used].pt, app.a_ray.r_pt);
+	    VMOVE(currJob->jobs[currJob->used].dir, app.a_ray.r_dir);
+
+	    currJob->used++;
+	}
+	
+	/* reset u */
+	u = uOff;
     }
 }
 
 /* return 1 if all jobs done, 0 if not */
 int shootJobs(void) {
+    int i;
     double elapsed_time;
 
     /* list cannot be empty */
     if (jobs.l.forw != NULL && (struct jobList *)jobs.l.forw != &jobs) {
 
 	while (BU_LIST_WHILE(currJob, jobList, &(jobs.l))) {
-	    VMOVE(app.a_ray.r_pt, currJob->pt);
-	    VMOVE(app.a_ray.r_dir, currJob->dir);
 
-	    rt_shootray(&app);
+	    /* shoot all jobs in this array */
+	    for (i = 0; i < currJob->used; i++) {
+		VMOVE(app.a_ray.r_pt, currJob->jobs[i].pt);
+		VMOVE(app.a_ray.r_dir, currJob->jobs[i].dir);
 
+		rt_shootray(&app);
+	    }
+
+	    /* free memory for this item */
 	    BU_LIST_DEQUEUE(&(currJob->l));
 	    bu_free(currJob, "free jobs currJob");
 
@@ -1676,7 +1707,7 @@ rtgl_drawVList(struct dm *dmp, register struct bn_vlist *vp)
 
     viewSize = gedp->ged_gvp->gv_size;
 
-    /* initialize list */
+    /* initialize lists */
     if (calls == 1 || ptInfo.l.forw == BU_LIST_NULL) {
 	/* initialize head */
         BU_LIST_INIT(&(ptInfo.l));
@@ -1749,6 +1780,10 @@ rtgl_drawVList(struct dm *dmp, register struct bn_vlist *vp)
 	/* initialize job list */
 	BU_LIST_INIT(&(jobs.l));
 
+	BU_GETSTRUCT(currJob, jobList);
+	BU_LIST_PUSH(&(jobs.l), currJob);
+	currJob->used = 0;
+
         /* set up application */
         RT_APPLICATION_INIT(&app);
         app.a_onehit = 0;
@@ -1778,6 +1813,9 @@ rtgl_drawVList(struct dm *dmp, register struct bn_vlist *vp)
 	shootGrid(min, max, maxSpan, maxPixels, X, Y, Z);
 	shootGrid(min, max, maxSpan, maxPixels, Z, X, Y);
 	shootGrid(min, max, maxSpan, maxPixels, Y, Z, X);
+#if 1
+	shuffleJobs();
+#endif
 #else
         /* use length of bounding box's longest diagonal as radius of bounding sphere */
 	radius = sqrt((span[X] * span[X]) + (span[Y] * span[Y]) + (span[Z] * span[Z])); 
@@ -1820,7 +1858,7 @@ rtgl_drawVList(struct dm *dmp, register struct bn_vlist *vp)
     
     if (!jobsDone) {
 	RTGL_DIRTY = 1;
-    
+
 	if ((jobsDone = shootJobs())) {
 	    bu_log("jobs done");
 	}

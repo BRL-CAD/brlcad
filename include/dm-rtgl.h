@@ -78,10 +78,17 @@ struct rtgl_vars {
 
 extern void rtgl_fogHint();
 
-struct jobList {
-    struct bu_list l;
+#define JOB_ARRAY_SIZE 1000
+
+struct job {
     point_t pt;
     vect_t dir;
+};
+
+struct jobList {
+    struct bu_list l;
+    int used;
+    struct job jobs[JOB_ARRAY_SIZE];
 };
 
 #define PT_ARRAY_SIZE 999
