@@ -36,8 +36,7 @@
 void
 rt_sph_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *)
 {
-    struct rt_sph_internal *tip;
-    point_t 
+    struct rt_ell_internal *tip;
 
     RT_CK_DB_INTERNAL(ip);
     tip = (struct rt_ell_internal *)ip->idb_ptr;
