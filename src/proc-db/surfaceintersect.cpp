@@ -695,18 +695,74 @@ bool BrepBrepIntersect(
 	double tol
 	)
 {
-    int i, j, k;
-    /* first we intersect all of the Faces and record the intersectiosn in Surface_X_Events */
+    int i, j, k, l;
+    /* the new curves we get from the actual intersection */
+    ON_ClassArray<ON_ClassArray<ON_Curve*> > intersection_curves1, intersection_curves2;
+    /* the new curves we get from destroying the old trim_loops */
+    ON_ClassArray<ON_ClassArray<ON_Curve*> > trim_curves1, trim_curves2;
+    intersection_curves1.SetCount(brep1->m_F.Count());
+    trim_curves1.SetCount(brep1->m_F.Count());
+    intersection_curves2.SetCount(brep2->m_F.Count());
+    trim_curves2.SetCount(brep2->m_F.Count());
+    /* flags for which trims need to be shattered */
+    ON_ClassArray<ON_SimpleArray<bool> > loop_flags1, loop_flags2;
+    loop_flags1.SetCount(brep1->m_F.Count());
+    loop_flags2.SetCount(brep2->m_F.Count());
+    /* initialize the loop_flag arrays */
+    for (i = 0; i < brep1->m_F.Count(); i++) {
+	ON_BrepFace *face1 = &brep1->m_F[i];
+	loop_flags1[i].SetCount(face1->LoopCount());
+	loop_flags1[i].MemSet(false);
+    }
+    for (j = 0; j < brep2->m_F.Count(); j++) {
+	    ON_BrepFace *face2 = &brep2->m_F[j];
+	    loop_flags2[j].SetCount(face2->LoopCount());
+	    loop_flags2[j].MemSet(false);
+    }
+    /* first we intersect all of the Faces and record the intersectiosn in Face_X_Events */
     ON_ClassArray<Face_X_Event> x;
     for (i = 0; i < brep1->m_F.Count(); i++) {
+	ON_BrepFace *face1 = &brep1->m_F[i];
 	for (j = 0; j < brep2->m_F.Count(); j++) {
+	    ON_BrepFace *face2 = &brep2->m_F[j];
 	    x.Empty();
-	    int new_xs = FaceFaceIntersect(&brep1->m_F[i], &brep2->m_F[j], stepsize, tol, x);
+	    FaceFaceIntersect(face1, face2, stepsize, tol, x);
+	    for (k = 0; k < x.Count(); k++) {
+		Face_X_Event event_ij = x[k];
+		int new_curves = event_ij.Render_Curves();
+		for (l = 0; l < new_curves; l++) {
+		    intersection_curves1[i].Append(event_ij.new_curves1[l]);
+		    intersection_curves2[j].Append(event_ij.new_curves2[l]);
+		}
+		for (l = 0; l < event_ij.loop_flags1.Count(); l++) {
+		    loop_flags1[i][l] = loop_flags1[i][l] && event_ij.loop_flags1[l];
+		}
+		for (l = 0; l < event_ij.loop_flags2.Count(); l++) {
+		    loop_flags2[j][l] = loop_flags2[j][l] && event_ij.loop_flags2[l];
+		}
+	    }
 	}
     }
-    for (i = 0; i < x.Count(); i++) {
-
+    /* Now we shatter the loops */
+    for (i = 0; i < brep1->m_F.Count(); i++) {
+	ON_BrepFace *face1 = &brep1->m_F[i];
+	for (j = 0; j < loop_flags1[i].Count(); j++) {
+	    if (loop_flags1[i][j]) {
+		/* time to destroy a loop */
+		ShatterLoop(face1->Loop(j), trim_curves1[i]);
+	    }
+	}
     }
+    for (i = 0; i < brep2->m_F.Count(); i++) {
+	ON_BrepFace *face2 = &brep2->m_F[i];
+	for (j = 0; j < loop_flags2[i].Count(); j++) {
+	    if (loop_flags2[i][j]) {
+		/* time to destroy a loop */
+		ShatterLoop(face2->Loop(j), trim_curves2[i]);
+	    }
+	}
+    }
+    /* We now have all of the trims we need to reconstruct the loops */
 }
 
 namespace {
