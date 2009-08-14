@@ -92,9 +92,9 @@ color fgcolor = {255, 255, 255};
 color bgcolor = {0, 0, 0};
 
 /*
- * Flags that set which edges are detected.  detect_ids means detect
- * boundaries region id codes.
+ * Flags that set which edges are detected.
  *
+ * detect_ids -> detect boundaries region id codes.
  * detect_regions -> detect region boundaries.
  * detect_distance -> detect noticable differences in hit distance.
  * detect_normals -> detect rapid change in surface normals
@@ -652,12 +652,16 @@ view_eol(struct application *ap)
 
 }
 
-void view_setup(void) { }
+void view_setup(void)
+{
+}
 
 /**
  * end of a frame, called after rt_clean()
  */
-void view_cleanup(void) { }
+void view_cleanup(void)
+{
+}
 
 /**
  * end of each frame
@@ -712,7 +716,8 @@ int rayhit2(struct application *ap, register struct partition *pt,
 /**
  * R A Y M I S S 2
  */
-int raymiss2(register struct application *ap)
+static int
+raymiss2(register struct application *ap)
 {
     struct cell *c = (struct cell *)ap->a_uptr;
 
@@ -727,8 +732,9 @@ int raymiss2(register struct application *ap)
     return 0;
 }
 
-int is_edge(struct application *ap, struct cell *here,
-	    struct cell *left, struct cell *below)
+static int
+is_edge(struct application *ap, struct cell *here,
+	struct cell *left, struct cell *below)
 {
     if (here->c_ishit) {
 	if (detect_ids) 
