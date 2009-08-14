@@ -13,6 +13,7 @@ bin_PROGRAMS = \
 	brickwall \
 	clutter \
 	contours \
+        csgbrep \
 	globe \
 	human \
 	kurt \
@@ -73,6 +74,7 @@ surfaceintersect_LDADD = \
 brickwall_SOURCES = brickwall.c
 clutter_SOURCES = clutter.c common.c
 contours_SOURCES = contours.c
+csgbrep_SOURCES = csgbrep.cpp
 globe_SOURCES = globe.c
 human_SOURCES = human.c
 kurt_SOURCES = kurt.c
@@ -122,6 +124,7 @@ FAST_OBJECTS = \
 	$(brickwall_OBJECTS) \
 	$(clutter_OBJECTS) \
 	$(contours_OBJECTS) \
+	$(csgbrep_OBJECTS) \
 	$(globe_OBJECTS) \
 	$(human_OBJECTS) \
 	$(kurt_OBJECTS) \
