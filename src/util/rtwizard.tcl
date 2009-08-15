@@ -1,5 +1,5 @@
 #!/bin/sh
-#                        R T W I Z A R D
+#                    R T W I Z A R D . T C L
 # BRL-CAD
 #
 # Copyright (c) 2006-2009 United States Government as represented by
@@ -29,10 +29,10 @@ exec bwish "$0" "$@"
 # Begin Tcl here!
 #
 foreach i $auto_path {
-    set wizpath [file join $i {..} tclscripts rtwizard rtwizard.tcl ]
-    if {  [file exists $wizpath] } {
-	    source $wizpath
-	    exit
+    set wizpath [ file join $i {..} tclscripts rtwizard rtwizard.tcl ]
+    if { [file exists $wizpath] } {
+	source $wizpath
+	exit
     }
 }
 
