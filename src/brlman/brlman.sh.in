@@ -1,5 +1,5 @@
 #!/bin/sh
-#                          B R L M A N
+#                       B R L M A N . S H
 # BRL-CAD
 #
 # Copyright (c) 1991-2009 United States Government as represented by
@@ -39,9 +39,8 @@
 #  have NROFF.  Henry Spencer's "nroff -man" replacement called AWF
 #  is used instead.
 #
-#  Michael John Muuss, BRL, 23-June-1991.
-#
-#  @(#) $Header$ (BRL)
+###
+
 path_to_this="`dirname $0`"
 
 if test $# -lt 1 ; then

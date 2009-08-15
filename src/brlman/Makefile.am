@@ -1,10 +1,15 @@
 
-bin_SCRIPTS = brlman
+dist_bin_SCRIPTS = brlman
+
+brlman: brlman.sh
+	cp $(top_srcdir)/src/brlman/brlman.sh brlman
+
+CLEANFILES = brlman
 
 man_MANS = brlman.1
 EXTRA_DIST = \
 	$(man_MANS) \
-	$(bin_SCRIPTS) \
-	brlman.in
+	$(dist_bin_SCRIPTS) \
+	brlman.sh.in
 
 include $(top_srcdir)/misc/Makefile.defs
