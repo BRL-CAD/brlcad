@@ -553,6 +553,10 @@ xyz_pl_LDADD = ${BN} ${BU}
 yuv_pix_SOURCES = yuv-pix.c
 yuv_pix_LDADD = ${FB} ${BN} ${BU}
 
+rtwizard: rtwizard.tcl
+	cp $(top_srcdir)/src/util/rtwizard.tcl rtwizard
+
+CLEANFILES = rtwizard
 
 man_MANS = \
 	ap-pix.1 \
@@ -662,7 +666,8 @@ EXTRA_DIST = \
 	$(sample_applications_DATA) \
 	${PL_DM_EXTRA} \
 	${PL_X_EXTRA} \
-	rtwizard.bat
+	rtwizard.bat \
+	rtwizard.tcl
 
 DEPS=src/liborle src/libdm src/libfb src/libpc
 
