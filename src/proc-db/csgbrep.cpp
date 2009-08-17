@@ -40,6 +40,7 @@ extern "C" {
 #include "vmath.h"		/* BRL-CAD Vector macros */
 #include "wdb.h"
 extern void rt_sph_brep(ON_Brep **bi, struct rt_db_internal *ip, const struct bn_tol *tol);
+extern void rt_ell_brep(ON_Brep **bi, struct rt_db_internal *ip, const struct bn_tol *tol);
 
 #ifdef __cplusplus
 }
@@ -63,7 +64,7 @@ main(int argc, char** argv)
     mk_id(outfp, id_name);
 
     bu_log("Writing a Spherical  b-rep...\n");
-    ON_Brep* brep = new ON_Brep();
+    ON_Brep* sphbrep = new ON_Brep();
     struct  rt_ell_internal *sph;
     BU_GETSTRUCT( sph, rt_ell_internal);
     sph->magic = RT_ELL_INTERNAL_MAGIC;
@@ -76,28 +77,31 @@ main(int argc, char** argv)
     VMOVE( sph->b, b );
     VMOVE( sph->c, c );
     tmp_internal->idb_ptr = (genptr_t)sph;
-    rt_sph_brep(&brep, (struct rt_db_internal*)tmp_internal, tol);
-    const char* geom_name = "sph_nurb.s";
-    mk_brep(outfp, geom_name, brep);
-    delete brep;
-/*    
-    unsigned char rgb[] = {255,255,255};
-    mk_region1(outfp, "cube.r", geom_name, "plastic", "", rgb);
-    
- 
+    rt_sph_brep(&sphbrep, (struct rt_db_internal*)tmp_internal, tol);
+    const char* sph_name = "sph_nurb.s";
+    mk_brep(outfp, sph_name, sphbrep);
+    delete sphbrep;
+/* 
     bu_log("Writing an Ellipsoidal b-rep...\n");
-    ON_Brep* brep = new ON_Brep();
+    ON_Brep* ellbrep = new ON_Brep();
     struct  rt_ell_internal *ell;
     BU_GETSTRUCT(ell, rt_ell_internal);
     ell->magic = RT_ELL_INTERNAL_MAGIC;
+    VSET(center, 0, 0, 0);
+    VSET(a, 5, 0, 0);
+    VSET(b, 0, 3, 0);
+    VSET(c, 0, 0, 1); 
     VMOVE( ell->v, center );
     VMOVE( ell->a, a );
     VMOVE( ell->b, b );
     VMOVE( ell->c, c );
-    const char* geom_name = "ell_nurb.s";
-    mk_brep(outfp, geom_name, brep);
-    delete brep;
- 
+    tmp_internal->idb_ptr = (genptr_t)ell;
+    rt_ell_brep(&ellbrep, (struct rt_db_internal*)tmp_internal, tol);
+    const char* ell_name = "ell_nurb.s";
+    mk_brep(outfp, ell_name, ellbrep);
+    delete ellbrep;
+  */  
+/* 
     bu_log("Writing a Torus b-rep...\n");
     ON_Brep* brep = new ON_Brep();
     struct rt_tor_internal *tor;

@@ -114,6 +114,7 @@ librt_nil_la_SOURCES = \
 	primitives/ebm/ebm.c \
 	primitives/ehy/ehy.c \
 	primitives/ell/ell.c \
+	primitives/ell/ell_brep.cpp \
 	primitives/ell/ell_mirror.c \
 	primitives/epa/epa.c \
 	primitives/eto/eto.c \
@@ -221,7 +222,6 @@ EXTRA_DIST = \
 	parse.c \
 	pmalloc.c \
 	primitives/bot/g_bot_include.c \
-	primitives/ell/ell_brep.cpp \
 	primitives/nmg/nmg_brep.cpp \
 	primitives/tor/tor_brep.cpp \
 	timer-nt.c \
