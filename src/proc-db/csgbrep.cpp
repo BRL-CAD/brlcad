@@ -39,7 +39,7 @@ extern "C" {
 
 #include "vmath.h"		/* BRL-CAD Vector macros */
 #include "wdb.h"
-BU_EXTERN(void rt_sph_brep, (ON_Brep **bi, struct rt_db_internal *ip, const struct bn_tol *tol));
+RT_EXPORT BU_EXTERN(void rt_sph_brep, (ON_Brep **bi, struct rt_db_internal *ip, const struct bn_tol *tol));
 
 #ifdef __cplusplus
 }
@@ -49,7 +49,9 @@ int
 main(int argc, char** argv)
 {
     struct rt_wdb* outfp;
-   const struct bn_tol *tol;
+    struct rt_db_internal *tmp_internal;
+    RT_INIT_DB_INTERNAL(tmp_internal);
+    const struct bn_tol *tol;
     point_t center;
     vect_t a, b, c;
     ON_TextLog error_log;
@@ -73,7 +75,8 @@ main(int argc, char** argv)
     VMOVE( sph->a, a );
     VMOVE( sph->b, b );
     VMOVE( sph->c, c );
-//    rt_sph_brep(&brep, (struct rt_db_internal*)sph, tol);
+    tmp_internal->idb_ptr = (genptr_t)sph;
+    rt_sph_brep(&brep, (struct rt_db_internal*)tmp_internal, tol);
     const char* geom_name = "sph_nurb.s";
     mk_brep(outfp, geom_name, brep);
     delete brep;
