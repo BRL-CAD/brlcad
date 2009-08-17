@@ -67,6 +67,9 @@ breplicator_LDADD = \
 brepintersect_LDADD = \
 	${proc_db_libs} \
 	${OPENNURBS}
+csgbrep_LDADD = \
+	${proc_db_libs} \
+	${OPENNURBS}
 surfaceintersect_LDADD = \
 	${proc_db_libs} \
 	${OPENNURBS}

@@ -49,9 +49,9 @@ int
 main(int argc, char** argv)
 {
     struct rt_wdb* outfp;
- /*   const struct bn_tol *tol;
+   const struct bn_tol *tol;
     point_t center;
-    vect_t a, b, c;*/
+    vect_t a, b, c;
     ON_TextLog error_log;
 
     ON::Begin();
@@ -59,7 +59,7 @@ main(int argc, char** argv)
     outfp = wdb_fopen("csgbrep.g");
     const char* id_name = "CSG B-Rep Examples";
     mk_id(outfp, id_name);
-/*
+
     bu_log("Writing a Spherical  b-rep...\n");
     ON_Brep* brep = new ON_Brep();
     struct  rt_ell_internal *sph;
@@ -73,11 +73,11 @@ main(int argc, char** argv)
     VMOVE( sph->a, a );
     VMOVE( sph->b, b );
     VMOVE( sph->c, c );
-    rt_sph_brep(&brep, (struct rt_db_internal*)sph, tol);
+//    rt_sph_brep(&brep, (struct rt_db_internal*)sph, tol);
     const char* geom_name = "sph_nurb.s";
     mk_brep(outfp, geom_name, brep);
     delete brep;
-    
+/*    
     unsigned char rgb[] = {255,255,255};
     mk_region1(outfp, "cube.r", geom_name, "plastic", "", rgb);
     
