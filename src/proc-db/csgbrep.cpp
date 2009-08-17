@@ -39,7 +39,7 @@ extern "C" {
 
 #include "vmath.h"		/* BRL-CAD Vector macros */
 #include "wdb.h"
-RT_EXPORT BU_EXTERN(void rt_sph_brep, (ON_Brep **bi, struct rt_db_internal *ip, const struct bn_tol *tol));
+extern void rt_sph_brep(ON_Brep **bi, struct rt_db_internal *ip, const struct bn_tol *tol);
 
 #ifdef __cplusplus
 }
