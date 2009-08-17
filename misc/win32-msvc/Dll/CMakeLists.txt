@@ -53,6 +53,30 @@ set_property(TARGET BrlcadCore PROPERTY LINK_INTERFACE_LIBRARIES "")
 # build the brlcad.dll
 set(BRLCAD_SOURCES
     TclDummies.c
+    brlcad.def
+    brlcad.rc
+)
+
+set(BRLCAD_HEADERS
+    ../../../include/bn.h
+    ../../../include/brlcad.h
+    ../../../include/brep.h
+    ../../../include/bu.h
+    ../../../include/common.h
+    ../../../include/db.h
+    ../../../include/db5.h
+    ../../../include/magic.h
+    ../../../include/opennurbs_ext.h
+    ../../../include/nmg.h
+    ../../../include/nurb.h
+    ../../../include/pc.h
+    ../../../include/raytrace.h
+    ../../../include/rtgeom.h
+    ../../../include/vmath.h
+    ../../../include/wdb.h
+)
+
+set(COREINTERFACE_SOURCES
     ../../../../rt^3/src/coreInterface/Arb8.cpp
     ../../../../rt^3/src/coreInterface/Combination.cpp
     ../../../../rt^3/src/coreInterface/Cone.cpp
@@ -67,9 +91,9 @@ set(BRLCAD_SOURCES
     ../../../../rt^3/src/coreInterface/Torus.cpp
     ../../../../rt^3/src/coreInterface/Unknown.cpp
     ../../../../rt^3/src/coreInterface/globals.cpp
-    brlcad.def
-    brlcad.rc
 )
+
+file(GLOB COREINTERFACE_HEADERS ../../../../rt^3/include/brlcad/*.h)
 
 include_directories(
     ../../../../rt^3/include
@@ -81,7 +105,10 @@ add_definitions(
     "-DBRLCAD_COREINTERFACE_EXPORT=__declspec(dllexport)"
 )
 
-add_library(brlcad SHARED ${BRLCAD_SOURCES})
+add_library(brlcad SHARED
+    ${BRLCAD_SOURCES}
+    ${COREINTERFACE_SOURCES}
+)
 
 target_link_libraries(brlcad
     libbn
@@ -102,3 +129,7 @@ install(TARGETS brlcad
     LIBRARY DESTINATION lib
     ARCHIVE DESTINATION lib
 )
+
+install(FILES ${BRLCAD_HEADERS} DESTINATION include)
+
+install(FILES ${COREINTERFACE_HEADERS} DESTINATION include/brlcad)
