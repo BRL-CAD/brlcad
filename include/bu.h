@@ -2954,7 +2954,7 @@ BU_EXPORT BU_EXTERN(struct bu_hash_entry *bu_find_hash_entry,
 		    (struct bu_hash_tbl *hsh_tbl,
 		     unsigned char *key,
 		     int key_len,
-		     struct bu_hash_entry **prev,
+		     struct bu_hash_entry *prev,
 		     unsigned long *index2));
 BU_EXPORT BU_EXTERN(void bu_set_hash_value,
 		    (struct bu_hash_entry *hsh_entry,

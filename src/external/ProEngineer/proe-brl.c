@@ -622,7 +622,7 @@ get_brlcad_name( char *part_name )
     }
 
     /* find name for this part in hash table */
-    entry = bu_find_hash_entry( name_hash, (unsigned char *)name_copy, strlen( name_copy ), &prev, &index );
+    entry = bu_find_hash_entry( name_hash, (unsigned char *)name_copy, strlen( name_copy ), prev, &index );
 
     if ( entry ) {
 	if ( logger_type == LOGGER_TYPE_ALL ) {
