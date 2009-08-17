@@ -52,7 +52,9 @@ main(int argc, char** argv)
     struct rt_wdb* outfp;
     struct rt_db_internal *tmp_internal;
     RT_INIT_DB_INTERNAL(tmp_internal);
-    const struct bn_tol *tol;
+    struct bn_tol tmptol;
+    tmptol.dist = 0.005;
+    const struct bn_tol *tol = &tmptol;
     point_t center;
     vect_t a, b, c;
     ON_TextLog error_log;
@@ -62,7 +64,7 @@ main(int argc, char** argv)
     outfp = wdb_fopen("csgbrep.g");
     const char* id_name = "CSG B-Rep Examples";
     mk_id(outfp, id_name);
-
+/*
     bu_log("Writing a Spherical  b-rep...\n");
     ON_Brep* sphbrep = new ON_Brep();
     struct  rt_ell_internal *sph;
@@ -81,7 +83,9 @@ main(int argc, char** argv)
     const char* sph_name = "sph_nurb.s";
     mk_brep(outfp, sph_name, sphbrep);
     delete sphbrep;
-/* 
+ */
+    ON::End();
+    ON::Begin();
     bu_log("Writing an Ellipsoidal b-rep...\n");
     ON_Brep* ellbrep = new ON_Brep();
     struct  rt_ell_internal *ell;
@@ -100,7 +104,7 @@ main(int argc, char** argv)
     const char* ell_name = "ell_nurb.s";
     mk_brep(outfp, ell_name, ellbrep);
     delete ellbrep;
-  */  
+    
 /* 
     bu_log("Writing a Torus b-rep...\n");
     ON_Brep* brep = new ON_Brep();
