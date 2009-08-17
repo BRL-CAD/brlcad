@@ -156,7 +156,7 @@ void SplitTrim(
  */
 void ShatterLoop(
 	ON_BrepLoop *loop,
-	ON_ClassArray<ON_Curve*> curves
+	ON_SimpleArray<ON_Curve*> curves
 	)
 {
     int i;
@@ -192,12 +192,12 @@ int Compare_X_Parameter(
  * @Compares the start points of the curve profiles
  */
 int Curve_Compare_start(
-	const ON_Curve *a,
-	const ON_Curve *b
+	ON_Curve *const *a,
+	ON_Curve *const *b
 	)
 {
-    ON_3dVector A = ON_2dVector(a->PointAtStart().x, a->PointAtStart().y);
-    ON_3dVector B = ON_2dVector(b->PointAtStart().x, b->PointAtStart().y);
+    ON_3dVector A = ON_2dVector((*a)->PointAtStart().x, (*a)->PointAtStart().y);
+    ON_3dVector B = ON_2dVector((*b)->PointAtStart().x, (*b)->PointAtStart().y);
     if (V2APPROXEQUAL(A, B, 1e-9)) {
 	return 0;
     } else if (A.x < B.x) {
@@ -219,12 +219,12 @@ int Curve_Compare_start(
  * @Compares the end points of the curve profiles
  */
 int Curve_Compare_end(
-	const ON_Curve *a,
-	const ON_Curve *b
+	const ON_Curve **a,
+	const ON_Curve **b
 	)
 {
-    ON_3dVector A = ON_2dVector(a->PointAtEnd().x, a->PointAtEnd().y);
-    ON_3dVector B = ON_2dVector(b->PointAtEnd().x, b->PointAtEnd().y);
+    ON_3dVector A = ON_2dVector((*a)->PointAtEnd().x, (*a)->PointAtEnd().y);
+    ON_3dVector B = ON_2dVector((*b)->PointAtEnd().x, (*b)->PointAtEnd().y);
     if (V2APPROXEQUAL(A, B, 1e-9)) {
 	return 0;
     } else if (A.x < B.x) {
@@ -281,7 +281,7 @@ ON_X_EVENT::ON_X_EVENT()
 }
 
 /**
- *        Curve_X_Profile::Render_Curves
+ *        Face_X_Event::Render_Curves
  *
  * @Renders the Curve in the Curve_X_Profile, as the different curves it is segmented in to
  * This assumes the convention that to the left of a curve is below. i.e
@@ -339,6 +339,19 @@ int Face_X_Event::Render_Curves()
     }
 }
 
+bool ON_SetCurveCurveIntersectionDir(
+	ON_3dVector N,
+	int xcount,
+	ON_X_EVENT* xevent,
+	double a0,
+	double a1,
+	double b0,
+	double b1
+	)
+{
+
+}
+
 
 /**
  *        Face_X_Event::Get_ON_X_Events()
@@ -385,14 +398,64 @@ int Face_X_Event::Get_ON_X_Events(double tol)
 /**
  *        MakeLoops
  *
- * @brief Makes loops out of the new trims
+ * @brief Makes loops out of the new trims and old trims by matching them end to end
+ *  old trims were previously in trim loops, new trims come from the intersection
+ *  the difference being that every new_trim must be used, while some old_trims will be discarded
+ *  Note Well: destroys the arrays it's given.
  */
-void MakeLoops(
-	ON_SimpleArray<ON_BrepTrim> trims,
+int MakeLoops(
+	ON_BrepFace *face,
+	ON_SimpleArray<ON_Curve*>& new_trims,
+	ON_SimpleArray<ON_Curve*>& old_trims,
 	double tol
 	)
 {
-
+    int i;
+    ON_SimpleArray<ON_Curve*> trims[2] = {new_trims, old_trims};
+    for (i = 0; i < 2; i++) {
+	assert(trims[i].QuickSort(Curve_Compare_start));
+    }
+    ON_SimpleArray<ON_Curve*> loop;
+    while (new_trims.Count() != 0) {
+	loop.Append(*new_trims.First());
+	new_trims.Remove(0);
+	while (!V2APPROXEQUAL((*loop.First())->PointAtStart(), (*loop.Last())->PointAtEnd(), tol)) {
+	    /* bit hacky, makes a curve we can use to search for the arrays for matching trims */
+	    ON_LineCurve search_line = ON_LineCurve((*loop.Last())->PointAtEnd(), (*loop.First())->PointAtStart());
+	    ON_Curve *search_curve = (ON_Curve *) &search_line;
+	    int next_curve; /* -1 is the not found value */
+	    for (i = 0; i < 2; i++) {
+		next_curve = -1;
+		next_curve = new_trims.BinarySearch(&search_curve, Curve_Compare_start);
+		if (next_curve != -1) {
+		    loop.Append(trims[i][next_curve]);
+		    trims[i].Remove(next_curve);
+		    break;
+		}
+	    }
+	    if (next_curve == -1) {
+		/* we didn't find anything in either array */
+		assert(0);
+	    }
+	}
+	/* When we get here, loop will be a fully closed loop of trims */
+	ON_Brep *brep = face->Brep();
+	ON_BrepLoop *new_loop = &brep->NewLoop(ON_BrepLoop::unknown, *face);
+	for (i = 0; i < loop.Count(); i++) {
+	    new_loop->m_ti.Append(brep->AddTrimCurve(loop[i]));
+	}
+	int ldir = brep->LoopDirection(*new_loop);
+	switch (ldir) {
+	    case 1:
+		new_loop->m_type = ON_BrepLoop::outer;
+		break;
+	    case -1:
+		new_loop->m_type = ON_BrepLoop::inner;
+		break;
+	    default:
+		assert(0); /* we should absolutely never get here */
+	}
+    }
 }
 
 /**
@@ -697,9 +760,9 @@ bool BrepBrepIntersect(
 {
     int i, j, k, l;
     /* the new curves we get from the actual intersection */
-    ON_ClassArray<ON_ClassArray<ON_Curve*> > intersection_curves1, intersection_curves2;
+    ON_ClassArray<ON_SimpleArray<ON_Curve*> > intersection_curves1, intersection_curves2;
     /* the new curves we get from destroying the old trim_loops */
-    ON_ClassArray<ON_ClassArray<ON_Curve*> > trim_curves1, trim_curves2;
+    ON_ClassArray<ON_SimpleArray<ON_Curve*> > trim_curves1, trim_curves2;
     intersection_curves1.SetCount(brep1->m_F.Count());
     trim_curves1.SetCount(brep1->m_F.Count());
     intersection_curves2.SetCount(brep2->m_F.Count());
@@ -763,6 +826,12 @@ bool BrepBrepIntersect(
 	}
     }
     /* We now have all of the trims we need to reconstruct the loops */
+    for (i = 0; i < brep1->m_F.Count(); i++) {
+	MakeLoops(&brep1->m_F[i], intersection_curves1[i], trim_curves1[i], tol);
+    }
+    for (i = 0; i < brep2->m_F.Count(); i++) {
+	MakeLoops(&brep2->m_F[i], intersection_curves2[i], trim_curves2[i], tol);
+    }
 }
 
 namespace {
