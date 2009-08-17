@@ -2,7 +2,7 @@
 dist_bin_SCRIPTS = brlman
 
 brlman: brlman.sh
-	cp $(top_srcdir)/src/brlman/brlman.sh brlman
+	cp brlman.sh brlman
 
 CLEANFILES = brlman
 
