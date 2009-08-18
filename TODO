@@ -48,6 +48,9 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 
 * modify g_qa to search for >1 region flag in a tree path.
 
+* utilize -pedantic -Wall -Werror on 'clean' directories
+
+
 THESE ARE UNSCHEDULED BACKLOG TASKS
 -----------------------------------
 
