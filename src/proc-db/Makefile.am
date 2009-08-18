@@ -80,6 +80,9 @@ contours_SOURCES = contours.c
 csgbrep_SOURCES = csgbrep.cpp
 globe_SOURCES = globe.c
 human_SOURCES = human.c
+human_LDADD = \
+	${GED} \
+	${WDB}
 kurt_SOURCES = kurt.c
 lens_SOURCES = lens.c
 masonry_SOURCES = masonry.c
