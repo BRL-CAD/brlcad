@@ -17,21 +17,22 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
+/** @{ */
 /** @file brepintersect.cpp
  *
- */
-
-/* Until further notice this code is in a state of heavy flux as part of
+ * Until further notice this code is in a state of heavy flux as part of
  * GSoC 2009 as such it would be very foolish to write anything that
- * depends on it right now
- * This code is written and maintained by Joe Doliner jdoliner@gmail.com */
+ * depends on it right now.
+ *
+ * This code is written and maintained by Joe Doliner: jdoliner@gmail.com
+ */
 
 #include "brepintersect.h"
 
 int PolylineBBox(
-	const ON_Polyline& pline,
-	ON_BoundingBox* bbox
-	)
+    const ON_Polyline& pline,
+    ON_BoundingBox* bbox
+    )
 {
     ON_3dPoint min = pline[0], max = pline[0];
     for (int i = 1; i < pline.Count(); i++) {
@@ -43,16 +44,18 @@ int PolylineBBox(
     return 0;
 }
 
-/* tests whether a point is inside of the triangle using vector math 
+/**
+ * tests whether a point is inside of the triangle using vector math 
  * the point has to be in the same plane as the triangle, otherwise
- * it returns false. */
+ * it returns false.
+ */
 bool PointInTriangle(
-	const ON_3dPoint& a,
-	const ON_3dPoint& b,
-	const ON_3dPoint& c,
-	const ON_3dPoint& P,
-	double tol
-	)
+    const ON_3dPoint& a,
+    const ON_3dPoint& b,
+    const ON_3dPoint& c,
+    const ON_3dPoint& P,
+    double tol
+    )
 {
     /* First we check to make sure that the point is in the plane */
     double normal[3];
@@ -93,26 +96,26 @@ bool PointInTriangle(
      * I can't think of any slick way to do this, so it gets kinda ugly
      */
 
-    if (VNEAR_ZERO(v1,tol)) {
-	if (VNEAR_ZERO(v2,tol)) {
+    if (VNEAR_ZERO(v1, tol)) {
+	if (VNEAR_ZERO(v2, tol)) {
 	    return true;
 	} else if (VNEAR_ZERO(v3, tol)) {
 	    return true;
-	} else if (VAPPROXEQUAL(v2,v3,tol)) {
+	} else if (VAPPROXEQUAL(v2, v3, tol)) {
 	    return true;
 	} else
 	    return false;
-    } else if (VNEAR_ZERO(v2,tol)) {
-	if (VNEAR_ZERO(v3,tol)) {
+    } else if (VNEAR_ZERO(v2, tol)) {
+	if (VNEAR_ZERO(v3, tol)) {
 	    return true;
-	} else if (VAPPROXEQUAL(v1,v3,tol)) {
+	} else if (VAPPROXEQUAL(v1, v3, tol)) {
 	    return true;
 	} else
 	    return false;
-    } else if (VAPPROXEQUAL(v1,v2,tol)) {
-	if (VNEAR_ZERO(v3,tol)) {
+    } else if (VAPPROXEQUAL(v1, v2, tol)) {
+	if (VNEAR_ZERO(v3, tol)) {
 	    return true;
-	} else if (VAPPROXEQUAL(v2,v3,tol)) {
+	} else if (VAPPROXEQUAL(v2, v3, tol)) {
 	    return true;
 	} else
 	    return false;
@@ -121,10 +124,10 @@ bool PointInTriangle(
 }
 
 bool PointInPolyline(
-	const ON_3dPoint& P,
-	const ON_Polyline pline,
-	double tol
-	)
+    const ON_3dPoint& P,
+    const ON_Polyline pline,
+    double tol
+    )
 {
     if (!pline.IsClosed(tol)) { /* no inside to speak of */
 	return false;
@@ -160,13 +163,13 @@ bool PointInPolyline(
     return inside;
 }
 
-/* PointInMesh:
+/**
  * determines whether or not a point is inside the given mesh
  */
 bool PointInMesh(
-	const ON_3dPoint P,
-	const ON_Mesh *mesh
-	)
+    const ON_3dPoint P,
+    const ON_Mesh *mesh
+    )
 {
     ON_3dPoint triangles[2][3];
     int n_triangles = 0;
@@ -192,12 +195,15 @@ bool PointInMesh(
     return 0;
 }
 
-/* finds the intersection point between segments x1,x2 and x3,x4
- * and stores the result in x we assume that the segments are coplanar
+/**
+ * finds the intersection point between segments x1, x2 and x3, x4 and
+ * stores the result in x we assume that the segments are coplanar.
+ *
  * return values:
- *	0: no intersection
- *	1: intersection in a point
- *	2: intersection in a line
+ *
+ * 0: no intersection
+ * 1: intersection in a point
+ * 2: intersection in a line
  *
  *
  *            x1*                  *x3
@@ -222,39 +228,39 @@ bool PointInMesh(
  *
  * the equations for the lines are:
  *
- * P(s) = x1 + s (x2 - x1) s in [0,1]
- * Q(t) = x3 + t (x4 - x3) t in [0,1]
+ * P(s) = x1 + s (x2 - x1) s in [0, 1]
+ * Q(t) = x3 + t (x4 - x3) t in [0, 1]
  *
  * so we need to find s and t s.t. P(s) = Q(t)
  * So some vector calculus tells us that:
  *
- *          (CXB) dot (AXB)
- *    s =   ---------------
- *              |AXB|^2
+ *       (CXB) dot (AXB)
+ * s =   ---------------
+ *           |AXB|^2
  *
- *         (-CXA) dot (BXA)
- *    t =  ----------------
- *              |BXA|^2
+ *      (-CXA) dot (BXA)
+ * t =  ----------------
+ *           |BXA|^2
  *
  *
  * Where we define:
  *
- *	A = (x2-x1)
- *	B = (x4-x3)
- *	C = (x3-x1)
+ * A = (x2-x1)
+ * B = (x4-x3)
+ * C = (x3-x1)
  *
- * This equation blows up if |AXB|^2 is 0 (in which case |BXA|^2 is also 0), which indicates
- * that the lines are parallel
- * which is kind of a pain
+ * This equation blows up if |AXB|^2 is 0 (in which case |BXA|^2 is
+ * also 0), which indicates that the lines are parallel which is kind
+ * of a pain.
  */
 int SegmentSegmentIntersect(
-	const ON_3dPoint& x1,
-	const ON_3dPoint& x2,
-	const ON_3dPoint& x3,
-	const ON_3dPoint& x4,
-	ON_3dPoint x[2],       /* segments could in degenerate cases intersect in another segment*/
-	double tol
-	)
+    const ON_3dPoint& x1,
+    const ON_3dPoint& x2,
+    const ON_3dPoint& x3,
+    const ON_3dPoint& x4,
+    ON_3dPoint x[2],       /* segments could in degenerate cases intersect in another segment*/
+    double tol
+    )
 {
     ON_3dPoint A = (x2 - x1);
     ON_3dPoint B = (x4 - x3);
@@ -263,9 +269,9 @@ int SegmentSegmentIntersect(
     double AXB[3];
     VCROSS(AXB, A, B);
     double BXA[3];
-    VCROSS(BXA, B,A);
+    VCROSS(BXA, B, A);
     double CXB[3];
-    VCROSS(CXB, C,B);
+    VCROSS(CXB, C, B);
     double negC[3];
     VSCALE(negC, C, -1.0);
     double negCXA[3];
@@ -286,7 +292,7 @@ int SegmentSegmentIntersect(
 	     * A dot B is positive if A and B point the same way
 	     * and negitive when they point in opposite directions
 	     * so --> dot --> is positive, but <-- dot --> is negative
-	     * so if (x3-x1) dot (x4-x1) is negative, then x1 lies on the segment (x3,x4)
+	     * so if (x3-x1) dot (x4-x1) is negative, then x1 lies on the segment (x3, x4)
 	     * which means that x1 should be one of the points we return so we just go
 	     * through and find which points are contained in the other segment
 	     * and those are our return values
@@ -300,19 +306,19 @@ int SegmentSegmentIntersect(
 		x[points] = x2;
 		points++;
 	    }
-	    if (VDOT((x3 - x1),(x4 - x1)) < 0) {
+	    if (VDOT((x3 - x1), (x4 - x1)) < 0) {
 		x[points] = x1;
 		points++;
 	    }
-	    if (VDOT((x3 - x2),(x4 - x2)) < 0) {
+	    if (VDOT((x3 - x2), (x4 - x2)) < 0) {
 		x[points] = x2;
 		points++;
 	    }
-	    if (VDOT((x1 - x3),(x2 - x3)) < 0) {
+	    if (VDOT((x1 - x3), (x2 - x3)) < 0) {
 		x[points] = x3;
 		points++;
 	    }
-	    if (VDOT((x1 - x4),(x2 - x4)) < 0) {
+	    if (VDOT((x1 - x4), (x2 - x4)) < 0) {
 		x[points] = x4;
 		points++;
 	    }
@@ -332,24 +338,25 @@ int SegmentSegmentIntersect(
 	    x[0] = Ps;
 	    return 1;
 	} else {
-	    /* this happens when the lines through x1,x2 and x3,x4 intersect but not the segments*/
+	    /* this happens when the lines through x1, x2 and x3, x4 intersect but not the segments*/
 	    return 0;
 	}
     }
     return 0;
 }
 
-/* SegmentPolylineIntersect 
- * uses iteration of SegmentSegmentIntersect
+/**
+ * uses iteration of SegmentSegmentIntersect.
+ *
  * returns the number of intersections it finds
  */
 int SegmentPolylineIntersect(
-	const ON_3dPoint& P,
-	const ON_3dPoint& Q,
-	const ON_Polyline& pline,
-	ON_SimpleArray<ON_3dPoint> out,
-	double tol
-	)
+    const ON_3dPoint& P,
+    const ON_3dPoint& Q,
+    const ON_Polyline& pline,
+    ON_SimpleArray<ON_3dPoint> out,
+    double tol
+    )
 {
     int rv;
     int my_rv; /* what this function will return at the end */
@@ -366,28 +373,30 @@ int SegmentPolylineIntersect(
     return my_rv;
 }
 
-/* intersects a triangle ABC with a line PQ
+/**
+ * intersects a triangle ABC with a line PQ
+ *
  * return values:
  * -1: error
- *	0: no intersection
- *	1: intersects in a point
- *	2: intersects in a line
+ * 0: no intersection
+ * 1: intersects in a point
+ * 2: intersects in a line
  */
 int SegmentTriangleIntersect(
-	const ON_3dPoint& a,
-	const ON_3dPoint& b,
-	const ON_3dPoint& c,
-	const ON_3dPoint& p,
-	const ON_3dPoint& q,
-	ON_3dPoint out[2],
-	double tol
-	)
+    const ON_3dPoint& a,
+    const ON_3dPoint& b,
+    const ON_3dPoint& c,
+    const ON_3dPoint& p,
+    const ON_3dPoint& q,
+    ON_3dPoint out[2],
+    double tol
+    )
 {
     ON_3dPoint triangle[3] = {a, b, c}; /* it'll be nice to have this as an array too*/
 
     /* First we need to get our plane into point normal form (N \dot (P - P0) = 0)
      * Where N is a normal vector, and P0 is a point in the plane
-     * P0 can be any of {a,b,c} so that's easy
+     * P0 can be any of {a, b, c} so that's easy
      * Finding N
      */
 
@@ -417,14 +426,17 @@ int SegmentTriangleIntersect(
 	if (PointInTriangle(a, b, c, P, tol)) {
 	    out[0] = P;
 	    return 1;
-	} else 
-	    return 0;
-    } else {/* If we're here it means that the line and plane are parallel*/
+	}
+	return 0;
+
+    } else {
+	/* If we're here it means that the line and plane are parallel*/
+
 	if (NEAR_ZERO(VDOT(normal, p-P0), tol)) {/* yahtzee!!*/
 	    /* The line segment is in the same plane as the triangle*/
 	    /* So first we check if the points are inside or outside the triangle*/
 	    bool p_in = PointInTriangle(a, b, c, p, tol);
-	    bool q_in = PointInTriangle(a, b , c , q ,tol);
+	    bool q_in = PointInTriangle(a, b , c , q , tol);
 	    ON_3dPoint x[2]; /* a place to put our results*/
 
 	    if (q_in && p_in) {
@@ -450,7 +462,9 @@ int SegmentTriangleIntersect(
 			return 2;
 		    }
 		}
-	    } else { /* neither q nor p is in the triangle*/
+	    } else {
+		/* neither q nor p is in the triangle*/
+
 		int i;
 		int points_found = 0;
 		int rv;
@@ -476,32 +490,38 @@ int SegmentTriangleIntersect(
 }
 
 
-/* intersects triangle abc with triangle def
- * returns the number of intersections found [0-6]
- * more accurately it returns the number of points needed
- * to describe the intersection so 6 points indicates intersection
- * in a hexagon.
- * Although it's never explicitly tested the points returned will be within
- * the tolerance of planar
- * TODO: make sure that the edges are outputted in an order representative of the polygonal intersection
+/**
+ * intersects triangle abc with triangle def.
  *
- * When the triangles intersect in 2 points the order of the points is meaningful as they indicate the ternality of the faces
- * the condition we want to meet is that the edge (result[1] - result[0]) is parallal to (Norm2 X Norm1)
+ * returns the number of intersections found [0-6].  more accurately
+ * it returns the number of points needed to describe the intersection
+ * so 6 points indicates intersection in a hexagon.
+ *
+ * Although it's never explicitly tested the points returned will be
+ * within the tolerance of planar.
+ *
+ * TODO: make sure that the edges are outputted in an order
+ * representative of the polygonal intersection
+ *
+ * When the triangles intersect in 2 points the order of the points is
+ * meaningful as they indicate the ternality of the faces the
+ * condition we want to meet is that the edge (result[1] - result[0])
+ * is parallal to (Norm2 X Norm1)
  */
 
 enum EdgeIndex {ab = 0, bc = 1, ca = 2, de = 3, ef = 4, fd = 5};
 
 int TriangleTriangleIntersect(
-	const ON_3dPoint a,
-	const ON_3dPoint b,
-	const ON_3dPoint c,
-	const ON_3dPoint d,
-	const ON_3dPoint e,
-	const ON_3dPoint f,
-	ON_3dPoint out[6], /* indicates the points of intersection */
-	char edge[6], /* indicates which edge the intersection points lie on ab is 0 bc is 1 etc. */
-	double tol
-	)
+    const ON_3dPoint a,
+    const ON_3dPoint b,
+    const ON_3dPoint c,
+    const ON_3dPoint d,
+    const ON_3dPoint e,
+    const ON_3dPoint f,
+    ON_3dPoint out[6], /* indicates the points of intersection */
+    char edge[6], /* indicates which edge the intersection points lie on ab is 0 bc is 1 etc. */
+    double tol
+    )
 {
     ON_3dPoint abc[3] = {a, b, c};
     ON_3dPoint def[3] = {d, e, f};
@@ -550,8 +570,11 @@ int TriangleTriangleIntersect(
 	}
     }
 
-    /* now we check if the points need to be reordered to meet our condition, and reorder them if necessary */
+    /* now we check if the points need to be reordered to meet our
+     * condition, and reorder them if necessary
+     */
     if (number_found == 2) {
+
 	double T1norm[3];
 	VCROSS(T1norm, b - a, c - a);
 	VUNITIZE(T1norm);
@@ -560,11 +583,13 @@ int TriangleTriangleIntersect(
 	VUNITIZE(T2norm);
 	double T2normXT1norm[3];
 	VCROSS(T2normXT1norm, T1norm, T2norm);
+
 	if (VDOT(T2normXT1norm, (out[1] - out[2])) < 0) {
 	    /* the points are in the wrong order swap them */
 	    ON_3dPoint tmpP = out[1];
 	    out[1] = out[0];
 	    out[0] = tmpP;
+
 	    /* and swap the edges they came from */
 	    char tmpC = edge[1];
 	    edge[1] = edge[0];
@@ -574,19 +599,22 @@ int TriangleTriangleIntersect(
     return number_found;
 }
 
-/* int PolylinePolylineInternal(ON_Polyline, ON_Polyline, double):
+/**
  * checks whether two Polylines are inside one another.
- * XXX It's the caller's responsibility to make sure the polylines are coplanar
+ *
+ * XXX It's the caller's responsibility to make sure the polylines are
+ * coplanar.
+ *
  * Returns:
  *  1 if the first is inside the second
- *  -1 if the second is inside the first
+ * -1 if the second is inside the first
  *  0 if the two intersect at some point or one of them isn't closed
  */
 int PolylinePolylineInternal(
-	ON_Polyline P,
-	ON_Polyline Q,
-	double tol
-	)
+    ON_Polyline P,
+    ON_Polyline Q,
+    double tol
+    )
 {
     int i;
     for (i = 0; i < P.Count(); i++) {
@@ -598,7 +626,7 @@ int PolylinePolylineInternal(
 	return 1;
     }
     for (i = 0; i < Q.Count(); i++) {
-	if (!PointInPolyline(Q[i], P, tol))  {
+	if (!PointInPolyline(Q[i], P, tol)) {
 	    break;
 	}
     }
@@ -609,16 +637,18 @@ int PolylinePolylineInternal(
     }
 }
 
-/* int Triangulate(ON_ClassArray<ON_Polyline>, ON_SimpleArray<ON_3dPoint[3]>)
- * takes an array of PolyLines and gives the resulting polygon triangulated
- * there are a number of contraints on the input which are the callers responsibility
- * the points must all lie within the same plane, none of the Polylines can intersect all polyline must be closed
- * one another all paths must be within the first path and no path can be inside of 2 paths
+/**
+ * takes an array of PolyLines and gives the resulting polygon
+ * triangulated.  there are a number of contraints on the input which
+ * are the callers responsibility.  the points must all lie within the
+ * same plane, none of the Polylines can intersect all polyline must
+ * be closed.  one another all paths must be within the first path and
+ * no path can be inside of 2 paths.
  */
 int Triangulate(
-	ON_ClassArray<ON_Polyline>& paths,
-	ON_SimpleArray<ON_3dPoint[3]>& triangles
-	)
+    ON_ClassArray<ON_Polyline>& paths,
+    ON_SimpleArray<ON_3dPoint[3]>& triangles
+    )
 {
     /* first we need to link the paths together */
     int i, j, k, l;
@@ -650,8 +680,8 @@ int Triangulate(
 
     /* Now we have one continous path and we need to triangulate it
      * I'm pretty sure it's true that given a planer path there exist
-     * 3 consecutive points a,b,c s.t. ac doesn't intersect any line in
-     * the polyline, perhaps I'll include a proof in a bit, but for
+     * 3 consecutive points a, b, c s.t. ac doesn't intersect any line
+     * in the polyline, perhaps I'll include a proof in a bit, but for
      * right now it seems pretty good.
      */
     while (paths[0].Count() > 4) { /* remember start pt is stored twice, so 4 indicates a triangle */
@@ -660,8 +690,8 @@ int Triangulate(
 	    ON_3dPoint mid = (paths[0][i] + paths[0][i + 2])/2;
 	    if (SegmentPolylineIntersect(paths[0][i], paths[0][(i + 2) % paths[0].Count()], paths[0], NULL, 1E-9) == 4 && PointInPolyline(mid, paths[0], 1E-9)) {
 		/* ON_3dPoint tri[3] = {paths[0][i], paths[i + 1], paths[(i + 2) % paths[0].Count()]};
-		triangles.Append(tri);
-		paths[0].Remove(i + 1); */
+		   triangles.Append(tri);
+		   paths[0].Remove(i + 1); */
 	    }
 	}
     }
@@ -669,11 +699,13 @@ int Triangulate(
     return 0;
 }
 
-/* class TriEdgeIntersections
- * This class has the responsibility of keeping track of the points that intersect the edges and
- * eventually chopping the edges up into little lines for the intersected mesh this is actually
- * a somewhat tricky proposition because the intersection functions never actually return these
- * edges, and there are a number of little things to keep track of:
+/**
+ * This class has the responsibility of keeping track of the points
+ * that intersect the edges and eventually chopping the edges up into
+ * little lines for the intersected mesh this is actually a somewhat
+ * tricky proposition because the intersection functions never
+ * actually return these edges, and there are a number of little
+ * things to keep track of:
  *
  *                                           * A
  *                                          / \
@@ -698,7 +730,10 @@ int Triangulate(
  * abdir = {-1, 0, 1, -1}
  * bcdir = {-1, -1}
  * cadir = {-1, 0, 1, -1}
- * The dir arrays indicate which direction the line is going (the order of the points), 
+ *
+ * The dir arrays indicate which direction the line is going (the
+ * order of the points):
+ *
  * -1 indicates an original point (about which we have no information)
  * 0 indicates an outgoing line
  * 1 indicates an incoming line 
@@ -708,19 +743,20 @@ class TriIntersections {
     ON_SimpleArray<char> dir[3];
     ON_SimpleArray<ON_Line> intersections;
     double tol;
-    public:
+public:
     TriIntersections(ON_3dPoint, ON_3dPoint, ON_3dPoint, double);
     int InsertPoint(ON_3dPoint, uint8_t, EdgeIndex);
     int AddLine(ON_Line);
     int Faces(ON_ClassArray<ON_3dPoint[3]>);
 };
 
+
 TriIntersections::TriIntersections(
-	ON_3dPoint A, 
-	ON_3dPoint B, 
-	ON_3dPoint C,
-	double tolerance
-	)
+    ON_3dPoint A, 
+    ON_3dPoint B, 
+    ON_3dPoint C,
+    double tolerance
+    )
 {
     tol = tolerance;
     ON_3dPoint points[3] = {A, B, C};
@@ -733,13 +769,14 @@ TriIntersections::TriIntersections(
 }
 
 int TriIntersections::InsertPoint(
-	ON_3dPoint P,
-	uint8_t direction,
-	EdgeIndex ei
-	)
+    ON_3dPoint P,
+    uint8_t direction,
+    EdgeIndex ei
+    )
 {
-    /* first check to see if the point is on the other side of the starting/ending point
-     * and return an error if it is */
+    /* first check to see if the point is on the other side of the
+     * starting/ending point and return an error if it is
+     */
     if ((VDOT((P - edges[ei][0]), (edges[ei][1] - edges[ei][0])) < 0) || (VDOT((P - *edges[ei].Last()), (edges[ei][0] - *edges[ei].Last())) < 0)) {
 	return -1;
     }
@@ -756,21 +793,24 @@ int TriIntersections::InsertPoint(
 }
 
 int TriIntersections::AddLine(
-	ON_Line line
-	)
+    ON_Line line
+    )
 {
     intersections.Append(line);
     return intersections.Count();
 }
 
 int TriIntersections::Faces(
-	ON_ClassArray<ON_3dPoint[3]> faces
-	)
+    ON_ClassArray<ON_3dPoint[3]> faces
+    )
 {
     if (intersections.Count() == 0) {
 	return 0;
     }
-    /* first we get an array of all the segments we can use to make our faces */
+
+    /* first we get an array of all the segments we can use to make
+     * our faces.
+     */
     ON_SimpleArray<ON_Line> segments; /*the segments we have to make faces */
     ON_SimpleArray<bool> flippable; /* whether or not the segment has direction */
     ON_SimpleArray<bool> segexternal; /* whether or not the segment is from the edge */
@@ -782,6 +822,7 @@ int TriIntersections::Faces(
 	segexternal.Append(false);
 	segexternal.Append(false);
     }
+
     for (int i = 0; i < 3; i++) {
 	if (edges[i].Count() == 2) { /* the edge was never intersected */ 
 	    segments.Append(ON_Line(edges[i][0], edges[i][0]));
@@ -804,14 +845,18 @@ int TriIntersections::Faces(
 	    }
 	}
     }
-    /* Now that the segments are all set up it's time to make them into faces */
+
+    /* Now that the segments are all set up it's time to make them
+     * into faces.
+     */
     ON_ClassArray<ON_Polyline> outlines;
     ON_SimpleArray<bool> line_external; /* stores whether each polyline is internal */
     ON_Polyline outline;
-    while(segments.Count() != 0) {
+    while (segments.Count() != 0) {
 	outline.Append(segments[0].from);
 	outline.Append(segments[0].to);
 	segments.Remove(0);
+
 	int i = 0;
 	bool ext = false; /* keeps track of the ternality of the path we're assembling */
 	while (!outline.IsClosed(tol)) {
@@ -829,6 +874,7 @@ int TriIntersections::Faces(
 		i++;
 		continue;
 	    }
+
 	    /* only executed when we append edge i */
 	    segments.Remove(i);
 	    flippable.Remove(i);
@@ -844,30 +890,30 @@ int TriIntersections::Faces(
     return 0;
 }
 
-/* Class: PointIndex
- * the point index is responsible for keeping track of the points we put into a mesh
- * if we give it a point it doesn't have it puts it in the array and returns the index
- * in the mesh where it put it
- * if it does have the point then it just returns the index of the point
+/**
+ * the point index is responsible for keeping track of the points we
+ * put into a mesh.  if we give it a point it doesn't have it puts it
+ * in the array and returns the index in the mesh where it put it.  if
+ * it does have the point then it just returns the index of the point.
  */
 class PointIndex{
     ON_Mesh *mesh;
     double tol;
-    public:
+public:
     PointIndex(ON_Mesh*);
     int InsertPoint(ON_3dPoint);
 };
 
 PointIndex::PointIndex(
-	ON_Mesh *m
-	)
+    ON_Mesh *m
+    )
 {
     mesh = m;
 }
 
 int PointIndex::InsertPoint(
-	ON_3dPoint P
-	)
+    ON_3dPoint P
+    )
 {
     /* This will eventually be implemented in a much more efficient way */
     for (int i = 0; i < mesh->m_V.Count(); i++) {
@@ -879,34 +925,38 @@ int PointIndex::InsertPoint(
     return mesh->m_V.Count();
 }
 
-/* GenerateFaceConnectivityList
- * Outputs an array of the same size as this.m_V.Count() in which the ith element of the array
- * is an array with all of the faces that use the ith vertex */
+/**
+ * Outputs an array of the same size as this.m_V.Count() in which the
+ * ith element of the array is an array with all of the faces that use
+ * the ith vertex
+ */
 int GenerateFaceConnectivityList(
-	ON_Mesh *mesh,
-	ON_ClassArray<ON_SimpleArray<int> > faces
-	)
+    ON_Mesh *mesh,
+    ON_ClassArray<ON_SimpleArray<int> > faces
+    )
 {
     faces.Empty();
     int n_vertices;
-    for(int i = 0; i < mesh->m_F.Count(); i++) {
+    for (int i = 0; i < mesh->m_F.Count(); i++) {
 	ON_MeshFace face = mesh->m_F[i];
 	if (face.IsTriangle()) {
 	    n_vertices = 3;
         } else {
 	    n_vertices = 4;
         }
-	for(int j = 0; j < n_vertices; j++) {
+	for (int j = 0; j < n_vertices; j++) {
 	    faces[face.vi[j]].Append(i);
 	}
     }
     return 0;
 }
 
-/* MeshTriangulate, converts all quads in a mesh to triangles */
+/**
+ * converts all quads in a mesh to triangles
+ */
 int MeshTriangulate(
-	ON_Mesh *mesh
-	)
+    ON_Mesh *mesh
+    )
 {
     for (int i = 0; i < mesh->m_F.Count(); i++) {
 	ON_MeshFace face = mesh->m_F[i];
@@ -923,17 +973,20 @@ int MeshTriangulate(
     return 0;
 }
 
-/* Intersect two meshes and returns their intersection in Polylines (ON_3dPoint arrays)
- * Returns how many polylines where found 0 indicates no intersection or -1 on error */
+/**
+ * Intersect two meshes and returns their intersection in Polylines
+ * (ON_3dPoint arrays).  Returns how many polylines where found 0
+ * indicates no intersection or -1 on error.
+ */
 int MeshMeshIntersect(
-	ON_Mesh *mesh1,
-	ON_Mesh *mesh2,
-	ON_Mesh *mesh1intern,
-	ON_Mesh *mesh1extern,
-	ON_Mesh *mesh2intern,
-	ON_Mesh *mesh2extern,
-	double tol
-	)
+    ON_Mesh *mesh1,
+    ON_Mesh *mesh2,
+    ON_Mesh *mesh1intern,
+    ON_Mesh *mesh1extern,
+    ON_Mesh *mesh2intern,
+    ON_Mesh *mesh2extern,
+    double tol
+    )
 {
     /* First both meshes need to be triangulated */
     MeshTriangulate(mesh1);
@@ -973,6 +1026,7 @@ int main()
     ON_3fPoint f2 = ON_3fPoint(0.5, -2.0, 0.5);
     ON_3fPoint g2 = ON_3fPoint(-0.5, -2.0, 0.5);
     ON_3fPoint h2 = ON_3fPoint(-0.5, -2.0, -0.5);
+
     /* create the meshes */
     ON_Mesh mesh1;
     mesh1.m_V.Empty();
@@ -980,6 +1034,7 @@ int main()
     ON_Mesh mesh2;
     mesh2.m_V.Empty();
     mesh2.m_F.Empty();
+
     /* put the points in the meshes */
     mesh1.m_V.Append(a1);
     mesh1.m_V.Append(b1);
@@ -997,13 +1052,15 @@ int main()
     mesh2.m_V.Append(f2);
     mesh2.m_V.Append(g2);
     mesh2.m_V.Append(h2);
-    /* create the faces  */
+
+    /* create the faces */
     ON_MeshFace abcd = {0, 1, 2, 3};
     ON_MeshFace efba = {4, 5, 1, 0};
     ON_MeshFace ehgf = {4, 7, 6, 5};
     ON_MeshFace dcgh = {3, 2, 6, 7};
     ON_MeshFace adhe = {0, 3, 7, 4};
     ON_MeshFace bfgc = {1, 5, 6, 2};
+
     /* put the faces in the meshes */
     mesh1.m_F.Append(abcd);
     mesh1.m_F.Append(efba);
@@ -1017,11 +1074,14 @@ int main()
     mesh2.m_F.Append(dcgh);
     mesh2.m_F.Append(adhe);
     mesh2.m_F.Append(bfgc);
+
     /* and now for the action */
     ON_ClassArray<ON_Polyline> out;
+
     /* int rv = MeshMeshIntersect(&mesh1, &mesh2, &out, 1.0e-10); */
     /* assert(rv == 2); */
 }
+
 /** @} */
 /*
  * Local Variables:
