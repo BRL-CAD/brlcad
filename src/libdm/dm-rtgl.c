@@ -1524,8 +1524,8 @@ void drawPoints(float *view, int pointSize) {
     struct bu_hash_entry *entry;
     struct bu_hash_record record;
 
-    /* get first table record */
-    if (bu_hash_tbl_first(colorTable, &record) == NULL)
+    /* get first table entry */
+    if ((entry = bu_hash_tbl_first(colorTable, &record)) == NULL)
 	return;
 
     /* drawing shaded points */
@@ -1539,7 +1539,7 @@ void drawPoints(float *view, int pointSize) {
 #endif
 
     /* for all table entries */
-    while ((entry = bu_hash_tbl_next(&record)) != NULL) {
+    do {
 	
 	/* get color bin from entry */
 	bin = (struct colorBin *)bu_get_hash_value(entry);
@@ -1576,12 +1576,13 @@ void drawPoints(float *view, int pointSize) {
 	    }
 	    glEnd();
 #else
-	    glVertexPointer(3, GL_DOUBLE, 0, &(currItem->points));
-	    glNormalPointer(GL_DOUBLE, 0, &(currItem->norms));
+	    glVertexPointer(3, GL_FLOAT, 0, &(currItem->points));
+	    glNormalPointer(GL_FLOAT, 0, &(currItem->norms));
 	    glDrawArrays(GL_POINTS, 0, numPoints);
 #endif
 	}
-    }
+    } while ((entry = bu_hash_tbl_next(&record)) != NULL);
+
     glDisable(GL_LIGHTING);
     glPointSize(1);
 }
