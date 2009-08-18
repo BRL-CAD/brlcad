@@ -69,7 +69,7 @@
 #	variable output 0
 #	variable outputString human.g
 	variable percentile 50
-	variable Stancenumber 0
+	variable Stance 0
 	variable StanceString Standing
 
 #Variables for manual mode
@@ -207,79 +207,79 @@
 
     # Create Height entry field
     itk_component add paramHeightL {
-	::ttk::label $itk_component(paramNonArrowF).HeightL \
+	::ttk::label $itk_component(paramNonArrowF).heightL \
 	    -text "Height (in):" \
 	    -anchor e
     } {}
     itk_component add paramHeightE {
-	::ttk::entry $itk_component(paramNonArrowF).HeightE \
+	::ttk::entry $itk_component(paramNonArrowF).heightE \
 	    -textvariable [::itcl::scope Height]
     } {}
 
     # Create Location X entry field
     itk_component add paramLocationxL {
-	::ttk::label $itk_component(paramNonArrowF).LocationxL \
+	::ttk::label $itk_component(paramNonArrowF).locationxL \
 	    -text "Centerpoint x (in):" \
 	    -anchor e
     } {}
-    itk_component add LocationxE {
-	::ttk::entry $itk_component(paramNonArrowF).LocationxE \
+    itk_component add paramLocationxE {
+	::ttk::entry $itk_component(paramNonArrowF).locationxE \
 	    -textvariable [::itcl::scope Locationx]
     } {}
 
     # Create Location Y entry field
-    itk_component add LocationyL {
-	::ttk::label $itk_component(paramNonArrowF).LocationyL \
+    itk_component add paramLocationyL {
+	::ttk::label $itk_component(paramNonArrowF).locationyL \
 	    -text "Centerpoint y (in):" \
 	    -anchor e
     } {}
-    itk_component add LocationyE {
-	::ttk::entry $itk_component(paramNonArrowF).LocationyE \
+    itk_component add paramLocationyE {
+	::ttk::entry $itk_component(paramNonArrowF).locationyE \
 	    -textvariable [::itcl::scope Locationy]
     } {}
 
     # Create Location Z entry field
     itk_component add paramLocationzL {
-	::ttk::label $itk_component(paramNonArrowF).LocationzL \
+	::ttk::label $itk_component(paramNonArrowF).locationzL \
 	    -text "Centerpoint z (in):" \
 	    -anchor e
     } {}
-    itk_component add LocationzE {
-	::ttk::entry $itk_component(paramNonArrowF).LocationzE \
+    itk_component add paramLocationzE {
+	::ttk::entry $itk_component(paramNonArrowF).locationzE \
 	    -textvariable [::itcl::scope Locationz]
     } {}
 
     # Create NumberSoldiers entry field
     itk_component add paramNumberSoldiersL {
-	::ttk::label $itk_component(paramNonArrowF).NumberSoldiersL \
+	::ttk::label $itk_component(paramNonArrowF).numberSoldiersL \
 	    -text "Number of soldiers (to be squard):" \
 	    -anchor e
     } {}
     itk_component add paramNumberSoldiersE {
-	::ttk::entry $itk_component(paramNonArrowF).NumberSoldiersE \
+	::ttk::entry $itk_component(paramNonArrowF).numberSoldiersE \
 	    -textvariable [::itcl::scope NumberSoldiers]
     } {}
 
     # Create percentile entry field
     itk_component add paramPercentileL {
-	::ttk::label $itk_component(paramNonArrowF).PercentileL \
+	::ttk::label $itk_component(paramNonArrowF).percentileL \
 	    -text "Enter percentile:" \
 	    -anchor e
     } {}
     itk_component add paramPercentileE {
-	::ttk::entry $itk_component(paramNonArrowF).PercentileE \
-	    -textvariable [::itcl::scope Percentile]
+	::ttk::entry $itk_component(paramNonArrowF).percentileE \
+	    -textvariable [::itcl::scope percentile]
     } {}
 	
     # Create stance entry field
     itk_component add paramStanceL {
-        ::ttk::label $itk_component(paramNonArrowF).StanceL \
+        ::ttk::label $itk_component(paramNonArrowF).stanceL \
             -text "Stance:" \
             -anchor e
     } {}
 
     itk_component add paramStanceCB {
-        ::ttk::combobox $itk_component(paramNonArrowF).StanceCB \
+        ::ttk::combobox $itk_component(paramNonArrowF).stanceCB \
             -textvariable [::itcl::scope StanceString] \
             -state readonly \
             -values {Standing Sitting Driving ArmsOut FancySit Custom}
@@ -294,23 +294,23 @@
 
     # Create "AutoMode" checkbutton
     itk_component add paramAutoModeCB {
-	::ttk::checkbutton $itk_component(paramNonArrowF).AutoModeCB \
+	::ttk::checkbutton $itk_component(paramNonArrowF).autoModeCB \
 	    -text "Automode" \
-	    -variable [::itcl::scope createWheel]
+	    -variable [::itcl::scope AutoMode]
     } {}
 
     # Create "ManualMode" checkbutton
     itk_component add paramManualModeCB {
-        ::ttk::checkbutton $itk_component(paramNonArrowF).ManualModeCB \
+        ::ttk::checkbutton $itk_component(paramNonArrowF).manualModeCB \
             -text "ManualMode" \
-            -variable [::itcl::scope createWheel]
+            -variable [::itcl::scope ManualMode]
     } {}
 
     # Create "BoundingBoxes" checkbutton
     itk_component add paramBoundingBoxCB {
-        ::ttk::checkbutton $itk_component(paramNonArrowF).BoundingBoxCB \
+        ::ttk::checkbutton $itk_component(paramNonArrowF).boundingBoxCB \
             -text "BoundingBoxes" \
-            -variable [::itcl::scope createWheel]
+            -variable [::itcl::scope BoundingBoxes]
     } {}
 
     set row 0
@@ -335,7 +335,7 @@
     grid $itk_component(paramPercentileL) $itk_component(paramPercentileE) \
 	-row $row -stick nsew
     incr row
-    grid $itk_component(paramStanceL) $itk_component(paramStanceE) \
+    grid $itk_component(paramStanceL) $itk_component(paramStanceCB) \
 	-row $row -stick nsew
     incr row
     grid $itk_component(emptyL) -columnspan 2 \
@@ -455,24 +455,24 @@
     set wizardState \
 	[list \
 	     AutoMode $AutoMode \
-	     BoundingBox $BoundingBox \
+	     BoundingBoxes $BoundingBoxes \
 	     Height $Height \
 	     Locationx $Locationx \
 	     Locationy $Locationy \
 	     Locationz $Locationz \
 	     ManualMode $ManualMode \
 	     NumberSoldiers $NumberSoldiers \
-	     Percentile $Percentile \
+	     percentile $percentile \
 	     Stance $Stance]
 
     $archersGed human \
 	-A $AutoMode \
-	-b $BoundingBox \
+	-b $BoundingBoxes \
 	-H $Height \
-	-l $Locationx $Locationy $Locationz \
+#	-l $Locationx $Locationy $Locationz \
 	-m $ManualMode \
 	-N $NumberSoldiers \
-	-p $Percentile \
+	-p $percentile \
 	-s $Stance \
 	$wizardTop
 
