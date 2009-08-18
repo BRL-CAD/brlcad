@@ -91,6 +91,8 @@ struct jobList {
     struct job jobs[JOB_ARRAY_SIZE];
 };
 
+#define START_TABLE_SIZE 64
+#define KEY_LENGTH 3
 #define PT_ARRAY_SIZE 999
 
 struct ptInfoList {
@@ -98,7 +100,11 @@ struct ptInfoList {
     int used;
     float points[PT_ARRAY_SIZE];
     float norms[PT_ARRAY_SIZE];
+};
+
+struct colorBin {
     float color[3];
+    struct ptInfoList *list;
 };
 
 struct objTree {

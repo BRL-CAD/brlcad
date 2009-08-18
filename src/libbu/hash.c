@@ -124,7 +124,7 @@ bu_create_hash_tbl(unsigned long tbl_size)
  * the hash table entry corresponding to the provided key, or NULL if not found
  */
 struct bu_hash_entry *
-bu_find_hash_entry(struct bu_hash_tbl *hsh_tbl, unsigned char *key, int key_len, struct bu_hash_entry *prev, unsigned long *idx)
+bu_find_hash_entry(struct bu_hash_tbl *hsh_tbl, unsigned char *key, int key_len, struct bu_hash_entry **prev, unsigned long *idx)
 {
     struct bu_hash_entry *hsh_entry=NULL;
     int found=0;
@@ -136,14 +136,14 @@ bu_find_hash_entry(struct bu_hash_tbl *hsh_tbl, unsigned char *key, int key_len,
     if (*idx >= hsh_tbl->num_lists) {
 	fprintf(stderr, "hash function returned too large value (%ld), only have %ld lists\n",
 		*idx, hsh_tbl->num_lists);
-	prev = NULL;
+	*prev = NULL;
 	return ((struct bu_hash_entry *)NULL);
     }
 
     /* look for the provided key in the list of entries in this bin */
-    prev = NULL;
+    *prev = NULL;
     if (hsh_tbl->lists[*idx]) {
-	prev = NULL;
+	*prev = NULL;
 	hsh_entry = hsh_tbl->lists[*idx];
 	while (hsh_entry) {
 	    unsigned char *c1, *c2;
@@ -151,7 +151,7 @@ bu_find_hash_entry(struct bu_hash_tbl *hsh_tbl, unsigned char *key, int key_len,
 
 	    /* compare key lengths first for performance */
 	    if (hsh_entry->key_len != key_len) {
-		prev = hsh_entry;
+		*prev = hsh_entry;
 		hsh_entry = hsh_entry->next;
 		continue;
 	    }
@@ -173,7 +173,7 @@ bu_find_hash_entry(struct bu_hash_tbl *hsh_tbl, unsigned char *key, int key_len,
 	    if (found) break;
 
 	    /* step to next entry in this bin */
-	    prev = hsh_entry;
+	    *prev = hsh_entry;
 	    hsh_entry = hsh_entry->next;
 	}
     }
@@ -262,7 +262,7 @@ bu_hash_add_entry(struct bu_hash_tbl *hsh_tbl, unsigned char *key, int key_len, 
      * get the hash bin index for this key
      * find the previous entry to link the new one to
      */
-    hsh_entry = bu_find_hash_entry(hsh_tbl, key, key_len, prev, &idx);
+    hsh_entry = bu_find_hash_entry(hsh_tbl, key, key_len, &prev, &idx);
 
     if (hsh_entry) {
 	/* this key is already in the table, return the entry, with flag set to 0 */

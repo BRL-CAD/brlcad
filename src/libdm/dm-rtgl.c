@@ -189,23 +189,27 @@ struct rt_i *rtip;
 char *oldTrees[RT_MAXARGS];
 int oldNumTrees = 0;
 
-/* list of hit points */
-struct ptInfoList ptInfo;
+/* color table */
+struct bu_hash_tbl *colorTable;
 struct ptInfoList *currItem;
 
-/* remove all points from points list */
-void freeInfoList(void) {
+/* list of ray trace jobs */
+struct jobList jobs;
+struct jobList *currJob;
+
+/* free all jobs from job list */
+void freeJobList(void) {
 
     /* list cannot be empty */
-    if (ptInfo.l.forw != NULL && (struct ptInfoList *)ptInfo.l.forw != &ptInfo) {
+    if (jobs.l.forw != NULL && (struct jobList *)jobs.l.forw != &jobs) {
 
-	struct ptInfoList *curr;
-	while (BU_LIST_WHILE(curr, ptInfoList, &(ptInfo.l))) {
-	    BU_LIST_DEQUEUE(&(curr->l));
-	    bu_free(curr, "free ptInfoList curr");
+	while (BU_LIST_WHILE(currJob, jobList, &(jobs.l))) {
+
+	    BU_LIST_DEQUEUE(&(currJob->l));
+	    bu_free(currJob, "free jobs currJob");
 	}
 
-	ptInfo.l.forw = BU_LIST_NULL;
+	jobs.l.forw = BU_LIST_NULL;
     }
 }
 
@@ -780,8 +784,14 @@ rtgl_close(struct dm *dmp)
     bu_free(dmp->dm_vars.pub_vars, "rtgl_close: dm_xvars");
     bu_free(dmp, "rtgl_close: dmp");
 
-    /* free points list */
-    freeInfoList();
+    /* free job list */
+    freeJobList();
+
+    /* free draw list */
+    if (colorTable != NULL) {
+	bu_hash_tbl_free(colorTable);
+	colorTable = NULL;
+    }
 
     return TCL_OK;
 }
@@ -1095,13 +1105,29 @@ void aeUniformVect(fastf_t *aeVect, fastf_t *aet, fastf_t *center, double radius
     aeVect[Z] += center[Z];
 }
 
+/* convert color vector to unsigned char array */
+unsigned char* getColorKey(float *color) {
+    int i, value;
+    unsigned char* key = bu_malloc(sizeof(char) * KEY_LENGTH, "dm-rtgl.c: getColorKey");
+
+    for (i = 0; i < KEY_LENGTH; i++) {
+	value = color[i] * 255;
+	key[i] = value;
+    }
+
+    return key;
+}
+
 /* calculate and add hit-point info to info list */
 void addInfo(struct application *app, struct hit *hit, struct soltab *soltab, char flip, float *partColor) {
     point_t point;
     vect_t normal;
-    struct ptInfoList *start;
-    int newColor = 1;
-    double dot;
+    int newColor;
+    unsigned long index;
+    unsigned char *colorKey;
+    struct bu_hash_entry *prev, *entry;
+    struct colorBin *bin;
+    struct bu_list *head;
 
     /* calculate intersection point */
     VJOIN1(point, app->a_ray.r_pt, hit->hit_dist, app->a_ray.r_dir);
@@ -1118,28 +1144,67 @@ void addInfo(struct application *app, struct hit *hit, struct soltab *soltab, ch
     /* calculate normal vector */
     RT_HIT_NORMAL(normal, hit, soltab, &(app->a_ray), flip);
 
-    /* get vector in the right color */
-    for (BU_LIST_FOR(currItem, ptInfoList, &(ptInfo.l))) {
-	if (VEQUAL(currItem->color, partColor) && currItem->used < PT_ARRAY_SIZE) {
+    /* find the table bin for this color */
+    colorKey = getColorKey(partColor);
+    entry = bu_find_hash_entry(colorTable, colorKey, KEY_LENGTH, &prev, &index);
+
+    /* look for the correct color bin in the found entries */
+    newColor = 1;
+
+    while (entry != NULL) {
+	bin = (struct colorBin *)bu_get_hash_value(entry);
+
+	if (VEQUAL(bin->color, partColor)) {
 	    newColor = 0;
 	    break;
 	}
-    }    
 
-    /* get new list item if current is full or if starting a new color */
-    if (currItem->used == PT_ARRAY_SIZE || newColor) {
-	BU_GETSTRUCT(currItem, ptInfoList);
-	BU_LIST_PUSH(&(ptInfo.l), currItem);
-	currItem->used = 0;
-	VMOVE(currItem->color, partColor);
+	entry = entry->next;
     }
 
-    /* add point to list */
+    /* have to make color bin for new color*/
+    if (newColor) {
+
+	/* create new color bin */
+	bin = bu_malloc(sizeof(struct colorBin), "dm-rtgl.c: addInfo");
+	VMOVE(bin->color, partColor);
+
+	/* create bin list head */
+	BU_GETSTRUCT(bin->list, ptInfoList);
+	head = &(bin->list->l);
+	BU_LIST_INIT(head);
+
+	/* add first list item */
+	BU_GETSTRUCT(currItem, ptInfoList);
+	BU_LIST_PUSH(head, currItem);
+	currItem->used = 0;
+
+	/* add the new bin to the table */
+	entry = bu_hash_add_entry(colorTable, colorKey, KEY_LENGTH, &newColor);
+	bu_set_hash_value(entry, (unsigned char *)bin);	
+    }
+
+    /* found existing color bin */
+    else {
+
+	/* get bin's current list item */
+	head = &(bin->list->l);
+	currItem = (struct ptInfoList *)head->forw;
+
+	/* if list item is full, create a new item */
+	if (currItem->used == PT_ARRAY_SIZE) {
+
+	    BU_GETSTRUCT(currItem, ptInfoList);
+	    BU_LIST_PUSH(head, currItem);
+	    currItem->used = 0;
+	}
+    }
+
+    /* add point and normal to bin's current list */
     currItem->points[X + currItem->used] = point[X];
     currItem->points[Y + currItem->used] = point[Y];
     currItem->points[Z + currItem->used] = point[Z];
 
-    /* add normal to list */
     currItem->norms[X + currItem->used] = normal[X];
     currItem->norms[Y + currItem->used] = normal[Y];
     currItem->norms[Z + currItem->used] = normal[Z];
@@ -1163,10 +1228,10 @@ int recordHit(struct application *app, struct partition *partH, struct seg *segs
 	soltab = part->pt_inseg->seg_stp;
 	addInfo(app, part->pt_inhit, soltab, part->pt_inflip, partColor);
 
-	/* add "out" hit point info */        
+	/* add "out" hit point info (unless half-space) */        
 	soltab = part->pt_inseg->seg_stp;
 
-	if (strncmp("half", soltab->st_meth->ft_label, 4) != 0) { /* don't attempt to calculate half-space out point */
+	if (strncmp("half", soltab->st_meth->ft_label, 4) != 0) {
 	
 	    addInfo(app, part->pt_outhit, soltab, part->pt_outflip, partColor);
 	}
@@ -1251,9 +1316,6 @@ void randShots(fastf_t *center, fastf_t radius, int flag) {
 
     glEnable(GL_LIGHTING);
 }
-
-static struct jobList jobs;
-static struct jobList *currJob;
 
 void swapItems(struct bu_list *a, struct bu_list *b) {
     struct bu_list temp;
@@ -1454,54 +1516,73 @@ int shootJobs(void) {
 }
 
 void drawPoints(float *view, int pointSize) {
-    glPointSize(pointSize);
-
-#if 0 /* use vertex arrays */
-    glEnableClientState(GL_VERTEX_ARRAY);
-    glEnableClientState(GL_NORMAL_ARRAY);
-#endif
     int i, numPoints, index, count = 0;
     float normal[3];
     float dot;
+    struct colorBin *bin;
+    struct bu_list *head;
+    struct bu_hash_entry *entry;
+    struct bu_hash_record record;
 
+    /* get first table record */
+    if (bu_hash_tbl_first(colorTable, &record) == NULL)
+	return;
 
-    for (BU_LIST_FOR(currItem, ptInfoList, &(ptInfo.l))) {
-	numPoints = currItem->used / 3;
-	count += numPoints;
+    /* drawing shaded points */
+    glEnable(GL_LIGHTING);
+    glPointSize(pointSize);
 
-	glMaterialfv(GL_FRONT, GL_AMBIENT_AND_DIFFUSE, (float *) &(currItem->color));
-
-#if 1
-	glBegin(GL_POINTS);
-	for (i = 0; i < numPoints; i++) {
-	    index = i + i + i;
-	    
-	    normal[X] = currItem->norms[X + index];
-	    normal[Y] = currItem->norms[Y + index];
-	    normal[Z] = currItem->norms[Z + index];
-
-	    dot = VDOT(view, normal);
 #if 0
-	    /* make all normals face front*/
-	    if (dot < 0) {
-		VREVERSE(normal, normal);
-	    }
+    /* using vertex arrays */
+    glEnableClientState(GL_VERTEX_ARRAY);
+    glEnableClientState(GL_NORMAL_ARRAY);
 #endif
-	    /* draw if visible */
-	    if (dot > 0) {
-		glNormal3f(normal[X], normal[Y], normal[Z]);
-		glVertex3f(currItem->points[X + index], currItem->points[Y + index], currItem->points[Z + index]);
+
+    /* for all table entries */
+    while ((entry = bu_hash_tbl_next(&record)) != NULL) {
+	
+	/* get color bin from entry */
+	bin = (struct colorBin *)bu_get_hash_value(entry);
+
+	/* set color for bin */
+	glMaterialfv(GL_FRONT, GL_AMBIENT_AND_DIFFUSE, bin->color);
+	
+	/* visit each item in bin's list */
+	head = &(bin->list->l);
+	
+	for (BU_LIST_FOR(currItem, ptInfoList, head)) {
+	    numPoints = currItem->used / 3;
+#if 1
+	    glBegin(GL_POINTS);
+	    for (i = 0; i < numPoints; i++) {
+		index = i + i + i;
+		
+		normal[X] = currItem->norms[X + index];
+		normal[Y] = currItem->norms[Y + index];
+		normal[Z] = currItem->norms[Z + index];
+		
+		dot = VDOT(view, normal);
+#if 0
+		/* make all normals face front*/
+		if (dot < 0) {
+		    VREVERSE(normal, normal);
+		}
+#endif
+		/* draw if visible */
+		if (dot > 0) {
+		    glNormal3f(normal[X], normal[Y], normal[Z]);
+		    glVertex3f(currItem->points[X + index], currItem->points[Y + index], currItem->points[Z + index]);
+		}
 	    }
-	}
-	glEnd();
+	    glEnd();
 #else
-	glVertexPointer(3, GL_DOUBLE, 0, &(currItem->points));
-        glNormalPointer(GL_DOUBLE, 0, &(currItem->norms));        
-	glDrawArrays(GL_POINTS, 0, numPoints);
+	    glVertexPointer(3, GL_DOUBLE, 0, &(currItem->points));
+	    glNormalPointer(GL_DOUBLE, 0, &(currItem->norms));
+	    glDrawArrays(GL_POINTS, 0, numPoints);
 #endif
+	}
     }
     glDisable(GL_LIGHTING);
-    glColor3d(0.0, 1.0, 0.0);
     glPointSize(1);
 }
 
@@ -1707,16 +1788,11 @@ rtgl_drawVList(struct dm *dmp, register struct bn_vlist *vp)
 
     viewSize = gedp->ged_gvp->gv_size;
 
-    /* initialize lists */
-    if (calls == 1 || ptInfo.l.forw == BU_LIST_NULL) {
-	/* initialize head */
-        BU_LIST_INIT(&(ptInfo.l));
-	ptInfo.used = 0;
+    /* initialize draw list */
+    if (calls == 1 || colorTable == NULL) {
 
-	/* get first list item */
-	BU_GETSTRUCT(currItem, ptInfoList);
-	BU_LIST_PUSH(&(ptInfo.l), currItem);
-	currItem->used = 0;
+	/* create color hash table */
+	colorTable = bu_create_hash_tbl(START_TABLE_SIZE);
     }
 
     /* get names of all drawable objects */
@@ -1736,7 +1812,12 @@ rtgl_drawVList(struct dm *dmp, register struct bn_vlist *vp)
 
 	/* drop previous work */
 	oldNumTrees = 0;
-	freeInfoList();
+	freeJobList();
+
+	if (colorTable != NULL) {
+	    bu_hash_tbl_free(colorTable);
+	    colorTable = NULL;
+	}
 
 	RTGL_DIRTY = 0;
 
@@ -1813,7 +1894,7 @@ rtgl_drawVList(struct dm *dmp, register struct bn_vlist *vp)
 	shootGrid(min, max, maxSpan, maxPixels, X, Y, Z);
 	shootGrid(min, max, maxSpan, maxPixels, Z, X, Y);
 	shootGrid(min, max, maxSpan, maxPixels, Y, Z, X);
-#if 1
+#if 0
 	shuffleJobs();
 #endif
 #else
