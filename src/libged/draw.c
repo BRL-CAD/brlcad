@@ -1092,6 +1092,10 @@ int
 ged_draw_guts(struct ged *gedp, int argc, const char *argv[], int kind)
 {
     register int i;
+    int	flag_A_attr=0;
+    int	flag_o_nonunique=1;
+    int	last_opt=0;
+    struct bu_vls vls;
     static const char *usage = "[-R -A -o -C#/#/# -s] <objects | attribute name/value pairs>";
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
@@ -1123,7 +1127,106 @@ ged_draw_guts(struct ged *gedp, int argc, const char *argv[], int kind)
 	ged_erasePathFromDisplay(gedp, argv[i]);
     }
 
-    ged_drawtrees(gedp, argc, argv, kind, (struct ged_client_data *)0);
+    /* check args for "-A" (attributes) and "-o" */
+    bu_vls_init(&vls);
+    for ( i=0; i<argc; i++ ) {
+	char *ptr_A=NULL;
+	char *ptr_o=NULL;
+	char *c;
+
+	if ( *argv[i] != '-' ) break;
+	if ( (ptr_A=strchr(argv[i], 'A' )) ) flag_A_attr = 1;
+	if ( (ptr_o=strchr(argv[i], 'o' )) ) flag_o_nonunique = 2;
+	last_opt = i;
+
+	if (!ptr_A && !ptr_o) {
+	    bu_vls_putc( &vls, ' ' );
+	    bu_vls_strcat( &vls, argv[i] );
+ 	    continue;
+	}
+
+	if (strlen( argv[i] ) == (1 + (ptr_A != NULL) + (ptr_o != NULL))) {
+	    /* argv[i] is just a "-A" or "-o" */
+	    continue;
+	}
+
+	/* copy args other than "-A" or "-o" */
+	bu_vls_putc( &vls, ' ' );
+	c = (char *)argv[i];
+	while ( *c != '\0' ) {
+	    if (*c != 'A' && *c != 'o') {
+		bu_vls_putc( &vls, *c );
+	    }
+	    c++;
+	}
+    }
+
+    if ( flag_A_attr ) {
+	/* args are attribute name/value pairs */
+	struct bu_attribute_value_set avs;
+	int max_count=0;
+	int remaining_args=0;
+	int new_argc=0;
+	char **new_argv=NULL;
+	struct bu_ptbl *tbl;
+
+	remaining_args = argc - last_opt - 1;
+	if ( remaining_args < 2 || remaining_args%2 ) {
+	    bu_vls_printf(&gedp->ged_result_str, "Error: must have even number of arguments (name/value pairs)\n" );
+	    bu_vls_free( &vls );
+	    return GED_ERROR;
+	}
+
+	bu_avs_init( &avs, (argc - last_opt)/2, "ged_draw_guts avs" );
+	i = 0;
+	while ( i < argc ) {
+	    if ( *argv[i] == '-' ) {
+		i++;
+		continue;
+	    }
+
+	    /* this is a name/value pair */
+	    if ( flag_o_nonunique == 2 ) {
+		bu_avs_add_nonunique( &avs, argv[i], argv[i+1] );
+	    } else {
+		bu_avs_add( &avs, argv[i], argv[i+1] );
+	    }
+	    i += 2;
+	}
+
+	tbl = db_lookup_by_attr( gedp->ged_wdbp->dbip, DIR_REGION | DIR_SOLID | DIR_COMB, &avs, flag_o_nonunique );
+	bu_avs_free( &avs );
+	if ( !tbl ) {
+	    bu_log( "Error: db_lookup_by_attr() failed!!\n" );
+	    bu_vls_free( &vls );
+	    return TCL_ERROR;
+	}
+	if ( BU_PTBL_LEN( tbl ) < 1 ) {
+	    /* nothing matched, just return */
+	    bu_vls_free( &vls );
+	    return TCL_OK;
+	}
+	for ( i=0; i<BU_PTBL_LEN( tbl ); i++ ) {
+	    struct directory *dp;
+
+	    dp = (struct directory *)BU_PTBL_GET( tbl, i );
+	    bu_vls_putc( &vls, ' ' );
+	    bu_vls_strcat( &vls, dp->d_namep );
+	}
+
+	max_count = BU_PTBL_LEN( tbl ) + last_opt + 1;
+	bu_ptbl_free( tbl );
+	bu_free( (char *)tbl, "ged_draw_guts ptbl" );
+	new_argv = (char **)bu_calloc( max_count+1, sizeof( char *), "ged_draw_guts new_argv" );
+	new_argc = bu_argv_from_string( new_argv, max_count, bu_vls_addr( &vls ) );
+
+	ged_drawtrees(gedp, new_argc, (const char **)new_argv, kind, (struct ged_client_data *)0);
+	bu_vls_free( &vls );
+	bu_free( (char *)new_argv, "ged_draw_guts new_argv" );
+    } else {
+	ged_drawtrees(gedp, argc, argv, kind, (struct ged_client_data *)0);
+    }
+
     ged_color_soltab(&gedp->ged_gdp->gd_headDisplay);
 
     return GED_OK;
