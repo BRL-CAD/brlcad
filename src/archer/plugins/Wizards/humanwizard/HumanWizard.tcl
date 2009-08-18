@@ -59,7 +59,8 @@
 # Variables for command line input
 	variable AutoMode 1
 	variable BoundingBoxes 0
-	variable Height 68	#68 inches
+	#68 Inches
+	variable Height 68
 	variable Locationx 0
 	variable Locationy 0
 	variable Locationz 0
@@ -97,7 +98,6 @@
 	variable FootLength 0
 	variable ToeWidth 0
 	variable LegLength 0
-	variable Height 0
 
 	method initWizardState {}
 	method buildParameter {parent}
@@ -171,7 +171,6 @@
     }
 
     setStanceString
-    setTreadTypeString
 }
 
 ::itcl::body HumanWizard::buildParameter {parent} {
@@ -409,7 +408,7 @@
 }
 
 ::itcl::body HumanWizard::setStanceString {} {
-    switch -- $treadPattern {
+    switch -- $Stance {
 	0 {
 	    set StanceString Standing
 	}
