@@ -15,7 +15,6 @@ bin_PROGRAMS = \
 	contours \
         csgbrep \
 	globe \
-	human \
 	kurt \
 	lens \
 	masonry \
@@ -79,10 +78,6 @@ clutter_SOURCES = clutter.c common.c
 contours_SOURCES = contours.c
 csgbrep_SOURCES = csgbrep.cpp
 globe_SOURCES = globe.c
-human_SOURCES = human.c
-human_LDADD = \
-	${GED} \
-	${WDB}
 kurt_SOURCES = kurt.c
 lens_SOURCES = lens.c
 masonry_SOURCES = masonry.c
@@ -132,7 +127,6 @@ FAST_OBJECTS = \
 	$(contours_OBJECTS) \
 	$(csgbrep_OBJECTS) \
 	$(globe_OBJECTS) \
-	$(human_OBJECTS) \
 	$(kurt_OBJECTS) \
 	$(lens_OBJECTS) \
 	$(masonry_OBJECTS) \
