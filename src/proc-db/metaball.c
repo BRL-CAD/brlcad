@@ -89,7 +89,7 @@ make_meatballs(struct rt_wdb *fp, const char *name, long count)
     }
 
     /* pack the meat, create the metaball */
-    mk_metaball(fp, name, count, method, threshold, pts);
+    mk_metaball(fp, name, count, method, threshold, (const fastf_t **)pts);
 
     /* free up our junk */
     for (i=0; i < count; i++) {
@@ -153,7 +153,7 @@ mix_balls(struct db_i *dbip, const char *name, int ac, const char *av[])
 	 */
 	for (BU_LIST_FOR(mpt, wdb_metaballpt, &mp->metaball_ctrl_head)) {
 	    bu_log("Adding point (%lf %lf %lf)\n", V3ARGS(mpt->coord));
-	    rt_metaball_add_point(newmp, &mpt->coord, mpt->fldstr, mpt->sweat);
+	    rt_metaball_add_point(newmp, (const point_t *)&mpt->coord, mpt->fldstr, mpt->sweat);
 	}
     }
 
