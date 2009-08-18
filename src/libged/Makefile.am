@@ -89,6 +89,7 @@ libged_nil_la_SOURCES = \
 	group.c \
 	hide.c \
 	how.c \
+	human.c \
 	illum.c \
 	importFg4Section.c \
 	inside.c \
