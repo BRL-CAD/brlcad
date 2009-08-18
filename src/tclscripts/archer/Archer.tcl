@@ -7747,7 +7747,7 @@ package provide Archer 1.0
 
 ::itcl::body Archer::clearTargetLedger {} {
     set mLedgerGID 0
-    set alist [$mLedger ls]
+    set alist [$mLedger expand *]
     eval $mLedger kill $alist
 }
 
