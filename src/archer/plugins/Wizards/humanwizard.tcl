@@ -58,7 +58,7 @@ set iconPath ""
 Archer::pluginRegister $pluginMajorType \
     $pluginMinorType \
     $pluginName \
-    "humanwizard" \
+    "HumanWizard" \
     "HumanWizard.tcl" \
     "Build human geometry." \
     $pluginVersion \
