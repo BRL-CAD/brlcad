@@ -469,7 +469,7 @@
 	-A $AutoMode \
 	-b $BoundingBoxes \
 	-H $Height \
-#	-l $Locationx $Locationy $Locationz \
+	-l $Locationx $Locationy $Locationz \
 	-m $ManualMode \
 	-N $NumberSoldiers \
 	-p $percentile \
