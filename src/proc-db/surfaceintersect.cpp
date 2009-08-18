@@ -17,28 +17,31 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
+/** @{ */
 /** @file surfaceintersect.cpp
  *
+ * Until further notice this code is in a state of heavy flux as part
+ * of GSoC 2009 as such it would be very foolish to write anything
+ * that depends on it right now
+ *
+ * This code is written and maintained by Joe Doliner: jdoliner@gmail.com
  */
 
-/* Until further notice this code is in a state of heavy flux as part of
- * GSoC 2009 as such it would be very foolish to write anything that
- * depends on it right now
- * This code is written and maintained by Joe Doliner jdoliner@gmail.com */
-
 #include "surfaceintersect.h"
+
 #define MIN(a, b) (((a) > (b)) ? (a) : (b))
 #define safesqrt(x) (((x) >= 0) ? sqrt(x) : (-(sqrt(-x))))
 
+
 /**
- *       ClosestValue
+ * ClosestValue
  *
  * @brief returns the value that is closest to the given value but in the given interval
  */
 double ClosestValue(
-	double value,
-	ON_Interval interval
-	)
+    double value,
+    ON_Interval interval
+    )
 {
     if (interval.Includes(value, true)) {
 	return value;
@@ -49,17 +52,18 @@ double ClosestValue(
     }
 }
 
+
 /**
- *        Push
+ * Push
  *
- * @brief updates s and t using an X,Y,Z vector
+ * @brief updates s and t using an X, Y, Z vector
  */
 void Push(
-	const ON_Surface *surf,
-	double *s,
-	double *t,
-	ON_3dVector vec
-	)
+    const ON_Surface *surf,
+    double *s,
+    double *t,
+    ON_3dVector vec
+    )
 {
     ON_3dVector ds, dt;
     ON_3dPoint value;
@@ -70,21 +74,22 @@ void Push(
     *t += delta_t;
 }
 
+
 /**
- *        Step
+ * Step
  *
- * @brief advances s1, s2, t1, t2 along the curve of intersection of the two surfaces
- * by a distance of step size.
+ * @brief advances s1, s2, t1, t2 along the curve of intersection of
+ * the two surfaces by a distance of step size.
  */
 void Step(
-	const ON_Surface *surf1,
-	const ON_Surface *surf2,
-	double *s1,
-	double *s2,
-	double *t1,
-	double *t2,
-	double stepsize
-	)
+    const ON_Surface *surf1,
+    const ON_Surface *surf2,
+    double *s1,
+    double *s2,
+    double *t1,
+    double *t2,
+    double stepsize
+    )
 {
     ON_3dVector Norm1 = surf1->NormalAt(*s1, *t1);
     ON_3dVector Norm2 = surf2->NormalAt(*s2, *t2);
@@ -97,20 +102,22 @@ void Step(
     Push(surf2, s2, t2, stepscaled);
 }
 
+
 /**
- *        Jiggle
+ * Jiggle
  *
- * @brief uses newtonesque method to jiggle the points on the surfaces about and find a closer
- * point returns the new distance between the points
+ * @brief uses newtonesque method to jiggle the points on the surfaces
+ * about and find a closer * point returns the new distance between
+ * the points.
  */
 double Jiggle(
-	const ON_Surface *surf1,
-	const ON_Surface *surf2,
-	double *s1,
-	double *s2,
-	double *t1,
-	double *t2
-	)
+    const ON_Surface *surf1,
+    const ON_Surface *surf2,
+    double *s1,
+    double *s2,
+    double *t1,
+    double *t2
+    )
 {
     ON_3dPoint p1 = surf1->PointAt(*s1, *t1);
     ON_3dPoint p2 = surf2->PointAt(*s2, *t2);
@@ -127,18 +134,19 @@ double Jiggle(
 
 
 /**
- *        SplitTrim
+ * SplitTrim
  *
- * @brief Split's a trim at a point, and replaces the references to that trim
- * with the pieces
+ * @brief Split's a trim at a point, and replaces the references to
+ * that trim with the pieces
  */
 void SplitTrim(
-	ON_BrepTrim *trim,
-	double t
-	)
+    ON_BrepTrim *trim,
+    double t
+    )
 {
     ON_Curve *left, *right;
     bool rv = trim->Split(t, left, right);
+
     if (rv) {
 	int lefti = trim->Brep()->AddTrimCurve(left);
 	int righti = trim->Brep()->AddTrimCurve(right);
@@ -148,34 +156,38 @@ void SplitTrim(
     }
 }
 
+
 /**
- *        ShatterLoop
+ * ShatterLoop
  *
- * @brief after slicing a loop up in to pieces, this destroys the loop itself 
- *  and drops the pieces into an array
+ * @brief after slicing a loop up in to pieces, this destroys the loop
+ * itself and drops the pieces into an array
  */
 void ShatterLoop(
-	ON_BrepLoop *loop,
-	ON_SimpleArray<ON_Curve*> curves
-	)
+    ON_BrepLoop *loop,
+    ON_SimpleArray<ON_Curve*> curves
+    )
 {
     int i;
     for (i = 0; i < loop->TrimCount(); i++) {
 	curves.Append(loop->Trim(i)->TrimCurveOf()->Duplicate());
     }
+
     /* deletes the loop as well as curves used only by this loop */
     loop->Brep()->DeleteLoop(*loop, true);
 }
 
+
 /**
- *        Compare_X_Parameter
+ * Compare_X_Parameter
  *
- * @Compares two ON_X_EVENTS by the value of the parameter of the first curve
+ * @Compares two ON_X_EVENTS by the value of the parameter of the
+ * first curve.
  */
 int Compare_X_Parameter(
-	const ON_X_EVENT *a,
-	const ON_X_EVENT *b
-	)
+    const ON_X_EVENT *a,
+    const ON_X_EVENT *b
+    )
 {
     if (a->m_a[0] < b->m_a[0]) {
 	return -1;
@@ -186,18 +198,20 @@ int Compare_X_Parameter(
     }
 }
 
+
 /**
- *        Curve_Compare_start
+ * Curve_Compare_start
  *
  * @Compares the start points of the curve profiles
  */
 int Curve_Compare_start(
-	ON_Curve *const *a,
-	ON_Curve *const *b
-	)
+    ON_Curve *const *a,
+    ON_Curve *const *b
+    )
 {
     ON_3dVector A = ON_2dVector((*a)->PointAtStart().x, (*a)->PointAtStart().y);
     ON_3dVector B = ON_2dVector((*b)->PointAtStart().x, (*b)->PointAtStart().y);
+
     if (V2APPROXEQUAL(A, B, 1e-9)) {
 	return 0;
     } else if (A.x < B.x) {
@@ -208,20 +222,22 @@ int Curve_Compare_start(
 	return -1;
     } else if (A.y > B.y) {
 	return 1;
-    } else {
-	return 0; /* we should have already done this... but just in case */
     }
+
+    /* we should have already done this... but just in case */
+    return 0;
 }
 
+
 /**
- *        Curve_Compare_end
+ * Curve_Compare_end
  *
  * @Compares the end points of the curve profiles
  */
 int Curve_Compare_end(
-	const ON_Curve **a,
-	const ON_Curve **b
-	)
+    const ON_Curve **a,
+    const ON_Curve **b
+    )
 {
     ON_3dVector A = ON_2dVector((*a)->PointAtEnd().x, (*a)->PointAtEnd().y);
     ON_3dVector B = ON_2dVector((*b)->PointAtEnd().x, (*b)->PointAtEnd().y);
@@ -235,30 +251,33 @@ int Curve_Compare_end(
 	return -1;
     } else if (A.y > B.y) {
 	return 1;
-    } else {
-	return 0; /* we should have already done this... but just in case */
     }
+
+    /* we should have already done this... but just in case */
+    return 0;
 }
 
+
 /**
- *        Face_X_Event::Face_X_Event
+ * Face_X_Event::Face_X_Event
  *
  * @brief create a new unintialized Face_X_Event
  */
 Face_X_Event::Face_X_Event()
 {}
 
+
 /**
- *        Face_X_Event::Face_X_Event
+ * Face_X_Event::Face_X_Event
  *
  * @brief create a new Face_X_Event using a set of given values
  */
 Face_X_Event::Face_X_Event(
-	    ON_BrepFace *face1,
-	    ON_BrepFace *face2,
-	    ON_Curve *curve1,
-	    ON_Curve *curve2
-	)
+    ON_BrepFace *face1,
+    ON_BrepFace *face2,
+    ON_Curve *curve1,
+    ON_Curve *curve2
+    )
 {
     Face_X_Event *event = new Face_X_Event;
     event->face1 = face1;
@@ -269,31 +288,36 @@ Face_X_Event::Face_X_Event(
     event->loop_flags2.SetCount(face2->LoopCount());
 }
 
+
 /**
- *        ON_X_EVENT::ON_X_EVENT
+ * ON_X_EVENT::ON_X_EVENT
  *
- * @brief create a new ON_X_EVENT This is implemented in opennurbs_x.cpp:19, not sure why the
- *  compiler is failing to see it
+ * @brief create a new ON_X_EVENT This is implemented in
+ * opennurbs_x.cpp:19, not sure why the compiler is failing to see it
  */
 ON_X_EVENT::ON_X_EVENT()
 {
     memset(this, 0, sizeof(*this));
 }
 
+
 /**
- *        Face_X_Event::Render_Curves
+ * Face_X_Event::Render_Curves
  *
- * @Renders the Curve in the Curve_X_Profile, as the different curves it is segmented in to
- * This assumes the convention that to the left of a curve is below. i.e
+ * @Renders the Curve in the Curve_X_Profile, as the different curves
+ * it is segmented in to This assumes the convention that to the left
+ * of a curve is below.
  */
 int Face_X_Event::Render_Curves()
 {
-    bool active1 = false, active2 = false; /* the curve can be active or inactive in either face */
+    /* the curve can be active or inactive in either face */
+    bool active1 = false, active2 = false;
     double last;
     int i;
-    /* Now we step through the X events activating and deactivating the curve
-     * Note the curve is always curve1 in the event, while the trim is always
-     * curve 2 
+
+    /* Now we step through the X events activating and deactivating
+     * the curve Note the curve is always curve1 in the event, while
+     * the trim is always curve 2
      */
     for (i = 0; i < x.Count(); i++) {
 	ON_X_EVENT event = x[i];
@@ -315,9 +339,11 @@ int Face_X_Event::Render_Curves()
 		    assert(0);
 		}
 	    } else if (event.m_dirA[0] == event.from_above_dir && event.m_dirA[1] == event.to_below_dir) {
-		/* this would be an activating event, except that both curves are already active
-		 * in this case we assume that the user forgot to remove the outer curve, thus
-		 * we reset last
+
+		/* this would be an activating event, except that both
+		 * curves are already active in this case we assume
+		 * that the user forgot to remove the outer curve,
+		 * thus we reset last
 		 */
 		last = event.m_a[0];
 	    }
@@ -337,53 +363,65 @@ int Face_X_Event::Render_Curves()
 	    }
 	}
     }
+
+    return 0; /* XXX - unused */
 }
 
-bool ON_SetCurveCurveIntersectionDir(
-	ON_3dVector N,
-	int xcount,
-	ON_X_EVENT* xevent,
-	double a0,
-	double a1,
-	double b0,
-	double b1
-	)
-{
 
+bool ON_SetCurveCurveIntersectionDir(
+    ON_3dVector N,
+    int xcount,
+    ON_X_EVENT* xevent,
+    double a0,
+    double a1,
+    double b0,
+    double b1
+    )
+{
+    return false;
 }
 
 
 /**
- *        Face_X_Event::Get_ON_X_Events()
+ * Face_X_Event::Get_ON_X_Events()
  *
- * @brief Returns all of the intersections between either of the new curves and the trims of the faces
+ * @brief Returns all of the intersections between either of the new
+ * curves and the trims of the faces
  */
 int Face_X_Event::Get_ON_X_Events(double tol)
 {
     assert(curve1->SetDomain(Canonical_start, Canonical_end)); /* Make sure curves have the same domain */
     assert(curve2->SetDomain(Canonical_start, Canonical_end)); /* and all the good numbers are in [0, 1] anyways */
+
     ON_SimpleArray<ON_X_EVENT> out;
     x.Empty();
     ON_BrepFace *faces[2] = {face1, face2};
     ON_Curve *curves[2] = {curve1, curve2};
     ON_ClassArray<bool> *loop_flags[2]= {&loop_flags1, &loop_flags2};
+
     int i, j, k, l;
     for (i = 0; i < 2; i++) {
+
 	ON_BrepFace *face = faces[i];
 	for (j = 0; j < face->LoopCount(); j++) {
+
 	    ON_BrepLoop* loop = face->Loop(i);
 	    for (k = 0; k < loop->TrimCount(); k++) {
+
 		ON_BrepTrim *trim = loop->Trim(j);
 		out.Empty();
+
 		/* It's worth noting that trims are always curve2 in intersections */
 		int new_xs = curves[i]->IntersectCurve(trim->TrimCurveOf(), out, tol, tol);
 		if (new_xs) {
 		    loop_flags[i][j] = true; /* flag loop j for destruction */
 		}
+
 		/* record in m_user which curve this intersection came from */
 		for (l = 0; l < new_xs; l++) {
 		    out[l].m_user.i = i;
 		}
+
 		/* ON_SetCurveCurveIntersectionDir(ON_3dVector(0.0, 0.0, 1.0), new_xs, out.Array(), Canonical_start, Canonical_end, Canonical_start, Canonical_end); */
 		x.Append(new_xs, out.Array());
 	    }
@@ -395,35 +433,44 @@ int Face_X_Event::Get_ON_X_Events(double tol)
     return x.Count();
 }
 
+
 /**
- *        MakeLoops
+ * MakeLoops
  *
- * @brief Makes loops out of the new trims and old trims by matching them end to end
- *  old trims were previously in trim loops, new trims come from the intersection
- *  the difference being that every new_trim must be used, while some old_trims will be discarded
- *  Note Well: destroys the arrays it's given.
+ * @brief Makes loops out of the new trims and old trims by matching
+ * them end to end old trims were previously in trim loops, new trims
+ * come from the intersection the difference being that every new_trim
+ * must be used, while some old_trims will be discarded.
+ *
+ * Note: destroys the arrays it's given.
  */
 int MakeLoops(
-	ON_BrepFace *face,
-	ON_SimpleArray<ON_Curve*>& new_trims,
-	ON_SimpleArray<ON_Curve*>& old_trims,
-	double tol
-	)
+    ON_BrepFace *face,
+    ON_SimpleArray<ON_Curve*>& new_trims,
+    ON_SimpleArray<ON_Curve*>& old_trims,
+    double tol
+    )
 {
     int i;
     ON_SimpleArray<ON_Curve*> trims[2] = {new_trims, old_trims};
     for (i = 0; i < 2; i++) {
 	assert(trims[i].QuickSort(Curve_Compare_start));
     }
+
     ON_SimpleArray<ON_Curve*> loop;
     while (new_trims.Count() != 0) {
+
 	loop.Append(*new_trims.First());
 	new_trims.Remove(0);
 	while (!V2APPROXEQUAL((*loop.First())->PointAtStart(), (*loop.Last())->PointAtEnd(), tol)) {
-	    /* bit hacky, makes a curve we can use to search for the arrays for matching trims */
+
+	    /* bit hacky, makes a curve we can use to search for the
+	     * arrays for matching trims
+	     */
 	    ON_LineCurve search_line = ON_LineCurve((*loop.Last())->PointAtEnd(), (*loop.First())->PointAtStart());
 	    ON_Curve *search_curve = (ON_Curve *) &search_line;
 	    int next_curve; /* -1 is the not found value */
+
 	    for (i = 0; i < 2; i++) {
 		next_curve = -1;
 		next_curve = new_trims.BinarySearch(&search_curve, Curve_Compare_start);
@@ -433,17 +480,22 @@ int MakeLoops(
 		    break;
 		}
 	    }
+
 	    if (next_curve == -1) {
 		/* we didn't find anything in either array */
 		assert(0);
 	    }
 	}
-	/* When we get here, loop will be a fully closed loop of trims */
+
+	/* When we get here, loop will be a fully closed loop of
+	 * trims.
+	 */
 	ON_Brep *brep = face->Brep();
 	ON_BrepLoop *new_loop = &brep->NewLoop(ON_BrepLoop::unknown, *face);
 	for (i = 0; i < loop.Count(); i++) {
 	    new_loop->m_ti.Append(brep->AddTrimCurve(loop[i]));
 	}
+
 	int ldir = brep->LoopDirection(*new_loop);
 	switch (ldir) {
 	    case 1:
@@ -456,18 +508,22 @@ int MakeLoops(
 		assert(0); /* we should absolutely never get here */
 	}
     }
+
+    return 0;/* XXX - unused */
 }
 
+
 /**
- *        ReconstructX_Events
+ * ReconstructX_Events
  *
- * @brief Walks an intersection list, the list should include every intersection the
- * curve and its twin have with the trims of their respective faces
+ * @brief Walks an intersection list, the list should include every
+ * intersection the curve and its twin have with the trims of their
+ * respective faces
  */
-void  ReconstructX_Events(
-	ON_SimpleArray<ON_X_EVENT>& x,
-	bool& isactive /* active points must map to active points in on both surfaces */
-	)
+void ReconstructX_Events(
+    ON_SimpleArray<ON_X_EVENT>& x,
+    bool& isactive /* active points must map to active points in on both surfaces */
+    )
 {
     int i;
     for (i = 0; i < x.Count(); i++) {
@@ -477,16 +533,19 @@ void  ReconstructX_Events(
     }
 }
 
+
 /**
- *        IsClosed
+ * IsClosed
  *
- * @check if a 2dPointarrray is closed to be closed an array must have >2 points in it, have the first and last points within tol of one another
- * and have at least one point not within tol of either of them.
+ * @check if a 2dPointarrray is closed to be closed an array must have
+ * >2 points in it, have the first and last points within tol of one
+ * another and have at least one point not within tol of either of
+ * them.
  */
 bool IsClosed(
-	const ON_2dPointArray l,
-	double tol
-	)
+    const ON_2dPointArray l,
+    double tol
+    )
 {
     if (l.Count() < 3) {
 	return false;
@@ -503,40 +562,44 @@ bool IsClosed(
     return false;
 }
 
-/**
- *        WalkIntersection
- *
- * @brief walks the intersection between 2 brepfaces,
- * returns lines segmented by the trimming curves
- */
 
+/**
+ * WalkIntersection
+ *
+ * @brief walks the intersection between 2 brepfaces, returns lines
+ * segmented by the trimming curves
+ */
 void WalkIntersection(
-	const ON_Surface *surf1,
-	const ON_Surface *surf2,
-	double s1,
-	double s2,
-	double t1,
-	double t2,
-	double stepsize,
-	double tol,
-	ON_Curve **out1,
-	ON_Curve **out2
-	)
+    const ON_Surface *surf1,
+    const ON_Surface *surf2,
+    double s1,
+    double s2,
+    double t1,
+    double t2,
+    double stepsize,
+    double tol,
+    ON_Curve **out1,
+    ON_Curve **out2
+    )
 {
     ON_2dPointArray intersectionPoints1, intersectionPoints2;
     double olds1, olds2, oldt1, oldt2;
     double inits1 = s1, inits2 = s2, initt1 = t1, initt2 = t2;
     double distance;
     int passes;
-    /* this function is meant to be called with an arbitrary point on the curve
-       and return the entire curve, regardless of which point was passed in,
-       this means that if the intersection doesn't happen to be a loop,
-       we need to walk both directions from the initial point. */
+
+    /* this function is meant to be called with an arbitrary point on
+     * the curve and return the entire curve, regardless of which
+     * point was passed in, this means that if the intersection
+     * doesn't happen to be a loop, we need to walk both directions
+     * from the initial point.
+     */
     for (passes = 0; passes < 2; passes++) {
 	while (surf1->Domain(0).Includes(s1, true) && surf1->Domain(1).Includes(t1, true) && surf2->Domain(0).Includes(s2, true) && surf2->Domain(1).Includes(t2, true) && !(IsClosed(intersectionPoints1, stepsize) && IsClosed(intersectionPoints2, stepsize))) {
 	    do {
 		distance = Jiggle(surf1, surf2, &s1, &s2, &t1, &t2);
 	    } while (distance > tol);
+
 	    intersectionPoints1.Append(ON_2dPoint(s1, t1));
 	    intersectionPoints2.Append(ON_2dPoint(s2, t2));
 	    olds1 = s1;
@@ -549,33 +612,45 @@ void WalkIntersection(
 		Step(surf1, surf2, &s1, &s2, &t1, &t2, -stepsize);
 	    }
 	}
+
 	if (!(IsClosed(intersectionPoints1, stepsize) && IsClosed(intersectionPoints2, stepsize))) {
-	    /* we stepped off the edge of our domain, we need to get a point right on the edge */
+
+	    /* we stepped off the edge of our domain, we need to get a
+	     * point right on the edge.
+	     */
 	    double news1, news2, newt1, newt2;
 	    news1 = ClosestValue(s1, surf1->Domain(0));
 	    news2 = ClosestValue(s2, surf2->Domain(1));
 	    newt1 = ClosestValue(t1, surf1->Domain(0));
 	    newt2 = ClosestValue(t2, surf2->Domain(1));
+
 	    news1 = olds1 + MIN((news1 - olds1) / (s1 - olds1), (newt1 - oldt1) / (t1 - oldt1)) * (s1 - olds1);
 	    news2 = olds2 + MIN((news2 - olds2) / (s2 - olds2), (newt2 - oldt2) / (t2 - oldt2)) * (s2 - olds2);
 	    newt1 = oldt1 + MIN((news1 - olds1) / (s1 - olds1), (newt1 - oldt1) / (t1 - oldt1)) * (t1 - oldt1);
 	    newt2 = oldt2 + MIN((news2 - olds2) / (s2 - olds2), (newt2 - oldt2) / (t2 - oldt2)) * (t2 - oldt2);
+
 	    double newstep = MIN(surf1->PointAt(olds1, oldt1).DistanceTo(surf1->PointAt(news1, newt1)), surf2->PointAt(olds2, oldt2).DistanceTo(surf2->PointAt(news2, newt2)));
 	    Step(surf1, surf2, &s1, &s2, &t1, &t2, newstep);
 	    intersectionPoints1.Append(ON_2dPoint(s1, t1));
 	    intersectionPoints2.Append(ON_2dPoint(s2, t2));
 	}
+
 	if (IsClosed(intersectionPoints1, stepsize) && IsClosed(intersectionPoints2, stepsize)) {
 	    break; /* we're done, no second pass required */
 	} else {
-	    intersectionPoints1.Reverse(); /* this is a bit cute, we are assured to hit this part on the second pass, so we either reverse 0 or 2 times */
+	    /* this is a bit cute, we are assured to hit this part on
+	     * the second pass, so we either reverse 0 or 2 times.
+	     */
+	    intersectionPoints1.Reverse();
 	    intersectionPoints2.Reverse();
 	    s1 = inits1;
 	    s2 = inits2;
 	    t1 = initt1;
 	    t2 = initt2;
+
 	    if (passes == 0) {
-		Step(surf1, surf2, &s1, &s2, &t1, &t2, -stepsize); /* to avoid duplicates of the starting point */
+		/* to avoid duplicates of the starting point */
+		Step(surf1, surf2, &s1, &s2, &t1, &t2, -stepsize);
 	    }
 	}
     }
@@ -583,20 +658,20 @@ void WalkIntersection(
     *out2 = (ON_Curve *) new ON_BezierCurve((ON_2dPointArray) intersectionPoints2);
 }
 
-/**
- *        GetStartPointsInternal
- *
- * @brief Subdibivides the surface recursively to zoom in on intersection
- * points internal to the surfaces
- */
 
+/**
+ * GetStartPointsInternal
+ *
+ * @brief Subdibivides the surface recursively to zoom in on
+ * intersection points internal to the surfaces.
+ */
 bool GetStartPointsInternal(
-	const ON_Surface *surf1,
-	const ON_Surface *surf2,
-	ON_2dPointArray& start_points1,
-	ON_2dPointArray& start_points2,
-	double tol
-	)
+    const ON_Surface *surf1,
+    const ON_Surface *surf2,
+    ON_2dPointArray& start_points1,
+    ON_2dPointArray& start_points2,
+    double tol
+    )
 {
     bool return_value;
     if (surf1->BoundingBox().IsDisjoint(surf2->BoundingBox())) {
@@ -607,6 +682,7 @@ bool GetStartPointsInternal(
 	    do {
 		distance = Jiggle(surf1, surf2, &s1, &s2, &t1, &t2);
 	    } while (distance > tol);
+
 	    start_points1.Append(ON_2dPoint(s1, t1));
 	    start_points2.Append(ON_2dPoint(s2, t2));
 	    return_value = true;
@@ -615,13 +691,15 @@ bool GetStartPointsInternal(
 	}
     } else {
 	ON_Surface *N1, *S1, *N2, *S2, *Parts1[4], *Parts2[4]; /* = {SW, SE, NW, NE} */
+
 	assert(surf1->Split(0, surf1->Domain(0).Mid(), S1, N1));
 	assert(surf2->Split(0, surf2->Domain(0).Mid(), S2, N2));
 	assert(S1->Split(1, S1->Domain(1).Mid(), Parts1[0], Parts1[1]));
 	assert(N1->Split(1, N1->Domain(1).Mid(), Parts1[2], Parts1[3]));
 	assert(S2->Split(1, S2->Domain(1).Mid(), Parts2[0], Parts2[1]));
 	assert(N2->Split(1, N2->Domain(1).Mid(), Parts2[2], Parts2[3]));
-	int i,j;
+
+	int i, j;
 	return_value = false;
 	for (i = 0; i < 4; i++) {
 	    for (j = 0; j < 4; j++) {
@@ -632,18 +710,19 @@ bool GetStartPointsInternal(
     return return_value;
 }
 
+
 /**
- *        GetStartPointsEdges
+ * GetStartPointsEdges
  *
  * @brief Find starting points that are on the edges of the surfaces
  */
 bool GetStartPointsEdges(
-	const ON_Surface *surf1,
-	const ON_Surface *surf2,
-	ON_2dPointArray& start_points1,
-	ON_2dPointArray& start_points2,
-	double tol
-	)
+    const ON_Surface *surf1,
+    const ON_Surface *surf2,
+    ON_2dPointArray& start_points1,
+    ON_2dPointArray& start_points2,
+    double tol
+    )
 {
     bool rv = false;
     ON_Interval intervals[4]; /* {s1, t1, s2, t2} */
@@ -651,9 +730,11 @@ bool GetStartPointsEdges(
     intervals[1] = surf1->Domain(1);
     intervals[2] = surf2->Domain(0);
     intervals[3] = surf2->Domain(1);
+
     const ON_Surface *surfaces[2] = {surf1, surf2};
     ON_2dPointArray out[2] = {start_points1, start_points2};
     ON_SimpleArray<ON_X_EVENT> x;
+
     surf1->IsoCurve(1, intervals[0].Min())->IntersectSurface(surf2, x, tol, tol);
     surf1->IsoCurve(1, intervals[0].Max())->IntersectSurface(surf2, x, tol, tol);
     surf1->IsoCurve(0, intervals[1].Min())->IntersectSurface(surf2, x, tol, tol);
@@ -662,9 +743,11 @@ bool GetStartPointsEdges(
     surf2->IsoCurve(1, intervals[2].Max())->IntersectSurface(surf1, x, tol, tol);
     surf2->IsoCurve(0, intervals[3].Min())->IntersectSurface(surf1, x, tol, tol);
     surf2->IsoCurve(0, intervals[3].Max())->IntersectSurface(surf1, x, tol, tol);
+
     int curve; /* the surface the curves come from */
     int dir; /* the parameter that varies in the iso curve */
     int min_or_max; /* 0 = min, 1 = max */
+
     for (curve = 0; curve < 2; curve++) {
 	for (dir = 0; dir < 2; dir++) {
 	    for (min_or_max = 0; min_or_max < 2; min_or_max++) {
@@ -673,6 +756,7 @@ bool GetStartPointsEdges(
 		} else {
 		    surfaces[curve]->IsoCurve(1 - dir, intervals[dir + (2 * curve)].Max())->IntersectSurface(surfaces[curve], x, tol, tol);
 		}
+
 		int i;
 		for (i = 0; i < x.Count(); i++) {
 		    rv = true; /* if we get here it means we've found a point */
@@ -682,8 +766,7 @@ bool GetStartPointsEdges(
 			} else {
 			    out[curve].Append(ON_2dPoint(x[i].m_a[0], intervals[dir + (2 * curve)].Min()));
 			}
-		    }
-		    else {
+		    } else {
 			if (min_or_max == 0) {
 			    out[curve].Append(ON_2dPoint(x[i].m_a[0], intervals[(1 - dir) + (2 * curve)].Min()));
 			} else {
@@ -700,36 +783,42 @@ bool GetStartPointsEdges(
 
 
 /**
- *        FaceFaceIntersect
+ * FaceFaceIntersect
  *
- * @brief finds the intersection curves of two faces and returns them as Face_X_Events
+ * @brief finds the intersection curves of two faces and returns them
+ * as Face_X_Events.
  */
-
 int FaceFaceIntersect(
-	ON_BrepFace *face1,
-	ON_BrepFace *face2,
-	double stepsize,
-	double tol,
-	ON_ClassArray<Face_X_Event>& x
-	)
+    ON_BrepFace *face1,
+    ON_BrepFace *face2,
+    double stepsize,
+    double tol,
+    ON_ClassArray<Face_X_Event>& x
+    )
 {
     int init_count = x.Count();
     const ON_Surface *surf1 = face1->SurfaceOf(), *surf2 = face2->SurfaceOf();
     ON_2dPointArray start_points1, start_points2;
+
     bool rv_edges = GetStartPointsEdges(surf1, surf2, start_points1, start_points2, tol);
     bool rv_internal = GetStartPointsInternal(surf1, surf2, start_points1, start_points2, tol);
+
     if (!(rv_edges || rv_internal)) {
 	return false;
     }
+
     int i, j;
     ON_Curve *out1, *out2;
     ON_2dPoint start1, start2;
+
     for (i = 0; i < start_points1.Count(); i++) {
 	start1 = *start_points1.First();
 	start2 = *start_points2.First();
 	WalkIntersection(surf1, surf2, start1[0], start2[0], start1[1], start2[1], stepsize, tol, &out1, &out2);
+
 	start_points1.Remove(0);
 	start_points2.Remove(0);
+
 	for (j = 0; j < start_points1.Count(); j++) {
 	    double dummy;
 	    if (out1->GetClosestPoint(ON_3dPoint(start_points1[j]), &dummy, stepsize) && out2->GetClosestPoint(ON_3dPoint(start_points2[j]), &dummy, stepsize)) {
@@ -744,55 +833,69 @@ int FaceFaceIntersect(
     return x.Count() - init_count;
 }
 
+
 /**
- *        BrepBrepIntersect
+ * BrepBrepIntersect
  *
- * @brief calls SurfaceSurfaceIntersect on the {m_S}X{m_S} then intersects the results with the trim curves of the
- * brepfaces
+ * @brief calls SurfaceSurfaceIntersect on the {m_S}X{m_S} then
+ * intersects the results with the trim curves of the brepfaces.
  */
 bool BrepBrepIntersect(
-	ON_Brep *brep1,
-	ON_Brep *brep2,
-	ON_Brep **out,
-	double stepsize,
-	double tol
-	)
+    ON_Brep *brep1,
+    ON_Brep *brep2,
+    ON_Brep **out,
+    double stepsize,
+    double tol
+    )
 {
     int i, j, k, l;
+
     /* the new curves we get from the actual intersection */
     ON_ClassArray<ON_SimpleArray<ON_Curve*> > intersection_curves1, intersection_curves2;
+
     /* the new curves we get from destroying the old trim_loops */
     ON_ClassArray<ON_SimpleArray<ON_Curve*> > trim_curves1, trim_curves2;
+
     intersection_curves1.SetCount(brep1->m_F.Count());
     trim_curves1.SetCount(brep1->m_F.Count());
     intersection_curves2.SetCount(brep2->m_F.Count());
     trim_curves2.SetCount(brep2->m_F.Count());
+
     /* flags for which trims need to be shattered */
     ON_ClassArray<ON_SimpleArray<bool> > loop_flags1, loop_flags2;
     loop_flags1.SetCount(brep1->m_F.Count());
     loop_flags2.SetCount(brep2->m_F.Count());
+
     /* initialize the loop_flag arrays */
     for (i = 0; i < brep1->m_F.Count(); i++) {
 	ON_BrepFace *face1 = &brep1->m_F[i];
 	loop_flags1[i].SetCount(face1->LoopCount());
 	loop_flags1[i].MemSet(false);
     }
+
     for (j = 0; j < brep2->m_F.Count(); j++) {
-	    ON_BrepFace *face2 = &brep2->m_F[j];
-	    loop_flags2[j].SetCount(face2->LoopCount());
-	    loop_flags2[j].MemSet(false);
+	ON_BrepFace *face2 = &brep2->m_F[j];
+	loop_flags2[j].SetCount(face2->LoopCount());
+	loop_flags2[j].MemSet(false);
     }
-    /* first we intersect all of the Faces and record the intersectiosn in Face_X_Events */
+
+    /* first we intersect all of the Faces and record the
+     * intersectiosn in Face_X_Events.
+     */
     ON_ClassArray<Face_X_Event> x;
     for (i = 0; i < brep1->m_F.Count(); i++) {
 	ON_BrepFace *face1 = &brep1->m_F[i];
 	for (j = 0; j < brep2->m_F.Count(); j++) {
+
 	    ON_BrepFace *face2 = &brep2->m_F[j];
 	    x.Empty();
 	    FaceFaceIntersect(face1, face2, stepsize, tol, x);
+
 	    for (k = 0; k < x.Count(); k++) {
+
 		Face_X_Event event_ij = x[k];
 		int new_curves = event_ij.Render_Curves();
+
 		for (l = 0; l < new_curves; l++) {
 		    intersection_curves1[i].Append(event_ij.new_curves1[l]);
 		    intersection_curves2[j].Append(event_ij.new_curves2[l]);
@@ -806,6 +909,7 @@ bool BrepBrepIntersect(
 	    }
 	}
     }
+
     /* Now we shatter the loops */
     for (i = 0; i < brep1->m_F.Count(); i++) {
 	ON_BrepFace *face1 = &brep1->m_F[i];
@@ -816,6 +920,7 @@ bool BrepBrepIntersect(
 	    }
 	}
     }
+
     for (i = 0; i < brep2->m_F.Count(); i++) {
 	ON_BrepFace *face2 = &brep2->m_F[i];
 	for (j = 0; j < loop_flags2[i].Count(); j++) {
@@ -825,6 +930,7 @@ bool BrepBrepIntersect(
 	    }
 	}
     }
+
     /* We now have all of the trims we need to reconstruct the loops */
     for (i = 0; i < brep1->m_F.Count(); i++) {
 	MakeLoops(&brep1->m_F[i], intersection_curves1[i], trim_curves1[i], tol);
@@ -832,28 +938,34 @@ bool BrepBrepIntersect(
     for (i = 0; i < brep2->m_F.Count(); i++) {
 	MakeLoops(&brep2->m_F[i], intersection_curves2[i], trim_curves2[i], tol);
     }
+
+    /* XXX - unused */
+    return false;
 }
 
-namespace {
+namespace si {
 
-enum {
-    A, B, C, D, E, F, G, H
-};
+    enum {
+	A, B, C, D, E, F, G, H
+    };
 
-enum {
-    AB, BC, CD, AD, EF, FG, GH, EH
-};
+    enum {
+	AB, BC, CD, AD, EF, FG, GH, EH
+    };
 
-enum {
-    ABCD, FEHG
-};
+    enum {
+	ABCD, FEHG
+    };
+} /* end namespace */
+using namespace si;
+
 
 ON_Curve*
-TwistedCubeEdgeCurve( const ON_3dPoint& from, const ON_3dPoint& to)
+TwistedCubeEdgeCurve(const ON_3dPoint& from, const ON_3dPoint& to)
 {
     // creates a 3d line segment to be used as a 3d curve in an ON_Brep
-    ON_Curve* c3d = new ON_LineCurve( from, to );
-    c3d->SetDomain( 0.0, 1.0 ); // XXX is this UV bounds?
+    ON_Curve* c3d = new ON_LineCurve(from, to );
+    c3d->SetDomain(0.0, 1.0 ); // XXX is this UV bounds?
     return c3d;
 }
 
@@ -862,7 +974,7 @@ MakeTwistedCubeEdge(ON_Brep& brep, int from, int to, int curve)
 {
     ON_BrepVertex& v0 = brep.m_V[from];
     ON_BrepVertex& v1 = brep.m_V[to];
-    ON_BrepEdge& edge = brep.NewEdge(v0,v1,curve);
+    ON_BrepEdge& edge = brep.NewEdge(v0, v1, curve);
     edge.m_tolerance = 0.0; // exact!
 }
 
@@ -880,8 +992,8 @@ MakeTwistedCubeEdges2(ON_Brep& brep)
 {
     MakeTwistedCubeEdge(brep, E, F, EF);
     MakeTwistedCubeEdge(brep, F, G, FG);
-    MakeTwistedCubeEdge(brep, G, H, GH);
-    MakeTwistedCubeEdge(brep, E, H, EH);
+    MakeTwistedCubeEdge(brep, G, si::H, GH);
+    MakeTwistedCubeEdge(brep, E, si::H, EH);
 }
 
 ON_Surface*
@@ -944,8 +1056,8 @@ TwistedCubeTrimmingCurve(const ON_Surface& s,
 	default:
 	    return NULL;
     }
-    ON_Curve* c2d = new ON_LineCurve(from,to);
-    c2d->SetDomain(0.0,1.0);
+    ON_Curve* c2d = new ON_LineCurve(from, to);
+    c2d->SetDomain(0.0, 1.0);
     return c2d;
 }
 
@@ -975,7 +1087,7 @@ MakeTwistedCubeTrimmingLoop(ON_Brep& brep,
 
     for (int side = 0; side < 4; side++) {
 	// side: 0=south, 1=east, 2=north, 3=west
-	c2 = TwistedCubeTrimmingCurve( srf, side );
+	c2 = TwistedCubeTrimmingCurve(srf, side );
 	c2i = brep.m_C2.Count();
 	brep.m_C2.Append(c2);
 
@@ -1061,7 +1173,7 @@ MakeTwistedCubeFaces2(ON_Brep& brep)
     MakeTwistedCubeFace(brep,
 			FEHG, // index of surface geometry
 			+1,   // orientation of surface w.r.t. brep
-			F, E, H, G, // indices of vertices listed in order
+			F, E, si::H, G, // indices of vertices listed in order
 			EF, -1, // south edge, orientation w.r.t. trimming curve?
 			EH, +1, // east edge, orientation w.r.t. trimming curve?
 			GH, -1,
@@ -1114,6 +1226,7 @@ MakeTwistedSquare1(ON_TextLog& error_log)
     return brep;
 }
 
+
 ON_Brep*
 MakeTwistedSquare2(ON_TextLog& error_log)
 {
@@ -1138,15 +1251,15 @@ MakeTwistedSquare2(ON_TextLog& error_log)
     // chosen so that the end vertices are in alphabetical order
     brep->m_C3.Append(TwistedCubeEdgeCurve(point[E], point[F])); // EF
     brep->m_C3.Append(TwistedCubeEdgeCurve(point[F], point[G])); // FG
-    brep->m_C3.Append(TwistedCubeEdgeCurve(point[G], point[H])); // GH
-    brep->m_C3.Append(TwistedCubeEdgeCurve(point[E], point[H])); // EH
+    brep->m_C3.Append(TwistedCubeEdgeCurve(point[G], point[si::H])); // GH
+    brep->m_C3.Append(TwistedCubeEdgeCurve(point[E], point[si::H])); // EH
 
     // create the 12 edges the connect the corners
     MakeTwistedCubeEdges2(*brep);
 
     // create the 3d surface geometry. the orientations are arbitrary so
     // some normals point into the cube and other point out... not sure why
-    brep->m_S.Append(TwistedCubeSideSurface(point[E], point[F], point[G], point[H]));
+    brep->m_S.Append(TwistedCubeSideSurface(point[E], point[F], point[G], point[si::H]));
 
     // create the faces
     MakeTwistedCubeFaces2(*brep);
@@ -1160,11 +1273,13 @@ MakeTwistedSquare2(ON_TextLog& error_log)
     return brep;
 }
 
+
 void
 printPoints(struct rt_brep_internal* bi)
 {
     ON_TextLog tl(stdout);
     ON_Brep* brep = bi->brep;
+
     if (brep) {
 	const int count = brep->m_V.Count();
 	for (int i = 0; i < count; i++) {
@@ -1176,17 +1291,21 @@ printPoints(struct rt_brep_internal* bi)
     }
 }
 
-}
 
 int main()
 {
+#if 0
+    ON_TextLog log1, log2;
     ON_3dPoint points1[4] = {ON_3dPoint(1.0, 1.0, 1.0), ON_3dPoint(-1.0, 1.0, 1.0), ON_3dPoint(-1.0, -1.0, -1.0), ON_3dPoint(1.0, -1.0, -1.0)};
     ON_3dPoint points2[4] = {ON_3dPoint(1.0, -1.0, 1.0), ON_3dPoint(-1.0, -1.0, 1.0), ON_3dPoint(-1.0, 1.0, -1.0), ON_3dPoint(1.0, 1.0, -1.0)};
-    ON_TextLog log1, log2;
     ON_Brep *brep1 = MakeTwistedSquare1(log1);
     ON_Brep *brep2 = MakeTwistedSquare2(log2);
+#endif
+
     ON_ClassArray<ON_Curve *> out1, out2;
+
     /* SurfaceSurfaceIntersect(surf1, surf2, 1e-4, 1e-10, out1, out2); */
+
     return 0;
 }
 
