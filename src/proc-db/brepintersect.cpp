@@ -168,9 +168,8 @@ bool PointInMesh(
 	const ON_Mesh *mesh
 	)
 {
-    bool inside = false;
     ON_3dPoint triangles[2][3];
-    int n_triangles;
+    int n_triangles = 0;
     int i, j;
     for (i = 0; i < mesh->m_F.Count(); i++) {
 	ON_MeshFace face = mesh->m_F[i];
@@ -187,9 +186,10 @@ bool PointInMesh(
 	    n_triangles = 2;
 	}
 	for (j = 0; j < n_triangles; j++) {
-	    
+	    /* XXX unimplemented */
 	}
     }
+    return 0;
 }
 
 /* finds the intersection point between segments x1,x2 and x3,x4
@@ -320,7 +320,7 @@ int SegmentSegmentIntersect(
 	    assert(points <= 2);
 	    return points;
 	}
-    } else{
+    } else {
 	double s = VDOT(CXB, AXB)/MAGSQ(AXB);
 	double t = VDOT(negCXA, BXA)/MAGSQ(BXA);
 	/* now we need to perform some tests to make sure we're not
@@ -331,9 +331,12 @@ int SegmentSegmentIntersect(
 	    assert(VAPPROXEQUAL(Ps, Qt, tol)); /* check to see if they agree, just a sanity check*/
 	    x[0] = Ps;
 	    return 1;
-	} else /* this happens when the lines through x1,x2 and x3,x4 intersect but not the segments*/
+	} else {
+	    /* this happens when the lines through x1,x2 and x3,x4 intersect but not the segments*/
 	    return 0;
+	}
     }
+    return 0;
 }
 
 /* SegmentPolylineIntersect 
@@ -618,7 +621,7 @@ int Triangulate(
 	)
 {
     /* first we need to link the paths together */
-    int i, j, k, l, m;
+    int i, j, k, l;
     bool intersectfree;
     while (paths.Count() > 1) {
 	/* we're going to merge paths[0] with some other path */
@@ -638,12 +641,13 @@ int Triangulate(
 			    paths[i].Insert(k + l, paths[0][(j + l) % paths[0].Count()]);
 			}
 		    } else {
-			break ;
+			break;
 		    }
 		}
 	    }
 	}
     }
+
     /* Now we have one continous path and we need to triangulate it
      * I'm pretty sure it's true that given a planer path there exist
      * 3 consecutive points a,b,c s.t. ac doesn't intersect any line in
@@ -661,6 +665,8 @@ int Triangulate(
 	    }
 	}
     }
+
+    return 0;
 }
 
 /* class TriEdgeIntersections
@@ -745,6 +751,8 @@ int TriIntersections::InsertPoint(
 	    return i;
 	}
     }
+
+    return 0;
 }
 
 int TriIntersections::AddLine(
@@ -831,8 +839,9 @@ int TriIntersections::Faces(
 	outlines.Append(outline);
 	line_external.Append(ext);
     }
-    /* now we need to setup the ternality tree for the paths */
+    /* XXX - now we need to setup the ternality tree for the paths */
 
+    return 0;
 }
 
 /* Class: PointIndex
@@ -910,6 +919,8 @@ int MeshTriangulate(
 	    i--; /* we just lost an element in the array so the cursor would be off by one */
 	}
     }
+
+    return 0;
 }
 
 /* Intersect two meshes and returns their intersection in Polylines (ON_3dPoint arrays)
@@ -939,6 +950,8 @@ int MeshMeshIntersect(
 	    }
 	}
     }
+
+    return 0;
 }
 
 int main()
