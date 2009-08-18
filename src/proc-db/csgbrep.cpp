@@ -50,7 +50,7 @@ int
 main(int argc, char** argv)
 {
     struct rt_wdb* outfp;
-    struct rt_db_internal *tmp_internal;
+    struct rt_db_internal *tmp_internal = (struct rt_db_internal *) bu_malloc(sizeof( struct rt_db_internal), "allocate structure");
     RT_INIT_DB_INTERNAL(tmp_internal);
     struct bn_tol tmptol;
     tmptol.dist = 0.005;
@@ -64,9 +64,9 @@ main(int argc, char** argv)
     outfp = wdb_fopen("csgbrep.g");
     const char* id_name = "CSG B-Rep Examples";
     mk_id(outfp, id_name);
-/*
+
     bu_log("Writing a Spherical  b-rep...\n");
-    ON_Brep* sphbrep = new ON_Brep();
+    ON_Brep* sphbrep = ON_Brep::New();
     struct  rt_ell_internal *sph;
     BU_GETSTRUCT( sph, rt_ell_internal);
     sph->magic = RT_ELL_INTERNAL_MAGIC;
@@ -79,15 +79,13 @@ main(int argc, char** argv)
     VMOVE( sph->b, b );
     VMOVE( sph->c, c );
     tmp_internal->idb_ptr = (genptr_t)sph;
-    rt_sph_brep(&sphbrep, (struct rt_db_internal*)tmp_internal, tol);
+    rt_sph_brep(&sphbrep, tmp_internal, tol);
     const char* sph_name = "sph_nurb.s";
     mk_brep(outfp, sph_name, sphbrep);
     delete sphbrep;
- */
-    ON::End();
-    ON::Begin();
+
     bu_log("Writing an Ellipsoidal b-rep...\n");
-    ON_Brep* ellbrep = new ON_Brep();
+    ON_Brep* ellbrep = ON_Brep::New();
     struct  rt_ell_internal *ell;
     BU_GETSTRUCT(ell, rt_ell_internal);
     ell->magic = RT_ELL_INTERNAL_MAGIC;
@@ -100,7 +98,7 @@ main(int argc, char** argv)
     VMOVE( ell->b, b );
     VMOVE( ell->c, c );
     tmp_internal->idb_ptr = (genptr_t)ell;
-    rt_ell_brep(&ellbrep, (struct rt_db_internal*)tmp_internal, tol);
+    rt_ell_brep(&ellbrep, tmp_internal, tol);
     const char* ell_name = "ell_nurb.s";
     mk_brep(outfp, ell_name, ellbrep);
     delete ellbrep;
@@ -128,6 +126,7 @@ main(int argc, char** argv)
     delete brep;
 */ 
 
+    bu_free(tmp_internal, "free tmp_internal");
     wdb_close(outfp);
 
     ON::End();
