@@ -29,7 +29,7 @@
 #include "rtgeom.h"
 #include "opennurbs_torus.h"
 
-void
+extern "C" void
 rt_tor_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *)
 {
     struct rt_tor_internal *tip;

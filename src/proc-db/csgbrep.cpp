@@ -41,6 +41,7 @@ extern "C" {
 #include "wdb.h"
 extern void rt_sph_brep(ON_Brep **bi, struct rt_db_internal *ip, const struct bn_tol *tol);
 extern void rt_ell_brep(ON_Brep **bi, struct rt_db_internal *ip, const struct bn_tol *tol);
+extern void rt_tor_brep(ON_Brep **bi, struct rt_db_internal *ip, const struct bn_tol *tol);
 
 #ifdef __cplusplus
 }
@@ -103,28 +104,22 @@ main(int argc, char** argv)
     mk_brep(outfp, ell_name, ellbrep);
     delete ellbrep;
     
-/* 
     bu_log("Writing a Torus b-rep...\n");
-    ON_Brep* brep = new ON_Brep();
+    ON_Brep* torbrep = ON_Brep::New();
     struct rt_tor_internal *tor;
     BU_GETSTRUCT( tor, rt_tor_internal );
     tor->magic = RT_TOR_INTERNAL_MAGIC;
+    VSET(center, 0, 0, 0);
+    VSET(a, 0, 0, 1);
     VMOVE( tor->v, center );
-    VMOVE( tor->h, inorm );
-    tor->r_a = r1;
-    tor->r_h = r2;
-    rt_tor_brep(brep, (struct rt_brep_internal*)ip.idb_ptr, (const struct bn_tol*)ip.rti_tol);
-    const char* geom_name = "sph_nurb.s";
-    mk_brep(outfp, geom_name, brep);
-    delete brep;
-
-    bu_log("Writing a   b-rep...\n");
-    ON_Brep* brep = new ON_Brep();
-    rt_sph_brep(brep, (struct rt_brep_internal*)ip.idb_ptr, (const struct bn_tol*)ip.rti_tol);
-    const char* geom_name = "sph_nurb.s";
-    mk_brep(outfp, geom_name, brep);
-    delete brep;
-*/ 
+    VMOVE( tor->h, a );
+    tor->r_a = 5.0;
+    tor->r_h = 2.0;
+    tmp_internal->idb_ptr = (genptr_t)tor;
+    rt_tor_brep(&torbrep, tmp_internal, tol);
+    const char* tor_name = "tor_nurb.s";
+    mk_brep(outfp, tor_name, torbrep);
+    delete torbrep;
 
     bu_free(tmp_internal, "free tmp_internal");
     wdb_close(outfp);

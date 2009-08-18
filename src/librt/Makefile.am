@@ -166,6 +166,7 @@ librt_nil_la_SOURCES = \
 	primitives/tgc/tgc.c \
 	primitives/tgc/tgc_mirror.c \
 	primitives/tor/tor.c \
+	primitives/tor/tor_brep.cpp \
 	primitives/tor/tor_mirror.c \
 	primitives/vol/vol.c \
 	regionfix.c \
@@ -223,7 +224,6 @@ EXTRA_DIST = \
 	pmalloc.c \
 	primitives/bot/g_bot_include.c \
 	primitives/nmg/nmg_brep.cpp \
-	primitives/tor/tor_brep.cpp \
 	timer-nt.c \
 	timer52brl.c \
 	timerhep.c \
