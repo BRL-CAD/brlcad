@@ -1862,6 +1862,14 @@ GED_EXPORT BU_EXTERN(int ged_hide, (struct ged *gedp, int argc, const char *argv
 GED_EXPORT BU_EXTERN(int ged_how, (struct ged *gedp, int argc, const char *argv[]));
 
 /**
+ * Create a human
+ *
+ * Usage:
+ *     human [options]
+ */
+GED_EXPORT BU_EXTERN(int ged_human, (struct ged *gedp, int argc, const char *argv[]));
+
+/**
  * Illuminate/highlight database object.
  *
  * Usage:

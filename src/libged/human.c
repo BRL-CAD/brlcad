@@ -1633,7 +1633,7 @@ int read_args(int argc, char **argv, struct human_data_t *dude, fastf_t *percent
 }
 
 int
-ged_human(struct ged *gedp, int ac, char *av[])
+ged_human(struct ged *gedp, int ac, const char *av[])
 {
     bu_log("Entering Human Builder\n");
 /*    struct rt_wdb *gedp->ged_wdbp; */
