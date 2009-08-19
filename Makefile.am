@@ -324,8 +324,10 @@ dist-hook:
 	find $(distdir) -type d \( -name 'CVS' -or -name '.svn' \) -prune -exec rm -rf {} \;
 	dir="`pwd`" ; cd $(top_srcdir) ; \
         ${SH} $(top_srcdir)/sh/cmakecheck.sh ; \
-	if test $$? -ne 0 ; then \
+	ret=$$? ; \
+	if test "x$$ret" != "x0" ; then \
 		echo "NEED TO SYNC CMAKELISTS.TXT" ; \
+		exit 1 ; \
 	fi ; \
         cd "$$dir"
 
