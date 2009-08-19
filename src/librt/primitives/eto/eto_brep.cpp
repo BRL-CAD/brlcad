@@ -64,9 +64,9 @@ rt_eto_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *t
     //  a vector at a right angle to the eto normal, unitize it
     //  and scale it.
 
-    bn_vec_ortho( v1, eip->eto_N );
-    VSET(v1a, -v1[0], -v1[1], -v1[2]);
-    VCROSS(v1,v1a,eip->eto_N);
+    VCROSS(v1, eip->eto_C, eip->eto_N);
+    VCROSS(v1a, v1, eip->eto_N);
+    VSET(v1, -v1a[0], -v1a[1], -v1a[2]);
     VUNITIZE( v1 );
     VSCALE(v1, v1, eip->eto_r);
     VMOVE(x_dir, eip->eto_C);
