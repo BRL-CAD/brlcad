@@ -473,8 +473,7 @@
 	-m $ManualMode \
 	-N $NumberSoldiers \
 	-p $percentile \
-	-s $Stance \
-	$wizardTop
+	-s $Stance 
 
     # Add wizard attributes
     addWizardAttrs $wizardTop 0

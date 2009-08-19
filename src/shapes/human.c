@@ -34,7 +34,7 @@
 #include "wdb.h"
 #include "ged.h"
 
-#define DEFAULT "human.g"
+#define DEFAULT_FILENAME "human.g"
 
 int main(int ac, char *av[])
 {
@@ -43,7 +43,7 @@ int main(int ac, char *av[])
     int ret;
     const char *filename = NULL;
 
-    filename = DEFAULT;
+    filename = DEFAULT_FILENAME;
 
     db_fp = wdb_fopen(filename);
 
