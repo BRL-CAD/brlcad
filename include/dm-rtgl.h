@@ -27,6 +27,7 @@
 #define __DM_RTGL__
 
 #include "dm_color.h"
+#include "vmath.h"
 
 #ifdef HAVE_GL_GLX_H
 #  include <GL/glx.h>
@@ -90,6 +91,10 @@ struct jobList {
     int used;
     struct job jobs[JOB_ARRAY_SIZE];
 };
+
+#define COPY_JOB(a, b) \
+    VMOVE(((struct job)a).pt, ((struct job)b).pt);	\
+    VMOVE(((struct job)a).dir, ((struct job)b).dir);
 
 #define START_TABLE_SIZE 64
 #define KEY_LENGTH 3

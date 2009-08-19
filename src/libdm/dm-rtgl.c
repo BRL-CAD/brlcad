@@ -1369,51 +1369,128 @@ void swapItems(struct bu_list *a, struct bu_list *b) {
     }
 }
 
+int numJobs = 0;
+
+struct jobList **jobsArray = NULL;
+
+/* get nth job from job list */
+struct job* getJob(int n) {
+    int bin, index, start;
+
+    if (n > numJobs)
+	return (struct job *)NULL;	
+
+    n--; /* meta-index of nth item */
+
+    /* determine what bin holds the nth item */
+    bin = (double) n / JOB_ARRAY_SIZE;
+
+    /* meta-index of first item in bin */
+    start = bin * JOB_ARRAY_SIZE;
+
+    /* actual index of nth item in bin */
+    index = n - start;
+
+    /* get the bin link */
+    currJob = jobsArray[bin];
+
+    return &(currJob->jobs[index]);
+}
+
+/* Fisher-Yates shuffle */
 void shuffleJobs(void) {
-    int i, j, swap, numJobs = 0;
+    int i;
+    struct job *a, *b, temp;
+
+    for (i = numJobs; i > 0; i--) {
+
+	a = getJob(i);
+	b = getJob((rand() % i) + 1);
+
+	/* swap current and rand element */
+	COPY_JOB(temp, *a);
+	COPY_JOB(*a, *b);
+	COPY_JOB(*b, temp);
+    }
+}
+
+void oldShuffleJobs(void) {
+    int i, j, swap, elements, minLength, currUsed, nextUsed;
     struct bu_list *pick, *curr;
+    struct jobList *this, *next;
+    struct job temp, *a, *b;
 
     /* list cannot be empty */
-    if (jobs.l.forw != NULL && (struct jobList *)jobs.l.forw != &jobs) {
+    if (jobs.l.forw == NULL || (struct jobList *)jobs.l.forw == &jobs)
+	return;
 
-	/* count list items */
-	for (BU_LIST_FOR(currJob, jobList, &(jobs.l))) {
-	    numJobs++;
-	}
-
-	/* randomize list (Fisher-Yates shuffle) */
-	for (i = numJobs - 1; i > 1; i--) {
-	   
+    /* randomize job groups (Fisher-Yates shuffle) */
+    elements = ceil(numJobs / JOB_ARRAY_SIZE);
+    
+    for (i = elements - 1; i > 1; i--) {
+	
+	swap = (rand() % i) + 1;
+	
+	/* swapping distinct items */
+	if (swap != i) {
+	    
 	    j = 0;
-	    swap = (rand() % i) + 1;
 	    pick = curr = NULL;
-
-	    if (swap != i) {
-
-		for (BU_LIST_FOR(currJob, jobList, &(jobs.l))) {
-		    
-		    j++;
-		    
-		    /* element being set */
-		    if (j == i) {
-			curr = &(currJob->l);
-		    }
-		    
-		    /* random element to set it to*/
-		    if (j == swap) {
-			pick = &(currJob->l);
-		    }
-		    
-		    if (pick != NULL && curr != NULL) {
-			break;
-		    }
+	    
+	    for (BU_LIST_FOR(currJob, jobList, &(jobs.l))) {
+		
+		j++;
+		
+		/* element being set */
+		if (j == i) {
+		    curr = &(currJob->l);
 		}
 		
-		/* swap random element into position */
-		if (pick != &(jobs.l) && curr != &(jobs.l)) {
-		    swapItems(pick, curr);
-		} else {
-		    bu_log("null");
+		/* random element to set it to*/
+		if (j == swap) {
+		    pick = &(currJob->l);
+		}
+		
+		if (pick != NULL && curr != NULL) {
+		    break;
+		}
+	    }
+	    
+	    /* swap random element into position */
+	    swapItems(pick, curr);
+	}
+    }
+
+    /* swap job items */
+    for (BU_LIST_FOR_BACKWARDS(currJob, jobList, &(jobs.l))) {
+
+	/* get group pair */
+	this = currJob;
+	next = (struct jobList *)currJob->l.forw;
+
+	if (next != &jobs) {
+
+	    /* determine max loop index */
+	    nextUsed = next->used;
+	    minLength = currUsed = this->used;	
+	    
+	    if (nextUsed < currUsed)
+		minLength = nextUsed;
+	    
+	    minLength = (double) minLength / 3.0;
+	    
+	    /* iterate through groups' arrays */
+	    for (j = 0; j < minLength; j++) {
+		
+		/* swap about half the items */
+		if (rand() % 2) {
+		    
+		    a = &(this->jobs[j]);
+		    b = &(next->jobs[j]);
+		    
+		    COPY_JOB(temp, *a);
+		    COPY_JOB(*a, *b);
+		    COPY_JOB(*b, temp);
 		}
 	    }
 	}
@@ -1432,12 +1509,12 @@ void shootGrid(vect_t min, vect_t max, double maxSpan, int pixels, int uAxis, in
     int uDivs = pixels * (span[uAxis] / maxSpan);
     int vDivs = pixels * (span[vAxis] / maxSpan);
 
-#if 1
+#if 0
     uDivs /= 2;
     vDivs /= 2;
 #endif
 
-    bu_log("adding %d x %d jobs", uDivs, vDivs);
+    bu_log("adding %d x %d jobs\n", uDivs, vDivs);
 
     fastf_t uWidth = span[uAxis] / uDivs;
     fastf_t vWidth = span[vAxis] / vDivs;
@@ -1467,7 +1544,7 @@ void shootGrid(vect_t min, vect_t max, double maxSpan, int pixels, int uAxis, in
 	    if (currJob->used == JOB_ARRAY_SIZE) {
 
 		BU_GETSTRUCT(currJob, jobList);
-		BU_LIST_INSERT(jobs.l.back, (struct bu_list *)currJob);
+		BU_LIST_PUSH(&(jobs.l), currJob);
 		currJob->used = 0;
 	    }
 	    
@@ -1475,6 +1552,8 @@ void shootGrid(vect_t min, vect_t max, double maxSpan, int pixels, int uAxis, in
 	    VMOVE(currJob->jobs[currJob->used].dir, app.a_ray.r_dir);
 
 	    currJob->used++;
+
+	    numJobs++;
 	}
 	
 	/* reset u */
@@ -1482,31 +1561,44 @@ void shootGrid(vect_t min, vect_t max, double maxSpan, int pixels, int uAxis, in
     }
 }
 
+int numShot = 0;
+
 /* return 1 if all jobs done, 0 if not */
 int shootJobs(void) {
-    int i;
+    int i, j, last;
     double elapsed_time;
 
     /* list cannot be empty */
-    if (jobs.l.forw != NULL && (struct jobList *)jobs.l.forw != &jobs) {
+    if (jobsArray != NULL) {
+	
+	last = numJobs - numShot;
+	last /= JOB_ARRAY_SIZE;
+	last++;
 
-	while (BU_LIST_WHILE(currJob, jobList, &(jobs.l))) {
+	while (jobsArray[last] == NULL) {
+	    last--;
+	}
 
-	    /* shoot all jobs in this array */
-	    for (i = 0; i < currJob->used; i++) {
-		VMOVE(app.a_ray.r_pt, currJob->jobs[i].pt);
-		VMOVE(app.a_ray.r_dir, currJob->jobs[i].dir);
+	for (i = last; i > 0; i--) {
+	    currJob = jobsArray[i];
+	    jobsArray[i] = NULL;
 
+	    for (j = 0; j < currJob->used; j++) {
+		VMOVE(app.a_ray.r_pt, currJob->jobs[j].pt);
+		VMOVE(app.a_ray.r_dir, currJob->jobs[j].dir);
+		
 		rt_shootray(&app);
 	    }
 
-	    /* free memory for this item */
+	    numShot += currJob->used;
+    
 	    BU_LIST_DEQUEUE(&(currJob->l));
 	    bu_free(currJob, "free jobs currJob");
 
 	    (void)rt_get_timer( (struct bu_vls *)0, &elapsed_time);
 	    if (elapsed_time > .1) /* 100ms */
 		return 0;
+	    
 	}
 
 	jobs.l.forw = BU_LIST_NULL;
@@ -1552,6 +1644,7 @@ void drawPoints(float *view, int pointSize) {
 	
 	for (BU_LIST_FOR(currItem, ptInfoList, head)) {
 	    numPoints = currItem->used / 3;
+
 #if 1
 	    glBegin(GL_POINTS);
 	    for (i = 0; i < numPoints; i++) {
@@ -1562,16 +1655,11 @@ void drawPoints(float *view, int pointSize) {
 		normal[Z] = currItem->norms[Z + index];
 		
 		dot = VDOT(view, normal);
-#if 0
-		/* make all normals face front*/
-		if (dot < 0) {
-		    VREVERSE(normal, normal);
-		}
-#endif
+		
 		/* draw if visible */
 		if (dot > 0) {
-		    glNormal3f(normal[X], normal[Y], normal[Z]);
-		    glVertex3f(currItem->points[X + index], currItem->points[Y + index], currItem->points[Z + index]);
+		    glNormal3fv(normal);
+		    glVertex3fv(&(currItem->points[index]));
 		}
 	    }
 	    glEnd();
@@ -1820,6 +1908,11 @@ rtgl_drawVList(struct dm *dmp, register struct bn_vlist *vp)
 	    colorTable = NULL;
 	}
 
+	if (jobsArray != NULL) {
+	    bu_free(jobsArray, "dm-rtgl.c: jobsArray");
+	    jobsArray = NULL;
+	}
+
 	RTGL_DIRTY = 0;
 
 	/* reset for dynamic z-clipping */
@@ -1828,6 +1921,7 @@ rtgl_drawVList(struct dm *dmp, register struct bn_vlist *vp)
 	}
 
 	maxSpan = 0.0;
+	numShot = numJobs = 0;
 
 	return TCL_OK;
     }
@@ -1895,8 +1989,18 @@ rtgl_drawVList(struct dm *dmp, register struct bn_vlist *vp)
 	shootGrid(min, max, maxSpan, maxPixels, X, Y, Z);
 	shootGrid(min, max, maxSpan, maxPixels, Z, X, Y);
 	shootGrid(min, max, maxSpan, maxPixels, Y, Z, X);
-#if 0
+
+	/* create job array */
+	jobsArray = bu_malloc(sizeof(struct jobList *) * numJobs, "dm-rtgl.c:getJob");
+	    
+	i = 0;
+	for (BU_LIST_FOR_BACKWARDS(currJob, jobList, &(jobs.l))) {
+	    jobsArray[i++] = currJob;
+	}
+
+#if 1
 	shuffleJobs();
+	bu_log("shuffled jobs");
 #endif
 #else
         /* use length of bounding box's longest diagonal as radius of bounding sphere */
@@ -1920,20 +2024,27 @@ rtgl_drawVList(struct dm *dmp, register struct bn_vlist *vp)
     VSET(vCenter, 0, 0, 0);
     aeVect(view, gedp->ged_gvp->gv_aet, vCenter, 1);
 
-    /* determine point size */
-    int pointSize = 4;
+    /* adjust point size based on zoom */
+    int pointSize = 2;
 
     if (maxSpan != 0.0) {
 	double ratio = maxSpan / viewSize;
 
-	pointSize = 4 * ratio;
+	pointSize = 2 * ratio;
+    }
 
-	if (pointSize < 1)
-	    pointSize = 1;
+    /* adjust point size based on % jobs completed */
+    double p = (double) numShot / (double) numJobs;
+    pointSize = ceil((double)pointSize / p);
+
+    if (pointSize < 1)
+	pointSize = 1;
+
+    if (pointSize > 10) {
+	pointSize = 10;
     }
 
     float fview[3];
-
     VMOVE(fview, view);
 
     drawPoints(fview, pointSize);
