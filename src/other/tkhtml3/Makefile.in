@@ -482,8 +482,15 @@ install-lib-binaries: binaries
 	  fi; \
 	done
 	@if test "x$(SHARED_BUILD)" = "x1"; then \
-	    echo " Install pkgIndex.tcl $(DESTDIR)$(pkglibdir)"; \
-	    $(INSTALL_DATA) pkgIndex.tcl $(DESTDIR)$(pkglibdir); \
+	    if test -f $(srcdir)/pkgIndex.tcl ; then \
+		echo " Install $(srcdir)/pkgIndex.tcl $(DESTDIR)$(pkglibdir)"; \
+		$(INSTALL_DATA) $(srcdir)/pkgIndex.tcl $(DESTDIR)$(pkglibdir); \
+	    else \
+		if test -f pkgIndex.tcl ; then \
+		    echo " Install pkgIndex.tcl $(DESTDIR)$(pkglibdir)"; \
+		    $(INSTALL_DATA) pkgIndex.tcl $(DESTDIR)$(pkglibdir); \
+		fi; \
+	    fi; \
 	fi
 
 #appease dvi-recursive rule from the top-level Makefile so this works as a SUBDIR
