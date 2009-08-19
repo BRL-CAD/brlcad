@@ -1362,7 +1362,7 @@ void show_help(const char *name, const char *optstr)
 	   "\t-m\t\tManual sizing mode\n"
 	   "\t-H\t\tSet Height in inches\n"
 	   "\t-L\t\tSet Center Point in inches, at feet (default 0 0 0)\n"
-	   "\t-o\t\tSet output file name\n"
+/*	   "\t-o\t\tSet output file name\n" */
 	   "\t-b\t\tShow bounding Boxes\n"
 	   "\t-n\t\tSet bounding region name, default Body.c\n"
 	   "\t-N\t\tNumber to make (square)\n"
@@ -1475,14 +1475,14 @@ int read_args(int argc, char **argv, struct human_data_t *dude, fastf_t *percent
                 *troops = (float)soldiers;
 		fflush(stdin);
                 break;
-
+/*
 	    case 'o':
 	    case 'O':
 		memset(filename, 0, MAXLENGTH);
 		bu_strlcpy(filename, bu_optarg, MAXLENGTH);
 		fflush(stdin);
 		break;
-
+*/
 	    case 'p':
 		sscanf(bu_optarg, "%d", &percent);
 		if(percent < 1)
@@ -1636,7 +1636,7 @@ int
 ged_human(struct ged *gedp, int ac, const char *av[])
 {
     bu_log("Entering Human Builder\n");
-/*    struct rt_wdb *gedp->ged_wdbp; */
+   
     struct wmember human;
     struct wmember boxes;
     struct wmember hollow;

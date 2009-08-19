@@ -47,7 +47,7 @@ int main(int ac, char *av[])
 
     db_fp = wdb_fopen(filename);
 
-    mk_id_units(db_fp, "dude", "in");
+    mk_id_units(db_fp, "Human Model", "in");
 
     GED_INIT(&ged, db_fp);
     bu_log("Building\n");
