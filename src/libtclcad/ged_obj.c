@@ -639,6 +639,7 @@ static struct go_cmdtab go_cmds[] = {
     {"grid",	"vname args", 6, go_view_func, ged_grid},
     {"hide",	(char *)0, MAXARGS, go_pass_through_func, ged_hide},
     {"how",	(char *)0, MAXARGS, go_pass_through_func, ged_how},
+    {"human",	(char *)0, MAXARGS, go_pass_through_func, ged_human},
     {"i",	(char *)0, MAXARGS, go_pass_through_func, ged_instance},
     {"idents",	(char *)0, MAXARGS, go_pass_through_func, ged_tables},
     {"idle_mode",	"vname", MAXARGS, go_idle_mode, GED_FUNC_PTR_NULL},

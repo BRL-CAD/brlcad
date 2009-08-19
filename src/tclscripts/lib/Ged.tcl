@@ -182,6 +182,7 @@ package provide cadwidgets::Ged 1.0
 	method grid {args}
 	method hide {args}
 	method how {args}
+	method human {args}
 	method i {args}
 	method idents {args}
 	method idle_mode {args}
@@ -1080,6 +1081,10 @@ package provide cadwidgets::Ged 1.0
 
 ::itcl::body cadwidgets::Ged::how {args} {
     eval $mGed how $args
+}
+
+::itcl::body cadwidgets::Ged::human {args} {
+    eval $mGed human $args
 }
 
 ::itcl::body cadwidgets::Ged::i {args} {

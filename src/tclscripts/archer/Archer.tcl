@@ -177,6 +177,7 @@ package provide Archer 1.0
 	method facetize            {args}
 	method fracture            {args}
 	method g                   {args}
+	method human               {args}
 	method i                   {args}
 	method in                  {args}
 	method inside              {args}
@@ -1130,6 +1131,10 @@ package provide Archer 1.0
 #
 ::itcl::body Archer::g {args} {
     eval combWrapper g 2 $args
+}
+
+::itcl::body Archer::human {args} {
+    eval ArcherCore::gedWrapper human 0 0 1 1 $args
 }
 
 ::itcl::body Archer::i {args} {
