@@ -53,7 +53,7 @@ rt_eto_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *t
 
     double ell_axis_len_1, ell_axis_len_2;
     
-    //  First, find a plane in 3 space with both x and y axis
+    //  First, find a plane in 3 space with x and y axes
     //  along an axis of the ellipse to be rotated, and its
     //  coordinate origin at the center of the ellipse.
     //
@@ -90,17 +90,16 @@ rt_eto_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *t
     //  around eto_N 
  
     ON_NurbsCurve* ellcurve = ellipse->GetNurbsForm();
-    ON_Line* revaxis = eip->eto_V, eip->eto_N; 
-    
-	ON_RevSurface* eto_surf = ON_RevSurface::New();
+    ON_3dPoint eto_vertex_pt = ON_3dPoint(eto->eto_V);
+    ON_3dPoint eto_normal_pt = ON_3dPoint(eto->eto_N);
+    ON_Line* revaxis = ON_Line(eto_vertex_pt, eto_normal_pt);
+    ON_RevSurface* eto_surf = ON_RevSurface::New();
     eto_surf->m_curve = ellcurve;
     eto_surf->m_axis = revaxis;
-    eto_surf->m_angle = angle;
-    eto_surf->m_t = t;
 
     /* Create brep with one face*/
     *b = ON_Brep::New();
-    (*b)->NewFace(*brep_ell_surf(unit2model));
+    (*b)->NewFace(eto_surf);
 //    (*b)->Standardize();
  //   (*b)->Compact();
 }
