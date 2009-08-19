@@ -41,6 +41,7 @@ extern "C" {
 #include "wdb.h"
 extern void rt_sph_brep(ON_Brep **bi, struct rt_db_internal *ip, const struct bn_tol *tol);
 extern void rt_ell_brep(ON_Brep **bi, struct rt_db_internal *ip, const struct bn_tol *tol);
+extern void rt_eto_brep(ON_Brep **bi, struct rt_db_internal *ip, const struct bn_tol *tol);
 extern void rt_tor_brep(ON_Brep **bi, struct rt_db_internal *ip, const struct bn_tol *tol);
 
 #ifdef __cplusplus
@@ -57,7 +58,7 @@ main(int argc, char** argv)
     tmptol.dist = 0.005;
     const struct bn_tol *tol = &tmptol;
     point_t center;
-    vect_t a, b, c;
+    vect_t a, b, c, N;
     ON_TextLog error_log;
 
     ON::Begin();
@@ -120,6 +121,26 @@ main(int argc, char** argv)
     const char* tor_name = "tor_nurb.s";
     mk_brep(outfp, tor_name, torbrep);
     delete torbrep;
+
+    bu_log("Writing an Elliptical Torus b-rep...\n");
+    ON_Brep* etobrep = ON_Brep::New();
+    struct rt_eto_internal *eto;
+    BU_GETSTRUCT( eto, rt_eto_internal );
+    eto->eto_magic = RT_ETO_INTERNAL_MAGIC;
+    VSET(center, 0, 0, 0);
+    VSET(N, 0, 0, 1);
+    VSET(a, 200, 0, 200);
+    VMOVE( eto->eto_V, center );
+    VMOVE( eto->eto_N, N );
+    VMOVE( eto->eto_C, a );
+    eto->eto_r = 800;
+    eto->eto_rd = 100;
+    tmp_internal->idb_ptr = (genptr_t)eto;
+    rt_eto_brep(&etobrep, tmp_internal, tol);
+    const char* eto_name = "eto_nurb.s";
+    mk_brep(outfp, eto_name, etobrep);
+    delete etobrep;
+
 
     bu_free(tmp_internal, "free tmp_internal");
     wdb_close(outfp);
