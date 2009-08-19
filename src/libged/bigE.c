@@ -2082,6 +2082,8 @@ ged_E(struct ged *gedp, int argc, const char *argv[])
 {
     register int i;
     register int c;
+    int ac = 1;
+    char *av[2];
     struct ged_client_data *dgcdp;
     static const char *usage = "[-C#/#/# -s] objects(s)";
 
@@ -2152,10 +2154,10 @@ ged_E(struct ged *gedp, int argc, const char *argv[])
     argc -= bu_optind;
     argv += bu_optind;
 
+    av[1] = (char *)0;
     for (i = 0; i < argc; ++i) {
 	ged_erasePathFromDisplay(gedp, argv[i]);
 	dgcdp->gdlp = ged_addToDisplay(dgcdp->gedp, argv[i]);
-    }
 
 #if 0
     gedp->ged_wdbp->wdb_ttol.magic = RT_TESS_TOL_MAGIC;
@@ -2179,7 +2181,8 @@ ged_E(struct ged *gedp, int argc, const char *argv[])
     dgcdp->nvectors = 0;
     (void)time(&dgcdp->start_time);
 
-    if (rt_gettrees(dgcdp->rtip, argc, (const char **)argv, 1)) {
+    av[0] = argv[i];
+    if (rt_gettrees(dgcdp->rtip, ac, (const char **)av, 1)) {
 	bu_ptbl_free(&dgcdp->leaf_list);
 
 	/* do not do an rt_free_rti() (closes the database!!!!) */
@@ -2219,6 +2222,7 @@ ged_E(struct ged *gedp, int argc, const char *argv[])
 	rt_clean(dgcdp->rtip);
 
 	bu_free((char *)dgcdp->rtip, "rt_i structure for 'E'");
+    }
     }
 
     ged_color_soltab(&gedp->ged_gdp->gd_headDisplay);
