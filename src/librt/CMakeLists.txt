@@ -80,6 +80,7 @@ set(LIBRT_SOURCES
     primitives/ell/ell_mirror.c
     primitives/epa/epa.c
     primitives/eto/eto.c
+    primitives/eto/eto_brep.cpp
     primitives/extrude/extrude.c
     primitives/grip/grip.c
     primitives/half/half.c
@@ -128,7 +129,7 @@ set(LIBRT_SOURCES
     primitives/tgc/tgc.c
     primitives/tgc/tgc_mirror.c
     primitives/tor/tor.c
-    primitives/tor/tor_brep.c
+    primitives/tor/tor_brep.cpp
     primitives/tor/tor_mirror.c
     primitives/vol/vol.c
     regionfix.c
