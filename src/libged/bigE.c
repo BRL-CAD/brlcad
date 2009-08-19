@@ -2160,69 +2160,69 @@ ged_E(struct ged *gedp, int argc, const char *argv[])
 	dgcdp->gdlp = ged_addToDisplay(dgcdp->gedp, argv[i]);
 
 #if 0
-    gedp->ged_wdbp->wdb_ttol.magic = RT_TESS_TOL_MAGIC;
-    gedp->ged_wdbp->wdb_ttol.rel = 0.01;
+	gedp->ged_wdbp->wdb_ttol.magic = RT_TESS_TOL_MAGIC;
+	gedp->ged_wdbp->wdb_ttol.rel = 0.01;
 #endif
 
-    dgcdp->ap = (struct application *)bu_malloc(sizeof(struct application), "Big E app");
-    RT_APPLICATION_INIT(dgcdp->ap);
-    dgcdp->ap->a_resource = &rt_uniresource;
-    rt_uniresource.re_magic = RESOURCE_MAGIC;
-    if (BU_LIST_UNINITIALIZED(&rt_uniresource.re_nmgfree))
-	BU_LIST_INIT(&rt_uniresource.re_nmgfree);
+	dgcdp->ap = (struct application *)bu_malloc(sizeof(struct application), "Big E app");
+	RT_APPLICATION_INIT(dgcdp->ap);
+	dgcdp->ap->a_resource = &rt_uniresource;
+	rt_uniresource.re_magic = RESOURCE_MAGIC;
+	if (BU_LIST_UNINITIALIZED(&rt_uniresource.re_nmgfree))
+	    BU_LIST_INIT(&rt_uniresource.re_nmgfree);
 
-    bu_ptbl_init(&dgcdp->leaf_list, 8, "leaf_list");
+	bu_ptbl_init(&dgcdp->leaf_list, 8, "leaf_list");
 
-    dgcdp->rtip = rt_new_rti(gedp->ged_wdbp->dbip);
-    dgcdp->rtip->rti_tol = gedp->ged_wdbp->wdb_tol;	/* struct copy */
-    dgcdp->rtip->useair = 1;
-    dgcdp->ap->a_rt_i = dgcdp->rtip;
+	dgcdp->rtip = rt_new_rti(gedp->ged_wdbp->dbip);
+	dgcdp->rtip->rti_tol = gedp->ged_wdbp->wdb_tol;	/* struct copy */
+	dgcdp->rtip->useair = 1;
+	dgcdp->ap->a_rt_i = dgcdp->rtip;
 
-    dgcdp->nvectors = 0;
-    (void)time(&dgcdp->start_time);
+	dgcdp->nvectors = 0;
+	(void)time(&dgcdp->start_time);
 
-    av[0] = argv[i];
-    if (rt_gettrees(dgcdp->rtip, ac, (const char **)av, 1)) {
-	bu_ptbl_free(&dgcdp->leaf_list);
+	av[0] = (char *)argv[i];
+	if (rt_gettrees(dgcdp->rtip, ac, (const char **)av, 1)) {
+	    bu_ptbl_free(&dgcdp->leaf_list);
 
-	/* do not do an rt_free_rti() (closes the database!!!!) */
-	rt_clean(dgcdp->rtip);
+	    /* do not do an rt_free_rti() (closes the database!!!!) */
+	    rt_clean(dgcdp->rtip);
 
-	bu_free((char *)dgcdp->rtip, "rt_i structure for 'E'");
-	bu_free(dgcdp, "dgcdp");
+	    bu_free((char *)dgcdp->rtip, "rt_i structure for 'E'");
+	    bu_free(dgcdp, "dgcdp");
 
-	bu_vls_printf(&gedp->ged_result_str, "Failed to get objects\n");
-	return GED_ERROR;
-    }
-    {
-	struct region *rp;
-	union E_tree *eptr;
-	struct bu_list vhead;
-	struct db_tree_state ts;
-	struct db_full_path path;
-
-	BU_LIST_INIT(&vhead);
-
-	for (BU_LIST_FOR (rp, region, &(dgcdp->rtip->HeadRegion))) {
-	    dgcdp->num_halfs = 0;
-	    eptr = build_etree(rp->reg_treetop, dgcdp);
-
-	    if (dgcdp->num_halfs)
-		fix_halfs(dgcdp);
-
-	    Eplot(eptr, &vhead, dgcdp);
-	    free_etree(eptr, dgcdp);
-	    bu_ptbl_reset(&dgcdp->leaf_list);
-	    ts.ts_mater = rp->reg_mater;
-	    db_string_to_path(&path, gedp->ged_wdbp->dbip, rp->reg_name);
-	    ged_drawH_part2(0, &vhead, &path, &ts, SOLID_NULL, dgcdp);
-	    db_free_full_path(&path);
+	    bu_vls_printf(&gedp->ged_result_str, "Failed to get objects\n");
+	    return GED_ERROR;
 	}
-	/* do not do an rt_free_rti() (closes the database!!!!) */
-	rt_clean(dgcdp->rtip);
+	{
+	    struct region *rp;
+	    union E_tree *eptr;
+	    struct bu_list vhead;
+	    struct db_tree_state ts;
+	    struct db_full_path path;
 
-	bu_free((char *)dgcdp->rtip, "rt_i structure for 'E'");
-    }
+	    BU_LIST_INIT(&vhead);
+
+	    for (BU_LIST_FOR (rp, region, &(dgcdp->rtip->HeadRegion))) {
+		dgcdp->num_halfs = 0;
+		eptr = build_etree(rp->reg_treetop, dgcdp);
+
+		if (dgcdp->num_halfs)
+		    fix_halfs(dgcdp);
+
+		Eplot(eptr, &vhead, dgcdp);
+		free_etree(eptr, dgcdp);
+		bu_ptbl_reset(&dgcdp->leaf_list);
+		ts.ts_mater = rp->reg_mater;
+		db_string_to_path(&path, gedp->ged_wdbp->dbip, rp->reg_name);
+		ged_drawH_part2(0, &vhead, &path, &ts, SOLID_NULL, dgcdp);
+		db_free_full_path(&path);
+	    }
+	    /* do not do an rt_free_rti() (closes the database!!!!) */
+	    rt_clean(dgcdp->rtip);
+
+	    bu_free((char *)dgcdp->rtip, "rt_i structure for 'E'");
+	}
     }
 
     ged_color_soltab(&gedp->ged_gdp->gd_headDisplay);
