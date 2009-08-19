@@ -223,6 +223,7 @@ EXTRA_DIST = \
 	parse.c \
 	pmalloc.c \
 	primitives/bot/g_bot_include.c \
+	primitives/eto/eto_brep.cpp \
 	primitives/nmg/nmg_brep.cpp \
 	timer-nt.c \
 	timer52brl.c \
