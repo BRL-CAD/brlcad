@@ -48,8 +48,9 @@ rt_eto_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *t
     RT_ETO_CK_MAGIC(eip);
 
     point_t p_origin;
-    vect_t v1, x_dir, y_dir;
-    ON_3dPoint plane_origin, plane_x_dir, plane_y_dir;
+    vect_t v1, v1a, x_dir, y_dir, halfx, halfy;
+    ON_3dPoint plane_origin;
+    ON_3dVector plane_x_dir, plane_y_dir;
 
     double ell_axis_len_1, ell_axis_len_2;
     
@@ -64,13 +65,13 @@ rt_eto_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *t
     //  and scale it.
 
     bn_vec_ortho( v1, eip->eto_N );
+    VSET(v1a, -v1[0], -v1[1], -v1[2]);
+    VCROSS(v1,v1a,eip->eto_N);
     VUNITIZE( v1 );
     VSCALE(v1, v1, eip->eto_r);
-    VSET(p_origin, v1[0], v1[1], v1[2]);
     VMOVE(x_dir, eip->eto_C);
-    VUNITIZE( x_dir );
-    bn_vec_ortho( y_dir, eip->eto_C );
-    VUNITIZE( y_dir );
+    bn_vec_ortho( y_dir, x_dir);
+    VSET(p_origin, v1[0], v1[1], v1[2]);
     plane_origin = ON_3dPoint(p_origin);
     plane_x_dir = ON_3dVector(x_dir);
     plane_y_dir = ON_3dVector(y_dir);
