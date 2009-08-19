@@ -1928,8 +1928,9 @@ ged_human(struct ged *gedp, int ac, const char *av[])
 	mk_lcomb(gedp->ged_wdbp, "Crowd.c", &crowd, 0, NULL, NULL, NULL, 0);
 
     /* Close database */
-    wdb_close(gedp->ged_wdbp);
-
+    bu_log("Regions Built\n");
+/*    wdb_close(gedp->ged_wdbp);
+*/
     bu_vls_free(&name);
     bu_vls_free(&str);
 

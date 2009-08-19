@@ -26,7 +26,7 @@
 ::itcl::class HumanWizard {
     inherit Wizard
 
-    constructor {_archer _wizardTop _WizardState _wizardOrigin _originUnits args} {}
+    constructor {_archer _wizardTop _wizardState _wizardOrigin _originUnits args} {}
     destructor {}
 
     public {
@@ -38,7 +38,7 @@
 	common wizardClass HumanWizard
 
 	# Methods that override Wizard methods
-	method setWizardState {_WizardState}
+	method setWizardState {_wizardState}
 
 	method drawHuman {}
 	method buildHuman {}
@@ -118,7 +118,7 @@
 #
 #
 #
-::itcl::body HumanWizard::constructor {_archer _wizardTop _WizardState _wizardOrigin _originUnits args} {
+::itcl::body HumanWizard::constructor {_archer _wizardTop _wizardState _wizardOrigin _originUnits args} {
     global env
 
     itk_component add pane {
@@ -138,7 +138,7 @@
     eval itk_initialize $args
 
     set wizardTop $_wizardTop
-    set WizardState $_WizardState
+    set wizardState $_wizardState
     set wizardOrigin $_wizardOrigin
     set wizardAction buildHuman
     set wizardXmlAction buildHumanXML
@@ -158,13 +158,13 @@
     # nothing for now
 }
 
-::itcl::body HumanWizard::setWizardState {_WizardState} {
-    set WizardState $_WizardState
+::itcl::body HumanWizard::setWizardState {_wizardState} {
+    set wizardState $_wizardState
     initWizardState
 }
 
 ::itcl::body HumanWizard::initWizardState {} {
-    foreach {vname val} $WizardState {
+    foreach {vname val} $wizardState {
 	if {[info exists $vname]} {
 	    set $vname $val
 	}
@@ -374,7 +374,7 @@
 	    WizardName $wizardName \
 	    WizardClass $wizardClass \
 	    WizardTop $wizardTop \
-	    WizardState $WizardState \
+	    WizardState $wizardState \
 	    WizardOrigin $wizardOrigin \
 	    WizardUnits $wizardUnits \
 	    WizardVersion $wizardVersion
@@ -452,7 +452,7 @@
     $archer pluginUpdateProgressBar 0.4
     after 50
 
-    set WizardState \
+    set wizardState \
 	[list \
 	     AutoMode $AutoMode \
 	     BoundingBoxes $BoundingBoxes \
