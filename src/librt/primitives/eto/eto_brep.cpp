@@ -83,23 +83,24 @@ rt_eto_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *t
     //  within the plane.
     ell_axis_len_1 = MAGNITUDE(eip->eto_C);
     ell_axis_len_2 = eip->eto_rd;
-    ON_Ellipse* ellipse = new ON_Ellipse(ell_plane, ell_axis_len_1, ell_axis_len_2);
+    ON_Ellipse* ellipse = new ON_Ellipse(*ell_plane, ell_axis_len_1, ell_axis_len_2);
 
 
     //  Generate an ON_Curve from the ellipse and revolve it
     //  around eto_N 
  
-    ON_NurbsCurve* ellcurve = ellipse->GetNurbsForm();
-    ON_3dPoint eto_vertex_pt = ON_3dPoint(eto->eto_V);
-    ON_3dPoint eto_normal_pt = ON_3dPoint(eto->eto_N);
-    ON_Line* revaxis = ON_Line(eto_vertex_pt, eto_normal_pt);
+    ON_NurbsCurve ellcurve;
+    ellipse->GetNurbForm(ellcurve);
+    ON_3dPoint eto_vertex_pt = ON_3dPoint(eip->eto_V);
+    ON_3dPoint eto_normal_pt = ON_3dPoint(eip->eto_N);
+    ON_Line revaxis = ON_Line(eto_vertex_pt, eto_normal_pt);
     ON_RevSurface* eto_surf = ON_RevSurface::New();
-    eto_surf->m_curve = ellcurve;
+    eto_surf->m_curve = &ellcurve;
     eto_surf->m_axis = revaxis;
 
     /* Create brep with one face*/
     *b = ON_Brep::New();
-    (*b)->NewFace(eto_surf);
+    (*b)->NewFace(*eto_surf);
 //    (*b)->Standardize();
  //   (*b)->Compact();
 }
