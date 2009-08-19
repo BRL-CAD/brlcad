@@ -225,10 +225,12 @@ void boundingBox(struct rt_wdb *file, char *name, fastf_t *startPoint, fastf_t *
 	vect_t vects[8];
 	vect_t newVects[8];
 	point_t finalPoints[8];
+	point_t endPoint;
 	vect_t distance;
 	char newName[MAXLENGTH] = "a";	
 	char debug[MAXLENGTH] = "a";
 	int i = 0;
+	int w=0;
 	bu_strlcpy(newName, name, MAXLENGTH);
 	bu_strlcpy(debug, name, MAXLENGTH);
 	bu_strlcat(newName, "Box", MAXLENGTH);
@@ -252,7 +254,6 @@ void boundingBox(struct rt_wdb *file, char *name, fastf_t *startPoint, fastf_t *
 	}
 
 /* Print rotation matrix */
-	int w=0;
 	for(w=1; w<=16; w++){
 	/*Z rotation matrix */
 /*		if(w==1 || w==2 || w== 5 || w== 6 || w==11)
@@ -280,7 +281,6 @@ void boundingBox(struct rt_wdb *file, char *name, fastf_t *startPoint, fastf_t *
 	*/
 		VEC3X3MAT(newVects[i], vects[i], rotMatrix);
 	}
-	point_t endPoint;
 	MAT4X3PNT(endPoint, rotMatrix, startPoint);
 
 	/* Set points to be at end of each vector */
@@ -332,14 +332,14 @@ fastf_t makeHead(struct rt_wdb (*file), char *name, struct human_data_t *dude, f
 {
 	fastf_t head = dude->head.headSize / 2;
 	vect_t startVector, lengthVector;
+	point_t headFix;
+	mat_t rotMatrix;
 	/*Length vector is just the diameter of the head, currently*/
 	VSET(lengthVector, 0, 0, dude->head.headSize);
 	VSET(startVector, 0, 0, 0);
-	mat_t rotMatrix;
 	setDirection(startVector, dude->head.headVector, rotMatrix, direction[X], direction[Y], direction[Z]);
 	mk_sph(file, name, dude->joints.headJoint, head);
 
-	point_t headFix;
 	VSET(headFix, dude->joints.headJoint[X], dude->joints.headJoint[Y], dude->joints.headJoint[Z]+head);
 	
 	if(showBoxes){
@@ -431,17 +431,17 @@ fastf_t makeLowerTorso(struct rt_wdb *file, char *name, struct human_data_t *dud
 fastf_t makeShoulderJoint(struct rt_wdb *file, fastf_t isLeft, char *name, struct human_data_t *dude, fastf_t showBoxes)
 {
 	vect_t startVector, lengthVector;
+	point_t leftFix, rightFix;
+	fastf_t shoulder;
+	mat_t rotMatrix;
 	VSET(startVector, 0, 0, dude->arms.upperArmWidth*2);
 	VSET(lengthVector, 0, 0, dude->arms.upperArmWidth);
-	mat_t rotMatrix;
-	fastf_t shoulder = dude->arms.upperArmWidth;
+	shoulder = dude->arms.upperArmWidth;
 
 	if(isLeft)
 		mk_sph(file, name, dude->joints.leftShoulderJoint, (dude->arms.upperArmWidth));
 	else
 		mk_sph(file, name, dude->joints.rightShoulderJoint, (dude->arms.upperArmWidth));
-
- 	point_t leftFix, rightFix;
 
 	if(showBoxes){
 		if(isLeft){
@@ -589,8 +589,8 @@ fastf_t makeThighJoint(struct rt_wdb *file, fastf_t isLeft, char *name, struct h
 fastf_t makeThigh(struct rt_wdb *file, fastf_t isLeft, char *name, struct human_data_t *dude, fastf_t showBoxes)
 {
 	vect_t startVector;
-	VSET(startVector, 0, 0, dude->legs.thighLength);
 	mat_t rotMatrix;
+	VSET(startVector, 0, 0, dude->legs.thighLength);
 
 	if(isLeft){
 		setDirection(startVector, dude->legs.thighVector, rotMatrix, dude->legs.lLegDirection[X], dude->legs.lLegDirection[Y], dude->legs.lLegDirection[Z]);
@@ -807,8 +807,8 @@ void makeLeg(struct rt_wdb (*file), char *suffix, int isLeft, struct human_data_
  */
 void makeBody(struct rt_wdb (*file), char *suffix, struct human_data_t *dude, fastf_t *location, fastf_t showBoxes)
 {
-	bu_log("Making Body\n");
 	vect_t direction;
+	bu_log("Making Body\n");
 	/* 
 	 * Make sure that vectors, points, and widths are sent to each function 
 	 * for direction, location, and correct sizing, respectivly.
@@ -850,13 +850,13 @@ void makeBody(struct rt_wdb (*file), char *suffix, struct human_data_t *dude, fa
 void makeArmy(struct rt_wdb (*file), struct human_data_t dude, int number, fastf_t showBoxes)
 {
 	point_t locations;
-	VSET(locations, 0, 0, 0); /* Starting location */
 	int x = 0;
 	int y = 0;
 	int num;
 	char testname[10]={'0'};
-	num = 0.0;
 	char suffix[MAXLENGTH];
+	VSET(locations, 0, 0, 0); /* Starting location */
+	num = 0.0;
 
 	for(x = 0; x<number; x++){
 		for(y=0; y<number; y++){
@@ -1020,9 +1020,9 @@ void setStance(fastf_t stance, struct human_data_t *dude)
                 VMOVE(dude->legs.lFootDirection, forwardVect);
                 VMOVE(dude->legs.rFootDirection, forwardVect);		
 		break;
-	case 4:
-		bu_log("Making the Letterman\n");
+        case 4: {
 		vect_t larm4, rarm4, knee4, lleg4;
+		bu_log("Making the Letterman\n");
 		VSET(larm4, -32, 135, 0);
 		VSET(rarm4, 32, 135, 0);
 		VSET(knee4, 90, 5, 0);		VSET(lleg4, 0, 75, 0);
@@ -1038,11 +1038,12 @@ void setStance(fastf_t stance, struct human_data_t *dude)
                 VMOVE(dude->legs.rKneeDirection, downVect);
                 VMOVE(dude->legs.lFootDirection, forwardVect);
                 VMOVE(dude->legs.rFootDirection, forwardVect);
+		}
 		break;
-	case 5:
-		bu_log("Making the Captain\n");
+        case 5: {
 		vect_t larm5, rarm5, llower5, rlower5;
 		vect_t rthigh5;
+		bu_log("Making the Captain\n");
 		VSET(larm5, 45, 180, 5);
 		VSET(rarm5, -45, 180, -5);
 		VSET(llower5, -45, 180, 5);
@@ -1060,19 +1061,20 @@ void setStance(fastf_t stance, struct human_data_t *dude)
 		VMOVE(dude->legs.rKneeDirection, downVect);
 		VMOVE(dude->legs.lFootDirection, forwardVect);
 		VMOVE(dude->legs.rFootDirection, forwardVect);
+		}
 		break;
 	case 6:
 		bu_log("Making the Thinker\n");
 		break;
 
 	/*Following cases are tests */
-	case 10:
-		bu_log("Test1 15 degree incs\n");
+        case 10: {
 		vect_t test1;
 		vect_t test2;
 		vect_t test3;
 		vect_t test4;
 		vect_t test5;
+		bu_log("Test1 15 degree incs\n");
 		VSET(test1, 0, 0, 0);
 		VSET(test2, 0, 15, 0);
 		VSET(test3, 0, 30, 0);
@@ -1090,6 +1092,7 @@ void setStance(fastf_t stance, struct human_data_t *dude)
                 VMOVE(dude->legs.rKneeDirection, test4);
                 VMOVE(dude->legs.lFootDirection, test5);
                 VMOVE(dude->legs.rFootDirection, test5);
+		}
 		break;
 
 	/* Additional Positions go here*/
@@ -1636,20 +1639,22 @@ ged_human(struct ged *gedp, int ac, char *av[])
     struct wmember boxes;
     struct wmember hollow;
     struct wmember crowd;
-    progname = *av;
     struct bu_vls name;
     struct bu_vls str;
     struct human_data_t human_data;
-    human_data.height = DEFAULT_HEIGHT_INCHES;
     fastf_t showBoxes = 0, troops = 0, stance = 0, percentile=50;
     char suffix[MAXLENGTH]= "";
     point_t location;
+    int ret;
+    int is_region = 0;
+    unsigned char rgb[3], rgb2[3], rgb3[3];
+    progname = *av;
+    human_data.height = DEFAULT_HEIGHT_INCHES;
     VSET(location, 0, 0, 0); /* Default standing location */
     bu_vls_init(&name);
     bu_vls_trunc(&name, 0);
     bu_vls_init(&str);
     bu_vls_trunc(&str, 0);
-    int ret;
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
     GED_CHECK_READ_ONLY(gedp, GED_ERROR);
@@ -1686,8 +1691,6 @@ ged_human(struct ged *gedp, int ac, char *av[])
 
 /** Make the Regions (.r's) of the body */
 /* Make the .r for the real body */
-    int is_region = 0;
-    unsigned char rgb[3], rgb2[3], rgb3[3];
     bu_log("Building Regions\n");
     if(!troops){    
     BU_LIST_INIT(&human.l);
@@ -1838,7 +1841,6 @@ ged_human(struct ged *gedp, int ac, char *av[])
     }
     }
     if(troops){
-	bu_log("Naming\n");
     	/*Build body regions for each troop*/
     	/*append number to end of part name, (Head.s0, LeftElbowJoint.s99, etc) */
 	int num=0;
@@ -1846,6 +1848,10 @@ ged_human(struct ged *gedp, int ac, char *av[])
 	int x=0;
 	char holder[10]={'0'};
 	char suffix[MAXLENGTH];	
+	int z=0;
+	char thing[10]="0";
+	char thing2[10]="0";
+	bu_log("Naming\n");
 
 	for(w=0; w<(troops*troops); w++){
         	char names[MAXLENGTH][MAXLENGTH]={"Head.s", "Neck.s", "UpperTorso.s","LowerTorso.s", "LeftShoulderJoint.s","LeftUpperArm.s","LeftElbowJoint.s",
@@ -1908,9 +1914,6 @@ ged_human(struct ged *gedp, int ac, char *av[])
 		num++;
 	}
         is_region = 0;
-	int z=0;
-	char thing[10]="0";
-	char thing2[10]="0";
 	for(z=0; z<(troops*troops); z++){
 		char comber[MAXLENGTH]="Body.r";
 		sprintf(thing, "%d", z);
