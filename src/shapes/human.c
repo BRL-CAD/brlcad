@@ -47,10 +47,12 @@ int main(int ac, char *av[])
 
     db_fp = wdb_fopen(filename);
 
-    mk_id(db_fp, "Human");
+    mk_id_units(db_fp, "dude", "in");
 
     GED_INIT(&ged, db_fp);
+    bu_log("Building\n");
     ret = ged_human(&ged, ac, (const char **)av);
+    bu_log("Finished Building\n");
     wdb_close(db_fp);
    
     if(ret) {

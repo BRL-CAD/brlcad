@@ -1125,6 +1125,7 @@ void setStance(fastf_t stance, struct human_data_t *dude)
  */
 void Auto(struct human_data_t *dude)
 {
+	bu_log("Auto Setting\n");
 	dude->torso.torsoLength = 0;
       	dude->head.headSize = (dude->height / 8) * IN2MM;
       	dude->arms.armLength = (dude->height / 2) * IN2MM;
@@ -1405,7 +1406,7 @@ int read_args(int argc, char **argv, struct human_data_t *dude, fastf_t *percent
     /* don't report errors */
     bu_opterr = 0;
 
-    while ((c=bu_getopt(argc, argv, options)) != EOF) {
+    while ((c=bu_getopt(argc, (char * const *)argv, options)) != EOF) {
 	/*bu_log("%c \n", c); Testing to see if args are getting read */
 	switch (c) {
 	    case 'A':
@@ -1634,7 +1635,8 @@ int read_args(int argc, char **argv, struct human_data_t *dude, fastf_t *percent
 int
 ged_human(struct ged *gedp, int ac, char *av[])
 {
-    struct rt_wdb *db_fp;
+    bu_log("Entering Human Builder\n");
+/*    struct rt_wdb *gedp->ged_wdbp; */
     struct wmember human;
     struct wmember boxes;
     struct wmember hollow;
@@ -1662,15 +1664,15 @@ ged_human(struct ged *gedp, int ac, char *av[])
     /* Process command line arguments */
     ret = read_args(ac, av, &human_data, &percentile, location, &stance, &troops, &showBoxes);
 
-    if (ret != GED_OK) {
-	bu_vls_free(&name);
-	bu_vls_free(&str);
-	return ret;
-    }
+//    if (ret != GED_OK) {
+//	bu_vls_free(&name);
+//	bu_vls_free(&str);
+//	return ret;
+//  }
 
     GED_CHECK_EXISTS(gedp, bu_vls_addr(&name), LOOKUP_QUIET, GED_ERROR);
 
-    db_fp = wdb_fopen(filename);
+    gedp->ged_wdbp = wdb_fopen(filename);
 
     bu_log("Center Location: ");
     bu_log("%.2f %.2f %.2f\n", location[X], location[Y], location[Z]);
@@ -1680,12 +1682,12 @@ ged_human(struct ged *gedp, int ac, char *av[])
     //setMeasurements(&human_data, percentile);
     setStance(stance, &human_data); 
     if(!troops){
-    	makeBody(db_fp, suffix, &human_data, location, showBoxes);
-	mk_id_units(db_fp, "A single Human", "in");
+    	makeBody(gedp->ged_wdbp, suffix, &human_data, location, showBoxes);
+	mk_id_units(gedp->ged_wdbp, "A single Human", "in");
     }
     if(troops){
-	makeArmy(db_fp, human_data, troops, showBoxes);
-    	mk_id_units(db_fp, "An army of people", "in");	
+	makeArmy(gedp->ged_wdbp, human_data, troops, showBoxes);
+    	mk_id_units(gedp->ged_wdbp, "An army of people", "in");	
     }
 /****End Magic****/
 
@@ -1725,7 +1727,7 @@ ged_human(struct ged *gedp, int ac, char *av[])
 
     is_region = 1;
     VSET(rgb, 128, 255, 128); /* some wonky bright green color */
-    mk_lcomb(db_fp,
+    mk_lcomb(gedp->ged_wdbp,
 	     humanName,
 	     &human,
 	     is_region,
@@ -1759,7 +1761,7 @@ ged_human(struct ged *gedp, int ac, char *av[])
     (void)mk_addmember("RightFoot.sBox", &boxes.l, NULL, WMOP_UNION); 
     is_region = 1;
     VSET(rgb2, 255, 128, 128); /* redish color */
-        mk_lcomb(db_fp,   
+        mk_lcomb(gedp->ged_wdbp,   
              "Boxes.r",
              &boxes,
              is_region,
@@ -1830,7 +1832,7 @@ ged_human(struct ged *gedp, int ac, char *av[])
 
     is_region = 1;
     VSET(rgb3, 128, 128, 255); /* blueish color */
-        mk_lcomb(db_fp,
+        mk_lcomb(gedp->ged_wdbp,
              "Hollow.r",
              &hollow,
              is_region,
@@ -1890,7 +1892,7 @@ ged_human(struct ged *gedp, int ac, char *av[])
 		VSET(rgb, 128, 255, 128); /* some wonky bright green color */
 		bu_log("Combining\n");
 		is_region = 1;
-		mk_lcomb(db_fp,
+		mk_lcomb(gedp->ged_wdbp,
        		    body[0],
 		    &human,
 		    is_region,
@@ -1901,7 +1903,7 @@ ged_human(struct ged *gedp, int ac, char *av[])
 
 		if(showBoxes){
 			VSET(rgb2, 255, 128, 128); /* redish color */
-			mk_lcomb(db_fp,   
+			mk_lcomb(gedp->ged_wdbp,   
              		box[0],
              		&boxes,
              		is_region,
@@ -1923,10 +1925,10 @@ ged_human(struct ged *gedp, int ac, char *av[])
     	}
     }
     if(troops)
-	mk_lcomb(db_fp, "Crowd.c", &crowd, 0, NULL, NULL, NULL, 0);
+	mk_lcomb(gedp->ged_wdbp, "Crowd.c", &crowd, 0, NULL, NULL, NULL, 0);
 
     /* Close database */
-    wdb_close(db_fp);
+    wdb_close(gedp->ged_wdbp);
 
     bu_vls_free(&name);
     bu_vls_free(&str);
