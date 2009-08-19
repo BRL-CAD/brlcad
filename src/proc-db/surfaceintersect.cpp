@@ -367,18 +367,47 @@ int Face_X_Event::Render_Curves()
     return 0; /* XXX - unused */
 }
 
-
-bool ON_SetCurveCurveIntersectionDir(
+/**
+ *        SetCurveSurveIntersectionDir
+ *
+ * @brief Sets the Dir fields on an intersection event, this function is 
+ *  'below' a curve refers to the portion to the right of the curve wrt N
+ */
+bool SetCurveCurveIntersectionDir(
     ON_3dVector N,
     int xcount,
     ON_X_EVENT* xevent,
-    double a0,
-    double a1,
-    double b0,
-    double b1
+    ON_Curve *curve1,
+    ON_Curve *curve2
     )
 {
-    return false;
+    int i;
+    for (i = 0; i < xcount; i++) {
+	ON_X_EVENT event = xevent[i];
+	if (event.m_type != event.ccx_point) {
+	    continue;
+	}
+	ON_3dVector tangent1 = curve1->TangentAt(event.m_a[0]);
+	ON_3dVector tangent2 = curve2->TangentAt(event.m_b[0]);
+	ON_3dVector cross = ON_CrossProduct(tangent1, tangent2);
+	double dot = ON_DotProduct(N, cross);
+	if (dot > 0) {
+	    event.m_dirA[0] = event.from_above_dir;
+	    event.m_dirA[1] = event.to_below_dir;
+	    event.m_dirB[0] = event.from_below_dir;
+	    event.m_dirB[1] = event.to_above_dir;
+	} else if (dot > 0) {
+	    event.m_dirA[0] = event.from_below_dir;
+	    event.m_dirA[1] = event.to_above_dir;
+	    event.m_dirB[0] = event.from_above_dir;
+	    event.m_dirB[0] = event.to_below_dir;
+	} else {
+	    event.m_dirA[0] = event.no_x_dir;
+	    event.m_dirA[1] = event.no_x_dir;
+	    event.m_dirB[0] = event.no_x_dir;
+	    event.m_dirB[1] = event.no_x_dir;
+	}
+    }
 }
 
 
@@ -422,7 +451,7 @@ int Face_X_Event::Get_ON_X_Events(double tol)
 		    out[l].m_user.i = i;
 		}
 
-		/* ON_SetCurveCurveIntersectionDir(ON_3dVector(0.0, 0.0, 1.0), new_xs, out.Array(), Canonical_start, Canonical_end, Canonical_start, Canonical_end); */
+		SetCurveCurveIntersectionDir(ON_3dVector(0.0, 0.0, 1.0), new_xs, out.Array(), curves[0], curves[1]);
 		x.Append(new_xs, out.Array());
 	    }
 	}
@@ -512,32 +541,10 @@ int MakeLoops(
     return 0;/* XXX - unused */
 }
 
-
-/**
- * ReconstructX_Events
- *
- * @brief Walks an intersection list, the list should include every
- * intersection the curve and its twin have with the trims of their
- * respective faces
- */
-void ReconstructX_Events(
-    ON_SimpleArray<ON_X_EVENT>& x,
-    bool& isactive /* active points must map to active points in on both surfaces */
-    )
-{
-    int i;
-    for (i = 0; i < x.Count(); i++) {
-	if (isactive) {
-	} else {
-	}
-    }
-}
-
-
 /**
  * IsClosed
  *
- * @check if a 2dPointarrray is closed to be closed an array must have
+ * @check if a 2dPointarrray is closed. To be closed an array must have
  * >2 points in it, have the first and last points within tol of one
  * another and have at least one point not within tol of either of
  * them.
@@ -1301,11 +1308,6 @@ int main()
     ON_Brep *brep1 = MakeTwistedSquare1(log1);
     ON_Brep *brep2 = MakeTwistedSquare2(log2);
 #endif
-
-    ON_ClassArray<ON_Curve *> out1, out2;
-
-    /* SurfaceSurfaceIntersect(surf1, surf2, 1e-4, 1e-10, out1, out2); */
-
     return 0;
 }
 
