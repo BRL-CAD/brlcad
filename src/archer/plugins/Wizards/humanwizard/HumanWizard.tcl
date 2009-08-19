@@ -26,7 +26,7 @@
 ::itcl::class HumanWizard {
     inherit Wizard
 
-    constructor {_archer _wizardTop _wizardState _wizardOrigin _originUnits args} {}
+    constructor {_archer _wizardTop _WizardState _wizardOrigin _originUnits args} {}
     destructor {}
 
     public {
@@ -34,11 +34,11 @@
 	common wizardMajorType $Archer::pluginMajorTypeWizard
 	common wizardMinorType $Archer::pluginMinorTypeMged
 	common wizardName "Human Wizard"
-	common wizardVersion "0.1"
+	common wizardVersion "0.2"
 	common wizardClass HumanWizard
 
 	# Methods that override Wizard methods
-	method setWizardState {_wizardState}
+	method setWizardState {_WizardState}
 
 	method drawHuman {}
 	method buildHuman {}
@@ -66,8 +66,8 @@
 	variable Locationz 0
 	variable ManualMode 0
 	variable NumberSoldiers 1
-#	variable output 0
-#	variable outputString human.g
+	variable output 0
+	variable outputString "Fellow.g"
 	variable percentile 50
 	variable Stance 0
 	variable StanceString Standing
@@ -118,7 +118,7 @@
 #
 #
 #
-::itcl::body HumanWizard::constructor {_archer _wizardTop _wizardState _wizardOrigin _originUnits args} {
+::itcl::body HumanWizard::constructor {_archer _wizardTop _WizardState _wizardOrigin _originUnits args} {
     global env
 
     itk_component add pane {
@@ -138,7 +138,7 @@
     eval itk_initialize $args
 
     set wizardTop $_wizardTop
-    setWizardState $_wizardState
+    set WizardState $_WizardState
     set wizardOrigin $_wizardOrigin
     set wizardAction buildHuman
     set wizardXmlAction buildHumanXML
@@ -158,13 +158,13 @@
     # nothing for now
 }
 
-::itcl::body HumanWizard::setWizardState {_wizardState} {
-    set wizardState $_wizardState
+::itcl::body HumanWizard::setWizardState {_WizardState} {
+    set WizardState $_WizardState
     initWizardState
 }
 
 ::itcl::body HumanWizard::initWizardState {} {
-    foreach {vname val} $wizardState {
+    foreach {vname val} $WizardState {
 	if {[info exists $vname]} {
 	    set $vname $val
 	}
@@ -202,7 +202,7 @@
     } {}
     itk_component add paramNameE {
 	::ttk::entry $itk_component(paramNonArrowF).nameE \
-	    -textvariable [::itcl::scope wizardTop]
+	    -textvariable [::itcl::scope outputString]
     } {}
 
     # Create Height entry field
@@ -374,7 +374,7 @@
 	    WizardName $wizardName \
 	    WizardClass $wizardClass \
 	    WizardTop $wizardTop \
-	    WizardState $wizardState \
+	    WizardState $WizardState \
 	    WizardOrigin $wizardOrigin \
 	    WizardUnits $wizardUnits \
 	    WizardVersion $wizardVersion
@@ -452,7 +452,7 @@
     $archer pluginUpdateProgressBar 0.4
     after 50
 
-    set wizardState \
+    set WizardState \
 	[list \
 	     AutoMode $AutoMode \
 	     BoundingBoxes $BoundingBoxes \
