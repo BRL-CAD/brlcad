@@ -35,6 +35,7 @@ scripts = \
 	tabwindow.itk \
 	TgcEditFrame.tcl \
 	TorusEditFrame.tcl \
+	Utility.tcl \
 	Wizard.tcl
 
 BUILT_SOURCES = \
