@@ -1416,7 +1416,6 @@ int read_args(int argc, char **argv, char *topLevel, struct human_data_t *dude, 
 		*percentile=50;
 		Auto(dude);
 		fflush(stdin);
-		have_name = 0;
 		break;
 
             case 'b':
@@ -1440,7 +1439,6 @@ int read_args(int argc, char **argv, char *topLevel, struct human_data_t *dude, 
                         bu_log("%.2f = height in inches\n", height);
                 }
 		fflush(stdin);
-		have_name = 1;
                 break;
 
             case 'h':
@@ -1460,7 +1458,6 @@ int read_args(int argc, char **argv, char *topLevel, struct human_data_t *dude, 
 	    case 'm':
 		bu_log("Manual Mode\n");
 		Manual(dude);
-		have_name = 1;
 		break;
 
 	    case 'n':
@@ -1479,7 +1476,6 @@ int read_args(int argc, char **argv, char *topLevel, struct human_data_t *dude, 
                 bu_log("Auto %d (squared) troop formation\n", soldiers);
                 *troops = (float)soldiers;
 		fflush(stdin);
-		have_name = 1;
                 break;
 /*
 	    case 'o':
@@ -1498,7 +1494,6 @@ int read_args(int argc, char **argv, char *topLevel, struct human_data_t *dude, 
 			percent=99;
 		*percentile=percent;
 		fflush(stdin);
-		have_name = 1;
 		break;
 
 	    case 's':
@@ -1640,8 +1635,6 @@ int read_args(int argc, char **argv, char *topLevel, struct human_data_t *dude, 
         if((argc - bu_optind) == 1) {
             /* Yes, there is a top-level name at the end of this argument chain, lets dump it into the file*/
             have_name = 1;
-            //bu_vls_trunc(name, 0);
-            //bu_vls_printf(name, "%s", argv[bu_optind]);
 
             memset(humanName, 0, MAXLENGTH);
             memset(topLevel, 0, MAXLENGTH);
@@ -1652,6 +1645,11 @@ int read_args(int argc, char **argv, char *topLevel, struct human_data_t *dude, 
         }
         if(!have_name) {
             bu_log("%s: need top level object name\n", argv[0]);
+	    bu_log("Setting generic name, Body.c");
+	    memset(humanName, 0, MAXLENGTH);
+	    memset(topLevel, 0, MAXLENGTH);
+	    bu_strlcpy(topLevel, "Body.c", MAXLENGTH);
+	    bu_strlcpy(humanName, topLevel, MAXLENGTH);
             show_help(*argv, options);
             return GED_ERROR;
     }
@@ -1712,7 +1710,8 @@ ged_human(struct ged *gedp, int ac, const char *av[])
     bu_strlcpy(humanName, topLevel, MAXLENGTH);
     setStance(stance, &human_data); 
     if(!troops){
-    	makeBody(gedp->ged_wdbp, suffix, &human_data, location, showBoxes);
+    	Auto(&human_data);
+	makeBody(gedp->ged_wdbp, suffix, &human_data, location, showBoxes);
 	mk_id_units(gedp->ged_wdbp, "A single Human", "in");
     }
     if(troops){
@@ -1890,7 +1889,7 @@ ged_human(struct ged *gedp, int ac, const char *av[])
 			"LeftLowerArm.s","LeftWristJoint.s","LeftHand.s","RightShoulderJoint.s","RightUpperArm.s","RightElbowJoint.s","RightLowerArm.s",
 			"RightWristJoint.s","RightHand.s","LeftThighJoint.s","LeftThigh.s","LeftKneeJoint.s","LeftCalf.s","LeftAnkleJoint.s","LeftFoot.s",
 			"RightThighJoint.s","RightThigh.s","RightKneeJoint.s","RightCalf.s","RightAnkleJoint.s","RightFoot.s","0"};
-        	char body[MAXLENGTH][MAXLENGTH]={"Body.r",};
+        	char body[MAXLENGTH][MAXLENGTH]={*topLevel,};
 		char box[MAXLENGTH][MAXLENGTH]={"Box.r",};
 
 		bu_log("%d\n", w);
@@ -1947,7 +1946,7 @@ ged_human(struct ged *gedp, int ac, const char *av[])
 	}
         is_region = 0;
 	for(z=0; z<(troops*troops); z++){
-		char comber[MAXLENGTH]="Body.r";
+		char comber[MAXLENGTH]={*topLevel};
 		sprintf(thing, "%d", z);
                 bu_strlcpy(thing2, thing, MAXLENGTH);
                 bu_strlcat(comber, thing2, MAXLENGTH);

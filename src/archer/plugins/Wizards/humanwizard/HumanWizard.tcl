@@ -440,9 +440,7 @@
 
 ::itcl::body HumanWizard::buildHuman {} {
     SetWaitCursor $archer
-
     setstance
-
     $archer pluginUpdateStatusBar "Building human..."
     $archer pluginUpdateSaveMode 1
     $archer pluginUpdateProgressBar 0.2
@@ -451,19 +449,26 @@
     after 50
 
     set wizardState \
-	[list \
-	     autoMode $autoMode \
-	     boundingBoxes $boundingBoxes \
-	     height $height \
-	     locationx $locationx \
-	     locationy $locationy \
-	     locationz $locationz \
-	     manualMode $manualMode \
-	     numberSoldiers $numberSoldiers \
-	     percentile $percentile \
-	     stance $stance]
-puts "archerGed human -A -s $stance $wizardTop"
-    $archersGed human -A -s $stance $wizardTop
+        [list \
+             autoMode $autoMode \
+             height $height \
+             stance $stance]
+
+#    set wizardState \
+#	[list \
+#	     autoMode $autoMode \
+#	     boundingBoxes $boundingBoxes \
+#	     height $height \
+#	     locationx $locationx \
+#	     locationy $locationy \
+#	     locationz $locationz \
+#	     manualMode $manualMode \
+#	     numberSoldiers $numberSoldiers \
+#	     percentile $percentile \
+#	     stance $stance]
+
+puts "$archersGed human -A -s$stance $wizardTop"
+    $archersGed human -A -s$stance $wizardTop
 #	-b \
 #	-H $height \
 #	-l \
@@ -477,8 +482,9 @@ puts "archerGed human -A -s $stance $wizardTop"
     addWizardAttrs $wizardTop 0
 
     drawHuman
+    
     $archer pluginUpdateProgressBar 0.6
-    after 50
+    after 100
     $archer pluginUpdateStatusBar "Almost Done..."
     $archer pluginUpdateProgressBar 0.8
     after 50
