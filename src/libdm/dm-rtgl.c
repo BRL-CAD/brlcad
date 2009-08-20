@@ -1414,90 +1414,7 @@ void shuffleJobs(void) {
     }
 }
 
-void oldShuffleJobs(void) {
-    int i, j, swap, elements, minLength, currUsed, nextUsed;
-    struct bu_list *pick, *curr;
-    struct jobList *this, *next;
-    struct job temp, *a, *b;
-
-    /* list cannot be empty */
-    if (jobs.l.forw == NULL || (struct jobList *)jobs.l.forw == &jobs)
-	return;
-
-    /* randomize job groups (Fisher-Yates shuffle) */
-    elements = ceil(numJobs / JOB_ARRAY_SIZE);
-    
-    for (i = elements - 1; i > 1; i--) {
-	
-	swap = (rand() % i) + 1;
-	
-	/* swapping distinct items */
-	if (swap != i) {
-	    
-	    j = 0;
-	    pick = curr = NULL;
-	    
-	    for (BU_LIST_FOR(currJob, jobList, &(jobs.l))) {
-		
-		j++;
-		
-		/* element being set */
-		if (j == i) {
-		    curr = &(currJob->l);
-		}
-		
-		/* random element to set it to*/
-		if (j == swap) {
-		    pick = &(currJob->l);
-		}
-		
-		if (pick != NULL && curr != NULL) {
-		    break;
-		}
-	    }
-	    
-	    /* swap random element into position */
-	    swapItems(pick, curr);
-	}
-    }
-
-    /* swap job items */
-    for (BU_LIST_FOR_BACKWARDS(currJob, jobList, &(jobs.l))) {
-
-	/* get group pair */
-	this = currJob;
-	next = (struct jobList *)currJob->l.forw;
-
-	if (next != &jobs) {
-
-	    /* determine max loop index */
-	    nextUsed = next->used;
-	    minLength = currUsed = this->used;	
-	    
-	    if (nextUsed < currUsed)
-		minLength = nextUsed;
-	    
-	    minLength = (double) minLength / 3.0;
-	    
-	    /* iterate through groups' arrays */
-	    for (j = 0; j < minLength; j++) {
-		
-		/* swap about half the items */
-		if (rand() % 2) {
-		    
-		    a = &(this->jobs[j]);
-		    b = &(next->jobs[j]);
-		    
-		    COPY_JOB(temp, *a);
-		    COPY_JOB(*a, *b);
-		    COPY_JOB(*b, temp);
-		}
-	    }
-	}
-    }
-}
-
-/* shoot an even grid of parallel rays in a principle direction */
+/* add jobs for an even grid of parallel rays in a principle direction */
 void shootGrid(vect_t min, vect_t max, double maxSpan, int pixels, int uAxis, int vAxis, int iAxis) {
     int i, j;
     vect_t span;
@@ -1513,8 +1430,6 @@ void shootGrid(vect_t min, vect_t max, double maxSpan, int pixels, int uAxis, in
     uDivs /= 2;
     vDivs /= 2;
 #endif
-
-    bu_log("adding %d x %d jobs\n", uDivs, vDivs);
 
     fastf_t uWidth = span[uAxis] / uDivs;
     fastf_t vWidth = span[vAxis] / vDivs;
@@ -1565,12 +1480,13 @@ int numShot = 0;
 
 /* return 1 if all jobs done, 0 if not */
 int shootJobs(void) {
-    int i, j, last;
+    int i, j, last, elements, *used;
     double elapsed_time;
 
     /* list cannot be empty */
     if (jobsArray != NULL) {
 	
+	/* get last non-null item */
 	last = numJobs - numShot;
 	last /= JOB_ARRAY_SIZE;
 	last++;
@@ -1579,26 +1495,33 @@ int shootJobs(void) {
 	    last--;
 	}
 
-	for (i = last; i > 0; i--) {
+	/* last to first item */
+	for (i = last; i >= 0; i--) {
+
 	    currJob = jobsArray[i];
-	    jobsArray[i] = NULL;
+	    used = &(currJob->used);
 
-	    for (j = 0; j < currJob->used; j++) {
-		VMOVE(app.a_ray.r_pt, currJob->jobs[j].pt);
-		VMOVE(app.a_ray.r_dir, currJob->jobs[j].dir);
-		
+	    /* shoot jobs in this array */
+	    while (*used > 0) {
+
+		VMOVE(app.a_ray.r_pt, currJob->jobs[*used].pt);
+		VMOVE(app.a_ray.r_dir, currJob->jobs[*used].dir);
 		rt_shootray(&app);
+		
+		numShot++;
+		(*used)--;
+		    
+		if (*used == 0) {
+		    BU_LIST_DEQUEUE(&(currJob->l));
+		    bu_free(currJob, "free jobs currJob");
+		    jobsArray[i] = NULL;
+		    break;
+		}
+
+		(void)rt_get_timer( (struct bu_vls *)0, &elapsed_time);
+		if (elapsed_time > .1) /* 100ms */
+		    return 0;
 	    }
-
-	    numShot += currJob->used;
-    
-	    BU_LIST_DEQUEUE(&(currJob->l));
-	    bu_free(currJob, "free jobs currJob");
-
-	    (void)rt_get_timer( (struct bu_vls *)0, &elapsed_time);
-	    if (elapsed_time > .1) /* 100ms */
-		return 0;
-	    
 	}
 
 	jobs.l.forw = BU_LIST_NULL;
@@ -1608,9 +1531,8 @@ int shootJobs(void) {
 }
 
 void drawPoints(float *view, int pointSize) {
-    int i, numPoints, index, count = 0;
-    float normal[3];
-    float dot;
+    int i, used;
+    float *point, *normal, dot;
     struct colorBin *bin;
     struct bu_list *head;
     struct bu_hash_entry *entry;
@@ -1626,8 +1548,8 @@ void drawPoints(float *view, int pointSize) {
 
 #if 0
     /* using vertex arrays */
-    glEnableClientState(GL_VERTEX_ARRAY);
     glEnableClientState(GL_NORMAL_ARRAY);
+    glEnableClientState(GL_VERTEX_ARRAY);
 #endif
 
     /* for all table entries */
@@ -1643,30 +1565,28 @@ void drawPoints(float *view, int pointSize) {
 	head = &(bin->list->l);
 	
 	for (BU_LIST_FOR(currItem, ptInfoList, head)) {
-	    numPoints = currItem->used / 3;
+	    used = currItem->used;
 
 #if 1
 	    glBegin(GL_POINTS);
-	    for (i = 0; i < numPoints; i++) {
-		index = i + i + i;
-		
-		normal[X] = currItem->norms[X + index];
-		normal[Y] = currItem->norms[Y + index];
-		normal[Z] = currItem->norms[Z + index];
-		
-		dot = VDOT(view, normal);
+	    for (i = 0; i < used; i += 3) {
+
+		point = &(currItem->points[i]);
+		normal = &(currItem->norms[i]);
 		
 		/* draw if visible */
+		dot = VDOT(view, normal);
+
 		if (dot > 0) {
-		    glNormal3fv(normal);
-		    glVertex3fv(&(currItem->points[index]));
+		    glNormal3fv(normal); /* MUST specify normal first */
+		    glVertex3fv(point);
 		}
 	    }
 	    glEnd();
 #else
-	    glVertexPointer(3, GL_FLOAT, 0, &(currItem->points));
 	    glNormalPointer(GL_FLOAT, 0, &(currItem->norms));
-	    glDrawArrays(GL_POINTS, 0, numPoints);
+	    glVertexPointer(3, GL_FLOAT, 0, &(currItem->points));
+	    glDrawArrays(GL_POINTS, 0, (used / 3));
 #endif
 	}
     } while ((entry = bu_hash_tbl_next(&record)) != NULL);
@@ -1837,6 +1757,18 @@ void buildTree(struct ged *gedp, struct objTree *tree) {
 vect_t min, max, center, view, vect;
 fastf_t radius;
 double maxSpan;
+time_t start = 0;
+
+#if 0
+int round (double f) {
+    int n = f;
+
+    if ((f - .5) >= n)
+	return n + 1;
+
+    return n;
+}
+#endif
 
 /*
  *  			R T G L _ D R A W V L I S T
@@ -1985,22 +1917,25 @@ rtgl_drawVList(struct dm *dmp, register struct bn_vlist *vp)
 	    maxSpan = span[Z];
 
 #if 1
-	/* shoot grid of rays in each principle direction */
+	/* create ray-trace jobs */
 	shootGrid(min, max, maxSpan, maxPixels, X, Y, Z);
 	shootGrid(min, max, maxSpan, maxPixels, Z, X, Y);
 	shootGrid(min, max, maxSpan, maxPixels, Y, Z, X);
 
+	bu_log("firing %d jobs", numJobs);
+
 	/* create job array */
-	jobsArray = bu_malloc(sizeof(struct jobList *) * numJobs, "dm-rtgl.c:getJob");
+	jobsArray = bu_malloc(sizeof(struct jobList *) * numJobs, "dm-rtgl.c: jobsArray");
 	    
 	i = 0;
 	for (BU_LIST_FOR_BACKWARDS(currJob, jobList, &(jobs.l))) {
 	    jobsArray[i++] = currJob;
 	}
 
+	start = time(NULL);
+
 #if 1
 	shuffleJobs();
-	bu_log("shuffled jobs");
 #endif
 #else
         /* use length of bounding box's longest diagonal as radius of bounding sphere */
@@ -2024,30 +1959,36 @@ rtgl_drawVList(struct dm *dmp, register struct bn_vlist *vp)
     VSET(vCenter, 0, 0, 0);
     aeVect(view, gedp->ged_gvp->gv_aet, vCenter, 1);
 
-    /* adjust point size based on zoom */
-    int pointSize = 2;
+    double wait = difftime(time(NULL), start);
 
-    if (maxSpan != 0.0) {
-	double ratio = maxSpan / viewSize;
+    if (wait > 3) {
 
-	pointSize = 2 * ratio;
+	float fview[3];
+	VMOVE(fview, view);
+
+	/* adjust point size based on zoom */
+	int pointSize = 2;
+	
+	if (maxSpan != 0.0) {
+	    double ratio = maxSpan / viewSize;
+	    
+	    pointSize = 2 * ratio;
+	    
+	    if (pointSize < 1)
+		pointSize = 1;
+	}
+	
+	/* adjust point size based on % jobs completed */
+	double p = (double) numShot / (double) numJobs;
+	pointSize = round((double)pointSize / p);
+	
+	
+	if (pointSize > (maxPixels / 50)) {
+	    pointSize = maxPixels / 50;
+	}
+
+	drawPoints(fview, pointSize);
     }
-
-    /* adjust point size based on % jobs completed */
-    double p = (double) numShot / (double) numJobs;
-    pointSize = ceil((double)pointSize / p);
-
-    if (pointSize < 1)
-	pointSize = 1;
-
-    if (pointSize > 10) {
-	pointSize = 10;
-    }
-
-    float fview[3];
-    VMOVE(fview, view);
-
-    drawPoints(fview, pointSize);
     
     if (!jobsDone) {
 	RTGL_DIRTY = 1;
