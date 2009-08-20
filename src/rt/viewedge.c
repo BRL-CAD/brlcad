@@ -987,7 +987,11 @@ handle_main_ray(struct application *ap, register struct partition *PartHeadp,
     }
 
     if (edge) {
-	choose_color(col, intensity, &me, &left, &below, NULL, NULL);
+	if (both_sides) {
+	    choose_color(col, intensity, &me, &left, &below, &right, &above);
+	} else {
+	    choose_color(col, intensity, &me, &left, &below, NULL, NULL);
+	}
 
 	scanline[cpu][ap->a_x*3+RED] = col[RED];
 	scanline[cpu][ap->a_x*3+GRN] = col[GRN];
@@ -1033,7 +1037,7 @@ void choose_color(RGBpixel col, double intensity, struct cell *me,
     col[GRN] = fgcolor[GRN];
     col[BLU] = fgcolor[BLU];
 
-    if (region_colors) {
+    if (region_colors && me) {
 
 	struct cell *use_this = me;
 
@@ -1041,8 +1045,14 @@ void choose_color(RGBpixel col, double intensity, struct cell *me,
 	 * Determine the cell with the smallest hit distance.
 	 */
 
-	use_this = (me->c_dist < left->c_dist) ? me : left;
-	use_this = (use_this->c_dist < below->c_dist) ? use_this : below;
+	if (left)
+	    use_this = (use_this->c_dist < left->c_dist) ? use_this : left;
+	if (below)
+	    use_this = (use_this->c_dist < below->c_dist) ? use_this : below;
+	if (right)
+	    use_this = (use_this->c_dist < right->c_dist) ? use_this : right;
+	if (above)
+	    use_this = (use_this->c_dist < above->c_dist) ? use_this : above;
 
 	if (use_this == (struct cell *)NULL)
 	    bu_exit(EXIT_FAILURE, "Error: use_this is NULL.\n");
@@ -1051,6 +1061,11 @@ void choose_color(RGBpixel col, double intensity, struct cell *me,
 	col[GRN] = 255 * use_this->c_region->reg_mater.ma_color[GRN];
 	col[BLU] = 255 * use_this->c_region->reg_mater.ma_color[BLU];
     }
+
+    col[RED] = (col[RED] * intensity) + (bgcolor[RED] * (1.0-intensity));
+    col[GRN] = (col[GRN] * intensity) + (bgcolor[GRN] * (1.0-intensity));
+    col[BLU] = (col[BLU] * intensity) + (bgcolor[BLU] * (1.0-intensity));
+
     return;
 }
 
