@@ -157,6 +157,13 @@ int region_colors = 0;
 
 int occlusion_mode = OCCLUSION_MODE_NONE;
 
+/*
+ * whether to perform antialiasing via sub-pixel sampling
+ */
+static int antialias = 0;
+static int both_sides = 0;
+
+
 struct bu_vls occlusion_objects;
 struct rt_i *occlusion_rtip = NULL;
 struct application **occlusion_apps;
@@ -174,8 +181,8 @@ static int occludes(struct application *, struct cell *);
  */
 static int rayhit(struct application *, struct partition *, struct seg *);
 static int raymiss(struct application *);
-static void choose_color(RGBpixel col, struct cell *me,
-			 struct cell *left, struct cell *below);
+static void choose_color(RGBpixel col, double intensity, struct cell *me,
+			 struct cell *left, struct cell *below, struct cell *right, struct cell *above);
 
 #define COSTOL 0.91    /* normals differ if dot product < COSTOL */
 #define OBLTOL 0.1     /* high obliquity if cosine of angle < OBLTOL ! */
@@ -205,17 +212,17 @@ struct bu_structparse view_parse[] = {
     {"%d", 1, "ov", bu_byteoffset(overlay), BU_STRUCTPARSE_FUNC_NULL},
     {"%d", 1, "blend", bu_byteoffset(blend), BU_STRUCTPARSE_FUNC_NULL},
     {"%d", 1, "bl", bu_byteoffset(blend), BU_STRUCTPARSE_FUNC_NULL},
-    {"%d", 1, "region_color", bu_byteoffset(region_colors),
-     BU_STRUCTPARSE_FUNC_NULL},
+    {"%d", 1, "region_color", bu_byteoffset(region_colors), BU_STRUCTPARSE_FUNC_NULL},
     {"%d", 1, "rc", bu_byteoffset(region_colors), BU_STRUCTPARSE_FUNC_NULL},
-    {"%V", 1, "occlusion_objects", bu_byteoffset(occlusion_objects),
-     BU_STRUCTPARSE_FUNC_NULL},
-    {"%V", 1, "oo", bu_byteoffset(occlusion_objects),
-     BU_STRUCTPARSE_FUNC_NULL},
-    {"%d", 1, "occlusion_mode", bu_byteoffset(occlusion_mode),
-     BU_STRUCTPARSE_FUNC_NULL},
+    {"%V", 1, "occlusion_objects", bu_byteoffset(occlusion_objects), BU_STRUCTPARSE_FUNC_NULL},
+    {"%V", 1, "oo", bu_byteoffset(occlusion_objects), BU_STRUCTPARSE_FUNC_NULL},
+    {"%d", 1, "occlusion_mode", bu_byteoffset(occlusion_mode), BU_STRUCTPARSE_FUNC_NULL},
     {"%d", 1, "om", bu_byteoffset(occlusion_mode), BU_STRUCTPARSE_FUNC_NULL},
     {"%f", 1, "max_dist", bu_byteoffset(max_dist), BU_STRUCTPARSE_FUNC_NULL},
+    {"%d", 1, "antialias", bu_byteoffset(antialias), BU_STRUCTPARSE_FUNC_NULL},
+    {"%d", 1, "aa", bu_byteoffset(antialias), BU_STRUCTPARSE_FUNC_NULL},
+    {"%d", 1, "both_sides", bu_byteoffset(both_sides), BU_STRUCTPARSE_FUNC_NULL},
+    {"%d", 1, "bs", bu_byteoffset(both_sides), BU_STRUCTPARSE_FUNC_NULL},
 #endif
     {"",	0, (char *)0,	0,	BU_STRUCTPARSE_FUNC_NULL }
 };
@@ -733,31 +740,86 @@ raymiss2(register struct application *ap)
 }
 
 static int
-is_edge(struct application *ap, struct cell *here,
-	struct cell *left, struct cell *below)
+is_edge(double *intensity, struct application *ap, const struct cell *here,
+	const struct cell *left, const struct cell *below, const struct cell *right, const struct cell *above)
 {
-    if (here->c_ishit) {
-	if (detect_ids) 
-	    if (here->c_id != left->c_id || here->c_id != below->c_id) 
-		return 1;
+    int found_edge = 0;
 
-	if (detect_regions) 
-	    if (here->c_region != left->c_region ||
-		here->c_region != below->c_region) 
-		return 1;
+    if (!here) {
+	return 0;
+    }
 
-	if (detect_distance) 
-	    if (Abs(here->c_dist - left->c_dist) > max_dist ||
-		Abs(here->c_dist - below->c_dist) > max_dist) 
-		return 1;
+    if (here && here->c_ishit) {
+	if (detect_ids) {
+	    if (left && below) {
+		if (here->c_id != left->c_id || here->c_id != below->c_id) {
+		    found_edge = 1;
+		}
+	    }
+	    if (both_sides && right && above) {
+		if (here->c_id != right->c_id || here->c_id != above->c_id) {
+		    found_edge = 1;
+		}
+	    }
+	}
 
-	if (detect_normals) 
-	    if ((VDOT(here->c_normal, left->c_normal) < COSTOL) ||
-		(VDOT(here->c_normal, below->c_normal)< COSTOL)) 
-		return 1;
+	if (detect_regions) {
+	    if (left && below) {
+		if (here->c_region != left->c_region ||here->c_region != below->c_region) {
+		    found_edge = 1;
+		}
+	    }
+	    if (both_sides && right && above) {
+		if (here->c_region != right->c_region || here->c_region != above->c_region) {
+		    found_edge = 1;
+		}
+	    }
+	}
+
+	if (detect_distance) {
+	    if (left && below) {
+		if (Abs(here->c_dist - left->c_dist) > max_dist || Abs(here->c_dist - below->c_dist) > max_dist) {
+		    found_edge = 1;
+		}
+	    }
+	    if (both_sides && right && above) {
+		if (Abs(here->c_dist - right->c_dist) > max_dist || Abs(here->c_dist - above->c_dist) > max_dist) {
+		    found_edge = 1;
+		}
+	    }
+	}
+
+	if (detect_normals) {
+	    if (left && below) {
+		if ((VDOT(here->c_normal, left->c_normal) < COSTOL) || (VDOT(here->c_normal, below->c_normal)< COSTOL)) {
+		    found_edge = 1;
+		}
+	    }
+	    if (both_sides && right && above) {
+		if ((VDOT(here->c_normal, right->c_normal)< COSTOL) || (VDOT(here->c_normal, above->c_normal)< COSTOL)) {
+		    found_edge = 1;
+		}
+	    }
+	}
     } else {
-	if (left->c_ishit || below->c_ishit)
-	    return 1;
+	if (left && below) {
+	    if (left->c_ishit || below->c_ishit) {
+		found_edge = 1;
+	    }
+	}
+	if (both_sides && right && above) {
+	    if (right->c_ishit || above->c_ishit) {
+		found_edge = 1;
+	    }
+	}
+    }
+
+    if (found_edge) {
+/*
+	if (intensity && ap)
+	    get_intensity(intensity, ap, here, left, below, right, above);
+*/
+	return 1;
     }
     return 0;
 }
@@ -778,6 +840,12 @@ handle_main_ray(struct application *ap, register struct partition *PartHeadp,
     struct cell me;
     struct cell below;
     struct cell left;
+
+    struct cell above;
+    struct cell right;
+
+    double intensity = 1.0;
+
     int edge = 0;
     int cpu;
     int oc = 1;
@@ -857,7 +925,7 @@ handle_main_ray(struct application *ap, register struct partition *PartHeadp,
     /*
      * Is this pixel an edge?
      */
-    edge = is_edge(ap, &me, &left, &below);
+    edge = is_edge(&intensity, ap, &me, &left, &below, NULL, NULL);
 
     /*
      * Does this pixel occlude the second geometry?  Note that we must
@@ -902,7 +970,7 @@ handle_main_ray(struct application *ap, register struct partition *PartHeadp,
     }
 
     if (edge) {
-	choose_color(col, &me, &left, &below);
+	choose_color(col, intensity, &me, &left, &below, NULL, NULL);
 
 	scanline[cpu][ap->a_x*3+RED] = col[RED];
 	scanline[cpu][ap->a_x*3+GRN] = col[GRN];
@@ -941,8 +1009,8 @@ int diffpixel(RGBpixel a, RGBpixel b)
 }
 
 
-void choose_color(RGBpixel col, struct cell *me,
-		  struct cell *left, struct cell *below)
+void choose_color(RGBpixel col, double intensity, struct cell *me,
+		  struct cell *left, struct cell *below, struct cell *right, struct cell *above)
 {
     col[RED] = fgcolor[RED];
     col[GRN] = fgcolor[GRN];
