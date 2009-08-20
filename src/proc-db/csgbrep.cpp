@@ -39,6 +39,7 @@ extern "C" {
 
 #include "vmath.h"		/* BRL-CAD Vector macros */
 #include "wdb.h"
+    extern void rt_arb8_brep(ON_Brep **bi, struct rt_db_internal *ip, const struct bn_tol *tol);
     extern void rt_sph_brep(ON_Brep **bi, struct rt_db_internal *ip, const struct bn_tol *tol);
     extern void rt_ell_brep(ON_Brep **bi, struct rt_db_internal *ip, const struct bn_tol *tol);
     extern void rt_eto_brep(ON_Brep **bi, struct rt_db_internal *ip, const struct bn_tol *tol);
@@ -66,6 +67,30 @@ main(int argc, char** argv)
     outfp = wdb_fopen("csgbrep.g");
     const char* id_name = "CSG B-Rep Examples";
     mk_id(outfp, id_name);
+
+    bu_log("Writing an ARB8 b-rep...\n");
+    ON_Brep* arb8brep = ON_Brep::New();
+    struct rt_arb_internal *arb8;
+    BU_GETSTRUCT(arb8, rt_arb_internal);
+    arb8->magic = RT_ARB_INTERNAL_MAGIC;
+    point_t pt8[8];
+    VSET(pt8[0], 1015, -1000, -995);
+    VSET(pt8[1], 1015, 1000, -995);
+    VSET(pt8[2], 1015, 1000, 1005);
+    VSET(pt8[3], 1015, -1000, 1005);
+    VSET(pt8[4], -985, -1000, -995);
+    VSET(pt8[5], -985, 1000, -995);
+    VSET(pt8[6], -985, 1000, 1005);
+    VSET(pt8[7], -985, -1000, 1005);
+    for ( int i=0; i < 8; i++ )  {
+	VMOVE( arb8->pt[i], pt8[i*3] );
+    }
+    tmp_internal->idb_ptr = (genptr_t)arb8;
+    rt_arb8_brep(&arb8brep, tmp_internal, tol);
+    const char* arb8_name = "arb8_nurb.s";
+    mk_brep(outfp, arb8_name, arb8brep);
+    delete arb8brep;
+
 
     bu_log("Writing a Spherical b-rep...\n");
     ON_Brep* sphbrep = ON_Brep::New();

@@ -79,6 +79,7 @@ librt_nil_la_SOURCES = \
 	pr.c \
 	prep.c \
 	primitives/arb8/arb8.c \
+	primitives/arb8/arb8_brep.cpp \
 	primitives/arb8/arb8_mirror.c \
 	primitives/arbn/arbn.c \
 	primitives/ars/ars.c \
