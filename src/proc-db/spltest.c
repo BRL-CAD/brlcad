@@ -20,7 +20,7 @@
 /** @file spltest.c
  * spltest.c
  *
- *  Simple spline test.
+ * Simple spline test.
  */
 
 #include "common.h"
@@ -79,7 +79,7 @@ make_face(struct rt_nurb_internal *s, fastf_t *a, fastf_t *b, fastf_t *c, fastf_
     rt_nurb_pr_kv(&srf->u);
 
     /*
-     *  The control mesh is stored in row-major order.
+     * The control mesh is stored in row-major order.
      */
 
     SSET(fp, srf, 0, 0, a);

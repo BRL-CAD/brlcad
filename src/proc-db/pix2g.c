@@ -48,7 +48,7 @@ char *progname ="pix2g";
 /* procedure variable start */
 struct rt_wdb *db_fp;
 int is_region=1;
-/*	struct wmember allPixelList; */ /* defined in wdb.h */
+/* struct wmember allPixelList; */ /* defined in wdb.h */
 struct wmember allScanlineList; /* defined in wdb.h */
 int width=512;
 int height=512;
@@ -70,12 +70,12 @@ void usage(void)
     bu_exit(-1, NULL);
 }
 
-void computeScanline( int pid, genptr_t arg ) {
+void computeScanline(int pid, genptr_t arg) {
     int i=0;
     /* working pixel component value */
     unsigned char *value = image->buf;
 
-    /*	struct wmember *allScanlineList = (struct wmember *)arg;*/
+    /* struct wmember *allScanlineList = (struct wmember *)arg;*/
     fflush(stdout);
     db_sync(db_fp->dbip);
 
@@ -106,7 +106,7 @@ void computeScanline( int pid, genptr_t arg ) {
 	}
 
 	for (j=0; j<width; j++) {
-	    /*			char solidName[256]="";*/
+	    /* char solidName[256]="";*/
 	    unsigned int r, g, b;
 	    unsigned char rgb[3];
 	    point_t p1;
@@ -114,7 +114,7 @@ void computeScanline( int pid, genptr_t arg ) {
 	    struct wmember wm_hd; /* defined in wdb.h */
 	    BU_LIST_INIT(&wm_hd.l);
 
-	    /*			bu_log("[%f:%f]", (float)i*cellSize, (float)j*cellSize);*/
+	    /* bu_log("[%f:%f]", (float)i*cellSize, (float)j*cellSize);*/
 
 	    VSET(p1, (float)i*cellSize, (float)j*cellSize, 0.0);
 
@@ -184,7 +184,7 @@ main(int ac, char *av[])
     if (ac > 5) cellSize=(double)atof(av[5]);
     if (ac > 6) objectSize=(double)atof(av[6]);
 
-    /*	bu_log("{%s} {%s} {%s} {%s} {%s} {%s} {%s}\n", av[0], av[1], av[2], av[3], av[4], av[5], av[6]); */
+    /* bu_log("{%s} {%s} {%s} {%s} {%s} {%s} {%s}\n", av[0], av[1], av[2], av[3], av[4], av[5], av[6]); */
 
     if ((db_fp = wdb_fopen(databaseFileName)) == NULL) {
 	bu_log("unable to open database [%s]\n", databaseFileName);
@@ -218,7 +218,7 @@ main(int ac, char *av[])
      * items that make up the combination.  The wm_hd structure serves
      * as the head of the list of items.
      */
-    /*	BU_LIST_INIT(&allPixelList.l); */
+    /* BU_LIST_INIT(&allPixelList.l); */
     BU_LIST_INIT(&allScanlineList.l);
 
     /*
@@ -254,7 +254,7 @@ main(int ac, char *av[])
     /* XXX We cannot write out one BIG combination of all the pixels due to
      * library stack limitations and tree build implementation
      */
-    /*	mk_lcomb(db_fp, "image.c", &allPixelList, 0, NULL, NULL, NULL, 0); */
+    /* mk_lcomb(db_fp, "image.c", &allPixelList, 0, NULL, NULL, NULL, 0); */
     /* write out the main image combination */
 
     mk_lcomb(db_fp, "image.c", &allScanlineList, 0, NULL, NULL, NULL, 0);

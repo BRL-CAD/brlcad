@@ -19,19 +19,19 @@
  */
 /** @file rawbot.c
  *
- *    Program to generate a BoT from raw triangle data in a file
+ * Program to generate a BoT from raw triangle data in a file
  *
- *    File input is assumed to be interleaved XYZ vertex data
- *    where three vertices comprise a single unoriented triangle.
+ * File input is assumed to be interleaved XYZ vertex data
+ * where three vertices comprise a single unoriented triangle.
  *
- *    e.g. The following describes three triangles:
+ * e.g. The following describes three triangles:
  *
- *      X1 Y1 Z1 X2 Y2 Z2 X3 Y3 Z3 X4 Y4 Z4 X5 Y5 Z5
- *      X6 Y6 Z6 X7 Y7 Z7 X8 Y8 Z8 X9 Y9 Z9
+ * X1 Y1 Z1 X2 Y2 Z2 X3 Y3 Z3 X4 Y4 Z4 X5 Y5 Z5
+ * X6 Y6 Z6 X7 Y7 Z7 X8 Y8 Z8 X9 Y9 Z9
  *
- *    Shared edges or points are not accounted for, implying data
- *    duplication for triangulated surface data where shared
- *    vertices/edges are common.
+ * Shared edges or points are not accounted for, implying data
+ * duplication for triangulated surface data where shared
+ * vertices/edges are common.
  *
  */
 
@@ -55,7 +55,7 @@ void usage(const char *progname)
     bu_exit(-1, NULL);
 }
 
-int main( int argc, char *argv[] )
+int main(int argc, char *argv[])
 {
     char inputString[512];
     float inputX, inputY, inputZ;
@@ -73,13 +73,13 @@ int main( int argc, char *argv[] )
 	usage(argv[0]);
     }
 
-    outfp = wdb_fopen( "rawbot.g" );
+    outfp = wdb_fopen("rawbot.g");
     if (outfp == NULL) {
 	fprintf(stderr, "Unable to open the output file rawbot.g\n");
 	return 1;
     }
     /* units would be nice... */
-    mk_id( outfp, "RAW BOT" );
+    mk_id(outfp, "RAW BOT");
 
     inputFile = fopen(argv[1], "r");
     if (inputFile == NULL) {
@@ -93,7 +93,7 @@ int main( int argc, char *argv[] )
 
     triangleCount=0;
     triangleAvailable = 1;
-    while ( triangleAvailable == 1 ) {
+    while (triangleAvailable == 1) {
 	/* read a set of input values -- input data should be a 3-tuple
 	 * of floating points.
 	 */
@@ -118,11 +118,11 @@ int main( int argc, char *argv[] )
 	    maxTriangleCapacity += 128;
 	}
 
-	/*		VSET( &vertices[triangleCount*3], inputX, inputY, inputZ ); */
+	/* VSET(&vertices[triangleCount*3], inputX, inputY, inputZ); */
 	vertices[(triangleCount*3)] = inputX;
 	vertices[(triangleCount*3)+1] = inputY;
 	vertices[(triangleCount*3)+2] = inputZ;
-	/*		printf("%f %f %f\n", vertices[(triangleCount*3)], vertices[(triangleCount*3)+1], vertices[(triangleCount*3)+2]); */
+	/* printf("%f %f %f\n", vertices[(triangleCount*3)], vertices[(triangleCount*3)+1], vertices[(triangleCount*3)+2]); */
 	triangleCount++;
     }
 
@@ -160,13 +160,13 @@ int main( int argc, char *argv[] )
     outputObjectName = (char *)bu_calloc(512, sizeof(char), "outputObjectName");
 
     snprintf(outputObjectName, 512, "%s.surface.s", argv[1]);
-    mk_bot( outfp, outputObjectName, RT_BOT_SURFACE, RT_BOT_UNORIENTED, 0, triangleCount*3, triangleCount, vertices,  faces, (fastf_t *)NULL, (struct bu_bitv *)NULL );
+    mk_bot(outfp, outputObjectName, RT_BOT_SURFACE, RT_BOT_UNORIENTED, 0, triangleCount*3, triangleCount, vertices,  faces, (fastf_t *)NULL, (struct bu_bitv *)NULL);
 
     snprintf(outputObjectName, 512, "%s.solid.s", argv[1]);
-    mk_bot( outfp, outputObjectName, RT_BOT_SOLID, RT_BOT_UNORIENTED, 0, triangleCount*3, triangleCount, vertices, faces, (fastf_t *)NULL, (struct bu_bitv *)NULL );
+    mk_bot(outfp, outputObjectName, RT_BOT_SOLID, RT_BOT_UNORIENTED, 0, triangleCount*3, triangleCount, vertices, faces, (fastf_t *)NULL, (struct bu_bitv *)NULL);
 
-    /*	snprintf(outputObjectName, 512, "%s.plate.s", argv[1]);*/
-    /*	mk_bot( outfp, "bot_u_plate", RT_BOT_PLATE, RT_BOT_UNORIENTED, 0, triangleCount, triangleCount, vertices, faces, thickness, NULL ); */
+    /* snprintf(outputObjectName, 512, "%s.plate.s", argv[1]);*/
+    /* mk_bot(outfp, "bot_u_plate", RT_BOT_PLATE, RT_BOT_UNORIENTED, 0, triangleCount, triangleCount, vertices, faces, thickness, NULL); */
 
     bu_free(vertices, "vertices");
     bu_free(faces, "faces");

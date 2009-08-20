@@ -84,20 +84,20 @@ unsigned char stud_color[3] = { 250, 178, 108 };
 char *stud_properties[] = { "plastic", "sh=10 di=0.7 sp=0.3" };
 
 struct opening {
-    struct bu_list	l;
-    double		sx;	/* start in X direction */
-    double		sz;	/* start in Z direction */
-    double		ex;	/* end in X direction */
-    double		ez;	/* end in Z direction */
+    struct bu_list l;
+    double sx;	/* start in X direction */
+    double sz;	/* start in Z direction */
+    double ex;	/* end in X direction */
+    double ez;	/* end in Z direction */
 } ol_hd;
 
 #define WALL_WIDTH ol_hd.ex
 #define WALL_HEIGHT ol_hd.ez
 
 struct boardseg {
-    struct bu_list	l;
-    double		s;	/* start */
-    double		e;	/* end */
+    struct bu_list l;
+    double s;	/* start */
+    double e;	/* end */
 };
 
 
@@ -113,10 +113,10 @@ void usage(char *s)
 
     bu_exit(1, "Usage: %s %s\n%s\n%s\n%s\n",
 	    progname,
-	    "[ -u units ] -w(all) width,height [-o(pening) lx,lz,hx,hz ...]",
+	    "[ -u units ] -w(all) width, height [-o(pening) lx, lz, hx, hz ...]",
 	    " [-n name] [ -d(ebug) ] [-t {frame|brick|block|sheetrock} ] [-c R/G/B]",
 	    " [-l(og_commands)] [-R(otate) rx/ry/rz] [-T(ranslate) dx/dy/dz]",
-	    " brick sub-options: [-r(and_color)] [-b width,height,depth ] [-m min_mortar]"
+	    " brick sub-options: [-r(and_color)] [-b width, height, depth ] [-m min_mortar]"
 	);
 }
 
@@ -138,7 +138,7 @@ set_translate(char *s)
 }
 
 /*
- *			B U I L D H R O T
+ * B U I L D H R O T
  *
  * This routine builds a Homogeneous rotation matrix, given
  * alpha, beta, and gamma as angles of rotation.
@@ -152,13 +152,13 @@ buildHrot(register matp_t mat, double alpha, double beta, double ggamma)
     static fastf_t calpha, cbeta, cgamma;
     static fastf_t salpha, sbeta, sgamma;
 
-    calpha = cos( alpha );
-    cbeta = cos( beta );
-    cgamma = cos( ggamma );
+    calpha = cos(alpha);
+    cbeta = cos(beta);
+    cgamma = cos(ggamma);
 
-    salpha = sin( alpha );
-    sbeta = sin( beta );
-    sgamma = sin( ggamma );
+    salpha = sin(alpha);
+    sbeta = sin(beta);
+    sgamma = sin(ggamma);
 
     /*
      * compute the new rotation to apply to the previous
@@ -215,7 +215,7 @@ set_rotate(char *s)
 
 
 /*
- *	P A R S E _ A R G S --- Parse through command line flags
+ * P A R S E _ A R G S --- Parse through command line flags
  */
 int parse_args(int ac, char **av)
 {
@@ -226,7 +226,7 @@ int parse_args(int ac, char **av)
     int units_lock=0;
     FILE *logfile;
 
-    if (! (progname=strrchr(*av, '/')) )
+    if (! (progname=strrchr(*av, '/')))
 	progname = *av;
     else
 	++progname;
@@ -248,7 +248,7 @@ int parse_args(int ac, char **av)
 		set_rotate(bu_optarg);
 		break;
 	    case 'b':
-		if (sscanf(bu_optarg, "%lf,%lf,%lf", &width, &height, &dy) == 3) {
+		if (sscanf(bu_optarg, "%lf, %lf, %lf", &width, &height, &dy) == 3) {
 		    brick_width = width * unit_conv;
 		    brick_height = height * unit_conv;
 		    brick_depth = dy * unit_conv;
@@ -288,7 +288,7 @@ int parse_args(int ac, char **av)
 	    case 'o':
 		if (ol_hd.ex == 0.0) {
 		    usage("set wall dim before openings\n");
-		} else if (sscanf(bu_optarg, "%lf,%lf,%lf,%lf", &dx, &dy, &width, &height) == 4) {
+		} else if (sscanf(bu_optarg, "%lf, %lf, %lf, %lf", &dx, &dy, &width, &height) == 4) {
 		    op = (struct opening *)bu_calloc(1, sizeof(struct opening), "calloc opening");
 		    BU_LIST_INSERT(&ol_hd.l, &op->l);
 		    op->sx = dx * unit_conv;
@@ -327,7 +327,7 @@ int parse_args(int ac, char **av)
 		}
 		break;
 	    case 'w':
-		if (sscanf(bu_optarg, "%lf,%lf", &width, &height) == 2) {
+		if (sscanf(bu_optarg, "%lf, %lf", &width, &height) == 2) {
 		    WALL_WIDTH = width * unit_conv;
 		    WALL_HEIGHT = height * unit_conv;
 		    units_lock = 1;
@@ -374,14 +374,14 @@ h_segs(double sz, double ez, struct boardseg *seglist, double sx, double ex)
     if (seg->e > WALL_WIDTH) seg->e = WALL_WIDTH;
     BU_LIST_APPEND(&(seglist->l), &(seg->l));
 
-    for (BU_LIST_FOR(op, opening, &ol_hd.l) ) {
+    for (BU_LIST_FOR(op, opening, &ol_hd.l)) {
 
 	if ((op->sz >= sz && op->sz <= ez) ||
 	    (op->ez >= sz && op->ez <= ez) ||
-	    (op->sz <= sz && op->ez >= ez) ) {
+	    (op->sz <= sz && op->ez >= ez)) {
 
 	    /* opening in horizontal segment */
-	    for (BU_LIST_FOR(seg, boardseg, &(seglist->l)) ) {
+	    for (BU_LIST_FOR(seg, boardseg, &(seglist->l))) {
 		if (op->sx <= seg->s) {
 		    if (op->ex >= seg->e) {
 			/* opening covers entire segment.
@@ -467,7 +467,7 @@ mk_v_rpp(struct rt_wdb *fd, struct wmember *wm_hd, double xmin, double xmax, dou
 }
 
 /*
- *	put the sides on a frame opening
+ * put the sides on a frame opening
  */
 void
 frame_o_sides(struct rt_wdb *fd, struct wmember *wm_hd, struct opening *op, double h)
@@ -529,7 +529,7 @@ frame_o_sides(struct rt_wdb *fd, struct wmember *wm_hd, struct opening *op, doub
 
 
 /*
- *	Make the frame opening (top & bottom, call frame_o_sides for sides)
+ * Make the frame opening (top & bottom, call frame_o_sides for sides)
  */
 void
 frame_opening(struct rt_wdb *fd, struct wmember *wm_hd, struct opening *op)
@@ -721,7 +721,7 @@ frame(struct rt_wdb *fd)
 		 0.0, bd_thin);
 
 	BU_LIST_DEQUEUE(&(seg->l));
-	bu_free( (char *)seg, "seg free 3");
+	bu_free((char *)seg, "seg free 3");
     }
 
     /* now find the segments of the cap board */
@@ -742,7 +742,7 @@ frame(struct rt_wdb *fd)
 		 WALL_HEIGHT-bd_thin, WALL_HEIGHT);
 
 	BU_LIST_DEQUEUE(&(seg->l));
-	bu_free( (char *)seg, "seg_free 4");
+	bu_free((char *)seg, "seg_free 4");
     }
 
     /* put in the vertical stud boards that are not a part of an

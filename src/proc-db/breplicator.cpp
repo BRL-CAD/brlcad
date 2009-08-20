@@ -208,25 +208,25 @@ generate_brep(int count, ON_3dPoint *points)
     
     // TRIM CURVES
 
-    ON_Curve* trimcurve01 = new ON_LineCurve(ON_2dPoint(0,0), ON_2dPoint(1,0));
+    ON_Curve* trimcurve01 = new ON_LineCurve(ON_2dPoint(0, 0), ON_2dPoint(1, 0));
     trimcurve01->SetDomain(0.0, 1.0);
     brep->m_C2.Append(trimcurve01); /* 0 */
 
-    ON_Curve* trimcurve12 = new ON_LineCurve(ON_2dPoint(1,0), ON_2dPoint(1,1));
+    ON_Curve* trimcurve12 = new ON_LineCurve(ON_2dPoint(1, 0), ON_2dPoint(1, 1));
     trimcurve12->SetDomain(0.0, 1.0);
     brep->m_C2.Append(trimcurve12); /* 1 */
 
-    ON_Curve* trimcurve23 = new ON_LineCurve(ON_2dPoint(1,1), ON_2dPoint(0,1));
+    ON_Curve* trimcurve23 = new ON_LineCurve(ON_2dPoint(1, 1), ON_2dPoint(0, 1));
     trimcurve23->SetDomain(0.0, 1.0);
     brep->m_C2.Append(trimcurve23); /* 2 */
 
-    ON_Curve* trimcurve30 = new ON_LineCurve(ON_2dPoint(0,1), ON_2dPoint(0,0));
+    ON_Curve* trimcurve30 = new ON_LineCurve(ON_2dPoint(0, 1), ON_2dPoint(0, 0));
     trimcurve30->SetDomain(0.0, 1.0);
     brep->m_C2.Append(trimcurve30); /* 3 */
 
     // EDGES
 
-                                         /* C3 curve */
+    /* C3 curve */
     // left face edges
     brep->NewEdge(brep->m_V[0], brep->m_V[1], 0, NULL, SMALL_FASTF); /* 0 */
     brep->NewEdge(brep->m_V[1], brep->m_V[2], 1, NULL, SMALL_FASTF); /* 1 */
@@ -469,7 +469,7 @@ main(int argc, char *argv[])
     mk_id(wdbp, "Breplicator test geometry");
 
     bu_log("Creating the BREP as BRL-CAD geometry\n");
-    ret = mk_brep( wdbp, name, brep);
+    ret = mk_brep(wdbp, name, brep);
     if (ret) {
 	delete brep;
 	wdb_close(wdbp);

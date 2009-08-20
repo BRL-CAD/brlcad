@@ -19,10 +19,7 @@
  */
 /** @file contours.c
  *
- *  Program to read "Brain Mapping Project" data and plot it.
- *
- *  Author -
- *	Michael John Muuss
+ * Program to read "Brain Mapping Project" data and plot it.
  *
  */
 
@@ -34,25 +31,25 @@
 #include "plot3.h"
 
 
-int	x, y, z;
-int	npts;
-char	name[128];
+int x, y, z;
+int npts;
+char name[128];
 
 int
 main(int argc, char *argv[])
 {
     register int i;
 
-    pl_3space( stdout, -32768,  -32768,  -32768, 32767, 32767, 32767 );
-    while ( !feof(stdin) )  {
-	if ( scanf( "%d %d %128s", &npts, &z, name ) != 3 )  break;
-	for ( i=0; i<npts; i++ )  {
-	    if ( scanf( "%d %d", &x, &y ) != 2 )
+    pl_3space(stdout, -32768,  -32768,  -32768, 32767, 32767, 32767);
+    while (!feof(stdin)) {
+	if (scanf("%d %d %128s", &npts, &z, name) != 3)  break;
+	for (i=0; i<npts; i++) {
+	    if (scanf("%d %d", &x, &y) != 2)
 		fprintf(stderr, "bad xy\n");
-	    if ( i==0 )
-		pl_3move( stdout, x, y, z );
+	    if (i==0)
+		pl_3move(stdout, x, y, z);
 	    else
-		pl_3cont( stdout, x, y, z );
+		pl_3cont(stdout, x, y, z);
 	}
 	/* Close curves? */
     }

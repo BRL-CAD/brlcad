@@ -368,7 +368,7 @@ int Face_X_Event::Render_Curves()
 }
 
 /**
- *        SetCurveSurveIntersectionDir
+ * SetCurveSurveIntersectionDir
  *
  * @brief Sets the Dir fields on an intersection event, this function is 
  *  'below' a curve refers to the portion to the right of the curve wrt N
@@ -971,8 +971,8 @@ ON_Curve*
 TwistedCubeEdgeCurve(const ON_3dPoint& from, const ON_3dPoint& to)
 {
     // creates a 3d line segment to be used as a 3d curve in an ON_Brep
-    ON_Curve* c3d = new ON_LineCurve(from, to );
-    c3d->SetDomain(0.0, 1.0 ); // XXX is this UV bounds?
+    ON_Curve* c3d = new ON_LineCurve(from, to);
+    c3d->SetDomain(0.0, 1.0); // XXX is this UV bounds?
     return c3d;
 }
 
@@ -1094,7 +1094,7 @@ MakeTwistedCubeTrimmingLoop(ON_Brep& brep,
 
     for (int side = 0; side < 4; side++) {
 	// side: 0=south, 1=east, 2=north, 3=west
-	c2 = TwistedCubeTrimmingCurve(srf, side );
+	c2 = TwistedCubeTrimmingCurve(srf, side);
 	c2i = brep.m_C2.Count();
 	brep.m_C2.Append(c2);
 

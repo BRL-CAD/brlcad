@@ -118,7 +118,7 @@ main(int ac, char *av[])
 
 	mk_addmember(name, &wm_hd.l, NULL, WMOP_UNION);
 
-	/*	  sprintf(shaderparams, "{alpha %f}", (float)1.0 - (((float)finalSize/(float)currentSize)-(float)1.0));  */
+	/* sprintf(shaderparams, "{alpha %f}", (float)1.0 - (((float)finalSize/(float)currentSize)-(float)1.0));  */
 
 	/* make the spatial region */
 	sprintf(name, "air.%d.r", counter);

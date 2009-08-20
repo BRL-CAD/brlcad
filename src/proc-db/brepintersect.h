@@ -33,45 +33,45 @@
 #include "../src/other/openNURBS/opennurbs_array.h"
 
 bool PointInTriangle(
-	const ON_3dPoint& a,
-	const ON_3dPoint& b,
-	const ON_3dPoint& c,
-	const ON_3dPoint& P,
-	double tol
-	);
+    const ON_3dPoint& a,
+    const ON_3dPoint& b,
+    const ON_3dPoint& c,
+    const ON_3dPoint& P,
+    double tol
+    );
 
 int SegmentSegmentIntersect(
-	const ON_3dPoint& x1,
-	const ON_3dPoint& x2,
-	const ON_3dPoint& x3,
-	const ON_3dPoint& x4,
-	ON_3dPoint x[2],
-	double tol
-	);
+    const ON_3dPoint& x1,
+    const ON_3dPoint& x2,
+    const ON_3dPoint& x3,
+    const ON_3dPoint& x4,
+    ON_3dPoint x[2],
+    double tol
+    );
 
 int SegmentTriangleIntersect(
-	const ON_3dPoint& a,
+    const ON_3dPoint& a,
     const ON_3dPoint& b,
     const ON_3dPoint& c,
     const ON_3dPoint& p,
     const ON_3dPoint& q,
     ON_3dPoint out[2], 
     double tol
-	);
+    );
 
 int TriangleTriangleIntersect(
-	const ON_3dPoint T1[3],
-	const ON_3dPoint T2[3],
-	ON_Line& out,
-	double tol
-	);
+    const ON_3dPoint T1[3],
+    const ON_3dPoint T2[3],
+    ON_Line& out,
+    double tol
+    );
 
 int TriangleBrepIntersect(
-	const ON_3dPoint T1[3],
-	const ON_Brep brep,
-	ON_Curve& out,
-	double tol
-	);
+    const ON_3dPoint T1[3],
+    const ON_Brep brep,
+    ON_Curve& out,
+    double tol
+    );
 
 
 /** @} */

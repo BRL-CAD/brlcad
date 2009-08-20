@@ -743,7 +743,7 @@ class TriIntersections {
     ON_SimpleArray<char> dir[3];
     ON_SimpleArray<ON_Line> intersections;
     double tol;
-public:
+ public:
     TriIntersections(ON_3dPoint, ON_3dPoint, ON_3dPoint, double);
     int InsertPoint(ON_3dPoint, uint8_t, EdgeIndex);
     int AddLine(ON_Line);
@@ -899,7 +899,7 @@ int TriIntersections::Faces(
 class PointIndex{
     ON_Mesh *mesh;
     double tol;
-public:
+ public:
     PointIndex(ON_Mesh*);
     int InsertPoint(ON_3dPoint);
 };

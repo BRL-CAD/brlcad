@@ -18,14 +18,14 @@
  * information.
  */
 /** @file wdb_example.c
- *  Create a BRL-CAD geometry database from C code.
+ * Create a BRL-CAD geometry database from C code.
  *
- *  Note that this is for writing (creating/appending) a database.
- *  There is currently no API for modifying a database.
+ * Note that this is for writing (creating/appending) a database.
+ * There is currently no API for modifying a database.
  *
- *  Note that since the values in the database are stored in millimeters.
- *  This constrains the arguments to the mk_* routines to also be in
- *  millimeters.
+ * Note that since the values in the database are stored in millimeters.
+ * This constrains the arguments to the mk_* routines to also be in
+ * millimeters.
  */
 
 #include "common.h"
@@ -102,7 +102,7 @@ main(int ac, char *av[])
      * in the combination.  The return from mk_addmember is a pointer
      * to the wmember structure
      */
-    (void)mk_addmember( "box.s", &wm_hd.l, NULL, WMOP_UNION );
+    (void)mk_addmember("box.s", &wm_hd.l, NULL, WMOP_UNION);
 
     /* If we wanted a transformation matrix for this arc, we could
      * have passed the matrix in to mk_addmember as an argument or we
@@ -123,7 +123,7 @@ main(int ac, char *av[])
      * problem.
      */
 
-    (void)mk_addmember( "ball.s", &wm_hd.l, NULL, WMOP_UNION );
+    (void)mk_addmember("ball.s", &wm_hd.l, NULL, WMOP_UNION);
 
     /* Create the combination
      * In this case we are going to make it a region (hence the

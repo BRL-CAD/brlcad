@@ -19,10 +19,8 @@
  */
 /** @file nmgmodel.c
  *
- *      build a really hairy nmg solid in a database
+ * build a really hairy nmg solid in a database
  *
- *	Options
- *	h	help
  */
 
 #include "common.h"
@@ -61,7 +59,7 @@ char mfilename[1024] = {0};
 int manifold[4] = { 1, 1, 1, 1 };
 
 /*
- *	U S A G E --- tell user how to invoke this program, then exit
+ * U S A G E --- tell user how to invoke this program, then exit
  */
 void usage(char *s)
 {
@@ -77,13 +75,13 @@ void usage(char *s)
 }
 
 /*
- *	P A R S E _ A R G S --- Parse through command line flags
+ * P A R S E _ A R G S --- Parse through command line flags
  */
 int parse_args(int ac, char **av)
 {
-    int  c;
+    int c;
 
-    if (  ! (progname=strrchr(*av, '/'))  )
+    if (! (progname=strrchr(*av, '/')))
 	progname = *av;
     else
 	++progname;
@@ -528,10 +526,10 @@ make_0manifold_bits(struct bn_tol *tol)
 
 
 /*
- *	M A I N
+ * M A I N
  *
- *	Call parse_args to handle command line arguments first, then
- *	process input.
+ * Call parse_args to handle command line arguments first, then
+ * process input.
  */
 int main(int ac, char **av)
 {
@@ -570,7 +568,7 @@ int main(int ac, char **av)
 	mk_nmg(fdmodel, "s.NMG",  m);
 
 	/* build a database region mentioning the solid */
-	mk_comb1( fdmodel, "r.NMG", "s.NMG", 1 );
+	mk_comb1(fdmodel, "r.NMG", "s.NMG", 1);
 
 	wdb_close(fdmodel);
     }
