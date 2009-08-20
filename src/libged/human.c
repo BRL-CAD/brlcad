@@ -1709,12 +1709,11 @@ ged_human(struct ged *gedp, int ac, const char *av[])
     memset(humanName, 0, MAXLENGTH);
     bu_strlcpy(humanName, topLevel, MAXLENGTH);
     setStance(stance, &human_data); 
-    if(!troops){
-    	Auto(&human_data);
+    if(troops <= 1){
 	makeBody(gedp->ged_wdbp, suffix, &human_data, location, showBoxes);
 	mk_id_units(gedp->ged_wdbp, "A single Human", "in");
     }
-    if(troops){
+    if(troops > 1){
 	makeArmy(gedp->ged_wdbp, human_data, troops, showBoxes);
     	mk_id_units(gedp->ged_wdbp, "An army of people", "in");	
     }
