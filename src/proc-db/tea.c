@@ -37,16 +37,6 @@
 #include "./ducks.h"		/* Teapot Vertex data */
 #include "./patches.h"		/* Teapot Patch data */
 
-extern dt ducks[DUCK_COUNT];		/* Vertex data of teapot */
-extern pt patches[PATCH_COUNT];		/* Patch data of teapot */
-
-struct face_g_snurb **surfaces;
-
-char *Usage = "This program ordinarily generates a database on stdout.\n\
-	Your terminal probably wouldn't like it.";
-
-struct rt_wdb *outfp;
-
 
 /* IEEE patch number of the Bi-Cubic Bezier patch and convert it
  * to a B-Spline surface (Bezier surfaces are a subset of B-spline surfaces
@@ -55,6 +45,9 @@ struct rt_wdb *outfp;
 void
 dump_patch(struct face_g_snurb **surfp, pt patch)
 {
+    /* Vertex data of teapot */
+    extern dt ducks[DUCK_COUNT];
+
     struct face_g_snurb *b_patch;
     int i, j, pt_type;
     fastf_t *mesh_pointer;
@@ -102,9 +95,16 @@ dump_patch(struct face_g_snurb **surfp, pt patch)
 int
 main(int argc, char **argv)
 {
-    char *id_name = "Spline Example";
-    char *tea_name = "UtahTeapot";
+    /* Patch data of teapot */
+    extern pt patches[PATCH_COUNT];
+
+    const char *Usage = "This program ordinarily generates a database on stdout.\n\tYour terminal probably wouldn't like it.";
+    const char *id_name = "Spline Example";
+    const char *tea_name = "UtahTeapot";
+
     int i;
+    struct rt_wdb *outfp;
+    struct face_g_snurb **surfaces;
 
     rt_init_resource(&rt_uniresource, 0, NULL);
 
