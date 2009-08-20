@@ -98,7 +98,6 @@ main(int argc, char **argv)
     /* Patch data of teapot */
     extern pt patches[PATCH_COUNT];
 
-    const char *Usage = "This program ordinarily generates a database on stdout.\n\tYour terminal probably wouldn't like it.";
     const char *id_name = "Spline Example";
     const char *tea_name = "UtahTeapot";
 
