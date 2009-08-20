@@ -3543,7 +3543,7 @@ Popup Menu    Right or Ctrl-Left
 	lappend tobjects [regsub {^/} $obj ""]
     }
 
-    if {[catch {eval gedCmd erase $tobjects} ret]} {
+    if {[catch {eval gedCmd erase $options $tobjects} ret]} {
 	gedCmd configure -primitiveLabels {}
 	refreshTree
 	SetNormalCursor $this
