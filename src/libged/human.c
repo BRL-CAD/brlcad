@@ -1699,8 +1699,6 @@ ged_human(struct ged *gedp, int ac, const char *av[])
 
     GED_CHECK_EXISTS(gedp, bu_vls_addr(&name), LOOKUP_QUIET, GED_ERROR);
 
-    gedp->ged_wdbp = wdb_fopen(filename);
-
     bu_log("Center Location: ");
     bu_log("%.2f %.2f %.2f\n", location[X], location[Y], location[Z]);
 
