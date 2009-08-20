@@ -40,91 +40,10 @@
 #include "./ducks.h"		/* Teapot Vertex data */
 #include "./patches.h"		/* Teapot Patch data */
 
-extern dt ducks[DUCK_COUNT];		/* Vertex data of teapot */
-extern pt patches[PATCH_COUNT];		/* Patch data of teapot */
-
-char *Usage = "This program ordinarily generates a database on stdout.\n\
-	Your terminal probably wouldn't like it.";
 
 static struct shell *s;
 static struct model *m;
 static struct bn_tol tol;
-
-void dump_patch(int (*patch)[4]);
-
-struct rt_wdb *outfp;
-
-int
-main(int argc, char **argv)
-{
-    struct nmgregion *r;
-    char *id_name = "BRL-CAD t-NURBS NMG Example";
-    char *tea_name = "UtahTeapot";
-    char *uplot_name = "teapot.pl";
-    struct bu_list vhead;
-    FILE *fp;
-    int i;
-
-    tol.magic = BN_TOL_MAGIC;
-    tol.dist = 0.005;
-    tol.dist_sq = tol.dist * tol.dist;
-    tol.perp = 1e-6;
-    tol.para = 1 - tol.perp;
-
-    BU_LIST_INIT(&rt_g.rtg_vlfree);
-
-    outfp = wdb_fopen("tea_nmg.g");
-
-    rt_g.debug |= DEBUG_ALLRAYS;	/* Cause core dumps on bu_bomb(), but no extra messages */
-
-    while ((i=bu_getopt(argc, argv, "d")) != EOF) {
-	switch (i) {
-	    case 'd' : rt_g.debug |= DEBUG_MEM | DEBUG_MEM_FULL; break;
-	    default	:
-		(void)fprintf(stderr,
-			      "Usage: %s [-d] > database.g\n", *argv);
-		return(-1);
-	}
-    }
-
-    mk_id(outfp, id_name);
-
-    m = nmg_mm();
-    NMG_CK_MODEL(m);
-    r = nmg_mrsv(m);
-    NMG_CK_REGION(r);
-    s = BU_LIST_FIRST(shell, &r->s_hd);
-    NMG_CK_SHELL(s);
-
-    /* Step through each patch and create a NMG TNURB face
-     * representing the patch then dump them out.
-     */
-
-    for (i = 0; i < PATCH_COUNT; i++) {
-	dump_patch(patches[i]);
-    }
-
-    /* Connect up the coincident vertexuses and edges */
-    (void)nmg_model_fuse(m, &tol);
-
-    /* write NMG to output file */
-    (void)mk_nmg(outfp, tea_name, m);
-    wdb_close(outfp);
-
-    /* Make a vlist drawing of the model */
-    BU_LIST_INIT(&vhead);
-    nmg_m_to_vlist(&vhead, m, 0);
-
-    /* Make a UNIX plot file from this vlist */
-    if ((fp=fopen(uplot_name, "w")) == NULL) {
-	bu_log("Cannot open plot file: %s\n", uplot_name);
-	perror("teapot_nmg");
-    } else {
-	rt_vlist_to_uplot(fp, &vhead);
-    }
-
-    return(0);
-}
 
 
 /* IEEE patch number of the Bi-Cubic Bezier patch and convert it
@@ -134,6 +53,9 @@ main(int argc, char **argv)
 void
 dump_patch(int (*patch)[4])
 {
+    /* Vertex data of teapot */
+    extern dt ducks[DUCK_COUNT];
+
     struct vertex *verts[4];
     struct faceuse *fu;
     struct loopuse *lu;
@@ -241,6 +163,83 @@ dump_patch(int (*patch)[4])
 #endif
     }
     nmg_face_bb(fu->f_p, &tol);
+}
+
+
+int
+main(int argc, char **argv)
+{
+    /* Patch data of teapot */
+    extern pt patches[PATCH_COUNT];
+
+    struct nmgregion *r;
+    char *id_name = "BRL-CAD t-NURBS NMG Example";
+    char *tea_name = "UtahTeapot";
+    char *uplot_name = "teapot.pl";
+    struct bu_list vhead;
+    FILE *fp;
+    int i;
+    struct rt_wdb *outfp;
+
+    tol.magic = BN_TOL_MAGIC;
+    tol.dist = 0.005;
+    tol.dist_sq = tol.dist * tol.dist;
+    tol.perp = 1e-6;
+    tol.para = 1 - tol.perp;
+
+    BU_LIST_INIT(&rt_g.rtg_vlfree);
+
+    outfp = wdb_fopen("tea_nmg.g");
+
+    rt_g.debug |= DEBUG_ALLRAYS;	/* Cause core dumps on bu_bomb(), but no extra messages */
+
+    while ((i=bu_getopt(argc, argv, "d")) != EOF) {
+	switch (i) {
+	    case 'd' : rt_g.debug |= DEBUG_MEM | DEBUG_MEM_FULL; break;
+	    default	:
+		(void)fprintf(stderr,
+			      "Usage: %s [-d] > database.g\n", *argv);
+		return(-1);
+	}
+    }
+
+    mk_id(outfp, id_name);
+
+    m = nmg_mm();
+    NMG_CK_MODEL(m);
+    r = nmg_mrsv(m);
+    NMG_CK_REGION(r);
+    s = BU_LIST_FIRST(shell, &r->s_hd);
+    NMG_CK_SHELL(s);
+
+    /* Step through each patch and create a NMG TNURB face
+     * representing the patch then dump them out.
+     */
+
+    for (i = 0; i < PATCH_COUNT; i++) {
+	dump_patch(patches[i]);
+    }
+
+    /* Connect up the coincident vertexuses and edges */
+    (void)nmg_model_fuse(m, &tol);
+
+    /* write NMG to output file */
+    (void)mk_nmg(outfp, tea_name, m);
+    wdb_close(outfp);
+
+    /* Make a vlist drawing of the model */
+    BU_LIST_INIT(&vhead);
+    nmg_m_to_vlist(&vhead, m, 0);
+
+    /* Make a UNIX plot file from this vlist */
+    if ((fp=fopen(uplot_name, "w")) == NULL) {
+	bu_log("Cannot open plot file: %s\n", uplot_name);
+	perror("teapot_nmg");
+    } else {
+	rt_vlist_to_uplot(fp, &vhead);
+    }
+
+    return(0);
 }
 
 /*
