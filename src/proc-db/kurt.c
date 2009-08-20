@@ -21,9 +21,6 @@
  *
  * Program to generate polygons from a multi-valued function.
  *
- * Author -
- * Michael John Muuss
- *
  */
 
 #include "common.h"

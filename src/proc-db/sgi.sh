@@ -6,9 +6,6 @@
 #
 # The SGI cube is a registered trademark of SGI.
 #
-# Author -
-#   Christopher Sean Morrison
-#
 # This script is in the public domain.
 #
 #####################################################################

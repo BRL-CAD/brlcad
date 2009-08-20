@@ -21,9 +21,6 @@
  *
  * Program to generate test pipes and particles.
  *
- * Author -
- * Michael John Muuss
- *
  */
 
 #include "common.h"
