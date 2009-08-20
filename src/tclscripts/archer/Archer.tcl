@@ -1974,7 +1974,7 @@ package provide Archer 1.0
 	}
 
 	SetNormalCursor $this
-	return $ret
+	error $ret
     }
 
     if {$sflag} {

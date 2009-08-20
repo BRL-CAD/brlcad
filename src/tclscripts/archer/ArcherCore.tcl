@@ -892,7 +892,7 @@ Popup Menu    Right or Ctrl-Left
 
     if {[catch {eval gedCmd $cmd $options $expandedArgs} ret]} {
 	SetNormalCursor $this
-	return $ret
+	error $ret
     }
 
     if {$sflag} {
