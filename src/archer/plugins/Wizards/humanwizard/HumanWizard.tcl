@@ -34,7 +34,7 @@
 	common wizardMajorType $Archer::pluginMajorTypeWizard
 	common wizardMinorType $Archer::pluginMinorTypeMged
 	common wizardName "Human Wizard"
-	common wizardVersion "0.2"
+	common wizardVersion "0.5"
 	common wizardClass HumanWizard
 
 	# Methods that override Wizard methods
@@ -66,8 +66,6 @@
 	variable locationz 0
 	variable manualMode 0
 	variable numberSoldiers 1
-#	variable output 0
-#	variable outputString "Fellow.g"
 	variable percentile 50
 	variable stance 0
 	variable stanceString Standing
@@ -138,7 +136,7 @@
     eval itk_initialize $args
 
     set wizardTop $_wizardTop
-    set wizardState $_wizardState
+    setWizardState $_wizardState
     set wizardOrigin $_wizardOrigin
     set wizardAction buildHuman
     set wizardXmlAction buildHumanXML
@@ -464,17 +462,16 @@
 	     numberSoldiers $numberSoldiers \
 	     percentile $percentile \
 	     stance $stance]
-
-    $archersGed human \
-	-A $autoMode \
-	-b $boundingBoxes \
-	-H $height \
-	-l $locationx $locationy $locationz \
-	-m $manualMode \
-	-N $numberSoldiers \
-	-p $percentile \
-	-s $stance \ 
-	$wizardTop
+puts "archerGed human -A -s $stance $wizardTop"
+    $archersGed human -A -s $stance $wizardTop
+#	-b \
+#	-H $height \
+#	-l \
+#	-m \
+#	-N $numberSoldiers \
+#	-p $percentile \
+#	-s $stance \ 
+#	$wizardTop
 
     # Add wizard attributes
     addWizardAttrs $wizardTop 0

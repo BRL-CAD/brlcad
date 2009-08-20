@@ -1634,26 +1634,26 @@ int read_args(int argc, char **argv, char *topLevel, struct human_data_t *dude, 
 		fflush(stdin);
 		break;
 	}
-	dude->height = (dude->legs.legLength + dude->torso.torsoLength + dude->head.headSize) / IN2MM;
+        }
+        dude->height = (dude->legs.legLength + dude->torso.torsoLength + dude->head.headSize) / IN2MM;
 
         if((argc - bu_optind) == 1) {
             /* Yes, there is a top-level name at the end of this argument chain, lets dump it into the file*/
             have_name = 1;
             //bu_vls_trunc(name, 0);
             //bu_vls_printf(name, "%s", argv[bu_optind]);
-            
-	    memset(humanName, 0, MAXLENGTH);
-	    memset(topLevel, 0, MAXLENGTH);
-	    bu_strlcpy(topLevel, argv[bu_optind], MAXLENGTH);
+
+            memset(humanName, 0, MAXLENGTH);
+            memset(topLevel, 0, MAXLENGTH);
+            bu_strlcpy(topLevel, argv[bu_optind], MAXLENGTH);
             bu_strlcpy(humanName, topLevel, MAXLENGTH);
-	    bu_log("TopLevel=%s\n", topLevel);
-	    bu_log("TopLevel2=%s\n", humanName);
+            bu_log("TopLevel=%s\n", topLevel);
+            bu_log("TopLevel2=%s\n", humanName);
         }
-        if(!have_name) {  
+        if(!have_name) {
             bu_log("%s: need top level object name\n", argv[0]);
             show_help(*argv, options);
             return GED_ERROR;
-        }
     }
     fflush(stdout);
     return(bu_optind);
