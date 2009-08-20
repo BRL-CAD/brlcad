@@ -175,14 +175,14 @@ rt_arb8_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *
     RT_ARB_CK_MAGIC(arb8ip);
 
     ON_3dPoint point[8] = {
-    	ON_3dPoint(arb8ip->pt[A]),
-    	ON_3dPoint(arb8ip->pt[B]),
-        ON_3dPoint(arb8ip->pt[C]),
     	ON_3dPoint(arb8ip->pt[D]),
+    	ON_3dPoint(arb8ip->pt[C]),
+        ON_3dPoint(arb8ip->pt[G]),
+    	ON_3dPoint(arb8ip->pt[H]),
+    	ON_3dPoint(arb8ip->pt[B]),
+    	ON_3dPoint(arb8ip->pt[A]), 
     	ON_3dPoint(arb8ip->pt[E]),
-    	ON_3dPoint(arb8ip->pt[F]), 
-    	ON_3dPoint(arb8ip->pt[G]),
-    	ON_3dPoint(arb8ip->pt[H])
+    	ON_3dPoint(arb8ip->pt[F])
     };
 
     for (int i = 0; i < 8; i++) {
@@ -225,16 +225,16 @@ rt_arb8_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *
     brep->m_S.Append(arb_nurbs_surface(point[D], point[C], point[H], point[G])); //DCHG
     
     arb_nurbs_face(brep, ABCD, +1, A, B, C, D, AB, +1, BC, +1, CD, +1, DA, +1);
-    arb_nurbs_face(brep, BEHC, +1, B, E, H, C, BE, +1, EH, +1, HC, +1, BC, +1);
-    arb_nurbs_face(brep, EFGH, +1, E, F, G, H, EF, +1, FG, +1, GH, +1, EH, +1);
-    arb_nurbs_face(brep, FADG, +1, F, A, D, G, FA, +1, DA, +1, DG, +1, FG, +1);
-    arb_nurbs_face(brep, FEBA, +1, F, E, B, A, EF, +1, BE, +1, AB, +1, FA, +1);
-    arb_nurbs_face(brep, DCHG, +1, D, C, H, G, CD, +1, HC, +1, GH, +1, DG, +1);
+    arb_nurbs_face(brep, BEHC, +1, B, E, H, C, BE, +1, EH, +1, HC, +1, BC, -1);
+    arb_nurbs_face(brep, EFGH, +1, E, F, G, H, EF, +1, FG, +1, GH, +1, EH, -1);
+    arb_nurbs_face(brep, FADG, +1, F, A, D, G, FA, +1, DA, -1, DG, +1, FG, -1);
+    arb_nurbs_face(brep, FEBA, +1, F, E, B, A, EF, -1, BE, -1, AB, -1, FA, -1);
+    arb_nurbs_face(brep, DCHG, +1, D, C, H, G, CD, -1, HC, -1, GH, -1, DG, -1);
 
 
     
-    brep->Standardize();
-    brep->Compact();
+ //   brep->Standardize();
+ //   brep->Compact();
 }
 
 }

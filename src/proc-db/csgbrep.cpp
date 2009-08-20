@@ -83,7 +83,7 @@ main(int argc, char** argv)
     VSET(pt8[6], -985, 1000, 1005);
     VSET(pt8[7], -985, -1000, 1005);
     for ( int i=0; i < 8; i++ )  {
-	VMOVE( arb8->pt[i], pt8[i*3] );
+	VMOVE( arb8->pt[i], pt8[i] );
     }
     tmp_internal->idb_ptr = (genptr_t)arb8;
     rt_arb8_brep(&arb8brep, tmp_internal, tol);
