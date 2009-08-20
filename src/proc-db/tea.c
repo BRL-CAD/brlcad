@@ -45,55 +45,7 @@ struct face_g_snurb **surfaces;
 char *Usage = "This program ordinarily generates a database on stdout.\n\
 	Your terminal probably wouldn't like it.";
 
-/*void dump_patch(int (*patch)[4]);*/
-void dump_patch(struct face_g_snurb **surfp, pt patch);
-
 struct rt_wdb *outfp;
-
-int
-main(int argc, char **argv)
-{
-    char *id_name = "Spline Example";
-    char *tea_name = "UtahTeapot";
-    int i;
-
-    rt_init_resource(&rt_uniresource, 0, NULL);
-
-    outfp = wdb_fopen("teapot.g");
-
-    while ((i=bu_getopt(argc, argv, "d")) != EOF) {
-	switch (i) {
-	    case 'd':
-		rt_g.debug |= DEBUG_MEM | DEBUG_MEM_FULL;
-		break;
-	    default:
-		bu_exit(-1, "Usage: %s [-d]\n", *argv);
-	}
-    }
-
-    /* Setup information
-     * Database header record
-     * File name
-     * B-Spline Solid record
-     * Name, Number of Surfaces, resolution (not used)
-     */
-
-    mk_id(outfp, id_name);
-
-    /* Step through each patch and create a B_SPLINE surface
-     * representing the patch then dump them out.
-     */
-    surfaces = (struct face_g_snurb **)bu_calloc(PATCH_COUNT+2, sizeof(struct face_g_snurb *), "surfaces");
-
-    for (i = 0; i < PATCH_COUNT; i++) {
-	dump_patch(&surfaces[i], patches[i]);
-    }
-    surfaces[PATCH_COUNT] = NULL;
-
-    mk_bspline(outfp, tea_name, surfaces);
-
-    return(0);
-}
 
 
 /* IEEE patch number of the Bi-Cubic Bezier patch and convert it
@@ -144,6 +96,52 @@ dump_patch(struct face_g_snurb **surfp, pt patch)
 	    mesh_pointer += 3;
 	}
     }
+}
+
+
+int
+main(int argc, char **argv)
+{
+    char *id_name = "Spline Example";
+    char *tea_name = "UtahTeapot";
+    int i;
+
+    rt_init_resource(&rt_uniresource, 0, NULL);
+
+    outfp = wdb_fopen("teapot.g");
+
+    while ((i=bu_getopt(argc, argv, "d")) != EOF) {
+	switch (i) {
+	    case 'd':
+		rt_g.debug |= DEBUG_MEM | DEBUG_MEM_FULL;
+		break;
+	    default:
+		bu_exit(-1, "Usage: %s [-d]\n", *argv);
+	}
+    }
+
+    /* Setup information
+     * Database header record
+     * File name
+     * B-Spline Solid record
+     * Name, Number of Surfaces, resolution (not used)
+     */
+
+    mk_id(outfp, id_name);
+
+    /* Step through each patch and create a B_SPLINE surface
+     * representing the patch then dump them out.
+     */
+    surfaces = (struct face_g_snurb **)bu_calloc(PATCH_COUNT+2, sizeof(struct face_g_snurb *), "surfaces");
+
+    for (i = 0; i < PATCH_COUNT; i++) {
+	dump_patch(&surfaces[i], patches[i]);
+    }
+    surfaces[PATCH_COUNT] = NULL;
+
+    mk_bspline(outfp, tea_name, surfaces);
+
+    return(0);
 }
 
 /*
