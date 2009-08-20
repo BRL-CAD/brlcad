@@ -1096,7 +1096,7 @@ ged_draw_guts(struct ged *gedp, int argc, const char *argv[], int kind)
     int	flag_o_nonunique=1;
     int	last_opt=0;
     struct bu_vls vls;
-    static const char *usage = "[-R -A -o -C#/#/# -s] <objects | attribute name/value pairs>";
+    static const char *usage = "<[-R -C#/#/# -s] objects> | <-o -A attribute name/value pairs>";
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
     GED_CHECK_DRAWABLE(gedp, GED_ERROR);
@@ -1114,18 +1114,6 @@ ged_draw_guts(struct ged *gedp, int argc, const char *argv[], int kind)
     /* skip past cmd */
     --argc;
     ++argv;
-
-    /*  First, delete any mention of these objects.
-     *  Silently skip any leading options (which start with minus signs).
-     */
-
-    for (i = 0; i < argc; ++i) {
-	/* Skip any options */
-	if (argv[i][0] == '-')
-	    continue;
-
-	ged_erasePathFromDisplay(gedp, argv[i]);
-    }
 
     /* check args for "-A" (attributes) and "-o" */
     bu_vls_init(&vls);
@@ -1220,10 +1208,34 @@ ged_draw_guts(struct ged *gedp, int argc, const char *argv[], int kind)
 	new_argv = (char **)bu_calloc( max_count+1, sizeof( char *), "ged_draw_guts new_argv" );
 	new_argc = bu_argv_from_string( new_argv, max_count, bu_vls_addr( &vls ) );
 
+	/*  First, delete any mention of these objects.
+	 *  Silently skip any leading options (which start with minus signs).
+	 */
+	for (i = 0; i < new_argc; ++i) {
+	    /* Skip any options */
+	    if (new_argv[i][0] == '-')
+		continue;
+
+	    ged_erasePathFromDisplay(gedp, new_argv[i]);
+	}
+
 	ged_drawtrees(gedp, new_argc, (const char **)new_argv, kind, (struct ged_client_data *)0);
 	bu_vls_free( &vls );
 	bu_free( (char *)new_argv, "ged_draw_guts new_argv" );
     } else {
+	bu_vls_free( &vls );
+
+	/*  First, delete any mention of these objects.
+	 *  Silently skip any leading options (which start with minus signs).
+	 */
+	for (i = 0; i < argc; ++i) {
+	    /* Skip any options */
+	    if (argv[i][0] == '-')
+		continue;
+
+	    ged_erasePathFromDisplay(gedp, argv[i]);
+	}
+
 	ged_drawtrees(gedp, argc, argv, kind, (struct ged_client_data *)0);
     }
 
