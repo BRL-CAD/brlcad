@@ -47,6 +47,16 @@
 #include "./ext.h"
 
 
+#define COSTOL 0.91    /* normals differ if dot product < COSTOL */
+#define OBLTOL 0.1     /* high obliquity if cosine of angle < OBLTOL ! */
+#define is_Odd(_a)      ((_a)&01)
+#define ARCTAN_87 19.08
+
+#ifndef Abs
+#  define Abs(x) ((x) < 0 ? -(x) : (x))                  /* UNSAFE */
+#endif
+
+
 extern FBIO *fbp;	/* Framebuffer handle */
 extern fastf_t viewsize;
 extern int lightmodel;
@@ -170,28 +180,6 @@ struct application **occlusion_apps;
 
 static struct bu_image_file *bif = NULL;
 
-static int occlusion_hit(struct application *,
-			 struct partition *, struct seg *);
-static int occlusion_miss(struct application *);
-static int occludes(struct application *, struct cell *);
-
-
-/*
- * Prototypes for the viewedge edge detection functions
- */
-static int rayhit(struct application *, struct partition *, struct seg *);
-static int raymiss(struct application *);
-static void choose_color(RGBpixel col, double intensity, struct cell *me,
-			 struct cell *left, struct cell *below, struct cell *right, struct cell *above);
-
-#define COSTOL 0.91    /* normals differ if dot product < COSTOL */
-#define OBLTOL 0.1     /* high obliquity if cosine of angle < OBLTOL ! */
-#define is_Odd(_a)      ((_a)&01)
-#define ARCTAN_87 19.08
-
-#ifndef Abs
-#  define Abs(x) ((x) < 0 ? -(x) : (x))                  /* UNSAFE */
-#endif
 
 /* Viewing module specific "set" variables */
 struct bu_structparse view_parse[] = {
@@ -249,6 +237,122 @@ Options:\n\
  -R                 Do not report overlaps\n\
  -c                 Auxillary commands (see man page)\n\
 ";
+
+
+static int occlusion_hit(struct application *ap, struct partition *pt,
+			 struct seg *segp)
+{
+    struct hit *hitp = pt->pt_forw->pt_inhit;
+
+    ap->a_dist = hitp->hit_dist;
+    return 1;
+}
+
+
+static int occlusion_miss(struct application *ap)
+{
+    ap->a_dist = MAX_FASTF;
+    return 0;
+}
+
+
+static int occludes(struct application *ap, struct cell *here)
+{
+    int cpu = ap->a_resource->re_cpu;
+    int oc_hit = 0;
+    /*
+     * Test the hit distance on the second geometry.  If the second
+     * geometry is closer, do not color pixel
+     */
+    VMOVE(occlusion_apps[cpu]->a_ray.r_pt, ap->a_ray.r_pt);
+    VMOVE(occlusion_apps[cpu]->a_ray.r_dir, ap->a_ray.r_dir);
+
+    oc_hit = rt_shootray(occlusion_apps[cpu]);
+
+    if (!oc_hit) {
+	/*
+	 * The occlusion ray missed, therefore this pixel occludes the
+	 * second geometry.
+	 *
+	 * Return 2 so that the fact that there is no geometry behind
+	 * can be conveyed to the OCCLUSION_MODE_DITHER section.
+	 */
+	return 2;
+    }
+
+    if (occlusion_apps[cpu]->a_dist < here->c_dist) {
+	/*
+	 * The second geometry is close than the edge, therefore it is
+	 * 'foreground'. Do not draw the edge.
+	 *
+	 * This pixel DOES NOT occlude the second geometry.
+	 */
+	return 0;
+    }
+
+    return 1;
+}
+
+
+/**
+ * R A Y H I T
+ */
+int rayhit(struct application *ap, register struct partition *pt,
+	   struct seg *segp)
+{
+    handle_main_ray(ap, pt, segp);
+    return 1;
+}
+
+
+/**
+ * R A Y M I S S
+ */
+int raymiss(struct application *ap)
+{
+    handle_main_ray(ap, NULL, NULL);
+    return 0;
+}
+
+
+void choose_color(RGBpixel col, double intensity, struct cell *me,
+		  struct cell *left, struct cell *below, struct cell *right, struct cell *above)
+{
+    col[RED] = fgcolor[RED];
+    col[GRN] = fgcolor[GRN];
+    col[BLU] = fgcolor[BLU];
+
+    if (region_colors && me) {
+
+	struct cell *use_this = me;
+
+	/*
+	 * Determine the cell with the smallest hit distance.
+	 */
+
+	if (left)
+	    use_this = (use_this->c_dist < left->c_dist) ? use_this : left;
+	if (below)
+	    use_this = (use_this->c_dist < below->c_dist) ? use_this : below;
+	if (right)
+	    use_this = (use_this->c_dist < right->c_dist) ? use_this : right;
+	if (above)
+	    use_this = (use_this->c_dist < above->c_dist) ? use_this : above;
+
+	if (use_this == (struct cell *)NULL)
+	    bu_exit(EXIT_FAILURE, "Error: use_this is NULL.\n");
+
+	col[RED] = 255 * use_this->c_region->reg_mater.ma_color[RED];
+	col[GRN] = 255 * use_this->c_region->reg_mater.ma_color[GRN];
+	col[BLU] = 255 * use_this->c_region->reg_mater.ma_color[BLU];
+    }
+
+    col[RED] = (col[RED] * intensity) + (bgcolor[RED] * (1.0-intensity));
+    col[GRN] = (col[GRN] * intensity) + (bgcolor[GRN] * (1.0-intensity));
+    col[BLU] = (col[BLU] * intensity) + (bgcolor[BLU] * (1.0-intensity));
+
+    return;
+}
 
 
 /**
@@ -659,9 +763,11 @@ view_eol(struct application *ap)
 
 }
 
+
 void view_setup(void)
 {
 }
+
 
 /**
  * end of a frame, called after rt_clean()
@@ -669,6 +775,7 @@ void view_setup(void)
 void view_cleanup(void)
 {
 }
+
 
 /**
  * end of each frame
@@ -679,24 +786,6 @@ void view_end(void) {
     bif = NULL;
 }
 
-/**
- * R A Y H I T
- */
-int rayhit(struct application *ap, register struct partition *pt,
-	   struct seg *segp)
-{
-    handle_main_ray(ap, pt, segp);
-    return 1;
-}
-
-/**
- * R A Y M I S S
- */
-int raymiss(struct application *ap)
-{
-    handle_main_ray(ap, NULL, NULL);
-    return 0;
-}
 
 /**
  * R A Y H I T 2
@@ -720,6 +809,7 @@ int rayhit2(struct application *ap, register struct partition *pt,
     return 1;
 }
 
+
 /**
  * R A Y M I S S 2
  */
@@ -738,6 +828,7 @@ raymiss2(register struct application *ap)
 
     return 0;
 }
+
 
 static int
 is_edge(double *intensity, struct application *ap, const struct cell *here,
@@ -1027,101 +1118,6 @@ int diffpixel(RGBpixel a, RGBpixel b)
     if (a[GRN] != b[GRN]) return 1;
     if (a[BLU] != b[BLU]) return 1;
     return 0;
-}
-
-
-void choose_color(RGBpixel col, double intensity, struct cell *me,
-		  struct cell *left, struct cell *below, struct cell *right, struct cell *above)
-{
-    col[RED] = fgcolor[RED];
-    col[GRN] = fgcolor[GRN];
-    col[BLU] = fgcolor[BLU];
-
-    if (region_colors && me) {
-
-	struct cell *use_this = me;
-
-	/*
-	 * Determine the cell with the smallest hit distance.
-	 */
-
-	if (left)
-	    use_this = (use_this->c_dist < left->c_dist) ? use_this : left;
-	if (below)
-	    use_this = (use_this->c_dist < below->c_dist) ? use_this : below;
-	if (right)
-	    use_this = (use_this->c_dist < right->c_dist) ? use_this : right;
-	if (above)
-	    use_this = (use_this->c_dist < above->c_dist) ? use_this : above;
-
-	if (use_this == (struct cell *)NULL)
-	    bu_exit(EXIT_FAILURE, "Error: use_this is NULL.\n");
-
-	col[RED] = 255 * use_this->c_region->reg_mater.ma_color[RED];
-	col[GRN] = 255 * use_this->c_region->reg_mater.ma_color[GRN];
-	col[BLU] = 255 * use_this->c_region->reg_mater.ma_color[BLU];
-    }
-
-    col[RED] = (col[RED] * intensity) + (bgcolor[RED] * (1.0-intensity));
-    col[GRN] = (col[GRN] * intensity) + (bgcolor[GRN] * (1.0-intensity));
-    col[BLU] = (col[BLU] * intensity) + (bgcolor[BLU] * (1.0-intensity));
-
-    return;
-}
-
-
-static int occlusion_hit(struct application *ap, struct partition *pt,
-			 struct seg *segp)
-{
-    struct hit *hitp = pt->pt_forw->pt_inhit;
-
-    ap->a_dist = hitp->hit_dist;
-    return 1;
-}
-
-
-static int occlusion_miss(struct application *ap)
-{
-    ap->a_dist = MAX_FASTF;
-    return 0;
-}
-
-
-static int occludes(struct application *ap, struct cell *here)
-{
-    int cpu = ap->a_resource->re_cpu;
-    int oc_hit = 0;
-    /*
-     * Test the hit distance on the second geometry.  If the second
-     * geometry is closer, do not color pixel
-     */
-    VMOVE(occlusion_apps[cpu]->a_ray.r_pt, ap->a_ray.r_pt);
-    VMOVE(occlusion_apps[cpu]->a_ray.r_dir, ap->a_ray.r_dir);
-
-    oc_hit = rt_shootray(occlusion_apps[cpu]);
-
-    if (!oc_hit) {
-	/*
-	 * The occlusion ray missed, therefore this pixel occludes the
-	 * second geometry.
-	 *
-	 * Return 2 so that the fact that there is no geometry behind
-	 * can be conveyed to the OCCLUSION_MODE_DITHER section.
-	 */
-	return 2;
-    }
-
-    if (occlusion_apps[cpu]->a_dist < here->c_dist) {
-	/*
-	 * The second geometry is close than the edge, therefore it is
-	 * 'foreground'. Do not draw the edge.
-	 *
-	 * This pixel DOES NOT occlude the second geometry.
-	 */
-	return 0;
-    }
-
-    return 1;
 }
 
 /*
