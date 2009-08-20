@@ -922,10 +922,27 @@ handle_main_ray(struct application *ap, register struct partition *PartHeadp,
 	VMOVE(left.c_normal, saved[cpu]->c_normal);
     }
 
+    if (both_sides) {
+	VADD2(a2.a_ray.r_pt, ap->a_ray.r_pt, dy_model); /* above */
+	VMOVE(a2.a_ray.r_dir, ap->a_ray.r_dir);
+	a2.a_uptr = (genptr_t)&above;
+	rt_shootray(&a2);
+ 
+	VADD2(a2.a_ray.r_pt, ap->a_ray.r_pt, dx_model); /* right */
+	VMOVE(a2.a_ray.r_dir, ap->a_ray.r_dir);
+	a2.a_uptr = (genptr_t)&right;
+	rt_shootray(&a2);
+    }
+
+
     /*
      * Is this pixel an edge?
      */
-    edge = is_edge(&intensity, ap, &me, &left, &below, NULL, NULL);
+    if (both_sides) {
+	edge = is_edge(&intensity, ap, &me, &left, &below, &right, &above);
+    } else {
+	edge = is_edge(&intensity, ap, &me, &left, &below, NULL, NULL);
+    }
 
     /*
      * Does this pixel occlude the second geometry?  Note that we must
