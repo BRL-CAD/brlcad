@@ -830,6 +830,243 @@ raymiss2(register struct application *ap)
 }
 
 
+/* get_intensity() calls is_edge() unfortunately.  cycle. */
+static int
+is_edge(double *intensity, struct application *ap, const struct cell *here,
+	const struct cell *left, const struct cell *below, const struct cell *right, const struct cell *above);
+
+/**
+ * absurdly inefficient way to perform sub-pixel anti-aliasing.  we
+ * shoot additional rays to estimate the intensity contribution of
+ * this edge cell.
+ */
+static void
+get_intensity(double *intensity, struct application *ap, const struct cell *here, const struct cell *left, const struct cell *below, const struct cell *right, const struct cell *above)
+{
+    vect_t dy, dx, dy3, dx3;
+    struct application aaap;
+    struct cell grid[4][4];
+
+    /* Grid layout:
+     *
+     *    left      right
+     * _____________________
+     * |0,0 | AL | AR | 0,3|  above
+     * |____|____|____|____|
+     * | TL | UL | UR | TR |  top/upper
+     * |____|____|____|____|
+     * | BL | LL | LR | BR |  bottom/lower
+     * |____|____|____|____|
+     * |3,0 | DL | DR | 3,3|  debajo
+     * |____|____|____|____|
+     */
+
+    struct cell *AL = &grid[0][1];
+    struct cell *AR = &grid[0][2];
+    struct cell *TL = &grid[1][0];
+    struct cell *UL = &grid[1][1];
+    struct cell *UR = &grid[1][2];
+    struct cell *TR = &grid[1][3];
+    struct cell *BL = &grid[2][0];
+    struct cell *LL = &grid[2][1];
+    struct cell *LR = &grid[2][2];
+    struct cell *BR = &grid[2][3];
+    struct cell *DL = &grid[3][1];
+    struct cell *DR = &grid[3][2];
+
+    RT_APPLICATION_INIT(&aaap);
+    memset(&grid, 0, sizeof(struct cell) * 16);
+
+    /* 4x4 sub-pixel grid, dx gets to inner cells */
+    VSCALE(dy, dy_model, 0.125);
+    VSCALE(dx, dx_model, 0.125);
+
+    /* 4x4 sub-pixel grid, dx*3 gets to outer cells */
+    VSCALE(dy3, dy_model, 0.375);
+    VSCALE(dx3, dx_model, 0.375);
+
+#if 0
+    fprintf(stderr, "\n(X,Y) = (%d,%d)\n", ap->a_x, ap->a_y);
+    VPRINT("dy_model", dy_model);
+    VPRINT("dx_model", dx_model);
+    VPRINT("dy", dy);
+    VPRINT("dx", dx);
+    VPRINT("dy3", dy3);
+    VPRINT("dx3", dx3);
+    VPRINT("PT", ap->a_ray.r_pt);
+#endif
+
+    /* setup */
+    aaap.a_hit = rayhit2;
+    aaap.a_miss = raymiss2;
+    aaap.a_onehit = 1;
+    aaap.a_rt_i = ap->a_rt_i;
+    aaap.a_resource = ap->a_resource;
+    aaap.a_logoverlap = ap->a_logoverlap;
+
+    /* Above Left */
+    aaap.a_uptr = (genptr_t)AL;
+    VADD2(aaap.a_ray.r_pt, ap->a_ray.r_pt, dy3);
+    VSUB2(aaap.a_ray.r_pt, aaap.a_ray.r_pt, dx);
+    VMOVE(aaap.a_ray.r_dir, ap->a_ray.r_dir);
+    rt_shootray(&aaap);
+
+#ifdef VEDEBUG
+    VPRINT("AL", aaap.a_ray.r_pt);
+#endif
+
+    /* Above Right */
+    aaap.a_uptr = (genptr_t)AR;
+    VADD2(aaap.a_ray.r_pt, ap->a_ray.r_pt, dy3);
+    VADD2(aaap.a_ray.r_pt, aaap.a_ray.r_pt, dx);
+    VMOVE(aaap.a_ray.r_dir, ap->a_ray.r_dir);
+    rt_shootray(&aaap);
+
+#ifdef VEDEBUG
+    VPRINT("AR", aaap.a_ray.r_pt);
+#endif
+
+    /* Top Left */
+    aaap.a_uptr = (genptr_t)TL;
+    VADD2(aaap.a_ray.r_pt, ap->a_ray.r_pt, dy);
+    VSUB2(aaap.a_ray.r_pt, aaap.a_ray.r_pt, dx3);
+    VMOVE(aaap.a_ray.r_dir, ap->a_ray.r_dir);
+    rt_shootray(&aaap);
+
+#ifdef VEDEBUG
+    VPRINT("TL", aaap.a_ray.r_pt);
+#endif
+
+    /* Upper Left */
+    aaap.a_uptr = (genptr_t)UL;
+    VADD2(aaap.a_ray.r_pt, ap->a_ray.r_pt, dy);
+    VSUB2(aaap.a_ray.r_pt, aaap.a_ray.r_pt, dx);
+    VMOVE(aaap.a_ray.r_dir, ap->a_ray.r_dir);
+    rt_shootray(&aaap);
+
+#ifdef VEDEBUG
+    VPRINT("UL", aaap.a_ray.r_pt);
+#endif
+
+    /* Upper Right */
+    aaap.a_uptr = (genptr_t)UR;
+    VADD2(aaap.a_ray.r_pt, ap->a_ray.r_pt, dy);
+    VADD2(aaap.a_ray.r_pt, aaap.a_ray.r_pt, dx);
+    VMOVE(aaap.a_ray.r_dir, ap->a_ray.r_dir);
+    rt_shootray(&aaap);
+
+#ifdef VEDEBUG
+    VPRINT("UR", aaap.a_ray.r_pt);
+#endif
+
+    /* Top Right */
+    aaap.a_uptr = (genptr_t)TR;
+    VADD2(aaap.a_ray.r_pt, ap->a_ray.r_pt, dy);
+    VADD2(aaap.a_ray.r_pt, aaap.a_ray.r_pt, dx3);
+    VMOVE(aaap.a_ray.r_dir, ap->a_ray.r_dir);
+    rt_shootray(&aaap);
+
+#ifdef VEDEBUG
+    VPRINT("TR", aaap.a_ray.r_pt);
+#endif
+
+    /* Bottom Left */
+    aaap.a_uptr = (genptr_t)BL;
+    VSUB2(aaap.a_ray.r_pt, ap->a_ray.r_pt, dy);
+    VSUB2(aaap.a_ray.r_pt, aaap.a_ray.r_pt, dx3);
+    VMOVE(aaap.a_ray.r_dir, ap->a_ray.r_dir);
+    rt_shootray(&aaap);
+
+#ifdef VEDEBUG
+    VPRINT("BL", aaap.a_ray.r_pt);
+#endif
+
+    /* Lower Left */
+    aaap.a_uptr = (genptr_t)LL;
+    VSUB2(aaap.a_ray.r_pt, ap->a_ray.r_pt, dy);
+    VSUB2(aaap.a_ray.r_pt, aaap.a_ray.r_pt, dx);
+    VMOVE(aaap.a_ray.r_dir, ap->a_ray.r_dir);
+    rt_shootray(&aaap);
+
+#ifdef VEDEBUG
+    VPRINT("LL", aaap.a_ray.r_pt);
+#endif
+
+    /* Lower Right */
+    aaap.a_uptr = (genptr_t)LR;
+    VSUB2(aaap.a_ray.r_pt, ap->a_ray.r_pt, dy);
+    VADD2(aaap.a_ray.r_pt, aaap.a_ray.r_pt, dx);
+    VMOVE(aaap.a_ray.r_dir, ap->a_ray.r_dir);
+    rt_shootray(&aaap);
+
+#ifdef VEDEBUG
+    VPRINT("LR", aaap.a_ray.r_pt);
+#endif
+
+    /* Bottom Right */
+    aaap.a_uptr = (genptr_t)BR;
+    VSUB2(aaap.a_ray.r_pt, ap->a_ray.r_pt, dy);
+    VADD2(aaap.a_ray.r_pt, aaap.a_ray.r_pt, dx3);
+    VMOVE(aaap.a_ray.r_dir, ap->a_ray.r_dir);
+    rt_shootray(&aaap);
+
+#ifdef VEDEBUG
+    VPRINT("BR", aaap.a_ray.r_pt);
+#endif
+
+    /* Debajo Left */
+    aaap.a_uptr = (genptr_t)DL;
+    VSUB2(aaap.a_ray.r_pt, ap->a_ray.r_pt, dy3);
+    VSUB2(aaap.a_ray.r_pt, aaap.a_ray.r_pt, dx);
+    VMOVE(aaap.a_ray.r_dir, ap->a_ray.r_dir);
+    rt_shootray(&aaap);
+
+#ifdef VEDEBUG
+    VPRINT("DL", aaap.a_ray.r_pt);
+#endif
+
+    /* Debajo Right */
+    aaap.a_uptr = (genptr_t)DR;
+    VSUB2(aaap.a_ray.r_pt, ap->a_ray.r_pt, dy3);
+    VADD2(aaap.a_ray.r_pt, aaap.a_ray.r_pt, dx);
+    VMOVE(aaap.a_ray.r_dir, ap->a_ray.r_dir);
+    rt_shootray(&aaap);
+
+#ifdef VEDEBUG
+    VPRINT("DR", aaap.a_ray.r_pt);
+#endif
+
+#define TWOBYTWO 1
+#ifdef TWOBYTWO
+    if (is_edge(NULL, NULL, UL, left, LL, UR, above)) {
+	*intensity += 0.25;
+    }
+    if (is_edge(NULL, NULL, UR, UL, LR, right, above)) {
+	*intensity += 0.25;
+    }
+    if (is_edge(NULL, NULL, LL, left, below, LR, UL)) {
+	*intensity += 0.25;
+    }
+    if (is_edge(NULL, NULL, LR, LL, below, right, UR)) {
+	*intensity += 0.25;
+    }
+#else
+    if (is_edge(NULL, NULL, UL, TL, LL, UR, AL)) {
+	*intensity += 0.25;
+    }
+    if (is_edge(NULL, NULL, UR, UL, LR, TR, AR)) {
+	*intensity += 0.25;
+    }
+    if (is_edge(NULL, NULL, LL, BL, DL, LR, UL)) {
+	*intensity += 0.25;
+    }
+    if (is_edge(NULL, NULL, LR, LL, DR, BR, UR)) {
+	*intensity += 0.25;
+    }
+#endif
+}
+
+
 static int
 is_edge(double *intensity, struct application *ap, const struct cell *here,
 	const struct cell *left, const struct cell *below, const struct cell *right, const struct cell *above)
@@ -906,10 +1143,8 @@ is_edge(double *intensity, struct application *ap, const struct cell *here,
     }
 
     if (found_edge) {
-/*
-	if (intensity && ap)
+	if (intensity && ap && antialias)
 	    get_intensity(intensity, ap, here, left, below, right, above);
-*/
 	return 1;
     }
     return 0;
