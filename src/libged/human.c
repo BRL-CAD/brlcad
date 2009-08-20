@@ -1393,7 +1393,7 @@ void getLocation(fastf_t *location)
 }
 
 /* Process command line arguments */
-int read_args(int argc, char **argv, struct human_data_t *dude, fastf_t *percentile, fastf_t *location, fastf_t *stance, fastf_t *troops, fastf_t *showBoxes)
+int read_args(int argc, char **argv, char *topLevel, struct human_data_t *dude, fastf_t *percentile, fastf_t *location, fastf_t *stance, fastf_t *troops, fastf_t *showBoxes)
 {
     char c = 'A';
     char *options="AbH:hLlmn:N:O:o:p:s:w1:2:3:4:5:6:7:8:9:0:=:+:_:*:^:%:$:#:@:!:Q:~:";
@@ -1402,6 +1402,7 @@ int read_args(int argc, char **argv, struct human_data_t *dude, fastf_t *percent
     int pose=0;
     int percent=50;
     fastf_t x = 0;
+    int have_name = 0;
 
     /* don't report errors */
     bu_opterr = 0;
@@ -1415,6 +1416,7 @@ int read_args(int argc, char **argv, struct human_data_t *dude, fastf_t *percent
 		*percentile=50;
 		Auto(dude);
 		fflush(stdin);
+		have_name = 0;
 		break;
 
             case 'b':
@@ -1438,6 +1440,7 @@ int read_args(int argc, char **argv, struct human_data_t *dude, fastf_t *percent
                         bu_log("%.2f = height in inches\n", height);
                 }
 		fflush(stdin);
+		have_name = 1;
                 break;
 
             case 'h':
@@ -1457,12 +1460,14 @@ int read_args(int argc, char **argv, struct human_data_t *dude, fastf_t *percent
 	    case 'm':
 		bu_log("Manual Mode\n");
 		Manual(dude);
+		have_name = 1;
 		break;
 
 	    case 'n':
 		memset(humanName, 0, MAXLENGTH);
 		bu_strlcpy(humanName, bu_optarg, MAXLENGTH);
 		fflush(stdin);
+		have_name = 1;
 		break;
 
             case 'N':
@@ -1474,6 +1479,7 @@ int read_args(int argc, char **argv, struct human_data_t *dude, fastf_t *percent
                 bu_log("Auto %d (squared) troop formation\n", soldiers);
                 *troops = (float)soldiers;
 		fflush(stdin);
+		have_name = 1;
                 break;
 /*
 	    case 'o':
@@ -1481,6 +1487,7 @@ int read_args(int argc, char **argv, struct human_data_t *dude, fastf_t *percent
 		memset(filename, 0, MAXLENGTH);
 		bu_strlcpy(filename, bu_optarg, MAXLENGTH);
 		fflush(stdin);
+		have_name = 1;
 		break;
 */
 	    case 'p':
@@ -1491,6 +1498,7 @@ int read_args(int argc, char **argv, struct human_data_t *dude, fastf_t *percent
 			percent=99;
 		*percentile=percent;
 		fflush(stdin);
+		have_name = 1;
 		break;
 
 	    case 's':
@@ -1627,6 +1635,25 @@ int read_args(int argc, char **argv, struct human_data_t *dude, fastf_t *percent
 		break;
 	}
 	dude->height = (dude->legs.legLength + dude->torso.torsoLength + dude->head.headSize) / IN2MM;
+
+        if((argc - bu_optind) == 1) {
+            /* Yes, there is a top-level name at the end of this argument chain, lets dump it into the file*/
+            have_name = 1;
+            //bu_vls_trunc(name, 0);
+            //bu_vls_printf(name, "%s", argv[bu_optind]);
+            
+	    memset(humanName, 0, MAXLENGTH);
+	    memset(topLevel, 0, MAXLENGTH);
+	    bu_strlcpy(topLevel, argv[bu_optind], MAXLENGTH);
+            bu_strlcpy(humanName, topLevel, MAXLENGTH);
+	    bu_log("TopLevel=%s\n", topLevel);
+	    bu_log("TopLevel2=%s\n", humanName);
+        }
+        if(!have_name) {  
+            bu_log("%s: need top level object name\n", argv[0]);
+            show_help(*argv, options);
+            return GED_ERROR;
+        }
     }
     fflush(stdout);
     return(bu_optind);
@@ -1650,21 +1677,21 @@ ged_human(struct ged *gedp, int ac, const char *av[])
     int ret;
     int is_region = 0;
     unsigned char rgb[3], rgb2[3], rgb3[3];
-    progname = *av;
     human_data.height = DEFAULT_HEIGHT_INCHES;
     VSET(location, 0, 0, 0); /* Default standing location */
+    char topLevel[MAXLENGTH] = "";
+
     bu_vls_init(&name);
-    bu_vls_trunc(&name, 0);
     bu_vls_init(&str);
-    bu_vls_trunc(&str, 0);
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
     GED_CHECK_READ_ONLY(gedp, GED_ERROR);
 
     /* Process command line arguments */
-    ret = read_args(ac, av, &human_data, &percentile, location, &stance, &troops, &showBoxes);
+    ret = read_args(ac, av, topLevel, &human_data, &percentile, location, &stance, &troops, &showBoxes);
 
 //    if (ret != GED_OK) {
+//	bu_log("Non GED_OK value\n");
 //	bu_vls_free(&name);
 //	bu_vls_free(&str);
 //	return ret;
@@ -1680,6 +1707,11 @@ ged_human(struct ged *gedp, int ac, const char *av[])
 /******MAGIC******/
 /*Magically set pose, and apply pose to human geometry*/ 
     //setMeasurements(&human_data, percentile);
+    /*humanName[MAXLENGTH]*/
+    /* This applies the generic end-name to the high-level object */
+    bu_log("%s\n", topLevel);
+    memset(humanName, 0, MAXLENGTH);
+    bu_strlcpy(humanName, topLevel, MAXLENGTH);
     setStance(stance, &human_data); 
     if(!troops){
     	makeBody(gedp->ged_wdbp, suffix, &human_data, location, showBoxes);

@@ -57,20 +57,20 @@
 	variable mkillIcon
 
 # Variables for command line input
-	variable AutoMode 1
-	variable BoundingBoxes 0
+	variable autoMode 1
+	variable boundingBoxes 0
 	#68 Inches
-	variable Height 68
-	variable Locationx 0
-	variable Locationy 0
-	variable Locationz 0
-	variable ManualMode 0
-	variable NumberSoldiers 1
-	variable output 0
-	variable outputString "Fellow.g"
+	variable height 68
+	variable locationx 0
+	variable locationy 0
+	variable locationz 0
+	variable manualMode 0
+	variable numberSoldiers 1
+#	variable output 0
+#	variable outputString "Fellow.g"
 	variable percentile 50
-	variable Stance 0
-	variable StanceString Standing
+	variable stance 0
+	variable stanceString Standing
 
 #Variables for manual mode
 	variable headSize 0
@@ -105,9 +105,9 @@
 
 	method addWizardAttrs {obj {onlyTop 1}}
 
-	method setStance {}
+	method setstance {}
 
-	method setStanceString {}
+	method setstanceString {}
     }
 
     private {
@@ -170,7 +170,7 @@
 	}
     }
 
-    setStanceString
+    setstanceString
 }
 
 ::itcl::body HumanWizard::buildParameter {parent} {
@@ -202,85 +202,85 @@
     } {}
     itk_component add paramNameE {
 	::ttk::entry $itk_component(paramNonArrowF).nameE \
-	    -textvariable [::itcl::scope outputString]
+	    -textvariable [::itcl::scope wizardTop]
     } {}
 
-    # Create Height entry field
-    itk_component add paramHeightL {
+    # Create height entry field
+    itk_component add paramheightL {
 	::ttk::label $itk_component(paramNonArrowF).heightL \
-	    -text "Height (in):" \
+	    -text "height (in):" \
 	    -anchor e
     } {}
-    itk_component add paramHeightE {
+    itk_component add paramheightE {
 	::ttk::entry $itk_component(paramNonArrowF).heightE \
-	    -textvariable [::itcl::scope Height]
+	    -textvariable [::itcl::scope height]
     } {}
 
     # Create Location X entry field
-    itk_component add paramLocationxL {
+    itk_component add paramlocationxL {
 	::ttk::label $itk_component(paramNonArrowF).locationxL \
 	    -text "Centerpoint x (in):" \
 	    -anchor e
     } {}
-    itk_component add paramLocationxE {
+    itk_component add paramlocationxE {
 	::ttk::entry $itk_component(paramNonArrowF).locationxE \
-	    -textvariable [::itcl::scope Locationx]
+	    -textvariable [::itcl::scope locationx]
     } {}
 
     # Create Location Y entry field
-    itk_component add paramLocationyL {
+    itk_component add paramlocationyL {
 	::ttk::label $itk_component(paramNonArrowF).locationyL \
 	    -text "Centerpoint y (in):" \
 	    -anchor e
     } {}
-    itk_component add paramLocationyE {
+    itk_component add paramlocationyE {
 	::ttk::entry $itk_component(paramNonArrowF).locationyE \
-	    -textvariable [::itcl::scope Locationy]
+	    -textvariable [::itcl::scope locationy]
     } {}
 
     # Create Location Z entry field
-    itk_component add paramLocationzL {
+    itk_component add paramlocationzL {
 	::ttk::label $itk_component(paramNonArrowF).locationzL \
 	    -text "Centerpoint z (in):" \
 	    -anchor e
     } {}
-    itk_component add paramLocationzE {
+    itk_component add paramlocationzE {
 	::ttk::entry $itk_component(paramNonArrowF).locationzE \
-	    -textvariable [::itcl::scope Locationz]
+	    -textvariable [::itcl::scope locationz]
     } {}
 
-    # Create NumberSoldiers entry field
-    itk_component add paramNumberSoldiersL {
+    # Create numberSoldiers entry field
+    itk_component add paramnumberSoldiersL {
 	::ttk::label $itk_component(paramNonArrowF).numberSoldiersL \
 	    -text "Number of soldiers (to be squard):" \
 	    -anchor e
     } {}
-    itk_component add paramNumberSoldiersE {
+    itk_component add paramnumberSoldiersE {
 	::ttk::entry $itk_component(paramNonArrowF).numberSoldiersE \
-	    -textvariable [::itcl::scope NumberSoldiers]
+	    -textvariable [::itcl::scope numberSoldiers]
     } {}
 
     # Create percentile entry field
-    itk_component add paramPercentileL {
+    itk_component add parampercentileL {
 	::ttk::label $itk_component(paramNonArrowF).percentileL \
 	    -text "Enter percentile:" \
 	    -anchor e
     } {}
-    itk_component add paramPercentileE {
+    itk_component add parampercentileE {
 	::ttk::entry $itk_component(paramNonArrowF).percentileE \
 	    -textvariable [::itcl::scope percentile]
     } {}
 	
     # Create stance entry field
-    itk_component add paramStanceL {
+    itk_component add paramstanceL {
         ::ttk::label $itk_component(paramNonArrowF).stanceL \
-            -text "Stance:" \
+            -text "stance:" \
             -anchor e
     } {}
 
-    itk_component add paramStanceCB {
+    itk_component add paramstanceCB {
         ::ttk::combobox $itk_component(paramNonArrowF).stanceCB \
-            -textvariable [::itcl::scope StanceString] \
+            -textvariable [::itcl::scope stanceString] \
             -state readonly \
             -values {Standing Sitting Driving ArmsOut FancySit Custom}
     } {}
@@ -292,61 +292,61 @@
 	    -anchor e
     } {}
 
-    # Create "AutoMode" checkbutton
-    itk_component add paramAutoModeCB {
+    # Create "autoMode" checkbutton
+    itk_component add paramautoModeCB {
 	::ttk::checkbutton $itk_component(paramNonArrowF).autoModeCB \
 	    -text "Automode" \
-	    -variable [::itcl::scope AutoMode]
+	    -variable [::itcl::scope autoMode]
     } {}
 
-    # Create "ManualMode" checkbutton
-    itk_component add paramManualModeCB {
+    # Create "manualMode" checkbutton
+    itk_component add parammanualModeCB {
         ::ttk::checkbutton $itk_component(paramNonArrowF).manualModeCB \
-            -text "ManualMode" \
-            -variable [::itcl::scope ManualMode]
+            -text "manualMode" \
+            -variable [::itcl::scope manualMode]
     } {}
 
-    # Create "BoundingBoxes" checkbutton
+    # Create "boundingBoxes" checkbutton
     itk_component add paramBoundingBoxCB {
         ::ttk::checkbutton $itk_component(paramNonArrowF).boundingBoxCB \
-            -text "BoundingBoxes" \
-            -variable [::itcl::scope BoundingBoxes]
+            -text "boundingBoxes" \
+            -variable [::itcl::scope boundingBoxes]
     } {}
 
     set row 0
     grid $itk_component(paramNameL) $itk_component(paramNameE) \
 	-row $row -stick nsew
     incr row
-    grid $itk_component(paramHeightL) $itk_component(paramHeightE) \
+    grid $itk_component(paramheightL) $itk_component(paramheightE) \
 	-row $row -stick nsew
     incr row
-    grid $itk_component(paramLocationxL) $itk_component(paramLocationxE) \
+    grid $itk_component(paramlocationxL) $itk_component(paramlocationxE) \
 	-row $row -stick nsew
     incr row
-    grid $itk_component(paramLocationyL) $itk_component(paramLocationyE) \
+    grid $itk_component(paramlocationyL) $itk_component(paramlocationyE) \
 	-row $row -stick nsew
     incr row
-    grid $itk_component(paramLocationzL) $itk_component(paramLocationzE) \
+    grid $itk_component(paramlocationzL) $itk_component(paramlocationzE) \
 	-row $row -stick nsew
     incr row
-    grid $itk_component(paramNumberSoldiersL) $itk_component(paramNumberSoldiersE) \
+    grid $itk_component(paramnumberSoldiersL) $itk_component(paramnumberSoldiersE) \
 	-row $row -stick nsew
     incr row
-    grid $itk_component(paramPercentileL) $itk_component(paramPercentileE) \
+    grid $itk_component(parampercentileL) $itk_component(parampercentileE) \
 	-row $row -stick nsew
     incr row
-    grid $itk_component(paramStanceL) $itk_component(paramStanceCB) \
+    grid $itk_component(paramstanceL) $itk_component(paramstanceCB) \
 	-row $row -stick nsew
     incr row
     grid $itk_component(emptyL) -columnspan 2 \
 	-row $row -stick nsew
     incr row
-    grid $itk_component(paramAutoModeCB) -columnspan 2 \
+    grid $itk_component(paramautoModeCB) -columnspan 2 \
 	-row $row -stick nsew
     grid columnconfigure $itk_component(paramNonArrowF) 1 -weight 1
 
     incr row
-    grid $itk_component(paramManualModeCB) -columnspan 2 \
+    grid $itk_component(parammanualModeCB) -columnspan 2 \
         -row $row -stick nsew
     grid columnconfigure $itk_component(paramNonArrowF) 1 -weight 1
 
@@ -381,54 +381,54 @@
     }
 }
 
-::itcl::body HumanWizard::setStance {} {
-    switch -- $StanceString {
+::itcl::body HumanWizard::setstance {} {
+    switch -- $stanceString {
 	Standing {
-	    set Stance 0
+	    set stance 0
 	}
 	Sitting {
-	    set Stance 1
+	    set stance 1
 	}
 	Driving {
-	    set Stance 2
+	    set stance 2
 	}
 	ArmsOut {
-	    set Stance 3
+	    set stance 3
 	}
 	FancySit {
-	    set Stance 4
+	    set stance 4
 	}
 	Captain {
-	    set Stance 5
+	    set stance 5
 	}
 	Custom {
-	    set Stance 999
+	    set stance 999
 	}
     }
 }
 
-::itcl::body HumanWizard::setStanceString {} {
-    switch -- $Stance {
+::itcl::body HumanWizard::setstanceString {} {
+    switch -- $stance {
 	0 {
-	    set StanceString Standing
+	    set stanceString Standing
 	}
 	1 {
-	    set StanceString Sitting
+	    set stanceString Sitting
 	}
 	2 {
-	    set StanceString Driving
+	    set stanceString Driving
 	}
 	3 {
-	    set StanceString ArmsOut
+	    set stanceString ArmsOut
 	}
 	4 {
-	    set StanceString FancySit
+	    set stanceString FancySit
 	}
 	5 {
-	    set StanceString Captain
+	    set stanceString Captain
 	}
 	999 {
-	    set StanceString Custom
+	    set stanceString Custom
 	}
     }
 }
@@ -443,7 +443,7 @@
 ::itcl::body HumanWizard::buildHuman {} {
     SetWaitCursor $archer
 
-    setStance
+    setstance
 
     $archer pluginUpdateStatusBar "Building human..."
     $archer pluginUpdateSaveMode 1
@@ -454,26 +454,27 @@
 
     set wizardState \
 	[list \
-	     AutoMode $AutoMode \
-	     BoundingBoxes $BoundingBoxes \
-	     Height $Height \
-	     Locationx $Locationx \
-	     Locationy $Locationy \
-	     Locationz $Locationz \
-	     ManualMode $ManualMode \
-	     NumberSoldiers $NumberSoldiers \
+	     autoMode $autoMode \
+	     boundingBoxes $boundingBoxes \
+	     height $height \
+	     locationx $locationx \
+	     locationy $locationy \
+	     locationz $locationz \
+	     manualMode $manualMode \
+	     numberSoldiers $numberSoldiers \
 	     percentile $percentile \
-	     Stance $Stance]
+	     stance $stance]
 
     $archersGed human \
-	-A $AutoMode \
-	-b $BoundingBoxes \
-	-H $Height \
-	-l $Locationx $Locationy $Locationz \
-	-m $ManualMode \
-	-N $NumberSoldiers \
+	-A $autoMode \
+	-b $boundingBoxes \
+	-H $height \
+	-l $locationx $locationy $locationz \
+	-m $manualMode \
+	-N $numberSoldiers \
 	-p $percentile \
-	-s $Stance 
+	-s $stance \ 
+	$wizardTop
 
     # Add wizard attributes
     addWizardAttrs $wizardTop 0
@@ -481,8 +482,10 @@
     drawHuman
     $archer pluginUpdateProgressBar 0.6
     after 50
+    $archer pluginUpdateStatusBar "Almost Done..."
     $archer pluginUpdateProgressBar 0.8
     after 50
+    $archer pluginUpdateStatusBar "Nearly finished..."
     $archer pluginUpdateProgressBar 1.0
 
     SetNormalCursor $archer
