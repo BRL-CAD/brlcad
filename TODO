@@ -624,32 +624,52 @@ DOCUMENTATION
 	Keybindings, GUI elements, scripting
 
 * Introduction to BRL-CAD Tutorial
-	mged, rt, pix-png, rtcheck, rtarea, rtweight, g_qa, fbserv, nirt
+	mged, rt, pix-png, rtcheck, rtarea, rtweight, g_qa, fbserv, nirt.  Succint overview of less than 10% of the core functionality in 10 pages or less (plus pictures).
+
+* Technical Overview of BRL-CAD
+        Describes everything in the package succinctly yet comprehensively.  Survey of all the major features, methodologies, and tools implemented in BRL-CAD with coverage on code maturity, library encapsulation, and tool aggregation.
+
+* BRL-CAD Validation and Verification
+        Overview of how contributions to BRL-CAD are reviewed and tested including regression, performance, and system integration testing as well as independent ARL configuration review.  This specifically addresses the issue of world-wide and potentially anonymous contributions to BRL-CAD and how those changes are managed.
 
 * DoD V/L M&S Industry Diagram
-	Similar to existing Industry Diagram
+	Similar to existing Industry Diagram.  Survey of all the major features, methodologies, and tools implemented in BRL-CAD with coverage on code maturity, library encapsulation, and tool aggregation.  This one is a particularly useful marketing and educational visual aid for describing how the various M&S codes interoperate in terms of features and scope.
 
 * Commercial CAD Comparison Diagram
+        Comparison of how BRL-CAD overlaps feature-wise with various major commercial CAD systems.
 
 * Solid Geometry Representation Comparisons
+        Describe the implications, tradeoffs, and conversion issues involved when converting between different geometry representations.  Includes describing implicit geometry, explicit polygonal boundary representations, explicit spline surface representations, volumetric models, wireframes, boolean operations, feature edit operations, and parametric modeling.
 
 * BRL-CAD Primitives
+        An overview of the various primitive object types in BRL-CAD, their range of features, and a description of their input parameters.
 
 * BRL-CAD Ray Tracing Shaders
+        An overview of the various shaders and shader options available in BRL-CAD.
 
-* BRL-CAD Open Source Effort
-	Why, History, How
+* BRL-CAD Open Source
+	An overview of how BRL-CAD is organized as an open source project and community describing the developer meritocracy, code reviews, development prioritization, and change management.  This introduces and explains the concept and philosophy of open source software, it's fundamental tenants, and the basic "why and how" it works.
+
+* History of BRL-CAD
+        Covers the 30-years development history of BRL-CAD, from 1979 to 2009, documenting the origins of the project, major development achievements, the conversion to open source, and lesson's learned.
 
 * BRL-CAD Manifesto
 	Vision & Scope
 
 * BRL-CAD Taxonomy
-
-* Procedural Geometry in BRL-CAD
+        Description of the common terminology used throughout BRL-CAD, conventions employed, and tool categorization.
 
 * Implementing a BRL-CAD Primitive
+        How-To for creating a new primitive in BRL-CAD that can be ray-traced, tessellated, plotted, and transformed seamlessly.
+
+* Procedural Geometry in BRL-CAD
+        How-To for creating new tools that create geometry.
+
+* BRL-CAD Ray Tracing Shader Development
+        How-To for creating new shaders.
 
 * Geometry Conversion with BRL-CAD
+        Overview of the various geometry conversion facilities in BRL-CAD and how they related to solid geometry representations.
 
 
 ---
