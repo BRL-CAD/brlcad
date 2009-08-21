@@ -85,7 +85,7 @@ struct torsoInfo
         fastf_t torsoLength;
         fastf_t topTorsoLength, lowTorsoLength;
         fastf_t shoulderWidth;
-	fastf_t topTorsoDepth;
+	fastf_t shoulderDepth;
         fastf_t abWidth;
 	fastf_t abDepth;
         fastf_t pelvisWidth;
@@ -267,8 +267,9 @@ void boundingBox(struct rt_wdb *file, char *name, fastf_t *startPoint, fastf_t *
 			rotMatrix[(w-1)] = rotMatrix[(w-1)] * -1;
 */
 	/*X rotation Matrix */
-		if(w==1 || w==6 || w== 7 || w==10 || w==11)
+/*		if(w==1 || w==6 || w== 7 || w==10 || w==11)
 			rotMatrix[(w-1)] = rotMatrix[(w-1)] * -1;
+*/
 /*
 		bu_log("%3.4f\t", rotMatrix[(w-1)]);
 		if(w%4==0)
@@ -279,18 +280,18 @@ void boundingBox(struct rt_wdb *file, char *name, fastf_t *startPoint, fastf_t *
 */
 	/* MAT4X3VEC, rotate a vector about a center point, by a rotmatrix, MAT4X3VEC(new, rotmatrix, old) */
 	for(i = 0; i < 8; i++){
-	/*
 		MAT4X3VEC(newVects[i], rotMatrix, vects[i]);
-	*/
-		VEC3X3MAT(newVects[i], vects[i], rotMatrix);
+	/*	VEC3X3MAT(newVects[i], vects[i], rotMatrix);*/
 	}
-	MAT4X3PNT(endPoint, rotMatrix, startPoint);
+/*	MAT4X3PNT(endPoint, rotMatrix, startPoint);*/
 
 	/* Set points to be at end of each vector */
 	for(i = 0; i < 8; i++){
 		VMOVE(finalPoints[i], newVects[i]);
 	}
-/*	mk_trc_h(file, debug, endPoint, lengthVector, 2, 2); */
+	vect_t JVEC;
+	MAT3X3VEC(JVEC, rotMatrix, lengthVector);
+	mk_trc_h(file, debug, startPoint, JVEC, 4, 1); 
 	mk_arb8(file, newName, *finalPoints);
 }
 
@@ -386,7 +387,7 @@ fastf_t makeUpperTorso(struct rt_wdb *file, char *name, struct human_data_t *dud
 	VADD2(dude->joints.rightShoulderJoint, dude->joints.neckJoint, rightVector);
 
 	/*Take shoulder width, and abWidth and convert values to vectors for tgc */
-	VSET(a, (dude->torso.topTorsoDepth), 0, 0);
+	VSET(a, (dude->torso.shoulderDepth), 0, 0);
 	VSET(b, 0, dude->torso.shoulderWidth, 0);
 	VSET(c, (dude->torso.abDepth), 0, 0);
 	VSET(d, 0, (dude->torso.abWidth), 0);
@@ -1137,7 +1138,7 @@ void Auto(struct human_data_t *dude)
       	dude->torso.topTorsoLength = (dude->torso.torsoLength *5) / 8;
       	dude->torso.lowTorsoLength = (dude->torso.torsoLength *3) / 8;     
       	dude->torso.shoulderWidth = (dude->height / 8) *IN2MM;
-	dude->torso.topTorsoDepth = dude->torso.shoulderWidth/2;
+	dude->torso.shoulderDepth = dude->torso.shoulderWidth/2;
       	dude->torso.abWidth=(dude->height / 9) * IN2MM;
       	dude->torso.abDepth = dude->torso.abWidth / 2;
 	dude->torso.pelvisWidth=(dude->height / 8) * IN2MM;
@@ -1191,7 +1192,7 @@ void Manual(struct human_data_t *dude)
         bu_log("upperTorsoDepth\n");
         scanf("%lf", &x);
         x=x*IN2MM;
-        dude->torso.topTorsoDepth=x;
+        dude->torso.shoulderDepth=x;
 
 	bu_log("Low Torso Length\n");
 	scanf("%lf", &x);
@@ -1686,6 +1687,7 @@ int read_args(int argc, char **argv, char *topLevel, struct human_data_t *dude, 
         if(!have_name) {
             bu_log("%s: need top level object name\n", argv[0]);
 	    bu_log("Setting generic name, Body.c");
+	    Auto(dude);
 	    memset(humanName, 0, MAXLENGTH);
 	    memset(topLevel, 0, MAXLENGTH);
 	    bu_strlcpy(topLevel, "Body.c", MAXLENGTH);
@@ -1727,8 +1729,8 @@ void text(struct human_data_t *dude)
 	fprintf(dump, "Neck\t%lf\t%lf\t%lf\n", x, y, z);	
 
 	/*Upper Torso*/
-	if(dude->torso.topTorsoDepth > dude->torso.abDepth)
-		x = dude->torso.topTorsoDepth;
+	if(dude->torso.shoulderDepth > dude->torso.abDepth)
+		x = dude->torso.shoulderDepth;
 	else
 		x = dude->torso.abDepth;
 	y = dude->torso.shoulderWidth;
@@ -1835,7 +1837,7 @@ void getText(struct human_data_t *dude)
 		bu_log("Non existant input file.\n");
 	}
 	else {
-		bu_log("File opened, reading data\n");
+		bu_log("File opened, reading data:\n");
 		while(fgets(buffer, 80, input)!=NULL) {
 			bu_log("%s", buffer);
 		}
