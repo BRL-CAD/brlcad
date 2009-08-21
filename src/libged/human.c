@@ -260,20 +260,20 @@ void boundingBox(struct rt_wdb *file, char *name, fastf_t *startPoint, fastf_t *
 	for(w=1; w<=16; w++){
 	/*Z rotation matrix */
 /*		if(w==1 || w==2 || w== 5 || w== 6 || w==11)
-			rotMatrix[(w-1)] = rotMatrix[(w-1)] * -1;
+*			rotMatrix[(w-1)] = rotMatrix[(w-1)] * -1;
 */
 	/*Y rotation Matrix */
 /*		if(w==1 || w==3 || w== 6 || w==9 || w==11)
-			rotMatrix[(w-1)] = rotMatrix[(w-1)] * -1;
+*			rotMatrix[(w-1)] = rotMatrix[(w-1)] * -1;
 */
 	/*X rotation Matrix */
 /*		if(w==1 || w==6 || w== 7 || w==10 || w==11)
-			rotMatrix[(w-1)] = rotMatrix[(w-1)] * -1;
+*			rotMatrix[(w-1)] = rotMatrix[(w-1)] * -1;
 */
 /*
-		bu_log("%3.4f\t", rotMatrix[(w-1)]);
-		if(w%4==0)
-			bu_log("\n");
+*		bu_log("%3.4f\t", rotMatrix[(w-1)]);
+*		if(w%4==0)
+*			bu_log("\n");
 */
 	}
 /*	bu_log("-------------------------------+\n");
@@ -281,9 +281,7 @@ void boundingBox(struct rt_wdb *file, char *name, fastf_t *startPoint, fastf_t *
 	/* MAT4X3VEC, rotate a vector about a center point, by a rotmatrix, MAT4X3VEC(new, rotmatrix, old) */
 	for(i = 0; i < 8; i++){
 		MAT4X3VEC(newVects[i], rotMatrix, vects[i]);
-	/*	VEC3X3MAT(newVects[i], vects[i], rotMatrix);*/
 	}
-/*	MAT4X3PNT(endPoint, rotMatrix, startPoint);*/
 
 	/* Set points to be at end of each vector */
 	for(i = 0; i < 8; i++){
@@ -292,7 +290,7 @@ void boundingBox(struct rt_wdb *file, char *name, fastf_t *startPoint, fastf_t *
 	vect_t JVEC;
 	MAT3X3VEC(JVEC, rotMatrix, lengthVector);
 	mk_trc_h(file, debug, startPoint, JVEC, 4, 1); 
-	mk_arb8(file, newName, *finalPoints);
+	mk_arb8(file, newName, *vects);
 }
 
 /** Create a bounding rectangle around the individual part, and this one has 2 separate values for depth and width */
