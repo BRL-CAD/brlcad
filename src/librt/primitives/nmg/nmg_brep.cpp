@@ -130,10 +130,6 @@ rt_nmg_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *t
     struct faceuse *fu;
 
 
-    printf("rt_arb_tess\n");
-    rt_arb_tess(&r, m, ip, NULL, tol);
-    printf("rt_arb_tess completed\n");
-
     /*
     RT_CK_DB_INTERNAL(ip);
     m = (struct model *)ip->idb_ptr;
