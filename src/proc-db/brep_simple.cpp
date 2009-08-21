@@ -279,66 +279,69 @@ namespace {
     void
     MakeTwistedCubeFaces(ON_Brep& brep)
     {
-	MakeTwistedCubeFace(brep,
+	// The direction of each edge was determined when the edge was
+	// created as an object (e.g. AD instead of DA).  When using these
+	// edges to define Faces, the direction of the edge is overridden
+	// by the direction the trimming loop of the face needs that edge to
+	// take - in other words, to properly form the loop for BEHC (for example)
+	// the Face definition needs edge CB rather than BC.  Instead of creating
+	// a new edge, a factor of -1 is supplied indicating that the BC
+	// edge data should be inverted from its default orientation for
+	// the purposes of loop assembly.
+
+        MakeTwistedCubeFace(brep,
 			    ABCD, // index of surface geometry
 			    +1,   // orientation of surface w.r.t. brep
 			    A, B, C, D, // indices of vertices listed in order
-			    AB, +1, // south edge, orientation w.r.t. trimming curve?
-			    BC, +1, // east edge, orientation w.r.t. trimming curve?
-			    CD, +1,
-			    DA, +1);
+			    AB, +1, // south edge, orientation w.r.t. trimming curve
+			    BC, +1, // east edge, orientation w.r.t. trimming curve 
+			    CD, +1, // west edge, orientation w.r.t. trimming curve 
+			    DA, +1);// north edge, orientation w.r.t. trimming curve
 
 	MakeTwistedCubeFace(brep,
 			    BEHC, // index of surface geometry
 			    +1,   // orientation of surface w.r.t. brep
 			    B, E, H, C, // indices of vertices listed in order
-			    BE, +1, // south edge, orientation w.r.t. trimming curve?
-			    EH, +1, // east edge, orientation w.r.t. trimming curve?
-			    HC, +1,
-			    BC, -1);
-
-	// ok, i think I understand the trimming curve orientation
-	// thingie. maybe.  since the edge "directions" are arbitrary
-	// (e.g. AD instead of DA (which would be more appropriate)) one
-	// must indicate that the direction with relation to the trimming
-	// curve (which only goes in ONE direction): 
-	// 1="in the same direction" and -1="in the opposite direction"
+			    BE, +1, // south edge, orientation w.r.t. trimming curve
+			    EH, +1, // east edge, orientation w.r.t. trimming curve 
+			    HC, +1, // west edge, orientation w.r.t. trimming curve 
+			    BC, -1);// north edge, orientation w.r.t. trimming curve
 
 	MakeTwistedCubeFace(brep,
 			    EFGH, // index of surface geometry
 			    +1,   // orientation of surface w.r.t. brep
 			    E, F, G, H, // indices of vertices listed in order
-			    EF, +1, // south edge, orientation w.r.t. trimming curve?
-			    FG, +1, // east edge, orientation w.r.t. trimming curve?
-			    GH, +1,
-			    EH, -1);
+			    EF, +1, // south edge, orientation w.r.t. trimming curve
+			    FG, +1, // east edge, orientation w.r.t. trimming curve 
+			    GH, +1, // west edge, orientation w.r.t. trimming curve 
+			    EH, -1);// north edge, orientation w.r.t. trimming curve
 
 	MakeTwistedCubeFace(brep,
 			    FADG, // index of surface geometry
 			    +1,   // orientation of surface w.r.t. brep
 			    F, A, D, G, // indices of vertices listed in order
-			    FA, +1, // south edge, orientation w.r.t. trimming curve?
-			    DA, -1, // east edge, orientation w.r.t. trimming curve?
-			    DG, +1,
-			    FG, -1);
+			    FA, +1, // south edge, orientation w.r.t. trimming curve
+			    DA, -1, // east edge, orientation w.r.t. trimming curve 
+			    DG, +1, // west edge, orientation w.r.t. trimming curve 
+			    FG, -1);// north edge, orientation w.r.t. trimming curve
 
 	MakeTwistedCubeFace(brep,
 			    FEBA, // index of surface geometry
 			    +1,   // orientation of surface w.r.t. brep
 			    F, E, B, A, // indices of vertices listed in order
-			    EF, -1, // south edge, orientation w.r.t. trimming curve?
-			    BE, -1, // east edge, orientation w.r.t. trimming curve?
-			    AB, -1,
-			    FA, -1);
+			    EF, -1, // south edge, orientation w.r.t. trimming curve
+			    BE, -1, // east edge, orientation w.r.t. trimming curve 
+			    AB, -1, // west edge, orientation w.r.t. trimming curve 
+			    FA, -1);// north edge, orientation w.r.t. trimming curve
 
 	MakeTwistedCubeFace(brep,
 			    DCHG, // index of surface geometry
 			    +1,   // orientation of surface w.r.t. brep
 			    D, C, H, G, // indices of vertices listed in order
-			    CD, -1, // south edge, orientation w.r.t. trimming curve?
-			    HC, -1, // east edge, orientation w.r.t. trimming curve?
-			    GH, -1,
-			    DG, -1);
+			    CD, -1, // south edge, orientation w.r.t. trimming curve
+			    HC, -1, // east edge, orientation w.r.t. trimming curve 
+			    GH, -1, // west edge, orientation w.r.t. trimming curve 
+			    DG, -1);// north edge, orientation w.r.t. trimming curve
 
     }
 
