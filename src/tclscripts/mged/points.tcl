@@ -1,4 +1,3 @@
-#!/usr/brlcad/bin/btclsh
 #                      P O I N T S . T C L
 # BRL-CAD
 #
