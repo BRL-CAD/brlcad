@@ -1128,6 +1128,7 @@ void setStance(fastf_t stance, struct human_data_t *dude)
 void Auto(struct human_data_t *dude)
 {
 	bu_log("Auto Setting\n");
+	bu_log("Height=%lf\n", dude->height);
 	dude->torso.torsoLength = 0;
       	dude->head.headSize = (dude->height / 8) * IN2MM;
       	dude->arms.armLength = (dude->height / 2) * IN2MM;
@@ -1136,7 +1137,7 @@ void Auto(struct human_data_t *dude)
       	dude->torso.topTorsoLength = (dude->torso.torsoLength *5) / 8;
       	dude->torso.lowTorsoLength = (dude->torso.torsoLength *3) / 8;     
       	dude->torso.shoulderWidth = (dude->height / 8) *IN2MM;
-	dude->torso.shoulderDepth = dude->torso.shoulderWidth/2;
+	dude->torso.shoulderDepth = (dude->torso.shoulderWidth/2);
       	dude->torso.abWidth=(dude->height / 9) * IN2MM;
       	dude->torso.abDepth = dude->torso.abWidth / 2;
 	dude->torso.pelvisWidth=(dude->height / 8) * IN2MM;
@@ -1288,8 +1289,11 @@ void Manual(struct human_data_t *dude)
         bu_log("Top Torso=%lf\n", dude->torso.topTorsoLength);
         bu_log("Low Torso=%lf\n", dude->torso.lowTorsoLength);
         bu_log("Shoulders=%lf\n", dude->torso.shoulderWidth);
-        bu_log("Abs=%lf\n", dude->torso.abWidth);
+        bu_log("ShoulderDepth=%lf\n", dude->torso.shoulderDepth);
+	bu_log("Abs=%lf\n", dude->torso.abWidth);
+	bu_log("AbDepth=%lf\n", dude->torso.abDepth);
         bu_log("Pelvis=%lf\n", dude->torso.pelvisWidth);
+	bu_log("PelvisDepth=%lf\n", dude->torso.pelvisDepth);
         bu_log("Torso Length=%lf\n", dude->torso.torsoLength);
 
         bu_log("Upper Arm Width=%lf\n", dude->arms.upperArmWidth);
@@ -1335,8 +1339,11 @@ void setMeasurements(struct human_data_t *dude, fastf_t percentile)
 	dude->torso.topTorsoLength=
 	dude->torso.lowTorsoLength=
 	dude->torso.shoulderWidth=
+	dude->torso.shoulderDepth=
 	dude->torso.abWidth=
+	dude->torso.abDepth=
 	dude->torso.pelvisWidth=
+	dude->torso.pelvisDepth=
 	dude->torso.torsoLength= dude->torso.topTorsoLength + dude->torso.lowTorsoLength;
 
 	dude->arms.upperArmWidth=
@@ -1441,7 +1448,6 @@ int read_args(int argc, char **argv, char *topLevel, struct human_data_t *dude, 
 	switch (c) {
 	    case 'A':
 		bu_log("AutoMode, making 50 percentile man\n");
-		dude->height = DEFAULT_HEIGHT_INCHES;
 		*percentile=50;
 		Auto(dude);
 		fflush(stdin);
@@ -1685,11 +1691,11 @@ int read_args(int argc, char **argv, char *topLevel, struct human_data_t *dude, 
         if(!have_name) {
             bu_log("%s: need top level object name\n", argv[0]);
 	    bu_log("Setting generic name, Body.c");
-	    Auto(dude);
 	    memset(humanName, 0, MAXLENGTH);
 	    memset(topLevel, 0, MAXLENGTH);
-	    bu_strlcpy(topLevel, "Body.c", MAXLENGTH);
-	    bu_strlcpy(humanName, topLevel, MAXLENGTH);
+	    bu_strlcpy(humanName, DEFAULT_HUMANNAME, MAXLENGTH);
+	    bu_strlcpy(topLevel, DEFAULT_HUMANNAME, MAXLENGTH);
+	    //Auto(dude);
             show_help(*argv, options);
             return GED_ERROR;
     }
@@ -1815,6 +1821,9 @@ void text(struct human_data_t *dude)
 	y = dude->legs.toeWidth * 2;
 	z = dude->legs.toeWidth * 2;
 	fprintf(dump, "Foot\t%lf\t%lf\t%lf\n", x, y, z);	
+
+	/*Total Height*/
+	fprintf(dump, "Height\t%lf\n", dude->height);
 
 	fclose(dump);
 }
