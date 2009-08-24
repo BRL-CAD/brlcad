@@ -39,7 +39,9 @@ extern "C" {
 
 #include "vmath.h"		/* BRL-CAD Vector macros */
 #include "wdb.h"
+    extern void rt_arb_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct rt_tess_tol *ttol,const struct bn_tol *tol);
     extern void rt_arb8_brep(ON_Brep **bi, struct rt_db_internal *ip, const struct bn_tol *tol);
+    extern void rt_nmg_brep(ON_Brep **bi, struct rt_db_internal *ip, const struct bn_tol *tol);
     extern void rt_sph_brep(ON_Brep **bi, struct rt_db_internal *ip, const struct bn_tol *tol);
     extern void rt_ell_brep(ON_Brep **bi, struct rt_db_internal *ip, const struct bn_tol *tol);
     extern void rt_eto_brep(ON_Brep **bi, struct rt_db_internal *ip, const struct bn_tol *tol);
@@ -56,8 +58,11 @@ main(int argc, char** argv)
     struct rt_db_internal *tmp_internal = (struct rt_db_internal *) bu_malloc(sizeof(struct rt_db_internal), "allocate structure");
     RT_INIT_DB_INTERNAL(tmp_internal);
     struct bn_tol tmptol;
+    tmptol.magic = BN_TOL_MAGIC;
     tmptol.dist = 0.005;
     const struct bn_tol *tol = &tmptol;
+    struct rt_tess_tol *ttmptol;
+    const struct rt_tess_tol *ttol = ttmptol;
     point_t center;
     vect_t a, b, c, N;
     ON_TextLog error_log;
@@ -68,6 +73,34 @@ main(int argc, char** argv)
     const char* id_name = "CSG B-Rep Examples";
     mk_id(outfp, id_name);
 
+    bu_log("Writing an NMG (arb8) brep...\n");
+    ON_Brep* nmgbrep = ON_Brep::New();
+    struct rt_arb_internal *arbnmg8;
+    BU_GETSTRUCT(arbnmg8, rt_arb_internal);
+    arbnmg8->magic = RT_ARB_INTERNAL_MAGIC;
+    point_t ptnmg8[8];
+    VSET(ptnmg8[0], 1015, -1000, -995);
+    VSET(ptnmg8[1], 1015, 1000, -995);
+    VSET(ptnmg8[2], 1015, 1000, 1005);
+    VSET(ptnmg8[3], 1015, -1000, 1005);
+    VSET(ptnmg8[4], -985, -1000, -995);
+    VSET(ptnmg8[5], -985, 1000, -995);
+    VSET(ptnmg8[6], -985, 1000, 1005);
+    VSET(ptnmg8[7], -985, -1000, 1005);
+    for ( int i=0; i < 8; i++ )  {
+	VMOVE( arbnmg8->pt[i], ptnmg8[i] );
+    }
+    tmp_internal->idb_ptr = (genptr_t)arbnmg8;
+    // Now, need nmg form of the arb
+    struct model *m = nmg_mm();
+    struct nmgregion *r;
+    rt_arb_tess(&r, m, tmp_internal, ttol, tol);
+    tmp_internal->idb_ptr = (genptr_t)m;
+    rt_nmg_brep(&nmgbrep, tmp_internal, tol);
+    const char* nmg_name = "nmg_nurb.s";
+    mk_brep(outfp, nmg_name, nmgbrep);
+    delete nmgbrep;
+    
     bu_log("Writing an ARB8 b-rep...\n");
     ON_Brep* arb8brep = ON_Brep::New();
     struct rt_arb_internal *arb8;

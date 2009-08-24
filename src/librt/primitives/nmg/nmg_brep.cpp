@@ -121,7 +121,7 @@ makeFunnyFaces(struct model *m, ON_Brep *b, struct faceuse *fu)
     }
 }
 
-void
+extern "C" void
 rt_nmg_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *tol)
 {
     struct model *m = nmg_mm();//not needed for non-tess
@@ -130,11 +130,11 @@ rt_nmg_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *t
     struct faceuse *fu;
 
 
-    /*
+    
     RT_CK_DB_INTERNAL(ip);
     m = (struct model *)ip->idb_ptr;
     NMG_CK_MODEL(m);
-    */
+   
     
     *b = new ON_Brep();
     for (BU_LIST_FOR(r, nmgregion, &m->r_hd)) {
@@ -142,7 +142,7 @@ rt_nmg_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *t
 	    for (BU_LIST_FOR(fu, faceuse, &s->fu_hd)) {
 		if(fu->orientation != OT_SAME)
 		    continue;
-		makeFunnyFaces(m, *b, fu);
+//		makeFunnyFaces(m, *b, fu);
 	    }
 	}
     }
