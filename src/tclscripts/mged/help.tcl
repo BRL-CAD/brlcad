@@ -99,7 +99,7 @@ Options:
 	-n <# copies>		- Specifies the number of copies to make.
 	-p <x> <y> <z>		- Specifies point to rotate around for -r.
 				  (Default is 0 0 0).
-	-r <x> <y> <z>		- Specifies the rotation around x, y, and z axes.
+	-r <x> <y> <z>		- Specifies the rotation (in degrees) around x, y, and z axes.
 	-t <x> <y> <z>		- Specifies translation between each copy.
 	-v		- Prints version info.}}
 set mged_help_data(color)	$helplib_data(wdb_color)
