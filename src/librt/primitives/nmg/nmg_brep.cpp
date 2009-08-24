@@ -128,24 +128,83 @@ rt_nmg_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *t
     struct nmgregion *r;
     struct shell *s;
     struct faceuse *fu;
-
-
-    
+    struct loopuse *lu;
+    struct edgeuse *eu;
+        
     RT_CK_DB_INTERNAL(ip);
     m = (struct model *)ip->idb_ptr;
     NMG_CK_MODEL(m);
    
+    long brepi[m->maxindex];
+    for (int i = 0; i < m->maxindex; i++) brepi[i] = -MAX_FASTF;
     
     *b = new ON_Brep();
-    for (BU_LIST_FOR(r, nmgregion, &m->r_hd)) {
+/*    for (BU_LIST_FOR(r, nmgregion, &m->r_hd)) {
 	for (BU_LIST_FOR(s, shell, &r->s_hd)) {
 	    for (BU_LIST_FOR(fu, faceuse, &s->fu_hd)) {
-		if(fu->orientation != OT_SAME)
-		    continue;
-//		makeFunnyFaces(m, *b, fu);
+		NMG_CK_FACEUSE(fu);
+		if(fu->orientation != OT_SAME) continue;
+		// Need to create ON_NurbsSurface based on plane of face
+		// in order to have UV space in which to define trimming
+		// loops.
+		//
+		// General approach:  assume (please) that the min and
+		// max bounding points in the face definition are on the
+		// plane of the face.  Given that, either use or calculate
+		// the normal to the plane at the midpoint between the min and max
+		// bounding points.  Cross the normal with the vector
+		// between the midpoint and (say) the max point.  create the opposing vector by
+		// crossing the normal with the vector between the midpoint and the min point
+		// Scale both vectors by 1/2 the distance between the min and the max
+		// point (DIST_PT_PT()/2 I think should be used here) to find the final two corners
+		// of the nurbs surface/plane in 3 space.  I'm guessing there will be some 
+		// sort of SW, SE, NE, NW convention that will come out of this that can always
+		// be depended on (say, min point is SW, max point is NE, Nxmax is NW and Nxmin
+		// is SE).  Because the result IS planar, the trimming curves can be placed in UV
+		// using ratios of distances between each vertex point and the corners.
+		struct face_g *fg;
+		fg = fu->f_p->fg_p;
+		
+		for (BU_LIST_FOR(lu, loopuse, &fu->lu_hd)) {
+		    int edges=0;
+		    // For each loop, add the edges and vertices
+		    if (BU_LIST_FIRST_MAGIC(&lu->down_hd) != NMG_EDGEUSE_MAGIC) continue; // loop is a single vertex
+		    for (BU_LIST_FOR(eu, edgeuse, &lu->down_hd)) {
+			// Add vertices if not already added
+			++edges;
+			ON_BrepVertex from, to, tmp;
+			struct vertex_g *vg;
+			vg = eu->vu_p->v_p->vg_p;
+			NMG_CK_VERTEX_G(vg);
+			if (brepi[eu->vu_p->v_p->index] == -MAX_FASTF) {
+			    from = b->NewVertex(vg->coord, SMALL_FASTF);
+			    brepi[eu->vu_p->v_p->index] = from.m_vertex_index;
+			}
+			vg = eu->eumate_p->vu_p->v_p->vg_p;
+			NMG_CK_VERTEX_G(vg);
+			if (brepi[eu->eumate_p->vu_p->v_p->index] == -MAX_FASTF) {
+			    to = b->NewVertex(vg->coord, SMALL_FASTF);
+			    brepi[eu->eumate_p->vu_p->v_p->index] = to.m_vertex_index;
+			}
+			// Add edge if not already added
+			if(brepi[eu->e_p->index] == -MAX_FASTF) {*/
+			    /* always add edges with the small vertex index as from */
+/*			    if (from.m_vertex_index > to.m_vertex_index) {
+				tmp = from;
+				from = to;
+				to = tmp;
+			    }
+			    // Create and add 3D curve
+			    b->m_C3.Append(edgeCurve(from, to));
+			    // Create and add 3D edge
+			    brepi[eu->e_p->index] = e.m_edge_index;
+			    ON_BrepEdge& e = b->NewEdge(from, to, eu->e_p->index);
+			}
+		    }
+		    
 	    }
 	}
-    }
+    }*/
 }
 
 
