@@ -1865,14 +1865,14 @@ ged_human(struct ged *gedp, int ac, const char *av[])
     struct bu_vls str;
     struct human_data_t human_data;
     fastf_t showBoxes = 0, troops = 0, stance = 0, percentile=50;
-    char suffix[MAXLENGTH];
+    char suffix[MAXLENGTH]="";
     point_t location;
     int ret;
     int is_region = 0;
     unsigned char rgb[3], rgb2[3], rgb3[3];
     human_data.height = DEFAULT_HEIGHT_INCHES;
     VSET(location, 0, 0, 0); /* Default standing location */
-    char topLevel[MAXLENGTH];
+    char topLevel[MAXLENGTH]="";
     int textDump = 0;
     int textRead = 0;
 
@@ -2085,7 +2085,7 @@ ged_human(struct ged *gedp, int ac, const char *av[])
 			"LeftLowerArm.s","LeftWristJoint.s","LeftHand.s","RightShoulderJoint.s","RightUpperArm.s","RightElbowJoint.s","RightLowerArm.s",
 			"RightWristJoint.s","RightHand.s","LeftThighJoint.s","LeftThigh.s","LeftKneeJoint.s","LeftCalf.s","LeftAnkleJoint.s","LeftFoot.s",
 			"RightThighJoint.s","RightThigh.s","RightKneeJoint.s","RightCalf.s","RightAnkleJoint.s","RightFoot.s","0"};
-        	char body[MAXLENGTH][MAXLENGTH]={*topLevel,};
+        	char body[MAXLENGTH][MAXLENGTH]={*topLevel};
 		char box[MAXLENGTH][MAXLENGTH]={"Box.r",};
 
 		bu_log("%d\n", w);
