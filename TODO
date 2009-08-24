@@ -169,8 +169,13 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
   base libs, it should disappear but shouldn't have wdb_*() funcs in
   libged regardless.  work in progress.
 
+* make our C headers C++-convenient with proper extern "C" wrapping.
+
 * reorganize the header files in include so it is clear which headers
   pertain to which libraries.
+
+* break up library headers into subheaders so includes can be more
+  specific (and help speed up compilation) and locally documented.
 
 * make sure news2tracker.sh is not missing recent news items.  several
   were missing from a recent report generated (unverified).
