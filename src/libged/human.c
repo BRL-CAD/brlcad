@@ -1461,7 +1461,7 @@ int read_args(int argc, char **argv, char *topLevel, struct human_data_t *dude, 
 
             case 'H':
                 sscanf(bu_optarg, "%f", &height);
-                if(height <= 0.0)
+                if(height < 1)
                 {
                         bu_log("Impossible height, setting default height!\n");
                         height = DEFAULT_HEIGHT_INCHES;
@@ -1473,6 +1473,7 @@ int read_args(int argc, char **argv, char *topLevel, struct human_data_t *dude, 
                         dude->height = height;
                         bu_log("%.2f = height in inches\n", height);
                 }
+		Auto(dude);
 		fflush(stdin);
                 break;
 
@@ -1513,13 +1514,13 @@ int read_args(int argc, char **argv, char *topLevel, struct human_data_t *dude, 
 		fflush(stdin);
                 break;
 /*
-	    case 'o':
-	    case 'O':
-		memset(filename, 0, MAXLENGTH);
-		bu_strlcpy(filename, bu_optarg, MAXLENGTH);
-		fflush(stdin);
-		have_name = 1;
-		break;
+*	    case 'o':
+*	    case 'O':
+*		memset(filename, 0, MAXLENGTH);
+*		bu_strlcpy(filename, bu_optarg, MAXLENGTH);
+*		fflush(stdin);
+*		have_name = 1;
+*		break;
 */
 	    case 'p':
 		sscanf(bu_optarg, "%d", &percent);
@@ -1695,9 +1696,7 @@ int read_args(int argc, char **argv, char *topLevel, struct human_data_t *dude, 
 	    memset(topLevel, 0, MAXLENGTH);
 	    bu_strlcpy(humanName, DEFAULT_HUMANNAME, MAXLENGTH);
 	    bu_strlcpy(topLevel, DEFAULT_HUMANNAME, MAXLENGTH);
-	    //Auto(dude);
             show_help(*argv, options);
-            return GED_ERROR;
     }
     *text = textdump;
     *input = textread;
@@ -1823,7 +1822,7 @@ void text(struct human_data_t *dude)
 	fprintf(dump, "Foot\t%lf\t%lf\t%lf\n", x, y, z);	
 
 	/*Total Height*/
-	fprintf(dump, "Height\t%lf\n", dude->height);
+	fprintf(dump, "Height\t%lf\n", (dude->height * IN2MM));
 
 	fclose(dump);
 }
@@ -1848,9 +1847,9 @@ void getText(struct human_data_t *dude)
 		while(fgets(buffer, 80, input)!=NULL) {
 			bu_log("%s", buffer);
 		}
+		bu_log("Input file read.\n");
+		fclose(input);
 	}
-	bu_log("Input file read.\n");
-	fclose(input);
 }
 
 int
@@ -1866,14 +1865,14 @@ ged_human(struct ged *gedp, int ac, const char *av[])
     struct bu_vls str;
     struct human_data_t human_data;
     fastf_t showBoxes = 0, troops = 0, stance = 0, percentile=50;
-    char suffix[MAXLENGTH]= "";
+    char suffix[MAXLENGTH];
     point_t location;
     int ret;
     int is_region = 0;
     unsigned char rgb[3], rgb2[3], rgb3[3];
     human_data.height = DEFAULT_HEIGHT_INCHES;
     VSET(location, 0, 0, 0); /* Default standing location */
-    char topLevel[MAXLENGTH] = "";
+    char topLevel[MAXLENGTH];
     int textDump = 0;
     int textRead = 0;
 
@@ -1885,13 +1884,6 @@ ged_human(struct ged *gedp, int ac, const char *av[])
 
     /* Process command line arguments */
     ret = read_args(ac, av, topLevel, &human_data, &percentile, location, &stance, &troops, &textDump, &textRead, &showBoxes);
-
-//    if (ret != GED_OK) {
-//	bu_log("Non GED_OK value\n");
-//	bu_vls_free(&name);
-//	bu_vls_free(&str);
-//	return ret;
-//  }
 
     GED_CHECK_EXISTS(gedp, bu_vls_addr(&name), LOOKUP_QUIET, GED_ERROR);
 
@@ -1907,8 +1899,6 @@ ged_human(struct ged *gedp, int ac, const char *av[])
     memset(humanName, 0, MAXLENGTH);
     bu_strlcpy(humanName, topLevel, MAXLENGTH);
     setStance(stance, &human_data); 
-
-    bu_log("Textread = %d\n", textRead);
     if(textRead)
 	getText(&human_data);
 
@@ -1916,7 +1906,7 @@ ged_human(struct ged *gedp, int ac, const char *av[])
 	makeBody(gedp->ged_wdbp, suffix, &human_data, location, showBoxes);
 	mk_id_units(gedp->ged_wdbp, "A single Human", "in");
 	
-	/*This function dumps out a text file of all dimentions of bounding boxes on human model.*/
+	/*This function dumps out a text file of all dimentions of bounding boxes/antrho-data/whatever on human model.*/
 	if(textDump)
 		text(&human_data);
     }
