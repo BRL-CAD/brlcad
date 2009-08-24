@@ -2127,6 +2127,10 @@ package provide Archer 1.0
 	return
     }
 
+    # Remove duplicates from both klist and mlist
+    set klist [lsort -unique $klist]
+    set mlist [lsort -unique $mlist]
+
     SetWaitCursor $this
 
     # Need to checkpoint before they're gone
