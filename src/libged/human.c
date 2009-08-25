@@ -1430,7 +1430,7 @@ void getLocation(fastf_t *location)
 int read_args(int argc, char **argv, char *topLevel, struct human_data_t *dude, fastf_t *percentile, fastf_t *location, fastf_t *stance, fastf_t *troops, int *text, int *input, fastf_t *showBoxes)
 {
     char c = 'A';
-    char *options="AbH:hLlmn:N:O:o:p:s:tTw1:2:3:4:5:6:7:8:9:0:=:+:_:*:^:%:$:#:@:!:Q:~:";
+    char *options="AbH:hLlmn:N:O:o:p:s:tTw1:2:3:4:5:6:7:8:9:0:=:+:_:*:^:%:$:#:@:!:Q:~:Z:Y:X:";
     float height=0;
     int soldiers=0;
     int pose=0;
@@ -1473,9 +1473,9 @@ int read_args(int argc, char **argv, char *topLevel, struct human_data_t *dude, 
                         dude->height = height;
                         bu_log("%.2f = height in inches\n", height);
                 }
-		Auto(dude);
 		fflush(stdin);
-                break;
+                Auto(dude);
+		break;
 
             case 'h':
             case '?':
@@ -1486,7 +1486,8 @@ int read_args(int argc, char **argv, char *topLevel, struct human_data_t *dude, 
 
             case 'L':
 	    case 'l':
-		bu_log("Location\n");
+		bu_log("Location\n");		Auto(dude);
+
                 getLocation(location);
 		fflush(stdin);
                 break;
@@ -1667,6 +1668,21 @@ int read_args(int argc, char **argv, char *topLevel, struct human_data_t *dude, 
 		x*=IN2MM;
 		dude->legs.toeWidth=x;
 		break;
+	    case 'Z':
+		sscanf(bu_optarg, "%lf", &x);
+		x*=IN2MM;
+		dude->torso.shoulderDepth=x;
+		break;
+	    case 'Y':
+		sscanf(bu_optarg, "%lf", &x);
+		x*=IN2MM;
+		dude->torso.abDepth=x;
+		break;
+	    case 'W':
+		sscanf(bu_optarg, "%lf", &x);
+		x*=IN2MM;
+		dude->torso.pelvisDepth=x;
+		break;
 
 	    default:
 		show_help(*argv, options);
@@ -1681,7 +1697,6 @@ int read_args(int argc, char **argv, char *topLevel, struct human_data_t *dude, 
         if((argc - bu_optind) == 1) {
             /* Yes, there is a top-level name at the end of this argument chain, lets dump it into the file*/
             have_name = 1;
-
             memset(humanName, 0, MAXLENGTH);
             memset(topLevel, 0, MAXLENGTH);
             bu_strlcpy(topLevel, argv[bu_optind], MAXLENGTH);
@@ -1690,13 +1705,14 @@ int read_args(int argc, char **argv, char *topLevel, struct human_data_t *dude, 
             bu_log("TopLevel2=%s\n", humanName);
         }
         if(!have_name) {
-            bu_log("%s: need top level object name\n", argv[0]);
-	    bu_log("Setting generic name, Body.c");
+	    /*If there is no top level name at the end, go with a default */
+            bu_log("Default top level object name\n");
+	    bu_log("Setting generic name, %s\n", DEFAULT_HUMANNAME);
 	    memset(humanName, 0, MAXLENGTH);
 	    memset(topLevel, 0, MAXLENGTH);
 	    bu_strlcpy(humanName, DEFAULT_HUMANNAME, MAXLENGTH);
 	    bu_strlcpy(topLevel, DEFAULT_HUMANNAME, MAXLENGTH);
-            show_help(*argv, options);
+        /*    show_help(*argv, options);*/
     }
     *text = textdump;
     *input = textread;
@@ -1828,6 +1844,51 @@ void text(struct human_data_t *dude)
 }
 
 /**
+ * Spit out every measurement of the model in a textfile called Verbose.txt
+ * Includes all measurments, sans angles.
+ */
+void verbose(struct human_data_t *dude)
+{
+	bu_log("\nVerbose Text Dump\n");
+	FILE *dump;
+	dump = fopen("Verbose.txt", "w+");
+
+	fprintf(dump, "headSize=%lf\n", dude->head.headSize);
+	fprintf(dump, "neckLength=%lf\n", dude->head.neckLength);
+	fprintf(dump, "neckWidth=%lf\n", dude->head.neckWidth);
+
+	fprintf(dump, "topTorsoLength=%lf\n", dude->torso.topTorsoLength);
+ 	fprintf(dump, "lowTorsoLength=%lf\n", dude->torso.lowTorsoLength);
+	fprintf(dump, "shoulderWidth=%lf\n", dude->torso.shoulderWidth);
+	fprintf(dump, "shoulderDepth=%lf\n", dude->torso.shoulderDepth);
+	fprintf(dump, "abWidth=%lf\n", dude->torso.abWidth);
+	fprintf(dump, "abDepth=%lf\n", dude->torso.abDepth);
+	fprintf(dump, "pelvisWidth=%lf\n", dude->torso.pelvisWidth);
+	fprintf(dump, "pelvisDepth=%lf\n", dude->torso.pelvisDepth);
+	fprintf(dump, "torsoLength=%lf\n", dude->torso.torsoLength);
+
+	fprintf(dump, "upperArmWidth=%lf\n", dude->arms.upperArmWidth);
+	fprintf(dump, "upperArmLength=%lf\n", dude->arms.upperArmLength);
+	fprintf(dump, "lowerArmLength=%lf\n", dude->arms.lowerArmLength);
+	fprintf(dump, "elbowWidth=%lf\n", dude->arms.elbowWidth);
+	fprintf(dump, "wristWidth=%lf\n", dude->arms.wristWidth);
+	fprintf(dump, "handLength=%lf\n", dude->arms.handLength);
+	fprintf(dump, "handWidth=%lf\n", dude->arms.handWidth);
+	fprintf(dump, "armLength=%lf\n", dude->arms.armLength);
+
+	fprintf(dump, "thighLength=%lf\n", dude->legs.thighLength);
+	fprintf(dump, "thighWidth=%lf\n", dude->legs.thighWidth);
+	fprintf(dump, "calfLength=%lf\n", dude->legs.calfLength);
+	fprintf(dump, "kneeWidth=%lf\n", dude->legs.kneeWidth);
+	fprintf(dump, "footLength=%lf\n", dude->legs.footLength);
+	fprintf(dump, "ankleWidth=%lf\n", dude->legs.ankleWidth);
+	fprintf(dump, "toeWidth=%lf\n", dude->legs.toeWidth);
+	fprintf(dump, "legLength=%lf\n", dude->legs.legLength);
+
+	fclose(dump);
+	bu_log("Verbose Output saved\n");	
+}
+/**
  * This function reads in a file with bounding box information and inputs into the program,
  * instead of manual mode or auto mode.
  */
@@ -1914,6 +1975,7 @@ ged_human(struct ged *gedp, int ac, const char *av[])
 	makeArmy(gedp->ged_wdbp, human_data, troops, showBoxes);
     	mk_id_units(gedp->ged_wdbp, "An army of people", "in");	
     }
+    verbose(&human_data);
 /****End Magic****/
 
 /** Make the Regions (.r's) of the body */
