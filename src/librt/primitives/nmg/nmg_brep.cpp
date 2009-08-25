@@ -144,42 +144,6 @@ rt_nmg_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *t
 	    for (BU_LIST_FOR(fu, faceuse, &s->fu_hd)) {
 		NMG_CK_FACEUSE(fu);
 		if(fu->orientation != OT_SAME) continue;
-		// Need to create ON_NurbsSurface based on plane of face
-		// in order to have UV space in which to define trimming
-		// loops.
-		//
-		// General approach:  assume (please) that the min and
-		// max bounding points in the face definition are on the
-		// plane of the face.  Given that, either use or calculate
-		// the normal to the plane at the midpoint between the min and max
-		// bounding points.  Cross the normal with the vector
-		// between the midpoint and (say) the max point.  create the opposing vector by
-		// crossing the normal with the vector between the midpoint and the min point
-		// Scale both vectors by 1/2 the distance between the min and the max
-		// point to find the final two corners
-		// of the nurbs surface/plane in 3 space.  I'm guessing there will be some 
-		// sort of SW, SE, NE, NW convention that will come out of this that can always
-		// be depended on (say, min point is SW, max point is NE, Nxmax is NW and Nxmin
-		// is SE).  Because the result IS planar, the trimming curves can be placed in UV
-		// using ratios of distances between each vertex point and the corners.
-		struct face_g_plane *fg;
-		fg = fu->f_p->g.plane_p;
-		vect_t v1, v2, v3, v4;
-		point_t p1, p2, p3, p4;
-		VMOVE(p2, fu->f_p->min_pt);
-		VMOVE(p4, fu->f_p->max_pt);
-		VMOVE(v1, p2);
-		VADD2(v1, v1, p4);
-		VMOVE(v2, v1);
-		VSCALE(v2, v2, 0.5);
-		VCROSS(v3, v2, fg->N);
-		VSET(v4, -v3[0], -v3[1], -v3[2]);
-		VUNITIZE(v3);
-		VUNITIZE(v4);
-		VSCALE(v3, v3, MAGNITUDE(v1)*0.5);
-		VSCALE(v4, v4, MAGNITUDE(v1)*0.5);
-		VSET(p1, v3[0], v3[1], v3[2]);
-		VSET(p4, v4[0], v4[1], v4[2]);
 		/*
 
 		for (BU_LIST_FOR(lu, loopuse, &fu->lu_hd)) {
@@ -219,6 +183,47 @@ rt_nmg_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *t
 			}
 		    }
 		    */
+		// Need to create ON_NurbsSurface based on plane of face
+		// in order to have UV space in which to define trimming
+		// loops.  Bounding points are NOT on the face plane, so 
+		// another approach must be used.
+		//
+		// General approach:  For all loops in the faceuse, collect all the vertices.
+		// Find the center point of all the vertices, and search for the point with
+		// the greatest distance from that center point.  Once found, cross the vector
+		// between the center point and furthest point with the normal of the face
+		// and scale the resulting vector to have the same length as the vector to
+		// the furthest point.  Add the two resulting vectors to find the first
+		// corner point.  Mirror the first corner point across the center to find the
+		// second corner point.  Cross the two vectors created by the first two corner
+		// points with the face normal to get the vectors of the other two corners,
+		// and scale the resulting vectors to the same magnitude as the first two.
+		// These four points bound all vertices on the plane and form a suitable
+		// staring point for a UV space, since all points on all the edges are equal
+		// to or further than the distance between the furthest vertex and the center
+		// point.
+		//
+		struct face_g_plane *fg;
+		fg = fu->f_p->g.plane_p;
+		vect_t v1, v2, v3, v4;
+		point_t p1, p2, p3, p4;
+		VMOVE(p2, fu->f_p->min_pt);
+		VMOVE(p4, fu->f_p->max_pt);
+		VMOVE(v1, p2);
+		VADD2(v1, v1, p4);
+		VMOVE(v2, v1);
+		VSCALE(v2, v2, 0.5);
+		VCROSS(v3, v2, fg->N);
+		VSET(v4, -v3[0], -v3[1], -v3[2]);
+		VUNITIZE(v3);
+		VUNITIZE(v4);
+		VSCALE(v3, v3, MAGNITUDE(v1)*0.5);
+		VSCALE(v4, v4, MAGNITUDE(v1)*0.5);
+		VSET(p1, v3[0], v3[1], v3[2]);
+		VSET(p4, v4[0], v4[1], v4[2]);
+
+
+
 	    } 
 	}
     }
