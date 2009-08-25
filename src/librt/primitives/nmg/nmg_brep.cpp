@@ -58,69 +58,6 @@ static ON_Surface* sideSurface(const ON_3dPoint& SW, const ON_3dPoint& SE, const
     return surf;
 }
 
-/**
-* Create Faces, Edges, and Vertices
-*/
-void 
-makeFunnyFaces(struct model *m, ON_Brep *b, struct faceuse *fu)
-{
-    struct loopuse *lu;
-    long brepi[m->maxindex];
-    for (int i = 0; i < m->maxindex; i++) brepi[i] = -1;
-    NMG_CK_FACEUSE(fu);
-    for (BU_LIST_FOR(lu, loopuse, &fu->lu_hd)) {
-//	printf("lu #%d\n", lu->index);
-	struct edgeuse *eu;
-	int edges=0;
-	/* loop is a single vertex */
-	if (BU_LIST_FIRST_MAGIC(&lu->down_hd) != NMG_EDGEUSE_MAGIC)
-	    continue;
-	for (BU_LIST_FOR(eu, edgeuse, &lu->down_hd)) {
-	    ++edges;
-	    /* add both vertices of this edge */
-	    ON_BrepVertex from, to, tmp;
-	    struct vertex_g *vg;
-	    vg = eu->vu_p->v_p->vg_p;
-	    NMG_CK_VERTEX_G(vg);
-	    if (brepi[eu->vu_p->v_p->index] == -1) {
-		printf("rt_nmg_brep: adding (%lf, %lf, %lf)\n", vg->coord[0], vg->coord[1], vg->coord[2]);
-		from = b->NewVertex(vg->coord, SMALL_FASTF);
-		brepi[eu->vu_p->v_p->index] = from.m_vertex_index;
-	    }
-	    vg = eu->eumate_p->vu_p->v_p->vg_p;
-	    NMG_CK_VERTEX_G(vg);
-	    if (brepi[eu->eumate_p->vu_p->v_p->index] == -1) {
-		printf("rt_nmg_brep: adding (%lf, %lf, %lf)\n", vg->coord[0], vg->coord[1], vg->coord[2]);
-		to = b->NewVertex(vg->coord, SMALL_FASTF);
-		brepi[eu->eumate_p->vu_p->v_p->index] = to.m_vertex_index;
-	    }
-
-	    /* add this edge */
-	    if(brepi[eu->e_p->index] == -1) {
-		/* always add edges with the small vertex index as from */
-		if (from.m_vertex_index > to.m_vertex_index) {
-		    tmp = from;
-		    from = to;
-		    to = tmp;
-		}
-		ON_BrepEdge& e = b->NewEdge(from, to, eu->e_p->index);
-		b->m_C3.Append(edgeCurve(from, to));
-		brepi[eu->e_p->index] = e.m_edge_index;
-	    }
-
-	}//done adding edges and vertices
-
-	
-	
-
-	/* for each loop */
-	//b->m_S.Append(
-
-
-
-    }
-}
-
 extern "C" void
 rt_nmg_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *tol)
 {
@@ -223,8 +160,21 @@ rt_nmg_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *t
  		//
  	       	
  		
- 		struct face_g_plane *fg;
- 		fg = fu->f_p->g.plane_p;
+ 		const struct face_g_plane *fg = fu->f_p->g.plane_p;
+		struct bu_ptbl vert_table;
+		nmg_tabulate_face_g_verts(&vert_table, fg);
+	    	point_t tmppt, center;
+		struct vertex **pt;
+	    	VSET(tmppt, 0, 0, 0);
+	    	int ptcnt = 0;
+	    	for (BU_PTBL_FOR(pt, (struct vertex **), &vert_table)) {
+	    	    tmppt[0] += (*pt)->vg_p->coord[0];
+	    	    tmppt[1] += (*pt)->vg_p->coord[1];
+	    	    tmppt[2] += (*pt)->vg_p->coord[2];
+		    ptcnt++;
+	    	}
+	    	VSET(center, tmppt[0]/ptcnt, tmppt[1]/ptcnt, tmppt[2]/ptcnt);
+/* 
  		vect_t v1, v2, v3, v4;
  		point_t p1, p2, p3, p4;
  		VMOVE(p2, fu->f_p->min_pt);
@@ -242,7 +192,7 @@ rt_nmg_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *t
 		VSET(p1, v3[0], v3[1], v3[2]);
 		VSET(p4, v4[0], v4[1], v4[2]);
 
-
+*/
 
 	    } 
 	}
