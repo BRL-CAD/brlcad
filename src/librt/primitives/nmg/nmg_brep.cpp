@@ -202,14 +202,34 @@ rt_nmg_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *t
 		// staring point for a UV space, since all points on all the edges are equal
 		// to or further than the distance between the furthest vertex and the center
 		// point.
-		//
-		struct face_g_plane *fg;
-		fg = fu->f_p->g.plane_p;
-		vect_t v1, v2, v3, v4;
-		point_t p1, p2, p3, p4;
-		VMOVE(p2, fu->f_p->min_pt);
-		VMOVE(p4, fu->f_p->max_pt);
-		VMOVE(v1, p2);
+		
+		// ............. .............
+ 		// .           .* .          .
+ 		// .         .  .    .       .
+ 		// .        .   .      .     .
+ 		// .       .    .       *    .
+ 		// .      .     .       .    .
+ 		// .     .      .       .    .
+ 		// .    .       .       .    .
+ 		// .   *        *       .    .
+ 		// .   .                .    .
+ 		// .   .                .    .
+ 		// .   .                .    .
+ 		// .   *.               .    .
+ 		// .     ...        ...*     .
+ 		// .       .... ....         .
+ 		// .           *             .
+ 		// ...........................
+ 		//
+ 	       	
+ 		
+ 		struct face_g_plane *fg;
+ 		fg = fu->f_p->g.plane_p;
+ 		vect_t v1, v2, v3, v4;
+ 		point_t p1, p2, p3, p4;
+ 		VMOVE(p2, fu->f_p->min_pt);
+ 		VMOVE(p4, fu->f_p->max_pt);
+ 		VMOVE(v1, p2);
 		VADD2(v1, v1, p4);
 		VMOVE(v2, v1);
 		VSCALE(v2, v2, 0.5);
