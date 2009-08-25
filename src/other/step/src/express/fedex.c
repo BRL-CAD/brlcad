@@ -79,9 +79,9 @@ char *FEDEXversion(void)
 #include <stdlib.h>
 #include <stdio.h>
 #include <unistd.h>
-#include "error.h"
-#include "express.h"
-#include "resolve.h"
+#include "express/error.h"
+#include "express/express.h"
+#include "express/resolve.h"
 
 #ifdef YYDEBUG
 extern int exp_yydebug;

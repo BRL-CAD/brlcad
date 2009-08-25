@@ -39,8 +39,8 @@ static char rcsid[] = "$Id: scope.c,v 1.9 1997/01/21 19:19:51 dar Exp $";
  */
 
 #define SCOPE_C
-#include "scope.h"
-#include "resolve.h"
+#include "express/scope.h"
+#include "express/resolve.h"
 
 Symbol *
 SCOPE_get_symbol(Generic s)

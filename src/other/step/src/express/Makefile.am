@@ -1,7 +1,7 @@
 lib_LTLIBRARIES = libexpress.la
 noinst_LTLIBRARIES = libexpress_nil.la
 
-AM_CFLAGS = -I$(top_srcdir)/include/express
+AM_CFLAGS = -I$(top_srcdir)/include
 AM_LFLAGS = -l
 
 bin_PROGRAMS = \

@@ -30,7 +30,7 @@ static char rcsid[] = "$Id: caseitem.c,v 1.3 1997/01/21 19:19:51 dar Exp $";
  */
 
 #define CASE_ITEM_C
-#include "caseitem.h"
+#include "express/caseitem.h"
 
 /*
 ** Procedure:	CASE_ITinitialize

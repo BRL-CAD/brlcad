@@ -57,16 +57,16 @@ static char rcsid[] = "$Id: error.c,v 1.13 1997/10/23 21:41:44 sauderd Exp $";
 
 #define	ERROR_C
 #include "signal.h"
-#include "error.h"
+#include "express/error.h"
 #include "string.h"
-#include "linklist.h"
+#include "express/linklist.h"
 #ifdef __STDC__
 #include <stdarg.h>
 #else
 #include <varargs.h>
 #endif
 
-#include "express.h"
+#include "express/express.h"
 
 #define ERROR_MAX_ERRORS	100	/* max line-numbered errors */
 #define ERROR_MAX_SPACE		4000	/* max space for line-numbered errors */

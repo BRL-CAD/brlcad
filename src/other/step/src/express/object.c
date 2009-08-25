@@ -23,7 +23,7 @@ static char rcsid[] = "$Id: object.c,v 1.7 1997/01/21 19:19:51 dar Exp $";
 
 #define OBJECT_C
 #include <stdlib.h>
-#include "object.h"
+#include "express/object.h"
 
 /*ARGSUSED*/
 Symbol *

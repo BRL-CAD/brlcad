@@ -41,7 +41,7 @@ static char rcsid[] = "$Id: stmt.c,v 1.3 1997/01/21 19:19:51 dar Exp $";
  */
 
 #define STATEMENT_C
-#include "stmt.h"
+#include "express/stmt.h"
 
 Statement 
 STMTcreate(int type)

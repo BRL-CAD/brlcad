@@ -85,8 +85,8 @@ static char rcsid[] = "$Id: variable.c,v 1.7 1997/01/21 19:19:51 dar Exp $";
 
 #define VARIABLE_C
 #include <stdlib.h>
-#include "variable.h"
-#include "object.h"
+#include "express/variable.h"
+#include "express/object.h"
 
 /*
 ** Procedure:	VAR_create/free/copy/equal

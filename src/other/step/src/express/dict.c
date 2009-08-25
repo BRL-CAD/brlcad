@@ -34,9 +34,9 @@ static char rcsid[] = "$Id: dict.c,v 1.4 1997/01/21 19:19:51 dar Exp $";
  */
 
 #define DICTIONARY_C
-#include "dict.h"
-#include "object.h"
-#include "expbasic.h"
+#include "express/dict.h"
+#include "express/object.h"
+#include "express/expbasic.h"
 
 static Error	ERROR_duplicate_decl;
 static Error	ERROR_duplicate_decl_diff_file;

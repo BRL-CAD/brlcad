@@ -6,7 +6,7 @@
 #include <sys/param.h>
 #include <stdio.h>
 #include <errno.h>
-#include "express.h"
+#include "express/express.h"
 
 void
 create_links(Express model)

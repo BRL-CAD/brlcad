@@ -69,17 +69,17 @@ static char rcsid[] = "";
 
 #define	EXPRESS_C
 #include "conf.h"
-#include <basic.h>
+#include "express/basic.h"
 #include <ctype.h>
 #include <pwd.h>
 #include <stdlib.h>
 #include <setjmp.h>
 #include <errno.h>
 
-#include "express.h"
-#include "resolve.h"
+#include "express/express.h"
+#include "express/resolve.h"
 #include "stack.h"
-#include "scope.h"
+#include "express/scope.h"
 
 extern FILE *yyin;
 extern Express yyexpresult;
