@@ -1409,6 +1409,8 @@ void show_help(const char *name, const char *optstr)
 	   "\t-p\t\tSet Percentile (not implemented yet) 1-99\n"
 	   "\t-t\t\tSave bounding box information to file Stats.txt\n"
 	   "\t-T\t\tRead bounding box information from file Stats.txt\n"
+	   "\t-v\t\tGenerate verbose output of all data used to build human model, to Verbose.txt\n"
+	   "\t-V\t\tRead verbose input of all data used to build human model, using Verbose.txt\n"
 	   "\t 1 - 9, 0, Q, and special characters are used for wizard purposes, ignore them.\n"
 	);
 
