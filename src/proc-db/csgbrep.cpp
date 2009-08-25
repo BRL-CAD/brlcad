@@ -79,14 +79,14 @@ main(int argc, char** argv)
     BU_GETSTRUCT(arbnmg8, rt_arb_internal);
     arbnmg8->magic = RT_ARB_INTERNAL_MAGIC;
     point_t ptnmg8[8];
-    VSET(ptnmg8[0], 1015, -1000, -995);
-    VSET(ptnmg8[1], 1015, 1000, -995);
-    VSET(ptnmg8[2], 1015, 1000, 1005);
-    VSET(ptnmg8[3], 1015, -1000, 1005);
-    VSET(ptnmg8[4], -985, -1000, -995);
-    VSET(ptnmg8[5], -985, 1000, -995);
-    VSET(ptnmg8[6], -985, 1000, 1005);
-    VSET(ptnmg8[7], -985, -1000, 1005);
+    VSET(ptnmg8[0], 0,0,0);
+    VSET(ptnmg8[1], 0,2000,0);
+    VSET(ptnmg8[2], 0,2000,2000);
+    VSET(ptnmg8[3], 0,0,2000);
+    VSET(ptnmg8[4], -2000,0, 0);
+    VSET(ptnmg8[5], -2000,2000,0);
+    VSET(ptnmg8[6], -2000,2000,2000);
+    VSET(ptnmg8[7], -2000,0,2000);
     for ( int i=0; i < 8; i++ )  {
 	VMOVE( arbnmg8->pt[i], ptnmg8[i] );
     }

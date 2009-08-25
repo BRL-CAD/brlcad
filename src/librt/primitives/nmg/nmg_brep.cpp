@@ -163,7 +163,7 @@ rt_nmg_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *t
  		const struct face_g_plane *fg = fu->f_p->g.plane_p;
 		struct bu_ptbl vert_table;
 		nmg_tabulate_face_g_verts(&vert_table, fg);
-	    	point_t tmppt, center;
+	    	point_t tmppt, center, max_pt;
 		struct vertex **pt;
 	    	VSET(tmppt, 0, 0, 0);
 	    	int ptcnt = 0;
@@ -174,6 +174,22 @@ rt_nmg_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *t
 		    ptcnt++;
 	    	}
 	    	VSET(center, tmppt[0]/ptcnt, tmppt[1]/ptcnt, tmppt[2]/ptcnt);
+		bu_log("center: [%2.f,%2.f,%2.f]\n", center[0], center[1], center[2]);
+		fastf_t max_dist = 0.0;
+		fastf_t curr_dist;
+		for (BU_PTBL_FOR(pt, (struct vertex **), &vert_table)) {
+	    	    tmppt[0] = (*pt)->vg_p->coord[0];
+	    	    tmppt[1] = (*pt)->vg_p->coord[1];
+	    	    tmppt[2] = (*pt)->vg_p->coord[2];
+		    curr_dist = DIST_PT_PT(center, tmppt);
+		    if (curr_dist > max_dist) {
+			max_dist = curr_dist;
+			VMOVE(max_pt, tmppt);
+		    }
+		}
+		bu_log("max_dist: %2.f\n", max_dist);
+		bu_log("max_pt: [%2.f,%2.f,%2.f]\n", max_pt[0], max_pt[1], max_pt[2]);
+		    
 /* 
  		vect_t v1, v2, v3, v4;
  		point_t p1, p2, p3, p4;
