@@ -1853,37 +1853,37 @@ void verbose(struct human_data_t *dude)
 	FILE *dump;
 	dump = fopen("Verbose.txt", "w+");
 
-	fprintf(dump, "headSize=%lf\n", dude->head.headSize);
-	fprintf(dump, "neckLength=%lf\n", dude->head.neckLength);
-	fprintf(dump, "neckWidth=%lf\n", dude->head.neckWidth);
+	fprintf(dump, "headSize=\t%lf\n", dude->head.headSize);
+	fprintf(dump, "neckLength=\t%lf\n", dude->head.neckLength);
+	fprintf(dump, "neckWidth=\t%lf\n", dude->head.neckWidth);
 
-	fprintf(dump, "topTorsoLength=%lf\n", dude->torso.topTorsoLength);
- 	fprintf(dump, "lowTorsoLength=%lf\n", dude->torso.lowTorsoLength);
-	fprintf(dump, "shoulderWidth=%lf\n", dude->torso.shoulderWidth);
-	fprintf(dump, "shoulderDepth=%lf\n", dude->torso.shoulderDepth);
-	fprintf(dump, "abWidth=%lf\n", dude->torso.abWidth);
-	fprintf(dump, "abDepth=%lf\n", dude->torso.abDepth);
-	fprintf(dump, "pelvisWidth=%lf\n", dude->torso.pelvisWidth);
-	fprintf(dump, "pelvisDepth=%lf\n", dude->torso.pelvisDepth);
-	fprintf(dump, "torsoLength=%lf\n", dude->torso.torsoLength);
+	fprintf(dump, "topTorsoLength=\t%lf\n", dude->torso.topTorsoLength);
+ 	fprintf(dump, "lowTorsoLength=\t%lf\n", dude->torso.lowTorsoLength);
+	fprintf(dump, "shoulderWidth=\t%lf\n", dude->torso.shoulderWidth);
+	fprintf(dump, "shoulderDepth=\t%lf\n", dude->torso.shoulderDepth);
+	fprintf(dump, "abWidth=\t%lf\n", dude->torso.abWidth);
+	fprintf(dump, "abDepth=\t%lf\n", dude->torso.abDepth);
+	fprintf(dump, "pelvisWidth=\t%lf\n", dude->torso.pelvisWidth);
+	fprintf(dump, "pelvisDepth=\t%lf\n", dude->torso.pelvisDepth);
+	fprintf(dump, "torsoLength=\t%lf\n", dude->torso.torsoLength);
 
-	fprintf(dump, "upperArmWidth=%lf\n", dude->arms.upperArmWidth);
-	fprintf(dump, "upperArmLength=%lf\n", dude->arms.upperArmLength);
-	fprintf(dump, "lowerArmLength=%lf\n", dude->arms.lowerArmLength);
-	fprintf(dump, "elbowWidth=%lf\n", dude->arms.elbowWidth);
-	fprintf(dump, "wristWidth=%lf\n", dude->arms.wristWidth);
-	fprintf(dump, "handLength=%lf\n", dude->arms.handLength);
-	fprintf(dump, "handWidth=%lf\n", dude->arms.handWidth);
-	fprintf(dump, "armLength=%lf\n", dude->arms.armLength);
+	fprintf(dump, "upperArmWidth=\t%lf\n", dude->arms.upperArmWidth);
+	fprintf(dump, "upperArmLength=\t%lf\n", dude->arms.upperArmLength);
+	fprintf(dump, "lowerArmLength=\t%lf\n", dude->arms.lowerArmLength);
+	fprintf(dump, "elbowWidth=\t%lf\n", dude->arms.elbowWidth);
+	fprintf(dump, "wristWidth=\t%lf\n", dude->arms.wristWidth);
+	fprintf(dump, "handLength=\t%lf\n", dude->arms.handLength);
+	fprintf(dump, "handWidth=\t%lf\n", dude->arms.handWidth);
+	fprintf(dump, "armLength=\t%lf\n", dude->arms.armLength);
 
-	fprintf(dump, "thighLength=%lf\n", dude->legs.thighLength);
-	fprintf(dump, "thighWidth=%lf\n", dude->legs.thighWidth);
-	fprintf(dump, "calfLength=%lf\n", dude->legs.calfLength);
-	fprintf(dump, "kneeWidth=%lf\n", dude->legs.kneeWidth);
-	fprintf(dump, "footLength=%lf\n", dude->legs.footLength);
-	fprintf(dump, "ankleWidth=%lf\n", dude->legs.ankleWidth);
-	fprintf(dump, "toeWidth=%lf\n", dude->legs.toeWidth);
-	fprintf(dump, "legLength=%lf\n", dude->legs.legLength);
+	fprintf(dump, "thighLength=\t%lf\n", dude->legs.thighLength);
+	fprintf(dump, "thighWidth=\t%lf\n", dude->legs.thighWidth);
+	fprintf(dump, "calfLength=\t%lf\n", dude->legs.calfLength);
+	fprintf(dump, "kneeWidth=\t%lf\n", dude->legs.kneeWidth);
+	fprintf(dump, "footLength=\t%lf\n", dude->legs.footLength);
+	fprintf(dump, "ankleWidth=\t%lf\n", dude->legs.ankleWidth);
+	fprintf(dump, "toeWidth=\t%lf\n", dude->legs.toeWidth);
+	fprintf(dump, "legLength=\t%lf\n", dude->legs.legLength);
 
 	fclose(dump);
 	bu_log("Verbose Output saved\n");	
@@ -1975,7 +1975,7 @@ ged_human(struct ged *gedp, int ac, const char *av[])
 	makeArmy(gedp->ged_wdbp, human_data, troops, showBoxes);
     	mk_id_units(gedp->ged_wdbp, "An army of people", "in");	
     }
-    verbose(&human_data);
+    verbose(&human_data); /*output a file, Verbose.txt, that contains all measurments of the body */
 /****End Magic****/
 
 /** Make the Regions (.r's) of the body */
