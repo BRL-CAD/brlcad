@@ -64,8 +64,14 @@ render_camera_init(render_camera_t *camera, int threads)
     camera->rm = RENDER_METHOD_PHONG;
 
     render_tlist = NULL;
-    if (camera->thread_num > 1)
+    if (camera->thread_num > 1) {
+	bu_log("Allocating thread memory\n");
 	render_tlist = (pthread_t *)bu_malloc(sizeof(pthread_t) * camera->thread_num, "render_tlist");
+	if(render_tlist == NULL) {
+	    bu_log("Failed to allocate threads. Running single threaded\n");
+	    camera->thread_num = 1;
+	}
+    }
 }
 
 
@@ -565,7 +571,7 @@ render_camera_render(render_camera_t *camera, tie_t *tie, camera_tile_t *tile, t
     pthread_mutex_init(&td.mut, 0);
 
     /* Launch Render threads */
-    if (camera->thread_num > 1)
+    if (camera->thread_num > 1 && render_tlist)
     {
 	for (i = 0; i < camera->thread_num; i++)
 	    pthread_create(&render_tlist[i], NULL, render_camera_render_thread, &td);
