@@ -69,7 +69,7 @@ makeFunnyFaces(struct model *m, ON_Brep *b, struct faceuse *fu)
     for (int i = 0; i < m->maxindex; i++) brepi[i] = -1;
     NMG_CK_FACEUSE(fu);
     for (BU_LIST_FOR(lu, loopuse, &fu->lu_hd)) {
-	printf("lu #%d\n", lu->index);
+//	printf("lu #%d\n", lu->index);
 	struct edgeuse *eu;
 	int edges=0;
 	/* loop is a single vertex */
@@ -136,10 +136,10 @@ rt_nmg_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *t
     NMG_CK_MODEL(m);
    
     long brepi[m->maxindex];
-    for (int i = 0; i < m->maxindex; i++) brepi[i] = -MAX_FASTF;
+    for (int i = 0; i < m->maxindex; i++) brepi[i] = -INT_MAX;
     
     *b = new ON_Brep();
-/*    for (BU_LIST_FOR(r, nmgregion, &m->r_hd)) {
+    for (BU_LIST_FOR(r, nmgregion, &m->r_hd)) {
 	for (BU_LIST_FOR(s, shell, &r->s_hd)) {
 	    for (BU_LIST_FOR(fu, faceuse, &s->fu_hd)) {
 		NMG_CK_FACEUSE(fu);
@@ -156,15 +156,32 @@ rt_nmg_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *t
 		// between the midpoint and (say) the max point.  create the opposing vector by
 		// crossing the normal with the vector between the midpoint and the min point
 		// Scale both vectors by 1/2 the distance between the min and the max
-		// point (DIST_PT_PT()/2 I think should be used here) to find the final two corners
+		// point to find the final two corners
 		// of the nurbs surface/plane in 3 space.  I'm guessing there will be some 
 		// sort of SW, SE, NE, NW convention that will come out of this that can always
 		// be depended on (say, min point is SW, max point is NE, Nxmax is NW and Nxmin
 		// is SE).  Because the result IS planar, the trimming curves can be placed in UV
 		// using ratios of distances between each vertex point and the corners.
-		struct face_g *fg;
-		fg = fu->f_p->fg_p;
-		
+		struct face_g_plane *fg;
+		fg = fu->f_p->g.plane_p;
+		vect_t v1, v2, v3, v4;
+		point_t p1, p2, p3, p4;
+		VMOVE(p2, fu->f_p->min_pt);
+		VMOVE(p4, fu->f_p->max_pt);
+		VMOVE(v1, p2);
+		VADD2(v1, v1, p4);
+		VMOVE(v2, v1);
+		VSCALE(v2, v2, 0.5);
+		VCROSS(v3, v2, fg->N);
+		VSET(v4, -v3[0], -v3[1], -v3[2]);
+		VUNITIZE(v3);
+		VUNITIZE(v4);
+		VSCALE(v3, v3, MAGNITUDE(v1)*0.5);
+		VSCALE(v4, v4, MAGNITUDE(v1)*0.5);
+		VSET(p1, v3[0], v3[1], v3[2]);
+		VSET(p4, v4[0], v4[1], v4[2]);
+		/*
+
 		for (BU_LIST_FOR(lu, loopuse, &fu->lu_hd)) {
 		    int edges=0;
 		    // For each loop, add the edges and vertices
@@ -176,18 +193,18 @@ rt_nmg_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *t
 			struct vertex_g *vg;
 			vg = eu->vu_p->v_p->vg_p;
 			NMG_CK_VERTEX_G(vg);
-			if (brepi[eu->vu_p->v_p->index] == -MAX_FASTF) {
+			if (brepi[eu->vu_p->v_p->index] == -INT_MAX) {
 			    from = b->NewVertex(vg->coord, SMALL_FASTF);
 			    brepi[eu->vu_p->v_p->index] = from.m_vertex_index;
 			}
 			vg = eu->eumate_p->vu_p->v_p->vg_p;
 			NMG_CK_VERTEX_G(vg);
-			if (brepi[eu->eumate_p->vu_p->v_p->index] == -MAX_FASTF) {
+			if (brepi[eu->eumate_p->vu_p->v_p->index] == -INT_MAX) {
 			    to = b->NewVertex(vg->coord, SMALL_FASTF);
 			    brepi[eu->eumate_p->vu_p->v_p->index] = to.m_vertex_index;
 			}
 			// Add edge if not already added
-			if(brepi[eu->e_p->index] == -MAX_FASTF) {*/
+			if(brepi[eu->e_p->index] == -INT_MAX) {*/
 			    /* always add edges with the small vertex index as from */
 /*			    if (from.m_vertex_index > to.m_vertex_index) {
 				tmp = from;
@@ -201,10 +218,10 @@ rt_nmg_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *t
 			    ON_BrepEdge& e = b->NewEdge(from, to, eu->e_p->index);
 			}
 		    }
-		    
-	    }
+		    */
+	    } 
 	}
-    }*/
+    }
 }
 
 
