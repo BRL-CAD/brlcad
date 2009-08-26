@@ -209,7 +209,6 @@ rt_nmg_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *t
 			// Add vertices if not already added
 			++edges;
 			ON_BrepVertex from, to, tmp;
-			ON_2dPoint from_uv, to_uv;
 			struct vertex_g *vg;
 			vg = eu->vu_p->v_p->vg_p;
 			NMG_CK_VERTEX_G(vg);
@@ -236,24 +235,41 @@ rt_nmg_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *t
 			    // Create and add 3D edge
 			    ON_BrepEdge& e = (*b)->NewEdge(from, to, eu->e_p->index);
 			    brepi[eu->e_p->index] = e.m_edge_index;
-
-			    // Figure out details of converting vertex coords
-			    // into uv parameters here
-			    // double u0, u1, v0, v1;
-			    // surf->GetDomain(0, &u0, &u1);
-			    // surf->GetDomain(1, &v0, &v1);
-			    // *****3dpoint -> 2dpoint magic*****
-			    // ON_Curve* c2d =  new ON_LineCurve(from_uv, to_uv);
-			    // c2d->SetDomain(0.0, 1.0);
-			    // int c2i = (*b)->m_C2.Count();
-			    // (*b)->m_C2.Append(c2d);
-			    // *****figure out edge orientation needed*****
-			    // ON_BrepTrim& trim = brep.NewTrim((*b)->m_E[e.m_edge_index], orientation, loop, c2i);
-			    // trim.m_iso = iso;
-			    // trim.m_type = ON_BrepTrim::mated;
-			    // trim.m_tolerance[0] = 0.0;
-			    // trim.m_tolerance[1] = 0.0;
 			}
+			// Regardless of whether the edge existed as an object, it
+			// needs to be added to the trimming loop
+			vect_t ev1, ev2, u_component, v_component;
+			int orientation = 1;
+			if (from.m_vertex_index > to.m_vertex_index) {
+ 			    VMOVE(ev2,eu->vu_p->v_p->vg_p->coord);
+ 			    VMOVE(ev1,eu->eumate_p->vu_p->v_p->vg_p->coord);
+			    orientation = -1;
+			} else {
+			    VMOVE(ev1,eu->vu_p->v_p->vg_p->coord);
+ 			    VMOVE(ev2,eu->eumate_p->vu_p->v_p->vg_p->coord);
+			}
+			VSUB2(ev1, ev1, v1);
+			VSUB2(ev2, ev2, v1);
+			ON_2dPoint from_uv, to_uv;
+			double u0, u1, v0, v1;
+			surf->GetDomain(0, &u0, &u1);
+			surf->GetDomain(1, &v0, &v1);
+			VPROJECT(ev1, u_axis, u_component, v_component);
+			from_uv.x = u0 + MAGNITUDE(u_component)/u_axis_dist*(u1-u0);
+			from_uv.y = v0 + MAGNITUDE(v_component)/v_axis_dist*(v1-v0);
+			VPROJECT(ev2, u_axis, u_component, v_component);
+			to_uv.x = u0 + MAGNITUDE(u_component)/u_axis_dist*(u1-u0);
+			to_uv.y = v0 + MAGNITUDE(v_component)/v_axis_dist*(v1-v0);
+			ON_Curve* c2d =  new ON_LineCurve(from_uv, to_uv);
+			c2d->SetDomain(0.0, 1.0);
+			int c2i = (*b)->m_C2.Count();
+			(*b)->m_C2.Append(c2d);
+			ON_BrepTrim& trim = (*b)->NewTrim((*b)->m_E[brepi[eu->e_p->index]], orientation, loop, c2i);
+			ON_Surface::ISO iso = ON_Surface::not_iso;
+			trim.m_iso = iso;
+			trim.m_type = ON_BrepTrim::mated;
+			trim.m_tolerance[0] = 0.0;
+			trim.m_tolerance[1] = 0.0;
 		    }
 		} 
 	        	
