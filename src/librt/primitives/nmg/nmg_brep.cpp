@@ -81,43 +81,7 @@ rt_nmg_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *t
 	    for (BU_LIST_FOR(fu, faceuse, &s->fu_hd)) {
 		NMG_CK_FACEUSE(fu);
 		if(fu->orientation != OT_SAME) continue;
-		for (BU_LIST_FOR(lu, loopuse, &fu->lu_hd)) {
-		    int edges=0;
-		    // For each loop, add the edges and vertices
-		    if (BU_LIST_FIRST_MAGIC(&lu->down_hd) != NMG_EDGEUSE_MAGIC) continue; // loop is a single vertex
-		    for (BU_LIST_FOR(eu, edgeuse, &lu->down_hd)) {
-			// Add vertices if not already added
-			++edges;
-			ON_BrepVertex from, to, tmp;
-			struct vertex_g *vg;
-			vg = eu->vu_p->v_p->vg_p;
-			NMG_CK_VERTEX_G(vg);
-			if (brepi[eu->vu_p->v_p->index] == -INT_MAX) {
-			    from = (*b)->NewVertex(vg->coord, SMALL_FASTF);
-			    brepi[eu->vu_p->v_p->index] = from.m_vertex_index;
-			}
-			vg = eu->eumate_p->vu_p->v_p->vg_p;
-			NMG_CK_VERTEX_G(vg);
-			if (brepi[eu->eumate_p->vu_p->v_p->index] == -INT_MAX) {
-			    to = (*b)->NewVertex(vg->coord, SMALL_FASTF);
-			    brepi[eu->eumate_p->vu_p->v_p->index] = to.m_vertex_index;
-			}
-			// Add edge if not already added
-			if(brepi[eu->e_p->index] == -INT_MAX) {
-			    /* always add edges with the small vertex index as from */
-			    if (from.m_vertex_index > to.m_vertex_index) {
-				tmp = from;
-				from = to;
-				to = tmp;
-			    }
-			    // Create and add 3D curve
-			    (*b)->m_C3.Append(edgeCurve(from, to));
-			    // Create and add 3D edge
-			    ON_BrepEdge& e = (*b)->NewEdge(from, to, eu->e_p->index);
-			    brepi[eu->e_p->index] = e.m_edge_index;
-			}
-		    }
-		} 
+		
 		// Need to create ON_NurbsSurface based on plane of face
 		// in order to have UV space in which to define trimming
 		// loops.  Bounding points are NOT on the face plane, so 
@@ -213,9 +177,86 @@ rt_nmg_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *t
 
 		(*b)->m_S.Append(sideSurface(p1, p2, p3, p4));
 		ON_Surface *surf = (*(*b)->m_S.Last());
+		int surfindex = (*b)->m_S.Count();
 		
-		// With the surface defined, make trimming loops and
-		// create faces
+		// Now that we have the surface, define the face
+		ON_BrepFace& face = (*b)->NewFace(surfindex);
+		
+		// With the surface and the face defined, make trimming loops and
+		// create faces.  To generate UV coordinates for each
+		// from and to for the edgecurves, the UV origin is
+		// defined to be v1, v1->v2 is defined as the U domain,
+		// and v1->v4 is defined as the V domain.
+		vect_t u_axis, v_axis;
+		VSUB2(u_axis, v2, v1);
+		VSUB2(v_axis, v4, v1);
+		fastf_t u_axis_dist = MAGNITUDE(u_axis);
+		fastf_t v_axis_dist = MAGNITUDE(v_axis);
+		// Possibility of using VPROJECT here - may even need only
+		// one domain vector since VPROJECT gives both parallel
+		// and orthogonal components.  Project vector from v1 to
+		// 3d vertex point onto u_axis - u and v go from 0 to 1 so
+		// magnitudes of projected components should locate the
+		// vertex points in UV space, since this is a simple
+		// planar case.
+
+		for (BU_LIST_FOR(lu, loopuse, &fu->lu_hd)) {
+		    int edges=0;
+		    if (BU_LIST_FIRST_MAGIC(&lu->down_hd) != NMG_EDGEUSE_MAGIC) continue; // loop is a single vertex
+		    // For each loop, add the edges and vertices
+		    ON_BrepLoop& loop = (*b)->NewLoop(ON_BrepLoop::outer, face);
+		    for (BU_LIST_FOR(eu, edgeuse, &lu->down_hd)) {
+			// Add vertices if not already added
+			++edges;
+			ON_BrepVertex from, to, tmp;
+			ON_2dPoint from_uv, to_uv;
+			struct vertex_g *vg;
+			vg = eu->vu_p->v_p->vg_p;
+			NMG_CK_VERTEX_G(vg);
+			if (brepi[eu->vu_p->v_p->index] == -INT_MAX) {
+			    from = (*b)->NewVertex(vg->coord, SMALL_FASTF);
+			    brepi[eu->vu_p->v_p->index] = from.m_vertex_index;
+			}
+			vg = eu->eumate_p->vu_p->v_p->vg_p;
+			NMG_CK_VERTEX_G(vg);
+			if (brepi[eu->eumate_p->vu_p->v_p->index] == -INT_MAX) {
+			    to = (*b)->NewVertex(vg->coord, SMALL_FASTF);
+			    brepi[eu->eumate_p->vu_p->v_p->index] = to.m_vertex_index;
+			}
+			// Add edge if not already added
+			if(brepi[eu->e_p->index] == -INT_MAX) {
+			    /* always add edges with the small vertex index as from */
+			    if (from.m_vertex_index > to.m_vertex_index) {
+				tmp = from;
+				from = to;
+				to = tmp;
+			    }
+			    // Create and add 3D curve
+			    (*b)->m_C3.Append(edgeCurve(from, to));
+			    // Create and add 3D edge
+			    ON_BrepEdge& e = (*b)->NewEdge(from, to, eu->e_p->index);
+			    brepi[eu->e_p->index] = e.m_edge_index;
+
+			    // Figure out details of converting vertex coords
+			    // into uv parameters here
+			    // double u0, u1, v0, v1;
+			    // surf->GetDomain(0, &u0, &u1);
+			    // surf->GetDomain(1, &v0, &v1);
+			    // *****3dpoint -> 2dpoint magic*****
+			    // ON_Curve* c2d =  new ON_LineCurve(from_uv, to_uv);
+			    // c2d->SetDomain(0.0, 1.0);
+			    // int c2i = (*b)->m_C2.Count();
+			    // (*b)->m_C2.Append(c2d);
+			    // *****figure out edge orientation needed*****
+			    // ON_BrepTrim& trim = brep.NewTrim((*b)->m_E[e.m_edge_index], orientation, loop, c2i);
+			    // trim.m_iso = iso;
+			    // trim.m_type = ON_BrepTrim::mated;
+			    // trim.m_tolerance[0] = 0.0;
+			    // trim.m_tolerance[1] = 0.0;
+			}
+		    }
+		} 
+	        	
 	    } 
 	}
     }
