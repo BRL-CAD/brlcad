@@ -37,6 +37,8 @@ wire_SOURCES = wire.c
 
 noinst_HEADERS = fence.h
 
+DEPENDS = src/libged src/libwdb
+
 include $(top_srcdir)/misc/Makefile.defs
 
 FAST_OBJECTS = \

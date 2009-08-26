@@ -669,7 +669,7 @@ EXTRA_DIST = \
 	rtwizard.bat \
 	rtwizard.tcl
 
-DEPS=src/liborle src/libdm src/libfb src/libpc
+DEPENDS = src/liborle src/libdm src/libfb src/libpc
 
 include $(top_srcdir)/misc/Makefile.defs
 

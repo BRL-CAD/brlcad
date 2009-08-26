@@ -37,6 +37,8 @@ EXTRA_DIST = \
 	script.l \
 	scriptsort.c
 
+DEPENDS = src/librt
+
 include $(top_srcdir)/misc/Makefile.defs
 
 FAST_OBJECTS = \

@@ -37,6 +37,8 @@ EXTRA_DIST = \
 	CMakeLists.txt \
 	dist_def.c
 
+DEPENDS = src/libfb src/librt
+
 include $(top_srcdir)/misc/Makefile.defs
 
 FAST_OBJECTS = \

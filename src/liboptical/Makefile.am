@@ -60,6 +60,6 @@ librtms_la_SOURCES = \
 EXTRA_DIST = \
 	liboptical.dsp
 
-DEPS=src/librt
+DEPENDS = src/librt
 
 include $(top_srcdir)/misc/Makefile.defs

@@ -356,7 +356,7 @@ sample_applications_DATA = \
 	g-xxx.c \
 	g-xxx_facets.c
 
-DEPS=src/libwdb src/libgcv
+DEPENDS = src/libged src/libwdb src/libgcv
 
 include $(top_srcdir)/misc/Makefile.defs
 

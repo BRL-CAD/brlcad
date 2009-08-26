@@ -74,7 +74,7 @@ EXTRA_DIST = \
 	pictx.1 \
 	pictx.c
 
-DEPS=src/librt
+DEPENDS = src/librt
 
 include $(top_srcdir)/misc/Makefile.defs
 

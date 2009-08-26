@@ -100,6 +100,6 @@ EXTRA_DIST = \
 	sgiselect.s
 
 
-DEPS=src/libpkg
+DEPENDS = src/libpkg
 
 include $(top_srcdir)/misc/Makefile.defs

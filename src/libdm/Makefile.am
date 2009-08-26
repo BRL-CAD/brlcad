@@ -83,6 +83,6 @@ libdm_la_LIBADD = \
 EXTRA_DIST = \
 	libdm.dsp
 
-DEPS=src/librt src/libfb src/libged
+DEPENDS = src/librt src/libfb src/libged
 
 include $(top_srcdir)/misc/Makefile.defs

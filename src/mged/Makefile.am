@@ -205,7 +205,7 @@ EXTRA_DIST = \
 	mged.dsp \
 	red.c
 
-DEPS=src/libtermio src/libwdb src/libdm src/other/incrTcl src/libtclcad
+DEPENDS = src/libtermio src/libwdb src/libdm src/other/incrTcl src/libtclcad
 
 include $(top_srcdir)/misc/Makefile.defs
 

@@ -211,7 +211,7 @@ EXTRA_DIST = \
 	$(man_MANS) \
 	rt.dsp
 
-DEPS=src/librt src/libfb src/liboptical
+DEPENDS = src/librt src/libfb src/liboptical
 
 include $(top_srcdir)/misc/Makefile.defs
 

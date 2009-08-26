@@ -14,4 +14,6 @@ libmultispectral_la_SOURCES = \
 	init.c \
 	sh_temp.c
 
+DEPENDS = src/librt src/liboptical
+
 include $(top_srcdir)/misc/Makefile.defs

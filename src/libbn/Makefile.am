@@ -48,6 +48,6 @@ EXTRA_DIST = \
 	CMakeLists.txt \
 	plot3.doc
 
-DEPS=src/libbu
+DEPENDS = src/libbu
 
 include $(top_srcdir)/misc/Makefile.defs

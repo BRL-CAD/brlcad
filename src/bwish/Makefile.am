@@ -61,7 +61,7 @@ EXTRA_DIST = \
 	cadAppInit.c \
 	winMain.c
 
-DEPS=src/libdm
+DEPENDS = src/libdm
 
 include $(top_srcdir)/misc/Makefile.defs
 
