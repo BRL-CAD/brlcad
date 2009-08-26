@@ -1171,7 +1171,7 @@ void Auto(struct human_data_t *dude)
 void RandAuto(struct human_data_t *dude)
 {
 	fastf_t X = 0;
-	X = ((rand()%10)+56);
+	X = ((rand()%12)+54);
 	dude->height = X;
 }
 
