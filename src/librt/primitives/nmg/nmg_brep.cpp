@@ -202,40 +202,38 @@ rt_nmg_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *t
 			// Add vertices if not already added
 			++edges;
 			vect_t ev1, ev2;
-			ON_BrepVertex from, to, tmp;
 			struct vertex_g *vg;
 			vg = eu->vu_p->v_p->vg_p;
 			NMG_CK_VERTEX_G(vg);
 			VMOVE(ev1, vg->coord);
 			if (brepi[eu->vu_p->v_p->index] == -INT_MAX) {
-			    from = (*b)->NewVertex(vg->coord, SMALL_FASTF);
+			    ON_BrepVertex& from = (*b)->NewVertex(vg->coord, SMALL_FASTF);
 			    brepi[eu->vu_p->v_p->index] = from.m_vertex_index;
-			} else {
-			    from = (*b)->m_V[brepi[eu->vu_p->v_p->index]];
 			}
 			vg = eu->eumate_p->vu_p->v_p->vg_p;
 			NMG_CK_VERTEX_G(vg);
 			VMOVE(ev2, vg->coord);
 			if (brepi[eu->eumate_p->vu_p->v_p->index] == -INT_MAX) {
-			    to = (*b)->NewVertex(vg->coord, SMALL_FASTF);
+			    ON_BrepVertex& to = (*b)->NewVertex(vg->coord, SMALL_FASTF);
 			    brepi[eu->eumate_p->vu_p->v_p->index] = to.m_vertex_index;
-			} else {
-			    to = (*b)->m_V[brepi[eu->eumate_p->vu_p->v_p->index]];
 			}
 			// Add edge if not already added
+		        int vert1 = brepi[eu->vu_p->v_p->index];
+			int vert2 = brepi[eu->eumate_p->vu_p->v_p->index];
 			if(brepi[eu->e_p->index] == -INT_MAX) {
 			    /* always add edges with the small vertex index as from */
-			    if (from.m_vertex_index > to.m_vertex_index) {
-				tmp = from;
-				from = to;
-				to = tmp;
+			    if (eu->vu_p->v_p->index > eu->eumate_p->vu_p->v_p->index) {
+				int tmpvert = vert1;
+				vert1 = vert2;
+				vert2 = tmpvert;
 			    }
 			    // Create and add 3D curve
-			    ON_Curve* c3d = new ON_LineCurve(from.Point(), to.Point());
+			    ON_Curve* c3d = new ON_LineCurve((*b)->m_V[vert1].Point(), (*b)->m_V[vert2].Point());
 			    c3d->SetDomain(0.0, 1.0);
 			    (*b)->m_C3.Append(c3d);
 			    // Create and add 3D edge
-			    ON_BrepEdge& e = (*b)->NewEdge(from, to, (*b)->m_C3.Count());
+			    ON_BrepEdge& e = (*b)->NewEdge((*b)->m_V[vert1], (*b)->m_V[vert2] , (*b)->m_C3.Count() - 1);
+			    e.m_tolerance = 0.0;
 			    bu_log("edge valid: %d\n", e.IsValid());
 			    brepi[eu->e_p->index] = e.m_edge_index;
 			}
