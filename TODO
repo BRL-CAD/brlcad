@@ -54,6 +54,10 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 THESE ARE UNSCHEDULED BACKLOG TASKS
 -----------------------------------
 
+* add a default phong 'metal' shader.  annoying to keep making plastic
+  more reflective or mirror less reflective when it's such a common
+  material appearance to want.
+
 * implement a new tool/command that reports summary information about
   a geometry file including number of objects, types of objects,
   classes of geometry representation types used, and potentially more.
