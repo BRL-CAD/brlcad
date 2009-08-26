@@ -32,16 +32,6 @@
 #include "bu.h"
 
 /**
-* Simple line for edge geometry
-*/
-static ON_Curve* edgeCurve (const ON_BrepVertex& from, const ON_BrepVertex& to)
-{
-    ON_Curve *c3d = new ON_LineCurve(from.Point(), to.Point());
-    c3d->SetDomain(0.0, 1.0);
-    return c3d;
-}
-
-/**
 * 
 */
 static ON_Surface* sideSurface(const ON_3dPoint& SW, const ON_3dPoint& SE, const ON_3dPoint& NE, const ON_3dPoint& NW)
@@ -76,6 +66,7 @@ rt_nmg_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *t
     for (int i = 0; i < m->maxindex; i++) brepi[i] = -INT_MAX;
     
     *b = new ON_Brep();
+    bu_log("brep valid: %d\n", (*b)->IsValid());
     for (BU_LIST_FOR(r, nmgregion, &m->r_hd)) {
 	for (BU_LIST_FOR(s, shell, &r->s_hd)) {
 	    for (BU_LIST_FOR(fu, faceuse, &s->fu_hd)) {
@@ -178,9 +169,11 @@ rt_nmg_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *t
 		(*b)->m_S.Append(sideSurface(p1, p2, p3, p4));
 		ON_Surface *surf = (*(*b)->m_S.Last());
 		int surfindex = (*b)->m_S.Count();
+		bu_log("surface valid: %d\n", surf->IsValid());
 		
 		// Now that we have the surface, define the face
 		ON_BrepFace& face = (*b)->NewFace(surfindex);
+		bu_log("face valid: %d\n", face.IsValid());
 		
 		// With the surface and the face defined, make trimming loops and
 		// create faces.  To generate UV coordinates for each
@@ -208,19 +201,26 @@ rt_nmg_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *t
 		    for (BU_LIST_FOR(eu, edgeuse, &lu->down_hd)) {
 			// Add vertices if not already added
 			++edges;
+			vect_t ev1, ev2;
 			ON_BrepVertex from, to, tmp;
 			struct vertex_g *vg;
 			vg = eu->vu_p->v_p->vg_p;
 			NMG_CK_VERTEX_G(vg);
+			VMOVE(ev1, vg->coord);
 			if (brepi[eu->vu_p->v_p->index] == -INT_MAX) {
 			    from = (*b)->NewVertex(vg->coord, SMALL_FASTF);
 			    brepi[eu->vu_p->v_p->index] = from.m_vertex_index;
+			} else {
+			    from = (*b)->m_V[brepi[eu->vu_p->v_p->index]];
 			}
 			vg = eu->eumate_p->vu_p->v_p->vg_p;
 			NMG_CK_VERTEX_G(vg);
+			VMOVE(ev2, vg->coord);
 			if (brepi[eu->eumate_p->vu_p->v_p->index] == -INT_MAX) {
 			    to = (*b)->NewVertex(vg->coord, SMALL_FASTF);
 			    brepi[eu->eumate_p->vu_p->v_p->index] = to.m_vertex_index;
+			} else {
+			    to = (*b)->m_V[brepi[eu->eumate_p->vu_p->v_p->index]];
 			}
 			// Add edge if not already added
 			if(brepi[eu->e_p->index] == -INT_MAX) {
@@ -231,22 +231,20 @@ rt_nmg_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *t
 				to = tmp;
 			    }
 			    // Create and add 3D curve
-			    (*b)->m_C3.Append(edgeCurve(from, to));
+			    ON_Curve* c3d = new ON_LineCurve(from.Point(), to.Point());
+			    c3d->SetDomain(0.0, 1.0);
+			    (*b)->m_C3.Append(c3d);
 			    // Create and add 3D edge
-			    ON_BrepEdge& e = (*b)->NewEdge(from, to, eu->e_p->index);
+			    ON_BrepEdge& e = (*b)->NewEdge(from, to, (*b)->m_C3.Count());
+			    bu_log("edge valid: %d\n", e.IsValid());
 			    brepi[eu->e_p->index] = e.m_edge_index;
 			}
 			// Regardless of whether the edge existed as an object, it
 			// needs to be added to the trimming loop
-			vect_t ev1, ev2, u_component, v_component;
+			vect_t u_component, v_component;
 			int orientation = 1;
-			if (from.m_vertex_index > to.m_vertex_index) {
- 			    VMOVE(ev2,eu->vu_p->v_p->vg_p->coord);
- 			    VMOVE(ev1,eu->eumate_p->vu_p->v_p->vg_p->coord);
+			if (eu->vu_p->v_p->index > eu->eumate_p->vu_p->v_p->index) {
 			    orientation = -1;
-			} else {
-			    VMOVE(ev1,eu->vu_p->v_p->vg_p->coord);
- 			    VMOVE(ev2,eu->eumate_p->vu_p->v_p->vg_p->coord);
 			}
 			VSUB2(ev1, ev1, v1);
 			VSUB2(ev2, ev2, v1);
@@ -260,6 +258,7 @@ rt_nmg_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *t
 			VPROJECT(ev2, u_axis, u_component, v_component);
 			to_uv.x = u0 + MAGNITUDE(u_component)/u_axis_dist*(u1-u0);
 			to_uv.y = v0 + MAGNITUDE(v_component)/v_axis_dist*(v1-v0);
+			bu_log("uvline: [%f,%f], [%f, %f]; orientation: %d\n", from_uv.x, from_uv.y, to_uv.x, to_uv.y, orientation);
 			ON_Curve* c2d =  new ON_LineCurve(from_uv, to_uv);
 			c2d->SetDomain(0.0, 1.0);
 			int c2i = (*b)->m_C2.Count();
@@ -274,9 +273,11 @@ rt_nmg_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *t
 		    }
 		    bu_log("loop valid: %d\n", loop.IsValid());
 		}
+		bu_log("face valid: %d\n", face.IsValid());
 	    } 
 	}
     }
+    bu_log("brep valid: %d\n", (*b)->IsValid());
 }
 
 
