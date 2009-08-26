@@ -2503,7 +2503,7 @@ rt_bot_adjust(struct bu_vls *log, struct rt_db_internal *intern, int argc, char 
 	if ( bot->face_mode )
 	{
 	    bu_free( (char *)bot->face_mode, "BOT facemode" );
-	    bot->face_mode = (bitv_t)NULL;
+	    bot->face_mode = (struct bu_bitv *)NULL;
 	}
     }
 
