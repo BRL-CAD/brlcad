@@ -871,6 +871,8 @@ void makeArmy(struct rt_wdb (*file), struct human_data_t dude, int number, fastf
 		for(y=0; y<number; y++){
 			sprintf(testname, "%d", num);
 			bu_strlcpy(suffix, testname, MAXLENGTH);
+			RandAuto(&dude);
+			Auto(&dude);
 			makeBody(file, suffix, &dude, locations, showBoxes); 
 			VSET(locations, (locations[X]- (dude.torso.shoulderWidth + dude.arms.upperArmWidth)*4), locations[Y], 0);
 			num++;
@@ -1165,6 +1167,14 @@ void Auto(struct human_data_t *dude)
 	dude->arms.lowerArmLength = (dude->height / 4.5) * IN2MM;
 	dude->head.neckWidth = dude->head.headSize / 4;
 }
+
+void RandAuto(struct human_data_t *dude)
+{
+	fastf_t X = 0;
+	X = ((rand()%10)+56);
+	dude->height = X;
+}
+
 
 /**
  * Manually Set all data for all parts, in inches
@@ -1961,6 +1971,8 @@ void verbIn(struct human_data_t *dude)
 				/*Then check remaining strings against existing variables*/
 				sscanf(buffer, "%s %lf", s, &holder);
 				/*bu_log("%s, %lf\n", s, holder);*/
+				if(holder <= 0)
+					bu_log("Bad inputs, zero and non-negative values for inputs!\n");
 				/*Big statement of matching names with variables*/
 				if(strcmp(s,"headSize")==0)
 					dude->head.headSize = holder;
@@ -2025,6 +2037,7 @@ int
 ged_human(struct ged *gedp, int ac, const char *av[])
 {
     bu_log("Entering Human Builder\n");
+    srand(time(NULL));
    
     struct wmember human;
     struct wmember boxes;
