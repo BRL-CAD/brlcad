@@ -81,8 +81,6 @@ rt_nmg_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *t
 	    for (BU_LIST_FOR(fu, faceuse, &s->fu_hd)) {
 		NMG_CK_FACEUSE(fu);
 		if(fu->orientation != OT_SAME) continue;
-		/*
-
 		for (BU_LIST_FOR(lu, loopuse, &fu->lu_hd)) {
 		    int edges=0;
 		    // For each loop, add the edges and vertices
@@ -95,31 +93,31 @@ rt_nmg_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *t
 			vg = eu->vu_p->v_p->vg_p;
 			NMG_CK_VERTEX_G(vg);
 			if (brepi[eu->vu_p->v_p->index] == -INT_MAX) {
-			    from = b->NewVertex(vg->coord, SMALL_FASTF);
+			    from = (*b)->NewVertex(vg->coord, SMALL_FASTF);
 			    brepi[eu->vu_p->v_p->index] = from.m_vertex_index;
 			}
 			vg = eu->eumate_p->vu_p->v_p->vg_p;
 			NMG_CK_VERTEX_G(vg);
 			if (brepi[eu->eumate_p->vu_p->v_p->index] == -INT_MAX) {
-			    to = b->NewVertex(vg->coord, SMALL_FASTF);
+			    to = (*b)->NewVertex(vg->coord, SMALL_FASTF);
 			    brepi[eu->eumate_p->vu_p->v_p->index] = to.m_vertex_index;
 			}
 			// Add edge if not already added
-			if(brepi[eu->e_p->index] == -INT_MAX) {*/
+			if(brepi[eu->e_p->index] == -INT_MAX) {
 			    /* always add edges with the small vertex index as from */
-/*			    if (from.m_vertex_index > to.m_vertex_index) {
+			    if (from.m_vertex_index > to.m_vertex_index) {
 				tmp = from;
 				from = to;
 				to = tmp;
 			    }
 			    // Create and add 3D curve
-			    b->m_C3.Append(edgeCurve(from, to));
+			    (*b)->m_C3.Append(edgeCurve(from, to));
 			    // Create and add 3D edge
+			    ON_BrepEdge& e = (*b)->NewEdge(from, to, eu->e_p->index);
 			    brepi[eu->e_p->index] = e.m_edge_index;
-			    ON_BrepEdge& e = b->NewEdge(from, to, eu->e_p->index);
 			}
 		    }
-		    */
+		} 
 		// Need to create ON_NurbsSurface based on plane of face
 		// in order to have UV space in which to define trimming
 		// loops.  Bounding points are NOT on the face plane, so 
@@ -189,27 +187,35 @@ rt_nmg_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *t
 		}
 		bu_log("max_dist: %2.f\n", max_dist);
 		bu_log("max_pt: [%2.f,%2.f,%2.f]\n", max_pt[0], max_pt[1], max_pt[2]);
-		    
-/* 
- 		vect_t v1, v2, v3, v4;
- 		point_t p1, p2, p3, p4;
- 		VMOVE(p2, fu->f_p->min_pt);
- 		VMOVE(p4, fu->f_p->max_pt);
- 		VMOVE(v1, p2);
-		VADD2(v1, v1, p4);
-		VMOVE(v2, v1);
-		VSCALE(v2, v2, 0.5);
-		VCROSS(v3, v2, fg->N);
-		VSET(v4, -v3[0], -v3[1], -v3[2]);
-		VUNITIZE(v3);
-		VUNITIZE(v4);
-		VSCALE(v3, v3, MAGNITUDE(v1)*0.5);
-		VSCALE(v4, v4, MAGNITUDE(v1)*0.5);
-		VSET(p1, v3[0], v3[1], v3[2]);
-		VSET(p4, v4[0], v4[1], v4[2]);
+		vect_t vtmp, v1, v2, v3, v4, vnormal;
+		VSET(vnormal, fg->N[0], fg->N[1], fg->N[2]);
+		VSUB2(v1, max_pt, center);
+		VCROSS(vtmp, v1, vnormal);
+		VADD2(v1, v1, vtmp);
+		VCROSS(v2, v1, vnormal);
+	        VREVERSE(v3, v1);
+		VCROSS(v4, v3, vnormal);
+		VADD2(v1, v1, center);
+		VADD2(v2, v2, center);
+		VADD2(v3, v3, center);
+		VADD2(v4, v4, center);
+		
+				
+		bu_log("v1: [%2.f,%2.f,%2.f]\n", v1[0], v1[1], v1[2]);
+		bu_log("v2: [%2.f,%2.f,%2.f]\n", v2[0], v2[1], v2[2]);
+		bu_log("v3: [%2.f,%2.f,%2.f]\n", v3[0], v3[1], v3[2]);
+		bu_log("v4: [%2.f,%2.f,%2.f]\n", v4[0], v4[1], v4[2]);
+		
+		ON_3dPoint p1 = ON_3dPoint(v1);
+		ON_3dPoint p2 = ON_3dPoint(v2);
+		ON_3dPoint p3 = ON_3dPoint(v3);
+		ON_3dPoint p4 = ON_3dPoint(v4);
 
-*/
-
+		(*b)->m_S.Append(sideSurface(p1, p2, p3, p4));
+		ON_Surface *surf = (*(*b)->m_S.Last());
+		
+		// With the surface defined, make trimming loops and
+		// create faces
 	    } 
 	}
     }
