@@ -1087,8 +1087,8 @@ void setStance(fastf_t stance, struct human_data_t *dude)
 		VSET(test1, 0, 0, 0);
 		VSET(test2, 0, 15, 0);
 		VSET(test3, 0, 30, 0);
-		VSET(test4, 0, 60, 0);
-		VSET(test5, 0, 90, 0);
+		VSET(test4, 0, 45, 0);
+		VSET(test5, 0, 60, 0);
                 VMOVE(dude->arms.lArmDirection, test1);
                 VMOVE(dude->arms.lElbowDirection, test1);
                 VMOVE(dude->arms.rArmDirection, test2);
@@ -1195,7 +1195,7 @@ void Manual(struct human_data_t *dude)
 	x=x*IN2MM;	
 	dude->torso.shoulderWidth=x;
 
-        bu_log("upperTorsoDepth\n");
+        bu_log("Shoulder Depth\n");
         scanf("%lf", &x);
         x=x*IN2MM;
         dude->torso.shoulderDepth=x;
@@ -1410,7 +1410,7 @@ void show_help(const char *name, const char *optstr)
 	   "\t-t\t\tSave bounding box information to file Stats.txt\n"
 	   "\t-T\t\tRead bounding box information from file Stats.txt\n"
 	   "\t-v\t\tGenerate verbose output of all data used to build human model, to Verbose.txt\n"
-	   "\t-V\t\tRead verbose input of all data used to build human model, using Verbose.txt\n"
+	   "\t-V\t\tRead verbose input of all data and build a human model, using Verbose.txt\n"
 	   "\t 1 - 9, 0, Q, and special characters are used for wizard purposes, ignore them.\n"
 	);
 
@@ -1562,6 +1562,7 @@ int read_args(int argc, char **argv, char *topLevel, struct human_data_t *dude, 
 	    case 'v':
 		dude->verbwrite=1;
 		break;
+
 	/*Input a text file with all measurements for a human model */
 	    case 'V':
 		dude->verbread=1;
@@ -1735,9 +1736,9 @@ int read_args(int argc, char **argv, char *topLevel, struct human_data_t *dude, 
 }
 
 /**
- * the text function takes the dimentions of each region on the body, and finds the measurements for each bounding box to be ouput
+ * The text function takes the dimentions of each region on the body, and finds the measurements for each bounding box to be ouput
  * to a text file. All dimentions are in mm, because it seems everyone just /loves/ millimeters for analytical purposes.
- * Hard Coded to dump out everything.
+ * Hard Coded to dump out everything related to boundingboxes.
  */
 void text(struct human_data_t *dude)
 {
@@ -1866,6 +1867,7 @@ void verbose(struct human_data_t *dude)
 	bu_log("Verbose Text Dump\n");
 	FILE *dump;
 	dump = fopen("Verbose.txt", "w+");
+	fprintf(dump, "#All Sizes are in mm\n");
 
 	fprintf(dump, "headSize\t%lf\n", dude->head.headSize);
 	fprintf(dump, "neckLength\t%lf\n", dude->head.neckLength);
@@ -1879,7 +1881,6 @@ void verbose(struct human_data_t *dude)
 	fprintf(dump, "abDepth\t%lf\n", dude->torso.abDepth);
 	fprintf(dump, "pelvisWidth\t%lf\n", dude->torso.pelvisWidth);
 	fprintf(dump, "pelvisDepth\t%lf\n", dude->torso.pelvisDepth);
-	fprintf(dump, "torsoLength\t%lf\n", dude->torso.torsoLength);
 
 	fprintf(dump, "upperArmWidth\t%lf\n", dude->arms.upperArmWidth);
 	fprintf(dump, "upperArmLength\t%lf\n", dude->arms.upperArmLength);
@@ -1888,7 +1889,6 @@ void verbose(struct human_data_t *dude)
 	fprintf(dump, "wristWidth\t%lf\n", dude->arms.wristWidth);
 	fprintf(dump, "handLength\t%lf\n", dude->arms.handLength);
 	fprintf(dump, "handWidth\t%lf\n", dude->arms.handWidth);
-	fprintf(dump, "armLength\t%lf\n", dude->arms.armLength);
 
 	fprintf(dump, "thighLength\t%lf\n", dude->legs.thighLength);
 	fprintf(dump, "thighWidth\t%lf\n", dude->legs.thighWidth);
@@ -1897,7 +1897,6 @@ void verbose(struct human_data_t *dude)
 	fprintf(dump, "footLength\t%lf\n", dude->legs.footLength);
 	fprintf(dump, "ankleWidth\t%lf\n", dude->legs.ankleWidth);
 	fprintf(dump, "toeWidth\t%lf\n", dude->legs.toeWidth);
-	fprintf(dump, "legLength\t%lf\n", dude->legs.legLength);
 
 	fclose(dump);
 	bu_log("Verbose Output saved\n");	
@@ -1961,7 +1960,7 @@ void verbIn(struct human_data_t *dude)
 			else {
 				/*Then check remaining strings against existing variables*/
 				sscanf(buffer, "%s %lf", s, &holder);
-				bu_log("%s, %lf\n", s, holder);
+				/*bu_log("%s, %lf\n", s, holder);*/
 				/*Big statement of matching names with variables*/
 				if(strcmp(s,"headSize")==0)
 					dude->head.headSize = holder;
@@ -2022,7 +2021,6 @@ void verbIn(struct human_data_t *dude)
 	}
 }
 
-
 int
 ged_human(struct ged *gedp, int ac, const char *av[])
 {
@@ -2064,11 +2062,12 @@ ged_human(struct ged *gedp, int ac, const char *av[])
 /******MAGIC******/
 /*Magically set pose, and apply pose to human geometry*/ 
     /*setMeasurements(&human_data, percentile);*/
-    /*humanName[MAXLENGTH]*/
+
     /* This applies the generic end-name to the high-level object */
     bu_log("%s\n", topLevel);
     memset(humanName, 0, MAXLENGTH);
     bu_strlcpy(humanName, topLevel, MAXLENGTH);
+
     setStance(stance, &human_data); 
     if(human_data.textread==1)
 	getText(&human_data);
