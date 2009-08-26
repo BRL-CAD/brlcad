@@ -279,13 +279,14 @@ Face_X_Event::Face_X_Event(
     ON_Curve *curve2
     )
 {
-    Face_X_Event *event = new Face_X_Event;
-    event->face1 = face1;
-    event->face2 = face2;
-    event->curve1 = curve1;
-    event->curve2 = curve2;
-    event->loop_flags1.SetCount(face1->LoopCount());
-    event->loop_flags2.SetCount(face2->LoopCount());
+    this->face1 = face1;
+    this->face2 = face2;
+    this->curve1 = curve1;
+    this->curve2 = curve2;
+    this->loop_flags1.SetCapacity(face1->LoopCount());
+    this->loop_flags1.SetCount(face1->LoopCount());
+    this->loop_flags2.SetCapacity(face2->LoopCount());
+    this->loop_flags2.SetCount(face2->LoopCount());
 }
 
 
@@ -304,7 +305,7 @@ ON_X_EVENT::ON_X_EVENT()
 /**
  * Face_X_Event::Render_Curves
  *
- * @Renders the Curve in the Curve_X_Profile, as the different curves
+ * @Renders the Curves in the Face_X_Event as the different curves
  * it is segmented in to This assumes the convention that to the left
  * of a curve is below.
  */
@@ -368,6 +369,63 @@ int Face_X_Event::Render_Curves()
 }
 
 /**
+ * CurveCurveIntersect
+ *
+ * @brief Intersect 2 curves appending ON_X_EVENTS to the array x for the intersections
+ *  returns the number of ON_X_EVENTS appended
+ *
+ *  This is not a great implementation of this function it's limited in that it will only find
+ *  point intersections, not overlaps. Overlaps, will come out as long strings of points, and
+ *  will probably take a long time to compute.
+ */
+int CurveCurveIntersect(
+	const ON_Curve *curve1,
+	const ON_Curve *curve2,
+	ON_SimpleArray<ON_X_EVENT>& x,
+	double tol
+	)
+{
+    int rv = 0;
+    ON_BoundingBox bbox1, bbox2;
+    curve1->GetTightBoundingBox(bbox1);
+    curve2->GetTightBoundingBox(bbox2);
+    if (bbox1.IsDisjoint(bbox2)) {
+	return 0;
+    } else {
+	ON_Interval domain1 = curve1->Domain(), domain2 = curve2->Domain();
+	if (bbox1.Diagonal().Length() + bbox2.Diagonal().Length() > tol) {
+	    ON_Curve *left1, *right1, *left2, *right2;
+	    curve1->Split(domain1.Mid(), left1, right1), curve2->Split(domain2.Mid(), left2, right2);
+	    rv += CurveCurveIntersect(left1, left2, x, tol);
+	    rv += CurveCurveIntersect(left1, right2, x, tol);
+	    rv += CurveCurveIntersect(right1, left2, x, tol);
+	    rv += CurveCurveIntersect(right2, right2, x, tol);
+	} else {
+	    /* the curves are contained within a bounding box that's smaller than the tolerance */
+	    ON_X_EVENT *newx = new ON_X_EVENT();
+	    newx->m_type = newx->ccx_point;
+	    newx->m_A[0] = curve1->PointAt(domain1.Mid());
+	    newx->m_B[0] = curve2->PointAt(domain2.Mid());
+	    newx->m_a[0] = domain1.Mid();
+	    newx->m_b[0] = domain2.Mid();
+
+	    /* Documentation for these routines being what it is for these intersections
+	     * it's not really clear what these should be
+	    newx.m_cnodeA[0] = ;
+	    newx.m_nodeA_t[0] = ;
+	    newx.m_cnodeB[0] = ;
+	    newx.m_nodeB_t[0] = ;
+	    newx.m_x_eventsn = ; this one we could do, but it doesn't seem worth the trouble.
+	    */
+	    x.Append(*newx);
+	    rv++;
+	}
+    }
+    return rv;
+}
+
+
+/**
  * SetCurveSurveIntersectionDir
  *
  * @brief Sets the Dir fields on an intersection event, this function is 
@@ -381,6 +439,7 @@ bool SetCurveCurveIntersectionDir(
     ON_Curve *curve2
     )
 {
+    bool rv = true;
     int i;
     for (i = 0; i < xcount; i++) {
 	ON_X_EVENT event = xevent[i];
@@ -406,22 +465,22 @@ bool SetCurveCurveIntersectionDir(
 	    event.m_dirA[1] = event.no_x_dir;
 	    event.m_dirB[0] = event.no_x_dir;
 	    event.m_dirB[1] = event.no_x_dir;
+	    rv = false;
 	}
     }
+    return rv;
 }
 
 
 /**
  * Face_X_Event::Get_ON_X_Events()
  *
- * @brief Returns all of the intersections between either of the new
- * curves and the trims of the faces
+ * @brief Gets all of the intersections between either of the new
+ * curves and the trims of the faces, stores them in the x field
+ * in the class
  */
 int Face_X_Event::Get_ON_X_Events(double tol)
 {
-    assert(curve1->SetDomain(Canonical_start, Canonical_end)); /* Make sure curves have the same domain */
-    assert(curve2->SetDomain(Canonical_start, Canonical_end)); /* and all the good numbers are in [0, 1] anyways */
-
     ON_SimpleArray<ON_X_EVENT> out;
     x.Empty();
     ON_BrepFace *faces[2] = {face1, face2};
@@ -441,7 +500,7 @@ int Face_X_Event::Get_ON_X_Events(double tol)
 		out.Empty();
 
 		/* It's worth noting that trims are always curve2 in intersections */
-		int new_xs = curves[i]->IntersectCurve(trim->TrimCurveOf(), out, tol, tol);
+		int new_xs = CurveCurveIntersect(curves[i], trim->TrimCurveOf(), out, tol);
 		if (new_xs) {
 		    loop_flags[i][j] = true; /* flag loop j for destruction */
 		}
@@ -835,7 +894,8 @@ int FaceFaceIntersect(
 		j--;
 	    }
 	}
-	x.Append(Face_X_Event(face1, face2, out1, out2));
+	Face_X_Event newevent = Face_X_Event(face1, face2, out1, out2);
+	x.Append(newevent);
     }
     return x.Count() - init_count;
 }
@@ -862,26 +922,33 @@ bool BrepBrepIntersect(
 
     /* the new curves we get from destroying the old trim_loops */
     ON_ClassArray<ON_SimpleArray<ON_Curve*> > trim_curves1, trim_curves2;
-
+    intersection_curves1.SetCapacity(brep1->m_F.Count());
     intersection_curves1.SetCount(brep1->m_F.Count());
+    trim_curves1.SetCapacity(brep1->m_F.Count());
     trim_curves1.SetCount(brep1->m_F.Count());
+    intersection_curves2.SetCapacity(brep2->m_F.Count());
     intersection_curves2.SetCount(brep2->m_F.Count());
+    trim_curves2.SetCapacity(brep2->m_F.Count());
     trim_curves2.SetCount(brep2->m_F.Count());
 
     /* flags for which trims need to be shattered */
     ON_ClassArray<ON_SimpleArray<bool> > loop_flags1, loop_flags2;
+    loop_flags1.SetCapacity(brep1->m_F.Count());
     loop_flags1.SetCount(brep1->m_F.Count());
+    loop_flags2.SetCapacity(brep2->m_F.Count());
     loop_flags2.SetCount(brep2->m_F.Count());
 
     /* initialize the loop_flag arrays */
     for (i = 0; i < brep1->m_F.Count(); i++) {
 	ON_BrepFace *face1 = &brep1->m_F[i];
+	loop_flags1[i].SetCapacity(face1->LoopCount());
 	loop_flags1[i].SetCount(face1->LoopCount());
 	loop_flags1[i].MemSet(false);
     }
 
     for (j = 0; j < brep2->m_F.Count(); j++) {
 	ON_BrepFace *face2 = &brep2->m_F[j];
+	loop_flags2[j].SetCapacity(face2->LoopCount());
 	loop_flags2[j].SetCount(face2->LoopCount());
 	loop_flags2[j].MemSet(false);
     }
@@ -901,6 +968,7 @@ bool BrepBrepIntersect(
 	    for (k = 0; k < x.Count(); k++) {
 
 		Face_X_Event event_ij = x[k];
+		event_ij.Get_ON_X_Events(tol);
 		int new_curves = event_ij.Render_Curves();
 
 		for (l = 0; l < new_curves; l++) {
@@ -1301,13 +1369,14 @@ printPoints(struct rt_brep_internal* bi)
 
 int main()
 {
-#if 0
-    ON_TextLog log1, log2;
-    ON_3dPoint points1[4] = {ON_3dPoint(1.0, 1.0, 1.0), ON_3dPoint(-1.0, 1.0, 1.0), ON_3dPoint(-1.0, -1.0, -1.0), ON_3dPoint(1.0, -1.0, -1.0)};
-    ON_3dPoint points2[4] = {ON_3dPoint(1.0, -1.0, 1.0), ON_3dPoint(-1.0, -1.0, 1.0), ON_3dPoint(-1.0, 1.0, -1.0), ON_3dPoint(1.0, 1.0, -1.0)};
-    ON_Brep *brep1 = MakeTwistedSquare1(log1);
-    ON_Brep *brep2 = MakeTwistedSquare2(log2);
-#endif
+
+    ON_Brep brep1 = ON_Brep(), brep2 = ON_Brep();
+    ON_Surface *surf1 = TwistedCubeSideSurface(ON_3dPoint(1, 1, 1), ON_3dPoint(-1, -1, 1), ON_3dPoint(-1, -1, -1), ON_3dPoint(1, 1, -1));
+    ON_Surface *surf2 = TwistedCubeSideSurface(ON_3dPoint(1, -1, 1), ON_3dPoint(-1, 1, 1), ON_3dPoint(-1, 1, -1), ON_3dPoint(1, -1, -1));
+    brep1.Create(surf1);
+    brep2.Create(surf2);
+    ON_Brep *out;
+    BrepBrepIntersect(&brep1, &brep2, &out, 1e-3, 1e-9);
     return 0;
 }
 

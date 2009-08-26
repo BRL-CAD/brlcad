@@ -40,20 +40,6 @@
 #define Canonical_end (1.0)
 
 /**
- * class Curve_X_Profile(ON_Curve)
- *
- * @Serves to record a curve along with the intersection events of the curve and its twin
- * a face it will eventually be added to.
- */
-class Curve_X_Profile : public ON_Curve {
- public:
-    ON_ClassArray<ON_X_EVENT> x;
-    int Compare_start(const Curve_X_Profile*, const Curve_X_Profile*);
-    int Compare_end(const Curve_X_Profile*, const Curve_X_Profile*);
-    int Render_Curves(ON_ClassArray<ON_Curve>&);
-};
-
-/**
  * class Face_X_Event
  *
  * @brief analogous to ON_X_EVENT but between ON_BrepFaces
