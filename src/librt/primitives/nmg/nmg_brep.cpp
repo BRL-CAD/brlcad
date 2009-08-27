@@ -172,8 +172,7 @@ rt_nmg_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *t
 		bu_log("surface valid: %d\n", surf->IsValid());
 		
 		// Now that we have the surface, define the face
-		ON_BrepFace& face = (*b)->NewFace(surfindex);
-		bu_log("face valid: %d\n", face.IsValid());
+		ON_BrepFace& face = (*b)->NewFace(surfindex - 1);
 		
 		// With the surface and the face defined, make trimming loops and
 		// create faces.  To generate UV coordinates for each
