@@ -871,7 +871,7 @@ void makeArmy(struct rt_wdb (*file), struct human_data_t dude, int number, fastf
 		for(y=0; y<number; y++){
 			sprintf(testname, "%d", num);
 			bu_strlcpy(suffix, testname, MAXLENGTH);
-			RandAuto(&dude);
+			RandAuto(&dude);	/*Generates random heights for random height, and thus random size, creation. */
 			Auto(&dude);
 			makeBody(file, suffix, &dude, locations, showBoxes); 
 			VSET(locations, (locations[X]- (dude.torso.shoulderWidth + dude.arms.upperArmWidth)*4), locations[Y], 0);
@@ -880,6 +880,8 @@ void makeArmy(struct rt_wdb (*file), struct human_data_t dude, int number, fastf
 		VSET(locations, 0, (locations[Y]- (dude.torso.shoulderWidth + dude.arms.upperArmWidth)*4), 0);
 	}
 }
+
+/* User inputs X, Y, Z coordinates for use in manual positioning */
 void grabCoordinates(fastf_t *positions)
 {
         printf("X: ");
@@ -893,6 +895,9 @@ void grabCoordinates(fastf_t *positions)
         fflush(stdin);
 }
 
+/**
+ * User manual poses the human model by inputting absolute angles for limb positions.
+ */
 void manualPosition(struct human_data_t *dude)
 {
 	vect_t positions;
@@ -1074,9 +1079,6 @@ void setStance(fastf_t stance, struct human_data_t *dude)
 		VMOVE(dude->legs.rFootDirection, forwardVect);
 		}
 		break;
-	case 6:
-		bu_log("Making the Thinker\n");
-		break;
 
 	/*Following cases are tests */
         case 10: {
@@ -1168,6 +1170,9 @@ void Auto(struct human_data_t *dude)
 	dude->head.neckWidth = dude->head.headSize / 4;
 }
 
+/**
+ * Random height generator
+ */
 void RandAuto(struct human_data_t *dude)
 {
 	fastf_t X = 0;
@@ -1428,6 +1433,9 @@ void show_help(const char *name, const char *optstr)
     return;
 }
 
+/**
+ * User inputs the XYZ coordinates of the center point of the human model.
+ */
 void getLocation(fastf_t *location)
 {
     fastf_t x, y, z;
@@ -1445,7 +1453,7 @@ void getLocation(fastf_t *location)
     fflush(stdin);
 }
 
-/* Process command line arguments */
+/* Process command line arguments, all 43 of them */
 int read_args(int argc, char **argv, char *topLevel, struct human_data_t *dude, fastf_t *percentile, fastf_t *location, fastf_t *stance, fastf_t *troops, fastf_t *showBoxes)
 {
     char c = 'A';
@@ -1476,7 +1484,7 @@ int read_args(int argc, char **argv, char *topLevel, struct human_data_t *dude, 
 		fflush(stdin);
                 break;	
 
-            case 'H':
+            case 'H':  
                 sscanf(bu_optarg, "%f", &height);
                 if(height < 1)
                 {
@@ -1517,6 +1525,7 @@ int read_args(int argc, char **argv, char *topLevel, struct human_data_t *dude, 
 	    case 'n':
 		memset(humanName, 0, MAXLENGTH);
 		bu_strlcpy(humanName, bu_optarg, MAXLENGTH);
+		bu_strlcpy(topLevel, humanName, MAXLENGTH);
 		fflush(stdin);
 		have_name = 1;
 		break;
@@ -1739,7 +1748,6 @@ int read_args(int argc, char **argv, char *topLevel, struct human_data_t *dude, 
 	    memset(topLevel, 0, MAXLENGTH);
 	    bu_strlcpy(humanName, DEFAULT_HUMANNAME, MAXLENGTH);
 	    bu_strlcpy(topLevel, DEFAULT_HUMANNAME, MAXLENGTH);
-        /*    show_help(*argv, options);*/
     }
     fflush(stdout);
     return(bu_optind);
