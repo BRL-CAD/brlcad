@@ -204,6 +204,7 @@ int feat_type_count[NUM_FEAT_TYPES];
 char *feat_type[NUM_FEAT_TYPES];
 
 #define MAX_LINE_LEN		256	/* maximum allowed line length for part number to name map file */
+#define PROE_NAME_ATTR "Proe_Name"
 
 void
 do_initialize()
@@ -2158,6 +2159,9 @@ output_part( ProMdl model )
 	    }
 	    fprintf( outfp, " }\n" );
 
+	    /* Set the PROE_NAME attributes for the solid/primitive */
+	    fprintf( outfp, "attr set {%s} %s %s\n", sol_name, PROE_NAME_ATTR, curr_part_name );
+
 	    /* build the tree for this region */
 	    bu_vls_init( &tree );
 	    build_tree( sol_name, &tree );
@@ -2171,6 +2175,7 @@ output_part( ProMdl model )
 		fprintf( logger, "Creating region for part %s\n", curr_part_name );
 	    }
 	    stat = prodb_get_surface_props( model, SEL_3D_PART, -1, 0, &props );
+
 	    if ( stat == PRODEV_SURF_PROPS_NOT_SET ) {
 		/* no surface properties */
 		fprintf( outfp,
@@ -2206,6 +2211,9 @@ output_part( ProMdl model )
 		fprintf( outfp, "put {%s} comb region yes id %d los 100 GIFTmater 1 tree %s\n",
 			 get_brlcad_name( curr_part_name ), reg_id, bu_vls_addr( &tree ) );
 	    }
+
+	    /* Set the PROE_NAME attributes for the region */
+	    fprintf( outfp, "attr set {%s} %s %s\n", get_brlcad_name( curr_part_name ), PROE_NAME_ATTR, curr_part_name );
 
 	    /* if the part has a material, add it as an attribute */
 	    got_density = 0;
@@ -2486,26 +2494,31 @@ output_assembly( ProMdl model )
     }
     fprintf( outfp, "\n" );
 
+    fprintf( outfp, "attr set {%s.c} %s %s\n",
+	     get_brlcad_name( curr_assem.name ),
+	     PROE_NAME_ATTR,
+	     curr_assem.name );
+
     /* calculate mass properties */
     if ( logger_type == LOGGER_TYPE_ALL ) {
-	fprintf( logger, "Getting mass properties for this assmebly\n" );
+	fprintf( logger, "Getting mass properties for this assembly\n" );
     }
 
     status = ProSolidMassPropertyGet( ProMdlToSolid( model ), NULL, &mass_prop );
     if ( status == PRO_TK_NO_ERROR ) {
 	if ( mass_prop.density > 0.0 ) {
 	    fprintf( outfp, "attr set {%s.c} density %g\n",
-		     get_brlcad_name( curr_asm_name ),
+		     get_brlcad_name( curr_assem.name ),
 		     mass_prop.density );
 	}
 	if ( mass_prop.mass > 0.0 ) {
 	    fprintf( outfp, "attr set {%s.c} mass %g\n",
-		     get_brlcad_name( curr_asm_name ),
+		     get_brlcad_name( curr_assem.name ),
 		     mass_prop.mass );
 	}
 	if ( mass_prop.volume > 0.0 ) {
 	    fprintf( outfp, "attr set {%s.c} volume %g\n",
-		     get_brlcad_name( curr_asm_name ),
+		     get_brlcad_name( curr_assem.name ),
 		     mass_prop.volume );
 	}
     }
