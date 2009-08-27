@@ -1188,7 +1188,6 @@ void RandAuto(struct human_data_t *dude)
 	dude->height = X;
 }
 
-
 /**
  * Manually Set all data for all parts, in inches
  */
@@ -1212,42 +1211,34 @@ void Manual(struct human_data_t *dude)
 	scanf("%lf", &x);
 	x=x*IN2MM;
 	dude->torso.topTorsoLength=x;
-
 	bu_log("Shoulder Width\n");
 	scanf("%lf", &x);
 	x=x*IN2MM;	
 	dude->torso.shoulderWidth=x;
-
         bu_log("Shoulder Depth\n");
         scanf("%lf", &x);
         x=x*IN2MM;
         dude->torso.shoulderDepth=x;
-
 	bu_log("Low Torso Length\n");
 	scanf("%lf", &x);
 	x=x*IN2MM;
 	dude->torso.lowTorsoLength=x;
-
 	bu_log("Ab Width\n");
 	scanf("%lf", &x);
 	x=x*IN2MM;
 	dude->torso.abWidth=x;
-
 	bu_log("Ab Depth\n");
 	scanf("%lf", &x);
 	x=x*IN2MM;
 	dude->torso.abDepth=x;
-
 	bu_log("Pelvis Width\n");
 	scanf("%lf", &x);
 	x=x*IN2MM;
 	dude->torso.pelvisWidth=x;
-
         bu_log("Pelvis Depth\n");
         scanf("%lf", &x);
         x=x*IN2MM;
         dude->torso.pelvisDepth=x;
-
 	bu_log("Upper Arm Length\n");
 	scanf("%lf", &x);
 	x=x*IN2MM;
@@ -1730,7 +1721,7 @@ int read_args(int argc, char **argv, char *topLevel, struct human_data_t *dude, 
 
 	    default:
 		show_help(*argv, options);
-		bu_log("%s: illegal option -- %c\n", bu_getprogname(), c);
+		bu_log("%s: illegal option, yes, there is a couple. -- %c\n", bu_getprogname(), c);
 	    	bu_exit(EXIT_SUCCESS, NULL);
 		fflush(stdin);
 		break;
