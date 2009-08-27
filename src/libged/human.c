@@ -114,7 +114,7 @@ struct armInfo
         vect_t rWristDirection;
 };
 
-/** All information needed to build the legs lie here */
+/** All information needed to build the legs lies here */
 struct legInfo
 {
         fastf_t legLength;
@@ -137,6 +137,7 @@ struct legInfo
 enum genders { male, female };
 enum ethnicities { generic, white, black, hispanic, asian, other }; /* divisions taken from army demographic sheet */
 
+/*Top level struct that holds all body information */
 struct human_data_t
 {
         fastf_t height;         	/* Height of person standing, inches */
@@ -225,7 +226,10 @@ fastf_t findVector(fastf_t x, fastf_t y)
         return sqrt(v + w);
 }
 
-/** Create a bounding box around the individual part, this one has only 1 value for depth and width */
+/** Create a bounding box around the individual part, this one has only 1 value for depth and width.
+ *  Currently is a big mess, as the boxes dont want to rotate in the correct mannor, and insit upon
+ *  rotating around an incorrect vertex.
+ */
 void boundingBox(struct rt_wdb *file, char *name, fastf_t *startPoint, fastf_t *lengthVector, fastf_t partWidth, fastf_t *rotMatrix)
 {
 	/* Make the arb8/rpp that will bound the part as it were straight up and down, 
@@ -265,6 +269,8 @@ void boundingBox(struct rt_wdb *file, char *name, fastf_t *startPoint, fastf_t *
 
 /* Print rotation matrix */
 	for(w=1; w<=16; w++){
+
+/*These z,y,x, rot matrices were for debugging purposes but didn't help. */
 	/*Z rotation matrix */
 /*		if(w==1 || w==2 || w== 5 || w== 6 || w==11)
 *			rotMatrix[(w-1)] = rotMatrix[(w-1)] * -1;
@@ -334,7 +340,9 @@ void boundingRectangle(struct rt_wdb *file, char *name, fastf_t *startPoint, fas
 }
 
 /******************************************/
+/*					  */
 /***** Body Parts, from the head down *****/
+/*					  */
 /******************************************/
 
 fastf_t makeHead(struct rt_wdb (*file), char *name, struct human_data_t *dude, fastf_t *direction, fastf_t showBoxes)
@@ -1427,6 +1435,7 @@ void show_help(const char *name, const char *optstr)
 	   "\t-v\t\tGenerate verbose output of all data used to build human model, to Verbose.txt\n"
 	   "\t-V\t\tRead verbose input of all data and build a human model, using Verbose.txt\n"
 	   "\t 1 - 9, 0, Q, and special characters are used for wizard purposes, ignore them.\n"
+	   "\t Last word on command line is also top level object. No argument needed!\n"
 	);
 
     bu_vls_free(&str);
@@ -1511,8 +1520,7 @@ int read_args(int argc, char **argv, char *topLevel, struct human_data_t *dude, 
 
             case 'L':
 	    case 'l':
-		bu_log("Location\n");		Auto(dude);
-
+		bu_log("Location\n");
                 getLocation(location);
 		fflush(stdin);
                 break;
@@ -1878,7 +1886,7 @@ void text(struct human_data_t *dude)
 
 /**
  * Spit out every measurement of the model in a textfile called Verbose.txt
- * Includes all measurments, sans angles.
+ * Includes all measurments: sans angles, joint information
  */
 void verbose(struct human_data_t *dude)
 {
@@ -2037,10 +2045,18 @@ void verbIn(struct human_data_t *dude)
 			}
 		}
 		bu_log("File read\n");
+		dude->legs.legLength = dude->legs.thighLength + dude->legs.calfLength;
+		dude->torso.torsoLength = dude->torso.topTorsoLength + dude->torso.lowTorsoLength;
+		dude->height = (dude->legs.legLength + dude->torso.torsoLength + dude->head.headSize) / IN2MM;
+		bu_log("In Height = %lf\n", dude->height);
 		fclose(input);
 	}
 }
 
+/**
+ * ged_human is the function which is called from an outside function in the /shapes directory. It's essentially a main function witout
+ * main.
+ */
 int
 ged_human(struct ged *gedp, int ac, const char *av[])
 {
