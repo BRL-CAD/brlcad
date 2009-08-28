@@ -83,6 +83,7 @@ set(LIBRT_SOURCES
     primitives/eto/eto_brep.cpp
     primitives/extrude/extrude.c
     primitives/grip/grip.c
+    primitives/grip/grip_mirror.c
     primitives/half/half.c
     primitives/half/half_mirror.c
     primitives/hf/hf.c

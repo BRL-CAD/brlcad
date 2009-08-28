@@ -47,6 +47,7 @@ RT_DECLARE_MIRROR(tgc);
 RT_DECLARE_MIRROR(ell);
 RT_DECLARE_MIRROR(arb);
 RT_DECLARE_MIRROR(half);
+RT_DECLARE_MIRROR(grip);
 
 
 /**
@@ -137,11 +138,11 @@ rt_mirror(struct db_i *dbip,
 	    err = rt_half_mirror(ip, plane);
 	    return err ? NULL : ip;
 	}
-#if 0
 	case ID_GRIP: {
-	    err = rt_grip_mirror(ip, &plane);
+	    err = rt_grip_mirror(ip, plane);
 	    return err ? NULL : ip;
 	}
+#if 0
 	case ID_POLY: {
 	    err = rt_poly_mirror(ip, &plane);
 	    return err ? NULL : ip;
@@ -244,31 +245,6 @@ rt_mirror(struct db_i *dbip,
     mirmat[3 + Z*4] += 2.0 * mirror_pt[Z] * mirror_dir[Z];
 
     switch (id) {
-	case ID_GRIP: {
-	    struct rt_grip_internal *grp;
-	    point_t pt;
-	    vect_t h;
-	    vect_t n;
-	    fastf_t ang;
-	    mat_t mat;
-
-	    grp = (struct rt_grip_internal *)ip->idb_ptr;
-	    RT_GRIP_CK_MAGIC(grp);
-
-	    VMOVE(pt, grp->center);
-	    MAT4X3PNT(grp->center, mirmat, pt);
-
-	    VMOVE(h, grp->normal);
-	    VUNITIZE(h);
-
-	    VCROSS(n, mirror_dir, grp->normal);
-	    VUNITIZE(n);
-	    ang = M_PI_2 - acos(VDOT(h, mirror_dir));
-	    bn_mat_arb_rot(mat, origin, n, ang*2);
-	    MAT4X3VEC(grp->normal, mat, h);
-
-	    break;
-	}
 	case ID_POLY: {
 	    struct rt_pg_internal *pg;
 	    fastf_t *verts;
