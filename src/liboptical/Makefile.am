@@ -41,7 +41,7 @@ liboptical_la_SOURCES = \
 	vers.c \
 	wray.c
 
-liboptical_la_LDFLAGS = -version-info 19:1 -no-undefined
+liboptical_la_LDFLAGS = -version-info 19:1 -no-undefined -Wc,${FEXCEPTIONS}
 liboptical_la_LIBADD = \
 	${OPTICAL_LIBS}
 
