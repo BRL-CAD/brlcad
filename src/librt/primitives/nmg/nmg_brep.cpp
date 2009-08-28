@@ -240,6 +240,8 @@ rt_nmg_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *t
 			if (vg1pt != evert1->Point() ) {
 			    orientation = -1;
 			}
+			// OK, at the moment the 2d curve generation routine is not generating curves with vertices corresponding to the
+			// edges in question.  Need to pick part the reasons for this and where the logic needs to change.
 			VSUB2(ev1, ev1, v1);
 			VSUB2(ev2, ev2, v1);
 			ON_2dPoint from_uv, to_uv;
@@ -252,7 +254,11 @@ rt_nmg_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *t
 			VPROJECT(ev2, u_axis, u_component, v_component);
 			to_uv.x = u0 + MAGNITUDE(u_component)/u_axis_dist*(u1-u0);
 			to_uv.y = v0 + MAGNITUDE(v_component)/v_axis_dist*(v1-v0);
-			bu_log("uvline: [%f,%f], [%f, %f]; orientation: %d\n", from_uv.x, from_uv.y, to_uv.x, to_uv.y, orientation);
+			ON_3dPoint S1, S2;
+			ON_3dVector Su, Sv;
+			surf->Ev1Der(from_uv.x,from_uv.y,S1,Su,Sv);
+			surf->Ev1Der(to_uv.x,to_uv.y,S2,Su,Sv);
+			bu_log("uvline: [%f,%f] (%2.f,%2.f,%2.f), [%f, %f] (%2.f,%2.f,%2.f); orientation: %d\n\n", from_uv.x, from_uv.y, S1[0],S1[1],S1[2], to_uv.x, to_uv.y, S2[0],S2[1],S2[2],orientation);
 			ON_Curve* c2d =  new ON_LineCurve(from_uv, to_uv);
 			c2d->SetDomain(0.0, 1.0);
 			int c2i = (*b)->m_C2.Count();
