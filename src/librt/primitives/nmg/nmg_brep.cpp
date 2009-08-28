@@ -70,6 +70,7 @@ rt_nmg_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *t
     for (BU_LIST_FOR(r, nmgregion, &m->r_hd)) {
 	for (BU_LIST_FOR(s, shell, &r->s_hd)) {
 	    for (BU_LIST_FOR(fu, faceuse, &s->fu_hd)) {
+		bu_log("\n\nGenerating Face...\n\n");
 		NMG_CK_FACEUSE(fu);
 		if(fu->orientation != OT_SAME) continue;
 		
@@ -125,9 +126,11 @@ rt_nmg_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *t
 	    	    tmppt[1] += (*pt)->vg_p->coord[1];
 	    	    tmppt[2] += (*pt)->vg_p->coord[2];
 		    ptcnt++;
+		    ON_BrepVertex& vert = (*b)->NewVertex((*pt)->vg_p->coord, SMALL_FASTF);
+		    brepi[(*pt)->vg_p->index] = vert.m_vertex_index;
+		    bu_log("brepi[%d] holds vertex %d, which is point [%2.f,%2.f,%2.f]\n", (*pt)->vg_p->index, vert.m_vertex_index, (*pt)->vg_p->coord[0], (*pt)->vg_p->coord[1], (*pt)->vg_p->coord[2]);
 	    	}
 	    	VSET(center, tmppt[0]/ptcnt, tmppt[1]/ptcnt, tmppt[2]/ptcnt);
-		bu_log("center: [%2.f,%2.f,%2.f]\n", center[0], center[1], center[2]);
 		fastf_t max_dist = 0.0;
 		fastf_t curr_dist;
 		for (BU_PTBL_FOR(pt, (struct vertex **), &vert_table)) {
@@ -140,8 +143,6 @@ rt_nmg_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *t
 			VMOVE(max_pt, tmppt);
 		    }
 		}
-		bu_log("max_dist: %2.f\n", max_dist);
-		bu_log("max_pt: [%2.f,%2.f,%2.f]\n", max_pt[0], max_pt[1], max_pt[2]);
 		vect_t vtmp, v1, v2, v3, v4, vnormal;
 		VSET(vnormal, fg->N[0], fg->N[1], fg->N[2]);
 		VSUB2(v1, max_pt, center);
@@ -154,12 +155,11 @@ rt_nmg_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *t
 		VADD2(v2, v2, center);
 		VADD2(v3, v3, center);
 		VADD2(v4, v4, center);
-		
-				
-		bu_log("v1: [%2.f,%2.f,%2.f]\n", v1[0], v1[1], v1[2]);
-		bu_log("v2: [%2.f,%2.f,%2.f]\n", v2[0], v2[1], v2[2]);
-		bu_log("v3: [%2.f,%2.f,%2.f]\n", v3[0], v3[1], v3[2]);
-		bu_log("v4: [%2.f,%2.f,%2.f]\n", v4[0], v4[1], v4[2]);
+			
+		bu_log("surface v1: [%2.f,%2.f,%2.f]\n", v1[0], v1[1], v1[2]);
+		bu_log("surface v2: [%2.f,%2.f,%2.f]\n", v2[0], v2[1], v2[2]);
+		bu_log("surface v3: [%2.f,%2.f,%2.f]\n", v3[0], v3[1], v3[2]);
+		bu_log("surface v4: [%2.f,%2.f,%2.f]\n", v4[0], v4[1], v4[2]);
 		
 		ON_3dPoint p1 = ON_3dPoint(v1);
 		ON_3dPoint p2 = ON_3dPoint(v2);
@@ -169,7 +169,6 @@ rt_nmg_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *t
 		(*b)->m_S.Append(sideSurface(p1, p2, p3, p4));
 		ON_Surface *surf = (*(*b)->m_S.Last());
 		int surfindex = (*b)->m_S.Count();
-		bu_log("surface valid: %d\n", surf->IsValid());
 		
 		// Now that we have the surface, define the face
 		ON_BrepFace& face = (*b)->NewFace(surfindex - 1);
@@ -198,49 +197,47 @@ rt_nmg_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *t
 		    // For each loop, add the edges and vertices
 		    ON_BrepLoop& loop = (*b)->NewLoop(ON_BrepLoop::outer, face);
 		    for (BU_LIST_FOR(eu, edgeuse, &lu->down_hd)) {
-			// Add vertices if not already added
 			++edges;
 			vect_t ev1, ev2;
-			struct vertex_g *vg;
-			vg = eu->vu_p->v_p->vg_p;
-			NMG_CK_VERTEX_G(vg);
-			VMOVE(ev1, vg->coord);
-			if (brepi[eu->vu_p->v_p->index] == -INT_MAX) {
-			    ON_BrepVertex& from = (*b)->NewVertex(vg->coord, SMALL_FASTF);
-			    brepi[eu->vu_p->v_p->index] = from.m_vertex_index;
-			}
-			vg = eu->eumate_p->vu_p->v_p->vg_p;
-			NMG_CK_VERTEX_G(vg);
-			VMOVE(ev2, vg->coord);
-			if (brepi[eu->eumate_p->vu_p->v_p->index] == -INT_MAX) {
-			    ON_BrepVertex& to = (*b)->NewVertex(vg->coord, SMALL_FASTF);
-			    brepi[eu->eumate_p->vu_p->v_p->index] = to.m_vertex_index;
-			}
+			struct vertex_g *vg1, *vg2;
+			bu_log("edgeuse %d references vertex %d and %d\n", eu->e_p->index, eu->vu_p->v_p->vg_p->index, eu->eumate_p->vu_p->v_p->vg_p->index);
+			vg1 = eu->vu_p->v_p->vg_p;
+			NMG_CK_VERTEX_G(vg1);
+		        int vert1 = brepi[vg1->index];
+			VMOVE(ev1, vg1->coord);
+			vg2 = eu->eumate_p->vu_p->v_p->vg_p;
+			NMG_CK_VERTEX_G(vg2);
+			int vert2 = brepi[vg2->index];
+			VMOVE(ev2, vg2->coord);
 			// Add edge if not already added
-		        int vert1 = brepi[eu->vu_p->v_p->index];
-			int vert2 = brepi[eu->eumate_p->vu_p->v_p->index];
 			if(brepi[eu->e_p->index] == -INT_MAX) {
 			    /* always add edges with the small vertex index as from */
-			    if (eu->vu_p->v_p->index > eu->eumate_p->vu_p->v_p->index) {
+			    if (vg1->index > vg2->index) {
 				int tmpvert = vert1;
 				vert1 = vert2;
 				vert2 = tmpvert;
 			    }
 			    // Create and add 3D curve
+			    ON_3dPoint tmppt1 = (*b)->m_V[vert1].Point();
+			    ON_3dPoint tmppt2 = (*b)->m_V[vert2].Point();
+			    bu_log("c3d being created from vertex %d [%2.f,%2.f,%2.f] to %d [%2.f,%2.f,%2.f]\n", vert1, tmppt1[0], tmppt1[1], tmppt1[2], vert2, tmppt2[0], tmppt2[1], tmppt2[2]);
 			    ON_Curve* c3d = new ON_LineCurve((*b)->m_V[vert1].Point(), (*b)->m_V[vert2].Point());
 			    c3d->SetDomain(0.0, 1.0);
 			    (*b)->m_C3.Append(c3d);
 			    // Create and add 3D edge
 			    ON_BrepEdge& e = (*b)->NewEdge((*b)->m_V[vert1], (*b)->m_V[vert2] , (*b)->m_C3.Count() - 1);
 			    e.m_tolerance = 0.0;
-			    bu_log("edge valid: %d\n", e.IsValid());
+			    bu_log("edge %d being created from vertex %d [%2.f,%2.f,%2.f] to %d [%2.f,%2.f,%2.f]\n", e.m_edge_index, vert1, tmppt1[0], tmppt1[1], tmppt1[2], vert2, tmppt2[0], tmppt2[1], tmppt2[2]);
 			    brepi[eu->e_p->index] = e.m_edge_index;
 			}
 			// Regardless of whether the edge existed as an object, it
 			// needs to be added to the trimming loop
 			vect_t u_component, v_component;
+			ON_BrepEdge *edge = &((*b)->m_E[brepi[eu->e_p->index]]);
+			ON_BrepVertex *evert1 = &((*b)->m_V[edge->m_vi[0]]);
+			ON_3dPoint vg1pt(vg1->coord);
 			int orientation = 1;
-			if (eu->vu_p->v_p->index > eu->eumate_p->vu_p->v_p->index) {
+			if (vg1pt != evert1->Point() ) {
 			    orientation = -1;
 			}
 			VSUB2(ev1, ev1, v1);
@@ -266,11 +263,8 @@ rt_nmg_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *t
     			trim.m_type = ON_BrepTrim::mated;
     			trim.m_tolerance[0] = 0.0;
     			trim.m_tolerance[1] = 0.0;
-			bu_log("trim valid: %d\n", trim.IsValid());
 		    }
-		    bu_log("loop valid: %d\n", loop.IsValid());
 		}
-		bu_log("face valid: %d\n", face.IsValid());
 	    } 
 	}
     }
