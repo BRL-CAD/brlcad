@@ -1805,9 +1805,23 @@ cmd_search(ClientData	clientData,
 	   int		argc,
 	   char		**argv)
 {
-    CHECK_DBI_NULL;
+    int ret;
+    Tcl_DString ds;
+    fastf_t sf;
 
-    return wdb_search_cmd(wdbp, interp, argc, argv);
+    if (gedp == GED_NULL)
+	return TCL_OK;
+
+    ret = ged_search_cmd(gedp, argc, (const char **)argv);
+    Tcl_DStringInit(&ds);
+    Tcl_DStringAppend(&ds, bu_vls_addr(&gedp->ged_result_str), -1);
+    Tcl_DStringResult(interp, &ds);
+
+    if (ret)
+	return TCL_ERROR;
+
+    return TCL_OK;
+
 }
 
 /**

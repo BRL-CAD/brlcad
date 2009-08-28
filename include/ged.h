@@ -730,11 +730,6 @@ GED_EXPORT BU_EXTERN(int	wdb_remove_cmd,
 		     Tcl_Interp *interp,
 		     int argc,
 		     char *argv[]));
-GED_EXPORT BU_EXTERN(int	wdb_search_cmd,
-		    (struct rt_wdb *wdbp,
-		     Tcl_Interp *interp,
-		     int argc,
-		     char *argv[]));
 GED_EXPORT BU_EXTERN(int	wdb_stub_cmd,
 		    (struct rt_wdb *wdbp,
 		     Tcl_Interp *interp,
@@ -2611,6 +2606,15 @@ GED_EXPORT BU_EXTERN(int ged_saveview, (struct ged *gedp, int argc, const char *
  */
 GED_EXPORT BU_EXTERN(int ged_scale_args, (struct ged *gedp, int argc, const char *argv[], fastf_t *sf));
 GED_EXPORT BU_EXTERN(int ged_scale, (struct ged *gedp, int argc, const char *argv[]));
+
+/**
+ * Interface to search functionality (i.e. Unix find for geometry)
+ *
+ * Usage:
+ *     search [options] (see search man page)
+ */
+GED_EXPORT BU_EXTERN(int ged_search_cmd, (struct ged *gedp, int argc, const char *argv[]));
+
 
 /**
  * Get/set the output handler script
