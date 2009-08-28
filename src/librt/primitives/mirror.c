@@ -46,6 +46,7 @@ RT_DECLARE_MIRROR(tor);
 RT_DECLARE_MIRROR(tgc);
 RT_DECLARE_MIRROR(ell);
 RT_DECLARE_MIRROR(arb);
+RT_DECLARE_MIRROR(half);
 
 
 /**
@@ -132,11 +133,11 @@ rt_mirror(struct db_i *dbip,
 	    err = rt_arb_mirror(ip, plane);
 	    return err ? NULL : ip;
 	}
-#if 0
 	case ID_HALF: {
-	    err = rt_half_mirror(ip, &plane);
+	    err = rt_half_mirror(ip, plane);
 	    return err ? NULL : ip;
 	}
+#if 0
 	case ID_GRIP: {
 	    err = rt_grip_mirror(ip, &plane);
 	    return err ? NULL : ip;
@@ -243,46 +244,6 @@ rt_mirror(struct db_i *dbip,
     mirmat[3 + Z*4] += 2.0 * mirror_pt[Z] * mirror_dir[Z];
 
     switch (id) {
-	case ID_HALF: {
-	    struct rt_half_internal *haf;
-	    vect_t n1;
-	    vect_t n2;
-	    fastf_t ang;
-	    mat_t mat;
-
-	    haf = (struct rt_half_internal *)ip->idb_ptr;
-	    RT_HALF_CK_MAGIC(haf);
-
-	    VMOVE(n1, haf->eqn);
-	    VCROSS(n2, mirror_dir, n1);
-	    VUNITIZE(n2);
-	    ang = M_PI_2 - acos(VDOT(n1, mirror_dir));
-	    bn_mat_arb_rot(mat, origin, n2, ang*2);
-	    MAT4X3VEC(haf->eqn, mat, n1);
-
-	    if (!NEAR_ZERO(VDOT(n1, haf->eqn) - 1.0, tol_dist_sq)) {
-		point_t ptA;
-		point_t ptB;
-		point_t ptC;
-		vect_t h;
-		fastf_t mag;
-		fastf_t cosa;
-
-		VSCALE(ptA, n1, haf->eqn[H]);
-		VADD2(ptB, ptA, mirror_dir);
-		VSUB2(h, ptB, ptA);
-		mag = MAGNITUDE(h);
-		VUNITIZE(h);
-
-		cosa = VDOT(h, mirror_dir);
-
-		VSCALE(ptC, haf->eqn, -mag * cosa);
-		VADD2(ptC, ptC, ptA);
-		haf->eqn[H] = VDOT(haf->eqn, ptC);
-	    }
-
-	    break;
-	}
 	case ID_GRIP: {
 	    struct rt_grip_internal *grp;
 	    point_t pt;

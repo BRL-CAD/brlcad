@@ -123,6 +123,7 @@ librt_nil_la_SOURCES = \
 	primitives/extrude/extrude.c \
 	primitives/grip/grip.c \
 	primitives/half/half.c \
+	primitives/half/half_mirror.c \
 	primitives/hf/hf.c \
 	primitives/hyp/hyp.c \
 	primitives/metaball/metaball.c \

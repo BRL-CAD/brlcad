@@ -432,6 +432,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\src\librt\primitives\half\half_mirror.c"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\src\librt\primitives\hf\hf.c"
 				>
 			</File>
