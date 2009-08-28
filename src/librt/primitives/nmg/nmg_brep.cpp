@@ -126,9 +126,11 @@ rt_nmg_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *t
 	    	    tmppt[1] += (*pt)->vg_p->coord[1];
 	    	    tmppt[2] += (*pt)->vg_p->coord[2];
 		    ptcnt++;
-		    ON_BrepVertex& vert = (*b)->NewVertex((*pt)->vg_p->coord, SMALL_FASTF);
-		    brepi[(*pt)->vg_p->index] = vert.m_vertex_index;
-		    bu_log("brepi[%d] holds vertex %d, which is point [%2.f,%2.f,%2.f]\n", (*pt)->vg_p->index, vert.m_vertex_index, (*pt)->vg_p->coord[0], (*pt)->vg_p->coord[1], (*pt)->vg_p->coord[2]);
+		    if (brepi[(*pt)->vg_p->index] == -INT_MAX) {
+    			ON_BrepVertex& vert = (*b)->NewVertex((*pt)->vg_p->coord, SMALL_FASTF);
+    			brepi[(*pt)->vg_p->index] = vert.m_vertex_index;
+    			bu_log("brepi[%d] holds vertex %d, which is point [%2.f,%2.f,%2.f]\n", (*pt)->vg_p->index, vert.m_vertex_index, (*pt)->vg_p->coord[0], (*pt)->vg_p->coord[1], (*pt)->vg_p->coord[2]);
+		    }
 	    	}
 	    	VSET(center, tmppt[0]/ptcnt, tmppt[1]/ptcnt, tmppt[2]/ptcnt);
 		fastf_t max_dist = 0.0;
