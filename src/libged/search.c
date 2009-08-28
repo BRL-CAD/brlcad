@@ -2021,7 +2021,7 @@ find_execute(PLAN *plan,        /* search plan */
 int isoutput;
 
 int
-ged_search_cmd(struct ged *gedp, int argc, const char *argv_orig[])
+ged_search(struct ged *gedp, int argc, const char *argv_orig[])
 {
     PLAN *dbplan;
     register int i;

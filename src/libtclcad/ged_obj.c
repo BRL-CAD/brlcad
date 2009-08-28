@@ -774,6 +774,7 @@ static struct go_cmdtab go_cmds[] = {
     {"scale_mode",	"vname x y", MAXARGS, go_scale_mode, GED_FUNC_PTR_NULL},
     {"screen2model",	"vname x y", MAXARGS, go_screen2model, GED_FUNC_PTR_NULL},
     {"screen2view",	"vname x y", MAXARGS, go_screen2view, GED_FUNC_PTR_NULL},
+    {"search",		(char *)0, MAXARGS, go_pass_through_func, ged_search},
     {"set_coord",	"vname [m|v]", MAXARGS, go_set_coord, GED_FUNC_PTR_NULL},
     {"set_fb_mode",	"vname [mode]", MAXARGS, go_set_fb_mode, GED_FUNC_PTR_NULL},
     {"set_output_script",	"[script]", MAXARGS, go_pass_through_func, ged_set_output_script},

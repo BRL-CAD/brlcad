@@ -2613,7 +2613,7 @@ GED_EXPORT BU_EXTERN(int ged_scale, (struct ged *gedp, int argc, const char *arg
  * Usage:
  *     search [options] (see search man page)
  */
-GED_EXPORT BU_EXTERN(int ged_search_cmd, (struct ged *gedp, int argc, const char *argv[]));
+GED_EXPORT BU_EXTERN(int ged_search, (struct ged *gedp, int argc, const char *argv[]));
 
 
 /**

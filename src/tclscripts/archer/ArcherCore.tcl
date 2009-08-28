@@ -217,6 +217,7 @@ namespace eval ArcherCore {
 	method rm                  {args}
 	method rmater              {args}
 	method rotate_arb_face     {args}
+	method search		   {args}
 	method shader              {args}
 	method shells              {args}
 	method tire                {args}
@@ -400,7 +401,7 @@ namespace eval ArcherCore {
 					   mv mvall nmg_collapse nmg_simplify \
 					   ocenter orotate oscale otranslate p packTree prefix protate pscale ptranslate \
 					   push put put_comb putmat pwd r rcodes red rfarb rm rmater \
-					   rotate_arb_face shader shells tire title track \
+					   rotate_arb_face search shader shells tire title track \
 					   unhide units unpackTree \
 					   vmake wmater xpush Z zap
 	}
@@ -3858,6 +3859,15 @@ Popup Menu    Right or Ctrl-Left
 ::itcl::body ArcherCore::rotate_arb_face {args} {
     eval gedWrapper rotate_arb_face 0 0 1 0 $args
 }
+
+::itcl::body ArcherCore::search {args} {
+     if {$args == {}} {
+	return [gedCmd search]
+    } else {
+	return [eval gedCmd search $args]
+    }
+}
+
 
 ::itcl::body ArcherCore::shader {args} {
     eval gedWrapper shader 0 0 1 0 $args

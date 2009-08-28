@@ -407,6 +407,7 @@ package provide cadwidgets::Ged 1.0
 	method ptranslate_mode {args}
 	method scale_mode {args}
 	method screen2view {args}
+	method search {args}
 	method set_coord {args}
 	method set_fb_mode {args}
 	method set_output_script {args}
@@ -2016,6 +2017,10 @@ package provide cadwidgets::Ged 1.0
     eval $mGed scale_mode $itk_component($itk_option(-pane)) $args
 }
 
+::itcl::body cadwidgets::Ged::search {args} {
+    eval $mGed search $args
+}
+
 ::itcl::body cadwidgets::Ged::set_coord {args} {
     eval $mGed set_coord $itk_component($itk_option(-pane)) $args
 }
@@ -3025,6 +3030,7 @@ package provide cadwidgets::Ged 1.0
     $help add savekey		{{file [time]} {save key frame data to file}}
     $help add saveview		{{[-e] [-i] [-l] [-o] filename [args]} {save the current view to file}}
     $help add sca		{{sfactor} {scale by sfactor}}
+    $help add search		{{options} {see search man page}}
     $help add setview		{{x y z} {set the view given angles x, y, and z in degrees}}
     $help add shaded_mode	{{[0|1|2]}	{get/set shaded mode}}
     $help add shader		{{comb shader_material [shader_args]} {command line version of the mater command}}
