@@ -21,10 +21,9 @@
 /** @{ */
 /** @file on_nurb.h
  *
- * @brief
- *	Define surface and curve structures for
- * 	Non Rational Uniform B-Spline (NURBS)
- *	curves and surfaces. Uses openNURBS library.
+ * Define surface and curve structures for Non Rational Uniform
+ * B-Spline (NURBS) curves and surfaces. Uses openNURBS library.
+ *
  */
 
 #ifndef BREP_H
@@ -55,14 +54,14 @@ typedef struct _on_brep_placeholder {
 #endif
 
 
-    /* Maximum number of newton iterations on root finding */
+/** Maximum number of newton iterations on root finding */
 #define BREP_MAX_ITERATIONS 100
-    /* Root finding threshold */
+/** Root finding threshold */
 #define BREP_INTERSECTION_ROOT_EPSILON 1e-6
-    /* Jungle Gym epsilon */
+/** Jungle Gym epsilon */
 #define BREP_EDGE_MISS_TOLERANCE 5e-2
 #define BREP_SAME_POINT_TOLERANCE 1e-3
-    /* Use vector operations? For debugging */
+/* Use vector operations? For debugging */
 #define DO_VECTOR 1
 
 
