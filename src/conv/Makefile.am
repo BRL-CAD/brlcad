@@ -79,6 +79,7 @@ bin_PROGRAMS = \
 	nmg-bot \
 	nmg-rib \
 	nmg-sgp \
+	obj-g \
 	off-g \
 	patch-g \
 	pix2asc \
@@ -267,6 +268,9 @@ off_g_SOURCES = off/off-g.c
 off_g_LDADD = \
 	${WDB} \
 	${WDB_LIBS}
+
+obj_g_SOURCES = obj-g.c
+obj_g_LDADD = ${WDB}
 
 patch_g_SOURCES = patch/patch-g.c
 patch_g_LDADD = \
