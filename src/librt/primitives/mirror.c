@@ -58,6 +58,7 @@ RT_DECLARE_MIRROR(rhc);
 RT_DECLARE_MIRROR(epa);
 RT_DECLARE_MIRROR(eto);
 RT_DECLARE_MIRROR(hyp);
+RT_DECLARE_MIRROR(nmg);
 
 
 /**
@@ -193,7 +194,7 @@ rt_mirror(struct db_i *dbip,
 	    return err ? NULL : ip;
 	}
 	case ID_NMG: {
-	    err = rt_nmg_mirror(ip, &plane);
+	    err = rt_nmg_mirror(ip, plane);
 	    return err ? NULL : ip;
 	}
 #if 0
@@ -255,83 +256,6 @@ rt_mirror(struct db_i *dbip,
     mirmat[3 + Z*4] += 2.0 * mirror_pt[Z] * mirror_dir[Z];
 
     switch (id) {
-	case ID_NMG: {
-	    struct model *m;
-	    struct nmgregion *r;
-	    struct shell *s;
-	    struct bu_ptbl table;
-	    struct vertex *v;
-
-	    m = (struct model *)ip->idb_ptr;
-	    NMG_CK_MODEL(m);
-
-	    /* move every vertex */
-	    nmg_vertex_tabulate(&table, &m->magic);
-	    for (i=0; i<BU_PTBL_END(&table); i++) {
-		point_t pt;
-
-		v = (struct vertex *)BU_PTBL_GET(&table, i);
-		NMG_CK_VERTEX(v);
-
-		VMOVE(pt, v->vg_p->coord);
-		MAT4X3PNT(v->vg_p->coord, mirmat, pt);
-	    }
-
-	    bu_ptbl_reset(&table);
-
-	    nmg_face_tabulate(&table, &m->magic);
-	    for (i=0; i<BU_PTBL_END(&table); i++) {
-		struct face *f;
-
-		f = (struct face *)BU_PTBL_GET(&table, i);
-		NMG_CK_FACE(f);
-
-		if (!f->g.magic_p)
-		    continue;
-
-		if (*f->g.magic_p != NMG_FACE_G_PLANE_MAGIC) {
-		    bu_log("Sorry, can only mirror NMG solids with planar faces\n");
-		    bu_ptbl_free(&table);
-		    return NULL;
-		}
-	    }
-
-	    for (BU_LIST_FOR (r, nmgregion, &m->r_hd)) {
-		for (BU_LIST_FOR (s, shell, &r->s_hd)) {
-		    nmg_invert_shell(s);
-		}
-	    }
-
-
-	    for (i=0; i<BU_PTBL_END(&table); i++) {
-		struct face *f;
-		struct faceuse *fu;
-
-		f = (struct face *)BU_PTBL_GET(&table, i);
-		NMG_CK_FACE(f);
-
-		fu = f->fu_p;
-		if (fu->orientation != OT_SAME) {
-		    fu = fu->fumate_p;
-		}
-		if (fu->orientation != OT_SAME) {
-		    bu_log("ERROR: Unexpected NMG face orientation\n");
-		    bu_ptbl_free(&table);
-		    return NULL;
-		}
-
-		if (nmg_calc_face_g(fu)) {
-		    bu_log("ERROR: Unable to calculate NMG faces for mirroring\n");
-		    bu_ptbl_free(&table);
-		    return NULL;
-		}
-	    }
-
-	    bu_ptbl_free(&table);
-	    nmg_rebound(m, &(dbip->dbi_wdbp->wdb_tol));
-
-	    break;
-	}
 	case ID_ARS: {
 	    struct rt_ars_internal *ars;
 	    fastf_t *tmp_curve;
