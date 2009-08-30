@@ -54,6 +54,7 @@ RT_DECLARE_MIRROR(arbn);
 RT_DECLARE_MIRROR(pipe);
 RT_DECLARE_MIRROR(particle);
 RT_DECLARE_MIRROR(rpc);
+RT_DECLARE_MIRROR(rhc);
 
 
 /**
@@ -169,14 +170,14 @@ rt_mirror(struct db_i *dbip,
 	    return err ? NULL : ip;
 	}
 	case ID_RPC: {
-	    err = rt_rpc_mirror(ip, &plane);
+	    err = rt_rpc_mirror(ip, plane);
+	    return err ? NULL : ip;
+	}
+	case ID_RHC: {
+	    err = rt_rhc_mirror(ip, plane);
 	    return err ? NULL : ip;
 	}
 #if 0
-	case ID_RHC: {
-	    err = rt_rhc_mirror(ip, &plane);
-	    return err ? NULL : ip;
-	}
 	case ID_EPA: {
 	    err = rt_epa_mirror(ip, &plane);
 	    return err ? NULL : ip;
@@ -251,42 +252,6 @@ rt_mirror(struct db_i *dbip,
     mirmat[3 + Z*4] += 2.0 * mirror_pt[Z] * mirror_dir[Z];
 
     switch (id) {
-	case ID_RHC: {
-	    struct rt_rhc_internal *rhc;
-	    point_t pt;
-	    vect_t h;
-	    vect_t b;
-	    vect_t n;
-	    fastf_t ang;
-	    mat_t mat;
-
-	    rhc = (struct rt_rhc_internal *)ip->idb_ptr;
-	    RT_RHC_CK_MAGIC(rhc);
-
-	    VMOVE(pt, rhc->rhc_V);
-	    MAT4X3PNT(rhc->rhc_V, mirmat, pt);
-
-	    VMOVE(h, rhc->rhc_H);
-	    VMOVE(b, rhc->rhc_B);
-	    VUNITIZE(h);
-	    VUNITIZE(b);
-
-	    VCROSS(n, mirror_dir, rhc->rhc_H);
-	    VUNITIZE(n);
-	    ang = M_PI_2 - acos(VDOT(h, mirror_dir));
-	    bn_mat_arb_rot(mat, origin, n, ang*2);
-	    VMOVE(h, rhc->rhc_H);
-	    MAT4X3VEC(rhc->rhc_H, mat, h);
-
-	    VCROSS(n, mirror_dir, rhc->rhc_B);
-	    VUNITIZE(n);
-	    ang = M_PI_2 - acos(VDOT(b, mirror_dir));
-	    bn_mat_arb_rot(mat, origin, n, ang*2);
-	    VMOVE(b, rhc->rhc_B);
-	    MAT4X3VEC(rhc->rhc_B, mat, b);
-
-	    break;
-	}
 	case ID_EPA: {
 	    struct rt_epa_internal *epa;
 	    point_t pt;
