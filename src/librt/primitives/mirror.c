@@ -65,6 +65,7 @@ RT_DECLARE_MIRROR(dsp);
 RT_DECLARE_MIRROR(vol);
 RT_DECLARE_MIRROR(superell);
 RT_DECLARE_MIRROR(comb);
+RT_DECLARE_MIRROR(bot);
 
 
 /*
@@ -233,11 +234,11 @@ rt_mirror(struct db_i *dbip,
 	    err = rt_comb_mirror(ip, plane);
 	    return err ? NULL : ip;
 	}
-#if 0
 	case ID_BOT: {
-	    err = rt_bot_mirror(ip, &plane);
+	    err = rt_bot_mirror(ip, plane);
 	    return err ? NULL : ip;
 	}
+#if 0
 	default: {
 	    bu_log("Unknown or unsupported object type (id==%d)\n", id);
 	    return NULL;
@@ -268,46 +269,6 @@ rt_mirror(struct db_i *dbip,
     mirmat[3 + Z*4] += 2.0 * mirror_pt[Z] * mirror_dir[Z];
 
     switch (id) {
-	case ID_BOT: {
-	    struct rt_bot_internal *bot;
-
-	    bot = (struct rt_bot_internal *)ip->idb_ptr;
-	    RT_BOT_CK_MAGIC(bot);
-
-	    /* mirror each vertex */
-	    for (i=0; i<bot->num_vertices; i++) {
-		point_t pt;
-
-		VMOVE(pt, &bot->vertices[i*3]);
-		MAT4X3PNT(&bot->vertices[i*3], mirmat, pt);
-	    }
-
-	    /* Reverse each faces' order */
-	    for (i=0; i<bot->num_faces; i++) {
-		int save_face = bot->faces[i*3];
-
-		bot->faces[i*3] = bot->faces[i*3 + Z];
-		bot->faces[i*3 + Z] = save_face;
-	    }
-
-	    /* fix normals */
-	    for (i=0; i<bot->num_normals; i++) {
-		vectp_t np = &bot->normals[i*3];
-		vect_t n1;
-		vect_t n2;
-		fastf_t ang;
-		mat_t mat;
-
-		VMOVE(n1, np);
-		VCROSS(n2, mirror_dir, n1);
-		VUNITIZE(n2);
-		ang = M_PI_2 - acos(VDOT(n1, mirror_dir));
-		bn_mat_arb_rot(mat, origin, n2, ang*2);
-		MAT4X3VEC(np, mat, n1);
-	    }
-
-	    break;
-	}
 	default: {
 	    bu_log("Unknown or unsupported object type (id==%d)\n", id);
 	    return NULL;

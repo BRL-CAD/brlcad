@@ -280,6 +280,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\src\librt\primitives\bot\bot_mirror.c"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\src\librt\primitives\brep\brep.cpp"
 				>
 			</File>
