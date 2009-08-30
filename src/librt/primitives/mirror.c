@@ -49,6 +49,7 @@ RT_DECLARE_MIRROR(arb);
 RT_DECLARE_MIRROR(half);
 RT_DECLARE_MIRROR(grip);
 RT_DECLARE_MIRROR(poly);
+RT_DECLARE_MIRROR(bspline);
 
 
 /**
@@ -144,14 +145,14 @@ rt_mirror(struct db_i *dbip,
 	    return err ? NULL : ip;
 	}
 	case ID_POLY: {
-	    err = rt_poly_mirror(ip, &plane);
+	    err = rt_poly_mirror(ip, plane);
+	    return err ? NULL : ip;
+	}
+	case ID_BSPLINE: {
+	    err = rt_nurb_mirror(ip, plane);
 	    return err ? NULL : ip;
 	}
 #if 0
-	case ID_BSPLINE: {
-	    err = rt_nurb_mirror(ip, &plane);
-	    return err ? NULL : ip;
-	}
 	case ID_ARBN: {
 	    err = rt_arbn_mirror(ip, &plane);
 	    return err ? NULL : ip;
@@ -246,72 +247,6 @@ rt_mirror(struct db_i *dbip,
     mirmat[3 + Z*4] += 2.0 * mirror_pt[Z] * mirror_dir[Z];
 
     switch (id) {
-	case ID_BSPLINE: {
-	    struct rt_nurb_internal *nurb;
-
-	    nurb = (struct rt_nurb_internal *)ip->idb_ptr;
-	    RT_NURB_CK_MAGIC(nurb);
-
-	    for (i=0; i<nurb->nsrf; i++) {
-		fastf_t *ptr;
-		int tmp;
-		int orig_size[2];
-		int ncoords;
-		int m;
-		int l;
-
-		/* swap knot vetcors between u and v */
-		ptr = nurb->srfs[i]->u.knots;
-		tmp = nurb->srfs[i]->u.k_size;
-
-		nurb->srfs[i]->u.knots = nurb->srfs[i]->v.knots;
-		nurb->srfs[i]->u.k_size = nurb->srfs[i]->v.k_size;
-		nurb->srfs[i]->v.knots = ptr;
-		nurb->srfs[i]->v.k_size = tmp;
-
-		/* swap order */
-		tmp = nurb->srfs[i]->order[0];
-		nurb->srfs[i]->order[0] = nurb->srfs[i]->order[1];
-		nurb->srfs[i]->order[1] = tmp;
-
-		/* swap mesh size */
-		orig_size[0] = nurb->srfs[i]->s_size[0];
-		orig_size[1] = nurb->srfs[i]->s_size[1];
-
-		nurb->srfs[i]->s_size[0] = orig_size[1];
-		nurb->srfs[i]->s_size[1] = orig_size[0];
-
-		/* allocat memory for a new control mesh */
-		ncoords = RT_NURB_EXTRACT_COORDS(nurb->srfs[i]->pt_type);
-		ptr = (fastf_t *)bu_calloc(orig_size[0]*orig_size[1]*ncoords, sizeof(fastf_t), "rt_mirror: ctl mesh ptr");
-
-		/* mirror each control point */
-		for (j=0; j<orig_size[0]*orig_size[1]; j++) {
-		    point_t pt;
-
-		    VMOVE(pt, &nurb->srfs[i]->ctl_points[j*ncoords]);
-		    MAT4X3PNT(&nurb->srfs[i]->ctl_points[j*ncoords], mirmat, pt);
-		}
-
-		/* copy mirrored control points into new mesh
-		 * while swaping u and v */
-		m = 0;
-		for (j=0; j<orig_size[0]; j++) {
-		    for (l=0; l<orig_size[1]; l++) {
-			VMOVEN(&ptr[(l*orig_size[0]+j)*ncoords], &nurb->srfs[i]->ctl_points[m*ncoords], ncoords);
-			m++;
-		    }
-		}
-
-		/* free old mesh */
-		bu_free((char *)nurb->srfs[i]->ctl_points, "rt_mirror: ctl points");
-
-		/* put new mesh in place */
-		nurb->srfs[i]->ctl_points = ptr;
-	    }
-
-	    break;
-	}
 	case ID_ARBN: {
 	    struct rt_arbn_internal *arbn;
 
