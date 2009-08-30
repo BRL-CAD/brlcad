@@ -14,6 +14,7 @@ changes made.  See document footer for additional details.
 --- 2009-06-XX  Release 7.14.10                                    ---
 ----------------------------------------------------------------------
 
+* Pro/E export plugin creates a 'Proe_Name' attribute - Bob Parker
 * enhanced rtedge with antialias and both side options - Sean Morrison
 * search command now works in Archer - Cliff Yapp
 * make_bb now handles empty combinations correctly - Bob Parker
