@@ -400,6 +400,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\src\librt\primitives\dsp\dsp_mirror.c"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\src\librt\dspline.c"
 				>
 			</File>

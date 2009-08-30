@@ -76,6 +76,7 @@ set(LIBRT_SOURCES
     primitives/bspline/nurb_xsplit.c
     primitives/cline/cline.c
     primitives/dsp/dsp.c
+    primitives/dsp/dsp_mirror.c
     primitives/ebm/ebm.c
     primitives/ebm/ebm_mirror.c
     primitives/ehy/ehy.c

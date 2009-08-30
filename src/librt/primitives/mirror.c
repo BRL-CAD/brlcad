@@ -61,6 +61,7 @@ RT_DECLARE_MIRROR(hyp);
 RT_DECLARE_MIRROR(nmg);
 RT_DECLARE_MIRROR(ars);
 RT_DECLARE_MIRROR(ebm);
+RT_DECLARE_MIRROR(dsp);
 
 
 /*
@@ -213,11 +214,11 @@ rt_mirror(struct db_i *dbip,
 	    err = rt_ebm_mirror(ip, plane);
 	    return err ? NULL : ip;
 	}
-#if 0
 	case ID_DSP: {
-	    err = rt_dsp_mirror(ip, &plane);
+	    err = rt_dsp_mirror(ip, plane);
 	    return err ? NULL : ip;
 	}
+#if 0
 	case ID_VOL: {
 	    err = rt_vol_mirror(ip, &plane);
 	    return err ? NULL : ip;
@@ -264,17 +265,6 @@ rt_mirror(struct db_i *dbip,
     mirmat[3 + Z*4] += 2.0 * mirror_pt[Z] * mirror_dir[Z];
 
     switch (id) {
-	case ID_DSP: {
-	    struct rt_dsp_internal *dsp;
-
-	    dsp = (struct rt_dsp_internal *)ip->idb_ptr;
-	    RT_DSP_CK_MAGIC(dsp);
-
-	    bn_mat_mul(temp, mirmat, dsp->dsp_mtos);
-	    MAT_COPY(dsp->dsp_mtos, temp);
-
-	    break;
-	}
 	case ID_VOL: {
 	    struct rt_vol_internal *vol;
 
