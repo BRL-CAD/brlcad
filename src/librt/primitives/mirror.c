@@ -63,6 +63,12 @@ RT_DECLARE_MIRROR(ars);
 RT_DECLARE_MIRROR(ebm);
 
 
+/*
+  FIXME: mysteriously missing
+  RT_DECLARE_MIRROR(ehy);
+*/
+
+
 /**
  * Mirror an object about some axis at a specified point on the axis.
  * It is the caller's responsibility to retain and free the internal.
