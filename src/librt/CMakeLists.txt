@@ -117,6 +117,7 @@ set(LIBRT_SOURCES
     primitives/nmg/nmg_tri.c
     primitives/nmg/nmg_visit.c
     primitives/part/part.c
+    primitives/part/part_mirror.c
     primitives/pipe/pipe.c
     primitives/pipe/pipe_mirror.c
     primitives/pnts/pnts.c

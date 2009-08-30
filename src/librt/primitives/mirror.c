@@ -162,11 +162,11 @@ rt_mirror(struct db_i *dbip,
 	    err = rt_pipe_mirror(ip, plane);
 	    return err ? NULL : ip;
 	}
-#if 0
 	case ID_PARTICLE: {
-	    err = rt_particle_mirror(ip, &plane);
+	    err = rt_particle_mirror(ip, plane);
 	    return err ? NULL : ip;
 	}
+#if 0
 	case ID_RPC: {
 	    err = rt_rpc_mirror(ip, &plane);
 	    return err ? NULL : ip;
@@ -249,32 +249,6 @@ rt_mirror(struct db_i *dbip,
     mirmat[3 + Z*4] += 2.0 * mirror_pt[Z] * mirror_dir[Z];
 
     switch (id) {
-	case ID_PARTICLE: {
-	    struct rt_part_internal *part;
-	    point_t pt;
-	    vect_t h;
-	    vect_t n;
-	    fastf_t ang;
-	    mat_t mat;
-
-	    part = (struct rt_part_internal *)ip->idb_ptr;
-	    RT_PART_CK_MAGIC(part);
-
-	    VMOVE(pt, part->part_V);
-	    MAT4X3PNT(part->part_V, mirmat, pt);
-
-	    VMOVE(h, part->part_H);
-	    VUNITIZE(h);
-
-	    VCROSS(n, mirror_dir, part->part_H);
-	    VUNITIZE(n);
-	    ang = M_PI_2 - acos(VDOT(h, mirror_dir));
-	    bn_mat_arb_rot(mat, origin, n, ang*2);
-	    VMOVE(h, part->part_H);
-	    MAT4X3VEC(part->part_H, mat, h);
-
-	    break;
-	}
 	case ID_RPC: {
 	    struct rt_rpc_internal *rpc;
 	    point_t pt;
