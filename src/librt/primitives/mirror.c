@@ -59,6 +59,7 @@ RT_DECLARE_MIRROR(epa);
 RT_DECLARE_MIRROR(eto);
 RT_DECLARE_MIRROR(hyp);
 RT_DECLARE_MIRROR(nmg);
+RT_DECLARE_MIRROR(ars);
 
 
 /**
@@ -197,11 +198,11 @@ rt_mirror(struct db_i *dbip,
 	    err = rt_nmg_mirror(ip, plane);
 	    return err ? NULL : ip;
 	}
-#if 0
 	case ID_ARS: {
-	    err = rt_ars_mirror(ip, &plane);
+	    err = rt_ars_mirror(ip, plane);
 	    return err ? NULL : ip;
 	}
+#if 0
 	case ID_EBM: {
 	    err = rt_ebm_mirror(ip, &plane);
 	    return err ? NULL : ip;
@@ -256,39 +257,6 @@ rt_mirror(struct db_i *dbip,
     mirmat[3 + Z*4] += 2.0 * mirror_pt[Z] * mirror_dir[Z];
 
     switch (id) {
-	case ID_ARS: {
-	    struct rt_ars_internal *ars;
-	    fastf_t *tmp_curve;
-
-	    ars = (struct rt_ars_internal *)ip->idb_ptr;
-	    RT_ARS_CK_MAGIC(ars);
-
-	    /* mirror each vertex */
-	    for (i=0; i<ars->ncurves; i++) {
-		for (j=0; j<ars->pts_per_curve; j++) {
-		    point_t pt;
-
-		    VMOVE(pt, &ars->curves[i][j*3]);
-		    MAT4X3PNT(&ars->curves[i][j*3], mirmat, pt);
-		}
-	    }
-
-	    /* now reverse order of vertices in each curve */
-	    tmp_curve = (fastf_t *)bu_calloc(3*ars->pts_per_curve, sizeof(fastf_t), "rt_mirror: tmp_curve");
-	    for (i=0; i<ars->ncurves; i++) {
-		/* reverse vertex order */
-		for (j=0; j<ars->pts_per_curve; j++) {
-		    VMOVE(&tmp_curve[(ars->pts_per_curve-j-1)*3], &ars->curves[i][j*3]);
-		}
-
-		/* now copy back */
-		memcpy(ars->curves[i], tmp_curve, ars->pts_per_curve*3*sizeof(fastf_t));
-	    }
-
-	    bu_free((char *)tmp_curve, "rt_mirror: tmp_curve");
-
-	    break;
-	}
 	case ID_EBM: {
 	    struct rt_ebm_internal *ebm;
 

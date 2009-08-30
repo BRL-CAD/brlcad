@@ -84,6 +84,7 @@ librt_nil_la_SOURCES = \
 	primitives/arbn/arbn.c \
 	primitives/arbn/arbn_mirror.c \
 	primitives/ars/ars.c \
+	primitives/ars/ars_mirror.c \
 	primitives/bot/bot.c \
 	primitives/brep/brep.cpp \
 	primitives/brep/brep_debug.cpp \
