@@ -30,6 +30,21 @@
  * TODO: would be nice to add support for detecting changes in
  * specified attributes.
  *
+ * TODO: the antialiasing implementation is very poor at the moment
+ * (and possibly has a bug) in that it subsamples the current edge
+ * cell at an awkward gridding.
+ *
+ * TODO: horribly inefficient at the moment with the current
+ * book-keeping with 2x as much work occuring as necessary on default
+ * renders due to double-firing of the "below" row.  antialiasing
+ * makes it even worse with entire subgrids being refired (although
+ * they should all at least be unique).
+ *
+ * TODO: it would be nice to capture an edge "intensity" based on
+ * normals, region ids, and the other detectable patterns, but then
+ * still allow edge processing (e.g., basic canny edge detection) on
+ * the resultant set so you can control the level of edges visible.
+ *
  */
 
 #include "common.h"
