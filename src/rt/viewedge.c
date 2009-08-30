@@ -207,6 +207,7 @@ struct bu_structparse view_parse[] = {
     {"%d", 1, "occlusion_mode", bu_byteoffset(occlusion_mode), BU_STRUCTPARSE_FUNC_NULL},
     {"%d", 1, "om", bu_byteoffset(occlusion_mode), BU_STRUCTPARSE_FUNC_NULL},
     {"%f", 1, "max_dist", bu_byteoffset(max_dist), BU_STRUCTPARSE_FUNC_NULL},
+    {"%f", 1, "md", bu_byteoffset(max_dist), BU_STRUCTPARSE_FUNC_NULL},
     {"%d", 1, "antialias", bu_byteoffset(antialias), BU_STRUCTPARSE_FUNC_NULL},
     {"%d", 1, "aa", bu_byteoffset(antialias), BU_STRUCTPARSE_FUNC_NULL},
     {"%d", 1, "both_sides", bu_byteoffset(both_sides), BU_STRUCTPARSE_FUNC_NULL},
