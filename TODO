@@ -54,6 +54,11 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 THESE ARE UNSCHEDULED BACKLOG TASKS
 -----------------------------------
 
+* refactor and manage libbn tolerance uses by providing an interface
+  default (e.g., an init macro) and making everyone use that where it
+  is hardcoded to 0.0005 presently (and a few places where it's
+  inconsistently/incorrectly 0.005).
+
 * add a default phong 'metal' shader.  annoying to keep making plastic
   more reflective or mirror less reflective when it's such a common
   material appearance to want.
