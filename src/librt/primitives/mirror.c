@@ -69,8 +69,19 @@ RT_DECLARE_MIRROR(bot);
 
 
 /*
-  FIXME: mysteriously missing
+  FIXME: missing mirror implementations
+
+  RT_DECLARE_MIRROR(brep);
+  RT_DECLARE_MIRROR(cline);
   RT_DECLARE_MIRROR(ehy);
+  RT_DECLARE_MIRROR(extrude);
+  RT_DECLARE_MIRROR(hf);
+  RT_DECLARE_MIRROR(metaball);
+  RT_DECLARE_MIRROR(pnts);
+  RT_DECLARE_MIRROR(rec);
+  RT_DECLARE_MIRROR(revolve);
+  RT_DECLARE_MIRROR(sketch);
+  RT_DECLARE_MIRROR(submodel);
 */
 
 
@@ -121,23 +132,6 @@ rt_mirror(struct db_i *dbip,
 
     /* determine the plane offset */
     plane[W] = VDOT(mirror_pt, mirror_dir);
-
-#if 0
-    bu_log("XXX Mirroring about (%lf, %lf, %lf) -> (%lf, %lf, %lf)\n",
-	   mirror_pt[X],
-	   mirror_pt[Y],
-	   mirror_pt[Z],
-	   mirror_dir[X],
-	   mirror_dir[Y],
-	   mirror_dir[Z]);
-
-    bu_log("XXX Mirror eqn is (%lf, %lf, %lf) -> (%lf)\n",
-	   plane[X],
-	   plane[Y],
-	   plane[Z],
-	   plane[W]);
-#endif
-
 
     switch (id) {
 	case ID_TOR: {
@@ -238,44 +232,13 @@ rt_mirror(struct db_i *dbip,
 	    err = rt_bot_mirror(ip, plane);
 	    return err ? NULL : ip;
 	}
-#if 0
 	default: {
 	    bu_log("Unknown or unsupported object type (id==%d)\n", id);
-	    return NULL;
-	}
-#endif
-    }
-
-    MAT_IDN(mirmat);
-
-    /* Build mirror transform matrix, for those who need it. */
-    /* First, perform a mirror down the X axis */
-    mirmat[0] = -1.0;
-
-    /* Create the rotation matrix */
-    VSET(xvec, 1, 0, 0);
-    VCROSS(nvec, xvec, mirror_dir);
-    VUNITIZE(nvec);
-    ang = -acos(VDOT(xvec, mirror_dir));
-    bn_mat_arb_rot(rmat, origin, nvec, ang*2.0);
-
-    /* Add the rotation to mirmat */
-    MAT_COPY(temp, mirmat);
-    bn_mat_mul(mirmat, temp, rmat);
-
-    /* Add the translation to mirmat */
-    mirmat[3 + X*4] += 2.0 * mirror_pt[X] * mirror_dir[X];
-    mirmat[3 + Y*4] += 2.0 * mirror_pt[Y] * mirror_dir[Y];
-    mirmat[3 + Z*4] += 2.0 * mirror_pt[Z] * mirror_dir[Z];
-
-    switch (id) {
-	default: {
-	    bu_log("Unknown or unsupported object type (id==%d)\n", id);
-	    return NULL;
 	}
     }
 
-    return ip;
+    /* sanity in case object is unknown */
+    return NULL;
 }
 
 
