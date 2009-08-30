@@ -77,6 +77,7 @@ set(LIBRT_SOURCES
     primitives/cline/cline.c
     primitives/dsp/dsp.c
     primitives/ebm/ebm.c
+    primitives/ebm/ebm_mirror.c
     primitives/ehy/ehy.c
     primitives/ell/ell.c
     primitives/ell/ell_brep.cpp

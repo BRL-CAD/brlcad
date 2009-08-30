@@ -408,6 +408,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\src\librt\primitives\ebm\ebm_mirror.c"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\src\librt\primitives\ehy\ehy.c"
 				>
 			</File>

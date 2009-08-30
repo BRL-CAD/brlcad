@@ -60,6 +60,7 @@ RT_DECLARE_MIRROR(eto);
 RT_DECLARE_MIRROR(hyp);
 RT_DECLARE_MIRROR(nmg);
 RT_DECLARE_MIRROR(ars);
+RT_DECLARE_MIRROR(ebm);
 
 
 /**
@@ -202,11 +203,11 @@ rt_mirror(struct db_i *dbip,
 	    err = rt_ars_mirror(ip, plane);
 	    return err ? NULL : ip;
 	}
-#if 0
 	case ID_EBM: {
-	    err = rt_ebm_mirror(ip, &plane);
+	    err = rt_ebm_mirror(ip, plane);
 	    return err ? NULL : ip;
 	}
+#if 0
 	case ID_DSP: {
 	    err = rt_dsp_mirror(ip, &plane);
 	    return err ? NULL : ip;
@@ -257,17 +258,6 @@ rt_mirror(struct db_i *dbip,
     mirmat[3 + Z*4] += 2.0 * mirror_pt[Z] * mirror_dir[Z];
 
     switch (id) {
-	case ID_EBM: {
-	    struct rt_ebm_internal *ebm;
-
-	    ebm = (struct rt_ebm_internal *)ip->idb_ptr;
-	    RT_EBM_CK_MAGIC(ebm);
-
-	    bn_mat_mul(temp, mirmat, ebm->mat);
-	    MAT_COPY(ebm->mat, temp);
-
-	    break;
-	}
 	case ID_DSP: {
 	    struct rt_dsp_internal *dsp;
 
