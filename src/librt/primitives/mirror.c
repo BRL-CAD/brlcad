@@ -50,6 +50,7 @@ RT_DECLARE_MIRROR(half);
 RT_DECLARE_MIRROR(grip);
 RT_DECLARE_MIRROR(poly);
 RT_DECLARE_MIRROR(bspline);
+RT_DECLARE_MIRROR(arbn);
 
 
 /**
@@ -152,11 +153,11 @@ rt_mirror(struct db_i *dbip,
 	    err = rt_nurb_mirror(ip, plane);
 	    return err ? NULL : ip;
 	}
-#if 0
 	case ID_ARBN: {
-	    err = rt_arbn_mirror(ip, &plane);
+	    err = rt_arbn_mirror(ip, plane);
 	    return err ? NULL : ip;
 	}
+#if 0
 	case ID_PIPE: {
 	    err = rt_pipe_mirror(ip, &plane);
 	    return err ? NULL : ip;

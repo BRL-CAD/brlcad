@@ -244,6 +244,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\src\librt\primitives\arbn\arbn_mirror.c"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\src\librt\primitives\ars\ars.c"
 				>
 			</File>
