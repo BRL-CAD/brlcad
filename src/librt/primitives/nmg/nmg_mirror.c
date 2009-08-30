@@ -50,13 +50,16 @@ rt_nmg_mirror(struct rt_db_internal *ip, register const plane_t plane)
     fastf_t ang;
 
     int i;
-    struct bn_tol tol;
     struct nmgregion *r;
     struct shell *s;
     struct bu_ptbl table;
     struct vertex *v;
 
     static point_t origin = {0.0, 0.0, 0.0};
+
+    static const struct bn_tol tol = {
+	BN_TOL_MAGIC, 0.0005, 0.0005*0.0005, 1e-6, 1-1e-6
+    };
 
     RT_CK_DB_INTERNAL(ip);
 
@@ -155,11 +158,6 @@ rt_nmg_mirror(struct rt_db_internal *ip, register const plane_t plane)
     /* FIXME: why do we need to rebound?  should mirroring really
      * require a tolerance??
      */
-    tol.magic = BN_TOL_MAGIC;
-    tol.dist = 0.0005;
-    tol.dist_sq = tol.dist * tol.dist;
-    tol.perp = 1e-6;
-    tol.para = 1 - tol.perp;
     nmg_rebound(nmg, &tol);
 
     return 0;
