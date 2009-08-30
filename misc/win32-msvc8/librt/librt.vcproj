@@ -876,6 +876,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\src\librt\primitives\vol\vol_mirror.c"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\src\librt\wdb.c"
 				>
 			</File>

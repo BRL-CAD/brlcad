@@ -62,6 +62,8 @@ RT_DECLARE_MIRROR(nmg);
 RT_DECLARE_MIRROR(ars);
 RT_DECLARE_MIRROR(ebm);
 RT_DECLARE_MIRROR(dsp);
+RT_DECLARE_MIRROR(vol);
+RT_DECLARE_MIRROR(superell);
 
 
 /*
@@ -218,15 +220,15 @@ rt_mirror(struct db_i *dbip,
 	    err = rt_dsp_mirror(ip, plane);
 	    return err ? NULL : ip;
 	}
-#if 0
 	case ID_VOL: {
-	    err = rt_vol_mirror(ip, &plane);
+	    err = rt_vol_mirror(ip, plane);
 	    return err ? NULL : ip;
 	}
 	case ID_SUPERELL: {
-	    err = rt_superell_mirror(ip, &plane);
+	    err = rt_superell_mirror(ip, plane);
 	    return err ? NULL : ip;
 	}
+#if 0
 	case ID_COMBINATION: {
 	    err = rt_comb_mirror(ip, &plane);
 	    return err ? NULL : ip;
@@ -265,17 +267,6 @@ rt_mirror(struct db_i *dbip,
     mirmat[3 + Z*4] += 2.0 * mirror_pt[Z] * mirror_dir[Z];
 
     switch (id) {
-	case ID_VOL: {
-	    struct rt_vol_internal *vol;
-
-	    vol = (struct rt_vol_internal *)ip->idb_ptr;
-	    RT_VOL_CK_MAGIC(vol);
-
-	    bn_mat_mul(temp, mirmat, vol->mat);
-	    MAT_COPY(vol->mat, temp);
-
-	    break;
-	}
 	case ID_SUPERELL: {
 	    struct rt_superell_internal *superell;
 	    point_t pt;
