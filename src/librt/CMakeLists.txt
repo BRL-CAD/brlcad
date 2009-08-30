@@ -5,6 +5,7 @@ set(LIBRT_SOURCES
     bool.c
     bundle.c
     cmd.c
+    comb_mirror.c
     constraint.c
     cut.c
     db5_alloc.c

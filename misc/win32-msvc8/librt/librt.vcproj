@@ -308,6 +308,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\src\librt\comb_mirror.c"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\src\librt\constraint.c"
 				>
 			</File>

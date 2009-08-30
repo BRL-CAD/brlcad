@@ -64,6 +64,7 @@ RT_DECLARE_MIRROR(ebm);
 RT_DECLARE_MIRROR(dsp);
 RT_DECLARE_MIRROR(vol);
 RT_DECLARE_MIRROR(superell);
+RT_DECLARE_MIRROR(comb);
 
 
 /*
@@ -228,11 +229,11 @@ rt_mirror(struct db_i *dbip,
 	    err = rt_superell_mirror(ip, plane);
 	    return err ? NULL : ip;
 	}
-#if 0
 	case ID_COMBINATION: {
-	    err = rt_comb_mirror(ip, &plane);
+	    err = rt_comb_mirror(ip, plane);
 	    return err ? NULL : ip;
 	}
+#if 0
 	case ID_BOT: {
 	    err = rt_bot_mirror(ip, &plane);
 	    return err ? NULL : ip;
@@ -267,17 +268,6 @@ rt_mirror(struct db_i *dbip,
     mirmat[3 + Z*4] += 2.0 * mirror_pt[Z] * mirror_dir[Z];
 
     switch (id) {
-	case ID_COMBINATION: {
-	    struct rt_comb_internal *comb;
-
-	    comb = (struct rt_comb_internal *)ip->idb_ptr;
-	    RT_CK_COMB(comb);
-
-	    if (comb->tree) {
-		db_tree_mul_dbleaf(comb->tree, mirmat);
-	    }
-	    break;
-	}
 	case ID_BOT: {
 	    struct rt_bot_internal *bot;
 
