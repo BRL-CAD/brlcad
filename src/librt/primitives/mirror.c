@@ -248,38 +248,6 @@ rt_mirror(struct db_i *dbip,
     mirmat[3 + Z*4] += 2.0 * mirror_pt[Z] * mirror_dir[Z];
 
     switch (id) {
-	case ID_ARBN: {
-	    struct rt_arbn_internal *arbn;
-
-	    arbn = (struct rt_arbn_internal *)ip->idb_ptr;
-	    RT_ARBN_CK_MAGIC(arbn);
-
-	    for (i=0; i<arbn->neqn; i++) {
-		point_t orig_pt;
-		point_t pt;
-		vect_t norm;
-		fastf_t factor;
-
-		/* unitize the plane equation first */
-		factor = 1.0 / MAGNITUDE(arbn->eqn[i]);
-		VSCALE(arbn->eqn[i], arbn->eqn[i], factor);
-		arbn->eqn[i][W] = arbn->eqn[i][W] * factor;
-
-		/* Pick a point on the original halfspace */
-		VSCALE(orig_pt, arbn->eqn[i], arbn->eqn[i][W]);
-
-		/* Transform the point, and the normal */
-		MAT4X3VEC(norm, mirmat, arbn->eqn[i]);
-		MAT4X3PNT(pt, mirmat, orig_pt);
-
-		/* Measure new distance from origin to new point */
-		VUNITIZE(norm);
-		VMOVE(arbn->eqn[i], norm);
-		arbn->eqn[i][W] = VDOT(pt, norm);
-	    }
-
-	    break;
-	}
 	case ID_PIPE: {
 	    struct rt_pipe_internal *pipe;
 	    struct wdb_pipept *ps;
