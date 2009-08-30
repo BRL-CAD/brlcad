@@ -84,6 +84,7 @@ set(LIBRT_SOURCES
     primitives/epa/epa_mirror.c
     primitives/eto/eto.c
     primitives/eto/eto_brep.cpp
+    primitives/eto/eto_mirror.c
     primitives/extrude/extrude.c
     primitives/grip/grip.c
     primitives/grip/grip_mirror.c

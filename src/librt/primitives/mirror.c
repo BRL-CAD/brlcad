@@ -56,6 +56,7 @@ RT_DECLARE_MIRROR(particle);
 RT_DECLARE_MIRROR(rpc);
 RT_DECLARE_MIRROR(rhc);
 RT_DECLARE_MIRROR(epa);
+RT_DECLARE_MIRROR(eto);
 
 
 /**
@@ -182,11 +183,11 @@ rt_mirror(struct db_i *dbip,
 	    err = rt_epa_mirror(ip, plane);
 	    return err ? NULL : ip;
 	}
-#if 0
 	case ID_ETO: {
-	    err = rt_eto_mirror(ip, &plane);
+	    err = rt_eto_mirror(ip, plane);
 	    return err ? NULL : ip;
 	}
+#if 0
 	case ID_HYP: {
 	    err = rt_hyp_mirror(ip, &plane);
 	    return err ? NULL : ip;
@@ -253,43 +254,6 @@ rt_mirror(struct db_i *dbip,
     mirmat[3 + Z*4] += 2.0 * mirror_pt[Z] * mirror_dir[Z];
 
     switch (id) {
-	case ID_ETO: {
-	    struct rt_eto_internal *eto;
-	    point_t pt;
-	    vect_t n1;
-	    vect_t n2;
-	    vect_t c;
-	    fastf_t ang;
-	    mat_t mat;
-
-	    eto = (struct rt_eto_internal *)ip->idb_ptr;
-	    RT_ETO_CK_MAGIC(eto);
-
-	    VMOVE(pt, eto->eto_V);
-	    MAT4X3PNT(eto->eto_V, mirmat, pt);
-
-	    VMOVE(n1, eto->eto_N);
-	    VMOVE(c, eto->eto_C);
-	    VUNITIZE(n1);
-	    VUNITIZE(c);
-
-	    VCROSS(n2, mirror_dir, eto->eto_N);
-	    VUNITIZE(n2);
-	    ang = M_PI_2 - acos(VDOT(n1, mirror_dir));
-	    bn_mat_arb_rot(mat, origin, n2, ang*2);
-	    VMOVE(n1, eto->eto_N);
-	    MAT4X3VEC(eto->eto_N, mat, n1);
-
-	    VCROSS(n2, mirror_dir, eto->eto_C);
-	    VUNITIZE(n2);
-	    ang = M_PI_2 - acos(VDOT(c, mirror_dir));
-	    bn_mat_arb_rot(mat, origin, n2, ang*2);
-	    VMOVE(c, eto->eto_C);
-	    MAT4X3VEC(eto->eto_C, mat, c);
-
-	    break;
-	}
-
 	case ID_HYP: {
 	    struct rt_hyp_internal *hyp;
 	    point_t pt;
