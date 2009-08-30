@@ -688,6 +688,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\src\librt\primitives\pipe\pipe_mirror.c"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\src\librt\primitives\pnts\pnts.c"
 				>
 			</File>

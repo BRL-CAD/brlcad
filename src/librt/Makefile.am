@@ -158,6 +158,7 @@ librt_nil_la_SOURCES = \
 	primitives/nmg/nmg_visit.c \
 	primitives/part/part.c \
 	primitives/pipe/pipe.c \
+	primitives/pipe/pipe_mirror.c \
 	primitives/pnts/pnts.c \
 	primitives/poly/poly.c \
 	primitives/poly/poly_mirror.c \

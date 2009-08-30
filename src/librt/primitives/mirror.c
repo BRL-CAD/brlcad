@@ -51,6 +51,7 @@ RT_DECLARE_MIRROR(grip);
 RT_DECLARE_MIRROR(poly);
 RT_DECLARE_MIRROR(bspline);
 RT_DECLARE_MIRROR(arbn);
+RT_DECLARE_MIRROR(pipe);
 
 
 /**
@@ -157,11 +158,11 @@ rt_mirror(struct db_i *dbip,
 	    err = rt_arbn_mirror(ip, plane);
 	    return err ? NULL : ip;
 	}
-#if 0
 	case ID_PIPE: {
-	    err = rt_pipe_mirror(ip, &plane);
+	    err = rt_pipe_mirror(ip, plane);
 	    return err ? NULL : ip;
 	}
+#if 0
 	case ID_PARTICLE: {
 	    err = rt_particle_mirror(ip, &plane);
 	    return err ? NULL : ip;
@@ -248,22 +249,6 @@ rt_mirror(struct db_i *dbip,
     mirmat[3 + Z*4] += 2.0 * mirror_pt[Z] * mirror_dir[Z];
 
     switch (id) {
-	case ID_PIPE: {
-	    struct rt_pipe_internal *pipe;
-	    struct wdb_pipept *ps;
-
-	    pipe = (struct rt_pipe_internal *)ip->idb_ptr;
-	    RT_PIPE_CK_MAGIC(pipe);
-
-	    for (BU_LIST_FOR (ps, wdb_pipept, &pipe->pipe_segs_head)) {
-		point_t pt;
-
-		VMOVE(pt, ps->pp_coord);
-		MAT4X3PNT(ps->pp_coord, mirmat, pt);
-	    }
-
-	    break;
-	}
 	case ID_PARTICLE: {
 	    struct rt_part_internal *part;
 	    point_t pt;
