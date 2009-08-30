@@ -48,6 +48,7 @@ RT_DECLARE_MIRROR(ell);
 RT_DECLARE_MIRROR(arb);
 RT_DECLARE_MIRROR(half);
 RT_DECLARE_MIRROR(grip);
+RT_DECLARE_MIRROR(poly);
 
 
 /**
@@ -142,11 +143,11 @@ rt_mirror(struct db_i *dbip,
 	    err = rt_grip_mirror(ip, plane);
 	    return err ? NULL : ip;
 	}
-#if 0
 	case ID_POLY: {
 	    err = rt_poly_mirror(ip, &plane);
 	    return err ? NULL : ip;
 	}
+#if 0
 	case ID_BSPLINE: {
 	    err = rt_nurb_mirror(ip, &plane);
 	    return err ? NULL : ip;
@@ -245,55 +246,6 @@ rt_mirror(struct db_i *dbip,
     mirmat[3 + Z*4] += 2.0 * mirror_pt[Z] * mirror_dir[Z];
 
     switch (id) {
-	case ID_POLY: {
-	    struct rt_pg_internal *pg;
-	    fastf_t *verts;
-	    fastf_t *norms;
-
-	    pg = (struct rt_pg_internal *)ip->idb_ptr;
-	    RT_PG_CK_MAGIC(pg);
-
-	    verts = (fastf_t *)bu_calloc(pg->max_npts*3, sizeof(fastf_t), "rt_mirror: verts");
-	    norms = (fastf_t *)bu_calloc(pg->max_npts*3, sizeof(fastf_t), "rt_mirror: norms");
-
-	    for (i=0; i<pg->npoly; i++) {
-		int last;
-
-		last = (pg->poly[i].npts - 1)*3;
-		/* mirror coords and temporarily store in reverse order */
-		for (j=0; j<pg->poly[i].npts*3; j += 3) {
-		    point_t pt;
-		    vect_t n1;
-		    vect_t n2;
-		    mat_t mat;
-
-		    VMOVE(pt, &pg->poly[i].verts[j]);
-		    MAT4X3PNT(&pg->poly[i].verts[j], mirmat, pt);
-
-		    VMOVE(n1, &pg->poly[i].norms[j]);
-		    VUNITIZE(n1);
-
-		    VCROSS(n2, mirror_dir, &pg->poly[i].norms[j]);
-		    VUNITIZE(n2);
-		    ang = M_PI_2 - acos(VDOT(n1, mirror_dir));
-		    bn_mat_arb_rot(mat, origin, n2, ang*2);
-		    MAT4X3VEC(&pg->poly[i].norms[j], mat, n1);
-
-		    VMOVE(&norms[last-j], &pg->poly[i].norms[j]);
-		}
-
-		/* write back mirrored and reversed face loop */
-		for (j=0; j<pg->poly[i].npts*3; j += 3) {
-		    VMOVE(&pg->poly[i].norms[j], &norms[j]);
-		    VMOVE(&pg->poly[i].verts[j], &verts[j]);
-		}
-	    }
-
-	    bu_free((char *)verts, "rt_mirror: verts");
-	    bu_free((char *)norms, "rt_mirror: norms");
-
-	    break;
-	}
 	case ID_BSPLINE: {
 	    struct rt_nurb_internal *nurb;
 

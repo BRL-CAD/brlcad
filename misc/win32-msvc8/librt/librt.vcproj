@@ -688,6 +688,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\src\librt\primitives\poly\poly_mirror.c"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\src\librt\pr.c"
 				>
 			</File>
