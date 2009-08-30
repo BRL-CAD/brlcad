@@ -236,6 +236,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\src\librt\primitives\arb8\arb8_brep.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\src\librt\primitives\arb8\arb8_mirror.c"
 				>
 			</File>
@@ -408,6 +412,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\src\librt\primitives\ell\ell_brep.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\src\librt\primitives\ell\ell_mirror.c"
 				>
 			</File>
@@ -501,6 +509,10 @@
 			</File>
 			<File
 				RelativePath="..\..\..\src\librt\primitives\nmg\nmg_bool.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\src\librt\primitives\nmg\nmg_brep.cpp"
 				>
 			</File>
 			<File
@@ -813,6 +825,10 @@
 			</File>
 			<File
 				RelativePath="..\..\..\src\librt\primitives\tor\tor.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\src\librt\primitives\tor\tor_brep.cpp"
 				>
 			</File>
 			<File
