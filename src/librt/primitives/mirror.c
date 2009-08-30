@@ -52,6 +52,8 @@ RT_DECLARE_MIRROR(poly);
 RT_DECLARE_MIRROR(bspline);
 RT_DECLARE_MIRROR(arbn);
 RT_DECLARE_MIRROR(pipe);
+RT_DECLARE_MIRROR(particle);
+RT_DECLARE_MIRROR(rpc);
 
 
 /**
@@ -166,11 +168,11 @@ rt_mirror(struct db_i *dbip,
 	    err = rt_particle_mirror(ip, plane);
 	    return err ? NULL : ip;
 	}
-#if 0
 	case ID_RPC: {
 	    err = rt_rpc_mirror(ip, &plane);
 	    return err ? NULL : ip;
 	}
+#if 0
 	case ID_RHC: {
 	    err = rt_rhc_mirror(ip, &plane);
 	    return err ? NULL : ip;
@@ -249,42 +251,6 @@ rt_mirror(struct db_i *dbip,
     mirmat[3 + Z*4] += 2.0 * mirror_pt[Z] * mirror_dir[Z];
 
     switch (id) {
-	case ID_RPC: {
-	    struct rt_rpc_internal *rpc;
-	    point_t pt;
-	    vect_t h;
-	    vect_t b;
-	    vect_t n;
-	    fastf_t ang;
-	    mat_t mat;
-
-	    rpc = (struct rt_rpc_internal *)ip->idb_ptr;
-	    RT_RPC_CK_MAGIC(rpc);
-
-	    VMOVE(pt, rpc->rpc_V);
-	    MAT4X3PNT(rpc->rpc_V, mirmat, pt);
-
-	    VMOVE(h, rpc->rpc_H);
-	    VMOVE(b, rpc->rpc_B);
-	    VUNITIZE(h);
-	    VUNITIZE(b);
-
-	    VCROSS(n, mirror_dir, rpc->rpc_H);
-	    VUNITIZE(n);
-	    ang = M_PI_2 - acos(VDOT(h, mirror_dir));
-	    bn_mat_arb_rot(mat, origin, n, ang*2);
-	    VMOVE(h, rpc->rpc_H);
-	    MAT4X3VEC(rpc->rpc_H, mat, h);
-
-	    VCROSS(n, mirror_dir, rpc->rpc_B);
-	    VUNITIZE(n);
-	    ang = M_PI_2 - acos(VDOT(b, mirror_dir));
-	    bn_mat_arb_rot(mat, origin, n, ang*2);
-	    VMOVE(b, rpc->rpc_B);
-	    MAT4X3VEC(rpc->rpc_B, mat, b);
-
-	    break;
-	}
 	case ID_RHC: {
 	    struct rt_rhc_internal *rhc;
 	    point_t pt;

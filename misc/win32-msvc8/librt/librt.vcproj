@@ -740,6 +740,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\src\librt\primitives\rpc\rpc_mirror.c"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\src\librt\shoot.c"
 				>
 			</File>

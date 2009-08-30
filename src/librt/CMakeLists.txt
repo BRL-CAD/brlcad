@@ -127,6 +127,7 @@ set(LIBRT_SOURCES
     primitives/revolve/revolve.c
     primitives/rhc/rhc.c
     primitives/rpc/rpc.c
+    primitives/rpc/rpc_mirror.c
     primitives/sketch/sketch.c
     primitives/sph/sph.c
     primitives/sph/sph_brep.cpp
