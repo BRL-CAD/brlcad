@@ -166,6 +166,7 @@ librt_nil_la_SOURCES = \
 	primitives/rec/rec.c \
 	primitives/revolve/revolve.c \
 	primitives/rhc/rhc.c \
+	primitives/rhc/rhc_mirror.c \
 	primitives/rpc/rpc.c \
 	primitives/rpc/rpc_mirror.c \
 	primitives/sketch/sketch.c \
