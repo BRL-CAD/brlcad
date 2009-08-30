@@ -267,53 +267,6 @@ rt_mirror(struct db_i *dbip,
     mirmat[3 + Z*4] += 2.0 * mirror_pt[Z] * mirror_dir[Z];
 
     switch (id) {
-	case ID_SUPERELL: {
-	    struct rt_superell_internal *superell;
-	    point_t pt;
-	    vect_t a, b, c;
-	    vect_t n;
-	    fastf_t ang;
-	    mat_t mat;
-
-
-	    superell = (struct rt_superell_internal *)ip->idb_ptr;
-	    RT_SUPERELL_CK_MAGIC(superell);
-
-	    VMOVE(pt, superell->v);
-	    MAT4X3PNT(superell->v, mirmat, pt);
-
-	    VMOVE(a, superell->a);
-	    VUNITIZE(a);
-	    VCROSS(n, mirror_dir, superell->a);
-	    VUNITIZE(n);
-	    ang = M_PI_2 - acos(VDOT(a, mirror_dir));
-	    bn_mat_arb_rot(mat, origin, n, ang*2);
-	    VMOVE(a, superell->a);
-	    MAT4X3VEC(superell->a, mat, a);
-
-	    VMOVE(b, superell->b);
-	    VUNITIZE(b);
-	    VCROSS(n, mirror_dir, superell->b);
-	    VUNITIZE(n);
-	    ang = M_PI_2 - acos(VDOT(b, mirror_dir));
-	    bn_mat_arb_rot(mat, origin, n, ang*2);
-	    VMOVE(b, superell->b);
-	    MAT4X3VEC(superell->b, mat, b);
-
-	    VMOVE(c, superell->c);
-	    VUNITIZE(c);
-	    VCROSS(n, mirror_dir, superell->c);
-	    VUNITIZE(n);
-	    ang = M_PI_2 - acos(VDOT(c, mirror_dir));
-	    bn_mat_arb_rot(mat, origin, n, ang*2);
-	    VMOVE(c, superell->c);
-	    MAT4X3VEC(superell->c, mat, c);
-
-	    superell->n = 1.0;
-	    superell->e = 1.0;
-
-	    break;
-	}
 	case ID_COMBINATION: {
 	    struct rt_comb_internal *comb;
 

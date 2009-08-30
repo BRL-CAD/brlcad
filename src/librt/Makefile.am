@@ -181,6 +181,7 @@ librt_nil_la_SOURCES = \
 	primitives/sph/sph_brep.cpp \
 	primitives/submodel/submodel.c \
 	primitives/superell/superell.c \
+	primitives/superell/superell_mirror.c \
 	primitives/table.c \
 	primitives/tgc/tgc.c \
 	primitives/tgc/tgc_mirror.c \

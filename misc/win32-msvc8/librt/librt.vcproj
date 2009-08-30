@@ -824,6 +824,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\src\librt\primitives\superell\superell_mirror.c"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\src\librt\primitives\table.c"
 				>
 			</File>
