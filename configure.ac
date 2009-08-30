@@ -3407,6 +3407,7 @@ if test "x$bc_with_wgl" != "xno" ; then
 main(int argc, char *argv[]) {
     GLboolean values;
     void (*func)() = glBegin;
+    wglMakeCurrent(NULL, NULL);
     if (GL_FALSE || argc > 1) {
         func(GL_POINTS);
 	glGetBooleanv(GL_DEPTH_TEST, &values);
