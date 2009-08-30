@@ -57,6 +57,7 @@ RT_DECLARE_MIRROR(rpc);
 RT_DECLARE_MIRROR(rhc);
 RT_DECLARE_MIRROR(epa);
 RT_DECLARE_MIRROR(eto);
+RT_DECLARE_MIRROR(hyp);
 
 
 /**
@@ -187,15 +188,15 @@ rt_mirror(struct db_i *dbip,
 	    err = rt_eto_mirror(ip, plane);
 	    return err ? NULL : ip;
 	}
-#if 0
 	case ID_HYP: {
-	    err = rt_hyp_mirror(ip, &plane);
+	    err = rt_hyp_mirror(ip, plane);
 	    return err ? NULL : ip;
 	}
 	case ID_NMG: {
 	    err = rt_nmg_mirror(ip, &plane);
 	    return err ? NULL : ip;
 	}
+#if 0
 	case ID_ARS: {
 	    err = rt_ars_mirror(ip, &plane);
 	    return err ? NULL : ip;
@@ -254,41 +255,6 @@ rt_mirror(struct db_i *dbip,
     mirmat[3 + Z*4] += 2.0 * mirror_pt[Z] * mirror_dir[Z];
 
     switch (id) {
-	case ID_HYP: {
-	    struct rt_hyp_internal *hyp;
-	    point_t pt;
-	    vect_t h;
-	    vect_t a;
-	    vect_t n;
-	    fastf_t ang;
-	    mat_t mat;
-
-	    hyp = (struct rt_hyp_internal *)ip->idb_ptr;
-	    RT_HYP_CK_MAGIC(hyp);
-
-	    VMOVE(pt, hyp->hyp_Vi);
-	    MAT4X3PNT(hyp->hyp_Vi, mirmat, pt);
-
-	    VMOVE(h, hyp->hyp_Hi);
-	    VUNITIZE(h);
-	    VCROSS(n, mirror_dir, hyp->hyp_Hi);
-	    VUNITIZE(n);
-	    ang = M_PI_2 - acos(VDOT(h, mirror_dir));
-	    bn_mat_arb_rot(mat, origin, n, ang*2);
-	    VMOVE(h, hyp->hyp_Hi);
-	    MAT4X3VEC(hyp->hyp_Hi, mat, h);
-
-	    VMOVE(a, hyp->hyp_A);
-	    VUNITIZE(a);
-	    VCROSS(n, mirror_dir, hyp->hyp_A);
-	    VUNITIZE(n);
-	    ang = M_PI_2 - acos(VDOT(a, mirror_dir));
-	    bn_mat_arb_rot(mat, origin, n, ang*2);
-	    VMOVE(a, hyp->hyp_A);
-	    MAT4X3VEC(hyp->hyp_A, mat, a);
-
-	    break;
-	}
 	case ID_NMG: {
 	    struct model *m;
 	    struct nmgregion *r;

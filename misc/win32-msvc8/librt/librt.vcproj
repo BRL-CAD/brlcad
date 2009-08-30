@@ -480,6 +480,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\src\librt\primitives\hyp\hyp_mirror.c"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\src\librt\many.c"
 				>
 			</File>
