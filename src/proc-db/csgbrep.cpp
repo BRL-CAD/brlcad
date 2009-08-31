@@ -61,8 +61,11 @@ main(int argc, char** argv)
     tmptol.magic = BN_TOL_MAGIC;
     tmptol.dist = 0.005;
     const struct bn_tol *tol = &tmptol;
-    struct rt_tess_tol *ttmptol;
-    const struct rt_tess_tol *ttol = ttmptol;
+    struct rt_tess_tol ttmptol;
+    ttmptol.abs = 0;
+    ttmptol.rel = 0.01;
+    ttmptol.norm = 0;
+    const struct rt_tess_tol *ttol = &ttmptol;
     point_t center;
     vect_t a, b, c, N;
     ON_TextLog error_log;
@@ -73,6 +76,120 @@ main(int argc, char** argv)
     const char* id_name = "CSG B-Rep Examples";
     mk_id(outfp, id_name);
 
+    bu_log("Writing an ARB4 (via NMG) brep...\n");
+    ON_Brep* arb4brep = ON_Brep::New();
+    struct rt_arb_internal *arb4;
+    BU_GETSTRUCT(arb4, rt_arb_internal);
+    arb4->magic = RT_ARB_INTERNAL_MAGIC;
+    point_t ptarb4[8];
+    VSET(ptarb4[0], 1000, -1000, -1000);
+    VSET(ptarb4[1], 1000, 1000, -1000);
+    VSET(ptarb4[2], 1000, 1000, 1000);
+    VSET(ptarb4[3], 1000, 1000, 1000);
+    VSET(ptarb4[4], -1000, 1000, -1000);
+    VSET(ptarb4[5], -1000, 1000, -1000);
+    VSET(ptarb4[6], -1000, 1000, -1000);
+    VSET(ptarb4[7], -1000, 1000, -1000);
+    for ( int i=0; i < 8; i++ )  {
+	VMOVE( arb4->pt[i], ptarb4[i] );
+    }
+    tmp_internal->idb_ptr = (genptr_t)arb4;
+    // Now, need nmg form of the arb
+    struct model *arb4m = nmg_mm();
+    struct nmgregion *arb4r;
+    rt_arb_tess(&arb4r, arb4m, tmp_internal, ttol, tol);
+    tmp_internal->idb_ptr = (genptr_t)arb4m;
+    rt_nmg_brep(&arb4brep, tmp_internal, tol);
+    const char* arb4_name = "arb4_nurb.s";
+    mk_brep(outfp, arb4_name, arb4brep);
+    delete arb4brep;
+ 
+    bu_log("Writing an ARB5 (via NMG) brep...\n");
+    ON_Brep* arb5brep = ON_Brep::New();
+    struct rt_arb_internal *arb5;
+    BU_GETSTRUCT(arb5, rt_arb_internal);
+    arb5->magic = RT_ARB_INTERNAL_MAGIC;
+    point_t ptarb5[8];
+    VSET(ptarb5[0], 0,0,0);
+    VSET(ptarb5[1], 0,2000,0);
+    VSET(ptarb5[2], 0,2000,2000);
+    VSET(ptarb5[3], 0,0,2000);
+    VSET(ptarb5[4], -2000,0, 0);
+    VSET(ptarb5[5], -2000,2000,0);
+    VSET(ptarb5[6], -2000,2000,2000);
+    VSET(ptarb5[7], -2000,0,2000);
+    for ( int i=0; i < 8; i++ )  {
+	VMOVE( arb5->pt[i], ptarb5[i] );
+    }
+    tmp_internal->idb_ptr = (genptr_t)arb5;
+    // Now, need nmg form of the arb
+    struct model *arb5m = nmg_mm();
+    struct nmgregion *arb5r;
+    rt_arb_tess(&arb5r, arb5m, tmp_internal, ttol, tol);
+    tmp_internal->idb_ptr = (genptr_t)arb5m;
+    rt_nmg_brep(&arb5brep, tmp_internal, tol);
+    const char* arb5_name = "arb5_nurb.s";
+    mk_brep(outfp, arb5_name, arb5brep);
+    delete arb5brep;
+ 
+
+
+    bu_log("Writing an ARB6 (via NMG) brep...\n");
+    ON_Brep* arb6brep = ON_Brep::New();
+    struct rt_arb_internal *arb6;
+    BU_GETSTRUCT(arb6, rt_arb_internal);
+    arb6->magic = RT_ARB_INTERNAL_MAGIC;
+    point_t ptarb6[8];
+    VSET(ptarb6[0], 0,0,0);
+    VSET(ptarb6[1], 0,2000,0);
+    VSET(ptarb6[2], 0,2000,2000);
+    VSET(ptarb6[3], 0,0,2000);
+    VSET(ptarb6[4], -2000,0, 0);
+    VSET(ptarb6[5], -2000,2000,0);
+    VSET(ptarb6[6], -2000,2000,2000);
+    VSET(ptarb6[7], -2000,0,2000);
+    for ( int i=0; i < 8; i++ )  {
+	VMOVE( arb6->pt[i], ptarb6[i] );
+    }
+    tmp_internal->idb_ptr = (genptr_t)arb6;
+    // Now, need nmg form of the arb
+    struct model *arb6m = nmg_mm();
+    struct nmgregion *arb6r;
+    rt_arb_tess(&arb6r, arb6m, tmp_internal, ttol, tol);
+    tmp_internal->idb_ptr = (genptr_t)arb6m;
+    rt_nmg_brep(&arb6brep, tmp_internal, tol);
+    const char* arb6_name = "arb6_nurb.s";
+    mk_brep(outfp, arb6_name, arb6brep);
+    delete arb6brep;
+ 
+    bu_log("Writing an ARB7 (via NMG) brep...\n");
+    ON_Brep* arb7brep = ON_Brep::New();
+    struct rt_arb_internal *arb7;
+    BU_GETSTRUCT(arb7, rt_arb_internal);
+    arb7->magic = RT_ARB_INTERNAL_MAGIC;
+    point_t ptarb7[8];
+    VSET(ptarb7[0], 0,0,0);
+    VSET(ptarb7[1], 0,2000,0);
+    VSET(ptarb7[2], 0,2000,2000);
+    VSET(ptarb7[3], 0,0,2000);
+    VSET(ptarb7[4], -2000,0, 0);
+    VSET(ptarb7[5], -2000,2000,0);
+    VSET(ptarb7[6], -2000,2000,2000);
+    VSET(ptarb7[7], -2000,0,2000);
+    for ( int i=0; i < 8; i++ )  {
+	VMOVE( arb7->pt[i], ptarb7[i] );
+    }
+    tmp_internal->idb_ptr = (genptr_t)arb7;
+    // Now, need nmg form of the arb
+    struct model *arb7m = nmg_mm();
+    struct nmgregion *arb7r;
+    rt_arb_tess(&arb7r, arb7m, tmp_internal, ttol, tol);
+    tmp_internal->idb_ptr = (genptr_t)arb7m;
+    rt_nmg_brep(&arb7brep, tmp_internal, tol);
+    const char* arb7_name = "arb7_nurb.s";
+    mk_brep(outfp, arb7_name, arb7brep);
+    delete arb7brep;
+ 
     bu_log("Writing an NMG (arb8) brep...\n");
     ON_Brep* nmgbrep = ON_Brep::New();
     struct rt_arb_internal *arbnmg8;
