@@ -145,28 +145,28 @@ rt_nmg_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *t
 			VMOVE(max_pt, tmppt);
 		    }
 		}
-		vect_t vtmp, v1, v2, v3, v4, vnormal;
+		vect_t vtmp, uv1, uv2, uv3, uv4, vnormal;
 		VSET(vnormal, fg->N[0], fg->N[1], fg->N[2]);
-		VSUB2(v1, max_pt, center);
-		VCROSS(vtmp, v1, vnormal);
-		VADD2(v1, v1, vtmp);
-		VCROSS(v2, v1, vnormal);
-	        VREVERSE(v3, v1);
-		VCROSS(v4, v3, vnormal);
-		VADD2(v1, v1, center);
-		VADD2(v2, v2, center);
-		VADD2(v3, v3, center);
-		VADD2(v4, v4, center);
+		VSUB2(uv1, max_pt, center);
+		VCROSS(vtmp, uv1, vnormal);
+		VADD2(uv1, uv1, vtmp);
+		VCROSS(uv2, uv1, vnormal);
+	        VREVERSE(uv3, uv1);
+		VCROSS(uv4, uv3, vnormal);
+		VADD2(uv1, uv1, center);
+		VADD2(uv2, uv2, center);
+		VADD2(uv3, uv3, center);
+		VADD2(uv4, uv4, center);
 			
-		bu_log("surface v1: [%2.f,%2.f,%2.f]\n", v1[0], v1[1], v1[2]);
-		bu_log("surface v2: [%2.f,%2.f,%2.f]\n", v2[0], v2[1], v2[2]);
-		bu_log("surface v3: [%2.f,%2.f,%2.f]\n", v3[0], v3[1], v3[2]);
-		bu_log("surface v4: [%2.f,%2.f,%2.f]\n", v4[0], v4[1], v4[2]);
+		bu_log("surface v1: [%2.f,%2.f,%2.f]\n", uv1[0], uv1[1], uv1[2]);
+		bu_log("surface v2: [%2.f,%2.f,%2.f]\n", uv2[0], uv2[1], uv2[2]);
+		bu_log("surface v3: [%2.f,%2.f,%2.f]\n", uv3[0], uv3[1], uv3[2]);
+		bu_log("surface v4: [%2.f,%2.f,%2.f]\n", uv4[0], uv4[1], uv4[2]);
 		
-		ON_3dPoint p1 = ON_3dPoint(v1);
-		ON_3dPoint p2 = ON_3dPoint(v2);
-		ON_3dPoint p3 = ON_3dPoint(v3);
-		ON_3dPoint p4 = ON_3dPoint(v4);
+		ON_3dPoint p1 = ON_3dPoint(uv1);
+		ON_3dPoint p2 = ON_3dPoint(uv2);
+		ON_3dPoint p3 = ON_3dPoint(uv3);
+		ON_3dPoint p4 = ON_3dPoint(uv4);
 
 		(*b)->m_S.Append(sideSurface(p1, p4, p3, p2));
 		ON_Surface *surf = (*(*b)->m_S.Last());
@@ -192,8 +192,8 @@ rt_nmg_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *t
 		// defined to be v1, v1->v2 is defined as the U domain,
 		// and v1->v4 is defined as the V domain.
 		vect_t u_axis, v_axis;
-		VSUB2(u_axis, v2, v1);
-		VSUB2(v_axis, v4, v1);
+		VSUB2(u_axis, uv2, uv1);
+		VSUB2(v_axis, uv4, uv1);
 		fastf_t u_axis_dist = MAGNITUDE(u_axis);
 		fastf_t v_axis_dist = MAGNITUDE(v_axis);
 		// Possibility of using VPROJECT here - may even need only
@@ -246,25 +246,31 @@ rt_nmg_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *t
 			// Regardless of whether the edge existed as an object, it
 			// needs to be added to the trimming loop
 			vect_t u_component, v_component;
-			ON_BrepEdge *edge = &((*b)->m_E[brepi[eu->e_p->index]]);
-			ON_BrepVertex *evert1 = &((*b)->m_V[edge->m_vi[0]]);
 			ON_3dPoint vg1pt(vg1->coord);
-			int orientation = -1;
-			if (vg1pt != evert1->Point() ) {
+			int orientation = 0;
+			if (vg1pt !=  (*b)->m_V[(*b)->m_E[brepi[eu->e_p->index]].m_vi[0]].Point()) {
 			    orientation = 1;
 			}
 			// OK, at the moment the 2d curve generation routine is not generating curves with vertices corresponding to the
 			// edges in question.  Need to pick part the reasons for this and where the logic needs to change.
-			VSUB2(ev1, ev1, v1);
-			VSUB2(ev2, ev2, v1);
+			vect_t vect1, vect2;
+			VSUB2(vect1, ev1, uv1);
+			VSUB2(vect2, ev2, uv1);
 			ON_2dPoint from_uv, to_uv;
 			double u0, u1, v0, v1;
 			surf->GetDomain(0, &u0, &u1);
 			surf->GetDomain(1, &v0, &v1);
-			VPROJECT(ev1, u_axis, u_component, v_component);
+			
+			bu_log("uv1: (%2.f,%2.f,%2.f)\n", uv1[0], uv1[1], uv1[2]);
+			bu_log("ev1: (%2.f,%2.f,%2.f)\n", ev1[0], ev1[1], ev1[2]);
+			bu_log("vect1: (%2.f,%2.f,%2.f)\n", vect1[0], vect1[1], vect1[2]);
+			bu_log("u_axis: (%2.f,%2.f,%2.f)\n", u_axis[0], u_axis[1], u_axis[2]);
+			VPROJECT(vect1, u_axis, u_component, v_component);
+			bu_log("vect1: ucomponent: (%2.f,%2.f,%2.f), vcomponent: (%2.f,%2.f,%2.f)\n", u_component[0], u_component[1], u_component[2], v_component[0], v_component[1], v_component[2]);
 			from_uv.x = u0 + MAGNITUDE(u_component)/u_axis_dist*(u1-u0);
 			from_uv.y = v0 + MAGNITUDE(v_component)/v_axis_dist*(v1-v0);
-			VPROJECT(ev2, u_axis, u_component, v_component);
+			VPROJECT(vect2, u_axis, u_component, v_component);
+			bu_log("vect2: ucomponent: (%2.f,%2.f,%2.f), vcomponent: (%2.f,%2.f,%2.f)\n", u_component[0], u_component[1], u_component[2], v_component[0], v_component[1], v_component[2]);
 			to_uv.x = u0 + MAGNITUDE(u_component)/u_axis_dist*(u1-u0);
 			to_uv.y = v0 + MAGNITUDE(v_component)/v_axis_dist*(v1-v0);
 			surf->Ev1Der(from_uv.x,from_uv.y,S1,Su,Sv);
