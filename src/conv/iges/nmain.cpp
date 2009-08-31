@@ -28,7 +28,7 @@
 #include <iostream>
 
 #include "n_iges.hpp"
-#include "brlcad.hpp"
+#include "brlcad_brep.hpp"
 
 
 using namespace brlcad;

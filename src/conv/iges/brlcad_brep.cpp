@@ -25,7 +25,7 @@
 
 #include <assert.h>
 
-#include "brlcad.hpp"
+#include "brlcad_brep.hpp"
 #include "vmath.h"
 
 namespace brlcad {
