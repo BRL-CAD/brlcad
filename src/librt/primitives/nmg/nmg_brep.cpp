@@ -291,14 +291,13 @@ rt_nmg_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *t
 			(*b)->m_C2.Append(c2d);
 			edge_index = brepi[eu->e_p->index];
     			ON_BrepTrim& trim = (*b)->NewTrim((*b)->m_E[edge_index], orientation, loop, c2i);
-    			ON_Surface::ISO iso = ON_Surface::not_iso;
-    			trim.m_iso = iso;
     			trim.m_type = ON_BrepTrim::mated;
     			trim.m_tolerance[0] = 0.0;
     			trim.m_tolerance[1] = 0.0;
 		    }
 		}
 	    } 
+	    (*b)->SetTrimIsoFlags();
 	}
     }
     bu_log("brep valid: %d\n", (*b)->IsValid());
