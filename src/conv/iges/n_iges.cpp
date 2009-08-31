@@ -446,17 +446,17 @@ namespace brlcad {
 	cout << in << endl;
 
 	// param delimiter
-	if (in[0] == ', ' && in[1] == ', ') {
-	    _params[0] = ", ";
+	if (in[0] == ',' && in[1] == ',') {
+	    _params[0] = ",";
 	    _params[1] = ";";
 	    index = 2;
-	} else if (in[0] == ', ') {
-	    _params[0] = ", ";
+	} else if (in[0] == ',') {
+	    _params[0] = ",";
 	    _params[1] = in.substr(1, 3);
 	    index = 4;
 	} else {
 	    _params[0] = in.substr(0, 3);
-	    if (in[4] == ', ') {
+	    if (in[4] == ',') {
 		_params[1] = ';';
 		index = 5;
 	    } else {
@@ -485,31 +485,37 @@ namespace brlcad {
 
     Pointer
     ParameterData::getPointer(int index) const {
+	assert(index >= 0);
 	return Pointer(params[index]);
     }
 
     Integer
     ParameterData::getInteger(int index) const {
+	assert(index >= 0);
 	return Integer(params[index]);
     }
 
     Logical
     ParameterData::getLogical(int index) const {
+	assert(index >= 0);
 	return Logical(params[index]);
     }
 
     String
     ParameterData::getString(int index) const {
+	assert(index >= 0);
 	return String(params[index]);
     }
 
     Real
     ParameterData::getReal(int index) const {
+	assert(index >= 0);
 	return Real(params[index]);
     }
 
     void
     ParameterData::addParam(const string& param) {
+	assert(index >= 0);
 	params.push_back(param);
     }
 
@@ -644,7 +650,8 @@ namespace brlcad {
     IGES::readBreps(Extractor* handler)
     {
 	DEList breps;
-	//    find(ManifoldSolidBRepObject, breps);
+	// XXX - right now this only reads one kind of object at a time.
+	// find(ManifoldSolidBRepObject, breps);
 	find(RationalBSplineSurface, breps);
 	debug("Found " << breps.size() << " breps!");
 

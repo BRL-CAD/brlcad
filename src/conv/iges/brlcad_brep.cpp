@@ -156,8 +156,11 @@ namespace brlcad {
 
 	// grab the curve for this edge
 	const ON_Curve* c = e.EdgeCurveOf();
+	if (!c) return _topology.size()-1;
+
 	// grab the surface for the face
 	const ON_Surface* s = face().SurfaceOf();
+	if (!s) return _topology.size()-1;
 
 	// get a 2d parameter-space curve that lies on the surface for this edge
 	// hopefully this works!

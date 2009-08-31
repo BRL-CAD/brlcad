@@ -281,6 +281,9 @@ namespace brlcad {
 
   int
   BrepHandler::extractEdge(const DirectoryEntry* edgeListDE, int index) {
+    //    assert(index > 0);
+    if (index <= 0) return index;
+
     EdgeKey k = make_pair(edgeListDE, index);
     EdgeMap::iterator i = edges.find(k);
     if (i == edges.end()) {
@@ -356,6 +359,9 @@ namespace brlcad {
 
   int
   BrepHandler::extractVertex(const DirectoryEntry* de, int index) {
+    //    assert(index > 0);
+    if (index <= 0) return index;
+
     VertKey k = make_pair(de,index);
     VertMap::iterator i = vertices.find(k);
     if (i == vertices.end()) {
