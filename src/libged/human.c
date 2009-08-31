@@ -29,6 +29,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
+#include <time.h>
 #include "bu.h"
 #include "vmath.h"
 #include "bn.h"
@@ -160,6 +161,9 @@ struct human_data_t
 
 };
 
+static void Auto(struct human_data_t *dude);
+static void RandAuto(struct human_data_t *dude);
+
 /**
  * This function takes in a vector, then applies a new direction to it
  * using x, y, and z degrees, and exports it to resultVect, and returns
@@ -239,12 +243,13 @@ void boundingBox(struct rt_wdb *file, char *name, fastf_t *startPoint, fastf_t *
 	vect_t vects[8];
 	vect_t newVects[8];
 	point_t finalPoints[8];
-	point_t endPoint;
 	vect_t distance;
+	vect_t JVEC;
 	char newName[MAXLENGTH] = "a";	
 	char debug[MAXLENGTH] = "a";
 	int i = 0;
 	int w=0;
+
 	bu_strlcpy(newName, name, MAXLENGTH);
 	bu_strlcpy(debug, name, MAXLENGTH);
 	bu_strlcat(newName, "Box", MAXLENGTH);
@@ -300,7 +305,7 @@ void boundingBox(struct rt_wdb *file, char *name, fastf_t *startPoint, fastf_t *
 	for(i = 0; i < 8; i++){
 		VMOVE(finalPoints[i], newVects[i]);
 	}
-	vect_t JVEC;
+
 	MAT3X3VEC(JVEC, rotMatrix, lengthVector);
 	mk_trc_h(file, debug, startPoint, JVEC, 4, 1); 
 	mk_arb8(file, newName, *vects);
@@ -1144,7 +1149,8 @@ void setStance(fastf_t stance, struct human_data_t *dude)
 /**
  * Auto Set all data for all parts, in inches
  */
-void Auto(struct human_data_t *dude)
+static void
+Auto(struct human_data_t *dude)
 {
 	bu_log("Auto Setting\n");
 	bu_log("Height=%lf\n", dude->height);
@@ -1181,7 +1187,8 @@ void Auto(struct human_data_t *dude)
 /**
  * Random height generator
  */
-void RandAuto(struct human_data_t *dude)
+static void
+RandAuto(struct human_data_t *dude)
 {
 	fastf_t X = 0;
 	X = ((rand()%12)+54);
@@ -1454,7 +1461,7 @@ void getLocation(fastf_t *location)
 }
 
 /* Process command line arguments, all 43 of them */
-int read_args(int argc, char **argv, char *topLevel, struct human_data_t *dude, fastf_t *percentile, fastf_t *location, fastf_t *stance, fastf_t *troops, fastf_t *showBoxes)
+int read_args(int argc, const char **argv, char *topLevel, struct human_data_t *dude, fastf_t *percentile, fastf_t *location, fastf_t *stance, fastf_t *troops, fastf_t *showBoxes)
 {
     char c = 'A';
     char *options="AbH:hLlmn:N:O:o:p:s:tTvVw1:2:3:4:5:6:7:8:9:0:=:+:_:*:^:%:$:#:@:!:Q:~:Z:Y:X:";
@@ -1759,10 +1766,11 @@ int read_args(int argc, char **argv, char *topLevel, struct human_data_t *dude, 
  */
 void text(struct human_data_t *dude)
 {
-	bu_log("Ouputting text file\n");
 	fastf_t x=0, y=0, z=0;
-
 	FILE *dump;
+
+	bu_log("Ouputting text file\n");
+
 	dump = fopen("Stats.txt", "w+");
 
 	fprintf(dump, "Name, X, Y, Z, all in millimeters\n");
@@ -1881,8 +1889,9 @@ void text(struct human_data_t *dude)
  */
 void verbose(struct human_data_t *dude)
 {
-	bu_log("Verbose Text Dump\n");
 	FILE *dump;
+
+	bu_log("Verbose Text Dump\n");
 	dump = fopen("Verbose.txt", "w+");
 	fprintf(dump, "#All Sizes are in mm\n");
 
@@ -1924,9 +1933,10 @@ void verbose(struct human_data_t *dude)
  */
 void getText(struct human_data_t *dude)
 {
-	bu_log("Reading Textfile for Input\n");
 	char buffer[80];
 	FILE *input;
+
+	bu_log("Reading Textfile for Input\n");
 
 	input = fopen("Stats.txt", "r");
 
@@ -1950,11 +1960,12 @@ void getText(struct human_data_t *dude)
 
 void verbIn(struct human_data_t *dude)
 {
-	bu_log("Reading textfile for all measurements\n");
 	char buffer[80];
 	char s[80];
 	fastf_t holder;
 	FILE *input;
+
+	bu_log("Reading textfile for all measurements\n");
 
 	input = fopen("Verbose.txt", "r");
 	if(input == NULL) {
@@ -2051,9 +2062,6 @@ void verbIn(struct human_data_t *dude)
 int
 ged_human(struct ged *gedp, int ac, const char *av[])
 {
-    bu_log("Entering Human Builder\n");
-    srand(time(NULL));
-   
     struct wmember human;
     struct wmember boxes;
     struct wmember hollow;
@@ -2067,12 +2075,15 @@ ged_human(struct ged *gedp, int ac, const char *av[])
     int ret;
     int is_region = 0;
     unsigned char rgb[3], rgb2[3], rgb3[3];
-    human_data.height = DEFAULT_HEIGHT_INCHES;
-    VSET(location, 0, 0, 0); /* Default standing location */
     char topLevel[MAXLENGTH]="";
     int textDump = 0;
     int textRead = 0;
 
+    bu_log("Entering Human Builder\n");
+    srand(time(NULL));
+    human_data.height = DEFAULT_HEIGHT_INCHES;
+    VSET(location, 0, 0, 0); /* Default standing location */
+   
     bu_vls_init(&name);
     bu_vls_init(&str);
 
