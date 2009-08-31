@@ -254,7 +254,7 @@ namespace brlcad {
     for (int i = 0; i < _reclen; i++) buf[i] = fgetc(_fp);
     buf[_reclen] = 0;
     //char* str = fgets(buf, _reclen, _fp);
-    _line = buf;
+    _line = buf.c_str();
     _type = _line[72];
     return true;
   }
