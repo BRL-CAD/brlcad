@@ -51,6 +51,7 @@ static ON_Surface* sideSurface(const ON_3dPoint& SW, const ON_3dPoint& SE, const
 extern "C" void
 rt_nmg_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *tol)
 {
+#if 0
     struct model *m = nmg_mm();//not needed for non-tess
     struct nmgregion *r;
     struct shell *s;
@@ -298,6 +299,7 @@ rt_nmg_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *t
 	}
     }
     bu_log("brep valid: %d\n", (*b)->IsValid());
+#endif
 }
 
 
