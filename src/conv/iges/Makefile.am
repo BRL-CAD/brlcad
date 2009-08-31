@@ -22,7 +22,7 @@ iges_SOURCES = \
 	BrepHandler.cpp \
 	brlcad_brep.cpp \
 	n_iges.cpp  \
-	nmain.cpp
+	n_main.cpp
 
 iges_LDADD = \
 	${WDB} \
