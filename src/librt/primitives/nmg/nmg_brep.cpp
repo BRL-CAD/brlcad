@@ -168,10 +168,21 @@ rt_nmg_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *t
 		ON_3dPoint p3 = ON_3dPoint(v3);
 		ON_3dPoint p4 = ON_3dPoint(v4);
 
-		(*b)->m_S.Append(sideSurface(p1, p2, p3, p4));
+		(*b)->m_S.Append(sideSurface(p1, p4, p3, p2));
 		ON_Surface *surf = (*(*b)->m_S.Last());
 		int surfindex = (*b)->m_S.Count();
-		
+		ON_3dPoint S1, S2;
+		ON_3dVector Su, Sv;
+		surf->Ev1Der(0,0,S1,Su,Sv);
+		bu_log("evalsurface v1: [0,0] (%2.f,%2.f,%2.f)\n", S1[0],S1[1],S1[2]);
+		surf->Ev1Der(0,1,S1,Su,Sv);
+		bu_log("evalsurface v2: [0,1] (%2.f,%2.f,%2.f)\n", S1[0],S1[1],S1[2]);
+		surf->Ev1Der(1,0,S1,Su,Sv);
+		bu_log("evalsurface v3: [1,0] (%2.f,%2.f,%2.f)\n", S1[0],S1[1],S1[2]);
+		surf->Ev1Der(1,1,S1,Su,Sv);
+		bu_log("evalsurface v4: [1,1] (%2.f,%2.f,%2.f)\n", S1[0],S1[1],S1[2]);
+
+
 		// Now that we have the surface, define the face
 		ON_BrepFace& face = (*b)->NewFace(surfindex - 1);
 		
@@ -238,9 +249,9 @@ rt_nmg_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *t
 			ON_BrepEdge *edge = &((*b)->m_E[brepi[eu->e_p->index]]);
 			ON_BrepVertex *evert1 = &((*b)->m_V[edge->m_vi[0]]);
 			ON_3dPoint vg1pt(vg1->coord);
-			int orientation = 1;
+			int orientation = -1;
 			if (vg1pt != evert1->Point() ) {
-			    orientation = -1;
+			    orientation = 1;
 			}
 			// OK, at the moment the 2d curve generation routine is not generating curves with vertices corresponding to the
 			// edges in question.  Need to pick part the reasons for this and where the logic needs to change.
@@ -256,8 +267,6 @@ rt_nmg_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *t
 			VPROJECT(ev2, u_axis, u_component, v_component);
 			to_uv.x = u0 + MAGNITUDE(u_component)/u_axis_dist*(u1-u0);
 			to_uv.y = v0 + MAGNITUDE(v_component)/v_axis_dist*(v1-v0);
-			ON_3dPoint S1, S2;
-			ON_3dVector Su, Sv;
 			surf->Ev1Der(from_uv.x,from_uv.y,S1,Su,Sv);
 			surf->Ev1Der(to_uv.x,to_uv.y,S2,Su,Sv);
 			bu_log("uvline: [%f,%f] (%2.f,%2.f,%2.f), [%f, %f] (%2.f,%2.f,%2.f); orientation: %d\n\n", from_uv.x, from_uv.y, S1[0],S1[1],S1[2], to_uv.x, to_uv.y, S2[0],S2[1],S2[2],orientation);
