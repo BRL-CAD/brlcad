@@ -40,6 +40,7 @@ libtclcad_la_CFLAGS = \
 	${DM_TK_CFLAGS} \
 	${DM_WGL_CFLAGS} \
 	${DM_OGL_CFLAGS} \
+	${PNG_CPPFLAGS} \
 	${X_CFLAGS} \
 	${ITK_CPPFLAGS} \
 	${ITCL_CPPFLAGS} \
