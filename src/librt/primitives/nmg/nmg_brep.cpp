@@ -51,13 +51,14 @@ static ON_Surface* sideSurface(const ON_3dPoint& SW, const ON_3dPoint& SE, const
 extern "C" void
 rt_nmg_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *tol)
 {
-#if 0
     struct model *m = nmg_mm();//not needed for non-tess
     struct nmgregion *r;
     struct shell *s;
     struct faceuse *fu;
     struct loopuse *lu;
     struct edgeuse *eu;
+
+    int edge_index;
         
     RT_CK_DB_INTERNAL(ip);
     m = (struct model *)ip->idb_ptr;
@@ -130,7 +131,7 @@ rt_nmg_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *t
 		    if (brepi[(*pt)->vg_p->index] == -INT_MAX) {
     			ON_BrepVertex& vert = (*b)->NewVertex((*pt)->vg_p->coord, SMALL_FASTF);
     			brepi[(*pt)->vg_p->index] = vert.m_vertex_index;
-    			bu_log("brepi[%d] holds vertex %d, which is point [%2.f,%2.f,%2.f]\n", (*pt)->vg_p->index, vert.m_vertex_index, (*pt)->vg_p->coord[0], (*pt)->vg_p->coord[1], (*pt)->vg_p->coord[2]);
+    			bu_log("brepi[%ld] holds vertex %d, which is point [%2.f,%2.f,%2.f]\n", (*pt)->vg_p->index, vert.m_vertex_index, (*pt)->vg_p->coord[0], (*pt)->vg_p->coord[1], (*pt)->vg_p->coord[2]);
 		    }
 	    	}
 	    	VSET(center, tmppt[0]/ptcnt, tmppt[1]/ptcnt, tmppt[2]/ptcnt);
@@ -214,7 +215,7 @@ rt_nmg_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *t
 			++edges;
 			vect_t ev1, ev2;
 			struct vertex_g *vg1, *vg2;
-			bu_log("edgeuse %d references vertex %d and %d\n", eu->e_p->index, eu->vu_p->v_p->vg_p->index, eu->eumate_p->vu_p->v_p->vg_p->index);
+			bu_log("edgeuse %ld references vertex %ld and %ld\n", eu->e_p->index, eu->vu_p->v_p->vg_p->index, eu->eumate_p->vu_p->v_p->vg_p->index);
 			vg1 = eu->vu_p->v_p->vg_p;
 			NMG_CK_VERTEX_G(vg1);
 		        int vert1 = brepi[vg1->index];
@@ -249,7 +250,8 @@ rt_nmg_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *t
 			vect_t u_component, v_component;
 			ON_3dPoint vg1pt(vg1->coord);
 			int orientation = 0;
-			if (vg1pt !=  (*b)->m_V[(*b)->m_E[brepi[eu->e_p->index]].m_vi[0]].Point()) {
+			edge_index = brepi[eu->e_p->index];
+			if (vg1pt !=  (*b)->m_V[(*b)->m_E[edge_index].m_vi[0]].Point()) {
 			    orientation = 1;
 			}
 			// OK, at the moment the 2d curve generation routine is not generating curves with vertices corresponding to the
@@ -287,7 +289,8 @@ rt_nmg_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *t
 			c2d->SetDomain(0.0, 1.0);
 			int c2i = (*b)->m_C2.Count();
 			(*b)->m_C2.Append(c2d);
-    			ON_BrepTrim& trim = (*b)->NewTrim((*b)->m_E[brepi[eu->e_p->index]], orientation, loop, c2i);
+			edge_index = brepi[eu->e_p->index];
+    			ON_BrepTrim& trim = (*b)->NewTrim((*b)->m_E[edge_index], orientation, loop, c2i);
     			ON_Surface::ISO iso = ON_Surface::not_iso;
     			trim.m_iso = iso;
     			trim.m_type = ON_BrepTrim::mated;
@@ -299,7 +302,6 @@ rt_nmg_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *t
 	}
     }
     bu_log("brep valid: %d\n", (*b)->IsValid());
-#endif
 }
 
 
