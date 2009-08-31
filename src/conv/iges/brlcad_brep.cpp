@@ -45,9 +45,15 @@ namespace brlcad {
 
     void
     BRLCADBrepHandler::write(const string& filename) {
+	debug("write");
 	_written = true;
 	outfp = wdb_fopen(filename.c_str());
 	mk_id(outfp, id_name.c_str());
+
+	if (!_brep) {
+	    debug("no brep to write");
+	    return;
+	}
 
 	ON_TextLog tl;
 	// XXX - join trims? iterate and call CloseTrimGap
