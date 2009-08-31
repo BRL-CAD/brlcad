@@ -97,10 +97,8 @@ define([CAD_VERSION], [patsubst([MAJOR_VERSION.MINOR_VERSION.PATCH_VERSION], [
 AC_INIT(BRL-CAD, [CAD_VERSION], [http://brlcad.org], brlcad)
 AC_REVISION($Revision$)
 
-AC_CONFIG_AUX_DIR(misc)
-
+AC_CONFIG_AUX_DIR([misc])
 AC_CONFIG_MACRO_DIR([m4])
-ACLOCAL_AMFLAGS = -I m4
 
 # keep track of cmd-line options for later
 BC_ARG0="$0"
