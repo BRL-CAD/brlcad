@@ -42,6 +42,7 @@ set(LIBRT_SOURCES
     pr.c
     prep.c
     primitives/arb8/arb8.c
+    primitives/arb8/arb8_brep.cpp
     primitives/arb8/arb8_mirror.c
     primitives/arbn/arbn.c
     primitives/arbn/arbn_mirror.c
@@ -102,6 +103,7 @@ set(LIBRT_SOURCES
     primitives/mirror.c
     primitives/nmg/nmg.c
     primitives/nmg/nmg_bool.c
+    primitives/nmg/nmg_brep.cpp
     primitives/nmg/nmg_ck.c
     primitives/nmg/nmg_class.c
     primitives/nmg/nmg_eval.c
