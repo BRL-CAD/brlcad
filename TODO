@@ -615,6 +615,9 @@ THESE BREAK PROTOCOL OR ARE BACKWARDS-INCOMPATIBLE
   also will allow primitives like the torus to support non-uniform
   scaling.
 
+* rename 'part' primitive to 'pill' or remove it entirely in favor of
+  a more generalized metaprimitive primitive.
+
 
 FUNCTIONALITY NEEDED TO SPEED UP RAYTRACING
 -------------------------------------------
