@@ -94,12 +94,7 @@ main(int argc, char** argv)
 	VMOVE( arb4->pt[i], ptarb4[i] );
     }
     tmp_internal->idb_ptr = (genptr_t)arb4;
-    // Now, need nmg form of the arb
-    struct model *arb4m = nmg_mm();
-    struct nmgregion *arb4r;
-    rt_arb_tess(&arb4r, arb4m, tmp_internal, ttol, tol);
-    tmp_internal->idb_ptr = (genptr_t)arb4m;
-    rt_nmg_brep(&arb4brep, tmp_internal, tol);
+    rt_arb8_brep(&arb4brep, tmp_internal, tol);
     const char* arb4_name = "arb4_nurb.s";
     mk_brep(outfp, arb4_name, arb4brep);
     delete arb4brep;
@@ -110,24 +105,19 @@ main(int argc, char** argv)
     BU_GETSTRUCT(arb5, rt_arb_internal);
     arb5->magic = RT_ARB_INTERNAL_MAGIC;
     point_t ptarb5[8];
-    VSET(ptarb5[0], 0,0,0);
-    VSET(ptarb5[1], 0,2000,0);
-    VSET(ptarb5[2], 0,2000,2000);
-    VSET(ptarb5[3], 0,0,2000);
-    VSET(ptarb5[4], -2000,0, 0);
-    VSET(ptarb5[5], -2000,2000,0);
-    VSET(ptarb5[6], -2000,2000,2000);
-    VSET(ptarb5[7], -2000,0,2000);
+    VSET(ptarb5[0], 1000, -1000, -1000);
+    VSET(ptarb5[1], 1000, 1000, -1000);
+    VSET(ptarb5[2], 1000, 1000, 1000);
+    VSET(ptarb5[3], 1000, -1000, 1000);
+    VSET(ptarb5[4], -1000, 0, 0);
+    VSET(ptarb5[5], -1000, 0, 0);
+    VSET(ptarb5[6], -1000, 0, 0);
+    VSET(ptarb5[7], -1000, 0, 0);
     for ( int i=0; i < 8; i++ )  {
 	VMOVE( arb5->pt[i], ptarb5[i] );
     }
     tmp_internal->idb_ptr = (genptr_t)arb5;
-    // Now, need nmg form of the arb
-    struct model *arb5m = nmg_mm();
-    struct nmgregion *arb5r;
-    rt_arb_tess(&arb5r, arb5m, tmp_internal, ttol, tol);
-    tmp_internal->idb_ptr = (genptr_t)arb5m;
-    rt_nmg_brep(&arb5brep, tmp_internal, tol);
+    rt_arb8_brep(&arb5brep, tmp_internal, tol);
     const char* arb5_name = "arb5_nurb.s";
     mk_brep(outfp, arb5_name, arb5brep);
     delete arb5brep;
@@ -140,24 +130,19 @@ main(int argc, char** argv)
     BU_GETSTRUCT(arb6, rt_arb_internal);
     arb6->magic = RT_ARB_INTERNAL_MAGIC;
     point_t ptarb6[8];
-    VSET(ptarb6[0], 0,0,0);
-    VSET(ptarb6[1], 0,2000,0);
-    VSET(ptarb6[2], 0,2000,2000);
-    VSET(ptarb6[3], 0,0,2000);
-    VSET(ptarb6[4], -2000,0, 0);
-    VSET(ptarb6[5], -2000,2000,0);
-    VSET(ptarb6[6], -2000,2000,2000);
-    VSET(ptarb6[7], -2000,0,2000);
+    VSET(ptarb6[0], 1000, -1000, -1000);
+    VSET(ptarb6[1], 1000, 1000, -1000);
+    VSET(ptarb6[2], 1000, 1000, 1000);
+    VSET(ptarb6[3], 1000, -1000, 1000);
+    VSET(ptarb6[4], -1000, 0, -1000);
+    VSET(ptarb6[5], -1000, 0, -1000);
+    VSET(ptarb6[6], -1000, 0, 1000);
+    VSET(ptarb6[7], -1000, 0, 1000);
     for ( int i=0; i < 8; i++ )  {
 	VMOVE( arb6->pt[i], ptarb6[i] );
     }
     tmp_internal->idb_ptr = (genptr_t)arb6;
-    // Now, need nmg form of the arb
-    struct model *arb6m = nmg_mm();
-    struct nmgregion *arb6r;
-    rt_arb_tess(&arb6r, arb6m, tmp_internal, ttol, tol);
-    tmp_internal->idb_ptr = (genptr_t)arb6m;
-    rt_nmg_brep(&arb6brep, tmp_internal, tol);
+    rt_arb8_brep(&arb6brep, tmp_internal, tol);
     const char* arb6_name = "arb6_nurb.s";
     mk_brep(outfp, arb6_name, arb6brep);
     delete arb6brep;
@@ -168,29 +153,52 @@ main(int argc, char** argv)
     BU_GETSTRUCT(arb7, rt_arb_internal);
     arb7->magic = RT_ARB_INTERNAL_MAGIC;
     point_t ptarb7[8];
-    VSET(ptarb7[0], 0,0,0);
-    VSET(ptarb7[1], 0,2000,0);
-    VSET(ptarb7[2], 0,2000,2000);
-    VSET(ptarb7[3], 0,0,2000);
-    VSET(ptarb7[4], -2000,0, 0);
-    VSET(ptarb7[5], -2000,2000,0);
-    VSET(ptarb7[6], -2000,2000,2000);
-    VSET(ptarb7[7], -2000,0,2000);
+    VSET(ptarb7[0], 1000, -1000, -500);
+    VSET(ptarb7[1], 1000, 1000, -500);
+    VSET(ptarb7[2], 1000, 1000, 1500);
+    VSET(ptarb7[3], 1000, -1000, 500);
+    VSET(ptarb7[4], -1000, -1000, -500);
+    VSET(ptarb7[5], -1000, 1000, -500);
+    VSET(ptarb7[6], -1000, 1000, 500);
+    VSET(ptarb7[7], -1000, -1000, -500);
     for ( int i=0; i < 8; i++ )  {
 	VMOVE( arb7->pt[i], ptarb7[i] );
     }
     tmp_internal->idb_ptr = (genptr_t)arb7;
-    // Now, need nmg form of the arb
-    struct model *arb7m = nmg_mm();
-    struct nmgregion *arb7r;
-    rt_arb_tess(&arb7r, arb7m, tmp_internal, ttol, tol);
-    tmp_internal->idb_ptr = (genptr_t)arb7m;
-    rt_nmg_brep(&arb7brep, tmp_internal, tol);
+    rt_arb8_brep(&arb7brep, tmp_internal, tol);
     const char* arb7_name = "arb7_nurb.s";
     mk_brep(outfp, arb7_name, arb7brep);
     delete arb7brep;
  
-    bu_log("Writing an NMG (arb8) brep...\n");
+    bu_log("Writing an ARB8 (via NMG) b-rep...\n");
+    ON_Brep* arb8brep = ON_Brep::New();
+    struct rt_arb_internal *arb8;
+    BU_GETSTRUCT(arb8, rt_arb_internal);
+    arb8->magic = RT_ARB_INTERNAL_MAGIC;
+    point_t pt8[8];
+    VSET(pt8[0], 1015, -1000, -995);
+    VSET(pt8[1], 1015, 1000, -995);
+    VSET(pt8[2], 1015, 1000, 1005);
+    VSET(pt8[3], 1015, -1000, 1005);
+    VSET(pt8[4], -985, -1000, -995);
+    VSET(pt8[5], -985, 1000, -995);
+    VSET(pt8[6], -985, 1000, 1005);
+    VSET(pt8[7], -985, -1000, 1005);
+    for ( int i=0; i < 8; i++ )  {
+	VMOVE( arb8->pt[i], pt8[i] );
+    }
+    tmp_internal->idb_ptr = (genptr_t)arb8;
+    rt_arb8_brep(&arb8brep, tmp_internal, tol);
+    const char* arb8_name = "arb8_nurb.s";
+    mk_brep(outfp, arb8_name, arb8brep);
+    delete arb8brep;
+
+    // This routine does explicitly what is done
+    // by the previous ARB8 brep call internally.
+    // Ideally a more general NMG will be created
+    // and fed to rt_nmg_brep rather than using an
+    // ARB as the starting point.
+    bu_log("Writing an NMG brep...\n");
     ON_Brep* nmgbrep = ON_Brep::New();
     struct rt_arb_internal *arbnmg8;
     BU_GETSTRUCT(arbnmg8, rt_arb_internal);
@@ -218,30 +226,7 @@ main(int argc, char** argv)
     mk_brep(outfp, nmg_name, nmgbrep);
     delete nmgbrep;
     
-    bu_log("Writing an ARB8 b-rep...\n");
-    ON_Brep* arb8brep = ON_Brep::New();
-    struct rt_arb_internal *arb8;
-    BU_GETSTRUCT(arb8, rt_arb_internal);
-    arb8->magic = RT_ARB_INTERNAL_MAGIC;
-    point_t pt8[8];
-    VSET(pt8[0], 1015, -1000, -995);
-    VSET(pt8[1], 1015, 1000, -995);
-    VSET(pt8[2], 1015, 1000, 1005);
-    VSET(pt8[3], 1015, -1000, 1005);
-    VSET(pt8[4], -985, -1000, -995);
-    VSET(pt8[5], -985, 1000, -995);
-    VSET(pt8[6], -985, 1000, 1005);
-    VSET(pt8[7], -985, -1000, 1005);
-    for ( int i=0; i < 8; i++ )  {
-	VMOVE( arb8->pt[i], pt8[i] );
-    }
-    tmp_internal->idb_ptr = (genptr_t)arb8;
-    rt_arb8_brep(&arb8brep, tmp_internal, tol);
-    const char* arb8_name = "arb8_nurb.s";
-    mk_brep(outfp, arb8_name, arb8brep);
-    delete arb8brep;
-
-
+    
     bu_log("Writing a Spherical b-rep...\n");
     ON_Brep* sphbrep = ON_Brep::New();
     struct rt_ell_internal *sph;
