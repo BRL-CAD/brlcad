@@ -41,6 +41,7 @@ extern "C" {
 #include "wdb.h"
     extern void rt_arb_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct rt_tess_tol *ttol,const struct bn_tol *tol);
     extern void rt_arb8_brep(ON_Brep **bi, struct rt_db_internal *ip, const struct bn_tol *tol);
+    extern void rt_arbn_brep(ON_Brep **bi, struct rt_db_internal *ip, const struct bn_tol *tol);
     extern void rt_nmg_brep(ON_Brep **bi, struct rt_db_internal *ip, const struct bn_tol *tol);
     extern void rt_sph_brep(ON_Brep **bi, struct rt_db_internal *ip, const struct bn_tol *tol);
     extern void rt_ell_brep(ON_Brep **bi, struct rt_db_internal *ip, const struct bn_tol *tol);
@@ -193,6 +194,44 @@ main(int argc, char** argv)
     mk_brep(outfp, arb8_name, arb8brep);
     delete arb8brep;
 
+/*
+    bu_log("Writing an ARBN (via NMG) b-rep...\n");
+    ON_Brep* arbnbrep = ON_Brep::New();
+    struct rt_db_internal arbninternal;
+    RT_INIT_DB_INTERNAL(&arbninternal);
+    arbninternal.idb_type = ID_ARBN;
+    arbninternal.idb_meth = &rt_functab[ID_ARBN];
+    arbninternal.idb_ptr = (genptr_t)bu_malloc(sizeof(struct rt_arbn_internal), "rt_arbn_internal");
+    struct rt_arbn_internal *arbn;
+    arbn = (struct rt_arbn_internal *)arbninternal.idb_ptr;
+    arbn->magic = RT_ARBN_INTERNAL_MAGIC;
+    arbn->neqn = 8;
+    arbn->eqn = (plane_t *)bu_calloc(arbn->neqn,sizeof(plane_t), "arbn plane eqns");
+    VSET(arbn->eqn[0], 1, 0, 0);
+    arbn->eqn[0][3] = 0.5;
+    VSET(arbn->eqn[1], -1, 0, 0);
+    arbn->eqn[1][3] = 0.5;
+    VSET(arbn->eqn[2], 0, 1, 0);
+    arbn->eqn[2][3] = 0.5;
+    VSET(arbn->eqn[3], 0, -1, 0);
+    arbn->eqn[3][3] = 0.5;
+    VSET(arbn->eqn[4], 0, 0, 1);
+    arbn->eqn[4][3] = 0.5;
+    VSET(arbn->eqn[5], 0, 0, -1);
+    arbn->eqn[5][3] = 0.5;
+    VSET(arbn->eqn[6], 0.57735, 0.57735, 0.57735);
+    arbn->eqn[6][3] = 0.5;
+    VSET(arbn->eqn[7], -0.57735, -0.57735, -0.57735);
+    arbn->eqn[7][3] = 0.5;
+    rt_arbn_brep(&arbnbrep, &arbninternal, tol);
+    const char* arbn_name = "arbn_nurb.s";
+    mk_brep(outfp, arbn_name, arbnbrep);
+    bu_free(arbn->eqn, "free arbn eqn");
+    bu_free(arbninternal.idb_ptr, "free arbn");
+    delete arbnbrep;
+*/
+  
+
     // This routine does explicitly what is done
     // by the previous ARB8 brep call internally.
     // Ideally a more general NMG will be created
@@ -225,7 +264,7 @@ main(int argc, char** argv)
     const char* nmg_name = "nmg_nurb.s";
     mk_brep(outfp, nmg_name, nmgbrep);
     delete nmgbrep;
-    
+   
     
     bu_log("Writing a Spherical b-rep...\n");
     ON_Brep* sphbrep = ON_Brep::New();
