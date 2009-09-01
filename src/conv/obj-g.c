@@ -76,10 +76,18 @@ free_region(struct region_s * r)
 }
 
 int
-write_region()
+write_region(struct region_s *r, struct rt_wdb *out_fp)
 {
-    return -1;
+    int rval;
+    char *regname;
+    /* add the region long name to list */
+    /* lock here, regname is not reentrant. */
+    regname = basename(r->name);
+    rval = wdb_export( out_fp, regname, (genptr_t)&(r->bot), ID_BOT, 1.0 );
+    /* unlock here. */
+    return rval;
 }
+
 
 int
 add_vertex(struct region_s * r, char *buf)
@@ -184,6 +192,8 @@ main(int argc, char **argv)
 		return EXIT_FAILURE;
 	}
     }
+
+    /* using the list generated in write regions, build the tree. */
 
     wdb_close(fd_out);
 
