@@ -76,7 +76,7 @@ main(int argc, char** argv)
     outfp = wdb_fopen("csgbrep.g");
     const char* id_name = "CSG B-Rep Examples";
     mk_id(outfp, id_name);
-
+/*
     bu_log("Writing an ARB4 (via NMG) brep...\n");
     ON_Brep* arb4brep = ON_Brep::New();
     struct rt_arb_internal *arb4;
@@ -193,7 +193,7 @@ main(int argc, char** argv)
     const char* arb8_name = "arb8_nurb.s";
     mk_brep(outfp, arb8_name, arb8brep);
     delete arb8brep;
-
+*/
     bu_log("Writing an ARBN (via NMG) b-rep...\n");
     ON_Brep* arbnbrep = ON_Brep::New();
     struct rt_db_internal arbninternal;
@@ -207,21 +207,21 @@ main(int argc, char** argv)
     arbn->neqn = 8;
     arbn->eqn = (plane_t *)bu_calloc(arbn->neqn,sizeof(plane_t), "arbn plane eqns");
     VSET(arbn->eqn[0], 1, 0, 0);
-    arbn->eqn[0][3] = 0.5;
+    arbn->eqn[0][3] = 1000;
     VSET(arbn->eqn[1], -1, 0, 0);
-    arbn->eqn[1][3] = 0.5;
+    arbn->eqn[1][3] = 1000;
     VSET(arbn->eqn[2], 0, 1, 0);
-    arbn->eqn[2][3] = 0.5;
+    arbn->eqn[2][3] = 1000;
     VSET(arbn->eqn[3], 0, -1, 0);
-    arbn->eqn[3][3] = 0.5;
+    arbn->eqn[3][3] = 1000;
     VSET(arbn->eqn[4], 0, 0, 1);
-    arbn->eqn[4][3] = 0.5;
+    arbn->eqn[4][3] = 1000;
     VSET(arbn->eqn[5], 0, 0, -1);
-    arbn->eqn[5][3] = 0.5;
+    arbn->eqn[5][3] = 1000;
     VSET(arbn->eqn[6], 0.57735, 0.57735, 0.57735);
-    arbn->eqn[6][3] = 0.5;
+    arbn->eqn[6][3] = 1000;
     VSET(arbn->eqn[7], -0.57735, -0.57735, -0.57735);
-    arbn->eqn[7][3] = 0.5;
+    arbn->eqn[7][3] = 1000;
     rt_arbn_brep(&arbnbrep, &arbninternal, tol);
     const char* arbn_name = "arbn_nurb.s";
     mk_brep(outfp, arbn_name, arbnbrep);
@@ -229,7 +229,7 @@ main(int argc, char** argv)
     bu_free(arbninternal.idb_ptr, "free arbn");
     delete arbnbrep;
   
-
+/*
     // This routine does explicitly what is done
     // by the previous ARB8 brep call internally.
     // Ideally a more general NMG will be created
@@ -337,7 +337,7 @@ main(int argc, char** argv)
     const char* eto_name = "eto_nurb.s";
     mk_brep(outfp, eto_name, etobrep);
     delete etobrep;
-
+*/
 
     bu_free(tmp_internal, "free tmp_internal");
     wdb_close(outfp);

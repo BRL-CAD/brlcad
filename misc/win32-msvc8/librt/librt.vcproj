@@ -248,6 +248,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\src\librt\primitives\arb8\arbn_brep.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\src\librt\primitives\arbn\arbn_mirror.c"
 				>
 			</File>
