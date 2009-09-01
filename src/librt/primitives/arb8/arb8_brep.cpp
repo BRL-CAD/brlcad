@@ -27,6 +27,7 @@
 
 #include "raytrace.h"
 #include "rtgeom.h"
+#include "nmg.h"
 #include "brep.h"
 
 extern "C" {
@@ -57,6 +58,7 @@ rt_arb8_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *
     rt_arb_tess(&arbr, arbm, tmp_internal, ttol, tol);
     tmp_internal->idb_ptr = (genptr_t)arbm;
     rt_nmg_brep(b, tmp_internal, tol);
+    FREE_MODEL(arbm);
     bu_free(tmp_internal, "free temporary rt_db_internal");
 }
 

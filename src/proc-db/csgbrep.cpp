@@ -194,7 +194,6 @@ main(int argc, char** argv)
     mk_brep(outfp, arb8_name, arb8brep);
     delete arb8brep;
 
-/*
     bu_log("Writing an ARBN (via NMG) b-rep...\n");
     ON_Brep* arbnbrep = ON_Brep::New();
     struct rt_db_internal arbninternal;
@@ -229,7 +228,6 @@ main(int argc, char** argv)
     bu_free(arbn->eqn, "free arbn eqn");
     bu_free(arbninternal.idb_ptr, "free arbn");
     delete arbnbrep;
-*/
   
 
     // This routine does explicitly what is done

@@ -1,4 +1,4 @@
-/*                    A R B 8 _ B R E P . C P P
+/*                    A R B N _ B R E P . C P P
  * BRL-CAD
  *
  * Copyright (c) 2008-2009 United States Government as represented by
@@ -27,6 +27,7 @@
 
 #include "raytrace.h"
 #include "rtgeom.h"
+#include "nmg.h"
 #include "brep.h"
 
 extern "C" {
@@ -35,7 +36,7 @@ extern void rt_nmg_brep(ON_Brep **bi, struct rt_db_internal *ip, const struct bn
 }
 
 /**
- *			R T _ A R B 8 _ B R E P
+ *			R T _ A R B N _ B R E P
  */
 extern "C" void
 rt_arbn_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *tol)
@@ -57,6 +58,7 @@ rt_arbn_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *
     rt_arbn_tess(&arbnmgr, arbn_nmg, tmp_internal, ttol, tol);
     tmp_internal->idb_ptr = (genptr_t)arbn_nmg;
     rt_nmg_brep(b, tmp_internal, tol);
+    FREE_MODEL(arbn_nmg);
     bu_free(tmp_internal, "free temporary rt_db_internal");
 }
 
