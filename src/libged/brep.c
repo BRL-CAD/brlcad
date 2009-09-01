@@ -40,9 +40,11 @@ RT_EXPORT BU_EXTERN(int brep_face_info,
 RT_EXPORT BU_EXTERN(int brep_surface_info,
 		    (struct brep_specific* bs,struct bu_vls *vls,int si));
 RT_EXPORT BU_EXTERN(int brep_surface_plot,
-		    (struct ged *gedp, struct brep_specific* bs, struct rt_brep_internal* bi, struct bn_vlblock *vbp,int index,int plotres));
+		    (struct bu_vls *vls, struct brep_specific* bs, struct rt_brep_internal* bi, struct bn_vlblock *vbp,int index,int plotres));
 RT_EXPORT BU_EXTERN(int brep_facetrim_plot,
-		    (struct ged *gedp, struct brep_specific* bs, struct rt_brep_internal* bi, struct bn_vlblock *vbp,int index));
+		    (struct bu_vls *vls, struct brep_specific* bs, struct rt_brep_internal* bi, struct bn_vlblock *vbp,int index));
+RT_EXPORT BU_EXTERN(int brep_command,
+		    (struct bu_vls *vls, struct brep_specific* bs, struct rt_brep_internal* bi, struct bn_vlblock *vbp,int argc, char *argv[]));
 #else
 extern int brep_surface_plot(struct ged *gedp, struct brep_specific* bs, struct rt_brep_internal* bi, struct bn_vlblock *vbp,int index);
 #endif
@@ -51,14 +53,9 @@ int
 ged_brep(struct ged *gedp, int argc, const char *argv[])
 {
     struct bn_vlblock*vbp;
-    /* unused?
-    int ret;
-    FILE *fp;
-    double char_size;
-    */
     char *solid_name;
     char *command;
-    static const char *usage = "brepsolidname [command]";
+    static const char *usage = "brep brepname.s [command]";
     register struct directory *ndp;
     struct rt_db_internal	intern;
     struct rt_brep_internal* bi;
@@ -125,84 +122,15 @@ ged_brep(struct ged *gedp, int argc, const char *argv[])
 	bi->brep = NULL;
 	stp->st_specific = (genptr_t)bs;
     }
-    
-    if (argc == 2)
-	command = "info";
-    else
-	command = (char *)argv[2];
-    
-    if ( strcmp(command,"info") == 0) {
-	if ( strcmp(command,"?") == 0) {
-	    bu_vls_printf( &gedp->ged_result_str, "%s", usage);
-	    bu_vls_printf(&gedp->ged_result_str, "\tinfo - return count information for specific BREP\n");
-	    bu_vls_printf(&gedp->ged_result_str, "\tinfo S [index] - return information for specific BREP 'surface'\n");
-	    bu_vls_printf(&gedp->ged_result_str, "\tinfo F [index] - return information for specific BREP 'face'\n");
-	} else if (argc == 3) {
-	    brep_info(bs, &gedp->ged_result_str);
-	} else if (argc == 5) {
-	    const char *part = argv[3];
-	    const char *strindex = argv[4];
-	    if (strcmp(strindex,"?") == 0) {
-		/* printout indedx options */
-		bu_vls_printf(&gedp->ged_result_str, "\tinfo S [index] - return information for specific BREP 'surface'\n");
-		bu_vls_printf(&gedp->ged_result_str, "\tinfo F [index] - return information for specific BREP 'face'\n");
-	    } else {
-		int index = atoi(strindex);
-		if (strcmp(part,"S") == 0) {
-		    bu_vls_printf( &gedp->ged_result_str, "%s - ", solid_name);
-		    brep_surface_info(bs, &gedp->ged_result_str,index);
-		} else if (strcmp(part,"F") == 0) {
-		    bu_vls_printf( &gedp->ged_result_str, "%s - ", solid_name);
-		    brep_face_info(bs, &gedp->ged_result_str,index);
-		}
-	    }
-	}
-    } else if ( strcmp(command,"plot") == 0) {
-	if ( strcmp(command,"?") == 0) {
-	    bu_vls_printf( &gedp->ged_result_str, "%s", usage);
-	    bu_vls_printf(&gedp->ged_result_str, "\tplot - plot entire BREP");
-	    bu_vls_printf(&gedp->ged_result_str, "\tplot S [index] - plot specific BREP 'surface'\n");
-	    bu_vls_printf(&gedp->ged_result_str, "\tplot F [index] - plot specific BREP 'face'\n");
-	    brep_info(bs, &gedp->ged_result_str);
-	} else if (argc == 3) {
-	    bu_vls_printf( &gedp->ged_result_str, "%s", usage);
-	    brep_info(bs, &gedp->ged_result_str);
-	} else if (argc >= 5) {
-	    const char *part = argv[3];
-	    const char *strindex = argv[4];
-	    if (strcmp(strindex,"?") == 0) {
-		/* printout indedx options */
-		bu_vls_printf(&gedp->ged_result_str, "\tplot S [index] - plot specific BREP 'surface'\n");
-		bu_vls_printf(&gedp->ged_result_str, "\tplot F [index] - plot specific BREP 'face'\n");
-		brep_info(bs, &gedp->ged_result_str);
-	    } else {
-		int index = atoi(strindex);
-		int plotres = 100;
-		if (strcmp(part,"S") == 0) {
-		    bu_vls_printf(&gedp->ged_result_str, "%s plot:", solid_name);
-		    if (argc == 6) {
-			const char *strres = argv[5];
-			plotres = atoi(strres);
-		    }
-		    vbp = rt_vlblock_init();
-		    brep_surface_plot(gedp,bs,bi,vbp,index,plotres);
-		    ged_cvt_vlblock_to_solids(gedp, vbp, "_SURF_", 0);
-		    rt_vlblock_free(vbp);
-		    vbp = (struct bn_vlblock *)NULL;
-		} else if (strcmp(part,"F") == 0) {
-		    bu_vls_printf(&gedp->ged_result_str, "%s plot:", solid_name);
-		    
-		    vbp = rt_vlblock_init();
-		    brep_facetrim_plot(gedp,bs,bi,vbp,index);
-		    ged_cvt_vlblock_to_solids(gedp, vbp, "_FACE_", 0);
-		    rt_vlblock_free(vbp);
-		    vbp = (struct bn_vlblock *)NULL;
-		}
-	    }
-	}
-    }
-    
-    
+
+    vbp = rt_vlblock_init();
+
+    brep_command(&gedp->ged_result_str,bs,bi,vbp,argc,argv);
+
+    ged_cvt_vlblock_to_solids(gedp, vbp, solid_name, 0);
+    rt_vlblock_free(vbp);
+    vbp = (struct bn_vlblock *)NULL;
+
     rt_db_free_internal(&intern, &rt_uniresource);
     
     return GED_OK;

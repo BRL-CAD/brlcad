@@ -54,9 +54,11 @@ RT_EXPORT BU_EXTERN(int brep_face_info,
 RT_EXPORT BU_EXTERN(int brep_surface_info,
 		    (struct brep_specific* bs,struct bu_vls *vls,int si));
 RT_EXPORT BU_EXTERN(int brep_surface_plot,
-		    (struct ged *gedp, struct brep_specific* bs, struct rt_brep_internal* bi, struct bn_vlblock *vbp,int index,int plotres));
+		    (struct bu_vls *vls, struct brep_specific* bs, struct rt_brep_internal* bi, struct bn_vlblock *vbp,int index,int plotres));
 RT_EXPORT BU_EXTERN(int brep_facetrim_plot,
-		    (struct ged *gedp, struct brep_specific* bs, struct rt_brep_internal* bi, struct bn_vlblock *vbp,int index));
+		    (struct bu_vls *vls, struct brep_specific* bs, struct rt_brep_internal* bi, struct bn_vlblock *vbp,int index));
+RT_EXPORT BU_EXTERN(int brep_command,
+		    (struct bu_vls *vls, struct brep_specific* bs, struct rt_brep_internal* bi, struct bn_vlblock *vbp,int argc, char *argv[]));
 #ifdef __cplusplus
 }
 #endif
@@ -76,7 +78,6 @@ using namespace brlcad;
 
 extern void brep_preprocess_trims(ON_BrepFace& face, SurfaceTree* tree);
 extern void brep_bvh_subdivide(BBNode* parent, const std::list<SurfaceTree*>& face_trees);
-//extern void ged_cvt_vlblock_to_solids(struct ged *gedp, struct bn_vlblock *vbp, char *name, int copy);
 
 #define PLOTTING 1
 #if PLOTTING
@@ -344,7 +345,7 @@ void plottrim(ON_BrepFace &face, struct bn_vlblock *vbp) {
     return;
 }
 
-void plotsurface(ON_Surface &surf, struct bn_vlblock *vbp,int plotres) {
+void plotsurface(ON_Surface &surf, struct bn_vlblock *vbp,int isocurveres, int gridres) {
 	register struct bu_list *vhead;
     double umin, umax;
     double vmin, vmax;
@@ -356,22 +357,22 @@ void plotsurface(ON_Surface &surf, struct bn_vlblock *vbp,int plotres) {
 	ON_Interval udom = surf.Domain(0);
 	ON_Interval vdom = surf.Domain(1);
 
-    int inc = plotres;
-    for (int u = 0; u <= inc; u++) {
-		for (int v = 1; v <= inc; v++) {
-			ON_3dPoint p = surf.PointAt(udom.ParameterAt((double)u/(double)inc),vdom.ParameterAt((double)(v-1)/(double)inc));
+    for (int u = 0; u <= gridres; u++) {
+		for (int v = 1; v <= isocurveres; v++) {
+			ON_3dPoint p = surf.PointAt(udom.ParameterAt((double)u/(double)gridres),vdom.ParameterAt((double)(v-1)/(double)isocurveres));
 			VMOVE(pt1, p);
-			p = surf.PointAt(udom.ParameterAt((double)u/(double)inc),vdom.ParameterAt((double)v/(double)inc));
+			p = surf.PointAt(udom.ParameterAt((double)u/(double)gridres),vdom.ParameterAt((double)v/(double)isocurveres));
 			VMOVE(pt2, p);
 			RT_ADD_VLIST(vhead, pt1, BN_VLIST_LINE_MOVE);
 			RT_ADD_VLIST(vhead, pt2, BN_VLIST_LINE_DRAW);
 		}
 	}
-	for (int v = 0; v <= inc; v++) {
-		for (int u = 1; u <= inc; u++) {
-			ON_3dPoint p = surf.PointAt(udom.ParameterAt((double)(u-1)/(double)inc),vdom.ParameterAt((double)v/(double)inc));
+
+	for (int v = 0; v <= gridres; v++) {
+		for (int u = 1; u <= isocurveres; u++) {
+			ON_3dPoint p = surf.PointAt(udom.ParameterAt((double)(u-1)/(double)isocurveres),vdom.ParameterAt((double)v/(double)gridres));
 			VMOVE(pt1, p);
-			p = surf.PointAt(udom.ParameterAt((double)u/(double)inc),vdom.ParameterAt((double)v/(double)inc));
+			p = surf.PointAt(udom.ParameterAt((double)u/(double)isocurveres),vdom.ParameterAt((double)v/(double)gridres));
 			VMOVE(pt2, p);
 			RT_ADD_VLIST(vhead, pt1, BN_VLIST_LINE_MOVE);
 			RT_ADD_VLIST(vhead, pt2, BN_VLIST_LINE_DRAW);
@@ -379,6 +380,53 @@ void plotsurface(ON_Surface &surf, struct bn_vlblock *vbp,int plotres) {
 	}
     return;
 }
+
+void plotcurve(ON_Curve &curve, struct bn_vlblock *vbp, int plotres) {
+	register struct bu_list *vhead;
+    double umin, umax;
+    double pt1[3],pt2[3];
+    ON_2dPoint from, to;
+
+    vhead = rt_vlblock_find(vbp, RED);
+
+	if (curve.IsLinear()) {
+		/*
+		 ON_BrepVertex& v1 = face.Brep()->m_V[trim.m_vi[0]];
+		 ON_BrepVertex& v2 = face.Brep()->m_V[trim.m_vi[1]];
+		 VMOVE(pt1, v1.Point());
+		 VMOVE(pt2, v2.Point());
+		 LINE_PLOT(pt1,pt2);
+		 */
+
+		int knotcnt = curve.SpanCount();
+		double *knots = new double[knotcnt + 1];
+
+		curve.GetSpanVector(knots);
+		for (int i = 1; i <= knotcnt; i++) {
+			ON_3dPoint p = curve.PointAt(knots[i - 1]);
+			VMOVE(pt1, p);
+			p = curve.PointAt(knots[i]);
+			VMOVE(pt2, p);
+			RT_ADD_VLIST(vhead, pt1, BN_VLIST_LINE_MOVE);
+			RT_ADD_VLIST(vhead, pt2, BN_VLIST_LINE_DRAW);
+		}
+
+	} else {
+		ON_Interval dom = curve.Domain();
+		// XXX todo: dynamically sample the curve
+		for (int i = 1; i <= plotres; i++) {
+			ON_3dPoint p = curve.PointAt(dom.ParameterAt((double) (i - 1)
+					/ (double)plotres));
+			VMOVE(pt1, p);
+			p = curve.PointAt(dom.ParameterAt((double) i / (double)plotres));
+			VMOVE(pt2, p);
+			RT_ADD_VLIST(vhead, pt1, BN_VLIST_LINE_MOVE);
+			RT_ADD_VLIST(vhead, pt2, BN_VLIST_LINE_DRAW);
+		}
+	}
+	return;
+}
+
 void plottrim(const ON_Curve &curve, double from, double to ) {
     point_t pt1,pt2;
     // XXX todo: dynamically sample the curve
@@ -481,7 +529,7 @@ brep_face_info(struct brep_specific* bs,struct bu_vls *vls,int si)
 }
 
 int
-brep_facetrim_plot(struct ged *gedp, struct brep_specific* bs, struct rt_brep_internal* bi, struct bn_vlblock *vbp,int index)
+brep_facetrim_plot(struct bu_vls *vls, struct brep_specific* bs, struct rt_brep_internal* bi, struct bn_vlblock *vbp,int index)
 {
 	register struct bu_list *vhead;
 	struct bn_vlblock        *surface_leafs_vbp;
@@ -501,7 +549,7 @@ brep_facetrim_plot(struct ged *gedp, struct brep_specific* bs, struct rt_brep_in
 }
 
 int
-brep_surface_plot(struct ged *gedp, struct brep_specific* bs, struct rt_brep_internal* bi, struct bn_vlblock *vbp,int index,int plotres)
+brep_surface_plot(struct bu_vls *vls, struct brep_specific* bs, struct rt_brep_internal* bi, struct bn_vlblock *vbp,int index,int plotres)
 {
 	register struct bu_list *vhead;
 	struct bn_vlblock        *surface_leafs_vbp;
@@ -512,10 +560,168 @@ brep_surface_plot(struct ged *gedp, struct brep_specific* bs, struct rt_brep_int
         bu_log("brep is NOT valid");
         return -1;
     }
+    if ( index == -1) {
+	for (index = 0; index < brep->m_S.Count(); index++) {
+	    ON_Surface *surf = brep->m_S[index];
+	    plotsurface(*surf,vbp,plotres,10);
+	}
+    } else if (index < brep->m_S.Count()) {
 	ON_Surface *surf = brep->m_S[index];
-    plotsurface(*surf,vbp,plotres);
+/*
+	ON_4dPoint pnt;
+	ON_NurbsSurface test;
+
+	if ( surf->GetNurbForm(test) > 0) {
+	    int u_size = test.m_cv_count[0];
+	    int v_size = test.m_cv_count[1];
+	    cout << "u,v - " << u_size << "," << v_size << endl;
+	    for (int iu = 0; iu < u_size; iu++) {
+		for (int iv = 0; iv < v_size; iv++) {
+			test.GetCV(iu,iv,pnt);
+			cout << "("<< pnt.x << "," << pnt.y << "," << pnt.z << "," << pnt.w << ")" << endl;
+		}
+	    }
+	double *knots = new double [test.SpanCount(0)+1];
+	if ( test.GetSpanVector( 0, knots ) ) {
+		cout << "knots 0 - (";
+		for(int i=0; i < test.SpanCount(0)+1; i++ ) {
+			if (i > 0) cout << ",";
+			cout << knots[i];
+		}
+		cout << ")" << endl;
+	}
+	knots = new double [test.SpanCount(1)+1];
+	if ( test.GetSpanVector( 1, knots ) ) {
+		cout << "knots 1 - (";
+		for(int i=0; i < test.SpanCount(1)+1; i++ ) {
+			if (i > 0) cout << ",";
+			cout << knots[i];
+		}
+		cout << ")" << endl;
+	}
+
+	}
+*/
+	plotsurface(*surf,vbp,plotres,10);
+    }
 	
     return 0;
+}
+
+int
+brep_edge3d_plot(struct bu_vls *vls, struct brep_specific* bs, struct rt_brep_internal* bi, struct bn_vlblock *vbp,int index,int plotres)
+{
+	register struct bu_list *vhead;
+	struct bn_vlblock *surface_leafs_vbp;
+
+	ON_TextLog tl(stderr);
+	ON_Brep* brep = bs->brep;
+	if (brep == NULL || !brep->IsValid(&tl)) {
+		bu_log("brep is NOT valid");
+		return -1;
+	}
+	if (index == -1) {
+		int num_curves = brep->m_C3.Count();
+		for (index = 0; index < num_curves; index++) {
+			ON_Curve *curve = brep->m_C3[index];
+			plotcurve(*curve, vbp, plotres);
+		}
+	} else if (index < brep->m_C3.Count()) {
+		ON_Curve *curve = brep->m_C3[index];
+		curve->Dump(tl);
+		plotcurve(*curve, vbp, plotres);
+	}
+
+	return 0;
+}
+
+void
+info_usage(struct bu_vls *vls)
+{
+    bu_vls_printf(vls, "mged>brep brepname.s info\n");
+    bu_vls_printf(vls, "\tinfo - return count information for specific BREP\n");
+    bu_vls_printf(vls, "\tinfo S [index] - return information for specific BREP 'surface'\n");
+    bu_vls_printf(vls, "\tinfo F [index] - return information for specific BREP 'face'\n");
+}
+
+void
+plot_usage(struct bu_vls *vls)
+{
+    bu_vls_printf(vls, "mged>brep brepname.s plot\n");
+    bu_vls_printf(vls, "\tplot - plot entire BREP");
+    bu_vls_printf(vls, "\tplot S [index] - plot specific BREP 'surface'\n");
+    bu_vls_printf(vls, "\tplot F [index] - plot specific BREP 'face'\n");
+}
+
+int
+brep_command(struct bu_vls *vls, struct brep_specific* bs, struct rt_brep_internal* bi,struct bn_vlblock *vbp,int argc, char *argv[])
+{
+    char *command;
+
+	if (argc == 2)
+		command = "info";
+	else
+		command = (char *) argv[2];
+
+	if (strcmp(command, "info") == 0) {
+		if (strcmp(command, "?") == 0) {
+			info_usage(vls);
+		} else if (argc == 3) {
+			brep_info(bs, vls);
+		} else if (argc == 5) {
+			const char *part = argv[3];
+			const char *strindex = argv[4];
+			if (strcmp(strindex, "?") == 0) {
+				info_usage(vls);
+			} else {
+				int index = atoi(strindex);
+				if (strcmp(part, "S") == 0) {
+					brep_surface_info(bs, vls, index);
+				} else if (strcmp(part, "F") == 0) {
+					brep_face_info(bs, vls, index);
+				}
+			}
+		}
+	} else if (strcmp(command, "plot") == 0) {
+		if (strcmp(command, "?") == 0) {
+			plot_usage(vls);
+		} else if (argc == 3) {
+			plot_usage(vls);
+		} else if (argc >= 4) {
+			const char *part = argv[3];
+			int index = -1;
+			int plotres = 100;
+			if (strcmp(part, "S") == 0) {
+				if (argc == 6) {
+					const char *strres = argv[5];
+					plotres = atoi(strres);
+				}
+				if (argc >= 5) {
+					const char *strindex = argv[4];
+					index = atoi(strindex);
+					bu_vls_printf(vls, "strindex-%s", strindex);
+					brep_surface_plot(vls, bs, bi, vbp, index, plotres);
+				} else {
+					brep_surface_plot(vls, bs, bi, vbp, index, plotres);
+				}
+			} else if (strcmp(part, "F") == 0) {
+				brep_facetrim_plot(vls, bs, bi, vbp, index);
+			} else if (strcmp(part, "E") == 0) {
+				if (argc == 6) {
+					const char *strres = argv[5];
+					plotres = atoi(strres);
+				}
+				if (argc >= 5) {
+					const char *strindex = argv[4];
+					index = atoi(strindex);
+					bu_vls_printf(vls, "strindex-%s", strindex);
+					brep_edge3d_plot(vls, bs, bi, vbp, index, plotres);
+				} else {
+					brep_edge3d_plot(vls, bs, bi, vbp, index, plotres);
+				}
+			}
+		}
+	}
 }
 #endif /* PLOTTING */
 
