@@ -303,6 +303,7 @@ package provide cadwidgets::Ged 1.0
 	method pane_pmat {_pane args}
 	method pane_pmodel2view {_pane args}
 	method pane_png {_pane args}
+	method pane_pngwf {_pane args}
 	method pane_pov {_pane args}
 	method pane_preview {_pane args}
 	method pane_protate_mode {_pane args}
@@ -355,6 +356,7 @@ package provide cadwidgets::Ged 1.0
 	method pmat {args}
 	method pmodel2view {args}
 	method png {args}
+	method pngwf {args}
 	method pov {args}
 	method prcolor {args}
 	method prefix {args}
@@ -1574,6 +1576,10 @@ package provide cadwidgets::Ged 1.0
     eval $mGed png $itk_component($_pane) $args
 }
 
+::itcl::body cadwidgets::Ged::pane_pngwf {_pane args} {
+    eval $mGed pngwf $itk_component($_pane) $args
+}
+
 ::itcl::body cadwidgets::Ged::pane_pov {_pane args} {
     eval $mGed pov $itk_component($_pane) $args
 }
@@ -1801,6 +1807,10 @@ package provide cadwidgets::Ged 1.0
 
 ::itcl::body cadwidgets::Ged::png {args} {
     eval $mGed png $itk_component($itk_option(-pane)) $args
+}
+
+::itcl::body cadwidgets::Ged::pngwf {args} {
+    eval $mGed pngwf $itk_component($itk_option(-pane)) $args
 }
 
 ::itcl::body cadwidgets::Ged::pov {args} {
