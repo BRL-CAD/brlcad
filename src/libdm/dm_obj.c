@@ -2379,8 +2379,8 @@ dmo_png_cmd(struct dm_obj *dmop,
 	 * We need to reverse things if the image byte order
 	 * is different from the system's byte order.
 	 */
-	if (((bu_byteorder() == BU_BIG_ENDIAN) && (ximage_p->byte_order == MSBFirst)) ||
-	    ((bu_byteorder() == BU_LITTLE_ENDIAN) && (ximage_p->byte_order == LSBFirst))) {
+	if (((bu_byteorder() == BU_BIG_ENDIAN) && (ximage_p->byte_order == LSBFirst)) ||
+	    ((bu_byteorder() == BU_LITTLE_ENDIAN) && (ximage_p->byte_order == MSBFirst))) {
 #if 0
 	    bu_log("red mask - %ld\n", ximage_p->red_mask);
 	    bu_log("green mask - %ld\n", ximage_p->green_mask);
