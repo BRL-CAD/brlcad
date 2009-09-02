@@ -83,7 +83,7 @@ rt_tgc_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *t
     //  Once the planes have been created, create the ellipses
     //  within the planes.
     ell1_axis_len_1 = MAGNITUDE(eip->a);
-    ell1_axis_len_2 = MAGNITUDE(eip->a);
+    ell1_axis_len_2 = MAGNITUDE(eip->b);
     ell2_axis_len_1 = MAGNITUDE(eip->c);
     ell2_axis_len_2 = MAGNITUDE(eip->d);
 
