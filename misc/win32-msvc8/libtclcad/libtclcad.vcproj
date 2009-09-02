@@ -52,7 +52,7 @@
 				Name="VCCLCompilerTool"
 				Optimization="2"
 				InlineFunctionExpansion="1"
-				AdditionalIncludeDirectories="../../../include;../../../src/other/tcl/generic;../../../src/other/tcl/win;../../../src/other/tk/generic;../../../src/other/tk/win;../../../src/other/tk/bitmaps;../../../src/other/tk/xlib;../../../src/other/incrTcl/itcl/generic;../../../src/other/incrTcl/itk/generic"
+				AdditionalIncludeDirectories="../../../include;../../../src/other/libz;../../../src/other/libpng;../../../src/other/tcl/generic;../../../src/other/tcl/win;../../../src/other/tk/generic;../../../src/other/tk/win;../../../src/other/tk/bitmaps;../../../src/other/tk/xlib;../../../src/other/incrTcl/itcl/generic;../../../src/other/incrTcl/itk/generic"
 				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;TCLCAD_EXPORT_DLL;DM_WGL;TCL_THREADS=1;__win32;BRLCAD_DLL;HAVE_CONFIG_H;BRLCADBUILD;IF_WGL;IF_REMOTE;_CRT_SECURE_NO_WARNINGS;inline=__inline"
 				StringPooling="true"
 				BasicRuntimeChecks="0"
@@ -83,7 +83,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="imm32.lib comctl32.lib tcl85.lib tk85.lib itcl34.lib itk34.lib libbu.lib libbn.lib librt.lib libfb.lib libdm.lib libged.lib"
+				AdditionalDependencies="opengl32.lib imm32.lib comctl32.lib tcl85.lib tk85.lib itcl34.lib itk34.lib libbu.lib libbn.lib librt.lib libfb.lib libdm.lib libged.lib libpng.lib"
 				OutputFile=".\$(PlatformName)\$(ConfigurationName)/libtclcad.dll"
 				LinkIncremental="1"
 				SuppressStartupBanner="true"
