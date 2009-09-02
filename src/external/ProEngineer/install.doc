@@ -23,7 +23,7 @@ line 5:description Convert currently displayed model to BRL-CAD
 line 7:end
 
 See "protk.dat" in this directory for an example. The exec_file must
-inlcude the name of the executable file, and the text_dir must include
+include the name of the executable file, and the text_dir must include
 the name of the "text" directory. In the "text" directory Pro/Engineer
 will look for a subdirectory named "usascii" for a file named
 "usermsg.txt". The "text" directory in this directory should be used or
