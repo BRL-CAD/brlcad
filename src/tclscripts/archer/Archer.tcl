@@ -2095,6 +2095,8 @@ package provide Archer 1.0
 	return [gedCmd $_cmd]
     }
 
+    SetWaitCursor $this
+
     # Get the list of killed and modified objects.
     if {[lsearch $options -a] != -1} {
 	set alist [eval gedCmd $_cmd -a -n $expandedArgs]
@@ -2120,18 +2122,18 @@ package provide Archer 1.0
 
     set nindex [lsearch $options "-n"]
     if {$nindex == 0 || $nindex == 1} {
+	SetNormalCursor $this
 	return [list $klist $mlist]
     }
 
     if {[llength $klist] == 0} {
+	SetNormalCursor $this
 	return
     }
 
     # Remove duplicates from both klist and mlist
     set klist [lsort -unique $klist]
     set mlist [lsort -unique $mlist]
-
-    SetWaitCursor $this
 
     # Need to checkpoint before they're gone
     checkpoint_olist $klist $LEDGER_DESTROY
