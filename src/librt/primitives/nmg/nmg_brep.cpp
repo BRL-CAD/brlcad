@@ -272,13 +272,6 @@ rt_nmg_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *t
     			trim.m_tolerance[0] = 0.0;
     			trim.m_tolerance[1] = 0.0;
 		    }
-		    int loop_dir = (*b)->LoopDirection(loop);
-		    bu_log("loop direction: %d\n", loop_dir);
-		    if (loop_dir == -1) {
-			(*b)->FlipLoop(loop);
-		    	loop_dir = (*b)->LoopDirection(loop);
-		    	bu_log("loop direction after flip: %d\n", loop_dir);
-		    }
 		}
 	    } 
 	    (*b)->SetTrimIsoFlags();
