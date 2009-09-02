@@ -146,11 +146,10 @@ rt_nmg_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *t
 		}
 		int ccw = 0;
 		vect_t vtmp, uv1, uv2, uv3, uv4, vnormal;
-		// This will work only in the case of polygonal surfaces with one
-		// (the outer) loop.  If multiple loops per surface are to be
-		// addressed, will need slightly more sophisticated logic here.
+		// If an outer loop is found in the nmg with a cw orientation, use a flipped normal
+		// to form the NURBS surface
                 for (BU_LIST_FOR(lu, loopuse, &fu->lu_hd)) {
-		    if (nmg_loop_is_ccw(lu, fg->N, tol) == -1) ccw = -1;
+		    if (lu->orientation == OT_SAME && nmg_loop_is_ccw(lu, fg->N, tol) == -1) ccw = -1;
 		}
 		if (ccw != -1) {
     		    VSET(vnormal, fg->N[0], fg->N[1], fg->N[2]);
@@ -195,10 +194,14 @@ rt_nmg_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *t
 		for (BU_LIST_FOR(lu, loopuse, &fu->lu_hd)) {
 		    int edges=0;
 		    if (BU_LIST_FIRST_MAGIC(&lu->down_hd) != NMG_EDGEUSE_MAGIC) continue; // loop is a single vertex
-		    // Not all loops (in theory) are outer loops.  This logic
-		    // along with the ccw check above will need to be revisited
-		    // to handle more general cases. 
-		    ON_BrepLoop& loop = (*b)->NewLoop(ON_BrepLoop::outer, face);
+		    ON_BrepLoop::TYPE looptype;
+		    // Check if this is an inner or outer loop
+		    if (lu->orientation == OT_SAME) {
+			looptype = ON_BrepLoop::outer;
+		    } else {
+			looptype = ON_BrepLoop::inner;
+		    }
+		    ON_BrepLoop& loop = (*b)->NewLoop(looptype, face);
 		    for (BU_LIST_FOR(eu, edgeuse, &lu->down_hd)) {
 			++edges;
 			vect_t ev1, ev2;
