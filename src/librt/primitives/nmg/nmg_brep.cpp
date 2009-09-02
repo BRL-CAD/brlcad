@@ -72,7 +72,7 @@ rt_nmg_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *t
     for (BU_LIST_FOR(r, nmgregion, &m->r_hd)) {
 	for (BU_LIST_FOR(s, shell, &r->s_hd)) {
 	    for (BU_LIST_FOR(fu, faceuse, &s->fu_hd)) {
-		bu_log("\n\nGenerating Face...\n\n");
+		bu_log("Generating Face...\n");
 		NMG_CK_FACEUSE(fu);
 		if(fu->orientation != OT_SAME) continue;
 		
@@ -131,7 +131,6 @@ rt_nmg_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *t
 		    if (brepi[(*pt)->vg_p->index] == -INT_MAX) {
     			ON_BrepVertex& vert = (*b)->NewVertex((*pt)->vg_p->coord, SMALL_FASTF);
     			brepi[(*pt)->vg_p->index] = vert.m_vertex_index;
-    			bu_log("brepi[%ld] holds vertex %d, which is point [%2.f,%2.f,%2.f]\n", (*pt)->vg_p->index, vert.m_vertex_index, (*pt)->vg_p->coord[0], (*pt)->vg_p->coord[1], (*pt)->vg_p->coord[2]);
 		    }
 	    	}
 	    	VSET(center, tmppt[0]/ptcnt, tmppt[1]/ptcnt, tmppt[2]/ptcnt);
@@ -147,8 +146,16 @@ rt_nmg_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *t
 			VMOVE(max_pt, tmppt);
 		    }
 		}
+		int ccw = 0;
 		vect_t vtmp, uv1, uv2, uv3, uv4, vnormal;
-		VSET(vnormal, fg->N[0], fg->N[1], fg->N[2]);
+                for (BU_LIST_FOR(lu, loopuse, &fu->lu_hd)) {
+		    if (nmg_loop_is_ccw(lu, fg->N, tol) == -1) ccw = -1;
+		}
+		if (ccw != -1) {
+    		    VSET(vnormal, fg->N[0], fg->N[1], fg->N[2]);
+		} else {
+		    VSET(vnormal, -fg->N[0], -fg->N[1], -fg->N[2]);
+		}
 		VSUB2(uv1, max_pt, center);
 		VCROSS(vtmp, uv1, vnormal);
 		VADD2(uv1, uv1, vtmp);
@@ -160,11 +167,6 @@ rt_nmg_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *t
 		VADD2(uv3, uv3, center);
 		VADD2(uv4, uv4, center);
 			
-		bu_log("surface v1: [%2.f,%2.f,%2.f]\n", uv1[0], uv1[1], uv1[2]);
-		bu_log("surface v2: [%2.f,%2.f,%2.f]\n", uv2[0], uv2[1], uv2[2]);
-		bu_log("surface v3: [%2.f,%2.f,%2.f]\n", uv3[0], uv3[1], uv3[2]);
-		bu_log("surface v4: [%2.f,%2.f,%2.f]\n", uv4[0], uv4[1], uv4[2]);
-		
 		ON_3dPoint p1 = ON_3dPoint(uv1);
 		ON_3dPoint p2 = ON_3dPoint(uv2);
 		ON_3dPoint p3 = ON_3dPoint(uv3);
@@ -173,17 +175,6 @@ rt_nmg_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *t
 		(*b)->m_S.Append(sideSurface(p1, p4, p3, p2));
 		ON_Surface *surf = (*(*b)->m_S.Last());
 		int surfindex = (*b)->m_S.Count();
-		ON_3dPoint S1, S2;
-		ON_3dVector Su, Sv;
-		surf->Ev1Der(0,0,S1,Su,Sv);
-		bu_log("evalsurface v1: [0,0] (%2.f,%2.f,%2.f)\n", S1[0],S1[1],S1[2]);
-		surf->Ev1Der(0,1,S1,Su,Sv);
-		bu_log("evalsurface v2: [0,1] (%2.f,%2.f,%2.f)\n", S1[0],S1[1],S1[2]);
-		surf->Ev1Der(1,0,S1,Su,Sv);
-		bu_log("evalsurface v3: [1,0] (%2.f,%2.f,%2.f)\n", S1[0],S1[1],S1[2]);
-		surf->Ev1Der(1,1,S1,Su,Sv);
-		bu_log("evalsurface v4: [1,1] (%2.f,%2.f,%2.f)\n", S1[0],S1[1],S1[2]);
-
 
 		// Now that we have the surface, define the face
 		ON_BrepFace& face = (*b)->NewFace(surfindex - 1);
@@ -215,7 +206,6 @@ rt_nmg_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *t
 			++edges;
 			vect_t ev1, ev2;
 			struct vertex_g *vg1, *vg2;
-			bu_log("edgeuse %ld references vertex %ld and %ld\n", eu->e_p->index, eu->vu_p->v_p->vg_p->index, eu->eumate_p->vu_p->v_p->vg_p->index);
 			vg1 = eu->vu_p->v_p->vg_p;
 			NMG_CK_VERTEX_G(vg1);
 		        int vert1 = brepi[vg1->index];
@@ -235,14 +225,12 @@ rt_nmg_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *t
 			    // Create and add 3D curve
 			    ON_3dPoint tmppt1 = (*b)->m_V[vert1].Point();
 			    ON_3dPoint tmppt2 = (*b)->m_V[vert2].Point();
-			    bu_log("c3d being created from vertex %d [%2.f,%2.f,%2.f] to %d [%2.f,%2.f,%2.f]\n", vert1, tmppt1[0], tmppt1[1], tmppt1[2], vert2, tmppt2[0], tmppt2[1], tmppt2[2]);
 			    ON_Curve* c3d = new ON_LineCurve((*b)->m_V[vert1].Point(), (*b)->m_V[vert2].Point());
 			    c3d->SetDomain(0.0, 1.0);
 			    (*b)->m_C3.Append(c3d);
 			    // Create and add 3D edge
 			    ON_BrepEdge& e = (*b)->NewEdge((*b)->m_V[vert1], (*b)->m_V[vert2] , (*b)->m_C3.Count() - 1);
 			    e.m_tolerance = 0.0;
-			    bu_log("edge %d being created from vertex %d [%2.f,%2.f,%2.f] to %d [%2.f,%2.f,%2.f]\n", e.m_edge_index, vert1, tmppt1[0], tmppt1[1], tmppt1[2], vert2, tmppt2[0], tmppt2[1], tmppt2[2]);
 			    brepi[eu->e_p->index] = e.m_edge_index;
 			}
 			// Regardless of whether the edge existed as an object, it
@@ -264,27 +252,16 @@ rt_nmg_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *t
 			surf->GetDomain(0, &u0, &u1);
 			surf->GetDomain(1, &v0, &v1);
 			
-			bu_log("uv1: (%2.f,%2.f,%2.f)\n", uv1[0], uv1[1], uv1[2]);
-			bu_log("ev1: (%2.f,%2.f,%2.f)\n", ev1[0], ev1[1], ev1[2]);
-			bu_log("vect1: (%2.f,%2.f,%2.f)\n", vect1[0], vect1[1], vect1[2]);
-			bu_log("u_axis: (%2.f,%2.f,%2.f)\n", u_axis[0], u_axis[1], u_axis[2]);
 			VPROJECT(vect1, u_axis, u_component, v_component);
-			bu_log("vect1: ucomponent: (%2.f,%2.f,%2.f), vcomponent: (%2.f,%2.f,%2.f)\n", u_component[0], u_component[1], u_component[2], v_component[0], v_component[1], v_component[2]);
 			from_uv.y = u0 + MAGNITUDE(u_component)/u_axis_dist*(u1-u0);
 			from_uv.x = v0 + MAGNITUDE(v_component)/v_axis_dist*(v1-v0);
-			bu_log("from_uv.x: %f; from_uv.y: %f\n\n", from_uv.x, from_uv.y);
-			bu_log("uv1: (%2.f,%2.f,%2.f)\n", uv1[0], uv1[1], uv1[2]);
-			bu_log("ev2: (%2.f,%2.f,%2.f)\n", ev2[0], ev2[1], ev2[2]);
-			bu_log("vect2: (%2.f,%2.f,%2.f)\n", vect2[0], vect2[1], vect2[2]);
-			bu_log("u_axis: (%2.f,%2.f,%2.f)\n", u_axis[0], u_axis[1], u_axis[2]);
 			VPROJECT(vect2, u_axis, u_component, v_component);
-			bu_log("vect2: ucomponent: (%2.f,%2.f,%2.f), vcomponent: (%2.f,%2.f,%2.f)\n", u_component[0], u_component[1], u_component[2], v_component[0], v_component[1], v_component[2]);
 			to_uv.y = u0 + MAGNITUDE(u_component)/u_axis_dist*(u1-u0);
 			to_uv.x = v0 + MAGNITUDE(v_component)/v_axis_dist*(v1-v0);
-			bu_log("to_uv.x: %f; to_uv.y: %f\n", to_uv.x, to_uv.y);
+			ON_3dPoint S1, S2;
+			ON_3dVector Su, Sv;
 			surf->Ev1Der(from_uv.x,from_uv.y,S1,Su,Sv);
 			surf->Ev1Der(to_uv.x,to_uv.y,S2,Su,Sv);
-			bu_log("uvline: [%f,%f] (%2.f,%2.f,%2.f), [%f, %f] (%2.f,%2.f,%2.f); orientation: %d\n\n", from_uv.x, from_uv.y, S1[0],S1[1],S1[2], to_uv.x, to_uv.y, S2[0],S2[1],S2[2],orientation);
 			ON_Curve* c2d =  new ON_LineCurve(from_uv, to_uv);
 			c2d->SetDomain(0.0, 1.0);
 			int c2i = (*b)->m_C2.Count();
@@ -294,6 +271,13 @@ rt_nmg_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *t
     			trim.m_type = ON_BrepTrim::mated;
     			trim.m_tolerance[0] = 0.0;
     			trim.m_tolerance[1] = 0.0;
+		    }
+		    int loop_dir = (*b)->LoopDirection(loop);
+		    bu_log("loop direction: %d\n", loop_dir);
+		    if (loop_dir == -1) {
+			(*b)->FlipLoop(loop);
+		    	loop_dir = (*b)->LoopDirection(loop);
+		    	bu_log("loop direction after flip: %d\n", loop_dir);
 		    }
 		}
 	    } 
