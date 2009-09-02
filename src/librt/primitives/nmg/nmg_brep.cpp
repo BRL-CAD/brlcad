@@ -68,11 +68,9 @@ rt_nmg_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *t
     for (int i = 0; i < m->maxindex; i++) brepi[i] = -INT_MAX;
     
     *b = new ON_Brep();
-    bu_log("brep valid: %d\n", (*b)->IsValid());
     for (BU_LIST_FOR(r, nmgregion, &m->r_hd)) {
 	for (BU_LIST_FOR(s, shell, &r->s_hd)) {
 	    for (BU_LIST_FOR(fu, faceuse, &s->fu_hd)) {
-		bu_log("Generating Face...\n");
 		NMG_CK_FACEUSE(fu);
 		if(fu->orientation != OT_SAME) continue;
 		
@@ -148,6 +146,9 @@ rt_nmg_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *t
 		}
 		int ccw = 0;
 		vect_t vtmp, uv1, uv2, uv3, uv4, vnormal;
+		// This will work only in the case of polygonal surfaces with one
+		// (the outer) loop.  If multiple loops per surface are to be
+		// addressed, will need slightly more sophisticated logic here.
                 for (BU_LIST_FOR(lu, loopuse, &fu->lu_hd)) {
 		    if (nmg_loop_is_ccw(lu, fg->N, tol) == -1) ccw = -1;
 		}
@@ -189,18 +190,14 @@ rt_nmg_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *t
 		VSUB2(v_axis, uv4, uv1);
 		fastf_t u_axis_dist = MAGNITUDE(u_axis);
 		fastf_t v_axis_dist = MAGNITUDE(v_axis);
-		// Possibility of using VPROJECT here - may even need only
-		// one domain vector since VPROJECT gives both parallel
-		// and orthogonal components.  Project vector from v1 to
-		// 3d vertex point onto u_axis - u and v go from 0 to 1 so
-		// magnitudes of projected components should locate the
-		// vertex points in UV space, since this is a simple
-		// planar case.
 
+		// Now that the surface context is set up, add the loops.
 		for (BU_LIST_FOR(lu, loopuse, &fu->lu_hd)) {
 		    int edges=0;
 		    if (BU_LIST_FIRST_MAGIC(&lu->down_hd) != NMG_EDGEUSE_MAGIC) continue; // loop is a single vertex
-		    // For each loop, add the edges and vertices
+		    // Not all loops (in theory) are outer loops.  This logic
+		    // along with the ccw check above will need to be revisited
+		    // to handle more general cases. 
 		    ON_BrepLoop& loop = (*b)->NewLoop(ON_BrepLoop::outer, face);
 		    for (BU_LIST_FOR(eu, edgeuse, &lu->down_hd)) {
 			++edges;
@@ -277,7 +274,6 @@ rt_nmg_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *t
 	    (*b)->SetTrimIsoFlags();
 	}
     }
-    bu_log("brep valid: %d\n", (*b)->IsValid());
 }
 
 
