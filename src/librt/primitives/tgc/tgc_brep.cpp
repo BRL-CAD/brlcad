@@ -69,7 +69,7 @@ rt_tgc_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *t
 
     VMOVE(p1_origin, eip->v);
     VMOVE(tmp, eip->v);
-    VSUB2(p2_origin, tmp, eip->h);
+    VADD2(p2_origin, tmp, eip->h);
     plane1_origin = ON_3dPoint(p1_origin);
     plane1_x_dir = ON_3dVector(x1_dir);
     plane1_y_dir = ON_3dVector(y1_dir);
@@ -99,9 +99,66 @@ rt_tgc_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *t
     //  Create the side surface with ON_NurbsSurface::CreateRuledSurface and the top
     //  and bottom planes by using the ellipses as outer trimming curves - define UV
     //  surfaces for the top and bottom such that they contain the ellipses.
+    
+    vect_t t1, t2, uv1, uv2, uv3, uv4;
+    VREVERSE(t1, plane1_x_dir);
+    VREVERSE(t2, plane1_y_dir);
+    VSET(uv1, 0, 0 ,0);
+    VSET(uv2, 0, 0 ,0);
+    VSET(uv3, 0, 0 ,0);
+    VSET(uv4, 0, 0 ,0);
+    VADD2(uv1, t2, t1);
+    VADD2(uv2, plane1_y_dir, t1);
+    VADD2(uv3, plane1_y_dir, plane1_x_dir);
+    VADD2(uv4, t2, plane1_x_dir);
+    ON_3dPoint p1uv1(uv1);
+    ON_3dPoint p1uv2(uv2);
+    ON_3dPoint p1uv3(uv3);
+    ON_3dPoint p1uv4(uv4);
+    ON_NurbsSurface *tgc_bottom_surf = new ON_NurbsSurface(3,FALSE, 2, 2, 2, 2);
+    tgc_bottom_surf->SetCV(0,0,p1uv1);
+    tgc_bottom_surf->SetCV(1,0,p1uv2);
+    tgc_bottom_surf->SetCV(0,1,p1uv3);
+    tgc_bottom_surf->SetCV(1,1,p1uv4);
+    tgc_bottom_surf->SetKnot(0,0,0.0);
+    tgc_bottom_surf->SetKnot(0,1,1.0);
+    tgc_bottom_surf->SetKnot(1,0,0.0);
+    tgc_bottom_surf->SetKnot(1,1,1.0);
+    
+    VREVERSE(t1, plane2_x_dir);
+    VREVERSE(t2, plane2_y_dir);
+    VSET(uv1, 0, 0 ,0);
+    VSET(uv2, 0, 0 ,0);
+    VSET(uv3, 0, 0 ,0);
+    VSET(uv4, 0, 0 ,0);
+    VADD2(uv1, t2, t1);
+    VADD2(uv2, plane2_y_dir, t1);
+    VADD2(uv3, plane2_y_dir, plane2_x_dir);
+    VADD2(uv4, t2, plane2_x_dir);
+    ON_3dPoint p2uv1(uv1);
+    ON_3dPoint p2uv2(uv2);
+    ON_3dPoint p2uv3(uv3);
+    ON_3dPoint p2uv4(uv4);
+    ON_NurbsSurface *tgc_top_surf = new ON_NurbsSurface(3,FALSE, 2, 2, 2, 2);
+    tgc_top_surf->SetCV(0,0,p2uv1);
+    tgc_top_surf->SetCV(1,0,p2uv2);
+    tgc_top_surf->SetCV(0,1,p2uv3);
+    tgc_top_surf->SetCV(1,1,p2uv4);
+    tgc_top_surf->SetKnot(0,0,0.0);
+    tgc_top_surf->SetKnot(0,1,1.0);
+    tgc_top_surf->SetKnot(1,0,0.0);
+    tgc_top_surf->SetKnot(1,1,1.0);
+    
+    ON_Interval ell1dom = ellcurve1.Domain();
+    ON_Interval ell2dom = ellcurve2.Domain();
+    
+    const ON_Curve *e1 = ON_Curve::Cast(&ellcurve1);
+    const ON_Curve *e2 = ON_Curve::Cast(&ellcurve2);
+    const ON_Interval *i1 = &ell1dom;
+    const ON_Interval *i2 = &ell2dom;
+    
     ON_NurbsSurface *tgc_side_surf;
-    ON_NurbsSurface *tgc_top_surf;
-    ON_NurbsSurface *tgc_bottom_surf;
+    tgc_side_surf->CreateRuledSurface((*e1), (*e2), i1, i2);
     
     /* Create brep with three faces*/
     *b = ON_Brep::New();
