@@ -149,6 +149,7 @@ set(LIBRT_SOURCES
     primitives/superell/superell_mirror.c
     primitives/table.c
     primitives/tgc/tgc.c
+    primitives/tgc/tgc_brep.cpp
     primitives/tgc/tgc_mirror.c
     primitives/tor/tor.c
     primitives/tor/tor_brep.cpp

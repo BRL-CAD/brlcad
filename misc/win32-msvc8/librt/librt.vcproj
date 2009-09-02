@@ -852,6 +852,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\src\librt\primitives\tgc\tgc_brep.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\src\librt\primitives\tgc\tgc_mirror.c"
 				>
 			</File>
