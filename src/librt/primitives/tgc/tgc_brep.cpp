@@ -157,7 +157,7 @@ rt_tgc_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *t
     const ON_Interval *i1 = &ell1dom;
     const ON_Interval *i2 = &ell2dom;
     
-    ON_NurbsSurface *tgc_side_surf;
+    ON_NurbsSurface *tgc_side_surf = ON_NurbsSurface::New();
     tgc_side_surf->CreateRuledSurface((*e1), (*e2), i1, i2);
     
     /* Create brep with three faces*/

@@ -46,6 +46,7 @@ extern "C" {
     extern void rt_sph_brep(ON_Brep **bi, struct rt_db_internal *ip, const struct bn_tol *tol);
     extern void rt_ell_brep(ON_Brep **bi, struct rt_db_internal *ip, const struct bn_tol *tol);
     extern void rt_eto_brep(ON_Brep **bi, struct rt_db_internal *ip, const struct bn_tol *tol);
+    extern void rt_tgc_brep(ON_Brep **bi, struct rt_db_internal *ip, const struct bn_tol *tol);
     extern void rt_tor_brep(ON_Brep **bi, struct rt_db_internal *ip, const struct bn_tol *tol);
 
 #ifdef __cplusplus
@@ -67,8 +68,8 @@ main(int argc, char** argv)
     ttmptol.rel = 0.01;
     ttmptol.norm = 0;
     const struct rt_tess_tol *ttol = &ttmptol;
-    point_t center;
-    vect_t a, b, c, N;
+    point_t center, v1, v2;
+    vect_t a, b, c, d, h, N;
     ON_TextLog error_log;
 
     ON::Begin();
@@ -301,7 +302,24 @@ main(int argc, char** argv)
     const char* ell_name = "ell_nurb.s";
     mk_brep(outfp, ell_name, ellbrep);
     delete ellbrep;
-    
+ 
+    bu_log("Writing a TGC b-rep...\n");
+    ON_Brep* tgcbrep = ON_Brep::New();
+    struct rt_tgc_internal *tgc;
+    BU_GETSTRUCT(tgc, rt_tgc_internal);
+    tgc->magic = RT_TGC_INTERNAL_MAGIC;
+    VSET(tgc->v, 0, 0, -1000);
+    VSET(tgc->h, 0, 0, 2000);
+    VSET(tgc->a, 500, 0, 0);
+    VSET(tgc->b, 0, 250, 0);
+    VSET(tgc->c, 250, 0, 0);
+    VSET(tgc->d, 0, 500, 0);
+    tmp_internal->idb_ptr = (genptr_t)tgc;
+    rt_tgc_brep(&tgcbrep, tmp_internal, tol);
+    const char* tgc_name = "tgc_nurb.s";
+    mk_brep(outfp, tgc_name, tgcbrep);
+    delete tgcbrep;
+   
     bu_log("Writing a Torus b-rep...\n");
     ON_Brep* torbrep = ON_Brep::New();
     struct rt_tor_internal *tor;
