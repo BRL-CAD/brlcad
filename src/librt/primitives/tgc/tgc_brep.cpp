@@ -98,6 +98,10 @@ rt_tgc_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *t
     ellipse2->GetNurbForm((*ellcurve2));
     ellcurve1->SetDomain(0.0,1.0);
     ellcurve2->SetDomain(0.0,1.0);
+    (*b)->m_C3.Append(ellcurve1);
+    int ell1ind = (*b)->m_C3.Count() - 1;
+    (*b)->m_C3.Append(ellcurve2);
+    int ell2ind = (*b)->m_C3.Count() - 1;
    
     //  Create the side surface with ON_NurbsSurface::CreateRuledSurface and the top
     //  and bottom planes by using the ellipses as outer trimming curves - define UV
@@ -122,9 +126,6 @@ rt_tgc_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *t
     ON_NurbsSurface *tgc_top_surf = ON_NurbsSurface::New();
     tgc_bottom_plane->GetNurbForm((*tgc_bottom_surf), 0.0);
     tgc_top_plane->GetNurbForm((*tgc_top_surf), 0.0);
-    (*b)->m_S.Append(ON_Surface::Cast(tgc_bottom_surf));
-    (*b)->m_S.Append(ON_Surface::Cast(tgc_top_surf));
- 
     ON_Interval ell1dom = ellcurve1->Domain();
     ON_Interval ell2dom = ellcurve2->Domain();
     
@@ -132,50 +133,45 @@ rt_tgc_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *t
     const ON_Curve *ce2 = ON_Curve::Cast(ellcurve2);
     const ON_Interval *i1 = &ell1dom;
     const ON_Interval *i2 = &ell2dom;
+   
     
     ON_NurbsSurface *tgc_side_surf = ON_NurbsSurface::New();
     tgc_side_surf->CreateRuledSurface((*ce1), (*ce2), i1, i2);
+    ON_ArcCurve* unitcircle = new ON_ArcCurve(ON_Circle(ON_2dPoint(0.5,0.5),0.5));
+    (*b)->AddTrimCurve(ON_Curve::Cast(unitcircle));
+    int unitcircleind = (*b)->m_C2.Count() - 1;
     
     /* Create brep with three faces*/
-    (*b)->NewFace(*tgc_top_surf);
-    (*b)->NewFace(*tgc_bottom_surf);
-    (*b)->NewFace(*tgc_side_surf);
-/*
-    ON_Curve *e1 = ON_Curve::Cast(ellcurve1);
-    ON_Curve *e2 = ON_Curve::Cast(ellcurve2);
- 
-    (*b)->m_C3.Append(e1);
-    int bottomcurveind = (*b)->m_C3.Count() - 1;
-    (*b)->m_C3.Append(e2);
-    int topcurveind = (*b)->m_C3.Count() - 1;
-
-    ON_3dPoint coords1 = ellcurve1->PointAt(0);
-    ON_3dPoint coords2 = ellcurve2->PointAt(0);
-   
-    ON_BrepEdge& bottomedge = (*b)->NewEdge(bottomcurveind);
+    int surfindex;
+    ON_BrepVertex& bottomvert = (*b)->NewVertex(ellcurve1->PointAt(0), SMALL_FASTF);
+    (*b)->m_S.Append(ON_Surface::Cast(tgc_bottom_surf));
+    surfindex = (*b)->m_S.Count() - 1;
+    ON_BrepFace& bottomface = (*b)->NewFace(surfindex);
+    ON_BrepLoop& bottomloop = (*b)->NewLoop(ON_BrepLoop::outer, bottomface);
+    ON_BrepEdge& bottomedge = (*b)->NewEdge(bottomvert, bottomvert, ell1ind); 
     bottomedge.m_tolerance = 0.0;
-    ON_BrepEdge& topedge = (*b)->NewEdge(topcurveind);
-    topedge.m_tolerance = 0.0;
-
-    ON_2dPoint circlept1(1,.5);
-    ON_2dPoint circlept2(0,0.5);
-    ON_2dPoint circlept3(.5,1);
+    ON_BrepTrim& bottomtrim = (*b)->NewTrim((*b)->m_E[ell1ind], 0, bottomloop, unitcircleind);
+    bottomtrim.m_type = ON_BrepTrim::crvonsrf;
+    bottomtrim.m_tolerance[0] = 0.0;
+    bottomtrim.m_tolerance[1] = 0.0;
     
-    ON_Circle uvcircle = ON_Circle::ON_Circle(circlept1,circlept2,circlept3);
-    ON_NurbsCurve* uvnurbs = ON_NurbsCurve::New();
-    uvcircle.GetNurbForm((*uvnurbs));
-    uvnurbs->SetDomain(0.0,1.0);
-    ON_Curve *uvcurve = ON_Curve::Cast(uvnurbs);
+    ON_BrepVertex& topvert = (*b)->NewVertex(ellcurve2->PointAt(0), SMALL_FASTF);
+    (*b)->m_S.Append(ON_Surface::Cast(tgc_top_surf));
+    surfindex = (*b)->m_S.Count() - 1;
+    ON_BrepFace& topface = (*b)->NewFace(surfindex);
+    ON_BrepLoop& toploop = (*b)->NewLoop(ON_BrepLoop::outer, topface);
+    ON_BrepEdge& topedge = (*b)->NewEdge(topvert, topvert, ell2ind);
+    topedge.m_tolerance = 0.0;
+    ON_BrepTrim& toptrim = (*b)->NewTrim((*b)->m_E[ell2ind], 0, toploop, unitcircleind);
+    toptrim.m_type = ON_BrepTrim::crvonsrf;
+    toptrim.m_tolerance[0] = 0.0;
+    toptrim.m_tolerance[1] = 0.0;
+ 
+    (*b)->m_S.Append(ON_Surface::Cast(tgc_side_surf));
+    surfindex = (*b)->m_S.Count() - 1;
+    ON_BrepFace& sideface = (*b)->NewFace(surfindex);
 
-    (*b)->m_C3.Append(uvcurve);
-    int unitcircleind = (*b)->m_C3.Count() - 1;
-  
-    ON_BrepLoop& toploop = (*b)->NewLoop(ON_BrepLoop::outer, (*b)->m_F[0]);
-    ON_BrepLoop& bottomloop = (*b)->NewLoop(ON_BrepLoop::outer, (*b)->m_F[1]);
 
-    ON_BrepTrim& bottomtrim = (*b)->NewTrim(bottomedge, 0, bottomloop, unitcircleind);
-    ON_BrepTrim& toptrim = (*b)->NewTrim(topedge, 0, toploop, unitcircleind);
-*/
 }
 
 // Local Variables:
