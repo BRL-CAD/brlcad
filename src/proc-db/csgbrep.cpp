@@ -46,6 +46,7 @@ extern "C" {
     extern void rt_sph_brep(ON_Brep **bi, struct rt_db_internal *ip, const struct bn_tol *tol);
     extern void rt_ell_brep(ON_Brep **bi, struct rt_db_internal *ip, const struct bn_tol *tol);
     extern void rt_eto_brep(ON_Brep **bi, struct rt_db_internal *ip, const struct bn_tol *tol);
+    //extern void rt_rhc_brep(ON_Brep **bi, struct rt_db_internal *ip, const struct bn_tol *tol);
     extern void rt_tgc_brep(ON_Brep **bi, struct rt_db_internal *ip, const struct bn_tol *tol);
     extern void rt_tor_brep(ON_Brep **bi, struct rt_db_internal *ip, const struct bn_tol *tol);
 
@@ -124,8 +125,6 @@ main(int argc, char** argv)
     mk_brep(outfp, arb5_name, arb5brep);
     delete arb5brep;
  
-
-
     bu_log("Writing an ARB6 (via NMG) brep...\n");
     ON_Brep* arb6brep = ON_Brep::New();
     struct rt_arb_internal *arb6;
@@ -262,6 +261,7 @@ main(int argc, char** argv)
     rt_nmg_brep(&nmgbrep, tmp_internal, tol);
     const char* nmg_name = "nmg_nurb.s";
     mk_brep(outfp, nmg_name, nmgbrep);
+    FREE_MODEL(m);
     delete nmgbrep;
    
     
@@ -302,7 +302,23 @@ main(int argc, char** argv)
     const char* ell_name = "ell_nurb.s";
     mk_brep(outfp, ell_name, ellbrep);
     delete ellbrep;
- 
+/* 
+    bu_log("Writing a RHC b-rep...\n");
+    ON_Brep* rhcbrep = ON_Brep::New();
+    struct rt_rhc_internal *rhc;
+    BU_GETSTRUCT(rhc, rt_rhc_internal);
+    rhc->rhc_magic = RT_RHC_INTERNAL_MAGIC;
+    VSET(rhc->rhc_V, 0, -1000, -1000);
+    VSET(rhc->rhc_H, 0, 2000, 0);
+    VSET(rhc->rhc_B, 0, 0, 2000);
+    rhc->rhc_r = 1000;
+    rhc->rhc_c = 400;
+    tmp_internal->idb_ptr = (genptr_t)rhc;
+    rt_rhc_brep(&rhcbrep, tmp_internal, tol);
+    const char* rhc_name = "rhc_nurb.s";
+    mk_brep(outfp, rhc_name, rhcbrep);
+    delete rhcbrep;
+*/
     bu_log("Writing a TGC b-rep...\n");
     ON_Brep* tgcbrep = ON_Brep::New();
     struct rt_tgc_internal *tgc;
