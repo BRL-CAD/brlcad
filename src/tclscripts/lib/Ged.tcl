@@ -124,9 +124,11 @@ package provide cadwidgets::Ged 1.0
 	method bot_dump {args}
 	method bot_face_fuse {args}
 	method bot_face_sort {args}
+	method bot_flip {args}
 	method bot_merge {args}
 	method bot_smooth {args}
 	method bot_split {args}
+	method bot_sync {args}
 	method bot_vertex_fuse {args}
 	method bounds {args}
 	method bounds_all {args}
@@ -848,6 +850,10 @@ package provide cadwidgets::Ged 1.0
     eval $mGed bot_face_sort $args
 }
 
+::itcl::body cadwidgets::Ged::bot_flip {args} {
+    eval $mGed bot_flip $args
+}
+
 ::itcl::body cadwidgets::Ged::bot_merge {args} {
     eval $mGed bot_merge $args
 }
@@ -858,6 +864,10 @@ package provide cadwidgets::Ged 1.0
 
 ::itcl::body cadwidgets::Ged::bot_split {args} {
     eval $mGed bot_split $args
+}
+
+::itcl::body cadwidgets::Ged::bot_sync {args} {
+    eval $mGed bot_sync $args
 }
 
 ::itcl::body cadwidgets::Ged::bot_vertex_fuse {args} {

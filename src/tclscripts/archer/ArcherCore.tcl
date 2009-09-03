@@ -138,9 +138,11 @@ namespace eval ArcherCore {
 	method bot_decimate        {args}
 	method bot_face_fuse       {args}
 	method bot_face_sort       {args}
+	method bot_flip            {args}
 	method bot_merge           {args}
 	method bot_smooth          {args}
 	method bot_split           {args}
+	method bot_sync            {args}
 	method bot_vertex_fuse     {args}
 	method c                   {args}
 	method cd                  {args}
@@ -391,7 +393,7 @@ namespace eval ArcherCore {
 	variable mArcherCoreCommands { \
 					   3ptarb adjust arced attr bb bev blast bo \
 					   bot2pipe bot_condense bot_decimate bot_face_fuse \
-					   bot_face_sort bot_merge bot_smooth bot_split bot_vertex_fuse \
+					   bot_face_sort bot_flip bot_merge bot_smooth bot_split bot_sync bot_vertex_fuse \
 					   c cd clear clone color comb comb_color copy copyeval copymat \
 					   cp cpi dbconcat dbExpand decompose delete draw E edcodes edcolor edcomb \
 					   edmater erase_all ev exit facetize fracture \
@@ -3310,6 +3312,10 @@ Popup Menu    Right or Ctrl-Left
     eval gedWrapper bot_face_sort 1 0 1 1 $args
 }
 
+::itcl::body ArcherCore::bot_flip {args} {
+    eval gedWrapper bot_flip 1 0 1 0 $args
+}
+
 ::itcl::body ArcherCore::bot_merge {args} {
     eval gedWrapper bot_merge 1 0 1 1 $args
 }
@@ -3320,6 +3326,10 @@ Popup Menu    Right or Ctrl-Left
 
 ::itcl::body ArcherCore::bot_split {args} {
     eval gedWrapper bot_split 0 0 1 1 $args
+}
+
+::itcl::body ArcherCore::bot_sync {args} {
+    eval gedWrapper bot_sync 1 0 1 0 $args
 }
 
 ::itcl::body ArcherCore::bot_vertex_fuse {args} {
