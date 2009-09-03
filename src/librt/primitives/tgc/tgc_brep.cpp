@@ -143,24 +143,30 @@ rt_tgc_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *t
     
     /* Create brep with three faces*/
     int surfindex;
-    ON_BrepVertex& bottomvert = (*b)->NewVertex(ellcurve1->PointAt(0), SMALL_FASTF);
+    ON_BrepVertex& bottomvert1 = (*b)->NewVertex(ellcurve1->PointAt(0), SMALL_FASTF);
+    int vert11 = (*b)->m_V.Count() - 1;
+    ON_BrepVertex& bottomvert2 = (*b)->NewVertex(ellcurve1->PointAt(1), SMALL_FASTF);
+    int vert12 = (*b)->m_V.Count() - 1;
     (*b)->m_S.Append(ON_Surface::Cast(tgc_bottom_surf));
     surfindex = (*b)->m_S.Count() - 1;
     ON_BrepFace& bottomface = (*b)->NewFace(surfindex);
     ON_BrepLoop& bottomloop = (*b)->NewLoop(ON_BrepLoop::outer, bottomface);
-    ON_BrepEdge& bottomedge = (*b)->NewEdge(bottomvert, bottomvert, ell1ind); 
+    ON_BrepEdge& bottomedge = (*b)->NewEdge((*b)->m_V[vert11], (*b)->m_V[vert12], ell1ind); 
     bottomedge.m_tolerance = 0.0;
     ON_BrepTrim& bottomtrim = (*b)->NewTrim((*b)->m_E[ell1ind], 0, bottomloop, unitcircleind);
     bottomtrim.m_type = ON_BrepTrim::crvonsrf;
     bottomtrim.m_tolerance[0] = 0.0;
     bottomtrim.m_tolerance[1] = 0.0;
     
-    ON_BrepVertex& topvert = (*b)->NewVertex(ellcurve2->PointAt(0), SMALL_FASTF);
+    ON_BrepVertex& topvert1 = (*b)->NewVertex(ellcurve2->PointAt(0), SMALL_FASTF);
+    int vert21 = (*b)->m_V.Count() - 1;
+    ON_BrepVertex& topvert2 = (*b)->NewVertex(ellcurve2->PointAt(1), SMALL_FASTF);
+    int vert22 = (*b)->m_V.Count() - 1;
     (*b)->m_S.Append(ON_Surface::Cast(tgc_top_surf));
     surfindex = (*b)->m_S.Count() - 1;
     ON_BrepFace& topface = (*b)->NewFace(surfindex);
     ON_BrepLoop& toploop = (*b)->NewLoop(ON_BrepLoop::outer, topface);
-    ON_BrepEdge& topedge = (*b)->NewEdge(topvert, topvert, ell2ind);
+    ON_BrepEdge& topedge = (*b)->NewEdge((*b)->m_V[vert21], (*b)->m_V[vert22], ell2ind);
     topedge.m_tolerance = 0.0;
     ON_BrepTrim& toptrim = (*b)->NewTrim((*b)->m_E[ell2ind], 0, toploop, unitcircleind);
     toptrim.m_type = ON_BrepTrim::crvonsrf;
