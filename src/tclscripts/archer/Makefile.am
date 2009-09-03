@@ -12,6 +12,7 @@ scripts = \
 	Arb8EditFrame.tcl \
 	Archer.tcl \
 	ArcherCore.tcl \
+	AttrGroupsDisplayUtility.tcl \
 	bgerror.tcl \
 	CombEditFrame.tcl \
 	cursor.tcl \
