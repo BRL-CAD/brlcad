@@ -98,79 +98,67 @@ rt_tgc_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *t
     ellipse2->GetNurbForm((*ellcurve2));
     ellcurve1->SetDomain(0.0,1.0);
     ellcurve2->SetDomain(0.0,1.0);
-    (*b)->m_C3.Append(ellcurve1);
-    int ell1ind = (*b)->m_C3.Count() - 1;
-    (*b)->m_C3.Append(ellcurve2);
-    int ell2ind = (*b)->m_C3.Count() - 1;
    
     //  Create the side surface with ON_NurbsSurface::CreateRuledSurface and the top
     //  and bottom planes by using the ellipses as outer trimming curves - define UV
     //  surfaces for the top and bottom such that they contain the ellipses.
-    
-    ON_PlaneSurface* tgc_bottom_plane = new ON_PlaneSurface((*ell1_plane));
-    ON_PlaneSurface* tgc_top_plane = new ON_PlaneSurface((*ell2_plane));
-    ON_Interval p1_x_extents(-ell1_axis_len_1,ell1_axis_len_1);
-    ON_Interval p1_y_extents(-ell1_axis_len_2,ell1_axis_len_2);
-    ON_Interval p2_x_extents(-ell2_axis_len_1,ell2_axis_len_1);
-    ON_Interval p2_y_extents(-ell2_axis_len_2,ell2_axis_len_2);
-    tgc_bottom_plane->SetExtents(0,p1_x_extents);
-    tgc_bottom_plane->SetExtents(1,p1_y_extents);
-    tgc_top_plane->SetExtents(0,p2_x_extents);
-    tgc_top_plane->SetExtents(1,p2_y_extents);
-    tgc_bottom_plane->SetDomain(0,0.0,1.0);
-    tgc_bottom_plane->SetDomain(1,0.0,1.0);
-    tgc_top_plane->SetDomain(0,0.0,1.0);
-    tgc_top_plane->SetDomain(1,0.0,1.0);
-
-    ON_NurbsSurface *tgc_bottom_surf = ON_NurbsSurface::New();
-    ON_NurbsSurface *tgc_top_surf = ON_NurbsSurface::New();
-    tgc_bottom_plane->GetNurbForm((*tgc_bottom_surf), 0.0);
-    tgc_top_plane->GetNurbForm((*tgc_top_surf), 0.0);
-    ON_Interval ell1dom = ellcurve1->Domain();
-    ON_Interval ell2dom = ellcurve2->Domain();
-    
-    const ON_Curve *ce1 = ON_Curve::Cast(ellcurve1);
-    const ON_Curve *ce2 = ON_Curve::Cast(ellcurve2);
-    const ON_Interval *i1 = &ell1dom;
-    const ON_Interval *i2 = &ell2dom;
-   
-    
-    ON_NurbsSurface *tgc_side_surf = ON_NurbsSurface::New();
-    tgc_side_surf->CreateRuledSurface((*ce1), (*ce2), i1, i2);
-    ON_ArcCurve* unitcircle = new ON_ArcCurve(ON_Circle(ON_2dPoint(0.5,0.5),0.5));
-    (*b)->AddTrimCurve(ON_Curve::Cast(unitcircle));
-    int unitcircleind = (*b)->m_C2.Count() - 1;
-    
-    /* Create brep with three faces*/
-    int surfindex, faceindex, edgeindex;
-    ON_BrepVertex& bottomvert1 = (*b)->NewVertex(ellcurve1->PointAt(0), SMALL_FASTF);
-    (*b)->m_S.Append(ON_Surface::Cast(tgc_bottom_surf));
-    surfindex = (*b)->m_S.Count() - 1;
-    ON_BrepFace& bottomface = (*b)->NewFace(surfindex);
-    faceindex = (*b)->m_F.Count() - 1;
-    ON_BrepEdge& bottomedge = (*b)->NewEdge(bottomvert1, bottomvert1, ell1ind); 
-    edgeindex = (*b)->m_E.Count() - 1;
-    bottomedge.m_tolerance = 0.0;
-    ON_BrepTrim& bottomtrim = (*b)->NewCurveOnFace((*b)->m_F[faceindex], (*b)->m_E[edgeindex], false, unitcircleind);
-    bottomtrim.m_tolerance[0] = 0.0;
-    bottomtrim.m_tolerance[1] = 0.0;
-    
-    ON_BrepVertex& topvert1 = (*b)->NewVertex(ellcurve2->PointAt(0), SMALL_FASTF);
-    (*b)->m_S.Append(ON_Surface::Cast(tgc_top_surf));
-    surfindex = (*b)->m_S.Count() - 1;
-    ON_BrepFace& topface = (*b)->NewFace(surfindex);
-    faceindex = (*b)->m_F.Count() - 1;
-    ON_BrepEdge& topedge = (*b)->NewEdge(topvert1, topvert1, ell2ind);
-    edgeindex = (*b)->m_E.Count() - 1;
-    topedge.m_tolerance = 0.0;
-    ON_BrepTrim& toptrim = (*b)->NewCurveOnFace((*b)->m_F[faceindex], (*b)->m_E[edgeindex], false, unitcircleind);
-    toptrim.m_tolerance[0] = 0.0;
-    toptrim.m_tolerance[1] = 0.0;
+    ON_SimpleArray<ON_Curve*> bottomboundary;
+    bottomboundary.Append(ON_Curve::Cast(ellcurve1)); 
+    ON_PlaneSurface* bp = new ON_PlaneSurface();
+    bp->m_plane = (*ell1_plane);
+    bp->SetDomain(0, -100.0, 100.0 );
+    bp->SetDomain(1, -100.0, 100.0 );
+    bp->SetExtents(0, bp->Domain(0) );
+    bp->SetExtents(1, bp->Domain(1) );
+    const int bsi = (*b)->AddSurface(bp);
+    ON_BrepFace& bface = (*b)->NewFace(bsi);
+    (*b)->NewPlanarFaceLoop(bface.m_face_index, ON_BrepLoop::outer, bottomboundary, true); 
+    const ON_BrepLoop* bloop = (*b)->m_L.Last();
+    bp->SetDomain(0, bloop->m_pbox.m_min.x, bloop->m_pbox.m_max.x );
+    bp->SetDomain(1, bloop->m_pbox.m_min.y, bloop->m_pbox.m_max.y );
+    bp->SetExtents(0,bp->Domain(0));
+    bp->SetExtents(1,bp->Domain(1));
+    (*b)->SetTrimIsoFlags(bface);
+    (*b)->FlipFace(bface);
  
-    (*b)->m_S.Append(ON_Surface::Cast(tgc_side_surf));
-    surfindex = (*b)->m_S.Count() - 1;
-    ON_BrepFace& sideface = (*b)->NewFace(surfindex);
+    ON_SimpleArray<ON_Curve*> topboundary;
+    topboundary.Append(ON_Curve::Cast(ellcurve2)); 
+    ON_PlaneSurface* tp = new ON_PlaneSurface();
+    tp->m_plane = (*ell2_plane);
+    tp->SetDomain(0, -100.0, 100.0 );
+    tp->SetDomain(1, -100.0, 100.0 );
+    tp->SetExtents(0, tp->Domain(0) );
+    tp->SetExtents(1, tp->Domain(1) );
+    const int tsi = (*b)->AddSurface(tp);
+    ON_BrepFace& tface = (*b)->NewFace(tsi);
+    (*b)->NewPlanarFaceLoop(tface.m_face_index, ON_BrepLoop::outer, topboundary, true); 
+    const ON_BrepLoop* tloop = (*b)->m_L.Last();
+    tp->SetDomain(0, tloop->m_pbox.m_min.x, tloop->m_pbox.m_max.x );
+    tp->SetDomain(1, tloop->m_pbox.m_min.y, tloop->m_pbox.m_max.y );
+    tp->SetExtents(0,tp->Domain(0));
+    tp->SetExtents(1,tp->Domain(1));
+    (*b)->SetTrimIsoFlags(tface);
+ 
 
+    // Need to use NewRuledEdge here, which means valid edges
+    // need to be created using the ellipses
+
+    int ell1ind = (*b)->AddEdgeCurve(ellcurve1);
+    int ell2ind = (*b)->AddEdgeCurve(ellcurve2);
+    ON_BrepVertex& bottomvert1 = (*b)->NewVertex(ellcurve1->PointAt(0), SMALL_FASTF);
+    bottomvert1.m_tolerance = 0.0;
+    int vert1ind = (*b)->m_V.Count() - 1;
+    ON_BrepVertex& topvert1 = (*b)->NewVertex(ellcurve2->PointAt(0), SMALL_FASTF);
+    topvert1.m_tolerance = 0.0;
+    int vert2ind = (*b)->m_V.Count() - 1;
+    ON_BrepEdge& bottomedge = (*b)->NewEdge((*b)->m_V[vert1ind], (*b)->m_V[vert1ind], ell1ind);
+    bottomedge.m_tolerance = 0.0;
+    int bei = (*b)->m_E.Count() - 1;
+    ON_BrepEdge& topedge = (*b)->NewEdge((*b)->m_V[vert2ind], (*b)->m_V[vert2ind], ell2ind);
+    topedge.m_tolerance = 0.0;
+    int tei = (*b)->m_E.Count() - 1;
+
+    ON_BrepFace *sidefce = (*b)->NewRuledFace((*b)->m_E[bei], false, (*b)->m_E[tei], false); 
 
 }
 
