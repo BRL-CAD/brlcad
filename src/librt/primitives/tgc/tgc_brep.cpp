@@ -142,34 +142,28 @@ rt_tgc_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *t
     int unitcircleind = (*b)->m_C2.Count() - 1;
     
     /* Create brep with three faces*/
-    int surfindex;
+    int surfindex, faceindex, edgeindex;
     ON_BrepVertex& bottomvert1 = (*b)->NewVertex(ellcurve1->PointAt(0), SMALL_FASTF);
-    int vert11 = (*b)->m_V.Count() - 1;
-    ON_BrepVertex& bottomvert2 = (*b)->NewVertex(ellcurve1->PointAt(1), SMALL_FASTF);
-    int vert12 = (*b)->m_V.Count() - 1;
     (*b)->m_S.Append(ON_Surface::Cast(tgc_bottom_surf));
     surfindex = (*b)->m_S.Count() - 1;
     ON_BrepFace& bottomface = (*b)->NewFace(surfindex);
-    ON_BrepLoop& bottomloop = (*b)->NewLoop(ON_BrepLoop::outer, bottomface);
-    ON_BrepEdge& bottomedge = (*b)->NewEdge((*b)->m_V[vert11], (*b)->m_V[vert12], ell1ind); 
+    faceindex = (*b)->m_F.Count() - 1;
+    ON_BrepEdge& bottomedge = (*b)->NewEdge(bottomvert1, bottomvert1, ell1ind); 
+    edgeindex = (*b)->m_E.Count() - 1;
     bottomedge.m_tolerance = 0.0;
-    ON_BrepTrim& bottomtrim = (*b)->NewTrim((*b)->m_E[ell1ind], 0, bottomloop, unitcircleind);
-    bottomtrim.m_type = ON_BrepTrim::crvonsrf;
+    ON_BrepTrim& bottomtrim = (*b)->NewCurveOnFace((*b)->m_F[faceindex], (*b)->m_E[edgeindex], false, unitcircleind);
     bottomtrim.m_tolerance[0] = 0.0;
     bottomtrim.m_tolerance[1] = 0.0;
     
     ON_BrepVertex& topvert1 = (*b)->NewVertex(ellcurve2->PointAt(0), SMALL_FASTF);
-    int vert21 = (*b)->m_V.Count() - 1;
-    ON_BrepVertex& topvert2 = (*b)->NewVertex(ellcurve2->PointAt(1), SMALL_FASTF);
-    int vert22 = (*b)->m_V.Count() - 1;
     (*b)->m_S.Append(ON_Surface::Cast(tgc_top_surf));
     surfindex = (*b)->m_S.Count() - 1;
     ON_BrepFace& topface = (*b)->NewFace(surfindex);
-    ON_BrepLoop& toploop = (*b)->NewLoop(ON_BrepLoop::outer, topface);
-    ON_BrepEdge& topedge = (*b)->NewEdge((*b)->m_V[vert21], (*b)->m_V[vert22], ell2ind);
+    faceindex = (*b)->m_F.Count() - 1;
+    ON_BrepEdge& topedge = (*b)->NewEdge(topvert1, topvert1, ell2ind);
+    edgeindex = (*b)->m_E.Count() - 1;
     topedge.m_tolerance = 0.0;
-    ON_BrepTrim& toptrim = (*b)->NewTrim((*b)->m_E[ell2ind], 0, toploop, unitcircleind);
-    toptrim.m_type = ON_BrepTrim::crvonsrf;
+    ON_BrepTrim& toptrim = (*b)->NewCurveOnFace((*b)->m_F[faceindex], (*b)->m_E[edgeindex], false, unitcircleind);
     toptrim.m_tolerance[0] = 0.0;
     toptrim.m_tolerance[1] = 0.0;
  
