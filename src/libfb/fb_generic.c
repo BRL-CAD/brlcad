@@ -96,7 +96,7 @@ FBIO *_if_list[] = {
 #ifdef IF_WGL
     &wgl_interface,
 #endif
-#ifdef IF_RTGL
+#ifdef IF_OGL
     &ogl_interface,
 #endif
 #ifdef IF_RAT
