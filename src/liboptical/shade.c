@@ -282,6 +282,13 @@ viewshade( struct application *ap, const struct partition *pp, struct shadework 
     mfp = (struct mfuncs *)pp->pt_regionp->reg_mfuncs;
     RT_CK_MF(mfp);
 
+    if (!swp) {
+	if ( R_DEBUG&RDEBUG_SHADE ) {
+	    bu_log("ERROR: NULL shadework structure encountered\n");
+	}
+	return 0;
+    }
+
     want = mfp->mf_inputs;
 
     if ( R_DEBUG&RDEBUG_SHADE ) {
