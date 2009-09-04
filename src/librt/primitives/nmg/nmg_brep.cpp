@@ -242,8 +242,7 @@ rt_nmg_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *t
 			if (vg1pt !=  (*b)->m_V[(*b)->m_E[edge_index].m_vi[0]].Point()) {
 			    orientation = 1;
 			}
-			// OK, at the moment the 2d curve generation routine is not generating curves with vertices corresponding to the
-			// edges in question.  Need to pick part the reasons for this and where the logic needs to change.
+			// Now, make 2d trimming curves
 			vect_t vect1, vect2;
 			VSUB2(vect1, ev1, uv1);
 			VSUB2(vect2, ev2, uv1);
