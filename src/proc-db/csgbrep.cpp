@@ -46,7 +46,7 @@ extern "C" {
     extern void rt_sph_brep(ON_Brep **bi, struct rt_db_internal *ip, const struct bn_tol *tol);
     extern void rt_ell_brep(ON_Brep **bi, struct rt_db_internal *ip, const struct bn_tol *tol);
     extern void rt_eto_brep(ON_Brep **bi, struct rt_db_internal *ip, const struct bn_tol *tol);
-    //extern void rt_rhc_brep(ON_Brep **bi, struct rt_db_internal *ip, const struct bn_tol *tol);
+    extern void rt_rhc_brep(ON_Brep **bi, struct rt_db_internal *ip, const struct bn_tol *tol);
     extern void rt_tgc_brep(ON_Brep **bi, struct rt_db_internal *ip, const struct bn_tol *tol);
     extern void rt_tor_brep(ON_Brep **bi, struct rt_db_internal *ip, const struct bn_tol *tol);
 
@@ -302,7 +302,7 @@ main(int argc, char** argv)
     const char* ell_name = "ell_nurb.s";
     mk_brep(outfp, ell_name, ellbrep);
     delete ellbrep;
-/* 
+    
     bu_log("Writing a RHC b-rep...\n");
     ON_Brep* rhcbrep = ON_Brep::New();
     struct rt_rhc_internal *rhc;
@@ -318,7 +318,7 @@ main(int argc, char** argv)
     const char* rhc_name = "rhc_nurb.s";
     mk_brep(outfp, rhc_name, rhcbrep);
     delete rhcbrep;
-*/
+
     bu_log("Writing a TGC b-rep...\n");
     ON_Brep* tgcbrep = ON_Brep::New();
     struct rt_tgc_internal *tgc;

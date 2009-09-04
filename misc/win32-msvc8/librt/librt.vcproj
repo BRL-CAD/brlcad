@@ -788,6 +788,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\src\librt\primitives\rhc\rhc_brep.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\src\librt\primitives\rhc\rhc_mirror.c"
 				>
 			</File>

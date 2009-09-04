@@ -138,6 +138,7 @@ set(LIBRT_SOURCES
     primitives/rec/rec.c
     primitives/revolve/revolve.c
     primitives/rhc/rhc.c
+    primitives/rhc/rhc_brep.cpp
     primitives/rhc/rhc_mirror.c
     primitives/rpc/rpc.c
     primitives/rpc/rpc_mirror.c
