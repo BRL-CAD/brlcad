@@ -285,7 +285,9 @@ struct hit {
 	RT_CK_HIT(_hitp); \
 	RT_CK_SOLTAB(_stp); \
 	RT_CK_FUNCTAB((_stp)->st_meth); \
-	(_stp)->st_meth->ft_norm(_hitp, _stp, (_hitp)->hit_rayp); \
+	if ((_stp)->st_meth->ft_norm) { \
+		(_stp)->st_meth->ft_norm(_hitp, _stp, (_hitp)->hit_rayp); \
+	} \
 }
 
 /**
@@ -301,7 +303,9 @@ struct hit {
 	RT_CK_HIT(_hitp); \
 	RT_CK_SOLTAB(_stp); \
 	RT_CK_FUNCTAB((_stp)->st_meth); \
-	(_stp)->st_meth->ft_norm(_hitp, _stp, (_hitp)->hit_rayp); \
+	if ((_stp)->st_meth->ft_norm) { \
+		(_stp)->st_meth->ft_norm(_hitp, _stp, (_hitp)->hit_rayp); \
+	} \
 	if (_normal) { \
 		if (_flipflag) { \
 			VREVERSE((fastf_t *)_normal, (_hitp)->hit_normal); \
@@ -344,7 +348,9 @@ struct curvature {
 	RT_CK_HIT(_hitp); \
 	RT_CK_SOLTAB(_stp); \
 	RT_CK_FUNCTAB((_stp)->st_meth); \
-	(_stp)->st_meth->ft_curve(_curvp, _hitp, _stp); \
+	if ((_stp)->st_meth->ft_curve) { \
+		(_stp)->st_meth->ft_curve(_curvp, _hitp, _stp); \
+	} \
 	if (_flipflag) { \
 		(_curvp)->crv_c1 = - (_curvp)->crv_c1; \
 		(_curvp)->crv_c2 = - (_curvp)->crv_c2; \
@@ -369,7 +375,10 @@ struct uvcoord {
 	RT_CK_HIT(_hitp); \
 	RT_CK_SOLTAB(_stp); \
 	RT_CK_FUNCTAB((_stp)->st_meth); \
-	(_stp)->st_meth->ft_uv(ap, _stp, _hitp, uvp); }
+	if ((_stp)->st_meth->ft_uv) { \
+ 		(_stp)->st_meth->ft_uv(ap, _stp, _hitp, uvp); \
+	} \
+}
 
 /* A more powerful interface would be: */
 /* RT_GET_UVCOORD(_uvp, _partition, inhit/outhit flag, ap) */
