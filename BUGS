@@ -15,6 +15,9 @@ on-going issues.
 Recent Bugs
 -----------
 
+* CMD-b and CMD-f navigates the mged command window text widget on Mac
+  and trivally causes problems with the cursor and text injection.
+
 * reported that mged -c invoked via python on windows prompts for the
   attach device and fails to parse a script.
 
