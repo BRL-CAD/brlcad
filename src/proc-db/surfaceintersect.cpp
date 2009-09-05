@@ -644,8 +644,8 @@ void WalkIntersection(
     double t2,
     double stepsize,
     double tol,
-    ON_Curve **out1,
-    ON_Curve **out2
+    ON_Curve *&out1,
+    ON_Curve *&out2
     )
 {
     ON_2dPointArray intersectionPoints1, intersectionPoints2;
@@ -720,8 +720,10 @@ void WalkIntersection(
 	    }
 	}
     }
-    *out1 = (ON_Curve *) new ON_BezierCurve((ON_2dPointArray) intersectionPoints1);
-    *out2 = (ON_Curve *) new ON_BezierCurve((ON_2dPointArray) intersectionPoints2);
+    ON_BezierCurve *bezier1 = new ON_BezierCurve((ON_2dPointArray) intersectionPoints1);
+    ON_BezierCurve *bezier2 = new ON_BezierCurve((ON_2dPointArray) intersectionPoints2);
+    out1 = ON_NurbsCurve::New(*bezier1);
+    out2 = ON_NurbsCurve::New(*bezier2);
 }
 
 
@@ -880,7 +882,7 @@ int FaceFaceIntersect(
     for (i = 0; i < start_points1.Count(); i++) {
 	start1 = *start_points1.First();
 	start2 = *start_points2.First();
-	WalkIntersection(surf1, surf2, start1[0], start2[0], start1[1], start2[1], stepsize, tol, &out1, &out2);
+	WalkIntersection(surf1, surf2, start1[0], start2[0], start1[1], start2[1], stepsize, tol, out1, out2);
 
 	start_points1.Remove(0);
 	start_points2.Remove(0);
