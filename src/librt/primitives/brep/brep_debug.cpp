@@ -657,6 +657,7 @@ int
 brep_command(struct bu_vls *vls, struct brep_specific* bs, struct rt_brep_internal* bi,struct bn_vlblock *vbp,int argc, char *argv[])
 {
     char *command;
+    int  ret = 0;
 
 	if (argc == 2)
 		command = "info";
@@ -667,7 +668,7 @@ brep_command(struct bu_vls *vls, struct brep_specific* bs, struct rt_brep_intern
 		if (strcmp(command, "?") == 0) {
 			info_usage(vls);
 		} else if (argc == 3) {
-			brep_info(bs, vls);
+			ret = brep_info(bs, vls);
 		} else if (argc == 5) {
 			const char *part = argv[3];
 			const char *strindex = argv[4];
@@ -676,9 +677,9 @@ brep_command(struct bu_vls *vls, struct brep_specific* bs, struct rt_brep_intern
 			} else {
 				int index = atoi(strindex);
 				if (strcmp(part, "S") == 0) {
-					brep_surface_info(bs, vls, index);
+					ret = brep_surface_info(bs, vls, index);
 				} else if (strcmp(part, "F") == 0) {
-					brep_face_info(bs, vls, index);
+					ret = brep_face_info(bs, vls, index);
 				}
 			}
 		}
@@ -700,12 +701,12 @@ brep_command(struct bu_vls *vls, struct brep_specific* bs, struct rt_brep_intern
 					const char *strindex = argv[4];
 					index = atoi(strindex);
 					bu_vls_printf(vls, "strindex-%s", strindex);
-					brep_surface_plot(vls, bs, bi, vbp, index, plotres);
+					ret = brep_surface_plot(vls, bs, bi, vbp, index, plotres);
 				} else {
-					brep_surface_plot(vls, bs, bi, vbp, index, plotres);
+					ret = brep_surface_plot(vls, bs, bi, vbp, index, plotres);
 				}
 			} else if (strcmp(part, "F") == 0) {
-				brep_facetrim_plot(vls, bs, bi, vbp, index);
+				ret = brep_facetrim_plot(vls, bs, bi, vbp, index);
 			} else if (strcmp(part, "E") == 0) {
 				if (argc == 6) {
 					const char *strres = argv[5];
@@ -715,13 +716,15 @@ brep_command(struct bu_vls *vls, struct brep_specific* bs, struct rt_brep_intern
 					const char *strindex = argv[4];
 					index = atoi(strindex);
 					bu_vls_printf(vls, "strindex-%s", strindex);
-					brep_edge3d_plot(vls, bs, bi, vbp, index, plotres);
+					ret = brep_edge3d_plot(vls, bs, bi, vbp, index, plotres);
 				} else {
-					brep_edge3d_plot(vls, bs, bi, vbp, index, plotres);
+					ret = brep_edge3d_plot(vls, bs, bi, vbp, index, plotres);
 				}
 			}
 		}
 	}
+
+    return ret;
 }
 #endif /* PLOTTING */
 
