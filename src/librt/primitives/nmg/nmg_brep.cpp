@@ -59,12 +59,13 @@ rt_nmg_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *t
     struct edgeuse *eu;
 
     int edge_index;
+    long* brepi;
         
     RT_CK_DB_INTERNAL(ip);
     m = (struct model *)ip->idb_ptr;
     NMG_CK_MODEL(m);
    
-    long brepi[m->maxindex];
+    brepi = static_cast<long*>(bu_malloc(m->maxindex * sizeof(long), "rt_nmg_brep: brepi[]"));
     for (int i = 0; i < m->maxindex; i++) brepi[i] = -INT_MAX;
     
     *b = new ON_Brep();
@@ -276,6 +277,8 @@ rt_nmg_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *t
 	    (*b)->SetTrimIsoFlags();
 	}
     }
+
+    bu_free(brepi, "rt_nmg_brep: brepi[]");
 }
 
 
