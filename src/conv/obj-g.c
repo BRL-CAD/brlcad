@@ -79,10 +79,10 @@ int
 write_region(struct region_s *r, struct rt_wdb *out_fp)
 {
     int rval;
-    char *regname;
+    const char *regname;
     /* add the region long name to list */
     /* lock here, regname is not reentrant. */
-    regname = basename(r->name);
+    regname = bu_basename(r->name);
     rval = wdb_export( out_fp, regname, (genptr_t)&(r->bot), ID_BOT, 1.0 );
     /* unlock here. */
     return rval;
