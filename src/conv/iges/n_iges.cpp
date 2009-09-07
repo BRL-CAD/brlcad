@@ -515,7 +515,7 @@ namespace brlcad {
 
     void
     ParameterData::addParam(const string& param) {
-	assert(index >= 0);
+	assert(param.size() > 0);
 	params.push_back(param);
     }
 
