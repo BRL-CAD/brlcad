@@ -17,7 +17,7 @@ tasks as they are completed.
 THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 -------------------------------------------------
 
-* ready to ship?
+* ship it.
 
 
 THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
@@ -33,8 +33,6 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 
 * initial step-g with basic file parsing capability but without
   creation of .g geometry just yet
-
-* improved archer interactive editing support for all primitives
 
 * refactor rt_functab accessors to go through an api call or calls so
   that the array is not accessed directly.  either an rt_eval() style
