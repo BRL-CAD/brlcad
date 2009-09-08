@@ -284,6 +284,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\src\librt\primitives\bot\bot_brep.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\src\librt\primitives\bot\bot_mirror.c"
 				>
 			</File>
@@ -421,6 +425,10 @@
 			</File>
 			<File
 				RelativePath="..\..\..\src\librt\primitives\ebm\ebm.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\src\librt\primitives\ebm\ebm_brep.cpp"
 				>
 			</File>
 			<File
@@ -757,6 +765,10 @@
 			</File>
 			<File
 				RelativePath="..\..\..\src\librt\primitives\poly\poly.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\src\librt\primitives\poly\poly_brep.cpp"
 				>
 			</File>
 			<File
