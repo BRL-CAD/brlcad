@@ -912,6 +912,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\src\librt\primitives\vol\vol_brep.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\src\librt\primitives\vol\vol_mirror.c"
 				>
 			</File>

@@ -159,6 +159,7 @@ set(LIBRT_SOURCES
     primitives/tor/tor_brep.cpp
     primitives/tor/tor_mirror.c
     primitives/vol/vol.c
+    primitives/vol/vol_brep.cpp
     primitives/vol/vol_mirror.c
     regionfix.c
     roots.c
