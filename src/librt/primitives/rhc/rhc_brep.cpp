@@ -90,7 +90,7 @@ rt_rhc_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *t
     ON_3dPoint onp2 = ON_3dPoint(ep2);
     ON_3dPoint onp3 = ON_3dPoint(ep3);
 
-/*
+
     ON_NurbsCurve* hypnurbscurve = ON_NurbsCurve::New(3,true,3,3);
     hypnurbscurve->SetKnot(0, 0);
     hypnurbscurve->SetKnot(1, 0);
@@ -101,17 +101,17 @@ rt_rhc_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *t
     hypnurbscurve->SetCV(2,ON_3dPoint(ep3));
     bu_log("Valid nurbs curve: %d\n", hypnurbscurve->IsValid(dump));
     hypnurbscurve->Dump(*dump);
-*/
+
     // Also need a staight line from the beginning to the end to
     // complete the loop
 
-    ON_LineCurve* straightedge = new ON_LineCurve(onp1,onp3);   
+    ON_LineCurve* straightedge = new ON_LineCurve(onp3,onp1);   
     bu_log("Valid curve: %d\n", straightedge->IsValid(dump));
     straightedge->Dump(*dump);
    
-    // Generate the end caps 
+    // Generate the bottom cap 
     ON_SimpleArray<ON_Curve*> boundary;
-//    boundary.Append(ON_Curve::Cast(hypnurbscurve)); 
+    boundary.Append(ON_Curve::Cast(hypnurbscurve)); 
     boundary.Append(ON_Curve::Cast(straightedge)); 
     
     ON_PlaneSurface* bp = new ON_PlaneSurface();
@@ -120,7 +120,8 @@ rt_rhc_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *t
     bp->SetDomain(1, -100.0, 100.0 );
     bp->SetExtents(0, bp->Domain(0) );
     bp->SetExtents(1, bp->Domain(1) );
-    const int bsi = (*b)->AddSurface(bp);
+    (*b)->m_S.Append(bp);
+    const int bsi = (*b)->m_S.Count() - 1;
     ON_BrepFace& bface = (*b)->NewFace(bsi);
     (*b)->NewPlanarFaceLoop(bface.m_face_index, ON_BrepLoop::outer, boundary, true); 
     const ON_BrepLoop* bloop = (*b)->m_L.Last();
@@ -129,32 +130,14 @@ rt_rhc_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *t
     bp->SetExtents(0,bp->Domain(0));
     bp->SetExtents(1,bp->Domain(1));
     (*b)->SetTrimIsoFlags(bface);
-    (*b)->FlipFace(bface);
-/* 
-    ON_PlaneSurface* tp = new ON_PlaneSurface();
-    tp->m_plane = (*rhc_top_plane);
-    tp->SetDomain(0, -100.0, 100.0 );
-    tp->SetDomain(1, -100.0, 100.0 );
-    tp->SetExtents(0, tp->Domain(0) );
-    tp->SetExtents(1, tp->Domain(1) );
-    const int tsi = (*b)->AddSurface(tp);
-    ON_BrepFace& tface = (*b)->NewFace(tsi);
-    (*b)->NewPlanarFaceLoop(tface.m_face_index, ON_BrepLoop::outer, boundary, true); 
-    const ON_BrepLoop* tloop = (*b)->m_L.Last();
-    tp->SetDomain(0, tloop->m_pbox.m_min.x, tloop->m_pbox.m_max.x );
-    tp->SetDomain(1, tloop->m_pbox.m_min.y, tloop->m_pbox.m_max.y );
-    tp->SetExtents(0,tp->Domain(0));
-    tp->SetExtents(1,tp->Domain(1));
-    (*b)->SetTrimIsoFlags(tface);
-    */
-/*
-    // Now the side face - extrude the bottom face
+
+    // Now the side face and top cap - extrude the bottom face and set the cap flag to true
     vect_t vp2;
     VADD2(vp2,eip->rhc_V, eip->rhc_H);
     const ON_Curve* extrudepath = new ON_LineCurve(ON_3dPoint(eip->rhc_V), ON_3dPoint(vp2));
     ON_Brep& brep = *(*b);
-    ON_BrepExtrudeFace(brep,0, *extrudepath, false);
-  */  
+    ON_BrepExtrudeFace(brep,0, *extrudepath, true);
+  
 }
 
 // Local Variables:
