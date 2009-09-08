@@ -2040,7 +2040,7 @@ rt_extrude_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip
  *  Apply modeling transformations as well.
  */
 int
-rt_extrude_import(struct rt_db_internal *ip, const struct bu_external *ep, register const fastf_t *mat, const struct db_i *dbip, struct resource *resp)
+rt_extrude_import4(struct rt_db_internal *ip, const struct bu_external *ep, register const fastf_t *mat, const struct db_i *dbip, struct resource *resp)
 {
     struct rt_extrude_internal *extrude_ip;
     struct rt_db_internal tmp_ip;
@@ -2054,7 +2054,7 @@ rt_extrude_import(struct rt_db_internal *ip, const struct bu_external *ep, regis
     rp = (union record *)ep->ext_buf;
     /* Check record type */
     if (rp->u_id != DBID_EXTR) {
-	bu_log("rt_extrude_import: defective record\n");
+	bu_log("rt_extrude_import4: defective record\n");
 	return(-1);
     }
 
@@ -2070,12 +2070,12 @@ rt_extrude_import(struct rt_db_internal *ip, const struct bu_external *ep, regis
     if (!dbip) {
 	extrude_ip->skt = (struct rt_sketch_internal *)NULL;
     } else if ((dp=db_lookup(dbip, sketch_name, LOOKUP_NOISY)) == DIR_NULL) {
-	bu_log("rt_extrude_import: ERROR: Cannot find sketch (%.16s) for extrusion (%.16s)\n",
+	bu_log("rt_extrude_import4: ERROR: Cannot find sketch (%.16s) for extrusion (%.16s)\n",
 	       sketch_name, rp->extr.ex_name);
 	extrude_ip->skt = (struct rt_sketch_internal *)NULL;
     } else {
 	if (rt_db_get_internal(&tmp_ip, dp, dbip, bn_mat_identity, resp) != ID_SKETCH) {
-	    bu_log("rt_extrude_import: ERROR: Cannot import sketch (%.16s) for extrusion (%.16s)\n",
+	    bu_log("rt_extrude_import4: ERROR: Cannot import sketch (%.16s) for extrusion (%.16s)\n",
 		   sketch_name, rp->extr.ex_name);
 	    bu_free(ip->idb_ptr, "extrusion");
 	    return(-1);
@@ -2109,7 +2109,7 @@ rt_extrude_import(struct rt_db_internal *ip, const struct bu_external *ep, regis
  *  The name is added by the caller, in the usual place.
  */
 int
-rt_extrude_export(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip)
+rt_extrude_export4(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip)
 {
     struct rt_extrude_internal *extrude_ip;
     vect_t tmp_vec;
@@ -2231,12 +2231,12 @@ rt_extrude_import5(
     if (!dbip) {
 	extrude_ip->skt = (struct rt_sketch_internal *)NULL;
     } else if ((dp=db_lookup(dbip, sketch_name, LOOKUP_NOISY)) == DIR_NULL) {
-	bu_log("rt_extrude_import: ERROR: Cannot find sketch (%s) for extrusion\n",
+	bu_log("rt_extrude_import4: ERROR: Cannot find sketch (%s) for extrusion\n",
 	       sketch_name);
 	extrude_ip->skt = (struct rt_sketch_internal *)NULL;
     } else {
 	if (rt_db_get_internal(&tmp_ip, dp, dbip, bn_mat_identity, resp) != ID_SKETCH) {
-	    bu_log("rt_extrude_import: ERROR: Cannot import sketch (%s) for extrusion\n",
+	    bu_log("rt_extrude_import4: ERROR: Cannot import sketch (%s) for extrusion\n",
 		   sketch_name);
 	    bu_free(ip->idb_ptr, "extrusion");
 	    return(-1);

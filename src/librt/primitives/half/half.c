@@ -538,7 +538,7 @@ rt_hlf_xform(
  *	 0	success
  */
 int
-rt_hlf_import(struct rt_db_internal *ip, const struct bu_external *ep, const fastf_t *mat, const struct db_i *dbip)
+rt_hlf_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fastf_t *mat, const struct db_i *dbip)
 {
     struct rt_half_internal	*hip;
     union record	*rp;
@@ -550,7 +550,7 @@ rt_hlf_import(struct rt_db_internal *ip, const struct bu_external *ep, const fas
     BU_CK_EXTERNAL( ep );
     rp = (union record *)ep->ext_buf;
     if ( rp->u_id != ID_SOLID )  {
-	bu_log("rt_hlf_import: defective record, id=x%x\n", rp->u_id);
+	bu_log("rt_hlf_import4: defective record, id=x%x\n", rp->u_id);
 	return(-1);
     }
 
@@ -581,7 +581,7 @@ rt_hlf_import(struct rt_db_internal *ip, const struct bu_external *ep, const fas
     /* Verify that normal has unit length */
     f = MAGNITUDE( hip->eqn );
     if ( f <= SMALL )  {
-	bu_log("rt_hlf_import:  bad normal, len=%g\n", f );
+	bu_log("rt_hlf_import4:  bad normal, len=%g\n", f );
 	return(-1);		/* BAD */
     }
     t = f - 1.0;
@@ -598,7 +598,7 @@ rt_hlf_import(struct rt_db_internal *ip, const struct bu_external *ep, const fas
  *			R T _ H L F _ E X P O R T
  */
 int
-rt_hlf_export(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip)
+rt_hlf_export4(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip)
 {
     struct rt_half_internal	*hip;
     union record		*rec;
@@ -664,7 +664,7 @@ rt_hlf_import5(struct rt_db_internal *ip, const struct bu_external *ep, register
     /* Verify that normal has unit length */
     f = MAGNITUDE( hip->eqn );
     if ( f <= SMALL )  {
-	bu_log("rt_hlf_import:  bad normal, len=%g\n", f );
+	bu_log("rt_hlf_import4:  bad normal, len=%g\n", f );
 	return(-1);		/* BAD */
     }
     t = f - 1.0;

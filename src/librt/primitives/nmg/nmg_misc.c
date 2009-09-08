@@ -5015,7 +5015,7 @@ nmg_stash_model_to_file(const char *filename, const struct model *m, const char 
 
     if (fp->dbip->dbi_version <= 4) {
 	BU_INIT_EXTERNAL(&ext);
-	ret = intern.idb_meth->ft_export(&ext, &intern, 1.0, fp->dbip, &rt_uniresource);
+	ret = intern.idb_meth->ft_export4(&ext, &intern, 1.0, fp->dbip, &rt_uniresource);
 	if (ret < 0) {
 	    bu_log("rt_db_put_internal(%s):  solid export failure\n",
 		   name);
@@ -5025,7 +5025,7 @@ nmg_stash_model_to_file(const char *filename, const struct model *m, const char 
 	db_wrap_v4_external(&ext, name);
     } else {
 	if (rt_db_cvt_to_external5(&ext, name, &intern, 1.0, fp->dbip, &rt_uniresource, intern.idb_major_type) < 0) {
-	    bu_log("wdb_export(%s): solid export failure\n",
+	    bu_log("wdb_export4(%s): solid export failure\n",
 		   name);
 	    ret = -2;
 	    goto out;

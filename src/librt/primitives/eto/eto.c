@@ -1200,7 +1200,7 @@ rt_eto_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
  *  Apply modeling transformations at the same time.
  */
 int
-rt_eto_import(struct rt_db_internal *ip, const struct bu_external *ep, register const fastf_t *mat, const struct db_i *dbip)
+rt_eto_import4(struct rt_db_internal *ip, const struct bu_external *ep, register const fastf_t *mat, const struct db_i *dbip)
 {
     struct rt_eto_internal	*tip;
     union record		*rp;
@@ -1209,7 +1209,7 @@ rt_eto_import(struct rt_db_internal *ip, const struct bu_external *ep, register 
     rp = (union record *)ep->ext_buf;
     /* Check record type */
     if ( rp->u_id != ID_SOLID )  {
-	bu_log("rt_eto_import: defective record\n");
+	bu_log("rt_eto_import4: defective record\n");
 	return(-1);
     }
 
@@ -1230,7 +1230,7 @@ rt_eto_import(struct rt_db_internal *ip, const struct bu_external *ep, register 
     tip->eto_rd = rp->s.s_values[3*3+1] / mat[15];
 
     if ( tip->eto_r <= SMALL || tip->eto_rd <= SMALL )  {
-	bu_log("rt_eto_import:  zero length R or Rd vector\n");
+	bu_log("rt_eto_import4:  zero length R or Rd vector\n");
 	return(-1);
     }
 
@@ -1243,7 +1243,7 @@ rt_eto_import(struct rt_db_internal *ip, const struct bu_external *ep, register 
  *  The name will be added by the caller.
  */
 int
-rt_eto_export(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip)
+rt_eto_export4(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip)
 {
     struct rt_eto_internal	*tip;
     union record		*eto;
@@ -1265,12 +1265,12 @@ rt_eto_export(struct bu_external *ep, const struct rt_db_internal *ip, double lo
 	|| MAGNITUDE(tip->eto_N) < RT_LEN_TOL
 	|| tip->eto_r < RT_LEN_TOL
 	|| tip->eto_rd < RT_LEN_TOL) {
-	bu_log("rt_eto_export: not all dimensions positive!\n");
+	bu_log("rt_eto_export4: not all dimensions positive!\n");
 	return(-1);
     }
 
     if (tip->eto_rd > MAGNITUDE(tip->eto_C) ) {
-	bu_log("rt_eto_export: semi-minor axis cannot be longer than semi-major axis!\n");
+	bu_log("rt_eto_export4: semi-minor axis cannot be longer than semi-major axis!\n");
 	return(-1);
     }
 
@@ -1321,7 +1321,7 @@ rt_eto_import5(struct rt_db_internal *ip, const struct bu_external *ep, register
     tip->eto_rd = vec[3*3+1] / mat[15];
 
     if ( tip->eto_r <= SMALL || tip->eto_rd <= SMALL )  {
-	bu_log("rt_eto_import:  zero length R or Rd vector\n");
+	bu_log("rt_eto_import4:  zero length R or Rd vector\n");
 	return(-1);
     }
 
@@ -1352,12 +1352,12 @@ rt_eto_export5(struct bu_external *ep, const struct rt_db_internal *ip, double l
 	|| MAGNITUDE(tip->eto_N) < RT_LEN_TOL
 	|| tip->eto_r < RT_LEN_TOL
 	|| tip->eto_rd < RT_LEN_TOL) {
-	bu_log("rt_eto_export: not all dimensions positive!\n");
+	bu_log("rt_eto_export4: not all dimensions positive!\n");
 	return(-1);
     }
 
     if (tip->eto_rd > MAGNITUDE(tip->eto_C) ) {
-	bu_log("rt_eto_export: semi-minor axis cannot be longer than semi-major axis!\n");
+	bu_log("rt_eto_export4: semi-minor axis cannot be longer than semi-major axis!\n");
 	return(-1);
     }
 

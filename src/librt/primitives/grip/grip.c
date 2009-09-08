@@ -284,7 +284,7 @@ rt_grp_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
  *	 0	success
  */
 int
-rt_grp_import(struct rt_db_internal *ip, const struct bu_external *ep, const fastf_t *mat, const struct db_i *dbip)
+rt_grp_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fastf_t *mat, const struct db_i *dbip)
 {
     struct rt_grip_internal	*gip;
     union record	*rp;
@@ -295,7 +295,7 @@ rt_grp_import(struct rt_db_internal *ip, const struct bu_external *ep, const fas
     BU_CK_EXTERNAL( ep );
     rp = (union record *)ep->ext_buf;
     if ( rp->u_id != ID_SOLID )  {
-	bu_log("rt_grp_import: defective record, id=x%x\n", rp->u_id);
+	bu_log("rt_grp_import4: defective record, id=x%x\n", rp->u_id);
 	return(-1);
     }
 
@@ -314,14 +314,14 @@ rt_grp_import(struct rt_db_internal *ip, const struct bu_external *ep, const fas
     MAT4X3PNT( gip->center, mat, &orig_eqn[0] );
     MAT4X3VEC( gip->normal, mat, &orig_eqn[3] );
     if ( NEAR_ZERO(mat[15], 0.001) ) {
-	bu_bomb("rt_grip_import, scale factor near zero.");
+	bu_bomb("rt_grip_import4, scale factor near zero.");
     }
     gip->mag = orig_eqn[6]/mat[15];
 
     /* Verify that normal has unit length */
     f = MAGNITUDE( gip->normal );
     if ( f <= SMALL )  {
-	bu_log("rt_grp_import:  bad normal, len=%g\n", f );
+	bu_log("rt_grp_import4:  bad normal, len=%g\n", f );
 	return(-1);		/* BAD */
     }
     t = f - 1.0;
@@ -338,7 +338,7 @@ rt_grp_import(struct rt_db_internal *ip, const struct bu_external *ep, const fas
  * R T _ G R P _ E X P O R T
  */
 int
-rt_grp_export(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip)
+rt_grp_export4(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip)
 {
     struct rt_grip_internal	*gip;
     union record		*rec;
@@ -397,7 +397,7 @@ rt_grp_import5(struct rt_db_internal *ip, const struct bu_external *ep, register
     /* Verify that normal has unit length */
     f = MAGNITUDE( gip->normal );
     if ( f <= SMALL )  {
-	bu_log("rt_grp_import:  bad normal, len=%g\n", f );
+	bu_log("rt_grp_import4:  bad normal, len=%g\n", f );
 	return(-1);		/* BAD */
     }
     t = f - 1.0;

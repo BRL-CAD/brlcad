@@ -3198,7 +3198,7 @@ rt_pipe_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, c
  * R T _ P I P E _ I M P O R T
  */
 int
-rt_pipe_import(struct rt_db_internal *ip, const struct bu_external *ep, register const fastf_t *mat, const struct db_i *dbip)
+rt_pipe_import4(struct rt_db_internal *ip, const struct bu_external *ep, register const fastf_t *mat, const struct db_i *dbip)
 {
     register struct exported_pipept *exp;
     register struct wdb_pipept *ptp;
@@ -3210,7 +3210,7 @@ rt_pipe_import(struct rt_db_internal *ip, const struct bu_external *ep, register
     rp = (union record *)ep->ext_buf;
     /* Check record type */
     if (rp->u_id != DBID_PIPE) {
-        bu_log("rt_pipe_import: defective record\n");
+        bu_log("rt_pipe_import4: defective record\n");
         return(-1);
     }
     
@@ -3253,7 +3253,7 @@ rt_pipe_import(struct rt_db_internal *ip, const struct bu_external *ep, register
  * R T _ P I P E _ E X P O R T
  */
 int
-rt_pipe_export(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip)
+rt_pipe_export4(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip)
 {
     struct rt_pipe_internal *pip;
     struct bu_list *headp;

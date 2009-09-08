@@ -1363,7 +1363,7 @@ rt_revolve_import5(struct rt_db_internal *ip, const struct bu_external *ep, cons
 	rip->sk = (struct rt_sketch_internal *)NULL;
     else if ((dp=db_lookup(dbip, sketch_name, LOOKUP_NOISY)) == DIR_NULL)
     {
-	bu_log("rt_revolve_import: ERROR: Cannot find sketch (%s) for extrusion\n",
+	bu_log("rt_revolve_import4: ERROR: Cannot find sketch (%s) for extrusion\n",
 	       sketch_name);
 	rip->sk = (struct rt_sketch_internal *)NULL;
     }
@@ -1371,7 +1371,7 @@ rt_revolve_import5(struct rt_db_internal *ip, const struct bu_external *ep, cons
     {
 	if (rt_db_get_internal(&tmp_ip, dp, dbip, bn_mat_identity, resp) != ID_SKETCH)
 	{
-	    bu_log("rt_revolve_import: ERROR: Cannot import sketch (%s) for extrusion\n",
+	    bu_log("rt_revolve_import4: ERROR: Cannot import sketch (%s) for extrusion\n",
 		   sketch_name);
 	    bu_free(ip->idb_ptr, "extrusion");
 	    return(-1);
@@ -1520,7 +1520,7 @@ rt_revolve_ifree(struct rt_db_internal *ip, struct resource *resp)
  *
  * Create transformed version of internal form.  Free *ip if
  * requested.  Implement this if it's faster than doing an
- * export/import cycle.
+ * export/import4 cycle.
  */
 int
 rt_revolve_xform(struct rt_db_internal *op, const mat_t mat, struct rt_db_internal *ip, int free)

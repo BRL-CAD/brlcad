@@ -1175,7 +1175,7 @@ rt_rpc_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
  *  Apply modeling transformations as well.
  */
 int
-rt_rpc_import(struct rt_db_internal *ip, const struct bu_external *ep, register const fastf_t *mat, const struct db_i *dbip)
+rt_rpc_import4(struct rt_db_internal *ip, const struct bu_external *ep, register const fastf_t *mat, const struct db_i *dbip)
 {
     struct rt_rpc_internal	*xip;
     union record			*rp;
@@ -1184,7 +1184,7 @@ rt_rpc_import(struct rt_db_internal *ip, const struct bu_external *ep, register 
     rp = (union record *)ep->ext_buf;
     /* Check record type */
     if ( rp->u_id != ID_SOLID )  {
-	bu_log("rt_rpc_import: defective record\n");
+	bu_log("rt_rpc_import4: defective record\n");
 	return(-1);
     }
 
@@ -1204,8 +1204,8 @@ rt_rpc_import(struct rt_db_internal *ip, const struct bu_external *ep, register 
     xip->rpc_r = rp->s.s_values[3*3] / mat[15];
 
     if ( xip->rpc_r <= SMALL_FASTF ) {
-	bu_log( "rt_rpc_import: r is zero\n" );
-	bu_free( (char *)ip->idb_ptr, "rt_rpc_import: ip->idp_ptr" );
+	bu_log( "rt_rpc_import4: r is zero\n" );
+	bu_free( (char *)ip->idb_ptr, "rt_rpc_import4: ip->idp_ptr" );
 	return( -1 );
     }
 
@@ -1218,7 +1218,7 @@ rt_rpc_import(struct rt_db_internal *ip, const struct bu_external *ep, register 
  *  The name is added by the caller, in the usual place.
  */
 int
-rt_rpc_export(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip)
+rt_rpc_export4(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip)
 {
     struct rt_rpc_internal	*xip;
     union record		*rpc;
@@ -1241,13 +1241,13 @@ rt_rpc_export(struct bu_external *ep, const struct rt_db_internal *ip, double lo
     mag_h = MAGNITUDE( xip->rpc_H );
 
     if ( mag_b < RT_LEN_TOL || mag_h < RT_LEN_TOL || xip->rpc_r < RT_LEN_TOL) {
-	bu_log("rt_rpc_export: not all dimensions positive!\n");
+	bu_log("rt_rpc_export4: not all dimensions positive!\n");
 	return(-1);
     }
 
     f = VDOT(xip->rpc_B, xip->rpc_H) / (mag_b * mag_h );
     if ( !NEAR_ZERO( f, RT_DOT_TOL) ) {
-	bu_log("rt_rpc_export: B and H are not perpendicular! (dot = %g)\n", f );
+	bu_log("rt_rpc_export4: B and H are not perpendicular! (dot = %g)\n", f );
 	return(-1);
     }
 
@@ -1296,8 +1296,8 @@ rt_rpc_import5(struct rt_db_internal *ip, const struct bu_external *ep, register
     xip->rpc_r = vec[3*3] / mat[15];
 
     if ( xip->rpc_r <= SMALL_FASTF ) {
-	bu_log( "rt_rpc_import: r is zero\n" );
-	bu_free( (char *)ip->idb_ptr, "rt_rpc_import: ip->idp_ptr" );
+	bu_log( "rt_rpc_import4: r is zero\n" );
+	bu_free( (char *)ip->idb_ptr, "rt_rpc_import4: ip->idp_ptr" );
 	return( -1 );
     }
 
@@ -1329,13 +1329,13 @@ rt_rpc_export5(struct bu_external *ep, const struct rt_db_internal *ip, double l
     mag_h = MAGNITUDE( xip->rpc_H );
 
     if ( mag_b < RT_LEN_TOL || mag_h < RT_LEN_TOL || xip->rpc_r < RT_LEN_TOL) {
-	bu_log("rt_rpc_export: not all dimensions positive!\n");
+	bu_log("rt_rpc_export4: not all dimensions positive!\n");
 	return(-1);
     }
 
     f = VDOT(xip->rpc_B, xip->rpc_H) / (mag_b * mag_h );
     if ( !NEAR_ZERO( f, RT_DOT_TOL) ) {
-	bu_log("rt_rpc_export: B and H are not perpendicular! (dot = %g)\n", f );
+	bu_log("rt_rpc_export4: B and H are not perpendicular! (dot = %g)\n", f );
 	return(-1);
     }
 

@@ -1530,7 +1530,7 @@ rt_tgc_class(void)
  *  Apply modeling transformations as well.
  */
 int
-rt_tgc_import(struct rt_db_internal *ip, const struct bu_external *ep, register const fastf_t *mat, const struct db_i *dbip)
+rt_tgc_import4(struct rt_db_internal *ip, const struct bu_external *ep, register const fastf_t *mat, const struct db_i *dbip)
 {
     struct rt_tgc_internal	*tip;
     union record		*rp;
@@ -1540,7 +1540,7 @@ rt_tgc_import(struct rt_db_internal *ip, const struct bu_external *ep, register 
     rp = (union record *)ep->ext_buf;
     /* Check record type */
     if ( rp->u_id != ID_SOLID )  {
-	bu_log("rt_tgc_import: defective record\n");
+	bu_log("rt_tgc_import4: defective record\n");
 	return(-1);
     }
 
@@ -1571,7 +1571,7 @@ rt_tgc_import(struct rt_db_internal *ip, const struct bu_external *ep, register 
  *			R T _ T G C _ E X P O R T
  */
 int
-rt_tgc_export(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip)
+rt_tgc_export4(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip)
 {
     struct rt_tgc_internal	*tip;
     union record		*rec;

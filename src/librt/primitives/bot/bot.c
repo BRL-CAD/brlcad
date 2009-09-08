@@ -668,7 +668,7 @@ rt_bot_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
  * Apply modeling transformations as well.
  */
 int
-rt_bot_import(struct rt_db_internal *ip, const struct bu_external *ep, register const fastf_t *mat, const struct db_i *dbip)
+rt_bot_import4(struct rt_db_internal *ip, const struct bu_external *ep, register const fastf_t *mat, const struct db_i *dbip)
 {
     struct rt_bot_internal	*bot_ip;
     union record			*rp;
@@ -679,7 +679,7 @@ rt_bot_import(struct rt_db_internal *ip, const struct bu_external *ep, register 
     rp = (union record *)ep->ext_buf;
     /* Check record type */
     if ( rp->u_id != DBID_BOT )  {
-	bu_log("rt_bot_import: defective record\n");
+	bu_log("rt_bot_import4: defective record\n");
 	return(-1);
     }
 
@@ -745,7 +745,7 @@ rt_bot_import(struct rt_db_internal *ip, const struct bu_external *ep, register 
  * The name is added by the caller, in the usual place.
  */
 int
-rt_bot_export(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip)
+rt_bot_export4(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip)
 {
     struct rt_bot_internal	*bot_ip;
     union record		*rec;

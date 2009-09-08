@@ -1301,7 +1301,7 @@ rt_tor_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
  * Apply modeling transformations at the same time.
  */
 int
-rt_tor_import(struct rt_db_internal *ip, const struct bu_external *ep, register const fastf_t *mat, const struct db_i *dbip)
+rt_tor_import4(struct rt_db_internal *ip, const struct bu_external *ep, register const fastf_t *mat, const struct db_i *dbip)
 {
     struct rt_tor_internal	*tip;
     union record		*rp;
@@ -1313,7 +1313,7 @@ rt_tor_import(struct rt_db_internal *ip, const struct bu_external *ep, register 
     rp = (union record *)ep->ext_buf;
     /* Check record type */
     if (rp->u_id != ID_SOLID) {
-	bu_log("rt_tor_import: defective record\n");
+	bu_log("rt_tor_import4: defective record\n");
 	return(-1);
     }
 
@@ -1340,7 +1340,7 @@ rt_tor_import(struct rt_db_internal *ip, const struct bu_external *ep, register 
     tip->r_b = MAGNITUDE(tip->b);
     tip->r_h = MAGNITUDE(tip->h);
     if (tip->r_a <= SMALL_FASTF || tip->r_b <= SMALL_FASTF || tip->r_h <= SMALL_FASTF) {
-	bu_log("rt_tor_import:  zero length A, B, or H vector\n");
+	bu_log("rt_tor_import4:  zero length A, B, or H vector\n");
 	return(-1);
     }
     /* In memory, the H vector is unit length */
@@ -1395,7 +1395,7 @@ rt_tor_export5(struct bu_external *ep, const struct rt_db_internal *ip, double l
  * The name will be added by the caller.
  */
 int
-rt_tor_export(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip)
+rt_tor_export4(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip)
 {
     struct rt_tor_internal	*tip;
     union record		*rec;
@@ -1423,11 +1423,11 @@ rt_tor_export(struct bu_external *ep, const struct rt_db_internal *ip, double lo
 
     /* Validate that 0 < r2 <= r1 */
     if (r2 <= 0.0) {
-	bu_log("rt_tor_export:  illegal r2=%.12e <= 0\n", r2);
+	bu_log("rt_tor_export4:  illegal r2=%.12e <= 0\n", r2);
 	return(-1);
     }
     if (r2 > r1) {
-	bu_log("rt_tor_export:  illegal r2=%.12e > r1=%.12e\n",
+	bu_log("rt_tor_export4:  illegal r2=%.12e > r1=%.12e\n",
 	       r2, r1);
 	return(-1);
     }
@@ -1439,7 +1439,7 @@ rt_tor_export(struct bu_external *ep, const struct rt_db_internal *ip, double lo
     VMOVE(norm, tip->h);
     m2 = MAGNITUDE(norm);		/* F2 is NORMAL to torus */
     if (m2 <= SQRT_SMALL_FASTF) {
-	bu_log("rt_tor_export: normal magnitude is zero!\n");
+	bu_log("rt_tor_export4: normal magnitude is zero!\n");
 	return(-1);		/* failure */
     }
     m2 = 1.0/m2;

@@ -928,7 +928,7 @@ rt_sketch_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip,
  * Apply modeling transformations as well.
  */
 int
-rt_sketch_import(struct rt_db_internal *ip, const struct bu_external *ep, register const fastf_t *mat, const struct db_i *dbip)
+rt_sketch_import4(struct rt_db_internal *ip, const struct bu_external *ep, register const fastf_t *mat, const struct db_i *dbip)
 {
     struct rt_sketch_internal	*sketch_ip;
     union record			*rp;
@@ -942,12 +942,12 @@ rt_sketch_import(struct rt_db_internal *ip, const struct bu_external *ep, regist
     rp = (union record *)ep->ext_buf;
     /* Check record type */
     if (rp->u_id != DBID_SKETCH) {
-	bu_log("rt_sketch_import: defective record\n");
+	bu_log("rt_sketch_import4: defective record\n");
 	return(-1);
     }
 
     if (bu_debug&BU_DEBUG_MEM_CHECK) {
-	bu_log("Barrier check at start of sketch_import():\n");
+	bu_log("Barrier check at start of sketch_import4():\n");
 	bu_mem_barriercheck();
     }
 
@@ -1056,7 +1056,7 @@ rt_sketch_import(struct rt_db_internal *ip, const struct bu_external *ep, regist
 		sketch_ip->skt_curve.segments[seg_no] = (genptr_t)bsg;
 		break;
 	    default:
-		bu_bomb("rt_sketch_import: ERROR: unrecognized segment type!\n");
+		bu_bomb("rt_sketch_import4: ERROR: unrecognized segment type!\n");
 		break;
 	}
     }
@@ -1071,7 +1071,7 @@ rt_sketch_import(struct rt_db_internal *ip, const struct bu_external *ep, regist
     }
 
     if (bu_debug&BU_DEBUG_MEM_CHECK) {
-	bu_log("Barrier check at end of sketch_import():\n");
+	bu_log("Barrier check at end of sketch_import4():\n");
 	bu_mem_barriercheck();
     }
 
@@ -1085,7 +1085,7 @@ rt_sketch_import(struct rt_db_internal *ip, const struct bu_external *ep, regist
  * The name is added by the caller, in the usual place.
  */
 int
-rt_sketch_export(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip)
+rt_sketch_export4(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip)
 {
     struct rt_sketch_internal	*sketch_ip;
     union record		*rec;
@@ -1099,7 +1099,7 @@ rt_sketch_export(struct bu_external *ep, const struct rt_db_internal *ip, double
     RT_SKETCH_CK_MAGIC(sketch_ip);
 
     if (bu_debug&BU_DEBUG_MEM_CHECK) {
-	bu_log("Barrier check at start of sketch_export():\n");
+	bu_log("Barrier check at start of sketch_export4():\n");
 	bu_mem_barriercheck();
     }
 
@@ -1132,8 +1132,8 @@ rt_sketch_export(struct bu_external *ep, const struct rt_db_internal *ip, double
 		nbytes += 8 + (bseg->degree + 1) * 4;
 		break;
 	    default:
-		bu_log("rt_sketch_export: unsupported segement type (x%x)\n", *lng);
-		bu_bomb("rt_sketch_export: unsupported segement type\n");
+		bu_log("rt_sketch_export4: unsupported segement type (x%x)\n", *lng);
+		bu_bomb("rt_sketch_export4: unsupported segement type\n");
 	}
     }
 
@@ -1241,7 +1241,7 @@ rt_sketch_export(struct bu_external *ep, const struct rt_db_internal *ip, double
 		}
 		break;
 	    default:
-		bu_bomb("rt_sketch_export: ERROR: unrecognized curve type!\n");
+		bu_bomb("rt_sketch_export4: ERROR: unrecognized curve type!\n");
 		break;
 
 	}
@@ -1252,7 +1252,7 @@ rt_sketch_export(struct bu_external *ep, const struct rt_db_internal *ip, double
 	ptr += 4;
     }
     if (bu_debug&BU_DEBUG_MEM_CHECK) {
-	bu_log("Barrier check at end of sketch_export():\n");
+	bu_log("Barrier check at end of sketch_export4():\n");
 	bu_mem_barriercheck();
     }
 
@@ -1392,7 +1392,7 @@ rt_sketch_import5(struct rt_db_internal *ip, const struct bu_external *ep, regis
 		sketch_ip->skt_curve.segments[seg_no] = (genptr_t)bsg;
 		break;
 	    default:
-		bu_bomb("rt_sketch_import: ERROR: unrecognized segment type!\n");
+		bu_bomb("rt_sketch_import4: ERROR: unrecognized segment type!\n");
 		break;
 	}
     }
@@ -1475,8 +1475,8 @@ rt_sketch_export5(struct bu_external *ep, const struct rt_db_internal *ip, doubl
 		ep->ext_nbytes += (bseg->degree + 3) * SIZEOF_NETWORK_LONG;
 		break;
 	    default:
-		bu_log("rt_sketch_export: unsupported segement type (x%x)\n", *lng);
-		bu_bomb("rt_sketch_export: unsupported segement type\n");
+		bu_log("rt_sketch_export4: unsupported segement type (x%x)\n", *lng);
+		bu_bomb("rt_sketch_export4: unsupported segement type\n");
 	}
     }
     ep->ext_buf = (genptr_t)bu_malloc(ep->ext_nbytes, "sketch external");
@@ -1581,7 +1581,7 @@ rt_sketch_export5(struct bu_external *ep, const struct rt_db_internal *ip, doubl
 		}
 		break;
 	    default:
-		bu_bomb("rt_sketch_export: ERROR: unrecognized curve type!\n");
+		bu_bomb("rt_sketch_export4: ERROR: unrecognized curve type!\n");
 		break;
 
 	}

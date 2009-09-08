@@ -30,7 +30,7 @@
  * define hyp_specific --- raytracing form, possibly w/precomuted terms
  * define rt_hyp_parse --- struct bu_structparse for "db get", "db adjust", ...
  *
- * code import/export/describe/print/ifree/plot/prep/shot/curve/uv/tess
+ * code import/export4/describe/print/ifree/plot/prep/shot/curve/uv/tess
  *
  * edit db.h add solidrec s_type define
  * edit rtgeom.h to add rt_hyp_internal

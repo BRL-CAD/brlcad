@@ -303,8 +303,8 @@ wdb_put_internal(
 	BU_INIT_EXTERNAL(&ext );
 
 	ret = -1;
-	if (ip->idb_meth->ft_export) {
-	    ret = ip->idb_meth->ft_export(&ext, ip, local2mm, wdbp->dbip, &rt_uniresource);
+	if (ip->idb_meth->ft_export4) {
+	    ret = ip->idb_meth->ft_export4(&ext, ip, local2mm, wdbp->dbip, &rt_uniresource);
 	}
 	if (ret < 0 ) {
 	    bu_log("rt_db_put_internal(%s):  solid export failure\n",

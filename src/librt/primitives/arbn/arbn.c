@@ -778,7 +778,7 @@ rt_arbn_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, c
  *  Transform
  */
 int
-rt_arbn_import(struct rt_db_internal *ip, const struct bu_external *ep, register const fastf_t *mat, const struct db_i *dbip)
+rt_arbn_import4(struct rt_db_internal *ip, const struct bu_external *ep, register const fastf_t *mat, const struct db_i *dbip)
 {
     union record		*rp;
     struct rt_arbn_internal	*aip;
@@ -787,7 +787,7 @@ rt_arbn_import(struct rt_db_internal *ip, const struct bu_external *ep, register
     BU_CK_EXTERNAL( ep );
     rp = (union record *)ep->ext_buf;
     if ( rp->u_id != DBID_ARBN )  {
-	bu_log("rt_arbn_import: defective record, id=x%x\n", rp->u_id );
+	bu_log("rt_arbn_import4: defective record, id=x%x\n", rp->u_id );
 	return(-1);
     }
 
@@ -838,7 +838,7 @@ rt_arbn_import(struct rt_db_internal *ip, const struct bu_external *ep, register
  *			R T _ A R B N _ E X P O R T
  */
 int
-rt_arbn_export(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip)
+rt_arbn_export4(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip)
 {
     struct rt_arbn_internal	*aip;
     union record		*rec;

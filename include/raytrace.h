@@ -1924,12 +1924,12 @@ struct rt_functab {
 			       const struct db_i * /*dbip*/,
 			       struct resource * /*resp*/,
 			       const int minor_type));
-    int (*ft_import) BU_ARGS((struct rt_db_internal * /*ip*/,
+    int (*ft_import4) BU_ARGS((struct rt_db_internal * /*ip*/,
 			      const struct bu_external * /*ep*/,
 			      const mat_t /*mat*/,
 			      const struct db_i * /*dbip*/,
 			      struct resource * /*resp*/));
-    int	(*ft_export) BU_ARGS((struct bu_external * /*ep*/,
+    int	(*ft_export4) BU_ARGS((struct bu_external * /*ep*/,
 			      const struct rt_db_internal * /*ip*/,
 			      double /*local2mm*/,
 			      const struct db_i * /*dbip*/,

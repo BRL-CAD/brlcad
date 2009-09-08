@@ -513,7 +513,7 @@ rt_ebm_dda(register struct xray *rp, struct soltab *stp, struct application *ap,
  * the associated internal variables.
  */
 int
-rt_ebm_import(struct rt_db_internal *ip, const struct bu_external *ep, const fastf_t *mat, const struct db_i *dbip)
+rt_ebm_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fastf_t *mat, const struct db_i *dbip)
 {
     union record *rp;
     register struct rt_ebm_internal *eip;
@@ -525,7 +525,7 @@ rt_ebm_import(struct rt_db_internal *ip, const struct bu_external *ep, const fas
     BU_CK_EXTERNAL(ep);
     rp = (union record *)ep->ext_buf;
     if (rp->u_id != DBID_STRSOL) {
-	bu_log("rt_ebm_import: defective strsol record\n");
+	bu_log("rt_ebm_import4: defective strsol record\n");
 	return(-1);
     }
 
@@ -544,7 +544,7 @@ rt_ebm_import(struct rt_db_internal *ip, const struct bu_external *ep, const fas
     bu_vls_strcpy(&str, rp->ss.ss_args);
     if (bu_struct_parse(&str, rt_ebm_parse, (char *)eip) < 0) {
 	bu_vls_free(&str);
-	bu_free((char *)eip, "rt_ebm_import: eip");
+	bu_free((char *)eip, "rt_ebm_import4: eip");
 	ip->idb_type = ID_NULL;
 	ip->idb_ptr = (genptr_t)NULL;
 	return -2;
@@ -557,7 +557,7 @@ rt_ebm_import(struct rt_db_internal *ip, const struct bu_external *ep, const fas
 	eip->tallness <= 0.0) {
 	bu_struct_print("Unreasonable EBM parameters", rt_ebm_parse,
 			(char *)eip);
-	bu_free((char *)eip, "rt_ebm_import: eip");
+	bu_free((char *)eip, "rt_ebm_import4: eip");
 	ip->idb_type = ID_NULL;
 	ip->idb_ptr = (genptr_t)NULL;
 	return -1;
@@ -570,8 +570,8 @@ rt_ebm_import(struct rt_db_internal *ip, const struct bu_external *ep, const fas
 
     /* Get bit map from .bw(5) file */
     if (!(mp = bu_open_mapped_file_with_path(dbip->dbi_filepath, eip->file, "ebm"))) {
-	bu_log("rt_ebm_import() unable to open '%s'\n", eip->file);
-	bu_free((char *)eip, "rt_ebm_import: eip");
+	bu_log("rt_ebm_import4() unable to open '%s'\n", eip->file);
+	bu_free((char *)eip, "rt_ebm_import4: eip");
     fail:
 	ip->idb_type = ID_NULL;
 	ip->idb_ptr = (genptr_t)NULL;
@@ -579,7 +579,7 @@ rt_ebm_import(struct rt_db_internal *ip, const struct bu_external *ep, const fas
     }
     eip->mp = mp;
     if (mp->buflen < eip->xdim*eip->ydim) {
-	bu_log("rt_ebm_import() file '%s' is too short %d < %d\n",
+	bu_log("rt_ebm_import4() file '%s' is too short %d < %d\n",
 	       eip->file, mp->buflen, eip->xdim*eip->ydim);
 	goto fail;
     }
@@ -599,7 +599,7 @@ rt_ebm_import(struct rt_db_internal *ip, const struct bu_external *ep, const fas
 	    return 0;
 	}
 	mp->apbuf = (genptr_t)bu_calloc(
-	    1, nbytes, "rt_ebm_import bitmap");
+	    1, nbytes, "rt_ebm_import4 bitmap");
 	mp->apbuflen = nbytes;
 
 	bu_semaphore_release(RT_SEM_MODEL);
@@ -622,7 +622,7 @@ rt_ebm_import(struct rt_db_internal *ip, const struct bu_external *ep, const fas
  * The name will be added by the caller.
  */
 int
-rt_ebm_export(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip)
+rt_ebm_export4(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip)
 {
     struct rt_ebm_internal *eip;
     struct rt_ebm_internal ebm;	/* scaled version */
@@ -688,7 +688,7 @@ rt_ebm_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fa
     bu_vls_strcpy(&str, ep->ext_buf);
     if (bu_struct_parse(&str, rt_ebm_parse, (char *)eip) < 0) {
 	bu_vls_free(&str);
-	bu_free((char *)eip, "rt_ebm_import: eip");
+	bu_free((char *)eip, "rt_ebm_import4: eip");
 	ip->idb_type = ID_NULL;
 	ip->idb_ptr = (genptr_t)NULL;
 	return -2;
@@ -701,7 +701,7 @@ rt_ebm_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fa
 	eip->tallness <= 0.0) {
 	bu_struct_print("Unreasonable EBM parameters", rt_ebm_parse,
 			(char *)eip);
-	bu_free((char *)eip, "rt_ebm_import: eip");
+	bu_free((char *)eip, "rt_ebm_import4: eip");
 	ip->idb_type = ID_NULL;
 	ip->idb_ptr = (genptr_t)NULL;
 	return -1;
@@ -714,8 +714,8 @@ rt_ebm_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fa
 
     /* Get bit map from .bw(5) file */
     if (!(mp = bu_open_mapped_file_with_path(dbip->dbi_filepath, eip->file, "ebm"))) {
-	bu_log("rt_ebm_import() unable to open '%s'\n", eip->file);
-	bu_free((char *)eip, "rt_ebm_import: eip");
+	bu_log("rt_ebm_import4() unable to open '%s'\n", eip->file);
+	bu_free((char *)eip, "rt_ebm_import4: eip");
     fail:
 	ip->idb_type = ID_NULL;
 	ip->idb_ptr = (genptr_t)NULL;
@@ -723,7 +723,7 @@ rt_ebm_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fa
     }
     eip->mp = mp;
     if (mp->buflen < eip->xdim*eip->ydim) {
-	bu_log("rt_ebm_import() file '%s' is too short %d < %d\n",
+	bu_log("rt_ebm_import4() file '%s' is too short %d < %d\n",
 	       eip->file, mp->buflen, eip->xdim*eip->ydim);
 	goto fail;
     }
@@ -743,7 +743,7 @@ rt_ebm_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fa
 	    return 0;
 	}
 	mp->apbuf = (genptr_t)bu_calloc(
-	    1, nbytes, "rt_ebm_import bitmap");
+	    1, nbytes, "rt_ebm_import4 bitmap");
 	mp->apbuflen = nbytes;
 
 	bu_semaphore_release(RT_SEM_MODEL);

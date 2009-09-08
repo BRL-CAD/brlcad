@@ -402,7 +402,7 @@ rt_vol_shot(struct soltab *stp, register struct xray *rp, struct application *ap
  *  and set up some of the associated internal variables.
  */
 int
-rt_vol_import(struct rt_db_internal *ip, const struct bu_external *ep, const fastf_t *mat, const struct db_i *dbip)
+rt_vol_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fastf_t *mat, const struct db_i *dbip)
 {
     union record	*rp;
     register struct rt_vol_internal *vip;
@@ -417,7 +417,7 @@ rt_vol_import(struct rt_db_internal *ip, const struct bu_external *ep, const fas
     BU_CK_EXTERNAL( ep );
     rp = (union record *)ep->ext_buf;
     if ( rp->u_id != DBID_STRSOL )  {
-	bu_log("rt_ebm_import: defective strsol record\n");
+	bu_log("rt_ebm_import4: defective strsol record\n");
 	return(-1);
     }
 
@@ -463,7 +463,7 @@ rt_vol_import(struct rt_db_internal *ip, const struct bu_external *ep, const fas
     nbytes = (vip->xdim+VOL_XWIDEN*2)*
 	(vip->ydim+VOL_YWIDEN*2)*
 	(vip->zdim+VOL_ZWIDEN*2);
-    vip->map = (unsigned char *)bu_calloc( 1, nbytes, "vol_import bitmap" );
+    vip->map = (unsigned char *)bu_calloc( 1, nbytes, "vol_import4 bitmap" );
 
     bu_semaphore_acquire( BU_SEM_SYSCALL );		/* lock */
     if ( (fp = fopen(vip->file, "rb")) == NULL )  {
@@ -480,7 +480,7 @@ rt_vol_import(struct rt_db_internal *ip, const struct bu_external *ep, const fas
 	    ret = fread( &VOL(vip, 0, y, z), vip->xdim, 1, fp ); /* res_syscall */
 	    bu_semaphore_release( BU_SEM_SYSCALL );		/* unlock */
 	    if ( ret < 1 )  {
-		bu_log("rt_vol_import(%s): Unable to read whole VOL, y=%d, z=%d\n",
+		bu_log("rt_vol_import4(%s): Unable to read whole VOL, y=%d, z=%d\n",
 		       vip->file, y, z);
 		bu_semaphore_acquire( BU_SEM_SYSCALL );		/* lock */
 		fclose(fp);
@@ -501,7 +501,7 @@ rt_vol_import(struct rt_db_internal *ip, const struct bu_external *ep, const fas
  *  The name will be added by the caller.
  */
 int
-rt_vol_export(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip)
+rt_vol_export4(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip)
 {
     struct rt_vol_internal	*vip;
     struct rt_vol_internal	vol;	/* scaled version */
@@ -596,7 +596,7 @@ rt_vol_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fa
     nbytes = (vip->xdim+VOL_XWIDEN*2)*
 	(vip->ydim+VOL_YWIDEN*2)*
 	(vip->zdim+VOL_ZWIDEN*2);
-    vip->map = (unsigned char *)bu_calloc( 1, nbytes, "vol_import bitmap" );
+    vip->map = (unsigned char *)bu_calloc( 1, nbytes, "vol_import4 bitmap" );
 
     bu_semaphore_acquire( BU_SEM_SYSCALL );		/* lock */
     if ( (fp = fopen(vip->file, "rb")) == NULL )  {
@@ -613,7 +613,7 @@ rt_vol_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fa
 	    ret = fread( &VOL(vip, 0, y, z), vip->xdim, 1, fp ); /* res_syscall */
 	    bu_semaphore_release( BU_SEM_SYSCALL );		/* unlock */
 	    if ( ret < 1 )  {
-		bu_log("rt_vol_import(%s): Unable to read whole VOL, y=%d, z=%d\n",
+		bu_log("rt_vol_import4(%s): Unable to read whole VOL, y=%d, z=%d\n",
 		       vip->file, y, z);
 		bu_semaphore_acquire( BU_SEM_SYSCALL );		/* lock */
 		fclose(fp);
