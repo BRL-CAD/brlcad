@@ -88,6 +88,7 @@ librt_nil_la_SOURCES = \
 	primitives/ars/ars.c \
 	primitives/ars/ars_mirror.c \
 	primitives/bot/bot.c \
+	primitives/bot/bot_brep.cpp \
 	primitives/bot/bot_mirror.c \
 	primitives/brep/brep.cpp \
 	primitives/brep/brep_debug.cpp \
@@ -120,6 +121,7 @@ librt_nil_la_SOURCES = \
 	primitives/dsp/dsp.c \
 	primitives/dsp/dsp_mirror.c \
 	primitives/ebm/ebm.c \
+	primitives/ebm/ebm_brep.cpp \
 	primitives/ebm/ebm_mirror.c \
 	primitives/ehy/ehy.c \
 	primitives/ell/ell.c \
@@ -172,6 +174,7 @@ librt_nil_la_SOURCES = \
 	primitives/pipe/pipe_mirror.c \
 	primitives/pnts/pnts.c \
 	primitives/poly/poly.c \
+	primitives/poly/poly_brep.cpp \
 	primitives/poly/poly_mirror.c \
 	primitives/rec/rec.c \
 	primitives/revolve/revolve.c \
