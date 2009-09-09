@@ -301,7 +301,8 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
   (i.e. via a globbing command and quoting globs that use []).  testing
   shows db_glob doesn't seem to behave correctly, at least not like
   glob.  hook globbing into all commands so glob_compat_mode
-  statefulness can go away.
+  statefulness can go away.  a db_glob expression that doesn't match
+  anything should not return the expression.
 
 * Explore possibility of "level of detail" wireframe renderings,
   possibly using the previous "smooth" wireframe work as a start,
