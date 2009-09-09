@@ -57,6 +57,8 @@ void printPoints(struct rt_brep_internal* bi, ON_TextLog* dump) {
 
 int main(int argc, char** argv) {
     int mcount = 0;
+    int verbose_mode = 0;
+    int random_colors = 0;
     struct rt_wdb* outfp;
     ON_TextLog error_log;
     const char* id_name = "3dm -> g conversion";
@@ -69,11 +71,11 @@ int main(int argc, char** argv) {
     ON_TextLog* dump = &dump_to_stdout;
 
     int c;
-    while ((c = bu_getopt(argc, argv, "o:dvt:s:")) != EOF) {
+    while ((c = bu_getopt(argc, argv, "o:dv:t:s:r")) != EOF) {
 	switch ( c ) {
 	    case 's':	/* scale factor */
 		break;
-	    case 'o':	/* ignore colors */
+	    case 'o':	/* specify output file name */
 		outFileName = bu_optarg;
 		break;
 	    case 'd':	/* debug */
@@ -81,7 +83,12 @@ int main(int argc, char** argv) {
 	    case 't':	/* tolerance */
 		break;
 	    case 'v':	/* verbose */
+		int tmpint;
+		sscanf(bu_optarg, "%d", &tmpint);
+		verbose_mode = tmpint;
 		break;
+	    case 'r':  /* randomize colors */
+		random_colors = 1;
 	    default:
 		break;
 	}
@@ -185,12 +192,15 @@ int main(int argc, char** argv) {
 	    ON_Group *group;
 	    ON_Geometry *geom;
 	    int r,g,b;
-	 /*   r = int(256*drand48() + 1.0);
-	    g = int(256*drand48() + 1.0);
-	    b = int(256*drand48() + 1.0); */
-            r = (model.WireframeColor(myAttributes) & 0xFF);
-	    g = ((model.WireframeColor(myAttributes)>>8) & 0xFF);
-	    b = ((model.WireframeColor(myAttributes)>>16) & 0xFF);
+	    if (random_colors) {
+    		r = int(256*drand48() + 1.0);
+    		g = int(256*drand48() + 1.0);
+    		b = int(256*drand48() + 1.0);
+	    } else {
+		r = (model.WireframeColor(myAttributes) & 0xFF);
+    		g = ((model.WireframeColor(myAttributes)>>8) & 0xFF);
+    		b = ((model.WireframeColor(myAttributes)>>16) & 0xFF);
+	    }
             bu_log("Color: %d,%d,%d\n", r,g,b);
 	    if ((brep = const_cast<ON_Brep * >(ON_Brep::Cast(pGeometry)))) {
 		mk_id(outfp, id_name);
@@ -198,49 +208,62 @@ int main(int argc, char** argv) {
 		unsigned char rgb[] = {r,g,b};
 		mk_region1(outfp, region_name.c_str(), geom_name.c_str(), "plastic", "", rgb);
                 (void)mk_addmember(region_name.c_str(), &all_regions.l, NULL, WMOP_UNION);
-		//          brep->Dump(*dump);  // on if debug or verbose
+		if (verbose_mode > 0) brep->Dump(*dump);
 		dump->PopIndent();
 	    } else if (pGeometry->HasBrepForm()) {
 		dump->Print("\n\n ***** HasBrepForm. ***** \n\n");
 		dump->PopIndent();
 	    } else if ((curve = const_cast<ON_Curve * >(ON_Curve::Cast(pGeometry)))) {
 		dump->Print("\n\n ***** ON_Curve. ***** \n\n");
+		if (verbose_mode > 1) curve->Dump(*dump);
 		dump->PopIndent();
 	    } else if ((surface = const_cast<ON_Surface * >(ON_Surface::Cast(pGeometry)))) {
 		dump->Print("\n\n ***** ON_Surface. ***** \n\n");
+		if (verbose_mode > 2) surface->Dump(*dump);
 		dump->PopIndent();
 	    } else if ((mesh = const_cast<ON_Mesh * >(ON_Mesh::Cast(pGeometry)))) {
 		dump->Print("\n\n ***** ON_Mesh. ***** \n\n");
+		if (verbose_mode > 4) mesh->Dump(*dump);
 		dump->PopIndent();
 	    } else if ((revsurf = const_cast<ON_RevSurface * >(ON_RevSurface::Cast(pGeometry)))) {
 		dump->Print("\n\n ***** ON_RevSurface. ***** \n\n");
+		if (verbose_mode > 2) revsurf->Dump(*dump);
 		dump->PopIndent();
 	    } else if ((planesurf = const_cast<ON_PlaneSurface * >(ON_PlaneSurface::Cast(pGeometry)))) {
 		dump->Print("\n\n ***** ON_PlaneSurface. ***** \n\n");
+		if (verbose_mode > 2) planesurf->Dump(*dump);
 		dump->PopIndent();
 	    } else if ((instdef = const_cast<ON_InstanceDefinition * >(ON_InstanceDefinition::Cast(pGeometry)))) {
 		dump->Print("\n\n ***** ON_InstanceDefinition. ***** \n\n");
+		if (verbose_mode > 3) instdef->Dump(*dump);
 		dump->PopIndent();
 	    } else if ((instref = const_cast<ON_InstanceRef * >(ON_InstanceRef::Cast(pGeometry)))) {
 		dump->Print("\n\n ***** ON_InstanceRef. ***** \n\n");
+		if (verbose_mode > 3) instref->Dump(*dump);
 		dump->PopIndent();
 	    } else if ((layer = const_cast<ON_Layer * >(ON_Layer::Cast(pGeometry)))) {
 		dump->Print("\n\n ***** ON_Layer. ***** \n\n");
+		if (verbose_mode > 3) layer->Dump(*dump);
 		dump->PopIndent();
 	    } else if ((light = const_cast<ON_Light * >(ON_Light::Cast(pGeometry)))) {
 		dump->Print("\n\n ***** ON_Light. ***** \n\n");
+		if (verbose_mode > 3) light->Dump(*dump);
 		dump->PopIndent();
 	    } else if ((nurbscage = const_cast<ON_NurbsCage * >(ON_NurbsCage::Cast(pGeometry)))) {
 		dump->Print("\n\n ***** ON_NurbsCage. ***** \n\n");
+		if (verbose_mode > 3) nurbscage->Dump(*dump);
 		dump->PopIndent();
 	    } else if ((morphctrl = const_cast<ON_MorphControl * >(ON_MorphControl::Cast(pGeometry)))) {
 		dump->Print("\n\n ***** ON_MorphControl. ***** \n\n");
+		if (verbose_mode > 3) morphctrl->Dump(*dump);
 		dump->PopIndent();
 	    } else if ((group = const_cast<ON_Group * >(ON_Group::Cast(pGeometry)))) {
 		dump->Print("\n\n ***** ON_Group. ***** \n\n");
+		if (verbose_mode > 3) group->Dump(*dump);
 		dump->PopIndent();
 	    } else if ((geom = const_cast<ON_Geometry * >(ON_Geometry::Cast(pGeometry)))) {
 		dump->Print("\n\n ***** ON_Geometry. ***** \n\n");
+		if (verbose_mode > 3) geom->Dump(*dump);
 		dump->PopIndent();
 	    } else {
 		dump->Print("\n\n ***** Got a different kind of object than geometry - investigate. ***** \n\n");
