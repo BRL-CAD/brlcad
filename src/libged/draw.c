@@ -976,7 +976,7 @@ ged_invent_solid(struct ged	*gedp,
 	 * Name exists from some other overlay,
 	 * zap any associated solids
 	 */
-	ged_erasePathFromDisplay(gedp, name);
+	ged_erasePathFromDisplay(gedp, name, 0);
     }
     /* Need to enter phony name in directory structure */
     dp = db_diradd(gedp->ged_wdbp->dbip, name, RT_DIR_PHONY_ADDR, 0, DIR_SOLID, (genptr_t)&type);
@@ -1216,7 +1216,7 @@ ged_draw_guts(struct ged *gedp, int argc, const char *argv[], int kind)
 	    if (new_argv[i][0] == '-')
 		continue;
 
-	    ged_erasePathFromDisplay(gedp, new_argv[i]);
+	    ged_erasePathFromDisplay(gedp, new_argv[i], 0);
 	}
 
 	ged_drawtrees(gedp, new_argc, (const char **)new_argv, kind, (struct ged_client_data *)0);
@@ -1233,7 +1233,7 @@ ged_draw_guts(struct ged *gedp, int argc, const char *argv[], int kind)
 	    if (argv[i][0] == '-')
 		continue;
 
-	    ged_erasePathFromDisplay(gedp, argv[i]);
+	    ged_erasePathFromDisplay(gedp, argv[i], 0);
 	}
 
 	ged_drawtrees(gedp, argc, argv, kind, (struct ged_client_data *)0);
@@ -1265,6 +1265,8 @@ ged_addToDisplay(struct ged *gedp,
     struct directory *dp;
     register struct ged_display_list *gdlp;
     char *cp;
+    int found_namepath = 0;
+    struct db_full_path namepath;
 
     cp = strrchr(name, '/');
     if (cp == '\0')
@@ -1272,18 +1274,40 @@ ged_addToDisplay(struct ged *gedp,
     else
 	++cp;
 
+    if ((dp = db_lookup(gedp->ged_wdbp->dbip, cp, LOOKUP_NOISY)) == DIR_NULL) {
+	gdlp = GED_DISPLAY_LIST_NULL;
+	goto end;
+    }
+
+    if (db_string_to_path(&namepath, gedp->ged_wdbp->dbip, name) == 0)
+	found_namepath = 1;
+
     /* Make sure name is not already in the list */
     gdlp = BU_LIST_NEXT(ged_display_list, &gedp->ged_gdp->gd_headDisplay);
     while (BU_LIST_NOT_HEAD(gdlp, &gedp->ged_gdp->gd_headDisplay)) {
-	if (!strcmp(name, bu_vls_addr(&gdlp->gdl_path))) {
-	    return gdlp;
+	register struct solid *sp;
+	register struct solid *nsp;
+
+	if (!strcmp(name, bu_vls_addr(&gdlp->gdl_path)))
+	    goto end;
+
+	/*
+	 */
+	if (found_namepath) {
+	    struct db_full_path gdlpath;
+
+	    if (db_string_to_path(&gdlpath, gedp->ged_wdbp->dbip, bu_vls_addr(&gdlp->gdl_path)) == 0) {
+		if (db_full_path_match_top(&gdlpath, &namepath)) {
+		    db_free_full_path(&gdlpath);
+		    goto end;
+		}
+
+		db_free_full_path(&gdlpath);
+	    }
 	}
 
 	gdlp = BU_LIST_PNEXT(ged_display_list, gdlp);
     }
-
-    if ((dp = db_lookup(gedp->ged_wdbp->dbip, cp, LOOKUP_NOISY)) == DIR_NULL)
-	return GED_DISPLAY_LIST_NULL;
 
     BU_GETSTRUCT(gdlp, ged_display_list);
     BU_LIST_INSERT(&gedp->ged_gdp->gd_headDisplay, &gdlp->l);
@@ -1291,6 +1315,10 @@ ged_addToDisplay(struct ged *gedp,
     gdlp->gdl_dp = dp;
     bu_vls_init(&gdlp->gdl_path);
     bu_vls_printf(&gdlp->gdl_path, name);
+
+ end:
+    if (found_namepath)
+	db_free_full_path(&namepath);
 
     return gdlp;
 }

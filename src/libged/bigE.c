@@ -2156,7 +2156,7 @@ ged_E(struct ged *gedp, int argc, const char *argv[])
 
     av[1] = (char *)0;
     for (i = 0; i < argc; ++i) {
-	ged_erasePathFromDisplay(gedp, argv[i]);
+	ged_erasePathFromDisplay(gedp, argv[i], 0);
 	dgcdp->gdlp = ged_addToDisplay(dgcdp->gedp, argv[i]);
 
 #if 0

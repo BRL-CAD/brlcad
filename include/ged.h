@@ -517,8 +517,9 @@ GED_EXPORT BU_EXTERN (struct ged_display_list *ged_addToDisplay,
 
 /* defined in erase.c */
 GED_EXPORT BU_EXTERN (void ged_erasePathFromDisplay,
-		      (struct ged	*gedp,
-		       const char	*path));
+		      (struct ged *gedp,
+		       const char *path,
+		       int allow_split));
 
 /* defined in ged.c */
 GED_EXPORT BU_EXTERN(void ged_close,

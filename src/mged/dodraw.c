@@ -1183,7 +1183,7 @@ invent_solid(
 	/* Name exists from some other overlay,
 	 * zap any associated solids
 	 */
-	ged_erasePathFromDisplay(gedp, name);
+	ged_erasePathFromDisplay(gedp, name, 0);
     }
     /* Need to enter phony name in directory structure */
     dp = db_diradd( dbip,  name, RT_DIR_PHONY_ADDR, 0, DIR_SOLID, &type );
