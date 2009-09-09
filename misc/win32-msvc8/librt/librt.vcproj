@@ -816,6 +816,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\src\librt\primitives\rpc\rpc_brep.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\src\librt\primitives\rpc\rpc_mirror.c"
 				>
 			</File>

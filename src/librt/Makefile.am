@@ -182,6 +182,7 @@ librt_nil_la_SOURCES = \
 	primitives/rhc/rhc_brep.cpp \
 	primitives/rhc/rhc_mirror.c \
 	primitives/rpc/rpc.c \
+	primitives/rpc/rpc_brep.cpp \
 	primitives/rpc/rpc_mirror.c \
 	primitives/sketch/sketch.c \
 	primitives/sph/sph.c \

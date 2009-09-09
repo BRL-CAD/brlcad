@@ -47,6 +47,7 @@ extern "C" {
     extern void rt_ell_brep(ON_Brep **bi, struct rt_db_internal *ip, const struct bn_tol *tol);
     extern void rt_eto_brep(ON_Brep **bi, struct rt_db_internal *ip, const struct bn_tol *tol);
     extern void rt_rhc_brep(ON_Brep **bi, struct rt_db_internal *ip, const struct bn_tol *tol);
+    extern void rt_rpc_brep(ON_Brep **bi, struct rt_db_internal *ip, const struct bn_tol *tol);
     extern void rt_tgc_brep(ON_Brep **bi, struct rt_db_internal *ip, const struct bn_tol *tol);
     extern void rt_tor_brep(ON_Brep **bi, struct rt_db_internal *ip, const struct bn_tol *tol);
 
@@ -318,6 +319,21 @@ main(int argc, char** argv)
     const char* rhc_name = "rhc_nurb.s";
     mk_brep(outfp, rhc_name, rhcbrep);
     delete rhcbrep;
+ 
+    bu_log("Writing a RPC b-rep...\n");
+    ON_Brep* rpcbrep = ON_Brep::New();
+    struct rt_rpc_internal *rpc;
+    BU_GETSTRUCT(rpc, rt_rpc_internal);
+    rpc->rpc_magic = RT_RPC_INTERNAL_MAGIC;
+    VSET(rpc->rpc_V, 0, -1000, -1000);
+    VSET(rpc->rpc_H, 0, 2000, 0);
+    VSET(rpc->rpc_B, 0, 0, 2000);
+    rpc->rpc_r = 1000;
+    tmp_internal->idb_ptr = (genptr_t)rpc;
+    rt_rpc_brep(&rpcbrep, tmp_internal, tol);
+    const char* rpc_name = "rpc_nurb.s";
+    mk_brep(outfp, rpc_name, rpcbrep);
+    delete rpcbrep;
 
     bu_log("Writing a TGC b-rep...\n");
     ON_Brep* tgcbrep = ON_Brep::New();
