@@ -94,8 +94,9 @@ rt_rhc_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *t
     hypnurbscurve->SetCV(0,ON_3dPoint(ep1));
     hypnurbscurve->SetCV(1,ON_3dPoint(ep2));
     hypnurbscurve->SetCV(2,ON_3dPoint(ep3));
-//    bu_log("Valid nurbs curve: %d\n", hypnurbscurve->IsValid(dump));
-//    hypnurbscurve->Dump(*dump);
+    hypnurbscurve->SetWeight(1,0.25);
+    bu_log("Valid nurbs curve: %d\n", hypnurbscurve->IsValid(dump));
+    hypnurbscurve->Dump(*dump);
 
     // Also need a staight line from the beginning to the end to
     // complete the loop
