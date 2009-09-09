@@ -73,11 +73,12 @@ rt_rpc_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *t
    
     //  Next, create a parabolic NURBS curve corresponding to the shape of
     //  the parabola in the two planes.
-    point_t x_rev_dir, ep1, ep2, ep3, focus;
+    point_t x_rev_dir, ep1, ep2, ep3, tmppt;
     VREVERSE(x_rev_dir, x_dir);
 
     VADD2(ep1, p1_origin, x_rev_dir);
-    VADD2(ep2, p1_origin, eip->rpc_B);
+    VSCALE(tmppt, eip->rpc_B, 2);
+    VADD2(ep2, p1_origin, tmppt);
     VADD2(ep3, p1_origin, x_dir);
     ON_3dPoint onp1 = ON_3dPoint(ep1);
     ON_3dPoint onp2 = ON_3dPoint(ep2);
