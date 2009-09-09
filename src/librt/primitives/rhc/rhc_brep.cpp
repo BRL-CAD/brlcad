@@ -56,9 +56,8 @@ rt_rhc_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *t
     ON_3dPoint plane1_origin, plane2_origin;
     ON_3dVector plane_x_dir, plane_y_dir;
     
-    //  First, find planes in 3 space corresponding to the top and
-    //  bottom faces of the RHC.  These will be needed to build the
-    //  top and bottom faces.
+    //  First, find plane in 3 space corresponding to the  bottom face
+    //  of the RHC.  
    
     vect_t tmp, x_dir, y_dir;
     
@@ -68,17 +67,13 @@ rt_rhc_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *t
     VMOVE(y_dir, eip->rhc_B);
 
     VMOVE(p1_origin, eip->rhc_V);
-    VMOVE(tmp, eip->rhc_V);
-    VADD2(p2_origin, tmp, eip->rhc_H);
     plane1_origin = ON_3dPoint(p1_origin);
-    plane2_origin = ON_3dPoint(p2_origin);
     plane_x_dir = ON_3dVector(x_dir);
     plane_y_dir = ON_3dVector(y_dir);
     const ON_Plane* rhc_bottom_plane = new ON_Plane(plane1_origin, plane_x_dir, plane_y_dir); 
-    const ON_Plane* rhc_top_plane = new ON_Plane(plane2_origin, plane_x_dir, plane_y_dir);
    
     //  Next, create a hyperbolic curve corresponding to the shape of
-    //  the hyperboloid in the two planes.  Need the two end points and
+    //  the hyperboloid in the plane.  Need the two end points and
     //  need to solve for the focus of the hyperbola
     point_t x_rev_dir, ep1, ep2, ep3, focus;
     VREVERSE(x_rev_dir, x_dir);
@@ -99,15 +94,13 @@ rt_rhc_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *t
     hypnurbscurve->SetCV(0,ON_3dPoint(ep1));
     hypnurbscurve->SetCV(1,ON_3dPoint(ep2));
     hypnurbscurve->SetCV(2,ON_3dPoint(ep3));
-    bu_log("Valid nurbs curve: %d\n", hypnurbscurve->IsValid(dump));
-    hypnurbscurve->Dump(*dump);
+//    bu_log("Valid nurbs curve: %d\n", hypnurbscurve->IsValid(dump));
+//    hypnurbscurve->Dump(*dump);
 
     // Also need a staight line from the beginning to the end to
     // complete the loop
 
     ON_LineCurve* straightedge = new ON_LineCurve(onp3,onp1);   
-    bu_log("Valid curve: %d\n", straightedge->IsValid(dump));
-    straightedge->Dump(*dump);
    
     // Generate the bottom cap 
     ON_SimpleArray<ON_Curve*> boundary;
