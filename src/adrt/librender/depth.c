@@ -27,7 +27,7 @@
 #include <stdio.h>
 
 
-void render_depth_init(render_t *render) {
+void render_depth_init(render_t *render, char *usr) {
     render->work = render_depth_work;
     render->free = render_depth_free;
 }

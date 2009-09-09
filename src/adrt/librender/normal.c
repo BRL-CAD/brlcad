@@ -28,7 +28,7 @@
 
 
 void
-render_normal_init(render_t *render) {
+render_normal_init(render_t *render, char *usr) {
     render->work = render_normal_work;
     render->free = render_normal_free;
     return;

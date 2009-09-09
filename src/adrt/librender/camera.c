@@ -60,7 +60,7 @@ render_camera_init(render_camera_t *camera, int threads)
 /* printf("threads: %d\n", camera->thread_num); */
 
     /* Initialize camera to rendering surface normals */
-    render_normal_init(&camera->render);
+    render_normal_init(&camera->render, NULL);
     camera->rm = RENDER_METHOD_PHONG;
 
     render_tlist = NULL;

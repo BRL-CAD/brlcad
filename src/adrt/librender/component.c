@@ -29,7 +29,7 @@
 
 
 void
-render_component_init(render_t *render) {
+render_component_init(render_t *render, char *usr) {
     render->work = render_component_work;
     render->free = render_component_free;
     return;

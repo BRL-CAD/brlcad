@@ -277,38 +277,40 @@ adrt_slave_work(tienet_buffer_t *work, tienet_buffer_t *result)
 
 		switch (rm) {
 		    case RENDER_METHOD_DEPTH:
-			render_depth_init(&adrt_workspace_list[wid].camera.render);
+			render_depth_init(&adrt_workspace_list[wid].camera.render, NULL);
 			break;
 
 		    case RENDER_METHOD_COMPONENT:
-			render_component_init(&adrt_workspace_list[wid].camera.render);
+			render_component_init(&adrt_workspace_list[wid].camera.render, NULL);
 			break;
 
 		    case RENDER_METHOD_FLOS:
 		    {
 			TIE_3 frag_pos;
+			char buf[BUFSIZ];
 
 			/* Extract shot position and direction */
 			TCOPY(TIE_3, work->data, ind, &frag_pos, 0);
+			snprintf(buf, BUFSIZ, "{%f %f %f}", V3ARGS(frag_pos.v));
 			ind += sizeof (TIE_3);
-			render_flos_init(&adrt_workspace_list[wid].camera.render, frag_pos);
+			render_flos_init(&adrt_workspace_list[wid].camera.render, buf);
 		    }
 		    break;
 
 		    case RENDER_METHOD_GRID:
-			render_grid_init(&adrt_workspace_list[wid].camera.render);
+			render_grid_init(&adrt_workspace_list[wid].camera.render, NULL);
 			break;
 
 		    case RENDER_METHOD_NORMAL:
-			render_normal_init(&adrt_workspace_list[wid].camera.render);
+			render_normal_init(&adrt_workspace_list[wid].camera.render, NULL);
 			break;
 
 		    case RENDER_METHOD_PATH:
-			render_path_init(&adrt_workspace_list[wid].camera.render, 12);
+			render_path_init(&adrt_workspace_list[wid].camera.render, "12");
 			break;
 
 		    case RENDER_METHOD_PHONG:
-			render_phong_init(&adrt_workspace_list[wid].camera.render);
+			render_phong_init(&adrt_workspace_list[wid].camera.render, NULL);
 			break;
 
 		    case RENDER_METHOD_CUT:

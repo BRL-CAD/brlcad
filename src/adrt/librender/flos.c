@@ -41,20 +41,18 @@
 
 #include "bu.h"
 
-void render_flos_init(render_t *render, TIE_3 frag_pos) {
+void render_flos_init(render_t *render, char *frag_pos) {
     render_flos_t *d;
 
     render->work = render_flos_work;
     render->free = render_flos_free;
     render->data = (render_flos_t *)bu_malloc(sizeof(render_flos_t), "render_flos_init");
     d = (render_flos_t *)render->data;
-    d->frag_pos = frag_pos;
+    sscanf(frag_pos, "{%f %f %f}", &d->frag_pos.v[0], &d->frag_pos.v[1],  &d->frag_pos.v[2]);
 }
-
 
 void render_flos_free(render_t *render) {
 }
-
 
 void render_flos_work(render_t *render, tie_t *tie, tie_ray_t *ray, TIE_3 *pixel) {
     tie_id_t id, tid;

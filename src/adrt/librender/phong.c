@@ -30,7 +30,7 @@
 #include "adrt_struct.h"
 
 void
-render_phong_init(render_t *render) {
+render_phong_init(render_t *render, char *usr) {
     render->work = render_phong_work;
     render->free = render_phong_free;
     return;

@@ -27,7 +27,7 @@
 #include <stdio.h>
 
 
-void render_flat_init(render_t *render) {
+void render_flat_init(render_t *render, char *usr) {
     render->work = render_flat_work;
     render->free = render_flat_free;
 }
