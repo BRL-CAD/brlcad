@@ -205,6 +205,7 @@ set(LIBGED_SOURCES
     size.c
     slew.c
     solids_on_ray.c
+    sphgroup.c
     summary.c
     sync.c
     tables.c

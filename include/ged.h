@@ -2706,6 +2706,14 @@ GED_EXPORT BU_EXTERN(int ged_solids_on_ray, (struct ged *gedp, int argc, const c
 GED_EXPORT BU_EXTERN(int ged_slew, (struct ged *gedp, int argc, const char *argv[]));
 
 /**
+ * Create or append objects to a group using a sphere
+ *
+ * Usage:
+ *     group object(s) whose bounding boxes intersect a sphere
+ */
+GED_EXPORT BU_EXTERN(int ged_sphgroup, (struct ged *gedp, int argc, const char *argv[]));
+
+/**
  * Count/list primitives/regions/groups
  *
  * Usage:

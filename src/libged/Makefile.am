@@ -209,6 +209,7 @@ libged_nil_la_SOURCES = \
 	size.c \
 	slew.c \
 	solids_on_ray.c \
+        sphgroup.c \
 	summary.c \
 	sync.c \
 	tables.c \

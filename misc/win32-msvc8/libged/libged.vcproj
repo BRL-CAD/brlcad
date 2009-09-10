@@ -1050,6 +1050,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\src\libged\sphgroup.c"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\src\libged\summary.c"
 				>
 			</File>
