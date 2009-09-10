@@ -45,12 +45,17 @@ typedef struct render_cut_hit_s {
 } render_cut_hit_t;
 
 
-void render_cut_init(render_t *render, TIE_3 ray_pos, TIE_3 ray_dir) {
+void render_cut_init(render_t *render, char *buf) {
     int i;
     render_cut_t *d;
     static TIE_3 list[6];
-    TIE_3 **tlist, up;
+    TIE_3 **tlist, up, ray_pos, ray_dir;
     fastf_t shot_len = 100, shot_width = .02;
+
+    sscanf(buf, "#(%f %f %f) #(%f %f %f)",
+	    ray_pos.v, ray_pos.v+1, ray_pos.v+2,
+	    ray_dir.v, ray_dir.v+1, ray_dir.v+2);
+
 
     tlist = (TIE_3 **)bu_malloc(sizeof(TIE_3 *) * 6, "cutting plane triangles");
 

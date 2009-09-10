@@ -291,7 +291,7 @@ adrt_slave_work(tienet_buffer_t *work, tienet_buffer_t *result)
 
 			/* Extract shot position and direction */
 			TCOPY(TIE_3, work->data, ind, &frag_pos, 0);
-			snprintf(buf, BUFSIZ, "{%f %f %f}", V3ARGS(frag_pos.v));
+			snprintf(buf, BUFSIZ, "#(%f %f %f)", V3ARGS(frag_pos.v));
 			ind += sizeof (TIE_3);
 			render_flos_init(&adrt_workspace_list[wid].camera.render, buf);
 		    }
@@ -314,6 +314,7 @@ adrt_slave_work(tienet_buffer_t *work, tienet_buffer_t *result)
 			break;
 
 		    case RENDER_METHOD_CUT:
+#if 0
 		    {
 			TIE_3 shot_pos, shot_dir;
 
@@ -326,6 +327,9 @@ adrt_slave_work(tienet_buffer_t *work, tienet_buffer_t *result)
 
 			render_cut_init(&adrt_workspace_list[wid].camera.render, shot_pos, shot_dir);
 		    }
+#else
+			render_cut_init(&adrt_workspace_list[wid].camera.render, (char *)work->data + ind);
+#endif
 		    break;
 
 		    case RENDER_METHOD_SPALL:

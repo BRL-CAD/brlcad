@@ -33,7 +33,7 @@ typedef struct render_cut_s {
     tie_t tie;
 } render_cut_t;
 
-void render_cut_init(render_t *render, TIE_3 ray_pos, TIE_3 ray_dir);
+void render_cut_init(render_t *render, char *buf);	/* requires two vectors; pos and dir */
 void render_cut_free(render_t *render);
 void render_cut_work(render_t *render, tie_t *tie, tie_ray_t *ray, TIE_3 *pixel);
 
