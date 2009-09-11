@@ -15,8 +15,7 @@ changes made.  See document footer for additional details.
 ----------------------------------------------------------------------
 
 * fixed a rendering bug with left-handed BoT objects - Bob Parker
-* made pipe textform validity independent of parameter order
-	- Daniel Roßberg
+* pipe now validates independent of parameter order - Daniel Roßberg
 * added '-r' color randomize option to 3dm-g importer - Cliff Yapp
 * enhanced '-v' verbosity option in 3dm-g importer - Cliff Yapp
 * initial obj-g geometry importer - Erik Greenwald
