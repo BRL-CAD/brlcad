@@ -2122,11 +2122,7 @@ output_part( ProMdl model )
 			 sol_name, brl_name );
 	    }
 
-	    if ( get_normals ) {
-		fprintf( outfp, "put {%s} bot mode volume orient no V { ", sol_name );
-	    } else {
-		fprintf( outfp, "put {%s} bot mode volume orient lh V { ", sol_name );
-	    }
+	    fprintf( outfp, "put {%s} bot mode volume orient no V { ", sol_name );
 
 	    for ( i=0; i<vert_tree_root->curr_vert; i++ ) {
 		fprintf( outfp, " {%.12e %.12e %.12e}",
@@ -2136,8 +2132,9 @@ output_part( ProMdl model )
 	    }
 	    fprintf( outfp, " } F {" );
 	    for ( i=0; i<curr_tri; i++ ) {
-		fprintf( outfp, " {%d %d %d}", part_tris[i][0],
-			 part_tris[i][1], part_tris[i][2] );
+		/* Proe orders things using left-hand rule, so reverse the order */
+		fprintf( outfp, " {%d %d %d}", part_tris[i][2],
+			 part_tris[i][1], part_tris[i][0] );
 	    }
 	    if ( get_normals ) {
 		if ( logger ) {
