@@ -24,6 +24,7 @@ changes made.  See document footer for additional details.
 * added '-r' color randomize option to 3dm-g importer - Cliff Yapp
 * enhanced '-v' verbosity option in 3dm-g importer - Cliff Yapp
 * added -A attribute option to mged 'erase' command - Bob Parker
+* fixed bug in 'E' command to show object names - John Anderson
 * initial obj-g geometry importer - Erik Greenwald
 * Pro/E export plugin creates a 'Proe_Name' attribute - Bob Parker
 * enhanced rtedge with antialias and both side options - Sean Morrison
