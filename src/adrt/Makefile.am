@@ -134,19 +134,6 @@ doxygen:
 	doxygen Doxyfile
 endif
 
-EXTRA_DIST = \
-	AUTHORS \
-	README \
-	bench/bench.c  \
-	bench/bench.h  \
-	bench/main.c \
-	scripts/adrt.py \
-	scripts/drawBSP.py \
-	scripts/makemovie.pl \
-	scripts/ptcloud.c \
-	scripts/ptcloud.py \
-	slave/g-adrt.c
-
 DEPS = src/libgcv
 
 include $(top_srcdir)/misc/Makefile.defs
