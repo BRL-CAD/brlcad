@@ -104,7 +104,7 @@ XGLUE(rt_botface_w_normals_, TRI_TYPE)(struct soltab	*stp,
      */
     VMOVE( trip->tri_N, trip->tri_wn );
     VUNITIZE( trip->tri_N );
-    if ( bot->bot_mode == RT_BOT_CW )
+    if ( bot->bot_orientation == RT_BOT_CW )
 	VREVERSE( trip->tri_N, trip->tri_N );
 
     /* Add this face onto the linked list for this solid */
