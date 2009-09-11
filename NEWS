@@ -23,7 +23,7 @@ changes made.  See document footer for additional details.
 * pipe now validates independent of parameter order - Daniel Roßberg
 * added '-r' color randomize option to 3dm-g importer - Cliff Yapp
 * enhanced '-v' verbosity option in 3dm-g importer - Cliff Yapp
-* added -A attribute option to mged 'erase' command - Bob Parker
+* added -A attribute option to draw and erase commands - Bob Parker
 * fixed bug in 'E' command to show object names - John Anderson
 * initial obj-g geometry importer - Erik Greenwald
 * Pro/E export plugin creates a 'Proe_Name' attribute - Bob Parker
