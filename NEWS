@@ -14,6 +14,8 @@ changes made.  See document footer for additional details.
 --- 2009-08-XX  Release 7.16.0                                     ---
 ----------------------------------------------------------------------
 
+* made pipe textform validity independent of parameter order
+	- Daniel Roßberg
 * added '-r' color randomize option to 3dm-g importer - Cliff Yapp
 * enhanced '-v' verbosity option in 3dm-g importer - Cliff Yapp
 * initial obj-g geometry importer - Erik Greenwald
