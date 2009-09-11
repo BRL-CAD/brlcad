@@ -37,8 +37,8 @@
 #  include <X11/Xosdefs.h>
 #endif
 #ifdef linux
-#  undef   X_NOT_STDC_ENV
-#  undef   X_NOT_POSIX
+#  undef X_NOT_STDC_ENV
+#  undef X_NOT_POSIX
 #endif
 
 #define XLIB_ILLEGAL_ACCESS	/* necessary on facist SGI 5.0.1 */
@@ -70,7 +70,6 @@
 #define YOFFSET_LEFT	532	/* YSTEREO + YBLANK ? */
 
 #define USE_VECTOR_THRESHHOLD 0
-
 #if USE_VECTOR_THRESHHOLD
 extern int vectorThreshold;	/* defined in libdm/tcl.c */
 #endif
@@ -79,31 +78,32 @@ static int rtgl_actively_drawing;
 HIDDEN XVisualInfo *rtgl_choose_visual(struct dm *dmp, Tk_Window tkwin);
 
 /* Display Manager package interface */
-#define IRBOUND	4095.9	/* Max magnification in Rot matrix */
+#define IRBOUND 4095.9	/* Max magnification in Rot matrix */
+#define PLOTBOUND 1000.0	/* Max magnification in Rot matrix */
 
-#define PLOTBOUND	1000.0	/* Max magnification in Rot matrix */
-struct dm	*rtgl_open(Tcl_Interp *interp, int argc, char **argv);
-HIDDEN int	rtgl_close(struct dm *dmp);
-HIDDEN int	rtgl_drawBegin(struct dm *dmp);
-HIDDEN int      rtgl_drawEnd(struct dm *dmp);
-HIDDEN int	rtgl_normal(struct dm *dmp), rtgl_loadMatrix(struct dm *dmp, fastf_t *mat, int which_eye);
-HIDDEN int	rtgl_drawString2D(struct dm *dmp, register char *str, fastf_t x, fastf_t y, int size, int use_aspect);
-HIDDEN int	rtgl_drawLine2D(struct dm *dmp, fastf_t x1, fastf_t y1, fastf_t x2, fastf_t y2);
-HIDDEN int      rtgl_drawPoint2D(struct dm *dmp, fastf_t x, fastf_t y);
-HIDDEN int	rtgl_drawVList(struct dm *dmp, register struct bn_vlist *vp);
-HIDDEN int      rtgl_setFGColor(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b, int strict, fastf_t transparency);
-HIDDEN int	rtgl_setBGColor(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b);
-HIDDEN int	rtgl_setLineAttr(struct dm *dmp, int width, int style);
-HIDDEN int	rtgl_configureWin_guts(struct dm *dmp, int force);
-HIDDEN int	rtgl_configureWin(struct dm *dmp);
-HIDDEN int	rtgl_setLight(struct dm *dmp, int lighting_on);
-HIDDEN int	rtgl_setTransparency(struct dm *dmp, int transparency_on);
-HIDDEN int	rtgl_setDepthMask(struct dm *dmp, int depthMask_on);
-HIDDEN int	rtgl_setZBuffer(struct dm *dmp, int zbuffer_on);
-HIDDEN int	rtgl_setWinBounds(struct dm *dmp, int *w), rtgl_debug(struct dm *dmp, int lvl);
-HIDDEN int      rtgl_beginDList(struct dm *dmp, unsigned int list), rtgl_endDList(struct dm *dmp);
-HIDDEN int      rtgl_drawDList(struct dm *dmp, unsigned int list);
-HIDDEN int      rtgl_freeDLists(struct dm *dmp, unsigned int list, int range);
+
+struct dm *rtgl_open(Tcl_Interp *interp, int argc, char **argv);
+HIDDEN int rtgl_close(struct dm *dmp);
+HIDDEN int rtgl_drawBegin(struct dm *dmp);
+HIDDEN int rtgl_drawEnd(struct dm *dmp);
+HIDDEN int rtgl_normal(struct dm *dmp), rtgl_loadMatrix(struct dm *dmp, fastf_t *mat, int which_eye);
+HIDDEN int rtgl_drawString2D(struct dm *dmp, register char *str, fastf_t x, fastf_t y, int size, int use_aspect);
+HIDDEN int rtgl_drawLine2D(struct dm *dmp, fastf_t x1, fastf_t y1, fastf_t x2, fastf_t y2);
+HIDDEN int rtgl_drawPoint2D(struct dm *dmp, fastf_t x, fastf_t y);
+HIDDEN int rtgl_drawVList(struct dm *dmp, register struct bn_vlist *vp);
+HIDDEN int rtgl_setFGColor(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b, int strict, fastf_t transparency);
+HIDDEN int rtgl_setBGColor(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b);
+HIDDEN int rtgl_setLineAttr(struct dm *dmp, int width, int style);
+HIDDEN int rtgl_configureWin_guts(struct dm *dmp, int force);
+HIDDEN int rtgl_configureWin(struct dm *dmp);
+HIDDEN int rtgl_setLight(struct dm *dmp, int lighting_on);
+HIDDEN int rtgl_setTransparency(struct dm *dmp, int transparency_on);
+HIDDEN int rtgl_setDepthMask(struct dm *dmp, int depthMask_on);
+HIDDEN int rtgl_setZBuffer(struct dm *dmp, int zbuffer_on);
+HIDDEN int rtgl_setWinBounds(struct dm *dmp, int *w), rtgl_debug(struct dm *dmp, int lvl);
+HIDDEN int rtgl_beginDList(struct dm *dmp, unsigned int list), rtgl_endDList(struct dm *dmp);
+HIDDEN int rtgl_drawDList(struct dm *dmp, unsigned int list);
+HIDDEN int rtgl_freeDLists(struct dm *dmp, unsigned int list, int range);
 
 struct dm dm_rtgl = {
     rtgl_close,
@@ -131,8 +131,8 @@ struct dm dm_rtgl = {
     rtgl_freeDLists,
     0,
     1,				/* has displaylist */
-    0,                            /* no stereo by default */
-    1.0,				/* zoom-in limit, */
+    0,                          /* no stereo by default */
+    1.0,			/* zoom-in limit, */
     1,				/* bound flag */
     "rtgl",
     "X Windows with OpenGL graphics",
@@ -150,8 +150,8 @@ struct dm dm_rtgl = {
     {0, 0, 0, 0, 0},		/* bu_vls short name drawing window */
     {0, 0, 0},			/* bg color */
     {0, 0, 0},			/* fg color */
-    {GED_MIN, GED_MIN, GED_MIN},	/* clipmin */
-    {GED_MAX, GED_MAX, GED_MAX},	/* clipmax */
+    {GED_MIN, GED_MIN, GED_MIN},/* clipmin */
+    {GED_MAX, GED_MAX, GED_MAX},/* clipmax */
     0,				/* no debugging */
     0,				/* no perspective */
     0,				/* no lighting */
@@ -164,8 +164,8 @@ struct dm dm_rtgl = {
 };
 
 extern fastf_t default_viewscale;
-extern double	xlim_view;	/* args for glOrtho*/
-extern double	ylim_view;
+extern double xlim_view;	/* args for glOrtho*/
+extern double ylim_view;
 
 /* lighting parameters */
 extern float amb_three[];
@@ -203,7 +203,7 @@ void freeJobList(void) {
     /* list cannot be empty */
     if (jobs.l.forw != NULL && (struct jobList *)jobs.l.forw != &jobs) {
 
-	while (BU_LIST_WHILE(currJob, jobList, &(jobs.l))) {
+	while (BU_LIST_WHILE (currJob, jobList, &(jobs.l))) {
 
 	    BU_LIST_DEQUEUE(&(currJob->l));
 	    bu_free(currJob, "free jobs currJob");
@@ -395,7 +395,7 @@ rtgl_open(Tcl_Interp *interp, int argc, char **argv)
 			    cp + 1, (char *)NULL);
     }
 
-    if ( ((struct dm_xvars *)dmp->dm_vars.pub_vars)->xtkwin == NULL ) {
+    if (((struct dm_xvars *)dmp->dm_vars.pub_vars)->xtkwin == NULL) {
 	bu_log("dm-Rtgl: Failed to open %s\n", bu_vls_addr(&dmp->dm_pathName));
 	bu_vls_free(&init_proc_vls);
 	(void)rtgl_close(dmp);
@@ -437,7 +437,7 @@ rtgl_open(Tcl_Interp *interp, int argc, char **argv)
 
     /* must do this before MakeExist */
     if ((((struct dm_xvars *)dmp->dm_vars.pub_vars)->vip=rtgl_choose_visual(dmp,
-									   ((struct dm_xvars *)dmp->dm_vars.pub_vars)->xtkwin)) == NULL) {
+									    ((struct dm_xvars *)dmp->dm_vars.pub_vars)->xtkwin)) == NULL) {
 	bu_log("rtgl_open: Can't get an appropriate visual.\n");
 	(void)rtgl_close(dmp);
 	return DM_NULL;
@@ -477,8 +477,8 @@ rtgl_open(Tcl_Interp *interp, int argc, char **argv)
     }
 
     /* IRIX 4.0.5 bug workaround */
-    if ( list == (XDeviceInfoPtr)NULL ||
-	 list == (XDeviceInfoPtr)1 )  goto Done;
+    if (list == (XDeviceInfoPtr)NULL ||
+	list == (XDeviceInfoPtr)1)  goto Done;
 
     for (j = 0; j < ndevices; ++j, list++) {
 	if (list->use == IsXExtensionDevice) {
@@ -553,7 +553,7 @@ rtgl_open(Tcl_Interp *interp, int argc, char **argv)
     (void)rtgl_configureWin_guts(dmp, 1);
 
     /* Lines will be solid when stippling disabled, dashed when enabled*/
-    glLineStipple( 1, 0xCF33);
+    glLineStipple(1, 0xCF33);
     glDisable(GL_LINE_STIPPLE);
 
     backgnd[0] = backgnd[1] = backgnd[2] = backgnd[3] = 0.0;
@@ -569,7 +569,7 @@ rtgl_open(Tcl_Interp *interp, int argc, char **argv)
     /* Leave it in model_view mode normally */
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
-    glOrtho( -xlim_view, xlim_view, -ylim_view, ylim_view, 0.0, 2.0 );
+    glOrtho(-xlim_view, xlim_view, -ylim_view, ylim_view, 0.0, 2.0);
     glGetDoublev(GL_PROJECTION_MATRIX, ((struct rtgl_vars *)dmp->dm_vars.priv_vars)->faceplate_mat);
     glPushMatrix();
     glMatrixMode(GL_MODELVIEW);
@@ -645,7 +645,7 @@ rtgl_share_dlist(struct dm *dmp1, struct dm *dmp2)
 	(void)rtgl_configureWin_guts(dmp1, 1);
 
 	/* Lines will be solid when stippling disabled, dashed when enabled*/
-	glLineStipple( 1, 0xCF33);
+	glLineStipple(1, 0xCF33);
 	glDisable(GL_LINE_STIPPLE);
 
 	backgnd[0] = backgnd[1] = backgnd[2] = backgnd[3] = 0.0;
@@ -662,7 +662,7 @@ rtgl_share_dlist(struct dm *dmp1, struct dm *dmp2)
 	/* Leave it in model_view mode normally */
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
-	glOrtho( -xlim_view, xlim_view, -ylim_view, ylim_view, 0.0, 2.0 );
+	glOrtho(-xlim_view, xlim_view, -ylim_view, ylim_view, 0.0, 2.0);
 	glGetDoublev(GL_PROJECTION_MATRIX, ((struct rtgl_vars *)dmp1->dm_vars.priv_vars)->faceplate_mat);
 	glPushMatrix();
 	glMatrixMode(GL_MODELVIEW);
@@ -715,7 +715,7 @@ rtgl_share_dlist(struct dm *dmp1, struct dm *dmp2)
 	(void)rtgl_configureWin_guts(dmp2, 1);
 
 	/* Lines will be solid when stippling disabled, dashed when enabled*/
-	glLineStipple( 1, 0xCF33);
+	glLineStipple(1, 0xCF33);
 	glDisable(GL_LINE_STIPPLE);
 
 	backgnd[0] = backgnd[1] = backgnd[2] = backgnd[3] = 0.0;
@@ -732,7 +732,7 @@ rtgl_share_dlist(struct dm *dmp1, struct dm *dmp2)
 	/* Leave it in model_view mode normally */
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
-	glOrtho( -xlim_view, xlim_view, -ylim_view, ylim_view, 0.0, 2.0 );
+	glOrtho(-xlim_view, xlim_view, -ylim_view, ylim_view, 0.0, 2.0);
 	glGetDoublev(GL_PROJECTION_MATRIX, ((struct rtgl_vars *)dmp2->dm_vars.priv_vars)->faceplate_mat);
 	glPushMatrix();
 	glMatrixMode(GL_MODELVIEW);
@@ -771,10 +771,6 @@ rtgl_close(struct dm *dmp)
 
 	if (((struct dm_xvars *)dmp->dm_vars.pub_vars)->xtkwin)
 	    Tk_DestroyWindow(((struct dm_xvars *)dmp->dm_vars.pub_vars)->xtkwin);
-
-#if 0
-	XCloseDisplay(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy);
-#endif
     }
 
     bu_vls_free(&dmp->dm_pathName);
@@ -922,7 +918,7 @@ HIDDEN int
 rtgl_loadMatrix(struct dm *dmp, fastf_t *mat, int which_eye)
 {
     GLfloat gtmat[16];
-    mat_t	newm;
+    mat_t newm;
 
     fastf_t clip, scale = 1;
 
@@ -956,22 +952,22 @@ rtgl_loadMatrix(struct dm *dmp, fastf_t *mat, int which_eye)
 	bu_vls_free(&tmp_vls);
     }
 
-    switch (which_eye)  {
+    switch (which_eye) {
 	case 0:
 	    /* Non-stereo */
 	    break;
 	case 1:
 	    /* R eye */
-	    glViewport(0,  0, (XMAXSCREEN)+1, ( YSTEREO)+1);
+	    glViewport(0,  0, (XMAXSCREEN)+1, (YSTEREO)+1);
 	    glScissor(0,  0, (XMAXSCREEN)+1, (YSTEREO)+1);
-	    rtgl_drawString2D( dmp, "R", 0.986, 0.0, 0, 1 );
+	    rtgl_drawString2D(dmp, "R", 0.986, 0.0, 0, 1);
 	    break;
 	case 2:
 	    /* L eye */
-	    glViewport(0,  0+YOFFSET_LEFT, ( XMAXSCREEN)+1,
-		       ( YSTEREO+YOFFSET_LEFT)-( YOFFSET_LEFT)+1);
-	    glScissor(0,  0+YOFFSET_LEFT, ( XMAXSCREEN)+1,
-		      ( YSTEREO+YOFFSET_LEFT)-( YOFFSET_LEFT)+1);
+	    glViewport(0,  0+YOFFSET_LEFT, (XMAXSCREEN)+1,
+		       (YSTEREO+YOFFSET_LEFT)-(YOFFSET_LEFT)+1);
+	    glScissor(0,  0+YOFFSET_LEFT, (XMAXSCREEN)+1,
+		      (YSTEREO+YOFFSET_LEFT)-(YOFFSET_LEFT)+1);
 	    break;
     }
 
@@ -1039,7 +1035,7 @@ rtgl_loadMatrix(struct dm *dmp, fastf_t *mat, int which_eye)
     /* apply view */
     if (controlClip) {
 /*
-	bu_log("clip: %3.2f translate:%3.2f", clip, clip - 1.25);
+  bu_log("clip: %3.2f translate:%3.2f", clip, clip - 1.25);
 */
 	/* move clipping volume when zooming-in
 	 * to prevent clipping front surfaces
@@ -1048,11 +1044,11 @@ rtgl_loadMatrix(struct dm *dmp, fastf_t *mat, int which_eye)
     }
 
     else {
-	glTranslatef( 0.0, 0.0, -1.0 );
+	glTranslatef(0.0, 0.0, -1.0);
     }
 
     /* transpose to OpenGL format before applying view */
-     glMultTransposeMatrixd(newm);
+    glMultTransposeMatrixd(newm);
 
     return TCL_OK;
 }
@@ -1518,7 +1514,7 @@ int shootJobs(void) {
 		    break;
 		}
 
-		(void)rt_get_timer( (struct bu_vls *)0, &elapsed_time);
+		(void)rt_get_timer((struct bu_vls *)0, &elapsed_time);
 		if (elapsed_time > .1) /* 100ms */
 		    return 0;
 	    }
@@ -1564,7 +1560,7 @@ void drawPoints(float *view, int pointSize) {
 	/* visit each item in bin's list */
 	head = &(bin->list->l);
 	
-	for (BU_LIST_FOR(currItem, ptInfoList, head)) {
+	for (BU_LIST_FOR (currItem, ptInfoList, head)) {
 	    used = currItem->used;
 
 #if 1
@@ -1615,13 +1611,13 @@ int getTops(struct ged *gedp) {
      *  Perhaps a "dirty bit" on the database? */
     db_update_nref(gedp->ged_wdbp->dbip, &rt_uniresource);
 
-    /* Find number of possible entries and allocate memory  */
+    /* Find number of possible entries and allocate memory */
     dirp = (struct directory **)ged_dir_getspace(gedp->ged_wdbp->dbip, 0);
     dirp0 = dirp;
 
     if (gedp->ged_wdbp->dbip->dbi_version < 5) {
 	for (i = 0; i < RT_DBNHASH; i++) {
-            for (dp = gedp->ged_wdbp->dbip->dbi_Head[i]; dp != RT_DIR_NULL; dp = dp->d_forw)  {
+            for (dp = gedp->ged_wdbp->dbip->dbi_Head[i]; dp != RT_DIR_NULL; dp = dp->d_forw) {
                 if (dp->d_nref == 0) {
                     *dirp++ = dp;
 
@@ -2021,7 +2017,7 @@ rtgl_normal(struct dm *dmp)
     if (!((struct rtgl_vars *)dmp->dm_vars.priv_vars)->face_flag) {
 	glMatrixMode(GL_PROJECTION);
 	glPushMatrix();
-	glLoadMatrixd( ((struct rtgl_vars *)dmp->dm_vars.priv_vars)->faceplate_mat );
+	glLoadMatrixd(((struct rtgl_vars *)dmp->dm_vars.priv_vars)->faceplate_mat);
 	glMatrixMode(GL_MODELVIEW);
 	glPushMatrix();
 	glLoadIdentity();
@@ -2053,7 +2049,7 @@ rtgl_drawString2D(struct dm *dmp, register char *str, fastf_t x, fastf_t y, int 
 	glRasterPos2f(x, y);
 
     glListBase(((struct rtgl_vars *)dmp->dm_vars.priv_vars)->fontOffset);
-    glCallLists(strlen( str ), GL_UNSIGNED_BYTE,  str );
+    glCallLists(strlen(str), GL_UNSIGNED_BYTE,  str);
 
     return TCL_OK;
 }
@@ -2122,7 +2118,7 @@ rtgl_setFGColor(struct dm *dmp, unsigned char r, unsigned char g, unsigned char 
     dmp->dm_fg[2] = b;
 
     if (strict) {
-	glColor3ub( (GLubyte)r, (GLubyte)g, (GLubyte)b );
+	glColor3ub((GLubyte)r, (GLubyte)g, (GLubyte)b);
     } else {
 
 	if (dmp->dm_light) {
@@ -2149,14 +2145,12 @@ rtgl_setFGColor(struct dm *dmp, unsigned char r, unsigned char g, unsigned char 
 	    diffuseColor[2] = wireColor[2] * 0.6;
 	    diffuseColor[3] = wireColor[3];
 
-#if 1
 	    glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, ambientColor);
 	    glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, specularColor);
 	    glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, diffuseColor);
-#endif
 
 	} else {
-	    glColor3ub( (GLubyte)r,  (GLubyte)g,  (GLubyte)b );
+	    glColor3ub((GLubyte)r,  (GLubyte)g,  (GLubyte)b);
 	}
     }
 
@@ -2273,7 +2267,7 @@ rtgl_choose_visual(struct dm *dmp, Tk_Window tkwin)
     int stereo;
 
     /*XXX Need to do something with this */
-    if ( dmp->dm_stereo )  {
+    if (dmp->dm_stereo) {
 	m_stereo = 1;
     } else {
 	m_stereo = 0;
@@ -2306,7 +2300,7 @@ rtgl_choose_visual(struct dm *dmp, Tk_Window tkwin)
 		continue;
 
 	    /* desires */
-	    if ( m_zbuffer ) {
+	    if (m_zbuffer) {
 		fail = glXGetConfig(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
 				    vip, GLX_DEPTH_SIZE, &zbuffer);
 		if (fail || !zbuffer)
@@ -2314,7 +2308,7 @@ rtgl_choose_visual(struct dm *dmp, Tk_Window tkwin)
 	    }
 
 #if RTGL_DO_STEREO
-	    if ( m_stereo ) {
+	    if (m_stereo) {
 		fail = glXGetConfig(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
 				    vip, GLX_STEREO, &stereo);
 		if (fail || !stereo) {
@@ -2372,14 +2366,14 @@ rtgl_choose_visual(struct dm *dmp, Tk_Window tkwin)
 	/* if no success at this point, relax a desire and try again */
 
 #if RTGL_DO_STEREO
-	if ( m_stereo ) {
+	if (m_stereo) {
 	    m_stereo = 0;
 	    bu_log("Stereo not available.\n");
 	    continue;
 	}
 #endif
 
-	if ( m_zbuffer ) {
+	if (m_zbuffer) {
 	    m_zbuffer = 0;
 	    continue;
 	}
@@ -2389,12 +2383,12 @@ rtgl_choose_visual(struct dm *dmp, Tk_Window tkwin)
 }
 
 
-/*
- *			O G L _ C O N F I G U R E W I N
+/**
+ * O G L _ C O N F I G U R E W I N
  *
- *  Either initially, or on resize/reshape of the window,
- *  sense the actual size of the window, and perform any
- *  other initializations of the window configuration.
+ * Either initially, or on resize/reshape of the window, sense the
+ * actual size of the window, and perform any other initializations of
+ * the window configuration.
  *
  * also change font size if necessary
  */
@@ -2403,7 +2397,7 @@ rtgl_configureWin_guts(struct dm *dmp, int force)
 {
     GLint mm;
     XWindowAttributes xwa;
-    XFontStruct	*newfontstruct;
+    XFontStruct *newfontstruct;
 
     if (dmp->dm_debugLevel)
 	bu_log("rtgl_configureWin_guts()\n");
@@ -2415,8 +2409,8 @@ rtgl_configureWin_guts(struct dm *dmp, int force)
 	return TCL_ERROR;
     }
 
-    XGetWindowAttributes( ((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
-			  ((struct dm_xvars *)dmp->dm_vars.pub_vars)->win, &xwa );
+    XGetWindowAttributes(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
+			 ((struct dm_xvars *)dmp->dm_vars.pub_vars)->win, &xwa);
 
     /* nothing to do */
     if (!force &&
@@ -2454,14 +2448,14 @@ rtgl_configureWin_guts(struct dm *dmp, int force)
     glGetIntegerv(GL_MATRIX_MODE, &mm);
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
-    glOrtho( -xlim_view, xlim_view, -ylim_view, ylim_view, 0.0, 2.0 );
+    glOrtho(-xlim_view, xlim_view, -ylim_view, ylim_view, 0.0, 2.0);
     glMatrixMode(mm);
 
     /* First time through, load a font or quit */
     if (((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct == NULL) {
 	if ((((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct =
 	     XLoadQueryFont(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
-			    FONT9)) == NULL ) {
+			    FONT9)) == NULL) {
 	    /* Try hardcoded backup font */
 	    if ((((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct =
 		 XLoadQueryFont(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
@@ -2470,8 +2464,8 @@ rtgl_configureWin_guts(struct dm *dmp, int force)
 		return TCL_ERROR;
 	    }
 	}
-	glXUseXFont( ((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct->fid,
-		     0, 127, ((struct rtgl_vars *)dmp->dm_vars.priv_vars)->fontOffset);
+	glXUseXFont(((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct->fid,
+		    0, 127, ((struct rtgl_vars *)dmp->dm_vars.priv_vars)->fontOffset);
     }
 
 
@@ -2481,56 +2475,56 @@ rtgl_configureWin_guts(struct dm *dmp, int force)
     if (dmp->dm_width < 582) {
 	if (((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct->per_char->width != 5) {
 	    if ((newfontstruct = XLoadQueryFont(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
-						FONT5)) != NULL ) {
+						FONT5)) != NULL) {
 		XFreeFont(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
 			  ((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct);
 		((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct = newfontstruct;
-		glXUseXFont( ((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct->fid,
-			     0, 127, ((struct rtgl_vars *)dmp->dm_vars.priv_vars)->fontOffset);
+		glXUseXFont(((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct->fid,
+			    0, 127, ((struct rtgl_vars *)dmp->dm_vars.priv_vars)->fontOffset);
 	    }
 	}
     } else if (dmp->dm_width < 679) {
 	if (((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct->per_char->width != 6) {
 	    if ((newfontstruct = XLoadQueryFont(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
-						FONT6)) != NULL ) {
+						FONT6)) != NULL) {
 		XFreeFont(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
 			  ((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct);
 		((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct = newfontstruct;
-		glXUseXFont( ((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct->fid,
-			     0, 127, ((struct rtgl_vars *)dmp->dm_vars.priv_vars)->fontOffset);
+		glXUseXFont(((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct->fid,
+			    0, 127, ((struct rtgl_vars *)dmp->dm_vars.priv_vars)->fontOffset);
 	    }
 	}
     } else if (dmp->dm_width < 776) {
 	if (((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct->per_char->width != 7) {
 	    if ((newfontstruct = XLoadQueryFont(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
-						FONT7)) != NULL ) {
+						FONT7)) != NULL) {
 		XFreeFont(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
 			  ((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct);
 		((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct = newfontstruct;
-		glXUseXFont( ((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct->fid,
-			     0, 127, ((struct rtgl_vars *)dmp->dm_vars.priv_vars)->fontOffset);
+		glXUseXFont(((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct->fid,
+			    0, 127, ((struct rtgl_vars *)dmp->dm_vars.priv_vars)->fontOffset);
 	    }
 	}
     } else if (dmp->dm_width < 873) {
 	if (((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct->per_char->width != 8) {
 	    if ((newfontstruct = XLoadQueryFont(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
-						FONT8)) != NULL ) {
+						FONT8)) != NULL) {
 		XFreeFont(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
 			  ((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct);
 		((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct = newfontstruct;
-		glXUseXFont( ((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct->fid,
-			     0, 127, ((struct rtgl_vars *)dmp->dm_vars.priv_vars)->fontOffset);
+		glXUseXFont(((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct->fid,
+			    0, 127, ((struct rtgl_vars *)dmp->dm_vars.priv_vars)->fontOffset);
 	    }
 	}
     } else {
 	if (((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct->per_char->width != 9) {
 	    if ((newfontstruct = XLoadQueryFont(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
-						FONT9)) != NULL ) {
+						FONT9)) != NULL) {
 		XFreeFont(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
 			  ((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct);
 		((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct = newfontstruct;
-		glXUseXFont( ((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct->fid,
-			     0, 127, ((struct rtgl_vars *)dmp->dm_vars.priv_vars)->fontOffset);
+		glXUseXFont(((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct->fid,
+			    0, 127, ((struct rtgl_vars *)dmp->dm_vars.priv_vars)->fontOffset);
 	    }
 	}
     }
@@ -2582,7 +2576,7 @@ rtgl_setLight(struct dm *dmp, int lighting_on)
 
 HIDDEN int
 rtgl_setTransparency(struct dm *dmp,
-		    int transparency_on)
+		     int transparency_on)
 {
     if (dmp->dm_debugLevel)
 	bu_log("rtgl_setTransparency()\n");
@@ -2611,7 +2605,7 @@ rtgl_setTransparency(struct dm *dmp,
 
 HIDDEN int
 rtgl_setDepthMask(struct dm *dmp,
-		 int enable) {
+		  int enable) {
     if (dmp->dm_debugLevel)
 	bu_log("rtgl_setDepthMask()\n");
 
