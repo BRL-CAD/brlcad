@@ -52,10 +52,18 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 THESE ARE UNSCHEDULED BACKLOG TASKS
 -----------------------------------
 
+* implement a "select" command in LIBGED that creates a selection set
+  based on specified sampling parameters or object lists.  example
+  could be "select -point 12.3 23.1 31.2 -dist 100.0" to
+  select objects within a given distance of a point; "select foo bar"
+  to select specific objects and create/return a temporary reference
+  name. this provides a command-line mechanism for implementing band
+  selection in the GUI, area-based selections, and object highlighting
+
 * make gqa overlap reporting suck less.  uselessly reports the same
   objects multiple times instead of keeping track of uniquely
-  overlapping pairs of objects (rtcheck used to have this problem but no
-  longer).  also reports overlaps even when not requested (e.g., -Aa).
+  overlapping pairs of objects (rtcheck used to have this problem but
+  not now).  also reports overlaps even when not requested (e.g. -Aa)
 
 * refactor the libtclcad go_*() functions and invocation wrappers
   (also in mged) into libged where appropriate. the 'png' command
