@@ -52,6 +52,7 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 THESE ARE UNSCHEDULED BACKLOG TASKS
 -----------------------------------
 
+
 * implement a "select" command in LIBGED that creates a selection set
   based on specified sampling parameters or object lists.  example
   could be "select -point 12.3 23.1 31.2 -dist 100.0" to
@@ -59,6 +60,7 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
   to select specific objects and create/return a temporary reference
   name. this provides a command-line mechanism for implementing band
   selection in the GUI, area-based selections, and object highlighting
+        - can replace unpublished 'sphgroup' command with this
 
 * make gqa overlap reporting suck less.  uselessly reports the same
   objects multiple times instead of keeping track of uniquely
