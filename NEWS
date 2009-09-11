@@ -14,6 +14,8 @@ changes made.  See document footer for additional details.
 --- 2009-08-XX  Release 7.16.0                                     ---
 ----------------------------------------------------------------------
 
+* added procedural 'human' generator to mged and gui plugin to archer
+	- Stephen Kennedy, Bob Parker
 * added BoT commands to archer (e.g., bot_flip, bot_sync) - Bob Parker
 * implemented support for sub-object erasures - Bob Parker
 * changed Pro/E exporter to output unoriented BoT objects - Bob Parker
