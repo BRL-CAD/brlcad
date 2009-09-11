@@ -248,7 +248,7 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\src\librt\primitives\arb8\arbn_brep.cpp"
+				RelativePath="..\..\..\src\librt\primitives\arbn\arbn_brep.cpp"
 				>
 			</File>
 			<File
@@ -596,11 +596,11 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\src\librt\primitives\nmg\nmg_misc.c"
+				RelativePath="..\..\..\src\librt\primitives\nmg\nmg_mirror.c"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\src\librt\primitives\nmg\nmg_mirror.c"
+				RelativePath="..\..\..\src\librt\primitives\nmg\nmg_misc.c"
 				>
 			</File>
 			<File
