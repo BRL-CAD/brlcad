@@ -798,7 +798,7 @@ deep_copy_object(struct resource *resp, struct ged_clone_state *state)
 static void
 print_usage(struct ged *gedp)
 {
-    bu_vls_printf(&gedp->ged_result_str, "Usage: clone [-abhimnprtv] object\n\n");
+    bu_vls_printf(&gedp->ged_result_str, "Usage: clone [-abhimnprtv] <object>\n\n");
     bu_vls_printf(&gedp->ged_result_str, "-a <n> <x> <y> <z>\t- Specifies a translation split between n copies.\n");
     bu_vls_printf(&gedp->ged_result_str, "-b <n> <x> <y> <z>\t- Specifies a rotation around x, y, and z axes \n\t\t\t  split between n copies.\n");
     bu_vls_printf(&gedp->ged_result_str, "-c\t\t\t- Increment the second number in object names.\n");
