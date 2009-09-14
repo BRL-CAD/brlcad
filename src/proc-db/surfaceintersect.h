@@ -1,7 +1,7 @@
-/*                         B R E P I N T E R S E C T . H
+/*                   B R E P I N T E R S E C T . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2009 United States Government as represented by
+ * Copyright (c) 2009 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -17,19 +17,25 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
+/** @{ */
 /** @file brepintersect.h
  *
  */
 
+#include "common.h"  
+
+/* system headers */
 #include <stdint.h>
-#include "../../include/common.h"  
-#include "../../include/raytrace.h"
-#include "../../include/rtgeom.h"
-#include "../../include/wdb.h"
-#include "../../include/bn.h"
-#include "../../include/bu.h"
-#include "../../include/vmath.h"
-#include "../src/other/openNURBS/opennurbs_array.h"
+
+/* common interface headers */
+#include "raytrace.h"
+#include "rtgeom.h"
+#include "wdb.h"
+#include "bn.h"
+#include "bu.h"
+#include "vmath.h"
+#include "opennurbs_array.h"
+
 
 /**
  * Canonical_start, Canonical_end

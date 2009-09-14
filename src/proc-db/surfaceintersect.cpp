@@ -1,7 +1,7 @@
-/*           S U R F A C E I N T E R S E C T . C P P
+/*             S U R F A C E I N T E R S E C T . C P P
  * BRL-CAD
  *
- * Copyright (c) 2008-2009 United States Government as represented by
+ * Copyright (c) 2009 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -372,18 +372,18 @@ int Face_X_Event::Render_Curves()
  * CurveCurveIntersect
  *
  * @brief Intersect 2 curves appending ON_X_EVENTS to the array x for the intersections
- *  returns the number of ON_X_EVENTS appended
+ * returns the number of ON_X_EVENTS appended
  *
- *  This is not a great implementation of this function it's limited in that it will only find
- *  point intersections, not overlaps. Overlaps, will come out as long strings of points, and
- *  will probably take a long time to compute.
+ * This is not a great implementation of this function it's limited in that it will only find
+ * point intersections, not overlaps. Overlaps, will come out as long strings of points, and
+ * will probably take a long time to compute.
  */
 int CurveCurveIntersect(
-	const ON_Curve *curve1,
-	const ON_Curve *curve2,
-	ON_SimpleArray<ON_X_EVENT>& x,
-	double tol
-	)
+    const ON_Curve *curve1,
+    const ON_Curve *curve2,
+    ON_SimpleArray<ON_X_EVENT>& x,
+    double tol
+    )
 {
     int rv = 0;
     ON_BoundingBox bbox1, bbox2;
@@ -411,11 +411,11 @@ int CurveCurveIntersect(
 
 	    /* Documentation for these routines being what it is for these intersections
 	     * it's not really clear what these should be
-	    newx.m_cnodeA[0] = ;
-	    newx.m_nodeA_t[0] = ;
-	    newx.m_cnodeB[0] = ;
-	    newx.m_nodeB_t[0] = ;
-	    newx.m_x_eventsn = ; this one we could do, but it doesn't seem worth the trouble.
+	     newx.m_cnodeA[0] = ;
+	     newx.m_nodeA_t[0] = ;
+	     newx.m_cnodeB[0] = ;
+	     newx.m_nodeB_t[0] = ;
+	     newx.m_x_eventsn = ; this one we could do, but it doesn't seem worth the trouble.
 	    */
 	    x.Append(*newx);
 	    rv++;
