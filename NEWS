@@ -14,6 +14,7 @@ changes made.  See document footer for additional details.
 --- 2009-08-XX  Release 7.16.0                                     ---
 ----------------------------------------------------------------------
 
+* reversed and simplified arguments to copyeval command - Bob Parker
 * 3dm-g converter creates automatic top-level combination - Cliff Yapp
 * added procedural 'human' generator command and gui plugin to archer
 	- Stephen Kennedy, Bob Parker
