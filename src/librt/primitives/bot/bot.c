@@ -1192,7 +1192,7 @@ rt_bot_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose
 
 		ptnum = bot_ip->faces[i*3+j];
 		if (ptnum < 0 || ptnum >= bot_ip->num_vertices) {
-		    bu_vls_strcat( str, " (?\?? ?\?? ?\?\?)");
+		    bu_vls_strcat( str, " (\?\?\? \?\?\? \?\?\?)");
 		    badVertexCount++;
 		} else {
 		    VSCALE( pt[j], &bot_ip->vertices[ptnum*3], mm2local );
