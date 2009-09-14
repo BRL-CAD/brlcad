@@ -39,7 +39,7 @@ changes made.  See document footer for additional details.
 * added experimental exporter to Panda3d EGG format - Erik Greenwald
 * fixed compilation support for Mac OS X 10.5 - Sean Morrison
 * new bb command creates & computes object bounding boxes - Cliff Yapp
-* added -n "no-action" reporting option to mvall command - Bob Parker
+* added -n "no-action" reporting option to edcodes & mvall - Bob Parker
 * reordering of and additions to Archer button menu - Cliff Yapp
 * extensive NURBS raytracing improvements - Keith Bowman, Cliff Yapp
 * initial undo support for Archer - Bob Parker
