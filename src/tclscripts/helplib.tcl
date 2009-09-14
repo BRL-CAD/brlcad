@@ -104,7 +104,7 @@ set helplib_data(wdb_move_arb_edge)	{{arb edge pt} {move an arb's edge through p
 set helplib_data(wdb_move_arb_face)	{{arb face pt} {move an arb's face through pt}}
 set helplib_data(wdb_rotate_arb_face)	{{arb face pt} {rotate an arb's face through pt}}
 set helplib_data(wdb_move)		{{from to} {rename a database object}}
-set helplib_data(wdb_moveall)		{{from to} {rename all occurences of object}}
+set helplib_data(wdb_moveall)		{{[-n] from to} {rename all occurences of object.  only reports matches without renaming with the -n option.}}
 set helplib_data(wdb_nmg_collapse)	{{nmg_solid new_solid maximum_error_distance [minimum_allowed_angle]}	{decimate NMG solid via edge collapse}}
 set helplib_data(wdb_nmg_simplify)	{{[arb|tgc|ell|poly] new_solid nmg_solid}	{simplify nmg_solid, if possible}}
 set helplib_data(wdb_observer)		{{cmd [args]} {Attach/detach observer to/from list}}
