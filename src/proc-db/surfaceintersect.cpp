@@ -29,8 +29,7 @@
 
 #include "surfaceintersect.h"
 
-#define MIN(a, b) (((a) > (b)) ? (a) : (b))
-#define safesqrt(x) (((x) >= 0) ? sqrt(x) : (-(sqrt(-x))))
+#define SI_MIN(a, b) (((a) > (b)) ? (a) : (b))
 
 
 /**
@@ -690,12 +689,12 @@ void WalkIntersection(
 	    newt1 = ClosestValue(t1, surf1->Domain(0));
 	    newt2 = ClosestValue(t2, surf2->Domain(1));
 
-	    news1 = olds1 + MIN((news1 - olds1) / (s1 - olds1), (newt1 - oldt1) / (t1 - oldt1)) * (s1 - olds1);
-	    news2 = olds2 + MIN((news2 - olds2) / (s2 - olds2), (newt2 - oldt2) / (t2 - oldt2)) * (s2 - olds2);
-	    newt1 = oldt1 + MIN((news1 - olds1) / (s1 - olds1), (newt1 - oldt1) / (t1 - oldt1)) * (t1 - oldt1);
-	    newt2 = oldt2 + MIN((news2 - olds2) / (s2 - olds2), (newt2 - oldt2) / (t2 - oldt2)) * (t2 - oldt2);
+	    news1 = olds1 + SI_MIN((news1 - olds1) / (s1 - olds1), (newt1 - oldt1) / (t1 - oldt1)) * (s1 - olds1);
+	    news2 = olds2 + SI_MIN((news2 - olds2) / (s2 - olds2), (newt2 - oldt2) / (t2 - oldt2)) * (s2 - olds2);
+	    newt1 = oldt1 + SI_MIN((news1 - olds1) / (s1 - olds1), (newt1 - oldt1) / (t1 - oldt1)) * (t1 - oldt1);
+	    newt2 = oldt2 + SI_MIN((news2 - olds2) / (s2 - olds2), (newt2 - oldt2) / (t2 - oldt2)) * (t2 - oldt2);
 
-	    double newstep = MIN(surf1->PointAt(olds1, oldt1).DistanceTo(surf1->PointAt(news1, newt1)), surf2->PointAt(olds2, oldt2).DistanceTo(surf2->PointAt(news2, newt2)));
+	    double newstep = SI_MIN(surf1->PointAt(olds1, oldt1).DistanceTo(surf1->PointAt(news1, newt1)), surf2->PointAt(olds2, oldt2).DistanceTo(surf2->PointAt(news2, newt2)));
 	    Step(surf1, surf2, &s1, &s2, &t1, &t2, newstep);
 	    intersectionPoints1.Append(ON_2dPoint(s1, t1));
 	    intersectionPoints2.Append(ON_2dPoint(s2, t2));
