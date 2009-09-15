@@ -34,6 +34,7 @@ changes made.  See document footer for additional details.
 * make_bb now handles empty combinations correctly - Bob Parker
 * no more rtweight crashing when PWD or HOME are unset - Sean Morrison
 * fixed "Invalid NMG" empty output bug in g-stl - Sean Morrison
+* improved BoT raytracing with vertex validation - John Anderson
 * fixed Mac OS X 10.5 OGL and X11 display manager crash affecting mged
 	- Sean Morrison, Mike Tegtmeyer, Tim Myers
 * added experimental exporter to Panda3d EGG format - Erik Greenwald
