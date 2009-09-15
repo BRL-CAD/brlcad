@@ -15,6 +15,9 @@ on-going issues.
 Recent Bugs
 -----------
 
+* fb-png gamma correction seems to be horribly off (massive
+  overexposure/brightness).
+
 * CMD-b and CMD-f navigates the mged command window text widget on Mac
   and trivally causes problems with the cursor and text injection.
 
