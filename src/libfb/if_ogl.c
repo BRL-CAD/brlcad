@@ -67,10 +67,9 @@
 #define CJDEBUG 0
 #define DIRECT_COLOR_VISUAL_ALLOWED 0
 
-/*WWW these come from Iris gl gl.h*/
-#define XMAXSCREEN 1279
-#define YMAXSCREEN 1023
-
+/* XXX - arbitrary upper bound */
+#define XMAXSCREEN 16383
+#define YMAXSCREEN 16383
 
 HIDDEN int ogl_nwindows = 0; 	/* number of open windows */
 HIDDEN XColor color_cell[256];		/* used to set colormap */
@@ -137,32 +136,32 @@ struct sgiinfo {
  */
 struct oglinfo {
     GLXContext glxc;
-    Display *dispp;	/* pointer to X display connection */
-    Window wind;	/* Window identifier */
+    Display *dispp;		/* pointer to X display connection */
+    Window wind;		/* Window identifier */
     int firstTime;
     int alive;
-    long event_mask;	/* event types to be received */
-    short front_flag;	/* front buffer being used (b-mode) */
-    short copy_flag;	/* pan and zoom copied from backbuffer */
+    long event_mask;		/* event types to be received */
+    short front_flag;		/* front buffer being used (b-mode) */
+    short copy_flag;		/* pan and zoom copied from backbuffer */
     short soft_cmap_flag;	/* use software colormapping */
-    int cmap_size;	/* hardware colormap size */
-    int win_width;	/* actual window width */
-    int win_height;	/* actual window height */
-    int vp_width;	/* actual viewport width */
-    int vp_height;	/* actual viewport height */
+    int cmap_size;		/* hardware colormap size */
+    int win_width;		/* actual window width */
+    int win_height;		/* actual window height */
+    int vp_width;		/* actual viewport width */
+    int vp_height;		/* actual viewport height */
     struct ogl_clip clip;	/* current view clipping */
     Window cursor;
-    XVisualInfo *vip;	/* pointer to info on current visual */
-    Colormap xcmap;	/* xstyle color map */
-    int use_ext_ctrl;	/* for controlling the Ogl graphics engine externally */
+    XVisualInfo *vip;		/* pointer to info on current visual */
+    Colormap xcmap;		/* xstyle color map */
+    int use_ext_ctrl;		/* for controlling the Ogl graphics engine externally */
 };
 
 #define SGI(ptr) ((struct sgiinfo *)((ptr)->u1.p))
 #define SGIL(ptr) ((ptr)->u1.p)	/* left hand side version */
 #define OGL(ptr) ((struct oglinfo *)((ptr)->u6.p))
 #define OGLL(ptr) ((ptr)->u6.p)	/* left hand side version */
-#define if_mem u2.p	/* shared memory pointer */
-#define if_cmap u3.p	/* color map in shared memory */
+#define if_mem u2.p		/* shared memory pointer */
+#define if_cmap u3.p		/* color map in shared memory */
 #define CMR(x) ((struct ogl_cmap *)((x)->if_cmap))->cmr
 #define CMG(x) ((struct ogl_cmap *)((x)->if_cmap))->cmg
 #define CMB(x) ((struct ogl_cmap *)((x)->if_cmap))->cmb
@@ -196,7 +195,7 @@ struct oglinfo {
 
 #define MODE_3MASK	(1<<2)
 #define MODE_3WINDOW	(0<<2)	/* window mode */
-#define MODE_3FULLSCR	(1<<2)	/* full screen mode */
+#define MODE_3FULLSCR	(1<<2)	/* full screen mode (unimplemented) */
 
 #define MODE_4MASK	(1<<3)
 #define MODE_4NORMAL	(0<<3)	/* dither if it seems necessary */
@@ -518,10 +517,6 @@ ogl_getmem(FBIO *ifp)
     int pixsize;
     int size;
     int i;
-#if defined(IRIX) && IRIX < 5
-    char *old_brk;
-    char *new_brk;
-#endif
     char *sp;
     int new = 0;
 
@@ -571,37 +566,12 @@ ogl_getmem(FBIO *ifp)
     }
 
     /* WWW this is unnecessary in this version? */
-#if defined(IRIX) && IRIX < 5
-    /* Move up the existing break, to leave room for later malloc()s */
-    old_brk = sbrk(0);
-    new_brk = (char *)(6 * (XMAXSCREEN+1) * 1024L);
-    if (new_brk <= old_brk )
-	new_brk = old_brk + (XMAXSCREEN+1) * 1024;
-    new_brk = (char *)((((long)new_brk) + getpagesize()-1) & ~(getpagesize()-1));
-    if (brk(new_brk ) < 0 ) {
-	fb_log("ogl_getmem: new brk(x%x) failure, errno=%d\n", new_brk, errno);
-	goto fail;
-    }
-
-    /* Open the segment Read/Write, near the current break */
-    if ((sp = shmat(SGI(ifp)->mi_shmid, 0, 0 )) == (char *)(-1L) ) {
-	fb_log("ogl_getmem: shmat returned x%x, errno=%d\n", sp, errno );
-	goto fail;
-    }
-
-    /* Restore the old break */
-    if (brk(old_brk ) < 0 ) {
-	fb_log("ogl_getmem: restore brk(x%x) failure, errno=%d\n", old_brk, errno);
-	/* Take the memory and run */
-    }
-#else
     /* Open the segment Read/Write */
     /* On Irix 5, this gets mapped in at a high address, no problem. */
     if ((sp = shmat(SGI(ifp)->mi_shmid, 0, 0 )) == (char *)(-1L) ) {
 	fb_log("ogl_getmem: shmat returned x%x, errno=%d\n", sp, errno );
 	goto fail;
     }
-#endif
 
 success:
     ifp->if_mem = sp;
@@ -1229,9 +1199,12 @@ fb_ogl_open(FBIO *ifp, char *file, int width, int height)
     }
 
     if ((ifp->if_mode & MODE_3MASK) == MODE_3FULLSCR ) {
-	/* Bump default size up to full screen, since we have it all */
-	ifp->if_width = XMAXSCREEN+1;		/* 1280 */
-	ifp->if_height = YMAXSCREEN+1;		/* 1024 */
+	/* XXX - unimplemented as there's no means to query the
+	 * display size. just set it what it originally was from old
+	 * irix gl.h for now.
+	 */
+	ifp->if_width = 1280;
+	ifp->if_height = 1024;
     }
 
     /* use defaults if invalid width and height specified */
