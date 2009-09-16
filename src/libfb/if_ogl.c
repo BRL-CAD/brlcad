@@ -75,74 +75,6 @@
 HIDDEN int ogl_nwindows = 0; 	/* number of open windows */
 HIDDEN XColor color_cell[256];		/* used to set colormap */
 
-int ogl_refresh(FBIO *ifp, int x, int y, int w, int h);
-int ogl_open_existing(FBIO *ifp, int argc, char **argv);
-int ogl_close_existing(FBIO *ifp);
-int _ogl_open_existing(FBIO *ifp, Display *dpy, Window win, Colormap cmap, XVisualInfo *vip, int width, int height, GLXContext glxc, int double_buffer, int soft_cmap);
-
-HIDDEN int fb_ogl_open(FBIO *ifp, char *file, int width, int height);
-HIDDEN int fb_ogl_close(FBIO *ifp);
-HIDDEN int ogl_clear(FBIO *ifp, unsigned char *pp);
-HIDDEN int ogl_read(FBIO *ifp, int x, int y, unsigned char *pixelp, int count);
-HIDDEN int ogl_write(FBIO *ifp, int xstart, int ystart, const unsigned char *pixelp, int count);
-HIDDEN int ogl_rmap(register FBIO *ifp, register ColorMap *cmp);
-HIDDEN int ogl_wmap(register FBIO *ifp, register const ColorMap *cmp);
-HIDDEN int ogl_view(FBIO *ifp, int xcenter, int ycenter, int xzoom, int yzoom);
-HIDDEN int ogl_getview(FBIO *ifp, int *xcenter, int *ycenter, int *xzoom, int *yzoom);
-HIDDEN int ogl_setcursor(FBIO *ifp, const unsigned char *bits, int xbits, int ybits, int xorig, int yorig);
-HIDDEN int ogl_cursor(FBIO *ifp, int mode, int x, int y);
-HIDDEN int ogl_writerect(FBIO *ifp, int xmin, int ymin, int width, int height, const unsigned char *pp);
-HIDDEN int ogl_bwwriterect(FBIO *ifp, int xmin, int ymin, int width, int height, const unsigned char *pp);
-HIDDEN int ogl_poll(FBIO *ifp);
-HIDDEN int ogl_flush(FBIO *ifp);
-HIDDEN int ogl_free(FBIO *ifp);
-HIDDEN int ogl_help(FBIO *ifp);
-
-/* This is the ONLY thing that we normally "export" */
-FBIO ogl_interface =
-{
-    0,			/* magic number slot */
-    fb_ogl_open,	/* open device */
-    fb_ogl_close,	/* close device */
-    ogl_clear,		/* clear device */
-    ogl_read,		/* read pixels */
-    ogl_write,		/* write pixels */
-    ogl_rmap,		/* read colormap */
-    ogl_wmap,		/* write colormap */
-    ogl_view,		/* set view */
-    ogl_getview,	/* get view */
-    ogl_setcursor,	/* define cursor */
-    ogl_cursor,		/* set cursor */
-    fb_sim_getcursor,	/* get cursor */
-    fb_sim_readrect,	/* read rectangle */
-    ogl_writerect,	/* write rectangle */
-    fb_sim_bwreadrect,
-    ogl_bwwriterect,	/* write rectangle */
-    ogl_poll,		/* process events */
-    ogl_flush,		/* flush output */
-    ogl_free,		/* free resources */
-    ogl_help,		/* help message */
-    "Silicon Graphics OpenGL",	/* device description */
-    XMAXSCREEN+1,	/* max width */
-    YMAXSCREEN+1,	/* max height */
-    "/dev/ogl",		/* short device name */
-    512,		/* default/current width */
-    512,		/* default/current height */
-    -1,			/* select file desc */
-    -1,			/* file descriptor */
-    1, 1,		/* zoom */
-    256, 256,		/* window center */
-    0, 0, 0,		/* cursor */
-    PIXEL_NULL,		/* page_base */
-    PIXEL_NULL,		/* page_curp */
-    PIXEL_NULL,		/* page_endp */
-    -1,			/* page_no */
-    0,			/* page_dirty */
-    0L,			/* page_curpos */
-    0L,			/* page_pixels */
-    0			/* debug */
-};
-
 
 /*
  * Structure of color map in shared memory region.  Has exactly the
@@ -1483,54 +1415,6 @@ fb_ogl_open(FBIO *ifp, char *file, int width, int height)
 
 
 int
-ogl_open_existing(FBIO *ifp, int argc, char **argv)
-{
-    Display *dpy;
-    Window win;
-    Colormap cmap;
-    XVisualInfo *vip;
-    int width;
-    int height;
-    GLXContext glxc;
-    int double_buffer;
-    int soft_cmap;
-
-    if (argc != 10)
-	return -1;
-
-    if (sscanf(argv[1], "%lu", (unsigned long *)&dpy) != 1)
-	return -1;
-
-    if (sscanf(argv[2], "%lu", (unsigned long *)&win) != 1)
-	return -1;
-
-    if (sscanf(argv[3], "%lu", (unsigned long *)&cmap) != 1)
-	return -1;
-
-    if (sscanf(argv[4], "%lu", (unsigned long *)&vip) != 1)
-	return -1;
-
-    if (sscanf(argv[5], "%d", &width) != 1)
-	return -1;
-
-    if (sscanf(argv[6], "%d", &height) != 1)
-	return -1;
-
-    if (sscanf(argv[7], "%lu", (unsigned long *)&glxc) != 1)
-	return -1;
-
-    if (sscanf(argv[8], "%d", &double_buffer) != 1)
-	return -1;
-
-    if (sscanf(argv[9], "%d", &soft_cmap) != 1)
-	return -1;
-
-    return _ogl_open_existing(ifp, dpy, win, cmap, vip, width, height,
-			      glxc, double_buffer, soft_cmap);
-}
-
-
-int
 _ogl_open_existing(FBIO *ifp, Display *dpy, Window win, Colormap cmap, XVisualInfo *vip, int width, int height, GLXContext glxc, int double_buffer, int soft_cmap)
 {
 
@@ -1595,6 +1479,55 @@ _ogl_open_existing(FBIO *ifp, Display *dpy, Window win, Colormap cmap, XVisualIn
     return 0;
 }
 
+
+int
+ogl_open_existing(FBIO *ifp, int argc, char **argv)
+{
+    Display *dpy;
+    Window win;
+    Colormap cmap;
+    XVisualInfo *vip;
+    int width;
+    int height;
+    GLXContext glxc;
+    int double_buffer;
+    int soft_cmap;
+
+    if (argc != 10)
+	return -1;
+
+    if (sscanf(argv[1], "%lu", (unsigned long *)&dpy) != 1)
+	return -1;
+
+    if (sscanf(argv[2], "%lu", (unsigned long *)&win) != 1)
+	return -1;
+
+    if (sscanf(argv[3], "%lu", (unsigned long *)&cmap) != 1)
+	return -1;
+
+    if (sscanf(argv[4], "%lu", (unsigned long *)&vip) != 1)
+	return -1;
+
+    if (sscanf(argv[5], "%d", &width) != 1)
+	return -1;
+
+    if (sscanf(argv[6], "%d", &height) != 1)
+	return -1;
+
+    if (sscanf(argv[7], "%lu", (unsigned long *)&glxc) != 1)
+	return -1;
+
+    if (sscanf(argv[8], "%d", &double_buffer) != 1)
+	return -1;
+
+    if (sscanf(argv[9], "%d", &soft_cmap) != 1)
+	return -1;
+
+    return _ogl_open_existing(ifp, dpy, win, cmap, vip, width, height,
+			      glxc, double_buffer, soft_cmap);
+}
+
+
 HIDDEN int
 ogl_final_close(FBIO *ifp)
 {
@@ -1628,11 +1561,38 @@ ogl_final_close(FBIO *ifp)
     }
 
     if (OGLL(ifp) != NULL) {
-	(void) free((char *)OGLL(ifp) );
+	(void)free((char *)OGLL(ifp) );
 	OGLL(ifp) = NULL;
     }
 
     ogl_nwindows--;
+    return(0);
+}
+
+
+HIDDEN int
+ogl_flush(FBIO *ifp)
+{
+    if ((ifp->if_mode & MODE_12MASK) == MODE_12DELAY_WRITES_TILL_FLUSH ) {
+	if (glXMakeCurrent(OGL(ifp)->dispp, OGL(ifp)->wind, OGL(ifp)->glxc)==False) {
+	    fb_log("Warning, ogl_flush: glXMakeCurrent unsuccessful.\n");
+	}
+
+	/* Send entire in-memory buffer to the screen, all at once */
+	ogl_xmit_scanlines(ifp, 0, ifp->if_height, 0, ifp->if_width );
+	if (SGI(ifp)->mi_doublebuffer) {
+	    glXSwapBuffers(OGL(ifp)->dispp, OGL(ifp)->wind);
+	} else {
+	    if (OGL(ifp)->copy_flag) {
+		backbuffer_to_screen(ifp, -1);
+	    }
+	}
+
+	/* unattach context for other threads to use, also flushes */
+	glXMakeCurrent(OGL(ifp)->dispp, None, NULL);
+    }
+    XFlush(OGL(ifp)->dispp);
+    glFlush();
     return(0);
 }
 
@@ -1716,7 +1676,7 @@ ogl_close_existing(FBIO *ifp)
     }
 
     if (OGLL(ifp) != NULL) {
-	(void) free((char *)OGLL(ifp) );
+	(void)free((char *)OGLL(ifp) );
 	OGLL(ifp) = NULL;
     }
 
@@ -2462,33 +2422,6 @@ ogl_cursor(FBIO *ifp, int mode, int x, int y)
 }
 
 
-HIDDEN int
-ogl_flush(FBIO *ifp)
-{
-    if ((ifp->if_mode & MODE_12MASK) == MODE_12DELAY_WRITES_TILL_FLUSH ) {
-	if (glXMakeCurrent(OGL(ifp)->dispp, OGL(ifp)->wind, OGL(ifp)->glxc)==False) {
-	    fb_log("Warning, ogl_flush: glXMakeCurrent unsuccessful.\n");
-	}
-
-	/* Send entire in-memory buffer to the screen, all at once */
-	ogl_xmit_scanlines(ifp, 0, ifp->if_height, 0, ifp->if_width );
-	if (SGI(ifp)->mi_doublebuffer) {
-	    glXSwapBuffers(OGL(ifp)->dispp, OGL(ifp)->wind);
-	} else {
-	    if (OGL(ifp)->copy_flag) {
-		backbuffer_to_screen(ifp, -1);
-	    }
-	}
-
-	/* unattach context for other threads to use, also flushes */
-	glXMakeCurrent(OGL(ifp)->dispp, None, NULL);
-    }
-    XFlush(OGL(ifp)->dispp);
-    glFlush();
-    return(0);
-}
-
-
 int
 ogl_refresh(FBIO *ifp, int x, int y, int w, int h)
 {
@@ -2531,6 +2464,52 @@ ogl_refresh(FBIO *ifp, int x, int y, int w, int h)
     glFlush();
     return 0;
 }
+
+/* This is the ONLY thing that we normally "export" */
+FBIO ogl_interface =
+{
+    0,			/* magic number slot */
+    fb_ogl_open,	/* open device */
+    fb_ogl_close,	/* close device */
+    ogl_clear,		/* clear device */
+    ogl_read,		/* read pixels */
+    ogl_write,		/* write pixels */
+    ogl_rmap,		/* read colormap */
+    ogl_wmap,		/* write colormap */
+    ogl_view,		/* set view */
+    ogl_getview,	/* get view */
+    ogl_setcursor,	/* define cursor */
+    ogl_cursor,		/* set cursor */
+    fb_sim_getcursor,	/* get cursor */
+    fb_sim_readrect,	/* read rectangle */
+    ogl_writerect,	/* write rectangle */
+    fb_sim_bwreadrect,
+    ogl_bwwriterect,	/* write rectangle */
+    ogl_poll,		/* process events */
+    ogl_flush,		/* flush output */
+    ogl_free,		/* free resources */
+    ogl_help,		/* help message */
+    "Silicon Graphics OpenGL",	/* device description */
+    XMAXSCREEN+1,	/* max width */
+    YMAXSCREEN+1,	/* max height */
+    "/dev/ogl",		/* short device name */
+    512,		/* default/current width */
+    512,		/* default/current height */
+    -1,			/* select file desc */
+    -1,			/* file descriptor */
+    1, 1,		/* zoom */
+    256, 256,		/* window center */
+    0, 0, 0,		/* cursor */
+    PIXEL_NULL,		/* page_base */
+    PIXEL_NULL,		/* page_curp */
+    PIXEL_NULL,		/* page_endp */
+    -1,			/* page_no */
+    0,			/* page_dirty */
+    0L,			/* page_curpos */
+    0L,			/* page_pixels */
+    0			/* debug */
+};
+
 
 #else
 
