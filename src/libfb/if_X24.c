@@ -24,23 +24,23 @@
 /** @{*/
 /** @file if_X24.c
  *
- *  X Window System (X11) libfb interface, supporting 24-, 8-, and 1-bit
- *  displays.
+ * X Window System (X11) libfb interface, supporting 24-, 8-, and
+ * 1-bit displays.
  *
- *  Authors -
- *	Christopher J. Jackson, Sun
- *	Timothy G. Smith, Sun
- *	Michael John Muuss, ARL
+ * Authors -
+ * Christopher J. Jackson, Sun
+ * Timothy G. Smith, Sun
+ * Michael John Muuss, ARL
  *
- *  Source -
- *	Sun Microsystems, Inc.
- *	Southern Area Special Projects Group
- *	6716 Alexander Bell Drive, Suite 200
- *	Columbia, MD 21046
+ * Source -
+ * Sun Microsystems, Inc.
+ * Southern Area Special Projects Group
+ * 6716 Alexander Bell Drive, Suite 200
+ * Columbia, MD 21046
  *
- *  Acknowledgements -
- *	This software is loosely based on the original if_X.c by
- *	Phillip Dykstra of BRL, which was Copyright 1988, US Army.
+ * Acknowledgements -
+ * This software is loosely based on the original if_X.c by
+ * Phillip Dykstra of BRL, which was Copyright 1988, US Army.
  */
 /** @} */
 
@@ -94,13 +94,13 @@
 # define DEBUG1(str)	/*NIL*/
 #endif
 
-#define X_DBG	0
+#define X_DBG 0
 #define UPD_DBG 0
 #define BLIT_DBG 0
 #define EVENT_DBG 0
 #define BLIT_DBG_PIX 0
 
-#define SHMEM_KEY	42
+#define SHMEM_KEY 42
 
 
 int X24_refresh();
@@ -108,7 +108,7 @@ int X24_close_existing();
 int X24_open_existing();
 int _X24_open_existing();
 
-HIDDEN int	X24_open(),
+HIDDEN int X24_open(),
     X24_close(),
     X24_clear(),
     X24_read(),
@@ -127,17 +127,17 @@ HIDDEN int	X24_open(),
     X24_free(),
     X24_help();
 
-HIDDEN int	X24_getmem();
-HIDDEN void	X24_zapmem();
-HIDDEN void	X24_destroy();
-HIDDEN void	X24_blit();
-HIDDEN void	X24_updstate();
+HIDDEN int X24_getmem();
+HIDDEN void X24_zapmem();
+HIDDEN void X24_destroy();
+HIDDEN void X24_blit();
+HIDDEN void X24_updstate();
 
-HIDDEN	int	x24_linger();
-HIDDEN	int	x24_setup();
-HIDDEN	void	print_display_info();	/* debug */
-HIDDEN	void	X24_createColorCube();
-HIDDEN	void	X24_createColorTables();
+HIDDEN int x24_linger();
+HIDDEN int x24_setup();
+HIDDEN void print_display_info();	/* debug */
+HIDDEN void X24_createColorCube();
+HIDDEN void X24_createColorTables();
 
 
 HIDDEN void X24_handle_event FB_ARGS((FBIO *ifp, XEvent *event));
@@ -145,69 +145,69 @@ void X24_configureWindow FB_ARGS((FBIO *ifp, int width, int height));
 
 /* This is the ONLY thing that we normally "export" */
 FBIO X24_interface =  {
-    0,			/* magic number slot	*/
-    X24_open,		/* open device		*/
-    X24_close,		/* close device		*/
-    X24_clear,		/* clear device		*/
-    X24_read,		/* read	pixels		*/
-    X24_write,		/* write pixels		*/
-    X24_rmap,		/* read colormap	*/
-    X24_wmap,		/* write colormap	*/
-    X24_view,		/* set view		*/
-    X24_getview,	/* get view		*/
-    X24_setcursor,	/* define cursor	*/
-    X24_cursor,		/* set cursor		*/
-    X24_getcursor,	/* get cursor		*/
-    X24_readrect,	/* read rectangle	*/
-    X24_writerect,	/* write rectangle	*/
+    0,			/* magic number slot */
+    X24_open,		/* open device */
+    X24_close,		/* close device */
+    X24_clear,		/* clear device */
+    X24_read,		/* read pixels */
+    X24_write,		/* write pixels */
+    X24_rmap,		/* read colormap */
+    X24_wmap,		/* write colormap */
+    X24_view,		/* set view */
+    X24_getview,	/* get view */
+    X24_setcursor,	/* define cursor */
+    X24_cursor,		/* set cursor */
+    X24_getcursor,	/* get cursor */
+    X24_readrect,	/* read rectangle */
+    X24_writerect,	/* write rectangle */
     fb_sim_bwreadrect,
     fb_sim_bwwriterect,
-    X24_poll,		/* process events	*/
-    X24_flush,		/* flush output		*/
-    X24_free,		/* free resources	*/
-    X24_help,		/* help message		*/
-    "24 bit X Window System (X11)",	/* device description	*/
-    2048,		/* max width		*/
-    2048,		/* max height		*/
-    "/dev/X",		/* short device name	*/
-    512,		/* default/current width  */
+    X24_poll,		/* process events */
+    X24_flush,		/* flush output */
+    X24_free,		/* free resources */
+    X24_help,		/* help message */
+    "24 bit X Window System (X11)",	/* device description */
+    2048,		/* max width */
+    2048,		/* max height */
+    "/dev/X",		/* short device name */
+    512,		/* default/current width */
     512,		/* default/current height */
-    -1,			/* select file desc	*/
-    -1,			/* file descriptor	*/
-    1, 1,		/* zoom			*/
-    256, 256,		/* window center	*/
-    0, 0, 0,		/* cursor		*/
-    PIXEL_NULL,		/* page_base		*/
-    PIXEL_NULL,		/* page_curp		*/
-    PIXEL_NULL,		/* page_endp		*/
-    -1,			/* page_no		*/
-    0,			/* page_dirty		*/
-    0L,			/* page_curpos		*/
-    0L,			/* page_pixels		*/
-    0			/* debug		*/
+    -1,			/* select file desc */
+    -1,			/* file descriptor */
+    1, 1,		/* zoom */
+    256, 256,		/* window center */
+    0, 0, 0,		/* cursor */
+    PIXEL_NULL,		/* page_base */
+    PIXEL_NULL,		/* page_curp */
+    PIXEL_NULL,		/* page_endp */
+    -1,			/* page_no */
+    0,			/* page_dirty */
+    0L,			/* page_curpos */
+    0L,			/* page_pixels */
+    0			/* debug */
 };
 
 
 /*
  * Per window state information.
  */
-struct	xinfo {
-    Display		*xi_dpy;	/* Display and Screen(s) info */
-    Window		xi_win;		/* Window ID */
-    int		xi_screen;		/* Our screen selection */
-    Visual		*xi_visual;	/* Our visual selection */
-    XVisualInfo	xi_visinfo;		/* Visual Info */
-    int		xi_depth;		/* Depth of our window */
-    GC		xi_gc;			/* current graphics context */
-    GC		xi_cgc;			/* graphics context for clipping */
-    Region		xi_reg;		/* Valid displayed region */
-    int		xi_usereg;		/* Flag determining whether or not to use regions */
-    Colormap	xi_cmap;		/* Colormap */
-    XImage		*xi_image;	/* XImage (size of screen) */
-    Window		xi_cwinp;	/* Cursor's Parent Window ID */
-    Window		xi_cwin;	/* Cursor Window ID */
-    unsigned long	xi_wp;		/* White pixel */
-    unsigned long	xi_bp;		/* Black pixel */
+struct xinfo {
+    Display *xi_dpy;	/* Display and Screen(s) info */
+    Window xi_win;	/* Window ID */
+    int xi_screen;	/* Our screen selection */
+    Visual *xi_visual;	/* Our visual selection */
+    XVisualInfo xi_visinfo;	/* Visual Info */
+    int xi_depth;	/* Depth of our window */
+    GC xi_gc;		/* current graphics context */
+    GC xi_cgc;		/* graphics context for clipping */
+    Region xi_reg;	/* Valid displayed region */
+    int xi_usereg;	/* Flag determining whether or not to use regions */
+    Colormap xi_cmap;	/* Colormap */
+    XImage *xi_image;	/* XImage (size of screen) */
+    Window xi_cwinp;	/* Cursor's Parent Window ID */
+    Window xi_cwin;	/* Cursor Window ID */
+    unsigned long xi_wp;	/* White pixel */
+    unsigned long xi_bp;	/* Black pixel */
 
     /*
      * Pixel buffer usage:
@@ -222,58 +222,58 @@ struct	xinfo {
      *
      */
 
-    unsigned char	*xi_mem;	/* 24-bit backing store */
-    unsigned char	*xi_pix;	/* X Image buffer */
+    unsigned char *xi_mem;	/* 24-bit backing store */
+    unsigned char *xi_pix;	/* X Image buffer */
 
 #ifdef HAVE_SYS_SHM_H
-    int		xi_shmid;	/* Sys V shared mem id */
+    int xi_shmid;		/* Sys V shared mem id */
 #endif
 
-    unsigned long	xi_mode;	/* 0, 1, 2 */
-    unsigned long	xi_flags;
+    unsigned long xi_mode;	/* 0, 1, 2 */
+    unsigned long xi_flags;
 
-    ColorMap 	*xi_rgb_cmap;	/* User's libfb colormap */
-    unsigned char	*xi_redmap;	/* Fake colormap for non-DirectColor */
-    unsigned char	*xi_blumap;	/* Fake colormap for non-DirectColor */
-    unsigned char	*xi_grnmap;	/* Fake colormap for non-DirectColor */
+    ColorMap *xi_rgb_cmap;	/* User's libfb colormap */
+    unsigned char *xi_redmap;	/* Fake colormap for non-DirectColor */
+    unsigned char *xi_blumap;	/* Fake colormap for non-DirectColor */
+    unsigned char *xi_grnmap;	/* Fake colormap for non-DirectColor */
 
-    unsigned char	*xi_ccredtbl;	/* Lookup table for red component */
-    unsigned char	*xi_ccgrntbl;	/* Lookup table for green component */
-    unsigned char	*xi_ccblutbl;	/* Lookup table for blue component */
+    unsigned char *xi_ccredtbl;	/* Lookup table for red component */
+    unsigned char *xi_ccgrntbl;	/* Lookup table for green component */
+    unsigned char *xi_ccblutbl;	/* Lookup table for blue component */
 
-    unsigned char	*xi_andtbl;	/* Lookup table for 1-bit dithering */
-    unsigned char	*xi_ortbl;	/* Lookup table for 1-bit dithering */
+    unsigned char *xi_andtbl;	/* Lookup table for 1-bit dithering */
+    unsigned char *xi_ortbl;	/* Lookup table for 1-bit dithering */
 
-    int		xi_ncolors;	/* Number of colors in colorcube */
-    int		xi_base;	/* Base color in colorcube */
+    int xi_ncolors;	/* Number of colors in colorcube */
+    int xi_base;	/* Base color in colorcube */
 
     /* The following values are in Image Pixels */
 
-    int		xi_iwidth;	/* Width of user's whole image */
-    int		xi_iheight;	/* Height of user's whole image */
+    int xi_iwidth;	/* Width of user's whole image */
+    int xi_iheight;	/* Height of user's whole image */
 
-    int		xi_ilf;		/* Image coordinate of LLHC image */
-    int		xi_ibt;		/*  pixel */
-    int		xi_irt;		/* Image coordinate of URHC image */
-    int		xi_itp;		/*  pixel */
+    int xi_ilf;		/* Image coordinate of LLHC image */
+    int xi_ibt;		/* pixel */
+    int xi_irt;		/* Image coordinate of URHC image */
+    int xi_itp;		/* pixel */
 
     /* The following values are in X Pixels */
 
-    int		xi_ilf_w;	/* Width of leftmost image pixels */
-    int		xi_irt_w;	/* Width of rightmost image pixels */
-    int		xi_ibt_h;	/* Height of bottommost image pixels */
-    int		xi_itp_h;	/* Height of topmost image pixels */
+    int xi_ilf_w;	/* Width of leftmost image pixels */
+    int xi_irt_w;	/* Width of rightmost image pixels */
+    int xi_ibt_h;	/* Height of bottommost image pixels */
+    int xi_itp_h;	/* Height of topmost image pixels */
 
-    int		xi_xwidth;	/* Width of X window */
-    int		xi_xheight;	/* Height of X window */
+    int xi_xwidth;	/* Width of X window */
+    int xi_xheight;	/* Height of X window */
 
-    int		xi_xlf;		/* X-coord of leftmost pixels */
-    int		xi_xrt;		/* X-coord of rightmost pixels */
-    int		xi_xtp;		/* Y-coord of topmost pixels */
-    int		xi_xbt;		/* Y-coord of bottomost pixels */
+    int xi_xlf;		/* X-coord of leftmost pixels */
+    int xi_xrt;		/* X-coord of rightmost pixels */
+    int xi_xtp;		/* Y-coord of topmost pixels */
+    int xi_xbt;		/* Y-coord of bottomost pixels */
 };
-#define	XI(ptr) ((struct xinfo *)((ptr)->u1.p))
-#define	XI_SET(ptr, val) ((ptr)->u1.p) = (char *) val;
+#define XI(ptr) ((struct xinfo *)((ptr)->u1.p))
+#define XI_SET(ptr, val) ((ptr)->u1.p) = (char *) val;
 
 
 /* Flags in xi_flags */
@@ -286,12 +286,12 @@ struct	xinfo {
 #define FLG_VT16        0x04	/* 16-bit TrueColor */
 #define FLG_VP8         0x05	/* 8-bit PseudoColor */
 #define FLG_VS8         0x06	/* 8-bit StaticGray */
-#define FLG_VG8		0x07	/* 8-bit GrayScale */
+#define FLG_VG8         0x07	/* 8-bit GrayScale */
 #define FLG_VS1         0x08	/* 1-bit StaticGray */
 
-#define FLG_LINCMAP	0x10	/* We're using a linear colormap */
-#define FLG_XCMAP	0x20	/* The X server can do colormapping for us */
-#define FLG_INIT	0x40	/* Display is fully initialized */
+#define FLG_LINCMAP 0x10	/* We're using a linear colormap */
+#define FLG_XCMAP   0x20	/* The X server can do colormapping for us */
+#define FLG_INIT    0x40	/* Display is fully initialized */
 
 /* Mode flags for open */
 
@@ -310,10 +310,10 @@ struct	xinfo {
 #define MODE11_ZAP	(1<<11)
 
 static struct modeflags {
-    char		c;
-    unsigned long	mask;
-    unsigned long	value;
-    char		*help;
+    char c;
+    unsigned long mask;
+    unsigned long value;
+    char *help;
 } modeflags[] = {
     { 'l',	MODE1_MASK, MODE1_LINGERING,
       "Lingering window" },
@@ -340,9 +340,9 @@ static struct modeflags {
 
 /* Flags for X24_blit's flags argument */
 
-#define	BLIT_DISP	0x1	/* Write bits to screen */
-#define BLIT_PZ		0x2	/* This is a pan or zoom */
-#define BLIT_RESIZE	0x4	/* We just resized (screen empty) */
+#define BLIT_DISP 0x1	/* Write bits to screen */
+#define BLIT_PZ 0x2	/* This is a pan or zoom */
+#define BLIT_RESIZE 0x4	/* We just resized (screen empty) */
 
 #define BS_NAME	"/tmp/X24_fb"
 
@@ -403,13 +403,10 @@ static unsigned long blumtbl[256];
 
 
 /*
- *			X 2 4 _ O P E N
+ * X 2 4 _ O P E N
  */
 HIDDEN int
-X24_open(ifp, file, width, height)
-    FBIO	*ifp;
-    char	*file;
-    int	width, height;
+X24_open(FBIO *ifp, char *file, int width, int height)
 {
     struct xinfo *xi;
 
@@ -423,18 +420,18 @@ X24_open(ifp, file, width, height)
     FB_CK_FBIO(ifp);
 
     /*
-     *  First, attempt to determine operating mode for this open,
-     *  based upon the "unit number" or flags.
-     *  file = "/dev/X###"
+     * First, attempt to determine operating mode for this open,
+     * based upon the "unit number" or flags.
+     * file = "/dev/X###"
      */
     mode = MODE1_LINGERING;
 
     if (file != NULL) {
 	register char *cp;
-	char	modebuf[80];
-	char	*mp;
-	int	alpha;
-	struct	modeflags *mfp;
+	char modebuf[80];
+	char *mp;
+	int alpha;
+	struct modeflags *mfp;
 
 	if (strncmp(file, ifp->if_name, strlen(ifp->if_name))) {
 	    /* How did this happen?? */
@@ -544,10 +541,7 @@ X24_open(ifp, file, width, height)
 }
 
 int
-X24_open_existing(ifp, argc, argv)
-    FBIO *ifp;
-    int argc;
-    char **argv;
+X24_open_existing(FBIO *ifp, int argc, char **argv)
 {
     Display *dpy;
     Window win;
@@ -589,16 +583,7 @@ X24_open_existing(ifp, argc, argv)
 }
 
 int
-_X24_open_existing(ifp, dpy, win, cwinp, cmap, vip, width, height, gc)
-    FBIO *ifp;
-    Display *dpy;
-    Window win;
-    Window cwinp;
-    Colormap cmap;
-    XVisualInfo *vip;
-    int width;
-    int height;
-    GC gc;
+_X24_open_existing(FBIO *ifp, Display *dpy, Window win, Window cwinp, Colormap cmap, XVisualInfo *vip, int width, int height, GC gc)
 {
     struct xinfo *xi;
 #if 0
@@ -638,7 +623,6 @@ _X24_open_existing(ifp, dpy, win, cwinp, cmap, vip, width, height, gc)
     /*XXX For now use same GC for both */
     xi->xi_gc = gc;
     xi->xi_cgc = gc;
-
 
     switch (vip->class) {
 	case TrueColor:
@@ -778,8 +762,7 @@ _X24_open_existing(ifp, dpy, win, cwinp, cmap, vip, width, height, gc)
 }
 
 HIDDEN int
-X24_close(ifp)
-    FBIO	*ifp;
+X24_close(FBIO *ifp)
 {
     struct xinfo *xi = XI(ifp);
 
@@ -795,8 +778,7 @@ X24_close(ifp)
 }
 
 int
-X24_close_existing(ifp)
-    FBIO    *ifp;
+X24_close_existing(FBIO *ifp)
 {
     struct xinfo *xi = XI(ifp);
 
@@ -819,8 +801,7 @@ X24_close_existing(ifp)
 }
 
 HIDDEN void
-X24_destroy(xi)
-    struct xinfo *xi;
+X24_destroy(struct xinfo *xi)
 {
     if (xi) {
 	if (xi->xi_rgb_cmap &&
@@ -865,9 +846,7 @@ X24_destroy(xi)
 }
 
 HIDDEN int
-X24_clear(ifp, pp)
-    FBIO	*ifp;
-    unsigned char	*pp;
+X24_clear(FBIO *ifp, unsigned char  *pp)
 {
     struct xinfo *xi = XI(ifp);
 
@@ -912,11 +891,7 @@ X24_clear(ifp, pp)
 
 
 HIDDEN int
-X24_read(ifp, x, y, pixelp, count)
-    FBIO	*ifp;
-    int	x, y;
-    unsigned char	*pixelp;
-    int	count;
+X24_read(FBIO *ifp, int x, int y, unsigned char *pixelp, int count)
 {
     struct xinfo *xi = XI(ifp);
     int maxcount;
@@ -937,15 +912,11 @@ X24_read(ifp, x, y, pixelp, count)
 
 
 HIDDEN int
-X24_write(ifp, x, y, pixelp, count)
-    FBIO	*ifp;
-    int	x, y;
-    const unsigned char	*pixelp;
-    int	count;
+X24_write(FBIO *ifp, int x, int y, const unsigned char *pixelp, int count)
 {
     struct xinfo *xi = XI(ifp);
 
-    int	maxcount;
+    int maxcount;
 
 #if X_DBG
     printf("X24_write(ifp:0x%x, x:%d, y:%d, pixelp:0x%x, count:%d) entered.\n",
@@ -984,9 +955,7 @@ X24_write(ifp, x, y, pixelp, count)
 }
 
 HIDDEN int
-X24_rmap(ifp, cmp)
-    FBIO	*ifp;
-    ColorMap	*cmp;
+X24_rmap(FBIO *ifp, ColorMap *cmp)
 {
     struct xinfo *xi = XI(ifp);
 
@@ -1001,9 +970,7 @@ X24_rmap(ifp, cmp)
 }
 
 HIDDEN int
-X24_wmap(ifp, cmp)
-    FBIO	*ifp;
-    const ColorMap	*cmp;
+X24_wmap(FBIO *ifp, const ColorMap *cmp)
 {
     struct xinfo *xi = XI(ifp);
     ColorMap *map = xi->xi_rgb_cmap;
@@ -1100,10 +1067,7 @@ X24_wmap(ifp, cmp)
 }
 
 HIDDEN int
-X24_view(ifp, xcenter, ycenter, xzoom, yzoom)
-    FBIO	*ifp;
-    int	xcenter, ycenter;
-    int	xzoom, yzoom;
+X24_view(FBIO *ifp, int xcenter, int ycenter, int xzoom, int yzoom)
 {
     struct xinfo *xi = XI(ifp);
 
@@ -1116,7 +1080,7 @@ X24_view(ifp, xcenter, ycenter, xzoom, yzoom)
     /* bypass if no change */
     if (ifp->if_xcenter == xcenter && ifp->if_ycenter == ycenter
 	&& ifp->if_xzoom == xcenter && ifp->if_yzoom == ycenter)
-	return	0;
+	return 0;
     /* check bounds */
     if (xcenter < 0 || xcenter >= xi->xi_iwidth
 	|| ycenter < 0 || ycenter >= xi->xi_iheight)
@@ -1134,14 +1098,11 @@ X24_view(ifp, xcenter, ycenter, xzoom, yzoom)
     X24_blit(ifp, 0, 0, xi->xi_iwidth, xi->xi_iheight,
 	     BLIT_DISP | BLIT_PZ);
 
-    return	0;
+    return 0;
 }
 
 HIDDEN int
-X24_getview(ifp, xcenter, ycenter, xzoom, yzoom)
-    FBIO	*ifp;
-    int	*xcenter, *ycenter;
-    int	*xzoom, *yzoom;
+X24_getview(FBIO *ifp, int *xcenter, int *ycenter, int *xzoom, int *yzoom)
 {
 
 #if X_DBG
@@ -1159,11 +1120,7 @@ X24_getview(ifp, xcenter, ycenter, xzoom, yzoom)
 
 /*ARGSUSED*/
 HIDDEN int
-X24_setcursor(ifp, bits, xbits, ybits, xorig, yorig)
-    FBIO	*ifp;
-    const unsigned char *bits;
-    int	xbits, ybits;
-    int	xorig, yorig;
+X24_setcursor(FBIO *ifp, const unsigned char *bits, int xbits, int ybits, int xorig, int yorig)
 {
 
 #if X_DBG
@@ -1175,10 +1132,7 @@ X24_setcursor(ifp, bits, xbits, ybits, xorig, yorig)
 }
 
 HIDDEN int
-X24_cursor(ifp, mode, x, y)
-    FBIO	*ifp;
-    int	mode;
-    int	x, y;
+X24_cursor(FBIO *ifp, int mode, int x, int y)
 {
     struct xinfo *xi = XI(ifp);
 
@@ -1240,10 +1194,7 @@ X24_cursor(ifp, mode, x, y)
 }
 
 HIDDEN int
-X24_getcursor(ifp, mode, x, y)
-    FBIO	*ifp;
-    int	*mode;
-    int	*x, *y;
+X24_getcursor(FBIO *ifp, int *mode, int *x, int *y)
 {
 
 #if X_DBG
@@ -1257,11 +1208,7 @@ X24_getcursor(ifp, mode, x, y)
 }
 
 HIDDEN int
-X24_readrect(ifp, xmin, ymin, width, height, pp)
-    FBIO	*ifp;
-    int	xmin, ymin;
-    int	width, height;
-    unsigned char	*pp;
+X24_readrect(FBIO *ifp, int xmin, int ymin, int width, int height, unsigned char *pp)
 {
     struct xinfo *xi = XI(ifp);
 
@@ -1307,11 +1254,7 @@ X24_readrect(ifp, xmin, ymin, width, height, pp)
 }
 
 HIDDEN int
-X24_writerect(ifp, xmin, ymin, width, height, pp)
-    FBIO	*ifp;
-    int	xmin, ymin;
-    int	width, height;
-    const unsigned char	*pp;
+X24_writerect(FBIO *ifp, int xmin, int ymin, int width, int height, const unsigned char *pp)
 {
     struct xinfo *xi = XI(ifp);
 
@@ -1360,12 +1303,11 @@ X24_writerect(ifp, xmin, ymin, width, height, pp)
 }
 
 HIDDEN int
-X24_poll(ifp)
-    FBIO	*ifp;
+X24_poll(FBIO *ifp)
 {
     struct xinfo *xi = XI(ifp);
 
-    XEvent	event;
+    XEvent event;
 
 #if 0
     printf("X24_poll(ifp:0x%x) entered\n", ifp);
@@ -1379,8 +1321,7 @@ X24_poll(ifp)
 }
 
 HIDDEN int
-X24_flush(ifp)
-    FBIO	*ifp;
+X24_flush(FBIO *ifp)
 {
     struct xinfo *xi = XI(ifp);
 
@@ -1394,8 +1335,7 @@ X24_flush(ifp)
 }
 
 HIDDEN int
-X24_free(ifp)
-    FBIO	*ifp;
+X24_free(FBIO *ifp)
 {
 
 #if X_DBG
@@ -1406,11 +1346,10 @@ X24_free(ifp)
 }
 
 HIDDEN int
-X24_help(ifp)
-    FBIO	*ifp;
+X24_help(FBIO *ifp)
 {
     struct xinfo *xi = XI(ifp);
-    struct	modeflags *mfp;
+    struct modeflags *mfp;
 
 #if X_DBG
     printf("X24_help(ifp:0x%x) entered\n", ifp);
@@ -1481,8 +1420,7 @@ X24_help(ifp)
   Create 6x9x4 color cube.
 */
 HIDDEN void
-X24_createColorCube(xi)
-    struct xinfo *xi;
+X24_createColorCube(struct xinfo *xi)
 {
     int i;
     int redmul, grnmul;
@@ -1518,8 +1456,7 @@ X24_createColorCube(xi)
   Create fast lookup tables for dithering
 */
 HIDDEN void
-X24_createColorTables(xi)
-    struct xinfo *xi;
+X24_createColorTables(struct xinfo *xi)
 {
     int i, j, idx;
     int redmul, grnmul;
@@ -1576,20 +1513,17 @@ X24_createColorTables(xi)
     }
 }
 
-HIDDEN
-int
-x24_setup(ifp, width, height)
-    FBIO	*ifp;
-    int	width, height;
+HIDDEN int
+x24_setup(FBIO *ifp, int width, int height)
 {
     struct xinfo *xi = XI(ifp);
 
-    XGCValues	gcv;
-    XSizeHints	xsh;		/* part of the "standard" props */
-    XWMHints	xwmh;		/* size guidelines for window mngr */
+    XGCValues gcv;
+    XSizeHints xsh;		/* part of the "standard" props */
+    XWMHints xwmh;		/* size guidelines for window mngr */
     XSetWindowAttributes xswa;
     XRectangle rect;
-    char		*xname;
+    char *xname;
 
 #if X_DBG
     printf("x24_setup(ifp:0x%x, width:%d, height:%d) entered\n", ifp, width, height);
@@ -1783,8 +1717,8 @@ x24_setup(ifp, width, height)
 		 * sure it's worth it.
 		 */
 
-		int	i;
-		XColor	colors[256];
+		int i;
+		XColor colors[256];
 
 		xi->xi_cmap = XCreateColormap(xi->xi_dpy, RootWindow(xi->xi_dpy,
 								     xi->xi_screen), xi->xi_visual, AllocAll);
@@ -2037,11 +1971,11 @@ x24_setup(ifp, width, height)
 static int alive = 1;
 
 HIDDEN int
-x24_linger(ifp)
-    FBIO	*ifp;
+x24_linger(FBIO *ifp)
+    FBIO *ifp;
 {
     struct xinfo *xi = XI(ifp);
-    XEvent	event;
+    XEvent event;
 
     if (fork() != 0)
 	return (1);	/* release the parent */
@@ -2055,9 +1989,7 @@ x24_linger(ifp)
 
 
 HIDDEN void
-X24_handle_event(ifp, event)
-    FBIO *ifp;
-    XEvent *event;
+X24_handle_event(FBIO *ifp, XEvent *event)
 {
     struct xinfo *xi = XI(ifp);
 
@@ -2119,9 +2051,9 @@ X24_handle_event(ifp, event)
 			break;
 		    case Button2:
 			{
-			    int	x, sy;
-			    int	ix, isy;
-			    unsigned char	*cp;
+			    int x, sy;
+			    int ix, isy;
+			    unsigned char *cp;
 
 			    x = event->xbutton.x;
 			    sy = xi->xi_xheight - event->xbutton.y - 1;
@@ -2191,9 +2123,7 @@ X24_handle_event(ifp, event)
 }
 
 void
-X24_configureWindow(ifp, width, height)
-    FBIO *ifp;
-    int width, height;
+X24_configureWindow(FBIO *ifp, int width, int height)
 {
     struct xinfo *xi = XI(ifp);
     XRectangle rect;
@@ -2306,21 +2236,22 @@ X24_configureWindow(ifp, width, height)
 }
 
 /*
- *  A given Display (i.e. Server) can have any number of Screens.
- *  Each Screen can support one or more Visual types.
- *  unix:0.1.2 => host:display.screen.visual
- *  Typically the screen and visual default to 0 by being omitted.
+ * A given Display (i.e. Server) can have any number of Screens.  Each
+ * Screen can support one or more Visual types.
+ *
+ * unix:0.1.2 => host:display.screen.visual
+ *
+ * Typically the screen and visual default to 0 by being omitted.
  */
 HIDDEN void
-print_display_info(dpy)
-    Display *dpy;
+print_display_info(Display *dpy)
 {
-    int	i;
-    int	screen;
-    Visual	*visual;
+    int i;
+    int screen;
+    Visual *visual;
     XVisualInfo *vp;
-    int	num;
-    Window	win = DefaultRootWindow(dpy);
+    int num;
+    Window win = DefaultRootWindow(dpy);
     XStandardColormap cmap;
 
     printf("Server \"%s\", release %d\n",
@@ -2432,29 +2363,28 @@ print_display_info(dpy)
 
 
 /*
- * Allocate backing store for two reaons.  First, if we are running on a
- * truecolor display then the colormaps are not modifiable and colormap
- * ops have to be simulated by manipulating the pixel values.  Second, X
- * does not provide a means to zoom or pan so zooming and panning must
- * also be simulated by manipulating the pixel values.  In order to
- * preserve the semantics of libfb which say that reads will read back
- * the original image, it is necessary to allocate backing store.  This
- * code tries to allocate a System V shared memory segment for backing
- * store.  System V shared memory persists until explicitly killed, so
- * this also means that under X, the previous contents of the frame
- * buffer still exist, and can be accessed again, even though the
- * windows are transient, per-process.
+ * Allocate backing store for two reaons.  First, if we are running on
+ * a truecolor display then the colormaps are not modifiable and
+ * colormap ops have to be simulated by manipulating the pixel values.
+ * Second, X does not provide a means to zoom or pan so zooming and
+ * panning must also be simulated by manipulating the pixel values.
+ * In order to preserve the semantics of libfb which say that reads
+ * will read back the original image, it is necessary to allocate
+ * backing store.  This code tries to allocate a System V shared
+ * memory segment for backing store.  System V shared memory persists
+ * until explicitly killed, so this also means that under X, the
+ * previous contents of the frame buffer still exist, and can be
+ * accessed again, even though the windows are transient, per-process.
  */
 HIDDEN int
-X24_getmem(ifp)
-    FBIO	*ifp;
+X24_getmem(FBIO *ifp)
 {
     struct xinfo *xi = XI(ifp);
 
-    char	*mem = NULL;
-    int	pixsize;
-    int	size;
-    int	new = 0;
+    char *mem = NULL;
+    int pixsize;
+    int size;
+    int new = 0;
 
     pixsize = ifp->if_max_height * ifp->if_max_width * sizeof(RGBpixel);
     size = pixsize + sizeof (*xi->xi_rgb_cmap);
@@ -2545,14 +2475,14 @@ store\n  Run shell command 'limit datasize unlmited' and try again.\n", size);
 }
 
 /*
- *			X 2 4 _ Z A P M E M
+ * X 2 4 _ Z A P M E M
  */
 HIDDEN void
 X24_zapmem()
 {
 #ifndef HAVE_SYS_MMAN_H
-    int	shmid;
-    int	i;
+    int shmid;
+    int i;
 #endif
 
 #ifdef HAVE_SYS_MMAN_H
@@ -2577,8 +2507,7 @@ X24_zapmem()
 }
 
 HIDDEN void
-X24_updstate(ifp)
-    FBIO	*ifp;
+X24_updstate(FBIO *ifp)
 {
     struct xinfo *xi = XI(ifp);
 
@@ -2614,7 +2543,8 @@ X24_updstate(ifp)
 
     /*
      * Force ?wp to be the same as the window width (mod 2).  This
-     * keeps the image from jumping around when using large zoom factors.
+     * keeps the image from jumping around when using large zoom
+     * factors.
      */
 
     if (xwp && (xwp ^ xi->xi_xwidth) & 1) {
@@ -2628,10 +2558,11 @@ X24_updstate(ifp)
     }
 
     /*
-     * Now we calculate the height/width of the outermost image pixel slots.
-     * If we've got any leftover X pixels, we'll make truncated slots
-     * out of them; if not, the outermost ones end up full size.  We'll
-     * adjust ?wp to be the number of full and truncated slots available.
+     * Now we calculate the height/width of the outermost image pixel
+     * slots.  If we've got any leftover X pixels, we'll make
+     * truncated slots out of them; if not, the outermost ones end up
+     * full size.  We'll adjust ?wp to be the number of full and
+     * truncated slots available.
      */
     switch (xrp)
     {
@@ -2674,7 +2605,9 @@ X24_updstate(ifp)
     }
 
     /*
-     * We've now divided our X window up into image pixel slots as follows:
+     * We've now divided our X window up into image pixel slots as
+     * follows:
+     *
      * - All slots are xzoom by yzoom X pixels in size, except:
      *     slots in the top row are tp_h X pixels high
      *     slots in the bottom row are bt_h X pixels high
@@ -2685,9 +2618,9 @@ X24_updstate(ifp)
 
     /*
      * We can think of xcenter as being "number of pixels we'd like
-     * displayed on the left half of the screen".  We have xwp/2 pixels
-     * available on the left half.  We use this information to calculate
-     * the remaining parameters as noted.
+     * displayed on the left half of the screen".  We have xwp/2
+     * pixels available on the left half.  We use this information to
+     * calculate the remaining parameters as noted.
      */
 
     want = ifp->if_xcenter;
@@ -2695,8 +2628,8 @@ X24_updstate(ifp)
     if (want >= avail)
     {
 	/*
-	 * Just enough or too many pixels to display.  We'll be
-	 * butted up against the left edge, so
+	 * Just enough or too many pixels to display.  We'll be butted
+	 * up against the left edge, so
 	 *  - the leftmost X pixels will have an x coordinate of 0;
 	 *  - the leftmost column of image pixels will be as wide as the
 	 *    leftmost column of image pixel slots; and
@@ -2709,8 +2642,8 @@ X24_updstate(ifp)
 	xi->xi_ilf = want - avail;
     } else {
 	/*
-	 * Not enough image pixels to fill the area.  We'll be
-	 * offset from the left edge, so
+	 * Not enough image pixels to fill the area.  We'll be offset
+	 * from the left edge, so
 	 *  - the leftmost X pixels will have an x coordinate equal
 	 *    to the number of pixels taken up by the unused image
 	 *    pixel slots;
@@ -2849,43 +2782,40 @@ X24_updstate(ifp)
 #endif
 }
 
-/*	X 2 4 _ b l i t
+/* X 2 4 _ b l i t
  *
  * This routine is called when ever the framebuffer is updated OR when
  * there is an expose event generated by the X server.
  *
  * The X server world is confusing because XDR is NOT done for client
- * or server, thus leaving each client responsable for getting a
- * X pixel map prepared in the correct lay out.
+ * or server, thus leaving each client responsable for getting a X
+ * pixel map prepared in the correct lay out.
  *
- * There are something like 18 different visuals and 2 endians that
- * we need to deal with 1-bit, 2-bit, 4-bit and 8-bit monochrome
- * 8-bit CLUT, 8-bit True Color, 8-bit Direct Color
- * 15-bit Pseudo Color, 15-bit True Color, 15-bit Direct color
- * 16-bit Pseudo Color, 16-bit True Color, 16-bit Direct Color
- * 24-bit Pseudo, True and Direct
- * and finally 32-bit Pseudo, True and Direct colors.
+ * There are something like 18 different visuals and 2 endians that we
+ * need to deal with 1-bit, 2-bit, 4-bit and 8-bit monochrome 8-bit
+ * CLUT, 8-bit True Color, 8-bit Direct Color 15-bit Pseudo Color,
+ * 15-bit True Color, 15-bit Direct color 16-bit Pseudo Color, 16-bit
+ * True Color, 16-bit Direct Color 24-bit Pseudo, True and Direct and
+ * finally 32-bit Pseudo, True and Direct colors.
  *
- * For the 1-8 bit case we do some dithering and get an image up as best
- * we can.
- * for the >8 bit cases we need to do a bit more.
+ * For the 1-8 bit case we do some dithering and get an image up as
+ * best we can.  for the >8 bit cases we need to do a bit more.
  *
- * Our input is always in RGB (24 bit) order in memory so there is nothing
- * fancy we need to do there.
+ * Our input is always in RGB (24 bit) order in memory so there is
+ * nothing fancy we need to do there.
  *
  * For output, the X server tells us, in an opaque object that we are
- * not suppose to peek into, where the RGB components go in a BIG endian
- * bit vector and how many bits per component.  Using this information we
- * construct masks and shift counts for each component.  This information
- * is later used to construct a bit vector in a register.  This register
- * is then clocked out as bytes in the correct ordering.
+ * not suppose to peek into, where the RGB components go in a BIG
+ * endian bit vector and how many bits per component.  Using this
+ * information we construct masks and shift counts for each component.
+ * This information is later used to construct a bit vector in a
+ * register.  This register is then clocked out as bytes in the
+ * correct ordering.
+ *
+ * x1,y1->w,h describes a Rectangle of changed bits (image space coord.)
  */
-
 HIDDEN void
-X24_blit(ifp, x1, y1, w, h, flags)
-    FBIO	*ifp;
-    int x1, y1, w, h;	/* Rectangle of changed bits (image space coord.) */
-    int flags;		/* BLIT_xxx flags */
+X24_blit(FBIO *ifp, int x1, int y1, int w, int h, int flags /* BLIT_xxx flags */)
 {
     struct xinfo *xi = XI(ifp);
 
@@ -2901,8 +2831,8 @@ X24_blit(ifp, x1, y1, w, h, flags)
     /*
      * Newish code, discover masks and shifts for each of RGB
      *
-     * The Masks are right justified, we just shift them up 6 bits
-     * in the long to give us some room on the low end.  We'll correct
+     * The Masks are right justified, we just shift them up 6 bits in
+     * the long to give us some room on the low end.  We'll correct
      * this out later.
      */
     unsigned int a_pixel;
@@ -2917,9 +2847,9 @@ X24_blit(ifp, x1, y1, w, h, flags)
     int i;
 
     /*
-     * Now that we know the mask, we shift a bit left, one bit at a time
-     * until it overlaps the mask.  This tells us how far we have to
-     * shift our pixel to get it under the bit mask.
+     * Now that we know the mask, we shift a bit left, one bit at a
+     * time until it overlaps the mask.  This tells us how far we have
+     * to shift our pixel to get it under the bit mask.
      */
     a_mask = mask_red;
     test_mask = 1;
@@ -3030,10 +2960,10 @@ X24_blit(ifp, x1, y1, w, h, flags)
 #endif
 
     /*
-     * Set pointers to start of source and destination areas; note that
-     * we're going from lower to higher image coordinates, so irgb
-     * increases, but since images are in quadrant I and X uses quadrant
-     * IV, opix _decreases_.
+     * Set pointers to start of source and destination areas; note
+     * that we're going from lower to higher image coordinates, so
+     * irgb increases, but since images are in quadrant I and X uses
+     * quadrant IV, opix _decreases_.
      */
 
     switch (xi->xi_flags & FLG_VMASK)
@@ -3087,10 +3017,10 @@ X24_blit(ifp, x1, y1, w, h, flags)
 		    /* Calculate the number of lines needed */
 		    /*
 		     * If we are zoomed, then it is possable that not
-		     * all of that zoomed pixel will be showned.
-		     * y1ht is the number of lines allocated for the
-		     * bottom most line.  y2ht is the number of lines
-		     * for the top most line.  if_yzoom is for everything
+		     * all of that zoomed pixel will be showned.  y1ht
+		     * is the number of lines allocated for the bottom
+		     * most line.  y2ht is the number of lines for the
+		     * top most line.  if_yzoom is for everything
 		     * else.
 		     */
 		    if (y == y1) {
@@ -3821,9 +3751,7 @@ X24_blit(ifp, x1, y1, w, h, flags)
 }
 
 int
-X24_refresh(ifp, x, y, w, h)
-    FBIO *ifp;
-    int x, y, w, h;
+X24_refresh(FBIO *ifp, int x, int y, int w, int h)
 {
     if (w < 0) {
 	w = -w;
