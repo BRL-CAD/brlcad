@@ -456,6 +456,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\src\librt\primitives\epa\epa_brep.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\src\librt\primitives\epa\epa_mirror.c"
 				>
 			</File>

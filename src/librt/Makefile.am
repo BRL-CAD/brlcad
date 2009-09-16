@@ -128,6 +128,7 @@ librt_nil_la_SOURCES = \
 	primitives/ell/ell_brep.cpp \
 	primitives/ell/ell_mirror.c \
 	primitives/epa/epa.c \
+	primitives/epa/epa_brep.cpp \
 	primitives/epa/epa_mirror.c \
 	primitives/eto/eto.c \
 	primitives/eto/eto_brep.cpp \

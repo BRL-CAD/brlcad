@@ -48,6 +48,7 @@ extern "C" {
     extern void rt_eto_brep(ON_Brep **bi, struct rt_db_internal *ip, const struct bn_tol *tol);
     extern void rt_rhc_brep(ON_Brep **bi, struct rt_db_internal *ip, const struct bn_tol *tol);
     extern void rt_rpc_brep(ON_Brep **bi, struct rt_db_internal *ip, const struct bn_tol *tol);
+    extern void rt_epa_brep(ON_Brep **bi, struct rt_db_internal *ip, const struct bn_tol *tol);
     extern void rt_tgc_brep(ON_Brep **bi, struct rt_db_internal *ip, const struct bn_tol *tol);
     extern void rt_tor_brep(ON_Brep **bi, struct rt_db_internal *ip, const struct bn_tol *tol);
 
@@ -303,16 +304,16 @@ main(int argc, char** argv)
     const char* ell_name = "ell_nurb.s";
     mk_brep(outfp, ell_name, ellbrep);
     delete ellbrep;
-    
+/*    
     bu_log("Writing a RHC b-rep...\n");
     ON_Brep* rhcbrep = ON_Brep::New();
     struct rt_rhc_internal *rhc;
     BU_GETSTRUCT(rhc, rt_rhc_internal);
     rhc->rhc_magic = RT_RHC_INTERNAL_MAGIC;
-    VSET(rhc->rhc_V, 0, -1000, -1000);
+    VSET(rhc->rhc_V, 0, 0, 0);
     VSET(rhc->rhc_H, 0, 2000, 0);
     VSET(rhc->rhc_B, 0, 0, 2000);
-    rhc->rhc_r = 1000;
+    rhc->rhc_r = 100;
     rhc->rhc_c = 400;
     tmp_internal->idb_ptr = (genptr_t)rhc;
     rt_rhc_brep(&rhcbrep, tmp_internal, tol);
@@ -325,16 +326,35 @@ main(int argc, char** argv)
     struct rt_rpc_internal *rpc;
     BU_GETSTRUCT(rpc, rt_rpc_internal);
     rpc->rpc_magic = RT_RPC_INTERNAL_MAGIC;
-    VSET(rpc->rpc_V, 0, -1000, -1000);
-    VSET(rpc->rpc_H, 0, 2000, 0);
-    VSET(rpc->rpc_B, 0, 0, 2000);
+    VSET(rpc->rpc_V, 24, -1218, -1000);
+    VSET(rpc->rpc_H, 60, 2000, -100);
+    VCROSS(rpc->rpc_B, rpc->rpc_V, rpc->rpc_H);
+    VUNITIZE(rpc->rpc_B);
+    VSCALE(rpc->rpc_B, rpc->rpc_B, 2000);
     rpc->rpc_r = 1000;
     tmp_internal->idb_ptr = (genptr_t)rpc;
     rt_rpc_brep(&rpcbrep, tmp_internal, tol);
     const char* rpc_name = "rpc_nurb.s";
     mk_brep(outfp, rpc_name, rpcbrep);
     delete rpcbrep;
+*/
 
+    bu_log("Writing an EPA b-rep...\n");
+    ON_Brep* epabrep = ON_Brep::New();
+    struct rt_epa_internal *epa;
+    BU_GETSTRUCT(epa, rt_epa_internal);
+    epa->epa_magic = RT_EPA_INTERNAL_MAGIC;
+    VSET(epa->epa_V, 0, 0, -1000);
+    VSET(epa->epa_H, 0, 0, 2000);
+    VSET(epa->epa_Au, 1, 0, 0);
+    epa->epa_r1 = 1000;
+    epa->epa_r2 = 500;
+    tmp_internal->idb_ptr = (genptr_t)epa;
+    rt_epa_brep(&epabrep, tmp_internal, tol);
+    const char* epa_name = "epa_nurb.s";
+    mk_brep(outfp, epa_name, epabrep);
+    delete epabrep;
+    
     bu_log("Writing a TGC b-rep...\n");
     ON_Brep* tgcbrep = ON_Brep::New();
     struct rt_tgc_internal *tgc;
