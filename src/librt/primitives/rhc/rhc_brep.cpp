@@ -80,8 +80,19 @@ rt_rhc_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *t
     VREVERSE(x_rev_dir, x_dir);
 
     VADD2(ep1, p1_origin, x_rev_dir);
-    double w1 = (MAGNITUDE(eip->rhc_B)/(MAGNITUDE(eip->rhc_B)+eip->rhc_c))/(1-(MAGNITUDE(eip->rhc_B)/(MAGNITUDE(eip->rhc_B)+eip->rhc_c)));
-    VSCALE(tmppt, eip->rhc_B, w1 * (MAGNITUDE(eip->rhc_B)+eip->rhc_c)/MAGNITUDE(eip->rhc_B));
+    double intercept_calc = (eip->rhc_c)*(eip->rhc_c)/(MAGNITUDE(eip->rhc_B) + eip->rhc_c);
+    double intercept_dist = MAGNITUDE(eip->rhc_B) + eip->rhc_c - intercept_calc;
+    double intercept_length = intercept_dist - MAGNITUDE(eip->rhc_B);
+    bu_log("intercept_dist: %f\n", intercept_dist);
+    bu_log("intercept_length: %f\n", intercept_length);
+    double MX = MAGNITUDE(eip->rhc_B);
+    double MP = MX + intercept_length;
+    double w1 = (MX/MP)/(1-MX/MP);
+    bu_log("weight: %f\n", w1);
+    
+    VMOVE(tmppt, eip->rhc_B);
+    VUNITIZE(tmppt);
+    VSCALE(tmppt,tmppt, w1 * intercept_dist);
     VADD2(ep2, p1_origin, tmppt);
     VADD2(ep3, p1_origin, x_dir);
     ON_3dPoint onp1 = ON_3dPoint(ep1);
