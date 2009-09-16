@@ -193,10 +193,6 @@ struct oglinfo {
 #define MODE_2TRANSIENT	(0<<1)
 #define MODE_2LINGERING (1<<1)	/* leave window up after closing*/
 
-#define MODE_3MASK	(1<<2)
-#define MODE_3WINDOW	(0<<2)	/* window mode */
-#define MODE_3FULLSCR	(1<<2)	/* full screen mode (unimplemented) */
-
 #define MODE_4MASK	(1<<3)
 #define MODE_4NORMAL	(0<<3)	/* dither if it seems necessary */
 #define MODE_4NODITH	(1<<3)	/* suppress any dithering */
@@ -233,8 +229,6 @@ HIDDEN struct modeflags {
       "Lingering window" },
     { 't',	MODE_2MASK, MODE_2TRANSIENT,
       "Transient window" },
-    { 'f',	MODE_3MASK, MODE_3FULLSCR,
-      "Full centered screen - else windowed" },
     { 'd',  MODE_4MASK, MODE_4NODITH,
       "Suppress dithering - else dither if not 24-bit buffer" },
     { 'c',	MODE_7MASK, MODE_7SWCMAP,
@@ -1198,15 +1192,6 @@ fb_ogl_open(FBIO *ifp, char *file, int width, int height)
 #endif
     }
 
-    if ((ifp->if_mode & MODE_3MASK) == MODE_3FULLSCR ) {
-	/* XXX - unimplemented as there's no means to query the
-	 * display size. just set it what it originally was from old
-	 * irix gl.h for now.
-	 */
-	ifp->if_width = 1280;
-	ifp->if_height = 1024;
-    }
-
     /* use defaults if invalid width and height specified */
     if (width <= 0 )
 	width = ifp->if_width;
@@ -1221,13 +1206,7 @@ fb_ogl_open(FBIO *ifp, char *file, int width, int height)
     ifp->if_width = width;
     ifp->if_height = height;
 
-
-    if ((ifp->if_mode & MODE_3MASK) == MODE_3WINDOW ) {
-	SGI(ifp)->mi_curs_on = 1;
-    }  else  {
-	/* MODE_3MASK == MODE_3FULLSCR */
-	SGI(ifp)->mi_curs_on = 0;
-    }
+    SGI(ifp)->mi_curs_on = 1;
 
     /* Build a descriptive window title bar */
     (void)snprintf(title, 128, "BRL-CAD /dev/ogl %s, %s",
@@ -1237,7 +1216,6 @@ fb_ogl_open(FBIO *ifp, char *file, int width, int height)
 		   ((ifp->if_mode & MODE_1MASK) == MODE_1MALLOC) ?
 		   "Private Mem" :
 		   "Shared Mem" );
-
 
     /* initialize window state variables before calling ogl_getmem */
     ifp->if_zoomflag = 0;
