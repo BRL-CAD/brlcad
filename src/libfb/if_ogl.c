@@ -23,12 +23,10 @@
  *
  * Frame Buffer Library interface for OpenGL.
  *
- * There are several different Frame Buffer modes supported.
- * Set your environment FB_FILE to the appropriate type.
- * Note that some of the /dev/sgi modes are not supported, and there are
- * some new modes.
- * (see the modeflag definitions below).
- * /dev/ogl[options]
+ * There are several different Frame Buffer modes supported.  Set your
+ * environment FB_FILE to the appropriate type.  Note that some of the
+ * /dev/sgi modes are not supported, and there are some new modes.
+ * (see the modeflag definitions below).  /dev/ogl[options]
  *
  * This code is basically a port of the 4d Framebuffer interface from
  * IRIS GL to OpenGL.
@@ -70,12 +68,12 @@
 #define DIRECT_COLOR_VISUAL_ALLOWED 0
 
 /*WWW these come from Iris gl gl.h*/
-#define XMAXSCREEN	1279
-#define YMAXSCREEN	1023
+#define XMAXSCREEN 1279
+#define YMAXSCREEN 1023
 
 
-HIDDEN int	ogl_nwindows = 0; 	/* number of open windows */
-HIDDEN	XColor	color_cell[256];		/* used to set colormap */
+HIDDEN int ogl_nwindows = 0; 	/* number of open windows */
+HIDDEN XColor color_cell[256];		/* used to set colormap */
 
 int ogl_refresh(FBIO *ifp, int x, int y, int w, int h);
 int ogl_open_existing(FBIO *ifp, int argc, char **argv);
@@ -103,64 +101,64 @@ HIDDEN int ogl_help(FBIO *ifp);
 /* This is the ONLY thing that we normally "export" */
 FBIO ogl_interface =
 {
-    0,			/* magic number slot	*/
-    fb_ogl_open,		/* open device		*/
-    fb_ogl_close,		/* close device		*/
-    ogl_clear,		/* clear device		*/
-    ogl_read,		/* read	pixels		*/
-    ogl_write,		/* write pixels		*/
-    ogl_rmap,		/* read colormap	*/
-    ogl_wmap,		/* write colormap	*/
-    ogl_view,		/* set view		*/
-    ogl_getview,		/* get view		*/
-    ogl_setcursor,		/* define cursor	*/
-    ogl_cursor,		/* set cursor		*/
-    fb_sim_getcursor,	/* get cursor		*/
-    fb_sim_readrect,	/* read rectangle	*/
-    ogl_writerect,		/* write rectangle	*/
+    0,			/* magic number slot */
+    fb_ogl_open,	/* open device */
+    fb_ogl_close,	/* close device */
+    ogl_clear,		/* clear device */
+    ogl_read,		/* read pixels */
+    ogl_write,		/* write pixels */
+    ogl_rmap,		/* read colormap */
+    ogl_wmap,		/* write colormap */
+    ogl_view,		/* set view */
+    ogl_getview,	/* get view */
+    ogl_setcursor,	/* define cursor */
+    ogl_cursor,		/* set cursor */
+    fb_sim_getcursor,	/* get cursor */
+    fb_sim_readrect,	/* read rectangle */
+    ogl_writerect,	/* write rectangle */
     fb_sim_bwreadrect,
-    ogl_bwwriterect,	/* write rectangle	*/
-    ogl_poll,		/* process events	*/
-    ogl_flush,		/* flush output		*/
-    ogl_free,		/* free resources	*/
-    ogl_help,		/* help message		*/
-    "Silicon Graphics OpenGL",	/* device description	*/
-    XMAXSCREEN+1,			/* max width		*/
-    YMAXSCREEN+1,			/* max height		*/
-    "/dev/ogl",		/* short device name	*/
-    512,			/* default/current width  */
-    512,			/* default/current height */
-    -1,			/* select file desc	*/
-    -1,			/* file descriptor	*/
-    1, 1,			/* zoom			*/
-    256, 256,		/* window center	*/
-    0, 0, 0,		/* cursor		*/
-    PIXEL_NULL,		/* page_base		*/
-    PIXEL_NULL,		/* page_curp		*/
-    PIXEL_NULL,		/* page_endp		*/
-    -1,			/* page_no		*/
-    0,			/* page_dirty		*/
-    0L,			/* page_curpos		*/
-    0L,			/* page_pixels		*/
-    0			/* debug		*/
+    ogl_bwwriterect,	/* write rectangle */
+    ogl_poll,		/* process events */
+    ogl_flush,		/* flush output */
+    ogl_free,		/* free resources */
+    ogl_help,		/* help message */
+    "Silicon Graphics OpenGL",	/* device description */
+    XMAXSCREEN+1,	/* max width */
+    YMAXSCREEN+1,	/* max height */
+    "/dev/ogl",		/* short device name */
+    512,		/* default/current width */
+    512,		/* default/current height */
+    -1,			/* select file desc */
+    -1,			/* file descriptor */
+    1, 1,		/* zoom */
+    256, 256,		/* window center */
+    0, 0, 0,		/* cursor */
+    PIXEL_NULL,		/* page_base */
+    PIXEL_NULL,		/* page_curp */
+    PIXEL_NULL,		/* page_endp */
+    -1,			/* page_no */
+    0,			/* page_dirty */
+    0L,			/* page_curpos */
+    0L,			/* page_pixels */
+    0			/* debug */
 };
 
 
 /*
- *  Structure of color map in shared memory region.
- *  Has exactly the same format as the SGI hardware "gammaramp" map
- *  Note that only the lower 8 bits are significant.
+ * Structure of color map in shared memory region.  Has exactly the
+ * same format as the SGI hardware "gammaramp" map Note that only the
+ * lower 8 bits are significant.
  */
 struct ogl_cmap {
-    short	cmr[256];
-    short	cmg[256];
-    short	cmb[256];
+    short cmr[256];
+    short cmg[256];
+    short cmb[256];
 };
 
 /*
- *  This defines the format of the in-memory framebuffer copy.
- *  The alpha component and reverse order are maintained for
- *  compatibility with /dev/sgi
+ * This defines the format of the in-memory framebuffer copy.  The
+ * alpha component and reverse order are maintained for compatibility
+ * with /dev/sgi
  */
 struct ogl_pixel {
     unsigned char alpha;
@@ -171,75 +169,75 @@ struct ogl_pixel {
 
 /* Clipping structure for zoom/pan operations */
 struct ogl_clip {
-    int	xpixmin;	/* view clipping planes clipped to pixel memory space*/
-    int	xpixmax;
-    int	ypixmin;
-    int	ypixmax;
-    int	xscrmin;	/* view clipping planes */
-    int	xscrmax;
-    int	yscrmin;
-    int	yscrmax;
-    double	oleft;		/* glOrtho parameters */
-    double	oright;
-    double	otop;
-    double	obottom;
+    int xpixmin;	/* view clipping planes clipped to pixel memory space*/
+    int xpixmax;
+    int ypixmin;
+    int ypixmax;
+    int xscrmin;	/* view clipping planes */
+    int xscrmax;
+    int yscrmin;
+    int yscrmax;
+    double oleft;	/* glOrtho parameters */
+    double oright;
+    double otop;
+    double obottom;
 
 };
 
 /*
- *  Per window state information, overflow area.
+ * Per window state information, overflow area.
  */
 struct sgiinfo {
-    short	mi_curs_on;
-    short	mi_cmap_flag;		/* enabled when there is a non-linear map in memory */
-    int	mi_shmid;
-    int	mi_memwidth;		/* width of scanline in if_mem */
-    short	mi_xoff;		/* X viewport offset, rel. window*/
-    short	mi_yoff;		/* Y viewport offset, rel. window*/
-    int	mi_pid;			/* for multi-cpu check */
-    int	mi_parent;		/* PID of linger-mode process */
-    int	mi_doublebuffer;	/* 0=singlebuffer 1=doublebuffer */
+    short mi_curs_on;
+    short mi_cmap_flag;		/* enabled when there is a non-linear map in memory */
+    int mi_shmid;
+    int mi_memwidth;		/* width of scanline in if_mem */
+    short mi_xoff;		/* X viewport offset, rel. window*/
+    short mi_yoff;		/* Y viewport offset, rel. window*/
+    int mi_pid;			/* for multi-cpu check */
+    int mi_parent;		/* PID of linger-mode process */
+    int mi_doublebuffer;	/* 0=singlebuffer 1=doublebuffer */
     struct ogl_pixel mi_scanline[XMAXSCREEN+1];	/* one scanline */
 };
 
 /*
- *  Per window state information particular to the OpenGL interface
+ * Per window state information particular to the OpenGL interface
  */
 struct oglinfo {
-    GLXContext	glxc;
-    Display	       *dispp;		/* pointer to X display connection */
-    Window		wind;		/* Window identifier */
-    int		firstTime;
-    int		alive;
-    long		event_mask;	/* event types to be received */
-    short		front_flag;	/* front buffer being used (b-mode) */
-    short		copy_flag;	/* pan and zoom copied from backbuffer */
-    short		soft_cmap_flag;	/* use software colormapping */
-    int		cmap_size;	/* hardware colormap size */
-    int 		win_width;	/* actual window width */
-    int		win_height;	/* actual window height */
-    int		vp_width;	/* actual viewport width */
-    int		vp_height;	/* actual viewport height */
-    struct ogl_clip	clip;		/* current view clipping */
-    Window		cursor;
-    XVisualInfo    *vip;		/* pointer to info on current visual */
-    Colormap	xcmap;		/* xstyle color map */
-    int		use_ext_ctrl;	/* for controlling the Ogl graphics engine externally */
+    GLXContext glxc;
+    Display *dispp;	/* pointer to X display connection */
+    Window wind;	/* Window identifier */
+    int firstTime;
+    int alive;
+    long event_mask;	/* event types to be received */
+    short front_flag;	/* front buffer being used (b-mode) */
+    short copy_flag;	/* pan and zoom copied from backbuffer */
+    short soft_cmap_flag;	/* use software colormapping */
+    int cmap_size;	/* hardware colormap size */
+    int win_width;	/* actual window width */
+    int win_height;	/* actual window height */
+    int vp_width;	/* actual viewport width */
+    int vp_height;	/* actual viewport height */
+    struct ogl_clip clip;	/* current view clipping */
+    Window cursor;
+    XVisualInfo *vip;	/* pointer to info on current visual */
+    Colormap xcmap;	/* xstyle color map */
+    int use_ext_ctrl;	/* for controlling the Ogl graphics engine externally */
 };
 
-#define	SGI(ptr)	((struct sgiinfo *)((ptr)->u1.p))
-#define	SGIL(ptr)	((ptr)->u1.p)		/* left hand side version */
-#define	OGL(ptr)	((struct oglinfo *)((ptr)->u6.p))
-#define	OGLL(ptr)	((ptr)->u6.p)		/* left hand side version */
-#define if_mem		u2.p			/* shared memory pointer */
-#define if_cmap		u3.p			/* color map in shared memory */
-#define CMR(x)		((struct ogl_cmap *)((x)->if_cmap))->cmr
-#define CMG(x)		((struct ogl_cmap *)((x)->if_cmap))->cmg
-#define CMB(x)		((struct ogl_cmap *)((x)->if_cmap))->cmb
-#define if_zoomflag	u4.l			/* zoom > 1 */
-#define if_mode		u5.l			/* see MODE_* defines */
+#define SGI(ptr) ((struct sgiinfo *)((ptr)->u1.p))
+#define SGIL(ptr) ((ptr)->u1.p)	/* left hand side version */
+#define OGL(ptr) ((struct oglinfo *)((ptr)->u6.p))
+#define OGLL(ptr) ((ptr)->u6.p)	/* left hand side version */
+#define if_mem u2.p	/* shared memory pointer */
+#define if_cmap u3.p	/* color map in shared memory */
+#define CMR(x) ((struct ogl_cmap *)((x)->if_cmap))->cmr
+#define CMG(x) ((struct ogl_cmap *)((x)->if_cmap))->cmg
+#define CMB(x) ((struct ogl_cmap *)((x)->if_cmap))->cmb
+#define if_zoomflag u4.l	/* zoom > 1 */
+#define if_mode u5.l		/* see MODE_* defines */
 
-#define MARGIN	4			/* # pixels margin to screen edge */
+#define MARGIN 4		/* # pixels margin to screen edge */
 
 #define CLIP_XTRA 1
 
@@ -247,41 +245,42 @@ struct oglinfo {
 #define WIN_T (ifp->if_max_height - ifp->if_height - MARGIN)
 
 /*
- *  The mode has several independent bits:
- *	SHARED -vs- MALLOC'ed memory for the image
- *	TRANSIENT -vs- LINGERING windows
- *	Windowed -vs- Centered Full screen
- *	Suppress dither -vs- dither
- *	Double -vs- Single buffered
- *	DrawPixels -vs- CopyPixels
+ * The mode has several independent bits:
+ *
+ * SHARED -vs- MALLOC'ed memory for the image
+ * TRANSIENT -vs- LINGERING windows
+ * Windowed -vs- Centered Full screen
+ * Suppress dither -vs- dither
+ * Double -vs- Single buffered
+ * DrawPixels -vs- CopyPixels
  */
 #define MODE_1MASK	(1<<0)
-#define MODE_1SHARED	(0<<0)		/* Use Shared memory */
-#define MODE_1MALLOC	(1<<0)		/* Use malloc memory */
+#define MODE_1SHARED	(0<<0)	/* Use Shared memory */
+#define MODE_1MALLOC	(1<<0)	/* Use malloc memory */
 
 #define MODE_2MASK	(1<<1)
 #define MODE_2TRANSIENT	(0<<1)
-#define MODE_2LINGERING (1<<1)		/* leave window up after closing*/
+#define MODE_2LINGERING (1<<1)	/* leave window up after closing*/
 
 #define MODE_3MASK	(1<<2)
-#define MODE_3WINDOW	(0<<2)		/* window mode */
-#define MODE_3FULLSCR	(1<<2)		/* full screen mode */
+#define MODE_3WINDOW	(0<<2)	/* window mode */
+#define MODE_3FULLSCR	(1<<2)	/* full screen mode */
 
 #define MODE_4MASK	(1<<3)
-#define MODE_4NORMAL	(0<<3)		/* dither if it seems necessary */
-#define MODE_4NODITH	(1<<3)		/* suppress any dithering */
+#define MODE_4NORMAL	(0<<3)	/* dither if it seems necessary */
+#define MODE_4NODITH	(1<<3)	/* suppress any dithering */
 
 #define MODE_7MASK	(1<<6)
-#define MODE_7NORMAL	(0<<6)		/* install colormap in hardware if possible*/
-#define MODE_7SWCMAP	(1<<6)		/* use software colormapping */
+#define MODE_7NORMAL	(0<<6)	/* install colormap in hardware if possible*/
+#define MODE_7SWCMAP	(1<<6)	/* use software colormapping */
 
 #define MODE_9MASK	(1<<8)
-#define MODE_9NORMAL	(0<<8)		/* doublebuffer if possible */
-#define MODE_9SINGLEBUF	(1<<8)		/* singlebuffer only */
+#define MODE_9NORMAL	(0<<8)	/* doublebuffer if possible */
+#define MODE_9SINGLEBUF	(1<<8)	/* singlebuffer only */
 
 #define MODE_11MASK	(1<<10)
-#define MODE_11NORMAL	(0<<10)		/* always draw from mem. to window*/
-#define MODE_11COPY	(1<<10)		/* keep full image on back buffer */
+#define MODE_11NORMAL	(0<<10)	/* always draw from mem. to window*/
+#define MODE_11COPY	(1<<10)	/* keep full image on back buffer */
 
 #define MODE_12MASK	(1<<11)
 #define MODE_12NORMAL	(0<<11)
@@ -289,13 +288,13 @@ struct oglinfo {
 /* and copy current view to front */
 #define MODE_15MASK	(1<<14)
 #define MODE_15NORMAL	(0<<14)
-#define MODE_15ZAP	(1<<14)		/* zap the shared memory segment */
+#define MODE_15ZAP	(1<<14)	/* zap the shared memory segment */
 
 HIDDEN struct modeflags {
-    char	c;
-    long	mask;
-    long	value;
-    char	*help;
+    char c;
+    long mask;
+    long value;
+    char *help;
 } modeflags[] = {
     { 'p',	MODE_1MASK, MODE_1MALLOC,
       "Private memory - else shared" },
@@ -322,7 +321,7 @@ HIDDEN struct modeflags {
 
 
 /*
- *			S I G K I D
+ * S I G K I D
  */
 HIDDEN void
 sigkid(int pid)
@@ -331,8 +330,8 @@ sigkid(int pid)
 }
 
 
-/* BACKBUFFER_TO_SCREEN - copy pixels from copy on the backbuffer
- * to the front buffer. Do one scanline specified by one_y, or whole
+/* BACKBUFFER_TO_SCREEN - copy pixels from copy on the backbuffer to
+ * the front buffer. Do one scanline specified by one_y, or whole
  * screen if one_y equals -1.
  */
 HIDDEN void
@@ -406,7 +405,7 @@ backbuffer_to_screen(register FBIO *ifp, int one_y)
 }
 
 
-/* 			O G L _ X M I T _ S C A N L I N E S
+/* O G L _ X M I T _ S C A N L I N E S
  *
  * Note: unlike sgi_xmit_scanlines, this function updates an arbitrary
  * rectangle of the frame buffer
@@ -414,10 +413,10 @@ backbuffer_to_screen(register FBIO *ifp, int one_y)
 HIDDEN void
 ogl_xmit_scanlines(register FBIO *ifp, int ybase, int nlines, int xbase, int npix)
 {
-    register int	y;
-    register int	n;
-    int		sw_cmap;	/* !0 => needs software color map */
-    struct ogl_clip	*clp;
+    register int y;
+    register int n;
+    int sw_cmap;	/* !0 => needs software color map */
+    struct ogl_clip *clp;
 
     /* Caller is expected to handle attaching context, etc. */
 
@@ -444,8 +443,9 @@ ogl_xmit_scanlines(register FBIO *ifp, int ybase, int nlines, int xbase, int npi
     if (!OGL(ifp)->use_ext_ctrl) {
 	if (!OGL(ifp)->copy_flag) {
 	    /*
-	     * Blank out areas of the screen around the image, if exposed.
-	     * In COPY mode, this is done in backbuffer_to_screen().
+	     * Blank out areas of the screen around the image, if
+	     * exposed.  In COPY mode, this is done in
+	     * backbuffer_to_screen().
 	     */
 
 	    /* Blank out area left of image */
@@ -491,9 +491,9 @@ ogl_xmit_scanlines(register FBIO *ifp, int ybase, int nlines, int xbase, int npi
 
     if ( sw_cmap ) {
 	/* Software colormap each line as it's transmitted */
-	register int	x;
-	register struct ogl_pixel	*oglp;
-	register struct ogl_pixel	*op;
+	register int x;
+	register struct ogl_pixel *oglp;
+	register struct ogl_pixel *op;
 
 	y = ybase;
 	if (CJDEBUG) printf("Doing sw colormap xmit\n");
@@ -536,7 +536,7 @@ ogl_xmit_scanlines(register FBIO *ifp, int ybase, int nlines, int xbase, int npi
 HIDDEN void
 ogl_cminit(register FBIO *ifp)
 {
-    register int	i;
+    register int i;
 
     for ( i = 0; i < 256; i++)  {
 	CMR(ifp)[i] = i;
@@ -547,11 +547,7 @@ ogl_cminit(register FBIO *ifp)
 
 
 /************************************************************************/
-/************************************************************************/
-/************************************************************************/
 /******************* Shared Memory Support ******************************/
-/************************************************************************/
-/************************************************************************/
 /************************************************************************/
 
 /**
@@ -586,22 +582,22 @@ ogl_cminit(register FBIO *ifp)
 HIDDEN int
 ogl_getmem(FBIO *ifp)
 {
-#define SHMEM_KEY	42
-    int	pixsize;
-    int	size;
-    int	i;
+#define SHMEM_KEY 42
+    int pixsize;
+    int size;
+    int i;
 #if defined(IRIX) && IRIX < 5
-    char	*old_brk;
-    char	*new_brk;
+    char *old_brk;
+    char *new_brk;
 #endif
-    char	*sp;
-    int	new = 0;
+    char *sp;
+    int new = 0;
 
     errno = 0;
 
     if ( (ifp->if_mode & MODE_1MASK) == MODE_1MALLOC )  {
 	/*
-	 *  In this mode, only malloc as much memory as is needed.
+	 * In this mode, only malloc as much memory as is needed.
 	 */
 	SGI(ifp)->mi_memwidth = ifp->if_width;
 	pixsize = ifp->if_height * ifp->if_width * sizeof(struct ogl_pixel);
@@ -620,9 +616,9 @@ ogl_getmem(FBIO *ifp)
     SGI(ifp)->mi_memwidth = ifp->if_max_width;
 
     /*
-     *  On Irix 5 with Indigo EXPRESS graphics,
-     *  lrectwrite() runs off the end!
-     *  So, provide a pad area of 2 scanlines.
+     * On Irix 5 with Indigo EXPRESS graphics,
+     * lrectwrite() runs off the end!
+     * So, provide a pad area of 2 scanlines.
      *  (1 line is enough, but this avoids risk of damage to colormap table.)
      */
     pixsize = (ifp->if_max_height+2) * ifp->if_max_width *
@@ -736,7 +732,7 @@ void
 ogl_clipper(register FBIO *ifp)
 {
     register struct ogl_clip *clp;
-    register int	i;
+    register int i;
     double pixels;
 
     clp = &(OGL(ifp)->clip);
@@ -975,8 +971,8 @@ ogl_do_event(FBIO *ifp)
 			break;
 		    case Button2:
 		    {
-			int	x, y;
-			int	ix, iy;
+			int x, y;
+			int ix, iy;
 			register struct ogl_pixel *oglp;
 
 			x = event.xbutton.x;
@@ -1042,8 +1038,8 @@ ogl_do_event(FBIO *ifp)
  * depth is chosen.
  *
  * The following flags are set:
- * 	SGI(ifp)->mi_doublebuffer
- *	OGL(ifp)->soft_cmap_flag
+ * SGI(ifp)->mi_doublebuffer
+ * OGL(ifp)->soft_cmap_flag
  *
  * Return NULL on failure.
  */
@@ -1173,28 +1169,28 @@ HIDDEN int
 fb_ogl_open(FBIO *ifp, char *file, int width, int height)
 {
 
-    int		f;
-    int		status;
-    static char	title[128];
-    int		mode, i, direct;
-    long		valuemask;
+    int f;
+    int status;
+    static char title[128];
+    int mode, i, direct;
+    long valuemask;
     XSetWindowAttributes swa;
 
     FB_CK_FBIO(ifp);
 
     /*
-     *  First, attempt to determine operating mode for this open,
-     *  based upon the "unit number" or flags.
-     *  file = "/dev/ogl###"
+     * First, attempt to determine operating mode for this open,
+     * based upon the "unit number" or flags.
+     * file = "/dev/ogl###"
      */
     mode = MODE_2LINGERING;
 
     if ( file != NULL )  {
 	register char *cp;
-	char	modebuf[80];
-	char	*mp;
-	int	alpha;
-	struct	modeflags *mfp;
+	char modebuf[80];
+	char *mp;
+	int alpha;
+	struct modeflags *mfp;
 
 	if (strncmp(file, ifp->if_name, strlen(ifp->if_name))) {
 	    /* How did this happen? */
@@ -1241,8 +1237,8 @@ fb_ogl_open(FBIO *ifp, char *file, int width, int height)
 #endif
 
     /*
-     *  Allocate extension memory sections,
-     *  addressed by SGI(ifp)->mi_xxx and OGL(ifp)->xxx
+     * Allocate extension memory sections,
+     * addressed by SGI(ifp)->mi_xxx and OGL(ifp)->xxx
      */
 
     if ( (SGIL(ifp) = (char *)calloc( 1, sizeof(struct sgiinfo) )) == NULL )  {
@@ -1283,9 +1279,9 @@ fb_ogl_open(FBIO *ifp, char *file, int width, int height)
 	    }
 
 	    /*
-	     *  Wait until the child dies, of whatever cause,
-	     *  or until the child kills us.
-	     *  Pretty vicious, this computer society.
+	     * Wait until the child dies, of whatever cause,
+	     * or until the child kills us.
+	     * Pretty vicious, this computer society.
 	     */
 	    while ( (k = wait(&status)) != -1 && k != f )
 		; /* NULL */
@@ -1542,8 +1538,8 @@ _ogl_open_existing(FBIO *ifp, Display *dpy, Window win, Colormap cmap, XVisualIn
     ifp->if_mode = MODE_1MALLOC;
 
     /*
-     *  Allocate extension memory sections,
-     *  addressed by SGI(ifp)->mi_xxx and OGL(ifp)->xxx
+     * Allocate extension memory sections,
+     * addressed by SGI(ifp)->mi_xxx and OGL(ifp)->xxx
      */
 
     if ( (SGIL(ifp) = (char *)calloc( 1, sizeof(struct sgiinfo) )) == NULL )  {
@@ -1658,29 +1654,30 @@ fb_ogl_close(FBIO *ifp)
 	printf("fb_ogl_close: remaining open to linger awhile.\n");
 
     /*
-     *  else:
-     *  LINGER mode.  Don't return to caller until user mouses "close"
-     *  menu item.  This may delay final processing in the calling
-     *  function for some time, but the assumption is that the user
-     *  wishes to compare this image with others.
+     * else:
      *
-     *  Since we plan to linger here, long after our invoker
-     *  expected us to be gone, be certain that no file descriptors
-     *  remain open to associate us with pipelines, network
-     *  connections, etc., that were ALREADY ESTABLISHED before
-     *  the point that fb_open() was called.
+     * LINGER mode.  Don't return to caller until user mouses "close"
+     * menu item.  This may delay final processing in the calling
+     * function for some time, but the assumption is that the user
+     * wishes to compare this image with others.
      *
-     *  The simple for i=0..20 loop will not work, because that
-     *  smashes some window-manager files.  Therefore, we content
-     *  ourselves with eliminating stdin and stdout (fd 0, 1), in the
-     *  hopes that this will successfully terminate any pipes or
-     *  network connections.  Standard error/out may be used to print
-     *  framebuffer debug messages, so they're kept around.
+     * Since we plan to linger here, long after our invoker expected
+     * us to be gone, be certain that no file descriptors remain open
+     * to associate us with pipelines, network connections, etc., that
+     * were ALREADY ESTABLISHED before the point that fb_open() was
+     * called.
+     *
+     * The simple for i=0..20 loop will not work, because that smashes
+     * some window-manager files.  Therefore, we content ourselves
+     * with eliminating stdin and stdout (fd 0, 1), in the hopes that
+     * this will successfully terminate any pipes or network
+     * connections.  Standard error/out may be used to print
+     * framebuffer debug messages, so they're kept around.
      */
     fclose( stdin );
 
-    /* Ignore likely signals, perhaps in the background,
-     * from other typing at the keyboard
+    /* Ignore likely signals, perhaps in the background, from other
+     * typing at the keyboard
      */
     (void)signal( SIGHUP, SIG_IGN );
     (void)signal( SIGINT, SIG_IGN );
@@ -1728,9 +1725,9 @@ ogl_close_existing(FBIO *ifp)
 
 
 /*
- *			O G L _ P O L L
+ * O G L _ P O L L
  *
- *	Handle any pending input events
+ * Handle any pending input events
  */
 HIDDEN int
 ogl_poll(FBIO *ifp)
@@ -1745,16 +1742,16 @@ ogl_poll(FBIO *ifp)
 
 
 /*
- *			O G L _ F R E E
+ * O G L _ F R E E
  *
- *  Free shared memory resources, and close.
+ * Free shared memory resources, and close.
  */
 HIDDEN int
 ogl_free(FBIO *ifp)
 {
-    int	ret;
+    int ret;
 
-    if (CJDEBUG) printf("entering  ogl_free\n");
+    if (CJDEBUG) printf("entering ogl_free\n");
     /* Close the framebuffer */
     ret = ogl_final_close( ifp );
 
@@ -1771,10 +1768,10 @@ ogl_clear(FBIO *ifp, unsigned char *pp)
 
     /* pointer to beginning of memory segment*/
 {
-    struct ogl_pixel		bg;
-    register struct ogl_pixel      *oglp;
-    register int			cnt;
-    register int			y;
+    struct ogl_pixel bg;
+    register struct ogl_pixel *oglp;
+    register int cnt;
+    register int y;
 
     if ( CJDEBUG ) printf("entering ogl_clear\n");
 
@@ -1841,7 +1838,7 @@ ogl_clear(FBIO *ifp, unsigned char *pp)
 
 
 /*
- *			O G L _ V I E W
+ * O G L _ V I E W
  */
 HIDDEN int
 ogl_view(FBIO *ifp, int xcenter, int ycenter, int xzoom, int yzoom)
@@ -1870,7 +1867,7 @@ ogl_view(FBIO *ifp, int xcenter, int ycenter, int xzoom, int yzoom)
 
     if ( ifp->if_xzoom > 1 || ifp->if_yzoom > 1 )
 	ifp->if_zoomflag = 1;
-    else	ifp->if_zoomflag = 0;
+    else ifp->if_zoomflag = 0;
 
 
     if (OGL(ifp)->use_ext_ctrl) {
@@ -1880,7 +1877,7 @@ ogl_view(FBIO *ifp, int xcenter, int ycenter, int xzoom, int yzoom)
 	    fb_log("Warning, ogl_view: glXMakeCurrent unsuccessful.\n");
 	}
 
-	/* Set clipping matrix  and zoom level */
+	/* Set clipping matrix and zoom level */
 	glMatrixMode(GL_PROJECTION);
 	if (OGL(ifp)->copy_flag && !OGL(ifp)->front_flag) {
 	    /* COPY mode - no changes to backbuffer copy - just
@@ -1915,7 +1912,7 @@ ogl_view(FBIO *ifp, int xcenter, int ycenter, int xzoom, int yzoom)
 
 
 /*
- *			O G L _ G E T V I E W
+ * O G L _ G E T V I E W
  */
 HIDDEN int
 ogl_getview(FBIO *ifp, int *xcenter, int *ycenter, int *xzoom, int *yzoom)
@@ -1931,15 +1928,15 @@ ogl_getview(FBIO *ifp, int *xcenter, int *ycenter, int *xzoom, int *yzoom)
 }
 
 
-/*read count pixels into pixelp starting at x, y*/
+/* read count pixels into pixelp starting at x, y */
 HIDDEN int
 ogl_read(FBIO *ifp, int x, int y, unsigned char *pixelp, int count)
 {
-    register short		scan_count;	/* # pix on this scanline */
-    register unsigned char	*cp;
-    int			ret;
-    register unsigned int	n;
-    register struct ogl_pixel	*oglp;
+    register short scan_count;	/* # pix on this scanline */
+    register unsigned char *cp;
+    int ret;
+    register unsigned int n;
+    register struct ogl_pixel *oglp;
 
     if (CJDEBUG) printf("entering ogl_read\n");
 
@@ -1982,17 +1979,17 @@ ogl_read(FBIO *ifp, int x, int y, unsigned char *pixelp, int count)
 }
 
 
-/*write count pixels from pixelp starting at xstart, ystart*/
+/* write count pixels from pixelp starting at xstart, ystart */
 HIDDEN int
 ogl_write(FBIO *ifp, int xstart, int ystart, const unsigned char *pixelp, int count)
 {
-    register short		scan_count;	/* # pix on this scanline */
-    register unsigned char	*cp;
-    int			ret;
-    int			ybase;
-    register int		pix_count;	/* # pixels to send */
-    register int		x;
-    register int		y;
+    register short scan_count;	/* # pix on this scanline */
+    register unsigned char *cp;
+    int ret;
+    int ybase;
+    register int pix_count;	/* # pixels to send */
+    register int x;
+    register int y;
 
     if (CJDEBUG) printf("entering ogl_write\n");
 
@@ -2014,7 +2011,7 @@ ogl_write(FBIO *ifp, int xstart, int ystart, const unsigned char *pixelp, int co
 
     while ( pix_count )  {
 	register unsigned int n;
-	register struct ogl_pixel	*oglp;
+	register struct ogl_pixel *oglp;
 
 	if ( y >= ifp->if_height )
 	    break;
@@ -2115,19 +2112,19 @@ ogl_write(FBIO *ifp, int xstart, int ystart, const unsigned char *pixelp, int co
 }
 
 /*
- *			O G L _ W R I T E R E C T
+ * O G L _ W R I T E R E C T
  *
- *  The task of this routine is to reformat the pixels into
- *  SGI internal form, and then arrange to have them sent to
- *  the screen separately.
+ * The task of this routine is to reformat the pixels into SGI
+ * internal form, and then arrange to have them sent to the screen
+ * separately.
  */
 HIDDEN int
 ogl_writerect(FBIO *ifp, int xmin, int ymin, int width, int height, const unsigned char *pp)
 {
-    register int		x;
-    register int		y;
-    register unsigned char	*cp;
-    register struct ogl_pixel	*oglp;
+    register int x;
+    register int y;
+    register unsigned char *cp;
+    register struct ogl_pixel *oglp;
 
     if (CJDEBUG) printf("entering ogl_writerect\n");
 
@@ -2182,19 +2179,19 @@ ogl_writerect(FBIO *ifp, int xmin, int ymin, int width, int height, const unsign
 
 
 /*
- *			O G L _ B W W R I T E R E C T
+ * O G L _ B W W R I T E R E C T
  *
- *  The task of this routine is to reformat the pixels into
- *  SGI internal form, and then arrange to have them sent to
- *  the screen separately.
+ * The task of this routine is to reformat the pixels into SGI
+ * internal form, and then arrange to have them sent to the screen
+ * separately.
  */
 HIDDEN int
 ogl_bwwriterect(FBIO *ifp, int xmin, int ymin, int width, int height, const unsigned char *pp)
 {
-    register int		x;
-    register int		y;
-    register unsigned char	*cp;
-    register struct ogl_pixel	*oglp;
+    register int x;
+    register int y;
+    register unsigned char *cp;
+    register struct ogl_pixel *oglp;
 
     if (CJDEBUG) printf("entering ogl_bwwriterect\n");
 
@@ -2210,7 +2207,7 @@ ogl_bwwriterect(FBIO *ifp, int xmin, int ymin, int width, int height, const unsi
 	oglp = (struct ogl_pixel *)&ifp->if_mem[
 	    (y*SGI(ifp)->mi_memwidth+xmin)*sizeof(struct ogl_pixel) ];
 	for ( x = xmin; x < xmin+width; x++ )  {
-	    register int	val;
+	    register int val;
 	    /* alpha channel is always zero */
 	    oglp->red   = (val = *cp++);
 	    oglp->green = val;
@@ -2266,13 +2263,13 @@ ogl_rmap(register FBIO *ifp, register ColorMap *cmp)
 
 
 /*
- *			 O G L _ W M A P
+ * O G L _ W M A P
  */
 HIDDEN int
 ogl_wmap(register FBIO *ifp, register const ColorMap *cmp)
 {
-    register int	i;
-    int		prev;	/* !0 = previous cmap was non-linear */
+    register int i;
+    int prev;	/* !0 = previous cmap was non-linear */
 
     if (CJDEBUG) printf("entering ogl_wmap\n");
 
@@ -2328,12 +2325,12 @@ ogl_wmap(register FBIO *ifp, register const ColorMap *cmp)
 }
 
 /*
- *			O G L _ H E L P
+ * O G L _ H E L P
  */
 HIDDEN int
 ogl_help(FBIO *ifp)
 {
-    struct	modeflags *mfp;
+    struct modeflags *mfp;
     XVisualInfo *visual = OGL(ifp)->vip;
 
     fb_log( "Description: %s\n", ifp->if_type );
