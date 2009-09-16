@@ -80,8 +80,8 @@ rt_rhc_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *t
     VREVERSE(x_rev_dir, x_dir);
 
     VADD2(ep1, p1_origin, x_rev_dir);
-    double w1 = 1/(1-(MAGNITUDE(eip->rhc_B)/(MAGNITUDE(eip->rhc_B)+eip->rhc_c)));
-    VSCALE(tmppt, eip->rhc_B, 2 * (MAGNITUDE(eip->rhc_B)+eip->rhc_c)/MAGNITUDE(eip->rhc_B));
+    double w1 = (MAGNITUDE(eip->rhc_B)/(MAGNITUDE(eip->rhc_B)+eip->rhc_c))/(1-(MAGNITUDE(eip->rhc_B)/(MAGNITUDE(eip->rhc_B)+eip->rhc_c)));
+    VSCALE(tmppt, eip->rhc_B, w1 * (MAGNITUDE(eip->rhc_B)+eip->rhc_c)/MAGNITUDE(eip->rhc_B));
     VADD2(ep2, p1_origin, tmppt);
     VADD2(ep3, p1_origin, x_dir);
     ON_3dPoint onp1 = ON_3dPoint(ep1);
