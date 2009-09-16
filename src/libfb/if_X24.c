@@ -1972,7 +1972,6 @@ static int alive = 1;
 
 HIDDEN int
 x24_linger(FBIO *ifp)
-    FBIO *ifp;
 {
     struct xinfo *xi = XI(ifp);
     XEvent event;
