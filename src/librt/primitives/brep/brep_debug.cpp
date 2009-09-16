@@ -478,16 +478,26 @@ brep_surface_info(struct brep_specific* bs,struct bu_vls *vls,int si)
 
 		if ( srf )
 		{
-			ON_Interval udom = srf->Domain(0);
-			ON_Interval vdom = srf->Domain(1);
-			const char* s = srf->ClassId()->ClassName();
-			if ( !s )
-				s = "";
-			bu_vls_printf(vls,"surface[%2d]: %s u(%g,%g) v(%g,%g)\n",
-					   si, s, 
-					   udom[0], udom[1], 
-					   vdom[0], vdom[1]
-					   );
+		    ON_wString wonstr;
+		    ON_TextLog info_output(wonstr);
+		    ON_Interval udom = srf->Domain(0);
+		    ON_Interval vdom = srf->Domain(1);
+		    const char* s = srf->ClassId()->ClassName();
+		    if ( !s )
+			s = "";
+		    bu_vls_printf(vls,"surface[%2d]: %s u(%g,%g) v(%g,%g)\n",
+			    si, s, 
+			    udom[0], udom[1], 
+			    vdom[0], vdom[1]
+			    );
+		    bu_vls_printf(vls,"NURBS form of Surface:\n");
+		    ON_NurbsSurface *nsrf = ON_NurbsSurface::New();
+		    srf->GetNurbForm(*nsrf, 0.0);
+		    nsrf->Dump(info_output);
+		    ON_String onstr = ON_String(wonstr);
+		    const char *infodesc = onstr.Array();
+		    bu_vls_strcat(vls, infodesc);
+		    delete nsrf;
 		}
 		else
 		{
