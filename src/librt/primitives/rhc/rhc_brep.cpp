@@ -73,22 +73,33 @@ rt_rhc_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *t
     const ON_Plane* rhc_bottom_plane = new ON_Plane(plane1_origin, plane_x_dir, plane_y_dir); 
    
     //  Next, create a hyperbolic curve corresponding to the shape of
-    //  the hyperboloid in the plane.  Need the two end points and
-    //  need to solve for the focus of the hyperbola
+    //  the hyperboloid in the plane.  
+    //  See if the following webpage will help:
+    //  http://www.cs.mtu.edu/~shene/COURSES/cs3621/NOTES/spline/NURBS/RB-conics.html
     point_t x_rev_dir, ep1, ep2, ep3, tmppt;
     VREVERSE(x_rev_dir, x_dir);
 
     VADD2(ep1, p1_origin, x_rev_dir);
-    VSCALE(tmppt, eip->rhc_B, 4);
+    double w1 = 1/(1-(MAGNITUDE(eip->rhc_B)/(MAGNITUDE(eip->rhc_B)+eip->rhc_c)));
+    VSCALE(tmppt, eip->rhc_B, 2 * (MAGNITUDE(eip->rhc_B)+eip->rhc_c)/MAGNITUDE(eip->rhc_B));
     VADD2(ep2, p1_origin, tmppt);
-    VSET(ep2, ep2[0], ep2[1]*4, ep2[2]);
     VADD2(ep3, p1_origin, x_dir);
     ON_3dPoint onp1 = ON_3dPoint(ep1);
     ON_3dPoint onp2 = ON_3dPoint(ep2);
     ON_3dPoint onp3 = ON_3dPoint(ep3);
 
-
-    ON_NurbsCurve* hypnurbscurve = ON_NurbsCurve::New(3,true,3,3);
+    ON_3dPointArray cpts(3);
+    cpts.Append(onp1);
+    cpts.Append(onp2);
+    cpts.Append(onp3);
+    ON_BezierCurve *bcurve = new ON_BezierCurve(cpts);
+    bcurve->MakeRational();
+    bcurve->SetWeight(1,w1);
+    
+    ON_NurbsCurve* hypnurbscurve = ON_NurbsCurve::New();
+    
+    bcurve->GetNurbForm(*hypnurbscurve);
+/*
     hypnurbscurve->SetKnot(0, 0);
     hypnurbscurve->SetKnot(1, 0);
     hypnurbscurve->SetKnot(2, 1);
@@ -96,7 +107,9 @@ rt_rhc_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *t
     hypnurbscurve->SetCV(0,ON_3dPoint(ep1));
     hypnurbscurve->SetCV(1,ON_3dPoint(ep2));
     hypnurbscurve->SetCV(2,ON_3dPoint(ep3));
-    hypnurbscurve->SetWeight(1,4);
+    hypnurbscurve->SetWeight(1,w1);
+*/
+    
     bu_log("Valid nurbs curve: %d\n", hypnurbscurve->IsValid(dump));
     hypnurbscurve->Dump(*dump);
 
