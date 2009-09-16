@@ -64,14 +64,9 @@
 
 #define CJDEBUG 0
 
-/*WWW these come from Iris gl gl.h*/
-#define XMAXSCREEN	1279
-#define YMAXSCREEN	1023
-#define XMAXMEDIUM	1023
-#define YMAXMEDIUM	767
-#define XMAX170		645
-#define YMAX170		484
-
+/* XXX - arbitrary upper bound */
+#define XMAXSCREEN 16383
+#define YMAXSCREEN 16383
 
 /* Internal callbacks etc.*/
 HIDDEN void		wgl_do_event();
