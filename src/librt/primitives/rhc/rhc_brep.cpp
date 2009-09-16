@@ -75,11 +75,13 @@ rt_rhc_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *t
     //  Next, create a hyperbolic curve corresponding to the shape of
     //  the hyperboloid in the plane.  Need the two end points and
     //  need to solve for the focus of the hyperbola
-    point_t x_rev_dir, ep1, ep2, ep3, focus;
+    point_t x_rev_dir, ep1, ep2, ep3, tmppt;
     VREVERSE(x_rev_dir, x_dir);
 
     VADD2(ep1, p1_origin, x_rev_dir);
-    VADD2(ep2, p1_origin, eip->rhc_B);
+    VSCALE(tmppt, eip->rhc_B, 4);
+    VADD2(ep2, p1_origin, tmppt);
+    VSET(ep2, ep2[0], ep2[1]*4, ep2[2]);
     VADD2(ep3, p1_origin, x_dir);
     ON_3dPoint onp1 = ON_3dPoint(ep1);
     ON_3dPoint onp2 = ON_3dPoint(ep2);
@@ -94,7 +96,7 @@ rt_rhc_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *t
     hypnurbscurve->SetCV(0,ON_3dPoint(ep1));
     hypnurbscurve->SetCV(1,ON_3dPoint(ep2));
     hypnurbscurve->SetCV(2,ON_3dPoint(ep3));
-    hypnurbscurve->SetWeight(1,0.25);
+    hypnurbscurve->SetWeight(1,4);
     bu_log("Valid nurbs curve: %d\n", hypnurbscurve->IsValid(dump));
     hypnurbscurve->Dump(*dump);
 
