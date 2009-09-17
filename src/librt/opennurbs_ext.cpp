@@ -54,6 +54,7 @@
 /// another arbitrary calculation tolerance (need to try VDIVIDE_TOL or VUNITIZE_TOL to tighten the bounds)
 #define TOL2 0.00001
 
+extern int getSurfacePoint(const ON_3dPoint&, ON_2dPoint&, brlcad::BBNode*);
 
 namespace brlcad {
 
@@ -68,7 +69,6 @@ namespace brlcad {
 	}
     }
 
-   
     //--------------------------------------------------------------------------------
     // CurveTree
     CurveTree::CurveTree(ON_BrepFace* face)
@@ -635,11 +635,10 @@ namespace brlcad {
 	return (vdot >= BREP_CURVE_FLATNESS);
     }
 
-
     //--------------------------------------------------------------------------------
     // SurfaceTree
-    SurfaceTree::SurfaceTree(ON_BrepFace* face)
-	: m_face(face)
+    SurfaceTree::SurfaceTree(ON_BrepFace* face,bool removeTrimmed)
+	: m_face(face),m_removeTrimmed(removeTrimmed)
     {
 	// first, build the Curve Tree
 	ctree = new CurveTree(m_face);
@@ -700,6 +699,30 @@ namespace brlcad {
 	m_root->getLeaves(out_leaves);
     }
 
+    const ON_Surface *
+    SurfaceTree::getSurface() {
+    	return m_face->SurfaceOf();
+    }
+
+    int
+    SurfaceTree::getSurfacePoint(const ON_3dPoint& pt, ON_2dPoint& uv, const ON_3dPoint& from) const {
+		list<BBNode*> nodes;
+		int num_nodes = m_root->getLeavesBoundingPoint(from, nodes);
+
+		list<BBNode*>::iterator i;
+		fastf_t dist = MAX_FASTF;
+		for (i = nodes.begin(); i != nodes.end(); i++) {
+			BBNode* node = (*i);
+			if (::getSurfacePoint(pt, uv, node)) {
+				ON_3dPoint fp = m_face->SurfaceOf()->PointAt(uv.x, uv.y);
+				if (VAPPROXEQUAL(pt,fp,TOL)) {
+					return 1;
+				}
+			}
+		}
+		return -1;
+    }
+
     BBNode*
     SurfaceTree::surfaceBBox(bool isLeaf, ON_3dPoint *m_corners, ON_3dVector *m_normals, const ON_Interval& u, const ON_Interval& v)
     {
@@ -744,13 +767,14 @@ namespace brlcad {
 
 	node->m_estimate = estimate;
 	node->m_normal = normal;
+	node->m_face = m_face;
 	return node;
     }
 
-    BBNode* initialBBox(CurveTree* ctree, const ON_Surface* surf)
+    BBNode* initialBBox(CurveTree* ctree, const ON_Surface* surf,const ON_BrepFace* face,const ON_Interval& u, const ON_Interval& v)
     {
 	ON_BoundingBox bb = surf->BoundingBox();
-	BBNode* node = new BBNode(ctree,bb);
+	BBNode* node = new BBNode(ctree,bb,face,u,v,false,false);
 	ON_3dPoint estimate;
 	ON_3dVector normal;
 	if (!surf->EvNormal(surf->Domain(0).Mid(), surf->Domain(1).Mid(), estimate, normal)) {
@@ -758,6 +782,7 @@ namespace brlcad {
 	}
 	node->m_estimate = estimate;
 	node->m_normal = normal;
+	node->m_face = face;
 	return node;
     }
 
@@ -788,7 +813,7 @@ namespace brlcad {
 	if ((dsubsurf/dsurf < BREP_SURF_SUB_FACTOR) && (isFlat(surf, normals, u, v) || depth >= BREP_MAX_FT_DEPTH)) {
 	    return surfaceBBox(true, corners, normals, u, v);
 	} else {
-	    BBNode* parent = (depth == 0) ? initialBBox(ctree,surf) : surfaceBBox(false, corners, normals, u, v);
+	    BBNode* parent = (depth == 0) ? initialBBox(ctree,surf,m_face,u,v) : surfaceBBox(false, corners, normals, u, v);
 	    BBNode* quads[4];
 	    ON_Interval first(0, 0.5);
 	    ON_Interval second(0.5, 1.0);
@@ -924,11 +949,16 @@ namespace brlcad {
 		    parent->m_checkTrim = true;
 		}
 	    }
-	    
-	    for (int i = 0; i < 4; i++) {
-		if (!(quads[i]->m_trimmed)) parent->addChild(quads[i]);
-	    }
-
+	    if (m_removeTrimmed) {
+			for (int i = 0; i < 4; i++) {
+				if (!(quads[i]->m_trimmed))
+					parent->addChild(quads[i]);
+			}
+		} else {
+			for (int i = 0; i < 4; i++) {
+				parent->addChild(quads[i]);
+			}
+		}
 	    parent->BuildBBox();
 	    return parent;
     	}

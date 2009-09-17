@@ -430,10 +430,17 @@ namespace brlcad {
 		point_t A,B;
 		double  Ta,Tb;
 		
-		VMOVE(A,m_start);
-		VMOVE(B,m_end);
-		Ta = m_t[0];
-		Tb = m_t[1];
+		if (m_start[X] < u) {
+			VMOVE(A,m_start);
+			VMOVE(B,m_end);
+			Ta = m_t[0];
+			Tb = m_t[1];
+		} else {
+			VMOVE(A,m_end);
+			VMOVE(B,m_start);
+			Ta = m_t[1];
+			Tb = m_t[0];
+		}
 
 		fastf_t dU = B[X] - A[X];
 		fastf_t dT = Tb - Ta;
@@ -594,7 +601,7 @@ namespace brlcad {
 		
 		ON_2dPoint getClosestPointEstimate(const ON_3dPoint& pt);
 		ON_2dPoint getClosestPointEstimate(const ON_3dPoint& pt, ON_Interval& u, ON_Interval& v);
-		
+		int getLeavesBoundingPoint(const ON_3dPoint& pt, list<BVNode<BV> *>& out);
 		int isTrimmed(const ON_2dPoint& uv,BRNode* closest,fastf_t &closesttrim);
 		bool doTrimming() const;
 		
@@ -615,11 +622,14 @@ namespace brlcad {
     // Template Implementation
    template<class BV>
     	inline
-    	BVNode<BV>::BVNode(){ }
+    	BVNode<BV>::BVNode(){
+		   m_face = NULL;
+	   }
 
     template<class BV>
     	inline
     	BVNode<BV>::BVNode(const BV& node) : m_node(node) {
+    		m_face = NULL;
 #if defined(_WIN32) && !defined(__CYGWIN__)
 	for (int i = 0; i < 3; i++) {
 #else
@@ -635,12 +645,15 @@ namespace brlcad {
 
     template<class BV>
     	inline
-    	BVNode<BV>::BVNode(CurveTree* ct): m_ctree(ct) { }
+    	BVNode<BV>::BVNode(CurveTree* ct): m_ctree(ct) {
+ 		   m_face = NULL;
+    	}
 
 
     template<class BV>
     	inline
     	BVNode<BV>::BVNode(CurveTree* ct, const BV& node) : m_ctree(ct), m_node(node) {
+ 		   m_face = NULL;
 #if defined(_WIN32) && !defined(__CYGWIN__)
 	for (int i = 0; i < 3; i++) {
 #else
@@ -659,7 +672,20 @@ namespace brlcad {
 	BVNode<BV>::BVNode(CurveTree* ct, const BV& node, const ON_BrepFace* face,
 	       	const ON_Interval& u, const ON_Interval& v, bool checkTrim, bool trimmed)
 	: m_ctree(ct), m_node(node), m_face(face), m_u(u), m_v(v), m_checkTrim(checkTrim), 
-          m_trimmed(trimmed) { }
+          m_trimmed(trimmed) {
+#if defined(_WIN32) && !defined(__CYGWIN__)
+	for (int i = 0; i < 3; i++) {
+#else
+	for (size_t i = 0; i < 3; i++) {
+#endif
+	    double d = m_node.m_max[i] - m_node.m_min[i];
+	    if (ON_NearZero(d, ON_ZERO_TOLERANCE)) {
+		m_node.m_min[i] -= 0.001;
+		m_node.m_max[i] += 0.001;
+	    }
+	}
+    }
+
 
     template<class BV>
     	inline
@@ -890,7 +916,35 @@ namespace brlcad {
  	     }
 	 }
 	
-    template<class BV>
+	template<class BV>
+	int
+	BVNode<BV>::getLeavesBoundingPoint(const ON_3dPoint& pt, list<BVNode<BV> *>& out) {
+		if (isLeaf()) {
+			double min[3],max[3];
+			GetBBox(min,max);
+			if ( (pt.x >= (min[0])) && (pt.x <= (max[0])) &&
+					(pt.y >= (min[1])) && (pt.y <= (max[1])) &&
+					(pt.z >= (min[2])) && (pt.z <= (max[2])) ) {
+				// falls within BBox so put in list
+				out.push_back(this);
+				return 1;
+			}
+			return 0;
+
+		} else {
+			int sum = 0;
+	#if defined(_WIN32) && !defined(__CYGWIN__)
+				for (int i = 0; i < m_children.size(); i++) {
+	#else
+				for (size_t i = 0; i < m_children.size(); i++) {
+	#endif
+					sum+=m_children[i]->getLeavesBoundingPoint(pt,out);
+				}
+				return sum;
+		}
+	}
+
+	template<class BV>
     	int
 	BVNode<BV>::isTrimmed(const ON_2dPoint& uv,BRNode* closest,fastf_t &closesttrim) {
 	    BRNode* br;
@@ -1014,6 +1068,9 @@ template<class BV>
     void BVNode<BV>::BuildBBox() {
 	if (m_children.size() > 0) {
 	    for (vector<BBNode*>::iterator childnode = m_children.begin(); childnode != m_children.end(); childnode++) {
+
+	    if (!(*childnode)->isLeaf())
+	    	(*childnode)->BuildBBox();
 		if (childnode == m_children.begin()) {
 		    m_node = ON_BoundingBox((*childnode)->m_node.m_min,(*childnode)->m_node.m_max);
 		} else {
@@ -1122,8 +1179,11 @@ template<class BV>
     //--------------------------------------------------------------------------------
     // SurfaceTree declaration
     class SurfaceTree {
+    private:
+	bool m_removeTrimmed;
+
     public:
-	SurfaceTree(ON_BrepFace* face);
+	SurfaceTree(ON_BrepFace* face,bool removeTrimmed=true);
 	~SurfaceTree();
 
 	CurveTree* ctree;
@@ -1139,6 +1199,12 @@ template<class BV>
 	ON_2dPoint getClosestPointEstimate(const ON_3dPoint& pt, ON_Interval& u, ON_Interval& v);
 
 	/**
+	 * Return surface
+	 */
+	const ON_Surface *getSurface();
+	int getSurfacePoint(const ON_3dPoint& pt, ON_2dPoint& uv, const ON_3dPoint& from) const;
+
+	/**
 	 * Return just the leaves of the surface tree
 	 */
 	void getLeaves(list<BBNode*>& out_leaves);
@@ -1152,7 +1218,6 @@ template<class BV>
 	ON_BrepFace* m_face;
 	BBNode* m_root;
     };
-
 
     /**-------------------------------------------------------------------------------
      *                    g e t _ c l o s e s t _ p o i n t

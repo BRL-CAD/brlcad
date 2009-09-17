@@ -695,6 +695,48 @@ brep_newton_iterate(const ON_Surface* surf, plane_ray& pr, pt2d_t R, ON_3dVector
     }
 }
 
+int
+getSurfacePoint(const ON_3dPoint& pt, ON_2dPoint& uv , BBNode* node) {
+	plane_ray pr;
+	const ON_Surface *surf = node->m_face->SurfaceOf();
+	ON_3dVector dir = node->m_normal;
+	dir.Reverse();
+	ON_Ray ray((ON_3dPoint&)pt,dir);
+	brep_get_plane_ray(ray,pr);
+
+	//know use this as guess to iterate to closer solution
+	pt2d_t Rcurr;
+	pt2d_t new_uv;
+	ON_3dVector su,sv;
+	bool found=false;
+	fastf_t Dlast = MAX_FASTF;
+	pt2d_t nuv;
+	nuv[0] = (node->m_u[1] + node->m_u[0])/2.0;
+	nuv[1] = (node->m_v[1] + node->m_v[0])/2.0;
+	ON_3dPoint newpt;
+	for (int i = 0; i < BREP_MAX_ITERATIONS; i++) {
+		brep_r(surf, pr, nuv, newpt, su, sv, Rcurr);
+		fastf_t d = v2mag(Rcurr);
+
+		if (d < BREP_INTERSECTION_ROOT_EPSILON) {
+		    TRACE1("R:"<<ON_PRINT2(Rcurr));
+		    found = true; break;
+		} else if (d > Dlast) {
+		    found = false;
+			break;
+		}
+		brep_newton_iterate(surf, pr, Rcurr, su, sv, nuv, new_uv);
+		move(nuv, new_uv);
+		Dlast = d;
+	}
+	if (found) {
+		uv.x = nuv[0];
+		uv.y = nuv[1];
+		return 1;
+	}
+	return -1;
+}
+
 
 typedef enum {
     BREP_INTERSECT_RIGHT_OF_EDGE = -5,
