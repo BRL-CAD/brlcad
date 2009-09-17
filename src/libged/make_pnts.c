@@ -189,31 +189,30 @@ remove_whitespace(char *input_string)
 int
 str2type(const char *format_string, rt_pnt_type *pnt_type, struct bu_vls *ged_result_str)
 {
+    struct bu_vls str;
     char *temp_string = (char *)NULL;
     int index = 0;
-    int index2 = 0;
     int format_string_length = 0;
     int ret = GED_OK;
+
+    bu_vls_init(&str);
 
     if ((format_string == (char *)NULL) || (pnt_type == (rt_pnt_type *)NULL)) {
         bu_vls_printf(ged_result_str, "NULL pointer(s) passed to function 'str2type'.\n");
         ret = GED_ERROR;
-    }
-    else {
+    } else {
         format_string_length = strlen(format_string);
-        temp_string = (char*)bu_malloc(format_string_length+1, "str2type: temp_string");
 
         /* remove any '?' from format string before testing for point-cloud type */
         for (index = 0 ; index < format_string_length ; index++) {
             if (format_string[index] != '?') {
-                temp_string[index2] = format_string[index];
-                index2++;
+		bu_vls_putc(&str, format_string[index]);
             }
         }
-        temp_string[index2] = '\0';
 
-        remove_whitespace(temp_string);
+	bu_vls_trimspace(&str);
 
+	temp_string = bu_vls_addr(&str);
         qsort(temp_string, strlen(temp_string), sizeof(char), (int (*)(const void *a, const void *b))compare_char);
 
         if (strcmp(temp_string, "xyz") == 0) {
@@ -244,9 +243,9 @@ str2type(const char *format_string, rt_pnt_type *pnt_type, struct bu_vls *ged_re
             bu_vls_printf(ged_result_str, "Invalid format string '%s'", format_string);
             ret = GED_ERROR;
         }
-
-        bu_free(temp_string, "str2type: temp_string");
     }
+
+    bu_vls_free(&str);
 
     return ret;
 }
