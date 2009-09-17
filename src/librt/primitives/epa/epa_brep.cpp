@@ -126,11 +126,11 @@ rt_epa_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *t
     ON_4dPoint pt03 = ON_4dPoint(0, r2, 0, 1);
     epacurvedsurf->SetCV(0,2,pt03);
     
-    ON_4dPoint pt04 = ON_4dPoint(0, 0, h/sqrt(2), 1/sqrt(2));
+    ON_4dPoint pt04 = ON_4dPoint(0, 0, h/sqrt(2.), 1/sqrt(2.));
     epacurvedsurf->SetCV(1,0,pt04);      
-    ON_4dPoint pt05 = ON_4dPoint(r1/2/sqrt(2), r2/2/sqrt(2), h/sqrt(2), 1/sqrt(2));
+    ON_4dPoint pt05 = ON_4dPoint(r1/2/sqrt(2.), r2/2/sqrt(2.), h/sqrt(2.), 1/sqrt(2.));
     epacurvedsurf->SetCV(1,1,pt05);      
-    ON_4dPoint pt06 = ON_4dPoint(r1/sqrt(2), r2/sqrt(2), 0, 1/sqrt(2));
+    ON_4dPoint pt06 = ON_4dPoint(r1/sqrt(2.), r2/sqrt(2.), 0, 1/sqrt(2.));
     epacurvedsurf->SetCV(1,2,pt06);
     
     ON_4dPoint pt07 = ON_4dPoint(0, 0, h, 1);
@@ -140,11 +140,11 @@ rt_epa_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *t
     ON_4dPoint pt09 = ON_4dPoint(r1, 0, 0, 1);
     epacurvedsurf->SetCV(2,2,pt09);
     
-    ON_4dPoint pt10 = ON_4dPoint(0, 0, h/sqrt(2), 1/sqrt(2));
+    ON_4dPoint pt10 = ON_4dPoint(0, 0, h/sqrt(2.), 1/sqrt(2.));
     epacurvedsurf->SetCV(3,0,pt10);      
-    ON_4dPoint pt11 = ON_4dPoint(r1/2/sqrt(2), -r2/2/sqrt(2), h/sqrt(2), 1/sqrt(2));
+    ON_4dPoint pt11 = ON_4dPoint(r1/2/sqrt(2.), -r2/2/sqrt(2.), h/sqrt(2.), 1/sqrt(2.));
     epacurvedsurf->SetCV(3,1,pt11);      
-    ON_4dPoint pt12 = ON_4dPoint(r1/sqrt(2), -r2/sqrt(2), 0, 1/sqrt(2));
+    ON_4dPoint pt12 = ON_4dPoint(r1/sqrt(2.), -r2/sqrt(2.), 0, 1/sqrt(2.));
     epacurvedsurf->SetCV(3,2,pt12);
     
     ON_4dPoint pt13 = ON_4dPoint(0, 0, h, 1);
@@ -154,11 +154,11 @@ rt_epa_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *t
     ON_4dPoint pt15 = ON_4dPoint(0, -r2, 0, 1);
     epacurvedsurf->SetCV(4,2,pt15);
    
-    ON_4dPoint pt16 = ON_4dPoint(0, 0, h/sqrt(2), 1/sqrt(2));
+    ON_4dPoint pt16 = ON_4dPoint(0, 0, h/sqrt(2.), 1/sqrt(2.));
     epacurvedsurf->SetCV(5,0,pt16);      
-    ON_4dPoint pt17 = ON_4dPoint(-r1/2/sqrt(2), -r2/2/sqrt(2), h/sqrt(2), 1/sqrt(2));
+    ON_4dPoint pt17 = ON_4dPoint(-r1/2/sqrt(2.), -r2/2/sqrt(2.), h/sqrt(2.), 1/sqrt(2.));
     epacurvedsurf->SetCV(5,1,pt17);      
-    ON_4dPoint pt18 = ON_4dPoint(-r1/sqrt(2), -r2/sqrt(2), 0, 1/sqrt(2));
+    ON_4dPoint pt18 = ON_4dPoint(-r1/sqrt(2.), -r2/sqrt(2.), 0, 1/sqrt(2.));
     epacurvedsurf->SetCV(5,2,pt18);
     
     ON_4dPoint pt19 = ON_4dPoint(0, 0, h, 1);
@@ -168,11 +168,11 @@ rt_epa_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *t
     ON_4dPoint pt21 = ON_4dPoint(-r1, 0, 0, 1);
     epacurvedsurf->SetCV(6,2,pt21);
     
-    ON_4dPoint pt22 = ON_4dPoint(0, 0, h/sqrt(2), 1/sqrt(2));
+    ON_4dPoint pt22 = ON_4dPoint(0, 0, h/sqrt(2.), 1/sqrt(2.));
     epacurvedsurf->SetCV(7,0,pt22);      
-    ON_4dPoint pt23 = ON_4dPoint(-r1/2/sqrt(2), r2/2/sqrt(2), h/sqrt(2), 1/sqrt(2));
+    ON_4dPoint pt23 = ON_4dPoint(-r1/2/sqrt(2.), r2/2/sqrt(2.), h/sqrt(2.), 1/sqrt(2.));
     epacurvedsurf->SetCV(7,1,pt23);      
-    ON_4dPoint pt24 = ON_4dPoint(-r1/sqrt(2), r2/sqrt(2), 0, 1/sqrt(2));
+    ON_4dPoint pt24 = ON_4dPoint(-r1/sqrt(2.), r2/sqrt(2.), 0, 1/sqrt(2.));
     epacurvedsurf->SetCV(7,2,pt24);
    
     ON_4dPoint pt25 = ON_4dPoint(0, 0, h, 1);
