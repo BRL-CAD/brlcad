@@ -49,6 +49,7 @@ extern "C" {
     extern void rt_rhc_brep(ON_Brep **bi, struct rt_db_internal *ip, const struct bn_tol *tol);
     extern void rt_rpc_brep(ON_Brep **bi, struct rt_db_internal *ip, const struct bn_tol *tol);
     extern void rt_epa_brep(ON_Brep **bi, struct rt_db_internal *ip, const struct bn_tol *tol);
+    extern void rt_ehy_brep(ON_Brep **bi, struct rt_db_internal *ip, const struct bn_tol *tol);
     extern void rt_tgc_brep(ON_Brep **bi, struct rt_db_internal *ip, const struct bn_tol *tol);
     extern void rt_tor_brep(ON_Brep **bi, struct rt_db_internal *ip, const struct bn_tol *tol);
 
@@ -337,14 +338,13 @@ main(int argc, char** argv)
     const char* rpc_name = "rpc_nurb.s";
     mk_brep(outfp, rpc_name, rpcbrep);
     delete rpcbrep;
-*/
 
     bu_log("Writing an EPA b-rep...\n");
     ON_Brep* epabrep = ON_Brep::New();
     struct rt_epa_internal *epa;
     BU_GETSTRUCT(epa, rt_epa_internal);
     epa->epa_magic = RT_EPA_INTERNAL_MAGIC;
-    VSET(epa->epa_V, 0, 0, -1000);
+    VSET(epa->epa_V, 0, 0, 0);
     VSET(epa->epa_H, 0, 0, 2000);
     VSET(epa->epa_Au, 1, 0, 0);
     epa->epa_r1 = 1000;
@@ -354,7 +354,24 @@ main(int argc, char** argv)
     const char* epa_name = "epa_nurb.s";
     mk_brep(outfp, epa_name, epabrep);
     delete epabrep;
-    
+ */
+    bu_log("Writing an EHY b-rep...\n");
+    ON_Brep* ehybrep = ON_Brep::New();
+    struct rt_ehy_internal *ehy;
+    BU_GETSTRUCT(ehy, rt_ehy_internal);
+    ehy->ehy_magic = RT_EHY_INTERNAL_MAGIC;
+    VSET(ehy->ehy_V, 0, 0, 0);
+    VSET(ehy->ehy_H, 0, 0, 2000);
+    VSET(ehy->ehy_Au, 1, 0, 0);
+    ehy->ehy_r1 = 1000;
+    ehy->ehy_r2 = 500;
+    ehy->ehy_c = 400;
+    tmp_internal->idb_ptr = (genptr_t)ehy;
+    rt_ehy_brep(&ehybrep, tmp_internal, tol);
+    const char* ehy_name = "ehy_nurb.s";
+    mk_brep(outfp, ehy_name, ehybrep);
+    delete ehybrep;
+   
     bu_log("Writing a TGC b-rep...\n");
     ON_Brep* tgcbrep = ON_Brep::New();
     struct rt_tgc_internal *tgc;
