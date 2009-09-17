@@ -262,34 +262,34 @@ str2type(const char *format_string, rt_pnt_type *pnt_type, struct bu_vls *ged_re
 int
 str2mm(const char *units_string, double *conv_factor, struct bu_vls *ged_result_str)
 {
+    struct bu_vls str;
     double tmp_value = 0.0;
-    char *temp_char_ptr = (char *)NULL;
     char *endp = (char *)NULL;
-    char *temp_string = (char *)NULL;
     int ret = GED_OK;
+
+    bu_vls_init(&str);
 
     if ((units_string == (char *)NULL) || (conv_factor == (double *)NULL)) {
         bu_vls_printf(ged_result_str, "NULL pointer(s) passed to function 'str2mm'.\n");
         ret = GED_ERROR;
     }
     else {
-        temp_string = (char*)bu_malloc(strlen(units_string)+1, "str2mm: temp_string");
-        temp_char_ptr = strcpy(temp_string, units_string);
-        remove_whitespace(temp_string);
+	bu_vls_strcat(&str, units_string);
+	bu_vls_trimspace(&str);
 
-        tmp_value = strtod(temp_string, &endp);
-        if ((temp_string != endp) && (*endp == '\0')) {
+        tmp_value = strtod(bu_vls_addr(&str), &endp);
+        if ((endp != bu_vls_addr(&str)) && (*endp == '\0')) {
             /* convert to double success */
             *conv_factor = tmp_value;
-        } else if ((tmp_value = bu_mm_value(temp_string)) > 0.0) {
+        } else if ((tmp_value = bu_mm_value(bu_vls_addr(&str))) > 0.0) {
             *conv_factor = tmp_value;
         } else {
             bu_vls_printf(ged_result_str, "Invalid units string '%s'\n", units_string);
             ret = GED_ERROR;
         }
-
-        bu_free(temp_string, "str2mm: temp_string");
     }
+
+    bu_vls_free(&str);
 
     return ret;
 }
