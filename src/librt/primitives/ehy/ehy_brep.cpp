@@ -19,7 +19,7 @@
  */
 /** @file ehy_brep.cpp
  *
- * Convert an ehy to b-rep form
+ * Convert a Right Parabolic Cylinder to b-rep form
  *
  */
 
@@ -97,98 +97,74 @@ rt_ehy_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *t
     bp->SetExtents(1,bp->Domain(1));
     (*b)->SetTrimIsoFlags(bface);
  
-    //  Now, the hard part.  Need an elliptical hyperbolic NURBS surface
+    //  Now, the hard part.  Need an elliptical hyperboloic NURBS surface
+    //  First step is to create a nurbs curve.
     
-    ON_NurbsSurface* ehycurvedsurf = ON_NurbsSurface::New(3,true,3,3,9,3);
-    ehycurvedsurf->SetKnot(0, 0, 0);
-    ehycurvedsurf->SetKnot(0, 1, 0);
-    ehycurvedsurf->SetKnot(0, 2, 1.571);
-    ehycurvedsurf->SetKnot(0, 3, 1.571);
-    ehycurvedsurf->SetKnot(0, 4, 3.142);
-    ehycurvedsurf->SetKnot(0, 5, 3.142);
-    ehycurvedsurf->SetKnot(0, 6, 4.713);
-    ehycurvedsurf->SetKnot(0, 7, 4.713);
-    ehycurvedsurf->SetKnot(0, 8, 6.284);
-    ehycurvedsurf->SetKnot(0, 9, 6.284);
-    ehycurvedsurf->SetKnot(1, 0, 0);
-    ehycurvedsurf->SetKnot(1, 1, 0);
-    ehycurvedsurf->SetKnot(1, 2, eip->ehy_r1*2);
-    ehycurvedsurf->SetKnot(1, 3, eip->ehy_r1*2);
-
     double intercept_calc = (eip->ehy_c)*(eip->ehy_c)/(MAGNITUDE(eip->ehy_H) + eip->ehy_c);
     double intercept_dist = MAGNITUDE(eip->ehy_H) + eip->ehy_c - intercept_calc;
     double intercept_length = intercept_dist - MAGNITUDE(eip->ehy_H);
     double MX = MAGNITUDE(eip->ehy_H);
     double MP = MX + intercept_length;
-    double w = 1/sqrt((MX/MP)/(1-MX/MP));
+    double w = (MX/MP)/(1-MX/MP);
     
-    double h = MAGNITUDE(eip->ehy_H);
-    double r1 = eip->ehy_r1;
-    double r2 = eip->ehy_r2;
+    point_t ep1, ep2, ep3, tmppt;
+    VSET(ep1,-eip->ehy_r1,0,0);
+    VSET(ep2,0,0,w*intercept_dist);
+    VSET(ep3,eip->ehy_r1,0,0);
+    ON_3dPoint onp1 = ON_3dPoint(ep1);
+    ON_3dPoint onp2 = ON_3dPoint(ep2);
+    ON_3dPoint onp3 = ON_3dPoint(ep3);
+
+    ON_3dPointArray cpts(3);
+    cpts.Append(onp1);
+    cpts.Append(onp2);
+    cpts.Append(onp3);
+    ON_BezierCurve *bcurve = new ON_BezierCurve(cpts);
+    bcurve->MakeRational();
+    bcurve->SetWeight(1,w);
     
-    ON_4dPoint pt01 = ON_4dPoint(0, 0, h, 1);
-    ehycurvedsurf->SetCV(0,0,pt01);
-    ON_4dPoint pt02 = ON_4dPoint(0, r2/2, h, 1);
-    ehycurvedsurf->SetCV(0,1,pt02);
-    ON_4dPoint pt03 = ON_4dPoint(0, r2, 0, 1);
-    ehycurvedsurf->SetCV(0,2,pt03);
+    ON_NurbsCurve* tnurbscurve = ON_NurbsCurve::New();
+    bcurve->GetNurbForm(*tnurbscurve);
+    ON_NurbsCurve* hypbnurbscurve = ON_NurbsCurve::New();
+    const ON_Interval subinterval = ON_Interval(0,0.5);
+    tnurbscurve->GetNurbForm(*hypbnurbscurve,0.0, &subinterval);
+
+    hypbnurbscurve->Dump(*dump);
     
-    ON_4dPoint pt04 = ON_4dPoint(0, 0, h*w, w);
-    ehycurvedsurf->SetCV(1,0,pt04);      
-    ON_4dPoint pt05 = ON_4dPoint(r1/2*w, r2/2*w, h*w, w);
-    ehycurvedsurf->SetCV(1,1,pt05);      
-    ON_4dPoint pt06 = ON_4dPoint(r1*1/sqrt(2), r2*1/sqrt(2), 0, 1/sqrt(2));
-    ehycurvedsurf->SetCV(1,2,pt06);
+    // Next, rotate that curve around the height vector.
+
+    point_t revpoint1, revpoint2;
+    VSET(revpoint1, 0,0,0);
+    VSET(revpoint2, 0,0,MX);
+    ON_3dPoint rpnt1 = ON_3dPoint(revpoint1);
+    ON_3dPoint rpnt2 = ON_3dPoint(revpoint2);
     
-    ON_4dPoint pt07 = ON_4dPoint(0, 0, h, 1);
-    ehycurvedsurf->SetCV(2,0,pt07);      
-    ON_4dPoint pt08 = ON_4dPoint(r1/2, 0, h, 1);
-    ehycurvedsurf->SetCV(2,1,pt08);      
-    ON_4dPoint pt09 = ON_4dPoint(r1, 0, 0, 1);
-    ehycurvedsurf->SetCV(2,2,pt09);
+    ON_Line revaxis = ON_Line(rpnt1, rpnt2); 
+    ON_RevSurface* hyp_surf = ON_RevSurface::New();
+    hyp_surf->m_curve = hypbnurbscurve;
+    hyp_surf->m_axis = revaxis;
+    hyp_surf->m_angle = ON_Interval(0,2*ON_PI);
     
-    ON_4dPoint pt10 = ON_4dPoint(0, 0, h*w, w);
-    ehycurvedsurf->SetCV(3,0,pt10);      
-    ON_4dPoint pt11 = ON_4dPoint(r1/2*w, -r2/2*w, h*w, w);
-    ehycurvedsurf->SetCV(3,1,pt11);      
-    ON_4dPoint pt12 = ON_4dPoint(r1*1/sqrt(2), -r2*1/sqrt(2), 0, 1/sqrt(2));
-    ehycurvedsurf->SetCV(3,2,pt12);
+    // Get the NURBS form of the surface
+    ON_NurbsSurface *ehycurvedsurf = ON_NurbsSurface::New();
+    hyp_surf->GetNurbForm(*ehycurvedsurf, 0.0); 
+    ehycurvedsurf->Dump(*dump);
     
-    ON_4dPoint pt13 = ON_4dPoint(0, 0, h, 1);
-    ehycurvedsurf->SetCV(4,0,pt13);      
-    ON_4dPoint pt14 = ON_4dPoint(0, -r2/2, h, 1);
-    ehycurvedsurf->SetCV(4,1,pt14);      
-    ON_4dPoint pt15 = ON_4dPoint(0, -r2, 0, 1);
-    ehycurvedsurf->SetCV(4,2,pt15);
-   
-    ON_4dPoint pt16 = ON_4dPoint(0, 0, h*w, w);
-    ehycurvedsurf->SetCV(5,0,pt16);      
-    ON_4dPoint pt17 = ON_4dPoint(-r1/2*w, -r2/2*w, h*w, w);
-    ehycurvedsurf->SetCV(5,1,pt17);      
-    ON_4dPoint pt18 = ON_4dPoint(-r1*1/sqrt(2), -r2*1/sqrt(2), 0, 1/sqrt(2));
-    ehycurvedsurf->SetCV(5,2,pt18);
-    
-    ON_4dPoint pt19 = ON_4dPoint(0, 0, h, 1);
-    ehycurvedsurf->SetCV(6,0,pt19);      
-    ON_4dPoint pt20 = ON_4dPoint(-r1/2, 0, h, 1);
-    ehycurvedsurf->SetCV(6,1,pt20);      
-    ON_4dPoint pt21 = ON_4dPoint(-r1, 0, 0, 1);
-    ehycurvedsurf->SetCV(6,2,pt21);
-    
-    ON_4dPoint pt22 = ON_4dPoint(0, 0, h*w, w);
-    ehycurvedsurf->SetCV(7,0,pt22);      
-    ON_4dPoint pt23 = ON_4dPoint(-r1/2*w, r2/2*w, h*w, w);
-    ehycurvedsurf->SetCV(7,1,pt23);      
-    ON_4dPoint pt24 = ON_4dPoint(-r1*1/sqrt(2), r2*1/sqrt(2), 0, 1/sqrt(2));
-    ehycurvedsurf->SetCV(7,2,pt24);
-   
-    ON_4dPoint pt25 = ON_4dPoint(0, 0, h, 1);
-    ehycurvedsurf->SetCV(8,0,pt25);      
-    ON_4dPoint pt26 = ON_4dPoint(0, r2/2, h, 1);
-    ehycurvedsurf->SetCV(8,1,pt26);      
-    ON_4dPoint pt27 = ON_4dPoint(0, r2, 0, 1);
-    ehycurvedsurf->SetCV(8,2,pt27);
-   
+    // Last but not least, scale the control points of the
+    // resulting surface to map to the longer axis.
+
+    for( int i = 0; i < ehycurvedsurf->CVCount(0); i++ ) {
+	for (int j = 0; j < ehycurvedsurf->CVCount(1); j++) {
+	    point_t cvpt;
+	    ON_4dPoint ctrlpt;
+	    ehycurvedsurf->GetCV(i,j, ctrlpt);
+	    VSET(cvpt, ctrlpt.x, ctrlpt.y * eip->ehy_r2/eip->ehy_r1, ctrlpt.z);
+	    ON_4dPoint newpt = ON_4dPoint(cvpt[0],cvpt[1],cvpt[2],ctrlpt.w);
+	    ehycurvedsurf->SetCV(i,j, newpt);
+	}
+    }
+  
+       
     bu_log("Valid nurbs surface: %d\n", ehycurvedsurf->IsValid(dump));
     ehycurvedsurf->Dump(*dump);
 
@@ -197,6 +173,7 @@ rt_ehy_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *t
     ON_BrepFace& face = (*b)->NewFace(surfindex - 1);
     int faceindex = (*b)->m_F.Count();
     ON_BrepLoop* outerloop = (*b)->NewOuterLoop(faceindex-1);
+    bu_log("Valid brep face: %d\n", face.IsValid(dump));
 }
 
 // Local Variables:
