@@ -25,12 +25,6 @@ add_subdirectory(Dll ./Dll)
 
 # build tools
 add_subdirectory(../../src/conv ./conv)
-add_subdirectory(../../src/conv/3dm ./3dm)
-add_subdirectory(../../src/conv/comgeom ./comgeom)
-add_subdirectory(../../src/conv/dxf ./dxf)
 add_subdirectory(../../src/conv/iges ./iges)
 add_subdirectory(../../src/conv/intaval ./intaval)
-add_subdirectory(../../src/conv/jack ./jack)
-add_subdirectory(../../src/conv/off ./off)
-add_subdirectory(../../src/conv/patch ./patch)
 add_subdirectory(../../src/nirt ./nirt)
