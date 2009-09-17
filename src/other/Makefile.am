@@ -178,7 +178,17 @@ endif
 # end ONLY_BENCHMARK
 
 EXTRA_DIST = \
-	boost
+	boost \
+	tkhtml3/COPYRIGHT \
+	tkhtml3/Makefile \
+	tkhtml3/Makefile.in \
+	tkhtml3/README \
+	tkhtml3/aclocal.m4 \
+	tkhtml3/configure \
+	tkhtml3/configure.in \
+	tkhtml3/doc \
+	tkhtml3/src \
+	tkhtml3/tclconfig
 
 # FIXME: need to only traverse tcl/tk if configured
 DIST_SUBDIRS = \
@@ -196,7 +206,6 @@ DIST_SUBDIRS = \
 	step \
 	tcl \
 	tk \
-	tkhtml3 \
 	tkimg \
 	tnt
 
