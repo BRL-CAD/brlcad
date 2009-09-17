@@ -93,8 +93,8 @@ struct jobList {
 };
 
 #define COPY_JOB(a, b) \
-    VMOVE(((struct job)a).pt, ((struct job)b).pt);	\
-    VMOVE(((struct job)a).dir, ((struct job)b).dir);
+    VMOVE((a).pt, (b).pt);	\
+    VMOVE((a).dir, (b).dir);
 
 #define START_TABLE_SIZE 64
 #define KEY_LENGTH 3
