@@ -33,18 +33,8 @@
 #include "./ged_private.h"
 
 #if 1
-RT_EXPORT BU_EXTERN(int brep_info,
-		    (struct brep_specific* bs,struct bu_vls *vls));
-RT_EXPORT BU_EXTERN(int brep_face_info,
-		    (struct brep_specific* bs,struct bu_vls *vls,int si));
-RT_EXPORT BU_EXTERN(int brep_surface_info,
-		    (struct brep_specific* bs,struct bu_vls *vls,int si));
-RT_EXPORT BU_EXTERN(int brep_surface_plot,
-		    (struct bu_vls *vls, struct brep_specific* bs, struct rt_brep_internal* bi, struct bn_vlblock *vbp,int index,int plotres));
-RT_EXPORT BU_EXTERN(int brep_facetrim_plot,
-		    (struct bu_vls *vls, struct brep_specific* bs, struct rt_brep_internal* bi, struct bn_vlblock *vbp,int index));
 RT_EXPORT BU_EXTERN(int brep_command,
-		    (struct bu_vls *vls, struct brep_specific* bs, struct rt_brep_internal* bi, struct bn_vlblock *vbp,int argc, char *argv[]));
+		    (struct bu_vls *vls, struct brep_specific* bs, struct rt_brep_internal* bi, struct bn_vlblock *vbp,int argc, char *argv[], char *commtag));
 #else
 extern int brep_surface_plot(struct ged *gedp, struct brep_specific* bs, struct rt_brep_internal* bi, struct bn_vlblock *vbp,int index);
 #endif
@@ -62,6 +52,8 @@ ged_brep(struct ged *gedp, int argc, const char *argv[])
     struct brep_specific* bs;
     struct soltab *stp;
     int real_flag;
+    char		commtag[64];
+    char		namebuf[64];
     
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
     GED_CHECK_DRAWABLE(gedp, GED_ERROR);
@@ -125,9 +117,11 @@ ged_brep(struct ged *gedp, int argc, const char *argv[])
 
     vbp = rt_vlblock_init();
 
-    brep_command(&gedp->ged_result_str,bs,bi,vbp,argc,argv);
+    brep_command(&gedp->ged_result_str,bs,bi,vbp,argc,argv,commtag);
 
-    ged_cvt_vlblock_to_solids(gedp, vbp, solid_name, 0);
+
+	snprintf(namebuf, 64, "%s%s_", commtag, solid_name);
+    ged_cvt_vlblock_to_solids(gedp, vbp, namebuf, 0);
     rt_vlblock_free(vbp);
     vbp = (struct bn_vlblock *)NULL;
 
