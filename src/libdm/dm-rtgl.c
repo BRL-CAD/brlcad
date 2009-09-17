@@ -31,6 +31,7 @@
 #include <stdio.h>
 #include <math.h>
 #include <string.h>
+#include <time.h>
 
 #ifdef HAVE_X11_XOSDEFS_H
 #  include <X11/Xfuncproto.h>
@@ -917,7 +918,6 @@ double startScale = 1;
 HIDDEN int
 rtgl_loadMatrix(struct dm *dmp, fastf_t *mat, int which_eye)
 {
-    GLfloat gtmat[16];
     mat_t newm;
 
     fastf_t clip, scale = 1;
@@ -1257,9 +1257,8 @@ double jitter(double range) {
 
 void randShots(fastf_t *center, fastf_t radius, int flag) {
     int i, j;
-    vect_t view, dir, jit, test;
+    vect_t view, dir;
     point_t pt;
-    double halfRad = radius / 2;
     view[2] = 0;
 
     glDisable(GL_LIGHTING);
@@ -1421,21 +1420,23 @@ void shuffleJobs(void) {
 void shootGrid(vect_t min, vect_t max, double maxSpan, int pixels, int uAxis, int vAxis, int iAxis) {
     int i, j;
     vect_t span;
+    int uDivs, vDivs;
+    fastf_t uWidth, vWidth;
 
     /* calculate span in each dimension */
     VSUB2(span, max, min);
 
     /* calculate firing intervals (trying to achieve pixel density) */
-    int uDivs = pixels * (span[uAxis] / maxSpan);
-    int vDivs = pixels * (span[vAxis] / maxSpan);
+    uDivs = pixels * (span[uAxis] / maxSpan);
+    vDivs = pixels * (span[vAxis] / maxSpan);
 
 #if 0
     uDivs /= 2;
     vDivs /= 2;
 #endif
 
-    fastf_t uWidth = span[uAxis] / uDivs;
-    fastf_t vWidth = span[vAxis] / vDivs;
+    uWidth = span[uAxis] / uDivs;
+    vWidth = span[vAxis] / vDivs;
 
     /* calculate starting offsets */
     fastf_t uOff;
@@ -1615,8 +1616,10 @@ rtgl_drawVList(struct dm *dmp, register struct bn_vlist *vp)
     int i, j, new, numVisible, numNew, maxPixels, viewSize;
     vect_t span;
     char *currTree, *visibleTrees[RT_MAXARGS];
-    struct ptInfoList *curr;
-    
+    struct db_i *dbip;
+
+    vect_t vCenter;
+
     /* get ged struct */
     struct ged *gedp = RTGL_GEDP;
 
@@ -1624,7 +1627,7 @@ rtgl_drawVList(struct dm *dmp, register struct bn_vlist *vp)
 	return TCL_ERROR;
 
     /* get database instance */
-    struct db_i *dbip = gedp->ged_wdbp->dbip;
+    dbip = gedp->ged_wdbp->dbip;
     
     if (dbip == DBI_NULL)
 	return TCL_ERROR;
@@ -1781,20 +1784,20 @@ rtgl_drawVList(struct dm *dmp, register struct bn_vlist *vp)
     } /* numNew > 0 */
 
     /* get view vector */
-    vect_t vCenter;
     VSET(vCenter, 0, 0, 0);
     aeVect(view, gedp->ged_gvp->gv_aet, vCenter, 1);
 
-    double wait = difftime(time(NULL), start);
+    if (difftime(time(NULL), start) > 3) {
 
-    if (wait > 3) {
+	/* adjust point size based on zoom */
+	int pointSize = 2;
+
+	/* adjust point size based on % jobs completed */
+	double p = (double) numShot / (double) numJobs;
 
 	float fview[3];
 	VMOVE(fview, view);
 
-	/* adjust point size based on zoom */
-	int pointSize = 2;
-	
 	if (maxSpan != 0.0) {
 	    double ratio = maxSpan / viewSize;
 	    
@@ -1804,11 +1807,7 @@ rtgl_drawVList(struct dm *dmp, register struct bn_vlist *vp)
 		pointSize = 1;
 	}
 	
-	/* adjust point size based on % jobs completed */
-	double p = (double) numShot / (double) numJobs;
 	pointSize = round((double)pointSize / p);
-	
-	
 	if (pointSize > (maxPixels / 50)) {
 	    pointSize = maxPixels / 50;
 	}
