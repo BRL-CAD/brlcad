@@ -113,6 +113,10 @@ __BEGIN_DECLS
     (_gedp)->ged_wdbp = (_wdbp); \
 }
 
+#define GED_INITIALIZED(_gedp) ((_gedp)->ged_wdbp != RT_WDB_NULL)
+#define GED_LOCAL2BASE(_gedp) ((_gedp)->ged_wdbp->dbip->dbi_local2base)
+#define GED_BASE2LOCAL(_gedp) ((_gedp)->ged_wdbp->dbip->dbi_base2local)
+
 /** Check if the object is a combination */
 #define	GED_CHECK_COMB(_gedp, _dp, _flags) \
     if (((_dp)->d_flags & DIR_COMB) == 0) { \
