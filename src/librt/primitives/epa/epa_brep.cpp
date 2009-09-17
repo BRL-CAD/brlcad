@@ -98,60 +98,90 @@ rt_epa_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *t
     (*b)->SetTrimIsoFlags(bface);
  
     //  Now, the hard part.  Need an elliptical parabolic NURBS surface
-    //  First step is to create a unit parabola that represents the surface
-    //  along the minor axis.
-
-    point_t y_tmp, y_rev_dir, ep1, ep2, ep3, tmppt;
-    VREVERSE(y_rev_dir, y_dir);
-    VADD2(ep1, p1_origin, y_rev_dir);
-    VSCALE(tmppt, eip->epa_H, 2);
-    VADD2(ep2, p1_origin, tmppt);
-    VADD2(ep3, p1_origin, y_dir);
-    ON_3dPoint onp1 = ON_3dPoint(ep1);
-    ON_3dPoint onp2 = ON_3dPoint(ep2);
-    ON_3dPoint onp3 = ON_3dPoint(ep3);
-     
     
-    ON_NurbsCurve* parabnurbscurve = ON_NurbsCurve::New(3,false,3,3);
-    parabnurbscurve->SetKnot(0, 0);
-    parabnurbscurve->SetKnot(1, 0);
-    parabnurbscurve->SetKnot(2, 1);
-    parabnurbscurve->SetKnot(3, 1);
-    parabnurbscurve->SetCV(0,ON_3dPoint(ep1));  
-    parabnurbscurve->SetCV(1,ON_3dPoint(ep2));
-    parabnurbscurve->SetCV(2,ON_3dPoint(ep3)); 
+    ON_NurbsSurface* epacurvedsurf = ON_NurbsSurface::New(3,true,3,3,9,3);
+    epacurvedsurf->SetKnot(0, 0, 0);
+    epacurvedsurf->SetKnot(0, 1, 0);
+    epacurvedsurf->SetKnot(0, 2, 1.571);
+    epacurvedsurf->SetKnot(0, 3, 1.571);
+    epacurvedsurf->SetKnot(0, 4, 3.142);
+    epacurvedsurf->SetKnot(0, 5, 3.142);
+    epacurvedsurf->SetKnot(0, 6, 4.713);
+    epacurvedsurf->SetKnot(0, 7, 4.713);
+    epacurvedsurf->SetKnot(0, 8, 6.284);
+    epacurvedsurf->SetKnot(0, 9, 6.284);
+    epacurvedsurf->SetKnot(1, 0, 0);
+    epacurvedsurf->SetKnot(1, 1, 0);
+    epacurvedsurf->SetKnot(1, 2, eip->epa_r1*2);
+    epacurvedsurf->SetKnot(1, 3, eip->epa_r1*2);
 
-    // Next, rotate that curve around the height vector.
-
-    point_t revpoint;
-    VADD2(revpoint, p1_origin, eip->epa_H);
-    ON_3dPoint rpnt = ON_3dPoint(revpoint);
+    double h = MAGNITUDE(eip->epa_H);
+    double r1 = eip->epa_r1;
+    double r2 = eip->epa_r2;
     
-    ON_Line revaxis = ON_Line(plane1_origin, rpnt); 
-    ON_RevSurface* para_surf = ON_RevSurface::New();
-    para_surf->m_curve = parabnurbscurve;
-    para_surf->m_axis = revaxis;
-    para_surf->m_angle = ON_Interval(0,2*ON_PI);
+    ON_4dPoint pt01 = ON_4dPoint(0, 0, h, 1);
+    epacurvedsurf->SetCV(0,0,pt01);
+    ON_4dPoint pt02 = ON_4dPoint(0, r2/2, h, 1);
+    epacurvedsurf->SetCV(0,1,pt02);
+    ON_4dPoint pt03 = ON_4dPoint(0, r2, 0, 1);
+    epacurvedsurf->SetCV(0,2,pt03);
     
-    // Get the NURBS form of the surface
-    ON_NurbsSurface *epacurvedsurf = ON_NurbsSurface::New();
-    para_surf->GetNurbForm(*epacurvedsurf, 0.0); 
+    ON_4dPoint pt04 = ON_4dPoint(0, 0, h/sqrt(2), 1/sqrt(2));
+    epacurvedsurf->SetCV(1,0,pt04);      
+    ON_4dPoint pt05 = ON_4dPoint(r1/2/sqrt(2), r2/2/sqrt(2), h/sqrt(2), 1/sqrt(2));
+    epacurvedsurf->SetCV(1,1,pt05);      
+    ON_4dPoint pt06 = ON_4dPoint(r1/sqrt(2), r2/sqrt(2), 0, 1/sqrt(2));
+    epacurvedsurf->SetCV(1,2,pt06);
     
-    // Last but not least, scale the control points of the
-    // resulting surface to map to the longer axis.
-
-    for( int i = 0; i < epacurvedsurf->CVCount(0); i++ ) {
-	for (int j = 0; j < epacurvedsurf->CVCount(1); j++) {
-	    point_t cvpt;
-	    ON_4dPoint ctrlpt;
-	    epacurvedsurf->GetCV(i,j, ctrlpt);
-	    VSET(cvpt, ctrlpt.x * eip->epa_r1, ctrlpt.y * eip->epa_r2, ctrlpt.z);
-	    ON_4dPoint newpt = ON_4dPoint(cvpt[0],cvpt[1],cvpt[2],ctrlpt.w);
-	    epacurvedsurf->SetCV(i,j, newpt);
-	}
-    }
-  
-       
+    ON_4dPoint pt07 = ON_4dPoint(0, 0, h, 1);
+    epacurvedsurf->SetCV(2,0,pt07);      
+    ON_4dPoint pt08 = ON_4dPoint(r1/2, 0, h, 1);
+    epacurvedsurf->SetCV(2,1,pt08);      
+    ON_4dPoint pt09 = ON_4dPoint(r1, 0, 0, 1);
+    epacurvedsurf->SetCV(2,2,pt09);
+    
+    ON_4dPoint pt10 = ON_4dPoint(0, 0, h/sqrt(2), 1/sqrt(2));
+    epacurvedsurf->SetCV(3,0,pt10);      
+    ON_4dPoint pt11 = ON_4dPoint(r1/2/sqrt(2), -r2/2/sqrt(2), h/sqrt(2), 1/sqrt(2));
+    epacurvedsurf->SetCV(3,1,pt11);      
+    ON_4dPoint pt12 = ON_4dPoint(r1/sqrt(2), -r2/sqrt(2), 0, 1/sqrt(2));
+    epacurvedsurf->SetCV(3,2,pt12);
+    
+    ON_4dPoint pt13 = ON_4dPoint(0, 0, h, 1);
+    epacurvedsurf->SetCV(4,0,pt13);      
+    ON_4dPoint pt14 = ON_4dPoint(0, -r2/2, h, 1);
+    epacurvedsurf->SetCV(4,1,pt14);      
+    ON_4dPoint pt15 = ON_4dPoint(0, -r2, 0, 1);
+    epacurvedsurf->SetCV(4,2,pt15);
+   
+    ON_4dPoint pt16 = ON_4dPoint(0, 0, h/sqrt(2), 1/sqrt(2));
+    epacurvedsurf->SetCV(5,0,pt16);      
+    ON_4dPoint pt17 = ON_4dPoint(-r1/2/sqrt(2), -r2/2/sqrt(2), h/sqrt(2), 1/sqrt(2));
+    epacurvedsurf->SetCV(5,1,pt17);      
+    ON_4dPoint pt18 = ON_4dPoint(-r1/sqrt(2), -r2/sqrt(2), 0, 1/sqrt(2));
+    epacurvedsurf->SetCV(5,2,pt18);
+    
+    ON_4dPoint pt19 = ON_4dPoint(0, 0, h, 1);
+    epacurvedsurf->SetCV(6,0,pt19);      
+    ON_4dPoint pt20 = ON_4dPoint(-r1/2, 0, h, 1);
+    epacurvedsurf->SetCV(6,1,pt20);      
+    ON_4dPoint pt21 = ON_4dPoint(-r1, 0, 0, 1);
+    epacurvedsurf->SetCV(6,2,pt21);
+    
+    ON_4dPoint pt22 = ON_4dPoint(0, 0, h/sqrt(2), 1/sqrt(2));
+    epacurvedsurf->SetCV(7,0,pt22);      
+    ON_4dPoint pt23 = ON_4dPoint(-r1/2/sqrt(2), r2/2/sqrt(2), h/sqrt(2), 1/sqrt(2));
+    epacurvedsurf->SetCV(7,1,pt23);      
+    ON_4dPoint pt24 = ON_4dPoint(-r1/sqrt(2), r2/sqrt(2), 0, 1/sqrt(2));
+    epacurvedsurf->SetCV(7,2,pt24);
+   
+    ON_4dPoint pt25 = ON_4dPoint(0, 0, h, 1);
+    epacurvedsurf->SetCV(8,0,pt25);      
+    ON_4dPoint pt26 = ON_4dPoint(0, r2/2, h, 1);
+    epacurvedsurf->SetCV(8,1,pt26);      
+    ON_4dPoint pt27 = ON_4dPoint(0, r2, 0, 1);
+    epacurvedsurf->SetCV(8,2,pt27);
+   
     bu_log("Valid nurbs surface: %d\n", epacurvedsurf->IsValid(dump));
     epacurvedsurf->Dump(*dump);
 
@@ -160,7 +190,6 @@ rt_epa_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *t
     ON_BrepFace& face = (*b)->NewFace(surfindex - 1);
     int faceindex = (*b)->m_F.Count();
     ON_BrepLoop* outerloop = (*b)->NewOuterLoop(faceindex-1);
-    bu_log("Valid brep face: %d\n", face.IsValid(dump));
 }
 
 // Local Variables:
