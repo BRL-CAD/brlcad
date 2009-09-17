@@ -119,8 +119,7 @@ ged_glob(struct ged *gedp, int argc, const char *argv[])
 	   it to the database. */
 
 	if (regexp) {
-	    if (!(gedp->ged_wdbp)) return GED_OK;
-	    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
+	    GED_CHECK_DATABASE_OPEN(gedp, GED_INITIALIZED(gedp) ? GED_ERROR : GED_OK);
 	    bu_vls_trunc( &temp, 0 );
 	    if ( db_regexp_match_all( &temp, gedp->ged_wdbp->dbip,
 				      bu_vls_addr(&word) ) == 0 ) {
