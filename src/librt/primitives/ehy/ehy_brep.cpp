@@ -151,7 +151,7 @@ rt_ehy_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *t
     ehycurvedsurf->Dump(*dump);
     
     // Last but not least, scale the control points of the
-    // resulting surface to map to the longer axis.
+    // resulting surface to map to the shorter axis.
 
     for( int i = 0; i < ehycurvedsurf->CVCount(0); i++ ) {
 	for (int j = 0; j < ehycurvedsurf->CVCount(1); j++) {
