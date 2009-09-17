@@ -444,6 +444,7 @@ struct ged {
     void			(*ged_output_handler)();	/**< @brief  function for handling output */
     char			*ged_output_script;		/**< @brief  script for use by the outputHandler */
 
+    /* FIXME -- this ugly hack needs to die.  the result string should be stored before the call. */
     int 			ged_internal_call;
 };
 
