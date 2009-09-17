@@ -36,50 +36,50 @@
 #include "./ged_private.h"
 
 #define INSERT_COORDINATE_INTO_STRUCTURE(_structure_type, _control_variable, _variable_to_insert) \
-    switch (_control_variable) { \
-        case 'x': \
+    switch (_control_variable) {					\
+        case 'x':							\
             ((struct _structure_type *)point)->v[X] = _variable_to_insert; \
-            break; \
-        case 'y': \
+            break;							\
+        case 'y':							\
             ((struct _structure_type *)point)->v[Y] = _variable_to_insert; \
-            break; \
-        case 'z': \
+            break;							\
+        case 'z':							\
             ((struct _structure_type *)point)->v[Z] = _variable_to_insert; \
-            break; \
+            break;							\
     }
 
 #define INSERT_COLOR_INTO_STRUCTURE(_structure_type, _control_variable, _variable_to_insert) \
-    switch (_control_variable) { \
-        case 'r': \
+    switch (_control_variable) {					\
+        case 'r':							\
             ((struct _structure_type *)point)->c.buc_magic = BU_COLOR_MAGIC; \
             ((struct _structure_type *)point)->c.buc_rgb[0] = _variable_to_insert; \
-            break; \
-        case 'g': \
+            break;							\
+        case 'g':							\
             ((struct _structure_type *)point)->c.buc_rgb[1] = _variable_to_insert; \
-            break; \
-        case 'b': \
+            break;							\
+        case 'b':							\
             ((struct _structure_type *)point)->c.buc_rgb[2] = _variable_to_insert; \
-            break; \
+            break;							\
     }
 
 #define INSERT_SCALE_INTO_STRUCTURE(_structure_type, _control_variable, _variable_to_insert) \
-    switch (_control_variable) { \
-        case 's': \
+    switch (_control_variable) {					\
+        case 's':							\
             ((struct _structure_type *)point)->s = _variable_to_insert; \
-            break; \
+            break;							\
     }
 
 #define INSERT_NORMAL_INTO_STRUCTURE(_structure_type, _control_variable, _variable_to_insert) \
-    switch (_control_variable) { \
-        case 'i': \
+    switch (_control_variable) {					\
+        case 'i':							\
             ((struct _structure_type *)point)->n[X] = _variable_to_insert; \
-            break; \
-        case 'j': \
+            break;							\
+        case 'j':							\
             ((struct _structure_type *)point)->n[Y] = _variable_to_insert; \
-            break; \
-        case 'k': \
+            break;							\
+        case 'k':							\
             ((struct _structure_type *)point)->n[Z] = _variable_to_insert; \
-            break; \
+            break;							\
     }
 
 static char *p_make_pnts[] = {
@@ -182,9 +182,9 @@ remove_whitespace(char *input_string)
 
 /*
  * Validate 'point file data format string', determine and output the
- * point-cloud type. A valid null terminated string is expected as input.
- * The function returns GED_ERROR if the format string is invalid or
- * if null pointers were passed to the function.
+ * point-cloud type. A valid null terminated string is expected as
+ * input.  The function returns GED_ERROR if the format string is
+ * invalid or if null pointers were passed to the function.
  */
 int
 str2type(const char *format_string, rt_pnt_type *pnt_type, struct bu_vls *ged_result_str)
@@ -253,11 +253,12 @@ str2type(const char *format_string, rt_pnt_type *pnt_type, struct bu_vls *ged_re
 
 
 /*
- * Validate points data file unit string and output conversion factor to
- * millimeters. If string is not a standard units identifier, the function
- * assumes a custom conversion factor was specified. A valid null terminated
- * string is expected as input. The function returns GED_ERROR if the unit
- * string is invalid or if null pointers were passed to the function.
+ * Validate points data file unit string and output conversion factor
+ * to millimeters. If string is not a standard units identifier, the
+ * function assumes a custom conversion factor was specified. A valid
+ * null terminated string is expected as input. The function returns
+ * GED_ERROR if the unit string is invalid or if null pointers were
+ * passed to the function.
  */
 int
 str2mm(const char *units_string, double *conv_factor, struct bu_vls *ged_result_str)
@@ -310,14 +311,15 @@ report_import_error_location(unsigned long int num_doubles_read, unsigned int nu
 
 
 /*
- *  MGED/ARCHER command 'make_pnts' to import point-cloud data into 'pnts' primitive.
+ * 'make_pnts' command for importing point-cloud data into a 'pnts'
+ * primitive.
  *
- *  Input values:
- *  argv[1] object name
- *  argv[2] filename with path
- *  argv[3] point data file format string
- *  argv[4] point data file units string or conversion factor to millimeters
- *  argv[5] default size of each point
+ * Input values:
+ * argv[1] object name
+ * argv[2] filename with path
+ * argv[3] point data file format string
+ * argv[4] point data file units string or conversion factor to millimeters
+ * argv[5] default size of each point
  *
  */
 int
@@ -448,7 +450,7 @@ ged_make_pnts(struct ged *gedp, int argc, const char *argv[])
     format_string_length = strlen(format_string);
 
     /* init database structure */
-    RT_INIT_DB_INTERNAL( &internal );
+    RT_INIT_DB_INTERNAL(&internal );
     internal.idb_major_type = DB5_MAJORTYPE_BRLCAD;
     internal.idb_type = ID_PNTS;
     internal.idb_meth = &rt_functab[ID_PNTS];
@@ -515,7 +517,7 @@ ged_make_pnts(struct ged *gedp, int argc, const char *argv[])
         return GED_ERROR;
     }
 
-    while( !found_eof ) {  /* points_loop */
+    while (!found_eof ) {  /* points_loop */
         /* allocate memory for single point structure for current point-cloud type */
         switch (type) {
             case RT_PNT_TYPE_PNT:
@@ -544,9 +546,9 @@ ged_make_pnts(struct ged *gedp, int argc, const char *argv[])
                 break;
         }    
 
-        while( !found_eof && !done_processing_format_string ) {   /* format_string_loop */
+        while (!found_eof && !done_processing_format_string ) {   /* format_string_loop */
 
-            while( !found_eof  && !found_double ) {  /* find_doubles_loop */
+            while (!found_eof  && !found_double ) {  /* find_doubles_loop */
 
                 buf = fgetc(fp);
 
@@ -648,41 +650,41 @@ ged_make_pnts(struct ged *gedp, int argc, const char *argv[])
                 if (format_string[format_string_index] != '?') {
                     switch (type) {
                         case RT_PNT_TYPE_PNT:
-                            INSERT_COORDINATE_INTO_STRUCTURE(pnt, format_string[format_string_index], (temp_double * local2base))
-                            break;
+                            INSERT_COORDINATE_INTO_STRUCTURE(pnt, format_string[format_string_index], (temp_double * local2base));
+			    break;
                         case RT_PNT_TYPE_COL:
-                            INSERT_COORDINATE_INTO_STRUCTURE(pnt_color, format_string[format_string_index], (temp_double * local2base))
-                            INSERT_COLOR_INTO_STRUCTURE(pnt_color, format_string[format_string_index], temp_double)
-                            break;
+                            INSERT_COORDINATE_INTO_STRUCTURE(pnt_color, format_string[format_string_index], (temp_double * local2base));
+			    INSERT_COLOR_INTO_STRUCTURE(pnt_color, format_string[format_string_index], temp_double);
+			    break;
                         case RT_PNT_TYPE_SCA:
-                            INSERT_COORDINATE_INTO_STRUCTURE(pnt_scale, format_string[format_string_index], (temp_double * local2base))
-                            INSERT_SCALE_INTO_STRUCTURE(pnt_scale, format_string[format_string_index], (temp_double * local2base))
-                            break;
+                            INSERT_COORDINATE_INTO_STRUCTURE(pnt_scale, format_string[format_string_index], (temp_double * local2base));
+			    INSERT_SCALE_INTO_STRUCTURE(pnt_scale, format_string[format_string_index], (temp_double * local2base));
+			    break;
                         case RT_PNT_TYPE_NRM:
-                            INSERT_COORDINATE_INTO_STRUCTURE(pnt_normal, format_string[format_string_index], (temp_double * local2base))
-                            INSERT_NORMAL_INTO_STRUCTURE(pnt_normal, format_string[format_string_index], (temp_double * local2base))
-                            break;
+                            INSERT_COORDINATE_INTO_STRUCTURE(pnt_normal, format_string[format_string_index], (temp_double * local2base));
+			    INSERT_NORMAL_INTO_STRUCTURE(pnt_normal, format_string[format_string_index], (temp_double * local2base));
+			    break;
                         case RT_PNT_TYPE_COL_SCA:
-                            INSERT_COORDINATE_INTO_STRUCTURE(pnt_color_scale, format_string[format_string_index], (temp_double * local2base))
-                            INSERT_COLOR_INTO_STRUCTURE(pnt_color_scale, format_string[format_string_index], temp_double)
-                            INSERT_SCALE_INTO_STRUCTURE(pnt_color_scale, format_string[format_string_index], (temp_double * local2base))
-                            break;
+                            INSERT_COORDINATE_INTO_STRUCTURE(pnt_color_scale, format_string[format_string_index], (temp_double * local2base));
+			    INSERT_COLOR_INTO_STRUCTURE(pnt_color_scale, format_string[format_string_index], temp_double);
+			    INSERT_SCALE_INTO_STRUCTURE(pnt_color_scale, format_string[format_string_index], (temp_double * local2base));
+			    break;
                         case RT_PNT_TYPE_COL_NRM:
-                            INSERT_COORDINATE_INTO_STRUCTURE(pnt_color_normal, format_string[format_string_index], (temp_double * local2base))
-                            INSERT_COLOR_INTO_STRUCTURE(pnt_color_normal, format_string[format_string_index], temp_double)
-                            INSERT_NORMAL_INTO_STRUCTURE(pnt_color_normal, format_string[format_string_index], (temp_double * local2base))
-                            break;
+                            INSERT_COORDINATE_INTO_STRUCTURE(pnt_color_normal, format_string[format_string_index], (temp_double * local2base));
+			    INSERT_COLOR_INTO_STRUCTURE(pnt_color_normal, format_string[format_string_index], temp_double);
+			    INSERT_NORMAL_INTO_STRUCTURE(pnt_color_normal, format_string[format_string_index], (temp_double * local2base));
+			    break;
                         case RT_PNT_TYPE_SCA_NRM:
-                            INSERT_COORDINATE_INTO_STRUCTURE(pnt_scale_normal, format_string[format_string_index], (temp_double * local2base))
-                            INSERT_SCALE_INTO_STRUCTURE(pnt_scale_normal, format_string[format_string_index], (temp_double * local2base))
-                            INSERT_NORMAL_INTO_STRUCTURE(pnt_scale_normal, format_string[format_string_index], (temp_double * local2base))
-                            break;
+                            INSERT_COORDINATE_INTO_STRUCTURE(pnt_scale_normal, format_string[format_string_index], (temp_double * local2base));
+			    INSERT_SCALE_INTO_STRUCTURE(pnt_scale_normal, format_string[format_string_index], (temp_double * local2base));
+			    INSERT_NORMAL_INTO_STRUCTURE(pnt_scale_normal, format_string[format_string_index], (temp_double * local2base));
+			    break;
                         case RT_PNT_TYPE_COL_SCA_NRM:
-                            INSERT_COORDINATE_INTO_STRUCTURE(pnt_color_scale_normal, format_string[format_string_index], (temp_double * local2base))
-                            INSERT_COLOR_INTO_STRUCTURE(pnt_color_scale_normal, format_string[format_string_index], temp_double)
-                            INSERT_SCALE_INTO_STRUCTURE(pnt_color_scale_normal, format_string[format_string_index], (temp_double * local2base))
-                            INSERT_NORMAL_INTO_STRUCTURE(pnt_color_scale_normal, format_string[format_string_index], (temp_double * local2base))
-                            break;
+                            INSERT_COORDINATE_INTO_STRUCTURE(pnt_color_scale_normal, format_string[format_string_index], (temp_double * local2base));
+			    INSERT_COLOR_INTO_STRUCTURE(pnt_color_scale_normal, format_string[format_string_index], temp_double);
+			    INSERT_SCALE_INTO_STRUCTURE(pnt_color_scale_normal, format_string[format_string_index], (temp_double * local2base));
+			    INSERT_NORMAL_INTO_STRUCTURE(pnt_color_scale_normal, format_string[format_string_index], (temp_double * local2base));
+			    break;
                     }    
                 }    
                 found_double = 0;  /* allows loop to continue */
@@ -692,10 +694,14 @@ ged_make_pnts(struct ged *gedp, int argc, const char *argv[])
                 }
             }
 
-        } /* loop exits when eof encountered (and/or) all doubles for a single point are stored in point structure */
+        } /* loop exits when eof encountered (and/or) all doubles for
+	   * a single point are stored in point structure
+	   */
 
         if (done_processing_format_string) {
-            /* push single point structure onto linked-list of points which makeup the point-cloud */
+            /* push single point structure onto linked-list of points
+	     * which makeup the point-cloud.
+	     */
             switch (type) {
                 case RT_PNT_TYPE_PNT:
                     BU_LIST_PUSH(&(((struct pnt *)headPoint)->l), &((struct pnt *)point)->l);
