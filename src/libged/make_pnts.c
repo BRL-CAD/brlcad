@@ -217,29 +217,21 @@ str2type(const char *format_string, rt_pnt_type *pnt_type, struct bu_vls *ged_re
 
         if (strcmp(temp_string, "xyz") == 0) {
             *pnt_type = RT_PNT_TYPE_PNT;
-        }
-        else if (strcmp(temp_string, "bgrxyz") == 0) {
+        } else if (strcmp(temp_string, "bgrxyz") == 0) {
             *pnt_type = RT_PNT_TYPE_COL;
-        }
-        else if (strcmp(temp_string, "sxyz") == 0) {
+        } else if (strcmp(temp_string, "sxyz") == 0) {
             *pnt_type = RT_PNT_TYPE_SCA;
-        }
-        else if (strcmp(temp_string, "ijkxyz") == 0) {
+        } else if (strcmp(temp_string, "ijkxyz") == 0) {
             *pnt_type = RT_PNT_TYPE_NRM;
-        }
-        else if (strcmp(temp_string, "bgrsxyz") == 0) {
+        } else if (strcmp(temp_string, "bgrsxyz") == 0) {
             *pnt_type = RT_PNT_TYPE_COL_SCA;
-        }
-        else if (strcmp(temp_string, "bgijkrxyz") == 0) {
+        } else if (strcmp(temp_string, "bgijkrxyz") == 0) {
             *pnt_type = RT_PNT_TYPE_COL_NRM;
-        }
-        else if (strcmp(temp_string, "ijksxyz") == 0) {
+        } else if (strcmp(temp_string, "ijksxyz") == 0) {
             *pnt_type = RT_PNT_TYPE_SCA_NRM;
-        }
-        else if (strcmp(temp_string, "bgijkrsxyz") == 0) {
+        } else if (strcmp(temp_string, "bgijkrsxyz") == 0) {
             *pnt_type = RT_PNT_TYPE_COL_SCA_NRM;
-        }
-        else {
+        } else {
             bu_vls_printf(ged_result_str, "Invalid format string '%s'", format_string);
             ret = GED_ERROR;
         }
@@ -272,8 +264,7 @@ str2mm(const char *units_string, double *conv_factor, struct bu_vls *ged_result_
     if ((units_string == (char *)NULL) || (conv_factor == (double *)NULL)) {
         bu_vls_printf(ged_result_str, "NULL pointer(s) passed to function 'str2mm'.\n");
         ret = GED_ERROR;
-    }
-    else {
+    } else {
 	bu_vls_strcat(&str, units_string);
 	bu_vls_trimspace(&str);
 
