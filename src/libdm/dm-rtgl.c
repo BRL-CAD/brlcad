@@ -19,7 +19,7 @@
  */
 /** @file dm-rtgl.c
  *
- *  A Ray Tracing X11 OpenGL Display Manager.
+ * A Ray Tracing X11 OpenGL Display Manager.
  *
  */
 
@@ -150,8 +150,8 @@ struct dm dm_rtgl = {
     {0, 0, 0, 0, 0},		/* bu_vls short name drawing window */
     {0, 0, 0},			/* bg color */
     {0, 0, 0},			/* fg color */
-    {GED_MIN, GED_MIN, GED_MIN},/* clipmin */
-    {GED_MAX, GED_MAX, GED_MAX},/* clipmax */
+    {GED_MIN, GED_MIN, GED_MIN}, /* clipmin */
+    {GED_MAX, GED_MAX, GED_MAX}, /* clipmax */
     0,				/* no debugging */
     0,				/* no perspective */
     0,				/* no lighting */
@@ -221,7 +221,7 @@ rtgl_fogHint(struct dm *dmp, int fastfog)
 }
 
 /*
- *			R T G L _ O P E N
+ * R T G L _ O P E N
  *
  * Fire up the display manager, and the display processor.
  *
@@ -520,7 +520,7 @@ rtgl_open(Tcl_Interp *interp, int argc, char **argv)
 	    }
 	}
     }
- Done:
+Done:
     XFreeDeviceList(olist);
 
     if (!glXMakeCurrent(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
@@ -751,9 +751,9 @@ rtgl_share_dlist(struct dm *dmp1, struct dm *dmp2)
 }
 
 /*
- *  			O G L _ C L O S E
+ * O G L _ C L O S E
  *
- *  Gracefully release the display.
+ * Gracefully release the display.
  */
 HIDDEN int
 rtgl_close(struct dm *dmp)
@@ -793,7 +793,7 @@ rtgl_close(struct dm *dmp)
 }
 
 /*
- *			O G L _ D R A W B E G I N
+ * O G L _ D R A W B E G I N
  *
  * There are global variables which are parameters to this routine.
  */
@@ -853,7 +853,7 @@ rtgl_drawBegin(struct dm *dmp)
 }
 
 /*
- *			O G L _ D R A W E N D
+ * O G L _ D R A W E N D
  */
 HIDDEN int
 rtgl_drawEnd(struct dm *dmp)
@@ -909,10 +909,10 @@ rtgl_drawEnd(struct dm *dmp)
 double startScale = 1;
 
 /*
- *  		       R T G L _ L O A D M A T R I X
+ * R T G L _ L O A D M A T R I X
  *
- *  Load a new transformation matrix.  This will be followed by
- *  many calls to rtgl_drawVList().
+ * Load a new transformation matrix.  This will be followed by
+ * many calls to rtgl_drawVList().
  */
 HIDDEN int
 rtgl_loadMatrix(struct dm *dmp, fastf_t *mat, int which_eye)
@@ -921,6 +921,8 @@ rtgl_loadMatrix(struct dm *dmp, fastf_t *mat, int which_eye)
     mat_t newm;
 
     fastf_t clip, scale = 1;
+
+    mat_t zclip;
 
     /* get ged struct */
     struct ged *gedp = RTGL_GEDP;
@@ -971,7 +973,6 @@ rtgl_loadMatrix(struct dm *dmp, fastf_t *mat, int which_eye)
 	    break;
     }
 
-    mat_t zclip;
     MAT_IDN(zclip);
 
     /* use z-clipping */
@@ -1010,23 +1011,29 @@ rtgl_loadMatrix(struct dm *dmp, fastf_t *mat, int which_eye)
     glLoadIdentity();
 
     /* Initial Material Properties */
-    GLfloat mat_specular[] = {.8, .8, .8, .8}; 
-    GLfloat mat_shininess[] = { 5.0 }; 
-    glMaterialfv(GL_FRONT, GL_SPECULAR, mat_specular); 
-    glMaterialfv(GL_FRONT, GL_SHININESS, mat_shininess); 
+    {
+	GLfloat mat_specular[] = {.8, .8, .8, .8}; 
+	GLfloat mat_shininess[] = { 5.0 }; 
+	glMaterialfv(GL_FRONT, GL_SPECULAR, mat_specular); 
+	glMaterialfv(GL_FRONT, GL_SHININESS, mat_shininess); 
+    }
 
     /* set light position now, so that it moves with the view */
-    GLfloat light_position[] = { 1.0, 1.0, 1.0, 0.0 }; 
-    GLfloat white_light[] = { .8, .8, .8, 1.0 }; 
-    glLightfv(GL_LIGHT0, GL_POSITION, light_position); 
-    glLightfv(GL_LIGHT0, GL_DIFFUSE, white_light); 
-    glLightfv(GL_LIGHT0, GL_SPECULAR, white_light); 
+    {
+	GLfloat light_position[] = { 1.0, 1.0, 1.0, 0.0 }; 
+	GLfloat white_light[] = { .8, .8, .8, 1.0 }; 
+	glLightfv(GL_LIGHT0, GL_POSITION, light_position); 
+	glLightfv(GL_LIGHT0, GL_DIFFUSE, white_light); 
+	glLightfv(GL_LIGHT0, GL_SPECULAR, white_light); 
+    }
 
-    glShadeModel(GL_FLAT); 
-    GLfloat lmodel_ambient[] = { 0.1, 0.1, 0.1, 1.0 }; 
-    glLightModelfv(GL_LIGHT_MODEL_AMBIENT, lmodel_ambient); 
-    glLightModelf(GL_LIGHT_MODEL_LOCAL_VIEWER, GL_TRUE);
-    glLightModelf(GL_LIGHT_MODEL_COLOR_CONTROL, GL_SEPARATE_SPECULAR_COLOR);
+    {
+	GLfloat lmodel_ambient[] = { 0.1, 0.1, 0.1, 1.0 }; 
+	glShadeModel(GL_FLAT); 
+	glLightModelfv(GL_LIGHT_MODEL_AMBIENT, lmodel_ambient); 
+	glLightModelf(GL_LIGHT_MODEL_LOCAL_VIEWER, GL_TRUE);
+	glLightModelf(GL_LIGHT_MODEL_COLOR_CONTROL, GL_SEPARATE_SPECULAR_COLOR);
+    }
 
     glEnable(GL_LIGHTING); 
     glEnable(GL_LIGHT0);
@@ -1476,7 +1483,7 @@ int numShot = 0;
 
 /* return 1 if all jobs done, 0 if not */
 int shootJobs(void) {
-    int i, j, last, elements, *used;
+    int i, last, *used;
     double elapsed_time;
 
     /* list cannot be empty */
@@ -1591,183 +1598,15 @@ void drawPoints(float *view, int pointSize) {
     glPointSize(1);
 }
 
-int numTops;
-struct objTree *tops;
-struct objTree *currObj;
-
-int getTops(struct ged *gedp) {
-    register struct directory *dp;
-    register int i, j;
-    struct directory **dirp;
-    struct directory **dirp0 = (struct directory **)NULL;
-    int c;
-
-    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
-
-    /* initialize result */
-    bu_vls_trunc(&gedp->ged_result_str, 0);
-
-    /* Can this be executed only sometimes?
-     *  Perhaps a "dirty bit" on the database? */
-    db_update_nref(gedp->ged_wdbp->dbip, &rt_uniresource);
-
-    /* Find number of possible entries and allocate memory */
-    dirp = (struct directory **)ged_dir_getspace(gedp->ged_wdbp->dbip, 0);
-    dirp0 = dirp;
-
-    if (gedp->ged_wdbp->dbip->dbi_version < 5) {
-	for (i = 0; i < RT_DBNHASH; i++) {
-            for (dp = gedp->ged_wdbp->dbip->dbi_Head[i]; dp != RT_DIR_NULL; dp = dp->d_forw) {
-                if (dp->d_nref == 0) {
-                    *dirp++ = dp;
-
-		}
-            }
-	}
-    } else {
-        for (i = 0; i < RT_DBNHASH; i++) {
-            for (dp = gedp->ged_wdbp->dbip->dbi_Head[i]; dp != DIR_NULL; dp = dp->d_forw) {
-                if (dp->d_nref == 0 && (dp->d_flags != RT_DIR_HIDDEN) && (dp->d_addr != RT_DIR_PHONY_ADDR)) {
-
-                    /* add non-hidden real object */
-                    *dirp++ = dp;
-                }
-            }
-	}
-    }
-
-    int length, numTops = (int)(dirp - dirp0);
-
-    /* build top objects */
-    tops = bu_malloc(numTops * sizeof(struct objTree), "dm-rtgl.c: getTops");
-
-    for (i = 0; i < numTops; i++) {
-
-	/* initialize this tree */
-	INIT_OBJTREE(&(tops[i]));
-
-	/* set tree name */
-	length = strlen(dirp0[i]->d_namep) + 1;
-	tops[i].name = bu_malloc(length * sizeof(char), "dm-rtgl.c: getTops");
-	strncpy(tops[i].name, dirp0[i]->d_namep, length);
-    }
-
-    bu_free((genptr_t)dirp0, "wdb_tops_cmd: wdb_dir_getspace");
-
-    return numTops;
-}
-
-int getChildren(struct ged *gedp, struct objTree *tree) {
-    int i, node_count, actual_count;
-    struct directory *dp;
-    struct rt_db_internal intern;
-    struct rt_comb_internal *comb;
-    struct rt_tree_array *rt_tree_array;
-
-    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
-    GED_CHECK_DRAWABLE(gedp, GED_ERROR);
-
-    if ((dp = db_lookup(gedp->ged_wdbp->dbip, tree->name, LOOKUP_NOISY)) != DIR_NULL) {
-
-	if (dp->d_flags != RT_DIR_COMB)
-	    return 0;
-
-	/*                                                                                                                                              
-	 *  This node is a combination (a directory).
-	 *  Process all the arcs (directory members).
-	 */
-	if (rt_db_get_internal(&intern, dp, gedp->ged_wdbp->dbip, (fastf_t *)NULL, &rt_uniresource) < 0) {
-	    bu_vls_printf(&gedp->ged_result_str, "Database read error, aborting");
-	    return;
-	}
-	
-	comb = (struct rt_comb_internal *)intern.idb_ptr;
-	
-	if (comb->tree) {
-
-	    if (comb->tree && db_ck_v4gift_tree(comb->tree) < 0) {
-		db_non_union_push(comb->tree, &rt_uniresource);
-		
-		if (db_ck_v4gift_tree(comb->tree) < 0) {
-		    bu_vls_printf(&gedp->ged_result_str, "Cannot flatten tree for listing");
-		    return;
-		}
-	    }
-
-	    node_count = db_tree_nleaves(comb->tree);
-
-	    if (node_count > 0) {
-		rt_tree_array = (struct rt_tree_array *) bu_calloc(node_count, sizeof(struct rt_tree_array), "tree list");
-		actual_count = (struct rt_tree_array *) db_flatten_tree(rt_tree_array, comb->tree, OP_UNION, 1, &rt_uniresource) - rt_tree_array;
-		BU_ASSERT_PTR(actual_count, ==, node_count);
-		comb->tree = TREE_NULL;
-	    } else {
-		actual_count = 0;
-		rt_tree_array = NULL;
-	    }
-	    
-	    tree->numChildren = actual_count;
-	    tree->children = bu_malloc(actual_count * sizeof(struct objTree), "dm-rtgl.c: getChildren");
-
-	    for (i = 0; i < actual_count; i++) {
-
-		INIT_OBJTREE(&(tree->children[i]));
-
-		/* set child's parent */
-		tree->children[i].parent = tree;
-
-		/* set child's name */
-		int length = strlen(rt_tree_array[i].tl_tree->tr_l.tl_name) + 1;
-		tree->children[i].name = bu_malloc(length * sizeof(char), "dm-rtgl.c: getChildren");
-		strncpy(tree->children[i].name, rt_tree_array[i].tl_tree->tr_l.tl_name, length);
-
-		db_free_tree(rt_tree_array[i].tl_tree, &rt_uniresource);
-	    }
-	    
-	    if (rt_tree_array) {
-		bu_free((char *)rt_tree_array, "printnode: rt_tree_array");
-	    }
-	}
-	
-	rt_db_free_internal(&intern, &rt_uniresource);
-    }
-
-    return actual_count;
-}
-
-void buildTree(struct ged *gedp, struct objTree *tree) {
-    int i, newTrees;
-
-    /* get this tree's children */
-    newTrees = getChildren(gedp, tree);
-
-    /* build tree for each child */
-    if (newTrees > 0) {
-	for (i = 0; i < newTrees; i++) {
-	    buildTree(gedp, &(tree->children[i]));
-	}
-    }
-}
-
 
 vect_t min, max, center, view, vect;
 fastf_t radius;
 double maxSpan;
 time_t start = 0;
 
-#if 0
-int round (double f) {
-    int n = f;
-
-    if ((f - .5) >= n)
-	return n + 1;
-
-    return n;
-}
-#endif
 
 /*
- *  			R T G L _ D R A W V L I S T
+ * R T G L _ D R A W V L I S T
  *
  */
 HIDDEN int
@@ -1810,15 +1649,6 @@ rtgl_drawVList(struct dm *dmp, register struct bn_vlist *vp)
 
 	/* create color hash table */
 	colorTable = bu_create_hash_tbl(START_TABLE_SIZE);
-    }
-
-    /* get names of all drawable objects */
-    if (0) {
-	numTops = getTops(gedp);
-
-	for (i = 0; i < numTops; i++) {
-	    buildTree(gedp, &tops[i]);
-	}
     }
 
     /* get number and names of visible tree tops */
@@ -2002,7 +1832,7 @@ rtgl_drawVList(struct dm *dmp, register struct bn_vlist *vp)
 }
 
 /*
- *			O G L _ N O R M A L
+ * O G L _ N O R M A L
  *
  * Restore the display processor to a normal mode of operation
  * (ie, not scaled, rotated, displaced, etc).
@@ -2032,7 +1862,7 @@ rtgl_normal(struct dm *dmp)
 }
 
 /*
- *			O G L _ D R A W S T R I N G 2 D
+ * O G L _ D R A W S T R I N G 2 D
  *
  * Output a string.
  * The starting position of the beam is as specified.
@@ -2056,7 +1886,7 @@ rtgl_drawString2D(struct dm *dmp, register char *str, fastf_t x, fastf_t y, int 
 
 
 /*
- *			O G L _ D R A W L I N E 2 D
+ * O G L _ D R A W L I N E 2 D
  *
  */
 HIDDEN int
