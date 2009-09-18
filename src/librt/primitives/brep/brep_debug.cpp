@@ -435,6 +435,54 @@ void plottrim2d(ON_BrepFace &face, struct bn_vlblock *vbp, int plotres) {
 	return;
 }
 
+void plotUVDomain2d(ON_BrepFace &face, struct bn_vlblock *vbp, int plotres) {
+	register struct bu_list *vhead;
+	const ON_Surface* surf = face.SurfaceOf();
+	double umin, umax, urange;
+	double vmin, vmax, vrange;
+	double pt1[3], pt2[3];
+	ON_2dPoint from, to;
+
+	ON_TextLog tl(stderr);
+	vhead = rt_vlblock_find(vbp, RED);
+
+	surf->GetDomain(0, &umin, &umax);
+	surf->GetDomain(1, &vmin, &vmax);
+	urange = umax - umin;
+	vrange = vmax - vmin;
+	double f1,f2;
+	double u1,u2,v1,v2;
+	for (int k = 1; k <= plotres; k++) {
+		f1=((double) (k - 1) / (double) plotres);
+		f2=((double) k / (double) plotres);
+		v1=vrange*f1;
+		v2=vrange*f2;
+		u1=urange*f1;
+		u2=urange*f2;
+		//umin
+		VSET(pt1, umin, vmin + v1, 0.0);
+		VSET(pt2, umin, vmin + v2, 0.0);
+		RT_ADD_VLIST(vhead, pt1, BN_VLIST_LINE_MOVE);
+		RT_ADD_VLIST(vhead, pt2, BN_VLIST_LINE_DRAW);
+		// umax
+		VSET(pt1, umax, vmin + v1, 0.0);
+		VSET(pt2, umax, vmin + v2, 0.0);
+		RT_ADD_VLIST(vhead, pt1, BN_VLIST_LINE_MOVE);
+		RT_ADD_VLIST(vhead, pt2, BN_VLIST_LINE_DRAW);
+		//vmin
+		VSET(pt1, umin + u1, vmin, 0.0);
+		VSET(pt2, umin + u2, vmin, 0.0);
+		RT_ADD_VLIST(vhead, pt1, BN_VLIST_LINE_MOVE);
+		RT_ADD_VLIST(vhead, pt2, BN_VLIST_LINE_DRAW);
+		//vmax
+		VSET(pt1, umin + u1, vmax, 0.0);
+		VSET(pt2, umin + u2, vmax, 0.0);
+		RT_ADD_VLIST(vhead, pt1, BN_VLIST_LINE_MOVE);
+		RT_ADD_VLIST(vhead, pt2, BN_VLIST_LINE_DRAW);
+	}
+	return;
+}
+
 void plottrim(ON_BrepTrim& trim, struct bn_vlblock *vbp, int plotres) {
 	register struct bu_list *vhead;
 	ON_BrepFace *face= trim.Face();
@@ -786,6 +834,7 @@ brep_facetrim_plot2d(struct bu_vls *vls, struct brep_specific* bs, struct rt_bre
     if (index == -1) {
 		for (index = 0; index < brep->m_F.Count(); index++) {
 			ON_BrepFace& face = brep->m_F[index];
+			plotUVDomain2d(face, vbp, plotres);
 			plottrim2d(face, vbp, plotres);
 		}
 	} else if (index < brep->m_S.Count()) {
@@ -793,6 +842,7 @@ brep_facetrim_plot2d(struct bu_vls *vls, struct brep_specific* bs, struct rt_bre
 		if (index < faces.Count()) {
 			ON_BrepFace& face = faces[index];
 			face.Dump(tl);
+			plotUVDomain2d(face, vbp, plotres);
 			plottrim2d(face, vbp, plotres);
 		}
 	}
