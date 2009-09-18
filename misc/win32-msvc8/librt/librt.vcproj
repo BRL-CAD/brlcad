@@ -440,6 +440,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\src\librt\primitives\ehy\ehy_brep.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\src\librt\primitives\ell\ell.c"
 				>
 			</File>
