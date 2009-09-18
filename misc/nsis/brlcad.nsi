@@ -40,7 +40,7 @@ FunctionEnd
   Name "BRL-CAD"
 
   ; The file to write
-  OutFile "BRL-CAD_${VERSION}.exe"
+  OutFile "BRL-CAD_${VERSION}${INSTALLERSUFFIX}.exe"
 
   ; The default installation directory
   InstallDir $PROGRAMFILES\BRL-CAD\${VERSION}
@@ -134,20 +134,20 @@ Section "BRL-CAD (required)" BRL-CAD
 
   ; Set output path to the installation directory.
   SetOutPath $INSTDIR
-  File /r "..\..\brlcadInstall\archer.ico"
-  File /r "..\..\brlcadInstall\brlcad.ico"
+  File /r "..\..\brlcadInstall${PLATFORM}\archer.ico"
+  File /r "..\..\brlcadInstall${PLATFORM}\brlcad.ico"
 
   SetOutPath $INSTDIR\bin
-  File /r "..\..\brlcadInstall\bin\*"
+  File /r "..\..\brlcadInstall${PLATFORM}\bin\*"
 
   SetOutPath $INSTDIR\include
-  File /r "..\..\brlcadInstall\include\*"
+  File /r "..\..\brlcadInstall${PLATFORM}\include\*"
 
   SetOutPath $INSTDIR\lib
-  File /r "..\..\brlcadInstall\lib\*"
+  File /r "..\..\brlcadInstall${PLATFORM}\lib\*"
 
   SetOutPath $INSTDIR\share
-  File /r "..\..\brlcadInstall\share\*"
+  File /r "..\..\brlcadInstall${PLATFORM}\share\*"
 
   ; Write the installation path into the registry
   WriteRegStr HKLM "SOFTWARE\BRL-CAD ${VERSION}" "Install_Dir" "$INSTDIR"
@@ -171,18 +171,18 @@ Section "BRL-CAD (required)" BRL-CAD
 
   ; Create desktop icons
   SetOutPath $INSTDIR
-  CreateShortCut "$DESKTOP\Archer.lnk" "$INSTDIR\bin\archer.bat" "" "$INSTDIR\archer.ico" 0
-  CreateShortCut "$DESKTOP\MGED.lnk" "$INSTDIR\bin\mged.bat" "" "$INSTDIR\brlcad.ico" 0
-  CreateShortCut "$DESKTOP\RtWizard.lnk" "$INSTDIR\bin\rtwizard.bat" "" "$INSTDIR\brlcad.ico" 0
+  CreateShortCut "$DESKTOP\Archer${INSTALLERSUFFIX}.lnk" "$INSTDIR\bin\archer.bat" "" "$INSTDIR\archer.ico" 0
+  CreateShortCut "$DESKTOP\MGED${INSTALLERSUFFIX}.lnk" "$INSTDIR\bin\mged.bat" "" "$INSTDIR\brlcad.ico" 0
+  CreateShortCut "$DESKTOP\RtWizard${INSTALLERSUFFIX}.lnk" "$INSTDIR\bin\rtwizard.bat" "" "$INSTDIR\brlcad.ico" 0
 
   !insertmacro MUI_STARTMENU_WRITE_BEGIN Application
     ;Main start menu shortcuts
     SetOutPath $INSTDIR
     CreateDirectory "$SMPROGRAMS\$STARTMENU_FOLDER"
-    CreateShortCut "$SMPROGRAMS\$STARTMENU_FOLDER\Archer.lnk" "$INSTDIR\bin\archer.bat" "" "$INSTDIR\archer.ico" 0
-    CreateShortCut "$SMPROGRAMS\$STARTMENU_FOLDER\MGED.lnk" "$INSTDIR\bin\mged.bat" "" "$INSTDIR\brlcad.ico" 0
-    CreateShortCut "$SMPROGRAMS\$STARTMENU_FOLDER\RtWizard.lnk" "$INSTDIR\bin\rtwizard.bat" "" "$INSTDIR\brlcad.ico" 0
-    CreateShortCut "$SMPROGRAMS\$STARTMENU_FOLDER\Uninstall.lnk" "$INSTDIR\uninstall.exe" "" "$INSTDIR\uninstall.exe" 0
+    CreateShortCut "$SMPROGRAMS\$STARTMENU_FOLDER\Archer${INSTALLERSUFFIX}.lnk" "$INSTDIR\bin\archer.bat" "" "$INSTDIR\archer.ico" 0
+    CreateShortCut "$SMPROGRAMS\$STARTMENU_FOLDER\MGED${INSTALLERSUFFIX}.lnk" "$INSTDIR\bin\mged.bat" "" "$INSTDIR\brlcad.ico" 0
+    CreateShortCut "$SMPROGRAMS\$STARTMENU_FOLDER\RtWizard${INSTALLERSUFFIX}.lnk" "$INSTDIR\bin\rtwizard.bat" "" "$INSTDIR\brlcad.ico" 0
+    CreateShortCut "$SMPROGRAMS\$STARTMENU_FOLDER\Uninstall${INSTALLERSUFFIX}.lnk" "$INSTDIR\uninstall.exe" "" "$INSTDIR\uninstall.exe" 0
   !insertmacro MUI_STARTMENU_WRITE_END
 
 SectionEnd
@@ -191,25 +191,25 @@ Section "Documentation (required)" Documentation
   ; SectionIn RO means temporarily required
   ;SectionIn RO
   ;SetOutPath $INSTDIR\doc
-  ;File /r ..\..\brlcadInstall\doc\*
+  ;File /r ..\..\brlcadInstall${PLATFORM}\doc\*
   !insertmacro MUI_STARTMENU_WRITE_BEGIN Application
     ;Main start menu shortcuts
     SetOutPath $INSTDIR
     CreateDirectory "$SMPROGRAMS\$STARTMENU_FOLDER\Manuals"
-    CreateShortCut "$SMPROGRAMS\$STARTMENU_FOLDER\Manuals\Archer.lnk" "$BRLCAD_DATA_DIR\html\manuals\archer\Archer_Documentation.chm" "" "$INSTDIR\archer.ico" 0
-    CreateShortCut "$SMPROGRAMS\$STARTMENU_FOLDER\Manuals\BRL-CAD.lnk" "$BRLCAD_DATA_DIR\html\manuals\index.html" "" "$INSTDIR\brlcad.ico" 0
-    CreateShortCut "$SMPROGRAMS\$STARTMENU_FOLDER\Manuals\MGED.lnk" "$BRLCAD_DATA_DIR\html\manuals\mged\index.html" "" "$INSTDIR\brlcad.ico" 0
+    CreateShortCut "$SMPROGRAMS\$STARTMENU_FOLDER\Manuals\Archer${INSTALLERSUFFIX}.lnk" "$BRLCAD_DATA_DIR\html\manuals\archer\Archer_Documentation.chm" "" "$INSTDIR\archer.ico" 0
+    CreateShortCut "$SMPROGRAMS\$STARTMENU_FOLDER\Manuals\BRL-CAD${INSTALLERSUFFIX}.lnk" "$BRLCAD_DATA_DIR\html\manuals\index.html" "" "$INSTDIR\brlcad.ico" 0
+    CreateShortCut "$SMPROGRAMS\$STARTMENU_FOLDER\Manuals\MGED${INSTALLERSUFFIX}.lnk" "$BRLCAD_DATA_DIR\html\manuals\mged\index.html" "" "$INSTDIR\brlcad.ico" 0
   !insertmacro MUI_STARTMENU_WRITE_END
 SectionEnd
 
 ;Section "Samples" Samples
 ;  SetOutPath $INSTDIR\Samples
-;  File ..\..\brlcadInstall\Samples\*
+;  File ..\..\brlcadInstall${PLATFORM}\Samples\*
 ;SectionEnd
 
 ;Section "Developement headers" Developer
 ;  SetOutPath $INSTDIR\include
-;  File ..\..\brlcadInstall\include\*
+;  File ..\..\brlcadInstall${PLATFORM}\include\*
 ;SectionEnd
 
 ;--------------------------------
@@ -248,9 +248,9 @@ Section "Uninstall"
   ; Remove shortcuts, if any
   Delete "$SMPROGRAMS\$MUI_TEMP\Manuals\*"
   Delete "$SMPROGRAMS\$MUI_TEMP\*"
-  Delete "$DESKTOP\Archer.lnk"
-  Delete "$DESKTOP\MGED.lnk"
-  Delete "$DESKTOP\RtWizard.lnk"
+  Delete "$DESKTOP\Archer${INSTALLERSUFFIX}.lnk"
+  Delete "$DESKTOP\MGED${INSTALLERSUFFIX}.lnk"
+  Delete "$DESKTOP\RtWizard${INSTALLERSUFFIX}.lnk"
 
 
   ; Remove miscellaneous files

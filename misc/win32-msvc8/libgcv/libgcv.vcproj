@@ -185,11 +185,11 @@
 				OutputFile=".\$(PlatformName)\$(ConfigurationName)/libgcv.dll"
 				LinkIncremental="1"
 				SuppressStartupBanner="true"
-				AdditionalLibraryDirectories="../../../brlcadInstall/lib"
+				AdditionalLibraryDirectories="../../../brlcadInstall$(PlatformName)/lib"
 				GenerateDebugInformation="false"
 				ProgramDatabaseFile=".\$(PlatformName)\$(ConfigurationName)/libgcv.pdb"
 				ImportLibrary=".\$(PlatformName)\$(ConfigurationName)/libgcv.lib"
-				TargetMachine="1"
+				TargetMachine="17"
 			/>
 			<Tool
 				Name="VCALinkTool"
