@@ -764,6 +764,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\src\librt\primitives\pipe\pipe_brep.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\src\librt\primitives\pipe\pipe_mirror.c"
 				>
 			</File>
