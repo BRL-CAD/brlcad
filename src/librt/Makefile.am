@@ -125,7 +125,6 @@ librt_nil_la_SOURCES = \
 	primitives/ebm/ebm_mirror.c \
 	primitives/ehy/ehy.c \
 	primitives/ehy/ehy_brep.cpp \
-	primitives/ehy/ehy.c \
 	primitives/ell/ell.c \
 	primitives/ell/ell_brep.cpp \
 	primitives/ell/ell_mirror.c \
