@@ -86,6 +86,7 @@ set(LIBRT_SOURCES
     primitives/ebm/ebm_brep.cpp
     primitives/ebm/ebm_mirror.c
     primitives/ehy/ehy.c
+    primitives/ehy/ehy_brep.cpp
     primitives/ell/ell.c
     primitives/ell/ell_brep.cpp
     primitives/ell/ell_mirror.c
