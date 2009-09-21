@@ -715,7 +715,7 @@ namespace brlcad {
 			BBNode* node = (*i);
 			if (::getSurfacePoint(pt, uv, node)) {
 				ON_3dPoint fp = m_face->SurfaceOf()->PointAt(uv.x, uv.y);
-				if (VAPPROXEQUAL(pt,fp,TOL)) {
+				if (VAPPROXEQUAL(pt,fp,0.001)) {
 					return 1;
 				}
 			}
