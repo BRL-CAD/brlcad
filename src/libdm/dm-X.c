@@ -424,18 +424,18 @@ X_open_dm(Tcl_Interp *interp, int argc, char **argv)
 
 	privars->bg = bg.pixel;
     } else {
-	dm_allocate_color_cube( pubvars->dpy,
+	X_allocate_color_cube( pubvars->dpy,
 				pubvars->cmap,
 				privars->pixels,
 				/* cube dimension, uses XStoreColor */
 				6, CMAP_BASE, 1 );
 
 	privars->bg =
-	    dm_get_pixel(DM_BLACK,
+	    X_get_pixel(DM_BLACK,
 			 privars->pixels,
 			 CUBE_DIMENSION);
 	privars->fg =
-	    dm_get_pixel(DM_RED,
+	    X_get_pixel(DM_RED,
 			 privars->pixels,
 			 CUBE_DIMENSION);
     }
@@ -1023,10 +1023,9 @@ X_setFGColor(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b, 
 		  &color);
 
 	gcv.foreground = color.pixel;
-    } else
-	gcv.foreground = dm_get_pixel(r, g, b,
-				      privars->pixels,
-				      CUBE_DIMENSION);
+    } else {
+	gcv.foreground = X_get_pixel(r, g, b, privars->pixels, CUBE_DIMENSION);
+    }
 
     /* save foreground pixel */
     privars->fg = gcv.foreground;
@@ -1066,7 +1065,7 @@ X_setBGColor(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b)
 	privars->bg = color.pixel;
     } else
 	privars->bg =
-	    dm_get_pixel(r, g, b, privars->pixels, CUBE_DIMENSION);
+	    X_get_pixel(r, g, b, privars->pixels, CUBE_DIMENSION);
 
     return TCL_OK;
 }

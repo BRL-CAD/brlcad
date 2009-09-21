@@ -23,19 +23,22 @@
 
 #include "common.h"
 
+#ifdef DM_X
+
 #include <stdio.h>
-#include <X11/Xlib.h>
+
+#ifdef HAVE_X11_XLIB_H
+#  include <X11/Xlib.h>
+#endif
+
 #include "bu.h"
 #include "dm_color.h"
 
-unsigned long dm_get_pixel(unsigned char r, unsigned char g, unsigned char b, long unsigned int *pixels, int cd);
-void dm_copy_cmap(Display *dpy, Colormap dest, Colormap src, int low, int hi, int store);
-void dm_allocate_color_cube(Display *dpy, Colormap cmap, long unsigned int *pixels, int cd, int cmap_base, int store);
 
 /* Return the allocated pixel value that most closely represents
    the color requested. */
 unsigned long
-dm_get_pixel(unsigned char r, unsigned char g, unsigned char b, long unsigned int *pixels, int cd)
+X_get_pixel(unsigned char r, unsigned char g, unsigned char b, long unsigned int *pixels, int cd)
     /* values assumed to be [0, 255] */
 
     /* cube dimension */
@@ -71,8 +74,8 @@ dm_get_pixel(unsigned char r, unsigned char g, unsigned char b, long unsigned in
 /*
  * Alloc/Store (hi - low) colors from src colormap into dest.
  */
-void
-dm_copy_cmap(Display *dpy, Colormap dest, Colormap src, int low, int hi, int store)
+HIDDEN void
+_X_copy_cmap(Display *dpy, Colormap dest, Colormap src, int low, int hi, int store)
 {
     int i;
     int ncolors;
@@ -97,7 +100,7 @@ dm_copy_cmap(Display *dpy, Colormap dest, Colormap src, int low, int hi, int sto
 }
 
 void
-dm_allocate_color_cube(Display *dpy, Colormap cmap, long unsigned int *pixels, int cd, int cmap_base, int store)
+X_allocate_color_cube(Display *dpy, Colormap cmap, long unsigned int *pixels, int cd, int cmap_base, int store)
 
 
     /* cube dimension */
@@ -140,6 +143,8 @@ dm_allocate_color_cube(Display *dpy, Colormap cmap, long unsigned int *pixels, i
 	    }
 }
 
+
+#endif /* DM_X */
 
 /*
  * Local Variables:
