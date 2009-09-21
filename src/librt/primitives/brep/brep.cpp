@@ -901,6 +901,7 @@ utah_newton_solver_test(const BBNode* sbv, const ON_Surface* surf, const ON_Ray&
 
     ON_3dVector p1, p2;
     double p1d = 0, p2d = 0;
+    int errantcount = 0;
     utah_ray_planes(r, p1, p1d, p2, p2d);
 
     ON_3dPoint S;
@@ -952,7 +953,13 @@ utah_newton_solver_test(const BBNode* sbv, const ON_Surface* surf, const ON_Ray&
 	oldrootdist = rootdist;
 	rootdist = fabs(f) + fabs(g);
 	
-	if (oldrootdist < rootdist) return intersects;
+	if (oldrootdist < rootdist) {
+	    if (errantcount > 3) {
+		return intersects;
+	    } else {
+    		errantcount++;
+	    }
+	}
 	
 	if (rootdist < ROOT_TOL) {
 	    if (sbv->m_u.Includes(uv.x) && sbv->m_v.Includes(uv.y)) {
