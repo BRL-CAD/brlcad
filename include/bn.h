@@ -57,6 +57,8 @@ __BEGIN_DECLS
 #define BN_AZIMUTH   0
 #define BN_ELEVATION 1
 #define BN_TWIST     2
+
+
 /** @} */
 
 /** @addtogroup tol */
@@ -856,6 +858,7 @@ BN_EXPORT BU_EXTERN(int bn_isect_planes,
 #define BN_MAX_POLY_DEGREE 4	/* Maximum Poly Order */
 /**
  * Polynomial data type
+ * bn_poly->cf[n] corresponds to X^n
  */
 typedef struct bn_poly {
     unsigned long magic;
@@ -894,6 +897,27 @@ BN_EXPORT BU_EXTERN(int bn_poly_cubic_roots,
 BN_EXPORT BU_EXTERN(int bn_poly_quartic_roots,
 		    (struct bn_complex roots[],
 		     const struct bn_poly *eqn));
+BN_EXPORT BU_EXTERN(int bn_poly_findroot,
+		    (bn_poly_t *eqn, 
+		     bn_complex_t *nxZ, 
+		     const char *str));
+BN_EXPORT BU_EXTERN(void bn_poly_eval_w_2derivatives,
+		    (bn_complex_t *cZ,
+		     bn_poly_t *eqn,
+		     bn_complex_t *b,
+		     bn_complex_t *c,
+		     bn_complex_t *d));
+BN_EXPORT BU_EXTERN(int bn_poly_checkroots,
+		    (bn_poly_t *eqn,
+		     bn_complex_t *roots,
+		     int nroots));
+BN_EXPORT BU_EXTERN(void bn_poly_deflate,
+		    (bn_poly_t *oldP,
+		     bn_complex_t *root));
+BN_EXPORT BU_EXTERN(int bn_poly_roots,
+		    (bn_poly_t *eqn,
+		     bn_complex_t roots[],
+		     const char *name));
 BN_EXPORT BU_EXTERN(void bn_pr_poly,
 		    (const char *title,
 		     const struct bn_poly *eqn));
