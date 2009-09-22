@@ -253,13 +253,13 @@ BU_EXTERN(int f_oedit_reset, (ClientData clientData, Tcl_Interp *interp, int arg
 BU_EXTERN(int f_opendb, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
 BU_EXTERN(int f_param, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
 BU_EXTERN(int f_permute, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
-BU_EXTERN(int f_pl, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
+BU_EXTERN(int f_pl, (ClientData clientData, Tcl_Interp *interp, int argc, const char **argv));
 BU_EXTERN(int f_plot, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
 BU_EXTERN(int f_polybinout, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
 BU_EXTERN(int f_prefix, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
 BU_EXTERN(int f_press, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
 BU_EXTERN(int f_preview, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
-BU_EXTERN(int f_ps, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
+BU_EXTERN(int f_ps, (ClientData clientData, Tcl_Interp *interp, int argc, const char **argv));
 BU_EXTERN(int f_put_sedit, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
 BU_EXTERN(int f_putmat, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
 BU_EXTERN(int f_qorot, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
