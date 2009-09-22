@@ -53,6 +53,7 @@
   <refsynopsisdiv id='synopsis'>
     <cmdsynopsis>
       <command>mged</command>
+      <arg choice='opt'>-a attach</arg>
       <arg choice='opt'>-b </arg>
       <arg choice='opt'>-c </arg>
       <arg choice='opt'>-d display</arg>
@@ -102,6 +103,29 @@
   
     <variablelist remap='TP'>
       <varlistentry>
+        <term><option>-a attach</option></term>
+        <listitem>
+          <para>
+            The <option>-a</option> option specifies a display manager to automatically attach to
+            when starting <application>MGED</application>.
+          </para>
+          <para>
+	    Without specifying the <option>-a</option> attach option,
+	    <application>MGED</application> will prompt which display manager to attach during
+	    startup: <prompt>attach (nu|X|ogl)[nu]?</prompt>
+          </para>
+          <para>
+            The list of available display managers varies from platform to platform and across
+	    releases.  However, some commonly available options are the <emphasis>nu</emphasis>
+	    (NULL) display manager, which will start <application>MGED</application> without any
+	    display manager attached; the <emphasis>X</emphasis> display manager, which provides an
+	    X11 graphical wireframe display; and the <emphasis>ogl</emphasis> display manager, which
+	    is similar to <emphasis>X</emphasis> but starts up a display manager that uses the
+	    OpenGL protocol for drawing wireframes.
+          </para>
+        </listitem>
+      </varlistentry>
+      <varlistentry>
 	<term><option>-b </option></term>
 	<listitem>
 	  <para>
@@ -113,18 +137,14 @@
 	</listitem>
       </varlistentry>
       <varlistentry>
-	<term><option>-c [nu|X|ogl]</option></term>
+	<term><option>-c</option></term>
 	<listitem>
 	  <para>
-	    Instructs <application>MGED</application> to start using classic mode instead of the default
-	    Tcl/Tk based GUI.  The options are <emphasis>nu</emphasis>, which will start 
-	    <emphasis>just</emphasis> the <application>MGED</application> command prompt in the terminal
-	    window, <emphasis>X</emphasis> which starts the command prompt in the terminal and an X display
-	    manager, and <emphasis>ogl</emphasis> which is like <emphasis>X</emphasis> but starts up an 
-	    OpenGL based display manager (note that as of 2008 the ogl dm is not currently working on OSX).
-	    These options can be supplied to <option>-c</option> on the command line - if none is supplied, 
-	    <application>MGED</application> will prompt which display manager to attach to the terminal:
-	    <prompt>attach (nu|X|ogl)[nu]?</prompt>
+	    Instructs <application>MGED</application> to start using classic mode instead of the
+	    default Tcl/Tk-based GUI.  The <option>-c</option> option is often used when specifying
+	    an <option>mged_command</option> to indicate that <application>MGED</application> is
+	    being run in a command-mode without a default GUI.  Example:
+	    <userinput><command>mged</command> <option>-c</option> db/moss.g tops</userinput>
 	  </para>
 	</listitem>
       </varlistentry>
@@ -132,7 +152,11 @@
 	<term><option>-d display</option></term>
 	<listitem>
 	  <para>
-	    ???????
+            The <option>-d</option> option to <application>MGED</application> specifies which X
+            server to connect to for platforms that have a running X11 server available.  This
+            option is an analogous alternative to setting the DISPLAY environment variable.  You can
+            specify a local or remote display in X11 HOST:PORT format (e.g., "-d :0" or "-d host:0")
+            and <application>MGED</application> should draw windows to that display.
 	  </para>
 	</listitem>
       </varlistentry>
@@ -255,8 +279,24 @@ mged>
 	</literallayout>
       </para>
     </example>
+
+    <example>
+      <title>Running <application>MGED</application> and bypassing the attach prompt by specifying
+      the X11 dislay manager.</title>
+      <para>
+        <prompt>user:~ </prompt><userinput>mged -a X -c</userinput>
+        <literallayout>
+BRL-CAD Release 7.15.0  Geometry Editor (MGED)
+    Tue, 22 Sep 2009 12:40:01 -0400, Compilation 1
+    user@localhost:/usr/brlcad/
+
+ATTACHING X (X Window System (X11))
+mged> 
+        </literallayout>
+      </para>
+    </example>
+
   </refsect1>
-  
   
   <refsect1 id='see_also'>
     <title>SEE ALSO</title>

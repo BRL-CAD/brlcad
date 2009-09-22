@@ -174,6 +174,8 @@ int classic_mged=1;
 #endif
 
 char *dpy_string = (char *)NULL;
+char *attach = (char *)NULL;
+
 static int mged_init_flag = 1;	/* >0 means in initialization stage */
 
 struct bu_vls input_str, scratchline, input_str_prefix;
@@ -313,8 +315,11 @@ main(int argc, char **argv)
 	bu_semaphore_init(RT_SEM_LAST);
     }
 
-    while ((c = bu_getopt(argc, argv, "d:hbicnrx:X:v")) != EOF) {
+    while ((c = bu_getopt(argc, argv, "a:d:hbicnrx:X:v?")) != EOF) {
 	switch (c) {
+	    case 'a':
+		attach = bu_optarg;
+		break;
 	    case 'd':
 		dpy_string = bu_optarg;
 		break;
@@ -349,8 +354,9 @@ main(int argc, char **argv)
 	    default:
 		bu_log("Unrecognized option (%c)\n", c);
 		/* Fall through to help */
+	    case '?':
 	    case 'h':
-		bu_exit(1, "Usage:  %s [-b] [-c] [-d display] [-h] [-r] [-x#] [-X#] [-v] [database [command]]\n", argv[0]);
+		bu_exit(1, "Usage:  %s [-a attach] [-b] [-c] [-d display] [-h] [-r] [-x#] [-X#] [-v] [database [command]]\n", argv[0]);
 	}
     }
 
@@ -683,7 +689,15 @@ main(int argc, char **argv)
 		notify_parent_done(parent_pipe[1]);
 	    }
 
-	    get_attached();
+	    if (attach) {
+		int ret;
+		char *attach_cmd[3] = {NULL, NULL, NULL};
+		attach_cmd[1] = attach;
+		ret = f_attach((ClientData)NULL, interp, 2, attach_cmd);
+		bu_log("%s", Tcl_GetStringResult(interp));
+	    } else {
+		get_attached();
+	    }
 	} else {
 	    struct bu_vls vls;
 	    int status;
@@ -719,7 +733,15 @@ main(int argc, char **argv)
 		cbreak_mode = COMMAND_LINE_EDITING;
 		save_Tty(fileno(stdin));
 #endif
-		get_attached();
+		if (attach) {
+		    int ret;
+		    char *attach_cmd[3] = {NULL, NULL, NULL};
+		    attach_cmd[1] = attach;
+		    f_attach((ClientData)NULL, interp, 2, attach_cmd);
+		    bu_log("%s", Tcl_GetStringResult(interp));
+		} else {
+		    get_attached();
+		}
 	    } else {
 
 		/* close out stdout/stderr as we're proceeding in GUI mode */

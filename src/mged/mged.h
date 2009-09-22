@@ -205,7 +205,6 @@ extern void col_putchar();
 extern void col_eol();
 extern void col_pr4v();
 extern void sedit_menu(void);
-extern void attach();
 extern void get_attached(void);
 extern void (*cur_sigint)();	/* Current SIGINT status */
 extern void sig2(int);
