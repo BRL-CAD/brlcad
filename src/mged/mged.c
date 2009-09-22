@@ -360,9 +360,9 @@ main(int argc, char **argv)
 	}
     }
 
-    argc -= (bu_optind - 1);
-    argv += (bu_optind - 1);
-    argv[0][0] = '\0'; /* nullify the first arg string to avoid confusion */
+    /* skip the args and invocation name */
+    argc -= bu_optind;
+    argv += bu_optind;
 
     if (bu_debug > 0)
 	out = fopen("/tmp/stdout", "w+"); /* I/O testing */
@@ -676,6 +676,7 @@ main(int argc, char **argv)
 
     /* --- Now safe to process commands. --- */
     if (interactive) {
+
 	/* This is an interactive mged, process .mgedrc */
 	do_rc();
 
@@ -689,15 +690,17 @@ main(int argc, char **argv)
 		notify_parent_done(parent_pipe[1]);
 	    }
 
-	    if (attach) {
+	    if (attach != NULL) {
 		int ret;
 		char *attach_cmd[3] = {NULL, NULL, NULL};
 		attach_cmd[1] = attach;
 		ret = f_attach((ClientData)NULL, interp, 2, attach_cmd);
-		bu_log("%s", Tcl_GetStringResult(interp));
+		bu_log("%s\n", Tcl_GetStringResult(interp));
+		attach = NULL;
 	    } else {
 		get_attached();
 	    }
+
 	} else {
 	    struct bu_vls vls;
 	    int status;
@@ -733,12 +736,13 @@ main(int argc, char **argv)
 		cbreak_mode = COMMAND_LINE_EDITING;
 		save_Tty(fileno(stdin));
 #endif
-		if (attach) {
+		if (attach != NULL) {
 		    int ret;
 		    char *attach_cmd[3] = {NULL, NULL, NULL};
 		    attach_cmd[1] = attach;
 		    f_attach((ClientData)NULL, interp, 2, attach_cmd);
-		    bu_log("%s", Tcl_GetStringResult(interp));
+		    bu_log("%s\n", Tcl_GetStringResult(interp));
+		    attach = NULL;
 		} else {
 		    get_attached();
 		}
@@ -773,6 +777,19 @@ main(int argc, char **argv)
 	}
 
     } /* interactive */
+
+    /* regardless of being interactive or classic, if the user
+     * requested a display manager and we haven't yet attached it, do
+     * it now.
+     */
+    if (attach) {
+	int ret;
+	char *attach_cmd[3] = {NULL, NULL, NULL};
+	attach_cmd[1] = attach;
+	f_attach((ClientData)NULL, interp, 2, attach_cmd);
+	bu_log("%s\n", Tcl_GetStringResult(interp));
+	attach = NULL;
+    }
 
     /* --- Now safe to process geometry. --- */
 
