@@ -1543,7 +1543,7 @@ f_ps(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 
     dml = curr_dm_list;
     gedp->ged_gvp = view_state->vs_gvp;
-    status = mged_attach(&which_dm[DM_PS_INDEX], argc, argv);
+    status = mged_attach(&which_dm[DM_PS_INDEX], argc, (const char **)argv);
     if (status == TCL_ERROR)
 	return TCL_ERROR;
 
@@ -1597,7 +1597,7 @@ f_pl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 
     dml = curr_dm_list;
     gedp->ged_gvp = view_state->vs_gvp;
-    status = mged_attach(&which_dm[DM_PLOT_INDEX], argc, argv);
+    status = mged_attach(&which_dm[DM_PLOT_INDEX], argc, (const char **)argv);
     if (status == TCL_ERROR)
 	return TCL_ERROR;
 

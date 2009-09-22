@@ -274,6 +274,25 @@ void _set_invalid_parameter_handler(void *callback) { return; }
 
 
 /*
+ * attaches the specified display manager
+ */
+static
+void attach_display_manager(Tcl_Interp *interp, const char *dm)
+{
+    if (dm != NULL) {
+	int ret;
+	const char *attach_cmd[3] = {NULL, NULL, NULL};
+	attach_cmd[1] = dm;
+	ret = f_attach((ClientData)NULL, interp, 2, attach_cmd);
+	bu_log("%s\n", Tcl_GetStringResult(interp));
+	attach = NULL;
+    } else {
+	get_attached();
+    }
+}
+
+
+/*
  * M A I N
  */
 int
@@ -690,16 +709,7 @@ main(int argc, char **argv)
 		notify_parent_done(parent_pipe[1]);
 	    }
 
-	    if (attach != NULL) {
-		int ret;
-		char *attach_cmd[3] = {NULL, NULL, NULL};
-		attach_cmd[1] = attach;
-		ret = f_attach((ClientData)NULL, interp, 2, attach_cmd);
-		bu_log("%s\n", Tcl_GetStringResult(interp));
-		attach = NULL;
-	    } else {
-		get_attached();
-	    }
+	    attach_display_manager(interp, attach);
 
 	} else {
 	    struct bu_vls vls;
@@ -736,16 +746,9 @@ main(int argc, char **argv)
 		cbreak_mode = COMMAND_LINE_EDITING;
 		save_Tty(fileno(stdin));
 #endif
-		if (attach != NULL) {
-		    int ret;
-		    char *attach_cmd[3] = {NULL, NULL, NULL};
-		    attach_cmd[1] = attach;
-		    f_attach((ClientData)NULL, interp, 2, attach_cmd);
-		    bu_log("%s\n", Tcl_GetStringResult(interp));
-		    attach = NULL;
-		} else {
-		    get_attached();
-		}
+
+		attach_display_manager(interp, attach);
+
 	    } else {
 
 		/* close out stdout/stderr as we're proceeding in GUI mode */
@@ -782,14 +785,7 @@ main(int argc, char **argv)
      * requested a display manager and we haven't yet attached it, do
      * it now.
      */
-    if (attach) {
-	int ret;
-	char *attach_cmd[3] = {NULL, NULL, NULL};
-	attach_cmd[1] = attach;
-	f_attach((ClientData)NULL, interp, 2, attach_cmd);
-	bu_log("%s\n", Tcl_GetStringResult(interp));
-	attach = NULL;
-    }
+    attach_display_manager(interp, attach);
 
     /* --- Now safe to process geometry. --- */
 
@@ -2592,7 +2588,7 @@ f_opendb(
 
     /* Get input file */
     if (((dbip = db_open(argv[1], "r+w")) == DBI_NULL) &&
-	((dbip = db_open(argv[1], "r"  )) == DBI_NULL)) {
+	((dbip = db_open(argv[1], "r" )) == DBI_NULL)) {
 	char line[128];
 
 	/*

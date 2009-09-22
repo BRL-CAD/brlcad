@@ -180,7 +180,7 @@ BU_EXTERN(int f_analyze, (ClientData clientData, Tcl_Interp *interp, int argc, c
 BU_EXTERN(int f_arbdef, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
 BU_EXTERN(int f_arced, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
 BU_EXTERN(int f_area, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
-BU_EXTERN(int f_attach, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
+BU_EXTERN(int f_attach, (ClientData clientData, Tcl_Interp *interp, int argc, const char **argv));
 BU_EXTERN(int f_bev, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
 BU_EXTERN(int f_bo, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
 BU_EXTERN(int f_bomb, (ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[]));

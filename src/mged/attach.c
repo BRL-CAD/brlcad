@@ -331,7 +331,7 @@ print_valid_dm(void)
 
 
 int
-f_attach(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
+f_attach(ClientData clientData, Tcl_Interp *interp, int argc, const char **argv)
 {
     register struct w_dm *wp;
 
@@ -436,7 +436,7 @@ int
 mged_attach(
     struct w_dm *wp,
     int argc,
-    char *argv[])
+    const char *argv[])
 {
     register struct dm_list *o_dm_list;
 
@@ -534,7 +534,7 @@ void
 get_attached(void)
 {
     int argc;
-    char *argv[3];
+    const char *argv[3];
     struct w_dm *wp = (struct w_dm *)NULL;
     int inflimit = 1000;
     int ret;
