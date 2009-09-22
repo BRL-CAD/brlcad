@@ -163,7 +163,12 @@ rt_sketch_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol
     plane_x_dir = ON_3dVector(eip->u_vec);
     plane_y_dir = ON_3dVector(eip->v_vec);
     const ON_Plane* sketch_plane = new ON_Plane(plane_origin, plane_x_dir, plane_y_dir); 
-    ON_PlaneSurface sketch_surf(*sketch_plane);
+
+    // Create the plane surface and brep face now - will need to find surface extents later.
+    ON_PlaneSurface *sketch_surf = new ON_PlaneSurface(*sketch_plane);
+    (*b)->m_S.Append(sketch_surf);
+    int surfindex = (*b)->m_S.Count();
+    ON_BrepFace& face = (*b)->NewFace(surfindex - 1);
  
     //  For the brep, need the list of 3D vertex points.  In sketch, they
     //  are stored as 2D coordinates, so use the sketch_plane to define 3 space
@@ -171,6 +176,49 @@ rt_sketch_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol
     for (int i = 0; i < eip->vert_count; i++) {
 	(*b)->NewVertex(sketch_plane->PointAt(eip->verts[i][0], eip->verts[i][1]), 0.0);
     }
+
+    // Create the brep elements corresponding to the sketch lines, curves
+    // and bezier segments.
+    struct line_seg *lsg;
+    struct carc_seg *csg;
+    struct bezier_seg *bsg;
+    int edgcnt;
+    ON_SimpleArray<ON_Curve*> boundary;
+    long *lng;
+    for (int i = 0; i < (&eip->skt_curve)->seg_count; i++) {
+	lng = (long *)(&eip->skt_curve)->segments[i];
+	switch (*lng) {
+	    case CURVE_LSEG_MAGIC:
+		lsg = (struct line_seg *)lng;
+		ON_Curve* lsg3d = new ON_LineCurve((*b)->m_V[lsg->start].Point(), (*b)->m_V[lsg->end].Point());
+		lsg3d->SetDomain(0.0, 1.0);
+		(*b)->m_C3.Append(lsg3d);
+		(*b)->NewEdge((*b)->m_V[lsg->start], (*b)->m_V[lsg->end] , (*b)->m_C3.Count() - 1);
+		edgcnt = (*b)->m_E.Count() - 1;
+		(*b)->m_E[edgcnt].m_tolerance = 0.0;
+		break;
+	    case CURVE_CARC_MAGIC:
+		csg = (struct carc_seg *)lng;
+		if (csg->radius < 0) {
+		    ON_Circle* c3dcirc = new ON_Circle();
+		    ON_Curve* c3d = new ON_ArcCurve();
+		} else {
+		    ON_Arc* c3darc = new ON_Arc();
+    		    ON_Curve* c3d = new ON_ArcCurve();
+		}
+		break;
+	    case CURVE_BEZIER_MAGIC:
+		bsg = (struct bezier_seg *)lng;
+//		ON_BezierCurve* bez3d = new ON_BezierCurve();
+//		ON_NurbsCurve* nurb3d;
+//		bez3d->GetNurbForm(*nurb3d);
+		break;
+	    default:
+		bu_log("Unhandled sketch object\n");
+		break;
+	}
+    }
+
 
 
     // Once the vertices are added, set the extents of the surface to ensure
@@ -192,46 +240,6 @@ rt_sketch_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol
     // in the sketch data structures themselves, and thus must be deduced
     ON_SimpleArray<ON_SimpleArray<struct curve*> *> loops;
     FindLoops(eip, loops);
-
-    // Create the brep elements corresponding to the sketch lines, curves
-    // and bezier segments
-    struct line_seg *lsg;
-    struct carc_seg *csg;
-    struct bezier_seg *bsg;
-    ON_SimpleArray<ON_Curve*> boundary;
-    struct curve *crv = &eip->skt_curve;
-    long *lng;
-    for (int i = 0; i < crv->seg_count; i++) {
-	lng = (long *)crv->segments[i];
-	switch (*lng) {
-	    case CURVE_LSEG_MAGIC:
-		lsg = (struct line_seg *)lng;
-		ON_Curve* c3d = new ON_LineCurve((*b)->m_V[lsg->start].Point(), (*b)->m_V[lsg->end].Point());
-		boundary.Append(c3d);
-		break;
-	    case CURVE_CARC_MAGIC:
-		csg = (struct carc_seg *)lng;
-		if (csg->radius < 0) {
-		    ON_Circle* c3dcirc = new ON_Circle();
-		    ON_Curve* c3d = new ON_ArcCurve();
-		} else {
-		    ON_Arc* c3darc = new ON_Arc();
-    		    ON_Curve* c3d = new ON_ArcCurve();
-		}
-		boundary.Append(c3d);
-		break;
-	    case CURVE_BEZIER_MAGIC:
-		bsg = (struct bezier_seg *)lng;
-		ON_Curve* c3d = new ON_BezierCurve();
-		boundary.Append(c3d);
-		break;
-	    default:
-		bu_log("Unhandled sketch object\n");
-		break;
-	}
-	c3d->SetDomain(0.0, 1.0);
-    	(*b)->m_C3.Append(c3d);
-    }
 
     // Create a single brep face and loops in that face
     const int bsi = (*b)->m_S.Count() - 1;
