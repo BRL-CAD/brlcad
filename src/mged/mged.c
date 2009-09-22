@@ -269,7 +269,7 @@ pr_beep(void)
 /* so the Windows-specific calls blend in */
 #if !defined(_WIN32) || defined(__CYGWIN__)
 #  define setmode(a, b) /* poof */
-void _set_invalid_parameter_handler(void *callback) { return; }
+void _set_invalid_parameter_handler(void (*callback)()) { return; }
 #endif
 
 
@@ -390,9 +390,6 @@ main(int argc, char **argv)
 	/* if there is more than a file name remaining, mged is not interactive */
 	interactive = 0;
     } else {
-	/* if argc is 1 or 2, then we may or may not be interactive */
-	int one = 1;
-
 	/* check if there is data on stdin (better than checking if isatty()) */
 	FD_ZERO(&read_set);
 	FD_SET(fileno(stdin), &read_set);
@@ -1330,7 +1327,7 @@ mged_process_char(char ch)
 	    if (input_str_index == bu_vls_strlen(&input_str))
 		break;
 	    pr_prompt(interactive);
-	    bu_log("%*S", input_str_index, &input_str);
+	    bu_log("%*V", input_str_index, &input_str);
 	    escaped = bracketed = 0;
 	    break;
 	case CTRL_B:                   /* Back one character */
@@ -1441,7 +1438,8 @@ mged_process_char(char ch)
 		len = bu_vls_strlen(&input_str);
 		bu_vls_trunc(&input_str, input_str_index);
 		pr_prompt(interactive);
-		bu_log("%V%V%*s", &input_str, &temp, len - input_str_index, SPACES);
+		bu_log("%V%V", &input_str, &temp);
+		bu_log("%*s", len - input_str_index, SPACES);
 		pr_prompt(interactive);
 		bu_log("%V", &input_str);
 		bu_vls_vlscat(&input_str, &temp);
@@ -1473,7 +1471,8 @@ mged_process_char(char ch)
 		bu_vls_strcat(&temp, curr);
 		bu_vls_trunc(&input_str, input_str_index);
 		pr_prompt(interactive);
-		bu_log("%V%V%*s", &input_str, &temp, i - input_str_index, SPACES);
+		bu_log("%V%V", &input_str, &temp);
+		bu_log("%*s", i - input_str_index, SPACES);
 		pr_prompt(interactive);
 		bu_log("%V", &input_str);
 		bu_vls_vlscat(&input_str, &temp);
