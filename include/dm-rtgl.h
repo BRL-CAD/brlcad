@@ -26,7 +26,7 @@
 #ifndef __DM_RTGL__
 #define __DM_RTGL__
 
-#include "dm_color.h"
+#include "common.h"
 #include "vmath.h"
 
 #ifdef HAVE_GL_GLX_H

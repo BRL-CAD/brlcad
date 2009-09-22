@@ -26,7 +26,7 @@
 #ifndef __DM_OGL__
 #define __DM_OGL__
 
-#include "dm_color.h"
+#include "common.h"
 
 #ifdef HAVE_GL_GLX_H
 #  include <GL/glx.h>

@@ -26,7 +26,6 @@
 #ifndef __DM_TK__
 #define __DM_TK__
 
-#include "dm_color.h"
 #define CMAP_BASE 40
 #define CUBE_DIMENSION 6
 #define NUM_PIXELS 216    /* CUBE_DIMENSION * CUBE_DIMENSION * CUBE_DIMENSION */

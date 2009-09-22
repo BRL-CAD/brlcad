@@ -26,11 +26,13 @@
 #ifndef __DM_WGL__
 #define __DM_WGL__
 
+#include "common.h"
+
 #ifdef HAVE_GL_GL_H
 #  include <GL/gl.h>
 #endif
 
-#include "dm_color.h"
+
 #define CMAP_BASE 40
 
 /* Map +/-2048 GED space into -1.0..+1.0 :: x/2048*/
