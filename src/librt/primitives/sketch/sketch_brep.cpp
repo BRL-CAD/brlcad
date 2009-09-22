@@ -210,7 +210,8 @@ rt_sketch_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol
 		    edgcnt = (*b)->m_E.Count() - 1;
 		    (*b)->m_E[edgcnt].m_tolerance = 0.0;
 		} else {
-
+		    // need to calculated 3rd point on arc - look to sketch.c around line 581 for
+		    // logic
 		    ON_Arc* c3darc = new ON_Arc();
     		    ON_Curve* c3d = new ON_ArcCurve();
 		}
