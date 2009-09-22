@@ -138,7 +138,7 @@ void FindLoops(struct rt_sketch_internal *sk, ON_SimpleArray<ON_SimpleArray<genp
 extern "C" void
 rt_sketch_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *tol)
 {
-   /*
+   
     struct rt_sketch_internal	*eip;
 
     *b = NULL; 
@@ -158,11 +158,11 @@ rt_sketch_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol
     
     //  First, find plane in 3 space corresponding to the sketch.
     
-    plane1_origin = ON_3dPoint(eip->V);
+    plane_origin = ON_3dPoint(eip->V);
     plane_x_dir = ON_3dVector(eip->u_vec);
     plane_y_dir = ON_3dVector(eip->v_vec);
-    const ON_Plane* sketch_plane = new ON_Plane(plane1_origin, plane_x_dir, plane_y_dir); 
-    ON_PlaneSurface sketch_surf = ON_Plane::New(sketch_plane);
+    const ON_Plane* sketch_plane = new ON_Plane(plane_origin, plane_x_dir, plane_y_dir); 
+    ON_PlaneSurface sketch_surf(*sketch_plane);
   
     //  For the brep, need the list of 3D vertex points.  In sketch, they
     //  are stored as 2D points. Also, save the min and max for the purposes
@@ -178,20 +178,19 @@ rt_sketch_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol
 
     // Once the vertices are added, set the extents of the surface to ensure
     // it will hold all the vertices.
-    vect_t vect_min, vect_max;
-    double umin, umax, vmin, vmax;
+    vect_t vect_min, vect_max, parallel, orthogonal;
     VSUB2(vect_min, pmin, eip->V);
     VSUB2(vect_max, pmax, eip->V);
-    VPROJECT(vect_min, plane_x_dir, umin, vmin);
-    VPROJECT(vect_max, plane_x_dir, umax, vmax);
-    sketch_surf->SetDomain(0, umin, umax);
-    sketch_surf->SetDomain(1, vmin, vmax);
-    sketch_surf->SetExtents(0, sketch_surf->Domain(0));
-    sketch_surf->SetExtents(1, sketch_surf->Domain(1));
+    VPROJECT(vect_min, eip->u_vec, parallel, orthogonal);
+    sketch_surf.SetDomain(0, MAGNITUDE(parallel), MAGNITUDE(orthogonal));
+    VPROJECT(vect_max, eip->u_vec, parallel, orthogonal);
+    sketch_surf.SetDomain(1, MAGNITUDE(parallel), MAGNITUDE(orthogonal));
+    sketch_surf.SetExtents(0, sketch_surf.Domain(0));
+    sketch_surf.SetExtents(1, sketch_surf.Domain(1));
 
     // Now, append the surface to the brep surface list
-    (*b)->m_S.Append(sketch_surf);
-
+    (*b)->m_S.Append(ON_Surface::Cast(&sketch_surf));
+/*
     // For the purposes of BREP creation, it is necessary to identify
     // loops created by sketch segments.  This information is not stored
     // in the sketch data structures themselves, and thus must be deduced
