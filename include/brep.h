@@ -59,8 +59,14 @@ typedef struct _on_brep_placeholder {
 /** Root finding threshold */
 #define BREP_INTERSECTION_ROOT_EPSILON 1e-6
 /** Jungle Gym epsilon */
+// The EDGE_MISS_TOLERANCE setting is critical in a couple
+// of ways - too small and the allowed uncertainty region
+// near edges will be smaller than the actual uncertainty needed
+// for accurate solid raytracing, too large and trimming will not
+// be adequate.  May need to adapt this to the scale of the model,
+// perhaps using bounding box size to key off of.
 //#define BREP_EDGE_MISS_TOLERANCE 5e-2
-#define BREP_EDGE_MISS_TOLERANCE 1e-3
+#define BREP_EDGE_MISS_TOLERANCE 1e-4
 #define BREP_SAME_POINT_TOLERANCE 1e-3
 /* Use vector operations? For debugging */
 #define DO_VECTOR 1
