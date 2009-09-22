@@ -516,15 +516,16 @@ main(int argc, char** argv)
     
     skt->skt_curve.segments[5] = (genptr_t)csg;
     
-    const char* sketch_name_csg = "sketch.s";
-    mk_sketch(outfp, sketch_name_csg, skt);
-        
+       
     tmp_internal->idb_ptr = (genptr_t)skt;
     rt_sketch_brep(&sketchbrep, tmp_internal, tol);
     const char* sketch_name = "sketch_nurb.s";
     mk_brep(outfp, sketch_name, sketchbrep);
-    delete sketchbrep;
+    //delete sketchbrep;
 
+    const char* sketch_name_csg = "sketch.s";
+    mk_sketch(outfp, sketch_name_csg, skt);
+ 
     bu_free(tmp_internal, "free tmp_internal");
     wdb_close(outfp);
 
