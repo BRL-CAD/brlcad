@@ -156,31 +156,27 @@ rt_sketch_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol
     ON_3dPoint plane_origin;
     ON_3dVector plane_x_dir, plane_y_dir;
     
-    //  First, find plane in 3 space corresponding to the sketch.
+ 
+    //  Find plane in 3 space corresponding to the sketch.
     
     plane_origin = ON_3dPoint(eip->V);
     plane_x_dir = ON_3dVector(eip->u_vec);
     plane_y_dir = ON_3dVector(eip->v_vec);
     const ON_Plane* sketch_plane = new ON_Plane(plane_origin, plane_x_dir, plane_y_dir); 
     ON_PlaneSurface sketch_surf(*sketch_plane);
-  
+ 
     //  For the brep, need the list of 3D vertex points.  In sketch, they
-    //  are stored as 2D points. Also, save the min and max for the purposes
-    //  of setting the extents.
-    point_t pt, pmin, pmax;
-    VMOVE(pmin, eip->V);
-    VSETALL(pmax, -INT_MAX);
+    //  are stored as 2D coordinates, so use the sketch_plane to define 3 space
+    //  points for the vertices.
     for (int i = 0; i < eip->vert_count; i++) {
-	VJOIN2(pt, eip->V, eip->verts[i][0], eip->u_vec, eip->verts[i][1], eip->v_vec);
-	VMINMAX(pmin, pmax, pt);
-	(*b)->NewVertex(pt, SMALL_FASTF);
+	(*b)->NewVertex(sketch_plane->PointAt(eip->verts[i][0], eip->verts[i][1]), 0.0);
     }
+
 
     // Once the vertices are added, set the extents of the surface to ensure
     // it will hold all the vertices.
-    vect_t vect_min, vect_max, parallel, orthogonal;
-    VSUB2(vect_min, pmin, eip->V);
-    VSUB2(vect_max, pmax, eip->V);
+/*    vect_t vect_diag, vect_max, parallel, orthogonal;
+    VSUB2(vect_diag, pmax, pmin);
     VPROJECT(vect_min, eip->u_vec, parallel, orthogonal);
     sketch_surf.SetDomain(0, MAGNITUDE(parallel), MAGNITUDE(orthogonal));
     VPROJECT(vect_max, eip->u_vec, parallel, orthogonal);
@@ -190,7 +186,7 @@ rt_sketch_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol
 
     // Now, append the surface to the brep surface list
     (*b)->m_S.Append(ON_Surface::Cast(&sketch_surf));
-/*
+
     // For the purposes of BREP creation, it is necessary to identify
     // loops created by sketch segments.  This information is not stored
     // in the sketch data structures themselves, and thus must be deduced
