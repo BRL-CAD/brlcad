@@ -200,9 +200,17 @@ rt_sketch_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol
 	    case CURVE_CARC_MAGIC:
 		csg = (struct carc_seg *)lng;
 		if (csg->radius < 0) {
-		    ON_Circle* c3dcirc = new ON_Circle();
-		    ON_Curve* c3d = new ON_ArcCurve();
+		    ON_3dPoint cntrpt = (*b)->m_V[csg->end].Point();
+		    ON_3dPoint edgept = (*b)->m_V[csg->start].Point();
+		    ON_Circle* c3dcirc = new ON_Circle(cntrpt,cntrpt.DistanceTo(edgept));
+		    ON_Curve* c3d = new ON_ArcCurve((const ON_Circle)*c3dcirc);
+		    c3d->SetDomain(0.0,1.0);
+		    (*b)->m_C3.Append(c3d);
+		    (*b)->NewEdge((*b)->m_V[csg->start], (*b)->m_V[csg->end] , (*b)->m_C3.Count() - 1);
+		    edgcnt = (*b)->m_E.Count() - 1;
+		    (*b)->m_E[edgcnt].m_tolerance = 0.0;
 		} else {
+
 		    ON_Arc* c3darc = new ON_Arc();
     		    ON_Curve* c3d = new ON_ArcCurve();
 		}
