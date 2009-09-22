@@ -120,7 +120,7 @@ X_allocate_color_cube(Display *dpy, Colormap cmap, long unsigned int *pixels, in
      * though cmap may be shared.
      */
     default_cmap = DefaultColormap(dpy, DefaultScreen(dpy));
-    dm_copy_cmap(dpy, cmap, default_cmap, 0, cmap_base, store);
+    _X_copy_cmap(dpy, cmap, default_cmap, 0, cmap_base, store);
 
     incr = 65535 / (cd - 1);
 
