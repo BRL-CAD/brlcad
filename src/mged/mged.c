@@ -752,17 +752,6 @@ main(int argc, char **argv)
 #ifdef HAVE_PIPE
 		(void)pipe(pipe_out);
 		(void)pipe(pipe_err);
-#if 0
-		/* Redirect stdout */
-		(void)close(1);
-		(void)dup(pipe_out[1]);
-		(void)close(pipe_out[1]);
-
-		/* Redirect stderr */
-		(void)close(2);
-		(void)dup(pipe_err[1]);
-		(void)close(pipe_err[1]);
-#endif
 #endif  /* HAVE_PIPE */
 
 		bu_add_hook(&bu_bomb_hook_list, mged_bomb_hook, GENPTR_NULL);
@@ -2282,22 +2271,9 @@ mged_finish(int exitcode)
 
     /* Be certain to close the database cleanly before exiting */
     Tcl_Preserve((ClientData)interp);
-#if 0
-    Tcl_Eval(interp, "db close");
-    Tcl_Eval(interp, ".inmem close");
-#else
     Tcl_Eval(interp, "rename db \"\"");
     Tcl_Eval(interp, "rename .inmem \"\"");
-#endif
     Tcl_Release((ClientData)interp);
-
-#if 0
-    if (wdbp)
-	wdb_close(wdbp);
-
-    if (dbip)
-	db_close(dbip);
-#endif
 
     if (gedp->ged_gdp) {
 	ged_drawable_close(gedp->ged_gdp);
@@ -2587,7 +2563,7 @@ f_opendb(
 
     /* Get input file */
     if (((dbip = db_open(argv[1], "r+w")) == DBI_NULL) &&
-	((dbip = db_open(argv[1], "r" )) == DBI_NULL)) {
+	((dbip = db_open(argv[1], "r")) == DBI_NULL)) {
 	char line[128];
 
 	/*
@@ -2725,18 +2701,6 @@ f_opendb(
 	dbip = new_dbip;
 	rt_new_material_head(new_materp);
     }
-
-#if 0
-    {
-	register struct dm_list *dmlp;
-
-	/* update local2base and base2local variables for all view objects */
-	FOR_ALL_DISPLAYS(dmlp, &head_dm_list.l) {
-	    dmlp->dml_view_state->vs_gvp->gv_local2base = dbip->dbi_local2base;
-	    dmlp->dml_view_state->vs_gvp->gv_base2local = dbip->dbi_base2local;
-	}
-    }
-#endif
 
     if (dbip->dbi_read_only)
 	bu_vls_printf(&msg, "%s: READ ONLY\n", dbip->dbi_filename);
@@ -2880,19 +2844,6 @@ f_closedb(
     Tcl_Eval(interp, "rename db \"\"; rename .inmem \"\"");
 
     log_event("CEASE", "(close)");
-
-#if 0
-    /* update any and all other displays */
-    {
-	register struct dm_list *dmlp;
-
-	/* update local2base and base2local variables for all view objects */
-	FOR_ALL_DISPLAYS(dmlp, &head_dm_list.l) {
-	    dmlp->dml_view_state->vs_gvp->gv_local2base = dbip->dbi_local2base;
-	    dmlp->dml_view_state->vs_gvp->gv_base2local = dbip->dbi_base2local;
-	}
-    }
-#endif
 
     ged_drawable_close(gedp->ged_gdp);
     gedp->ged_gdp = NULL;
