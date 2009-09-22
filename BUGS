@@ -15,6 +15,9 @@ on-going issues.
 Recent Bugs
 -----------
 
+* if you attach a display manager in tk-mged, kill the window, then
+  quit, mged crashes on exit.
+
 * fb-png gamma correction is not right with the output png having
   massive overexposure/brightness.  For example, 0/0/1 background
   pixel was converted to 0/0/12.  (0/0/0 stayed 0/0/0)
