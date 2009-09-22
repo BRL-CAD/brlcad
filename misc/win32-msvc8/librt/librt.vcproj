@@ -844,6 +844,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\src\librt\primitives\sketch\sketch_brep.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\src\librt\spectrum.c"
 				>
 			</File>
