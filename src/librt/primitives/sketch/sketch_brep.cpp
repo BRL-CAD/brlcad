@@ -218,9 +218,18 @@ rt_sketch_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol
 		break;
 	    case CURVE_BEZIER_MAGIC:
 		bsg = (struct bezier_seg *)lng;
-//		ON_BezierCurve* bez3d = new ON_BezierCurve();
-//		ON_NurbsCurve* nurb3d;
-//		bez3d->GetNurbForm(*nurb3d);
+		ON_3dPointArray *bezpoints = new ON_3dPointArray(bsg->degree + 1);
+		for (int i = 0; i < bsg->degree + 1; i++) {
+		    bezpoints->Append((*b)->m_V[bsg->ctl_points[i]].Point());
+		}
+		ON_BezierCurve* bez3d = new ON_BezierCurve((const ON_3dPointArray)*bezpoints);
+		ON_NurbsCurve* beznurb3d = new ON_NurbsCurve();
+		bez3d->GetNurbForm(*beznurb3d);
+		beznurb3d->SetDomain(0.0,1.0);
+		(*b)->m_C3.Append(beznurb3d);
+		(*b)->NewEdge((*b)->m_V[bsg->ctl_points[0]], (*b)->m_V[bsg->ctl_points[bsg->degree]] , (*b)->m_C3.Count() - 1);
+		edgcnt = (*b)->m_E.Count() - 1;
+		(*b)->m_E[edgcnt].m_tolerance = 0.0;
 		break;
 	    default:
 		bu_log("Unhandled sketch object\n");
