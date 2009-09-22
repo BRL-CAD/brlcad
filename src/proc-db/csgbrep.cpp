@@ -87,7 +87,7 @@ main(int argc, char** argv)
     outfp = wdb_fopen("csgbrep.g");
     const char* id_name = "CSG B-Rep Examples";
     mk_id(outfp, id_name);
-/*
+
     bu_log("Writing an ARB4 (via NMG) brep...\n");
     ON_Brep* arb4brep = ON_Brep::New();
     struct rt_arb_internal *arb4;
@@ -360,7 +360,7 @@ main(int argc, char** argv)
     const char* epa_name = "epa_nurb.s";
     mk_brep(outfp, epa_name, epabrep);
     delete epabrep;
- 
+/* 
     bu_log("Writing an EHY b-rep...\n");
     ON_Brep* ehybrep = ON_Brep::New();
     struct rt_ehy_internal *ehy;
@@ -377,7 +377,7 @@ main(int argc, char** argv)
     const char* ehy_name = "ehy_nurb.s";
     mk_brep(outfp, ehy_name, ehybrep);
     delete ehybrep;
-  
+ */ 
     bu_log("Writing a TGC b-rep...\n");
     ON_Brep* tgcbrep = ON_Brep::New();
     struct rt_tgc_internal *tgc;
@@ -430,7 +430,7 @@ main(int argc, char** argv)
     const char* eto_name = "eto_nurb.s";
     mk_brep(outfp, eto_name, etobrep);
     delete etobrep;
-*/
+
     bu_log("Writing a Sketch (non-solid) b-rep...\n");
     int cnti;
     ON_Brep* sketchbrep = ON_Brep::New();
