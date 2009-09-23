@@ -32,6 +32,7 @@
 void FindLoops(ON_Brep **b) {
     ON_SimpleArray<ON_BrepEdge *> allsegments;
     int loop_complete = 0;
+    int orientation;
     int current_loop;
     int current_segment;
     for (int i = 0; i < (*b)->m_E.Count(); i++) {
@@ -39,9 +40,13 @@ void FindLoops(ON_Brep **b) {
     }
     while (allsegments.Count() > 0) {
 	// Note that all loops start life as inner loops - the outer loop must be
-	// found and labeled later.
+	// found and handled once analysis has revealed which loop is in fact the
+	// outer loop.
 	ON_BrepLoop& loop = (*b)->NewLoop(ON_BrepLoop::inner,(*b)->m_F[0]);
-	(*b)->NewTrim(*(allsegments[allsegments.Count() - 1]), 0, loop, allsegments.Count() - 1);
+	ON_BrepTrim& currenttrim = (*b)->NewTrim(*(allsegments[allsegments.Count() - 1]), 0, loop, allsegments.Count() - 1);
+	currenttrim.m_type = ON_BrepTrim::boundary;
+	currenttrim.m_tolerance[0] = 0.0;
+	currenttrim.m_tolerance[1] = 0.0;
 	ON_BrepEdge *currentedge = allsegments[allsegments.Count() - 1];
 	ON_BrepVertex *vertmatch = &((*b)->m_V[currentedge->m_vi[0]]);
 	ON_BrepVertex *vertterminate = &((*b)->m_V[currentedge->m_vi[1]]);
@@ -52,9 +57,18 @@ void FindLoops(ON_Brep **b) {
 	   ON_BrepVertex *currentvertexstart = &((*b)->m_V[currentedge->m_vi[0]]);
 	   ON_BrepVertex *currentvertexend = &((*b)->m_V[currentedge->m_vi[1]]);
 	   if ( (currentvertexstart == vertmatch) || (currentvertexend == vertmatch) ) {
-	       if (currentvertexstart == vertmatch) vertmatch = currentvertexend;
-	       if (currentvertexend == vertmatch) vertmatch = currentvertexstart;
-	       (*b)->NewTrim(*(allsegments[allsegments.Count() - 1]), 0, loop, allsegments.Count() - 1);
+	       if (currentvertexstart == vertmatch) {
+		   vertmatch = currentvertexend;
+		   orientation = 0;
+	       }
+	       if (currentvertexend == vertmatch) { 
+		   vertmatch = currentvertexstart;
+		   orientation = 1;
+	       }
+	       ON_BrepTrim& ctrim = (*b)->NewTrim(*(allsegments[current_segment]), orientation, loop, current_segment);
+       	       ctrim.m_type = ON_BrepTrim::boundary;
+       	       ctrim.m_tolerance[0] = 0.0;
+       	       ctrim.m_tolerance[1] = 0.0;
 	       allsegments.Remove(current_segment);
 	       if (vertterminate == vertmatch) {
 		   loop_complete = 1;
@@ -67,6 +81,33 @@ void FindLoops(ON_Brep **b) {
 	   }
 	}
     }
+    ON_BoundingBox *lbbox = new ON_BoundingBox();
+    double maxdist = 0.0;
+    int largest_loop_index = 0;
+    for (int i = 0; i < (*b)->m_L.Count(); i++) {
+	ON_BrepLoop *loop = &((*b)->m_L[i]);
+	loop->GetBoundingBox(*lbbox, false);
+	point_t minpt, maxpt;
+	double currdist;
+	VSET(minpt, lbbox->m_min[0], lbbox->m_min[1], lbbox->m_min[2]);
+	VSET(maxpt, lbbox->m_max[0], lbbox->m_max[1], lbbox->m_max[2]);
+	currdist = DIST_PT_PT(minpt, maxpt);
+	if (currdist > maxdist) {
+	  maxdist = currdist;
+	  largest_loop_index = i;
+	}
+    }
+    ON_BrepLoop& real_outer_loop = (*b)->NewLoop(ON_BrepLoop::outer, (*b)->m_F[0]);
+    ON_BrepLoop& old_outer_loop = (*b)->m_L[largest_loop_index];
+    for (int i = 0; i < old_outer_loop.TrimCount(); i++) {
+	ON_BrepTrim *otrim = old_outer_loop.Trim(i);
+	ON_BrepEdge *oedge = otrim->Edge();
+	ON_BrepTrim& notrim = (*b)->NewTrim(*oedge, otrim->m_bRev3d, real_outer_loop, i);
+	notrim.m_type = ON_BrepTrim::mated;
+	notrim.m_tolerance[0] = 0.0;
+	notrim.m_tolerance[1] = 0.0;
+    }
+    (*b)->m_F[0].m_li.Remove(largest_loop_index);
 }    
  
 
@@ -114,6 +155,8 @@ rt_sketch_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol
     //  points for the vertices.
     for (int i = 0; i < eip->vert_count; i++) {
 	(*b)->NewVertex(sketch_plane->PointAt(eip->verts[i][0], eip->verts[i][1]), 0.0);
+	int vertind = (*b)->m_V.Count() - 1;
+	(*b)->m_V[vertind].Dump(*dump);
     }
 
     // Create the brep elements corresponding to the sketch lines, curves
@@ -164,7 +207,7 @@ rt_sketch_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol
 		    	c3d->GetBoundingBox(*bbox,true);
 			(*b)->m_C2.Append(c3d2d);
 			(*b)->m_C3.Append(c3d);
-			(*b)->NewEdge((*b)->m_V[csg->start], (*b)->m_V[csg->end] , (*b)->m_C3.Count() - 1);
+			(*b)->NewEdge((*b)->m_V[csg->start], (*b)->m_V[csg->start] , (*b)->m_C3.Count() - 1);
 		    }
 		    edgcnt = (*b)->m_E.Count() - 1;
 		    (*b)->m_E[edgcnt].m_tolerance = 0.0;
