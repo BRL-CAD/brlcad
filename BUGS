@@ -15,6 +15,8 @@ on-going issues.
 Recent Bugs
 -----------
 
+* hyp tesselation routine creates bot that does not raytrace
+
 * if you attach a display manager in tk-mged, kill the window, then
   quit, mged crashes on exit.
 
