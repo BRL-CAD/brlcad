@@ -249,7 +249,6 @@ rt_hyp_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct 
     fastf_t hitX, hitY;
 
     fastf_t height;
-    mat_t R;
 
     hitp = &hits[0];
 
@@ -729,15 +728,12 @@ rt_hyp_plot(struct bu_list *vhead, struct rt_db_internal *incoming, const struct
 int
 rt_hyp_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol)
 {
-    fastf_t c, dtol, f, mag_a, mag_h, ntol, r1, r2, r3, cprime, swap;
+    fastf_t c, dtol, f, mag_a, mag_h, ntol, r1, r2, r3, cprime;
     fastf_t **ellipses, theta_prev, theta_new;
     fastf_t rt_ell_ang(fastf_t *p1, fastf_t a, fastf_t b, fastf_t dtol, fastf_t ntol);
-    int *pts_dbl, face, i, j, nseg, nseg_prev, nseg_max;
-    int jj, na, nb, nell, recalc_b;
-    mat_t R;
-    mat_t invR;
+    int *pts_dbl, face, i, j, nseg;
+    int jj, nell;
     mat_t invRoS;
-    mat_t S;
     mat_t SoR;
     struct rt_hyp_internal *iip;
     struct hyp_specific *xip;
@@ -1179,6 +1175,7 @@ rt_hyp_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 	NMG_CK_VERTEX_G(vg);
 
 	VSUB2(tmp_pt, vg->coord, xip->hyp_V);
+	/* Fix me. SoR and invRoS have not been initialized before using */
 	MAT4X3VEC(pt_prime, SoR, tmp_pt);
 	VSET(tmp_vect, pt_prime[X]*(2*cprime+1), pt_prime[Y]*(2*cprime+1), -(pt_prime[Z]+cprime+1));
 	MAT4X3VEC(norm, invRoS, tmp_vect);
