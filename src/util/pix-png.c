@@ -44,12 +44,12 @@
 #include "bn.h"
 
 
-static long int	file_width = 512L;		/* default input width */
-static long int	file_height = 512L;		/* default input height */
-static int	autosize = 0;			/* !0 to autosize input */
-static int	fileinput = 0;			/* file of pipe on input? */
-static char	*file_name;
-static FILE	*infp, *outfp;
+static long int file_width = 512L;		/* default input width */
+static long int file_height = 512L;		/* default input height */
+static int autosize = 0;			/* !0 to autosize input */
+static int fileinput = 0;			/* file of pipe on input? */
+static char *file_name;
+static FILE *infp, *outfp;
 
 #define BYTESPERPIXEL 3
 
@@ -65,8 +65,8 @@ get_args(int argc, register char **argv)
 {
     register int c;
 
-    while ( (c = bu_getopt( argc, argv, "as:w:n:" )) != EOF )  {
-	switch ( c )  {
+    while ((c = bu_getopt(argc, argv, "as:w:n:")) != EOF) {
+	switch (c) {
 	    case 'a':
 		autosize = 1;
 		break;
@@ -115,14 +115,15 @@ get_args(int argc, register char **argv)
 	return 0; /* not ok */
     }
 
-    if ( argc > ++bu_optind )
-	(void)fprintf( stderr, "pix-png: excess argument(s) ignored\n" );
+    if (argc > ++bu_optind)
+	(void)fprintf(stderr, "pix-png: excess argument(s) ignored\n");
 
     return(1);		/* OK */
 }
 
+
 int
-main(int argc, char **argv)
+main(int argc, char *argv[])
 {
     int i;
     unsigned long int w, h;
@@ -133,14 +134,14 @@ main(int argc, char **argv)
     png_infop info_p;
 
 
-    if ( !get_args( argc, argv ) )  {
+    if (!get_args(argc, argv)) {
 	(void)fputs(usage, stderr);
-	bu_exit(1, NULL );
+	bu_exit(1, NULL);
     }
 
     /* autosize input? */
-    if ( fileinput && autosize ) {
-	if ( fb_common_file_size(&w, &h, file_name, 3) ) {
+    if (fileinput && autosize) {
+	if (fb_common_file_size(&w, &h, file_name, 3)) {
 	    file_width = (long)w;
 	    file_height = (long)h;
 	} else {
@@ -148,24 +149,24 @@ main(int argc, char **argv)
 	}
     }
 
-    png_p = png_create_write_struct( PNG_LIBPNG_VER_STRING, NULL, NULL, NULL );
-    if ( !png_p )
-	bu_exit(1, "Could not create PNG write structure\n" );
+    png_p = png_create_write_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
+    if (!png_p)
+	bu_exit(1, "Could not create PNG write structure\n");
 
-    info_p = png_create_info_struct( png_p );
-    if ( !info_p )
-	bu_exit(1, "Could not create PNG info structure\n" );
+    info_p = png_create_info_struct(png_p);
+    if (!info_p)
+	bu_exit(1, "Could not create PNG info structure\n");
 
     /* allocate space for the image */
-    scanbuf = (unsigned char *)bu_calloc( SIZE, sizeof( unsigned char ), "scanbuf" );
+    scanbuf = (unsigned char *)bu_calloc(SIZE, sizeof(unsigned char), "scanbuf");
 
     /* create array of pointers to rows for libpng */
-    rows = (unsigned char **)bu_calloc( file_height, sizeof( unsigned char *), "rows" );
-    for ( i=0; i<file_height; i++ )
+    rows = (unsigned char **)bu_calloc(file_height, sizeof(unsigned char *), "rows");
+    for (i=0; i<file_height; i++)
 	rows[i] = scanbuf + ((file_height-i-1)*ROWSIZE);
 
     /* read the pix file */
-    if ( fread( scanbuf, SIZE, 1, infp ) != 1 )
+    if (fread(scanbuf, SIZE, 1, infp) != 1)
 	bu_exit(1, "pix-png: Short read\n");
 
     /* warn if we only read part of the input */
@@ -186,37 +187,34 @@ main(int argc, char **argv)
 	}
     }
 
-
-    png_init_io( png_p, outfp );
-    png_set_filter( png_p, 0, PNG_FILTER_NONE );
-    png_set_compression_level( png_p, Z_BEST_COMPRESSION );
-    png_set_IHDR( png_p, info_p, file_width, file_height, 8,
-		  PNG_COLOR_TYPE_RGB, PNG_INTERLACE_NONE,
-		  PNG_COMPRESSION_TYPE_DEFAULT, PNG_FILTER_TYPE_DEFAULT );
+    png_init_io(png_p, outfp);
+    png_set_filter(png_p, 0, PNG_FILTER_NONE);
+    png_set_compression_level(png_p, Z_BEST_COMPRESSION);
+    png_set_IHDR(png_p, info_p, file_width, file_height, 8,
+		 PNG_COLOR_TYPE_RGB, PNG_INTERLACE_NONE,
+		 PNG_COMPRESSION_TYPE_DEFAULT, PNG_FILTER_TYPE_DEFAULT);
 
     /*
-     *  From the PNG 1.0 Specification:
-     *	the gAMA chunk specifies the gamma characteristic
-     *	of the source device.
+     * From the PNG 1.0 Specification: the gAMA chunk specifies the
+     * gamma characteristic of the source device.
      *
-     *  In this interpretation, we set the value to 1.0;
-     *  indicating we hadn't done any gamma correction.
+     * In this interpretation, we set the value to 1.0; indicating we
+     * hadn't done any gamma correction.
      *
-     *  From the PNG 1.1 Specification:
+     * From the PNG 1.1 Specification:
      *
-     *	PNG images can specify, via the gAMA chunk, the
-     *	power function relating the desired display output
-     *	with the image samples.
+     * PNG images can specify, via the gAMA chunk, the power function
+     * relating the desired display output with the image samples.
      *
-     *  In this interpretation, we set the value to 0.6,
-     *  representing the value needed to un-do the 2.2 correction
-     *  auto-applied by PowerPoint for PC monitors.
+     * In this interpretation, we set the value to 0.6, representing
+     * the value needed to un-do the 2.2 correction auto-applied by
+     * PowerPoint for PC monitors.
      */
-    png_set_gAMA( png_p, info_p, 0.6 );
+    png_set_gAMA(png_p, info_p, 0.6);
 
-    png_write_info( png_p, info_p );
-    png_write_image( png_p, rows );
-    png_write_end( png_p, NULL );
+    png_write_info(png_p, info_p);
+    png_write_image(png_p, rows);
+    png_write_end(png_p, NULL);
 
 
     /* release resources */
