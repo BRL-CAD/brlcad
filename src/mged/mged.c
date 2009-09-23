@@ -173,13 +173,12 @@ int classic_mged=0;
 int classic_mged=1;
 #endif
 
-char *dpy_string = (char *)NULL;
-char *attach = (char *)NULL;
-
 static int mged_init_flag = 1;	/* >0 means in initialization stage */
 
 struct bu_vls input_str, scratchline, input_str_prefix;
 int input_str_index = 0;
+
+char *dpy_string = (char *)NULL;
 
 /*
  * 0 - no warn
@@ -277,15 +276,19 @@ void _set_invalid_parameter_handler(void (*callback)()) { return; }
  * attaches the specified display manager
  */
 static
-void attach_display_manager(Tcl_Interp *interp, const char *dm)
+void attach_display_manager(Tcl_Interp *interp, const char *dm, const char *display)
 {
     if (dm != NULL) {
 	int ret;
-	const char *attach_cmd[3] = {NULL, NULL, NULL};
-	attach_cmd[1] = dm;
-	ret = f_attach((ClientData)NULL, interp, 2, attach_cmd);
+	int argc = 1;
+	const char *attach_cmd[5] = {NULL, NULL, NULL, NULL, NULL};
+	if (display != NULL) {
+	    attach_cmd[argc++] = "-d";
+	    attach_cmd[argc++] = display;
+	}
+	attach_cmd[argc++] = dm;
+	ret = f_attach((ClientData)NULL, interp, argc, attach_cmd);
 	bu_log("%s\n", Tcl_GetStringResult(interp));
-	attach = NULL;
     } else {
 	get_attached();
     }
@@ -313,6 +316,8 @@ main(int argc, char **argv)
     struct timeval timeout;
     int result;
     FILE *out;
+
+    char *attach = (char *)NULL;
 
     setmode(fileno(stdin), O_BINARY);
     setmode(fileno(stdout), O_BINARY);
@@ -706,7 +711,7 @@ main(int argc, char **argv)
 		notify_parent_done(parent_pipe[1]);
 	    }
 
-	    attach_display_manager(interp, attach);
+	    attach_display_manager(interp, attach, dpy_string);
 
 	} else {
 	    struct bu_vls vls;
@@ -744,7 +749,7 @@ main(int argc, char **argv)
 		save_Tty(fileno(stdin));
 #endif
 
-		attach_display_manager(interp, attach);
+		attach_display_manager(interp, attach, dpy_string);
 
 	    } else {
 
@@ -771,7 +776,7 @@ main(int argc, char **argv)
      * requested a display manager and we haven't yet attached it, do
      * it now.
      */
-    attach_display_manager(interp, attach);
+    attach_display_manager(interp, attach, dpy_string);
 
     /* --- Now safe to process geometry. --- */
 
