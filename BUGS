@@ -20,10 +20,6 @@ Recent Bugs
 * if you attach a display manager in tk-mged, kill the window, then
   quit, mged crashes on exit.
 
-* fb-png gamma correction is not right with the output png having
-  massive overexposure/brightness.  For example, 0/0/1 background
-  pixel was converted to 0/0/12.  (0/0/0 stayed 0/0/0)
-
 * CMD-b and CMD-f navigates the mged command window text widget on Mac
   and trivally causes problems with the cursor and text injection.
 
