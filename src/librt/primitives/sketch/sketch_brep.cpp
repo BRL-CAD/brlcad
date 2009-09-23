@@ -107,7 +107,12 @@ void FindLoops(ON_Brep **b) {
 	notrim.m_tolerance[0] = 0.0;
 	notrim.m_tolerance[1] = 0.0;
     }
-//    (*b)->m_F[0].m_li.Remove(largest_loop_index);
+    bu_log("largest_loop_index: %d\n", largest_loop_index);
+/*    for (int i = 0; i < old_outer_loop.TrimCount(); i++) {
+	 ON_BrepTrim *otrim = old_outer_loop.Trim(i);
+	 (*b)->m_T.Remove(otrim->m_trim_index);
+    }*/
+    (*b)->m_F[0].m_li.Remove(largest_loop_index+1);
 }    
  
 
