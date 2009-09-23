@@ -32,7 +32,6 @@
 #endif
 
 #include "bu.h"
-#include "dm_color.h"
 
 
 /* Return the allocated pixel value that most closely represents
