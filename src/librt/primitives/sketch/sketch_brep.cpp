@@ -30,6 +30,10 @@
 #include "brep.h"
 
 void FindLoops(ON_Brep **b) {
+    // Note to self - will need to create edges HERE, not below - need to make sure
+    // the edges are in correct vert-vert orientation.  Means restructuring things
+    // to use curve arrays not edge arrays, and as long as we're at it maybe the
+    // creation and removal of the fake outer loop from the brep can be avoided?
     ON_SimpleArray<ON_BrepEdge *> allsegments;
     int loop_complete = 0;
     int orientation;
