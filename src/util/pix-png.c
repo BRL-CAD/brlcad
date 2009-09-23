@@ -60,15 +60,25 @@ static char usage[] = "\
 Usage: pix-png [-a] [-w file_width] [-n file_height]\n\
 	[-s square_file_size] [file.pix] > file.png\n";
 
+/**
+ * gamma correction value.  0.6 for sane, 1.0 for insane, negative
+ * value disables writing a gAMA chunk.
+ */
+double out_gamma = -1.0;
+
+
 int
 get_args(int argc, register char **argv)
 {
     register int c;
 
-    while ((c = bu_getopt(argc, argv, "as:w:n:")) != EOF) {
+    while ((c = bu_getopt(argc, argv, "as:w:n:g:")) != EOF) {
 	switch (c) {
 	    case 'a':
 		autosize = 1;
+		break;
+	    case 'g':
+		out_gamma = atof(bu_optarg);
 		break;
 	    case 's':
 		/* square file size */
@@ -206,11 +216,11 @@ main(int argc, char *argv[])
      * PNG images can specify, via the gAMA chunk, the power function
      * relating the desired display output with the image samples.
      *
-     * In this interpretation, we set the value to 0.6, representing
-     * the value needed to un-do the 2.2 correction auto-applied by
-     * PowerPoint for PC monitors.
+     * In this interpretation, we could set the value to 0.6,
+     * representing the value needed to un-do the 2.2 correction
+     * auto-applied by PowerPoint for PC monitors.
      */
-    png_set_gAMA(png_p, info_p, 0.6);
+    png_set_gAMA(png_p, info_p, out_gamma);
 
     png_write_info(png_p, info_p);
     png_write_image(png_p, rows);

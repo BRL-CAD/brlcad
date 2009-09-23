@@ -14,6 +14,7 @@ changes made.  See document footer for additional details.
 --- 2009-08-XX  Release 7.16.0                                     ---
 ----------------------------------------------------------------------
 
+* added a '-g' gamma correction option to pix-png - Sean Morrison
 * added mged '-a' option for attaching display manager - Sean Morrison
 * increased maximum size of framebuffer windows - Sean Morrison
 * removed framebuffer option 'f' from interfaces - Sean Morrison
