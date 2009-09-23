@@ -154,12 +154,6 @@ rt_sketch_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol
     plane_y_dir = ON_3dVector(eip->v_vec);
     const ON_Plane* sketch_plane = new ON_Plane(plane_origin, plane_x_dir, plane_y_dir); 
 
-    // Create the plane surface and brep face now - will need to find surface extents later.
-    ON_PlaneSurface *sketch_surf = new ON_PlaneSurface(*sketch_plane);
-    (*b)->m_S.Append(sketch_surf);
-    int surfindex = (*b)->m_S.Count();
-    ON_BrepFace& face = (*b)->NewFace(surfindex - 1);
-
     //  For the brep, need the list of 3D vertex points.  In sketch, they
     //  are stored as 2D coordinates, so use the sketch_plane to define 3 space
     //  points for the vertices.
@@ -279,81 +273,30 @@ rt_sketch_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol
     VADD2(vcomponent, vcomponent, ovc);
     double umax = MAGNITUDE(ucomponent);
     double vmax = MAGNITUDE(vcomponent);
-    (*b)->m_S[0]->SetDomain(0,umin, umax);
-    (*b)->m_S[0]->SetDomain(1,vmin, vmax); 
-     
+    
+    // Create the plane surface and brep face.
+    ON_PlaneSurface *sketch_surf = new ON_PlaneSurface(*sketch_plane);
+    sketch_surf->SetDomain(0,umin, umax);
+    sketch_surf->SetDomain(1,vmin, vmax);
+    (*b)->m_S.Append(sketch_surf);
+    int surfindex = (*b)->m_S.Count();
+    ON_BrepFace& face = (*b)->NewFace(surfindex - 1);
+
 
     // For the purposes of BREP creation, it is necessary to identify
     // loops created by sketch segments.  This information is not stored
     // in the sketch data structures themselves, and thus must be deduced
     FindLoops(b);
-/*
-    // Create a single brep face and loops in that face
-    const int bsi = (*b)->m_S.Count() - 1;
-    ON_BrepFace& bface = (*b)->NewFace(bsi);
-    (*b)->NewPlanarFaceLoop(bface.m_face_index, ON_BrepLoop::outer, boundary, true);
-    (*b)->SetTrimIsoFlags(bface);
+    const ON_BrepLoop* tloop = (*b)->m_L.Last();
+    sketch_surf->SetDomain(0, tloop->m_pbox.m_min.x, tloop->m_pbox.m_max.x );
+    sketch_surf->SetDomain(1, tloop->m_pbox.m_min.y, tloop->m_pbox.m_max.y );
+    sketch_surf->SetExtents(0,sketch_surf->Domain(0));
+    sketch_surf->SetExtents(1,sketch_surf->Domain(1));
 
-
-
-    //  Next, create a parabolic NURBS curve corresponding to the shape of
-    //  the parabola in the two planes.
-    point_t x_rev_dir, ep1, ep2, ep3, tmppt;
-    VREVERSE(x_rev_dir, x_dir);
-
-    VADD2(ep1, p1_origin, x_rev_dir);
-    VSCALE(tmppt, eip->rpc_B, 2);
-    VADD2(ep2, p1_origin, tmppt);
-    VADD2(ep3, p1_origin, x_dir);
-    ON_3dPoint onp1 = ON_3dPoint(ep1);
-    ON_3dPoint onp2 = ON_3dPoint(ep2);
-    ON_3dPoint onp3 = ON_3dPoint(ep3);
-
-
-    ON_NurbsCurve* parabnurbscurve = ON_NurbsCurve::New(3,false,3,3);
-    parabnurbscurve->SetKnot(0, 0);
-    parabnurbscurve->SetKnot(1, 0);
-    parabnurbscurve->SetKnot(2, 1);
-    parabnurbscurve->SetKnot(3, 1);
-    parabnurbscurve->SetCV(0,ON_3dPoint(ep1));
-    parabnurbscurve->SetCV(1,ON_3dPoint(ep2));
-    parabnurbscurve->SetCV(2,ON_3dPoint(ep3));
-    bu_log("Valid nurbs curve: %d\n", parabnurbscurve->IsValid(dump));
-    parabnurbscurve->Dump(*dump);
-
-    // Also need a staight line from the beginning to the end to
-    // complete the loop
-
-    ON_LineCurve* straightedge = new ON_LineCurve(onp3,onp1);   
-    bu_log("Valid curve: %d\n", straightedge->IsValid(dump));
-    straightedge->Dump(*dump);
-
-    // Generate the bottom cap 
-
-    ON_PlaneSurface* bp = new ON_PlaneSurface();
-    bp->m_plane = (*rpc_bottom_plane);
-    bp->SetDomain(0, -100.0, 100.0 );
-    bp->SetDomain(1, -100.0, 100.0 );
-    bp->SetExtents(0, bp->Domain(0) );
-    bp->SetExtents(1, bp->Domain(1) );
-    (*b)->m_S.Append(bp);
-    const int bsi = (*b)->m_S.Count() - 1;
-    ON_BrepFace& bface = (*b)->NewFace(bsi);
-    (*b)->NewPlanarFaceLoop(bface.m_face_index, ON_BrepLoop::outer, boundary, true); 
-    const ON_BrepLoop* bloop = (*b)->m_L.Last();
-    bp->SetDomain(0, bloop->m_pbox.m_min.x, bloop->m_pbox.m_max.x );
-    bp->SetDomain(1, bloop->m_pbox.m_min.y, bloop->m_pbox.m_max.y );
-    bp->SetExtents(0,bp->Domain(0));
-    bp->SetExtents(1,bp->Domain(1));
-    (*b)->SetTrimIsoFlags(bface);
-
-    // Now the side face and top cap - extrude the bottom face and set the cap flag to true
-    vect_t vp2;
-    VADD2(vp2,eip->rpc_V, eip->rpc_H);
-    const ON_Curve* extrudepath = new ON_LineCurve(ON_3dPoint(eip->rpc_V), ON_3dPoint(vp2));
-    ON_Brep& brep = *(*b);
-    ON_BrepExtrudeFace(brep,0, *extrudepath, true);
-    */ 
+    ON_NurbsSurface *nsurf = new ON_NurbsSurface();
+    sketch_surf->GetNurbForm(*nsurf);
+    nsurf->Dump(*dump);
+    
 }
 
 // Local Variables:
