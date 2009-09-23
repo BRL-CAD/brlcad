@@ -265,6 +265,24 @@ rt_sketch_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol
     bu_log("bbox: %f,%f,%f; %f,%f,%f\n", bbox->m_min[0], bbox->m_min[1], bbox->m_min[2], bbox->m_max[0], bbox->m_max[1], bbox->m_max[2]);
 
 
+    vect_t ouc, ovc, vect1, vect2, ucomponent, vcomponent;
+    VSET(vect1, bbox->m_min[0], bbox->m_min[1], bbox->m_min[2]);
+    VSET(vect2, bbox->m_max[0], bbox->m_max[1], bbox->m_max[2]);
+    VPROJECT(eip->V, eip->u_vec, ouc, ovc);
+    VPROJECT(vect1, eip->u_vec, ucomponent, vcomponent);
+    VADD2(ucomponent, ucomponent, ouc);
+    VADD2(vcomponent, vcomponent, ovc);
+    double umin = MAGNITUDE(ucomponent);
+    double vmin = MAGNITUDE(vcomponent);
+    VPROJECT(vect2, eip->u_vec, ucomponent, vcomponent);
+    VADD2(ucomponent, ucomponent, ouc);
+    VADD2(vcomponent, vcomponent, ovc);
+    double umax = MAGNITUDE(ucomponent);
+    double vmax = MAGNITUDE(vcomponent);
+    (*b)->m_S[0]->SetDomain(0,umin, umax);
+    (*b)->m_S[0]->SetDomain(1,vmin, vmax); 
+     
+
     // For the purposes of BREP creation, it is necessary to identify
     // loops created by sketch segments.  This information is not stored
     // in the sketch data structures themselves, and thus must be deduced
