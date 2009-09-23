@@ -102,7 +102,7 @@ void FindLoops(ON_Brep **b) {
     for (int i = 0; i < old_outer_loop.TrimCount(); i++) {
 	ON_BrepTrim *otrim = old_outer_loop.Trim(i);
 	ON_BrepEdge *oedge = otrim->Edge();
-	ON_BrepTrim& notrim = (*b)->NewTrim(*oedge, otrim->m_bRev3d, real_outer_loop, i);
+	ON_BrepTrim& notrim = (*b)->NewTrim(*oedge, otrim->m_bRev3d, real_outer_loop, otrim->m_c2i);
 	notrim.m_type = ON_BrepTrim::mated;
 	notrim.m_tolerance[0] = 0.0;
 	notrim.m_tolerance[1] = 0.0;
