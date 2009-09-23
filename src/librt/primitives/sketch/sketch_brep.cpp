@@ -29,9 +29,8 @@
 #include "rtgeom.h"
 #include "brep.h"
 
-void FindLoops(ON_Brep **b, ON_SimpleArray<ON_SimpleArray<ON_BrepEdge *> *> *loops) {
-/*    ON_SimpleArray<ON_BrepEdge *> allsegments;
-    ON_SimpleArray<ON_BrepEdge *> *currentsegments;
+void FindLoops(ON_Brep **b) {
+    ON_SimpleArray<ON_BrepEdge *> allsegments;
     int loop_complete = 0;
     int current_loop;
     int current_segment;
@@ -39,13 +38,13 @@ void FindLoops(ON_Brep **b, ON_SimpleArray<ON_SimpleArray<ON_BrepEdge *> *> *loo
 	allsegments.Append(&((*b)->m_E[i]));
     }
     while (allsegments.Count() > 0) {
-	loops->AppendNew();
-	current_loop = loops->Count() - 1;
-	currentsegments = loops[current_loop][0];
-	currentsegments->Append(allsegments[allsegments.Count() - 1]);
+	// Note that all loops start life as inner loops - the outer loop must be
+	// found and labeled later.
+	ON_BrepLoop& loop = (*b)->NewLoop(ON_BrepLoop::inner,(*b)->m_F[0]);
+//	ON_BrepTrim& trim = (*b)->NewTrim(allsegments[allsegments.Count() - 1], orientation, loop, c2i);
 	allsegments.Remove(allsegments.Count() - 1);
 	current_segment = allsegments.Count() - 1;
-	ON_BrepVertex *vertmatch = currentsegments[0][0]->m_vi[0];
+/*	ON_BrepVertex *vertmatch = currentsegments[0][0]->m_vi[0];
 	ON_BrepVertex *vertterminate = currentsegments[0][0]->m_vi[1];
 	while ((allsegments.Count() > 0) && (current_segment > -1) && (loop_complete != 1)) {
 	   if ( (allsegments[current_segment].m_vi[0] == vertmatch) ||
@@ -63,8 +62,8 @@ void FindLoops(ON_Brep **b, ON_SimpleArray<ON_SimpleArray<ON_BrepEdge *> *> *loo
 	   } else {
 	       current_segment--;
 	   }
-	}
-    }*/
+	}*/
+    }
 }    
  
 
@@ -115,11 +114,14 @@ rt_sketch_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol
     }
 
     // Create the brep elements corresponding to the sketch lines, curves
-    // and bezier segments.
+    // and bezier segments. Will need to use the bboxes of each element to
+    // build the overall bounding box for the face. Use bGrowBox to expand
+    // a single box.
     struct line_seg *lsg;
     struct carc_seg *csg;
     struct bezier_seg *bsg;
     int edgcnt;
+    ON_BoundingBox *bbox = new ON_BoundingBox();
     ON_SimpleArray<ON_Curve*> boundary;
     long *lng;
     for (int i = 0; i < (&eip->skt_curve)->seg_count; i++) {
@@ -130,6 +132,9 @@ rt_sketch_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol
 		    lsg = (struct line_seg *)lng;
 		    ON_Curve* lsg3d = new ON_LineCurve((*b)->m_V[lsg->start].Point(), (*b)->m_V[lsg->end].Point());
 		    lsg3d->SetDomain(0.0, 1.0);
+		    lsg3d->GetBoundingBox(*bbox,true);
+		    bbox->Set((*b)->m_V[lsg->start].Point(), true);
+		    bbox->Set((*b)->m_V[lsg->end].Point(), true);
 		    (*b)->m_C3.Append(lsg3d);
 		    (*b)->NewEdge((*b)->m_V[lsg->start], (*b)->m_V[lsg->end] , (*b)->m_C3.Count() - 1);
 		}
@@ -145,6 +150,7 @@ rt_sketch_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol
 			ON_Circle* c3dcirc = new ON_Circle(cntrpt,cntrpt.DistanceTo(edgept));
 			ON_Curve* c3d = new ON_ArcCurve((const ON_Circle)*c3dcirc);
 			c3d->SetDomain(0.0,1.0);
+		    	c3d->GetBoundingBox(*bbox,true);
 			(*b)->m_C3.Append(c3d);
 			(*b)->NewEdge((*b)->m_V[csg->start], (*b)->m_V[csg->end] , (*b)->m_C3.Count() - 1);
 		    }
@@ -155,6 +161,7 @@ rt_sketch_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol
 		    // logic
 		    ON_Arc* c3darc = new ON_Arc();
 		    ON_Curve* c3d = new ON_ArcCurve();
+		    c3d->GetBoundingBox(*bbox,true);
 		}
 		break;
 	    case CURVE_BEZIER_MAGIC:
@@ -168,6 +175,7 @@ rt_sketch_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol
 		    ON_NurbsCurve* beznurb3d = new ON_NurbsCurve();
 		    bez3d->GetNurbForm(*beznurb3d);
 		    beznurb3d->SetDomain(0.0,1.0);
+		    beznurb3d->GetBoundingBox(*bbox,true);
 		    (*b)->m_C3.Append(beznurb3d);
 		    (*b)->NewEdge((*b)->m_V[bsg->ctl_points[0]], (*b)->m_V[bsg->ctl_points[bsg->degree]] , (*b)->m_C3.Count() - 1);
 		}
@@ -180,11 +188,13 @@ rt_sketch_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol
 	}
     }
 
+    bu_log("bbox: %f,%f,%f; %f,%f,%f\n", bbox->m_min[0], bbox->m_min[1], bbox->m_min[2], bbox->m_max[0], bbox->m_max[1], bbox->m_max[2]);
+
+
     // For the purposes of BREP creation, it is necessary to identify
     // loops created by sketch segments.  This information is not stored
     // in the sketch data structures themselves, and thus must be deduced
-    ON_SimpleArray<ON_SimpleArray<ON_BrepEdge *> *> loops;
-    FindLoops(b, &loops);
+    FindLoops(b);
 /*
     // Create a single brep face and loops in that face
     const int bsi = (*b)->m_S.Count() - 1;
