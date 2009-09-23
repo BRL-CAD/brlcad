@@ -29,107 +29,44 @@
 #include "rtgeom.h"
 #include "brep.h"
 
-/*
-void FindLoops(struct rt_sketch_internal *sk, ON_SimpleArray<ON_SimpleArray<genptr_t *> *> *loops) {
-    ON_SimpleArray<genptr_t *> allsegments;
-    long                *lng;
-    struct line_seg     *lsg;
-    struct carc_seg     *csg;
-    struct bezier_seg   *bsg;
-    int currentstart, currentend;
-    int foundfirst = 0;
-    for (int i = 0; i < sk->skt_curve.seg_count; i++) {
-	allsegments.Append(sk->skt_curve.segments[i]);
+void FindLoops(ON_Brep **b, ON_SimpleArray<ON_SimpleArray<ON_BrepEdge *> *> *loops) {
+/*    ON_SimpleArray<ON_BrepEdge *> allsegments;
+    ON_SimpleArray<ON_BrepEdge *> *currentsegments;
+    int loop_complete = 0;
+    int current_loop;
+    int current_segment;
+    for (int i = 0; i < (*b)->m_E.Count(); i++) {
+	allsegments.Append(&((*b)->m_E[i]));
     }
-    int crvcnt = 0;
-    while ((foundfirst != 1) && (crvcnt < allsegments.Count())) {
-	    lng = (long *)allsegments[crvcnt];
-	    crvcnt++;
-	    switch (*lng) {
-    	    	case CURVE_LSEG_MAGIC:
-		    lsg = (struct line_seg *)lng;
-		    int currentstart = lsg->start;
-		    int currentend = lsg->end;
-		    foundfirst == 1;
-		    break;
-		case CURVE_CARC_MAGIC:
-     		    csg = (struct carc_seg *)lng;
-		    int currentstart = csg->start;
-		    int currentend = csg->end;
-		    foundfirst == 1;
-		    break;
-		case CURVE_BEZIER_MAGIC:
-     		    bsg = (struct bezier_seg *)lng;
-		    int currentstart = bsg->ctl_points[0];
-		    int currentend = bsg->ctl_points[bsg->degree];    
-		    foundfirst == 1;
-		    break;
-	    	default:
-    		    bu_log("Unhandled sketch type - FindLoops\n");
-		    foundfirst == 0;
-    		break;
-	    }
-    }
-    loops->AppendNew();
-    loops[0]->Append(allsegments[0]);
-    allsegments.Remove(0);
     while (allsegments.Count() > 0) {
-	int j = 0;
-	int current_loop = loops->Count() - 1;
-	while (allsegments.Count() > 0 && j < allsegments.Count()) {
-	    lng = (long *)allsegments[j];
-	    switch (*lng) {
-		case CURVE_LSEG_MAGIC:
-		    lsg = (struct line_seg *)lng;
-		    if ((currentstart == lsg->end) || (currentend == lsg->start)) {
-			if (currentstart == lsg->end) currentstart = lsg->start;
-			if (currentend == lsg->end) currentend = lsg->end;
-			loops[current_loop]->Append(allsegments[j]);
-			allsegments.Remove(j);
-			j == -1;
-		    }
-		    j++;
-		    break;
-		case CURVE_CARC_MAGIC:
-		    csg = (struct carc_seg *)lng;
-		    if ((csg->orientation == 0) &&  ((currentstart == csg->end) || (currentend == csg->start))) {
-			if (currentstart == csg->end) currentstart = csg->start;
-			if (currentend == csg->end) currentend = csg->end;
-			loops[current_loop]->Append(allsegments[j]);
-			allsegments.Remove(j);
-			j == -1;
-		    }
-		    if ((csg->orientation != 0) &&  ((currentstart == csg->start) || (currentend == csg->end))) {
-			if (currentstart == csg->start) currentstart = csg->start;
-			if (currentend == csg->start) currentend = csg->end;
-			loops[current_loop]->Append(allsegments[j]);
-			allsegments.Remove(j);
-			j == -1;
-		    }
-		    j++;
-		    break;
-		case CURVE_BEZIER_MAGIC:
-		    bsg = (struct bezier_seg *)lng;
-		    if ((currentstart == bsg->end) || (currentend == bsg->start)) {
-			if (currentstart == bsg->end) currentstart = bsg->start;
-			if (currentend == bsg->end) currentend = bsg->end;
-			loops[current_loop]->Append(allsegments[j]);
-			allsegments.Remove(j);
-			j == -1;
-		    }
-		    j++;
-		    break;
-		default:
-		    bu_log("Unhandled sketch type - FindLoops\n");
-		    j++;
-		    break;
-	    }
+	loops->AppendNew();
+	current_loop = loops->Count() - 1;
+	currentsegments = loops[current_loop][0];
+	currentsegments->Append(allsegments[allsegments.Count() - 1]);
+	allsegments.Remove(allsegments.Count() - 1);
+	current_segment = allsegments.Count() - 1;
+	ON_BrepVertex *vertmatch = currentsegments[0][0]->m_vi[0];
+	ON_BrepVertex *vertterminate = currentsegments[0][0]->m_vi[1];
+	while ((allsegments.Count() > 0) && (current_segment > -1) && (loop_complete != 1)) {
+	   if ( (allsegments[current_segment].m_vi[0] == vertmatch) ||
+		  (allsegments[current_segment].m_vi[1] == vertmatch) ) {
+	       if (allsegments[current_segment].m_vi[0] == vertmatch) vertmatch = allsegments[current_segment].m_vi[1];
+	       if (allsegments[current_segment].m_vi[1] == vertmatch) vertmatch = allsegments[current_segment].m_vi[0];
+	       loops[current_loop]->Append(allsegments[current_segment]);
+	       allsegments.Remove(current_segment);
+	       if (vertterminate == vertmatch) {
+		   loop_complete = 1;
+		   current_segment == -1;
+	       } else {
+		   current_segment = allsegments.Count() - 1;
+	       }
+	   } else {
+	       current_segment--;
+	   }
 	}
-	if (allsegments.Count != 0) loops->AppendNew();
-	loops[0]->Append(allsegments[0]);
-	allsegments.Remove(0);
-    }	
- */
+    }*/
+}    
+ 
 
 
 /**
@@ -243,28 +180,12 @@ rt_sketch_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol
 	}
     }
 
-
-
-    // Once the vertices are added, set the extents of the surface to ensure
-    // it will hold all the vertices.
-    /*    vect_t vect_diag, vect_max, parallel, orthogonal;
-	  VSUB2(vect_diag, pmax, pmin);
-	  VPROJECT(vect_min, eip->u_vec, parallel, orthogonal);
-	  sketch_surf.SetDomain(0, MAGNITUDE(parallel), MAGNITUDE(orthogonal));
-	  VPROJECT(vect_max, eip->u_vec, parallel, orthogonal);
-	  sketch_surf.SetDomain(1, MAGNITUDE(parallel), MAGNITUDE(orthogonal));
-	  sketch_surf.SetExtents(0, sketch_surf.Domain(0));
-	  sketch_surf.SetExtents(1, sketch_surf.Domain(1));
-
-    // Now, append the surface to the brep surface list
-    (*b)->m_S.Append(ON_Surface::Cast(&sketch_surf));
-
     // For the purposes of BREP creation, it is necessary to identify
     // loops created by sketch segments.  This information is not stored
     // in the sketch data structures themselves, and thus must be deduced
-    ON_SimpleArray<ON_SimpleArray<struct curve*> *> loops;
-    FindLoops(eip, loops);
-
+    ON_SimpleArray<ON_SimpleArray<ON_BrepEdge *> *> loops;
+    FindLoops(b, &loops);
+/*
     // Create a single brep face and loops in that face
     const int bsi = (*b)->m_S.Count() - 1;
     ON_BrepFace& bface = (*b)->NewFace(bsi);
