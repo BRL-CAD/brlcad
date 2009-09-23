@@ -41,17 +41,20 @@ void FindLoops(ON_Brep **b) {
 	// Note that all loops start life as inner loops - the outer loop must be
 	// found and labeled later.
 	ON_BrepLoop& loop = (*b)->NewLoop(ON_BrepLoop::inner,(*b)->m_F[0]);
-	ON_BrepTrim& trim = (*b)->NewTrim(*(allsegments[allsegments.Count() - 1]), 0, loop, allsegments.Count() - 1);
+	(*b)->NewTrim(*(allsegments[allsegments.Count() - 1]), 0, loop, allsegments.Count() - 1);
+	ON_BrepEdge *currentedge = allsegments[allsegments.Count() - 1];
+	ON_BrepVertex *vertmatch = &((*b)->m_V[currentedge->m_vi[0]]);
+	ON_BrepVertex *vertterminate = &((*b)->m_V[currentedge->m_vi[1]]);
 	allsegments.Remove(allsegments.Count() - 1);
 	current_segment = allsegments.Count() - 1;
-/*	ON_BrepVertex *vertmatch = currentsegments[0][0]->m_vi[0];
-	ON_BrepVertex *vertterminate = currentsegments[0][0]->m_vi[1];
 	while ((allsegments.Count() > 0) && (current_segment > -1) && (loop_complete != 1)) {
-	   if ( (allsegments[current_segment].m_vi[0] == vertmatch) ||
-		  (allsegments[current_segment].m_vi[1] == vertmatch) ) {
-	       if (allsegments[current_segment].m_vi[0] == vertmatch) vertmatch = allsegments[current_segment].m_vi[1];
-	       if (allsegments[current_segment].m_vi[1] == vertmatch) vertmatch = allsegments[current_segment].m_vi[0];
-	       loops[current_loop]->Append(allsegments[current_segment]);
+	   currentedge = allsegments[current_segment];
+	   ON_BrepVertex *currentvertexstart = &((*b)->m_V[currentedge->m_vi[0]]);
+	   ON_BrepVertex *currentvertexend = &((*b)->m_V[currentedge->m_vi[1]]);
+	   if ( (currentvertexstart == vertmatch) || (currentvertexend == vertmatch) ) {
+	       if (currentvertexstart == vertmatch) vertmatch = currentvertexend;
+	       if (currentvertexend == vertmatch) vertmatch = currentvertexstart;
+	       (*b)->NewTrim(*(allsegments[allsegments.Count() - 1]), 0, loop, allsegments.Count() - 1);
 	       allsegments.Remove(current_segment);
 	       if (vertterminate == vertmatch) {
 		   loop_complete = 1;
@@ -62,7 +65,7 @@ void FindLoops(ON_Brep **b) {
 	   } else {
 	       current_segment--;
 	   }
-	}*/
+	}
     }
 }    
  
