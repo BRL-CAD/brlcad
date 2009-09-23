@@ -651,8 +651,8 @@ namespace brlcad {
     {
 	DEList breps;
 	// XXX - right now this only reads one kind of object at a time.
-	// find(ManifoldSolidBRepObject, breps);
-	find(RationalBSplineSurface, breps);
+	find(ManifoldSolidBRepObject, breps);
+	//	find(RationalBSplineSurface, breps);
 	debug("Found " << breps.size() << " breps!");
 
 	for (DEList::iterator i = breps.begin(); i != breps.end(); i++) {
