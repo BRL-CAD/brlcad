@@ -53,7 +53,7 @@ static int pixbytes = 3;	/* Default is 3 bytes/pixel */
 int screen_height;		/* input height */
 int screen_width;		/* input width */
 
-double out_gamma = 1.0;	/* Gamma the image was created at */
+double out_gamma = -1.0;	/* Gamma the image was created at */
 char *framebuffer = NULL;
 FILE *outfp;
 
