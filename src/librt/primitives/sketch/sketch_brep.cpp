@@ -107,7 +107,7 @@ void FindLoops(ON_Brep **b) {
 	notrim.m_tolerance[0] = 0.0;
 	notrim.m_tolerance[1] = 0.0;
     }
-    (*b)->m_F[0].m_li.Remove(largest_loop_index);
+//    (*b)->m_F[0].m_li.Remove(largest_loop_index);
 }    
  
 
