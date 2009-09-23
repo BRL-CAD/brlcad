@@ -30,11 +30,11 @@
 #include "brep.h"
 
 void FindLoops(ON_Brep **b) {
-    // Note to self - will need to create edges HERE, not below - need to make sure
-    // the edges are in correct vert-vert orientation.  Means restructuring things
-    // to use curve arrays not edge arrays, and as long as we're at it maybe the
-    // creation and removal of the fake outer loop from the brep can be avoided?
+    ON_TextLog dump_to_stdout;
+    ON_TextLog* dump = &dump_to_stdout;
+
     ON_SimpleArray<ON_BrepEdge *> allsegments;
+    ON_BrepTrim *ctrim;
     int loop_complete = 0;
     int orientation;
     int current_loop;
@@ -51,28 +51,28 @@ void FindLoops(ON_Brep **b) {
 	currenttrim.m_type = ON_BrepTrim::boundary;
 	currenttrim.m_tolerance[0] = 0.0;
 	currenttrim.m_tolerance[1] = 0.0;
+	bu_log("Trim vert indices: %d, %d\n", currenttrim.Edge()->m_vi[0], currenttrim.Edge()->m_vi[1]);
 	ON_BrepEdge *currentedge = allsegments[allsegments.Count() - 1];
-	ON_BrepVertex *vertmatch = &((*b)->m_V[currentedge->m_vi[0]]);
-	ON_BrepVertex *vertterminate = &((*b)->m_V[currentedge->m_vi[1]]);
+	ON_BrepVertex *vertmatch = &((*b)->m_V[currentedge->m_vi[1]]);
+	bu_log("Initial vertmatch:\n");
+	vertmatch->Dump(*dump);
+	ON_BrepVertex *vertterminate = &((*b)->m_V[currentedge->m_vi[0]]);
 	allsegments.Remove(allsegments.Count() - 1);
 	current_segment = allsegments.Count() - 1;
 	while ((allsegments.Count() > 0) && (current_segment > -1) && (loop_complete != 1)) {
 	   currentedge = allsegments[current_segment];
 	   ON_BrepVertex *currentvertexstart = &((*b)->m_V[currentedge->m_vi[0]]);
 	   ON_BrepVertex *currentvertexend = &((*b)->m_V[currentedge->m_vi[1]]);
-	   if ( (currentvertexstart == vertmatch) || (currentvertexend == vertmatch) ) {
-	       if (currentvertexstart == vertmatch) {
-		   vertmatch = currentvertexend;
-		   orientation = 0;
-	       }
-	       if (currentvertexend == vertmatch) { 
-		   vertmatch = currentvertexstart;
-		   orientation = 1;
-	       }
-	       ON_BrepTrim& ctrim = (*b)->NewTrim(*(allsegments[current_segment]), orientation, loop, current_segment);
-       	       ctrim.m_type = ON_BrepTrim::boundary;
-       	       ctrim.m_tolerance[0] = 0.0;
-       	       ctrim.m_tolerance[1] = 0.0;
+	   if (currentvertexstart == vertmatch) {
+	       bu_log("New vertmatch:\n");
+    	       vertmatch = currentvertexend;
+	       vertmatch->Dump(*dump);
+	       bu_log("current_segment = %d\n", current_segment);
+	       ctrim = &((*b)->NewTrim(*currentedge, 0, loop, currentedge->EdgeCurveIndexOf()));
+	       bu_log("Trim vert indices: %d, %d\n", ctrim->Edge()->m_vi[0], ctrim->Edge()->m_vi[1]);
+       	       ctrim->m_type = ON_BrepTrim::boundary;
+       	       ctrim->m_tolerance[0] = 0.0;
+       	       ctrim->m_tolerance[1] = 0.0;
 	       allsegments.Remove(current_segment);
 	       if (vertterminate == vertmatch) {
 		   loop_complete = 1;
@@ -85,6 +85,7 @@ void FindLoops(ON_Brep **b) {
 	   }
 	}
     }
+
     ON_BoundingBox *lbbox = new ON_BoundingBox();
     double maxdist = 0.0;
     int largest_loop_index = 0;
