@@ -41,7 +41,7 @@ void FindLoops(ON_Brep **b) {
 	// Note that all loops start life as inner loops - the outer loop must be
 	// found and labeled later.
 	ON_BrepLoop& loop = (*b)->NewLoop(ON_BrepLoop::inner,(*b)->m_F[0]);
-//	ON_BrepTrim& trim = (*b)->NewTrim(allsegments[allsegments.Count() - 1], orientation, loop, c2i);
+	ON_BrepTrim& trim = (*b)->NewTrim(*(allsegments[allsegments.Count() - 1]), 0, loop, allsegments.Count() - 1);
 	allsegments.Remove(allsegments.Count() - 1);
 	current_segment = allsegments.Count() - 1;
 /*	ON_BrepVertex *vertmatch = currentsegments[0][0]->m_vi[0];
@@ -114,7 +114,8 @@ rt_sketch_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol
     }
 
     // Create the brep elements corresponding to the sketch lines, curves
-    // and bezier segments. Will need to use the bboxes of each element to
+    // and bezier segments. Create 2d, 3d and BrepEdge elements for each segment.
+    // Will need to use the bboxes of each element to
     // build the overall bounding box for the face. Use bGrowBox to expand
     // a single box.
     struct line_seg *lsg;
@@ -133,6 +134,8 @@ rt_sketch_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol
 		    ON_Curve* lsg3d = new ON_LineCurve((*b)->m_V[lsg->start].Point(), (*b)->m_V[lsg->end].Point());
 		    lsg3d->SetDomain(0.0, 1.0);
 		    lsg3d->GetBoundingBox(*bbox,true);
+		    ON_Curve* lsg2d = new ON_LineCurve(ON_2dPoint(eip->verts[lsg->start][0],eip->verts[lsg->start][1]), ON_2dPoint(eip->verts[lsg->end][0],eip->verts[lsg->end][1]));
+		    (*b)->m_C2.Append(lsg2d);
 		    bbox->Set((*b)->m_V[lsg->start].Point(), true);
 		    bbox->Set((*b)->m_V[lsg->end].Point(), true);
 		    (*b)->m_C3.Append(lsg3d);
@@ -145,12 +148,18 @@ rt_sketch_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol
 		csg = (struct carc_seg *)lng;
 		if (csg->radius < 0) {
 		    {
+			ON_2dPoint cntrpt2d = ON_2dPoint(eip->verts[csg->end][0], eip->verts[csg->end][1]);
+			ON_2dPoint edgept2d = ON_2dPoint(eip->verts[csg->start][0], eip->verts[csg->start][1]);
 			ON_3dPoint cntrpt = (*b)->m_V[csg->end].Point();
 			ON_3dPoint edgept = (*b)->m_V[csg->start].Point();
+			ON_Circle* c3dcirc2d = new ON_Circle(cntrpt, cntrpt.DistanceTo(edgept));
 			ON_Circle* c3dcirc = new ON_Circle(cntrpt,cntrpt.DistanceTo(edgept));
+			ON_Curve* c3d2d = new ON_ArcCurve((const ON_Circle)*c3dcirc2d);
+		    	c3d2d->ChangeDimension(2);
 			ON_Curve* c3d = new ON_ArcCurve((const ON_Circle)*c3dcirc);
 			c3d->SetDomain(0.0,1.0);
 		    	c3d->GetBoundingBox(*bbox,true);
+			(*b)->m_C2.Append(c3d2d);
 			(*b)->m_C3.Append(c3d);
 			(*b)->NewEdge((*b)->m_V[csg->start], (*b)->m_V[csg->end] , (*b)->m_C3.Count() - 1);
 		    }
@@ -167,11 +176,20 @@ rt_sketch_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol
 	    case CURVE_BEZIER_MAGIC:
 		bsg = (struct bezier_seg *)lng;
 		{
+		    ON_2dPointArray *bezpoints2d = new ON_2dPointArray(bsg->degree + 1);
+		    for (int i = 0; i < bsg->degree + 1; i++) {
+			bezpoints2d->Append(ON_2dPoint(eip->verts[bsg->ctl_points[i]][0], eip->verts[bsg->ctl_points[i]][1]));
+		    }
 		    ON_3dPointArray *bezpoints = new ON_3dPointArray(bsg->degree + 1);
 		    for (int i = 0; i < bsg->degree + 1; i++) {
 			bezpoints->Append((*b)->m_V[bsg->ctl_points[i]].Point());
 		    }
+		    ON_BezierCurve* bez3d2d = new ON_BezierCurve((const ON_2dPointArray)*bezpoints2d);
 		    ON_BezierCurve* bez3d = new ON_BezierCurve((const ON_3dPointArray)*bezpoints);
+		    ON_NurbsCurve* beznurb2d = new ON_NurbsCurve();
+		    bez3d2d->GetNurbForm(*beznurb2d);
+		    beznurb2d->ChangeDimension(2);
+		    (*b)->m_C2.Append(beznurb2d);
 		    ON_NurbsCurve* beznurb3d = new ON_NurbsCurve();
 		    bez3d->GetNurbForm(*beznurb3d);
 		    beznurb3d->SetDomain(0.0,1.0);
