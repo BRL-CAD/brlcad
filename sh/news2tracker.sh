@@ -360,7 +360,9 @@ for _revision in $_revisions ; do
     [ $VERBOSE -gt 1 ] && echo "Looking up $_revision"
 
     _date="`echo \"$_log\" | grep -C2 revision=\\"$_revision\\" | tail -1 | sed 's/.*\([0-9][0-9][0-9][0-9]\)-\([0-9][0-9]\)-\([0-9][0-9]\).*/\1 \2 \3/'`"
-echo "DATE IS $_date"
+
+    [ $VERBOSE -gt 1 ] && echo "Date for $_revision is $_date"
+
     _today="`days`"
     _added="`days $_date`"
     if [ $(($_today - $_added)) -gt $CLOSED ] ; then
