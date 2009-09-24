@@ -71,7 +71,7 @@ void FindLoops(ON_Brep **b) {
 	       allsegments.Remove(current_segment);
 	       if (vertterminate == vertmatch) {
 		   loop_complete = 1;
-		   current_segment == -1;
+		   current_segment = -1;
 	       } else {
 		   current_segment = allsegments.Count() - 1;
 	       }
@@ -137,7 +137,7 @@ void FindLoops(ON_Brep **b) {
 	       allsegments.Remove(current_segment);
 	       if (vertterminate == vertmatch) {
 		   loop_complete = 1;
-		   current_segment == -1;
+		   current_segment = -1;
 	       } else {
 		   current_segment = allsegments.Count() - 1;
 	       }
@@ -175,7 +175,7 @@ void FindLoops(ON_Brep **b) {
 	       allsegments.Remove(current_segment);
 	       if (vertterminate == vertmatch) {
 		   loop_complete = 1;
-		   current_segment == -1;
+		   current_segment = -1;
 	       } else {
 		   current_segment = allsegments.Count() - 1;
 	       }
