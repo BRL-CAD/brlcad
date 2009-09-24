@@ -88,8 +88,9 @@ void FindLoops(ON_Brep **b) {
 	ON_BoundingBox *lbbox = new ON_BoundingBox();
 	for (int j = 0; j < (*b)->m_E.Count(); j++) {
 	    if (edgearray[j] == i) {
-		ON_BrepEdge *curredge = &((*b)->m_E[i]);
+		ON_BrepEdge *curredge = &((*b)->m_E[j]);
 		curredge->GetBoundingBox(*lbbox, true);
+		bu_log("edgearray[%d]: %f,%f,%f;%f,%f,%f\n", j, lbbox->m_min[0], lbbox->m_min[1], lbbox->m_min[2], lbbox->m_max[0], lbbox->m_max[1], lbbox->m_max[2]);
 	    }
 	}
 	point_t minpt, maxpt;
