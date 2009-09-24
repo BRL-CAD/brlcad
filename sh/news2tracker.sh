@@ -378,7 +378,7 @@ for _revision in $_revisions ; do
     _itemLine="$_itemLine,NEWS"
 
     # get the description
-    _itemDesc="`echo \"$_annotate\" | grep -E \" *$_revision\" | sed 's/ *[0-9][0-9]* *[a-zA-Z0-9][a-zA-Z0-9]* *\(.*\)/\1/g' | sed 's/\(.*\)[ \t]*-[ \t]*.*/\1/g' | grep -v '^-' | grep -v '^[ \t]*[^\*].*' | grep -v '^[ \t][ \t]*[^*]' | grep -v '^[ -][ -]*$' | grep -v '^$' | sed 's/^* //g' | perl -0777 -pi -e 's/\n(.)/; \1/gs'`"
+    _itemDesc="`echo \"$_annotate\" | grep -E \" *$_revision\" | sed 's/ *[0-9][0-9]* *[a-zA-Z0-9][a-zA-Z0-9]* *\(.*\)/\1/g' | perl -pi -e 's/(.*)[ \t]*-[ \t]*.*/\1/g' | grep -v '^-' | grep -v '^[ \t]*[^\*].*' | grep -v '^[ \t][ \t]*[^*]' | grep -v '^[ -][ -]*$' | grep -v '^$' | sed 's/^* //g' | perl -0777 -pi -e 's/\n(.)/; \1/gs'`"
     [ $VERBOSE -gt 1 ] && echo "${_revision}: Description is $_itemDesc"
     _itemLine="$_itemLine,\"$_itemDesc\""
 
@@ -389,7 +389,10 @@ for _revision in $_revisions ; do
     _itemLine="$_itemLine,Committed"
 
     # get the assignee
-    _itemAssigned="`echo \"$_annotate\" | grep -E \" *$_revision\" | grep '\- ' | grep -v '\-\-' | sed 's/.* *- *\([^-]*\)/\1/g' | perl -0777 -pi -e 's/,/\n/g' | sed 's/^ *\(.*\) *$/\1/g' | sort | uniq | perl -0777 -pi -e 's/\n(.)/, \1/g'`"
+    _itemAssigned="`echo \"$_annotate\" | grep -E \" *$_revision\" | grep '\- ' | grep -v '\-\-' | perl -pi -e 's/.* *- *([^-]*)/\1/g' | perl -0777 -pi -e 's/,/\n/g' | sed 's/^ *\(.*\) *$/\1/g' | sort | uniq | perl -0777 -pi -e 's/\n(.)/, \1/g'`"
+    if test "x$_itemAssigned" = "x" ; then
+	_itemAssigned="`echo \"$_annotate\" | grep -A 1 -E \" *$_revision\" | grep '\- ' | grep -v '\-\-' | perl -pi -e 's/.* *- *([^-]*)/\1/g' | perl -0777 -pi -e 's/,/\n/g' | sed 's/^ *\(.*\) *$/\1/g' | sort | uniq | perl -0777 -pi -e 's/\n(.)/, \1/g'`"
+    fi
     [ $VERBOSE -gt 1 ] && echo "${_revision}: Assigned is $_itemAssigned"
     _itemLine="$_itemLine,\"$_itemAssigned\""
 
