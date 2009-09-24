@@ -33,29 +33,31 @@ void FindLoops(ON_Brep **b) {
     ON_TextLog dump_to_stdout;
     ON_TextLog* dump = &dump_to_stdout;
 
+    int *edgearray;
+    edgearray = static_cast<int*>(bu_malloc((*b)->m_E.Count() * sizeof(int), "sketch edge list"));
+    for (int i = 0; i < (*b)->m_E.Count(); i++) {
+	edgearray[i] = -1;
+    }
     ON_SimpleArray<ON_BrepEdge *> allsegments;
     ON_BrepTrim *ctrim;
+    ON_BrepLoop *loop; 
     int loop_complete = 0;
     int orientation;
-    int current_loop;
+    int current_loop = 0;
     int current_segment;
     for (int i = 0; i < (*b)->m_E.Count(); i++) {
 	allsegments.Append(&((*b)->m_E[i]));
     }
+
+    int edgecount = 0;
+    int loopcount = -1;
     while (allsegments.Count() > 0) {
-	// Note that all loops start life as inner loops - the outer loop must be
-	// found and handled once analysis has revealed which loop is in fact the
-	// outer loop.
-	ON_BrepLoop& loop = (*b)->NewLoop(ON_BrepLoop::inner,(*b)->m_F[0]);
-	ON_BrepTrim& currenttrim = (*b)->NewTrim(*(allsegments[allsegments.Count() - 1]), 0, loop, allsegments.Count() - 1);
-	currenttrim.m_type = ON_BrepTrim::boundary;
-	currenttrim.m_tolerance[0] = 0.0;
-	currenttrim.m_tolerance[1] = 0.0;
-	bu_log("Trim vert indices: %d, %d\n", currenttrim.Edge()->m_vi[0], currenttrim.Edge()->m_vi[1]);
+	bu_log("edge_array[%d,%d,%d,%d,%d,%d]\n", edgearray[0], edgearray[1], edgearray[2], edgearray[3], edgearray[4], edgearray[5]);
+	// First, sort through things to find the outer loop.
+	loopcount++;
 	ON_BrepEdge *currentedge = allsegments[allsegments.Count() - 1];
+	edgearray[currentedge->m_edge_index] = loopcount;
 	ON_BrepVertex *vertmatch = &((*b)->m_V[currentedge->m_vi[1]]);
-	bu_log("Initial vertmatch:\n");
-	vertmatch->Dump(*dump);
 	ON_BrepVertex *vertterminate = &((*b)->m_V[currentedge->m_vi[0]]);
 	allsegments.Remove(allsegments.Count() - 1);
 	current_segment = allsegments.Count() - 1;
@@ -64,12 +66,71 @@ void FindLoops(ON_Brep **b) {
 	   ON_BrepVertex *currentvertexstart = &((*b)->m_V[currentedge->m_vi[0]]);
 	   ON_BrepVertex *currentvertexend = &((*b)->m_V[currentedge->m_vi[1]]);
 	   if (currentvertexstart == vertmatch) {
-	       bu_log("New vertmatch:\n");
     	       vertmatch = currentvertexend;
-	       vertmatch->Dump(*dump);
-	       bu_log("current_segment = %d\n", current_segment);
-	       ctrim = &((*b)->NewTrim(*currentedge, 0, loop, currentedge->EdgeCurveIndexOf()));
-	       bu_log("Trim vert indices: %d, %d\n", ctrim->Edge()->m_vi[0], ctrim->Edge()->m_vi[1]);
+	       edgearray[currentedge->m_edge_index] = loopcount;
+	       allsegments.Remove(current_segment);
+	       if (vertterminate == vertmatch) {
+		   loop_complete = 1;
+		   current_segment == -1;
+	       } else {
+		   current_segment = allsegments.Count() - 1;
+	       }
+	   } else {
+	       current_segment--;
+	   }
+	}
+    }
+
+    bu_log("edge_array[%d,%d,%d,%d,%d,%d]\n", edgearray[0], edgearray[1], edgearray[2], edgearray[3], edgearray[4], edgearray[5]);
+    double maxdist = 0.0;
+    int largest_loop_index = 0;
+    for (int i = 0; i <= loopcount ; i++) {
+	ON_BoundingBox *lbbox = new ON_BoundingBox();
+	for (int j = 0; j < (*b)->m_E.Count(); j++) {
+	    if (edgearray[j] == i) {
+		ON_BrepEdge *curredge = &((*b)->m_E[i]);
+		curredge->GetBoundingBox(*lbbox, true);
+	    }
+	}
+	point_t minpt, maxpt;
+	double currdist;
+	VSET(minpt, lbbox->m_min[0], lbbox->m_min[1], lbbox->m_min[2]);
+	VSET(maxpt, lbbox->m_max[0], lbbox->m_max[1], lbbox->m_max[2]);
+	currdist = DIST_PT_PT(minpt, maxpt);
+	bu_log("currdist: %f\n", currdist);
+	if (currdist > maxdist) {
+	  maxdist = currdist;
+	  largest_loop_index = i;
+	}
+    }
+    bu_log("largest_loop_index = %d\n", largest_loop_index);
+
+    bu_log("edge_array[%d,%d,%d,%d,%d,%d]\n", edgearray[0], edgearray[1], edgearray[2], edgearray[3], edgearray[4], edgearray[5]);
+    // Now, handle outer loop
+    loop = &((*b)->NewLoop(ON_BrepLoop::outer,(*b)->m_F[0]));
+    for (int i = 0; i < (*b)->m_E.Count(); i++) {
+	if (edgearray[i] == largest_loop_index) {
+	    allsegments.Append(&((*b)->m_E[i]));
+	    bu_log("Appended %d\n", i);
+	}
+    }
+    while (allsegments.Count() > 0) {
+	ctrim = &((*b)->NewTrim(*(allsegments[allsegments.Count() - 1]), 0, *loop, allsegments.Count() - 1));
+	ctrim->m_type = ON_BrepTrim::boundary;
+	ctrim->m_tolerance[0] = 0.0;
+	ctrim->m_tolerance[1] = 0.0;
+	ON_BrepEdge *currentedge = allsegments[allsegments.Count() - 1];
+	ON_BrepVertex *vertmatch = &((*b)->m_V[currentedge->m_vi[1]]);
+	ON_BrepVertex *vertterminate = &((*b)->m_V[currentedge->m_vi[0]]);
+	allsegments.Remove(allsegments.Count() - 1);
+	current_segment = allsegments.Count() - 1;
+	while ((allsegments.Count() > 0) && (current_segment > -1) && (loop_complete != 1)) {
+	   currentedge = allsegments[current_segment];
+	   ON_BrepVertex *currentvertexstart = &((*b)->m_V[currentedge->m_vi[0]]);
+	   ON_BrepVertex *currentvertexend = &((*b)->m_V[currentedge->m_vi[1]]);
+	   if (currentvertexstart == vertmatch) {
+    	       vertmatch = currentvertexend;
+	       ctrim = &((*b)->NewTrim(*currentedge, 0, *loop, currentedge->EdgeCurveIndexOf()));
        	       ctrim->m_type = ON_BrepTrim::boundary;
        	       ctrim->m_tolerance[0] = 0.0;
        	       ctrim->m_tolerance[1] = 0.0;
@@ -85,39 +146,44 @@ void FindLoops(ON_Brep **b) {
 	   }
 	}
     }
-
-    ON_BoundingBox *lbbox = new ON_BoundingBox();
-    double maxdist = 0.0;
-    int largest_loop_index = 0;
-    for (int i = 0; i < (*b)->m_L.Count(); i++) {
-	ON_BrepLoop *loop = &((*b)->m_L[i]);
-	loop->GetBoundingBox(*lbbox, false);
-	point_t minpt, maxpt;
-	double currdist;
-	VSET(minpt, lbbox->m_min[0], lbbox->m_min[1], lbbox->m_min[2]);
-	VSET(maxpt, lbbox->m_max[0], lbbox->m_max[1], lbbox->m_max[2]);
-	currdist = DIST_PT_PT(minpt, maxpt);
-	if (currdist > maxdist) {
-	  maxdist = currdist;
-	  largest_loop_index = i;
+	    
+    // If there's anything left, make inner loops out of it
+     for (int i = 0; i < (*b)->m_E.Count(); i++) {
+	if (edgearray[i] != largest_loop_index) allsegments.Append(&((*b)->m_E[i]));
+     }
+     while (allsegments.Count() > 0) {
+	loop = &((*b)->NewLoop(ON_BrepLoop::inner,(*b)->m_F[0]));
+	ctrim = &((*b)->NewTrim(*(allsegments[allsegments.Count() - 1]), 0, *loop, allsegments.Count() - 1));
+	ctrim->m_type = ON_BrepTrim::boundary;
+	ctrim->m_tolerance[0] = 0.0;
+	ctrim->m_tolerance[1] = 0.0;
+	ON_BrepEdge *currentedge = allsegments[allsegments.Count() - 1];
+	ON_BrepVertex *vertmatch = &((*b)->m_V[currentedge->m_vi[1]]);
+	ON_BrepVertex *vertterminate = &((*b)->m_V[currentedge->m_vi[0]]);
+	allsegments.Remove(allsegments.Count() - 1);
+	current_segment = allsegments.Count() - 1;
+	while ((allsegments.Count() > 0) && (current_segment > -1) && (loop_complete != 1)) {
+	   currentedge = allsegments[current_segment];
+	   ON_BrepVertex *currentvertexstart = &((*b)->m_V[currentedge->m_vi[0]]);
+	   ON_BrepVertex *currentvertexend = &((*b)->m_V[currentedge->m_vi[1]]);
+	   if (currentvertexstart == vertmatch) {
+    	       vertmatch = currentvertexend;
+	       ctrim = &((*b)->NewTrim(*currentedge, 0, *loop, currentedge->EdgeCurveIndexOf()));
+       	       ctrim->m_type = ON_BrepTrim::boundary;
+       	       ctrim->m_tolerance[0] = 0.0;
+       	       ctrim->m_tolerance[1] = 0.0;
+	       allsegments.Remove(current_segment);
+	       if (vertterminate == vertmatch) {
+		   loop_complete = 1;
+		   current_segment == -1;
+	       } else {
+		   current_segment = allsegments.Count() - 1;
+	       }
+	   } else {
+	       current_segment--;
+	   }
 	}
     }
-    ON_BrepLoop& real_outer_loop = (*b)->NewLoop(ON_BrepLoop::outer, (*b)->m_F[0]);
-    ON_BrepLoop& old_outer_loop = (*b)->m_L[largest_loop_index];
-    for (int i = 0; i < old_outer_loop.TrimCount(); i++) {
-	ON_BrepTrim *otrim = old_outer_loop.Trim(i);
-	ON_BrepEdge *oedge = otrim->Edge();
-	ON_BrepTrim& notrim = (*b)->NewTrim(*oedge, otrim->m_bRev3d, real_outer_loop, otrim->m_c2i);
-	notrim.m_type = ON_BrepTrim::mated;
-	notrim.m_tolerance[0] = 0.0;
-	notrim.m_tolerance[1] = 0.0;
-    }
-    bu_log("largest_loop_index: %d\n", largest_loop_index);
-/*    for (int i = 0; i < old_outer_loop.TrimCount(); i++) {
-	 ON_BrepTrim *otrim = old_outer_loop.Trim(i);
-	 (*b)->m_T.Remove(otrim->m_trim_index);
-    }*/
-    (*b)->m_F[0].m_li.Remove(largest_loop_index+1);
 }    
  
 
