@@ -116,22 +116,32 @@ void FindLoops(ON_Brep **b) {
 	}
     }
     while (allsegments.Count() > 0) {
-	ctrim = &((*b)->NewTrim(*(allsegments[allsegments.Count() - 1]), 0, *loop, allsegments.Count() - 1));
+	loop_complete = 0;
+	ON_BrepEdge *currentedge = allsegments[allsegments.Count() - 1];
+	ctrim = &((*b)->NewTrim(*currentedge, 0, *loop, currentedge->EdgeCurveIndexOf()));
 	ctrim->m_type = ON_BrepTrim::boundary;
 	ctrim->m_tolerance[0] = 0.0;
 	ctrim->m_tolerance[1] = 0.0;
-	ON_BrepEdge *currentedge = allsegments[allsegments.Count() - 1];
+	bu_log("Trim vert indices: %d, %d\n", ctrim->Edge()->m_vi[0], ctrim->Edge()->m_vi[1]);
+	currentedge = allsegments[allsegments.Count() - 1];
 	ON_BrepVertex *vertmatch = &((*b)->m_V[currentedge->m_vi[1]]);
+	bu_log("Initial vertmatch:\n");
+	vertmatch->Dump(*dump);
 	ON_BrepVertex *vertterminate = &((*b)->m_V[currentedge->m_vi[0]]);
 	allsegments.Remove(allsegments.Count() - 1);
 	current_segment = allsegments.Count() - 1;
 	while ((allsegments.Count() > 0) && (current_segment > -1) && (loop_complete != 1)) {
 	   currentedge = allsegments[current_segment];
 	   ON_BrepVertex *currentvertexstart = &((*b)->m_V[currentedge->m_vi[0]]);
+	   currentvertexstart->Dump(*dump);
 	   ON_BrepVertex *currentvertexend = &((*b)->m_V[currentedge->m_vi[1]]);
+	   currentvertexend->Dump(*dump);
 	   if (currentvertexstart == vertmatch) {
     	       vertmatch = currentvertexend;
+	       bu_log("New vertmatch:\n");
+	       vertmatch->Dump(*dump);
 	       ctrim = &((*b)->NewTrim(*currentedge, 0, *loop, currentedge->EdgeCurveIndexOf()));
+	       bu_log("Trim vert indices: %d, %d\n", ctrim->Edge()->m_vi[0], ctrim->Edge()->m_vi[1]);
        	       ctrim->m_type = ON_BrepTrim::boundary;
        	       ctrim->m_tolerance[0] = 0.0;
        	       ctrim->m_tolerance[1] = 0.0;
@@ -150,15 +160,21 @@ void FindLoops(ON_Brep **b) {
 	    
     // If there's anything left, make inner loops out of it
      for (int i = 0; i < (*b)->m_E.Count(); i++) {
-	if (edgearray[i] != largest_loop_index) allsegments.Append(&((*b)->m_E[i]));
+	if (edgearray[i] != largest_loop_index) {
+	    bu_log("allsegments contains %d segments\n", allsegments.Count());
+	    allsegments.Append(&((*b)->m_E[i]));
+	    bu_log("Appended %d\n", i);
+	}
      }
      while (allsegments.Count() > 0) {
+	loop_complete = 0;
 	loop = &((*b)->NewLoop(ON_BrepLoop::inner,(*b)->m_F[0]));
-	ctrim = &((*b)->NewTrim(*(allsegments[allsegments.Count() - 1]), 0, *loop, allsegments.Count() - 1));
+	ON_BrepEdge *currentedge = allsegments[allsegments.Count() - 1];
+	ctrim = &((*b)->NewTrim(*currentedge, 0, *loop, currentedge->EdgeCurveIndexOf()));
 	ctrim->m_type = ON_BrepTrim::boundary;
 	ctrim->m_tolerance[0] = 0.0;
 	ctrim->m_tolerance[1] = 0.0;
-	ON_BrepEdge *currentedge = allsegments[allsegments.Count() - 1];
+	currentedge = allsegments[allsegments.Count() - 1];
 	ON_BrepVertex *vertmatch = &((*b)->m_V[currentedge->m_vi[1]]);
 	ON_BrepVertex *vertterminate = &((*b)->m_V[currentedge->m_vi[0]]);
 	allsegments.Remove(allsegments.Count() - 1);
@@ -281,7 +297,9 @@ rt_sketch_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol
 			(*b)->NewEdge((*b)->m_V[csg->start], (*b)->m_V[csg->start] , (*b)->m_C3.Count() - 1);
 		    }
 		    edgcnt = (*b)->m_E.Count() - 1;
-		    (*b)->m_E[edgcnt].m_tolerance = 0.0;
+		    // WARNING!!!!!
+		    // LINE BELOW IS ALMOST CERTAINLY WRONG!!!!!  WHY WON'T ZERO WORK FOR INNER TRIMMING LOOP?
+		    (*b)->m_E[edgcnt].m_tolerance = DIST_PT_PT(eip->verts[csg->start], eip->verts[csg->end]);
 		} else {
 		    // need to calculated 3rd point on arc - look to sketch.c around line 581 for
 		    // logic
