@@ -145,7 +145,15 @@ typedef struct {
 } ResultStruct;
 
 
-void usage(void)
+inline double
+round_closest(double x)
+{
+    return floor(x + 0.5);
+}
+
+
+void
+usage(void)
 {
     bu_log("Usage: %s dem_file\n", progname);
 }
@@ -796,7 +804,7 @@ int process_manual_scale_factor(
             /* clipping.  manual scale factor > auto scale factor
              * derived_dem_max_raw_elevation is any value 0-999999
 	     */
-            dem_max_raw_clipped_elevation = round(65535 / *in_raw_dem_2_raw_dsp_manual_scale_factor_ptr);
+            dem_max_raw_clipped_elevation = round_closest(65535 / *in_raw_dem_2_raw_dsp_manual_scale_factor_ptr);
             dem_max_real_clipped_elevation = 
                 (dem_max_raw_clipped_elevation * *in_z_spatial_resolution_ptr) + *in_datum_elevation_in_curr_b_record_ptr;
             bu_log("Scale factor '%g' was entered. Scale factors above '%g' cause clipping.\n", 
@@ -870,7 +878,7 @@ int process_manual_dem_max_raw_elevation(
     /* compute raw_dem_2_raw_dsp_scale_factor based on the user entered */
     /* dem max raw elevation */
     /* test for zero to avoid divide by 0 math error */
-    if (round(*in_manual_dem_max_raw_elevation_ptr) > 0) {
+    if (round_closest(*in_manual_dem_max_raw_elevation_ptr) > 0) {
         *out_raw_dem_2_raw_dsp_scale_factor_ptr = DSP_MAX_RAW_ELEVATION / (double)*in_manual_dem_max_raw_elevation_ptr;
     } else {
         *out_raw_dem_2_raw_dsp_scale_factor_ptr = 1;
@@ -984,7 +992,7 @@ int process_manual_dem_max_real_elevation(
 
     /* manual_dem_max_real_elevation value adjusted to multiple of z_spatial resolution then add datum elevation */ 
     adjusted_manual_dem_max_real_elevation = 
-        (round((*in_manual_dem_max_real_elevation_ptr - *in_datum_elevation_in_curr_b_record_ptr) / *in_z_spatial_resolution_ptr) * 
+        (round_closest((*in_manual_dem_max_real_elevation_ptr - *in_datum_elevation_in_curr_b_record_ptr) / *in_z_spatial_resolution_ptr) * 
 	 *in_z_spatial_resolution_ptr) + *in_datum_elevation_in_curr_b_record_ptr;  
 
     /* compute raw elevation that corresponds to the adjusted user input max real elevation */
@@ -1000,7 +1008,7 @@ int process_manual_dem_max_real_elevation(
 
     /* compute raw_dem_2_raw_dsp_scale_factor based on the adjusted, user entered, dem max real elevation */
     /* test for zero to avoid divide by 0 math error */
-    if (round(dem_max_raw_elevation) > 0) {
+    if (round_closest(dem_max_raw_elevation) > 0) {
         *out_raw_dem_2_raw_dsp_scale_factor_ptr = DSP_MAX_RAW_ELEVATION / (double)dem_max_raw_elevation;
     } else {
         *out_raw_dem_2_raw_dsp_scale_factor_ptr = 1;
@@ -1427,7 +1435,7 @@ read_dem(
                     curr_elevation = 0;
                 }
 
-                if (output_elevation((long int)round(curr_elevation * raw_dem_2_raw_dsp_scale_factor), fp2) == BRLCAD_ERROR) {
+                if (output_elevation((long int)round_closest(curr_elevation * raw_dem_2_raw_dsp_scale_factor), fp2) == BRLCAD_ERROR) {
                     bu_log("Function 'output_elevation' failed on 'b' record# '%ld', record elevation# '%ld', dem elevation# '%ld', raw elevation value '%ld'.\n", curr_b_record, elevation_number_in_curr_b_record, elevation_number, curr_elevation);
                     fclose(fp);
                     fclose(fp2);
@@ -1463,7 +1471,7 @@ read_dem(
                             curr_elevation = 0;
                         }
 
-                        if (output_elevation((long int)round(curr_elevation * raw_dem_2_raw_dsp_scale_factor), fp2) == BRLCAD_ERROR) {
+                        if (output_elevation((long int)round_closest(curr_elevation * raw_dem_2_raw_dsp_scale_factor), fp2) == BRLCAD_ERROR) {
                             bu_log("Function 'output_elevation' failed on 'b' record# '%ld', record elevation# '%ld', dem elevation# '%ld', raw elevation value '%ld'.\n", curr_b_record, elevation_number_in_curr_b_record, elevation_number, curr_elevation);
                             fclose(fp);
                             fclose(fp2);
@@ -1497,7 +1505,7 @@ read_dem(
                         curr_elevation = 0;
                     }
 
-                    if (output_elevation((long int)round(curr_elevation * raw_dem_2_raw_dsp_scale_factor), fp2) == BRLCAD_ERROR) {
+                    if (output_elevation((long int)round_closest(curr_elevation * raw_dem_2_raw_dsp_scale_factor), fp2) == BRLCAD_ERROR) {
                         bu_log("Function 'output_elevation' failed on 'b' record# '%ld', record elevation# '%ld', dem elevation# '%ld', raw elevation value '%ld'.\n", curr_b_record, elevation_number_in_curr_b_record, elevation_number, curr_elevation);
                         fclose(fp);
                         fclose(fp2);
@@ -1526,7 +1534,7 @@ read_dem(
                     curr_elevation = 0;
                 }
 
-                if (output_elevation((long int)round(curr_elevation * raw_dem_2_raw_dsp_scale_factor), fp2) == BRLCAD_ERROR) {
+                if (output_elevation((long int)round_closest(curr_elevation * raw_dem_2_raw_dsp_scale_factor), fp2) == BRLCAD_ERROR) {
                     bu_log("Function 'output_elevation' failed on 'b' record# '%ld', record elevation# '%ld', dem elevation# '%ld', raw elevation value '%ld'.\n", curr_b_record, elevation_number_in_curr_b_record, elevation_number, curr_elevation);
                     fclose(fp);
                     fclose(fp2);
