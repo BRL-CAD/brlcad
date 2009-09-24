@@ -367,7 +367,6 @@ rt_sketch_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol
     int surfindex = (*b)->m_S.Count();
     ON_BrepFace& face = (*b)->NewFace(surfindex - 1);
 
-
     // For the purposes of BREP creation, it is necessary to identify
     // loops created by sketch segments.  This information is not stored
     // in the sketch data structures themselves, and thus must be deduced
@@ -377,10 +376,41 @@ rt_sketch_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol
     sketch_surf->SetDomain(1, tloop->m_pbox.m_min.y, tloop->m_pbox.m_max.y );
     sketch_surf->SetExtents(0,sketch_surf->Domain(0));
     sketch_surf->SetExtents(1,sketch_surf->Domain(1));
+    (*b)->SetTrimIsoFlags(face);
 
-    ON_NurbsSurface *nsurf = new ON_NurbsSurface();
-    sketch_surf->GetNurbForm(*nsurf);
-    nsurf->Dump(*dump);
+    ON_3dPoint trim_pt0, trim_pt1, srf_pt0, srf_pt1;
+    ON_3dVector trim_der0, trim_der1, srf_du0, srf_dv0, srf_du1, srf_dv1;
+    ON_BrepTrim& trim = (*b)->m_T[5];
+    ON_Interval trim_domain = (*b)->m_T[5].Domain();
+
+    trim.Ev1Der( trim_domain[0], trim_pt0, trim_der0 );
+    trim.Ev1Der( trim_domain[1], trim_pt1, trim_der1 );
+    const ON_Surface* trim_srf = (*b)->m_F[ (*b)->m_L[trim.m_li].m_fi ].SurfaceOf();
+    trim_srf->Ev1Der( trim_pt0.x, trim_pt0.y, srf_pt0, srf_du0, srf_dv0 );
+    trim_srf->Ev1Der( trim_pt1.x, trim_pt1.y, srf_pt1, srf_du1, srf_dv1 );
+    ON_3dVector trim_tangent0 = trim_der0.x*srf_du0 + trim_der0.y*srf_dv0;
+    trim_tangent0.Unitize();
+    ON_3dVector trim_tangent1 = trim_der1.x*srf_du1 + trim_der1.y*srf_dv1;
+    trim_tangent1.Unitize();
+    const ON_BrepEdge& edge = (*b)->m_E[trim.m_ei];
+    ON_3dVector edge_tangent0 = edge.TangentAt( edge.Domain()[trim.m_bRev3d ? 1 : 0] );
+    ON_3dVector edge_tangent1 = edge.TangentAt( edge.Domain()[trim.m_bRev3d ? 0 : 1] );
+    ON_3dPoint EdgeEnd[2];
+    EdgeEnd[trim.m_bRev3d?1:0] = edge.PointAtStart();
+    EdgeEnd[trim.m_bRev3d?0:1] = edge.PointAtEnd();
+    double d0 = EdgeEnd[0].DistanceTo(srf_pt0);
+    double d1 = EdgeEnd[1].DistanceTo(srf_pt1);
+    bu_log("d0: %f; d1: %f\n", d0, d1);
+    
+    
+
+
+    vect_t vo,vh;
+    VSET(vo, 0,0,0);
+    VSET(vh, 0,0,1000);
+    const ON_Curve* extrudepath = new ON_LineCurve(ON_3dPoint(vo), ON_3dPoint(vh));
+    ON_Brep& brep = *(*b);
+    ON_BrepExtrudeFace(brep,0, *extrudepath, true);
     
 }
 
