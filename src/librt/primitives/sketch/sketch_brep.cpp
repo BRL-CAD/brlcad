@@ -33,64 +33,78 @@ void FindLoops(ON_Brep **b) {
     ON_TextLog dump_to_stdout;
     ON_TextLog* dump = &dump_to_stdout;
 
-    int *edgearray;
-    edgearray = static_cast<int*>(bu_malloc((*b)->m_E.Count() * sizeof(int), "sketch edge list"));
-    for (int i = 0; i < (*b)->m_E.Count(); i++) {
-	edgearray[i] = -1;
+    ON_3dPoint ptmatch, ptterminate, pstart, pend;
+
+    int *curvearray;
+    curvearray = static_cast<int*>(bu_malloc((*b)->m_C3.Count() * sizeof(int), "sketch edge list"));
+    for (int i = 0; i < (*b)->m_C3.Count(); i++) {
+	curvearray[i] = -1;
     }
-    ON_SimpleArray<ON_BrepEdge *> allsegments;
-    ON_BrepTrim *ctrim;
-    ON_BrepLoop *loop; 
-    int loop_complete = 0;
+    ON_SimpleArray<ON_Curve *> allsegments;
+    ON_SimpleArray<ON_Curve *> loopsegments;
+    int loop_complete;
     int orientation;
     int current_loop = 0;
     int current_segment;
-    for (int i = 0; i < (*b)->m_E.Count(); i++) {
-	allsegments.Append(&((*b)->m_E[i]));
+    for (int i = 0; i < (*b)->m_C3.Count(); i++) {
+	allsegments.Append((*b)->m_C3[i]);
     }
 
-    int edgecount = 0;
-    int loopcount = -1;
-    while (allsegments.Count() > 0) {
-	bu_log("edge_array[%d,%d,%d,%d,%d,%d]\n", edgearray[0], edgearray[1], edgearray[2], edgearray[3], edgearray[4], edgearray[5]);
-	// First, sort through things to find the outer loop.
-	loopcount++;
-	ON_BrepEdge *currentedge = allsegments[allsegments.Count() - 1];
-	edgearray[currentedge->m_edge_index] = loopcount;
-	ON_BrepVertex *vertmatch = &((*b)->m_V[currentedge->m_vi[1]]);
-	ON_BrepVertex *vertterminate = &((*b)->m_V[currentedge->m_vi[0]]);
-	allsegments.Remove(allsegments.Count() - 1);
-	current_segment = allsegments.Count() - 1;
-	while ((allsegments.Count() > 0) && (current_segment > -1) && (loop_complete != 1)) {
-	   currentedge = allsegments[current_segment];
-	   ON_BrepVertex *currentvertexstart = &((*b)->m_V[currentedge->m_vi[0]]);
-	   ON_BrepVertex *currentvertexend = &((*b)->m_V[currentedge->m_vi[1]]);
-	   if (currentvertexstart == vertmatch) {
-    	       vertmatch = currentvertexend;
-	       edgearray[currentedge->m_edge_index] = loopcount;
-	       allsegments.Remove(current_segment);
-	       if (vertterminate == vertmatch) {
-		   loop_complete = 1;
-		   current_segment = -1;
-	       } else {
-		   current_segment = allsegments.Count() - 1;
-	       }
-	   } else {
-	       current_segment--;
-	   }
+    int allcurvesassigned = 0;
+    int assignedcount = 0;
+    int curvecount = 0;
+    int loopcount = 0;
+    while (allcurvesassigned != 1) {
+	int havefirstcurve = 0;
+	while ((havefirstcurve == 0) && (curvecount < allsegments.Count())) {
+	    if (curvearray[curvecount] == -1) {
+		havefirstcurve = 1;
+	    } else {
+		curvecount++;
+	    }
+	}
+	// First, sort through things to assign curves to loops.
+	loop_complete = 0;
+	while ( (loop_complete != 1) && (allcurvesassigned != 1)) {
+	    curvearray[curvecount] = loopcount;
+    	    ON_Curve *currentcurve = allsegments[curvecount];
+    	    ptmatch = (*b)->m_C3[curvecount]->PointAtEnd();
+    	    ptterminate = (*b)->m_C3[curvecount]->PointAtStart();
+	    for (int i = 0; i < allsegments.Count(); i++) {
+		pstart = (*b)->m_C3[i]->PointAtStart();
+		pend = (*b)->m_C3[i]->PointAtEnd();
+		if (ON_NearZero(ptmatch.DistanceTo(pstart), ON_ZERO_TOLERANCE) && (curvearray[i] == -1)) {
+		    curvecount = i;
+		    ptmatch = pend;
+		    i = allsegments.Count();
+		    if (ON_NearZero(pend.DistanceTo(ptterminate), ON_ZERO_TOLERANCE)) {
+			loop_complete = 1;
+			loopcount++;
+		    }
+		} else {
+		    if (i == allsegments.Count() - 1) {
+			loop_complete = 1; //If we reach this pass, loop had better be complete
+			loopcount++;
+			assignedcount = 0;
+			for (int j = 0; j < allsegments.Count(); j++) {
+			    if (curvearray[j] != -1) assignedcount++;
+			}
+			if (allsegments.Count() == assignedcount) allcurvesassigned = 1;
+		    }
+		}
+	    }		
 	}
     }
 
-    bu_log("edge_array[%d,%d,%d,%d,%d,%d]\n", edgearray[0], edgearray[1], edgearray[2], edgearray[3], edgearray[4], edgearray[5]);
     double maxdist = 0.0;
     int largest_loop_index = 0;
     for (int i = 0; i <= loopcount ; i++) {
 	ON_BoundingBox *lbbox = new ON_BoundingBox();
-	for (int j = 0; j < (*b)->m_E.Count(); j++) {
-	    if (edgearray[j] == i) {
-		ON_BrepEdge *curredge = &((*b)->m_E[j]);
-		curredge->GetBoundingBox(*lbbox, true);
-		bu_log("edgearray[%d]: %f,%f,%f;%f,%f,%f\n", j, lbbox->m_min[0], lbbox->m_min[1], lbbox->m_min[2], lbbox->m_max[0], lbbox->m_max[1], lbbox->m_max[2]);
+	for (int j = 0; j < (*b)->m_C3.Count(); j++) {
+	    if (curvearray[j] == i) {
+		ON_Curve *currcurve = (*b)->m_C3[j];
+		currcurve->GetBoundingBox(*lbbox, true);
+		bu_log("curvearray[%d]: %f,%f,%f;%f,%f,%f\n", j, lbbox->m_min[0], lbbox->m_min[1], lbbox->m_min[2], lbbox->m_max[0], lbbox->m_max[1], lbbox->m_max[2]);
 	    }
 	}
 	point_t minpt, maxpt;
@@ -106,101 +120,27 @@ void FindLoops(ON_Brep **b) {
     }
     bu_log("largest_loop_index = %d\n", largest_loop_index);
 
-    bu_log("edge_array[%d,%d,%d,%d,%d,%d]\n", edgearray[0], edgearray[1], edgearray[2], edgearray[3], edgearray[4], edgearray[5]);
-    // Now, handle outer loop
-    loop = &((*b)->NewLoop(ON_BrepLoop::outer,(*b)->m_F[0]));
-    for (int i = 0; i < (*b)->m_E.Count(); i++) {
-	if (edgearray[i] == largest_loop_index) {
-	    allsegments.Append(&((*b)->m_E[i]));
-	    bu_log("Appended %d\n", i);
-	}
+    bu_log("curve_array[%d,%d,%d,%d,%d,%d]\n", curvearray[0], curvearray[1], curvearray[2], curvearray[3], curvearray[4], curvearray[5]);
+
+
+    for (int i = 0; i < allsegments.Count(); i++) {
+	if (curvearray[i] == largest_loop_index) loopsegments.Append((*b)->m_C3[i]);
     }
-    while (allsegments.Count() > 0) {
-	loop_complete = 0;
-	ON_BrepEdge *currentedge = allsegments[allsegments.Count() - 1];
-	ctrim = &((*b)->NewTrim(*currentedge, 0, *loop, currentedge->EdgeCurveIndexOf()));
-	ctrim->m_type = ON_BrepTrim::boundary;
-	ctrim->m_tolerance[0] = 0.0;
-	ctrim->m_tolerance[1] = 0.0;
-	bu_log("Trim vert indices: %d, %d\n", ctrim->Edge()->m_vi[0], ctrim->Edge()->m_vi[1]);
-	currentedge = allsegments[allsegments.Count() - 1];
-	ON_BrepVertex *vertmatch = &((*b)->m_V[currentedge->m_vi[1]]);
-	bu_log("Initial vertmatch:\n");
-	vertmatch->Dump(*dump);
-	ON_BrepVertex *vertterminate = &((*b)->m_V[currentedge->m_vi[0]]);
-	allsegments.Remove(allsegments.Count() - 1);
-	current_segment = allsegments.Count() - 1;
-	while ((allsegments.Count() > 0) && (current_segment > -1) && (loop_complete != 1)) {
-	   currentedge = allsegments[current_segment];
-	   ON_BrepVertex *currentvertexstart = &((*b)->m_V[currentedge->m_vi[0]]);
-	   currentvertexstart->Dump(*dump);
-	   ON_BrepVertex *currentvertexend = &((*b)->m_V[currentedge->m_vi[1]]);
-	   currentvertexend->Dump(*dump);
-	   if (currentvertexstart == vertmatch) {
-    	       vertmatch = currentvertexend;
-	       bu_log("New vertmatch:\n");
-	       vertmatch->Dump(*dump);
-	       ctrim = &((*b)->NewTrim(*currentedge, 0, *loop, currentedge->EdgeCurveIndexOf()));
-	       bu_log("Trim vert indices: %d, %d\n", ctrim->Edge()->m_vi[0], ctrim->Edge()->m_vi[1]);
-       	       ctrim->m_type = ON_BrepTrim::boundary;
-       	       ctrim->m_tolerance[0] = 0.0;
-       	       ctrim->m_tolerance[1] = 0.0;
-	       allsegments.Remove(current_segment);
-	       if (vertterminate == vertmatch) {
-		   loop_complete = 1;
-		   current_segment = -1;
-	       } else {
-		   current_segment = allsegments.Count() - 1;
-	       }
-	   } else {
-	       current_segment--;
-	   }
-	}
-    }
-	    
+
+    (*b)->NewPlanarFaceLoop(0, ON_BrepLoop::outer, loopsegments, false);
+    
+    loopsegments.Empty();
+       
     // If there's anything left, make inner loops out of it
-     for (int i = 0; i < (*b)->m_E.Count(); i++) {
-	if (edgearray[i] != largest_loop_index) {
-	    bu_log("allsegments contains %d segments\n", allsegments.Count());
-	    allsegments.Append(&((*b)->m_E[i]));
-	    bu_log("Appended %d\n", i);
+     for (int i = 0; i <= loopcount; i++) {
+	if (i != largest_loop_index) {
+	    for (int j = 0; j < allsegments.Count(); j++) {
+		if (curvearray[j] == i)	loopsegments.Append((*b)->m_C3[j]);
+	    }
+	    (*b)->NewPlanarFaceLoop(0, ON_BrepLoop::inner, loopsegments, false);
 	}
+	loopsegments.Empty();
      }
-     while (allsegments.Count() > 0) {
-	loop_complete = 0;
-	loop = &((*b)->NewLoop(ON_BrepLoop::inner,(*b)->m_F[0]));
-	ON_BrepEdge *currentedge = allsegments[allsegments.Count() - 1];
-	ctrim = &((*b)->NewTrim(*currentedge, 0, *loop, currentedge->EdgeCurveIndexOf()));
-	ctrim->m_type = ON_BrepTrim::boundary;
-	ctrim->m_tolerance[0] = 0.0;
-	ctrim->m_tolerance[1] = 0.0;
-	currentedge = allsegments[allsegments.Count() - 1];
-	ON_BrepVertex *vertmatch = &((*b)->m_V[currentedge->m_vi[1]]);
-	ON_BrepVertex *vertterminate = &((*b)->m_V[currentedge->m_vi[0]]);
-	allsegments.Remove(allsegments.Count() - 1);
-	current_segment = allsegments.Count() - 1;
-	while ((allsegments.Count() > 0) && (current_segment > -1) && (loop_complete != 1)) {
-	   currentedge = allsegments[current_segment];
-	   ON_BrepVertex *currentvertexstart = &((*b)->m_V[currentedge->m_vi[0]]);
-	   ON_BrepVertex *currentvertexend = &((*b)->m_V[currentedge->m_vi[1]]);
-	   if (currentvertexstart == vertmatch) {
-    	       vertmatch = currentvertexend;
-	       ctrim = &((*b)->NewTrim(*currentedge, 0, *loop, currentedge->EdgeCurveIndexOf()));
-       	       ctrim->m_type = ON_BrepTrim::boundary;
-       	       ctrim->m_tolerance[0] = 0.0;
-       	       ctrim->m_tolerance[1] = 0.0;
-	       allsegments.Remove(current_segment);
-	       if (vertterminate == vertmatch) {
-		   loop_complete = 1;
-		   current_segment = -1;
-	       } else {
-		   current_segment = allsegments.Count() - 1;
-	       }
-	   } else {
-	       current_segment--;
-	   }
-	}
-    }
 }    
  
 
@@ -254,9 +194,6 @@ rt_sketch_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol
     struct line_seg *lsg;
     struct carc_seg *csg;
     struct bezier_seg *bsg;
-    int edgcnt;
-    ON_BoundingBox *bbox = new ON_BoundingBox();
-    ON_SimpleArray<ON_Curve*> boundary;
     long *lng;
     for (int i = 0; i < (&eip->skt_curve)->seg_count; i++) {
 	lng = (long *)(&eip->skt_curve)->segments[i];
@@ -266,74 +203,40 @@ rt_sketch_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol
 		    lsg = (struct line_seg *)lng;
 		    ON_Curve* lsg3d = new ON_LineCurve((*b)->m_V[lsg->start].Point(), (*b)->m_V[lsg->end].Point());
 		    lsg3d->SetDomain(0.0, 1.0);
-		    lsg3d->GetBoundingBox(*bbox,true);
-		    ON_Curve* lsg2d = new ON_LineCurve(ON_2dPoint(eip->verts[lsg->start][0],eip->verts[lsg->start][1]), ON_2dPoint(eip->verts[lsg->end][0],eip->verts[lsg->end][1]));
-		    (*b)->m_C2.Append(lsg2d);
-		    bbox->Set((*b)->m_V[lsg->start].Point(), true);
-		    bbox->Set((*b)->m_V[lsg->end].Point(), true);
 		    (*b)->m_C3.Append(lsg3d);
-		    (*b)->NewEdge((*b)->m_V[lsg->start], (*b)->m_V[lsg->end] , (*b)->m_C3.Count() - 1);
 		}
-		edgcnt = (*b)->m_E.Count() - 1;
-		(*b)->m_E[edgcnt].m_tolerance = 0.0;
 		break;
 	    case CURVE_CARC_MAGIC:
 		csg = (struct carc_seg *)lng;
 		if (csg->radius < 0) {
 		    {
-			ON_2dPoint cntrpt2d = ON_2dPoint(eip->verts[csg->end][0], eip->verts[csg->end][1]);
-			ON_2dPoint edgept2d = ON_2dPoint(eip->verts[csg->start][0], eip->verts[csg->start][1]);
 			ON_3dPoint cntrpt = (*b)->m_V[csg->end].Point();
 			ON_3dPoint edgept = (*b)->m_V[csg->start].Point();
-			ON_Circle* c3dcirc2d = new ON_Circle(cntrpt, cntrpt.DistanceTo(edgept));
 			ON_Circle* c3dcirc = new ON_Circle(cntrpt,cntrpt.DistanceTo(edgept));
-			ON_Curve* c3d2d = new ON_ArcCurve((const ON_Circle)*c3dcirc2d);
-		    	c3d2d->ChangeDimension(2);
 			ON_Curve* c3d = new ON_ArcCurve((const ON_Circle)*c3dcirc);
 			c3d->SetDomain(0.0,1.0);
-		    	c3d->GetBoundingBox(*bbox,true);
-			(*b)->m_C2.Append(c3d2d);
 			(*b)->m_C3.Append(c3d);
-			(*b)->NewEdge((*b)->m_V[csg->start], (*b)->m_V[csg->start] , (*b)->m_C3.Count() - 1);
 		    }
-		    edgcnt = (*b)->m_E.Count() - 1;
-		    // WARNING!!!!!
-		    // LINE BELOW IS ALMOST CERTAINLY WRONG!!!!!  WHY WON'T ZERO WORK FOR INNER TRIMMING LOOP?
-		    (*b)->m_E[edgcnt].m_tolerance = DIST_PT_PT(eip->verts[csg->start], eip->verts[csg->end]);
 		} else {
 		    // need to calculated 3rd point on arc - look to sketch.c around line 581 for
 		    // logic
 		    ON_Arc* c3darc = new ON_Arc();
 		    ON_Curve* c3d = new ON_ArcCurve();
-		    c3d->GetBoundingBox(*bbox,true);
 		}
 		break;
 	    case CURVE_BEZIER_MAGIC:
 		bsg = (struct bezier_seg *)lng;
 		{
-		    ON_2dPointArray *bezpoints2d = new ON_2dPointArray(bsg->degree + 1);
-		    for (int i = 0; i < bsg->degree + 1; i++) {
-			bezpoints2d->Append(ON_2dPoint(eip->verts[bsg->ctl_points[i]][0], eip->verts[bsg->ctl_points[i]][1]));
-		    }
 		    ON_3dPointArray *bezpoints = new ON_3dPointArray(bsg->degree + 1);
 		    for (int i = 0; i < bsg->degree + 1; i++) {
 			bezpoints->Append((*b)->m_V[bsg->ctl_points[i]].Point());
 		    }
-		    ON_BezierCurve* bez3d2d = new ON_BezierCurve((const ON_2dPointArray)*bezpoints2d);
 		    ON_BezierCurve* bez3d = new ON_BezierCurve((const ON_3dPointArray)*bezpoints);
-		    ON_NurbsCurve* beznurb2d = new ON_NurbsCurve();
-		    bez3d2d->GetNurbForm(*beznurb2d);
-		    beznurb2d->ChangeDimension(2);
-		    (*b)->m_C2.Append(beznurb2d);
 		    ON_NurbsCurve* beznurb3d = new ON_NurbsCurve();
 		    bez3d->GetNurbForm(*beznurb3d);
 		    beznurb3d->SetDomain(0.0,1.0);
-		    beznurb3d->GetBoundingBox(*bbox,true);
 		    (*b)->m_C3.Append(beznurb3d);
-		    (*b)->NewEdge((*b)->m_V[bsg->ctl_points[0]], (*b)->m_V[bsg->ctl_points[bsg->degree]] , (*b)->m_C3.Count() - 1);
 		}
-		edgcnt = (*b)->m_E.Count() - 1;
-		(*b)->m_E[edgcnt].m_tolerance = 0.0;
 		break;
 	    default:
 		bu_log("Unhandled sketch object\n");
@@ -341,28 +244,8 @@ rt_sketch_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol
 	}
     }
 
-    bu_log("bbox: %f,%f,%f; %f,%f,%f\n", bbox->m_min[0], bbox->m_min[1], bbox->m_min[2], bbox->m_max[0], bbox->m_max[1], bbox->m_max[2]);
-
-
-    vect_t ouc, ovc, vect1, vect2, ucomponent, vcomponent;
-    VSET(vect1, bbox->m_min[0], bbox->m_min[1], bbox->m_min[2]);
-    VSET(vect2, bbox->m_max[0], bbox->m_max[1], bbox->m_max[2]);
-    VPROJECT(eip->V, eip->u_vec, ouc, ovc);
-    VPROJECT(vect1, eip->u_vec, ucomponent, vcomponent);
-    VADD2(ucomponent, ucomponent, ouc);
-    VADD2(vcomponent, vcomponent, ovc);
-    double umin = MAGNITUDE(ucomponent);
-    double vmin = MAGNITUDE(vcomponent);
-    VPROJECT(vect2, eip->u_vec, ucomponent, vcomponent);
-    VADD2(ucomponent, ucomponent, ouc);
-    VADD2(vcomponent, vcomponent, ovc);
-    double umax = MAGNITUDE(ucomponent);
-    double vmax = MAGNITUDE(vcomponent);
-    
     // Create the plane surface and brep face.
     ON_PlaneSurface *sketch_surf = new ON_PlaneSurface(*sketch_plane);
-    sketch_surf->SetDomain(0,umin, umax);
-    sketch_surf->SetDomain(1,vmin, vmax);
     (*b)->m_S.Append(sketch_surf);
     int surfindex = (*b)->m_S.Count();
     ON_BrepFace& face = (*b)->NewFace(surfindex - 1);
@@ -371,47 +254,21 @@ rt_sketch_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol
     // loops created by sketch segments.  This information is not stored
     // in the sketch data structures themselves, and thus must be deduced
     FindLoops(b);
-    const ON_BrepLoop* tloop = (*b)->m_L.Last();
+    const ON_BrepLoop* tloop = (*b)->m_L.First();
     sketch_surf->SetDomain(0, tloop->m_pbox.m_min.x, tloop->m_pbox.m_max.x );
     sketch_surf->SetDomain(1, tloop->m_pbox.m_min.y, tloop->m_pbox.m_max.y );
     sketch_surf->SetExtents(0,sketch_surf->Domain(0));
     sketch_surf->SetExtents(1,sketch_surf->Domain(1));
     (*b)->SetTrimIsoFlags(face);
-
-    ON_3dPoint trim_pt0, trim_pt1, srf_pt0, srf_pt1;
-    ON_3dVector trim_der0, trim_der1, srf_du0, srf_dv0, srf_du1, srf_dv1;
-    ON_BrepTrim& trim = (*b)->m_T[5];
-    ON_Interval trim_domain = (*b)->m_T[5].Domain();
-
-    trim.Ev1Der( trim_domain[0], trim_pt0, trim_der0 );
-    trim.Ev1Der( trim_domain[1], trim_pt1, trim_der1 );
-    const ON_Surface* trim_srf = (*b)->m_F[ (*b)->m_L[trim.m_li].m_fi ].SurfaceOf();
-    trim_srf->Ev1Der( trim_pt0.x, trim_pt0.y, srf_pt0, srf_du0, srf_dv0 );
-    trim_srf->Ev1Der( trim_pt1.x, trim_pt1.y, srf_pt1, srf_du1, srf_dv1 );
-    ON_3dVector trim_tangent0 = trim_der0.x*srf_du0 + trim_der0.y*srf_dv0;
-    trim_tangent0.Unitize();
-    ON_3dVector trim_tangent1 = trim_der1.x*srf_du1 + trim_der1.y*srf_dv1;
-    trim_tangent1.Unitize();
-    const ON_BrepEdge& edge = (*b)->m_E[trim.m_ei];
-    ON_3dVector edge_tangent0 = edge.TangentAt( edge.Domain()[trim.m_bRev3d ? 1 : 0] );
-    ON_3dVector edge_tangent1 = edge.TangentAt( edge.Domain()[trim.m_bRev3d ? 0 : 1] );
-    ON_3dPoint EdgeEnd[2];
-    EdgeEnd[trim.m_bRev3d?1:0] = edge.PointAtStart();
-    EdgeEnd[trim.m_bRev3d?0:1] = edge.PointAtEnd();
-    double d0 = EdgeEnd[0].DistanceTo(srf_pt0);
-    double d1 = EdgeEnd[1].DistanceTo(srf_pt1);
-    bu_log("d0: %f; d1: %f\n", d0, d1);
-    
-    
-
-
+    (*b)->FlipFace(face);
+/*
     vect_t vo,vh;
     VSET(vo, 0,0,0);
     VSET(vh, 0,0,1000);
     const ON_Curve* extrudepath = new ON_LineCurve(ON_3dPoint(vo), ON_3dPoint(vh));
     ON_Brep& brep = *(*b);
     ON_BrepExtrudeFace(brep,0, *extrudepath, true);
-    
+  */  
 }
 
 // Local Variables:
