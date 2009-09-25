@@ -23,14 +23,6 @@ THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 -------------------------------------------------------
 
-* the binary windows installer is missing headers for our external
-  dependencies (Tcl and OpenNURBS in particular as the likes of bu.h
-  and raytrace.h requires them)
-
-* implement file input support for the pnts primitive
-
-* display cross-hair in mged when rtarea reports center
-
 * initial step-g with basic file parsing capability but without
   creation of .g geometry just yet
 
@@ -40,22 +32,32 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
   or simply have an rt_*() for each function (e.g., rt_mirror(),
   rt_shot(), rt_describe(), etc).
 
-* implement necessary routines for generating a NURBS bounding
-  box tree, needed for "good" initial guesses when raytracing
-  a NURBS surface. (per Abert et. al. 2006)
-
 * modify g_qa to search for >1 region flag in a tree path.
 
 * utilize -pedantic -Wall -Werror on 'clean' directories
+
+* implement a routine to convert an NMG object (whether polygonal or
+  old bspline/nurbs) to the newer openNURBS BREP object type to
+  facilitate tool migration.
 
 
 THESE ARE UNSCHEDULED BACKLOG TASKS
 -----------------------------------
 
-* make nmg objects not raytrace so slowly.  the presently render more
-  than an order of magnitude slower than tracing that nmg converted to
-  an equivalent BoT due to malloc/free calls being made during shot().
-  Confirmable with a simple test case of a sphere converted to an nmg:
+
+* the binary windows installer is missing headers for our external
+  dependencies (Tcl, zlib, and OpenNURBS in particular as the likes of
+  bu.h and raytrace.h requires them)
+
+* make rtarea display a cross-hair and perhaps coordinates for the
+  center of area if run from within mged.
+
+* optimization of NMG ray tracing.  the hitmiss bookkeeping presently
+  used has a malloc/free occuring per shot().  allocations need to
+  occur during prep only.  the presently render more than an order of
+  magnitude slower than tracing that nmg converted to an equivalent
+  BoT due to malloc/free calls being made during shot(). Confirmable
+  with a simple test case of a sphere converted to an nmg:
 
     make sph sph ; facetize -n sph.nmg sph
 
@@ -120,8 +122,6 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
 * make db_open modes behave the same as the fopen() modes (i.e.,
   create the .g if one doesn't exist when write mode)
 
-* Impliment procedural human geometry generator
-
 * fix the shaders.sh regression test case, failing dues to changes
   with mged's view initialization.
 
@@ -135,8 +135,6 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
   a "progress report" for longer runs that provides some notion of
   how much of the total job is done.
 
-* restored support for shotline region reporting within ADRT
-
 * make color and vectors on pnts work
 
 * mged inconsistently ignores signals.  initially allowing mged to be
@@ -145,18 +143,6 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
 
 * libfb needs to have the fb_open/close_existing functions refactored
   into the function table and hav the #ifdef sections removed.
-
-* optimization of NMG ray tracing.  the hitmiss bookkeeping presently
-  used has a malloc/free occuring per shot().  allocations need to
-  occur during prep only.
-
-* implement a routine to convert an NMG object (whether polygonal or
-  old bspline/nurbs) to the newer openNURBS BREP object type to
-  facilitate tool migration.
-
-* implement primitive-to-brep routines for all primitives (partially
-  completed) so that each implicit can describe themselves as a NURBS
-  surface or set of trimmed NURBS surfaces.
 
 * integrate library tester into regression suite that validates
   exported library symbols published in headers.  make sure they at
@@ -209,15 +195,10 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
 * break up library headers into subheaders so includes can be more
   specific (and help speed up compilation) and locally documented.
 
-* make sure news2tracker.sh is not missing recent news items.  several
-  were missing from a recent report generated (unverified).
-
 * fix framebuffer refresh bug.  problem was caused when the if_ogl
   framebuffer was changed (back) to request a direct rendering
   context.  presumably that is triggering other code that is failing
   to redraw.
-
-* segregate the nmg routines out of librt back into their own library
 
 * implement a routine/command to convert from a bot to an nmg
   (similar/related to the nmg-bot tool, but the reverse).
@@ -231,8 +212,6 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
 * refactor mged/bwish/g_diff initialization to all use the same routine
 
 * rename all the g_* tools sans _ next minor update
-
-* implement a obj-g importer
 
 * deprecate either orot or rotobj
 
@@ -291,13 +270,6 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
 
 * fix/change naming convention for presented/exposed area
 
-* make rtarea display a cross-hair and perhaps coordinates for the
-  center of area if run from within mged.
-
-* remove MySQL code from ADRT
-
-* fix ISST callbacks within ADRT
-
 * re-enable RISE client in ADRT
 
 * test homovulgaris' root solver patch that puts coefficients in the
@@ -330,11 +302,6 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
   is predominantly (but not entirely) a complex bot structure in
   itself.  idea is to use some sort of marching cubes/tets to find
   those volumes, perhaps use a libified g_qa.
-
-* include tcl and zlib headers in the Windows install
-
-* make including the main headers work for 3rd party apps including
-  for C++ projects, working out of the box
 
 * fix metaball "shelling" but that causes the primitive to invert and
   just give paper thin surface (something wrong in the intersection).
@@ -382,9 +349,6 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
 * add alpha channel support to the framebuffers
 
 * remote framebuffer timeout support (perhaps as ::key=val;key=val)
-
-* review and integrate David Loman's bot-processing and object label
-  scripts, add libdm interface for textual overlay support
 
 * develop a tool that applies a text overlay to a given rendered image
   (e.g., as an rt option) for things like adding an image title, the
@@ -453,6 +417,7 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
 * automatic geometry voxelizer (perhaps using arbs or vol primitive)
 
 * turn geometry converters and image converters into libraries
+  (started as libraries libgcv and libicv)
 
 * add support for querying geometry properties to library including
   computing surface area and weight/mass.
@@ -529,8 +494,6 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
   also be useful to allow an optional "thickness" so that the
   annotations can represent physical geometry (so they raytrace).
 
-* rt annotation support
-
 * support for fillets and chamfers as object/combination operations
 
 * make the DSP primitive use less memory when data is coming from
@@ -545,8 +508,6 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
 
 * obliterate verbose compilation warnings
 
-* add support for subgeometry support to the geometry syndicator
-
 * add xml, nff, bzw, pov, blend geometry import and export support
 
 * add support for filesystem-based geometry collections
@@ -560,11 +521,6 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
   a tool to create propeller parts) to identify themselves and their
   features to BRL-CAD, and to allow BRL-CAD to incorporate those features
   as an integrated part of interaction environments.  
-
-* incremental raytrace-based display manager
-
-* implement tools for generating springs and gears, improve bolt/nut
-  tool support
 
 * SVG renderer.  go straight from 3D model to a 2D vector image for a
   given view.  similar to the plot/postscript wireframe view saves,
