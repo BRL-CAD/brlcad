@@ -56,6 +56,7 @@ extern "C" {
     extern void rt_ehy_brep(ON_Brep **bi, struct rt_db_internal *ip, const struct bn_tol *tol);
     extern void rt_tgc_brep(ON_Brep **bi, struct rt_db_internal *ip, const struct bn_tol *tol);
     extern void rt_tor_brep(ON_Brep **bi, struct rt_db_internal *ip, const struct bn_tol *tol);
+    extern void rt_pipe_brep(ON_Brep **bi, struct rt_db_internal *ip, const struct bn_tol *tol);
     extern void rt_sketch_brep(ON_Brep **bi, struct rt_db_internal *ip, const struct bn_tol *tol);
     extern void rt_sketch_ifree(struct rt_db_internal *ip, struct resource *resp);
     extern void rt_extrude_brep(ON_Brep **bi, struct rt_db_internal *ip, const struct bn_tol *tol);
@@ -433,6 +434,46 @@ main(int argc, char** argv)
     mk_brep(outfp, eto_name, etobrep);
     delete etobrep;
 
+    bu_log("Writing a Pipe b-rep...\n");
+    ON_Brep* pipebrep = ON_Brep::New();
+    struct wdb_pipept pipe1[] = {
+     {
+         {(long)WDB_PIPESEG_MAGIC, 0, 0},
+	 {0, 1, 0},
+	 0.05, 0.1, 0.1
+     },
+     {
+	 {(long)WDB_PIPESEG_MAGIC, 0, 0},
+	 {4, 5, 0},
+	 0.05, 0.1, 0.1
+     },
+     {
+	 {(long)WDB_PIPESEG_MAGIC, 0, 0},
+	 {4, 9, 0},
+	 0.05, 0.1, 0.1
+     },
+     {
+	 {(long)WDB_PIPESEG_MAGIC, 0, 0},
+	 {9, 9, 0},
+	 0.05, 0.1, 0.1
+     }
+    };
+    int pipe1_npts = sizeof(pipe1)/sizeof(struct wdb_pipept);
+    
+    struct rt_pipe_internal *pipe;
+    BU_GETSTRUCT(pipe, rt_pipe_internal);
+    BU_LIST_INIT(&pipe->pipe_segs_head);
+    pipe->pipe_magic = RT_PIPE_INTERNAL_MAGIC;
+    
+    for (int i=0; i<pipe1_npts; i++) {
+	BU_LIST_INSERT(&pipe->pipe_segs_head, &pipe1[i].l);
+    }
+    tmp_internal->idb_ptr = (genptr_t)pipe;
+    rt_pipe_brep(&pipebrep, tmp_internal, tol);
+    const char* pipe_name = "pipe_nurb.s";
+    mk_brep(outfp, pipe_name, pipebrep);
+//    delete pipebrep;
+    
     bu_log("Writing a Sketch (non-solid) b-rep...\n");
     int cnti;
     ON_Brep* sketchbrep = ON_Brep::New();
