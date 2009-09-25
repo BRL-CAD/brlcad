@@ -24,6 +24,7 @@ libtie1_la_CFLAGS = -DTIE_PRECISION=1
 noinst_LTLIBRARIES = libtie0.la libtie1.la
 
 librender_la_SOURCES = \
+	load.c \
 	load_g.c \
 	librender/camera.c \
 	librender/component.c \
@@ -71,7 +72,6 @@ adrt_master_LDADD = \
 	${LIBZ}
 
 adrt_slave_SOURCES = \
-	slave/load.c \
 	slave/slave.c \
 	slave/smain.c \
 	slave/tienet_slave.c
@@ -112,11 +112,11 @@ tieinclude_HEADERS = \
 	libtie/tie_struct.h
 
 noinst_HEADERS = \
+	load.h \
 	master/compnet.h \
 	master/dispatcher.h \
 	master/tienet_master.h \
 	master/master.h \
-	slave/load.h \
 	slave/slave.h \
 	slave/tienet_slave.h
 
