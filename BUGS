@@ -82,22 +82,6 @@ Recent Bugs
 
   invalid command name "bind"
 
-* The nmg objects are raytracing VERY slowly, more than an order of
-  magnitude slower than tracing that nmg converted to an equivalent
-  bot.  There appears to be major resource contention and/or thread
-  locking on SMP machines resulting in nearly serialized performance,
-  though the trace is still slow with -P1.  Confirmed with a simple
-  test case of a sphere converted to an nmg:
-
-    make sph sph ; facetize -n sph.nmg sph
-
-  Looks like bots are fine and problem is independent of framebuffer
-  and image size.  Problem seems to be the way the ray_data structure
-  is used to track hitmiss data.  It is horribly inefficient with a
-  large per-shot calloc/free occurring.  Quick timing test showed
-  eliminating the calloc/free alone should result in approximately a
-  3x increase.
-
 * mged 'facetize -n' command is giving many errors:
     ERROR: color index out of range (-128 > 255)
   and it shouldn't.  seems to be happening on 3-manifold surfaces but

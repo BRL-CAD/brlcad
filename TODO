@@ -52,6 +52,12 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 THESE ARE UNSCHEDULED BACKLOG TASKS
 -----------------------------------
 
+* make nmg objects not raytrace so slowly.  the presently render more
+  than an order of magnitude slower than tracing that nmg converted to
+  an equivalent BoT due to malloc/free calls being made during shot().
+  Confirmable with a simple test case of a sphere converted to an nmg:
+
+    make sph sph ; facetize -n sph.nmg sph
 
 * implement a "select" command in LIBGED that creates a selection set
   based on specified sampling parameters or object lists.  example
