@@ -49,9 +49,52 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
   also be useful to allow an optional "thickness" so that the
   annotations can represent physical geometry (so they raytrace).
 
+* 64-bit port of BRL-CAD on Windows
+
+* make GUI mged support interactively swapping out display managers
+  (in order to support switching to ogl/X/rtgl, for example)
+
+* finish obj-g importer.  need to test more inputs and make sure all
+  geometry is preserved on import in some form.
+
 
 THESE ARE UNSCHEDULED BACKLOG TASKS
 -----------------------------------
+
+* Simple GUI for repairing BoT normals.  Basically make it easier to
+  make all normals consistent and outward facing through some form of
+  MGED integration of bot_sync and bot_flip.
+
+* Machine-independent dbupgrade.  Make it so that dbupgrade will work
+  on an old v4 without being on a machine of the same original
+  architecture type.
+
+* complete conversion of existing manual pages into docbook format
+
+* expose all manual page documentation from within mged through
+  searchable viewer interface (GUI)
+
+* add support to 'mv' (and possibly friends like mvall) for renaming
+  objects based on a mapping file.  Primarily of benefit to imported
+  geometries, this would introduce a renaming capability similar to
+  rcodes, idents, and other similar commands that provide file-based
+  collective name editing.
+
+* add an option to bot_dump for outputting surface normals.  Make sure
+  all supported dump formats (obj, dxf, etc) optionally write out
+  normals.  Consider adding an option to smoothly interpolate normals
+  (per face or vertex).
+
+* add option to push/xpush to stop at the region level.
+
+* consolidate push/xpush together
+
+* verify/fix/improve rtarea.  There are reports that the rtarea
+  command may have a bug in its calculations.  This needs to be
+  investigated along with a review of the taxonomy used by rtarea for
+  describing presented/projected areas.
+
+* make sca command accept three arguments for x/y/z.
 
 * obliterate verbose compilation warnings
 
