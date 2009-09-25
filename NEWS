@@ -57,6 +57,7 @@ changes made.  See document footer for additional details.
 * improved 'e_id' mged command help - Sean Morrison
 * archer interactive editing support for most primitives - Bob Parker
 * added '-v' to mged for version information - Erik Greenwald
+* fixed the "scalloping" bug in the metaball primitive - Erik Greenwald
 
 
 ----------------------------------------------------------------------
