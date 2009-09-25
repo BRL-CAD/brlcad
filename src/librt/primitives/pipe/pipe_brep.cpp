@@ -51,17 +51,34 @@ void generate_curves(point_t prevp, point_t curp, double od, double id, ON_Plane
 
 void make_linear_surfaces(ON_Brep **b, ON_SimpleArray<ON_Curve*> *startoutercurves, ON_SimpleArray<ON_Curve*> *endoutercurves, ON_SimpleArray<ON_Curve*> *startinnercurves, ON_SimpleArray<ON_Curve*> *endinnercurves) {
     bu_log("make_linear_surfaces\n");
-    int c1ind = (*b)->AddEdgeCurve(ON_Curve::Cast(*(startoutercurves[0])));
-    int c2ind = (*b)->AddEdgeCurve(ON_Curve::Cast(*(endoutercurves[0])));
-    ON_BrepEdge& startedge = (*b)->NewEdge(c1ind);
-    ON_BrepEdge& endedge = (*b)->NewEdge(c2ind);
-    (*b)->NewRuledFace(startedge, false, endedge, false);
+    int c1ind = (*b)->AddEdgeCurve(*(startoutercurves[0]));
+    int c2ind = (*b)->AddEdgeCurve(*(endoutercurves[0]));
+    ON_BrepVertex& vert1 = (*b)->NewVertex((*b)->m_C3[c1ind]->PointAt(0), SMALL_FASTF);
+    vert1.m_tolerance = 0.0;
+    int vert1ind = (*b)->m_V.Count() - 1;
+    ON_BrepVertex& vert2 = (*b)->NewVertex((*b)->m_C3[c2ind]->PointAt(0), SMALL_FASTF);
+    vert2.m_tolerance = 0.0;
+    int vert2ind = (*b)->m_V.Count() - 1;
+    ON_BrepEdge& startedge = (*b)->NewEdge((*b)->m_V[vert1ind], (*b)->m_V[vert1ind], c1ind);
+    startedge.m_tolerance = 0.0;
+    ON_BrepEdge& endedge = (*b)->NewEdge((*b)->m_V[vert2ind], (*b)->m_V[vert2ind],c2ind);
+    endedge.m_tolerance = 0.0;
+    ON_BrepFace *newouterface = (*b)->NewRuledFace(startedge, false, endedge, false);
+    (*b)->FlipFace(*newouterface);
     
     if (startinnercurves->Count() > 0) {
 	int c3ind = (*b)->AddEdgeCurve(ON_Curve::Cast(*(startinnercurves[0])));
 	int c4ind = (*b)->AddEdgeCurve(ON_Curve::Cast(*(endinnercurves[0])));
-	ON_BrepEdge& startinneredge = (*b)->NewEdge(c1ind);
-	ON_BrepEdge& endinneredge = (*b)->NewEdge(c2ind);
+	ON_BrepVertex& vert3 = (*b)->NewVertex((*b)->m_C3[c3ind]->PointAt(0), SMALL_FASTF);
+    	vert3.m_tolerance = 0.0;
+    	int vert3ind = (*b)->m_V.Count() - 1;
+    	ON_BrepVertex& vert4 = (*b)->NewVertex((*b)->m_C3[c4ind]->PointAt(0), SMALL_FASTF);
+    	vert4.m_tolerance = 0.0;
+    	int vert4ind = (*b)->m_V.Count() - 1;
+    	ON_BrepEdge& startinneredge = (*b)->NewEdge((*b)->m_V[vert3ind], (*b)->m_V[vert3ind], c3ind);
+	startinneredge.m_tolerance = 0.0;
+    	ON_BrepEdge& endinneredge = (*b)->NewEdge((*b)->m_V[vert4ind], (*b)->m_V[vert4ind],c4ind);
+	endinneredge.m_tolerance = 0.0;
 	(*b)->NewRuledFace(startinneredge, false, endinneredge, false);
     }
 }
@@ -130,6 +147,17 @@ rt_pipe_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *
     (*b)->m_S.Append(bp);
     const int bsi = (*b)->m_S.Count() - 1;
     ON_BrepFace& bface = (*b)->NewFace(bsi);
+    startoutercurves.Empty();
+    startinnercurves.Empty();
+    for (int i = 0; i < endoutercurves.Count(); i++) {
+	ON_Curve *curve = endoutercurves[i];
+	startoutercurves.Append(curve);
+    }
+    for (int i = 0; i < endinnercurves.Count(); i++) {
+	ON_Curve *curve = endinnercurves[i];
+	startinnercurves.Append(curve);
+    }
+    
     (*b)->NewPlanarFaceLoop(bface.m_face_index, ON_BrepLoop::outer, endoutercurves, true);
     const ON_BrepLoop* bloop = (*b)->m_L.Last();
     if (prevp->pp_id > 0.0) {
@@ -140,39 +168,33 @@ rt_pipe_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *
     bp->SetExtents(0,bp->Domain(0));
     bp->SetExtents(1,bp->Domain(1));
     (*b)->SetTrimIsoFlags(bface);
+   
+    point_t saved_pt;
+    VMOVE(saved_pt,prevp->pp_coord);
+    double savedod = prevp->pp_od;
+    double savedid = prevp->pp_id;
     
-    while (1) {/*
+    while (1) {
 	vect_t n1, n2;
 	vect_t norm;
 	fastf_t angle;
 	fastf_t dist_to_bend;
-
-	startoutercurves.Empty();
-	startinnercurves.Empty();
-	for (int i = 0; i < endoutercurves.Count(); i++) {
-	    ON_Curve *curve = endoutercurves[i];
-	    startoutercurves.Append(curve);
-	}
-	for (int i = 0; i < endinnercurves.Count(); i++) {
-	    ON_Curve *curve = endinnercurves[i];
-	    startinnercurves.Append(curve);
-	}
 	startplane = endplane;
 	endoutercurves.Empty();
 	endinnercurves.Empty();
-*/	
+	
 	if (BU_LIST_IS_HEAD(&nextp->l, &pip->pipe_segs_head)) {
 	    // last segment, always linear
-  /*     	    VSUB2(pipe_dir, prevp->pp_coord, curp->pp_coord);
+       	    VSUB2(pipe_dir, saved_pt, curp->pp_coord);
 	    bn_vec_ortho(x_dir, pipe_dir);
 	    VCROSS(y_dir, pipe_dir, x_dir);
 	    VUNITIZE(y_dir);
-	    plane_origin = ON_3dPoint(current_point);
+	    plane_origin = ON_3dPoint(curp->pp_coord);
 	    plane_x_dir = ON_3dVector(x_dir);
 	    plane_y_dir = ON_3dVector(y_dir);
 	    endplane = new ON_Plane(plane_origin, plane_x_dir, plane_y_dir); 
-    	    generate_curves(prevp->pp_coord, curp->pp_coord, prevp->pp_od, prevp->pp_id, endplane, &endoutercurves, &endinnercurves);
-	    make_linear_surfaces(b, &startoutercurves, &endoutercurves, &startinnercurves, &endinnercurves);*/
+    	    generate_curves(saved_pt, curp->pp_coord, savedod, savedid, endplane, &endoutercurves, &endinnercurves);
+	    make_linear_surfaces(b, &startoutercurves, &endoutercurves, &startinnercurves, &endinnercurves);
 	    break;
 	}
 /*
