@@ -142,6 +142,7 @@ librt_nil_la_SOURCES = \
 	primitives/half/half_mirror.c \
 	primitives/hf/hf.c \
 	primitives/hyp/hyp.c \
+	primitives/hyp/hyp_brep.cpp \
 	primitives/hyp/hyp_mirror.c \
 	primitives/metaball/metaball.c \
 	primitives/mirror.c \

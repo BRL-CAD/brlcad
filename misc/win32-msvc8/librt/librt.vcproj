@@ -524,6 +524,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\src\librt\primitives\hyp\hyp_brep.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\src\librt\primitives\hyp\hyp_mirror.c"
 				>
 			</File>
