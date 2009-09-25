@@ -275,23 +275,24 @@ void _set_invalid_parameter_handler(void (*callback)()) { return; }
 /*
  * attaches the specified display manager
  */
-static
-void attach_display_manager(Tcl_Interp *interp, const char *dm, const char *display)
+static void
+attach_display_manager(Tcl_Interp *interp, const char *manager, const char *display)
 {
-    if (dm != NULL) {
-	int ret;
-	int argc = 1;
-	const char *attach_cmd[5] = {NULL, NULL, NULL, NULL, NULL};
-	if (display != NULL) {
-	    attach_cmd[argc++] = "-d";
-	    attach_cmd[argc++] = display;
-	}
-	attach_cmd[argc++] = dm;
-	ret = f_attach((ClientData)NULL, interp, argc, attach_cmd);
-	bu_log("%s\n", Tcl_GetStringResult(interp));
-    } else {
-	get_attached();
+    int ret;
+    int argc = 1;
+    const char *attach_cmd[5] = {NULL, NULL, NULL, NULL, NULL};
+
+    if (!manager) {
+	manager = "nu";
     }
+
+    if (display && strlen(display) > 0) {
+	attach_cmd[argc++] = "-d";
+	attach_cmd[argc++] = display;
+    }
+    attach_cmd[argc++] = manager;
+    ret = f_attach((ClientData)NULL, interp, argc, attach_cmd);
+    bu_log("%s\n", Tcl_GetStringResult(interp));
 }
 
 
@@ -299,7 +300,7 @@ void attach_display_manager(Tcl_Interp *interp, const char *dm, const char *disp
  * M A I N
  */
 int
-main(int argc, char **argv)
+main(int argc, char *argv[])
 {
     int rateflag = 0;
     int c;
@@ -707,11 +708,10 @@ main(int argc, char **argv)
 	 */
 
 	if (classic_mged) {
+
 	    if (!run_in_foreground && use_pipe) {
 		notify_parent_done(parent_pipe[1]);
 	    }
-
-	    attach_display_manager(interp, attach, dpy_string);
 
 	} else {
 	    struct bu_vls vls;
@@ -743,13 +743,12 @@ main(int argc, char **argv)
 		    mged_finish(1);
 		}
 		bu_log("%s\nMGED unable to initialize gui, reverting to classic mode.\n", Tcl_GetStringResult(interp));
-		classic_mged=1;
+		classic_mged = 1;
+
 #if !defined(_WIN32) || defined(__CYGWIN__)
 		cbreak_mode = COMMAND_LINE_EDITING;
 		save_Tty(fileno(stdin));
 #endif
-
-		attach_display_manager(interp, attach, dpy_string);
 
 	    } else {
 
@@ -772,11 +771,12 @@ main(int argc, char **argv)
 
     } /* interactive */
 
-    /* regardless of being interactive or classic, if the user
-     * requested a display manager and we haven't yet attached it, do
-     * it now.
-     */
-    attach_display_manager(interp, attach, dpy_string);
+    /* initialize a display manager */
+    if (!attach && interactive && classic_mged) {
+	get_attached();
+    } else {
+	attach_display_manager(interp, attach, dpy_string);
+    }
 
     /* --- Now safe to process geometry. --- */
 
