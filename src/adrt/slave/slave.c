@@ -31,6 +31,7 @@
 #include <sys/time.h>
 #include <pthread.h>
 
+#include "libtie/tie.h"
 #include "adrt.h"
 #include "camera.h"
 #include "adrt.h"

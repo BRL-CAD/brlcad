@@ -32,6 +32,7 @@
 #include <netinet/in.h>
 #include <netdb.h>
 
+#include "libtie/tie.h"
 #include "adrt.h"
 
 int master_compserv_socket;

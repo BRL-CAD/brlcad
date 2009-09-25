@@ -34,6 +34,7 @@
 #include "bio.h"
 #include "bu.h"
 
+#include "libtie/tie.h"
 #include "adrt.h"
 #include "slave.h"
 

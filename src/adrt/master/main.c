@@ -28,6 +28,7 @@
 #include <signal.h>
 
 #include "bio.h"
+#include "libtie/tie.h"
 #include "adrt.h"
 #include "master.h"
 

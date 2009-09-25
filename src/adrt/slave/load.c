@@ -29,6 +29,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "libtie/tie.h"
 #include "load.h"
 
 uint32_t slave_load_mesh_num;
@@ -86,7 +87,10 @@ slave_load (tie_t *tie, void *data, uint32_t dlen)
 
     switch ( *meh ) {
 	case ADRT_LOAD_FORMAT_G:	/* given a filename and 1 toplevel region, recursively load from a .g file */
-	    return slave_load_g ( tie, meh + 1 );
+	    {
+		const char *db = NULL; /* FIXME */
+		return load_g ( tie, db, (int *)(meh + 1), (char *)(meh+1+sizeof(int)));
+	    }
 	case ADRT_LOAD_FORMAT_REG:	/* special magic for catching data on the pipe */
 	    return slave_load_region (tie, meh + 1);
 	case ADRT_LOAD_FORMAT_KDTREE:	/* more special magic */
