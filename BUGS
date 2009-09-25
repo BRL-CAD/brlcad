@@ -338,10 +338,6 @@ Recent Bugs
 
 * an underlay framebuffer does not underlay with shaded mode
 
-* bu_malloc() function and company take an unsigned int argument and
-  will overflow without notification (since it is unsigned) resulting
-  in less memory allocated than one requested.
-
 * rtweight chokes on a .density file that has less than 3 values per
   line (infinite loop).  also gives infinite areas when presented with
   an empty .density file.
