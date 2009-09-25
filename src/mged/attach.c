@@ -346,6 +346,11 @@ f_attach(ClientData clientData, Tcl_Interp *interp, int argc, const char **argv)
 	return TCL_ERROR;
     }
 
+    if (strcmp(argv[argc-1], "nu") == 0) {
+	/* nothing to do */
+	return TCL_OK;
+    }
+
     /* Look at last argument, skipping over any options which preceed it */
     for (wp = &which_dm[2]; wp->type != -1; wp++)
 	if (strcmp(argv[argc - 1], wp->name) == 0)
