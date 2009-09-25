@@ -63,6 +63,11 @@ void make_linear_surfaces(ON_Brep **b, ON_SimpleArray<ON_Curve*> *startoutercurv
     startedge.m_tolerance = 0.0;
     ON_BrepEdge& endedge = (*b)->NewEdge((*b)->m_V[vert2ind], (*b)->m_V[vert2ind],c2ind);
     endedge.m_tolerance = 0.0;
+    startoutercurves->Empty();
+    for (int i = 0; i < endoutercurves->Count(); i++) {
+	ON_Curve *curve = *(endoutercurves[i]);
+	startoutercurves->Append(curve);
+    }
     ON_BrepFace *newouterface = (*b)->NewRuledFace(startedge, false, endedge, false);
     (*b)->FlipFace(*newouterface);
     
@@ -79,7 +84,12 @@ void make_linear_surfaces(ON_Brep **b, ON_SimpleArray<ON_Curve*> *startoutercurv
 	startinneredge.m_tolerance = 0.0;
     	ON_BrepEdge& endinneredge = (*b)->NewEdge((*b)->m_V[vert4ind], (*b)->m_V[vert4ind],c4ind);
 	endinneredge.m_tolerance = 0.0;
-	(*b)->NewRuledFace(startinneredge, false, endinneredge, false);
+	startinnercurves->Empty();
+	for (int i = 0; i < endinnercurves->Count(); i++) {
+    	    ON_Curve *curve = *(endinnercurves[i]);
+    	    startinnercurves->Append(curve);
+    	}
+       	(*b)->NewRuledFace(startinneredge, false, endinneredge, false);
     }
 }
 
