@@ -812,6 +812,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\src\librt\primitives\revolve\revolve_brep.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\src\librt\primitives\rhc\rhc.c"
 				>
 			</File>

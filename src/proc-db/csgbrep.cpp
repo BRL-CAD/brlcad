@@ -59,6 +59,7 @@ extern "C" {
     extern void rt_sketch_brep(ON_Brep **bi, struct rt_db_internal *ip, const struct bn_tol *tol);
     extern void rt_sketch_ifree(struct rt_db_internal *ip, struct resource *resp);
     extern void rt_extrude_brep(ON_Brep **bi, struct rt_db_internal *ip, const struct bn_tol *tol);
+    extern void rt_revolve_brep(ON_Brep **bi, struct rt_db_internal *ip, const struct bn_tol *tol);
 
 #ifdef __cplusplus
 }
@@ -627,7 +628,109 @@ main(int argc, char** argv)
     const char* extrude_name = "extrude_nurb.s";
     mk_brep(outfp, extrude_name, extrudebrep);
 //    delete extrudebrep;
+ 
+
+    bu_log("Writing a Revolve b-rep...\n");
+    ON_Brep* revolvebrep = ON_Brep::New();
+    // revolve will need its own sketch
+    struct rt_sketch_internal *rskt;
+    struct bezier_seg *rbsg;
+    struct line_seg *rlsg;
+    struct carc_seg *rcsg;
+    point2d_t rverts[] = {
+        { 250, 0 },     /* 0 */
+	{ 500, 0 },     /* 1 */
+	{ 500, 500 },   /* 2 */
+	{ 0, 500 },     /* 3 */
+	{ 0, 250 },     /* 4 */
+	{ 250, 250 },   /* 5 */
+	{ 125, 125 },   /* 6 */
+	{ 0, 125 },     /* 7 */
+	{ 125, 0 },     /* 8 */
+	{ 200, 200 }    /* 9 */
+    };
+    VSET(V, 10, 20, 30);
+    VSET(u_vec, 1, 0, 0);
+    VSET(v_vec, 0, 1, 0);
+    rskt = (struct rt_sketch_internal *)bu_calloc(1, sizeof(struct rt_sketch_internal), "sketch");
+    rskt->magic = RT_SKETCH_INTERNAL_MAGIC;
+    VMOVE(rskt->V, V);
+    VMOVE(rskt->u_vec, u_vec);
+    VMOVE(rskt->v_vec, v_vec);
+    rskt->vert_count = 10;
+    rskt->verts = (point2d_t *)bu_calloc(rskt->vert_count, sizeof(point2d_t), "verts");
+    for (cnti=0; cnti < rskt->vert_count; cnti++) {
+	V2MOVE(rskt->verts[cnti], rverts[cnti]);
+    }
+    rskt->skt_curve.seg_count = 6;
+    rskt->skt_curve.reverse = (int *)bu_calloc(rskt->skt_curve.seg_count, sizeof(int), "sketch: reverse");
+    rskt->skt_curve.segments = (genptr_t *)bu_calloc(rskt->skt_curve.seg_count, sizeof(genptr_t), "segs");
+    rbsg = (struct bezier_seg *)bu_malloc(sizeof(struct bezier_seg), "sketch: bsg");
+    rbsg->magic = CURVE_BEZIER_MAGIC;
+    rbsg->degree = 4;
+    rbsg->ctl_points = (int *)bu_calloc(rbsg->degree+1, sizeof(int), "sketch: bsg->ctl_points");
+    rbsg->ctl_points[0] = 4;
+    rbsg->ctl_points[1] = 7;
+    rbsg->ctl_points[2] = 9;
+    rbsg->ctl_points[3] = 8;
+    rbsg->ctl_points[4] = 0;
+    rskt->skt_curve.segments[0] = (genptr_t)rbsg;
     
+    rlsg = (struct line_seg *)bu_malloc(sizeof(struct line_seg), "sketch: lsg");
+    rlsg->magic = CURVE_LSEG_MAGIC;
+    rlsg->start = 0;
+    rlsg->end = 1;
+    
+    rskt->skt_curve.segments[1] = (genptr_t)rlsg;
+    
+    rlsg = (struct line_seg *)bu_malloc(sizeof(struct line_seg), "sketch: lsg");
+    rlsg->magic = CURVE_LSEG_MAGIC;
+    rlsg->start = 1;
+    rlsg->end = 2;
+    
+    rskt->skt_curve.segments[2] = (genptr_t)rlsg;
+    
+    rlsg = (struct line_seg *)bu_malloc(sizeof(struct line_seg), "sketch: lsg");
+    rlsg->magic = CURVE_LSEG_MAGIC;
+    rlsg->start = 2;
+    rlsg->end = 3;
+    
+    rskt->skt_curve.segments[3] = (genptr_t)rlsg;
+    
+    rlsg = (struct line_seg *)bu_malloc(sizeof(struct line_seg), "sketch: lsg");
+    rlsg->magic = CURVE_LSEG_MAGIC;
+    rlsg->start = 3;
+    rlsg->end = 4;
+    
+    rskt->skt_curve.segments[4] = (genptr_t)rlsg;
+    
+    rcsg = (struct carc_seg *)bu_malloc(sizeof(struct carc_seg), "sketch: csg");
+    
+    rcsg->magic = CURVE_CARC_MAGIC;
+    rcsg->radius = -1.0;
+    rcsg->start = 6;
+    rcsg->end = 5;
+    
+    rskt->skt_curve.segments[5] = (genptr_t)rcsg;
+   // now to the actual revolve 
+    struct rt_revolve_internal *revolve;
+    BU_GETSTRUCT(revolve, rt_revolve_internal);
+    revolve->magic = RT_REVOLVE_INTERNAL_MAGIC;
+    VSET(V, -2000, 0, 0);
+    VSET(h, 0, 1, 0);
+    VMOVE(revolve->v3d, V);
+    VMOVE(revolve->axis3d, h);
+    char* rsketch_name = "rsketch_nurb.s";
+    //revolve->sketch_name = rsketch_name;
+    revolve->sk = rskt;
+    tmp_internal->idb_ptr = (genptr_t)revolve;
+    rt_revolve_brep(&revolvebrep, tmp_internal, tol);
+    const char* revolve_name = "revolve_nurb.s";
+    mk_brep(outfp, revolve_name, revolvebrep);
+//    delete revolvebrep;
+ 
+
+
     bu_free(tmp_internal, "free tmp_internal");
     wdb_close(outfp);
 

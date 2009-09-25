@@ -144,6 +144,7 @@ set(LIBRT_SOURCES
     primitives/poly/poly_mirror.c
     primitives/rec/rec.c
     primitives/revolve/revolve.c
+    primitives/revolve/revolve_brep.cpp
     primitives/rhc/rhc.c
     primitives/rhc/rhc_brep.cpp
     primitives/rhc/rhc_mirror.c
