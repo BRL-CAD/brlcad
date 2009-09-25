@@ -58,6 +58,7 @@ extern "C" {
     extern void rt_tor_brep(ON_Brep **bi, struct rt_db_internal *ip, const struct bn_tol *tol);
     extern void rt_sketch_brep(ON_Brep **bi, struct rt_db_internal *ip, const struct bn_tol *tol);
     extern void rt_sketch_ifree(struct rt_db_internal *ip, struct resource *resp);
+    extern void rt_extrude_brep(ON_Brep **bi, struct rt_db_internal *ip, const struct bn_tol *tol);
 
 #ifdef __cplusplus
 }
@@ -525,7 +526,108 @@ main(int argc, char** argv)
 
     const char* sketch_name_csg = "sketch.s";
     mk_sketch(outfp, sketch_name_csg, skt);
- 
+
+    bu_log("Writing an Extrude b-rep...\n");
+    ON_Brep* extrudebrep = ON_Brep::New();
+    // extrude will need its own sketch
+    struct rt_sketch_internal *eskt;
+    struct bezier_seg *ebsg;
+    struct line_seg *elsg;
+    struct carc_seg *ecsg;
+    point2d_t everts[] = {
+        { 250, 0 },     /* 0 */
+	{ 500, 0 },     /* 1 */
+	{ 500, 500 },   /* 2 */
+	{ 0, 500 },     /* 3 */
+	{ 0, 250 },     /* 4 */
+	{ 250, 250 },   /* 5 */
+	{ 125, 125 },   /* 6 */
+	{ 0, 125 },     /* 7 */
+	{ 125, 0 },     /* 8 */
+	{ 200, 200 }    /* 9 */
+    };
+    VSET(V, 10, 20, 30);
+    VSET(u_vec, 1, 0, 0);
+    VSET(v_vec, 0, 1, 0);
+    eskt = (struct rt_sketch_internal *)bu_calloc(1, sizeof(struct rt_sketch_internal), "sketch");
+    eskt->magic = RT_SKETCH_INTERNAL_MAGIC;
+    VMOVE(eskt->V, V);
+    VMOVE(eskt->u_vec, u_vec);
+    VMOVE(eskt->v_vec, v_vec);
+    eskt->vert_count = 10;
+    eskt->verts = (point2d_t *)bu_calloc(skt->vert_count, sizeof(point2d_t), "verts");
+    for (cnti=0; cnti < eskt->vert_count; cnti++) {
+	V2MOVE(eskt->verts[cnti], everts[cnti]);
+    }
+    eskt->skt_curve.seg_count = 6;
+    eskt->skt_curve.reverse = (int *)bu_calloc(eskt->skt_curve.seg_count, sizeof(int), "sketch: reverse");
+    eskt->skt_curve.segments = (genptr_t *)bu_calloc(eskt->skt_curve.seg_count, sizeof(genptr_t), "segs");
+    ebsg = (struct bezier_seg *)bu_malloc(sizeof(struct bezier_seg), "sketch: bsg");
+    ebsg->magic = CURVE_BEZIER_MAGIC;
+    ebsg->degree = 4;
+    ebsg->ctl_points = (int *)bu_calloc(bsg->degree+1, sizeof(int), "sketch: bsg->ctl_points");
+    ebsg->ctl_points[0] = 4;
+    ebsg->ctl_points[1] = 7;
+    ebsg->ctl_points[2] = 9;
+    ebsg->ctl_points[3] = 8;
+    ebsg->ctl_points[4] = 0;
+    eskt->skt_curve.segments[0] = (genptr_t)ebsg;
+    
+    elsg = (struct line_seg *)bu_malloc(sizeof(struct line_seg), "sketch: lsg");
+    elsg->magic = CURVE_LSEG_MAGIC;
+    elsg->start = 0;
+    elsg->end = 1;
+    
+    eskt->skt_curve.segments[1] = (genptr_t)elsg;
+    
+    elsg = (struct line_seg *)bu_malloc(sizeof(struct line_seg), "sketch: lsg");
+    elsg->magic = CURVE_LSEG_MAGIC;
+    elsg->start = 1;
+    elsg->end = 2;
+    
+    eskt->skt_curve.segments[2] = (genptr_t)elsg;
+    
+    elsg = (struct line_seg *)bu_malloc(sizeof(struct line_seg), "sketch: lsg");
+    elsg->magic = CURVE_LSEG_MAGIC;
+    elsg->start = 2;
+    elsg->end = 3;
+    
+    eskt->skt_curve.segments[3] = (genptr_t)elsg;
+    
+    elsg = (struct line_seg *)bu_malloc(sizeof(struct line_seg), "sketch: lsg");
+    elsg->magic = CURVE_LSEG_MAGIC;
+    elsg->start = 3;
+    elsg->end = 4;
+    
+    eskt->skt_curve.segments[4] = (genptr_t)elsg;
+    
+    ecsg = (struct carc_seg *)bu_malloc(sizeof(struct carc_seg), "sketch: csg");
+    
+    ecsg->magic = CURVE_CARC_MAGIC;
+    ecsg->radius = -1.0;
+    ecsg->start = 6;
+    ecsg->end = 5;
+    
+    eskt->skt_curve.segments[5] = (genptr_t)ecsg;
+   // now to the actual extrusion 
+    struct rt_extrude_internal *extrude;
+    BU_GETSTRUCT(extrude, rt_extrude_internal);
+    extrude->magic = RT_EXTRUDE_INTERNAL_MAGIC;
+    VSET(V, 0, 0, 0);
+    VSET(h, 0, 0, 1000);
+    VMOVE(extrude->V, V);
+    VMOVE(extrude->h, h);
+    VMOVE(extrude->u_vec, u_vec);
+    VMOVE(extrude->v_vec, v_vec);
+    char* esketch_name = "esketch_nurb.s";
+    extrude->sketch_name = esketch_name;
+    extrude->skt = eskt;
+    tmp_internal->idb_ptr = (genptr_t)extrude;
+    rt_extrude_brep(&extrudebrep, tmp_internal, tol);
+    const char* extrude_name = "extrude_nurb.s";
+    mk_brep(outfp, extrude_name, extrudebrep);
+//    delete extrudebrep;
+    
     bu_free(tmp_internal, "free tmp_internal");
     wdb_close(outfp);
 

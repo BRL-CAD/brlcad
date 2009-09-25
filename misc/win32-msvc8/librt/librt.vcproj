@@ -484,6 +484,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\src\librt\primitives\extrude\extrude_brep.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\src\librt\fortray.c"
 				>
 			</File>
