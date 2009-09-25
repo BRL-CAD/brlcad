@@ -32,18 +32,30 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
   or simply have an rt_*() for each function (e.g., rt_mirror(),
   rt_shot(), rt_describe(), etc).
 
-* modify g_qa to search for >1 region flag in a tree path.
-
 * utilize -pedantic -Wall -Werror on 'clean' directories
 
 * implement a routine to convert an NMG object (whether polygonal or
   old bspline/nurbs) to the newer openNURBS BREP object type to
   facilitate tool migration.
 
+* annotation primitive.  specifically a means to create an object in
+  the database that can optionally be associated with an object and/or
+  location that a label refers to.  there are various styles such as
+  a single line from a point to text and two lines (e.g., indicating
+  measurement) to text.  the object should allow for different line
+  styles including having no lines.  there should also be support for
+  view-fixed or view-independent annotation placement (which requires
+  a change to plot()'s and possibly prep()'s signature).  it would
+  also be useful to allow an optional "thickness" so that the
+  annotations can represent physical geometry (so they raytrace).
+
 
 THESE ARE UNSCHEDULED BACKLOG TASKS
 -----------------------------------
 
+* obliterate verbose compilation warnings
+
+* modify g_qa to search for >1 region flag in a tree path.
 
 * the binary windows installer is missing headers for our external
   dependencies (Tcl, zlib, and OpenNURBS in particular as the likes of
@@ -483,17 +495,6 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
 * rtedge shoots twice as many rays as it needs to (shoots the 'below'
   ray for each primary, only reusing current scanline cells.
 
-* annotation primitive.  specifically a means to create an object in
-  the database that can optionally be associated with an object and/or
-  location that a label refers to.  there are various styles such as
-  a single line from a point to text and two lines (e.g., indicating
-  measurement) to text.  the object should allow for different line
-  styles including having no lines.  there should also be support for
-  view-fixed or view-independent annotation placement (which requires
-  a change to plot()'s and possibly prep()'s signature).  it would
-  also be useful to allow an optional "thickness" so that the
-  annotations can represent physical geometry (so they raytrace).
-
 * support for fillets and chamfers as object/combination operations
 
 * make the DSP primitive use less memory when data is coming from
@@ -505,8 +506,6 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
 
 * investigate why g-iges followed by iges-g on a single box results in
   permuted vertex lists
-
-* obliterate verbose compilation warnings
 
 * add xml, nff, bzw, pov, blend geometry import and export support
 
