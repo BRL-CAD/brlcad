@@ -129,13 +129,6 @@ Recent Bugs
 * Mac OS X installer doesn't include the symbolic links, only
   including the versioned installation directory.
 
-* 'who' command displays the top-level object if you e up an entire
-  path in mged.
-
-* running 'rt' in mged similarly chokes up if you e a particular path
-  (e.g. /all.g/plate.r) resulting in overlaps that the top-level being
-  rendered.  probably rt not dealing with paths.
-
 * Mouse cursor turns into a huge yellow-translucent arrow when running
   MGED through remote X11.
 
