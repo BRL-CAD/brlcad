@@ -121,6 +121,7 @@ rt_pipe_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *
     
     ON_Plane *startplane;
     ON_Plane *endplane;
+    ON_BrepLoop *bloop;
 
     *b = NULL; 
 
@@ -146,7 +147,7 @@ rt_pipe_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *
     plane_y_dir = ON_3dVector(y_dir);
     endplane = new ON_Plane(plane_origin, plane_x_dir, plane_y_dir); 
  
-    generate_curves(prevp->pp_coord, curp->pp_coord, prevp->pp_od, prevp->pp_id, endplane, &endoutercurves, &endinnercurves);
+    generate_curves(prevp->pp_coord, curp->pp_coord, prevp->pp_id, prevp->pp_od, endplane, &endoutercurves, &endinnercurves);
     
     ON_PlaneSurface* bp = new ON_PlaneSurface();
     bp->m_plane = (*endplane);
@@ -169,15 +170,15 @@ rt_pipe_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *
     }
     
     (*b)->NewPlanarFaceLoop(bface.m_face_index, ON_BrepLoop::outer, endoutercurves, true);
-    const ON_BrepLoop* bloop = (*b)->m_L.Last();
-    if (prevp->pp_id > 0.0) {
-	(*b)->NewPlanarFaceLoop(bface.m_face_index, ON_BrepLoop::inner, endinnercurves, true);
-    }
+    bloop = (*b)->m_L.Last();
     bp->SetDomain(0, bloop->m_pbox.m_min.x, bloop->m_pbox.m_max.x );
     bp->SetDomain(1, bloop->m_pbox.m_min.y, bloop->m_pbox.m_max.y );
     bp->SetExtents(0,bp->Domain(0));
     bp->SetExtents(1,bp->Domain(1));
-    (*b)->SetTrimIsoFlags(bface);
+    if (prevp->pp_id > 0.0) {
+	(*b)->NewPlanarFaceLoop(bface.m_face_index, ON_BrepLoop::inner, endinnercurves, true);
+    }
+   (*b)->SetTrimIsoFlags(bface);
   
     while (1) {
 	vect_t n1, n2;
@@ -198,7 +199,7 @@ rt_pipe_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *
 	    plane_x_dir = ON_3dVector(x_dir);
 	    plane_y_dir = ON_3dVector(y_dir);
 	    endplane = new ON_Plane(plane_origin, plane_x_dir, plane_y_dir); 
-	    generate_curves(prevp->pp_coord, curp->pp_coord, prevp->pp_od, prevp->pp_id, endplane, &endoutercurves, &endinnercurves);
+	    generate_curves(prevp->pp_coord, curp->pp_coord, prevp->pp_id, prevp->pp_od, endplane, &endoutercurves, &endinnercurves);
 	    make_linear_surfaces(b, &startoutercurves, &endoutercurves, &startinnercurves, &endinnercurves);
 	    break;
 	}
@@ -223,7 +224,7 @@ rt_pipe_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *
 	    	plane_x_dir = ON_3dVector(x_dir);
 	    	plane_y_dir = ON_3dVector(y_dir);
 	    	endplane = new ON_Plane(plane_origin, plane_x_dir, plane_y_dir); 
-       		generate_curves(prevp->pp_coord, curp->pp_coord, prevp->pp_od, prevp->pp_id, endplane, &endoutercurves, &endinnercurves);
+       		generate_curves(prevp->pp_coord, curp->pp_coord, prevp->pp_id, prevp->pp_od, endplane, &endoutercurves, &endinnercurves);
     		make_linear_surfaces(b, &startoutercurves, &endoutercurves, &startinnercurves, &endinnercurves);
     	    } else {
 		point_t bend_center;
@@ -240,7 +241,7 @@ rt_pipe_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *
 	    	plane_x_dir = ON_3dVector(x_dir);
 	    	plane_y_dir = ON_3dVector(y_dir);
 	    	endplane = new ON_Plane(plane_origin, plane_x_dir, plane_y_dir); 
-       		generate_curves(prevp->pp_coord, bend_start, prevp->pp_od, prevp->pp_id, endplane, &endoutercurves, &endinnercurves);
+       		generate_curves(prevp->pp_coord, bend_start, prevp->pp_id, prevp->pp_od, endplane, &endoutercurves, &endinnercurves);
     		make_linear_surfaces(b, &startoutercurves, &endoutercurves, &startinnercurves, &endinnercurves);
 		VJOIN1(bend_end, curp->pp_coord, dist_to_bend, n2);
 		VCROSS(v1, n1, norm);
@@ -266,7 +267,7 @@ rt_pipe_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *
     plane_y_dir = ON_3dVector(y_dir);
     endplane = new ON_Plane(plane_origin, plane_x_dir, plane_y_dir); 
  
-    generate_curves(prevp->pp_coord, curp->pp_coord, prevp->pp_od, prevp->pp_id, endplane, &endoutercurves, &endinnercurves);
+    generate_curves(prevp->pp_coord, curp->pp_coord, prevp->pp_id, prevp->pp_od, endplane, &endoutercurves, &endinnercurves);
     
     ON_PlaneSurface* ebp = new ON_PlaneSurface();
     ebp->m_plane = (*endplane);
@@ -279,14 +280,14 @@ rt_pipe_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *
     ON_BrepFace& ebface = (*b)->NewFace(ebsi);
     (*b)->NewPlanarFaceLoop(ebface.m_face_index, ON_BrepLoop::outer, endoutercurves, true);
     const ON_BrepLoop* ebloop = (*b)->m_L.Last();
-    if (prevp->pp_id > 0.0) {
-	(*b)->NewPlanarFaceLoop(ebface.m_face_index, ON_BrepLoop::inner, endinnercurves, true);
-    }
     ebp->SetDomain(0, ebloop->m_pbox.m_min.x, ebloop->m_pbox.m_max.x );
     ebp->SetDomain(1, ebloop->m_pbox.m_min.y, ebloop->m_pbox.m_max.y );
     ebp->SetExtents(0,ebp->Domain(0));
     ebp->SetExtents(1,ebp->Domain(1));
-    (*b)->SetTrimIsoFlags(ebface);
+    if (prevp->pp_id > 0.0) {
+	(*b)->NewPlanarFaceLoop(ebface.m_face_index, ON_BrepLoop::inner, endinnercurves, true);
+    }
+   (*b)->SetTrimIsoFlags(ebface);
 }
 	
 
