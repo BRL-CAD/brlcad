@@ -53,21 +53,20 @@ rt_hyp_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *t
     ON_3dPoint plane1_origin, plane2_origin;
     ON_3dVector plane_x_dir, plane_y_dir;
 
-    //  First, find planes in 3 space corresponding to the top and bottom faces
+    //  First, find planes corresponding to the top and bottom faces - initially
+    //  the hyp must be centered around the origin.
 
     vect_t tmp, x_dir, y_dir;
-    VMOVE(x_dir, eip->hyp_A);
-    VUNITIZE(x_dir);
-    VCROSS(y_dir, eip->hyp_A, eip->hyp_Hi);
-    VUNITIZE(y_dir);
+    VSET(x_dir, 1,0,0);
+    VSET(y_dir, 0,1,0);
 
-    VMOVE(p1_origin, eip->hyp_Vi);
+    VSET(p1_origin, 0, 0, -0.5*MAGNITUDE(eip->hyp_Hi));
     plane1_origin = ON_3dPoint(p1_origin);
     plane_x_dir = ON_3dVector(x_dir);
     plane_y_dir = ON_3dVector(y_dir);
     const ON_Plane* hyp_bottom_plane = new ON_Plane(plane1_origin, plane_x_dir, plane_y_dir);
  
-    VADD2(p2_origin, eip->hyp_Vi, eip->hyp_Hi);
+    VSET(p2_origin, 0, 0, 0.5*MAGNITUDE(eip->hyp_Hi));
     plane2_origin = ON_3dPoint(p2_origin);
     const ON_Plane* hyp_top_plane = new ON_Plane(plane2_origin, plane_x_dir, plane_y_dir);
 
@@ -101,13 +100,14 @@ rt_hyp_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *t
     bp->SetDomain(1, bloop->m_pbox.m_min.y, bloop->m_pbox.m_max.y );
     bp->SetExtents(0,bp->Domain(0));
     bp->SetExtents(1,bp->Domain(1));
+    (*b)->FlipFace(bface);
     (*b)->SetTrimIsoFlags(bface);
     boundary.Empty();
 
     // Generate the top cap 
     boundary.Append(ON_Curve::Cast(tcurve)); 
     ON_PlaneSurface* tp = new ON_PlaneSurface();
-    tp->m_plane = (*hyp_bottom_plane);
+    tp->m_plane = (*hyp_top_plane);
     tp->SetDomain(0, -100.0, 100.0 );
     tp->SetDomain(1, -100.0, 100.0 );
     tp->SetExtents(0, bp->Domain(0) );
@@ -136,20 +136,18 @@ rt_hyp_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *t
     double w = (MX/MP)/(1-MX/MP);
 
     point_t ep1, ep2, ep3, tmppt;
-    VSCALE(tmppt, y_dir, eip->hyp_b);
-    VADD2(ep1,eip->hyp_Vi, tmppt);
-    VSCALE(tmppt, eip->hyp_Hi, 0.5*MAGNITUDE(eip->hyp_Hi));
-    VADD2(ep2, eip->hyp_Vi, tmppt);
-    VSCALE(tmppt, y_dir, param_c);
-    VADD2(ep2, ep2, tmppt);
-    VADD2(ep3, eip->hyp_Vi, eip->hyp_Hi);
-    VSCALE(tmppt, y_dir, eip->hyp_b);
-    VADD2(ep3, ep3, tmppt);
+    VSET(ep1,-eip->hyp_b, 0, 0.5*MAGNITUDE(eip->hyp_Hi));
+    VSET(ep2,-MX, 0, 0);
+    VSET(ep3,-eip->hyp_b, 0, -0.5*MAGNITUDE(eip->hyp_Hi));
+
+    bu_log("pt1: %f, %f, %f\n", ep1[0], ep1[1], ep1[2]);
+    bu_log("pt2: %f, %f, %f\n", ep2[0], ep2[1], ep2[2]);
+    bu_log("pt3: %f, %f, %f\n", ep3[0], ep3[1], ep3[2]);
 
     ON_3dPoint onp1 = ON_3dPoint(ep1);
     ON_3dPoint onp2 = ON_3dPoint(ep2);
     ON_3dPoint onp3 = ON_3dPoint(ep3);
-    
+  
     ON_3dPointArray cpts(3);
     cpts.Append(onp1);
     cpts.Append(onp2);
@@ -174,11 +172,21 @@ rt_hyp_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *t
     ON_NurbsSurface *hypcurvedsurf = ON_NurbsSurface::New();
     hyp_surf->GetNurbForm(*hypcurvedsurf, 0.0);
 
-    // Need to scale
+    for( int i = 0; i < hypcurvedsurf->CVCount(0); i++ ) {
+	for (int j = 0; j < hypcurvedsurf->CVCount(1); j++) {
+	    point_t cvpt;
+	    ON_4dPoint ctrlpt;
+	    hypcurvedsurf->GetCV(i,j, ctrlpt);
+	    VSET(cvpt, ctrlpt.x  * MAGNITUDE(eip->hyp_A)/eip->hyp_b, ctrlpt.y, ctrlpt.z);
+	    ON_4dPoint newpt = ON_4dPoint(cvpt[0],cvpt[1],cvpt[2],ctrlpt.w);
+	    hypcurvedsurf->SetCV(i,j, newpt);
+	}
+    }
     
     (*b)->m_S.Append(hypcurvedsurf);
     int surfindex = (*b)->m_S.Count();
     ON_BrepFace& face = (*b)->NewFace(surfindex - 1);
+    (*b)->FlipFace(face);
     int faceindex = (*b)->m_F.Count();
     ON_BrepLoop* outerloop = (*b)->NewOuterLoop(faceindex-1);
     
