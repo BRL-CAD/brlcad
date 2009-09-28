@@ -151,8 +151,8 @@ puts "Creating [file join $shareDir plugins]"
 file mkdir [file join $shareDir plugins]
 puts "Creating [file join $shareDir plugins archer]"
 file mkdir [file join $shareDir plugins archer]
-puts "Creating [file join $shareDir plugins archer Utilities]"
-file mkdir [file join $shareDir plugins archer Utilities]
+puts "Creating [file join $shareDir plugins archer Utility]"
+file mkdir [file join $shareDir plugins archer Utility]
 puts "Creating [file join $shareDir plugins archer Wizards]"
 file mkdir [file join $shareDir plugins archer Wizards]
 puts "Creating [file join $shareDir plugins archer Wizards tankwizard]"
