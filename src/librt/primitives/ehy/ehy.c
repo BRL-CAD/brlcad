@@ -1404,7 +1404,7 @@ rt_ehy_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
  *  Apply modeling transformations as well.
  */
 int
-rt_ehy_import(struct rt_db_internal *ip, const struct bu_external *ep, register const fastf_t *mat, const struct db_i *dbip)
+rt_ehy_import4(struct rt_db_internal *ip, const struct bu_external *ep, register const fastf_t *mat, const struct db_i *dbip)
 {
     struct rt_ehy_internal	*xip;
     union record			*rp;
@@ -1413,7 +1413,7 @@ rt_ehy_import(struct rt_db_internal *ip, const struct bu_external *ep, register 
     rp = (union record *)ep->ext_buf;
     /* Check record type */
     if ( rp->u_id != ID_SOLID )  {
-	bu_log("rt_ehy_import: defective record\n");
+	bu_log("rt_ehy_import4: defective record\n");
 	return(-1);
     }
 
@@ -1436,8 +1436,8 @@ rt_ehy_import(struct rt_db_internal *ip, const struct bu_external *ep, register 
     xip->ehy_c  = rp->s.s_values[3*3+2] / mat[15];
 
     if ( xip->ehy_r1 <= SMALL_FASTF || xip->ehy_r2 <= SMALL_FASTF || xip->ehy_c <= SMALL_FASTF ) {
-	bu_log( "rt_ehy_import: r1, r2, or c are zero\n" );
-	bu_free( (char *)ip->idb_ptr, "rt_ehy_import: ip->idb_ptr" );
+	bu_log( "rt_ehy_import4: r1, r2, or c are zero\n" );
+	bu_free( (char *)ip->idb_ptr, "rt_ehy_import4: ip->idb_ptr" );
 	return( -1 );
     }
 
@@ -1450,7 +1450,7 @@ rt_ehy_import(struct rt_db_internal *ip, const struct bu_external *ep, register 
  *  The name is added by the caller, in the usual place.
  */
 int
-rt_ehy_export(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip)
+rt_ehy_export4(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip)
 {
     struct rt_ehy_internal	*xip;
     union record		*ehy;
@@ -1469,7 +1469,7 @@ rt_ehy_export(struct bu_external *ep, const struct rt_db_internal *ip, double lo
     ehy->s.s_type = EHY;
 
     if (!NEAR_ZERO( MAGNITUDE(xip->ehy_Au) - 1., RT_LEN_TOL)) {
-	bu_log("rt_ehy_export: Au not a unit vector!\n");
+	bu_log("rt_ehy_export4: Au not a unit vector!\n");
 	return(-1);
     }
 
@@ -1477,17 +1477,17 @@ rt_ehy_export(struct bu_external *ep, const struct rt_db_internal *ip, double lo
 	|| xip->ehy_c < RT_LEN_TOL
 	|| xip->ehy_r1 < RT_LEN_TOL
 	|| xip->ehy_r2 < RT_LEN_TOL) {
-	bu_log("rt_ehy_export: not all dimensions positive!\n");
+	bu_log("rt_ehy_export4: not all dimensions positive!\n");
 	return(-1);
     }
 
     if ( !NEAR_ZERO( VDOT(xip->ehy_Au, xip->ehy_H), RT_DOT_TOL) ) {
-	bu_log("rt_ehy_export: Au and H are not perpendicular!\n");
+	bu_log("rt_ehy_export4: Au and H are not perpendicular!\n");
 	return(-1);
     }
 
     if (xip->ehy_r2 > xip->ehy_r1) {
-	bu_log("rt_ehy_export: semi-minor axis cannot be longer than semi-major axis!\n");
+	bu_log("rt_ehy_export4: semi-minor axis cannot be longer than semi-major axis!\n");
 	return(-1);
     }
 
@@ -1542,8 +1542,8 @@ rt_ehy_import5(struct rt_db_internal *ip, const struct bu_external *ep, register
     xip->ehy_c  = vec[3*3+2] / mat[15];
 
     if ( xip->ehy_r1 <= SMALL_FASTF || xip->ehy_r2 <= SMALL_FASTF || xip->ehy_c <= SMALL_FASTF ) {
-	bu_log( "rt_ehy_import: r1, r2, or c are zero\n" );
-	bu_free( (char *)ip->idb_ptr, "rt_ehy_import: ip->idb_ptr" );
+	bu_log( "rt_ehy_import4: r1, r2, or c are zero\n" );
+	bu_free( (char *)ip->idb_ptr, "rt_ehy_import4: ip->idb_ptr" );
 	return( -1 );
     }
 
@@ -1571,7 +1571,7 @@ rt_ehy_export5(struct bu_external *ep, const struct rt_db_internal *ip, double l
     ep->ext_buf = (genptr_t)bu_malloc( ep->ext_nbytes, "ehy external");
 
     if (!NEAR_ZERO( MAGNITUDE(xip->ehy_Au) - 1., RT_LEN_TOL)) {
-	bu_log("rt_ehy_export: Au not a unit vector!\n");
+	bu_log("rt_ehy_export4: Au not a unit vector!\n");
 	return(-1);
     }
 
@@ -1579,17 +1579,17 @@ rt_ehy_export5(struct bu_external *ep, const struct rt_db_internal *ip, double l
 	|| xip->ehy_c < RT_LEN_TOL
 	|| xip->ehy_r1 < RT_LEN_TOL
 	|| xip->ehy_r2 < RT_LEN_TOL) {
-	bu_log("rt_ehy_export: not all dimensions positive!\n");
+	bu_log("rt_ehy_export4: not all dimensions positive!\n");
 	return(-1);
     }
 
     if ( !NEAR_ZERO( VDOT(xip->ehy_Au, xip->ehy_H), RT_DOT_TOL) ) {
-	bu_log("rt_ehy_export: Au and H are not perpendicular!\n");
+	bu_log("rt_ehy_export4: Au and H are not perpendicular!\n");
 	return(-1);
     }
 
     if (xip->ehy_r2 > xip->ehy_r1) {
-	bu_log("rt_ehy_export: semi-minor axis cannot be longer than semi-major axis!\n");
+	bu_log("rt_ehy_export4: semi-minor axis cannot be longer than semi-major axis!\n");
 	return(-1);
     }
 

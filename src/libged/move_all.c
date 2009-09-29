@@ -25,6 +25,7 @@
 
 #include "common.h"
 
+#include <stdlib.h>
 #include <string.h>
 #include "bio.h"
 
@@ -37,16 +38,18 @@
 int
 ged_move_all(struct ged *gedp, int argc, const char *argv[])
 {
+    register struct ged_display_list *gdlp;
+    int nflag;
     register int	i;
     register struct directory *dp;
     struct rt_db_internal	intern;
     struct rt_comb_internal *comb;
     struct bu_ptbl		stack;
-    static const char *usage = "from to";
+    static const char *usage = "[-n] from to";
 
-    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
-    GED_CHECK_READ_ONLY(gedp, BRLCAD_ERROR);
-    GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
+    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
+    GED_CHECK_READ_ONLY(gedp, GED_ERROR);
+    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
 
     /* initialize result */
     bu_vls_trunc(&gedp->ged_result_str, 0);
@@ -54,26 +57,39 @@ ged_move_all(struct ged *gedp, int argc, const char *argv[])
     /* must be wanting help */
     if (argc == 1) {
 	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return BRLCAD_HELP;
+	return GED_HELP;
     }
 
-    if (argc != 3) {
+    if (argc < 3 || 4 < argc) {
 	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return BRLCAD_ERROR;
+	return GED_ERROR;
     }
 
     if (gedp->ged_wdbp->dbip->dbi_version < 5 && (int)strlen(argv[2]) > NAMESIZE) {
-	bu_vls_printf(&gedp->ged_result_str, "ERROR: name length limited to %d characters in v4 databases\n");
-	return BRLCAD_ERROR;
+	bu_vls_printf(&gedp->ged_result_str, "ERROR: name length limited to %d characters in v4 databases\n", strlen(argv[2]));
+	return GED_ERROR;
     }
+
+    /* Process the -n option */
+    if (argc == 4) {
+	if (argv[1][0] == '-' && argv[1][1] == 'n' && argv[1][2] == '\0') {
+	    nflag = 1;
+	    --argc;
+	    ++argv;
+	} else {
+	    bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	    return GED_ERROR;
+	}
+    } else
+	nflag = 0;
 
     /* rename the record itself */
     if ((dp = db_lookup(gedp->ged_wdbp->dbip, argv[1], LOOKUP_NOISY )) == DIR_NULL)
-	return BRLCAD_ERROR;
+	return GED_ERROR;
 
     if (db_lookup(gedp->ged_wdbp->dbip, argv[2], LOOKUP_QUIET) != DIR_NULL) {
 	bu_vls_printf(&gedp->ged_result_str, "%s: already exists", argv[2]);
-	return BRLCAD_ERROR;
+	return GED_ERROR;
     }
 
     /* if this was a sketch, we need to look for all the extrude
@@ -102,34 +118,42 @@ ged_move_all(struct ged *gedp, int argc, const char *argv[])
 		    extrude = (struct rt_extrude_internal *)intern.idb_ptr;
 		    RT_EXTRUDE_CK_MAGIC(extrude);
 
-		    if (! strcmp(extrude->sketch_name, argv[1]) ) {
-			bu_free(extrude->sketch_name, "sketch name");
-			extrude->sketch_name = bu_strdup(argv[2]);
+		    if (!strcmp(extrude->sketch_name, argv[1])) {
+			if (nflag) {
+			    bu_vls_printf(&gedp->ged_result_str, "%s ", dirp->d_namep);
+			    rt_db_free_internal(&intern, &rt_uniresource);
+			} else {
+			    bu_free(extrude->sketch_name, "sketch name");
+			    extrude->sketch_name = bu_strdup(argv[2]);
 
-			if (rt_db_put_internal(dirp, gedp->ged_wdbp->dbip, &intern, &rt_uniresource) < 0) {
-			    bu_log("oops\n");
+			    if (rt_db_put_internal(dirp, gedp->ged_wdbp->dbip, &intern, &rt_uniresource) < 0) {
+				bu_log("oops\n");
+			    }
 			}
-		    }
+		    } else
+			rt_db_free_internal(&intern, &rt_uniresource);
 		}
 	    }
 	}
     }
 
-    /*  Change object name in the directory. */
-    if (db_rename(gedp->ged_wdbp->dbip, dp, argv[2]) < 0) {
-	bu_vls_printf(&gedp->ged_result_str, "error in rename to %s, aborting", argv[2]);
-	return BRLCAD_ERROR;
-    }
+    if (!nflag) {
+	/*  Change object name in the directory. */
+	if (db_rename(gedp->ged_wdbp->dbip, dp, argv[2]) < 0) {
+	    bu_vls_printf(&gedp->ged_result_str, "error in rename to %s, aborting", argv[2]);
+	    return GED_ERROR;
+	}
 
-    /* Change name in the file */
-    if (rt_db_get_internal(&intern, dp, gedp->ged_wdbp->dbip, (fastf_t *)NULL, &rt_uniresource) < 0) {
-	bu_vls_printf(&gedp->ged_result_str, "Database read error, aborting");
-	return BRLCAD_ERROR;
-    }
+	/* Change name in the file */
+	if (rt_db_get_internal(&intern, dp, gedp->ged_wdbp->dbip, (fastf_t *)NULL, &rt_uniresource) < 0) {
+	    bu_vls_printf(&gedp->ged_result_str, "Database read error, aborting");
+	    return GED_ERROR;
+	}
 
-    if (rt_db_put_internal(dp, gedp->ged_wdbp->dbip, &intern, &rt_uniresource) < 0) {
-	bu_vls_printf(&gedp->ged_result_str, "Database write error, aborting");
-	return BRLCAD_ERROR;
+	if (rt_db_put_internal(dp, gedp->ged_wdbp->dbip, &intern, &rt_uniresource) < 0) {
+	    bu_vls_printf(&gedp->ged_result_str, "Database write error, aborting");
+	    return GED_ERROR;
+	}
     }
 
     bu_ptbl_init(&stack, 64, "combination stack for wdb_mvall_cmd");
@@ -161,9 +185,13 @@ ged_move_all(struct ged *gedp, int argc, const char *argv[])
 		    }
 
 		    if (!strcmp(comb_leaf->tr_l.tl_name, argv[1])) {
-			bu_free(comb_leaf->tr_l.tl_name, "comb_leaf->tr_l.tl_name");
-			comb_leaf->tr_l.tl_name = bu_strdup(argv[2]);
-			changed = 1;
+			if (nflag)
+			    bu_vls_printf(&gedp->ged_result_str, "%s ", dp->d_namep);
+			else {
+			    bu_free(comb_leaf->tr_l.tl_name, "comb_leaf->tr_l.tl_name");
+			    comb_leaf->tr_l.tl_name = bu_strdup(argv[2]);
+			    changed = 1;
+			}
 		    }
 
 		    if (BU_PTBL_END(&stack) < 1) {
@@ -181,9 +209,8 @@ ged_move_all(struct ged *gedp, int argc, const char *argv[])
 	    if (changed) {
 		if (rt_db_put_internal(dp, gedp->ged_wdbp->dbip, &intern, &rt_uniresource)) {
 		    bu_ptbl_free( &stack );
-		    rt_db_free_internal( &intern, &rt_uniresource );
 		    bu_vls_printf(&gedp->ged_result_str, "Database write error, aborting");
-		    return BRLCAD_ERROR;
+		    return GED_ERROR;
 		}
 	    }
 	    else
@@ -193,7 +220,48 @@ ged_move_all(struct ged *gedp, int argc, const char *argv[])
 
     bu_ptbl_free(&stack);
 
-    return BRLCAD_OK;
+    if (!nflag) {
+	/* Change object name anywhere in the display list path. */
+	for (BU_LIST_FOR(gdlp, ged_display_list, &gedp->ged_gdp->gd_headDisplay)) {
+	    register int first = 1;
+	    register int found = 0;
+	    struct bu_vls new_path;
+	    char *dup = strdup(bu_vls_addr(&gdlp->gdl_path));
+	    char *tok = strtok(dup, "/");
+
+	    bu_vls_init(&new_path);
+
+	    while (tok) {
+		if (!strcmp(tok, argv[1])) {
+		    found = 1;
+
+		    if (first) {
+			first = 0;
+			bu_vls_printf(&new_path, "%s", argv[2]);
+		    } else
+			bu_vls_printf(&new_path, "/%s", argv[2]);
+		} else {
+		    if (first) {
+			first = 0;
+			bu_vls_printf(&new_path, "%s", tok);
+		    } else
+			bu_vls_printf(&new_path, "/%s", tok);
+		}
+
+		tok = strtok((char *)NULL, "/");
+	    }
+
+	    if (found) {
+		bu_vls_free(&gdlp->gdl_path);
+		bu_vls_printf(&gdlp->gdl_path, "%s", bu_vls_addr(&new_path));
+	    }
+
+	    free((void *)dup);
+	    bu_vls_free(&new_path);
+	}
+    }
+
+    return GED_OK;
 }
 
 

@@ -71,8 +71,8 @@ static char rcsid[] = "$Id: expr.c,v 1.6 1997/01/21 19:19:51 dar Exp $";
  */
 
 #define EXPRESSION_C
-#include "expr.h"
-#include "resolve.h"
+#include "express/expr.h"
+#include "express/resolve.h"
 
 void EXPop_init();
 static Error ERROR_internal_unrecognized_op_in_EXPresolve;

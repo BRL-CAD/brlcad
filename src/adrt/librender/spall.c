@@ -162,11 +162,11 @@ void render_spall_work(render_t *render, tie_t *tie, tie_ray_t *ray, TIE_3 *pixe
 
     /*
      * Optimization:
-     * First intersect this ray with the plane and fire the ray from there 
+     * First intersect this ray with the plane and fire the ray from there
      * Plane: Ax + By + Cz + D = 0
      * Ray = O + td
      * t = -(Pn · R0 + D) / (Pn · Rd)
-     * 
+     *
      */
 
     t = (rd->plane[0]*ray->pos.v[0] + rd->plane[1]*ray->pos.v[1] + rd->plane[2]*ray->pos.v[2] + rd->plane[3]) /
@@ -198,7 +198,7 @@ void render_spall_work(render_t *render, tie_t *tie, tie_ray_t *ray, TIE_3 *pixe
     dot = VDOT( ray->dir.v,  hit.id.norm.v);
     /* flip normal */
     dot = fabs(dot);
-  
+
 
     if (hit.mesh->flags == 1) {
 	VSET(color.v, 0.9, 0.2, 0.2);

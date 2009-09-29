@@ -36,9 +36,9 @@
 int
 ged_view2model(struct ged *gedp, int argc, const char *argv[])
 {
-    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
-    GED_CHECK_VIEW(gedp, BRLCAD_ERROR);
-    GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
+    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
+    GED_CHECK_VIEW(gedp, GED_ERROR);
+    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
 
     /* initialize result */
     bu_vls_trunc(&gedp->ged_result_str, 0);
@@ -46,11 +46,11 @@ ged_view2model(struct ged *gedp, int argc, const char *argv[])
     /* get the view2model matrix */
     if (argc == 1) {
 	bn_encode_mat(&gedp->ged_result_str, gedp->ged_gvp->gv_view2model);
-	return BRLCAD_OK;
+	return GED_OK;
     }
 
     bu_vls_printf(&gedp->ged_result_str, "Usage: %s", argv[0]);
-    return BRLCAD_ERROR;
+    return GED_ERROR;
 }
 
 

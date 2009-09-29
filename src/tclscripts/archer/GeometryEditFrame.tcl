@@ -45,17 +45,18 @@
     destructor {}
 
     public {
-	common mEditMode 0
-	common mEditCommand ""
-	common mEditClass ""
-	common mEditParam1 1
-	common mEditParam2 1
-	common mEditLastTransMode $::ArcherCore::OBJECT_CENTER_MODE
-
 	common EDIT_CLASS_NONE 0
 	common EDIT_CLASS_ROT 1
 	common EDIT_CLASS_SCALE 2
 	common EDIT_CLASS_TRANS 3
+
+	common mEditMode 0
+	common mEditClass $EDIT_CLASS_NONE
+	common mEditCommand ""
+	common mEditParam1 0
+	common mEditParam2 0
+	common mEditLastTransMode $::ArcherCore::OBJECT_CENTER_MODE
+	common mEditPCommand ""
 
 	proc validateDigit {d}
 	proc validateDigitMax100 {d}
@@ -68,6 +69,8 @@
 	method initGeometry {gdata}
 	method updateGeometry {}
 	method createGeometry {obj}
+
+	method p {obj args}
     }
 
     protected {
@@ -86,13 +89,11 @@
 
 	method buildUpperPanel {}
 	method buildLowerPanel {}
-	method buildValuePanel {}
 
 	method updateUpperPanel {normal disabled}
-	method updateValuePanel {}
 	method updateGeometryIfMod {}
 
-	method initValuePanel {}
+	method initEditState {}
 
 	method buildComboBox {parent name1 name2 varName text listOfChoices}
 	method buildArrow {parent prefix text buildViewFunc}
@@ -123,99 +124,35 @@
     $itk_component(pane) add upper
     $itk_component(pane) add lower
 
-    if {1} {
-	set parent [$itk_component(pane) childsite upper]
-	itk_component add upper {
-	    ::ttk::frame $parent.upper
-	} {}
-
-	# Repack parent so it's anchor to the north
-	pack $parent \
-	    -expand yes \
-	    -fill x \
-	    -anchor n
-
-	set parent [$itk_component(pane) childsite lower]
-	itk_component add lower {
-	    ::ttk::frame $parent.lower
-	} {}
-
-	# Repack parent so it's anchor to the north
-	pack $parent \
-	    -expand yes \
-	    -fill x \
-	    -anchor n
-    } else {
-	set parent [$itk_component(pane) childsite upper]
-	itk_component add upper {
-	    ::iwidgets::Scrolledframe $parent.upper
-	} {
-	    keep -vscrollmode
-	    keep -hscrollmode
-	}
-
-	set parent [$itk_component(pane) childsite lower]
-	itk_component add lower {
-	    ::iwidgets::Scrolledframe $parent.lower
-	} {
-	    keep -vscrollmode
-	    keep -hscrollmode
-	}
-    }
-
-    itk_component add valueSeparator {
-	::ttk::frame $itk_interior.valueSeparator \
-	    -height 2 \
-	    -relief raised \
-	    -borderwidth 1
+    set parent [$itk_component(pane) childsite upper]
+    itk_component add upper {
+	::ttk::frame $parent.upper
     } {}
-    itk_component add value {
-	::ttk::frame $itk_interior.value
+
+    # Repack parent so it's anchor to the north
+    pack $parent \
+	-expand yes \
+	-fill x \
+	-anchor n
+
+    set parent [$itk_component(pane) childsite lower]
+    itk_component add lower {
+	::ttk::frame $parent.lower
     } {}
-    itk_component add valueL {
-	::ttk::label $itk_component(value).valueL \
-	    -text "Enter a value:" \
-	    -anchor e
-    } {}
-    itk_component add valueCS {
-	::ttk::frame $itk_component(value).valueCS
-    } {}
-    itk_component add valueUnitsL {
-	::ttk::label $itk_component(value).valueUnitsL \
-	    -textvariable [::itcl::scope itk_option(-valueUnits)] \
-	    -anchor e
-    } {
-	rename -font -labelFont labelFont Font
-    }
+
+    # Repack parent so it's anchor to the north
+    pack $parent \
+	-expand yes \
+	-fill x \
+	-anchor n
 
     # These are no-ops unless overridden in a subclass
     buildUpperPanel
     buildLowerPanel
-    buildValuePanel
 
     pack $itk_component(upper) -expand yes -fill both
     pack $itk_component(lower) -expand yes -fill both
     pack $itk_component(pane) -expand yes -fill both
-
-    pack $itk_component(valueL) \
-	-side left \
-	-anchor e
-    pack $itk_component(valueUnitsL) \
-	-side right
-    pack $itk_component(valueCS) \
-	-side right \
-	-expand yes \
-	-fill x
-    pack $itk_component(value) \
-	-side bottom \
-	-anchor w \
-	-fill x \
-	-padx 2 \
-	-pady 2
-    pack $itk_component(valueSeparator) \
-	-side bottom \
-	-anchor w \
-	-fill x
 
     eval itk_initialize $args
 }
@@ -323,23 +260,12 @@
 
 ::itcl::body GeometryEditFrame::childsite {{site upper}} {
     switch -- $site {
-	"value" {
-	    return $itk_component(valueCS)
-	}
 	"lower" {
-	    if {1} {
-		return $itk_component(lower)
-	    } else {
-		return [$itk_component(lower) childsite]
-	    }
+	    return $itk_component(lower)
 	}
 	default -
 	"upper" {
-	    if {1} {
-		return $itk_component(upper)
-	    } else {
-		return [$itk_component(upper) childsite]
-	    }
+	    return $itk_component(upper)
 	}
     }
 }
@@ -353,12 +279,10 @@
 ::itcl::body GeometryEditFrame::initGeometry {gdata} {
     # The scrollmode options are needed so that the
     # scrollbars dynamically appear/disappear. Sheesh!
-    update
+#    update
     #after idle $this configure \
 	-vscrollmode dynamic \
 	-hscrollmode none
-
-    updateValuePanel
 }
 
 ::itcl::body GeometryEditFrame::updateGeometry {} {
@@ -376,6 +300,8 @@
     return 1
 }
 
+::itcl::body GeometryEditFrame::p {obj args} {
+}
 
 # ------------------------------------------------------------
 #                      PROTECTED METHODS
@@ -387,19 +313,13 @@
 ::itcl::body GeometryEditFrame::buildLowerPanel {} {
 }
 
-::itcl::body GeometryEditFrame::buildValuePanel {} {
-}
-
 ::itcl::body GeometryEditFrame::updateUpperPanel {normal disabled} {
-}
-
-::itcl::body GeometryEditFrame::updateValuePanel {} {
 }
 
 ::itcl::body GeometryEditFrame::updateGeometryIfMod {} {
 }
 
-::itcl::body GeometryEditFrame::initValuePanel {} {
+::itcl::body GeometryEditFrame::initEditState {} {
     if {$mEditClass == $EDIT_CLASS_ROT} {
 	$::ArcherCore::application setDefaultBindingMode $::ArcherCore::OBJECT_ROTATE_MODE
     } elseif {$mEditClass == $EDIT_CLASS_SCALE} {

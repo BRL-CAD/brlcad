@@ -95,11 +95,12 @@
 #define DM_TYPE_PLOT	1
 #define DM_TYPE_PS	2
 #define DM_TYPE_X	3
-#define DM_TYPE_TK	8
 #define DM_TYPE_OGL	4
 #define DM_TYPE_GLX	5
 #define DM_TYPE_PEX	6
 #define DM_TYPE_WGL     7
+#define DM_TYPE_TK	8
+#define DM_TYPE_RTGL	9
 
 /* Line Styles */
 #define DM_SOLID_LINE 0
@@ -114,6 +115,7 @@
 #define IS_DM_TYPE_GLX(_t) ((_t) == DM_TYPE_GLX)
 #define IS_DM_TYPE_PEX(_t) ((_t) == DM_TYPE_PEX)
 #define IS_DM_TYPE_WGL(_t) ((_t) == DM_TYPE_WGL)
+#define IS_DM_TYPE_RTGL(_t) ((_t) == DM_TYPE_RTGL)
 
 #define GET_DM(p, structure, w, hp) { \
 	register struct structure *tp; \

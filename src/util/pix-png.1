@@ -43,6 +43,7 @@ pix-png	\- convert a BRL-CAD PIX format image to a PNG format image
 .SH SYNOPSIS
 .B pix-png
 .RB [ \-a ]
+.RB [ \-g gamma ]
 .RB [ \-s squaresize]
 .RB [ \-w file_width]
 .RB [ \-n file_height]
@@ -64,6 +65,12 @@ not the default 512x512 size.
 .TP
 .B \-a
 autosize the input file to determine file image height and width
+.TP
+.B \-g gamma
+sets the specified gamma correction value into the created PNG file.
+A value of 0.6 is a close approximation of PC display monitors.  A
+negative gamma value disables writing a gAMA chunk out entirely (and
+is the default).
 .TP
 .B \-n file_height
 tells

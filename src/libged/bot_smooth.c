@@ -25,6 +25,7 @@
 
 #include "common.h"
 
+#include <stdlib.h>
 #include <string.h>
 #include "bio.h"
 
@@ -43,12 +44,13 @@ ged_bot_smooth(struct ged *gedp, int argc, const char *argv[])
     struct rt_db_internal intern;
     fastf_t tolerance_angle=180.0;
     int arg_index=1;
-    int id;
     static const char *usage = "[-t ntol] new_bot old_bot";
 
-    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
-    GED_CHECK_READ_ONLY(gedp, BRLCAD_ERROR);
-    GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
+    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
+    GED_CHECK_READ_ONLY(gedp, GED_ERROR);
+    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
+
+    dp_old = dp_new = DIR_NULL;
 
     /* initialize result */
     bu_vls_trunc(&gedp->ged_result_str, 0);
@@ -56,18 +58,18 @@ ged_bot_smooth(struct ged *gedp, int argc, const char *argv[])
     /* must be wanting help */
     if (argc == 1) {
 	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return BRLCAD_HELP;
+	return GED_HELP;
     }
 
     /* check that we are using a version 5 database */
     if (gedp->ged_wdbp->dbip->dbi_version < 5) {
 	bu_vls_printf(&gedp->ged_result_str, "This is an older database version.\nIt does not support BOT surface normals.\nUse \"dbupgrade\" to upgrade this database to the current version.\n");
-	return BRLCAD_ERROR;
+	return GED_ERROR;
     }
 
     if (argc < 3) {
 	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return BRLCAD_ERROR;
+	return GED_ERROR;
     }
 
     while (*argv[arg_index] == '-') {
@@ -77,43 +79,33 @@ ged_bot_smooth(struct ged *gedp, int argc, const char *argv[])
 	    tolerance_angle = atof( argv[arg_index] );
 	} else {
 	    bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	    return BRLCAD_ERROR;
+	    return GED_ERROR;
 	}
 	arg_index++;
     }
 
     if ( arg_index >= argc ) {
 	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return BRLCAD_ERROR;
+	return GED_ERROR;
     }
 
     new_bot_name = (char *)argv[arg_index++];
     old_bot_name = (char *)argv[arg_index];
 
-    if ( (dp_old=db_lookup( gedp->ged_wdbp->dbip, old_bot_name, LOOKUP_QUIET ) ) == DIR_NULL ) {
-	bu_vls_printf(&gedp->ged_result_str, "%s does not exist!!\n", old_bot_name);
-	return BRLCAD_ERROR;
-    }
+    GED_DB_LOOKUP(gedp, dp_old, old_bot_name, LOOKUP_QUIET, GED_ERROR);
 
     if ( strcmp( old_bot_name, new_bot_name ) ) {
-
-	if ( (dp_new=db_lookup( gedp->ged_wdbp->dbip, new_bot_name, LOOKUP_QUIET ) ) != DIR_NULL ) {
-	    bu_vls_printf(&gedp->ged_result_str, "%s already exists!!\n", new_bot_name);
-	    return BRLCAD_ERROR;
-	}
+	GED_CHECK_EXISTS(gedp, new_bot_name, LOOKUP_QUIET, GED_ERROR);
     } else {
 	dp_new = dp_old;
     }
 
-    if ( (id=rt_db_get_internal( &intern, dp_old, gedp->ged_wdbp->dbip, NULL, gedp->ged_wdbp->wdb_resp ) ) < 0 ) {
-	bu_vls_printf(&gedp->ged_result_str, "Failed to get internal form of %s\n", old_bot_name);
-	return BRLCAD_ERROR;
-    }
+    GED_DB_GET_INTERNAL(gedp, &intern, dp_old, NULL, gedp->ged_wdbp->wdb_resp, GED_ERROR);
 
-    if ( id != ID_BOT ) {
+    if (intern.idb_major_type != DB5_MAJORTYPE_BRLCAD || intern.idb_minor_type != DB5_MINORTYPE_BRLCAD_BOT) {
 	bu_vls_printf(&gedp->ged_result_str, "%s is not a BOT primitive\n", old_bot_name);
 	rt_db_free_internal( &intern, gedp->ged_wdbp->wdb_resp );
-	return BRLCAD_ERROR;
+	return GED_ERROR;
     }
 
     old_bot = (struct rt_bot_internal *)intern.idb_ptr;
@@ -122,29 +114,18 @@ ged_bot_smooth(struct ged *gedp, int argc, const char *argv[])
     if ( rt_bot_smooth( old_bot, old_bot_name, gedp->ged_wdbp->dbip, tolerance_angle*M_PI/180.0 ) ) {
 	bu_vls_printf(&gedp->ged_result_str, "Failed to smooth %s\n", old_bot_name);
 	rt_db_free_internal( &intern, gedp->ged_wdbp->wdb_resp );
-	return BRLCAD_ERROR;
+	return GED_ERROR;
     }
 
     if ( dp_new == DIR_NULL ) {
-	if ( (dp_new=db_diradd( gedp->ged_wdbp->dbip, new_bot_name, -1L, 0, DIR_SOLID,
-				(genptr_t)&intern.idb_type)) == DIR_NULL ) {
-	    rt_db_free_internal(&intern, gedp->ged_wdbp->wdb_resp);
-	    bu_vls_printf(&gedp->ged_result_str, "Cannot add %s to directory\n", new_bot_name);
-	    return BRLCAD_ERROR;
-	}
+	GED_DB_DIRADD(gedp, dp_new, new_bot_name, -1L, 0, DIR_SOLID, (genptr_t)&intern.idb_type, GED_ERROR);
     }
 
-    if ( rt_db_put_internal( dp_new, gedp->ged_wdbp->dbip, &intern, gedp->ged_wdbp->wdb_resp ) < 0 ) {
-	rt_db_free_internal(&intern, gedp->ged_wdbp->wdb_resp);
-	bu_vls_printf(&gedp->ged_result_str, "Database write error, aborting.\n");
-	return BRLCAD_ERROR;
-    }
-
+    GED_DB_PUT_INTERNAL(gedp, dp_new, &intern, gedp->ged_wdbp->wdb_resp, GED_ERROR);
     rt_db_free_internal( &intern, gedp->ged_wdbp->wdb_resp );
 
-    return BRLCAD_OK;
+    return GED_OK;
 }
-
 
 /*
  * Local Variables:

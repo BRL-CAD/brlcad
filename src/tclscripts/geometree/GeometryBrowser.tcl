@@ -1,4 +1,3 @@
-#!/bin/tclsh
 #             G E O M E T R Y B R O W S E R . T C L
 # BRL-CAD
 #

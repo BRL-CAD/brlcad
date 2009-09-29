@@ -21,23 +21,32 @@
  *
  */
 
+#include "common.h"
+
 #ifndef TIE_PRECISION
 # define TIE_PRECISION 0
 #endif
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <signal.h>
 #include <string.h>
 #include <sys/time.h>
+#include <pthread.h>
 
+#ifdef HAVE_GETOPT_H
+#  include <getopt.h>
+#endif
+
+#include "libtie/tie.h"
 #include "adrt.h"
 #include "camera.h"
 #include "adrt.h"
 #include "tie.h"
-#include "tienet.h"
 #include "render_util.h"
 
 #include "slave.h"
+#include "tienet_slave.h"
 #include "load.h"
 
 typedef struct adrt_slave_project_s {
@@ -50,8 +59,8 @@ typedef struct adrt_slave_project_s {
 uint32_t adrt_slave_threads;
 adrt_slave_project_t adrt_workspace_list[ADRT_MAX_WORKSPACE_NUM];
 
-void 
-adrt_slave_free() 
+void
+adrt_slave_free()
 {
     uint16_t i;
 
@@ -90,7 +99,7 @@ adrt_slave_work(tienet_buffer_t *work, tienet_buffer_t *result)
 	case ADRT_WORK_INIT:
 	{
 	    render_camera_init (&adrt_workspace_list[wid].camera, adrt_slave_threads);
-	    if( slave_load (&adrt_workspace_list[wid].tie, (struct adrt_load_info *)work->data, wlen-ind) != 0 )
+	    if( slave_load (&adrt_workspace_list[wid].tie, (void *)work->data, wlen-ind) != 0 )
 		bu_exit (1, "Failed to load geometry. Going into a flaming tailspin\n");
 	    tie_prep (&adrt_workspace_list[wid].tie);
 	    render_camera_prep (&adrt_workspace_list[wid].camera);
@@ -110,7 +119,7 @@ adrt_slave_work(tienet_buffer_t *work, tienet_buffer_t *result)
 	    printf ("load average: %f\n", loadavg);
 	}
 	break;
- 
+
 	case ADRT_WORK_SELECT:
 	{
 	    uint8_t c;
@@ -147,7 +156,7 @@ adrt_slave_work(tienet_buffer_t *work, tienet_buffer_t *result)
 
 	    /* zero length result */
 	    result->ind = 0;
-	}  
+	}
 	break;
 
 	case ADRT_WORK_SHOTLINE:
@@ -276,41 +285,44 @@ adrt_slave_work(tienet_buffer_t *work, tienet_buffer_t *result)
 
 		switch (rm) {
 		    case RENDER_METHOD_DEPTH:
-			render_depth_init(&adrt_workspace_list[wid].camera.render);
+			render_depth_init(&adrt_workspace_list[wid].camera.render, NULL);
 			break;
 
 		    case RENDER_METHOD_COMPONENT:
-			render_component_init(&adrt_workspace_list[wid].camera.render);
+			render_component_init(&adrt_workspace_list[wid].camera.render, NULL);
 			break;
 
 		    case RENDER_METHOD_FLOS:
 		    {
 			TIE_3 frag_pos;
+			char buf[BUFSIZ];
 
 			/* Extract shot position and direction */
 			TCOPY(TIE_3, work->data, ind, &frag_pos, 0);
+			snprintf(buf, BUFSIZ, "#(%f %f %f)", V3ARGS(frag_pos.v));
 			ind += sizeof (TIE_3);
-			render_flos_init(&adrt_workspace_list[wid].camera.render, frag_pos);
+			render_flos_init(&adrt_workspace_list[wid].camera.render, buf);
 		    }
 		    break;
 
 		    case RENDER_METHOD_GRID:
-			render_grid_init(&adrt_workspace_list[wid].camera.render);
+			render_grid_init(&adrt_workspace_list[wid].camera.render, NULL);
 			break;
 
 		    case RENDER_METHOD_NORMAL:
-			render_normal_init(&adrt_workspace_list[wid].camera.render);
+			render_normal_init(&adrt_workspace_list[wid].camera.render, NULL);
 			break;
 
 		    case RENDER_METHOD_PATH:
-			render_path_init(&adrt_workspace_list[wid].camera.render, 12);
+			render_path_init(&adrt_workspace_list[wid].camera.render, "12");
 			break;
 
 		    case RENDER_METHOD_PHONG:
-			render_phong_init(&adrt_workspace_list[wid].camera.render);
+			render_phong_init(&adrt_workspace_list[wid].camera.render, NULL);
 			break;
 
 		    case RENDER_METHOD_CUT:
+#if 0
 		    {
 			TIE_3 shot_pos, shot_dir;
 
@@ -323,6 +335,9 @@ adrt_slave_work(tienet_buffer_t *work, tienet_buffer_t *result)
 
 			render_cut_init(&adrt_workspace_list[wid].camera.render, shot_pos, shot_dir);
 		    }
+#else
+			render_cut_init(&adrt_workspace_list[wid].camera.render, (char *)work->data + ind);
+#endif
 		    break;
 
 		    case RENDER_METHOD_SPALL:
@@ -389,13 +404,13 @@ adrt_slave_work(tienet_buffer_t *work, tienet_buffer_t *result)
 	struct timeval	tv;
 	static int      adrt_slave_completed = 0;
 	static time_t	adrt_slave_startsec = 0;
-	
+
 	if(adrt_slave_startsec == 0) adrt_slave_startsec = time(NULL);
 
 	gettimeofday(&tv, NULL);
-	printf("\t[Work Units Completed: %.6d  Rays: %.5d k/sec %lld]\n", 
-		++adrt_slave_completed, 
-		(int) ((tfloat) adrt_workspace_list[wid].tie.rays_fired / (tfloat) (1000 * (tv.tv_sec - adrt_slave_startsec + 1))), 
+	printf("\t[Work Units Completed: %.6d  Rays: %.5d k/sec %lld]\n",
+		++adrt_slave_completed,
+		(int) ((tfloat) adrt_workspace_list[wid].tie.rays_fired / (tfloat) (1000 * (tv.tv_sec - adrt_slave_startsec + 1))),
 		adrt_workspace_list[wid].tie.rays_fired);
 	fflush(stdout);
     }
@@ -404,8 +419,8 @@ adrt_slave_work(tienet_buffer_t *work, tienet_buffer_t *result)
     return;
 }
 
-void 
-adrt_slave(int port, char *host, int threads) 
+void
+adrt_slave(int port, char *host, int threads)
 {
     int i;
     adrt_slave_threads = threads;
@@ -419,7 +434,7 @@ adrt_slave(int port, char *host, int threads)
 }
 
 #if 0
-void adrt_slave_mesg(void *mesg, unsigned int mesg_len) 
+void adrt_slave_mesg(void *mesg, unsigned int mesg_len)
 {
     short		op;
     TIE_3		foo;
@@ -486,6 +501,117 @@ void adrt_slave_mesg(void *mesg, unsigned int mesg_len)
     }
 }
 #endif
+
+#ifdef HAVE_GETOPT_LONG
+static struct option longopts[] =
+{
+    { "help",	no_argument,		NULL, 'h' },
+    { "port",	required_argument,	NULL, 'p' },
+    { "threads",	required_argument,	NULL, 't' },
+    { "version",	no_argument,		NULL, 'v' },
+};
+#endif
+static char shortopts[] = "Xdhp:t:v";
+
+
+static void finish(int sig)
+{
+    bu_exit(EXIT_FAILURE, "Collected signal %d, aborting!\n", sig);
+}
+
+static void info(int sig)
+{
+	/* something to display info about clients, threads and port. */
+    return;
+}
+
+static void help()
+{
+    printf("%s\n", ADRT_VER_DETAIL);
+    printf("%s", "usage: adrt_slave [options] [host]\n\
+  -v\t\tdisplay version\n\
+  -h\t\tdisplay help\n\
+  -p\t\tport number\n\
+  -t ...\tnumber of threads to launch for processing\n");
+}
+
+
+int main(int argc, char **argv)
+{
+    int		port = 0, c = 0, threads = 0;
+    char		host[64], temp[64];
+
+
+    /* Default Port */
+    signal(SIGINT, finish);
+#ifdef SIGUSR1
+    signal(SIGUSR1, info);
+#endif
+#ifdef SIGINFO
+    signal(SIGINFO, info);
+#endif
+
+    /* Initialize strings */
+    host[0] = 0;
+    port = 0;
+
+
+    /* Parse command line options */
+
+    while ((c =
+#ifdef HAVE_GETOPT_LONG
+	    getopt_long(argc, argv, shortopts, longopts, NULL)
+#else
+	    getopt(argc, argv, shortopts)
+#endif
+	       )!= -1) {
+	switch (c) {
+	    case 'h':
+		help();
+		return EXIT_SUCCESS;
+
+	    case 'p':
+		port = atoi(optarg);
+		break;
+
+	    case 't':
+		strncpy(temp, optarg, 4);
+		threads = atoi(temp);
+		if (threads < 0) threads = 0;
+		if (threads > 32) threads = 32;
+		break;
+
+	    case 'v':
+		printf("%s\n", ADRT_VER_DETAIL);
+		return EXIT_SUCCESS;
+
+	    default:
+		help();
+		return EXIT_FAILURE;
+	}
+    }
+
+    argc -= optind;
+    argv += optind;
+
+    if (argc) {
+	strncpy(host, argv[0], 64-1);
+	host[64-1] = '\0'; /* sanity */
+    }
+
+    if (!host[0]) {
+	if (!port)
+	    port = TN_SLAVE_PORT;
+	printf("running as daemon.\n");
+    } else {
+	if (!port)
+	    port = TN_MASTER_PORT;
+    }
+
+    adrt_slave(port, host, threads);
+
+    return EXIT_SUCCESS;
+}
 
 /*
  * Local Variables:

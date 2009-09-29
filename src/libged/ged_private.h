@@ -64,32 +64,33 @@ struct ged_id_to_names {
 };
 
 struct ged_client_data {
-    struct ged	       	*gedp;
-    int			wireframe_color_override;
-    int			wireframe_color[3];
-    int			draw_nmg_only;
-    int			nmg_triangulate;
-    int			draw_wireframes;
-    int			draw_normals;
-    int			draw_solid_lines_only;
-    int			draw_no_surfaces;
-    int			shade_per_vertex_normals;
-    int			draw_edge_uses;
-    int			fastpath_count;			/* statistics */
-    int			do_not_draw_nmg_solids_during_debugging;
-    struct bn_vlblock	*draw_edge_uses_vbp;
-    int			shaded_mode_override;
-    fastf_t		transparency;
-    int			dmode;
+    struct ged			*gedp;
+    struct ged_display_list	*gdlp;
+    int				wireframe_color_override;
+    int				wireframe_color[3];
+    int				draw_nmg_only;
+    int				nmg_triangulate;
+    int				draw_wireframes;
+    int				draw_normals;
+    int				draw_solid_lines_only;
+    int				draw_no_surfaces;
+    int				shade_per_vertex_normals;
+    int				draw_edge_uses;
+    int				fastpath_count;			/* statistics */
+    int				do_not_draw_nmg_solids_during_debugging;
+    struct bn_vlblock		*draw_edge_uses_vbp;
+    int				shaded_mode_override;
+    fastf_t			transparency;
+    int				dmode;
     /* bigE related members */
-    struct application	*ap;
-    struct bu_ptbl	leaf_list;
-    struct rt_i		*rtip;
-    time_t		start_time;
-    time_t		etime;
-    long		nvectors;
-    int			do_polysolids;
-    int			num_halfs;
+    struct application		*ap;
+    struct bu_ptbl		leaf_list;
+    struct rt_i			*rtip;
+    time_t			start_time;
+    time_t			etime;
+    long			nvectors;
+    int				do_polysolids;
+    int				num_halfs;
 };
 
 struct ged_rt_client_data {
@@ -156,9 +157,6 @@ BU_EXTERN (struct directory *ged_combadd,
 	    int				air));
 
 /* defined in draw.c */
-BU_EXTERN (void ged_color_soltab,
-	   (struct solid *hsp));
-
 BU_EXTERN (void ged_cvt_vlblock_to_solids,
 	   (struct ged *gedp,
 	    struct bn_vlblock *vbp,
@@ -185,14 +183,34 @@ BU_EXTERN (void ged_eraseobjpath,
 	   (struct ged	*gedp,
 	    int		argc,
 	    const char	*argv[],
-	    int		noisy,
-	    int		all));
+	    const int	noisy,
+	    const int	all,
+	    const int	skip_first));
 BU_EXTERN (void ged_eraseobjall,
 	   (struct ged			*gedp,
-	    register struct directory	**dpp));
+	    register struct directory	**dpp,
+	    int				skip_first));
 BU_EXTERN (void ged_eraseobj,
 	   (struct ged			*gedp,
-	    register struct directory	**dpp));
+	    register struct directory	**dpp,
+	    int				skip_first));
+BU_EXTERN (void ged_eraseAllNamesFromDisplay,
+	   (struct ged			*gedp,
+	    const char			*name,
+	    int				skip_first));
+BU_EXTERN (void ged_eraseAllPathsFromDisplay,
+	   (struct ged			*gedp,
+	    const char			*path,
+	    int				skip_first));
+BU_EXTERN (void ged_eraseAllSubpathsFromSolidList,
+	   (struct ged			*gedp,
+	    struct ged_display_list	*gdlp,
+	    struct db_full_path		*subpath,
+	    const int			skip_first));
+BU_EXTERN (void ged_freeDisplayListItem,
+	   (struct ged			*gedp,
+	    struct ged_display_list *gdlp));
+
 
 /* defined in get_comb.c */
 BU_EXTERN(void ged_vls_print_matrix,
@@ -332,26 +350,129 @@ BU_EXTERN (void ged_wait_status,
 	   (struct bu_vls *log,
 	    int status));
 
+/* defined in rotate_eto.c */
+BU_EXTERN (int ged_rotate_eto,
+	   (struct ged *gedp,
+	    struct rt_eto_internal *eto,
+	    const char *attribute,
+	    matp_t rmat));
+
+/* defined in rotate_extrude.c */
+BU_EXTERN (int ged_rotate_extrude,
+	   (struct ged *gedp,
+	    struct rt_extrude_internal *extrude,
+	    const char *attribute,
+	    matp_t rmat));
+
+/* defined in rotate_hyp.c */
+BU_EXTERN (int ged_rotate_hyp,
+	   (struct ged *gedp,
+	    struct rt_hyp_internal *hyp,
+	    const char *attribute,
+	    matp_t rmat));
+
+/* defined in rotate_tgc.c */
+BU_EXTERN (int ged_rotate_tgc,
+	   (struct ged *gedp,
+	    struct rt_tgc_internal *tgc,
+	    const char *attribute,
+	    matp_t rmat));
+
 /* defined in scale_ehy.c */
 BU_EXTERN (int ged_scale_ehy,
 	   (struct ged *gedp,
 	    struct rt_ehy_internal *ehy,
-	    char *attribute,
-	    fastf_t sf));
+	    const char *attribute,
+	    fastf_t sf,
+	    int rflag));
 
 /* defined in scale_ell.c */
 BU_EXTERN (int ged_scale_ell,
 	   (struct ged *gedp,
 	    struct rt_ell_internal *ell,
-	    char *attribute,
-	    fastf_t sf));
+	    const char *attribute,
+	    fastf_t sf,
+	    int rflag));
+
+/* defined in scale_epa.c */
+BU_EXTERN (int ged_scale_epa,
+	   (struct ged *gedp,
+	    struct rt_epa_internal *epa,
+	    const char *attribute,
+	    fastf_t sf,
+	    int rflag));
+
+/* defined in scale_eto.c */
+BU_EXTERN (int ged_scale_eto,
+	   (struct ged *gedp,
+	    struct rt_eto_internal *eto,
+	    const char *attribute,
+	    fastf_t sf,
+	    int rflag));
+
+/* defined in scale_extrude.c */
+BU_EXTERN (int ged_scale_extrude,
+	   (struct ged *gedp,
+	    struct rt_extrude_internal *extrude,
+	    const char *attribute,
+	    fastf_t sf,
+	    int rflag));
+
+/* defined in scale_hyp.c */
+BU_EXTERN (int ged_scale_hyp,
+	   (struct ged *gedp,
+	    struct rt_hyp_internal *hyp,
+	    const char *attribute,
+	    fastf_t sf,
+	    int rflag));
+
+/* defined in scale_part.c */
+BU_EXTERN (int ged_scale_part,
+	   (struct ged *gedp,
+	    struct rt_part_internal *part,
+	    const char *attribute,
+	    fastf_t sf,
+	    int rflag));
+
+/* defined in scale_rhc.c */
+BU_EXTERN (int ged_scale_rhc,
+	   (struct ged *gedp,
+	    struct rt_rhc_internal *rhc,
+	    const char *attribute,
+	    fastf_t sf,
+	    int rflag));
+
+/* defined in scale_rpc.c */
+BU_EXTERN (int ged_scale_rpc,
+	   (struct ged *gedp,
+	    struct rt_rpc_internal *rpc,
+	    const char *attribute,
+	    fastf_t sf,
+	    int rflag));
+
+/* defined in scale_superell.c */
+BU_EXTERN (int ged_scale_superell,
+	   (struct ged *gedp,
+	    struct rt_superell_internal *superell,
+	    const char *attribute,
+	    fastf_t sf,
+	    int rflag));
+
+/* defined in scale_tgc.c */
+BU_EXTERN (int ged_scale_tgc,
+	   (struct ged *gedp,
+	    struct rt_tgc_internal *tgc,
+	    const char *attribute,
+	    fastf_t sf,
+	    int rflag));
 
 /* defined in scale_tor.c */
 BU_EXTERN (int ged_scale_tor,
 	   (struct ged *gedp,
 	    struct rt_tor_internal *tor,
-	    char *attribute,
-	    fastf_t sf));
+	    const char *attribute,
+	    fastf_t sf,
+	    int rflag));
 
 /* defined in tops.c */
 struct directory **
@@ -364,6 +485,22 @@ BU_EXTERN (void ged_trace,
 	    int				pathpos,
 	    const mat_t			old_xlate,
 	    struct ged_trace_data	*gtdp));
+
+/* defined in translate_extrude.c */
+BU_EXTERN (int ged_translate_extrude,
+	   (struct ged *gedp,
+	    struct rt_extrude_internal *extrude,
+	    const char *attribute,
+	    vect_t tvec,
+	    int rflag));
+
+/* defined in translate_tgc.c */
+BU_EXTERN (int ged_translate_tgc,
+	   (struct ged *gedp,
+	    struct rt_tgc_internal *tgc,
+	    const char *attribute,
+	    vect_t tvec,
+	    int rflag));
 
 /* defined in vutil.c */
 BU_EXTERN (void ged_view_update,

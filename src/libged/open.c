@@ -39,8 +39,8 @@ ged_reopen(struct ged *gedp, int argc, const char *argv[])
     struct db_i *dbip;
     static const char *usage = "[filename]";
 
-    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
-    GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
+    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
+    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
 
     /* initialize result */
     bu_vls_trunc(&gedp->ged_result_str, 0);
@@ -48,7 +48,7 @@ ged_reopen(struct ged *gedp, int argc, const char *argv[])
     /* get database filename */
     if (argc == 1) {
 	bu_vls_printf(&gedp->ged_result_str, "%s", gedp->ged_wdbp->dbip->dbi_filename);
-	return BRLCAD_OK;
+	return GED_OK;
     }
 
     /* set database filename */
@@ -57,7 +57,7 @@ ged_reopen(struct ged *gedp, int argc, const char *argv[])
 
 	if ((dbip = ged_open_dbip(argv[1], 0)) == DBI_NULL) {
 	    bu_vls_printf(&gedp->ged_result_str, "ged_reopen: failed to open %s\n", argv[1]);
-	    return BRLCAD_ERROR;
+	    return GED_ERROR;
 	}
 
 	av[0] = "zap";
@@ -70,11 +70,11 @@ ged_reopen(struct ged *gedp, int argc, const char *argv[])
 	gedp->ged_wdbp->dbip = dbip;
 
 	bu_vls_printf(&gedp->ged_result_str, "%s", gedp->ged_wdbp->dbip->dbi_filename);
-	return BRLCAD_OK;
+	return GED_OK;
     }
 
     bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-    return BRLCAD_ERROR;
+    return GED_ERROR;
 }
 
 

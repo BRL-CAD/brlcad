@@ -25,6 +25,8 @@
 
 #include "common.h"
 
+#include  <stdlib.h>
+
 #include "bio.h"
 
 #include "solid.h"
@@ -44,37 +46,41 @@ ged_zap(struct ged *gedp, int argc, const char *argv[])
 {
     register struct solid *sp;
     register struct solid *nsp;
+    register struct ged_display_list *gdlp;
     struct directory *dp;
 
-    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
-    GED_CHECK_DRAWABLE(gedp, BRLCAD_ERROR);
-    GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
+    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
+    GED_CHECK_DRAWABLE(gedp, GED_ERROR);
+    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
 
     /* initialize result */
     bu_vls_trunc(&gedp->ged_result_str, 0);
 
     if (argc != 1) {
 	bu_vls_printf(&gedp->ged_result_str, "Usage: %s", argv[0]);
-	return BRLCAD_ERROR;
+	return GED_ERROR;
     }
 
-    sp = BU_LIST_NEXT(solid, &gedp->ged_gdp->gd_headSolid);
-    while (BU_LIST_NOT_HEAD(sp, &gedp->ged_gdp->gd_headSolid)) {
-	dp = FIRST_SOLID(sp);
-	RT_CK_DIR(dp);
-	if (dp->d_addr == RT_DIR_PHONY_ADDR) {
-	    if (db_dirdelete(gedp->ged_wdbp->dbip, dp) < 0) {
-		bu_vls_printf(&gedp->ged_result_str, "ged_zap: db_dirdelete failed\n");
+    while (BU_LIST_WHILE(gdlp, ged_display_list, &gedp->ged_gdp->gd_headDisplay)) {
+	while (BU_LIST_WHILE(sp, solid, &gdlp->gdl_headSolid)) {
+	    dp = FIRST_SOLID(sp);
+	    RT_CK_DIR(dp);
+	    if (dp->d_addr == RT_DIR_PHONY_ADDR) {
+		if (db_dirdelete(gedp->ged_wdbp->dbip, dp) < 0) {
+		    bu_vls_printf(&gedp->ged_result_str, "ged_zap: db_dirdelete failed\n");
+		}
 	    }
+
+	    BU_LIST_DEQUEUE(&sp->l);
+	    FREE_SOLID(sp, &FreeSolid.l);
 	}
 
-	nsp = BU_LIST_PNEXT(solid, sp);
-	BU_LIST_DEQUEUE(&sp->l);
-	FREE_SOLID(sp, &FreeSolid.l);
-	sp = nsp;
-    }
+	BU_LIST_DEQUEUE(&gdlp->l);
+	bu_vls_free(&gdlp->gdl_path);
+	free((void *)gdlp);
+    }    
 
-    return BRLCAD_OK;
+    return GED_OK;
 }
 
 

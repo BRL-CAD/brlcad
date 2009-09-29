@@ -41,8 +41,8 @@ ged_dir2ae(struct ged *gedp, int argc, const char *argv[])
     int iflag;
     static const char *usage = "[-i] x y z";
 
-    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
-    GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
+    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
+    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
 
     /* initialize result */
     bu_vls_trunc(&gedp->ged_result_str, 0);
@@ -50,7 +50,7 @@ ged_dir2ae(struct ged *gedp, int argc, const char *argv[])
     /* must be wanting help */
     if (argc == 1) {
 	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return BRLCAD_HELP;
+	return GED_HELP;
     }
 
     if (argv[1][0] == '-' && argv[1][1] == 'i' && argv[1][2] == '\0') {
@@ -62,14 +62,14 @@ ged_dir2ae(struct ged *gedp, int argc, const char *argv[])
 
     if (argc != 4) {
 	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return BRLCAD_ERROR;
+	return GED_ERROR;
     }
 
     if (sscanf(argv[1], "%lf", &dir[X]) != 1 ||
 	sscanf(argv[2], "%lf", &dir[Y]) != 1 ||
 	sscanf(argv[3], "%lf", &dir[Z]) != 1) {
 	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return BRLCAD_ERROR;
+	return GED_ERROR;
     }
 
     AZEL_FROM_V3DIR(az, el, dir);
@@ -79,7 +79,7 @@ ged_dir2ae(struct ged *gedp, int argc, const char *argv[])
 
     bu_vls_printf(&gedp->ged_result_str, "%lf %lf", az, el);
 
-    return BRLCAD_OK;
+    return GED_OK;
 }
 
 /*

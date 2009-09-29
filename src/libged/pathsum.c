@@ -40,8 +40,8 @@ ged_pathsum(struct ged *gedp, int argc, const char *argv[])
     struct ged_trace_data gtd;
     static const char *usage = "pattern";
 
-    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
-    GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
+    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
+    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
 
     /* initialize result */
     bu_vls_trunc(&gedp->ged_result_str, 0);
@@ -49,12 +49,12 @@ ged_pathsum(struct ged *gedp, int argc, const char *argv[])
     /* must be wanting help */
     if (argc == 1) {
 	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return BRLCAD_HELP;
+	return GED_HELP;
     }
 
     if (MAXARGS < argc) {
 	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return BRLCAD_ERROR;
+	return GED_ERROR;
     }
 
     /*
@@ -86,7 +86,7 @@ ged_pathsum(struct ged *gedp, int argc, const char *argv[])
 	tok = strtok((char *)argv[1], "/");
 	while (tok) {
 	    if ((gtd.gtd_obj[gtd.gtd_objpos++] = db_lookup(gedp->ged_wdbp->dbip, tok, LOOKUP_NOISY)) == DIR_NULL)
-		return BRLCAD_ERROR;
+		return GED_ERROR;
 	    tok = strtok((char *)NULL, "/");
 	}
     } else {
@@ -95,7 +95,7 @@ ged_pathsum(struct ged *gedp, int argc, const char *argv[])
 	/* build directory pointer array for desired path */
 	for (i=0; i<gtd.gtd_objpos; i++) {
 	    if ((gtd.gtd_obj[i] = db_lookup(gedp->ged_wdbp->dbip, argv[pos_in+i], LOOKUP_NOISY)) == DIR_NULL)
-		return BRLCAD_ERROR;
+		return GED_ERROR;
 	}
     }
 
@@ -109,10 +109,10 @@ ged_pathsum(struct ged *gedp, int argc, const char *argv[])
 	for (i=0; i<gtd.gtd_objpos; i++)
 	    bu_vls_printf(&gedp->ged_result_str, "/%s", gtd.gtd_obj[i]->d_namep);
 
-	bu_vls_printf(&gedp->ged_result_str, "  NOT FOUND\n", (char *)NULL);
+	bu_vls_printf(&gedp->ged_result_str, "  NOT FOUND\n");
     }
 
-    return BRLCAD_OK;
+    return GED_OK;
 }
 
 

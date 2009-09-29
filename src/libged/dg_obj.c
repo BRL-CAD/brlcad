@@ -33,6 +33,15 @@
 #include <string.h>
 #include <limits.h>
 #include <errno.h>
+
+#ifdef HAVE_SYS_TYPES_H
+#   include <sys/types.h>
+#endif
+
+#ifdef HAVE_SYS_WAIT_H
+#   include <sys/wait.h>
+#endif
+
 #include "bio.h"
 
 #include "tcl.h"
@@ -3621,7 +3630,7 @@ dgo_eraseobjall(struct dg_obj			*dgop,
     sp = BU_LIST_NEXT(solid, &dgop->dgo_headSolid);
     while (BU_LIST_NOT_HEAD(sp, &dgop->dgo_headSolid)) {
 	nsp = BU_LIST_PNEXT(solid, sp);
-	if (db_full_path_subset(&sp->s_fullpath, &subpath)) {
+	if (db_full_path_subset(&sp->s_fullpath, &subpath, 0)) {
 	    BU_LIST_DEQUEUE(&sp->l);
 	    FREE_SOLID(sp, &FreeSolid.l);
 	}
@@ -3711,7 +3720,7 @@ dgo_eraseobj(struct dg_obj		*dgop,
     sp = BU_LIST_FIRST(solid, &dgop->dgo_headSolid);
     while (BU_LIST_NOT_HEAD(sp, &dgop->dgo_headSolid)) {
 	nsp = BU_LIST_PNEXT(solid, sp);
-	if (db_full_path_subset(&sp->s_fullpath, &subpath)) {
+	if (db_full_path_subset(&sp->s_fullpath, &subpath, 0)) {
 	    BU_LIST_DEQUEUE(&sp->l);
 	    FREE_SOLID(sp, &FreeSolid.l);
 	}

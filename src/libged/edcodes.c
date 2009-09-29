@@ -33,7 +33,8 @@
 #include "./ged_private.h"
 
 
-#define ABORTED		-99
+#define ABORTED -99
+#define MAX_LEVELS 12
 
 static int ged_id_compare(const void *p1, const void *p2);
 static int ged_reg_compare(const void *p1, const void *p2);
@@ -42,10 +43,14 @@ static int regflag;
 static int lastmemb;
 static char tmpfil[MAXPATHLEN] = {0};
 
+static void traverse_node(struct db_i *dbip, struct rt_comb_internal *comb, union tree *comb_leaf, genptr_t user_ptr1, genptr_t user_ptr2, genptr_t user_ptr3);
+static int collect_regnames(struct ged *gedp, struct directory *dp, int pathpos);
+
 int
 ged_edcodes(struct ged *gedp, int argc, const char *argv[])
 {
     int i;
+    int nflag = 0;
     int status;
     int sort_by_ident=0;
     int sort_by_region=0;
@@ -53,11 +58,11 @@ ged_edcodes(struct ged *gedp, int argc, const char *argv[])
     char **av;
     FILE *fp = NULL;
 
-    static const char *usage = "object(s)";
+    static const char *usage = "[-i|-n|-r] object(s)";
 
-    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
-    GED_CHECK_READ_ONLY(gedp, BRLCAD_ERROR);
-    GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
+    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
+    GED_CHECK_READ_ONLY(gedp, GED_ERROR);
+    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
 
     /* initialize result */
     bu_vls_trunc(&gedp->ged_result_str, 0);
@@ -65,14 +70,17 @@ ged_edcodes(struct ged *gedp, int argc, const char *argv[])
     /* must be wanting help */
     if (argc == 1) {
 	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return BRLCAD_HELP;
+	return GED_HELP;
     }
 
     bu_optind = 1;
-    while ((c = bu_getopt(argc, (char * const *)argv, "ir")) != EOF) {
+    while ((c = bu_getopt(argc, (char * const *)argv, "inr")) != EOF) {
 	switch( c ) {
 	    case 'i':
 		sort_by_ident = 1;
+		break;
+	    case 'n':
+		nflag = 1;
 		break;
 	    case 'r':
 		sort_by_region = 1;
@@ -80,17 +88,36 @@ ged_edcodes(struct ged *gedp, int argc, const char *argv[])
 	}
     }
 
-    if ((sort_by_ident + sort_by_region) > 1) {
-	bu_vls_printf(&gedp->ged_result_str, "%s: can only sort by region or ident, not both\n", argv[0]);
-	return BRLCAD_ERROR;
+    if ((nflag + sort_by_ident + sort_by_region) > 1) {
+	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	return GED_ERROR;
     }
 
     argc -= (bu_optind - 1);
     argv += (bu_optind - 1);
 
+    if (nflag) {
+	struct directory *dp;
+
+	for (i = 1; i < argc; ++i) {
+	    if ((dp = db_lookup(gedp->ged_wdbp->dbip, argv[i], LOOKUP_NOISY)) != DIR_NULL) {
+		status = collect_regnames(gedp, dp, 0);
+
+		if (status == GED_ERROR) {
+		    if (regflag == ABORTED)
+			bu_vls_printf(&gedp->ged_result_str, "%s: nesting is too deep\n", argv[0]);
+
+		    return GED_ERROR;
+		}
+	    }
+	}
+
+	return GED_OK;
+    }
+
     fp = bu_temp_file(tmpfil, MAXPATHLEN);
     if (!fp)
-	return BRLCAD_ERROR;
+	return GED_ERROR;
 
     av = (char **)bu_malloc(sizeof(char *)*(argc + 2), "ged_edcodes: av");
     av[0] = "wcodes";
@@ -100,10 +127,10 @@ ged_edcodes(struct ged *gedp, int argc, const char *argv[])
 
     av[i] = NULL;
 
-    if (ged_wcodes(gedp, argc + 1, (const char **)av) == BRLCAD_ERROR) {
+    if (ged_wcodes(gedp, argc + 1, (const char **)av) == GED_ERROR) {
 	(void)unlink(tmpfil);
 	bu_free((genptr_t)av, "ged_edcodes: av");
-	return BRLCAD_ERROR;
+	return GED_ERROR;
     }
 
     (void)fclose(fp);
@@ -111,7 +138,7 @@ ged_edcodes(struct ged *gedp, int argc, const char *argv[])
     if (regflag == ABORTED) {
 	bu_vls_printf(&gedp->ged_result_str, "%s: nesting is too deep\n", argv[0]);
 	(void)unlink(tmpfil);
-	return BRLCAD_ERROR;
+	return GED_ERROR;
     }
 
     if (sort_by_ident || sort_by_region) {
@@ -124,7 +151,7 @@ ged_edcodes(struct ged *gedp, int argc, const char *argv[])
 	if ((f_srt=fopen(tmpfil, "r+" )) == NULL) {
 	    bu_vls_printf(&gedp->ged_result_str, "%s: Failed to open temp file for sorting\n", argv[0]);
 	    (void)unlink(tmpfil);
-	    return BRLCAD_ERROR;
+	    return GED_ERROR;
 	}
 
 	/* count lines */
@@ -166,7 +193,7 @@ ged_edcodes(struct ged *gedp, int argc, const char *argv[])
 	av[2] = NULL;
 	status = ged_rcodes(gedp, 2, (const char **)av);
     } else
-	status = BRLCAD_ERROR;
+	status = GED_ERROR;
 
     unlink(tmpfil);
     bu_free((genptr_t)av, "ged_edcodes: av");
@@ -193,6 +220,77 @@ ged_reg_compare(const void *p1, const void *p2)
     reg2 = strchr(*(char **)p2, '/');
 
     return strcmp(reg1, reg2);
+}
+
+static void
+traverse_node(struct db_i *dbip,
+	     struct rt_comb_internal *comb,
+	     union tree *comb_leaf,
+	     genptr_t user_ptr1,
+	     genptr_t user_ptr2,
+	     genptr_t user_ptr3)
+{
+    int *pathpos;
+    struct directory *nextdp;
+    struct ged *gedp;
+
+    RT_CK_DBI(dbip);
+    RT_CK_TREE(comb_leaf);
+
+    if ((nextdp=db_lookup(dbip, comb_leaf->tr_l.tl_name, LOOKUP_NOISY)) == DIR_NULL)
+	return;
+
+    pathpos = (int *)user_ptr2;
+    gedp = (struct ged *)user_ptr3; 
+
+    /* recurse on combinations */
+    if (nextdp->d_flags & DIR_COMB)
+	(void)collect_regnames(gedp, nextdp, (*pathpos)+1);
+}
+
+static int
+collect_regnames(struct ged *gedp, struct directory *dp, int pathpos)
+{
+    int i;
+    struct rt_db_internal intern;
+    struct rt_comb_internal *comb;
+    int id;
+
+    if (pathpos >= MAX_LEVELS) {
+	regflag = ABORTED;
+	return GED_ERROR;
+    }
+
+    if (!(dp->d_flags & RT_DIR_COMB))
+	return GED_OK;
+
+    if ((id=rt_db_get_internal(&intern, dp, gedp->ged_wdbp->dbip,
+			       (matp_t)NULL, &rt_uniresource)) < 0) {
+	bu_vls_printf(&gedp->ged_result_str,
+		      "collect_regnames: Cannot get records for %s\n", dp->d_namep);
+	return GED_ERROR;
+    }
+
+    if (id != ID_COMBINATION) {
+	intern.idb_meth->ft_ifree(&intern, &rt_uniresource);
+	return GED_OK;
+    }
+
+    comb = (struct rt_comb_internal *)intern.idb_ptr;
+    RT_CK_COMB(comb);
+
+    if (comb->region_flag) {
+	bu_vls_printf(&gedp->ged_result_str, " %s", dp->d_namep);
+	intern.idb_meth->ft_ifree(&intern, &rt_uniresource);
+	return GED_OK;
+    }
+
+    if (comb->tree)
+	db_tree_funcleaf(gedp->ged_wdbp->dbip, comb, comb->tree, traverse_node,
+			 (genptr_t)0, (genptr_t)&pathpos, (genptr_t)gedp);
+
+    intern.idb_meth->ft_ifree(&intern, &rt_uniresource);
+    return GED_OK;
 }
 
 

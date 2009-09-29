@@ -56,7 +56,7 @@ typedef struct render_flos_s {
     TIE_3 frag_pos;
 } render_flos_t;
 
-void render_flos_init(render_t *render, TIE_3 frag_pos);
+void render_flos_init(render_t *render, char *frag_pos);
 void render_flos_free(render_t *render);
 void render_flos_work(render_t *render, tie_t *tie, tie_ray_t *ray, TIE_3 *pixel);
 

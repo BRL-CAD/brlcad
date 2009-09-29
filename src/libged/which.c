@@ -48,8 +48,8 @@ ged_which(struct ged *gedp, int argc, const char *argv[])
     static const char *usageAir = "code(s)";
     static const char *usageIds = "region_id(s)";
 
-    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
-    GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
+    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
+    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
 
     /* initialize result */
     bu_vls_trunc(&gedp->ged_result_str, 0);
@@ -65,7 +65,7 @@ ged_which(struct ged *gedp, int argc, const char *argv[])
 	    bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usageAir);
 	else
 	    bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usageIds);
-	return BRLCAD_HELP;
+	return GED_HELP;
     }
 
     if (MAXARGS < argc) {
@@ -73,7 +73,7 @@ ged_which(struct ged *gedp, int argc, const char *argv[])
 	    bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usageAir);
 	else
 	    bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usageIds);
-	return BRLCAD_ERROR;
+	return GED_ERROR;
     }
 
     if (strcmp(argv[1], "-s") == 0) {
@@ -86,7 +86,7 @@ ged_which(struct ged *gedp, int argc, const char *argv[])
 	    else
 		bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usageIds);
 
-	    return BRLCAD_ERROR;
+	    return GED_ERROR;
 	}
 
 	sflag = 1;
@@ -156,7 +156,7 @@ ged_which(struct ged *gedp, int argc, const char *argv[])
 
 	    if (rt_db_get_internal( &intern, dp, gedp->ged_wdbp->dbip, (fastf_t *)NULL, &rt_uniresource ) < 0) {
 		bu_vls_printf(&gedp->ged_result_str, "Database read error, aborting");
-		return BRLCAD_ERROR;
+		return GED_ERROR;
 	    }
 	    comb = (struct rt_comb_internal *)intern.idb_ptr;
 	    /* check to see if the region id or air code matches one in our list */
@@ -198,7 +198,7 @@ ged_which(struct ged *gedp, int argc, const char *argv[])
 	bu_free((genptr_t)itnp, "which: itnp");
     }
 
-    return BRLCAD_OK;
+    return GED_OK;
 }
 
 

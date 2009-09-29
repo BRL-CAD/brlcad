@@ -21,7 +21,7 @@
 /** @{ */
 /** @file fopen_uniq.c
  *
- * @brief Routine to open a unique filename.
+ * @brief DEPRECATED: Routine to open a unique filename.
  *
  */
 
@@ -46,6 +46,7 @@
  * B U _ F O P E N _ U N I Q
  * @brief
  * Open a file for output.  Assures that the file did not previously exist.
+ * This routine is DEPRECATED.  Do not use.
  *
  * Typical Usages:
  @code
@@ -74,14 +75,17 @@ bu_fopen_uniq(const char *outfmt, const char *namefmt, int n)
 
     bu_semaphore_acquire(BU_SEM_SYSCALL);
 
+    printf("DEVELOPER DEPRECATION NOTICE: bu_fopen_uniq is deprecated, use fopen instead\n");
+
     /* NOTE: can't call bu_log because of the semaphore */
 
     snprintf(filename, MAXPATHLEN, namefmt, n);
     if ((fd = open(filename, O_RDWR|O_CREAT|O_EXCL, 0600)) < 0) {
-	bu_exit(-1, "Cannot open %s, %s\n", filename, strerror(errno));
+	fprintf(stderr, "Cannot open %s, %s\n", filename, strerror(errno));
+	return NULL;
     }
     if ((fp=fdopen(fd, "w")) == (FILE *)NULL) {
-	bu_exit(-1, "%s", strerror(errno));
+	fprintf(stderr, "%s", strerror(errno));
     }
 
     if (outfmt)

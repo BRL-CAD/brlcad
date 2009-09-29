@@ -24,8 +24,8 @@
 #
 #==============================================================================
 
-set helplib_data(dm_bg)			{{["r g b"]} {Get/set background color}}
-set helplib_data(dm_bounds)		{{["xmin xmax ymin ymax zmin zmax"]} {Set/get window bounds}}
+set helplib_data(dm_bg)			{{[r g b]} {Get/set background color}}
+set helplib_data(dm_bounds)		{{[xmin xmax ymin ymax zmin zmax]} {Set/get window bounds}}
 set helplib_data(dm_close)		{{} {close/destroy this display manager object}}
 set helplib_data(dm_open)		{{[name type [args]]} {Open/create a display manager object}}
 set helplib_data(dm_configure)		{{} {configure window parameters}}
@@ -41,7 +41,7 @@ set helplib_data(dm_drawModelAxes)	{{vsize rmat apos asize acolor lcolor lw v2m_
 set helplib_data(dm_drawViewAxes)	{{vsize rmat apos asize acolor lcolor lw} {draw view axes with labels}}
 set helplib_data(dm_drawCenterDot)	{{color} {draw center dot using specified color}}
 set helplib_data(dm_drawGeom)		{{obj(s)} {draw the specified geometry object(s)}}
-set helplib_data(dm_fg)			{{["r g b"]} {Get/set foreground color}}
+set helplib_data(dm_fg)			{{[r g b]} {Get/set foreground color}}
 set helplib_data(dm_linewidth)		{{[width]} {Set/get line width}}
 set helplib_data(dm_linestyle)		{{[0|1]} {Set/get line style}}
 set helplib_data(dm_zclip)		{{[flag]} {Set/get zclip flag}}
@@ -104,7 +104,7 @@ set helplib_data(wdb_move_arb_edge)	{{arb edge pt} {move an arb's edge through p
 set helplib_data(wdb_move_arb_face)	{{arb face pt} {move an arb's face through pt}}
 set helplib_data(wdb_rotate_arb_face)	{{arb face pt} {rotate an arb's face through pt}}
 set helplib_data(wdb_move)		{{from to} {rename a database object}}
-set helplib_data(wdb_moveall)		{{from to} {rename all occurences of object}}
+set helplib_data(wdb_moveall)		{{[-n] from to} {rename all occurences of object.  only reports matches without renaming with the -n option.}}
 set helplib_data(wdb_nmg_collapse)	{{nmg_solid new_solid maximum_error_distance [minimum_allowed_angle]}	{decimate NMG solid via edge collapse}}
 set helplib_data(wdb_nmg_simplify)	{{[arb|tgc|ell|poly] new_solid nmg_solid}	{simplify nmg_solid, if possible}}
 set helplib_data(wdb_observer)		{{cmd [args]} {Attach/detach observer to/from list}}
@@ -171,13 +171,13 @@ set helplib_data(vo_zoom)		{{sf} {zoom view by specified scale factor}}
 
 set helplib_data(dgo_assoc)		{{[wdb_obj]} {set/get the associated database object}}
 set helplib_data(dgo_autoview)		{{view_obj} {calculate an appropriate view size and center for view_obj}}
-set helplib_data(dgo_blast)		{{"[-A] [-o] [-C#/#/#] [-s] <object(s) | attribute name/value pairs>"} {erase all currently displayed geometry and draw the specified object(s)}}
+set helplib_data(dgo_blast)		{{[-A] [-o] [-C#/#/#] [-s] <object(s) | attribute name/value pairs>} {erase all currently displayed geometry and draw the specified object(s)}}
 set helplib_data(dgo_clear)		{{} {erase all objects from the display}}
-set helplib_data(dgo_draw)		{{"[-A] [-o] [-C#/#/#] [-s] <objects | attribute name/value pairs>"} {prepare object(s) for display}}
-set helplib_data(dgo_E)			{{"[-C#/#/#] [-s] <objects>"} {evaluated display of objects}}
+set helplib_data(dgo_draw)		{{[-A] [-o] [-C#/#/#] [-s] <objects | attribute name/value pairs>} {prepare object(s) for display}}
+set helplib_data(dgo_E)			{{[-C#/#/#] [-s] <objects>} {evaluated display of objects}}
 set helplib_data(dgo_erase)		{{<objects>} {erase objects from the display}}
 set helplib_data(dgo_erase_all)		{{<objects>} {erase all occurrences of objects from the display}}
-set helplib_data(dgo_ev)		{{"[-dfnstuvwT] [-P #] <objects>"}	{evaluate objects via NMG tessellation}}
+set helplib_data(dgo_ev)		{{[-dfnstuvwT] [-P #] <objects>}	{evaluate objects via NMG tessellation}}
 set helplib_data(dgo_get_autoview)	{{}	{get view size and center such that all displayed solids would be in view}}
 set helplib_data(dgo_headSolid)		{{} {return pointer to solid list}}
 set helplib_data(dgo_how)		{{[-b] obj}	{returns how an object is being displayed}}

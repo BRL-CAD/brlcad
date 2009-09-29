@@ -301,7 +301,7 @@ debugging facilities.  Disabling the run-time debugging facilities can
 provide a significant (10%-30%) performance boost at the expense of
 extensive error checking (that in turn help prevent corruption of your
 data).  Default is "yes", and should only be disabled for read-only
-render work where performance is critical.  Alises:
+render work where performance is critical.  Aliases:
 	--enable-run-time-debug
 	--enable-runtime-debugging
 	--enable-run-time-debugging
@@ -636,6 +636,19 @@ Setting Up the Manual Pages Path:
 It may be useful to add /usr/brlcad/man to your MANPATH in the same
 manner as shown above for PATH.  Conversely, you can use the `brlman'
 command that is already preconfigured to locate the BRL-CAD manpages.
+
+
+Configuring permissions uniformly with group read/write access:
+
+find /usr/brlcad -type d -exec chmod ug+rwx {} \; -exec chmod o+rx {} \; -o -type f -exec chmod ug+rw {} \; -exec chmod o+r {} \;
+
+The above 'find' line will set up permissions across a /usr/brlcad
+rooted installation such that 'user' and 'group' will have read-write
+access and 'other' will have read access consistently across all
+files.  This is a common configuration used by BRL-CAD developers that
+allows shared management of installations amongst developers while
+having all users maintain read-only access.
+
 
 
 TESTING FUNCTIONALITY

@@ -5,6 +5,7 @@ bin_PROGRAMS = \
 	fence \
 	gastank \
 	handle \
+	human \
 	picket_fence \
 	tire \
 	window \
@@ -19,6 +20,10 @@ coil_SOURCES = coil.c
 fence_SOURCES = fence.c
 gastank_SOURCES = gastank.c
 handle_SOURCES = handle.c
+human_SOURCES = human.c
+human_LDADD = \
+	${GED} \
+	${WDB}
 picket_fence_SOURCES = picket_fence.c
 
 tire_SOURCES = tire.c
@@ -32,6 +37,8 @@ wire_SOURCES = wire.c
 
 noinst_HEADERS = fence.h
 
+DEPENDS = src/libged src/libwdb
+
 include $(top_srcdir)/misc/Makefile.defs
 
 FAST_OBJECTS = \
@@ -40,6 +47,7 @@ FAST_OBJECTS = \
 	$(fence_OBJECTS) \
 	$(gastank_OBJECTS) \
 	$(handle_OBJECTS) \
+	$(human_OBJECTS) \
 	$(picket_fence_OBJECTS) \
 	$(tire_OBJECTS) \
 	$(window_OBJECTS) \

@@ -47,9 +47,9 @@ ged_orotate(struct ged *gedp, int argc, const char *argv[])
     point_t keypoint;
     static const char *usage = "obj rX rY rZ [kX kY kZ]";
 
-    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
-    GED_CHECK_READ_ONLY(gedp, BRLCAD_ERROR);
-    GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
+    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
+    GED_CHECK_READ_ONLY(gedp, GED_ERROR);
+    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
 
     /* initialize result */
     bu_vls_trunc(&gedp->ged_result_str, 0);
@@ -57,39 +57,39 @@ ged_orotate(struct ged *gedp, int argc, const char *argv[])
     /* must be wanting help */
     if (argc == 1) {
 	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return BRLCAD_HELP;
+	return GED_HELP;
     }
 
     if (argc != 5 && argc != 8) {
 	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return BRLCAD_ERROR;
+	return GED_ERROR;
     }
 
     if (sscanf(argv[2], "%lf", &xrot) != 1) {
 	bu_vls_printf(&gedp->ged_result_str, "%s: bad rX value - %s", argv[0], argv[2]);
-	return BRLCAD_ERROR;
+	return GED_ERROR;
     }
 
     if (sscanf(argv[3], "%lf", &yrot) != 1) {
 	bu_vls_printf(&gedp->ged_result_str, "%s: bad rY value - %s", argv[0], argv[3]);
-	return BRLCAD_ERROR;
+	return GED_ERROR;
     }
 
     if (sscanf(argv[4], "%lf", &zrot) != 1) {
 	bu_vls_printf(&gedp->ged_result_str, "%s: bad rZ value - %s", argv[0], argv[4]);
-	return BRLCAD_ERROR;
+	return GED_ERROR;
     }
 
     if (argc == 5) {
 	/* Use the object's center as the keypoint. */
 
-	if (ged_get_obj_bounds2(gedp, 1, argv+1, &gtd, rpp_min, rpp_max) == BRLCAD_ERROR)
-	    return BRLCAD_ERROR;
+	if (ged_get_obj_bounds2(gedp, 1, argv+1, &gtd, rpp_min, rpp_max) == GED_ERROR)
+	    return GED_ERROR;
 
 	dp = gtd.gtd_obj[gtd.gtd_objpos-1];
 	if (!(dp->d_flags & DIR_SOLID)) {
-	    if (ged_get_obj_bounds(gedp, 1, argv+1, 1, rpp_min, rpp_max) == BRLCAD_ERROR)
-		return BRLCAD_ERROR;
+	    if (ged_get_obj_bounds(gedp, 1, argv+1, 1, rpp_min, rpp_max) == GED_ERROR)
+		return GED_ERROR;
 	}
 
 	VADD2(keypoint, rpp_min, rpp_max);
@@ -100,24 +100,24 @@ ged_orotate(struct ged *gedp, int argc, const char *argv[])
 
 	if (sscanf(argv[5], "%lf", &keypoint[X]) != 1) {
 	    bu_vls_printf(&gedp->ged_result_str, "%s: bad kX value - %s", argv[0], argv[5]);
-	    return BRLCAD_ERROR;
+	    return GED_ERROR;
 	}
 
 	if (sscanf(argv[6], "%lf", &keypoint[Y]) != 1) {
 	    bu_vls_printf(&gedp->ged_result_str, "%s: bad kY value - %s", argv[0], argv[6]);
-	    return BRLCAD_ERROR;
+	    return GED_ERROR;
 	}
 
 	if (sscanf(argv[7], "%lf", &keypoint[Z]) != 1) {
 	    bu_vls_printf(&gedp->ged_result_str, "%s: bad kZ value - %s", argv[0], argv[7]);
-	    return BRLCAD_ERROR;
+	    return GED_ERROR;
 	}
 
 	VSCALE(keypoint, keypoint, gedp->ged_wdbp->dbip->dbi_local2base);
 
 	if ((dp = db_lookup(gedp->ged_wdbp->dbip,  argv[1],  LOOKUP_QUIET)) == DIR_NULL) {
 	    bu_vls_printf(&gedp->ged_result_str, "%s: %s not found", argv[0], argv[1]);
-	    return BRLCAD_ERROR;
+	    return GED_ERROR;
 	}
     }
 
@@ -128,16 +128,16 @@ ged_orotate(struct ged *gedp, int argc, const char *argv[])
     bn_mat_mul(tmpMat, invXform, pmat);
     bn_mat_mul(emat, tmpMat, gtd.gtd_xform);
 
-    GED_DB_GET_INTERNAL(gedp, &intern, dp, emat, &rt_uniresource, BRLCAD_ERROR);
+    GED_DB_GET_INTERNAL(gedp, &intern, dp, emat, &rt_uniresource, GED_ERROR);
     RT_CK_DB_INTERNAL(&intern);
-    GED_DB_PUT_INTERNAL(gedp, dp, &intern, &rt_uniresource, BRLCAD_ERROR);
+    GED_DB_PUT_INTERNAL(gedp, dp, &intern, &rt_uniresource, GED_ERROR);
 
 #if 0
     /* notify observers */
     bu_observer_notify(interp, &gedp->wdb_observers, bu_vls_addr(&gedp->wdb_name));
 #endif
 
-    return BRLCAD_OK;
+    return GED_OK;
 }
 
 

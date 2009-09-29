@@ -26,9 +26,7 @@
 #ifndef __DM_COLOR__
 #define __DM_COLOR__
 
-extern unsigned long dm_get_pixel(unsigned char r, unsigned char g, unsigned char b, long unsigned int *pixels, int cd);
-extern void dm_copy_default_colors();
-extern void dm_allocate_color_cube();
+#warning "The dm_color.h header is deprecated -- use dm.h instead"
 
 #endif /* __DM_COLOR__ */
 

@@ -3198,7 +3198,7 @@ rt_pipe_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, c
  * R T _ P I P E _ I M P O R T
  */
 int
-rt_pipe_import(struct rt_db_internal *ip, const struct bu_external *ep, register const fastf_t *mat, const struct db_i *dbip)
+rt_pipe_import4(struct rt_db_internal *ip, const struct bu_external *ep, register const fastf_t *mat, const struct db_i *dbip)
 {
     register struct exported_pipept *exp;
     register struct wdb_pipept *ptp;
@@ -3210,7 +3210,7 @@ rt_pipe_import(struct rt_db_internal *ip, const struct bu_external *ep, register
     rp = (union record *)ep->ext_buf;
     /* Check record type */
     if (rp->u_id != DBID_PIPE) {
-        bu_log("rt_pipe_import: defective record\n");
+        bu_log("rt_pipe_import4: defective record\n");
         return(-1);
     }
     
@@ -3253,7 +3253,7 @@ rt_pipe_import(struct rt_db_internal *ip, const struct bu_external *ep, register
  * R T _ P I P E _ E X P O R T
  */
 int
-rt_pipe_export(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip)
+rt_pipe_export4(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip)
 {
     struct rt_pipe_internal *pip;
     struct bu_list *headp;
@@ -3520,7 +3520,8 @@ rt_pipe_ifree(struct rt_db_internal *ip, struct resource *resp)
  * Check pipe solid.  Bend radius must be at least as large as the
  * outer radius.  All bends must have constant diameters.  No
  * consecutive LINEAR sections without BENDS unless the LINEAR
- * sections are collinear.
+ * sections are collinear.  Inner diameter must be less than outer
+ * diameter.
  */
 int
 rt_pipe_ck(const struct bu_list *headp)
@@ -3532,18 +3533,32 @@ rt_pipe_ck(const struct bu_list *headp)
     fastf_t v2_len=0.0;
     
     prev = BU_LIST_FIRST(wdb_pipept, headp);
+
+    if (prev->pp_id >= prev->pp_od) {
+        bu_log("Inner diameter (%gmm) has to be less than outer diameter (%gmm)\n",
+	   prev->pp_id, prev->pp_od);
+        error_count++;
+    }
+
     if (prev->pp_bendradius < prev->pp_od * 0.5) {
         bu_log("Bend radius (%gmm) is less than outer radius at (%g %g %g)\n",
 	       prev->pp_bendradius, V3ARGS(prev->pp_coord));
         error_count++;
     }
+
     cur = BU_LIST_NEXT(wdb_pipept, &prev->l);
     next = BU_LIST_NEXT(wdb_pipept, &cur->l);
     while (BU_LIST_NOT_HEAD(&next->l, headp)) {
         vect_t v1, v2, norm;
         fastf_t v1_len;
         fastf_t angle;
-        
+
+        if (cur->pp_id >= cur->pp_od) {
+            bu_log("Inner diameter (%gmm) has to be less than outer diameter (%gmm)\n",
+		   cur->pp_id, cur->pp_od);
+            error_count++;
+        }
+
         if (cur->pp_bendradius < cur->pp_od * 0.5) {
             bu_log("Bend radius (%gmm) is less than outer radius at (%g %g %g)\n",
 		   cur->pp_bendradius, V3ARGS(cur->pp_coord));
@@ -3595,7 +3610,13 @@ rt_pipe_ck(const struct bu_list *headp)
 	cur = next;
 	next = BU_LIST_NEXT(wdb_pipept, &cur->l);
     }
-    
+
+    if (cur->pp_id >= cur->pp_od) {
+        bu_log("Inner diameter (%gmm) has to be less than outer diameter (%gmm)\n",
+	   cur->pp_id, cur->pp_od);
+        error_count++;
+    }
+
     if (old_bend_dist > v2_len) {
         error_count++;
         bu_log("last segment (%g %g %g) to (%g %g %g) is too short to allow\n",
@@ -3787,12 +3808,7 @@ rt_pipe_adjust(struct bu_vls *log, struct rt_db_internal *intern, int argc, char
                 Tcl_DecrRefCount(list);
                 break;
             case 'I':
-                tmp = atof(argv[1]);
-                if (tmp >= ptp->pp_od) {
-                    bu_vls_printf(log, "inner diameter must be less than outer diameter");
-                    return BRLCAD_ERROR;
-                }
-                ptp->pp_id = tmp;
+                ptp->pp_id = atof(argv[1]);
                 break;
             case 'O':
                 tmp = atof(argv[1]);
@@ -3800,19 +3816,10 @@ rt_pipe_adjust(struct bu_vls *log, struct rt_db_internal *intern, int argc, char
                     bu_vls_printf(log, "outer diameter cannot be 0.0 or less");
                     return BRLCAD_ERROR;
                 }
-                if (tmp <= ptp->pp_id) {
-                    bu_vls_printf(log, "outer diameter must be greater than inner diameter");
-                    return BRLCAD_ERROR;
-                }
                 ptp->pp_od = tmp;
                 break;
             case 'R':
-                tmp = atof(argv[1]);
-                if (tmp < ptp->pp_od * 0.5) {
-                    bu_vls_printf(log, "cannot set bend radius to less than outer radius");
-                    return BRLCAD_ERROR;
-                }
-                ptp->pp_bendradius = tmp;
+                ptp->pp_bendradius = atof(argv[1]);
                 break;
             default:
                 bu_vls_printf(log, "unrecognized attribute, choices are V, I, O, or R");
@@ -3823,7 +3830,7 @@ rt_pipe_adjust(struct bu_vls *log, struct rt_db_internal *intern, int argc, char
         argv += 2;
     }
     
-    return(TCL_OK);
+    return (rt_pipe_ck(&pipe->pipe_segs_head) == 0) ? TCL_OK : BRLCAD_ERROR;
 }
 
 /**

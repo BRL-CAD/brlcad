@@ -797,7 +797,7 @@ rt_superell_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *i
  * internal structure.  Apply modeling transformations as wsuperell.
  */
 int
-rt_superell_import(struct rt_db_internal *ip, const struct bu_external *ep, register const fastf_t *mat, const struct db_i *dbip)
+rt_superell_import4(struct rt_db_internal *ip, const struct bu_external *ep, register const fastf_t *mat, const struct db_i *dbip)
 {
     struct rt_superell_internal	*eip;
     union record		*rp;
@@ -807,7 +807,7 @@ rt_superell_import(struct rt_db_internal *ip, const struct bu_external *ep, regi
     rp = (union record *)ep->ext_buf;
     /* Check record type */
     if ( rp->u_id != ID_SOLID )  {
-	bu_log("rt_superell_import: defective record\n");
+	bu_log("rt_superell_import4: defective record\n");
 	return(-1);
     }
 
@@ -838,7 +838,7 @@ rt_superell_import(struct rt_db_internal *ip, const struct bu_external *ep, regi
  * R T _ S U P E R E L L _ E X P O R T
  */
 int
-rt_superell_export(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip)
+rt_superell_export4(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip)
 {
     struct rt_superell_internal	*tip;
     union record		*rec;

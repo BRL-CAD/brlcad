@@ -41,42 +41,54 @@
 int
 ged_autoview(struct ged *gedp, int argc, const char *argv[])
 {
+    register struct ged_display_list *gdlp;
+    register struct ged_display_list *next_gdlp;
     register struct solid	*sp;
+    register int is_empty = 1;
     vect_t		min, max;
     vect_t		minus, plus;
     vect_t		center;
     vect_t		radial;
     vect_t		sqrt_small;
 
-    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
-    GED_CHECK_DRAWABLE(gedp, BRLCAD_ERROR);
-    GED_CHECK_VIEW(gedp, BRLCAD_ERROR);
-    GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
+    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
+    GED_CHECK_DRAWABLE(gedp, GED_ERROR);
+    GED_CHECK_VIEW(gedp, GED_ERROR);
+    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
 
     /* initialize result */
     bu_vls_trunc(&gedp->ged_result_str, 0);
 
     if (argc != 1) {
 	bu_vls_printf(&gedp->ged_result_str, "Usage: %s", argv[0]);
-	return BRLCAD_ERROR;
+	return GED_ERROR;
     }
 
     VSETALL(min,  INFINITY);
     VSETALL(max, -INFINITY);
     VSETALL(sqrt_small, SQRT_SMALL_FASTF);
 
-    FOR_ALL_SOLIDS(sp, &gedp->ged_gdp->gd_headSolid) {
-	minus[X] = sp->s_center[X] - sp->s_size;
-	minus[Y] = sp->s_center[Y] - sp->s_size;
-	minus[Z] = sp->s_center[Z] - sp->s_size;
-	VMIN(min, minus);
-	plus[X] = sp->s_center[X] + sp->s_size;
-	plus[Y] = sp->s_center[Y] + sp->s_size;
-	plus[Z] = sp->s_center[Z] + sp->s_size;
-	VMAX(max, plus);
+    gdlp = BU_LIST_NEXT(ged_display_list, &gedp->ged_gdp->gd_headDisplay);
+    while (BU_LIST_NOT_HEAD(gdlp, &gedp->ged_gdp->gd_headDisplay)) {
+	next_gdlp = BU_LIST_PNEXT(ged_display_list, gdlp);
+
+	FOR_ALL_SOLIDS(sp, &gdlp->gdl_headSolid) {
+	    minus[X] = sp->s_center[X] - sp->s_size;
+	    minus[Y] = sp->s_center[Y] - sp->s_size;
+	    minus[Z] = sp->s_center[Z] - sp->s_size;
+	    VMIN(min, minus);
+	    plus[X] = sp->s_center[X] + sp->s_size;
+	    plus[Y] = sp->s_center[Y] + sp->s_size;
+	    plus[Z] = sp->s_center[Z] + sp->s_size;
+	    VMAX(max, plus);
+
+	    is_empty = 0;
+	}
+
+	gdlp = next_gdlp;
     }
 
-    if (BU_LIST_IS_EMPTY(&gedp->ged_gdp->gd_headSolid)) {
+    if (is_empty) {
 	/* Nothing is in view */
 	VSETALL(center, 0.0);
 	VSETALL(radial, 1000.0);	/* 1 meter */
@@ -102,7 +114,7 @@ ged_autoview(struct ged *gedp, int argc, const char *argv[])
     gedp->ged_gvp->gv_isize = 1.0 / gedp->ged_gvp->gv_size;
     ged_view_update(gedp->ged_gvp);
 
-    return BRLCAD_OK;
+    return GED_OK;
 }
 
 

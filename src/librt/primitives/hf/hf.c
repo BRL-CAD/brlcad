@@ -1901,7 +1901,7 @@ rt_hf_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, con
  * Apply modeling transformations as well.
  */
 int
-rt_hf_import(struct rt_db_internal *ip, const struct bu_external *ep, register const fastf_t *mat, const struct db_i *dbip)
+rt_hf_import4(struct rt_db_internal *ip, const struct bu_external *ep, register const fastf_t *mat, const struct db_i *dbip)
 {
     struct rt_hf_internal *xip;
     union record *rp;
@@ -1918,7 +1918,7 @@ rt_hf_import(struct rt_db_internal *ip, const struct bu_external *ep, register c
     rp = (union record *)ep->ext_buf;
     /* Check record type */
     if (rp->u_id != DBID_STRSOL) {
-	bu_log("rt_hf_import: defective record\n");
+	bu_log("rt_hf_import4: defective record\n");
 	return(-1);
     }
 
@@ -1947,7 +1947,7 @@ rt_hf_import(struct rt_db_internal *ip, const struct bu_external *ep, register c
     if (bu_struct_parse(&str, rt_hf_parse, (char *)xip) < 0) {
 	bu_vls_free(&str);
     err1:
-	bu_free((char *)xip, "rt_hf_import: xip");
+	bu_free((char *)xip, "rt_hf_import4: xip");
 	ip->idb_type = ID_NULL;
 	ip->idb_ptr = (genptr_t)NULL;
 	return -2;
@@ -1963,7 +1963,7 @@ rt_hf_import(struct rt_db_internal *ip, const struct bu_external *ep, register c
 	bu_semaphore_release(BU_SEM_SYSCALL);
 	if (!fp) {
 	    perror(xip->cfile);
-	    bu_log("rt_hf_import() unable to open cfile=%s\n", xip->cfile);
+	    bu_log("rt_hf_import4() unable to open cfile=%s\n", xip->cfile);
 	    goto err1;
 	}
 	bu_vls_init(&str);
@@ -1973,7 +1973,7 @@ rt_hf_import(struct rt_db_internal *ip, const struct bu_external *ep, register c
 	fclose(fp);
 	bu_semaphore_release(BU_SEM_SYSCALL);
 	if (bu_struct_parse(&str, rt_hf_cparse, (char *)xip) < 0) {
-	    bu_log("rt_hf_import() parse error in cfile input '%s'\n",
+	    bu_log("rt_hf_import4() parse error in cfile input '%s'\n",
 		   bu_vls_addr(&str));
 	    bu_vls_free(&str);
 	    goto err1;
@@ -1983,15 +1983,15 @@ rt_hf_import(struct rt_db_internal *ip, const struct bu_external *ep, register c
     /* Check for reasonable values */
     if (!xip->dfile[0]) {
 	/* XXX Should create 2x2 data file instead, for positioning use (FPO) */
-	bu_log("rt_hf_import() no dfile specified\n");
+	bu_log("rt_hf_import4() no dfile specified\n");
 	goto err1;
     }
     if (xip->w < 2 || xip->n < 2) {
-	bu_log("rt_hf_import() w=%d, n=%d too small\n");
+	bu_log("rt_hf_import4() w=%d, n=%d too small\n");
 	goto err1;
     }
     if (xip->xlen <= 0 || xip->ylen <= 0) {
-	bu_log("rt_hf_import() xlen=%g, ylen=%g too small\n", xip->xlen, xip->ylen);
+	bu_log("rt_hf_import4() xlen=%g, ylen=%g too small\n", xip->xlen, xip->ylen);
 	goto err1;
     }
 
@@ -2012,7 +2012,7 @@ rt_hf_import(struct rt_db_internal *ip, const struct bu_external *ep, register c
 
     /* Prepare for cracking input file format */
     if ((in_cookie = bu_cv_cookie(xip->fmt)) == 0) {
-	bu_log("rt_hf_import() fmt='%s' unknown\n", xip->fmt);
+	bu_log("rt_hf_import4() fmt='%s' unknown\n", xip->fmt);
 	goto err1;
     }
     in_len = bu_cv_itemlen(in_cookie);
@@ -2021,7 +2021,7 @@ rt_hf_import(struct rt_db_internal *ip, const struct bu_external *ep, register c
      * Load data file, and transform to internal format
      */
     if (!(mp = bu_open_mapped_file(xip->dfile, "hf"))) {
-	bu_log("rt_hf_import() unable to open '%s'\n", xip->dfile);
+	bu_log("rt_hf_import4() unable to open '%s'\n", xip->dfile);
 	goto err1;
     }
     xip->mp = mp;
@@ -2045,11 +2045,11 @@ rt_hf_import(struct rt_db_internal *ip, const struct bu_external *ep, register c
 	return 0;		/* OK */
     }
 
-    mp->apbuf = (genptr_t)bu_malloc(mp->apbuflen, "rt_hf_import apbuf[]");
+    mp->apbuf = (genptr_t)bu_malloc(mp->apbuflen, "rt_hf_import4 apbuf[]");
     got = bu_cv_w_cookie(mp->apbuf, out_cookie, mp->apbuflen,
 			 mp->buf, in_cookie, count);
     if (got != count) {
-	bu_log("rt_hf_import(%s) bu_cv_w_cookie count=%d, got=%d\n",
+	bu_log("rt_hf_import4(%s) bu_cv_w_cookie count=%d, got=%d\n",
 	       xip->dfile, count, got);
     }
 
@@ -2072,7 +2072,7 @@ rt_hf_import(struct rt_db_internal *ip, const struct bu_external *ep, register c
  * name).
  */
 int
-rt_hf_export(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip)
+rt_hf_export4(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip)
 {
     struct rt_hf_internal *xip;
     union record *rec;

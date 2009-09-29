@@ -1149,7 +1149,7 @@ rt_arb_class(const struct soltab *stp, const fastf_t *min, const fastf_t *max, c
  * adding in the base vector.
  */
 int
-rt_arb_import(struct rt_db_internal *ip, const struct bu_external *ep, register const fastf_t *mat, const struct db_i *dbip)
+rt_arb_import4(struct rt_db_internal *ip, const struct bu_external *ep, register const fastf_t *mat, const struct db_i *dbip)
 {
     struct rt_arb_internal	*aip;
     union record		*rp;
@@ -1161,7 +1161,7 @@ rt_arb_import(struct rt_db_internal *ip, const struct bu_external *ep, register 
     rp = (union record *)ep->ext_buf;
     /* Check record type */
     if ( rp->u_id != ID_SOLID )  {
-	bu_log("rt_arb_import: defective record, id=x%x\n", rp->u_id);
+	bu_log("rt_arb_import4: defective record, id=x%x\n", rp->u_id);
 	return(-1);
     }
 
@@ -1193,7 +1193,7 @@ rt_arb_import(struct rt_db_internal *ip, const struct bu_external *ep, register 
  * R T _ A R B _ E X P O R T
  */
 int
-rt_arb_export(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip)
+rt_arb_export4(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip)
 {
     struct rt_arb_internal	*aip;
     union record		*rec;
@@ -1225,7 +1225,7 @@ rt_arb_export(struct bu_external *ep, const struct rt_db_internal *ip, double lo
  * R T _ A R B _ I M P O R T 5
  *
  * Import an arb from the db5 format and convert to the internal
- * structure.  Code duplicated from rt_arb_import() with db5 help from
+ * structure.  Code duplicated from rt_arb_import4() with db5 help from
  * g_ell.c
  */
 int

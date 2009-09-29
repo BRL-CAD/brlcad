@@ -1462,7 +1462,7 @@ rt_part_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, c
  *			R T _ P A R T _ I M P O R T
  */
 int
-rt_part_import(struct rt_db_internal *ip, const struct bu_external *ep, register const fastf_t *mat, const struct db_i *dbip)
+rt_part_import4(struct rt_db_internal *ip, const struct bu_external *ep, register const fastf_t *mat, const struct db_i *dbip)
 {
     point_t		v;
     vect_t		h;
@@ -1476,7 +1476,7 @@ rt_part_import(struct rt_db_internal *ip, const struct bu_external *ep, register
     rp = (union record *)ep->ext_buf;
     /* Check record type */
     if ( rp->u_id != DBID_PARTICLE )  {
-	bu_log("rt_part_import: defective record\n");
+	bu_log("rt_part_import4: defective record\n");
 	return(-1);
     }
 
@@ -1548,7 +1548,7 @@ rt_part_import(struct rt_db_internal *ip, const struct bu_external *ep, register
  *			R T _ P A R T _ E X P O R T
  */
 int
-rt_part_export(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip)
+rt_part_export4(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip)
 {
     struct rt_part_internal	*pip;
     union record		*rec;

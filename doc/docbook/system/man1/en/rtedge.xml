@@ -243,13 +243,13 @@
     </para>
     <variablelist remap='TP'>
       <varlistentry>
-	<term><option>-c"set foreground=#,#,#</option></term>
+	<term><option>-c "set foreground=#,#,#"</option></term>
 	<listitem>
 	  <para>and</para>
 	</listitem>
       </varlistentry>
       <varlistentry>
-	<term><option>-c"set fg=#,#,#</option></term>
+	<term><option>-c "set fg=#,#,#"</option></term>
 	<listitem>
 	  <para>
 	    set the color of the foreground (edges) to the
@@ -259,13 +259,13 @@
 	</listitem>
       </varlistentry>
       <varlistentry>
-	<term><option>-c"set background=#,#,#</option></term>
+	<term><option>-c "set background=#,#,#"</option></term>
 	<listitem>
 	  <para>and</para>
 	</listitem>
       </varlistentry>
       <varlistentry>
-	<term><option>-c"set bg=#,#,#</option></term>
+	<term><option>-c "set bg=#,#,#"</option></term>
 	<listitem>
 	  <para>
 	    set the color of the background to the r,g,b
@@ -274,13 +274,13 @@
 	</listitem>
       </varlistentry>
       <varlistentry>
-	<term><option>-c"set region_colors=#</option></term>
+	<term><option>-c "set region_colors=#"</option></term>
 	<listitem>
 	  <para>and</para>
 	</listitem>
       </varlistentry>
       <varlistentry>
-	<term><option>-c"set rc=#</option></term>
+	<term><option>-c "set rc=#"</option></term>
 	<listitem>
 	  <para>
 	    determine whether to use the material color
@@ -292,13 +292,13 @@
 	</listitem>
       </varlistentry>
       <varlistentry>
-	<term><option>-c"set detect_regions=#</option></term>
+	<term><option>-c "set detect_regions=#"</option></term>
 	<listitem>
 	  <para>and</para>
 	</listitem>
       </varlistentry>
       <varlistentry>
-	<term><option>-c"set dr=#</option></term>
+	<term><option>-c "set dr=#"</option></term>
 	<listitem>
 	  <para>
 	    determine whether the boundary between two BRL-CAD regions
@@ -308,13 +308,13 @@
 	</listitem>
       </varlistentry>
       <varlistentry>
-	<term><option>-c"set detect_distance=#</option></term>
+	<term><option>-c "set detect_distance=#"</option></term>
 	<listitem>
 	  <para>and</para>
 	</listitem>
       </varlistentry>
       <varlistentry>
-	<term><option>-c"set dd=#</option></term>
+	<term><option>-c "set dd=#"</option></term>
 	<listitem>
 	  <para>
 	    determine whether a difference in hit distance between
@@ -324,13 +324,13 @@
 	</listitem>
       </varlistentry>
       <varlistentry>
-	<term><option>-c"set detect_normals</option></term>
+	<term><option>-c "set detect_normals"</option></term>
 	<listitem>
 	  <para>and</para>
 	</listitem>
       </varlistentry>
       <varlistentry>
-	<term><option>-c"set dn=#</option></term>
+	<term><option>-c "set dn=#"</option></term>
 	<listitem>
 	  <para>
 	    determine whether a difference in surface normals
@@ -340,13 +340,13 @@
 	</listitem>
       </varlistentry>
       <varlistentry>
-	<term><option>-c"set detect_ids</option></term>
+	<term><option>-c "set detect_ids"</option></term>
 	<listitem>
 	  <para>and</para>
 	</listitem>
       </varlistentry>
       <varlistentry>
-	<term><option>-c"set di=#</option></term>
+	<term><option>-c "set di=#"</option></term>
 	<listitem>
 	  <para>
 	    determine whether a difference in component id numbers
@@ -356,13 +356,13 @@
 	</listitem>
       </varlistentry>
       <varlistentry>
-	<term><option>-c"set overlaymode=#</option></term>
+	<term><option>-c "set overlaymode=#"</option></term>
 	<listitem>
 	  <para>and</para>
 	</listitem>
       </varlistentry>
       <varlistentry>
-	<term><option>-c"set ov=#</option></term>
+	<term><option>-c "set ov=#"</option></term>
 	<listitem>
 	  <para>
 	    configure the overlay mode to be either on (1) or off (0).
@@ -371,17 +371,53 @@
 	    specified with the -F option.
 	  </para>
 	</listitem>
+      </varlistentry>
+      <varlistentry>
+	<term><option>-c "set max_dist=#"</option></term>
 	<listitem>
 	  <para>and</para>
 	</listitem>
       </varlistentry>
       <varlistentry>
-	<term><option>-c"set max_dist=#</option></term>
+	<term><option>-c "set md=#"</option></term>
 	<listitem>
 	  <para>
-	    over-ride the maximum hit distance of neighboring pixels before being 
-	    declared an edge. The default value is computed based on the size of 
-	    the output image, approximately 1000 for the default image/fb size.
+	    override the maximum hit distance of neighboring pixels
+	    before being declared an edge. The default value is
+	    computed based on the size of the output image,
+	    approximately 1000 for the default image/fb size.
+	  </para>
+	</listitem>
+      </varlistentry>
+      <varlistentry>
+	<term><option>-c "set antialias"</option></term>
+	<listitem>
+	  <para>and</para>
+	</listitem>
+      </varlistentry>
+      <varlistentry>
+	<term><option>-c "set aa"</option></term>
+	<listitem>
+	  <para>
+	    configure whether to perform antialiasing on edges. Valid
+	    values are 1 (on) and 0 (off). The default is off.
+	  </para>
+	</listitem>
+      </varlistentry>
+      <varlistentry>
+	<term><option>-c "set both_sides"</option></term>
+	<listitem>
+	  <para>and</para>
+	</listitem>
+      </varlistentry>
+      <varlistentry>
+	<term><option>-c "set bs"</option></term>
+	<listitem>
+	  <para>
+	    configure whether to render both sides of an edge.  result
+	    are edges twice as thick but that work well with
+	    antialiasing.  Valid values are 1 (on) and 0 (off). The
+	    default is off.
 	  </para>
 	</listitem>
       </varlistentry>

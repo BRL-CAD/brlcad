@@ -23,6 +23,8 @@
  *
  */
 
+#include <string.h>
+
 #include "ged.h"
 #include "solid.h"
 
@@ -37,14 +39,16 @@
 int
 ged_illum(struct ged *gedp, int argc, const char *argv[])
 {
+    register struct ged_display_list *gdlp;
+    register struct ged_display_list *next_gdlp;
     register struct solid *sp;
     int found = 0;
     int illum = 1;
     static const char *usage = "[-n] obj";
 
-    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
-    GED_CHECK_DRAWABLE(gedp, BRLCAD_ERROR);
-    GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
+    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
+    GED_CHECK_DRAWABLE(gedp, GED_ERROR);
+    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
 
     /* initialize result */
     bu_vls_trunc(&gedp->ged_result_str, 0);
@@ -52,7 +56,7 @@ ged_illum(struct ged *gedp, int argc, const char *argv[])
     /* must be wanting help */
     if (argc == 1) {
 	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return BRLCAD_HELP;
+	return GED_HELP;
     }
 
     if (argc == 3) {
@@ -68,31 +72,39 @@ ged_illum(struct ged *gedp, int argc, const char *argv[])
     if (argc != 2)
 	goto bad;
 
-    FOR_ALL_SOLIDS(sp, &gedp->ged_gdp->gd_headSolid) {
-	register int i;
+    gdlp = BU_LIST_NEXT(ged_display_list, &gedp->ged_gdp->gd_headDisplay);
+    while (BU_LIST_NOT_HEAD(gdlp, &gedp->ged_gdp->gd_headDisplay)) {
+	next_gdlp = BU_LIST_PNEXT(ged_display_list, gdlp);
 
-	for (i = 0; i < sp->s_fullpath.fp_len; ++i) {
-	    if (*argv[1] == *DB_FULL_PATH_GET(&sp->s_fullpath, i)->d_namep &&
-		strcmp(argv[1], DB_FULL_PATH_GET(&sp->s_fullpath, i)->d_namep) == 0) {
-		found = 1;
-		if (illum)
-		    sp->s_iflag = UP;
-		else
-		    sp->s_iflag = DOWN;
+	FOR_ALL_SOLIDS(sp, &gdlp->gdl_headSolid) {
+	    register int i;
+
+	    for (i = 0; i < sp->s_fullpath.fp_len; ++i) {
+		if (*argv[1] == *DB_FULL_PATH_GET(&sp->s_fullpath, i)->d_namep &&
+		    strcmp(argv[1], DB_FULL_PATH_GET(&sp->s_fullpath, i)->d_namep) == 0) {
+		    found = 1;
+		    if (illum)
+			sp->s_iflag = UP;
+		    else
+			sp->s_iflag = DOWN;
+		}
 	    }
 	}
+
+	gdlp = next_gdlp;
     }
+
 
     if (!found) {
 	bu_vls_printf(&gedp->ged_result_str, "illum: %s not found", argv[1]);
-	return BRLCAD_ERROR;
+	return GED_ERROR;
     }
 
-    return BRLCAD_OK;
+    return GED_OK;
 
  bad:
     bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-    return BRLCAD_ERROR;
+    return GED_ERROR;
 }
 
 

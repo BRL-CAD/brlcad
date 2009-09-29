@@ -155,6 +155,13 @@ target_link_libraries(g-obj
     BrlcadCore
 )
 
+add_executable(obj-g
+    obj-g.c
+)
+target_link_libraries(obj-g
+    BrlcadCore
+)
+
 add_executable(patch-g
     patch/patch-g.c
 )

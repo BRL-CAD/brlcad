@@ -290,12 +290,14 @@ static int pathListNoLeaf = 0;
 
 static struct bu_cmdtab wdb_newcmds[] = {
     {"arced",		ged_arced},
+    {"cc",		ged_cc},
     {"color",		ged_color},
     {"comb_color",	ged_comb_color},
     {"edcomb",		ged_edcomb},
     {"edmater",		ged_edmater},
     {"item",		ged_item},
     {"log",		ged_log},
+    {"lscon",		ged_lscon},
     {"make",		ged_make},
     {"make_name",	ged_make_name},
     {"mater",		ged_mater},
@@ -1135,7 +1137,7 @@ wdb_put_cmd(struct rt_wdb *wdbp,
 
 	bu_vls_init(&log);
 
-	if (!ftp->ft_adjust || ftp->ft_adjust(&log, &intern, argc-3, argv+3, &rt_uniresource) == BRLCAD_ERROR) {
+	if (!ftp->ft_adjust || ftp->ft_adjust(&log, &intern, argc-3, argv+3, &rt_uniresource) == GED_ERROR) {
 	    Tcl_AppendResult(interp, bu_vls_addr(&log), (char *)NULL);
 	    bu_vls_free(&log);
 	    rt_db_free_internal(&intern, &rt_uniresource);
@@ -1233,7 +1235,7 @@ wdb_adjust_cmd(struct rt_wdb *wdbp,
 
 	status = intern.idb_meth->ft_adjust(&log, &intern, argc-2, argv+2, &rt_uniresource);
 
-	if (status == BRLCAD_OK && wdb_put_internal(wdbp, name, &intern, 1.0) < 0) {
+	if (status == GED_OK && wdb_put_internal(wdbp, name, &intern, 1.0) < 0) {
 	    Tcl_AppendResult(interp, bu_vls_addr(&log), (char *)NULL);
 	    bu_vls_free(&log);
 	    Tcl_AppendResult(interp, "wdb_export(", name,
@@ -2649,7 +2651,7 @@ wdb_killall_cmd(struct rt_wdb *wdbp,
 	    for (k=1; k<argc; k++) {
 		int code;
 
-		code = db_tree_del_dbleaf(&(comb->tree), argv[k], &rt_uniresource);
+		code = db_tree_del_dbleaf(&(comb->tree), argv[k], &rt_uniresource, 0);
 		if (code == -1)
 		    continue;	/* not found */
 		if (code == -2)
@@ -4050,7 +4052,7 @@ wdb_remove_cmd(struct rt_wdb *wdbp,
     num_deleted = 0;
     ret = TCL_OK;
     for (i = 2; i < argc; i++) {
-	if (db_tree_del_dbleaf(&(comb->tree), argv[i], &rt_uniresource) < 0) {
+	if (db_tree_del_dbleaf(&(comb->tree), argv[i], &rt_uniresource, 0) < 0) {
 	    Tcl_AppendResult(interp, "  ERROR_deleting ",
 			     dp->d_namep, "/", argv[i],
 			     "\n", (char *)NULL);
@@ -10405,12 +10407,12 @@ wdb_newcmds_tcl(ClientData clientData,
     if (ctp->ct_name == (char *)0) {
 	bu_vls_trunc(&ged.ged_result_str, 0);
 	bu_vls_printf(&ged.ged_result_str, "%s not found", argv[1]);
-	ret = BRLCAD_ERROR;
+	ret = GED_ERROR;
     }
 
     Tcl_DStringInit(&ds);
 
-    if (ret == BRLCAD_HELP)
+    if (ret == GED_HELP)
 	Tcl_DStringAppendElement(&ds, "1");
     else
 	Tcl_DStringAppendElement(&ds, "0");
@@ -10418,7 +10420,7 @@ wdb_newcmds_tcl(ClientData clientData,
     Tcl_DStringAppendElement(&ds, bu_vls_addr(&ged.ged_result_str));
     Tcl_DStringResult(interp, &ds);
 
-    if (ret == BRLCAD_ERROR)
+    if (ret == GED_ERROR)
 	return TCL_ERROR;
 
     return TCL_OK;

@@ -177,7 +177,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="libbu.lib libbn.lib libsysv.lib librt.lib libwdb.lib tcl85.lib"
+				AdditionalDependencies="libbu.lib libbn.lib libsysv.lib librt.lib libwdb.lib tcl85.lib libged.lib"
 				OutputFile="$(PlatformName)\$(ConfigurationName)/tire.exe"
 				LinkIncremental="1"
 				SuppressStartupBanner="true"

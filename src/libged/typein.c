@@ -592,7 +592,7 @@ binunif_in(struct ged *gedp, const char **cmd_argvs, struct rt_db_internal *inte
 
     if ( strlen( cmd_argvs[3] ) != 1 ) {
 	bu_vls_printf(&gedp->ged_result_str, "Unrecognized minor type (%s)\n", cmd_argvs[3]);
-	return BRLCAD_ERROR;
+	return GED_ERROR;
     }
 
     switch ( *cmd_argvs[3] ) {
@@ -628,16 +628,16 @@ binunif_in(struct ged *gedp, const char **cmd_argvs, struct rt_db_internal *inte
 	    break;
 	default:
 	    bu_log( "Unrecognized minor type (%c)\n", *cmd_argvs[3] );
-	    return BRLCAD_ERROR;
+	    return GED_ERROR;
     }
     if ( rt_mk_binunif( gedp->ged_wdbp, name, cmd_argvs[4], minor_type, atol(cmd_argvs[5]) ) ) {
 	bu_vls_printf(&gedp->ged_result_str,
 		      "Failed to create binary object %s from file %s\n",
 		      name, cmd_argvs[4]);
-	return BRLCAD_ERROR;
+	return GED_ERROR;
     }
 
-    return BRLCAD_OK;
+    return GED_OK;
 }
 
 /*			E B M _ I N
@@ -663,7 +663,7 @@ ebm_in(struct ged *gedp, const char **cmd_argvs, struct rt_db_internal *intern)
     ebm->tallness = atof( cmd_argvs[6] ) * gedp->ged_wdbp->dbip->dbi_local2base;
     MAT_IDN( ebm->mat );
 
-    return BRLCAD_OK;
+    return GED_OK;
 }
 
 /*			S U B M O D E L _ I N
@@ -689,7 +689,7 @@ submodel_in(struct ged *gedp, const char **cmd_argvs, struct rt_db_internal *int
     bu_vls_init( &sip->file );
     bu_vls_strcpy( &sip->file, cmd_argvs[5] );
 
-    return BRLCAD_OK;
+    return GED_OK;
 }
 
 /*			D S P _ I N
@@ -723,7 +723,7 @@ dsp_in_v4(struct ged *gedp, const char **cmd_argvs, struct rt_db_internal *inter
 
     bn_mat_inv( dsp->dsp_mtos, dsp->dsp_stom );
 
-    return BRLCAD_OK;
+    return GED_OK;
 }
 
 extern void dsp_dump(struct rt_dsp_internal *dsp);
@@ -749,7 +749,7 @@ dsp_in_v5(struct ged *gedp, const char **cmd_argvs, struct rt_db_internal *inter
     else if (*cmd_argvs[3] == 'O' || *cmd_argvs[3] == 'o')
 	dsp->dsp_datasrc = RT_DSP_SRC_OBJ;
     else
-	return BRLCAD_ERROR;
+	return GED_ERROR;
 
     bu_vls_init( &dsp->dsp_name );
     bu_vls_strcpy( &dsp->dsp_name, cmd_argvs[4] );
@@ -770,7 +770,7 @@ dsp_in_v5(struct ged *gedp, const char **cmd_argvs, struct rt_db_internal *inter
 	    break;
 	default:
 	    bu_log("Error: dsp_cuttype:\"%s\"\n", cmd_argvs[8]);
-	    return BRLCAD_ERROR;
+	    return GED_ERROR;
 	    break;
     }
 
@@ -783,7 +783,7 @@ dsp_in_v5(struct ged *gedp, const char **cmd_argvs, struct rt_db_internal *inter
 
     bn_mat_inv( dsp->dsp_mtos, dsp->dsp_stom );
 
-    return BRLCAD_OK;
+    return GED_OK;
 }
 
 
@@ -828,13 +828,13 @@ hf_in(struct ged *gedp, const char **cmd_argvs, struct rt_db_internal *intern)
     if ( hf->w < 2 || hf->n < 2 )
     {
 	bu_vls_printf(&gedp->ged_result_str, "ERROR: length or width of fta file is too small\n");
-	return BRLCAD_ERROR;
+	return GED_ERROR;
     }
 
     if ( hf->xlen <= 0 || hf->ylen <= 0 )
     {
 	bu_vls_printf(&gedp->ged_result_str, "ERROR: length and width of HF solid must be greater than 0\n");
-	return BRLCAD_ERROR;
+	return GED_ERROR;
     }
 
     /* XXXX should check for orthogonality of 'x' and 'y' vectors */
@@ -843,10 +843,10 @@ hf_in(struct ged *gedp, const char **cmd_argvs, struct rt_db_internal *intern)
     {
 	bu_vls_printf(&gedp->ged_result_str, "ERROR: cannot open data file\n");
 	hf->mp = (struct bu_mapped_file *)NULL;
-	return BRLCAD_ERROR;
+	return GED_ERROR;
     }
 
-    return BRLCAD_OK;
+    return GED_OK;
 }
 
 /*			V O L _ I N
@@ -877,7 +877,7 @@ vol_in(struct ged *gedp, const char **cmd_argvs, struct rt_db_internal *intern)
     vol->cellsize[2] = atof( cmd_argvs[11] ) * gedp->ged_wdbp->dbip->dbi_local2base;
     MAT_IDN( vol->mat );
 
-    return BRLCAD_OK;
+    return GED_OK;
 }
 
 /*
@@ -894,49 +894,49 @@ bot_in(struct ged *gedp, int argc, const char **argv, struct rt_db_internal *int
 
     if ( argc < 7 ) {
 	bu_vls_printf(&gedp->ged_result_str, "%s", prompt[argc-3]);
-	return BRLCAD_MORE_ARGS;
+	return GED_MORE;
     }
 
     num_verts = atoi( argv[3] );
     if ( num_verts < 3 )
     {
 	bu_vls_printf(&gedp->ged_result_str, "Invalid number of vertices (must be at least 3)\n");
-	return BRLCAD_ERROR;
+	return GED_ERROR;
     }
 
     num_faces = atoi( argv[4] );
     if ( num_faces < 1 )
     {
 	bu_vls_printf(&gedp->ged_result_str, "Invalid number of triangles (must be at least 1)\n");
-	return BRLCAD_ERROR;
+	return GED_ERROR;
     }
 
     mode = atoi( argv[5] );
     if ( mode < 1 || mode > 3 )
     {
 	bu_vls_printf(&gedp->ged_result_str, "Invalid mode (must be 1, 2, or 3)\n");
-	return BRLCAD_ERROR;
+	return GED_ERROR;
     }
 
     orientation = atoi( argv[6] );
     if ( orientation < 1 || orientation > 3 )
     {
 	bu_vls_printf(&gedp->ged_result_str, "Invalid orientation (must be 1, 2, or 3)\n");
-	return BRLCAD_ERROR;
+	return GED_ERROR;
     }
 
     arg_count = argc - 7;
     if ( arg_count < num_verts*3 )
     {
 	bu_vls_printf(&gedp->ged_result_str, "%s for vertex %d : ", prompt[4+arg_count%3], arg_count/3 );
-	return BRLCAD_MORE_ARGS;
+	return GED_MORE;
     }
 
     arg_count = argc - 7 - num_verts*3;
     if ( arg_count < num_faces*3 )
     {
 	bu_vls_printf(&gedp->ged_result_str, "%s for triangle %d : ", prompt[7+arg_count%3], arg_count/3 );
-	return BRLCAD_MORE_ARGS;
+	return GED_MORE;
     }
 
     if ( mode == RT_BOT_PLATE )
@@ -945,7 +945,7 @@ bot_in(struct ged *gedp, int argc, const char **argv, struct rt_db_internal *int
 	if ( arg_count < num_faces*2 )
 	{
 	    bu_vls_printf(&gedp->ged_result_str, "%s for face %d : ", prompt[10+arg_count%2], arg_count/2 );
-	    return BRLCAD_MORE_ARGS;
+	    return GED_MORE;
 	}
     }
 
@@ -995,13 +995,13 @@ bot_in(struct ged *gedp, int argc, const char **argv, struct rt_db_internal *int
 	    else if ( j != 0 )
 	    {
 		bu_vls_printf(&gedp->ged_result_str, "Invalid face mode (must be 0 or 1)\n");
-		return BRLCAD_ERROR;
+		return GED_ERROR;
 	    }
 	    bot->thickness[i] = atof( argv[arg_count + i*2 + 1] ) * gedp->ged_wdbp->dbip->dbi_local2base;
 	}
     }
 
-    return BRLCAD_OK;
+    return GED_OK;
 }
 
 /*
@@ -1016,14 +1016,14 @@ arbn_in(struct ged *gedp, int argc, const char **argv, struct rt_db_internal *in
 
     if ( argc < 4 ) {
 	bu_vls_printf(&gedp->ged_result_str, "%s", prompt[argc-3]);
-	return BRLCAD_MORE_ARGS;
+	return GED_MORE;
     }
 
     num_planes = atoi( argv[3] );
 
     if ( argc < num_planes * 4 + 4 ) {
 	bu_vls_printf(&gedp->ged_result_str, "%s for plane %d : ", prompt[(argc-4)%4 + 1], 1+(argc-4)/4 );
-	return BRLCAD_MORE_ARGS;
+	return GED_MORE;
     }
 
     intern->idb_major_type = DB5_MAJORTYPE_BRLCAD;
@@ -1044,7 +1044,7 @@ arbn_in(struct ged *gedp, int argc, const char **argv, struct rt_db_internal *in
 	arbn->eqn[i][W] = atof( argv[4+i*4+3] ) * gedp->ged_wdbp->dbip->dbi_local2base;
     }
 
-    return BRLCAD_OK;
+    return GED_OK;
 }
 
 /*
@@ -1058,26 +1058,26 @@ pipe_in(struct ged *gedp, int argc, const char **argv, struct rt_db_internal *in
 
     if ( argc < 4 ) {
 	bu_vls_printf(&gedp->ged_result_str, "%s", prompt[argc-3]);
-	return BRLCAD_MORE_ARGS;
+	return GED_MORE;
     }
 
     num_points = atoi( argv[3] );
     if ( num_points < 2 )
     {
 	bu_vls_printf(&gedp->ged_result_str, "Invalid number of points (must be at least 2)\n");
-	return BRLCAD_ERROR;
+	return GED_ERROR;
     }
 
     if ( argc < 10 )
     {
 	bu_vls_printf(&gedp->ged_result_str, "%s", prompt[argc-3]);
-	return BRLCAD_MORE_ARGS;
+	return GED_MORE;
     }
 
     if ( argc < 4 + num_points*6 )
     {
 	bu_vls_printf(&gedp->ged_result_str, "%s for point %d : ", prompt[7+(argc-10)%6], 1+(argc-4)/6 );
-	return BRLCAD_MORE_ARGS;
+	return GED_MORE;
     }
 
     intern->idb_major_type = DB5_MAJORTYPE_BRLCAD;
@@ -1105,10 +1105,10 @@ pipe_in(struct ged *gedp, int argc, const char **argv, struct rt_db_internal *in
     if ( rt_pipe_ck(  &pipe->pipe_segs_head ) )
     {
 	bu_vls_printf(&gedp->ged_result_str, "Illegal pipe, solid not made!!\n");
-	return BRLCAD_ERROR;
+	return GED_ERROR;
     }
 
-    return BRLCAD_OK;
+    return GED_OK;
 }
 
 /*
@@ -1134,7 +1134,7 @@ ars_in(struct ged *gedp, int argc, const char **argv, struct rt_db_internal *int
 	if (num_pts < 3 ) {
 	    bu_vls_printf(&gedp->ged_result_str, "points per waterline must be >= 3\n");
 	    intern->idb_meth = &rt_functab[ID_ARS];
-	    return BRLCAD_ERROR;
+	    return GED_ERROR;
 	}
     }
 
@@ -1143,7 +1143,7 @@ ars_in(struct ged *gedp, int argc, const char **argv, struct rt_db_internal *int
 	if (num_curves < 3) {
 	    bu_vls_printf(&gedp->ged_result_str, "points per waterline must be >= 3\n");
 	    intern->idb_meth = &rt_functab[ID_ARS];
-	    return BRLCAD_ERROR;
+	    return GED_ERROR;
 	}
     }
 
@@ -1152,7 +1152,7 @@ ars_in(struct ged *gedp, int argc, const char **argv, struct rt_db_internal *int
 	 * pre-formatted prompts exist
 	 */
 	bu_vls_printf(&gedp->ged_result_str, "%s", prompt[vals_present]);
-	return BRLCAD_MORE_ARGS;
+	return GED_MORE;
     }
 
     total_vals_needed = 2 +		/* #rows, #pts/row */
@@ -1186,7 +1186,7 @@ ars_in(struct ged *gedp, int argc, const char **argv, struct rt_db_internal *int
 		break;
 	}
 
-	return BRLCAD_MORE_ARGS;
+	return GED_MORE;
     } else if (vals_present < total_vals_needed) {
 	/* we're looking for the last point which is used for all points
 	 * on the last curve
@@ -1213,7 +1213,7 @@ ars_in(struct ged *gedp, int argc, const char **argv, struct rt_db_internal *int
 		break;
 	}
 
-	return BRLCAD_MORE_ARGS;
+	return GED_MORE;
     }
 
     intern->idb_major_type = DB5_MAJORTYPE_BRLCAD;
@@ -1263,7 +1263,7 @@ ars_in(struct ged *gedp, int argc, const char **argv, struct rt_db_internal *int
 	       arip->curves[ncurves_minus_one] );
     }
 
-    return BRLCAD_OK;
+    return GED_OK;
 }
 
 /*   H A L F _ I N ( ) :   	reads halfspace parameters from keyboard
@@ -1285,14 +1285,14 @@ half_in(struct ged *gedp, const char **cmd_argvs, struct rt_db_internal *intern,
 
     if (MAGNITUDE(norm) < RT_LEN_TOL) {
 	bu_vls_printf(&gedp->ged_result_str, "ERROR, normal vector is too small!\n");
-	return BRLCAD_ERROR;
+	return GED_ERROR;
     }
 
     VUNITIZE( norm );
     if ( mk_half( gedp->ged_wdbp, name, norm, d ) < 0 )
-	return BRLCAD_ERROR;
+	return GED_ERROR;
 
-    return BRLCAD_OK;
+    return GED_OK;
 }
 
 /*   A R B _ I N ( ) :   	reads arb parameters from keyboard
@@ -1336,7 +1336,7 @@ arb_in(struct ged *gedp, const char **cmd_argvs, struct rt_db_internal *intern)
 	VMOVE( aip->pt[7], aip->pt[4] );
     }
 
-    return BRLCAD_OK;	/* success */
+    return GED_OK;	/* success */
 }
 
 /*   S P H _ I N ( ) :   	reads sph parameters from keyboard
@@ -1359,12 +1359,12 @@ sph_in(struct ged *gedp, const char **cmd_argvs, struct rt_db_internal *intern, 
 
     if (r < RT_LEN_TOL) {
 	bu_vls_printf(&gedp->ged_result_str, "ERROR, radius must be greater than zero!\n");
-	return BRLCAD_ERROR;
+	return GED_ERROR;
     }
 
     if ( mk_sph( gedp->ged_wdbp, name, center, r ) < 0 )
-	return BRLCAD_ERROR;
-    return BRLCAD_OK;
+	return GED_ERROR;
+    return GED_OK;
 }
 
 /*   E L L _ I N ( ) :   	reads ell parameters from keyboard
@@ -1402,7 +1402,7 @@ ell_in(struct ged *gedp, const char **cmd_argvs, struct rt_db_internal *intern)
 	VMOVE( eip->a, &vals[3] );
 	VMOVE( eip->b, &vals[6] );
 	VMOVE( eip->c, &vals[9] );
-	return BRLCAD_OK;
+	return GED_OK;
     }
 
     if (!strcmp("ellg", cmd_argvs[2])) {
@@ -1416,7 +1416,7 @@ ell_in(struct ged *gedp, const char **cmd_argvs, struct rt_db_internal *intern)
 	mag_b = MAGNITUDE( eip->b );
 	if ( NEAR_ZERO( mag_b, RT_LEN_TOL )) {
 	    bu_vls_printf(&gedp->ged_result_str, "ERROR, foci are coincident!\n");
-	    return BRLCAD_ERROR;
+	    return GED_ERROR;
 	}
 	/* calculate A vector */
 	VSCALE( eip->a, eip->b, .5*len/mag_b );
@@ -1441,7 +1441,7 @@ ell_in(struct ged *gedp, const char **cmd_argvs, struct rt_db_internal *intern)
     VCROSS( eip->c, eip->a, eip->b );
     VUNITIZE( eip->c );
     VSCALE( eip->c, eip->c, r_rev );
-    return BRLCAD_OK;
+    return GED_OK;
 }
 
 /*   T O R _ I N ( ) :   	reads tor parameters from keyboard
@@ -1471,15 +1471,15 @@ tor_in(struct ged *gedp, const char **cmd_argvs, struct rt_db_internal *intern)
     /* Check for radius 2 >= radius 1 */
     if ( tip->r_a <= tip->r_h )  {
 	bu_vls_printf(&gedp->ged_result_str, "ERROR, radius 2 >= radius 1 ....\n");
-	return BRLCAD_ERROR;
+	return GED_ERROR;
     }
 
     if (MAGNITUDE( tip->h ) < RT_LEN_TOL) {
 	bu_vls_printf(&gedp->ged_result_str, "ERROR, normal must be greater than zero!\n");
-	return BRLCAD_ERROR;
+	return GED_ERROR;
     }
 
-    return BRLCAD_OK;
+    return GED_OK;
 }
 
 /*   T G C _ I N ( ) :   	reads tgc parameters from keyboard
@@ -1515,7 +1515,7 @@ tgc_in(struct ged *gedp, const char **cmd_argvs, struct rt_db_internal *intern)
 	|| MAGNITUDE(tip->b) < RT_LEN_TOL
 	|| r1 < RT_LEN_TOL || r2 < RT_LEN_TOL) {
 	bu_vls_printf(&gedp->ged_result_str, "ERROR, all dimensions must be greater than zero!\n");
-	return BRLCAD_ERROR;
+	return GED_ERROR;
     }
 
     /* calculate C */
@@ -1528,7 +1528,7 @@ tgc_in(struct ged *gedp, const char **cmd_argvs, struct rt_db_internal *intern)
     VUNITIZE( tip->d );
     VSCALE( tip->d, tip->d, r2);
 
-    return BRLCAD_OK;
+    return GED_OK;
 }
 
 /*   R C C _ I N ( ) :   	reads rcc parameters from keyboard
@@ -1558,7 +1558,7 @@ rcc_in(struct ged *gedp, const char **cmd_argvs, struct rt_db_internal *intern)
 
     if (MAGNITUDE(tip->h) < RT_LEN_TOL || r < RT_LEN_TOL) {
 	bu_vls_printf(&gedp->ged_result_str, "ERROR, all dimensions must be greater than zero!\n");
-	return BRLCAD_ERROR;
+	return GED_ERROR;
     }
 
     bn_vec_ortho( tip->a, tip->h );
@@ -1571,7 +1571,7 @@ rcc_in(struct ged *gedp, const char **cmd_argvs, struct rt_db_internal *intern)
     VMOVE( tip->c, tip->a );
     VMOVE( tip->d, tip->b );
 
-    return BRLCAD_OK;
+    return GED_OK;
 }
 
 /*   T E C _ I N ( ) :   	reads tec parameters from keyboard
@@ -1605,13 +1605,13 @@ tec_in(struct ged *gedp, const char **cmd_argvs, struct rt_db_internal *intern)
 	|| MAGNITUDE(tip->b) < RT_LEN_TOL
 	|| ratio < RT_LEN_TOL) {
 	bu_vls_printf(&gedp->ged_result_str, "ERROR, all dimensions must be greater than zero!\n");
-	return BRLCAD_ERROR;
+	return GED_ERROR;
     }
 
     VSCALE( tip->c, tip->a, 1./ratio );	/* C vector */
     VSCALE( tip->d, tip->b, 1./ratio );	/* D vector */
 
-    return BRLCAD_OK;
+    return GED_OK;
 }
 
 /*   R E C _ I N ( ) :   	reads rec parameters from keyboard
@@ -1643,13 +1643,13 @@ rec_in(struct ged *gedp, const char **cmd_argvs, struct rt_db_internal *intern)
 	|| MAGNITUDE(tip->a) < RT_LEN_TOL
 	|| MAGNITUDE(tip->b) < RT_LEN_TOL ) {
 	bu_vls_printf(&gedp->ged_result_str, "ERROR, all dimensions must be greater than zero!\n");
-	return BRLCAD_ERROR;
+	return GED_ERROR;
     }
 
     VMOVE( tip->c, tip->a );		/* C vector */
     VMOVE( tip->d, tip->b );		/* D vector */
 
-    return BRLCAD_OK;
+    return GED_OK;
 }
 
 /*   T R C _ I N ( ) :   	reads trc parameters from keyboard
@@ -1681,7 +1681,7 @@ trc_in(struct ged *gedp, const char **cmd_argvs, struct rt_db_internal *intern)
     if (MAGNITUDE(tip->h) < RT_LEN_TOL
 	|| r1 < RT_LEN_TOL || r2 < RT_LEN_TOL) {
 	bu_vls_printf(&gedp->ged_result_str, "ERROR, all dimensions must be greater than zero!\n");
-	return BRLCAD_ERROR;
+	return GED_ERROR;
     }
 
     bn_vec_ortho( tip->a, tip->h );
@@ -1696,7 +1696,7 @@ trc_in(struct ged *gedp, const char **cmd_argvs, struct rt_db_internal *intern)
     VSCALE( tip->c, tip->c, r2 );
     VSCALE( tip->d, tip->d, r2 );
 
-    return BRLCAD_OK;
+    return GED_OK;
 }
 
 /*   B O X _ I N ( ) :   	reads box parameters from keyboard
@@ -1728,7 +1728,7 @@ box_in(struct ged *gedp, const char **cmd_argvs, struct rt_db_internal *intern)
     if (MAGNITUDE(Dpth) < RT_LEN_TOL || MAGNITUDE(Hgt) < RT_LEN_TOL
 	|| MAGNITUDE(Wdth) < RT_LEN_TOL) {
 	bu_vls_printf(&gedp->ged_result_str, "ERROR, all dimensions must be greater than zero!\n");
-	return BRLCAD_ERROR;
+	return GED_ERROR;
     }
 
     if (!strcmp("box", cmd_argvs[2])) {
@@ -1752,7 +1752,7 @@ box_in(struct ged *gedp, const char **cmd_argvs, struct rt_db_internal *intern)
 	VMOVE( aip->pt[7], aip->pt[6] );
     }
 
-    return BRLCAD_OK;
+    return GED_OK;
 }
 
 /*   R P P _ I N ( ) :   	reads rpp parameters from keyboard
@@ -1775,21 +1775,21 @@ rpp_in(struct ged *gedp, const char **cmd_argvs, struct rt_db_internal *intern, 
 
     if (min[X] >= max[X]) {
 	bu_vls_printf(&gedp->ged_result_str, "ERROR, XMIN:(%lg) greater than XMAX:(%lg) !\n", min[X], max[X]);
-	return BRLCAD_ERROR;
+	return GED_ERROR;
     }
     if (min[Y] >= max[Y]) {
 	bu_vls_printf(&gedp->ged_result_str, "ERROR, YMIN:(%lg) greater than YMAX:(%lg) !\n", min[Y], max[Y]);
-	return BRLCAD_ERROR;
+	return GED_ERROR;
     }
     if (min[Z] >= max[Z]) {
 	bu_vls_printf(&gedp->ged_result_str, "ERROR, ZMIN:(%lg) greater than ZMAX:(%lg)!\n", min[Z], max[Z]);
-	return BRLCAD_ERROR;
+	return GED_ERROR;
     }
 
     if ( mk_rpp( gedp->ged_wdbp, name, min, max ) < 0 )
 	return 1;
 
-    return BRLCAD_OK;
+    return GED_OK;
 }
 
 /*
@@ -1813,22 +1813,22 @@ orpp_in(struct ged *gedp, const char **cmd_argvs, struct rt_db_internal *intern,
 
     if (min[X] >= max[X]) {
 	bu_vls_printf(&gedp->ged_result_str, "ERROR, XMIN greater than XMAX!\n");
-	return BRLCAD_ERROR;
+	return GED_ERROR;
     }
     if (min[Y] >= max[Y]) {
 	bu_vls_printf(&gedp->ged_result_str, "ERROR, YMIN greater than YMAX!\n");
-	return BRLCAD_ERROR;
+	return GED_ERROR;
     }
     if (min[Z] >= max[Z]) {
 	bu_vls_printf(&gedp->ged_result_str, "ERROR, ZMIN greater than ZMAX!\n");
-	return BRLCAD_ERROR;
+	return GED_ERROR;
     }
 
     if ( mk_rpp( gedp->ged_wdbp, name, min, max ) < 0 )
-	return BRLCAD_ERROR;
+	return GED_ERROR;
 	return 1;
 
-    return BRLCAD_OK;
+    return GED_OK;
 }
 
 /*   P A R T _ I N ( ) :	reads particle parameters from keyboard
@@ -1860,10 +1860,10 @@ part_in(struct ged *gedp, const char **cmd_argvs, struct rt_db_internal *intern)
 	|| part_ip->part_vrad <= RT_LEN_TOL
 	|| part_ip->part_hrad <= RT_LEN_TOL) {
 	bu_vls_printf(&gedp->ged_result_str, "ERROR, height, v radius and h radius must be greater than zero!\n");
-	return BRLCAD_ERROR;
+	return GED_ERROR;
     }
 
-    return BRLCAD_OK;
+    return GED_OK;
 }
 
 /*   R P C _ I N ( ) :   	reads rpc parameters from keyboard
@@ -1895,10 +1895,10 @@ rpc_in(struct ged *gedp, const char **cmd_argvs, struct rt_db_internal *intern)
 	|| MAGNITUDE(rip->rpc_B) < RT_LEN_TOL
 	|| rip->rpc_r <= RT_LEN_TOL) {
 	bu_vls_printf(&gedp->ged_result_str, "ERROR, height, breadth, and width must be greater than zero!\n");
-	return BRLCAD_ERROR;
+	return GED_ERROR;
     }
 
-    return BRLCAD_OK;
+    return GED_OK;
 }
 
 /*   R H C _ I N ( ) :   	reads rhc parameters from keyboard
@@ -1931,10 +1931,10 @@ rhc_in(struct ged *gedp, const char **cmd_argvs, struct rt_db_internal *intern)
 	|| MAGNITUDE(rip->rhc_B) < RT_LEN_TOL
 	|| rip->rhc_r <= RT_LEN_TOL || rip->rhc_c <= RT_LEN_TOL) {
 	bu_vls_printf(&gedp->ged_result_str, "ERROR, height, breadth, and width must be greater than zero!\n");
-	return BRLCAD_ERROR;
+	return GED_ERROR;
     }
 
-    return BRLCAD_OK;
+    return GED_OK;
 }
 
 /*   E P A _ I N ( ) :   	reads epa parameters from keyboard
@@ -1967,15 +1967,15 @@ epa_in(struct ged *gedp, const char **cmd_argvs, struct rt_db_internal *intern)
     if (MAGNITUDE(rip->epa_H) < RT_LEN_TOL
 	|| rip->epa_r1 <= RT_LEN_TOL || rip->epa_r2 <= RT_LEN_TOL) {
 	bu_vls_printf(&gedp->ged_result_str, "ERROR, height and axes must be greater than zero!\n");
-	return BRLCAD_ERROR;
+	return GED_ERROR;
     }
 
     if (rip->epa_r2 > rip->epa_r1) {
 	bu_vls_printf(&gedp->ged_result_str, "ERROR, |A| must be greater than |B|!\n");
-	return BRLCAD_ERROR;
+	return GED_ERROR;
     }
 
-    return BRLCAD_OK;
+    return GED_OK;
 }
 
 /*   E H Y _ I N ( ) :   	reads ehy parameters from keyboard
@@ -2010,20 +2010,20 @@ ehy_in(struct ged *gedp, const char **cmd_argvs, struct rt_db_internal *intern)
 	|| rip->ehy_r1 <= RT_LEN_TOL || rip->ehy_r2 <= RT_LEN_TOL
 	|| rip->ehy_c <= RT_LEN_TOL) {
 	bu_vls_printf(&gedp->ged_result_str, "ERROR, height, axes, and distance to asymptotes must be greater than zero!\n");
-	return BRLCAD_ERROR;
+	return GED_ERROR;
     }
 
     if ( !NEAR_ZERO( VDOT( rip->ehy_H, rip->ehy_Au ), RT_DOT_TOL ) ) {
 	bu_vls_printf(&gedp->ged_result_str, "ERROR, major axis must be perpendicular to height vector!\n");
-	return BRLCAD_ERROR;
+	return GED_ERROR;
     }
 
     if (rip->ehy_r2 > rip->ehy_r1) {
 	bu_vls_printf(&gedp->ged_result_str, "ERROR, |A| must be greater than |B|!\n");
-	return BRLCAD_ERROR;
+	return GED_ERROR;
     }
 
-    return BRLCAD_OK;
+    return GED_OK;
 }
 
 
@@ -2077,21 +2077,21 @@ hyp_in(struct ged *gedp, const char **cmd_argvs, struct rt_db_internal *intern)
 	|| MAGNITUDE( rip->hyp_A ) * rip->hyp_bnr <= RT_LEN_TOL 
 	|| rip->hyp_b <= RT_LEN_TOL) {
 	bu_vls_printf(&gedp->ged_result_str, "ERROR, height, axes, and distance to asymptotes must be greater than zero!\n");
-	return(BRLCAD_ERROR);
+	return(GED_ERROR);
     }
 
     if ( !NEAR_ZERO( VDOT( rip->hyp_Hi, rip->hyp_A ), RT_DOT_TOL ) ) {
     	bu_vls_printf(&gedp->ged_result_str, "ERROR, major axis must be perpendicular to height vector!\n");
-      	return BRLCAD_ERROR;
+      	return GED_ERROR;
     }
 
     if ( inC >= 1 || inC <=0 ) {
    	bu_vls_printf(&gedp->ged_result_str, "ERROR, neck to base ratio must be between 0 and 1!\n");
-     	return BRLCAD_ERROR;
+     	return GED_ERROR;
 
     }
 
-    return BRLCAD_OK;
+    return GED_OK;
 }
 
 /*   E T O _ I N ( ) :   	reads eto parameters from keyboard
@@ -2124,15 +2124,15 @@ eto_in(struct ged *gedp, const char **cmd_argvs, struct rt_db_internal *intern)
 	|| MAGNITUDE(eip->eto_C) < RT_LEN_TOL
 	|| eip->eto_r <= RT_LEN_TOL || eip->eto_rd <= RT_LEN_TOL) {
 	bu_vls_printf(&gedp->ged_result_str, "ERROR, normal, axes, and radii must be greater than zero!\n");
-	return BRLCAD_ERROR;
+	return GED_ERROR;
     }
 
     if (eip->eto_rd > MAGNITUDE(eip->eto_C)) {
 	bu_vls_printf(&gedp->ged_result_str, "ERROR, |C| must be greater than |D|!\n");
-	return BRLCAD_ERROR;
+	return GED_ERROR;
     }
 
-    return BRLCAD_OK;
+    return GED_OK;
 }
 
 /*   E X T R U D E _ I N ( ) :   	reads extrude parameters from keyboard
@@ -2168,18 +2168,18 @@ extrude_in(struct ged *gedp, const char **cmd_argvs, struct rt_db_internal *inte
 	bu_vls_printf(&gedp->ged_result_str, "Cannot find sketch (%s) for extrusion (%s)\n",
 		      eip->sketch_name, cmd_argvs[1]);
 	eip->skt = (struct rt_sketch_internal *)NULL;
-	return BRLCAD_ERROR;
+	return GED_ERROR;
     }
 
     if (rt_db_get_internal(&tmp_ip, dp, gedp->ged_wdbp->dbip, bn_mat_identity, &rt_uniresource) != ID_SKETCH) {
 	bu_vls_printf(&gedp->ged_result_str, "Cannot import sketch (%s) for extrusion (%s)\n",
 		      eip->sketch_name, cmd_argvs[1]);
 	eip->skt = (struct rt_sketch_internal *)NULL;
-	return BRLCAD_ERROR;
+	return GED_ERROR;
     } else
 	eip->skt = (struct rt_sketch_internal *)tmp_ip.idb_ptr;
 
-    return BRLCAD_OK;
+    return GED_OK;
 }
 
 /*   R E V O L V E _ I N ( ) :   	reads extrude parameters from keyboard
@@ -2219,18 +2219,18 @@ revolve_in(struct ged *gedp, const char **cmd_argvs, struct rt_db_internal *inte
 	bu_vls_printf(&gedp->ged_result_str, "Cannot find sketch (%s) for revolve (%s)\n",
 		      bu_vls_addr(&rip->sketch_name), cmd_argvs[1]);
 	rip->sk = (struct rt_sketch_internal *)NULL;
-	return BRLCAD_ERROR;
+	return GED_ERROR;
     }
 
     if (rt_db_get_internal(&tmp_ip, dp, gedp->ged_wdbp->dbip, bn_mat_identity, &rt_uniresource) != ID_SKETCH) {
 	bu_vls_printf(&gedp->ged_result_str, "Cannot import sketch (%s) for revolve (%s)\n",
 		      bu_vls_addr(&rip->sketch_name), cmd_argvs[1]);
 	rip->sk = (struct rt_sketch_internal *)NULL;
-	return BRLCAD_ERROR;
+	return GED_ERROR;
     } else
 	rip->sk = (struct rt_sketch_internal *)tmp_ip.idb_ptr;
 
-    return BRLCAD_OK;
+    return GED_OK;
 }
 
 /*   G R I P _ I N ( ) :   	reads grip parameters from keyboard
@@ -2258,7 +2258,7 @@ grip_in(struct ged *gedp, const char **cmd_argvs, struct rt_db_internal *intern)
 
     gip->mag = atof(cmd_argvs[9]);
 
-    return BRLCAD_OK;
+    return GED_OK;
 }
 
 /*   S U P E R E L L _ I N ( ) :   	reads superell parameters from keyboard
@@ -2296,7 +2296,7 @@ superell_in(struct ged *gedp, char *cmd_argvs[], struct rt_db_internal *intern)
     eip->n = vals[12];
     eip->e = vals[13];
 
-    return BRLCAD_OK;
+    return GED_OK;
 }
 
 /*
@@ -2315,43 +2315,43 @@ metaball_in(struct ged *gedp, int argc, const char **argv, struct rt_db_internal
 
     if ( argc < 4 ) {
 	bu_vls_printf(&gedp->ged_result_str, "%s", prompt[argc-3]);
-	return BRLCAD_MORE_ARGS;
+	return GED_MORE;
     }
     method = atof( argv[3] );
 
     if ( argc < 5 ) {
 	bu_vls_printf(&gedp->ged_result_str, "%s", prompt[argc-3]);
-	return BRLCAD_MORE_ARGS;
+	return GED_MORE;
     }
     threshold = atof( argv[4] );
 
     if (threshold < 0.0) {
 	bu_vls_printf(&gedp->ged_result_str, "Threshold may not be negative.\n");
-	return BRLCAD_ERROR;
+	return GED_ERROR;
     }
 
     if ( argc < 6 ) {
 	bu_vls_printf(&gedp->ged_result_str, "%s", prompt[argc-3]);
-	return BRLCAD_MORE_ARGS;
+	return GED_MORE;
     }
 
     num_points = atoi( argv[5] );
     if ( num_points < 1 )
     {
 	bu_vls_printf(&gedp->ged_result_str, "Invalid number of points (must be at least 1)\n");
-	return BRLCAD_ERROR;
+	return GED_ERROR;
     }
 
     if ( argc < 10 )
     {
 	bu_vls_printf(&gedp->ged_result_str, "%s", prompt[argc-3]);
-	return BRLCAD_MORE_ARGS;
+	return GED_MORE;
     }
 
     if ( argc < 6 + num_points*4 )
     {
 	bu_vls_printf(&gedp->ged_result_str, "%s for point %d : ", prompt[6+(argc-9)%4], 1+(argc-5)/4 );
-	return BRLCAD_MORE_ARGS;
+	return GED_MORE;
     }
 
     intern->idb_major_type = DB5_MAJORTYPE_BRLCAD;
@@ -2383,7 +2383,7 @@ metaball_in(struct ged *gedp, int argc, const char **argv, struct rt_db_internal
 	BU_LIST_INSERT( &metaball->metaball_ctrl_head, &metaballpt->l );
     }
 
-    return BRLCAD_OK;
+    return GED_OK;
 }
 
 /*   P N T S _ I N */
@@ -2409,7 +2409,7 @@ pnts_in(struct ged *gedp, int argc, const char **argv, struct rt_db_internal *in
     /* prompt if points file */
     if (argc < 4) {
         bu_vls_printf(&gedp->ged_result_str, "%s", prompt[0]);
-        return BRLCAD_MORE_ARGS;
+        return GED_MORE;
     }
 
     /* if points are in a file */
@@ -2418,25 +2418,25 @@ pnts_in(struct ged *gedp, int argc, const char **argv, struct rt_db_internal *in
         /* prompt for point file path and name */
         if (argc < 5) {
             bu_vls_printf(&gedp->ged_result_str, "%s", prompt[16]);
-            return BRLCAD_MORE_ARGS;
+            return GED_MORE;
         }
 
         /* prompt for file data format */
         if (argc < 6) {
             bu_vls_printf(&gedp->ged_result_str, "%s", prompt[17]);
-            return BRLCAD_MORE_ARGS;
+            return GED_MORE;
         }
 
         /* prompt for file data units */
         if (argc < 7) {
             bu_vls_printf(&gedp->ged_result_str, "%s", prompt[18]);
-            return BRLCAD_MORE_ARGS;
+            return GED_MORE;
         }
 
         /* prompt for default point size */
         if (argc < 8) {
             bu_vls_printf(&gedp->ged_result_str, "%s", prompt[5]);
-            return BRLCAD_MORE_ARGS;
+            return GED_MORE;
         }
 
         /* call function(s) to validate 'point file data format string' and return the
@@ -2452,7 +2452,7 @@ pnts_in(struct ged *gedp, int argc, const char **argv, struct rt_db_internal *in
 
         bu_log("The ability to create a pnts primitive from a data file is not yet implemented.\n");
 
-        return BRLCAD_ERROR;
+        return GED_ERROR;
 
     } /* endif to process point data file */
 
@@ -2460,7 +2460,7 @@ pnts_in(struct ged *gedp, int argc, const char **argv, struct rt_db_internal *in
     /* prompt for numPoints if not entered */
     if (argc < 5) {
 	bu_vls_printf(&gedp->ged_result_str, "%s", prompt[1]);
-	return BRLCAD_MORE_ARGS;
+	return GED_MORE;
     }
     numPoints = atol(argv[4]);
     if (numPoints < 0) {
@@ -2471,28 +2471,28 @@ pnts_in(struct ged *gedp, int argc, const char **argv, struct rt_db_internal *in
     /* prompt for orientation */
     if (argc < 6) {
 	bu_vls_printf(&gedp->ged_result_str, "%s", prompt[2]);
-	return BRLCAD_MORE_ARGS;
+	return GED_MORE;
     }
     oriented = booleanize(argv[5]);
 
     /* prompt for color */
     if (argc < 7) {
 	bu_vls_printf(&gedp->ged_result_str, "%s", prompt[3]);
-	return BRLCAD_MORE_ARGS;
+	return GED_MORE;
     }
     hasColor = booleanize(argv[6]);
 
     /* prompt for uniform scale */
     if (argc < 8) {
 	bu_vls_printf(&gedp->ged_result_str, "%s", prompt[4]);
-	return BRLCAD_MORE_ARGS;
+	return GED_MORE;
     }
     hasScale = booleanize(argv[7]); /* has scale if not uniform */
 
     /* prompt for size of points if not entered */
     if (argc < 9) {
 	bu_vls_printf(&gedp->ged_result_str, "%s", prompt[5]);
-	return BRLCAD_MORE_ARGS;
+	return GED_MORE;
     }
     defaultSize = atof(argv[8]);
     if (defaultSize < 0.0) {
@@ -2587,7 +2587,7 @@ pnts_in(struct ged *gedp, int argc, const char **argv, struct rt_db_internal *in
 	bu_vls_printf(&gedp->ged_result_str, "%s", bu_vls_addr(&vls));
 
         bu_vls_free(&vls);
-        return BRLCAD_MORE_ARGS;
+        return GED_MORE;
     }
 
     /* now we have everything we need to allocate an internal */
@@ -2740,7 +2740,7 @@ pnts_in(struct ged *gedp, int argc, const char **argv, struct rt_db_internal *in
 	}
     }
 
-    return BRLCAD_OK;
+    return GED_OK;
 }
 
 int
@@ -2753,9 +2753,9 @@ ged_in(struct ged *gedp, int argc, const char *argv[])
     int nvals, (*fn_in)();
     void (*cur_sigint)();
 
-    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
-    GED_CHECK_READ_ONLY(gedp, BRLCAD_ERROR);
-    GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
+    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
+    GED_CHECK_READ_ONLY(gedp, GED_ERROR);
+    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
 
     /* initialize result */
     bu_vls_trunc(&gedp->ged_result_str, 0);
@@ -2763,15 +2763,15 @@ ged_in(struct ged *gedp, int argc, const char *argv[])
     /* Get the name of the solid to be created */
     if ( argc < 2 )  {
 	bu_vls_printf(&gedp->ged_result_str, "Enter name of solid: ");
-	return BRLCAD_MORE_ARGS;
+	return GED_MORE;
     }
     if ( db_lookup( gedp->ged_wdbp->dbip,  argv[1], LOOKUP_QUIET ) != DIR_NULL )  {
 	bu_vls_printf(&gedp->ged_result_str, "%s: %s already exists", argv[0], argv[1]);
-	return BRLCAD_ERROR;
+	return GED_ERROR;
     }
     if ( gedp->ged_wdbp->dbip->dbi_version <= 4 && (int)strlen(argv[1]) > NAMESIZE )  {
 	bu_vls_printf(&gedp->ged_result_str, "%s: ERROR, v4 names are limited to %d characters\n", argv[0], NAMESIZE);
-	return BRLCAD_ERROR;
+	return GED_ERROR;
     }
     /* Save the solid name */
     name = (char *)argv[1];
@@ -2779,7 +2779,7 @@ ged_in(struct ged *gedp, int argc, const char *argv[])
     /* Get the solid type to be created and make it */
     if ( argc < 3 )  {
 	bu_vls_printf(&gedp->ged_result_str, "Enter solid type: ");
-	return BRLCAD_MORE_ARGS;
+	return GED_MORE;
     }
 
     RT_INIT_DB_INTERNAL( &internal );
@@ -2795,22 +2795,22 @@ ged_in(struct ged *gedp, int argc, const char *argv[])
 	fn_in = ebm_in;
     } else if ( strcmp( argv[2], "arbn" ) == 0 ) {
 	switch ( arbn_in(gedp, argc, argv, &internal, &p_arbn[0]) ) {
-	    case BRLCAD_ERROR:
+	    case GED_ERROR:
 		bu_vls_printf(&gedp->ged_result_str, "%s: ERROR, ARBN not made!\n", argv[0]);
 		rt_db_free_internal( &internal, &rt_uniresource );
-		return BRLCAD_ERROR;
-	    case BRLCAD_MORE_ARGS:
-		return BRLCAD_MORE_ARGS;
+		return GED_ERROR;
+	    case GED_MORE:
+		return GED_MORE;
 	}
 	goto do_new_update;
     } else if ( strcmp( argv[2], "bot" ) == 0 ) {
 	switch ( bot_in(gedp, argc, argv, &internal, &p_bot[0]) ) {
-	    case BRLCAD_ERROR:
+	    case GED_ERROR:
 		bu_vls_printf(&gedp->ged_result_str, "%s: ERROR, BOT not made!\n", argv[0]);
 		rt_db_free_internal( &internal, &rt_uniresource );
-		return BRLCAD_ERROR;
-	    case BRLCAD_MORE_ARGS:
-		return BRLCAD_MORE_ARGS;
+		return GED_ERROR;
+	    case GED_MORE:
+		return GED_MORE;
 	}
 	goto do_new_update;
     } else if ( strcmp( argv[2], "submodel" ) == 0 )  {
@@ -2829,12 +2829,12 @@ ged_in(struct ged *gedp, int argc, const char *argv[])
 	    bu_vls_printf(&gedp->ged_result_str, "%s: the height field is deprecated. Use the dsp primitive.\n", argv[0]);
 	} else {
 	    bu_vls_printf(&gedp->ged_result_str, "%s: the height field is deprecated. Use the dsp primitive.\n", argv[0]);
-	    return BRLCAD_ERROR;
+	    return GED_ERROR;
 	}
     } else if (strcmp(argv[2], "poly") == 0 ||
 	       strcmp(argv[2], "pg") == 0) {
 	bu_vls_printf(&gedp->ged_result_str, "%s: the polysolid is deprecated and not supported by this command.\nUse the bot primitive.\n", argv[0]);
-	return BRLCAD_ERROR;
+	return GED_ERROR;
     } else if ( strcmp( argv[2], "dsp" ) == 0 )  {
 	if (gedp->ged_wdbp->dbip->dbi_version <= 4) {
 	    nvals = 6;
@@ -2848,32 +2848,32 @@ ged_in(struct ged *gedp, int argc, const char *argv[])
 
     } else if ( strcmp( argv[2], "pipe" ) == 0 ) {
 	switch ( pipe_in(gedp, argc, argv, &internal, &p_pipe[0]) ) {
-	    case BRLCAD_ERROR:
+	    case GED_ERROR:
 		bu_vls_printf(&gedp->ged_result_str, "%s: ERROR, pipe not made!\n", argv[0]);
 		rt_db_free_internal( &internal, &rt_uniresource );
-		return BRLCAD_ERROR;
-	    case BRLCAD_MORE_ARGS:
-		return BRLCAD_ERROR;
+		return GED_ERROR;
+	    case GED_MORE:
+		return GED_MORE;
 	}
 	goto do_new_update;
     } else if ( strcmp( argv[2], "metaball" ) == 0 ) {
 	switch ( metaball_in(gedp, argc, argv, &internal, &p_metaball[0]) ) {
-	    case BRLCAD_ERROR:
+	    case GED_ERROR:
 		bu_vls_printf(&gedp->ged_result_str, "%s: ERROR, metaball not made!\n", argv[0]);
 		rt_db_free_internal( &internal, &rt_uniresource );
-		return BRLCAD_ERROR;
-	    case BRLCAD_MORE_ARGS:
-		return BRLCAD_ERROR;
+		return GED_ERROR;
+	    case GED_MORE:
+		return GED_MORE;
 	}
 	goto do_new_update;
     } else if ( strcmp( argv[2], "ars" ) == 0 )  {
 	switch ( ars_in(gedp, argc, argv, &internal, &p_ars[0]) ) {
-	    case BRLCAD_ERROR:
+	    case GED_ERROR:
 		bu_vls_printf(&gedp->ged_result_str, "%s: ERROR, ars not made!\n", argv[0]);
 		rt_db_free_internal( &internal, &rt_uniresource );
-		return BRLCAD_ERROR;
-	    case BRLCAD_MORE_ARGS:
-		return BRLCAD_ERROR;
+		return GED_ERROR;
+	    case GED_MORE:
+		return GED_MORE;
 	}
 	goto do_new_update;
     } else if ( strcmp( argv[2], "half" ) == 0 )  {
@@ -2887,7 +2887,7 @@ ged_in(struct ged *gedp, int argc, const char *argv[])
 	    bu_vls_printf(&gedp->ged_result_str,
 			  "%s: ERROR: %s not supported!\nsupported arbs: arb4 arb5 arb6 arb7 arb8\n",
 			  argv[0], argv[2]);
-	    return BRLCAD_ERROR;
+	    return GED_ERROR;
 	}
 
 	nvals = 3*n;
@@ -2979,7 +2979,7 @@ ged_in(struct ged *gedp, int argc, const char *argv[])
 	    bu_vls_printf(&gedp->ged_result_str,
 			  "%s: the binunif primitive is not supported by this command when using an old style database",
 			  argv[0]);
-	    return BRLCAD_ERROR;
+	    return GED_ERROR;
 	} else {
 	    nvals = 3;
 	    menu = p_binunif;
@@ -3003,12 +3003,12 @@ ged_in(struct ged *gedp, int argc, const char *argv[])
 	fn_in = superell_in;
     } else if (strcmp(argv[2], "pnts") == 0) {
 	switch (pnts_in(gedp, argc, argv, &internal, p_pnts)) {
-	case BRLCAD_ERROR:
+	case GED_ERROR:
 	    bu_vls_printf(&gedp->ged_result_str, "%s: ERROR, pnts not made!\n", argv[0]);
 	    rt_db_free_internal(&internal, &rt_uniresource);
-	    return BRLCAD_ERROR;
-	case BRLCAD_MORE_ARGS:
-	    return BRLCAD_MORE_ARGS;
+	    return GED_ERROR;
+	case GED_MORE:
+	    return GED_MORE;
 	}
 
 	goto do_new_update;
@@ -3019,16 +3019,16 @@ ged_in(struct ged *gedp, int argc, const char *argv[])
 	       strcmp(argv[2], "sketch") == 0 ||
 	       strcmp(argv[2], "spline") == 0) {
 	bu_vls_printf(&gedp->ged_result_str, "%s: the %s primitive is not supported by this command", argv[0], argv[2]);
-	return BRLCAD_ERROR;
+	return GED_ERROR;
     } else {
 	bu_vls_printf(&gedp->ged_result_str, "%s: %s is not a known primitive\n", argv[0], argv[2]);
-	return BRLCAD_ERROR;
+	return GED_ERROR;
     }
 
     /* Read arguments */
     if ( argc < 3+nvals )  {
 	bu_vls_printf(&gedp->ged_result_str, "%s", menu[argc-3]);
-	return BRLCAD_MORE_ARGS;
+	return GED_MORE;
     }
 
     if (fn_in(gedp, argv, &internal, name) != 0)  {
@@ -3039,7 +3039,7 @@ ged_in(struct ged *gedp, int argc, const char *argv[])
 	     */
 	    rt_db_free_internal( &internal, &rt_uniresource );
 	}
-	return BRLCAD_ERROR;
+	return GED_ERROR;
     }
 
  do_new_update:
@@ -3048,16 +3048,16 @@ ged_in(struct ged *gedp, int argc, const char *argv[])
 	if ( (dp=db_diradd( gedp->ged_wdbp->dbip, name, -1L, 0, DIR_SOLID, (genptr_t)&internal.idb_type)) == DIR_NULL ) {
 	    rt_db_free_internal( &internal, &rt_uniresource );
 	    bu_vls_printf(&gedp->ged_result_str, "%s: Cannot add '%s' to directory\n", argv[0], name);
-	    return BRLCAD_ERROR;
+	    return GED_ERROR;
 	}
 	if ( rt_db_put_internal( dp, gedp->ged_wdbp->dbip, &internal, &rt_uniresource ) < 0 ) {
 	    rt_db_free_internal( &internal, &rt_uniresource );
 	    bu_vls_printf(&gedp->ged_result_str, "%s: Database write error, aborting\n", argv[0]);
-	    return BRLCAD_ERROR;
+	    return GED_ERROR;
 	}
     }
 
-    return BRLCAD_OK;
+    return GED_OK;
 }
 
 

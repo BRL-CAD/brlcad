@@ -38,9 +38,9 @@ ged_scale_args(struct ged *gedp, int argc, const char *argv[], fastf_t *sf)
 {
     static const char *usage = "sf";
 
-    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
-    GED_CHECK_VIEW(gedp, BRLCAD_ERROR);
-    GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
+    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
+    GED_CHECK_VIEW(gedp, GED_ERROR);
+    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
 
     /* initialize result */
     bu_vls_trunc(&gedp->ged_result_str, 0);
@@ -48,20 +48,20 @@ ged_scale_args(struct ged *gedp, int argc, const char *argv[], fastf_t *sf)
     /* must be wanting help */
     if (argc == 1) {
 	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return BRLCAD_HELP;
+	return GED_HELP;
     }
 
     if (argc != 2) {
 	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return BRLCAD_ERROR;
+	return GED_ERROR;
     }
 
     if (sscanf(argv[1], "%lf", sf) != 1) {
 	bu_vls_printf(&gedp->ged_result_str, "bad scale factor - %s", argv[1]);
-	return BRLCAD_ERROR;
+	return GED_ERROR;
     }
 
-    return BRLCAD_OK;
+    return GED_OK;
 }
 
 int
@@ -70,11 +70,11 @@ ged_scale(struct ged *gedp, int argc, const char *argv[])
     int ret;
     fastf_t sf;
 
-    if ((ret = ged_scale_args(gedp, argc, argv, &sf)) != BRLCAD_OK)
+    if ((ret = ged_scale_args(gedp, argc, argv, &sf)) != GED_OK)
 	return ret;
 
     if (sf <= SMALL_FASTF || INFINITY < sf)
-	return BRLCAD_OK;
+	return GED_OK;
 
     /* scale the view */
     gedp->ged_gvp->gv_scale *= sf;
@@ -85,7 +85,7 @@ ged_scale(struct ged *gedp, int argc, const char *argv[])
     gedp->ged_gvp->gv_isize = 1.0 / gedp->ged_gvp->gv_size;
     ged_view_update(gedp->ged_gvp);
 
-    return BRLCAD_OK;
+    return GED_OK;
 }
 
 

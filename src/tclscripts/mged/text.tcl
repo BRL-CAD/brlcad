@@ -1880,8 +1880,9 @@ proc tab_expansion { line } {
 		    set name "/$name"
 		}
 		set newCommand [lreplace $line end end $name]
+	    } else {
+		return [list $line {}]
 	    }
-	    # note that {$len == 0} is not possible
 	}
     } else {
 	# command expansion

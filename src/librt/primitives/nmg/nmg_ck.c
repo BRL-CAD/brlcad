@@ -507,14 +507,8 @@ nmg_vface(const struct face *f, const struct faceuse *fup)
     /* make sure we can get back to the parent faceuse from the face */
     if (!f->fu_p) bu_bomb("nmg_vface() null faceuse pointer\n");
 
-#if 0
-    for (fu = fup; fu && fu != f->fu_p && fu->forw != fup; fu = fu->forw);
-
-    if (f->fu_p != fu) bu_bomb("nmg_vface() can't get to parent faceuse from face\n");
-#endif
-
     for (i=0; i < ELEMENTS_PER_POINT; ++i)
-	if (f->min_pt[i] >= f->max_pt[i]) {
+	if (f->min_pt[i] > f->max_pt[i]) {
 	    bu_log("nmg_vface() face min_pt[%d]:%g greater than max_pt[%d]:%g\n",
 		   i, f->min_pt[i], i, f->max_pt[i]);
 	    bu_log("min_pt(%g %g %g)  ", V3ARGS(f->min_pt));

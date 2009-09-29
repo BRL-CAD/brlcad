@@ -55,16 +55,16 @@ static char rcsid[] = "$Id: lexact.c,v 1.10 1997/09/24 20:05:38 dar Exp $";
 #include <stdlib.h>
 #include <ctype.h>
 /*#include <strings.h>*/
-#include "lexact.h"
+#include "express/lexact.h"
 
 #include "string.h"
-#include "linklist.h"
+#include "express/linklist.h"
 #include "stack.h"
-#include "hash.h"
-#include "express.h"
+#include "express/hash.h"
+#include "express/express.h"
 #include "expparse.h"
-#include "dict.h"
-#include "memory.h"
+#include "express/dict.h"
+#include "express/memory.h"
 
 extern int		yylineno;
 extern FILE*		yyin;

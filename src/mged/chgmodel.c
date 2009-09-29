@@ -107,7 +107,7 @@ f_make(ClientData	clientData,
     Tcl_DStringAppend(&ds, bu_vls_addr(&gedp->ged_result_str), -1);
     Tcl_DStringResult(interp, &ds);
 
-    if (ret == BRLCAD_OK) {
+    if (ret == GED_OK) {
 	const char *av[4];
 
 	av[0] = "draw";
@@ -115,11 +115,9 @@ f_make(ClientData	clientData,
 	av[2] = argv[argc-2];
 	av[3] = NULL;
 	edit_com(3, av, 1, 1);
-    }
-
-    /* Convert to Tcl codes */
-    if (ret == BRLCAD_ERROR)
+    } else {
 	return TCL_ERROR;
+    }
 
     return TCL_OK;
 }

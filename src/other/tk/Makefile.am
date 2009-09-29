@@ -14,6 +14,7 @@ install-am: all-am
 	if test -d unix ; then cd unix && $(MAKE) $(AM_MAKEFLAGS) install ; fi
 
 INSTALLED_BINARIES = \
+	wish \
 	wish8.5
 
 INSTALLED_INCLUDES = \

@@ -52,9 +52,9 @@ ged_move_arb_edge(struct ged *gedp, int argc, const char *argv[])
     struct directory *dp;
     static const char *usage = "[-r] arb edge pt";
 
-    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
-    GED_CHECK_READ_ONLY(gedp, BRLCAD_ERROR);
-    GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
+    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
+    GED_CHECK_READ_ONLY(gedp, GED_ERROR);
+    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
 
     /* initialize result */
     bu_vls_trunc(&gedp->ged_result_str, 0);
@@ -62,18 +62,18 @@ ged_move_arb_edge(struct ged *gedp, int argc, const char *argv[])
     /* must be wanting help */
     if (argc == 1) {
 	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return BRLCAD_HELP;
+	return GED_HELP;
     }
 
     if (argc < 4 || 5 < argc) {
 	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return BRLCAD_ERROR;
+	return GED_ERROR;
     }
 
     if (argc == 5) {
 	if (argv[1][0] != '-' || argv[1][1] != 'r' || argv[1][2] != '\0') {
 	    bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	    return BRLCAD_ERROR;
+	    return GED_ERROR;
 	}
 
 	rflag = 1;
@@ -88,30 +88,30 @@ ged_move_arb_edge(struct ged *gedp, int argc, const char *argv[])
 
     if (last[0] == '\0') {
 	bu_vls_printf(&gedp->ged_result_str, "illegal input - %s", argv[1]);
-	return BRLCAD_ERROR;
+	return GED_ERROR;
     }
 
     if ((dp = db_lookup(gedp->ged_wdbp->dbip, last, LOOKUP_QUIET)) == DIR_NULL) {
 	bu_vls_printf(&gedp->ged_result_str, "%s not found", argv[1]);
-	return BRLCAD_ERROR;
+	return GED_ERROR;
     }
 
-    if (wdb_import_from_path2(&gedp->ged_result_str, &intern, argv[1], gedp->ged_wdbp, mat) == BRLCAD_ERROR)
-	return BRLCAD_ERROR;
+    if (wdb_import_from_path2(&gedp->ged_result_str, &intern, argv[1], gedp->ged_wdbp, mat) == GED_ERROR)
+	return GED_ERROR;
 
     if (intern.idb_major_type != DB5_MAJORTYPE_BRLCAD ||
 	intern.idb_minor_type != DB5_MINORTYPE_BRLCAD_ARB8) {
 	bu_vls_printf(&gedp->ged_result_str, "Object not an ARB");
 	rt_db_free_internal(&intern, &rt_uniresource);
 
-	return BRLCAD_ERROR;
+	return GED_ERROR;
     }
 
     if (sscanf(argv[2], "%d", &edge) != 1) {
 	bu_vls_printf(&gedp->ged_result_str, "bad edge - %s", argv[2]);
 	rt_db_free_internal(&intern, &rt_uniresource);
 
-	return BRLCAD_ERROR;
+	return GED_ERROR;
     }
     edge -= 1;
 
@@ -119,7 +119,7 @@ ged_move_arb_edge(struct ged *gedp, int argc, const char *argv[])
 	bu_vls_printf(&gedp->ged_result_str, "bad point - %s", argv[3]);
 	rt_db_free_internal(&intern, &rt_uniresource);
 
-	return BRLCAD_ERROR;
+	return GED_ERROR;
     }
 
     arb = (struct rt_arb_internal *)intern.idb_ptr;
@@ -158,7 +158,7 @@ ged_move_arb_edge(struct ged *gedp, int argc, const char *argv[])
 	    bu_vls_printf(&gedp->ged_result_str, "unrecognized arb type");
 	    rt_db_free_internal(&intern, &rt_uniresource);
 
-	    return BRLCAD_ERROR;
+	    return GED_ERROR;
     }
 
     /* check the edge id */
@@ -166,13 +166,13 @@ ged_move_arb_edge(struct ged *gedp, int argc, const char *argv[])
 	bu_vls_printf(&gedp->ged_result_str, "bad edge - %s", argv[2]);
 	rt_db_free_internal(&intern, &rt_uniresource);
 
-	return BRLCAD_ERROR;
+	return GED_ERROR;
     }
 
     if (rt_arb_calc_planes(&gedp->ged_result_str, arb, arb_type, planes, &gedp->ged_wdbp->wdb_tol)) {
 	rt_db_free_internal(&intern, &rt_uniresource);
 
-	return BRLCAD_ERROR;
+	return GED_ERROR;
     }
 
     VSCALE(pt, pt, gedp->ged_wdbp->dbip->dbi_local2base);
@@ -184,7 +184,7 @@ ged_move_arb_edge(struct ged *gedp, int argc, const char *argv[])
     if (rt_arb_edit(&gedp->ged_result_str, arb, arb_type, edge, pt, planes, &gedp->ged_wdbp->wdb_tol)) {
 	rt_db_free_internal(&intern, &rt_uniresource);
 
-	return BRLCAD_ERROR;
+	return GED_ERROR;
     }
 
     {
@@ -200,10 +200,10 @@ ged_move_arb_edge(struct ged *gedp, int argc, const char *argv[])
 	    VMOVE(arb->pt[i], arb_pt);
 	}
 
-	GED_DB_PUT_INTERNAL(gedp, dp, &intern, &rt_uniresource, BRLCAD_ERROR);
+	GED_DB_PUT_INTERNAL(gedp, dp, &intern, &rt_uniresource, GED_ERROR);
     }
 
-    return BRLCAD_OK;
+    return GED_OK;
 }
 
 

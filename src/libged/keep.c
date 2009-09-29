@@ -55,8 +55,8 @@ ged_keep(struct ged *gedp, int argc, const char *argv[])
     struct db_i		*new_dbip;
     static const char *usage = "file object(s)";
 
-    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
-    GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
+    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
+    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
 
     /* initialize result */
     bu_vls_trunc(&gedp->ged_result_str, 0);
@@ -64,12 +64,12 @@ ged_keep(struct ged *gedp, int argc, const char *argv[])
     /* must be wanting help */
     if (argc == 1) {
 	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return BRLCAD_HELP;
+	return GED_HELP;
     }
 
     if (argc < 3 || MAXARGS < argc) {
 	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return BRLCAD_ERROR;
+	return GED_ERROR;
     }
 
     /* First, clear any existing counts */
@@ -86,12 +86,12 @@ ged_keep(struct ged *gedp, int argc, const char *argv[])
 	if (new_dbip->dbi_version != gedp->ged_wdbp->dbip->dbi_version) {
 	    bu_vls_printf(&gedp->ged_result_str, "keep: File format mismatch between '%s' and '%s'\n",
 			  argv[1], gedp->ged_wdbp->dbip->dbi_filename);
-	    return BRLCAD_ERROR;
+	    return GED_ERROR;
 	}
 
 	if ((keepfp = wdb_dbopen(new_dbip, RT_WDB_TYPE_DB_DISK)) == NULL) {
 	    bu_vls_printf(&gedp->ged_result_str, "keep: Error opening '%s'\n", argv[1]);
-	    return BRLCAD_ERROR;
+	    return GED_ERROR;
 	} else {
 	    bu_vls_printf(&gedp->ged_result_str, "keep:  appending to '%s'\n", argv[1]);
 
@@ -104,7 +104,7 @@ ged_keep(struct ged *gedp, int argc, const char *argv[])
 
 	if (keepfp == NULL) {
 	    perror(argv[1]);
-	    return BRLCAD_ERROR;
+	    return GED_ERROR;
 	}
     }
 
@@ -123,7 +123,7 @@ ged_keep(struct ged *gedp, int argc, const char *argv[])
 	bu_vls_printf(&gedp->ged_result_str, "db_update_ident() failed\n");
 	wdb_close(keepfp);
 	bu_vls_free(&title);
-	return BRLCAD_ERROR;
+	return GED_ERROR;
     }
     bu_vls_free(&title);
 
@@ -134,7 +134,7 @@ ged_keep(struct ged *gedp, int argc, const char *argv[])
     }
 
     wdb_close(keepfp);
-    return BRLCAD_OK;
+    return GED_OK;
 }
 
 /**

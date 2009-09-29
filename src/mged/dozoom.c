@@ -31,6 +31,10 @@
 #include "bn.h"
 #include "dg.h"
 
+#ifdef DM_RTGL
+#  include "dm-rtgl.h"
+#endif
+
 #include "./mged.h"
 #include "./sedit.h"
 #include "./mged_dm.h"
@@ -280,10 +284,10 @@ drawSolid(register struct solid *sp,
 	sp->s_flag = UP;
 	ndrawn++;
     } else {
-	if (DM_DRAW_VLIST(dmp, (struct bn_vlist *)&sp->s_vlist) == TCL_OK) {
-	    sp->s_flag = UP;
-	    ndrawn++;
-	}
+        if (DM_DRAW_VLIST(dmp, (struct bn_vlist *)&sp->s_vlist) == TCL_OK) {
+            sp->s_flag = UP;
+            ndrawn++;
+        }
     }
 }
 
@@ -298,6 +302,8 @@ drawSolid(register struct solid *sp,
 void
 dozoom(int which_eye)
 {
+    register struct ged_display_list *gdlp;
+    register struct ged_display_list *next_gdlp;
     register struct solid	*sp;
     fastf_t		ratio;
     fastf_t			inv_viewsize;
@@ -356,7 +362,7 @@ dozoom(int which_eye)
 		/* Non-stereo case */
 		mat = view_state->vs_gvp->gv_model2view;
 		/* XXX hack */
-		// if ( mged_variables->mv_faceplate > 0 )
+		/* if ( mged_variables->mv_faceplate > 0 ) */
 		if ( 1 ) {
 		    if ( view_state->vs_gvp->gv_eye_pos[Z] == 1.0 )  {
 			/* This way works, with reasonable Z-clipping */
@@ -392,117 +398,155 @@ dozoom(int which_eye)
 
     DM_LOADMATRIX( dmp, mat, which_eye );
 
+#ifdef DM_RTGL
+    /* dm rtgl has it's own way of drawing */
+    if (IS_DM_TYPE_RTGL(dmp->dm_type)) {
+    
+        /* dm-rtgl needs database info for ray tracing */
+        RTGL_GEDP = gedp;
+
+	/* will ray trace visible objects and draw the intersection points */
+	DM_DRAW_VLIST(dmp, (struct bn_vlist *)NULL);
+      
+	/* force update if needed */
+	dirty = RTGL_DIRTY;
+
+        return;
+    }
+#endif
+
     if (dmp->dm_transparency) {
 	/* First, draw opaque stuff */
-	FOR_ALL_SOLIDS(sp, &gedp->ged_gdp->gd_headSolid)  {
-	    sp->s_flag = DOWN;		/* Not drawn yet */
+	gdlp = BU_LIST_NEXT(ged_display_list, &gedp->ged_gdp->gd_headDisplay);
+	while (BU_LIST_NOT_HEAD(gdlp, &gedp->ged_gdp->gd_headDisplay)) {
+	    next_gdlp = BU_LIST_PNEXT(ged_display_list, gdlp);
 
-	    /* If part of object edit, will be drawn below */
-	    if ( sp->s_iflag == UP )
-		continue;
+	    FOR_ALL_SOLIDS(sp, &gdlp->gdl_headSolid) {
+		sp->s_flag = DOWN;		/* Not drawn yet */
 
-	    if (sp->s_transparency < 1.0)
-		continue;
+		/* If part of object edit, will be drawn below */
+		if ( sp->s_iflag == UP )
+		    continue;
 
-	    /*
-	     * The vectorThreshold stuff in libdm may turn the
-	     * Tcl-crank causing curr_dm_list to change.
-	     */
-	    if (curr_dm_list != save_dm_list)
-		curr_dm_list = save_dm_list;
-
-	    if (dmp->dm_boundFlag) {
-		ratio = sp->s_size * inv_viewsize;
+		if (sp->s_transparency < 1.0)
+		    continue;
 
 		/*
-		 * Check for this object being bigger than
-		 * dmp->dm_bound * the window size, or smaller than a speck.
+		 * The vectorThreshold stuff in libdm may turn the
+		 * Tcl-crank causing curr_dm_list to change.
 		 */
-		if (ratio < 0.001)
-		    continue;
+		if (curr_dm_list != save_dm_list)
+		    curr_dm_list = save_dm_list;
+
+		if (dmp->dm_boundFlag) {
+		    ratio = sp->s_size * inv_viewsize;
+
+		    /*
+		     * Check for this object being bigger than
+		     * dmp->dm_bound * the window size, or smaller than a speck.
+		     */
+		    if (ratio < 0.001)
+			continue;
+		}
+
+		if (linestyle != sp->s_soldash) {
+		    linestyle = sp->s_soldash;
+		    DM_SET_LINE_ATTR(dmp, mged_variables->mv_linewidth, linestyle);
+		}
+
+		drawSolid(sp, r, g, b);
 	    }
 
-	    if (linestyle != sp->s_soldash) {
-		linestyle = sp->s_soldash;
-		DM_SET_LINE_ATTR(dmp, mged_variables->mv_linewidth, linestyle);
-	    }
-
-	    drawSolid(sp, r, g, b);
+	    gdlp = next_gdlp;
 	}
 
 	/* disable write to depth buffer */
 	DM_SET_DEPTH_MASK(dmp, 0);
 
 	/* Second, draw transparent stuff */
-	FOR_ALL_SOLIDS(sp, &gedp->ged_gdp->gd_headSolid)  {
+	gdlp = BU_LIST_NEXT(ged_display_list, &gedp->ged_gdp->gd_headDisplay);
+	while (BU_LIST_NOT_HEAD(gdlp, &gedp->ged_gdp->gd_headDisplay)) {
+	    next_gdlp = BU_LIST_PNEXT(ged_display_list, gdlp);
 
-	    /* If part of object edit, will be drawn below */
-	    if ( sp->s_iflag == UP )
-		continue;
+	    FOR_ALL_SOLIDS(sp, &gdlp->gdl_headSolid) {
 
-	    /* already drawn above */
-	    if (sp->s_transparency == 1.0)
-		continue;
+		/* If part of object edit, will be drawn below */
+		if ( sp->s_iflag == UP )
+		    continue;
 
-	    /*
-	     * The vectorThreshold stuff in libdm may turn the
-	     * Tcl-crank causing curr_dm_list to change.
-	     */
-	    if (curr_dm_list != save_dm_list)
-		curr_dm_list = save_dm_list;
-
-	    if (dmp->dm_boundFlag) {
-		ratio = sp->s_size * inv_viewsize;
+		/* already drawn above */
+		if (sp->s_transparency == 1.0)
+		    continue;
 
 		/*
-		 * Check for this object being bigger than
-		 * dmp->dm_bound * the window size, or smaller than a speck.
+		 * The vectorThreshold stuff in libdm may turn the
+		 * Tcl-crank causing curr_dm_list to change.
 		 */
-		if (ratio < 0.001)
-		    continue;
+		if (curr_dm_list != save_dm_list)
+		    curr_dm_list = save_dm_list;
+
+		if (dmp->dm_boundFlag) {
+		    ratio = sp->s_size * inv_viewsize;
+
+		    /*
+		     * Check for this object being bigger than
+		     * dmp->dm_bound * the window size, or smaller than a speck.
+		     */
+		    if (ratio < 0.001)
+			continue;
+		}
+
+		if (linestyle != sp->s_soldash) {
+		    linestyle = sp->s_soldash;
+		    DM_SET_LINE_ATTR(dmp, mged_variables->mv_linewidth, linestyle);
+		}
+
+		drawSolid(sp, r, g, b);
 	    }
 
-	    if (linestyle != sp->s_soldash) {
-		linestyle = sp->s_soldash;
-		DM_SET_LINE_ATTR(dmp, mged_variables->mv_linewidth, linestyle);
-	    }
-
-	    drawSolid(sp, r, g, b);
+	    gdlp = next_gdlp;
 	}
 
 	/* re-enable write of depth buffer */
 	DM_SET_DEPTH_MASK(dmp, 1);
     } else {
 
-	FOR_ALL_SOLIDS(sp, &gedp->ged_gdp->gd_headSolid)  {
-	    sp->s_flag = DOWN;		/* Not drawn yet */
-	    /* If part of object edit, will be drawn below */
-	    if ( sp->s_iflag == UP )
-		continue;
+	gdlp = BU_LIST_NEXT(ged_display_list, &gedp->ged_gdp->gd_headDisplay);
+	while (BU_LIST_NOT_HEAD(gdlp, &gedp->ged_gdp->gd_headDisplay)) {
+	    next_gdlp = BU_LIST_PNEXT(ged_display_list, gdlp);
 
-	    /*
-	     * The vectorThreshold stuff in libdm may turn the
-	     * Tcl-crank causing curr_dm_list to change.
-	     */
-	    if (curr_dm_list != save_dm_list)
-		curr_dm_list = save_dm_list;
-
-	    if (dmp->dm_boundFlag) {
-		ratio = sp->s_size * inv_viewsize;
+	    FOR_ALL_SOLIDS(sp, &gdlp->gdl_headSolid) {
+		sp->s_flag = DOWN;		/* Not drawn yet */
+		/* If part of object edit, will be drawn below */
+		if ( sp->s_iflag == UP )
+		    continue;
 
 		/*
-		 * Check for this object being smaller than a speck.
+		 * The vectorThreshold stuff in libdm may turn the
+		 * Tcl-crank causing curr_dm_list to change.
 		 */
-		if (ratio < 0.001)
-		    continue;
+		if (curr_dm_list != save_dm_list)
+		    curr_dm_list = save_dm_list;
+
+		if (dmp->dm_boundFlag) {
+		    ratio = sp->s_size * inv_viewsize;
+
+		    /*
+		     * Check for this object being smaller than a speck.
+		     */
+		    if (ratio < 0.001)
+			continue;
+		}
+
+		if (linestyle != sp->s_soldash) {
+		    linestyle = sp->s_soldash;
+		    DM_SET_LINE_ATTR(dmp, mged_variables->mv_linewidth, linestyle);
+		}
+
+		drawSolid(sp, r, g, b);
 	    }
 
-	    if (linestyle != sp->s_soldash) {
-		linestyle = sp->s_soldash;
-		DM_SET_LINE_ATTR(dmp, mged_variables->mv_linewidth, linestyle);
-	    }
-
-	    drawSolid(sp, r, g, b);
+	    gdlp = next_gdlp;
 	}
     }
 
@@ -542,43 +586,50 @@ dozoom(int which_eye)
 		   color_scheme->cs_geo_hl[1],
 		   color_scheme->cs_geo_hl[2], 1, 1.0);
 
-    FOR_ALL_SOLIDS(sp, &gedp->ged_gdp->gd_headSolid)  {
-	/* Ignore all objects not being edited */
-	if (sp->s_iflag != UP)
-	    continue;
+    gdlp = BU_LIST_NEXT(ged_display_list, &gedp->ged_gdp->gd_headDisplay);
+    while (BU_LIST_NOT_HEAD(gdlp, &gedp->ged_gdp->gd_headDisplay)) {
+	next_gdlp = BU_LIST_PNEXT(ged_display_list, gdlp);
 
-	/*
-	 * The vectorThreshold stuff in libdm may turn the
-	 * Tcl-crank causing curr_dm_list to change.
-	 */
-	if (curr_dm_list != save_dm_list)
-	    curr_dm_list = save_dm_list;
-
-	if (dmp->dm_boundFlag) {
-	    ratio = sp->s_size * inv_viewsize;
-	    /*
-	     * Check for this object being smaller than a speck.
-	     */
-	    if (ratio < 0.001)
+	FOR_ALL_SOLIDS(sp, &gdlp->gdl_headSolid) {
+	    /* Ignore all objects not being edited */
+	    if (sp->s_iflag != UP)
 		continue;
-	}
 
-	if (linestyle != sp->s_soldash) {
-	    linestyle = sp->s_soldash;
-	    DM_SET_LINE_ATTR(dmp, mged_variables->mv_linewidth, linestyle);
-	}
+	    /*
+	     * The vectorThreshold stuff in libdm may turn the
+	     * Tcl-crank causing curr_dm_list to change.
+	     */
+	    if (curr_dm_list != save_dm_list)
+		curr_dm_list = save_dm_list;
 
-	if (displaylist && mged_variables->mv_dlist) {
-	    DM_DRAWDLIST(dmp, sp->s_dlist);
-	    sp->s_flag = UP;
-	    ndrawn++;
-	} else {
-	    /* draw in immediate mode */
-	    if (DM_DRAW_VLIST(dmp, (struct bn_vlist *)&sp->s_vlist) == TCL_OK) {
+	    if (dmp->dm_boundFlag) {
+		ratio = sp->s_size * inv_viewsize;
+		/*
+		 * Check for this object being smaller than a speck.
+		 */
+		if (ratio < 0.001)
+		    continue;
+	    }
+
+	    if (linestyle != sp->s_soldash) {
+		linestyle = sp->s_soldash;
+		DM_SET_LINE_ATTR(dmp, mged_variables->mv_linewidth, linestyle);
+	    }
+
+	    if (displaylist && mged_variables->mv_dlist) {
+		DM_DRAWDLIST(dmp, sp->s_dlist);
 		sp->s_flag = UP;
 		ndrawn++;
+	    } else {
+		/* draw in immediate mode */
+		if (DM_DRAW_VLIST(dmp, (struct bn_vlist *)&sp->s_vlist) == TCL_OK) {
+		    sp->s_flag = UP;
+		    ndrawn++;
+		}
 	    }
 	}
+
+	gdlp = next_gdlp;
     }
 
     /*
@@ -604,12 +655,21 @@ createDList(struct solid *sp)
  * Create Display Lists
  */
 void
-createDLists(struct bu_list *hsp)
+createDLists(struct bu_list *hdlp)
 {
+    register struct ged_display_list *gdlp;
+    register struct ged_display_list *next_gdlp;
     register struct solid *sp;
 
-    FOR_ALL_SOLIDS(sp, hsp) {
-	createDList(sp);
+    gdlp = BU_LIST_NEXT(ged_display_list, hdlp);
+    while (BU_LIST_NOT_HEAD(gdlp, hdlp)) {
+	next_gdlp = BU_LIST_PNEXT(ged_display_list, gdlp);
+
+	FOR_ALL_SOLIDS(sp, &gdlp->gdl_headSolid) {
+	    createDList(sp);
+	}
+
+	gdlp = next_gdlp;
     }
 }
 
@@ -653,12 +713,21 @@ createDListALL(struct solid *sp)
  * for a description.
  */
 void
-createDListsAll(struct bu_list *hsp)
+createDListsAll(struct bu_list *hdlp)
 {
-    struct solid *sp;
+    register struct ged_display_list *gdlp;
+    register struct ged_display_list *next_gdlp;
+    register struct solid *sp;
 
-    FOR_ALL_SOLIDS(sp, hsp) {
-	createDListALL(sp);
+    gdlp = BU_LIST_NEXT(ged_display_list, hdlp);
+    while (BU_LIST_NOT_HEAD(gdlp, hdlp)) {
+	next_gdlp = BU_LIST_PNEXT(ged_display_list, gdlp);
+
+	FOR_ALL_SOLIDS(sp, &gdlp->gdl_headSolid) {
+	    createDListALL(sp);
+	}
+
+	gdlp = next_gdlp;
     }
 }
 

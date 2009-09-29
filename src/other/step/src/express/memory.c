@@ -36,8 +36,8 @@ Now you can say things like:
 */
 #include <stdlib.h>
 #include <string.h>
-#include "memory.h"
-#include "error.h"
+#include "express/memory.h"
+#include "express/error.h"
 
 /* just in case we are compiling by hand */
 #ifndef ALLOC

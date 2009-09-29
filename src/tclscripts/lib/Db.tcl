@@ -531,7 +531,6 @@
 	    for the "get" subcommand, the arguments are attribute names
 	    for the "rm" subcommand, the arguments are attribute names
 	    for the "append" subcommand, the arguments are attribute name/value pairs } }
-
     $help add binary	{{(-i|-o) major_type minor_type dest source}
 	{manipulate opaque objects.
 	    Must specify one of -i (for creating or adjusting objects (input))

@@ -1,9 +1,9 @@
 
 nonexpressdirs = \
+	clutils \
+	clstepcore \
 	cldai \
 	cleditor \
-	clstepcore \
-	clutils \
 	exppp \
 	fedex_plus
 

@@ -381,8 +381,9 @@ nmg_shell_manifolds(struct shell *sp, char *tbl)
     for (BU_LIST_FOR(fu_p, faceuse, &sp->fu_hd)) {
 	BU_LIST_LINK_CHECK( &fu_p->l );
 
-	paint_color = NMG_INDEX_VALUE(paint_table, fu_p->index);
+	paint_color = NMG_INDEX_VALUE((unsigned char *)paint_table, fu_p->index);
 
+	/* this should never trigger. */
 	if (paint_color < 0 || paint_color > 255) {
 	    bu_log("ERROR: color index out of range (%d > %d)\n", paint_color, 255);
 	    break;

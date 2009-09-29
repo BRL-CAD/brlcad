@@ -113,6 +113,7 @@ package provide cadwidgets::Ged 1.0
 	method autoview {args}
 	method autoview_all {args}
 	method base2local {}
+	method bb {args}
 	method bev {args}
 	method bg {args}
 	method bg_all {args}
@@ -123,9 +124,11 @@ package provide cadwidgets::Ged 1.0
 	method bot_dump {args}
 	method bot_face_fuse {args}
 	method bot_face_sort {args}
+	method bot_flip {args}
 	method bot_merge {args}
 	method bot_smooth {args}
 	method bot_split {args}
+	method bot_sync {args}
 	method bot_vertex_fuse {args}
 	method bounds {args}
 	method bounds_all {args}
@@ -137,7 +140,6 @@ package provide cadwidgets::Ged 1.0
 	method color {args}
 	method comb {args}
 	method comb_color {args}
-	method concat {args}
 	method configure_win {args}
 	method constrain_rmode {args}
 	method constrain_tmode {args}
@@ -145,6 +147,8 @@ package provide cadwidgets::Ged 1.0
 	method copymat {args}
 	method cp {args}
 	method cpi {args}
+	method dbconcat {args}
+	method dbfind {args}
 	method dbip {args}
 	method decompose {args}
 	method delay {args}
@@ -156,6 +160,7 @@ package provide cadwidgets::Ged 1.0
 	method eac {args}
 	method echo {args}
 	method edcodes {args}
+	method edcolor {args}
 	method edcomb {args}
 	method edmater {args}
 	method erase {args}
@@ -166,7 +171,6 @@ package provide cadwidgets::Ged 1.0
 	method eye_pos {args}
 	method faceplate {args}
 	method facetize {args}
-	method find {args}
 	method form {args}
 	method fracture {args}
 	method g {args}
@@ -180,6 +184,7 @@ package provide cadwidgets::Ged 1.0
 	method grid {args}
 	method hide {args}
 	method how {args}
+	method human {args}
 	method i {args}
 	method idents {args}
 	method idle_mode {args}
@@ -211,6 +216,7 @@ package provide cadwidgets::Ged 1.0
 	method make {args}
 	method make_bb {name args}
 	method make_name {args}
+	method make_pnts {args}
 	method match {args}
 	method mater {args}
 	method mirror {args}
@@ -227,7 +233,9 @@ package provide cadwidgets::Ged 1.0
 	method mouse_rot {args}
 	method mouse_rotate_arb_face {args}
 	method mouse_scale {args}
+	method mouse_protate {args}
 	method mouse_pscale {args}
+	method mouse_ptranslate {args}
 	method mouse_trans {args}
 	method move_arb_edge {args}
 	method move_arb_edge_mode {args}
@@ -282,7 +290,9 @@ package provide cadwidgets::Ged 1.0
 	method pane_mouse_rot {_pane args}
 	method pane_mouse_rotate_arb_face {_pane args}
 	method pane_mouse_scale {_pane args}
+	method pane_mouse_protate {_pane args}
 	method pane_mouse_pscale {_pane args}
+	method pane_mouse_ptranslate {_pane args}
 	method pane_mouse_trans {_pane args}
 	method pane_nirt {_pane args}
 	method pane_orient {_pane args}
@@ -295,9 +305,13 @@ package provide cadwidgets::Ged 1.0
 	method pane_pmat {_pane args}
 	method pane_pmodel2view {_pane args}
 	method pane_png {_pane args}
+	method pane_pngwf {_pane args}
 	method pane_pov {_pane args}
 	method pane_preview {_pane args}
+	method pane_protate_mode {_pane args}
 	method pane_ps {_pane args}
+	method pane_pscale_mode {_pane args}
+	method pane_ptranslate_mode {_pane args}
 	method pane_quat {_pane args}
 	method pane_qvrot {_pane args}
 	method pane_rect {_pane args}
@@ -317,7 +331,6 @@ package provide cadwidgets::Ged 1.0
 	method pane_savekey {_pane args}
 	method pane_saveview {_pane args}
 	method pane_sca {_pane args}
-	method pane_pscale_mode {_pane args}
 	method pane_scale_mode {_pane args}
 	method pane_set_coord {_pane args}
 	method pane_set_fb_mode {_pane args}
@@ -345,6 +358,7 @@ package provide cadwidgets::Ged 1.0
 	method pmat {args}
 	method pmodel2view {args}
 	method png {args}
+	method pngwf {args}
 	method pov {args}
 	method prcolor {args}
 	method prefix {args}
@@ -389,10 +403,15 @@ package provide cadwidgets::Ged 1.0
 	method savekey {args}
 	method saveview {args}
 	method sca {args}
+	method protate {args}
+	method protate_mode {args}
 	method pscale {args}
 	method pscale_mode {args}
+	method ptranslate {args}
+	method ptranslate_mode {args}
 	method scale_mode {args}
 	method screen2view {args}
+	method search {args}
 	method set_coord {args}
 	method set_fb_mode {args}
 	method set_output_script {args}
@@ -784,6 +803,10 @@ package provide cadwidgets::Ged 1.0
     eval $mGed base2local
 }
 
+::itcl::body cadwidgets::Ged::bb {args} {
+    eval $mGed bb $args
+}
+
 ::itcl::body cadwidgets::Ged::bev {args} {
     eval $mGed bev $args
 }
@@ -827,6 +850,10 @@ package provide cadwidgets::Ged 1.0
     eval $mGed bot_face_sort $args
 }
 
+::itcl::body cadwidgets::Ged::bot_flip {args} {
+    eval $mGed bot_flip $args
+}
+
 ::itcl::body cadwidgets::Ged::bot_merge {args} {
     eval $mGed bot_merge $args
 }
@@ -837,6 +864,10 @@ package provide cadwidgets::Ged 1.0
 
 ::itcl::body cadwidgets::Ged::bot_split {args} {
     eval $mGed bot_split $args
+}
+
+::itcl::body cadwidgets::Ged::bot_sync {args} {
+    eval $mGed bot_sync $args
 }
 
 ::itcl::body cadwidgets::Ged::bot_vertex_fuse {args} {
@@ -886,10 +917,6 @@ package provide cadwidgets::Ged 1.0
     eval $mGed comb_color $args
 }
 
-::itcl::body cadwidgets::Ged::concat {args} {
-    eval $mGed concat $args
-}
-
 ::itcl::body cadwidgets::Ged::configure_win {args} {
     eval $mGed configure $args
 }
@@ -916,6 +943,14 @@ package provide cadwidgets::Ged 1.0
 
 ::itcl::body cadwidgets::Ged::cpi {args} {
     eval $mGed cpi $args
+}
+
+::itcl::body cadwidgets::Ged::dbconcat {args} {
+    eval $mGed dbconcat $args
+}
+
+::itcl::body cadwidgets::Ged::dbfind {args} {
+    eval $mGed dbfind $args
 }
 
 ::itcl::body cadwidgets::Ged::dbip {args} {
@@ -962,6 +997,10 @@ package provide cadwidgets::Ged 1.0
     eval $mGed edcodes $args
 }
 
+::itcl::body cadwidgets::Ged::edcolor {args} {
+    eval $mGed edcolor $args
+}
+
 ::itcl::body cadwidgets::Ged::edcomb {args} {
     eval $mGed edcomb $args
 }
@@ -1003,10 +1042,6 @@ package provide cadwidgets::Ged 1.0
 
 ::itcl::body cadwidgets::Ged::facetize {args} {
     eval $mGed facetize $args
-}
-
-::itcl::body cadwidgets::Ged::find {args} {
-    eval $mGed find $args
 }
 
 ::itcl::body cadwidgets::Ged::form {args} {
@@ -1059,6 +1094,10 @@ package provide cadwidgets::Ged 1.0
 
 ::itcl::body cadwidgets::Ged::how {args} {
     eval $mGed how $args
+}
+
+::itcl::body cadwidgets::Ged::human {args} {
+    eval $mGed human $args
 }
 
 ::itcl::body cadwidgets::Ged::i {args} {
@@ -1188,6 +1227,10 @@ package provide cadwidgets::Ged 1.0
     eval $mGed make_name $args
 }
 
+::itcl::body cadwidgets::Ged::make_pnts {args} {
+    eval $mGed make_pnts $args
+}
+
 ::itcl::body cadwidgets::Ged::match {args} {
     eval $mGed match $args
 }
@@ -1255,8 +1298,16 @@ package provide cadwidgets::Ged 1.0
     eval $mGed mouse_scale $itk_component($itk_option(-pane)) $args
 }
 
+::itcl::body cadwidgets::Ged::mouse_protate {args} {
+    eval $mGed mouse_protate $itk_component($itk_option(-pane)) $args
+}
+
 ::itcl::body cadwidgets::Ged::mouse_pscale {args} {
     eval $mGed mouse_pscale $itk_component($itk_option(-pane)) $args
+}
+
+::itcl::body cadwidgets::Ged::mouse_ptranslate {args} {
+    eval $mGed mouse_ptranslate $itk_component($itk_option(-pane)) $args
 }
 
 ::itcl::body cadwidgets::Ged::mouse_trans {args} {
@@ -1475,8 +1526,16 @@ package provide cadwidgets::Ged 1.0
     eval $mGed mouse_scale $itk_component($_pane) $args
 }
 
+::itcl::body cadwidgets::Ged::pane_mouse_protate {_pane args} {
+    eval $mGed mouse_protate $itk_component($_pane) $args
+}
+
 ::itcl::body cadwidgets::Ged::pane_mouse_pscale {_pane args} {
     eval $mGed mouse_pscale $itk_component($_pane) $args
+}
+
+::itcl::body cadwidgets::Ged::pane_mouse_ptranslate {_pane args} {
+    eval $mGed mouse_ptranslate $itk_component($_pane) $args
 }
 
 ::itcl::body cadwidgets::Ged::pane_mouse_trans {_pane args} {
@@ -1527,6 +1586,10 @@ package provide cadwidgets::Ged 1.0
     eval $mGed png $itk_component($_pane) $args
 }
 
+::itcl::body cadwidgets::Ged::pane_pngwf {_pane args} {
+    eval $mGed pngwf $itk_component($_pane) $args
+}
+
 ::itcl::body cadwidgets::Ged::pane_pov {_pane args} {
     eval $mGed pov $itk_component($_pane) $args
 }
@@ -1535,8 +1598,20 @@ package provide cadwidgets::Ged 1.0
     eval $mGed preview $itk_component($_pane) $args
 }
 
+::itcl::body cadwidgets::Ged::pane_protate_mode {_pane args} {
+    eval $mGed protate_mode $itk_component($_pane) $args
+}
+
 ::itcl::body cadwidgets::Ged::pane_ps {_pane args} {
     eval $mGed ps $itk_component($_pane) $args
+}
+
+::itcl::body cadwidgets::Ged::pane_pscale_mode {_pane args} {
+    eval $mGed pscale_mode $itk_component($_pane) $args
+}
+
+::itcl::body cadwidgets::Ged::pane_ptranslate_mode {_pane args} {
+    eval $mGed ptranslate_mode $itk_component($_pane) $args
 }
 
 ::itcl::body cadwidgets::Ged::pane_quat {_pane args} {
@@ -1615,8 +1690,8 @@ package provide cadwidgets::Ged 1.0
     eval $mGed sca $itk_component($_pane) $args
 }
 
-::itcl::body cadwidgets::Ged::pane_pscale_mode {_pane args} {
-    eval $mGed pscale_mode $itk_component($_pane) $args
+::itcl::body cadwidgets::Ged::pane_scale_mode {_pane args} {
+    eval $mGed scale_mode $itk_component($_pane) $args
 }
 
 ::itcl::body cadwidgets::Ged::pane_scale_mode {_pane args} {
@@ -1742,6 +1817,10 @@ package provide cadwidgets::Ged 1.0
 
 ::itcl::body cadwidgets::Ged::png {args} {
     eval $mGed png $itk_component($itk_option(-pane)) $args
+}
+
+::itcl::body cadwidgets::Ged::pngwf {args} {
+    eval $mGed pngwf $itk_component($itk_option(-pane)) $args
 }
 
 ::itcl::body cadwidgets::Ged::pov {args} {
@@ -1930,6 +2009,14 @@ package provide cadwidgets::Ged 1.0
     eval $mGed screen2view $itk_component($itk_option(-pane)) $args
 }
 
+::itcl::body cadwidgets::Ged::protate {args} {
+    eval $mGed protate $args
+}
+
+::itcl::body cadwidgets::Ged::protate_mode {args} {
+    eval $mGed protate_mode $itk_component($itk_option(-pane)) $args
+}
+
 ::itcl::body cadwidgets::Ged::pscale {args} {
     eval $mGed pscale $args
 }
@@ -1938,8 +2025,20 @@ package provide cadwidgets::Ged 1.0
     eval $mGed pscale_mode $itk_component($itk_option(-pane)) $args
 }
 
+::itcl::body cadwidgets::Ged::ptranslate {args} {
+    eval $mGed ptranslate $args
+}
+
+::itcl::body cadwidgets::Ged::ptranslate_mode {args} {
+    eval $mGed ptranslate_mode $itk_component($itk_option(-pane)) $args
+}
+
 ::itcl::body cadwidgets::Ged::scale_mode {args} {
     eval $mGed scale_mode $itk_component($itk_option(-pane)) $args
+}
+
+::itcl::body cadwidgets::Ged::search {args} {
+    eval $mGed search $args
 }
 
 ::itcl::body cadwidgets::Ged::set_coord {args} {
@@ -2780,6 +2879,7 @@ package provide cadwidgets::Ged 1.0
 	    		for the "rm" subcommand, the arguments are attribute names
 	    		for the "append" subcommand, the arguments are attribute name/value pairs}}
     $help add autoview		{{view_obj} {set the view object's size and center}}
+    $help add bb		{{object} {Report the size of the bounding box (rpp) containing the specified object}}
     $help add bev		{{[P|t] new_obj obj1 op obj2 ...} {boolean evaluation of objects via NMG's}}
     $help add blast		{{"-C#/#/# <objects>"} {clear screen, draw objects}}
     $help add bo		{{(-i|-o) major_type minor_type dest source}
@@ -2818,11 +2918,12 @@ package provide cadwidgets::Ged 1.0
     $help add color		{{low high r g b str} {make color entry}}
     $help add comb		{{comb_name <operation solid>} {create or extend combination w/booleans}}
     $help add comb_color 	{{comb R G B} {set combination's color}}
-    $help add concat		{{file [prefix]} {concatenate 'file' onto end of present database.  Run 'dup file' first.}}
     $help add copyeval		{{new_solid path_to_old_solid}	{copy an 'evaluated' path solid}}
     $help add copymat		{{a/b c/d}	{copy matrix from one combination's arc to another's}}
     $help add cp		{{from to} {copy [duplicate] object}}
     $help add cpi		{{from to}	{copy cylinder and position at end of original cylinder}}
+    $help add dbconcat		{{file [prefix]} {concatenate 'file' onto end of present database.  Run 'dup file' first.}}
+    $help add dbfind		{{[-s] <objects>} {find all references to objects}}
     $help add dbip		{{} {get dbip}}
     $help add decompose		{{nmg_solid [prefix]}	{decompose nmg_solid into maximally connected shells}}
     $help add delay		{{sec usec} {delay processing for the specified amount of time}}
@@ -2834,6 +2935,7 @@ package provide cadwidgets::Ged 1.0
     $help add eac		{{air_code(s)} {draw objects with the specified air codes}}
     $help add echo		{{args} {echo the specified args to the command window}}
     $help add edcodes		{{object(s)} {edit the various codes for the specified objects}}
+    $help add edcolor		{{} {edit the color table}}
     $help add edcomb		{{comb rflag rid air los mid} {modify combination record information}}
     $help add edmater		{{comb1 [comb2 ...]} {edit combination materials}}
     $help add erase		{{<objects>} {remove objects from the screen}}
@@ -2843,7 +2945,6 @@ package provide cadwidgets::Ged 1.0
     $help add eye		{{mx my mz} {set eye point to given model coordinates}}
     $help add eye_pos		{{mx my mz} {set eye position to given model coordinates}}
     $help add facetize		{{[-n] [-t] [-T] new_obj old_obj [old_obj2 old_obj3 ...]} {create a new bot object by facetizing the specified objects}}
-    $help add find		{{[-s] <objects>} {find all references to objects}}
     $help add form		{{objType} {returns form of objType}}
     $help add fracture		{{} {}}
     $help add g			{{groupname <objects>} {group objects}}
@@ -2886,6 +2987,7 @@ package provide cadwidgets::Ged 1.0
     $help add make		{{-t | object type} {make an object/primitive of the specified type}}
     $help add make_bb		{{bbname object(s)} {make a bounding box (rpp) around the specified objects}}
     $help add make_name		{{template | -s [num]} {make a unique name}}
+    $help add make_pnts		{{object_name path_and_filename file_format units_or_conv_factor default_diameter} {creates a point-cloud}}
     $help add match		{{exp} {returns all database objects matching the given expression}}
     $help add mater		{{region shader R G B inherit} {modify region's material information}}
     $help add mirror		{{[-p point] [-d dir] [-x] [-y] [-z] [-o offset] old new}	{mirror object along the specified axis}}
@@ -2948,6 +3050,7 @@ package provide cadwidgets::Ged 1.0
     $help add savekey		{{file [time]} {save key frame data to file}}
     $help add saveview		{{[-e] [-i] [-l] [-o] filename [args]} {save the current view to file}}
     $help add sca		{{sfactor} {scale by sfactor}}
+    $help add search		{{options} {see search man page}}
     $help add setview		{{x y z} {set the view given angles x, y, and z in degrees}}
     $help add shaded_mode	{{[0|1|2]}	{get/set shaded mode}}
     $help add shader		{{comb shader_material [shader_args]} {command line version of the mater command}}

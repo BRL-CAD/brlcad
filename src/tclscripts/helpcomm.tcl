@@ -29,7 +29,7 @@ proc help_comm {data args} {
     if {[llength $args] > 0} {
 	foreach cmd [join $args] {
 	    if [info exists [subst $data]($cmd)] {
-		append info "Usage: $cmd [lindex [subst $[subst $data]($cmd)] 0]\n\t([lindex [subst $[subst $data]($cmd)] 1])\n"
+		append info "Usage: $cmd [lindex [subst $[subst $data]($cmd)] 0]\n\nDescription: [lindex [subst $[subst $data]($cmd)] 1]\n"
 	    } else {
 		append info "No help found for $cmd\n"
 	    }

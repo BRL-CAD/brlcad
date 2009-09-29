@@ -12,11 +12,11 @@ libsteputils_nil_la_SOURCES = \
 	scl_string.cc \
 	scl_char_str_list.cc
 
-libsteputils_nil_la_LDFLAGS =
+libsteputils_nil_la_LDFLAGS = -avoid-version -no-undefined -Wc,${FEXCEPTIONS}
 libsteputils_nil_la_LIBADD = 
 
 libsteputils_la_SOURCES = 
-libsteputils_la_LDFLAGS =
+libsteputils_la_LDFLAGS = -no-undefined -Wc,${FEXCEPTIONS} -version-info 19:1
 libsteputils_la_LIBADD = \
 	libsteputils_nil.la \
 	${LIBSTDCXX}

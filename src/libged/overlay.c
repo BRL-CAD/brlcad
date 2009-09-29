@@ -40,9 +40,9 @@ ged_overlay(struct ged *gedp, int argc, const char *argv[])
     char *name;
     static const char *usage = "file.pl char_size [name]";
 
-    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
-    GED_CHECK_DRAWABLE(gedp, BRLCAD_ERROR);
-    GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
+    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
+    GED_CHECK_DRAWABLE(gedp, GED_ERROR);
+    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
 
     /* initialize result */
     bu_vls_trunc(&gedp->ged_result_str, 0);
@@ -50,17 +50,17 @@ ged_overlay(struct ged *gedp, int argc, const char *argv[])
     /* must be wanting help */
     if (argc == 1) {
 	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return BRLCAD_HELP;
+	return GED_HELP;
     }
 
     if (argc < 3 || 4 < argc) {
 	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return BRLCAD_ERROR;
+	return GED_ERROR;
     }
 
     if (sscanf(argv[2], "%lf", &char_size) != 1) {
 	bu_vls_printf(&gedp->ged_result_str, "ged_overlay: bad character size - %s\n", argv[2]);
-	return BRLCAD_ERROR;
+	return GED_ERROR;
     }
 
     if (argc == 3)
@@ -70,7 +70,7 @@ ged_overlay(struct ged *gedp, int argc, const char *argv[])
 
     if ((fp = fopen(argv[1], "rb")) == NULL) {
 	bu_vls_printf(&gedp->ged_result_str, "ged_overlay: failed to open file - %s\n", argv[1]);
-	return BRLCAD_ERROR;
+	return GED_ERROR;
     }
 
     vbp = rt_vlblock_init();
@@ -79,13 +79,13 @@ ged_overlay(struct ged *gedp, int argc, const char *argv[])
 
     if (ret < 0) {
 	rt_vlblock_free(vbp);
-	return BRLCAD_ERROR;
+	return GED_ERROR;
     }
 
     ged_cvt_vlblock_to_solids(gedp, vbp, name, 0);
     rt_vlblock_free(vbp);
 
-    return BRLCAD_OK;
+    return GED_OK;
 }
 
 

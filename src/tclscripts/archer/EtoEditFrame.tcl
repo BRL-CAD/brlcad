@@ -37,9 +37,15 @@
 	method initGeometry {gdata}
 	method updateGeometry {}
 	method createGeometry {obj}
+	method p {obj args}
     }
 
     protected {
+	common setr 1
+	common setr_d 2
+	common setC 3
+	common rotC 4
+
 	variable mVx ""
 	variable mVy ""
 	variable mVz ""
@@ -52,8 +58,14 @@
 	variable mR ""
 	variable mR_d ""
 
-	# Override what's in GeometryEditFrame
+	# Methods used by the constructor.
+	# Override methods in GeometryEditFrame.
+	method buildUpperPanel
+	method buildLowerPanel
+
+	# Override what's in GeometryEditFrame.
 	method updateGeometryIfMod {}
+	method initEditState {}
     }
 
     private {}
@@ -65,6 +77,112 @@
 # ------------------------------------------------------------
 
 ::itcl::body EtoEditFrame::constructor {args} {
+    eval itk_initialize $args
+}
+
+
+# ------------------------------------------------------------
+#                        OPTIONS
+# ------------------------------------------------------------
+
+
+# ------------------------------------------------------------
+#                      PUBLIC METHODS
+# ------------------------------------------------------------
+
+## - initGeometry
+#
+# Initialize the variables containing the object's specification.
+#
+::itcl::body EtoEditFrame::initGeometry {gdata} {
+    set _V [bu_get_value_by_keyword V $gdata]
+    set mVx [lindex $_V 0]
+    set mVy [lindex $_V 1]
+    set mVz [lindex $_V 2]
+    set _N [bu_get_value_by_keyword N $gdata]
+    set mNx [lindex $_N 0]
+    set mNy [lindex $_N 1]
+    set mNz [lindex $_N 2]
+    set _C [bu_get_value_by_keyword C $gdata]
+    set mCx [lindex $_C 0]
+    set mCy [lindex $_C 1]
+    set mCz [lindex $_C 2]
+    set mR [bu_get_value_by_keyword r $gdata]
+    set mR_d [bu_get_value_by_keyword r_d $gdata]
+
+    GeometryEditFrame::initGeometry $gdata
+}
+
+::itcl::body EtoEditFrame::updateGeometry {} {
+    if {$itk_option(-mged) == "" ||
+	$itk_option(-geometryObject) == ""} {
+	return
+    }
+
+    $itk_option(-mged) adjust $itk_option(-geometryObject) \
+	V [list $mVx $mVy $mVz] \
+	N [list $mNx $mNy $mNz] \
+	C [list $mCx $mCy $mCz] \
+	r $mR \
+	r_d $mR_d
+
+    if {$itk_option(-geometryChangedCallback) != ""} {
+	$itk_option(-geometryChangedCallback)
+    }
+}
+
+::itcl::body EtoEditFrame::createGeometry {obj} {
+    if {![GeometryEditFrame::createGeometry $obj]} {
+	return
+    }
+
+    $itk_option(-mged) put $obj eto \
+	V [list $mCenterX $mCenterY $mCenterZ] \
+	N [list $mDelta 0 0] \
+	C [list $mDelta 0 0] \
+	r $mDelta \
+	r_d [expr {$mDelta * 0.1}]
+}
+
+::itcl::body EtoEditFrame::p {obj args} {
+    switch -- $GeometryEditFrame::mEditClass \
+	$GeometryEditFrame::EDIT_CLASS_SCALE {
+	    if {[llength $args] != 1 || ![string is double $args]} {
+		return "Usage: p sf"
+	    }
+	} \
+	$GeometryEditFrame::EDIT_CLASS_ROT {
+	    if {[llength $args] != 3 ||
+		![string is double [lindex $args 0]] ||
+		![string is double [lindex $args 1]] ||
+		![string is double [lindex $args 2]]} {
+		return "Usage: p rx ry rz"
+	    }
+	}
+
+    switch -- $mEditMode \
+	$setr {
+	    $::ArcherCore::application p_pscale $obj r $args
+	} \
+	$setr_d {
+	    $::ArcherCore::application p_pscale $obj d $args
+	} \
+	$setC {
+	    $::ArcherCore::application p_pscale $obj c $args
+	} \
+	$rotC {
+	    $::ArcherCore::application p_protate $obj c $args
+	}
+
+    return ""
+}
+
+
+# ------------------------------------------------------------
+#                      PROTECTED METHODS
+# ------------------------------------------------------------
+
+::itcl::body EtoEditFrame::buildUpperPanel {} {
     set parent [$this childsite]
     itk_component add etoType {
 	::ttk::label $parent.etotype \
@@ -285,85 +403,31 @@
     bind $itk_component(etoCzE) <Return> [::itcl::code $this updateGeometryIfMod]
     bind $itk_component(etoRE) <Return> [::itcl::code $this updateGeometryIfMod]
     bind $itk_component(etoR_dE) <Return> [::itcl::code $this updateGeometryIfMod]
-
-    eval itk_initialize $args
 }
 
+::itcl::body EtoEditFrame::buildLowerPanel {} {
+    set parent [$this childsite lower]
 
-# ------------------------------------------------------------
-#                        OPTIONS
-# ------------------------------------------------------------
+    foreach {attribute op opLabel} {r set Set r_d set Set C set Set C rot Rotate} {
+	itk_component add $op$attribute {
+	    ::ttk::radiobutton $parent.$op\_$attribute \
+		-variable [::itcl::scope mEditMode] \
+		-value [subst $[subst $op$attribute]] \
+		-text "$opLabel $attribute" \
+		-command [::itcl::code $this initEditState]
+	} {}
 
-
-# ------------------------------------------------------------
-#                      PUBLIC METHODS
-# ------------------------------------------------------------
-
-## - initGeometry
-#
-# Initialize the variables containing the object's specification.
-#
-::itcl::body EtoEditFrame::initGeometry {gdata} {
-    set _V [bu_get_value_by_keyword V $gdata]
-    set mVx [lindex $_V 0]
-    set mVy [lindex $_V 1]
-    set mVz [lindex $_V 2]
-    set _N [bu_get_value_by_keyword N $gdata]
-    set mNx [lindex $_N 0]
-    set mNy [lindex $_N 1]
-    set mNz [lindex $_N 2]
-    set _C [bu_get_value_by_keyword C $gdata]
-    set mCx [lindex $_C 0]
-    set mCy [lindex $_C 1]
-    set mCz [lindex $_C 2]
-    set mR [bu_get_value_by_keyword r $gdata]
-    set mR_d [bu_get_value_by_keyword r_d $gdata]
-
-    GeometryEditFrame::initGeometry $gdata
-}
-
-::itcl::body EtoEditFrame::updateGeometry {} {
-    if {$itk_option(-mged) == "" ||
-	$itk_option(-geometryObject) == ""} {
-	return
-    }
-
-    $itk_option(-mged) adjust $itk_option(-geometryObject) \
-	V [list $mVx $mVy $mVz] \
-	N [list $mNx $mNy $mNz] \
-	C [list $mCx $mCy $mCz] \
-	r $mR \
-	r_d $mR_d
-
-    if {$itk_option(-geometryChangedCallback) != ""} {
-	$itk_option(-geometryChangedCallback)
+	pack $itk_component($op$attribute) \
+	    -anchor w \
+	    -expand yes
     }
 }
-
-::itcl::body EtoEditFrame::createGeometry {obj} {
-    if {![GeometryEditFrame::createGeometry $obj]} {
-	return
-    }
-
-    $itk_option(-mged) put $obj eto \
-	V [list $mCenterX $mCenterY $mCenterZ] \
-	N [list $mDelta 0 0] \
-	C [list $mDelta 0 0] \
-	r $mDelta \
-	r_d [expr {$mDelta * 0.1}]
-}
-
-
-# ------------------------------------------------------------
-#                      PROTECTED METHODS
-# ------------------------------------------------------------
 
 ::itcl::body EtoEditFrame::updateGeometryIfMod {} {
     if {$itk_option(-mged) == "" ||
 	$itk_option(-geometryObject) == ""} {
 	return
     }
-
 
     set gdata [$itk_option(-mged) get $itk_option(-geometryObject)]
     set gdata [lrange $gdata 1 end]
@@ -423,6 +487,36 @@
 	updateGeometry
     }
 }
+
+::itcl::body EtoEditFrame::initEditState {} {
+    set mEditPCommand [::itcl::code $this p]
+    configure -valueUnits "mm"
+
+    switch -- $mEditMode \
+	$setr {
+	    set mEditCommand pscale
+	    set mEditClass $EDIT_CLASS_SCALE
+	    set mEditParam1 r
+	} \
+	$setr_d {
+	    set mEditCommand pscale
+	    set mEditClass $EDIT_CLASS_SCALE
+	    set mEditParam1 d
+	} \
+	$setC {
+	    set mEditCommand pscale
+	    set mEditClass $EDIT_CLASS_SCALE
+	    set mEditParam1 c
+	} \
+	$rotC {
+	    set mEditCommand protate
+	    set mEditClass $EDIT_CLASS_ROT
+	    set mEditParam1 c
+	}
+
+    GeometryEditFrame::initEditState
+}
+
 
 # Local Variables:
 # mode: Tcl

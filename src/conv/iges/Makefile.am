@@ -11,7 +11,7 @@ man_MANS = g-iges.1 iges-g.1
 
 noinst_HEADERS = \
 	PullbackCurve.h \
-	brlcad.hpp \
+	brlcad_brep.hpp \
 	iges.h \
 	iges_extern.h \
 	iges_struct.h \
@@ -22,7 +22,7 @@ iges_SOURCES = \
 	BrepHandler.cpp \
 	brlcad_brep.cpp \
 	n_iges.cpp  \
-	nmain.cpp
+	n_main.cpp
 
 iges_LDADD = \
 	${WDB} \

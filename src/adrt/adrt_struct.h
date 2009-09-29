@@ -53,6 +53,7 @@ typedef struct adrt_mesh_attributes_s {
 
 /* Mesh */
 typedef struct adrt_mesh_s {
+    struct bu_list l;
     int flags;
     char name[256];
     TIE_3 min, max;

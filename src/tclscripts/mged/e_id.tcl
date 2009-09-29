@@ -53,8 +53,7 @@ proc e_id {args} {
     #	Ensure that at least one argument was given
     #
     if {$args == ""} {
-	puts "Usage: e_id <idents and/or ident_ranges>\n       \
-		(edit object(s) with the specified idents)"
+	help e_id
 	return
     }
     #
@@ -62,7 +61,7 @@ proc e_id {args} {
     #
     set ident_list {}
     foreach arg $args {
-	if {[regexp {([0-9]+)-([0-9]+)} $arg range lo hi] == 1} {
+	if {[regexp {([0-9]+)[-:]([0-9]+)} $arg range lo hi] == 1} {
 	    if {$lo > $hi} {
 		puts "Illegal ident range: '$arg'"
 	    }

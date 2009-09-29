@@ -50,9 +50,9 @@ ged_copymat(struct ged *gedp, int argc, const char *argv[])
     union tree			*tp;
     static const char *usage = "a/b c/d";
 
-    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
-    GED_CHECK_READ_ONLY(gedp, BRLCAD_ERROR);
-    GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
+    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
+    GED_CHECK_READ_ONLY(gedp, GED_ERROR);
+    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
 
     /* initialize result */
     bu_vls_trunc(&gedp->ged_result_str, 0);
@@ -60,12 +60,12 @@ ged_copymat(struct ged *gedp, int argc, const char *argv[])
     /* must be wanting help */
     if (argc == 1) {
 	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return BRLCAD_HELP;
+	return GED_HELP;
     }
 
     if (argc != 3) {
 	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return BRLCAD_ERROR;
+	return GED_ERROR;
     }
 
     /*
@@ -76,7 +76,7 @@ ged_copymat(struct ged *gedp, int argc, const char *argv[])
 	    || (strchr(++child, '/') != NULL))
 	{
 	    bu_vls_printf(&gedp->ged_result_str, "%s: bad arc: '%s'\n", argv[0], argv[i]);
-	    return BRLCAD_ERROR;
+	    return GED_ERROR;
 	}
 
     BU_GETSTRUCT(anp, animate);
@@ -91,7 +91,7 @@ ged_copymat(struct ged *gedp, int argc, const char *argv[])
 	< 0 )
     {
 	bu_vls_printf(&gedp->ged_result_str, "%s: cannot follow path for arc: '%s'\n", argv[0], argv[1]);
-	return BRLCAD_ERROR;
+	return GED_ERROR;
     }
 
     bu_vls_init(&pvls);
@@ -107,7 +107,7 @@ ged_copymat(struct ged *gedp, int argc, const char *argv[])
 	    else {
 		bu_vls_printf(&gedp->ged_result_str,
 			      "%s: Non-combination directory <x%lx> '%s' for combination rt_db_internal <x%lx>\nThis should not happen\n",
-			      argv[0], (long)dp, dp->d_namep, &intern);
+			      argv[0], (long)dp, dp->d_namep, (long)&intern);
 	    }
 	    /* Fall through this case */
 	default:
@@ -115,7 +115,7 @@ ged_copymat(struct ged *gedp, int argc, const char *argv[])
 	    /* Fall through this case */
 	case ID_NULL:
 	    bu_vls_free(&pvls);
-	    return BRLCAD_ERROR;
+	    return GED_ERROR;
     }
     comb = (struct rt_comb_internal *) intern.idb_ptr;
     RT_CK_COMB(comb);
@@ -124,7 +124,7 @@ ged_copymat(struct ged *gedp, int argc, const char *argv[])
     {
 	bu_vls_printf(&gedp->ged_result_str, "%s: unable to find instance of '%s' in combination '%s'\n",
 		      argv[0], child, dp->d_namep);
-	status = BRLCAD_ERROR;
+	status = GED_ERROR;
 	goto wrapup;
     }
 
@@ -147,20 +147,20 @@ ged_copymat(struct ged *gedp, int argc, const char *argv[])
     if (rt_db_put_internal(dp, gedp->ged_wdbp->dbip, &intern, &rt_uniresource) < 0)
     {
 	bu_vls_printf(&gedp->ged_result_str, "%s: Database write error, aborting\n", argv[0]);
-	status = BRLCAD_ERROR;
+	status = GED_ERROR;
 	goto wrapup;
     }
 
-    status = BRLCAD_OK;
+    status = GED_OK;
 
  wrapup:
 
     bu_vls_free(&pvls);
-    if (status == BRLCAD_ERROR)
+    if (status == GED_ERROR)
 	rt_db_free_internal(&intern, &rt_uniresource);
     return status;
 
-    return BRLCAD_OK;
+    return GED_OK;
 }
 
 /*

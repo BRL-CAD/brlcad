@@ -205,7 +205,6 @@ extern void col_putchar();
 extern void col_eol();
 extern void col_pr4v();
 extern void sedit_menu(void);
-extern void attach();
 extern void get_attached(void);
 extern void (*cur_sigint)();	/* Current SIGINT status */
 extern void sig2(int);
@@ -248,6 +247,7 @@ extern void stop_catching_output(struct bu_vls *vp);
  * Pointer to solid in solid table to be illuminated. - defined in
  * usepen.c
  */
+extern struct ged_display_list *illum_gdlp;
 extern struct solid *illump;/* == 0 if none, else points to ill. solid */
 extern int sedraw;		/* apply solid editing changes */
 
@@ -452,7 +452,7 @@ int f_adc (ClientData clientData, Tcl_Interp *interpreter, int argc, char **argv
 
 /* attach.c */
 int is_dm_null(void);
-int mged_attach(struct w_dm *wp, int argc, char **argv);
+int mged_attach(struct w_dm *wp, int argc, const char **argv);
 void mged_link_vars(struct dm_list *p);
 
 
@@ -642,7 +642,7 @@ void add_solid_path_to_result(
 
 /* dozoom.c */
 void createDList(struct solid *sp);
-void createDLists(struct bu_list *hsp);
+void createDLists(struct bu_list *hdlp);
 void createDListALL(struct solid *sp);
 void createDListsAll(struct bu_list *hsp);
 void freeDListsAll(unsigned int dlist, int range);

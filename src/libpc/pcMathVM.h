@@ -34,7 +34,7 @@
 
 #include <boost/shared_ptr.hpp>
 #include <boost/iterator/indirect_iterator.hpp>
-#include <boost/spirit/symbols/symbols.hpp>
+#include <boost/spirit/symbols/symbols.hpp>	/* deprecated header */
 
 #include <iostream>
 #include <string>
@@ -89,6 +89,10 @@ public:
     iterator erase(iterator begin, iterator end);
 
     iterator insert(iterator location, Node * n);
+
+    /** Operator overloading */
+    Stack & operator=(Stack const & other);
+    Stack & operator+=(Stack const & other);
 
 private:
     container_t data;
@@ -183,7 +187,7 @@ private:
 };
 
 /** UserFunction Defintion */
-struct UserFunctionExpression;
+struct UserFuncExpression;
 struct UserFunction : public MathFunction
 {
     typedef boost::spirit::symbols<double> symboltable;
@@ -193,6 +197,7 @@ struct UserFunction : public MathFunction
     UserFunction();
     UserFunction(std::string const & name, std::size_t const farity);
     UserFunction(UserFunction const & other);
+    UserFunction & operator=(UserFuncExpression const & ufe);
 
     /** Data access methods */
     UserFunction * asUserFunction();
@@ -201,11 +206,13 @@ struct UserFunction : public MathFunction
     /** Arity return method */
     std::size_t arity() const;
 private:
+    /** XXX standardize underscoring variables */
     double evalp(std::vector<double> const & args) const;
     std::size_t arity_;
     std::vector<std::string> argnames;
     symboltable localvariables_;
     Stack stack;
+    UserFunction & operator=(UserFunction const &);
 };
 
 /** Node Implementations */
@@ -256,6 +263,27 @@ private:
     boost::shared_ptr<MathFunction> fp;
 };
 
+struct OrNode : public FunctionNode
+{
+    OrNode(Stack const &);
+    boost::shared_ptr<Node> clone () const;
+
+    MathFunction const & func() const;
+    std::size_t nbranches() const;
+    Stack * branch(std::size_t);
+private:
+    struct OrFunc : public MathFunction {
+    	OrFunc(Stack const &);
+
+	std::size_t arity() const;
+	double evalp(std::vector<double> const & params) const;
+
+	Stack rhs_stack_;
+    };
+
+    OrFunc func_;
+};
+
 struct BranchNode : public FunctionNode
 {
     BranchNode(Stack const & stack1, Stack const & stack2);
@@ -275,6 +303,29 @@ private:
 	Stack stack2_;
     };
     BranchFunc func_;
+};
+
+struct UserFuncExpression
+{
+    UserFuncExpression(std::vector<std::string> const & arnam, \
+    	boost::shared_ptr<boost::spirit::symbols<double> > const & locvar,
+	Stack const & s)
+    	: argnames(arnam), localvars(locvar), stack(s)
+	{}
+    std::vector<std::string> argnames;
+    boost::shared_ptr<boost::spirit::symbols<double> > localvars;
+    Stack stack;
+};
+
+struct FuncDefNode : public Node
+{
+    FuncDefNode(boost::shared_ptr<MathFunction> const & funcptr,\
+    		UserFuncExpression const & value);
+    boost::shared_ptr<Node> clone() const;
+    void assign() const;
+private:
+    boost::shared_ptr<MathFunction> funcptr_;
+    UserFuncExpression value_;
 };
 
 #endif

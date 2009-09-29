@@ -45,6 +45,8 @@
 int
 ged_how(struct ged *gedp, int argc, const char *argv[])
 {
+    register struct ged_display_list *gdlp;
+    register struct ged_display_list *next_gdlp;
     register struct solid *sp;
     int i;
     struct directory **dpp;
@@ -52,9 +54,9 @@ ged_how(struct ged *gedp, int argc, const char *argv[])
     int both = 0;
     static const char *usage = "[-b] object";
 
-    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
-    GED_CHECK_DRAWABLE(gedp, BRLCAD_ERROR);
-    GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
+    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
+    GED_CHECK_DRAWABLE(gedp, GED_ERROR);
+    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
 
     /* initialize result */
     bu_vls_trunc(&gedp->ged_result_str, 0);
@@ -62,12 +64,12 @@ ged_how(struct ged *gedp, int argc, const char *argv[])
     /* must be wanting help */
     if (argc == 1) {
 	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return BRLCAD_HELP;
+	return GED_HELP;
     }
 
     if (3 < argc) {
 	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return BRLCAD_ERROR;
+	return GED_ERROR;
     }
 
     if (argc == 3 &&
@@ -82,25 +84,32 @@ ged_how(struct ged *gedp, int argc, const char *argv[])
 	    goto good;
     }
 
-    FOR_ALL_SOLIDS(sp, &gedp->ged_gdp->gd_headSolid) {
-	for (i = 0, tmp_dpp = dpp;
-	     i < sp->s_fullpath.fp_len && *tmp_dpp != DIR_NULL;
-	     ++i, ++tmp_dpp) {
-	    if (sp->s_fullpath.fp_names[i] != *tmp_dpp)
-		break;
+    gdlp = BU_LIST_NEXT(ged_display_list, &gedp->ged_gdp->gd_headDisplay);
+    while (BU_LIST_NOT_HEAD(gdlp, &gedp->ged_gdp->gd_headDisplay)) {
+	next_gdlp = BU_LIST_PNEXT(ged_display_list, gdlp);
+
+	FOR_ALL_SOLIDS(sp, &gdlp->gdl_headSolid) {
+	    for (i = 0, tmp_dpp = dpp;
+		 i < sp->s_fullpath.fp_len && *tmp_dpp != DIR_NULL;
+		 ++i, ++tmp_dpp) {
+		if (sp->s_fullpath.fp_names[i] != *tmp_dpp)
+		    break;
+	    }
+
+	    if (*tmp_dpp != DIR_NULL)
+		continue;
+
+
+	    /* found a match */
+	    if (both)
+		bu_vls_printf(&gedp->ged_result_str, "%d %g", sp->s_dmode, sp->s_transparency);
+	    else
+		bu_vls_printf(&gedp->ged_result_str, "%d", sp->s_dmode);
+
+	    goto good;
 	}
 
-	if (*tmp_dpp != DIR_NULL)
-	    continue;
-
-
-	/* found a match */
-	if (both)
-	    bu_vls_printf(&gedp->ged_result_str, "%d %g", sp->s_dmode, sp->s_transparency);
-	else
-	    bu_vls_printf(&gedp->ged_result_str, "%d", sp->s_dmode);
-
-	goto good;
+	gdlp = next_gdlp;
     }
 
     /* match NOT found */
@@ -110,7 +119,7 @@ ged_how(struct ged *gedp, int argc, const char *argv[])
     if (dpp != (struct directory **)NULL)
 	bu_free((genptr_t)dpp, "ged_how: directory pointers");
 
-    return BRLCAD_OK;
+    return GED_OK;
 }
 
 

@@ -17,17 +17,9 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file scale_ell.c
+/** @file pscale.c
  *
- * The scale_ell command.
- *
- * FIXME: This command really probably shouldn't exist.  The way MGED
- * currently handles scaling is to pass a transformation matrix to
- * transform_editing_solid(), which simply calls
- * rt_matrix_transform().  The primitives already know how to apply an
- * arbitrary matrix transform to their data making the need for
- * primitive-specific editing commands such as this one unnecessary.
- *
+ * The pscale command.
  */
 
 #include "common.h"
@@ -46,16 +38,16 @@ int
 ged_pscale(struct ged *gedp, int argc, const char *argv[])
 {
     int ret;
+    int rflag;
     struct rt_db_internal intern;
     fastf_t sf;
-    mat_t mat;
     char *last;
     struct directory *dp;
-    static const char *usage = "obj attribute sf";
+    static const char *usage = "[-r] obj attribute sf";
 
-    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
-    GED_CHECK_READ_ONLY(gedp, BRLCAD_ERROR);
-    GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
+    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
+    GED_CHECK_READ_ONLY(gedp, GED_ERROR);
+    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
 
     /* initialize result */
     bu_vls_trunc(&gedp->ged_result_str, 0);
@@ -63,23 +55,30 @@ ged_pscale(struct ged *gedp, int argc, const char *argv[])
     /* must be wanting help */
     if (argc == 1) {
 	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return BRLCAD_HELP;
+	return GED_HELP;
     }
 
-    if (argc != 4) {
+    if (argc < 4 || argc > 5) {
 	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return BRLCAD_ERROR;
+	return GED_ERROR;
     }
 
-    if (argv[2][1] != '\0') {
-	bu_vls_printf(&gedp->ged_result_str, "bad attribute - %s", argv[2]);
-	return BRLCAD_ERROR;
-    }
+    if (argc == 5) {
+	if (argv[1][0] == '-' && argv[1][1] == 'r' && argv[1][2] == '\0') {
+	    rflag = 1;
+	    --argc;
+	    ++argv;
+	} else {
+	    bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	    return BRLCAD_ERROR;
+	}
+    } else 
+	rflag = 0;
 
     if (sscanf(argv[3], "%lf", &sf) != 1 ||
 	sf <= SQRT_SMALL_FASTF) {
-	bu_vls_printf(&gedp->ged_result_str, "bad scale factor - %s", argv[3]);
-	return BRLCAD_ERROR;
+	bu_vls_printf(&gedp->ged_result_str, "%s: bad scale factor - %s", argv[0], argv[3]);
+	return GED_ERROR;
     }
 
     if ((last = strrchr(argv[1], '/')) == NULL)
@@ -88,45 +87,72 @@ ged_pscale(struct ged *gedp, int argc, const char *argv[])
 	++last;
 
     if (last[0] == '\0') {
-	bu_vls_printf(&gedp->ged_result_str, "illegal input - %s", argv[1]);
-	return BRLCAD_ERROR;
+	bu_vls_printf(&gedp->ged_result_str, "%s: illegal input - %s", argv[0], argv[1]);
+	return GED_ERROR;
     }
 
     if ((dp = db_lookup(gedp->ged_wdbp->dbip, last, LOOKUP_QUIET)) == DIR_NULL) {
-	bu_vls_printf(&gedp->ged_result_str, "%s not found", argv[1]);
-	return BRLCAD_ERROR;
+	bu_vls_printf(&gedp->ged_result_str, "%s: %s not found", argv[0], argv[1]);
+	return GED_ERROR;
     }
 
-    GED_DB_GET_INTERNAL(gedp, &intern, dp, (matp_t)NULL, &rt_uniresource, BRLCAD_ERROR);
+    GED_DB_GET_INTERNAL(gedp, &intern, dp, (matp_t)NULL, &rt_uniresource, GED_ERROR);
     RT_CK_DB_INTERNAL(&intern);
 
     if (intern.idb_major_type != DB5_MAJORTYPE_BRLCAD) {
-	bu_vls_printf(&gedp->ged_result_str, "Object not eligible for scaling.");
+	bu_vls_printf(&gedp->ged_result_str, "%s: Object not eligible for scaling.", argv[0]);
 	rt_db_free_internal(&intern, &rt_uniresource);
 
-	return BRLCAD_ERROR;
+	return GED_ERROR;
     }
 
     switch (intern.idb_minor_type) {
     case DB5_MINORTYPE_BRLCAD_EHY:
-	ret = ged_scale_ehy(gedp, (struct rt_ell_internal *)intern.idb_ptr, argv[2], sf);
+	ret = ged_scale_ehy(gedp, (struct rt_ehy_internal *)intern.idb_ptr, argv[2], sf, rflag);
 	break;
     case DB5_MINORTYPE_BRLCAD_ELL:
-	ret = ged_scale_ell(gedp, (struct rt_ell_internal *)intern.idb_ptr, argv[2], sf);
+	ret = ged_scale_ell(gedp, (struct rt_ell_internal *)intern.idb_ptr, argv[2], sf, rflag);
+	break;
+    case DB5_MINORTYPE_BRLCAD_EPA:
+	ret = ged_scale_epa(gedp, (struct rt_epa_internal *)intern.idb_ptr, argv[2], sf, rflag);
+	break;
+    case DB5_MINORTYPE_BRLCAD_ETO:
+	ret = ged_scale_eto(gedp, (struct rt_eto_internal *)intern.idb_ptr, argv[2], sf, rflag);
+	break;
+    case DB5_MINORTYPE_BRLCAD_EXTRUDE:
+	ret = ged_scale_extrude(gedp, (struct rt_extrude_internal *)intern.idb_ptr, argv[2], sf, rflag);
+	break;
+    case DB5_MINORTYPE_BRLCAD_HYP:
+	ret = ged_scale_hyp(gedp, (struct rt_hyp_internal *)intern.idb_ptr, argv[2], sf, rflag);
+	break;
+    case DB5_MINORTYPE_BRLCAD_PARTICLE:
+	ret = ged_scale_part(gedp, (struct rt_part_internal *)intern.idb_ptr, argv[2], sf, rflag);
+	break;
+    case DB5_MINORTYPE_BRLCAD_RHC:
+	ret = ged_scale_rhc(gedp, (struct rt_rhc_internal *)intern.idb_ptr, argv[2], sf, rflag);
+	break;
+    case DB5_MINORTYPE_BRLCAD_RPC:
+	ret = ged_scale_rpc(gedp, (struct rt_rpc_internal *)intern.idb_ptr, argv[2], sf, rflag);
+	break;
+    case DB5_MINORTYPE_BRLCAD_SUPERELL:
+	ret = ged_scale_superell(gedp, (struct rt_superell_internal *)intern.idb_ptr, argv[2], sf, rflag);
+	break;
+    case DB5_MINORTYPE_BRLCAD_TGC:
+	ret = ged_scale_tgc(gedp, (struct rt_tgc_internal *)intern.idb_ptr, argv[2], sf, rflag);
 	break;
     case DB5_MINORTYPE_BRLCAD_TOR:
-	ret = ged_scale_tor(gedp, (struct rt_tor_internal *)intern.idb_ptr, argv[2], sf);
+	ret = ged_scale_tor(gedp, (struct rt_tor_internal *)intern.idb_ptr, argv[2], sf, rflag);
 	break;
     default:
-	bu_vls_printf(&gedp->ged_result_str, "Object not yet supported.");
+	bu_vls_printf(&gedp->ged_result_str, "%s: Object not yet supported.", argv[0]);
 	rt_db_free_internal(&intern, &rt_uniresource);
 
-	return BRLCAD_ERROR;
+	return GED_ERROR;
     }
 
-    if (ret == BRLCAD_OK) {
-	GED_DB_PUT_INTERNAL(gedp, dp, &intern, &rt_uniresource, BRLCAD_ERROR);
-    } else if (ret == BRLCAD_ERROR) {
+    if (ret == GED_OK) {
+	GED_DB_PUT_INTERNAL(gedp, dp, &intern, &rt_uniresource, GED_ERROR);
+    } else if (ret == GED_ERROR) {
 	rt_db_free_internal(&intern, &rt_uniresource);
     }
 

@@ -298,12 +298,12 @@ show_seg(struct bu_list *seg, int str)
     struct seg *ptr;
 
     if (!seg)
-	bu_log("%s - NULL seg list\n", str);
+	bu_log("%d - NULL seg list\n", str);
     else {
 	if (BU_LIST_IS_EMPTY(seg))
-	    bu_log("%s - empty\n", str);
+	    bu_log("%d - empty\n", str);
 	else {
-	    bu_log("%s:\n", str);
+	    bu_log("%d:\n", str);
 	    for (BU_LIST_FOR (ptr, seg, seg)) {
 		if (ptr->seg_stp == ON_SURF)
 		    bu_log("\t %g to %g (ON_SURF)\n", ptr->seg_in.hit_dist, ptr->seg_out.hit_dist);
@@ -2080,13 +2080,16 @@ fix_halfs(struct ged_client_data *dgcdp)
 int
 ged_E(struct ged *gedp, int argc, const char *argv[])
 {
+    register int i;
     register int c;
+    int ac = 1;
+    char *av[2];
     struct ged_client_data *dgcdp;
     static const char *usage = "[-C#/#/# -s] objects(s)";
 
-    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
-    GED_CHECK_DRAWABLE(gedp, BRLCAD_ERROR);
-    GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
+    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
+    GED_CHECK_DRAWABLE(gedp, GED_ERROR);
+    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
 
     /* initialize result */
     bu_vls_trunc(&gedp->ged_result_str, 0);
@@ -2094,7 +2097,7 @@ ged_E(struct ged *gedp, int argc, const char *argv[])
     /* must be wanting help */
     if (argc == 1) {
 	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return BRLCAD_HELP;
+	return GED_HELP;
     }
 
     if (bu_debug&BU_DEBUG_MEM_CHECK && bu_mem_barriercheck())
@@ -2144,80 +2147,85 @@ ged_E(struct ged *gedp, int argc, const char *argv[])
 	    default:
 		{
 		    bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-		    return BRLCAD_ERROR;
+		    return GED_ERROR;
 		}
 	}
     }
     argc -= bu_optind;
     argv += bu_optind;
 
-    ged_eraseobjpath(gedp, argc-1, argv+1, LOOKUP_QUIET, 0);
+    av[1] = (char *)0;
+    for (i = 0; i < argc; ++i) {
+	ged_erasePathFromDisplay(gedp, argv[i], 0);
+	dgcdp->gdlp = ged_addToDisplay(dgcdp->gedp, argv[i]);
 
 #if 0
-    gedp->ged_wdbp->wdb_ttol.magic = RT_TESS_TOL_MAGIC;
-    gedp->ged_wdbp->wdb_ttol.rel = 0.01;
+	gedp->ged_wdbp->wdb_ttol.magic = RT_TESS_TOL_MAGIC;
+	gedp->ged_wdbp->wdb_ttol.rel = 0.01;
 #endif
 
-    dgcdp->ap = (struct application *)bu_malloc(sizeof(struct application), "Big E app");
-    RT_APPLICATION_INIT(dgcdp->ap);
-    dgcdp->ap->a_resource = &rt_uniresource;
-    rt_uniresource.re_magic = RESOURCE_MAGIC;
-    if (BU_LIST_UNINITIALIZED(&rt_uniresource.re_nmgfree))
-	BU_LIST_INIT(&rt_uniresource.re_nmgfree);
+	dgcdp->ap = (struct application *)bu_malloc(sizeof(struct application), "Big E app");
+	RT_APPLICATION_INIT(dgcdp->ap);
+	dgcdp->ap->a_resource = &rt_uniresource;
+	rt_uniresource.re_magic = RESOURCE_MAGIC;
+	if (BU_LIST_UNINITIALIZED(&rt_uniresource.re_nmgfree))
+	    BU_LIST_INIT(&rt_uniresource.re_nmgfree);
 
-    bu_ptbl_init(&dgcdp->leaf_list, 8, "leaf_list");
+	bu_ptbl_init(&dgcdp->leaf_list, 8, "leaf_list");
 
-    dgcdp->rtip = rt_new_rti(gedp->ged_wdbp->dbip);
-    dgcdp->rtip->rti_tol = gedp->ged_wdbp->wdb_tol;	/* struct copy */
-    dgcdp->rtip->useair = 1;
-    dgcdp->ap->a_rt_i = dgcdp->rtip;
+	dgcdp->rtip = rt_new_rti(gedp->ged_wdbp->dbip);
+	dgcdp->rtip->rti_tol = gedp->ged_wdbp->wdb_tol;	/* struct copy */
+	dgcdp->rtip->useair = 1;
+	dgcdp->ap->a_rt_i = dgcdp->rtip;
 
-    dgcdp->nvectors = 0;
-    (void)time(&dgcdp->start_time);
+	dgcdp->nvectors = 0;
+	(void)time(&dgcdp->start_time);
 
-    if (rt_gettrees(dgcdp->rtip, argc, (const char **)argv, 1)) {
-	bu_ptbl_free(&dgcdp->leaf_list);
+	av[0] = (char *)argv[i];
+	if (rt_gettrees(dgcdp->rtip, ac, (const char **)av, 1)) {
+	    bu_ptbl_free(&dgcdp->leaf_list);
 
-	/* do not do an rt_free_rti() (closes the database!!!!) */
-	rt_clean(dgcdp->rtip);
+	    /* do not do an rt_free_rti() (closes the database!!!!) */
+	    rt_clean(dgcdp->rtip);
 
-	bu_free((char *)dgcdp->rtip, "rt_i structure for 'E'");
-	bu_free(dgcdp, "dgcdp");
+	    bu_free((char *)dgcdp->rtip, "rt_i structure for 'E'");
+	    bu_free(dgcdp, "dgcdp");
 
-	bu_vls_printf(&gedp->ged_result_str, "Failed to get objects\n");
-	return BRLCAD_ERROR;
-    }
-    {
-	struct region *rp;
-	union E_tree *eptr;
-	struct bu_list vhead;
-	struct db_tree_state ts;
-	struct db_full_path path;
-
-	BU_LIST_INIT(&vhead);
-
-	for (BU_LIST_FOR (rp, region, &(dgcdp->rtip->HeadRegion))) {
-	    dgcdp->num_halfs = 0;
-	    eptr = build_etree(rp->reg_treetop, dgcdp);
-
-	    if (dgcdp->num_halfs)
-		fix_halfs(dgcdp);
-
-	    Eplot(eptr, &vhead, dgcdp);
-	    free_etree(eptr, dgcdp);
-	    bu_ptbl_reset(&dgcdp->leaf_list);
-	    ts.ts_mater = rp->reg_mater;
-	    db_string_to_path(&path, gedp->ged_wdbp->dbip, rp->reg_name);
-	    ged_drawH_part2(0, &vhead, &path, &ts, SOLID_NULL, dgcdp);
-	    db_free_full_path(&path);
+	    bu_vls_printf(&gedp->ged_result_str, "Failed to get objects\n");
+	    return GED_ERROR;
 	}
-	/* do not do an rt_free_rti() (closes the database!!!!) */
-	rt_clean(dgcdp->rtip);
+	{
+	    struct region *rp;
+	    union E_tree *eptr;
+	    struct bu_list vhead;
+	    struct db_tree_state ts;
+	    struct db_full_path path;
 
-	bu_free((char *)dgcdp->rtip, "rt_i structure for 'E'");
+	    BU_LIST_INIT(&vhead);
+
+	    for (BU_LIST_FOR (rp, region, &(dgcdp->rtip->HeadRegion))) {
+		dgcdp->num_halfs = 0;
+		eptr = build_etree(rp->reg_treetop, dgcdp);
+
+		if (dgcdp->num_halfs)
+		    fix_halfs(dgcdp);
+
+		Eplot(eptr, &vhead, dgcdp);
+		free_etree(eptr, dgcdp);
+		bu_ptbl_reset(&dgcdp->leaf_list);
+		ts.ts_mater = rp->reg_mater;
+		db_string_to_path(&path, gedp->ged_wdbp->dbip, rp->reg_name);
+		ged_drawH_part2(0, &vhead, &path, &ts, SOLID_NULL, dgcdp);
+		db_free_full_path(&path);
+	    }
+	    /* do not do an rt_free_rti() (closes the database!!!!) */
+	    rt_clean(dgcdp->rtip);
+
+	    bu_free((char *)dgcdp->rtip, "rt_i structure for 'E'");
+	}
     }
 
-    ged_color_soltab((struct solid *)&gedp->ged_gdp->gd_headSolid);
+    ged_color_soltab(&gedp->ged_gdp->gd_headDisplay);
     (void)time(&dgcdp->etime);
 
     /* free leaf_list */
@@ -2226,7 +2234,7 @@ ged_E(struct ged *gedp, int argc, const char *argv[])
     bu_vls_printf(&gedp->ged_result_str, "E: %ld vectors in %ld sec\n",
 		  dgcdp->nvectors, (long)(dgcdp->etime - dgcdp->start_time));
 
-    return BRLCAD_OK;
+    return GED_OK;
 }
 
 /*

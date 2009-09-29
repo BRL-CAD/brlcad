@@ -412,7 +412,7 @@ rt_nmg_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
  *
  * There are two special values that may be assigned to an
  * disk_index_t to signal special processing when the structure is
- * re-imported.
+ * re-import4ed.
  */
 #define DISK_INDEX_NULL 0
 #define DISK_INDEX_LISTHEAD	-1
@@ -820,7 +820,7 @@ static unsigned int rt_nmg_cur_fastf_subscript;
  * Returns subscript number of this array, in the external form.
  */
 int
-rt_nmg_export_fastf(const fastf_t *fp, int count, int pt_type, double scale)
+rt_nmg_export4_fastf(const fastf_t *fp, int count, int pt_type, double scale)
 
 
     /* If zero, means literal array of values */
@@ -840,7 +840,7 @@ rt_nmg_export_fastf(const fastf_t *fp, int count, int pt_type, double scale)
 	fastf_t *new;
 
 	/* Need to scale data by 'scale' ! */
-	new = (fastf_t *)bu_malloc(count*sizeof(fastf_t), "rt_nmg_export_fastf");
+	new = (fastf_t *)bu_malloc(count*sizeof(fastf_t), "rt_nmg_export4_fastf");
 	if (RT_NURB_IS_PT_RATIONAL(pt_type)) {
 	    /* Don't scale the homogeneous (rational) coord */
 	    register int i;
@@ -856,7 +856,7 @@ rt_nmg_export_fastf(const fastf_t *fp, int count, int pt_type, double scale)
 	    VSCALEN(new, fp, scale, count);
 	}
 	htond(cp + (4+4), (unsigned char *)new, count);
-	bu_free((char *)new, "rt_nmg_export_fastf");
+	bu_free((char *)new, "rt_nmg_export4_fastf");
     }
     cp += (4+4) + count * 8;
     rt_nmg_fastf_p = cp;
@@ -868,7 +868,7 @@ rt_nmg_export_fastf(const fastf_t *fp, int count, int pt_type, double scale)
  * R T _ N M G _ I M P O R T _ F A S T F
  */
 fastf_t *
-rt_nmg_import_fastf(const unsigned char *base, struct nmg_exp_counts *ecnt, long int subscript, const matp_t mat, int len, int pt_type)
+rt_nmg_import4_fastf(const unsigned char *base, struct nmg_exp_counts *ecnt, long int subscript, const matp_t mat, int len, int pt_type)
 {
     const unsigned char *cp;
     register int count;
@@ -879,7 +879,7 @@ rt_nmg_import_fastf(const unsigned char *base, struct nmg_exp_counts *ecnt, long
 	bu_log("subscript=%d, byte_offset=%d, kind=%d (expected %d)\n",
 	       subscript, ecnt[subscript].byte_offset,
 	       ecnt[subscript].kind, NMG_KIND_DOUBLE_ARRAY);
-	bu_bomb("rt_nmg_import_fastf() bad ecnt table\n");
+	bu_bomb("rt_nmg_import4_fastf() bad ecnt table\n");
     }
 
 
@@ -889,7 +889,7 @@ rt_nmg_import_fastf(const unsigned char *base, struct nmg_exp_counts *ecnt, long
 	       bu_glong(cp), DISK_DOUBLE_ARRAY_MAGIC, __FILE__, __LINE__);
 	bu_log("subscript=%d, byte_offset=%d\n",
 	       subscript, ecnt[subscript].byte_offset);
-	bu_bomb("rt_nmg_import_fastf() bad magic\n");
+	bu_bomb("rt_nmg_import4_fastf() bad magic\n");
     }
 
     if (pt_type)
@@ -897,11 +897,11 @@ rt_nmg_import_fastf(const unsigned char *base, struct nmg_exp_counts *ecnt, long
 
     count = bu_glong(cp + 4);
     if (count != len) {
-	bu_log("rt_nmg_import_fastf() subscript=%d, expected len=%d, got=%d\n",
+	bu_log("rt_nmg_import4_fastf() subscript=%d, expected len=%d, got=%d\n",
 	       subscript, len, count);
-	bu_bomb("rt_nmg_import_fastf()\n");
+	bu_bomb("rt_nmg_import4_fastf()\n");
     }
-    ret = (fastf_t *)bu_malloc(count * sizeof(fastf_t), "rt_nmg_import_fastf[]");
+    ret = (fastf_t *)bu_malloc(count * sizeof(fastf_t), "rt_nmg_import4_fastf[]");
     if (!mat) {
 	ntohd((unsigned char *)ret, cp + (4+4), count);
 	return ret;
@@ -912,25 +912,25 @@ rt_nmg_import_fastf(const unsigned char *base, struct nmg_exp_counts *ecnt, long
      *  Need to know width of data points, may be 3, or 4-tuples.
      *  The vector times matrix calculation can't be done in place.
      */
-    tmp = (fastf_t *)bu_malloc(count * sizeof(fastf_t), "rt_nmg_import_fastf tmp[]");
+    tmp = (fastf_t *)bu_malloc(count * sizeof(fastf_t), "rt_nmg_import4_fastf tmp[]");
     ntohd((unsigned char *)tmp, cp + (4+4), count);
     switch (RT_NURB_EXTRACT_COORDS(pt_type)) {
 	case 3:
-	    if (RT_NURB_IS_PT_RATIONAL(pt_type))  bu_bomb("rt_nmg_import_fastf() Rational 3-tuple?\n");
+	    if (RT_NURB_IS_PT_RATIONAL(pt_type))  bu_bomb("rt_nmg_import4_fastf() Rational 3-tuple?\n");
 	    for (count -= 3; count >= 0; count -= 3) {
 		MAT4X3PNT(&ret[count], mat, &tmp[count]);
 	    }
 	    break;
 	case 4:
-	    if (!RT_NURB_IS_PT_RATIONAL(pt_type))  bu_bomb("rt_nmg_import_fastf() non-rational 4-tuple?\n");
+	    if (!RT_NURB_IS_PT_RATIONAL(pt_type))  bu_bomb("rt_nmg_import4_fastf() non-rational 4-tuple?\n");
 	    for (count -= 4; count >= 0; count -= 4) {
 		MAT4X4PNT(&ret[count], mat, &tmp[count]);
 	    }
 	    break;
 	default:
-	    bu_bomb("rt_nmg_import_fastf() unsupported # of coords in ctl_point\n");
+	    bu_bomb("rt_nmg_import4_fastf() unsupported # of coords in ctl_point\n");
     }
-    bu_free((char *)tmp, "rt_nmg_import_fastf tmp[]");
+    bu_free((char *)tmp, "rt_nmg_import4_fastf tmp[]");
     return ret;
 }
 
@@ -1137,17 +1137,17 @@ rt_nmg_edisk(genptr_t op, genptr_t ip, struct nmg_exp_counts *ecnt, int index, d
 		bu_plong(d->u_size, fg->u.k_size);
 		bu_plong(d->v_size, fg->v.k_size);
 		bu_plong(d->u_knots,
-			 rt_nmg_export_fastf(fg->u.knots,
+			 rt_nmg_export4_fastf(fg->u.knots,
 					     fg->u.k_size, 0, 1.0));
 		bu_plong(d->v_knots,
-			 rt_nmg_export_fastf(fg->v.knots,
+			 rt_nmg_export4_fastf(fg->v.knots,
 					     fg->v.k_size, 0, 1.0));
 		bu_plong(d->us_size, fg->s_size[0]);
 		bu_plong(d->vs_size, fg->s_size[1]);
 		bu_plong(d->pt_type, fg->pt_type);
 		/* scale XYZ ctl_points by local2mm */
 		bu_plong(d->ctl_points,
-			 rt_nmg_export_fastf(fg->ctl_points,
+			 rt_nmg_export4_fastf(fg->ctl_points,
 					     fg->s_size[0] * fg->s_size[1],
 					     fg->pt_type,
 					     local2mm));
@@ -1255,7 +1255,7 @@ rt_nmg_edisk(genptr_t op, genptr_t ip, struct nmg_exp_counts *ecnt, int index, d
 
 		bu_plong(d->k_size, eg->k.k_size);
 		bu_plong(d->knots,
-			 rt_nmg_export_fastf(eg->k.knots,
+			 rt_nmg_export4_fastf(eg->k.knots,
 					     eg->k.k_size, 0, 1.0));
 		bu_plong(d->c_size, eg->c_size);
 		bu_plong(d->pt_type, eg->pt_type);
@@ -1265,7 +1265,7 @@ rt_nmg_edisk(genptr_t op, genptr_t ip, struct nmg_exp_counts *ecnt, int index, d
 		 * UV values do NOT get transformed, XYZ values do!
 		 */
 		bu_plong(d->ctl_points,
-			 rt_nmg_export_fastf(eg->ctl_points,
+			 rt_nmg_export4_fastf(eg->ctl_points,
 					     eg->c_size,
 					     eg->pt_type,
 					     RT_NURB_EXTRACT_PT_TYPE(eg->pt_type) == RT_NURB_PT_UV ?
@@ -1524,18 +1524,18 @@ rt_nmg_idisk(genptr_t op, genptr_t ip, struct nmg_exp_counts *ecnt, int index, u
 		fg->order[0] = bu_glong(d->u_order);
 		fg->order[1] = bu_glong(d->v_order);
 		fg->u.k_size = bu_glong(d->u_size);
-		fg->u.knots = rt_nmg_import_fastf(basep, ecnt,
+		fg->u.knots = rt_nmg_import4_fastf(basep, ecnt,
 						  bu_glong(d->u_knots), (matp_t)NULL,
 						  fg->u.k_size, 0);
 		fg->v.k_size = bu_glong(d->v_size);
-		fg->v.knots = rt_nmg_import_fastf(basep, ecnt,
+		fg->v.knots = rt_nmg_import4_fastf(basep, ecnt,
 						  bu_glong(d->v_knots), (matp_t)NULL,
 						  fg->v.k_size, 0);
 		fg->s_size[0] = bu_glong(d->us_size);
 		fg->s_size[1] = bu_glong(d->vs_size);
 		fg->pt_type = bu_glong(d->pt_type);
 		/* Transform ctl_points by 'mat' */
-		fg->ctl_points = rt_nmg_import_fastf(basep, ecnt,
+		fg->ctl_points = rt_nmg_import4_fastf(basep, ecnt,
 						     bu_glong(d->ctl_points), (matp_t)mat,
 						     fg->s_size[0] * fg->s_size[1],
 						     fg->pt_type);
@@ -1680,7 +1680,7 @@ rt_nmg_idisk(genptr_t op, genptr_t ip, struct nmg_exp_counts *ecnt, int index, u
 		if (eg->order == 0)  return 0;
 
 		eg->k.k_size = bu_glong(d->k_size);
-		eg->k.knots = rt_nmg_import_fastf(basep, ecnt,
+		eg->k.knots = rt_nmg_import4_fastf(basep, ecnt,
 						  bu_glong(d->knots), (matp_t)NULL,
 						  eg->k.k_size, 0);
 		eg->c_size = bu_glong(d->c_size);
@@ -1691,13 +1691,13 @@ rt_nmg_idisk(genptr_t op, genptr_t ip, struct nmg_exp_counts *ecnt, int index, u
 		 */
 		if (RT_NURB_EXTRACT_PT_TYPE(eg->pt_type) == RT_NURB_PT_UV) {
 		    /* UV coords on snurb surface don't get xformed */
-		    eg->ctl_points = rt_nmg_import_fastf(basep,
+		    eg->ctl_points = rt_nmg_import4_fastf(basep,
 							 ecnt,
 							 bu_glong(d->ctl_points), (matp_t)NULL,
 							 eg->c_size, eg->pt_type);
 		} else {
 		    /* XYZ coords on planar face DO get xformed */
-		    eg->ctl_points = rt_nmg_import_fastf(basep,
+		    eg->ctl_points = rt_nmg_import4_fastf(basep,
 							 ecnt,
 							 bu_glong(d->ctl_points), (matp_t)mat,
 							 eg->c_size, eg->pt_type);
@@ -1995,7 +1995,7 @@ rt_nmg_ialloc(unsigned long **ptrs, struct nmg_exp_counts *ecnt, int *kind_count
  * front of the input record in ecnt[], indexed by subscript number.
  *
  * No storage is allocated here, that will be done by
- * rt_nmg_import_fastf() on the fly.  A separate call to bu_malloc()
+ * rt_nmg_import4_fastf() on the fly.  A separate call to bu_malloc()
  * will be used, so that nmg_keg(), etc., can kill each array as
  * appropriate.
  */
@@ -2047,7 +2047,7 @@ rt_nmg_i2alloc(struct nmg_exp_counts *ecnt, unsigned char *cp, int *kind_counts,
  *    0 indicates that a null pointer should be used.
  */
 int
-rt_nmg_import_internal(struct rt_db_internal *ip, const struct bu_external *ep, register const fastf_t *mat, int rebound, const struct bn_tol *tol)
+rt_nmg_import4_internal(struct rt_db_internal *ip, const struct bu_external *ep, register const fastf_t *mat, int rebound, const struct bn_tol *tol)
 {
     struct model *m;
     union record *rp;
@@ -2066,7 +2066,7 @@ rt_nmg_import_internal(struct rt_db_internal *ip, const struct bu_external *ep, 
     rp = (union record *)ep->ext_buf;
     /* Check record type */
     if (rp->u_id != DBID_NMG) {
-	bu_log("rt_nmg_import: defective record\n");
+	bu_log("rt_nmg_import4: defective record\n");
 	return(-1);
     }
 
@@ -2075,7 +2075,7 @@ rt_nmg_import_internal(struct rt_db_internal *ip, const struct bu_external *ep, 
      *  In the future, this will be the backwards-compatability hook.
      */
     if (rp->nmg.N_version != DISK_MODEL_VERSION) {
-	bu_log("rt_nmg_import:  expected NMG '.g' format version %d, got version %d, aborting.\n",
+	bu_log("rt_nmg_import4:  expected NMG '.g' format version %d, got version %d, aborting.\n",
 	       DISK_MODEL_VERSION,
 	       rp->nmg.N_version);
 	return -1;
@@ -2188,7 +2188,7 @@ rt_nmg_import_internal(struct rt_db_internal *ip, const struct bu_external *ep, 
  * format.
  */
 int
-rt_nmg_export_internal(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, int compact)
+rt_nmg_export4_internal(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, int compact)
 {
     struct model *m;
     union record *rp;
@@ -2372,7 +2372,7 @@ rt_nmg_export_internal(struct bu_external *ep, const struct rt_db_internal *ip, 
  * Apply modeling transformations as well.
  */
 int
-rt_nmg_import(struct rt_db_internal *ip, const struct bu_external *ep, register const fastf_t *mat, const struct db_i *dbip)
+rt_nmg_import4(struct rt_db_internal *ip, const struct bu_external *ep, register const fastf_t *mat, const struct db_i *dbip)
 {
     struct model *m;
     union record *rp;
@@ -2382,7 +2382,7 @@ rt_nmg_import(struct rt_db_internal *ip, const struct bu_external *ep, register 
     rp = (union record *)ep->ext_buf;
     /* Check record type */
     if (rp->u_id != DBID_NMG) {
-	bu_log("rt_nmg_import: defective record\n");
+	bu_log("rt_nmg_import4: defective record\n");
 	return(-1);
     }
 
@@ -2397,7 +2397,7 @@ rt_nmg_import(struct rt_db_internal *ip, const struct bu_external *ep, register 
     tol.perp = 1e-6;
     tol.para = 1 - tol.perp;
 
-    if (rt_nmg_import_internal(ip, ep, mat, 1, &tol) < 0)
+    if (rt_nmg_import4_internal(ip, ep, mat, 1, &tol) < 0)
 	return(-1);
 
     m = (struct model *)ip->idb_ptr;
@@ -2446,7 +2446,7 @@ rt_nmg_import5(struct rt_db_internal *ip,
 	version = bu_glong(dp);
 	dp+= SIZEOF_NETWORK_LONG;
 	if (version != DISK_MODEL_VERSION) {
-	    bu_log("rt_nmg_import: expected NMG '.g' format version %d, got %d, aborting nmg solid import\n",
+	    bu_log("rt_nmg_import4: expected NMG '.g' format version %d, got %d, aborting nmg solid import\n",
 		   DISK_MODEL_VERSION, version);
 	    return -1;
 	}
@@ -2511,7 +2511,7 @@ rt_nmg_import5(struct rt_db_internal *ip,
  * The name is added by the caller, in the usual place.
  */
 int
-rt_nmg_export(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip)
+rt_nmg_export4(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip)
 {
     struct model *m;
 
@@ -2524,7 +2524,7 @@ rt_nmg_export(struct bu_external *ep, const struct rt_db_internal *ip, double lo
     nmg_vmodel(m);
 
     /* The "compact" flag is used to save space in the database */
-    return rt_nmg_export_internal(ep, ip, local2mm, 1);
+    return rt_nmg_export4_internal(ep, ip, local2mm, 1);
 }
 
 

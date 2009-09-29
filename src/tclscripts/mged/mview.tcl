@@ -40,6 +40,10 @@ proc openmv { id w wc dpy dtype } {
 
     attach -d $dpy -t 0 -n $w.ul $dtype
     dm set zclip $mged_default(zclip)
+    if { $dtype == "rtgl" } {
+        dm set zclip 1
+	dm set zbuffer 1
+    }
     if { $dtype == "ogl" } {
 	dm set zbuffer $mged_default(zbuffer)
 	dm set lighting $mged_default(lighting)
@@ -50,6 +54,10 @@ proc openmv { id w wc dpy dtype } {
 
     attach -d $dpy -t 0 -n $w.ur $dtype
     dm set zclip $mged_default(zclip)
+    if { $dtype == "rtgl" } {
+        dm set zclip 1
+	dm set zbuffer 1
+    }
     if { $dtype == "ogl" } {
 	dm set zbuffer $mged_default(zbuffer)
 	dm set lighting $mged_default(lighting)
@@ -60,6 +68,10 @@ proc openmv { id w wc dpy dtype } {
 
     attach -d $dpy -t 0 -n $w.ll $dtype
     dm set zclip $mged_default(zclip)
+    if { $dtype == "rtgl" } {
+        dm set zclip 1
+	dm set zbuffer 1
+    }
     if { $dtype == "ogl" } {
 	dm set zbuffer $mged_default(zbuffer)
 	dm set lighting $mged_default(lighting)
@@ -70,6 +82,10 @@ proc openmv { id w wc dpy dtype } {
 
     attach -d $dpy -t 0 -n $w.lr $dtype
     dm set zclip $mged_default(zclip)
+    if { $dtype == "rtgl" } {
+        dm set zclip 1
+	dm set zbuffer 1
+    }
     if { $dtype == "ogl" } {
 	dm set zbuffer $mged_default(zbuffer)
 	dm set lighting $mged_default(lighting)

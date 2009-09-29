@@ -25,7 +25,7 @@
 #define _RENDER_CAMERA_H
 
 #include "tie.h"
-#include "tienet.h"
+#include "adrt.h"
 #include "render.h"
 
 #define	RENDER_CAMERA_DOF_SAMPLES	13

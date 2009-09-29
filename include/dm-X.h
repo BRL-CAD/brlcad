@@ -28,8 +28,6 @@
 
 #include "common.h"
 
-#include "dm_color.h"
-
 
 #define CMAP_BASE 40
 #define CUBE_DIMENSION 6

@@ -14,10 +14,11 @@ libged_nil_la_SOURCES = \
 	arot.c \
 	attr.c \
 	autoview.c \
+	bb.c \
 	bev.c \
 	bigE.c \
-	binary.c \
 	blast.c \
+	bo.c \
 	bot_condense.c \
 	bot_decimate.c \
 	bot_dump.c \
@@ -29,7 +30,9 @@ libged_nil_la_SOURCES = \
 	bot_split.c \
 	bot_sync.c \
 	bot_vertex_fuse.c \
+	brep.c \
 	cat.c \
+	cc.c \
 	center.c \
 	clip.c \
 	clone.c \
@@ -86,6 +89,7 @@ libged_nil_la_SOURCES = \
 	group.c \
 	hide.c \
 	how.c \
+	human.c \
 	illum.c \
 	importFg4Section.c \
 	inside.c \
@@ -104,11 +108,13 @@ libged_nil_la_SOURCES = \
 	log.c \
 	lookat.c \
 	ls.c \
+	lscon.c \
 	lt.c \
 	m2v_point.c \
 	make.c \
 	make_bb.c \
 	make_name.c \
+	make_pnts.c \
 	match.c \
 	mater.c \
 	mirror.c \
@@ -143,7 +149,9 @@ libged_nil_la_SOURCES = \
 	prefix.c \
 	preview.c \
 	ps.c \
+	protate.c \
 	pscale.c \
+	ptranslate.c \
 	push.c \
 	put.c \
 	put_comb.c \
@@ -166,6 +174,10 @@ libged_nil_la_SOURCES = \
 	rot_point.c \
 	rotate_about.c \
 	rotate_arb_face.c \
+	rotate_eto.c \
+	rotate_extrude.c \
+	rotate_hyp.c \
+	rotate_tgc.c \
 	rrt.c \
 	rt.c \
 	rtabort.c \
@@ -175,6 +187,15 @@ libged_nil_la_SOURCES = \
 	scale.c \
 	scale_ehy.c \
 	scale_ell.c \
+	scale_epa.c \
+	scale_eto.c \
+	scale_extrude.c \
+	scale_hyp.c \
+	scale_part.c \
+	scale_rhc.c \
+	scale_rpc.c \
+	scale_superell.c \
+	scale_tgc.c \
 	scale_tor.c \
 	search.c \
 	set_output_script.c \
@@ -188,6 +209,7 @@ libged_nil_la_SOURCES = \
 	size.c \
 	slew.c \
 	solids_on_ray.c \
+        sphgroup.c \
 	summary.c \
 	sync.c \
 	tables.c \
@@ -198,6 +220,8 @@ libged_nil_la_SOURCES = \
 	tra.c \
 	trace.c \
 	track.c \
+	translate_extrude.c \
+	translate_tgc.c \
 	tree.c \
 	typein.c \
 	unhide.c \
@@ -246,7 +270,7 @@ noinst_HEADERS = \
 	wdb_qray.h
 
 libged_la_SOURCES =
-libged_la_LDFLAGS = -version-info 19:1 -no-undefined
+libged_la_LDFLAGS = -version-info 19:1 -no-undefined -Wc,${FEXCEPTIONS}
 libged_la_LIBADD = \
 	libged_nil.la \
 	${GED_LIBS}

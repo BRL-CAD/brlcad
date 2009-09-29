@@ -38,9 +38,14 @@
 	method initGeometry {gdata}
 	method updateGeometry {}
 	method createGeometry {obj}
+	method p {obj args}
     }
 
     protected {
+	common setH 1
+	common setr_v 2
+	common setr_h 3
+
 	variable mVx ""
 	variable mVy ""
 	variable mVz ""
@@ -50,8 +55,14 @@
 	variable mR_v ""
 	variable mR_h ""
 
+	# Methods used by the constructor
+	# override methods in GeometryEditFrame
+	method buildUpperPanel
+	method buildLowerPanel
+
 	# Override what's in GeometryEditFrame
 	method updateGeometryIfMod {}
+	method initEditState {}
     }
 
     private {}
@@ -63,6 +74,93 @@
 # ------------------------------------------------------------
 
 ::itcl::body PartEditFrame::constructor {args} {
+    eval itk_initialize $args
+}
+
+# ------------------------------------------------------------
+#                        OPTIONS
+# ------------------------------------------------------------
+
+
+# ------------------------------------------------------------
+#                      PUBLIC METHODS
+# ------------------------------------------------------------
+
+## - initGeometry
+#
+# Initialize the variables containing the object's specification.
+#
+::itcl::body PartEditFrame::initGeometry {gdata} {
+    set _V [bu_get_value_by_keyword V $gdata]
+    set mVx [lindex $_V 0]
+    set mVy [lindex $_V 1]
+    set mVz [lindex $_V 2]
+    set _H [bu_get_value_by_keyword H $gdata]
+    set mHx [lindex $_H 0]
+    set mHy [lindex $_H 1]
+    set mHz [lindex $_H 2]
+    set mR_v [bu_get_value_by_keyword r_v $gdata]
+    set mR_h [bu_get_value_by_keyword r_h $gdata]
+
+    GeometryEditFrame::initGeometry $gdata
+}
+
+::itcl::body PartEditFrame::updateGeometry {} {
+    if {$itk_option(-mged) == "" ||
+	$itk_option(-geometryObject) == ""} {
+	return
+    }
+
+    $itk_option(-mged) adjust $itk_option(-geometryObject) \
+	V [list $mVx $mVy $mVz] \
+	H [list $mHx $mHy $mHz] \
+	r_v $mR_v \
+	r_h $mR_h
+
+    if {$itk_option(-geometryChangedCallback) != ""} {
+	$itk_option(-geometryChangedCallback)
+    }
+}
+
+::itcl::body PartEditFrame::createGeometry {obj} {
+    if {![GeometryEditFrame::createGeometry $obj]} {
+	return
+    }
+
+    set r1 [expr {$mDelta * 0.5}]
+    set r2 [expr {$mDelta * 0.25}]
+
+    $itk_option(-mged) put $obj part \
+	V [list $mCenterX $mCenterY $mCenterZ] \
+	H [list $mDelta 0 0] \
+	r_v $r1 \
+	r_h $r2
+}
+
+::itcl::body PartEditFrame::p {obj args} {
+    if {[llength $args] != 1 || ![string is double $args]} {
+	return "Usage: p sf"
+    }
+
+    switch -- $mEditMode \
+	$setH {
+	    $::ArcherCore::application p_pscale $obj H $args
+	} \
+	$setr_v {
+	    $::ArcherCore::application p_pscale $obj v $args
+	} \
+	$setr_h {
+	    $::ArcherCore::application p_pscale $obj h $args
+	}
+
+    return ""
+}
+
+# ------------------------------------------------------------
+#                      PROTECTED METHODS
+# ------------------------------------------------------------
+
+::itcl::body PartEditFrame::buildUpperPanel {} {
     set parent [$this childsite]
     itk_component add partType {
 	::ttk::label $parent.parttype \
@@ -239,75 +337,25 @@
     bind $itk_component(partHzE) <Return> [::itcl::code $this updateGeometryIfMod]
     bind $itk_component(partR_vE) <Return> [::itcl::code $this updateGeometryIfMod]
     bind $itk_component(partR_hE) <Return> [::itcl::code $this updateGeometryIfMod]
-
-    eval itk_initialize $args
 }
 
+::itcl::body PartEditFrame::buildLowerPanel {} {
+    set parent [$this childsite lower]
 
-# ------------------------------------------------------------
-#                        OPTIONS
-# ------------------------------------------------------------
+    foreach attribute {H r_v r_h} {
+	itk_component add set$attribute {
+	    ::ttk::radiobutton $parent.set_$attribute \
+		-variable [::itcl::scope mEditMode] \
+		-value [subst $[subst set$attribute]] \
+		-text "Set $attribute" \
+		-command [::itcl::code $this initEditState]
+	} {}
 
-
-# ------------------------------------------------------------
-#                      PUBLIC METHODS
-# ------------------------------------------------------------
-
-## - initGeometry
-#
-# Initialize the variables containing the object's specification.
-#
-::itcl::body PartEditFrame::initGeometry {gdata} {
-    set _V [bu_get_value_by_keyword V $gdata]
-    set mVx [lindex $_V 0]
-    set mVy [lindex $_V 1]
-    set mVz [lindex $_V 2]
-    set _H [bu_get_value_by_keyword H $gdata]
-    set mHx [lindex $_H 0]
-    set mHy [lindex $_H 1]
-    set mHz [lindex $_H 2]
-    set mR_v [bu_get_value_by_keyword r_v $gdata]
-    set mR_h [bu_get_value_by_keyword r_h $gdata]
-
-    GeometryEditFrame::initGeometry $gdata
-}
-
-::itcl::body PartEditFrame::updateGeometry {} {
-    if {$itk_option(-mged) == "" ||
-	$itk_option(-geometryObject) == ""} {
-	return
-    }
-
-    $itk_option(-mged) adjust $itk_option(-geometryObject) \
-	V [list $mVx $mVy $mVz] \
-	H [list $mHx $mHy $mHz] \
-	r_v $mR_v \
-	r_h $mR_h
-
-    if {$itk_option(-geometryChangedCallback) != ""} {
-	$itk_option(-geometryChangedCallback)
+	pack $itk_component(set$attribute) \
+	    -anchor w \
+	    -expand yes
     }
 }
-
-::itcl::body PartEditFrame::createGeometry {obj} {
-    if {![GeometryEditFrame::createGeometry $obj]} {
-	return
-    }
-
-    set r1 [expr {$mDelta * 0.5}]
-    set r2 [expr {$mDelta * 0.25}]
-
-    $itk_option(-mged) put $obj part \
-	V [list $mCenterX $mCenterY $mCenterZ] \
-	H [list $mDelta 0 0] \
-	r_v $r1 \
-	r_h $r2
-}
-
-
-# ------------------------------------------------------------
-#                      PROTECTED METHODS
-# ------------------------------------------------------------
 
 ::itcl::body PartEditFrame::updateGeometryIfMod {} {
     if {$itk_option(-mged) == "" ||
@@ -361,6 +409,27 @@
 	updateGeometry
     }
 }
+
+::itcl::body PartEditFrame::initEditState {} {
+    set mEditCommand pscale
+    set mEditClass $EDIT_CLASS_SCALE
+    set mEditPCommand [::itcl::code $this p]
+    configure -valueUnits "mm"
+
+    switch -- $mEditMode \
+	$setH {
+	    set mEditParam1 H
+	} \
+	$setr_v {
+	    set mEditParam1 v
+	} \
+	$setr_h {
+	    set mEditParam1 h
+	}
+
+    GeometryEditFrame::initEditState
+}
+
 
 # Local Variables:
 # mode: Tcl

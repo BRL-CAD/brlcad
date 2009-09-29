@@ -46,9 +46,9 @@ ged_bot_decimate(struct ged *gedp, int argc, const char *argv[])
     fastf_t min_edge_length=-1.0;
     static const char *usage = "-c maximum_chord_error -n maximum_normal_error -e minimum_edge_length new_bot_name current_bot_name";
 
-    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
-    GED_CHECK_READ_ONLY(gedp, BRLCAD_ERROR);
-    GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
+    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
+    GED_CHECK_READ_ONLY(gedp, GED_ERROR);
+    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
 
     /* initialize result */
     bu_vls_trunc(&gedp->ged_result_str, 0);
@@ -56,12 +56,12 @@ ged_bot_decimate(struct ged *gedp, int argc, const char *argv[])
     /* must be wanting help */
     if (argc == 1) {
 	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return BRLCAD_HELP;
+	return GED_HELP;
     }
 
     if (argc < 5 || argc > 9) {
 	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return BRLCAD_ERROR;
+	return GED_ERROR;
     }
 
     /* process args */
@@ -74,7 +74,7 @@ ged_bot_decimate(struct ged *gedp, int argc, const char *argv[])
 		if ( max_chord_error < 0.0 ) {
 		    bu_vls_printf(&gedp->ged_result_str,
 				  "Maximum chord error cannot be less than zero");
-		    return BRLCAD_ERROR;
+		    return GED_ERROR;
 		}
 		break;
 	    case 'n':
@@ -82,7 +82,7 @@ ged_bot_decimate(struct ged *gedp, int argc, const char *argv[])
 		if ( max_normal_error < 0.0 ) {
 		    bu_vls_printf(&gedp->ged_result_str,
 				  "Maximum normal error cannot be less than zero");
-		    return BRLCAD_ERROR;
+		    return GED_ERROR;
 		}
 		break;
 	    case 'e':
@@ -90,13 +90,13 @@ ged_bot_decimate(struct ged *gedp, int argc, const char *argv[])
 		if ( min_edge_length < 0.0 ) {
 		    bu_vls_printf(&gedp->ged_result_str,
 				  "minumum edge length cannot be less than zero");
-		    return BRLCAD_ERROR;
+		    return GED_ERROR;
 		}
 		break;
 	    default:
 	    {
 		bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-		return BRLCAD_ERROR;
+		return GED_ERROR;
 	    }
 	}
     }
@@ -105,30 +105,20 @@ ged_bot_decimate(struct ged *gedp, int argc, const char *argv[])
     argv += bu_optind;
 
     /* make sure new solid does not already exist */
-    if ( (dp=db_lookup( gedp->ged_wdbp->dbip, argv[0], LOOKUP_QUIET ) ) != DIR_NULL ) {
-	bu_vls_printf(&gedp->ged_result_str, "%s already exists!!\n", argv[0]);
-	return BRLCAD_ERROR;
-    }
+    GED_CHECK_EXISTS(gedp, argv[0], LOOKUP_QUIET, GED_ERROR);
 
     /* make sure current solid does exist */
-    if ( (dp=db_lookup( gedp->ged_wdbp->dbip, argv[1], LOOKUP_QUIET ) ) == DIR_NULL ) {
-	bu_vls_printf(&gedp->ged_result_str, "%s does not exist\n", argv[1]);
-	return BRLCAD_ERROR;
-    }
+    GED_DB_LOOKUP(gedp, dp, argv[1], LOOKUP_QUIET, GED_ERROR);
 
     /* import the current solid */
     RT_INIT_DB_INTERNAL( &intern );
-    if ( rt_db_get_internal( &intern, dp, gedp->ged_wdbp->dbip, NULL, gedp->ged_wdbp->wdb_resp ) < 0 ) {
-	bu_vls_printf(&gedp->ged_result_str, "Failed to get internal form of %s\n", argv[1]);
-	return BRLCAD_ERROR;
-    }
+    GED_DB_GET_INTERNAL(gedp, &intern, dp, NULL, gedp->ged_wdbp->wdb_resp, GED_ERROR);
 
     /* make sure this is a BOT solid */
-    if ( intern.idb_major_type != DB5_MAJORTYPE_BRLCAD ||
-	 intern.idb_minor_type != DB5_MINORTYPE_BRLCAD_BOT ) {
+    if (intern.idb_major_type != DB5_MAJORTYPE_BRLCAD || intern.idb_minor_type != DB5_MINORTYPE_BRLCAD_BOT) {
 	bu_vls_printf(&gedp->ged_result_str, "%s is not a BOT solid\n", argv[1]);
 	rt_db_free_internal( &intern, gedp->ged_wdbp->wdb_resp );
-	return BRLCAD_ERROR;
+	return GED_ERROR;
     }
 
     bot = (struct rt_bot_internal *)intern.idb_ptr;
@@ -147,17 +137,18 @@ ged_bot_decimate(struct ged *gedp, int argc, const char *argv[])
     if ( rt_bot_decimate( bot, max_chord_error, max_normal_error, min_edge_length) < 0 ) {
 	bu_vls_printf(&gedp->ged_result_str, "Decimation Error\n");
 	rt_db_free_internal( &intern, gedp->ged_wdbp->wdb_resp );
-	return BRLCAD_ERROR;
+	return GED_ERROR;
     }
 
     /* save the result to the database */
+    /* XXX - should this be rt_db_put_internal() instead? */
     if ( wdb_put_internal( gedp->ged_wdbp, argv[0], &intern, 1.0 ) < 0 ) {
 	bu_vls_printf(&gedp->ged_result_str,
 		      "Failed to write decimated BOT back to database\n");
-	return BRLCAD_ERROR;
+	return GED_ERROR;
     }
 
-    return BRLCAD_OK;
+    return GED_OK;
 }
 
 

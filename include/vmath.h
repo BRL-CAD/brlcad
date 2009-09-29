@@ -485,6 +485,26 @@ typedef fastf_t	plane_t[ELEMENTS_PER_PLANE];
 	(m)[0] = (m)[5] = (m)[10] = (m)[15] = 1.0; \
 }
 
+/** @brief set t to the transpose of matrix m */
+#define MAT_TRANSPOSE(t, m) { \
+	(t)[0] = (m)[0]; \
+	(t)[4] = (m)[1]; \
+	(t)[8] = (m)[2]; \
+	(t)[12] = (m)[3]; \
+	(t)[1] = (m)[4]; \
+	(t)[5] = (m)[5]; \
+	(t)[9] = (m)[6]; \
+	(t)[13] = (m)[7]; \
+	(t)[2] = (m)[8]; \
+	(t)[6] = (m)[9]; \
+	(t)[10] = (m)[10]; \
+	(t)[14] = (m)[11]; \
+	(t)[3] = (m)[12]; \
+	(t)[7] = (m)[13]; \
+	(t)[11] = (m)[14]; \
+	(t)[15] = (m)[15]; \
+}
+
 /** @brief Copy a matrix. */
 #define MAT_COPY( d, s ) { \
 	(d)[0] = (s)[0]; \
@@ -735,7 +755,7 @@ typedef fastf_t	plane_t[ELEMENTS_PER_PLANE];
  * @brief Find the sum of two points, and scale the result.  Often
  * used to find the midpoint.
  */
-#define VADD2SCALE( o, a, b, s ) { \
+#define VADD2SCALE(o, a, b, s) { \
 			(o)[X] = ((a)[X] + (b)[X]) * (s); \
 			(o)[Y] = ((a)[Y] + (b)[Y]) * (s); \
 			(o)[Z] = ((a)[Z] + (b)[Z]) * (s); \
@@ -754,13 +774,13 @@ typedef fastf_t	plane_t[ELEMENTS_PER_PLANE];
  * @brief Find the difference between two points, and scale result.
  * Often used to compute bounding sphere radius given rpp points.
  */
-#define VSUB2SCALE( o, a, b, s ) { \
+#define VSUB2SCALE(o, a, b, s) { \
 			(o)[X] = ((a)[X] - (b)[X]) * (s); \
 			(o)[Y] = ((a)[Y] - (b)[Y]) * (s); \
 			(o)[Z] = ((a)[Z] - (b)[Z]) * (s); \
 }
 
-#define VSUB2SCALEN( o, a, b, n ) { \
+#define VSUB2SCALEN(o, a, b, n) { \
 	register int _vsub2scale; \
 	for ( _vsub2scale = 0; \
 	_vsub2scale < (n); \
@@ -879,6 +899,16 @@ typedef fastf_t	plane_t[ELEMENTS_PER_PLANE];
 	_vblend2++) { \
 		(a)[_vblend2] = (b) * (c)[_vblend2] + (d) * (e)[_vblend2]; \
 	} \
+}
+
+/**
+ * @brief Project vector `a' onto `b'
+ *   vector `c' is the component of `a' parallel   to `b'
+ *     "    `d' "   "     "      "   "  orthogonal "   "
+ */
+#define VPROJECT(a, b, c, d) { \
+    VSCALE(c, b, VDOT(a, b) / VDOT(b, b)); \
+    VSUB2(d, a, c); \
 }
 
 /** @brief Return scalar magnitude squared of vector at `a' */
@@ -1189,6 +1219,28 @@ typedef fastf_t	plane_t[ELEMENTS_PER_PLANE];
 #define VMOVE_2D(a, b)		V2MOVE(a, b)
 #define VSCALE_2D(a, b, c)	V2SCALE(a, b, c)
 #define VJOIN1_2D(a, b, c, d) 	V2JOIN1(a, b, c, d)
+
+/** @brief Compare two vectors for EXACT equality.  Use carefully. 
+ *  Version for degree 2 vectors. 
+ */
+#define V2EQUAL(a, b)	((a)[X]==(b)[X] && (a)[Y]==(b)[Y])
+
+/**
+ * @brief Compare two vectors for approximate equality, within the
+ * specified absolute tolerance.
+ * Version for degree 2 vectors.
+ */
+#define V2APPROXEQUAL(a, b, tol)	( \
+	NEAR_ZERO( (a)[X]-(b)[X], tol ) && \
+	NEAR_ZERO( (a)[Y]-(b)[Y], tol ) )
+
+/** 
+ * @brief Test for all elements of `v' being smaller than `tol'. 
+ * Version for degree 2 vectors.
+ */
+#define V2NEAR_ZERO(v, tol)	( \
+	NEAR_ZERO(v[X], tol) && NEAR_ZERO(v[Y], tol) )
+
 
 /**
  * @brief Quaternion math definitions.

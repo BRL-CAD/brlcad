@@ -46,9 +46,9 @@ ged_report(struct ged *gedp, int argc, const char *argv[])
     int		lvl = 0;
     static const char *usage = "lvl";
 
-    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
-    GED_CHECK_DRAWABLE(gedp, BRLCAD_ERROR);
-    GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
+    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
+    GED_CHECK_DRAWABLE(gedp, GED_ERROR);
+    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
 
     /* initialize result */
     bu_vls_trunc(&gedp->ged_result_str, 0);
@@ -56,12 +56,12 @@ ged_report(struct ged *gedp, int argc, const char *argv[])
     /* must be wanting help */
     if (argc == 1) {
 	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return BRLCAD_HELP;
+	return GED_HELP;
     }
 
     if (argc != 2) {
 	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return BRLCAD_ERROR;
+	return GED_ERROR;
     }
 
     lvl = atoi(argv[1]);
@@ -71,7 +71,7 @@ ged_report(struct ged *gedp, int argc, const char *argv[])
     else
 	ged_print_schain_vlcmds(gedp);
 
-    return BRLCAD_OK;
+    return GED_OK;
 }
 
 /*
@@ -84,6 +84,8 @@ ged_report(struct ged *gedp, int argc, const char *argv[])
 static void
 ged_print_schain(struct ged *gedp, int lvl)
 {
+    register struct ged_display_list *gdlp;
+    register struct ged_display_list *next_gdlp;
     register struct solid	*sp;
     register struct bn_vlist	*vp;
     int				nvlist;
@@ -92,69 +94,76 @@ ged_print_schain(struct ged *gedp, int lvl)
     if (gedp->ged_wdbp->dbip == DBI_NULL)
 	return;
 
-    FOR_ALL_SOLIDS(sp, &gedp->ged_gdp->gd_headSolid) {
-	if (lvl <= -2) {
-	    /* print only leaves */
-	    bu_vls_printf(&gedp->ged_result_str, "%s ", LAST_SOLID(sp)->d_namep);
-	    continue;
-	}
+    gdlp = BU_LIST_NEXT(ged_display_list, &gedp->ged_gdp->gd_headDisplay);
+    while (BU_LIST_NOT_HEAD(gdlp, &gedp->ged_gdp->gd_headDisplay)) {
+	next_gdlp = BU_LIST_PNEXT(ged_display_list, gdlp);
 
-	db_path_to_vls(&gedp->ged_result_str, &sp->s_fullpath);
+	FOR_ALL_SOLIDS(sp, &gdlp->gdl_headSolid) {
+	    if (lvl <= -2) {
+		/* print only leaves */
+		bu_vls_printf(&gedp->ged_result_str, "%s ", LAST_SOLID(sp)->d_namep);
+		continue;
+	    }
 
-	if ((lvl != -1) && (sp->s_iflag == UP))
-	    bu_vls_printf(&gedp->ged_result_str, " ILLUM");
+	    db_path_to_vls(&gedp->ged_result_str, &sp->s_fullpath);
 
-	bu_vls_printf(&gedp->ged_result_str, "\n");
+	    if ((lvl != -1) && (sp->s_iflag == UP))
+		bu_vls_printf(&gedp->ged_result_str, " ILLUM");
 
-	if (lvl <= 0)
-	    continue;
+	    bu_vls_printf(&gedp->ged_result_str, "\n");
 
-	/* convert to the local unit for printing */
-	bu_vls_printf(&gedp->ged_result_str, "  cent=(%.3f,%.3f,%.3f) sz=%g ",
-		      sp->s_center[X]*gedp->ged_wdbp->dbip->dbi_base2local,
-		      sp->s_center[Y]*gedp->ged_wdbp->dbip->dbi_base2local,
-		      sp->s_center[Z]*gedp->ged_wdbp->dbip->dbi_base2local,
-		      sp->s_size*gedp->ged_wdbp->dbip->dbi_base2local);
-	bu_vls_printf(&gedp->ged_result_str, "reg=%d\n", sp->s_regionid);
-	bu_vls_printf(&gedp->ged_result_str, "  basecolor=(%d,%d,%d) color=(%d,%d,%d)%s%s%s\n",
-		      sp->s_basecolor[0],
-		      sp->s_basecolor[1],
-		      sp->s_basecolor[2],
-		      sp->s_color[0],
-		      sp->s_color[1],
-		      sp->s_color[2],
-		      sp->s_uflag?" U":"",
-		      sp->s_dflag?" D":"",
-		      sp->s_cflag?" C":"");
-
-	if (lvl <= 1)
-	    continue;
-
-	/* Print the actual vector list */
-	nvlist = 0;
-	npts = 0;
-	for (BU_LIST_FOR(vp, bn_vlist, &(sp->s_vlist))) {
-	    register int	i;
-	    register int	nused = vp->nused;
-	    register int	*cmd = vp->cmd;
-	    register point_t *pt = vp->pt;
-
-	    BN_CK_VLIST(vp);
-	    nvlist++;
-	    npts += nused;
-
-	    if (lvl <= 2)
+	    if (lvl <= 0)
 		continue;
 
-	    for (i = 0; i < nused; i++, cmd++, pt++) {
-		bu_vls_printf(&gedp->ged_result_str, "  %s (%g, %g, %g)\n",
-			      rt_vlist_cmd_descriptions[*cmd],
-			      V3ARGS(*pt));
+	    /* convert to the local unit for printing */
+	    bu_vls_printf(&gedp->ged_result_str, "  cent=(%.3f,%.3f,%.3f) sz=%g ",
+			  sp->s_center[X]*gedp->ged_wdbp->dbip->dbi_base2local,
+			  sp->s_center[Y]*gedp->ged_wdbp->dbip->dbi_base2local,
+			  sp->s_center[Z]*gedp->ged_wdbp->dbip->dbi_base2local,
+			  sp->s_size*gedp->ged_wdbp->dbip->dbi_base2local);
+	    bu_vls_printf(&gedp->ged_result_str, "reg=%d\n", sp->s_regionid);
+	    bu_vls_printf(&gedp->ged_result_str, "  basecolor=(%d,%d,%d) color=(%d,%d,%d)%s%s%s\n",
+			  sp->s_basecolor[0],
+			  sp->s_basecolor[1],
+			  sp->s_basecolor[2],
+			  sp->s_color[0],
+			  sp->s_color[1],
+			  sp->s_color[2],
+			  sp->s_uflag?" U":"",
+			  sp->s_dflag?" D":"",
+			  sp->s_cflag?" C":"");
+
+	    if (lvl <= 1)
+		continue;
+
+	    /* Print the actual vector list */
+	    nvlist = 0;
+	    npts = 0;
+	    for (BU_LIST_FOR(vp, bn_vlist, &(sp->s_vlist))) {
+		register int	i;
+		register int	nused = vp->nused;
+		register int	*cmd = vp->cmd;
+		register point_t *pt = vp->pt;
+
+		BN_CK_VLIST(vp);
+		nvlist++;
+		npts += nused;
+
+		if (lvl <= 2)
+		    continue;
+
+		for (i = 0; i < nused; i++, cmd++, pt++) {
+		    bu_vls_printf(&gedp->ged_result_str, "  %s (%g, %g, %g)\n",
+				  rt_vlist_cmd_descriptions[*cmd],
+				  V3ARGS(*pt));
+		}
 	    }
+
+	    bu_vls_printf(&gedp->ged_result_str, "  %d vlist structures, %d pts\n", nvlist, npts);
+	    bu_vls_printf(&gedp->ged_result_str, "  %d pts (via rt_ck_vlist)\n", rt_ck_vlist(&(sp->s_vlist)));
 	}
 
-	bu_vls_printf(&gedp->ged_result_str, "  %d vlist structures, %d pts\n", nvlist, npts);
-	bu_vls_printf(&gedp->ged_result_str, "  %d pts (via rt_ck_vlist)\n", rt_ck_vlist(&(sp->s_vlist)));
+	gdlp = next_gdlp;
     }
 }
 
@@ -168,30 +177,39 @@ ged_print_schain(struct ged *gedp, int lvl)
 static void
 ged_print_schain_vlcmds(struct ged *gedp)
 {
+    register struct ged_display_list *gdlp;
+    register struct ged_display_list *next_gdlp;
     register struct solid	*sp;
     register struct bn_vlist	*vp;
 
     if (gedp->ged_wdbp->dbip == DBI_NULL)
 	return;
 
-    FOR_ALL_SOLIDS(sp, &gedp->ged_gdp->gd_headSolid) {
-	bu_vls_printf(&gedp->ged_result_str, "-1 %d %d %d\n",
-		      sp->s_color[0],
-		      sp->s_color[1],
-		      sp->s_color[2]);
+    gdlp = BU_LIST_NEXT(ged_display_list, &gedp->ged_gdp->gd_headDisplay);
+    while (BU_LIST_NOT_HEAD(gdlp, &gedp->ged_gdp->gd_headDisplay)) {
+	next_gdlp = BU_LIST_PNEXT(ged_display_list, gdlp);
 
-	/* Print the actual vector list */
-	for (BU_LIST_FOR(vp, bn_vlist, &(sp->s_vlist))) {
-	    register int	i;
-	    register int	nused = vp->nused;
-	    register int	*cmd = vp->cmd;
-	    register point_t *pt = vp->pt;
+	FOR_ALL_SOLIDS(sp, &gdlp->gdl_headSolid) {
+	    bu_vls_printf(&gedp->ged_result_str, "-1 %d %d %d\n",
+			  sp->s_color[0],
+			  sp->s_color[1],
+			  sp->s_color[2]);
 
-	    BN_CK_VLIST(vp);
+	    /* Print the actual vector list */
+	    for (BU_LIST_FOR(vp, bn_vlist, &(sp->s_vlist))) {
+		register int	i;
+		register int	nused = vp->nused;
+		register int	*cmd = vp->cmd;
+		register point_t *pt = vp->pt;
 
-	    for (i = 0; i < nused; i++, cmd++, pt++)
-		bu_vls_printf(&gedp->ged_result_str, "%d %g %g %g\n", *cmd, V3ARGS(*pt));
+		BN_CK_VLIST(vp);
+
+		for (i = 0; i < nused; i++, cmd++, pt++)
+		    bu_vls_printf(&gedp->ged_result_str, "%d %g %g %g\n", *cmd, V3ARGS(*pt));
+	    }
 	}
+
+	gdlp = next_gdlp;
     }
 }
 

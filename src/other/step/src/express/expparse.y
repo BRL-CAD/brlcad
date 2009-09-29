@@ -83,13 +83,13 @@ static char rcsid[] = "$Id: expparse.y,v 1.23 1997/11/14 17:09:04 libes Exp $";
  * Initial revision
  */
 
-#include "symbol.h"
-#include "linklist.h"
+#include "express/symbol.h"
+#include "express/linklist.h"
 #include "stack.h"
-#include "express.h"
-#include "schema.h"
-#include "entity.h"
-#include "resolve.h"
+#include "express/express.h"
+#include "express/schema.h"
+#include "express/entity.h"
+#include "express/resolve.h"
 
 extern int print_objects_while_running;
 

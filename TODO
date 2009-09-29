@@ -17,20 +17,14 @@ tasks as they are completed.
 THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 -------------------------------------------------
 
-* if you're reading this, then they're all done!
+* ship it.
 
 
 THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 -------------------------------------------------------
 
-* implement file input support for the pnts primitive
-
-* display cross-hair in mged when rtarea reports center
-
 * initial step-g with basic file parsing capability but without
   creation of .g geometry just yet
-
-* improved archer interactive editing support for all primitives
 
 * refactor rt_functab accessors to go through an api call or calls so
   that the array is not accessed directly.  either an rt_eval() style
@@ -38,21 +32,163 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
   or simply have an rt_*() for each function (e.g., rt_mirror(),
   rt_shot(), rt_describe(), etc).
 
-* restored support for split-view cutting planes within ADRT
+* utilize -pedantic -Wall -Werror on 'clean' directories
 
-* implement necessary routines for generating a NURBS bounding
-  box tree, needed for "good" initial guesses when raytracing
-  a NURBS surface. (per Abert et. al. 2006)
+* implement a routine to convert an NMG object (whether polygonal or
+  old bspline/nurbs) to the newer openNURBS BREP object type to
+  facilitate tool migration.
+
+* annotation primitive.  specifically a means to create an object in
+  the database that can optionally be associated with an object and/or
+  location that a label refers to.  there are various styles such as
+  a single line from a point to text and two lines (e.g., indicating
+  measurement) to text.  the object should allow for different line
+  styles including having no lines.  there should also be support for
+  view-fixed or view-independent annotation placement (which requires
+  a change to plot()'s and possibly prep()'s signature).  it would
+  also be useful to allow an optional "thickness" so that the
+  annotations can represent physical geometry (so they raytrace).
+
+* 64-bit port of BRL-CAD on Windows
+
+* make GUI mged support interactively swapping out display managers
+  (in order to support switching to ogl/X/rtgl, for example)
+
+* finish obj-g importer.  need to test more inputs and make sure all
+  geometry is preserved on import in some form.
+
 
 THESE ARE UNSCHEDULED BACKLOG TASKS
 -----------------------------------
+
+* Simple GUI for repairing BoT normals.  Basically make it easier to
+  make all normals consistent and outward facing through some form of
+  MGED integration of bot_sync and bot_flip.
+
+* Machine-independent dbupgrade.  Make it so that dbupgrade will work
+  on an old v4 without being on a machine of the same original
+  architecture type.
+
+* complete conversion of existing manual pages into docbook format
+
+* expose all manual page documentation from within mged through
+  searchable viewer interface (GUI)
+
+* add support to 'mv' (and possibly friends like mvall) for renaming
+  objects based on a mapping file.  Primarily of benefit to imported
+  geometries, this would introduce a renaming capability similar to
+  rcodes, idents, and other similar commands that provide file-based
+  collective name editing.
+
+* add an option to bot_dump for outputting surface normals.  Make sure
+  all supported dump formats (obj, dxf, etc) optionally write out
+  normals.  Consider adding an option to smoothly interpolate normals
+  (per face or vertex).
+
+* add option to push/xpush to stop at the region level.
+
+* consolidate push/xpush together
+
+* verify/fix/improve rtarea.  There are reports that the rtarea
+  command may have a bug in its calculations.  This needs to be
+  investigated along with a review of the taxonomy used by rtarea for
+  describing presented/projected areas.
+
+* make sca command accept three arguments for x/y/z.
+
+* obliterate verbose compilation warnings
+
+* modify g_qa to search for >1 region flag in a tree path.
+
+* the binary windows installer is missing headers for our external
+  dependencies (Tcl, zlib, and OpenNURBS in particular as the likes of
+  bu.h and raytrace.h requires them)
+
+* make rtarea display a cross-hair and perhaps coordinates for the
+  center of area if run from within mged.
+
+* optimization of NMG ray tracing.  the hitmiss bookkeeping presently
+  used has a malloc/free occuring per shot().  allocations need to
+  occur during prep only.  the presently render more than an order of
+  magnitude slower than tracing that nmg converted to an equivalent
+  BoT due to malloc/free calls being made during shot(). Confirmable
+  with a simple test case of a sphere converted to an nmg:
+
+    make sph sph ; facetize -n sph.nmg sph
+
+* implement a "select" command in LIBGED that creates a selection set
+  based on specified sampling parameters or object lists.  example
+  could be "select -point 12.3 23.1 31.2 -dist 100.0" to
+  select objects within a given distance of a point; "select foo bar"
+  to select specific objects and create/return a temporary reference
+  name. this provides a command-line mechanism for implementing band
+  selection in the GUI, area-based selections, and object highlighting
+        - can replace unpublished 'sphgroup' command with this
+
+* make gqa overlap reporting suck less.  uselessly reports the same
+  objects multiple times instead of keeping track of uniquely
+  overlapping pairs of objects (rtcheck used to have this problem but
+  not now).  also reports overlaps even when not requested (e.g. -Aa)
+
+* refactor the libtclcad go_*() functions and invocation wrappers
+  (also in mged) into libged where appropriate. the 'png' command
+  comes to mind.
+
+* refactor and manage libbn tolerance uses by providing an interface
+  default (e.g., an init macro) and making everyone use that where it
+  is hardcoded to 0.0005 presently (and a few places where it's
+  inconsistently/incorrectly 0.005).
+
+* add a default phong 'metal' shader.  annoying to keep making plastic
+  more reflective or mirror less reflective when it's such a common
+  material appearance to want.
+
+* implement a new tool/command that reports summary information about
+  a geometry file including number of objects, types of objects,
+  classes of geometry representation types used, and potentially more.
+
+* add an option to mv/mvall to take input from a mapping file.
+  relates to sf feature request 2827957 from butler.  should be
+  something along the lines of simple file parsing such as the
+  following:
+
+  # this line is a comment
+  foo bar
+  "big foo" "big bar"
+  foobar "foo bar"  # another comment, replacing foobar with 'foo bar'
+
+* consider adding an option to reid/remat and edcodes (and others?) to
+  ignore negative regions (regions subtracted from regions or
+  intersected with them) since, while bad practice, are valid
+  geometrically.
+
+* implement some sort of archive/backup command in mged in order to
+  save the currently open database out to a file.
+
+* make sure there are no getenv() non-NULL assumptions within the
+  code.  might want to see if there's a pattern of variables being
+  checked such that a libbu interface would be warranted (e.g.,
+  instead of checking HOME, having a bu_find_directory(BU_USER_HOME)
+  routine or similar facility) for finding common resource locations.
+
+* add support for a zoom/viewsize option to rt so you can adjust the
+  image scale without having to feed a view script.
+
+* make db_open modes behave the same as the fopen() modes (i.e.,
+  create the .g if one doesn't exist when write mode)
+
+* fix the shaders.sh regression test case, failing dues to changes
+  with mged's view initialization.
+
+* inside support for ARS
+
+* add support to 'rtxray' for outputting inverted pixel values so that
+  we have pixel values that are directly related to material thickness
 
 * g_qa (gqa in mged) needs to be more informative when it runs - 
   needs a header letting you know what it's doing, and if possible
   a "progress report" for longer runs that provides some notion of
   how much of the total job is done.
-
-* restored support for shotline region reporting within ADRT
 
 * make color and vectors on pnts work
 
@@ -62,18 +198,6 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
 
 * libfb needs to have the fb_open/close_existing functions refactored
   into the function table and hav the #ifdef sections removed.
-
-* optimization of NMG ray tracing.  the hitmiss bookkeeping presently
-  used has a malloc/free occuring per shot().  allocations need to
-  occur during prep only.
-
-* implement a routine to convert an NMG object (whether polygonal or
-  old bspline/nurbs) to the newer openNURBS BREP object type to
-  facilitate tool migration.
-
-* implement primitive-to-brep routines for all primitives (partially
-  completed) so that each implicit can describe themselves as a NURBS
-  surface or set of trimmed NURBS surfaces.
 
 * integrate library tester into regression suite that validates
   exported library symbols published in headers.  make sure they at
@@ -118,18 +242,18 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
   base libs, it should disappear but shouldn't have wdb_*() funcs in
   libged regardless.  work in progress.
 
+* make our C headers C++-convenient with proper extern "C" wrapping.
+
 * reorganize the header files in include so it is clear which headers
   pertain to which libraries.
 
-* make sure news2tracker.sh is not missing recent news items.  several
-  were missing from a recent report generated (unverified).
+* break up library headers into subheaders so includes can be more
+  specific (and help speed up compilation) and locally documented.
 
 * fix framebuffer refresh bug.  problem was caused when the if_ogl
   framebuffer was changed (back) to request a direct rendering
   context.  presumably that is triggering other code that is failing
   to redraw.
-
-* segregate the nmg routines out of librt back into their own library
 
 * implement a routine/command to convert from a bot to an nmg
   (similar/related to the nmg-bot tool, but the reverse).
@@ -144,8 +268,6 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
 
 * rename all the g_* tools sans _ next minor update
 
-* implement a obj-g importer
-
 * deprecate either orot or rotobj
 
 * refactor mged's signal handling to make it possible to safely
@@ -157,6 +279,8 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
 * have mged record a timestamped command history by default
 
 * implement -exec support for 'search' command
+
+* implement -param support for 'search' command
 
 * make ged command names aware of object arguments for automatic
   globbing and regular expression expansion:
@@ -201,13 +325,6 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
 
 * fix/change naming convention for presented/exposed area
 
-* make rtarea display a cross-hair and perhaps coordinates for the
-  center of area if run from within mged.
-
-* remove MySQL code from ADRT
-
-* fix ISST callbacks within ADRT
-
 * re-enable RISE client in ADRT
 
 * test homovulgaris' root solver patch that puts coefficients in the
@@ -227,7 +344,8 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
   (i.e. via a globbing command and quoting globs that use []).  testing
   shows db_glob doesn't seem to behave correctly, at least not like
   glob.  hook globbing into all commands so glob_compat_mode
-  statefulness can go away.
+  statefulness can go away.  a db_glob expression that doesn't match
+  anything should not return the expression.
 
 * Explore possibility of "level of detail" wireframe renderings,
   possibly using the previous "smooth" wireframe work as a start,
@@ -239,11 +357,6 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
   is predominantly (but not entirely) a complex bot structure in
   itself.  idea is to use some sort of marching cubes/tets to find
   those volumes, perhaps use a libified g_qa.
-
-* include tcl and zlib headers in the Windows install
-
-* make including the main headers work for 3rd party apps including
-  for C++ projects, working out of the box
 
 * fix metaball "shelling" but that causes the primitive to invert and
   just give paper thin surface (something wrong in the intersection).
@@ -291,9 +404,6 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
 * add alpha channel support to the framebuffers
 
 * remote framebuffer timeout support (perhaps as ::key=val;key=val)
-
-* review and integrate David Loman's bot-processing and object label
-  scripts, add libdm interface for textual overlay support
 
 * develop a tool that applies a text overlay to a given rendered image
   (e.g., as an rt option) for things like adding an image title, the
@@ -362,6 +472,7 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
 * automatic geometry voxelizer (perhaps using arbs or vol primitive)
 
 * turn geometry converters and image converters into libraries
+  (started as libraries libgcv and libicv)
 
 * add support for querying geometry properties to library including
   computing surface area and weight/mass.
@@ -377,7 +488,10 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
 
 * ability to "unpush" objects, translating them to a new position and
   applying the correct matrix (using either bounding box or center of
-  mass, for example)
+  mass, for example).  would be useful to optionally allow the
+  creation of a parent combination that contains the unpushed matrix
+  so you could return primitives to local coordinates.  See sf feature
+  request 2826720 from cericole.
 
 * ensure successful build on mingw
 
@@ -421,7 +535,8 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
 * rtedge-style tracer that outputs tool paths (splines/segments, etc)
   for CNC/CAM style toolpath cutting descriptions (g-code files).
 
-* rt annotation support
+* rtedge shoots twice as many rays as it needs to (shoots the 'below'
+  ray for each primary, only reusing current scanline cells.
 
 * support for fillets and chamfers as object/combination operations
 
@@ -434,10 +549,6 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
 
 * investigate why g-iges followed by iges-g on a single box results in
   permuted vertex lists
-
-* obliterate verbose compilation warnings
-
-* add support for subgeometry support to the geometry syndicator
 
 * add xml, nff, bzw, pov, blend geometry import and export support
 
@@ -452,11 +563,6 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
   a tool to create propeller parts) to identify themselves and their
   features to BRL-CAD, and to allow BRL-CAD to incorporate those features
   as an integrated part of interaction environments.  
-
-* incremental raytrace-based display manager
-
-* implement tools for generating springs and gears, improve bolt/nut
-  tool support
 
 * SVG renderer.  go straight from 3D model to a 2D vector image for a
   given view.  similar to the plot/postscript wireframe view saves,
@@ -527,6 +633,9 @@ THESE BREAK PROTOCOL OR ARE BACKWARDS-INCOMPATIBLE
   also will allow primitives like the torus to support non-uniform
   scaling.
 
+* rename 'part' primitive to 'pill' or remove it entirely in favor of
+  a more generalized metaprimitive primitive.
+
 
 FUNCTIONALITY NEEDED TO SPEED UP RAYTRACING
 -------------------------------------------
@@ -565,32 +674,52 @@ DOCUMENTATION
 	Keybindings, GUI elements, scripting
 
 * Introduction to BRL-CAD Tutorial
-	mged, rt, pix-png, rtcheck, rtarea, rtweight, g_qa, fbserv, nirt
+	mged, rt, pix-png, rtcheck, rtarea, rtweight, g_qa, fbserv, nirt.  Succint overview of less than 10% of the core functionality in 10 pages or less (plus pictures).
+
+* Technical Overview of BRL-CAD
+        Describes everything in the package succinctly yet comprehensively.  Survey of all the major features, methodologies, and tools implemented in BRL-CAD with coverage on code maturity, library encapsulation, and tool aggregation.
+
+* BRL-CAD Validation and Verification
+        Overview of how contributions to BRL-CAD are reviewed and tested including regression, performance, and system integration testing as well as independent ARL configuration review.  This specifically addresses the issue of world-wide and potentially anonymous contributions to BRL-CAD and how those changes are managed.
 
 * DoD V/L M&S Industry Diagram
-	Similar to existing Industry Diagram
+	Similar to existing Industry Diagram.  Survey of all the major features, methodologies, and tools implemented in BRL-CAD with coverage on code maturity, library encapsulation, and tool aggregation.  This one is a particularly useful marketing and educational visual aid for describing how the various M&S codes interoperate in terms of features and scope.
 
 * Commercial CAD Comparison Diagram
+        Comparison of how BRL-CAD overlaps feature-wise with various major commercial CAD systems.
 
 * Solid Geometry Representation Comparisons
+        Describe the implications, tradeoffs, and conversion issues involved when converting between different geometry representations.  Includes describing implicit geometry, explicit polygonal boundary representations, explicit spline surface representations, volumetric models, wireframes, boolean operations, feature edit operations, and parametric modeling.
 
 * BRL-CAD Primitives
+        An overview of the various primitive object types in BRL-CAD, their range of features, and a description of their input parameters.
 
 * BRL-CAD Ray Tracing Shaders
+        An overview of the various shaders and shader options available in BRL-CAD.
 
-* BRL-CAD Open Source Effort
-	Why, History, How
+* BRL-CAD Open Source
+	An overview of how BRL-CAD is organized as an open source project and community describing the developer meritocracy, code reviews, development prioritization, and change management.  This introduces and explains the concept and philosophy of open source software, it's fundamental tenants, and the basic "why and how" it works.
+
+* History of BRL-CAD
+        Covers the 30-years development history of BRL-CAD, from 1979 to 2009, documenting the origins of the project, major development achievements, the conversion to open source, and lesson's learned.
 
 * BRL-CAD Manifesto
 	Vision & Scope
 
 * BRL-CAD Taxonomy
-
-* Procedural Geometry in BRL-CAD
+        Description of the common terminology used throughout BRL-CAD, conventions employed, and tool categorization.
 
 * Implementing a BRL-CAD Primitive
+        How-To for creating a new primitive in BRL-CAD that can be ray-traced, tessellated, plotted, and transformed seamlessly.
+
+* Procedural Geometry in BRL-CAD
+        How-To for creating new tools that create geometry.
+
+* BRL-CAD Ray Tracing Shader Development
+        How-To for creating new shaders.
 
 * Geometry Conversion with BRL-CAD
+        Overview of the various geometry conversion facilities in BRL-CAD and how they related to solid geometry representations.
 
 
 ---

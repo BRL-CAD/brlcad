@@ -330,6 +330,7 @@ tmist_render(struct application *ap, struct partition *pp, struct shadework *swp
 	VSET(my_ap.a_ray.r_dir, 0.0, 0.0, -1.0);
 	my_ap.a_hit = tmist_hit;
 	my_ap.a_miss = tmist_miss;
+	my_ap.a_logoverlap = ap->a_logoverlap;
 	my_ap.a_onehit = 0;
 	my_ap.a_uptr = (genptr_t)air_sp;
 	rt_shootray( &my_ap );

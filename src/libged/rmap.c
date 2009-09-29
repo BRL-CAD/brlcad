@@ -44,20 +44,20 @@ ged_rmap(struct ged *gedp, int argc, const char *argv[])
     struct ged_id_to_names *itnp;
     struct ged_id_names *inp;
 
-    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
-    GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
+    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
+    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
 
     /* initialize result */
     bu_vls_trunc(&gedp->ged_result_str, 0);
 
     if (argc != 1) {
 	bu_vls_printf(&gedp->ged_result_str, "Usage: %s", argv[0]);
-	return BRLCAD_ERROR;
+	return GED_ERROR;
     }
 
     if (gedp->ged_wdbp->dbip->dbi_version < 5) {
 	bu_vls_printf(&gedp->ged_result_str, "%s is not available prior to version 5 of the .g file format\n", argv[0]);
-	return BRLCAD_ERROR;
+	return GED_ERROR;
     }
 
     BU_LIST_INIT(&headIdName.l);
@@ -77,7 +77,7 @@ ged_rmap(struct ged *gedp, int argc, const char *argv[])
 				   (fastf_t *)NULL,
 				   &rt_uniresource) < 0) {
 		bu_vls_printf(&gedp->ged_result_str, "%s: Database read error, aborting", argv[0]);
-		return BRLCAD_ERROR;
+		return GED_ERROR;
 	    }
 
 	    comb = (struct rt_comb_internal *)intern.idb_ptr;
@@ -131,13 +131,13 @@ ged_rmap(struct ged *gedp, int argc, const char *argv[])
 	    bu_vls_free(&inp->name);
 	    bu_free((genptr_t)inp, "ged_rmap: inp");
 	}
-	bu_vls_printf(&gedp->ged_result_str, " } ", itnp->id);
+	bu_vls_printf(&gedp->ged_result_str, " } "); /* , itnp->id); */
 
 	BU_LIST_DEQUEUE(&itnp->l);
 	bu_free((genptr_t)itnp, "ged_rmap: itnp");
     }
 
-    return BRLCAD_OK;
+    return GED_OK;
 }
 
 

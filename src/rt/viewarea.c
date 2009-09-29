@@ -773,9 +773,9 @@ print_region_area_list(long int *count, struct rt_i *rtip, area_type_t type)
     }
     for (listp = listHead; listp->cell != NULL;) {
 	struct area_list *prev = listp;
-	double factor = 1.0; // show mm in parens by default
+	double factor = 1.0; /* show mm in parens by default */
 
-	// if millimeters, show meters in parens
+	/* if millimeters, show meters in parens */
 	if (NEAR_ZERO(units - 1.0, SMALL_FASTF)) {
 	    factor = bu_units_conversion("m");
 	}
@@ -904,9 +904,9 @@ print_assembly_area_list(struct rt_i *rtip, long int max_depth, area_type_t type
     for (listp = listHead; listp->cell != NULL;) {
 	int indents = max_depth - listp->cell->depth;
 	struct area_list *prev = listp;
-	double factor = 1.0; // show mm in parens by default
+	double factor = 1.0; /* show mm in parens by default */
 
-	// if millimeters, show meters in parens
+	/* if millimeters, show meters in parens */
 	if (NEAR_ZERO(units - 1.0, SMALL_FASTF)) {
 	    factor = bu_units_conversion("m");
 	}
@@ -992,9 +992,9 @@ view_end(struct application *ap)
     long int exposed_region_count = 0;
     long int exposed_assembly_count = 0;
 
-    double factor = 1.0; // show mm in parens by default
+    double factor = 1.0; /* show mm in parens by default */
 
-    // if millimeters, show meters in parens
+    /* if millimeters, show meters in parens */
     if (NEAR_ZERO(units - 1.0, SMALL_FASTF)) {
 	factor = bu_units_conversion("m");
     }

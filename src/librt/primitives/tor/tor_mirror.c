@@ -36,24 +36,24 @@
  * object's values about the given transformation matrix.
  */
 int
-rt_tor_mirror(struct rt_db_internal *ip, register const plane_t *plane)
+rt_tor_mirror(struct rt_db_internal *ip, register const plane_t plane)
 {
     struct rt_tor_internal *tor;
 
-    fastf_t ang;
-    mat_t mat;
     mat_t mirmat;
     mat_t rmat;
     mat_t temp;
-    vect_t mirror_dir;
-    point_t mirror_pt;
-    point_t pt;
-    vect_t h;
-    vect_t n;
     vect_t nvec;
     vect_t xvec;
+    vect_t mirror_dir;
+    point_t mirror_pt;
+    fastf_t ang;
 
-    static fastf_t tol_dist_sq = 0.005 * 0.005;
+    point_t pt;
+    mat_t mat;
+    vect_t h;
+    vect_t n;
+
     static point_t origin = {0.0, 0.0, 0.0};
 
     RT_CK_DB_INTERNAL(ip);
@@ -63,8 +63,8 @@ rt_tor_mirror(struct rt_db_internal *ip, register const plane_t *plane)
 
     MAT_IDN(mirmat);
 
-    VMOVE(mirror_dir, *plane);
-    VSCALE(mirror_pt, *plane, (*plane)[W]);
+    VMOVE(mirror_dir, plane);
+    VSCALE(mirror_pt, plane, plane[W]);
 
     /* Build mirror transform matrix, for those who need it. */
     /* First, perform a mirror down the X axis */

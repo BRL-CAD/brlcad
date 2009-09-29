@@ -17,17 +17,9 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file scale_ell.c
+/** @file scale_ehy.c
  *
- * The scale_ell command.
- *
- * FIXME: This command really probably shouldn't exist.  The way MGED
- * currently handles scaling is to pass a transformation matrix to
- * transform_editing_solid(), which simply calls
- * rt_matrix_transform().  The primitives already know how to apply an
- * arbitrary matrix transform to their data making the need for
- * primitive-specific editing commands such as this one unnecessary.
- *
+ * The scale_ehy command.
  */
 
 #include "common.h"
@@ -42,37 +34,55 @@
 #include "./ged_private.h"
 
 int
-ged_scale_ehy(struct ged *gedp, struct rt_ehy_internal *ehy, char *attribute, fastf_t sf)
+ged_scale_ehy(struct ged *gedp, struct rt_ehy_internal *ehy, const char *attribute, fastf_t sf, int rflag)
 {
     fastf_t ma, mb;
+    fastf_t newrad;
 
     RT_EHY_CK_MAGIC(ehy);
 
     switch (attribute[0]) {
     case 'h':
     case 'H':
+	if (!rflag)
+	    sf /= MAGNITUDE(ehy->ehy_H);
+
 	VSCALE(ehy->ehy_H, ehy->ehy_H, sf);
 	break;
     case 'a':
     case 'A':
-	if (ehy->ehy_r1 * sf >= ehy->ehy_r2)
-	    ehy->ehy_r1 *= sf;
+	if (rflag)
+	    newrad = ehy->ehy_r1 * sf;
+	else
+	    newrad = sf;
+
+	if (newrad >= ehy->ehy_r2)
+	    ehy->ehy_r1 = newrad;
 	break;
     case 'b':
     case 'B':
-	if (ehy->ehy_r2 * sf <= ehy->ehy_r1)
-	    ehy->ehy_r2 *= sf;
+	if (rflag)
+	    newrad = ehy->ehy_r2 * sf;
+	else
+	    newrad = sf;
+
+	if (newrad <= ehy->ehy_r1)
+	    ehy->ehy_r2 = newrad;
 	break;
     case 'c':
     case 'C':
-	ehy->ehy_c *= sf;
+	if (rflag)
+	    ehy->ehy_c *= sf;
+	else
+	    ehy->ehy_c = sf;
+
 	break;
     default:
 	bu_vls_printf(&gedp->ged_result_str, "bad ehy attribute - %s", attribute);
-	return BRLCAD_ERROR;
+	return GED_ERROR;
     }
 
-    return BRLCAD_OK;
+    return GED_OK;
 }
 
 

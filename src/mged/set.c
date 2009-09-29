@@ -372,7 +372,7 @@ set_dlist(void)
 	    if (dlp1->dml_dmp->dm_displaylist &&
 		dlp1->dml_dlist_state->dl_active == 0) {
 		curr_dm_list = dlp1;
-		createDLists(&gedp->ged_gdp->gd_headSolid);
+		createDLists(&gedp->ged_gdp->gd_headDisplay);
 		dlp1->dml_dlist_state->dl_active = 1;
 		dlp1->dml_dirty = 1;
 	    }
@@ -401,11 +401,22 @@ set_dlist(void)
 
 		/* these display lists are not being used, so free them */
 		if (BU_LIST_IS_HEAD(dlp2, &head_dm_list.l)) {
+		    register struct ged_display_list *gdlp;
+		    register struct ged_display_list *next_gdlp;
+
 		    dlp1->dml_dlist_state->dl_active = 0;
-		    DM_FREEDLISTS(dlp1->dml_dmp,
-				  BU_LIST_FIRST(solid, &gedp->ged_gdp->gd_headSolid)->s_dlist,
-				  BU_LIST_LAST(solid, &gedp->ged_gdp->gd_headSolid)->s_dlist -
-				  BU_LIST_FIRST(solid, &gedp->ged_gdp->gd_headSolid)->s_dlist + 1);
+
+		    gdlp = BU_LIST_NEXT(ged_display_list, &gedp->ged_gdp->gd_headDisplay);
+		    while (BU_LIST_NOT_HEAD(gdlp, &gedp->ged_gdp->gd_headDisplay)) {
+			next_gdlp = BU_LIST_PNEXT(ged_display_list, gdlp);
+
+			DM_FREEDLISTS(dlp1->dml_dmp,
+				      BU_LIST_FIRST(solid, &gdlp->gdl_headSolid)->s_dlist,
+				      BU_LIST_LAST(solid, &gdlp->gdl_headSolid)->s_dlist -
+				      BU_LIST_FIRST(solid, &gdlp->gdl_headSolid)->s_dlist + 1);
+
+			gdlp = next_gdlp;
+		    }
 		}
 	    }
 	}

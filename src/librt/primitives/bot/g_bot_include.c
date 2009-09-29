@@ -104,7 +104,7 @@ XGLUE(rt_botface_w_normals_, TRI_TYPE)(struct soltab	*stp,
      */
     VMOVE( trip->tri_N, trip->tri_wn );
     VUNITIZE( trip->tri_N );
-    if ( bot->bot_mode == RT_BOT_CW )
+    if ( bot->bot_orientation == RT_BOT_CW )
 	VREVERSE( trip->tri_N, trip->tri_N );
 
     /* Add this face onto the linked list for this solid */
@@ -268,10 +268,22 @@ XGLUE(rt_bot_prep_, TRI_TYPE)( stp, bot_ip, rtip )
     {
 	point_t p1, p2, p3;
 	int default_normal=-1;
+	int pt1, pt2, pt3;
 
-	VMOVE( p1, &bot_ip->vertices[bot_ip->faces[tri_index*3]*3] );
-	VMOVE( p2, &bot_ip->vertices[bot_ip->faces[tri_index*3 + 1]*3] );
-	VMOVE( p3, &bot_ip->vertices[bot_ip->faces[tri_index*3 + 2]*3] );
+	pt1 = bot_ip->faces[tri_index*3];
+	pt2 = bot_ip->faces[tri_index*3 + 1];
+	pt3 = bot_ip->faces[tri_index*3 + 2];
+	if (pt1 >= bot_ip->num_vertices || pt1 < 0 ||
+	    pt2 >= bot_ip->num_vertices || pt2 < 0 ||
+	    pt3 >= bot_ip->num_vertices || pt3 < 0) {
+	    bu_log( "face number %d of bot(%s) references a non-existent vertex\n",
+		    tri_index, stp->st_name);
+	    return -1;
+	}
+
+	VMOVE( p1, &bot_ip->vertices[pt1*3] );
+	VMOVE( p2, &bot_ip->vertices[pt2*3] );
+	VMOVE( p3, &bot_ip->vertices[pt3*3] );
 
 	if ( rt_bot_minpieces <= 0 || bot_ip->num_faces <= rt_bot_minpieces ) {
 	    VMINMAX( stp->st_min, stp->st_max, p1 );

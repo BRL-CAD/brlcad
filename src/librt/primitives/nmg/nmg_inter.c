@@ -1313,7 +1313,7 @@ nmg_isect_2colinear_edge2p(struct edgeuse *eu1, struct edgeuse *eu2, struct face
  *
  *  One or both of the edges may be wire edges, i.e.
  *  either or both of the fu1 and fu2 args may be null.
- *  If so, the vert_list's are unimportant.
+ *  If so, the vert_list's are unimport4ant.
  *
  *  Returns a bit vector -
  *	ISECT_NONE	no intersection

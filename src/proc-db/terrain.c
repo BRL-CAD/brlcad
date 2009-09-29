@@ -46,11 +46,11 @@ interpolate_data(fastf_t *grid)
     struct face_g_snurb *srf;
     fastf_t rt_nurb_par_edge();
 
-    BU_GETSTRUCT(srf, face_g_snurb );
+    BU_GETSTRUCT(srf, face_g_snurb);
 
-    rt_nurb_sinterp(srf, 4, grid, 10, 10 );
-    rt_nurb_kvnorm(&srf->u );
-    rt_nurb_kvnorm(&srf->v );
+    rt_nurb_sinterp(srf, 4, grid, 10, 10);
+    rt_nurb_kvnorm(&srf->u);
+    rt_nurb_kvnorm(&srf->v);
 
     surfs = (struct face_g_snurb **)bu_calloc(2, sizeof(struct face_g_snurb *), "surfaces");
     surfs[0] = srf;
@@ -81,7 +81,7 @@ main(int argc, char **argv)
 		rt_g.debug |= DEBUG_MEM | DEBUG_MEM_FULL;
 		break;
 	    case 'h':
-		hscale = atof(bu_optarg );
+		hscale = atof(bu_optarg);
 		break;
 	    default:
 		bu_exit(1, "Usage: %s [-d]\n", *argv);

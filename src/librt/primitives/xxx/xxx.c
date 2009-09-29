@@ -30,7 +30,7 @@
  *	define xxx_specific --- raytracing form, possibly w/precomuted terms
  *	define rt_xxx_parse --- struct bu_structparse for "db get", "db adjust", ...
  *
- *	code import/export/describe/print/ifree/plot/prep/shot/curve/uv/tess
+ *	code import/export4/describe/print/ifree/plot/prep/shot/curve/uv/tess
  *
  *	edit db.h add solidrec s_type define
  *	edit rtgeom.h to add rt_xxx_internal
@@ -401,7 +401,7 @@ rt_xxx_ifree( struct rt_db_internal *ip, struct resource *resp)
  *
  * Create transformed version of internal form.  Free *ip if
  * requested.  Implement this if it's faster than doing an
- * export/import cycle.
+ * export/import4 cycle.
  */
 int
 rt_xxx_xform( struct rt_db_internal *op, const mat_t mat, struct rt_db_internal *ip, int free )

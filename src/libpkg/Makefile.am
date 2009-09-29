@@ -24,6 +24,6 @@ sample_applications_DATA = tpkg.c
 
 EXTRA_DIST = libpkg.dsp
 
-DEPS=src/libbu
+DEPENDS = src/libbu
 
 include $(top_srcdir)/misc/Makefile.defs

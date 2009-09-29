@@ -62,9 +62,9 @@ ged_3ptarb(struct ged *gedp, int argc, const char *argv[])
     struct rt_arb_internal	*aip;
     static const char *usage = "name x1 y1 z1 x2 y2 z2 x3 y3 z3 coord c1 c2 th";
 
-    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
-    GED_CHECK_READ_ONLY(gedp, BRLCAD_ERROR);
-    GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
+    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
+    GED_CHECK_READ_ONLY(gedp, GED_ERROR);
+    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
 
     /* initialize result */
     bu_vls_trunc(&gedp->ged_result_str, 0);
@@ -73,30 +73,27 @@ ged_3ptarb(struct ged *gedp, int argc, const char *argv[])
     /* must be wanting help */
     if (argc == 1) {
 	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return BRLCAD_HELP;
+	return GED_HELP;
     }
 #endif
 
     if (argc > 15) {
 	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return BRLCAD_ERROR;
+	return GED_ERROR;
     }
 
     if (argc < 2) {
 	bu_vls_printf(&gedp->ged_result_str, "Enter name for this arb: ");
-	return BRLCAD_MORE_ARGS;
+	return GED_MORE;
     }
 
-    if ( db_lookup( gedp->ged_wdbp->dbip, argv[1], LOOKUP_QUIET) != DIR_NULL ) {
-	bu_vls_printf(&gedp->ged_result_str, "%s: %s already exists\n", argv[0], argv[1]);
-	return BRLCAD_ERROR;
-    }
+    GED_CHECK_EXISTS(gedp, argv[1], LOOKUP_QUIET, GED_ERROR);
 
     /* read the three points */
     prompts = &p_arb3pt[0];
     if (argc < 11) {
 	bu_vls_printf(&gedp->ged_result_str, prompts[argc-2]);
-	return BRLCAD_MORE_ARGS;
+	return GED_MORE;
     }
 
     /* preliminary calculations to check input so far */
@@ -108,30 +105,30 @@ ged_3ptarb(struct ged *gedp, int argc, const char *argv[])
     length = MAGNITUDE( norm );
     if (length == 0.0) {
 	bu_vls_printf(&gedp->ged_result_str, "%s: points are colinear\n", argv[0]);
-	return BRLCAD_ERROR;
+	return GED_ERROR;
     }
     VSCALE(norm, norm, 1.0/length);
 
     if (argc < 12) {
 	bu_vls_printf(&gedp->ged_result_str, "Enter coordinate to solve for (x, y, or z): ");
-	return BRLCAD_MORE_ARGS;
+	return GED_MORE;
     }
 
     switch (argv[11][0]) {
 	case 'x':
 	    if (norm[0] == 0.0) {
 		bu_vls_printf(&gedp->ged_result_str, "%s: X not unique in this face\n", argv[0]);
-		return BRLCAD_ERROR;
+		return GED_ERROR;
 	    }
 	    solve = X;
 
 	    if (argc < 13) {
 		bu_vls_printf(&gedp->ged_result_str, "Enter the Y, Z coordinate values: ");
-		return BRLCAD_MORE_ARGS;
+		return GED_MORE;
 	    }
 	    if (argc < 14) {
 		bu_vls_printf(&gedp->ged_result_str, "Enter the Z coordinate value: ");
-		return BRLCAD_MORE_ARGS;
+		return GED_MORE;
 	    }
 
 	    pt4[0] = atof( argv[12] ) * gedp->ged_wdbp->dbip->dbi_local2base;
@@ -141,17 +138,17 @@ ged_3ptarb(struct ged *gedp, int argc, const char *argv[])
 	case 'y':
 	    if (norm[1] == 0.0) {
 		bu_vls_printf(&gedp->ged_result_str, "%s: Y not unique in this face\n", argv[0]);
-		return BRLCAD_ERROR;
+		return GED_ERROR;
 	    }
 	    solve = Y;
 
 	    if (argc < 13) {
 		bu_vls_printf(&gedp->ged_result_str, "Enter the X, Z coordinate values: ");
-		return BRLCAD_MORE_ARGS;
+		return GED_MORE;
 	    }
 	    if (argc < 14) {
 		bu_vls_printf(&gedp->ged_result_str, "Enter the Z coordinate value: ");
-		return BRLCAD_MORE_ARGS;
+		return GED_MORE;
 	    }
 
 	    pt4[0] = atof( argv[12] ) * gedp->ged_wdbp->dbip->dbi_local2base;
@@ -161,17 +158,17 @@ ged_3ptarb(struct ged *gedp, int argc, const char *argv[])
 	case 'z':
 	    if (norm[2] == 0.0) {
 		bu_vls_printf(&gedp->ged_result_str, "%s: Z not unique in this face\n", argv[0]);
-		return BRLCAD_ERROR;
+		return GED_ERROR;
 	    }
 	    solve = Z;
 
 	    if (argc < 13) {
 		bu_vls_printf(&gedp->ged_result_str, "Enter the X, Y coordinate values: ");
-		return BRLCAD_MORE_ARGS;
+		return GED_MORE;
 	    }
 	    if (argc < 14) {
 		bu_vls_printf(&gedp->ged_result_str, "Enter the Y coordinate value: ");
-		return BRLCAD_MORE_ARGS;
+		return GED_MORE;
 	    }
 
 	    pt4[0] = atof( argv[12] ) * gedp->ged_wdbp->dbip->dbi_local2base;
@@ -180,17 +177,17 @@ ged_3ptarb(struct ged *gedp, int argc, const char *argv[])
 
 	default:
 	    bu_vls_printf(&gedp->ged_result_str, "%s: coordinate must be x, y, or z\n", argv[0]);
-	    return BRLCAD_ERROR;
+	    return GED_ERROR;
     }
 
     if (argc < 15) {
 	bu_vls_printf(&gedp->ged_result_str, "Enter thickness for this arb: ");
-	return BRLCAD_MORE_ARGS;
+	return GED_MORE;
     }
 
     if ((thick = (atof( argv[14] ))) == 0.0) {
 	bu_vls_printf(&gedp->ged_result_str, "%s: thickness = 0.0\n", argv[0]);
-	return BRLCAD_ERROR;
+	return GED_ERROR;
     }
 
     RT_INIT_DB_INTERNAL( &internal );
@@ -247,8 +244,9 @@ ged_3ptarb(struct ged *gedp, int argc, const char *argv[])
 	    break;
 
 	default:
+	    bu_free((genptr_t)internal.idb_ptr, "rt_arb_internal");
 	    bu_vls_printf(&gedp->ged_result_str, "%s: bad coordinate to solve for\n", argv[0]);
-	    return BRLCAD_ERROR;
+	    return GED_ERROR;
     }
 
     /* calculate the remaining 4 vertices */
@@ -256,20 +254,11 @@ ged_3ptarb(struct ged *gedp, int argc, const char *argv[])
 	VJOIN1( aip->pt[i+4], aip->pt[i], thick, norm );
     }
 
-    if ( (dp = db_diradd( gedp->ged_wdbp->dbip, argv[1], -1L, 0, DIR_SOLID, (genptr_t)&internal.idb_type)) == DIR_NULL )
-    {
-	bu_vls_printf(&gedp->ged_result_str, "%s: Cannot add %s to the directory\n", argv[0], argv[1]);
-	return BRLCAD_ERROR;
-    }
+    GED_DB_DIRADD(gedp, dp, argv[1], -1L, 0, DIR_SOLID, (genptr_t)&internal.idb_type, GED_ERROR);
 
-    if ( rt_db_put_internal( dp, gedp->ged_wdbp->dbip, &internal, &rt_uniresource ) < 0 )
-    {
-	rt_db_free_internal( &internal, &rt_uniresource );
-	bu_vls_printf(&gedp->ged_result_str, "%s: Database write error, aborting\n", argv[0]);
-	return BRLCAD_ERROR;
-    }
+    GED_DB_PUT_INTERNAL(gedp, dp, &internal, &rt_uniresource, GED_ERROR);
 
-    return BRLCAD_OK;
+    return GED_OK;
 }
 
 /*

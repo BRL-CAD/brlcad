@@ -15,6 +15,7 @@ libbn_nil_la_SOURCES = \
 	marker.c \
 	mat.c \
 	msr.c \
+	multipoly.c \
 	noise.c \
 	plane.c \
 	plot3.c \
@@ -47,6 +48,6 @@ EXTRA_DIST = \
 	CMakeLists.txt \
 	plot3.doc
 
-DEPS=src/libbu
+DEPENDS = src/libbu
 
 include $(top_srcdir)/misc/Makefile.defs

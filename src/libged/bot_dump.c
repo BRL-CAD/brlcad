@@ -29,6 +29,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <string.h>
+#include <ctype.h>
 #include "bio.h"
 
 #include "vmath.h"
@@ -594,8 +595,8 @@ ged_bot_dump(struct ged *gedp, int argc, const char *argv[])
     register int i;
     const char *cmd_name;
 
-    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
-    GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
+    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
+    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
 
     /* initialize result */
     bu_vls_trunc(&gedp->ged_result_str, 0);
@@ -603,7 +604,7 @@ ged_bot_dump(struct ged *gedp, int argc, const char *argv[])
     /* must be wanting help */
     if (argc == 1) {
 	bu_vls_printf(&gedp->ged_result_str, usage, argv[0]);
-	return BRLCAD_HELP;
+	return GED_HELP;
     }
 
     bu_optind = 1;
@@ -648,18 +649,18 @@ ged_bot_dump(struct ged *gedp, int argc, const char *argv[])
 
     if (bu_optind > argc) {
 	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return BRLCAD_ERROR;
+	return GED_ERROR;
     }
 
     if (output_file && output_directory) {
 	fprintf(stderr, "ERROR: options \"-o\" and \"-m\" are mutually exclusive\n");
-	return BRLCAD_ERROR;
+	return GED_ERROR;
     }
 
     if (!output_file && !output_directory) {
 	if (binary) {
 	    bu_vls_printf(&gedp->ged_result_str, "Can't output binary to stdout\nUsage: %s %s", argv[0], usage);
-	    return BRLCAD_ERROR;
+	    return GED_ERROR;
 	}
 	fp = stdout;
 
@@ -675,7 +676,7 @@ ged_bot_dump(struct ged *gedp, int argc, const char *argv[])
 	    if ((fd=open(output_file, O_WRONLY|O_CREAT|O_TRUNC|O_BINARY, S_IRUSR|S_IWUSR|S_IRGRP|S_IROTH)) < 0) {
 		perror(argv[0]);
 		bu_vls_printf(&gedp->ged_result_str, "Cannot open binary output file (%s) for writing\n", output_file);
-		return BRLCAD_ERROR;
+		return GED_ERROR;
 	    }
 
 	    /* Write out STL header if output file is binary */
@@ -691,7 +692,7 @@ ged_bot_dump(struct ged *gedp, int argc, const char *argv[])
 	    if ((fp=fopen(output_file, "wb+")) == NULL) {
 		perror(argv[0]);
 		bu_vls_printf(&gedp->ged_result_str, "Cannot open ascii output file (%s) for writing\n", output_file);
-		return BRLCAD_ERROR;
+		return GED_ERROR;
 	    }
 
 	    switch (output_type) {
@@ -763,7 +764,6 @@ ged_bot_dump(struct ged *gedp, int argc, const char *argv[])
 
 	    /* get the internal form */
 	    i=rt_db_get_internal(&intern, dp, gedp->ged_wdbp->dbip, mat, &rt_uniresource);
-
 	    if (i < 0) {
 		fprintf(stderr, "%s: rt_get_internal failure %d on %s\n", cmd_name, i, dp->d_namep);
 		continue;
@@ -840,7 +840,7 @@ ged_bot_dump(struct ged *gedp, int argc, const char *argv[])
 	}
     }
 
-    return BRLCAD_OK;
+    return GED_OK;
 }
 
 /*

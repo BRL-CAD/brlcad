@@ -41,8 +41,8 @@ ged_whatid(struct ged *gedp, int argc, const char *argv[])
     struct rt_comb_internal	*comb;
     static const char *usage = "region";
 
-    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
-    GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
+    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
+    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
 
     /* initialize result */
     bu_vls_trunc(&gedp->ged_result_str, 0);
@@ -50,31 +50,31 @@ ged_whatid(struct ged *gedp, int argc, const char *argv[])
     /* must be wanting help */
     if (argc == 1) {
 	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return BRLCAD_HELP;
+	return GED_HELP;
     }
 
     if (argc != 2) {
 	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return BRLCAD_ERROR;
+	return GED_ERROR;
     }
 
 
     if ((dp=db_lookup(gedp->ged_wdbp->dbip, argv[1], LOOKUP_NOISY)) == DIR_NULL)
-	return BRLCAD_ERROR;
+	return GED_ERROR;
 
     if (!(dp->d_flags & DIR_REGION)) {
 	bu_vls_printf(&gedp->ged_result_str, "%s is not a region", argv[1]);
-	return BRLCAD_ERROR;
+	return GED_ERROR;
     }
 
     if (rt_db_get_internal(&intern, dp, gedp->ged_wdbp->dbip, (fastf_t *)NULL, &rt_uniresource) < 0)
-	return BRLCAD_ERROR;
+	return GED_ERROR;
     comb = (struct rt_comb_internal *)intern.idb_ptr;
 
     bu_vls_printf(&gedp->ged_result_str, "%d", comb->region_id);
     rt_db_free_internal(&intern, &rt_uniresource);
 
-    return BRLCAD_OK;
+    return GED_OK;
 }
 
 

@@ -102,39 +102,39 @@ void MakeP(struct rt_wdb (*file), char *prefix, fastf_t diameter, fastf_t focal_
     BU_LIST_INIT(&lens.l);
 
     if (epa_R > 0 && epa_H > 0) {
-       if (rcc_h < 0) bu_log("Warning - specified thickness too thin for lens\n");
+	if (rcc_h < 0) bu_log("Warning - specified thickness too thin for lens\n");
 
-       if (rcc_h >= 0) {
-    	   VSET(origin, 0, 0, 0);
-	   VSET(height, 0, -rcc_h, 0);
-	   bu_vls_trunc(&str, 0);
-	   bu_vls_printf(&str, "%s-cyl.s", prefix);
-	   mk_rcc(file, bu_vls_addr(&str), origin, height, diameter/2);
-	   (void)mk_addmember(bu_vls_addr(&str), &lensglass.l, NULL, WMOP_UNION);
-       }
+	if (rcc_h >= 0) {
+	    VSET(origin, 0, 0, 0);
+	    VSET(height, 0, -rcc_h, 0);
+	    bu_vls_trunc(&str, 0);
+	    bu_vls_printf(&str, "%s-cyl.s", prefix);
+	    mk_rcc(file, bu_vls_addr(&str), origin, height, diameter/2);
+	    (void)mk_addmember(bu_vls_addr(&str), &lensglass.l, NULL, WMOP_UNION);
+	}
 
-       VSET(origin, 0, -rcc_h, 0);
-       VSET(height, 0, -1*lens_type*epa_H, 0);
-       VSET(breadth, 0, 0, 1);
-       bu_vls_trunc(&str, 0);
-       bu_vls_printf(&str, "%s-epa.s", prefix);
-       mk_epa(file, bu_vls_addr(&str), origin, height, breadth, epa_R, epa_R); 
-       if (lens_type == 1) {       
-           (void)mk_addmember(bu_vls_addr(&str), &lensglass.l, NULL, WMOP_UNION);
-       } else {
-           (void)mk_addmember(bu_vls_addr(&str), &lensglass.l, NULL, WMOP_SUBTRACT);
-       }
+	VSET(origin, 0, -rcc_h, 0);
+	VSET(height, 0, -1*lens_type*epa_H, 0);
+	VSET(breadth, 0, 0, 1);
+	bu_vls_trunc(&str, 0);
+	bu_vls_printf(&str, "%s-epa.s", prefix);
+	mk_epa(file, bu_vls_addr(&str), origin, height, breadth, epa_R, epa_R); 
+	if (lens_type == 1) {       
+	    (void)mk_addmember(bu_vls_addr(&str), &lensglass.l, NULL, WMOP_UNION);
+	} else {
+	    (void)mk_addmember(bu_vls_addr(&str), &lensglass.l, NULL, WMOP_SUBTRACT);
+	}
 
-       bu_vls_trunc(&str, 0);
-       bu_vls_printf(&str, "%s.c", prefix);
-       mk_lcomb(file, bu_vls_addr(&str), &lensglass, 0,  NULL, NULL, NULL, 0);
+	bu_vls_trunc(&str, 0);
+	bu_vls_printf(&str, "%s.c", prefix);
+	mk_lcomb(file, bu_vls_addr(&str), &lensglass, 0,  NULL, NULL, NULL, 0);
        
-       (void)mk_addmember(bu_vls_addr(&str), &lens.l, NULL, WMOP_UNION);
-       bu_vls_trunc(&str, 0);
-       bu_vls_printf(&str, "%s.r", prefix);
-       mk_lcomb(file, bu_vls_addr(&str), &lens, 1, "glass", "ri=1.5", NULL, 0);
+	(void)mk_addmember(bu_vls_addr(&str), &lens.l, NULL, WMOP_UNION);
+	bu_vls_trunc(&str, 0);
+	bu_vls_printf(&str, "%s.r", prefix);
+	mk_lcomb(file, bu_vls_addr(&str), &lens, 1, "glass", "ri=1.5", NULL, 0);
     } else {
-       bu_log("Error - specified parameters result in non-physical geometry");
+	bu_log("Error - specified parameters result in non-physical geometry");
     }
 }
 
@@ -170,50 +170,50 @@ void MakeD(struct rt_wdb (*file), char *prefix, fastf_t diameter, fastf_t focal_
     BU_LIST_INIT(&lens.l);
 
     if (epa_R > 0 && epa_H > 0) {
-       if (rcc_h < 0) bu_log("Warning - specified thickness too thin for lens\n");
+	if (rcc_h < 0) bu_log("Warning - specified thickness too thin for lens\n");
 
-       if (rcc_h >= 0) {
-    	   VSET(origin, 0, -rcc_h/2, 0);
-	   VSET(height, 0, rcc_h, 0);
-	   bu_vls_trunc(&str, 0);
-	   bu_vls_printf(&str, "%s-cyl.s", prefix);
-	   mk_rcc(file, bu_vls_addr(&str), origin, height, diameter/2);
-	   (void)mk_addmember(bu_vls_addr(&str), &lensglass.l, NULL, WMOP_UNION);
-       }
+	if (rcc_h >= 0) {
+	    VSET(origin, 0, -rcc_h/2, 0);
+	    VSET(height, 0, rcc_h, 0);
+	    bu_vls_trunc(&str, 0);
+	    bu_vls_printf(&str, "%s-cyl.s", prefix);
+	    mk_rcc(file, bu_vls_addr(&str), origin, height, diameter/2);
+	    (void)mk_addmember(bu_vls_addr(&str), &lensglass.l, NULL, WMOP_UNION);
+	}
 
-       VSET(origin, 0, -rcc_h/2, 0);
-       VSET(height, 0, -1 * lens_type * epa_H, 0);
-       VSET(breadth, 0, 0, 1);
-       bu_vls_trunc(&str, 0);
-       bu_vls_printf(&str, "%s-epa1.s", prefix);
-       mk_epa(file, bu_vls_addr(&str), origin, height, breadth, epa_R, epa_R); 
-       if (lens_type == 1) {
-           (void)mk_addmember(bu_vls_addr(&str), &lensglass.l, NULL, WMOP_UNION);
-       } else {
-	   (void)mk_addmember(bu_vls_addr(&str), &lensglass.l, NULL, WMOP_SUBTRACT);
-       }
-       VSET(origin, 0, rcc_h/2, 0);
-       VSET(height, 0, lens_type * epa_H, 0);
-       VSET(breadth, 0, 0, 1);
-       bu_vls_trunc(&str, 0);
-       bu_vls_printf(&str, "%s-epa2.s", prefix);
-       mk_epa(file, bu_vls_addr(&str), origin, height, breadth, epa_R, epa_R); 
-       if (lens_type == 1) {
-           (void)mk_addmember(bu_vls_addr(&str), &lensglass.l, NULL, WMOP_UNION);
-       } else {
-	   (void)mk_addmember(bu_vls_addr(&str), &lensglass.l, NULL, WMOP_SUBTRACT);
-       }
+	VSET(origin, 0, -rcc_h/2, 0);
+	VSET(height, 0, -1 * lens_type * epa_H, 0);
+	VSET(breadth, 0, 0, 1);
+	bu_vls_trunc(&str, 0);
+	bu_vls_printf(&str, "%s-epa1.s", prefix);
+	mk_epa(file, bu_vls_addr(&str), origin, height, breadth, epa_R, epa_R); 
+	if (lens_type == 1) {
+	    (void)mk_addmember(bu_vls_addr(&str), &lensglass.l, NULL, WMOP_UNION);
+	} else {
+	    (void)mk_addmember(bu_vls_addr(&str), &lensglass.l, NULL, WMOP_SUBTRACT);
+	}
+	VSET(origin, 0, rcc_h/2, 0);
+	VSET(height, 0, lens_type * epa_H, 0);
+	VSET(breadth, 0, 0, 1);
+	bu_vls_trunc(&str, 0);
+	bu_vls_printf(&str, "%s-epa2.s", prefix);
+	mk_epa(file, bu_vls_addr(&str), origin, height, breadth, epa_R, epa_R); 
+	if (lens_type == 1) {
+	    (void)mk_addmember(bu_vls_addr(&str), &lensglass.l, NULL, WMOP_UNION);
+	} else {
+	    (void)mk_addmember(bu_vls_addr(&str), &lensglass.l, NULL, WMOP_SUBTRACT);
+	}
        
-       bu_vls_trunc(&str, 0);
-       bu_vls_printf(&str, "%s.c", prefix);
-       mk_lcomb(file, bu_vls_addr(&str), &lensglass, 0,  NULL, NULL, NULL, 0);
+	bu_vls_trunc(&str, 0);
+	bu_vls_printf(&str, "%s.c", prefix);
+	mk_lcomb(file, bu_vls_addr(&str), &lensglass, 0,  NULL, NULL, NULL, 0);
        
-       (void)mk_addmember(bu_vls_addr(&str), &lens.l, NULL, WMOP_UNION);
-       bu_vls_trunc(&str, 0);
-       bu_vls_printf(&str, "%s.r", prefix);
-       mk_lcomb(file, bu_vls_addr(&str), &lens, 1, "glass", "ri=1.5", NULL, 0);
+	(void)mk_addmember(bu_vls_addr(&str), &lens.l, NULL, WMOP_UNION);
+	bu_vls_trunc(&str, 0);
+	bu_vls_printf(&str, "%s.r", prefix);
+	mk_lcomb(file, bu_vls_addr(&str), &lens, 1, "glass", "ri=1.5", NULL, 0);
     } else {
-       bu_log("Error - specified parameters result in non-physical geometry");
+	bu_log("Error - specified parameters result in non-physical geometry");
     }
 }
 
@@ -289,54 +289,54 @@ int main(int ac, char *av[])
     /* Create file name if supplied, else use "lens.g" */
     if (av[bu_optind]) {
 	if (!bu_file_exists(av[bu_optind])) {
-	    db_fp = wdb_fopen( av[bu_optind] );
+	    db_fp = wdb_fopen(av[bu_optind]);
 	} else {
-	    bu_exit(-1,"Error - refusing to overwrite pre-existing file %s",av[bu_optind]);
+	    bu_exit(-1, "Error - refusing to overwrite pre-existing file %s", av[bu_optind]);
 	}
     }
     if (!av[bu_optind]) {
 	if (!bu_file_exists(DEFAULT_LENS_FILENAME)) {
 	    db_fp = wdb_fopen(DEFAULT_LENS_FILENAME);
 	} else {
-	    bu_exit(-1,"Error - no filename supplied and lens.g exists.");
+	    bu_exit(-1, "Error - no filename supplied and lens.g exists.");
 	}
     }
-   /* Make the requested lens*/
-   if (lens_1side_2side == 1 && focal_length > 0) {
-    bu_log("Making Plano-Convex lens...\n");
-    bu_vls_trunc(&lens_type, 0);
-    bu_vls_trunc(&name, 0);
-    bu_vls_printf(&lens_type, "PCX");
-    bu_vls_printf(&name, "lens_%s_f%.1f_d%.1f", bu_vls_addr(&lens_type), focal_length, diameter);
-    MakeP(db_fp, bu_vls_addr(&name), diameter, focal_length, ref_ind, thickness);
-   }
-   if (lens_1side_2side == 1 && focal_length < 0) { 
-    bu_log("Making Plano-Concave lens...\n");
-    bu_vls_trunc(&lens_type, 0);
-    bu_vls_trunc(&name, 0);
-    bu_vls_printf(&lens_type, "PCV");
-    bu_vls_printf(&name, "lens_%s_f%.1f_d%.1f", bu_vls_addr(&lens_type), focal_length, diameter);
-    MakeP(db_fp, bu_vls_addr(&name), diameter, focal_length, ref_ind, thickness);
-   }
+    /* Make the requested lens*/
+    if (lens_1side_2side == 1 && focal_length > 0) {
+	bu_log("Making Plano-Convex lens...\n");
+	bu_vls_trunc(&lens_type, 0);
+	bu_vls_trunc(&name, 0);
+	bu_vls_printf(&lens_type, "PCX");
+	bu_vls_printf(&name, "lens_%s_f%.1f_d%.1f", bu_vls_addr(&lens_type), focal_length, diameter);
+	MakeP(db_fp, bu_vls_addr(&name), diameter, focal_length, ref_ind, thickness);
+    }
+    if (lens_1side_2side == 1 && focal_length < 0) { 
+	bu_log("Making Plano-Concave lens...\n");
+	bu_vls_trunc(&lens_type, 0);
+	bu_vls_trunc(&name, 0);
+	bu_vls_printf(&lens_type, "PCV");
+	bu_vls_printf(&name, "lens_%s_f%.1f_d%.1f", bu_vls_addr(&lens_type), focal_length, diameter);
+	MakeP(db_fp, bu_vls_addr(&name), diameter, focal_length, ref_ind, thickness);
+    }
 
     if (lens_1side_2side == 2 && focal_length > 0) {
-    bu_log("Making BiConvex lens...\n");
-    bu_vls_trunc(&lens_type, 0);
-    bu_vls_trunc(&name, 0);
-    bu_vls_printf(&lens_type, "DCX");
-    bu_vls_printf(&name, "lens_%s_f%.1f_d%.1f", bu_vls_addr(&lens_type), focal_length, diameter);
-    MakeD(db_fp, bu_vls_addr(&name), diameter, focal_length, ref_ind, thickness);
-   }
-   if (lens_1side_2side == 2 && focal_length < 0) {
-    bu_log("Making BiConcave lens...\n");
-    bu_vls_trunc(&lens_type, 0);
-    bu_vls_trunc(&name, 0);
-    bu_vls_printf(&lens_type, "DCV");
-    bu_vls_printf(&name, "lens_%s_f%.1f_d%.1f", bu_vls_addr(&lens_type), focal_length, diameter);
-    MakeD(db_fp, bu_vls_addr(&name), diameter, focal_length, ref_ind, thickness);
-   }
+	bu_log("Making BiConvex lens...\n");
+	bu_vls_trunc(&lens_type, 0);
+	bu_vls_trunc(&name, 0);
+	bu_vls_printf(&lens_type, "DCX");
+	bu_vls_printf(&name, "lens_%s_f%.1f_d%.1f", bu_vls_addr(&lens_type), focal_length, diameter);
+	MakeD(db_fp, bu_vls_addr(&name), diameter, focal_length, ref_ind, thickness);
+    }
+    if (lens_1side_2side == 2 && focal_length < 0) {
+	bu_log("Making BiConcave lens...\n");
+	bu_vls_trunc(&lens_type, 0);
+	bu_vls_trunc(&name, 0);
+	bu_vls_printf(&lens_type, "DCV");
+	bu_vls_printf(&name, "lens_%s_f%.1f_d%.1f", bu_vls_addr(&lens_type), focal_length, diameter);
+	MakeD(db_fp, bu_vls_addr(&name), diameter, focal_length, ref_ind, thickness);
+    }
 
-   /* Close database */
+    /* Close database */
     wdb_close(db_fp);
 
     return 0;

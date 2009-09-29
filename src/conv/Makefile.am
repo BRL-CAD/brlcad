@@ -58,8 +58,8 @@ bin_PROGRAMS = \
 	euclid_unformat \
 	fast4-g \
 	g-acad \
-	g-adrt \
 	g-dxf \
+	g-egg \
 	g-euclid \
 	g-euclid1 \
 	g-jack \
@@ -79,6 +79,7 @@ bin_PROGRAMS = \
 	nmg-bot \
 	nmg-rib \
 	nmg-sgp \
+	obj-g \
 	off-g \
 	patch-g \
 	pix2asc \
@@ -191,11 +192,11 @@ g5_g4_LDADD = ${WDB}
 g_acad_SOURCES = g-acad.c
 g_acad_LDADD = ${WDB}
 
-g_adrt_SOURCES = g-adrt.c
-g_adrt_LDADD = ${WDB}
-
 g_dxf_SOURCES = dxf/g-dxf.c
 g_dxf_LDADD = ${WDB} ${GCV}
+
+g_egg_SOURCES = g-egg.c
+g_egg_LDADD = ${WDB} ${GCV}
 
 g_euclid1_SOURCES = euclid/g-euclid1.c
 g_euclid1_LDADD = ${RT}
@@ -268,6 +269,9 @@ off_g_LDADD = \
 	${WDB} \
 	${WDB_LIBS}
 
+obj_g_SOURCES = obj-g.c
+obj_g_LDADD = ${WDB}
+
 patch_g_SOURCES = patch/patch-g.c
 patch_g_LDADD = \
 	${WDB}\
@@ -327,6 +331,7 @@ dist_man_MANS = \
 	euclid/g-euclid.1 \
 	fast4-g.1 \
 	g-acad.1 \
+	g-egg.1 \
 	g-nff.1 \
 	g-obj.1 \
 	g-shell.rect.1 \
@@ -355,7 +360,7 @@ sample_applications_DATA = \
 	g-xxx.c \
 	g-xxx_facets.c
 
-DEPS=src/libwdb src/librt
+DEPENDS = src/libged src/libwdb src/libgcv
 
 include $(top_srcdir)/misc/Makefile.defs
 
@@ -395,6 +400,7 @@ FAST_OBJECTS = \
 	$(g_acad_OBJECTS) \
 	$(g_adrt_OBJECTS) \
 	$(g_dxf_OBJECTS) \
+	$(g_egg) \
 	$(g_euclid1_OBJECTS) \
 	$(g_euclid_OBJECTS) \
 	$(g_jack_OBJECTS) \

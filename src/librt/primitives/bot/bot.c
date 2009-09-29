@@ -531,14 +531,60 @@ rt_bot_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     struct shell *s;
     struct vertex **verts;
     point_t pt[3];
+    point_t center;
     int i;
 
     RT_CK_DB_INTERNAL(ip);
     bot_ip = (struct rt_bot_internal *)ip->idb_ptr;
     RT_BOT_CK_MAGIC(bot_ip);
-#if 0
-    if ( bot_ip->mode == RT_BOT_PLATE || bot_ip->mode == RT_BOT_PLATE_NOCOS )	/* tesselation not supported */
-	return( -1 );
+#if 1
+    if ( bot_ip->mode == RT_BOT_PLATE || bot_ip->mode == RT_BOT_PLATE_NOCOS ) {
+#       define RT_BOT_TESS_MAX_FACES 1024
+        int faces[RT_BOT_TESS_MAX_FACES];
+        plane_t planes[RT_BOT_TESS_MAX_FACES];
+        fastf_t scale = 1.0;
+
+        rt_bot_condense(bot_ip);
+        VSETALL(center, 0.0);
+        for( i=0 ; i<bot_ip->num_vertices ; i++ ) {
+            VADD2(center, center, &bot_ip->vertices[i*3]);
+        }
+        scale = 1.0 / (fastf_t)bot_ip->num_vertices;
+        VSCALE(center, center, scale);
+        fprintf( stderr, "center pt = (%g %g %g)\n", V3ARGS(center));
+
+        // get the faces that use each vertex
+        for( i=0 ; i<bot_ip->num_vertices ; i++ ) {
+            int faceCount = 0;
+            int j;
+            for( j=0 ; j<bot_ip->num_faces ; j++ ) {
+                int k;
+                for( k=0 ; k<3 ; k++ ) {
+                    if (bot_ip->faces[j*3+k] == i) {
+                        //this face uses vertex i
+                        faces[faceCount] = j;
+                        faceCount++;
+                        break;
+                    }
+                }
+            }
+            fprintf( stderr, "Vertex #%d appears in %d faces\n", i, faceCount);
+            if (faceCount == 0) {
+                continue;
+            }
+            if (bot_ip->bot_flags & RT_BOT_HAS_SURFACE_NORMALS)
+            for( i=0 ; i<faceCount ; i++) {
+                int k;
+                for( k=0 ; k<3 ; k++) {
+                        int index = faces[i] * 3 + k;
+                        VMOVE( planes[i], &bot_ip->normals[bot_ip->face_normals[index]*3] );
+                        planes[i][3] = VDOT(planes[i], &bot_ip->vertices[bot_ip->faces[faces[i]*3]*3]);
+                }
+                fprintf(stderr, "\tplane #%d = (%g %g %g %g)\n", i, V4ARGS(&planes[i]));
+            }
+        }
+        return -1;
+    }
 #endif
     *r = nmg_mrsv( m );     /* Make region, empty shell, vertex */
     s = BU_LIST_FIRST(shell, &(*r)->s_hd);
@@ -622,7 +668,7 @@ rt_bot_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
  * Apply modeling transformations as well.
  */
 int
-rt_bot_import(struct rt_db_internal *ip, const struct bu_external *ep, register const fastf_t *mat, const struct db_i *dbip)
+rt_bot_import4(struct rt_db_internal *ip, const struct bu_external *ep, register const fastf_t *mat, const struct db_i *dbip)
 {
     struct rt_bot_internal	*bot_ip;
     union record			*rp;
@@ -633,7 +679,7 @@ rt_bot_import(struct rt_db_internal *ip, const struct bu_external *ep, register 
     rp = (union record *)ep->ext_buf;
     /* Check record type */
     if ( rp->u_id != DBID_BOT )  {
-	bu_log("rt_bot_import: defective record\n");
+	bu_log("rt_bot_import4: defective record\n");
 	return(-1);
     }
 
@@ -699,7 +745,7 @@ rt_bot_import(struct rt_db_internal *ip, const struct bu_external *ep, register 
  * The name is added by the caller, in the usual place.
  */
 int
-rt_bot_export(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip)
+rt_bot_export4(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip)
 {
     struct rt_bot_internal	*bot_ip;
     union record		*rec;
@@ -1132,19 +1178,30 @@ rt_bot_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose
 
     if ( verbose )
     {
+	int badVertexCount = 0;
 	for ( i=0; i<bot_ip->num_faces; i++ )
 	{
 	    int j, k;
 	    point_t pt[3];
 
-	    for ( j=0; j<3; j++ )
-		VSCALE( pt[j], &bot_ip->vertices[bot_ip->faces[i*3+j]*3], mm2local );
+	    snprintf( buf, 256, "\tface %d:", i);
+	    bu_vls_strcat(str, buf);
+
+	    for ( j=0; j<3; j++ ) {
+		int ptnum;
+
+		ptnum = bot_ip->faces[i*3+j];
+		if (ptnum < 0 || ptnum >= bot_ip->num_vertices) {
+		    bu_vls_strcat( str, " (\?\?\? \?\?\? \?\?\?)");
+		    badVertexCount++;
+		} else {
+		    VSCALE( pt[j], &bot_ip->vertices[ptnum*3], mm2local );
+		    snprintf( buf, 256, " (%g %g %g)", V3INTCLAMPARGS( pt[j] ) );
+		    bu_vls_strcat( str, buf );
+		}
+	    }
 	    if ( (bot_ip->bot_flags & RT_BOT_HAS_SURFACE_NORMALS) && bot_ip->num_normals > 0 ) {
-		snprintf( buf, 256, "\tface %d: (%g %g %g), (%g %g %g), (%g %g %g) normals: ", i,
-			  V3INTCLAMPARGS( pt[0] ),
-			  V3INTCLAMPARGS( pt[1] ),
-			  V3INTCLAMPARGS( pt[2] ) );
-		bu_vls_strcat( str, buf );
+		bu_vls_strcat( str, " normals: " );
 		for ( k=0; k<3; k++ ) {
 		    int index;
 
@@ -1158,11 +1215,7 @@ rt_bot_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose
 		}
 		bu_vls_strcat( str, "\n" );
 	    } else {
-		snprintf( buf, 256, "\tface %d: (%g %g %g), (%g %g %g), (%g %g %g)\n", i,
-			  V3INTCLAMPARGS( pt[0] ),
-			  V3INTCLAMPARGS( pt[1] ),
-			  V3INTCLAMPARGS( pt[2] ) );
-		bu_vls_strcat( str, buf );
+		bu_vls_strcat( str, "\n" );
 	    }
 	    if ( bot_ip->mode == RT_BOT_PLATE || bot_ip->mode == RT_BOT_PLATE_NOCOS )
 	    {
@@ -1175,6 +1228,10 @@ rt_bot_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose
 		snprintf( buf, 256, "\t\tthickness = %g, %s\n", INTCLAMP(mm2local*bot_ip->thickness[i]), face_mode );
 		bu_vls_strcat( str, buf );
 	    }
+	}
+	if (badVertexCount > 0 ) {
+	    snprintf( buf, 256, "\tThis BOT has %d invalid references to vertices\n", badVertexCount );
+	    bu_vls_strcat( str, buf );
 	}
     }
 
@@ -2281,6 +2338,7 @@ rt_bot_adjust(struct bu_vls *log, struct rt_db_internal *intern, int argc, char 
 		}
 		bot->faces[i*3+2] = atoi( f_str );
 	    }
+	    bot_check_vertex_indices(log, bot);
 	}
 	else if ( argv[0][0] ==  'T' )
 	{
@@ -2445,12 +2503,31 @@ rt_bot_adjust(struct bu_vls *log, struct rt_db_internal *intern, int argc, char 
 	if ( bot->face_mode )
 	{
 	    bu_free( (char *)bot->face_mode, "BOT facemode" );
-	    bot->face_mode = (bitv_t)NULL;
+	    bot->face_mode = (struct bu_bitv *)NULL;
 	}
     }
 
     return BRLCAD_OK;
 }
+
+int
+bot_check_vertex_indices(struct bu_vls *log, struct rt_bot_internal *bot)
+{
+    int badVertexCount = 0;
+    int i;
+    for (i=0 ; i<bot->num_faces ; i++) {
+	int k;
+	for (k=0 ; k<3 ; k++) {
+	    int vertex_no = bot->faces[i*3+k];
+	    if (vertex_no < 0 || vertex_no >= bot->num_vertices) {
+		bu_vls_printf(log, "WARNING: BOT has illegal vertex index (%d) in face #(%d)\n", vertex_no, i);
+		badVertexCount++;
+	    }
+	}
+    }
+    return badVertexCount;
+}
+
 
 int
 rt_bot_form(struct bu_vls *log, const struct rt_functab *ftp)

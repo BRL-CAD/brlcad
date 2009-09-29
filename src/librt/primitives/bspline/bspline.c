@@ -602,7 +602,7 @@ rt_nurb_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, c
  * R T _ N U R B _ I M P O R T
  */
 int
-rt_nurb_import(struct rt_db_internal *ip, const struct bu_external *ep, register const fastf_t *mat, const struct db_i *dbip)
+rt_nurb_import4(struct rt_db_internal *ip, const struct bu_external *ep, register const fastf_t *mat, const struct db_i *dbip)
 {
     struct rt_nurb_internal *sip;
     union record *rp;
@@ -612,7 +612,7 @@ rt_nurb_import(struct rt_db_internal *ip, const struct bu_external *ep, register
     BU_CK_EXTERNAL(ep);
     rp = (union record *)ep->ext_buf;
     if (rp->u_id != ID_BSOLID) {
-	bu_log("rt_nurb_import: defective header record");
+	bu_log("rt_nurb_import4: defective header record");
 	return (-1);
     }
 
@@ -636,7 +636,7 @@ rt_nurb_import(struct rt_db_internal *ip, const struct bu_external *ep, register
 	int pt_type;
 
 	if (rp->d.d_id != ID_BSURF) {
-	    bu_log("rt_nurb_import() surf %d bad ID\n", s);
+	    bu_log("rt_nurb_import4() surf %d bad ID\n", s);
 	    return -1;
 	}
 
@@ -807,7 +807,7 @@ rt_return_nurb_hit(struct nurb_hit *head)
  * R T _ N U R B _ E X P O R T
  */
 int
-rt_nurb_export(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip)
+rt_nurb_export4(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip)
 {
     register int rec_ptr;
     struct rt_nurb_internal *sip;

@@ -75,9 +75,9 @@ ged_concat(struct ged *gedp, int argc, const char *argv[])
     const char *oldfile;
     static const char *usage = "[-s|-p] file.g [suffix|prefix]";
 
-    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
-    GED_CHECK_READ_ONLY(gedp, BRLCAD_ERROR);
-    GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
+    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
+    GED_CHECK_READ_ONLY(gedp, GED_ERROR);
+    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
 
     /* initialize result */
     bu_vls_trunc(&gedp->ged_result_str, 0);
@@ -85,7 +85,7 @@ ged_concat(struct ged *gedp, int argc, const char *argv[])
     /* must be wanting help */
     if (argc == 1) {
 	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return BRLCAD_HELP;
+	return GED_HELP;
     }
 
     if ((argc < 2) ||
@@ -93,7 +93,7 @@ ged_concat(struct ged *gedp, int argc, const char *argv[])
 	(argv[1][0] != '-' && argc > 3) ||
 	(argv[1][0] == '-' && (argc < 3 || argc > 4))) {
 	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return BRLCAD_ERROR;
+	return GED_ERROR;
     }
 
     bu_vls_init( &cc_data.affix );
@@ -129,7 +129,7 @@ ged_concat(struct ged *gedp, int argc, const char *argv[])
 	} else {
 	    bu_vls_free( &cc_data.affix );
 	    bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	    return BRLCAD_ERROR;
+	    return GED_ERROR;
 	}
 
     } else {
@@ -152,7 +152,7 @@ ged_concat(struct ged *gedp, int argc, const char *argv[])
 	if ( bu_vls_strlen(&cc_data.affix) > GED_V4_MAXNAME-1) {
 	    bu_log("ERROR: affix [%s] is too long for v%d\n", bu_vls_addr(&cc_data.affix), gedp->ged_wdbp->dbip->dbi_version);
 	    bu_vls_free( &cc_data.affix );
-	    return BRLCAD_ERROR;
+	    return GED_ERROR;
 	}
     }
 
@@ -161,14 +161,14 @@ ged_concat(struct ged *gedp, int argc, const char *argv[])
 	bu_vls_free( &cc_data.affix );
 	perror(oldfile);
 	bu_vls_printf(&gedp->ged_result_str, "%s: Can't open %s", argv[0], oldfile);
-	return BRLCAD_ERROR;
+	return GED_ERROR;
     }
 
     if ( newdbp->dbi_version > 4 && gedp->ged_wdbp->dbip->dbi_version < 5 ) {
 	bu_vls_free( &cc_data.affix );
 	bu_vls_printf(&gedp->ged_result_str, "%s: databases are incompatible, use dbupgrade on %s first",
 		      argv[0], gedp->ged_wdbp->dbip->dbi_filename);
-	return BRLCAD_ERROR;
+	return GED_ERROR;
     }
 
     db_dirbuild( newdbp );
@@ -205,7 +205,7 @@ ged_concat(struct ged *gedp, int argc, const char *argv[])
     Tcl_DeleteHashTable( &name_tbl );
     Tcl_DeleteHashTable( &used_names_tbl );
 
-    return bad ? BRLCAD_ERROR : BRLCAD_OK;
+    return bad ? GED_ERROR : GED_OK;
 }
 
 /**
@@ -295,7 +295,7 @@ ged_get_new_name(const char		*name,
 	/* make sure it fits for v4 */
 	if ( cc_data->old_dbip->dbi_version < 5 ) {
 	    if (bu_vls_strlen(&new_name) > GED_V4_MAXNAME) {
-		bu_log("ERROR: generated new name [%s] is too long (%ld > %ld)\n", bu_vls_addr(&new_name), bu_vls_strlen(&new_name), GED_V4_MAXNAME);
+		bu_log("ERROR: generated new name [%s] is too long (%d > %d)\n", bu_vls_addr(&new_name), bu_vls_strlen(&new_name), GED_V4_MAXNAME);
 	    }
 	    return NULL;
 	}
@@ -390,7 +390,7 @@ ged_copy_object(struct ged		*gedp,
 	bu_vls_printf(&gedp->ged_result_str,
 		      "Failed to get internal form of object (%s) - aborting!!!\n",
 		      input_dp->d_namep);
-	return BRLCAD_ERROR;
+	return GED_ERROR;
     }
 
     if ( ip.idb_major_type == DB5_MAJORTYPE_BRLCAD ) {
@@ -437,17 +437,17 @@ ged_copy_object(struct ged		*gedp,
 	bu_vls_printf(&gedp->ged_result_str,
 		      "Failed to add new object name (%s) to directory - aborting!!\n",
 		      new_name);
-	return BRLCAD_ERROR;
+	return GED_ERROR;
     }
 
     if ( rt_db_put_internal( new_dp, curr_dbip, &ip, &rt_uniresource ) < 0 )  {
 	bu_vls_printf(&gedp->ged_result_str,
 		      "Failed to write new object (%s) to database - aborting!!\n",
 		      new_name);
-	return BRLCAD_ERROR;
+	return GED_ERROR;
     }
 
-    return BRLCAD_OK;
+    return GED_OK;
 }
 
 

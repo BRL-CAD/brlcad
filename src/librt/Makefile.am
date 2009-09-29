@@ -4,6 +4,12 @@ noinst_LTLIBRARIES = \
 	librt_nil.la \
 	librt_xxx.la
 
+if BUILD_RTGL
+DM_RTGL_CPPFLAGS = -DDM_RTGL -DIF_RTGL $(GL_CPPFLAGS)
+else
+DM_RTGL_CPPFLAGS =
+endif
+
 BREP_TEST = brep_test
 BREP_CPPFLAGS = ${SSE} -DOBJ_BREP=1 ${TNT_CPPFLAGS} ${OPENNURBS_CPPFLAGS}
 BREP_LIBADD = ${OPENNURBS}
@@ -19,7 +25,8 @@ brep_test_LDADD = \
 AM_CPPFLAGS = \
 	${REGEX_CPPFLAGS} \
 	${TCL_CPPFLAGS} \
-	${BREP_CPPFLAGS}
+	${BREP_CPPFLAGS} \
+	${DM_RTGL_CPPFLAGS}
 
 noinst_PROGRAMS = \
 	comb \
@@ -36,6 +43,7 @@ librt_nil_la_SOURCES = \
 	bool.c \
 	bundle.c \
 	cmd.c \
+	comb_mirror.c \
 	constraint.c \
 	cut.c \
 	db5_alloc.c \
@@ -72,11 +80,20 @@ librt_nil_la_SOURCES = \
 	pr.c \
 	prep.c \
 	primitives/arb8/arb8.c \
+	primitives/arb8/arb8_brep.cpp \
+	primitives/arb8/arb8_mirror.c \
 	primitives/arbn/arbn.c \
+	primitives/arbn/arbn_brep.cpp \
+	primitives/arbn/arbn_mirror.c \
 	primitives/ars/ars.c \
+	primitives/ars/ars_mirror.c \
 	primitives/bot/bot.c \
+	primitives/bot/bot_brep.cpp \
+	primitives/bot/bot_mirror.c \
 	primitives/brep/brep.cpp \
+	primitives/brep/brep_debug.cpp \
 	primitives/bspline/bspline.c \
+	primitives/bspline/bspline_mirror.c \
 	primitives/bspline/nurb_basis.c \
 	primitives/bspline/nurb_bezier.c \
 	primitives/bspline/nurb_bound.c \
@@ -102,20 +119,37 @@ librt_nil_la_SOURCES = \
 	primitives/bspline/nurb_xsplit.c \
 	primitives/cline/cline.c \
 	primitives/dsp/dsp.c \
+	primitives/dsp/dsp_brep.cpp \
+	primitives/dsp/dsp_mirror.c \
 	primitives/ebm/ebm.c \
+	primitives/ebm/ebm_brep.cpp \
+	primitives/ebm/ebm_mirror.c \
 	primitives/ehy/ehy.c \
+	primitives/ehy/ehy_brep.cpp \
 	primitives/ell/ell.c \
+	primitives/ell/ell_brep.cpp \
+	primitives/ell/ell_mirror.c \
 	primitives/epa/epa.c \
+	primitives/epa/epa_brep.cpp \
+	primitives/epa/epa_mirror.c \
 	primitives/eto/eto.c \
+	primitives/eto/eto_brep.cpp \
+	primitives/eto/eto_mirror.c \
 	primitives/extrude/extrude.c \
+	primitives/extrude/extrude_brep.cpp \
 	primitives/grip/grip.c \
+	primitives/grip/grip_mirror.c \
 	primitives/half/half.c \
+	primitives/half/half_mirror.c \
 	primitives/hf/hf.c \
 	primitives/hyp/hyp.c \
+	primitives/hyp/hyp_brep.cpp \
+	primitives/hyp/hyp_mirror.c \
 	primitives/metaball/metaball.c \
 	primitives/mirror.c \
 	primitives/nmg/nmg.c \
 	primitives/nmg/nmg_bool.c \
+	primitives/nmg/nmg_brep.cpp \
 	primitives/nmg/nmg_ck.c \
 	primitives/nmg/nmg_class.c \
 	primitives/nmg/nmg_eval.c \
@@ -128,6 +162,7 @@ librt_nil_la_SOURCES = \
 	primitives/nmg/nmg_junk.c \
 	primitives/nmg/nmg_manif.c \
 	primitives/nmg/nmg_mesh.c \
+	primitives/nmg/nmg_mirror.c \
 	primitives/nmg/nmg_misc.c \
 	primitives/nmg/nmg_mk.c \
 	primitives/nmg/nmg_mod.c \
@@ -139,22 +174,40 @@ librt_nil_la_SOURCES = \
 	primitives/nmg/nmg_tri.c \
 	primitives/nmg/nmg_visit.c \
 	primitives/part/part.c \
+	primitives/part/part_mirror.c \
 	primitives/pipe/pipe.c \
+	primitives/pipe/pipe_brep.cpp \
+	primitives/pipe/pipe_mirror.c \
 	primitives/pnts/pnts.c \
 	primitives/poly/poly.c \
+	primitives/poly/poly_brep.cpp \
+	primitives/poly/poly_mirror.c \
 	primitives/rec/rec.c \
 	primitives/revolve/revolve.c \
+	primitives/revolve/revolve_brep.cpp \
 	primitives/rhc/rhc.c \
+	primitives/rhc/rhc_brep.cpp \
+	primitives/rhc/rhc_mirror.c \
 	primitives/rpc/rpc.c \
+	primitives/rpc/rpc_brep.cpp \
+	primitives/rpc/rpc_mirror.c \
 	primitives/sketch/sketch.c \
+	primitives/sketch/sketch_brep.cpp \
 	primitives/sph/sph.c \
+	primitives/sph/sph_brep.cpp \
 	primitives/submodel/submodel.c \
 	primitives/superell/superell.c \
+	primitives/superell/superell_mirror.c \
 	primitives/table.c \
 	primitives/tgc/tgc.c \
+	primitives/tgc/tgc_brep.cpp \
+	primitives/tgc/tgc_mirror.c \
 	primitives/tor/tor.c \
+	primitives/tor/tor_brep.cpp \
 	primitives/tor/tor_mirror.c \
 	primitives/vol/vol.c \
+	primitives/vol/vol_brep.cpp \
+	primitives/vol/vol_mirror.c \
 	regionfix.c \
 	roots.c \
 	shoot.c \
@@ -188,6 +241,7 @@ nurb_example_LDADD = \
 
 noinst_HEADERS = \
 	primitives/fixpt.h \
+	primitives/brep/brep_debug.h \
 	primitives/revolve/revolve.h \
 	primitives/xxx/xxx.h
 
@@ -208,10 +262,6 @@ EXTRA_DIST = \
 	parse.c \
 	pmalloc.c \
 	primitives/bot/g_bot_include.c \
-	primitives/ell/ell_brep.cpp \
-	primitives/nmg/nmg_brep.cpp \
-	primitives/sph/sph_brep.cpp \
-	primitives/tor/tor_brep.cpp \
 	timer-nt.c \
 	timer52brl.c \
 	timerhep.c \

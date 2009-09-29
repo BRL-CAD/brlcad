@@ -77,6 +77,16 @@ if {![string is int $major] ||
     return
 }
 
+set platform [lindex $argv 0]
+if {$platform == "x64"} {
+    set brlcadInstall "brlcadInstallx64"
+    set installerSuffix " (64-bit)"
+} else {
+    set platform ""
+    set brlcadInstall brlcadInstall
+    set installerSuffix ""
+}
+
 set version "$major.$minor.$patch"
 
 # Create VERSION.txt
@@ -85,6 +95,8 @@ puts $fd "!define MAJOR '$major'"
 puts $fd "!define MINOR '$minor'"
 puts $fd "!define PATCH '$patch'"
 puts $fd "!define VERSION '$version'"
+puts $fd "!define PLATFORM '$platform'"
+puts $fd "!define INSTALLERSUFFIX '$installerSuffix'"
 close $fd
 
 # Create VERSION.bat

@@ -46,10 +46,10 @@ static char rcsid[] = "$Id: schema.c,v 1.13 1997/01/21 19:19:51 dar Exp $";
  */
 
 #define SCHEMA_C
-#include "expbasic.h"
-#include "schema.h"
-#include "object.h"
-#include "resolve.h"
+#include "express/expbasic.h"
+#include "express/schema.h"
+#include "express/object.h"
+#include "express/resolve.h"
 
 Symbol *
 RENAME_get_symbol(Generic r)

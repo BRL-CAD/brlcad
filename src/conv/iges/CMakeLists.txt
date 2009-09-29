@@ -17,7 +17,7 @@ add_executable(iges
     BrepHandler.cpp
     brlcad_brep.cpp
     n_iges.cpp
-    nmain.cpp
+    n_main.cpp
 )
 target_link_libraries(iges
     BrlcadCore

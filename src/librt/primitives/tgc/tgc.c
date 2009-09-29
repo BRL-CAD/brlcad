@@ -842,6 +842,7 @@ rt_tgc_shot(struct soltab *stp, register struct xray *rp, struct application *ap
     }
 
     if ( npts != 0 && npts != 2 && npts != 4 ) {
+#ifndef DM_RTGL
 	/* these are printed in 'mm' regardless of local units */
 	bu_log("tgc(%s):  %d intersects != {0, 2, 4}\n", stp->st_name, npts );
 	bu_log( "\tray: pt = (%g %g %g), dir = (%g %g %g), units in mm\n", V3ARGS( ap->a_ray.r_pt ), V3ARGS( ap->a_ray.r_dir ) );
@@ -849,6 +850,7 @@ rt_tgc_shot(struct soltab *stp, register struct xray *rp, struct application *ap
 	    bu_log( "\t%g", k[i]*t_scale );
 	}
 	bu_log( "\n" );
+#endif
 	return(0);			/* No hit */
     }
 
@@ -1130,9 +1132,11 @@ rt_tgc_vshot(struct soltab **stp, register struct xray **rp, struct seg *segp, i
 	    k[i] -= cor_proj;
 
 	if ( npts != 0 && npts != 2 && npts != 4 ) {
+#ifndef DM_RTGL
 	    bu_log("tgc(%s):  %d intersects != {0, 2, 4}\n",
 		   stp[ix]->st_name, npts );
 	    RT_TGC_SEG_MISS(segp[ix]);		/* No hit	*/
+#endif
 	    continue;
 	}
 
@@ -1526,7 +1530,7 @@ rt_tgc_class(void)
  *  Apply modeling transformations as well.
  */
 int
-rt_tgc_import(struct rt_db_internal *ip, const struct bu_external *ep, register const fastf_t *mat, const struct db_i *dbip)
+rt_tgc_import4(struct rt_db_internal *ip, const struct bu_external *ep, register const fastf_t *mat, const struct db_i *dbip)
 {
     struct rt_tgc_internal	*tip;
     union record		*rp;
@@ -1536,7 +1540,7 @@ rt_tgc_import(struct rt_db_internal *ip, const struct bu_external *ep, register 
     rp = (union record *)ep->ext_buf;
     /* Check record type */
     if ( rp->u_id != ID_SOLID )  {
-	bu_log("rt_tgc_import: defective record\n");
+	bu_log("rt_tgc_import4: defective record\n");
 	return(-1);
     }
 
@@ -1567,7 +1571,7 @@ rt_tgc_import(struct rt_db_internal *ip, const struct bu_external *ep, register 
  *			R T _ T G C _ E X P O R T
  */
 int
-rt_tgc_export(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip)
+rt_tgc_export4(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip)
 {
     struct rt_tgc_internal	*tip;
     union record		*rec;

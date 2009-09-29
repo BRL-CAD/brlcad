@@ -6,6 +6,10 @@ set(TCL_SOURCES
     ${TCL_LIBTOMMATH_SOURCES}
 )
 
+set(TCL_HEADERS
+    ${TCL_GENERIC_HEADERS}
+)
+
 include_directories(
     generic
     libtommath
@@ -55,3 +59,5 @@ if(MSVC)
     add_executable(tclpip85 win/stub16.c)
     set_target_properties(tclpip85 PROPERTIES SUFFIX ".dll")
 endif(MSVC)
+
+install(FILES ${TCL_HEADERS} DESTINATION include)

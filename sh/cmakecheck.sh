@@ -41,6 +41,8 @@
 ###
 
 
+missing=0
+
 for dir in src/libbn src/libbu src/libgcv src/libged src/librt src/libsysv src/libwdb ; do
 
     if test ! -f $dir/CMakeLists.txt ; then
@@ -62,12 +64,16 @@ for dir in src/libbn src/libbu src/libgcv src/libged src/librt src/libsysv src/l
     for file in $amfiles ; do
 	result="`echo \"$cmfiles\" | grep $file`"
 	if test "x$result" = "x" ; then
+	    missing=1
 	    echo "MISSING from $dir/CMakeLists.txt: $file"
 	fi
     done
 
 done
 
+if test "x$missing" = "x1" ; then
+    exit 2
+fi
 
 
 # Local Variables:

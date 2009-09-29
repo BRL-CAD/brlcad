@@ -52,8 +52,8 @@
 				Name="VCCLCompilerTool"
 				Optimization="2"
 				InlineFunctionExpansion="1"
-				AdditionalIncludeDirectories="../../../include;../../../src/libged;../../../src/other/libregex;../../../src/other/tcl/generic;../../../src/other/tcl/win;../../../src/other/libz;../../../src/other/opennurbs;../../../src/other/tnt;../../../src/other/libpng"
-				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;__win32;ON_DLL_IMPORTS;GED_EXPORT_DLL;BRLCAD_DLL;HAVE_CONFIG_H;BRLCADBUILD;OBJ_BREP=1;TCL_THREADS=1;_CRT_SECURE_NO_WARNINGS"
+				AdditionalIncludeDirectories="../../../include;../../../src/libged;../../../src/other/libregex;../../../src/other/tcl/generic;../../../src/other/tcl/win;../../../src/other/libz;../../../src/other/opennurbs;../../../src/other/tnt;../../../src/other/libpng;../../../src/librt/primitives/brep"
+				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;__win32;ON_DLL_IMPORTS;GED_EXPORT_DLL;BRLCAD_DLL;HAVE_CONFIG_H;BRLCADBUILD;OBJ_BREP=1;TCL_THREADS=1;_CRT_SECURE_NO_WARNINGS;PNG_DLL"
 				StringPooling="true"
 				BasicRuntimeChecks="0"
 				RuntimeLibrary="2"
@@ -151,8 +151,8 @@
 				Name="VCCLCompilerTool"
 				Optimization="2"
 				InlineFunctionExpansion="1"
-				AdditionalIncludeDirectories="../../../include;../../../src/libged;../../../src/other/tcl/generic;../../../src/other/tcl/win;../../../src/other/libz;../../../src/other/opennurbs;../../../src/other/tnt;../../../src/other/libpng"
-				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;__win32;ON_DLL_IMPORTS;GED_EXPORT_DLL;BRLCAD_DLL;HAVE_CONFIG_H;BRLCADBUILD;OBJ_BREP=1;TCL_THREADS=1;_CRT_SECURE_NO_WARNINGS"
+				AdditionalIncludeDirectories="../../../include;../../../src/libged;../../../src/other/libregex;../../../src/other/tcl/generic;../../../src/other/tcl/win;../../../src/other/libz;../../../src/other/opennurbs;../../../src/other/tnt;../../../src/other/libpng;../../../src/librt/primitives/brep"
+				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;__win32;ON_DLL_IMPORTS;GED_EXPORT_DLL;BRLCAD_DLL;HAVE_CONFIG_H;BRLCADBUILD;OBJ_BREP=1;TCL_THREADS=1;_CRT_SECURE_NO_WARNINGS;PNG_DLL"
 				StringPooling="true"
 				BasicRuntimeChecks="0"
 				RuntimeLibrary="2"
@@ -185,11 +185,11 @@
 				OutputFile=".\$(PlatformName)\$(ConfigurationName)/libged.dll"
 				LinkIncremental="1"
 				SuppressStartupBanner="true"
-				AdditionalLibraryDirectories="../../../brlcadInstall/lib"
+				AdditionalLibraryDirectories="../../../brlcadInstall$(PlatformName)/lib"
 				GenerateDebugInformation="false"
 				ProgramDatabaseFile=".\$(PlatformName)\$(ConfigurationName)/libged.pdb"
 				ImportLibrary=".\$(PlatformName)\$(ConfigurationName)/libged.lib"
-				TargetMachine="1"
+				TargetMachine="17"
 			/>
 			<Tool
 				Name="VCALinkTool"
@@ -270,6 +270,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\src\libged\bb.c"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\src\libged\bev.c"
 				>
 			</File>
@@ -278,11 +282,11 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\src\libged\binary.c"
+				RelativePath="..\..\..\src\libged\blast.c"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\src\libged\blast.c"
+				RelativePath="..\..\..\src\libged\bo.c"
 				>
 			</File>
 			<File
@@ -330,7 +334,15 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\src\libged\brep.c"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\src\libged\cat.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\src\libged\cc.c"
 				>
 			</File>
 			<File
@@ -558,6 +570,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\src\libged\human.c"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\src\libged\illum.c"
 				>
 			</File>
@@ -630,6 +646,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\src\libged\lscon.c"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\src\libged\lt.c"
 				>
 			</File>
@@ -647,6 +667,10 @@
 			</File>
 			<File
 				RelativePath="..\..\..\src\libged\make_name.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\src\libged\make_pnts.c"
 				>
 			</File>
 			<File
@@ -782,11 +806,19 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\src\libged\protate.c"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\src\libged\ps.c"
 				>
 			</File>
 			<File
 				RelativePath="..\..\..\src\libged\pscale.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\src\libged\ptranslate.c"
 				>
 			</File>
 			<File
@@ -878,6 +910,22 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\src\libged\rotate_eto.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\src\libged\rotate_extrude.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\src\libged\rotate_hyp.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\src\libged\rotate_tgc.c"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\src\libged\rrt.c"
 				>
 			</File>
@@ -906,7 +954,47 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\src\libged\scale_ehy.c"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\src\libged\scale_ell.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\src\libged\scale_epa.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\src\libged\scale_eto.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\src\libged\scale_extrude.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\src\libged\scale_hyp.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\src\libged\scale_part.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\src\libged\scale_rhc.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\src\libged\scale_rpc.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\src\libged\scale_superell.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\src\libged\scale_tgc.c"
 				>
 			</File>
 			<File
@@ -962,6 +1050,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\src\libged\sphgroup.c"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\src\libged\summary.c"
 				>
 			</File>
@@ -999,6 +1091,14 @@
 			</File>
 			<File
 				RelativePath="..\..\..\src\libged\track.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\src\libged\translate_extrude.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\src\libged\translate_tgc.c"
 				>
 			</File>
 			<File

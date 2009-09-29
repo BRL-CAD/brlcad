@@ -236,11 +236,31 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\src\librt\primitives\arb8\arb8_brep.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\src\librt\primitives\arb8\arb8_mirror.c"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\src\librt\primitives\arbn\arbn.c"
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\src\librt\primitives\arbn\arbn_brep.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\src\librt\primitives\arbn\arbn_mirror.c"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\src\librt\primitives\ars\ars.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\src\librt\primitives\ars\ars_mirror.c"
 				>
 			</File>
 			<File
@@ -264,11 +284,27 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\src\librt\primitives\bot\bot_brep.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\src\librt\primitives\bot\bot_mirror.c"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\src\librt\primitives\brep\brep.cpp"
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\src\librt\primitives\brep\brep_debug.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\src\librt\primitives\bspline\bspline.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\src\librt\primitives\bspline\bspline_mirror.c"
 				>
 			</File>
 			<File
@@ -281,6 +317,10 @@
 			</File>
 			<File
 				RelativePath="..\..\..\src\librt\cmd.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\src\librt\comb_mirror.c"
 				>
 			</File>
 			<File
@@ -376,6 +416,14 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\src\librt\primitives\dsp\dsp_brep.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\src\librt\primitives\dsp\dsp_mirror.c"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\src\librt\dspline.c"
 				>
 			</File>
@@ -384,7 +432,19 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\src\librt\primitives\ebm\ebm_brep.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\src\librt\primitives\ebm\ebm_mirror.c"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\src\librt\primitives\ehy\ehy.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\src\librt\primitives\ehy\ehy_brep.cpp"
 				>
 			</File>
 			<File
@@ -392,7 +452,23 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\src\librt\primitives\ell\ell_brep.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\src\librt\primitives\ell\ell_mirror.c"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\src\librt\primitives\epa\epa.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\src\librt\primitives\epa\epa_brep.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\src\librt\primitives\epa\epa_mirror.c"
 				>
 			</File>
 			<File
@@ -400,7 +476,19 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\src\librt\primitives\eto\eto_brep.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\src\librt\primitives\eto\eto_mirror.c"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\src\librt\primitives\extrude\extrude.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\src\librt\primitives\extrude\extrude_brep.cpp"
 				>
 			</File>
 			<File
@@ -416,7 +504,15 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\src\librt\primitives\grip\grip_mirror.c"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\src\librt\primitives\half\half.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\src\librt\primitives\half\half_mirror.c"
 				>
 			</File>
 			<File
@@ -429,6 +525,14 @@
 			</File>
 			<File
 				RelativePath="..\..\..\src\librt\primitives\hyp\hyp.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\src\librt\primitives\hyp\hyp_brep.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\src\librt\primitives\hyp\hyp_mirror.c"
 				>
 			</File>
 			<File
@@ -461,6 +565,10 @@
 			</File>
 			<File
 				RelativePath="..\..\..\src\librt\primitives\nmg\nmg_bool.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\src\librt\primitives\nmg\nmg_brep.cpp"
 				>
 			</File>
 			<File
@@ -505,6 +613,10 @@
 			</File>
 			<File
 				RelativePath="..\..\..\src\librt\primitives\nmg\nmg_mesh.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\src\librt\primitives\nmg\nmg_mirror.c"
 				>
 			</File>
 			<File
@@ -656,7 +768,19 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\src\librt\primitives\part\part_mirror.c"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\src\librt\primitives\pipe\pipe.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\src\librt\primitives\pipe\pipe_brep.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\src\librt\primitives\pipe\pipe_mirror.c"
 				>
 			</File>
 			<File
@@ -665,6 +789,14 @@
 			</File>
 			<File
 				RelativePath="..\..\..\src\librt\primitives\poly\poly.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\src\librt\primitives\poly\poly_brep.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\src\librt\primitives\poly\poly_mirror.c"
 				>
 			</File>
 			<File
@@ -688,7 +820,19 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\src\librt\primitives\revolve\revolve_brep.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\src\librt\primitives\rhc\rhc.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\src\librt\primitives\rhc\rhc_brep.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\src\librt\primitives\rhc\rhc_mirror.c"
 				>
 			</File>
 			<File
@@ -700,6 +844,14 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\src\librt\primitives\rpc\rpc_brep.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\src\librt\primitives\rpc\rpc_mirror.c"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\src\librt\shoot.c"
 				>
 			</File>
@@ -708,11 +860,19 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\src\librt\primitives\sketch\sketch_brep.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\src\librt\spectrum.c"
 				>
 			</File>
 			<File
 				RelativePath="..\..\..\src\librt\primitives\sph\sph.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\src\librt\primitives\sph\sph_brep.cpp"
 				>
 			</File>
 			<File
@@ -728,6 +888,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\src\librt\primitives\superell\superell_mirror.c"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\src\librt\primitives\table.c"
 				>
 			</File>
@@ -740,11 +904,27 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\src\librt\primitives\tgc\tgc_brep.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\src\librt\primitives\tgc\tgc_mirror.c"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\src\librt\timer-nt.c"
 				>
 			</File>
 			<File
 				RelativePath="..\..\..\src\librt\primitives\tor\tor.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\src\librt\primitives\tor\tor_brep.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\src\librt\primitives\tor\tor_mirror.c"
 				>
 			</File>
 			<File
@@ -768,6 +948,14 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\src\librt\primitives\vol\vol_brep.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\src\librt\primitives\vol\vol_mirror.c"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\src\librt\wdb.c"
 				>
 			</File>
@@ -776,6 +964,10 @@
 			Name="Header Files"
 			Filter="h;hpp;hxx;hm;inl;fi;fd"
 			>
+			<File
+				RelativePath="..\..\..\src\librt\primitives\brep\brep_debug.h"
+				>
+			</File>
 		</Filter>
 		<Filter
 			Name="Resource Files"

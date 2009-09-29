@@ -95,6 +95,8 @@ set(OPENNURBS_SOURCES
     opennurbs_zlib.cpp
 )
 
+file(GLOB OPENNURBS_HEADERS *.h)
+
 set(OPENNURBS_LINKLIBRARIES
     libz
 )
@@ -102,6 +104,7 @@ set(OPENNURBS_LINKLIBRARIES
 include_directories(
     ../../../include
     ../libz
+    ../tcl/generic
 )
 
 add_definitions(
@@ -125,3 +128,10 @@ add_library(openNURBS SHARED ${OPENNURBS_SOURCES})
 target_link_libraries(openNURBS ${OPENNURBS_LINKLIBRARIES})
 
 set_property(TARGET openNURBS PROPERTY LINK_INTERFACE_LIBRARIES "")
+
+install(TARGETS openNURBS
+    RUNTIME DESTINATION bin
+    LIBRARY DESTINATION lib
+)
+
+install(FILES ${OPENNURBS_HEADERS} DESTINATION include)

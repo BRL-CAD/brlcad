@@ -9,7 +9,6 @@ step_g_SOURCES = \
 	AdvancedBrepShapeRepresentation.cpp \
 	BRLCADWrapper.cpp \
 	STEPWrapper.cpp \
-	needFunc.cc \
 	step-g.cpp
 
 fedex_hdrs = \
@@ -31,8 +30,7 @@ fedex_srcs = \
 noinst_HEADERS = \
 	AdvancedBrepShapeRepresentation.h \
 	BRLCADWrapper.h \
-	STEPWrapper.h \
-	needFunc.h
+	STEPWrapper.h
 
 # per-program CPPFLAGS wasn't added until automake 1.7
 step_g_CXXFLAGS = \

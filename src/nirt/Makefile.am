@@ -34,8 +34,10 @@ noinst_HEADERS = \
 
 EXTRA_DIST = \
 	$(man_MANS) \
-	dist_def.c \
-	nirt.dsp
+	CMakeLists.txt \
+	dist_def.c
+
+DEPENDS = src/libfb src/librt
 
 include $(top_srcdir)/misc/Makefile.defs
 

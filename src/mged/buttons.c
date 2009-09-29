@@ -466,13 +466,30 @@ bv_35_25(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)  {
 /* returns 0 if error, !0 if success */
 static int
 ill_common(void) {
+    register struct ged_display_list *gdlp;
+    register struct ged_display_list *next_gdlp;
+    int is_empty = 1;
+
     /* Common part of illumination */
-    if (BU_LIST_IS_EMPTY(&gedp->ged_gdp->gd_headSolid)) {
+    gdlp = BU_LIST_NEXT(ged_display_list, &gedp->ged_gdp->gd_headDisplay);
+    while (BU_LIST_NOT_HEAD(gdlp, &gedp->ged_gdp->gd_headDisplay)) {
+	next_gdlp = BU_LIST_PNEXT(ged_display_list, gdlp);
+
+	if (BU_LIST_NON_EMPTY(&gdlp->gdl_headSolid)) {
+	    is_empty = 0;
+	    break;
+	}
+
+	gdlp = next_gdlp;
+    }
+
+    if (is_empty) {
 	Tcl_AppendResult(interp, "no solids in view\n", (char *)NULL);
 	return(0);	/* BAD */
     }
 
-    illump = BU_LIST_NEXT(solid, &gedp->ged_gdp->gd_headSolid);/* any valid solid would do */
+    illum_gdlp = gdlp;
+    illump = BU_LIST_NEXT(solid, &gdlp->gdl_headSolid);/* any valid solid would do */
     illump->s_iflag = UP;
     edobj = 0;		/* sanity */
     edsol = 0;		/* sanity */
@@ -624,6 +641,8 @@ be_o_rotate(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)  {
 
 int
 be_accept(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)  {
+    register struct ged_display_list *gdlp;
+    register struct ged_display_list *next_gdlp;
     register struct solid *sp;
     register struct dm_list *dmlp;
 
@@ -636,9 +655,17 @@ be_accept(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)  {
 	mmenu_set_all( MENU_L1, MENU_NULL );
 	mmenu_set_all( MENU_L2, MENU_NULL );
 
-	FOR_ALL_SOLIDS(sp, &gedp->ged_gdp->gd_headSolid)
-	    sp->s_iflag = DOWN;
+	gdlp = BU_LIST_NEXT(ged_display_list, &gedp->ged_gdp->gd_headDisplay);
+	while (BU_LIST_NOT_HEAD(gdlp, &gedp->ged_gdp->gd_headDisplay)) {
+	    next_gdlp = BU_LIST_PNEXT(ged_display_list, gdlp);
 
+	    FOR_ALL_SOLIDS(sp, &gdlp->gdl_headSolid)
+		sp->s_iflag = DOWN;
+
+	    gdlp = next_gdlp;
+	}
+
+	illum_gdlp = GED_DISPLAY_LIST_NULL;
 	illump = SOLID_NULL;
 	color_soltab();
 	(void)chg_state( ST_S_EDIT, ST_VIEW, "Edit Accept" );
@@ -651,6 +678,7 @@ be_accept(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)  {
 
 	mmenu_set_all( MENU_L2, MENU_NULL );
 
+	illum_gdlp = GED_DISPLAY_LIST_NULL;
 	illump = SOLID_NULL;
 	color_soltab();
 	(void)chg_state( ST_O_EDIT, ST_VIEW, "Edit Accept" );
@@ -677,6 +705,8 @@ be_accept(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)  {
 
 int
 be_reject(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)  {
+    register struct ged_display_list *gdlp;
+    register struct ged_display_list *next_gdlp;
     register struct solid *sp;
     register struct dm_list *dmlp;
 
@@ -715,11 +745,20 @@ be_reject(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)  {
     edsol = 0;
     edobj = 0;
     es_edflag = -1;
+    illum_gdlp = GED_DISPLAY_LIST_NULL;
     illump = SOLID_NULL;		/* None selected */
 
     /* Clear illumination flags */
-    FOR_ALL_SOLIDS(sp, &gedp->ged_gdp->gd_headSolid)
-	sp->s_iflag = DOWN;
+    gdlp = BU_LIST_NEXT(ged_display_list, &gedp->ged_gdp->gd_headDisplay);
+    while (BU_LIST_NOT_HEAD(gdlp, &gedp->ged_gdp->gd_headDisplay)) {
+	next_gdlp = BU_LIST_PNEXT(ged_display_list, gdlp);
+
+	FOR_ALL_SOLIDS(sp, &gdlp->gdl_headSolid)
+	    sp->s_iflag = DOWN;
+
+	gdlp = next_gdlp;
+    }
+
     color_soltab();
     (void)chg_state( state, ST_VIEW, "Edit Reject" );
 

@@ -49,9 +49,9 @@ ged_decompose(struct ged *gedp, int argc, const char *argv[])
     struct rt_db_internal nmg_intern;
     static const char *usage = "nmg [prefix]";
 
-    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
-    GED_CHECK_READ_ONLY(gedp, BRLCAD_ERROR);
-    GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
+    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
+    GED_CHECK_READ_ONLY(gedp, GED_ERROR);
+    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
 
     /* initialize result */
     bu_vls_trunc(&gedp->ged_result_str, 0);
@@ -59,12 +59,12 @@ ged_decompose(struct ged *gedp, int argc, const char *argv[])
     /* must be wanting help */
     if (argc == 1) {
 	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return BRLCAD_HELP;
+	return GED_HELP;
     }
 
     if (argc < 2 || 3 < argc) {
 	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return BRLCAD_ERROR;
+	return GED_ERROR;
     }
 
     count = 0;
@@ -74,23 +74,23 @@ ged_decompose(struct ged *gedp, int argc, const char *argv[])
 	prefix = (char *)argv[2];
 	if ( gedp->ged_wdbp->dbip->dbi_version < 5 && strlen(prefix) > NAMESIZE ) {
 	    bu_vls_printf(&gedp->ged_result_str, "%s: Prefix %s is too long", argv[0], prefix);
-	    return BRLCAD_ERROR;
+	    return GED_ERROR;
 	}
     } else {
 	prefix = def_prefix;
     }
 
     if ( (dp=db_lookup( gedp->ged_wdbp->dbip, nmg_solid_name, LOOKUP_NOISY ) ) == DIR_NULL )
-	return BRLCAD_ERROR;
+	return GED_ERROR;
 
     if ( rt_db_get_internal( &nmg_intern, dp, gedp->ged_wdbp->dbip, bn_mat_identity, &rt_uniresource ) < 0 ) {
 	bu_vls_printf(&gedp->ged_result_str, "%s: rt_db_get_internal(%s) error\n", argv[0], nmg_solid_name);
-	return BRLCAD_ERROR;
+	return GED_ERROR;
     }
 
     if ( nmg_intern.idb_type != ID_NMG ) {
 	bu_vls_printf(&gedp->ged_result_str, "%s: %s is not an NMG solid!", argv[0], nmg_solid_name);
-	return BRLCAD_ERROR;
+	return GED_ERROR;
     }
 
     bu_vls_init( &solid_name );
@@ -165,7 +165,7 @@ ged_decompose(struct ged *gedp, int argc, const char *argv[])
 		if ( db_lookup( gedp->ged_wdbp->dbip, bu_vls_addr( &solid_name ), LOOKUP_QUIET ) != DIR_NULL ) {
 		    bu_vls_printf(&gedp->ged_result_str, "%s: cannot create unique solid name (%s)",
 				  argv[0], bu_vls_addr(&solid_name));
-		    return BRLCAD_ERROR;
+		    return GED_ERROR;
 		}
 
 		/* write this model as a seperate nmg solid */
@@ -179,7 +179,7 @@ ged_decompose(struct ged *gedp, int argc, const char *argv[])
 					(genptr_t)&new_intern.idb_type)) == DIR_NULL ) {
 		    bu_vls_free( &solid_name );
 		    bu_vls_printf(&gedp->ged_result_str, "%s: Database alloc error, aborting", argv[0]);
-		    return BRLCAD_ERROR;;
+		    return GED_ERROR;;
 		}
 
 		if ( rt_db_put_internal( new_dp, gedp->ged_wdbp->dbip, &new_intern, &rt_uniresource ) < 0 ) {
@@ -187,7 +187,7 @@ ged_decompose(struct ged *gedp, int argc, const char *argv[])
 		    bu_vls_printf(&gedp->ged_result_str, "%s: rt_db_put_internal(%s) failure\n",
 				  argv[0], bu_vls_addr(&solid_name));
 		    bu_vls_free( &solid_name );
-		    return BRLCAD_ERROR;
+		    return GED_ERROR;
 		}
 
 		(void)nmg_ks( decomp_s );
@@ -199,7 +199,7 @@ ged_decompose(struct ged *gedp, int argc, const char *argv[])
     rt_db_free_internal( &nmg_intern, &rt_uniresource );
     bu_vls_free( &solid_name );
 
-    return BRLCAD_OK;
+    return GED_OK;
 }
 
 /*

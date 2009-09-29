@@ -36,29 +36,43 @@
 
 
 int
-ged_scale_tor(struct ged *gedp, struct rt_tor_internal *tor, char *attribute, fastf_t sf)
+ged_scale_tor(struct ged *gedp, struct rt_tor_internal *tor, const char *attribute, fastf_t sf, int rflag)
 {
+    fastf_t newrad;
+
     RT_TOR_CK_MAGIC(tor);
 
     switch (attribute[0]) {
     case 'a':
     case 'A':
-	tor->r_a *= sf;
-	if (tor->r_a < SMALL)
-	    tor->r_a = 4*SMALL;
+	if (rflag)
+	    newrad = tor->r_a * sf;
+	else
+	    newrad = sf;
+
+	if (newrad < SMALL)
+	    newrad = 4*SMALL;
+	if (tor->r_h <= newrad)
+	    tor->r_a = newrad;
 	break;
     case 'h':
     case 'H':
-	tor->r_h *= sf;
-	if (tor->r_h < SMALL)
-	    tor->r_h = 4*SMALL;
+	if (rflag)
+	    newrad = tor->r_h * sf;
+	else
+	    newrad = sf;
+
+	if (newrad < SMALL)
+	    newrad = 4*SMALL;
+	if (newrad <= tor->r_a)
+	    tor->r_h = newrad;
 	break;
     default:
 	bu_vls_printf(&gedp->ged_result_str, "bad tor attribute - %s", attribute);
-	return BRLCAD_ERROR;
+	return GED_ERROR;
     }
 
-    return BRLCAD_OK;
+    return GED_OK;
 }
 
 

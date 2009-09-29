@@ -11,6 +11,57 @@ changes made.  See document footer for additional details.
 
 
 ----------------------------------------------------------------------
+--- 2009-09-29  Release 7.16.0                                     ---
+----------------------------------------------------------------------
+
+* added '-u' flag to 3dm-g - uses UUID for import names - Cliff Yapp
+* improved fb-png and pix-png defaut gamma correction - Sean Morrison
+* added a '-g' gamma correction option to pix-png - Sean Morrison
+* added mged '-a' option for attaching display manager - Sean Morrison
+* increased maximum size of framebuffer windows - Sean Morrison
+* removed framebuffer option 'f' from interfaces - Sean Morrison
+* reversed and simplified arguments to copyeval command - Bob Parker
+* 3dm-g converter creates automatic top-level combination - Cliff Yapp
+* added procedural 'human' generator command and gui plugin to archer
+	- Stephen Kennedy, Bob Parker
+* added BoT commands to archer (e.g., bot_flip, bot_sync) - Bob Parker
+* implemented support for sub-object erasures - Bob Parker
+* changed Pro/E exporter to output unoriented BoT objects - Bob Parker
+* fixed a rendering bug with left-handed BoT objects - Bob Parker
+* pipe now validates independent of parameter order - Daniel Roßberg
+* added '-r' color randomize option to 3dm-g importer - Cliff Yapp
+* enhanced '-v' verbosity option in 3dm-g importer - Cliff Yapp
+* readded -A & -o attribute options to 'draw' and 'erase' - Bob Parker
+* fixed bug in 'E' command to show object names - John Anderson
+* initial obj-g geometry importer - Erik Greenwald
+* Pro/E export plugin creates a 'Proe_Name' attribute - Bob Parker
+* enhanced rtedge with antialias and both side options - Sean Morrison
+* search command now works in Archer - Cliff Yapp
+* make_bb now handles empty combinations correctly - Bob Parker
+* no more rtweight crashing when PWD or HOME are unset - Sean Morrison
+* fixed "Invalid NMG" empty output bug in g-stl - Sean Morrison
+* improved BoT raytracing with vertex validation - John Anderson
+* fixed Mac OS X 10.5 OGL and X11 display manager crash affecting mged
+	- Sean Morrison, Mike Tegtmeyer, Tim Myers
+* added experimental exporter to Panda3d EGG format - Erik Greenwald
+* fixed compilation support for Mac OS X 10.5 - Sean Morrison
+* new bb command creates & computes object bounding boxes - Cliff Yapp
+* added -n "no-action" reporting option to edcodes & mvall - Bob Parker
+* reordering of and additions to Archer button menu - Cliff Yapp
+* extensive NURBS raytracing improvements - Keith Bowman, Cliff Yapp
+* fixed mged bug when raytracing subpath context objects - Bob Parker
+* added make_pnts for importing pnts data from file - Richard Weiss
+* initial undo support for Archer - Bob Parker
+* raytracers respect secondary ray overlap reporting - Sean Morrison
+* add dynamic sampling for NURBS wireframe drawing - Cliff Yapp
+* changed mged 'help' output formatting - Sean Morrison
+* improved 'e_id' mged command help - Sean Morrison
+* archer interactive editing support for most primitives - Bob Parker
+* added '-v' to mged for version information - Erik Greenwald
+* fixed the "scalloping" bug in the metaball primitive - Erik Greenwald
+
+
+----------------------------------------------------------------------
 --- 2009-05-11  Release 7.14.8                                     ---
 ----------------------------------------------------------------------
 
@@ -19,7 +70,7 @@ changes made.  See document footer for additional details.
 * improved asc2g handling of large BoT conversions - Keith Bowman
 * conversion of mged and archer to use new ttk widgets - Bob Parker
 * fixed crash in raytracing of pipe when duplicate hit points returned
-        - Cliff Yapp, Sean Morrison
+	- Cliff Yapp, Sean Morrison
 * mged 'dbconcat' command no longer requires an affix - Bob Parker
 * added 'l' describe support for the pnts primitive - Richard Weiss
 * restored mged mirror command trailing axis options - Sean Morrison
@@ -203,11 +254,11 @@ to supply their own rim.  A number of small but visual flaws in the
 tread geometry definitions were also corrected.
 
 MGED's dbconcat command works again without needing to specifying an
-affix for object names when importing geometry from one database to 
+affix for object names when importing geometry from one database to
 another.  Primitive selection via the Edit menu is working again
 thanks to the fixing of the solid_illum bug. The pipe primitive's
 performance problems during raytracing, due to unnecessary memory
-allocations, are now fixed.  The extrude primitive's handling of 
+allocations, are now fixed.  The extrude primitive's handling of
 invalid geometry is now more robust.
 
 * renamed mged binary command to bo for binary objects - Sean Morrison
@@ -309,7 +360,7 @@ code repository with a move from CVS to Subversion recently completed.
 The conversion was successfully completed with the entire history of
 BRL-CAD development preserved, accounting for nearly 25 years of
 continuous active development.
- 
+
 * automatic redraw updates after Geometry Browser edits - Bob Parker
 * improved Geometry Browser mouse behavior in mged - Bob Parker
 * make fast4-g use GIFT_material=1 and los=100 - Sean Morrison
@@ -317,7 +368,7 @@ continuous active development.
 * removed ogl framebuffer multiple window 'm' option - Sean Morrison
 * tree -d option in mged for limiting tree display depth - Cliff Yapp
 * added mouse color query support to OpenGL framebuffer - Bob Parker
-* fixed X11 framebuffer colormapping bug - Bob Parker 
+* fixed X11 framebuffer colormapping bug - Bob Parker
 * libpng updated to 1.2.25 - Erik Greenwald
 * fixed several mged I/O bugs for stdin/stdout/stderr - Bob Parker
 * nirt now uses bounding sphere for -b backout option - Erik Greenwald
@@ -366,7 +417,7 @@ continuous active development.
 * fixed garbled output during parallel crash reports - Sean Morrison
 * fixed memory deallocation bug in the raytracers - Bob Parker
 * renamed 'hd' hexadecimal dump utility to 'hex' - Sean Morrison
-* renamed procedural 'wall' generator to 'masonry' - Sean Morrison 
+* renamed procedural 'wall' generator to 'masonry' - Sean Morrison
 * mged 'tol' command now accepts multiple tolerances - Sean Morrison
 * TCL and TK updated to 8.5b1. itcl/itk to dev 3.4. - Erik Greenwald
 * fixed non-normalized vector bugs with ARBN objects - John Anderson

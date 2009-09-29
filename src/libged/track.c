@@ -166,14 +166,14 @@ ged_track(struct ged *gedp, int argc, const char *argv[])
     vect_t temp1, temp2;
     int item, mat, los;
     int arg;
-    int edit_result = BRLCAD_OK;
+    int edit_result = GED_OK;
     struct bu_list head;
     int len;
     static const char *usage = "basename rX1 rX2 rZ rR dX dZ dR iX iZ iR minX minY th";
 
-    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
-    GED_CHECK_READ_ONLY(gedp, BRLCAD_ERROR);
-    GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
+    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
+    GED_CHECK_READ_ONLY(gedp, GED_ERROR);
+    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
 
     /* initialize result */
     bu_vls_trunc(&gedp->ged_result_str, 0);
@@ -181,12 +181,12 @@ ged_track(struct ged *gedp, int argc, const char *argv[])
     /* must be wanting help */
     if (argc == 1) {
 	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return BRLCAD_HELP;
+	return GED_HELP;
     }
 
     if (argc != 15) {
 	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return BRLCAD_ERROR;
+	return GED_ERROR;
     }
 
     BU_LIST_INIT(&head);
@@ -213,7 +213,7 @@ ged_track(struct ged *gedp, int argc, const char *argv[])
 
     if (fw[0] <= lw[0]) {
 	bu_vls_printf(&gedp->ged_result_str, "First wheel after last wheel - STOP\n");
-	edit_result = BRLCAD_ERROR;
+	edit_result = GED_ERROR;
 	goto end;
     }
 
@@ -227,7 +227,7 @@ ged_track(struct ged *gedp, int argc, const char *argv[])
 
     if ( fw[2] <= 0 ) {
 	bu_vls_printf(&gedp->ged_result_str, "Radius <= 0 - STOP\n");
-	edit_result = BRLCAD_ERROR;
+	edit_result = GED_ERROR;
 	goto end;
     }
 
@@ -237,7 +237,7 @@ ged_track(struct ged *gedp, int argc, const char *argv[])
 
     if ( dw[0] >= lw[0] ) {
 	bu_vls_printf(&gedp->ged_result_str, "DRIVE wheel not in the rear - STOP \n");
-	edit_result = BRLCAD_ERROR;
+	edit_result = GED_ERROR;
 	goto end;
     }
 
@@ -251,7 +251,7 @@ ged_track(struct ged *gedp, int argc, const char *argv[])
 
     if ( dw[2] <= 0 ) {
 	bu_vls_printf(&gedp->ged_result_str, "Radius <= 0 - STOP\n");
-	edit_result = BRLCAD_ERROR;
+	edit_result = GED_ERROR;
 	goto end;
     }
 
@@ -261,7 +261,7 @@ ged_track(struct ged *gedp, int argc, const char *argv[])
 
     if ( iw[0] <= fw[0] ) {
 	bu_vls_printf(&gedp->ged_result_str, "IDLER wheel not in the front - STOP \n");
-	edit_result = BRLCAD_ERROR;
+	edit_result = GED_ERROR;
 	goto end;
     }
 
@@ -275,7 +275,7 @@ ged_track(struct ged *gedp, int argc, const char *argv[])
 
     if ( iw[2] <= 0 ) {
 	bu_vls_printf(&gedp->ged_result_str, "Radius <= 0 - STOP\n");
-	edit_result = BRLCAD_ERROR;
+	edit_result = GED_ERROR;
 	goto end;
     }
 
@@ -289,7 +289,7 @@ ged_track(struct ged *gedp, int argc, const char *argv[])
 
     if ( tr[0] == tr[1] ) {
 	bu_vls_printf(&gedp->ged_result_str, "MIN == MAX ... STOP\n");
-	edit_result = BRLCAD_ERROR;
+	edit_result = GED_ERROR;
 	goto end;
     }
     if ( tr[0] > tr[1] ) {
@@ -304,7 +304,7 @@ ged_track(struct ged *gedp, int argc, const char *argv[])
 
     if ( tr[2] <= 0 ) {
 	bu_vls_printf(&gedp->ged_result_str, "Track thickness <= 0 - STOP\n");
-	edit_result = BRLCAD_ERROR;
+	edit_result = GED_ERROR;
 	goto end;
     }
 
@@ -348,7 +348,7 @@ ged_track(struct ged *gedp, int argc, const char *argv[])
 	    (db_lookup( gedp->ged_wdbp->dbip, regname, LOOKUP_QUIET) != DIR_NULL)) {
 	    /* name already exists */
 	    bu_vls_printf(&gedp->ged_result_str, "Track: naming error -- STOP\n");
-	    edit_result = BRLCAD_ERROR;
+	    edit_result = GED_ERROR;
 	    goto end;
 	}
 
@@ -369,7 +369,7 @@ ged_track(struct ged *gedp, int argc, const char *argv[])
 
     sol.s_type = ID_ARB8;
     if (wrobj(gedp, solname, DIR_SOLID))
-	return BRLCAD_ERROR;
+	return GED_ERROR;
 
     solname[grpname_len + extraTypeChars] = '\0';
 
@@ -382,7 +382,7 @@ ged_track(struct ged *gedp, int argc, const char *argv[])
     crname(gedp, solname, 1, len);
     bu_strlcpy(sol.s_name, solname, len);
     if (wrobj(gedp, solname, DIR_SOLID ) )
-	return BRLCAD_ERROR;
+	return GED_ERROR;
     solname[grpname_len + extraTypeChars] = '\0';
     /* idler dummy rcc */
     sol.s_values[6] = iw[2];
@@ -393,7 +393,7 @@ ged_track(struct ged *gedp, int argc, const char *argv[])
     crname(gedp, solname, 2, len);
     bu_strlcpy(sol.s_name, solname, len);
     if (wrobj(gedp, solname, DIR_SOLID ) )
-	return BRLCAD_ERROR;
+	return GED_ERROR;
     solname[grpname_len + extraTypeChars] = '\0';
 
     /* solid 3 */
@@ -405,7 +405,7 @@ ged_track(struct ged *gedp, int argc, const char *argv[])
     sol.s_type = ID_ARB8;
     crdummy(iw, tr, 1);
     if (wrobj(gedp, solname, DIR_SOLID) )
-	return BRLCAD_ERROR;
+	return GED_ERROR;
     solname[grpname_len + extraTypeChars] = '\0';
 
     /* solid 4 */
@@ -417,7 +417,7 @@ ged_track(struct ged *gedp, int argc, const char *argv[])
     crname(gedp, solname, 4, len);
     bu_strlcpy(sol.s_name, solname, len);
     if (wrobj(gedp, solname, DIR_SOLID))
-	return BRLCAD_ERROR;
+	return GED_ERROR;
     solname[grpname_len + extraTypeChars] = '\0';
 
     /* solid 5 */
@@ -429,7 +429,7 @@ ged_track(struct ged *gedp, int argc, const char *argv[])
     crname(gedp, solname, 5, len);
     bu_strlcpy(sol.s_name, solname, len);
     if (wrobj(gedp, solname, DIR_SOLID) )
-	return BRLCAD_ERROR;
+	return GED_ERROR;
     solname[grpname_len + extraTypeChars] = '\0';
 
     /* solid 6 */
@@ -441,7 +441,7 @@ ged_track(struct ged *gedp, int argc, const char *argv[])
     crname(gedp, solname, 6, len);
     bu_strlcpy(sol.s_name, solname, len);
     if (wrobj(gedp, solname, DIR_SOLID) )
-	return BRLCAD_ERROR;
+	return GED_ERROR;
     solname[grpname_len + extraTypeChars] = '\0';
 
     /* solid 7 */
@@ -453,7 +453,7 @@ ged_track(struct ged *gedp, int argc, const char *argv[])
     sol.s_type = ID_ARB8;
     crdummy(dw, tr, 2);
     if (wrobj(gedp, solname, DIR_SOLID) )
-	return BRLCAD_ERROR;
+	return GED_ERROR;
     solname[grpname_len + extraTypeChars] = '\0';
 
     /* solid 8 */
@@ -463,7 +463,7 @@ ged_track(struct ged *gedp, int argc, const char *argv[])
     crname(gedp, solname, 8, len);
     bu_strlcpy(sol.s_name, solname, len);
     if (wrobj(gedp, solname, DIR_SOLID) )
-	return BRLCAD_ERROR;
+	return GED_ERROR;
     solname[grpname_len + extraTypeChars] = '\0';
 
     /* solid 9 */
@@ -477,7 +477,7 @@ ged_track(struct ged *gedp, int argc, const char *argv[])
     crname(gedp, solname, 9, len);
     bu_strlcpy(sol.s_name, solname, len);
     if (wrobj(gedp, solname, DIR_SOLID) )
-	return BRLCAD_ERROR;
+	return GED_ERROR;
     solname[grpname_len + extraTypeChars] = '\0';
 
     /* add the regions */
@@ -597,12 +597,12 @@ wrobj(struct ged	*gedp,
 
     if (db_lookup(gedp->ged_wdbp->dbip, name, LOOKUP_QUIET) != DIR_NULL) {
 	bu_vls_printf(&gedp->ged_result_str, "track naming error: %s already exists\n", name);
-	return BRLCAD_ERROR;
+	return GED_ERROR;
     }
 
     if (flags != DIR_SOLID) {
 	bu_vls_printf(&gedp->ged_result_str, "wrobj can only write solids, aborting\n");
-	return BRLCAD_ERROR;
+	return GED_ERROR;
     }
 
     RT_INIT_DB_INTERNAL(&intern);
@@ -649,14 +649,14 @@ wrobj(struct ged	*gedp,
 	break;
 	default:
 	    bu_vls_printf(&gedp->ged_result_str, "Unrecognized solid type in 'wrobj', aborting\n");
-	    return BRLCAD_ERROR;
+	    return GED_ERROR;
     }
 
     if ( (tdp = db_diradd( gedp->ged_wdbp->dbip, name, -1L, 0, flags, (genptr_t)&intern.idb_type)) == DIR_NULL )
     {
 	rt_db_free_internal( &intern, &rt_uniresource );
 	bu_vls_printf(&gedp->ged_result_str, "Cannot add '%s' to directory, aborting\n", name);
-	return BRLCAD_ERROR;
+	return GED_ERROR;
     }
 
     if ( rt_db_put_internal( tdp, gedp->ged_wdbp->dbip, &intern, &rt_uniresource ) < 0 )
@@ -665,7 +665,7 @@ wrobj(struct ged	*gedp,
 	bu_vls_printf(&gedp->ged_result_str, "wrobj(gedp, %s):  write error\n", name);
 	bu_vls_printf(&gedp->ged_result_str, "The in-memory table of contents may not match the status of the on-disk\ndatabase.  The on-disk database should still be intact.  For safety,\nyou should exit now, and resolve the I/O problem, before continuing.\n");
 
-	return BRLCAD_ERROR;
+	return GED_ERROR;
     }
     return(0);
 }

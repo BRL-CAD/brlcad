@@ -46,8 +46,8 @@ ged_expand(struct ged *gedp, int argc, const char *argv[])
     int regexp, nummatch, thismatch, backslashed;
     static const char *usage = "expression";
 
-    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
-    GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
+    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
+    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
 
     /* initialize result */
     bu_vls_trunc(&gedp->ged_result_str, 0);
@@ -55,12 +55,12 @@ ged_expand(struct ged *gedp, int argc, const char *argv[])
     /* must be wanting help */
     if (argc == 1) {
 	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return BRLCAD_HELP;
+	return GED_HELP;
     }
 
     if (MAXARGS < argc) {
 	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return BRLCAD_ERROR;
+	return GED_ERROR;
     }
 
     nummatch = 0;
@@ -83,10 +83,12 @@ ged_expand(struct ged *gedp, int argc, const char *argv[])
 
 	/* If it isn't a regexp, copy directly and continue */
 	if (regexp == 0) {
-	    if (nummatch > 0)
-		bu_vls_printf(&gedp->ged_result_str, " ");
-	    ged_scrape_escapes_AppendResult(&gedp->ged_result_str, argv[whicharg]);
-	    ++nummatch;
+	    if (db_lookup(gedp->ged_wdbp->dbip, argv[whicharg], LOOKUP_QUIET) != DIR_NULL) {
+		if (nummatch > 0)
+		    bu_vls_printf(&gedp->ged_result_str, " ");
+		ged_scrape_escapes_AppendResult(&gedp->ged_result_str, argv[whicharg]);
+		++nummatch;
+	    }
 	    continue;
 	}
 
@@ -112,14 +114,9 @@ ged_expand(struct ged *gedp, int argc, const char *argv[])
 		++thismatch;
 	    }
 	}
-	if (thismatch == 0) {
-	    if (nummatch > 0)
-		bu_vls_printf(&gedp->ged_result_str, " ");
-	    ged_scrape_escapes_AppendResult(&gedp->ged_result_str, argv[whicharg]);
-	}
     }
 
-    return BRLCAD_OK;
+    return GED_OK;
 }
 
 static void

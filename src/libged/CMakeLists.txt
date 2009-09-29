@@ -10,10 +10,11 @@ set(LIBGED_SOURCES
     arot.c
     attr.c
     autoview.c
+    bb.c
     bev.c
     bigE.c
-    binary.c
     blast.c
+    bo.c
     bot_condense.c
     bot_decimate.c
     bot_dump.c
@@ -25,7 +26,9 @@ set(LIBGED_SOURCES
     bot_split.c
     bot_sync.c
     bot_vertex_fuse.c
+    brep.c
     cat.c
+    cc.c
     center.c
     clip.c
     clone.c
@@ -82,6 +85,7 @@ set(LIBGED_SOURCES
     group.c
     hide.c
     how.c
+    human.c
     illum.c
     importFg4Section.c
     inside.c
@@ -100,11 +104,13 @@ set(LIBGED_SOURCES
     log.c
     lookat.c
     ls.c
+    lscon.c
     lt.c
     m2v_point.c
     make.c
     make_bb.c
     make_name.c
+    make_pnts.c
     match.c
     mater.c
     mirror.c
@@ -138,8 +144,10 @@ set(LIBGED_SOURCES
     prcolor.c
     prefix.c
     preview.c
+    protate.c
     ps.c
     pscale.c
+    ptranslate.c
     push.c
     put.c
     put_comb.c
@@ -162,6 +170,10 @@ set(LIBGED_SOURCES
     rot_point.c
     rotate_about.c
     rotate_arb_face.c
+    rotate_eto.c
+    rotate_extrude.c
+    rotate_hyp.c
+    rotate_tgc.c
     rrt.c
     rt.c
     rtabort.c
@@ -171,6 +183,15 @@ set(LIBGED_SOURCES
     scale.c
     scale_ehy.c
     scale_ell.c
+    scale_epa.c
+    scale_eto.c
+    scale_extrude.c
+    scale_hyp.c
+    scale_part.c
+    scale_rhc.c
+    scale_rpc.c
+    scale_superell.c
+    scale_tgc.c
     scale_tor.c
     search.c
     set_output_script.c
@@ -184,6 +205,7 @@ set(LIBGED_SOURCES
     size.c
     slew.c
     solids_on_ray.c
+    sphgroup.c
     summary.c
     sync.c
     tables.c
@@ -194,6 +216,8 @@ set(LIBGED_SOURCES
     tra.c
     trace.c
     track.c
+    translate_extrude.c
+    translate_tgc.c
     tree.c
     typein.c
     unhide.c

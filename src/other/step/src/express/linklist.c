@@ -22,7 +22,7 @@ static char rcsid[] = "$Id: linklist.c,v 1.3 1997/01/21 19:19:51 dar Exp $";
  */
 
 #define LINKED_LIST_C
-#include "linklist.h"
+#include "express/linklist.h"
 
 void
 LISTinitialize(void)

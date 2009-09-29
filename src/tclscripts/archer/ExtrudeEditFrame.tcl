@@ -38,9 +38,14 @@
 	method initGeometry {gdata}
 	method updateGeometry {}
 	method createGeometry {obj}
+	method p {obj args}
     }
 
     protected {
+	common setH    1
+	common rotH    2
+	common moveH   3
+
 	variable mVx ""
 	variable mVy ""
 	variable mVz ""
@@ -55,8 +60,14 @@
 	variable mBz ""
 	variable mS ""
 
-	# Override what's in GeometryEditFrame
+	# Methods used by the constructor.
+	# Override methods in GeometryEditFrame.
+	method buildUpperPanel {}
+	method buildLowerPanel {}
+
+	# Override what's in GeometryEditFrame.
 	method updateGeometryIfMod {}
+	method initEditState {}
     }
 
     private {}
@@ -68,6 +79,120 @@
 # ------------------------------------------------------------
 
 ::itcl::body ExtrudeEditFrame::constructor {args} {
+    eval itk_initialize $args
+}
+
+
+# ------------------------------------------------------------
+#                        OPTIONS
+# ------------------------------------------------------------
+
+
+# ------------------------------------------------------------
+#                      PUBLIC METHODS
+# ------------------------------------------------------------
+
+## - initGeometry
+#
+# Initialize the variables containing the object's specification.
+#
+::itcl::body ExtrudeEditFrame::initGeometry {gdata} {
+    set _V [bu_get_value_by_keyword V $gdata]
+    set mVx [lindex $_V 0]
+    set mVy [lindex $_V 1]
+    set mVz [lindex $_V 2]
+    set _H [bu_get_value_by_keyword H $gdata]
+    set mHx [lindex $_H 0]
+    set mHy [lindex $_H 1]
+    set mHz [lindex $_H 2]
+    set _A [bu_get_value_by_keyword A $gdata]
+    set mAx [lindex $_A 0]
+    set mAy [lindex $_A 1]
+    set mAz [lindex $_A 2]
+    set _B [bu_get_value_by_keyword B $gdata]
+    set mBx [lindex $_B 0]
+    set mBy [lindex $_B 1]
+    set mBz [lindex $_B 2]
+    set mS [bu_get_value_by_keyword S $gdata]
+
+    GeometryEditFrame::initGeometry $gdata
+}
+
+::itcl::body ExtrudeEditFrame::updateGeometry {} {
+    if {$itk_option(-mged) == "" ||
+	$itk_option(-geometryObject) == ""} {
+	return
+    }
+
+    $itk_option(-mged) adjust $itk_option(-geometryObject) \
+	V [list $mVx $mVy $mVz] \
+	H [list $mHx $mHy $mHz] \
+	A [list $mAx $mAy $mAz] \
+	B [list $mBx $mBy $mBz] \
+	S $mS
+
+    if {$itk_option(-geometryChangedCallback) != ""} {
+	$itk_option(-geometryChangedCallback)
+    }
+}
+
+::itcl::body ExtrudeEditFrame::createGeometry {obj} {
+    if {![GeometryEditFrame::createGeometry $obj]} {
+	return
+    }
+
+    $itk_option(-mged) put $obj extrude \
+	V [list $mCenterX $mCenterY $mCenterZ] \
+	H [list 0 0 $mDelta] \
+	A [list $mDelta 0 0] \
+	B [list 0 $mDelta 0] \
+	S "none"
+}
+
+::itcl::body ExtrudeEditFrame::p {obj args} {
+    switch -- $GeometryEditFrame::mEditClass \
+	$GeometryEditFrame::EDIT_CLASS_SCALE {
+	    if {[llength $args] != 1 || ![string is double $args]} {
+		return "Usage: p sf"
+	    }
+	} \
+	$GeometryEditFrame::EDIT_CLASS_ROT {
+	    if {[llength $args] != 3 ||
+		![string is double [lindex $args 0]] ||
+		![string is double [lindex $args 1]] ||
+		![string is double [lindex $args 2]]} {
+		return "Usage: p rx ry rz"
+	    }
+	} \
+	$GeometryEditFrame::EDIT_CLASS_TRANS {
+	    if {[llength $args] != 3 ||
+		![string is double [lindex $args 0]] ||
+		![string is double [lindex $args 1]] ||
+		![string is double [lindex $args 2]]} {
+		return "Usage: p tx ty tz"
+	    }
+	}
+
+    switch -- $mEditMode \
+	$setH {
+	    $::ArcherCore::application p_pscale $obj h $args
+	} \
+	$moveH {
+	    $::ArcherCore::application p_ptranslate $obj h $args
+	} \
+	$rotH {
+	    $::ArcherCore::application p_protate $obj h $args
+	}
+
+    return ""
+}
+
+
+# ------------------------------------------------------------
+#                      PROTECTED METHODS
+# ------------------------------------------------------------
+
+::itcl::body ExtrudeEditFrame::buildUpperPanel {} {
     set parent [$this childsite]
     itk_component add extrudeType {
 	::ttk::label $parent.extrudetype \
@@ -300,81 +425,27 @@
     bind $itk_component(extrudeByE) <Return> [::itcl::code $this updateGeometryIfMod]
     bind $itk_component(extrudeBzE) <Return> [::itcl::code $this updateGeometryIfMod]
     bind $itk_component(extrudeSE) <Return> [::itcl::code $this updateGeometryIfMod]
-
-    eval itk_initialize $args
 }
 
+::itcl::body ExtrudeEditFrame::buildLowerPanel {} {
+    set parent [$this childsite lower]
 
-# ------------------------------------------------------------
-#                        OPTIONS
-# ------------------------------------------------------------
+    set alist [list H set Set H move Move H rot Rotate]
 
+    foreach {attribute op opLabel} $alist {
+	itk_component add $op$attribute {
+	    ::ttk::radiobutton $parent.$op\_$attribute \
+		-variable [::itcl::scope mEditMode] \
+		-value [subst $[subst $op$attribute]] \
+		-text "$opLabel $attribute" \
+		-command [::itcl::code $this initEditState]
+	} {}
 
-# ------------------------------------------------------------
-#                      PUBLIC METHODS
-# ------------------------------------------------------------
-
-## - initGeometry
-#
-# Initialize the variables containing the object's specification.
-#
-::itcl::body ExtrudeEditFrame::initGeometry {gdata} {
-    set _V [bu_get_value_by_keyword V $gdata]
-    set mVx [lindex $_V 0]
-    set mVy [lindex $_V 1]
-    set mVz [lindex $_V 2]
-    set _H [bu_get_value_by_keyword H $gdata]
-    set mHx [lindex $_H 0]
-    set mHy [lindex $_H 1]
-    set mHz [lindex $_H 2]
-    set _A [bu_get_value_by_keyword A $gdata]
-    set mAx [lindex $_A 0]
-    set mAy [lindex $_A 1]
-    set mAz [lindex $_A 2]
-    set _B [bu_get_value_by_keyword B $gdata]
-    set mBx [lindex $_B 0]
-    set mBy [lindex $_B 1]
-    set mBz [lindex $_B 2]
-    set mS [bu_get_value_by_keyword S $gdata]
-
-    GeometryEditFrame::initGeometry $gdata
-}
-
-::itcl::body ExtrudeEditFrame::updateGeometry {} {
-    if {$itk_option(-mged) == "" ||
-	$itk_option(-geometryObject) == ""} {
-	return
-    }
-
-    $itk_option(-mged) adjust $itk_option(-geometryObject) \
-	V [list $mVx $mVy $mVz] \
-	H [list $mHx $mHy $mHz] \
-	A [list $mAx $mAy $mAz] \
-	B [list $mBx $mBy $mBz] \
-	S $mS
-
-    if {$itk_option(-geometryChangedCallback) != ""} {
-	$itk_option(-geometryChangedCallback)
+	pack $itk_component($op$attribute) \
+	    -anchor w \
+	    -expand yes
     }
 }
-
-::itcl::body ExtrudeEditFrame::createGeometry {obj} {
-    if {![GeometryEditFrame::createGeometry $obj]} {
-	return
-    }
-
-    $itk_option(-mged) put $obj extrude \
-	V [list $mCenterX $mCenterY $mCenterZ] \
-	H [list 0 0 $mDelta] \
-	A [list $mDelta 0 0] \
-	B [list 0 $mDelta 0] \
-	S "none"
-}
-
-
-# ------------------------------------------------------------
-#                      PROTECTED METHODS
-# ------------------------------------------------------------
 
 ::itcl::body ExtrudeEditFrame::updateGeometryIfMod {} {
     if {$itk_option(-mged) == "" ||
@@ -447,6 +518,31 @@
 	updateGeometry
     }
 }
+
+::itcl::body ExtrudeEditFrame::initEditState {} {
+    set mEditPCommand [::itcl::code $this p]
+    configure -valueUnits "mm"
+
+    switch -- $mEditMode \
+	$setH {
+	    set mEditCommand pscale
+	    set mEditClass $EDIT_CLASS_SCALE
+	    set mEditParam1 h
+	} \
+	$moveH {
+	    set mEditCommand ptranslate
+	    set mEditClass $EDIT_CLASS_TRANS
+	    set mEditParam1 h
+        } \
+	$rotH {
+	    set mEditCommand protate
+	    set mEditClass $EDIT_CLASS_ROT
+	    set mEditParam1 h
+	}
+
+    GeometryEditFrame::initEditState
+}
+
 
 # Local Variables:
 # mode: Tcl

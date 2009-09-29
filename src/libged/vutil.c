@@ -135,7 +135,7 @@ ged_do_rot(struct ged	*gedp,
 		MAT4X3PNT(rot_pt, gedp->ged_gvp->gv_model2view, new_origin);
 		break;
 	    default:
-		return BRLCAD_ERROR;
+		return GED_ERROR;
 	}
 
 	bn_mat_xform_about_pt(viewchg, rmat, rot_pt);
@@ -152,7 +152,7 @@ ged_do_rot(struct ged	*gedp,
     bn_mat_mul2(rmat, gedp->ged_gvp->gv_rotation);
     ged_view_update(gedp->ged_gvp);
 
-    return BRLCAD_OK;
+    return GED_OK;
 }
 
 int
@@ -164,7 +164,7 @@ ged_do_slew(struct ged *gedp, vect_t svec)
     MAT_DELTAS_VEC_NEG(gedp->ged_gvp->gv_center, model_center);
     ged_view_update(gedp->ged_gvp);
 
-    return BRLCAD_OK;
+    return GED_OK;
 }
 
 int
@@ -198,7 +198,7 @@ ged_do_tra(struct ged	*gedp,
     MAT_DELTAS_VEC_NEG(gedp->ged_gvp->gv_center, nvc);
     ged_view_update(gedp->ged_gvp);
 
-    return BRLCAD_OK;
+    return GED_OK;
 }
 
 int
@@ -211,7 +211,7 @@ ged_do_zoom(struct ged *gedp, fastf_t sf)
     gedp->ged_gvp->gv_isize = 1.0 / gedp->ged_gvp->gv_size;
     ged_view_update(gedp->ged_gvp);
 
-    return BRLCAD_OK;
+    return GED_OK;
 }
 
 /*

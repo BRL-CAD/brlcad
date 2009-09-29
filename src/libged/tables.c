@@ -79,8 +79,8 @@ ged_tables(struct ged *gedp, int argc, const char *argv[])
     int i;
     static const char *usage = "file object(s)";
 
-    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
-    GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
+    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
+    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
 
     /* initialize result */
     bu_vls_trunc(&gedp->ged_result_str, 0);
@@ -88,12 +88,12 @@ ged_tables(struct ged *gedp, int argc, const char *argv[])
     /* must be wanting help */
     if (argc == 1) {
 	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return BRLCAD_HELP;
+	return GED_HELP;
     }
 
     if (argc < 3) {
 	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return BRLCAD_ERROR;
+	return GED_ERROR;
     }
 
 
@@ -111,10 +111,10 @@ ged_tables(struct ged *gedp, int argc, const char *argv[])
 	bu_vls_free( &cmd );
 	bu_vls_free(&tmp_vls);
 	bu_ptbl_free( &cur_path );
-	return BRLCAD_OK;
+	return GED_OK;
     }
 #endif
-    status = BRLCAD_OK;
+    status = GED_OK;
 
     /* find out which ascii table is desired */
     if ( strcmp(argv[0], "solids") == 0 ) {
@@ -129,14 +129,14 @@ ged_tables(struct ged *gedp, int argc, const char *argv[])
     } else {
 	/* should never reach here */
 	bu_vls_printf(&gedp->ged_result_str, "%s:  input error\n", argv[0]);
-	status = BRLCAD_ERROR;
+	status = GED_ERROR;
 	goto end;
     }
 
     /* open the file */
     if ((tabptr=fopen(argv[1], "w+")) == NULL) {
 	bu_vls_printf(&gedp->ged_result_str, "%s:  Can't open %s\n", argv[0], argv[1]);
-	status = BRLCAD_ERROR;
+	status = GED_ERROR;
 	goto end;
     }
 
@@ -144,7 +144,7 @@ ged_tables(struct ged *gedp, int argc, const char *argv[])
 	/* temp file for discrimination of solids */
 	if ( (idfd = creat("/tmp/mged_discr", 0600)) < 0 ) {
 	    perror( "/tmp/mged_discr" );
-	    status = BRLCAD_ERROR;
+	    status = GED_ERROR;
 	    goto end;
 	}
 	rd_idfd = open( "/tmp/mged_discr", 2 );
@@ -188,7 +188,7 @@ ged_tables(struct ged *gedp, int argc, const char *argv[])
 	if ( (dp = db_lookup(gedp->ged_wdbp->dbip, argv[i], LOOKUP_NOISY)) != DIR_NULL )
 	    ged_new_tables(gedp, dp, &cur_path, (fastf_t *)bn_mat_identity, flag);
 	else
-	    bu_vls_printf(&gedp->ged_result_str, "%s:  skip this object\n");
+	    bu_vls_printf(&gedp->ged_result_str, "%s:  skip this object\n", argv[i]);
     }
 
     bu_vls_printf(&gedp->ged_result_str, "Summary written in: %s\n", argv[1]);

@@ -55,9 +55,9 @@ ged_facetize(struct ged *gedp, int argc, const char *argv[])
     struct model	*nmg_model;
     static const char *usage = "[-n] [-t] [-T] new_obj old_obj [old_obj2 old_obj3 ...]";
 
-    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
-    GED_CHECK_READ_ONLY(gedp, BRLCAD_ERROR);
-    GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
+    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
+    GED_CHECK_READ_ONLY(gedp, GED_ERROR);
+    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
 
     /* initialize result */
     bu_vls_trunc(&gedp->ged_result_str, 0);
@@ -65,12 +65,12 @@ ged_facetize(struct ged *gedp, int argc, const char *argv[])
     /* must be wanting help */
     if (argc == 1) {
 	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return BRLCAD_HELP;
+	return GED_HELP;
     }
 
     if (argc < 3) {
 	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return BRLCAD_ERROR;
+	return GED_ERROR;
     }
 
     dbip = gedp->ged_wdbp->dbip;
@@ -102,7 +102,7 @@ ged_facetize(struct ged *gedp, int argc, const char *argv[])
 	    default:
 	    {
 		bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-		return BRLCAD_ERROR;
+		return GED_ERROR;
 	    }
 	}
     }
@@ -110,7 +110,7 @@ ged_facetize(struct ged *gedp, int argc, const char *argv[])
     argv += bu_optind;
     if ( argc < 0 ) {
 	bu_vls_printf(&gedp->ged_result_str, "facetize: missing argument\n");
-	return BRLCAD_ERROR;
+	return GED_ERROR;
     }
 
     newname = (char *)argv[0];
@@ -118,12 +118,12 @@ ged_facetize(struct ged *gedp, int argc, const char *argv[])
     argc--;
     if ( argc < 0 ) {
 	bu_vls_printf(&gedp->ged_result_str, "facetize: missing argument\n");
-	return BRLCAD_ERROR;
+	return GED_ERROR;
     }
 
     if ( db_lookup( dbip, newname, LOOKUP_QUIET ) != DIR_NULL )  {
 	bu_vls_printf(&gedp->ged_result_str, "error: solid '%s' already exists, aborting\n", newname);
-	return BRLCAD_ERROR;
+	return GED_ERROR;
     }
 
     bu_vls_printf(&gedp->ged_result_str,
@@ -150,7 +150,7 @@ ged_facetize(struct ged *gedp, int argc, const char *argv[])
 	bu_vls_printf(&gedp->ged_result_str, "facetize: error in db_walk_tree()\n");
 	/* Destroy NMG */
 	nmg_km( nmg_model );
-	return BRLCAD_ERROR;
+	return GED_ERROR;
     }
 
     if ( facetize_tree )
@@ -167,7 +167,7 @@ ged_facetize(struct ged *gedp, int argc, const char *argv[])
 	    facetize_tree = (union tree *)NULL;
 	    nmg_km( nmg_model );
 	    nmg_model = (struct model *)NULL;
-	    return BRLCAD_ERROR;
+	    return GED_ERROR;
 	}
 
 	failed = nmg_boolean( facetize_tree, nmg_model, &gedp->ged_wdbp->wdb_tol, &rt_uniresource );
@@ -183,7 +183,7 @@ ged_facetize(struct ged *gedp, int argc, const char *argv[])
 	facetize_tree = (union tree *)NULL;
 	nmg_km( nmg_model );
 	nmg_model = (struct model *)NULL;
-	return BRLCAD_ERROR;
+	return GED_ERROR;
     }
     /* New region remains part of this nmg "model" */
     NMG_CK_REGION( facetize_tree->tr_d.td_r );
@@ -202,7 +202,7 @@ ged_facetize(struct ged *gedp, int argc, const char *argv[])
 	    facetize_tree = (union tree *)NULL;
 	    nmg_km( nmg_model );
 	    nmg_model = (struct model *)NULL;
-	    return BRLCAD_ERROR;
+	    return GED_ERROR;
 	}
 	nmg_triangulate_model( nmg_model, &gedp->ged_wdbp->wdb_tol );
 	BU_UNSETJUMP;
@@ -245,15 +245,15 @@ ged_facetize(struct ged *gedp, int argc, const char *argv[])
 
     if ( (dp=db_diradd( dbip, newname, -1L, 0, DIR_SOLID, (genptr_t)&intern.idb_type)) == DIR_NULL )
     {
-	bu_vls_printf(&gedp->ged_result_str, "Cannot add ", newname, " to directory\n");
-	return BRLCAD_ERROR;
+	bu_vls_printf(&gedp->ged_result_str, "Cannot add %s to directory\n", newname);
+	return GED_ERROR;
     }
 
     if ( rt_db_put_internal( dp, dbip, &intern, &rt_uniresource ) < 0 )
     {
 	bu_vls_printf(&gedp->ged_result_str, "Failed to write %s to database\n", newname);
 	rt_db_free_internal( &intern, &rt_uniresource );
-	return BRLCAD_ERROR;
+	return GED_ERROR;
     }
 
     facetize_tree->tr_d.td_r = (struct nmgregion *)NULL;
@@ -262,7 +262,7 @@ ged_facetize(struct ged *gedp, int argc, const char *argv[])
     db_free_tree( facetize_tree, &rt_uniresource );
     facetize_tree = (union tree *)NULL;
 
-    return BRLCAD_OK;
+    return GED_OK;
 }
 
 static union tree *

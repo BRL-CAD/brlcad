@@ -65,15 +65,42 @@ else !BUILD_TERMLIB
 TERMLIBDIR=
 endif
 
+if BUILD_DOCS
 if BUILD_TKHTML3
 if WITH_X11
-TKHTML3DIR=tkhtml3
-else !WITH_X11
-TKHTML3DIR=
+TKHTML3_MAKE=$(MAKE)
+else
+TKHTML3_MAKE=:
 endif
-else !BUILD_TKHTML3
-TKHTML3DIR=
+else
+TKHTML3_MAKE=:
 endif
+else
+TKHTML3_MAKE=:
+endif
+
+tkhtml3-all:
+	cd tkhtml3 && ${TKHTML3_MAKE} $(AM_MAKEFLAGS) LIBS="${X_LIBS} ${LIBS}" all
+
+tkhtml3-install:
+	cd tkhtml3 && ${TKHTML3_MAKE} $(AM_MAKEFLAGS) LIBS="${X_LIBS} ${LIBS}" install
+
+tkhtml3-clean:
+	cd tkhtml3 && ${TKHTML3_MAKE} $(AM_MAKEFLAGS) LIBS="${X_LIBS} ${LIBS}" clean
+
+tkhtml3-distclean:
+	cd tkhtml3 && ${TKHTML3_MAKE} $(AM_MAKEFLAGS) LIBS="${X_LIBS} ${LIBS}" distclean
+
+tkhtml3-uninstall:
+	cd tkhtml3 && ${TKHTML3_MAKE} $(AM_MAKEFLAGS) LIBS="${X_LIBS} ${LIBS}" uninstall
+
+all-local: tkhtml3-all
+install-exec-local: tkhtml3-install
+clean-local: tkhtml3-clean
+distclean-local: tkhtml3-distclean
+uninstall-local: tkhtml3-uninstall
+
+.PHONY : tkhtml3-all tkhtml3-install tkhtml3-clean tkhtml3-distclean tkhtml3-uninstall
 
 if BUILD_TKIMG
 if WITH_X11
@@ -139,7 +166,6 @@ SUBDIRS = \
 	${TERMLIBDIR} \
 	${JOVEDIR} \
 	${STEPDIR} \
-	${TKHTML3DIR} \
 	${TKIMGDIR} \
 	${OPENNURBSDIR} \
 	${TNTDIR} \
@@ -152,7 +178,17 @@ endif
 # end ONLY_BENCHMARK
 
 EXTRA_DIST = \
-	boost
+	boost \
+	tkhtml3/COPYRIGHT \
+	tkhtml3/Makefile \
+	tkhtml3/Makefile.in \
+	tkhtml3/README \
+	tkhtml3/aclocal.m4 \
+	tkhtml3/configure \
+	tkhtml3/configure.in \
+	tkhtml3/doc \
+	tkhtml3/src \
+	tkhtml3/tclconfig
 
 # FIXME: need to only traverse tcl/tk if configured
 DIST_SUBDIRS = \
@@ -170,7 +206,6 @@ DIST_SUBDIRS = \
 	step \
 	tcl \
 	tk \
-	tkhtml3 \
 	tkimg \
 	tnt
 

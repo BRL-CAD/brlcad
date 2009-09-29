@@ -644,7 +644,7 @@ db_tree_del_rhs( union tree *tp, struct resource *resp )
  *	 0	OK
  */
 int
-db_tree_del_dbleaf(union tree **tp, const char *cp, struct resource *resp)
+db_tree_del_dbleaf(union tree **tp, const char *cp, struct resource *resp, int nflag)
 {
     union tree	*parent;
     int		side = 0;
@@ -658,6 +658,9 @@ db_tree_del_dbleaf(union tree **tp, const char *cp, struct resource *resp)
 	/* Perhaps the root of the tree is the named leaf? */
 	if ( (*tp)->tr_op == OP_DB_LEAF &&
 	     strcmp( cp, (*tp)->tr_l.tl_name ) == 0 )  {
+	    if (nflag)
+		return 0;
+
 	    db_free_tree( *tp, resp );
 	    *tp = TREE_NULL;
 	    return 0;
@@ -667,12 +670,18 @@ db_tree_del_dbleaf(union tree **tp, const char *cp, struct resource *resp)
 
     switch ( side )  {
 	case 1:
+	    if (nflag)
+		return 0;
+
 	    db_tree_del_lhs( parent, resp );
-	    (void)db_tree_del_dbleaf( tp, cp, resp );	/* recurse for extras */
+	    (void)db_tree_del_dbleaf( tp, cp, resp, nflag );	/* recurse for extras */
 	    return 0;
 	case 2:
+	    if (nflag)
+		return 0;
+
 	    db_tree_del_rhs( parent, resp );
-	    (void)db_tree_del_dbleaf( tp, cp, resp );	/* recurse for extras */
+	    (void)db_tree_del_dbleaf( tp, cp, resp, nflag );	/* recurse for extras */
 	    return 0;
     }
     bu_log("db_tree_del_dbleaf() unknown side=%d?\n", side);

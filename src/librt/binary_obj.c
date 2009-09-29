@@ -146,7 +146,15 @@ rt_mk_binunif(struct rt_wdb *wdbp, const char *obj_name, const char *file_name, 
     rt_db_free_internal( &intern, wdbp->wdb_resp );
     bu_free_external( &body );
 
-    /* add this object to the directory */
+    /* make sure the database directory is initialized */
+    if (wdbp->dbip->dbi_eof == RT_DIR_PHONY_ADDR) {
+	ret = db_dirbuild(wdbp->dbip);
+	if (ret) {
+	    return -1;
+	}
+    }
+
+    /* add this (phony until written) object to the directory */
     if ( (dp=db_diradd5( wdbp->dbip, obj_name, -1, major_type,
 			 minor_type, 0, 0, NULL )) == DIR_NULL ) {
 	bu_log( "Error while attemptimg to add new name (%s) to the database",

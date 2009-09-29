@@ -35,6 +35,7 @@
 #include "adrt_struct.h"
 
 #include "bu.h"
+#include "bn.h"
 #include "vmath.h"
 
 
@@ -46,7 +47,7 @@
     VSUB2(_a.v,  _b.v,  _a.v); \
     VUNITIZE(_a.v); }
 
-void render_path_init(render_t *render, int samples) {
+void render_path_init(render_t *render, char *samples) {
     render_path_t *d;
 
     render->work = render_path_work;
@@ -57,8 +58,8 @@ void render_path_init(render_t *render, int samples) {
 	exit(1);
     }
     d = (render_path_t *)render->data;
-    d->samples = samples;
-    d->inv_samples = 1.0 / samples;
+    d->samples = atoi(samples);	/* TODO: make this more robust */
+    d->inv_samples = 1.0 / d->samples;
 }
 
 
@@ -76,6 +77,7 @@ void render_path_work(render_t *render, tie_t *tie, tie_ray_t *ray, TIE_3 *pixel
     int i, n, propogate;
     render_path_t *rd;
 
+    VSETALL(new_pix.v, 0);
 
     rd = (render_path_t *)render->data;
 

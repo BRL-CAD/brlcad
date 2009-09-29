@@ -10,6 +10,7 @@
 
 !include "MUI.nsh"
 !include "FileFunc.nsh"
+!include "WordFunc.nsh"
 
 !insertmacro GetFileName
 
@@ -27,6 +28,10 @@ Function .onVerifyInstDir
   StrCmp "BRL-CAD" $R0 found notFound
 
   notFound:
+    ${WordFind3X} $INSTDIR "\" "BRL-CAD" " "  "+1" $R0
+    StrCmp "BRL-CAD" $R0 found stillNotFound
+
+  stillNotFound:
     StrCpy $INSTDIR "$INSTDIR\BRL-CAD"
 
   found:
@@ -40,14 +45,14 @@ FunctionEnd
   Name "BRL-CAD"
 
   ; The file to write
-  OutFile "BRL-CAD_${VERSION}.exe"
+  OutFile "BRL-CAD_${VERSION}${INSTALLERSUFFIX}.exe"
 
   ; The default installation directory
   InstallDir $PROGRAMFILES\BRL-CAD\${VERSION}
 
   ; Registry key to check for directory (so if you install again, it will 
   ; overwrite the old one automatically)
-  InstallDirRegKey HKLM "Software\BRL-CAD ${VERSION}" "Install_Dir"
+;  InstallDirRegKey HKLM "Software\BRL-CAD ${VERSION}" "Install_Dir"
 
   ; Make it look pretty in XP
   XPStyle on
@@ -92,9 +97,9 @@ FunctionEnd
   !insertmacro MUI_PAGE_DIRECTORY
 
   ;Start Menu Folder Page Configuration
-  !define MUI_STARTMENUPAGE_REGISTRY_ROOT "HKLM" 
-  !define MUI_STARTMENUPAGE_REGISTRY_KEY "Software\BRL-CAD\${VERSION}" 
-  !define MUI_STARTMENUPAGE_REGISTRY_VALUENAME "Start Menu Folder"
+;  !define MUI_STARTMENUPAGE_REGISTRY_ROOT "HKLM" 
+;  !define MUI_STARTMENUPAGE_REGISTRY_KEY "Software\BRL-CAD\${VERSION}" 
+;  !define MUI_STARTMENUPAGE_REGISTRY_VALUENAME "Start Menu Folder"
 
   !insertmacro MUI_PAGE_STARTMENU Application $STARTMENU_FOLDER
 
@@ -134,34 +139,34 @@ Section "BRL-CAD (required)" BRL-CAD
 
   ; Set output path to the installation directory.
   SetOutPath $INSTDIR
-  File /r "..\..\brlcadInstall\archer.ico"
-  File /r "..\..\brlcadInstall\brlcad.ico"
+  File /r "..\..\brlcadInstall${PLATFORM}\archer.ico"
+  File /r "..\..\brlcadInstall${PLATFORM}\brlcad.ico"
 
   SetOutPath $INSTDIR\bin
-  File /r "..\..\brlcadInstall\bin\*"
+  File /r "..\..\brlcadInstall${PLATFORM}\bin\*"
 
   SetOutPath $INSTDIR\include
-  File /r "..\..\brlcadInstall\include\*"
+  File /r "..\..\brlcadInstall${PLATFORM}\include\*"
 
   SetOutPath $INSTDIR\lib
-  File /r "..\..\brlcadInstall\lib\*"
+  File /r "..\..\brlcadInstall${PLATFORM}\lib\*"
 
   SetOutPath $INSTDIR\share
-  File /r "..\..\brlcadInstall\share\*"
+  File /r "..\..\brlcadInstall${PLATFORM}\share\*"
 
   ; Write the installation path into the registry
-  WriteRegStr HKLM "SOFTWARE\BRL-CAD ${VERSION}" "Install_Dir" "$INSTDIR"
+;  WriteRegStr HKLM "SOFTWARE\BRL-CAD ${VERSION}" "Install_Dir" "$INSTDIR"
 
   ; Write the uninstall keys for Windows
-  WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\BRL-CAD ${VERSION}" "DisplayName" "BRL-CAD ${VERSION}"
-  WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\BRL-CAD ${VERSION}" "DisplayVersion" "${VERSION}"
-  WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\BRL-CAD ${VERSION}" "VersionMajor" "${MAJOR}"
-  WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\BRL-CAD ${VERSION}" "VersionMinor" "${MINOR}"
-  WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\BRL-CAD ${VERSION}" "InstallLocation" '"$INSTDIR"'
-  WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\BRL-CAD ${VERSION}" "URLInfoAbout" "http://brlcad.org"
-  WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\BRL-CAD ${VERSION}" "URLUpdateInfo" "http://brlcad.org"
-  WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\BRL-CAD ${VERSION}" "HelpLink" "http://irc.brlcad.org"
-  WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\BRL-CAD ${VERSION}" "UninstallString" '"$INSTDIR\uninstall.exe"'
+;  WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\BRL-CAD ${VERSION}" "DisplayName" "BRL-CAD ${VERSION}"
+;  WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\BRL-CAD ${VERSION}" "DisplayVersion" "${VERSION}"
+;  WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\BRL-CAD ${VERSION}" "VersionMajor" "${MAJOR}"
+;  WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\BRL-CAD ${VERSION}" "VersionMinor" "${MINOR}"
+;  WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\BRL-CAD ${VERSION}" "InstallLocation" '"$INSTDIR"'
+;  WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\BRL-CAD ${VERSION}" "URLInfoAbout" "http://brlcad.org"
+;  WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\BRL-CAD ${VERSION}" "URLUpdateInfo" "http://brlcad.org"
+;  WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\BRL-CAD ${VERSION}" "HelpLink" "http://irc.brlcad.org"
+;  WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\BRL-CAD ${VERSION}" "UninstallString" '"$INSTDIR\uninstall.exe"'
 
   ;Create uninstaller
   WriteUninstaller "uninstall.exe"
@@ -171,18 +176,18 @@ Section "BRL-CAD (required)" BRL-CAD
 
   ; Create desktop icons
   SetOutPath $INSTDIR
-  CreateShortCut "$DESKTOP\Archer.lnk" "$INSTDIR\bin\archer.bat" "" "$INSTDIR\archer.ico" 0
-  CreateShortCut "$DESKTOP\MGED.lnk" "$INSTDIR\bin\mged.bat" "" "$INSTDIR\brlcad.ico" 0
-  CreateShortCut "$DESKTOP\RtWizard.lnk" "$INSTDIR\bin\rtwizard.bat" "" "$INSTDIR\brlcad.ico" 0
+  CreateShortCut "$DESKTOP\Archer${INSTALLERSUFFIX}.lnk" "$INSTDIR\bin\archer.bat" "" "$INSTDIR\archer.ico" 0
+  CreateShortCut "$DESKTOP\MGED${INSTALLERSUFFIX}.lnk" "$INSTDIR\bin\mged.bat" "" "$INSTDIR\brlcad.ico" 0
+  CreateShortCut "$DESKTOP\RtWizard${INSTALLERSUFFIX}.lnk" "$INSTDIR\bin\rtwizard.bat" "" "$INSTDIR\brlcad.ico" 0
 
   !insertmacro MUI_STARTMENU_WRITE_BEGIN Application
     ;Main start menu shortcuts
     SetOutPath $INSTDIR
-    CreateDirectory "$SMPROGRAMS\$STARTMENU_FOLDER"
-    CreateShortCut "$SMPROGRAMS\$STARTMENU_FOLDER\Archer.lnk" "$INSTDIR\bin\archer.bat" "" "$INSTDIR\archer.ico" 0
-    CreateShortCut "$SMPROGRAMS\$STARTMENU_FOLDER\MGED.lnk" "$INSTDIR\bin\mged.bat" "" "$INSTDIR\brlcad.ico" 0
-    CreateShortCut "$SMPROGRAMS\$STARTMENU_FOLDER\RtWizard.lnk" "$INSTDIR\bin\rtwizard.bat" "" "$INSTDIR\brlcad.ico" 0
-    CreateShortCut "$SMPROGRAMS\$STARTMENU_FOLDER\Uninstall.lnk" "$INSTDIR\uninstall.exe" "" "$INSTDIR\uninstall.exe" 0
+    CreateDirectory "$SMPROGRAMS\$STARTMENU_FOLDER${INSTALLERSUFFIX}"
+    CreateShortCut "$SMPROGRAMS\$STARTMENU_FOLDER${INSTALLERSUFFIX}\Archer.lnk" "$INSTDIR\bin\archer.bat" "" "$INSTDIR\archer.ico" 0
+    CreateShortCut "$SMPROGRAMS\$STARTMENU_FOLDER${INSTALLERSUFFIX}\MGED.lnk" "$INSTDIR\bin\mged.bat" "" "$INSTDIR\brlcad.ico" 0
+    CreateShortCut "$SMPROGRAMS\$STARTMENU_FOLDER${INSTALLERSUFFIX}\RtWizard.lnk" "$INSTDIR\bin\rtwizard.bat" "" "$INSTDIR\brlcad.ico" 0
+    CreateShortCut "$SMPROGRAMS\$STARTMENU_FOLDER${INSTALLERSUFFIX}\Uninstall.lnk" "$INSTDIR\uninstall.exe" "" "$INSTDIR\uninstall.exe" 0
   !insertmacro MUI_STARTMENU_WRITE_END
 
 SectionEnd
@@ -191,25 +196,25 @@ Section "Documentation (required)" Documentation
   ; SectionIn RO means temporarily required
   ;SectionIn RO
   ;SetOutPath $INSTDIR\doc
-  ;File /r ..\..\brlcadInstall\doc\*
+  ;File /r ..\..\brlcadInstall${PLATFORM}\doc\*
   !insertmacro MUI_STARTMENU_WRITE_BEGIN Application
     ;Main start menu shortcuts
     SetOutPath $INSTDIR
-    CreateDirectory "$SMPROGRAMS\$STARTMENU_FOLDER\Manuals"
-    CreateShortCut "$SMPROGRAMS\$STARTMENU_FOLDER\Manuals\Archer.lnk" "$BRLCAD_DATA_DIR\html\manuals\archer\Archer_Documentation.chm" "" "$INSTDIR\archer.ico" 0
-    CreateShortCut "$SMPROGRAMS\$STARTMENU_FOLDER\Manuals\BRL-CAD.lnk" "$BRLCAD_DATA_DIR\html\manuals\index.html" "" "$INSTDIR\brlcad.ico" 0
-    CreateShortCut "$SMPROGRAMS\$STARTMENU_FOLDER\Manuals\MGED.lnk" "$BRLCAD_DATA_DIR\html\manuals\mged\index.html" "" "$INSTDIR\brlcad.ico" 0
+    CreateDirectory "$SMPROGRAMS\$STARTMENU_FOLDER${INSTALLERSUFFIX}\Manuals"
+    CreateShortCut "$SMPROGRAMS\$STARTMENU_FOLDER${INSTALLERSUFFIX}\Manuals\Archer.lnk" "$BRLCAD_DATA_DIR\html\manuals\archer\Archer_Documentation.chm" "" "$INSTDIR\archer.ico" 0
+    CreateShortCut "$SMPROGRAMS\$STARTMENU_FOLDER${INSTALLERSUFFIX}\Manuals\BRL-CAD.lnk" "$BRLCAD_DATA_DIR\html\manuals\index.html" "" "$INSTDIR\brlcad.ico" 0
+    CreateShortCut "$SMPROGRAMS\$STARTMENU_FOLDER${INSTALLERSUFFIX}\Manuals\MGED.lnk" "$BRLCAD_DATA_DIR\html\manuals\mged\index.html" "" "$INSTDIR\brlcad.ico" 0
   !insertmacro MUI_STARTMENU_WRITE_END
 SectionEnd
 
 ;Section "Samples" Samples
 ;  SetOutPath $INSTDIR\Samples
-;  File ..\..\brlcadInstall\Samples\*
+;  File ..\..\brlcadInstall${PLATFORM}\Samples\*
 ;SectionEnd
 
 ;Section "Developement headers" Developer
 ;  SetOutPath $INSTDIR\include
-;  File ..\..\brlcadInstall\include\*
+;  File ..\..\brlcadInstall${PLATFORM}\include\*
 ;SectionEnd
 
 ;--------------------------------
@@ -239,18 +244,17 @@ SectionEnd
 Section "Uninstall"
   
   ; Remove registry keys
-  DeleteRegKey HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\BRL-CAD ${VERSION}"
-  DeleteRegKey HKLM "SOFTWARE\BRL-CAD ${VERSION}"
+;  DeleteRegKey HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\BRL-CAD ${VERSION}"
+;  DeleteRegKey HKLM "SOFTWARE\BRL-CAD ${VERSION}"
 
   !insertmacro MUI_STARTMENU_GETFOLDER Application $MUI_TEMP
 
-
   ; Remove shortcuts, if any
-  Delete "$SMPROGRAMS\$MUI_TEMP\Manuals\*"
-  Delete "$SMPROGRAMS\$MUI_TEMP\*"
-  Delete "$DESKTOP\Archer.lnk"
-  Delete "$DESKTOP\MGED.lnk"
-  Delete "$DESKTOP\RtWizard.lnk"
+  Delete "$SMPROGRAMS\$MUI_TEMP${INSTALLERSUFFIX}\Manuals\*"
+  Delete "$SMPROGRAMS\$MUI_TEMP${INSTALLERSUFFIX}\*"
+  Delete "$DESKTOP\Archer${INSTALLERSUFFIX}.lnk"
+  Delete "$DESKTOP\MGED${INSTALLERSUFFIX}.lnk"
+  Delete "$DESKTOP\RtWizard${INSTALLERSUFFIX}.lnk"
 
 
   ; Remove miscellaneous files
@@ -265,7 +269,7 @@ Section "Uninstall"
   RMDir /r "$INSTDIR\lib"
   RMDir /r "$INSTDIR\share"
   RMDir "$INSTDIR"
-  RMDir "$SMPROGRAMS\$MUI_TEMP\Manuals"
-  RMDir "$SMPROGRAMS\$MUI_TEMP"
+  RMDir "$SMPROGRAMS\$MUI_TEMP${INSTALLERSUFFIX}\Manuals"
+  RMDir "$SMPROGRAMS\$MUI_TEMP${INSTALLERSUFFIX}"
 
 SectionEnd

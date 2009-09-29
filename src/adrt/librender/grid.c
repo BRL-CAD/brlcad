@@ -28,7 +28,7 @@
 
 #define GRID 5.0
 #define LINE 0.4
-void render_grid_init(render_t *render) {
+void render_grid_init(render_t *render, char *usr) {
     render->work = render_grid_work;
     render->free = render_grid_free;
 }

@@ -38,6 +38,7 @@
 	method initGeometry {gdata}
 	method updateGeometry {}
 	method createGeometry {obj}
+	method p {obj args}
     }
 
     protected {
@@ -66,7 +67,7 @@
 
 	# Override what's in GeometryEditFrame
 	method updateGeometryIfMod {}
-	method initValuePanel {}
+	method initEditState {}
     }
 
     private {}
@@ -108,7 +109,7 @@
     set mAy [lindex $_A 1]
     set mAz [lindex $_A 2]
     set mR_1 [bu_get_value_by_keyword r_1 $gdata]
-    set mR_2 [bu_get_value_by_keyword r_1 $gdata]
+    set mR_2 [bu_get_value_by_keyword r_2 $gdata]
     set mC [bu_get_value_by_keyword c $gdata]
 
     GeometryEditFrame::initGeometry $gdata
@@ -147,6 +148,27 @@
 	c $mDelta
 }
 
+::itcl::body EhyEditFrame::p {obj args} {
+    if {[llength $args] != 1 || ![string is double $args]} {
+	return "Usage: p sf"
+    }
+
+    switch -- $mEditMode \
+	$setH {
+	    $::ArcherCore::application p_pscale $obj h $args
+	} \
+	$setA {
+	    $::ArcherCore::application p_pscale $obj a $args
+	} \
+	$setB {
+	    $::ArcherCore::application p_pscale $obj b $args
+	} \
+	$setC {
+	    $::ArcherCore::application p_pscale $obj c $args
+	}
+
+    return ""
+}
 
 # ------------------------------------------------------------
 #                      PROTECTED METHODS
@@ -408,7 +430,7 @@
 		-variable [::itcl::scope mEditMode] \
 		-value [subst $[subst set$attribute]] \
 		-text "Set $attribute" \
-		-command [::itcl::code $this initValuePanel]
+		-command [::itcl::code $this initEditState]
 	} {}
 
 	pack $itk_component(set$attribute) \
@@ -487,35 +509,27 @@
     }
 }
 
-::itcl::body EhyEditFrame::initValuePanel {} {
+::itcl::body EhyEditFrame::initEditState {} {
+    set mEditCommand pscale
+    set mEditClass $EDIT_CLASS_SCALE
+    set mEditPCommand [::itcl::code $this p]
+    configure -valueUnits "mm"
+
     switch -- $mEditMode \
-	$setH { \
-	    set mEditCommand pscale; \
-	    set mEditClass $EDIT_CLASS_SCALE; \
-	    set mEditParam1 h; \
-	    configure -valueUnits "mm"; \
+	$setH {
+	    set mEditParam1 h
 	} \
-	$setA { \
-	    set mEditCommand pscale; \
-	    set mEditClass $EDIT_CLASS_SCALE; \
-	    set mEditParam1 a; \
-	    configure -valueUnits "mm"; \
+	$setA {
+	    set mEditParam1 a
 	} \
-	$setB { \
-	    set mEditCommand pscale; \
-	    set mEditClass $EDIT_CLASS_SCALE; \
-	    set mEditParam1 b; \
-	    configure -valueUnits "mm"; \
+	$setB {
+	    set mEditParam1 b
 	} \
-	$setC { \
-	    set mEditCommand pscale; \
-	    set mEditClass $EDIT_CLASS_SCALE; \
-	    set mEditParam1 c; \
-	    configure -valueUnits "mm"; \
+	$setC {
+	    set mEditParam1 c
 	}
 
-    GeometryEditFrame::initValuePanel
-    updateValuePanel
+    GeometryEditFrame::initEditState
 }
 
 

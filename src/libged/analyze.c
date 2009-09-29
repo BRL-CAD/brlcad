@@ -68,8 +68,8 @@ ged_analyze(struct ged *gedp, int argc, const char *argv[])
     struct rt_db_internal	intern;
     static const char *usage = "object(s)";
 
-    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
-    GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
+    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
+    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
 
     /* initialize result */
     bu_vls_trunc(&gedp->ged_result_str, 0);
@@ -77,12 +77,12 @@ ged_analyze(struct ged *gedp, int argc, const char *argv[])
     /* must be wanting help */
     if (argc == 1) {
 	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return BRLCAD_HELP;
+	return GED_HELP;
     }
 
     if (argc < 2) {
 	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return BRLCAD_ERROR;
+	return GED_ERROR;
     }
 
     /* use the names that were input */
@@ -90,17 +90,14 @@ ged_analyze(struct ged *gedp, int argc, const char *argv[])
 	if ( (ndp = db_lookup( gedp->ged_wdbp->dbip,  argv[i], LOOKUP_NOISY )) == DIR_NULL )
 	    continue;
 
-	if ( rt_db_get_internal( &intern, ndp, gedp->ged_wdbp->dbip, bn_mat_identity, &rt_uniresource ) < 0 )  {
-	    bu_vls_printf(&gedp->ged_result_str, "%s: rt_db_get_internal() error\n", argv[0]);
-	    return BRLCAD_ERROR;
-	}
+	GED_DB_GET_INTERNAL(gedp, &intern, ndp, bn_mat_identity, &rt_uniresource, GED_ERROR);
 
 	ged_do_list(gedp, ndp, 1);
 	ged_do_anal(gedp, &intern);
 	rt_db_free_internal(&intern, &rt_uniresource);
     }
 
-    return BRLCAD_OK;
+    return GED_OK;
 }
 
 

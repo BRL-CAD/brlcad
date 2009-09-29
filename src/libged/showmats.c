@@ -56,8 +56,8 @@ ged_showmats(struct ged *gedp, int argc, const char *argv[])
     int max_count=1;
     static const char *usage = "path";
 
-    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
-    GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
+    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
+    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
 
     /* initialize result */
     bu_vls_trunc(&gedp->ged_result_str, 0);
@@ -65,12 +65,12 @@ ged_showmats(struct ged *gedp, int argc, const char *argv[])
     /* must be wanting help */
     if (argc == 1) {
 	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return BRLCAD_HELP;
+	return GED_HELP;
     }
 
     if (argc != 2) {
 	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return BRLCAD_ERROR;
+	return GED_ERROR;
     }
 
     sm_data.smd_gedp = gedp;
@@ -93,7 +93,7 @@ ged_showmats(struct ged *gedp, int argc, const char *argv[])
 
 	if (rt_db_get_internal(&intern, dp, gedp->ged_wdbp->dbip, (fastf_t *)NULL, &rt_uniresource) < 0) {
 	    bu_vls_printf(&gedp->ged_result_str, "Database read error, aborting.\n");
-	    BRLCAD_ERROR;
+	    return GED_ERROR;
 	}
 	comb = (struct rt_comb_internal *)intern.idb_ptr;
 
@@ -106,7 +106,7 @@ ged_showmats(struct ged *gedp, int argc, const char *argv[])
 
 	if (!sm_data.smd_count) {
 	    bu_vls_printf(&gedp->ged_result_str, "%s is not a member of %s\n", sm_data.smd_child, parent);
-	    return BRLCAD_ERROR;
+	    return GED_ERROR;
 	}
 	if (sm_data.smd_count > max_count)
 	    max_count = sm_data.smd_count;
@@ -127,7 +127,7 @@ ged_showmats(struct ged *gedp, int argc, const char *argv[])
 	bu_vls_printf(&gedp->ged_result_str, "%s", obuf);
     }
 
-    return BRLCAD_OK;
+    return GED_OK;
 }
 
 static void

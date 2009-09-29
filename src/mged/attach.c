@@ -49,13 +49,14 @@
 #include "./sedit.h"
 #include "./mged_dm.h"
 
-#define NEED_GUI(_type) ( \
+#define NEED_GUI(_type) (\
 	IS_DM_TYPE_WGL(_type) || \
 	IS_DM_TYPE_OGL(_type) || \
+	IS_DM_TYPE_RTGL(_type) || \
 	IS_DM_TYPE_GLX(_type) || \
 	IS_DM_TYPE_PEX(_type) || \
 	IS_DM_TYPE_TK(_type) || \
-	IS_DM_TYPE_X(_type) )
+	IS_DM_TYPE_X(_type))
 
 /* All systems can compile these! */
 extern int Plot_dm_init(struct dm_list *o_dm_list, int argc, char **argv);
@@ -80,6 +81,11 @@ extern void Wgl_fb_open();
 extern int Ogl_dm_init();
 extern void Ogl_fb_open();
 #endif /* DM_OGL */
+
+#ifdef DM_RTGL
+extern int Rtgl_dm_init();
+extern void Rtgl_fb_open();
+#endif /* DM_RTGL */
 
 #ifdef DM_GLX
 extern int Glx_dm_init();
@@ -116,6 +122,9 @@ struct w_dm which_dm[] = {
 #ifdef DM_OGL
     { DM_TYPE_OGL, "ogl", Ogl_dm_init },
 #endif /* DM_OGL */
+#ifdef DM_RTGL
+    { DM_TYPE_RTGL, "rtgl", Rtgl_dm_init },
+#endif /* DM_RTGL */
 #ifdef DM_GLX
     { DM_TYPE_GLX, "glx", Glx_dm_init },
 #endif /* DM_GLX */
@@ -145,6 +154,10 @@ mged_fb_open(void)
     if (dmp->dm_type == DM_TYPE_OGL)
 	Ogl_fb_open();
 #endif /* DM_OGL */
+#ifdef DM_RTGL
+    if (dmp->dm_type == DM_TYPE_RTGL)
+	Rtgl_fb_open();
+#endif /* DM_RTGL */
 }
 
 
@@ -218,15 +231,17 @@ release(char *name, int need_close)
     }
 
     /*
-     *  This saves the state of the resoures to the "nu" display manager, which
-     *  is beneficial only if closing the last display manager. So when
-     *  another display manager is opened, it looks like the last one
-     *  the user had open. This depends on "nu" always being last in the list.
+     * This saves the state of the resoures to the "nu" display
+     * manager, which is beneficial only if closing the last display
+     * manager. So when another display manager is opened, it looks
+     * like the last one the user had open. This depends on "nu"
+     * always being last in the list.
      */
     usurp_all_resources(BU_LIST_LAST(dm_list, &head_dm_list.l), curr_dm_list);
 
-    /* If this display is being referenced by a command window,
-       then remove the reference  */
+    /* If this display is being referenced by a command window, then
+     * remove the reference.
+     */
     if (curr_dm_list->dml_tie != NULL)
 	curr_dm_list->dml_tie->cl_tie = (struct dm_list *)NULL;
 
@@ -234,9 +249,9 @@ release(char *name, int need_close)
 	DM_CLOSE(dmp);
 
     RT_FREE_VLIST(&curr_dm_list->dml_p_vlist);
-    BU_LIST_DEQUEUE( &curr_dm_list->l );
+    BU_LIST_DEQUEUE(&curr_dm_list->l);
     mged_slider_free_vls(curr_dm_list);
-    bu_free( (genptr_t)curr_dm_list, "release: curr_dm_list" );
+    bu_free((genptr_t)curr_dm_list, "release: curr_dm_list");
 
     if (save_dm_list != DM_LIST_NULL)
 	curr_dm_list = save_dm_list;
@@ -300,6 +315,10 @@ print_valid_dm(void)
     Tcl_AppendResult(interp, "ogl  ", (char *)NULL);
     i++;
 #endif /* DM_OGL */
+#ifdef DM_RTGL
+    Tcl_AppendResult(interp, "rtgl  ", (char *)NULL);
+    i++;
+#endif /* DM_RTGL */
 #ifdef DM_GLX
     Tcl_AppendResult(interp, "glx", (char *)NULL);
     i++;
@@ -312,7 +331,7 @@ print_valid_dm(void)
 
 
 int
-f_attach(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
+f_attach(ClientData clientData, Tcl_Interp *interp, int argc, const char **argv)
 {
     register struct w_dm *wp;
 
@@ -327,9 +346,14 @@ f_attach(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	return TCL_ERROR;
     }
 
+    if (strcmp(argv[argc-1], "nu") == 0) {
+	/* nothing to do */
+	return TCL_OK;
+    }
+
     /* Look at last argument, skipping over any options which preceed it */
-    for ( wp = &which_dm[2]; wp->type != -1; wp++ )
-	if ( strcmp(argv[argc - 1], wp->name ) == 0 )
+    for (wp = &which_dm[2]; wp->type != -1; wp++)
+	if (strcmp(argv[argc - 1], wp->name) == 0)
 	    break;
 
     if (wp->type == -1) {
@@ -417,7 +441,7 @@ int
 mged_attach(
     struct w_dm *wp,
     int argc,
-    char *argv[])
+    const char *argv[])
 {
     register struct dm_list *o_dm_list;
 
@@ -445,7 +469,7 @@ mged_attach(
 	dm_processOptions(tmp_dmp, &tmp_vls, argc - 1, argv + 1);
 	if (strlen(bu_vls_addr(&tmp_dmp->dm_dName))) {
 	    if (gui_setup(bu_vls_addr(&tmp_dmp->dm_dName)) == TCL_ERROR) {
-		bu_free( (genptr_t)curr_dm_list, "f_attach: dm_list" );
+		bu_free((genptr_t)curr_dm_list, "f_attach: dm_list");
 		curr_dm_list = o_dm_list;
 		bu_vls_free(&tmp_dmp->dm_pathName);
 		bu_vls_free(&tmp_dmp->dm_dName);
@@ -454,7 +478,7 @@ mged_attach(
 		return TCL_ERROR;
 	    }
 	} else if (gui_setup((char *)NULL) == TCL_ERROR) {
-	    bu_free( (genptr_t)curr_dm_list, "f_attach: dm_list" );
+	    bu_free((genptr_t)curr_dm_list, "f_attach: dm_list");
 	    curr_dm_list = o_dm_list;
 	    bu_vls_free(&tmp_dmp->dm_pathName);
 	    bu_vls_free(&tmp_dmp->dm_dName);
@@ -491,7 +515,7 @@ mged_attach(
     share_dlist(curr_dm_list);
 
     if (displaylist && mged_variables->mv_dlist && !dlist_state->dl_active) {
-	createDLists(&gedp->ged_gdp->gd_headSolid);
+	createDLists(&gedp->ged_gdp->gd_headDisplay);
 	dlist_state->dl_active = 1;
     }
 
@@ -515,7 +539,7 @@ void
 get_attached(void)
 {
     int argc;
-    char *argv[3];
+    const char *argv[3];
     struct w_dm *wp = (struct w_dm *)NULL;
     int inflimit = 1000;
     int ret;
@@ -557,7 +581,7 @@ get_attached(void)
 	    }
 	}
 
-	if ( wp->type != -1 ) {
+	if (wp->type != -1) {
 	    break;
 	}
 
@@ -583,14 +607,14 @@ get_attached(void)
 
 
 /*
- *			F _ D M
+ * F _ D M
  *
- *  Run a display manager specific command(s).
+ * Run a display manager specific command(s).
  */
 int
 f_dm(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
-    if ( !cmd_hook ) {
+    if (!cmd_hook) {
 	Tcl_AppendResult(interp, "The '", dmp->dm_name,
 			 "' display manager does not support local commands.\n",
 			 (char *)NULL);
@@ -607,15 +631,15 @@ f_dm(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	return TCL_ERROR;
     }
 
-    return cmd_hook( argc-1, argv+1 );
+    return cmd_hook(argc-1, argv+1);
 }
 
 /*
- *			 I S _ D M _ N U L L
+ * I S _ D M _ N U L L
  *
- *  Returns -
- *	 0	If the display manager goes to a real screen.
- *	!0	If the null display manager is attached.
+ * Returns -
+ *  0  If the display manager goes to a real screen.
+ * !0  If the null display manager is attached.
  */
 int
 is_dm_null(void)
@@ -628,11 +652,8 @@ void
 dm_var_init(struct dm_list *initial_dm_list)
 {
     BU_GETSTRUCT(adc_state, _adc_state);
-    *adc_state = *initial_dm_list->dml_adc_state;			/* struct copy */
+    *adc_state = *initial_dm_list->dml_adc_state;		/* struct copy */
     adc_state->adc_rc = 1;
-#if 0
-    adc_state->adc_a1 = adc_state->adc_a2 = 45.0;
-#endif
 
     BU_GETSTRUCT(menu_state, _menu_state);
     *menu_state = *initial_dm_list->dml_menu_state;		/* struct copy */
@@ -651,13 +672,10 @@ dm_var_init(struct dm_list *initial_dm_list)
     mged_variables->mv_fb = 0;
 
     BU_GETSTRUCT(color_scheme, _color_scheme);
-#if 0
-    /* initialize using the last curr_dm_list */
-    *color_scheme = *initial_dm_list->dml_color_scheme;		/* struct copy */
-#else
+
     /* initialize using the nu display manager */
     *color_scheme = *BU_LIST_LAST(dm_list, &head_dm_list.l)->dml_color_scheme;
-#endif
+
     color_scheme->cs_rc = 1;
 
     BU_GETSTRUCT(grid_state, _grid_state);

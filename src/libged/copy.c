@@ -36,14 +36,14 @@
 int
 ged_copy(struct ged *gedp, int argc, const char *argv[])
 {
-    register struct directory *proto;
-    register struct directory *dp;
+    register struct directory *from_dp;
     struct bu_external external;
+    int flags;
     static const char *usage = "from to";
 
-    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
-    GED_CHECK_READ_ONLY(gedp, BRLCAD_ERROR);
-    GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
+    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
+    GED_CHECK_READ_ONLY(gedp, GED_ERROR);
+    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
 
     /* initialize result */
     bu_vls_trunc(&gedp->ged_result_str, 0);
@@ -51,41 +51,109 @@ ged_copy(struct ged *gedp, int argc, const char *argv[])
     /* must be wanting help */
     if (argc == 1) {
 	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return BRLCAD_HELP;
+	return GED_HELP;
     }
 
     if (argc != 3) {
 	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return BRLCAD_ERROR;
+	return GED_ERROR;
     }
 
+    GED_DB_LOOKUP(gedp, from_dp, argv[1], LOOKUP_NOISY, GED_ERROR & GED_QUIET);
+    GED_CHECK_EXISTS(gedp, argv[2], LOOKUP_QUIET, GED_ERROR);
 
-    if ((proto = db_lookup(gedp->ged_wdbp->dbip,  argv[1], LOOKUP_NOISY)) == DIR_NULL)
-	return BRLCAD_ERROR;
-
-    if (db_lookup(gedp->ged_wdbp->dbip, argv[2], LOOKUP_QUIET) != DIR_NULL) {
-	bu_vls_printf(&gedp->ged_result_str, "%s: already exists", argv[2]);
-	return BRLCAD_ERROR;
-    }
-
-    if (db_get_external(&external, proto, gedp->ged_wdbp->dbip)) {
+    if (db_get_external(&external, from_dp, gedp->ged_wdbp->dbip)) {
 	bu_vls_printf(&gedp->ged_result_str, "Database read error, aborting\n");
-	return BRLCAD_ERROR;
+	return GED_ERROR;
     }
 
-    if ((dp=db_diradd(gedp->ged_wdbp->dbip, argv[2], -1, 0, proto->d_flags, (genptr_t)&proto->d_minor_type)) == DIR_NULL ) {
-	bu_vls_printf(&gedp->ged_result_str, "An error has occured while adding a new object to the database.");
-	return BRLCAD_ERROR;
-    }
-
-    if (db_put_external(&external, dp, gedp->ged_wdbp->dbip) < 0) {
+    if (wdb_export_external(gedp->ged_wdbp, &external, argv[2],
+			    from_dp->d_flags,  from_dp->d_minor_type) < 0) {
 	bu_free_external(&external);
-	bu_vls_printf(&gedp->ged_result_str, "Database write error, aborting\n");
-	return BRLCAD_ERROR;
+	bu_vls_printf(&gedp->ged_result_str,
+		      "Failed to write new object (%s) to database - aborting!!\n",
+		      argv[2]);
+	return GED_ERROR;
     }
+
     bu_free_external(&external);
 
-    return BRLCAD_OK;
+    return GED_OK;
+}
+
+int
+ged_dbcopy(struct ged *from_gedp, struct ged *to_gedp, const char *from, const char *to, int fflag)
+{
+    register struct directory *from_dp;
+    struct bu_external external;
+    int exists;
+
+    GED_CHECK_DATABASE_OPEN(from_gedp, GED_ERROR);
+    GED_CHECK_DATABASE_OPEN(to_gedp, GED_ERROR);
+    GED_CHECK_READ_ONLY(to_gedp, GED_ERROR);
+
+    /* initialize result */
+    bu_vls_trunc(&from_gedp->ged_result_str, 0);
+    bu_vls_trunc(&to_gedp->ged_result_str, 0);
+
+    GED_DB_LOOKUP(from_gedp, from_dp, from, LOOKUP_NOISY, GED_ERROR & GED_QUIET);
+
+    if (!fflag && db_lookup(to_gedp->ged_wdbp->dbip, to, LOOKUP_QUIET) != DIR_NULL) {
+	bu_vls_printf(&from_gedp->ged_result_str, "%s already exists.", to);
+	return GED_ERROR;
+    }
+
+    if (db_get_external(&external, from_dp, from_gedp->ged_wdbp->dbip)) {
+	bu_vls_printf(&from_gedp->ged_result_str, "Database read error, aborting\n");
+	return GED_ERROR;
+    }
+
+    if (wdb_export_external(to_gedp->ged_wdbp, &external, to,
+			    from_dp->d_flags,  from_dp->d_minor_type) < 0) {
+	bu_free_external(&external);
+	bu_vls_printf(&from_gedp->ged_result_str,
+		      "Failed to write new object (%s) to database - aborting!!\n",
+		      to);
+	return GED_ERROR;
+    }
+
+    bu_free_external(&external);
+
+    /* Need to do something extra for _GLOBAL */
+    if (to_gedp->ged_wdbp->dbip->dbi_version > 4 && !strcmp(to, DB5_GLOBAL_OBJECT_NAME)) {
+	register struct directory *to_dp;
+	struct bu_attribute_value_set avs;
+	const char *val;
+
+	GED_DB_LOOKUP(to_gedp, to_dp, to, LOOKUP_NOISY, GED_ERROR & GED_QUIET);
+
+	bu_avs_init_empty(&avs);
+	if (db5_get_attributes(to_gedp->ged_wdbp->dbip, &avs, to_dp)) {
+	    bu_vls_printf(&from_gedp->ged_result_str, "Cannot get attributes for object %s\n", to_dp->d_namep);
+	    return GED_ERROR;
+	}
+
+	if ((val = bu_avs_get(&avs, "title")) != NULL)
+	    to_gedp->ged_wdbp->dbip->dbi_title = strdup(val);
+
+	if ((val = bu_avs_get(&avs, "units")) != NULL) {
+	    double loc2mm;
+
+	    if ((loc2mm = bu_mm_value(val)) > 0) {
+		to_gedp->ged_wdbp->dbip->dbi_local2base = loc2mm;
+		to_gedp->ged_wdbp->dbip->dbi_base2local = 1.0 / loc2mm;
+	    }
+	}
+
+	if ((val = bu_avs_get(&avs, "regionid_colortable")) != NULL) {
+	    rt_color_free();
+	    db5_import_color_table((char *)val);
+	}
+
+	bu_avs_free(&avs);
+    }
+
+    return GED_OK;
 }
 
 

@@ -8,12 +8,13 @@ bin_PROGRAMS = \
 	bottest \
 	brep_cube \
 	brep_simple \
+	brepintersect \
 	breplicator \
 	brickwall \
 	clutter \
 	contours \
+        csgbrep \
 	globe \
-	human \
 	kurt \
 	lens \
 	masonry \
@@ -29,6 +30,7 @@ bin_PROGRAMS = \
 	sketch \
 	sphflake \
 	spltest \
+	surfaceintersect \
 	tea \
 	tea_nmg \
 	terrain \
@@ -42,11 +44,15 @@ bottest_SOURCES = bottest.c
 brep_cube_SOURCES = brep_cube.cpp
 brep_simple_SOURCES = brep_simple.cpp
 breplicator_SOURCES = breplicator.cpp
+brepintersect_SOURCES = brepintersect.cpp
+surfaceintersect_SOURCES = surfaceintersect.cpp
 
 # per-target CPPFLAGS not available until automake 1.7+
 brep_cube_CXXFLAGS = -DOBJ_BREP=1 ${OPENNURBS_CPPFLAGS}
 brep_simple_CXXFLAGS = -DOBJ_BREP=1 ${OPENNURBS_CPPFLAGS}
 breplicator_CXXFLAGS = -DOBJ_BREP=1 ${OPENNURBS_CPPFLAGS}
+brepintersect_CXXFLAGS = -DOBJ_BREP=1 ${OPENNURBS_CPPFLAGS}
+surfaceintersect_CXXFLAGS = -DOBJ_BREP=1 ${OPENNURBS_CPPFLAGS}
 
 brep_cube_LDADD = \
 	${proc_db_libs} \
@@ -57,12 +63,21 @@ brep_simple_LDADD = \
 breplicator_LDADD = \
 	${proc_db_libs} \
 	${OPENNURBS}
+brepintersect_LDADD = \
+	${proc_db_libs} \
+	${OPENNURBS}
+csgbrep_LDADD = \
+	${proc_db_libs} \
+	${OPENNURBS}
+surfaceintersect_LDADD = \
+	${proc_db_libs} \
+	${OPENNURBS}
 
 brickwall_SOURCES = brickwall.c
 clutter_SOURCES = clutter.c common.c
 contours_SOURCES = contours.c
+csgbrep_SOURCES = csgbrep.cpp
 globe_SOURCES = globe.c
-human_SOURCES = human.c
 kurt_SOURCES = kurt.c
 lens_SOURCES = lens.c
 masonry_SOURCES = masonry.c
@@ -87,6 +102,8 @@ vegitation_SOURCES = vegitation.c
 wdb_example_SOURCES = wdb_example.c
 
 noinst_HEADERS = \
+	brepintersect.h \
+	surfaceintersect.h \
 	ducks.h \
 	patches.h \
 	tea.h \
@@ -103,12 +120,13 @@ FAST_OBJECTS = \
 	$(bottest_OBJECTS) \
 	$(brep_simple_OBJECTS) \
 	$(brep_cube_OBJECTS) \
+	$(brepintersect_OBJECTS) \
 	$(breplicator_OBJECTS) \
 	$(brickwall_OBJECTS) \
 	$(clutter_OBJECTS) \
 	$(contours_OBJECTS) \
+	$(csgbrep_OBJECTS) \
 	$(globe_OBJECTS) \
-	$(human_OBJECTS) \
 	$(kurt_OBJECTS) \
 	$(lens_OBJECTS) \
 	$(masonry_OBJECTS) \
@@ -123,6 +141,7 @@ FAST_OBJECTS = \
 	$(sketch_OBJECTS) \
 	$(sphflake_OBJECTS) \
 	$(spltest_OBJECTS) \
+	$(surfaceintersect_OBJECTS) \
 	$(tea_OBJECTS) \
 	$(tea_nmg_OBJECTS) \
 	$(terrain_OBJECTS) \

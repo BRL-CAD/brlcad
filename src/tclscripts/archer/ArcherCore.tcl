@@ -130,6 +130,7 @@ namespace eval ArcherCore {
 	method adjust              {args}
 	method arced               {args}
 	method attr                {args}
+	method bb                  {args}
 	method bev                 {args}
 	method blast               {args}
 	method bo                  {args}
@@ -137,9 +138,11 @@ namespace eval ArcherCore {
 	method bot_decimate        {args}
 	method bot_face_fuse       {args}
 	method bot_face_sort       {args}
+	method bot_flip            {args}
 	method bot_merge           {args}
 	method bot_smooth          {args}
 	method bot_split           {args}
+	method bot_sync            {args}
 	method bot_vertex_fuse     {args}
 	method c                   {args}
 	method cd                  {args}
@@ -148,18 +151,19 @@ namespace eval ArcherCore {
 	method color               {args}
 	method comb                {args}
 	method comb_color          {args}
-	method concat              {args}
 	method copy                {args}
 	method copyeval            {args}
 	method copymat             {args}
 	method cp                  {args}
 	method cpi                 {args}
+	method dbconcat            {args}
 	method dbExpand	           {args}
 	method decompose           {args}
 	method delete              {args}
 	method draw                {args}
 	method E                   {args}
 	method edcodes             {args}
+	method edcolor             {args}
 	method edcomb              {args}
 	method edmater             {args}
 	method erase               {args}
@@ -169,6 +173,7 @@ namespace eval ArcherCore {
 	method facetize            {args}
 	method fracture            {args}
 	method hide                {args}
+	method human               {args}
 	method g                   {args}
 	method group               {args}
 	method i                   {args}
@@ -183,6 +188,7 @@ namespace eval ArcherCore {
 	method ls                  {args}
 	method make		   {args}
 	method make_bb             {args}
+	method make_pnts           {args}
 	method mater               {args}
 	method mirror              {args}
 	method move                {args}
@@ -196,8 +202,11 @@ namespace eval ArcherCore {
 	method orotate		   {args}
 	method oscale		   {args}
 	method otranslate	   {args}
+	method p                   {args}
 	method prefix              {args}
+	method protate             {args}
 	method pscale              {args}
+	method ptranslate          {args}
 	method push                {args}
 	method put                 {args}
 	method put_comb            {args}
@@ -210,6 +219,7 @@ namespace eval ArcherCore {
 	method rm                  {args}
 	method rmater              {args}
 	method rotate_arb_face     {args}
+	method search		   {args}
 	method shader              {args}
 	method shells              {args}
 	method tire                {args}
@@ -272,7 +282,6 @@ namespace eval ArcherCore {
 	variable mProgressBarHeight ""
 	#variable mProgressString ""
 	variable mNeedSave 0
-	variable mBackupObj ""
 	variable mPrevSelectedObjPath ""
 	variable mPrevSelectedObj ""
 	variable mSelectedObjPath ""
@@ -382,19 +391,19 @@ namespace eval ArcherCore {
 	# This is mostly a list of wrapped Ged commands. However, it also contains
 	# a few commands that are implemented here in ArcherCore.
 	variable mArcherCoreCommands { \
-					   3ptarb adjust arced attr bev blast bo \
+					   3ptarb adjust arced attr bb bev blast bo \
 					   bot2pipe bot_condense bot_decimate bot_face_fuse \
-					   bot_face_sort bot_merge bot_smooth bot_split bot_vertex_fuse \
-					   c cd clear clone color comb comb_color concat copy copyeval copymat \
-					   cp cpi dbExpand decompose delete draw E edcodes edcomb \
+					   bot_face_sort bot_flip bot_merge bot_smooth bot_split bot_sync bot_vertex_fuse \
+					   c cd clear clone color comb comb_color copy copyeval copymat \
+					   cp cpi dbconcat dbExpand decompose delete draw E edcodes edcolor edcomb \
 					   edmater erase_all ev exit facetize fracture \
-					   g group hide i importFg4Section \
+					   g group hide human i importFg4Section \
 					   in inside item kill killall killrefs killtree ls \
-					   make make_bb mater mirror move move_arb_edge move_arb_face \
+					   make make_bb make_pnts mater mirror move move_arb_edge move_arb_face \
 					   mv mvall nmg_collapse nmg_simplify \
-					   ocenter orotate oscale otranslate packTree prefix pscale push \
-					   put put_comb putmat pwd r rcodes red rfarb rm rmater \
-					   rotate_arb_face shader shells tire title track \
+					   ocenter orotate oscale otranslate p packTree prefix protate pscale ptranslate \
+					   push put put_comb putmat pwd r rcodes red rfarb rm rmater \
+					   rotate_arb_face search shader shells tire title track \
 					   unhide units unpackTree \
 					   vmake wmater xpush Z zap
 	}
@@ -884,23 +893,9 @@ Popup Menu    Right or Ctrl-Left
 	set expandedArgs $args
     }
 
-    if {$hflag} {
-	set obj [lindex $expandedArgs 0]
-	if {$obj != ""} {
-	    # First, apply the command to hobj if necessary.
-	    # Note - we're making the (ass)umption that the object
-	    #        name is the first item in the "expandedArgs" list.
-	    if {![catch {gedCmd attr get $obj history} hobj] &&
-		$obj != $hobj} {
-		set tmpArgs [lreplace $expandedArgs 0 0 $hobj]
-		catch {eval gedCmd $cmd $options $tmpArgs}
-	    }
-	}
-    }
-
     if {[catch {eval gedCmd $cmd $options $expandedArgs} ret]} {
 	SetNormalCursor $this
-	return $ret
+	error $ret
     }
 
     if {$sflag} {
@@ -1100,18 +1095,28 @@ Popup Menu    Right or Ctrl-Left
 	return
     }
 
-    set renderData [gedCmd how -b $obj]
+    set dlist [gedCmd who]
+    foreach pelement [split $obj /] {
+	set new_dlist {}
+	set dlen [llength $dlist]
+	foreach ditem $dlist {
+	    if {[lsearch [split $ditem /] $pelement] != -1} {
+		set renderData [gedCmd how -b $ditem]
+		set renderMode [lindex $renderData 0]
+		set renderTrans [lindex $renderData 1]
+		render $ditem $renderMode $renderTrans 0 $wflag
+	    } else {
+		lappend new_dlist $ditem
+	    }
+	}
 
-    set renderMode [lindex $renderData 0]
-    set renderTrans [lindex $renderData 1]
+	if {$new_dlist == {}} {
+	    break
+	}
 
-    if {$renderMode == -1} {
-	return
+	set dlist $new_dlist
     }
-
-    render $obj $renderMode $renderTrans 0 $wflag
 }
-
 
 ::itcl::body ArcherCore::initTree {} {
     set parent [$itk_component(vpane) childsite hierarchyView]
@@ -1526,7 +1531,7 @@ Popup Menu    Right or Ctrl-Left
 	    -helpstr "Save the current geometry file" \
 	    -relief flat \
 	    -overrelief raised \
-	    -command [::itcl::code $this saveDb]
+	    -command [::itcl::code $this askToSave]
     }
 
     $itk_component(primaryToolbar) add radiobutton rotate \
@@ -1987,7 +1992,7 @@ Popup Menu    Right or Ctrl-Left
     }
 
     # first remove any matrices
-    regsub -all {\{[0-9]+[^\}]+[0-9]+\}} $tlist "" tlist
+    regsub -all -- {\{-?[0-9]+[^\}]+-?[0-9]+\}} $tlist "" tlist
 
     # remove all other unwanted stuff
     regsub -all {^[lun!GXN^-] |\{[lun!GXN^-]|\}} $tlist "" tlist
@@ -2019,7 +2024,6 @@ Popup Menu    Right or Ctrl-Left
 	SetWaitCursor $this
     }
 
-    set savePwd ""
     set tnode [file tail $node]
     set saveGroundPlane 0
 
@@ -2080,12 +2084,7 @@ Popup Menu    Right or Ctrl-Left
 	    }
 	}
     }
-
-    # Change back to previous directory
-    if {$savePwd != ""} {
-	cd $savePwd
-    }
-
+ 
     # Turn ground plane back on if it was on before the draw
     if {$saveGroundPlane} {
 	set mShowGroundPlane 1
@@ -2538,8 +2537,6 @@ Popup Menu    Right or Ctrl-Left
 	set mRenderMode 2
     }
 
-    $itk_component(tree) toggle $snode
-
     if {$nodeType == "leaf"} {
 	$menu add radiobutton -label "Wireframe" \
 	    -indicatoron 1 -value 0 -variable [::itcl::scope mRenderMode] \
@@ -2671,10 +2668,7 @@ Popup Menu    Right or Ctrl-Left
 ::itcl::body ArcherCore::Load {target} {
     SetWaitCursor $this
     if {$mNeedSave} {
-	$itk_component(saveDialog) center [namespace tail $this]
-	if {[$itk_component(saveDialog) activate]} {
-	    saveDb
-	} else {
+	if {![askToSave]} {
 	    set mNeedSave 0
 	    updateSaveMode
 	}
@@ -2775,12 +2769,17 @@ Popup Menu    Right or Ctrl-Left
 }
 
 ::itcl::body ArcherCore::askToSave {} {
-    if {$mNeedSave} {
-	$itk_component(saveDialog) center [namespace tail $this]
-	if {[$itk_component(saveDialog) activate]} {
-	    saveDb
-	}
+    if {!$mNeedSave} {
+	return 0
     }
+
+    $itk_component(saveDialog) center [namespace tail $this]
+    if {[$itk_component(saveDialog) activate]} {
+	saveDb
+	return 1
+    }
+
+    return 0
 }
 
 ::itcl::body ArcherCore::menuStatusCB {w} {
@@ -3281,6 +3280,10 @@ Popup Menu    Right or Ctrl-Left
     eval gedWrapper attr 0 0 1 0 $args
 }
 
+::itcl::body ArcherCore::bb {args} {
+    eval gedWrapper bb 0 0 1 1 $args
+}
+
 ::itcl::body ArcherCore::bev {args} {
     eval gedWrapper bev 0 0 1 1 $args
 }
@@ -3309,6 +3312,10 @@ Popup Menu    Right or Ctrl-Left
     eval gedWrapper bot_face_sort 1 0 1 1 $args
 }
 
+::itcl::body ArcherCore::bot_flip {args} {
+    eval gedWrapper bot_flip 1 0 1 0 $args
+}
+
 ::itcl::body ArcherCore::bot_merge {args} {
     eval gedWrapper bot_merge 1 0 1 1 $args
 }
@@ -3319,6 +3326,10 @@ Popup Menu    Right or Ctrl-Left
 
 ::itcl::body ArcherCore::bot_split {args} {
     eval gedWrapper bot_split 0 0 1 1 $args
+}
+
+::itcl::body ArcherCore::bot_sync {args} {
+    eval gedWrapper bot_sync 1 0 1 0 $args
 }
 
 ::itcl::body ArcherCore::bot_vertex_fuse {args} {
@@ -3357,10 +3368,6 @@ Popup Menu    Right or Ctrl-Left
     eval gedWrapper comb_color 0 1 1 1 $args
 }
 
-::itcl::body ArcherCore::concat {args} {
-    eval gedWrapper concat 0 0 1 1 $args
-}
-
 ::itcl::body ArcherCore::copy {args} {
     eval gedWrapper cp 0 0 1 1 $args
 }
@@ -3379,6 +3386,10 @@ Popup Menu    Right or Ctrl-Left
 
 ::itcl::body ArcherCore::cpi {args} {
     eval gedWrapper cpi 0 0 1 1 $args
+}
+
+::itcl::body ArcherCore::dbconcat {args} {
+    eval gedWrapper dbconcat 0 0 1 1 $args
 }
 
 ::itcl::body ArcherCore::dbExpand {args} {
@@ -3416,8 +3427,12 @@ Popup Menu    Right or Ctrl-Left
 	    # find indices of matching children
 	    set mi [lsearch -all $searchType $lsItems $child]
 
-	    foreach i $mi {
-		lappend tobjects [lindex $lsItems $i]
+	    if {[llength $mi] == 0} {
+		lappend tobjects $obj
+	    } else {
+		foreach i $mi {
+		    lappend tobjects [lindex $lsItems $i]
+		}
 	    }
 	} else {
 	    set path [file dirname $obj]
@@ -3434,8 +3449,12 @@ Popup Menu    Right or Ctrl-Left
 	    # find indices of matching children
 	    set mi [lsearch -all $searchType $children $child]
 
-	    foreach i $mi {
-		lappend tobjects "/$path/[lindex $children $i]"
+	    if {[llength $mi] == 0} {
+		lappend tobjects $obj
+	    } else {
+		foreach i $mi {
+		    lappend tobjects "/$path/[lindex $children $i]"
+		}
 	    }
 	}
     }
@@ -3507,6 +3526,10 @@ Popup Menu    Right or Ctrl-Left
     eval gedWrapper edcodes 0 0 1 0 $args
 }
 
+::itcl::body ArcherCore::edcolor {args} {
+    eval gedWrapper edcolor 0 0 1 0 $args
+}
+
 ::itcl::body ArcherCore::edcomb {args} {
     eval gedWrapper edcomb 0 0 1 1 $args
 }
@@ -3531,7 +3554,7 @@ Popup Menu    Right or Ctrl-Left
 	lappend tobjects [regsub {^/} $obj ""]
     }
 
-    if {[catch {eval gedCmd erase $tobjects} ret]} {
+    if {[catch {eval gedCmd erase $options $tobjects} ret]} {
 	gedCmd configure -primitiveLabels {}
 	refreshTree
 	SetNormalCursor $this
@@ -3574,6 +3597,10 @@ Popup Menu    Right or Ctrl-Left
 
 ::itcl::body ArcherCore::hide {args} {
     eval gedWrapper hide 0 0 1 1 $args
+}
+
+::itcl::body ArcherCore::human {args} {
+    eval gedWrapper human 0 0 1 1 $args
 }
 
 
@@ -3635,6 +3662,10 @@ Popup Menu    Right or Ctrl-Left
 
 ::itcl::body ArcherCore::make_bb {args} {
     eval gedWrapper make_bb 0 0 1 1 $args
+}
+
+::itcl::body ArcherCore::make_pnts {args} {
+    eval gedWrapper make_pnts 0 1 1 1 $args
 }
 
 ::itcl::body ArcherCore::mater {args} {
@@ -3715,6 +3746,10 @@ Popup Menu    Right or Ctrl-Left
     return $result
 }
 
+::itcl::body ArcherCore::p {args} {
+    # Nothing for now
+}
+
 ::itcl::body ArcherCore::packTree {data} {
     if {$data == ""} {
 	return ""
@@ -3775,8 +3810,16 @@ Popup Menu    Right or Ctrl-Left
     eval gedWrapper prefix 0 0 1 1 $args
 }
 
+::itcl::body ArcherCore::protate {args} {
+    eval gedWrapper protate 0 0 1 0 $args
+}
+
 ::itcl::body ArcherCore::pscale {args} {
     eval gedWrapper pscale 0 0 1 0 $args
+}
+
+::itcl::body ArcherCore::ptranslate {args} {
+    eval gedWrapper ptranslate 0 0 1 0 $args
 }
 
 ::itcl::body ArcherCore::push {args} {
@@ -3827,12 +3870,21 @@ Popup Menu    Right or Ctrl-Left
     eval gedWrapper rotate_arb_face 0 0 1 0 $args
 }
 
+::itcl::body ArcherCore::search {args} {
+     if {$args == {}} {
+	return [gedCmd search]
+    } else {
+	return [eval gedCmd search $args]
+    }
+}
+
+
 ::itcl::body ArcherCore::shader {args} {
     eval gedWrapper shader 0 0 1 0 $args
 }
 
 ::itcl::body ArcherCore::shells {args} {
-    eval gedWrapper shells 0 0 1 0 $args
+    eval gedWrapper shells 0 0 1 1 $args
 }
 
 ::itcl::body ArcherCore::tire {args} {
@@ -3906,11 +3958,11 @@ Popup Menu    Right or Ctrl-Left
 }
 
 ::itcl::body ArcherCore::wmater {args} {
-    eval gedWrapper wmater 0 0 1 1 $args
+    eval gedWrapper wmater 0 0 0 0 $args
 }
 
 ::itcl::body ArcherCore::xpush {args} {
-    eval gedWrapper wmater 0 1 1 0 $args
+    eval gedWrapper xpush 0 0 1 0 $args
 }
 
 ::itcl::body ArcherCore::Z {args} {
@@ -3993,8 +4045,8 @@ Popup Menu    Right or Ctrl-Left
 
 ::itcl::body ArcherCore::buildSaveDialog {} {
     buildInfoDialog saveDialog \
-	"Save Target?" \
-	"Do you wish to save the current target?" \
+	"Save Database?" \
+	"Do you wish to save the current database?" \
 	450x85 none application
 
     $itk_component(saveDialog) show 2

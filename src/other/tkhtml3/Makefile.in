@@ -77,8 +77,6 @@ datadir		= @datadir@
 mandir		= @mandir@
 includedir	= @includedir@
 
-DESTDIR		=
-
 PKG_DIR		= $(PACKAGE_NAME)$(PACKAGE_VERSION)
 pkgdatadir	= $(datadir)/$(PKG_DIR)
 pkglibdir	= $(libdir)/$(PKG_DIR)
@@ -134,9 +132,9 @@ TCLSH_ENV	= TCL_LIBRARY=`@CYGPATH@ $(TCL_SRC_DIR)/library` \
 		  PATH="$(EXTRA_PATH):$(PATH)" \
 		  TCLLIBPATH="$(TCLLIBPATH)"
 #		  TK_LIBRARY=`@CYGPATH@ $(TK_SRC_DIR)/library`
-TCLSH_PROG	= @TCLSH_PROG@
+TCLSH_PROG	= tclsh # @TCLSH_PROG@
 TCLSH		= $(TCLSH_ENV) $(TCLSH_PROG)
-WISH_PROG	= @WISH_PROG@
+WISH_PROG	= wish # @WISH_PROG@
 WISH		= $(TCLSH_ENV) $(WISH_PROG)
 SHARED_BUILD	= @SHARED_BUILD@
 
@@ -484,8 +482,15 @@ install-lib-binaries: binaries
 	  fi; \
 	done
 	@if test "x$(SHARED_BUILD)" = "x1"; then \
-	    echo " Install pkgIndex.tcl $(DESTDIR)$(pkglibdir)"; \
-	    $(INSTALL_DATA) pkgIndex.tcl $(DESTDIR)$(pkglibdir); \
+	    if test -f $(srcdir)/pkgIndex.tcl ; then \
+		echo " Install $(srcdir)/pkgIndex.tcl $(DESTDIR)$(pkglibdir)"; \
+		$(INSTALL_DATA) $(srcdir)/pkgIndex.tcl $(DESTDIR)$(pkglibdir); \
+	    else \
+		if test -f pkgIndex.tcl ; then \
+		    echo " Install pkgIndex.tcl $(DESTDIR)$(pkglibdir)"; \
+		    $(INSTALL_DATA) pkgIndex.tcl $(DESTDIR)$(pkglibdir); \
+		fi; \
+	    fi; \
 	fi
 
 #appease dvi-recursive rule from the top-level Makefile so this works as a SUBDIR

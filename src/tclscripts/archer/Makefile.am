@@ -12,6 +12,7 @@ scripts = \
 	Arb8EditFrame.tcl \
 	Archer.tcl \
 	ArcherCore.tcl \
+	AttrGroupsDisplayUtility.tcl \
 	bgerror.tcl \
 	CombEditFrame.tcl \
 	cursor.tcl \
@@ -23,6 +24,7 @@ scripts = \
 	GeometryEditFrame.tcl \
 	GripEditFrame.tcl \
 	HalfEditFrame.tcl \
+	HypEditFrame.tcl \
 	LoadArcherLibs.tcl \
 	PartEditFrame.tcl \
 	Plugin.tcl \
@@ -30,9 +32,11 @@ scripts = \
 	RpcEditFrame.tcl \
 	ShaderEdit.tcl \
 	SphereEditFrame.tcl \
+	SuperellEditFrame.tcl \
 	tabwindow.itk \
 	TgcEditFrame.tcl \
 	TorusEditFrame.tcl \
+	Utility.tcl \
 	Wizard.tcl
 
 BUILT_SOURCES = \

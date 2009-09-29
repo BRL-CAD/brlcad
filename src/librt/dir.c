@@ -108,15 +108,15 @@ rt_db_get_internal(
     if ( dp->d_flags & DIR_COMB )  {
 	id = ID_COMBINATION;
     } else {
-	/* As a convenience to older ft_import routines */
+	/* As a convenience to older ft_import4 routines */
 	if ( mat == NULL )  mat = bn_mat_identity;
 	id = rt_id_solid( &ext );
     }
 
     /* ip is already initialized and should not be re-initialized */
     ret = -1;
-    if (rt_functab[id].ft_import) {
-	ret = rt_functab[id].ft_import(ip, &ext, mat, dbip, resp);
+    if (rt_functab[id].ft_import4) {
+	ret = rt_functab[id].ft_import4(ip, &ext, mat, dbip, resp);
     }
     if (ret < 0) {
 	bu_log("rt_db_get_internal(%s):  import failure\n",
@@ -165,8 +165,8 @@ rt_db_put_internal(
 
     /* Scale change on export is 1.0 -- no change */
     ret = -1;
-    if (ip->idb_meth->ft_export) {
-	ret = ip->idb_meth->ft_export( &ext, ip, 1.0, dbip, resp );
+    if (ip->idb_meth->ft_export4) {
+	ret = ip->idb_meth->ft_export4( &ext, ip, 1.0, dbip, resp );
     }
     if ( ret < 0 )  {
 	bu_log("rt_db_put_internal(%s):  solid export failure\n",
@@ -213,8 +213,8 @@ rt_fwrite_internal(
     BU_INIT_EXTERNAL( &ext );
 
     ret = -1;
-    if (ip->idb_meth->ft_export) {
-	ret = ip->idb_meth->ft_export(&ext, ip, conv2mm, NULL /*dbip*/, &rt_uniresource);
+    if (ip->idb_meth->ft_export4) {
+	ret = ip->idb_meth->ft_export4(&ext, ip, conv2mm, NULL /*dbip*/, &rt_uniresource);
     }
     if (ret < 0) {
 	bu_log("rt_file_put_internal(%s): solid export failure\n",

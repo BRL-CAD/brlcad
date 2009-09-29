@@ -39,9 +39,8 @@ ged_title(struct ged *gedp, int argc, const char *argv[])
     struct bu_vls title;
     static const char *usage = "description";
 
-    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
-    GED_CHECK_READ_ONLY(gedp, BRLCAD_ERROR);
-    GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
+    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
+    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
 
     /* initialize result */
     bu_vls_trunc(&gedp->ged_result_str, 0);
@@ -49,12 +48,14 @@ ged_title(struct ged *gedp, int argc, const char *argv[])
     /* get title */
     if (argc == 1) {
 	bu_vls_printf(&gedp->ged_result_str, "%s", gedp->ged_wdbp->dbip->dbi_title);
-	return BRLCAD_OK;
+	return GED_OK;
     }
+
+    GED_CHECK_READ_ONLY(gedp, GED_ERROR);
 
     if (MAXARGS < argc) {
 	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return BRLCAD_ERROR;
+	return GED_ERROR;
     }
 
     /* set title */
@@ -64,11 +65,11 @@ ged_title(struct ged *gedp, int argc, const char *argv[])
     if (db_update_ident(gedp->ged_wdbp->dbip, bu_vls_addr(&title), gedp->ged_wdbp->dbip->dbi_base2local) < 0) {
 	bu_vls_free(&title);
 	bu_vls_printf(&gedp->ged_result_str, "Error: unable to change database title");
-	return BRLCAD_ERROR;
+	return GED_ERROR;
     }
 
     bu_vls_free(&title);
-    return BRLCAD_OK;
+    return GED_OK;
 }
 
 

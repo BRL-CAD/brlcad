@@ -38,14 +38,16 @@ ged_kill(struct ged *gedp, int argc, const char *argv[])
 {
     register struct directory *dp;
     register int i;
+    int c;
     int	is_phony;
     int	verbose = LOOKUP_NOISY;
     int force = 0;
-    static const char *usage = "object(s)";
+    int nflag = 0;
+    static const char *usage = "[-f|-n] object(s)";
 
-    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
-    GED_CHECK_READ_ONLY(gedp, BRLCAD_ERROR);
-    GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
+    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
+    GED_CHECK_READ_ONLY(gedp, GED_ERROR);
+    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
 
     /* initialize result */
     bu_vls_trunc(&gedp->ged_result_str, 0);
@@ -53,20 +55,44 @@ ged_kill(struct ged *gedp, int argc, const char *argv[])
     /* must be wanting help */
     if (argc == 1) {
 	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return BRLCAD_HELP;
+	return GED_HELP;
     }
 
     if (MAXARGS < argc) {
 	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return BRLCAD_ERROR;
+	return GED_ERROR;
     }
 
-    /* skip past "-f" */
-    if (argc > 1 && strcmp(argv[1], "-f") == 0) {
-	verbose = LOOKUP_QUIET;
-	force = 1;
-	argc--;
-	argv++;
+    bu_optind = 1;
+    while ((c = bu_getopt(argc, (char * const *)argv, "fn")) != EOF) {
+	switch( c ) {
+	    case 'f':
+		force = 1;
+		break;
+	    case 'n':
+		nflag = 1;
+		break;
+	    default:
+		bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+		return GED_ERROR;
+	}
+    }
+
+    if ((force + nflag) > 1) {
+	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	return GED_ERROR;
+    }
+
+    argc -= (bu_optind - 1);
+    argv += (bu_optind - 1);
+
+    if (nflag) {
+	bu_vls_printf(&gedp->ged_result_str, "{");
+	for (i = 1; i < argc; i++)
+	    bu_vls_printf(&gedp->ged_result_str, "%s ", argv[i]);
+	bu_vls_printf(&gedp->ged_result_str, "} {}");
+
+	return GED_OK;
     }
 
     for (i = 1; i < argc; i++) {
@@ -87,20 +113,18 @@ ged_kill(struct ged *gedp, int argc, const char *argv[])
 	    if (is_phony)
 		continue;
 
-	    dpp[0] = dp;
-	    dpp [1] = DIR_NULL;
-	    ged_eraseobjall(gedp, dpp);
+	    ged_eraseAllNamesFromDisplay(gedp, argv[i], 0);
 
 	    if (db_delete(gedp->ged_wdbp->dbip, dp) < 0 ||
 		db_dirdelete(gedp->ged_wdbp->dbip, dp) < 0) {
 		/* Abort kill processing on first error */
 		bu_vls_printf(&gedp->ged_result_str, "an error occurred while deleting %s", argv[i]);
-		return BRLCAD_ERROR;
+		return GED_ERROR;
 	    }
 	}
     }
 
-    return BRLCAD_OK;
+    return GED_OK;
 }
 
 

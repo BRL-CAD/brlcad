@@ -678,7 +678,130 @@ rt_revolve_shot(struct soltab *stp, struct xray *rp, struct application *ap, str
 		}
 		break;
 	    case CURVE_CARC_MAGIC:
+		/*
+		circle: (x-cx)^2 + (y-cy)^2 = cr^2
+			x = (1/2cx)y^2 + (-cy/cx)y + (1/2cx)(cy^2 + cx^2 - cr^2) + (1/2cx)(x^2)
+			x = f(y) + (1/2cx)x^2
+		
+		hyperbola:
+			[(x-hx)/a]^2 - [(y-hy)/b]^2 = 1
+			x^2 = (a^2/b^2)y^2 + (-2*hy*a^2/b^2)y + (hy^2 * a^2/b^2) + a^2
+			x^2 = g(y)
+			
+		plug the second equation into the first to get:
+			x = f(y) + (1/2cx)g(y)
+		then square that to get:
+			x^2 = {f(y) + (1/2cx)g(y)}^2 = g(y)
+		move all to one side to get:
+			0 = {f(y) + (1/2cx)g(y)}^2 - g(y)
+		this is a fourth order polynomial in y.
+		*/
+	    {
+		bn_poly_t	circleX;	/* f(y) */
+		bn_poly_t	hypXsq;		/* g(y) */
+		bn_poly_t	hypXsq_scaled;	/* g(y) / (2*cx) */
+		bn_poly_t	sum;		/* f(y) + g(y)/(2cx) */
+		bn_poly_t	sum_sq;		/* {f(y) + g(y)/(2cx)}^2 */
+		bn_poly_t	answer;		/* {f(y) + g(y)/(2cx)}^2 - g(y) */
+		bn_complex_t	roots[4];
+		
+		fastf_t		cx, cy, crsq;	/* carc's (x,y) coords and radius^2 */
+		point2d_t	center, radius;
+		
+		/* calculate circle parameters */
+		csg = (struct carc_seg *)lng;
+		
+		if (csg->radius <= 0.0) {
+		    /* full circle, "end" is center and "start" is on the circle */
+		    V2MOVE(center, rev->sk->verts[csg->end]);
+		    V2SUB2(radius, rev->sk->verts[csg->start], center);
+		    crsq = MAG2SQ(radius);
+		} else {
+		    point_t start, end, mid;
+		    vect_t s_to_m;
+		    vect_t bisector;
+		    vect_t vertical;
+		    fastf_t dist;
+		    fastf_t magsq_s2m;
+		    
+		    VSET(vertical, 0, 0, 1);
+		    VMOVE(start, rev->sk->verts[csg->start]);
+		    start[Z] = 0.0;
+		    VMOVE(end, rev->sk->verts[csg->end]);
+		    end[Z] = 0.0;
+		    
+		    VBLEND2(mid, 0.5, start, 0.5, end);
+		    VSUB2(s_to_m, mid, start);
+		    VCROSS(bisector, vertical, s_to_m);
+		    VUNITIZE(bisector);
+		    magsq_s2m = MAGSQ(s_to_m);
+		    if (magsq_s2m > csg->radius*csg->radius) {
+			fastf_t max_radius;
+			
+			max_radius = sqrt(magsq_s2m);
+			if (NEAR_ZERO(max_radius - csg->radius, RT_LEN_TOL)) {
+			    csg->radius = max_radius;
+			} else {
+			    bu_log("Impossible radius for circular arc in extrusion (%s), is %g, cannot be more than %g!\n",
+			    stp->st_dp->d_namep, csg->radius, sqrt(magsq_s2m));
+			    bu_log("Difference is %g\n", max_radius - csg->radius);
+			    return(-1);
+			}
+		    }
+		    dist = sqrt(csg->radius*csg->radius - magsq_s2m);
+		    
+		    /* save arc center */
+		    if (csg->center_is_left) {
+			VJOIN1(center, mid, dist, bisector);
+		    } else {
+			VJOIN1(center, mid, -dist, bisector);
+		    }
+		}
+		
+		cx = center[X];
+		cy = center[Y];
+		
+		circleX.dgr = 2;
+		hypXsq.dgr = 2;
+		hypXsq_scaled.dgr = 2;
+		sum.dgr = 2;
+		sum_sq.dgr = 4;
+		answer.dgr = 4;
+		
+		circleX.cf[0] = (cy*cy + cx*cx - crsq)/(2.0*cx);
+		circleX.cf[1] = -cy/cx;
+		circleX.cf[2] = 1/(2.0*cx);
+		
+		hypXsq_scaled.cf[0] = hypXsq.cf[0] = aa*aa + h*h*aa*aa/(bb*bb);
+		hypXsq_scaled.cf[1] = hypXsq.cf[1] = -2.0*h*aa*aa/(bb*bb);
+		hypXsq_scaled.cf[2] = hypXsq.cf[2] = (aa*aa)/(bb*bb);
+		
+		bn_poly_scale(&hypXsq_scaled, 1.0 / (2.0 * cx));
+		bn_poly_add(&sum, &hypXsq_scaled, &circleX);
+		bn_poly_mul(&sum_sq, &sum, &sum);
+		bn_poly_sub(&answer, &sum_sq, &hypXsq);
+		
+		/* It is known that the equation is 4th order.  Therefore, if the
+		* root finder returns other than 4 roots, error.
+		*/
+		if ((i = rt_poly_roots(&answer, roots, stp->st_dp->d_namep)) != 4) {
+		    if (i > 0) {
+			bu_log("tor:  rt_poly_roots() 4!=%d\n", i);
+			bn_pr_roots(stp->st_name, roots, i);
+		    } else if (i < 0) {
+			static int reported=0;
+			bu_log("The root solver failed to converge on a solution for %s\n", stp->st_dp->d_namep);
+			if (!reported) {
+			    VPRINT("while shooting from:\t", rp->r_pt);
+			    VPRINT("while shooting at:\t", rp->r_dir);
+			    bu_log("Additional torus convergence failure details will be suppressed.\n");
+			    reported=1;
+			}
+		    }
+		}
+		
 		break;
+	    }
 	    case CURVE_BEZIER_MAGIC:
 		break;
 	    case CURVE_NURB_MAGIC:
@@ -1240,7 +1363,7 @@ rt_revolve_import5(struct rt_db_internal *ip, const struct bu_external *ep, cons
 	rip->sk = (struct rt_sketch_internal *)NULL;
     else if ((dp=db_lookup(dbip, sketch_name, LOOKUP_NOISY)) == DIR_NULL)
     {
-	bu_log("rt_revolve_import: ERROR: Cannot find sketch (%s) for extrusion\n",
+	bu_log("rt_revolve_import4: ERROR: Cannot find sketch (%s) for extrusion\n",
 	       sketch_name);
 	rip->sk = (struct rt_sketch_internal *)NULL;
     }
@@ -1248,7 +1371,7 @@ rt_revolve_import5(struct rt_db_internal *ip, const struct bu_external *ep, cons
     {
 	if (rt_db_get_internal(&tmp_ip, dp, dbip, bn_mat_identity, resp) != ID_SKETCH)
 	{
-	    bu_log("rt_revolve_import: ERROR: Cannot import sketch (%s) for extrusion\n",
+	    bu_log("rt_revolve_import4: ERROR: Cannot import sketch (%s) for extrusion\n",
 		   sketch_name);
 	    bu_free(ip->idb_ptr, "extrusion");
 	    return(-1);
@@ -1397,7 +1520,7 @@ rt_revolve_ifree(struct rt_db_internal *ip, struct resource *resp)
  *
  * Create transformed version of internal form.  Free *ip if
  * requested.  Implement this if it's faster than doing an
- * export/import cycle.
+ * export/import4 cycle.
  */
 int
 rt_revolve_xform(struct rt_db_internal *op, const mat_t mat, struct rt_db_internal *ip, int free)

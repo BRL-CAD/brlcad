@@ -62,7 +62,7 @@ void render_util_spall_vec(TIE_3 dir, tfloat angle, int vec_num, TIE_3 *vec_list
     radius = sqrt(vec.v[0]*vec.v[0] + vec.v[1]*vec.v[1]);
     vec.v[0] /= radius;
     vec.v[1] /= radius;
-  
+
     vec.v[0] = vec.v[1] < 0 ? 360.0 - acos(vec.v[0])*MATH_RAD2DEG : acos(vec.v[0])*MATH_RAD2DEG;
 
     /* triangles to approximate */
@@ -181,7 +181,7 @@ void render_util_spall_list(tie_t *tie, tie_ray_t *ray, tfloat angle, void **dat
     int i, ind;
     unsigned char c;
     TIE_3 *vec_list, in, out;
- 
+
 
     shotline.mesh_list = NULL;
     shotline.mesh_num = 0;

@@ -19,7 +19,7 @@
  */
 /** @file bottest.c
  *
- *  Program to generate test BOT solids
+ * Program to generate test BOT solids
  *
  */
 

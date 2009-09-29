@@ -217,6 +217,7 @@ X_open_dm(Tcl_Interp *interp, int argc, char **argv)
     struct bu_vls init_proc_vls;
     struct dm *dmp = (struct dm *)NULL;
     Tk_Window tkwin;
+    Screen *screen;
 
     struct dm_xvars *pubvars = NULL;
     struct x_vars *privars = NULL;
@@ -335,6 +336,20 @@ X_open_dm(Tcl_Interp *interp, int argc, char **argv)
 
     /* make sure there really is a display before proceeding. */
     if (!pubvars->dpy) {
+	bu_log("ERROR: Unable to attach to display (%s)\n", bu_vls_addr(&dmp->dm_pathName));
+	(void)X_close_dm(dmp);
+	return DM_NULL;
+    }
+
+    screen = DefaultScreenOfDisplay(pubvars->dpy);
+    if (!screen) {
+	/* failed to get a default screen, try harder */
+	screen = Tk_Screen(pubvars->top);
+    }
+
+    /* make sure there really is a screen before proceesing. */
+    if (!screen) {
+	bu_log("ERROR: Unable to attach to screen (%s)\n", bu_vls_addr(&dmp->dm_pathName));
 	(void)X_close_dm(dmp);
 	return DM_NULL;
     }
@@ -409,18 +424,18 @@ X_open_dm(Tcl_Interp *interp, int argc, char **argv)
 
 	privars->bg = bg.pixel;
     } else {
-	dm_allocate_color_cube( pubvars->dpy,
+	X_allocate_color_cube( pubvars->dpy,
 				pubvars->cmap,
 				privars->pixels,
 				/* cube dimension, uses XStoreColor */
 				6, CMAP_BASE, 1 );
 
 	privars->bg =
-	    dm_get_pixel(DM_BLACK,
+	    X_get_pixel(DM_BLACK,
 			 privars->pixels,
 			 CUBE_DIMENSION);
 	privars->fg =
-	    dm_get_pixel(DM_RED,
+	    X_get_pixel(DM_RED,
 			 privars->pixels,
 			 CUBE_DIMENSION);
     }
@@ -1008,10 +1023,9 @@ X_setFGColor(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b, 
 		  &color);
 
 	gcv.foreground = color.pixel;
-    } else
-	gcv.foreground = dm_get_pixel(r, g, b,
-				      privars->pixels,
-				      CUBE_DIMENSION);
+    } else {
+	gcv.foreground = X_get_pixel(r, g, b, privars->pixels, CUBE_DIMENSION);
+    }
 
     /* save foreground pixel */
     privars->fg = gcv.foreground;
@@ -1051,7 +1065,7 @@ X_setBGColor(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b)
 	privars->bg = color.pixel;
     } else
 	privars->bg =
-	    dm_get_pixel(r, g, b, privars->pixels, CUBE_DIMENSION);
+	    X_get_pixel(r, g, b, privars->pixels, CUBE_DIMENSION);
 
     return TCL_OK;
 }
@@ -1263,26 +1277,20 @@ HIDDEN XVisualInfo *
 X_choose_visual(struct dm *dmp)
 {
     XVisualInfo *vip, vitemp, *vibase, *maxvip;
-    int good[256];
     int num, i, j;
     int tries, baddepth;
     int desire_trueColor = 1;
     int min_depth = 8;
+    int *good = NULL;
     struct dm_xvars *pubvars = (struct dm_xvars *)dmp->dm_vars.pub_vars;
     struct x_vars *privars = (struct x_vars *)dmp->dm_vars.priv_vars;
 
-    vibase = XGetVisualInfo(pubvars->dpy,
-			    0, &vitemp, &num);
+    vibase = XGetVisualInfo(pubvars->dpy, 0, &vitemp, &num);
+
+    good = (int *)bu_malloc(sizeof(int)*num, "alloc good visuals");
 
     while (1) {
 	for (i=0, j=0, vip=vibase; i<num; i++, vip++) {
-#if 0
-	    /* code to force a particular visual class and depth */
-	    if (vip->depth != 8)
-		continue;
-	    if (vip->class != PseudoColor)
-		continue;
-#else
 	    /* requirements */
 	    if (vip->depth < min_depth)
 		continue;
@@ -1291,7 +1299,6 @@ X_choose_visual(struct dm *dmp)
 		    continue;
 	    } else if (vip->class != PseudoColor)
 		continue;
-#endif
 
 	    /* this visual meets criteria */
 	    good[j++] = i;
@@ -1330,6 +1337,7 @@ X_choose_visual(struct dm *dmp)
 				   pubvars->cmap)) {
 		pubvars->depth = maxvip->depth;
 
+		bu_free(good, "dealloc good visuals");
 		return maxvip; /* success */
 	    } else {
 		/* retry with lesser depth */
@@ -1338,11 +1346,16 @@ X_choose_visual(struct dm *dmp)
 	    }
 	}
 
-	if (desire_trueColor)
+	if (desire_trueColor) {
 	    desire_trueColor = 0;
-	else
-	    return (XVisualInfo *)NULL; /* failure */
+	} else {
+	    /* ran out of visuals, give up */
+	    break;
+	}
     }
+
+    bu_free(good, "dealloc good visuals");
+    return (XVisualInfo *)NULL; /* failure */
 }
 
 #endif /* DM_X */

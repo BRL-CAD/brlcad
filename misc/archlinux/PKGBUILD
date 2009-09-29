@@ -52,7 +52,7 @@ install=brlcad.install
 arch=('i686' 'x86_64')
 makedepends=('bc' 'libxslt')
 optdepends=('tkhtml3: For man page browsing in mged.')
-depends=('libpng' 'zlib' 'libgl' 'tk>=8.5')
+depends=('flex' 'libpng' 'zlib' 'libgl' 'tk>=8.5')
 
 options=('!libtool' '!strip' 'docs')
 source=('brlcad.sh')

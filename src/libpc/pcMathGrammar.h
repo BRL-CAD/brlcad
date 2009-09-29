@@ -36,10 +36,12 @@
 #include "pcMathLF.h"
 #include "pcMathVM.h"
 
-#include <boost/spirit.hpp>
-#include <boost/spirit/phoenix.hpp>
-#include <boost/spirit/dynamic/if.hpp>
+#include <boost/spirit.hpp>		/* deprecated header */
+#include <boost/spirit/phoenix.hpp>	/* deprecated header */
+#include <boost/spirit/dynamic/if.hpp>	/* deprecated header */
+#include <boost/spirit/dynamic/lazy.hpp>
 #include <string>
+#include <vector>
 
 /*#include <boost/spirit/core.hpp>
 #include <boost/spirit/phoenix.hpp>
@@ -243,6 +245,128 @@ struct ExpressionGrammar : public boost::spirit::grammar<ExpressionGrammar,Stack
 							conditional_expr_helper.stack2))
 		  ]
 		;
+	    logical_expr
+	    	= bitwise_expr
+		  [
+		  	logical_expr.stack = arg1
+		  ]
+		>> *(logical_expr_helper
+		     [
+		     	logical_expr.stack +=arg1
+		     ]
+		    )
+		;
+	    logical_expr_helper
+	    	= boolean_op
+		  [
+		  	logical_expr_helper.or_op = arg1
+		  ]
+		>> bitwise_expr
+		   [
+		   	if_(logical_expr_helper.or_op)
+			[
+			   push_back(logical_expr_helper.stack,new_<OrNode>(arg1))
+			]
+			.else_
+			[
+			   logical_expr_helper.stack = arg1,
+			   push_back(logical_expr_helper.stack,
+			   		new_<sysFunctionNode>(checked_find(self.functions, "logical_and")))
+			]
+		    ]
+		;
+	    bitwise_expr
+	    	= binary_op_p(equality_expr, bitwise_op)[bitwise_expr.stack = arg1];
+	    equality_expr
+	    	= binary_op_p(compare_expr,equality_op)[equality_expr.stack = arg1];
+	    compare_expr
+	    	= binary_op_p(shift_expr, compare_op)[compare_expr.stack = arg1];
+	    shift_expr
+	    	= binary_op_p(add_expr, shift_op)[shift_expr.stack = arg1];
+	    add_expr
+	    	= binary_op_p(mult_expr, add_op)[add_expr.stack = arg1];
+	    mult_expr
+	    	= binary_op_p(expr_atom, mult_op)[mult_expr.stack = arg1];
+	    expr_atom
+	    	= number
+		  [
+		  	expr_atom.stack = arg1
+		  ]
+		| func
+		  [
+		  	expr_atom.stack = arg1
+		  ]
+		| ('(' >>
+		  expr
+		  [
+		  	expr_atom.stack = arg1
+		  ]
+		  >> ')')
+		| unary_expr
+		  [
+		  	expr_atom.stack = arg1
+		  ]
+		;
+	    unary_expr
+		= unary_op
+		  [
+			unary_expr.function_ptr = arg1
+		  ]
+		>> expr_atom
+		   [
+			unary_expr.stack = arg1,
+			if_(unary_expr.function_ptr != FunctionPointer())
+			[
+				push_back(unary_expr.stack,
+					new_<sysFunctionNode>(unary_expr.function_ptr))
+			]
+		   ]
+		;
+
+	    number
+		= real_p
+		  [
+			push_back(number.stack,new_<ConstantNode>(arg1))
+		  ]
+		| self.local_vars
+		  [
+			push_back(number.stack,
+					new_<VariableNode>(address_of(arg1)))
+		  ]
+		| self.global_vars
+		  [
+			push_back(number.stack,
+					new_<VariableNode>(address_of(arg1)))
+		  ]
+		;
+	    func
+		= name
+		  [
+			func.arity = 0,
+			func.name = construct_<std::string>(arg1,arg2)
+		  ]
+		>> ('(' >> !list_p(arg,',') >> ')')
+		   [
+			func.function_ptr
+				= checked_find_(var(self.functions),
+						mangled_name(func.name, func.arity))
+		   ]
+		>> if_p(func.function_ptr != FunctionPointer())
+		   [
+			epsilon_p
+			[
+				push_back(func.stack,
+					new_<sysFunctionNode>(func.function_ptr))
+			]
+		   ]
+		   .else_p[nothing_p]
+		;
+	    arg = expr
+	    	  [
+		  	func.arity +=1,
+			func.stack += arg1
+		  ]
+		;
 	}
 
 	typedef boost::spirit::rule<ScannerT> RuleT;
@@ -258,7 +382,7 @@ struct ExpressionGrammar : public boost::spirit::grammar<ExpressionGrammar,Stack
 		logical_expr, number, or_expr, or_op, mult_expr, shift_expr;
 	FRuleT unary_expr, func;
 	CRuleT conditional_expr_helper;
-	LRuleT lobical_expr_helper;
+	LRuleT logical_expr_helper;
 	NameGrammar name;
 	boost::spirit::symbols<bool> boolean_op;
 	FunctionTable and_op, add_op, bitwise_op, compare_op, equality_op,\
@@ -266,6 +390,93 @@ struct ExpressionGrammar : public boost::spirit::grammar<ExpressionGrammar,Stack
     };
 };
 
+/**
+ *
+ * FunctionGrammar implementation
+ * Function closure is attached to the grammar itself
+ */
+struct FunctionClosure : boost::spirit::closure<FunctionClosure, std::string, std::vector<std::string>, boost::shared_ptr<boost::spirit::symbols<double> >, std::string, boost::shared_ptr<ExpressionGrammar> >
+{
+   member1 name;
+   member2 args;
+   member3 local_vars;
+   member4 expr;
+};
+
+struct FunctionGrammar : public boost::spirit::grammar<FunctionGrammar,StackClosure::context_t>
+{
+    boost::spirit::symbols<boost::shared_ptr<MathFunction> > & functions;
+    boost::spirit::symbols<double> const & globalvars;
+
+    FunctionGrammar(boost::spirit::symbols<boost::shared_ptr<MathFunction> > & f, boost::spirit::symbols<double> const & v) : functions(f), globalvars(v)
+    {}
+
+    template <typename ScannerT>
+    struct definition {
+	definition(FunctionGrammar const & self)
+	{
+	    using phoenix::arg1;
+	    using phoenix::arg2;
+	    using phoenix::construct_;
+	    using phoenix::new_;
+	    using phoenix::var;
+
+	    using boost::spirit::ch_p;
+	    using boost::spirit::lazy_p;
+	    using boost::spirit::list_p;
+
+	    top = funcdef;
+
+	    funcdef
+	    	=  funcdecl
+		   [
+		   	add_symbol(var(self.functions), funcdef.name,\
+					construct_<UserFunction>( \
+						funcdef.name, \
+						size(funcdef.args))),
+			/* create expression grammar for the function */
+			reset(funcdef.expr,new_<ExpressionGrammar>(
+						var(self.functions),\
+						var(self.globalvars),\
+						*funcdef.localvars))
+		   ]
+		>> '='
+		>> lazy_p(*funcdef.expr)
+		   [
+		   	/* add node to the stack */
+			push_bakc(self.stack, \
+				new_<FuncDefNode>(
+					*find_symbol(var(self.functions), funcdef.name), \
+					construct_<UserFuncExpression>(funcdef.args, funcdef.localvars, arg1)))
+		   ]
+		;
+	    funcdecl
+	    	=  name
+		   [
+		   	funcdef.name = construct_<std::string>(arg1,arg2)
+		   ]
+		>> ch_p('(')
+		   [
+		   	reset(funcdef.localvars, new_<boost::spirit::symbols<double> >() )
+		   ]
+		>> !list_p((name - lazy_p(*funcdef.localvars))
+			   [
+			   	push_back(funcdef.args,
+					construct_<std::string>(arg1,arg2)),
+				add_symbol(*funcdef.localvars,
+					construct_<std::string>(arg1,arg2))
+			   ]
+			, ',')  
+		>> ')'
+		;
+	}
+    boost::spirit::rule<ScannerT> const & start() const { return top; }
+    private:
+        boost::spirit::rule<ScannerT> top, funcdecl;
+    	boost::spirit::rule<ScannerT, FunctionClosure::context_t> funcdef;
+	NameGrammar name;
+    };
+};
 /**
  * VariableGrammar implementation
  * Stack closure is attached to the grammar itself
@@ -351,4 +562,4 @@ struct VariableGrammar : public boost::spirit::grammar<VariableGrammar, StackClo
  * c-file-style: "stroustrup"
  * End:
  * ex: shiftwidth=4 tabstop=8
- */ 
+ */

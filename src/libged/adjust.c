@@ -41,9 +41,9 @@ ged_adjust(struct ged *gedp, int argc, const char *argv[])
     struct rt_db_internal	 intern;
     static const char *usage = "object attr value ?attr value?";
 
-    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
-    GED_CHECK_READ_ONLY(gedp, BRLCAD_ERROR);
-    GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
+    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
+    GED_CHECK_READ_ONLY(gedp, GED_ERROR);
+    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
 
     /* initialize result */
     bu_vls_trunc(&gedp->ged_result_str, 0);
@@ -51,29 +51,22 @@ ged_adjust(struct ged *gedp, int argc, const char *argv[])
     /* must be wanting help */
     if (argc == 1) {
 	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return BRLCAD_HELP;
+	return GED_HELP;
     }
 
     if (argc < 4) {
 	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return BRLCAD_ERROR;
+	return GED_ERROR;
     }
 
     name = (char *)argv[1];
 
     /* Verify that this wdb supports lookup operations (non-null dbip) */
-    RT_CK_DBI(gedp->ged_wdbp->dbip);
+    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
 
-    dp = db_lookup(gedp->ged_wdbp->dbip, name, LOOKUP_QUIET);
-    if (dp == DIR_NULL) {
-	bu_vls_printf(&gedp->ged_result_str, "%s: not found", name);
-	return BRLCAD_ERROR;
-    }
+    GED_DB_LOOKUP(gedp, dp, name, LOOKUP_QUIET, GED_ERROR);
 
-    if (rt_db_get_internal(&intern, dp, gedp->ged_wdbp->dbip, (matp_t)NULL, &rt_uniresource) < 0) {
-	bu_vls_printf(&gedp->ged_result_str, "rt_db_get_internal(%s) failure", name);
-	return BRLCAD_ERROR;
-    }
+    GED_DB_GET_INTERNAL(gedp, &intern, dp, (matp_t)NULL, &rt_uniresource, GED_ERROR);
     RT_CK_DB_INTERNAL(&intern);
 
     /* Find out what type of object we are dealing with and tweak it. */
@@ -81,14 +74,14 @@ ged_adjust(struct ged *gedp, int argc, const char *argv[])
 
     if (!intern.idb_meth->ft_adjust) {
 	bu_vls_printf(&gedp->ged_result_str, "wdb_export(%s) adjust failure", name);
-	return BRLCAD_ERROR;
+	return GED_ERROR;
     }
 
     status = intern.idb_meth->ft_adjust(&gedp->ged_result_str, &intern, argc-2, (char **)argv+2, &rt_uniresource);
-    if (status == BRLCAD_OK && wdb_put_internal(gedp->ged_wdbp, name, &intern, 1.0) < 0) {
+    if (status == GED_OK && wdb_put_internal(gedp->ged_wdbp, name, &intern, 1.0) < 0) {
 	bu_vls_printf(&gedp->ged_result_str, "wdb_export(%s) failure", name);
 	rt_db_free_internal(&intern, &rt_uniresource);
-	return BRLCAD_ERROR;
+	return GED_ERROR;
     }
 
 #if 0
@@ -96,7 +89,7 @@ ged_adjust(struct ged *gedp, int argc, const char *argv[])
     bu_observer_notify(interp, &wdbp->wdb_observers, bu_vls_addr(&wdbp->wdb_name));
 #endif
 
-    return BRLCAD_OK;
+    return GED_OK;
 }
 
 

@@ -47,26 +47,26 @@
 #include "nurb.h"
 #include "solid.h"
 #include "dm.h"
-#include "dm_xvars.h"
-
-#if defined(DM_X) || defined(DM_TK)
-#  include "tk.h"
-#  include <X11/Xutil.h>
-#endif /* DM_X or DM_TK*/
 
 #ifdef DM_X
+#  include "dm_xvars.h"
+#  include <X11/Xutil.h>
 #  include "dm-X.h"
 #endif /* DM_X */
 
 #ifdef DM_TK
+#  include "dm_xvars.h"
+#  include "tk.h"
 #  include "dm-tk.h"
 #endif /* DM_TK */
 
 #ifdef DM_OGL
+#  include "dm_xvars.h"
 #  include "dm-ogl.h"
 #endif /* DM_OGL */
 
 #ifdef DM_WGL
+#  include "dm_xvars.h"
 #  include <tkwinport.h>
 #  include "dm-wgl.h"
 #endif /* DM_WGL */
@@ -121,9 +121,9 @@ static int dmo_sync_tcl(ClientData clientData, Tcl_Interp *interp, int argc, cha
 static int dmo_size_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
 static int dmo_get_aspect_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
 static int dmo_observer_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
-#ifndef _WIN32
+
 static int dmo_png_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
-#endif
+
 static int dmo_clearBufferAfter_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
 static int dmo_getDrawLabelsHook_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
 static int dmo_setDrawLabelsHook_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
@@ -169,9 +169,7 @@ static struct bu_cmdtab dmo_cmds[] = {
     {"normal",		dmo_normal_tcl},
     {"observer",		dmo_observer_tcl},
     {"perspective",		dmo_perspective_tcl},
-#ifndef _WIN32
     {"png",		        dmo_png_tcl},
-#endif
 #ifdef USE_FBSERV
     {"refreshfb",		dmo_refreshFb_tcl},
 #endif
@@ -2253,7 +2251,7 @@ dmo_perspective_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **
 }
 
 
-#ifndef _WIN32
+#if defined(DM_X) || defined(DM_OGL)
 
 #if 1
 #define DM_REVERSE_COLOR_BYTE_ORDER(_shift, _mask) { \
@@ -2379,8 +2377,8 @@ dmo_png_cmd(struct dm_obj *dmop,
 	 * We need to reverse things if the image byte order
 	 * is different from the system's byte order.
 	 */
-	if (((bu_byteorder() == BU_BIG_ENDIAN) && (ximage_p->byte_order == MSBFirst)) ||
-	    ((bu_byteorder() == BU_LITTLE_ENDIAN) && (ximage_p->byte_order == LSBFirst))) {
+	if (((bu_byteorder() == BU_BIG_ENDIAN) && (ximage_p->byte_order == LSBFirst)) ||
+	    ((bu_byteorder() == BU_LITTLE_ENDIAN) && (ximage_p->byte_order == MSBFirst))) {
 #if 0
 	    bu_log("red mask - %ld\n", ximage_p->red_mask);
 	    bu_log("green mask - %ld\n", ximage_p->green_mask);
@@ -2597,6 +2595,9 @@ dmo_png_cmd(struct dm_obj *dmop,
     return TCL_OK;
 }
 
+#endif /* defined(DM_X) || defined(DM_OGL)
+
+
 /*
  * Write the pixels to a file in png format.
  *
@@ -2612,9 +2613,13 @@ dmo_png_tcl(ClientData clientData,
 {
     struct dm_obj *dmop = (struct dm_obj *)clientData;
 
+#if defined(DM_X) || defined(DM_OGL)
     return dmo_png_cmd(dmop, interp, argc-1, argv+1);
-}
+#else
+    bu_log("Sorry, support for the 'png' command is unavailable.\n");
+    return 0;
 #endif
+}
 
 /*
  * Get/set the clearBufferAfter flag.
@@ -3116,9 +3121,14 @@ dmo_size_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	    }
 	}
 
+#if defined(DM_X) || defined(DM_OGL) || defined(DM_OGL) || defined(DM_WGL)
 	Tk_GeometryRequest(((struct dm_xvars *)dmop->dmo_dmp->dm_vars.pub_vars)->xtkwin,
 			   width, height);
 	return TCL_OK;
+#else
+	bu_log("Sorry, support for 'size' command is unavailable.\n");
+	return TCL_ERROR;
+#endif
     }
 
     bu_vls_init(&vls);

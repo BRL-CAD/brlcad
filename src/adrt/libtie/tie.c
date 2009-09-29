@@ -42,7 +42,7 @@
 # include <stdint.h>
 #endif
 
-#define TIE_DEGENERATE_THRESHOLD 0.0001 
+#define TIE_DEGENERATE_THRESHOLD 0.0001
 TIE_VAL(int tie_check_degenerate) = 1;
 
 /*************************************************************
@@ -112,6 +112,9 @@ static void tie_tri_prep(tie_t *tie)
  * This needs to be called before any other libtie data structures are called.
  *
  * @param tie pointer to a struct tie_t
+ * @param tri_num initial number of triangles to allocate for. tie_push may
+ *		    expand the buffer, if needed
+ * @param kdmethod Either TIE_KDTREE_FAST or TIE_KDTREE_OPTIMAL
  * @return void
  */
 TIE_FUNC(void tie_init, tie_t *tie, unsigned int tri_num, unsigned int kdmethod)
@@ -120,7 +123,8 @@ TIE_FUNC(void tie_init, tie_t *tie, unsigned int tri_num, unsigned int kdmethod)
     tie->kdmethod = kdmethod;
     tie->tri_num = 0;
     tie->tri_num_alloc = tri_num;
-    tie->tri_list = (tie_tri_t *)bu_malloc(sizeof(tie_tri_t) * tri_num, "tie_init");
+	/* set to NULL if tri_num == 0. bu_malloc(0) causes issues. */
+    tie->tri_list = tri_num?(tie_tri_t *)bu_malloc(sizeof(tie_tri_t) * tri_num, "tie_init"):NULL;
     tie->stat = 0;
     tie->rays_fired = 0;
 }
@@ -195,7 +199,8 @@ TIE_FUNC(void* tie_work, tie_t *tie, tie_ray_t *ray, tie_id_t *id, void *(*hitfu
     tie_geom_t *data;
     tie_kdtree_t *node_aligned, *temp[2];
     tfloat near, far, dirinv[3], dist;
-    int i, n, ab[3], split, stack_ind, hit_count;
+    unsigned int i, n, hit_count;
+    int ab[3], split, stack_ind;
     void *result;
 
 
@@ -406,7 +411,7 @@ TIE_FUNC(void tie_push, tie_t *tie, TIE_3 **tlist, unsigned int tnum, void *plis
 /* expand the tri buffer if needed */
     if (tnum + tie->tri_num > tie->tri_num_alloc) {
 	tie->tri_list = (tie_tri_t *)bu_realloc(
-	    tie->tri_list, 
+	    tie->tri_list,
 	    sizeof(tie_tri_t) * (tie->tri_num + tnum),
 	    "tri_list during tie_push");
 	tie->tri_num_alloc += tnum;
@@ -421,8 +426,11 @@ TIE_FUNC(void tie_push, tie_t *tie, TIE_3 **tlist, unsigned int tnum, void *plis
 	    VSUB2(v.v,  (*tlist[i*3+2]).v,  (*tlist[i*3+0]).v);
 	    VCROSS(w.v,  u.v,  v.v);
 
-	    if (MAGNITUDE(w.v) < 0.0001 * 0.0001)
+	    if (MAGNITUDE(w.v) < 0.0001 * 0.0001) {
+		bu_log("WARNING: degenerate triangle found: %f %f %f | %f %f %f | %f %f %f\n", 
+			V3ARGS((*tlist[i*3+0]).v),  V3ARGS((*tlist[i*3+1]).v), V3ARGS((*tlist[i*3+2]).v));
 		continue;
+	    }
 	}
 
 /* pack pack pack */

@@ -25,6 +25,7 @@
 
 #include "common.h"
 
+#include <stdlib.h>
 #include <string.h>
 #include "bio.h"
 
@@ -82,9 +83,9 @@ ged_push(struct ged *gedp, int argc, const char *argv[])
     extern	char		*bu_optarg;
     static const char *usage = "object(s)";
 
-    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
-    GED_CHECK_READ_ONLY(gedp, BRLCAD_ERROR);
-    GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
+    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
+    GED_CHECK_READ_ONLY(gedp, GED_ERROR);
+    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
 
     /* initialize result */
     bu_vls_trunc(&gedp->ged_result_str, 0);
@@ -92,12 +93,12 @@ ged_push(struct ged *gedp, int argc, const char *argv[])
     /* must be wanting help */
     if (argc == 1) {
 	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return BRLCAD_HELP;
+	return GED_HELP;
     }
 
     if (MAXARGS < argc) {
 	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return BRLCAD_ERROR;
+	return GED_ERROR;
     }
 
     BU_GETSTRUCT(gpdp, ged_push_data);
@@ -160,7 +161,7 @@ ged_push(struct ged *gedp, int argc, const char *argv[])
 	rt_g.debug = old_debug;
 	bu_free((genptr_t)gpdp, "ged_push: gpdp");
 	bu_vls_printf(&gedp->ged_result_str, "ged_push:\tdb_walk_tree failed or there was a solid moving\n\tin two or more directions");
-	return BRLCAD_ERROR;
+	return GED_ERROR;
     }
 /*
  * We've built the push solid list, now all we need to do is apply
@@ -212,7 +213,7 @@ ged_push(struct ged *gedp, int argc, const char *argv[])
     push_error = gpdp->push_error;
     bu_free((genptr_t)gpdp, "ged_push: gpdp");
 
-    return push_error ? BRLCAD_ERROR : BRLCAD_OK;
+    return push_error ? GED_ERROR : GED_OK;
 }
 
 /**

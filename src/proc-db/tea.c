@@ -37,79 +37,20 @@
 #include "./ducks.h"		/* Teapot Vertex data */
 #include "./patches.h"		/* Teapot Patch data */
 
-extern dt ducks[DUCK_COUNT];		/* Vertex data of teapot */
-extern pt patches[PATCH_COUNT];		/* Patch data of teapot */
-
-struct face_g_snurb **surfaces;
-
-char *Usage = "This program ordinarily generates a database on stdout.\n\
-	Your terminal probably wouldn't like it.";
-
-/*void dump_patch(int (*patch)[4]);*/
-void dump_patch( struct face_g_snurb **surfp, pt patch );
-
-struct rt_wdb *outfp;
-
-int
-main(int argc, char **argv) 			/* really has no arguments */
-
-{
-    char * id_name = "Spline Example";
-    char * tea_name = "UtahTeapot";
-    int i;
-
-    rt_init_resource( &rt_uniresource, 0, NULL );
-
-    outfp = wdb_fopen("teapot.g");
-
-    while ((i=bu_getopt(argc, argv, "d")) != EOF) {
-	switch (i) {
-	    case 'd' : rt_g.debug |= DEBUG_MEM | DEBUG_MEM_FULL; break;
-	    default	:
-		(void)fprintf(stderr,
-			      "Usage: %s [-d]\n", *argv);
-		return(-1);
-	}
-    }
-
-    /* Setup information
-     * Database header record
-     *	File name
-     * B-Spline Solid record
-     * 	Name, Number of Surfaces, resolution (not used)
-     *
-     */
-
-    mk_id( outfp, id_name);
-
-    /* Step through each patch and create a B_SPLINE surface
-     * representing the patch then dump them out.
-     */
-
-    surfaces = (struct face_g_snurb **)bu_calloc( PATCH_COUNT+2,
-						  sizeof( struct face_g_snurb *), "surfaces" );
-
-    for ( i = 0; i < PATCH_COUNT; i++)
-    {
-	dump_patch( &surfaces[i], patches[i] );
-    }
-    surfaces[PATCH_COUNT] = NULL;
-
-    mk_bspline( outfp, tea_name, surfaces );
-
-    return(0);
-}
 
 /* IEEE patch number of the Bi-Cubic Bezier patch and convert it
  * to a B-Spline surface (Bezier surfaces are a subset of B-spline surfaces
  * and output it to a BRL-CAD binary format.
  */
 void
-dump_patch( struct face_g_snurb **surfp, pt patch )
+dump_patch(struct face_g_snurb **surfp, pt patch)
 {
-    struct face_g_snurb * b_patch;
+    /* Vertex data of teapot */
+    extern dt ducks[DUCK_COUNT];
+
+    struct face_g_snurb *b_patch;
     int i, j, pt_type;
-    fastf_t * mesh_pointer;
+    fastf_t *mesh_pointer;
 
     /* U and V parametric Direction Spline parameters
      * Cubic = order 4,
@@ -120,36 +61,86 @@ dump_patch( struct face_g_snurb **surfp, pt patch )
 
     pt_type = RT_NURB_MAKE_PT_TYPE(3, 2, 0); /* see nurb.h for details */
 
-    b_patch = (struct face_g_snurb *) rt_nurb_new_snurb( 4, 4, 8, 8, 4, 4,
-							 pt_type, &rt_uniresource);
+    b_patch = (struct face_g_snurb *) rt_nurb_new_snurb(4, 4, 8, 8, 4, 4, pt_type, &rt_uniresource);
     *surfp = b_patch;
 
     /* Now fill in the pieces */
 
     /* Both u and v knot vectors are [ 0 0 0 0 1 1 1 1]
-     * spl_kvknot( order, lower parametric value, upper parametric value,
-     * 		Number of interior knots )
+     * spl_kvknot(order, lower parametric value, upper parametric value,
+     * Number of interior knots)
      */
 
-
     bu_free((char *)b_patch->u.knots, "dumping u knots I'm about to realloc");
-    rt_nurb_kvknot( &b_patch->u, 4, 0.0, 1.0, 0, &rt_uniresource);
+    rt_nurb_kvknot(&b_patch->u, 4, 0.0, 1.0, 0, &rt_uniresource);
 
     bu_free((char *)b_patch->v.knots, "dumping v_kv knots I'm about to realloc");
-    rt_nurb_kvknot( &b_patch->v, 4, 0.0, 1.0, 0, &rt_uniresource);
+    rt_nurb_kvknot(&b_patch->v, 4, 0.0, 1.0, 0, &rt_uniresource);
 
     /* Copy the control points */
 
     mesh_pointer = b_patch->ctl_points;
 
-    for ( i = 0; i< 4; i++)
-	for ( j = 0; j < 4; j++)
-	{
+    for (i = 0; i< 4; i++) {
+	for (j = 0; j < 4; j++) {
 	    *mesh_pointer = ducks[patch[i][j]-1].x * 1000;
 	    *(mesh_pointer+1) = ducks[patch[i][j]-1].y * 1000;
 	    *(mesh_pointer+2) = ducks[patch[i][j]-1].z * 1000;
 	    mesh_pointer += 3;
 	}
+    }
+}
+
+
+int
+main(int argc, char **argv)
+{
+    /* Patch data of teapot */
+    extern pt patches[PATCH_COUNT];
+
+    const char *id_name = "Spline Example";
+    const char *tea_name = "UtahTeapot";
+
+    int i;
+    struct rt_wdb *outfp;
+    struct face_g_snurb **surfaces;
+
+    rt_init_resource(&rt_uniresource, 0, NULL);
+
+    outfp = wdb_fopen("teapot.g");
+
+    while ((i=bu_getopt(argc, argv, "d")) != EOF) {
+	switch (i) {
+	    case 'd':
+		rt_g.debug |= DEBUG_MEM | DEBUG_MEM_FULL;
+		break;
+	    default:
+		bu_exit(-1, "Usage: %s [-d]\n", *argv);
+	}
+    }
+
+    /* Setup information
+     * Database header record
+     * File name
+     * B-Spline Solid record
+     * Name, Number of Surfaces, resolution (not used)
+     */
+
+    mk_id(outfp, id_name);
+
+    /* Step through each patch and create a B_SPLINE surface
+     * representing the patch then dump them out.
+     */
+    surfaces = (struct face_g_snurb **)bu_calloc(PATCH_COUNT+2, sizeof(struct face_g_snurb *), "surfaces");
+
+    for (i = 0; i < PATCH_COUNT; i++) {
+	dump_patch(&surfaces[i], patches[i]);
+    }
+    surfaces[PATCH_COUNT] = NULL;
+
+    mk_bspline(outfp, tea_name, surfaces);
+
+    return(0);
 }
 
 /*

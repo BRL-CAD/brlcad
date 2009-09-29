@@ -24,6 +24,15 @@
  */
 
 #include <stdlib.h>
+
+#ifdef HAVE_SYS_TYPES_H
+#   include <sys/types.h>
+#endif
+
+#ifdef HAVE_SYS_WAIT_H
+#   include <sys/wait.h>
+#endif
+
 #include "bio.h"
 #include "ged.h"
 

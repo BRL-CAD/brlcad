@@ -71,3 +71,9 @@ set(TCL_GENERIC_SOURCES
     generic/tclUtil.c
     generic/tclVar.c
 )
+
+set(TCL_GENERIC_HEADERS
+    generic/tcl.h
+    generic/tclDecls.h
+    generic/tclPlatDecls.h
+)

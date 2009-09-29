@@ -97,7 +97,8 @@ define([CAD_VERSION], [patsubst([MAJOR_VERSION.MINOR_VERSION.PATCH_VERSION], [
 AC_INIT(BRL-CAD, [CAD_VERSION], [http://brlcad.org], brlcad)
 AC_REVISION($Revision$)
 
-AC_CONFIG_AUX_DIR(misc)
+AC_CONFIG_AUX_DIR([misc])
+AC_CONFIG_MACRO_DIR([m4])
 
 # keep track of cmd-line options for later
 BC_ARG0="$0"
@@ -233,7 +234,7 @@ AM_CONFIG_HEADER([include/brlcad_config.h])
 builtin(include,src/other/tcl/unix/tcl.m4)
 
 # automatically enable and load our configure cache file if available
-BC_CONFIG_CACHE([config.cache.${host_os}.${ac_hostname}])
+BC_CONFIG_CACHE([config.cache.${host_os}.${ac_hostname}], [yes])
 
 
 dnl ***********************
@@ -309,7 +310,7 @@ BC_ARG_ENABLE([build_tkimg], [tkimg-build], [Build the included tkImg], [auto])
 BC_ARG_ENABLE([build_tnt], [tnt-install], [Install the included Template Numerical Toolkit], [auto])
 
 # jove
-BC_ARG_ENABLE([build_jove], [jove-build], [Enable compilation of jove (optional)], [auto])
+BC_ARG_ENABLE([build_jove], [jove-build], [Enable compilation of jove (optional)], [no])
 
 # endgame framework simulation module
 BC_ARG_ENABLE([build_ef], [ef-build], [Enable compilation of Endgame Framework module (optional)], [no])
@@ -346,6 +347,8 @@ BC_ARG_ENABLE([build_warnings], [warnings], [Enable verbose compilation warnings
 
 # build progress status
 BC_ARG_ENABLE([build_progress], [progress], [Enable verbose compilation progress], [no])
+
+BC_ARG_ENABLE([rtgl], [rtgl], [Enable compilation of experimental Ray Trace OpenGL display manager], [no])
 
 
 dnl *** with options ***
@@ -839,6 +842,9 @@ AC_MSG_RESULT($bc_with_wgl)
 AC_MSG_CHECKING(whether to compile the Pro/ENGINEER plugin)
 AC_MSG_RESULT($bc_with_proe)
 
+AC_MSG_CHECKING(whether to compile experimental RTGL display manager)
+AC_MSG_RESULT($bc_rtgl)
+
 
 dnl **************************
 dnl *** Check for programs ***
@@ -1133,9 +1139,7 @@ if test "x$bc_with_x11" != "xno" ; then
     dnl find X11 libraries.  sets X_CFLAGS, X_LIBS, and X_EXTRA_LIBS
     BC_SEARCH_DIRECTORY([/usr/X11], [X11])
     AC_PATH_XTRA
-    if test "x$have_x" = "xyes" ; then
-	AC_DEFINE(HAVE_X11_XLIB_H, 1, Define to 1 if you have the <X11/Xlib.h> header file.)
-    fi
+    AC_CHECK_HEADERS([X11/Xlib.h])
 
     dnl add X11 libraries that link to X_LIBS
     LIBX11=""
@@ -1374,7 +1378,8 @@ if test "x$bc_with_opengl" != "xno" ; then
 	for bc_dir in "$ac_x_libraries" `echo "$ac_x_includes $ac_x_header_dirs" |
 		sed s/include/lib/g` ; do
 
-	    LDFLAGS="$PRELDFLAGS -L$bc_dir"
+	    GL_LDFLAGS="-L$bc_dir"
+	    LDFLAGS="$PRELDFLAGS $GL_LDFLAGS"
 	    LIBS="$PRELIBS -lGL"
 	    AC_LINK_IFELSE([AC_LANG_CALL([],[glEnable])],
 		gl_link_works=yes ; LIBGL="-L$bc_dir -lGL" ; break)
@@ -1384,6 +1389,28 @@ if test "x$bc_with_opengl" != "xno" ; then
 	done
 	LDFLAGS="$PRELDFLAGS"
 	LIBS="$PRELIBS"
+    fi
+
+    # Mac OS X 10.5 has a linker bug resulting in the following error:
+    #   ld: cycle in dylib re-exports with /usr/X11/lib/libGL.dylib
+    #
+    # This fixes that error by forcing the GL exports specified in the
+    # /usr/X11/lib dylib to use the framework dylib instead of being a
+    # cyclic dependency due to search paths.  Fugly workaround.
+
+    if test "x$gl_link_works" = "xno" ; then
+	unset ac_cv_lib_GL_glEnable # disable cache result
+	PRELDFLAGS="$LDFLAGS"
+	GL_LDFLAGS="-Wl,-dylib_file -Wl,/System/Library/Frameworks/OpenGL.framework/Versions/A/Libraries/libGL.dylib:/System/Library/Frameworks/OpenGL.framework/Versions/A/Libraries/libGL.dylib"
+	LDFLAGS="$PRELDFLAGS $GL_LDFLAGS"
+	LIBGL=-lGL
+	AC_CHECK_LIB(GL, glEnable, gl_link_works=yes)
+	# leave LDFLAGS set with this gl workaround
+	# LDFLAGS="$PRELDFLAGS"
+	if test "x$gl_link_works" = "xno" ; then
+	    GL_LDFLAGS=""
+	    LIBGL=""
+	fi
     fi
 fi
 
@@ -1509,37 +1536,58 @@ if test "x$bc_with_dtrace" != "xno" ; then
     AC_CHECK_HEADER(sys/sdt.h,, [bc_with_dtrace=no])
 fi
 
-GL_CPPFLAGS=""
+GL_H_CPPFLAGS=""
+GLX_H_CPPFLAGS=""
+PRECPPFLAGS="$CPPFLAGS"
 # optionally check for OpenGL headers
 if test "x$bc_with_opengl" != "xno" -o "x$bc_with_wgl" != "xno" ; then
     gl_include_works=no
-
-    AC_COMPILE_IFELSE([AC_LANG_SOURCE([@%:@include <GL/gl.h>])],
-	[gl_include_works="yes"])
-    AC_COMPILE_IFELSE([AC_LANG_SOURCE([@%:@include <GL/glx.h>])],
-	[gl_include_works="yes"])
-
-    PRECPPFLAGS="$CPPFLAGS"
+    unset ac_cv_header_GL_gl_h
+    AC_CHECK_HEADER([GL/gl.h], [
+	AC_DEFINE(HAVE_GL_GL_H, 1, [Define to 1 if you have the <GL/gl.h> header file.])
+	gl_include_works="yes"
+    ], [unset ac_cv_header_GL_gl_h])
+    # didn't find header, try harder
     if test "x$gl_include_works" = "xno" ; then
-	for bc_dir in "$ac_x_includes" `echo $ac_x_header_dirs` ; do
-	    CPPFLAGS="$PRECPPFLAGS -I$bc_dir"
-	    AC_COMPILE_IFELSE([AC_LANG_SOURCE([@%:@include <GL/gl.h>])],
-		[gl_include_works="yes"])
-	    AC_COMPILE_IFELSE([AC_LANG_SOURCE([@%:@include <GL/glx.h>])],
-		[gl_include_works="yes"])
-	    if test "x$gl_include_works" = "xyes" ; then
-		GL_CPPFLAGS="-I$bc_dir"
+	# this won't work for paths with spaces
+	for bc_dir in "$ac_x_includes" `echo $ac_x_header_dirs` `echo $ac_x_libraries | sed 's/\/lib/\/include/g'`; do
+	    GL_H_CPPFLAGS="-I$bc_dir"
+	    CPPFLAGS="$PRECPPFLAGS $GL_H_CPPFLAGS"
+	    AC_MSG_NOTICE([ .. looking in $bc_dir for gl.h])
+	    AC_CHECK_HEADER([GL/gl.h], [
+		AC_DEFINE(HAVE_GL_GL_H, 1, [Define to 1 if you have the <GL/gl.h> header file.])
+		gl_include_works="yes"
 		break
-	    fi
+	    ], [unset ac_cv_header_GL_gl_h])
 	done
     fi
-    AC_CHECK_HEADERS([GL/gl.h GL/glx.h])
     CPPFLAGS="$PRECPPFLAGS"
 
+    glx_include_works=no
+    unset ac_cv_header_GL_glx_h
+    AC_CHECK_HEADER([GL/glx.h], [
+	AC_DEFINE(HAVE_GL_GLX_H, 1, [Define to 1 if you have the <GL/glx.h> header file.])
+	glx_include_works="yes"
+    ], [unset ac_cv_header_GL_glx_h])
+    # didn't find header, try harder
+    if test "x$glx_include_works" = "xno" ; then
+	# this won't work for paths with spaces
+	for bc_dir in "$ac_x_includes" `echo $ac_x_header_dirs` `echo $ac_x_libraries | sed 's/\/lib/\/include/g'`; do
+	    GLX_H_CPPFLAGS="-I$bc_dir"
+	    CPPFLAGS="$PRECPPFLAGS $GLX_H_CPPFLAGS"
+	    AC_MSG_NOTICE([ .. looking in $bc_dir for glx.h])
+	    AC_CHECK_HEADER([GL/glx.h], [
+	    	AC_DEFINE(HAVE_GL_GLX_H, 1, [Define to 1 if you have the <GL/glx.h> header file.])
+		glx_include_works="yes"
+		break
+	    ], [unset ac_cv_header_GL_glx_h])
+	done
+    fi
+    CPPFLAGS="$PRECPPFLAGS"
 fi # bc_with_opengl
+GL_CPPFLAGS="$GL_H_CPPFLAGS $GLX_H_CPPFLAGS"
+AC_SUBST(GL_CPPFLAGS)
 
-GL_CFLAGS=$GL_CPPFLAGS
-AC_SUBST(GL_CFLAGS)
 
 # optionally (yes or auto) check for vectorization headers for opennurbs
 if test "x$bc_build_opennurbs" != "xno" ; then
@@ -1706,7 +1754,7 @@ AC_TYPE_OFF_T
 AC_TYPE_PID_T
 AC_TYPE_SIZE_T
 AC_CHECK_TYPE(socklen_t, ,
-    AC_DEFINE([socklen_t], [int], [Define to int if <sys/socket.h> nor <sys/types.h define socklen_t]),
+    AC_DEFINE([socklen_t], [int], [Define to int if <sys/socket.h> nor <sys/types.h> define socklen_t]),
     [
 #ifdef HAVE_SYS_TYPES_H
 #  include <sys/types.h>
@@ -2173,7 +2221,6 @@ fi
 AC_SUBST(PNG)
 AC_SUBST(PNG_CPPFLAGS)
 
-
 dnl *** libregex ***
 dnl See if regular expression support works
 regex_works=no
@@ -2338,7 +2385,6 @@ main() {
 	fi
     fi
 fi
-AC_SUBST(X_PREFIX)
 AC_SUBST(X_CFLAGS)
 AC_SUBST(X_LIBS)
 AC_MSG_CHECKING(whether to build against X11)
@@ -2794,12 +2840,22 @@ AC_SUBST(ITK_CPPFLAGS)
 AC_SUBST(LIBITCL)
 AC_SUBST(LIBITK)
 
-# XXX need incrTcl's configure for the proper .so/.dylib value
-ITCL_LIB_FILE="libitcl${ITCL_VERSION}.a"
-ITK_LIB_FILE="libitk${ITCL_VERSION}.a"
+# XXX hack until we can call incrTcl's configure to get the value
+case $host_os in
+    darwin*)
+	SHLIB_SUFFIX=".dylib"
+	;;
+    *)
+	SHLIB_SUFFIX=".so"
+	;;
+esac
+
+# XXX hack since we don't call incrTcl's configure for the proper
+# library name.
+ITCL_LIB_FILE="libitcl${ITCL_VERSION}${SHLIB_SUFFIX}"
+ITK_LIB_FILE="libitk${ITCL_VERSION}${SHLIB_SUFFIX}"
 AC_SUBST(ITCL_LIB_FILE)
 AC_SUBST(ITK_LIB_FILE)
-
 
 dnl *** iwidgets ***
 dnl See if the iwidgets are available
@@ -3293,8 +3349,10 @@ if test "x$bc_with_opengl" != "xno" ; then
     opengl_works=no
     PRELIBS="$LIBS"
     PRECPPFLAGS="$CPPFLAGS"
+    PRELDFLAGS="$LDFLAGS"
     LIBS="$LIBS $LIBGL"
     CPPFLAGS="$CPPFLAGS $GL_CPPFLAGS"
+    LDFLAGS="$LDFLAGS $GL_LDFLAGS"
     AC_TRY_RUN([
 #ifdef HAVE_GL_GL_H
 #  include <GL/gl.h>
@@ -3312,6 +3370,7 @@ main(int argc, char *argv[]) {
     ], [opengl_works=yes])
     LIBS="$PRELIBS"
     CPPFLAGS="$PRECPPFLAGS"
+    LDFLAGS="$PRELDFLAGS"
     AC_MSG_RESULT($opengl_works)
 
     dnl figure out whether we need to build against opengl
@@ -3346,6 +3405,7 @@ if test "x$bc_with_wgl" != "xno" ; then
 main(int argc, char *argv[]) {
     GLboolean values;
     void (*func)() = glBegin;
+    wglMakeCurrent(NULL, NULL);
     if (GL_FALSE || argc > 1) {
         func(GL_POINTS);
 	glGetBooleanv(GL_DEPTH_TEST, &values);
@@ -3373,6 +3433,22 @@ main(int argc, char *argv[]) {
 fi # bc_with_wgl
 AC_MSG_CHECKING(whether to build against WindowsGL)
 AC_MSG_RESULT($build_against_wgl)
+
+
+dnl *** RTGL interface compilation ***
+build_rtgl="no"
+if test "x$bc_rtgl" = "xyes" ; then
+    if test "x$build_against_opengl" = "xno" ; then
+	AC_MSG_NOTICE([RTGL was requested, but no system OpenGL libraries were found])
+	AC_MSG_NOTICE([}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}])
+	AC_MSG_NOTICE([Try adding --with-opengl])
+	AC_MSG_ERROR([*** Using RTGL was requested, yet no system OpenGL was found ***])
+    fi
+    build_rtgl="yes"
+fi # bc_with_rtgl
+AC_MSG_CHECKING(whether to build experimental RTGL display manager)
+AC_MSG_RESULT($build_rtgl)
+
 
 dnl *** Knobs availability ***
 dials_and_buttons=no
@@ -3492,6 +3568,10 @@ AM_CONDITIONAL(WITH_WGL, [test "x$build_against_wgl" != "xno"])
 AM_CONDITIONAL(WITH_TK, [test "xyes" = "xno"])
 #AM_CONDITIONAL(WITH_TK, [test "x$build_against_tk" != "xno"])
 
+# XXX need to refactor the above fb/dm interfaces to have a better
+# separation of their external 'with' deps and the interfaces
+AM_CONDITIONAL(BUILD_RTGL, [test "x$build_rtgl" = "xyes"])
+
 AM_CONDITIONAL(WITH_JAVA, [test "x$build_against_java" != "xno"])
 AM_CONDITIONAL(WITH_PROE, [test "x$build_against_proe" != "xno"])
 AM_CONDITIONAL(WITH_PARSERS, [test "x$build_parsers" != "xno"])
@@ -3501,6 +3581,7 @@ AM_CONDITIONAL(BUILD_PDF_DOCS, [test "x$docbook_pdf_processing" != "xno"])
 AM_CONDITIONAL(INSTALL_MODELS, [test "x$bc_install_geometry" = "xyes"])
 AM_CONDITIONAL(ONLY_BENCHMARK, [test "x$bc_only_benchmark" != "xno"])
 AM_CONDITIONAL(ONLY_RTS, [test "x$bc_only_rts" != "xno"])
+
 
 
 dnl Any combination of the different optimizations listed below may individually be
@@ -3716,6 +3797,7 @@ fi
 
 dnl configure tkhtml3
 if test "x$build_brlcad_tkhtml3" = "xyes" ; then
+    ac_configure_args="$ac_configure_args --exec-prefix=\"$bc_prefix\""
     AC_CONFIG_SUBDIRS([src/other/tkhtml3])
 fi
 
@@ -3831,21 +3913,10 @@ AC_CONFIG_FILES([
 	misc/win32-msvc/Dll/Makefile
 	misc/win32-msvc/Makefile
 	misc/win32-msvc8/Makefile
-	misc/win32-msvc9/Makefile
 	pix/Makefile
 	sh/Makefile
 	src/Makefile
 	src/adrt/Makefile
-	src/adrt/bench/Makefile
-	src/adrt/doc/Makefile
-	src/adrt/librender/Makefile
-	src/adrt/libtexture/Makefile
-	src/adrt/libtie/Makefile
-	src/adrt/libtienet/Makefile
-	src/adrt/master/Makefile
-	src/adrt/rise/Makefile
-	src/adrt/scripts/Makefile
-	src/adrt/slave/Makefile
 	src/anim/Makefile
 	src/archer/Makefile
 	src/archer/plugins/Commands/Makefile
@@ -3853,11 +3924,12 @@ AC_CONFIG_FILES([
 	src/archer/plugins/Makefile
 	src/archer/plugins/Utility/Makefile
 	src/archer/plugins/Wizards/Makefile
+	src/archer/plugins/Wizards/humanwizard/Makefile
 	src/archer/plugins/Wizards/tankwizard/Makefile
 	src/archer/plugins/Wizards/tankwizard/images/Makefile
 	src/archer/plugins/Wizards/tirewizard/Makefile
 	src/brlman/Makefile
-	src/brlman/brlman
+	src/brlman/brlman.sh
 	src/burst/Makefile
 	src/bwish/Makefile
 	src/canon/Makefile
@@ -3992,6 +4064,10 @@ AC_CONFIG_FILES([
 	src/vfont/Makefile
 ])
 
+# let the BC_CONFIG_CACHE know we completed successfully (must come before AC_OUTPUT)
+BC_CONFIG_COMPLETE
+
+# GENERATE EVERYTHING
 AC_OUTPUT
 
 # ac_top_builddir and other variables are modified after AC_OUTPUT so

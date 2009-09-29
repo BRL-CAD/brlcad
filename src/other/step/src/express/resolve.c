@@ -57,10 +57,10 @@ static char rcsid[] = "$Id: resolve.c,v 1.14 1997/01/21 19:19:51 dar Exp $";
 
 #define RESOLVE_C
 #include <stdlib.h>
-#include "resolve.h"
+#include "express/resolve.h"
 #include "stack.h"
-#include "schema.h"
-#include "express.h"
+#include "express/schema.h"
+#include "express/express.h"
 
 static void ENTITYresolve_subtypes PROTO((Schema));
 static void ENTITYresolve_supertypes PROTO((Entity));

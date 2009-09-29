@@ -629,7 +629,7 @@ rt_pg_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, con
  *  (vid rt_pg_ifree).
  */
 int
-rt_pg_import(struct rt_db_internal *ip, const struct bu_external *ep, const fastf_t *mat, const struct db_i *dbip)
+rt_pg_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fastf_t *mat, const struct db_i *dbip)
 {
     struct rt_pg_internal	*pgp;
     union record		*rp;
@@ -640,7 +640,7 @@ rt_pg_import(struct rt_db_internal *ip, const struct bu_external *ep, const fast
     BU_CK_EXTERNAL( ep );
     rp = (union record *)ep->ext_buf;
     if ( rp->u_id != ID_P_HEAD )  {
-	bu_log("rt_pg_import: defective header record\n");
+	bu_log("rt_pg_import4: defective header record\n");
 	return(-1);
     }
 
@@ -655,7 +655,7 @@ rt_pg_import(struct rt_db_internal *ip, const struct bu_external *ep, const fast
     pgp->npoly = (ep->ext_nbytes - sizeof(union record)) /
 	sizeof(union record);
     if ( pgp->npoly <= 0 )  {
-	bu_log("rt_pg_import: polysolid with no polygons!\n");
+	bu_log("rt_pg_import4: polysolid with no polygons!\n");
 	return -1;
     }
     if ( pgp->npoly )
@@ -670,7 +670,7 @@ rt_pg_import(struct rt_db_internal *ip, const struct bu_external *ep, const fast
 	pp = &pgp->poly[p];
 	rno = p+1;
 	if ( rp[rno].q.q_id != ID_P_DATA )  {
-	    bu_log("rt_pg_import: defective data record\n");
+	    bu_log("rt_pg_import4: defective data record\n");
 	    return -1;
 	}
 	pp->npts = rp[rno].q.q_count;
@@ -688,7 +688,7 @@ rt_pg_import(struct rt_db_internal *ip, const struct bu_external *ep, const fast
 	if ( pp->npts > pgp->max_npts )  pgp->max_npts = pp->npts;
     }
     if ( pgp->max_npts < 3 )  {
-	bu_log("rt_pg_import: polysolid with all polygons of less than %d vertices!\n", pgp->max_npts);
+	bu_log("rt_pg_import4: polysolid with all polygons of less than %d vertices!\n", pgp->max_npts);
 	/* XXX free storage */
 	return -1;
     }
@@ -702,7 +702,7 @@ rt_pg_import(struct rt_db_internal *ip, const struct bu_external *ep, const fast
  *  Generally, only libwdb will set conv2mm != 1.0
  */
 int
-rt_pg_export(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip)
+rt_pg_export4(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip)
 {
     struct rt_pg_internal	*pgp;
     union record		*rec;
@@ -728,7 +728,7 @@ rt_pg_export(struct bu_external *ep, const struct rt_db_internal *ip, double loc
 	rno = p+1;
 	pp = &pgp->poly[p];
 	if ( pp->npts < 3 || pp->npts > 5 )  {
-	    bu_log("rt_pg_export:  unable to support npts=%d\n",
+	    bu_log("rt_pg_export4:  unable to support npts=%d\n",
 		   pp->npts);
 	    return(-1);
 	}

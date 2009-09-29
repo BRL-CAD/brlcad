@@ -112,9 +112,9 @@ static char rcsid[] = "$Id: entity.c,v 1.11 1997/01/21 19:19:51 dar Exp $";
  */
 
 #define ENTITY_C
-#include "entity.h"
-#include "express.h"
-#include "object.h"
+#include "express/entity.h"
+#include "express/express.h"
+#include "express/object.h"
 
 /* returns true if variable is declared (or redeclared) directly by entity */
 int

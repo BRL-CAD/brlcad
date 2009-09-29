@@ -1326,11 +1326,10 @@ HIDDEN XVisualInfo *
 ogl_choose_visual(struct dm *dmp, Tk_Window tkwin)
 {
     XVisualInfo *vip, vitemp, *vibase, *maxvip;
-#define NGOOD 256
-    int good[NGOOD];
     int tries, baddepth;
     int num, i, j;
     int fail;
+    int *good = NULL;
 
     /* requirements */
     int use;
@@ -1340,17 +1339,15 @@ ogl_choose_visual(struct dm *dmp, Tk_Window tkwin)
     /* desires */
     int m_zbuffer = 1; /* m_zbuffer - try to get zbuffer */
     int zbuffer;
-#if OGL_DO_STEREO
+
     int m_stereo; /* m_stereo - try to get stereo */
     int stereo;
 
-    /*XXX Need to do something with this */
     if ( dmp->dm_stereo )  {
 	m_stereo = 1;
     } else {
 	m_stereo = 0;
     }
-#endif
 
     memset((void *)&vitemp, 0, sizeof(XVisualInfo));
     /* Try to satisfy the above desires with a color visual of the
@@ -1358,6 +1355,8 @@ ogl_choose_visual(struct dm *dmp, Tk_Window tkwin)
 
     vibase = XGetVisualInfo(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
 			    0, &vitemp, &num);
+
+    good = (int *)bu_malloc(sizeof(int)*num, "alloc good visuals");
 
     while (1) {
 	for (i=0, j=0, vip=vibase; i<num; i++, vip++) {
@@ -1385,7 +1384,6 @@ ogl_choose_visual(struct dm *dmp, Tk_Window tkwin)
 		    continue;
 	    }
 
-#if OGL_DO_STEREO
 	    if ( m_stereo ) {
 		fail = glXGetConfig(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
 				    vip, GLX_STEREO, &stereo);
@@ -1394,13 +1392,8 @@ ogl_choose_visual(struct dm *dmp, Tk_Window tkwin)
 		    continue;
 		}
 	    }
-#endif
 
 	    /* this visual meets criteria */
-	    if (j >= NGOOD) {
-		bu_log("ogl_choose_visual: More than %d candidate visuals!\n", NGOOD);
-		break;
-	    }
 	    good[j++] = i;
 	}
 
@@ -1431,7 +1424,8 @@ ogl_choose_visual(struct dm *dmp, Tk_Window tkwin)
 		    if (((struct ogl_vars *)dmp->dm_vars.priv_vars)->mvars.depth > 0)
 			((struct ogl_vars *)dmp->dm_vars.priv_vars)->mvars.zbuf = 1;
 
-		    return (maxvip); /* success */
+		    bu_free(good, "dealloc good visuals");
+		    return maxvip; /* success */
 		} else {
 		    /* retry with lesser depth */
 		    baddepth = maxvip->depth;
@@ -1443,21 +1437,23 @@ ogl_choose_visual(struct dm *dmp, Tk_Window tkwin)
 
 	/* if no success at this point, relax a desire and try again */
 
-#if OGL_DO_STEREO
 	if ( m_stereo ) {
 	    m_stereo = 0;
 	    bu_log("Stereo not available.\n");
 	    continue;
 	}
-#endif
 
 	if ( m_zbuffer ) {
 	    m_zbuffer = 0;
 	    continue;
 	}
 
-	return (XVisualInfo *)NULL; /* failure */
+	/* ran out of visuals, give up */
+	break;
     }
+
+    bu_free(good, "dealloc good visuals");
+    return (XVisualInfo *)NULL; /* failure */
 }
 
 
@@ -1641,7 +1637,9 @@ ogl_setLight(struct dm *dmp, int lighting_on)
 	glLightModelfv(GL_LIGHT_MODEL_AMBIENT, amb_three);
 	glLightModeli(GL_LIGHT_MODEL_LOCAL_VIEWER, GL_FALSE);
 
+#if 0
 	glLightModeli(GL_LIGHT_MODEL_TWO_SIDE, GL_TRUE);
+#endif
 	glLightfv(GL_LIGHT0, GL_DIFFUSE, light0_diffuse);
 	glLightfv(GL_LIGHT0, GL_SPECULAR, light0_diffuse);
 

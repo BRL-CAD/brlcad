@@ -108,8 +108,7 @@ static float segmentToSegmentDistance(const point_t S1P0, const point_t S1P1, co
 	sN = 0.0;
 	tN = e;
 	tD = c;
-    }
-    else {
+    } else {
 	/* get the closest points on the infinite lines */
 	sN = (b*e - c*d);
 	tN = (a*e - b*d);
@@ -118,8 +117,7 @@ static float segmentToSegmentDistance(const point_t S1P0, const point_t S1P1, co
 	    sN = 0.0;
 	    tN = e;
 	    tD = c;
-	}
-	else if (sN > sD) {
+	} else if (sN > sD) {
 	    /* sc > 1  => the s=1 edge is visible */
 	    sN = sD;
 	    tN = e + b;
@@ -139,8 +137,7 @@ static float segmentToSegmentDistance(const point_t S1P0, const point_t S1P1, co
 	    sN = -d;
 	    sD = a;
 	}
-    }
-    else if (tN > tD) {
+    } else if (tN > tD) {
 	/* tc > 1  => the t=1 edge is visible */
 	tN = tD;
 	/* recompute sc for this edge */
@@ -306,7 +303,7 @@ static int branchWithProbability(plant_t *plant, structure_t* structure, unsigne
 			    branchPointRadius = structure->segment[i]->endRadius;
 			}
 			/*
-			  printf("branching on endpoint: %f  with radius: %f\n", branchPoint, branchPointRadius);
+			  printf("branching on endpoint: %f with radius: %f\n", branchPoint, branchPointRadius);
 			*/
 		    } else {
 
@@ -628,7 +625,7 @@ static void growPlant(plant_t *plant) {
 	    }
 
 	    /* add segment to list of segments for this growth point structure*/
-	    if (point->structure->segmentCount >= point->structure->segmentCapacity ) {
+	    if (point->structure->segmentCount >= point->structure->segmentCapacity) {
 		point->structure->segment = (growthSegment_t **)bu_realloc(point->structure->segment, (point->structure->segmentCapacity + 10) * sizeof(growthSegment_t *), "point->structure->segment");
 		point->structure->segmentCapacity+=10;
 	    }
@@ -648,7 +645,7 @@ static void growPlant(plant_t *plant) {
 }
 
 
-static plant_t *createPlant(unsigned int age, vect_t position, double radius, vect_t direction, characteristic_t *characteristic ) {
+static plant_t *createPlant(unsigned int age, vect_t position, double radius, vect_t direction, characteristic_t *characteristic) {
     plant_t *plant;
 
     /* List of growth points */
@@ -723,7 +720,7 @@ static int writeStructureToDisk(struct rt_wdb *fp, structure_t *structure, outpu
 	VSCALE(height, structure->segment[i]->direction, structure->segment[i]->length);
 
 	/* error check for bad primitive creation */
-	if ((structure->segment[i]->startRadius < 0.0) || (structure->segment[i]->endRadius < 0.0) || VNEAR_ZERO(height, ZERO_TOLERANCE) ) {
+	if ((structure->segment[i]->startRadius < 0.0) || (structure->segment[i]->endRadius < 0.0) || VNEAR_ZERO(height, ZERO_TOLERANCE)) {
 	    fprintf(stderr, "Negative radius or height\n");
 	}
 

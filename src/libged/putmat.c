@@ -57,15 +57,15 @@
 int
 ged_putmat(struct ged *gedp, int argc, const char *argv[])
 {
-    int			result = BRLCAD_OK;	/* Return code */
+    int			result = GED_OK;	/* Return code */
     char		*newargv[20+2];
     struct bu_vls	*avp;
     int			got;
     static const char *usage = "a/b I|m0 m1 ... m15";
 
-    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
-    GED_CHECK_READ_ONLY(gedp, BRLCAD_ERROR);
-    GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
+    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
+    GED_CHECK_READ_ONLY(gedp, GED_ERROR);
+    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
 
     /* initialize result */
     bu_vls_trunc(&gedp->ged_result_str, 0);
@@ -73,17 +73,17 @@ ged_putmat(struct ged *gedp, int argc, const char *argv[])
     /* must be wanting help */
     if (argc == 1) {
 	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return BRLCAD_HELP;
+	return GED_HELP;
     }
 
     if (argc < 3 || 18 < argc) {
 	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return BRLCAD_ERROR;
+	return GED_ERROR;
     }
 
     if (!strchr( argv[1], '/')) {
 	bu_vls_printf(&gedp->ged_result_str, "%s: bad path spec '%s'\n", argv[0], argv[1]);
-	return BRLCAD_ERROR;
+	return GED_ERROR;
     }
     switch (argc) {
     case 18:
@@ -104,7 +104,7 @@ ged_putmat(struct ged *gedp, int argc, const char *argv[])
 	break;
     default:
 	bu_vls_printf(&gedp->ged_result_str, "%s: error in matrix specification (wrong number of args)\n", argv[0]);
-	return BRLCAD_ERROR;
+	return GED_ERROR;
     }
     newargv[0] = "arced";
     newargv[1] = (char *)argv[1];
@@ -115,10 +115,10 @@ ged_putmat(struct ged *gedp, int argc, const char *argv[])
     if (got != 16)  {
 	bu_vls_printf(&gedp->ged_result_str, "%s: %s:%d: bad matrix, only got %d elements\n",
 		      argv[0], __FILE__, __LINE__, got);
-	result = BRLCAD_ERROR;
+	result = GED_ERROR;
     }
 
-    if (result != BRLCAD_ERROR)
+    if (result != GED_ERROR)
 	result = ged_arced(gedp, 20, (const char **)newargv);
 
     bu_vls_vlsfree(avp);

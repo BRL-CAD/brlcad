@@ -26,15 +26,17 @@
 #    Script for building the install tree on Windows.
 #
 
-set brlcadInstall [lindex $argv 0]
-if {$brlcadInstall == ""} {
-    set brlcadInstall brlcadInstall
-}
-
 set rootDir [file normalize ../../..]
 if {![file exists $rootDir]} {
     puts "$rootDir must exist and must be the root of the BRL-CAD source tree. "
     return
+}
+
+set platform [lindex $argv 0]
+if {$platform == "x64"} {
+    set brlcadInstall "brlcadInstallx64"
+} else {
+    set brlcadInstall brlcadInstall
 }
 
 set installDir [file join $rootDir $brlcadInstall]
@@ -149,8 +151,8 @@ puts "Creating [file join $shareDir plugins]"
 file mkdir [file join $shareDir plugins]
 puts "Creating [file join $shareDir plugins archer]"
 file mkdir [file join $shareDir plugins archer]
-puts "Creating [file join $shareDir plugins archer Utilities]"
-file mkdir [file join $shareDir plugins archer Utilities]
+puts "Creating [file join $shareDir plugins archer Utility]"
+file mkdir [file join $shareDir plugins archer Utility]
 puts "Creating [file join $shareDir plugins archer Wizards]"
 file mkdir [file join $shareDir plugins archer Wizards]
 puts "Creating [file join $shareDir plugins archer Wizards tankwizard]"

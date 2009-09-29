@@ -687,7 +687,7 @@ parse_args(int ac, char *av[])
 	    case 'U'	:
 		use_air = strtol(bu_optarg, (char **)NULL, 10);
 		if (errno == ERANGE || errno == EINVAL) {
-		    bu_vls_printf(&ged_current_gedp->ged_result_str, "error in air argument\n", bu_optarg);
+		    bu_vls_printf(&ged_current_gedp->ged_result_str, "error in air argument %s\n", bu_optarg);
 		    return -1;
 		}
 		break;
@@ -779,23 +779,23 @@ parse_densities_buffer(char *buf, unsigned long len)
 	idx = strtol(p, &q, 10);
 	if (q == (char *)NULL) {
 	    bu_vls_printf(&ged_current_gedp->ged_result_str, "could not convert idx\n");
-	    return BRLCAD_ERROR;
+	    return GED_ERROR;
 	}
 
 	if (idx < 0) {
 	    bu_vls_printf(&ged_current_gedp->ged_result_str, "bad density index (%ld < 0)\n", idx);
-	    return BRLCAD_ERROR;
+	    return GED_ERROR;
 	}
 
 	density = strtod(q, &p);
 	if (q == p) {
 	    bu_vls_printf(&ged_current_gedp->ged_result_str, "could not convert density\n");
-	    return BRLCAD_ERROR;
+	    return GED_ERROR;
 	}
 
 	if (density < 0.0) {
 	    bu_vls_printf(&ged_current_gedp->ged_result_str, "bad density (%lf < 0)\n", density);
-	    return BRLCAD_ERROR;
+	    return GED_ERROR;
 	}
 
 	/* Skip tabs and spaces */
@@ -836,7 +836,7 @@ parse_densities_buffer(char *buf, unsigned long len)
 			  densities[idx].name);
 #endif
 
-    return BRLCAD_OK;
+    return GED_OK;
 }
 
 /**
@@ -858,7 +858,7 @@ get_densities_from_file(char *name)
 #else
 	perror(name);
 #endif
-	return BRLCAD_ERROR;
+	return GED_ERROR;
     }
 
     if (fstat(fileno(fp), &sb)) {
@@ -867,7 +867,7 @@ get_densities_from_file(char *name)
 #else
 	perror(name);
 #endif
-	return BRLCAD_ERROR;
+	return GED_ERROR;
     }
 
     buf = bu_malloc(sb.st_size+1, "density buffer");
@@ -898,16 +898,16 @@ get_densities_from_database(struct rt_i *rtip)
     if (dp == (struct directory *)NULL) {
 	bu_vls_printf(&ged_current_gedp->ged_result_str, "No \"_DENSITIES\" density table object in database.");
 	bu_vls_printf(&ged_current_gedp->ged_result_str, " If you do not have density data you can still get adjacent air, bounding box, exposed air, gaps, volume or overlaps by using the -Aa, -Ab, -Ae, -Ag, -Av, or -Ao options respectively.\n");
-	return BRLCAD_ERROR;
+	return GED_ERROR;
     }
 
     if (rt_db_get_internal(&intern, dp, rtip->rti_dbip, NULL, &rt_uniresource) < 0) {
 	bu_vls_printf(&ged_current_gedp->ged_result_str, "could not import %s\n", dp->d_namep);
-	return BRLCAD_ERROR;
+	return GED_ERROR;
     }
 
     if ((intern.idb_major_type & DB5_MAJORTYPE_BINARY_MASK) == 0)
-	return BRLCAD_ERROR;
+	return GED_ERROR;
 
     bu = (struct rt_binunif_internal *)intern.idb_ptr;
 
@@ -1206,7 +1206,7 @@ hit(register struct application *ap, struct partition *PartHeadp, struct seg *se
 			      pp->pt_regionp->reg_name,
 			      num_densities); /* XXX this should do something else */
 		bu_semaphore_release(GED_SEM_WORKER);
-		return BRLCAD_ERROR;
+		return GED_ERROR;
 	    } else {
 
 		/* make sure the density index has been set */
@@ -1325,7 +1325,7 @@ hit(register struct application *ap, struct partition *PartHeadp, struct seg *se
 		    bu_semaphore_release(GED_SEM_WORKER);
 
 		    aborted = 1;
-		    return BRLCAD_ERROR;
+		    return GED_ERROR;
 		}
 	    }
 	}
@@ -1591,7 +1591,7 @@ find_cmd_line_obj(struct per_obj_data *obj_rpt, const char *name)
 
     bu_vls_printf(&ged_current_gedp->ged_result_str, "%s Didn't find object named \"%s\" in %d entries\n", BU_FLSTR, name, num_objects);
 
-    return BRLCAD_ERROR;
+    return GED_ERROR;
 }
 
 
@@ -1701,13 +1701,13 @@ options_prep(struct rt_i *rtip, vect_t span)
     if (analysis_flags & ANALYSIS_WEIGHT) {
 	if (densityFileName) {
 	    DLOG(&ged_current_gedp->ged_result_str, "density from file\n");
-	    if (get_densities_from_file(densityFileName) != BRLCAD_OK) {
-		return BRLCAD_ERROR;
+	    if (get_densities_from_file(densityFileName) != GED_OK) {
+		return GED_ERROR;
 	    }
 	} else {
 	    DLOG(&ged_current_gedp->ged_result_str, "density from db\n");
-	    if (get_densities_from_database(rtip) != BRLCAD_OK) {
-		return BRLCAD_ERROR;
+	    if (get_densities_from_database(rtip) != GED_OK) {
+		return GED_ERROR;
 	    }
 	}
     }
@@ -1768,7 +1768,7 @@ options_prep(struct rt_i *rtip, vect_t span)
 	if (plot_files)
 	    if ((plot_gaps=fopen(name, "wb")) == (FILE *)NULL) {
 		bu_vls_printf(&ged_current_gedp->ged_result_str, "cannot open plot file %s\n", name);
-		return BRLCAD_ERROR;
+		return GED_ERROR;
 	    }
     }
     if (analysis_flags & ANALYSIS_OVERLAPS) {
@@ -1778,7 +1778,7 @@ options_prep(struct rt_i *rtip, vect_t span)
 	    char *name = "overlaps.pl";
 	    if ((plot_overlaps=fopen(name, "wb")) == (FILE *)NULL) {
 		bu_vls_printf(&ged_current_gedp->ged_result_str, "cannot open plot file %s\n", name);
-		return BRLCAD_ERROR;
+		return GED_ERROR;
 	    }
 	}
     }
@@ -1792,7 +1792,7 @@ options_prep(struct rt_i *rtip, vect_t span)
 	    char *name = "adj_air.pl";
 	    if ((plot_adjair=fopen(name, "wb")) == (FILE *)NULL) {
 		bu_vls_printf(&ged_current_gedp->ged_result_str, "cannot open plot file %s\n", name);
-		return BRLCAD_ERROR;
+		return GED_ERROR;
 	    }
 	}
 
@@ -1801,17 +1801,17 @@ options_prep(struct rt_i *rtip, vect_t span)
 	    char *name = "exp_air.pl";
 	    if ((plot_expair=fopen(name, "wb")) == (FILE *)NULL) {
 		bu_vls_printf(&ged_current_gedp->ged_result_str, "cannot open plot file %s\n", name);
-		return BRLCAD_ERROR;
+		return GED_ERROR;
 	    }
 	}
 
 
     if ((analysis_flags & (ANALYSIS_ADJ_AIR|ANALYSIS_EXP_AIR)) && ! use_air) {
 	bu_vls_printf(&ged_current_gedp->ged_result_str, "Error:  Air regions discarded but air analysis requested!\nSet use_air non-zero or eliminate air analysis\n");
-	return BRLCAD_ERROR;
+	return GED_ERROR;
     }
 
-    return BRLCAD_OK;
+    return GED_OK;
 }
 
 
@@ -2429,8 +2429,8 @@ ged_gqa(struct ged *gedp, int argc, const char *argv[])
     struct region *regp;
     static const char *usage = "object [object ...]";
 
-    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
-    GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
+    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
+    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
 
     /* initialize result */
     bu_vls_trunc(&gedp->ged_result_str, 0);
@@ -2438,7 +2438,7 @@ ged_gqa(struct ged *gedp, int argc, const char *argv[])
     /* must be wanting help */
     if (argc == 1) {
 	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s %s", argv[0], options_str, usage);
-	return BRLCAD_HELP;
+	return GED_HELP;
     }
 
     ged_current_gedp = gedp;
@@ -2478,7 +2478,7 @@ ged_gqa(struct ged *gedp, int argc, const char *argv[])
 
     if (arg_count < 0 || (argc-arg_count) < 1) {
 	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s %s", argv[0], options_str, usage);
-	return BRLCAD_ERROR;
+	return GED_ERROR;
     }
 
     bu_semaphore_reinit(GED_SEM_LAST);
@@ -2549,7 +2549,7 @@ ged_gqa(struct ged *gedp, int argc, const char *argv[])
 	bu_vls_printf(&gedp->ged_result_str, "initial spacing %g\n", gridSpacing);
     }
 
-    if (options_prep(rtip, state.span) != BRLCAD_OK) return BRLCAD_ERROR;
+    if (options_prep(rtip, state.span) != GED_OK) return GED_ERROR;
 
     /* initialize some stuff */
     state.rtip = rtip;
@@ -2685,7 +2685,7 @@ ged_gqa(struct ged *gedp, int argc, const char *argv[])
 
     rt_free_rti(rtip);
 
-    return BRLCAD_OK;
+    return GED_OK;
 }
 
 

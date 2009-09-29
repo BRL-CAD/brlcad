@@ -56,9 +56,9 @@ ged_bev(struct ged *gedp, int argc, const char *argv[])
     int			failed;
     static const char *usage = "[P|t] new_obj obj1 op obj2 op obj3 ...";
 
-    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
-    GED_CHECK_READ_ONLY(gedp, BRLCAD_ERROR);
-    GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
+    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
+    GED_CHECK_READ_ONLY(gedp, GED_ERROR);
+    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
 
     /* initialize result */
     bu_vls_trunc(&gedp->ged_result_str, 0);
@@ -66,12 +66,12 @@ ged_bev(struct ged *gedp, int argc, const char *argv[])
     /* must be wanting help */
     if (argc == 1) {
 	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return BRLCAD_HELP;
+	return GED_HELP;
     }
 
     if (argc < 3) {
 	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return BRLCAD_ERROR;
+	return GED_ERROR;
     }
 
     cmdname = (char *)argv[0];
@@ -116,13 +116,10 @@ ged_bev(struct ged *gedp, int argc, const char *argv[])
 
     if (argc < 1) {
 	bu_vls_printf(&gedp->ged_result_str, "%s: Nothing to evaluate!!!\n", cmdname);
-	return BRLCAD_ERROR;
+	return GED_ERROR;
     }
 
-    if ( db_lookup( gedp->ged_wdbp->dbip, newname, LOOKUP_QUIET ) != DIR_NULL )  {
-	bu_vls_printf(&gedp->ged_result_str, "%s: solid '%s' already exists, aborting\n", cmdname, newname);
-	return BRLCAD_ERROR;
-    }
+    GED_CHECK_EXISTS(gedp, newname, LOOKUP_QUIET, GED_ERROR);
 
     bu_vls_printf(&gedp->ged_result_str,
 		  "%s:  tessellating primitives with tolerances a=%g, r=%g, n=%g\n",
@@ -152,7 +149,7 @@ ged_bev(struct ged *gedp, int argc, const char *argv[])
 	    bu_vls_printf(&gedp->ged_result_str, "%s: error in db_walk_tree()\n", cmdname);
 	    /* Destroy NMG */
 	    nmg_km( ged_nmg_model );
-	    return BRLCAD_ERROR;
+	    return GED_ERROR;
 	}
 	argc--;
 	argv++;
@@ -186,7 +183,7 @@ ged_bev(struct ged *gedp, int argc, const char *argv[])
 				  argv[0], op);
 		    db_free_tree( ged_facetize_tree, &rt_uniresource );
 		    nmg_km( ged_nmg_model );
-		    return BRLCAD_ERROR;
+		    return GED_ERROR;
 		}
 	    }
 
@@ -226,7 +223,7 @@ ged_bev(struct ged *gedp, int argc, const char *argv[])
 	    tmp_tree = (union tree *)NULL;
 	    nmg_km( ged_nmg_model );
 	    ged_nmg_model = (struct model *)NULL;
-	    return BRLCAD_ERROR;
+	    return GED_ERROR;
 	}
 
 	failed = nmg_boolean( tmp_tree, ged_nmg_model, &gedp->ged_wdbp->wdb_tol, &rt_uniresource );
@@ -242,7 +239,7 @@ ged_bev(struct ged *gedp, int argc, const char *argv[])
 	tmp_tree = (union tree *)NULL;
 	nmg_km( ged_nmg_model );
 	ged_nmg_model = (struct model *)NULL;
-	return BRLCAD_ERROR;
+	return GED_ERROR;
     }
     /* New region remains part of this nmg "model" */
     NMG_CK_REGION( tmp_tree->tr_d.td_r );
@@ -263,7 +260,7 @@ ged_bev(struct ged *gedp, int argc, const char *argv[])
 	    tmp_tree = (union tree *)NULL;
 	    nmg_km( ged_nmg_model );
 	    ged_nmg_model = (struct model *)NULL;
-	    return BRLCAD_ERROR;
+	    return GED_ERROR;
 	}
 	nmg_triangulate_model( ged_nmg_model, &gedp->ged_wdbp->wdb_tol );
 	BU_UNSETJUMP;
@@ -279,24 +276,15 @@ ged_bev(struct ged *gedp, int argc, const char *argv[])
     intern.idb_ptr = (genptr_t)ged_nmg_model;
     ged_nmg_model = (struct model *)NULL;
 
-    if ( (dp=db_diradd( gedp->ged_wdbp->dbip, newname, -1L, 0, DIR_SOLID, (genptr_t)&intern.idb_type)) == DIR_NULL ) {
-	bu_vls_printf(&gedp->ged_result_str, "%s: Cannot add %s to directory\n", cmdname, newname);
-	return BRLCAD_ERROR;
-    }
-
-    if ( rt_db_put_internal( dp, gedp->ged_wdbp->dbip, &intern, &rt_uniresource ) < 0 )
-    {
-	rt_db_free_internal( &intern, &rt_uniresource );
-	bu_vls_printf(&gedp->ged_result_str, "%s: Database write error, aborting\n", cmdname);
-	return BRLCAD_ERROR;
-    }
+    GED_DB_DIRADD(gedp, dp, newname, -1L, 0, DIR_SOLID, (genptr_t)&intern.idb_type, GED_ERROR);
+    GED_DB_PUT_INTERNAL(gedp, dp, &intern, &rt_uniresource, GED_ERROR);
 
     tmp_tree->tr_d.td_r = (struct nmgregion *)NULL;
 
     /* Free boolean tree, and the regions in it. */
     db_free_tree( tmp_tree, &rt_uniresource );
 
-    return BRLCAD_OK;
+    return GED_OK;
 }
 
 /*

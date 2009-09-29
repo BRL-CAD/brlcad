@@ -2847,8 +2847,13 @@ rt_dsp_norm(register struct hit *hitp, struct soltab *stp, register struct xray 
     len = MAGNITUDE(t);
 
     if (RT_G_DEBUG & DEBUG_HF) {
-	fd = bu_fopen_uniq("plotting normals in %s",
-			   "dsp_gourand%02d.pl", plot_file_num++);
+	struct bu_vls str;
+
+	bu_vls_init(&str);
+	bu_vls_printf(&str, "dsp_gourand%02d.pl", plot_file_num++);
+	bu_log("plotting normals in %s", bu_vls_addr(&str));
+	fd = fopen(bu_vls_addr(&str), "w");
+	bu_vls_free(&str);
 
 	/* plot the ray */
 	pl_color(fd, 255, 0, 0);
@@ -3955,6 +3960,15 @@ rt_dsp_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 	nmg_kill_cracks(s);
     }
 
+    /* Mark edges as real */
+    (void)nmg_mark_edges_real(&s->l.magic);
+
+    /* Compute "geometry" for region and shell */
+    nmg_region_a(*r, tol);
+
+    /* sanity check */
+    nmg_make_faces_within_tol(s, tol);
+
     return(0);
 }
 
@@ -4158,7 +4172,7 @@ dsp_get_data(struct rt_dsp_internal	*dsp_ip,
  *  Apply modeling transformations as well.
  */
 int
-rt_dsp_import(struct rt_db_internal *ip, const struct bu_external *ep, register const fastf_t *mat, const struct db_i *dbip)
+rt_dsp_import4(struct rt_db_internal *ip, const struct bu_external *ep, register const fastf_t *mat, const struct db_i *dbip)
 {
     struct rt_dsp_internal	*dsp_ip;
     union record			*rp;
@@ -4166,13 +4180,13 @@ rt_dsp_import(struct rt_db_internal *ip, const struct bu_external *ep, register 
 
 
     if (RT_G_DEBUG & DEBUG_HF)
-	bu_log("rt_dsp_import_v4()\n");
+	bu_log("rt_dsp_import4_v4()\n");
 
 
 #define IMPORT_FAIL(_s) \
-	bu_log("rt_dsp_import(%d) '%s' %s\n", __LINE__, \
+	bu_log("rt_dsp_import4(%d) '%s' %s\n", __LINE__, \
 	       bu_vls_addr(&dsp_ip->dsp_name), _s);\
-	bu_free( (char *)dsp_ip, "rt_dsp_import: dsp_ip" ); \
+	bu_free( (char *)dsp_ip, "rt_dsp_import4: dsp_ip" ); \
 	ip->idb_type = ID_NULL; \
 	ip->idb_ptr = (genptr_t)NULL; \
 	return -2
@@ -4181,13 +4195,13 @@ rt_dsp_import(struct rt_db_internal *ip, const struct bu_external *ep, register 
     rp = (union record *)ep->ext_buf;
 
     if (RT_G_DEBUG & DEBUG_HF)
-	bu_log("rt_dsp_import(%s)\n", rp->ss.ss_args);
+	bu_log("rt_dsp_import4(%s)\n", rp->ss.ss_args);
     /*----------------------------------------------------------------------*/
 
 
     /* Check record type */
     if (rp->u_id != DBID_STRSOL )  {
-	bu_log("rt_dsp_import: defective record\n");
+	bu_log("rt_dsp_import4: defective record\n");
 	return(-1);
     }
 
@@ -4250,7 +4264,7 @@ rt_dsp_import(struct rt_db_internal *ip, const struct bu_external *ep, register 
  *  The name is added by the caller, in the usual place.
  */
 int
-rt_dsp_export(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip)
+rt_dsp_export4(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip)
 {
     struct rt_dsp_internal	*dsp_ip;
     struct rt_dsp_internal	dsp;
@@ -4281,7 +4295,7 @@ rt_dsp_export(struct bu_external *ep, const struct rt_db_internal *ip, double lo
     bu_vls_init( &str );
     bu_vls_struct_print( &str, rt_dsp_ptab, (char *)&dsp);
     if (RT_G_DEBUG & DEBUG_HF)
-	bu_log("rt_dsp_export_v4(%s)\n", bu_vls_addr(&str) );
+	bu_log("rt_dsp_export4_v4(%s)\n", bu_vls_addr(&str) );
 
     rec->ss.ss_id = DBID_STRSOL;
     bu_strlcpy( rec->ss.ss_keyword, "dsp", sizeof(rec->ss.ss_keyword) );
@@ -4307,7 +4321,7 @@ rt_dsp_import5(struct rt_db_internal *ip, const struct bu_external *ep, register
     unsigned char		*cp;
 
     if (RT_G_DEBUG & DEBUG_HF)
-	bu_log("rt_dsp_import_v5()\n");
+	bu_log("rt_dsp_import4_v5()\n");
 
 
     BU_CK_EXTERNAL( ep );
@@ -4415,7 +4429,7 @@ rt_dsp_export5(struct bu_external *ep, const struct rt_db_internal *ip, double l
     RT_DSP_CK_MAGIC(dsp_ip);
 
     if (RT_G_DEBUG & DEBUG_HF)
-	bu_log("rt_dsp_export_v5()\n");
+	bu_log("rt_dsp_export4_v5()\n");
 
     name_len = bu_vls_strlen(&dsp_ip->dsp_name) + 1;
 

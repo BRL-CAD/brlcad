@@ -19,11 +19,11 @@
  */
 /** @file vegitation.h
  *
- *      This is the header file to the program that generages geometry
- *      that resembles or approximates a plant.  More specifically,
- *      the generator is geared towards generating trees and shrubbery.
- *      The plants are generated based on specification of growth
- *      parameters such as growth and branching rates.
+ * This is the header file to the program that generages geometry
+ * that resembles or approximates a plant.  More specifically,
+ * the generator is geared towards generating trees and shrubbery.
+ * The plants are generated based on specification of growth
+ * parameters such as growth and branching rates.
  *
  */
 #ifndef __VEGITATION_H__

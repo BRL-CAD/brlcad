@@ -19,6 +19,7 @@ fedex_idl_SOURCES = \
 	fedex_idl.c
 
 fedex_plus_SOURCES = \
+	$(COMMON) \
 	fedex_main.c \
 	classes_wrapper.cc \
 	classes.c \
@@ -36,12 +37,15 @@ fedex_plus_SOURCES = \
 	trynext.cc \
 	write.cc \
 	print.cc
-	
-fedex_os_LDADD = ${EXPRESS} ${EXPPP} $(top_builddir)/src/express/fedex.o
 
-fedex_idl_LDADD = ${EXPRESS} ${EXPPP} $(top_builddir)/src/express/fedex.o
+fedex_libs = \
+	${EXPRESS} \
+	${EXPPP} \
+	$(top_builddir)/src/express/fedex.o
 
-fedex_plus_LDADD = classes_misc.o ${EXPRESS} ${EXPPP} $(top_builddir)/src/express/fedex.o
+fedex_os_LDADD = $(fedex_libs)
+fedex_idl_LDADD = $(fedex_libs)
+fedex_plus_LDADD = $(fedex_libs)
 
 noinst_HEADERS = \
 	classes.h \

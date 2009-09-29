@@ -213,9 +213,9 @@ INSTALL_STRIP_PROGRAM   = -s
 INSTALL_STRIP_LIBRARY   = -S -x
 
 INSTALL			= @srcdir@/install-sh -c
-INSTALL_PROGRAM		= ${INSTALL}
-INSTALL_LIBRARY		= ${INSTALL}
-INSTALL_DATA		= ${INSTALL} -m 644
+INSTALL_PROGRAM		= ${INSTALL} -m 775
+INSTALL_LIBRARY		= ${INSTALL} -m 775
+INSTALL_DATA		= ${INSTALL} -m 664
 
 # The symbol below provides support for dynamic loading and shared
 # libraries.  See configure.in for a description of what it means.
@@ -567,7 +567,7 @@ binaries: ${LIB_FILE} ${STUB_LIB_FILE} wish
 libraries:
 
 $(TOP_DIR)/doc/man.macros:
-	chmod +x $(UNIX_DIR)/install-sh
+	chmod 775 $(UNIX_DIR)/install-sh
 	$(INSTALL_DATA) @TCL_SRC_DIR@/doc/man.macros $(TOP_DIR)/doc/man.macros
 
 doc: $(TOP_DIR)/doc/man.macros
@@ -591,7 +591,7 @@ ${STUB_LIB_FILE}: ${STUB_LIB_OBJS}
 	    ln -s $(STUB_LIB_FILE) libtkstub.a ; \
 	 fi;\
 	fi
-	
+
 # Build Aqua resource files
 ${TK_RSRC_FILE}: $(AQUA_RESOURCES)
 	rm -f $@
@@ -705,7 +705,7 @@ install-binaries: $(TK_LIB_FILE) $(TK_STUB_LIB_FILE) $(TK_BUILD_EXP_FILE) wish
 	    if [ ! -d "$$i" ] ; then \
 		echo "Making directory $$i"; \
 		mkdir -p "$$i"; \
-		chmod 755 "$$i"; \
+		chmod 775 "$$i"; \
 		else true; \
 		fi; \
 	    done;
@@ -724,10 +724,10 @@ install-binaries: $(TK_LIB_FILE) $(TK_STUB_LIB_FILE) $(TK_BUILD_EXP_FILE) wish
 	    fi
 	@echo "Installing $(LIB_FILE) to $(LIB_INSTALL_DIR)/"
 	@@INSTALL_LIB@
-	@chmod 555 "$(LIB_INSTALL_DIR)"/$(LIB_FILE)
+	@chmod 775 "$(LIB_INSTALL_DIR)"/$(LIB_FILE)
 	if test -f libtk$(SHLIB_SUFFIX) ; then \
 	   $(INSTALL_LIBRARY) libtk$(SHLIB_SUFFIX) $(LIB_INSTALL_DIR)/libtk$(SHLIB_SUFFIX);\
-	   chmod +x $(LIB_INSTALL_DIR)/libtk$(SHLIB_SUFFIX) ; \
+	   chmod 775 $(LIB_INSTALL_DIR)/libtk$(SHLIB_SUFFIX) ; \
 	fi
 	@if test "$(TK_BUILD_EXP_FILE)" != ""; then \
 	    echo "Installing $(TK_EXP_FILE) to $(LIB_INSTALL_DIR)/"; \
@@ -736,14 +736,17 @@ install-binaries: $(TK_LIB_FILE) $(TK_STUB_LIB_FILE) $(TK_BUILD_EXP_FILE) wish
 	    fi
 	@echo "Installing wish as $(BIN_INSTALL_DIR)/wish$(VERSION)"
 	@$(INSTALL_PROGRAM) wish "$(BIN_INSTALL_DIR)"/wish$(VERSION)
+	@echo "Installing wish as $(BIN_INSTALL_DIR)/wish"
+	@$(INSTALL_PROGRAM) wish "$(BIN_INSTALL_DIR)"/wish
 	@echo "Installing tkConfig.sh to $(LIB_INSTALL_DIR)/"
 	@$(INSTALL_DATA) tkConfig.sh "$(LIB_INSTALL_DIR)"/tkConfig.sh
 	@if test "$(STUB_LIB_FILE)" != "" ; then \
 	    echo "Installing $(STUB_LIB_FILE) to $(LIB_INSTALL_DIR)/"; \
 	    @INSTALL_STUB_LIB@ ; \
+	    chmod 775 $(LIB_INSTALL_DIR)/$(STUB_LIB_FILE) ; \
 	    if test -f libtkstub.a ; then \
-	    $(INSTALL_LIBRARY) libtkstub.a $(LIB_INSTALL_DIR)/libtkstub.a ; \
-	    chmod +x $(LIB_INSTALL_DIR)/libtkstub.a ; \
+		$(INSTALL_LIBRARY) libtkstub.a $(LIB_INSTALL_DIR)/libtkstub.a ; \
+		chmod 775 $(LIB_INSTALL_DIR)/libtkstub.a ; \
 	    fi;\
 	fi
 	@EXTRA_INSTALL_BINARIES@
@@ -758,7 +761,7 @@ install-libraries: libraries
 	    if [ -n "$$i" -a ! -d "$$i" ] ; then \
 		echo "Making directory $$i"; \
 		mkdir -p "$$i"; \
-		chmod 755 "$$i"; \
+		chmod 775 "$$i"; \
 		else true; \
 		fi; \
 	    done;
@@ -810,7 +813,7 @@ install-demos:
 	    if [ ! -d "$$i" ] ; then \
 		echo "Making directory $$i"; \
 		mkdir -p "$$i"; \
-		chmod 755 "$$i"; \
+		chmod 775 "$$i"; \
 		else true; \
 		fi; \
 	    done;
@@ -824,7 +827,7 @@ install-demos:
 	    done;
 	@for i in $(DEMOPROGS); \
 	    do \
-	    chmod 755 "$(SCRIPT_INSTALL_DIR)"/demos/$$i; \
+	    chmod 775 "$(SCRIPT_INSTALL_DIR)"/demos/$$i; \
 	    done;
 	@echo "Installing demo images";
 	@for i in $(TOP_DIR)/library/demos/images/*; \
@@ -843,7 +846,7 @@ install-doc:
 	    if [ ! -d "$$i" ] ; then \
 		echo "Making directory $$i"; \
 		mkdir -p "$$i"; \
-		chmod 755 "$$i"; \
+		chmod 775 "$$i"; \
 		else true; \
 		fi; \
 	    done;
@@ -869,7 +872,7 @@ install-private-headers: libraries
 	    if [ ! -d "$$i" ] ; then \
 		echo "Making directory $$i"; \
 		mkdir -p "$$i"; \
-		chmod 755 "$$i"; \
+		chmod 775 "$$i"; \
 		else true; \
 		fi; \
 	    done;
@@ -1535,7 +1538,7 @@ dist:   $(UNIX_DIR)/configure $(UNIX_DIR)/tkConfig.h.in $(MAC_OSX_DIR)/configure
 		$(UNIX_DIR)/README $(UNIX_DIR)/installManPage \
 		$(UNIX_DIR)/tkConfig.h.in $(DISTDIR)/unix
 	chmod 775 $(DISTDIR)/unix/configure $(DISTDIR)/unix/configure.in
-	chmod +x $(DISTDIR)/unix/install-sh
+	chmod 775 $(DISTDIR)/unix/install-sh
 	mkdir $(DISTDIR)/bitmaps
 	@(cd $(TOP_DIR); for i in bitmaps/* ; do \
 	    if [ -f $$i ] ; then \
@@ -1750,7 +1753,7 @@ package-common:
 	sed -e "s/TCLVERSION/$(TCLVERSION)/g" \
 		-e "s/TKVERSION/$(VERSION)/g" < $(UNIX_DIR)/wish.sh \
 		> $(DISTDIR)/SUNWtcl/$(TCLVERSION)/bin/wish$(VERSION)
-	chmod 755 $(DISTDIR)/SUNWtcl/$(TCLVERSION)/bin/wish$(VERSION)
+	chmod 775 $(DISTDIR)/SUNWtcl/$(TCLVERSION)/bin/wish$(VERSION)
 
 #
 # Build and install the architecture specific files in the dist directory.

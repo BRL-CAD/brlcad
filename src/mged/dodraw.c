@@ -842,6 +842,7 @@ drawH_part2(
     struct db_tree_state	*tsp,
     struct solid		*existing_sp)
 {
+    register struct ged_display_list *gdlp;
     register struct solid *sp;
 
     if ( !existing_sp )  {
@@ -849,7 +850,9 @@ drawH_part2(
 	GET_SOLID(sp, &MGED_FreeSolid.l);
 	/* NOTICE:  The structure is dirty & not initialized for you! */
 
-	sp->s_dlist = BU_LIST_LAST(solid, &gedp->ged_gdp->gd_headSolid)->s_dlist + 1;
+	/* Grab the last display list */
+	gdlp = BU_LIST_PREV(ged_display_list, &gedp->ged_gdp->gd_headDisplay);
+	sp->s_dlist = BU_LIST_LAST(solid, &gdlp->gdl_headSolid)->s_dlist + 1;
     } else {
 	/* Just updating an existing solid.
 	 *  'tsp' and 'pathpos' will not be used
@@ -906,7 +909,11 @@ drawH_part2(
     if ( !existing_sp )  {
 	/* Add to linked list of solid structs */
 	bu_semaphore_acquire( RT_SEM_MODEL );
-	BU_LIST_APPEND(gedp->ged_gdp->gd_headSolid.back, &sp->l);
+
+	/* Grab the last display list */
+	gdlp = BU_LIST_PREV(ged_display_list, &gedp->ged_gdp->gd_headDisplay);
+	BU_LIST_APPEND(gdlp->gdl_headSolid.back, &sp->l);
+
 	bu_semaphore_release( RT_SEM_MODEL );
     } else {
 	/* replacing existing solid -- struct already linked in */
@@ -1123,13 +1130,13 @@ cvt_vlblock_to_solids(
 	av[0] = "erase";
 	av[1] = shortname;
 	av[2] = NULL;
-	(void)ged_erase(gedp, 2, av);
+	(void)ged_erase(gedp, 2, (const char **)av);
     } else {
 	av[0] = "kill";
 	av[1] = "-f";
 	av[2] = shortname;
 	av[3] = NULL;
-	(void)ged_kill(gedp, 3, av);
+	(void)ged_kill(gedp, 3, (const char **)av);
     }
 
     for ( i=0; i < vbp->nused; i++ )  {
@@ -1159,9 +1166,9 @@ invent_solid(
     long		rgb,
     int		copy)
 {
-    struct directory	*dp;
-    struct directory	*dpp[2] = {DIR_NULL, DIR_NULL};
-    register struct solid	*sp;
+    register struct ged_display_list *gdlp;
+    register struct solid *sp;
+    struct directory *dp;
     int type = 0;
 
     if (dbip == DBI_NULL)
@@ -1176,8 +1183,7 @@ invent_solid(
 	/* Name exists from some other overlay,
 	 * zap any associated solids
 	 */
-	dpp[0] = dp;
-	eraseobjall(dpp);
+	ged_erasePathFromDisplay(gedp, name, 0);
     }
     /* Need to enter phony name in directory structure */
     dp = db_diradd( dbip,  name, RT_DIR_PHONY_ADDR, 0, DIR_SOLID, &type );
@@ -1198,6 +1204,8 @@ invent_solid(
     /* set path information -- this is a top level node */
     db_add_node_to_full_path( &sp->s_fullpath, dp );
 
+    gdlp = ged_addToDisplay(gedp, name);
+
     sp->s_iflag = DOWN;
     sp->s_soldash = 0;
     sp->s_Eflag = 1;		/* Can't be solid edited! */
@@ -1205,10 +1213,13 @@ invent_solid(
     sp->s_color[1] = sp->s_basecolor[1] = (rgb>> 8) & 0xFF;
     sp->s_color[2] = sp->s_basecolor[2] = (rgb    ) & 0xFF;
     sp->s_regionid = 0;
-    sp->s_dlist = BU_LIST_LAST(solid, &gedp->ged_gdp->gd_headSolid)->s_dlist + 1;
 
     /* Solid successfully drawn, add to linked list of solid structs */
-    BU_LIST_APPEND(gedp->ged_gdp->gd_headSolid.back, &sp->l);
+    BU_LIST_APPEND(gdlp->gdl_headSolid.back, &sp->l);
+
+    /* Grab the last display list */
+    gdlp = BU_LIST_PREV(ged_display_list, &gedp->ged_gdp->gd_headDisplay);
+    sp->s_dlist = BU_LIST_LAST(solid, &gdlp->gdl_headSolid)->s_dlist + 1;
 
     createDListALL(sp);
 
@@ -1806,6 +1817,8 @@ add_solid_path_to_result(
 int
 cmd_redraw_vlist(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
+    register struct ged_display_list *gdlp;
+    register struct ged_display_list *next_gdlp;
     struct directory	*dp;
     int		i;
 
@@ -1827,17 +1840,23 @@ cmd_redraw_vlist(ClientData clientData, Tcl_Interp *interp, int argc, char **arg
 	if ( (dp = db_lookup( dbip, argv[i], LOOKUP_NOISY )) == NULL )
 	    continue;
 
-	FOR_ALL_SOLIDS(sp, &gedp->ged_gdp->gd_headSolid)  {
-	    if ( db_full_path_search( &sp->s_fullpath, dp ) )  {
+	gdlp = BU_LIST_NEXT(ged_display_list, &gedp->ged_gdp->gd_headDisplay);
+	while (BU_LIST_NOT_HEAD(gdlp, &gedp->ged_gdp->gd_headDisplay)) {
+	    next_gdlp = BU_LIST_PNEXT(ged_display_list, gdlp);
+
+	    FOR_ALL_SOLIDS(sp, &gdlp->gdl_headSolid) {
+		if ( db_full_path_search( &sp->s_fullpath, dp ) )  {
 #if 0
-		add_solid_path_to_result(interp, sp);
+		    add_solid_path_to_result(interp, sp);
 #endif
-		(void)replot_original_solid( sp );
-		sp->s_iflag = DOWN;	/* It won't be drawn otherwise */
+		    (void)replot_original_solid( sp );
+		    sp->s_iflag = DOWN;	/* It won't be drawn otherwise */
+		}
 	    }
+
+	    gdlp = next_gdlp;
 	}
     }
-
 
     update_views = 1;
     return TCL_OK;

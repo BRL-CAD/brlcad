@@ -29,7 +29,7 @@
 int
 ged_item(struct ged *gedp, int argc, const char *argv[])
 {
-    int status = BRLCAD_OK;
+    int status = GED_OK;
     register struct directory *dp;
     int			ident, air, GIFTmater=0, los=0;
     int			GIFTmater_set, los_set;
@@ -37,9 +37,9 @@ ged_item(struct ged *gedp, int argc, const char *argv[])
     struct rt_comb_internal	*comb;
     static const char *usage = "region ident [air [material [los]]]";
 
-    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
-    GED_CHECK_READ_ONLY(gedp, BRLCAD_ERROR);
-    GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
+    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
+    GED_CHECK_READ_ONLY(gedp, GED_ERROR);
+    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
 
     /* initialize result */
     bu_vls_trunc(&gedp->ged_result_str, 0);
@@ -47,17 +47,17 @@ ged_item(struct ged *gedp, int argc, const char *argv[])
     /* must be wanting help */
     if (argc == 1) {
 	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return BRLCAD_HELP;
+	return GED_HELP;
     }
 
     if (argc < 3 || 6 < argc) {
 	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return BRLCAD_ERROR;
+	return GED_ERROR;
     }
 
-    GED_DB_LOOKUP(gedp, dp, argv[1], LOOKUP_NOISY, BRLCAD_ERROR);
-    GED_CHECK_COMB(gedp, dp, BRLCAD_ERROR);
-    GED_CHECK_REGION(gedp, dp, BRLCAD_ERROR);
+    GED_DB_LOOKUP(gedp, dp, argv[1], LOOKUP_NOISY, GED_ERROR);
+    GED_CHECK_COMB(gedp, dp, GED_ERROR);
+    GED_CHECK_REGION(gedp, dp, GED_ERROR);
 
     air = ident = 0;
     GIFTmater_set = los_set = 0;
@@ -82,7 +82,7 @@ ged_item(struct ged *gedp, int argc, const char *argv[])
 	los_set = 1;
     }
 
-    GED_DB_GET_INTERNAL(gedp, &intern, dp, (fastf_t *)NULL, &rt_uniresource, BRLCAD_ERROR);
+    GED_DB_GET_INTERNAL(gedp, &intern, dp, (fastf_t *)NULL, &rt_uniresource, GED_ERROR);
 
     comb = (struct rt_comb_internal *)intern.idb_ptr;
     RT_CK_COMB(comb);
@@ -97,7 +97,7 @@ ged_item(struct ged *gedp, int argc, const char *argv[])
 	comb->los = los;
     }
 
-    GED_DB_PUT_INTERNAL(gedp, dp, &intern, &rt_uniresource, BRLCAD_ERROR);
+    GED_DB_PUT_INTERNAL(gedp, dp, &intern, &rt_uniresource, GED_ERROR);
 
     return status;
 }

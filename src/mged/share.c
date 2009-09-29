@@ -192,7 +192,7 @@ f_share(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 			save_dlp = curr_dm_list;
 
 			curr_dm_list = dlp1;
-			createDLists(&gedp->ged_gdp->gd_headSolid);
+			createDLists(&gedp->ged_gdp->gd_headDisplay);
 
 			/* restore */
 			curr_dm_list = save_dlp;

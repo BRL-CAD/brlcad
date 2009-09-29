@@ -52,7 +52,7 @@ f_qray(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
     Tcl_DStringAppend(&ds, bu_vls_addr(&gedp->ged_result_str), -1);
     Tcl_DStringResult(interp, &ds);
 
-    if (ret != BRLCAD_OK)
+    if (ret != GED_OK)
 	return TCL_ERROR;
 
     return TCL_OK;

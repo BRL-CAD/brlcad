@@ -72,11 +72,11 @@ cmd_overlay(ClientData	clientData,
     } else
 	av[3] = (char *)0;
 
-    ret = ged_overlay(gedp, ac, av);
+    ret = ged_overlay(gedp, ac, (const char **)av);
     Tcl_DStringAppend(&ds, bu_vls_addr(&gedp->ged_result_str), -1);
     Tcl_DStringResult(interp, &ds);
 
-    if (ret != BRLCAD_OK)
+    if (ret != GED_OK)
 	return TCL_ERROR;
 
     update_views = 1;
@@ -89,6 +89,8 @@ cmd_overlay(ClientData	clientData,
 int
 f_labelvert(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
+    register struct ged_display_list *gdlp;
+    register struct ged_display_list *next_gdlp;
     int	i;
     struct bn_vlblock*vbp;
     struct directory	*dp;
@@ -117,10 +119,17 @@ f_labelvert(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	if ( (dp = db_lookup( dbip, argv[i], LOOKUP_NOISY )) == DIR_NULL )
 	    continue;
 	/* Find uses of this solid in the solid table */
-	FOR_ALL_SOLIDS(s, &gedp->ged_gdp->gd_headSolid)  {
-	    if ( db_full_path_search( &s->s_fullpath, dp ) )  {
-		rt_label_vlist_verts( vbp, &s->s_vlist, mat, scale, base2local );
+	gdlp = BU_LIST_NEXT(ged_display_list, &gedp->ged_gdp->gd_headDisplay);
+	while (BU_LIST_NOT_HEAD(gdlp, &gedp->ged_gdp->gd_headDisplay)) {
+	    next_gdlp = BU_LIST_PNEXT(ged_display_list, gdlp);
+
+	    FOR_ALL_SOLIDS(s, &gdlp->gdl_headSolid) {
+		if ( db_full_path_search( &s->s_fullpath, dp ) )  {
+		    rt_label_vlist_verts( vbp, &s->s_vlist, mat, scale, base2local );
+		}
 	    }
+
+	    gdlp = next_gdlp;
 	}
     }
 

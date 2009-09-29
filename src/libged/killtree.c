@@ -36,6 +36,7 @@
 struct ged_killtree_data {
     struct ged *gedp;
     int killrefs;
+    int nflag;
     int ac;
     char *av[MAXARGS];
 };
@@ -50,12 +51,13 @@ ged_killtree(struct ged *gedp, int argc, const char *argv[])
 {
     register struct directory *dp;
     register int i;
+    int c;
     struct ged_killtree_data gktd;
-    static const char *usage = "[-a] object(s)";
+    static const char *usage = "[-a|-n] object(s)";
 
-    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
-    GED_CHECK_READ_ONLY(gedp, BRLCAD_ERROR);
-    GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
+    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
+    GED_CHECK_READ_ONLY(gedp, GED_ERROR);
+    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
 
     /* initialize result */
     bu_vls_trunc(&gedp->ged_result_str, 0);
@@ -63,29 +65,46 @@ ged_killtree(struct ged *gedp, int argc, const char *argv[])
     /* must be wanting help */
     if (argc == 1) {
 	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return BRLCAD_HELP;
+	return GED_HELP;
     }
 
     if (MAXARGS < argc) {
 	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return BRLCAD_ERROR;
+	return GED_ERROR;
     }
 
     gktd.gedp = gedp;
     gktd.ac = 1;
     gktd.av[0] = "killrefs";
     gktd.av[1] = (char *)0;
+    gktd.killrefs = 0;
+    gktd.nflag = 0;
 
-    if (argv[1][0] == '-' && argv[1][1] == 'a' && argv[1][2] == '\0') {
-	gktd.killrefs = 1;
-	--argc;
-	++argv;
-    } else
-	gktd.killrefs = 0;
+    bu_optind = 1;
+    while ((c = bu_getopt(argc, (char * const *)argv, "an")) != EOF) {
+	switch( c ) {
+	    case 'a':
+		gktd.killrefs = 1;
+		break;
+	    case 'n':
+		gktd.nflag = 1;
+		gktd.av[gktd.ac++] = bu_strdup("-n");
+		gktd.av[gktd.ac] = (char *)0;
+		break;
+	    default:
+		bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+		return GED_ERROR;
+	}
+    }
+
+    argc -= (bu_optind - 1);
+    argv += (bu_optind - 1);
+
+    /* Objects that would be killed are in the first sublist */
+    if (gktd.nflag)
+	bu_vls_printf(&gedp->ged_result_str, "{");
 
     for (i=1; i<argc; i++) {
-	struct directory *dpp[2];
-
 	if ((dp = db_lookup(gedp->ged_wdbp->dbip, argv[i], LOOKUP_NOISY)) == DIR_NULL)
 	    continue;
 
@@ -93,25 +112,33 @@ ged_killtree(struct ged *gedp, int argc, const char *argv[])
 	if (dp->d_addr == RT_DIR_PHONY_ADDR)
 	    continue;
 
-	dpp[0] = dp;
-	dpp [1] = DIR_NULL;
-	ged_eraseobjall(gedp, dpp);
-
 	db_functree(gedp->ged_wdbp->dbip, dp,
 		    ged_killtree_callback, ged_killtree_callback,
 		    gedp->ged_wdbp->wdb_resp, (genptr_t)&gktd);
     }
 
+    /* Close the sublist of would-be killed objects. Also open the
+     * sublist of objects that reference the would-be killed objects.
+     */
+    if (gktd.nflag)
+	bu_vls_printf(&gedp->ged_result_str, "} {");
+
     if (gktd.killrefs && gktd.ac > 1) {
+	gedp->ged_internal_call = 1;
 	(void)ged_killrefs(gedp, gktd.ac, (const char **)gktd.av);
+	gedp->ged_internal_call = 0;
 
 	for (i=1; i<gktd.ac; i++) {
-	    bu_vls_printf(&gedp->ged_result_str, "Freeing %s\n", gktd.av[i]);
+	    if (!gktd.nflag)
+		bu_vls_printf(&gedp->ged_result_str, "Freeing %s\n", gktd.av[i]);
 	    bu_free((genptr_t)gktd.av[i], "ged_killtree_data");
 	}
     }
 
-    return BRLCAD_OK;
+    if (gktd.nflag)
+	bu_vls_printf(&gedp->ged_result_str, "}");
+
+    return GED_OK;
 }
 
 /*
@@ -122,36 +149,54 @@ ged_killtree_callback(struct db_i		*dbip,
 		      register struct directory *dp,
 		      genptr_t			ptr)
 {
+    struct directory *dpp[2];
     struct ged_killtree_data *gktdp = (struct ged_killtree_data *)ptr;
 
     if (dbip == DBI_NULL)
 	return;
 
-    bu_vls_printf(&gktdp->gedp->ged_result_str, "KILL %s:  %s\n",
-		  (dp->d_flags & DIR_COMB) ? "COMB" : "Solid",
-		  dp->d_namep);
+    if (gktdp->nflag) {
+	if (!gktdp->killrefs) 
+	    bu_vls_printf(&gktdp->gedp->ged_result_str, "%s ", dp->d_namep);
+	else {
+	    if (gktdp->ac < MAXARGS-1) {
+		gktdp->av[gktdp->ac++] = bu_strdup(dp->d_namep);
+		gktdp->av[gktdp->ac] = (char *)0;
 
-    if (!gktdp->killrefs) {
-	if (db_delete(dbip, dp) < 0 || db_dirdelete(dbip, dp) < 0) {
-	    bu_vls_printf(&gktdp->gedp->ged_result_str, "an error occurred while deleting %s\n", dp->d_namep);
+		bu_vls_printf(&gktdp->gedp->ged_result_str, "%s ", dp->d_namep);
+	    } else {
+		bu_vls_printf(&gktdp->gedp->ged_result_str, "MAXARGS exceeded while scheduling %s for a killrefs\n", dp->d_namep);
+	    }
 	}
     } else {
-	if (gktdp->ac < MAXARGS-1) {
-	    gktdp->av[gktdp->ac++] = bu_strdup(dp->d_namep);
-	    gktdp->av[gktdp->ac] = (char *)0;
+	ged_eraseAllNamesFromDisplay(gktdp->gedp, dp->d_namep, 0);
 
+	bu_vls_printf(&gktdp->gedp->ged_result_str, "KILL %s:  %s\n",
+		      (dp->d_flags & DIR_COMB) ? "COMB" : "Solid",
+		      dp->d_namep);
+
+	if (!gktdp->killrefs) {
 	    if (db_delete(dbip, dp) < 0 || db_dirdelete(dbip, dp) < 0) {
 		bu_vls_printf(&gktdp->gedp->ged_result_str, "an error occurred while deleting %s\n", dp->d_namep);
-
-		/* Remove from list */
-		bu_free((genptr_t)gktdp->av[--gktdp->ac], "ged_killtree_callback");
-		gktdp->av[gktdp->ac] = (char *)0;
 	    }
 	} else {
-	    bu_vls_printf(&gktdp->gedp->ged_result_str, "MAXARGS exceeded while scheduling %s for a killrefs\n", dp->d_namep);
+	    if (gktdp->ac < MAXARGS-1) {
+		gktdp->av[gktdp->ac++] = bu_strdup(dp->d_namep);
+		gktdp->av[gktdp->ac] = (char *)0;
 
-	    if (db_delete(dbip, dp) < 0 || db_dirdelete(dbip, dp) < 0) {
-		bu_vls_printf(&gktdp->gedp->ged_result_str, "an error occurred while deleting %s\n", dp->d_namep);
+		if (db_delete(dbip, dp) < 0 || db_dirdelete(dbip, dp) < 0) {
+		    bu_vls_printf(&gktdp->gedp->ged_result_str, "an error occurred while deleting %s\n", dp->d_namep);
+
+		    /* Remove from list */
+		    bu_free((genptr_t)gktdp->av[--gktdp->ac], "ged_killtree_callback");
+		    gktdp->av[gktdp->ac] = (char *)0;
+		}
+	    } else {
+		bu_vls_printf(&gktdp->gedp->ged_result_str, "MAXARGS exceeded while scheduling %s for a killrefs\n", dp->d_namep);
+
+		if (db_delete(dbip, dp) < 0 || db_dirdelete(dbip, dp) < 0) {
+		    bu_vls_printf(&gktdp->gedp->ged_result_str, "an error occurred while deleting %s\n", dp->d_namep);
+		}
 	    }
 	}
     }

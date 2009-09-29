@@ -19,9 +19,9 @@
  */
 /** @file tea.h
  */
-#define DEGREE		4
-#define DUCK_COUNT	306
-#define PATCH_COUNT	32
+#define DEGREE 4
+#define DUCK_COUNT 306
+#define PATCH_COUNT 32
 
 typedef struct {
     float x, y, z;

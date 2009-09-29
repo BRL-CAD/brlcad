@@ -42,6 +42,7 @@
 const struct bu_structparse rt_constraint_parse[] = {
     {"%d", 1, "ID",      bu_offsetof(struct rt_constraint_internal, id), BU_STRUCTPARSE_FUNC_NULL},
     {"%d", 1, "N",       bu_offsetof(struct rt_constraint_internal, type), BU_STRUCTPARSE_FUNC_NULL},
+    {"%V", 1, "Ex",	bu_offsetof(struct rt_constraint_internal, expression), BU_STRUCTPARSE_FUNC_NULL},
     {"",   0, (char *)0, 0, BU_STRUCTPARSE_FUNC_NULL }
 };
 
@@ -61,6 +62,11 @@ rt_constraint_ifree( struct rt_db_internal *ip, struct resource *resp)
     
     if (constraint) {
 	constraint->magic = 0;			/* sanity */
+	if (BU_VLS_IS_INITIALIZED(&constraint->expression))
+	    bu_vls_free(&constraint->expression);
+	else
+	    bu_log("Freeing bogus constraint, VLS not initialized\n");
+
 	bu_free( (genptr_t)constraint, "constraint ifree" );
     }
     ip->idb_ptr = GENPTR_NULL;	/* sanity */

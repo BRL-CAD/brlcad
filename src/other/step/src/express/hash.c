@@ -107,7 +107,7 @@ static char rcsid[] = "$Id: hash.c,v 1.8 1997/10/22 16:36:49 sauderd Exp $";
 
 #define HASH_C
 #include <stdlib.h>
-#include "hash.h"
+#include "express/hash.h"
 
 /*
 ** Internal routines

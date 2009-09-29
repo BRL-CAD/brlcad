@@ -19,10 +19,10 @@
  */
 /** @file brickwall.c
  *
- *	builds a brick wall.
+ * builds a brick wall.
  *
- *	Options
- *	h	help
+ * Options
+ * h	help
  */
 
 #include "common.h"
@@ -53,7 +53,7 @@ double units_conv=25.4;	/* default to inches */
 char color[32] = "160 40 40";
 char mortar_color[32] = "190 190 190";
 /*
- *	U S A G E --- tell user how to invoke this program, then exit
+ * U S A G E --- tell user how to invoke this program, then exit
  */
 void usage(char *s)
 {
@@ -71,15 +71,15 @@ void usage(char *s)
 }
 
 /*
- *	P A R S E _ A R G S --- Parse through command line flags
+ * P A R S E _ A R G S --- Parse through command line flags
  */
 int parse_args(int ac, char **av)
 {
-    int  c;
+    int c;
     double d;
     int red, grn, blu;
 
-    if (  ! (progname=strrchr(*av, '/'))  )
+    if ( ! (progname=strrchr(*av, '/')) )
 	progname = *av;
     else
 	++progname;
@@ -233,10 +233,10 @@ void gen_mortar(int horiz_bricks, int vert_bricks, double horiz_spacing, double 
 }
 
 /*
- *	G E N _ B R I C K S
+ * G E N _ B R I C K S
  *
- *	generate the brick solids, regions thereof, groups for rows
- *	and a group for the wall as a whole.
+ * generate the brick solids, regions thereof, groups for rows
+ * and a group for the wall as a whole.
  */
 void gen_bricks(int horiz_bricks, int vert_bricks, double horiz_spacing, double vert_spacing)
 {
@@ -285,10 +285,10 @@ void gen_bricks(int horiz_bricks, int vert_bricks, double horiz_spacing, double 
 		  brick_name, "sh=40 di=0.9 sp=0.1", color);
 }
 /*
- *	M A I N
+ * M A I N
  *
- *	Call parse_args to handle command line arguments first, then
- *	process input.
+ * Call parse_args to handle command line arguments first, then
+ * process input.
  */
 int main(int ac, char **av)
 {
@@ -308,7 +308,7 @@ int main(int ac, char **av)
 
     if (debug)
     (void)fprintf(stderr,
-    "bw %g  bh %g  bd %g  ww %g  wh %g  bn\"%s\"\n",
+    "bw %g bh %g bd %g ww %g wh %g bn\"%s\"\n",
     brick_width, brick_height, brick_depth,
     wall_width, wall_height, brick_name);
     */

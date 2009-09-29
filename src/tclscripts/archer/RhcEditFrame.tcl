@@ -38,9 +38,15 @@
 	method initGeometry {gdata}
 	method updateGeometry {}
 	method createGeometry {obj}
+	method p {obj args}
     }
 
     protected {
+	common setB 1
+	common setH 2
+	common setr 3
+	common setc 4
+
 	variable mVx ""
 	variable mVy ""
 	variable mVz ""
@@ -53,8 +59,14 @@
 	variable mR ""
 	variable mC ""
 
-	# Override what's in GeometryEditFrame
+	# Methods used by the constructor.
+	# Override methods in GeometryEditFrame.
+	method buildUpperPanel {}
+	method buildLowerPanel {}
+
+	# Override what's in GeometryEditFrame.
 	method updateGeometryIfMod {}
+	method initEditState {}
     }
 
     private {}
@@ -66,6 +78,100 @@
 # ------------------------------------------------------------
 
 ::itcl::body RhcEditFrame::constructor {args} {
+    eval itk_initialize $args
+}
+
+# ------------------------------------------------------------
+#                        OPTIONS
+# ------------------------------------------------------------
+
+
+# ------------------------------------------------------------
+#                      PUBLIC METHODS
+# ------------------------------------------------------------
+
+## - initGeometry
+#
+# Initialize the variables containing the object's specification.
+#
+::itcl::body RhcEditFrame::initGeometry {gdata} {
+    set _V [bu_get_value_by_keyword V $gdata]
+    set mVx [lindex $_V 0]
+    set mVy [lindex $_V 1]
+    set mVz [lindex $_V 2]
+    set _H [bu_get_value_by_keyword H $gdata]
+    set mHx [lindex $_H 0]
+    set mHy [lindex $_H 1]
+    set mHz [lindex $_H 2]
+    set _B [bu_get_value_by_keyword B $gdata]
+    set mBx [lindex $_B 0]
+    set mBy [lindex $_B 1]
+    set mBz [lindex $_B 2]
+    set mR [bu_get_value_by_keyword r $gdata]
+    set mC [bu_get_value_by_keyword c $gdata]
+
+    GeometryEditFrame::initGeometry $gdata
+}
+
+::itcl::body RhcEditFrame::updateGeometry {} {
+    if {$itk_option(-mged) == "" ||
+	$itk_option(-geometryObject) == ""} {
+	return
+    }
+
+    $itk_option(-mged) adjust $itk_option(-geometryObject) \
+	V [list $mVx $mVy $mVz] \
+	H [list $mHx $mHy $mHz] \
+	B [list $mBx $mBy $mBz] \
+	r $mR \
+	c $mC
+
+    if {$itk_option(-geometryChangedCallback) != ""} {
+	$itk_option(-geometryChangedCallback)
+    }
+}
+
+::itcl::body RhcEditFrame::createGeometry {obj} {
+    if {![GeometryEditFrame::createGeometry $obj]} {
+	return
+    }
+
+    $itk_option(-mged) put $obj rhc \
+	V [list $mCenterX $mCenterY $mCenterZ] \
+	H [list 0 0 $mDelta] \
+	B [list $mDelta 0 0] \
+	r $mDelta \
+	c $mDelta
+}
+
+::itcl::body RhcEditFrame::p {obj args} {
+    if {[llength $args] != 1 || ![string is double $args]} {
+	return "Usage: p sf"
+    }
+
+    switch -- $mEditMode \
+	$setB {
+	    $::ArcherCore::application p_pscale $obj b $args
+	} \
+	$setH {
+	    $::ArcherCore::application p_pscale $obj h $args
+	} \
+	$setr {
+	    $::ArcherCore::application p_pscale $obj r $args
+	} \
+	$setc {
+	    $::ArcherCore::application p_pscale $obj c $args
+	}
+
+    return ""
+}
+
+
+# ------------------------------------------------------------
+#                      PROTECTED METHODS
+# ------------------------------------------------------------
+
+::itcl::body RhcEditFrame::buildUpperPanel {} {
     set parent [$this childsite]
     itk_component add rhcType {
 	::ttk::label $parent.rhctype \
@@ -286,78 +392,25 @@
     bind $itk_component(rhcBzE) <Return> [::itcl::code $this updateGeometryIfMod]
     bind $itk_component(rhcRE) <Return> [::itcl::code $this updateGeometryIfMod]
     bind $itk_component(rhcCE) <Return> [::itcl::code $this updateGeometryIfMod]
-
-    eval itk_initialize $args
 }
 
+::itcl::body RhcEditFrame::buildLowerPanel {} {
+    set parent [$this childsite lower]
 
-# ------------------------------------------------------------
-#                        OPTIONS
-# ------------------------------------------------------------
+    foreach attribute {B H r c} {
+	itk_component add set$attribute {
+	    ::ttk::radiobutton $parent.set_$attribute \
+		-variable [::itcl::scope mEditMode] \
+		-value [subst $[subst set$attribute]] \
+		-text "Set $attribute" \
+		-command [::itcl::code $this initEditState]
+	} {}
 
-
-# ------------------------------------------------------------
-#                      PUBLIC METHODS
-# ------------------------------------------------------------
-
-## - initGeometry
-#
-# Initialize the variables containing the object's specification.
-#
-::itcl::body RhcEditFrame::initGeometry {gdata} {
-    set _V [bu_get_value_by_keyword V $gdata]
-    set mVx [lindex $_V 0]
-    set mVy [lindex $_V 1]
-    set mVz [lindex $_V 2]
-    set _H [bu_get_value_by_keyword H $gdata]
-    set mHx [lindex $_H 0]
-    set mHy [lindex $_H 1]
-    set mHz [lindex $_H 2]
-    set _B [bu_get_value_by_keyword B $gdata]
-    set mBx [lindex $_B 0]
-    set mBy [lindex $_B 1]
-    set mBz [lindex $_B 2]
-    set mR [bu_get_value_by_keyword r $gdata]
-    set mC [bu_get_value_by_keyword c $gdata]
-
-    GeometryEditFrame::initGeometry $gdata
-}
-
-::itcl::body RhcEditFrame::updateGeometry {} {
-    if {$itk_option(-mged) == "" ||
-	$itk_option(-geometryObject) == ""} {
-	return
-    }
-
-    $itk_option(-mged) adjust $itk_option(-geometryObject) \
-	V [list $mVx $mVy $mVz] \
-	H [list $mHx $mHy $mHz] \
-	B [list $mBx $mBy $mBz] \
-	r $mR \
-	c $mC
-
-    if {$itk_option(-geometryChangedCallback) != ""} {
-	$itk_option(-geometryChangedCallback)
+	pack $itk_component(set$attribute) \
+	    -anchor w \
+	    -expand yes
     }
 }
-
-::itcl::body RhcEditFrame::createGeometry {obj} {
-    if {![GeometryEditFrame::createGeometry $obj]} {
-	return
-    }
-
-    $itk_option(-mged) put $obj rhc \
-	V [list $mCenterX $mCenterY $mCenterZ] \
-	H [list 0 0 $mDelta] \
-	B [list $mDelta 0 0] \
-	r $mDelta \
-	c $mDelta
-}
-
-
-# ------------------------------------------------------------
-#                      PROTECTED METHODS
-# ------------------------------------------------------------
 
 ::itcl::body RhcEditFrame::updateGeometryIfMod {} {
     if {$itk_option(-mged) == "" ||
@@ -424,6 +477,30 @@
 	updateGeometry
     }
 }
+
+::itcl::body RhcEditFrame::initEditState {} {
+    set mEditCommand pscale
+    set mEditClass $EDIT_CLASS_SCALE
+    set mEditPCommand [::itcl::code $this p]
+    configure -valueUnits "mm"
+
+    switch -- $mEditMode \
+	$setB {
+	    set mEditParam1 b
+	} \
+	$setH {
+	    set mEditParam1 h
+	} \
+	$setr {
+	    set mEditParam1 r
+	} \
+	$setc {
+	    set mEditParam1 c
+	}
+
+    GeometryEditFrame::initEditState
+}
+
 
 # Local Variables:
 # mode: Tcl

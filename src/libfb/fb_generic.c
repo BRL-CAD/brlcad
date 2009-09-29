@@ -310,6 +310,23 @@ fb_close_existing(FBIO *ifp)
     }
 #endif  /* IF_OGL */
 
+#ifdef IF_RTGL
+    {
+	extern FBIO ogl_interface;
+	if (strcasecmp(ifp->if_name, ogl_interface.if_type) == 0) {
+	    if ((status = ogl_close_existing(ifp)) <= -1) {
+		fb_log("fb_close_existing: cannot close device \"%s\", ret=%d.\n", ifp->if_name, status);
+		return BRLCAD_ERROR;
+	    }
+	    if (ifp->if_pbase != PIXEL_NULL)
+		free((void *)ifp->if_pbase);
+	    free((void *)ifp->if_name);
+	    free((void *)ifp);
+	    return BRLCAD_OK;
+	}
+    }
+#endif  /* IF_RTGL */
+
 #ifdef IF_TK
     {
 	extern FBIO tk_interface;

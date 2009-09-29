@@ -17,10 +17,17 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-
 /** @file metaball.c
  *
- * He slimed me!
+ * This is an example of how to programmatically create and combine
+ * metaball primitives together.
+ *
+ * This example uses two specific techniques for creating the
+ * metaballs, one using libwdb (i.e., the mk_metaball() function) and
+ * another using librt (i.e., creating an rt_metaball_internal
+ * directly).  The librt approach shows how points can be read from
+ * existing metaballs to be combined into a new "mega metaball".
+ *
  */
 
 #include "common.h"
@@ -33,118 +40,198 @@
 
 #include "vmath.h"
 #include "raytrace.h"
+#include "rtgeom.h"
 #include "wdb.h"
 
-#define FMTSIZ 64
 
-static const char usage[] = "\
-Usage:\n\
-\t%s [-h] [-n number of frames] [-m method] [-o outfile]\n\
-\n\
-\t-h\tShow help\n\
-\t-n #\tNumber of frames to (objects) to create\n\
-\t-m #\tMetaball render method (1 for iso, 2 for Blinn)\n\
-\t-t title\tTitle of geometry\n\
-\t-o file\tFile to write to\n\
-\t-g\tGravotronic animation\n\
-\t-c #\tNumber of control points (require Gravotronic mode)\n\
-\n";
-
-/******************************************************************/
-
-/* hideous hack to generate a hideous dynamic format string for snprintf. *sob*/
-int
-mkfmt(char *fmt, char *prefix, char *postfix, int nframes)
+/**
+ * Creates one metaball object with 'count' random points using
+ * LIBWDB's mk_metaball() interface.  
+ */
+static void
+make_meatballs(struct rt_wdb *fp, const char *name, long count)
 {
-    return snprintf(fmt, FMTSIZ, "%s%%0%dd%s", prefix, (int)ceil(log10((double)nframes)), postfix);
-}
+    static float *ctx; /* random context */
+    static const int method = 1; /* 1==ISO */
+    static const fastf_t threshold = 1.0;
+    static const fastf_t SZ = 1000.0;
 
-int
-bitronic(struct rt_wdb *outfp, int method, fastf_t threshold, int nframes)
-{
-    /*
-    char buf[BUFSIZ];
-    */
-    char fmt[FMTSIZ];
-    fastf_t step;
-    struct rt_metaball_internal *mb;
+    long i;
+    fastf_t **pts;
 
-    BU_GETSTRUCT( mb, rt_metaball_internal );
-    mb->magic = RT_METABALL_INTERNAL_MAGIC;
-    mb->threshold = threshold > 0 ? threshold : 1.0;
-    mb->method = method >= 0 ? method : 0;	/* default to Blinn blob */
+    RT_CK_WDB(fp);
 
-    step = 2.0 / (double) nframes;
+    bn_rand_init(ctx, rand());
+    bu_log("Creating [%s] object with %ld random point%s\n", name, count, count > 1 ? "s" : "");
 
-    mkfmt(fmt, "mball", ".s", nframes);
-
-#if 0
-    bleh[0].l->next = &bleh[1];
-    bleh[1].l->next = NULL;
-
-    while(nframes--) {
-	struct wdb_metaballpt *mbpt;
-	snprintf(buf, BUFSIZ, fmt, nframes);
-#define PT(B, X,Y,Z,FLDSTR,GOO)	B.type = WDB_METABALLPT_TYPE_POINT; B.fldstr = FLDSTR; B.sweat = GOO; VSET(B.coord, X, Y, Z);
-	BU_GETSTRUCT( mbpt, wdb_metaballpt );
-	PT(bleh[0], - ((double)nframes) * step, 0, 0, 1, 1);
-	PT(bleh[1], ((double)nframes) * step, 0, 0, 1, 1);
-#undef PT
-	BU_LIST_INSERT( &mb->metaball_ctrl_head, &mbpt->l );
-	/*
-	mk_metaball(outfp, buf, 2, method, threshold, bleh);
-	*/
-	printf("%s\t%f %f\n", buf, - ((double)nframes) * step, ((double)nframes) * step);
+    /* allocate a dynamic array of pointers to points.  this may be
+     * subject to change but is presently the format mk_metaball()
+     * wants.
+     */
+    pts = (fastf_t **)bu_calloc(count, sizeof(fastf_t*), "alloc metaball pts array");
+    for (i=0; i < count; i++) {
+	pts[i] = (fastf_t *)bu_malloc(sizeof(fastf_t)*5, "alloc metaball point");
     }
-#endif
-    return EXIT_FAILURE;
+
+    /* create random metaball point values positioned randomly within
+     * a cube with random field strengths.
+     */
+    for (i=0; i < count; i++) {
+	/* just for explicit clarity */
+	fastf_t x = bn_rand_half(ctx) * SZ;
+	fastf_t y = bn_rand_half(ctx) * SZ;
+	fastf_t z = bn_rand_half(ctx) * SZ;
+	fastf_t field_strength = bn_rand0to1(ctx) * SZ / (2.0 * sqrt(count));
+
+	VSET(pts[i], x, y, z);
+	pts[i][3] = field_strength; /* something blobbly random */
+	pts[i][4] = 0.0; /* sweat/goo field is unused with iso method */
+    }
+
+    /* pack the meat, create the metaball */
+    mk_metaball(fp, name, count, method, threshold, (const fastf_t **)pts);
+
+    /* free up our junk */
+    for (i=0; i < count; i++) {
+	bu_free(pts[i], "dealloc metaball point");
+    }
+    bu_free(pts, "dealloc metaball pts array");
 }
 
-int
-gravotronic(struct rt_wdb *outfp, int method, fastf_t threshold, int nframes, int count)
+
+/**
+ * Creates one metaball object that includes all points from an
+ * existing list (in 'av') of named metaballs.  This routine creates
+ * an rt_metaball_internal object directly via LIBRT given it requires
+ * reading existing metaballs from the database.
+ */
+static void
+mix_balls(struct db_i *dbip, const char *name, int ac, const char *av[])
 {
-    char buf[BUFSIZ], fmt[FMTSIZ];
+    int i;
+    struct directory *dp;
+    struct rt_metaball_internal *newmp;
 
-    mkfmt(fmt, "mball", ".s", nframes);
-    snprintf(buf, BUFSIZ, fmt, nframes);
-    /* probably need a list or something
-    BU_LIST_INIT( &head.l );
-    */
-    
-    /* do something
-    mk_lfcomb( outfp, "mball.g", &head, 0 );
-    */
+    RT_CK_DBI(dbip);
 
-    return EXIT_FAILURE;
+    /* allocate a struct rt_metaball_internal object that we'll
+     * manually fill in with points from the other metaballs being
+     * joined together.
+     */
+    BU_GETSTRUCT(newmp, rt_metaball_internal);
+    newmp->magic = RT_METABALL_INTERNAL_MAGIC;
+    newmp->threshold = 1.0;
+    newmp->method = 1;
+    BU_LIST_INIT(&newmp->metaball_ctrl_head);
+
+    bu_log("Combining together the following metaballs:\n");
+
+    for (i = 0; i < ac; i++) {
+	struct rt_db_internal dir;
+	struct rt_metaball_internal *mp;
+	struct wdb_metaballpt *mpt;
+
+	/* get a handle on the existing database object */
+	bu_log("\t%s\n", av[i]);
+	dp = db_lookup(dbip, av[i], 1);
+	if (!dp) {
+	    bu_log("Unable to find %s\n", av[i]);
+	}
+
+	/* load the existing database object */
+	if (rt_db_get_internal(&dir, dp, dbip, NULL, &rt_uniresource) < 0) {
+	    bu_log("Unable to load %s\n", av[i]);
+	    continue;
+	}
+
+	/* access the metaball-specific internal structure */
+	mp = (struct rt_metaball_internal *)dir.idb_ptr;
+	RT_METABALL_CK_MAGIC(mp);
+
+	/* iterate over each point in that database objct and add it
+	 * to our new metaball.
+	 */
+	for (BU_LIST_FOR(mpt, wdb_metaballpt, &mp->metaball_ctrl_head)) {
+	    bu_log("Adding point (%lf %lf %lf)\n", V3ARGS(mpt->coord));
+	    rt_metaball_add_point(newmp, (const point_t *)&mpt->coord, mpt->fldstr, mpt->sweat);
+	}
+    }
+
+    bu_log("Joining balls together and creating [%s] object\n", name);
+
+    /* write out new "mega metaball" out to disk */
+    dbip->dbi_wdbp = wdb_dbopen(dbip, RT_WDB_TYPE_DB_DISK);
+    wdb_export(dbip->dbi_wdbp, name, newmp, ID_METABALL, 1.0);
 }
 
-/******************************************************************/
+
+/**
+ * main driver logic that creates the various random metaballs and
+ * then creates another that combines them all into one.
+ */
+static void
+make_spaghetti(const char *filename, const char *name, long count)
+{
+    const char *balls[4] = {"someballs.s", "moreballs.s", "manyballs.s", NULL};
+    const char title[BUFSIZ] = "metaball";
+    struct rt_wdb *fp;
+    struct db_i *dbip;
+
+    long some, more, many;
+
+    /* get a write-only handle */
+    fp = wdb_fopen(filename);
+    if (fp == RT_WDB_NULL) {
+	bu_exit(EXIT_FAILURE, "ERROR: unable to open file for writing.\n");
+    }
+
+    mk_id(fp, title);
+
+    /* just to make things interesting, make varying sized sets */
+    some = (long)ceil((double)count * (1.0 / 111.0));
+    more = (long)ceil((double)count * (10.0 / 111.0));
+    many = (long)ceil((double)count * (100.0 / 111.0));
+
+    /* create individual metaballs with random points using LIBWDB */
+    make_meatballs(fp, balls[0], some);
+    make_meatballs(fp, balls[1], more);
+    make_meatballs(fp, balls[2], many);
+
+    wdb_close(fp);
+
+    /* done with the write-only, now begins read/write */
+    dbip = db_open(filename, "rw");
+    if (dbip == DBI_NULL) {
+	perror("ERROR");
+	bu_exit(EXIT_FAILURE, "Failed to open geometry file [%s].  Aborting.\n", filename);
+    }
+
+    /* load a database directory */
+    db_dirbuild(dbip);
+
+    /* combine all metaballs into one "mega metaball" */
+    mix_balls(dbip, name, 3, balls);
+
+    /* and clean up */
+    db_close(dbip);
+}
+
 
 int
-main(int argc, char **argv)
+main(int argc, char *argv[])
 {
-    char title[BUFSIZ] = "metaball", outfile[MAXPATHLEN] = "metaball.g";
-    int nframes = 1, method = 1, optc, gravotron = 0, count = 0, retval = EXIT_SUCCESS;
-    struct rt_wdb *outfp;
+    static const char usage[] = "Usage:\n%s [-h] [-o outfile] [-n count]\n\n  -h      \tShow help\n  -o file \tFile to write out (default: metaball.g)\n  -n count\tTotal metaball point count (default 555)\n\n";
 
-    while ( (optc = bu_getopt( argc, argv, "Hhm:n:o:t:" )) != -1 )
+    char outfile[MAXPATHLEN] = "metaball.g";
+    int optc = 0;
+    long count = 555;
+
+    while ((optc = bu_getopt(argc, argv, "Hho:n:")) != -1) {
 	switch (optc) {
-	    case 'n' :
-		nframes = atoi(bu_optarg);
-		break;
-	    case 'm' :
-		method = atoi(bu_optarg);
-		break;
-	    case 't':
-		snprintf(title, BUFSIZ, "%s", bu_optarg);;
-		break;
 	    case 'o':
 		snprintf(outfile, MAXPATHLEN, "%s", bu_optarg);;
 		break;
-	    case 'g':
-		++gravotron;
-		break;
-	    case 'c':
+	    case 'n':
 		count = atoi(bu_optarg);
 		break;
 	    case 'h' :
@@ -153,41 +240,24 @@ main(int argc, char **argv)
 		printf(usage, *argv);
 		return optc == '?' ? EXIT_FAILURE : EXIT_SUCCESS;
 	}
-
-    /* sanity checking on the various parameters */
-
-    if(count && !gravotron) {
-	fprintf(stderr, "Count only works in gravotronic mode. Turning on the gravitrons.\n");
-	++gravotron;
-    }
-	
-    /* prepare for DB generation */
-
-    outfp = wdb_fopen( outfile );
-    if( outfp == RT_WDB_NULL ) {
-	perror("Failed to open file for writing. Aborting.\n");
-	return EXIT_FAILURE;
-    }
-    mk_id( outfp, title );
-
-    /* here we go! */
-
-    if(gravotron)
-	retval = gravotronic(outfp, method, 1.0, nframes, count);
-    else
-	retval = bitronic(outfp, method, 1.0, nframes);
-
-    /* and clean up  */
-
-    wdb_close(outfp);
-
-    if(retval != EXIT_SUCCESS) {
-	fprintf(stderr, "Removing \"%s\".\n", outfile);
-	if(unlink(outfile) == -1)
-	    perror("Failure removing: ");
     }
 
-    return retval;
+    if (count <= 0) {
+	bu_exit(EXIT_FAILURE, "ERROR: count must be greater than zero");
+    }
+
+    if (bu_file_exists(outfile)) {
+	bu_exit(EXIT_FAILURE, "ERROR: %s already exists.  Remove file and try again.", outfile);
+    }
+
+    bu_log("Writing metaballs out to [%s]\n", outfile);
+
+    /* make dinner */
+    make_spaghetti(outfile, "meatballs.s", count);
+
+    bu_log("BRL-CAD geometry database file [%s] created.\nDone.\n", outfile);
+
+    return EXIT_SUCCESS;
 }
 
 /*

@@ -19,10 +19,7 @@
  */
 /** @file common.c
  *
- *  Subroutines common to several procedural database generators.
- *
- *  Author -
- *	Michael John Muuss
+ * Subroutines common to several procedural database generators.
  *
  */
 
@@ -34,11 +31,11 @@
 #include "raytrace.h"
 #include "wdb.h"
 
-extern struct rt_wdb	*outfp;
+extern struct rt_wdb *outfp;
 
 struct colors {
-    char		*name;
-    unsigned char	c_pixel[3];
+    char *name;
+    unsigned char c_pixel[3];
 }colortab[] = {
     {"black",	{20, 20, 20}},
     {"blue",	{0, 0, 255}},
@@ -62,14 +59,14 @@ struct colors {
     {"yellow",	{255, 200, 0}},
     {"",		{0, 0, 0}}
 };
-int	ncolors = sizeof(colortab)/sizeof(struct colors);
-int	curcolor = 0;
+int ncolors = sizeof(colortab)/sizeof(struct colors);
+int curcolor = 0;
 
 void
-get_rgb( unsigned char *rgb )
+get_rgb(unsigned char *rgb)
 {
     register struct colors *cp;
-    if ( ++curcolor >= ncolors )  curcolor = 0;
+    if (++curcolor >= ncolors)  curcolor = 0;
     cp = &colortab[curcolor];
     rgb[0] = cp->c_pixel[0];
     rgb[1] = cp->c_pixel[1];
@@ -86,37 +83,37 @@ do_light(char *name, fastf_t *pos, fastf_t *dir_at, int da_flag, double r, unsig
 
 
 {
-    char	nbuf[64];
-    vect_t	center;
-    mat_t	rot;
-    mat_t	xlate;
-    mat_t	both;
-    vect_t	from;
-    vect_t	dir;
+    char nbuf[64];
+    vect_t center;
+    mat_t rot;
+    mat_t xlate;
+    mat_t both;
+    vect_t from;
+    vect_t dir;
 
-    if ( da_flag )  {
-	VSUB2( dir, dir_at, pos );
-	VUNITIZE( dir );
+    if (da_flag) {
+	VSUB2(dir, dir_at, pos);
+	VUNITIZE(dir);
     } else {
-	VMOVE( dir, dir_at );
+	VMOVE(dir, dir_at);
     }
 
-    snprintf( nbuf, 64, "%s.s", name );
-    VSETALL( center, 0 );
-    mk_sph( outfp, nbuf, center, r );
+    snprintf(nbuf, 64, "%s.s", name);
+    VSETALL(center, 0);
+    mk_sph(outfp, nbuf, center, r);
 
     /*
      * Need to rotate from 0, 0, -1 to vect "dir",
      * then xlate to final position.
      */
-    VSET( from, 0, 0, -1 );
-    bn_mat_fromto( rot, from, dir );
-    MAT_IDN( xlate );
-    MAT_DELTAS_VEC( xlate, pos);
-    bn_mat_mul( both, xlate, rot );
+    VSET(from, 0, 0, -1);
+    bn_mat_fromto(rot, from, dir);
+    MAT_IDN(xlate);
+    MAT_DELTAS_VEC(xlate, pos);
+    bn_mat_mul(both, xlate, rot);
 
-    mk_region1( outfp, name, nbuf, "light", "shadows=1", rgb );
-    (void)mk_addmember( name, &(headp->l), NULL, WMOP_UNION );
+    mk_region1(outfp, name, nbuf, "light", "shadows=1", rgb);
+    (void)mk_addmember(name, &(headp->l), NULL, WMOP_UNION);
 }
 
 /*

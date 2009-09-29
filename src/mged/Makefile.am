@@ -3,12 +3,19 @@ AM_CPPFLAGS = ${TCL_CPPFLAGS}
 
 if WITH_OPENGL
 OGL_SRCS = dm-ogl.c
-OGL_CFLAGS = -DDM_OGL -DIF_OGL $(GL_CFLAGS)
+OGL_CFLAGS = -DDM_OGL -DIF_OGL $(GL_CPPFLAGS)
 else
 OGL_SRCS =
 OGL_CFLAGS =
 endif
 
+if BUILD_RTGL
+RTGL_SRCS = dm-rtgl.c
+RTGL_CFLAGS = -DDM_RTGL -DIF_RTGL $(GL_CPPFLAGS)
+else
+RTGL_SRCS =
+RTGL_CFLAGS =
+endif
 
 if WITH_WGL
 WGL_SRCS = dm-wgl.c
@@ -72,6 +79,7 @@ mged_SOURCES = \
 	concat.c \
 	dir.c \
 	$(OGL_SRCS) \
+	$(RTGL_SRCS) \
 	$(WGL_SRCS) \
 	$(X11_SRCS) \
 	$(TK_SRCS) \
@@ -121,6 +129,7 @@ mged_SOURCES = \
 # per-program CPPFLAGS wasn't added until automake 1.7
 mged_CFLAGS = \
 	$(OGL_CFLAGS) \
+	$(RTGL_CFLAGS) \
 	$(WGL_CFLAGS) \
 	$(X11_CFLAGS) \
 	$(TK_CFLAGS) \
@@ -134,7 +143,6 @@ mged_CFLAGS = \
 	-I$(top_srcdir)/src/other/tk/generic \
 	-I$(top_srcdir)/src/other/tk/unix
 
-mged_LINK = $(LIBTOOL) --mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) $(AM_LDFLAGS) -o $@
 mged_LDADD = \
 	${POINTS_LDADD} \
 	${TERMIO} \
@@ -188,6 +196,7 @@ EXTRA_DIST = \
 	comb_bool_parse.y \
 	comb_bool_scan.l \
 	dm-ogl.c \
+	dm-rtgl.c \
 	dm-wgl.c \
 	dm-X.c \
 	dm-tk.c \
@@ -196,7 +205,7 @@ EXTRA_DIST = \
 	mged.dsp \
 	red.c
 
-DEPS=src/libtermio src/libwdb src/libdm src/other/incrTcl src/libtclcad
+DEPENDS = src/libtermio src/libwdb src/libdm src/other/incrTcl src/libtclcad
 
 include $(top_srcdir)/misc/Makefile.defs
 

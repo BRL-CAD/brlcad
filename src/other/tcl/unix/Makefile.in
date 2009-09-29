@@ -150,9 +150,9 @@ INSTALL_STRIP_PROGRAM   = -s
 INSTALL_STRIP_LIBRARY   = -S -x
 
 INSTALL			= @srcdir@/../unix/install-sh -c
-INSTALL_PROGRAM		= ${INSTALL}
-INSTALL_LIBRARY		= ${INSTALL}
-INSTALL_DATA		= ${INSTALL} -m 644
+INSTALL_PROGRAM		= ${INSTALL} -m 775
+INSTALL_LIBRARY		= ${INSTALL} -m 775
+INSTALL_DATA		= ${INSTALL} -m 664
 
 # TCL_EXE is the name of a tclsh executable that is available *BEFORE* running
 # make for the first time. Certain build targets (make genstubs) need it to be
@@ -728,7 +728,7 @@ install-binaries: binaries
 	    if [ ! -d "$$i" ] ; then \
 		echo "Making directory $$i"; \
 		mkdir -p "$$i"; \
-		chmod 755 "$$i"; \
+		chmod 775 "$$i"; \
 		else true; \
 		fi; \
 	    done;
@@ -737,10 +737,10 @@ install-binaries: binaries
 	    fi
 	@echo "Installing $(LIB_FILE) to $(LIB_INSTALL_DIR)/"
 	@@INSTALL_LIB@
-	@chmod 555 "$(LIB_INSTALL_DIR)"/$(LIB_FILE)
+	@chmod 775 "$(LIB_INSTALL_DIR)"/$(LIB_FILE)
 	@if test -f libtcl$(SHLIB_SUFFIX) ; then \
 	    $(INSTALL_LIBRARY) libtcl$(SHLIB_SUFFIX) $(LIB_INSTALL_DIR)/libtcl$(SHLIB_SUFFIX);\
-	    chmod +x $(LIB_INSTALL_DIR)/libtcl$(SHLIB_SUFFIX) ; \
+	    chmod 775 $(LIB_INSTALL_DIR)/libtcl$(SHLIB_SUFFIX) ; \
 	fi
 	@if test "$(TCL_BUILD_EXP_FILE)" != ""; then \
 	    echo "Installing $(TCL_EXP_FILE) to $(LIB_INSTALL_DIR)/"; \
@@ -749,14 +749,17 @@ install-binaries: binaries
 	    fi
 	@echo "Installing tclsh as $(BIN_INSTALL_DIR)/tclsh$(VERSION)"
 	@$(INSTALL_PROGRAM) tclsh "$(BIN_INSTALL_DIR)"/tclsh$(VERSION)
+	@echo "Installing tclsh as $(BIN_INSTALL_DIR)/tclsh"
+	@$(INSTALL_PROGRAM) tclsh "$(BIN_INSTALL_DIR)"/tclsh
 	@echo "Installing tclConfig.sh to $(LIB_INSTALL_DIR)/"
 	@$(INSTALL_DATA) tclConfig.sh "$(LIB_INSTALL_DIR)"/tclConfig.sh
 	@if test "$(STUB_LIB_FILE)" != "" ; then \
 	    echo "Installing $(STUB_LIB_FILE) to $(LIB_INSTALL_DIR)/"; \
 	    @INSTALL_STUB_LIB@ ; \
+	    chmod 775 $(LIB_INSTALL_DIR)/$(STUB_LIB_FILE) ; \
 	    if test -f libtclstub.a ; then \
-	    $(INSTALL_LIBRARY) libtclstub.a $(LIB_INSTALL_DIR)/libtclstub.a ; \
-	    chmod +x $(LIB_INSTALL_DIR)/libtclstub.a ; \
+		$(INSTALL_LIBRARY) libtclstub.a $(LIB_INSTALL_DIR)/libtclstub.a ; \
+		chmod 775 $(LIB_INSTALL_DIR)/libtclstub.a ; \
 	    fi ; \
 	fi
 	@EXTRA_INSTALL_BINARIES@
@@ -767,7 +770,7 @@ install-libraries: libraries $(INSTALL_TZDATA) install-msgs
 	    if [ ! -d "$$i" ] ; then \
 		echo "Making directory $$i"; \
 		mkdir -p "$$i"; \
-		chmod 755 "$$i"; \
+		chmod 775 "$$i"; \
 		else true; \
 		fi; \
 	    done;
@@ -776,7 +779,7 @@ install-libraries: libraries $(INSTALL_TZDATA) install-msgs
 	    if [ ! -d "$(SCRIPT_INSTALL_DIR)"/$$i ] ; then \
 		echo "Making directory $(SCRIPT_INSTALL_DIR)/$$i"; \
 		mkdir -p "$(SCRIPT_INSTALL_DIR)"/$$i; \
-		chmod 755 "$(SCRIPT_INSTALL_DIR)"/$$i; \
+		chmod 775 "$(SCRIPT_INSTALL_DIR)"/$$i; \
 		else true; \
 		fi; \
 	    done;
@@ -852,7 +855,7 @@ install-doc: doc
 	    if [ ! -d "$$i" ] ; then \
 		echo "Making directory $$i"; \
 		mkdir -p "$$i"; \
-		chmod 755 "$$i"; \
+		chmod 775 "$$i"; \
 		else true; \
 		fi; \
 	    done;
@@ -878,7 +881,7 @@ install-private-headers: libraries
 	    if [ ! -d "$$i" ] ; then \
 		echo "Making directory $$i"; \
 		mkdir -p "$$i"; \
-		chmod 755 "$$i"; \
+		chmod 775 "$$i"; \
 		else true; \
 		fi; \
 	    done;
@@ -1649,7 +1652,7 @@ dist: $(UNIX_DIR)/configure $(UNIX_DIR)/tclConfig.h.in $(MAC_OSX_DIR)/configure 
 		$(DISTDIR)/unix
 	chmod 775 $(DISTDIR)/unix/configure $(DISTDIR)/unix/configure.in
 	chmod 775 $(DISTDIR)/unix/ldAix
-	chmod +x $(DISTDIR)/unix/install-sh
+	chmod 775 $(DISTDIR)/unix/install-sh
 	mkdir $(DISTDIR)/generic
 	cp -p $(GENERIC_DIR)/*.[cdh] $(DISTDIR)/generic
 	cp -p $(GENERIC_DIR)/*.decls $(DISTDIR)/generic
@@ -1835,7 +1838,7 @@ package-common:
 	mkdir -p $(DISTDIR)/$(PACKAGE)/$(VERSION)/bin
 	sed -e "s/TCLVERSION/$(VERSION)/g" < $(UNIX_DIR)/tclsh.sh \
 		> $(DISTDIR)/$(PACKAGE)/$(VERSION)/bin/tclsh$(VERSION)
-	chmod 755 $(DISTDIR)/$(PACKAGE)/$(VERSION)/bin/tclsh$(VERSION)
+	chmod 775 $(DISTDIR)/$(PACKAGE)/$(VERSION)/bin/tclsh$(VERSION)
 
 #
 # Build and install the architecture specific files in the dist directory.

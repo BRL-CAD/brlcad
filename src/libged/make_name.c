@@ -23,22 +23,22 @@
  *
  */
 
+#include <string.h>
 #include "ged.h"
-
 
 int
 ged_make_name(struct ged *gedp, int argc, const char *argv[])
 {
-    int status = BRLCAD_OK;
+    int status = GED_OK;
     struct bu_vls obj_name;
     char *cp, *tp;
     static int i = 0;
     int	len;
     static const char *usage = "template | -s [num]";
 
-    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
-    GED_CHECK_READ_ONLY(gedp, BRLCAD_ERROR);
-    GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
+    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
+    GED_CHECK_READ_ONLY(gedp, GED_ERROR);
+    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
 
     /* initialize result */
     bu_vls_trunc(&gedp->ged_result_str, 0);
@@ -46,7 +46,7 @@ ged_make_name(struct ged *gedp, int argc, const char *argv[])
     /* must be wanting help */
     if (argc == 1) {
 	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return BRLCAD_HELP;
+	return GED_HELP;
     }
 
     switch (argc) {
@@ -55,7 +55,7 @@ ged_make_name(struct ged *gedp, int argc, const char *argv[])
 		break;
 	    else {
 		i = 0;
-		return BRLCAD_OK;
+		return GED_OK;
 	    }
 	case 3:
 	{
@@ -64,12 +64,12 @@ ged_make_name(struct ged *gedp, int argc, const char *argv[])
 	    if ((strcmp(argv[1], "-s") == 0)
 		&& (sscanf(argv[2], "%d", &new_i) == 1)) {
 		i = new_i;
-		return BRLCAD_OK;
+		return GED_OK;
 	    }
 	}
 	default:
 	    bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	    return BRLCAD_ERROR;
+	    return GED_ERROR;
     }
 
     bu_vls_init(&obj_name);
@@ -95,7 +95,7 @@ ged_make_name(struct ged *gedp, int argc, const char *argv[])
     bu_vls_printf(&gedp->ged_result_str, bu_vls_addr(&obj_name));
     bu_vls_free(&obj_name);
 
-    return BRLCAD_OK;
+    return GED_OK;
 }
 
 

@@ -52,8 +52,8 @@ ged_find(struct ged *gedp, int argc, const char *argv[])
     int aflag = 0;		/* look at all objects */
     static const char *usage = "<objects>";
 
-    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
-    GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
+    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
+    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
 
     /* initialize result */
     bu_vls_trunc(&gedp->ged_result_str, 0);
@@ -61,12 +61,12 @@ ged_find(struct ged *gedp, int argc, const char *argv[])
     /* must be wanting help */
     if (argc == 1) {
 	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return BRLCAD_HELP;
+	return GED_HELP;
     }
 
     if (MAXARGS < argc) {
 	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return BRLCAD_ERROR;
+	return GED_ERROR;
     }
 
     bu_optind = 1;	/* re-init bu_getopt() */
@@ -77,7 +77,7 @@ ged_find(struct ged *gedp, int argc, const char *argv[])
 		break;
 	    default:
 		bu_vls_printf(&gedp->ged_result_str, "Unrecognized option - %c", c);
-		return BRLCAD_ERROR;
+		return GED_ERROR;
 	}
     }
     argc -= (bu_optind - 1);
@@ -96,7 +96,7 @@ ged_find(struct ged *gedp, int argc, const char *argv[])
 				   (fastf_t *)NULL,
 				   &rt_uniresource) < 0) {
 		bu_vls_printf(&gedp->ged_result_str, "Database read error, aborting");
-		return BRLCAD_ERROR;
+		return GED_ERROR;
 	    }
 
 	    comb = (struct rt_comb_internal *)intern.idb_ptr;
@@ -113,7 +113,7 @@ ged_find(struct ged *gedp, int argc, const char *argv[])
 	}
     }
 
-    return BRLCAD_OK;
+    return GED_OK;
 }
 
 static void
@@ -136,7 +136,7 @@ ged_find_ref(struct db_i		*dbip,
 
     comb_name = (char *)comb_name_ptr;
 
-    bu_vls_printf(&gedp->ged_result_str, "%s", comb_name);
+    bu_vls_printf(&gedp->ged_result_str, "%s ", comb_name);
 }
 
 

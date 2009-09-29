@@ -14,6 +14,62 @@ on-going issues.
 
 Recent Bugs
 -----------
+
+* hyp tesselation routine creates bot that does not raytrace
+
+* if you attach a display manager in tk-mged, kill the window, then
+  quit, mged crashes on exit.
+
+* CMD-b and CMD-f navigates the mged command window text widget on Mac
+  and trivally causes problems with the cursor and text injection.
+
+* ogl display manager still crashes on attach in mged on Mac OS X 10.5
+
+* mged segfaults when drawing lots of solids at once (e.g. draw *.s)
+
+* mged command mode doesn't display the output of multiple
+  semicolon-separated commands.  Only the output of the very last mged
+  command is displayed.  Example:
+
+  mged -c moss.g "tops ; title"
+  mged -c moss.g "puts OK ; tops ; puts OK2 ; title ; puts DONE"
+
+* kill command in archer deletes object but then reports a failure and
+  mouse is stuck in a busy state.
+
+* mged rotation halts after a few events and after zooming in/out at
+  least once (Mac OS X 10.5)
+
+* rtedge fills in nearly entire faces of an object when executing on a
+  model that is in perspective mode. Effects really bad on small sized
+  renders, and gets better the larger the render size. Does not happen
+  in non-perspective ray-traces.
+
+* shaders.sh regression test is failing because mged's view
+  initialization has changed.  this causes the first shaders.txt
+  projection shader to have bad/changed eye_pt and orientation values:
+
+  eye_pt=1484.81,1039.67,1094.24
+  orientation=0.248097349046,0.476590573266,0.748097349046,0.389434830518
+
+  instead of the correct:
+
+  eye_pt=0.0,0.0,2249.0
+  orientation=0,0,0,1
+
+* infinite light sources close to objects result in unexpected/bad
+  light behavior.  example is a 1m sph light about 5m from a box about
+  1k x 1k x 1k in size.  setting make each light be red, green, and
+  blue respectively, set to infinite (and fraction 10) and sides to
+  the cube will render sides with a fixed color (green, blue) and top
+  magenta.  On one test with all lights at fraction 1.0 and only one
+  inf, was getting interleaved partial flat/no color all around cube.
+
+* fastgen plate mode bots are reporting invalid shotline segments.
+  depending on whether you shoot from the front or back can result in
+  bogus lists visiable with nirt in mged, entirely missing the bot, or
+  mismatched entry/exit/overlap segments.
+
 * coil -S ... generates bad pipes with values previously known to
   work (see man page for one example).
 
@@ -25,22 +81,6 @@ Recent Bugs
   reproduce this with the result given as:
 
   invalid command name "bind"
-
-* The nmg objects are raytracing VERY slowly, more than an order of
-  magnitude slower than tracing that nmg converted to an equivalent
-  bot.  There appears to be major resource contention and/or thread
-  locking on SMP machines resulting in nearly serialized performance,
-  though the trace is still slow with -P1.  Confirmed with a simple
-  test case of a sphere converted to an nmg:
-
-    make sph sph ; facetize -n sph.nmg sph
-
-  Looks like bots are fine and problem is independent of framebuffer
-  and image size.  Problem seems to be the way the ray_data structure
-  is used to track hitmiss data.  It is horribly inefficient with a
-  large per-shot calloc/free occurring.  Quick timing test showed
-  eliminating the calloc/free alone should result in approximately a
-  3x increase.
 
 * mged 'facetize -n' command is giving many errors:
     ERROR: color index out of range (-128 > 255)
@@ -89,13 +129,6 @@ Recent Bugs
 * Mac OS X installer doesn't include the symbolic links, only
   including the versioned installation directory.
 
-* 'who' command displays the top-level object if you e up an entire
-  path in mged.
-
-* running 'rt' in mged similarly chokes up if you e a particular path
-  (e.g. /all.g/plate.r) resulting in overlaps that the top-level being
-  rendered.  probably rt not dealing with paths.
-
 * Mouse cursor turns into a huge yellow-translucent arrow when running
   MGED through remote X11.
 
@@ -130,6 +163,9 @@ Recent Bugs
 * the graphics window does not acquire keybinding focus in mged on
   ubuntu linux.  key events go to the command window even with the
   graphics window has focus.
+
+* rt is consuming 100% CPU in fb_close() on a lingering ogl
+  framebuffer waiting to close.  needs to sleep or select for a while.
 
 * /dev/ogl framebuffer is not refreshing/updating on mac os x,
   resulting in the window remaining blank until you give expose events
@@ -272,10 +308,9 @@ Recent Bugs
 
 * mged's solid illuminate doesn't work when Lighting is turned on
 
-* raytrace of -s64 and -F/dev/X crashes inside a memcpy during
-  fb_write().  seems to only occur on an unbuffered render to a X24
-  framebuffer, incremental/buffered works fine.  Seems to happen for
-  most image sizes smaller than 128.  This reproduces it:
+* raytrace of zoomed images (e.g., -s64) doesn't work for if_X24
+  framebuffers.  zooming logic seems to be broken (was crashing in
+  memcpy, but that was fixed) for at least -s96 and smaller:
 
   ./libtool --mode=execute gdb --args src/rt/rt -F/dev/X -P1 -s64 db/moss.g all.g
 
@@ -302,10 +337,6 @@ Recent Bugs
   shouldn't be required to get the shading.
 
 * an underlay framebuffer does not underlay with shaded mode
-
-* bu_malloc() function and company take an unsigned int argument and
-  will overflow without notification (since it is unsigned) resulting
-  in less memory allocated than one requested.
 
 * rtweight chokes on a .density file that has less than 3 values per
   line (infinite loop).  also gives infinite areas when presented with

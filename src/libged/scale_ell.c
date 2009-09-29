@@ -20,14 +20,6 @@
 /** @file scale_ell.c
  *
  * The scale_ell command.
- *
- * FIXME: This command really probably shouldn't exist.  The way MGED
- * currently handles scaling is to pass a transformation matrix to
- * transform_editing_solid(), which simply calls
- * rt_matrix_transform().  The primitives already know how to apply an
- * arbitrary matrix transform to their data making the need for
- * primitive-specific editing commands such as this one unnecessary.
- *
  */
 
 #include "common.h"
@@ -42,7 +34,7 @@
 #include "./ged_private.h"
 
 int
-ged_scale_ell(struct ged *gedp, struct rt_ell_internal *ell, char *attribute, fastf_t sf)
+ged_scale_ell(struct ged *gedp, struct rt_ell_internal *ell, const char *attribute, fastf_t sf, int rflag)
 {
     fastf_t ma, mb;
 
@@ -51,27 +43,56 @@ ged_scale_ell(struct ged *gedp, struct rt_ell_internal *ell, char *attribute, fa
     switch (attribute[0]) {
     case 'a':
     case 'A':
-	VSCALE(ell->a, ell->a, sf);
+	if (!rflag)
+	    sf /= MAGNITUDE(ell->a);
+
+	switch (attribute[1]) {
+	case '\0':
+	    VSCALE(ell->a, ell->a, sf);
+	    break;
+	case 'b':
+	case 'B':
+	    if ((attribute[2] == 'c' || attribute[2] == 'C') &&
+		attribute[3] == '\0') {
+		/* set A, B, and C lengths the same */
+		VSCALE(ell->a, ell->a, sf);
+		ma = MAGNITUDE(ell->a);
+		mb = MAGNITUDE(ell->b);
+		VSCALE(ell->b, ell->b, ma/mb);
+		mb = MAGNITUDE(ell->c);
+		VSCALE(ell->c, ell->c, ma/mb);
+	    } else {
+		bu_vls_printf(&gedp->ged_result_str, "bad ell attribute - %s", attribute);
+		return GED_ERROR;
+	    }
+
+	    break;
+	default:
+	    bu_vls_printf(&gedp->ged_result_str, "bad ell attribute - %s", attribute);
+	    return GED_ERROR;
+	}
+
 	break;
     case 'b':
     case 'B':
+	if (!rflag)
+	    sf /= MAGNITUDE(ell->b);
+
 	VSCALE(ell->b, ell->b, sf);
 	break;
     case 'c':
     case 'C':
-	VSCALE(ell->c, ell->c, sf);
-	break;
-    case '3':
-	VSCALE(ell->a, ell->a, sf);
-	VSCALE(ell->b, ell->b, sf);
+	if (!rflag)
+	    sf /= MAGNITUDE(ell->c);
+
 	VSCALE(ell->c, ell->c, sf);
 	break;
     default:
 	bu_vls_printf(&gedp->ged_result_str, "bad ell attribute - %s", attribute);
-	return BRLCAD_ERROR;
+	return GED_ERROR;
     }
 
-    return BRLCAD_OK;
+    return GED_OK;
 }
 
 

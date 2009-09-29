@@ -2100,10 +2100,10 @@ ReadArgs(struct ged *gedp,
 	    default:
 		bu_vls_printf(&gedp->ged_result_str, "%s: illegal option -- %c\n", argv[0], c);
 		show_help(gedp, argv[0]);
-		return BRLCAD_ERROR;
+		return GED_ERROR;
 	    case 'h':
 		show_help(gedp, argv[0]);
-		return BRLCAD_HELP;
+		return GED_HELP;
 	}
     }
 
@@ -2116,10 +2116,10 @@ ReadArgs(struct ged *gedp,
     if (!have_name) {
 	bu_vls_printf(&gedp->ged_result_str, "%s: need top-level object name\n", argv[0]);
 	show_help(gedp, argv[0]);
-	return BRLCAD_ERROR;
+	return GED_ERROR;
     }
 
-    return BRLCAD_OK;
+    return GED_OK;
 }
 
 
@@ -2148,8 +2148,8 @@ ged_tire(struct ged *gedp, int argc, const char *argv[])
     fastf_t tread_depth_float = tread_depth/32.0;
     int ret;
 
-    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
-    GED_CHECK_READ_ONLY(gedp, BRLCAD_ERROR);
+    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
+    GED_CHECK_READ_ONLY(gedp, GED_ERROR);
 
     /* initialize result */
     bu_vls_trunc(&gedp->ged_result_str, 0);
@@ -2175,13 +2175,13 @@ ged_tire(struct ged *gedp, int argc, const char *argv[])
 		   &tread_depth, &tire_thickness, &hub_width,
 		   &pattern_type, &zside1, &usewheel);
 
-    if (ret != BRLCAD_OK) {
+    if (ret != GED_OK) {
 	bu_vls_free(&name);
 	bu_vls_free(&dimen);
 	return ret;
     }
 
-    GED_CHECK_EXISTS(gedp, bu_vls_addr(&name), LOOKUP_QUIET, BRLCAD_ERROR);
+    GED_CHECK_EXISTS(gedp, bu_vls_addr(&name), LOOKUP_QUIET, GED_ERROR);
 
     bu_vls_init(&str);
 
@@ -2290,7 +2290,7 @@ ged_tire(struct ged *gedp, int argc, const char *argv[])
     bu_vls_free(&name);
     bu_vls_free(&dimen);
 
-    return BRLCAD_OK;
+    return GED_OK;
 }
 
 

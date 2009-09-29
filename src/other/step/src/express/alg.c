@@ -39,9 +39,9 @@ static char rcsid[] = "$Id: alg.c,v 1.5 1997/01/21 19:19:51 dar Exp $";
  */
 
 #define ALGORITHM_C
-#include "alg.h"
-#include "object.h"
-#include "schema.h"
+#include "express/alg.h"
+#include "express/object.h"
+#include "express/schema.h"
 
 Scope
 ALGcreate(char type)

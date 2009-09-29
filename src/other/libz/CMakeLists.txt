@@ -13,4 +13,11 @@ set(LIBZ_SOURCES
     zutil.c
 )
 
+set(LIBZ_HEADERS
+    zconf.h
+    zlib.h
+)
+
 add_library(libz ${LIBZ_SOURCES})
+
+install(FILES ${LIBZ_HEADERS} DESTINATION include)

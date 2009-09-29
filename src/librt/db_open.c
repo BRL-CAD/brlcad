@@ -443,8 +443,10 @@ db_sync(struct db_i *dbip)
     bu_semaphore_acquire(BU_SEM_SYSCALL);
 
     /* make sure we have something to do */
-    if (!dbip->dbi_fp)
+    if (!dbip->dbi_fp) {
+	bu_semaphore_release(BU_SEM_SYSCALL);
 	return;
+    }
 
     /* flush the file */
     (void)fflush(dbip->dbi_fp);

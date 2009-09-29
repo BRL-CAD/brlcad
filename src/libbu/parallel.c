@@ -108,9 +108,9 @@
 
 #if (defined(sgi) && defined(mips)) || (defined(__sgi) && defined(__mips))
 /* XXX hack that should eventually go away when it can be verified */
-#  define SGI_4D	1
-#  define _SGI_SOURCE	1	/* IRIX 5.0.1 needs this to def M_BLKSZ */
-#  define _BSD_TYPES	1	/* IRIX 5.0.1 botch in sys/prctl.h */
+#  define SGI_4D      1
+#  define _SGI_SOURCE 1 /* IRIX 5.0.1 needs this to def M_BLKSZ */
+#  define _BSD_TYPES  1 /* IRIX 5.0.1 botch in sys/prctl.h */
 #endif
 
 #ifdef HAVE_SYS_TYPES_H
@@ -156,22 +156,22 @@ static struct sched_param bu_param;
 #  include <sys/unistd.h>
 #  include <thread.h>
 #  include <synch.h>
-#  define rt_thread_t	thread_t
-#endif	/* SUNOS */
+#  define rt_thread_t thread_t
+#endif /* SUNOS */
 
 /*
  * multithread support built on POSIX Threads (pthread) library.
  */
 #ifdef HAVE_PTHREAD_H
 #  include <pthread.h>
-#  define rt_thread_t	pthread_t
+#  define rt_thread_t pthread_t
 #endif
 
 #ifdef CRAY
 static struct taskcontrol {
-    int	tsk_len;
-    int	tsk_id;
-    int	tsk_value;
+    int tsk_len;
+    int tsk_id;
+    int tsk_value;
 } bu_taskcontrol[MAX_PSW];
 #endif
 
@@ -188,8 +188,8 @@ bu_nice_set(int newnice)
 #ifdef HAVE_SETPRIORITY
     int opri, npri;
 
-#  ifndef PRIO_PROCESS  /* necessary for linux */
-#    define PRIO_PROCESS  0	/* From /usr/include/sys/resource.h */
+#  ifndef PRIO_PROCESS     /* necessary for linux */
+#    define PRIO_PROCESS 0 /* From /usr/include/sys/resource.h */
 #  endif
     opri = getpriority(PRIO_PROCESS, 0);
     setpriority(PRIO_PROCESS, 0, newnice);
@@ -218,7 +218,7 @@ int
 bu_cpulimit_get(void)
 {
 #ifdef CRAY
-    long	old;			/* 64-bit clock counts */
+    long old;			/* 64-bit clock counts */
     extern long limit();
 
     if ((old = limit(C_PROC, 0, L_CPU, -1)) < 0) {
@@ -242,9 +242,9 @@ void
 bu_cpulimit_set(int sec)
 {
 #ifdef CRAY
-    long	old;		/* seconds */
-    long	new;		/* seconds */
-    long	newtick;	/* 64-bit clock counts */
+    long old;		/* seconds */
+    long new;		/* seconds */
+    long newtick;	/* 64-bit clock counts */
     extern long limit();
 
     old = bu_cpulimit_get();
@@ -329,7 +329,7 @@ bu_avail_cpus(void)
 
 #  ifdef alliant
     {
-	long	memsize, ipnum, cenum, detnum, attnum;
+	long memsize, ipnum, cenum, detnum, attnum;
 
 #    if !defined(i860)
 	/* FX/8 */
@@ -457,7 +457,7 @@ bu_avail_cpus(void)
     }
 #  endif
 
- DONE_NCPU:  ; /* allows debug and final validity check */
+DONE_NCPU:  ; /* allows debug and final validity check */
 
 #endif /* PARALLEL */
 
@@ -488,12 +488,12 @@ bu_avail_cpus(void)
 fastf_t
 bu_get_load_average(void)
 {
-    double	load = -1.0;
+    double load = -1.0;
 
     bu_log("DEPRECATED: bu_get_load_average is deprecated and will be removed in a future release.\n");
 
 #ifndef _WIN32
-    FILE	*fp;
+    FILE *fp;
 
     /* XXX - wow. eek. */
     fp = popen("PATH=/bin:/usr/bin:/usr/ucb:/usr/bsd; export PATH; uptime|sed -e 's/.*average: //' -e 's/,.*//' ", "r");
@@ -519,18 +519,22 @@ bu_get_load_average(void)
  * If the number in the file is negative, it means "all but that many."
  *
  * Returns the number of processors presently available for "public" use.
+ *
+ * DEPRECATED: this routine's use of a temporary file is deprecated
+ * and should not be relied upon.  a future implementation will
+ * utilize environment variables instead of temporary files.
  */
 #ifndef _WIN32
-#  define PUBLIC_CPUS1	"/var/tmp/public_cpus"
-#  define PUBLIC_CPUS2	"/usr/tmp/public_cpus"
+#  define PUBLIC_CPUS1 "/var/tmp/public_cpus"
+#  define PUBLIC_CPUS2 "/usr/tmp/public_cpus"
 #endif
 int
 bu_get_public_cpus(void)
 {
-    int	avail_cpus = bu_avail_cpus();
+    int avail_cpus = bu_avail_cpus();
 #ifndef _WIN32
-    int	public_cpus = 1;
-    FILE	*fp;
+    int public_cpus = 1;
+    FILE *fp;
 
     if ((fp = fopen(PUBLIC_CPUS1, "rb")) != NULL ||
 	(fp = fopen(PUBLIC_CPUS2, "rb")) != NULL
@@ -548,6 +552,7 @@ bu_get_public_cpus(void)
 	(fp = fopen(PUBLIC_CPUS2, "wb")) != NULL)
     {
 	fprintf(fp, "%d\n", avail_cpus);
+	bu_fchmod(fp, 0666);
 	fclose(fp);
     }
 #endif
@@ -561,15 +566,15 @@ bu_get_public_cpus(void)
  * Will often need root privs to succeed.
  *
  * Returns -
- * 1	realtime priority obtained
- * 0	running with non-realtime scheduler behavior
+ * 1 realtime priority obtained
+ * 0 running with non-realtime scheduler behavior
  */
 int
 bu_set_realtime(void)
 {
 #	if defined(IRIX64) && IRIX64 >= 64
     {
-	int	policy;
+	int policy;
 
 	if ((policy = sched_getscheduler(0)) >= 0) {
 	    if (policy == SCHED_RR || policy == SCHED_FIFO)
@@ -578,11 +583,8 @@ bu_set_realtime(void)
 
 	sched_getparam(0, &bu_param);
 
-	if (sched_setscheduler(0,
-			       SCHED_RR,		/* policy */
-			       &bu_param
-		) >= 0) {
-	    return 1;		/* realtime */
+	if (sched_setscheduler(0, SCHED_RR /* policy */, &bu_param) >= 0) {
+	    return 1; /* realtime */
 	}
 	/* Fall through to return 0 */
     }
@@ -644,12 +646,12 @@ bu_kill_workers(int tbl[MAX_PSW])
 #  endif   /* end check if sgi_4d defined */
 
 /* non-published global */
-extern int	bu_pid_of_initiating_thread;
+extern int bu_pid_of_initiating_thread;
 
-static int	bu_nthreads_started = 0;	/* # threads started */
-static int	bu_nthreads_finished = 0;	/* # threads properly finished */
-static void	(*bu_parallel_func) BU_ARGS((int, genptr_t));	/* user function to run in parallel */
-static genptr_t	bu_parallel_arg;		/* User's arg to his threads */
+static int bu_nthreads_started = 0;	/* # threads started */
+static int bu_nthreads_finished = 0;	/* # threads properly finished */
+static void (*bu_parallel_func) BU_ARGS((int, genptr_t));	/* user function to run in parallel */
+static genptr_t bu_parallel_arg;	/* User's arg to his threads */
 
 
 /**
@@ -670,12 +672,12 @@ static genptr_t	bu_parallel_arg;		/* User's arg to his threads */
 static void
 bu_parallel_interface(void)
 {
-    register int	cpu;		/* our CPU (thread) number */
+    register int cpu;		/* our CPU (thread) number */
 
 #if 0
 #ifdef HAVE_PTHREAD_H
     {
-	pthread_t	pt;
+	pthread_t pt;
 	pt = pthread_self();
 	fprintf(stderr, "bu_parallel_interface, Thread ID = 0x%x\n", (unsigned int)pt);
     }
@@ -711,8 +713,8 @@ bu_parallel_interface(void)
  */
 void
 bu_pr_FILE(title, fp)
-    char	*title;
-    FILE	*fp;
+    char *title;
+    FILE *fp;
 {
     bu_log("FILE structure '%s', at x%x:\n", title, fp);
     bu_log(" _cnt = x%x\n", fp->_cnt);
@@ -748,7 +750,7 @@ bu_pr_FILE(title, fp)
 void
 bu_parallel(void (*func)(int, genptr_t), int ncpu, genptr_t arg)
 {
-    int	avail_cpus = 1;
+    int avail_cpus = 1;
 
 #ifndef PARALLEL
 
@@ -759,34 +761,34 @@ bu_parallel(void (*func)(int, genptr_t), int ncpu, genptr_t arg)
 #else
 
 #  if defined(alliant) && !defined(i860) && !__STDC__
-    register int d7;	/* known to be in d7 */
-    register int d6 = ncpu;	/* known to be in d6 */
+    register int d7;        /* known to be in d7 */
+    register int d6 = ncpu; /* known to be in d6 */
 #  endif
     int x;
 
 #  if defined(SGI_4D) || defined(CRAY)
-    int	new;
+    int new;
 #  endif
 
 #  ifdef sgi
-    long	stdin_pos;
-    FILE	stdin_save;
-    int	worker_pid_tbl[MAX_PSW] = {0};
+    long stdin_pos;
+    FILE stdin_save;
+    int worker_pid_tbl[MAX_PSW] = {0};
 #  endif
 
     /*
      * multithreading support for SunOS 5.X / Solaris 2.x
      */
 #  if defined(SUNOS) && SUNOS >= 52
-    static int	concurrency = 0; /* Max concurrency we have set */
+    static int concurrency = 0; /* Max concurrency we have set */
 #  endif
 #  if (defined(SUNOS) && SUNOS >= 52) || defined(HAVE_PTHREAD_H)
-    int		nthreadc;
-    int		nthreade;
-    rt_thread_t	thread;
-    rt_thread_t	thread_tbl[MAX_PSW];
-    int		i;
-#  endif	/* SUNOS */
+    int nthreadc;
+    int nthreade;
+    rt_thread_t thread;
+    rt_thread_t thread_tbl[MAX_PSW];
+    int i;
+#  endif /* SUNOS */
 
 #  ifdef sgi
     memset(worker_pid_tbl, 0, MAX_PSW * sizeof(int));
@@ -849,19 +851,19 @@ bu_parallel(void (*func)(int, genptr_t), int ncpu, genptr_t arg)
 #  if defined(alliant) && !defined(i860)
 #	if defined(__STDC__)	/* fxc defines it == 0 !! */
 #	undef __STDC__
-#	define __STDC__	2
+#	define __STDC__ 2
 
     /* Calls bu_parallel_interface in parallel "ncpu" times */
     concurrent_call(CNCALL_COUNT|CNCALL_NO_QUIT, bu_parallel_interface, ncpu);
 
 #	else
     {
-	asm("	movl		d6, d0");
-	asm("	subql		#1, d0");
-	asm("	cstart		d0");
+	asm("	movl d6, d0");
+	asm("	subql #1, d0");
+	asm("	cstart d0");
 	asm("super_loop:");
 	bu_parallel_interface();		/* d7 has current index, like magic */
-	asm("	crepeat		super_loop");
+	asm("	crepeat super_loop");
     }
 #	endif
 #  endif
@@ -923,7 +925,7 @@ bu_parallel(void (*func)(int, genptr_t), int ncpu, genptr_t arg)
 #    endif
 	if (new < 0) {
 	    perror("sproc");
-	    bu_log("ERROR bu_parallel(): sproc(x%x, x%x,)=%d failed on processor %d\n",
+	    bu_log("ERROR bu_parallel(): sproc(x%x, x%x)=%d failed on processor %d\n",
 		   bu_parallel_interface, PR_SALL,
 		   new, x);
 	    bu_log("sbrk(0)=%p\n", sbrk(0));
@@ -935,9 +937,9 @@ bu_parallel(void (*func)(int, genptr_t), int ncpu, genptr_t arg)
     }
     (*func)(0, arg);	/* don't waste this thread */
     {
-	int	pid;
-	int	pstat;
-	int	children;
+	int pid;
+	int pstat;
+	int children;
 
 	/*
 	 * Make sure all children are done.

@@ -3501,49 +3501,6 @@ mesh_leaf(struct db_tree_state *tsp, struct db_full_path *pathp, struct rt_db_in
 
     return curtree;
 }
-/**
- *			B U I L D _ T O P S
- *
- *  Build a command line vector of the tops of all objects in view.
- */
-int
-build_tops(char **start, char **end)
-{
-    register char **vp = start;
-    register struct solid *sp;
-
-    /*
-     * Find all unique top-level entries.
-     *  Mark ones already done with s_wflag == UP
-     */
-    FOR_ALL_SOLIDS(sp, &gedp->ged_gdp->gd_headSolid) {
-	sp->s_wflag = DOWN;
-    }
-    FOR_ALL_SOLIDS(sp, &gedp->ged_gdp->gd_headSolid)  {
-	register struct solid *forw;
-	struct directory *dp = FIRST_SOLID(sp);
-
-	if ( sp->s_wflag == UP )
-	    continue;
-	if ( dp->d_addr == RT_DIR_PHONY_ADDR )
-	    continue;	/* Ignore overlays, predictor, etc */
-	if ( vp < end )
-	    *vp++ = dp->d_namep;
-	else  {
-	    Tcl_AppendResult(interp, "mged: ran out of comand vector space at ",
-			     dp->d_namep, "\n", (char *)NULL);
-	    break;
-	}
-	sp->s_wflag = UP;
-	for (BU_LIST_PFOR(forw, sp, solid, &gedp->ged_gdp->gd_headSolid)) {
-	    if ( FIRST_SOLID(forw) == dp )
-		forw->s_wflag = UP;
-	}
-    }
-    *vp = (char *) 0;
-    return vp-start;
-}
-
 
 HIDDEN union tree *
 mesh_end_region (register struct db_tree_state *tsp, struct db_full_path *pathp, union tree *curtree, genptr_t client_data)
@@ -3612,11 +3569,21 @@ f_jmesh(int argc, char **argv)
 	name = argv[2];
     }
 
-    topc = build_tops(topv, topv+2000);
+    topc = ged_build_tops(gedp, topv, topv+2000);
     {
+	register struct ged_display_list *gdlp;
+	register struct ged_display_list *next_gdlp;
 	register struct solid *sp;
-	FOR_ALL_SOLIDS(sp, &gedp->ged_gdp->gd_headSolid) {
-	    sp->s_iflag=DOWN;
+
+	gdlp = BU_LIST_NEXT(ged_display_list, &gedp->ged_gdp->gd_headDisplay);
+	while (BU_LIST_NOT_HEAD(gdlp, &gedp->ged_gdp->gd_headDisplay)) {
+	    next_gdlp = BU_LIST_PNEXT(ged_display_list, gdlp);
+
+	    FOR_ALL_SOLIDS(sp, &gdlp->gdl_headSolid) {
+		sp->s_iflag=DOWN;
+	    }
+
+	    gdlp = next_gdlp;
 	}
     }
 

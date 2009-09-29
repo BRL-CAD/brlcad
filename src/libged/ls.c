@@ -25,6 +25,7 @@
 
 #include "common.h"
 
+#include <stdlib.h>
 #include <string.h>
 #include "bio.h"
 
@@ -61,15 +62,15 @@ ged_ls(struct ged *gedp, int argc, const char *argv[])
     const char *cmdname = argv[0];
     static const char *usage = "[-A name/value pairs] OR [-acrslop] object(s)";
 
-    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
-    GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
+    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
+    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
 
     /* initialize result */
     bu_vls_trunc(&gedp->ged_result_str, 0);
 
     if (MAXARGS < argc) {
 	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return BRLCAD_ERROR;
+	return GED_ERROR;
     }
 
     bu_vls_init(&vls);
@@ -101,7 +102,7 @@ ged_ls(struct ged *gedp, int argc, const char *argv[])
 		break;
 	    default:
 		bu_vls_printf(&gedp->ged_result_str, "Unrecognized option - %c", c);
-		return BRLCAD_ERROR;
+		return GED_ERROR;
 	}
     }
     /* skip options processed plus command name, should just leave object names */
@@ -194,7 +195,7 @@ ged_ls(struct ged *gedp, int argc, const char *argv[])
 
     bu_free((genptr_t)dirp0, "ged_getspace dp[]");
 
-    return BRLCAD_OK;
+    return GED_OK;
 }
 
 /**

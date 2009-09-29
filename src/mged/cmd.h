@@ -60,6 +60,7 @@ BU_EXTERN(int cmd_bot_decimate, (ClientData clientData, Tcl_Interp *interp, int 
 BU_EXTERN(int cmd_bot_face_sort, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
 BU_EXTERN(int cmd_bot_smooth, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
 BU_EXTERN(int cmd_cat, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
+BU_EXTERN(int cmd_cc, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
 BU_EXTERN(int cmd_center, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
 BU_EXTERN(int cmd_cmd_win, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
 BU_EXTERN(int cmd_color, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
@@ -104,9 +105,11 @@ BU_EXTERN(int cmd_list, (ClientData clientData, Tcl_Interp *interp, int argc, ch
 BU_EXTERN(int cmd_lm, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
 BU_EXTERN(int cmd_lookat, (ClientData clientData, Tcl_Interp *interp, int argc, const char **argv));
 BU_EXTERN(int cmd_ls, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
+BU_EXTERN(int cmd_lscon, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
 BU_EXTERN(int cmd_lt, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
 BU_EXTERN(int cmd_make_bb, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
 BU_EXTERN(int cmd_make_name, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
+BU_EXTERN(int cmd_make_pnts, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
 BU_EXTERN(int cmd_match, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
 BU_EXTERN(int cmd_mged_glob, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
 BU_EXTERN(int cmd_mmenu_get, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
@@ -177,7 +180,7 @@ BU_EXTERN(int f_analyze, (ClientData clientData, Tcl_Interp *interp, int argc, c
 BU_EXTERN(int f_arbdef, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
 BU_EXTERN(int f_arced, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
 BU_EXTERN(int f_area, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
-BU_EXTERN(int f_attach, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
+BU_EXTERN(int f_attach, (ClientData clientData, Tcl_Interp *interp, int argc, const char **argv));
 BU_EXTERN(int f_bev, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
 BU_EXTERN(int f_bo, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
 BU_EXTERN(int f_bomb, (ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[]));
@@ -250,13 +253,13 @@ BU_EXTERN(int f_oedit_reset, (ClientData clientData, Tcl_Interp *interp, int arg
 BU_EXTERN(int f_opendb, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
 BU_EXTERN(int f_param, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
 BU_EXTERN(int f_permute, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
-BU_EXTERN(int f_pl, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
+BU_EXTERN(int f_pl, (ClientData clientData, Tcl_Interp *interp, int argc, const char **argv));
 BU_EXTERN(int f_plot, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
 BU_EXTERN(int f_polybinout, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
 BU_EXTERN(int f_prefix, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
 BU_EXTERN(int f_press, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
 BU_EXTERN(int f_preview, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
-BU_EXTERN(int f_ps, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
+BU_EXTERN(int f_ps, (ClientData clientData, Tcl_Interp *interp, int argc, const char **argv));
 BU_EXTERN(int f_put_sedit, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
 BU_EXTERN(int f_putmat, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
 BU_EXTERN(int f_qorot, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));

@@ -32,6 +32,15 @@
 #include <cassert>
 #include <map>
 
+void copyStack(Stack::container_t & lhs, Stack::container_t const & rhs)
+{
+    lhs.clear();
+    Stack::container_t::const_iterator i = rhs.begin();
+    Stack::container_t::const_iterator const end = rhs.end();
+    for(;i !=end; ++i)
+	lhs.push_back((*i)->clone());
+}
+
 /**
  * 				Stack Object Methods
  */
@@ -76,6 +85,23 @@ void Stack::push_back(Node * n)
 void Stack::clear()
 {
     data.clear();
+}
+
+/** Stack operator = overloading */
+Stack & Stack::operator=(Stack const & other)
+{
+    if(&other != this)
+	copyStack(data,other.data);
+    return *this;
+}
+
+/** Stack operator += overloading */
+Stack & Stack::operator+=(Stack const & other)
+{
+    container_t otherdata;
+    copyStack(otherdata, other.data);
+    data.insert(data.end(), otherdata.begin(), otherdata.end());
+    return *this;
 }
 
 /**
@@ -265,6 +291,16 @@ UserFunction::UserFunction(UserFunction const & other)
     updateStack(stack, localvariables_, other.localvariables_, argnames);
 }
 
+UserFunction & UserFunction::operator=(UserFuncExpression const & ufe)
+{
+    BOOST_ASSERT(ufe.argnames.size() == arity_ && ufe.localvars.get());
+    argnames = ufe.argnames;
+    localvariables_ = *ufe.localvars;
+    stack = ufe.stack;
+    updateStack(stack, localvariables_, *ufe.localvars, argnames);
+    return *this;
+}
+
 /** Arity return method */
 std::size_t UserFunction::arity() const
 {
@@ -359,6 +395,78 @@ MathFunction const & sysFunctionNode::func() const
 {
     return *fp;
 }
+
+/** OrNode methods */
+
+OrNode::OrNode(Stack const & stack)
+	: func_(stack)
+{}
+
+boost::shared_ptr<Node> OrNode::clone() const
+{
+    return boost::shared_ptr<Node>(new OrNode(*this));
+}
+
+MathFunction const & OrNode::func() const
+{
+    return func_;
+}
+
+std::size_t OrNode::nbranches() const
+{
+    return 1;
+}
+
+Stack * OrNode::branch(std::size_t i)
+{
+    return i == 0 ? &func_.rhs_stack_ : 0;
+}
+
+OrNode::OrFunc::OrFunc(Stack const & stack)
+	: MathFunction("or"), rhs_stack_(stack)
+{}
+
+std::size_t OrNode::OrFunc::arity() const
+{
+    return 1;
+}
+
+double OrNode::OrFunc::evalp(std::vector<double> const & params) const
+{
+    return bool (params[0]) ? true : bool(evaluate(rhs_stack_));
+}
+
+/** FuncDefNode methods */
+
+FuncDefNode::FuncDefNode(boost::shared_ptr<MathFunction> const & funcptr, UserFuncExpression const & value)
+	: funcptr_(funcptr), value_(value)
+{}
+
+boost::shared_ptr<Node> FuncDefNode::clone() const
+{
+    return boost::shared_ptr<Node>(new FuncDefNode(*this));
+}
+
+void FuncDefNode::assign() const
+{
+    BOOST_ASSERT(funcptr_.get());
+    UserFunction * func = funcptr_->asUserFunction();
+    BOOST_ASSERT(func);
+    *func = value_;
+}
+
+/** AssignNode Methods */
+
+boost::shared_ptr<Node> AssignNode::clone() const
+{
+    return boost::shared_ptr<Node>(new AssignNode(*this));
+}
+
+void AssignNode::assign(double & var, double val) const
+{
+    var = val;
+}
+
 /** BranchNode Methods */
 
 BranchNode::BranchNode(Stack const & stack1, Stack const & stack2)
@@ -441,15 +549,33 @@ double evaluate(Stack s)
 
     Stack::iterator i = s.begin();
     while (i != s.end()) {
-	if (FunctionNode const * f = dynamic_cast<FunctionNode const *>(&*i)) {
+	if (FunctionNode const * f = dynamic_cast<FunctionNode const *>(&*i))
+	{
 	    MathFunction const & funct = f->func();
 
+	    /** arity must be a signed type (boost::prior) */
 	    Stack::difference_type const arity = funct.arity();
 	    Stack::iterator j = boost::prior(i,arity);
 	    double const result = funct.eval(makeArgList(j,i));
 
 	    i = s.erase(j,boost::next(i));
 	    s.insert(i, new ConstantNode(result));
+	    continue;
+	}
+
+	if (AssignNode const * a = dynamic_cast<AssignNode const *>(&*i))
+	{
+	    Stack::iterator vali = boost::prior(i);
+	    Stack::iterator vari = boost::prior(vali);
+	    a->assign(getVariableNode(vari)->getVar(), getNumberNode(vali)->getValue());
+	    i = s.erase(vari, boost::next(i));
+	    continue;
+	}
+
+	if (FuncDefNode const * f = dynamic_cast<FuncDefNode const *>(&*i))
+	{
+	    f->assign();
+	    i = s.erase(i);
 	    continue;
 	}
 
@@ -460,7 +586,7 @@ double evaluate(Stack s)
 	return 0.0;
     
     /* If stack size = 1 */
-    assert(s.size() == 1) ;
+    BOOST_ASSERT(s.size() == 1) ;
     return getNumberNode(s.begin())->getValue();
 }
 

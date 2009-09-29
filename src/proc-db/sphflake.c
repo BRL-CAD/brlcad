@@ -18,13 +18,10 @@
  * information.
  */
 /** @file sphflake.c
-    TITLE: sphflake1.c
-
-    AUTHOR: Jason Owens
-
-    DESCRIPTION: Program to create a sphere-flake utilizing libwdb
-
-*/
+ *
+ * Program to create a sphere-flake utilizing libwdb
+ *
+ */
 
 #include "common.h"
 
@@ -32,11 +29,13 @@
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
+
 #include "bu.h"
 #include "vmath.h"
 #include "bn.h"
 #include "raytrace.h"
 #include "wdb.h"
+
 
 #define D2R(x) (((x)/180)*3.14159265358979)
 #define MATXPNT(d, m, v) { \
@@ -88,8 +87,8 @@ typedef struct depthMat depthMat_t;
 
 struct params {
     char fileName[MAX_INPUT_LENGTH];
-    int  maxRadius;
-    int  maxDepth;
+    int maxRadius;
+    int maxDepth;
     double deltaRadius;
     point_t pos;
     depthMat_t *matArray;
@@ -148,7 +147,7 @@ int main(int argc, char **argv)
 
     bu_opterr = 0;
 
-    while ( (optc = bu_getopt( argc, argv, "hHiIDd:f:F:" )) != -1 ) {
+    while ((optc = bu_getopt(argc, argv, "hHiIDd:f:F:")) != -1) {
 	switch (optc) {
 	    case 'I' :
 	    case 'i' : /* interactive mode */
@@ -248,8 +247,7 @@ void initializeInfo(params_t *p, int inter, char *name, int depth)
 
     if (name == NULL) {
 	bu_strlcpy(p->fileName, DEFAULT_FILENAME, sizeof(p->fileName));
-    }
-    else {
+    } else {
 	bu_strlcpy(p->fileName, name, sizeof(p->fileName));
     }
     p->maxRadius = DEFAULT_MAXRADIUS;
@@ -277,11 +275,10 @@ void initializeInfo(params_t *p, int inter, char *name, int depth)
 	/* prompt the user for some data */
 	/* no error checking here.... */
 	printf("\nPlease enter a filename for sphereflake output: [%s] ", p->fileName);
-	if (! bu_fgets(input, MAX_INPUT_LENGTH, stdin) ) {
+	if (! bu_fgets(input, MAX_INPUT_LENGTH, stdin)) {
 	    fprintf(stderr, "sphereflake: initializeInfo: fgets filename read error.\n");
 	    fprintf(stderr, "Continuing with default value.\n");
-	}
-	else {
+	} else {
 	    len = strlen(input);
 	    if ((len > 0) && (input[len-1] == '\n')) input[len-1] = 0;
 	    if (strncmp(input, "", MAX_INPUT_LENGTH) != 0) {
@@ -291,11 +288,10 @@ void initializeInfo(params_t *p, int inter, char *name, int depth)
 	fflush(stdin);
 
 	printf("Initial position X Y Z: [%.2f %.2f %.2f] ", p->pos[X], p->pos[Y], p->pos[Z]);
-	if (! bu_fgets(input, MAX_INPUT_LENGTH, stdin) ) {
+	if (! bu_fgets(input, MAX_INPUT_LENGTH, stdin)) {
 	    fprintf(stderr, "sphereflake: initializeInfo: fgets position read error.\n");
 	    fprintf(stderr, "Continuing with default values.\n");
-	}
-	else {
+	} else {
 	    len = strlen(input);
 	    if ((len > 0) && (input[len-1] == '\n')) input[len-1] = 0;
 	    if (strncmp(input, "", MAX_INPUT_LENGTH) == 0) {
@@ -305,11 +301,10 @@ void initializeInfo(params_t *p, int inter, char *name, int depth)
 	fflush(stdin);
 
 	printf("maxRadius: [%d] ", p->maxRadius);
-	if (! bu_fgets(input, MAX_INPUT_LENGTH, stdin) ) {
+	if (! bu_fgets(input, MAX_INPUT_LENGTH, stdin)) {
 	    fprintf(stderr, "sphereflake: initializeInfo: fgets maxradius read error.\n");
 	    fprintf(stderr, "Continuing with default value.\n");
-	}
-	else {
+	} else {
 	    len = strlen(input);
 	    if ((len > 0) && (input[len-1] == '\n')) input[len-1] = 0;
 	    if (strncmp(input, "", MAX_INPUT_LENGTH) != 0) {
@@ -319,11 +314,10 @@ void initializeInfo(params_t *p, int inter, char *name, int depth)
 	fflush(stdin);
 
 	printf("deltaRadius: [%.2f] ", p->deltaRadius);
-	if (! bu_fgets(input, MAX_INPUT_LENGTH, stdin) ) {
+	if (! bu_fgets(input, MAX_INPUT_LENGTH, stdin)) {
 	    fprintf(stderr, "sphereflake: initializeInfo: fgets deltaradius read error.\n");
 	    fprintf(stderr, "Continuing with default value.\n");
-	}
-	else {
+	} else {
 	    len = strlen(input);
 	    if ((len > 0) && (input[len-1] == '\n')) input[len-1] = 0;
 	    if (strncmp(input, "", MAX_INPUT_LENGTH) != 0) {
@@ -333,11 +327,10 @@ void initializeInfo(params_t *p, int inter, char *name, int depth)
 	fflush(stdin);
 
 	printf("maxDepth: [%d] ", p->maxDepth);
-	if (! bu_fgets(input, MAX_INPUT_LENGTH, stdin) ) {
+	if (! bu_fgets(input, MAX_INPUT_LENGTH, stdin)) {
 	    fprintf(stderr, "sphereflake: initializeInfo: fgets maxdepth read error.\n");
 	    fprintf(stderr, "Continuing with default value.\n");
-	}
-	else {
+	} else {
 	    len = strlen(input);
 	    if ((len > 0) && (input[len-1] == '\n')) input[len-1] = 0;
 	    if (strncmp(input, "", MAX_INPUT_LENGTH) != 0) {
@@ -349,11 +342,10 @@ void initializeInfo(params_t *p, int inter, char *name, int depth)
 
 	for (i = 0; i <= p->maxDepth; i++) {
 	    printf("Material for depth %d: [%s] ", i, p->matArray[i].name);
-	    if ( ! bu_fgets(input, MAX_INPUT_LENGTH, stdin) ) {
+	    if (! bu_fgets(input, MAX_INPUT_LENGTH, stdin)) {
 		fprintf(stderr, "sphereflake: initializeInfo: fgets material read error.\n");
 		fprintf(stderr, "Continuing with default value.\n");
-	    }
-	    else {
+	    } else {
 		len = strlen(input);
 		if ((len > 0) && (input[len-1] == '\n')) input[len-1] = 0;
 		if (strncmp(input, "", MAX_INPUT_LENGTH) != 0) {
@@ -363,11 +355,10 @@ void initializeInfo(params_t *p, int inter, char *name, int depth)
 	    fflush(stdin);
 
 	    printf("Mat. params for depth %d: [%s] ", i, p->matArray[i].params);
-	    if ( ! bu_fgets(input, MAX_INPUT_LENGTH, stdin) ) {
+	    if (! bu_fgets(input, MAX_INPUT_LENGTH, stdin)) {
 		fprintf(stderr, "sphereflake: initializeInfo: fgets params read error.\n");
 		fprintf(stderr, "Continuing with default value.\n");
-	    }
-	    else {
+	    } else {
 		len = strlen(input);
 		if ((len > 0) && (input[len-1] == '\n')) input[len-1] = 0;
 		if (strncmp(input, "", MAX_INPUT_LENGTH) != 0) {
@@ -377,11 +368,10 @@ void initializeInfo(params_t *p, int inter, char *name, int depth)
 	    fflush(stdin);
 
 	    printf("Mat. color for depth %d: [%d %d %d] ", i, p->matArray[i].color[0], p->matArray[i].color[1], p->matArray[i].color[2]);
-	    if (! bu_fgets(input, MAX_INPUT_LENGTH, stdin) ) {
+	    if (! bu_fgets(input, MAX_INPUT_LENGTH, stdin)) {
 		fprintf(stderr, "sphereflake: initializeInfo: fgets color read error.\n");
 		fprintf(stderr, "Continuing with default values.\n");
-	    }
-	    else {
+	    } else {
 		len = strlen(input);
 		if ((len > 0) && (input[len-1] == '\n')) input[len-1] = 0;
 		if (strncmp(input, "", MAX_INPUT_LENGTH) != 0) {

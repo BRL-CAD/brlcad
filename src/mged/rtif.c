@@ -93,7 +93,7 @@ cmd_rt(ClientData	clientData,
     Tcl_DStringAppend(&ds, bu_vls_addr(&gedp->ged_result_str), -1);
     Tcl_DStringResult(interp, &ds);
 
-    if (ret == BRLCAD_OK)
+    if (ret == GED_OK)
 	return TCL_OK;
 
     return TCL_ERROR;
@@ -136,7 +136,7 @@ cmd_rrt(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
     Tcl_DStringAppend(&ds, bu_vls_addr(&gedp->ged_result_str), -1);
     Tcl_DStringResult(interp, &ds);
 
-    if (ret == BRLCAD_OK)
+    if (ret == GED_OK)
 	return TCL_OK;
 
     return TCL_ERROR;
@@ -183,6 +183,8 @@ rt_read(FILE *fp, fastf_t *scale, fastf_t *eye, fastf_t *mat)
 int
 f_rmats(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
+    register struct ged_display_list *gdlp;
+    register struct ged_display_list *next_gdlp;
     register FILE *fp;
     register struct directory *dp;
     register struct solid *sp;
@@ -226,14 +228,22 @@ f_rmats(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 		mode = -1;
 		break;
 	    }
-	    FOR_ALL_SOLIDS(sp, &gedp->ged_gdp->gd_headSolid)  {
-		if ( LAST_SOLID(sp) != dp )  continue;
-		if ( BU_LIST_IS_EMPTY( &(sp->s_vlist) ) )  continue;
-		vp = BU_LIST_LAST( bn_vlist, &(sp->s_vlist) );
-		VMOVE( sav_start, vp->pt[vp->nused-1] );
-		VMOVE( sav_center, sp->s_center );
-		Tcl_AppendResult(interp, "animating EYE solid\n", (char *)NULL);
-		goto work;
+
+	    gdlp = BU_LIST_NEXT(ged_display_list, &gedp->ged_gdp->gd_headDisplay);
+	    while (BU_LIST_NOT_HEAD(gdlp, &gedp->ged_gdp->gd_headDisplay)) {
+		next_gdlp = BU_LIST_PNEXT(ged_display_list, gdlp);
+
+		FOR_ALL_SOLIDS(sp, &gdlp->gdl_headSolid) {
+		    if ( LAST_SOLID(sp) != dp )  continue;
+		    if ( BU_LIST_IS_EMPTY( &(sp->s_vlist) ) )  continue;
+		    vp = BU_LIST_LAST( bn_vlist, &(sp->s_vlist) );
+		    VMOVE( sav_start, vp->pt[vp->nused-1] );
+		    VMOVE( sav_center, sp->s_center );
+		    Tcl_AppendResult(interp, "animating EYE solid\n", (char *)NULL);
+		    goto work;
+		}
+
+		gdlp = next_gdlp;
 	    }
 	    /* Fall through */
 	default:
@@ -385,7 +395,7 @@ f_nirt(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
     Tcl_DStringAppend(&ds, bu_vls_addr(&gedp->ged_result_str), -1);
     Tcl_DStringResult(interp, &ds);
 
-    if (ret == BRLCAD_OK)
+    if (ret == GED_OK)
 	return TCL_OK;
 
     return TCL_ERROR;
@@ -412,7 +422,7 @@ f_vnirt(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
     Tcl_DStringAppend(&ds, bu_vls_addr(&gedp->ged_result_str), -1);
     Tcl_DStringResult(interp, &ds);
 
-    if (ret == BRLCAD_OK)
+    if (ret == GED_OK)
 	return TCL_OK;
 
     return TCL_ERROR;

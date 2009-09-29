@@ -46,9 +46,9 @@ ged_get_comb(struct ged *gedp, int argc, const char *argv[])
     struct bu_vls vls;
     static const char *usage = "comb";
 
-    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
-    GED_CHECK_READ_ONLY(gedp, BRLCAD_ERROR);
-    GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
+    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
+    GED_CHECK_READ_ONLY(gedp, GED_ERROR);
+    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
 
     /* initialize result */
     bu_vls_trunc(&gedp->ged_result_str, 0);
@@ -56,12 +56,12 @@ ged_get_comb(struct ged *gedp, int argc, const char *argv[])
     /* must be wanting help */
     if (argc == 1) {
 	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return BRLCAD_HELP;
+	return GED_HELP;
     }
 
     if (argc != 2) {
 	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return BRLCAD_ERROR;
+	return GED_ERROR;
     }
 
     bu_vls_init(&vls);
@@ -71,12 +71,12 @@ ged_get_comb(struct ged *gedp, int argc, const char *argv[])
     if (dp != DIR_NULL) {
 	if (!(dp->d_flags & DIR_COMB)) {
 	    bu_vls_printf(&gedp->ged_result_str, "%s is not a combination, so cannot be edited this way\n", argv[1]);
-	    return BRLCAD_ERROR;
+	    return GED_ERROR;
 	}
 
 	if (rt_db_get_internal(&intern, dp, gedp->ged_wdbp->dbip, (fastf_t *)NULL, &rt_uniresource) < 0) {
 	    bu_vls_printf(&gedp->ged_result_str, "Database read error, aborting\n");
-	    return BRLCAD_ERROR;
+	    return GED_ERROR;
 	}
 
 	comb = (struct rt_comb_internal *)intern.idb_ptr;
@@ -85,7 +85,7 @@ ged_get_comb(struct ged *gedp, int argc, const char *argv[])
 	    db_non_union_push(comb->tree, &rt_uniresource);
 	    if (db_ck_v4gift_tree(comb->tree) < 0) {
 		bu_vls_printf(&gedp->ged_result_str, "Cannot flatten tree for editing\n");
-		return BRLCAD_ERROR;
+		return GED_ERROR;
 	    }
 	}
 
@@ -108,7 +108,7 @@ ged_get_comb(struct ged *gedp, int argc, const char *argv[])
 
 	bu_vls_printf(&gedp->ged_result_str, "%s", dp->d_namep);
 	if (comb->region_flag) {
-	    bu_vls_printf(&gedp->ged_result_str, " Yes %d %d %d %d",
+	    bu_vls_printf(&gedp->ged_result_str, " Yes %ld %ld %ld %ld",
 			  comb->region_id, comb->aircode, comb->GIFTmater, comb->los);
 	} else {
 	    bu_vls_printf(&gedp->ged_result_str, " No");
@@ -143,7 +143,7 @@ ged_get_comb(struct ged *gedp, int argc, const char *argv[])
 		    break;
 		default:
 		    bu_vls_printf(&gedp->ged_result_str, "\nIllegal op code in tree\n");
-		    return BRLCAD_ERROR;
+		    return GED_ERROR;
 	    }
 
 	    bu_vls_printf(&gedp->ged_result_str, " %c %s\t", op, rt_tree_array[i].tl_tree->tr_l.tl_name);
@@ -162,7 +162,7 @@ ged_get_comb(struct ged *gedp, int argc, const char *argv[])
 		      gedp->ged_wdbp->wdb_los_default);
     }
 
-    return BRLCAD_OK;
+    return GED_OK;
 }
 
 void

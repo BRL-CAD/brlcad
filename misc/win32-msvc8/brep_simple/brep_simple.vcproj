@@ -146,8 +146,8 @@
 				Name="VCCLCompilerTool"
 				Optimization="2"
 				InlineFunctionExpansion="1"
-				AdditionalIncludeDirectories="../../../include;../../../src/other/tcl/generic"
-				PreprocessorDefinitions="WIN32;NDEBUG;_CONSOLE;TCL_THREADS=1;__win32;BRLCAD_DLL;HAVE_CONFIG_H;BRLCADBUILD;_CRT_SECURE_NO_WARNINGS"
+				AdditionalIncludeDirectories="../../../include;../../../src/other/tcl/generic;../../../src/other/libz;../../../src/other/opennurbs"
+				PreprocessorDefinitions="WIN32;NDEBUG;_CONSOLE;TCL_THREADS=1;__win32;BRLCAD_DLL;HAVE_CONFIG_H;BRLCADBUILD;_CRT_SECURE_NO_WARNINGS;OBJ_BREP"
 				StringPooling="true"
 				BasicRuntimeChecks="0"
 				RuntimeLibrary="2"
@@ -177,7 +177,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="libbu.lib libbn.lib libsysv.lib librt.lib libwdb.lib tcl85.lib"
+				AdditionalDependencies="libbu.lib libbn.lib libsysv.lib librt.lib libwdb.lib tcl85.lib libz.lib opennurbs.lib"
 				OutputFile="$(PlatformName)\$(ConfigurationName)/brep_simple.exe"
 				LinkIncremental="1"
 				SuppressStartupBanner="true"

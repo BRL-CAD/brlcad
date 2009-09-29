@@ -557,6 +557,9 @@ db_lookup_by_attr(struct db_i *dbip, int dir_flags, struct bu_attribute_value_se
 
 	if ( (dp->d_flags & dir_flags) == 0 ) continue;
 
+	/* Skip phony entries */
+	if (dp->d_addr == RT_DIR_PHONY_ADDR) continue;
+
 	if (attr_count ) {
 	    bu_avs_init_empty(&obj_avs);
 	    if ( db5_get_attributes( dbip, &obj_avs, dp ) < 0 ) {

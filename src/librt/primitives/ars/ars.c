@@ -120,7 +120,7 @@ rt_ars_rd_curve(union record *rp, int npts)
  *  as the last point, to make processing the data easier.
  */
 int
-rt_ars_import(struct rt_db_internal *ip, const struct bu_external *ep, const fastf_t *mat, const struct db_i *dbip)
+rt_ars_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fastf_t *mat, const struct db_i *dbip)
 {
     struct rt_ars_internal *ari;
     union record	*rp;
@@ -131,7 +131,7 @@ rt_ars_import(struct rt_db_internal *ip, const struct bu_external *ep, const fas
     BU_CK_EXTERNAL( ep );
     rp = (union record *)ep->ext_buf;
     if ( rp->u_id != ID_ARS_A )  {
-	bu_log("rt_ars_import: defective record\n");
+	bu_log("rt_ars_import4: defective record\n");
 	return(-1);
     }
 
@@ -193,7 +193,7 @@ rt_ars_import(struct rt_db_internal *ip, const struct bu_external *ep, const fas
  *  Generally, only libwdb will set conv2mm != 1.0
  */
 int
-rt_ars_export(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip)
+rt_ars_export4(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip)
 {
     struct rt_ars_internal	*arip;
     union record		*rec;

@@ -285,7 +285,9 @@ struct hit {
 	RT_CK_HIT(_hitp); \
 	RT_CK_SOLTAB(_stp); \
 	RT_CK_FUNCTAB((_stp)->st_meth); \
-	(_stp)->st_meth->ft_norm(_hitp, _stp, (_hitp)->hit_rayp); \
+	if ((_stp)->st_meth->ft_norm) { \
+		(_stp)->st_meth->ft_norm(_hitp, _stp, (_hitp)->hit_rayp); \
+	} \
 }
 
 /**
@@ -301,7 +303,9 @@ struct hit {
 	RT_CK_HIT(_hitp); \
 	RT_CK_SOLTAB(_stp); \
 	RT_CK_FUNCTAB((_stp)->st_meth); \
-	(_stp)->st_meth->ft_norm(_hitp, _stp, (_hitp)->hit_rayp); \
+	if ((_stp)->st_meth->ft_norm) { \
+		(_stp)->st_meth->ft_norm(_hitp, _stp, (_hitp)->hit_rayp); \
+	} \
 	if (_normal) { \
 		if (_flipflag) { \
 			VREVERSE((fastf_t *)_normal, (_hitp)->hit_normal); \
@@ -344,7 +348,9 @@ struct curvature {
 	RT_CK_HIT(_hitp); \
 	RT_CK_SOLTAB(_stp); \
 	RT_CK_FUNCTAB((_stp)->st_meth); \
-	(_stp)->st_meth->ft_curve(_curvp, _hitp, _stp); \
+	if ((_stp)->st_meth->ft_curve) { \
+		(_stp)->st_meth->ft_curve(_curvp, _hitp, _stp); \
+	} \
 	if (_flipflag) { \
 		(_curvp)->crv_c1 = - (_curvp)->crv_c1; \
 		(_curvp)->crv_c2 = - (_curvp)->crv_c2; \
@@ -369,7 +375,10 @@ struct uvcoord {
 	RT_CK_HIT(_hitp); \
 	RT_CK_SOLTAB(_stp); \
 	RT_CK_FUNCTAB((_stp)->st_meth); \
-	(_stp)->st_meth->ft_uv(ap, _stp, _hitp, uvp); }
+	if ((_stp)->st_meth->ft_uv) { \
+ 		(_stp)->st_meth->ft_uv(ap, _stp, _hitp, uvp); \
+	} \
+}
 
 /* A more powerful interface would be: */
 /* RT_GET_UVCOORD(_uvp, _partition, inhit/outhit flag, ap) */
@@ -960,6 +969,7 @@ struct rt_constraint_internal {
     unsigned long magic;
     int id;
     int type;
+    struct bu_vls expression;
 };
 
 #define RT_CHECK_CONSTRAINT(_p)		BU_CKMAG(_p, PC_CONSTRAINT_MAGIC, "pc_constraint_internal")
@@ -1914,12 +1924,12 @@ struct rt_functab {
 			       const struct db_i * /*dbip*/,
 			       struct resource * /*resp*/,
 			       const int minor_type));
-    int (*ft_import) BU_ARGS((struct rt_db_internal * /*ip*/,
+    int (*ft_import4) BU_ARGS((struct rt_db_internal * /*ip*/,
 			      const struct bu_external * /*ep*/,
 			      const mat_t /*mat*/,
 			      const struct db_i * /*dbip*/,
 			      struct resource * /*resp*/));
-    int	(*ft_export) BU_ARGS((struct bu_external * /*ep*/,
+    int	(*ft_export4) BU_ARGS((struct bu_external * /*ep*/,
 			      const struct rt_db_internal * /*ip*/,
 			      double /*local2mm*/,
 			      const struct db_i * /*dbip*/,
@@ -2630,8 +2640,12 @@ RT_EXPORT BU_EXTERN(int db_identical_full_paths,
 		    (const struct db_full_path *a,
 		     const struct db_full_path *b));
 RT_EXPORT BU_EXTERN(int db_full_path_subset,
-		    (const struct db_full_path *a,
-		     const struct db_full_path *b));
+		    (const struct db_full_path	*a,
+		     const struct db_full_path	*b,
+		     int			skip_first));
+RT_EXPORT BU_EXTERN(int db_full_path_match_top,
+		    (const struct db_full_path	*a,
+		     const struct db_full_path	*b));
 RT_EXPORT BU_EXTERN(int db_full_path_search,
 		    (const struct db_full_path *a,
 		     const struct directory *dp));
@@ -3138,7 +3152,8 @@ RT_EXPORT BU_EXTERN(void db_tree_del_rhs,
 RT_EXPORT BU_EXTERN(int db_tree_del_dbleaf,
 		    (union tree **tp,
 		     const char *cp,
-		     struct resource *resp));
+		     struct resource *resp,
+		     int nflag));
 RT_EXPORT BU_EXTERN(void db_tree_mul_dbleaf,
 		    (union tree *tp,
 		     const mat_t mat));

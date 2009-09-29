@@ -123,7 +123,7 @@ static char rcsid[] = "$Id: type.c,v 1.12 1997/01/21 19:19:51 dar Exp $";
  */
 
 #define TYPE_C
-#include "type.h"
+#include "express/type.h"
 
 static Error ERROR_undefined_tag;
 

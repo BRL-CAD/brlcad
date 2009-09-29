@@ -1,14 +1,14 @@
 lib_LTLIBRARIES = libexpress.la
 noinst_LTLIBRARIES = libexpress_nil.la
 
-AM_CFLAGS = -I$(top_srcdir)/include/express
+AM_CFLAGS = -I$(top_srcdir)/include
 AM_LFLAGS = -l
 
 bin_PROGRAMS = \
 	fedex \
 	symlink
 
-COMMON = \
+SRCS = \
 	expscan.l \
 	expparse.y \
 	symbol.c \
@@ -33,26 +33,20 @@ COMMON = \
 	yyvars.c \
 	express.c
 
-fedex_SOURCES = \
-	fedex.c 
-
-symlink_SOURCES = \
-	symlink.c 
-
+fedex_SOURCES = fedex.c 
 fedex_LDADD = libexpress.la
 
-symlink_LDADD = libexpress.la fedex.o
+symlink_SOURCES = \
+	fedex.c \
+	symlink.c
+symlink_LDADD = libexpress.la
 
-libexpress_nil_la_SOURCES = \
-	$(COMMON)
-
-libexpress_nil_la_LDFLAGS =
-libexpress_nil_la_LIBADD = 
+libexpress_nil_la_SOURCES = $(SRCS)
+libexpress_nil_la_LDFLAGS = -avoid-version
 
 libexpress_la_SOURCES = 
-libexpress_la_LDFLAGS =
-libexpress_la_LIBADD = \
-	libexpress_nil.la
+libexpress_la_LDFLAGS = -version-info 19:1 -no-undefined -Wc,${FEXCEPTIONS}
+libexpress_la_LIBADD = libexpress_nil.la
 
 noinst_HEADERS = \
 	conf.h \

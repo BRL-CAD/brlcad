@@ -1,4 +1,3 @@
-#!/usr/bin/env tclsh
 #                   M A N . T C L
 # BRL-CAD
 #

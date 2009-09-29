@@ -825,7 +825,7 @@ rt_cline_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, 
  * Apply modeling transformations as well.
  */
 int
-rt_cline_import(struct rt_db_internal *ip, const struct bu_external *ep, register const fastf_t *mat, const struct db_i *dbip)
+rt_cline_import4(struct rt_db_internal *ip, const struct bu_external *ep, register const fastf_t *mat, const struct db_i *dbip)
 {
     struct rt_cline_internal	*cline_ip;
     union record			*rp;
@@ -836,7 +836,7 @@ rt_cline_import(struct rt_db_internal *ip, const struct bu_external *ep, registe
     /* Check record type */
 
     if ( rp->u_id != DBID_CLINE )  {
-	bu_log("rt_cline_import: defective record\n");
+	bu_log("rt_cline_import4: defective record\n");
 	return(-1);
     }
 
@@ -867,7 +867,7 @@ rt_cline_import(struct rt_db_internal *ip, const struct bu_external *ep, registe
  * The name is added by the caller, in the usual place.
  */
 int
-rt_cline_export(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip)
+rt_cline_export4(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip)
 {
     struct rt_cline_internal	*cline_ip;
     union record			*rec;

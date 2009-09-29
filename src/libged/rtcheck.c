@@ -26,6 +26,15 @@
 #include "common.h"
 
 #include <stdlib.h>
+
+#ifdef HAVE_SYS_TYPES_H
+#   include <sys/types.h>
+#endif
+
+#ifdef HAVE_SYS_WAIT_H
+#   include <sys/wait.h>
+#endif
+
 #include "bio.h"
 
 #include "cmd.h"
@@ -108,10 +117,10 @@ ged_rtcheck(struct ged *gedp, int argc, const char *argv[])
     const char *bin;
     char rtcheck[256] = {0};
 
-    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
-    GED_CHECK_DRAWABLE(gedp, BRLCAD_ERROR);
-    GED_CHECK_VIEW(gedp, BRLCAD_ERROR);
-    GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
+    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
+    GED_CHECK_DRAWABLE(gedp, GED_ERROR);
+    GED_CHECK_VIEW(gedp, GED_ERROR);
+    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
 
     /* initialize result */
     bu_vls_trunc(&gedp->ged_result_str, 0);
@@ -220,7 +229,7 @@ ged_rtcheck(struct ged *gedp, int argc, const char *argv[])
 			  ged_rtcheck_output_handler,
 			  (ClientData)rtcop);
 
-    return BRLCAD_OK;
+    return GED_OK;
 #else
     /* _WIN32 */
     vp = &gedp->ged_gdp->gd_rt_cmd[0];
@@ -361,7 +370,7 @@ ged_rtcheck(struct ged *gedp, int argc, const char *argv[])
 			     TCL_READABLE,
 			     ged_rtcheck_output_handler,
 			     (ClientData)rtcop);
-    return BRLCAD_OK;
+    return GED_OK;
 #endif
 }
 
@@ -369,6 +378,8 @@ ged_rtcheck(struct ged *gedp, int argc, const char *argv[])
 static void
 ged_rtcheck_vector_handler(ClientData clientData, int mask)
 {
+    register struct ged_display_list *gdlp;
+    register struct ged_display_list *next_gdlp;
     int value;
     struct solid *sp;
     struct ged_rtcheck *rtcp = (struct ged_rtcheck *)clientData;
@@ -381,8 +392,15 @@ ged_rtcheck_vector_handler(ClientData clientData, int mask)
 	Tcl_DeleteFileHandler(rtcp->fd);
 	fclose(rtcp->fp);
 
-	FOR_ALL_SOLIDS(sp, &rtcp->gedp->ged_gdp->gd_headSolid)
-	    sp->s_flag = DOWN;
+	gdlp = BU_LIST_NEXT(ged_display_list, &rtcp->gedp->ged_gdp->gd_headDisplay);
+	while (BU_LIST_NOT_HEAD(gdlp, &rtcp->gedp->ged_gdp->gd_headDisplay)) {
+	    next_gdlp = BU_LIST_PNEXT(ged_display_list, gdlp);
+
+	    FOR_ALL_SOLIDS(sp, &gdlp->gdl_headSolid)
+		sp->s_flag = DOWN;
+
+	    gdlp = next_gdlp;
+	}
 
 	/* Add overlay */
 	ged_cvt_vlblock_to_solids(rtcp->gedp, rtcp->vbp, "OVERLAPS", 0);
@@ -390,7 +408,7 @@ ged_rtcheck_vector_handler(ClientData clientData, int mask)
 
 	/* wait for the forked process */
 	while ((rpid = wait(&retcode)) != rtcp->pid && rpid != -1) {
-	    
+
 	    ged_wait_status(&rtcp->gedp->ged_result_str, retcode);
 	}
 
@@ -447,6 +465,8 @@ ged_rtcheck_output_handler(ClientData clientData, int mask)
 void
 ged_rtcheck_vector_handler(ClientData clientData, int mask)
 {
+    register struct ged_display_list *gdlp;
+    register struct ged_display_list *next_gdlp;
     int value;
     struct solid *sp;
     struct ged_rtcheck *rtcp = (struct ged_rtcheck *)clientData;
@@ -458,8 +478,15 @@ ged_rtcheck_vector_handler(ClientData clientData, int mask)
 				 (ClientData)rtcp);
 	Tcl_Close(rtcp->interp, rtcp->chan);
 
-	FOR_ALL_SOLIDS(sp, &rtcp->gedp->ged_gdp->gd_headSolid)
-	    sp->s_flag = DOWN;
+	gdlp = BU_LIST_NEXT(ged_display_list, &rtcp->gedp->ged_gdp->gd_headDisplay);
+	while (BU_LIST_NOT_HEAD(gdlp, &rtcp->gedp->ged_gdp->gd_headDisplay)) {
+	    next_gdlp = BU_LIST_PNEXT(ged_display_list, gdlp);
+
+	    FOR_ALL_SOLIDS(sp, &gdlp->gdl_headSolid)
+		sp->s_flag = DOWN;
+
+	    gdlp = next_gdlp;
+	}
 
 	/* Add overlay */
 	ged_cvt_vlblock_to_solids(rtcp->gedp, rtcp->vbp, "OVERLAPS", 0);

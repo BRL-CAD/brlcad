@@ -46,6 +46,7 @@
 int
 Tclcad_Init(Tcl_Interp *interp)
 {
+    /* XXX why are these disabled? */
 #if 0
     if (Tcl_Init(interp) == TCL_ERROR) {
 	return TCL_ERROR;

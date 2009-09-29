@@ -52,6 +52,18 @@ __BEGIN_DECLS
 #  endif
 #endif
 
+/** all okay return code, not a maskable result */
+#define GED_OK    0x0000
+
+/**
+ * possible maskable return codes from ged functions.  callers should
+ * not rely on the actual values but should instead test via masking.
+ */
+#define GED_ERROR 0x0001 /**< something went wrong, the action was not performed */
+#define GED_HELP  0x0002 /**< invalid specification, result contains usage */
+#define GED_MORE  0x0004 /**< incomplete specification, can specify again interactively */
+#define GED_QUIET 0x0008 /**< don't set or modify the result string */
+
 #define GED_VMIN -2048.0
 #define GED_VMAX 2047.0
 #define GED_VRANGE 4095.0
@@ -59,6 +71,7 @@ __BEGIN_DECLS
 #define INV_4096_V 0.000244140625
 
 #define GED_NULL (struct ged *)0
+#define GED_DISPLAY_LIST_NULL (struct ged_display_list *)0
 #define GED_DRAWABLE_NULL (struct ged_drawable *)0
 #define GED_VIEW_NULL (struct ged_view *)0
 
@@ -80,7 +93,9 @@ __BEGIN_DECLS
 #define GED_MOVE_ARB_EDGE_MODE 9
 #define GED_MOVE_ARB_FACE_MODE 10
 #define GED_ROTATE_ARB_FACE_MODE 11
-#define GED_PSCALE_MODE 12
+#define GED_PROTATE_MODE 12
+#define GED_PSCALE_MODE 13
+#define GED_PTRANSLATE_MODE 14
 
 /**
  * S E M A P H O R E S
@@ -98,96 +113,125 @@ __BEGIN_DECLS
     (_gedp)->ged_wdbp = (_wdbp); \
 }
 
+#define GED_INITIALIZED(_gedp) ((_gedp)->ged_wdbp != RT_WDB_NULL)
+#define GED_LOCAL2BASE(_gedp) ((_gedp)->ged_wdbp->dbip->dbi_local2base)
+#define GED_BASE2LOCAL(_gedp) ((_gedp)->ged_wdbp->dbip->dbi_base2local)
+
 /** Check if the object is a combination */
-#define	GED_CHECK_COMB(_gedp, _dp, _ret) \
+#define	GED_CHECK_COMB(_gedp, _dp, _flags) \
     if (((_dp)->d_flags & DIR_COMB) == 0) { \
-	bu_vls_printf(&(_gedp)->ged_result_str, "%s: not a combination", (_dp)->d_namep); \
-	return (_ret); \
+	if (!((_flags) & GED_QUIET)) { \
+	    bu_vls_printf(&(_gedp)->ged_result_str, "%s is not a combination", (_dp)->d_namep); \
+	} \
+	return (_flags); \
     }
 
 /** Check if a database is open */
-#define GED_CHECK_DATABASE_OPEN(_gedp, _ret) \
+#define GED_CHECK_DATABASE_OPEN(_gedp, _flags) \
     if ((_gedp) == GED_NULL || (_gedp)->ged_wdbp == RT_WDB_NULL || (_gedp)->ged_wdbp->dbip == DBI_NULL) { \
-	if ((_gedp) != GED_NULL) { \
-	    bu_vls_trunc(&(_gedp)->ged_result_str, 0); \
-	    bu_vls_printf(&(_gedp)->ged_result_str, "A database is not open!"); \
-	} else								\
-	    bu_log("A database is not open!\n"); \
-	return (_ret); \
+	if (!((_flags) & GED_QUIET)) { \
+	    if ((_gedp) != GED_NULL) { \
+		bu_vls_trunc(&(_gedp)->ged_result_str, 0); \
+		bu_vls_printf(&(_gedp)->ged_result_str, "A database is not open!"); \
+	    } else {\
+		bu_log("A database is not open!\n"); \
+	    } \
+	} \
+	return (_flags); \
     }
 
 /** Check if a drawable exists */
-#define GED_CHECK_DRAWABLE(_gedp, _ret) \
+#define GED_CHECK_DRAWABLE(_gedp, _flags) \
     if (_gedp->ged_gdp == GED_DRAWABLE_NULL) { \
-	bu_vls_trunc(&(_gedp)->ged_result_str, 0); \
-	bu_vls_printf(&(_gedp)->ged_result_str, "A drawable does not exist!"); \
-	return (_ret); \
+	if (!((_flags) & GED_QUIET)) { \
+	    bu_vls_trunc(&(_gedp)->ged_result_str, 0); \
+	    bu_vls_printf(&(_gedp)->ged_result_str, "A drawable does not exist."); \
+	} \
+	return (_flags); \
     }
 
 /** Check if a view exists */
-#define GED_CHECK_VIEW(_gedp, _ret) \
+#define GED_CHECK_VIEW(_gedp, _flags) \
     if (_gedp->ged_gvp == GED_VIEW_NULL) { \
-	bu_vls_trunc(&(_gedp)->ged_result_str, 0); \
-	bu_vls_printf(&(_gedp)->ged_result_str, "A view does not exist!"); \
-	return (_ret); \
+	if (!((_flags) & GED_QUIET)) { \
+	    bu_vls_trunc(&(_gedp)->ged_result_str, 0); \
+	    bu_vls_printf(&(_gedp)->ged_result_str, "A view does not exist."); \
+	} \
+	return (_flags); \
     }
 
 /** Lookup database object */
-#define GED_CHECK_EXISTS(_gedp, _name, _noisy, _ret) \
+#define GED_CHECK_EXISTS(_gedp, _name, _noisy, _flags) \
     if (db_lookup((_gedp)->ged_wdbp->dbip, (_name), (_noisy)) != DIR_NULL) { \
-	bu_vls_printf(&(_gedp)->ged_result_str, "%s already exists", (_name)); \
-	return (_ret); \
+	if (!((_flags) & GED_QUIET)) { \
+	    bu_vls_printf(&(_gedp)->ged_result_str, "%s already exists.", (_name)); \
+	} \
+	return (_flags); \
     }
 
 /** Check if the database is read only */
-#define	GED_CHECK_READ_ONLY(_gedp, _ret) \
+#define	GED_CHECK_READ_ONLY(_gedp, _flags) \
     if ((_gedp)->ged_wdbp->dbip->dbi_read_only) { \
-	bu_vls_trunc(&(_gedp)->ged_result_str, 0); \
-	bu_vls_printf(&(_gedp)->ged_result_str, "Sorry, this database is READ-ONLY"); \
-	return (_ret); \
+	if (!((_flags) & GED_QUIET)) { \
+	    bu_vls_trunc(&(_gedp)->ged_result_str, 0); \
+	    bu_vls_printf(&(_gedp)->ged_result_str, "Sorry, this database is READ-ONLY."); \
+	} \
+	return (_flags); \
     }
 
 /** Check if the object is a region */
-#define	GED_CHECK_REGION(_gedp, _dp, _ret) \
+#define	GED_CHECK_REGION(_gedp, _dp, _flags) \
     if (((_dp)->d_flags & DIR_REGION) == 0) { \
-	bu_vls_printf(&(_gedp)->ged_result_str, "%s: not a region", (_dp)->d_namep); \
-	return (_ret); \
+	if (!((_flags) & GED_QUIET)) { \
+	    bu_vls_printf(&(_gedp)->ged_result_str, "%s is not a region.", (_dp)->d_namep); \
+	} \
+	return (_flags); \
     }
 
 /** make sure there is a command name given */
-#define GED_CHECK_ARGC_GT_0(_gedp, _argc, _ret) \
+#define GED_CHECK_ARGC_GT_0(_gedp, _argc, _flags) \
     if ((_argc) < 1) { \
-	bu_vls_trunc(&(_gedp)->ged_result_str, 0); \
-	bu_vls_printf(&(_gedp)->ged_result_str, "ERROR: command name not provided (%s:%d)", __FILE__, __LINE__); \
-	return (_ret); \
+	if (!((_flags) & GED_QUIET)) { \
+	    bu_vls_trunc(&(_gedp)->ged_result_str, 0); \
+	    bu_vls_printf(&(_gedp)->ged_result_str, "Command name not provided on (%s:%d).", __FILE__, __LINE__); \
+	} \
+	return (_flags); \
     }
 
 /** add a new directory entry to the currently open database */
-#define GED_DB_DIRADD(_gedp, _dp, _name, _laddr, _len, _flags, _ptr, _ret) \
-    if (((_dp) = db_diradd((_gedp)->ged_wdbp->dbip, (_name), (_laddr), (_len), (_flags), (_ptr))) == DIR_NULL) { \
-	bu_vls_printf(&(_gedp)->ged_result_str, "An error has occurred while adding a new object to the database."); \
-	return (_ret); \
+#define GED_DB_DIRADD(_gedp, _dp, _name, _laddr, _len, _dirflags, _ptr, _flags) \
+    if (((_dp) = db_diradd((_gedp)->ged_wdbp->dbip, (_name), (_laddr), (_len), (_dirflags), (_ptr))) == DIR_NULL) { \
+	if (!((_flags) & GED_QUIET)) { \
+	    bu_vls_printf(&(_gedp)->ged_result_str, "Unable to add %s to the database.", (_name)); \
+	} \
+	return (_flags); \
     }
 
 /** Lookup database object */
-#define GED_DB_LOOKUP(_gedp, _dp, _name, _noisy, _ret) \
+#define GED_DB_LOOKUP(_gedp, _dp, _name, _noisy, _flags) \
     if (((_dp) = db_lookup((_gedp)->ged_wdbp->dbip, (_name), (_noisy))) == DIR_NULL) { \
-	bu_vls_printf(&(_gedp)->ged_result_str, "%s: not found", (_name)); \
-	return (_ret); \
+	if (!((_flags) & GED_QUIET)) { \
+	    bu_vls_printf(&(_gedp)->ged_result_str, "Unable to find %s in the database.", (_name)); \
+	} \
+	return (_flags); \
     }
 
 /** Get internal representation */
-#define GED_DB_GET_INTERNAL(_gedp, _intern, _dp, _mat, _resource, _ret) \
+#define GED_DB_GET_INTERNAL(_gedp, _intern, _dp, _mat, _resource, _flags) \
     if (rt_db_get_internal((_intern), (_dp), (_gedp)->ged_wdbp->dbip, (_mat), (_resource)) < 0) { \
-	bu_vls_printf(&(_gedp)->ged_result_str, "Database read error, aborting"); \
-	return (_ret); \
+	if (!((_flags) & GED_QUIET)) { \
+	    bu_vls_printf(&(_gedp)->ged_result_str, "Database read failure."); \
+	} \
+	return (_flags); \
     }
 
 /** Put internal representation */
-#define GED_DB_PUT_INTERNAL(_gedp, _dp, _intern, _resource, _ret) \
+#define GED_DB_PUT_INTERNAL(_gedp, _dp, _intern, _resource, _flags) \
     if (rt_db_put_internal((_dp), (_gedp)->ged_wdbp->dbip, (_intern), (_resource)) < 0) { \
-	bu_vls_printf(&(_gedp)->ged_result_str, "Database write error, aborting"); \
-	return (_ret); \
+	if (!((_flags) & GED_QUIET)) { \
+	    bu_vls_printf(&(_gedp)->ged_result_str, "Database write failure."); \
+	} \
+	return (_flags); \
     }
 
 struct ged_adc_state {
@@ -300,9 +344,17 @@ struct ged_qray_fmt {
     struct bu_vls fmt;
 };
 
+struct ged_display_list {
+    struct bu_list	l;
+    struct directory	*gdl_dp;
+    struct bu_vls	gdl_path;
+    struct bu_list	gdl_headSolid;		/**< @brief  head of solid list for this object */
+    int			gdl_wflag;
+};
+
 struct ged_drawable {
     struct bu_list		l;
-    struct bu_list		gd_headSolid;		/**< @brief  head of solid list */
+    struct bu_list		gd_headDisplay;		/**< @brief  head of display list */
     struct bu_list		gd_headVDraw;		/**< @brief  head of vdraw list */
     struct vd_curve		*gd_currVHead;		/**< @brief  current vdraw head */
     struct solid		*gd_freeSolids;		/**< @brief  ptr to head of free solid list */
@@ -391,6 +443,9 @@ struct ged {
     void			(*ged_refresh_handler)();	/**< @brief  function for handling refresh requests */
     void			(*ged_output_handler)();	/**< @brief  function for handling output */
     char			*ged_output_script;		/**< @brief  script for use by the outputHandler */
+
+    /* FIXME -- this ugly hack needs to die.  the result string should be stored before the call. */
+    int 			ged_internal_call;
 };
 
 typedef int (*ged_func_ptr)(struct ged *, int, const char *[]);
@@ -450,6 +505,27 @@ GED_EXPORT BU_EXTERN(int ged_vclip,
 		      register fastf_t *min,
 		      register fastf_t *max));
 
+/* defined in copy.c */
+GED_EXPORT BU_EXTERN(int ged_dbcopy,
+		     (struct ged *from_gedp,
+		      struct ged *to_gedp,
+		      const char *from,
+		      const char *to,
+		      int fflag));
+
+/* defined in draw.c */
+GED_EXPORT BU_EXTERN (void ged_color_soltab,
+		      (struct bu_list *hdlp));
+GED_EXPORT BU_EXTERN (struct ged_display_list *ged_addToDisplay,
+		      (struct ged *gedp,
+		       const char *name));
+
+/* defined in erase.c */
+GED_EXPORT BU_EXTERN (void ged_erasePathFromDisplay,
+		      (struct ged *gedp,
+		       const char *path,
+		       int allow_split));
+
 /* defined in ged.c */
 GED_EXPORT BU_EXTERN(void ged_close,
 		     (struct ged *gedp));
@@ -471,7 +547,7 @@ GED_EXPORT BU_EXTERN(int ged_inside_internal,
 		     (struct ged *gedp,
 		      struct rt_db_internal *ip,
 		      int argc,
-		      char *argv[],
+		      const char *argv[],
 		      int arg,
 		      char *o_name));
 
@@ -656,11 +732,6 @@ GED_EXPORT BU_EXTERN(int	wdb_group_cmd,
 		     int argc,
 		     char *argv[]));
 GED_EXPORT BU_EXTERN(int	wdb_remove_cmd,
-		    (struct rt_wdb *wdbp,
-		     Tcl_Interp *interp,
-		     int argc,
-		     char *argv[]));
-GED_EXPORT BU_EXTERN(int	wdb_search_cmd,
 		    (struct rt_wdb *wdbp,
 		     Tcl_Interp *interp,
 		     int argc,
@@ -1197,6 +1268,14 @@ GED_EXPORT BU_EXTERN(int ged_arot, (struct ged *gedp, int argc, const char *argv
 GED_EXPORT BU_EXTERN(int ged_autoview, (struct ged *gedp, int argc, const char *argv[]));
 
 /**
+ * Report the size of the bounding box (rpp) around the specified object
+ *
+ * Usage:
+ *     bb object
+ */
+GED_EXPORT BU_EXTERN(int ged_bb, (struct ged *gedp, int argc, const char *argv[]));
+
+/**
  * Tesselates each operand object, then performs the
  * boolean evaluation, storing result in new_obj
  *
@@ -1206,7 +1285,7 @@ GED_EXPORT BU_EXTERN(int ged_autoview, (struct ged *gedp, int argc, const char *
 GED_EXPORT BU_EXTERN(int ged_bev, (struct ged *gedp, int argc, const char *argv[]));
 
 /**
- * Manipulate opaque objects.
+ * Manipulate opaque binary objects.
  * Must specify one of -i (for creating or adjusting objects (input))
  * or -o for extracting objects (output).
  * If the major type is "u" the minor type must be one of:
@@ -1227,7 +1306,7 @@ GED_EXPORT BU_EXTERN(int ged_bev, (struct ged *gedp, int argc, const char *argv[
  * Usage:
  *     binary {-i major_type minor_type | -o} dest source
  */
-GED_EXPORT BU_EXTERN(int ged_binary, (struct ged *gedp, int argc, const char *argv[]));
+GED_EXPORT BU_EXTERN(int ged_bo, (struct ged *gedp, int argc, const char *argv[]));
 
 /**
  * Erase all currently displayed geometry and draw the specified object(s)
@@ -1328,12 +1407,28 @@ GED_EXPORT BU_EXTERN(int ged_bot_sync, (struct ged *gedp, int argc, const char *
 GED_EXPORT BU_EXTERN(int ged_bot_vertex_fuse, (struct ged *gedp, int argc, const char *argv[]));
 
 /**
+ * BREP utility command
+ *
+ * Usage:
+ *     brep [command]
+ */
+GED_EXPORT BU_EXTERN(int ged_brep, (struct ged *gedp, int argc, const char *argv[]));
+
+/**
  * List attributes (brief).
  *
  * Usage:
  *     cat <objects>
  */
 GED_EXPORT BU_EXTERN(int ged_cat, (struct ged *gedp, int argc, const char *argv[]));
+
+/**
+ * Create constraint object
+ *
+ * Usage:
+ *     cc expression
+ */
+GED_EXPORT BU_EXTERN(int ged_cc, (struct ged *gedp, int argc, const char *argv[]));
 
 /**
  * Get or set the view center.
@@ -1768,6 +1863,14 @@ GED_EXPORT BU_EXTERN(int ged_hide, (struct ged *gedp, int argc, const char *argv
 GED_EXPORT BU_EXTERN(int ged_how, (struct ged *gedp, int argc, const char *argv[]));
 
 /**
+ * Create a human
+ *
+ * Usage:
+ *     human [options]
+ */
+GED_EXPORT BU_EXTERN(int ged_human, (struct ged *gedp, int argc, const char *argv[]));
+
+/**
  * Illuminate/highlight database object.
  *
  * Usage:
@@ -1912,6 +2015,14 @@ GED_EXPORT BU_EXTERN(int ged_lookat, (struct ged *gedp, int argc, const char *ar
 GED_EXPORT BU_EXTERN(int ged_ls, (struct ged *gedp, int argc, const char *argv[]));
 
 /**
+ * List the constraint objects in this database
+ *
+ * Usage:
+ *     lscon
+ */
+GED_EXPORT BU_EXTERN(int ged_lscon, (struct ged *gedp, int argc, const char *argv[]));
+
+/**
  * List object's tree as a tcl list of {operator object} pairs
  *
  * Usage:
@@ -1934,6 +2045,19 @@ GED_EXPORT BU_EXTERN(int ged_m2v_point, (struct ged *gedp, int argc, const char 
  *     make obj type
  */
 GED_EXPORT BU_EXTERN(int ged_make, (struct ged *gedp, int argc, const char *argv[]));
+
+/**
+ * Creates a point-cloud (pnts) given the following:
+ *   1)   object name
+ *   2)   path and filename to point data file
+ *   3)   point data file format (xyzrgbsijk?)
+ *   4)   point data file units or conversion factor to mm
+ *   5)   default diameter of each point
+ *
+ * Usage:
+ *     make_pnts object_name path_and_filename file_format units_or_conv_factor default_diameter
+ */
+GED_EXPORT BU_EXTERN(int ged_make_pnts, (struct ged *gedp, int argc, const char *argv[]));
 
 /**
  * Make a bounding box (rpp) around the specified objects
@@ -2226,12 +2350,28 @@ GED_EXPORT BU_EXTERN(int ged_preview, (struct ged *gedp, int argc, const char *a
 GED_EXPORT BU_EXTERN(int ged_ps, (struct ged *gedp, int argc, const char *argv[]));
 
 /**
+ * Rotate obj's attributes by rvec.
+ *
+ * Usage:
+ *     protate obj attribute rvec
+ */
+GED_EXPORT BU_EXTERN(int ged_protate, (struct ged *gedp, int argc, const char *argv[]));
+
+/**
  * Scale obj's attributes by sf.
  *
  * Usage:
  *     pscale obj attribute sf
  */
 GED_EXPORT BU_EXTERN(int ged_pscale, (struct ged *gedp, int argc, const char *argv[]));
+
+/**
+ * Translate obj's attributes by tvec.
+ *
+ * Usage:
+ *     ptranslate obj attribute tvec
+ */
+GED_EXPORT BU_EXTERN(int ged_ptranslate, (struct ged *gedp, int argc, const char *argv[]));
 
 /**
  * Push objects' path transformations to  primitives
@@ -2474,6 +2614,15 @@ GED_EXPORT BU_EXTERN(int ged_scale_args, (struct ged *gedp, int argc, const char
 GED_EXPORT BU_EXTERN(int ged_scale, (struct ged *gedp, int argc, const char *argv[]));
 
 /**
+ * Interface to search functionality (i.e. Unix find for geometry)
+ *
+ * Usage:
+ *     search [options] (see search man page)
+ */
+GED_EXPORT BU_EXTERN(int ged_search, (struct ged *gedp, int argc, const char *argv[]));
+
+
+/**
  * Get/set the output handler script
  *
  * Usage:
@@ -2560,6 +2709,14 @@ GED_EXPORT BU_EXTERN(int ged_solids_on_ray, (struct ged *gedp, int argc, const c
  *     slew x y [z]
  */
 GED_EXPORT BU_EXTERN(int ged_slew, (struct ged *gedp, int argc, const char *argv[]));
+
+/**
+ * Create or append objects to a group using a sphere
+ *
+ * Usage:
+ *     group object(s) whose bounding boxes intersect a sphere
+ */
+GED_EXPORT BU_EXTERN(int ged_sphgroup, (struct ged *gedp, int argc, const char *argv[]));
 
 /**
  * Count/list primitives/regions/groups

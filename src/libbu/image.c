@@ -119,7 +119,8 @@ png_save(int fd, unsigned char *rgb, int width, int height)
     fh = fdopen(fd, "wb");
     if (fh==NULL) {
 	perror("fdopen");
-	bu_exit(-1, "png_save trying to get FILE pointer for descriptor\n");
+	bu_log("ERROR: png_save failed to get a FILE pointer\n");
+	return 0;
     }
 
     png_ptr = png_create_write_struct (PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
@@ -129,7 +130,8 @@ png_save(int fd, unsigned char *rgb, int width, int height)
     info_ptr = png_create_info_struct (png_ptr);
     if (info_ptr == NULL || setjmp (png_jmpbuf (png_ptr))) {
 	png_destroy_read_struct (&png_ptr, info_ptr ? &info_ptr : NULL, NULL);
-	bu_exit(-1, "Ohs Noes!\n");
+	bu_log("ERROR: Unable to create png header\n");
+	return 0;
     }
 
     png_init_io (png_ptr, fh);
@@ -154,14 +156,16 @@ bmp_save(int fd, unsigned char *rgb, int width, int height)
     fh = fdopen(fd, "wb");
     if (fh==NULL) {
 	perror("fdopen");
-	bu_exit(-1, "bmp_save trying to get FILE pointer for descriptor\n");
+	bu_log("ERROR: bmp_save failed to get a FILE pointer\n");
+	return 0;
     }
 
     if (!rgb || width<0 || height<0) {
-	bu_exit(-1, "Ohs Noes!\n");
+	bu_log("ERROR: invalid image specification\n");
+	return 0;
     }
 
-    bu_log("Unimplemented\n");
+    bu_log("ERROR: Unimplemented\n");
 
     return 0;
 }
@@ -181,7 +185,8 @@ bw_save(int fd, unsigned char *rgb, int size)
     int bwsize = size/3, i;
 
     if (bwsize*3 != size) {
-	bu_exit(-1, "Huh, size=%d is not a multiple of 3.\n", size);
+	bu_log("ERROR: image size=%d is not a multiple of 3.\n", size);
+	return 0;
     }
 
     /* an ugly naïve pixel grey-scale hack. Does not take human color curves. */
@@ -253,11 +258,10 @@ bu_image_save_open(char *filename, int format, int width, int height, int depth)
      * where to check for an existing "partial" file. */
     bif->fd = open(bif->filename, O_WRONLY|O_CREAT|O_TRUNC, WRMODE);
     if (bif->fd < 0) {
-	char buf[BUFSIZ];
 	perror("open");
 	free(bif);
-	snprintf(buf, BUFSIZ, "ERROR opening output file \"%s\" for writing\n", bif->filename);
-	bu_exit(-1, buf);
+	bu_log("ERROR: opening output file \"%s\" for writing\n", bif->filename);
+	return NULL;
     }
     bif->width = width;
     bif->height = height;
@@ -270,7 +274,7 @@ int
 bu_image_save_writeline(struct bu_image_file *bif, int y, unsigned char *data)
 {
     if (bif==NULL) {
-	printf("trying to write a line with a null bif\n");
+	bu_log("ERROR: trying to write a line with a null bif\n");
 	return -1;
     }
     memcpy(bif->data + bif->width*bif->depth*y, data, (size_t)bif->width*bif->depth);

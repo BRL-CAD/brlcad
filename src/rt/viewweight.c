@@ -185,9 +185,15 @@ view_init(register struct application *ap, char *file, char *obj, int minus_o)
     register int i;
     char buf[BUFSIZ+1];
     static char null = (char) 0;
-    char *curdir = getenv( "PWD" );
-    char *homedir = getenv( "HOME" );
+    const char *curdir = getenv( "PWD" );
+    const char *homedir = getenv( "HOME" );
     int line;
+
+    /* make sure they're not NULL */
+    if (!curdir)
+	curdir = "."; /* current dir */
+    if (!homedir)
+	homedir = ""; /* drop to root */
 
     if ( !minus_o ) {
 	outfp = stdout;
@@ -208,6 +214,7 @@ view_init(register struct application *ap, char *file, char *obj, int minus_o)
     if ( (densityfp=fopen( densityfile, "r" )) == (FILE *) 0 ) {
 	snprintf(densityfile, i, "%s/%s", homedir, DENSITY_FILE);
 	if ( (densityfp=fopen( densityfile, "r" )) == (FILE *) 0 ) {
+	    bu_log( "Unable to load density file \"%s\" for reading\n", densityfile);
 	    perror( densityfile );
 	    bu_exit( -1, NULL );
 	}

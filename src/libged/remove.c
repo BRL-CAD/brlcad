@@ -44,9 +44,9 @@ ged_remove(struct ged *gedp, int argc, const char *argv[])
     int				ret;
     static const char *usage = "comb object(s)";
 
-    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
-    GED_CHECK_READ_ONLY(gedp, BRLCAD_ERROR);
-    GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
+    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
+    GED_CHECK_READ_ONLY(gedp, GED_ERROR);
+    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
 
     /* initialize result */
     bu_vls_trunc(&gedp->ged_result_str, 0);
@@ -54,25 +54,25 @@ ged_remove(struct ged *gedp, int argc, const char *argv[])
     /* must be wanting help */
     if (argc == 1) {
 	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return BRLCAD_HELP;
+	return GED_HELP;
     }
 
     if (argc < 3 || MAXARGS < argc) {
 	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return BRLCAD_ERROR;
+	return GED_ERROR;
     }
 
     if ((dp = db_lookup(gedp->ged_wdbp->dbip,  argv[1], LOOKUP_NOISY)) == DIR_NULL)
-	return BRLCAD_ERROR;
+	return GED_ERROR;
 
     if ((dp->d_flags & DIR_COMB) == 0) {
 	bu_vls_printf(&gedp->ged_result_str, "rm: %s is not a combination", dp->d_namep);
-	return BRLCAD_ERROR;
+	return GED_ERROR;
     }
 
     if (rt_db_get_internal(&intern, dp, gedp->ged_wdbp->dbip, (fastf_t *)NULL, &rt_uniresource) < 0) {
 	bu_vls_printf(&gedp->ged_result_str, "Database read error, aborting");
-	return BRLCAD_ERROR;
+	return GED_ERROR;
     }
 
     comb = (struct rt_comb_internal *)intern.idb_ptr;
@@ -82,9 +82,9 @@ ged_remove(struct ged *gedp, int argc, const char *argv[])
     num_deleted = 0;
     ret = TCL_OK;
     for (i = 2; i < argc; i++) {
-	if (db_tree_del_dbleaf( &(comb->tree), argv[i], &rt_uniresource ) < 0) {
+	if (db_tree_del_dbleaf( &(comb->tree), argv[i], &rt_uniresource, 0 ) < 0) {
 	    bu_vls_printf(&gedp->ged_result_str, "  ERROR_deleting %s/%s\n", dp->d_namep, argv[i]);
-	    ret = BRLCAD_ERROR;
+	    ret = GED_ERROR;
 	} else {
 	    bu_vls_printf(&gedp->ged_result_str, "deleted %s/%s\n", dp->d_namep, argv[i]);
 	    num_deleted++;
@@ -93,7 +93,7 @@ ged_remove(struct ged *gedp, int argc, const char *argv[])
 
     if (rt_db_put_internal(dp, gedp->ged_wdbp->dbip, &intern, &rt_uniresource) < 0) {
 	bu_vls_printf(&gedp->ged_result_str, "Database write error, aborting");
-	return BRLCAD_ERROR;
+	return GED_ERROR;
     }
 
     return ret;

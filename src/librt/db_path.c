@@ -430,7 +430,8 @@ db_identical_full_paths(
 int
 db_full_path_subset(
     const struct db_full_path *a,
-    const struct db_full_path *b )
+    const struct db_full_path *b,
+    const int skip_first)
 {
     register int i;
 
@@ -439,7 +440,12 @@ db_full_path_subset(
 
     if ( b->fp_len > a->fp_len )  return 0;
 
-    for ( i=0; i < a->fp_len; i++ )  {
+    if (skip_first)
+	i = 1;
+    else
+	i = 0;
+
+    for (; i < a->fp_len; i++ )  {
 	register int j;
 
 	if ( a->fp_names[i] != b->fp_names[0] )  continue;
@@ -458,6 +464,34 @@ db_full_path_subset(
 	;
     }
     return 0;
+}
+
+/**
+ * D B _ F U L L _ P A T H _ M A T C H _ T O P
+ *
+ * Returns -
+ *	1	if 'a' matches the top part of 'b'
+ *	0	if not.
+ *
+ * For example, /a/b matches both the top part of /a/b/c and /a/b.
+ */
+int
+db_full_path_match_top(
+    const struct db_full_path *a,
+    const struct db_full_path *b)
+{
+    register int i;
+
+    RT_CK_FULL_PATH(a);
+    RT_CK_FULL_PATH(b);
+
+    if ( a->fp_len > b->fp_len )  return 0;
+
+    for ( i=0; i < a->fp_len; i++ )  {
+	if ( a->fp_names[i] != b->fp_names[i] ) return 0;
+    }
+
+    return 1;
 }
 
 

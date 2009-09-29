@@ -244,7 +244,7 @@ db5_diradd(struct db_i *dbip,
 		 */
 		if (db5_import_attributes(&avs, &rip->attributes) < 0) {
 		    bu_log("db5_diradd_handler: Bad attributes on combination '%s'\n",
-			   rip->name);
+			   rip->name.ext_buf);
 		    break;
 		}
 		if (bu_avs_get(&avs, "region") != NULL)
@@ -303,7 +303,7 @@ db5_diradd_handler(
 
     if (RT_G_DEBUG&DEBUG_DB) {
 	bu_log("db5_diradd_handler(dbip=x%x, name='%s', addr=x%x, len=%d)\n",
-	       dbip, rip->name, laddr, rip->object_length);
+	       dbip, rip->name.ext_buf, laddr, rip->object_length);
     }
 
     db5_diradd(dbip, rip, laddr, client_data);

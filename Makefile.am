@@ -148,7 +148,7 @@ $(PACKAGE_NAME)_$(BRLCAD_VERSION).pkg:
 	@${SH} $(top_srcdir)/sh/make_pkg.sh "$(PACKAGE_NAME)" "$(BRLCAD_VERSION)" "$(DESTDIR)$(prefix)" "$(top_srcdir)/misc/macosx/Resources"
 
 openUp:
-	cd misc/macosx && make openUp
+	cd misc/macosx && $(MAKE) openUp
 
 $(PACKAGE_NAME)_$(BRLCAD_VERSION).dmg: $(PACKAGE_NAME)_$(BRLCAD_VERSION).pkg openUp
 	@$(ECHO) "Building a Disk Image for Mac OS X"
@@ -240,15 +240,15 @@ $(PACKAGE_NAME)_$(BRLCAD_VERSION).zip:
 .PHONY : clobber benchmark bench regression regress test pkg dmg rpm deb zip tgz tbz
 
 clobber:
-	@cd bench && make clobber
+	@cd bench && $(MAKE) clobber
 
 benchmark: all
-	@cd bench && make run
+	@cd bench && $(MAKE) run
 
 bench: benchmark
 
 regression: all
-	@cd regress && make regression
+	@cd regress && $(MAKE) regression
 
 dox : misc/Doxyfile misc/doxygen_structure
 	doxygen $(top_srcdir)/misc/Doxyfile
@@ -258,7 +258,7 @@ regress: regression
 test: regression
 
 check: regression
-	@TIMEFRAME=1 make benchmark
+	@TIMEFRAME=1 $(MAKE) benchmark
 
 pkg: $(PACKAGE_NAME)_$(BRLCAD_VERSION).pkg
 	@$(ECHO) "Done."
@@ -324,8 +324,10 @@ dist-hook:
 	find $(distdir) -type d \( -name 'CVS' -or -name '.svn' \) -prune -exec rm -rf {} \;
 	dir="`pwd`" ; cd $(top_srcdir) ; \
         ${SH} $(top_srcdir)/sh/cmakecheck.sh ; \
-	if test $$? -ne 0 ; then \
+	ret=$$? ; \
+	if test "x$$ret" != "x0" ; then \
 		echo "NEED TO SYNC CMAKELISTS.TXT" ; \
+		exit 1 ; \
 	fi ; \
         cd "$$dir"
 

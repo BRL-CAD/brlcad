@@ -25,6 +25,7 @@
 
 #include "common.h"
 
+#include <stdlib.h>
 #include <string.h>
 #include "bio.h"
 
@@ -47,9 +48,9 @@ ged_nmg_collapse(struct ged *gedp, int argc, const char *argv[])
     fastf_t min_angle;
     static const char *usage = "nmg_prim new_prim max_err_dist [min_angle]";
 
-    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
-    GED_CHECK_READ_ONLY(gedp, BRLCAD_ERROR);
-    GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
+    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
+    GED_CHECK_READ_ONLY(gedp, GED_ERROR);
+    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
 
     /* initialize result */
     bu_vls_trunc(&gedp->ged_result_str, 0);
@@ -57,56 +58,56 @@ ged_nmg_collapse(struct ged *gedp, int argc, const char *argv[])
     /* must be wanting help */
     if (argc == 1) {
 	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return BRLCAD_HELP;
+	return GED_HELP;
     }
 
     if (argc < 4) {
 	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return BRLCAD_ERROR;
+	return GED_ERROR;
     }
 
     if (strchr(argv[2], '/')) {
 	bu_vls_printf(&gedp->ged_result_str, "Do not use '/' in solid names: %s\n", argv[2]);
-	return BRLCAD_ERROR;
+	return GED_ERROR;
     }
 
     new_name = (char *)argv[2];
 
     if (db_lookup(gedp->ged_wdbp->dbip, new_name, LOOKUP_QUIET) != DIR_NULL) {
 	bu_vls_printf(&gedp->ged_result_str, "%s already exists\n", new_name);
-	return BRLCAD_ERROR;
+	return GED_ERROR;
     }
 
     if ((dp=db_lookup(gedp->ged_wdbp->dbip, argv[1], LOOKUP_NOISY)) == DIR_NULL)
-	return BRLCAD_ERROR;
+	return GED_ERROR;
 
     if (dp->d_flags & DIR_COMB) {
 	bu_vls_printf(&gedp->ged_result_str, "%s is a combination, only NMG primitives are allowed here\n", argv[1]);
-	return BRLCAD_ERROR;
+	return GED_ERROR;
     }
 
     if (rt_db_get_internal(&intern, dp, gedp->ged_wdbp->dbip, (matp_t)NULL, &rt_uniresource) < 0) {
 	bu_vls_printf(&gedp->ged_result_str, "Failed to get internal form of %s!!!!\n", argv[1]);
-	return BRLCAD_ERROR;
+	return GED_ERROR;
     }
 
     if (intern.idb_type != ID_NMG) {
 	bu_vls_printf(&gedp->ged_result_str, "%s is not an NMG solid!!!!\n", argv[1]);
 	rt_db_free_internal(&intern, &rt_uniresource);
-	return BRLCAD_ERROR;
+	return GED_ERROR;
     }
 
     tol_coll = atof(argv[3]) * gedp->ged_wdbp->dbip->dbi_local2base;
     if (tol_coll <= 0.0) {
 	bu_vls_printf(&gedp->ged_result_str, "tolerance distance too small\n");
-	return BRLCAD_ERROR;
+	return GED_ERROR;
     }
 
     if (argc == 5) {
 	min_angle = atof(argv[4]);
 	if (min_angle < 0.0) {
 	    bu_vls_printf(&gedp->ged_result_str, "Minimum angle cannot be less than zero\n");
-	    return BRLCAD_ERROR;
+	    return GED_ERROR;
 	}
     } else
 	min_angle = 0.0;
@@ -122,7 +123,7 @@ ged_nmg_collapse(struct ged *gedp, int argc, const char *argv[])
 	    bu_ptbl_free(&faces);
 	    bu_vls_printf(&gedp->ged_result_str,
 		"nmg_collapse can only be applied to NMG primitives with planar faces\n");
-	    return BRLCAD_ERROR;
+	    return GED_ERROR;
 	}
     }
     bu_ptbl_free(&faces);
@@ -135,20 +136,20 @@ ged_nmg_collapse(struct ged *gedp, int argc, const char *argv[])
     if ((dp=db_diradd(gedp->ged_wdbp->dbip, new_name, -1L, 0, DIR_SOLID, (genptr_t)&intern.idb_type)) == DIR_NULL) {
 	bu_vls_printf(&gedp->ged_result_str, "Cannot add %s to directory\n", new_name);
 	rt_db_free_internal(&intern, &rt_uniresource);
-	return BRLCAD_ERROR;
+	return GED_ERROR;
     }
 
     if (rt_db_put_internal(dp, gedp->ged_wdbp->dbip, &intern, &rt_uniresource) < 0) {
 	rt_db_free_internal(&intern, &rt_uniresource);
 	bu_vls_printf(&gedp->ged_result_str, "Database write error, aborting.\n");
-	return BRLCAD_ERROR;
+	return GED_ERROR;
     }
 
     rt_db_free_internal(&intern, &rt_uniresource);
 
     bu_vls_printf(&gedp->ged_result_str, "%d edges collapsed\n", count);
 
-    return BRLCAD_OK;
+    return GED_OK;
 }
 
 

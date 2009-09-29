@@ -34,6 +34,6 @@ rtserverTest_SOURCES = rtserverTest.c
 
 rtserverTest_LDADD = ${lib_LTLIBRARIES}
 
-DEPS=src/librt
+DEPENDS = src/librt
 
 include $(top_srcdir)/misc/Makefile.defs

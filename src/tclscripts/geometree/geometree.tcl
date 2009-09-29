@@ -1,4 +1,3 @@
-#!/usr/bin/env tclsh
 #                   G E O M E T R E E . T C L
 # BRL-CAD
 #

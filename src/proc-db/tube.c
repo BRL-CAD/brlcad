@@ -19,8 +19,8 @@
  */
 /** @file tube.c
  *
- *  Program to generate a gun-tube as a procedural spline.
- *  The tube's core lies on the X axis.
+ * Program to generate a gun-tube as a procedural spline.
+ * The tube's core lies on the X axis.
  *
  */
 
@@ -38,15 +38,15 @@
 #include "wdb.h"
 
 
-mat_t	identity;
-double	degtorad = 0.0174532925199433;
-double	inches2mm = 25.4;
+mat_t identity;
+double degtorad = 0.0174532925199433;
+double inches2mm = 25.4;
 
-void	build_spline(char *name, int npts, double radius), read_pos(FILE *fp), build_cyl(char *cname, int npts, double radius), xfinddir(fastf_t *dir, double x, fastf_t *loc);
-int	read_frame( FILE *fp );
+void build_spline(char *name, int npts, double radius), read_pos(FILE *fp), build_cyl(char *cname, int npts, double radius), xfinddir(fastf_t *dir, double x, fastf_t *loc);
+int read_frame(FILE *fp);
 
-#define N_CIRCLE_KNOTS	12
-fastf_t	circle_knots[N_CIRCLE_KNOTS] = {
+#define N_CIRCLE_KNOTS 12
+fastf_t circle_knots[N_CIRCLE_KNOTS] = {
     0,	0,	0,
     1,	1,
     2,	2,
@@ -54,8 +54,8 @@ fastf_t	circle_knots[N_CIRCLE_KNOTS] = {
     4,	4,	4
 };
 
-#define IRT2	0.70710678	/* 1/sqrt(2) */
-#define NCOLS	9
+#define IRT2 0.70710678	/* 1/sqrt(2) */
+#define NCOLS 9
 /* When scaling, multiply only XYZ, not W */
 fastf_t polyline[NCOLS*4] = {
     0,	1,	0,	1,
@@ -72,10 +72,10 @@ fastf_t polyline[NCOLS*4] = {
 /*
  * X displacement table for Kathy's gun tube center of masses, in mm,
  * with X=0 at rear of projectile (on diagram, junction between m1 & m2)
- *  This table lists x positions of centers of mass m1..m12, which
- *  will be used as the end-points of the cylinders
+ * This table lists x positions of centers of mass m1..m12, which
+ * will be used as the end-points of the cylinders
  */
-double	dxtab[] = {
+double dxtab[] = {
     -555,		/* breach rear */
     -280.5,		/* m1 */
     341,
@@ -93,53 +93,53 @@ double	dxtab[] = {
     0,
 };
 
-double	projectile_pos;
-point_t	sample[1024];
-int	nsamples;
+double projectile_pos;
+point_t sample[1024];
+int nsamples;
 
-double	iradius, oradius;
-double	length;
-double	spacing;
+double iradius, oradius;
+double length;
+double spacing;
 
-int	nframes = 10;
-double	delta_t = 0.02;		/* ms/step */
-FILE	*pos_fp;
-double	cur_time;
+int nframes = 10;
+double delta_t = 0.02;		/* ms/step */
+FILE *pos_fp;
+double cur_time;
 
-struct rt_wdb	*outfp;
+struct rt_wdb *outfp;
 
 int
 main(int argc, char **argv)
 {
-    int	frame;
-    char	name[128];
-    char	gname[128];
-    vect_t	normal;
+    int frame;
+    char name[128];
+    char gname[128];
+    vect_t normal;
     struct wmember head, ghead;
-    matp_t	matp;
-    mat_t	xlate;
-    mat_t	rot1, rot2, rot3;
-    vect_t	from, to;
-    vect_t	offset;
+    matp_t matp;
+    mat_t xlate;
+    mat_t rot1, rot2, rot3;
+    vect_t from, to;
+    vect_t offset;
 
-    BU_LIST_INIT( &head.l );
-    BU_LIST_INIT( &ghead.l );
+    BU_LIST_INIT(&head.l);
+    BU_LIST_INIT(&ghead.l);
     rt_uniresource.re_magic = RESOURCE_MAGIC;
 
     outfp = wdb_fopen("tube.g");
-    if ( (pos_fp = fopen( "pos.dat", "r" )) == NULL )
-	perror( "pos.dat" );	/* Just warn */
+    if ((pos_fp = fopen("pos.dat", "r")) == NULL)
+	perror("pos.dat");	/* Just warn */
 
-    mk_id( outfp, "Procedural Gun Tube with Projectile" );
+    mk_id(outfp, "Procedural Gun Tube with Projectile");
 
-    VSET( normal, 0, -1, 0 );
-    mk_half( outfp, "cut", normal, 0.0 );
-    VSET( normal, 0, 1, 0 );
-    mk_half( outfp, "bg.s", normal, -1000.0 );
-    (void)mk_addmember( "bg.s", &head.l, NULL, WMOP_UNION );	/* temp use of "head" */
-    mk_lcomb( outfp, "bg.r", &head, 1,
-	      "texture", "file=movie128bw.pix w=128",
-	      (unsigned char *)0, 0 );
+    VSET(normal, 0, -1, 0);
+    mk_half(outfp, "cut", normal, 0.0);
+    VSET(normal, 0, 1, 0);
+    mk_half(outfp, "bg.s", normal, -1000.0);
+    (void)mk_addmember("bg.s", &head.l, NULL, WMOP_UNION);	/* temp use of "head" */
+    mk_lcomb(outfp, "bg.r", &head, 1,
+	     "texture", "file=movie128bw.pix w=128",
+	     (unsigned char *)0, 0);
 
 #ifdef never
     /* Numbers for a 105-mm M68 gun */
@@ -160,70 +160,70 @@ main(int argc, char **argv)
     fprintf(stderr, "nframes=%d\n", nframes);
 #endif
 
-    for ( frame=0;; frame++ )  {
+    for (frame=0;; frame++) {
 	cur_time = frame * delta_t;
 #ifdef never
 	/* Generate some dummy sample data */
-	if ( frame < 16 ) break;
-	for ( i=0; i<nsamples; i++ )  {
+	if (frame < 16) break;
+	for (i=0; i<nsamples; i++) {
 	    sample[i][X] = i * spacing;
 	    sample[i][Y] = 0;
 	    sample[i][Z] = 4 * oradius * sin(
 		((double)i*i)/nsamples * 2 * 3.14159265358979323 +
-		frame * 3.141592 * 2 / 8 );
+		frame * 3.141592 * 2 / 8);
 	}
 	projectile_pos = ((double)frame)/nframes *
 	    (sample[nsamples-1][X] - sample[0][X]); /* length */
 #else
-	if ( read_frame(stdin) < 0 )  break;
-	if ( pos_fp != NULL )  read_pos(pos_fp);
+	if (read_frame(stdin) < 0)  break;
+	if (pos_fp != NULL)  read_pos(pos_fp);
 #endif
 
 #define build_spline build_cyl
-	sprintf( name, "tube%do", frame);
-	build_spline( name, nsamples, oradius );
-	(void)mk_addmember( name, &head.l, NULL, WMOP_UNION );
+	sprintf(name, "tube%do", frame);
+	build_spline(name, nsamples, oradius);
+	(void)mk_addmember(name, &head.l, NULL, WMOP_UNION);
 
-	sprintf( name, "tube%di", frame);
-	build_spline( name, nsamples, iradius );
-	mk_addmember( name, &head.l, NULL, WMOP_SUBTRACT );
+	sprintf(name, "tube%di", frame);
+	build_spline(name, nsamples, iradius);
+	mk_addmember(name, &head.l, NULL, WMOP_SUBTRACT);
 
-	mk_addmember( "cut", &head.l, NULL, WMOP_SUBTRACT );
+	mk_addmember("cut", &head.l, NULL, WMOP_SUBTRACT);
 
-	sprintf( name, "tube%d", frame);
-	mk_lcomb( outfp, name, &head, 1,
-		  "plastic", "",
-		  (unsigned char *)0, 0 );
+	sprintf(name, "tube%d", frame);
+	mk_lcomb(outfp, name, &head, 1,
+		 "plastic", "",
+		 (unsigned char *)0, 0);
 
-	/*  Place the tube region and the ammo together.
-	 *  The origin of the ammo is expected to be the center
-	 *  of the rearmost plate.
+	/* Place the tube region and the ammo together.
+	 * The origin of the ammo is expected to be the center
+	 * of the rearmost plate.
 	 */
-	mk_addmember( name, &ghead.l, NULL, WMOP_UNION );
-	matp = mk_addmember( "ke", &ghead.l, NULL, WMOP_UNION )->wm_mat;
+	mk_addmember(name, &ghead.l, NULL, WMOP_UNION);
+	matp = mk_addmember("ke", &ghead.l, NULL, WMOP_UNION)->wm_mat;
 
-	VSET( from, 0, -1, 0 );
-	VSET( to, 1, 0, 0 );		/* to X axis */
-	bn_mat_fromto( rot1, from, to );
+	VSET(from, 0, -1, 0);
+	VSET(to, 1, 0, 0);		/* to X axis */
+	bn_mat_fromto(rot1, from, to);
 
-	VSET( from, 1, 0, 0 );
+	VSET(from, 1, 0, 0);
 	/* Projectile is 480mm long -- use center pt, not end */
-	xfinddir( to, projectile_pos + 480.0/2, offset );
-	bn_mat_fromto( rot2, from, to );
+	xfinddir(to, projectile_pos + 480.0/2, offset);
+	bn_mat_fromto(rot2, from, to);
 
-	MAT_IDN( xlate );
-	MAT_DELTAS_VEC( xlate, offset);
-	bn_mat_mul( rot3, rot2, rot1 );
-	bn_mat_mul( matp, xlate, rot3 );
+	MAT_IDN(xlate);
+	MAT_DELTAS_VEC(xlate, offset);
+	bn_mat_mul(rot3, rot2, rot1);
+	bn_mat_mul(matp, xlate, rot3);
 
-	(void)mk_addmember( "light.r", &ghead.l, NULL, WMOP_UNION );
-	(void)mk_addmember( "bg.r", &ghead.l, NULL, WMOP_UNION );
+	(void)mk_addmember("light.r", &ghead.l, NULL, WMOP_UNION);
+	(void)mk_addmember("bg.r", &ghead.l, NULL, WMOP_UNION);
 
-	sprintf( gname, "g%d", frame);
-	mk_lcomb( outfp, gname, &ghead, 0,
-		  (char *)0, "", (unsigned char *)0, 0 );
+	sprintf(gname, "g%d", frame);
+	mk_lcomb(outfp, gname, &ghead, 0,
+		 (char *)0, "", (unsigned char *)0, 0);
 
-	fprintf( stderr, "%d, ", frame );  fflush(stderr);
+	fprintf(stderr, "%d, ", frame);  fflush(stderr);
     }
     wdb_close(outfp);
     fflush(stderr);
@@ -238,55 +238,55 @@ build_spline(char *name, int npts, double radius)
 {
     struct face_g_snurb *bp;
     register int i;
-    int	nv;
-    int	cur_kv;
-    fastf_t	*meshp;
+    int nv;
+    int cur_kv;
+    fastf_t *meshp;
     register int col;
-    vect_t	point;
+    vect_t point;
 
     /*
-     *  This spline will look like a cylinder.
-     *  In the mesh, the circular cross section will be presented
-     *  across the first row by filling in the 9 (NCOLS) columns.
+     * This spline will look like a cylinder.
+     * In the mesh, the circular cross section will be presented
+     * across the first row by filling in the 9 (NCOLS) columns.
      *
-     *  The U direction is across the first row,
-     *  and has NCOLS+order[U] positions, 12 in this instance.
-     *  The V direction is down the first column,
-     *  and has NROWS+order[V] positions.
+     * The U direction is across the first row,
+     * and has NCOLS+order[U] positions, 12 in this instance.
+     * The V direction is down the first column,
+     * and has NROWS+order[V] positions.
      */
-    bp = rt_nurb_new_snurb( 3,	4,		/* u, v order */
-			    N_CIRCLE_KNOTS,	npts+6,		/* u, v knot vector size */
-			    npts+2,		NCOLS,		/* nrows, ncols */
-			    RT_NURB_MAKE_PT_TYPE(4, 2, 1),
-			    &rt_uniresource);
+    bp = rt_nurb_new_snurb(3,	4,		/* u, v order */
+			   N_CIRCLE_KNOTS,	npts+6,		/* u, v knot vector size */
+			   npts+2,		NCOLS,		/* nrows, ncols */
+			   RT_NURB_MAKE_PT_TYPE(4, 2, 1),
+			   &rt_uniresource);
 
-    /*  Build the U knots */
-    for ( i=0; i<N_CIRCLE_KNOTS; i++ )
+    /* Build the U knots */
+    for (i=0; i<N_CIRCLE_KNOTS; i++)
 	bp->u.knots[i] = circle_knots[i];
 
     /* Build the V knots */
     cur_kv = 0;		/* current knot value */
     nv = 0;			/* current knot subscript */
-    for ( i=0; i<4; i++ )
+    for (i=0; i<4; i++)
 	bp->v.knots[nv++] = cur_kv;
     cur_kv++;
-    for ( i=4; i<(npts+4-2); i++ )
+    for (i=4; i<(npts+4-2); i++)
 	bp->v.knots[nv++] = cur_kv++;
-    for ( i=0; i<4; i++ )
+    for (i=0; i<4; i++)
 	bp->v.knots[nv++] = cur_kv;
 
     /*
-     *  The control mesh is stored in row-major order,
-     *  which works out well for us, as a row is one
-     *  circular slice through the tube.  So we just
-     *  have to write down the slices, one after another.
-     *  The first and last "slice" are the center points that
-     *  create the end caps.
+     * The control mesh is stored in row-major order,
+     * which works out well for us, as a row is one
+     * circular slice through the tube.  So we just
+     * have to write down the slices, one after another.
+     * The first and last "slice" are the center points that
+     * create the end caps.
      */
     meshp = bp->ctl_points;
 
     /* Row 0 */
-    for ( col=0; col<9; col++ )  {
+    for (col=0; col<9; col++) {
 	*meshp++ = sample[0][X];
 	*meshp++ = sample[0][Y];
 	*meshp++ = sample[0][Z];
@@ -294,10 +294,10 @@ build_spline(char *name, int npts, double radius)
     }
 
     /* Rows 1..npts */
-    for ( i=0; i<npts; i++ )  {
+    for (i=0; i<npts; i++) {
 	/* row = i; */
-	VMOVE( point, sample[i] );
-	for ( col=0; col<9; col++ )  {
+	VMOVE(point, sample[i]);
+	for (col=0; col<9; col++) {
 	    register fastf_t h;
 
 	    h = polyline[col*4+H];
@@ -309,7 +309,7 @@ build_spline(char *name, int npts, double radius)
     }
 
     /* Row npts+1 */
-    for ( col=0; col<9; col++ )  {
+    for (col=0; col<9; col++) {
 	*meshp++ = sample[npts-1][X];
 	*meshp++ = sample[npts-1][Y];
 	*meshp++ = sample[npts-1][Z];
@@ -320,42 +320,42 @@ build_spline(char *name, int npts, double radius)
 	struct face_g_snurb *surfp[2];
 	surfp[0] = bp;
 	surfp[1] = NULL;
-	mk_bspline( outfp, name, surfp );
+	mk_bspline(outfp, name, surfp);
     }
 
-    rt_nurb_free_snurb( bp, &rt_uniresource );
+    rt_nurb_free_snurb(bp, &rt_uniresource);
 }
 
 /* Returns -1 if done, 0 if something to draw */
 int
-read_frame( FILE *fp )
+read_frame(FILE *fp)
 {
-    char	buf[256];
-    int	i;
-    static float	last_read_time = -5;
-    double	dx = 0.0;
+    char buf[256];
+    int i;
+    static float last_read_time = -5;
+    double dx = 0.0;
 
-    if ( feof(fp) )
+    if (feof(fp))
 	return(-1);
 
 #ifdef never
     /* Phils format */
-    for ( nsamples=0;;nsamples++)  {
-	if ( bu_fgets( buf, sizeof(buf), fp ) == NULL )  return(-1);
-	if ( buf[0] == '\0' || buf[0] == '\n' )
+    for (nsamples=0;;nsamples++) {
+	if (bu_fgets(buf, sizeof(buf), fp) == NULL)  return(-1);
+	if (buf[0] == '\0' || buf[0] == '\n')
 	    /* Blank line, marks break in implicit connection */
 	    fprintf(stderr, "implicit break unimplemented\n");
 	continue;
     }
-    if ( buf[0] == '=' )  {
+    if (buf[0] == '=') {
 	/* End of frame */
 	break;
     }
-    i = sscanf( buf, "%f %f %f",
-		&sample[nsamples][X],
-		&sample[nsamples][Y],
-		&sample[nsamples][Z] );
-    if ( i != 3 )  {
+    i = sscanf(buf, "%f %f %f",
+	       &sample[nsamples][X],
+	       &sample[nsamples][Y],
+	       &sample[nsamples][Z]);
+    if (i != 3) {
 	fprintf(stderr, "input line didn't have 3 numbers: %s\n", buf);
 	break;
     }
@@ -367,51 +367,51 @@ read_frame( FILE *fp )
 #else
 
     /* Kurt's / Kathy's format, in inches */
-    if ( cur_time <= 0 )  {
+    if (cur_time <= 0) {
 	/* Really should use Y and Z initial conditions, too */
-	for ( nsamples=0; nsamples < (sizeof(dxtab)/sizeof(dxtab[0])); nsamples++ )  {
+	for (nsamples=0; nsamples < (sizeof(dxtab)/sizeof(dxtab[0])); nsamples++) {
 	    sample[nsamples][X] = dxtab[nsamples];
 	    sample[nsamples][Y] = sample[nsamples][Z] = 0;
 	}
 	return(0);		/* OK */
     }
-    if ( last_read_time > cur_time )
+    if (last_read_time > cur_time)
 	return(0);		/* OK, reuse last step's data */
     /* Ferret out next time marker */
-    while (1)  {
-	if ( bu_fgets( buf, sizeof(buf), fp ) == NULL )  {
+    while (1) {
+	if (bu_fgets(buf, sizeof(buf), fp) == NULL) {
 	    fprintf(stderr, "EOF?\n");
 	    return(-1);
 	}
-	if ( strncmp(buf, "TIME", strlen("TIME")) != 0 )  continue;
-	if ( sscanf(buf, "TIME %f", &last_read_time ) < 1 )  {
+	if (strncmp(buf, "TIME", strlen("TIME")) != 0)  continue;
+	if (sscanf(buf, "TIME %f", &last_read_time) < 1) {
 	    fprintf(stderr, "bad TIME\n");
 	    return(-1);
 	}
 	break;
     }
 
-    for ( nsamples=0;;nsamples++)  {
-	int	nmass;
-	float	kx, ky, kz;
+    for (nsamples=0;;nsamples++) {
+	int nmass;
+	float kx, ky, kz;
 	
 	buf[0] = '\0';
-	if ( bu_fgets( buf, sizeof(buf), fp ) == NULL )  return(-1);
+	if (bu_fgets(buf, sizeof(buf), fp) == NULL)  return(-1);
 	/* center of mass #, +X, +Z, -Y (chg of coordinates) */
-	if ( buf[0] == '\0' || buf[0] == '\n' )
+	if (buf[0] == '\0' || buf[0] == '\n')
 	    break;		/* stop at a blank line */
-	i = sscanf( buf, "%d %f %f %f",
-		    &nmass, &kx, &ky, &kz );
-	if ( i != 4 )  {
-	    fprintf( stderr, "input line in error: %s\n", buf );
+	i = sscanf(buf, "%d %f %f %f",
+		   &nmass, &kx, &ky, &kz);
+	if (i != 4) {
+	    fprintf(stderr, "input line in error: %s\n", buf);
 	    return(-1);
 	}
-	if ( nmass-1 != nsamples )  {
-	    fprintf( stderr, "nmass %d / nsamples %d mismatch\n",
-		     nmass, nsamples );
+	if (nmass-1 != nsamples) {
+	    fprintf(stderr, "nmass %d / nsamples %d mismatch\n",
+		    nmass, nsamples);
 	    return(-1);
 	}
-#define EXAGERATION	(4 * oradius)
+#define EXAGERATION (4 * oradius)
 	/* scale = EXAGERATIONmm / MAX_DEVIATIONmm */
 	/* Deviations used here manually derived */
 	dx = kx * inches2mm * EXAGERATION / (0.95 * inches2mm);
@@ -427,7 +427,7 @@ read_frame( FILE *fp )
     sample[nsamples][Z] = sample[nsamples-1][Z] * 2 - sample[nsamples-2][Z];
     nsamples++;
 #endif
-    if ( nsamples <= 4 )  {
+    if (nsamples <= 4) {
 	fprintf(stderr, "insufficient samples\n");
 	return(-1);
     }
@@ -437,14 +437,14 @@ read_frame( FILE *fp )
 void
 read_pos(FILE *fp)
 {
-    static float	last_read_time = -5;
-    static float	pos = 0;
+    static float last_read_time = -5;
+    static float pos = 0;
 
 /* Skip over needless intermediate time steps */
-    while ( last_read_time < cur_time )  {
-	if ( feof(fp) )
+    while (last_read_time < cur_time) {
+	if (feof(fp))
 	    break;
-	fscanf( fp, "%f %f", &last_read_time, &pos );
+	fscanf(fp, "%f %f", &last_read_time, &pos);
 	/* HACK:  tmax[kathy]=6.155ms, tmax[kurt]=9.17 */
 	/* we just read a Kurt number, make it a Kathy number */
 	last_read_time = last_read_time / 9.17 * 6.155;
@@ -458,23 +458,23 @@ void
 build_cyl(char *cname, int npts, double radius)
 {
     register int i;
-    vect_t	v, h, a, b;
-    char	name[32];
+    vect_t v, h, a, b;
+    char name[32];
     struct wmember head;
 
-    BU_LIST_INIT( &head.l );
+    BU_LIST_INIT(&head.l);
 
-    for ( i=0; i<npts-1; i++ )  {
-	VMOVE( v, sample[i] );
-	VSUB2( h, sample[i+1], v );
-	VSET( a, 0, radius, 0 );
-	VSET( b, 0, 0, radius );
+    for (i=0; i<npts-1; i++) {
+	VMOVE(v, sample[i]);
+	VSUB2(h, sample[i+1], v);
+	VSET(a, 0, radius, 0);
+	VSET(b, 0, 0, radius);
 
-	snprintf( name, 32, "%s%d", cname, i );
-	mk_tgc( outfp, name, v, h, a, b, a, b );
-	(void)mk_addmember( name, &head.l, NULL, WMOP_UNION );
+	snprintf(name, 32, "%s%d", cname, i);
+	mk_tgc(outfp, name, v, h, a, b, a, b);
+	(void)mk_addmember(name, &head.l, NULL, WMOP_UNION);
     }
-    mk_lfcomb( outfp, cname, &head, 0 );
+    mk_lfcomb(outfp, cname, &head, 0);
 }
 
 /*
@@ -485,23 +485,23 @@ void
 xfinddir(fastf_t *dir, double x, fastf_t *loc)
 {
     register int i;
-    fastf_t	ratio;
+    fastf_t ratio;
 
-    for ( i=0; i<nsamples-1; i++ )  {
-	if ( x < sample[i][X] )
+    for (i=0; i<nsamples-1; i++) {
+	if (x < sample[i][X])
 	    break;
-	if ( x >= sample[i+1][X] )
+	if (x >= sample[i+1][X])
 	    continue;
 	goto out;
     }
     fprintf(stderr, "xfinddir: x=%g is past last segment, using final direction\n", x);
     i = nsamples-2;
  out:
-    VSUB2( dir, sample[i+1], sample[i] );
+    VSUB2(dir, sample[i+1], sample[i]);
     ratio = (x-sample[i][X]) / (sample[i+1][X]-sample[i][X]);
-    VJOIN1( loc, sample[i], ratio, dir );
+    VJOIN1(loc, sample[i], ratio, dir);
 
-    VUNITIZE( dir );
+    VUNITIZE(dir);
     return;
 }
 

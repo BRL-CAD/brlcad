@@ -55,12 +55,12 @@ ged_glob(struct ged *gedp, int argc, const char *argv[])
     /* must be wanting help */
     if (argc == 1) {
 	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return BRLCAD_HELP;
+	return GED_HELP;
     }
 
     if (argc != 2) {
 	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return BRLCAD_ERROR;
+	return GED_ERROR;
     }
 
     bu_vls_init(&word);
@@ -119,8 +119,7 @@ ged_glob(struct ged *gedp, int argc, const char *argv[])
 	   it to the database. */
 
 	if (regexp) {
-	    if (!(gedp->ged_wdbp)) return BRLCAD_OK;
-	    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
+	    GED_CHECK_DATABASE_OPEN(gedp, GED_INITIALIZED(gedp) ? GED_ERROR : GED_OK);
 	    bu_vls_trunc( &temp, 0 );
 	    if ( db_regexp_match_all( &temp, gedp->ged_wdbp->dbip,
 				      bu_vls_addr(&word) ) == 0 ) {
@@ -139,7 +138,7 @@ ged_glob(struct ged *gedp, int argc, const char *argv[])
     bu_vls_free(&word);
     bu_vls_free(&src);
 
-    return BRLCAD_OK;
+    return GED_OK;
 }
 
 /**

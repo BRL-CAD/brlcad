@@ -239,10 +239,6 @@ struct sgiinfo {
 #define MODE_2TRANSIENT	(0<<1)
 #define MODE_2LINGERING (1<<1)
 
-#define MODE_3MASK	(1<<2)
-#define MODE_3WINDOW	(0<<2)
-#define MODE_3FULLSCR	(1<<2)
-
 #define MODE_4MASK	(1<<3)
 #define MODE_4HZDEF	(0<<3)
 #define MODE_4HZ30	(1<<3)
@@ -291,8 +287,6 @@ static struct modeflags {
       "Lingering window" },
     { 't',	MODE_2MASK, MODE_2TRANSIENT,
       "Transient window" },
-    { 'f',	MODE_3MASK, MODE_3FULLSCR,
-      "Full centered screen - else windowed" },
     { 'T',	MODE_4MASK, MODE_4HZ30,
       "Thirty Hz (e.g. Dunn) - else 60 Hz" },
     { 'n',	MODE_5MASK, MODE_5NTSC,
@@ -968,10 +962,6 @@ sgi_open( ifp, file, width, height )
 	/* NTSC, see below */
 	ifp->if_width = ifp->if_max_width = XMAX170+1;	/* 646 */
 	ifp->if_height = ifp->if_max_height = YMAX170+1; /* 485 */
-    } else if ( (ifp->if_mode & MODE_3MASK) == MODE_3FULLSCR )  {
-	/* Bump default size up to full screen, since we have it all */
-	ifp->if_width = XMAXSCREEN+1;		/* 1280 */
-	ifp->if_height = YMAXSCREEN+1;		/* 1024 */
     }
 
     if ( width <= 0 )
@@ -1000,23 +990,13 @@ sgi_open( ifp, file, width, height )
 	prefposition( 0, XMAX170, 0, YMAX170 );
 #endif
 	SGI(ifp)->mi_curs_on = 0;	/* cursoff() happens below */
-    } else if ( (ifp->if_mode & MODE_3MASK) == MODE_3WINDOW )  {
+    } else {
 	if ( sgi_nwindows == 0 ) {
 	    prefposition( WIN_L, WIN_R, WIN_B, WIN_T );
 	} else {
 	    prefsize( (long)width, (long)height );
 	}
 	SGI(ifp)->mi_curs_on = 1;	/* Mex usually has it on */
-    }  else  {
-	/* MODE_3MASK == MODE_3FULLSCR */
-	noborder();
-#if defined(__sgi) && defined(__mips)
-	/* Deal with Irix 4.0 bug:  (+2,+21) offset due to title */
-	prefposition( 0-2, XMAXSCREEN-2, 0+21, YMAXSCREEN+21 );
-#else
-	prefposition( 0, XMAXSCREEN, 0, YMAXSCREEN );
-#endif
-	SGI(ifp)->mi_curs_on = 0;	/* cursoff() happens below */
     }
 
     /*
@@ -1165,30 +1145,6 @@ sgi_open( ifp, file, width, height )
     SGI(ifp)->mi_xoff = 0;
     SGI(ifp)->mi_yoff = 0;
     SGI(ifp)->mi_pid = bu_process_id();
-
-    /*
-     *  In full screen mode, center the image on the screen.
-     *  For the SGI machines, this is done via mi_xoff, rather
-     *  than with viewport/ortho2 calls, because lrectwrite()
-     *  uses window-relative, NOT viewport-relative addresses.
-     */
-    if ( (ifp->if_mode & MODE_3MASK) == MODE_3FULLSCR )  {
-	int	xleft, ybot;
-
-	xleft = (ifp->if_max_width)/2 - ifp->if_width/2;
-	ybot = (ifp->if_max_height)/2 - ifp->if_height/2;
-	/* These may be necessary for cursor aiming? */
-	viewport( xleft, xleft + ifp->if_width,
-		  ybot, ybot + ifp->if_height );
-	ortho2( (Coord)0, (Coord)ifp->if_width,
-		(Coord)0, (Coord)ifp->if_height );
-	/* The real secret:  used to modify args to lrectwrite() */
-	SGI(ifp)->mi_xoff = xleft;
-	SGI(ifp)->mi_yoff = ybot;
-	/* set input focus to current window, so that
-	 * we can manipulate the cursor icon */
-	winattach();
-    }
 
     /* Attach to shared memory, potentially with a screen repaint */
     if ( sgi_getmem(ifp) < 0 )

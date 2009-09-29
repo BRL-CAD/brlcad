@@ -109,9 +109,15 @@ struct rt_superell_internal {
  */
 struct rt_metaball_internal {
     unsigned long magic;
+    /* these three defines are used with the method field */
+#define METABALL_METABALL     0
+#define METABALL_ISOPOTENTIAL 1
+#define METABALL_BLOB         2
     int	method;
-    fastf_t	threshold;
-    struct bu_list	metaball_ctrl_head;
+    fastf_t threshold;
+    fastf_t initstep;
+    fastf_t finalstep; /* for raytrace stepping. */
+    struct bu_list metaball_ctrl_head;
 };
 #define RT_METABALL_CK_MAGIC(_p)        BU_CKMAG(_p, RT_METABALL_INTERNAL_MAGIC, "rt_metaball_internal")
 
@@ -193,6 +199,8 @@ struct rt_brep_internal {
 };
 
 #define RT_BREP_CK_MAGIC( _p) BU_CKMAG(_p, RT_BREP_INTERNAL_MAGIC, "rt_brep_internal");
+#define RT_BREP_TEST_MAGIC( _p) ((_p) && (*((unsigned long *)(_p)) == (unsigned long)(RT_BREP_INTERNAL_MAGIC)))
+
 
 /*
  * ID_NMG

@@ -195,10 +195,14 @@ ON_SRC = \
 nurbincludedir = $(includedir)/openNURBS
 nurbinclude_HEADERS = $(ON_INC)
 
+# FIXME: this is temporary while opennurbs_curve.cpp includes our
+# opennurbs_ext.h header (which needs bu.h which needs tcl.h). be sure
+# to fix CMakeLists.txt when this is no longer necessary too.
+FIXME_HACK = ${TCL_CPPFLAGS}
 
 libopenNURBS_nil_la_SOURCES = $(ON_SRC)
 libopenNURBS_nil_la_CFLAGS = ${LIBZ_CPPFLAGS}
-libopenNURBS_nil_la_CXXFLAGS = -Wall ${LIBZ_CPPFLAGS}
+libopenNURBS_nil_la_CXXFLAGS = -Wall ${LIBZ_CPPFLAGS} ${FIXME_HACK}
 libopenNURBS_nil_la_LIBADD = ${LIBZ}
 
 libopenNURBS_la_SOURCES =

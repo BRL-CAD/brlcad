@@ -226,7 +226,7 @@ static void tie_kdtree_prep_head(tie_t *tie, tie_tri_t *tri_list, unsigned int t
     }
 }
 
-static int tie_kdtree_tri_box_overlap(TIE_3 *center, TIE_3 *half_size, TIE_3 triverts[3]) 
+static int tie_kdtree_tri_box_overlap(TIE_3 *center, TIE_3 *half_size, TIE_3 triverts[3])
 {
 /*
  * use separating axis theorem to test overlap between triangle and box
@@ -315,11 +315,11 @@ static int tie_kdtree_tri_box_overlap(TIE_3 *center, TIE_3 *half_size, TIE_3 tri
     return t >= d ? 1 : 0;
 }
 
-static void tie_kdtree_build(tie_t *tie, tie_kdtree_t *node, unsigned int depth, TIE_3 min, TIE_3 max, unsigned int node_a, unsigned int node_b) 
+static void tie_kdtree_build(tie_t *tie, tie_kdtree_t *node, unsigned int depth, TIE_3 min, TIE_3 max)
 {
     tie_geom_t *child[2], *node_gd = (tie_geom_t *)(node->data);
     TIE_3 cmin[2], cmax[2], center[2], half_size[2];
-    unsigned int i, j, n, split, cnt[2];
+    unsigned int i, j, n, split = 0, cnt[2];
 
 #if 0
 /*  if (depth >= 26) */
@@ -389,9 +389,9 @@ static void tie_kdtree_build(tie_t *tie, tie_kdtree_t *node, unsigned int depth,
 /****************************************
  * Justin's Aggressive KD-Tree Algorithm *
  *****************************************/
-	unsigned int slice[3][MAX_SLICES+MIN_SLICES], gap[3][2], active, split_slice;
+	unsigned int slice[3][MAX_SLICES+MIN_SLICES], gap[3][2], active, split_slice = 0;
 	unsigned int side[3][MAX_SLICES+MIN_SLICES][2], d, s, k, smax[3], smin, slice_num;
-	tfloat coef[3][MAX_SLICES+MIN_SLICES], split_coef, beg, end, d_min, d_max;
+	tfloat coef[3][MAX_SLICES+MIN_SLICES], split_coef, beg, end, d_min = 0.0, d_max = 0.0;
 	tie_tri_t *tri;
 
 /*
@@ -674,7 +674,8 @@ static void tie_kdtree_build(tie_t *tie, tie_kdtree_t *node, unsigned int depth,
 	cmax[0].v[split] = min.v[split]*(1.0-split_coef) + max.v[split]*split_coef;
 	cmin[1].v[split] = cmax[0].v[split];
 	node->axis = cmax[0].v[split];
-    }
+    } else
+	bu_bomb("Illegal tie kdtree method\n");
 
 
 /* Allocate 2 children nodes for the parent node */
@@ -734,12 +735,12 @@ static void tie_kdtree_build(tie_t *tie, tie_kdtree_t *node, unsigned int depth,
 /* Resize Tri List to actual ammount of memory used */
 	/* TODO: examine if this is correct. A 0 re-alloc is probably a very bad
 	 * thing. */
-	if( child[n]->tri_num == 0 )
+	if( child[n]->tri_num == 0 ) {
 	    if( child[n]->tri_list ) {
 		bu_free( child[n]->tri_list, "child[n]->tri_list" );
 		child[n]->tri_list = NULL;
 	    }
-	else
+	} else
 	    child[n]->tri_list = (tie_tri_t **)bu_realloc(child[n]->tri_list, sizeof(tie_tri_t *)*child[n]->tri_num, __FUNCTION__);
     }
 
@@ -752,8 +753,8 @@ static void tie_kdtree_build(tie_t *tie, tie_kdtree_t *node, unsigned int depth,
     bu_free(node_gd, __FUNCTION__);
 
 /* Push each child through the same process. */
-    tie_kdtree_build(tie, &((tie_kdtree_t *)(node->data))[0], depth+1, cmin[0], cmax[0], cnt[0], cnt[1]);
-    tie_kdtree_build(tie, &((tie_kdtree_t *)(node->data))[1], depth+1, cmin[1], cmax[1], cnt[0], cnt[1]);
+    tie_kdtree_build(tie, &((tie_kdtree_t *)(node->data))[0], depth+1, cmin[0], cmax[0]);
+    tie_kdtree_build(tie, &((tie_kdtree_t *)(node->data))[1], depth+1, cmin[1], cmax[1]);
 
 /* Assign the splitting dimension to the node */
 /* If we've come this far then YES, this node DOES have child nodes, MARK it as so. */
@@ -911,11 +912,12 @@ TIE_FUNC(void tie_kdtree_prep, tie_t *tie)
 /* Trim KDTREE to number of actual triangles if it's not that size already. */
 	/* TODO: examine if this is correct. A 0 re-alloc is probably a very bad
 	 * thing. */
-    if (!already_built)
+    if (!already_built) {
 	if (((tie_geom_t *)(tie->kdtree->data))->tri_num)
 	    ((tie_geom_t *)(tie->kdtree->data))->tri_list = (tie_tri_t **)bu_realloc(((tie_geom_t *)(tie->kdtree->data))->tri_list, sizeof(tie_tri_t *) * ((tie_geom_t *)(tie->kdtree->data))->tri_num, "prep tri_list");
 	else
 	    bu_free (((tie_geom_t *)(tie->kdtree->data))->tri_list, "freeing tri list");
+    }
 
 /*
  * Compute Floating Fuzz Precision Value
@@ -940,7 +942,7 @@ TIE_FUNC(void tie_kdtree_prep, tie_t *tie)
 
 /* Build the KDTREE */
     if (!already_built)
-	tie_kdtree_build(tie, tie->kdtree, 0, tie->min, tie->max, 0, 0);
+	tie_kdtree_build(tie, tie->kdtree, 0, tie->min, tie->max);
 
 /*  printf("stat: %d\n", tie->stat); */
     tie->stat = 0;
