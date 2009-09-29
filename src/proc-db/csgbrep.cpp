@@ -62,6 +62,7 @@ extern "C" {
     extern void rt_sketch_ifree(struct rt_db_internal *ip, struct resource *resp);
     extern void rt_extrude_brep(ON_Brep **bi, struct rt_db_internal *ip, const struct bn_tol *tol);
     extern void rt_revolve_brep(ON_Brep **bi, struct rt_db_internal *ip, const struct bn_tol *tol);
+    extern void rt_dsp_brep(ON_Brep **bi, struct rt_db_internal *ip, const struct bn_tol *tol);
 
 #ifdef __cplusplus
 }
@@ -787,6 +788,26 @@ main(int argc, char** argv)
     mk_brep(outfp, revolve_name, revolvebrep);
 //    delete revolvebrep;
 */ 
+
+    bu_log("Writing a DSP b-rep...\n");
+    ON_Brep* dspbrep = ON_Brep::New();
+    struct rt_dsp_internal *dsp;
+    BU_GETSTRUCT(dsp, rt_dsp_internal);
+    dsp->magic = RT_DSP_INTERNAL_MAGIC;
+    bu_vls_init(&(dsp->dsp_name));
+    bu_vls_printf(&(dsp->dsp_name), "./terra.dsp");
+    dsp->dsp_xcnt = 256;
+    dsp->dsp_ycnt = 256;
+    dsp->dsp_smooth = 1;
+    dsp->dsp_cuttype = 'a';
+    dsp->dsp_datasrc = RT_DSP_SRC_FILE;
+    MAT_IDN(dsp->dsp_mtos);
+    MAT_IDN(dsp->dsp_stom);
+    tmp_internal->idb_ptr = (genptr_t)dsp;
+    rt_dsp_brep(&dspbrep, tmp_internal, tol);
+    const char* dsp_name = "dsp_nurb.s";
+    mk_brep(outfp, dsp_name, dspbrep);
+    delete dspbrep;
 
 
     bu_free(tmp_internal, "free tmp_internal");

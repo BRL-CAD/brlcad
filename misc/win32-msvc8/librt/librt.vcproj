@@ -416,6 +416,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\src\librt\primitives\dsp\dsp_brep.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\src\librt\primitives\dsp\dsp_mirror.c"
 				>
 			</File>
