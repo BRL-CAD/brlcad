@@ -35,7 +35,7 @@
  *			R T _ P I P E _ B R E P
  */
 
-void generate_curves(double od, double id, ON_Plane *plane, ON_SimpleArray<ON_Curve*> *outer, ON_SimpleArray<ON_Curve*> *inner) {
+void generate_curves(double id, double od, ON_Plane *plane, ON_SimpleArray<ON_Curve*> *outer, ON_SimpleArray<ON_Curve*> *inner) {
     ON_Circle outercirclestart = ON_Circle(*plane, od/2.0);
     ON_NurbsCurve *ocurve = ON_NurbsCurve::New();
     outercirclestart.GetNurbForm(*ocurve);
@@ -102,6 +102,7 @@ void make_curved_surfaces(ON_Brep **b, ON_SimpleArray<ON_Curve*> *startoutercurv
     revsurf->m_axis = *revaxis;
     revsurf->m_angle = ON_Interval(2*ON_PI - angle, 2*ON_PI);
     ON_BrepFace *face = (*b)->NewFace(*revsurf);
+    (*b)->FlipFace(*face);
     
     revsurf = ON_RevSurface::New();
     revsurf->m_curve = *startinnercurves[0];
@@ -268,7 +269,7 @@ rt_pipe_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *
 		VCROSS(v1, n1, norm);
 		VCROSS(v2, v1, norm);
 		VJOIN1(bend_center, bend_start, -curp->pp_bendradius, v1);
-		make_curved_surfaces(b, &startinnercurves, &startoutercurves, angle, bend_center, norm);
+		make_curved_surfaces(b, &startoutercurves, &startinnercurves, angle, bend_center, norm);
 		startinnercurves.Empty();
 		startoutercurves.Empty();
     		VSUB2(pipe_dir, curp->pp_coord, nextp->pp_coord);
