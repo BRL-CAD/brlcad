@@ -147,7 +147,7 @@ void FindLoops(ON_Brep **b, const ON_Line* revaxis) {
 	revsurf->m_curve = revcurve;
 	revsurf->m_axis = *revaxis;
 	ON_BrepFace *face = (*b)->NewFace(*revsurf);
-	if (i != largest_loop_index) {
+	if (i == largest_loop_index) {
 	    (*b)->FlipFace(*face);
 	}
     }
