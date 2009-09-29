@@ -128,12 +128,26 @@ void FindLoops(ON_Brep **b, const ON_Line* revaxis) {
     bu_log("curve_array[%d,%d,%d,%d,%d,%d]\n", curvearray[0], curvearray[1], curvearray[2], curvearray[3], curvearray[4], curvearray[5]);
 
 
-    for (int i = 0; i < allsegments.Count(); i++) {
-	ON_RevSurface* revsurf = ON_RevSurface::New();
-	revsurf->m_curve = allsegments[i];
+    for (int i = 0; i < loopcount ; i++) {
+	bu_log("loopcount: %d\n", i);
+	ON_PolyCurve* poly_curve = NULL;
+    	for (int j = 0; j < allsegments.Count(); j++) {
+	    if ( curvearray[j] == i ) {
+    		if ( !poly_curve ) {
+		    poly_curve = new ON_PolyCurve();
+		    poly_curve->Append(allsegments[j]);
+		} else {
+		    poly_curve->Append(allsegments[j]);
+		}
+	    }
+	}
+	ON_NurbsCurve *revcurve = ON_NurbsCurve::New();
+	poly_curve->GetNurbForm(*revcurve);
+    	ON_RevSurface* revsurf = ON_RevSurface::New();
+	revsurf->m_curve = revcurve;
 	revsurf->m_axis = *revaxis;
 	ON_BrepFace *face = (*b)->NewFace(*revsurf);
-        if (curvearray[i] != largest_loop_index) {
+	if (i != largest_loop_index) {
 	    (*b)->FlipFace(*face);
 	}
     }
