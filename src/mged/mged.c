@@ -392,7 +392,7 @@ main(int argc, char *argv[])
     if (bu_debug > 0)
 	out = fopen("/tmp/stdout", "w+"); /* I/O testing */
 
-    if (argc > 2) {
+    if (argc > 1) {
 	/* if there is more than a file name remaining, mged is not interactive */
 	interactive = 0;
     } else {
@@ -444,7 +444,7 @@ main(int argc, char *argv[])
 	    fflush(out);
 	    fclose(out);
 	}
-    } /* argc > 2 */
+    } /* argc > 1 */
 
     if (bu_debug > 0)
 	fprintf(out, "DEBUG: interactive=%d, classic_mged=%d\n", interactive, classic_mged);
@@ -672,11 +672,17 @@ main(int argc, char *argv[])
     }
 
     /* Open the database */
-    if (argc >= 2) {
+    if (argc >= 1) {
+	char *av[3];
+
+	av[0] = "opendb";
+	av[1] = argv[0];
+	av[2] = NULL;
+
 	/* Command line may have more than 2 args, opendb only wants 2
 	 * expecting second to be the file name.
 	 */
-	if (f_opendb((ClientData)NULL, interp, 2, argv) == TCL_ERROR) {
+	if (f_opendb((ClientData)NULL, interp, 2, av) == TCL_ERROR) {
 	    if (!run_in_foreground && use_pipe) {
 		notify_parent_done(parent_pipe[1]);
 	    }
@@ -781,7 +787,7 @@ main(int argc, char *argv[])
     /* --- Now safe to process geometry. --- */
 
     /* If this is an argv[] invocation, do it now */
-    if (argc > 2) {
+    if (argc > 1) {
 	char *av[2];
 
 	av[0] = "q";
@@ -790,7 +796,7 @@ main(int argc, char *argv[])
 	/* Call cmdline instead of calling mged_cmd directly so that
 	 * access to Tcl/Tk is possible.
 	 */
-	for (argc -= 2, argv += 2; argc; --argc, ++argv)
+	for (argc -= 1, argv += 1; argc; --argc, ++argv)
 	    bu_vls_printf(&input_str, "%s ", *argv);
 
 	cmdline(&input_str, TRUE);
