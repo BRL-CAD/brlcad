@@ -93,11 +93,12 @@ void make_linear_surfaces(ON_Brep **b, ON_SimpleArray<ON_Curve*> *startoutercurv
     }
 }
 
-void make_curved_surfaces(ON_Brep **b, ON_SimpleArray<ON_Curve*> *startoutercurves, ON_SimpleArray<ON_Curve*> *endoutercurves, ON_SimpleArray<ON_Curve*> *startinnercurves, ON_SimpleArray<ON_Curve*> *endinnercurves) {
-   /* ON_RevSurface* revsurf = ON_RevSurface::New();
-    revsurf->m_curve = allsegments[i];
-    revsurf->m_axis = *revaxis;
-    ON_BrepFace *face = (*b)->NewFace(*revsurf);*/
+void make_curved_surfaces(ON_Brep **b, ON_SimpleArray<ON_Curve*> *startoutercurves, ON_SimpleArray<ON_Curve*> *startinnercurves, fastf_t angle, point_t bend_start, point_t bend_center, point_t bend_end) {
+    ON_Arc *patharc = new ON_Arc(ON_3dPoint(bend_start), ON_3dPoint(bend_center), ON_3dPoint(bend_end));
+    ON_ArcCurve *pathcurve = new ON_ArcCurve(*patharc);
+    ON_SumSurface *sumsurf = new ON_SumSurface(); 
+    sumsurf->Create(*startoutercurves[0],ON_Curve::Cast(pathcurve));
+    ON_BrepFace *face = (*b)->NewFace(*sumsurf);
 }
 
 extern "C" void
@@ -247,7 +248,7 @@ rt_pipe_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *
 		VCROSS(v1, n1, norm);
 		VCROSS(v2, v1, norm);
 		VJOIN1(bend_center, bend_start, -curp->pp_bendradius, v1);
-//		make_curved_surfaces
+		make_curved_surfaces(b, &startoutercurves, &startinnercurves, angle, bend_start, bend_center, bend_end);
 	    }
 	}
 	prevp = curp;
