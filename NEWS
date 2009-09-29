@@ -11,7 +11,7 @@ changes made.  See document footer for additional details.
 
 
 ----------------------------------------------------------------------
---- 2009-08-XX  Release 7.16.0                                     ---
+--- 2009-09-29  Release 7.16.0                                     ---
 ----------------------------------------------------------------------
 
 * added '-u' flag to 3dm-g - uses UUID for import names - Cliff Yapp
