@@ -1178,9 +1178,9 @@ typedef fastf_t	plane_t[ELEMENTS_PER_PLANE];
  * values to contain a point
  */
 
-#define V_MIN(r, s)	if ( (s) < (r) ) r = (s)
+#define V_MIN(r, s)	if ( (r) > (s) ) r = (s)
 
-#define V_MAX(r, s)	if ( (s) > (r) ) r = (s)
+#define V_MAX(r, s)	if ( (r) < (s) ) r = (s)
 
 #define VMIN(r, s) { \
 	V_MIN((r)[X], (s)[X]); V_MIN((r)[Y], (s)[Y]); V_MIN((r)[Z], (s)[Z]); \
