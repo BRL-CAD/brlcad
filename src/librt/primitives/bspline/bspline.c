@@ -23,9 +23,6 @@
  *
  * Intersect a ray with a Non Uniform Rational B-Spline.
  *
- * Authors -
- *	Paul R. Stay
- *
  */
 /** @} */
 
@@ -45,10 +42,6 @@
 #include "nmg.h"
 
 
-#ifndef M_SQRT1_2
-#	define M_SQRT1_2 0.70710678118654752440
-#endif /* M_SQRT1_2 */
-
 struct nurb_specific {
     struct nurb_specific *next;	/* next surface in the the solid */
     struct face_g_snurb *srf;	/* Original surface description */
@@ -66,7 +59,7 @@ struct nurb_hit {
     char *hit_private;	/* Store current nurb root */
 };
 
-#define NULL_HIT  (struct nurb_hit *)0
+#define NULL_HIT (struct nurb_hit *)0
 
 BU_EXTERN(int rt_nurb_grans, (struct face_g_snurb * srf));
 BU_EXTERN(struct nurb_hit *rt_conv_uv, (struct nurb_specific *n,
@@ -487,7 +480,7 @@ rt_nurb_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_t
 	VSUB2(tmp_pt, n->min_pt, n->max_pt);
 	bound =         MAGNITUDE(tmp_pt)/ 2.0;
 	/*
-	 *  Establish tolerances
+	 * Establish tolerances
 	 */
 	if (ttol->rel <= 0.0 || ttol->rel >= 1.0) {
 	    rel = 0.0;              /* none */
