@@ -251,7 +251,7 @@ ged_open(const char *dbtype, const char *filename, int existing_only)
     } else {
 	struct db_i	*dbip;
 
-	if (sscanf(filename, "%ul", (unsigned long *)&dbip) != 1) {
+	if (sscanf(filename, "%llu", (unsigned long long *)&dbip) != 1) {
 	    /* Restore RT's material head */
 	    rt_new_material_head(save_materp);
 
