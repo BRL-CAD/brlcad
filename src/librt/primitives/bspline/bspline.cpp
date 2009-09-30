@@ -252,11 +252,11 @@ rt_nurb_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
     bi.magic = RT_BREP_INTERNAL_MAGIC;
     bi.brep = brep;
 
-    struct rt_db_internal nurb_i;
-    RT_INIT_DB_INTERNAL(&nurb_i);
-    nurb_i.idb_ptr = (genptr_t)&bi;
+    struct rt_db_internal di;
+    RT_INIT_DB_INTERNAL(&di);
+    di.idb_ptr = (genptr_t)&bi;
 
-    return rt_brep_prep(stp, &nurb_i, rtip);
+    return rt_brep_prep(stp, &di, rtip);
 #else
 
     for (i = 0; i < sip->nsrf; i++) {
@@ -669,11 +669,11 @@ rt_nurb_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_t
     bi.magic = RT_BREP_INTERNAL_MAGIC;
     bi.brep = brep;
 
-    struct rt_db_internal nurb_i;
-    RT_INIT_DB_INTERNAL(&nurb_i);
-    nurb_i.idb_ptr = (genptr_t)&bi;
+    struct rt_db_internal di;
+    RT_INIT_DB_INTERNAL(&di);
+    di.idb_ptr = (genptr_t)&bi;
 
-    return rt_brep_plot(vhead, ip, ttol, tol);
+    return rt_brep_plot(vhead, &di, ttol, tol);
 #else
     struct rt_nurb_internal *sip;
     register int i;
