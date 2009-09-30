@@ -173,9 +173,8 @@ XGLUE(rt_bot_prep_pieces_, TRI_TYPE)(struct bot_specific	*bot,
 
 	fap[surfno] = trip;
 
-	if (bot->bot_mode == RT_BOT_PLATE ||
-	    bot->bot_mode == RT_BOT_PLATE_NOCOS )  {
-	    if ( BU_BITTEST( bot->bot_facemode, surfno ) )  {
+	if (bot->bot_mode == RT_BOT_PLATE || bot->bot_mode == RT_BOT_PLATE_NOCOS) {
+	    if (BU_BITTEST( bot->bot_facemode, surfno)) {
 		/* Append full thickness on both sides */
 		los = bot->bot_thickness[surfno];
 	    } else {
@@ -185,6 +184,8 @@ XGLUE(rt_bot_prep_pieces_, TRI_TYPE)(struct bot_specific	*bot,
 	} else {
 	    /* Prevent the RPP from being 0 thickness */
 	    los = tol->dist;	/* typ 0.005mm */
+	    if (los < SMALL_FASTF)
+		los = SMALL_FASTF;
 	}
 
 	VADD2( b, trip->tri_BA, trip->tri_A );
@@ -244,6 +245,10 @@ XGLUE(rt_bot_prep_, TRI_TYPE)( stp, bot_ip, rtip )
     fastf_t			dx, dy, dz;
     fastf_t			f;
     int				ntri = 0;
+    fastf_t los = tol->dist;
+
+    if (los < SMALL_FASTF)
+	los = SMALL_FASTF;
 
     RT_BOT_CK_MAGIC(bot_ip);
 
@@ -338,13 +343,18 @@ XGLUE(rt_bot_prep_, TRI_TYPE)( stp, bot_ip, rtip )
     }
 
     /* zero thickness will get missed by the raytracer */
-    for ( i=0; i<3; i++ )
-    {
-	if ( NEAR_ZERO( stp->st_min[i] - stp->st_max[i], 1.0 ) )
-	{
-	    stp->st_min[i] -= 0.000001;
-	    stp->st_max[i] += 0.000001;
-	}
+    /* zero thickness will get missed by the raytracer */
+    if (NEAR_ZERO(stp->st_min[X] - stp->st_max[X], los)) {
+	stp->st_min[X] -= los;
+	stp->st_max[X] += los;
+    }
+    if (NEAR_ZERO(stp->st_min[Y] - stp->st_max[Y], los)) {
+	stp->st_min[Y] -= los;
+	stp->st_max[Y] += los;
+    }
+    if (NEAR_ZERO(stp->st_min[Z] - stp->st_max[Z], los)) {
+	stp->st_min[Z] -= los;
+	stp->st_max[Z] += los;
     }
 
     VADD2SCALE( stp->st_center, stp->st_max, stp->st_min, 0.5 );
@@ -404,6 +414,7 @@ XGLUE(rt_bot_plate_segs_, TRI_TYPE)(struct hit		*hits,
 	    if ( los < 0.0 )
 		los = -los;
 	}
+
 	if ( BU_BITTEST( bot->bot_facemode, hits[i].hit_surfno ) ) {
 
 	    /* append thickness to hit point */
