@@ -26,6 +26,8 @@
  */
 /** @} */
 
+//#define CONVERT_TO_BREP 1
+
 #include "common.h"
 
 #include <stdlib.h>
@@ -41,6 +43,14 @@
 #include "nurb.h"		/* before nmg.h */
 #include "nmg.h"
 
+#ifdef CONVERT_TO_BREP
+#  include "opennurbs.h"
+#endif
+
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 struct nurb_specific {
     struct nurb_specific *next;	/* next surface in the the solid */
@@ -69,6 +79,11 @@ BU_EXTERN(void rt_nurb_add_hit, (struct nurb_hit *head,
 				 struct nurb_hit * hit, const struct bn_tol *tol));
 
 
+#ifdef CONVERT_TO_BREP
+    extern void rt_nurb_brep(ON_Brep **b, struct rt_db_internal *ip, const struct bn_tol *tol);
+    extern int rt_brep_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip);
+#endif
+
 /**
  * R T _ N U R B _ P R E P
  *
@@ -76,7 +91,6 @@ BU_EXTERN(void rt_nurb_add_hit, (struct nurb_hit *head,
  * matrix, determine if this is a valid NURB, and if so, prepare the
  * surface so the intersections will work.
  */
-
 int
 rt_nurb_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 {
@@ -93,6 +107,21 @@ rt_nurb_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 
     sip = (struct rt_nurb_internal *) ip->idb_ptr;
     RT_NURB_CK_MAGIC(sip);
+
+#ifdef CONVERT_TO_BREP
+    ON_Brep *brep = ON_Brep::New();
+    rt_nurb_brep(&brep, ip, tol);
+    sip->brep = brep;
+
+    struct rt_db_internal nurb_i;
+    RT_INIT_DB_INTERNAL(&nurb_i);
+
+    struct rt_brep_internal bi;
+    bi.magic = RT_BREP_INTERNAL_MAGIC;
+    bi.brep = brep;
+    nurb_i.idb_ptr = (genptr_t)&bi;
+    return rt_brep_prep(stp, &nurb_i, rtip);
+#else
 
     for (i = 0; i < sip->nsrf; i++) {
 	struct face_g_snurb * s;
@@ -153,6 +182,7 @@ rt_nurb_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
     }
 
     return 0;
+#endif
 }
 
 
@@ -1007,7 +1037,7 @@ rt_nurb_import5(struct rt_db_internal *ip, const struct bu_external *ep, registe
     sip = (struct rt_nurb_internal *)ip->idb_ptr;
     sip->magic = RT_NURB_INTERNAL_MAGIC;
 
-    cp = ep->ext_buf;
+    cp = (unsigned char *)ep->ext_buf;
 
     sip->nsrf = bu_glong(cp);
     cp += SIZEOF_NETWORK_LONG;
@@ -1125,7 +1155,7 @@ rt_nurb_ifree(struct rt_db_internal *ip, struct resource *resp)
     sip->magic = 0;
     sip->nsrf = 0;
     bu_free(sip->srfs, "nurb surfs[]");
-    sip->srfs = GENPTR_NULL;
+    sip->srfs = (struct face_g_snurb**)GENPTR_NULL;
 
     bu_free(ip->idb_ptr, "sip ifree");
     ip->idb_ptr = GENPTR_NULL;
@@ -1379,6 +1409,9 @@ rt_nurb_params(struct pc_pc_set *ps, const struct rt_db_internal *ip)
     return(0);			/* OK */
 }
 
+#ifdef __cplusplus
+}
+#endif
 
 /*
  * Local Variables:
