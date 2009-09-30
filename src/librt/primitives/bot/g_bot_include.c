@@ -336,7 +336,6 @@ XGLUE(rt_bot_prep_, TRI_TYPE)(stp, bot_ip, rtip)
     }
 
     /* zero thickness will get missed by the raytracer */
-    /* zero thickness will get missed by the raytracer */
     if (NEAR_ZERO(stp->st_min[X] - stp->st_max[X], los)) {
 	stp->st_min[X] -= los;
 	stp->st_max[X] += los;
