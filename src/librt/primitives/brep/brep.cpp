@@ -473,6 +473,7 @@ rt_brep_prep(struct soltab *stp, struct rt_db_internal* ip, struct rt_i* rtip)
      */
     struct rt_brep_internal* bi;
     struct brep_specific* bs;
+    const struct bn_tol *tol = &rtip->rti_tol;
 
     RT_CK_DB_INTERNAL(ip);
     bi = (struct rt_brep_internal*)ip->idb_ptr;
@@ -493,12 +494,14 @@ rt_brep_prep(struct soltab *stp, struct rt_db_internal* ip, struct rt_i* rtip)
 
     /* Once a proper SurfaceTree is built, finalize the bounding
      * volumes */
-    point_t adjust;
-    VSETALL(adjust, 1);
     bs->bvh->GetBBox(stp->st_min, stp->st_max);
-    // expand outer bounding box...
+
+    // expand outer bounding box just a little bit
+    point_t adjust;
+    VSETALL(adjust, tol->dist < SMALL_FASTF ? SMALL_FASTF : tol->dist);
     VSUB2(stp->st_min, stp->st_min, adjust);
     VADD2(stp->st_max, stp->st_max, adjust);
+
     VADD2SCALE(stp->st_center, stp->st_min, stp->st_max, 0.5);
     vect_t work;
     VSUB2SCALE(work, stp->st_max, stp->st_min, 0.5);
