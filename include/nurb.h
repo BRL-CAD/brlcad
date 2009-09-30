@@ -130,6 +130,10 @@ struct bezier_2d_list {
     point2d_t	*ctl;
 };
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /* nurb_basis.c */
 RT_EXPORT BU_EXTERN(fastf_t rt_nurb_basis_eval, (struct knot_vector *knts, int interval,
 						 int order, fastf_t mu));
@@ -290,6 +294,10 @@ RT_EXPORT BU_EXTERN( int FindRoots, (point2d_t *w, int degree, point2d_t **inter
 				     int depth, fastf_t epsilon) );
 RT_EXPORT BU_EXTERN( struct bezier_2d_list *subdivide_bezier, (struct bezier_2d_list *bezier_hd, int degree,
 							       fastf_t epsilon, int depth) );
+#ifdef __cplusplus
+}
+#endif
+
 #endif /* __NURB_H__ */
 
 /** @} */
