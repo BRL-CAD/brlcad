@@ -26,7 +26,7 @@
  */
 /** @} */
 
-//#define CONVERT_TO_BREP 1
+#define CONVERT_TO_BREP 1
 
 #include "common.h"
 
@@ -45,7 +45,7 @@
 
 #ifdef CONVERT_TO_BREP
 #  include "opennurbs.h"
-#endif
+#endif /* CONVERT_TO_BREP */
 
 
 #ifdef __cplusplus
@@ -71,9 +71,9 @@ struct nurb_hit {
 
 #define NULL_HIT (struct nurb_hit *)0
 
+static struct nurb_hit *rt_conv_uv(struct nurb_specific *n, struct xray *r, struct rt_nurb_uv_hit *h);
+
 BU_EXTERN(int rt_nurb_grans, (struct face_g_snurb * srf));
-BU_EXTERN(struct nurb_hit *rt_conv_uv, (struct nurb_specific *n,
-					struct xray *r, struct rt_nurb_uv_hit *h));
 BU_EXTERN(struct nurb_hit *rt_return_nurb_hit, (struct nurb_hit * head));
 BU_EXTERN(void rt_nurb_add_hit, (struct nurb_hit *head,
 				 struct nurb_hit * hit, const struct bn_tol *tol));
@@ -81,8 +81,17 @@ BU_EXTERN(void rt_nurb_add_hit, (struct nurb_hit *head,
 
 #ifdef CONVERT_TO_BREP
     extern void rt_nurb_brep(ON_Brep **b, struct rt_db_internal *ip, const struct bn_tol *tol);
+
     extern int rt_brep_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip);
-#endif
+    extern void rt_brep_print(register const struct soltab *stp);
+    extern int rt_brep_shot(struct soltab *stp, register struct xray *rp, struct application *ap, struct seg *seghead);
+    extern void rt_brep_norm(register struct hit *hitp, struct soltab *stp, register struct xray *rp);
+    extern void rt_brep_curve(register struct curvature *cvp, register struct hit *hitp, struct soltab *stp);
+    extern void rt_brep_uv(struct application *ap, struct soltab *stp, register struct hit *hitp, register struct uvcoord *uvp);
+    extern void rt_brep_free(register struct soltab *stp);
+    extern int rt_brep_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol);
+
+#endif /* CONVERT_TO_BREP */
 
 /**
  * R T _ N U R B _ P R E P
@@ -182,7 +191,7 @@ rt_nurb_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
     }
 
     return 0;
-#endif
+#endif /* CONVERT_TO_BREP */
 }
 
 
@@ -192,10 +201,9 @@ rt_nurb_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 void
 rt_nurb_print(register const struct soltab *stp)
 {
-
-  /*** XXX left off here ***/
-
-
+#ifdef CONVERT_TO_BREP
+    return rt_brep_print(stp);
+#else
     register struct nurb_specific *nurb =
 	(struct nurb_specific *)stp->st_specific;
 
@@ -208,6 +216,7 @@ rt_nurb_print(register const struct soltab *stp)
 	/* XXX There is a linked list of Bezier surfaces to print here too */
 	rt_nurb_s_print("NURB", nurb->srf);
     }
+#endif /* CONVERT_TO_BREP */
 }
 
 
@@ -224,6 +233,9 @@ rt_nurb_print(register const struct soltab *stp)
 int
 rt_nurb_shot(struct soltab *stp, register struct xray *rp, struct application *ap, struct seg *seghead)
 {
+#ifdef CONVERT_TO_BREP
+    return rt_brep_shot(stp, rp, ap, seghead);
+#else
     register struct nurb_specific *nurb =
 	(struct nurb_specific *)stp->st_specific;
     register struct seg *segp;
@@ -359,6 +371,7 @@ rt_nurb_shot(struct soltab *stp, register struct xray *rp, struct application *a
     }
 
     return(hit_num);	/* not hit */
+#endif /* CONVERT_TO_BREP */
 }
 
 
@@ -390,6 +403,9 @@ rt_nurb_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, st
 void
 rt_nurb_norm(register struct hit *hitp, struct soltab *stp, register struct xray *rp)
 {
+#ifdef CONVERT_TO_BREP
+    return rt_brep_norm(hitp, stp, rp);
+#else
 /*	register struct nurb_specific *nurb =
 	(struct nurb_specific *)stp->st_specific; */
 
@@ -407,6 +423,7 @@ rt_nurb_norm(register struct hit *hitp, struct soltab *stp, register struct xray
     }
 
     return;
+#endif /* CONVERT_TO_BREP */
 }
 
 
@@ -418,6 +435,9 @@ rt_nurb_norm(register struct hit *hitp, struct soltab *stp, register struct xray
 void
 rt_nurb_curve(register struct curvature *cvp, register struct hit *hitp, struct soltab *stp)
 {
+#ifdef CONVERT_TO_BREP
+    return rt_brep_curve(cvp, hitp, stp);
+#else
 /*	register struct nurb_specific *nurb =
 	(struct nurb_specific *)stp->st_specific; */
     struct face_g_snurb *srf = (struct face_g_snurb *) hitp->hit_private;
@@ -435,6 +455,7 @@ rt_nurb_curve(register struct curvature *cvp, register struct hit *hitp, struct 
     v = hitp->hit_vpriv[1];
 
     rt_nurb_curvature(cvp, srf, u, v);
+#endif /* CONVERT_TO_BREP */
 }
 
 
@@ -449,11 +470,15 @@ rt_nurb_curve(register struct curvature *cvp, register struct hit *hitp, struct 
 void
 rt_nurb_uv(struct application *ap, struct soltab *stp, register struct hit *hitp, register struct uvcoord *uvp)
 {
+#ifdef CONVERT_TO_BREP
+    return rt_brep_uv(ap, stp, hitp, uvp);
+#else
 /*	register struct nurb_specific *nurb =
 	(struct nurb_specific *)stp->st_specific; */
     uvp->uv_u = hitp->hit_vpriv[0];
     uvp->uv_v = hitp->hit_vpriv[1];
     return;
+#endif /* CONVERT_TO_BREP */
 }
 
 
@@ -463,6 +488,10 @@ rt_nurb_uv(struct application *ap, struct soltab *stp, register struct hit *hitp
 void
 rt_nurb_free(register struct soltab *stp)
 {
+#ifdef CONVERT_TO_BREP
+    return rt_brep_free(stp);
+#else
+    
     register struct nurb_specific *nurb =
 	(struct nurb_specific *)stp->st_specific;
     register struct nurb_specific *next;
@@ -484,6 +513,8 @@ rt_nurb_free(register struct soltab *stp)
 	rt_nurb_free_snurb(nurb->srf, (struct resource *)NULL);	/* original surf */
 	bu_free((char *)nurb, "nurb_specific");
     }
+    return;
+#endif /* CONVERT_TO_BREP */
 }
 
 
@@ -503,6 +534,10 @@ rt_nurb_class(void)
 int
 rt_nurb_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol)
 {
+#ifdef CONVERT_TO_BREP
+    /* XXX need to fix this */
+    return rt_brep_plot(vhead, ip, ttol, tol);
+#else
     struct rt_nurb_internal *sip;
     register int i;
     register int j;
@@ -630,6 +665,7 @@ rt_nurb_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_t
 	bu_free((char *) tkv2.knots, "rt_nurb_plot:tkv2.knots");
     }
     return(0);
+#endif /* CONVERT_TO_BREP */
 }
 
 
@@ -738,7 +774,7 @@ rt_nurb_import4(struct rt_db_internal *ip, const struct bu_external *ep, registe
     return (0);
 }
 
-struct nurb_hit *
+HIDDEN struct nurb_hit *
 rt_conv_uv(struct nurb_specific *n, struct xray *r, struct rt_nurb_uv_hit *h)
 {
     struct nurb_hit *hit;
