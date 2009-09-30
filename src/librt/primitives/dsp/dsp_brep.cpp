@@ -114,29 +114,196 @@ rt_dsp_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *t
    
     // Step 1 - create the bottom face.
     
-    point_t p_origin, p2, p3;
-    ON_3dPoint plane_origin, plane_x_dir, plane_y_dir;
+    point_t p_origin, p2, p3, p4;
+    ON_3dPoint plane_origin, plane_x_dir, plane_y_dir, pt2, pt3, pt4;
     
     VSETALL(p_origin, 0.0);
     plane_origin = ON_3dPoint(p_origin);
     
-    VSET(p2, dsp_ip->dsp_xcnt - 1, 0, 0);
+    VSET(p2, dsp_ip->dsp_xcnt*1000 - 1, 0, 0);
     plane_x_dir = ON_3dPoint(p2);
 
-    VSET(p3, 0, dsp_ip->dsp_ycnt - 1, 0);
+    VSET(p3, 0, dsp_ip->dsp_ycnt*1000 - 1, 0);
     plane_y_dir = ON_3dPoint(p3);
 
     ON_Plane *bottom_plane = new ON_Plane(plane_origin, plane_x_dir, plane_y_dir);
     ON_PlaneSurface *bottom_surf = new ON_PlaneSurface(*bottom_plane);
+    bottom_surf->SetDomain(0, 0.0, 256000.0 );
+    bottom_surf->SetDomain(1, 0.0, 256000.0 );
+    bottom_surf->SetExtents(0, bottom_surf->Domain(0) );
+    bottom_surf->SetExtents(1, bottom_surf->Domain(1) );
     (*b)->NewFace(*bottom_surf);
+   
+    // Second step, the "walls"
+
+    ON_SimpleArray<ON_Curve *> boundary;
+    ON_3dPointArray *bezpoints = new ON_3dPointArray(256);
+	
+    // side 1
+    
+    VSET(p2, dsp_ip->dsp_xcnt*1000, 0, 0);
+    VSET(p3, dsp_ip->dsp_xcnt*1000, 0, DSP(dsp_ip, dsp_ip->dsp_xcnt,0));
+    VSET(p4, 0, 0, DSP(dsp_ip, 0 ,0));
+    pt2 = ON_3dPoint(p2);
+    pt3 = ON_3dPoint(p3);
+    pt4 = ON_3dPoint(p4);
+    ON_Plane *s1_plane = new ON_Plane(plane_origin, pt2, pt4);
+    ON_PlaneSurface *s1_surf = new ON_PlaneSurface(*s1_plane);
+    // Need 3 linear curves and a spline curve
+    ON_Curve *c1 = new ON_LineCurve(plane_origin, pt2);
+    boundary.Append(c1);
+    ON_Curve *c2 = new ON_LineCurve(pt2, pt3);
+    boundary.Append(c2);
+    for (int x=(dsp_ip->dsp_xcnt); x > 0; x-- ) {
+	ON_3dPoint *ctrlpt = new ON_3dPoint(x*1000, 0, DSP(dsp_ip, x, 0));
+	bezpoints->Append(*ctrlpt);
+    }
+    ON_BezierCurve *s1_bez3d = new ON_BezierCurve((const ON_3dPointArray)*bezpoints);
+    ON_NurbsCurve* s1_beznurb3d = new ON_NurbsCurve();
+    s1_bez3d->GetNurbForm(*s1_beznurb3d);
+    s1_beznurb3d->SetDomain(0.0,1.0);
+    boundary.Append(s1_beznurb3d);
+    ON_Curve *c4 = new ON_LineCurve(pt4, plane_origin);
+    boundary.Append(c4);
+    const int bsi = (*b)->AddSurface(s1_surf);
+    ON_BrepFace& s1f = (*b)->NewFace(bsi);
+    (*b)->NewPlanarFaceLoop(s1f.m_face_index, ON_BrepLoop::outer, boundary, true);
+    const ON_BrepLoop* bloop = (*b)->m_L.Last();
+    s1_surf->SetDomain(0, bloop->m_pbox.m_min.x, bloop->m_pbox.m_max.x );
+    s1_surf->SetDomain(1, bloop->m_pbox.m_min.y, bloop->m_pbox.m_max.y );
+    s1_surf->SetExtents(0,s1_surf->Domain(0));
+    s1_surf->SetExtents(1,s1_surf->Domain(1));
+    (*b)->SetTrimIsoFlags(s1f);
+ 
+    // side 2
+   
+    ON_3dPointArray *bezpoints2 = new ON_3dPointArray(256);
+    
+    boundary.Empty(); 
+    VSET(p2, 0, dsp_ip->dsp_ycnt*1000, 0);
+    VSET(p3, 0, dsp_ip->dsp_ycnt*1000, DSP(dsp_ip, 0, dsp_ip->dsp_ycnt-1));
+    VSET(p4, 0, 0, DSP(dsp_ip, 0 ,0));
+    pt2 = ON_3dPoint(p2);
+    pt3 = ON_3dPoint(p3);
+    pt4 = ON_3dPoint(p4);
+    ON_Plane *s2_plane = new ON_Plane(plane_origin, pt2, pt4);
+    ON_PlaneSurface *s2_surf = new ON_PlaneSurface(*s2_plane);
+    // Need 3 linear curves and a spline curve
+    c1 = new ON_LineCurve(plane_origin, pt2);
+    boundary.Append(c1);
+    c2 = new ON_LineCurve(pt2, pt3);
+    boundary.Append(c2);
+    for (int y=(dsp_ip->dsp_ycnt - 1); y > 0; y-- ) {
+	ON_3dPoint *ctrlpt = new ON_3dPoint(0, y*1000, DSP(dsp_ip, 0, y));
+	bezpoints2->Append(*ctrlpt);
+    }
+    ON_BezierCurve *s2_bez3d = new ON_BezierCurve((const ON_3dPointArray)*bezpoints2);
+    ON_NurbsCurve* s2_beznurb3d = new ON_NurbsCurve();
+    s2_bez3d->GetNurbForm(*s2_beznurb3d);
+    s2_beznurb3d->SetDomain(0.0,1.0);
+    boundary.Append(s2_beznurb3d);
+    c4 = new ON_LineCurve(pt4, plane_origin);
+    boundary.Append(c4);
+    const int bsi2 = (*b)->AddSurface(s2_surf);
+    ON_BrepFace& s2f = (*b)->NewFace(bsi2);
+    (*b)->NewPlanarFaceLoop(s2f.m_face_index, ON_BrepLoop::outer, boundary, true);
+    const ON_BrepLoop* bloop2 = (*b)->m_L.Last();
+    s2_surf->SetDomain(0, bloop2->m_pbox.m_min.x, bloop2->m_pbox.m_max.x );
+    s2_surf->SetDomain(1, bloop2->m_pbox.m_min.y, bloop2->m_pbox.m_max.y );
+    s2_surf->SetExtents(0,s2_surf->Domain(0));
+    s2_surf->SetExtents(1,s2_surf->Domain(1));
+    (*b)->SetTrimIsoFlags(s2f);
+ 
+    // side 3
+   
+    ON_3dPointArray *bezpoints3 = new ON_3dPointArray(256);
+    
+    boundary.Empty();
+    VSET(p_origin, dsp_ip->dsp_xcnt*1000, dsp_ip->dsp_ycnt*1000, 0);
+    VSET(p2, dsp_ip->dsp_xcnt*1000, dsp_ip->dsp_ycnt*1000, DSP(dsp_ip, dsp_ip->dsp_xcnt-1, dsp_ip->dsp_ycnt-1));
+    VSET(p3, 0, dsp_ip->dsp_ycnt*1000, DSP(dsp_ip, 0, dsp_ip->dsp_ycnt-1));
+    VSET(p4, 0, dsp_ip->dsp_ycnt*1000, 0);
+    plane_origin = ON_3dPoint(p_origin);
+    pt2 = ON_3dPoint(p2);
+    pt3 = ON_3dPoint(p3);
+    pt4 = ON_3dPoint(p4);
+    ON_Plane *s3_plane = new ON_Plane(plane_origin, pt2, pt4);
+    ON_PlaneSurface *s3_surf = new ON_PlaneSurface(*s3_plane);
+    // Need 3 linear curves and a spline curve
+    c1 = new ON_LineCurve(plane_origin, pt2);
+    boundary.Append(c1);
+    c2 = new ON_LineCurve(pt2, pt3);
+    boundary.Append(c2);
+    for (int x=(dsp_ip->dsp_xcnt-1); x > 0; x-- ) {
+	ON_3dPoint *ctrlpt = new ON_3dPoint(x*1000, dsp_ip->dsp_ycnt*1000, DSP(dsp_ip, x, dsp_ip->dsp_ycnt - 1));
+	bezpoints3->Append(*ctrlpt);
+    }
+    ON_BezierCurve *s3_bez3d = new ON_BezierCurve((const ON_3dPointArray)*bezpoints3);
+    ON_NurbsCurve* s3_beznurb3d = new ON_NurbsCurve();
+    s3_bez3d->GetNurbForm(*s3_beznurb3d);
+    s3_beznurb3d->SetDomain(0.0,1.0);
+    boundary.Append(s3_beznurb3d);
+    c4 = new ON_LineCurve(pt4, plane_origin);
+    boundary.Append(c4);
+    const int bsi3 = (*b)->AddSurface(s3_surf);
+    ON_BrepFace& s3f = (*b)->NewFace(bsi3);
+    (*b)->NewPlanarFaceLoop(s3f.m_face_index, ON_BrepLoop::outer, boundary, true);
+    const ON_BrepLoop* bloop3 = (*b)->m_L.Last();
+    s3_surf->SetDomain(0, bloop3->m_pbox.m_min.x, bloop3->m_pbox.m_max.x );
+    s3_surf->SetDomain(1, bloop3->m_pbox.m_min.y, bloop3->m_pbox.m_max.y );
+    s3_surf->SetExtents(0,s3_surf->Domain(0));
+    s3_surf->SetExtents(1,s3_surf->Domain(1));
+    (*b)->SetTrimIsoFlags(s3f);
+ 
+    // side 4
+   
+    ON_3dPointArray *bezpoints4 = new ON_3dPointArray(256);
+    
+    boundary.Empty();
+    VSET(p_origin, dsp_ip->dsp_xcnt*1000, dsp_ip->dsp_ycnt*1000, 0);
+    VSET(p2, dsp_ip->dsp_xcnt*1000, dsp_ip->dsp_ycnt*1000, DSP(dsp_ip, dsp_ip->dsp_xcnt-1, dsp_ip->dsp_ycnt-1));
+    VSET(p3, dsp_ip->dsp_xcnt*1000, 0, DSP(dsp_ip, dsp_ip->dsp_xcnt-1, 0));
+    VSET(p4, dsp_ip->dsp_xcnt*1000, 0, 0);
+    plane_origin = ON_3dPoint(p_origin);
+    pt2 = ON_3dPoint(p2);
+    pt3 = ON_3dPoint(p3);
+    pt4 = ON_3dPoint(p4);
+    ON_Plane *s4_plane = new ON_Plane(plane_origin, pt2, pt4);
+    ON_PlaneSurface *s4_surf = new ON_PlaneSurface(*s4_plane);
+    // Need 3 linear curves and a spline curve
+    c1 = new ON_LineCurve(plane_origin, pt2);
+    boundary.Append(c1);
+    c2 = new ON_LineCurve(pt2, pt3);
+    boundary.Append(c2);
+    for (int y=(dsp_ip->dsp_ycnt-1); y > 0; y-- ) {
+	ON_3dPoint *ctrlpt = new ON_3dPoint(dsp_ip->dsp_xcnt*1000, y*1000, DSP(dsp_ip, dsp_ip->dsp_xcnt - 1, y));
+	bezpoints4->Append(*ctrlpt);
+    }
+    ON_BezierCurve *s4_bez3d = new ON_BezierCurve((const ON_3dPointArray)*bezpoints4);
+    ON_NurbsCurve* s4_beznurb3d = new ON_NurbsCurve();
+    s4_bez3d->GetNurbForm(*s4_beznurb3d);
+    s4_beznurb3d->SetDomain(0.0,1.0);
+    boundary.Append(s4_beznurb3d);
+    c4 = new ON_LineCurve(pt4, plane_origin);
+    boundary.Append(c4);
+    const int bsi4 = (*b)->AddSurface(s4_surf);
+    ON_BrepFace& s4f = (*b)->NewFace(bsi4);
+    (*b)->NewPlanarFaceLoop(s4f.m_face_index, ON_BrepLoop::outer, boundary, true);
+    const ON_BrepLoop* bloop4 = (*b)->m_L.Last();
+    s4_surf->SetDomain(0, bloop4->m_pbox.m_min.x, bloop4->m_pbox.m_max.x );
+    s4_surf->SetDomain(1, bloop4->m_pbox.m_min.y, bloop4->m_pbox.m_max.y );
+    s4_surf->SetExtents(0,s4_surf->Domain(0));
+    s4_surf->SetExtents(1,s4_surf->Domain(1));
+    (*b)->SetTrimIsoFlags(s4f);
+    
     
     // Next, define the top face with full resultion.
 
     ON_BezierSurface *bezsurf = new ON_BezierSurface(3, false, dsp_ip->dsp_xcnt, dsp_ip->dsp_ycnt);
       
-    for (int y=0; y < (dsp_ip->dsp_ycnt - 1); y++ ) {
-	for (int x=0; x < (dsp_ip->dsp_xcnt - 1); x++) {
-	    ON_3dPoint *ctrlpt = new ON_3dPoint(x, y, DSP(dsp_ip, x, y));
+    for (int y=0; y < (dsp_ip->dsp_ycnt); y++ ) {
+	for (int x=0; x < (dsp_ip->dsp_xcnt); x++) {
+	    ON_3dPoint *ctrlpt = new ON_3dPoint(x*1000, y*1000, DSP(dsp_ip, x, y));
 	    bezsurf->SetCV(x,y,*ctrlpt);
 	}
     }
