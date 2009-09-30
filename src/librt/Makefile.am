@@ -97,6 +97,7 @@ librt_nil_la_SOURCES = \
 	primitives/bspline/nurb_basis.c \
 	primitives/bspline/nurb_bezier.c \
 	primitives/bspline/nurb_bound.c \
+	primitives/bspline/nurb_brep.cpp \
 	primitives/bspline/nurb_c2.c \
 	primitives/bspline/nurb_copy.c \
 	primitives/bspline/nurb_diff.c \

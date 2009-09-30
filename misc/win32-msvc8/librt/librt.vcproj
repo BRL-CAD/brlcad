@@ -672,6 +672,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\src\librt\primitives\bspline\nurb_brep.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\src\librt\primitives\bspline\nurb_c2.c"
 				>
 			</File>

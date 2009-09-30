@@ -59,6 +59,7 @@ set(LIBRT_SOURCES
     primitives/bspline/nurb_basis.c
     primitives/bspline/nurb_bezier.c
     primitives/bspline/nurb_bound.c
+    primitives/bspline/nurb_brep.c
     primitives/bspline/nurb_c2.c
     primitives/bspline/nurb_copy.c
     primitives/bspline/nurb_diff.c
