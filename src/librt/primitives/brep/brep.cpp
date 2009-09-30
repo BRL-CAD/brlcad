@@ -411,7 +411,7 @@ split_trims_hv_tangent(const ON_Curve* curve, ON_Interval& t, list<double>& list
 
 
 int
-brep_build_bvh(struct brep_specific* bs, struct rt_brep_internal* bi)
+brep_build_bvh(struct brep_specific* bs)
 {
     // First, run the openNURBS validity check on the brep in question
     ON_TextLog tl(stderr);
@@ -488,7 +488,7 @@ rt_brep_prep(struct soltab *stp, struct rt_db_internal* ip, struct rt_i* rtip)
 
     /* The workhorse routines of BREP prep are called by brep_build_bvh
      */
-    if (brep_build_bvh(bs, bi) < 0) {
+    if (brep_build_bvh(bs) < 0) {
 	return -1;
     }
 
