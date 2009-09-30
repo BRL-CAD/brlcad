@@ -117,20 +117,6 @@ rt_nurb_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 	    rt_nurb_s_bound(s, s->min_pt, s->max_pt);
 	    VMINMAX(stp->st_min, stp->st_max, s->min_pt);
 	    VMINMAX(stp->st_min, stp->st_max, s->max_pt);
-
-	    /* zero thickness will get missed by the raytracer */
-	    if (NEAR_ZERO(stp->st_min[X] - stp->st_max[X], los)) {
-		stp->st_min[X] -= los;
-		stp->st_max[X] += los;
-	    }
-	    if (NEAR_ZERO(stp->st_min[Y] - stp->st_max[Y], los)) {
-		stp->st_min[Y] -= los;
-		stp->st_max[Y] += los;
-	    }
-	    if (NEAR_ZERO(stp->st_min[Z] - stp->st_max[Z], los)) {
-		stp->st_min[Z] -= los;
-		stp->st_max[Z] += los;
-	    }
 	}
 
 	n->next = nurbs;
@@ -138,6 +124,20 @@ rt_nurb_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
     }
 
     stp->st_specific = (genptr_t)nurbs;
+
+    /* zero thickness will get missed by the raytracer */
+    if (NEAR_ZERO(stp->st_min[X] - stp->st_max[X], los)) {
+	stp->st_min[X] -= los;
+	stp->st_max[X] += los;
+    }
+    if (NEAR_ZERO(stp->st_min[Y] - stp->st_max[Y], los)) {
+	stp->st_min[Y] -= los;
+	stp->st_max[Y] += los;
+    }
+    if (NEAR_ZERO(stp->st_min[Z] - stp->st_max[Z], los)) {
+	stp->st_min[Z] -= los;
+	stp->st_max[Z] += los;
+    }
 
     VADD2SCALE(stp->st_center, stp->st_max, stp->st_min, 0.5);
     {
@@ -187,7 +187,6 @@ rt_nurb_print(register const struct soltab *stp)
  *   0 MISS
  *  >0 HIT
  */
-
 int
 rt_nurb_shot(struct soltab *stp, register struct xray *rp, struct application *ap, struct seg *seghead)
 {
@@ -212,8 +211,8 @@ rt_nurb_shot(struct soltab *stp, register struct xray *rp, struct application *a
     if (!NEAR_ZERO(rp->r_dir[2], SQRT_SMALL_FASTF))
 	invdir[2] = 1.0 / rp->r_dir[2];
 
-    /* Create two orthogonal Planes their intersection contains the ray
-     * so we can project the surface into a 2 dimensional problem
+    /* Create two orthogonal Planes their intersection contains the
+     * ray so we can project the surface into a 2 dimensional problem
      */
 
     bn_vec_ortho(dir1, rp->r_dir);
