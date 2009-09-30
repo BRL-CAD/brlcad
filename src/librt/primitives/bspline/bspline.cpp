@@ -661,20 +661,6 @@ rt_nurb_class(void)
 int
 rt_nurb_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol)
 {
-#ifdef CONVERT_TO_BREP
-    ON_Brep *brep = ON_Brep::New();
-    rt_nurb_brep(&brep, ip, tol);
-
-    struct rt_brep_internal bi;
-    bi.magic = RT_BREP_INTERNAL_MAGIC;
-    bi.brep = brep;
-
-    struct rt_db_internal di;
-    RT_INIT_DB_INTERNAL(&di);
-    di.idb_ptr = (genptr_t)&bi;
-
-    return rt_brep_plot(vhead, &di, ttol, tol);
-#else
     struct rt_nurb_internal *sip;
     register int i;
     register int j;
@@ -801,6 +787,21 @@ rt_nurb_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_t
 	bu_free((char *) tkv1.knots, "rt_nurb_plot:tkv1>knots");
 	bu_free((char *) tkv2.knots, "rt_nurb_plot:tkv2.knots");
     }
+
+#ifdef CONVERT_TO_BREP
+    ON_Brep *brep = ON_Brep::New();
+    rt_nurb_brep(&brep, ip, tol);
+
+    struct rt_brep_internal bi;
+    bi.magic = RT_BREP_INTERNAL_MAGIC;
+    bi.brep = brep;
+
+    struct rt_db_internal di;
+    RT_INIT_DB_INTERNAL(&di);
+    di.idb_ptr = (genptr_t)&bi;
+
+    return rt_brep_plot(vhead, &di, ttol, tol);
+#else
     return(0);
 #endif /* CONVERT_TO_BREP */
 }
