@@ -192,6 +192,10 @@ rt_nurb_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 void
 rt_nurb_print(register const struct soltab *stp)
 {
+
+  /*** XXX left off here ***/
+
+
     register struct nurb_specific *nurb =
 	(struct nurb_specific *)stp->st_specific;
 
