@@ -132,7 +132,8 @@ rt_dsp_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *t
     bottom_surf->SetDomain(1, 0.0, 255000.0 );
     bottom_surf->SetExtents(0, bottom_surf->Domain(0) );
     bottom_surf->SetExtents(1, bottom_surf->Domain(1) );
-    (*b)->NewFace(*bottom_surf);
+    ON_BrepFace *bottomface = (*b)->NewFace(*bottom_surf);
+    (*b)->FlipFace(*bottomface);
    
     // Second step, the "walls"
 
