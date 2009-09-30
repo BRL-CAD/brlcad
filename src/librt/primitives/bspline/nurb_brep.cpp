@@ -44,14 +44,20 @@ rt_nurb_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *
     RT_NURB_CK_MAGIC(nip);
     
     for (i = 0; i < nip->nsrf; i++) {
+	point_t min_bound, max_bound;
 	NMG_CK_SNURB(nip->srfs[i]);
-	rt_nurb_s_bound(nip->srfs[i], min_pt, max_pt);
+	rt_nurb_s_bound(nip->srfs[i], min_bound, max_bound);
+
+	VMINMAX(min_pt, max_pt, min_bound);
+	VMINMAX(min_pt, max_pt, max_bound);
     }
 
     VADD2SCALE(center, max_pt, min_pt, 0.5);
 
     /* create a bounding sphere for now */
-    ON_Sphere sph(center, DIST_PT_PT(min_pt, max_pt));
+    // bu_log("DEBUG: min_pt is (%f,%f,%f); max_pt is (%f,%f,%f); radius is %f\n", V3ARGS(min_pt), V3ARGS(max_pt), DIST_PT_PT(min_pt, max_pt) * 0.5);
+
+    ON_Sphere sph(center, DIST_PT_PT(min_pt, max_pt) * 0.5);
     *b = ON_BrepSphere(sph);
 }
 
