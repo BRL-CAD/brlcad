@@ -71,13 +71,6 @@ struct nurb_hit {
 
 #define NULL_HIT (struct nurb_hit *)0
 
-static struct nurb_hit *rt_conv_uv(struct nurb_specific *n, struct xray *r, struct rt_nurb_uv_hit *h);
-
-BU_EXTERN(int rt_nurb_grans, (struct face_g_snurb * srf));
-BU_EXTERN(struct nurb_hit *rt_return_nurb_hit, (struct nurb_hit * head));
-BU_EXTERN(void rt_nurb_add_hit, (struct nurb_hit *head,
-				 struct nurb_hit * hit, const struct bn_tol *tol));
-
 
 #ifdef CONVERT_TO_BREP
     extern void rt_nurb_brep(ON_Brep **b, struct rt_db_internal *ip, const struct bn_tol *tol);
@@ -92,6 +85,139 @@ BU_EXTERN(void rt_nurb_add_hit, (struct nurb_hit *head,
     extern int rt_brep_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol);
 
 #endif /* CONVERT_TO_BREP */
+
+
+HIDDEN int
+rt_nurb_grans(struct face_g_snurb *srf)
+{
+    int total_knots, total_points;
+    int k_gran;
+    int p_gran;
+
+    total_knots = srf->u.k_size + srf->v.k_size;
+    k_gran = ((total_knots * sizeof(dbfloat_t)) + sizeof(union record)-1)
+	/ sizeof(union record);
+
+    total_points = RT_NURB_EXTRACT_COORDS(srf->pt_type) *
+	(srf->s_size[0] * srf->s_size[1]);
+    p_gran = ((total_points * sizeof(dbfloat_t)) + sizeof(union record)-1)
+	/ sizeof(union record);
+
+    return 1 + k_gran + p_gran;
+}
+
+
+HIDDEN struct nurb_hit *
+rt_conv_uv(struct nurb_specific *n, struct xray *r, struct rt_nurb_uv_hit *h)
+{
+    struct nurb_hit *hit;
+    fastf_t pt[4];
+    point_t vecsub;
+
+    hit = (struct nurb_hit *) bu_malloc(sizeof (struct nurb_hit),
+					"rt_conv_uv:nurb hit");
+
+    hit->prev = hit->next = (struct nurb_hit *)0;
+    VSET(hit->hit_normal, 0.0, 0.0, 0.0);
+
+    rt_nurb_s_eval(n->srf, h->u, h->v, pt);
+
+    if (RT_NURB_IS_PT_RATIONAL(n->srf->pt_type)) {
+	hit->hit_point[0] = pt[0] / pt[3];
+	hit->hit_point[1] = pt[1] / pt[3];
+	hit->hit_point[2] = pt[2] / pt[3];
+    } else {
+	hit->hit_point[0] = pt[0];
+	hit->hit_point[1] = pt[1];
+	hit->hit_point[2] = pt[2];
+    }
+
+    VSUB2(vecsub, hit->hit_point, r->r_pt);
+    hit->hit_dist = VDOT(vecsub, r->r_dir);
+    hit->hit_uv[0] = h->u;
+    hit->hit_uv[1] = h->v;
+    hit->hit_private = (char *) n->srf;
+
+    return (struct nurb_hit *) hit;
+}
+
+
+HIDDEN struct nurb_hit *
+rt_return_nurb_hit(struct nurb_hit *head)
+{
+
+    register struct nurb_hit *h, *ret;
+    fastf_t dist;
+
+    if (head->next == NULL_HIT)
+	return NULL_HIT;
+
+    dist = INFINITY;
+    ret = NULL_HIT;
+
+    for (h = head->next; h != NULL_HIT; h = h->next) {
+	if (h->hit_dist < dist) {
+	    ret = h;
+	    dist = ret->hit_dist;
+	}
+    }
+
+    if (ret != NULL_HIT) {
+	if (ret->prev != NULL_HIT) ret->prev->next = ret->next;
+	if (ret->next != NULL_HIT) ret->next->prev = ret->prev;
+	ret->next = ret->prev = NULL_HIT;
+    }
+    return (struct nurb_hit *) ret;
+}
+
+
+HIDDEN void
+rt_nurb_add_hit(struct nurb_hit *head, struct nurb_hit *hit, const struct bn_tol *tol)
+{
+    register struct nurb_hit *h_ptr;
+
+    BN_CK_TOL(tol);
+#if 0
+    /* Shouldn't be discarded, because shootray moves start pt around */
+    if (hit->hit_dist < .001) {
+
+	bu_free((char *) hit, "internal_add_hit: hit");
+	return;
+    }
+#endif
+
+    /* If this is the only one, nothing to check against */
+    if (head->next == (struct nurb_hit *) 0) {
+	head->next = hit;
+	hit->prev = head;
+	return;
+    }
+
+    /* Check for duplicates */
+    for (h_ptr = head->next; h_ptr != (struct nurb_hit *)0; h_ptr = h_ptr->next) {
+	register fastf_t f;
+
+	/* This test a distance in model units (mm) */
+	f = hit->hit_dist - h_ptr->hit_dist;
+	if (NEAR_ZERO(f, tol->dist))  goto duplicate;
+
+	/* These tests are in parameter space, 0..1 */
+	f = hit->hit_uv[0] - h_ptr->hit_uv[0];
+	if (NEAR_ZERO(f, 0.0001))  goto duplicate;
+	f = hit->hit_uv[1] - h_ptr->hit_uv[1];
+	if (NEAR_ZERO(f, 0.0001))  goto duplicate;
+    }
+
+    hit->prev = head;
+    hit->next = head->next;
+    hit->next->prev = hit;
+    head->next = hit;
+    return;
+ duplicate:
+    bu_free((char *) hit, "add hit: hit");
+    return;
+}
+
 
 /**
  * R T _ N U R B _ P R E P
@@ -774,115 +900,6 @@ rt_nurb_import4(struct rt_db_internal *ip, const struct bu_external *ep, registe
     return (0);
 }
 
-HIDDEN struct nurb_hit *
-rt_conv_uv(struct nurb_specific *n, struct xray *r, struct rt_nurb_uv_hit *h)
-{
-    struct nurb_hit *hit;
-    fastf_t pt[4];
-    point_t vecsub;
-
-    hit = (struct nurb_hit *) bu_malloc(sizeof (struct nurb_hit),
-					"rt_conv_uv:nurb hit");
-
-    hit->prev = hit->next = (struct nurb_hit *)0;
-    VSET(hit->hit_normal, 0.0, 0.0, 0.0);
-
-    rt_nurb_s_eval(n->srf, h->u, h->v, pt);
-
-    if (RT_NURB_IS_PT_RATIONAL(n->srf->pt_type)) {
-	hit->hit_point[0] = pt[0] / pt[3];
-	hit->hit_point[1] = pt[1] / pt[3];
-	hit->hit_point[2] = pt[2] / pt[3];
-    } else {
-	hit->hit_point[0] = pt[0];
-	hit->hit_point[1] = pt[1];
-	hit->hit_point[2] = pt[2];
-    }
-
-    VSUB2(vecsub, hit->hit_point, r->r_pt);
-    hit->hit_dist = VDOT(vecsub, r->r_dir);
-    hit->hit_uv[0] = h->u;
-    hit->hit_uv[1] = h->v;
-    hit->hit_private = (char *) n->srf;
-
-    return (struct nurb_hit *) hit;
-}
-
-void
-rt_nurb_add_hit(struct nurb_hit *head, struct nurb_hit *hit, const struct bn_tol *tol)
-{
-    register struct nurb_hit *h_ptr;
-
-    BN_CK_TOL(tol);
-#if 0
-    /* Shouldn't be discarded, because shootray moves start pt around */
-    if (hit->hit_dist < .001) {
-
-	bu_free((char *) hit, "internal_add_hit: hit");
-	return;
-    }
-#endif
-
-    /* If this is the only one, nothing to check against */
-    if (head->next == (struct nurb_hit *) 0) {
-	head->next = hit;
-	hit->prev = head;
-	return;
-    }
-
-    /* Check for duplicates */
-    for (h_ptr = head->next; h_ptr != (struct nurb_hit *)0; h_ptr = h_ptr->next) {
-	register fastf_t f;
-
-	/* This test a distance in model units (mm) */
-	f = hit->hit_dist - h_ptr->hit_dist;
-	if (NEAR_ZERO(f, tol->dist))  goto duplicate;
-
-	/* These tests are in parameter space, 0..1 */
-	f = hit->hit_uv[0] - h_ptr->hit_uv[0];
-	if (NEAR_ZERO(f, 0.0001))  goto duplicate;
-	f = hit->hit_uv[1] - h_ptr->hit_uv[1];
-	if (NEAR_ZERO(f, 0.0001))  goto duplicate;
-    }
-
-    hit->prev = head;
-    hit->next = head->next;
-    hit->next->prev = hit;
-    head->next = hit;
-    return;
- duplicate:
-    bu_free((char *) hit, "add hit: hit");
-    return;
-}
-
-struct nurb_hit *
-rt_return_nurb_hit(struct nurb_hit *head)
-{
-
-    register struct nurb_hit *h, *ret;
-    fastf_t dist;
-
-    if (head->next == NULL_HIT)
-	return NULL_HIT;
-
-    dist = INFINITY;
-    ret = NULL_HIT;
-
-    for (h = head->next; h != NULL_HIT; h = h->next) {
-	if (h->hit_dist < dist) {
-	    ret = h;
-	    dist = ret->hit_dist;
-	}
-    }
-
-    if (ret != NULL_HIT) {
-	if (ret->prev != NULL_HIT) ret->prev->next = ret->next;
-	if (ret->next != NULL_HIT) ret->next->prev = ret->prev;
-	ret->next = ret->prev = NULL_HIT;
-    }
-    return (struct nurb_hit *) ret;
-}
-
 
 /**
  * R T _ N U R B _ E X P O R T
@@ -1150,26 +1167,6 @@ rt_nurb_import5(struct rt_db_internal *ip, const struct bu_external *ep, registe
 			sip->srfs[s]->max_pt);
     }
     return (0);
-}
-
-
-int
-rt_nurb_grans(struct face_g_snurb *srf)
-{
-    int total_knots, total_points;
-    int k_gran;
-    int p_gran;
-
-    total_knots = srf->u.k_size + srf->v.k_size;
-    k_gran = ((total_knots * sizeof(dbfloat_t)) + sizeof(union record)-1)
-	/ sizeof(union record);
-
-    total_points = RT_NURB_EXTRACT_COORDS(srf->pt_type) *
-	(srf->s_size[0] * srf->s_size[1]);
-    p_gran = ((total_points * sizeof(dbfloat_t)) + sizeof(union record)-1)
-	/ sizeof(union record);
-
-    return 1 + k_gran + p_gran;
 }
 
 
