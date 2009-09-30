@@ -181,7 +181,6 @@ rt_dsp_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *t
     s1_surf->SetExtents(0,s1_surf->Domain(0));
     s1_surf->SetExtents(1,s1_surf->Domain(1));
     (*b)->SetTrimIsoFlags(s1f);
-    (*b)->FlipFace(s1f);
  
     // side 2
    
@@ -225,6 +224,7 @@ rt_dsp_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *t
     s2_surf->SetExtents(0,s2_surf->Domain(0));
     s2_surf->SetExtents(1,s2_surf->Domain(1));
     (*b)->SetTrimIsoFlags(s2f);
+    (*b)->FlipFace(s2f);
  
     // side 3
  
