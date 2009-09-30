@@ -848,6 +848,8 @@ Popup Menu    Right or Ctrl-Left
 
     updateTheme
 
+    $itk_component(primaryToolbar) itemconfigure open -state normal
+
     #    eval itk_initialize $args
 }
 
@@ -1518,14 +1520,14 @@ Popup Menu    Right or Ctrl-Left
 	    -background $LABEL_BACKGROUND_COLOR
     } {}
 
-    if {!$mViewOnly} {
-	$itk_component(primaryToolbar) add button open \
-	    -balloonstr "Open an existing geometry file" \
-	    -helpstr "Open an existing geometry file" \
-	    -relief flat \
-	    -overrelief raised \
-	    -command [::itcl::code $this openDb]
+    $itk_component(primaryToolbar) add button open \
+	-balloonstr "Open an existing geometry file" \
+	-helpstr "Open an existing geometry file" \
+	-relief flat \
+	-overrelief raised \
+	-command [::itcl::code $this openDb]
 
+    if {!$mViewOnly} {
 	$itk_component(primaryToolbar) add button save \
 	    -balloonstr "Save the current geometry file" \
 	    -helpstr "Save the current geometry file" \
@@ -2629,32 +2631,40 @@ Popup Menu    Right or Ctrl-Left
 	$trans configure \
 	    -background $SystemButtonFace
 
-	$trans add command -label "0%" \
+	$trans add command -label "None" \
 	    -command [::itcl::code $this setTransparency $node 1.0]
-	#$trans add command -label "25%" \
-	    #	-command [::itcl::code $this setTransparency $node 0.75]
-	#$trans add command -label "50%" \
-	    #	-command [::itcl::code $this setTransparency $node 0.5]
-	#$trans add command -label "75%" \
-	    #	-command [::itcl::code $this setTransparency $node 0.25]
-	$trans add command -label "10%" \
-	    -command [::itcl::code $this setTransparency $node 0.9]
-	$trans add command -label "20%" \
-	    -command [::itcl::code $this setTransparency $node 0.8]
-	$trans add command -label "30%" \
-	    -command [::itcl::code $this setTransparency $node 0.7]
-	$trans add command -label "40%" \
-	    -command [::itcl::code $this setTransparency $node 0.6]
-	$trans add command -label "50%" \
-	    -command [::itcl::code $this setTransparency $node 0.5]
-	$trans add command -label "60%" \
-	    -command [::itcl::code $this setTransparency $node 0.4]
-	$trans add command -label "70%" \
-	    -command [::itcl::code $this setTransparency $node 0.3]
+#	#$trans add command -label "25%" \
+#	    #	-command [::itcl::code $this setTransparency $node 0.75]
+#	#$trans add command -label "50%" \
+#	    #	-command [::itcl::code $this setTransparency $node 0.5]
+#	#$trans add command -label "75%" \
+#	    #	-command [::itcl::code $this setTransparency $node 0.25]
+#	$trans add command -label "10%" \
+#	    -command [::itcl::code $this setTransparency $node 0.9]
+#	$trans add command -label "20%" \
+#	    -command [::itcl::code $this setTransparency $node 0.8]
+#	$trans add command -label "30%" \
+#	    -command [::itcl::code $this setTransparency $node 0.7]
+#	$trans add command -label "40%" \
+#	    -command [::itcl::code $this setTransparency $node 0.6]
+#	$trans add command -label "50%" \
+#	    -command [::itcl::code $this setTransparency $node 0.5]
+#	$trans add command -label "60%" \
+#	    -command [::itcl::code $this setTransparency $node 0.4]
+#	$trans add command -label "70%" \
+#	    -command [::itcl::code $this setTransparency $node 0.3]
 	$trans add command -label "80%" \
 	    -command [::itcl::code $this setTransparency $node 0.2]
+	$trans add command -label "85%" \
+	    -command [::itcl::code $this setTransparency $node 0.15]
 	$trans add command -label "90%" \
 	    -command [::itcl::code $this setTransparency $node 0.1]
+	$trans add command -label "95%" \
+	    -command [::itcl::code $this setTransparency $node 0.05]
+	$trans add command -label "97%" \
+	    -command [::itcl::code $this setTransparency $node 0.03]
+	$trans add command -label "99%" \
+	    -command [::itcl::code $this setTransparency $node 0.01]
     }
 
     # set up bindings for status

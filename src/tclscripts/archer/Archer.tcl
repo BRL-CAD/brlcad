@@ -496,6 +496,9 @@ package provide Archer 1.0
 	$itk_component(cmd) configure -prompt "Archer> "
 	$itk_component(cmd) reinitialize
     }
+
+    $itk_component(primaryToolbar) itemconfigure new -state normal
+    $itk_component(primaryToolbar) itemconfigure preferences -state normal
 }
 
 
