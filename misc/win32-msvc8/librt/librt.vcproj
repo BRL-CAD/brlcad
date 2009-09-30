@@ -300,7 +300,7 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\src\librt\primitives\bspline\bspline.c"
+				RelativePath="..\..\..\src\librt\primitives\bspline\bspline.cpp"
 				>
 			</File>
 			<File
