@@ -80,9 +80,14 @@ BU_EXTERN(void rt_nurb_add_hit, (struct nurb_hit *head,
 int
 rt_nurb_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 {
-    struct rt_nurb_internal *sip;
-    struct nurb_specific *nurbs;
     int i;
+    struct nurb_specific *nurbs;
+    struct rt_nurb_internal *sip;
+    const struct bn_tol *tol = &rtip->rti_tol;
+    fastf_t los = tol->dist;
+
+    if (los < SMALL_FASTF)
+	los = SMALL_FASTF;
 
     nurbs = (struct nurb_specific *) 0;
 
@@ -96,7 +101,7 @@ rt_nurb_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 	BU_GETSTRUCT(n, nurb_specific);
 
 	/* Store off the original face_g_snurb */
-	s = rt_nurb_scopy (sip->srfs[i], (struct resource *)NULL);
+	s = rt_nurb_scopy(sip->srfs[i], (struct resource *)NULL);
 	NMG_CK_SNURB(s);
 	rt_nurb_s_bound(s, s->min_pt, s->max_pt);
 
@@ -107,11 +112,25 @@ rt_nurb_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 	(void)rt_nurb_bezier(&n->bez_hd, sip->srfs[i], (struct resource *)NULL);
 
 	/* Compute bounds of each Bezier face_g_snurb */
-	for (BU_LIST_FOR (s, face_g_snurb, &n->bez_hd)) {
+	for (BU_LIST_FOR(s, face_g_snurb, &n->bez_hd)) {
 	    NMG_CK_SNURB(s);
 	    rt_nurb_s_bound(s, s->min_pt, s->max_pt);
 	    VMINMAX(stp->st_min, stp->st_max, s->min_pt);
 	    VMINMAX(stp->st_min, stp->st_max, s->max_pt);
+
+	    /* zero thickness will get missed by the raytracer */
+	    if (NEAR_ZERO(stp->st_min[X] - stp->st_max[X], los)) {
+		stp->st_min[X] -= los;
+		stp->st_max[X] += los;
+	    }
+	    if (NEAR_ZERO(stp->st_min[Y] - stp->st_max[Y], los)) {
+		stp->st_min[Y] -= los;
+		stp->st_max[Y] += los;
+	    }
+	    if (NEAR_ZERO(stp->st_min[Z] - stp->st_max[Z], los)) {
+		stp->st_min[Z] -= los;
+		stp->st_max[Z] += los;
+	    }
 	}
 
 	n->next = nurbs;
