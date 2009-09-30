@@ -1,4 +1,4 @@
-/*                          B S P L I N E . C
+/*                        B S P L I N E . C P P
  * BRL-CAD
  *
  * Copyright (c) 1991-2009 United States Government as represented by
@@ -19,7 +19,7 @@
  */
 /** @addtogroup primitives */
 /** @{ */
-/** @file bspline.c
+/** @file bspline.cpp
  *
  * Intersect a ray with a Non Uniform Rational B-Spline.
  *
