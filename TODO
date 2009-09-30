@@ -61,6 +61,11 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 THESE ARE UNSCHEDULED BACKLOG TASKS
 -----------------------------------
 
+* verify/improve kicking off an EDITOR in mged so that we don't lock
+  up mged in vim/emacs/jove/whatever without a controlling terminal,
+  without breaking the ability to set a GUI editor like TextEdit,
+  Wordpad, etc.
+
 * Simple GUI for repairing BoT normals.  Basically make it easier to
   make all normals consistent and outward facing through some form of
   MGED integration of bot_sync and bot_flip.
