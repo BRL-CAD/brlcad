@@ -45,6 +45,8 @@ static char *usage = "%s [-d] [-x rt_debug_flag] input.obj output.g\n\
 			 The -x option specifies an RT debug flags (see raytrace.h).\n";
 static int debug = 0;
 
+static int facemax = 1;
+
 struct region_s {
     char *name;
     struct rt_bot_internal bot;
@@ -57,9 +59,9 @@ new_region(char *name)
     r->name = strdup(name);
     r->bot.magic = RT_BOT_INTERNAL_MAGIC;
     r->bot.mode = RT_BOT_SURFACE;
-    r->bot.orientation = RT_BOT_CCW;
+    r->bot.orientation = RT_BOT_UNORIENTED;
     r->bot.num_vertices = 0;
-    r->bot.vertices = NULL;	/* why doesn't memset eat this? */
+    r->bot.vertices = NULL;
     r->bot.num_faces = 0;
     r->bot.faces = NULL;
     return r;
@@ -78,11 +80,20 @@ free_region(struct region_s * r)
 int
 write_region(struct region_s *r, struct rt_wdb *out_fp)
 {
-    int rval;
+    int rval = -1;
     const char *regname;
-    /* add the region long name to list */
-    regname = bu_basename(r->name);
-    rval = wdb_export( out_fp, regname, (genptr_t)&(r->bot), ID_BOT, 1.0 );
+
+    if(r->bot.num_faces == 0) {
+	if(strncmp(r->name, "all.s", 6))
+	    rval = fprintf("%s has 0 faces, skipping\n", r->name), 0;
+    } else {
+	int faces;
+	/* add the region long name to list */
+	regname = bu_basename(r->name);
+	faces = r->bot.num_faces;
+	rval = wdb_export( out_fp, regname, (genptr_t)&(r->bot), ID_BOT, 1.0 );
+	printf("Wrote %s (%d faces)\n", regname, faces);
+    }
     return rval;
 }
 
@@ -107,10 +118,9 @@ add_face(struct region_s * r, char *buf)
 	    r->bot.faces + 3*r->bot.num_faces,
 	    r->bot.faces + 3*r->bot.num_faces + 1,
 	    r->bot.faces + 3*r->bot.num_faces + 2);
-    /* WaveFront OBJ counts from 1, BRL-CAD counts from 0 */
-    r->bot.faces[3*r->bot.num_faces+0]--;
-    r->bot.faces[3*r->bot.num_faces+1]--;
-    r->bot.faces[3*r->bot.num_faces+2]--;
+    r->bot.faces[3*r->bot.num_faces+0]-=facemax;
+    r->bot.faces[3*r->bot.num_faces+1]-=facemax;
+    r->bot.faces[3*r->bot.num_faces+2]-=facemax;
     r->bot.num_faces++;
     return 0;
 }
@@ -174,6 +184,9 @@ main(int argc, char **argv)
 
 	switch (*buf) {
 	    case '#':	/* comment */
+	    case '\0':
+	    case '\n':
+	    case ' ':
 		continue;
 	    case 'g':	/* group (region) */
 		if (region) {
