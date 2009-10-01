@@ -82,13 +82,13 @@ rt_nurb_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *
 	/* skip first and last (duplicates?) */
 	for (j = 1; j < surface->u.k_size - 1; j++) {
 	    nurb->SetKnot(0, j-1, surface->u.knots[j]);
-	    bu_log("u knot %d is %f\n", j-1, surface->u.knots[j]);
+//	    bu_log("u knot %d is %f\n", j-1, surface->u.knots[j]);
 	}
 	/* set 'v' knots */
 	/* skip first and last (duplicates?) */
 	for (j = 1; j < surface->v.k_size - 1; j++) {
 	    nurb->SetKnot(1, j-1, surface->v.knots[j]);
-	    bu_log("v knot %d is %f\n", j-1, surface->u.knots[j]);
+//	    bu_log("v knot %d is %f\n", j-1, surface->u.knots[j]);
 	}
 #endif
 	/* set control points */
@@ -100,7 +100,7 @@ rt_nurb_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *
 	}
 
 	ON_TextLog log(stderr);
-	nurb->Dump(log);
+/*	nurb->Dump(log);*/
 	bu_log("NURBS surface %s valid\n", nurb->IsValid(&log) ? "is" : "is not");
 
 	(*b)->m_S.Append(nurb);
