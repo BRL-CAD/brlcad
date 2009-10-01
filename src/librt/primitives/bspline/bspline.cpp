@@ -671,6 +671,7 @@ rt_nurb_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_t
     sip = (struct rt_nurb_internal *) ip->idb_ptr;
     RT_NURB_CK_MAGIC(sip);
 
+#if 0
     for (s=0; s < sip->nsrf; s++) {
 	struct face_g_snurb * n, *r, *c;
 	int coords;
@@ -787,6 +788,7 @@ rt_nurb_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_t
 	bu_free((char *) tkv1.knots, "rt_nurb_plot:tkv1>knots");
 	bu_free((char *) tkv2.knots, "rt_nurb_plot:tkv2.knots");
     }
+#endif
 
 #ifdef CONVERT_TO_BREP
     ON_Brep *brep = ON_Brep::New();
