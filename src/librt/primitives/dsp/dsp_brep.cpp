@@ -37,13 +37,9 @@
 extern "C" void
 rt_dsp_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *tol)
 {
-   
-    struct rt_dsp_internal	*dsp_ip;
-    struct bu_mapped_file       *mf;
+    struct rt_dsp_internal *dsp_ip;
+    struct bu_mapped_file *mf;
     
-
-    *b = NULL; 
-
     RT_CK_DB_INTERNAL(ip);
     dsp_ip = (struct rt_dsp_internal *)ip->idb_ptr;
     RT_DSP_CK_MAGIC(dsp_ip);
@@ -57,8 +53,7 @@ rt_dsp_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *t
     bu_cv_w_cookie(mf->apbuf, out_cookie, mf->apbuflen, mf->buf, in_cookie, count);
     dsp_ip->dsp_buf = (short unsigned int*)mf->apbuf;
     
-    *b = new ON_Brep();
-
+    *b = ON_Brep::New();
 
     ON_TextLog dump_to_stdout;
     ON_TextLog* dump = &dump_to_stdout;

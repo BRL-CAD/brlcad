@@ -37,17 +37,13 @@
 extern "C" void
 rt_epa_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *tol)
 {
-   
-    struct rt_epa_internal	*eip;
-
-    *b = NULL; 
+    struct rt_epa_internal *eip;
 
     RT_CK_DB_INTERNAL(ip);
     eip = (struct rt_epa_internal *)ip->idb_ptr;
     RT_EPA_CK_MAGIC(eip);
 
-    *b = new ON_Brep();
-
+    *b = ON_Brep::New();
 
     ON_TextLog dump_to_stdout;
     ON_TextLog* dump = &dump_to_stdout;

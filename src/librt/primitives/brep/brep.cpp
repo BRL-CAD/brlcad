@@ -2861,7 +2861,7 @@ rt_brep_import5(struct rt_db_internal *ip, const struct bu_external *ep, registe
 	ONX_Model_Object mo = model.m_object_table[0];
 	// XXX does openNURBS force us to copy? it seems the answer is
 	// YES due to the const-ness
-	bi->brep = new ON_Brep(*ON_Brep::Cast(mo.m_object));
+	bi->brep = ON_Brep::New(*ON_Brep::Cast(mo.m_object));
 	return 0;
     } else {
 	return -1;

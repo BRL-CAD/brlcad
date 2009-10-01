@@ -136,8 +136,6 @@ rt_pipe_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *
     ON_Plane *endplane;
     ON_BrepLoop *bloop;
 
-    *b = NULL; 
-
     RT_CK_DB_INTERNAL(ip);
     pip = (struct rt_pipe_internal *)ip->idb_ptr;
     RT_PIPE_CK_MAGIC(pip);
@@ -150,8 +148,7 @@ rt_pipe_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *
   
     VMOVE(current_point, prevp->pp_coord);
      
-    *b = new ON_Brep();
-
+    *b = ON_Brep::New();
    
     VSUB2(pipe_dir, prevp->pp_coord, curp->pp_coord);
     bn_vec_ortho(x_dir, pipe_dir);

@@ -42,7 +42,8 @@ rt_nurb_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *
     RT_CK_DB_INTERNAL(ip);
     nip = (struct rt_nurb_internal *)ip->idb_ptr;
     RT_NURB_CK_MAGIC(nip);
-    
+
+#if 0    
     for (i = 0; i < nip->nsrf; i++) {
 	point_t min_bound, max_bound;
 	NMG_CK_SNURB(nip->srfs[i]);
@@ -59,6 +60,16 @@ rt_nurb_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *
 
     ON_Sphere sph(center, DIST_PT_PT(min_pt, max_pt) * 0.5);
     *b = ON_BrepSphere(sph);
+
+#else
+
+    *b = ON_Brep::New();
+
+    for (i = 0; i < nip->nsrf; i++) {
+	
+    }
+
+#endif
 }
 
 

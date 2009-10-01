@@ -168,15 +168,13 @@ rt_revolve_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_to
     RT_INIT_DB_INTERNAL(tmp_internal);
     struct rt_revolve_internal *rip;
     struct rt_sketch_internal *eip;
+
     rip = (struct rt_revolve_internal *)ip->idb_ptr;
     RT_REVOLVE_CK_MAGIC(rip);
     eip = rip->sk;
     RT_SKETCH_CK_MAGIC(eip);
    
-    *b = NULL;
-
-*b = new ON_Brep();
-
+    *b = ON_Brep::New();
 
     ON_TextLog dump_to_stdout;
     ON_TextLog* dump = &dump_to_stdout;
