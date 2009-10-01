@@ -54,13 +54,19 @@ struct region_s *
 new_region(char *name)
 {
     struct region_s *r;
-    r = (struct region_s *) malloc(sizeof(struct region_s *));
+    r = (struct region_s *) bu_malloc(sizeof(struct region_s), "Region");
     if(r) {
 	memset(r, 0, sizeof(r));    /* flash everything to 0, hope that NULL==0x0 */
 	r->name = strdup(name);
 	r->bot.magic = RT_BOT_INTERNAL_MAGIC;
 	r->bot.mode = RT_BOT_SURFACE;
 	r->bot.orientation = RT_BOT_CCW;
+	r->bot.num_vertices = 0;
+	r->bot.vertices = NULL;	/* why doesn't memset eat this? */
+	r->bot.num_faces = 0;
+	r->bot.faces = NULL;
+    } else {
+	printf("wtf? couldn't allocate a region?\n");
     }
     return r;
 }
@@ -69,9 +75,9 @@ int
 free_region(struct region_s * r)
 {
     if (r && r->name)
-	free(r->name);
+	bu_free(r->name, "region name");
     if (r)
-	free(r);
+	bu_free(r, "region");
     return 0;
 }
 
@@ -92,24 +98,24 @@ write_region(struct region_s *r, struct rt_wdb *out_fp)
 int
 add_vertex(struct region_s * r, char *buf)
 {
-    r->bot.num_vertices++;
-    r->bot.vertices = realloc(r->bot.vertices, sizeof(fastf_t) * 3 * r->bot.num_vertices);
+    r->bot.vertices = bu_realloc(r->bot.vertices, sizeof(fastf_t) * 3 * (r->bot.num_vertices + 1), "bot vertices");
     sscanf(buf, "%lf %lf %lf", 
-	    &r->bot.vertices[r->bot.num_vertices],
-	    &r->bot.vertices[r->bot.num_vertices+1],
-	    &r->bot.vertices[r->bot.num_vertices+2]);
+	    r->bot.vertices + r->bot.num_vertices,
+	    r->bot.vertices + r->bot.num_vertices + 1,
+	    r->bot.vertices + r->bot.num_vertices + 2);
+    r->bot.num_vertices++;
     return 0;
 }
 
 int
 add_face(struct region_s * r, char *buf)
 {
-    r->bot.num_faces++;
-    r->bot.faces = realloc(r->bot.faces, sizeof(int) * 3 * r->bot.num_faces);
+    r->bot.faces = bu_realloc(r->bot.faces, sizeof(int) * 3 * (r->bot.num_faces + 1), "bot faces");
     sscanf(buf, "%d %d %d", 
-	    &(r->bot.faces[r->bot.num_faces]),
-	    &(r->bot.faces[r->bot.num_faces+1]),
-	    &(r->bot.faces[r->bot.num_faces+2]));
+	    r->bot.faces + r->bot.num_faces,
+	    r->bot.faces + r->bot.num_faces + 1,
+	    r->bot.faces + r->bot.num_faces + 2);
+    r->bot.num_faces++;
     return 0;
 }
 
@@ -160,13 +166,18 @@ main(int argc, char **argv)
 	    fprintf(stderr, "Ack! %d\nflaming death\n", ferror(fd_in));
 	    return EXIT_FAILURE;
 	}
+	/* ghetto chomp() */
+	if(strlen(buf)>2 && buf[strlen(buf) - 1] == '\n')
+	    buf[strlen(buf) - 1] = 0;
+
 	switch (*buf) {
 	    case '#':	/* comment */
 		continue;
 	    case 'g':	/* group (region) */
-		if (region)
+		if (region) {
 		    write_region(region, fd_out);
-		free_region(region);
+		    free_region(region);
+		}
 		region = new_region(buf + 2);
 		if (!region) {
 		    perror(prog);
