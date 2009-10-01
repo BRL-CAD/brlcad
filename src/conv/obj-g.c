@@ -100,9 +100,9 @@ add_vertex(struct region_s * r, char *buf)
 {
     r->bot.vertices = bu_realloc(r->bot.vertices, sizeof(fastf_t) * 3 * (r->bot.num_vertices + 1), "bot vertices");
     sscanf(buf, "%lf %lf %lf", 
-	    r->bot.vertices + r->bot.num_vertices,
-	    r->bot.vertices + r->bot.num_vertices + 1,
-	    r->bot.vertices + r->bot.num_vertices + 2);
+	    r->bot.vertices + 3*r->bot.num_vertices,
+	    r->bot.vertices + 3*r->bot.num_vertices + 1,
+	    r->bot.vertices + 3*r->bot.num_vertices + 2);
     r->bot.num_vertices++;
     return 0;
 }
@@ -112,9 +112,13 @@ add_face(struct region_s * r, char *buf)
 {
     r->bot.faces = bu_realloc(r->bot.faces, sizeof(int) * 3 * (r->bot.num_faces + 1), "bot faces");
     sscanf(buf, "%d %d %d", 
-	    r->bot.faces + r->bot.num_faces,
-	    r->bot.faces + r->bot.num_faces + 1,
-	    r->bot.faces + r->bot.num_faces + 2);
+	    r->bot.faces + 3*r->bot.num_faces,
+	    r->bot.faces + 3*r->bot.num_faces + 1,
+	    r->bot.faces + 3*r->bot.num_faces + 2);
+    /* WaveFront OBJ counts from 1, BRL-CAD counts from 0 */
+    r->bot.faces[3*r->bot.num_faces+0]--;
+    r->bot.faces[3*r->bot.num_faces+1]--;
+    r->bot.faces[3*r->bot.num_faces+2]--;
     r->bot.num_faces++;
     return 0;
 }
