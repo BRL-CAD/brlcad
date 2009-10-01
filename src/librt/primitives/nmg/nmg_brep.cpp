@@ -36,7 +36,7 @@
 */
 static ON_Surface* sideSurface(const ON_3dPoint& SW, const ON_3dPoint& SE, const ON_3dPoint& NE, const ON_3dPoint& NW)
 {
-    ON_NurbsSurface *surf = new ON_NurbsSurface(3,FALSE, 2, 2, 2, 2);
+    ON_NurbsSurface *surf = ON_NurbsSurface::New(3,FALSE, 2, 2, 2, 2);
     surf->SetCV(0,0,SW);
     surf->SetCV(1,0,SE);
     surf->SetCV(1,1,NE);

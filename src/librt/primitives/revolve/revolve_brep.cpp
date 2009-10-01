@@ -245,7 +245,7 @@ rt_revolve_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_to
                         bezpoints->Append((*b)->m_V[bsg->ctl_points[i]].Point());
                     }
                     ON_BezierCurve* bez3d = new ON_BezierCurve((const ON_3dPointArray)*bezpoints);
-                    ON_NurbsCurve* beznurb3d = new ON_NurbsCurve();
+                    ON_NurbsCurve* beznurb3d = ON_NurbsCurve::New();
                     bez3d->GetNurbForm(*beznurb3d);
                     beznurb3d->SetDomain(0.0,1.0);
                     (*b)->m_C3.Append(beznurb3d);
