@@ -53,17 +53,16 @@ rt_nurb_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *
 	ON_NurbsSurface *nurb = ON_NurbsSurface::New(3, true, surface->order[0], surface->order[1], surface->s_size[0], surface->s_size[1]);
 
 	/* set 'u' knots */
-	/* set 'u' knots */
 	/* skip first and last (duplicates?) */
 	for (j = 1; j < surface->u.k_size - 1; j++) {
 	    nurb->SetKnot(0, j-1, surface->u.knots[j]);
-//	    bu_log("u knot %d is %f\n", j-1, surface->u.knots[j]);
+	    /* bu_log("u knot %d is %f\n", j-1, surface->u.knots[j]); */
 	}
 	/* set 'v' knots */
 	/* skip first and last (duplicates?) */
 	for (j = 1; j < surface->v.k_size - 1; j++) {
 	    nurb->SetKnot(1, j-1, surface->v.knots[j]);
-//	    bu_log("v knot %d is %f\n", j-1, surface->u.knots[j]);
+	    /* bu_log("v knot %d is %f\n", j-1, surface->u.knots[j]); */
 	}
 
 	/* set control points */
@@ -74,8 +73,8 @@ rt_nurb_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *
 	    }
 	}
 
-/*	nurb->Dump(log);*/
-	bu_log("NURBS surface %s valid\n", nurb->IsValid(&log) ? "is" : "is not");
+	/* nurb->Dump(log); */
+	bu_log("NURBS surface %d %s valid\n", i, nurb->IsValid(&log) ? "is" : "is not");
 
 	(*b)->m_S.Append(nurb);
 	int sindex = (*b)->m_S.Count();
