@@ -43,6 +43,7 @@ rt_nurb_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *
     nip = (struct rt_nurb_internal *)ip->idb_ptr;
     RT_NURB_CK_MAGIC(nip);
 
+    ON_TextLog log(stderr);
     *b = ON_Brep::New();
 
     for (i = 0; i < nip->nsrf; i++) {
@@ -73,7 +74,6 @@ rt_nurb_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *
 	    }
 	}
 
-	ON_TextLog log(stderr);
 /*	nurb->Dump(log);*/
 	bu_log("NURBS surface %s valid\n", nurb->IsValid(&log) ? "is" : "is not");
 
@@ -83,6 +83,13 @@ rt_nurb_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *
 	int findex = (*b)->m_F.Count();
 	ON_BrepLoop* loop = (*b)->NewOuterLoop(findex - 1);
     }
+
+    bu_log("BREP object %s a single surface\n", (*b)->IsSurface() ? "is" : "is not");
+    bu_log("BREP object %s valid\n", (*b)->IsValid(&log) ? "is" : "is not");
+    bu_log("BREP object %s valid topology\n", (*b)->IsValidTopology(&log) ? "is" : "is not");
+    bu_log("BREP object %s valid geometry\n", (*b)->IsValidGeometry(&log) ? "is" : "is not");
+    bu_log("BREP object %s solid\n", (*b)->IsSolid() ? "is" : "is not");
+    bu_log("BREP object %s manifold\n", (*b)->IsManifold() ? "is" : "is not");
 }
 
 
