@@ -26,7 +26,14 @@
  */
 /** @} */
 
+/* define to use new brep ray-tracing */
 #define CONVERT_TO_BREP 1
+
+/* define to display old nurbs wireframe plot */
+//#define OLD_WIREFRAME 1
+
+/* define to display new brep wireframe plot */
+#define NEW_WIREFRAME 1
 
 #include "common.h"
 
@@ -671,7 +678,7 @@ rt_nurb_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_t
     sip = (struct rt_nurb_internal *) ip->idb_ptr;
     RT_NURB_CK_MAGIC(sip);
 
-#if 0
+#ifdef OLD_WIREFRAME
     for (s=0; s < sip->nsrf; s++) {
 	struct face_g_snurb * n, *r, *c;
 	int coords;
@@ -790,7 +797,7 @@ rt_nurb_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_t
     }
 #endif
 
-#ifdef CONVERT_TO_BREP
+#ifdef NEW_WIREFRAME
     ON_Brep *brep = ON_Brep::New();
     rt_nurb_brep(&brep, ip, tol);
 
