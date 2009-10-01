@@ -46,29 +46,27 @@ static char *usage = "%s [-d] [-x rt_debug_flag] input.obj output.g\n\
 static int debug = 0;
 
 struct region_s {
-    char*name;
+    char *name;
     struct rt_bot_internal bot;
 };
 
 struct region_s *
 new_region(char *name)
 {
-    struct region_s *r;
-    r = (struct region_s *) bu_malloc(sizeof(struct region_s), "Region");
-    if(r) {
-	memset(r, 0, sizeof(r));    /* flash everything to 0, hope that NULL==0x0 */
-	r->name = strdup(name);
-	r->bot.magic = RT_BOT_INTERNAL_MAGIC;
-	r->bot.mode = RT_BOT_SURFACE;
-	r->bot.orientation = RT_BOT_CCW;
-	r->bot.num_vertices = 0;
-	r->bot.vertices = NULL;	/* why doesn't memset eat this? */
-	r->bot.num_faces = 0;
-	r->bot.faces = NULL;
-    } else {
-	printf("wtf? couldn't allocate a region?\n");
-    }
-    return r;
+    static struct region_s r;
+    r.name = strdup(name);
+    r.bot.magic = RT_BOT_INTERNAL_MAGIC;
+    r.bot.mode = RT_BOT_SURFACE;
+    r.bot.orientation = RT_BOT_CCW;
+    r.bot.num_vertices = 0;
+    if(r.bot.vertices)
+	bu_free(r.bot.vertices, "new_region vertices");
+    r.bot.vertices = NULL;	/* why doesn't memset eat this? */
+    r.bot.num_faces = 0;
+    r.bot.faces = NULL;
+    if(r.bot.faces)
+	bu_free(r.bot.faces, "new_region faces");
+    return &r;
 }
 
 int
@@ -87,10 +85,8 @@ write_region(struct region_s *r, struct rt_wdb *out_fp)
     int rval;
     const char *regname;
     /* add the region long name to list */
-    /* lock here, regname is not reentrant. */
     regname = bu_basename(r->name);
     rval = wdb_export( out_fp, regname, (genptr_t)&(r->bot), ID_BOT, 1.0 );
-    /* unlock here. */
     return rval;
 }
 
@@ -155,16 +151,22 @@ main(int argc, char **argv)
 
     rt_init_resource(&rt_uniresource, 0, NULL);
 
+    /* open the OBJ for reading */
     if ((fd_in = fopen(argv[0], "r")) == NULL) {
 	bu_log("Cannot open input file (%s)\n", argv[0]);
 	perror(prog);
 	bu_exit(1, NULL);
     }
+    /* open the .g for writing */
     if ((fd_out = wdb_fopen(argv[1])) == NULL) {
 	bu_log("Cannot create new BRL-CAD file (%s)\n", argv[1]);
 	perror(prog);
 	bu_exit(1, NULL);
     }
+
+    /* prep the region, use a default name in case the OBJ has no groups */
+    region = new_region("all.s");
+    /* loop through the OBJ file. */
     while (fgets(buf, BUFSIZ, fd_in)) {
 	if (ferror(fd_in)) {
 	    fprintf(stderr, "Ack! %d\nflaming death\n", ferror(fd_in));
@@ -207,6 +209,7 @@ main(int argc, char **argv)
 		return EXIT_FAILURE;
 	}
     }
+    write_region(region, fd_out);
 
     /* using the list generated in write regions, build the tree. */
 
