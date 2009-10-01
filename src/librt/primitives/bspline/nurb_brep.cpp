@@ -34,7 +34,7 @@
 extern "C" void
 rt_nurb_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *tol)
 {
-    int i;
+    int i, j, k;
     struct rt_nurb_internal *nip;
     point_t min_pt, max_pt;
     point_t center;
@@ -66,7 +66,37 @@ rt_nurb_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *
     *b = ON_Brep::New();
 
     for (i = 0; i < nip->nsrf; i++) {
-	
+	struct face_g_snurb *surface = nip->srfs[i];
+	NMG_CK_SNURB(surface);
+
+	ON_NurbsSurface *nurb = ON_NurbsSurface::New(3, true, surface->order[0], surface->order[1], surface->s_size[0], surface->s_size[1]);
+
+	/* set 'u' knots */
+	for (j = 0; j < surface->u.k_size; j++) {
+	    nurb->SetKnot(0, j, surface->u.knots[j]);
+	}
+	/* set 'v' knots */
+	for (j = 0; j < surface->v.k_size; j++) {
+	    nurb->SetKnot(1, j, surface->v.knots[j]);
+	}
+
+	/* set control points */
+	for (j = 0; j < surface->s_size[0]; j++) {
+	    for (k = 0; k < surface->s_size[1]; k++) {
+		ON_3dPoint point = &RT_NURB_GET_CONTROL_POINT(surface, j, k);
+		nurb->SetCV(j, k, point);
+	    }
+	}
+
+	ON_TextLog log;
+	nurb->Dump(log);
+	bu_log("NURBS surface %s valid", nurb->IsValid(&log) ? "is" : "is not");
+
+	(*b)->m_S.Append(nurb);
+	int sindex = (*b)->m_S.Count();
+	ON_BrepFace& face = (*b)->NewFace(sindex - 1);
+	int findex = (*b)->m_F.Count();
+	ON_BrepLoop* loop = (*b)->NewOuterLoop(findex - 1);
     }
 
 #endif
