@@ -53,20 +53,16 @@ struct region_s {
 struct region_s *
 new_region(char *name)
 {
-    static struct region_s r;
-    r.name = strdup(name);
-    r.bot.magic = RT_BOT_INTERNAL_MAGIC;
-    r.bot.mode = RT_BOT_SURFACE;
-    r.bot.orientation = RT_BOT_CCW;
-    r.bot.num_vertices = 0;
-    if(r.bot.vertices)
-	bu_free(r.bot.vertices, "new_region vertices");
-    r.bot.vertices = NULL;	/* why doesn't memset eat this? */
-    r.bot.num_faces = 0;
-    r.bot.faces = NULL;
-    if(r.bot.faces)
-	bu_free(r.bot.faces, "new_region faces");
-    return &r;
+    struct region_s *r = (struct region_s *)bu_malloc(sizeof(struct region_s), "new_region");;
+    r->name = strdup(name);
+    r->bot.magic = RT_BOT_INTERNAL_MAGIC;
+    r->bot.mode = RT_BOT_SURFACE;
+    r->bot.orientation = RT_BOT_CCW;
+    r->bot.num_vertices = 0;
+    r->bot.vertices = NULL;	/* why doesn't memset eat this? */
+    r->bot.num_faces = 0;
+    r->bot.faces = NULL;
+    return r;
 }
 
 int
