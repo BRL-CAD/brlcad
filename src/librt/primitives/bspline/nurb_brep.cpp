@@ -84,11 +84,11 @@ rt_nurb_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *
 	for (j = 0; j < surface->s_size[0]; j++) {
 	    for (k = 0; k < surface->s_size[1]; k++) {
 		ON_3dPoint point = &RT_NURB_GET_CONTROL_POINT(surface, j, k);
-		nurb->SetCV(j, k, point);
+		nurb->SetCV(k, j, point);
 	    }
 	}
 
-	ON_TextLog log;
+	ON_TextLog log(stderr);
 	nurb->Dump(log);
 	bu_log("NURBS surface %s valid", nurb->IsValid(&log) ? "is" : "is not");
 
