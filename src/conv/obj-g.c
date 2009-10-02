@@ -89,6 +89,7 @@ write_region(struct region_s *r, struct rt_wdb *out_fp)
     } else {
 	int faces;
 	/* add the region long name to list */
+	facemax += r->bot.num_faces;
 	regname = bu_basename(r->name);
 	faces = r->bot.num_faces;
 	rval = wdb_export(out_fp, regname, (genptr_t)&(r->bot), ID_BOT, 1.0);
@@ -173,7 +174,7 @@ main(int argc, char **argv)
     /* prep the region, use a default name in case the OBJ has no groups */
     region = new_region("all.s");
     /* loop through the OBJ file. */
-    while (fgets(buf, BUFSIZ, fd_in)) {
+    while (bu_fgets(buf, BUFSIZ, fd_in)) {
 	if (ferror(fd_in)) {
 	    fprintf(stderr, "Ack! %d\nflaming death\n", ferror(fd_in));
 	    return EXIT_FAILURE;
