@@ -55,7 +55,7 @@ struct region_s {
 struct region_s *
 new_region(char *name)
 {
-    struct region_s *r = (struct region_s *)bu_malloc(sizeof(struct region_s), "new_region");;
+    struct region_s *r = (struct region_s *)bu_calloc(1, sizeof(struct region_s), "new_region");;
     r->name = strdup(name);
     r->bot.magic = RT_BOT_INTERNAL_MAGIC;
     r->bot.mode = RT_BOT_SURFACE;
@@ -83,15 +83,15 @@ write_region(struct region_s *r, struct rt_wdb *out_fp)
     int rval = -1;
     const char *regname;
 
-    if(r->bot.num_faces == 0) {
-	if(strncmp(r->name, "all.s", 6))
+    if (r->bot.num_faces == 0) {
+	if (strncmp(r->name, "all.s", 6))
 	    rval = fprintf("%s has 0 faces, skipping\n", r->name), 0;
     } else {
 	int faces;
 	/* add the region long name to list */
 	regname = bu_basename(r->name);
 	faces = r->bot.num_faces;
-	rval = wdb_export( out_fp, regname, (genptr_t)&(r->bot), ID_BOT, 1.0 );
+	rval = wdb_export(out_fp, regname, (genptr_t)&(r->bot), ID_BOT, 1.0);
 	printf("Wrote %s (%d faces)\n", regname, faces);
     }
     return rval;
@@ -103,9 +103,9 @@ add_vertex(struct region_s * r, char *buf)
 {
     r->bot.vertices = bu_realloc(r->bot.vertices, sizeof(fastf_t) * 3 * (r->bot.num_vertices + 1), "bot vertices");
     sscanf(buf, "%lf %lf %lf", 
-	    r->bot.vertices + 3*r->bot.num_vertices,
-	    r->bot.vertices + 3*r->bot.num_vertices + 1,
-	    r->bot.vertices + 3*r->bot.num_vertices + 2);
+	   r->bot.vertices + 3*r->bot.num_vertices,
+	   r->bot.vertices + 3*r->bot.num_vertices + 1,
+	   r->bot.vertices + 3*r->bot.num_vertices + 2);
     r->bot.num_vertices++;
     return 0;
 }
@@ -115,9 +115,9 @@ add_face(struct region_s * r, char *buf)
 {
     r->bot.faces = bu_realloc(r->bot.faces, sizeof(int) * 3 * (r->bot.num_faces + 1), "bot faces");
     sscanf(buf, "%d %d %d", 
-	    r->bot.faces + 3*r->bot.num_faces,
-	    r->bot.faces + 3*r->bot.num_faces + 1,
-	    r->bot.faces + 3*r->bot.num_faces + 2);
+	   r->bot.faces + 3*r->bot.num_faces,
+	   r->bot.faces + 3*r->bot.num_faces + 1,
+	   r->bot.faces + 3*r->bot.num_faces + 2);
     r->bot.faces[3*r->bot.num_faces+0]-=facemax;
     r->bot.faces[3*r->bot.num_faces+1]-=facemax;
     r->bot.faces[3*r->bot.num_faces+2]-=facemax;
@@ -128,10 +128,10 @@ add_face(struct region_s * r, char *buf)
 int
 main(int argc, char **argv)
 {
-    int             c;
-    char           *prog = *argv, buf[BUFSIZ];
-    FILE           *fd_in;	/* input file */
-    struct rt_wdb  *fd_out;	/* Resulting BRL-CAD file */
+    int c;
+    char *prog = *argv, buf[BUFSIZ];
+    FILE *fd_in;	/* input file */
+    struct rt_wdb *fd_out;	/* Resulting BRL-CAD file */
     struct region_s *region = NULL;
 
     if (argc < 2)
@@ -179,7 +179,7 @@ main(int argc, char **argv)
 	    return EXIT_FAILURE;
 	}
 	/* ghetto chomp() */
-	if(strlen(buf)>2 && buf[strlen(buf) - 1] == '\n')
+	if (strlen(buf)>2 && buf[strlen(buf) - 1] == '\n')
 	    buf[strlen(buf) - 1] = 0;
 
 	switch (*buf) {
