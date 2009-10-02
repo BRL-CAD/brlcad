@@ -44,8 +44,8 @@ static char *usage = "%s [-d] [-x rt_debug_flag] input.obj output.g\n\
 			 The -d option prints additional debugging information.\n\
 			 The -x option specifies an RT debug flags (see raytrace.h).\n";
 static int debug = 0;
-
-static int facemax = 1;
+static int verbose = 0;
+static int vertmax = 1;
 
 struct region_s {
     char *name;
@@ -85,15 +85,16 @@ write_region(struct region_s *r, struct rt_wdb *out_fp)
 
     if (r->bot.num_faces == 0) {
 	if (strncmp(r->name, "all.s", 6))
-	    rval = fprintf("%s has 0 faces, skipping\n", r->name), 0;
+	    rval = fprintf(stderr, "%s has 0 faces, skipping\n", r->name), 0;
     } else {
 	int faces;
 	/* add the region long name to list */
-	facemax += r->bot.num_faces;
+	vertmax += r->bot.num_vertices;
 	regname = bu_basename(r->name);
 	faces = r->bot.num_faces;
 	rval = wdb_export(out_fp, regname, (genptr_t)&(r->bot), ID_BOT, 1.0);
-	printf("Wrote %s (%d faces)\n", regname, faces);
+	if(verbose)
+	    printf("Wrote %s (%d faces)\n", regname, faces);
     }
     return rval;
 }
@@ -119,9 +120,9 @@ add_face(struct region_s * r, char *buf)
 	   r->bot.faces + 3*r->bot.num_faces,
 	   r->bot.faces + 3*r->bot.num_faces + 1,
 	   r->bot.faces + 3*r->bot.num_faces + 2);
-    r->bot.faces[3*r->bot.num_faces+0]-=facemax;
-    r->bot.faces[3*r->bot.num_faces+1]-=facemax;
-    r->bot.faces[3*r->bot.num_faces+2]-=facemax;
+    r->bot.faces[3*r->bot.num_faces+0]-=vertmax;
+    r->bot.faces[3*r->bot.num_faces+1]-=vertmax;
+    r->bot.faces[3*r->bot.num_faces+2]-=vertmax;
     r->bot.num_faces++;
     return 0;
 }
@@ -138,7 +139,7 @@ main(int argc, char **argv)
     if (argc < 2)
 	bu_exit(1, usage, argv[0]);
 
-    while ((c = bu_getopt(argc, argv, "dx")) != EOF) {
+    while ((c = bu_getopt(argc, argv, "dxv")) != EOF) {
 	switch (c) {
 	    case 'd':
 		debug = 1;
@@ -147,6 +148,9 @@ main(int argc, char **argv)
 		sscanf(bu_optarg, "%x", (unsigned int *) &rt_g.debug);
 		bu_printb("librt RT_G_DEBUG", RT_G_DEBUG, DEBUG_FORMAT);
 		bu_log("\n");
+		break;
+	    case 'v':
+		verbose++;
 		break;
 	    default:
 		bu_exit(1, usage, argv[0]);
