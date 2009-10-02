@@ -103,6 +103,7 @@ write_region(struct region_s *r, struct rt_wdb *out_fp)
 int
 add_vertex(struct region_s * r, char *buf)
 {
+    /* syntax is "v <x> <y> <z> [w]" */
     r->bot.vertices = bu_realloc(r->bot.vertices, sizeof(fastf_t) * 3 * (r->bot.num_vertices + 1), "bot vertices");
     sscanf(buf, "%lf %lf %lf", 
 	   r->bot.vertices + 3*r->bot.num_vertices,
@@ -115,6 +116,8 @@ add_vertex(struct region_s * r, char *buf)
 int
 add_face(struct region_s * r, char *buf)
 {
+    /* syntax is ... messy. v1/vt1/vn1, can be
+     * "f 1 2 3 ...", or "f 1//1 2//x ..." or "f 1/1/1/ ..." or "f 1/1 ..." or ... */
     r->bot.faces = bu_realloc(r->bot.faces, sizeof(int) * 3 * (r->bot.num_faces + 1), "bot faces");
     sscanf(buf, "%d %d %d", 
 	   r->bot.faces + 3*r->bot.num_faces,
@@ -205,11 +208,18 @@ main(int argc, char **argv)
 		}
 		break;
 	    case 'v':	/* vertex */
-		if (!region) {
-		    perror(prog);
-		    return EXIT_FAILURE;
+		switch(buf[1]) {
+		    case ' ':
+			if (!region) {
+			    perror(prog);
+			    return EXIT_FAILURE;
+			}
+			add_vertex(region, buf + 2);
+			break;
+		    case 'n':
+			/* vertex normal here */
+			break;
 		}
-		add_vertex(region, buf + 2);
 		break;
 	    case 'f':	/* face */
 		if (!region) {
@@ -218,10 +228,22 @@ main(int argc, char **argv)
 		}
 		add_face(region, buf + 2);
 		break;
+	    case 'l': 
+		{ static int seen = 0; if(!seen) { printf("Saw a 'line' statement, ignoring lines.\n"); seen++; } } 
+		break;
+	    case 's':
+		{ static int seen = 0; if(!seen) { printf("Saw a 'smoothing group' statement, ignoring.\n"); seen++; } } 
+		break;
+	    case 'm':
+		if(!strncmp(buf,"mtllib",6)) printf("Ignoring this mtllib for now\n");
+		break;
+	    case 'u':
+		if(!strncmp(buf,"usemtl",6)) printf("Ignoring this usemtl for now\n");
+		break;
 	    default:
 		fprintf(stderr, "Unknown control code: %c\n", *buf);
 		return EXIT_FAILURE;
-	}
+	} 
     }
     write_region(region, fd_out);
 
