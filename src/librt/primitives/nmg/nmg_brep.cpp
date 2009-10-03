@@ -146,6 +146,7 @@ rt_nmg_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *t
 			VMOVE(max_pt, tmppt);
 		    }
 		}
+		bu_ptbl_free(&vert_table);
 		int ccw = 0;
 		vect_t vtmp, uv1, uv2, uv3, uv4, vnormal;
 		// If an outer loop is found in the nmg with a cw orientation, use a flipped normal
