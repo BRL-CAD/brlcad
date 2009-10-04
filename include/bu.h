@@ -207,7 +207,7 @@ BU_EXPORT extern Tcl_Interp *brlcad_interp;
  *
  * @def BU_GETUNION(ptr, union_type)
  * Allocate storage for a union
-*/
+ */
 #define BU_GETSTRUCT(_p, _str) \
 	_p = (struct _str *)bu_calloc(1, sizeof(struct _str), #_str " (getstruct)" BU_FLSTR)
 #define BU_GETUNION(_p, _unn) \
@@ -222,7 +222,7 @@ BU_EXPORT extern Tcl_Interp *brlcad_interp;
  * for typedef'ed objects.
  */
 #define BU_GETTYPE(_p, _type) \
-	_p = (_type *)bu_calloc(1, sizeof(_type), #_type " (gettype)" )
+	_p = (_type *)bu_calloc(1, sizeof(_type), #_type " (gettype)")
 
 
 /**
@@ -250,9 +250,9 @@ BU_EXPORT extern Tcl_Interp *brlcad_interp;
 #  define BU_ASSERT(_equation)
 #else
 #  define BU_ASSERT(_equation)	\
-	if ( !(_equation) )  { \
-		bu_log("BU_ASSERT( " #_equation " ) failed, file %s, line %d\n", \
-			__FILE__, __LINE__ ); \
+	if (!(_equation)) { \
+		bu_log("BU_ASSERT(" #_equation ") failed, file %s, line %d\n", \
+			__FILE__, __LINE__); \
 		bu_bomb("BU_ASSERT failure\n"); \
 	}
 #endif
@@ -261,10 +261,10 @@ BU_EXPORT extern Tcl_Interp *brlcad_interp;
 #  define BU_ASSERT_PTR(_lhs, _relation, _rhs)
 #else
 #  define BU_ASSERT_PTR(_lhs, _relation, _rhs)	\
-	if ( !((_lhs) _relation (_rhs)) )  { \
-		bu_log("BU_ASSERT_PTR( " #_lhs #_relation #_rhs " ) failed, lhs=x%lx, rhs=x%lx, file %s, line %d\n", \
+	if (!((_lhs) _relation (_rhs))) { \
+		bu_log("BU_ASSERT_PTR(" #_lhs #_relation #_rhs ") failed, lhs=x%lx, rhs=x%lx, file %s, line %d\n", \
 			(long)(_lhs), (long)(_rhs), \
-			__FILE__, __LINE__ ); \
+			__FILE__, __LINE__); \
 		bu_bomb("BU_ASSERT_PTR failure\n"); \
 	}
 #endif
@@ -274,10 +274,10 @@ BU_EXPORT extern Tcl_Interp *brlcad_interp;
 #  define BU_ASSERT_LONG(_lhs, _relation, _rhs)
 #else
 #  define BU_ASSERT_LONG(_lhs, _relation, _rhs)	\
-	if ( !((_lhs) _relation (_rhs)) )  { \
-		bu_log("BU_ASSERT_LONG( " #_lhs #_relation #_rhs " ) failed, lhs=%ld, rhs=%ld, file %s, line %d\n", \
+	if (!((_lhs) _relation (_rhs))) { \
+		bu_log("BU_ASSERT_LONG(" #_lhs #_relation #_rhs ") failed, lhs=%ld, rhs=%ld, file %s, line %d\n", \
 			(long)(_lhs), (long)(_rhs), \
-			__FILE__, __LINE__ ); \
+			__FILE__, __LINE__); \
 		bu_bomb("BU_ASSERT_LONG failure\n"); \
 	}
 #endif
@@ -287,10 +287,10 @@ BU_EXPORT extern Tcl_Interp *brlcad_interp;
 #  define BU_ASSERT_DOUBLE(_lhs, _relation, _rhs)
 #else
 #  define BU_ASSERT_DOUBLE(_lhs, _relation, _rhs)	\
-	if ( !((_lhs) _relation (_rhs)) )  { \
-		bu_log("BU_ASSERT_DOUBLE( " #_lhs #_relation #_rhs " ) failed, lhs=%lf, rhs=%lf, file %s, line %d\n", \
+	if (!((_lhs) _relation (_rhs))) { \
+		bu_log("BU_ASSERT_DOUBLE(" #_lhs #_relation #_rhs ") failed, lhs=%lf, rhs=%lf, file %s, line %d\n", \
 			(double)(_lhs), (double)(_rhs), \
-			__FILE__, __LINE__ ); \
+			__FILE__, __LINE__); \
 		bu_bomb("BU_ASSERT_DOUBLE failure\n"); \
 	}
 #endif
@@ -497,34 +497,34 @@ BU_EXPORT BU_EXTERN(inline bu_endian_t bu_byteorder, (void));
  * --- BEGIN EXAMPLE ---
  * @code
 
-    // make bu_list the first element in your structure
-    struct my_structure {
-	struct bu_list l;
-	int my_data;
-    };
+ // make bu_list the first element in your structure
+ struct my_structure {
+     struct bu_list l;
+     int my_data;
+ };
 
-    // your actual list
-    struct my_structure *my_list = NULL;
+ // your actual list
+ struct my_structure *my_list = NULL;
 
-    // allocate and initialize your list head
-    BU_GETSTRUCT(my_list, my_structure);
-    BU_LIST_INIT(&(my_list->l));
-    my_list->my_data = -1;
+ // allocate and initialize your list head
+ BU_GETSTRUCT(my_list, my_structure);
+ BU_LIST_INIT(&(my_list->l));
+ my_list->my_data = -1;
 
-    // add a new element to your list
-    struct my_structure *new_entry;
-    BU_GETSTRUCT(new_entry, my_structure);
-    new_entry->my_data = rand();
-    BU_LIST_PUSH(&(my_list->l), &(new_entry->l));
+ // add a new element to your list
+ struct my_structure *new_entry;
+ BU_GETSTRUCT(new_entry, my_structure);
+ new_entry->my_data = rand();
+ BU_LIST_PUSH(&(my_list->l), &(new_entry->l));
 
-    // iterate over your list, remove all items
-    struct my_structure *entry;
-    while (BU_LIST_WHILE(entry, my_structure, &(my_list->l))) {
-	bu_log("Entry value is %d\n", entry->my_data);
-	BU_LIST_DEQUEUE(&(entry->l));
-	bu_free(entry, "free my_structure entry");
-    }
-    bu_free(my_list, "free my_structure list head");
+ // iterate over your list, remove all items
+ struct my_structure *entry;
+ while (BU_LIST_WHILE(entry, my_structure, &(my_list->l))) {
+     bu_log("Entry value is %d\n", entry->my_data);
+     BU_LIST_DEQUEUE(&(entry->l));
+     bu_free(entry, "free my_structure entry");
+ }
+ bu_free(my_list, "free my_structure list head");
 
  * @endcode
  * --- END EXAMPLE ---
@@ -542,9 +542,10 @@ BU_EXPORT BU_EXTERN(inline bu_endian_t bu_byteorder, (void));
  * user "magic" numbers, as long as the head is properly marked.
  *
  * There is a dual set of terminology used in some of the macros:
- *   FIRST / LAST	from the point of view of the list head
- *   NEXT / PREV	from the point of view of a list member
- *   forw / back	the actual pointer names
+ *
+ * FIRST/ LAST - from the point of view of the list head
+ * NEXT / PREV - from the point of view of a list member
+ * forw / back - the actual pointer names
  */
 /**@{*/
 
@@ -560,22 +561,22 @@ typedef struct bu_list bu_list_t;
 BU_EXPORT BU_EXTERN(struct bu_list *bu_list_new, ());
 BU_EXPORT BU_EXTERN(struct bu_list *bu_list_pop, (struct bu_list *hp));
 
-#define BU_LIST_CLOSE( hp ) { \
-	BU_ASSERT( (hp) != NULL ); \
-	if ( (hp) == NULL ) \
+#define BU_LIST_CLOSE(hp) { \
+	BU_ASSERT((hp) != NULL); \
+	if ((hp) == NULL) \
 		return; \
-	BU_ASSERT( BU_LIST_IS_EMPTY( (hp) ) ); \
-	bu_list_free( (hp) ); \
-	bu_free( (char *)(hp), "bu_list head" ); \
+	BU_ASSERT(BU_LIST_IS_EMPTY((hp))); \
+	bu_list_free((hp)); \
+	bu_free((char *)(hp), "bu_list head"); \
 }
 
 
 /**
  * Insert "new" item in front of "old" item.  Often, "old" is the
  * head.  To put the new item at the tail of the list, insert before
- * the head, e.g.  * BU_LIST_INSERT( &(head.l), &((p)->l) );
+ * the head, e.g.  * BU_LIST_INSERT(&(head.l), &((p)->l));
  */
-#define BU_LIST_INSERT(old, new)	{ \
+#define BU_LIST_INSERT(old, new) { \
 	(new)->back = (old)->back; \
 	(old)->back = (new); \
 	(new)->forw = (old); \
@@ -584,9 +585,9 @@ BU_EXPORT BU_EXTERN(struct bu_list *bu_list_pop, (struct bu_list *hp));
 /**
  * Append "new" item after "old" item.  Often, "old" is the head.  To
  * put the new item at the head of the list, append after the head,
- * e.g.  * BU_LIST_APPEND( &(head.l), &((p)->l) );
+ * e.g.  * BU_LIST_APPEND(&(head.l), &((p)->l));
  */
-#define BU_LIST_APPEND(old, new)	{ \
+#define BU_LIST_APPEND(old, new) { \
 	(new)->forw = (old)->forw; \
 	(new)->back = (old); \
 	(old)->forw = (new); \
@@ -595,7 +596,7 @@ BU_EXPORT BU_EXTERN(struct bu_list *bu_list_pop, (struct bu_list *hp));
 /**
  * Dequeue "cur" item from anywhere in doubly-linked list
  */
-#define BU_LIST_DEQUEUE(cur)	{ \
+#define BU_LIST_DEQUEUE(cur) { \
 	(cur)->forw->back = (cur)->back; \
 	(cur)->back->forw = (cur)->forw; \
 	(cur)->forw = (cur)->back = BU_LIST_NULL;  /* sanity */ }
@@ -610,17 +611,17 @@ BU_EXPORT BU_EXTERN(struct bu_list *bu_list_pop, (struct bu_list *hp));
 #define BU_LIST_DQ_T(cur, type) (\
 	(cur)->forw->back = (cur)->back, \
 	(cur)->back->forw = (cur)->forw, \
-	(type *)(cur) )
+	(type *)(cur))
 
 /**
  * This version of BU_LIST_DEQUEUE uses the comma operator inorder to
  * return a typecast version of the dequeued pointer
  */
-#define BU_LIST_DEQUEUE_T( cur, type ) (\
+#define BU_LIST_DEQUEUE_T(cur, type) (\
 	(cur)->forw->back = (cur)->back, \
 	(cur)->back->forw = (cur)->forw, \
 	(cur)->forw = (cur)->back = BU_LIST_NULL, \
-	(type *)(cur) )
+	(type *)(cur))
 
 
 /**
@@ -644,8 +645,8 @@ BU_EXPORT BU_EXTERN(struct bu_list *bu_list_pop, (struct bu_list *hp));
 		     (p) = (struct structure *) 0;			\
 	}
 
-#define BU_LIST_POP_T(hp, type )				\
-	(type *)bu_list_pop( hp )
+#define BU_LIST_POP_T(hp, type)				\
+	(type *)bu_list_pop(hp)
 
 /**
  * "Bulk transfer" all elements from the list headed by src_hd onto
@@ -656,7 +657,7 @@ BU_EXPORT BU_EXTERN(struct bu_list *bu_list_pop, (struct bu_list *hp));
  * BU_LIST_APPEND_LIST places src_hd elements at end of dest_hd list.
  */
 #define BU_LIST_INSERT_LIST(dest_hp, src_hp) \
-	if ( BU_LIST_NON_EMPTY(src_hp) )  { \
+	if (BU_LIST_NON_EMPTY(src_hp)) { \
 		register struct bu_list *_first = (src_hp)->forw; \
 		register struct bu_list *_last = (src_hp)->back; \
 		(dest_hp)->forw->back = _last; \
@@ -667,7 +668,7 @@ BU_EXPORT BU_EXTERN(struct bu_list *bu_list_pop, (struct bu_list *hp));
 	}
 
 #define BU_LIST_APPEND_LIST(dest_hp, src_hp) \
-	if ( BU_LIST_NON_EMPTY(src_hp) )  {\
+	if (BU_LIST_NON_EMPTY(src_hp)) {\
 		register struct bu_list *_first = (src_hp)->forw; \
 		register struct bu_list *_last = (src_hp)->back; \
 		_first->back = (dest_hp)->back; \
@@ -691,10 +692,10 @@ BU_EXPORT BU_EXTERN(struct bu_list *bu_list_pop, (struct bu_list *hp));
 /* Handle list initialization */
 #define BU_LIST_UNINITIALIZED(hp)	((hp)->forw == BU_LIST_NULL)
 #define BU_LIST_IS_INITIALIZED(hp)	((hp)->forw != BU_LIST_NULL)
-#define BU_LIST_INIT(hp)	{ \
+#define BU_LIST_INIT(hp) { \
 	(hp)->forw = (hp)->back = (hp); \
 	(hp)->magic = BU_LIST_HEAD_MAGIC;	/* used by circ. macros */ }
-#define BU_LIST_MAGIC_SET(hp, val)	{(hp)->magic = (val);}
+#define BU_LIST_MAGIC_SET(hp, val) {(hp)->magic = (val);}
 #define BU_LIST_MAGIC_OK(hp, val)	((hp)->magic == (val))
 #define BU_LIST_MAGIC_WRONG(hp, val)	((hp)->magic != (val))
 
@@ -721,7 +722,7 @@ BU_EXPORT BU_EXTERN(struct bu_list *bu_list_pop, (struct bu_list *hp));
 	(((struct bu_list *)(p)) == (hp))
 #define BU_LIST_NOT_HEAD(p, hp)	\
 	(((struct bu_list *)(p)) != (hp))
-#define BU_CK_LIST_HEAD( _p )	BU_CKMAG( (_p), BU_LIST_HEAD_MAGIC, "bu_list")
+#define BU_CK_LIST_HEAD(_p)	BU_CKMAG((_p), BU_LIST_HEAD_MAGIC, "bu_list")
 
 /**
  * Boolean test to see if previous list element is the head
@@ -739,26 +740,26 @@ BU_EXPORT BU_EXTERN(struct bu_list *bu_list_pop, (struct bu_list *hp));
 #define BU_LIST_NEXT_NOT_HEAD(p, hp)	\
 	(((struct bu_list *)(p))->forw != (hp))
 
-#define BU_LIST_EACH( hp, p, type ) \
-	 for ( (p)=(type *)BU_LIST_FIRST(bu_list, hp); \
+#define BU_LIST_EACH(hp, p, type) \
+	 for ((p)=(type *)BU_LIST_FIRST(bu_list, hp); \
 	      (p) && BU_LIST_NOT_HEAD(p, hp); \
-	      (p)=(type *)BU_LIST_PNEXT(bu_list, p) ) \
+	      (p)=(type *)BU_LIST_PNEXT(bu_list, p)) \
 
-#define BU_LIST_REVEACH( hp, p, type ) \
-	 for ( (p)=(type *)BU_LIST_LAST(bu_list, hp); \
+#define BU_LIST_REVEACH(hp, p, type) \
+	 for ((p)=(type *)BU_LIST_LAST(bu_list, hp); \
 	      (p) && BU_LIST_NOT_HEAD(p, hp); \
-	      (p)=(type *)BU_LIST_PREV(bu_list, ((struct bu_list *)(p))) ) \
+	      (p)=(type *)BU_LIST_PREV(bu_list, ((struct bu_list *)(p)))) \
 
-#define BU_LIST_TAIL( hp, start, p, type ) \
-	 for ( (p)=(type *)start; \
+#define BU_LIST_TAIL(hp, start, p, type) \
+	 for ((p)=(type *)start; \
 	      (p) && BU_LIST_NOT_HEAD(p, hp); \
-	      (p)=(type *)BU_LIST_PNEXT(bu_list, (p)) )
+	      (p)=(type *)BU_LIST_PNEXT(bu_list, (p)))
 
 /**
  * Intended as innards for a for loop to visit all nodes on list, e.g.:
  *
- * for ( BU_LIST_FOR( p, structure, hp ) )  {
- *	work_on( p );
+ * for (BU_LIST_FOR(p, structure, hp)) {
+ *	work_on(p);
  * }
  */
 #define BU_LIST_FOR(p, structure, hp)	\
@@ -784,8 +785,8 @@ BU_EXPORT BU_EXTERN(struct bu_list *bu_list_pop, (struct bu_list *hp));
  * Intended as innards for a for loop to visit elements of two lists
  * in tandem, e.g.:
  *
- * for (BU_LIST_FOR2(p1, p2, structure, hp1, hp2) ) {
- *	process( p1, p2 );
+ * for (BU_LIST_FOR2(p1, p2, structure, hp1, hp2)) {
+ *	process(p1, p2);
  * }
  */
 #define BU_LIST_FOR2(p1, p2, structure, hp1, hp2)				\
@@ -801,9 +802,9 @@ BU_EXPORT BU_EXTERN(struct bu_list *bu_list_pop, (struct bu_list *hp));
  * element.  Useful mostly for a loop that will dequeue every list
  * element, e.g.:
  *
- *	while ( BU_LIST_WHILE(p, structure, hp) )  {
- *@n		BU_LIST_DEQUEUE( &(p->l) );
- *@n		free( (char *)p );
+ *	while (BU_LIST_WHILE(p, structure, hp)) {
+ *@n		BU_LIST_DEQUEUE(&(p->l));
+ *@n		free((char *)p);
  *@n	}
  */
 #define BU_LIST_WHILE(p, structure, hp)	\
@@ -841,7 +842,7 @@ BU_EXPORT BU_EXTERN(struct bu_list *bu_list_pop, (struct bu_list *hp));
 #define BU_LIST_PNEXT_CIRC(structure, p)	\
 	((BU_LIST_FIRST_MAGIC((struct bu_list *)(p)) == BU_LIST_HEAD_MAGIC) ? \
 		BU_LIST_PNEXT_PNEXT(structure, (struct bu_list *)(p)) : \
-		BU_LIST_PNEXT(structure, p) )
+		BU_LIST_PNEXT(structure, p))
 
 /**
  * Return pointer to circular last element; ie, ignoring the list head
@@ -849,7 +850,7 @@ BU_EXPORT BU_EXTERN(struct bu_list *bu_list_pop, (struct bu_list *hp));
 #define BU_LIST_PPREV_CIRC(structure, p)	\
 	((BU_LIST_LAST_MAGIC((struct bu_list *)(p)) == BU_LIST_HEAD_MAGIC) ? \
 		BU_LIST_PLAST_PLAST(structure, (struct bu_list *)(p)) : \
-		BU_LIST_PLAST(structure, p) )
+		BU_LIST_PLAST(structure, p))
 
 /**
  * Support for membership on multiple linked lists.
@@ -860,7 +861,7 @@ BU_EXPORT BU_EXTERN(struct bu_list *bu_list_pop, (struct bu_list *hp));
  * (an element called '_name2' in structure '_type') back into a
  * pointer to the overall enclosing structure.  Examples:
  *
- * eu = BU_LIST_MAIN_PTR( edgeuse, midway, l2 );
+ * eu = BU_LIST_MAIN_PTR(edgeuse, midway, l2);
  *
  * eu1 = BU_LIST_MAIN_PTR(edgeuse, BU_LIST_FIRST(bu_list, &eg1->eu_hd2), l2);
  *
@@ -916,13 +917,13 @@ typedef double fastf_t;
  *
  */
 #if defined(vax) || (defined(sgi) && !defined(mips))
-   /* DEC VAX "D" format, the most restrictive */
+/* DEC VAX "D" format, the most restrictive */
 #  define MAX_FASTF		1.0e37	/* Very close to the largest number */
 #  define SQRT_MAX_FASTF	1.0e18	/* This squared just avoids overflow */
 #  define SMALL_FASTF		1.0e-37	/* Anything smaller is zero */
 #  define SQRT_SMALL_FASTF	1.0e-18	/* This squared gives zero */
 #else
-   /* IBM format, being the next most restrictive format */
+/* IBM format, being the next most restrictive format */
 #  define MAX_FASTF		1.0e73	/* Very close to the largest number */
 #  define SQRT_MAX_FASTF	1.0e36	/* This squared just avoids overflow */
 #  define SMALL_FASTF		1.0e-77	/* Anything smaller is zero */
@@ -1036,13 +1037,13 @@ BU_EXPORT BU_EXTERN(inline unsigned int bu_bitv_shift, ());
 #else
 static __inline__ int BU_BITTEST(volatile void * addr, int nr)
 {
-	int oldbit;
+    int oldbit;
 
-	__asm__ __volatile__(
-		"btl %2,%1\n\tsbbl %0,%0"
-		:"=r" (oldbit)
-		:"m" (addr), "Ir" (nr));
-	return oldbit;
+    __asm__ __volatile__(
+	"btl %2, %1\n\tsbbl %0, %0"
+	:"=r" (oldbit)
+	:"m" (addr), "Ir" (nr));
+    return oldbit;
 }
 #endif
 
@@ -1071,7 +1072,7 @@ static __inline__ int BU_BITTEST(volatile void * addr, int nr)
 #  define BU_BITV_BITNUM_CHECK(_bv, _bit)
 #else
 #  define BU_BITV_BITNUM_CHECK(_bv, _bit)	/* Validate bit number */ \
-	if ( ((unsigned)(_bit)) >= (_bv)->nbits )  {\
+	if (((unsigned)(_bit)) >= (_bv)->nbits) {\
 		bu_log("BU_BITV_BITNUM_CHECK bit number (%u) out of range (0..%u)\n", \
 			((unsigned)(_bit)), (_bv)->nbits); \
 		bu_bomb("process self-terminating\n");\
@@ -1082,9 +1083,9 @@ static __inline__ int BU_BITTEST(volatile void * addr, int nr)
 #  define BU_BITV_NBITS_CHECK(_bv, _nbits)
 #else
 #  define BU_BITV_NBITS_CHECK(_bv, _nbits)	/* Validate number of bits */ \
-	if ( ((unsigned)(_nbits)) > (_bv)->nbits )  {\
+	if (((unsigned)(_nbits)) > (_bv)->nbits) {\
 		bu_log("BU_BITV_NBITS_CHECK number of bits (%u) out of range (> %u)", \
-			((unsigned)(_nbits)), (_bv)->nbits ); \
+			((unsigned)(_nbits)), (_bv)->nbits); \
 		bu_bomb("process self-terminating"); \
 	}
 #endif
@@ -1097,23 +1098,25 @@ static __inline__ int BU_BITTEST(volatile void * addr, int nr)
  * to smear to the right.
  *
  * @par Example:
-@code
-	BU_BITV_LOOP_START(bv)  {
-		fiddle(BU_BITV_LOOP_INDEX);
-	} BU_BITV_LOOP_END;
-@endcode
+ @code
+
+ BU_BITV_LOOP_START(bv) {
+     fiddle(BU_BITV_LOOP_INDEX);
+ } BU_BITV_LOOP_END;
+
+ @endcode
  *
  */
 #define BU_BITV_LOOP_START(_bv)	\
 { \
 	register int _wd;	/* Current word number */  \
 	BU_CK_BITV(_bv); \
-	for ( _wd=BU_BITS2WORDS((_bv)->nbits)-1; _wd>=0; _wd-- )  {  \
+	for (_wd=BU_BITS2WORDS((_bv)->nbits)-1; _wd>=0; _wd--) {  \
 		register int _b;	/* Current bit-in-word number */  \
 		register bitv_t _val;	/* Current word value */  \
 		if ((_val = (_bv)->bits[_wd])==0) continue;  \
-		for (_b=0; _b < BU_BITV_MASK+1; _b++, _val >>= 1 ) { \
-			if ( !(_val & 1) )  continue;
+		for (_b=0; _b < BU_BITV_MASK+1; _b++, _val >>= 1) { \
+			if (!(_val & 1))  continue;
 
 /**
  * This macro is valid only between a BU_BITV_LOOP_START/LOOP_END
@@ -1152,21 +1155,21 @@ struct bu_hist  {
 };
 #define BU_CK_HIST(_p)	BU_CKMAG(_p, BU_HIST_MAGIC, "struct bu_hist")
 
-#define BU_HIST_TALLY( _hp, _val )	{ \
-	if ( (_val) <= (_hp)->hg_min )  { \
+#define BU_HIST_TALLY(_hp, _val) { \
+	if ((_val) <= (_hp)->hg_min) { \
 		(_hp)->hg_bins[0]++; \
-	} else if ( (_val) >= (_hp)->hg_max )  { \
+	} else if ((_val) >= (_hp)->hg_max) { \
 		(_hp)->hg_bins[(_hp)->hg_nbins]++; \
 	} else { \
 		(_hp)->hg_bins[(int)(((_val)-(_hp)->hg_min)/(_hp)->hg_clumpsize)]++; \
 	} \
 	(_hp)->hg_nsamples++;  }
 
-#define BU_HIST_TALLY_MULTIPLE( _hp, _val, _count )	{ \
+#define BU_HIST_TALLY_MULTIPLE(_hp, _val, _count) { \
 	register int __count = (_count); \
-	if ( (_val) <= (_hp)->hg_min )  { \
+	if ((_val) <= (_hp)->hg_min) { \
 		(_hp)->hg_bins[0] += __count; \
-	} else if ( (_val) >= (_hp)->hg_max )  { \
+	} else if ((_val) >= (_hp)->hg_max) { \
 		(_hp)->hg_bins[(_hp)->hg_nbins] += __count; \
 	} else { \
 		(_hp)->hg_bins[(int)(((_val)-(_hp)->hg_min)/(_hp)->hg_clumpsize)] += __count; \
@@ -1221,7 +1224,7 @@ struct bu_ptbl {
  *     NMG_CK_EDGEUSE(*eup);
  * }
  * --- OR ---
- * for (BU_PTBL_FOR( eup, (struct edgeuse **), &eutab )) {
+ * for (BU_PTBL_FOR(eup, (struct edgeuse **), &eutab)) {
  *     NMG_CK_EDGEUSE(*eup);
  * }
  */
@@ -1346,8 +1349,8 @@ struct bu_attribute_value_set {
  * whether the pointer needs to be freed or not.
  */
 #define AVS_IS_FREEABLE(_avsp, _p)	\
-	( (_avsp)->readonly_max == NULL || \
-	    ((genptr_t)(_p) < (genptr_t)(_avsp)->readonly_min || (genptr_t)(_p) > (genptr_t)(_avsp)->readonly_max) )
+	((_avsp)->readonly_max == NULL || \
+	    ((genptr_t)(_p) < (genptr_t)(_avsp)->readonly_min || (genptr_t)(_p) > (genptr_t)(_avsp)->readonly_max))
 
 /** @} */
 /*----------------------------------------------------------------------*/
@@ -1429,22 +1432,22 @@ struct bu_mro {
 
 #define BU_CK_MRO(_vp)		BU_CKMAG(_vp, BU_MRO_MAGIC, "bu_mro")
 
-#define BU_MRO_INVALIDATE(_p ) {\
+#define BU_MRO_INVALIDATE(_p) {\
 	_p->long_rep_is_valid = '\0';\
 	_p->double_rep_is_valid = '\0';\
 }
 
-#define BU_MRO_GETDOUBLE( _p ) ( _p->double_rep_is_valid ? _p->double_rep : \
-	(_p->double_rep = strtod( bu_vls_addr( &_p->string_rep ), NULL ), \
-	( _p->double_rep_is_valid='y', _p->double_rep ) ) )
+#define BU_MRO_GETDOUBLE(_p) (_p->double_rep_is_valid ? _p->double_rep : \
+	(_p->double_rep = strtod(bu_vls_addr(&_p->string_rep), NULL), \
+	(_p->double_rep_is_valid='y', _p->double_rep)))
 
-#define BU_MRO_GETLONG( _p ) ( _p->long_rep_is_valid ? _p->long_rep : \
-	(_p->long_rep = strtol( bu_vls_addr( &_p->string_rep ), NULL, 10 ), \
-	( _p->long_rep_is_valid='y', _p->long_rep ) ) )
+#define BU_MRO_GETLONG(_p) (_p->long_rep_is_valid ? _p->long_rep : \
+	(_p->long_rep = strtol(bu_vls_addr(&_p->string_rep), NULL, 10), \
+	(_p->long_rep_is_valid='y', _p->long_rep)))
 
-#define BU_MRO_GETSTRING( _p ) bu_vls_addr( &_p->string_rep )
+#define BU_MRO_GETSTRING(_p) bu_vls_addr(&_p->string_rep)
 
-#define BU_MRO_STRLEN( _p ) bu_vls_strlen( &_p->string_rep )
+#define BU_MRO_STRLEN(_p) bu_vls_strlen(&_p->string_rep)
 /** @} */
 
 /*----------------------------------------------------------------------*/
@@ -1524,7 +1527,7 @@ BU_EXPORT extern int bu_debug;
  */
 #ifndef offsetof
 #  define bu_offsetof(_t, _m) (size_t)(&(((_t *)0)->_m))
-#  define bu_offsetofarray(_t, _m) (size_t)( (((_t *)0)->_m))
+#  define bu_offsetofarray(_t, _m) (size_t)((((_t *)0)->_m))
 #else
 #  define bu_offsetof(_t, _m) offsetof(_t, _m)
 #  define bu_offsetofarray(_t, _m) offsetof(_t, _m[0])
@@ -1549,7 +1552,7 @@ BU_EXPORT extern int bu_debug;
 #      define bu_byteoffset(_i)	((size_t)__INTADDR__(&(_i)))
 #  else
 #    if defined(sgi) || defined(__convexc__) || defined(ultrix) || defined(_HPUX_SOURCE)
-       /* "Lazy" way.  Works on reasonable machines with byte addressing */
+/* "Lazy" way.  Works on reasonable machines with byte addressing */
 #      define bu_byteoffset(_i)	((size_t)((char *)&(_i)))
 #    else
 #      if defined(__ia64__) || defined(__x86_64__) || defined(__sparc64__)
@@ -1559,7 +1562,7 @@ BU_EXPORT extern int bu_debug;
 #          define bu_byteoffset(_i)	((size_t)(((void *)&(_i))-((void *)0)))
 #        endif
 #      else
-	 /* "Conservative" way of finding # bytes as diff of 2 char ptrs */
+/* "Conservative" way of finding # bytes as diff of 2 char ptrs */
 #        define bu_byteoffset(_i)	((size_t)(((char *)&(_i))-((char *)0)))
 #      endif
 #    endif
@@ -1572,54 +1575,37 @@ BU_EXPORT extern int bu_debug;
  * least those portions for which parse/print/import/export support is
  * desired.  For example:
  *@code
-  struct data_structure {
-	char a_char;
-	char str[32];
-	short a_short;
-	int a_int;
-	double a_double;
-  }
 
-  struct data_structure data_default =
-	{ 'c', "the default string", 32767, 1, 1.0 };
+ struct data_structure {
+     char a_char;
+     char str[32];
+     short a_short;
+     int a_int;
+     double a_double;
+ }
 
-  struct data_structure my_values;
+ struct data_structure data_default =
+ { 'c', "the default string", 32767, 1, 1.0 };
 
-  struct bu_structparse data_sp[] ={
+ struct data_structure my_values;
 
-  {"%c", 1,  "a_char",   bu_offsetof(data_structure, a_char),
-	BU_STRUCTPARSE_FUNC_NULL,
-	"a single character",	(void*)&default.a_char },
+ struct bu_structparse data_sp[] ={
+     {"%c", 1,  "a_char",   bu_offsetof(data_structure, a_char), BU_STRUCTPARSE_FUNC_NULL, "a single character",	(void*)&default.a_char },
+     {"%s", 32, "str",      bu_offsetofarray(data_structure, str), BU_STRUCTPARSE_FUNC_NULL, "This is a full character string", (void*)default.str }, },
+     {"%i", 1,  "a_short",  bu_offsetof(data_structure, a_short), BU_STRUCTPARSE_FUNC_NULL, "A 16bit integer",	(void*)&default.a_short },
+     {"%d", 1,  "a_int",    bu_offsetof(data_structure, a_int), BU_STRUCTPARSE_FUNC_NULL, "A full integer",	(void*)&default.a_int },
+     {"%f", 1,  "a_double", bu_offsetof(data_structure, a_double), BU_STRUCTPARSE_FUNC_NULL, "A double-precision floating point value",  (void*)&default.a_double },
+     { "", 0, (char *)NULL, 0, BU_STRUCTPARSE_FUNC_NULL, (char *)NULL, (void *)NULL }
+ };
 
-  {"%s", 32, "str",      bu_offsetofarray(data_structure, str),
-	BU_STRUCTPARSE_FUNC_NULL,
-	"This is a full character string", (void*)default.str }, },
-
-  {"%i", 1,  "a_short",  bu_offsetof(data_structure, a_short),
-	BU_STRUCTPARSE_FUNC_NULL,
-	"A 16bit integer",	(void*)&default.a_short },
-
-  {"%d", 1,  "a_int",    bu_offsetof(data_structure, a_int),
-	BU_STRUCTPARSE_FUNC_NULL,
-	"A full integer",	(void*)&default.a_int },
-
-  {"%f", 1,  "a_double", bu_offsetof(data_structure, a_double),
-	BU_STRUCTPARSE_FUNC_NULL,
-	"A double-precision floating point value",  (void*)&default.a_double },
-
-  { "", 0, (char *)NULL, 0,
-	BU_STRUCTPARSE_FUNC_NULL,
-	(char *)NULL, (void *)NULL }
-
-  };
  @endcode
  *
  * To parse a string, call:
  *
- * bu_struct_parse( vls_string, data_sp, (char *)my_values)
+ * bu_struct_parse(vls_string, data_sp, (char *)my_values)
  *
- * this will parse the vls string and assign values to the members of the
- * structure my_values
+ * this will parse the vls string and assign values to the members of
+ * the structure my_values
  *
  * A gross hack: To set global variables (or others for that matter)
  * you can store the actual address of the variable in the sp_offset
@@ -1655,7 +1641,7 @@ struct bu_external  {
     long ext_nbytes;
     genptr_t ext_buf;
 };
-#define BU_INIT_EXTERNAL(_p)	{(_p)->ext_magic = BU_EXTERNAL_MAGIC; \
+#define BU_INIT_EXTERNAL(_p) {(_p)->ext_magic = BU_EXTERNAL_MAGIC; \
 	(_p)->ext_buf = (genptr_t)NULL; (_p)->ext_nbytes = 0;}
 #define BU_CK_EXTERNAL(_p)	BU_CKMAG(_p, BU_EXTERNAL_MAGIC, "bu_external")
 
@@ -2115,7 +2101,7 @@ BU_EXPORT BU_EXTERN(void bu_exit, (int status, const char *fmt, ...)) __BU_ATTR_
 BU_EXPORT BU_EXTERN(int bu_crashreport, (const char *filename));
 
 /* fgets.c */
-BU_EXPORT BU_EXTERN(char *bu_fgets, ( char *s, int size, FILE *stream));
+BU_EXPORT BU_EXTERN(char *bu_fgets, (char *s, int size, FILE *stream));
 
 /** @} */
 /** @addtogroup color */
@@ -2374,23 +2360,25 @@ BU_EXPORT BU_EXTERN(void bu_call_hook,
  *
  * --- BEGIN EXAMPLE ---
  * @code
-    int log_output_to_file(genptr_t data, genptr_t str)
-    {
-        FILE *fp = (FILE *)data;
-        fprintf(fp, "LOG: %s", str);
-        return 0;
-    }
 
-    int main(int ac, char *av[])
-    {
-        FILE *fp = fopen("whatever.log", "w+");
-        bu_log_add_hook(log_output_to_file, (genptr_t)fp);
-        bu_log("Logging to file.\n");
-        bu_log_delete_hook(log_output_to_file, (genptr_t)fp);
-        bu_log("Logging to stderr.\n");
-        fclose(fp);
-        return 0;
-    }
+ int log_output_to_file(genptr_t data, genptr_t str)
+ {
+     FILE *fp = (FILE *)data;
+     fprintf(fp, "LOG: %s", str);
+     return 0;
+ }
+
+ int main(int ac, char *av[])
+ {
+     FILE *fp = fopen("whatever.log", "w+");
+     bu_log_add_hook(log_output_to_file, (genptr_t)fp);
+     bu_log("Logging to file.\n");
+     bu_log_delete_hook(log_output_to_file, (genptr_t)fp);
+     bu_log("Logging to stderr.\n");
+     fclose(fp);
+     return 0;
+ }
+
  * @endcode
  * --- END EXAMPLE ---
  *
@@ -2400,8 +2388,8 @@ BU_EXPORT BU_EXTERN(void bu_log_indent_vls, (struct bu_vls *v));
 BU_EXPORT BU_EXTERN(void bu_log_add_hook, (bu_hook_t func, genptr_t clientdata));
 BU_EXPORT BU_EXTERN(void bu_log_delete_hook, (bu_hook_t func, genptr_t clientdata));
 BU_EXPORT BU_EXTERN(void bu_putchar, (int c));
-BU_EXPORT BU_EXTERN(void bu_log, (const char *, ... )) __BU_ATTR_FORMAT12;
-BU_EXPORT BU_EXTERN(void bu_flog, (FILE *, const char *, ... )) __BU_ATTR_FORMAT23;
+BU_EXPORT BU_EXTERN(void bu_log, (const char *, ...)) __BU_ATTR_FORMAT12;
+BU_EXPORT BU_EXTERN(void bu_flog, (FILE *, const char *, ...)) __BU_ATTR_FORMAT23;
 
 /** @} */
 
@@ -2863,26 +2851,26 @@ BU_EXPORT BU_EXTERN(void bu_vls_prepend,
 
 /* vlb.c */
 BU_EXPORT BU_EXTERN(void bu_vlb_init,
-        (struct bu_vlb *vlb));
+		    (struct bu_vlb *vlb));
 
 BU_EXPORT BU_EXTERN(void bu_vlb_initialize,
-        (struct bu_vlb *vlb,
-        int initialSize));
+		    (struct bu_vlb *vlb,
+		     int initialSize));
 BU_EXPORT BU_EXTERN(void bu_vlb_write,
-        (struct bu_vlb *vlb,
-        unsigned char *start,
-        int len));
+		    (struct bu_vlb *vlb,
+		     unsigned char *start,
+		     int len));
 BU_EXPORT BU_EXTERN(void bu_vlb_reset,
-        (struct bu_vlb *vlb));
+		    (struct bu_vlb *vlb));
 BU_EXPORT BU_EXTERN(unsigned char *bu_vlb_getBuffer,
-        (struct bu_vlb *vlb));
+		    (struct bu_vlb *vlb));
 BU_EXPORT BU_EXTERN(int bu_vlb_getBufferLength,
-        (struct bu_vlb *vlb));
+		    (struct bu_vlb *vlb));
 BU_EXPORT BU_EXTERN(void bu_vlb_free,
-        (struct bu_vlb *vlb));
+		    (struct bu_vlb *vlb));
 BU_EXPORT BU_EXTERN(void bu_vlb_print,
-        (struct bu_vlb *vlb,
-        FILE *fd));
+		    (struct bu_vlb *vlb,
+		     FILE *fd));
 
 /* str.c */
 BU_EXPORT BU_EXTERN(size_t bu_strlcatm, (char *dst, const char *src, size_t size, const char *label));
@@ -2930,15 +2918,15 @@ BU_EXPORT BU_EXTERN(void bu_mm_cvt,
 	     (((long)((_cp)[4])) << 24) |	\
 	     (((long)((_cp)[5])) << 16) |	\
 	     (((long)((_cp)[6])) <<  8) |	\
-	      ((long)((_cp)[7])) )
+	      ((long)((_cp)[7])))
 #define BU_GLONG(_cp)	\
 	    ((((long)((_cp)[0])) << 24) |	\
 	     (((long)((_cp)[1])) << 16) |	\
 	     (((long)((_cp)[2])) <<  8) |	\
-	      ((long)((_cp)[3])) )
+	      ((long)((_cp)[3])))
 #define BU_GSHORT(_cp)	\
 	    ((((short)((_cp)[0])) << 8) | \
-		       (_cp)[1] )
+		       (_cp)[1])
 
 BU_EXPORT BU_EXTERN(unsigned short bu_gshort, (const unsigned char *msgp));
 BU_EXPORT BU_EXTERN(unsigned long bu_glong, (const unsigned char *msgp));
@@ -2952,7 +2940,7 @@ BU_EXPORT BU_EXTERN(unsigned char *bu_plong, (unsigned char *msgp, unsigned long
 
 /* Things that live in libbu/observer.c */
 BU_EXPORT BU_EXTERN(int bu_observer_cmd, (ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[]));
-BU_EXPORT BU_EXTERN(void bu_observer_notify,());
+BU_EXPORT BU_EXTERN(void bu_observer_notify, ());
 BU_EXPORT BU_EXTERN(void bu_observer_free, (struct bu_observer *));
 
 
@@ -3163,9 +3151,9 @@ struct bu_hash_record {
     struct bu_hash_entry *hsh_entry;
 };
 
-#define BU_CK_HASH_TBL(_hp)	BU_CKMAG( _hp, BU_HASH_TBL_MAGIC, "bu_hash_tbl" )
-#define BU_CK_HASH_RECORD(_rp)	BU_CKMAG( _rp, BU_HASH_RECORD_MAGIC, "bu_hash_record" )
-#define BU_CK_HASH_ENTRY(_ep)	BU_CKMAG( _ep, BU_HASH_ENTRY_MAGIC, "bu_hash_entry" )
+#define BU_CK_HASH_TBL(_hp)	BU_CKMAG(_hp, BU_HASH_TBL_MAGIC, "bu_hash_tbl")
+#define BU_CK_HASH_RECORD(_rp)	BU_CKMAG(_rp, BU_HASH_RECORD_MAGIC, "bu_hash_record")
+#define BU_CK_HASH_ENTRY(_ep)	BU_CKMAG(_ep, BU_HASH_ENTRY_MAGIC, "bu_hash_entry")
 
 BU_EXPORT BU_EXTERN(unsigned long bu_hash,
 		    (unsigned char *str,
