@@ -35,11 +35,7 @@
 
 #define AVS_ALLOCATION_INCREMENT 32
 
-/**
- * B U _ A V S _ I N I T _ E M P T Y
- *
- * initialize an empty avs
- */
+
 void
 bu_avs_init_empty(struct bu_attribute_value_set *avsp)
 {
@@ -50,11 +46,7 @@ bu_avs_init_empty(struct bu_attribute_value_set *avsp)
     avsp->avp = (struct bu_attribute_value_pair *)NULL;
 }
 
-/**
- * B U _ A V S _ I N I T
- *
- * initialize avs with storage for len entries
- */
+
 void
 bu_avs_init(struct bu_attribute_value_set *avsp, int len, const char *str)
 {
@@ -70,16 +62,11 @@ bu_avs_init(struct bu_attribute_value_set *avsp, int len, const char *str)
     avsp->avp = (struct bu_attribute_value_pair *)bu_calloc(avsp->max, sizeof(struct bu_attribute_value_pair), str);
 }
 
-/**
- * B U _ A V S _ N E W
- *
- * Allocate storage for a new attribute/value set, with at least
- * 'len' slots pre-allocated.
- */
-struct bu_attribute_value_set	*
+
+struct bu_attribute_value_set *
 bu_avs_new(int len, const char *str)
 {
-    struct bu_attribute_value_set	*avsp;
+    struct bu_attribute_value_set *avsp;
 
     BU_GETSTRUCT(avsp, bu_attribute_value_set);
     bu_avs_init(avsp, len, "bu_avs_new");
@@ -90,17 +77,7 @@ bu_avs_new(int len, const char *str)
     return avsp;
 }
 
-/**
- * B U _ A V S _ A D D
- *
- * If the given attribute exists it will recieve the new value,
- * othwise the set will be extended to have a new attribute/value pair.
- *
- * Returns -
- *   0 some error occured
- *   1 existing attribute updated with new value
- *   2 set extended with new attribute/value pair
- */
+
 int
 bu_avs_add(struct bu_attribute_value_set *avsp, const char *name, const char *value)
 {
@@ -156,11 +133,7 @@ bu_avs_add(struct bu_attribute_value_set *avsp, const char *name, const char *va
     return 2;
 }
 
-/**
- * B U _ A V S _ A D D _ V L S
- *
- * Add a bu_vls string as an attribute to a given attribute set.
- */
+
 int
 bu_avs_add_vls(struct bu_attribute_value_set *avsp, const char *name, const struct bu_vls *value_vls)
 {
@@ -170,12 +143,7 @@ bu_avs_add_vls(struct bu_attribute_value_set *avsp, const char *name, const stru
     return bu_avs_add(avsp, name, bu_vls_addr(value_vls));
 }
 
-/**
- * B U _ A V S _ M E R G E
- *
- * Take all the attributes from 'src' and merge them into 'dest' by
- * replacing an attribute if it already exists.
- */
+
 void
 bu_avs_merge(struct bu_attribute_value_set *dest, const struct bu_attribute_value_set *src)
 {
@@ -191,11 +159,7 @@ bu_avs_merge(struct bu_attribute_value_set *dest, const struct bu_attribute_valu
     }
 }
 
-/**
- * B U _ A V S _ G E T
- *
- * Get the value of a given attribute from an attribute set.
- */
+
 const char *
 bu_avs_get(const struct bu_attribute_value_set *avsp, const char *name)
 {
@@ -218,16 +182,7 @@ bu_avs_get(const struct bu_attribute_value_set *avsp, const char *name)
     return NULL;
 }
 
-/**
- * B U _ A V S _ R E M O V E
- *
- * Remove the given attribute from an attribute set.
- *
- * @return
- *	-1	attribute not found in set
- * @return
- *	 0	OK
- */
+
 int
 bu_avs_remove(struct bu_attribute_value_set *avsp, const char *name)
 {
@@ -263,11 +218,6 @@ bu_avs_remove(struct bu_attribute_value_set *avsp, const char *name)
 }
 
 
-/**
- * B U _ A V S _ F R E E
- *
- * Release all attributes in an attribute set.
- */
 void
 bu_avs_free(struct bu_attribute_value_set *avsp)
 {
@@ -299,16 +249,10 @@ bu_avs_free(struct bu_attribute_value_set *avsp)
 }
 
 
-/**
- * B U _ A V S _ P R I N T
- *
- * Print all attributes in an attribute set in "name = value" form,
- * using the provided title.
- */
 void
 bu_avs_print(const struct bu_attribute_value_set *avsp, const char *title)
 {
-    struct bu_attribute_value_pair	*avpp;
+    struct bu_attribute_value_pair *avpp;
     unsigned int i;
 
     BU_CK_AVS(avsp);
@@ -326,11 +270,6 @@ bu_avs_print(const struct bu_attribute_value_set *avsp, const char *title)
 }
 
 
-/**
- * B U _ A V S _ A D D _ N O N U N I Q U E
- *
- * Add a name/value pair even if the name already exists in this AVS.
- */
 void
 bu_avs_add_nonunique(struct bu_attribute_value_set *avsp, const char *name, const char *value)
 {
@@ -368,6 +307,7 @@ bu_avs_add_nonunique(struct bu_attribute_value_set *avsp, const char *name, cons
 	app->value = (char *)NULL;
     }
 }
+
 /** @} */
 /*
  * Local Variables:

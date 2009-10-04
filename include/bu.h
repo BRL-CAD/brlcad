@@ -1855,37 +1855,119 @@ struct bu_cmdtab {
 /** @addtogroup avs */
 /** @{ */
 /* avs.c */
+
+
+/**
+ * B U _ A V S _ I N I T
+ *
+ * initialize avs with storage for len entries
+ */
 BU_EXPORT BU_EXTERN(void bu_avs_init,
 		    (struct bu_attribute_value_set *avp,
 		     int len,
 		     const char *str));
+
+/**
+ * B U _ A V S _ I N I T _ E M P T Y
+ *
+ * initialize an empty avs
+ */
 BU_EXPORT BU_EXTERN(void bu_avs_init_empty,
 		    (struct bu_attribute_value_set *avp));
+
+/**
+ * B U _ A V S _ N E W
+ *
+ * Allocate storage for a new attribute/value set, with at least 'len'
+ * slots pre-allocated.
+ */
 BU_EXPORT BU_EXTERN(struct bu_attribute_value_set *bu_avs_new,
 		    (int len,
 		     const char *str));
+
+/**
+ * B U _ A V S _ A D D
+ *
+ * If the given attribute exists it will recieve the new value,
+ * othwise the set will be extended to have a new attribute/value
+ * pair.
+ *
+ * Returns -
+ *   0 some error occured
+ *   1 existing attribute updated with new value
+ *   2 set extended with new attribute/value pair
+ */
 BU_EXPORT BU_EXTERN(int bu_avs_add,
 		    (struct bu_attribute_value_set *avp,
 		     const char *attribute,
 		     const char *value));
+
+/**
+ * B U _ A V S _ A D D _ V L S
+ *
+ * Add a bu_vls string as an attribute to a given attribute set.
+ */
 BU_EXPORT BU_EXTERN(int bu_avs_add_vls,
 		    (struct bu_attribute_value_set *avp,
 		     const char *attribute,
 		     const struct bu_vls *value_vls));
+
+/**
+ * B U _ A V S _ M E R G E
+ *
+ * Take all the attributes from 'src' and merge them into 'dest' by
+ * replacing an attribute if it already exists.
+ */
 BU_EXPORT BU_EXTERN(void bu_avs_merge,
 		    (struct bu_attribute_value_set *dest,
 		     const struct bu_attribute_value_set *src));
+
+/**
+ * B U _ A V S _ G E T
+ *
+ * Get the value of a given attribute from an attribute set.
+ */
 BU_EXPORT BU_EXTERN(const char *bu_avs_get,
 		    (const struct bu_attribute_value_set *avp,
 		     const char *attribute));
+
+/**
+ * B U _ A V S _ R E M O V E
+ *
+ * Remove the given attribute from an attribute set.
+ *
+ * @return
+ *	-1	attribute not found in set
+ * @return
+ *	 0	OK
+ */
 BU_EXPORT BU_EXTERN(int bu_avs_remove,
 		    (struct bu_attribute_value_set *avp,
 		     const char *attribute));
+
+/**
+ * B U _ A V S _ F R E E
+ *
+ * Release all attributes in an attribute set.
+ */
 BU_EXPORT BU_EXTERN(void bu_avs_free,
 		    (struct bu_attribute_value_set *avp));
+
+/**
+ * B U _ A V S _ P R I N T
+ *
+ * Print all attributes in an attribute set in "name = value" form,
+ * using the provided title.
+ */
 BU_EXPORT BU_EXTERN(void bu_avs_print,
 		    (const struct bu_attribute_value_set *avp,
 		     const char *title));
+
+/**
+ * B U _ A V S _ A D D _ N O N U N I Q U E
+ *
+ * Add a name/value pair even if the name already exists in this AVS.
+ */
 BU_EXPORT BU_EXTERN(void bu_avs_add_nonunique,
 		    (struct bu_attribute_value_set *avsp,
 		     const char *attribute,
