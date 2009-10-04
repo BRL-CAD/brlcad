@@ -2177,14 +2177,85 @@ BU_EXPORT BU_EXTERN(void bu_list_path, (char *path, char *substr, char **filearr
 
 
 /* brlcad_path.c */
+
+/**
+ * b u _ a r g v 0
+ *
+ * this routine is used by the brlcad-path-finding routines when
+ * attempting to locate binaries, libraries, and resources.  This
+ * routine will set argv0 if path is provided and should generally be
+ * set early on by bu_setprogname().
+ */
 BU_EXPORT BU_EXTERN(const char *bu_argv0, (void));
+
+/**
+ * b u _ a r g v 0 _ f u l l _ p a t h
+ *
+ * returns the full path to argv0, regardless of how the application
+ * was invoked.
+ */
 BU_EXPORT BU_EXTERN(const char *bu_argv0_full_path, (void));
+
+/**
+ * b u _ g e t p r o g n a m e
+ *
+ * get the name of the running application if they ran
+ * bu_setprogname() first or if we know what it's supposed to be
+ * anyways.
+ */
 BU_EXPORT BU_EXTERN(const char *bu_getprogname, (void));
+
+/**
+ * b u _ s e t p r o g n a m e
+ *
+ * Set the name of the running application.  This isn't necessary on
+ * modern systems that support getprogname() and call setprogname()
+ * before main() for you, but necessary otherwise for portability.
+ */
 BU_EXPORT BU_EXTERN(void bu_setprogname, (const char *path));
-BU_EXPORT BU_EXTERN(const char *bu_brlcad_root,
-		    (const char *rhs, int fail_quietly));
-BU_EXPORT BU_EXTERN(const char *bu_brlcad_data,
-		    (const char *rhs, int fail_quietly));
+
+/**
+ * b u _ b r l c a d _ r o o t
+ *
+ * Locate where the BRL-CAD applications and libraries are installed.
+ *
+ * The BRL-CAD root is searched for in the following order of
+ * precedence by testing for the rhs existence if provided or the
+ * directory existence otherwise:
+ *
+ *   BRLCAD_ROOT environment variable if set
+ *   BRLCAD_ROOT compile-time path
+ *   run-time path identification
+ *   /usr/brlcad static path
+ *   current directory
+ *
+ * @return
+ * A STATIC buffer is returned.
+ * It is the caller's responsibility to call bu_strdup() or make
+ * other provisions to save the returned string, before calling again.
+ */
+BU_EXPORT BU_EXTERN(const char *bu_brlcad_root, (const char *rhs, int fail_quietly));
+
+/**
+ * b u _ b r l c a d _ d a t a
+ *
+ * Locate where the BRL-CAD data resources are installed.
+ *
+ * The BRL-CAD data resources are searched for in the following order
+ * of precedence by testing for the existence of rhs if provided or
+ * the directory existence otherwise:
+ *
+ *   BRLCAD_DATA environment variable if set
+ *   BRLCAD_DATA compile-time path
+ *   bu_brlcad_root/share/brlcad/VERSION path
+ *   bu_brlcad_root path
+ *   current directory
+ *
+ * A STATIC buffer is returned.
+ * It is the caller's responsibility to call bu_strdup() or make
+ * other provisions to save the returned string, before calling again.
+ */
+BU_EXPORT BU_EXTERN(const char *bu_brlcad_data, (const char *rhs, int fail_quietly));
 
 /* bu_which.c */
 BU_EXPORT BU_EXTERN(const char *bu_which, (const char *cmd));
