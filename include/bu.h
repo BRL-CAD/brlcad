@@ -1977,41 +1977,139 @@ BU_EXPORT BU_EXTERN(void bu_avs_add_nonunique,
 /** @addtogroup bitv */
 /** @{ */
 /* bitv.c */
-BU_EXPORT BU_EXTERN(struct bu_bitv *bu_bitv_new,
-		    (unsigned int nbits));
-BU_EXPORT BU_EXTERN(void bu_bitv_clear,
-		    (struct bu_bitv *bv));
-BU_EXPORT BU_EXTERN(void bu_bitv_or,
-		    (struct bu_bitv *ov,
-		     const struct bu_bitv *iv));
-BU_EXPORT BU_EXTERN(void bu_bitv_and,
-		    (struct bu_bitv *ov,
-		     const struct bu_bitv *iv));
-BU_EXPORT BU_EXTERN(void bu_bitv_vls,
-		    (struct bu_vls *v,
-		     const struct bu_bitv *bv));
-BU_EXPORT BU_EXTERN(void bu_pr_bitv,
-		    (const char *str,
-		     const struct bu_bitv *bv));
-BU_EXPORT BU_EXTERN(void bu_bitv_to_hex,
-		    (struct bu_vls *v,
-		     const struct bu_bitv *bv));
-BU_EXPORT BU_EXTERN(struct bu_bitv *bu_hex_to_bitv,
-		    (const char *str));
-BU_EXPORT BU_EXTERN(struct bu_bitv *bu_bitv_dup,
-		    (const struct bu_bitv *bv));
-BU_EXPORT BU_EXTERN(void bu_bitv_free,
-		    (struct bu_bitv *bv));
+
+/**
+ * B U _ B I T V _ N E W
+ * @brief
+ * Allocate storage for a new bit vector of at least 'nbits' in
+ * length.  For efficiency, the bit vector itself is not initialized.
+ */
+BU_EXPORT BU_EXTERN(struct bu_bitv *bu_bitv_new, (unsigned int nbits));
+
+/**
+ * B U _ B I T V _ F R E E
+ * @brief
+ * Release all internal storage for this bit vector.
+ *
+ * It is the caller's responsibility to not use the pointer 'bv' any
+ * longer.  It is the caller's responsibility to dequeue from any
+ * linked list first.
+ */
+BU_EXPORT BU_EXTERN(void bu_bitv_free, (struct bu_bitv *bv));
+
+/**
+ * B U _ B I T V _ C L E A R
+ * @brief
+ * Set all the bits in the bit vector to zero.
+ *
+ * Also available as a macro if you don't desire the pointer checking.
+ */
+BU_EXPORT BU_EXTERN(void bu_bitv_clear, (struct bu_bitv *bv));
+
+/**
+ * B U _ B I T V _ O R
+ */
+BU_EXPORT BU_EXTERN(void bu_bitv_or, (struct bu_bitv *ov,  const struct bu_bitv *iv));
+
+/**
+ * B U _ B I T V _ A N D
+ */
+BU_EXPORT BU_EXTERN(void bu_bitv_and, (struct bu_bitv *ov, const struct bu_bitv *iv));
+
+/**
+ * B U _ B I T V _ V L S
+ * @brief
+ * Print the bits set in a bit vector.
+ */
+BU_EXPORT BU_EXTERN(void bu_bitv_vls, (struct bu_vls *v, const struct bu_bitv *bv));
+
+/**
+ * B U _ P R _ B I T V
+ * @brief
+ * Print the bits set in a bit vector.  Use bu_vls stuff, to make only
+ * a single call to bu_log().
+ */
+BU_EXPORT BU_EXTERN(void bu_pr_bitv, (const char *str, const struct bu_bitv *bv));
+
+/**
+ * B U _ B I T V _ T O _ H E X
+ * @brief
+ * Convert a bit vector to an ascii string of hex digits.  The string
+ * is from MSB to LSB (bytes and bits).
+ */
+BU_EXPORT BU_EXTERN(void bu_bitv_to_hex, (struct bu_vls *v, const struct bu_bitv *bv));
+
+/**
+ * B U _ H E X _ T O _ B I T V
+ * @brief
+ * Convert a string of HEX digits (as produces by bu_bitv_to_hex) into
+ * a bit vector.
+ */
+BU_EXPORT BU_EXTERN(struct bu_bitv *bu_hex_to_bitv, (const char *str));
+
+/**
+ * B U _ B I T V _ D U P
+ * @brief
+ * Make a copy of a bit vector
+ */
+BU_EXPORT BU_EXTERN(struct bu_bitv *bu_bitv_dup, (const struct bu_bitv *bv));
+
 
 /** @} */
 /** @addtogroup bu_log */
 /** @{ */
 
 /* backtrace.c */
+
+/**
+ * b u _ b a c k t r a c e
+ *
+ * this routine provides a trace of the call stack to the caller,
+ * generally called either directly, via a signal handler, or through
+ * bu_bomb() with the appropriate bu_debug flags set.
+ *
+ * the routine waits indefinitely (in a spin loop) until a signal
+ * (SIGINT) is received, at which point execution continues, or until
+ * some other signal is received that terminates the application.
+ *
+ * the stack backtrace will be written to the provided 'fp' file
+ * pointer.  it's the caller's responsibility to open and close
+ * that pointer if necessary.  If 'fp' is NULL, stdout will be used.
+ *
+ * returns truthfully if a backtrace was attempted.
+ */
 BU_EXPORT BU_EXTERN(int bu_backtrace, (FILE *fp));
 
 /* bomb.c */
+
+/**
+ * B U _ B O M B
+ * @brief
+ * Abort the program with a message.
+ *
+ * Only produce a core-dump when that debugging bit is set.  Note that
+ * this function is meant to be a last resort graceful abort.  It
+ * should not attempt to allocate anything on the stack or heap.
+ *
+ * This routine should never return unless there is a bu_setjmp
+ * handler registered.
+ */
 BU_EXPORT BU_EXTERN(void bu_bomb, (const char *str)) __BU_ATTR_NORETURN;
+
+/**
+ * b u _ e x i t
+ *
+ * Semi-graceful termination of the application that doesn't cause a
+ * stack trace, exiting with the specified status after printing the
+ * given message.  It's okay for this routine to use the stack,
+ * contrary to bu_bomb's behavior since it should be called for
+ * expected termination situations.
+ *
+ * This routine should generally not be called within a library.  Use
+ * bu_bomb or (better) cascade the error back up to the application.
+ *
+ * This routine should never return.
+ */
 BU_EXPORT BU_EXTERN(void bu_exit, (int status, const char *fmt, ...)) __BU_ATTR_NORETURN __BU_ATTR_FORMAT23;
 
 /* crashreport.c */

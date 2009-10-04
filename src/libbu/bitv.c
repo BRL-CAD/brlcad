@@ -21,8 +21,6 @@
 /** @{ */
 /** @file bitv.c
  *
- * @brief
- *
  * Routines for managing efficient high-performance bit vectors of
  * arbitrary length.
  *
@@ -93,12 +91,6 @@ bu_bitv_shift()
 }
 
 
-/**
- * B U _ B I T V _ N E W
- * @brief
- * Allocate storage for a new bit vector of at least 'nbits' in length.
- * For efficiency, the bit vector itself is not initialized.
- */
 struct bu_bitv *
 bu_bitv_new(unsigned int nbits)
 {
@@ -116,14 +108,7 @@ bu_bitv_new(unsigned int nbits)
     return bv;
 }
 
-/**
- * B U _ B I T V _ F R E E
- * @brief
- * Release all internal storage for this bit vector.
- *
- * It is the caller's responsibility to not use the pointer 'bv' any longer.
- * It is the caller's responsibility to dequeue from any linked list first.
- */
+
 void
 bu_bitv_free(struct bu_bitv *bv)
 {
@@ -133,13 +118,7 @@ bu_bitv_free(struct bu_bitv *bv)
     bu_free((char *)bv, "struct bu_bitv");
 }
 
-/**
- * B U _ B I T V _ C L E A R
- * @brief
- * Set all the bits in the bit vector to zero.
- *
- * Also available as a macro if you don't desire the pointer checking.
- */
+
 void
 bu_bitv_clear(struct bu_bitv *bv)
 {
@@ -148,9 +127,7 @@ bu_bitv_clear(struct bu_bitv *bv)
     BU_BITV_ZEROALL(bv);
 }
 
-/**
- * B U _ B I T V _ O R
- */
+
 void
 bu_bitv_or(struct bu_bitv *ov, const struct bu_bitv *iv)
 {
@@ -171,9 +148,7 @@ bu_bitv_or(struct bu_bitv *ov, const struct bu_bitv *iv)
 #endif
 }
 
-/*
- * B U _ B I T V _ A N D
- */
+
 void
 bu_bitv_and(struct bu_bitv *ov, const struct bu_bitv *iv)
 {
@@ -194,11 +169,7 @@ bu_bitv_and(struct bu_bitv *ov, const struct bu_bitv *iv)
 #endif
 }
 
-/**
- * B U _ B I T V _ V L S
- * @brief
- * Print the bits set in a bit vector.
- */
+
 void
 bu_bitv_vls(struct bu_vls *v, register const struct bu_bitv *bv)
 {
@@ -223,12 +194,7 @@ bu_bitv_vls(struct bu_vls *v, register const struct bu_bitv *bv)
     bu_vls_strcat(v, ") ");
 }
 
-/**
- * B U _ P R _ B I T V
- * @brief
- * Print the bits set in a bit vector.
- * Use bu_vls stuff, to make only a single call to bu_log().
- */
+
 void
 bu_pr_bitv(const char *str, register const struct bu_bitv *bv)
 {
@@ -243,12 +209,7 @@ bu_pr_bitv(const char *str, register const struct bu_bitv *bv)
     bu_vls_free(&v);
 }
 
-/**
- * B U _ B I T V _ T O _ H E X
- * @brief
- * Convert a bit vector to an ascii string of hex digits.
- * The string is from MSB to LSB (bytes and bits).
- */
+
 void
 bu_bitv_to_hex(struct bu_vls *v, register const struct bu_bitv *bv)
 {
@@ -272,11 +233,7 @@ bu_bitv_to_hex(struct bu_vls *v, register const struct bu_bitv *bv)
     }
 }
 
-/**
- * B U _ H E X _ T O _ B I T V
- * @brief
- * Convert a string of HEX digits (as produces by bu_bitv_to_hex) into a bit vector.
- */
+
 struct bu_bitv *
 bu_hex_to_bitv(const char *str)
 {
@@ -339,11 +296,7 @@ bu_hex_to_bitv(const char *str)
     return (bv);
 }
 
-/**
- * B U _ B I T V _ D U P
- * @brief
- * Make a copy of a bit vector
- */
+
 struct bu_bitv *
 bu_bitv_dup(register const struct bu_bitv *bv)
 {
@@ -355,6 +308,7 @@ bu_bitv_dup(register const struct bu_bitv *bv)
 
     return (bv2);
 }
+
 /** @} */
 /*
  * Local Variables:
