@@ -92,7 +92,7 @@ make_face(struct rt_nurb_internal *s, fastf_t *a, fastf_t *b, fastf_t *c, fastf_
 
 
 int
-main(int argc, char *argv[0])
+main(int argc, char *argv[])
 {
     point_t a, b, c, d;
     struct rt_wdb *fp;
