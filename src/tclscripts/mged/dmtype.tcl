@@ -63,9 +63,10 @@ proc dmtype {args} {
   destroy $mged_gui($id,top).lrF
 
   openmv $id $mged_gui($id,top) $mged_gui($id,dmc) $mged_default(display) $dtype
-
  
   grid $mged_gui($id,dmc).$mged_gui($id,dm_loc)\F -in $mged_gui($id,dmc) -sticky "nsew" -row 0 -column 0
+
+  set mged_gui($id,dtype) $dtype
 
   mged_apply_local $id "rset cs mode 0"
   rset cs mode 1
