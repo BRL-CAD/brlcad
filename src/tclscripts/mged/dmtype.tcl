@@ -53,11 +53,11 @@ proc dmtype {args} {
   set dtype [lindex $args 1]
   
   # New dm type is requested
-  destroy $mged_gui($id,top).ur
-  destroy $mged_gui($id,top).ul
-  destroy $mged_gui($id,top).lr
-  destroy $mged_gui($id,top).ll
-  destroy $mged_gui($id,top).ulF
+  catch { release $mged_gui($id,top).ur }
+  catch { release $mged_gui($id,top).ul }
+  catch { release $mged_gui($id,top).lr }
+  catch { release $mged_gui($id,top).ll }
+  destroy $mged_gui($id,top).ulF 
   destroy $mged_gui($id,top).urF
   destroy $mged_gui($id,top).llF
   destroy $mged_gui($id,top).lrF
