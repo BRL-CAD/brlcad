@@ -92,7 +92,7 @@ main(int argc, char** argv)
     outfp = wdb_fopen("csgbrep.g");
     const char* id_name = "CSG B-Rep Examples";
     mk_id(outfp, id_name);
-/*
+
     bu_log("Writing an ARB4 (via NMG) brep...\n");
     ON_Brep* arb4brep = ON_Brep::New();
     struct rt_arb_internal *arb4;
@@ -457,23 +457,23 @@ main(int argc, char** argv)
     struct wdb_pipept pipe1[] = {
      {
          {(long)WDB_PIPESEG_MAGIC, 0, 0},
-	 {0, 1, 0},
-	 0.5, 0.1, 0.1
+	 {0, 1000, 0},
+	 50, 100, 100
      },
      {
 	 {(long)WDB_PIPESEG_MAGIC, 0, 0},
-	 {4, 5, 0},
-	 0.5, 0.1, 0.1
+	 {4000, 5000, 0},
+	 50,100,2000
      },
      {
 	 {(long)WDB_PIPESEG_MAGIC, 0, 0},
-	 {4, 9, 0},
-	 0.5, 0.1, 0.1
+	 {4000, 9000, 0},
+	 50,100,1500
      },
      {
 	 {(long)WDB_PIPESEG_MAGIC, 0, 0},
-	 {9, 9, 0},
-	 0.5, 0.1, 0.1
+	 {9000, 9000, 0},
+	 50,100,100
      }
     };
     int pipe1_npts = sizeof(pipe1)/sizeof(struct wdb_pipept);
@@ -615,7 +615,7 @@ main(int argc, char** argv)
     VMOVE(eskt->u_vec, u_vec);
     VMOVE(eskt->v_vec, v_vec);
     eskt->vert_count = 10;
-    eskt->verts = (point2d_t *)bu_calloc(skt->vert_count, sizeof(point2d_t), "verts");
+    eskt->verts = (point2d_t *)bu_calloc(eskt->vert_count, sizeof(point2d_t), "verts");
     for (cnti=0; cnti < eskt->vert_count; cnti++) {
 	V2MOVE(eskt->verts[cnti], everts[cnti]);
     }
@@ -688,7 +688,7 @@ main(int argc, char** argv)
     mk_brep(outfp, extrude_name, extrudebrep);
 //    delete extrudebrep;
  
-/*
+
     bu_log("Writing a Revolve b-rep...\n");
     ON_Brep* revolvebrep = ON_Brep::New();
     // revolve will need its own sketch
@@ -788,7 +788,7 @@ main(int argc, char** argv)
     mk_brep(outfp, revolve_name, revolvebrep);
 //    delete revolvebrep;
  
-*/
+/*
     bu_log("Writing a DSP b-rep...\n");
     ON_Brep* dspbrep = ON_Brep::New();
     struct rt_dsp_internal *dsp;
@@ -808,7 +808,7 @@ main(int argc, char** argv)
     const char* dsp_name = "dsp_nurb.s";
     mk_brep(outfp, dsp_name, dspbrep);
     delete dspbrep;
-
+*/
     bu_free(tmp_internal, "free tmp_internal");
     wdb_close(outfp);
 
