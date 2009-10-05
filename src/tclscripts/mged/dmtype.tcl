@@ -50,14 +50,19 @@ proc dmtype {args} {
   if {$arg != "set"} {
     return [help dmtype]
   }
-  set arg [lindex $args 1]
+  set dtype [lindex $args 1]
   
   # New dm type is requested
   destroy $mged_gui($id,top).ur
   destroy $mged_gui($id,top).ul
   destroy $mged_gui($id,top).lr
   destroy $mged_gui($id,top).ll
+  destroy $mged_gui($id,top).ulF
+  destroy $mged_gui($id,top).urF
+  destroy $mged_gui($id,top).llF
+  destroy $mged_gui($id,top).lrF
 
+  openmv $id $mged_gui($id,top) $mged_gui($id,dmc) $mged_default(display) $dtype
   
 
 }
