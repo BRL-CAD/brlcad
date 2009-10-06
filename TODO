@@ -17,12 +17,6 @@ tasks as they are completed.
 THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 -------------------------------------------------
 
-* ship it.
-
-
-THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
--------------------------------------------------------
-
 * initial step-g with basic file parsing capability but without
   creation of .g geometry just yet
 
@@ -33,10 +27,6 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
   rt_shot(), rt_describe(), etc).
 
 * utilize -pedantic -Wall -Werror on 'clean' directories
-
-* implement a routine to convert an NMG object (whether polygonal or
-  old bspline/nurbs) to the newer openNURBS BREP object type to
-  facilitate tool migration.
 
 * annotation primitive.  specifically a means to create an object in
   the database that can optionally be associated with an object and/or
@@ -51,11 +41,14 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 
 * 64-bit port of BRL-CAD on Windows
 
-* make GUI mged support interactively swapping out display managers
-  (in order to support switching to ogl/X/rtgl, for example)
-
 * finish obj-g importer.  need to test more inputs and make sure all
   geometry is preserved on import in some form.
+
+
+THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
+-------------------------------------------------------
+
+* TBD
 
 
 THESE ARE UNSCHEDULED BACKLOG TASKS
