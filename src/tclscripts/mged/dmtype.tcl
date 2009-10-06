@@ -53,9 +53,8 @@ proc dmtype {args} {
   }
   set dtype [lindex $args 1]
 
-  set oldaet [_mged_ae]
-  puts $oldaet
-  
+  set oldaet [_mged_ae] 
+ 
   # New dm type is requested
   catch { release $mged_gui($id,top).ur }
   catch { release $mged_gui($id,top).ul }

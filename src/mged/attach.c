@@ -293,7 +293,6 @@ f_release(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	return release((char *)NULL, 1);
 }
 
-
 void
 print_valid_dm(void)
 {
@@ -614,12 +613,6 @@ get_attached(void)
 int
 f_dm(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
-    if (!cmd_hook) {
-	Tcl_AppendResult(interp, "The '", dmp->dm_name,
-			 "' display manager does not support local commands.\n",
-			 (char *)NULL);
-	return TCL_ERROR;
-    }
 
     if (argc < 2) {
 	struct bu_vls vls;
@@ -630,6 +623,57 @@ f_dm(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	bu_vls_free(&vls);
 	return TCL_ERROR;
     }
+
+    if (!strcmp(argv[1],"valid")) {
+	if (argc < 3) {
+    	    struct bu_vls vls;
+	    
+    	    bu_vls_init(&vls);
+    	    bu_vls_printf(&vls, "help dm");
+    	    Tcl_Eval(interp, bu_vls_addr(&vls));
+    	    bu_vls_free(&vls);
+    	    return TCL_ERROR;
+    	}
+#ifdef DM_X
+    	if (!strcmp(argv[argc-1], "X")) {
+    	    Tcl_AppendResult(interp, "X", (char *)NULL);
+    	}
+#endif /* DM_X */
+#ifdef DM_TK
+    	if (!strcmp(argv[argc-1], "tk")) {
+    	    Tcl_AppendResult(interp, "tk", (char *)NULL);
+    	}
+#endif /* DM_TK */
+#ifdef DM_WGL
+    	if (!strcmp(argv[argc-1], "wgl")) {
+	    Tcl_AppendResult(interp, "wgl", (char *)NULL);
+	}
+#endif /* DM_WGL */
+#ifdef DM_OGL
+    	if (!strcmp(argv[argc-1], "ogl")) {
+	    Tcl_AppendResult(interp, "ogl", (char *)NULL);
+	}
+#endif /* DM_OGL */
+#ifdef DM_RTGL
+    	if (!strcmp(argv[argc-1], "rtgl")) {
+	    Tcl_AppendResult(interp, "rtgl", (char *)NULL);
+	}
+#endif /* DM_RTGL */
+#ifdef DM_GLX
+    	if (!strcmp(argv[argc-1], "glx")) {
+	    Tcl_AppendResult(interp, "glx", (char *)NULL);
+	}
+#endif /* DM_GLX */
+       return TCL_OK;
+    }       
+    
+    if (!cmd_hook) {
+	Tcl_AppendResult(interp, "The '", dmp->dm_name,
+			 "' display manager does not support local commands.\n",
+			 (char *)NULL);
+	return TCL_ERROR;
+    }
+
 
     return cmd_hook(argc-1, argv+1);
 }

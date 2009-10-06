@@ -1762,16 +1762,43 @@ hoc_register_menu_data "Create" "$ptype..." "Make a $ptype" $ksl
 	    { see_also "rset" } }
 
     menu .$id.menubar.modes.dmtype -title "Display Manager" -tearoff $mged_default(tearoff_menus)
+    set have_dm [dm valid ogl]
+    if {$have_dm == "ogl"} {
     .$id.menubar.modes.dmtype add radiobutton -value s -variable mged_gui($id,dtype)\
         -label "OpenGL" -underline 0\
         -command "dmtype set ogl"
+    }
+    set have_dm [dm valid wgl]
+    if {$have_dm == "wgl"} {
+    .$id.menubar.modes.dmtype add radiobutton -value s -variable mged_gui($id,dtype)\
+        -label "Windows OpenGL" -underline 0\
+        -command "dmtype set wgl"
+    }
+    set have_dm [dm valid X]
+    if {$have_dm == "X"} {
     .$id.menubar.modes.dmtype add radiobutton -value s -variable mged_gui($id,dtype)\
         -label "X Windows" -underline 0\
         -command "dmtype set X"
+    }
+    set have_dm [dm valid glx]
+    if {$have_dm == "glx"} {
+    .$id.menubar.modes.dmtype add radiobutton -value s -variable mged_gui($id,dtype)\
+        -label "GLX" -underline 0\
+        -command "dmtype set glx"
+    }
+    set have_dm [dm valid rtgl]
+    if {$have_dm == "rtgl"} {
     .$id.menubar.modes.dmtype add radiobutton -value s -variable mged_gui($id,dtype)\
         -label "Ray Traced" -underline 0\
         -command "dmtype set rtgl"
-     hoc_register_menu_data "Modes" "Display Manager" "Display Manager"\
+    }
+    set have_dm [dm valid tk]
+    if {$have_dm == "tk"} {
+    .$id.menubar.modes.dmtype add radiobutton -value s -variable mged_gui($id,dtype)\
+        -label "Tk" -underline 0\
+        -command "dmtype set tk"
+    }
+    hoc_register_menu_data "Modes" "Display Manager" "Display Manager"\
 	{ { summary "Change the display manager being used to render wireframe and/or
         shaded displays of BRL-CAD models." }
 	    { see_also "dmtype" } }
