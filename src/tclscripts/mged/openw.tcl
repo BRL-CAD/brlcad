@@ -1650,6 +1650,8 @@ hoc_register_menu_data "Create" "$ptype..." "Make a $ptype" $ksl
     .$id.menubar.modes add cascade -label "Axes" -underline 1\
 	-menu .$id.menubar.modes.axes
     .$id.menubar.modes add separator
+    .$id.menubar.modes add cascade -label "Display Manager" -underline 1\
+        -menu .$id.menubar.modes.dmtype
     .$id.menubar.modes add checkbutton -offvalue 0 -onvalue 1 -variable mged_gui($id,multi_pane)\
 	-label "Multipane" -underline 0 -command "setmv $id"
     hoc_register_menu_data "Modes" "Multipane" "Multipane"\
@@ -1758,6 +1760,22 @@ hoc_register_menu_data "Create" "$ptype..." "Make a $ptype" $ksl
 	pair of axes. One remains unmoved, while the other
 	moves to indicate how things have changed." }
 	    { see_also "rset" } }
+
+    menu .$id.menubar.modes.dmtype -title "Display Manager" -tearoff $mged_default(tearoff_menus)
+    .$id.menubar.modes.dmtype add radiobutton -value s -variable mged_gui($id,dtype)\
+        -label "ogl" -underline 0\
+        -command "dmtype set ogl"
+    .$id.menubar.modes.dmtype add radiobutton -value s -variable mged_gui($id,dtype)\
+        -label "X" -underline 0\
+        -command "dmtype set X"
+    .$id.menubar.modes.dmtype add radiobutton -value s -variable mged_gui($id,dtype)\
+        -label "rtgl" -underline 0\
+        -command "dmtype set rtgl"
+     hoc_register_menu_data "Modes" "Display Manager" "Display Manager"\
+	{ { summary "Change the display manager being used to render wireframe and/or
+        shaded displays of BRL-CAD models." }
+	    { see_also "dmtype" } }
+   
 
     menu .$id.menubar.misc -title "Misc" -tearoff $mged_default(tearoff_menus)
     .$id.menubar.misc add checkbutton -offvalue 0 -onvalue 1\
