@@ -44,6 +44,8 @@ THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 * finish obj-g importer.  need to test more inputs and make sure all
   geometry is preserved on import in some form.
 
+* rename istat/dstat to avoid naming conflicts
+
 
 THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 -------------------------------------------------------
