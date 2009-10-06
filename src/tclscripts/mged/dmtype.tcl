@@ -34,6 +34,7 @@ proc dmtype {args} {
   global mged_gui
   global mged_default
   global mged_players
+  global mged_display
   set id $mged_players
   
   set argc [llength $args]
@@ -51,6 +52,9 @@ proc dmtype {args} {
     return [help dmtype]
   }
   set dtype [lindex $args 1]
+
+  set oldaet [_mged_ae]
+  puts $oldaet
   
   # New dm type is requested
   catch { release $mged_gui($id,top).ur }
@@ -70,6 +74,8 @@ proc dmtype {args} {
 
   mged_apply_local $id "rset cs mode 0"
   rset cs mode 1
+
+  ae [lindex $oldaet 0] [lindex $oldaet 1] [lindex $oldaet 2]
 }
 
 

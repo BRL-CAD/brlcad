@@ -1763,13 +1763,13 @@ hoc_register_menu_data "Create" "$ptype..." "Make a $ptype" $ksl
 
     menu .$id.menubar.modes.dmtype -title "Display Manager" -tearoff $mged_default(tearoff_menus)
     .$id.menubar.modes.dmtype add radiobutton -value s -variable mged_gui($id,dtype)\
-        -label "ogl" -underline 0\
+        -label "OpenGL" -underline 0\
         -command "dmtype set ogl"
     .$id.menubar.modes.dmtype add radiobutton -value s -variable mged_gui($id,dtype)\
-        -label "X" -underline 0\
+        -label "X Windows" -underline 0\
         -command "dmtype set X"
     .$id.menubar.modes.dmtype add radiobutton -value s -variable mged_gui($id,dtype)\
-        -label "rtgl" -underline 0\
+        -label "Ray Traced" -underline 0\
         -command "dmtype set rtgl"
      hoc_register_menu_data "Modes" "Display Manager" "Display Manager"\
 	{ { summary "Change the display manager being used to render wireframe and/or
