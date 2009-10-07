@@ -1754,7 +1754,12 @@ rtgl_drawVList(struct dm *dmp, register struct bn_vlist *vp)
 	bu_log("firing %d jobs", numJobs);
 
 	/* create job array */
-	jobsArray = bu_malloc(sizeof(struct jobList *) * numJobs, "dm-rtgl.c: jobsArray");
+	if (jobsArray == NULL) {
+    	    jobsArray = bu_malloc(sizeof(struct jobList *) * numJobs, "dm-rtgl.c: jobsArray");
+	} else {
+	    bu_free(jobsArray, "jobsArray");
+	    jobsArray = bu_malloc(sizeof(struct jobList *) * numJobs, "dm-rtgl.c: jobsArray");
+	}
 	    
 	i = 0;
 	for (BU_LIST_FOR_BACKWARDS(currJob, jobList, &(jobs.l))) {
