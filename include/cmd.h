@@ -135,6 +135,13 @@ BU_EXPORT BU_EXTERN(int bu_cmdhist_next, (ClientData clientData, Tcl_Interp *int
  */
 BU_EXPORT BU_EXTERN(int bu_cmdhist_prev, (ClientData clientData, Tcl_Interp *interp, int argc, const char **argv));
 
+/**
+ * @brief
+ * Open a command history object.
+ *
+ * USAGE:
+ * ch_open name
+ */
 BU_EXPORT BU_EXTERN(int cho_open_tcl, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
 
 #endif  /* __CMD_H__ */

@@ -47,19 +47,7 @@ static struct bu_cmdtab ch_cmds[] =
     {(char *)NULL,	CMD_NULL}
 };
 
-/**
- *
- */
-int
-cho_hist(ClientData clientData, Tcl_Interp *interp, int argc, const char **argv)
-{
-    return bu_cmd(clientData, interp, argc, argv, ch_cmds, 1);
-}
 
-
-/**
- *
- */
 static struct bu_cmdtab cho_cmds[] =
 {
     {"add",	bu_cmdhist_add},
@@ -71,19 +59,20 @@ static struct bu_cmdtab cho_cmds[] =
 };
 
 
-/**
- *
- */
-static int
+HIDDEN int
+cho_hist(ClientData clientData, Tcl_Interp *interp, int argc, const char **argv)
+{
+    return bu_cmd(clientData, interp, argc, argv, ch_cmds, 1);
+}
+
+
+HIDDEN int
 cho_cmd(ClientData clientData, Tcl_Interp *interp, int argc, const char **argv)
 {
     return bu_cmd(clientData, interp, argc, argv, cho_cmds, 1);
 }
 
 
-/**
- *
- */
 int
 Cho_Init(Tcl_Interp *interp)
 {
@@ -95,13 +84,10 @@ Cho_Init(Tcl_Interp *interp)
 }
 
 
-/**
- *
- */
-static void
+HIDDEN void
 cho_deleteProc(ClientData clientData)
 {
-    struct bu_cmdhist_obj *chop = (struct  bu_cmdhist_obj *)clientData;
+    struct bu_cmdhist_obj *chop = (struct bu_cmdhist_obj *)clientData;
     struct bu_cmdhist *curr, *next;
 
     /* free list of commands */
@@ -124,43 +110,8 @@ cho_deleteProc(ClientData clientData)
     bu_free((genptr_t)chop, "cho_deleteProc: chop");
 }
 
-#if 0			/* As far as I can tell, this is not used.  CTJ */
-/*
- * Close a command history object.
- *
- * USAGE:
- *        procname close
- */
-static int
-cho_close_tcl(clientData, interp, argc, argv)
-    ClientData      clientData;
-    Tcl_Interp      *interp;
-    int             argc;
-    char            **argv;
-{
-    struct bu_cmdhist_obj *chop = (struct  bu_cmdhist_obj *)clientData;
-    struct bu_vls vls;
 
-    if (argc != 2) {
-	bu_vls_init(&vls);
-	bu_vls_printf(&vls, "helplib cho_close");
-	Tcl_Eval(interp, bu_vls_addr(&vls));
-	bu_vls_free(&vls);
-	return TCL_ERROR;
-    }
-
-    /* Among other things, this will call cho_deleteProc. */
-    Tcl_DeleteCommand(interp, bu_vls_addr(&chop->cho_name));
-
-    return TCL_OK;
-}
-#endif
-
-
-/**
- *
- */
-static struct bu_cmdhist_obj *
+HIDDEN struct bu_cmdhist_obj *
 cho_open(ClientData clientData, Tcl_Interp *interp, char *name)
 {
     struct bu_cmdhist_obj *chop;
@@ -191,13 +142,7 @@ cho_open(ClientData clientData, Tcl_Interp *interp, char *name)
     return chop;
 }
 
-/**
- * @brief
- * Open a command history object.
- *
- * USAGE:
- *        ch_open name
- */
+
 int
 cho_open_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
