@@ -70,11 +70,8 @@ int	numreflect = DEFAULTREFLECT;	/* max number of reflections */
 
 /* Viewing module specific "set" variables */
 struct bu_structparse view_parse[] = {
-#if !defined(__alpha)   /* XXX Alpha does not support this initialization! */
-
-    {"%d",	1, "maxreflect",	bu_byteoffset(numreflect),	BU_STRUCTPARSE_FUNC_NULL },
-#endif
-    {"",	0, (char *)0,		0,			BU_STRUCTPARSE_FUNC_NULL }
+    {"%d", 1, "maxreflect", bu_byteoffset(numreflect), BU_STRUCTPARSE_FUNC_NULL},
+    {"", 0, (char *)0, 0, BU_STRUCTPARSE_FUNC_NULL }
 };
 
 const char title[] = "RTRAD";
