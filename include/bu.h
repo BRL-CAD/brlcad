@@ -2098,9 +2098,34 @@ BU_EXPORT BU_EXTERN(void bu_bomb, (const char *str)) __BU_ATTR_NORETURN;
 BU_EXPORT BU_EXTERN(void bu_exit, (int status, const char *fmt, ...)) __BU_ATTR_NORETURN __BU_ATTR_FORMAT23;
 
 /* crashreport.c */
+
+/**
+ * b u _ c r a s h r e p o r t
+ *
+ * this routine writes out details of the currently running process to
+ * the specified file, including an informational header about the
+ * execution environment, stack trace details, kernel and hardware
+ * information, and current version information.
+ *
+ * returns truthfully if the crash report was written.
+ *
+ * due to various reasons, this routine is NOT thread-safe.
+ */
 BU_EXPORT BU_EXTERN(int bu_crashreport, (const char *filename));
 
 /* fgets.c */
+
+/**
+ * b u _ f g e t s
+ *
+ * Reads in at most one less than size characters from stream and
+ * stores them into the buffer pointed to by s. Reading stops after an
+ * EOF, CR, LF, or a CR/LF combination. If a LF or CR is read, it is
+ * stored into the buffer. If a CR/LF is read, just a CR is stored
+ * into the buffer. A '\\0' is stored after the last character in the
+ * buffer. Returns s on success, and NULL on error or when end of file
+ * occurs while no characters have been read.
+ */
 BU_EXPORT BU_EXTERN(char *bu_fgets, (char *s, int size, FILE *stream));
 
 /** @} */
@@ -2147,7 +2172,15 @@ BU_EXPORT BU_EXTERN(int bu_file_executable, (const char *path));
 BU_EXPORT BU_EXTERN(int bu_fnmatch, (const char *, const char *, int));
 
 /* dirent.c */
+
+/**
+ * Count number of files in directory whose type matches substr
+ */
 BU_EXPORT BU_EXTERN(int bu_count_path, (char *path, char *substr));
+
+/**
+ * Return array with filenames with suffix matching substr
+ */
 BU_EXPORT BU_EXTERN(void bu_list_path, (char *path, char *substr, char **filearray)); 
 
 
@@ -2239,6 +2272,28 @@ BU_EXPORT BU_EXTERN(const char *bu_which, (const char *cmd));
 BU_EXPORT BU_EXTERN(const char *bu_whereis, (const char *cmd));
 
 /* fopen_uniq */
+
+/**
+ * B U _ F O P E N _ U N I Q
+ * @brief
+ * Open a file for output.  Assures that the file did not previously
+ * exist.  This routine is DEPRECATED.  Do not use.
+ *
+ * Typical Usages:
+ @code
+ *	static int n = 0;
+ *	FILE *fp;
+ *
+ *	fp = bu_fopen_uniq("writing to %s for results", "output%d.pl", n++);
+ *	...
+ *	fclose(fp);
+ *
+ *
+ *	fp = bu_fopen_uniq((char *)NULL, "output%d.pl", n++);
+ *	...
+ *	fclose(fp);
+ @endcode
+*/
 BU_EXPORT BU_EXTERN(FILE *bu_fopen_uniq, (const char *outfmt, const char *namefmt, int n)); /**< DEPRECATED */
 
 /* temp.c */
@@ -2253,6 +2308,12 @@ BU_EXPORT extern int bu_opterr;
 BU_EXPORT extern int bu_optind;
 BU_EXPORT extern int bu_optopt;
 BU_EXPORT extern char * bu_optarg;
+
+/**
+ * B U _ G E T O P T
+ *
+ * get option letter from argument vector
+ */
 BU_EXPORT BU_EXTERN(int bu_getopt, (int nargc, char * const nargv[], const char *ostr));
 
 /** @} */
@@ -2417,7 +2478,28 @@ BU_EXPORT BU_EXTERN(genptr_t bu_calloc,
 BU_EXPORT BU_EXTERN(void bu_prmem,
 		    (const char *str));
 
-/* don't rely on non-constness of bu_dirname().. will change to const */
+/**
+ * B U _ D I R N A M E
+ *
+ * Given a filesystem pathname, return a pointer to a dynamic string
+ * which is the parent directory of that file/directory.
+ *
+ *	/usr/dir/file	/usr/dir
+ * @n	/usr/dir/	/usr
+ * @n	/usr/file	/usr
+ * @n	/usr/		/
+ * @n	/usr		/
+ * @n	/		/
+ * @n	.		.
+ * @n	..		.
+ * @n	usr		.
+ * @n	a/b		a
+ * @n	a/		.
+ * @n	../a/b		../a
+ *
+ * Warning: don't rely on non-constness of bu_dirname().. will change
+ * to const.
+ */
 BU_EXPORT BU_EXTERN(char *bu_dirname,
 		    (const char *cp));
 BU_EXPORT BU_EXTERN(const char *bu_basename,

@@ -50,11 +50,12 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- */
-
-/*
+ *
+ ***
+ *
  * Function fnmatch() as specified in POSIX 1003.2-1992, section B.6.
  * Compares a filename or pathname to a pattern.
+ *
  */
 
 #include "common.h"

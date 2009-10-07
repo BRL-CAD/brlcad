@@ -42,27 +42,7 @@
 
 #include "bu.h"
 
-/**
- * B U _ F O P E N _ U N I Q
- * @brief
- * Open a file for output.  Assures that the file did not previously exist.
- * This routine is DEPRECATED.  Do not use.
- *
- * Typical Usages:
- @code
- *	static int n = 0;
- *	FILE *fp;
- *
- *	fp = bu_fopen_uniq("writing to %s for results", "output%d.pl", n++);
- *	...
- *	fclose(fp);
- *
- *
- *	fp = bu_fopen_uniq((char *)NULL, "output%d.pl", n++);
- *	...
- *	fclose(fp);
- @endcode
-*/
+
 FILE *
 bu_fopen_uniq(const char *outfmt, const char *namefmt, int n)
 {
