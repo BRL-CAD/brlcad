@@ -865,13 +865,13 @@ get_intensity(double *intensity, struct application *ap, const struct cell *here
      *
      *    left      right
      * _____________________
-     * |0,0 | AL | AR | 0,3|  above
+     * |0, 0 | AL | AR | 0, 3|  above
      * |____|____|____|____|
      * | TL | UL | UR | TR |  top/upper
      * |____|____|____|____|
      * | BL | LL | LR | BR |  bottom/lower
      * |____|____|____|____|
-     * |3,0 | DL | DR | 3,3|  debajo
+     * |3, 0 | DL | DR | 3, 3|  debajo
      * |____|____|____|____|
      */
 
@@ -900,7 +900,7 @@ get_intensity(double *intensity, struct application *ap, const struct cell *here
     VSCALE(dx3, dx_model, 0.375);
 
 #if 0
-    fprintf(stderr, "\n(X,Y) = (%d,%d)\n", ap->a_x, ap->a_y);
+    fprintf(stderr, "\n(X, Y) = (%d, %d)\n", ap->a_x, ap->a_y);
     VPRINT("dy_model", dy_model);
     VPRINT("dx_model", dx_model);
     VPRINT("dy", dy);
