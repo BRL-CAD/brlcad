@@ -840,9 +840,9 @@ cmd_list(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 
 	linelen += len;
 	if (linelen > 80)
-	    bu_log("\n%-*S", len, &plp->pl_name);
+	    bu_log("\n%-*V", len, &plp->pl_name);
 	else
-	    bu_log("%-*S", len, &plp->pl_name);
+	    bu_log("%-*V", len, &plp->pl_name);
     }
 
     bu_log("\n");
