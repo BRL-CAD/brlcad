@@ -42,60 +42,9 @@
 #include "dm-X.h"
 
 
-static int appInit();
-static int islewview();
-static int slewview();
-static int zoom();
-static void refresh();
-static void size_reset();
-static void vrot();
-static void setview();
-static void new_mats();
-static void buildHrot();
-
-static int cmd_aetview();
-static int cmd_clear();
-static int cmd_closepl();
-static int cmd_dm();
-static int cmd_draw();
-static int cmd_erase();
-static int cmd_exit();
-static int cmd_list();
-static int cmd_openpl();
-static int cmd_reset();
-static int cmd_slewview();
-static int cmd_vrot();
-static int cmd_zoom();
-static void cmd_setup();
-
-
-static int X_dmInit();
-static int X_doEvent();
-static int X_dm();
-
-
 struct cmdtab {
     char *ct_name;
     int (*ct_func)();
-};
-
-static struct cmdtab cmdtab[] = {
-    "ae", cmd_aetview,
-    "clear", cmd_clear,
-    "closepl", cmd_closepl,
-    "dm", cmd_dm,
-    "draw", cmd_draw,
-    "erase", cmd_erase,
-    "exit", cmd_exit,
-    "ls", cmd_list,
-    "openpl", cmd_openpl,
-    "q", cmd_exit,
-    "reset", cmd_reset,
-    "sv", cmd_slewview,
-    "t", cmd_list,
-    "vrot", cmd_vrot,
-    "zoom", cmd_zoom,
-    (char *)NULL, (int (*)())NULL
 };
 
 #define MAXARGS 9000
@@ -121,7 +70,7 @@ int omx, omy;
 int (*cmd_hook)();
 static int windowbounds[6] = { 2047, -2048, 2047, -2048, 2047, -2048 };
 
-double degtorad =  0.01745329251994329573;
+double degtorad = 0.01745329251994329573;
 
 struct plot_list{
     struct bu_list l;
@@ -162,6 +111,7 @@ output_catch(genptr_t clientdata, genptr_t str)
     return len;
 }
 
+
 /*
  *                 S T A R T _ C A T C H I N G _ O U T P U T
  *
@@ -174,6 +124,7 @@ start_catching_output(struct bu_vls *vp)
     bu_log_add_hook(output_catch, (genptr_t)vp);
 }
 
+
 /*
  *                 S T O P _ C A T C H I N G _ O U T P U T
  *
@@ -184,6 +135,7 @@ stop_catching_output(struct bu_vls *vp)
 {
     bu_log_delete_hook(output_catch, (genptr_t)vp);
 }
+
 
 int
 get_args( int argc, char **argv )
@@ -217,89 +169,10 @@ get_args( int argc, char **argv )
 }
 
 
-int
-main(int argc, char *argv[])
-{
-    int n;
-    char *file;
-    FILE *fp;
-    struct plot_list *plp;
 
-    if (!get_args(argc, argv))
-	bu_exit (1, "%s", usage);
-
-    memset((void *)&HeadPlot, 0, sizeof(struct plot_list));
-    BU_LIST_INIT(&HeadPlot.l);
-
-    MAT_IDN(toViewcenter);
-    MAT_IDN(Viewrot);
-    MAT_IDN(model2view);
-    MAT_IDN(view2model);
-
-    if (cmd_openpl((ClientData)NULL, (Tcl_Interp *)NULL,
-		   argc-bu_optind+1, argv+bu_optind-1) == TCL_ERROR)
-	bu_exit (1, NULL);
-
-    argv[1] = (char *)NULL;
-    Tk_Main(1, argv, appInit);
-
-    bu_exit (0, NULL);
-}
-
-static int
-appInit(Tcl_Interp *_interp)
-{
-    const char *filename;
-    struct bu_vls str;
-    struct bu_vls str2;
-
-    /* libdm uses interp */
-    interp = _interp;
-
-    switch (dm_type) {
-	case DM_TYPE_X:
-	default:
-	    cmd_hook = X_dm;
-	    break;
-    }
-
-    /* Evaluates init.tcl */
-    if (Tcl_Init(interp) == TCL_ERROR)
-	bu_exit (1, "Tcl_Init error %s\n", Tcl_GetStringResult(interp));
-
-    /*
-     * Creates the main window and registers all of Tk's commands
-     * into the interpreter.
-     */
-    if (Tk_Init(interp) == TCL_ERROR)
-	bu_exit (1, "Tk_Init error %s\n", Tcl_GetStringResult(interp));
-
-    if ((tkwin = Tk_MainWindow(interp)) == NULL)
-	bu_exit (1, "appInit: Failed to get main window.\n");
-
-    /* Locate the BRL-CAD-specific Tcl scripts */
-    filename = bu_brlcad_data( "tclscripts", 0 );
-
-    bu_vls_init(&str);
-    bu_vls_init(&str2);
-    bu_vls_printf(&str2, "%s/pl-dm", filename);
-    bu_vls_printf(&str, "wm withdraw .; set auto_path [linsert $auto_path 0 %s %s]",
-		  bu_vls_addr(&str2), filename);
-    (void)Tcl_Eval(interp, bu_vls_addr(&str));
-    bu_vls_free(&str);
-    bu_vls_free(&str2);
-
-    /* register application commands */
-    cmd_setup(interp, cmdtab);
-
-    /* open display manager */
-    switch (dm_type) {
-	case DM_TYPE_X:
-	default:
-	    return X_dmInit();
-    }
-}
-
+/*
+ * X Display Manager Specific Stuff
+ */
 
 static void
 refresh() {
@@ -328,17 +201,64 @@ refresh() {
 }
 
 
+/*
+ *                      B U I L D H R O T
+ *
+ * This routine builds a Homogeneous rotation matrix, given
+ * alpha, beta, and gamma as angles of rotation.
+ *
+ * NOTE:  Only initialize the rotation 3x3 parts of the 4x4
+ * There is important information in dx, dy, dz, s .
+ */
 static void
-vrot(double x, double y, double z)
+buildHrot( register matp_t mat, double alpha, double beta, double ggamma )
 {
-    mat_t newrot;
+    static fastf_t calpha, cbeta, cgamma;
+    static fastf_t salpha, sbeta, sgamma;
 
-    MAT_IDN( newrot );
-    buildHrot( newrot,
-	       x * degtorad,
-	       y * degtorad,
-	       z * degtorad );
-    bn_mat_mul2( newrot, Viewrot );
+    calpha = cos( alpha );
+    cbeta = cos( beta );
+    cgamma = cos( ggamma );
+
+    salpha = sin( alpha );
+    sbeta = sin( beta );
+    sgamma = sin( ggamma );
+
+    /*
+     * compute the new rotation to apply to the previous
+     * viewing rotation.
+     * Alpha is angle of rotation about the X axis, and is done third.
+     * Beta is angle of rotation about the Y axis, and is done second.
+     * Gamma is angle of rotation about Z axis, and is done first.
+     */
+#ifdef m_RZ_RY_RX
+    /* view = model * RZ * RY * RX (Neuman+Sproul, premultiply) */
+    mat[0] = cbeta * cgamma;
+    mat[1] = -cbeta * sgamma;
+    mat[2] = -sbeta;
+
+    mat[4] = -salpha * sbeta * cgamma + calpha * sgamma;
+    mat[5] = salpha * sbeta * sgamma + calpha * cgamma;
+    mat[6] = -salpha * cbeta;
+
+    mat[8] = calpha * sbeta * cgamma + salpha * sgamma;
+    mat[9] = -calpha * sbeta * sgamma + salpha * cgamma;
+    mat[10] = calpha * cbeta;
+#endif
+    /* This is the correct form for this version of GED */
+    /* view = RX * RY * RZ * model (Rodgers, postmultiply) */
+    /* Point thumb along axis of rotation.  +Angle as hand closes */
+    mat[0] = cbeta * cgamma;
+    mat[1] = -cbeta * sgamma;
+    mat[2] = sbeta;
+
+    mat[4] = salpha * sbeta * cgamma + calpha * sgamma;
+    mat[5] = -salpha * sbeta * sgamma + calpha * cgamma;
+    mat[6] = -salpha * cbeta;
+
+    mat[8] = -calpha * sbeta * cgamma + salpha * sgamma;
+    mat[9] = calpha * sbeta * sgamma + salpha * cgamma;
+    mat[10] = calpha * cbeta;
 }
 
 
@@ -364,6 +284,18 @@ setview(double a1, double a2, double a3)
 
 
 static int
+slewview(vect_t view_pos)
+{
+    vect_t new_model_pos;
+
+    MAT4X3PNT( new_model_pos, view2model, view_pos );
+    MAT_DELTAS_VEC_NEG( toViewcenter, new_model_pos );
+
+    return TCL_OK;
+}
+
+
+static int
 islewview(vect_t vdiff)
 {
     vect_t old_model_pos;
@@ -375,18 +307,6 @@ islewview(vect_t vdiff)
     VSUB2(view_pos, old_view_pos, vdiff);
 
     return slewview(view_pos);
-}
-
-
-static int
-slewview(vect_t view_pos)
-{
-    vect_t new_model_pos;
-
-    MAT4X3PNT( new_model_pos, view2model, view_pos );
-    MAT_DELTAS_VEC_NEG( toViewcenter, new_model_pos );
-
-    return TCL_OK;
 }
 
 
@@ -403,6 +323,177 @@ zoom(Tcl_Interp *interp, double val)
 	return TCL_ERROR;
 
     Viewscale /= val;
+
+    return TCL_OK;
+}
+
+
+static void
+vrot(double x, double y, double z)
+{
+    mat_t newrot;
+
+    MAT_IDN( newrot );
+    buildHrot( newrot,
+	       x * degtorad,
+	       y * degtorad,
+	       z * degtorad );
+    bn_mat_mul2( newrot, Viewrot );
+}
+
+
+/*
+ *                      N E W _ M A T S
+ *
+ *  Derive the inverse and editing matrices, as required.
+ *  Centralized here to simplify things.
+ */
+static void
+new_mats()
+{
+    bn_mat_mul( model2view, Viewrot, toViewcenter );
+    model2view[15] = Viewscale;
+    bn_mat_inv( view2model, model2view );
+}
+
+
+/*
+ * Event handler for the X display manager.
+ */
+static int
+X_doEvent(ClientData clientData, XEvent *eventPtr)
+{
+    if (eventPtr->type == Expose && eventPtr->xexpose.count == 0) {
+	refresh();
+    } else if (eventPtr->type == ConfigureNotify) {
+	refresh();
+    } else if ( eventPtr->type == MotionNotify ) {
+	int mx, my;
+
+	mx = eventPtr->xmotion.x;
+	my = eventPtr->xmotion.y;
+
+	switch (mouse_mode) {
+	    case MOUSE_MODE_ROTATE:
+		vrot((my - omy) * app_scale,
+		     (mx - omx) * app_scale,
+		     0.0);
+		new_mats();
+		refresh();
+
+		break;
+	    case MOUSE_MODE_TRANSLATE:
+	    {
+		vect_t vdiff;
+
+		vdiff[X] = (mx - omx) /
+		    (fastf_t)dmp->dm_width * 2.0;
+		vdiff[Y] = (omy - my) /
+		    (fastf_t)dmp->dm_height * 2.0;
+		vdiff[Z] = 0.0;
+
+		(void)islewview(vdiff);
+		new_mats();
+		refresh();
+	    }
+
+	    break;
+	    case MOUSE_MODE_ZOOM:
+	    {
+		double val;
+
+		val = 1.0 + (omy - my) /
+		    (fastf_t)dmp->dm_height;
+
+		zoom(interp, val);
+		new_mats();
+		refresh();
+	    }
+
+	    break;
+	    case MOUSE_MODE_IDLE:
+	    default:
+		break;
+	}
+
+	omx = mx;
+	omy = my;
+    }
+
+    return TCL_OK;
+}
+
+
+/*
+ * Handle X display manger specific commands.
+ */
+static int
+X_dm(int argc, char *argv[])
+{
+    int status;
+
+    if ( !strcmp( argv[0], "set" )) {
+	struct bu_vls tmp_vls;
+
+	bu_vls_init(&tmp_vls);
+	start_catching_output(&tmp_vls);
+
+	stop_catching_output(&tmp_vls);
+	Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
+	bu_vls_free(&tmp_vls);
+	return TCL_OK;
+    }
+
+    if ( !strcmp( argv[0], "m")) {
+	vect_t view_pos;
+
+	if ( argc < 4) {
+	    Tcl_AppendResult(interp, "dm m: need more parameters\n",
+			     "dm m button 1|0 xpos ypos\n", (char *)NULL);
+	    return TCL_ERROR;
+	}
+
+	view_pos[X] = dm_Xx2Normal(dmp, atoi(argv[3]));
+	view_pos[Y] = dm_Xy2Normal(dmp, atoi(argv[4]), 0);
+	view_pos[Z] = 0.0;
+	status = slewview(view_pos);
+	new_mats();
+	refresh();
+
+	return status;
+    }
+
+    if ( !strcmp( argv[0], "am" )) {
+	int buttonpress;
+
+	if ( argc < 5) {
+	    Tcl_AppendResult(interp, "dm am: need more parameters\n",
+			     "dm am <r|t|z> 1|0 xpos ypos\n", (char *)NULL);
+	    return TCL_ERROR;
+	}
+
+	buttonpress = atoi(argv[2]);
+	omx = atoi(argv[3]);
+	omy = atoi(argv[4]);
+
+	if (buttonpress) {
+	    switch (*argv[1]) {
+		case 'r':
+		    mouse_mode = MOUSE_MODE_ROTATE;
+		    break;
+		case 't':
+		    mouse_mode = MOUSE_MODE_TRANSLATE;
+		    break;
+		case 'z':
+		    mouse_mode = MOUSE_MODE_ZOOM;
+		    break;
+		default:
+		    mouse_mode = MOUSE_MODE_IDLE;
+		    break;
+	    }
+	} else
+	    mouse_mode = MOUSE_MODE_IDLE;
+    }
 
     return TCL_OK;
 }
@@ -475,79 +566,8 @@ size_reset()
 
 
 /*
- *                      N E W _ M A T S
- *
- *  Derive the inverse and editing matrices, as required.
- *  Centralized here to simplify things.
+ * User Commands
  */
-static void
-new_mats()
-{
-    bn_mat_mul( model2view, Viewrot, toViewcenter );
-    model2view[15] = Viewscale;
-    bn_mat_inv( view2model, model2view );
-}
-
-
-/*
- *                      B U I L D H R O T
- *
- * This routine builds a Homogeneous rotation matrix, given
- * alpha, beta, and gamma as angles of rotation.
- *
- * NOTE:  Only initialize the rotation 3x3 parts of the 4x4
- * There is important information in dx, dy, dz, s .
- */
-static void
-buildHrot( register matp_t mat, double alpha, double beta, double ggamma )
-{
-    static fastf_t calpha, cbeta, cgamma;
-    static fastf_t salpha, sbeta, sgamma;
-
-    calpha = cos( alpha );
-    cbeta = cos( beta );
-    cgamma = cos( ggamma );
-
-    salpha = sin( alpha );
-    sbeta = sin( beta );
-    sgamma = sin( ggamma );
-
-    /*
-     * compute the new rotation to apply to the previous
-     * viewing rotation.
-     * Alpha is angle of rotation about the X axis, and is done third.
-     * Beta is angle of rotation about the Y axis, and is done second.
-     * Gamma is angle of rotation about Z axis, and is done first.
-     */
-#ifdef m_RZ_RY_RX
-    /* view = model * RZ * RY * RX (Neuman+Sproul, premultiply) */
-    mat[0] = cbeta * cgamma;
-    mat[1] = -cbeta * sgamma;
-    mat[2] = -sbeta;
-
-    mat[4] = -salpha * sbeta * cgamma + calpha * sgamma;
-    mat[5] = salpha * sbeta * sgamma + calpha * cgamma;
-    mat[6] = -salpha * cbeta;
-
-    mat[8] = calpha * sbeta * cgamma + salpha * sgamma;
-    mat[9] = -calpha * sbeta * sgamma + salpha * cgamma;
-    mat[10] = calpha * cbeta;
-#endif
-    /* This is the correct form for this version of GED */
-    /* view = RX * RY * RZ * model (Rodgers, postmultiply) */
-    /* Point thumb along axis of rotation.  +Angle as hand closes */
-    mat[0] = cbeta * cgamma;
-    mat[1] = -cbeta * sgamma;
-    mat[2] = sbeta;
-
-    mat[4] = salpha * sbeta * cgamma + calpha * sgamma;
-    mat[5] = -salpha * sbeta * sgamma + calpha * cgamma;
-    mat[6] = -salpha * cbeta;
-
-    mat[8] = -calpha * sbeta * cgamma + salpha * sgamma;
-    mat[9] = calpha * sbeta * sgamma + salpha * cgamma;
-    mat[10] = calpha * cbeta;
-}
 
 
 /*
@@ -1011,8 +1031,29 @@ cmd_setup(Tcl_Interp *interp, struct cmdtab commands[])
 
 
 /*
- * X Display Manager Specific Stuff
+ * Initialization and callback functions
  */
+
+
+static struct cmdtab cmdtab[] = {
+    "ae", cmd_aetview,
+    "clear", cmd_clear,
+    "closepl", cmd_closepl,
+    "dm", cmd_dm,
+    "draw", cmd_draw,
+    "erase", cmd_erase,
+    "exit", cmd_exit,
+    "ls", cmd_list,
+    "openpl", cmd_openpl,
+    "q", cmd_exit,
+    "reset", cmd_reset,
+    "sv", cmd_slewview,
+    "t", cmd_list,
+    "vrot", cmd_vrot,
+    "zoom", cmd_zoom,
+    (char *)NULL, (int (*)())NULL
+};
+
 
 /*
  * Open an X display manager.
@@ -1038,146 +1079,90 @@ X_dmInit()
     return TCL_OK;
 }
 
-/*
- * Event handler for the X display manager.
- */
+
 static int
-X_doEvent(ClientData clientData, XEvent *eventPtr)
+appInit(Tcl_Interp *_interp)
 {
-    if (eventPtr->type == Expose && eventPtr->xexpose.count == 0) {
-	refresh();
-    } else if (eventPtr->type == ConfigureNotify) {
-	refresh();
-    } else if ( eventPtr->type == MotionNotify ) {
-	int mx, my;
+    const char *filename;
+    struct bu_vls str;
+    struct bu_vls str2;
 
-	mx = eventPtr->xmotion.x;
-	my = eventPtr->xmotion.y;
+    /* libdm uses interp */
+    interp = _interp;
 
-	switch (mouse_mode) {
-	    case MOUSE_MODE_ROTATE:
-		vrot((my - omy) * app_scale,
-		     (mx - omx) * app_scale,
-		     0.0);
-		new_mats();
-		refresh();
-
-		break;
-	    case MOUSE_MODE_TRANSLATE:
-	    {
-		vect_t vdiff;
-
-		vdiff[X] = (mx - omx) /
-		    (fastf_t)dmp->dm_width * 2.0;
-		vdiff[Y] = (omy - my) /
-		    (fastf_t)dmp->dm_height * 2.0;
-		vdiff[Z] = 0.0;
-
-		(void)islewview(vdiff);
-		new_mats();
-		refresh();
-	    }
-
+    switch (dm_type) {
+	case DM_TYPE_X:
+	default:
+	    cmd_hook = X_dm;
 	    break;
-	    case MOUSE_MODE_ZOOM:
-	    {
-		double val;
-
-		val = 1.0 + (omy - my) /
-		    (fastf_t)dmp->dm_height;
-
-		zoom(interp, val);
-		new_mats();
-		refresh();
-	    }
-
-	    break;
-	    case MOUSE_MODE_IDLE:
-	    default:
-		break;
-	}
-
-	omx = mx;
-	omy = my;
     }
 
-    return TCL_OK;
+    /* Evaluates init.tcl */
+    if (Tcl_Init(interp) == TCL_ERROR)
+	bu_exit (1, "Tcl_Init error %s\n", Tcl_GetStringResult(interp));
+
+    /*
+     * Creates the main window and registers all of Tk's commands
+     * into the interpreter.
+     */
+    if (Tk_Init(interp) == TCL_ERROR)
+	bu_exit (1, "Tk_Init error %s\n", Tcl_GetStringResult(interp));
+
+    if ((tkwin = Tk_MainWindow(interp)) == NULL)
+	bu_exit (1, "appInit: Failed to get main window.\n");
+
+    /* Locate the BRL-CAD-specific Tcl scripts */
+    filename = bu_brlcad_data( "tclscripts", 0 );
+
+    bu_vls_init(&str);
+    bu_vls_init(&str2);
+    bu_vls_printf(&str2, "%s/pl-dm", filename);
+    bu_vls_printf(&str, "wm withdraw .; set auto_path [linsert $auto_path 0 %s %s]",
+		  bu_vls_addr(&str2), filename);
+    (void)Tcl_Eval(interp, bu_vls_addr(&str));
+    bu_vls_free(&str);
+    bu_vls_free(&str2);
+
+    /* register application commands */
+    cmd_setup(interp, cmdtab);
+
+    /* open display manager */
+    switch (dm_type) {
+	case DM_TYPE_X:
+	default:
+	    return X_dmInit();
+    }
 }
 
-/*
- * Handle X display manger specific commands.
- */
-static int
-X_dm(int argc, char *argv[])
+
+int
+main(int argc, char *argv[])
 {
-    int status;
+    int n;
+    char *file;
+    FILE *fp;
+    struct plot_list *plp;
 
-    if ( !strcmp( argv[0], "set" )) {
-	struct bu_vls tmp_vls;
+    if (!get_args(argc, argv))
+	bu_exit (1, "%s", usage);
 
-	bu_vls_init(&tmp_vls);
-	start_catching_output(&tmp_vls);
+    memset((void *)&HeadPlot, 0, sizeof(struct plot_list));
+    BU_LIST_INIT(&HeadPlot.l);
 
-	stop_catching_output(&tmp_vls);
-	Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
-	bu_vls_free(&tmp_vls);
-	return TCL_OK;
-    }
+    MAT_IDN(toViewcenter);
+    MAT_IDN(Viewrot);
+    MAT_IDN(model2view);
+    MAT_IDN(view2model);
 
-    if ( !strcmp( argv[0], "m")) {
-	vect_t view_pos;
+    if (cmd_openpl((ClientData)NULL, (Tcl_Interp *)NULL,
+		   argc-bu_optind+1, argv+bu_optind-1) == TCL_ERROR)
+	bu_exit (1, NULL);
 
-	if ( argc < 4) {
-	    Tcl_AppendResult(interp, "dm m: need more parameters\n",
-			     "dm m button 1|0 xpos ypos\n", (char *)NULL);
-	    return TCL_ERROR;
-	}
+    argv[1] = (char *)NULL;
+    Tk_Main(1, argv, appInit);
 
-	view_pos[X] = dm_Xx2Normal(dmp, atoi(argv[3]));
-	view_pos[Y] = dm_Xy2Normal(dmp, atoi(argv[4]), 0);
-	view_pos[Z] = 0.0;
-	status = slewview(view_pos);
-	new_mats();
-	refresh();
-
-	return status;
-    }
-
-    if ( !strcmp( argv[0], "am" )) {
-	int buttonpress;
-
-	if ( argc < 5) {
-	    Tcl_AppendResult(interp, "dm am: need more parameters\n",
-			     "dm am <r|t|z> 1|0 xpos ypos\n", (char *)NULL);
-	    return TCL_ERROR;
-	}
-
-	buttonpress = atoi(argv[2]);
-	omx = atoi(argv[3]);
-	omy = atoi(argv[4]);
-
-	if (buttonpress) {
-	    switch (*argv[1]) {
-		case 'r':
-		    mouse_mode = MOUSE_MODE_ROTATE;
-		    break;
-		case 't':
-		    mouse_mode = MOUSE_MODE_TRANSLATE;
-		    break;
-		case 'z':
-		    mouse_mode = MOUSE_MODE_ZOOM;
-		    break;
-		default:
-		    mouse_mode = MOUSE_MODE_IDLE;
-		    break;
-	    }
-	} else
-	    mouse_mode = MOUSE_MODE_IDLE;
-    }
-
-    return TCL_OK;
+    bu_exit (0, NULL);
 }
-
 
 /*
  * Local Variables:
