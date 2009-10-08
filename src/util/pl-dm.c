@@ -19,7 +19,8 @@
  */
 /** @file pl-dm.c
  *
- *  Example application that shows how to hook into the display manager.
+ * Example application that shows how to hook into the display
+ * manager.
  *
  */
 
@@ -29,6 +30,9 @@
 #include <stdlib.h>
 #include <math.h>
 #include <string.h>
+#ifdef HAVE_UNISTD_H
+#  include <unistd.h>
+#endif
 
 #include "tcl.h"
 #include "tk.h"
@@ -52,25 +56,20 @@ struct cmdtab {
 #define MOUSE_MODE_ROTATE 1
 #define MOUSE_MODE_TRANSLATE 3
 #define MOUSE_MODE_ZOOM 4
+#define APP_SCALE 180.0 / 512.0
 
 Tcl_Interp *interp;
-Tk_Window tkwin;
 struct dm *dmp;
 mat_t toViewcenter;
 mat_t Viewrot;
 mat_t model2view;
 mat_t view2model;
 fastf_t Viewscale;
-fastf_t azimuth;
-fastf_t elevation;
-fastf_t twist;
-double app_scale = 180.0 / 512.0;
+
 int mouse_mode = MOUSE_MODE_IDLE;
 int omx, omy;
 int (*cmd_hook)();
-static int windowbounds[6] = { 2047, -2048, 2047, -2048, 2047, -2048 };
 
-double degtorad = 0.01745329251994329573;
 
 struct plot_list{
     struct bu_list l;
@@ -84,13 +83,6 @@ struct plot_list HeadPlot;
 
 int dm_type = DM_TYPE_X;
 
-
-struct bu_structparse X_vparse[] = {
-    {"",	0,  (char *)0,		0,			BU_STRUCTPARSE_FUNC_NULL }
-};
-
-
-static char usage[] = "Usage: pl-dm [-t o|X] plot_file(s)\n";
 
 /*
  *                     O U T P U T _ C A T C H
@@ -276,10 +268,7 @@ buildHrot( register matp_t mat, double alpha, double beta, double ggamma )
 static void
 setview(double a1, double a2, double a3)
 {
-    point_t model_pos;
-    point_t new_pos;
-
-    buildHrot(Viewrot, a1 * degtorad, a2 * degtorad, a3 * degtorad);
+    buildHrot(Viewrot, a1 * DEG2RAD, a2 * DEG2RAD, a3 * DEG2RAD);
 }
 
 
@@ -335,9 +324,9 @@ vrot(double x, double y, double z)
 
     MAT_IDN( newrot );
     buildHrot( newrot,
-	       x * degtorad,
-	       y * degtorad,
-	       z * degtorad );
+	       x * DEG2RAD,
+	       y * DEG2RAD,
+	       z * DEG2RAD );
     bn_mat_mul2( newrot, Viewrot );
 }
 
@@ -363,6 +352,8 @@ new_mats()
 static int
 X_doEvent(ClientData clientData, XEvent *eventPtr)
 {
+    double app_scale = APP_SCALE;
+
     if (eventPtr->type == Expose && eventPtr->xexpose.count == 0) {
 	refresh();
     } else if (eventPtr->type == ConfigureNotify) {
@@ -663,8 +654,6 @@ cmd_openpl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 static int
 cmd_vrot(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
-    mat_t newrot;
-
     if (argc != 4) {
 	struct bu_vls vls;
 
@@ -688,8 +677,6 @@ cmd_vrot(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 static int
 cmd_dm(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
-    int status;
-
     if (argc < 2 || MAXARGS < argc) {
 	struct bu_vls vls;
 
@@ -946,6 +933,9 @@ cmd_slewview(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 static int
 cmd_aetview(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
+    fastf_t azimuth = (fastf_t)0.0;
+    fastf_t elevation = (fastf_t)0.0;
+    fastf_t twist = (fastf_t)0.0;
     int iflag = 0;
     fastf_t o_twist;
 
@@ -1036,22 +1026,22 @@ cmd_setup(Tcl_Interp *interp, struct cmdtab commands[])
 
 
 static struct cmdtab cmdtab[] = {
-    "ae", cmd_aetview,
-    "clear", cmd_clear,
-    "closepl", cmd_closepl,
-    "dm", cmd_dm,
-    "draw", cmd_draw,
-    "erase", cmd_erase,
-    "exit", cmd_exit,
-    "ls", cmd_list,
-    "openpl", cmd_openpl,
-    "q", cmd_exit,
-    "reset", cmd_reset,
-    "sv", cmd_slewview,
-    "t", cmd_list,
-    "vrot", cmd_vrot,
-    "zoom", cmd_zoom,
-    (char *)NULL, (int (*)())NULL
+    {"ae", cmd_aetview},
+    {"clear", cmd_clear},
+    {"closepl", cmd_closepl},
+    {"dm", cmd_dm},
+    {"draw", cmd_draw},
+    {"erase", cmd_erase},
+    {"exit", cmd_exit},
+    {"ls", cmd_list},
+    {"openpl", cmd_openpl},
+    {"q", cmd_exit},
+    {"reset", cmd_reset},
+    {"sv", cmd_slewview},
+    {"t", cmd_list},
+    {"vrot", cmd_vrot},
+    {"zoom", cmd_zoom},
+    {(char *)NULL, (int (*)())NULL}
 };
 
 
@@ -1061,6 +1051,7 @@ static struct cmdtab cmdtab[] = {
 static int
 X_dmInit()
 {
+    int windowbounds[6] = { 2047, -2048, 2047, -2048, 2047, -2048 };
     char *av[4];
 
     av[0] = "X_open";
@@ -1083,6 +1074,7 @@ X_dmInit()
 static int
 appInit(Tcl_Interp *_interp)
 {
+    Tk_Window tkwin;
     const char *filename;
     struct bu_vls str;
     struct bu_vls str2;
@@ -1138,10 +1130,7 @@ appInit(Tcl_Interp *_interp)
 int
 main(int argc, char *argv[])
 {
-    int n;
-    char *file;
-    FILE *fp;
-    struct plot_list *plp;
+    const char usage[] = "Usage: pl-dm [-t o|X] plot_file(s)\n";
 
     if (!get_args(argc, argv))
 	bu_exit (1, "%s", usage);
