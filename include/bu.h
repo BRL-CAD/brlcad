@@ -1457,14 +1457,19 @@ struct bu_mro {
  * @{
  */
 
-/*
+/**
+ * controls the libbu debug level
+ */
+BU_EXPORT extern int bu_debug;
+
+/**
  * Section for BU_DEBUG values
  *
  * These can be set from the command-line of RT-compatible programs
  * using the "-!" option.
+ *
+ * These definitions are each for one bit.
  */
-BU_EXPORT extern int bu_debug;
-/* These definitions are each for one bit */
 #define BU_DEBUG_OFF 0	/* No debugging */
 
 #define BU_DEBUG_COREDUMP	0x00000001	/* bu_bomb() should dump core on exit */
@@ -2304,10 +2309,26 @@ BU_EXPORT BU_EXTERN(FILE *bu_temp_file, (char *filepath, size_t len));
 /** @{ */
 
 /* getopt.c */
+
+/**
+ * for bu_getopt().  set to zero to suppress errors.
+ */
 BU_EXPORT extern int bu_opterr;
+
+/**
+ * for bu_getopt().  current index into parent argv vector.
+ */
 BU_EXPORT extern int bu_optind;
+
+/**
+ * for bu_getopt().  current option being checked for validity.
+ */
 BU_EXPORT extern int bu_optopt;
-BU_EXPORT extern char * bu_optarg;
+
+/**
+ * for bu_getopt().  current argument associated with current option.
+ */
+BU_EXPORT extern char *bu_optarg;
 
 /**
  * B U _ G E T O P T

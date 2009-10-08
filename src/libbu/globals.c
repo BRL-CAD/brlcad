@@ -31,11 +31,6 @@
 
 
 /**
- * this variable controls the libbu debug level
- */
-int bu_debug = 0;
-
-/**
  * number of calls to bu_malloc()/bu_calloc()/bu_alloc().
  *
  * used by rt.
@@ -123,25 +118,11 @@ int bu_setjmp_valid = 0;
  */
 jmp_buf bu_jmpbuf;
 
-/**
- * for bu_getopt().  set to zero to suppress errors.
- */
+/* externed in bu.h */
+int bu_debug = 0;
 int bu_opterr = 1;
-
-/**
- * for bu_getopt().  current index into parent argv vector.
- */
-
 int bu_optind = 1;
-
-/**
- * for bu_getopt().  current option being checked for validity.
- */
 int bu_optopt = 0;
-
-/**
- * for bu_getopt().  current argument associated with current option.
- */
 char *bu_optarg = NULL;
 
 
