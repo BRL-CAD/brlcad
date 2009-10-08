@@ -486,22 +486,22 @@ ogl_open(Tcl_Interp *interp, int argc, char **argv)
     }
  Done:
     XFreeDeviceList(olist);
-
+/*
     if (!glXMakeCurrent(pubvars->dpy, pubvars->win, privvars->glxc)) {
 	bu_log("ogl_open: Couldn't make context current\n");
 	(void)ogl_close(dmp);
 	return DM_NULL;
     }
-
+*/
     /* display list (fontOffset + char) will display a given ASCII char */
-    if ((privvars->fontOffset = glGenLists(128))==0) {
+/*    if ((privvars->fontOffset = glGenLists(128))==0) {
 	bu_log("dm-ogl: Can't make display lists for font.\n");
 	(void)ogl_close(dmp);
 	return DM_NULL;
     }
-
+*/
     /* This is the applications display list offset */
-    dmp->dm_displaylist = privvars->fontOffset + 128;
+ /*   dmp->dm_displaylist = privvars->fontOffset + 128;
 
     ogl_setBGColor(dmp, 0, 0, 0);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -510,12 +510,12 @@ ogl_open(Tcl_Interp *interp, int argc, char **argv)
 	glDrawBuffer(GL_BACK);
     else
 	glDrawBuffer(GL_FRONT);
-
+*/
     /* do viewport, ortho commands and initialize font */
-    (void)ogl_configureWin_guts(dmp, 1);
+ /*   (void)ogl_configureWin_guts(dmp, 1);*/
 
     /* Lines will be solid when stippling disabled, dashed when enabled*/
-    glLineStipple( 1, 0xCF33);
+/*    glLineStipple( 1, 0xCF33);
     glDisable(GL_LINE_STIPPLE);
 
     backgnd[0] = backgnd[1] = backgnd[2] = backgnd[3] = 0.0;
@@ -523,13 +523,13 @@ ogl_open(Tcl_Interp *interp, int argc, char **argv)
     glFogf(GL_FOG_START, 0.0);
     glFogf(GL_FOG_END, 2.0);
     glFogfv(GL_FOG_COLOR, backgnd);
-
+*/
     /*XXX Need to do something about VIEWFACTOR */
-    glFogf(GL_FOG_DENSITY, VIEWFACTOR);
+ /*   glFogf(GL_FOG_DENSITY, VIEWFACTOR);*/
 
     /* Initialize matrices */
     /* Leave it in model_view mode normally */
-    glMatrixMode(GL_PROJECTION);
+/*    glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
     glOrtho( -xlim_view, xlim_view, -ylim_view, ylim_view, 0.0, 2.0 );
     glGetDoublev(GL_PROJECTION_MATRIX, privvars->faceplate_mat);
@@ -539,7 +539,7 @@ ogl_open(Tcl_Interp *interp, int argc, char **argv)
     glTranslatef(0.0, 0.0, -1.0);
     glPushMatrix();
     glLoadIdentity();
-    privvars->face_flag = 1;	/* faceplate matrix is on top of stack */
+    privvars->face_flag = 1;*/	/* faceplate matrix is on top of stack */
 
     Tk_MapWindow(pubvars->xtkwin);
     return dmp;
