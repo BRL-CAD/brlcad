@@ -85,7 +85,7 @@ int dm_type = DM_TYPE_X;
 
 
 /*
- *                     O U T P U T _ C A T C H
+ * O U T P U T _ C A T C H
  *
  * Gets the output from bu_log and appends it to clientdata vls.
  */
@@ -105,7 +105,7 @@ output_catch(genptr_t clientdata, genptr_t str)
 
 
 /*
- *                 S T A R T _ C A T C H I N G _ O U T P U T
+ * S T A R T _ C A T C H I N G _ O U T P U T
  *
  * Sets up hooks to bu_log so that all output is caught in the given vls.
  *
@@ -118,7 +118,7 @@ start_catching_output(struct bu_vls *vp)
 
 
 /*
- *                 S T O P _ C A T C H I N G _ O U T P U T
+ * S T O P _ C A T C H I N G _ O U T P U T
  *
  * Turns off the output catch hook.
  */
@@ -130,18 +130,20 @@ stop_catching_output(struct bu_vls *vp)
 
 
 int
-get_args( int argc, char **argv )
+get_args(int argc, char **argv)
 {
     register int c;
 
-    while ((c = bu_getopt( argc, argv, "t:" )) != EOF) {
+    while ((c = bu_getopt(argc, argv, "t:")) != EOF) {
 	switch (c) {
 	    case 't':
 		switch (*bu_optarg) {
+		    case 'o':
+		    case 'O':
+			dm_type = DM_TYPE_OGL;
+			break;
 		    case 'x':
 		    case 'X':
-			dm_type = DM_TYPE_X;
-			break;
 		    default:
 			dm_type = DM_TYPE_X;
 			break;
@@ -194,7 +196,7 @@ refresh() {
 
 
 /*
- *                      B U I L D H R O T
+ * B U I L D H R O T
  *
  * This routine builds a Homogeneous rotation matrix, given
  * alpha, beta, and gamma as angles of rotation.
@@ -203,18 +205,18 @@ refresh() {
  * There is important information in dx, dy, dz, s .
  */
 static void
-buildHrot( register matp_t mat, double alpha, double beta, double ggamma )
+buildHrot(register matp_t mat, double alpha, double beta, double ggamma)
 {
     static fastf_t calpha, cbeta, cgamma;
     static fastf_t salpha, sbeta, sgamma;
 
-    calpha = cos( alpha );
-    cbeta = cos( beta );
-    cgamma = cos( ggamma );
+    calpha = cos(alpha);
+    cbeta = cos(beta);
+    cgamma = cos(ggamma);
 
-    salpha = sin( alpha );
-    sbeta = sin( beta );
-    sgamma = sin( ggamma );
+    salpha = sin(alpha);
+    sbeta = sin(beta);
+    sgamma = sin(ggamma);
 
     /*
      * compute the new rotation to apply to the previous
@@ -255,7 +257,7 @@ buildHrot( register matp_t mat, double alpha, double beta, double ggamma )
 
 
 /*
- *                      S E T V I E W
+ * S E T V I E W
  *
  * Set the view.  Angles are DOUBLES, in degrees.
  *
@@ -277,8 +279,8 @@ slewview(vect_t view_pos)
 {
     vect_t new_model_pos;
 
-    MAT4X3PNT( new_model_pos, view2model, view_pos );
-    MAT_DELTAS_VEC_NEG( toViewcenter, new_model_pos );
+    MAT4X3PNT(new_model_pos, view2model, view_pos);
+    MAT_DELTAS_VEC_NEG(toViewcenter, new_model_pos);
 
     return TCL_OK;
 }
@@ -302,13 +304,13 @@ islewview(vect_t vdiff)
 static int
 zoom(Tcl_Interp *interp, double val)
 {
-    if ( val < SMALL_FASTF || val > INFINITY )  {
+    if (val < SMALL_FASTF || val > INFINITY) {
 	Tcl_AppendResult(interp,
 			 "zoom: scale factor out of range\n", (char *)NULL);
 	return TCL_ERROR;
     }
 
-    if ( Viewscale < SMALL_FASTF || INFINITY < Viewscale )
+    if (Viewscale < SMALL_FASTF || INFINITY < Viewscale)
 	return TCL_ERROR;
 
     Viewscale /= val;
@@ -322,27 +324,27 @@ vrot(double x, double y, double z)
 {
     mat_t newrot;
 
-    MAT_IDN( newrot );
-    buildHrot( newrot,
-	       x * DEG2RAD,
-	       y * DEG2RAD,
-	       z * DEG2RAD );
-    bn_mat_mul2( newrot, Viewrot );
+    MAT_IDN(newrot);
+    buildHrot(newrot,
+	      x * DEG2RAD,
+	      y * DEG2RAD,
+	      z * DEG2RAD);
+    bn_mat_mul2(newrot, Viewrot);
 }
 
 
 /*
- *                      N E W _ M A T S
+ * N E W _ M A T S
  *
- *  Derive the inverse and editing matrices, as required.
- *  Centralized here to simplify things.
+ * Derive the inverse and editing matrices, as required.
+ * Centralized here to simplify things.
  */
 static void
 new_mats()
 {
-    bn_mat_mul( model2view, Viewrot, toViewcenter );
+    bn_mat_mul(model2view, Viewrot, toViewcenter);
     model2view[15] = Viewscale;
-    bn_mat_inv( view2model, model2view );
+    bn_mat_inv(view2model, model2view);
 }
 
 
@@ -358,7 +360,7 @@ X_doEvent(ClientData clientData, XEvent *eventPtr)
 	refresh();
     } else if (eventPtr->type == ConfigureNotify) {
 	refresh();
-    } else if ( eventPtr->type == MotionNotify ) {
+    } else if (eventPtr->type == MotionNotify) {
 	int mx, my;
 
 	mx = eventPtr->xmotion.x;
@@ -374,34 +376,34 @@ X_doEvent(ClientData clientData, XEvent *eventPtr)
 
 		break;
 	    case MOUSE_MODE_TRANSLATE:
-	    {
-		vect_t vdiff;
+		{
+		    vect_t vdiff;
 
-		vdiff[X] = (mx - omx) /
-		    (fastf_t)dmp->dm_width * 2.0;
-		vdiff[Y] = (omy - my) /
-		    (fastf_t)dmp->dm_height * 2.0;
-		vdiff[Z] = 0.0;
+		    vdiff[X] = (mx - omx) /
+			(fastf_t)dmp->dm_width * 2.0;
+		    vdiff[Y] = (omy - my) /
+			(fastf_t)dmp->dm_height * 2.0;
+		    vdiff[Z] = 0.0;
 
-		(void)islewview(vdiff);
-		new_mats();
-		refresh();
-	    }
+		    (void)islewview(vdiff);
+		    new_mats();
+		    refresh();
+		}
 
-	    break;
+		break;
 	    case MOUSE_MODE_ZOOM:
-	    {
-		double val;
+		{
+		    double val;
 
-		val = 1.0 + (omy - my) /
-		    (fastf_t)dmp->dm_height;
+		    val = 1.0 + (omy - my) /
+			(fastf_t)dmp->dm_height;
 
-		zoom(interp, val);
-		new_mats();
-		refresh();
-	    }
+		    zoom(interp, val);
+		    new_mats();
+		    refresh();
+		}
 
-	    break;
+		break;
 	    case MOUSE_MODE_IDLE:
 	    default:
 		break;
@@ -423,7 +425,7 @@ X_dm(int argc, char *argv[])
 {
     int status;
 
-    if ( !strcmp( argv[0], "set" )) {
+    if (!strcmp(argv[0], "set")) {
 	struct bu_vls tmp_vls;
 
 	bu_vls_init(&tmp_vls);
@@ -435,10 +437,10 @@ X_dm(int argc, char *argv[])
 	return TCL_OK;
     }
 
-    if ( !strcmp( argv[0], "m")) {
+    if (!strcmp(argv[0], "m")) {
 	vect_t view_pos;
 
-	if ( argc < 4) {
+	if (argc < 4) {
 	    Tcl_AppendResult(interp, "dm m: need more parameters\n",
 			     "dm m button 1|0 xpos ypos\n", (char *)NULL);
 	    return TCL_ERROR;
@@ -454,10 +456,10 @@ X_dm(int argc, char *argv[])
 	return status;
     }
 
-    if ( !strcmp( argv[0], "am" )) {
+    if (!strcmp(argv[0], "am")) {
 	int buttonpress;
 
-	if ( argc < 5) {
+	if (argc < 5) {
 	    Tcl_AppendResult(interp, "dm am: need more parameters\n",
 			     "dm am <r|t|z> 1|0 xpos ypos\n", (char *)NULL);
 	    return TCL_ERROR;
@@ -491,11 +493,11 @@ X_dm(int argc, char *argv[])
 
 
 /*
- *                      S I Z E _ R E S E T
+ * S I Z E _ R E S E T
  *
- *  Reset view size and view center so that everything in the vlist
- *  is in view.
- *  Caller is responsible for calling new_mats().
+ * Reset view size and view center so that everything in the vlist
+ * is in view.
+ * Caller is responsible for calling new_mats().
  */
 static void
 size_reset()
@@ -507,8 +509,8 @@ size_reset()
     vect_t radial;
     struct plot_list *plp;
 
-    VSETALL( min,  INFINITY );
-    VSETALL( max, -INFINITY );
+    VSETALL(min,  INFINITY);
+    VSETALL(max, -INFINITY);
 
     for (BU_LIST_FOR(plp, plot_list, &HeadPlot.l)) {
 	struct bn_vlblock *vbp;
@@ -523,7 +525,7 @@ size_reset()
 		register int *cmd = tvp->cmd;
 		register point_t *pt = tvp->pt;
 
-		for (j = 0; j < nused; j++, cmd++, pt++ ) {
+		for (j = 0; j < nused; j++, cmd++, pt++) {
 		    switch (*cmd) {
 			case BN_VLIST_POLY_START:
 			case BN_VLIST_POLY_VERTNORM:
@@ -542,17 +544,17 @@ size_reset()
 	}
     }
 
-    VADD2SCALE( center, max, min, 0.5 );
-    VSUB2( radial, max, center );
+    VADD2SCALE(center, max, min, 0.5);
+    VSUB2(radial, max, center);
 
-    if ( VNEAR_ZERO( radial, SQRT_SMALL_FASTF ) )
-	VSETALL( radial, 1.0 );
+    if (VNEAR_ZERO(radial, SQRT_SMALL_FASTF))
+	VSETALL(radial, 1.0);
 
-    MAT_IDN( toViewcenter );
-    MAT_DELTAS_VEC_NEG( toViewcenter, center);
+    MAT_IDN(toViewcenter);
+    MAT_DELTAS_VEC_NEG(toViewcenter, center);
     Viewscale = radial[X];
-    V_MAX( Viewscale, radial[Y] );
-    V_MAX( Viewscale, radial[Z] );
+    V_MAX(Viewscale, radial[Y]);
+    V_MAX(Viewscale, radial[Z]);
 }
 
 
@@ -628,7 +630,7 @@ cmd_openpl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	plp->pl_vbp = rt_vlblock_init();
 	rt_uplot_to_vlist(plp->pl_vbp, fp, 0.001, 0);
 	plp->pl_draw = 1;
-	fclose( fp );
+	fclose(fp);
     }
 
     if (!read_file)
@@ -857,16 +859,16 @@ cmd_list(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 }
 
 /*
- *                      F _ Z O O M
+ * F _ Z O O M
  *
- *  A scale factor of 2 will increase the view size by a factor of 2,
+ * A scale factor of 2 will increase the view size by a factor of 2,
  *  (i.e., a zoom out) which is accomplished by reducing Viewscale in half.
  */
 static int
 cmd_zoom(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
     int status;
-    double	val;
+    double val;
 
     if (argc != 2) {
 	struct bu_vls vls;
@@ -897,10 +899,10 @@ cmd_reset(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 }
 
 /*
- *                      S L E W V I E W
+ * S L E W V I E W
  *
- *  Given a position in view space,
- *  make that point the new view center.
+ * Given a position in view space,
+ * make that point the new view center.
  */
 static int
 cmd_slewview(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
@@ -1071,6 +1073,32 @@ X_dmInit()
 }
 
 
+/*
+ * Open an OGL display manager.
+ */
+static int
+Ogl_dmInit()
+{
+    int windowbounds[6] = { 2047, -2048, 2047, -2048, 2047, -2048 };
+    char *av[4];
+
+    av[0] = "Ogl_open";
+    av[1] = "-i";
+    av[2] = "sampler_bind_dm";
+    av[3] = (char *)NULL;
+
+    if ((dmp = DM_OPEN(interp, DM_TYPE_OGL, 3, av)) == DM_NULL) {
+	Tcl_AppendResult(interp, "Failed to open a display manager\n", (char *)NULL);
+	return TCL_ERROR;
+    }
+
+    Tk_CreateGenericHandler(X_doEvent, (ClientData)DM_TYPE_OGL);
+    DM_SET_WIN_BOUNDS(dmp, windowbounds);
+
+    return TCL_OK;
+}
+
+
 static int
 appInit(Tcl_Interp *_interp)
 {
@@ -1083,6 +1111,7 @@ appInit(Tcl_Interp *_interp)
     interp = _interp;
 
     switch (dm_type) {
+	case DM_TYPE_OGL:
 	case DM_TYPE_X:
 	default:
 	    cmd_hook = X_dm;
@@ -1104,7 +1133,7 @@ appInit(Tcl_Interp *_interp)
 	bu_exit (1, "appInit: Failed to get main window.\n");
 
     /* Locate the BRL-CAD-specific Tcl scripts */
-    filename = bu_brlcad_data( "tclscripts", 0 );
+    filename = bu_brlcad_data("tclscripts", 0);
 
     bu_vls_init(&str);
     bu_vls_init(&str2);
@@ -1120,6 +1149,8 @@ appInit(Tcl_Interp *_interp)
 
     /* open display manager */
     switch (dm_type) {
+	case DM_TYPE_OGL:
+	    return Ogl_dmInit();
 	case DM_TYPE_X:
 	default:
 	    return X_dmInit();
