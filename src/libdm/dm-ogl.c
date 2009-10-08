@@ -348,7 +348,7 @@ ogl_open(Tcl_Interp *interp, int argc, char **argv)
 
 	cp = strrchr(bu_vls_addr(&dmp->dm_pathName), (int)'.');
 	if (cp == bu_vls_addr(&dmp->dm_pathName)) {
-	    pub_vars->top = tkwin;
+	    pubvars->top = tkwin;
 	} else {
 	    struct bu_vls top_vls;
 
@@ -532,7 +532,7 @@ ogl_open(Tcl_Interp *interp, int argc, char **argv)
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
     glOrtho( -xlim_view, xlim_view, -ylim_view, ylim_view, 0.0, 2.0 );
-    glGetDoublev(GL_PROJECTION_MATRIX, priv_vars->faceplate_mat);
+    glGetDoublev(GL_PROJECTION_MATRIX, privvars->faceplate_mat);
     glPushMatrix();
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
