@@ -524,6 +524,8 @@ rtgl_open(Tcl_Interp *interp, int argc, char **argv)
 Done:
     XFreeDeviceList(olist);
 
+    Tk_MapWindow(((struct dm_xvars *)dmp->dm_vars.pub_vars)->xtkwin);
+    
     if (!glXMakeCurrent(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
 			((struct dm_xvars *)dmp->dm_vars.pub_vars)->win,
 			((struct rtgl_vars *)dmp->dm_vars.priv_vars)->glxc)) {
@@ -580,7 +582,6 @@ Done:
     glLoadIdentity();
     ((struct rtgl_vars *)dmp->dm_vars.priv_vars)->face_flag = 1;	/* faceplate matrix is on top of stack */
 
-    Tk_MapWindow(((struct dm_xvars *)dmp->dm_vars.pub_vars)->xtkwin);
     return dmp;
 }
 
