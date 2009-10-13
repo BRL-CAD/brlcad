@@ -893,15 +893,22 @@ package provide Archer 1.0
 
 ::itcl::body Archer::attr {args} {
     set len [llength $args]
-    if {$len < 4} {
-	return [eval gedWrapper2 attr 1 0 0 0 0 0 $args]
-    }
 
     set cmd [lindex $args 0]
     switch -- $cmd {
 	"append" -
-	"rm" -
 	"set" {
+	    if {$len < 4} {
+		return [eval gedWrapper2 attr 1 0 0 0 0 0 $args]
+	    }
+
+	    return [eval gedWrapper2 attr 1 0 0 0 1 0 $args]
+	}
+	"rm" {
+	    if {$len < 3} {
+		return [eval gedWrapper2 attr 1 0 0 0 0 0 $args]
+	    }
+
 	    return [eval gedWrapper2 attr 1 0 0 0 1 0 $args]
 	}
 	"get" -
