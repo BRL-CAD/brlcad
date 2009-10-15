@@ -3,7 +3,19 @@ bin_PROGRAMS = step-g
 
 AM_CPPFLAGS = ${STEP_CPPFLAGS} ${TCL_CPPFLAGS} ${TNT_CPPFLAGS} ${OPENNURBS_CPPFLAGS}
 
+
+# FIXME: these should be compiled into a noinst_LTLIBRARIES
+# convenience library and linked to step-g instead of being bundled
+# directly as a SOURCES.
+fedex_srcs = \
+	SdaiAll.cc \
+	SdaiCONFIG_CONTROL_DESIGN.cc \
+	SdaiCONFIG_CONTROL_DESIGN.init.cc \
+	compstructs.cc \
+	schema.cc
+
 step_g_SOURCES = \
+	$(fedex_srcs) \
 	AdvancedBrepShapeRepresentation.cpp \
 	AdvancedFace.cpp \
 	AmountOfSubstanceContextDependentUnit.cpp \
@@ -186,17 +198,8 @@ fedex_hdrs = \
 	Sdaiclasses.h \
 	schema.h
 
-# FIXME: these should be compiled into a noinst_LTLIBRARIES
-# convenience library and linked to step-g instead of being bundled
-# directly as a SOURCES.
-fedex_srcs = \
-	SdaiAll.cc \
-	SdaiCONFIG_CONTROL_DESIGN.cc \
-	SdaiCONFIG_CONTROL_DESIGN.init.cc \
-	compstructs.cc \
-	schema.cc
-
 noinst_HEADERS = \
+	$(fedex_hdrs) \
 	AdvancedBrepShapeRepresentation.h \
 	AdvancedFace.h \
 	AmountOfSubstanceContextDependentUnit.h \
