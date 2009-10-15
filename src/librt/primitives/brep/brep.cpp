@@ -729,6 +729,16 @@ getSurfacePoint(const ON_3dPoint& pt, ON_2dPoint& uv , BBNode* node) {
 			break;
 		}
 		brep_newton_iterate(surf, pr, Rcurr, su, sv, nuv, new_uv);
+		//push answer back to within node bounds
+		if (new_uv[0] < node->m_u[0])
+			new_uv[0] = node->m_u[0];
+		else if (new_uv[0] > node->m_u[1])
+			new_uv[0] = node->m_u[1];
+		else if (new_uv[1] < node->m_v[0])
+			new_uv[1] = node->m_v[0];
+		else if (new_uv[1] > node->m_v[1])
+			new_uv[1] = node->m_v[1];
+
 		move(nuv, new_uv);
 		Dlast = d;
 	}
