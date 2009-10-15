@@ -1,0 +1,48 @@
+/*                 DefinitionalRepresentation.h
+ * BRL-CAD
+ *
+ * Copyright (c) 1994-2009 United States Government as represented by
+ * the U.S. Army Research Laboratory.
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public License
+ * version 2.1 as published by the Free Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this file; see the file named COPYING for more
+ * information.
+ */
+/** @file DefinitionalRepresentation.h
+ *
+ * Class definition used to convert STEP "DefinitionalRepresentation" to BRL-CAD BREP
+ * structures.
+ *
+ */
+#ifndef DEFINITIONALREPRESENTATION_H_
+#define DEFINITIONALREPRESENTATION_H_
+
+#include "Representation.h"
+
+class DefinitionalRepresentation : public Representation {
+private:
+	static string entityname;
+
+protected:
+
+public:
+	DefinitionalRepresentation();
+	DefinitionalRepresentation(STEPWrapper *sw, int STEPid);
+	virtual ~DefinitionalRepresentation();
+	bool Load(STEPWrapper *sw, SCLP23(Application_instance) *sse);
+	virtual void Print(int level);
+
+	//static methods
+	static STEPEntity *Create(STEPWrapper *sw,SCLP23(Application_instance) *sse);
+};
+
+#endif /* DEFINITIONALREPRESENTATION_H_ */

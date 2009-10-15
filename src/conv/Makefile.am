@@ -1,5 +1,5 @@
 if BUILD_STEP
-STEPDIR=step
+STEPDIR=
 else !BUILD_STEP
 STEPDIR=
 endif
@@ -8,6 +8,7 @@ endif
 AM_CPPFLAGS = ${TCL_CPPFLAGS}
 
 EXTRA_DIST = \
+	step \
 	CMakeLists.txt \
 	Formats.csv \
 	comgeom/try.sh \

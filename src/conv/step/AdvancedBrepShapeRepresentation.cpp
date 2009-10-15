@@ -23,13 +23,68 @@
  * structures.
  *
  */
+
+#include "STEPWrapper.h"
+#include "Factory.h"
+
 #include "AdvancedBrepShapeRepresentation.h"
+#include "ManifoldSolidBrep.h"
+#include "GeometricRepresentationContext.h"
+
+
+#define CLASSNAME "AdvancedBrepShapeRepresentation"
+#define ENTITYNAME "Advanced_Brep_Shape_Representation"
+string AdvancedBrepShapeRepresentation::entityname = Factory::RegisterClass(ENTITYNAME,(FactoryMethod)AdvancedBrepShapeRepresentation::Create);
 
 AdvancedBrepShapeRepresentation::AdvancedBrepShapeRepresentation() {
-	// TODO Auto-generated constructor stub
+	step = NULL;
+	id = 0;
+}
 
+AdvancedBrepShapeRepresentation::AdvancedBrepShapeRepresentation(STEPWrapper *sw, int STEPid) {
+	step = sw;
+	id = STEPid;
 }
 
 AdvancedBrepShapeRepresentation::~AdvancedBrepShapeRepresentation() {
-	// TODO Auto-generated destructor stub
+}
+
+STEPEntity *
+AdvancedBrepShapeRepresentation::Create(STEPWrapper *sw,SCLP23(Application_instance) *sse){
+	Factory::OBJECTS::iterator i;
+	if ((i = Factory::FindObject(sse->STEPfile_id)) == Factory::objects.end()) {
+		AdvancedBrepShapeRepresentation *object = new AdvancedBrepShapeRepresentation(sw,sse->STEPfile_id);
+
+		Factory::AddObject(object);
+
+		if (!object->Load(sw,sse)) {
+			cerr << CLASSNAME << ":Error loading class in ::Create() method." << endl;
+			delete object;
+			return NULL;
+		}
+		return static_cast<STEPEntity *>(object);
+	} else {
+		return (*i).second;
+	}
+}
+
+bool
+AdvancedBrepShapeRepresentation::Load(STEPWrapper *sw, SCLP23(Application_instance) *sse) {
+	step=sw;
+	id = sse->STEPfile_id;
+
+	if ( !ShapeRepresentation::Load(step,sse) ) {
+		cerr << CLASSNAME << ":Error loading base class ::ShapeRepresentation." << endl;
+		return false;
+	}
+	return true;
+}
+
+void
+AdvancedBrepShapeRepresentation::Print(int level) {
+	TAB(level); cout << CLASSNAME << ":" << name << "(";
+	cout << "ID:" << STEPid() << ")" << endl;
+
+	TAB(level); cout << "Inherited Attributes:" << endl;
+	ShapeRepresentation::Print(level);
 }
