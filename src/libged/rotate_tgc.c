@@ -36,7 +36,7 @@
 
 
 int
-ged_rotate_tgc(struct ged *gedp, struct rt_tgc_internal *tgc, const char *attribute, matp_t rmat)
+_ged_rotate_tgc(struct ged *gedp, struct rt_tgc_internal *tgc, const char *attribute, matp_t rmat)
 {
     fastf_t newrad;
 

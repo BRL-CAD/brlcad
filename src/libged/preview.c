@@ -194,7 +194,7 @@ void
 _ged_setup_rt(struct ged *gedp, register char **vp, int printcmd)
 {
     _ged_current_gedp->ged_gdp->gd_rt_cmd_len = vp - _ged_current_gedp->ged_gdp->gd_rt_cmd;
-    _ged_current_gedp->ged_gdp->gd_rt_cmd_len += ged_build_tops(gedp, 
+    _ged_current_gedp->ged_gdp->gd_rt_cmd_len += _ged_build_tops(gedp, 
 				     vp, &_ged_current_gedp->ged_gdp->gd_rt_cmd[MAXARGS]);
 
     if (printcmd) {

@@ -36,7 +36,7 @@
 
 
 int
-ged_rotate_hyp(struct ged *gedp, struct rt_hyp_internal *hyp, const char *attribute, matp_t rmat)
+_ged_rotate_hyp(struct ged *gedp, struct rt_hyp_internal *hyp, const char *attribute, matp_t rmat)
 {
     fastf_t newrad;
 

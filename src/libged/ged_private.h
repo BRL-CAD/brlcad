@@ -316,58 +316,58 @@ BU_EXTERN(void _ged_print_matrix,
 	  (FILE *fp, matp_t matrix));
 
 /* defined in rt.c */
-BU_EXTERN (void ged_rt_set_eye_model,
+BU_EXTERN (void _ged_rt_set_eye_model,
 	   (struct ged *gedp,
 	    vect_t eye_model));
 BU_EXTERN (int ged_run_rt,
 	   (struct ged *gdp));
-BU_EXTERN (void ged_rt_write,
+BU_EXTERN (void _ged_rt_write,
 	   (struct ged *gedp,
 	    FILE *fp,
 	    vect_t eye_model));
-BU_EXTERN (void ged_rt_output_handler,
+BU_EXTERN (void _ged_rt_output_handler,
 	   (ClientData clientData,
 	    int	 mask));
-BU_EXTERN (int ged_build_tops,
+BU_EXTERN (int _ged_build_tops,
 	   (struct ged	*gedp,
 	    char		**start,
 	    register char	**end));
 
 /* defined in rtcheck.c */
-BU_EXTERN (void ged_wait_status,
+BU_EXTERN (void _ged_wait_status,
 	   (struct bu_vls *log,
 	    int status));
 
 /* defined in rotate_eto.c */
-BU_EXTERN (int ged_rotate_eto,
+BU_EXTERN (int _ged_rotate_eto,
 	   (struct ged *gedp,
 	    struct rt_eto_internal *eto,
 	    const char *attribute,
 	    matp_t rmat));
 
 /* defined in rotate_extrude.c */
-BU_EXTERN (int ged_rotate_extrude,
+BU_EXTERN (int _ged_rotate_extrude,
 	   (struct ged *gedp,
 	    struct rt_extrude_internal *extrude,
 	    const char *attribute,
 	    matp_t rmat));
 
 /* defined in rotate_hyp.c */
-BU_EXTERN (int ged_rotate_hyp,
+BU_EXTERN (int _ged_rotate_hyp,
 	   (struct ged *gedp,
 	    struct rt_hyp_internal *hyp,
 	    const char *attribute,
 	    matp_t rmat));
 
 /* defined in rotate_tgc.c */
-BU_EXTERN (int ged_rotate_tgc,
+BU_EXTERN (int _ged_rotate_tgc,
 	   (struct ged *gedp,
 	    struct rt_tgc_internal *tgc,
 	    const char *attribute,
 	    matp_t rmat));
 
 /* defined in scale_ehy.c */
-BU_EXTERN (int ged_scale_ehy,
+BU_EXTERN (int _ged_scale_ehy,
 	   (struct ged *gedp,
 	    struct rt_ehy_internal *ehy,
 	    const char *attribute,
@@ -375,7 +375,7 @@ BU_EXTERN (int ged_scale_ehy,
 	    int rflag));
 
 /* defined in scale_ell.c */
-BU_EXTERN (int ged_scale_ell,
+BU_EXTERN (int _ged_scale_ell,
 	   (struct ged *gedp,
 	    struct rt_ell_internal *ell,
 	    const char *attribute,
@@ -383,7 +383,7 @@ BU_EXTERN (int ged_scale_ell,
 	    int rflag));
 
 /* defined in scale_epa.c */
-BU_EXTERN (int ged_scale_epa,
+BU_EXTERN (int _ged_scale_epa,
 	   (struct ged *gedp,
 	    struct rt_epa_internal *epa,
 	    const char *attribute,
@@ -391,7 +391,7 @@ BU_EXTERN (int ged_scale_epa,
 	    int rflag));
 
 /* defined in scale_eto.c */
-BU_EXTERN (int ged_scale_eto,
+BU_EXTERN (int _ged_scale_eto,
 	   (struct ged *gedp,
 	    struct rt_eto_internal *eto,
 	    const char *attribute,
@@ -399,7 +399,7 @@ BU_EXTERN (int ged_scale_eto,
 	    int rflag));
 
 /* defined in scale_extrude.c */
-BU_EXTERN (int ged_scale_extrude,
+BU_EXTERN (int _ged_scale_extrude,
 	   (struct ged *gedp,
 	    struct rt_extrude_internal *extrude,
 	    const char *attribute,
@@ -407,7 +407,7 @@ BU_EXTERN (int ged_scale_extrude,
 	    int rflag));
 
 /* defined in scale_hyp.c */
-BU_EXTERN (int ged_scale_hyp,
+BU_EXTERN (int _ged_scale_hyp,
 	   (struct ged *gedp,
 	    struct rt_hyp_internal *hyp,
 	    const char *attribute,
@@ -415,7 +415,7 @@ BU_EXTERN (int ged_scale_hyp,
 	    int rflag));
 
 /* defined in scale_part.c */
-BU_EXTERN (int ged_scale_part,
+BU_EXTERN (int _ged_scale_part,
 	   (struct ged *gedp,
 	    struct rt_part_internal *part,
 	    const char *attribute,
@@ -423,7 +423,7 @@ BU_EXTERN (int ged_scale_part,
 	    int rflag));
 
 /* defined in scale_rhc.c */
-BU_EXTERN (int ged_scale_rhc,
+BU_EXTERN (int _ged_scale_rhc,
 	   (struct ged *gedp,
 	    struct rt_rhc_internal *rhc,
 	    const char *attribute,
@@ -431,7 +431,7 @@ BU_EXTERN (int ged_scale_rhc,
 	    int rflag));
 
 /* defined in scale_rpc.c */
-BU_EXTERN (int ged_scale_rpc,
+BU_EXTERN (int _ged_scale_rpc,
 	   (struct ged *gedp,
 	    struct rt_rpc_internal *rpc,
 	    const char *attribute,
@@ -439,7 +439,7 @@ BU_EXTERN (int ged_scale_rpc,
 	    int rflag));
 
 /* defined in scale_superell.c */
-BU_EXTERN (int ged_scale_superell,
+BU_EXTERN (int _ged_scale_superell,
 	   (struct ged *gedp,
 	    struct rt_superell_internal *superell,
 	    const char *attribute,
@@ -447,7 +447,7 @@ BU_EXTERN (int ged_scale_superell,
 	    int rflag));
 
 /* defined in scale_tgc.c */
-BU_EXTERN (int ged_scale_tgc,
+BU_EXTERN (int _ged_scale_tgc,
 	   (struct ged *gedp,
 	    struct rt_tgc_internal *tgc,
 	    const char *attribute,
@@ -455,7 +455,7 @@ BU_EXTERN (int ged_scale_tgc,
 	    int rflag));
 
 /* defined in scale_tor.c */
-BU_EXTERN (int ged_scale_tor,
+BU_EXTERN (int _ged_scale_tor,
 	   (struct ged *gedp,
 	    struct rt_tor_internal *tor,
 	    const char *attribute,

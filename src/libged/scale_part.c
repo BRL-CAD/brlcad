@@ -34,7 +34,7 @@
 #include "./ged_private.h"
 
 int
-ged_scale_part(struct ged *gedp, struct rt_part_internal *part, const char *attribute, fastf_t sf, int rflag)
+_ged_scale_part(struct ged *gedp, struct rt_part_internal *part, const char *attribute, fastf_t sf, int rflag)
 {
     RT_PART_CK_MAGIC(part);
 

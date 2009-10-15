@@ -149,7 +149,7 @@ ged_rtcheck(struct ged *gedp, int argc, const char *argv[])
      */
     if (i == argc) {
 	gedp->ged_gdp->gd_rt_cmd_len = vp - gedp->ged_gdp->gd_rt_cmd;
-	gedp->ged_gdp->gd_rt_cmd_len += ged_build_tops(gedp,
+	gedp->ged_gdp->gd_rt_cmd_len += _ged_build_tops(gedp,
 					       vp,
 					       &gedp->ged_gdp->gd_rt_cmd[MAXARGS]);
     } else {
@@ -196,8 +196,8 @@ ged_rtcheck(struct ged *gedp, int argc, const char *argv[])
     (void)close(o_pipe[0]);
     fp = fdopen(o_pipe[1], "w");
 
-    ged_rt_set_eye_model(gedp, eye_model);
-    ged_rt_write(gedp, fp, eye_model);
+    _ged_rt_set_eye_model(gedp, eye_model);
+    _ged_rt_write(gedp, fp, eye_model);
     (void)fclose(fp);
 
     /* close write end of pipes */
@@ -252,7 +252,7 @@ ged_rtcheck(struct ged *gedp, int argc, const char *argv[])
      */
     if (i == argc) {
 	gedp->ged_gdp->gd_rt_cmd_len = vp - gedp->ged_gdp->gd_rt_cmd;
-	gedp->ged_gdp->gd_rt_cmd_len += ged_build_tops(gedp,
+	gedp->ged_gdp->gd_rt_cmd_len += _ged_build_tops(gedp,
 					       vp,
 					       &gedp->ged_gdp->gd_rt_cmd[MAXARGS]);
     } else {
@@ -338,8 +338,8 @@ ged_rtcheck(struct ged *gedp, int argc, const char *argv[])
     fp = _fdopen(_open_osfhandle((HFILE)pipe_oDup, _O_TEXT), "wb");
     setmode(_fileno(fp), O_BINARY);
 
-    ged_rt_set_eye_model(gedp, eye_model);
-    ged_rt_write(gedp, fp, eye_model);
+    _ged_rt_set_eye_model(gedp, eye_model);
+    _ged_rt_write(gedp, fp, eye_model);
     (void)fclose(fp);
 
     BU_GETSTRUCT(rtcp, ged_rtcheck);
@@ -409,7 +409,7 @@ ged_rtcheck_vector_handler(ClientData clientData, int mask)
 	/* wait for the forked process */
 	while ((rpid = wait(&retcode)) != rtcp->pid && rpid != -1) {
 
-	    ged_wait_status(&rtcp->gedp->ged_result_str, retcode);
+	    _ged_wait_status(&rtcp->gedp->ged_result_str, retcode);
 	}
 
 #if 0
@@ -548,7 +548,7 @@ ged_rtcheck_output_handler(ClientData clientData, int mask)
 #endif
 
 void
-ged_wait_status(struct bu_vls	*log,
+_ged_wait_status(struct bu_vls	*log,
 		int		status)
 {
     int	sig = status & 0x7f;

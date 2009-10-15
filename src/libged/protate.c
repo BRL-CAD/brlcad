@@ -97,16 +97,16 @@ ged_protate(struct ged *gedp, int argc, const char *argv[])
 
     switch (intern.idb_minor_type) {
     case DB5_MINORTYPE_BRLCAD_ETO:
-	ret = ged_rotate_eto(gedp, (struct rt_eto_internal *)intern.idb_ptr, argv[2], rmat);
+	ret = _ged_rotate_eto(gedp, (struct rt_eto_internal *)intern.idb_ptr, argv[2], rmat);
 	break;
     case DB5_MINORTYPE_BRLCAD_EXTRUDE:
-	ret = ged_rotate_extrude(gedp, (struct rt_extrude_internal *)intern.idb_ptr, argv[2], rmat);
+	ret = _ged_rotate_extrude(gedp, (struct rt_extrude_internal *)intern.idb_ptr, argv[2], rmat);
 	break;
     case DB5_MINORTYPE_BRLCAD_HYP:
-	ret = ged_rotate_hyp(gedp, (struct rt_hyp_internal *)intern.idb_ptr, argv[2], rmat);
+	ret = _ged_rotate_hyp(gedp, (struct rt_hyp_internal *)intern.idb_ptr, argv[2], rmat);
 	break;
     case DB5_MINORTYPE_BRLCAD_TGC:
-	ret = ged_rotate_tgc(gedp, (struct rt_tgc_internal *)intern.idb_ptr, argv[2], rmat);
+	ret = _ged_rotate_tgc(gedp, (struct rt_tgc_internal *)intern.idb_ptr, argv[2], rmat);
 	break;
     default:
 	bu_vls_printf(&gedp->ged_result_str, "%s: Object not yet supported.", argv[0]);

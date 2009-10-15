@@ -34,7 +34,7 @@
 
 
 int
-ged_scale_args(struct ged *gedp, int argc, const char *argv[], fastf_t *sf)
+_ged_scale_args(struct ged *gedp, int argc, const char *argv[], fastf_t *sf)
 {
     static const char *usage = "sf";
 
@@ -65,12 +65,12 @@ ged_scale_args(struct ged *gedp, int argc, const char *argv[], fastf_t *sf)
 }
 
 int
-ged_scale(struct ged *gedp, int argc, const char *argv[])
+_ged_scale(struct ged *gedp, int argc, const char *argv[])
 {
     int ret;
     fastf_t sf;
 
-    if ((ret = ged_scale_args(gedp, argc, argv, &sf)) != GED_OK)
+    if ((ret = _ged_scale_args(gedp, argc, argv, &sf)) != GED_OK)
 	return ret;
 
     if (sf <= SMALL_FASTF || INFINITY < sf)

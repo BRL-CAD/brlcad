@@ -36,7 +36,7 @@
 
 
 int
-ged_scale_hyp(struct ged *gedp, struct rt_hyp_internal *hyp, const char *attribute, fastf_t sf, int rflag)
+_ged_scale_hyp(struct ged *gedp, struct rt_hyp_internal *hyp, const char *attribute, fastf_t sf, int rflag)
 {
     fastf_t f;
     point_t old_top;

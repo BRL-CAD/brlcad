@@ -276,8 +276,8 @@ ged_nirt(struct ged *gedp, int argc, const char *argv[])
 
     gedp->ged_gdp->gd_rt_cmd_len = vp - gedp->ged_gdp->gd_rt_cmd;
 
-    /* Note - ged_build_tops sets the last vp to (char *)0 */
-    gedp->ged_gdp->gd_rt_cmd_len += ged_build_tops(gedp,
+    /* Note - _ged_build_tops sets the last vp to (char *)0 */
+    gedp->ged_gdp->gd_rt_cmd_len += _ged_build_tops(gedp,
 						   vp,
 						   &gedp->ged_gdp->gd_rt_cmd[RT_MAXARGS]);
 
@@ -564,7 +564,7 @@ ged_nirt(struct ged *gedp, int argc, const char *argv[])
 	;	/* NULL */
 
     if (retcode != 0)
-	ged_wait_status(&gedp->ged_result_str, retcode);
+	_ged_wait_status(&gedp->ged_result_str, retcode);
 #else
     /* Wait for program to finish */
     WaitForSingleObject( pi.hProcess, INFINITE );
