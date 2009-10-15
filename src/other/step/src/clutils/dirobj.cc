@@ -532,7 +532,7 @@ void DirObj::RemoveFile (int index) {
 
 void DirObj::ClearFileList () {
     for (int i = 0; i < fileCount; ++i) {
-        delete fileList[i];
+      free(fileList[i]);
     }
     fileCount = 0;
 }

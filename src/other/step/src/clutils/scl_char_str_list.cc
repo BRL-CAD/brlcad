@@ -32,7 +32,7 @@ void scl_char_str__list::Check (int index) {
         _bufsize = (index+1) * 2;
         newbuf = new scl_char_str_ptr[_bufsize];
         memmove(newbuf, _buf, _count*sizeof(scl_char_str_ptr));
-        delete _buf;
+        delete [] _buf;
         _buf = newbuf;
     }
 }

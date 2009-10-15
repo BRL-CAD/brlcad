@@ -36,7 +36,7 @@ STEPcomplex::STEPcomplex(Registry *registry, const SCLstring **names,
     nms[j] = NULL;
     Initialize( (const char **)nms, schnm );
     for ( k=0; k<j; k++ ) {
-	delete nms[k];
+	delete [] nms[k];
     }
 }
 

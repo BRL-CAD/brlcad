@@ -65,7 +65,7 @@ Explicit_item_id__set::Explicit_item_id__set (int defaultSize) {
     _count = 0;
 }
 
-Explicit_item_id__set::~Explicit_item_id__set () { delete _buf; }
+Explicit_item_id__set::~Explicit_item_id__set () { delete [] _buf; }
 
 void Explicit_item_id__set::Check (int index) {
     Explicit_item_id_ptr* newbuf;
@@ -249,7 +249,7 @@ Interface_spec__set::Interface_spec__set (int defaultSize) {
     _count = 0;
 }
 
-Interface_spec__set::~Interface_spec__set () { delete _buf; }
+Interface_spec__set::~Interface_spec__set () { delete [] _buf; }
 
 void Interface_spec__set::Check (int index) {
     Interface_spec_ptr* newbuf;
@@ -1581,7 +1581,7 @@ void Global_rule__set::Check (int index) {
         _bufsize = (index+1) * 2;
         newbuf = new Global_rule_ptr[_bufsize];
         memmove(newbuf, _buf, _count*sizeof(Global_rule_ptr));
-        delete _buf;
+        delete [] _buf;
         _buf = newbuf;
     }
 }
