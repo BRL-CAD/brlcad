@@ -59,7 +59,7 @@ PKG_TCL_SOURCES = @PKG_TCL_SOURCES@
 # This is a list of public header files to be installed, if any.
 #========================================================================
 
-PKG_HEADERS	= @PKG_HEADERS@ togl_ws.h
+PKG_HEADERS	= @PKG_HEADERS@
 
 #========================================================================
 # "PKG_LIB_FILE" refers to the library (dynamic or static as per
@@ -290,6 +290,9 @@ install-libraries: libraries
 	    echo "Installing $(srcdir)/$$i" ; \
 	    $(INSTALL_DATA) $(srcdir)/$$i $(DESTDIR)$(includedir) ; \
 	done
+	@echo "Installing togl_ws.h"
+	@$(INSTALL_DATA) ./togl_ws.h $(DESTDIR)$(includedir)
+
 
 #========================================================================
 # Install documentation.  Unix manpages should go in the $(mandir)
