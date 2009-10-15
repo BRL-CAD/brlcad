@@ -142,7 +142,7 @@ ged_code(fastf_t x, fastf_t y)
  *	if !0 was returned, "a" and "b" have been clipped to the RPP.
  */
 int
-_ged_vclip(vect_t a, vect_t b, register fastf_t *min, register fastf_t *max)
+ged_vclip(vect_t a, vect_t b, register fastf_t *min, register fastf_t *max)
 {
     static vect_t diff;
     static double sv;

@@ -191,7 +191,7 @@ ged_cm_tree(int argc, char **argv)
 }
 
 void
-ged_setup_rt(struct ged *gedp, register char **vp, int printcmd)
+_ged_setup_rt(struct ged *gedp, register char **vp, int printcmd)
 {
     _ged_current_gedp->ged_gdp->gd_rt_cmd_len = vp - _ged_current_gedp->ged_gdp->gd_rt_cmd;
     _ged_current_gedp->ged_gdp->gd_rt_cmd_len += ged_build_tops(gedp, 
@@ -322,7 +322,7 @@ ged_preview(struct ged *gedp, int argc, const char *argv[])
     }
 
     /* Build list of top-level objects in view, in _ged_current_gedp->ged_gdp->gd_rt_cmd[] */
-    ged_setup_rt(gedp, _ged_current_gedp->ged_gdp->gd_rt_cmd, 1);
+    _ged_setup_rt(gedp, _ged_current_gedp->ged_gdp->gd_rt_cmd, 1);
 
     preview_vbp = rt_vlblock_init();
 

@@ -240,7 +240,7 @@ ged_plot(struct ged *gedp, int argc, const char *argv[])
 			VMOVE(last, fin);
 			break;
 		    }
-		    if (_ged_vclip(start, fin, clipmin, clipmax) == 0)
+		    if (ged_vclip(start, fin, clipmin, clipmax) == 0)
 			continue;
 
 		    if (Three_D)  {

@@ -61,7 +61,7 @@ ged_rrt(struct ged *gedp, int argc, const char *argv[])
 
     _ged_current_gedp = gedp;
 
-    ged_setup_rt(gedp, vp, 1);
+    _ged_setup_rt(gedp, vp, 1);
     (void)ged_run_rt(gedp);
 
     return GED_OK;

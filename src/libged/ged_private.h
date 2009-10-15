@@ -125,18 +125,6 @@ BU_EXTERN (struct db_i *_ged_open_dbip,
 	   (const char *filename,
 	    int existing_only));
 
-/* defined in clip.c */
-BU_EXTERN (int _ged_clip,
-	   (fastf_t *xp1,
-	    fastf_t *yp1,
-	    fastf_t *xp2,
-	    fastf_t *yp2));
-BU_EXTERN (int _ged_vclip,
-	   (vect_t a,
-	    vect_t b,
-	    register fastf_t *min,
-	    register fastf_t *max));
-
 /* defined in color.c */
 BU_EXTERN (void _ged_color_putrec,
 	   (struct ged			*gedp,
@@ -299,17 +287,17 @@ BU_EXTERN(struct directory ** _ged_getspace,
 	   register int	num_entries));
 
 /* defined in preview.c */
-BU_EXTERN (void ged_setup_rt,
+BU_EXTERN (void _ged_setup_rt,
 	   (struct ged *gedp,
 	    register char **vp,
 	    int printcmd));
 
 /* defined in red.c */
-extern char ged_tmpfil[MAXPATHLEN];
-extern char ged_tmpcomb[17];
-extern char *ged_tmpcomb_init;
+extern char _ged_tmpfil[MAXPATHLEN];
+extern char _ged_tmpcomb[17];
+extern char *_ged_tmpcomb_init;
 extern char _delims[];
-BU_EXTERN(int ged_make_tree,
+BU_EXTERN(int _ged_make_tree,
 	  (struct ged *gedp,
 	   struct rt_comb_internal *comb,
 	   struct directory *dp,
@@ -318,13 +306,13 @@ BU_EXTERN(int ged_make_tree,
 	   const char *new_name,
 	   struct rt_tree_array *rt_tree_array,
 	   int tree_index));
-BU_EXTERN(int ged_save_comb,
+BU_EXTERN(int _ged_save_comb,
 	  (struct ged *gedp,
 	   struct directory *dpold));
-BU_EXTERN(void ged_restore_comb,
+BU_EXTERN(void _ged_restore_comb,
 	  (struct ged *gedp,
 	   struct directory *dp));
-BU_EXTERN(void ged_print_matrix,
+BU_EXTERN(void _ged_print_matrix,
 	  (FILE *fp, matp_t matrix));
 
 /* defined in rt.c */

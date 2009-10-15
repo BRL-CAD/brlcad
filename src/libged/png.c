@@ -264,7 +264,7 @@ ged_draw_png_solid(struct ged *gedp, unsigned char **image, struct solid *sp, ma
 		    break;
 	    }
 
-	    if (_ged_vclip(start, fin, clipmin, clipmax) == 0)
+	    if (ged_vclip(start, fin, clipmin, clipmax) == 0)
 		continue;
 
 	    coord1.x = start[0] * half_size + half_size;
