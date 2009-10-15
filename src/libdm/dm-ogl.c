@@ -254,11 +254,8 @@ ogl_open(Tcl_Interp *interp, int argc, char **argv)
 
     dm_processOptions(dmp, &init_proc_vls, --argc, ++argv);
 
-    if (bu_vls_strlen(&dmp->dm_pathName) == 0) {
+    if (bu_vls_strlen(&dmp->dm_pathName) == 0)
 	bu_vls_printf(&dmp->dm_pathName, ".dm_ogl%d", count);
-    } else {
-	bu_log("dm_pathName: %s\n", bu_vls_addr(&dmp->dm_pathName));
-    }
     ++count;
     if (bu_vls_strlen(&dmp->dm_dName) == 0) {
 	char *dp;
