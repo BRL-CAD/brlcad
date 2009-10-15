@@ -112,7 +112,7 @@ ged_autoview(struct ged *gedp, int argc, const char *argv[])
 
     gedp->ged_gvp->gv_size = 2.0 * gedp->ged_gvp->gv_scale;
     gedp->ged_gvp->gv_isize = 1.0 / gedp->ged_gvp->gv_size;
-    ged_view_update(gedp->ged_gvp);
+    _ged_view_update(gedp->ged_gvp);
 
     return GED_OK;
 }

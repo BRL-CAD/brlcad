@@ -31,7 +31,7 @@
 
 
 void
-ged_view_update(struct ged_view	*gvp)
+_ged_view_update(struct ged_view	*gvp)
 {
     vect_t work, work1;
     vect_t temp, temp1;
@@ -72,7 +72,7 @@ ged_view_update(struct ged_view	*gvp)
 }
 
 void
-ged_mat_aet(struct ged_view *gvp)
+_ged_mat_aet(struct ged_view *gvp)
 {
     mat_t tmat;
     fastf_t twist;
@@ -92,7 +92,7 @@ ged_mat_aet(struct ged_view *gvp)
 }
 
 int
-ged_do_rot(struct ged	*gedp,
+_ged_do_rot(struct ged	*gedp,
 	   char		coord,
 	   mat_t	rmat,
 	   int		(*func)())
@@ -150,25 +150,25 @@ ged_do_rot(struct ged	*gedp,
 
     /* pure rotation */
     bn_mat_mul2(rmat, gedp->ged_gvp->gv_rotation);
-    ged_view_update(gedp->ged_gvp);
+    _ged_view_update(gedp->ged_gvp);
 
     return GED_OK;
 }
 
 int
-ged_do_slew(struct ged *gedp, vect_t svec)
+_ged_do_slew(struct ged *gedp, vect_t svec)
 {
     point_t model_center;
 
     MAT4X3PNT(model_center, gedp->ged_gvp->gv_view2model, svec);
     MAT_DELTAS_VEC_NEG(gedp->ged_gvp->gv_center, model_center);
-    ged_view_update(gedp->ged_gvp);
+    _ged_view_update(gedp->ged_gvp);
 
     return GED_OK;
 }
 
 int
-ged_do_tra(struct ged	*gedp,
+_ged_do_tra(struct ged	*gedp,
 	   char		coord,
 	   vect_t	tvec,
 	   int		(*func)())
@@ -196,20 +196,20 @@ ged_do_tra(struct ged	*gedp,
 
     VSUB2(nvc, vc, delta);
     MAT_DELTAS_VEC_NEG(gedp->ged_gvp->gv_center, nvc);
-    ged_view_update(gedp->ged_gvp);
+    _ged_view_update(gedp->ged_gvp);
 
     return GED_OK;
 }
 
 int
-ged_do_zoom(struct ged *gedp, fastf_t sf)
+_ged_do_zoom(struct ged *gedp, fastf_t sf)
 {
     gedp->ged_gvp->gv_scale /= sf;
     if (gedp->ged_gvp->gv_scale < RT_MINVIEWSCALE)
 	gedp->ged_gvp->gv_scale = RT_MINVIEWSCALE;
     gedp->ged_gvp->gv_size = 2.0 * gedp->ged_gvp->gv_scale;
     gedp->ged_gvp->gv_isize = 1.0 / gedp->ged_gvp->gv_size;
-    ged_view_update(gedp->ged_gvp);
+    _ged_view_update(gedp->ged_gvp);
 
     return GED_OK;
 }

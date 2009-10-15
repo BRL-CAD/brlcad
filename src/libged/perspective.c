@@ -67,7 +67,7 @@ ged_perspective(struct ged *gedp, int argc, const char *argv[])
 #else
 	ged_mike_persp_mat(gedp->ged_gvp->gv_pmat, gedp->ged_gvp->gv_eye_pos);
 #endif
-	ged_view_update(gedp->ged_gvp);
+	_ged_view_update(gedp->ged_gvp);
 
 	return GED_OK;
     }

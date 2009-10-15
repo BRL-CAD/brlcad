@@ -36,7 +36,7 @@
 
 
 int
-ged_translate_tgc(struct ged *gedp, struct rt_tgc_internal *tgc, const char *attribute, vect_t tvec, int rflag)
+_ged_translate_tgc(struct ged *gedp, struct rt_tgc_internal *tgc, const char *attribute, vect_t tvec, int rflag)
 {
     fastf_t la, lb, lc, ld;
     vect_t hvec;

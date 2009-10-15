@@ -126,14 +126,14 @@ ged_rt(struct ged *gedp, int argc, const char *argv[])
 
 	bu_vls_printf(&gedp->ged_result_str, "\n");
     }
-    (void)ged_run_rt(gedp);
+    (void)_ged_run_rt(gedp);
 
     return GED_OK;
 }
 
 
 int
-ged_run_rt(struct ged *gedp)
+_ged_run_rt(struct ged *gedp)
 {
     register int i;
     FILE *fp_in;

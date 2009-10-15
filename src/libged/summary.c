@@ -123,7 +123,7 @@ ged_dir_summary(struct ged	*gedp,
     /* Print all names matching the flags parameter */
     /* THIS MIGHT WANT TO BE SEPARATED OUT BY CATEGORY */
 
-    dirp = ged_dir_getspace(gedp->ged_wdbp->dbip, 0);
+    dirp = _ged_dir_getspace(gedp->ged_wdbp->dbip, 0);
     dirp0 = dirp;
     /*
      * Walk the directory list adding pointers (to the directory entries

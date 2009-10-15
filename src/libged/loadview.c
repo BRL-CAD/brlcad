@@ -239,7 +239,7 @@ ged_loadview(struct ged *gedp, int argc, const char *argv[])
     /* First step:  put eye at view center (view 0, 0, 0) */
     MAT_COPY(gedp->ged_gvp->gv_rotation, _ged_viewrot);
     MAT_DELTAS_VEC_NEG(gedp->ged_gvp->gv_center, _ged_eye_model);
-    ged_view_update(gedp->ged_gvp);
+    _ged_view_update(gedp->ged_gvp);
 
     return GED_OK;
 }

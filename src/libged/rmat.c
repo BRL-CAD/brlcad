@@ -55,7 +55,7 @@ ged_rmat(struct ged *gedp, int argc, const char *argv[])
 	    return GED_ERROR;
 
 	MAT_COPY(gedp->ged_gvp->gv_rotation, rotation);
-	ged_view_update(gedp->ged_gvp);
+	_ged_view_update(gedp->ged_gvp);
 
 	return TCL_OK;
     }

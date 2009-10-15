@@ -551,7 +551,7 @@ ged_rect_zoom(struct ged *gedp)
     /* set the new model center */
     MAT_DELTAS_VEC_NEG(gedp->ged_gvp->gv_center, new_model_center);
     gedp->ged_gvp->gv_scale *= sf;
-    ged_view_update(gedp->ged_gvp);
+    _ged_view_update(gedp->ged_gvp);
 
 #if 0
     gedp->ged_gvp->gv_rect.grs_x = -1.0;

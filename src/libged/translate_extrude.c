@@ -36,7 +36,7 @@
 
 
 int
-ged_translate_extrude(struct ged *gedp, struct rt_extrude_internal *extrude, const char *attribute, vect_t tvec, int rflag)
+_ged_translate_extrude(struct ged *gedp, struct rt_extrude_internal *extrude, const char *attribute, vect_t tvec, int rflag)
 {
     vect_t hvec;
 

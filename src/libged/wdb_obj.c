@@ -2357,7 +2357,7 @@ wdb_pathsum_cmd(struct rt_wdb *wdbp,
 
     MAT_IDN(gtd.gtd_xform);
 
-    ged_trace(gtd.gtd_obj[0], 0, bn_mat_identity, &gtd);
+    _ged_trace(gtd.gtd_obj[0], 0, bn_mat_identity, &gtd);
 
     if (gtd.gtd_prflag == 0) {
 	/* path not found */
@@ -3663,7 +3663,7 @@ wdb_copyeval_cmd(struct rt_wdb *wdbp,
 	return TCL_ERROR;
     }
 
-    ged_trace(gtd.gtd_obj[0], 0, start_mat, &gtd);
+    _ged_trace(gtd.gtd_obj[0], 0, start_mat, &gtd);
 
     if (gtd.gtd_prflag == 0) {
 	Tcl_AppendResult(interp, "PATH:  ", (char *)NULL);

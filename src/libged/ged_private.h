@@ -464,18 +464,18 @@ BU_EXTERN (int _ged_scale_tor,
 
 /* defined in tops.c */
 struct directory **
-ged_dir_getspace(struct db_i	*dbip,
+_ged_dir_getspace(struct db_i	*dbip,
 		 register int	num_entries);
 
 /* defined in trace.c */
-BU_EXTERN (void ged_trace,
+BU_EXTERN (void _ged_trace,
 	   (register struct directory	*dp,
 	    int				pathpos,
 	    const mat_t			old_xlate,
 	    struct _ged_trace_data	*gtdp));
 
 /* defined in translate_extrude.c */
-BU_EXTERN (int ged_translate_extrude,
+BU_EXTERN (int _ged_translate_extrude,
 	   (struct ged *gedp,
 	    struct rt_extrude_internal *extrude,
 	    const char *attribute,
@@ -483,7 +483,7 @@ BU_EXTERN (int ged_translate_extrude,
 	    int rflag));
 
 /* defined in translate_tgc.c */
-BU_EXTERN (int ged_translate_tgc,
+BU_EXTERN (int _ged_translate_tgc,
 	   (struct ged *gedp,
 	    struct rt_tgc_internal *tgc,
 	    const char *attribute,
@@ -491,19 +491,19 @@ BU_EXTERN (int ged_translate_tgc,
 	    int rflag));
 
 /* defined in vutil.c */
-BU_EXTERN (void ged_view_update,
+BU_EXTERN (void _ged_view_update,
 	   (struct ged_view *gvp));
-BU_EXTERN (void ged_mat_aet,
+BU_EXTERN (void _ged_mat_aet,
 	   (struct ged_view *gvp));
-BU_EXTERN (int ged_do_rot,
+BU_EXTERN (int _ged_do_rot,
 	   (struct ged	*gedp,
 	    char	coord,
 	    mat_t	rmat,
 	    int		(*func)()));
-BU_EXTERN (int ged_do_slew,
+BU_EXTERN (int _ged_do_slew,
 	   (struct ged	*gedp,
 	    vect_t	svec));
-BU_EXTERN (int ged_do_tra,
+BU_EXTERN (int _ged_do_tra,
 	   (struct ged	*gedp,
 	    char	coord,
 	    vect_t	tvec,

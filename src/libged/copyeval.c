@@ -104,7 +104,7 @@ ged_copyeval(struct ged *gedp, int argc, const char *argv[])
 	}
 
 	/* Accumulate the matrices */
-	ged_trace(gtd.gtd_obj[0], 0, start_mat, &gtd);
+	_ged_trace(gtd.gtd_obj[0], 0, start_mat, &gtd);
 
 	if (gtd.gtd_prflag == 0) {
 	    bu_vls_printf(&gedp->ged_result_str, "PATH:  ");
