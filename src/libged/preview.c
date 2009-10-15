@@ -132,7 +132,7 @@ ged_cm_end(int argc, char **argv)
 	av[0] = "zap";
 	av[1] = NULL;
 
-	(void)_ged_zap(_ged_current_gedp, 1, av );
+	(void)ged_zap(_ged_current_gedp, 1, av );
 	_ged_drawtrees(_ged_current_gedp, _ged_current_gedp->ged_gdp->gd_rt_cmd_len, (const char **)_ged_current_gedp->ged_gdp->gd_rt_cmd, preview_mode, (struct _ged_client_data *)0);
 	ged_color_soltab(&_ged_current_gedp->ged_gdp->gd_headDisplay);
     }

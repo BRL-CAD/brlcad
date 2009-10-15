@@ -62,7 +62,7 @@ ged_reopen(struct ged *gedp, int argc, const char *argv[])
 
 	av[0] = "zap";
 	av[1] = (char *)0;
-	_ged_zap(gedp, 1, (const char **)av);
+	ged_zap(gedp, 1, (const char **)av);
 
 	/* close current database */
 	db_close(gedp->ged_wdbp->dbip);

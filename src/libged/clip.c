@@ -45,7 +45,7 @@
 static int ged_code(fastf_t x, fastf_t y);
 
 int
-_ged_clip(fastf_t *xp1, fastf_t *yp1, fastf_t *xp2, fastf_t *yp2)
+ged_clip(fastf_t *xp1, fastf_t *yp1, fastf_t *xp2, fastf_t *yp2)
 {
     char code1, code2;
 

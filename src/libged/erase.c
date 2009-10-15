@@ -277,7 +277,7 @@ ged_erasePathFromDisplay(struct ged *gedp,
 		RT_CK_DIR(dp);
 		if (dp->d_addr == RT_DIR_PHONY_ADDR) {
 		    if (db_dirdelete(gedp->ged_wdbp->dbip, dp) < 0) {
-			bu_vls_printf(&gedp->ged_result_str, "_ged_zap: db_dirdelete failed\n");
+			bu_vls_printf(&gedp->ged_result_str, "ged_erasePathFromDisplay: db_dirdelete failed\n");
 		    }
 		}
 
@@ -462,7 +462,7 @@ _ged_freeDisplayListItem (struct ged *gedp,
 	RT_CK_DIR(dp);
 	if (dp->d_addr == RT_DIR_PHONY_ADDR) {
 	    if (db_dirdelete(gedp->ged_wdbp->dbip, dp) < 0) {
-		bu_vls_printf(&gedp->ged_result_str, "_ged_zap: db_dirdelete failed\n");
+		bu_vls_printf(&gedp->ged_result_str, "_ged_freeDisplayListItem: db_dirdelete failed\n");
 	    }
 	}
 

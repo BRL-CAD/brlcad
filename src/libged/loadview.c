@@ -184,7 +184,7 @@ ged_loadview(struct ged *gedp, int argc, const char *argv[])
 	    /* get rid of anything that may be displayed, since we
 	     * will load objects that are listed in the script next.
 	     */
-	    (void)_ged_zap(gedp, 1, NULL);
+	    (void)ged_zap(gedp, 1, NULL);
 
 	    /* now get the objects listed */
 	    fscanf(fp, "%10000s", objects);
