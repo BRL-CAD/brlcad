@@ -148,7 +148,7 @@ ged_ls(struct ged *gedp, int argc, const char *argv[])
 	tbl = db_lookup_by_attr(gedp->ged_wdbp->dbip, dir_flags, &avs, op);
 	bu_avs_free(&avs);
 
-	dirp = ged_getspace(gedp->ged_wdbp->dbip, BU_PTBL_LEN(tbl));
+	dirp = _ged_getspace(gedp->ged_wdbp->dbip, BU_PTBL_LEN(tbl));
 	dirp0 = dirp;
 	for ( i=0; i<BU_PTBL_LEN( tbl ); i++ ) {
 	    *dirp++ = (struct directory *)BU_PTBL_GET(tbl, i);
@@ -158,7 +158,7 @@ ged_ls(struct ged *gedp, int argc, const char *argv[])
 	bu_free((char *)tbl, "wdb_ls_cmd ptbl");
     } else if (argc > 0) {
 	/* Just list specified names */
-	dirp = ged_getspace(gedp->ged_wdbp->dbip, argc);
+	dirp = _ged_getspace(gedp->ged_wdbp->dbip, argc);
 	dirp0 = dirp;
 	/*
 	 * Verify the names, and add pointers to them to the array.
@@ -170,7 +170,7 @@ ged_ls(struct ged *gedp, int argc, const char *argv[])
 	}
     } else {
 	/* Full table of contents */
-	dirp = ged_getspace(gedp->ged_wdbp->dbip, 0);	/* Enough for all */
+	dirp = _ged_getspace(gedp->ged_wdbp->dbip, 0);	/* Enough for all */
 	dirp0 = dirp;
 	/*
 	 * Walk the directory list adding pointers (to the directory
@@ -185,15 +185,15 @@ ged_ls(struct ged *gedp, int argc, const char *argv[])
     }
 
     if (lflag)
-	ged_vls_long_dpp(&gedp->ged_result_str, dirp0, (int)(dirp - dirp0),
+	_ged_vls_long_dpp(&gedp->ged_result_str, dirp0, (int)(dirp - dirp0),
 			 aflag, cflag, rflag, sflag);
     else if (aflag || cflag || rflag || sflag)
-	ged_vls_line_dpp(&gedp->ged_result_str, dirp0, (int)(dirp - dirp0),
+	_ged_vls_line_dpp(&gedp->ged_result_str, dirp0, (int)(dirp - dirp0),
 			 aflag, cflag, rflag, sflag);
     else
-	ged_vls_col_pr4v(&gedp->ged_result_str, dirp0, (int)(dirp - dirp0), 0);
+	_ged_vls_col_pr4v(&gedp->ged_result_str, dirp0, (int)(dirp - dirp0), 0);
 
-    bu_free((genptr_t)dirp0, "ged_getspace dp[]");
+    bu_free((genptr_t)dirp0, "_ged_getspace dp[]");
 
     return GED_OK;
 }
@@ -225,7 +225,7 @@ ged_cmpdirname(const genptr_t a,
  *  This routine was lifted from mged/columns.c.
  */
 void
-ged_vls_col_pr4v(struct bu_vls		*vls,
+_ged_vls_col_pr4v(struct bu_vls		*vls,
 		 struct directory	**list_of_names,
 		 int			num_in_list,
 		 int			no_decorate)
@@ -364,7 +364,7 @@ ged_vls_col_pr4v(struct bu_vls		*vls,
 }
 
 void
-ged_vls_long_dpp(struct bu_vls		*vls,
+_ged_vls_long_dpp(struct bu_vls		*vls,
 		 struct directory	**list_of_names,
 		 int			num_in_list,
 		 int			aflag,		/* print all objects */
@@ -486,7 +486,7 @@ ged_vls_long_dpp(struct bu_vls		*vls,
  *  This routine was lifted from mged/columns.c.
  */
 void
-ged_vls_line_dpp(struct bu_vls	*vls,
+_ged_vls_line_dpp(struct bu_vls	*vls,
 		 struct directory **list_of_names,
 		 int		num_in_list,
 		 int		aflag,	/* print all objects */
@@ -540,7 +540,7 @@ ged_vls_line_dpp(struct bu_vls	*vls,
  *  This routine was lifted from mged/dir.c.
  */
 struct directory **
-ged_getspace(struct db_i	*dbip,
+_ged_getspace(struct db_i	*dbip,
 	     register int	num_entries)
 {
     register struct directory **dir_basep;

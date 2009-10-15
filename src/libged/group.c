@@ -62,7 +62,7 @@ ged_group(struct ged *gedp, int argc, const char *argv[])
     /* get objects to add to group */
     for (i = 2; i < argc; i++) {
 	if ((dp = db_lookup(gedp->ged_wdbp->dbip, argv[i], LOOKUP_NOISY)) != DIR_NULL) {
-	    if (ged_combadd(gedp, dp, (char *)argv[1], 0,
+	    if (_ged_combadd(gedp, dp, (char *)argv[1], 0,
 			    WMOP_UNION, 0, 0) == DIR_NULL)
 		return GED_ERROR;
 	}  else

@@ -55,14 +55,14 @@ ged_reopen(struct ged *gedp, int argc, const char *argv[])
     if (argc == 2) {
 	char *av[2];
 
-	if ((dbip = ged_open_dbip(argv[1], 0)) == DBI_NULL) {
+	if ((dbip = _ged_open_dbip(argv[1], 0)) == DBI_NULL) {
 	    bu_vls_printf(&gedp->ged_result_str, "ged_reopen: failed to open %s\n", argv[1]);
 	    return GED_ERROR;
 	}
 
 	av[0] = "zap";
 	av[1] = (char *)0;
-	ged_zap(gedp, 1, (const char **)av);
+	_ged_zap(gedp, 1, (const char **)av);
 
 	/* close current database */
 	db_close(gedp->ged_wdbp->dbip);

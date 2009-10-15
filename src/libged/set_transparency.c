@@ -75,7 +75,7 @@ ged_set_transparency(struct ged *gedp, int argc, const char *argv[])
 	return GED_ERROR;
     }
 
-    if ((dpp = ged_build_dpp(gedp, argv[1])) == NULL) {
+    if ((dpp = _ged_build_dpp(gedp, argv[1])) == NULL) {
 	return GED_OK;
     }
 

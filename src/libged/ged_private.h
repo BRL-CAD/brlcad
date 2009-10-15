@@ -37,33 +37,33 @@
 
 __BEGIN_DECLS
 
-#define GED_V4_MAXNAME	NAMESIZE
-#define GED_TERMINAL_WIDTH 80
-#define GED_COLUMNS ((GED_TERMINAL_WIDTH + GED_V4_MAXNAME - 1) / GED_V4_MAXNAME)
+#define _GED_V4_MAXNAME	NAMESIZE
+#define _GED_TERMINAL_WIDTH 80
+#define _GED_COLUMNS ((_GED_TERMINAL_WIDTH + _GED_V4_MAXNAME - 1) / _GED_V4_MAXNAME)
 
-#define GED_MAX_LEVELS 12
-#define GED_CPEVAL	0
-#define GED_LISTPATH	1
-#define GED_LISTEVAL	2
-#define GED_EVAL_ONLY	3
+#define _GED_MAX_LEVELS 12
+#define _GED_CPEVAL	0
+#define _GED_LISTPATH	1
+#define _GED_LISTEVAL	2
+#define _GED_EVAL_ONLY	3
+        
+#define _GED_WIREFRAME        0
+#define _GED_SHADED_MODE_BOTS 1
+#define _GED_SHADED_MODE_ALL  2
+#define _GED_BOOL_EVAL        3
 
-#define GED_WIREFRAME        0
-#define GED_SHADED_MODE_BOTS 1
-#define GED_SHADED_MODE_ALL  2
-#define GED_BOOL_EVAL        3
-
-struct ged_id_names {
+struct _ged_id_names {
     struct bu_list l;
     struct bu_vls name;		/**< name associated with region id */
 };
 
-struct ged_id_to_names {
+struct _ged_id_to_names {
     struct bu_list l;
     int id;				/**< starting id (i.e. region id or air code) */
-    struct ged_id_names headName;	/**< head of list of names */
+    struct _ged_id_names headName;	/**< head of list of names */
 };
 
-struct ged_client_data {
+struct _ged_client_data {
     struct ged			*gedp;
     struct ged_display_list	*gdlp;
     int				wireframe_color_override;
@@ -93,15 +93,15 @@ struct ged_client_data {
     int				num_halfs;
 };
 
-struct ged_rt_client_data {
+struct _ged_rt_client_data {
     struct ged_run_rt 	*rrtp;
     struct ged	       	*gedp;
 };
 
-struct ged_trace_data {
+struct _ged_trace_data {
     struct ged	      *gtd_gedp;
-    struct directory  *gtd_path[GED_MAX_LEVELS];
-    struct directory  *gtd_obj[GED_MAX_LEVELS];
+    struct directory  *gtd_path[_GED_MAX_LEVELS];
+    struct directory  *gtd_obj[_GED_MAX_LEVELS];
     mat_t	      gtd_xform;
     int		      gtd_objpos;
     int		      gtd_prflag;
@@ -109,10 +109,10 @@ struct ged_trace_data {
 };
 
 /* defined in globals.c */
-extern struct solid FreeSolid;
+extern struct solid _FreeSolid;
 
 /* defined in ged.c */
-BU_EXTERN (void ged_print_node,
+BU_EXTERN (void _ged_print_node,
 	   (struct ged		*gedp,
 	    register struct directory *dp,
 	    int			pathpos,
@@ -121,33 +121,33 @@ BU_EXTERN (void ged_print_node,
 	    int			cflag,
 	    int                 displayDepth,
 	    int                 currdisplayDepth));
-BU_EXTERN (struct db_i *ged_open_dbip,
+BU_EXTERN (struct db_i *_ged_open_dbip,
 	   (const char *filename,
 	    int existing_only));
 
 /* defined in clip.c */
-BU_EXTERN (int ged_clip,
+BU_EXTERN (int _ged_clip,
 	   (fastf_t *xp1,
 	    fastf_t *yp1,
 	    fastf_t *xp2,
 	    fastf_t *yp2));
-BU_EXTERN (int ged_vclip,
+BU_EXTERN (int _ged_vclip,
 	   (vect_t a,
 	    vect_t b,
 	    register fastf_t *min,
 	    register fastf_t *max));
 
 /* defined in color.c */
-BU_EXTERN (void ged_color_putrec,
+BU_EXTERN (void _ged_color_putrec,
 	   (struct ged			*gedp,
 	    register struct mater	*mp));
 	    
-BU_EXTERN (void ged_color_zaprec,
+BU_EXTERN (void _ged_color_zaprec,
 	   (struct ged			*gedp,
 	    register struct mater	*mp));
 
 /* defined in comb.c */
-BU_EXTERN (struct directory *ged_combadd,
+BU_EXTERN (struct directory *_ged_combadd,
 	   (struct ged			*gedp,
 	    register struct directory	*objp,
 	    char			*combname,
@@ -157,12 +157,12 @@ BU_EXTERN (struct directory *ged_combadd,
 	    int				air));
 
 /* defined in draw.c */
-BU_EXTERN (void ged_cvt_vlblock_to_solids,
+BU_EXTERN (void _ged_cvt_vlblock_to_solids,
 	   (struct ged *gedp,
 	    struct bn_vlblock *vbp,
 	    char *name,
 	    int copy));
-BU_EXTERN (int ged_invent_solid,
+BU_EXTERN (int _ged_invent_solid,
 	   (struct ged		*gedp,
 	    char		*name,
 	    struct bu_list	*vhead,
@@ -170,55 +170,55 @@ BU_EXTERN (int ged_invent_solid,
 	    int			copy,
 	    fastf_t		transparency,
 	    int			dmode));
-BU_EXTERN (int ged_drawtrees,
+BU_EXTERN (int _ged_drawtrees,
 	   (struct ged *gedp,
 	    int argc,
 	    const char *argv[],
 	    int kind,
-	    struct ged_client_data *_dgcdp));
+	    struct _ged_client_data *_dgcdp));
 
 
 /* defined in erase.c */
-BU_EXTERN (void ged_eraseobjpath,
+BU_EXTERN (void _ged_eraseobjpath,
 	   (struct ged	*gedp,
 	    int		argc,
 	    const char	*argv[],
 	    const int	noisy,
 	    const int	all,
 	    const int	skip_first));
-BU_EXTERN (void ged_eraseobjall,
+BU_EXTERN (void _ged_eraseobjall,
 	   (struct ged			*gedp,
 	    register struct directory	**dpp,
 	    int				skip_first));
-BU_EXTERN (void ged_eraseobj,
+BU_EXTERN (void _ged_eraseobj,
 	   (struct ged			*gedp,
 	    register struct directory	**dpp,
 	    int				skip_first));
-BU_EXTERN (void ged_eraseAllNamesFromDisplay,
+BU_EXTERN (void _ged_eraseAllNamesFromDisplay,
 	   (struct ged			*gedp,
 	    const char			*name,
 	    int				skip_first));
-BU_EXTERN (void ged_eraseAllPathsFromDisplay,
+BU_EXTERN (void _ged_eraseAllPathsFromDisplay,
 	   (struct ged			*gedp,
 	    const char			*path,
 	    int				skip_first));
-BU_EXTERN (void ged_eraseAllSubpathsFromSolidList,
+BU_EXTERN (void _ged_eraseAllSubpathsFromSolidList,
 	   (struct ged			*gedp,
 	    struct ged_display_list	*gdlp,
 	    struct db_full_path		*subpath,
 	    const int			skip_first));
-BU_EXTERN (void ged_freeDisplayListItem,
+BU_EXTERN (void _ged_freeDisplayListItem,
 	   (struct ged			*gedp,
 	    struct ged_display_list *gdlp));
 
 
 /* defined in get_comb.c */
-BU_EXTERN(void ged_vls_print_matrix,
+BU_EXTERN(void _ged_vls_print_matrix,
 	  (struct bu_vls *vls,
 	   matp_t matrix));
 
 /* defined in get_obj_bounds.c */
-BU_EXTERN (int ged_get_obj_bounds,
+BU_EXTERN (int _ged_get_obj_bounds,
 	   (struct ged		*gedp,
 	    int			argc,
 	    const char		*argv[],
@@ -226,59 +226,59 @@ BU_EXTERN (int ged_get_obj_bounds,
 	    point_t		rpp_min,
 	    point_t		rpp_max));
 
-BU_EXTERN (int ged_get_obj_bounds2,
+BU_EXTERN (int _ged_get_obj_bounds2,
 	   (struct ged			*gedp,
 	    int				argc,
 	    const char			*argv[],
-	    struct ged_trace_data	*gtdp,
+	    struct _ged_trace_data	*gtdp,
 	    point_t			rpp_min,
 	    point_t			rpp_max));
 
 /* defined in how.c */
-BU_EXTERN (struct directory **ged_build_dpp,
+BU_EXTERN (struct directory **_ged_build_dpp,
 	   (struct ged *gedp,
 	    const char *path));
 
 /* defined in list.c */
-BU_EXTERN(void ged_do_list,
+BU_EXTERN(void _ged_do_list,
 	  (struct ged			*gedp,
 	   register struct directory	*dp,
 	   int				verbose));
 
 /* defined in loadview.c */
-extern vect_t ged_eye_model;
-extern mat_t ged_viewrot;
-extern struct ged *ged_current_gedp;
-BU_EXTERN (int ged_cm_vsize,
+extern vect_t _ged_eye_model;
+extern mat_t _ged_viewrot;
+extern struct ged *_ged_current_gedp;
+BU_EXTERN (int _ged_cm_vsize,
 	   (int argc,
 	    char **argv));
-BU_EXTERN (int ged_cm_eyept,
+BU_EXTERN (int _ged_cm_eyept,
 	   (int argc,
 	    char **argv));
-BU_EXTERN (int ged_cm_lookat_pt,
+BU_EXTERN (int _ged_cm_lookat_pt,
 	   (int argc,
 	    char **argv));
-BU_EXTERN (int ged_cm_vrot,
+BU_EXTERN (int _ged_cm_vrot,
 	   (int argc,
 	    char **argv));
-BU_EXTERN (int ged_cm_orientation,
+BU_EXTERN (int _ged_cm_orientation,
 	   (int argc,
 	    char **argv));
-BU_EXTERN (int ged_cm_set,
+BU_EXTERN (int _ged_cm_set,
 	   (int argc,
 	    char **argv));
-BU_EXTERN (int ged_cm_null,
+BU_EXTERN (int _ged_cm_null,
 	   (int argc,
 	    char **argv));
 
 
 /* defined in ls.c */
-BU_EXTERN(void ged_vls_col_pr4v,
+BU_EXTERN(void _ged_vls_col_pr4v,
 	  (struct bu_vls	*vls,
 	   struct directory	**list_of_names,
 	   int			num_in_list,
 	   int			no_decorate));
-BU_EXTERN(void ged_vls_long_dpp,
+BU_EXTERN(void _ged_vls_long_dpp,
 	  (struct bu_vls	*vls,
 	   struct directory	**list_of_names,
 	   int			num_in_list,
@@ -286,7 +286,7 @@ BU_EXTERN(void ged_vls_long_dpp,
 	   int			cflag,		/* print combinations */
 	   int			rflag,		/* print regions */
 	   int			sflag));	/* print solids */
-BU_EXTERN(void ged_vls_line_dpp,
+BU_EXTERN(void _ged_vls_line_dpp,
 	  (struct bu_vls	*vls,
 	   struct directory	**list_of_names,
 	   int			num_in_list,
@@ -294,7 +294,7 @@ BU_EXTERN(void ged_vls_line_dpp,
 	   int			cflag,	/* print combinations */
 	   int			rflag,	/* print regions */
 	   int			sflag));	/* print solids */
-BU_EXTERN(struct directory ** ged_getspace,
+BU_EXTERN(struct directory ** _ged_getspace,
 	  (struct db_i	*dbip,
 	   register int	num_entries));
 
@@ -308,7 +308,7 @@ BU_EXTERN (void ged_setup_rt,
 extern char ged_tmpfil[MAXPATHLEN];
 extern char ged_tmpcomb[17];
 extern char *ged_tmpcomb_init;
-extern char delims[];
+extern char _delims[];
 BU_EXTERN(int ged_make_tree,
 	  (struct ged *gedp,
 	   struct rt_comb_internal *comb,
@@ -484,7 +484,7 @@ BU_EXTERN (void ged_trace,
 	   (register struct directory	*dp,
 	    int				pathpos,
 	    const mat_t			old_xlate,
-	    struct ged_trace_data	*gtdp));
+	    struct _ged_trace_data	*gtdp));
 
 /* defined in translate_extrude.c */
 BU_EXTERN (int ged_translate_extrude,

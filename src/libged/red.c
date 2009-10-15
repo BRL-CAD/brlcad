@@ -42,7 +42,7 @@ static int ged_write_comb(struct ged *gedp, const struct rt_comb_internal *comb,
 char ged_tmpfil[MAXPATHLEN] = {0};
 char ged_tmpcomb[17];
 char *ged_tmpcomb_init = "ged_tmp.aXXXXXX";
-char delims[] = " \t/";	/* allowable delimiters */
+char _delims[] = " \t/";	/* allowable delimiters */
 
 int
 ged_red(struct ged *gedp, int argc, const char *argv[])
@@ -300,15 +300,15 @@ ged_check_comb(struct ged *gedp)
 	    char *ptr2;
 
 	    rgb_valid = 1;
-	    ptr2 = strtok( ptr, delims );
+	    ptr2 = strtok( ptr, _delims );
 	    if ( !ptr2 ) {
 		continue;
 	    } else {
-		ptr2 = strtok( (char *)NULL, delims );
+		ptr2 = strtok( (char *)NULL, _delims );
 		if ( !ptr2 ) {
 		    rgb_valid = 0;
 		} else {
-		    ptr2 = strtok( (char *)NULL, delims );
+		    ptr2 = strtok( (char *)NULL, _delims );
 		    if ( !ptr2 ) {
 			rgb_valid = 0;
 		    }
@@ -352,7 +352,7 @@ ged_check_comb(struct ged *gedp)
 
 	done2=0;
 	first=1;
-	ptr = strtok( line, delims );
+	ptr = strtok( line, _delims );
 
 	while (!done2) {
 	    if ( name_v5 ) {
@@ -376,7 +376,7 @@ ged_check_comb(struct ged *gedp)
 	    first = 0;
 
 	    /* Next must be the member name */
-	    ptr = strtok( (char *)NULL, delims );
+	    ptr = strtok( (char *)NULL, _delims );
 	    name = NULL;
 	    if ( ptr != NULL && *ptr != '\0' ) {
 		if ( gedp->ged_wdbp->dbip->dbi_version < 5 ) {
@@ -420,7 +420,7 @@ ged_check_comb(struct ged *gedp)
 		return( -1 );
 	    }
 
-	    ptr = strtok( (char *)NULL, delims );
+	    ptr = strtok( (char *)NULL, _delims );
 	    if ( !ptr )
 		done2 = 1;
 	    else if (*ptr != 'u' &&
@@ -430,7 +430,7 @@ ged_check_comb(struct ged *gedp)
 
 		/* skip past matrix */
 		for ( k=1; k<16; k++ ) {
-		    ptr = strtok( (char *)NULL, delims );
+		    ptr = strtok( (char *)NULL, _delims );
 		    if ( !ptr) {
 			bu_vls_printf(&gedp->ged_result_str, "incomplete matrix\n%s\n", lineCopy);
 			fclose( fp );
@@ -441,7 +441,7 @@ ged_check_comb(struct ged *gedp)
 		}
 
 		/* get the next relational operator on the current line */
-		ptr = strtok( (char *)NULL, delims );
+		ptr = strtok( (char *)NULL, _delims );
 	    }
 
 	    node_count++;
@@ -649,7 +649,7 @@ ged_build_comb(struct ged *gedp, struct rt_comb_internal *comb, struct directory
 	    char *ptr2;
 	    int value;
 
-	    ptr2 = strtok(ptr, delims);
+	    ptr2 = strtok(ptr, _delims);
 	    if (!ptr2) {
 		comb->rgb_valid = 0;
 		continue;
@@ -664,7 +664,7 @@ ged_build_comb(struct ged *gedp, struct rt_comb_internal *comb, struct directory
 		value = 255;
 	    }
 	    comb->rgb[0] = value;
-	    ptr2 = strtok((char *)NULL, delims);
+	    ptr2 = strtok((char *)NULL, _delims);
 	    if (!ptr2) {
 		bu_vls_printf(&gedp->ged_result_str, "ged_build_comb: Invalid RGB value\n");
 		comb->rgb_valid = 0;
@@ -680,7 +680,7 @@ ged_build_comb(struct ged *gedp, struct rt_comb_internal *comb, struct directory
 		value = 255;
 	    }
 	    comb->rgb[1] = value;
-	    ptr2 = strtok((char *)NULL, delims);
+	    ptr2 = strtok((char *)NULL, _delims);
 	    if (!ptr2) {
 		bu_vls_printf(&gedp->ged_result_str, "ged_build_comb: Invalid RGB value\n");
 		comb->rgb_valid = 0;
@@ -718,7 +718,7 @@ ged_build_comb(struct ged *gedp, struct rt_comb_internal *comb, struct directory
 	    continue;
 
 	done2=0;
-	ptr = strtok(line, delims);
+	ptr = strtok(line, _delims);
 	while (!done2) {
 	    if (!ptr)
 		break;
@@ -729,7 +729,7 @@ ged_build_comb(struct ged *gedp, struct rt_comb_internal *comb, struct directory
 		break;
 
 	    /* Next must be the member name */
-	    ptr = strtok((char *)NULL, delims);
+	    ptr = strtok((char *)NULL, _delims);
 	    if (gedp->ged_wdbp->dbip->dbi_version < 5) {
 		bu_strlcpy(name_v4 , ptr, NAMESIZE+1);
 		name = name_v4;
@@ -751,7 +751,7 @@ ged_build_comb(struct ged *gedp, struct rt_comb_internal *comb, struct directory
 	    if ((db_lookup(gedp->ged_wdbp->dbip, name, LOOKUP_QUIET)) == DIR_NULL)
 		bu_vls_printf(&gedp->ged_result_str, "\tWARNING: '%s' does not exist\n", name);
 	    /* get matrix */
-	    ptr = strtok((char *)NULL, delims);
+	    ptr = strtok((char *)NULL, _delims);
 	    if (!ptr) {
 		matrix = (matp_t)NULL;
 		done2 = 1;
@@ -766,7 +766,7 @@ ged_build_comb(struct ged *gedp, struct rt_comb_internal *comb, struct directory
 		matrix = (matp_t)bu_calloc(16, sizeof(fastf_t), "red: matrix");
 		matrix[0] = atof(ptr);
 		for (k=1; k<16; k++) {
-		    ptr = strtok((char *)NULL, delims);
+		    ptr = strtok((char *)NULL, _delims);
 		    if (!ptr) {
 			bu_vls_printf(&gedp->ged_result_str, "ged_build_comb: incomplete matrix for member %s. No changes made\n", name);
 			bu_free((char *)matrix, "red: matrix");
@@ -782,7 +782,7 @@ ged_build_comb(struct ged *gedp, struct rt_comb_internal *comb, struct directory
 		    matrix = (matp_t)NULL;
 		}
 
-		ptr = strtok((char *)NULL, delims);
+		ptr = strtok((char *)NULL, _delims);
 		if (ptr == (char *)NULL)
 		    done2 = 1;
 	    }

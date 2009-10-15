@@ -73,7 +73,7 @@ ged_instance(struct ged *gedp, int argc, const char *argv[])
 	return GED_ERROR;
     }
 
-    if (ged_combadd(gedp, dp, (char *)argv[2], 0, oper, 0, 0) == DIR_NULL)
+    if (_ged_combadd(gedp, dp, (char *)argv[2], 0, oper, 0, 0) == DIR_NULL)
 	return GED_ERROR;
 
     return GED_OK;

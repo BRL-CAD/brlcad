@@ -147,7 +147,7 @@ ged_get_comb(struct ged *gedp, int argc, const char *argv[])
 	    }
 
 	    bu_vls_printf(&gedp->ged_result_str, " %c %s\t", op, rt_tree_array[i].tl_tree->tr_l.tl_name);
-	    ged_vls_print_matrix(&gedp->ged_result_str, rt_tree_array[i].tl_tree->tr_l.tl_mat);
+	    _ged_vls_print_matrix(&gedp->ged_result_str, rt_tree_array[i].tl_tree->tr_l.tl_mat);
 	    bu_vls_printf(&gedp->ged_result_str, "\n");
 	    db_free_tree(rt_tree_array[i].tl_tree, &rt_uniresource);
 	}
@@ -166,7 +166,7 @@ ged_get_comb(struct ged *gedp, int argc, const char *argv[])
 }
 
 void
-ged_vls_print_matrix(struct bu_vls *vls, matp_t matrix)
+_ged_vls_print_matrix(struct bu_vls *vls, matp_t matrix)
 {
     int k;
     char buf[64];

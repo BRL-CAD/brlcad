@@ -403,7 +403,7 @@ ged_rtcheck_vector_handler(ClientData clientData, int mask)
 	}
 
 	/* Add overlay */
-	ged_cvt_vlblock_to_solids(rtcp->gedp, rtcp->vbp, "OVERLAPS", 0);
+	_ged_cvt_vlblock_to_solids(rtcp->gedp, rtcp->vbp, "OVERLAPS", 0);
 	rt_vlblock_free(rtcp->vbp);
 
 	/* wait for the forked process */
@@ -489,7 +489,7 @@ ged_rtcheck_vector_handler(ClientData clientData, int mask)
 	}
 
 	/* Add overlay */
-	ged_cvt_vlblock_to_solids(rtcp->gedp, rtcp->vbp, "OVERLAPS", 0);
+	_ged_cvt_vlblock_to_solids(rtcp->gedp, rtcp->vbp, "OVERLAPS", 0);
 	rt_vlblock_free(rtcp->vbp);
 
 	/* wait for the forked process */

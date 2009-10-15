@@ -245,7 +245,7 @@ ged_put_tree_into_comb(struct ged *gedp, struct rt_comb_internal *comb, struct d
 
     for (BU_LIST_FOR (llp, line_list, &HeadLines.l)) {
 	done = 0;
-	ptr = strtok(llp->line, delims);
+	ptr = strtok(llp->line, _delims);
 	while (!done) {
 	    if (!ptr)
 		break;
@@ -256,7 +256,7 @@ ged_put_tree_into_comb(struct ged *gedp, struct rt_comb_internal *comb, struct d
 		break;
 
 	    /* Next must be the member name */
-	    ptr = strtok((char *)NULL, delims);
+	    ptr = strtok((char *)NULL, _delims);
 	    if (ptr == (char *)NULL) {
 		bu_list_free(&HeadLines.l);
 		if (rt_tree_array)
@@ -277,7 +277,7 @@ ged_put_tree_into_comb(struct ged *gedp, struct rt_comb_internal *comb, struct d
 		bu_log("\tWARNING: ' %s ' does not exist\n", name);
 
 	    /* get matrix */
-	    ptr = strtok((char *)NULL, delims);
+	    ptr = strtok((char *)NULL, _delims);
 	    if (ptr == (char *)NULL) {
 		matrix = (matp_t)NULL;
 		done = 1;
@@ -292,7 +292,7 @@ ged_put_tree_into_comb(struct ged *gedp, struct rt_comb_internal *comb, struct d
 		matrix = (matp_t)bu_calloc(16, sizeof(fastf_t), "red: matrix");
 		matrix[0] = atof(ptr);
 		for (k=1; k<16; k++) {
-		    ptr = strtok((char *)NULL, delims);
+		    ptr = strtok((char *)NULL, _delims);
 		    if (!ptr) {
 			bu_log("incomplete matrix for member %s - No changes made\n", name);
 			bu_free((char *)matrix, "red: matrix");
@@ -309,7 +309,7 @@ ged_put_tree_into_comb(struct ged *gedp, struct rt_comb_internal *comb, struct d
 		    matrix = (matp_t)NULL;
 		}
 
-		ptr = strtok((char *)NULL, delims);
+		ptr = strtok((char *)NULL, _delims);
 		if (ptr == (char *)NULL)
 		    done = 1;
 	    }
@@ -359,7 +359,7 @@ ged_count_nodes(struct ged *gedp, char *line)
     if (line == NULL)
 	return 0;
 
-    ptr = strtok(line, delims);
+    ptr = strtok(line, _delims);
 
     while (ptr) {
 	/* First non-white is the relation operator */
@@ -371,14 +371,14 @@ ged_count_nodes(struct ged *gedp, char *line)
 	}
 
 	/* Next must be the member name */
-	name = strtok((char *)NULL, delims);
+	name = strtok((char *)NULL, _delims);
 
 	if (name == NULL) {
 	    bu_vls_printf(&gedp->ged_result_str, " operand name missing\n");
 	    return -1;
 	}
 
-	ptr = strtok((char *)NULL, delims);
+	ptr = strtok((char *)NULL, _delims);
 	/*
 	 * If this token is not a boolean operator, then it must be the start
 	 * of a matrix which we will skip.
@@ -389,7 +389,7 @@ ged_count_nodes(struct ged *gedp, char *line)
 
 	    /* skip past matrix, k=1 because we already have the first value */
 	    for (k=1; k<16; k++) {
-		ptr = strtok((char *)NULL, delims);
+		ptr = strtok((char *)NULL, _delims);
 		if (!ptr) {
 		    bu_vls_printf(&gedp->ged_result_str, "expecting a matrix\n");
 		    return -1;
@@ -397,7 +397,7 @@ ged_count_nodes(struct ged *gedp, char *line)
 	    }
 
 	    /* get the next relational operator on the current line */
-	    ptr = strtok((char *)NULL, delims);
+	    ptr = strtok((char *)NULL, _delims);
 	}
 
 	node_count++;

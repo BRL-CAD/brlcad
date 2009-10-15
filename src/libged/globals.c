@@ -48,7 +48,7 @@ struct dg_obj HeadDGObj;
 /**
  * head of free solid list
  */
-struct solid FreeSolid;
+struct solid _FreeSolid;
 
 /*
  * Local Variables:

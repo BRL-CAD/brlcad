@@ -216,7 +216,7 @@ ged_draw_ps_solid(struct ged *gedp, FILE *fp, struct solid *sp, matp_t psmat)
 		    break;
 	    }
 
-	    if (ged_vclip(start, fin, clipmin, clipmax) == 0)
+	    if (_ged_vclip(start, fin, clipmin, clipmax) == 0)
 		continue;
 
 	    fprintf(fp,

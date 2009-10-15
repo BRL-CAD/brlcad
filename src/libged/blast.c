@@ -58,7 +58,7 @@ ged_blast(struct ged *gedp, int argc, const char *argv[])
 
 	av[0] = "zap";
 	av[1] = (char *)0;
-	ged_zap(gedp, 1, av);
+	_ged_zap(gedp, 1, av);
     }
 
     /* Draw the new object(s) */

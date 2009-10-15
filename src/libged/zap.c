@@ -42,7 +42,7 @@
  *
  */
 int
-ged_zap(struct ged *gedp, int argc, const char *argv[])
+_ged_zap(struct ged *gedp, int argc, const char *argv[])
 {
     register struct solid *sp;
     register struct solid *nsp;
@@ -67,12 +67,12 @@ ged_zap(struct ged *gedp, int argc, const char *argv[])
 	    RT_CK_DIR(dp);
 	    if (dp->d_addr == RT_DIR_PHONY_ADDR) {
 		if (db_dirdelete(gedp->ged_wdbp->dbip, dp) < 0) {
-		    bu_vls_printf(&gedp->ged_result_str, "ged_zap: db_dirdelete failed\n");
+		    bu_vls_printf(&gedp->ged_result_str, "_ged_zap: db_dirdelete failed\n");
 		}
 	    }
 
 	    BU_LIST_DEQUEUE(&sp->l);
-	    FREE_SOLID(sp, &FreeSolid.l);
+	    FREE_SOLID(sp, &_FreeSolid.l);
 	}
 
 	BU_LIST_DEQUEUE(&gdlp->l);

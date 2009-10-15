@@ -447,14 +447,14 @@ read_units_double(double *val, char *buf, const struct cvt_tab *cvt)
 		cvt++;
 	    }
 	}
-	bu_vls_printf(&ged_current_gedp->ged_result_str, "Bad units specifier \"%s\" on value \"%s\"\n", units_string, buf);
+	bu_vls_printf(&_ged_current_gedp->ged_result_str, "Bad units specifier \"%s\" on value \"%s\"\n", units_string, buf);
 	return 1;
 
     found_units:
 	*val = a * cvt->val;
 	return 0;
     }
-    bu_vls_printf(&ged_current_gedp->ged_result_str, "%s sscanf problem on \"%s\"  got %d\n", BU_FLSTR, buf, i);
+    bu_vls_printf(&_ged_current_gedp->ged_result_str, "%s sscanf problem on \"%s\"  got %d\n", BU_FLSTR, buf, i);
     return 1;
 }
 
@@ -563,23 +563,23 @@ parse_args(int ac, char *av[])
 				analysis_flags |= ANALYSIS_WEIGHT;
 				break;
 			    default:
-				bu_vls_printf(&ged_current_gedp->ged_result_str, "Unknown analysis type \"%c\" requested.\n", *p);
+				bu_vls_printf(&_ged_current_gedp->ged_result_str, "Unknown analysis type \"%c\" requested.\n", *p);
 				return -1;
 			}
 		    }
 		    break;
 		}
 	    case 'a'	:
-		bu_vls_printf(&ged_current_gedp->ged_result_str, "azimuth not implemented\n");
+		bu_vls_printf(&_ged_current_gedp->ged_result_str, "azimuth not implemented\n");
 		if (sscanf(bu_optarg, "%lg", &azimuth_deg) != 1) {
-		    bu_vls_printf(&ged_current_gedp->ged_result_str, "error parsing azimuth \"%s\"\n", bu_optarg);
+		    bu_vls_printf(&_ged_current_gedp->ged_result_str, "error parsing azimuth \"%s\"\n", bu_optarg);
 		    return -1;
 		}
 		break;
 	    case 'e'	:
-		bu_vls_printf(&ged_current_gedp->ged_result_str, "elevation not implemented\n");
+		bu_vls_printf(&_ged_current_gedp->ged_result_str, "elevation not implemented\n");
 		if (sscanf(bu_optarg, "%lg", &elevation_deg) != 1) {
-		    bu_vls_printf(&ged_current_gedp->ged_result_str, "error parsing elevation \"%s\"\n", bu_optarg);
+		    bu_vls_printf(&_ged_current_gedp->ged_result_str, "error parsing elevation \"%s\"\n", bu_optarg);
 		    return -1;
 		}
 		break;
@@ -603,7 +603,7 @@ parse_args(int ac, char *av[])
 
 
 		    if (read_units_double(&value1, bu_optarg, units_tab[0])) {
-			bu_vls_printf(&ged_current_gedp->ged_result_str, "error parsing grid spacing value \"%s\"\n", bu_optarg);
+			bu_vls_printf(&_ged_current_gedp->ged_result_str, "error parsing grid spacing value \"%s\"\n", bu_optarg);
 			return -1;
 		    }
 
@@ -612,7 +612,7 @@ parse_args(int ac, char *av[])
 			 * and lower limit.
 			 */
 			if (read_units_double(&value2, p, units_tab[0])) {
-			    bu_vls_printf(&ged_current_gedp->ged_result_str, "error parsing grid spacing limit value \"%s\"\n", p);
+			    bu_vls_printf(&_ged_current_gedp->ged_result_str, "error parsing grid spacing limit value \"%s\"\n", p);
 			    return -1;
 			}
 
@@ -624,18 +624,18 @@ parse_args(int ac, char *av[])
 			gridSpacing = 0.0; /* flag it */
 		    }
 
-		    bu_vls_printf(&ged_current_gedp->ged_result_str, "set grid spacing:%g %s limit:%g %s\n",
+		    bu_vls_printf(&_ged_current_gedp->ged_result_str, "set grid spacing:%g %s limit:%g %s\n",
 				  gridSpacing / units[LINE]->val, units[LINE]->name,
 				  gridSpacingLimit / units[LINE]->val, units[LINE]->name);
 		    break;
 		}
 	    case 'G'	:
 		makeOverlapAssemblies = 1;
-		bu_vls_printf(&ged_current_gedp->ged_result_str, "-G option unimplemented\n");
+		bu_vls_printf(&_ged_current_gedp->ged_result_str, "-G option unimplemented\n");
 		return -1;
 	    case 'n'	:
 		if (sscanf(bu_optarg, "%d", &c) != 1 || c < 0) {
-		    bu_vls_printf(&ged_current_gedp->ged_result_str, "num_hits must be integer value >= 0, not \"%s\"\n", bu_optarg);
+		    bu_vls_printf(&_ged_current_gedp->ged_result_str, "num_hits must be integer value >= 0, not \"%s\"\n", bu_optarg);
 		    return -1;
 		}
 
@@ -657,14 +657,14 @@ parse_args(int ac, char *av[])
 		break;
 	    case 'S'	:
 		if (sscanf(bu_optarg, "%lg", &a) != 1 || a <= 1.0) {
-		    bu_vls_printf(&ged_current_gedp->ged_result_str, "error in specifying minimum samples per model axis: \"%s\"\n", bu_optarg);
+		    bu_vls_printf(&_ged_current_gedp->ged_result_str, "error in specifying minimum samples per model axis: \"%s\"\n", bu_optarg);
 		    break;
 		}
 		Samples_per_model_axis = a + 1;
 		break;
 	    case 't'	:
 		if (read_units_double(&overlap_tolerance, bu_optarg, units_tab[0])) {
-		    bu_vls_printf(&ged_current_gedp->ged_result_str, "error in overlap tolerance distance \"%s\"\n", bu_optarg);
+		    bu_vls_printf(&_ged_current_gedp->ged_result_str, "error in overlap tolerance distance \"%s\"\n", bu_optarg);
 		    return -1;
 		}
 		break;
@@ -673,13 +673,13 @@ parse_args(int ac, char *av[])
 		break;
 	    case 'V'	:
 		if (read_units_double(&volume_tolerance, bu_optarg, units_tab[1])) {
-		    bu_vls_printf(&ged_current_gedp->ged_result_str, "error in volume tolerance \"%s\"\n", bu_optarg);
+		    bu_vls_printf(&_ged_current_gedp->ged_result_str, "error in volume tolerance \"%s\"\n", bu_optarg);
 		    return -1;
 		}
 		break;
 	    case 'W'	:
 		if (read_units_double(&weight_tolerance, bu_optarg, units_tab[2])) {
-		    bu_vls_printf(&ged_current_gedp->ged_result_str, "error in weight tolerance \"%s\"\n", bu_optarg);
+		    bu_vls_printf(&_ged_current_gedp->ged_result_str, "error in weight tolerance \"%s\"\n", bu_optarg);
 		    return -1;
 		}
 		break;
@@ -687,7 +687,7 @@ parse_args(int ac, char *av[])
 	    case 'U'	:
 		use_air = strtol(bu_optarg, (char **)NULL, 10);
 		if (errno == ERANGE || errno == EINVAL) {
-		    bu_vls_printf(&ged_current_gedp->ged_result_str, "error in air argument %s\n", bu_optarg);
+		    bu_vls_printf(&_ged_current_gedp->ged_result_str, "error in air argument %s\n", bu_optarg);
 		    return -1;
 		}
 		break;
@@ -708,18 +708,18 @@ parse_args(int ac, char *av[])
 				    goto found_cv;
 				}
 			    }
-			    bu_vls_printf(&ged_current_gedp->ged_result_str, "Units \"%s\" not found in coversion table\n", units_name[i]);
+			    bu_vls_printf(&_ged_current_gedp->ged_result_str, "Units \"%s\" not found in coversion table\n", units_name[i]);
 			    return -1;
 			found_cv:
 			    units[i] = cv;
 			}
 		    }
 
-		    bu_vls_printf(&ged_current_gedp->ged_result_str, "Units: ");
+		    bu_vls_printf(&_ged_current_gedp->ged_result_str, "Units: ");
 		    for (i=0; i < 3; i++) {
-			bu_vls_printf(&ged_current_gedp->ged_result_str, " %s: %s", dim[i], units[i]->name);
+			bu_vls_printf(&_ged_current_gedp->ged_result_str, " %s: %s", dim[i], units[i]->name);
 		    }
-		    bu_vls_printf(&ged_current_gedp->ged_result_str, "\n");
+		    bu_vls_printf(&_ged_current_gedp->ged_result_str, "\n");
 		}
 		break;
 
@@ -778,23 +778,23 @@ parse_densities_buffer(char *buf, unsigned long len)
 
 	idx = strtol(p, &q, 10);
 	if (q == (char *)NULL) {
-	    bu_vls_printf(&ged_current_gedp->ged_result_str, "could not convert idx\n");
+	    bu_vls_printf(&_ged_current_gedp->ged_result_str, "could not convert idx\n");
 	    return GED_ERROR;
 	}
 
 	if (idx < 0) {
-	    bu_vls_printf(&ged_current_gedp->ged_result_str, "bad density index (%ld < 0)\n", idx);
+	    bu_vls_printf(&_ged_current_gedp->ged_result_str, "bad density index (%ld < 0)\n", idx);
 	    return GED_ERROR;
 	}
 
 	density = strtod(q, &p);
 	if (q == p) {
-	    bu_vls_printf(&ged_current_gedp->ged_result_str, "could not convert density\n");
+	    bu_vls_printf(&_ged_current_gedp->ged_result_str, "could not convert density\n");
 	    return GED_ERROR;
 	}
 
 	if (density < 0.0) {
-	    bu_vls_printf(&ged_current_gedp->ged_result_str, "bad density (%lf < 0)\n", density);
+	    bu_vls_printf(&_ged_current_gedp->ged_result_str, "bad density (%lf < 0)\n", density);
 	    return GED_ERROR;
 	}
 
@@ -830,7 +830,7 @@ parse_densities_buffer(char *buf, unsigned long len)
 #ifdef PRINT_DENSITIES
     for (idx=0; idx < num_densities; idx++)
 	if (densities[idx].magic == DENSITY_MAGIC)
-	    bu_vls_printf(&ged_current_gedp->ged_result_str, "%4d %6g %s\n",
+	    bu_vls_printf(&_ged_current_gedp->ged_result_str, "%4d %6g %s\n",
 			  idx,
 			  densities[idx].density,
 			  densities[idx].name);
@@ -854,7 +854,7 @@ get_densities_from_file(char *name)
 
     if ((fp=fopen(name, "rb")) == (FILE *)NULL) {
 #if 1
-	bu_vls_printf(&ged_current_gedp->ged_result_str, "Could not open file - %s\n", name);
+	bu_vls_printf(&_ged_current_gedp->ged_result_str, "Could not open file - %s\n", name);
 #else
 	perror(name);
 #endif
@@ -863,7 +863,7 @@ get_densities_from_file(char *name)
 
     if (fstat(fileno(fp), &sb)) {
 #if 1
-	bu_vls_printf(&ged_current_gedp->ged_result_str, "Could not fstat file - %s\n", name);
+	bu_vls_printf(&_ged_current_gedp->ged_result_str, "Could not fstat file - %s\n", name);
 #else
 	perror(name);
 #endif
@@ -896,13 +896,13 @@ get_densities_from_database(struct rt_i *rtip)
 
     dp = db_lookup(rtip->rti_dbip, "_DENSITIES", LOOKUP_QUIET);
     if (dp == (struct directory *)NULL) {
-	bu_vls_printf(&ged_current_gedp->ged_result_str, "No \"_DENSITIES\" density table object in database.");
-	bu_vls_printf(&ged_current_gedp->ged_result_str, " If you do not have density data you can still get adjacent air, bounding box, exposed air, gaps, volume or overlaps by using the -Aa, -Ab, -Ae, -Ag, -Av, or -Ao options respectively.\n");
+	bu_vls_printf(&_ged_current_gedp->ged_result_str, "No \"_DENSITIES\" density table object in database.");
+	bu_vls_printf(&_ged_current_gedp->ged_result_str, " If you do not have density data you can still get adjacent air, bounding box, exposed air, gaps, volume or overlaps by using the -Aa, -Ab, -Ae, -Ag, -Av, or -Ao options respectively.\n");
 	return GED_ERROR;
     }
 
     if (rt_db_get_internal(&intern, dp, rtip->rti_dbip, NULL, &rt_uniresource) < 0) {
-	bu_vls_printf(&ged_current_gedp->ged_result_str, "could not import %s\n", dp->d_namep);
+	bu_vls_printf(&_ged_current_gedp->ged_result_str, "could not import %s\n", dp->d_namep);
 	return GED_ERROR;
     }
 
@@ -1052,7 +1052,7 @@ overlap(struct application *ap,
 	}
     } else {
 	bu_semaphore_acquire(GED_SEM_WORKER);
-	bu_vls_printf(&ged_current_gedp->ged_result_str, "overlap %s %s\n", reg1->reg_name, reg2->reg_name);
+	bu_vls_printf(&_ged_current_gedp->ged_result_str, "overlap %s %s\n", reg1->reg_name, reg2->reg_name);
 	bu_semaphore_release(GED_SEM_WORKER);
     }
 
@@ -1136,7 +1136,7 @@ hit(register struct application *ap, struct partition *PartHeadp, struct seg *se
 	VJOIN1(opt, ap->a_ray.r_pt, pp->pt_outhit->hit_dist, ap->a_ray.r_dir);
 
 	bu_semaphore_acquire(GED_SEM_WORKER);
-	DLOG(&ged_current_gedp->ged_result_str, "%s %g->%g\n",
+	DLOG(&_ged_current_gedp->ged_result_str, "%s %g->%g\n",
 	     pp->pt_regionp->reg_name,
 	     pp->pt_inhit->hit_dist,
 	     pp->pt_outhit->hit_dist);
@@ -1195,13 +1195,13 @@ hit(register struct application *ap, struct partition *PartHeadp, struct seg *se
 	/* computing the weight of the objects */
 	if (analysis_flags & ANALYSIS_WEIGHT) {
 	    bu_semaphore_acquire(GED_SEM_WORKER);
-	    DLOG(&ged_current_gedp->ged_result_str, "Hit %s doing weight\n", pp->pt_regionp->reg_name);
+	    DLOG(&_ged_current_gedp->ged_result_str, "Hit %s doing weight\n", pp->pt_regionp->reg_name);
 	    bu_semaphore_release(GED_SEM_WORKER);
 
 	    /* make sure mater index is within range of densities */
 	    if (pp->pt_regionp->reg_gmater >= num_densities) {
 		bu_semaphore_acquire(GED_SEM_WORKER);
-		bu_vls_printf(&ged_current_gedp->ged_result_str, "density index %d on region %s is outside of range of table [1..%d]\nSet GIFTmater on region or add entry to density table\n",
+		bu_vls_printf(&_ged_current_gedp->ged_result_str, "density index %d on region %s is outside of range of table [1..%d]\nSet GIFTmater on region or add entry to density table\n",
 			      pp->pt_regionp->reg_gmater,
 			      pp->pt_regionp->reg_name,
 			      num_densities); /* XXX this should do something else */
@@ -1257,7 +1257,7 @@ hit(register struct application *ap, struct partition *PartHeadp, struct seg *se
 
 		    if (los < 1) {
 			bu_semaphore_acquire(GED_SEM_WORKER);
-			bu_vls_printf(&ged_current_gedp->ged_result_str, "bad LOS (%d) on %s\n", los, pp->pt_regionp->reg_name);
+			bu_vls_printf(&_ged_current_gedp->ged_result_str, "bad LOS (%d) on %s\n", los, pp->pt_regionp->reg_name);
 			bu_semaphore_release(GED_SEM_WORKER);
 		    }
 
@@ -1320,7 +1320,7 @@ hit(register struct application *ap, struct partition *PartHeadp, struct seg *se
 
 		} else {
 		    bu_semaphore_acquire(GED_SEM_WORKER);
-		    bu_vls_printf(&ged_current_gedp->ged_result_str, "density index %d from region %s is not set.\nAdd entry to density table\n",
+		    bu_vls_printf(&_ged_current_gedp->ged_result_str, "density index %d from region %s is not set.\nAdd entry to density table\n",
 				  pp->pt_regionp->reg_gmater, pp->pt_regionp->reg_name);
 		    bu_semaphore_release(GED_SEM_WORKER);
 
@@ -1347,7 +1347,7 @@ hit(register struct application *ap, struct partition *PartHeadp, struct seg *se
 	    }
 
 	    bu_semaphore_acquire(GED_SEM_WORKER);
-	    DLOG(&ged_current_gedp->ged_result_str, "\t\tvol hit %s oDist:%g objVol:%g %s\n",
+	    DLOG(&_ged_current_gedp->ged_result_str, "\t\tvol hit %s oDist:%g objVol:%g %s\n",
 		 pp->pt_regionp->reg_name,
 		 dist,
 		 prd->optr->o_len[state->curr_view],
@@ -1428,7 +1428,7 @@ miss(register struct application *ap)
 {
 #if 0
     bu_semaphore_acquire(GED_SEM_WORKER);
-    bu_vls_printf(&ged_current_gedp->ged_result_str, "missed\n");
+    bu_vls_printf(&_ged_current_gedp->ged_result_str, "missed\n");
     bu_semaphore_release(GED_SEM_WORKER);
 #endif
     return(0);
@@ -1492,7 +1492,7 @@ plane_worker (int cpu, genptr_t ptr)
 
 	v_coord = v * gridSpacing;
 	bu_semaphore_acquire(GED_SEM_WORKER);
-	DLOG(&ged_current_gedp->ged_result_str, "  v = %d v_coord=%g\n", v, v_coord);
+	DLOG(&_ged_current_gedp->ged_result_str, "  v = %d v_coord=%g\n", v, v_coord);
 	bu_semaphore_release(GED_SEM_WORKER);
 
 	if ((v&1) || state->first) {
@@ -1506,7 +1506,7 @@ plane_worker (int cpu, genptr_t ptr)
 		ap.a_ray.r_pt[state->i_axis] = ap.a_rt_i->mdl_min[state->i_axis];
 
 		bu_semaphore_acquire(GED_SEM_WORKER);
-		DLOG(&ged_current_gedp->ged_result_str, "%5g %5g %5g -> %g %g %g\n", V3ARGS(ap.a_ray.r_pt), V3ARGS(ap.a_ray.r_dir));
+		DLOG(&_ged_current_gedp->ged_result_str, "%5g %5g %5g -> %g %g %g\n", V3ARGS(ap.a_ray.r_pt), V3ARGS(ap.a_ray.r_dir));
 		bu_semaphore_release(GED_SEM_WORKER);
 		ap.a_user = v;
 		(void)rt_shootray(&ap);
@@ -1528,7 +1528,7 @@ plane_worker (int cpu, genptr_t ptr)
 		ap.a_ray.r_pt[state->i_axis] = ap.a_rt_i->mdl_min[state->i_axis];
 
 		bu_semaphore_acquire(GED_SEM_WORKER);
-		DLOG(&ged_current_gedp->ged_result_str, "%5g %5g %5g -> %g %g %g\n", V3ARGS(ap.a_ray.r_pt), V3ARGS(ap.a_ray.r_dir));
+		DLOG(&_ged_current_gedp->ged_result_str, "%5g %5g %5g -> %g %g %g\n", V3ARGS(ap.a_ray.r_pt), V3ARGS(ap.a_ray.r_dir));
 		bu_semaphore_release(GED_SEM_WORKER);
 		ap.a_user = v;
 		(void)rt_shootray(&ap);
@@ -1543,7 +1543,7 @@ plane_worker (int cpu, genptr_t ptr)
 		if (debug)
 		    if (u+1 <  state->steps[state->u_axis]) {
 			bu_semaphore_acquire(GED_SEM_WORKER);
-			bu_vls_printf(&ged_current_gedp->ged_result_str, "  ---\n");
+			bu_vls_printf(&_ged_current_gedp->ged_result_str, "  ---\n");
 			bu_semaphore_release(GED_SEM_WORKER);
 		    }
 	    }
@@ -1552,7 +1552,7 @@ plane_worker (int cpu, genptr_t ptr)
 
     if (u == -1) {
 	bu_semaphore_acquire(GED_SEM_WORKER);
-	DLOG(&ged_current_gedp->ged_result_str, "didn't shoot any rays\n");
+	DLOG(&_ged_current_gedp->ged_result_str, "didn't shoot any rays\n");
 	bu_semaphore_release(GED_SEM_WORKER);
     }
 
@@ -1589,7 +1589,7 @@ find_cmd_line_obj(struct per_obj_data *obj_rpt, const char *name)
 	}
     }
 
-    bu_vls_printf(&ged_current_gedp->ged_result_str, "%s Didn't find object named \"%s\" in %d entries\n", BU_FLSTR, name, num_objects);
+    bu_vls_printf(&_ged_current_gedp->ged_result_str, "%s Didn't find object named \"%s\" in %d entries\n", BU_FLSTR, name, num_objects);
 
     return GED_ERROR;
 }
@@ -1660,20 +1660,20 @@ list_report(struct region_pair *list)
     struct region_pair *rp;
 
     if (BU_LIST_IS_EMPTY(&list->l)) {
-	bu_vls_printf(&ged_current_gedp->ged_result_str, "No %s\n", (char *)list->r.name);
+	bu_vls_printf(&_ged_current_gedp->ged_result_str, "No %s\n", (char *)list->r.name);
 
 	return;
     }
 
-    bu_vls_printf(&ged_current_gedp->ged_result_str, "list %s:\n", (char *)list->r.name);
+    bu_vls_printf(&_ged_current_gedp->ged_result_str, "list %s:\n", (char *)list->r.name);
 
     for (BU_LIST_FOR (rp, region_pair, &(list->l))) {
 	if (rp->r2) {
-	    bu_vls_printf(&ged_current_gedp->ged_result_str, "%s %s count:%lu dist:%g%s @ (%g %g %g)\n",
+	    bu_vls_printf(&_ged_current_gedp->ged_result_str, "%s %s count:%lu dist:%g%s @ (%g %g %g)\n",
 			  rp->r.r1->reg_name, rp->r2->reg_name, rp->count,
 			  rp->max_dist / units[LINE]->val, units[LINE]->name, V3ARGS(rp->coord));
 	} else {
-	    bu_vls_printf(&ged_current_gedp->ged_result_str, "%s count:%lu dist:%g%s @ (%g %g %g)\n",
+	    bu_vls_printf(&_ged_current_gedp->ged_result_str, "%s count:%lu dist:%g%s @ (%g %g %g)\n",
 			  rp->r.r1->reg_name, rp->count,
 			  rp->max_dist / units[LINE]->val, units[LINE]->name, V3ARGS(rp->coord));
 	}
@@ -1700,12 +1700,12 @@ options_prep(struct rt_i *rtip, vect_t span)
      */
     if (analysis_flags & ANALYSIS_WEIGHT) {
 	if (densityFileName) {
-	    DLOG(&ged_current_gedp->ged_result_str, "density from file\n");
+	    DLOG(&_ged_current_gedp->ged_result_str, "density from file\n");
 	    if (get_densities_from_file(densityFileName) != GED_OK) {
 		return GED_ERROR;
 	    }
 	} else {
-	    DLOG(&ged_current_gedp->ged_result_str, "density from db\n");
+	    DLOG(&_ged_current_gedp->ged_result_str, "density from db\n");
 	    if (get_densities_from_database(rtip) != GED_OK) {
 		return GED_ERROR;
 	    }
@@ -1724,10 +1724,10 @@ options_prep(struct rt_i *rtip, vect_t span)
     }
 
     if (newGridSpacing != gridSpacing) {
-	bu_vls_printf(&ged_current_gedp->ged_result_str, "Grid spacing %g %s is does not allow %g samples per axis\n",
+	bu_vls_printf(&_ged_current_gedp->ged_result_str, "Grid spacing %g %s is does not allow %g samples per axis\n",
 		      gridSpacing / units[LINE]->val, units[LINE]->name, Samples_per_model_axis - 1);
 
-	bu_vls_printf(&ged_current_gedp->ged_result_str, "Adjusted to %g %s to get %g samples per model axis\n",
+	bu_vls_printf(&_ged_current_gedp->ged_result_str, "Adjusted to %g %s to get %g samples per model axis\n",
 		      newGridSpacing / units[LINE]->val, units[LINE]->name, Samples_per_model_axis);
 
 	gridSpacing = newGridSpacing;
@@ -1738,13 +1738,13 @@ options_prep(struct rt_i *rtip, vect_t span)
 	char *name = "volume.pl";
 	if (volume_tolerance == -1.0) {
 	    volume_tolerance = span[X] * span[Y] * span[Z] * 0.001;
-	    bu_vls_printf(&ged_current_gedp->ged_result_str, "setting volume tolerance to %g %s\n",
+	    bu_vls_printf(&_ged_current_gedp->ged_result_str, "setting volume tolerance to %g %s\n",
 			  volume_tolerance / units[VOL]->val, units[VOL]->name);
 	} else
-	    bu_vls_printf(&ged_current_gedp->ged_result_str, "volume tolerance   %g\n", volume_tolerance);
+	    bu_vls_printf(&_ged_current_gedp->ged_result_str, "volume tolerance   %g\n", volume_tolerance);
 	if (plot_files)
 	    if ((plot_volume=fopen(name, "wb")) == (FILE *)NULL) {
-		bu_vls_printf(&ged_current_gedp->ged_result_str, "cannot open plot file %s\n", name);
+		bu_vls_printf(&_ged_current_gedp->ged_result_str, "cannot open plot file %s\n", name);
 	    }
     }
     if (analysis_flags & ANALYSIS_WEIGHT) {
@@ -1756,28 +1756,28 @@ options_prep(struct rt_i *rtip, vect_t span)
 		    max_den = densities[i].grams_per_cu_mm;
 	    }
 	    weight_tolerance = span[X] * span[Y] * span[Z] * 0.1 * max_den;
-	    bu_vls_printf(&ged_current_gedp->ged_result_str, "setting weight tolerance to %g %s\n",
+	    bu_vls_printf(&_ged_current_gedp->ged_result_str, "setting weight tolerance to %g %s\n",
 			  weight_tolerance / units[WGT]->val,
 			  units[WGT]->name);
 	} else {
-	    bu_vls_printf(&ged_current_gedp->ged_result_str, "weight tolerance   %g\n", weight_tolerance);
+	    bu_vls_printf(&_ged_current_gedp->ged_result_str, "weight tolerance   %g\n", weight_tolerance);
 	}
     }
     if (analysis_flags & ANALYSIS_GAP) {
 	char *name = "gaps.pl";
 	if (plot_files)
 	    if ((plot_gaps=fopen(name, "wb")) == (FILE *)NULL) {
-		bu_vls_printf(&ged_current_gedp->ged_result_str, "cannot open plot file %s\n", name);
+		bu_vls_printf(&_ged_current_gedp->ged_result_str, "cannot open plot file %s\n", name);
 		return GED_ERROR;
 	    }
     }
     if (analysis_flags & ANALYSIS_OVERLAPS) {
 	if (overlap_tolerance != 0.0)
-	    bu_vls_printf(&ged_current_gedp->ged_result_str, "overlap tolerance to %g\n", overlap_tolerance);
+	    bu_vls_printf(&_ged_current_gedp->ged_result_str, "overlap tolerance to %g\n", overlap_tolerance);
 	if (plot_files) {
 	    char *name = "overlaps.pl";
 	    if ((plot_overlaps=fopen(name, "wb")) == (FILE *)NULL) {
-		bu_vls_printf(&ged_current_gedp->ged_result_str, "cannot open plot file %s\n", name);
+		bu_vls_printf(&_ged_current_gedp->ged_result_str, "cannot open plot file %s\n", name);
 		return GED_ERROR;
 	    }
 	}
@@ -1785,13 +1785,13 @@ options_prep(struct rt_i *rtip, vect_t span)
 
     if (print_per_region_stats)
 	if ((analysis_flags & (ANALYSIS_VOLUME|ANALYSIS_WEIGHT)) == 0)
-	    bu_vls_printf(&ged_current_gedp->ged_result_str, "Note: -r option ignored: neither volume or weight options requested\n");
+	    bu_vls_printf(&_ged_current_gedp->ged_result_str, "Note: -r option ignored: neither volume or weight options requested\n");
 
     if (analysis_flags & ANALYSIS_ADJ_AIR)
 	if (plot_files) {
 	    char *name = "adj_air.pl";
 	    if ((plot_adjair=fopen(name, "wb")) == (FILE *)NULL) {
-		bu_vls_printf(&ged_current_gedp->ged_result_str, "cannot open plot file %s\n", name);
+		bu_vls_printf(&_ged_current_gedp->ged_result_str, "cannot open plot file %s\n", name);
 		return GED_ERROR;
 	    }
 	}
@@ -1800,14 +1800,14 @@ options_prep(struct rt_i *rtip, vect_t span)
 	if (plot_files) {
 	    char *name = "exp_air.pl";
 	    if ((plot_expair=fopen(name, "wb")) == (FILE *)NULL) {
-		bu_vls_printf(&ged_current_gedp->ged_result_str, "cannot open plot file %s\n", name);
+		bu_vls_printf(&_ged_current_gedp->ged_result_str, "cannot open plot file %s\n", name);
 		return GED_ERROR;
 	    }
 	}
 
 
     if ((analysis_flags & (ANALYSIS_ADJ_AIR|ANALYSIS_EXP_AIR)) && ! use_air) {
-	bu_vls_printf(&ged_current_gedp->ged_result_str, "Error:  Air regions discarded but air analysis requested!\nSet use_air non-zero or eliminate air analysis\n");
+	bu_vls_printf(&_ged_current_gedp->ged_result_str, "Error:  Air regions discarded but air analysis requested!\nSet use_air non-zero or eliminate air analysis\n");
 	return GED_ERROR;
     }
 
@@ -1838,7 +1838,7 @@ view_reports(struct cstate *state)
 		    obj_tbl[obj].o_len[view] * (state->area[view] / state->shots[view]);
 
 		if (verbose)
-		    bu_vls_printf(&ged_current_gedp->ged_result_str, "\t%s volume %g %s\n",
+		    bu_vls_printf(&_ged_current_gedp->ged_result_str, "\t%s volume %g %s\n",
 				  obj_tbl[obj].o_name,
 				  val / units[VOL]->val,
 				  units[VOL]->name);
@@ -1855,7 +1855,7 @@ view_reports(struct cstate *state)
 
 
 	    if (verbose)
-		bu_vls_printf(&ged_current_gedp->ged_result_str, "\t%s %g %s\n",
+		bu_vls_printf(&_ged_current_gedp->ged_result_str, "\t%s %g %s\n",
 			      obj_tbl[obj].o_name,
 			      grams_per_cu_mm / units[WGT]->val,
 			      units[WGT]->name);
@@ -1893,7 +1893,7 @@ weight_volume_terminate(struct cstate *state)
 	for (obj=0; obj < num_objects; obj++) {
 	    int view = 0;
 	    if (verbose)
-		bu_vls_printf(&ged_current_gedp->ged_result_str, "object %d\n", obj);
+		bu_vls_printf(&_ged_current_gedp->ged_result_str, "object %d\n", obj);
 	    /* compute weight of object for given view */
 	    val = obj_tbl[obj].o_weight[view] =
 		obj_tbl[obj].o_lenDensity[view] * (state->area[view] / state->shots[view]);
@@ -1913,7 +1913,7 @@ weight_volume_terminate(struct cstate *state)
 	    delta = hi - low;
 
 	    if (verbose)
-		bu_vls_printf(&ged_current_gedp->ged_result_str, "\t%s weight %g %s +%g -%g\n",
+		bu_vls_printf(&_ged_current_gedp->ged_result_str, "\t%s weight %g %s +%g -%g\n",
 			      obj_tbl[obj].o_name,
 			      val / units[WGT]->val,
 			      units[WGT]->name,
@@ -1927,13 +1927,13 @@ weight_volume_terminate(struct cstate *state)
 		 */
 		can_terminate = 0;
 		if (verbose)
-		    bu_vls_printf(&ged_current_gedp->ged_result_str, "\t%s differs too much in weight per view.\n",
+		    bu_vls_printf(&_ged_current_gedp->ged_result_str, "\t%s differs too much in weight per view.\n",
 				  obj_tbl[obj].o_name);
 	    }
 	}
 	if (can_terminate) {
 	    if (verbose)
-		bu_vls_printf(&ged_current_gedp->ged_result_str, "all objects within tolerance on weight calculation\n");
+		bu_vls_printf(&_ged_current_gedp->ged_result_str, "all objects within tolerance on weight calculation\n");
 	}
     }
 
@@ -1962,7 +1962,7 @@ weight_volume_terminate(struct cstate *state)
 	    delta = hi - low;
 
 	    if (verbose)
-		bu_vls_printf(&ged_current_gedp->ged_result_str, "\t%s volume %g %s +(%g) -(%g)\n",
+		bu_vls_printf(&_ged_current_gedp->ged_result_str, "\t%s volume %g %s +(%g) -(%g)\n",
 			      obj_tbl[obj].o_name,
 			      val / units[VOL]->val, units[VOL]->name,
 			      hi / units[VOL]->val,
@@ -1974,7 +1974,7 @@ weight_volume_terminate(struct cstate *state)
 		 */
 		can_terminate = 0;
 		if (verbose)
-		    bu_vls_printf(&ged_current_gedp->ged_result_str, "\tvolume tol not met on %s.  Refine grid\n",
+		    bu_vls_printf(&_ged_current_gedp->ged_result_str, "\tvolume tol not met on %s.  Refine grid\n",
 				  obj_tbl[obj].o_name);
 		break;
 	    }
@@ -2003,7 +2003,7 @@ terminate_check(struct cstate *state)
     int view;
     int obj;
 
-    DLOG(&ged_current_gedp->ged_result_str, "terminate_check\n");
+    DLOG(&_ged_current_gedp->ged_result_str, "terminate_check\n");
     RT_CK_RTI(state->rtip);
 
     if (plot_overlaps) fflush(plot_overlaps);
@@ -2022,7 +2022,7 @@ terminate_check(struct cstate *state)
     /* if we've reached the grid limit, we're done, no matter what */
     if (gridSpacing < gridSpacingLimit) {
 	if (verbose)
-	    bu_vls_printf(&ged_current_gedp->ged_result_str, "grid spacing refined to %g (below lower limit %g)\n",
+	    bu_vls_printf(&_ged_current_gedp->ged_result_str, "grid spacing refined to %g (below lower limit %g)\n",
 			  gridSpacing, gridSpacingLimit);
 	return 0;
     }
@@ -2036,7 +2036,7 @@ terminate_check(struct cstate *state)
 	    /* since we've found an overlap, we can quit */
 	    return 0;
 	} else {
-	    bu_vls_printf(&ged_current_gedp->ged_result_str, "overlaps list is empty\n");
+	    bu_vls_printf(&_ged_current_gedp->ged_result_str, "overlaps list is empty\n");
 	}
     }
     if ((analysis_flags & ANALYSIS_GAP)) {
@@ -2065,7 +2065,7 @@ terminate_check(struct cstate *state)
 	 */
 	if (analysis_flags & (ANALYSIS_GAP|ANALYSIS_ADJ_AIR|ANALYSIS_OVERLAPS|ANALYSIS_EXP_AIR)) {
 	    if (verbose)
-		bu_vls_printf(&ged_current_gedp->ged_result_str, "Volume/Weight tolerance met.  Cannot terminate calculation due to error computations\n");
+		bu_vls_printf(&_ged_current_gedp->ged_result_str, "Volume/Weight tolerance met.  Cannot terminate calculation due to error computations\n");
 	} else {
 	    struct region *regp;
 	    int all_hit = 1;
@@ -2081,9 +2081,9 @@ terminate_check(struct cstate *state)
 			all_hit = 0;
 			if (verbose) {
 			    if (hits == 0) {
-				bu_vls_printf(&ged_current_gedp->ged_result_str, "%s was not hit\n", regp->reg_name);
+				bu_vls_printf(&_ged_current_gedp->ged_result_str, "%s was not hit\n", regp->reg_name);
 			    } else {
-				bu_vls_printf(&ged_current_gedp->ged_result_str, "%s hit only %lu times (< %u)\n",
+				bu_vls_printf(&_ged_current_gedp->ged_result_str, "%s hit only %lu times (< %u)\n",
 					      regp->reg_name, hits, require_num_hits);
 			    }
 			}
@@ -2092,13 +2092,13 @@ terminate_check(struct cstate *state)
 
 		if (all_hit && wv_status == 0) {
 		    if (verbose)
-			bu_vls_printf(&ged_current_gedp->ged_result_str, "%s: Volume/Weight tolerance met. Terminate\n", BU_FLSTR);
+			bu_vls_printf(&_ged_current_gedp->ged_result_str, "%s: Volume/Weight tolerance met. Terminate\n", BU_FLSTR);
 		    return 0; /* terminate */
 		}
 	    } else {
 		if (wv_status == 0) {
 		    if (verbose)
-			bu_vls_printf(&ged_current_gedp->ged_result_str, "%s: Volume/Weight tolerance met. Terminate\n", BU_FLSTR);
+			bu_vls_printf(&_ged_current_gedp->ged_result_str, "%s: Volume/Weight tolerance met. Terminate\n", BU_FLSTR);
 		    return 0; /* terminate */
 		}
 	    }
@@ -2131,12 +2131,12 @@ summary_reports(struct cstate *state, int start, int ac, const char *av[])
     struct region *regp;
 
     if (multiple_analyses)
-	bu_vls_printf(&ged_current_gedp->ged_result_str, "Summaries:\n");
+	bu_vls_printf(&_ged_current_gedp->ged_result_str, "Summaries:\n");
     else
-	bu_vls_printf(&ged_current_gedp->ged_result_str, "Summary:\n");
+	bu_vls_printf(&_ged_current_gedp->ged_result_str, "Summary:\n");
 
     if (analysis_flags & ANALYSIS_WEIGHT) {
-	bu_vls_printf(&ged_current_gedp->ged_result_str, "Weight:\n");
+	bu_vls_printf(&_ged_current_gedp->ged_result_str, "Weight:\n");
 	for (obj=0; obj < num_objects; obj++) {
 	    avg_mass = 0.0;
 
@@ -2145,7 +2145,7 @@ summary_reports(struct cstate *state, int start, int ac, const char *av[])
 		avg_mass += obj_tbl[obj].o_weight[view];
 	    }
 	    avg_mass /= num_views;
-	    bu_vls_printf(&ged_current_gedp->ged_result_str, "\t%*s %g %s\n", -max_region_name_len, obj_tbl[obj].o_name,
+	    bu_vls_printf(&_ged_current_gedp->ged_result_str, "\t%*s %g %s\n", -max_region_name_len, obj_tbl[obj].o_name,
 			  avg_mass / units[WGT]->val, units[WGT]->name);
 
 	    if (analysis_flags & ANALYSIS_CENTROIDS &&
@@ -2165,7 +2165,7 @@ summary_reports(struct cstate *state, int start, int ac, const char *av[])
 
 		VSCALE(centroid, centroid, 1.0/(fastf_t)num_views);
 		VSCALE(centroid, centroid, inv_total_mass);
-		bu_vls_printf(&ged_current_gedp->ged_result_str,
+		bu_vls_printf(&_ged_current_gedp->ged_result_str,
 			      "\t\tcentroid: (%g %g %g) mm\n", V3ARGS(centroid));
 
 		/* Do the final calculations for the moments of
@@ -2212,7 +2212,7 @@ summary_reports(struct cstate *state, int start, int ac, const char *av[])
 
 		    bu_vls_init(&title);
 		    bu_vls_printf(&title, "For the Moments and Products of Inertia For %s", obj_tbl[obj].o_name);
-		    bn_mat_print_vls(bu_vls_addr(&title), tmat, &ged_current_gedp->ged_result_str);
+		    bn_mat_print_vls(bu_vls_addr(&title), tmat, &_ged_current_gedp->ged_result_str);
 		    bu_vls_free(&title);
 		}
 	    }
@@ -2221,7 +2221,7 @@ summary_reports(struct cstate *state, int start, int ac, const char *av[])
 
 	if (print_per_region_stats) {
 	    double *wv;
-	    bu_vls_printf(&ged_current_gedp->ged_result_str, "\tregions:\n");
+	    bu_vls_printf(&_ged_current_gedp->ged_result_str, "\tregions:\n");
 	    for (BU_LIST_FOR (regp, region, &(state->rtip->HeadRegion))) {
 		double low = HUGE;
 		double hi = -HUGE;
@@ -2243,7 +2243,7 @@ summary_reports(struct cstate *state, int start, int ac, const char *av[])
 		}
 
 		avg_mass /= num_views;
-		bu_vls_printf(&ged_current_gedp->ged_result_str, "\t%s %g %s +(%g) -(%g)\n",
+		bu_vls_printf(&_ged_current_gedp->ged_result_str, "\t%s %g %s +(%g) -(%g)\n",
 			      regp->reg_name,
 			      avg_mass,
 			      units[WGT]->name,
@@ -2261,7 +2261,7 @@ summary_reports(struct cstate *state, int start, int ac, const char *av[])
 	}
 
 	avg_mass /= num_views;
-	bu_vls_printf(&ged_current_gedp->ged_result_str, "  Average total weight: %g %s\n", avg_mass / units[WGT]->val, units[WGT]->name);
+	bu_vls_printf(&_ged_current_gedp->ged_result_str, "  Average total weight: %g %s\n", avg_mass / units[WGT]->val, units[WGT]->name);
 
 	if (analysis_flags & ANALYSIS_CENTROIDS &&
 	    !NEAR_ZERO(avg_mass, SQRT_SMALL_FASTF)) {
@@ -2280,7 +2280,7 @@ summary_reports(struct cstate *state, int start, int ac, const char *av[])
 
 	    VSCALE(centroid, centroid, 1.0/(fastf_t)num_views);
 	    VSCALE(centroid, centroid, inv_total_mass);
-	    bu_vls_printf(&ged_current_gedp->ged_result_str,
+	    bu_vls_printf(&_ged_current_gedp->ged_result_str,
 			  "  Average centroid: (%g %g %g) mm\n", V3ARGS(centroid));
 
 	    /* Do the final calculations for the moments of inertia
@@ -2325,14 +2325,14 @@ summary_reports(struct cstate *state, int start, int ac, const char *av[])
 		tmat[9] = tmat[6];
 
 		bn_mat_print_vls("For the Moments and Products of Inertia For\n\tAll Specified Objects",
-				 tmat, &ged_current_gedp->ged_result_str);
+				 tmat, &_ged_current_gedp->ged_result_str);
 	    }
 	}
     }
 
 
     if (analysis_flags & ANALYSIS_VOLUME) {
-	bu_vls_printf(&ged_current_gedp->ged_result_str, "Volume:\n");
+	bu_vls_printf(&_ged_current_gedp->ged_result_str, "Volume:\n");
 
 	/* print per-object */
 	for (obj=0; obj < num_objects; obj++) {
@@ -2342,14 +2342,14 @@ summary_reports(struct cstate *state, int start, int ac, const char *av[])
 		avg_mass += obj_tbl[obj].o_volume[view];
 
 	    avg_mass /= num_views;
-	    bu_vls_printf(&ged_current_gedp->ged_result_str, "\t%*s %g %s\n", -max_region_name_len, obj_tbl[obj].o_name,
+	    bu_vls_printf(&_ged_current_gedp->ged_result_str, "\t%*s %g %s\n", -max_region_name_len, obj_tbl[obj].o_name,
 			  avg_mass / units[VOL]->val, units[VOL]->name);
 	}
 
 	if (print_per_region_stats) {
 	    double *vv;
 
-	    bu_vls_printf(&ged_current_gedp->ged_result_str, "\tregions:\n");
+	    bu_vls_printf(&_ged_current_gedp->ged_result_str, "\tregions:\n");
 	    for (BU_LIST_FOR (regp, region, &(state->rtip->HeadRegion))) {
 		double low = HUGE;
 		double hi = -HUGE;
@@ -2374,7 +2374,7 @@ summary_reports(struct cstate *state, int start, int ac, const char *av[])
 
 		avg_mass /= num_views;
 
-		bu_vls_printf(&ged_current_gedp->ged_result_str, "\t%s volume:%g %s +(%g) -(%g)\n",
+		bu_vls_printf(&_ged_current_gedp->ged_result_str, "\t%s volume:%g %s +(%g) -(%g)\n",
 			      regp->reg_name,
 			      avg_mass,
 			      units[VOL]->name,
@@ -2392,7 +2392,7 @@ summary_reports(struct cstate *state, int start, int ac, const char *av[])
 	}
 
 	avg_mass /= num_views;
-	bu_vls_printf(&ged_current_gedp->ged_result_str, "  Average total volume: %g %s\n", avg_mass / units[VOL]->val, units[VOL]->name);
+	bu_vls_printf(&_ged_current_gedp->ged_result_str, "  Average total volume: %g %s\n", avg_mass / units[VOL]->val, units[VOL]->name);
     }
     if (analysis_flags & ANALYSIS_OVERLAPS) list_report(&overlapList);
     if (analysis_flags & ANALYSIS_ADJ_AIR)  list_report(&adjAirList);
@@ -2406,9 +2406,9 @@ summary_reports(struct cstate *state, int start, int ac, const char *av[])
 	hits = ((struct per_region_data *)regp->reg_udata)->hits;
 	if (hits < require_num_hits) {
 	    if (hits == 0) {
-		bu_vls_printf(&ged_current_gedp->ged_result_str, "%s was not hit\n", regp->reg_name);
+		bu_vls_printf(&_ged_current_gedp->ged_result_str, "%s was not hit\n", regp->reg_name);
 	    } else {
-		bu_vls_printf(&ged_current_gedp->ged_result_str, "%s hit only %lu times (< %u)\n",
+		bu_vls_printf(&_ged_current_gedp->ged_result_str, "%s hit only %lu times (< %u)\n",
 			      regp->reg_name, hits, require_num_hits);
 	    }
 
@@ -2441,7 +2441,7 @@ ged_gqa(struct ged *gedp, int argc, const char *argv[])
 	return GED_HELP;
     }
 
-    ged_current_gedp = gedp;
+    _ged_current_gedp = gedp;
 
     analysis_flags = ANALYSIS_VOLUME | ANALYSIS_OVERLAPS | ANALYSIS_WEIGHT |
 	ANALYSIS_EXP_AIR | ANALYSIS_ADJ_AIR | ANALYSIS_GAP | ANALYSIS_CENTROIDS | ANALYSIS_MOMENTS;
@@ -2622,7 +2622,7 @@ ged_gqa(struct ged *gedp, int argc, const char *argv[])
 	summary_reports(&state, start_objs, argc, argv);
 
 	if (analysis_flags & ANALYSIS_PLOT_OVERLAPS)
-	    ged_cvt_vlblock_to_solids(gedp, ged_gqa_plot.vbp, "OVERLAPS", 0);
+	    _ged_cvt_vlblock_to_solids(gedp, ged_gqa_plot.vbp, "OVERLAPS", 0);
     } else
 	aborted = 0; /* reset flag */
 

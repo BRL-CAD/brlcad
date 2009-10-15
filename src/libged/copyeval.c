@@ -44,7 +44,7 @@ ged_copyeval(struct ged *gedp, int argc, const char *argv[])
     int i;
     int endpos;
     char *tok;
-    struct ged_trace_data gtd;
+    struct _ged_trace_data gtd;
     static const char *usage = "path_to_old_prim new_prim";
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
@@ -67,7 +67,7 @@ ged_copyeval(struct ged *gedp, int argc, const char *argv[])
 
     /* initialize gtd */
     gtd.gtd_gedp = gedp;
-    gtd.gtd_flag = GED_CPEVAL;
+    gtd.gtd_flag = _GED_CPEVAL;
     gtd.gtd_prflag = 0;
 
     /* check if new solid name already exists in description */

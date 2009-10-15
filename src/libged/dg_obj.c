@@ -225,7 +225,7 @@ int
 Dgo_Init(Tcl_Interp *interp)
 {
     BU_LIST_INIT(&HeadDGObj.l);
-    BU_LIST_INIT(&FreeSolid.l);
+    BU_LIST_INIT(&_FreeSolid.l);
 
     (void)Tcl_CreateCommand(interp, "dg_open", (Tcl_CmdProc *)dgo_open_tcl, (ClientData)NULL, (Tcl_CmdDeleteProc *)NULL);
 
@@ -295,7 +295,7 @@ dgo_open_cmd(char		*oname,
     BU_LIST_INIT(&dgop->dgo_headVDraw);
     BU_LIST_INIT(&dgop->dgo_observers.l);
     BU_LIST_INIT(&dgop->dgo_headRunRt.l);
-    dgop->dgo_freeSolids = &FreeSolid;
+    dgop->dgo_freeSolids = &_FreeSolid;
     dgop->dgo_uplotOutputMode = PL_OUTPUT_MODE_BINARY;
 
     dgo_init_qray(dgop);
@@ -1456,7 +1456,7 @@ dgo_zap_cmd(struct dg_obj	*dgop,
 
 	nsp = BU_LIST_PNEXT(solid, sp);
 	BU_LIST_DEQUEUE(&sp->l);
-	FREE_SOLID(sp, &FreeSolid.l);
+	FREE_SOLID(sp, &_FreeSolid.l);
 	sp = nsp;
     }
 }
@@ -3277,7 +3277,7 @@ dgo_invent_solid(struct dg_obj	*dgop,
     dp = db_diradd(dgop->dgo_wdbp->dbip,  name, RT_DIR_PHONY_ADDR, 0, DIR_SOLID, (genptr_t)&type);
 
     /* Obtain a fresh solid structure, and fill it in */
-    GET_SOLID(sp, &FreeSolid.l);
+    GET_SOLID(sp, &_FreeSolid.l);
 
     if (copy) {
 	BU_LIST_INIT(&(sp->s_vlist));
@@ -3393,7 +3393,7 @@ dgo_drawH_part2(int dashflag, struct bu_list *vhead, struct db_full_path *pathp,
 
     if (!existing_sp) {
 	/* Handling a new solid */
-	GET_SOLID(sp, &FreeSolid.l);
+	GET_SOLID(sp, &_FreeSolid.l);
 	/* NOTICE:  The structure is dirty & not initialized for you! */
 
 	sp->s_dlist = BU_LIST_LAST(solid, &dgcdp->dgop->dgo_headSolid)->s_dlist + 1;
@@ -3632,7 +3632,7 @@ dgo_eraseobjall(struct dg_obj			*dgop,
 	nsp = BU_LIST_PNEXT(solid, sp);
 	if (db_full_path_subset(&sp->s_fullpath, &subpath, 0)) {
 	    BU_LIST_DEQUEUE(&sp->l);
-	    FREE_SOLID(sp, &FreeSolid.l);
+	    FREE_SOLID(sp, &_FreeSolid.l);
 	}
 	sp = nsp;
     }
@@ -3689,7 +3689,7 @@ dgo_eraseobj(struct dg_obj		*dgop,
 	    goto end;
 
 	BU_LIST_DEQUEUE(&sp->l);
-	FREE_SOLID(sp, &FreeSolid.l);
+	FREE_SOLID(sp, &_FreeSolid.l);
     end:
 	sp = nsp;
     }
@@ -3722,7 +3722,7 @@ dgo_eraseobj(struct dg_obj		*dgop,
 	nsp = BU_LIST_PNEXT(solid, sp);
 	if (db_full_path_subset(&sp->s_fullpath, &subpath, 0)) {
 	    BU_LIST_DEQUEUE(&sp->l);
-	    FREE_SOLID(sp, &FreeSolid.l);
+	    FREE_SOLID(sp, &_FreeSolid.l);
 	}
 	sp = nsp;
     }

@@ -102,7 +102,7 @@ ged_region(struct ged *gedp, int argc, const char *argv[])
 	    bu_vls_printf(&gedp->ged_result_str, "Note: %s is a region\n", dp->d_namep);
 	}
 
-	if (ged_combadd(gedp, dp, (char *)argv[1], 1, oper, ident, air) == DIR_NULL) {
+	if (_ged_combadd(gedp, dp, (char *)argv[1], 1, oper, ident, air) == DIR_NULL) {
 	    bu_vls_printf(&gedp->ged_result_str, "error in combadd");
 	    return GED_ERROR;
 	}

@@ -35,7 +35,7 @@
 
 
 int
-ged_get_obj_bounds(struct ged	*gedp,
+_ged_get_obj_bounds(struct ged	*gedp,
 		   int		argc,
 		   const char	*argv[],
 		   int		use_air,
@@ -169,7 +169,7 @@ static int
 ged_get_objpath_mat(struct ged			*gedp,
 		    int				argc,
 		    const char			*argv[],
-		    struct ged_trace_data	*gtdp)
+		    struct _ged_trace_data	*gtdp)
 {
     int i, pos_in;
 
@@ -180,7 +180,7 @@ ged_get_objpath_mat(struct ged			*gedp,
 
     /* initialize gtd */
     gtdp->gtd_gedp = gedp;
-    gtdp->gtd_flag = GED_EVAL_ONLY;
+    gtdp->gtd_flag = _GED_EVAL_ONLY;
     gtdp->gtd_prflag = 0;
 
     pos_in = 0;
@@ -228,10 +228,10 @@ ged_get_objpath_mat(struct ged			*gedp,
  * This version works if the last member of the path is a primitive.
  */
 int
-ged_get_obj_bounds2(struct ged			*gedp,
+_ged_get_obj_bounds2(struct ged			*gedp,
 		    int				argc,
 		    const char			*argv[],
-		    struct ged_trace_data	*gtdp,
+		    struct _ged_trace_data	*gtdp,
 		    point_t			rpp_min,
 		    point_t			rpp_max)
 {

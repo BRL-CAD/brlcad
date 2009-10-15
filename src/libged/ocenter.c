@@ -34,7 +34,7 @@ int
 ged_ocenter(struct ged *gedp, int argc, const char *argv[])
 {
     register struct directory *dp;
-    struct ged_trace_data gtd;
+    struct _ged_trace_data gtd;
     struct rt_db_internal intern;
     mat_t dmat;
     mat_t emat;
@@ -68,12 +68,12 @@ ged_ocenter(struct ged *gedp, int argc, const char *argv[])
      * One of the get bounds routines needs to be fixed to
      * work with all cases. In the meantime...
      */
-    if (ged_get_obj_bounds2(gedp, 1, argv+1, &gtd, rpp_min, rpp_max) == GED_ERROR)
+    if (_ged_get_obj_bounds2(gedp, 1, argv+1, &gtd, rpp_min, rpp_max) == GED_ERROR)
 	return GED_ERROR;
 
     dp = gtd.gtd_obj[gtd.gtd_objpos-1];
     if (!(dp->d_flags & DIR_SOLID)) {
-	if (ged_get_obj_bounds(gedp, 1, argv+1, 1, rpp_min, rpp_max) == GED_ERROR)
+	if (_ged_get_obj_bounds(gedp, 1, argv+1, 1, rpp_min, rpp_max) == GED_ERROR)
 	    return GED_ERROR;
     }
 

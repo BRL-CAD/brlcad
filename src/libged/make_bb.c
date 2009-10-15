@@ -84,7 +84,7 @@ ged_make_bb(struct ged *gedp, int argc, const char *argv[])
 	return GED_ERROR;
     }
 
-    if (ged_get_obj_bounds(gedp, argc-2, (const char **)argv+2, use_air, rpp_min, rpp_max) == GED_ERROR)
+    if (_ged_get_obj_bounds(gedp, argc-2, (const char **)argv+2, use_air, rpp_min, rpp_max) == GED_ERROR)
 	return GED_ERROR;
 
     /* build bounding RPP */

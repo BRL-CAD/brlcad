@@ -151,7 +151,7 @@ ged_run_rt(struct ged *gedp)
 #endif
     vect_t eye_model;
     struct ged_run_rt *run_rtp;
-    struct ged_rt_client_data *drcdp;
+    struct _ged_rt_client_data *drcdp;
 #ifndef _WIN32
     int pid;
 
@@ -199,7 +199,7 @@ ged_run_rt(struct ged *gedp)
     run_rtp->fd = pipe_err[0];
     run_rtp->pid = pid;
 
-    BU_GETSTRUCT(drcdp, ged_rt_client_data);
+    BU_GETSTRUCT(drcdp, _ged_rt_client_data);
     drcdp->gedp = gedp;
     drcdp->rrtp = run_rtp;
 
@@ -276,7 +276,7 @@ ged_run_rt(struct ged *gedp)
     run_rtp->aborted=0;
     run_rtp->chan = Tcl_MakeFileChannel(run_rtp->fd, TCL_READABLE);
 
-    BU_GETSTRUCT(drcdp, ged_rt_client_data);
+    BU_GETSTRUCT(drcdp, _ged_rt_client_data);
     drcdp->gedp = gedp;
     drcdp->rrtp = run_rtp;
 
@@ -361,13 +361,13 @@ void
 ged_rt_output_handler(ClientData	clientData,
 		      int		mask)
 {
-    struct ged_rt_client_data *drcdp = (struct ged_rt_client_data *)clientData;
+    struct _ged_rt_client_data *drcdp = (struct _ged_rt_client_data *)clientData;
     struct ged_run_rt *run_rtp;
     int count;
     int read_failed = 0;
     char line[RT_MAXLINE+1];
 
-    if (drcdp == (struct ged_rt_client_data *)NULL ||
+    if (drcdp == (struct _ged_rt_client_data *)NULL ||
 	drcdp->gedp == (struct ged *)NULL ||
 	drcdp->rrtp == (struct ged_run_rt *)NULL ||
 	brlcad_interp == (Tcl_Interp *)NULL)

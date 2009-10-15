@@ -2297,7 +2297,7 @@ wdb_pathsum_cmd(struct rt_wdb *wdbp,
 		char *argv[])
 {
     int i, pos_in;
-    struct ged_trace_data gtd;
+    struct _ged_trace_data gtd;
     struct ged ged;
 
     if (argc < 2 || MAXARGS < argc) {
@@ -2320,7 +2320,7 @@ wdb_pathsum_cmd(struct rt_wdb *wdbp,
 
     /* initialize gtd */
     gtd.gtd_gedp = &ged;
-    gtd.gtd_flag = GED_CPEVAL;
+    gtd.gtd_flag = _GED_CPEVAL;
     gtd.gtd_prflag = 0;
 
     pos_in = 1;
@@ -2328,11 +2328,11 @@ wdb_pathsum_cmd(struct rt_wdb *wdbp,
     /* find out which command was entered */
     if (strcmp(argv[0], "paths") == 0) {
 	/* want to list all matching paths */
-	gtd.gtd_flag = GED_LISTPATH;
+	gtd.gtd_flag = _GED_LISTPATH;
     }
     if (strcmp(argv[0], "listeval") == 0) {
 	/* want to list evaluated solid[s] */
-	gtd.gtd_flag = GED_LISTEVAL;
+	gtd.gtd_flag = _GED_LISTEVAL;
     }
 
     if (argc == 2 && strchr(argv[1], '/')) {
@@ -3597,7 +3597,7 @@ wdb_copyeval_cmd(struct rt_wdb *wdbp,
     int id;
     int i;
     int endpos;
-    struct ged_trace_data gtd;
+    struct _ged_trace_data gtd;
     struct ged ged;
 
     WDB_TCL_CHECK_READ_ONLY;
@@ -3617,7 +3617,7 @@ wdb_copyeval_cmd(struct rt_wdb *wdbp,
 
     /* initialize gtd */
     gtd.gtd_gedp = &ged;
-    gtd.gtd_flag = GED_CPEVAL;
+    gtd.gtd_flag = _GED_CPEVAL;
     gtd.gtd_prflag = 0;
 
     /* check if new solid name already exists in description */
@@ -7047,7 +7047,7 @@ wdb_make_bb_cmd(struct rt_wdb *wdbp,
 	return TCL_ERROR;
     }
 
-    if (ged_get_obj_bounds(&ged, argc-2, (const char **)argv+2, use_air, rpp_min, rpp_max) == TCL_ERROR)
+    if (_ged_get_obj_bounds(&ged, argc-2, (const char **)argv+2, use_air, rpp_min, rpp_max) == TCL_ERROR)
 	return TCL_ERROR;
 
     /* build bounding RPP */

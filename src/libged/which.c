@@ -40,9 +40,9 @@ ged_which(struct ged *gedp, int argc, const char *argv[])
     register struct directory *dp;
     struct rt_db_internal intern;
     struct rt_comb_internal *comb;
-    struct ged_id_to_names headIdName;
-    struct ged_id_to_names *itnp;
-    struct ged_id_names *inp;
+    struct _ged_id_to_names headIdName;
+    struct _ged_id_to_names *itnp;
+    struct _ged_id_names *inp;
     int isAir;
     int sflag;
     static const char *usageAir = "code(s)";
@@ -106,13 +106,13 @@ ged_which(struct ged *gedp, int argc, const char *argv[])
 	n = sscanf(argv[j], "%d%*[:-]%d", &start, &end);
 	switch (n) {
 	    case 1:
-		for (BU_LIST_FOR(itnp, ged_id_to_names, &headIdName.l))
+		for (BU_LIST_FOR(itnp, _ged_id_to_names, &headIdName.l))
 		    if (itnp->id == start)
 			break;
 
 		/* id not found */
 		if (BU_LIST_IS_HEAD(itnp, &headIdName.l)) {
-		    BU_GETSTRUCT(itnp, ged_id_to_names);
+		    BU_GETSTRUCT(itnp, _ged_id_to_names);
 		    itnp->id = start;
 		    BU_LIST_INSERT(&headIdName.l, &itnp->l);
 		    BU_LIST_INIT(&itnp->headName.l);
@@ -131,13 +131,13 @@ ged_which(struct ged *gedp, int argc, const char *argv[])
 		for (k = 0; k < range; ++k) {
 		    int id = start + k;
 
-		    for (BU_LIST_FOR(itnp, ged_id_to_names, &headIdName.l))
+		    for (BU_LIST_FOR(itnp, _ged_id_to_names, &headIdName.l))
 			if (itnp->id == id)
 			    break;
 
 		    /* id not found */
 		    if (BU_LIST_IS_HEAD(itnp, &headIdName.l)) {
-			BU_GETSTRUCT(itnp, ged_id_to_names);
+			BU_GETSTRUCT(itnp, _ged_id_to_names);
 			itnp->id = id;
 			BU_LIST_INSERT(&headIdName.l, &itnp->l);
 			BU_LIST_INIT(&itnp->headName.l);
@@ -160,11 +160,11 @@ ged_which(struct ged *gedp, int argc, const char *argv[])
 	    }
 	    comb = (struct rt_comb_internal *)intern.idb_ptr;
 	    /* check to see if the region id or air code matches one in our list */
-	    for (BU_LIST_FOR(itnp, ged_id_to_names, &headIdName.l)) {
+	    for (BU_LIST_FOR(itnp, _ged_id_to_names, &headIdName.l)) {
 		if ((!isAir && comb->region_id == itnp->id) ||
 		    (isAir && comb->aircode == itnp->id)) {
 		    /* add region name to our name list for this region */
-		    BU_GETSTRUCT(inp, ged_id_names);
+		    BU_GETSTRUCT(inp, _ged_id_names);
 		    bu_vls_init(&inp->name);
 		    bu_vls_strcpy(&inp->name, dp->d_namep);
 		    BU_LIST_INSERT(&itnp->headName.l, &inp->l);
@@ -177,13 +177,13 @@ ged_which(struct ged *gedp, int argc, const char *argv[])
     }
 
     /* place data in interp and free memory */
-    while (BU_LIST_WHILE(itnp, ged_id_to_names, &headIdName.l)) {
+    while (BU_LIST_WHILE(itnp, _ged_id_to_names, &headIdName.l)) {
 	if (!sflag) {
 	    bu_vls_printf(&gedp->ged_result_str, "Region[s] with %s %d:\n",
 			  isAir ? "air code" : "ident", itnp->id);
 	}
 
-	while (BU_LIST_WHILE(inp, ged_id_names, &itnp->headName.l)) {
+	while (BU_LIST_WHILE(inp, _ged_id_names, &itnp->headName.l)) {
 	    if (sflag)
 		bu_vls_printf(&gedp->ged_result_str, " %V", &inp->name);
 	    else

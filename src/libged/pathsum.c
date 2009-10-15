@@ -37,7 +37,7 @@ int
 ged_pathsum(struct ged *gedp, int argc, const char *argv[])
 {
     int i, pos_in;
-    struct ged_trace_data gtd;
+    struct _ged_trace_data gtd;
     static const char *usage = "pattern";
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
@@ -64,7 +64,7 @@ ged_pathsum(struct ged *gedp, int argc, const char *argv[])
 
     /* initialize gtd */
     gtd.gtd_gedp = gedp;
-    gtd.gtd_flag = GED_CPEVAL;
+    gtd.gtd_flag = _GED_CPEVAL;
     gtd.gtd_prflag = 0;
 
     pos_in = 1;
@@ -72,11 +72,11 @@ ged_pathsum(struct ged *gedp, int argc, const char *argv[])
     /* find out which command was entered */
     if (strcmp(argv[0], "paths") == 0) {
 	/* want to list all matching paths */
-	gtd.gtd_flag = GED_LISTPATH;
+	gtd.gtd_flag = _GED_LISTPATH;
     }
     if (strcmp(argv[0], "listeval") == 0) {
 	/* want to list evaluated solid[s] */
-	gtd.gtd_flag = GED_LISTEVAL;
+	gtd.gtd_flag = _GED_LISTEVAL;
     }
 
     if (argc == 2 && strchr(argv[1], '/')) {
