@@ -44,14 +44,14 @@
 #include "./ged_private.h"
 
 int
-_ged_results_append_str(char *result_string, struct ged *gedp)
+_ged_results_append_str(struct ged *gedp, char *result_string)
 {
     bu_vls_printf(&gedp->ged_result_str, "%s", result_string);
     return GED_OK;
 }
 
 int
-_ged_results_append_vls(struct bu_vls *result_vls, struct ged *gedp)
+_ged_results_append_vls(struct ged *gedp, struct bu_vls *result_vls)
 {
     bu_vls_printf(&gedp->ged_result_str, "%s", bu_vls_addr(&result_vls));
     return GED_OK;
