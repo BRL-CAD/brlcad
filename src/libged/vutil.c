@@ -31,7 +31,7 @@
 
 
 void
-_ged_view_update(struct ged_view	*gvp)
+ged_view_update(struct ged_view	*gvp)
 {
     vect_t work, work1;
     vect_t temp, temp1;
@@ -150,7 +150,7 @@ _ged_do_rot(struct ged	*gedp,
 
     /* pure rotation */
     bn_mat_mul2(rmat, gedp->ged_gvp->gv_rotation);
-    _ged_view_update(gedp->ged_gvp);
+    ged_view_update(gedp->ged_gvp);
 
     return GED_OK;
 }
@@ -162,7 +162,7 @@ _ged_do_slew(struct ged *gedp, vect_t svec)
 
     MAT4X3PNT(model_center, gedp->ged_gvp->gv_view2model, svec);
     MAT_DELTAS_VEC_NEG(gedp->ged_gvp->gv_center, model_center);
-    _ged_view_update(gedp->ged_gvp);
+    ged_view_update(gedp->ged_gvp);
 
     return GED_OK;
 }
@@ -196,7 +196,7 @@ _ged_do_tra(struct ged	*gedp,
 
     VSUB2(nvc, vc, delta);
     MAT_DELTAS_VEC_NEG(gedp->ged_gvp->gv_center, nvc);
-    _ged_view_update(gedp->ged_gvp);
+    ged_view_update(gedp->ged_gvp);
 
     return GED_OK;
 }
@@ -209,7 +209,7 @@ _ged_do_zoom(struct ged *gedp, fastf_t sf)
 	gedp->ged_gvp->gv_scale = RT_MINVIEWSCALE;
     gedp->ged_gvp->gv_size = 2.0 * gedp->ged_gvp->gv_scale;
     gedp->ged_gvp->gv_isize = 1.0 / gedp->ged_gvp->gv_size;
-    _ged_view_update(gedp->ged_gvp);
+    ged_view_update(gedp->ged_gvp);
 
     return GED_OK;
 }

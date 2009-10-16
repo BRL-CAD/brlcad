@@ -34,7 +34,7 @@
 
 
 int
-_ged_scale_args(struct ged *gedp, int argc, const char *argv[], fastf_t *sf)
+ged_scale_args(struct ged *gedp, int argc, const char *argv[], fastf_t *sf)
 {
     static const char *usage = "sf";
 
@@ -65,12 +65,12 @@ _ged_scale_args(struct ged *gedp, int argc, const char *argv[], fastf_t *sf)
 }
 
 int
-_ged_scale(struct ged *gedp, int argc, const char *argv[])
+ged_scale(struct ged *gedp, int argc, const char *argv[])
 {
     int ret;
     fastf_t sf;
 
-    if ((ret = _ged_scale_args(gedp, argc, argv, &sf)) != GED_OK)
+    if ((ret = ged_scale_args(gedp, argc, argv, &sf)) != GED_OK)
 	return ret;
 
     if (sf <= SMALL_FASTF || INFINITY < sf)
@@ -83,7 +83,7 @@ _ged_scale(struct ged *gedp, int argc, const char *argv[])
 	gedp->ged_gvp->gv_scale = RT_MINVIEWSIZE;
     gedp->ged_gvp->gv_size = 2.0 * gedp->ged_gvp->gv_scale;
     gedp->ged_gvp->gv_isize = 1.0 / gedp->ged_gvp->gv_size;
-    _ged_view_update(gedp->ged_gvp);
+    ged_view_update(gedp->ged_gvp);
 
     return GED_OK;
 }

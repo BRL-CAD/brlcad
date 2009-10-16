@@ -220,7 +220,7 @@ ged_view_init(struct ged_view *gvp)
     VSET(gvp->gv_view_scale.gos_text_color, 255, 255, 255);
 
     _ged_mat_aet(gvp);
-    _ged_view_update(gvp);
+    ged_view_update(gvp);
 }
 
 struct ged *

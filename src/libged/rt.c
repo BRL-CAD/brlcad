@@ -113,7 +113,7 @@ ged_rt(struct ged *gedp, int argc, const char *argv[])
      */
     if (i == argc) {
 	gedp->ged_gdp->gd_rt_cmd_len = vp - gedp->ged_gdp->gd_rt_cmd;
-	gedp->ged_gdp->gd_rt_cmd_len += _ged_build_tops(gedp,
+	gedp->ged_gdp->gd_rt_cmd_len += ged_build_tops(gedp,
 						       vp,
 						       &gedp->ged_gdp->gd_rt_cmd[MAXARGS]);
     } else {
@@ -466,7 +466,7 @@ _ged_rt_output_handler(ClientData	clientData,
  * Build a command line vector of the tops of all objects in view.
  */
 int
-_ged_build_tops(struct ged	*gedp,
+ged_build_tops(struct ged	*gedp,
 	       char		**start,
 	       register char	**end)
 {

@@ -134,7 +134,7 @@ ged_solids_on_ray(struct ged *gedp, int argc, const char *argv[])
     /*
      *	Build a list of all the top-level objects currently displayed
      */
-    rt_cmd_vec_len = _ged_build_tops(gedp, &rt_cmd_vec[0], &rt_cmd_vec[MAXARGS]);
+    rt_cmd_vec_len = ged_build_tops(gedp, &rt_cmd_vec[0], &rt_cmd_vec[MAXARGS]);
 
 #if 0
     start_catching_output(&gedp->ged_result_str);

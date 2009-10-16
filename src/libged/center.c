@@ -85,7 +85,7 @@ ged_center(struct ged *gedp, int argc, const char *argv[])
 
     VSCALE(center, center, gedp->ged_wdbp->dbip->dbi_local2base);
     MAT_DELTAS_VEC_NEG(gedp->ged_gvp->gv_center, center);
-    _ged_view_update(gedp->ged_gvp);
+    ged_view_update(gedp->ged_gvp);
 
     return GED_OK;
 }

@@ -328,10 +328,6 @@ BU_EXTERN (void _ged_rt_write,
 BU_EXTERN (void _ged_rt_output_handler,
 	   (ClientData clientData,
 	    int	 mask));
-BU_EXTERN (int _ged_build_tops,
-	   (struct ged	*gedp,
-	    char		**start,
-	    register char	**end));
 
 /* defined in rtcheck.c */
 BU_EXTERN (void _ged_wait_status,
@@ -491,8 +487,6 @@ BU_EXTERN (int _ged_translate_tgc,
 	    int rflag));
 
 /* defined in vutil.c */
-BU_EXTERN (void _ged_view_update,
-	   (struct ged_view *gvp));
 BU_EXTERN (void _ged_mat_aet,
 	   (struct ged_view *gvp));
 BU_EXTERN (int _ged_do_rot,
@@ -511,8 +505,6 @@ BU_EXTERN (int _ged_do_tra,
 BU_EXTERN (int ged_do_zoom,
 	   (struct ged	*gedp,
 	    fastf_t	sf));
-
-
 
 __END_DECLS
 

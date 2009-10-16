@@ -67,7 +67,7 @@ ged_size(struct ged *gedp, int argc, const char *argv[])
 	    gedp->ged_gvp->gv_size = RT_MINVIEWSIZE;
 	gedp->ged_gvp->gv_isize = 1.0 / gedp->ged_gvp->gv_size;
 	gedp->ged_gvp->gv_scale = 0.5 * gedp->ged_gvp->gv_size;
-	_ged_view_update(gedp->ged_gvp);
+	ged_view_update(gedp->ged_gvp);
 
 	return GED_OK;
     }

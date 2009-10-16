@@ -98,7 +98,7 @@ ged_pov(struct ged *gedp, int argc, const char *argv[])
     VMOVE(gedp->ged_gvp->gv_eye_pos, eye_pos);
     gedp->ged_gvp->gv_perspective = perspective;
 
-    _ged_view_update(gedp->ged_gvp);
+    ged_view_update(gedp->ged_gvp);
 
     return GED_OK;
 }

@@ -55,7 +55,7 @@ ged_pmat(struct ged *gedp, int argc, const char *argv[])
 	    return TCL_ERROR;
 
 	MAT_COPY(gedp->ged_gvp->gv_pmat, pmat);
-	_ged_view_update(gedp->ged_gvp);
+	ged_view_update(gedp->ged_gvp);
 
 	return TCL_OK;
     }

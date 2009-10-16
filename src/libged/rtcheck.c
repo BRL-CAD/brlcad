@@ -149,7 +149,7 @@ ged_rtcheck(struct ged *gedp, int argc, const char *argv[])
      */
     if (i == argc) {
 	gedp->ged_gdp->gd_rt_cmd_len = vp - gedp->ged_gdp->gd_rt_cmd;
-	gedp->ged_gdp->gd_rt_cmd_len += _ged_build_tops(gedp,
+	gedp->ged_gdp->gd_rt_cmd_len += ged_build_tops(gedp,
 					       vp,
 					       &gedp->ged_gdp->gd_rt_cmd[MAXARGS]);
     } else {
@@ -252,7 +252,7 @@ ged_rtcheck(struct ged *gedp, int argc, const char *argv[])
      */
     if (i == argc) {
 	gedp->ged_gdp->gd_rt_cmd_len = vp - gedp->ged_gdp->gd_rt_cmd;
-	gedp->ged_gdp->gd_rt_cmd_len += _ged_build_tops(gedp,
+	gedp->ged_gdp->gd_rt_cmd_len += ged_build_tops(gedp,
 					       vp,
 					       &gedp->ged_gdp->gd_rt_cmd[MAXARGS]);
     } else {
