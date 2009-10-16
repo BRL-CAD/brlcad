@@ -74,6 +74,7 @@ libged_nil_la_SOURCES = \
 	form.c \
 	fracture.c \
 	ged.c \
+	ged_util.c \
 	get.c \
 	get_autoview.c \
 	get_comb.c \

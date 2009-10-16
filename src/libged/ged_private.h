@@ -506,6 +506,18 @@ BU_EXTERN (int ged_do_zoom,
 	   (struct ged	*gedp,
 	    fastf_t	sf));
 
+/* defined in ged_util.c */
+BU_EXTERN (int _ged_results_append_str,
+	   (char *result_string,
+	    struct ged *gedp));
+	    
+BU_EXTERN (int _ged_results_append_vls,
+	   (struct bu_vls *result_vls,
+	    struct ged *gedp));
+
+BU_EXTERN (int _ged_results_clear,
+	   (struct ged *gedp));
+	
 __END_DECLS
 
 #endif /* __GED_PRIVATE_H__ */
