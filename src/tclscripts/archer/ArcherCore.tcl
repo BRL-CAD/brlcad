@@ -3355,11 +3355,7 @@ Popup Menu    Right or Ctrl-Left
 }
 
 ::itcl::body ArcherCore::clear {args} {
-    eval gedWrapper clear 0 0 0 1 $args
-
-    if {$mShowGroundPlane} {
-	showGroundPlane
-    }
+    $itk_component(cmd) clear
 }
 
 ::itcl::body ArcherCore::clone {args} {
