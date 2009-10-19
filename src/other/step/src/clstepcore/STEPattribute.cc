@@ -23,6 +23,8 @@
 //#include <STEPentity.h>
 #include <ExpDict.h>
 #include <sdai.h>
+#include <iomanip.h>
+
 
 // REAL_NUM_PRECISION is defined in STEPattribute.h, and is also used
 // in aggregate real handling (STEPaggregate.cc)  -- IMS 6 Jun 95
@@ -1133,10 +1135,14 @@ STEPattribute::AddErrorInfo()
 char
 STEPattribute::SkipBadAttr(istream& in, char *StopChars)
 {
+#if defined(__GNUC__) && (__GNUC__ > 2)
     ios_base::fmtflags flbuf = in.flags();
-    in.unsetf(ios_base::skipws);  // turn skipping whitespace off
+#else
+    ios::fmtflags flbuf = in.flags();
+#endif
+    in.unsetf(ios::skipws);  // turn skipping whitespace off
 
-	// read bad data until end of this attribute or entity.
+    // read bad data until end of this attribute or entity.
     char *foundCh = 0;
     char c = '\0';
     char errStr[BUFSIZ];
