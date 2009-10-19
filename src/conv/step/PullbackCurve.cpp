@@ -411,6 +411,105 @@ printMatrix(Array2D<double>& m) {
   }
 }
 
+ON_NurbsCurve*
+interpolateLocalCubicCurve(ON_2dPointArray &Q) {
+	int num_samples = Q.Count();
+	int num_segments = Q.Count() - 1;
+	int qsize = num_samples + 3;
+	ON_2dVector qarray[qsize];
+	ON_2dVector *q = &qarray[1];
+
+	for(int i=1; i < Q.Count(); i++) {
+		q[i] = Q[i] - Q[i-1];
+	}
+	q[0] = 2.0*q[1] - q[2];
+	q[-1] = 2.0*q[0] - q[1];
+
+	q[num_samples+1] = 2*q[num_samples] - q[num_samples-1];
+	q[num_samples+2] = 2*q[num_samples+1] - q[num_samples];
+
+	ON_2dVector T[num_samples];
+	double a[num_samples];
+	for (int k=0; k < num_samples; k++ ) {
+		ON_3dVector a = ON_CrossProduct(q[k-1],q[k]);
+		ON_3dVector b = ON_CrossProduct(q[k+1],q[k+2]);
+		double alength = a.Length();
+		if (NEAR_ZERO(alength,PBC_TOL)) {
+			a[k] = 1.0;
+		} else {
+			a[k] = (a.Length())/(a.Length() + b.Length());
+		}
+		T[k] = (1.0 - a[k])*q[k] + a[k]*q[k+1];
+		T[k].Unitize();
+	}
+	ON_2dPointArray P[num_samples-1];
+	ON_2dPointArray control_points;
+	control_points.Append(Q[0]);
+	for(int i=1; i<num_samples; i++) {
+		ON_2dPoint P0 = Q[i-1];
+		ON_2dPoint P3 = Q[i];
+		ON_2dVector T0 = T[i-1];
+		ON_2dVector T3 = T[i];
+
+		double a,b,c;
+
+		ON_2dVector vT0T3 = T0 + T3;
+		ON_2dVector dP0P3 = P3 - P0;
+		a = 16.0 - vT0T3.Length()*vT0T3.Length();
+		b = 12.0*(dP0P3*vT0T3);
+		c = -36.0*dP0P3.Length()*dP0P3.Length();
+
+		double alpha = (-b + sqrt(b*b - 4.0*a*c))/(2.0*a);
+
+		ON_2dPoint P1 = P0 + (1.0/3.0)*alpha*T0;
+		control_points.Append(P1);
+		ON_2dPoint P2 = P3 - (1.0/3.0)*alpha*T3;
+		control_points.Append(P2);
+		P[i-1].Append(P0);
+		P[i-1].Append(P1);
+		P[i-1].Append(P2);
+		P[i-1].Append(P3);
+	}
+	control_points.Append(Q[num_samples-1]);
+
+	//generateParameters(spline);
+	double u[num_segments+1];
+	double U[2*(num_segments-1) + 8];
+	u[0] = 0.0;
+	for(int k=0;k<num_segments;k++){
+		u[k+1] = u[k] + 3.0*(P[k][1]-P[k][0]).Length();
+	}
+	int degree = 3;
+    int n = control_points.Count();
+    int p = degree;
+    int m = n + p - 1;
+    int dimension = 2;
+	ON_NurbsCurve* c = ON_NurbsCurve::New(dimension,
+						false,
+						degree+1,
+						n);
+	c->ReserveKnotCapacity(m);
+	for (int i = 0; i < degree; i++) {
+		c->SetKnot(i,0.0);
+	}
+	for (int i = 1; i < num_segments; i++) {
+		double knot_value = u[i]/u[num_segments];
+		c->SetKnot(degree + 2*(i -1),knot_value);
+		c->SetKnot(degree + 2*(i -1) + 1,knot_value);
+	}
+	int k = c->KnotCount();
+	for (int i = m - p; i < m; i++) {
+		c->SetKnot(i,1.0);
+	}
+
+	// insert the control points
+	for (int i = 0; i < n; i++) {
+		ON_3dPoint p = control_points[i];
+		c->SetCV(i,p);
+	}
+	return c;
+}
+
 void
 generateControlPoints(BSpline& bspline, ON_2dPointArray &samples)
 {
@@ -489,15 +588,20 @@ interpolateCurve(ON_2dPointArray &samples) {
 
 		return nurbs;
 	} else {
-		BSpline spline;
-		spline.p = 3;
-		spline.n = samples.Count()-1;
-		spline.m = spline.n + spline.p + 1;
-		generateKnots(spline);
-		generateParameters(spline);
-		generateControlPoints(spline, samples);
-		ON_NurbsCurve* nurbs = newNURBSCurve(spline,2);
-
+		ON_NurbsCurve* nurbs;
+		if (samples.Count() < 1000) {
+			BSpline spline;
+			spline.p = 3;
+			spline.n = samples.Count()-1;
+			spline.m = spline.n + spline.p + 1;
+			generateKnots(spline);
+			generateParameters(spline);
+			generateControlPoints(spline, samples);
+			nurbs = newNURBSCurve(spline,2);
+		} else {
+			// local vs. global interpolation for large point sampled curves
+			nurbs = interpolateLocalCubicCurve(samples);
+		}
 		// XXX - attempt to simplify here!
 
 		return nurbs;
