@@ -32,7 +32,6 @@
 #include "opennurbs.h"
 #include <vector>
 #include <list>
-#include <limits>
 #include <iostream>
 #include "vmath.h"
 
@@ -53,8 +52,6 @@
 /* subdivision size factors */
 #define BREP_SURF_SUB_FACTOR 1
 #define BREP_TRIM_SUB_FACTOR 1
-
-static std::numeric_limits<double> real;
 
 // XXX debugging crapola (clean up later)
 #define ON_PRINT4(p) "[" << (p)[0] << "," << (p)[1] << "," << (p)[2] << "," << (p)[3] << "]"

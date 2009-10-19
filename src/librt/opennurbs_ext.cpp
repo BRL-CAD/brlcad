@@ -28,7 +28,6 @@
 #include "bio.h"
 #include <assert.h>
 #include <vector>
-#include <limits>
 
 #include "tnt.h"
 #include "jama_lu.h"
@@ -1130,7 +1129,7 @@ get_closest_point(ON_2dPoint& outpt,
     int try_count = 0;
     bool delete_tree = false;
     bool found = false;
-    double d_last = real.infinity();
+    double d_last = DBL_MAX;
     pt2d_t curr_grad;
     pt2d_t new_uv;
     GCPData data;
@@ -1345,7 +1344,7 @@ generateParameters(BSpline& bspline) {
 	getCoefficients(bspline, n, t);
     }
     for (int i = 0; i < bspline.n+1; i++) {
-	double max = -real.max();
+	double max = -DBL_MAX;
 	for (int j = 0; j < UNIVERSAL_SAMPLE_COUNT; j++) {
 	    double f = N[j][i];
 	    double t = ((double)j)/(UNIVERSAL_SAMPLE_COUNT-1);
