@@ -348,7 +348,7 @@ SCHEMAout(Schema s)
 		fprintf(stdout,"%s: writing schema file %s\n",EXPRESSprogram_name,filename);
 	}
 	if (!(exppp_fp = f = fopen(filename,"w"))) {
-		ERRORreport(ERROR_file_unwriteable,filename,sys_errlist[errno]);
+		ERRORreport(ERROR_file_unwriteable,filename,strerror(errno));
 		return 0;
 	}
 
@@ -587,7 +587,7 @@ copy_file_chunk(char *filename, int start, int end, int level)
     int i, indent, undent = 0, fix;
 
     if (!(infile = fopen(filename, "r"))) {
-	ERRORreport(ERROR_file_unreadable, filename, sys_errlist[errno]);
+	ERRORreport(ERROR_file_unreadable, filename, strerror(errno));
     }
 
     /* skip to start of chunk */
