@@ -750,9 +750,6 @@ Face::LoadONBrep(ON_Brep *brep)
 	int cnt = 0;
 	LIST_OF_FACE_BOUNDS::reverse_iterator i;
 	for(i=bounds.rbegin();i!=bounds.rend();i++){
-		if (cnt == 0) {
-			(*i)->SetOuter();
-		}
 		(*i)->SetFaceIndex(ON_id);
 		if (!(*i)->LoadONBrep(brep)) {
 			//(*i)->GetONId()
@@ -1154,23 +1151,10 @@ Path::LoadONTrimmingCurves(ON_Brep *brep)
 			brep->m_C2.Append(c2d);
 
 			ON_BrepTrim& trim = brep->NewTrim((ON_BrepEdge&)*data->edge, data->order_reversed, (ON_BrepLoop&)*loop, trimCurve);
-			ON_BrepTrim::TYPE ttype = brep->TrimType( trim, false );
-			//debug("handleEdgeUse: trim " << (orientWithCurve ? "is not " : "is ") << "reversed");
-	//	    trim.m_type = ON_BrepTrim::mated; // closed solids!
-	//		if ((trim.m_trim_index == 113)||(trim.m_trim_index == 115) ||
-	//				(trim.m_trim_index == 117)||(trim.m_trim_index == 119)) {
-	//		    trim.m_type = ON_BrepTrim::seam; // closed solids!
-	//			cout << "debugging" << endl;
-	//		}
-	//	    if (trim.m_trim_index == 112) {
-	//	      trim.m_bRev3d = true;
-	//	    }
 			trim.m_tolerance[0] = 1e-3; // XXX: tolerance?
 			trim.m_tolerance[1] = 1e-3;
 			ON_Interval PD = trim.ProxyCurveDomain();
 			trim.m_iso = surface->IsIsoparametric(*c2d, &PD);
-			//trim.Reverse();
-			trim.m_type = ttype;
 
 			trim.IsValid(&tl);
 
