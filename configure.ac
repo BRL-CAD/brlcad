@@ -1343,6 +1343,11 @@ nsl_link_works=no
 LIBNSL=""
 AC_CHECK_LIB(nsl, gethostbyaddr, nsl_link_works=yes ; LIBNSL="-lnsl")
 
+dnl check if a network library links
+newtork_link_works=no
+LIBNETWORK=""
+AC_CHECK_LIB(network, socket, network_link_works=yes ; LIBNETWORK="-lnetwork")
+
 dnl check if a malloc library links
 malloc_link_works=no
 LIBMALLOC=""
@@ -3140,6 +3145,11 @@ AC_MSG_CHECKING(for system network socket library availablity)
 AC_MSG_RESULT([$nsl_link_works])
 AC_SUBST(LIBNSL)
 
+dnl *** libnetwork ***
+AC_MSG_CHECKING(for system network library availablity)
+AC_MSG_RESULT([$network_link_works])
+AC_SUBST(LIBNETWORK)
+
 dnl *** libmalloc ***
 AC_MSG_CHECKING(for system malloc library availability)
 AC_MSG_RESULT([$malloc_link_works])
@@ -3671,7 +3681,7 @@ STEP_EXPPP='${top_builddir}/src/other/step/src/exppp/exppp'
 STEP_AP203='${top_srcdir}/src/other/step/data/ap203/203wseds.exp'
 
 ORLE_LIBS=
-PKG_LIBS="${LIBSOCKET} ${LIBNSL}"
+PKG_LIBS="${LIBSOCKET} ${LIBNSL} ${LIBNETWORK}"
 SYSV_LIBS=
 TERMIO_LIBS="${TERMLIB}"
 CURSOR_LIBS="${TERMLIB}"
@@ -3682,7 +3692,7 @@ RT_LIBS="${BN} ${BN_LIBS} ${BU} ${BU_LIBS} ${REGEX} ${LIBM} ${SYSV} ${OPENNURBS}
 GCV_LIBS="${RT} ${RT_LIBS} ${BN} ${BN_LIBS} ${BU} ${BU_LIBS}"
 GED_LIBS="${WDB} ${RT} ${RT_LIBS} ${BN} ${BN_LIBS} ${BU} ${BU_LIBS} ${PNG} ${TCL} ${REGEX}"
 WDB_LIBS="${RT} ${RT_LIBS} ${BN} ${BN_LIBS} ${BU} ${BU_LIBS}"
-FB_LIBS="${BU} ${BU_LIBS} ${PKG} ${TCL} ${SOCKET} ${NSL}" # additional/optional FB_LIBS: ${TK} ${X_LIBS} ${LIBGL}
+FB_LIBS="${BU} ${BU_LIBS} ${PKG} ${PKG_LIBS} ${TCL}" # additional/optional FB_LIBS: ${TK} ${X_LIBS} ${LIBGL}
 OPTICAL_LIBS="${RT} ${RT_LIBS} ${BN} ${BN_LIBS} ${BU} ${BU_LIBS} ${TCL}"
 MULTISPECTRAL_LIBS="${OPTICAL} ${OPTICAL_LIBS} ${RT} ${RT_LIBS} ${BN} ${BN_LIBS} ${BU} ${BU_LIBS}"
 PC_LIBS="${LIBSTDCXX} ${BU} ${BU_LIBS}"
