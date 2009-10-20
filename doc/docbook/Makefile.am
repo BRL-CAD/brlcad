@@ -508,8 +508,6 @@ MOSTLYCLEANFILES = \
          $(BUILT_SOURCES) \
          $(BUILTMAN_EN_SOURCES)
 
-clean-local: clean-image-dirs	
-
 EXTRA_DIST = \
 	${articlesDOCBOOK_EN} \
 	${articlesDOCBOOK_EN_IMAGES} \
