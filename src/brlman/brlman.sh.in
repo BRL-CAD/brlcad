@@ -60,41 +60,60 @@ if test "${MANPAGER}" != "" ; then
 	MORE="${MANPAGER}"
 fi
 
-# Ensure that MANPATH is set and has BRL-CAD materials man dirs listed first.
+# prefix is needed within 'mandir'
+prefix="@prefix@"
+datarootdir="@datarootdir@"
 
-prefix="@prefix@"	# needed to fill @mandir@
-if test -d "@mandir@" ; then
-    MANPATH="@mandir@:$MANPATH"
-fi
-if test -d "@BRLCAD_ROOT@/share/brlcad/@BRLCAD_VERSION@/man" ; then
-    MANPATH="@BRLCAD_ROOT@/share/brlcad/@BRLCAD_VERSION@/man:$MANPATH"
-fi
+# Ensure that MANPATH is set and has BRL-CAD materials man dirs listed
+# first.  check for 1) a run-time path override first, then 2) a
+# compile-time path, then 3) a run-time relative path.  paths prepended.
+
+# 3) run-time relative search paths
 if test -d "${path_to_this}/../share/brlcad/@BRLCAD_VERSION@/man" ; then
     MANPATH="${path_to_this}/../share/brlcad/@BRLCAD_VERSION@/man:$MANPATH"
 fi
 if test -d "${path_to_this}/../man" ; then
     MANPATH="${path_to_this}/../man:$MANPATH"
 fi
+
+# 2) compile-time search paths
+if test -d "@mandir@" ; then
+    MANPATH="@mandir@:$MANPATH"
+fi
+if test "@datarootdir@/man" != "@mandir@" ; then
+    if test -d "@datarootdir@/man" ; then
+	MANPATH="@datarootdir@/man:$MANPATH"
+    fi
+fi
+
+# 1) run-time override search paths
 if test -d "@BRLCAD_DATA@/man" ; then
     MANPATH="@BRLCAD_DATA@/man:$MANPATH"
 fi
-if test -d "@BRLCAD_ROOT@/man" ; then
-    MANPATH="@BRLCAD_ROOT@/man:$MANPATH"
+if test "@BRLCAD_ROOT@/man" != "@BRLCAD_DATA@/man" ; then
+    if test -d "@BRLCAD_ROOT@/man" ; then
+	MANPATH="@BRLCAD_ROOT@/man:$MANPATH"
+    fi
+fi
+if test "@BRLCAD_ROOT@/share/brlcad/@BRLCAD_VERSION@/man" != "@BRLCAD_DATA@/man" ; then
+    if test -d "@BRLCAD_ROOT@/share/brlcad/@BRLCAD_VERSION@/man" ; then
+	MANPATH="@BRLCAD_ROOT@/share/brlcad/@BRLCAD_VERSION@/man:$MANPATH"
+    fi
 fi
 
-PATH_ELEMENTS=`echo ${MANPATH} | sed 's/^://
+path_elements=`echo ${MANPATH} | sed 's/^://
 				s/:://g
 				s/:$//
 				s/:\\.:/:/g
 				s/:/ /g'`
 
-for PLACE in ${PATH_ELEMENTS} ; do
-	PATTERN="${PLACE}/man?/$1.?"
-	TRY=`eval echo ${PATTERN}`
-	if test "${TRY}" != "${PATTERN}" ; then
+for dir in ${path_elements} ; do
+	pattern="${dir}/man?/$1.?"
+	try=`eval echo ${pattern}`
+	if test "${try}" != "${pattern}" ; then
 		# Found something(s), format it/them
-		echo ${TRY}
-		man ${TRY}
+		echo ${try}
+		man ${try}
 		if test "x$?" = "x0" ; then
 		    break
 		fi
