@@ -4,13 +4,15 @@ XSL_MAN_STYLESHEET=$(top_srcdir)/doc/docbook/resources/standard/xsl/manpages/doc
 XSL_FO_STYLESHEET=$(top_srcdir)/doc/docbook/resources/standard/xsl/fo/docbook.xsl
 XML_CATALOG_FILES=$(top_srcdir)/doc/docbook/catalog.xml
 
+README.DOCBOOK:
+	mkdir -p system/man1/en
+	mkdir -p articles/en/images
+	mkdir -p books/en/images
+	mkdir -p lessons/en/images
+	cp $(top_srcdir)/doc/docbook/README README.DOCBOOK
+
 .xml.html: 
 	XML_CATALOG_FILES=$(XML_CATALOG_FILES) $(XSLTPROC) $(XSLTPROC_FLAGS) -o $@ $(XSL_XHTML_STYLESHEET) $?
-
-.PHONY: create-man-dirs
-create-man-dirs:
-	mkdir -p system/man1/en
-	touch create-man-dirs
 
 .xml.1:
 	XML_CATALOG_FILES=$(XML_CATALOG_FILES) $(XSLTPROC) $(XSLTPROC_FLAGS) $(XSL_MAN_STYLESHEET) $?
@@ -21,13 +23,6 @@ create-man-dirs:
 
 .xml.fo:
 	XML_CATALOG_FILES=$(XML_CATALOG_FILES) $(XSLTPROC) $(XSLTPROC_FLAGS) -o $@ $(XSL_FO_STYLESHEET) $?
-
-.PHONY: create-image-dirs
-create-image-dirs:
-	mkdir -p articles/en/images
-	mkdir -p books/en/images
-	mkdir -p lessons/en/images
-	touch create-image-dirs
 
 .docpng.png:
 	cp $? $@
@@ -145,7 +140,7 @@ articlesDOCBOOK_ENhtmlimages_DATA = \
 	$(BUILTARTICLES_ENIMAGES)
 
 BUILTARTICLES_ENIMAGES = \
-	create-image-dirs \
+	README \
 	${articlesDOCBOOK_EN_IMAGES:docpng=png}
 
 
@@ -298,7 +293,6 @@ lessonsDOCBOOK_ENhtmlimages_DATA = \
 	$(BUILTLESSONS_ENIMAGES)
 
 BUILTLESSONS_ENIMAGES = \
-	create-image-dirs \
 	${lessonsDOCBOOK_EN_IMAGES:docpng=png}
 
 
@@ -364,7 +358,6 @@ booksDOCBOOK_ENhtmlimages_DATA = \
 	$(BUILTBOOKS_ENIMAGES)
 
 BUILTBOOKS_ENIMAGES = \
-	create-image-dirs \
 	${booksDOCBOOK_EN_IMAGES:docpng=png}
 
 
@@ -469,7 +462,6 @@ man1DOCBOOK_ENhtmldir = $(BRLCAD_DATA)/html/man1/en
 man1DOCBOOK_ENhtml_DATA = $(BUILTMAN_ENHTML)
 
 BUILTMAN_ENHTML = \
-	create-man-dirs \
 	${man1DOCBOOK_EN:xml=html} \
 	${man1INTRO_EN:xml=html} 
 
@@ -485,6 +477,7 @@ man1DOCBOOK_ENpdf_DATA = $(BUILTMAN_ENPDF)
 
 
 BUILT_SOURCES = \
+	README.DOCBOOK \
 	$(BUILTARTICLES_ENIMAGES) \
 	$(BUILTARTICLES_ENHTML) \
 	$(BUILTARTICLES_ENPDF) \
@@ -518,7 +511,6 @@ EXTRA_DIST = \
 	${articlesDOCBOOK_EN_IMAGES} \
 	${man1DOCBOOK_EN} \
 	${man1INTRO_EN} \
-	README \
 	books/README \
 	BRL-CAD_db_format.xml \
 	catalog.xml \
