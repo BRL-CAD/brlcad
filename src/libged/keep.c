@@ -104,7 +104,11 @@ ged_keep(struct ged *gedp, int argc, const char *argv[])
     struct bu_vls title;
     register int i;
     struct db_i *new_dbip;
-    static const char *usage = "file object(s)";
+    static const char *usage = "[-R] file object(s)";
+    const char *cmd = argv[0];
+
+    int c;
+    int flag_R = 0;
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
     GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
@@ -114,12 +118,34 @@ ged_keep(struct ged *gedp, int argc, const char *argv[])
 
     /* must be wanting help */
     if (argc == 1) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", cmd, usage);
 	return GED_HELP;
     }
 
-    if (argc < 3 || MAXARGS < argc) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+    /* check for options */
+    while ((c = bu_getopt(argc, (char * const *)argv, "R")) != EOF) {
+	switch (c) {
+	    case 'R':
+		/* not recursively */
+		flag_R = 1;
+		break;
+	    default:
+		bu_vls_printf(&gedp->ged_result_str, "Unrecognized option - %c", c);
+		return GED_ERROR;
+	}
+    }
+    /* skip options processed plus command name */
+    argc -= bu_optind;
+    argv += bu_optind;
+
+    if (argc < 2) {
+	bu_vls_printf(&gedp->ged_result_str, "ERROR: missing file or object names\n");
+	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", cmd, usage);
+	return GED_ERROR;
+    }
+
+    if (argc > MAXARGS) {
+	bu_vls_printf(&gedp->ged_result_str, "ERROR: too many arguments\n");
 	return GED_ERROR;
     }
 
@@ -131,30 +157,30 @@ ged_keep(struct ged *gedp, int argc, const char *argv[])
 
     /* Alert user if named file already exists */
 
-    new_dbip = db_open(argv[1], "w");
+    new_dbip = db_open(argv[0], "w");
 
     if (new_dbip != DBI_NULL) {
 	if (new_dbip->dbi_version != gedp->ged_wdbp->dbip->dbi_version) {
-	    bu_vls_printf(&gedp->ged_result_str, "keep: File format mismatch between '%s' and '%s'\n",
-			  argv[1], gedp->ged_wdbp->dbip->dbi_filename);
+	    bu_vls_printf(&gedp->ged_result_str, "%s: File format mismatch between '%s' and '%s'\n",
+			  cmd, argv[0], gedp->ged_wdbp->dbip->dbi_filename);
 	    return GED_ERROR;
 	}
 
 	if ((keepfp = wdb_dbopen(new_dbip, RT_WDB_TYPE_DB_DISK)) == NULL) {
-	    bu_vls_printf(&gedp->ged_result_str, "keep: Error opening '%s'\n", argv[1]);
+	    bu_vls_printf(&gedp->ged_result_str, "%s:  Error opening '%s'\n", cmd, argv[0]);
 	    return GED_ERROR;
 	} else {
-	    bu_vls_printf(&gedp->ged_result_str, "keep:  appending to '%s'\n", argv[1]);
+	    bu_vls_printf(&gedp->ged_result_str, "%s:  Appending to '%s'\n", cmd, argv[0]);
 
 	    /* --- Scan geometry database and build in-memory directory --- */
 	    db_dirbuild(new_dbip);
 	}
     } else {
 	/* Create a new database */
-	keepfp = wdb_fopen_v(argv[1], gedp->ged_wdbp->dbip->dbi_version);
+	keepfp = wdb_fopen_v(argv[0], gedp->ged_wdbp->dbip->dbi_version);
 
 	if (keepfp == NULL) {
-	    perror(argv[1]);
+	    perror(argv[0]);
 	    return GED_ERROR;
 	}
     }
@@ -178,10 +204,17 @@ ged_keep(struct ged *gedp, int argc, const char *argv[])
     }
     bu_vls_free(&title);
 
-    for (i = 2; i < argc; i++) {
+    for (i = 1; i < argc; i++) {
 	if ((dp = db_lookup(gedp->ged_wdbp->dbip, argv[i], LOOKUP_NOISY)) == DIR_NULL)
 	    continue;
-	db_functree(gedp->ged_wdbp->dbip, dp, node_write, node_write, &rt_uniresource, (genptr_t)&knd);
+
+	if (!flag_R) {
+	    /* recursively keep objects */
+	    db_functree(gedp->ged_wdbp->dbip, dp, node_write, node_write, &rt_uniresource, (genptr_t)&knd);
+	} else {
+	    /* keep just this object */
+	    node_write(gedp->ged_wdbp->dbip, dp, (genptr_t)&knd);
+	}
     }
 
     wdb_close(keepfp);
