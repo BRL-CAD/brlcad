@@ -25,12 +25,6 @@ create-image-dirs:
 	mkdir -p books/en/images
 	mkdir -p lessons/en/images
 
-clean-image-dirs:
-	-rm -rf articles
-	-rm -rf books
-	-rm -rf lessons
-	-rm -rf system
-
 .docpng.png:
 	cp $? $@
 
@@ -507,6 +501,12 @@ man_MANS = \
 MOSTLYCLEANFILES = \
          $(BUILT_SOURCES) \
          $(BUILTMAN_EN_SOURCES)
+
+clean-generic: mostlyclean-generic
+	-rmdir -p articles/en/images
+	-rmdir -p books/en/images
+	-rmdir -p lessons/en/images
+	-rmdir -p system/man1/en
 
 EXTRA_DIST = \
 	${articlesDOCBOOK_EN} \
