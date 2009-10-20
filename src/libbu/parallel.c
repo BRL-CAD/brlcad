@@ -478,12 +478,8 @@ DONE_NCPU:  ; /* allows debug and final validity check */
 /**
  * B U _ G E T _ L O A D _ A V E R A G E
  *
- * A generally portable method for obtaining the 1-minute load average.
- * Vendor-specific methods which don't involve a fork/exec sequence
- * would be preferable.
- * Alas, very very few systems put the load average in /proc,
- * most still grunge the avenrun[3] array out of /dev/kmem,
- * which requires special privleges to open.
+ * DEPRECATED: this routine is scheduled for removal and presently
+ * does nothing useful.
  */
 fastf_t
 bu_get_load_average(void)
@@ -492,20 +488,6 @@ bu_get_load_average(void)
 
     bu_log("DEPRECATED: bu_get_load_average is deprecated and will be removed in a future release.\n");
 
-#ifndef _WIN32
-    FILE *fp;
-
-    /* XXX - wow. eek. */
-    fp = popen("PATH=/bin:/usr/bin:/usr/ucb:/usr/bsd; export PATH; uptime|sed -e 's/.*average: //' -e 's/,.*//' ", "r");
-    if (!fp)
-	return -1.0;
-
-    fscanf(fp, "%lf", &load);
-    fclose(fp);
-
-    while (wait(NULL) != -1)
-	;	/* NIL */
-#endif
     return load;
 }
 
