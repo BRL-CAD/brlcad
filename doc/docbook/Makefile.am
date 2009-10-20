@@ -66,6 +66,7 @@ articlesDOCBOOK_EN_IMAGES = \
 	articles/en/images/nirt_fig07.docpng \
 	articles/en/images/nirt_fig08.docpng \
 	articles/en/images/nirt_fig09.docpng \
+	articles/en/images/nirt_fig10.docpng \
 	articles/en/images/nirt_fig11.docpng \
 	articles/en/images/nirt_fig12.docpng \
 	articles/en/images/nirt_fig13.docpng \
