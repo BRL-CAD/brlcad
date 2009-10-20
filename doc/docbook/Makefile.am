@@ -10,6 +10,7 @@ XML_CATALOG_FILES=$(top_srcdir)/doc/docbook/catalog.xml
 .PHONY: create-man-dirs
 create-man-dirs:
 	mkdir -p system/man1/en
+	touch create-man-dirs
 
 .xml.1:
 	XML_CATALOG_FILES=$(XML_CATALOG_FILES) $(XSLTPROC) $(XSLTPROC_FLAGS) $(XSL_MAN_STYLESHEET) $?
@@ -26,6 +27,7 @@ create-image-dirs:
 	mkdir -p articles/en/images
 	mkdir -p books/en/images
 	mkdir -p lessons/en/images
+	touch create-image-dirs
 
 .docpng.png:
 	cp $? $@
