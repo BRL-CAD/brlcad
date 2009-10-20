@@ -8,6 +8,10 @@ AM_CPPFLAGS = \
 	${BOOST_CPPFLAGS} \
 	${TCL_CPPFLAGS}
 
+# portability support for gcc 2.95, conditionally adds -ftemplate-depth-NN
+AM_CXXFLAGS = \
+	${TEMPLATE_DEPTH}
+
 noinst_PROGRAMS = \
 	solver_test \
 	vm_test

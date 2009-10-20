@@ -1801,6 +1801,15 @@ if test "xyes" = "xyes" ; then
        AC_SUBST(FEXCEPTIONS)
     fi
 
+    dnl check for -ftemplate-depth-NN this is needed in libpc and
+    dnl other code using boost where the template instantiation depth
+    dnl needs to be increased from the default ANSI minimum of 17.
+    BC_COMPILER_RECOGNIZES([-ftemplate-depth-50], [template_depth], [nokeep])
+    if test "x$bc_template_depth_works" = "xyes" ; then
+	TEMPLATE_DEPTH="-ftemplate-depth-50"
+	AC_SUBST(TEMPLATE_DEPTH)
+    fi
+
     dnl dynamic SSE optimizations for NURBS processing
 dnl
 dnl XXX disable the SSE flags for now as they can cause illegal instructions.
