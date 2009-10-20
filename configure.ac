@@ -3821,59 +3821,6 @@ AC_CONFIG_FILES([
 	doc/Makefile
 	doc/book/Makefile
 	doc/docbook/Makefile
-        doc/docbook/articles/Makefile
-	doc/docbook/articles/build_pattern/Makefile
-	doc/docbook/articles/build_pattern/en/Makefile
-	doc/docbook/articles/build_pattern/build_pattern_images/Makefile
-	doc/docbook/articles/build_region/Makefile
-	doc/docbook/articles/build_region/en/Makefile
-	doc/docbook/articles/build_region/build_region_images/Makefile
-	doc/docbook/articles/ebm_primitive/Makefile
-	doc/docbook/articles/ebm_primitive/en/Makefile
-	doc/docbook/articles/ebm_primitive/ebm_primitive_images/Makefile
-	doc/docbook/articles/mgedrc/Makefile
-	doc/docbook/articles/mgedrc/en/Makefile
-	doc/docbook/articles/mgedrc/mgedrc_images/Makefile
-	doc/docbook/articles/nirt/Makefile
-	doc/docbook/articles/nirt/en/Makefile
-	doc/docbook/articles/nirt/nirt_images/Makefile
-	doc/docbook/articles/pipes/Makefile
-	doc/docbook/articles/pipes/en/Makefile
-	doc/docbook/articles/pipes/pipe_images/Makefile
-	doc/docbook/articles/projection_shader/Makefile
-	doc/docbook/articles/projection_shader/en/Makefile
-	doc/docbook/articles/projection_shader/projection_shader_images/Makefile
-	doc/docbook/articles/oed/Makefile
-	doc/docbook/articles/oed/en/Makefile
-	doc/docbook/articles/oed/oed_images/Makefile
-	doc/docbook/articles/tire/Makefile
-	doc/docbook/articles/tire/en/Makefile
-	doc/docbook/articles/tire/tire_images/Makefile
-	doc/docbook/books/Makefile
-	doc/docbook/books/tutorial_series/Makefile
-	doc/docbook/books/tutorial_series/en/Makefile
-	doc/docbook/books/tutorial_series/volumeIII_images/Makefile
-	doc/docbook/lessons/Makefile
-	doc/docbook/lessons/mged/Makefile
-	doc/docbook/lessons/mged/en/Makefile
-	doc/docbook/lessons/mged/L001_imgs/Makefile
-	doc/docbook/lessons/mged/L002_imgs/Makefile
-	doc/docbook/lessons/mged/L004_imgs/Makefile
-	doc/docbook/lessons/mged/L005_imgs/Makefile
-	doc/docbook/lessons/mged/L006_imgs/Makefile
-	doc/docbook/lessons/mged/L007_imgs/Makefile
-	doc/docbook/lessons/mged/L008_imgs/Makefile
-	doc/docbook/lessons/mged/L009_imgs/Makefile
-	doc/docbook/lessons/mged/L010_imgs/Makefile
-	doc/docbook/lessons/mged/L011_imgs/Makefile
-	doc/docbook/lessons/mged/L012_imgs/Makefile
-	doc/docbook/lessons/mged/L013_imgs/Makefile
-	doc/docbook/lessons/mged/L014_imgs/Makefile
-	doc/docbook/lessons/mged/L015_imgs/Makefile
-	doc/docbook/lessons/mged/L016_imgs/Makefile
-	doc/docbook/system/Makefile
-	doc/docbook/system/man1/Makefile
-	doc/docbook/system/man1/en/Makefile
 	doc/html/Makefile
 	doc/html/ReleaseNotes/Makefile
 	doc/html/ReleaseNotes/Rel5.0/Makefile

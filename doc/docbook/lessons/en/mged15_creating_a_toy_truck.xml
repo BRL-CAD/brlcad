@@ -1,0 +1,833 @@
+<!DOCTYPE article PUBLIC "-//OASIS//DTD DocBook XML V4.5//EN"
+"../../resources/standard/dtd/docbookx.dtd">
+<article xmlns:xi="http://www.w3.org/2001/XInclude">
+  <articleinfo>
+    <title>Creating a Toy Truck</title>
+
+    <xi:include href="../../books/en/tutorial_series_authors.xml" xpointer="Intro_MGED_Tutorial_Series_II_authors"/>
+
+    <legalnotice>
+       <para>Approved for public release; distribution is unlimited</para>
+   </legalnotice>
+  </articleinfo>
+
+    <para id="creating_toy_truck_overviewlist">
+      In this lesson, you will:
+      <itemizedlist mark='bullet'>
+	<listitem>
+	  <para>Create a toy truck from three shapes.</para>
+	</listitem>
+	<listitem>
+	  <para>Make copies of shapes using the Primitive Editor.</para>
+	</listitem>
+	<listitem>
+	  <para>Make combinations and regions of a more complex object.</para>
+	</listitem>
+	<listitem>
+	  <para>Check the data tree for accuracy.</para>
+	</listitem>
+	<listitem>
+	  <para>List contents of the database.</para>
+	</listitem>
+	<listitem>
+	  <para>Assign material properties using the Combination Editor.</para>
+	</listitem>
+	<listitem>
+	  <para>Identify the difference between OK, Accept, Apply, Reset, Cancel, and Dismiss.</para>
+	</listitem>
+	<listitem>
+	  <para>Identify the on-screen help option.</para>
+	</listitem>
+	<listitem>
+	  <para>Identify the stacker option.</para>
+	</listitem>
+	<listitem>
+	  <para>Experiment with the attributes of the camo shader.</para>
+	</listitem>
+      </itemizedlist>
+    </para>
+
+    <para id="creating_toy_truck_intro1">
+      In previous lessons, you created and edited shapes to produce simple
+      objects. This lesson focuses on creating a slightly more complex object, a
+      toy truck, from the Command Window. Your completed truck should look
+      similar to the following truck:
+      
+      <informalfigure>
+	<mediaobject>
+	  <imageobject>
+	    <imagedata align = "center" fileref="../../lessons/en/images/mged15_truck_design.png" format="PNG"></imagedata>
+	  </imageobject>
+	  <caption>
+	    <para>
+	      Raytraced Toy Truck Design
+	    </para>
+	  </caption>
+	</mediaobject>
+      </informalfigure>
+
+    </para>
+
+    <para id="creating_toy_truck_intro2">
+      Begin by creating a new database called truck.g.
+    </para>
+
+    <sect1 id="truck_cab_in_cmd">
+      <title>Creating an rpp for the Cab of the Truck Using the In Command</title>
+      <para>
+	To make the cab of the truck, you will create a right parallel piped using
+	the in (insert) command. At the Command Window prompt, type:
+	
+	<command>in cab1.s rpp[Enter]</command>
+	
+	<application>MGED</application> will ask you to enter values for XMIN, XMAX, YMIN, YMAX, ZMIN, and
+	ZMAX. Type at the prompt:
+	
+	<command>0 1 0 1 0 1[Enter]</command>
+	
+	This will tell <application>MGED</application> to:
+	<informaltable>
+	  <tgroup cols='6'>
+	    <tbody>
+	      <row>
+		<entry>0</entry>
+		<entry>1</entry>
+		<entry>0</entry>
+		<entry>1</entry>
+		<entry>0</entry>
+		<entry>1</entry>
+	      </row>
+	      <row>
+		<entry>Make the value of the rpp's XMIN 0</entry>
+		<entry>Make the value of the rpp's XMAX 1</entry>
+		<entry>Make the value of the rpp's YMIN 0</entry>
+		<entry>Make the value of the rpp's YMAX 1</entry>
+		<entry>Make the value of the rpp's ZMIN 0</entry>
+		<entry>Make the value of the rpp's ZMAX 1</entry>
+	      </row>
+	    </tbody>
+	  </tgroup>
+	</informaltable>
+      </para>
+      <para>
+	You could also have used the streamlined version of:
+	
+	<command>in cab1.s rpp 0 1 0 1 0 1[Enter]</command>
+	
+	A cube shape should appear in the Graphics Window, as follows:
+	
+      <informalfigure>
+	<mediaobject>
+	  <imageobject>
+	    <imagedata align = "center" fileref="../../lessons/en/images/mged15_truck_cab1s.png" format="PNG"></imagedata>
+	  </imageobject>
+	  <caption>
+	    <para>
+	      Wireframe Representation of Shape cab1.s
+	    </para>
+	  </caption>
+	</mediaobject>
+      </informalfigure>
+
+      </para>
+    </sect1>
+
+    <sect1 id="truck_hood_in_cmd">
+      <title>Using the Inside Command to Create an rpp for the Hood of the Cab</title>
+      <para>
+	To make the hood of the cab, you will need to make another rpp shape, this
+	time using the inside command. This special command was originally created
+	to hollow out objects such as gas tanks and boxes; however, it can be used
+	to create any new shape that has some relationship to a pre-existing
+	shape. In this lesson, it is used to cut away material above the hood and
+	in front of the cab.
+      </para>
+      <para>
+	If you are using <application>BRL-CAD</application> version 6.0 or later, at the Command Window
+	prompt, type:
+	
+	<command>inside cab1.s caboff1.s .5 -.1 .7 -.1 -.1 -.1[Enter]</command>
+	
+	The inside command tells <application>MGED</application> to:
+	<informaltable>
+	  <tgroup cols='9'>
+	    <tbody>
+	      <row>
+		<entry>inside</entry>
+		<entry>cab1.s</entry>
+		<entry>caboff1.s</entry>
+		<entry>.5</entry>
+		<entry>-.1</entry>
+		<entry>7</entry>
+		<entry>-.1</entry>
+		<entry>-.1</entry>
+		<entry>-.1</entry>
+	      </row>
+	      <row>
+		<entry>Inside the shape</entry>
+		<entry>named cab1.s,</entry>
+		<entry>create rpp called caboff1.s</entry>
+		<entry>Make face 1234 (bottom) .5 units thick</entry>
+		<entry>Make face 5678 (top) -.1 units thick</entry>
+		<entry>Make face 1485 (rear) .7 units thick</entry>
+		<entry>Make face 2376 (front) -.1 units thick</entry>
+		<entry>Make face 1265 (right) -.1 units thick</entry>
+		<entry>Make face 3478 (left) -.1 units thick</entry>
+	      </row>
+	    </tbody>
+	  </tgroup>
+	</informaltable>
+	
+      </para>
+      <note>
+	<para>
+	  In this example, each negative thickness number indicates that
+	  caboff1.s will protrude through the corresponding face of cab1.s.
+	</para>
+      </note>
+      <note>
+	<para>
+	  Note that in <application>BRL-CAD</application> versions 6.0 and later, the faces of an rpp are  
+	  numbered in a different order than in previous versions. So, if you   
+	  are using a pre-6.0 release of the package, the following parameter   
+	  order must be used for the aforementioned inside command:             
+	  
+	  <command>inside cab1.s caboff1.s -.1 .7 -.1 -.1 .5 -.1[Enter]</command>
+	  
+	  (The order of faces in this case is front, rear, right, left, bottom, 
+	  top instead of that specified for versions 6.0 and later.)            
+	</para>
+      </note>
+     
+      <para>
+	When in Multipane mode, the design should resemble the following
+	illustration.
+	
+      <informalfigure>
+	<mediaobject>
+	  <imageobject>
+	    <imagedata align = "center" fileref="../../lessons/en/images/mged15_truck_cab_cutoff.png" format="PNG"></imagedata>
+	  </imageobject>
+	  <caption>
+	    <para>
+	      Truck Cab with Cutoff
+	    </para>
+	  </caption>
+	</mediaobject>
+      </informalfigure>
+
+      </para>
+    </sect1>
+
+    <sect1 id="truck_cab_wheel_well">
+      <title>Using an rcc to Create a Wheel Well in the Cab</title>
+      <para>
+	Make a cylinder (rcc) to use for cutting away a space for the first wheel
+	of the cab. At the Command Window prompt, type:
+	
+	<command>make well1.s rcc[Enter]</command>
+	
+	Go to the Edit menu and click on Primitive Selection, then well1.s. After
+	selecting a Left view, go back to Edit and select Scale. Reduce the size
+	of the rcc until its diameter is about the right size for a wheel well. Go
+	back to Edit and select Rotate. As discussed previously, one way to easily
+	rotate the rcc is by using the CTRL key and the left mouse button to drag
+	the top lip of the rcc down (in a straight line) until the A and C edit
+	labels overlap. However, because we know we want to flip the object
+	exactly 90'0 along the x axis, a better choice is to use the Command Line
+	and type:
+	
+	<command>p 90 0 0[Enter]</command>
+	
+	After doing so, you may still have to use the Set H and Scale editing
+	options to resize and the SHIFT key and left mouse button to position your
+	wheel well. When satisfied, select Accept. Your design should look similar
+	to the following in Multipane mode:
+	
+      <informalfigure>
+	<mediaobject>
+	  <imageobject>
+	    <imagedata align = "center" fileref="../../lessons/en/images/mged15_truck_multipane_1stwheel.png" format="PNG"></imagedata>
+	  </imageobject>
+	  <caption>
+	    <para>
+	      Multipane View of Truck with First Wheel in Place
+	    </para>
+	  </caption>
+	</mediaobject>
+      </informalfigure>
+
+      </para>
+    </sect1>
+
+    <sect1 id="ok_accept_apply_reset_cancel_dismiss">
+      <title>The Difference Between OK, Accept, Apply, Reset, Cancel, and Dismiss</title>
+      <para>
+	The GUI environment of <application>MGED</application> offers users several options for applying,
+	accepting, or rejecting changes made through buttons at the bottom of
+	dialog pop-up windows. To use any of these options, just place the mouse
+	cursor over the desired button and click the left mouse button.
+      </para>
+      <para>
+	Selecting the Accept or OK button will tell <application>MGED</application> to record the changes you
+	have made to a shape, region, or combination. <application>MGED</application> uses the Accept and OK
+	buttons interchangeably. When you click on Accept or OK, the window you
+	are using will automatically close.
+      </para>
+      <para>
+	The Apply button tells <application>MGED</application> to apply a change you have made and wait for
+	further instructions. The window does not automatically close. This
+	enables you to make changes to several things without having to reopen the
+	window for each change.
+      </para>
+      <para>
+	The Reset button tells <application>MGED</application> to reset values you have changed in a dialog
+	box to the last values you applied or accepted. The Reset button does not
+	close the dialog box. The Cancel or Dismiss buttons discard any changes
+	made in the dialog box and leave values unchanged from their last stored
+	settings. These two buttons close the dialog box.
+      </para>
+    </sect1>
+
+    <sect1 id="truck_wheel_well_prim_edit_cpy">
+      <title>Using the Primitive Editor to Make a Copy of the Wheel Well</title>
+      <para>
+	To make a copy of your wheel well, go to the Edit menu and select
+	Primitive Editor, which will contain information about the last shape
+	edited through the dialog box (or myPrimitive if nothing has been edited).
+	Erase the old shape's name in the Name entry box. Type in well1.s and
+	press Reset (or press Enter while the cursor is still in the Name entry
+	box). The parameter values of the old shape will be replaced by those of
+	the new shape. The Primitive Editor will change and look something like
+	the following example:
+	
+      <informalfigure>
+	<mediaobject>
+	  <imageobject>
+	    <imagedata align = "center" fileref="../../lessons/en/images/mged15_prim_ed_wheel_well.png" format="PNG"></imagedata>
+	  </imageobject>
+	  <caption>
+	    <para>
+	      The Primitive Editor
+	    </para>
+	  </caption>
+	</mediaobject>
+      </informalfigure>
+
+      </para>
+      <para>
+	Go back to the Name text box and change the 1 to a 2 and click on OK.
+	Change to Front under the View menu. Go to Edit/Primitive Selection and
+	click on well2.s. Use the SHIFT and left mouse button to drag the new
+	wheel well into position, as shown in the following illustration. Check
+	your alignment in Multipane mode and then click on Accept when you are
+	finished.
+
+      <informalfigure>
+	<mediaobject>
+	  <imageobject>
+	    <imagedata align = "center" fileref="../../lessons/en/images/mged15_truck_2nd_wheel_wheel_place.png" format="PNG"></imagedata>
+	  </imageobject>
+	  <caption>
+	    <para>
+	      Placement of the Second Wheel
+	    </para>
+	  </caption>
+	</mediaobject>
+      </informalfigure>
+
+      </para>
+    </sect1>
+
+    <sect1 id="truck_cab_shape_comb">
+      <title>Making a Combination of the Cab Shapes</title>
+      <para>
+	It is now time to make a combination of the various cab shapes.
+	
+	<command>comb cab1.c u cab1.s - caboff1.s - well1.s - well2.s[Enter]</command>
+	
+	This command tells <application>MGED</application> to:
+	
+	<informaltable>
+	  <tgroup cols='10'>
+	    <tbody>
+	      <row>
+		<entry>comb</entry>
+		<entry>cab1.c</entry>
+		<entry>u</entry>
+		<entry>cab1.s</entry>
+		<entry>-</entry>
+		<entry>caboff1.s</entry>
+		<entry>-</entry>
+		<entry>well1.s</entry>
+		<entry>-</entry>
+		<entry>well2.s</entry>
+	      </row>
+	      <row>
+		<entry>Make a combination</entry>
+		<entry>Name it cab1.c</entry>
+		<entry>Make a union</entry>
+		<entry>of the shape cab1.s</entry>
+		<entry>minus</entry>
+		<entry>the shape caboff1.s</entry>
+		<entry>minus</entry>
+		<entry>the shape well1.s</entry>
+		<entry>minus</entry>
+		<entry>the shape well2.s</entry>
+	      </row>
+	    </tbody>
+	  </tgroup>
+	</informaltable>
+      </para>
+      <para>
+	Before you go any further, you should check your data tree by typing tree
+	cab1.c. The data tree should say:
+
+	<literallayout>
+   cab1.c/
+
+   u cab1.s
+
+   - caboff1.s
+
+   - well1.s
+
+   - well2.s
+	</literallayout>
+	
+      </para>
+      <para>
+	If you type ls (list) at the Command Window prompt, you should find that
+	your database is composed of the combination cab1.c and the shapes cab1.s,
+	caboff1.s, well1.s, and well2.s. You will find as you make more complex
+	objects that you will periodically refer to the list of the database to
+	ensure it is composed of the elements you want.
+      </para>
+    </sect1>
+
+    <sect1 id="truck_body_in_cmd">
+      <title>Creating an rpp for the Body of the Truck Using the In Command</title>
+      <para>
+	To make the body of the truck, type at the Command Window prompt:
+	
+	<command>in body1.s rpp 0 2 0 1 0 1.5[Enter]</command>
+	
+	By now, you should know what this command tells <application>MGED</application> to do. If you have
+	forgotten, refer back to making the cab of the truck.
+      </para>
+      <para>
+	Edit the body of the truck so that its front face slightly overlaps the
+	cab's back face. Check different views to make sure the body lines up
+	correctly with the cab. Accept your changes when you are done, and then
+	Blast your design. Your truck should now look like the following:
+   
+      <informalfigure>
+	<mediaobject>
+	  <imageobject>
+	    <imagedata align = "center" fileref="../../lessons/en/images/mged15_truck_cab_body.png" format="PNG"></imagedata>
+	  </imageobject>
+	  <caption>
+	    <para>
+	      Truck Cab and Body
+	    </para>
+	  </caption>
+	</mediaobject>
+      </informalfigure>
+
+      </para>
+    </sect1>
+
+    <sect1 id="prim_ed_wheel_wells">
+      <title>Using the Primitive Editor to Make Two More Wheel Wells</title>
+      <para>
+	To make two wheel wells for the body of the truck, repeat the steps used
+	in making the second wheel well. Name your new shapes well3.s and well4.s.
+	Using multiple views, move the new shapes into position so that your truck
+	now looks similar to the following:
+   
+      <informalfigure>
+	<mediaobject>
+	  <imageobject>
+	    <imagedata align = "center" fileref="../../lessons/en/images/mged15_truck_wheel_wells_wireframe.png" format="PNG"></imagedata>
+	  </imageobject>
+	  <caption>
+	    <para>
+	      Wireframe Representation of Truck with Wheel Wells
+	    </para>
+	  </caption>
+	</mediaobject>
+      </informalfigure>
+
+      </para>
+    </sect1>
+
+    <sect1 id="truck_body_wheel_wells_comb">
+      <title>Making a Combination of the Truck Body and Wheel Wells</title>
+      <para>
+	Make a combination of the truck body and the two new wheel wells. Name it
+	body1.c.
+	
+	The tree for body1.c should say:
+	
+	<literallayout>
+   body1.c/
+
+   u body1.s
+
+   - well3.s
+
+   - well4.s
+	</literallayout>
+      </para>
+    </sect1>
+
+    <sect1 id="truck_cab_body_region">
+      <title>Making a Region of the Cab and Body</title>
+      <para>
+	Before adding wheels to the truck, you need to make a region of the cab
+	and body. At the Command Window prompt, type:
+	
+	<command>r truck1.r u cab1.c u body1.c[Enter]</command>
+      </para>
+    </sect1>
+
+    <sect1 id="truck_wheels">
+      <title>Making Wheels for the Truck</title>
+      <para>
+	Perhaps the best shape for making wheels is the torus. You can create a
+	shape through the Command Window that has the correct size and placement
+	for your design without further editing. However, this lesson is designed
+	to give you practice rotating and translating shapes.
+      </para>
+      <para>
+	To make the first wheel, type at the Command Window prompt:
+	
+	<command>in wheel1.s tor 0 0 0 .5774 .5774 .5774 .18 .08[Enter]</command>
+	
+	This command tells <application>MGED</application> to:
+	<informaltable>
+	  <tgroup cols='7'>
+	    <tbody>
+	      <row>
+		<entry>in</entry>
+		<entry>wheel1.s</entry>
+		<entry>tor</entry>
+		<entry>0 0 0</entry>
+		<entry>.5774 .5774 .5774</entry>
+		<entry>.18</entry>
+		<entry>.08</entry>
+	      </row>
+	      <row>
+		<entry>Create a shape</entry>
+		<entry>Name it wheel1.s</entry>
+		<entry>Make the shape a torus</entry>
+		<entry>Make the values of the vertex 0 0 0</entry>
+		<entry>Make the values for x, y, and z of the normal vector .5774 .5774 .5774</entry>
+		<entry>Make the value of the outer radius .18</entry>
+		<entry>Make the value of radius 2 (the tire thickness) .08</entry>
+	      </row>
+	    </tbody>
+	  </tgroup>
+	</informaltable>
+      </para>
+      <para>
+	Change View to Left and then Edit the position of the wheel. To correctly
+	align the wheel with the truck, you will have to Rotate the tire using the
+	CTRL key and any mouse button. Scale and Translate the wheel into position
+	as appropriate and check your alignment from several different views.
+	Accept your changes when finished.
+      </para>
+      <para>
+	Using the Primitive Editor, make the second, third, and fourth wheels.
+	Move each of these wheels into position until your truck looks like the
+	following:
+	
+      <informalfigure>
+	<mediaobject>
+	  <imageobject>
+	    <imagedata align = "center" fileref="../../lessons/en/images/mged15_truck_wheels.png" format="PNG"></imagedata>
+	  </imageobject>
+	  <caption>
+	    <para>
+	      Wireframe Truck and Wheels
+	    </para>
+	  </caption>
+	</mediaobject>
+      </informalfigure>
+
+      </para>
+    </sect1>
+
+    <sect1 id="truck_wheels_region">
+      <title>Making a Region of the Wheels</title>
+      <para>
+	Make a region of the four wheels. When you are finished, your data tree
+	for wheel1.r should say:
+
+	<literallayout>
+   wheel1.r/R
+
+   u wheel1.s
+
+   u wheel2.s
+
+   u wheel3.s
+
+   u wheel4.s
+	</literallayout>
+      </para>
+    </sect1>
+
+    <sect1 id="truck_regions_mater_props">
+      <title>Assigning Material Properties to the Truck Regions</title>
+      <para>
+	Your truck is composed of two regions: truck1.r and wheel1.r. Use the
+	Combination Editor and select truck1.r.
+      </para>
+      <para>
+	In the Combination Editor, the camouflage (camo) shader creates a
+	pseudo-random tricolor camouflage pattern on the object using a fractal
+	noise pattern. The shader offers lots of attributes from which to choose.
+	For now, select a Background Color of black (0 0 0) and make Color #1
+	green (0 134 0), and Color #2 rust brown (164 96 38). To make the pattern
+	design proportional to the truck, select a Noise Size of .25 and then
+	Apply the selections. The Combination Editor window for the camo shader
+	should look like this:
+	
+      <informalfigure>
+	<mediaobject>
+	  <imageobject>
+	    <imagedata align = "center" fileref="../../lessons/en/images/mged15_cameo_shader.png" format="PNG"></imagedata>
+	  </imageobject>
+	  <caption>
+	    <para>
+	      Camo Shader
+	    </para>
+	  </caption>
+	</mediaobject>
+      </informalfigure>
+
+      </para>
+      <para>
+	Apply a black color and plastic shader to the wheels (wheel1.r) and click
+	on OK. Then raytrace your design.
+      </para>
+    </sect1>
+
+    <sect1 id="on_screen_help">
+      <title>Using the On-Screen Help Option</title>
+      <para>
+	You have probably noticed that many of the <application>MGED</application> menus offer a wide variety
+	of options from which to choose. With so many choices available, it is
+	easy to forget what a particular selection does. To help users quickly
+	access basic information about the various <application>MGED</application> options, the program
+	offers a context-sensitive, on-screen help feature.
+      </para>
+      <para>
+	The on-screen help can be accessed from any menu or pop-up window by
+	placing the mouse cursor over the name of any option in the menu or window
+	and clicking the right mouse button. The only place this feature doesn't
+	work is in the geometry portion of the Graphics Window, where the design
+	is drawn.
+      </para>
+    </sect1>
+
+    <sect1 id="stacker_shading">
+      <title>The Stacker Option</title>
+      <para>
+	In previous lessons, you applied color and a shader to an object to make
+	it appear realistic. Sometimes, however, you will need to apply two or
+	three shaders to an object to get the design you want.
+      </para>
+      <para>
+	<application>MGED</application> offers three categories of shaders: paint, plastic, and light. Any
+	combination of these three types of shaders can be applied to the same
+	object using the stacker option of the shader menu.
+      </para>
+      <para>
+	There are three plastic shaders: glass, mirror, and plastic. A plastic
+	shader is used to give the perception of space. It does this by making the
+	object's surface shiny so that it reflects light. A plastic shader is
+	normally applied last in the stacker process.
+      </para>
+      <para>
+	The paint shaders are used to apply pigment and texture to the surface of
+	an object. Color is pigment, and texture is the three-dimensional quality
+	of the surface material (such as stucco paint).
+      </para>
+      <para>
+	Pigment shaders include camo, texture (color), texture (black/white), fake
+	star, cloud, checker, test map, and projection. Texture shaders include
+	bump map, fbm bump, and tur bump. Paint shaders are normally applied first
+	in the stacking process and are used in combination with the plastic
+	shader.
+      </para>
+      <para>
+	The light shader is used to produce illumination in the scene. This helps
+	produce realism in the final image. The light shader is technically
+	complex and is not discussed in this tutorial.
+      </para>
+      <para>
+	The camo shader involves applying pigments, in a random pattern, to the
+	surface of an object. The camo shader doesn't indicate the
+	three-dimensional nature of an object. If you want your design to show
+	depth, you will need to stack the camo shader and the plastic shader.
+      </para>
+    </sect1>
+
+    <sect1 id="using_stacker_shading">
+      <title>Using the Stacker Option</title>
+      <para>
+	To use the stacker option, open the Combination Editor and select
+	truck1.r. Click on the button to the right of the Shader entry box and
+	then select stack from the drop-down menu. A button with the words Add
+	Shader will appear under the text box. Click on the button and then select
+	camouflage. Set the Background Color to black (0 0 0), Color #1 to green
+	(0 134 0), and Color #2 to rust brown (164 96 38). Make the Noise Size
+	.25. Click on Add Shader once again and select plastic.
+      </para>
+      <para>
+	At this point, your Combination Editor window may have gone off the bottom
+	of the screen. If this happens, reduce the size of the window as much as
+	you can and then drag it up to the top of the screen. The buttons at the
+	bottom of the box should now appear, and you can Apply your selections.
+      </para>
+
+      <caution>
+	<para>
+	  When using the stacker option, you need to keep track of the 
+	  number of characters and spaces in the shader text box. <application>MGED</application> versions 
+	  prior to release 6.0 will only recognize 64 characters/spaces, so be  
+	  careful stacking shaders with complex attributes.                     
+	</para>
+      </caution>
+    </sect1>
+
+    <sect1 id="truck_combine_regions">
+      <title>Making a Combination of the Truck Regions</title>
+      <para>
+	To make a combination of the two truck regions, type at the Command Window
+	prompt:
+	
+	<command>comb truck1.c u truck1.r u wheel1.r[Enter]</command>
+	
+	<command>B truck1.c[Enter]</command>
+	
+	Your data tree for truck1.c should read:
+	<literallayout>
+   truck1.c/
+
+   u truck1.r/R
+
+   u cab1.c/
+
+   u cab1.s
+
+   - caboff1.s
+
+   - well1.s
+
+   - well2.s
+
+   u body1.c
+
+   u body1.s
+
+   - well3.s
+
+   - well4.s
+
+   u wheel1.r/R
+
+   u wheel1.s
+
+   u wheel2.s
+
+   u wheel3.s
+
+   u wheel4.s
+	</literallayout>
+      </para>
+    </sect1>
+
+    <sect1 id="truck_raytracing">
+      <title>Raytracing the Truck</title>
+      <para>
+	The last step in creating your truck is to raytrace your design. When the
+	raytracer has finished, notice that the top and one side of the truck are
+	very dark. This is because there is very little light falling on them.
+	Because we have not specified any light sources for our scene, <application>MGED</application>
+	provides us with a set of default lights. These defaults consist of a dim
+	light at the location of the viewer and a brighter one located to the left
+	and below the viewer. Since the primary light is not really shining on one
+	side of the truck, it is dark.
+      </para>
+      <para>
+	There is a special adjustment we can make to improve the overall
+	brightness of the scene. We can adjust the amount of ambient light, which
+	is light that does not come from a particular light source but is a
+	measure of the light generally present in the scene. To adjust the amount
+	of ambient light, click on the Advanced Settings  button in the Raytrace
+	Control Panel. Next to Other Options, type -A .9 and click Dismiss. Now
+	when you raytrace, you will get a much lighter image.
+      </para>
+      <para>
+
+	<informaltable frame='none' pgwide="1">
+	  <tgroup cols='2' align='center'>
+	    <tbody>
+	      <row>
+		<entry><inlinegraphic fileref="../../lessons/en/images/mged15_truck_default_lighting.png" /></entry>
+		<entry><inlinegraphic fileref="../../lessons/en/images/mged15_truck_ambient_lighting.png" /></entry>
+	      </row>
+	      <row>
+		<entry>Truck with Default Lighting</entry>
+		<entry>Truck with Added Ambient Light</entry>
+	      </row>
+	    </tbody>
+	  </tgroup>
+	</informaltable>
+
+      </para>
+    </sect1>
+
+    <sect1 id="creating_toy_truck_review">
+      <title>Review</title>
+      <para>
+	In this lesson, you:
+	<itemizedlist mark='bullet'>
+	  <listitem>
+	    <para>Created a toy truck from three shapes.</para>
+	  </listitem>
+	  <listitem>
+	    <para>Made copies of shapes using the Primitive Editor.</para>
+	  </listitem>
+	  <listitem>
+	    <para>Made combinations and regions of a more complex object.</para>
+	  </listitem>
+	  <listitem>
+	    <para>Checked the data tree for accuracy.</para>
+	  </listitem>
+	  <listitem>
+	    <para>Listed contents of the database.</para>
+	  </listitem>
+	  <listitem>
+	    <para>Assigned material properties using the Combination Editor.</para>
+	  </listitem>
+	  <listitem>
+	    <para>Identified the difference between OK, Accept, Apply, Reset, Cancel, and Dismiss.</para>
+	  </listitem>
+	  <listitem>
+	    <para>Identified the on-screen help option.</para>
+	  </listitem>
+	  <listitem>
+	    <para>Identified the stacker option.</para>
+	  </listitem>
+	  <listitem>
+	    <para>Experimented with the attributes of the camo shader.</para>
+	  </listitem>
+	</itemizedlist>
+      </para>
+    </sect1>
+
+  </article>

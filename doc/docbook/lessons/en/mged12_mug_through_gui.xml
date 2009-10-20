@@ -1,0 +1,408 @@
+<!DOCTYPE article PUBLIC "-//OASIS//DTD DocBook XML V4.5//EN"
+"../../resources/standard/dtd/docbookx.dtd">
+<article xmlns:xi="http://www.w3.org/2001/XInclude">
+  <articleinfo>
+    <title>Creating a Mug Model using the <application>MGED</application> Interface</title>
+
+    <xi:include href="../../books/en/tutorial_series_authors.xml" xpointer="Intro_MGED_Tutorial_Series_II_authors"/>
+
+    <legalnotice>
+       <para>Approved for public release; distribution is unlimited</para>
+   </legalnotice>
+  </articleinfo>
+
+   <para id="mug_through_gui_overviewlist">
+      In this lesson, you will:
+      <itemizedlist mark='bullet'>
+	<listitem>
+	  <para>Create the shapes of the mug through the GUI.</para>
+	</listitem>
+	<listitem>
+	  <para>Use new shapes to create the handle and rim of the mug.</para>
+	</listitem>
+	<listitem>
+	  <para>Combine the shapes.</para>
+	</listitem>
+	<listitem>
+	  <para>Make a region of the combinations.</para>
+	</listitem>
+	<listitem>
+	  <para>Check the data tree and make corrections.</para>
+	</listitem>
+	<listitem>
+	  <para>Assign material properties using the Combination Editor.</para>
+	</listitem>
+      </itemizedlist>
+    </para>
+    <para id="mug_through_gui_intro1">
+      In the previous two lessons, you created a mug by entering commands at the
+      Command Window prompt. Now, you will create the same type of mug using the
+      GUI and different shapes.
+    </para>
+
+    <para id="mug_through_gui_intro2">
+      Begin by opening a new database. Call it mug2.g.
+    </para>
+
+    <sect1 id="mug_gui_create_body">
+      <title>Creating the Body of the Mug</title>
+      <para>
+	Go to the Create menu and select rcc (right circular cylinder) under the
+	Cones and Cylinders category. Enter the name for the rcc. Call it outside.s.
+      </para>
+      <para>
+	Go to the Edit menu, where you will be offered the following options:
+	
+	<informaltable>
+	  <tgroup cols='4'>
+	    <tbody>
+	      <row>
+		<entry>
+		  <literallayout>
+		    Set H
+		    Set H (Move V)
+		    Set A
+		    Set B
+		    Set c
+		    Set d
+		    Set A,B
+		    Set C,D
+		    Set A,B,C,D
+		    Rotate H
+		    Rotate AxB
+		    Move End H(rt)
+		    Move End H
+		  </literallayout>
+		</entry>
+		<entry>
+		  <literallayout>
+		    Rotate
+		    Translate
+		    Scale
+		    None of the Above
+		  </literallayout>
+		</entry>
+		<entry>
+		  <literallayout>
+		    Reject
+		    Accept
+		    Apply
+		    Reset
+		  </literallayout>
+		</entry>
+		<entry>
+		  <literallayout>
+		    Primitive Editor
+		    Combination
+		    Editor
+		  </literallayout>
+		</entry>
+	      </row>
+	    </tbody>
+	  </tgroup>
+	</informaltable>
+      </para>
+      <note>
+	<para>The first column includes shape-specific functions. The other
+	columns are functions common to all shapes.
+	</para>
+      </note>
+      <para>
+	Select Set H. From a Front view, move your mouse cursor to the lower half
+	of the screen and click the middle mouse button to reduce the scale of the
+	cylinder's height. Next select Set A,B,C,D. Move your mouse cursor to the
+	upper half of the screen and click the middle mouse button to increase the
+	diameter of the cylinder. Accept your changes when your object appears
+	similar to the one shown in the following figure.
+      </para>
+      <note>
+	<para>
+	  If at any time when you are editing through the GUI you don't  
+	  like your changes, you can click on Reject to refuse the changes or   
+	  Reset to return the shape to its original form. However, if you       
+	  select Reject, you will have to re-enter the Primitive Edit state, as 
+	  described in previous lessons.                                        
+	</para>
+      </note>
+      <para>
+	Next, create an inside right circular cylinder and name it inside.s. Edit
+	the cylinder the same way you edited the outside cylinder. Before you
+	accept your changes, change View to Top and make sure your cylinders are
+	in alignment. If the cylinders are out of alignment, use the SHIFT key and
+	left mouse button to drag the inside cylinder into position. Return your
+	View to Front and Accept your changes when the cylinders are lined up.
+	Your cylinders should look like those in the following example:
+
+      <informalfigure>
+	<mediaobject>
+	  <imageobject>
+	    <imagedata align = "center" fileref="../../lessons/en/images/mged12_cyls_frontview.png" format="PNG"></imagedata>
+	  </imageobject>
+	  <caption>
+	    <para>
+	     Two Cylinders Shown from a Front View
+	    </para>
+	  </caption>
+	</mediaobject>
+      </informalfigure>
+
+      </para>
+      <note>
+	<para>
+	  Remember that when you scale a shape, the position of the mouse pointer 
+	  in the Graphics Window will determine how large or small the  
+	  change will be. The closer the mouse pointer is to the center 
+	  horizontal line of the window, the smaller the change will be, and 
+	  vice versa.                                                        
+	</para>
+      </note>
+    </sect1>
+
+    <sect1 id="mug_gui_create_handle">
+      <title>Creating the Handle of the Mug</title>
+
+      <para>
+	Previously, we made the handle of the mug using an elliptical torus. In
+	this lesson, we make the handle by selecting a torus (which is a doughnut
+	shape) from the menu of shapes. Name the torus handle.s. The Edit menu
+	will now offer a different set of parameters than those of the right
+	circular cylinders, as shown in the following list:
+
+	<informaltable>
+	  <tgroup cols='4'>
+	    <tbody>
+	      <row>
+		<entry>
+		  <literallayout>
+		    Set Radius 1
+		    Set Radius 2
+		  </literallayout>
+		</entry>
+		<entry>
+		  <literallayout>
+		    Rotate
+		    Translate
+		    Scale
+		    None of the Above
+		  </literallayout>
+		</entry>
+		<entry>
+		  <literallayout>
+		    Reject
+		    Accept
+		    Apply
+		    Reset
+		  </literallayout>
+		</entry>
+		<entry>
+		  <literallayout>
+		    Primitive Editor
+		    Combination
+		    Editor
+		  </literallayout>
+		</entry>
+	      </row>
+	    </tbody>
+	  </tgroup>
+	</informaltable>
+	
+	In this instance, Set Radius 1 changes the distance from the center of the
+	doughnut hole to the middle of the dough. Set Radius 2 changes the radius
+	of the dough ring. With the same technique used in editing the rcc shapes,
+	edit the size of the torus until it looks similar to the following
+	examples:
+	
+	<informaltable>
+	  <tgroup cols='2'>
+	    <tbody>
+	      <row>
+		<entry><inlinegraphic fileref="../../lessons/en/images/mged12_mug_handle_frontview.png" /></entry>
+		<entry><inlinegraphic fileref="../../lessons/en/images/mged12_mug_handle_topview.png" /></entry>
+	      </row>
+	      <row>
+		<entry>Mug and Handle from a Front View</entry>
+		<entry>Mug and Handle from a Top View</entry>
+	      </row>
+	    </tbody>
+	  </tgroup>
+	</informaltable>
+
+	Check your mug from the top to make sure the handle is aligned. Accept
+	your changes when you are finished.
+      </para>
+    </sect1>
+    
+    <sect1 id="mug_gui_create_rim">
+      <title>Creating the Rim of the Mug</title>
+      
+      <para>
+	To make the rim of the mug, go to the Create, select tor, and name it
+	rim.s. Select the Rotate command and type on the Command Line:
+	
+	<command>p 0 90 0[Enter]</command>
+	
+	to rotate the torus on its side (90'0 about the y axis). Then, Scale and
+	edit the various parameters of the torus using the front and top views
+	until the mug looks similar to the following example. Make sure you Accept
+	your changes when you are finished.
+
+      <informalfigure>
+	<mediaobject>
+	  <imageobject>
+	    <imagedata align = "center" fileref="../../lessons/en/images/mged12_mug_rim_frontview.png" format="PNG"></imagedata>
+	  </imageobject>
+	  <caption>
+	    <para>
+	     Mug with Rim Shown from a Front View
+	    </para>
+	  </caption>
+	</mediaobject>
+      </informalfigure>
+      </para>
+    </sect1>
+    
+    <sect1 id="mug_gui_create_combinations">
+      <title>Creating Combinations of the Various Shapes</title>
+
+      <para>
+	To combine the various shapes of the mug, type the following commands at
+	the Command Window prompt:
+	
+	<command>comb mug.c u outside.s - inside.s[Enter]</command>
+	
+	<command>comb handle.c u handle.s - outside.s[Enter]</command>
+	
+	<command>comb mug.c u rim.s[Enter]</command>
+	
+	Note: Refer to the previous two lessons to recall how each of these
+	commands works.
+	
+      </para>
+    </sect1>
+
+    <sect1 id="mug_gui_make_region">
+      <title>Making a Region of the Combinations</title>
+
+      <para>
+	To make a region out of the combinations you just created, type at the
+	Command Window prompt:
+	
+	<command>r mug.r u mug.c u handle.c[Enter]</command>
+      </para>
+    </sect1>
+
+    <sect1 id="mug_gui_check_tree">
+      <title>Checking the Data Tree</title>
+
+      <para>
+	Before continuing, it would be wise to check your data tree and make sure
+	it agrees with the following tree:
+
+	<literallayout>
+   mug.r/R
+
+   u mug.c/
+
+   u outside.s
+
+   - inside.s
+
+   u rim.s
+
+   u handle.c/
+
+   u handle.s
+
+   - outside.s
+	</literallayout>
+
+	If your data tree doesn't look like this example, you will need to go back
+	and figure out where you went wrong. If necessary, you can kill off a
+	shape, combination, or region by typing at the Command Window prompt:
+	
+	<command>kill [name of shape, combination, or region][Enter]</command>
+
+      </para>
+      <para>
+	
+	For example, in this lesson you may have created an extra shape, named
+	rim2.s, which you no longer want. To kill this shape, you would type:
+	
+	<command>kill rim2.s[Enter]</command>
+	
+      </para>
+    </sect1>
+
+    <sect1 id="mug_gui_comb_edit_props">
+      <title>Assigning Material Properties Using the Combination Editor</title>
+
+      <para>
+	Go to the Edit menu and select Combination Editor. Type mug.r in the Name
+	entry box. Press ENTER. Type 0 148 0 in the Color entry box. Select a
+	plastic shader. Check the Boolean Expression box to make sure it says:
+	
+	<literallayout>
+   u mug.c
+
+   u handle.c
+	</literallayout>
+	
+	When you are finished, click on Apply and then Dismiss. In the Command
+	Window then, type at the prompt:
+	
+	<command>B mug.r[Enter]</command>
+
+      </para>
+    </sect1>
+
+    <sect1 id="mug_gui_raytracing">
+      <title>Raytracing the Design</title>
+      <para>
+	Go to the View option of the menu bar and select az35, el25. Go to File
+	and then Raytrace. Select a white background color and Raytrace your
+	design. Click on Overlay. When the raytracing is finished, it should look
+	like the following example:
+
+      <informalfigure>
+	<mediaobject>
+	  <imageobject>
+	    <imagedata align = "center" fileref="../../lessons/en/images/mged12_mug_gui_finished_raytraced.png" format="PNG"></imagedata>
+	  </imageobject>
+	  <caption>
+	    <para>
+	     The Completed Raytraced Mug
+	    </para>
+	  </caption>
+	</mediaobject>
+      </informalfigure>
+      </para>
+    </sect1>
+
+    <sect1 id="mug_through_gui_review">
+      <title>Review</title>
+      <para>
+	In this lesson, you:
+	<itemizedlist mark='bullet'>
+	  <listitem>
+	    <para>Created the shapes of the mug through the GUI.</para>
+	  </listitem>
+	  <listitem>
+	    <para>Used new shapes to create the handle and rim of the mug.</para>
+	  </listitem>
+	  <listitem>
+	    <para>Combined the shapes.</para>
+	  </listitem>
+	  <listitem>
+	    <para>Made a region of the combinations.</para>
+	  </listitem>
+	  <listitem>
+	    <para>Checked the data tree and made corrections.</para>
+	  </listitem>
+	  <listitem>
+	    <para>Assigned material properties using the Combination Editor.</para>
+	  </listitem>
+	</itemizedlist>
+      </para>
+    </sect1>
+
+  </article>

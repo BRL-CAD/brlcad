@@ -1,0 +1,261 @@
+<!DOCTYPE article PUBLIC "-//OASIS//DTD DocBook XML V4.5//EN"
+"../../resources/standard/dtd/docbookx.dtd">
+<article xmlns:xi="http://www.w3.org/2001/XInclude">
+  <articleinfo>
+    <title>Setting Up a .mgedrc File</title>
+
+    <xi:include href="../../books/en/tutorial_series_authors.xml" xpointer="Intro_MGED_Tutorial_Series_III_authors"/>
+
+    <legalnotice>
+       <para>Approved for public release; distribution is unlimited</para>
+   </legalnotice>
+  </articleinfo>
+
+  <para id="mgedrc1">
+    Similar to the preferences or settings options in other computer
+    applications, the .mgedrc file is a useful tool to customize the look and
+    functionality of the U.S. Army Ballistic Research Laboratory -
+    Computer-Aided Design (BRL-CAD) package and minimize potentially
+    time-consuming actions. Using Multi-Device Geometry Editor (MGED) commands
+    and the Tcl/Tk scripting language, users can modify default settings,
+    specify features to be toggled on or off whenever MGED is started,
+    establish typing shortcuts for a command or a series of commands, locate
+    and size the command and geometry windows, and perform a host of other
+    customizations.
+  </para>
+  <para id="mgedrc2">
+    The command to create/update a .mgedrc file with the graphical user
+    interface (GUI) is found under the File drop-down menu. When the
+    Create/Update .mgedrc command is called, it writes an extensive list (~500
+    lines) of default settings and comments representing the default state of
+    the command and graphics windows.
+  </para>
+  <para id="mgedrc3">
+    As shown in Figure D-1, there are two basic parts to a .mgedrc file: (1)
+    the information before the MGEDRC_HEADER and (2) the information after the
+    MGEDRC_HEADER. The information before the header is any text created by
+    the user. The information after the MGEDRC_HEADER is written by the
+    Create/Update .mgedrc command and is a comprehensive list of the default
+    settings and options for the MGED user interface. If any edits are made to
+    the .mgedrc text after the header, these changes will be overwritten by
+    the default settings if the Create/Update .mgedrc command is called again.
+    The information before the HEADER, however, is not changed.
+  </para>
+
+  <note id="mgedrc4">
+    <para>
+      Remember that when creating/updating .mgedrc files, if any            
+      conflicting/repeated commands are found, BRL-CAD "obeys" the last     
+      command listed.
+    </para>
+  </note>
+
+  <para id="mgedrc5">
+    In Figure D-1, note that lines have been added before the header to show
+    different raytracing options and the commands have been sectioned into
+    functional divisions separated by comment fields (comment fields are
+    denoted by the symbol "#").
+  </para>
+
+  <figure id="mgedrc6">
+    <title>The two basic parts of the .mgedrc file: (1) information before header, and (2) information
+    after header.</title>
+    <mediaobject>
+      <imageobject>
+	<imagedata align = "center" fileref="../../articles/en/images/mgedrc_fig01.png" format="PNG"></imagedata>
+      </imageobject>
+    </mediaobject>
+  </figure>
+
+  <para id="mgedrc7">
+    Each command includes the following four basic components:
+    
+    <itemizedlist>
+      <listitem>
+	<para>
+	  the "proc" (procedure) prefix,
+	</para>
+      </listitem>
+      <listitem>
+	<para>
+	  a unique name,
+	</para>
+      </listitem>
+      <listitem>
+	<para>
+	 arguments, and
+	</para>
+      </listitem>
+      <listitem>
+	<para>
+	 the body (i.e., commands that MGED should execute).
+	</para>
+      </listitem>
+    </itemizedlist>  
+  </para>
+
+  <para id="mgedrc8">
+    The symbol ";" signifies command separation (a return), and the symbol "$"
+    inserts the value of the subsequently named variable.
+  </para>
+  <para id="mgedrc9">
+    The following text discusses some specific examples of the type of
+    shortcuts that can be created by users to expedite common operations such
+    as executing raytraces with particular parameters, accepting and rejecting
+    edits, setting azimuth and elevation, etc.
+  </para>
+  <para id="mgedrc10">
+    First, the command to execute a specific kind of raytrace can often be
+    long and tedious to type. For example, if a user wanted to render an image
+    in a window 256 pixels high and wide, with a background color of white,
+    and with the ambient light set to 0.7, the following text would have to be
+    typed:
+    
+    <literallayout>
+rt -s256 -C255/255/255 -A.7
+    </literallayout>
+    
+    However, it is a simple matter to add a line to the user's .mgedrc file to
+    automate the calling of this instruction. The user's line might be as
+    follows:
+    
+    <literallayout>
+proc 256wa {} {rt -s256 -C255/255/255 -A.7}
+    </literallayout>
+    
+    Diagrammed, this line breaks down as follows:
+    <informaltable>
+      <tgroup cols='4'>
+	<tbody>
+	  <row>
+	    <entry>proc</entry>
+	    <entry>256wa</entry>
+	    <entry>{}</entry>
+	    <entry>{rt -s256 -C255/255/255 -A.7}</entry>
+	  </row>
+	  <row>
+	    <entry>Denotes that a Tcl procedure is being created.</entry>
+	    <entry>Names the procedure 256wa.</entry>
+	    <entry>Denotes that there are no arguments.</entry>
+	    <entry>Denotes the MGED command that will be executed.
+	    The rendering will be 256 pixels square size (as
+	    signified by -s), will have a background red-greenblue
+	    value of 255 255 255 (as signified by the -C
+	    option), and will have an ambient light setting of 0.7
+	    (as signified by the -A option).</entry>
+	  </row>
+	</tbody>
+      </tgroup>
+    </informaltable>
+	
+    Now, all the user has to type on the command line to execute a rendering with the previously
+    listed options is the following procedure name:
+
+    <literallayout>
+256wa
+    </literallayout>
+
+    Note that this name has been intentionally kept short and function-based. It reduces a
+    27-character command to a 5-character command and provides the user with an idea of the
+    action it performs. The 256 stands for the rt square size, the w stands for a white background,
+    and the a stands for ambient lighting. But this convention is just a suggestion. The user may
+    choose any name that is unique and does not contain words that are reserved for MGED
+    commands (e.g., create).
+  </para>
+
+  <para id="mgedrc11">
+    The .mgedrc file can also be used to create shortcuts for other types of command line or GUI
+    commands. For example, the syntax for creating a shortcut for accepting and rejecting edits
+    from the command line might be as follows:
+    
+    <literallayout>
+proc acc {} {press accept}
+proc rej {} {press reject}
+    </literallayout>
+
+    In addition, a possible shortcut for calling a standard viewing geometry might be as follows:
+    
+    <literallayout>
+proc 145 {} {ae 145 25}
+    </literallayout>
+
+    And to save the extra selection step when making or copying a primitive, the respective
+    procedure syntax for combining the make and sed commands and copy and sed commands
+    might be as follows:
+
+    <literallayout>
+proc mks {newprim primtype} {make $newprim $primtype; sed $newprim}
+    </literallayout>
+
+and
+
+    <literallayout>
+proc cps {oldprim newprim} {cp $oldprim $newprim; sed $newprim}
+    </literallayout>
+
+  </para>
+
+  <para id="mgedrc12">
+    Figure D-2 shows a sample section of a .mgedrc file that allows the user to specify the command
+    line editor, customize the window size and placement, and toggle the function keys.
+  </para>
+
+  <figure id="mgedrc13">
+    <title>Sample elements and functionality of a .mgedrc file.</title>
+    <mediaobject>
+      <imageobject>
+	<imagedata align = "center" fileref="../../articles/en/images/mgedrc_fig02.png" format="PNG"></imagedata>
+      </imageobject>
+    </mediaobject>
+  </figure>
+
+
+  <para id="mgedrc14">
+    The diagrammed command for sizing and positioning the command window is as follows:
+    <informaltable>
+      <tgroup cols='4'>
+	<tbody>
+	  <row>
+	    <entry>set mged_default</entry>
+	    <entry>(geom)</entry>
+	    <entry>475 × 250</entry>
+	    <entry>+65 +80</entry>
+	  </row>
+	  <row>
+	    <entry>Sets MGED command window defaults.</entry>
+	    <entry>Specifies command window.</entry>
+	    <entry>Sizes the window width to 475 pixels and the height to 250 pixels.</entry>
+	    <entry>Denotes window location will be 65 pixels from the left side of the
+	    display and 80 pixels from the top edge of the display.</entry>
+	  </row>
+	</tbody>
+      </tgroup>
+    </informaltable>
+  </para>
+
+  <para id="mgedrc15">
+    As illustrated in Figure D-3, to specify the window size, the user inputs
+    width-by-height dimensions for each window (i.e., 475 × 250). To specify
+    the placement of the windows on the display, the user specifies offset
+    distances (i.e., +65 +80) from the edges of the display (as measured in
+    pixels). The first number defines the distance for the left/right
+    placement, and the second number is for the up/down placement. The "+"
+    symbol indicates a distance from the left side of the display to the left
+    side of the window or from the top of the display to the top of the
+    window. Alternatively, if a "-" symbol were present (as shown on the right
+    side of Figure D-3), it would indicate a distance from the right side of
+    the display to the right side of the window or from the bottom of the
+    display to the bottom of the window.
+  </para>
+
+  <figure id="mgedrc16">
+    <title>Sample window dimension input and positioning.</title>
+    <mediaobject>
+      <imageobject>
+	<imagedata align = "center" fileref="../../articles/en/images/mgedrc_fig03.png" format="PNG"></imagedata>
+      </imageobject>
+    </mediaobject>
+  </figure>
+
+
+</article>
