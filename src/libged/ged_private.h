@@ -266,22 +266,6 @@ BU_EXTERN(void _ged_vls_col_pr4v,
 	   struct directory	**list_of_names,
 	   int			num_in_list,
 	   int			no_decorate));
-BU_EXTERN(void _ged_vls_long_dpp,
-	  (struct bu_vls	*vls,
-	   struct directory	**list_of_names,
-	   int			num_in_list,
-	   int			aflag,		/* print all objects */
-	   int			cflag,		/* print combinations */
-	   int			rflag,		/* print regions */
-	   int			sflag));	/* print solids */
-BU_EXTERN(void _ged_vls_line_dpp,
-	  (struct bu_vls	*vls,
-	   struct directory	**list_of_names,
-	   int			num_in_list,
-	   int			aflag,	/* print all objects */
-	   int			cflag,	/* print combinations */
-	   int			rflag,	/* print regions */
-	   int			sflag));	/* print solids */
 BU_EXTERN(struct directory ** _ged_getspace,
 	  (struct db_i	*dbip,
 	   register int	num_entries));
