@@ -140,7 +140,6 @@ articlesDOCBOOK_ENhtmlimages_DATA = \
 	$(BUILTARTICLES_ENIMAGES)
 
 BUILTARTICLES_ENIMAGES = \
-	README.DOCBOOK \
 	${articlesDOCBOOK_EN_IMAGES:docpng=png}
 
 
@@ -473,6 +472,8 @@ endif
 
 man1DOCBOOK_ENpdfdir = $(BRLCAD_DATA)/pdf/man1/en
 man1DOCBOOK_ENpdf_DATA = $(BUILTMAN_ENPDF)
+
+
 
 
 
