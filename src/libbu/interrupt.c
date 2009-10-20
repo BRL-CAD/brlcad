@@ -33,6 +33,11 @@
 #include "bu.h"
 
 
+#ifndef HAVE_SIG_T
+typedef void (*sig_t)(int);
+#endif
+
+
 /* hard-coded maximum signal number we can defer due to array we're
  * using for quick O(1) access in a single container for all signals.
  */

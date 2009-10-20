@@ -1758,7 +1758,7 @@ AC_TYPE_MODE_T
 AC_TYPE_OFF_T
 AC_TYPE_PID_T
 AC_TYPE_SIZE_T
-AC_CHECK_TYPE(socklen_t, ,
+AC_CHECK_TYPE([socklen_t], [],
     AC_DEFINE([socklen_t], [int], [Define to int if <sys/socket.h> nor <sys/types.h> define socklen_t]),
     [
 #ifdef HAVE_SYS_TYPES_H
@@ -1768,6 +1768,7 @@ AC_CHECK_TYPE(socklen_t, ,
 #  include <sys/socket.h>
 #endif
 ])
+AC_CHECK_TYPES([sig_t], [], [], [#include <signal.h>])
 
 
 dnl ******************************************
