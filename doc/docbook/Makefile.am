@@ -367,34 +367,34 @@ booksDOCBOOK_ENpdf_DATA = $(BUILTBOOKS_ENPDF)
 
 
 
-specDOCBOOK_EN = \
-	spec/en/BRL_CAD_g_format_V5.xml
+specificationsDOCBOOK_EN = \
+	specifications/en/BRL_CAD_g_format_V5.xml
 
-specDOCBOOK_EN_IMAGES = 
+specificationsDOCBOOK_EN_IMAGES = 
 
-specDOCBOOK_ENhtmldir = $(BRLCAD_DATA)/html/spec/en
-specDOCBOOK_ENhtml_DATA = \
+specificationsDOCBOOK_ENhtmldir = $(BRLCAD_DATA)/html/specifications/en
+specificationsDOCBOOK_ENhtml_DATA = \
 	$(BUILTSPECS_ENHTML)
 
 BUILTSPECS_ENHTML = \
-	${specDOCBOOK_EN:xml=html}
+	${specificationsDOCBOOK_EN:xml=html}
 
-specDOCBOOK_ENhtmlimagesdir = $(BRLCAD_DATA)/html/spec/en/images
-specDOCBOOK_ENhtmlimages_DATA = \
+specificationsDOCBOOK_ENhtmlimagesdir = $(BRLCAD_DATA)/html/specifications/en/images
+specificationsDOCBOOK_ENhtmlimages_DATA = \
 	$(BUILTSPECS_ENIMAGES)
 
 BUILTSPECS_ENIMAGES = \
-	${specDOCBOOK_EN_IMAGES:docpng=png}
+	${specificationsDOCBOOK_EN_IMAGES:docpng=png}
 
 
 if BUILD_PDF_DOCS
 
-BUILTSPECS_ENPDF = ${specDOCBOOK_EN:xml=pdf}
+BUILTSPECS_ENPDF = ${specificationsDOCBOOK_EN:xml=pdf}
 
 endif
 
-specDOCBOOK_ENpdfdir = $(BRLCAD_DATA)/pdf/spec/en
-specDOCBOOK_ENpdf_DATA = $(BUILTSPECS_ENPDF)
+specificationsDOCBOOK_ENpdfdir = $(BRLCAD_DATA)/pdf/specifications/en
+specificationsDOCBOOK_ENpdf_DATA = $(BUILTSPECS_ENPDF)
 
 
 
