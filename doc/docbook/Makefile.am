@@ -367,6 +367,38 @@ booksDOCBOOK_ENpdf_DATA = $(BUILTBOOKS_ENPDF)
 
 
 
+systemDOCBOOK_EN = \
+	system/en/BRL-CAD_db_format.xml
+
+systemDOCBOOK_EN_IMAGES = 
+
+systemDOCBOOK_ENhtmldir = $(BRLCAD_DATA)/html/system/en
+systemDOCBOOK_ENhtml_DATA = \
+	$(BUILTSYSTEMS_ENHTML)
+
+BUILTSYSTEMS_ENHTML = \
+	${systemDOCBOOK_EN:xml=html}
+
+systemDOCBOOK_ENhtmlimagesdir = $(BRLCAD_DATA)/html/system/en/images
+systemDOCBOOK_ENhtmlimages_DATA = \
+	$(BUILTSYSTEMS_ENIMAGES)
+
+BUILTSYSTEMS_ENIMAGES = \
+	${systemDOCBOOK_EN_IMAGES:docpng=png}
+
+
+if BUILD_PDF_DOCS
+
+BUILTSYSTEMS_ENPDF = ${systemDOCBOOK_EN:xml=pdf}
+
+endif
+
+systemDOCBOOK_ENpdfdir = $(BRLCAD_DATA)/pdf/system/en
+systemDOCBOOK_ENpdf_DATA = $(BUILTSYSTEMS_ENPDF)
+
+
+
+
 
 
 
@@ -482,6 +514,9 @@ BUILT_SOURCES = \
 	$(BUILTBOOKS_ENIMAGES) \
 	$(BUILTBOOKS_ENHTML) \
 	$(BUILTBOOKS_ENPDF) \
+	$(BUILTSYSTEMS_ENIMAGES) \
+	$(BUILTSYSTEMS_ENHTML) \
+	$(BUILTSYSTEMS_ENPDF) \
 	$(BUILTMAN_ENHTML) \
 	$(BUILTMAN_ENPDF)
 
@@ -508,7 +543,6 @@ EXTRA_DIST = \
 	${man1INTRO_EN} \
 	README \
 	books/README \
-	BRL-CAD_db_format.xml \
 	catalog.xml \
 	resources \
 	system/man1/mged_cmd_template.xml \

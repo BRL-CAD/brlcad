@@ -1673,21 +1673,6 @@ Magic2 (1 byte).
 
 
 
-
-  <itemizedlist>
-    <listitem>
-      <para>
-      </para>
-    </listitem>
-    <listitem>
-      <para>
-      </para>
-    </listitem>
-  </itemizedlist>
-
-
-
-
   <section>
     <title>How Objects Are Grouped into a Database</title>
     <para>
@@ -1724,5 +1709,5 @@ Magic2 (1 byte).
       
     </para>
   </section>
- 
- </article>
+</section>
+</article>
