@@ -534,6 +534,7 @@ clean-generic: mostlyclean-generic
 	-rmdir -p articles/en/images
 	-rmdir -p books/en/images
 	-rmdir -p lessons/en/images
+	-rmdir -p specifications/en
 	-rmdir -p system/man1/en
 
 EXTRA_DIST = \
