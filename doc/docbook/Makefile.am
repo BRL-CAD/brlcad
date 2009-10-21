@@ -4,18 +4,12 @@ XSL_MAN_STYLESHEET=$(top_srcdir)/doc/docbook/resources/standard/xsl/manpages/doc
 XSL_FO_STYLESHEET=$(top_srcdir)/doc/docbook/resources/standard/xsl/fo/docbook.xsl
 XML_CATALOG_FILES=$(top_srcdir)/doc/docbook/catalog.xml
 
-README.DOCBOOK:
-	mkdir -p system/man1/en
-	mkdir -p articles/en/images
-	mkdir -p books/en/images
-	mkdir -p lessons/en/images
-	cp $(top_srcdir)/doc/docbook/README README.DOCBOOK
-
 .xml.html: 
 	XML_CATALOG_FILES=$(XML_CATALOG_FILES) $(XSLTPROC) $(XSLTPROC_FLAGS) -o $@ $(XSL_XHTML_STYLESHEET) $?
 
 .xml.1:
 	XML_CATALOG_FILES=$(XML_CATALOG_FILES) $(XSLTPROC) $(XSLTPROC_FLAGS) $(XSL_MAN_STYLESHEET) $?
+	mkdir -p system/man1/en/
 	mv '$(@F)' system/man1/en/
 
 .fo.pdf: .xml.fo
@@ -25,6 +19,7 @@ README.DOCBOOK:
 	XML_CATALOG_FILES=$(XML_CATALOG_FILES) $(XSLTPROC) $(XSLTPROC_FLAGS) -o $@ $(XSL_FO_STYLESHEET) $?
 
 .docpng.png:
+	mkdir -p `dirname $@`
 	cp $? $@
 
 
@@ -478,7 +473,6 @@ man1DOCBOOK_ENpdf_DATA = $(BUILTMAN_ENPDF)
 
 
 BUILT_SOURCES = \
-	README.DOCBOOK \
 	$(BUILTARTICLES_ENIMAGES) \
 	$(BUILTARTICLES_ENHTML) \
 	$(BUILTARTICLES_ENPDF) \
@@ -512,6 +506,7 @@ EXTRA_DIST = \
 	${articlesDOCBOOK_EN_IMAGES} \
 	${man1DOCBOOK_EN} \
 	${man1INTRO_EN} \
+	README \
 	books/README \
 	BRL-CAD_db_format.xml \
 	catalog.xml \
