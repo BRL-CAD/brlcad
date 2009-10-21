@@ -2075,11 +2075,28 @@ BU_EXPORT BU_EXTERN(int bu_backtrace, (FILE *fp));
 /**
  * B U _ B O M B
  * @brief
- * Abort the program with a message.
+ * Abort the running process.
+ *
+ * Before termination, it optionally performs the following operations
+ * in the order listed:
+ *
+ * 1. Outputs str to standard error
+ *
+ * 2. Calls any callback functions set in the global bu_bomb_hook_list
+ *    variable with str passed as an argument.
+ *
+ * 3. Jumps to any user specified error handler registered with the
+ *    bu_setjmp_valid/bu_jmpbuf setjmp facility.
+ *
+ * 4. Outputs str to the terminal device in case standard error is
+ *    redirected.
+ *
+ * 5. Aborts abnormally (via abort()) if BU_DEBUG_COREDUMP is defined.
+ *
+ * 6. Exits with exit(12).
  *
  * Only produce a core-dump when that debugging bit is set.  Note that
- * this function is meant to be a last resort graceful abort.  It
- * should not attempt to allocate anything on the stack or heap.
+ * this function is meant to be a last resort semi-graceful abort.
  *
  * This routine should never return unless there is a bu_setjmp
  * handler registered.
