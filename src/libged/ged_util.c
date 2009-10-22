@@ -53,7 +53,7 @@ _ged_results_append_str(struct ged *gedp, char *result_string)
 int
 _ged_results_append_vls(struct ged *gedp, struct bu_vls *result_vls)
 {
-    bu_vls_printf(&gedp->ged_result_str, "%s", bu_vls_addr(&result_vls));
+    bu_vls_printf(&gedp->ged_result_str, "%s", bu_vls_addr(result_vls));
     return GED_OK;
 }
 
