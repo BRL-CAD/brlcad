@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @addtogroup g_  */
+/** @addtogroup g_ */
 /** @{ */
 /** @file brep_debug.h
  *
@@ -59,53 +59,53 @@ using namespace brlcad;
 
 #include "plot3.h"
 
-#define BLUEVIOLET 138,43,226
-#define CADETBLUE 95,159,159
-#define CORNFLOWERBLUE 66,66,111
-#define LIGHTBLUE 173,216,230
-#define DARKGREEN 0,100,0
-#define KHAKI 189,183,107
-#define FORESTGREEN 34,139,34
-#define LIMEGREEN 124,252,0
-#define PALEGREEN 152,251,152
-#define DARKORANGE 255,140,0
-#define DARKSALMON 233,150,122
-#define LIGHTCORAL 240,128,128
-#define PEACH 255,218,185
-#define DEEPPINK 255,20,147
-#define HOTPINK 255,105,180
-#define INDIANRED 205,92,92
-#define DARKVIOLET 148,0,211
-#define MAROON 139,28,98
-#define GOLDENROD 218,165,32
-#define DARKGOLDENROD 184,134,11
-#define LIGHTGOLDENROD 238,221,130
-#define DARKYELLOW 155,155,52
-#define LIGHTYELLOW 255,255,224
-#define RED 255,0,0
-#define GREEN 0,255,0
-#define BLUE 0,0,255
-#define YELLOW 255,255,0
-#define MAGENTA 255,0,255
-#define CYAN 0,255,255
-#define BLACK 0,0,0
-#define WHITE 255,255,255
+#define BLUEVIOLET 138, 43, 226
+#define CADETBLUE 95, 159, 159
+#define CORNFLOWERBLUE 66, 66, 111
+#define LIGHTBLUE 173, 216, 230
+#define DARKGREEN 0, 100, 0
+#define KHAKI 189, 183, 107
+#define FORESTGREEN 34, 139, 34
+#define LIMEGREEN 124, 252, 0
+#define PALEGREEN 152, 251, 152
+#define DARKORANGE 255, 140, 0
+#define DARKSALMON 233, 150, 122
+#define LIGHTCORAL 240, 128, 128
+#define PEACH 255, 218, 185
+#define DEEPPINK 255, 20, 147
+#define HOTPINK 255, 105, 180
+#define INDIANRED 205, 92, 92
+#define DARKVIOLET 148, 0, 211
+#define MAROON 139, 28, 98
+#define GOLDENROD 218, 165, 32
+#define DARKGOLDENROD 184, 134, 11
+#define LIGHTGOLDENROD 238, 221, 130
+#define DARKYELLOW 155, 155, 52
+#define LIGHTYELLOW 255, 255, 224
+#define RED 255, 0, 0
+#define GREEN 0, 255, 0
+#define BLUE 0, 0, 255
+#define YELLOW 255, 255, 0
+#define MAGENTA 255, 0, 255
+#define CYAN 0, 255, 255
+#define BLACK 0, 0, 0
+#define WHITE 255, 255, 255
 
 #define M_COLOR_PLOT(c) pl_color(plot_file(), c)
-#define COLOR_PLOT(r, g, b) pl_color(plot_file(),(r),(g),(b))
-#define M_PT_PLOT(p) 	{ 		\
-    point_t pp,ppp;		        \
-    vect_t grow;                        \
-    VSETALL(grow,0.01);                  \
-    VADD2(pp, p, grow);                 \
-    VSUB2(ppp, p, grow);                \
-    pdv_3box(plot_file(), pp, ppp); 	\
-}
-#define PT_PLOT(p) 	{ 		\
-    point_t 	pp; 			\
-    VSCALE(pp, p, 1.001); 		\
-    pdv_3box(plot_file(), p, pp); 	\
-}
+#define COLOR_PLOT(r, g, b) pl_color(plot_file(), (r), (g), (b))
+#define M_PT_PLOT(p) {				\
+	point_t pp, ppp;		        \
+	vect_t grow;				\
+	VSETALL(grow, 0.01);			\
+	VADD2(pp, p, grow);			\
+	VSUB2(ppp, p, grow);			\
+	pdv_3box(plot_file(), pp, ppp); 	\
+    }
+#define PT_PLOT(p) {				\
+	point_t pp;				\
+	VSCALE(pp, p, 1.001);			\
+	pdv_3box(plot_file(), p, pp);		\
+    }
 #define LINE_PLOT(p1, p2) pdv_3move(plot_file(), p1); pdv_3line(plot_file(), p1, p2)
 #define BB_PLOT(p1, p2) pdv_3box(plot_file(), p1, p2)
 
@@ -116,8 +116,8 @@ void plotsurfaceleafs(SurfaceTree* surf);
 void plotleaf3d(BBNode* bb);
 void plotleafuv(BBNode* bb);
 void plottrim(ON_BrepFace &face, struct bn_vlblock *vbp);
-void plottrim(const ON_Curve &curve, double from, double to );
-void plottrim(ON_Curve &curve );
+void plottrim(const ON_Curve &curve, double from, double to);
+void plottrim(ON_Curve &curve);
 
 #endif
 /** @} */
