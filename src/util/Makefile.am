@@ -18,6 +18,13 @@ PL_DM_EXTRA = pl-dm.c
 endif
 # WITH_X11
 
+if BUILD_BOOST
+PC_TEST = pc_test
+else
+PC_TEST =
+endif
+# BUILD_BOOST
+
 
 bin_PROGRAMS = \
 	${PL_DM} \
@@ -146,8 +153,8 @@ bin_PROGRAMS = \
 AM_CPPFLAGS = ${TCL_CPPFLAGS}
 
 noinst_PROGRAMS = \
-	roots_example \
-	pc_test
+	${PC_TEST} \
+	roots_example
 
 
 dist_bin_SCRIPTS = \
@@ -526,8 +533,11 @@ rle_pix_CFLAGS = ${RLE_CPPFLAGS}
 roots_example_SOURCES = roots_example.c
 roots_example_LDADD = ${RT} ${BU}
 
+if BUILD_BOOST
 pc_test_SOURCES = pc_test.c
 pc_test_LDADD = ${PC} ${PC_LIBS} ${WDB} ${WDB_LIBS}
+endif
+# BUILD_BOOST
 
 sgi_pix_SOURCES = sgi-pix.c
 sgi_pix_LDADD = ${BU} ${LIBSGIGL}

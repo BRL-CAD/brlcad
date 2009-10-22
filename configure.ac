@@ -1537,6 +1537,13 @@ AC_CHECK_HEADERS( \
 	winsock.h \
 )
 
+AC_LANG_PUSH([C++])
+AC_CHECK_HEADERS( \
+	limit \
+	istream \
+)
+AC_LANG_POP
+
 if test "x$bc_with_dtrace" != "xno" ; then
     AC_CHECK_HEADER(sys/sdt.h,, [bc_with_dtrace=no])
 fi
@@ -3573,6 +3580,7 @@ AM_CONDITIONAL(BUILD_REGEX, [test "x$build_brlcad_regex" = "xyes"])
 AM_CONDITIONAL(BUILD_ZLIB, [test "x$build_brlcad_zlib" = "xyes"])
 AM_CONDITIONAL(BUILD_URT, [test "x$build_brlcad_urt" = "xyes"])
 AM_CONDITIONAL(BUILD_OPENNURBS, [test "x$build_brlcad_opennurbs" = "xyes"])
+AM_CONDITIONAL(BUILD_BOOST, [test "x$ac_cv_header_limit" = "xyes" && test "x$ac_cv_header_istream" = "xyes"])
 AM_CONDITIONAL(BUILD_STEP, [test "x$build_brlcad_step" = "xyes"])
 AM_CONDITIONAL(BUILD_TERMLIB, [test "x$build_brlcad_termlib" = "xyes"])
 AM_CONDITIONAL(BUILD_TNT, [test "x$build_brlcad_tnt" = "xyes"])
