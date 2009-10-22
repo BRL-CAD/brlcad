@@ -1539,7 +1539,7 @@ AC_CHECK_HEADERS( \
 
 AC_LANG_PUSH([C++])
 AC_CHECK_HEADERS( \
-	limit \
+	limits \
 	istream \
 )
 AC_LANG_POP
