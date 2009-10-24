@@ -17,20 +17,6 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @addtogroup bu_log */
-/** @{ */
-/** @file whereis.c
- *
- * Routine to provide BSD "whereis" functionality, locating binaries
- * of specified programs from the SYSTEM path.  This is useful to
- * locate binaries and resources at run-time.
- *
- * Author -
- *   Christopher Sean Morrison
- *
- * Source -
- *   BRL-CAD Open Source
- */
 
 #include "common.h"
 
@@ -55,19 +41,10 @@
 /* how big should PATH from getenv ever be */
 #define MAXPATHENV 32767
 
-/** container for path match results */
+/* container for path match results */
 static char bu_whereis_result[MAXPATHLEN] = {0};
 
 
-/**
- * b u _ w h e r e i s
- *
- * returns the first SYSTEM path match to a given executable cmd name.
- *
- * caller should not free the result, though it will not be preserved
- * between calls either.  the caller should strdup the result if they
- * need to keep it around.
- */
 const char *
 bu_whereis(const char *cmd)
 {
@@ -154,7 +131,6 @@ bu_whereis(const char *cmd)
 
     return NULL;
 }
-/** @} */
 
 /*
  * Local Variables:

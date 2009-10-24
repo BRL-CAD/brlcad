@@ -17,13 +17,6 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @addtogroup bu_log */
-/** @{ */
-/** @file backtrace.c
- *
- * Extract a backtrace of the current call stack.
- *
- */
 
 #include "common.h"
 
@@ -389,8 +382,6 @@ main(int argc, char *argv[])
     return 0;
 }
 #endif  /* TEST_BACKTRACE */
-
-/** @} */
 
 /*
  * Local Variables:

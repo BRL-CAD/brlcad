@@ -17,15 +17,6 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @addtogroup bu_log */
-/** @{ */
-/** @file which.c
- *
- * Routine to provide BSD "which" functionality, locating binaries of
- * specified programs from the user's PATH. This is useful to locate
- * binaries and resources at run-time.
- *
- */
 
 #include "common.h"
 
@@ -41,19 +32,10 @@
 /* how big should PATH from getenv ever be */
 #define MAXPATHENV 32767
 
-/** container for path match results */
+/* container for path match results */
 static char bu_which_result[MAXPATHLEN] = {0};
 
 
-/**
- * b u _ w h i c h
- *
- * returns the first USER path match to a given executable cmd name.
- *
- * caller should not free the result, though it will not be preserved
- * between calls either.  the caller should strdup the result if they
- * need to keep it around.
- */
 const char *
 bu_which(const char *cmd)
 {
@@ -150,7 +132,7 @@ bu_which(const char *cmd)
 
     return NULL;
 }
-/** @} */
+
 /*
  * Local Variables:
  * mode: C

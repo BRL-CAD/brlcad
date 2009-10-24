@@ -17,15 +17,6 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @addtogroup hton */
-/** @{ */
-/** @file htonf.c
- *
- * @brief convert floats to host/network format
- *
- * Host to Network Floats  +  Network to Host Floats.
- *
- */
 
 #include "common.h"
 
@@ -37,11 +28,7 @@
 #endif
 #include <stdio.h>
 
-/**
- * H T O N F
- *
- * Host to Network Floats
- */
+
 void
 htonf(register unsigned char *out, register const unsigned char *in, int count)
 {
@@ -77,11 +64,6 @@ htonf(register unsigned char *out, register const unsigned char *in, int count)
 }
 
 
-/**
- * N T O H F
- *
- * Network to Host Floats
- */
 void
 ntohf(register unsigned char *out, register const unsigned char *in, int count)
 {
@@ -118,7 +100,6 @@ ntohf(register unsigned char *out, register const unsigned char *in, int count)
     bu_bomb("ntohf.c:  ERROR, no NtoHD conversion for this machine type\n");
 }
 
-/** @} */
 /*
  * Local Variables:
  * mode: C

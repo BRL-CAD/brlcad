@@ -17,13 +17,6 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file libbu/vers.c
- *
- * version information about LIBBU
- *
- * @author
- *   Christopher Sean Morrison
- */
 
 #include "common.h"
 
@@ -31,9 +24,6 @@
 #include "brlcad_version.h"
 
 
-/**
- * returns the compile-time version of libbu
- */
 const char *
 bu_version(void)
 {

@@ -17,13 +17,6 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @addtogroup bu_log */
-/** @{ */
-/** @file fgets.c
- *
- * fgets replacement function that also handles CR as an EOL marker
- *
- */
 
 #include "common.h"
 
@@ -100,8 +93,6 @@ bu_fgets(char *s, int size, FILE *stream)
 	return s;
 }
 
-
-/** @} */
 
 /*
  * Local Variables:

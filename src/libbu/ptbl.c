@@ -17,21 +17,6 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @addtogroup ptbl */
-/** @{ */
-/** @file ptbl.c
- *
- * @brief Support for generalized "pointer tables"
- *
- * Support for generalized "pointer tables",
- * kept compactly in a dynamic array.
- *
- * The table is currently un-ordered, and is merely a array of pointers.
- * The support routine nmg_tbl manipulates the array for you.
- * Pointers to be operated on (inserted, deleted,
- * searched for) are passed as a "pointer to long".
- *
- */
 
 #include "common.h"
 
@@ -41,12 +26,6 @@
 #include "bu.h"
 
 
-/**
- * B U _ P T B L _ I N I T
- *
- * Initialize struct & get storage for table.
- * Recommend 8 or 64 for initial len.
- */
 void
 bu_ptbl_init(struct bu_ptbl *b, int len, const char *str)
 {
@@ -61,11 +40,6 @@ bu_ptbl_init(struct bu_ptbl *b, int len, const char *str)
 }
 
 
-/**
- * B U _ P T B L _ R E S E T
- *
- * Reset the table to have no elements, but retain any existing storage.
- */
 void
 bu_ptbl_reset(struct bu_ptbl *b)
 {
@@ -77,11 +51,6 @@ bu_ptbl_reset(struct bu_ptbl *b)
 }
 
 
-/**
- * B U _ P T B L _ I N S
- *
- * Append/Insert a (long *) item to/into the table.
- */
 int
 bu_ptbl_ins(struct bu_ptbl *b, long int *p)
 {
@@ -105,24 +74,11 @@ bu_ptbl_ins(struct bu_ptbl *b, long int *p)
 }
 
 
-/**
- * B U _ P T B L _ L O C A T E
- *
- * locate a (long *) in an existing table
- *
- *
- * @return	index of first matching element in array, if found
- * @return	-1	if not found
- *
- * We do this a great deal, so make it go as fast as possible.
- * this is the biggest argument I can make for changing to an
- * ordered list.  Someday....
- */
 int
 bu_ptbl_locate(const struct bu_ptbl *b, const long int *p)
 {
-    register int		k;
-    register const long	**pp;
+    register int k;
+    register const long **pp;
 
     BU_CK_PTBL(b);
     pp = (const long **)b->buffer;
@@ -133,17 +89,11 @@ bu_ptbl_locate(const struct bu_ptbl *b, const long int *p)
 }
 
 
-/**
- * B U _ P T B L _ Z E R O
- *
- * Set all occurrences of "p" in the table to zero.
- * This is different than deleting them.
- */
 void
 bu_ptbl_zero(struct bu_ptbl *b, const long int *p)
 {
-    register int		k;
-    register const long	**pp;
+    register int k;
+    register const long **pp;
 
     BU_CK_PTBL(b);
     pp = (const long **)b->buffer;
@@ -152,24 +102,11 @@ bu_ptbl_zero(struct bu_ptbl *b, const long int *p)
 }
 
 
-/**
- * B U _ P T B L _ I N S _ U N I Q U E
- *
- * Append item to table, if not already present.  Unique insert.
- *
- *
- * @return	index of first matchine element in array, if found.  (table unchanged)
- * @return	-1	if table extended to hold new element
- *
- * We do this a great deal, so make it go as fast as possible.
- * this is the biggest argument I can make for changing to an
- * ordered list.  Someday....
- */
 int
 bu_ptbl_ins_unique(struct bu_ptbl *b, long int *p)
 {
-    register int	k;
-    register long	**pp = b->buffer;
+    register int k;
+    register long **pp = b->buffer;
 
     BU_CK_PTBL(b);
 
@@ -191,27 +128,12 @@ bu_ptbl_ins_unique(struct bu_ptbl *b, long int *p)
 }
 
 
-/**
- * B U _ P T B L _ R M
- *
- * Remove all occurrences of an item from a table
- *
- *
- * @return	Number of copies of 'p' that were removed from the table.
- * @return	0 if none found.
- *
- * we go backwards down the table looking for occurrences
- * of p to delete.  We do it backwards to reduce the amount
- * of data moved when there is more than one occurrence of p
- * in the table.  A pittance savings, unless you're doing a
- * lot of it.
- */
 int
 bu_ptbl_rm(struct bu_ptbl *b, const long int *p)
 {
     register int end = b->end, j, k, l;
     register long **pp = b->buffer;
-    int	ndel = 0;
+    int ndel = 0;
 
     BU_CK_PTBL(b);
     for (l = b->end-1; l >= 0; --l) {
@@ -235,12 +157,6 @@ bu_ptbl_rm(struct bu_ptbl *b, const long int *p)
 }
 
 
-/**
- * B U _ P T B L _ C A T
- *
- * Catenate one table onto end of another.
- * There is no checking for duplication.
- */
 void
 bu_ptbl_cat(struct bu_ptbl *dest, const struct bu_ptbl *src)
 {
@@ -260,18 +176,10 @@ bu_ptbl_cat(struct bu_ptbl *dest, const struct bu_ptbl *src)
 }
 
 
-/**
- * B U _ P T B L _ C A T _ U N I Q
- *
- * Catenate one table onto end of another,
- * ensuring that no entry is duplicated.
- * Duplications between multiple items in 'src' are not caught.
- * The search is a nasty n**2 one.  The tables are expected to be short.
- */
 void
 bu_ptbl_cat_uniq(struct bu_ptbl *dest, const struct bu_ptbl *src)
 {
-    register long	**p;
+    register long **p;
 
     BU_CK_PTBL(dest);
     BU_CK_PTBL(src);
@@ -290,12 +198,6 @@ bu_ptbl_cat_uniq(struct bu_ptbl *dest, const struct bu_ptbl *src)
 }
 
 
-/**
- * B U _ P T B L _ F R E E
- *
- * Deallocate dynamic buffer associated with a table,
- * and render this table unusable without a subsequent bu_ptbl_init().
- */
 void
 bu_ptbl_free(struct bu_ptbl *b)
 {
@@ -309,11 +211,6 @@ bu_ptbl_free(struct bu_ptbl *b)
 }
 
 
-/**
- * B U _ P T B L
- *
- * This version maintained for source compatibility with existing NMG code.
- */
 int
 bu_ptbl(struct bu_ptbl *b, int func, long int *p)
 {
@@ -349,15 +246,10 @@ bu_ptbl(struct bu_ptbl *b, int func, long int *p)
 }
 
 
-/**
- * B U _ P R _ P T B L
- *
- * Print a bu_ptbl array for inspection.
- */
 void
 bu_pr_ptbl(const char *title, const struct bu_ptbl *tbl, int verbose)
 {
-    register long	**lp;
+    register long **lp;
 
     BU_CK_PTBL(tbl);
     bu_log("%s: bu_ptbl array with %d entries\n",
@@ -378,11 +270,6 @@ bu_pr_ptbl(const char *title, const struct bu_ptbl *tbl, int verbose)
 }
 
 
-/**
- * B U _ P T B L _ T R U N C
- *
- * truncate a bu_ptbl
- */
 void
 bu_ptbl_trunc(struct bu_ptbl *tbl, int end)
 {
@@ -394,7 +281,7 @@ bu_ptbl_trunc(struct bu_ptbl *tbl, int end)
     tbl->end = end;
     return;
 }
-/** @} */
+
 /*
  * Local Variables:
  * mode: C

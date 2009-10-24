@@ -19,19 +19,6 @@
  */
 /** @addtogroup bitv */
 /** @{ */
-/** @file bitv.c
- *
- * Routines for managing efficient high-performance bit vectors of
- * arbitrary length.
- *
- * The basic type "bitv_t" is defined in include/bu.h; it is the
- * widest integer datatype for which efficient hardware support
- * exists.  BU_BITV_SHIFT and BU_BITV_MASK are also defined in bu.h
- *
- * These bit vectors are "little endian", bit 0 is in the right hand
- * side of the [0] word.
- *
- */
 
 #include "common.h"
 
@@ -310,6 +297,7 @@ bu_bitv_dup(register const struct bu_bitv *bv)
 }
 
 /** @} */
+
 /*
  * Local Variables:
  * mode: C

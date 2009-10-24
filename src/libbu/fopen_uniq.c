@@ -17,13 +17,6 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @addtogroup bu_log */
-/** @{ */
-/** @file fopen_uniq.c
- *
- * @brief DEPRECATED: Routine to open a unique filename.
- *
- */
 
 #include "common.h"
 
@@ -75,7 +68,6 @@ bu_fopen_uniq(const char *outfmt, const char *namefmt, int n)
 
     return fp;
 }
-/** @} */
 
 /*
  * Local Variables:

@@ -19,24 +19,6 @@
  */
 /** @addtogroup parse */
 /** @{ */
-/** @file ./libbu/parse.c
- *
- * @brief routines for parsing arbitrary structures
- *
- * Routines to assign values to elements of arbitrary structures.
- * The layout of a structure to be processed is described by
- * a structure of type "bu_structparse", giving element names, element
- * formats, an offset from the beginning of the structure, and
- * a pointer to an optional "hooked" function that is called whenever
- * that structure element is changed.
- *
- * @par There are four basic operations supported:
- * @arg	print	struct elements to ASCII
- * @arg	parse	ASCII to struct elements
- * @arg	export	struct elements to machine-independent binary
- * @arg	import	machine-independent binary to struct elements
- *
- */
 
 #include "common.h"
 
@@ -50,10 +32,10 @@
 #include "bu.h"
 
 
-#define CKMEM(_len)	{  \
-	register int	offset; \
+#define CKMEM(_len) {  \
+	register int offset; \
 	if ((offset = (ep - cp) - (_len)) < 0) { \
-		do  { \
+		do { \
 			offset += ext->ext_nbytes;	/* decr by new growth */ \
 			ext->ext_nbytes <<= 1; \
 		} while (offset < 0); \
@@ -62,22 +44,23 @@
 		     ext->ext_nbytes, "bu_struct_export"); \
 		ep = (char *) ext->ext_buf + ext->ext_nbytes; \
 		cp = (char *) ext->ext_buf + offset; \
-	} }
+	} \
+}
 
-#define	BU_GETPUT_MAGIC_1	0x15cb
-#define BU_GETPUT_MAGIC_2	0xbc51
-#define BU_INIT_GETPUT_1(_p)	{ \
+#define BU_GETPUT_MAGIC_1 0x15cb
+#define BU_GETPUT_MAGIC_2 0xbc51
+#define BU_INIT_GETPUT_1(_p) { \
 	BU_CK_EXTERNAL(_p); \
 	((unsigned char *) _p->ext_buf)[1] = (BU_GETPUT_MAGIC_1 & 0xFF); \
 	((unsigned char *) _p->ext_buf)[0] = (BU_GETPUT_MAGIC_1 >> 8) & 0xFF; \
-	}
-#define BU_INIT_GETPUT_2(_p, _l)	{\
+}
+#define BU_INIT_GETPUT_2(_p, _l) {\
 	BU_CK_EXTERNAL(_p); \
 	((unsigned char *) _p->ext_buf)[_l-1] = (BU_GETPUT_MAGIC_2 & 0xFF); \
 	((unsigned char *) _p->ext_buf)[_l-2] = (BU_GETPUT_MAGIC_2 >> 8) & 0xFF; \
-	}
+}
 
-#define	BU_CK_GETPUT(_p) {\
+#define BU_CK_GETPUT(_p) {\
 	register long _i; \
 	register long _len; \
 	BU_CK_EXTERNAL(_p); \
@@ -119,18 +102,16 @@
 	} \
 }
 
-/**
- * B U _ S T R U C T _ E X P O R T
- */
+
 int
 bu_struct_export(struct bu_external *ext, const genptr_t base, const struct bu_structparse *imp)
 {
-    register char	*cp;		/* current possition in buffer */
-    char		*ep;		/* &ext->ext_buf[ext->ext_nbytes] */
+    register char *cp;		/* current possition in buffer */
+    char *ep;		/* &ext->ext_buf[ext->ext_nbytes] */
     const struct bu_structparse *ip;	/* current imexport structure */
-    char		*loc;		/* where host-format data is */
-    int		len;
-    register int	i;
+    char *loc;		/* where host-format data is */
+    int len;
+    register int i;
 
     BU_INIT_EXTERNAL(ext);
 
@@ -150,14 +131,14 @@ bu_struct_export(struct bu_external *ext, const genptr_t base, const struct bu_s
 		/* Indirect to another structure */
 		/* deferred */
 		bu_free((char *) ext->ext_buf, "output ext_buf");
-		return (0);
+		return 0;
 	    case '%':
 		/* See below */
 		break;
 	    default:
 		/* Unknown */
 		bu_free((char *) ext->ext_buf, "output ext_buf");
-		return (0);
+		return 0;
 	}
 	/* [0] == '%', use printf-like format char */
 	switch (ip->sp_fmt[1]) {
@@ -172,7 +153,7 @@ bu_struct_export(struct bu_external *ext, const genptr_t base, const struct bu_s
 		/* 32-bit network integer, from "int" */
 		CKMEM(ip->sp_count * 4);
 		{
-		    register unsigned long	l;
+		    register unsigned long l;
 		    for (i = ip->sp_count-1; i >= 0; i--) {
 			l = *((int *)loc);
 			cp[3] = l;
@@ -188,7 +169,7 @@ bu_struct_export(struct bu_external *ext, const genptr_t base, const struct bu_s
 		/* 16-bit integer, from "int" */
 		CKMEM(ip->sp_count * 2);
 		{
-		    register unsigned short	s;
+		    register unsigned short s;
 		    for (i = ip->sp_count-1; i >= 0; i--) {
 			s = *((int *)loc);
 			cp[1] = s;
@@ -200,11 +181,10 @@ bu_struct_export(struct bu_external *ext, const genptr_t base, const struct bu_s
 		continue;
 	    case 's':
 		{
-		    /* char array is transmitted as a
-		     * 4 byte character count, followed by a
-		     * null terminated, word padded char array.
-		     * The count includes any pad bytes,
-		     * but not the count itself.
+		    /* char array is transmitted as a 4 byte character
+		     * count, followed by a null terminated, word
+		     * padded char array.  The count includes any pad
+		     * bytes, but not the count itself.
 		     *
 		     * ip->sp_count == sizeof(char array)
 		     */
@@ -221,8 +201,7 @@ bu_struct_export(struct bu_external *ext, const genptr_t base, const struct bu_s
 
 		    CKMEM(len + 4);
 
-		    /* put the length on the front
-		     * of the string
+		    /* put the length on the front of the string
 		     */
 		    cp[3] = len;
 		    cp[2] = len >> 8;
@@ -250,7 +229,7 @@ bu_struct_export(struct bu_external *ext, const genptr_t base, const struct bu_s
 		continue;
 	    default:
 		bu_free((char *) ext->ext_buf, "output ext_buf");
-		return (0);
+		return 0;
 	}
     }
     CKMEM(2);	/* get room for the trailing magic number */
@@ -264,21 +243,19 @@ bu_struct_export(struct bu_external *ext, const genptr_t base, const struct bu_s
     ((char *)ext->ext_buf)[2] = i >>24;
     BU_INIT_GETPUT_2(ext, i);
     ext->ext_nbytes = i;	/* XXX this changes nbytes if i < 480 ? */
-    return (1);
+    return 1;
 }
 
-/**
- * B U _ S T R U C T _ I M P O R T
- */
+
 int
 bu_struct_import(genptr_t base, const struct bu_structparse *imp, const struct bu_external *ext)
 {
-    register const unsigned char	*cp;	/* current possition in buffer */
-    const struct bu_structparse	*ip;	/* current imexport structure */
-    char		*loc;		/* where host-format data is */
-    int		len;
-    int		bytes_used;
-    register int	i;
+    register const unsigned char *cp;	/* current possition in buffer */
+    const struct bu_structparse *ip;	/* current imexport structure */
+    char *loc;		/* where host-format data is */
+    int len;
+    int bytes_used;
+    register int i;
 
     BU_CK_GETPUT(ext);
 
@@ -292,13 +269,13 @@ bu_struct_import(genptr_t base, const struct bu_structparse *imp, const struct b
 	    case 'i':
 		/* Indirect to another structure */
 		/* deferred */
-		return (-1);
+		return -1;
 	    case '%':
 		/* See below */
 		break;
 	    default:
 		/* Unknown */
-		return (-1);
+		return -1;
 	}
 	/* [0] == '%', use printf-like format char */
 	switch (ip->sp_fmt[1]) {
@@ -312,7 +289,7 @@ bu_struct_import(genptr_t base, const struct bu_structparse *imp, const struct b
 	    case 'd':
 		/* 32-bit network integer, from "int" */
 		{
-		    register long	l;
+		    register long l;
 		    for (i = ip->sp_count-1; i >= 0; i--) {
 			l =	(cp[0] << 24) |
 			    (cp[1] << 16) |
@@ -337,9 +314,9 @@ bu_struct_import(genptr_t base, const struct bu_structparse *imp, const struct b
 		break;
 	    case 's':
 		{
-		    /* char array transmitted as a
-		     * 4 byte character count, followed by a
-		     * null terminated, word padded char array
+		    /* char array transmitted as a 4 byte character
+		     * count, followed by a null terminated, word
+		     * padded char array
 		     *
 		     * ip->sp_count == sizeof(char array)
 		     */
@@ -385,7 +362,7 @@ bu_struct_import(genptr_t base, const struct bu_structparse *imp, const struct b
 		}
 		break;
 	    default:
-		return (-1);
+		return -1;
 	}
 	if (ip->sp_hook) {
 	    ip->sp_hook(ip, ip->sp_name, (const char *)base, NULL);
@@ -396,12 +373,7 @@ bu_struct_import(genptr_t base, const struct bu_structparse *imp, const struct b
     return (bytes_used);
 }
 
-/**
- * B U _ S T R U C T _ P U T
- *
- * Put a structure in external form to a stdio file.
- * All formatting must have been accomplished previously.
- */
+
 int
 bu_struct_put(FILE *fp, const struct bu_external *ext)
 {
@@ -410,11 +382,7 @@ bu_struct_put(FILE *fp, const struct bu_external *ext)
     return (fwrite(ext->ext_buf, 1, ext->ext_nbytes, fp));
 }
 
-/**
- * B U _ S T R U C T _ G E T
- *
- * Obtain the next structure in external form from a stdio file.
- */
+
 int
 bu_struct_get(struct bu_external *ext, FILE *fp)
 {
@@ -428,7 +396,9 @@ bu_struct_get(struct bu_external *ext, FILE *fp)
     bu_semaphore_release(BU_SEM_SYSCALL);		/* unlock */
 
     if (i != 6) {
-	if (i == 0) return (0);
+	if (i == 0)
+	    return 0;
+
 	bu_log("ERROR: bu_struct_get bad fread (%d), file %s, line %d\n",
 	       i, __FILE__, __LINE__);
 	bu_bomb("Bad fread");
@@ -464,18 +434,10 @@ bu_struct_get(struct bu_external *ext, FILE *fp)
 	       bu_identify_magic(i), i, __FILE__, __LINE__);
 	bu_bomb("Bad getput buffer");
     }
-    return (1);
+    return 1;
 }
 
-/**
- * B U _ S T R U C T _ B U F
- *
- * Given a buffer with an external representation of a structure
- * (e.g. the ext_buf portion of the output from bu_struct_export),
- * check it for damage in shipment, and if it's OK,
- * wrap it up in an bu_external structure, suitable for passing
- * to bu_struct_import().
- */
+
 void
 bu_struct_wrap_buf(struct bu_external *ext, genptr_t buf)
 {
@@ -508,21 +470,22 @@ bu_struct_wrap_buf(struct bu_external *ext, genptr_t buf)
 
 
 /**
- * B U _ P A R S E _ D O U B L E
+ * _ B U _ P A R S E _ D O U B L E
  *
  * Parse an array of one or more doubles.
- * Return value: 0 when successful
- *               <0 upon failure
+ *
+ * Returns: 0 when successful
+ *         <0 upon failure
  */
 HIDDEN int
-bu_parse_double(const char *str, long int count, double *loc)
+_bu_parse_double(const char *str, long int count, double *loc)
 {
-    long	i;
-    int	dot_seen;
-    const char	*numstart;
-    double	tmp_double;
-    char	buf[128];
-    int	len;
+    long i;
+    int dot_seen;
+    const char *numstart;
+    double tmp_double;
+    char buf[128];
+    int len;
 
     for (i=0; i < count && *str; ++i) {
 	numstart = str;
@@ -546,7 +509,7 @@ bu_parse_double(const char *str, long int count, double *loc)
 	    return -1;
 
 	/* there was a mantissa, so we may have an exponent */
-	if  (*str == 'E' || *str == 'e') {
+	if (*str == 'E' || *str == 'e') {
 	    str++;
 
 	    /* skip exponent sign */
@@ -571,16 +534,16 @@ bu_parse_double(const char *str, long int count, double *loc)
     return 0;
 }
 
+
 /**
- * B U _ S T R U C T _ L O O K U P
+ * _ B U _ S T R U C T _ L O O K U P
  *
- *
- * @return     -2      parse error
- * @return	-1	not found
- * @return	 0	entry found and processed
+ * @return -2 parse error
+ * @return -1 not found
+ * @return  0 entry found and processed
  */
 HIDDEN int
-bu_struct_lookup(register const struct bu_structparse *sdp, register const char *name, const char *base, const char *const value)
+_bu_struct_lookup(register const struct bu_structparse *sdp, register const char *name, const char *base, const char *const value)
     /* structure description */
     /* struct member name */
     /* begining of structure */
@@ -596,26 +559,23 @@ bu_struct_lookup(register const struct bu_structparse *sdp, register const char 
 
 	    continue;
 
-	/* if we get this far, we've got a name match
-	 * with a name in the structure description
+	/* if we get this far, we've got a name match with a name in
+	 * the structure description
 	 */
 
 	loc = (char *)(base + sdp->sp_offset);
 
 	if (sdp->sp_fmt[0] == 'i') {
 	    /* Indirect to another structure */
-	    if (bu_struct_lookup(
-		    (struct bu_structparse *)sdp->sp_count,
-		    name, base, value)
-		== 0)
-		return (0);	/* found */
+	    if (_bu_struct_lookup((struct bu_structparse *)sdp->sp_count, name, base, value) == 0)
+		return 0;	/* found */
 	    else
 		continue;
 	}
 	if (sdp->sp_fmt[0] != '%') {
-	    bu_log("bu_struct_lookup(%s): unknown format '%s'\n",
+	    bu_log("_bu_struct_lookup(%s): unknown format '%s'\n",
 		   name, sdp->sp_fmt);
-	    return (-1);
+	    return -1;
 	}
 
 	switch (sdp->sp_fmt[1]) {
@@ -624,8 +584,8 @@ bu_struct_lookup(register const struct bu_structparse *sdp, register const char 
 		{
 		    register int i, j;
 
-		    /* copy the string, converting escaped
-		     * double quotes to just double quotes
+		    /* copy the string, converting escaped double
+		     * quotes to just double quotes
 		     */
 		    for (i=j=0;
 			 j < sdp->sp_count && value[i] != '\0';
@@ -730,48 +690,39 @@ bu_struct_lookup(register const struct bu_structparse *sdp, register const char 
 		}
 		break;
 	    case 'f':
-		retval = bu_parse_double(value, sdp->sp_count,
-					 (double *)loc);
+		retval = _bu_parse_double(value, sdp->sp_count,
+					  (double *)loc);
 		break;
 	    default:
-		bu_log("bu_struct_lookup(%s): unknown format '%s'\n",
+		bu_log("_bu_struct_lookup(%s): unknown format '%s'\n",
 		       name, sdp->sp_fmt);
-		return (-1);
+		return -1;
 	}
 	if (sdp->sp_hook) {
 	    sdp->sp_hook(sdp, name, base, value);
 	}
 	return (retval);		/* OK or parse error */
     }
-    return (-1);			/* Not found */
+    return -1;			/* Not found */
 }
 
-/**
- * B U _ S T R U C T P A R S E
- *
- * Parse the structure element description in the vls string "vls"
- * according to the structure description in "parsetab"
- *
- *
- * @return	<0	failure
- * @return	 0	OK
- */
+
 int
 bu_struct_parse(const struct bu_vls *in_vls, const struct bu_structparse *desc, const char *base)
     /* string to parse through */
     /* structure description */
     /* base addr of users struct */
 {
-    struct bu_vls	vls;
+    struct bu_vls vls;
     register char *cp;
-    char	*name;
-    char	*value;
+    char *name;
+    char *value;
     int retval;
 
     BU_CK_VLS(in_vls);
     if (desc == (struct bu_structparse *)NULL) {
 	bu_log("Null \"struct bu_structparse\" pointer\n");
-	return (-1);
+	return -1;
     }
 
     /* Duplicate the input string.  This algorithm is destructive. */
@@ -798,16 +749,15 @@ bu_struct_parse(const struct bu_vls *in_vls, const struct bu_structparse *desc, 
 	    bu_log("bu_structparse: input keyword '%s' is not followed by '=' in '%s'\nInput must be in keyword=value format.\n",
 		   name, bu_vls_addr(in_vls));
 	    bu_vls_free(&vls);
-	    return (-2);
+	    return -2;
 	}
 
 	*cp++ = '\0';
 
 	/* Find end of value. */
-	if (*cp == '"')	{
-	    /* strings are double-quote (") delimited
-	     * skip leading " & find terminating "
-	     * while skipping escaped quotes (\")
+	if (*cp == '"') {
+	    /* strings are double-quote (") delimited skip leading " &
+	     * find terminating " while skipping escaped quotes (\")
 	     */
 	    for (value = ++cp; *cp != '\0'; ++cp)
 		if (*cp == '"' &&
@@ -818,7 +768,7 @@ bu_struct_parse(const struct bu_vls *in_vls, const struct bu_structparse *desc, 
 		bu_log("bu_structparse: keyword '%s'=\" without closing \"\n",
 		       name);
 		bu_vls_free(&vls);
-		return (-3);
+		return -3;
 	    }
 	} else {
 	    /* non-strings are white-space delimited */
@@ -831,7 +781,7 @@ bu_struct_parse(const struct bu_vls *in_vls, const struct bu_structparse *desc, 
 	    *cp++ = '\0';
 
 	/* Lookup name in desc table and modify */
-	retval = bu_struct_lookup(desc, name, base, value);
+	retval = _bu_struct_lookup(desc, name, base, value);
 	if (retval == -1) {
 	    bu_log("bu_structparse:  '%s=%s', keyword not found in:\n",
 		   name, value);
@@ -843,20 +793,20 @@ bu_struct_parse(const struct bu_vls *in_vls, const struct bu_structparse *desc, 
 
     }
     bu_vls_free(&vls);
-    return (0);
+    return 0;
 }
 
 
 /**
- * B U _ M A T P R I N T
+ * _ B U _ M A T P R I N T
  *
  * XXX Should this be here, or could it be with the matrix support?
  * pretty-print a matrix
  */
 HIDDEN void
-bu_matprint(const char *name, register const double *mat)
+_bu_matprint(const char *name, register const double *mat)
 {
-    int	delta = strlen(name)+2;
+    int delta = strlen(name)+2;
 
     /* indent the body of the matrix */
     bu_log_indent_delta(delta);
@@ -876,15 +826,13 @@ bu_matprint(const char *name, register const double *mat)
 	   mat[12], mat[13], mat[14], mat[15]);
 }
 
-/**
- *
- */
+
 HIDDEN void
-bu_vls_matprint(struct bu_vls		*vls,
-		const char		*name,
-		register const double	*mat)
+_bu_vls_matprint(struct bu_vls *vls,
+		 const char *name,
+		 register const double *mat)
 {
-    int	delta = strlen(name)+2;
+    int delta = strlen(name)+2;
 
     /* indent the body of the matrix */
     bu_log_indent_delta(delta);
@@ -907,11 +855,7 @@ bu_vls_matprint(struct bu_vls		*vls,
 		  mat[12], mat[13], mat[14], mat[15]);
 }
 
-/**
- *
- * Convert a structure element (indicated by sdp) to its ASCII
- * representation in a VLS
- */
+
 void
 bu_vls_struct_item(struct bu_vls *vp, const struct bu_structparse *sdp, const char *base, int sep_char)
 
@@ -991,12 +935,6 @@ bu_vls_struct_item(struct bu_vls *vp, const struct bu_structparse *sdp, const ch
 }
 
 
-/**
- * B U _ V L S _ S T R U C T _ I T E M _ N A M E D
- *
- * Convert a structure element called "name" to an ASCII representation
- * in a VLS.
- */
 int
 bu_vls_struct_item_named(struct bu_vls *vp, const struct bu_structparse *parsetab, const char *name, const char *base, int sep_char)
 {
@@ -1012,18 +950,16 @@ bu_vls_struct_item_named(struct bu_vls *vp, const struct bu_structparse *parseta
 }
 
 
-/**
- * B U _ S T R U C T P R I N T
- */
+
 void
 bu_struct_print(const char *title, const struct bu_structparse *parsetab, const char *base)
 
     /* structure description */
     /* base address of users structure */
 {
-    register const struct bu_structparse	*sdp;
-    register char			*loc;
-    register int			lastoff = -1;
+    register const struct bu_structparse *sdp;
+    register char *loc;
+    register int lastoff = -1;
 
     bu_log("%s\n", title);
     if (parsetab == (struct bu_structparse *)NULL) {
@@ -1053,7 +989,7 @@ bu_struct_print(const char *title, const struct bu_structparse *parsetab, const 
 	}
 #if 0
 	bu_vls_trunc(&vls, 0);
-	bu_vls_struct_item(&vls, sdp, base, ',');
+	bu_vls_struct_item(&vls, sdp, base, ', ');
 	bu_log(" %s=%s\n", sdp->sp_name, bu_vls_addr(&vls));
 #else
 	switch (sdp->sp_fmt[1]) {
@@ -1092,7 +1028,7 @@ bu_struct_print(const char *title, const struct bu_structparse *parsetab, const 
 
 		    bu_log(" %s=%d", sdp->sp_name, *sp++);
 
-		    while (--i > 0) bu_log(",%d", *sp++);
+		    while (--i > 0) bu_log(", %d", *sp++);
 
 		    bu_log("\n");
 		}
@@ -1104,7 +1040,7 @@ bu_struct_print(const char *title, const struct bu_structparse *parsetab, const 
 
 		    bu_log(" %s=%d", sdp->sp_name, *dp++);
 
-		    while (--i > 0) bu_log(",%d", *dp++);
+		    while (--i > 0) bu_log(", %d", *dp++);
 
 		    bu_log("\n");
 		}
@@ -1115,15 +1051,15 @@ bu_struct_print(const char *title, const struct bu_structparse *parsetab, const 
 		    register double *dp = (double *)loc;
 
 		    if (sdp->sp_count == 16) {
-			bu_matprint(sdp->sp_name, dp);
+			_bu_matprint(sdp->sp_name, dp);
 		    } else if (sdp->sp_count <= 3) {
 			bu_log(" %s=%.25G", sdp->sp_name, *dp++);
 
 			while (--i > 0)
-			    bu_log(",%.25G", *dp++);
+			    bu_log(", %.25G", *dp++);
 
 			bu_log("\n");
-		    } else  {
+		    } else {
 			int delta = strlen(sdp->sp_name)+2;
 
 			bu_log_indent_delta(delta);
@@ -1145,7 +1081,7 @@ bu_struct_print(const char *title, const struct bu_structparse *parsetab, const 
 
 		    bu_log(" %s=%08x", sdp->sp_name, *dp++);
 
-		    while (--i > 0) bu_log(",%08x", *dp++);
+		    while (--i > 0) bu_log(", %08x", *dp++);
 
 		    bu_log("\n");
 		}
@@ -1159,11 +1095,9 @@ bu_struct_print(const char *title, const struct bu_structparse *parsetab, const 
     }
 }
 
-/**
- * B U _ V L S _ P R I N T _ D O U B L E
- */
+
 HIDDEN void
-bu_vls_print_double(struct bu_vls *vls, const char *name, register long int count, register const double *dp)
+_bu_vls_print_double(struct bu_vls *vls, const char *name, register long int count, register const double *dp)
 {
     register int tmpi;
     register char *cp;
@@ -1178,27 +1112,22 @@ bu_vls_print_double(struct bu_vls *vls, const char *name, register long int coun
 
     while (--count > 0) {
 	cp += tmpi;
-	sprintf(cp, ",%.27G", *dp++);
+	sprintf(cp, ", %.27G", *dp++);
 	tmpi = strlen(cp);
 	vls->vls_len += tmpi;
     }
 }
 
-/**
- * B U _ V L S _ S T R U C T P R I N T
- *
- * This differs from bu_struct_print in that this output is less readable
- * by humans, but easier to parse with the computer.
- */
+
 void
 bu_vls_struct_print(struct bu_vls *vls, register const struct bu_structparse *sdp, const char *base)
     /* vls to print into */
     /* structure description */
     /* structure ponter */
 {
-    register char			*loc;
-    register int			lastoff = -1;
-    register char			*cp;
+    register char *loc;
+    register int lastoff = -1;
+    register char *cp;
     int increase;
 
     BU_CK_VLS(vls);
@@ -1325,7 +1254,7 @@ bu_vls_struct_print(struct bu_vls *vls, register const struct bu_structparse *sd
 
 		    while (--i > 0) {
 			cp += tmpi;
-			sprintf(cp, ",%d", *sp++);
+			sprintf(cp, ", %d", *sp++);
 			tmpi = strlen(cp);
 			vls->vls_len += tmpi;
 		    }
@@ -1349,15 +1278,15 @@ bu_vls_struct_print(struct bu_vls *vls, register const struct bu_structparse *sd
 
 		    while (--i > 0) {
 			cp += tmpi;
-			sprintf(cp, ",%d", *dp++);
+			sprintf(cp, ", %d", *dp++);
 			tmpi = strlen(cp);
 			vls->vls_len += tmpi;
 		    }
 		}
 		break;
 	    case 'f':
-		bu_vls_print_double(vls, sdp->sp_name, sdp->sp_count,
-				    (double *)loc);
+		_bu_vls_print_double(vls, sdp->sp_name, sdp->sp_count,
+				     (double *)loc);
 		break;
 	    default:
 		bu_log(" %s=%s ??\n", sdp->sp_name, sdp->sp_fmt);
@@ -1368,20 +1297,15 @@ bu_vls_struct_print(struct bu_vls *vls, register const struct bu_structparse *sd
 }
 
 
-/**
- * B U _ V L S _ S T R U C T P R I N T 2
- *
- * This differs from bu_struct_print in that it prints to a vls.
- */
 void
-bu_vls_struct_print2(struct bu_vls			*vls_out,
-		     const char				*title,
-		     const struct bu_structparse	*parsetab,	/* structure description */
-		     const char				*base)	  	/* base address of users structure */
+bu_vls_struct_print2(struct bu_vls *vls_out,
+		     const char *title,
+		     const struct bu_structparse *parsetab,	/* structure description */
+		     const char *base)	  	/* base address of users structure */
 {
-    register const struct bu_structparse	*sdp;
-    register char			*loc;
-    register int			lastoff = -1;
+    register const struct bu_structparse *sdp;
+    register char *loc;
+    register int lastoff = -1;
 
     bu_vls_printf(vls_out, "%s\n", title);
     if (parsetab == (struct bu_structparse *)NULL) {
@@ -1449,7 +1373,7 @@ bu_vls_struct_print2(struct bu_vls			*vls_out,
 		    bu_vls_printf(vls_out, " %s=%d", sdp->sp_name, *sp++);
 
 		    while (--i > 0)
-			bu_vls_printf(vls_out, ",%d", *sp++);
+			bu_vls_printf(vls_out, ", %d", *sp++);
 
 		    bu_vls_printf(vls_out, "\n");
 		}
@@ -1462,7 +1386,7 @@ bu_vls_struct_print2(struct bu_vls			*vls_out,
 		    bu_vls_printf(vls_out, " %s=%d", sdp->sp_name, *dp++);
 
 		    while (--i > 0)
-			bu_vls_printf(vls_out, ",%d", *dp++);
+			bu_vls_printf(vls_out, ", %d", *dp++);
 
 		    bu_vls_printf(vls_out, "\n");
 		}
@@ -1473,15 +1397,15 @@ bu_vls_struct_print2(struct bu_vls			*vls_out,
 		    register double *dp = (double *)loc;
 
 		    if (sdp->sp_count == 16) {
-			bu_vls_matprint(vls_out, sdp->sp_name, dp);
+			_bu_vls_matprint(vls_out, sdp->sp_name, dp);
 		    } else if (sdp->sp_count <= 3) {
 			bu_vls_printf(vls_out, " %s=%.25G", sdp->sp_name, *dp++);
 
 			while (--i > 0)
-			    bu_vls_printf(vls_out, ",%.25G", *dp++);
+			    bu_vls_printf(vls_out, ", %.25G", *dp++);
 
 			bu_vls_printf(vls_out, "\n");
-		    } else  {
+		    } else {
 			int delta = strlen(sdp->sp_name)+2;
 
 			bu_log_indent_delta(delta);
@@ -1506,7 +1430,7 @@ bu_vls_struct_print2(struct bu_vls			*vls_out,
 		    bu_vls_printf(vls_out, " %s=%08x", sdp->sp_name, *dp++);
 
 		    while (--i > 0)
-			bu_vls_printf(vls_out, ",%08x", *dp++);
+			bu_vls_printf(vls_out, ", %08x", *dp++);
 
 		    bu_vls_printf(vls_out, "\n");
 		}
@@ -1520,10 +1444,6 @@ bu_vls_struct_print2(struct bu_vls			*vls_out,
 }
 
 
-/**
- * This allows us to specify the "size" parameter as values like ".5m"
- * or "27in" rather than using mm all the time.
- */
 void
 bu_parse_mm(register const struct bu_structparse *sdp, register const char *name, char *base, const char *value)
     /* structure description */
@@ -1537,14 +1457,12 @@ bu_parse_mm(register const struct bu_structparse *sdp, register const char *name
     *p = bu_mm_value(value);
 }
 
-#define STATE_UNKNOWN		0
-#define STATE_IN_KEYWORD	1
-#define STATE_IN_VALUE		2
-#define STATE_IN_QUOTED_VALUE	3
 
-/**
- *
- */
+#define STATE_UNKNOWN 0
+#define STATE_IN_KEYWORD 1
+#define STATE_IN_VALUE 2
+#define STATE_IN_QUOTED_VALUE 3
+
 int
 bu_key_eq_to_key_val(const char *in, const char **next, struct bu_vls *vls)
 {
@@ -1556,12 +1474,10 @@ bu_key_eq_to_key_val(const char *in, const char **next, struct bu_vls *vls)
 
     *next = NULL;
 
-    while (*iptr)
-    {
+    while (*iptr) {
 	const char *prev='\0';
 
-	switch (state)
-	{
+	switch (state) {
 	    case STATE_IN_KEYWORD:
 		/* skip leading white space */
 		while (isspace(*iptr))
@@ -1570,11 +1486,10 @@ bu_key_eq_to_key_val(const char *in, const char **next, struct bu_vls *vls)
 		if (!(*iptr))
 		    break;
 
-		if (*iptr == ';')
-		{
+		if (*iptr == ';') {
 		    /* found end of a stack element */
 		    *next = iptr+1;
-		    return (0);
+		    return 0;
 		}
 
 		/* copy keyword up to '=' */
@@ -1603,8 +1518,7 @@ bu_key_eq_to_key_val(const char *in, const char **next, struct bu_vls *vls)
 		    iptr++;
 
 		/* check for quoted value */
-		if (*iptr == '"')
-		{
+		if (*iptr == '"') {
 		    /* switch to quoted value state */
 		    state = STATE_IN_QUOTED_VALUE;
 
@@ -1621,8 +1535,8 @@ bu_key_eq_to_key_val(const char *in, const char **next, struct bu_vls *vls)
 
 		bu_vls_strncat(vls, start, iptr - start);
 
-		if (*iptr) /* more to come */
-		{
+		if (*iptr) {
+		    /* more to come */
 		    bu_vls_putc(vls, ' ');
 
 		    /* switch back to keyword state */
@@ -1635,10 +1549,8 @@ bu_key_eq_to_key_val(const char *in, const char **next, struct bu_vls *vls)
 		 * replace quotes with '{' '}' */
 
 		bu_vls_strcat(vls, " {");
-		while (1)
-		{
-		    if (*iptr == '"' && *prev != '\\')
-		    {
+		while (1) {
+		    if (*iptr == '"' && *prev != '\\') {
 			bu_vls_putc(vls, '}');
 			iptr++;
 			break;
@@ -1656,29 +1568,10 @@ bu_key_eq_to_key_val(const char *in, const char **next, struct bu_vls *vls)
 		break;
 	}
     }
-    return (0);
+    return 0;
 }
 
-/**
- * B U _ S H A D E R _ T O _ T C L _ L I S T
- *
- * Take an old v4 shader specification of the form
- *
- * shadername arg1=value1 arg2=value2 color=1/2/3
- *
- * and convert it into the v5 Tcl-list form
- *
- * shadername {arg1 value1 arg2 value2 color 1/2/3}
- *
- * Note -- the input string is smashed with nulls.
- *
- * Note -- the v5 version is used everywhere internally, and in v5
- * databases.
- *
- *
- * @return	1	error
- * @return	0	OK
- */
+
 int
 bu_shader_to_tcl_list(const char *in, struct bu_vls *vls)
 {
@@ -1693,8 +1586,7 @@ bu_shader_to_tcl_list(const char *in, struct bu_vls *vls)
 
     BU_CK_VLS(vls);
 
-    while (next)
-    {
+    while (next) {
 	iptr = next;
 
 	/* skip over white space */
@@ -1709,15 +1601,13 @@ bu_shader_to_tcl_list(const char *in, struct bu_vls *vls)
 	    iptr++;
 	shader_name_len = iptr - shader;
 
-	if (!strncmp(shader, "stack", 5))
-	{
+	if (!strncmp(shader, "stack", 5)) {
 	    /* stack shader, loop through all shaders in stack */
 	    int done=0;
 
 	    bu_vls_strcat(vls, "stack {");
 
-	    while (!done)
-	    {
+	    while (!done) {
 		const char *shade1;
 
 		while (isspace(*iptr))
@@ -1735,7 +1625,7 @@ bu_shader_to_tcl_list(const char *in, struct bu_vls *vls)
 
 		if (bu_shader_to_tcl_list(shade1, vls)) {
 		    bu_free(copy, BU_FLSTR);
-		    return (1);
+		    return 1;
 		}
 
 		bu_vls_strcat(vls, "} ");
@@ -1745,18 +1635,16 @@ bu_shader_to_tcl_list(const char *in, struct bu_vls *vls)
 	    }
 	    bu_vls_putc(vls, '}');
 	    bu_free(copy, BU_FLSTR);
-	    return (0);
-	}
-	else if (!strncmp(shader, "envmap", 6))
-	{
+	    return 0;
+	} else if (!strncmp(shader, "envmap", 6)) {
 	    bu_vls_strcat(vls, "envmap {");
 	    if (bu_shader_to_tcl_list(iptr, vls)) {
 		bu_free(copy, BU_FLSTR);
-		return (1);
+		return 1;
 	    }
 	    bu_vls_putc(vls, '}');
 	    bu_free(copy, BU_FLSTR);
-	    return (0);
+	    return 0;
 	}
 
 	if (is_stack)
@@ -1769,23 +1657,22 @@ bu_shader_to_tcl_list(const char *in, struct bu_vls *vls)
 	    iptr++;
 
 	/* iptr now points at start of parameters, if any */
-	if (*iptr && *iptr != ';')
-	{
+	if (*iptr && *iptr != ';') {
 	    bu_vls_strcat(vls, " {");
 	    len = bu_vls_strlen(vls);
 	    if (bu_key_eq_to_key_val(iptr, (const char **)&next, vls)) {
 		bu_free(copy, BU_FLSTR);
-		return (1);
+		return 1;
 	    }
 	    if (bu_vls_strlen(vls) > len)
 		bu_vls_putc(vls, '}');
 	    else
 		bu_vls_trunc(vls, len-2);
-	}
-	else if (*iptr && *iptr == ';')
+	} else if (*iptr && *iptr == ';') {
 	    next = ++iptr;
-	else
+	} else {
 	    next = (char *)NULL;
+	}
 
 	if (is_stack)
 	    bu_vls_putc(vls, '}');
@@ -1795,20 +1682,20 @@ bu_shader_to_tcl_list(const char *in, struct bu_vls *vls)
 	bu_vls_putc(vls, '}');
 
     bu_free(copy, BU_FLSTR);
-    return (0);
+    return 0;
 }
 
+
 /**
- * B U _ L I S T _ E L E M
+ * _ B U _ L I S T _ E L E M
  *
  * Given a Tcl list, return a copy of the 'index'th entry,
  * which may itself be a list.
  *
- *
- * Note -- the caller is responsible for freeing the returned string.
+ * Note: caller is responsible for freeing the returned string.
  */
-char *
-bu_list_elem(const char *in, int index)
+HIDDEN char *
+_bu_list_elem(const char *in, int index)
 {
     int depth=0;
     int count=0;
@@ -1819,11 +1706,9 @@ bu_list_elem(const char *in, int index)
     const char *end=NULL;
     char *out=NULL;
 
-    while (*ptr)
-    {
+    while (*ptr) {
 	/* skip leading white space */
-	while (*ptr && isspace(*ptr))
-	{
+	while (*ptr && isspace(*ptr)) {
 	    prev = ptr;
 	    ptr++;
 	}
@@ -1834,27 +1719,21 @@ bu_list_elem(const char *in, int index)
 	if (depth == 0 && count == index)
 	    start = ptr;
 
-	if (*ptr == '{')
-	{
+	if (*ptr == '{') {
 	    depth++;
 	    prev = ptr;
 	    ptr++;
-	}
-	else if (*ptr == '}')
-	{
+	} else if (*ptr == '}') {
 	    depth--;
 	    if (depth == 0)
 		count++;
-	    if (start && depth == 0)
-	    {
+	    if (start && depth == 0) {
 		end = ptr;
 		break;
 	    }
 	    prev = ptr;
 	    ptr++;
-	}
-	else
-	{
+	} else {
 	    while (*ptr &&
 		   (!isspace(*ptr) || *prev == '\\') &&
 		   (*ptr != '}' || *prev == '\\') &&
@@ -1866,8 +1745,7 @@ bu_list_elem(const char *in, int index)
 	    if (depth == 0)
 		count++;
 
-	    if (start && depth == 0)
-	    {
+	    if (start && depth == 0) {
 		end = ptr-1;
 		break;
 	    }
@@ -1877,10 +1755,8 @@ bu_list_elem(const char *in, int index)
     if (!start)
 	return ((char *)NULL);
 
-    if (*start == '{')
-    {
-	if (!end || *end != '}')
-	{
+    if (*start == '{') {
+	if (!end || *end != '}') {
 	    bu_log("Error in list (uneven braces?): %s\n", in);
 	    return ((char *)NULL);
 	}
@@ -1899,7 +1775,7 @@ bu_list_elem(const char *in, int index)
     }
 
     len = end - start + 1;
-    out = (char *)bu_malloc(len+1, "bu_list_elem:out");
+    out = (char *)bu_malloc(len+1, "_bu_list_elem:out");
     strncpy(out, start, len);
     *(out + len) = '\0';
 
@@ -1907,23 +1783,21 @@ bu_list_elem(const char *in, int index)
 }
 
 /**
- * B U _ T C L _ L I S T _ L E N G T H
+ * _ B U _ T C L _ L I S T _ L E N G T H
  *
  * Return number of items in a string, interpreted as a Tcl list.
  */
 int
-bu_tcl_list_length(const char *in)
+_bu_tcl_list_length(const char *in)
 {
     int count=0;
     int depth=0;
     const char *ptr=in;
     const char *prev=NULL;
 
-    while (*ptr)
-    {
+    while (*ptr) {
 	/* skip leading white space */
-	while (*ptr && isspace(*ptr))
-	{
+	while (*ptr && isspace(*ptr)) {
 	    prev = ptr;
 	    ptr++;
 	}
@@ -1931,22 +1805,17 @@ bu_tcl_list_length(const char *in)
 	if (!*ptr)
 	    break;
 
-	if (*ptr == '{')
-	{
+	if (*ptr == '{') {
 	    if (depth == 0)
 		count++;
 	    depth++;
 	    prev = ptr;
 	    ptr++;
-	}
-	else if (*ptr == '}')
-	{
+	} else if (*ptr == '}') {
 	    depth--;
 	    prev = ptr;
 	    ptr++;
-	}
-	else
-	{
+	} else {
 	    if (depth == 0)
 		count++;
 
@@ -1964,60 +1833,52 @@ bu_tcl_list_length(const char *in)
     return (count);
 }
 
-/**
- *
- */
-int
-bu_key_val_to_vls(struct bu_vls *vls, char *params)
+
+HIDDEN int
+_bu_key_val_to_vls(struct bu_vls *vls, char *params)
 {
     int len;
     int j;
 
-    len = bu_tcl_list_length(params);
+    len = _bu_tcl_list_length(params);
 
-    if (len == 1)
-    {
+    if (len == 1) {
 	bu_vls_putc(vls, ' ');
 	bu_vls_strcat(vls, params);
-	return (0);
+	return 0;
     }
 
-    if (len%2)
-    {
-	bu_log("bu_key_val_to_vls: Error: shader parameters must be even numbered!!\n\t%s\n", params);
-	return (1);
+    if (len%2) {
+	bu_log("_bu_key_val_to_vls: Error: shader parameters must be even numbered!!\n\t%s\n", params);
+	return 1;
     }
 
-    for (j=0; j<len; j += 2)
-    {
+    for (j=0; j<len; j += 2) {
 	char *keyword;
 	char *value;
 
-	keyword = bu_list_elem(params, j);
-	value = bu_list_elem(params, j+1);
+	keyword = _bu_list_elem(params, j);
+	value = _bu_list_elem(params, j+1);
 
 	bu_vls_putc(vls, ' ');
 	bu_vls_strcat(vls, keyword);
 	bu_vls_putc(vls, '=');
-	if (bu_tcl_list_length(value) > 1 )
-	{
+	if (_bu_tcl_list_length(value) > 1) {
 	    bu_vls_putc(vls, '"');
 	    bu_vls_strcat(vls, value);
 	    bu_vls_putc(vls, '"');
+	} else {
+	    bu_vls_strcat(vls, value);
 	}
-	else
-	    bu_vls_strcat(vls, value);
 
-	bu_free(keyword, "bu_key_val_to_vls() keyword");
-	bu_free(value, "bu_key_val_to_vls() value");
+	bu_free(keyword, "_bu_key_val_to_vls() keyword");
+	bu_free(value, "_bu_key_val_to_vls() value");
 
     }
-    return (0);
+    return 0;
 }
 
-/**
- * B U _ S H A D E R _ T O _ K E Y _ E Q
- */
+
 int
 bu_shader_to_key_eq(const char *in, struct bu_vls *vls)
 {
@@ -2028,31 +1889,28 @@ bu_shader_to_key_eq(const char *in, struct bu_vls *vls)
 
     BU_CK_VLS(vls);
 
-    len = bu_tcl_list_length(in);
+    len = _bu_tcl_list_length(in);
 
     if (len == 0)
-	return (0);
+	return 0;
 
-    if (len == 1)
-    {
+    if (len == 1) {
 	/* shader with no parameters */
 	if (bu_vls_strlen(vls))
 	    bu_vls_putc(vls, ' ');
 	bu_vls_strcat(vls, in);
-	return (0);
+	return 0;
     }
 
-    if (len != 2)
-    {
+    if (len != 2) {
 	bu_log("bu_shader_to_key_eq: Error: shader must have two elements (not %d)!!\n\t%s\n", len, in);
 	return 1;
     }
 
-    shader = bu_list_elem(in, 0);
-    params = bu_list_elem(in, 1);
+    shader = _bu_list_elem(in, 0);
+    params = _bu_list_elem(in, 1);
 
-    if (!strcmp(shader, "envmap"))
-    {
+    if (!strcmp(shader, "envmap")) {
 	/* environment map */
 
 	if (bu_vls_strlen(vls))
@@ -2060,9 +1918,7 @@ bu_shader_to_key_eq(const char *in, struct bu_vls *vls)
 	bu_vls_strcat(vls, "envmap");
 
 	bu_shader_to_key_eq(params, vls);
-    }
-    else if (!strcmp(shader, "stack"))
-    {
+    } else if (!strcmp(shader, "stack")) {
 	/* stacked shaders */
 
 	int i;
@@ -2072,28 +1928,25 @@ bu_shader_to_key_eq(const char *in, struct bu_vls *vls)
 	bu_vls_strcat(vls, "stack");
 
 	/* get number of shaders in the stack */
-	len = bu_tcl_list_length(params);
+	len = _bu_tcl_list_length(params);
 
 	/* process each shader in the stack */
-	for (i=0; i<len; i++)
-	{
+	for (i=0; i<len; i++) {
 	    char *shader1;
 
 	    /* each parameter must be a shader specification in itself */
-	    shader1 = bu_list_elem(params, i);
+	    shader1 = _bu_list_elem(params, i);
 
 	    if (i > 0)
 		bu_vls_putc(vls, ';');
 	    bu_shader_to_key_eq(shader1, vls);
 	    bu_free(shader1, "shader1");
 	}
-    }
-    else
-    {
+    } else {
 	if (bu_vls_strlen(vls))
 	    bu_vls_putc(vls, ' ');
 	bu_vls_strcat(vls, shader);
-	ret = bu_key_val_to_vls(vls, params);
+	ret = _bu_key_val_to_vls(vls, params);
     }
 
     bu_free(shader, "shader");
@@ -2102,23 +1955,11 @@ bu_shader_to_key_eq(const char *in, struct bu_vls *vls)
     return (ret);
 }
 
-/**
- *
- * B U _ F W R I T E _ E X T E R N A L
- *
- * Take a block of memory, and write it into a file.
- *
- * Caller is responsible for freeing memory of external representation,
- * using bu_free_external().
- *
- *
- * @return	<0	error
- * @return	0	OK
- */
+
 int
 bu_fwrite_external(FILE *fp, const struct bu_external *ep)
 {
-    size_t	got;
+    size_t got;
 
     BU_CK_EXTERNAL(ep);
 
@@ -2130,14 +1971,12 @@ bu_fwrite_external(FILE *fp, const struct bu_external *ep)
     return 0;
 }
 
-/**
- * B U _ H E X D U M P _ E X T E R N A L
- */
+
 void
 bu_hexdump_external(FILE *fp, const struct bu_external *ep, const char *str)
 {
-    const unsigned char	*cp;
-    const unsigned char	*endp;
+    const unsigned char *cp;
+    const unsigned char *endp;
     int i, j, k;
 
     BU_CK_EXTERNAL(ep);
@@ -2148,7 +1987,7 @@ bu_hexdump_external(FILE *fp, const struct bu_external *ep, const char *str)
     cp = (const unsigned char *)ep->ext_buf;
     endp = cp + ep->ext_nbytes;
     for (i=0; i < ep->ext_nbytes; i += 16) {
-	const unsigned char	*sp = cp;
+	const unsigned char *sp = cp;
 
 	for (j=0; j < 4; j++) {
 	    for (k=0; k < 4; k++) {
@@ -2173,9 +2012,7 @@ bu_hexdump_external(FILE *fp, const struct bu_external *ep, const char *str)
     }
 }
 
-/**
- * B U _ F R E E _ E X T E R N A L
- */
+
 void
 bu_free_external(register struct bu_external *ep)
 {
@@ -2186,28 +2023,21 @@ bu_free_external(register struct bu_external *ep)
     }
 }
 
-/**
- * B U _ C O P Y _ E X T E R N A L
- */
+
 void
 bu_copy_external(struct bu_external *op, const struct bu_external *ip)
 {
     BU_CK_EXTERNAL(ip);
     BU_INIT_EXTERNAL(op);
 
-    if (op == ip)  return;
+    if (op == ip) return;
 
     op->ext_nbytes = ip->ext_nbytes;
     op->ext_buf = bu_malloc(ip->ext_nbytes, "bu_copy_external");
     memcpy(op->ext_buf, ip->ext_buf, ip->ext_nbytes);
 }
 
-/**
- * B U _ N E X T _ T O K E N
- *
- * Advance pointer through string over current token,
- * across white space, to beginning of next token.
- */
+
 char *
 bu_next_token(char *str)
 {
@@ -2222,11 +2052,12 @@ bu_next_token(char *str)
     return (ret);
 }
 
+
 void
 bu_structparse_get_terse_form(struct bu_vls *log, const struct bu_structparse *sp)
 {
-    struct bu_vls	str;
-    int		i;
+    struct bu_vls str;
+    int i;
 
     bu_vls_init(&str);
 
@@ -2260,48 +2091,19 @@ bu_structparse_get_terse_form(struct bu_vls *log, const struct bu_structparse *s
     bu_vls_free(&str);
 }
 
-/**
- * b u _ s p _ s k i p _ s e p
- *
- * Skip the separator(s) (i.e. whitespace and open-braces)
- *
- * @param _cp	- character pointer
- */
-#define BU_SP_SKIP_SEP(_cp)	\
-	{ while (*(_cp) && (*(_cp) == ' ' || *(_cp) == '\n' || \
-		*(_cp) == '\t' || *(_cp) == '{'))  ++(_cp); }
 
-/**
- * b u _ s t r u c t p a r s e _ a r g v
- *
- * Support routine for db adjust and db put.  Much like the bu_struct_parse routine
- * which takes its input as a bu_vls. This routine, however, takes the arguments
- * as lists, a more Tcl-friendly method. There is a log vls for storing messages.
- *
- * Operates on argv[0] and argv[1], then on argv[2] and argv[3], ...
- *
- *
- * @param log	- vls for dumping info that might have gone to bu_log
- * @param argc	- number of elements in argv
- * @param argv	- contains the keyword-value pairs
- * @param desc	- structure description
- * @param base	- base addr of users struct
- *
- * 	@retval TCL_OK if successful,
- * @retval TCL_ERROR on failure
- */
 int
-bu_structparse_argv(struct bu_vls		*log,
-		    int				argc,
-		    char			**argv,
-		    const struct bu_structparse	*desc,
-		    char			*base)
+bu_structparse_argv(struct bu_vls *log,
+		    int argc,
+		    char **argv,
+		    const struct bu_structparse *desc,
+		    char *base)
 {
-    register char				*cp, *loc;
-    register const struct bu_structparse	*sdp;
-    register int				 j;
-    register int				ii;
-    struct bu_vls				 str;
+    register char *cp, *loc;
+    register const struct bu_structparse *sdp;
+    register int j;
+    register int ii;
+    struct bu_vls str;
 
     if (desc == (struct bu_structparse *)NULL) {
 	bu_vls_printf(log, "bu_structparse_argv: NULL desc pointer\n");
@@ -2332,9 +2134,9 @@ bu_structparse_argv(struct bu_vls		*log,
 	    switch (sdp->sp_fmt[1]) {
 		case 'c':
 		case 's':
-		    /* copy the string to an array of
-		     * length sdp->sp_count, converting escaped
-		     * double quotes to just double quotes
+		    /* copy the string to an array of length
+		     * sdp->sp_count, converting escaped double quotes
+		     * to just double quotes
 		     */
 		    if (argc < 1) {
 			bu_vls_printf(log,
@@ -2361,13 +2163,13 @@ bu_structparse_argv(struct bu_vls		*log,
 		    /* fall through */
 		case 'V':
 		    {
-			/* copy the string to a bu_vls
-			 * (string of variable length provided by libbu)
+			/* copy the string to a bu_vls (string of
+			 * variable length provided by libbu)
 			 */
 			struct bu_vls *vls = (struct bu_vls *)loc;
 
-			/* argv[0] contains the string
-			 * i.e. we have exactly one value
+			/* argv[0] contains the string.  i.e., we have
+			 * exactly one value
 			 */
 			assert(sdp->sp_count == 1);
 
@@ -2512,10 +2314,10 @@ bu_structparse_argv(struct bu_vls		*log,
 		    break;
 		}
 		case 'f': {
-		    int		dot_seen;
-		    double		tmp_double;
+		    int dot_seen;
+		    double tmp_double;
 		    register double *dp;
-		    char		*numstart;
+		    char *numstart;
 
 		    dp = (double *)loc;
 
@@ -2555,8 +2357,9 @@ bu_structparse_argv(struct bu_vls		*log,
 				break;
 			}
 
-			/* If no mantissa seen,
-			   then there is no float here */
+			/* If no mantissa seen, then there is no float
+			 * here.
+			 */
 			if (cp == (numstart + dot_seen)) {
 			    bu_vls_printf(log,
 					  "value \"%s\" to argument %s isn't a float",
@@ -2565,8 +2368,9 @@ bu_structparse_argv(struct bu_vls		*log,
 			    return BRLCAD_ERROR;
 			}
 
-			/* there was a mantissa,
-			   so we may have an exponent */
+			/* there was a mantissa, so we may have an
+			 * exponent.
+			 */
 			if (*cp == 'E' || *cp == 'e') {
 			    cp++;
 
@@ -2630,8 +2434,8 @@ bu_structparse_argv(struct bu_vls		*log,
     return BRLCAD_OK;
 }
 
-
 /** @} */
+
 /*
  * Local Variables:
  * mode: C

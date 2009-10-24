@@ -17,17 +17,8 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @addtogroup butcl */
+/** @addtogroup libbu */
 /** @{ */
-/** @file cmdhist.c
- *
- * @brief
- * Routines for maintaining a command history
- *
- * The history routines were borrowed from mged/history.c
- * and modified to work with command history objects.
- *
- */
 
 #include "common.h"
 
@@ -46,7 +37,7 @@
  * Stores the given command with start and finish times in the
  * history vls'es. 'status' is either TCL_OK or TCL_ERROR.
  */
-static void
+HIDDEN void
 history_record(struct bu_cmdhist_obj *chop, struct bu_vls *cmdp, struct timeval *start, struct timeval *finish, int status)
 {
     struct bu_cmdhist *new_hist;
@@ -67,7 +58,7 @@ history_record(struct bu_cmdhist_obj *chop, struct bu_vls *cmdp, struct timeval 
 }
 
 
-static int
+HIDDEN int
 timediff(struct timeval *tvdiff, struct timeval *start, struct timeval *finish)
 {
     if (finish->tv_sec == 0 && finish->tv_usec == 0)
@@ -268,6 +259,7 @@ bu_cmdhist_next(ClientData clientData, Tcl_Interp *interp, int argc, const char 
 }
 
 /** @} */
+
 /*
  * Local Variables:
  * mode: C

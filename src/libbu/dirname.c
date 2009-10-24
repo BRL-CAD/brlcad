@@ -17,13 +17,6 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @addtogroup bu_log */
-/** @{ */
-/** @file dirname.c
- *
- * Routines to process path names.
- *
- */
 
 #include "common.h"
 
@@ -69,8 +62,6 @@ bu_dirname(const char *cp)
 
     return ret;
 }
-
-/** @} */
 
 /*
  * Local Variables:

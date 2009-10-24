@@ -17,18 +17,6 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @addtogroup bu_log */
-/** @{ */
-/** @file hook.c
- *
- * @brief
- * BRL-CAD support library's hook utility.
- *
- * @par Acknowledgements
- * This builds on the work in libbu/log.c.
- *
- */
-/** @} */
 
 #include "common.h"
 
@@ -76,7 +64,7 @@ bu_delete_hook(struct bu_hook_list *hlp, bu_hook_t func, genptr_t clientdata)
 void
 bu_call_hook(struct bu_hook_list *hlp, genptr_t buf)
 {
-    struct bu_hook_list	*call_hook;
+    struct bu_hook_list *call_hook;
 
     for (BU_LIST_FOR(call_hook, bu_hook_list, &hlp->l)) {
 	if (!(call_hook->hookfunc)) {

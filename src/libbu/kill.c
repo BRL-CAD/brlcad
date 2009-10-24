@@ -17,16 +17,6 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file kill.c
- *
- * terminate a given process.
- *
- * Author -
- *   Christopher Sean Morrison
- *
- * Source -
- *   BRL-CAD Open Source
- */
 
 #include "common.h"
 
@@ -38,13 +28,6 @@
 #include "bu.h"
 
 
-/**
- * b u _ t e r m i n a t e
- *
- * terminate a given process.
- *
- * returns truthfully whether the process could be killed.
- */
 int
 bu_terminate(int process)
 {

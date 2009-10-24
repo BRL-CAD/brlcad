@@ -17,22 +17,6 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @addtogroup bu_log */
-/** @{ */
-/** @file mread.c
- *
- * @brief multiple-read to fill a buffer
- *
- * Provide a general means to a read some count of items from a file
- * descriptor reading multiple times until the quantity desired is
- * obtained.  This is useful for pipes and network connections that
- * don't necessarily deliver data with the same grouping as it is
- * written with.
- *
- * If a read error occurs, a negative value will be returns and errno
- * should be set (by read()).
- *
- */
 
 #include "common.h"
 
@@ -44,10 +28,6 @@
 #include "bu.h"
 
 
-/**
- * "Multiple try" read.  Read multiple times until quantity is
- * obtained or an error occurs.  This is useful for pipes.
- */
 long int
 bu_mread(int fd, void *bufp, long int n)
 {
@@ -68,7 +48,6 @@ bu_mread(int fd, void *bufp, long int n)
     }
     return count;
 }
-/** @} */
 
 /*
  * Local Variables:

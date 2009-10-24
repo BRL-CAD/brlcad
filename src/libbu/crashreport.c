@@ -17,14 +17,6 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @addtogroup bu_log */
-/** @{ */
-/** @file crashreport.c
- *
- * Generate a crash report file, including a call stack backtrace and
- * other system details.
- *
- */
 
 #include "common.h"
 
@@ -146,8 +138,6 @@ bu_crashreport(const char *filename)
     /* success */
     return 1;
 }
-
-/** @} */
 
 /*
  * Local Variables:

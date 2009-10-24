@@ -19,13 +19,6 @@
  */
 /** @addtogroup bu_log */
 /** @{ */
-/** @file brlcad_path.c
- *
- * @brief
- * A support routine to provide the executable code with the path
- * to where the BRL-CAD programs and libraries are installed.
- *
- */
 
 #include "common.h"
 
@@ -692,6 +685,7 @@ bu_brlcad_data(const char *rhs, int fail_quietly)
 }
 
 /** @} */
+
 /*
  * Local Variables:
  * mode: C

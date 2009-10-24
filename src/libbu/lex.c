@@ -17,17 +17,6 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @addtogroup bu_log */
-/** @{ */
-/** @file lex.c
- *
- * @author
- * Christopher T. Johnson
- *
- * @par Source
- * Geometric Solutions, Inc.
- */
-/** @} */
 
 #include "common.h"
 
@@ -38,16 +27,14 @@
 
 static int bu_lex_reading_comment = 0;
 
-/**
- * B U _ L E X _ G E T O N E
- */
-static char *
-bu_lex_getone(int *used, struct bu_vls *rtstr)
+
+HIDDEN char *
+_bu_lex_getone(int *used, struct bu_vls *rtstr)
 {
     register char *cp;
     register char *sp;
     register char *unit;
-    int	number;
+    int number;
 
     number = 1;
     *used = 0;
@@ -159,9 +146,7 @@ bu_lex_getone(int *used, struct bu_vls *rtstr)
     return unit;
 }
 
-/**
- * B U _ L E X
- */
+
 int
 bu_lex(
     union bu_lex_token *token,
@@ -177,7 +162,7 @@ bu_lex(
      * get a unit of information from rtstr.
      */
     used = 0;
-    unit = bu_lex_getone(&used, rtstr);
+    unit = _bu_lex_getone(&used, rtstr);
 
     /*
      * Was line empty or commented out.
@@ -193,7 +178,7 @@ bu_lex(
     if (isdigit(*unit)) {
 	/*
 	 * Humm, this could be a number.
-	 * 	octal -- 0[0-7]*
+	 * octal -- 0[0-7]*
 	 * hex   -- 0x[0-9a-f]*
 	 * dec   -- [0-9][0-9]*
 	 * dbl   -- [0-9][0-9]*.[0-9]*{{E|e}{+|-}[0-9][0-9]*}
@@ -201,7 +186,7 @@ bu_lex(
 	if (*unit == '0') {
 	    /* any of the above */
 	    /*
-	     * 	octal -- 0[0-7]*
+	     * octal -- 0[0-7]*
 	     */
 	    for (cp=unit; *cp && *cp>='0' && *cp <='7'; cp++);
 	    if (!*cp) {
@@ -294,8 +279,6 @@ bu_lex(
     token->t_id.value = unit;
     return used;
 }
-
-/** @} */
 
 /*
  * Local Variables:

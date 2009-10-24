@@ -17,18 +17,6 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @addtogroup bu_log */
-/** @{ */
-/** @file ./libbu/bomb.c
- *
- * The bu_bomb routine is called on a fatal error, generally where no
- * recovery is possible.  Error handlers may, however, be registered
- * with BU_SETJMP.  This routine intentionally limits calls to other
- * functions and intentionally uses no stack variables.  Just in case
- * the application is out of memory, bu_bomb deallocates a small
- * buffer of memory.
- *
- */
 
 #include "common.h"
 
@@ -198,8 +186,6 @@ bu_exit(int status, const char *fmt, ...)
     exit(status);
 }
 
-
-/** @} */
 /*
  * Local Variables:
  * mode: C

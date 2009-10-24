@@ -19,12 +19,22 @@
  */
 /** @addtogroup libbu */
 /** @{ */
-/** @file cmd.h
+/** @file cmdhist.c
  *
  * @brief
- * Command history data structures
+ * Routines for maintaining a command history
+ *
+ * The history routines were borrowed from mged/history.c
+ * and modified to work with command history objects.
  *
  */
+/** @file cmdhist_obj.c
+ *
+ * A cmdhist object contains the attributes and
+ * methods for maintaining command history.
+ *
+ */
+
 #ifndef __CMD_H__
 #define __CMD_H__
 
