@@ -42,7 +42,7 @@
  * of the routine OS-SELECT on p. 282 of Cormen et al.
  */
 HIDDEN struct bu_rb_node *
-_rb_select (struct bu_rb_node *root, int order, int k)
+_rb_select(struct bu_rb_node *root, int order, int k)
 {
     int rank;
 
@@ -87,7 +87,7 @@ bu_rb_select(bu_rb_tree *tree, int order, int k)
 }
 
 
-int bu_rb_rank (bu_rb_tree *tree, int order)
+int bu_rb_rank(bu_rb_tree *tree, int order)
 {
     int rank;
     struct bu_rb_node *node;

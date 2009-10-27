@@ -74,8 +74,7 @@ _rb_insert(bu_rb_tree *tree, int order, struct bu_rb_node *new_node)
     parent = rb_null(tree);
     node = rb_root(tree, order);
     compare = rb_order_func(tree, order);
-    while (node != rb_null(tree))
-    {
+    while (node != rb_null(tree)) {
 	parent = node;
 	++rb_size(parent, order);
 	if (tree -> rbt_debug & BU_RB_DEBUG_OS)
@@ -319,7 +318,7 @@ bu_rb_uniq_off(bu_rb_tree *tree, int order)
 
 
 int
-bu_rb_is_uniq (bu_rb_tree *tree, int order)
+bu_rb_is_uniq(bu_rb_tree *tree, int order)
 {
     BU_CKMAG(tree, BU_RB_TREE_MAGIC, "red-black tree");
     RB_CKORDER(tree, order);
@@ -375,13 +374,13 @@ _rb_set_uniq_all(bu_rb_tree *tree, int new_value)
 }
 
 
-void bu_rb_uniq_all_on (bu_rb_tree *tree)
+void bu_rb_uniq_all_on(bu_rb_tree *tree)
 {
     _rb_set_uniq_all(tree, 1);
 }
 
 
-void bu_rb_uniq_all_off (bu_rb_tree *tree)
+void bu_rb_uniq_all_off(bu_rb_tree *tree)
 {
     _rb_set_uniq_all(tree, 0);
 }
