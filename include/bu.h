@@ -3749,12 +3749,6 @@ BU_EXPORT BU_EXTERN(int bu_shader_to_tcl_list,
  * B U _ S H A D E R _ T O _ K E Y _ E Q
  *
  */
-BU_EXPORT BU_EXTERN(int bu_key_val_to_key_eq,
-		    (char *in));
-
-/**
- *
- */
 BU_EXPORT BU_EXTERN(int bu_shader_to_key_eq,
 		    (const char *in, struct bu_vls *vls));
 
