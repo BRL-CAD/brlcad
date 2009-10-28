@@ -30,12 +30,14 @@
 #endif
 
 #include "tcl.h"
-#include "tk.h"
+#ifdef HAVE_TK_H
+#  include "tk.h"
+#endif
 
 #include "bu.h"
 
-#include "./mgedtcl.h"
 
+extern Tk_Window tkwin; /* in cmd.c */
 
 extern void refresh();
 extern int event_check();

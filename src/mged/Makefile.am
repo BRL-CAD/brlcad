@@ -176,7 +176,6 @@ noinst_HEADERS = \
 	mgdev.h \
 	mged.h \
 	mged_dm.h \
-	mgedtcl.h \
 	qray.h \
 	scroll.h \
 	sedit.h \

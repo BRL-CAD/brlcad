@@ -72,7 +72,6 @@
 /* Needed to define struct w_dm */
 #include "./mged_dm.h"
 
-#include "./mgedtcl.h"
 /* Needed to define struct solid */
 #include "solid.h"
 

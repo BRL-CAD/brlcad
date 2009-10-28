@@ -35,8 +35,10 @@
 #include "bio.h"
 
 #include "tcl.h"
-#include "tk.h"
-#include "itk.h"
+#ifdef HAVE_TK_H
+#  include "tk.h"
+#  include "itk.h"
+#endif
 
 #include "bu.h"
 #include "vmath.h"
@@ -49,6 +51,7 @@
 #include "./sedit.h"
 #include "./mged_dm.h"
 
+
 #define NEED_GUI(_type) (\
 	IS_DM_TYPE_WGL(_type) || \
 	IS_DM_TYPE_OGL(_type) || \
@@ -57,6 +60,9 @@
 	IS_DM_TYPE_PEX(_type) || \
 	IS_DM_TYPE_TK(_type) || \
 	IS_DM_TYPE_X(_type))
+
+
+extern Tk_Window tkwin; /* in cmd.c */
 
 /* All systems can compile these! */
 extern int Plot_dm_init(struct dm_list *o_dm_list, int argc, char **argv);

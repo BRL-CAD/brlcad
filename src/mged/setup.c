@@ -44,6 +44,9 @@
 #include "./mged.h"
 #include "./cmd.h"
 
+
+extern Tk_Window tkwin; /* in cmd.c */
+
 extern void init_qray(void);
 extern void mged_global_variable_setup(Tcl_Interp *interp);
 
