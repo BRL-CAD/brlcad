@@ -277,7 +277,8 @@ libged_la_LIBADD = \
 	${GED_LIBS}
 
 EXTRA_DIST = \
-        CMakeLists.txt
+        CMakeLists.txt \
+	annotate.c
 
 DEPENDS = src/librt src/libwdb
 
