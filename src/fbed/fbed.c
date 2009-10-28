@@ -2056,11 +2056,13 @@ general_Handler(int sig)
 	    abort();
 	    /*NOTREACHED*/
 #endif
+#if defined(SIGSEGV) && (SIGBUS != SIGSEGV)
 	case SIGSEGV :
 	    prnt_Event( "Segmentation violation (core dumped)." );
 	    restore_Tty();
 	    abort();
 	    /*NOTREACHED*/
+#endif
 	case SIGALRM :
 	    break;
 #ifdef SIGWINCH
