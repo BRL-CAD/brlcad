@@ -46,8 +46,6 @@
 int
 Tclcad_Init(Tcl_Interp *interp)
 {
-    /* XXX why are these disabled? */
-#if 0
     if (Tcl_Init(interp) == TCL_ERROR) {
 	return TCL_ERROR;
     }
@@ -55,7 +53,6 @@ Tclcad_Init(Tcl_Interp *interp)
     if (Tk_Init(interp) == TCL_ERROR) {
 	return TCL_ERROR;
     }
-#endif
 
     /* Locate the BRL-CAD-specific Tcl scripts, set the auto_path */
     tclcad_auto_path(interp);
