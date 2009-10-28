@@ -448,7 +448,7 @@ int
 set_O_NDELAY( fd )
     int	fd;
 {
-#if defined(SYSV) || defined(BSD)
+#if defined(O_NDELAY)
     return	fcntl( fd, F_SETFL, O_NDELAY );
 #else
 #if HAVE_TERMIOS_H
