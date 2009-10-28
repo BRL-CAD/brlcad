@@ -29,7 +29,11 @@
 #define RESOURCE_INCLUDED 1
 #include <tcl.h>
 #include <itcl.h>
-#include <itk.h>
+
+#ifdef HAVE_TK_H
+#  include <itk.h>
+#endif
+
 #include "bio.h"
 
 #include "bu.h"
@@ -50,9 +54,11 @@ Tclcad_Init(Tcl_Interp *interp)
 	return TCL_ERROR;
     }
 
+#ifdef HAVE_TK_H
     if (Tk_Init(interp) == TCL_ERROR) {
 	return TCL_ERROR;
     }
+#endif
 
     /* Locate the BRL-CAD-specific Tcl scripts, set the auto_path */
     tclcad_auto_path(interp);
@@ -63,11 +69,13 @@ Tclcad_Init(Tcl_Interp *interp)
 	return TCL_ERROR;
     }
 
+#ifdef HAVE_TK_H
     /* Initialize [incr Tk] */
     if (Itk_Init(interp) == TCL_ERROR) {
 	bu_log("Itk_Init ERROR:\n%s\n", Tcl_GetStringResult(interp));
 	return TCL_ERROR;
     }
+#endif
 
     /* Initialize the Iwidgets package */
     if (Tcl_Eval(interp, "package require Iwidgets") != TCL_OK) {
