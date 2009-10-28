@@ -13,7 +13,6 @@
 
 #include <sdai.h>
 #include <sstream>
-#include <iomanip.h>
 
 
 SCLP23(String)& 

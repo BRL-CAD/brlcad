@@ -23,7 +23,6 @@
 //#include <STEPentity.h>
 #include <ExpDict.h>
 #include <sdai.h>
-#include <iomanip.h>
 
 
 // REAL_NUM_PRECISION is defined in STEPattribute.h, and is also used
