@@ -1703,6 +1703,30 @@ rtgl_drawVList(struct dm *dmp, register struct bn_vlist *vp)
         }
         
         if (new) {
+    	    /* drop previous work */
+    	    oldNumTrees = 0;
+    	    freeJobList(&jobs);
+	    
+    	    if (colorTable != NULL) {
+    		bu_hash_tbl_free(colorTable);
+    		colorTable = NULL;
+    	    }
+	    
+    	    if (jobsArray != NULL) {
+    		bu_free(jobsArray, "dm-rtgl.c: jobsArray");
+    		jobsArray = NULL;
+    	    }
+	    
+    	    RTGL_DIRTY = 0;
+	    
+    	    /* reset for dynamic z-clipping */
+    	    if (dmp->dm_zclip) {
+    		startScale = 1;
+    	    }
+	    
+    	    maxSpan = 0.0;
+    	    numShot = numJobs = 0;
+
 	    /* will ray trace new tree*/
             if (rt_gettree(rtip, currTree) < 0)
                 return TCL_ERROR;
@@ -1820,9 +1844,30 @@ rtgl_drawVList(struct dm *dmp, register struct bn_vlist *vp)
     if (!jobsDone) {
 	RTGL_DIRTY = 1;
 
-	if ((jobsDone = shootJobs(&jobs))) {
-
+	if ((jobsDone = shootJobs(&jobs))) {	
+	    oldNumTrees = 0;
     	    freeJobList(&jobs);
+	    
+    	    if (colorTable != NULL) {
+    		bu_hash_tbl_free(colorTable);
+    		colorTable = NULL;
+    	    }
+	    
+    	    if (jobsArray != NULL) {
+    		bu_free(jobsArray, "dm-rtgl.c: jobsArray");
+    		jobsArray = NULL;
+    	    }
+	    
+    	    RTGL_DIRTY = 0;
+	    
+    	    /* reset for dynamic z-clipping */
+    	    if (dmp->dm_zclip) {
+    		startScale = 1;
+    	    }
+	    
+    	    maxSpan = 0.0;
+    	    numShot = numJobs = 0;
+
 	    bu_log("jobs done");
 	}
     } else {
