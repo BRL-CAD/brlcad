@@ -66,6 +66,7 @@ adrt_master_SOURCES = \
 adrt_master_LDADD = \
 	libtie.la \
 	${BU} \
+	${LIBNETWORK} \
 	${LIBTHREAD} \
 	${LIBM} \
 	${LIBZ}
