@@ -22,8 +22,6 @@
  *
  * Locate the BRL-CAD tclscripts
  *
- * Author --
- *   Christopher Sean Morrison
  */
 
 #include "common.h"
@@ -32,12 +30,12 @@
 #include <stdio.h>
 
 #include "tcl.h"
-#include "tk.h"
-#include "itcl.h"
 
-#if !defined(_WIN32) || defined(__CYGWIN__)
-#include "itk.h"
+#ifdef HAVE_TK_H
+#  include "tk.h"
+#  include "itk.h"
 #endif
+#include "itcl.h"
 
 /* incrTcl prior to 3.3 doesn't provide ITK_VERSION */
 #ifndef ITK_VERSION
@@ -261,12 +259,16 @@ tclcad_auto_path(Tcl_Interp *interp)
 		      BU_PATH_SEPARATOR, root, BU_DIR_SEPARATOR);
 	bu_vls_printf(&auto_path, "%c%s%clib%ctcl%s",
 		      BU_PATH_SEPARATOR, root, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR, TCL_VERSION);
+#ifdef HAVE_TK_H
 	bu_vls_printf(&auto_path, "%c%s%clib%ctk%s",
 		      BU_PATH_SEPARATOR, root, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR, TK_VERSION);
+#endif
 	bu_vls_printf(&auto_path, "%c%s%clib%citcl%s",
 		      BU_PATH_SEPARATOR, root, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR, ITCL_VERSION);
+#ifdef HAVE_TK_H
 	bu_vls_printf(&auto_path, "%c%s%clib%citk%s",
 		      BU_PATH_SEPARATOR, root, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR, ITK_VERSION);
+#endif
 	bu_vls_printf(&auto_path, "%c%s%clib%ciwidgets%s",
 		      BU_PATH_SEPARATOR, root, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR, IWIDGETS_VERSION);
 	bu_vls_printf(&auto_path, "%c%s%ctclscripts",
@@ -366,12 +368,16 @@ tclcad_auto_path(Tcl_Interp *interp)
 		      BU_PATH_SEPARATOR, root, BU_DIR_SEPARATOR);
 	bu_vls_printf(&auto_path, "%c%s%clib%ctcl%s",
 		      BU_PATH_SEPARATOR, root, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR, TCL_VERSION);
+#ifdef HAVE_TK_H
 	bu_vls_printf(&auto_path, "%c%s%clib%ctk%s",
 		      BU_PATH_SEPARATOR, root, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR, TK_VERSION);
+#endif
 	bu_vls_printf(&auto_path, "%c%s%clib%citcl%s",
 		      BU_PATH_SEPARATOR, root, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR, ITCL_VERSION);
+#ifdef HAVE_TK_H
 	bu_vls_printf(&auto_path, "%c%s%clib%citk%s",
 		      BU_PATH_SEPARATOR, root, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR, ITK_VERSION);
+#endif
 	bu_vls_printf(&auto_path, "%c%s%clib%ciwidgets%s",
 		      BU_PATH_SEPARATOR, root, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR, IWIDGETS_VERSION);
 	bu_vls_printf(&auto_path, "%c%s%ctclscripts",
