@@ -1,7 +1,27 @@
 
+if WITH_X11
+BWISH=bwish
+blib_LIBS = \
+	${TCLCAD} \
+	${DM} \
+	${ITK} \
+	${ITCL} \
+	${TK} \
+	${TCL} \
+	${TERMIO}
+else
+BWISH=
+blib_LIBS = \
+	${TCLCAD} \
+	${DM} \
+	${ITCL} \
+	${TCL} \
+	${TERMIO}
+endif
+
 bin_PROGRAMS = \
 	btclsh \
-	bwish
+	${BWISH}
 
 # static is required to avoid MIPSpro 7.3 long rpath linker bug
 if LINK_STATIC_REQUIRED
@@ -25,15 +45,6 @@ bwish_SOURCES = \
 	input.c \
 	main.c \
 	tcl.c
-
-blib_LIBS = \
-	${TCLCAD} \
-	${DM} \
-	${ITK} \
-	${ITCL} \
-	${TK} \
-	${TCL} \
-	${TERMIO}
 
 bwish_LDADD = ${blib_LIBS}
 
