@@ -198,6 +198,7 @@ struct ptInfoList *currItem;
 struct jobList *currJob;
 
 int numJobs = 0;
+int rtglWasClosed = 0;
 
 /* free all jobs from job list */
 void freeJobList(struct jobList *jobs) {
@@ -785,7 +786,8 @@ rtgl_close(struct dm *dmp)
 
     /* reset job count */
     numJobs = 0;
-
+    rtglWasClosed = 1;
+    
     /* free draw list */
     if (colorTable != NULL) {
 	bu_hash_tbl_free(colorTable);
@@ -1702,7 +1704,8 @@ rtgl_drawVList(struct dm *dmp, register struct bn_vlist *vp)
                 new = 0;
         }
         
-        if (new) {
+        if (new || rtglWasClosed == 1) {
+	    rtglWasClosed = 0;
     	    /* drop previous work */
     	    oldNumTrees = 0;
     	    freeJobList(&jobs);
