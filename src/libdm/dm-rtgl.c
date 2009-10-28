@@ -1845,13 +1845,7 @@ rtgl_drawVList(struct dm *dmp, register struct bn_vlist *vp)
 	RTGL_DIRTY = 1;
 
 	if ((jobsDone = shootJobs(&jobs))) {	
-	    oldNumTrees = 0;
     	    freeJobList(&jobs);
-	    
-    	    if (colorTable != NULL) {
-    		bu_hash_tbl_free(colorTable);
-    		colorTable = NULL;
-    	    }
 	    
     	    if (jobsArray != NULL) {
     		bu_free(jobsArray, "dm-rtgl.c: jobsArray");
@@ -1859,13 +1853,7 @@ rtgl_drawVList(struct dm *dmp, register struct bn_vlist *vp)
     	    }
 	    
     	    RTGL_DIRTY = 0;
-	    
-    	    /* reset for dynamic z-clipping */
-    	    if (dmp->dm_zclip) {
-    		startScale = 1;
-    	    }
-	    
-    	    maxSpan = 0.0;
+    	   
     	    numShot = numJobs = 0;
 
 	    bu_log("jobs done");
