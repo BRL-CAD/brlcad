@@ -1017,6 +1017,13 @@ AC_CHECK_LIB(c, sproc, thread_link_works=yes ; LIBTHREAD="-lc",
     )]
 )
 
+dnl check for the daemon function in -lbsd and/or -lc for adrt
+LIBBSD=""
+AC_CHECK_LIB(bsd, daemon, LIBBSD="-lbsd",
+    [AC_CHECK_LIB(c, daemon, LIBBSD="-lc")]
+)
+AC_SUBST(LIBBSD)
+
 dnl check whether we ended up with functioning posix threading.
 AC_MSG_CHECKING([whether we are using POSIX threading])
 posix_threading=no
