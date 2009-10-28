@@ -2056,12 +2056,14 @@ general_Handler(int sig)
 	    abort();
 	    /*NOTREACHED*/
 #endif
-#if defined(SIGSEGV) && (SIGBUS != SIGSEGV)
+#if defined(SIGSEGV)
+#  if !defined(SIGBUS) || (SIGSEGV != SIGBUS)
 	case SIGSEGV :
 	    prnt_Event( "Segmentation violation (core dumped)." );
 	    restore_Tty();
 	    abort();
 	    /*NOTREACHED*/
+#  endif
 #endif
 	case SIGALRM :
 	    break;
@@ -2077,11 +2079,15 @@ general_Handler(int sig)
 	    break;
 #endif
 
-#if defined(SIGSTOP) && defined(SIGTSTP) && defined(SIGCONT)
+#if defined(SIGSTOP)
 	case SIGSTOP :
+#endif
+#if defined(SIGTSTP)
 	case SIGTSTP :
 	    (void) f_Stop( (char *) NULL );
 	    break;
+#endif
+#if defined(SIGCONT)
 	case SIGCONT :
 	    break;
 #endif
