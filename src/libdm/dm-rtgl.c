@@ -195,22 +195,23 @@ struct bu_hash_tbl *colorTable;
 struct ptInfoList *currItem;
 
 /* list of ray trace jobs */
-struct jobList jobs;
 struct jobList *currJob;
 
+int numJobs = 0;
+
 /* free all jobs from job list */
-void freeJobList(void) {
+void freeJobList(struct jobList *jobs) {
 
     /* list cannot be empty */
-    if (jobs.l.forw != NULL && (struct jobList *)jobs.l.forw != &jobs) {
+    if (jobs->l.forw != NULL && (struct jobList *)jobs->l.forw != &(*jobs)) {
 
-	while (BU_LIST_WHILE (currJob, jobList, &(jobs.l))) {
+	while (BU_LIST_WHILE (currJob, jobList, &(jobs->l))) {
 
 	    BU_LIST_DEQUEUE(&(currJob->l));
 	    bu_free(currJob, "free jobs currJob");
 	}
 
-	jobs.l.forw = BU_LIST_NULL;
+	jobs->l.forw = BU_LIST_NULL;
     }
 }
 
@@ -782,8 +783,8 @@ rtgl_close(struct dm *dmp)
     bu_free(dmp->dm_vars.pub_vars, "rtgl_close: dm_xvars");
     bu_free(dmp, "rtgl_close: dmp");
 
-    /* free job list */
-    freeJobList();
+    /* reset job count */
+    numJobs = 0;
 
     /* free draw list */
     if (colorTable != NULL) {
@@ -1372,7 +1373,6 @@ void swapItems(struct bu_list *a, struct bu_list *b) {
     }
 }
 
-int numJobs = 0;
 
 struct jobList **jobsArray = NULL;
 
@@ -1418,7 +1418,7 @@ void shuffleJobs(void) {
 }
 
 /* add jobs for an even grid of parallel rays in a principle direction */
-void shootGrid(vect_t min, vect_t max, double maxSpan, int pixels, int uAxis, int vAxis, int iAxis) {
+void shootGrid(struct jobList *jobs, vect_t min, vect_t max, double maxSpan, int pixels, int uAxis, int vAxis, int iAxis) {
     int i, j;
     vect_t span;
     int uDivs, vDivs;
@@ -1464,7 +1464,7 @@ void shootGrid(vect_t min, vect_t max, double maxSpan, int pixels, int uAxis, in
 	    if (currJob->used == JOB_ARRAY_SIZE) {
 
 		BU_GETSTRUCT(currJob, jobList);
-		BU_LIST_PUSH(&(jobs.l), currJob);
+		BU_LIST_PUSH(&(jobs->l), currJob);
 		currJob->used = 0;
 	    }
 	    
@@ -1484,7 +1484,7 @@ void shootGrid(vect_t min, vect_t max, double maxSpan, int pixels, int uAxis, in
 int numShot = 0;
 
 /* return 1 if all jobs done, 0 if not */
-int shootJobs(void) {
+int shootJobs(struct jobList *jobs) {
     int i, last, *used;
     double elapsed_time;
 
@@ -1529,7 +1529,7 @@ int shootJobs(void) {
 	    }
 	}
 
-	jobs.l.forw = BU_LIST_NULL;
+	jobs->l.forw = BU_LIST_NULL;
     }
 
     return 1;
@@ -1618,7 +1618,8 @@ rtgl_drawVList(struct dm *dmp, register struct bn_vlist *vp)
     vect_t span;
     char *currTree, *visibleTrees[RT_MAXARGS];
     struct db_i *dbip;
-
+    struct jobList jobs;
+    
     vect_t vCenter;
 
     /* get ged struct */
@@ -1663,7 +1664,7 @@ rtgl_drawVList(struct dm *dmp, register struct bn_vlist *vp)
 
 	/* drop previous work */
 	oldNumTrees = 0;
-	freeJobList();
+	freeJobList(&jobs);
 
 	if (colorTable != NULL) {
 	    bu_hash_tbl_free(colorTable);
@@ -1748,9 +1749,9 @@ rtgl_drawVList(struct dm *dmp, register struct bn_vlist *vp)
 
 #if 1
 	/* create ray-trace jobs */
-	shootGrid(min, max, maxSpan, maxPixels, X, Y, Z);
-	shootGrid(min, max, maxSpan, maxPixels, Z, X, Y);
-	shootGrid(min, max, maxSpan, maxPixels, Y, Z, X);
+	shootGrid(&jobs, min, max, maxSpan, maxPixels, X, Y, Z);
+	shootGrid(&jobs, min, max, maxSpan, maxPixels, Z, X, Y);
+	shootGrid(&jobs, min, max, maxSpan, maxPixels, Y, Z, X);
 
 	bu_log("firing %d jobs", numJobs);
 
@@ -1819,7 +1820,9 @@ rtgl_drawVList(struct dm *dmp, register struct bn_vlist *vp)
     if (!jobsDone) {
 	RTGL_DIRTY = 1;
 
-	if ((jobsDone = shootJobs())) {
+	if ((jobsDone = shootJobs(&jobs))) {
+
+    	    freeJobList(&jobs);
 	    bu_log("jobs done");
 	}
     } else {
