@@ -2080,9 +2080,10 @@ AC_CHECK_FUNCS(\
 	drand48 \
 	fchmod \
 	fsync \
-	geteuid \
 	getegid \
+	geteuid \
 	gethostname \
+	getloadavg \
 	getopt_long \
 	getprogname \
 	kill \
