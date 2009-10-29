@@ -7,6 +7,9 @@ PL_X_EXTRA =
 PL_DM = pl-dm
 PL_DM_EXTRA =
 
+BOMBARDIER = bombardier
+BOMBARDIER_EXTRA =
+
 else !WITH_X11
 
 PL_X =
@@ -14,6 +17,9 @@ PL_X_EXTRA = pl-X.c
 
 PL_DM =
 PL_DM_EXTRA = pl-dm.c
+
+BOMBARDIER =
+BOMBARDIER_EXTRA = bombardier.c
 
 endif
 # WITH_X11
@@ -27,6 +33,7 @@ endif
 
 
 bin_PROGRAMS = \
+	${BOMBARDIER} \
 	${PL_DM} \
 	${PL_X} \
 	alias-pix \
@@ -35,7 +42,6 @@ bin_PROGRAMS = \
 	azel \
 	bary \
 	binfo \
-	bombardier \
 	buffer \
 	bw-a \
 	bw-imp \
@@ -184,9 +190,12 @@ bary_LDADD = ${BU}
 binfo_SOURCES = binfo.c
 binfo_LDADD = ${RT} ${FB} ${BU}
 
+if WITH_X11
 bombardier_SOURCES = bombardier.c bombardier.h
 bombardier_LDADD = ${TCLCAD} ${BU} ${TCL} ${TK}
 bombardier_CFLAGS = ${TK_CPPFLAGS} ${TCL_CPPFLAGS}
+endif
+# WITH_X11
 
 buffer_SOURCES = buffer.c
 buffer_LDADD = ${BU}
@@ -458,7 +467,6 @@ pixuntile_SOURCES = pixuntile.c
 pixuntile_LDADD = ${BU}
 
 if WITH_X11
-
 pl_X_SOURCES = pl-X.c
 pl_X_LDADD = ${DM} ${DM_LIBS} ${BU}
 pl_X_CFLAGS = ${X_CFLAGS}
@@ -466,8 +474,8 @@ pl_X_CFLAGS = ${X_CFLAGS}
 pl_dm_SOURCES = pl-dm.c
 pl_dm_LDADD = ${DM} ${DM_LIBS} ${BU} ${TK}
 pl_dm_CFLAGS = ${TK_CPPFLAGS} ${X_CFLAGS}
-
 endif
+# WITH_X11
 
 pl_asc_SOURCES = pl-asc.c
 pl_asc_LDADD = ${BU}
@@ -674,6 +682,7 @@ sample_applications_DATA = \
 EXTRA_DIST = \
 	$(man_MANS) \
 	$(sample_applications_DATA) \
+	${BOMBARDIER_EXTRA} \
 	${PL_DM_EXTRA} \
 	${PL_X_EXTRA} \
 	rtwizard.bat \
