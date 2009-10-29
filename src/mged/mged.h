@@ -432,6 +432,11 @@ extern Tcl_Interp *interp;
 extern struct cmd_list head_cmd_list;
 extern struct cmd_list *curr_cmd_list;
 
+#ifndef HAVE_TK
+typedef void *Tk_Window;
+#endif
+extern Tk_Window tkwin; /* in cmd.c */
+
 /* defined in rtif.c */
 extern struct run_rt head_run_rt;
 

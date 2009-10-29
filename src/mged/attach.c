@@ -35,7 +35,7 @@
 #include "bio.h"
 
 #include "tcl.h"
-#ifdef HAVE_TK_H
+#ifdef HAVE_TK
 #  include "tk.h"
 #  include "itk.h"
 #endif
@@ -61,8 +61,6 @@
 	IS_DM_TYPE_TK(_type) || \
 	IS_DM_TYPE_X(_type))
 
-
-extern Tk_Window tkwin; /* in cmd.c */
 
 /* All systems can compile these! */
 extern int Plot_dm_init(struct dm_list *o_dm_list, int argc, char **argv);
@@ -299,6 +297,7 @@ f_release(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	return release((char *)NULL, 1);
 }
 
+
 void
 print_valid_dm(void)
 {
@@ -388,6 +387,7 @@ gui_setup(char *dstr)
 #endif
     }
 
+#ifdef HAVE_TK
     /* This runs the tk.tcl script */
     if (Tk_Init(interp) == TCL_ERROR) {
 	const char *result = Tcl_GetStringResult(interp);
@@ -410,6 +410,7 @@ gui_setup(char *dstr)
 		   "::itk::*", /* allowOverwrite */ 1) != TCL_OK) {
 	return TCL_ERROR;
     }
+#endif
 
     /* Initialize the Iwidgets package */
     if (Tcl_Eval(interp, "package require Iwidgets") != TCL_OK) {
@@ -428,25 +429,26 @@ gui_setup(char *dstr)
     /* Initialize libfb */
     (void)Fb_Init(interp);
 
+#ifdef HAVE_TK
     if ((tkwin = Tk_MainWindow(interp)) == NULL) {
 	return TCL_ERROR;
     }
+#endif
 
     /* create the event handler */
     Tk_CreateGenericHandler(doEvent, (ClientData)NULL);
 
+#ifdef HAVE_TK
     Tcl_Eval(interp, "wm withdraw .");
     Tcl_Eval(interp, "tk appname mged");
+#endif
 
     return TCL_OK;
 }
 
 
 int
-mged_attach(
-    struct w_dm *wp,
-    int argc,
-    const char *argv[])
+mged_attach(struct w_dm *wp, int argc, const char *argv[])
 {
     register struct dm_list *o_dm_list;
 
@@ -539,6 +541,7 @@ mged_attach(
 
     return TCL_ERROR;
 }
+
 
 void
 get_attached(void)
@@ -684,7 +687,8 @@ f_dm(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
     return cmd_hook(argc-1, argv+1);
 }
 
-/*
+
+/**
  * I S _ D M _ N U L L
  *
  * Returns -
@@ -775,6 +779,7 @@ mged_link_vars(struct dm_list *p)
     bu_vls_printf(&p->dml_adc_name, "%s(%V,adc)", MGED_DISPLAY_VAR,
 		  &p->dml_dmp->dm_pathName);
 }
+
 
 int
 f_get_dm_list(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
