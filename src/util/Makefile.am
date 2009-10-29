@@ -562,7 +562,7 @@ texturescale_SOURCES = texturescale.c
 texturescale_LDADD = ${FB} ${BN} ${BU}
 
 ttcp_SOURCES = ttcp.c
-ttcp_LDADD = ${LIBSOCKET} ${LIBNSL}
+ttcp_LDADD = ${LIBSOCKET} ${LIBNSL} ${LIBNETWORK}
 
 wavelet_SOURCES = wavelet.c
 wavelet_LDADD = ${FB} ${BN} ${BU}
