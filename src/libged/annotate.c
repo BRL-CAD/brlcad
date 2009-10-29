@@ -52,7 +52,7 @@
 void
 annotate_help(struct bu_vls *result, const char *cmd)
 {
-    static const char *usage = "[object] [-n name] [-p x y z] [-t type] [-m message]";
+    static const char *usage = "[object(s)] [-n name] [-p x y z] [-t type] [-m message]";
 
     bu_vls_printf(result, "Usage: %s %s", cmd, usage);
 }
@@ -63,8 +63,6 @@ ged_annotate(struct ged *gedp, int argc, const char *argv[])
 {
     const char *argv0 = argv[0];
 
-    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
-
     /* initialize result */
     bu_vls_trunc(&gedp->ged_result_str, 0);
 
@@ -73,6 +71,8 @@ ged_annotate(struct ged *gedp, int argc, const char *argv[])
 	annotate_help(&gedp->ged_result_str, argv0);
 	return GED_HELP;
     }
+
+    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
 
     /* do something */
 
