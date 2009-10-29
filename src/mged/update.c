@@ -40,7 +40,7 @@
 
 
 void
-mged_update(int	non_blocking)
+mged_update(int non_blocking)
 {
     if (non_blocking >= 0)
 	event_check(non_blocking);
@@ -48,10 +48,10 @@ mged_update(int	non_blocking)
 }
 
 int
-f_update(ClientData	clientData,
-	 Tcl_Interp	*interp,
-	 int		argc,
-	 char		**argv)
+f_update(ClientData clientData,
+	 Tcl_Interp *interp,
+	 int argc,
+	 char **argv)
 {
     int non_blocking;
 
@@ -76,11 +76,11 @@ f_update(ClientData	clientData,
  * the f_wait() procedure.
  */
 static char *
-WaitVariableProc(ClientData	clientData,	/* Pointer to integer to set to 1. */
-		 Tcl_Interp	*interp,	/* Interpreter containing variable. */
-		 char		*name1,		/* Name of variable. */
-		 char		*name2,		/* Second part of variable name. */
-		 int		flags)		/* Information about what happened. */
+WaitVariableProc(ClientData clientData,	/* Pointer to integer to set to 1. */
+		 Tcl_Interp *interp,	/* Interpreter containing variable. */
+		 char *name1,		/* Name of variable. */
+		 char *name2,		/* Second part of variable name. */
+		 int flags)		/* Information about what happened. */
 {
     int *donePtr = (int *) clientData;
 
@@ -90,12 +90,11 @@ WaitVariableProc(ClientData	clientData,	/* Pointer to integer to set to 1. */
 
 
 /*
- * Copied from libtk/generic/tkCmds.c. Used by
- * the f_wait() procedure.
+ * Copied from libtk/generic/tkCmds.c. Used by the f_wait() procedure.
  */
 static void
-WaitVisibilityProc(ClientData	clientData,	/* Pointer to integer to set to 1. */
-		   XEvent	*eventPtr)	/* Information about event (not used). */
+WaitVisibilityProc(ClientData clientData, /* Pointer to integer to set to 1. */
+		   XEvent *eventPtr)      /* Information about event (not used). */
 {
     int *donePtr = (int *) clientData;
 
@@ -112,8 +111,8 @@ WaitVisibilityProc(ClientData	clientData,	/* Pointer to integer to set to 1. */
  * the f_wait() procedure.
  */
 static void
-WaitWindowProc(ClientData	clientData,	/* Pointer to integer to set to 1. */
-	       XEvent		*eventPtr)	/* Information about event. */
+WaitWindowProc(ClientData clientData,	/* Pointer to integer to set to 1. */
+	       XEvent *eventPtr)	/* Information about event. */
 {
     int *donePtr = (int *) clientData;
 
@@ -128,10 +127,10 @@ WaitWindowProc(ClientData	clientData,	/* Pointer to integer to set to 1. */
  * would get refreshed.
  */
 int
-f_wait(ClientData	clientData,	/* Main window associated with interpreter. */
-       Tcl_Interp	*interp,	/* Current interpreter. */
-       int		argc,		/* Number of arguments. */
-       char		**argv)		/* Argument strings. */
+f_wait(ClientData clientData,	/* Main window associated with interpreter. */
+       Tcl_Interp *interp,	/* Current interpreter. */
+       int argc,		/* Number of arguments. */
+       char **argv)		/* Argument strings. */
 {
 #ifdef HAVE_TK
     int c, done;
@@ -177,7 +176,8 @@ f_wait(ClientData	clientData,	/* Main window associated with interpreter. */
 	if (done != 1) {
 	    /*
 	     * Note that we do not delete the event handler because it
-	     * was deleted automatically when the window was destroyed.
+	     * was deleted automatically when the window was
+	     * destroyed.
 	     */
 
 	    Tcl_ResetResult(interp);
@@ -200,7 +200,7 @@ f_wait(ClientData	clientData,	/* Main window associated with interpreter. */
 	    mged_update(0);
 	}
 	/*
-	 * Note:  there's no need to delete the event handler.  It was
+	 * Note: there's no need to delete the event handler.  It was
 	 * deleted automatically when the window was destroyed.
 	 */
     } else {
