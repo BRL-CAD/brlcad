@@ -42,6 +42,11 @@ typedef void *Tk_Window;
 #  define TK_WINDOW_TYPEDEF 1
 #endif
 
+#ifndef HAVE_X11_XLIB_H
+typedef long Display;
+typedef long Window;
+#endif
+
 #define XVARS_MV_O(_m) offsetof(struct dm_xvars, _m)
 
 /* XXX - this really should not be variable-width and does not allow
