@@ -77,7 +77,7 @@
  * sometimes helpful to debuggers.
  */
 #if !defined(HIDDEN)
-#  if defined(lint)
+#  if defined(NDEBUG)
 #    define HIDDEN	static
 #  else
 #    define HIDDEN	/***/
