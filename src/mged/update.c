@@ -30,17 +30,13 @@
 #endif
 
 #include "tcl.h"
-#ifdef HAVE_TK_H
+#ifdef HAVE_TK
 #  include "tk.h"
 #endif
 
 #include "bu.h"
 
-
-extern Tk_Window tkwin; /* in cmd.c */
-
-extern void refresh();
-extern int event_check();
+#include "./mged.h"
 
 
 void
@@ -137,6 +133,7 @@ f_wait(ClientData	clientData,	/* Main window associated with interpreter. */
        int		argc,		/* Number of arguments. */
        char		**argv)		/* Argument strings. */
 {
+#ifdef HAVE_TK
     int c, done;
     size_t length;
     Tk_Window window;
@@ -211,6 +208,8 @@ f_wait(ClientData	clientData,	/* Main window associated with interpreter. */
 			 "\": must be variable, visibility, or window", (char *) NULL);
 	return TCL_ERROR;
     }
+
+#endif /* HAVE_TK */
 
     /*
      * Clear out the interpreter's result, since it may have been set

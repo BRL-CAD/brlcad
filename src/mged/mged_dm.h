@@ -33,7 +33,7 @@
 #include "pkg.h" /* struct pkg_conn */
 #include "ged.h"
 
-#ifdef HAVE_TK_H
+#ifdef HAVE_TK
 #  include <tk.h>
 #endif
 
