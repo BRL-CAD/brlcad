@@ -19,7 +19,7 @@
  */
 /** @file dm-X.c
  *
- *  An X Window System Display Manager.
+ * An X Window System Display Manager.
  *
  */
 
@@ -45,8 +45,8 @@
 #  include <X11/extensions/XInput.h>
 #endif
 #if defined(linux)
-#  undef   X_NOT_STDC_ENV
-#  undef   X_NOT_POSIX
+#  undef X_NOT_STDC_ENV
+#  undef X_NOT_POSIX
 #endif
 #define XLIB_ILLEGAL_ACCESS	/* necessary on facist SGI 5.0.1 */
 
@@ -64,30 +64,30 @@
 #include "solid.h"
 
 
-HIDDEN void	label();
-HIDDEN void	draw();
-HIDDEN void     x_var_init();
+HIDDEN void label();
+HIDDEN void draw();
+HIDDEN void x_var_init();
 HIDDEN XVisualInfo *X_choose_visual(struct dm *dmp);
 
 /* Display Manager package interface */
 
-#define PLOTBOUND	1000.0	/* Max magnification in Rot matrix */
-struct dm	*X_open_dm(Tcl_Interp *interp, int argc, char **argv);
-HIDDEN int	X_close_dm(struct dm *dmp);
-HIDDEN int	X_drawBegin(struct dm *dmp), X_drawEnd(struct dm *dmp);
-HIDDEN int	X_normal(struct dm *dmp), X_loadMatrix(struct dm *dmp, fastf_t *mat, int which_eye);
-HIDDEN int      X_drawString2D(struct dm *dmp, register char *str, fastf_t x, fastf_t y, int size, int use_aspect);
-HIDDEN int	X_drawLine2D(struct dm *dmp, fastf_t x1, fastf_t y1, fastf_t x2, fastf_t y2);
-HIDDEN int      X_drawPoint2D(struct dm *dmp, fastf_t x, fastf_t y);
-HIDDEN int	X_drawVList(struct dm *dmp, register struct bn_vlist *vp);
-HIDDEN int      X_setFGColor(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b, int strict, fastf_t transparency);
-HIDDEN int	X_setBGColor(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b);
-HIDDEN int	X_setLineAttr(struct dm *dmp, int width, int style);
-HIDDEN int	X_configureWin_guts(struct dm *dmp, int force);
-HIDDEN int	X_configureWin(struct dm *dmp);
-HIDDEN int	X_setLight(struct dm *dmp, int light_on);
-HIDDEN int	X_setZBuffer(struct dm *dmp, int zbuffer_on);
-HIDDEN int	X_setWinBounds(struct dm *dmp, register int *w), X_debug(struct dm *dmp, int lvl);
+#define PLOTBOUND 1000.0	/* Max magnification in Rot matrix */
+struct dm *X_open_dm(Tcl_Interp *interp, int argc, char **argv);
+HIDDEN int X_close_dm(struct dm *dmp);
+HIDDEN int X_drawBegin(struct dm *dmp), X_drawEnd(struct dm *dmp);
+HIDDEN int X_normal(struct dm *dmp), X_loadMatrix(struct dm *dmp, fastf_t *mat, int which_eye);
+HIDDEN int X_drawString2D(struct dm *dmp, register char *str, fastf_t x, fastf_t y, int size, int use_aspect);
+HIDDEN int X_drawLine2D(struct dm *dmp, fastf_t x1, fastf_t y1, fastf_t x2, fastf_t y2);
+HIDDEN int X_drawPoint2D(struct dm *dmp, fastf_t x, fastf_t y);
+HIDDEN int X_drawVList(struct dm *dmp, register struct bn_vlist *vp);
+HIDDEN int X_setFGColor(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b, int strict, fastf_t transparency);
+HIDDEN int X_setBGColor(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b);
+HIDDEN int X_setLineAttr(struct dm *dmp, int width, int style);
+HIDDEN int X_configureWin_guts(struct dm *dmp, int force);
+HIDDEN int X_configureWin(struct dm *dmp);
+HIDDEN int X_setLight(struct dm *dmp, int light_on);
+HIDDEN int X_setZBuffer(struct dm *dmp, int zbuffer_on);
+HIDDEN int X_setWinBounds(struct dm *dmp, register int *w), X_debug(struct dm *dmp, int lvl);
 
 struct dm dm_X = {
     X_close_dm,
@@ -157,7 +157,7 @@ get_color(Display *dpy, Colormap cmap, XColor *color)
 {
     Status st;
     XColor rgb;
-#define CSCK   0xf800
+#define CSCK 0xf800
 
     rgb = *color;
 
@@ -165,10 +165,10 @@ get_color(Display *dpy, Colormap cmap, XColor *color)
     switch (st) {
 	case 1:
 #if 0
-	    if ( (color->red & CSCK) != (rgb.red & CSCK) ||
-		 (color->green & CSCK) != (rgb.green & CSCK) ||
-		 (color->blue & CSCK) != (rgb.blue & CSCK) ) {
-		bu_log("\nlooking for fg    (%3d,%3d,%3d) %04x,%04x,%04x got \n                  (%3d,%3d,%3d) %04x,%04x,%04x\n",
+	    if ((color->red & CSCK) != (rgb.red & CSCK) ||
+		(color->green & CSCK) != (rgb.green & CSCK) ||
+		(color->blue & CSCK) != (rgb.blue & CSCK)) {
+		bu_log("\nlooking for fg (%3d, %3d, %3d) %04x, %04x, %04x got \n (%3d, %3d, %3d) %04x, %04x, %04x\n",
 		       (rgb.red >> 8), (rgb.green >> 8), (rgb.blue >> 8),
 		       rgb.red, rgb.green, rgb.blue,
 
@@ -178,13 +178,13 @@ get_color(Display *dpy, Colormap cmap, XColor *color)
 #endif
 	    break;
 	case BadColor:
-	    bu_log("XAllocColor failed (BadColor) for (%3d,%3d,%3d) %04x,%04x,%04x\n",
+	    bu_log("XAllocColor failed (BadColor) for (%3d, %3d, %3d) %04x, %04x, %04x\n",
 		   (rgb.red >> 8), (rgb.green >> 8), (rgb.blue >> 8),
 		   rgb.red, rgb.green, rgb.blue);
 	    break;
 
 	default:
-	    bu_log("XAllocColor error for (%3d,%3d,%3d) %04x,%04x,%04x\n",
+	    bu_log("XAllocColor error for (%3d, %3d, %3d) %04x, %04x, %04x\n",
 		   (rgb.red >> 8), (rgb.green >> 8), (rgb.blue >> 8),
 		   rgb.red, rgb.green, rgb.blue);
 	    break;
@@ -194,7 +194,7 @@ get_color(Display *dpy, Colormap cmap, XColor *color)
 }
 
 /*
- *			X _ O P E N
+ * X _ O P E N
  *
  * Fire up the display manager, and the display processor.
  *
@@ -439,20 +439,20 @@ X_open_dm(Tcl_Interp *interp, int argc, char **argv)
 
 	privars->bg = bg.pixel;
     } else {
-	X_allocate_color_cube( pubvars->dpy,
-				pubvars->cmap,
-				privars->pixels,
-				/* cube dimension, uses XStoreColor */
-				6, CMAP_BASE, 1 );
+	X_allocate_color_cube(pubvars->dpy,
+			      pubvars->cmap,
+			      privars->pixels,
+			      /* cube dimension, uses XStoreColor */
+			      6, CMAP_BASE, 1);
 
 	privars->bg =
 	    X_get_pixel(DM_BLACK,
-			 privars->pixels,
-			 CUBE_DIMENSION);
+			privars->pixels,
+			CUBE_DIMENSION);
 	privars->fg =
 	    X_get_pixel(DM_RED,
-			 privars->pixels,
-			 CUBE_DIMENSION);
+			privars->pixels,
+			CUBE_DIMENSION);
     }
 
     gcv.background = privars->bg;
@@ -472,15 +472,15 @@ X_open_dm(Tcl_Interp *interp, int argc, char **argv)
 
 #if USE_DIALS_AND_BUTTONS
     /*
-     * Take a look at the available input devices. We're looking
-     * for "dial+buttons".
+     * Take a look at the available input devices. We're looking for
+     * "dial+buttons".
      */
     if (XQueryExtension(pubvars->dpy, "XInputExtension", &unused, &unused, &unused)) {
 	olist = list = (XDeviceInfoPtr)XListInputDevices(pubvars->dpy, &ndevices);
     }
 
-    if ( list == (XDeviceInfoPtr)NULL ||
-	 list == (XDeviceInfoPtr)1 )  goto Done;
+    if (list == (XDeviceInfoPtr)NULL ||
+	list == (XDeviceInfoPtr)1)  goto Done;
 
     for (j = 0; j < ndevices; ++j, list++) {
 	if (list->use == IsXExtensionDevice) {
@@ -541,9 +541,9 @@ X_open_dm(Tcl_Interp *interp, int argc, char **argv)
 }
 
 /*
- *  			X _ C L O S E
+ * X _ C L O S E
  *
- *  Gracefully release the display.
+ * Gracefully release the display.
  */
 HIDDEN int
 X_close_dm(struct dm *dmp)
@@ -588,12 +588,12 @@ X_close_dm(struct dm *dmp)
 }
 
 /*
- *			X _ D R A W B E G I N
+ * X _ D R A W B E G I N
  */
 HIDDEN int
 X_drawBegin(struct dm *dmp)
 {
-    XGCValues       gcv;
+    XGCValues gcv;
     struct dm_xvars *pubvars = (struct dm_xvars *)dmp->dm_vars.pub_vars;
     struct x_vars *privars = (struct x_vars *)dmp->dm_vars.priv_vars;
 
@@ -620,8 +620,9 @@ X_drawBegin(struct dm *dmp)
     return TCL_OK;
 }
 
+
 /*
- *			X _ E P I L O G
+ * X _ E P I L O G
  */
 HIDDEN int
 X_drawEnd(struct dm *dmp)
@@ -645,13 +646,13 @@ X_drawEnd(struct dm *dmp)
     return TCL_OK;
 }
 
+
 /*
- *  			X _ L O A D M A T R I X
+ * X _ L O A D M A T R I X
  *
- *  Load a new transformation matrix.  This will be followed by
- *  many calls to X_drawVList().
+ * Load a new transformation matrix.  This will be followed by many
+ * calls to X_drawVList().
  */
-/* ARGSUSED */
 HIDDEN int
 X_loadMatrix(struct dm *dmp, fastf_t *mat, int which_eye)
 {
@@ -682,15 +683,15 @@ X_loadMatrix(struct dm *dmp, fastf_t *mat, int which_eye)
 HIDDEN int
 X_drawVList(struct dm *dmp, register struct bn_vlist *vp)
 {
-    static vect_t			spnt, lpnt, pnt;
-    register struct bn_vlist	*tvp;
-    XSegment			segbuf[1024];		/* XDrawSegments list */
-    XSegment			*segp;			/* current segment */
-    int				nseg;		        /* number of segments */
-    fastf_t				delta;
-    register point_t		*pt_prev = NULL;
-    fastf_t				dist_prev=1.0;
-    static int			nvectors = 0;
+    static vect_t spnt, lpnt, pnt;
+    register struct bn_vlist *tvp;
+    XSegment segbuf[1024];	/* XDrawSegments list */
+    XSegment *segp;		/* current segment */
+    int nseg;		        /* number of segments */
+    fastf_t delta;
+    register point_t *pt_prev = NULL;
+    fastf_t dist_prev=1.0;
+    static int nvectors = 0;
     struct dm_xvars *pubvars = (struct dm_xvars *)dmp->dm_vars.pub_vars;
     struct x_vars *privars = (struct x_vars *)dmp->dm_vars.priv_vars;
 
@@ -700,9 +701,9 @@ X_drawVList(struct dm *dmp, register struct bn_vlist *vp)
 	bu_log("vp - %lu, perspective - %d\n", vp, dmp->dm_perspective);
     }
 
-    /* delta is used in clipping to insure clipped endpoint is slightly
-     * in front of eye plane (perspective mode only).
-     * This value is a SWAG that seems to work OK.
+    /* delta is used in clipping to insure clipped endpoint is
+     * slightly in front of eye plane (perspective mode only).  This
+     * value is a SWAG that seems to work OK.
      */
     delta = privars->xmat[15]*0.0001;
     if (delta < 0.0)
@@ -713,11 +714,11 @@ X_drawVList(struct dm *dmp, register struct bn_vlist *vp)
     nseg = 0;
     segp = segbuf;
     for (BU_LIST_FOR(tvp, bn_vlist, &vp->l)) {
-	register int	i;
-	register int	nused = tvp->nused;
-	register int	*cmd = tvp->cmd;
+	register int i;
+	register int nused = tvp->nused;
+	register int *cmd = tvp->cmd;
 	register point_t *pt = tvp->pt;
-	fastf_t 	 dist;
+	fastf_t dist;
 
 	/* Viewing region is from -1.0 to +1.0 */
 	/* 2^31 ~= 2e9 -- dynamic range of a long int */
@@ -772,9 +773,9 @@ X_drawVList(struct dm *dmp, register struct bn_vlist *vp)
 			/* cannot apply perspective transformation to
 			 * points behind eye plane!!!!
 			 */
-			dist = VDOT( *pt, &privars->xmat[12] ) + privars->xmat[15];
+			dist = VDOT(*pt, &privars->xmat[12]) + privars->xmat[15];
 			if (dmp->dm_debugLevel > 2)
-			    bu_log( "dist=%g, dist_prev=%g\n", dist, dist_prev );
+			    bu_log("dist=%g, dist_prev=%g\n", dist, dist_prev);
 			if (dist <= 0.0) {
 			    if (dist_prev <= 0.0) {
 				/* nothing to plot */
@@ -846,15 +847,19 @@ X_drawVList(struct dm *dmp, register struct bn_vlist *vp)
 			    continue;
 			}
 		    } else {
-			/* Check to see if lpnt or pnt contain values that exceed
-			   the capacity of a short (segbuf is an array of XSegments which
-			   contain shorts). If so, do clipping now. Otherwise, let the
-			   X server do the clipping */
+			/* Check to see if lpnt or pnt contain values
+			 * that exceed the capacity of a short (segbuf
+			 * is an array of XSegments which contain
+			 * shorts). If so, do clipping now. Otherwise,
+			 * let the X server do the clipping.
+			 */
 			if (lpnt[0] < min_short || max_short < lpnt[0] ||
 			    lpnt[1] < min_short || max_short < lpnt[1] ||
 			    pnt[0] < min_short || max_short < pnt[0] ||
 			    pnt[1] < min_short || max_short < pnt[1]) {
-			    /* if the entire line segment will not be visible then ignore it */
+			    /* if the entire line segment will not be
+			     * visible then ignore it.
+			     */
 			    if (clip(&lpnt[0], &lpnt[1], &pnt[0], &pnt[1]) == -1) {
 				VMOVE(lpnt, spnt);
 				continue;
@@ -903,19 +908,20 @@ X_drawVList(struct dm *dmp, register struct bn_vlist *vp)
     }
 
     if (nseg) {
-	XDrawSegments( pubvars->dpy,
-		       privars->pix,
-		       privars->gc, segbuf, nseg );
+	XDrawSegments(pubvars->dpy,
+		      privars->pix,
+		      privars->gc, segbuf, nseg);
     }
 
     return TCL_OK;
 }
 
-/*
- *			X _ N O R M A L
+
+/**
+ * X _ N O R M A L
  *
- * Restore the display processor to a normal mode of operation
- * (ie, not scaled, rotated, displaced, etc).
+ * Restore the display processor to a normal mode of operation (ie,
+ * not scaled, rotated, displaced, etc).
  */
 HIDDEN int
 X_normal(struct dm *dmp)
@@ -926,13 +932,13 @@ X_normal(struct dm *dmp)
     return TCL_OK;
 }
 
-/*
- *			X _ D R A W S T R I N G 2 D
+
+/**
+ * X _ D R A W S T R I N G 2 D
  *
- * Output a string into the displaylist.
- * The starting position of the beam is as specified.
+ * Output a string into the displaylist.  The starting position of the
+ * beam is as specified.
  */
-/* ARGSUSED */
 HIDDEN int
 X_drawString2D(struct dm *dmp, register char *str, fastf_t x, fastf_t y, int size, int use_aspect)
 {
@@ -955,10 +961,10 @@ X_drawString2D(struct dm *dmp, register char *str, fastf_t x, fastf_t y, int siz
     sx = dm_Normal2Xx(dmp, x);
     sy = dm_Normal2Xy(dmp, y, use_aspect);
 
-    XDrawString( pubvars->dpy,
-		 privars->pix,
-		 privars->gc,
-		 sx, sy, str, strlen(str) );
+    XDrawString(pubvars->dpy,
+		privars->pix,
+		privars->gc,
+		sx, sy, str, strlen(str));
 
     return TCL_OK;
 }
@@ -966,7 +972,7 @@ X_drawString2D(struct dm *dmp, register char *str, fastf_t x, fastf_t y, int siz
 HIDDEN int
 X_drawLine2D(struct dm *dmp, fastf_t x1, fastf_t y1, fastf_t x2, fastf_t y2)
 {
-    int	sx1, sy1, sx2, sy2;
+    int sx1, sy1, sx2, sy2;
     struct dm_xvars *pubvars = (struct dm_xvars *)dmp->dm_vars.pub_vars;
     struct x_vars *privars = (struct x_vars *)dmp->dm_vars.priv_vars;
 
@@ -983,10 +989,10 @@ X_drawLine2D(struct dm *dmp, fastf_t x1, fastf_t y1, fastf_t x2, fastf_t y2)
 	bu_log("sx2 = %d, sy2 = %d\n", sx2, sy2);
     }
 
-    XDrawLine( pubvars->dpy,
-	       privars->pix,
-	       privars->gc,
-	       sx1, sy1, sx2, sy2 );
+    XDrawLine(pubvars->dpy,
+	      privars->pix,
+	      privars->gc,
+	      sx1, sy1, sx2, sy2);
 
     return TCL_OK;
 }
@@ -994,7 +1000,7 @@ X_drawLine2D(struct dm *dmp, fastf_t x1, fastf_t y1, fastf_t x2, fastf_t y2)
 HIDDEN int
 X_drawPoint2D(struct dm *dmp, fastf_t x, fastf_t y)
 {
-    int   sx, sy;
+    int sx, sy;
     struct dm_xvars *pubvars = (struct dm_xvars *)dmp->dm_vars.pub_vars;
     struct x_vars *privars = (struct x_vars *)dmp->dm_vars.priv_vars;
 
@@ -1007,9 +1013,9 @@ X_drawPoint2D(struct dm *dmp, fastf_t x, fastf_t y)
 	bu_log("sx = %d, sy = %d\n", sx, sy);
     }
 
-    XDrawPoint( pubvars->dpy,
-		privars->pix,
-		privars->gc, sx, sy );
+    XDrawPoint(pubvars->dpy,
+	       privars->pix,
+	       privars->gc, sx, sy);
 
     return TCL_OK;
 }
@@ -1107,14 +1113,14 @@ X_setLineAttr(struct dm *dmp, int width, int style)
     else
 	linestyle = LineSolid;
 
-    XSetLineAttributes( pubvars->dpy,
-			privars->gc,
-			width, linestyle, CapButt, JoinMiter );
+    XSetLineAttributes(pubvars->dpy,
+		       privars->gc,
+		       width, linestyle, CapButt, JoinMiter);
 
     return TCL_OK;
 }
 
-/* ARGSUSED */
+
 HIDDEN int
 X_debug(struct dm *dmp, int lvl)
 {
@@ -1122,6 +1128,7 @@ X_debug(struct dm *dmp, int lvl)
 
     return TCL_OK;
 }
+
 
 HIDDEN int
 X_setWinBounds(struct dm *dmp, register int *w)
@@ -1139,17 +1146,18 @@ X_setWinBounds(struct dm *dmp, register int *w)
     return TCL_OK;
 }
 
+
 HIDDEN int
 X_configureWin_guts(struct dm *dmp, int force)
 {
     XWindowAttributes xwa;
-    XFontStruct     *newfontstruct;
-    XGCValues       gcv;
+    XFontStruct *newfontstruct;
+    XGCValues gcv;
     struct dm_xvars *pubvars = (struct dm_xvars *)dmp->dm_vars.pub_vars;
     struct x_vars *privars = (struct x_vars *)dmp->dm_vars.priv_vars;
 
-    XGetWindowAttributes( pubvars->dpy,
-			  pubvars->win, &xwa );
+    XGetWindowAttributes(pubvars->dpy,
+			 pubvars->win, &xwa);
 
     /* nothing to do */
     if (!force &&
@@ -1180,7 +1188,7 @@ X_configureWin_guts(struct dm *dmp, int force)
     /* First time through, load a font or quit */
     if (pubvars->fontstruct == NULL) {
 	if ((pubvars->fontstruct =
-	     XLoadQueryFont(pubvars->dpy, FONT9)) == NULL ) {
+	     XLoadQueryFont(pubvars->dpy, FONT9)) == NULL) {
 	    /* Try hardcoded backup font */
 	    if ((pubvars->fontstruct =
 		 XLoadQueryFont(pubvars->dpy, FONTBACK)) == NULL) {
@@ -1200,7 +1208,7 @@ X_configureWin_guts(struct dm *dmp, int force)
     if (dmp->dm_width < 582) {
 	if (pubvars->fontstruct->per_char->width != 5) {
 	    if ((newfontstruct = XLoadQueryFont(pubvars->dpy,
-						FONT5)) != NULL ) {
+						FONT5)) != NULL) {
 		XFreeFont(pubvars->dpy,
 			  pubvars->fontstruct);
 		pubvars->fontstruct = newfontstruct;
@@ -1212,7 +1220,7 @@ X_configureWin_guts(struct dm *dmp, int force)
     } else if (dmp->dm_width < 679) {
 	if (pubvars->fontstruct->per_char->width != 6) {
 	    if ((newfontstruct = XLoadQueryFont(pubvars->dpy,
-						FONT6)) != NULL ) {
+						FONT6)) != NULL) {
 		XFreeFont(pubvars->dpy,
 			  pubvars->fontstruct);
 		pubvars->fontstruct = newfontstruct;
@@ -1224,7 +1232,7 @@ X_configureWin_guts(struct dm *dmp, int force)
     } else if (dmp->dm_width < 776) {
 	if (pubvars->fontstruct->per_char->width != 7) {
 	    if ((newfontstruct = XLoadQueryFont(pubvars->dpy,
-						FONT7)) != NULL ) {
+						FONT7)) != NULL) {
 		XFreeFont(pubvars->dpy,
 			  pubvars->fontstruct);
 		pubvars->fontstruct = newfontstruct;
@@ -1236,7 +1244,7 @@ X_configureWin_guts(struct dm *dmp, int force)
     } else if (dmp->dm_width < 873) {
 	if (pubvars->fontstruct->per_char->width != 8) {
 	    if ((newfontstruct = XLoadQueryFont(pubvars->dpy,
-						FONT8)) != NULL ) {
+						FONT8)) != NULL) {
 		XFreeFont(pubvars->dpy,
 			  pubvars->fontstruct);
 		pubvars->fontstruct = newfontstruct;
@@ -1248,7 +1256,7 @@ X_configureWin_guts(struct dm *dmp, int force)
     } else {
 	if (pubvars->fontstruct->per_char->width != 9) {
 	    if ((newfontstruct = XLoadQueryFont(pubvars->dpy,
-						FONT9)) != NULL ) {
+						FONT9)) != NULL) {
 		XFreeFont(pubvars->dpy,
 			  pubvars->fontstruct);
 		pubvars->fontstruct = newfontstruct;
@@ -1262,12 +1270,14 @@ X_configureWin_guts(struct dm *dmp, int force)
     return TCL_OK;
 }
 
+
 HIDDEN int
 X_configureWin(struct dm *dmp)
 {
     /* don't force */
     return X_configureWin_guts(dmp, 0);
 }
+
 
 HIDDEN int
 X_setLight(struct dm *dmp, int light_on)
@@ -1280,6 +1290,7 @@ X_setLight(struct dm *dmp, int light_on)
     return TCL_OK;
 }
 
+
 HIDDEN int
 X_setZBuffer(struct dm *dmp, int zbuffer_on)
 {
@@ -1290,6 +1301,7 @@ X_setZBuffer(struct dm *dmp, int zbuffer_on)
 
     return TCL_OK;
 }
+
 
 HIDDEN XVisualInfo *
 X_choose_visual(struct dm *dmp)
