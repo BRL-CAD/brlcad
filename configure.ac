@@ -3506,6 +3506,17 @@ fi
 AC_MSG_RESULT($dials_and_buttons)
 
 
+dnl *** MGED GUI ***
+tk_gui=yes
+if test "x$build_against_x11" = "xno" && test "x$build_against_opengl" = "xno" && test "x$build_against_wgl" = "xno" ; then
+    if test "x$build_brlcad_tk" = "xno" ; then
+	tk_gui=no
+    fi
+fi
+if test "x$tk_gui" = "xyes" ; then
+    AC_DEFINE(HAVE_TK, 1, [Support for a Tk GUI is enabled])
+fi
+
 dnl *** Docbook functionality ***
 docbook_processing=no
 docbook_pdf_processing=no
