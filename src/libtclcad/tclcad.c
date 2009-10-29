@@ -30,7 +30,7 @@
 #include <tcl.h>
 #include <itcl.h>
 
-#ifdef HAVE_TK_H
+#ifdef HAVE_TK
 #  include <itk.h>
 #endif
 
@@ -54,7 +54,7 @@ Tclcad_Init(Tcl_Interp *interp)
 	return TCL_ERROR;
     }
 
-#ifdef HAVE_TK_H
+#ifdef HAVE_TK
     if (Tk_Init(interp) == TCL_ERROR) {
 	return TCL_ERROR;
     }
@@ -69,7 +69,7 @@ Tclcad_Init(Tcl_Interp *interp)
 	return TCL_ERROR;
     }
 
-#ifdef HAVE_TK_H
+#ifdef HAVE_TK
     /* Initialize [incr Tk] */
     if (Itk_Init(interp) == TCL_ERROR) {
 	bu_log("Itk_Init ERROR:\n%s\n", Tcl_GetStringResult(interp));

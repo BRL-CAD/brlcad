@@ -31,7 +31,7 @@
 
 #include "tcl.h"
 
-#ifdef HAVE_TK_H
+#ifdef HAVE_TK
 #  include "tk.h"
 #  include "itk.h"
 #endif
@@ -259,13 +259,13 @@ tclcad_auto_path(Tcl_Interp *interp)
 		      BU_PATH_SEPARATOR, root, BU_DIR_SEPARATOR);
 	bu_vls_printf(&auto_path, "%c%s%clib%ctcl%s",
 		      BU_PATH_SEPARATOR, root, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR, TCL_VERSION);
-#ifdef HAVE_TK_H
+#ifdef HAVE_TK
 	bu_vls_printf(&auto_path, "%c%s%clib%ctk%s",
 		      BU_PATH_SEPARATOR, root, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR, TK_VERSION);
 #endif
 	bu_vls_printf(&auto_path, "%c%s%clib%citcl%s",
 		      BU_PATH_SEPARATOR, root, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR, ITCL_VERSION);
-#ifdef HAVE_TK_H
+#ifdef HAVE_TK
 	bu_vls_printf(&auto_path, "%c%s%clib%citk%s",
 		      BU_PATH_SEPARATOR, root, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR, ITK_VERSION);
 #endif
@@ -368,13 +368,13 @@ tclcad_auto_path(Tcl_Interp *interp)
 		      BU_PATH_SEPARATOR, root, BU_DIR_SEPARATOR);
 	bu_vls_printf(&auto_path, "%c%s%clib%ctcl%s",
 		      BU_PATH_SEPARATOR, root, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR, TCL_VERSION);
-#ifdef HAVE_TK_H
+#ifdef HAVE_TK
 	bu_vls_printf(&auto_path, "%c%s%clib%ctk%s",
 		      BU_PATH_SEPARATOR, root, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR, TK_VERSION);
 #endif
 	bu_vls_printf(&auto_path, "%c%s%clib%citcl%s",
 		      BU_PATH_SEPARATOR, root, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR, ITCL_VERSION);
-#ifdef HAVE_TK_H
+#ifdef HAVE_TK
 	bu_vls_printf(&auto_path, "%c%s%clib%citk%s",
 		      BU_PATH_SEPARATOR, root, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR, ITK_VERSION);
 #endif

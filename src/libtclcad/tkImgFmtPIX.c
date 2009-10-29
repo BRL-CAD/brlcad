@@ -55,7 +55,7 @@
 #include "common.h"
 
 /* make sure we have tk if we're going to compile this up */
-#ifdef HAVE_TK_H
+#ifdef HAVE_TK
 
 #include <stdio.h>
 #include <string.h>
@@ -342,7 +342,7 @@ FileWritePIX(Tcl_Interp *interp, const char *fileName, Tcl_Obj *format, Tk_Photo
     return TCL_ERROR;
 }
 
-#endif /* HAVE_TK_H */
+#endif /* HAVE_TK */
 
 /*
  * Local Variables:
