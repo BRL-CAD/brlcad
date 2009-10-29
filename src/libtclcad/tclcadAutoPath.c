@@ -28,6 +28,7 @@
 
 #include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
 
 #include "tcl.h"
 
@@ -53,6 +54,9 @@
 #endif
 
 #define MAX_BUF 2048
+
+/* FIXME: we utilize this Tcl internal in here */
+extern Tcl_Obj *TclGetLibraryPath (void);
 
 
 /* helper routine to determine whether the full 'path' includes a
@@ -101,6 +105,7 @@ tclcad_tcl_library(Tcl_Interp *interp)
     Tcl_Obj *tclpath = NULL;
     char buffer[MAX_BUF] = {0};
 
+    /* FIXME: this is a private internal call */
     tclpath = TclGetLibraryPath();
     if (!tclpath) {
 	bu_log("WARNING: Unable to get the library path\n");
@@ -123,9 +128,12 @@ tclcad_tcl_library(Tcl_Interp *interp)
 		TclSetLibraryPath(listtl);
 	    }
 	}
+
 	Tcl_DecrRefCount(tclpath);
+	/* FIXME: this is a private internal call */
 	tclpath = TclGetLibraryPath();
 	Tcl_IncrRefCount(tclpath);
+
 	Tcl_ListObjLength(NULL, tclpath, &pathcount);
 	if (pathcount <= 0) {
 	    bu_log("WARNING: tcl_library is unset (unexpected)\n");
