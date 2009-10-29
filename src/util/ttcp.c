@@ -54,7 +54,7 @@
 
 #include <netdb.h>
 
-#ifdef SYSV
+#if defined(SYSV) || defined(__HAIKU__)
 #  include <sys/times.h>
 #  include <sys/param.h>
 #else
@@ -174,7 +174,7 @@ pattern(register char *cp, register int cnt)
 
 /******* timing *********/
 
-#ifdef SYSV
+#if defined(SYSV) || defined(__HAIKU__)
 /* was long instead of time_t */
 extern time_t time(time_t *);
 static time_t time0;
@@ -195,7 +195,7 @@ static void psecs(long int l, register char *cp);
 void
 prep_timer(void)
 {
-#ifdef SYSV
+#if defined(SYSV) || defined(__HAIKU__)
     (void)time(&time0);
     (void)times(&tms0);
 #else
@@ -211,7 +211,7 @@ prep_timer(void)
 double
 read_timer(char *str, int len)
 {
-#ifdef SYSV
+#if defined(SYSV) || defined(__HAIKU__)
     time_t now;
     struct tms tmsnow;
     char line[132] = {0};
@@ -220,7 +220,7 @@ read_timer(char *str, int len)
     realt = now-time0;
     (void)times(&tmsnow);
     cput = tmsnow.tms_utime - tms0.tms_utime;
-    cput /= HZ;
+    cput /= 1.0;//HZ;
     if ( cput < 0.00001 )  cput = 0.01;
     if ( realt < 0.00001 )  realt = cput;
     sprintf(line, "%g CPU secs in %g elapsed secs (%g%%)",
@@ -255,7 +255,7 @@ read_timer(char *str, int len)
 #endif
 }
 
-#ifndef SYSV
+#if !defined(SYSV) && !defined(__HAIKU__)
 static void
 prusage(register struct rusage *r0,
 	register struct rusage *r1,
