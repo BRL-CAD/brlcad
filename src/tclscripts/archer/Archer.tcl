@@ -233,6 +233,7 @@ package provide Archer 1.0
     }
 
     protected {
+	variable mPrefFile ""
 	variable mNeedObjSave 0
 	variable mNeedGlobalUndo 0
 	variable mNeedObjUndo 0
@@ -403,7 +404,10 @@ package provide Archer 1.0
 	method applyViewAxesPreferencesIfDiff {}
 	method doPreferences {}
 	method readPreferences {}
+	method readPreferencesInit {}
 	method writePreferences {}
+	method writePreferencesHeader {_pfile}
+	method writePreferencesBody {_pfile}
 
 	# Primitive Creation Section
 	method createObj {_type}
@@ -457,7 +461,7 @@ package provide Archer 1.0
 
 	updatePrimaryToolbar
     }
-	
+
     eval itk_initialize $args
 
     $this configure -background $LABEL_BACKGROUND_COLOR
@@ -1608,24 +1612,24 @@ package provide Archer 1.0
 			-file [file join $dir primitive_list.png]]
 
 	# View Toolbar
-	$itk_component(primaryToolbar) itemconfigure rotate \
-	    -image [image create photo \
-			-file [file join $dir view_rotate.png]]
-	$itk_component(primaryToolbar) itemconfigure translate \
-	    -image [image create photo \
-			-file [file join $dir view_translate.png]]
-	$itk_component(primaryToolbar) itemconfigure scale \
-	    -image [image create photo \
-			-file [file join $dir view_scale.png]]
-	$itk_component(primaryToolbar) itemconfigure center \
-	    -image [image create photo \
-			-file [file join $dir view_select.png]]
-	$itk_component(primaryToolbar) itemconfigure cpick \
-	    -image [image create photo \
-			-file [file join $dir compSelect.png]]
-	$itk_component(primaryToolbar) itemconfigure measure \
-	    -image [image create photo \
-			-file [file join $dir measure.png]]
+#	$itk_component(primaryToolbar) itemconfigure rotate \
+#	    -image [image create photo \
+#			-file [file join $dir view_rotate.png]]
+#	$itk_component(primaryToolbar) itemconfigure translate \
+#	    -image [image create photo \
+#			-file [file join $dir view_translate.png]]
+#	$itk_component(primaryToolbar) itemconfigure scale \
+#	    -image [image create photo \
+#			-file [file join $dir view_scale.png]]
+#	$itk_component(primaryToolbar) itemconfigure center \
+#	    -image [image create photo \
+#			-file [file join $dir view_select.png]]
+#	$itk_component(primaryToolbar) itemconfigure cpick \
+#	    -image [image create photo \
+#			-file [file join $dir compSelect.png]]
+#	$itk_component(primaryToolbar) itemconfigure measure \
+#	    -image [image create photo \
+#			-file [file join $dir measure.png]]
 
 	# We catch this because the item may not exist
 	catch {$itk_component(primaryToolbar) itemconfigure wizards \
@@ -3847,7 +3851,7 @@ package provide Archer 1.0
 		set mStatusStr "Set application preferences"
 	    }
 	    "Quit" {
-		set mStatusStr "Exit ArcherCore"
+		set mStatusStr "Exit Archer"
 	    }
 	    "Reset" {
 		set mStatusStr "Set view to default"
@@ -3991,9 +3995,15 @@ package provide Archer 1.0
 	-command [::itcl::code $this doPreferences]
 
     # half-size spacer
-    $itk_component(primaryToolbar) insert rotate frame sep2 \
+    $itk_component(primaryToolbar) insert rotate frame fill0 \
+	-relief flat \
+	-width 3
+    $itk_component(primaryToolbar) insert rotate frame sep0 \
 	-relief sunken \
 	-width 2
+    $itk_component(primaryToolbar) insert rotate frame fill1 \
+	-relief flat \
+	-width 3
 
     $itk_component(primaryToolbar) insert rotate button checkpoint \
 	-balloonstr "Create checkpoint" \
@@ -4025,18 +4035,28 @@ package provide Archer 1.0
 
 
    if {$::Archer::plugins != ""} {
-	# half-size spacer
-	$itk_component(primaryToolbar) insert rotate frame sep6 \
+	$itk_component(primaryToolbar) insert rotate frame fill2 \
+	    -relief flat \
+	    -width 3
+	$itk_component(primaryToolbar) insert rotate frame sep1 \
 	    -relief sunken \
 	    -width 2
+	$itk_component(primaryToolbar) insert rotate frame fill3 \
+	    -relief flat \
+	    -width 3
     }
 
     buildWizardMenu
     
-    # half-size spacer
-    $itk_component(primaryToolbar) insert rotate frame sep4 \
+    $itk_component(primaryToolbar) insert rotate frame fill4 \
+	-relief flat \
+	-width 3
+    $itk_component(primaryToolbar) insert rotate frame sep2 \
 	-relief sunken \
 	-width 2
+    $itk_component(primaryToolbar) insert rotate frame fill5 \
+	-relief flat \
+	-width 3
 
     $itk_component(primaryToolbar) insert rotate button arb6 \
 	-balloonstr "Create an arb6" \
@@ -4086,9 +4106,15 @@ package provide Archer 1.0
 	-relief flat
 
     # half-size spacer
-    $itk_component(primaryToolbar) insert rotate frame sep5 \
+    $itk_component(primaryToolbar) insert rotate frame fill6 \
+	-relief flat \
+	-width 3
+    $itk_component(primaryToolbar) insert rotate frame sep3 \
 	-relief sunken \
 	-width 2
+    $itk_component(primaryToolbar) insert rotate frame fill7 \
+	-relief flat \
+	-width 3
 
     $itk_component(primaryToolbar) insert rotate button comb \
 	-state disabled \
@@ -4274,26 +4300,26 @@ package provide Archer 1.0
 	-command [::itcl::code $this createObj bot]
 
     # half-size spacer
-    $itk_component(primaryToolbar) insert rotate frame fill1 \
+    $itk_component(primaryToolbar) insert rotate frame fill8 \
 	-relief flat \
-	-width 5
-    $itk_component(primaryToolbar) insert rotate frame sep7 \
+	-width 3
+    $itk_component(primaryToolbar) insert rotate frame sep4 \
 	-relief sunken \
 	-width 2
-    $itk_component(primaryToolbar) insert rotate frame fill2 \
+    $itk_component(primaryToolbar) insert rotate frame fill9 \
 	-relief flat \
-	-width 5
+	-width 3
 
     # add spacer
-    $itk_component(primaryToolbar) add frame fill3 \
+    $itk_component(primaryToolbar) add frame fill10 \
 	-relief flat \
-	-width 5
-    $itk_component(primaryToolbar) add frame sep8 \
+	-width 3
+    $itk_component(primaryToolbar) add frame sep5 \
 	-relief sunken \
 	-width 2
-    $itk_component(primaryToolbar) add frame fill4 \
+    $itk_component(primaryToolbar) add frame fill11 \
 	-relief flat \
-	-width 5
+	-width 3
     $itk_component(primaryToolbar) add radiobutton edit_rotate \
 	-balloonstr "Rotate selected object" \
 	-helpstr "Rotate selected object" \
@@ -4805,8 +4831,8 @@ package provide Archer 1.0
 
 ################################### Modes Section ###################################
 
-::itcl::body Archer::initMode {{updateFractions 0}} {
-    if {$updateFractions} {
+::itcl::body Archer::initMode {{_updateFractions 0}} {
+    if {$_updateFractions} {
 	updateHPaneFractions
 	updateVPaneFractions
     }
@@ -7089,8 +7115,10 @@ package provide Archer 1.0
 	set home .
     }
 
+    readPreferencesInit
+
     # Read in the preferences file.
-    if {![catch {open [file join $home .archerrc] r} pfile]} {
+    if {![catch {open [file join $home $mPrefFile] r} pfile]} {
 	set lines [split [read $pfile] "\n"]
 	close $pfile
 
@@ -7114,6 +7142,9 @@ package provide Archer 1.0
     updateToggleMode
 }
 
+::itcl::body Archer::readPreferencesInit {} {
+    set mPrefFile ".archerrc"
+}
 
 ::itcl::body Archer::writePreferences {} {
     global env
@@ -7132,66 +7163,74 @@ package provide Archer 1.0
     updateVPaneFractions
 
     # Write the preferences file.
-    if {![catch {open [file join $home .archerrc] w} pfile]} {
-	puts $pfile "# Archer's Preferences File"
-	puts $pfile "# Version 0.7.5"
-	puts $pfile "#"
-	puts $pfile "# DO NOT EDIT THIS FILE"
-	puts $pfile "#"
-	puts $pfile "# This file is created and updated by Archer."
-	puts $pfile "#"
-	puts $pfile "set mBackground \"$mBackground\""
-	puts $pfile "set mBindingMode $mBindingMode"
-	puts $pfile "set mEnableBigE $mEnableBigE"
-	puts $pfile "set mMeasuringStickColor \"$mMeasuringStickColor\""
-	puts $pfile "set mMeasuringStickMode $mMeasuringStickMode"
-	puts $pfile "set mPrimitiveLabelColor \"$mPrimitiveLabelColor\""
-	puts $pfile "set mScaleColor \"$mScaleColor\""
-	puts $pfile "set mViewingParamsColor \"$mViewingParamsColor\""
-	puts $pfile "set mTheme \"$mTheme\""
-
-	puts $pfile "set mGroundPlaneMajorColor \"$mGroundPlaneMajorColor\""
-	puts $pfile "set mGroundPlaneMinorColor \"$mGroundPlaneMinorColor\""
-	puts $pfile "set mGroundPlaneInterval \"$mGroundPlaneInterval\""
-	puts $pfile "set mGroundPlaneSize \"$mGroundPlaneSize\""
-
-	puts $pfile "set mViewAxesSize \"$mViewAxesSize\""
-	puts $pfile "set mViewAxesPosition \"$mViewAxesPosition\""
-	puts $pfile "set mViewAxesLineWidth $mViewAxesLineWidth"
-	puts $pfile "set mViewAxesColor \"$mViewAxesColor\""
-	puts $pfile "set mViewAxesLabelColor \"$mViewAxesLabelColor\""
-
-	puts $pfile "set mModelAxesSize \"$mModelAxesSize\""
-	puts $pfile "set mModelAxesPosition \"$mModelAxesPosition\""
-	puts $pfile "set mModelAxesLineWidth $mModelAxesLineWidth"
-	puts $pfile "set mModelAxesColor \"$mModelAxesColor\""
-	puts $pfile "set mModelAxesLabelColor \"$mModelAxesLabelColor\""
-
-	puts $pfile "set mModelAxesTickInterval $mModelAxesTickInterval"
-	puts $pfile "set mModelAxesTicksPerMajor $mModelAxesTicksPerMajor"
-	puts $pfile "set mModelAxesTickThreshold $mModelAxesTickThreshold"
-	puts $pfile "set mModelAxesTickLength $mModelAxesTickLength"
-	puts $pfile "set mModelAxesTickMajorLength $mModelAxesTickMajorLength"
-	puts $pfile "set mModelAxesTickColor \"$mModelAxesTickColor\""
-	puts $pfile "set mModelAxesTickMajorColor \"$mModelAxesTickMajorColor\""
-
-	puts $pfile "set mLastSelectedDir \"$mLastSelectedDir\""
-	puts $pfile "set mZClipMode $mZClipMode"
-
-	puts $pfile "set mHPaneFraction1 $mHPaneFraction1"
-	puts $pfile "set mHPaneFraction2 $mHPaneFraction2"
-	puts $pfile "set mVPaneFraction1 $mVPaneFraction1"
-	puts $pfile "set mVPaneFraction2 $mVPaneFraction2"
-	puts $pfile "set mVPaneFraction3 $mVPaneFraction3"
-	puts $pfile "set mVPaneFraction4 $mVPaneFraction4"
-	puts $pfile "set mVPaneFraction5 $mVPaneFraction5"
-	puts $pfile "set mVPaneToggle1 $mVPaneToggle1"
-	puts $pfile "set mVPaneToggle3 $mVPaneToggle3"
-	puts $pfile "set mVPaneToggle5 $mVPaneToggle5"
+    if {![catch {open [file join $home $mPrefFile] w} pfile]} {
+	writePreferencesHeader $pfile
+	writePreferencesBody $pfile
 	close $pfile
     } else {
 	puts "Failed to write the preferences file:\n$pfile"
     }
+}
+
+::itcl::body Archer::writePreferencesHeader {_pfile} {
+    puts $_pfile "# Archer's Preferences File"
+    puts $_pfile "# Version 1.0.0"
+    puts $_pfile "#"
+    puts $_pfile "# DO NOT EDIT THIS FILE"
+    puts $_pfile "#"
+    puts $_pfile "# This file is created and updated by Archer."
+    puts $_pfile "#"
+}
+
+::itcl::body Archer::writePreferencesBody {_pfile} {
+    puts $_pfile "set mBackground \"$mBackground\""
+    puts $_pfile "set mBindingMode $mBindingMode"
+    puts $_pfile "set mEnableBigE $mEnableBigE"
+    puts $_pfile "set mMeasuringStickColor \"$mMeasuringStickColor\""
+    puts $_pfile "set mMeasuringStickMode $mMeasuringStickMode"
+    puts $_pfile "set mPrimitiveLabelColor \"$mPrimitiveLabelColor\""
+    puts $_pfile "set mScaleColor \"$mScaleColor\""
+    puts $_pfile "set mViewingParamsColor \"$mViewingParamsColor\""
+    puts $_pfile "set mTheme \"$mTheme\""
+
+    puts $_pfile "set mGroundPlaneMajorColor \"$mGroundPlaneMajorColor\""
+    puts $_pfile "set mGroundPlaneMinorColor \"$mGroundPlaneMinorColor\""
+    puts $_pfile "set mGroundPlaneInterval \"$mGroundPlaneInterval\""
+    puts $_pfile "set mGroundPlaneSize \"$mGroundPlaneSize\""
+
+    puts $_pfile "set mViewAxesSize \"$mViewAxesSize\""
+    puts $_pfile "set mViewAxesPosition \"$mViewAxesPosition\""
+    puts $_pfile "set mViewAxesLineWidth $mViewAxesLineWidth"
+    puts $_pfile "set mViewAxesColor \"$mViewAxesColor\""
+    puts $_pfile "set mViewAxesLabelColor \"$mViewAxesLabelColor\""
+
+    puts $_pfile "set mModelAxesSize \"$mModelAxesSize\""
+    puts $_pfile "set mModelAxesPosition \"$mModelAxesPosition\""
+    puts $_pfile "set mModelAxesLineWidth $mModelAxesLineWidth"
+    puts $_pfile "set mModelAxesColor \"$mModelAxesColor\""
+    puts $_pfile "set mModelAxesLabelColor \"$mModelAxesLabelColor\""
+
+    puts $_pfile "set mModelAxesTickInterval $mModelAxesTickInterval"
+    puts $_pfile "set mModelAxesTicksPerMajor $mModelAxesTicksPerMajor"
+    puts $_pfile "set mModelAxesTickThreshold $mModelAxesTickThreshold"
+    puts $_pfile "set mModelAxesTickLength $mModelAxesTickLength"
+    puts $_pfile "set mModelAxesTickMajorLength $mModelAxesTickMajorLength"
+    puts $_pfile "set mModelAxesTickColor \"$mModelAxesTickColor\""
+    puts $_pfile "set mModelAxesTickMajorColor \"$mModelAxesTickMajorColor\""
+
+    puts $_pfile "set mLastSelectedDir \"$mLastSelectedDir\""
+    puts $_pfile "set mZClipMode $mZClipMode"
+
+    puts $_pfile "set mHPaneFraction1 $mHPaneFraction1"
+    puts $_pfile "set mHPaneFraction2 $mHPaneFraction2"
+    puts $_pfile "set mVPaneFraction1 $mVPaneFraction1"
+    puts $_pfile "set mVPaneFraction2 $mVPaneFraction2"
+    puts $_pfile "set mVPaneFraction3 $mVPaneFraction3"
+    puts $_pfile "set mVPaneFraction4 $mVPaneFraction4"
+    puts $_pfile "set mVPaneFraction5 $mVPaneFraction5"
+    puts $_pfile "set mVPaneToggle1 $mVPaneToggle1"
+    puts $_pfile "set mVPaneToggle3 $mVPaneToggle3"
+    puts $_pfile "set mVPaneToggle5 $mVPaneToggle5"
 }
 
 
