@@ -74,7 +74,6 @@ articlesDOCBOOK_EN_IMAGES = \
 	articles/en/images/nirt_fig22.docpng \
 	articles/en/images/nirt_fig23.docpng \
 	articles/en/images/nirt_fig24.docpng \
-	articles/en/images/nirt_fig24.docpng \
 	articles/en/images/oed_fig01.docpng \
 	articles/en/images/oed_fig02.docpng \
 	articles/en/images/oed_fig03.docpng \
