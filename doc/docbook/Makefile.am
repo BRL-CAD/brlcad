@@ -539,6 +539,12 @@ clean-generic: mostlyclean-generic
 EXTRA_DIST = \
 	${articlesDOCBOOK_EN} \
 	${articlesDOCBOOK_EN_IMAGES} \
+	${lessonsDOCBOOK_EN} \
+	${lessonsDOCBOOK_EN_IMAGES} \
+	${booksDOCBOOK_EN} \
+	${booksDOCBOOK_EN_IMAGES} \
+	${specificationsDOCBOOK_EN} \
+	${specificationsDOCBOOK_EN_IMAGES} \
 	${man1DOCBOOK_EN} \
 	${man1INTRO_EN} \
 	README \
