@@ -433,12 +433,10 @@ gui_setup(char *dstr)
     if ((tkwin = Tk_MainWindow(interp)) == NULL) {
 	return TCL_ERROR;
     }
-#endif
 
     /* create the event handler */
     Tk_CreateGenericHandler(doEvent, (ClientData)NULL);
 
-#ifdef HAVE_TK
     Tcl_Eval(interp, "wm withdraw .");
     Tcl_Eval(interp, "tk appname mged");
 #endif
