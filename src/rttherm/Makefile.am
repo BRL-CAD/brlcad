@@ -1,9 +1,27 @@
 
+if WITH_X11
+SSAMPVIEW = ssampview
+
+ssampview_SOURCES = \
+	spectrum.c \
+	ssampview.c
+
+ssampview_CFLAGS = \
+	${X_CFLAGS} \
+	${TK_CPPFLAGS}
+ssampview_LDADD = \
+	${OPTICAL} \
+	${FB} \
+	${TK}
+else
+SSAMPVIEW =
+endif
+
 # pixtest removed, looks like an outdated sample_application
 bin_PROGRAMS = \
 	rttherm \
 	ssamp-bw \
-	ssampview
+	${SSAMPVIEW}
 
 noinst_PROGRAMS = pixtest
 
@@ -28,18 +46,6 @@ rttherm_LDADD = \
 	${OPTICAL} \
 	${FB} \
 	${GED}
-
-ssampview_SOURCES = \
-	spectrum.c \
-	ssampview.c
-
-ssampview_CFLAGS = \
-	${X_CFLAGS} \
-	${TK_CPPFLAGS}
-ssampview_LDADD = \
-	${OPTICAL} \
-	${FB} \
-	${TK}
 
 ssamp_bw_SOURCES = ssamp-bw.c
 ssamp_bw_LDADD = ${OPTICAL}
