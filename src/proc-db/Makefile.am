@@ -106,6 +106,7 @@ wdb_example_SOURCES = wdb_example.c
 
 noinst_HEADERS = \
 	brepintersect.h \
+	mkbuilding.h \
 	surfaceintersect.h \
 	ducks.h \
 	patches.h \
