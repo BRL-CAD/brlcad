@@ -9,6 +9,7 @@ libged_nil_la_SOURCES = \
 	ae2dir.c \
 	aet.c \
 	analyze.c \
+	annotate.c \
 	arb.c \
 	arced.c \
 	arot.c \
@@ -277,8 +278,7 @@ libged_la_LIBADD = \
 	${GED_LIBS}
 
 EXTRA_DIST = \
-        CMakeLists.txt \
-	annotate.c
+        CMakeLists.txt
 
 DEPENDS = src/librt src/libwdb
 
