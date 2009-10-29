@@ -123,7 +123,7 @@ void
 LineAI()
 {
 	LineInsert();
-	whitesp(getline(curline->l_prev->l_dline, genbuf), linebuf);
+	whitesp(get_line(curline->l_prev->l_dline, genbuf), linebuf);
 }
 
 void
@@ -319,9 +319,9 @@ AtMargin()
 TwoBlank()
 {
 	return (curline->l_next &&
-			(getline(curline->l_next->l_dline,
+			(get_line(curline->l_next->l_dline,
 			genbuf)[0] == '\0') && curline->l_next->l_next &&
-			(getline(curline->l_next->l_next->l_dline,
+			(get_line(curline->l_next->l_next->l_dline,
 			genbuf)[0] == '\0'));
 }
 
@@ -420,7 +420,7 @@ BUFFER	*whatbuf;
 		atchar = 0;
 	}
 
-	ignore(getline(atline->l_dline, genbuf));
+	ignore(get_line(atline->l_dline, genbuf));
 	atchar += tchar;
 	linecopy(genbuf, atchar, save);
 	atline->l_dline = putline(genbuf);

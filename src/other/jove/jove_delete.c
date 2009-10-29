@@ -101,7 +101,7 @@ char	*buf;
 	if (line == curline)
 		return linebuf;
 	else {
-		ignore(getline(line->l_dline, buf));
+		ignore(get_line(line->l_dline, buf));
 		return buf;
 	}
 }
@@ -117,7 +117,7 @@ char	*buf;
 		if (buf != linebuf)
 			strcpy(buf, linebuf);
 	} else
-		ignore(getline(line->l_dline, buf));
+		ignore(get_line(line->l_dline, buf));
 	return buf;
 }
 
@@ -135,7 +135,7 @@ register LINE	*line1,
 	if (line1 != line2)
 		KludgeWindows(line1, line2);
 	SetModified(curbuf);
-	if (line2 == curline) {		/* So we don't need to getline it */
+	if (line2 == curline) {		/* So we don't need to get_line it */
 		if (line1 == curline)
 			twoptr = linebuf;
 		else {

@@ -235,7 +235,7 @@ LINE	*line1,
 	lsave();	/* Need this! */
 
 	while (line1 != line2->l_next) {
-		lp = getline(line1->l_dline, linebuf) + char1;
+		lp = get_line(line1->l_dline, linebuf) + char1;
 		if (line1 == line2)
 			linebuf[char2] = '\0';
 		for (;;) {
@@ -323,7 +323,7 @@ char	*file;
 	count = 0L;
 	s_mess("\"%s\"", file);
 	UpdateMesg();
-	ignore(getline(curline->l_dline, end));
+	ignore(get_line(curline->l_dline, end));
 	strcpy(genbuf, end);
 	strcpy(end, &end[curchar]);
 	if ((xeof = getfline(linebuf)) == 0)
@@ -882,7 +882,7 @@ lsave()
 	if (curbuf == 0 || !DOLsave)	/* Nothing modified recently */
 		return;
 
-	if (!strcmp(linebuf, getline(curline->l_dline, tmp)))
+	if (!strcmp(linebuf, get_line(curline->l_dline, tmp)))
 		return;		/* They are the same. */
 	SavLine(curline, linebuf);	/* Put linebuf on the disk */
 	DOLsave = 0;
@@ -891,7 +891,7 @@ lsave()
 void
 getDOT()
 {
-	ignore(getline(curline->l_dline, linebuf));
+	ignore(get_line(curline->l_dline, linebuf));
 }
 
 void

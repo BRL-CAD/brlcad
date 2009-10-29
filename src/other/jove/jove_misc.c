@@ -383,7 +383,7 @@ LINE	*l1,
 	nlines = diffnum;
 	SetLine(l1);
 
-	if (lastp(l2) && !blnkp(getline(l2->l_dline, genbuf)))
+	if (lastp(l2) && !blnkp(get_line(l2->l_dline, genbuf)))
 		nlines++;
 
 	while (nlines) {	/* One line at a time */
@@ -1412,7 +1412,7 @@ LINE	*line1,
 	SetModified(curbuf);
 	fixorder(&line1, &char1, &line2, &char2);
 	lsave();
-	ignore(getline(line1->l_dline, lbuf));
+	ignore(get_line(line1->l_dline, lbuf));
 	for (;;) {
 		if (line1 == line2 && char1 == char2)
 			break;
@@ -1423,7 +1423,7 @@ LINE	*line1,
 			if (lastp(line1))
 				break;
 			line1 = line1->l_next;
-			ignore(getline(line1->l_dline, lbuf));
+			ignore(get_line(line1->l_dline, lbuf));
 			continue;
 		}
 		if (up)
