@@ -32,7 +32,10 @@
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
 
-#include "tk.h"
+#ifdef HAVE_TK
+#  include "tk.h"
+#endif
+
 #include "bu.h"
 #include "vmath.h"
 #include "mater.h"
@@ -52,10 +55,8 @@ static int X_dm(int argc, char **argv);
 static void dirty_hook(void);
 static void zclip_hook(void);
 
-#ifdef USE_PROTOTYPES
+#ifdef HAVE_TK
 static Tk_GenericProc X_doevent;
-#else
-static int X_doevent();
 #endif
 
 struct bu_structparse X_vparse[] = {
@@ -78,7 +79,10 @@ X_dm_init(struct dm_list	*o_dm_list,
     /* register application provided routines */
     cmd_hook = X_dm;
 
+#ifdef HAVE_TK
     Tk_DeleteGenericHandler(doEvent, (ClientData)NULL);
+#endif
+
     if ((dmp = dm_open(interp, DM_TYPE_X, argc-1, argv)) == DM_NULL)
 	return TCL_ERROR;
 
@@ -86,7 +90,11 @@ X_dm_init(struct dm_list	*o_dm_list,
     dmp->dm_perspective = mged_variables->mv_perspective_mode;
 
     eventHandler = X_doevent;
+
+#ifdef HAVE_TK
     Tk_CreateGenericHandler(doEvent, (ClientData)NULL);
+#endif
+
     (void)DM_CONFIGURE_WIN(dmp);
 
     bu_vls_init(&vls);

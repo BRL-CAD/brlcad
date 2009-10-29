@@ -37,7 +37,9 @@
 
 #include "bio.h"
 #include "tcl.h"
-#include "tk.h"
+#ifdef HAVE_TK
+#  include "tk.h"
+#endif
 #include "dm_xvars.h"
 
 #include "bu.h"

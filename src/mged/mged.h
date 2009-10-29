@@ -433,8 +433,9 @@ extern Tcl_Interp *interp;
 extern struct cmd_list head_cmd_list;
 extern struct cmd_list *curr_cmd_list;
 
-#ifndef HAVE_TK
+#if !defined(HAVE_TK) && !defined(TK_WINDOW_TYPEDEF)
 typedef void *Tk_Window;
+#  define TK_WINDOW_TYPEDEF 1
 #endif
 extern Tk_Window tkwin; /* in cmd.c */
 

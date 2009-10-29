@@ -34,7 +34,9 @@
 #endif
 
 #include "tcl.h"
-#include "tk.h"
+#ifdef HAVE_TK
+#  include "tk.h"
+#endif
 
 #ifdef HAVE_X11_XLIB_H
 #  include <X11/Xutil.h>
