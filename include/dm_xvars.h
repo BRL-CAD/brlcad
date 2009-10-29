@@ -45,6 +45,7 @@ typedef void *Tk_Window;
 #ifndef HAVE_X11_XLIB_H
 typedef long Display;
 typedef long Window;
+typedef long Colormap;
 #endif
 
 #define XVARS_MV_O(_m) offsetof(struct dm_xvars, _m)
