@@ -92,6 +92,8 @@
 
 #define fb_log bu_log
 
+#define HAVE_TK 1
+
 /*
  * functions declared in io.h
  */
