@@ -48,21 +48,12 @@
 #include "./cmd.h"
 
 
-extern struct db_tree_state	mged_initial_tree_state;
-extern int			classic_mged;
-
-static char *really_delete="tk_messageBox -icon question -title {Are you sure?}\
- -type yesno -message {If you delete the \"_GLOBAL\" object you will be losing some important information\
- such as your preferred units and the title of the database. Do you really want to do this?}";
-
-
-
-/* Copy a cylinder and position at end of original cylinder
-
-*	Used in making "wires"
-*
-* Format: cpi old new
-*/
+/**
+ * Copy a cylinder and position at end of original cylinder
+ * Used in making "wires"
+ *
+ * Format: cpi old new
+ */
 int
 f_copy_inv(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
@@ -85,38 +76,37 @@ f_copy_inv(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	return TCL_ERROR;
     }
 
-    if ( (proto = db_lookup( dbip,  argv[1], LOOKUP_NOISY )) == DIR_NULL )
+    if ((proto = db_lookup(dbip,  argv[1], LOOKUP_NOISY)) == DIR_NULL)
 	return TCL_ERROR;
 
-    if ( db_lookup( dbip,  argv[2], LOOKUP_QUIET ) != DIR_NULL )  {
-	aexists( argv[2] );
+    if (db_lookup(dbip,  argv[2], LOOKUP_QUIET) != DIR_NULL) {
+	aexists(argv[2]);
 	return TCL_ERROR;
     }
 
-    if ( (id = rt_db_get_internal( &internal, proto, dbip, (fastf_t *)NULL, &rt_uniresource )) < 0 )  {
+    if ((id = rt_db_get_internal(&internal, proto, dbip, (fastf_t *)NULL, &rt_uniresource)) < 0) {
 	TCL_READ_ERR_return;
     }
     /* make sure it is a TGC */
-    if ( id != ID_TGC )
-    {
+    if (id != ID_TGC) {
 	Tcl_AppendResult(interp, "f_copy_inv: ", argv[1],
 			 " is not a cylinder\n", (char *)NULL);
-	rt_db_free_internal( &internal, &rt_uniresource );
+	rt_db_free_internal(&internal, &rt_uniresource);
 	return TCL_ERROR;
     }
     tgc_ip = (struct rt_tgc_internal *)internal.idb_ptr;
 
     /* translate to end of "original" cylinder */
-    VADD2( tgc_ip->v, tgc_ip->v, tgc_ip->h );
+    VADD2(tgc_ip->v, tgc_ip->v, tgc_ip->h);
 
     /* no interuprts */
-    (void)signal( SIGINT, SIG_IGN );
+    (void)signal(SIGINT, SIG_IGN);
 
-    if ( (dp = db_diradd( dbip, argv[2], -1L, 0, proto->d_flags, &proto->d_minor_type)) == DIR_NULL )  {
+    if ((dp = db_diradd(dbip, argv[2], -1L, 0, proto->d_flags, &proto->d_minor_type)) == DIR_NULL) {
 	TCL_ALLOC_ERR_return;
     }
 
-    if ( rt_db_put_internal( dp, dbip, &internal, &rt_uniresource ) < 0 )  {
+    if (rt_db_put_internal(dp, dbip, &internal, &rt_uniresource) < 0) {
 	TCL_WRITE_ERR_return;
     }
 
@@ -128,7 +118,7 @@ f_copy_inv(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	av[2] = NULL;
 
 	/* draw the new solid */
-	(void)cmd_draw( clientData, interp, 2, av );
+	(void)cmd_draw(clientData, interp, 2, av);
     }
 
     if (state == ST_VIEW) {
@@ -139,23 +129,24 @@ f_copy_inv(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	av[2] = NULL;
 
 	/* solid edit this new cylinder */
-	(void)f_sed( clientData, interp, 2, av );
+	(void)f_sed(clientData, interp, 2, av);
     }
 
     return TCL_OK;
 }
 
-/*
- *			F I N D _ S O L I D _ W I T H _ P A T H
+
+/**
+ * F I N D _ S O L I D _ W I T H _ P A T H
  */
 struct solid *
 find_solid_with_path(register struct db_full_path *pathp)
 {
     register struct ged_display_list *gdlp;
     register struct ged_display_list *next_gdlp;
-    register struct solid	*sp;
-    int			count = 0;
-    struct solid		*ret = (struct solid *)NULL;
+    register struct solid *sp;
+    int count = 0;
+    struct solid *ret = (struct solid *)NULL;
 
     RT_CK_FULL_PATH(pathp);
 
@@ -164,7 +155,7 @@ find_solid_with_path(register struct db_full_path *pathp)
 	next_gdlp = BU_LIST_PNEXT(ged_display_list, gdlp);
 
 	FOR_ALL_SOLIDS(sp, &gdlp->gdl_headSolid) {
-	    if ( !db_identical_full_paths( pathp, &sp->s_fullpath ) )  continue;
+	    if (!db_identical_full_paths(pathp, &sp->s_fullpath))  continue;
 
 	    /* Paths are the same */
 	    illum_gdlp = gdlp;
@@ -187,27 +178,29 @@ find_solid_with_path(register struct db_full_path *pathp)
     return ret;
 }
 
-/*
- *			C M D _ O E D
+
+/**
+ * C M D _ O E D
  *
- *  Transition from VIEW state to OBJECT EDIT state in a single command,
- *  rather than requiring "press oill", "ill leaf", "matpick a/b".
+ * Transition from VIEW state to OBJECT EDIT state in a single
+ * command, rather than requiring "press oill", "ill leaf", "matpick
+ * a/b".
  *
- *  Takes two parameters which when combined represent the full path to
- *  the reference solid of the object to be edited.
- *  The conceptual slash between the two strings signifies which
- *  matrix is to be edited.
+ * Takes two parameters which when combined represent the full path to
+ * the reference solid of the object to be edited.  The conceptual
+ * slash between the two strings signifies which matrix is to be
+ * edited.
  */
 int
 cmd_oed(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
     register struct ged_display_list *gdlp;
     register struct ged_display_list *next_gdlp;
-    struct db_full_path	lhs;
-    struct db_full_path	rhs;
-    struct db_full_path	both;
-    char			*new_argv[4];
-    char			number[32];
+    struct db_full_path lhs;
+    struct db_full_path rhs;
+    struct db_full_path both;
+    char *new_argv[4];
+    char number[32];
     int is_empty = 1;
 
     CHECK_DBI_NULL;
@@ -222,7 +215,7 @@ cmd_oed(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	return TCL_ERROR;
     }
 
-    if ( not_state( ST_VIEW, "Object Illuminate" ) )  {
+    if (not_state(ST_VIEW, "Object Illuminate")) {
 	return TCL_ERROR;
     }
 
@@ -244,73 +237,73 @@ cmd_oed(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	return TCL_ERROR;
     }
 
-    if ( db_string_to_path( &lhs, dbip, argv[1] ) < 0 )  {
+    if (db_string_to_path(&lhs, dbip, argv[1]) < 0) {
 	Tcl_AppendResult(interp, "bad lhs path", (char *)NULL);
 	return TCL_ERROR;
     }
-    if ( db_string_to_path( &rhs, dbip, argv[2] ) < 0 )  {
-	db_free_full_path( &lhs );
+    if (db_string_to_path(&rhs, dbip, argv[2]) < 0) {
+	db_free_full_path(&lhs);
 	Tcl_AppendResult(interp, "bad rhs path", (char *)NULL);
 	return TCL_ERROR;
     }
-    if ( rhs.fp_len <= 0 )  {
-	db_free_full_path( &lhs );
-	db_free_full_path( &rhs );
+    if (rhs.fp_len <= 0) {
+	db_free_full_path(&lhs);
+	db_free_full_path(&rhs);
 	Tcl_AppendResult(interp, "rhs must not be null", (char *)NULL);
 	return TCL_ERROR;
     }
 
-    db_full_path_init( &both );
-    db_dup_full_path( &both, &lhs );
-    db_append_full_path( &both, &rhs );
+    db_full_path_init(&both);
+    db_dup_full_path(&both, &lhs);
+    db_append_full_path(&both, &rhs);
 
-    /* Patterned after  ill_common() ... */
+    /* Patterned after ill_common() ... */
     illum_gdlp = gdlp;
     illump = BU_LIST_NEXT(solid, &gdlp->gdl_headSolid);/* any valid solid would do */
     edobj = 0;		/* sanity */
     movedir = 0;		/* No edit modes set */
-    MAT_IDN( modelchanges );	/* No changes yet */
-    (void)chg_state( ST_VIEW, ST_O_PICK, "internal change of state");
+    MAT_IDN(modelchanges);	/* No changes yet */
+    (void)chg_state(ST_VIEW, ST_O_PICK, "internal change of state");
     /* reset accumulation local scale factors */
     acc_sc[0] = acc_sc[1] = acc_sc[2] = 1.0;
     new_mats();
 
     /* Find the one solid, set s_iflag UP, point illump at it */
-    illump = find_solid_with_path( &both );
-    if ( !illump )  {
-	db_free_full_path( &lhs );
-	db_free_full_path( &rhs );
-	db_free_full_path( &both );
+    illump = find_solid_with_path(&both);
+    if (!illump) {
+	db_free_full_path(&lhs);
+	db_free_full_path(&rhs);
+	db_free_full_path(&both);
 	Tcl_AppendResult(interp, "Unable to find solid matching path", (char *)NULL);
 	illum_gdlp = GED_DISPLAY_LIST_NULL;
 	illump = 0;
-	(void)chg_state( ST_O_PICK, ST_VIEW, "error recovery");
+	(void)chg_state(ST_O_PICK, ST_VIEW, "error recovery");
 	return TCL_ERROR;
     }
-    (void)chg_state( ST_O_PICK, ST_O_PATH, "internal change of state");
+    (void)chg_state(ST_O_PICK, ST_O_PATH, "internal change of state");
 
     /* Select the matrix */
-    sprintf( number, "%d", lhs.fp_len );
+    sprintf(number, "%d", lhs.fp_len);
     new_argv[0] = "matpick";
     new_argv[1] = number;
     new_argv[2] = NULL;
-    if ( f_matpick( clientData, interp, 2, new_argv ) != TCL_OK )  {
-	db_free_full_path( &lhs );
-	db_free_full_path( &rhs );
-	db_free_full_path( &both );
+    if (f_matpick(clientData, interp, 2, new_argv) != TCL_OK) {
+	db_free_full_path(&lhs);
+	db_free_full_path(&rhs);
+	db_free_full_path(&both);
 	Tcl_AppendResult(interp, "error detected inside f_matpick", (char *)NULL);
 	return TCL_ERROR;
     }
-    if ( not_state( ST_O_EDIT, "Object EDIT" ) )  {
-	db_free_full_path( &lhs );
-	db_free_full_path( &rhs );
-	db_free_full_path( &both );
+    if (not_state(ST_O_EDIT, "Object EDIT")) {
+	db_free_full_path(&lhs);
+	db_free_full_path(&rhs);
+	db_free_full_path(&both);
 	Tcl_AppendResult(interp, "MGED state did not advance to Object EDIT", (char *)NULL);
 	return TCL_ERROR;
     }
-    db_free_full_path( &lhs );
-    db_free_full_path( &rhs );
-    db_free_full_path( &both );
+    db_free_full_path(&lhs);
+    db_free_full_path(&rhs);
+    db_free_full_path(&both);
     return TCL_OK;
 }
 
