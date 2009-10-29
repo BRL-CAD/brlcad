@@ -1694,43 +1694,49 @@ rtgl_drawVList(struct dm *dmp, register struct bn_vlist *vp)
     /* look for new trees in need of ray tracing */
     numNew = 0;
     
+    if (rtglWasClosed == 1) {
+	rtglWasClosed = 0;
+	oldNumTrees = 0;
+    	/* drop previous work */
+	freeJobList(&jobs);
+	
+	if (colorTable != NULL) {
+	    bu_hash_tbl_free(colorTable);
+	    colorTable = NULL;
+	}
+	
+	if (jobsArray != NULL) {
+	    bu_free(jobsArray, "dm-rtgl.c: jobsArray");
+	    jobsArray = NULL;
+	}
+	
+	RTGL_DIRTY = 0;
+	
+	/* reset for dynamic z-clipping */
+	if (dmp->dm_zclip) {
+	    startScale = 1;
+	}
+	
+	maxSpan = 0.0;
+	numShot = numJobs = 0;
+    }
+    
     for (i = 0; i < numVisible; i++) {
         currTree = visibleTrees[i];
         new = 1;
         
-        /* if this tree is in the old tree list, it's not new */
+        /* if this tree is in the old tree list, it's not new
+	 * if it's NOT in the old list, it needs to be cleared,
+	 * but that's not set up yet without clearing everything
+	 * first and starting over.
+	 */
         for (j = 0; j < oldNumTrees; j++) {
             if (strcmp(currTree, oldTrees[j]) == 0)
                 new = 0;
         }
         
-        if (new || rtglWasClosed == 1) {
-	    rtglWasClosed = 0;
-    	    /* drop previous work */
-    	    oldNumTrees = 0;
-    	    freeJobList(&jobs);
-	    
-    	    if (colorTable != NULL) {
-    		bu_hash_tbl_free(colorTable);
-    		colorTable = NULL;
-    	    }
-	    
-    	    if (jobsArray != NULL) {
-    		bu_free(jobsArray, "dm-rtgl.c: jobsArray");
-    		jobsArray = NULL;
-    	    }
-	    
-    	    RTGL_DIRTY = 0;
-	    
-    	    /* reset for dynamic z-clipping */
-    	    if (dmp->dm_zclip) {
-    		startScale = 1;
-    	    }
-	    
-    	    maxSpan = 0.0;
-    	    numShot = numJobs = 0;
-
-	    /* will ray trace new tree*/
+        if (new) {
+    	    /* will ray trace new tree*/
             if (rt_gettree(rtip, currTree) < 0)
                 return TCL_ERROR;
 
