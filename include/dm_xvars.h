@@ -32,7 +32,15 @@
 #  include <X11/Xutil.h>
 #endif
 
-#include "tk.h"
+#ifdef HAVE_TK
+#  include "tk.h"
+#endif
+
+
+#if !defined(HAVE_TK) && !defined(TK_WINDOW_TYPEDEF)
+typedef void *Tk_Window;
+#  define TK_WINDOW_TYPEDEF 1
+#endif
 
 #define XVARS_MV_O(_m) offsetof(struct dm_xvars, _m)
 
