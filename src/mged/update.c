@@ -92,9 +92,10 @@ WaitVariableProc(ClientData clientData,	/* Pointer to integer to set to 1. */
 /*
  * Copied from libtk/generic/tkCmds.c. Used by the f_wait() procedure.
  */
+#ifdef HAVE_X11_XLIB_H
 static void
-WaitVisibilityProc(ClientData clientData, /* Pointer to integer to set to 1. */
-		   XEvent *eventPtr)      /* Information about event (not used). */
+WaitVisibilityProc(ClientData clientData,
+		   XEvent *eventPtr)
 {
     int *donePtr = (int *) clientData;
 
@@ -105,14 +106,21 @@ WaitVisibilityProc(ClientData clientData, /* Pointer to integer to set to 1. */
 	*donePtr = 2;
     }
 }
+#else
+static void
+WaitVisibilityProc(ClientData clientData, void *eventPtr)
+{
+}
+#endif /* HAVE_X11_XLIB_H */
 
 /*
  * Copied from libtk/generic/tkCmds.c. Used by
  * the f_wait() procedure.
  */
+#ifdef HAVE_X11_XLIB_H
 static void
-WaitWindowProc(ClientData clientData,	/* Pointer to integer to set to 1. */
-	       XEvent *eventPtr)	/* Information about event. */
+WaitWindowProc(ClientData clientData,
+	       XEvent *eventPtr)
 {
     int *donePtr = (int *) clientData;
 
@@ -120,6 +128,12 @@ WaitWindowProc(ClientData clientData,	/* Pointer to integer to set to 1. */
 	*donePtr = 1;
     }
 }
+#else
+static void
+WaitWindowProc(ClientData clientData, void *eventPtr)
+{
+}
+#endif /* HAVE_X11_XLIB_H */
 
 /*
  * This procedure is a slightly modified version of the Tk_TkwaitCmd.
