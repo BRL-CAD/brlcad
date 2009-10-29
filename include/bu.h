@@ -4700,8 +4700,13 @@ BU_EXPORT BU_EXTERN(int bu_vls_strncmp,
 /**
  * b u _ v l s _ f r o m _ a r g v
  *
- * Given and argc & argv pair, convert them into a vls string of
- * space-separated words.
+ * Convert an array of character strings into a space-separated vls.
+ *
+ * If the input argv string has spaces, it will be wrapped in '"'
+ * quotes.  if the argv string contains '"' quote characters, they
+ * will be escaped with a '\' backslash.
+ *
+ * bu_argv_from_string() reverses the quoting and escaped characters.
  */
 BU_EXPORT BU_EXTERN(void bu_vls_from_argv,
 		    (struct bu_vls *vp,
