@@ -37,13 +37,13 @@
 int
 ged_make_bb(struct ged *gedp, int argc, const char *argv[])
 {
-    register int		i;
-    point_t			rpp_min, rpp_max;
-    struct directory	*dp;
-    struct rt_arb_internal	*arb;
-    struct rt_db_internal	new_intern;
-    char			*new_name;
-    int			use_air = 0;
+    register int i;
+    point_t rpp_min, rpp_max;
+    struct directory *dp;
+    struct rt_arb_internal *arb;
+    struct rt_db_internal new_intern;
+    char *new_name;
+    int use_air = 0;
     static const char *usage = "bbname object(s)";
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
@@ -67,7 +67,7 @@ ged_make_bb(struct ged *gedp, int argc, const char *argv[])
     i = 1;
 
     /* look for a USEAIR option */
-    if ( ! strcmp(argv[i], "-u") ) {
+    if (! strcmp(argv[i], "-u")) {
 	use_air = 1;
 	i++;
     }
