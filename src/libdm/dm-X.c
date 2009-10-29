@@ -50,7 +50,9 @@
 #endif
 #define XLIB_ILLEGAL_ACCESS	/* necessary on facist SGI 5.0.1 */
 
-#include "tk.h"
+#ifdef HAVE_TK
+#  include "tk.h"
+#endif
 
 #include "bu.h"
 #include "vmath.h"
@@ -216,15 +218,17 @@ X_open_dm(Tcl_Interp *interp, int argc, char **argv)
     struct bu_vls str;
     struct bu_vls init_proc_vls;
     struct dm *dmp = (struct dm *)NULL;
-    Tk_Window tkwin;
-    Screen *screen;
+    Tk_Window tkwin = (Tk_Window)NULL;
+    Screen *screen = (Screen *)NULL;
 
     struct dm_xvars *pubvars = NULL;
     struct x_vars *privars = NULL;
 
+#ifdef HAVE_TK
     if ((tkwin = Tk_MainWindow(interp)) == NULL) {
 	return DM_NULL;
     }
+#endif
 
     BU_GETSTRUCT(dmp, dm);
     if (dmp == DM_NULL) {
@@ -281,11 +285,13 @@ X_open_dm(Tcl_Interp *interp, int argc, char **argv)
     pubvars->fontstruct = NULL;
 
     if (dmp->dm_top) {
+#ifdef HAVE_TK
 	/* Make xtkwin a toplevel window */
 	pubvars->xtkwin = Tk_CreateWindowFromPath(interp, tkwin,
 						  bu_vls_addr(&dmp->dm_pathName),
 						  bu_vls_addr(&dmp->dm_dName));
 	pubvars->top = pubvars->xtkwin;
+#endif
     } else {
 	char *cp;
 
@@ -298,15 +304,19 @@ X_open_dm(Tcl_Interp *interp, int argc, char **argv)
 	    bu_vls_init(&top_vls);
 	    bu_vls_printf(&top_vls, "%*s", cp - bu_vls_addr(&dmp->dm_pathName),
 			  bu_vls_addr(&dmp->dm_pathName));
+#ifdef HAVE_TK
 	    pubvars->top =
 		Tk_NameToWindow(interp, bu_vls_addr(&top_vls), tkwin);
+#endif
 	    bu_vls_free(&top_vls);
 	}
 
+#ifdef HAVE_TK
 	/* Make xtkwin an embedded window */
 	pubvars->xtkwin =
 	    Tk_CreateWindow(interp, pubvars->top,
 			    cp + 1, (char *)NULL);
+#endif
     }
 
     if (pubvars->xtkwin == NULL) {
@@ -315,8 +325,10 @@ X_open_dm(Tcl_Interp *interp, int argc, char **argv)
 	return DM_NULL;
     }
 
+#ifdef HAVE_TK
     bu_vls_printf(&dmp->dm_tkName, "%s",
 		  (char *)Tk_Name(pubvars->xtkwin));
+#endif
 
     bu_vls_init(&str);
     bu_vls_printf(&str, "_init_dm %V %V\n",
@@ -332,7 +344,10 @@ X_open_dm(Tcl_Interp *interp, int argc, char **argv)
     bu_vls_free(&init_proc_vls);
     bu_vls_free(&str);
 
+    pubvars->dpy = NULL;
+#ifdef HAVE_TK
     pubvars->dpy = Tk_Display(pubvars->top);
+#endif
 
     /* make sure there really is a display before proceeding. */
     if (!pubvars->dpy) {
@@ -342,9 +357,12 @@ X_open_dm(Tcl_Interp *interp, int argc, char **argv)
     }
 
     screen = DefaultScreenOfDisplay(pubvars->dpy);
+
     if (!screen) {
+#ifdef HAVE_TK
 	/* failed to get a default screen, try harder */
 	screen = Tk_Screen(pubvars->top);
+#endif
     }
 
     /* make sure there really is a screen before proceesing. */
@@ -377,13 +395,10 @@ X_open_dm(Tcl_Interp *interp, int argc, char **argv)
 	    dmp->dm_height = dmp->dm_width;
     }
 
+#ifdef HAVE_TK
     Tk_GeometryRequest(pubvars->xtkwin,
 		       dmp->dm_width,
 		       dmp->dm_height);
-
-#if 0
-    /*XXX For debugging purposes */
-    XSynchronize(pubvars->dpy, 1);
 #endif
 
     /* must do this before MakeExist */
@@ -393,17 +408,17 @@ X_open_dm(Tcl_Interp *interp, int argc, char **argv)
 	return DM_NULL;
     }
 
+#ifdef HAVE_TK
     Tk_MakeWindowExist(pubvars->xtkwin);
-    pubvars->win =
-	Tk_WindowId(pubvars->xtkwin);
+    pubvars->win = Tk_WindowId(pubvars->xtkwin);
     dmp->dm_id = pubvars->win;
-
     privars->pix =
 	Tk_GetPixmap(pubvars->dpy,
 		     DefaultRootWindow(pubvars->dpy),
 		     dmp->dm_width,
 		     dmp->dm_height,
 		     Tk_Depth(pubvars->xtkwin));
+#endif
 
     if (privars->is_trueColor) {
 	XColor fg, bg;
@@ -514,9 +529,11 @@ X_open_dm(Tcl_Interp *interp, int argc, char **argv)
  Skip_dials:
     (void)X_configureWin_guts(dmp, 1);
 
+#ifdef HAVE_TK
     Tk_SetWindowBackground(pubvars->xtkwin,
 			   privars->bg);
     Tk_MapWindow(pubvars->xtkwin);
+#endif
 
     MAT_IDN(privars->xmat);
 
@@ -539,17 +556,21 @@ X_close_dm(struct dm *dmp)
 	    XFreeGC(pubvars->dpy,
 		    privars->gc);
 
+#ifdef HAVE_TK
 	if (privars->pix)
 	    Tk_FreePixmap(pubvars->dpy,
 			  privars->pix);
+#endif
 
 	/*XXX Possibly need to free the colormap */
 	if (pubvars->cmap)
 	    XFreeColormap(pubvars->dpy,
 			  pubvars->cmap);
 
+#ifdef HAVE_TK
 	if (pubvars->xtkwin)
 	    Tk_DestroyWindow(pubvars->xtkwin);
+#endif
 
 #if 0
 	XCloseDisplay(pubvars->dpy);
@@ -641,28 +662,23 @@ X_loadMatrix(struct dm *dmp, fastf_t *mat, int which_eye)
 
 	bu_log("which eye = %d\t", which_eye);
 	bu_log("transformation matrix = \n");
-#if 1
+
+	/* note the row/column ordering */
 	bu_log("%g %g %g %g\n", mat[0], mat[1], mat[2], mat[3]);
 	bu_log("%g %g %g %g\n", mat[4], mat[5], mat[6], mat[7]);
 	bu_log("%g %g %g %g\n", mat[8], mat[9], mat[10], mat[11]);
 	bu_log("%g %g %g %g\n", mat[12], mat[13], mat[14], mat[15]);
-#else
-	bu_log("%g %g %g %g\n", mat[0], mat[4], mat[8], mat[12]);
-	bu_log("%g %g %g %g\n", mat[1], mat[5], mat[9], mat[13]);
-	bu_log("%g %g %g %g\n", mat[2], mat[6], mat[10], mat[14]);
-	bu_log("%g %g %g %g\n", mat[3], mat[7], mat[11], mat[15]);
-#endif
     }
 
     MAT_COPY(privars->xmat, mat);
     return TCL_OK;
 }
 
-/*
- *  			X _ D R A W V L I S T
+
+/**
+ * X _ D R A W V L I S T
  *
  */
-
 HIDDEN int
 X_drawVList(struct dm *dmp, register struct bn_vlist *vp)
 {
@@ -1150,6 +1166,7 @@ X_configureWin_guts(struct dm *dmp, int force)
 	bu_log("width = %d, height = %d\n", dmp->dm_width, dmp->dm_height);
     }
 
+#ifdef HAVE_TK
     Tk_FreePixmap(pubvars->dpy,
 		  privars->pix);
     privars->pix =
@@ -1158,6 +1175,7 @@ X_configureWin_guts(struct dm *dmp, int force)
 		     dmp->dm_width,
 		     dmp->dm_height,
 		     Tk_Depth(pubvars->xtkwin));
+#endif
 
     /* First time through, load a font or quit */
     if (pubvars->fontstruct == NULL) {
@@ -1331,6 +1349,7 @@ X_choose_visual(struct dm *dmp)
 		privars->is_trueColor = 0;
 	    }
 
+#ifdef HAVE_TK
 	    if (Tk_SetWindowVisual(pubvars->xtkwin,
 				   maxvip->visual,
 				   maxvip->depth,
@@ -1339,7 +1358,9 @@ X_choose_visual(struct dm *dmp)
 
 		bu_free(good, "dealloc good visuals");
 		return maxvip; /* success */
-	    } else {
+	    } else
+#endif
+	    {
 		/* retry with lesser depth */
 		baddepth = maxvip->depth;
 		XFreeColormap(pubvars->dpy, pubvars->cmap);
