@@ -46,13 +46,13 @@
 
 #include "common.h"
 
-#include <stdlib.h>
+#include "ged.h"
 
 
 void
-ged_annotate_help(struct bu_vls *result, const char *cmd)
+annotate_help(struct bu_vls *result, const char *cmd)
 {
-    static const char *usage = "name [create|delete|adjust] name ";
+    static const char *usage = "[object] [-n name] [-p x y z] [-t type] [-m message]";
 
     bu_vls_printf(result, "Usage: %s %s", cmd, usage);
 }
