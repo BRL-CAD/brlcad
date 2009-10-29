@@ -363,6 +363,7 @@ static int go_png(struct ged *gedp,
 		  const char *usage,
 		  int maxargs);
 #endif
+
 static int go_prim_label(struct ged *gedp,
 			 int argc,
 			 const char *argv[],
@@ -381,6 +382,12 @@ static int go_refresh_all(struct ged *gedp,
 			  ged_func_ptr func,
 			  const char *usage,
 			  int maxargs);
+static int go_refresh_on(struct ged *gedp,
+			 int argc,
+			 const char *argv[],
+			 ged_func_ptr func,
+			 const char *usage,
+			 int maxargs);
 static int go_rotate_arb_face_mode(struct ged *gedp,
 				   int argc,
 				   const char *argv[],
@@ -764,6 +771,7 @@ static struct go_cmdtab go_cmds[] = {
     {"red",	(char *)0, MAXARGS, go_pass_through_func, ged_red},
     {"refresh",	"vname", MAXARGS, go_refresh, GED_FUNC_PTR_NULL},
     {"refresh_all",	(char *)0, MAXARGS, go_refresh_all, GED_FUNC_PTR_NULL},
+    {"refresh_on",	"[0|1]", MAXARGS, go_refresh_on, GED_FUNC_PTR_NULL},
     {"regdef",	(char *)0, MAXARGS, go_pass_through_func, ged_regdef},
     {"regions",	(char *)0, MAXARGS, go_pass_through_func, ged_tables},
     {"report",	(char *)0, MAXARGS, go_pass_through_func, ged_report},
@@ -1092,6 +1100,7 @@ Usage: go_open\n\
     bu_vls_init(&gop->go_more_args_callback);
     BU_LIST_INIT(&gop->go_observers.l);
     gop->go_interp = interp;
+    gop->go_refresh_on = 1;
 
     BU_LIST_INIT(&gop->go_head_views.l);
 
@@ -5033,6 +5042,37 @@ go_refresh_all(struct ged *gedp,
 }
 
 static int
+go_refresh_on(struct ged *gedp,
+	      int argc,
+	      const char *argv[],
+	      ged_func_ptr func,
+	      const char *usage,
+	      int maxargs)
+{
+    int on;
+
+    if (2 < argc) {
+	bu_vls_printf(&gedp->ged_result_str, "Usage: %s", argv[0]);
+	return BRLCAD_ERROR;
+    }
+
+    /* Get refresh_on state */
+    if (argc == 1) {
+	bu_vls_printf(&gedp->ged_result_str, "%d", go_current_gop->go_refresh_on);
+	return BRLCAD_OK;
+    }
+
+    /* Set refresh_on state */
+    if (sscanf(argv[1], "%d", &on) != 1) {
+	bu_vls_printf(&gedp->ged_result_str, "Usage: %s", argv[0]);
+	return BRLCAD_ERROR;
+    }
+
+    go_current_gop->go_refresh_on = on;
+
+    return BRLCAD_OK;
+}
+
 go_rotate_arb_face_mode(struct ged *gedp,
 			int argc,
 			const char *argv[],
@@ -6931,6 +6971,9 @@ static void
 go_refresh_view(struct ged_dm_view *gdvp)
 {
     int restore_zbuffer = 0;
+
+    if (!go_current_gop->go_refresh_on)
+	return;
 
     /* Turn off the zbuffer if the framebuffer is active AND the zbuffer is on. */
     if (gdvp->gdv_fbs.fbs_mode != GED_OBJ_FB_MODE_OFF &&
