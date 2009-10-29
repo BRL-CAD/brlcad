@@ -190,6 +190,8 @@ bary_LDADD = ${BU}
 binfo_SOURCES = binfo.c
 binfo_LDADD = ${RT} ${FB} ${BU}
 
+# FIXME: this needs to be tied to a WITH_TK intead of WITH_X11 (but
+# have to change configure so that doesn't mean an fb/dm interface).
 if WITH_X11
 bombardier_SOURCES = bombardier.c bombardier.h
 bombardier_LDADD = ${TCLCAD} ${BU} ${TCL} ${TK}
