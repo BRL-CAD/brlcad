@@ -127,7 +127,7 @@ historyInit(void)
  *	history vls'es.
  */
 void
-history_record(struct bu_vls *cmdp, struct timeval *start, struct timeval *finish, int status)
+history_record_priv(struct bu_vls *cmdp, struct timeval *start, struct timeval *finish, int status)
 
 
     /* Either TCL_OK or TCL_ERROR */
