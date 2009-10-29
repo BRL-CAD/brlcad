@@ -229,7 +229,7 @@ CopyRegion()
 	if (killbuf[killptr])
 		lfreelist(killbuf[killptr]);
 	nl = killbuf[killptr] = nbufline();
-	nl->l_dline = putline("");
+	nl->l_dline = put_line("");
 	nl->l_next = nl->l_prev = 0;
 
 	status = inorder(mp->m_line, mp->m_char, curline, curchar);
@@ -1418,7 +1418,7 @@ LINE	*line1,
 			break;
 		if (lbuf[char1] == '\0') {
 			char1 = 0;
-			line1->l_dline = putline(lbuf);
+			line1->l_dline = put_line(lbuf);
 			makedirty(line1);
 			if (lastp(line1))
 				break;
@@ -1432,7 +1432,7 @@ LINE	*line1,
 			lower(&lbuf[char1]);
 		char1++;
 	}
-	line1->l_dline = putline(lbuf);
+	line1->l_dline = put_line(lbuf);
 	makedirty(line1);
 	getDOT();
 }

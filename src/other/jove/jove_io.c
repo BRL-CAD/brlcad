@@ -329,16 +329,16 @@ char	*file;
 	if ((xeof = getfline(linebuf)) == 0)
 		linecopy(genbuf, curchar, linebuf);
 
-	curline->l_dline = putline(genbuf);
+	curline->l_dline = put_line(genbuf);
 	if (!xeof) do {
 		xeof = getfline(linebuf);
 		nlines++;
 		curline = listput(curbuf, curline);
-		curline->l_dline = putline(linebuf) | DIRTY;
+		curline->l_dline = put_line(linebuf) | DIRTY;
 	} while (!xeof);
 
 	linecopy(linebuf, (curchar = strlen(linebuf)), end);
-	curline->l_dline = putline(linebuf);
+	curline->l_dline = put_line(linebuf);
 	FileMess(file, nlines, count);
 }
 
@@ -595,7 +595,7 @@ BUFFER	*bp;
 	lfreelist(bp->b_zero);
 	ignore(listput(bp, (LINE *) 0));		/* First line in buffer */
 
-	bp->b_dot->l_dline = putline("") | DIRTY;
+	bp->b_dot->l_dline = put_line("") | DIRTY;
 	bp->b_char = 0;
 	AllMarkSet(bp, bp->b_dot, 0);
 	if (bp == curbuf)  {
@@ -899,5 +899,5 @@ SavLine(addr, buf)
 LINE	*addr;
 char	*buf;
 {
-	addr->l_dline = putline(buf);
+	addr->l_dline = put_line(buf);
 }
