@@ -512,22 +512,6 @@ bu_argv_from_string(char *argv[], int lim, char *lp)
 	return 0;
     }
 
-#ifdef HAVE_SHELL_ESCAPE
-    /* Handle "!" shell escape char so the shell can parse the line */
-    if (*lp == '!') {
-	int ret;
-
-	ret = system(lp+1);
-	if (ret != 0) {
-	    perror("system(3)");
-	    bu_log("bu_argv_from_string() FAILED: %s\n", lp);
-	}
-
-	/* No words, return NULL */
-	return 0;
-    }
-#endif
-
     /* some non-space string has been seen, set argv[0] */
     argc = 0;
     argv[argc] = lp;
