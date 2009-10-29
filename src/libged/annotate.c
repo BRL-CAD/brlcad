@@ -46,6 +46,8 @@
 
 #include "common.h"
 
+#include <string.h>
+
 #include "ged.h"
 
 
@@ -61,7 +63,13 @@ annotate_help(struct bu_vls *result, const char *cmd)
 int
 ged_annotate(struct ged *gedp, int argc, const char *argv[])
 {
+    char **object_argv;
     const char *argv0 = argv[0];
+    struct bu_vls objects;
+    int object_count = 0;
+    int i;
+
+    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
 
     /* initialize result */
     bu_vls_trunc(&gedp->ged_result_str, 0);
@@ -73,8 +81,33 @@ ged_annotate(struct ged *gedp, int argc, const char *argv[])
     }
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
+    GED_CHECK_READ_ONLY(gedp, GED_ERROR);
 
-    /* do something */
+    bu_vls_init(&objects);
+
+    /* stash objects, quoting them if they include spaces */
+    for (i = 1; i < argc; i++) {
+	bu_log("DEBUG: argv[%d] == %s\n", i, argv[i]);
+
+	if (argv[i][0] != '-') {
+	    object_count++;
+	    if (i != 1)
+		bu_vls_putc(&objects, ' ');
+	    bu_vls_from_argv(&objects, 1, &(argv[i]));
+	} else {
+	    break;
+	}
+    }
+    bu_log("DEBUG: objects: [%s]\n", bu_vls_addr(&objects));
+
+    object_argv = (char **)bu_calloc(object_count+1, sizeof(char *), "alloc object argv");
+    bu_argv_from_string(object_argv, object_count, bu_vls_addr(&objects));
+    for (i = 0; i < object_count; i++) {
+	bu_log("DEBUG: stashed [%s]\n", object_argv[i]);
+    }
+
+    bu_vls_free(&objects);
+    bu_free(object_argv, "free object argv");
 
     return GED_OK;
 }
