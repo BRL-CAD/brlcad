@@ -58,14 +58,18 @@
 #include "dm.h"
 
 #ifdef DM_X
-#  include "tk.h"
+#  ifdef WITH_TK
+#    include "tk.h"
+#endif
 #  include <X11/Xutil.h>
 #  include "dm_xvars.h"
 #  include "dm-X.h"
 #endif /* DM_X */
 
 #ifdef DM_TK
-#  include "tk.h"
+#  ifdef WITH_TK
+#    include "tk.h"
+#  endif
 #  include <X11/Xutil.h>
 #  include "dm_xvars.h"
 #  include "dm-tk.h"
