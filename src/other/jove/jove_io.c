@@ -722,7 +722,7 @@ tmpinit()
    long. */
 
 char *
-getline(tl, buf)
+get_line(tl, buf)
 disk_line	tl;
 char	*buf;
 {
@@ -749,7 +749,7 @@ char	*buf;
 /* Put `buf' and return the disk address */
 
 disk_line
-putline(buf)
+put_line(buf)
 char	*buf;
 {
 	register char	*bp,
