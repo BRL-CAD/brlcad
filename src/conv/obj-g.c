@@ -119,6 +119,7 @@ add_vertex(struct region_s * r, char *buf)
 int
 add_face(struct region_s * r, char *buf)
 {
+    char *contains_slash = strchr( buf,'/');
     /* syntax is ... messy. v1/vt1/vn1, can be
      * "f 1 2 3 ...", or "f 1//1 2//x ..." or "f 1/1/1/ ..." or "f 1/1 ..." or ... */
     r->bot->faces = bu_realloc(r->bot->faces, sizeof(int) * 3 * (r->bot->num_faces + 1), "bot faces");
@@ -126,7 +127,6 @@ add_face(struct region_s * r, char *buf)
      * checking to see if OBJ file contains texture and/or normal data
      * we won't be using it but will need to parse around it.
      */
-    char *contains_slash = strchr( buf,'/');
     if (contains_slash) {
 	sscanf(buf, "%d/%*s %d/%*s %d/%*s", 
 	       r->bot->faces + 3*r->bot->num_faces,
