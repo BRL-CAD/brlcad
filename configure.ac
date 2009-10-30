@@ -3935,7 +3935,6 @@ AC_CONFIG_FILES([
 	src/canon/Makefile
 	src/conv/Makefile
 	src/conv/iges/Makefile
-	src/conv/step/Makefile
 	src/conv/intaval/Makefile
 	src/external/Makefile
 	src/external/Cubit/Makefile
