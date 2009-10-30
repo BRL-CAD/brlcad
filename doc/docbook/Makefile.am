@@ -371,22 +371,12 @@ booksDOCBOOK_ENpdf_DATA = $(BUILTBOOKS_ENPDF)
 specificationsDOCBOOK_EN = \
 	specifications/en/BRL_CAD_g_format_V5.xml
 
-specificationsDOCBOOK_EN_IMAGES = 
-
 specificationsDOCBOOK_ENhtmldir = $(BRLCAD_DATA)/html/specifications/en
 specificationsDOCBOOK_ENhtml_DATA = \
 	$(BUILTSPECS_ENHTML)
 
 BUILTSPECS_ENHTML = \
 	${specificationsDOCBOOK_EN:xml=html}
-
-specificationsDOCBOOK_ENhtmlimagesdir = $(BRLCAD_DATA)/html/specifications/en/images
-specificationsDOCBOOK_ENhtmlimages_DATA = \
-	$(BUILTSPECS_ENIMAGES)
-
-BUILTSPECS_ENIMAGES = \
-	${specificationsDOCBOOK_EN_IMAGES:docpng=png}
-
 
 if BUILD_PDF_DOCS
 
@@ -540,7 +530,6 @@ EXTRA_DIST = \
 	${lessonsDOCBOOK_EN} \
 	${man1DOCBOOK_EN} \
 	${man1INTRO_EN} \
-	${specificationsDOCBOOK_EN_IMAGES} \
 	${specificationsDOCBOOK_EN} \
 	README \
 	articles/en/images/tire_fig12.svg \
@@ -548,7 +537,6 @@ EXTRA_DIST = \
 	books/README \
 	books/en/tutorial_series_authors.xml \
 	catalog.xml \
-	html/specifications/en/images \
 	resources \
 	system/man1/README \
 	system/man1/mged_cmd_template.xml
