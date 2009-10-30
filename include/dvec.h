@@ -1,4 +1,4 @@
-/*                        V E C T O R . H
+/*                           D V E C . H
  * BRL-CAD
  *
  * Copyright (c) 2008-2009 United States Government as represented by
@@ -17,18 +17,21 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file vector.h
+/** @file dvec.h
  *
  * Brief description
  *
  */
 
-#ifndef __VECTOR
-#define __VECTOR
+#ifndef __DVEC_H__
+#define __DVEC_H__
 
 #include "common.h"
 
 #include <math.h>
+
+#include "raytrace.h"
+
 
 extern "C++" {
 #include <iostream>
@@ -181,7 +184,7 @@ extern "C++" {
     }
 }
 
-#endif
+#endif /* __DVEC_H__ */
 
 /*
  * Local Variables:
