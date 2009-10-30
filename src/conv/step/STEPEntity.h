@@ -30,7 +30,6 @@
 #include <vector>
 #include <list>
 #include <map>
-using namespace std;
 
 class STEPWrapper;
 class ON_Brep;

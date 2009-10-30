@@ -30,18 +30,18 @@ class ON_Brep;
 
 class BRLCADWrapper {
 private:
-	string filename;
-	struct rt_wdb *outfp;
-	static int sol_reg_cnt;
+    std::string filename;
+    struct rt_wdb *outfp;
+    static int sol_reg_cnt;
 
 public:
-	BRLCADWrapper();
-	virtual ~BRLCADWrapper();
-	bool OpenFile( const char * flnm);
-	bool WriteHeader();
-	bool WriteSphere(double *center, double radius);
-	bool WriteBrep(string name,ON_Brep *brep);
-	bool Close();
+    BRLCADWrapper();
+    virtual ~BRLCADWrapper();
+    bool OpenFile( const char * flnm);
+    bool WriteHeader();
+    bool WriteSphere(double *center, double radius);
+    bool WriteBrep(std::string name,ON_Brep *brep);
+    bool Close();
 };
 
 #endif /* BRLCADWRAPPER_H_ */

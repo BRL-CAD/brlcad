@@ -38,7 +38,6 @@
 
 #include "PullbackCurve.h"
 
-using namespace std;
 using namespace brlcad;
 
 #define RANGE_HI 0.55
