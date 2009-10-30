@@ -1,8 +1,11 @@
 
 bin_PROGRAMS = step-g
 
-AM_CPPFLAGS = ${STEP_CPPFLAGS} ${TCL_CPPFLAGS} ${TNT_CPPFLAGS} ${OPENNURBS_CPPFLAGS}
-
+AM_CPPFLAGS = \
+	${STEP_CPPFLAGS} \
+	${TCL_CPPFLAGS} \
+	${TNT_CPPFLAGS} \
+	${OPENNURBS_CPPFLAGS}
 
 # FIXME: these should be compiled into a noinst_LTLIBRARIES
 # convenience library and linked to step-g instead of being bundled
@@ -191,7 +194,6 @@ step_g_SOURCES = \
 	VolumeSiUnit.cpp \
 	VolumeUnit.cpp \
 	step-g.cpp
-	
 
 fedex_hdrs = \
 	SdaiCONFIG_CONTROL_DESIGN.h \
@@ -373,7 +375,6 @@ noinst_HEADERS = \
 	VolumeConversionBasedUnit.h \
 	VolumeSiUnit.h \
 	VolumeUnit.h 
-	
 
 # per-program CPPFLAGS wasn't added until automake 1.7
 step_g_CXXFLAGS = \
@@ -383,9 +384,9 @@ step_g_CXXFLAGS = \
 
 # FIXME: these declarations are required for proper distchecking if
 # the files do not exist before configure is run.
-#BUILT_SOURCES = \
-#	$(fedex_srcs) \
-#	$(fedex_headers)
+BUILT_SOURCES = \
+	$(fedex_srcs) \
+	$(fedex_headers)
 
 step_g_LDADD = \
 	${BU} \
@@ -398,7 +399,6 @@ $(fedex_srcs):
 	$(STEP_FEDEX_PLUS) $(STEP_AP203)
 
 $(fedex_hdrs): ${fedex_srcs}
-
 
 include $(top_srcdir)/misc/Makefile.defs
 
