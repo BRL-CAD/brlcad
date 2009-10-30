@@ -1,11 +1,17 @@
-#include "opennurbs_ext.h"
+
+#include "common.h"
+
+#include "dvec.h"
+
 #include <assert.h>
 #include <vector>
 #include <list>
 #include <limits>
+
 #include "tnt.h"
 #include "jama_lu.h"
-#include "vector.h"
+#include "opennurbs_ext.h"
+
 #include "PullbackCurve.h"
 
 using namespace std;
