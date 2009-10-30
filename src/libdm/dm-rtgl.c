@@ -1661,6 +1661,44 @@ rtgl_drawVList(struct dm *dmp, register struct bn_vlist *vp)
     /* get number and names of visible tree tops */
     numVisible = ged_build_tops(gedp, visibleTrees, &visibleTrees[RT_MAXARGS]);
 
+    int foundalloldtrees = 1;
+    int foundthistree = 0;
+    for (i = 0; i < oldNumTrees; i++) {
+	currTree = oldTrees[i];
+	foundthistree = 0;
+ 	for (j = 0; j < numVisible; j++) {
+	    if (strcmp(currTree, visibleTrees[j]) == 0) 
+		foundthistree = 1;
+	}
+	if (foundthistree == 0) foundalloldtrees = 0;
+    }
+
+    /* display out of date */
+    if (foundalloldtrees == 0) {
+
+    	foundalloldtrees = 1;
+	
+	/* drop previous work */
+	oldNumTrees = 0;
+	freeJobList(&jobs);
+
+	if (colorTable != NULL) {
+	    bu_hash_tbl_free(colorTable);
+	    colorTable = NULL;
+	}
+
+	if (jobsArray != NULL) {
+	    bu_free(jobsArray, "dm-rtgl.c: jobsArray");
+	    jobsArray = NULL;
+	}
+
+	RTGL_DIRTY = 1;
+
+	maxSpan = 0.0;
+	numShot = numJobs = 0;
+    }
+
+
     /* no objects are visible */
     if (numVisible == 0) {
 
@@ -1720,6 +1758,7 @@ rtgl_drawVList(struct dm *dmp, register struct bn_vlist *vp)
 	maxSpan = 0.0;
 	numShot = numJobs = 0;
     }
+ 
     
     for (i = 0; i < numVisible; i++) {
         currTree = visibleTrees[i];
