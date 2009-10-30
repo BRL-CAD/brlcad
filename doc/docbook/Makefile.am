@@ -70,6 +70,7 @@ articlesDOCBOOK_EN_IMAGES = \
 	articles/en/images/nirt_fig17.docpng \
 	articles/en/images/nirt_fig18.docpng \
 	articles/en/images/nirt_fig19.docpng \
+	articles/en/images/nirt_fig20.docpng \
 	articles/en/images/nirt_fig21.docpng \
 	articles/en/images/nirt_fig22.docpng \
 	articles/en/images/nirt_fig23.docpng \
@@ -197,6 +198,7 @@ lessonsDOCBOOK_EN_IMAGES = \
 	lessons/en/images/mged04_fb_overlay_mode.docpng \
 	lessons/en/images/mged04_raytracedshapes.docpng \
 	lessons/en/images/mged05_combinationeditor.docpng \
+	lessons/en/images/mged05_intersectionspheres.docpng \
 	lessons/en/images/mged05_raytraceddome.docpng \
 	lessons/en/images/mged05_raytracedpart1.docpng \
 	lessons/en/images/mged05_raytracedpart2.docpng \
@@ -310,34 +312,34 @@ booksDOCBOOK_EN = \
 
 booksDOCBOOK_EN_IMAGES = \
 	books/en/images/tutorial_series_volIII_fig01.docpng \
- 	books/en/images/tutorial_series_volIII_fig02.docpng \
- 	books/en/images/tutorial_series_volIII_fig03.docpng \
- 	books/en/images/tutorial_series_volIII_fig04.docpng \
- 	books/en/images/tutorial_series_volIII_fig05.docpng \
- 	books/en/images/tutorial_series_volIII_fig06.docpng \
- 	books/en/images/tutorial_series_volIII_fig07.docpng \
- 	books/en/images/tutorial_series_volIII_fig08.docpng \
- 	books/en/images/tutorial_series_volIII_fig09.docpng \
- 	books/en/images/tutorial_series_volIII_fig10.docpng \
- 	books/en/images/tutorial_series_volIII_fig11.docpng \
- 	books/en/images/tutorial_series_volIII_fig12.docpng \
- 	books/en/images/tutorial_series_volIII_fig13.docpng \
- 	books/en/images/tutorial_series_volIII_fig14.docpng \
- 	books/en/images/tutorial_series_volIII_fig15.docpng \
- 	books/en/images/tutorial_series_volIII_fig16.docpng \
- 	books/en/images/tutorial_series_volIII_fig17.docpng \
- 	books/en/images/tutorial_series_volIII_fig18.docpng \
- 	books/en/images/tutorial_series_volIII_fig19.docpng \
- 	books/en/images/tutorial_series_volIII_fig20.docpng \
- 	books/en/images/tutorial_series_volIII_fig21.docpng \
- 	books/en/images/tutorial_series_volIII_fig22.docpng \
- 	books/en/images/tutorial_series_volIII_fig23.docpng \
- 	books/en/images/tutorial_series_volIII_fig24.docpng \
- 	books/en/images/tutorial_series_volIII_fig25.docpng \
- 	books/en/images/tutorial_series_volIII_fig26.docpng \
- 	books/en/images/tutorial_series_volIII_fig27.docpng \
- 	books/en/images/tutorial_series_volIII_fig28.docpng \
- 	books/en/images/tutorial_series_volIII_fig29.docpng
+	books/en/images/tutorial_series_volIII_fig02.docpng \
+	books/en/images/tutorial_series_volIII_fig03.docpng \
+	books/en/images/tutorial_series_volIII_fig04.docpng \
+	books/en/images/tutorial_series_volIII_fig05.docpng \
+	books/en/images/tutorial_series_volIII_fig06.docpng \
+	books/en/images/tutorial_series_volIII_fig07.docpng \
+	books/en/images/tutorial_series_volIII_fig08.docpng \
+	books/en/images/tutorial_series_volIII_fig09.docpng \
+	books/en/images/tutorial_series_volIII_fig10.docpng \
+	books/en/images/tutorial_series_volIII_fig11.docpng \
+	books/en/images/tutorial_series_volIII_fig12.docpng \
+	books/en/images/tutorial_series_volIII_fig13.docpng \
+	books/en/images/tutorial_series_volIII_fig14.docpng \
+	books/en/images/tutorial_series_volIII_fig15.docpng \
+	books/en/images/tutorial_series_volIII_fig16.docpng \
+	books/en/images/tutorial_series_volIII_fig17.docpng \
+	books/en/images/tutorial_series_volIII_fig18.docpng \
+	books/en/images/tutorial_series_volIII_fig19.docpng \
+	books/en/images/tutorial_series_volIII_fig20.docpng \
+	books/en/images/tutorial_series_volIII_fig21.docpng \
+	books/en/images/tutorial_series_volIII_fig22.docpng \
+	books/en/images/tutorial_series_volIII_fig23.docpng \
+	books/en/images/tutorial_series_volIII_fig24.docpng \
+	books/en/images/tutorial_series_volIII_fig25.docpng \
+	books/en/images/tutorial_series_volIII_fig26.docpng \
+	books/en/images/tutorial_series_volIII_fig27.docpng \
+	books/en/images/tutorial_series_volIII_fig28.docpng \
+	books/en/images/tutorial_series_volIII_fig29.docpng
 
 booksDOCBOOK_ENhtmldir = $(BRLCAD_DATA)/html/books/en
 booksDOCBOOK_ENhtml_DATA = \
@@ -394,10 +396,6 @@ endif
 
 specificationsDOCBOOK_ENpdfdir = $(BRLCAD_DATA)/pdf/specifications/en
 specificationsDOCBOOK_ENpdf_DATA = $(BUILTSPECS_ENPDF)
-
-
-
-
 
 
 
@@ -500,9 +498,6 @@ man1DOCBOOK_ENpdfdir = $(BRLCAD_DATA)/pdf/man1/en
 man1DOCBOOK_ENpdf_DATA = $(BUILTMAN_ENPDF)
 
 
-
-
-
 BUILT_SOURCES = \
 	$(BUILTARTICLES_ENIMAGES) \
 	$(BUILTARTICLES_ENHTML) \
@@ -537,22 +532,25 @@ clean-generic: mostlyclean-generic
 	-rmdir -p system/man1/en
 
 EXTRA_DIST = \
-	${articlesDOCBOOK_EN} \
 	${articlesDOCBOOK_EN_IMAGES} \
-	${lessonsDOCBOOK_EN} \
-	${lessonsDOCBOOK_EN_IMAGES} \
-	${booksDOCBOOK_EN} \
+	${articlesDOCBOOK_EN} \
 	${booksDOCBOOK_EN_IMAGES} \
-	${specificationsDOCBOOK_EN} \
-	${specificationsDOCBOOK_EN_IMAGES} \
+	${booksDOCBOOK_EN} \
+	${lessonsDOCBOOK_EN_IMAGES} \
+	${lessonsDOCBOOK_EN} \
 	${man1DOCBOOK_EN} \
 	${man1INTRO_EN} \
+	${specificationsDOCBOOK_EN_IMAGES} \
+	${specificationsDOCBOOK_EN} \
 	README \
-	books/README \
-	catalog.xml \
-	resources \
-	system/man1/mged_cmd_template.xml \
 	articles/en/images/tire_fig12.svg \
-	articles/en/images/tire_fig13.svg
+	articles/en/images/tire_fig13.svg \
+	books/README \
+	books/en/tutorial_series_authors.xml \
+	catalog.xml \
+	html/specifications/en/images \
+	resources \
+	system/man1/README \
+	system/man1/mged_cmd_template.xml
 
 include $(top_srcdir)/misc/Makefile.defs
