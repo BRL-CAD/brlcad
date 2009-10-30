@@ -1800,3 +1800,12 @@ pullback_seam_curve(enum seam_direction seam_dir,
 
   return interpolateCurve(samples);
 }
+
+// Local Variables:
+// tab-width: 8
+// mode: C++
+// c-basic-offset: 4
+// indent-tabs-mode: t
+// c-file-style: "stroustrup"
+// End:
+// ex: shiftwidth=4 tabstop=8

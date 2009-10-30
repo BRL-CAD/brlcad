@@ -127,3 +127,12 @@ GlobalUncertaintyAssignedContext::Create(STEPWrapper *sw, SCLP23(Application_ins
 		return (*i).second;
 	}
 }
+
+// Local Variables:
+// tab-width: 8
+// mode: C++
+// c-basic-offset: 4
+// indent-tabs-mode: t
+// c-file-style: "stroustrup"
+// End:
+// ex: shiftwidth=4 tabstop=8

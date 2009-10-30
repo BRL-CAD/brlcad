@@ -155,3 +155,12 @@ string
 BSplineSurface::Form() {
 	return B_spline_surface_form_string[surface_form];
 }
+
+// Local Variables:
+// tab-width: 8
+// mode: C++
+// c-basic-offset: 4
+// indent-tabs-mode: t
+// c-file-style: "stroustrup"
+// End:
+// ex: shiftwidth=4 tabstop=8

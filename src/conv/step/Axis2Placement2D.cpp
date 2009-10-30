@@ -177,3 +177,12 @@ Axis2Placement2D::LoadONBrep(ON_Brep *brep)
 	cerr << "Error: ::LoadONBrep(ON_Brep *brep) not implemented for " << entityname << endl;
 	return false;
 }
+
+// Local Variables:
+// tab-width: 8
+// mode: C++
+// c-basic-offset: 4
+// indent-tabs-mode: t
+// c-file-style: "stroustrup"
+// End:
+// ex: shiftwidth=4 tabstop=8
