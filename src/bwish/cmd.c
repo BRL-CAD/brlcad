@@ -20,9 +20,9 @@
  */
 /** @file cmd.c
  *
- * This is the place where BWISH/BTCLSH's commands live.
- * The history routines were borrowed from mged/history.c
- * and modified for use in this application.
+ * This is the place where BWISH/BTCLSH's commands live.  The history
+ * routines were borrowed from mged/history.c and modified for use in
+ * this application.
  *
  */
 
@@ -44,50 +44,17 @@
 /* defined in tcl.c */
 extern void Cad_Exit(int status);
 
-HIDDEN void historyInit(void);
-HIDDEN int cmd_history(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
-HIDDEN int cmd_hist(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
-HIDDEN int cmd_quit(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
-
 HIDDEN struct bu_cmdhist histHead;
 HIDDEN struct bu_cmdhist *currHist;
 
-HIDDEN struct bu_cmdtab bwish_cmds[] =
-{
-    {"exit",		cmd_quit},
-    {"history",		cmd_history},
-    {"hist",		cmd_hist},
-    {"q",			cmd_quit},
-    {(char *)NULL,		CMD_NULL}
-};
-
-#ifdef BWISH
-extern Tk_PhotoImageFormat tkImgFmtPIX;
-#endif
-
-int
-cmdInit(Tcl_Interp *interp)
-{
-    /* Register bwish/btclsh commands */
-    bu_register_cmds(interp, bwish_cmds);
-
-#ifdef BWISH
-    /* Add pix format for images */
-    Tk_CreatePhotoImageFormat(&tkImgFmtPIX);
-#endif
-
-    /* initialize command history */
-    historyInit();
-    return TCL_OK;
-}
 
 /***************************** BWISH/BTCLSH COMMANDS *****************************/
 
 HIDDEN int
-cmd_quit(ClientData	clientData,
-	 Tcl_Interp	*interp,
-	 int		argc,
-	 char		**argv)
+cmd_quit(ClientData clientData,
+	 Tcl_Interp *interp,
+	 int argc,
+	 char **argv)
 {
     int status;
 
@@ -114,23 +81,19 @@ historyInit(void)
 	histHead.h_finish.tv_sec = histHead.h_finish.tv_usec = 0L;
     histHead.h_status = TCL_OK;
     currHist = &histHead;
-#if 0
-    journalfp = NULL;
-#endif
     historyInitialized=1;
 }
 
 /*
- *	H I S T O R Y _ R E C O R D
+ * H I S T O R Y _ R E C O R D
  *
- *	Stores the given command with start and finish times in the
- *	history vls'es.
+ * Stores the given command with start and finish times in the history
+ * vls'es.
+ *
+ * status is either TCL_OK or TCL_ERROR.
  */
 void
 history_record_priv(struct bu_vls *cmdp, struct timeval *start, struct timeval *finish, int status)
-
-
-    /* Either TCL_OK or TCL_ERROR */
 {
     struct bu_cmdhist *new_hist;
 
@@ -145,7 +108,7 @@ history_record_priv(struct bu_vls *cmdp, struct timeval *start, struct timeval *
     new_hist->h_finish = *finish;
     new_hist->h_status = status;
 
-    /* make sure the list is initialized before attempting to add this entry */
+    /* make sure list is initialized before attempting to add entry */
     if (!historyInitialized) {
 	historyInit();
     }
@@ -153,19 +116,14 @@ history_record_priv(struct bu_vls *cmdp, struct timeval *start, struct timeval *
     BU_LIST_INSERT(&(histHead.l), &(new_hist->l));
 
     /* As long as this isn't our first command to record after setting
-       up the journal (which would be "journal", which we don't want
-       recorded!)... */
+     * up the journal (which would be "journal", which we don't want
+     * recorded!)...
+     */
 
-#if 0
-    if (journalfp != NULL && !firstjournal)
-	history_journalize(new_hist);
-#endif
 
     currHist = &histHead;
-#if 0
-    firstjournal = 0;
-#endif
 }
+
 
 HIDDEN int
 timediff(struct timeval *tvdiff, struct timeval *start, struct timeval *finish)
@@ -185,128 +143,12 @@ timediff(struct timeval *tvdiff, struct timeval *start, struct timeval *finish)
     return 0;
 }
 
-#if 0
-void
-history_journalize(hptr)
-    struct bu_cmdhist *hptr;
-{
-    struct timeval tvdiff;
-    struct bu_cmdhist *lasthptr;
-
-    lasthptr = BU_LIST_PREV(bu_cmdhist, &(hptr->l));
-
-    if (journal_delay && timediff(&tvdiff, &(lasthptr->h_finish), &(hptr->h_start)) >= 0)
-	fprintf(journalfp, "delay %d %ld\n", tvdiff.tv_sec, tvdiff.tv_usec);
-
-    if (hptr->h_status == TCL_ERROR)
-	fprintf(journalfp, "# ");
-    fprintf(journalfp, "%s", bu_vls_addr(&hptr->h_command));
-
-    if (journal_delay)
-	fprintf(journalfp, "mged_update 1\n");
-}
 
 /*
- *	F _ J O U R N A L
+ * F _ H I S T O R Y
  *
- *	Opens the journal file, so each command and the time since the previous
- *	  one will be recorded.  Or, if called with no arguments, closes the
- *	  journal file.
+ * Prints out the command history, either to bu_log or to a file.
  */
-int
-cmd_journal(clientData, interp, argc, argv)
-    ClientData clientData;
-    Tcl_Interp *interp;
-    int argc;
-    char **argv;
-{
-    if (argc < 1 || 3 < argc) {
-	struct bu_vls vls;
-
-	bu_vls_init(&vls);
-	bu_vls_printf(&vls, "help journal");
-	Tcl_Eval(interp, bu_vls_addr(&vls));
-	bu_vls_free(&vls);
-	return TCL_ERROR;
-    }
-
-    /* close previously open journal file */
-    if (journalfp != NULL) {
-	fclose(journalfp);
-	journalfp = NULL;
-    }
-    journal_delay = 0;
-
-    if (argc < 2)
-	return TCL_OK;
-
-    if (argv[1][0] == '-' && argv[1][1] == 'd') {
-	journal_delay = 1;
-	++argv;
-	--argc;
-    }
-
-    if (argc < 2) {
-	struct bu_vls vls;
-
-	bu_vls_init(&vls);
-	bu_vls_printf(&vls, "help journal");
-	Tcl_Eval(interp, bu_vls_addr(&vls));
-	bu_vls_free(&vls);
-	return TCL_ERROR;
-    }
-
-    journalfp = fopen(argv[1], "a+");
-    if (journalfp == NULL) {
-	Tcl_AppendResult(interp, "Error opening ", argv[1],
-			 " for appending\n", (char *)NULL);
-	return TCL_ERROR;
-    }
-    firstjournal = 1;
-
-    return TCL_OK;
-}
-
-/*
- *	F _ D E L A Y
- *
- * 	Uses select to delay for the specified amount of seconds and
- *	  microseconds.
- */
-
-int
-f_delay(clientData, interp, argc, argv)
-    ClientData clientData;
-    Tcl_Interp *interp;
-    int argc;
-    char **argv;
-{
-    struct timeval tv;
-
-    if (argc < 3 || 3 < argc) {
-	struct bu_vls vls;
-
-	bu_vls_init(&vls);
-	bu_vls_printf(&vls, "help delay");
-	Tcl_Eval(interp, bu_vls_addr(&vls));
-	bu_vls_free(&vls);
-	return TCL_ERROR;
-    }
-
-    tv.tv_sec = atoi(argv[1]);
-    tv.tv_usec = atoi(argv[2]);
-    select(0, NULL, NULL, NULL, &tv);
-
-    return TCL_OK;
-}
-#endif
-
-/*
- *	F _ H I S T O R Y
- *
- *	Prints out the command history, either to bu_log or to a file.
- */
-
 int
 cmd_history(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
@@ -335,7 +177,7 @@ cmd_history(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 		Tcl_AppendResult(interp, "history: I need a file name\n", (char *)NULL);
 		return TCL_ERROR;
 	    } else {
-		fp = fopen( argv[2], "a+" );
+		fp = fopen(argv[2], "a+");
 		if (fp == NULL) {
 		    Tcl_AppendResult(interp, "history: error opening file", (char *)NULL);
 		    return TCL_ERROR;
@@ -377,8 +219,9 @@ cmd_history(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
     return TCL_OK;
 }
 
-/*
- *      H I S T O R Y _ P R E V
+
+/**
+ * H I S T O R Y _ P R E V
  */
 struct bu_vls *
 history_prev(void)
@@ -394,8 +237,9 @@ history_prev(void)
     }
 }
 
-/*
- *      H I S T O R Y _ C U R
+
+/**
+ * H I S T O R Y _ C U R
  */
 struct bu_vls *
 history_cur(void)
@@ -406,8 +250,9 @@ history_cur(void)
 	return &(currHist->h_command);
 }
 
-/*
- *      H I S T O R Y _ N E X T
+
+/**
+ * H I S T O R Y _ N E X T
  */
 struct bu_vls *
 history_next(void)
@@ -427,6 +272,7 @@ history_next(void)
 	return &(hp->h_command);
     }
 }
+
 
 int
 cmd_hist(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
@@ -496,6 +342,40 @@ cmd_hist(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
     Tcl_AppendResult(interp, "hist command\n\troutine for maintaining command history", (char *)0);
     return TCL_ERROR;
 }
+
+
+HIDDEN struct bu_cmdtab bwish_cmds[] =
+{
+    {"exit",		cmd_quit},
+    {"history",		cmd_history},
+    {"hist",		cmd_hist},
+    {"q",		cmd_quit},
+    {(char *)NULL,	CMD_NULL}
+};
+
+#ifdef BWISH
+/* structure provided in libtclcad. provides -format pix-n-w support.
+ * doesn't really seem to be used anywhere except here.
+ */
+extern Tk_PhotoImageFormat tkImgFmtPIX;
+#endif
+
+int
+cmdInit(Tcl_Interp *interp)
+{
+    /* Register bwish/btclsh commands */
+    bu_register_cmds(interp, bwish_cmds);
+
+#ifdef BWISH
+    /* Add pix format for images */
+    Tk_CreatePhotoImageFormat(&tkImgFmtPIX);
+#endif
+
+    /* initialize command history */
+    historyInit();
+    return TCL_OK;
+}
+
 
 /*
  * Local Variables:
