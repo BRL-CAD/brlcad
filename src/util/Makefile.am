@@ -26,8 +26,10 @@ endif
 
 if BUILD_BOOST
 PC_TEST = pc_test
+PC_TEST_EXTRA =
 else
 PC_TEST =
+PC_TEST_EXTRA = pc_test.c
 endif
 # BUILD_BOOST
 
@@ -685,6 +687,7 @@ EXTRA_DIST = \
 	$(man_MANS) \
 	$(sample_applications_DATA) \
 	${BOMBARDIER_EXTRA} \
+	${PC_TEST_EXTRA} \
 	${PL_DM_EXTRA} \
 	${PL_X_EXTRA} \
 	rtwizard.bat \
