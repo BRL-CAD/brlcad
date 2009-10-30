@@ -29,6 +29,8 @@
 
 #include "STEPEntity.h"
 
+#include "sdai.h"
+
 class ON_Brep;
 
 class RepresentationItem : virtual public STEPEntity {
