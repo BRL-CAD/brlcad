@@ -37,7 +37,7 @@
 #include "vmath.h"
 
 #include "brep.h"
-#include "vector.h"
+#include "dvec.h"
 
 #include "raytrace.h"
 #include "rtgeom.h"

@@ -34,7 +34,7 @@
 
 #include "vmath.h"
 #include "bu.h"
-#include "vector.h"
+#include "dvec.h"
 #include "opennurbs_ext.h"
 
 
