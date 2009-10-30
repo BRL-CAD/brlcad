@@ -1,5 +1,5 @@
 if BUILD_STEP
-STEPDIR=
+STEPDIR=step
 else !BUILD_STEP
 STEPDIR=
 endif
@@ -8,7 +8,6 @@ endif
 AM_CPPFLAGS = ${TCL_CPPFLAGS}
 
 EXTRA_DIST = \
-	step \
 	CMakeLists.txt \
 	Formats.csv \
 	comgeom/try.sh \
@@ -35,9 +34,14 @@ bin_PROGRAMS = \
 else !ONLY_BENCHMARK
 
 SUBDIRS = \
-	iges \
 	${STEPDIR} \
+	iges \
 	intaval
+
+DIST_SUBDIRS = \
+	iges \
+	intaval \
+	step
 
 bin_PROGRAMS = \
 	3dm-g \
