@@ -23,14 +23,17 @@
  * structures.
  *
  */
-#include  "opennurbs.h"
-#include "opennurbs_ext.h"
-#include  "nurb.h"
 
-#define P23_NAMESPACE_F(x) SDAI##x
-#define SCLP23(x) P23_NAMESPACE_F(_##x)
+#include "common.h"
+
+#include "opennurbs.h"
+#include "opennurbs_ext.h"
+
+#include "sdai.h"
 class SCLP23(Application_instance);
 
+/* must come after nist step headers */
+#include "nurb.h"
 
 #include "STEPEntity.h"
 #include "Axis1Placement.h"
