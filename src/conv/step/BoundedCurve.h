@@ -41,8 +41,6 @@ public:
 	BoundedCurve(STEPWrapper *sw,int STEPid);
 	bool Load(STEPWrapper *sw,SCLP23(Application_instance) *sse);
 	virtual bool LoadONBrep(ON_Brep *brep);
-	virtual const double *PointAtEnd();
-	virtual const double *PointAtStart();
 	virtual void Print(int level);
 
 	//static methods

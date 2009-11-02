@@ -58,18 +58,6 @@ BoundedCurve::Load(STEPWrapper *sw,SCLP23(Application_instance) *sse) {
 
 	return true;
 }
-const double *
-BoundedCurve::PointAtEnd() {
-	cerr << CLASSNAME << ": Error: virtual function PointAtEnd() not implemented for this type of curve.";
-	return NULL;
-}
-
-const double *
-BoundedCurve::PointAtStart() {
-	cerr << CLASSNAME << ": Error: virtual function PointAtStart() not implemented for this type of curve.";
-	return NULL;
-}
-
 
 void
 BoundedCurve::Print(int level) {
