@@ -167,6 +167,7 @@ TIE_FUNC(void tie_prep, tie_t *tie)
 
 /* Prep all the triangles */
     tie_tri_prep (tie);
+    bu_log("total tri: %ld\n", tie->tri_num);
 }
 
 
