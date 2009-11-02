@@ -4720,6 +4720,11 @@ RT_EXPORT BU_EXTERN(void nmg_triangulate_fu,
 		    (struct faceuse *fu,
 		     const struct bn_tol *tol));
 
+/*  nmg_tri_mc.c */
+RT_EXPORT BU_EXTERN(void nmg_triangulate_model_mc,
+		    (struct model *m,
+		     const struct bn_tol *tol));
+
 /* nmg_manif.c */
 RT_EXPORT BU_EXTERN(int nmg_dangling_face,
 		    (const struct faceuse *fu,
