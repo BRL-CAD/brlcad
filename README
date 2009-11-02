@@ -14,51 +14,6 @@ libraries, a system performance analysis benchmark suite, an embedded
 scripting interface, and a robust high-performance geometric
 representation and analysis library.
 
-BRL-CAD is the primary tri-service solid modeling CAD system used by
-the U.S. military to model weapons systems for vulnerability and
-lethality analyses.  The solid modeling system is frequently used in a
-wide range of military and industrial application including in the
-design and analysis of vehicles, mechanical parts, and architecture.
-The package has also been used in radiation dose planning, medical
-visualization, computer graphics education, CSG concepts and modeling
-education, and system performance benchmark testing among other
-purposes.
-
-Actively developed since 1979, BRL-CAD is a collection of more than
-400 tools, utilities, and applications comprising more than a million
-lines of source code.  BRL-CAD supports a great variety of geometric
-representations including an extensive set of traditional CSG
-primitive implicit solids such as boxes, ellipsoids, cones, and tori,
-as well as explicit solids made from closed collections of Uniform
-B-Spline Surfaces, Non-Uniform Rational B-Spline (NURBS) surfaces,
-n-Manifold Geometry (NMG), and purely faceted mesh geometry.  All
-geometric objects may be combined using boolean set-theoretic CSG
-operations including union, intersection, and difference.
-
-BRL-CAD has been under active development for more than 20 years with
-a portability heritage that includes systems such as a DEC VAX-11/780
-running 4.3 BSD; DECStations running ULTRIX; Silicon Graphics 3030, 4D
-"IRIS", O2, Onyx, and Origin systems running various versions of IRIX;
-Sun Microsystems Sun-3 and Sun-4 Sparcs running SunOS; the Cray 1,
-Cray X-MP, Cray Y-MP, and Cray 2 running UNICOS; DEC Alpha AXP running
-OSF/1; Apple Macintosh II running A/UX; iPSC/860 Hypercube running
-NX/2; the Alliant FX/8, FX/80, and FX/2800; Gould/Encore SEL PowerNode
-6000/9000 and NP1; NeXT workstations; IBM RS/6000; HPPA 9000/700
-running HPUX; Ardent/Stardent; Encore Multi-Max; and much much more.
-BRL-CAD's extensive portability of course also includes a plethora of
-common desktop and server versions of BSD, IRIX, Solaris, Mac OS X,
-Linux, and Windows.
-
-The BRL-CAD package is intentionally designed to be extensively
-cross-platform and is actively developed on and maintained for many
-common operating system environments including for BSD, IRIX, Linux,
-Solaris, Mac OS X, and Windows among others.  The entire package is
-distributed in binary and source code form as free open source
-software (FOSS), provided under Open Source Initiative (OSI) approved
-license terms.  BRL-CAD was released as open source in December 2004
-with portions licensed under the GPL, LGPL, GFDL, and BSD licenses.
-See the COPYING file for more details.
-
 
 TABLE OF CONTENTS
 -----------------
@@ -70,7 +25,7 @@ TABLE OF CONTENTS
   Communication
   Bug Reports/Feature Requests
   Distribution Details
-  Background Material
+  Background Information
   Future Events
   Getting Help
 
@@ -235,14 +190,53 @@ SURVIAC Aberdeen Satellite Office
 Belcamp, MD 210017-1505  USA
 
 
-BACKGROUND MATERIAL
--------------------
+BACKGROUND INFORMATION
+----------------------
 
-For overview information on the whole package, consult the website at
-http://brlcad.org/ and the brlcad(1) manual page in the file
-src/util/brlcad.1.  For a discussion of the significance of this
-software, read the paper "Understanding the Preparation and Analysis
-of Solid Models".
+BRL-CAD is the primary tri-service solid modeling CAD system used by
+the U.S. military to model weapons systems for vulnerability and
+lethality analyses.  The solid modeling system is frequently used in a
+wide range of military and industrial application including in the
+design and analysis of vehicles, mechanical parts, and architecture.
+The package has also been used in radiation dose planning, medical
+visualization, computer graphics education, CSG concepts and modeling
+education, and system performance benchmark testing among other
+purposes.
+
+Actively developed since 1979, BRL-CAD is a collection of more than
+400 tools, utilities, and applications comprising more than a million
+lines of source code.  BRL-CAD supports a great variety of geometric
+representations including an extensive set of traditional CSG
+primitive implicit solids such as boxes, ellipsoids, cones, and tori,
+as well as explicit solids made from closed collections of Uniform
+B-Spline Surfaces, Non-Uniform Rational B-Spline (NURBS) surfaces,
+n-Manifold Geometry (NMG), and purely faceted mesh geometry.  All
+geometric objects may be combined using boolean set-theoretic CSG
+operations including union, intersection, and difference.
+
+BRL-CAD has been under active development for more than 20 years with
+a portability heritage that includes systems such as a DEC VAX-11/780
+running 4.3 BSD; DECStations running ULTRIX; Silicon Graphics 3030, 4D
+"IRIS", O2, Onyx, and Origin systems running various versions of IRIX;
+Sun Microsystems Sun-3 and Sun-4 Sparcs running SunOS; the Cray 1,
+Cray X-MP, Cray Y-MP, and Cray 2 running UNICOS; DEC Alpha AXP running
+OSF/1; Apple Macintosh II running A/UX; iPSC/860 Hypercube running
+NX/2; the Alliant FX/8, FX/80, and FX/2800; Gould/Encore SEL PowerNode
+6000/9000 and NP1; NeXT workstations; IBM RS/6000; HPPA 9000/700
+running HPUX; Ardent/Stardent; Encore Multi-Max; and much much more.
+BRL-CAD's extensive portability of course also includes a plethora of
+common desktop and server versions of BSD, IRIX, Solaris, Mac OS X,
+Linux, and Windows.
+
+The BRL-CAD package is intentionally designed to be extensively
+cross-platform and is actively developed on and maintained for many
+common operating system environments including for BSD, IRIX, Linux,
+Solaris, Mac OS X, and Windows among others.  The entire package is
+distributed in binary and source code form as free open source
+software (FOSS), provided under Open Source Initiative (OSI) approved
+license terms.  BRL-CAD was released as open source in December 2004
+with portions licensed under the GPL, LGPL, GFDL, and BSD licenses.
+See the COPYING file for more details.
 
 
 FUTURE EVENTS
