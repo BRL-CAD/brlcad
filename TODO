@@ -17,13 +17,13 @@ tasks as they are completed.
 THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 -------------------------------------------------
 
-* refactor rt_functab accessors to go through an api call or calls so
-  that the array is not accessed directly.  either an rt_eval() style
-  interface with data-driven keys to tell it with function(s) to call,
-  or simply have an rt_*() for each function (e.g., rt_mirror(),
-  rt_shot(), rt_describe(), etc).
+* rename istat/dstat to avoid naming conflicts
 
-* utilize -pedantic -Wall -Werror on 'clean' directories
+
+THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
+-------------------------------------------------------
+
+* 64-bit port of BRL-CAD on Windows
 
 * annotation primitive.  specifically a means to create an object in
   the database that can optionally be associated with an object and/or
@@ -36,18 +36,16 @@ THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
   also be useful to allow an optional "thickness" so that the
   annotations can represent physical geometry (so they raytrace).
 
-* 64-bit port of BRL-CAD on Windows
+* utilize -pedantic -Wall -Werror on 'clean' directories
+
+* refactor rt_functab accessors to go through an api call or calls so
+  that the array is not accessed directly.  either an rt_eval() style
+  interface with data-driven keys to tell it with function(s) to call,
+  or simply have an rt_*() for each function (e.g., rt_mirror(),
+  rt_shot(), rt_describe(), etc).
 
 * finish obj-g importer.  need to test more inputs and make sure all
   geometry is preserved on import in some form.
-
-* rename istat/dstat to avoid naming conflicts
-
-
-THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
--------------------------------------------------------
-
-* TBD
 
 
 THESE ARE UNSCHEDULED BACKLOG TASKS
