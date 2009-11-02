@@ -25,7 +25,8 @@
 
 #include "common.h"
 
-#include "dvec.h"
+#include "vmath.h"
+#include "vector.h"
 
 #include <assert.h>
 #include <vector>
@@ -38,6 +39,7 @@
 
 #include "PullbackCurve.h"
 
+using namespace std;
 using namespace brlcad;
 
 #define RANGE_HI 0.55
@@ -454,6 +456,7 @@ interpolateLocalCubicCurve(ON_2dPointArray &Q) {
 	q[0] = 2.0*q[1] - q[2];
 	q[-1] = 2.0*q[0] - q[1];
 
+	q[num_samples] = 2*q[num_samples-1] - q[num_samples-2];
 	q[num_samples+1] = 2*q[num_samples] - q[num_samples-1];
 	q[num_samples+2] = 2*q[num_samples+1] - q[num_samples];
 
@@ -631,8 +634,6 @@ interpolateCurve(ON_2dPointArray &samples) {
 			// local vs. global interpolation for large point sampled curves
 			nurbs = interpolateLocalCubicCurve(samples);
 		}
-		// XXX - attempt to simplify here!
-
 		return nurbs;
     }
 }
@@ -1097,14 +1098,17 @@ print_pullback_data(string str, list<PBCData*> &pbcs, bool justendpoints) {
 				int seam=IsAtSeam(surf,(*samples)[i].x,(*samples)[i].y);
 				cerr << "--------";
 				if ((seam>0) && (singularity>=0)) {
-					cerr << " S/S  " << (*samples)[i].x << "," << (*samples)[i].y << endl;
+					cerr << " S/S  " << (*samples)[i].x << "," << (*samples)[i].y;
 				} else if (seam>0) {
-					cerr << " Seam " << (*samples)[i].x << "," << (*samples)[i].y << endl;
+					cerr << " Seam " << (*samples)[i].x << "," << (*samples)[i].y;
 				} else if (singularity>=0) {
-					cerr << " Sing " << (*samples)[i].x << "," << (*samples)[i].y << endl;
+					cerr << " Sing " << (*samples)[i].x << "," << (*samples)[i].y;
 				} else {
-					cerr << "      " << (*samples)[i].x << "," << (*samples)[i].y << endl;
+					cerr << "      " << (*samples)[i].x << "," << (*samples)[i].y;
 				}
+				ON_3dPoint p = surf->PointAt((*samples)[i].x,(*samples)[i].y );
+				cerr << "  ( " << p.x << ", " << p.y << ", " << p.z << " ) "<< endl;
+
 				i=ilast;
 				singularity=IsAtSingularity(surf,(*samples)[i].x,(*samples)[i].y);
 				seam=IsAtSeam(surf,(*samples)[i].x,(*samples)[i].y);
@@ -1118,6 +1122,8 @@ print_pullback_data(string str, list<PBCData*> &pbcs, bool justendpoints) {
 				} else {
 					cerr << "      " << (*samples)[i].x << "," << (*samples)[i].y << endl;
 				}
+				p = surf->PointAt((*samples)[i].x,(*samples)[i].y );
+				cerr << "  ( " << p.x << ", " << p.y << ", " << p.z << " ) "<< endl;
 				si++;
 			}
 			cs++;
@@ -1146,14 +1152,16 @@ print_pullback_data(string str, list<PBCData*> &pbcs, bool justendpoints) {
 						cerr << "        ";
 					}
 					if ((seam>0) && (singularity>=0)) {
-						cerr << " S/S  " << (*samples)[i].x << "," << (*samples)[i].y << endl;
+						cerr << " S/S  " << (*samples)[i].x << "," << (*samples)[i].y;
 					} else if (seam>0) {
-						cerr << " Seam " << (*samples)[i].x << "," << (*samples)[i].y << endl;
+						cerr << " Seam " << (*samples)[i].x << "," << (*samples)[i].y;
 					} else if (singularity>=0) {
-						cerr << " Sing " << (*samples)[i].x << "," << (*samples)[i].y << endl;
+						cerr << " Sing " << (*samples)[i].x << "," << (*samples)[i].y;
 					} else {
-						cerr << "      " << (*samples)[i].x << "," << (*samples)[i].y << endl;
+						cerr << "      " << (*samples)[i].x << "," << (*samples)[i].y;
 					}
+					ON_3dPoint p = surf->PointAt((*samples)[i].x,(*samples)[i].y );
+					cerr << "  ( " << p.x << ", " << p.y << ", " << p.z << " ) "<< endl;
 				}
 				si++;
 			}
@@ -1162,6 +1170,242 @@ print_pullback_data(string str, list<PBCData*> &pbcs, bool justendpoints) {
 	}
 	/////
 }
+
+bool
+resolve_seam_segment_from_prev(const ON_Surface *surface, ON_2dPointArray &segment, ON_2dPoint *prev = NULL)
+{
+	bool complete = false;
+	double umin,umax,umid;
+	double vmin,vmax,vmid;
+
+	surface->GetDomain(0,&umin,&umax);
+	surface->GetDomain(1,&vmin,&vmax);
+	umid = (umin+umax)/2.0;
+	vmid = (vmin+vmax)/2.0;
+
+	for(int i = 0; i < segment.Count(); i++) {
+		int singularity=IsAtSingularity(surface,segment[i].x,segment[i].y);
+		if (singularity < 0) {
+			int seam=IsAtSeam(surface,segment[i].x,segment[i].y);
+			if ((seam > 0) ) {
+				if (prev != NULL) {
+					//cerr << " at seam " << seam << " but has prev" << endl;
+					//cerr << "    prev: " << prev->x << "," << prev->y << endl;
+					//cerr << "    curr: " << data->samples[i].x << "," << data->samples[i].y << endl;
+					switch (seam) {
+					case 1: //east/west
+						if (prev->x < umid) {
+							segment[i].x = umin;
+						} else {
+							segment[i].x = umax;
+						}
+						break;
+					case 2: //north/south
+						if (prev->y < vmid) {
+							segment[i].y = vmin;
+						} else {
+							segment[i].y = vmax;
+						}
+						break;
+					case 3: //both
+						if (prev->x < umid) {
+							segment[i].x = umin;
+						} else {
+							segment[i].x = umax;
+						}
+						if (prev->y < vmid) {
+							segment[i].y = vmin;
+						} else {
+							segment[i].y = vmax;
+						}
+					}
+				} else {
+					//cerr << " at seam and no prev" << endl;
+					complete = false;
+				}
+			} else {
+				prev = &segment[i];
+			}
+		} else {
+			prev = NULL;
+		}
+	}
+}
+
+bool
+resolve_seam_segment_from_next(const ON_Surface *surface, ON_2dPointArray &segment, ON_2dPoint *next = NULL)
+{
+	bool complete = false;
+	double umin,umax,umid;
+	double vmin,vmax,vmid;
+
+	surface->GetDomain(0,&umin,&umax);
+	surface->GetDomain(1,&vmin,&vmax);
+	umid = (umin+umax)/2.0;
+	vmid = (vmin+vmax)/2.0;
+
+	if (next != NULL) {
+		complete=true;
+		for(int i = segment.Count()-1; i >= 0; i--) {
+			int singularity=IsAtSingularity(surface,segment[i].x,segment[i].y);
+			if (singularity < 0) {
+				int seam=IsAtSeam(surface,segment[i].x,segment[i].y);
+				if ((seam > 0) ) {
+					if (next != NULL) {
+						switch (seam) {
+						case 1: //east/west
+							if (next->x < umid) {
+								segment[i].x = umin;
+							} else {
+								segment[i].x = umax;
+							}
+							break;
+						case 2: //north/south
+							if (next->y < vmid) {
+								segment[i].y = vmin;
+							} else {
+								segment[i].y = vmax;
+							}
+							break;
+						case 3: //both
+							if (next->x < umid) {
+								segment[i].x = umin;
+							} else {
+								segment[i].x = umax;
+							}
+							if (next->y < vmid) {
+								segment[i].y = vmin;
+							} else {
+								segment[i].y = vmax;
+							}
+						}
+					} else {
+						//cerr << " at seam and no prev" << endl;
+						complete = false;
+					}
+				} else {
+					next = &segment[i];
+				}
+			} else {
+				next = NULL;
+			}
+		}
+	}
+}
+
+bool
+resolve_seam_segment(const ON_Surface *surface, ON_2dPointArray &segment)
+{
+	ON_2dPoint *prev = NULL;
+	bool complete = false;
+	double umin,umax,umid;
+	double vmin,vmax,vmid;
+
+	surface->GetDomain(0,&umin,&umax);
+	surface->GetDomain(1,&vmin,&vmax);
+	umid = (umin+umax)/2.0;
+	vmid = (vmin+vmax)/2.0;
+
+	for(int i = 0; i < segment.Count(); i++) {
+		int singularity=IsAtSingularity(surface,segment[i].x,segment[i].y);
+		if (singularity < 0) {
+			int seam=IsAtSeam(surface,segment[i].x,segment[i].y);
+			if ((seam > 0) ) {
+				if (prev != NULL) {
+					//cerr << " at seam " << seam << " but has prev" << endl;
+					//cerr << "    prev: " << prev->x << "," << prev->y << endl;
+					//cerr << "    curr: " << data->samples[i].x << "," << data->samples[i].y << endl;
+					switch (seam) {
+					case 1: //east/west
+						if (prev->x < umid) {
+							segment[i].x = umin;
+						} else {
+							segment[i].x = umax;
+						}
+						break;
+					case 2: //north/south
+						if (prev->y < vmid) {
+							segment[i].y = vmin;
+						} else {
+							segment[i].y = vmax;
+						}
+						break;
+					case 3: //both
+						if (prev->x < umid) {
+							segment[i].x = umin;
+						} else {
+							segment[i].x = umax;
+						}
+						if (prev->y < vmid) {
+							segment[i].y = vmin;
+						} else {
+							segment[i].y = vmax;
+						}
+					}
+				} else {
+					//cerr << " at seam and no prev" << endl;
+					complete = false;
+				}
+			} else {
+				prev = &segment[i];
+			}
+		} else {
+			prev = NULL;
+		}
+	}
+	if ((!complete) && (prev != NULL)) {
+		complete=true;
+		for(int i = segment.Count()-2; i >= 0; i--) {
+			int singularity=IsAtSingularity(surface,segment[i].x,segment[i].y);
+			if (singularity < 0) {
+				int seam=IsAtSeam(surface,segment[i].x,segment[i].y);
+				if ((seam > 0) ) {
+					if (prev != NULL) {
+						//cerr << " at seam " << seam << " but has prev" << endl;
+						//cerr << "    prev: " << prev->x << "," << prev->y << endl;
+						//cerr << "    curr: " << data->samples[i].x << "," << data->samples[i].y << endl;
+						switch (seam) {
+						case 1: //east/west
+							if (prev->x < umid) {
+								segment[i].x = umin;
+							} else {
+								segment[i].x = umax;
+							}
+							break;
+						case 2: //north/south
+							if (prev->y < vmid) {
+								segment[i].y = vmin;
+							} else {
+								segment[i].y = vmax;
+							}
+							break;
+						case 3: //both
+							if (prev->x < umid) {
+								segment[i].x = umin;
+							} else {
+								segment[i].x = umax;
+							}
+							if (prev->y < vmid) {
+								segment[i].y = vmin;
+							} else {
+								segment[i].y = vmax;
+							}
+						}
+					} else {
+						//cerr << " at seam and no prev" << endl;
+						complete = false;
+					}
+				} else {
+					prev = &segment[i];
+				}
+			} else {
+				prev = NULL;
+			}
+		}
+	}
+	return complete;
+}
+
 /*
  * run through curve loop to determine correct start/end
  * points resolving ambiguities when point lies on a seam or
@@ -1177,11 +1421,13 @@ resolve_pullback_seams(list<PBCData*> &pbcs) {
 
 	///// Loop through and fix any seam ambiguities
 	ON_2dPoint *prev = NULL;
+	ON_2dPoint *next = NULL;
 	bool complete = true;
 	cs = pbcs.begin();
 	while(cs!=pbcs.end()) {
 		PBCData *data = (*cs);
 		const ON_Surface *surf = data->surftree->getSurface();
+
 		double umin,umax,umid;
 		double vmin,vmax,vmid;
 		surf->GetDomain(0,&umin,&umax);
@@ -1190,348 +1436,63 @@ resolve_pullback_seams(list<PBCData*> &pbcs) {
 		vmid = (vmin+vmax)/2.0;
 
 		list<ON_2dPointArray *>::iterator si = data->segments.begin();
-		int segcnt = 0;
 		while (si != data->segments.end()) {
 			ON_2dPointArray *samples = (*si);
-			for(int i = 0; i < samples->Count(); i++) {
-				int singularity=IsAtSingularity(surf,(*samples)[i].x,(*samples)[i].y);
-				if (singularity < 0) {
-					int seam=IsAtSeam(surf,(*samples)[i].x,(*samples)[i].y);
-					if ((seam > 0) ) {
-						if (prev != NULL) {
-							//cerr << " at seam " << seam << " but has prev" << endl;
-							//cerr << "    prev: " << prev->x << "," << prev->y << endl;
-							//cerr << "    curr: " << data->samples[i].x << "," << data->samples[i].y << endl;
-							switch (seam) {
-							case 1: //east/west
-								if (prev->x < umid) {
-									(*samples)[i].x = umin;
-								} else {
-									(*samples)[i].x = umax;
-								}
-								break;
-							case 2: //north/south
-								if (prev->y < vmid) {
-									(*samples)[i].y = vmin;
-								} else {
-									(*samples)[i].y = vmax;
-								}
-								break;
-							case 3: //both
-								if (prev->x < umid) {
-									(*samples)[i].x = umin;
-								} else {
-									(*samples)[i].x = umax;
-								}
-								if (prev->y < vmid) {
-									(*samples)[i].y = vmin;
-								} else {
-									(*samples)[i].y = vmax;
-								}
-							}
-						} else {
-							//cerr << " at seam and no prev" << endl;
-							complete = false;
-						}
-					} else {
-						prev = &(*samples)[i];
+			if ( resolve_seam_segment(surf,*samples)) {
+				// Found a starting point
+				//1) walk back up with resolved next point
+				next = &(*samples)[0];
+				list<PBCData*>::reverse_iterator rcs(cs);
+				rcs--;
+				PBCData *d1 = (*cs);
+				PBCData *d2 = (*rcs);
+				list<ON_2dPointArray *>::reverse_iterator rsi(si);
+				while (rcs != pbcs.rend()) {
+					PBCData *rdata = (*rcs);
+					if (data->segments.rend() == rdata->segments.rend() ) {
+						cerr << "Ends match" << endl;
 					}
-				} else {
-					prev = NULL;
-				}
-			}
-			if ((!complete) && (prev != NULL)) {
-				complete=true;
-				for(int i = samples->Count()-2; i >= 0; i--) {
-					int singularity=IsAtSingularity(surf,(*samples)[i].x,(*samples)[i].y);
-					if (singularity < 0) {
-						int seam=IsAtSeam(surf,(*samples)[i].x,(*samples)[i].y);
-						if ((seam > 0) ) {
-							if (prev != NULL) {
-								//cerr << " at seam " << seam << " but has prev" << endl;
-								//cerr << "    prev: " << prev->x << "," << prev->y << endl;
-								//cerr << "    curr: " << data->samples[i].x << "," << data->samples[i].y << endl;
-								switch (seam) {
-								case 1: //east/west
-									if (prev->x < umid) {
-										(*samples)[i].x = umin;
-									} else {
-										(*samples)[i].x = umax;
-									}
-									break;
-								case 2: //north/south
-									if (prev->y < vmid) {
-										(*samples)[i].y = vmin;
-									} else {
-										(*samples)[i].y = vmax;
-									}
-									break;
-								case 3: //both
-									if (prev->x < umid) {
-										(*samples)[i].x = umin;
-									} else {
-										(*samples)[i].x = umax;
-									}
-									if (prev->y < vmid) {
-										(*samples)[i].y = vmin;
-									} else {
-										(*samples)[i].y = vmax;
-									}
-								}
-							} else {
-								//cerr << " at seam and no prev" << endl;
-								complete = false;
-							}
-						} else {
-							prev = &(*samples)[i];
+					while(rsi != rdata->segments.rend()) {
+						ON_2dPointArray *rsamples = (*rsi);
+						// first try and resolve on own merits
+						if ( !resolve_seam_segment(surf,*rsamples)) {
+							resolve_seam_segment_from_next(surf, *rsamples, next);
 						}
-					} else {
-						prev = NULL;
+						next = &(*rsamples)[0];
+						rsi++;
+					}
+					rcs++;
+					if (rcs != pbcs.rend()) {
+						rdata = (*rcs);
+						rsi = rdata->segments.rbegin();
 					}
 				}
-			}
-			prev = NULL;
-			si++;
-		}
-//		cerr << " P1:" << endl;
-//		for(int i = 0; i < data->samples.Count(); i++) {
-//			if (i == 0) {
-//				cerr << "--------" << data->samples[i].x << "," << data->samples[i].y << endl;
-//			} else {
-//				cerr << "        " << data->samples[i].x << "," << data->samples[i].y << endl;
-//			}
-//		}
-		cs++;
-	}
-	if (!complete) {
-		list<PBCData*>::reverse_iterator rcs;
-		complete = true;
-		rcs = pbcs.rbegin();
-		while(rcs!=pbcs.rend()) {
-			PBCData *data = (*rcs);
-			const ON_Surface *surf = data->surftree->getSurface();
-			double umin,umax,umid;
-			double vmin,vmax,vmid;
-			surf->GetDomain(0,&umin,&umax);
-			surf->GetDomain(1,&vmin,&vmax);
-			umid = (umin+umax)/2.0;
-			vmid = (vmin+vmax)/2.0;
 
-			list<ON_2dPointArray *>::reverse_iterator rsi = data->segments.rbegin();
-			int segcnt = 0;
-			while (rsi != data->segments.rend()) {
-				ON_2dPointArray *samples = (*rsi);
-				for(int i = samples->Count()-1; i >= 0; i--) {
-					int singularity=IsAtSingularity(surf,(*samples)[i].x,(*samples)[i].y);
-					if (singularity < 0) {
-						int seam=IsAtSeam(surf,(*samples)[i].x,(*samples)[i].y);
-						if ((seam > 0) ) {
-							if (prev != NULL) {
-								//cerr << " at seam " << seam << " but has prev" << endl;
-								//cerr << "    prev: " << prev->x << "," << prev->y << endl;
-								//cerr << "    curr: " << data->samples[i].x << "," << data->samples[i].y << endl;
-								switch (seam) {
-								case 1: //east/west
-									if (prev->x < umid) {
-										(*samples)[i].x = umin;
-									} else {
-										(*samples)[i].x = umax;
-									}
-									break;
-								case 2: //north/south
-									if (prev->y < vmid) {
-										(*samples)[i].y = vmin;
-									} else {
-										(*samples)[i].y = vmax;
-									}
-									break;
-								case 3: //both
-									if (prev->x < umid) {
-										(*samples)[i].x = umin;
-									} else {
-										(*samples)[i].x = umax;
-									}
-									if (prev->y < vmid) {
-										(*samples)[i].y = vmin;
-									} else {
-										(*samples)[i].y = vmax;
-									}
-								}
-							} else {
-								//cerr << " at seam and no prev" << endl;
-								complete = false;
-							}
-						} else {
-							prev = &(*samples)[i];
-						}
-					} else {
-						prev = NULL;
-					}
-				}
-				prev = NULL;
-				rsi++;
-			}
-			rcs++;
-		}
-//		cerr << " P2:" << endl;
-//		for(int i = 0; i < data->samples.Count(); i++) {
-//			if (i == 0) {
-//				cerr << "--------" << data->samples[i].x << "," << data->samples[i].y << endl;
-//			} else {
-//				cerr << "        " << data->samples[i].x << "," << data->samples[i].y << endl;
-//			}
-//		}
-	}
-
-	if (!complete) {
-		//cerr << "must be all seams pick one" << endl;
-		prev = NULL;
-		complete = true;
-		cs = pbcs.begin();
-		while(cs!=pbcs.end()) {
-			PBCData *data = (*cs);
-			const ON_Surface *surf = data->surftree->getSurface();
-			double umin,umax,umid;
-			double vmin,vmax,vmid;
-			surf->GetDomain(0,&umin,&umax);
-			surf->GetDomain(1,&vmin,&vmax);
-			umid = (umin+umax)/2.0;
-			vmid = (vmin+vmax)/2.0;
-
-			list<ON_2dPointArray *>::iterator si = data->segments.begin();
-			int segcnt = 0;
-			while (si != data->segments.end()) {
-				ON_2dPointArray *samples = (*si);
-				for(int i = 0; i < samples->Count(); i++) {
-					int seam;
-					if ((seam=IsAtSeam(surf,(*samples)[i].x,(*samples)[i].y)) > 0) {
-						if (prev != NULL) {
-							//cerr << " at seam " << seam << " but has prev" << endl;
-							//cerr << "    prev: " << prev->x << "," << prev->y << endl;
-							//cerr << "    curr: " << data->samples[i].x << "," << data->samples[i].y << endl;
-							switch (seam) {
-							case 1: //east/west
-								if (prev->x < umid) {
-									(*samples)[i].x = umin;
-								} else {
-									(*samples)[i].x = umax;
-								}
-								break;
-							case 2: //north/south
-								if (prev->y < vmid) {
-									(*samples)[i].y = vmin;
-								} else {
-									(*samples)[i].y = vmax;
-								}
-								break;
-							case 3: //both
-								if (prev->x < umid) {
-									(*samples)[i].x = umin;
-								} else {
-									(*samples)[i].x = umax;
-								}
-								if (prev->y < vmid) {
-									(*samples)[i].y = vmin;
-								} else {
-									(*samples)[i].y = vmax;
-								}
-							}
-						} else {
-							//cerr << " at seam and no prev" << endl;
-							complete = false;
-							if ((seam == 1) || (seam ==2)) {
-								prev = &(*samples)[i];
-							}
-						}
-					} else {
-						prev = &(*samples)[i];
-					}
-				}
+				//2) walk rest of way down with resolved prev point
+				prev = &(*samples)[samples->Count() -1];
 				si++;
-			}
-	//		cerr << " P1:" << endl;
-	//		for(int i = 0; i < data->samples.Count(); i++) {
-	//			if (i == 0) {
-	//				cerr << "--------" << data->samples[i].x << "," << data->samples[i].y << endl;
-	//			} else {
-	//				cerr << "        " << data->samples[i].x << "," << data->samples[i].y << endl;
-	//			}
-	//		}
-			cs++;
-		}
-		if (!complete) {
-			list<PBCData*>::reverse_iterator rcs;
-			complete = true;
-			rcs = pbcs.rbegin();
-			while(rcs!=pbcs.rend()) {
-				PBCData *data = (*rcs);
-				const ON_Surface *surf = data->surftree->getSurface();
-				double umin,umax,umid;
-				double vmin,vmax,vmid;
-				surf->GetDomain(0,&umin,&umax);
-				surf->GetDomain(1,&vmin,&vmax);
-				umid = (umin+umax)/2.0;
-				vmid = (vmin+vmax)/2.0;
-
-				list<ON_2dPointArray *>::reverse_iterator rsi = data->segments.rbegin();
-				int segcnt = 0;
-				while (rsi != data->segments.rend()) {
-					ON_2dPointArray *samples = (*rsi);
-					for(int i = samples->Count()-1; i >= 0; i--) {
-						int seam;
-						if ((seam=IsAtSeam(surf,(*samples)[i].x,(*samples)[i].y)) > 0) {
-							if (prev != NULL) {
-								//cerr << " at seam " << seam << " but has prev" << endl;
-								//cerr << "    prev: " << prev->x << "," << prev->y << endl;
-								//cerr << "    curr: " << data->samples[i].x << "," << data->samples[i].y << endl;
-								switch (seam) {
-								case 1: //east/west
-									if (prev->x < umid) {
-										(*samples)[i].x = umin;
-									} else {
-										(*samples)[i].x = umax;
-									}
-									break;
-								case 2: //north/south
-									if (prev->y < vmid) {
-										(*samples)[i].y = vmin;
-									} else {
-										(*samples)[i].y = vmax;
-									}
-									break;
-								case 3: //both
-									if (prev->x < umid) {
-										(*samples)[i].x = umin;
-									} else {
-										(*samples)[i].x = umax;
-									}
-									if (prev->y < vmid) {
-										(*samples)[i].y = vmin;
-									} else {
-										(*samples)[i].y = vmax;
-									}
-								}
-							} else {
-								//cerr << " at seam and no prev" << endl;
-								complete = false;
-							}
-						} else {
-							prev = &(*samples)[i];
+				while (cs != pbcs.end()) {
+					while(si != data->segments.end()) {
+						samples = (*si);
+						// first try and resolve on own merits
+						if ( !resolve_seam_segment(surf,*samples)) {
+							resolve_seam_segment_from_prev(surf, *samples, prev);
 						}
+						prev = &(*samples)[samples->Count() -1];
+						si++;
 					}
-					rsi++;
+					cs++;
+					if (cs != pbcs.end()) {
+						data = (*cs);
+						si = data->segments.begin();
+					}
 				}
-				rcs++;
 			}
-	//		cerr << " P2:" << endl;
-	//		for(int i = 0; i < data->samples.Count(); i++) {
-	//			if (i == 0) {
-	//				cerr << "--------" << data->samples[i].x << "," << data->samples[i].y << endl;
-	//			} else {
-	//				cerr << "        " << data->samples[i].x << "," << data->samples[i].y << endl;
-	//			}
-	//		}
+			if (si != data->segments.end())
+				si++;
 		}
+		if (cs != pbcs.end())
+			cs++;
 	}
 	//TODO: remove debugging
 	if (false)
@@ -1662,6 +1623,35 @@ resolve_pullback_singularities(list<PBCData*> &pbcs) {
 	return true;
 }
 
+void
+remove_consecutive_intersegment_duplicates(list<PBCData*> &pbcs) {
+	list<PBCData*>::iterator cs = pbcs.begin();
+	while(cs!=pbcs.end()) {
+		PBCData *data = (*cs);
+		list<ON_2dPointArray *>::iterator si = data->segments.begin();
+		while (si != data->segments.end()) {
+			ON_2dPointArray *samples = (*si);
+			if (samples->Count() == 0) {
+				si = data->segments.erase(si);
+			} else {
+				for(int i = 0; i < samples->Count()-1; i++) {
+					while ((i < (samples->Count()-1)) && (*samples)[i].DistanceTo((*samples)[i+1]) < 1e-9) {
+						cerr << "Sample Count was " << samples->Count();
+						samples->Remove(i+1);
+						cerr << " now " << samples->Count() << endl;
+					}
+				}
+				si++;
+			}
+		}
+		if (data->segments.empty()) {
+			cs = pbcs.erase(cs);
+		} else {
+			cs++;
+		}
+	}
+}
+
 bool
 check_pullback_data(list<PBCData*> &pbcs) {
 	bool resolvable = true;
@@ -1676,9 +1666,7 @@ check_pullback_data(list<PBCData*> &pbcs) {
 
 	bool singular = has_singularity(surf);
 	bool closed = is_closed(surf);
-	if (!singular && !closed) { //shouldn't have to do anything
-		return true;
-	}
+
 	if (closed) {
 		if (!resolve_pullback_seams(pbcs)) {
 			cerr << "Error: Can not resolve seam ambiguities." << endl;
@@ -1690,6 +1678,10 @@ check_pullback_data(list<PBCData*> &pbcs) {
 			cerr << "Error: Can not resolve singular ambiguities." << endl;
 		}
 	}
+
+	// consecutive duplicates within segment will cause problems in curve fit
+	remove_consecutive_intersegment_duplicates(pbcs);
+
 	//TODO: remove debugging code
 	if (false)
 		print_pullback_data("After cleanup",pbcs,false);
