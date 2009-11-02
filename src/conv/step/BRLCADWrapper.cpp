@@ -27,6 +27,8 @@
 #include <string>
 #include <iostream>
 
+using namespace std;
+
 #include "BRLCADWrapper.h"
 
 extern "C" {
@@ -77,19 +79,19 @@ BRLCADWrapper::WriteSphere(double *center, double radius) {
 }
 
 bool
-BRLCADWrapper::WriteBrep(std::string name, ON_Brep *brep) {
-    std::ostringstream str;
-    std::string strcnt;
-    
-    if (name.empty()) {
-	name = filename;
-    }
-    //TODO: need to do some name checks here for now static
-    //region/solid number increment
-    str << sol_reg_cnt++;
-    strcnt = str.str();
-    std::string sol = name + strcnt + ".s";
-    std::string reg = name + strcnt + ".r";
+BRLCADWrapper::WriteBrep(string name,ON_Brep *brep) {
+	ostringstream str;
+	string strcnt;
+
+	if (name.empty()) {
+		name = filename;
+	}
+	//TODO: need to do some name checks here for now static
+	//region/solid number increment
+	str << sol_reg_cnt++;
+	strcnt = str.str();
+    string sol = name + strcnt + ".s";
+    string reg = name + strcnt + ".r";
 
     mk_brep(outfp, sol.c_str(), brep);
     unsigned char rgb[] = {200,180,180};

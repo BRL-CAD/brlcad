@@ -38,6 +38,8 @@
 #include <map>
 #include <vector>
 
+using namespace std;
+
 #include <sdai.h>
 
 #include <STEPattribute.h>
