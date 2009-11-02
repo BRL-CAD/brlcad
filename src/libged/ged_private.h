@@ -486,7 +486,7 @@ BU_EXTERN (int _ged_do_tra,
 	    char	coord,
 	    vect_t	tvec,
 	    int		(*func)()));
-BU_EXTERN (int ged_do_zoom,
+BU_EXTERN (int _ged_do_zoom,
 	   (struct ged	*gedp,
 	    fastf_t	sf));
 
