@@ -33,6 +33,7 @@
 class SCLP23(Application_instance);
 
 /* must come after nist step headers */
+#include "brep.h"
 #include "nurb.h"
 
 #include "STEPEntity.h"
@@ -180,27 +181,60 @@ BSplineCurveWithKnots::LoadONBrep(ON_Brep *brep)
 
     ON_NurbsCurve* curve = ON_NurbsCurve::New( 3, false,degree+1,t_size);
 
-    // knot index ( >= 0 and < Order + CV_count - 2 )
-    LIST_OF_INTEGERS::iterator m = knot_multiplicities.begin();
-    LIST_OF_REALS::iterator r = knots.begin();
-    int knot_index = 0;
-    while (m != knot_multiplicities.end()) {
-    	int multiplicity = (*m);
+    if ( closed_curve == 1 ) {
+		LIST_OF_INTEGERS::iterator m = knot_multiplicities.begin();
+		LIST_OF_REALS::iterator r = knots.begin();
+		int multiplicity = (*m);
 		double knot_value = (*r);
-		if (multiplicity > degree) multiplicity = degree;
-    	for (int j = 0; j < multiplicity; j++,knot_index++) {
-        	curve->SetKnot(knot_index, knot_value);
-    	}
-    	r++;
-    	m++;
-    }
 
+		if ((multiplicity < degree) && (knot_value < 0.0)) {
+			//skip fist multiplicity and knot value
+			m++;
+			r++;
+		}
+		int knot_index = 0;
+		while (m != knot_multiplicities.end()) {
+			LIST_OF_INTEGERS::iterator n=m;
+			n++;
+			multiplicity = (*m);
+			knot_value = (*r);
+			if (n == knot_multiplicities.end() && (multiplicity < degree) && (knot_value > 1.0) ) {
+				break;
+			}
+			if ((multiplicity > degree) || (n == knot_multiplicities.end()))
+				multiplicity = degree;
+			for (int j = 0; j < multiplicity; j++,knot_index++) {
+				curve->SetKnot(knot_index, knot_value);
+			}
+			r++;
+			m++;
+		}
+    } else {
+		// knot index ( >= 0 and < Order + CV_count - 2 )
+		LIST_OF_INTEGERS::iterator m = knot_multiplicities.begin();
+		LIST_OF_REALS::iterator r = knots.begin();
+		int knot_index = 0;
+		while (m != knot_multiplicities.end()) {
+			LIST_OF_INTEGERS::iterator n=m;
+			n++;
+			int multiplicity = (*m);
+			double knot_value = (*r);
+			if ((multiplicity > degree) || (n == knot_multiplicities.end()))
+				multiplicity = degree;
+			for (int j = 0; j < multiplicity; j++,knot_index++) {
+				curve->SetKnot(knot_index, knot_value);
+			}
+			r++;
+			m++;
+		}
+    }
 	LIST_OF_POINTS::iterator i;
 	int t=0;
 	for(i=control_points_list.begin(); i != control_points_list.end(); ++i) {
 		curve->SetCV(t, ON_3dPoint((*i)->X()*LocalUnits::length,(*i)->Y()*LocalUnits::length,(*i)->Z()*LocalUnits::length));
 		t++;
 	}
+
 	ON_id = brep->AddEdgeCurve(curve);
 
 	return true;
@@ -278,23 +312,52 @@ RationalBSplineCurveWithKnots::LoadONBrep(ON_Brep *brep)
 
     ON_NurbsCurve* curve = ON_NurbsCurve::New( 3, true,degree+1,t_size);
 
-	// knot index ( >= 0 and < Order + CV_count - 2 )
-    LIST_OF_INTEGERS::iterator m = knot_multiplicities.begin();
-    LIST_OF_REALS::iterator r = knots.begin();
-    int knot_index = 0;
-    while (m != knot_multiplicities.end()) {
-    	int multiplicity = (*m);
+    if ( closed_curve == 1 ) {
+		LIST_OF_INTEGERS::iterator m = knot_multiplicities.begin();
+		LIST_OF_REALS::iterator r = knots.begin();
+		int multiplicity = (*m);
 		double knot_value = (*r);
-		if (multiplicity > degree) multiplicity = degree;
-    	for (int j = 0; j < multiplicity; j++,knot_index++) {
-        	curve->SetKnot(knot_index, knot_value);
-    	}
-    	r++;
-    	m++;
+
+		if ((multiplicity < degree) && (knot_value < 0.0)) {
+			//skip fist multiplicity and knot value
+			m++;
+			r++;
+		}
+		int knot_index = 0;
+		while (m != knot_multiplicities.end()) {
+			LIST_OF_INTEGERS::iterator n=m;
+			n++;
+			multiplicity = (*m);
+			knot_value = (*r);
+			if (n == knot_multiplicities.end() && (multiplicity < degree) && (knot_value > 1.0) ) {
+				break;
+			}
+			if ((multiplicity > degree) || (n == knot_multiplicities.end()))
+				multiplicity = degree;
+			for (int j = 0; j < multiplicity; j++,knot_index++) {
+				curve->SetKnot(knot_index, knot_value);
+			}
+			r++;
+			m++;
+		}
+    } else {
+		LIST_OF_INTEGERS::iterator m = knot_multiplicities.begin();
+		LIST_OF_REALS::iterator r = knots.begin();
+		int knot_index = 0;
+		while (m != knot_multiplicities.end()) {
+			int multiplicity = (*m);
+			double knot_value = (*r);
+			if (multiplicity > degree) multiplicity = degree;
+			for (int j = 0; j < multiplicity; j++,knot_index++) {
+				curve->SetKnot(knot_index, knot_value);
+			}
+			r++;
+			m++;
+		}
     }
 
 	LIST_OF_POINTS::iterator i;
-	r = weights_data.begin();
+	LIST_OF_REALS::iterator r = weights_data.begin();
 	int t=0;
 	for(i=control_points_list.begin(); i != control_points_list.end(); ++i) {
 		double w = (*r);
@@ -424,33 +487,96 @@ BSplineSurfaceWithKnots::LoadONBrep(ON_Brep *brep)
 
     ON_NurbsSurface* surf = ON_NurbsSurface::New( 3, false,u_degree+1,v_degree+1,u_size,v_size);
 
-    // knot index ( >= 0 and < Order + CV_count - 2 )
-    LIST_OF_INTEGERS::iterator m = u_multiplicities.begin();
-    LIST_OF_REALS::iterator r = u_knots.begin();
-    int knot_index = 0;
-    while (m != u_multiplicities.end()) {
-    	int multiplicity = (*m);
-		double knot_value = (*r);
-		if (multiplicity > u_degree) multiplicity = u_degree;
-    	for (int j = 0; j < multiplicity; j++) {
-    		surf->SetKnot(0, knot_index++, knot_value);
-    	}
-    	r++;
-    	m++;
-    }
-    m = v_multiplicities.begin();
-    r = v_knots.begin();
-    knot_index = 0;
-    while (m != v_multiplicities.end()) {
-    	int multiplicity = (*m);
-		double knot_value = (*r);
-		if (multiplicity > v_degree) multiplicity = v_degree;
-    	for (int j = 0; j < multiplicity; j++,knot_index++) {
-    		surf->SetKnot(1, knot_index, knot_value);
-    	}
-    	r++;
-    	m++;
-    }
+    if ( u_closed == 1 ) {
+ 		LIST_OF_INTEGERS::iterator m = u_multiplicities.begin();
+ 		LIST_OF_REALS::iterator r = u_knots.begin();
+
+ 		int multiplicity = (*m);
+ 		double knot_value = (*r);
+ 		if ((multiplicity < u_degree) && (knot_value < 0.0)) {
+ 			//skip fist multiplicity and knot value
+ 			m++;
+ 			r++;
+ 		}
+ 		int knot_index = 0;
+ 		while (m != u_multiplicities.end()) {
+ 			LIST_OF_INTEGERS::iterator n=m;
+ 			n++;
+
+ 			multiplicity = (*m);
+ 			knot_value = (*r);
+
+ 			if (n == this->u_multiplicities.end() && (multiplicity < u_degree) && (knot_value > 1.0) ) {
+ 				break;
+ 			}
+
+ 			if (multiplicity > u_degree) multiplicity = u_degree;
+ 			for (int j = 0; j < multiplicity; j++) {
+ 				surf->SetKnot(0, knot_index++, knot_value);
+ 			}
+ 			r++;
+ 			m++;
+ 		}
+      } else {
+ 		LIST_OF_INTEGERS::iterator m = u_multiplicities.begin();
+ 		LIST_OF_REALS::iterator r = u_knots.begin();
+ 		int knot_index = 0;
+ 		while (m != u_multiplicities.end()) {
+ 			int multiplicity = (*m);
+ 			double knot_value = (*r);
+ 			if (multiplicity > u_degree) multiplicity = u_degree;
+ 			for (int j = 0; j < multiplicity; j++) {
+ 				surf->SetKnot(0, knot_index++, knot_value);
+ 			}
+ 			r++;
+ 			m++;
+ 		}
+     }
+    if ( v_closed == 1 ) {
+ 		LIST_OF_INTEGERS::iterator m = v_multiplicities.begin();
+ 		LIST_OF_REALS::iterator r = v_knots.begin();
+
+ 		int multiplicity = (*m);
+ 		double knot_value = (*r);
+ 		if ((multiplicity < v_degree) && (knot_value < 0.0)) {
+ 			//skip fist multiplicity and knot value
+ 			m++;
+ 			r++;
+ 		}
+ 		int knot_index = 0;
+ 		while (m != v_multiplicities.end()) {
+ 			LIST_OF_INTEGERS::iterator n=m;
+ 			n++;
+
+ 			int multiplicity = (*m);
+ 			double knot_value = (*r);
+
+ 			if (n == v_multiplicities.end() && (multiplicity < v_degree) && (knot_value > 1.0) ) {
+ 				break;
+ 			}
+
+ 			if (multiplicity > v_degree) multiplicity = v_degree;
+ 			for (int j = 0; j < multiplicity; j++,knot_index++) {
+ 				surf->SetKnot(1, knot_index, knot_value);
+ 			}
+ 			r++;
+ 			m++;
+ 		}
+     } else {
+ 		LIST_OF_INTEGERS::iterator m = v_multiplicities.begin();
+ 		LIST_OF_REALS::iterator r = v_knots.begin();
+ 		int knot_index = 0;
+  		while (m != v_multiplicities.end()) {
+ 			int multiplicity = (*m);
+ 			double knot_value = (*r);
+ 			if (multiplicity > v_degree) multiplicity = v_degree;
+ 			for (int j = 0; j < multiplicity; j++,knot_index++) {
+ 				surf->SetKnot(1, knot_index, knot_value);
+ 			}
+ 			r++;
+ 			m++;
+ 		}
+     }
 	LIST_OF_LIST_OF_POINTS::iterator i;
 	int u=0;
 	for(i=control_points_list->begin(); i != control_points_list->end(); ++i) {
@@ -1142,7 +1268,14 @@ Path::LoadONTrimmingCurves(ON_Brep *brep)
     	ON_2dPointArray* nsamples = (*nsi);
 
     	while (si != data->segments.end()) {
+    		nsi = si;
+    		nsi++;
+    		if (nsi == data->segments.end()) {
+    			PBCData *ndata = (*next_cs);
+    			nsi = ndata->segments.begin();
+    		}
 			ON_2dPointArray* samples = (*si);
+			nsamples = (*nsi);
 
 			//TODO:Fix this shouldn't have sample counts less than 2
 			if (samples->Count() < 2) {
