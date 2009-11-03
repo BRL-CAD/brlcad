@@ -19,10 +19,10 @@
  */
 /** @file ustat.c
  *
- *  gather statistics on file of unsigned shorts.
+ * gather statistics on unsigned shorts.
  *
- *	Options
- *	h	help
+ * Options
+ * h help
  */
 
 #include "common.h"
@@ -38,19 +38,21 @@ char *options = "h";
 char *progname = "(noname)";
 
 /*
- *	U S A G E --- tell user how to invoke this program, then exit
+ * U S A G E --- tell user how to invoke this program, then exit
  */
-void usage(void)
+void
+usage(void)
 {
     bu_exit(1, "Usage: %s [ file ]\n", progname);
 }
 
 /*
- *	P A R S E _ A R G S --- Parse through command line flags
+ * P A R S E _ A R G S --- Parse through command line flags
  */
-int parse_args(int ac, char **av)
+int
+parse_args(int ac, char **av)
 {
-    int  c;
+    int c;
 
     if (!(progname=strrchr(*av, '/')))
 	progname = *av;
@@ -61,15 +63,17 @@ int parse_args(int ac, char **av)
     /* get all the option flags from the command line */
     while ((c=bu_getopt(ac, av, options)) != EOF)
 	switch (c) {
-	    case '?'	:
-	    case 'h'	:
-	    default		: usage(); break;
+	    case '?':
+	    case 'h':
+	    default:
+		usage(); break;
 	}
 
     return(bu_optind);
 }
 
-void comp_stats(FILE *fd)
+void
+comp_stats(FILE *fd)
 {
     unsigned short *buffer=(unsigned short *)NULL;
     unsigned short min, max;
@@ -84,7 +88,7 @@ void comp_stats(FILE *fd)
     min = 65535;
     max = 0;
 
-    while ( (count=fread((void *)buffer, sizeof(short), 10240, fd)) ) {
+    while ((count=fread((void *)buffer, sizeof(short), 10240, fd))) {
 	for (i=0; i < count; ++i) {
 	    sum += (double)buffer[i];
 	    sum_sq += (double)(buffer[i]) * (double)(buffer[i]);
@@ -94,7 +98,7 @@ void comp_stats(FILE *fd)
 	num += (double)count;
     }
 
-    stdev = sqrt( ((num * sum_sq) - (sum*sum)) / (num * (num-1)) );
+    stdev = sqrt(((num * sum_sq) - (sum*sum)) / (num * (num-1)));
 
     (void)printf("   Num: %g\n   Min: %u\n   Max: %u\n   Sum: %g\n  Mean: %g\nSStdev: %g\n",
 		 num, min, max, sum, sum/num, stdev);
@@ -104,12 +108,13 @@ void comp_stats(FILE *fd)
 
 
 /*
- *	M A I N
+ * M A I N
  *
- *	Call parse_args to handle command line arguments first, then
- *	process input.
+ * Call parse_args to handle command line arguments first, then
+ * process input.
  */
-int main(int ac, char **av)
+int
+main(int ac, char *av[])
 {
     int arg_index;
 
