@@ -87,8 +87,7 @@ htester_LDADD = \
 	libbu.la \
 	${BU_LIBS}
 
-brlcadincludedir = $(includedir)/brlcad
-brlcadinclude_HEADERS = \
+noinst_HEADERS = \
 	rb_internals.h \
 	uce-dirent.h
 
