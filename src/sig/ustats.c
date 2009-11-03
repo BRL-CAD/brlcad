@@ -1,4 +1,4 @@
-/*                         U S T A T . C
+/*                         U S T A T S . C
  * BRL-CAD
  *
  * Copyright (c) 2004-2009 United States Government as represented by
@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file ustat.c
+/** @file ustats.c
  *
  * gather statistics on unsigned shorts.
  *
