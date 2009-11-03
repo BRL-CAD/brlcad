@@ -38,13 +38,13 @@ extern const char bu_strdup_message[];
 /* private constants */
 
 /* minimum initial allocation size */
-static const int _VLS_ALLOC_MIN = 40;
+static const unsigned int _VLS_ALLOC_MIN = 40;
 
 /* minimum vls allocation increment size */
 static const int _VLS_ALLOC_STEP = 120;
 
 /* minimum vls buffer allocation size */
-static const int _VLS_ALLOC_READ = 4096;
+static const unsigned int _VLS_ALLOC_READ = 4096;
 
 
 void
@@ -478,7 +478,6 @@ bu_vls_strncmp(struct bu_vls *s1, struct bu_vls *s2, size_t n)
 
 static const char SPACE = ' ';
 static const char DQUOTE = '"';
-static const char SQUOTE = '\'';
 static const char ESCAPE = '\\';
 
 
@@ -497,7 +496,7 @@ vls_encode(struct bu_vls *vp, const char *str)
     BU_CK_VLS(vp);
 
     if (strchr(str, SPACE) == NULL) {
-	for (i = 0; i < strlen(str); i++) {
+	for (i = 0; (size_t)i < strlen(str); i++) {
 	    if (str[i] == DQUOTE) {
 		bu_vls_putc(vp, ESCAPE);
 	    }
@@ -506,7 +505,7 @@ vls_encode(struct bu_vls *vp, const char *str)
     } else {
 	/* argv elements has spaces, quote it */
 	bu_vls_putc(vp, DQUOTE);
-	for (i = 0; i < strlen(str); i++) {
+	for (i = 0; (size_t)i < strlen(str); i++) {
 	    if (str[i] == DQUOTE) {
 		bu_vls_putc(vp, ESCAPE);
 	    }
