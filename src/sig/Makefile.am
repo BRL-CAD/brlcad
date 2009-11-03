@@ -17,7 +17,7 @@ bin_PROGRAMS = \
 	dmod \
 	dpeak \
 	dsel \
-	dstat \
+	dstats \
 	dwin \
 	f-d \
 	f-i \
@@ -27,14 +27,14 @@ bin_PROGRAMS = \
 	i-f \
 	ihist \
 	imod \
-	istat \
+	istats \
 	syn \
 	u-a \
 	u-bw \
 	u-d \
 	u-f \
 	umod \
-	ustat
+	ustats
 
 AM_CPPFLAGS = ${TCL_CPPFLAGS}
 
