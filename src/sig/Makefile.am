@@ -155,11 +155,6 @@ dauto2_LDADD = ${BU}
 ihist_SOURCES = ihist.c
 ihist_LDADD = ${BU}
 
-# XXX need to review why these are not built
-EXTRA_DIST = \
-	fhor2.c \
-	fhor3.c
-
 DEPENDS = src/libfb src/libfft
 
 include $(top_srcdir)/misc/Makefile.defs
