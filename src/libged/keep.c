@@ -43,10 +43,8 @@ struct keep_node_data {
  * Supports for the 'keep' method.
  * Write each node encountered exactly once.
  */
-static void
-node_write(struct db_i *dbip,
-	       register struct directory *dp,
-	       genptr_t ptr)
+HIDDEN void
+node_write(struct db_i *dbip, struct directory *dp, genptr_t ptr)
 {
     struct keep_node_data *kndp = (struct keep_node_data *)ptr;
     struct rt_db_internal intern;
@@ -98,14 +96,14 @@ node_write(struct db_i *dbip,
 int
 ged_keep(struct ged *gedp, int argc, const char *argv[])
 {
+    int i;
     struct keep_node_data knd;
     struct rt_wdb *keepfp;
-    register struct directory *dp;
+    struct directory *dp;
     struct bu_vls title;
-    register int i;
     struct db_i *new_dbip;
-    static const char *usage = "[-R] file object(s)";
     const char *cmd = argv[0];
+    static const char *usage = "[-R] file object(s)";
 
     int c;
     int flag_R = 0;
