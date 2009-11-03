@@ -1,4 +1,4 @@
-/*                         D S T A T . C
+/*                        D S T A T S . C
  * BRL-CAD
  *
  * Copyright (c) 1986-2009 United States Government as represented by
@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file dstat.c
+/** @file dstats.c
  *
  * Compute statistics of double precision floats.
  * Gives min, max, mode, median, mean, s.d., var, and skew.
@@ -59,7 +59,7 @@ int main(int ac, char *av[])
     /* look for optional input file */
     if (ac > 1) {
 	if ((fp = fopen(av[1], "r")) == 0) {
-	    bu_exit(1, "dstat: can't open \"%s\"\n", av[1]);
+	    bu_exit(1, "dstats: can't open \"%s\"\n", av[1]);
 	}
 	av++;
 	ac--;
@@ -68,7 +68,7 @@ int main(int ac, char *av[])
 
     /* check usage */
     if (ac > 1 || isatty(fileno(fp))) {
-	bu_exit(1, "Usage: dstat [-v] [file.doubles]\n");
+	bu_exit(1, "Usage: dstats [-v] [file.doubles]\n");
     }
 
     /*
