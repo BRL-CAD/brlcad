@@ -495,22 +495,20 @@ vls_encode(struct bu_vls *vp, const char *str)
 
     if (strchr(str, SPACE) == NULL) {
 	/* no spaces, just watch for quotes */
-	while (str[0] != '\0') {
-	    if (str[0] == DQUOTE) {
+	for (; *str != '\0'; str++) {
+	    if (*str == DQUOTE) {
 		bu_vls_putc(vp, ESCAPE);
 	    }
-	    bu_vls_putc(vp, str[0]);
-	    str++;
+	    bu_vls_putc(vp, *str);
 	}	    
     } else {
 	/* argv elements has spaces, quote it */
 	bu_vls_putc(vp, DQUOTE);
-	while (str[0] != '\0') {
-	    if (str[0] == DQUOTE) {
+	for (; *str != '\0'; str++) {
+	    if (*str == DQUOTE) {
 		bu_vls_putc(vp, ESCAPE);
 	    }
-	    bu_vls_putc(vp, str[0]);
-	    str++;
+	    bu_vls_putc(vp, *str);
 	}
 	bu_vls_putc(vp, DQUOTE);
     }
@@ -537,27 +535,25 @@ vls_decode(struct bu_vls *vp, const char *str)
 
     bu_vls_init(&quotebuf);
 
-    while (str[0] != '\0') {
+    for (; *str != '\0'; str++) {
 	if (escape) {
 	    /* previous character was escaped */
 	    if (dquote) {
-		bu_vls_putc(&quotebuf, str[0]);
+		bu_vls_putc(&quotebuf, *str);
 	    } else {
-		bu_vls_putc(vp, str[0]);
+		bu_vls_putc(vp, *str);
 	    }
 	    escape = 0;
-	    str++;
 	    continue;
 	}
 
-	if (str[0] == ESCAPE) {
+	if (*str == ESCAPE) {
 	    /* encountered new escape */
 	    escape = 1;
-	    str++;
 	    continue;
 	}
 
-	if (str[0] == DQUOTE) {
+	if (*str == DQUOTE) {
 	    if (!dquote) {
 		/* entering double quote pairing */
 		dquote = 1;
@@ -566,7 +562,6 @@ vls_decode(struct bu_vls *vp, const char *str)
 		dquote = 0;
 		bu_vls_vlscatzap(vp, &quotebuf);
 	    }
-	    str++;
 	    continue;
 	}
 
@@ -574,11 +569,10 @@ vls_decode(struct bu_vls *vp, const char *str)
 	 * a matching double quote character.
 	 */
 	if (dquote) {
-	    bu_vls_putc(&quotebuf, str[0]);
+	    bu_vls_putc(&quotebuf, *str);
 	} else {
-	    bu_vls_putc(vp, str[0]);
+	    bu_vls_putc(vp, *str);
 	}
-	str++;
     }
 
     if (dquote) {
@@ -620,12 +614,14 @@ bu_argv_from_string(char *argv[], int lim, char *lp)
 
     if (!argv) {
 	/* do this instead of crashing */
-	bu_bomb("bu_argv_from_string received a null argv\n");
+	bu_bomb("bu_argv_from_string received a NULL argv\n");
     }
+
+    /* if there's nothing to do, we make sure to return NULL */
     argv[0] = (char *)NULL;
 
     if (lim <= 0 || !lp) {
-	/* nothing to do, only return NULL */
+	/* nothing to do */
 	return 0;
     }
 
@@ -634,7 +630,7 @@ bu_argv_from_string(char *argv[], int lim, char *lp)
 	lp++;
 
     if (*lp == '\0') {
-	/* no words, only return NULL */
+	/* nothing to do */
 	return 0;
     }
 
