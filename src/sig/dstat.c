@@ -39,7 +39,7 @@ double buf[IBUFSIZE];		/* Input buffer */
 int verbose = 0;
 
 
-int main(int argc, char **argv)
+int main(int ac, char *av[])
 {
     int i, n;
     long num_values;
@@ -50,24 +50,24 @@ int main(int argc, char **argv)
     FILE *fp;
 
     /* check for verbose flag */
-    if (argc > 1 && strcmp(argv[1], "-v") == 0) {
+    if (ac > 1 && strcmp(av[1], "-v") == 0) {
 	verbose++;
-	argv++;
-	argc--;
+	av++;
+	ac--;
     }
 
     /* look for optional input file */
-    if (argc > 1) {
-	if ((fp = fopen(argv[1], "r")) == 0) {
-	    bu_exit(1, "dstat: can't open \"%s\"\n", argv[1]);
+    if (ac > 1) {
+	if ((fp = fopen(av[1], "r")) == 0) {
+	    bu_exit(1, "dstat: can't open \"%s\"\n", av[1]);
 	}
-	argv++;
-	argc--;
+	av++;
+	ac--;
     } else
 	fp = stdin;
 
     /* check usage */
-    if (argc > 1 || isatty(fileno(fp))) {
+    if (ac > 1 || isatty(fileno(fp))) {
 	bu_exit(1, "Usage: dstat [-v] [file.doubles]\n");
     }
 

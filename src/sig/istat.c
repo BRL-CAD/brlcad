@@ -19,7 +19,7 @@
  */
 /** @file istat.c
  *
- * gather statistics on file of shorts.
+ * gather statistics on a set of short integers.
  *
  * Options
  * h help
@@ -106,7 +106,7 @@ void comp_stats(FILE *fd)
  * Call parse_args to handle command line arguments first, then
  * process input.
  */
-int main(int ac, char **av)
+int main(int ac, char *av[])
 {
     char *progname = "(noname)";
     int arg_index;
