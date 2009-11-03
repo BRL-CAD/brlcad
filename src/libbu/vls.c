@@ -488,28 +488,29 @@ static const char ESCAPE = '\\';
 HIDDEN void
 vls_encode(struct bu_vls *vp, const char *str)
 {
-    int i;
-
     if (!str)
 	return;
 
     BU_CK_VLS(vp);
 
     if (strchr(str, SPACE) == NULL) {
-	for (i = 0; (size_t)i < strlen(str); i++) {
-	    if (str[i] == DQUOTE) {
+	/* no spaces, just watch for quotes */
+	while (str[0] != '\0') {
+	    if (str[0] == DQUOTE) {
 		bu_vls_putc(vp, ESCAPE);
 	    }
-	    bu_vls_putc(vp, str[i]);
-	}
+	    bu_vls_putc(vp, str[0]);
+	    str++;
+	}	    
     } else {
 	/* argv elements has spaces, quote it */
 	bu_vls_putc(vp, DQUOTE);
-	for (i = 0; (size_t)i < strlen(str); i++) {
-	    if (str[i] == DQUOTE) {
+	while (str[0] != '\0') {
+	    if (str[0] == DQUOTE) {
 		bu_vls_putc(vp, ESCAPE);
 	    }
-	    bu_vls_putc(vp, str[i]);
+	    bu_vls_putc(vp, str[0]);
+	    str++;
 	}
 	bu_vls_putc(vp, DQUOTE);
     }
