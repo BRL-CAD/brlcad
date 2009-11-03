@@ -17,6 +17,8 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
+/** @addtogroup vls */
+/** @{ */
 
 #include "common.h"
 
@@ -474,14 +476,138 @@ bu_vls_strncmp(struct bu_vls *s1, struct bu_vls *s2, size_t n)
 }
 
 
-void
-bu_vls_from_argv(register struct bu_vls *vp, int argc, const char *argv[])
+static const char SPACE = ' ';
+static const char DQUOTE = '"';
+static const char SQUOTE = '\'';
+static const char ESCAPE = '\\';
+
+
+/**
+ * given an input string, wrap the string in double quotes if there is
+ * a space.  escape any existing double quotes.
+ */
+HIDDEN void
+vls_encode(struct bu_vls *vp, const char *str)
 {
+    int i;
+
+    if (!str)
+	return;
+
     BU_CK_VLS(vp);
 
-    for (/* nada */; argc > 0; argc--, argv++) {
-	bu_vls_strcat(vp, *argv);
-	if (argc > 1)  bu_vls_strcat(vp, " ");
+    if (strchr(str, SPACE) == NULL) {
+	for (i = 0; i < strlen(str); i++) {
+	    if (str[i] == DQUOTE) {
+		bu_vls_putc(vp, ESCAPE);
+	    }
+	    bu_vls_putc(vp, str[i]);
+	}
+    } else {
+	/* argv elements has spaces, quote it */
+	bu_vls_putc(vp, DQUOTE);
+	for (i = 0; i < strlen(str); i++) {
+	    if (str[i] == DQUOTE) {
+		bu_vls_putc(vp, ESCAPE);
+	    }
+	    bu_vls_putc(vp, str[i]);
+	}
+	bu_vls_putc(vp, DQUOTE);
+    }
+
+}
+
+
+/**
+ * given an encoded input string, unwrap the string from any
+ * surrounding double quotes and unescape any embedded double quotes.
+ */
+HIDDEN void
+vls_decode(struct bu_vls *vp, const char *str)
+{
+    int dquote = 0;
+    int escape = 0;
+
+    struct bu_vls quotebuf;
+
+    if (!str)
+	return;
+
+    BU_CK_VLS(vp);
+
+    bu_vls_init(&quotebuf);
+
+    while (str[0] != '\0') {
+	if (escape) {
+	    /* previous character was escaped */
+	    if (dquote) {
+		bu_vls_putc(&quotebuf, str[0]);
+	    } else {
+		bu_vls_putc(vp, str[0]);
+	    }
+	    escape = 0;
+	    str++;
+	    continue;
+	}
+
+	if (str[0] == ESCAPE) {
+	    /* encountered new escape */
+	    escape = 1;
+	    str++;
+	    continue;
+	}
+
+	if (str[0] == DQUOTE) {
+	    if (!dquote) {
+		/* entering double quote pairing */
+		dquote = 1;
+	    } else {
+		/* end of double quote */
+		dquote = 0;
+		bu_vls_vlscatzap(vp, &quotebuf);
+	    }
+	    str++;
+	    continue;
+	}
+
+	/* if we're inside a quote, buffer up the string until we find
+	 * a matching double quote character.
+	 */
+	if (dquote) {
+	    bu_vls_putc(&quotebuf, str[0]);
+	} else {
+	    bu_vls_putc(vp, str[0]);
+	}
+	str++;
+    }
+
+    if (dquote) {
+	/* we got to the end of the input string whilte still inside a
+	 * double-quote.  have to assume the quote is regular content.
+	 */
+	bu_vls_putc(vp, DQUOTE);
+	bu_vls_vlscatzap(vp, &quotebuf);
+    }
+
+    bu_vls_free(&quotebuf);
+}
+
+
+void
+bu_vls_from_argv(struct bu_vls *vp, int argc, const char *argv[])
+{
+    int i;
+
+    BU_CK_VLS(vp);
+
+    if (!argv)
+	return;
+
+    for (i = 0; i < argc; i++) {
+	vls_encode(vp, argv[i]);
+
+	if (i < argc-1)
+	    bu_vls_putc(vp, SPACE);
     }
 }
 
@@ -489,8 +615,8 @@ bu_vls_from_argv(register struct bu_vls *vp, int argc, const char *argv[])
 int
 bu_argv_from_string(char *argv[], int lim, char *lp)
 {
-    register int argc = 0; /* number of words seen */
-    register int skip = 0;
+    int argc = 0; /* number of words seen */
+    int skip = 0;
 
     if (!argv) {
 	/* do this instead of crashing */
@@ -512,7 +638,7 @@ bu_argv_from_string(char *argv[], int lim, char *lp)
 	return 0;
     }
 
-    /* some non-space string has been seen, set argv[0] */
+    /* some non-space string has been encountered, set argv[0] */
     argc = 0;
     argv[argc] = lp;
 
@@ -1048,6 +1174,8 @@ bu_vls_prepend(struct bu_vls *vp, char *str)
     /* insert the data at the head of the string */
     memcpy(vp->vls_str+vp->vls_offset, str, len);
 }
+
+/** @} */
 
 /*
  * Local Variables:
