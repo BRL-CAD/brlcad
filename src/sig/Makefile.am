@@ -117,17 +117,17 @@ umod_LDADD = ${BU} ${LIBM}
 
 #  Misc
 
-dstat_SOURCES = dstat.c
-dstat_LDADD = ${BU} ${LIBM}
+dstats_SOURCES = dstats.c
+dstats_LDADD = ${BU} ${LIBM}
 
 dsel_SOURCES = dsel.c
 dsel_LDADD = ${BU}
 
-istat_SOURCES = istat.c
-istat_LDADD = ${BU}
+istats_SOURCES = istats.c
+istats_LDADD = ${BU}
 
-ustat_SOURCES = ustat.c
-ustat_LDADD = ${BU}
+ustats_SOURCES = ustats.c
+ustats_LDADD = ${BU}
 
 
 #  Experimental
