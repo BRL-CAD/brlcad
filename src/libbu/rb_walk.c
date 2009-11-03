@@ -40,9 +40,9 @@ HIDDEN void
 prewalknodes(struct bu_rb_node *root, int order, void (*visit) (/* ??? */), int depth)
 {
     BU_CKMAG(root, BU_RB_NODE_MAGIC, "red-black node");
-    RB_CKORDER(root -> rbn_tree, order);
+    RB_CKORDER(root->rbn_tree, order);
 
-    if (root == rb_null(root -> rbn_tree))
+    if (root == rb_null(root->rbn_tree))
 	return;
     visit(root, depth);
     prewalknodes (rb_left_child(root, order), order, visit, depth + 1);
@@ -59,9 +59,9 @@ HIDDEN void
 inwalknodes(struct bu_rb_node *root, int order, void (*visit) (/* ??? */), int depth)
 {
     BU_CKMAG(root, BU_RB_NODE_MAGIC, "red-black node");
-    RB_CKORDER(root -> rbn_tree, order);
+    RB_CKORDER(root->rbn_tree, order);
 
-    if (root == rb_null(root -> rbn_tree))
+    if (root == rb_null(root->rbn_tree))
 	return;
     inwalknodes (rb_left_child(root, order), order, visit, depth + 1);
     visit(root, depth);
@@ -78,9 +78,9 @@ HIDDEN void
 postwalknodes(struct bu_rb_node *root, int order, void (*visit) (/* ??? */), int depth)
 {
     BU_CKMAG(root, BU_RB_NODE_MAGIC, "red-black node");
-    RB_CKORDER(root -> rbn_tree, order);
+    RB_CKORDER(root->rbn_tree, order);
 
-    if (root == rb_null(root -> rbn_tree))
+    if (root == rb_null(root->rbn_tree))
 	return;
     postwalknodes (rb_left_child(root, order), order, visit, depth + 1);
     postwalknodes (rb_right_child(root, order), order, visit, depth + 1);
@@ -97,9 +97,9 @@ HIDDEN void
 prewalkdata(struct bu_rb_node *root, int order, void (*visit) (/* ??? */), int depth)
 {
     BU_CKMAG(root, BU_RB_NODE_MAGIC, "red-black node");
-    RB_CKORDER(root -> rbn_tree, order);
+    RB_CKORDER(root->rbn_tree, order);
 
-    if (root == rb_null(root -> rbn_tree))
+    if (root == rb_null(root->rbn_tree))
 	return;
     visit(rb_data(root, order), depth);
     prewalkdata (rb_left_child(root, order), order, visit, depth + 1);
@@ -116,9 +116,9 @@ HIDDEN void
 inwalkdata(struct bu_rb_node *root, int order, void (*visit) (/* ??? */), int depth)
 {
     BU_CKMAG(root, BU_RB_NODE_MAGIC, "red-black node");
-    RB_CKORDER(root -> rbn_tree, order);
+    RB_CKORDER(root->rbn_tree, order);
 
-    if (root == rb_null(root -> rbn_tree))
+    if (root == rb_null(root->rbn_tree))
 	return;
     inwalkdata (rb_left_child(root, order), order, visit, depth + 1);
     visit(rb_data(root, order), depth);
@@ -135,9 +135,9 @@ HIDDEN void
 postwalkdata(struct bu_rb_node *root, int order, void (*visit) (/* ??? */), int depth)
 {
     BU_CKMAG(root, BU_RB_NODE_MAGIC, "red-black node");
-    RB_CKORDER(root -> rbn_tree, order);
+    RB_CKORDER(root->rbn_tree, order);
 
-    if (root == rb_null(root -> rbn_tree))
+    if (root == rb_null(root->rbn_tree))
 	return;
     postwalkdata (rb_left_child(root, order), order, visit, depth + 1);
     postwalkdata (rb_right_child(root, order), order, visit, depth + 1);
