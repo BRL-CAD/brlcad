@@ -3403,6 +3403,9 @@ RT_EXPORT BU_EXTERN(int rt_metaball_ck,
 RT_EXPORT BU_EXTERN(fastf_t rt_metaball_point_value,
 		    (const point_t *p,
 		     const struct rt_metaball_internal *mb));
+RT_EXPORT BU_EXTERN(int rt_metaball_point_inside,
+		    (const point_t *p,
+		     const struct rt_metaball_internal *mb));
 RT_EXPORT BU_EXTERN(int rt_metaball_lookup_type_id,
 		    (const char *name));
 RT_EXPORT BU_EXTERN(const char *rt_metaball_lookup_type_name,

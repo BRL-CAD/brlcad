@@ -307,6 +307,13 @@ rt_metaball_point_value(const point_t *p, const struct rt_metaball_internal *mb)
     return 0;
 }
 
+/* returns true if the point is in/on the unscaled metaball. */
+int
+rt_metaball_point_inside(const point_t *p, const struct rt_metaball_internal *mb)
+{
+    return rt_metaball_point_value(p,mb) >= mb->threshold;
+}
+
 /*
  * R T _ M E T A B A L L _ S H O T
  */
