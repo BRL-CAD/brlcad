@@ -92,7 +92,7 @@ ged_facetize(struct ged *gedp, int argc, const char *argv[])
     while ( (c=bu_getopt(argc, (char * const *)argv, "mntT")) != EOF )  {
 	switch (c)  {
 	    case 'm':
-		marching_cube = 1;
+		marching_cube = triangulate = 1;
 		/* no break, marching cubes assumes nmg for now */
 	    case 'n':
 		make_bot = 0;
@@ -208,11 +208,10 @@ ged_facetize(struct ged *gedp, int argc, const char *argv[])
 	    nmg_model = (struct model *)NULL;
 	    return GED_ERROR;
 	}
-	if(marching_cube == 1) {
+	if(marching_cube == 1)
 	    nmg_triangulate_model_mc( nmg_model, &gedp->ged_wdbp->wdb_tol );
-	} else {
+	else
 	    nmg_triangulate_model( nmg_model, &gedp->ged_wdbp->wdb_tol );
-	}
 	BU_UNSETJUMP;
     }
 
