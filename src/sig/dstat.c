@@ -33,33 +33,33 @@
 
 #include "bu.h"
 
-#define	IBUFSIZE 1024		/* Max read size */
-double	buf[IBUFSIZE];		/* Input buffer */
+#define IBUFSIZE 1024		/* Max read size */
+double buf[IBUFSIZE];		/* Input buffer */
 
-int	verbose = 0;
+int verbose = 0;
 
 
 int main(int argc, char **argv)
 {
-    int	i, n;
-    long	num_values;
+    int i, n;
+    long num_values;
     register double *bp;
-    double	sum, sum2;
-    double	max, min;
-    double	mean, var;
-    FILE	*fp;
+    double sum, sum2;
+    double max, min;
+    double mean, var;
+    FILE *fp;
 
     /* check for verbose flag */
-    if ( argc > 1 && strcmp(argv[1], "-v") == 0 ) {
+    if (argc > 1 && strcmp(argv[1], "-v") == 0) {
 	verbose++;
 	argv++;
 	argc--;
     }
 
     /* look for optional input file */
-    if ( argc > 1 ) {
-	if ( (fp = fopen(argv[1], "r")) == 0 ) {
-	    bu_exit(1, "dstat: can't open \"%s\"\n", argv[1] );
+    if (argc > 1) {
+	if ((fp = fopen(argv[1], "r")) == 0) {
+	    bu_exit(1, "dstat: can't open \"%s\"\n", argv[1]);
 	}
 	argv++;
 	argc--;
@@ -67,7 +67,7 @@ int main(int argc, char **argv)
 	fp = stdin;
 
     /* check usage */
-    if ( argc > 1 || isatty(fileno(fp)) ) {
+    if (argc > 1 || isatty(fileno(fp))) {
 	bu_exit(1, "Usage: dstat [-v] [file.doubles]\n");
     }
 
@@ -83,15 +83,15 @@ int main(int argc, char **argv)
     min = HUGE;
     max = -HUGE;
 #endif
-    while ( (n = fread(buf, sizeof(*buf), IBUFSIZE, fp)) > 0 ) {
+    while ((n = fread(buf, sizeof(*buf), IBUFSIZE, fp)) > 0) {
 	num_values += n;
 	bp = &buf[0];
-	for ( i = 0; i < n; i++ ) {
+	for (i = 0; i < n; i++) {
 	    sum += *bp;
 	    sum2 += *bp * *bp;
-	    if ( *bp < min )
+	    if (*bp < min)
 		min = *bp;
-	    if ( *bp > max )
+	    if (*bp > max)
 		max = *bp;
 	    bp++;
 	}
@@ -102,13 +102,13 @@ int main(int argc, char **argv)
     /*
      * Display the results.
      */
-    printf( "Values  %14ld (%.0f x %.0f)\n", num_values,
-	    sqrt((double)num_values), sqrt((double)num_values) );
-    printf( "Min     %14.6g\n", min );
-    printf( "Max     %14.6g\n", max );
-    printf( "Mean    %14.6g\n", mean );
-    printf( "s.d.    %14.6g\n", sqrt( var ) );
-    printf( "Var     %14.6g\n", var );
+    printf("Values  %14ld (%.0f x %.0f)\n", num_values,
+	   sqrt((double)num_values), sqrt((double)num_values));
+    printf("Min     %14.6g\n", min);
+    printf("Max     %14.6g\n", max);
+    printf("Mean    %14.6g\n", mean);
+    printf("s.d.    %14.6g\n", sqrt(var));
+    printf("Var     %14.6g\n", var);
 
     return 0;
 }

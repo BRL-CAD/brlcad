@@ -21,8 +21,8 @@
  *
  * gather statistics on file of shorts.
  *
- *	Options
- *	h	help
+ * Options
+ * h help
  */
 
 #include "common.h"
@@ -35,7 +35,7 @@
 
 
 /*
- *	U S A G E --- tell user how to invoke this program, then exit
+ * U S A G E --- tell user how to invoke this program, then exit
  */
 void usage(const char *progname)
 {
@@ -43,11 +43,11 @@ void usage(const char *progname)
 }
 
 /*
- *	P A R S E _ A R G S --- Parse through command line flags
+ * P A R S E _ A R G S --- Parse through command line flags
  */
 int parse_args(int ac, char **av, char *progname)
 {
-    int  c;
+    int c;
 
     if (!(progname=strrchr(*av, '/')))
 	progname = *av;
@@ -81,7 +81,7 @@ void comp_stats(FILE *fd)
     min = 32767;
     max = -32768;
 
-    while ( (count=fread((void *)buffer, sizeof(short), 10240, fd)) ) {
+    while ((count=fread((void *)buffer, sizeof(short), 10240, fd))) {
 	for (i=0; i < count; ++i) {
 	    sum += (double)buffer[i];
 	    sum_sq += (double)(buffer[i] * buffer[i]);
@@ -91,7 +91,7 @@ void comp_stats(FILE *fd)
 	num += (double)count;
     }
 
-    stdev = sqrt( ((num * sum_sq) - (sum*sum)) / (num * (num-1)) );
+    stdev = sqrt(((num * sum_sq) - (sum*sum)) / (num * (num-1)));
 
     (void)printf("   Num: %g\n   Min: %hd\n   Max: %hd\n   Sum: %g\n  Mean: %g\nSStdev: %g\n",
 		 num, min, max, sum, sum/num, stdev);
@@ -101,10 +101,10 @@ void comp_stats(FILE *fd)
 
 
 /*
- *	M A I N
+ * M A I N
  *
- *	Call parse_args to handle command line arguments first, then
- *	process input.
+ * Call parse_args to handle command line arguments first, then
+ * process input.
  */
 int main(int ac, char **av)
 {
