@@ -1544,6 +1544,11 @@ AC_CHECK_HEADERS( \
 	winsock.h \
 )
 
+# specifically for openNURBS
+AC_CHECK_HEADERS( \
+	ieeefp.h \
+}
+
 AC_LANG_PUSH([C++])
 AC_CHECK_HEADERS( \
 	limits \
