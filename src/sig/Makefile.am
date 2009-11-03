@@ -8,6 +8,7 @@ bin_PROGRAMS = \
 	d-f \
 	d-i \
 	d-u \
+	d2-c \
 	damdf \
 	dauto \
 	dauto2 \
@@ -58,6 +59,9 @@ d_u_LDADD = ${BU}
 
 d_bw_SOURCES = d-bw.c
 d_bw_LDADD = ${BU}
+
+d2_c_SOURCES = d2-c.c
+d2_c_LDADD = ${BU}
 
 d_f_SOURCES = d-f.c
 d_f_LDADD = ${BU}
@@ -149,7 +153,6 @@ ihist_LDADD = ${BU}
 
 # XXX need to review why these are not built
 EXTRA_DIST = \
-	d2-c.c \
 	fhor2.c \
 	fhor3.c \
 	smod.c
