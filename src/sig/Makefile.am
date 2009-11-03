@@ -29,6 +29,7 @@ bin_PROGRAMS = \
 	ihist \
 	imod \
 	istats \
+	smod \
 	syn \
 	u-a \
 	u-bw \
@@ -118,6 +119,9 @@ imod_LDADD = ${BU} ${LIBM}
 umod_SOURCES = umod.c
 umod_LDADD = ${BU} ${LIBM}
 
+smod_SOURCES = smod.c
+smod_LDADD = ${BU}
+
 
 #  Misc
 
@@ -154,8 +158,7 @@ ihist_LDADD = ${BU}
 # XXX need to review why these are not built
 EXTRA_DIST = \
 	fhor2.c \
-	fhor3.c \
-	smod.c
+	fhor3.c
 
 DEPENDS = src/libfb src/libfft
 
@@ -170,6 +173,7 @@ FAST_OBJECTS = \
 	$(d_f_OBJECTS) \
 	$(d_i_OBJECTS) \
 	$(d_u_OBJECTS) \
+	$(d2_c_OBJECTS) \
 	$(damdf_OBJECTS) \
 	$(dauto_OBJECTS) \
 	$(dauto2_OBJECTS) \
@@ -179,7 +183,7 @@ FAST_OBJECTS = \
 	$(dmod_OBJECTS) \
 	$(dpeak_OBJECTS) \
 	$(dsel_OBJECTS) \
-	$(dstat_OBJECTS) \
+	$(dstats_OBJECTS) \
 	$(dwin_OBJECTS) \
 	$(f_d_OBJECTS) \
 	$(f_i_OBJECTS) \
@@ -189,12 +193,13 @@ FAST_OBJECTS = \
 	$(i_f_OBJECTS) \
 	$(ihist_OBJECTS) \
 	$(imod_OBJECTS) \
-	$(istat_OBJECTS) \
+	$(istats_OBJECTS) \
+	$(smod_OBJECTS) \
 	$(syn_OBJECTS) \
 	$(u_a_OBJECTS) \
 	$(u_bw_OBJECTS) \
 	$(u_d_OBJECTS) \
 	$(u_f_OBJECTS) \
 	$(umod_OBJECTS) \
-	$(ustat_OBJECTS) \
+	$(ustats_OBJECTS) \
 	$(bin_PROGRAMS)
