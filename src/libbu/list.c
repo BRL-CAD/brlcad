@@ -127,22 +127,22 @@ bu_ck_list(const struct bu_list *hd, const char *str)
 	if (cur->magic == BU_LIST_HEAD_MAGIC)  head_count++;
 	if (!cur->forw) {
 	    bu_log("bu_ck_list(%s) cur=%p, cur->forw=%p, hd=%p\n",
-		   str, cur, cur->forw, hd);
+		   str, (void *)cur, (void *)cur->forw, (void *)hd);
 	    bu_bomb("bu_ck_list() forw\n");
 	}
 	if (cur->forw->back != cur) {
 	    bu_log("bu_ck_list(%s) cur=%p, cur->forw=%p, cur->forw->back=%p, hd=%p\n",
-		   str, cur, cur->forw, cur->forw->back, hd);
+		   str, (void *)cur, (void *)cur->forw, (void *)cur->forw->back, (void *)hd);
 	    bu_bomb("bu_ck_list() forw->back\n");
 	}
 	if (!cur->back) {
 	    bu_log("bu_ck_list(%s) cur=%p, cur->back=%p, hd=%p\n",
-		   str, cur, cur->back, hd);
+		   str, (void *)cur, (void *)cur->back, (void *)hd);
 	    bu_bomb("bu_ck_list() back\n");
 	}
 	if (cur->back->forw != cur) {
 	    bu_log("bu_ck_list(%s) cur=%p, cur->back=%p, cur->back->forw=%p, hd=%p\n",
-		   str, cur, cur->back, cur->back->forw, hd);
+		   str, (void *)cur, (void *)cur->back, (void *)cur->back->forw, (void *)hd);
 	    bu_bomb("bu_ck_list() back->forw\n");
 	}
 	cur = cur->forw;
@@ -150,7 +150,7 @@ bu_ck_list(const struct bu_list *hd, const char *str)
 
     if (head_count != 1) {
 	bu_log("bu_ck_list(%s) head_count = %d, hd=%p\n",
-	       str, head_count, hd);
+	       str, head_count, (void *)hd);
 	bu_bomb("bu_ck_list() headless!\n");
     }
 }
@@ -168,9 +168,10 @@ bu_ck_list_magic(const struct bu_list *hd, const char *str, const unsigned long 
 	    head_count++;
 	} else if (cur->magic != magic) {
 	    bu_log("bu_ck_list(%s) cur magic=(%s)%p, cur->forw magic=(%s)%p, hd magic=(%s)%p, item=%d\n",
-		   str, bu_identify_magic(cur->magic), cur->magic,
-		   bu_identify_magic(cur->forw->magic), cur->forw->magic,
-		   bu_identify_magic(hd->magic), hd->magic,
+		   str, 
+		   bu_identify_magic(cur->magic), (void *)cur->magic,
+		   bu_identify_magic(cur->forw->magic), (void *)cur->forw->magic,
+		   bu_identify_magic(hd->magic), (void *)hd->magic,
 		   item);
 	    bu_bomb("bu_ck_list_magic() cur->magic\n");
 	}
@@ -182,7 +183,8 @@ bu_ck_list_magic(const struct bu_list *hd, const char *str, const unsigned long 
 	}
 	if (cur->forw->back != cur) {
 	    bu_log("bu_ck_list_magic(%s) cur=%p, cur->forw=%p, cur->forw->back=%p, hd=%p, item=%d\n",
-		   str, cur, cur->forw, cur->forw->back, hd, item);
+		   str,
+		   (void *)cur, (void *)cur->forw, (void *)cur->forw->back, (void *)hd, item);
 	    bu_log(" cur=%s, cur->forw=%s, cur->forw->back=%s\n",
 		   bu_identify_magic(cur->magic),
 		   bu_identify_magic(cur->forw->magic),
@@ -191,12 +193,12 @@ bu_ck_list_magic(const struct bu_list *hd, const char *str, const unsigned long 
 	}
 	if (!cur->back) {
 	    bu_log("bu_ck_list_magic(%s) cur=%p, cur->back=%p, hd=%p, item=%d\n",
-		   str, cur, cur->back, hd, item);
+		   str, (void *)cur, (void *)cur->back, (void *)hd, item);
 	    bu_bomb("bu_ck_list_magic() back NULL\n");
 	}
 	if (cur->back->forw != cur) {
 	    bu_log("bu_ck_list_magic(%s) cur=%p, cur->back=%p, cur->back->forw=%p, hd=%p, item=%d\n",
-		   str, cur, cur->back, cur->back->forw, hd, item);
+		   str, (void *)cur, (void *)cur->back, (void *)cur->back->forw, (void *)hd, item);
 	    bu_bomb("bu_ck_list_magic() cur->back->forw != cur\n");
 	}
 	cur = cur->forw;
@@ -205,7 +207,7 @@ bu_ck_list_magic(const struct bu_list *hd, const char *str, const unsigned long 
 
     if (head_count != 1) {
 	bu_log("bu_ck_list_magic(%s) head_count = %d, hd=%p, items=%d\n",
-	       str, head_count, hd, item);
+	       str, head_count, (void *)hd, item);
 	bu_bomb("bu_ck_list_magic() headless!\n");
     }
 }
