@@ -4722,11 +4722,11 @@ BU_EXPORT BU_EXTERN(void bu_vls_from_argv,
  * 'lim' indicates the maximum number of elements that can be stored
  * in the argv[] array not including a terminating NULL.
  *
- * The input buffer is altered by this process.  The argv[] array
- * points into the input buffer.  The argv[] array needs to have at
+ * The input buffer is NOT altered by this process.  The argv[] array
+ * points newly allocated strings.  The argv[] array needs to have at
  * least lim+1 pointers allocated for lim items plus a terminating
- * pointer to NULL.  The input buffer should not be freed until argv
- * has been freed or passes out of scope.
+ * pointer to NULL.  The argv array should be released with
+ * bu_free_array().
  *
  * Returns -
  * 0	no words in input
@@ -4735,7 +4735,7 @@ BU_EXPORT BU_EXTERN(void bu_vls_from_argv,
 BU_EXPORT BU_EXTERN(int bu_argv_from_string,
 		    (char *argv[],
 		     int lim,
-		     char *lp));
+		     const char *lp));
 
 /**
  * b u _ v l s _ f w r i t e

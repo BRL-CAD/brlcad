@@ -607,10 +607,12 @@ bu_vls_from_argv(struct bu_vls *vp, int argc, const char *argv[])
 
 
 int
-bu_argv_from_string(char *argv[], int lim, char *lp)
+bu_argv_from_string(char *argv[], int lim, const char *lp)
 {
     int argc = 0; /* number of words seen */
     int skip = 0;
+
+    struct bu_vls item;
 
     if (!argv) {
 	/* do this instead of crashing */
@@ -634,25 +636,23 @@ bu_argv_from_string(char *argv[], int lim, char *lp)
 	return 0;
     }
 
-    /* some non-space string has been encountered, set argv[0] */
-    argc = 0;
-    argv[argc] = lp;
+    bu_vls_init(&item);
 
     for (; *lp != '\0'; lp++) {
 
-	/* skip over current word */
-	if (!isspace(*lp))
-	    continue;
-
 	skip = 0;
 
-	/* terminate current word, skip space until we find the start
-	 * of the next word nulling out the spaces as we go along.
-	 */
-	while (*(lp+skip) != '\0' && isspace(*(lp+skip))) {
-	    lp[skip] = '\0';
-	    skip++;
+	/* stash current word */
+	if (!isspace(*lp)) {
+	    bu_vls_putc(&item, *lp);
+	    continue;
 	}
+
+	/* done with current word, skip whitespace until we find start
+	 * of the next word or end of string.
+	 */
+	while (*(lp+skip) != '\0' && isspace(*(lp+skip)))
+	    skip++;
 
 	if (*(lp + skip) == '\0')
 	    break;
@@ -662,16 +662,24 @@ bu_argv_from_string(char *argv[], int lim, char *lp)
 	    break;
 
 	/* start of next word */
-	argc++;
-	argv[argc] = lp + skip;
+	argv[argc++] = bu_vls_strdup(&item);
+	bu_vls_trunc(&item, 0);
 
 	/* jump over the spaces, remember the loop's lp++ */
 	lp += skip - 1;
     }
 
+    /* stash the last word encountered */
+    if ((*(lp + skip) == '\0') && (argc < lim)) {
+	argv[argc++] = bu_vls_strdup(&item);
+    }
+
     /* always NULL-terminate the array */
     argc++;
     argv[argc] = (char *)NULL;
+
+    bu_vls_free(&item);
+
     return argc;
 }
 
