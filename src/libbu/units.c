@@ -24,8 +24,13 @@
 #include <stdio.h>
 #include <ctype.h>
 #include <string.h>
+#include <float.h>
 
 #include "bu.h"
+
+
+/* done specifically to avoid a libbn dependency */
+#define NEAR_ZERO(val, epsilon) (((val) > -epsilon) && ((val) < epsilon))
 
 
 struct cvt_tab {
@@ -160,7 +165,7 @@ struct cvt_tab bu_units_mass_tab[] = {
 };
 
 static const struct conv_table unit_lists[3] = {
-    bu_units_length_tab, bu_units_volume_tab, bu_units_mass_tab
+    {bu_units_length_tab}, {bu_units_volume_tab}, {bu_units_mass_tab}
 };
 
 
@@ -215,7 +220,7 @@ bu_units_string(register const double mm)
     for (tp=bu_units_length_tab; tp->name[0]; tp++) {
 	fastf_t diff, bigger;
 
-	if (mm == tp->val)
+	if (NEAR_ZERO(mm - tp->val, SMALL_FASTF))
 	    return tp->name;
 
 	/* Check for near-miss */
@@ -245,7 +250,7 @@ bu_nearest_units_string(register const double mm)
     register const struct cvt_tab *tp;
 
     const char *nearest = NULL;
-    double nearer = 99.0e+99;
+    double nearer = DBL_MAX;
 
     if (mm <= 0)
 	return (char *)NULL;
@@ -255,11 +260,11 @@ bu_nearest_units_string(register const double mm)
 	double nearness;
 
 	/* skip zero so we don't return 'none' */
-	if (tp->val == 0.0)
+	if (NEAR_ZERO(tp->val, SMALL_FASTF))
 	    continue;
 
 	/* break early on perfect match */
-	if (mm == tp->val)
+	if (NEAR_ZERO(mm - tp->val, SMALL_FASTF))
 	    return tp->name;
 
 	/* Check for nearness */
