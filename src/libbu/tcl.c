@@ -94,12 +94,12 @@ bu_tcl_structparse_get_terse_form(Tcl_Interp *interp,
 				  const struct bu_structparse *sp)
 {
 #if 1
-    struct bu_vls log;
+    struct bu_vls vlog;
 
-    bu_vls_init(&log);
-    bu_structparse_get_terse_form(&log, sp);
-    Tcl_AppendResult(interp, bu_vls_addr(&log), (char *)NULL);
-    bu_vls_free(&log);
+    bu_vls_init(&vlog);
+    bu_structparse_get_terse_form(&vlog, sp);
+    Tcl_AppendResult(interp, bu_vls_addr(&vlog), (char *)NULL);
+    bu_vls_free(&vlog);
 #else
     struct bu_vls str;
     int i;
@@ -142,13 +142,13 @@ bu_tcl_structparse_argv(Tcl_Interp *interp,
 			const struct bu_structparse *desc,
 			char *base)
 {
-    struct bu_vls log;
+    struct bu_vls vlog;
     int ret;
 
-    bu_vls_init(&log);
-    ret = bu_structparse_argv(&log, argc, argv, desc, base);
-    Tcl_AppendResult(interp, bu_vls_addr(&log), (char *)NULL);
-    bu_vls_free(&log);
+    bu_vls_init(&vlog);
+    ret = bu_structparse_argv(&vlog, argc, argv, desc, base);
+    Tcl_AppendResult(interp, bu_vls_addr(&vlog), (char *)NULL);
+    bu_vls_free(&vlog);
 
     /* Convert to a Tcl return code */
     if (ret != BRLCAD_OK)
