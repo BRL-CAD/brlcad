@@ -107,7 +107,7 @@ ged_annotate(struct ged *gedp, int argc, const char *argv[])
     }
 
     bu_vls_free(&objects);
-    bu_free(object_argv, "free object argv");
+    bu_free_argv(object_count+1, object_argv);
 
     return GED_OK;
 }
