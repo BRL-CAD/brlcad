@@ -40,7 +40,7 @@
  * in which to search, the comparison function, and a data block
  * containing the desired value of the key.  On success, _rb_search()
  * returns a pointer to the discovered node.  Otherwise, it returns
- * (tree -> rbt_empty_node).
+ * (tree->rbt_empty_node).
  */
 HIDDEN struct bu_rb_node *
 _rb_search(struct bu_rb_node *root, int order_nm, int (*order) (/* ??? */), void *data)
@@ -49,12 +49,12 @@ _rb_search(struct bu_rb_node *root, int order_nm, int (*order) (/* ??? */), void
     bu_rb_tree *tree;
 
     BU_CKMAG(root, BU_RB_NODE_MAGIC, "red-black node");
-    tree = root -> rbn_tree;
+    tree = root->rbn_tree;
     RB_CKORDER(tree, order_nm);
 
     while (1)
     {
-	if (root == rb_null(root -> rbn_tree))
+	if (root == rb_null(root->rbn_tree))
 	    break;
 	if ((result = (*order)(data, rb_data(root, order_nm))) == 0)
 	    break;

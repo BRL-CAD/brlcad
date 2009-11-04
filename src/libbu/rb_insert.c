@@ -64,7 +64,7 @@ _rb_insert(bu_rb_tree *tree, int order, struct bu_rb_node *new_node)
 	rb_left_child(new_node, order) =
 	rb_right_child(new_node, order) = rb_null(tree);
     rb_size(new_node, order) = 1;
-    if (tree -> rbt_debug & BU_RB_DEBUG_OS)
+    if (tree->rbt_debug & BU_RB_DEBUG_OS)
 	bu_log("_rb_insert(%x): size(%x, %d)=%d\n",
 	       new_node, new_node, order, rb_size(new_node, order));
 
@@ -77,18 +77,18 @@ _rb_insert(bu_rb_tree *tree, int order, struct bu_rb_node *new_node)
     while (node != rb_null(tree)) {
 	parent = node;
 	++rb_size(parent, order);
-	if (tree -> rbt_debug & BU_RB_DEBUG_OS)
+	if (tree->rbt_debug & BU_RB_DEBUG_OS)
 	    bu_log("_rb_insert(%x): size(%x, %d)=%d\n",
 		   new_node, parent, order, rb_size(parent, order));
 	comparison = (*compare)(rb_data(new_node, order),
 				rb_data(node, order));
 	if (comparison < 0) {
-	    if (tree -> rbt_debug & BU_RB_DEBUG_INSERT)
+	    if (tree->rbt_debug & BU_RB_DEBUG_INSERT)
 		bu_log("_rb_insert(%x): <_%d <%x>, going left\n",
 		       new_node, order, node);
 	    node = rb_left_child(node, order);
 	} else {
-	    if (tree -> rbt_debug & BU_RB_DEBUG_INSERT)
+	    if (tree->rbt_debug & BU_RB_DEBUG_INSERT)
 		bu_log("_rb_insert(%x): >=_%d <%x>, going right\n",
 		       new_node, order, node);
 	    node = rb_right_child(node, order);
@@ -142,7 +142,7 @@ _rb_insert(bu_rb_tree *tree, int order, struct bu_rb_node *new_node)
     }
     rb_set_color(rb_root(tree, order), order, RB_BLK);
 
-    if (tree -> rbt_debug & BU_RB_DEBUG_INSERT)
+    if (tree->rbt_debug & BU_RB_DEBUG_INSERT)
 	bu_log("_rb_insert(%x): comparison = %d, returning %d\n",
 	       new_node, comparison, result);
 
@@ -162,7 +162,7 @@ bu_rb_insert(bu_rb_tree *tree, void *data)
 
     BU_CKMAG(tree, BU_RB_TREE_MAGIC, "red-black tree");
 
-    nm_orders = tree -> rbt_nm_orders;
+    nm_orders = tree->rbt_nm_orders;
 
     /*
      * Enforce uniqueness
@@ -176,7 +176,7 @@ bu_rb_insert(bu_rb_tree *tree, void *data)
 	if (rb_get_uniqueness(tree, order) &&
 	    (bu_rb_search(tree, order, data) != NULL))
 	{
-	    if (tree -> rbt_debug & BU_RB_DEBUG_UNIQ)
+	    if (tree->rbt_debug & BU_RB_DEBUG_UNIQ)
 		bu_log("bu_rb_insert(<%x>, <%x>, TBD) will return %d\n",
 		       tree, data, -(order + 1));
 	    return (-(order + 1));
@@ -188,64 +188,64 @@ bu_rb_insert(bu_rb_tree *tree, void *data)
      */
     package = (struct bu_rb_package *)
 	bu_malloc(sizeof(struct bu_rb_package), "red-black package");
-    package -> rbp_node = (struct bu_rb_node **)
+    package->rbp_node = (struct bu_rb_node **)
 	bu_malloc(nm_orders * sizeof(struct bu_rb_node *),
 		  "red-black package nodes");
     rblp = (struct bu_rb_list *)
 	bu_malloc(sizeof(struct bu_rb_list),
 		  "red-black list element");
-    rblp -> rbl_magic = BU_RB_LIST_MAGIC;
-    rblp -> rbl_package = package;
-    BU_LIST_PUSH(&(tree -> rbt_packages.l), rblp);
-    package -> rbp_list_pos = rblp;
+    rblp->rbl_magic = BU_RB_LIST_MAGIC;
+    rblp->rbl_package = package;
+    BU_LIST_PUSH(&(tree->rbt_packages.l), rblp);
+    package->rbp_list_pos = rblp;
 
     /*
      * Make a new node and add it to the list of all nodes.
      */
     node = (struct bu_rb_node *)
 	bu_malloc(sizeof(struct bu_rb_node), "red-black node");
-    node -> rbn_parent = (struct bu_rb_node **)
+    node->rbn_parent = (struct bu_rb_node **)
 	bu_malloc(nm_orders * sizeof(struct bu_rb_node *),
 		  "red-black parents");
-    node -> rbn_left = (struct bu_rb_node **)
+    node->rbn_left = (struct bu_rb_node **)
 	bu_malloc(nm_orders * sizeof(struct bu_rb_node *),
 		  "red-black left children");
-    node -> rbn_right = (struct bu_rb_node **)
+    node->rbn_right = (struct bu_rb_node **)
 	bu_malloc(nm_orders * sizeof(struct bu_rb_node *),
 		  "red-black right children");
-    node -> rbn_color = (char *)
+    node->rbn_color = (char *)
 	bu_malloc((size_t) ceil((double) (nm_orders / 8.0)),
 		  "red-black colors");
-    node -> rbn_size = (int *)
+    node->rbn_size = (int *)
 	bu_malloc(nm_orders * sizeof(int),
 		  "red-black subtree sizes");
-    node -> rbn_package = (struct bu_rb_package **)
+    node->rbn_package = (struct bu_rb_package **)
 	bu_malloc(nm_orders * sizeof(struct bu_rb_package *),
 		  "red-black packages");
     rblp = (struct bu_rb_list *)
 	bu_malloc(sizeof(struct bu_rb_list),
 		  "red-black list element");
-    rblp -> rbl_magic = BU_RB_LIST_MAGIC;
-    rblp -> rbl_node = node;
-    BU_LIST_PUSH(&(tree -> rbt_nodes.l), rblp);
-    node -> rbn_list_pos = rblp;
+    rblp->rbl_magic = BU_RB_LIST_MAGIC;
+    rblp->rbl_node = node;
+    BU_LIST_PUSH(&(tree->rbt_nodes.l), rblp);
+    node->rbn_list_pos = rblp;
 
     /*
      * Fill in the package
      */
-    package -> rbp_magic = BU_RB_PKG_MAGIC;
-    package -> rbp_data = data;
+    package->rbp_magic = BU_RB_PKG_MAGIC;
+    package->rbp_data = data;
     for (order = 0; order < nm_orders; ++order)
-	(package -> rbp_node)[order] = node;
+	(package->rbp_node)[order] = node;
 
     /*
      * Fill in the node
      */
-    node -> rbn_magic = BU_RB_NODE_MAGIC;
-    node -> rbn_tree = tree;
+    node->rbn_magic = BU_RB_NODE_MAGIC;
+    node->rbn_tree = tree;
     for (order = 0; order < nm_orders; ++order)
-	(node -> rbn_package)[order] = package;
-    node -> rbn_pkg_refs = nm_orders;
+	(node->rbn_package)[order] = package;
+    node->rbn_pkg_refs = nm_orders;
 
     /*
      * If the tree was empty, install this node as the root and give
@@ -259,7 +259,7 @@ bu_rb_insert(bu_rb_tree *tree, void *data)
 		rb_right_child(node, order) = rb_null(tree);
 	    rb_set_color(node, order, RB_BLK);
 	    rb_size(node, order) = 1;
-	    if (tree -> rbt_debug & BU_RB_DEBUG_OS)
+	    if (tree->rbt_debug & BU_RB_DEBUG_OS)
 		bu_log("bu_rb_insert(<%x>, <%x>, <%x>): size(%x, %d)=%d\n",
 		       tree, data, node, node, order, rb_size(node, order));
 	}
@@ -267,12 +267,12 @@ bu_rb_insert(bu_rb_tree *tree, void *data)
 	/* Otherwise, insert the node into the tree */
 	for (order = 0; order < nm_orders; ++order)
 	    result += _rb_insert(tree, order, node);
-	if (tree -> rbt_debug & BU_RB_DEBUG_UNIQ)
+	if (tree->rbt_debug & BU_RB_DEBUG_UNIQ)
 	    bu_log("bu_rb_insert(<%x>, <%x>, <%x>) will return %d\n",
 		   tree, data, node, result);
     }
 
-    ++(tree -> rbt_nm_nodes);
+    ++(tree->rbt_nm_nodes);
     rb_current(tree) = node;
     return (result);
 }
@@ -335,7 +335,7 @@ bu_rb_set_uniqv(bu_rb_tree *tree, bitv_t flag_rep)
 
     BU_CKMAG(tree, BU_RB_TREE_MAGIC, "red-black tree");
 
-    nm_orders = tree -> rbt_nm_orders;
+    nm_orders = tree->rbt_nm_orders;
     for (order = 0; order < nm_orders; ++order)
 	rb_set_uniqueness(tree, order, 0);
 
@@ -368,7 +368,7 @@ _rb_set_uniq_all(bu_rb_tree *tree, int new_value)
     BU_CKMAG(tree, BU_RB_TREE_MAGIC, "red-black tree");
     new_value = (new_value != 0);
 
-    nm_orders = tree -> rbt_nm_orders;
+    nm_orders = tree->rbt_nm_orders;
     for (order = 0; order < nm_orders; ++order)
 	rb_set_uniqueness(tree, order, new_value);
 }

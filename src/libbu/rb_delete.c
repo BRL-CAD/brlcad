@@ -111,7 +111,7 @@ _rb_delete(bu_rb_tree *tree, struct bu_rb_node *node, int order)
     BU_CKMAG(node, BU_RB_NODE_MAGIC, "red-black node");
     RB_CKORDER(tree, order);
 
-    if (tree -> rbt_debug & BU_RB_DEBUG_DELETE)
+    if (tree->rbt_debug & BU_RB_DEBUG_DELETE)
 	bu_log("_rb_delete(%p, %p, %d): data=%p\n",
 	       tree, node, order, rb_data(node, order));
 
@@ -138,14 +138,14 @@ _rb_delete(bu_rb_tree *tree, struct bu_rb_node *node, int order)
      * Splice y out if it's not node
      */
     if (y != node) {
-	(node -> rbn_package)[order] = (y -> rbn_package)[order];
-	((node -> rbn_package)[order] -> rbp_node)[order] = node;
+	(node->rbn_package)[order] = (y->rbn_package)[order];
+	((node->rbn_package)[order]->rbp_node)[order] = node;
     }
 
     if (rb_get_color(y, order) == RB_BLK)
 	_rb_fixup(tree, only_child, order);
 
-    if (--(y -> rbn_pkg_refs) == 0)
+    if (--(y->rbn_pkg_refs) == 0)
 	rb_free_node(y);
 }
 
@@ -160,9 +160,9 @@ bu_rb_delete(bu_rb_tree *tree, int order)
     BU_CKMAG(tree, BU_RB_TREE_MAGIC, "red-black tree");
     RB_CKORDER(tree, order);
 
-    if (tree -> rbt_nm_nodes <= 0) {
+    if (tree->rbt_nm_nodes <= 0) {
 	bu_log("ERROR: Attempt to delete from tree with %d nodes\n",
-	       tree -> rbt_nm_nodes);
+	       tree->rbt_nm_nodes);
 	bu_bomb("");
     }
     if (rb_current(tree) == rb_null(tree)) {
@@ -170,14 +170,14 @@ bu_rb_delete(bu_rb_tree *tree, int order)
 	return;
     }
 
-    nm_orders = tree -> rbt_nm_orders;
-    package = (rb_current(tree) -> rbn_package)[order];
+    nm_orders = tree->rbt_nm_orders;
+    package = (rb_current(tree)->rbn_package)[order];
 
     node = (struct bu_rb_node **)
 	bu_malloc(nm_orders * sizeof(struct bu_rb_node *), "node list");
 
     for (order = 0; order < nm_orders; ++order)
-	node[order] = (package -> rbp_node)[order];
+	node[order] = (package->rbp_node)[order];
 
     /*
      * Do the deletion from each order
@@ -185,7 +185,7 @@ bu_rb_delete(bu_rb_tree *tree, int order)
     for (order = 0; order < nm_orders; ++order)
 	_rb_delete(tree, node[order], order);
 
-    --(tree -> rbt_nm_nodes);
+    --(tree->rbt_nm_nodes);
     rb_free_package(package);
     bu_free((genptr_t) node, "node list");
 }

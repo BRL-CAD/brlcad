@@ -35,17 +35,17 @@ rb_rot_left(struct bu_rb_node *x, int order)
     struct bu_rb_node *y;		/* x's child to pivot up */
     struct bu_rb_node *beta;		/* y's child in direction of rot. */
     struct bu_rb_node *x_parent;	/* x's parent */
-    bu_rb_tree *tree = x -> rbn_tree;	/* Tree where it all happens */
+    bu_rb_tree *tree = x->rbn_tree;	/* Tree where it all happens */
 
     /*
      * Set y and check data types of both x and y
      */
     BU_CKMAG(x, BU_RB_NODE_MAGIC, "red-black node");
-    RB_CKORDER(x -> rbn_tree, order);
+    RB_CKORDER(x->rbn_tree, order);
 
     y = rb_right_child(x, order);
 
-    if (tree -> rbt_debug & BU_RB_DEBUG_ROTATE)
+    if (tree->rbt_debug & BU_RB_DEBUG_ROTATE)
 	bu_log("rb_rot_left(<%p>, %d)...\n", x, order);
 
     rb_right_child(x, order) = beta = rb_left_child(y, order);
@@ -65,7 +65,7 @@ rb_rot_left(struct bu_rb_node *x, int order)
     rb_size(x, order) =
 	rb_size(rb_left_child(x, order), order) +
 	rb_size(rb_right_child(x, order), order) + 1;
-    if (tree -> rbt_debug & BU_RB_DEBUG_OS)
+    if (tree->rbt_debug & BU_RB_DEBUG_OS)
 	bu_log("After rotation, size(%p, %d)=%d, size(%p, %d)=%d\n",
 	       x, order, rb_size(x, order), y, order, rb_size(y, order));
 }
@@ -76,17 +76,17 @@ void rb_rot_right (struct bu_rb_node *y, int order)
     struct bu_rb_node *x;		/* y's child to pivot up */
     struct bu_rb_node *beta;		/* x's child in direction of rot. */
     struct bu_rb_node *y_parent;	/* y's parent */
-    bu_rb_tree *tree = y -> rbn_tree;	/* Tree where it all happens */
+    bu_rb_tree *tree = y->rbn_tree;	/* Tree where it all happens */
 
     /*
      * Set x and check data types of both x and y
      */
     BU_CKMAG(y, BU_RB_NODE_MAGIC, "red-black node");
-    RB_CKORDER(y -> rbn_tree, order);
+    RB_CKORDER(y->rbn_tree, order);
 
     x = rb_left_child(y, order);
 
-    if (tree -> rbt_debug & BU_RB_DEBUG_ROTATE)
+    if (tree->rbt_debug & BU_RB_DEBUG_ROTATE)
 	bu_log("rb_rot_right(<%p>, %d)...\n", y, order);
 
     rb_left_child(y, order) = beta = rb_right_child(x, order);
@@ -106,7 +106,7 @@ void rb_rot_right (struct bu_rb_node *y, int order)
     rb_size(y, order) =
 	rb_size(rb_left_child(y, order), order) +
 	rb_size(rb_right_child(y, order), order) + 1;
-    if (tree -> rbt_debug & BU_RB_DEBUG_OS)
+    if (tree->rbt_debug & BU_RB_DEBUG_OS)
 	bu_log("After rotation, size(%p, %d)=%d, size(%p, %d)=%d\n",
 	       x, order, rb_size(x, order), y, order, rb_size(y, order));
 }

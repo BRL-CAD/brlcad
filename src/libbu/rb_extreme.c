@@ -52,7 +52,7 @@ _rb_extreme(struct bu_rb_node *root, int order, int sense, struct bu_rb_node *em
 
     while (1) {
 	BU_CKMAG(root, BU_RB_NODE_MAGIC, "red-black node");
-	tree = root -> rbn_tree;
+	tree = root->rbn_tree;
 	RB_CKORDER(tree, order);
 
 	child = (sense == SENSE_MIN) ? rb_left_child(root, order) :
@@ -101,7 +101,7 @@ rb_neighbor(struct bu_rb_node *node, int order, int sense)
     struct bu_rb_node *empty_node;
 
     BU_CKMAG(node, BU_RB_NODE_MAGIC, "red-black node");
-    tree = node -> rbn_tree;
+    tree = node->rbn_tree;
     RB_CKORDER(tree, order);
 
     empty_node = rb_null(tree);

@@ -38,39 +38,39 @@ bu_rb_free(bu_rb_tree *tree, void (*free_data) (/* ??? */))
     /*
      * Free all the nodes
      */
-    while (BU_LIST_WHILE(rblp, bu_rb_list, &(tree -> rbt_nodes.l))) {
+    while (BU_LIST_WHILE(rblp, bu_rb_list, &(tree->rbt_nodes.l))) {
 	BU_CKMAG(rblp, BU_RB_LIST_MAGIC, "red-black list element");
-	rb_free_node(rblp -> rbl_node);
+	rb_free_node(rblp->rbl_node);
     }
 
     /*
      * Free all the packages
      */
-    while (BU_LIST_WHILE(rblp, bu_rb_list, &(tree -> rbt_packages.l))) {
+    while (BU_LIST_WHILE(rblp, bu_rb_list, &(tree->rbt_packages.l))) {
 	BU_CKMAG(rblp, BU_RB_LIST_MAGIC, "red-black list element");
-	package = rblp -> rbl_package;
+	package = rblp->rbl_package;
 	BU_CKMAG(package, BU_RB_PKG_MAGIC, "red-black package");
 	if (free_data)
-	    (*free_data)(package -> rbp_data);
+	    (*free_data)(package->rbp_data);
 	rb_free_package(package);
     }
 
     /*
      * Free the tree's NIL sentinel
      */
-    node = tree -> rbt_empty_node;
-    bu_free((genptr_t) node -> rbn_left, "red-black left children");
-    bu_free((genptr_t) node -> rbn_right, "red-black right children");
-    bu_free((genptr_t) node -> rbn_parent, "red-black parents");
-    bu_free((genptr_t) node -> rbn_color, "red-black colors");
-    bu_free((genptr_t) node -> rbn_package, "red-black packages");
+    node = tree->rbt_empty_node;
+    bu_free((genptr_t) node->rbn_left, "red-black left children");
+    bu_free((genptr_t) node->rbn_right, "red-black right children");
+    bu_free((genptr_t) node->rbn_parent, "red-black parents");
+    bu_free((genptr_t) node->rbn_color, "red-black colors");
+    bu_free((genptr_t) node->rbn_package, "red-black packages");
     bu_free((genptr_t) node, "red-black empty node");
 
     /*
      * Free the tree itself
      */
-    bu_free((genptr_t) tree -> rbt_root, "red-black roots");
-    bu_free((genptr_t) tree -> rbt_unique, "red-black uniqueness flags");
+    bu_free((genptr_t) tree->rbt_root, "red-black roots");
+    bu_free((genptr_t) tree->rbt_unique, "red-black uniqueness flags");
     bu_free((genptr_t) tree, "red-black tree");
 }
 
@@ -82,7 +82,7 @@ rb_free_node(struct bu_rb_node *node)
 
     BU_CKMAG(node, BU_RB_NODE_MAGIC, "red-black node");
 
-    tree = node -> rbn_tree;
+    tree = node->rbn_tree;
     if (rb_current(tree) == node)
 	rb_current(tree) = rb_null(tree);
     BU_CKMAG(node, BU_RB_NODE_MAGIC, "red-black node");
@@ -90,15 +90,15 @@ rb_free_node(struct bu_rb_node *node)
     /*
      * Remove node from the list of all nodes
      */
-    BU_CKMAG(node -> rbn_list_pos, BU_RB_LIST_MAGIC, "red-black list element");
-    BU_LIST_DEQUEUE(&(node -> rbn_list_pos -> l));
+    BU_CKMAG(node->rbn_list_pos, BU_RB_LIST_MAGIC, "red-black list element");
+    BU_LIST_DEQUEUE(&(node->rbn_list_pos->l));
 
-    bu_free((genptr_t) node -> rbn_parent, "red-black parents");
-    bu_free((genptr_t) node -> rbn_left, "red-black left children");
-    bu_free((genptr_t) node -> rbn_right, "red-black right children");
-    bu_free((genptr_t) node -> rbn_color, "red-black colors");
-    bu_free((genptr_t) node -> rbn_package, "red-black packages");
-    bu_free((genptr_t) node -> rbn_list_pos, "red-black list element");
+    bu_free((genptr_t) node->rbn_parent, "red-black parents");
+    bu_free((genptr_t) node->rbn_left, "red-black left children");
+    bu_free((genptr_t) node->rbn_right, "red-black right children");
+    bu_free((genptr_t) node->rbn_color, "red-black colors");
+    bu_free((genptr_t) node->rbn_package, "red-black packages");
+    bu_free((genptr_t) node->rbn_list_pos, "red-black list element");
     bu_free((genptr_t) node, "red-black node");
 }
 
@@ -111,12 +111,12 @@ rb_free_package(struct bu_rb_package *package)
     /*
      * Remove node from the list of all packages
      */
-    BU_CKMAG(package -> rbp_list_pos, BU_RB_LIST_MAGIC,
+    BU_CKMAG(package->rbp_list_pos, BU_RB_LIST_MAGIC,
 	     "red-black list element");
-    BU_LIST_DEQUEUE(&(package -> rbp_list_pos -> l));
+    BU_LIST_DEQUEUE(&(package->rbp_list_pos->l));
 
-    bu_free((genptr_t) package -> rbp_node, "red-black package nodes");
-    bu_free((genptr_t) package -> rbp_list_pos, "red-black list element");
+    bu_free((genptr_t) package->rbp_node, "red-black package nodes");
+    bu_free((genptr_t) package->rbp_list_pos, "red-black list element");
     bu_free((genptr_t) package, "red-black package");
 }
 
