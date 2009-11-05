@@ -16,6 +16,7 @@ changes made.  See document footer for additional details.
 
 * improved mged 'opendb' prompting - Sean Morrison, Jack Devanney
 * renamed [diu]stat tools to dstats/istats/ustats - Sean Morrison
+* added -n export surface normals option to bot_dump - Keith Bowman
 * added -R non-recursive option to mged 'keep' command - Sean Morrison
 * fix crash of 'attach ogl' commands on OSX - Cliff Yapp
 * added an mged menu option to change display managers - Cliff Yapp
