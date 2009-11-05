@@ -611,8 +611,9 @@ bu_argv_from_string(char *argv[], int lim, const char *lp)
 {
     int argc = 0; /* number of words seen */
     int skip = 0;
-
+    int inquote = 0;
     struct bu_vls item;
+    const char *orig_lp = lp;
 
     if (!argv) {
 	/* do this instead of crashing */
@@ -638,14 +639,47 @@ bu_argv_from_string(char *argv[], int lim, const char *lp)
 
     bu_vls_init(&item);
 
-    for (; *lp != '\0'; lp++) {
+    for (; *lp != '\0' && argc < lim; lp++) {
 
 	skip = 0;
 
-	/* stash current word */
-	if (!isspace(*lp)) {
+	/* keep track of whether we are inside double quotes */
+ 	if (*lp == DQUOTE && lp != orig_lp && *(lp-1) != ESCAPE) {
+	    if (inquote) {
+		inquote = 0;
+	    } else {
+		inquote = 1;
+	    }
+	}
+
+	/* read in characters for an item */
+	if (!isspace(*lp) /* not a space */
+	    || (isspace(*lp) /* space but escaped */
+		&& lp != orig_lp
+		&& *(lp-1) == ESCAPE)
+	    || (isspace(*lp) && inquote)) /* space but quoted */
+	{
+#ifdef DEBUG
+    bu_log("PUT[%c]\n", *lp);
+#endif
 	    bu_vls_putc(&item, *lp);
 	    continue;
+	}
+
+	/* stash the new entry, unencoded */
+	{
+	    struct bu_vls decoded;
+	    bu_vls_init(&decoded);
+#ifdef DEBUG
+    bu_log("DECODING [%V]\n", &item);
+#endif
+	    vls_decode(&decoded, bu_vls_addr(&item));
+	    argv[argc++] = bu_vls_strdup(&decoded);
+#ifdef DEBUG
+    bu_log("STASHED av[%d]=[%V]\n", argc-1, &decoded);
+#endif
+	    bu_vls_free(&decoded);
+	    bu_vls_trunc(&item, 0);
 	}
 
 	/* done with current word, skip whitespace until we find start
@@ -654,24 +688,24 @@ bu_argv_from_string(char *argv[], int lim, const char *lp)
 	while (*(lp+skip) != '\0' && isspace(*(lp+skip)))
 	    skip++;
 
-	if (*(lp + skip) == '\0')
-	    break;
-
-	/* make sure argv[] isn't full, need room for NULL */
-	if (argc >= lim-1)
-	    break;
-
-	/* start of next word */
-	argv[argc++] = bu_vls_strdup(&item);
-	bu_vls_trunc(&item, 0);
-
 	/* jump over the spaces, remember the loop's lp++ */
 	lp += skip - 1;
     }
 
-    /* stash the last word encountered */
-    if ((*(lp + skip) == '\0') && (argc < lim)) {
-	argv[argc++] = bu_vls_strdup(&item);
+    /* stash the last entry, unencoded */
+    if (*lp == '\0' && argc < lim) {
+	struct bu_vls decoded;
+	bu_vls_init(&decoded);
+#ifdef DEBUG
+    bu_log("DECODING LAST [%V]\n", &item);
+#endif
+	vls_decode(&decoded, bu_vls_addr(&item));
+	argv[argc++] = bu_vls_strdup(&decoded);
+#ifdef DEBUG
+    bu_log("STASHED av[%d]=[%V]\n", argc-1, &decoded);
+#endif
+	bu_vls_free(&decoded);
+	bu_vls_trunc(&item, 0);
     }
 
     /* always NULL-terminate the array */
