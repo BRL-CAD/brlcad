@@ -18,6 +18,7 @@ changes made.  See document footer for additional details.
 * renamed [diu]stat tools to dstats/istats/ustats - Sean Morrison
 * improved obj-g ignoring textures and surface normals  - Keith Bowman
 * added -n export surface normals option to bot_dump - Keith Bowman
+* new archer plugin for displaying groups of attributes - Bob Parker
 * added -R non-recursive option to mged 'keep' command - Sean Morrison
 * fix crash of 'attach ogl' commands on OSX - Cliff Yapp
 * added an mged menu option to change display managers - Cliff Yapp
