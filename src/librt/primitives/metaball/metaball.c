@@ -536,14 +536,14 @@ rt_metaball_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *i
     bu_vls_init(&times);
     rt_prep_timer();
 
-    /* TODO: get better sampling tolerance, unless this is "good enough" */
-    mtol = ttol->abs;
-    V_MAX(mtol, ttol->rel);
-    V_MAX(mtol, tol->dist);
-
     /* generate the box to sample */
     radius = rt_metaball_get_bounding_sphere(&center, mb->threshold, mb);
     rt_metaball_set_bbox(center, radius, &min, &max);
+
+    /* TODO: get better sampling tolerance, unless this is "good enough" */
+    mtol = ttol->abs;
+    V_MAX(mtol, ttol->rel * radius * 2.0);
+    V_MAX(mtol, tol->dist);
 
     /* the incredibly naïve approach. Time could be cut in half by simply
      * caching 4 point values, more by actually marching or doing active
