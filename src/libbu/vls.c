@@ -17,8 +17,6 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @addtogroup vls */
-/** @{ */
 
 #include "common.h"
 
@@ -38,13 +36,13 @@ extern const char bu_strdup_message[];
 /* private constants */
 
 /* minimum initial allocation size */
-static const unsigned int _VLS_ALLOC_MIN = 40;
+static const int _VLS_ALLOC_MIN = 40;
 
 /* minimum vls allocation increment size */
 static const int _VLS_ALLOC_STEP = 120;
 
 /* minimum vls buffer allocation size */
-static const unsigned int _VLS_ALLOC_READ = 4096;
+static const int _VLS_ALLOC_READ = 4096;
 
 
 void
@@ -476,155 +474,32 @@ bu_vls_strncmp(struct bu_vls *s1, struct bu_vls *s2, size_t n)
 }
 
 
-static const char SPACE = ' ';
-static const char DQUOTE = '"';
-static const char ESCAPE = '\\';
-
-
-/**
- * given an input string, wrap the string in double quotes if there is
- * a space.  escape any existing double quotes.
- */
-HIDDEN void
-vls_encode(struct bu_vls *vp, const char *str)
-{
-    if (!str)
-	return;
-
-    BU_CK_VLS(vp);
-
-    if (strchr(str, SPACE) == NULL) {
-	/* no spaces, just watch for quotes */
-	for (; *str != '\0'; str++) {
-	    if (*str == DQUOTE) {
-		bu_vls_putc(vp, ESCAPE);
-	    }
-	    bu_vls_putc(vp, *str);
-	}	    
-    } else {
-	/* argv elements has spaces, quote it */
-	bu_vls_putc(vp, DQUOTE);
-	for (; *str != '\0'; str++) {
-	    if (*str == DQUOTE) {
-		bu_vls_putc(vp, ESCAPE);
-	    }
-	    bu_vls_putc(vp, *str);
-	}
-	bu_vls_putc(vp, DQUOTE);
-    }
-
-}
-
-
-/**
- * given an encoded input string, unwrap the string from any
- * surrounding double quotes and unescape any embedded double quotes.
- */
-HIDDEN void
-vls_decode(struct bu_vls *vp, const char *str)
-{
-    int dquote = 0;
-    int escape = 0;
-
-    struct bu_vls quotebuf;
-
-    if (!str)
-	return;
-
-    BU_CK_VLS(vp);
-
-    bu_vls_init(&quotebuf);
-
-    for (; *str != '\0'; str++) {
-	if (escape) {
-	    /* previous character was escaped */
-	    if (dquote) {
-		bu_vls_putc(&quotebuf, *str);
-	    } else {
-		bu_vls_putc(vp, *str);
-	    }
-	    escape = 0;
-	    continue;
-	}
-
-	if (*str == ESCAPE) {
-	    /* encountered new escape */
-	    escape = 1;
-	    continue;
-	}
-
-	if (*str == DQUOTE) {
-	    if (!dquote) {
-		/* entering double quote pairing */
-		dquote = 1;
-	    } else {
-		/* end of double quote */
-		dquote = 0;
-		bu_vls_vlscatzap(vp, &quotebuf);
-	    }
-	    continue;
-	}
-
-	/* if we're inside a quote, buffer up the string until we find
-	 * a matching double quote character.
-	 */
-	if (dquote) {
-	    bu_vls_putc(&quotebuf, *str);
-	} else {
-	    bu_vls_putc(vp, *str);
-	}
-    }
-
-    if (dquote) {
-	/* we got to the end of the input string whilte still inside a
-	 * double-quote.  have to assume the quote is regular content.
-	 */
-	bu_vls_putc(vp, DQUOTE);
-	bu_vls_vlscatzap(vp, &quotebuf);
-    }
-
-    bu_vls_free(&quotebuf);
-}
-
-
 void
-bu_vls_from_argv(struct bu_vls *vp, int argc, const char *argv[])
+bu_vls_from_argv(register struct bu_vls *vp, int argc, const char *argv[])
 {
-    int i;
-
     BU_CK_VLS(vp);
 
-    if (!argv)
-	return;
-
-    for (i = 0; i < argc; i++) {
-	vls_encode(vp, argv[i]);
-
-	if (i < argc-1)
-	    bu_vls_putc(vp, SPACE);
+    for (/* nada */; argc > 0; argc--, argv++) {
+	bu_vls_strcat(vp, *argv);
+	if (argc > 1)  bu_vls_strcat(vp, " ");
     }
 }
 
 
 int
-bu_argv_from_string(char *argv[], int lim, const char *lp)
+bu_argv_from_string(char *argv[], int lim, char *lp)
 {
-    int argc = 0; /* number of words seen */
-    int skip = 0;
-    int inquote = 0;
-    struct bu_vls item;
-    const char *orig_lp = lp;
+    register int argc = 0; /* number of words seen */
+    register int skip = 0;
 
     if (!argv) {
 	/* do this instead of crashing */
-	bu_bomb("bu_argv_from_string received a NULL argv\n");
+	bu_bomb("bu_argv_from_string received a null argv\n");
     }
-
-    /* if there's nothing to do, we make sure to return NULL */
     argv[0] = (char *)NULL;
 
     if (lim <= 0 || !lp) {
-	/* nothing to do */
+	/* nothing to do, only return NULL */
 	return 0;
     }
 
@@ -633,87 +508,48 @@ bu_argv_from_string(char *argv[], int lim, const char *lp)
 	lp++;
 
     if (*lp == '\0') {
-	/* nothing to do */
+	/* no words, only return NULL */
 	return 0;
     }
 
-    bu_vls_init(&item);
+    /* some non-space string has been seen, set argv[0] */
+    argc = 0;
+    argv[argc] = lp;
 
-    for (; *lp != '\0' && argc < lim; lp++) {
+    for (; *lp != '\0'; lp++) {
+
+	/* skip over current word */
+	if (!isspace(*lp))
+	    continue;
 
 	skip = 0;
 
-	/* keep track of whether we are inside double quotes */
- 	if (*lp == DQUOTE && lp != orig_lp && *(lp-1) != ESCAPE) {
-	    if (inquote) {
-		inquote = 0;
-	    } else {
-		inquote = 1;
-	    }
-	}
-
-	/* read in characters for an item */
-	if (!isspace(*lp) /* not a space */
-	    || (isspace(*lp) /* space but escaped */
-		&& lp != orig_lp
-		&& *(lp-1) == ESCAPE)
-	    || (isspace(*lp) && inquote)) /* space but quoted */
-	{
-#ifdef DEBUG
-    bu_log("PUT[%c]\n", *lp);
-#endif
-	    bu_vls_putc(&item, *lp);
-	    continue;
-	}
-
-	/* stash the new entry, unencoded */
-	{
-	    struct bu_vls decoded;
-	    bu_vls_init(&decoded);
-#ifdef DEBUG
-    bu_log("DECODING [%V]\n", &item);
-#endif
-	    vls_decode(&decoded, bu_vls_addr(&item));
-	    argv[argc++] = bu_vls_strdup(&decoded);
-#ifdef DEBUG
-    bu_log("STASHED av[%d]=[%V]\n", argc-1, &decoded);
-#endif
-	    bu_vls_free(&decoded);
-	    bu_vls_trunc(&item, 0);
-	}
-
-	/* done with current word, skip whitespace until we find start
-	 * of the next word or end of string.
+	/* terminate current word, skip space until we find the start
+	 * of the next word nulling out the spaces as we go along.
 	 */
-	while (*(lp+skip) != '\0' && isspace(*(lp+skip)))
+	while (*(lp+skip) != '\0' && isspace(*(lp+skip))) {
+	    lp[skip] = '\0';
 	    skip++;
+	}
+
+	if (*(lp + skip) == '\0')
+	    break;
+
+	/* make sure argv[] isn't full, need room for NULL */
+	if (argc >= lim-1)
+	    break;
+
+	/* start of next word */
+	argc++;
+	argv[argc] = lp + skip;
 
 	/* jump over the spaces, remember the loop's lp++ */
 	lp += skip - 1;
     }
 
-    /* stash the last entry, unencoded */
-    if (*lp == '\0' && argc < lim) {
-	struct bu_vls decoded;
-	bu_vls_init(&decoded);
-#ifdef DEBUG
-    bu_log("DECODING LAST [%V]\n", &item);
-#endif
-	vls_decode(&decoded, bu_vls_addr(&item));
-	argv[argc++] = bu_vls_strdup(&decoded);
-#ifdef DEBUG
-    bu_log("STASHED av[%d]=[%V]\n", argc-1, &decoded);
-#endif
-	bu_vls_free(&decoded);
-	bu_vls_trunc(&item, 0);
-    }
-
     /* always NULL-terminate the array */
     argc++;
     argv[argc] = (char *)NULL;
-
-    bu_vls_free(&item);
-
     return argc;
 }
 
@@ -1212,8 +1048,6 @@ bu_vls_prepend(struct bu_vls *vp, char *str)
     /* insert the data at the head of the string */
     memcpy(vp->vls_str+vp->vls_offset, str, len);
 }
-
-/** @} */
 
 /*
  * Local Variables:
