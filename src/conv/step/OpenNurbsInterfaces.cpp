@@ -795,6 +795,10 @@ FaceSurface::LoadONBrep(ON_Brep *brep)
 
 	AddFace(brep);
 
+	//TODO: remove debugging code
+	if ((false) && ( ON_id == 39 )) {
+		cerr << "We are here" << endl;
+	}
 	if (!Face::LoadONBrep(brep)) {
 		cerr << "Error: " << entityname << "::LoadONBrep() - Error loading openNURBS brep." << endl;
 		return false;
@@ -986,6 +990,10 @@ OrientedEdge::LoadONBrep(ON_Brep *brep)
 
 	ON_id = edge_element->GetONId();
 
+	//TODO: remove debugging code
+	if ((false) && (ON_id == 31 )) {
+		cerr << "We are here!!!" << endl;
+	}
 	return true;
 }
 
@@ -1019,6 +1027,10 @@ Path::LoadONBrep(ON_Brep *brep)
 			cerr << "Error: " << entityname << "::LoadONBrep() - Error loading openNURBS brep." << endl;
 			return false;
 		}
+	}
+	//TODO: remove debugging code
+	if ((false) && (id == 124)) {
+		cerr << "We are here." << endl;
 	}
 	if (!LoadONTrimmingCurves(brep)) {
 		return false;
@@ -1067,334 +1079,196 @@ Path::ShiftSurfaceSeam(ON_Brep *brep, double *t)
 	return false;
 }
 
-bool
-Path::LoadONTrimmingCurves(ON_Brep *brep)
+bool Path::LoadONTrimmingCurves(ON_Brep *brep)
 {
     ON_TextLog tl;
-	LIST_OF_ORIENTED_EDGES::iterator i;
-	list<PBCData *> curve_pullback_samples;
+    LIST_OF_ORIENTED_EDGES::iterator i;
+    list<PBCData *> curve_pullback_samples;
     const ON_BrepLoop* loop = &brep->m_L[ON_path_index];
     const ON_BrepFace* face = loop->Face();
     const ON_Surface* surface = face->SurfaceOf();
 
-
-/*
-    //First let's check to see if we have to shift the surface seam
-	double t;
-	if ( surface->IsClosed(0) || surface->IsClosed(1) )
-	{
-		//TODO: look for other closed surfaces to assess like this
-		if (ShiftSurfaceSeam(brep,&t)) {
-			ON_Surface* surf = (ON_Surface*)surface;
-			ON_Cylinder cylinder;
-			ON_Cone cone;
-			if ( surface->IsCylinder(&cylinder) ) {
-				surf->Rotate(t,cylinder.Axis(),cylinder.Center());
-			} //else if ( surface->IsCone(&cone) ) {
-				//surf->Rotate(t,cone.Axis(),cone.BasePoint());
-			//}
-		}
-	}
-*/
-
-
     // build surface tree making sure not to remove trimmed subsurfaces
     // since currently building trims and need full tree
     bool removeTrimmed = false;
-	SurfaceTree* st = new SurfaceTree((ON_BrepFace*)face, removeTrimmed);
+    SurfaceTree* st = new SurfaceTree((ON_BrepFace*) face, removeTrimmed);
 
-
+    //TODO: remove debugging code
+    if ((false) && (id == 33316)) {
+	cerr << "We are here !!!" << endl;
+    }
     PBCData *data = NULL;
-	LIST_OF_ORIENTED_EDGES::iterator prev,next;
-	for(i=edge_list.begin();i!=edge_list.end();i++) {
-	    // grab the curve for this edge,face and surface
-	    const ON_BrepEdge* edge = &brep->m_E[(*i)->GetONId()];
-	    const ON_Curve* curve = edge->EdgeCurveOf();
-	    ON_BoundingBox bb = curve->BoundingBox();
-	    ON_Curve* c2d;
-	    bool orientWithCurve;
-	    double t,nudge;
-		if (false && isSeam(i)) {
-			ON_2dPoint prev_uv,next_uv;
-			prev = getPrev(i);
-			next = getNext(i);
-		    const ON_BrepEdge* edge = &brep->m_E[(*prev)->GetONId()];
-		    const ON_Curve* prev_curve = edge->EdgeCurveOf();
-		    orientWithCurve = (*prev)->OrientWithEdge();
-		    if (!orientWithCurve) {
-		    	t = 0.0;
-		    	nudge = 0.02;
-		    } else {
-		    	t = 1.0;
-		    	nudge = -0.02;
-		    }
-		    ON_3dPoint P = prev_curve->PointAt(t);
-		    toUV(st, (const ON_Curve *)prev_curve,  prev_uv, t, nudge);
+    LIST_OF_ORIENTED_EDGES::iterator prev, next;
+    for (i = edge_list.begin(); i != edge_list.end(); i++) {
+	// grab the curve for this edge,face and surface
+	const ON_BrepEdge* edge = &brep->m_E[(*i)->GetONId()];
+	const ON_Curve* curve = edge->EdgeCurveOf();
+	ON_BoundingBox bb = curve->BoundingBox();
+	bool orientWithCurve;
 
-		    edge = &brep->m_E[(*next)->GetONId()];
-		    const ON_Curve* next_curve = edge->EdgeCurveOf();
-		    orientWithCurve = (*next)->OrientWithEdge();
-		    if (!orientWithCurve) {
-		    	t = 1.0;
-		    	nudge = -0.02;
-		    } else {
-		    	t = 0.0;
-		    	nudge = 0.02;
-		    }
-		    ON_3dPoint N = next_curve->PointAt(t);
-		    toUV(st, (const ON_Curve *)next_curve,  next_uv, t, nudge);
+	data = pullback_samples(st, curve);
+	if (data == NULL)
+	    continue;
 
-		    ON_2dPoint uv1 = st->getClosestPointEstimate(P);
-		    ON_2dPoint uv2 = st->getClosestPointEstimate(N);
-		    enum seam_direction dir = seam_direction(prev_uv,next_uv);
-
-		    c2d = pullback_seam_curve(dir, st, curve);
-		    orientWithCurve = (*i)->OrientWithEdge();
-		} else {
-			ON_2dPoint uv;
-		    orientWithCurve = (*i)->OrientWithEdge();
-		    if (!orientWithCurve) {
-		    	t = 1.0;
-		    	nudge = -0.0000001;
-		    } else {
-		    	t = 0.0;
-		    	nudge = 0.0000001;
-		    }
-		    toUV(st, (const ON_Curve *)curve,  uv, t + nudge,0.0);
-		    ON_Interval dom = curve->Domain();
-		    const ON_3dPoint p = curve->PointAt(dom[0]);
-		    const ON_3dPoint from = curve->PointAt(dom[0]+nudge);
-		    if ( !st->getSurfacePoint(p,uv,from) > 0 ) {
-		      	cerr << "Error: Can not get surface point." << endl;
-		    }
-//		    ON_Interval u = surface->Domain(0);
-//		    ON_Interval v = surface->Domain(1);
-//		    ON_3dPoint startuv(u[0],v[0],0.0);
-//		    ON_3dPoint enduv(u[1],v[0],0.0);
-//		    c2d = surface->Pullback( *curve,1.0e-6,NULL,startuv,enduv);
-		    //c2d = pullback_curve(st, curve);
-		    //c2d = test2_pullback_curve(st, curve);
-		    data = test2_pullback_samples(st, curve);
-		    if (!orientWithCurve) {
-		      data->order_reversed = true;
-		    } else {
-		    	data->order_reversed = false;
-		    }
-		    data->edge = edge;
-		    curve_pullback_samples.push_back(data);
-		    if (!orientWithCurve) {
-		    	list<ON_2dPointArray*>::iterator si;
-		    	si = data->segments.begin();
-		    	list<ON_2dPointArray*> rsegs;
-		    	while (si != data->segments.end()) {
-					ON_2dPointArray* samples = (*si);
-					samples->Reverse();
-					rsegs.push_front(samples);
-					si++;
-		    	}
-		    	data->segments.clear();
-		    	si = rsegs.begin();
-		    	while (si != rsegs.end()) {
-		    		ON_2dPointArray* samples = (*si);
-		    		data->segments.push_back(samples);
-		    		si++;
-		    	}
-		    	rsegs.clear();
-		    }
-
-		    //ON_Curve* testcurve = c2d->Duplicate();
-		    //c2d = brlcad::pullback_curve((ON_BrepFace*)face,curve);
-		}
-		/*
-	    if (!orientWithCurve) {
-	      c2d->Reverse();
-	      data->order_reversed = true;
-	    } else {
-	    	data->order_reversed = false;
+	if (!orientWithCurve) {
+	    data->order_reversed = true;
+	} else {
+	    data->order_reversed = false;
+	}
+	data->edge = edge;
+	curve_pullback_samples.push_back(data);
+	if (!orientWithCurve) {
+	    list<ON_2dPointArray*>::iterator si;
+	    si = data->segments.begin();
+	    list<ON_2dPointArray*> rsegs;
+	    while (si != data->segments.end()) {
+		ON_2dPointArray* samples = (*si);
+		samples->Reverse();
+		rsegs.push_front(samples);
+		si++;
 	    }
-	    */
-	}
-	// check for seams and singularities
-	if ( !check_pullback_data(curve_pullback_samples) ) {
-		cerr << "Error: Can not resolve seam or singularity issues." << endl;
-	}
-	list<PBCData *>::iterator cs = curve_pullback_samples.begin();
-	list<PBCData *>::iterator next_cs;
-	int trimcnt = 0;
-//	while(cs!=curve_pullback_samples.end()) {
-//		PBCData *data = (*cs);
-//		int ilast = data->samples.Count() - 1;
-//		cerr << "T:" << trimcnt++ << endl;
-//		cerr << "    start - " << data->samples[0].x << "," << data->samples[0].y << endl;
-//		cerr << "    end -   " << data->samples[ilast].x << "," << data->samples[ilast].y << endl;
-//		cs++;
-//	}
-//	cs = curve_pullback_samples.begin();
-
-/*
-	//TODO: check validate routine with boggle
-	//ugly hack to get trim endpoint tolerance happy
-	while(cs!=curve_pullback_samples.end()) {
-		ON_2dPoint end_current,start_next;
-		PBCData *data = (*cs);
-
-		next_cs = cs;
-		next_cs++;
-		if (next_cs == curve_pullback_samples.end())
-			next_cs = curve_pullback_samples.begin();
-	    end_current=data->samples[data->samples.Count()-1];
-	    start_next=(*next_cs)->samples[0];
-	    //TODO: check over tolerance here
-	    double d = end_current.DistanceTo(start_next);
-	    if (d <= 0.0001) {
-	    	data->samples[data->samples.Count()-1].x = start_next.x;
-	    	data->samples[data->samples.Count()-1].y = start_next.y;
+	    data->segments.clear();
+	    si = rsegs.begin();
+	    while (si != rsegs.end()) {
+		ON_2dPointArray* samples = (*si);
+		data->segments.push_back(samples);
+		si++;
 	    }
-	    cs++;
+	    rsegs.clear();
 	}
-*/
-	cs = curve_pullback_samples.begin();
-	while(cs!=curve_pullback_samples.end()) {
-		next_cs = cs;
-		next_cs++;
-		if (next_cs == curve_pullback_samples.end())
-			next_cs = curve_pullback_samples.begin();
-		PBCData *data = (*cs);
-    	list<ON_2dPointArray*>::iterator si;
-    	si = data->segments.begin();
+
+    }
+    // check for seams and singularities
+    if (!check_pullback_data(curve_pullback_samples)) {
+	cerr << "Error: Can not resolve seam or singularity issues." << endl;
+    }
+    list<PBCData *>::iterator cs = curve_pullback_samples.begin();
+    list<PBCData *>::iterator next_cs;
+    int trimcnt = 0;
+    cs = curve_pullback_samples.begin();
+    while (cs != curve_pullback_samples.end()) {
+	next_cs = cs;
+	next_cs++;
+	if (next_cs == curve_pullback_samples.end())
+	    next_cs = curve_pullback_samples.begin();
+	PBCData *data = (*cs);
+	list<ON_2dPointArray*>::iterator si;
+	si = data->segments.begin();
+	PBCData *ndata = (*next_cs);
+	list<ON_2dPointArray*>::iterator nsi;
+	nsi = ndata->segments.begin();
+	ON_2dPointArray* nsamples = (*nsi);
+
+	while (si != data->segments.end()) {
+	    nsi = si;
+	    nsi++;
+	    if (nsi == data->segments.end()) {
 		PBCData *ndata = (*next_cs);
-    	list<ON_2dPointArray*>::iterator nsi;
-    	nsi = ndata->segments.begin();
-    	ON_2dPointArray* nsamples = (*nsi);
+		nsi = ndata->segments.begin();
+	    }
+	    ON_2dPointArray* samples = (*si);
+	    nsamples = (*nsi);
 
-    	while (si != data->segments.end()) {
-    		nsi = si;
-    		nsi++;
-    		if (nsi == data->segments.end()) {
-    			PBCData *ndata = (*next_cs);
-    			nsi = ndata->segments.begin();
-    		}
-			ON_2dPointArray* samples = (*si);
-			nsamples = (*nsi);
+	    //TODO:Fix this shouldn't have sample counts less than 2
+	    if (samples->Count() < 2) {
+		si++;
+		continue;
+	    }
+	    int trimCurve = brep->m_C2.Count();
+	    //TODO: remove debugging code
+	    if ((false) && (trimCurve == 68)) {
+		cerr << "We are here!!!" << endl;
+	    }
+	    ON_Curve* c2d = interpolateCurve(*samples);
+	    brep->m_C2.Append(c2d);
 
-			//TODO:Fix this shouldn't have sample counts less than 2
-			if (samples->Count() < 2) {
-				si++;
-				continue;
-			}
-			ON_Curve* c2d = interpolateCurve(*samples);
-			int trimCurve = brep->m_C2.Count();
-			brep->m_C2.Append(c2d);
+	    ON_BrepTrim& trim = brep->NewTrim((ON_BrepEdge&) *data->edge, data->order_reversed, (ON_BrepLoop&) *loop, trimCurve);
+	    trim.m_tolerance[0] = 1e-3; // XXX: tolerance?
+	    trim.m_tolerance[1] = 1e-3;
+	    ON_Interval PD = trim.ProxyCurveDomain();
+	    trim.m_iso = surface->IsIsoparametric(*c2d, &PD);
 
-			ON_BrepTrim& trim = brep->NewTrim((ON_BrepEdge&)*data->edge, data->order_reversed, (ON_BrepLoop&)*loop, trimCurve);
-			trim.m_tolerance[0] = 1e-3; // XXX: tolerance?
-			trim.m_tolerance[1] = 1e-3;
-			ON_Interval PD = trim.ProxyCurveDomain();
-			trim.m_iso = surface->IsIsoparametric(*c2d, &PD);
-
-			trim.IsValid(&tl);
-
-			int ilast = samples->Count() - 1;
-
-			// check for bridging trim, trims along singularities
-			// are implicitly expected
-			ON_2dPoint end_current,start_next;
-			end_current=(*samples)[samples->Count()-1];
-	//	    //TODO:Fix this shouldn't have sample counts less than 2
-	//	    while ((*next_cs)->samples.Count() < 2) {
-	//	    	next_cs++;
-	//			if (next_cs == curve_pullback_samples.end())
-	//				next_cs = curve_pullback_samples.begin();
-	//	    }
-			start_next=(*nsamples)[0];
-
-			if (true && (end_current.DistanceTo(start_next) > PBC_TOL)) {
-				//cerr << "endpoints don't connect" << endl;
-				int is;
-				const ON_Surface *surf = data->surftree->getSurface();
-				if ( (is=check_pullback_singularity_bridge(surf,end_current,start_next)) >= 0) {
-					// insert trim
-					//cerr << "insert singular trim along ";
-					// 0 = south, 1 = east, 2 = north, 3 = west
-					ON_Surface::ISO iso;
-					switch (is) {
-					case 0:
-						//south
-						iso = ON_Surface::S_iso;
-						break;
-					case 1:
-						//east
-						iso = ON_Surface::E_iso;
-						break;
-					case 2:
-						//north
-						iso = ON_Surface::N_iso;
-						break;
-					case 3:
-						//west
-						iso = ON_Surface::W_iso;
-					}
-
-					ON_Curve* c2d = new ON_LineCurve(end_current,start_next);
-					trimCurve = brep->m_C2.Count();
-					brep->m_C2.Append(c2d);
-
-					int vi;
-					if (data->order_reversed)
-						vi = data->edge->m_vi[0];
-					else
-						vi = data->edge->m_vi[1];
-
-					ON_BrepTrim& trim = brep->NewSingularTrim(brep->m_V[vi],(ON_BrepLoop&)*loop,iso,trimCurve);
-
-					trim.m_tolerance[0] = 1e-3; //TODO: need constant tolerance?
-					trim.m_tolerance[1] = 1e-3;
-					ON_Interval PD = trim.ProxyCurveDomain();
-					trim.m_iso = surf->IsIsoparametric(*brep->m_C2[trimCurve], &PD);
-					trim.m_iso = iso;
-					//trim.Reverse();
-					trim.IsValid(&tl);
-				} /*else if ((is=check_pullback_seam_bridge(surf,end_current,start_next)) > 0) {
-					ON_Surface::ISO iso;
-					switch (is) {
-					case 1:
-						//east
-						iso = ON_Surface::x_iso;
-						break;
-					case 2:
-						//north
-						iso = ON_Surface::y_iso;
-						break;
-					case 3:
-						//west
-						iso = ON_Surface::not_iso;
-					}
-
-					ON_Curve* c2d = new ON_LineCurve(end_current,start_next);
-					trimCurve = brep->m_C2.Count();
-					brep->m_C2.Append(c2d);
-
-					int vi;
-					ON_BrepVertex& v = brep->NewVertex(end_current,1e-6);
-
-					ON_BrepTrim& trim = brep->NewSingularTrim(v,(ON_BrepLoop&)*loop,iso,trimCurve);
-
-					trim.m_tolerance[0] = 1e-3; //TODO: need constant tolerance?
-					trim.m_tolerance[1] = 1e-3;
-					ON_Interval PD = trim.ProxyCurveDomain();
-					trim.m_iso = surf->IsIsoparametric(*brep->m_C2[trimCurve], &PD);
-					trim.m_iso = iso;
-					//trim.Reverse();
-					trim.IsValid(&tl);
-				}*/
-			}
-			si++;
+	    if (!trim.IsValid(&tl)) {
+		ON_NurbsCurve nurbs_curve;
+		c2d->GetNurbForm(nurbs_curve);
+		cerr << "Num_knots - " << nurbs_curve.KnotCount() << endl;
+		cerr << "CV count - " << nurbs_curve.CVCount() << endl;
+		//knot[17959]=0.310448 >= knot[17960]=0.310448
+		for (int i = 17955; i < 17970; i++) {
+		    cerr << "Knot[" << i << "] - " << nurbs_curve.Knot(i) << endl;
 		}
+		for (int i = 17955; i < 17970; i++) {
+		    ON_3dPoint p;
+		    nurbs_curve.GetCV(i, p);
+		    cerr << "CV[" << i << "] - " << p.x << "," << p.y << endl;
+		}
+		for (int i = 8970; i < 8989; i++) {
+		    cerr << "samples[" << i << "] - " << (*samples)[i].x << "," << (*samples)[i].y << endl;
+		}
+	    }
 
-	    cs++;
+	    int ilast = samples->Count() - 1;
+
+	    // check for bridging trim, trims along singularities
+	    // are implicitly expected
+	    ON_2dPoint end_current, start_next;
+	    end_current = (*samples)[samples->Count() - 1];
+	    start_next = (*nsamples)[0];
+
+	    if (end_current.DistanceTo(start_next) > PBC_TOL) {
+		//cerr << "endpoints don't connect" << endl;
+		int is;
+		const ON_Surface *surf = data->surftree->getSurface();
+		if ((is = check_pullback_singularity_bridge(surf, end_current, start_next)) >= 0) {
+		    // insert trim
+		    //cerr << "insert singular trim along ";
+		    // 0 = south, 1 = east, 2 = north, 3 = west
+		    ON_Surface::ISO iso;
+		    switch (is) {
+		    case 0:
+			//south
+			iso = ON_Surface::S_iso;
+			break;
+		    case 1:
+			//east
+			iso = ON_Surface::E_iso;
+			break;
+		    case 2:
+			//north
+			iso = ON_Surface::N_iso;
+			break;
+		    case 3:
+			//west
+			iso = ON_Surface::W_iso;
+		    }
+
+		    ON_Curve* c2d = new ON_LineCurve(end_current, start_next);
+		    trimCurve = brep->m_C2.Count();
+		    brep->m_C2.Append(c2d);
+
+		    int vi;
+		    if (data->order_reversed)
+			vi = data->edge->m_vi[0];
+		    else
+			vi = data->edge->m_vi[1];
+
+		    ON_BrepTrim& trim = brep->NewSingularTrim(brep->m_V[vi], (ON_BrepLoop&) *loop, iso, trimCurve);
+
+		    trim.m_tolerance[0] = 1e-3; //TODO: need constant tolerance?
+		    trim.m_tolerance[1] = 1e-3;
+		    ON_Interval PD = trim.ProxyCurveDomain();
+		    trim.m_iso = surf->IsIsoparametric(*brep->m_C2[trimCurve], &PD);
+		    trim.m_iso = iso;
+		    //trim.Reverse();
+		    trim.IsValid(&tl);
+		}
+	    }
+	    si++;
 	}
+	cs++;
+    }
 
-	return true;
+    return true;
 }
 
 bool
@@ -2712,21 +2586,6 @@ SurfaceOfRevolution::LoadONBrep(ON_Brep *brep)
 	//cerr << "Error: ::LoadONBrep(ON_Brep *brep) not implemented for " << entityname << endl;
 	return true;
 }
-
-bool
-SweptSurface::LoadONBrep(ON_Brep *brep)
-{
-	if (ON_id >= 0)
-		return true; // already loaded
-
-	if (!swept_curve->LoadONBrep(brep)) {
-		cerr << "Error: " << entityname << "::LoadONBrep() - Error loading openNURBS brep." << endl;
-		return false;
-	}
-
-	return true;
-}
-
 
 bool
 VertexLoop::LoadONBrep(ON_Brep *brep)

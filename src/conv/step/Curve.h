@@ -67,8 +67,8 @@ public:
 	virtual void Print(int level);
 	virtual void SetParameterTrim(double start, double end);
 	void SetPointTrim(const double *start, const double *end);
-	void Start(Vertex *v) { trimmed=false; start = v; };
-	void End(Vertex *v) { trimmed=false; end = v; };
+	void Start(Vertex *v);
+	void End(Vertex *v);
 
 	//static methods
 	static STEPEntity *Create(STEPWrapper *sw,SCLP23(Application_instance) *sse);

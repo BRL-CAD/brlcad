@@ -45,6 +45,9 @@ extern void SchemaInit (class Registry &);
 
 InstMgr   instance_list;
 
+using namespace std;
+
+
 void
 usage() {
 	cerr << "Usage: step-g -o outfile.g infile.stp \n" << endl;

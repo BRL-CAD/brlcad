@@ -31,7 +31,8 @@
 			cout << "    "; \
 	}
 
-#define TRACE(s) std::cerr << __FILE__ << ":" << __LINE__ << ":" << __func__ << ":" << s << std::endl;
+//TODO
+//#define TRACE(s) std::cerr << __FILE__ << ":" << __LINE__ << ":" << __func__ << ":" << s << std::endl;
 #define ERROR(s) std::cerr << __FILE__ << ":" << __LINE__ << ":" << __func__ << ":" << s << std::endl;
 
 #include <list>

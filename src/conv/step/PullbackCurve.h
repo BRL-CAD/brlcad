@@ -84,6 +84,11 @@ extern enum seam_direction seam_direction(ON_2dPoint uv1,ON_2dPoint uv2);
 extern ON_Curve*
 interpolateCurve(ON_2dPointArray& samples);
 
+
+extern ON_Curve*
+refit_edge(const ON_BrepEdge* edge,
+		double tolerance);
+
 extern ON_Curve*
 test1_pullback_curve(const brlcad::SurfaceTree* surfacetree,
 		const ON_Curve* curve,
@@ -97,7 +102,7 @@ test2_pullback_curve(const brlcad::SurfaceTree* surfacetree,
 		double flatness = 1.0e-3);
 
 extern PBCData *
-test2_pullback_samples(const brlcad::SurfaceTree* surfacetree,
+pullback_samples(const brlcad::SurfaceTree* surfacetree,
 		const ON_Curve* curve,
 		double tolerance = 1.0e-6,
 		double flatness = 1.0e-3);

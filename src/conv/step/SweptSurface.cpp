@@ -104,6 +104,20 @@ SweptSurface::Create(STEPWrapper *sw, SCLP23(Application_instance) *sse) {
 	}
 }
 
+bool
+SweptSurface::LoadONBrep(ON_Brep *brep)
+{
+	if (ON_id >= 0)
+		return true; // already loaded
+
+	if (!swept_curve->LoadONBrep(brep)) {
+		cerr << "Error: " << entityname << "::LoadONBrep() - Error loading openNURBS brep." << endl;
+		return false;
+	}
+
+	return true;
+}
+
 // Local Variables:
 // tab-width: 8
 // mode: C++

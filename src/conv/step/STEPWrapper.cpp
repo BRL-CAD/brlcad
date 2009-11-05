@@ -75,6 +75,8 @@ STEPWrapper::convert(BRLCADWrapper *dotg) {
 //				LocalUnits::solidangle = 1.0;
 				ON_Brep *onBrep = aBrep->GetONBrep();
 
+				//ON_Brep *tbrep = TightenBrep( onBrep );
+
 				dotg->WriteBrep(name,onBrep);
 
 				delete onBrep;

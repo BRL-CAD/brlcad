@@ -123,6 +123,18 @@ Curve::SetPointTrim(const double *start, const double *end) {
 	}
 }
 
+void
+Curve::Start(Vertex *v) {
+	trimmed=false;
+	start = v;
+}
+
+void
+Curve::End(Vertex *v) {
+	trimmed=false;
+	end = v;
+}
+
 STEPEntity *
 Curve::Create(STEPWrapper *sw,SCLP23(Application_instance) *sse){
 	Factory::OBJECTS::iterator i;

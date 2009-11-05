@@ -36,6 +36,7 @@
 #include "tnt.h"
 #include "jama_lu.h"
 #include "opennurbs_ext.h"
+#include "brep.h"
 
 #include "PullbackCurve.h"
 
@@ -46,7 +47,6 @@ using namespace brlcad;
 #define RANGE_LO 0.45
 #define UNIVERSAL_SAMPLE_COUNT 1001
 
-//numeric_limits<double> real;
 
 typedef struct _bspline {
   int p; // degree
@@ -169,7 +169,7 @@ seam_direction(ON_2dPoint uv1,ON_2dPoint uv2) {
        	return UNKNOWN_SEAM_DIRECTION;
     }
 }
-#define BREP_INTERSECTION_ROOT_EPSILON 1e-6
+
 bool
 toUV(PBCData& data, ON_2dPoint& out_pt, double t, double knudge=0.0) {
   ON_3dPoint pointOnCurve = data.curve->PointAt(t);
@@ -188,7 +188,6 @@ toUV(PBCData& data, ON_2dPoint& out_pt, double t, double knudge=0.0) {
   }
 
   ON_3dVector dt;
-  double a,b;
   data.curve->Ev1Der(t,pointOnCurve,dt);
   ON_3dVector tangent = data.curve->TangentAt(t);
   //data.surf->GetClosestPoint(pointOnCurve,&a,&b,0.0001);
@@ -214,7 +213,7 @@ toUV(PBCData& data, ON_2dPoint& out_pt, double t, double knudge=0.0) {
   dir.Reverse();
   ON_Ray ray(pointOnCurve,dir);
   brep_get_plane_ray(ray,pr);
-  //know use this as guess to iterate to closer solution
+  //now use this as guess to iterate to closer solution
   pt2d_t Rcurr;
   pt2d_t new_uv;
   ON_3dPoint pt;
@@ -250,7 +249,6 @@ toUV(SurfaceTree *surftree, const ON_Curve *curve,  ON_2dPoint& out_pt, double t
   ON_3dPoint pointOnCurve = curve->PointAt(t);
   ON_3dPoint knudgedPointOnCurve = curve->PointAt(t+knudge);
   ON_3dVector dt;
-  double a,b;
   curve->Ev1Der(t,pointOnCurve,dt);
   ON_3dVector tangent = curve->TangentAt(t);
   //data.surf->GetClosestPoint(pointOnCurve,&a,&b,0.0001);
@@ -506,7 +504,6 @@ interpolateLocalCubicCurve(ON_2dPointArray &Q) {
 
 	//generateParameters(spline);
 	double u[num_segments+1];
-	double U[2*(num_segments-1) + 8];
 	u[0] = 0.0;
 	for(int k=0;k<num_segments;k++){
 		u[k+1] = u[k] + 3.0*(P[k][1]-P[k][0]).Length();
@@ -529,7 +526,6 @@ interpolateLocalCubicCurve(ON_2dPointArray &Q) {
 		c->SetKnot(degree + 2*(i -1),knot_value);
 		c->SetKnot(degree + 2*(i -1) + 1,knot_value);
 	}
-	int k = c->KnotCount();
 	for (int i = m - p; i < m; i++) {
 		c->SetKnot(i,1.0);
 	}
@@ -540,6 +536,102 @@ interpolateLocalCubicCurve(ON_2dPointArray &Q) {
 		c->SetCV(i,p);
 	}
 	return c;
+}
+
+ON_NurbsCurve*
+interpolateLocalCubicCurve(ON_3dPointArray &Q)
+{
+    int num_samples = Q.Count();
+    int num_segments = Q.Count() - 1;
+    int qsize = num_samples + 3;
+    ON_3dVector qarray[qsize];
+    ON_3dVector *q = &qarray[1];
+
+    for (int i = 1; i < Q.Count(); i++) {
+	q[i] = Q[i] - Q[i - 1];
+    }
+    q[0] = 2.0 * q[1] - q[2];
+    q[-1] = 2.0 * q[0] - q[1];
+
+    q[num_samples] = 2 * q[num_samples - 1] - q[num_samples - 2];
+    q[num_samples + 1] = 2 * q[num_samples] - q[num_samples - 1];
+    q[num_samples + 2] = 2 * q[num_samples + 1] - q[num_samples];
+
+    ON_3dVector T[num_samples];
+    double a[num_samples];
+    for (int k = 0; k < num_samples; k++) {
+	ON_3dVector a = ON_CrossProduct(q[k - 1], q[k]);
+	ON_3dVector b = ON_CrossProduct(q[k + 1], q[k + 2]);
+	double alength = a.Length();
+	if (NEAR_ZERO(alength,PBC_TOL)) {
+	    a[k] = 1.0;
+	} else {
+	    a[k] = (a.Length()) / (a.Length() + b.Length());
+	}
+	T[k] = (1.0 - a[k]) * q[k] + a[k] * q[k + 1];
+	T[k].Unitize();
+    }
+    ON_3dPointArray P[num_samples - 1];
+    ON_3dPointArray control_points;
+    control_points.Append(Q[0]);
+    for (int i = 1; i < num_samples; i++) {
+	ON_3dPoint P0 = Q[i - 1];
+	ON_3dPoint P3 = Q[i];
+	ON_3dVector T0 = T[i - 1];
+	ON_3dVector T3 = T[i];
+
+	double a, b, c;
+
+	ON_3dVector vT0T3 = T0 + T3;
+	ON_3dVector dP0P3 = P3 - P0;
+	a = 16.0 - vT0T3.Length() * vT0T3.Length();
+	b = 12.0 * (dP0P3 * vT0T3);
+	c = -36.0 * dP0P3.Length() * dP0P3.Length();
+
+	double alpha = (-b + sqrt(b * b - 4.0 * a * c)) / (2.0 * a);
+
+	ON_3dPoint P1 = P0 + (1.0 / 3.0) * alpha * T0;
+	control_points.Append(P1);
+	ON_3dPoint P2 = P3 - (1.0 / 3.0) * alpha * T3;
+	control_points.Append(P2);
+	P[i - 1].Append(P0);
+	P[i - 1].Append(P1);
+	P[i - 1].Append(P2);
+	P[i - 1].Append(P3);
+    }
+    control_points.Append(Q[num_samples - 1]);
+
+    //generateParameters(spline);
+    double u[num_segments + 1];
+    u[0] = 0.0;
+    for (int k = 0; k < num_segments; k++) {
+	u[k + 1] = u[k] + 3.0 * (P[k][1] - P[k][0]).Length();
+    }
+    int degree = 3;
+    int n = control_points.Count();
+    int p = degree;
+    int m = n + p - 1;
+    int dimension = 3;
+    ON_NurbsCurve* c = ON_NurbsCurve::New(dimension, false, degree + 1, n);
+    c->ReserveKnotCapacity(m);
+    for (int i = 0; i < degree; i++) {
+	c->SetKnot(i, 0.0);
+    }
+    for (int i = 1; i < num_segments; i++) {
+	double knot_value = u[i] / u[num_segments];
+	c->SetKnot(degree + 2 * (i - 1), knot_value);
+	c->SetKnot(degree + 2 * (i - 1) + 1, knot_value);
+    }
+    for (int i = m - p; i < m; i++) {
+	c->SetKnot(i, 1.0);
+    }
+
+    // insert the control points
+    for (int i = 0; i < n; i++) {
+	ON_3dPoint p = control_points[i];
+	c->SetCV(i, p);
+    }
+    return c;
 }
 
 void
@@ -620,8 +712,9 @@ interpolateCurve(ON_2dPointArray &samples) {
 
 		return nurbs;
 	} else {
+		ON_TextLog dump;
 		ON_NurbsCurve* nurbs;
-		if (samples.Count() < 1000) {
+		if (false) { //(samples.Count() < 1000) { //
 			BSpline spline;
 			spline.p = 3;
 			spline.n = samples.Count()-1;
@@ -630,9 +723,11 @@ interpolateCurve(ON_2dPointArray &samples) {
 			generateParameters(spline);
 			generateControlPoints(spline, samples);
 			nurbs = newNURBSCurve(spline,2);
+			//nurbs->Dump(dump);
 		} else {
 			// local vs. global interpolation for large point sampled curves
 			nurbs = interpolateLocalCubicCurve(samples);
+			//nurbs->Dump(dump);
 		}
 		return nurbs;
     }
@@ -876,8 +971,9 @@ pullback_samples(PBCData* data,
 	delete [] knots;
 	return samples;
 }
+
 PBCData *
-test2_pullback_samples(const SurfaceTree* surfacetree,
+pullback_samples(const SurfaceTree* surfacetree,
 		const ON_Curve* curve,
 		double tolerance,
 		double flatness) {
@@ -904,7 +1000,9 @@ test2_pullback_samples(const SurfaceTree* surfacetree,
 				  if (samples2 != NULL) {
 					  data->segments.push_back(samples2);
 				  }
-				  cerr << "need to divide curve across the seam" << endl;
+				  //TODO: remove debugging code
+				  if (false)
+				      cerr << "need to divide curve across the seam" << endl;
 			  } else {
 				  ON_2dPointArray *samples = pullback_samples(data,tmin,tmax);
 				  if (samples != NULL) {
@@ -929,6 +1027,213 @@ test2_pullback_samples(const SurfaceTree* surfacetree,
   }
   return data;
 }
+
+
+ON_Curve*
+refit_edge(const ON_BrepEdge* edge, double tolerance)
+{
+    double edge_tolerance = 0.01;
+    ON_Brep *brep = edge->Brep();
+    ON_3dPoint start = edge->PointAtStart();
+    ON_3dPoint end = edge->PointAtEnd();
+
+    ON_BrepTrim& trim1 = brep->m_T[edge->m_ti[0]];
+    ON_BrepTrim& trim2 = brep->m_T[edge->m_ti[1]];
+    ON_BrepFace *face1 = trim1.Face();
+    ON_BrepFace *face2 = trim2.Face();
+    const ON_Surface *surface1 = face1->SurfaceOf();
+    const ON_Surface *surface2 = face2->SurfaceOf();
+    bool removeTrimmed = false;
+    SurfaceTree *st1 = new SurfaceTree(face1,removeTrimmed);
+    SurfaceTree *st2 = new SurfaceTree(face2,removeTrimmed);
+
+    ON_Curve *curve = brep->m_C3[edge->m_c3i];
+    double t0,t1;
+    curve->GetDomain(&t0,&t1);
+    ON_Plane plane;
+    curve->FrameAt(t0,plane);
+    ON_3dPoint origin = plane.Origin();
+    ON_3dVector xaxis = plane.Xaxis();
+    ON_3dVector yaxis = plane.Yaxis();
+    ON_3dVector zaxis = plane.zaxis;
+    ON_3dPoint px = origin + xaxis;
+    ON_3dPoint py = origin + yaxis;
+    ON_3dPoint pz = origin + zaxis;
+
+    int numKnots = curve->SpanCount();
+    double *knots = new double[numKnots+1];
+    curve->GetSpanVector(knots);
+
+    int samplesperknotinterval;
+    int degree = curve->Degree();
+
+    if (degree > 1) {
+  	  samplesperknotinterval = 3*degree;
+    } else {
+  	  samplesperknotinterval = 18*degree;
+    }
+    ON_2dPoint pt;
+    double t = 0.0;
+    ON_3dPoint pointOnCurve;
+    ON_3dPoint knudgedPointOnCurve;
+    for (int i = 0; i <= numKnots; i++) {
+	if (i <= numKnots / 2) {
+	    if (i > 0) {
+		double delta = (knots[i] - knots[i - 1]) / (double) samplesperknotinterval;
+		for (int j = 1; j < samplesperknotinterval; j++) {
+		    t = knots[i - 1] + j * delta;
+		    pointOnCurve = curve->PointAt(t);
+		    knudgedPointOnCurve = curve->PointAt(t + PBC_TOL);
+
+		    ON_3dPoint point = pointOnCurve;
+		    ON_3dPoint knudgepoint = knudgedPointOnCurve;
+		    ON_3dPoint ps1;
+		    ON_3dPoint ps2;
+		    bool found = false;
+		    double dist;
+		    while (!found) {
+			ON_2dPoint uv;
+			if (st1->getSurfacePoint((const ON_3dPoint&) point, uv, (const ON_3dPoint&) knudgepoint, edge_tolerance) > 0) {
+			    ps1 = surface1->PointAt(uv.x, uv.y);
+			    if (st2->getSurfacePoint((const ON_3dPoint&) point, uv, (const ON_3dPoint&) knudgepoint, edge_tolerance) > 0) {
+				ps2 = surface2->PointAt(uv.x, uv.y);
+			    }
+			}
+			dist = ps1.DistanceTo(ps2);
+			if (NEAR_ZERO(dist,PBC_TOL)) {
+			    point = ps1;
+			    found = true;
+			} else {
+			    ON_3dVector v1 = ps1 - point;
+			    ON_3dVector v2 = ps2 - point;
+			    knudgepoint = point;
+			    ON_3dVector deltav = v1 + v2;
+			    if ( NEAR_ZERO(deltav.Length(),PBC_TOL) ) {
+				found = true; // as close as we are going to get
+			    } else {
+				point = point + v1 + v2;
+			    }
+			}
+		    }
+		}
+	    }
+	    t = knots[i];
+	    pointOnCurve = curve->PointAt(t);
+	    knudgedPointOnCurve = curve->PointAt(t + PBC_TOL);
+	    ON_3dPoint point = pointOnCurve;
+	    ON_3dPoint knudgepoint = knudgedPointOnCurve;
+	    ON_3dPoint ps1;
+	    ON_3dPoint ps2;
+	    bool found = false;
+	    double dist;
+
+	    while (!found) {
+		ON_2dPoint uv;
+		if (st1->getSurfacePoint((const ON_3dPoint&) point, uv, (const ON_3dPoint&) knudgepoint, edge_tolerance) > 0) {
+		    ps1 = surface1->PointAt(uv.x, uv.y);
+		    if (st2->getSurfacePoint((const ON_3dPoint&) point, uv, (const ON_3dPoint&) knudgepoint, edge_tolerance) > 0) {
+			ps2 = surface2->PointAt(uv.x, uv.y);
+		    }
+		}
+		dist = ps1.DistanceTo(ps2);
+		if (NEAR_ZERO(dist,PBC_TOL)) {
+		    point = ps1;
+		    found = true;
+		} else {
+		    ON_3dVector v1 = ps1 - point;
+		    ON_3dVector v2 = ps2 - point;
+		    knudgepoint = point;
+		    ON_3dVector deltav = v1 + v2;
+		    if ( NEAR_ZERO(deltav.Length(),PBC_TOL) ) {
+			found = true; // as close as we are going to get
+		    } else {
+			point = point + v1 + v2;
+		    }
+		}
+	    }
+	} else {
+	    if (i > 0) {
+		double delta = (knots[i] - knots[i - 1]) / (double) samplesperknotinterval;
+		for (int j = 1; j < samplesperknotinterval; j++) {
+		    t = knots[i - 1] + j * delta;
+		    pointOnCurve = curve->PointAt(t);
+		    knudgedPointOnCurve = curve->PointAt(t - PBC_TOL);
+
+		    ON_3dPoint point = pointOnCurve;
+		    ON_3dPoint knudgepoint = knudgedPointOnCurve;
+		    ON_3dPoint ps1;
+		    ON_3dPoint ps2;
+		    bool found = false;
+		    double dist;
+
+		    while (!found) {
+			ON_2dPoint uv;
+			if (st1->getSurfacePoint((const ON_3dPoint&) point, uv, (const ON_3dPoint&) knudgepoint, edge_tolerance) > 0) {
+			    ps1 = surface1->PointAt(uv.x, uv.y);
+			    if (st2->getSurfacePoint((const ON_3dPoint&) point, uv, (const ON_3dPoint&) knudgepoint, edge_tolerance) > 0) {
+				ps2 = surface2->PointAt(uv.x, uv.y);
+			    }
+			}
+			dist = ps1.DistanceTo(ps2);
+			if (NEAR_ZERO(dist,PBC_TOL)) {
+			    point = ps1;
+			    found = true;
+			} else {
+			    ON_3dVector v1 = ps1 - point;
+			    ON_3dVector v2 = ps2 - point;
+			    knudgepoint = point;
+			    ON_3dVector deltav = v1 + v2;
+			    if ( NEAR_ZERO(deltav.Length(),PBC_TOL) ) {
+				found = true; // as close as we are going to get
+			    } else {
+				point = point + v1 + v2;
+			    }
+			}
+		    }
+		}
+		t = knots[i];
+		pointOnCurve = curve->PointAt(t);
+		knudgedPointOnCurve = curve->PointAt(t - PBC_TOL);
+		ON_3dPoint point = pointOnCurve;
+		ON_3dPoint knudgepoint = knudgedPointOnCurve;
+		ON_3dPoint ps1;
+		ON_3dPoint ps2;
+		bool found = false;
+		double dist;
+
+		while (!found) {
+		    ON_2dPoint uv;
+		    if (st1->getSurfacePoint((const ON_3dPoint&) point, uv, (const ON_3dPoint&) knudgepoint, edge_tolerance) > 0) {
+			ps1 = surface1->PointAt(uv.x, uv.y);
+			if (st2->getSurfacePoint((const ON_3dPoint&) point, uv, (const ON_3dPoint&) knudgepoint, edge_tolerance) > 0) {
+			    ps2 = surface2->PointAt(uv.x, uv.y);
+			}
+		    }
+		    dist = ps1.DistanceTo(ps2);
+		    if (NEAR_ZERO(dist,PBC_TOL)) {
+			point = ps1;
+			found = true;
+		    } else {
+			ON_3dVector v1 = ps1 - point;
+			ON_3dVector v2 = ps2 - point;
+			knudgepoint = point;
+			ON_3dVector deltav = v1 + v2;
+			if ( NEAR_ZERO(deltav.Length(),PBC_TOL) ) {
+			    found = true; // as close as we are going to get
+			} else {
+			    point = point + v1 + v2;
+			}
+		    }
+		}
+	    }
+	}
+    }
+    delete [] knots;
+
+
+    return NULL;
+}
+
 bool
 has_singularity(const ON_Surface *surf) {
 	bool ret = false;
@@ -1422,7 +1727,6 @@ resolve_pullback_seams(list<PBCData*> &pbcs) {
 	///// Loop through and fix any seam ambiguities
 	ON_2dPoint *prev = NULL;
 	ON_2dPoint *next = NULL;
-	bool complete = true;
 	cs = pbcs.begin();
 	while(cs!=pbcs.end()) {
 		PBCData *data = (*cs);
@@ -1444,12 +1748,12 @@ resolve_pullback_seams(list<PBCData*> &pbcs) {
 				next = &(*samples)[0];
 				list<PBCData*>::reverse_iterator rcs(cs);
 				rcs--;
-				PBCData *d1 = (*cs);
-				PBCData *d2 = (*rcs);
 				list<ON_2dPointArray *>::reverse_iterator rsi(si);
 				while (rcs != pbcs.rend()) {
 					PBCData *rdata = (*rcs);
 					if (data->segments.rend() == rdata->segments.rend() ) {
+					    //TODO: remove debugging
+					    if (false)
 						cerr << "Ends match" << endl;
 					}
 					while(rsi != rdata->segments.rend()) {
@@ -1636,9 +1940,13 @@ remove_consecutive_intersegment_duplicates(list<PBCData*> &pbcs) {
 			} else {
 				for(int i = 0; i < samples->Count()-1; i++) {
 					while ((i < (samples->Count()-1)) && (*samples)[i].DistanceTo((*samples)[i+1]) < 1e-9) {
-						cerr << "Sample Count was " << samples->Count();
+						//TODO: remove debugging code
+						if (false)
+						    cerr << "Sample Count was " << samples->Count();
 						samples->Remove(i+1);
-						cerr << " now " << samples->Count() << endl;
+						//TODO: remove debugging code
+						if (false)
+						    cerr << " now " << samples->Count() << endl;
 					}
 				}
 				si++;
