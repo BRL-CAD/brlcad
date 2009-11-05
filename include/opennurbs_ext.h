@@ -52,6 +52,17 @@
 /* subdivision size factors */
 #define BREP_SURF_SUB_FACTOR 1
 #define BREP_TRIM_SUB_FACTOR 1
+/**
+ * The EDGE_MISS_TOLERANCE setting is critical in a couple of ways -
+ * too small and the allowed uncertainty region near edges will be
+ * smaller than the actual uncertainty needed for accurate solid
+ * raytracing, too large and trimming will not be adequate.  May need
+ * to adapt this to the scale of the model, perhaps using bounding box
+ * size to key off of.
+ */
+/* #define BREP_EDGE_MISS_TOLERANCE 5e-2 */
+#define BREP_EDGE_MISS_TOLERANCE 1e-3
+#define BREP_SAME_POINT_TOLERANCE 1e-3
 
 // XXX debugging crapola (clean up later)
 #define ON_PRINT4(p) "[" << (p)[0] << "," << (p)[1] << "," << (p)[2] << "," << (p)[3] << "]"
@@ -1131,7 +1142,7 @@ template<class BV>
 	 * Return surface
 	 */
 	const ON_Surface *getSurface();
-	int getSurfacePoint(const ON_3dPoint& pt, ON_2dPoint& uv, const ON_3dPoint& from) const;
+	int getSurfacePoint(const ON_3dPoint& pt, ON_2dPoint& uv, const ON_3dPoint& from, double tolerance = BREP_SAME_POINT_TOLERANCE) const;
 
 	/**
 	 * Return just the leaves of the surface tree
