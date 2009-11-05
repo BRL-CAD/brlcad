@@ -50,7 +50,6 @@
 #include <stdio.h>
 #include <string.h>
 #include <math.h>
-#include <time.h>	/* for clock() in the tesselator. */
 #include "bio.h"
 
 #include "vmath.h"
@@ -526,17 +525,16 @@ rt_metaball_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *i
     struct rt_metaball_internal *mb;
     fastf_t mtol, radius;
     point_t center, min, max;
-    struct timeval tp[2];
     fastf_t i, j, k;
     int meh;
-    clock_t c[2];
+    struct bu_vls times;
 
     RT_CK_DB_INTERNAL(ip);
     mb = (struct rt_metaball_internal *)ip->idb_ptr;
     RT_METABALL_CK_MAGIC(mb);
 
-    gettimeofday(tp, NULL);
-    c[0] = clock();
+    bu_vls_init(&times);
+    rt_prep_timer();
 
     /* TODO: get better sampling tolerance, unless this is "good enough" */
     mtol = ttol->abs;
@@ -576,12 +574,8 @@ rt_metaball_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *i
 		 * decimated, perhaps? */
 	    }
 
-    c[1] = clock();
-    gettimeofday(tp+1, NULL);
-    printf("time: %lf seconds (%lf CPU seconds)\n", 
-	    (double)(tp[1].tv_sec-tp[0].tv_sec)
-	    +(double)(tp[1].tv_usec-tp[0].tv_usec)/(double)1e6,
-	    (double)(c[1]-c[0])/CLOCKS_PER_SEC); 
+    rt_get_timer(&times, NULL);
+    bu_log("metaball tesselate: %s\n", bu_vls_addr(&times));
 
     bu_log("ERROR: rt_metaball_tess called() is not implemented\n");
     return -1;
