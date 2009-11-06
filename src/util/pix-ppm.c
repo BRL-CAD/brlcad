@@ -42,8 +42,9 @@ static long int file_height = 512L;	/* default input height */
 static int autosize = 0;		/* !0 to autosize input */
 
 static int fileinput = 0;		/* file of pipe on input? */
-static char *file_name;
-static FILE *infp;
+static char *file_name = (char *)NULL;
+static FILE *infp = (FILE *)NULL;
+static FILE *outfp = (FILE *)NULL;
 
 static int pixbytes = 3;
 
@@ -58,7 +59,7 @@ get_args(int argc, char *argv[])
 {
     int c;
 
-    while ((c = bu_getopt(argc, argv, "a#:s:w:n:")) != EOF) {
+    while ((c = bu_getopt(argc, argv, "a#:s:w:n:o:h?")) != EOF) {
 	switch (c) {
 	    case '#':
 		pixbytes = atoi(bu_optarg);
@@ -80,6 +81,8 @@ get_args(int argc, char *argv[])
 		autosize = 0;
 		break;
 
+	    case '?':
+	    case 'h':
 	    default:		/* '?' */
 		return(0);
 	}
@@ -89,18 +92,24 @@ get_args(int argc, char *argv[])
 	if (isatty(fileno(stdin)))
 	    return(0);
 	file_name = "-";
-	infp = stdin;
     } else {
 	file_name = argv[bu_optind];
 	if ((infp = fopen(file_name, "r")) == NULL) {
 	    perror(file_name);
-	    bu_exit(1, "pix-ppm: cannot open \"%s\" for reading\n", file_name);
+	    bu_exit(1, "%s: cannot open \"%s\" for reading\n", bu_getprogname(), file_name);
 	}
 	fileinput++;
     }
 
+    if (isatty(fileno(infp))) {
+	bu_log("ERROR: %s will not read pix data from a tty\n", bu_getprogname());
+	return 0; /* usage */
+    }
+    if (isatty(fileno(outfp))) {
+	bu_exit(0, "ERROR: %s will not write ppm data to a tty\n", bu_getprogname());
+    }
     if (argc > ++bu_optind)
-	bu_log("pix-ppm: excess argument(s) ignored\n");
+	bu_log("%s: excess argument(s) ignored\n", bu_getprogname());
 
     return(1);		/* OK */
 }
@@ -110,16 +119,20 @@ main(int argc, char *argv[])
 {
     int i;
     char *row;
-    static char usage[] = "Usage: pix-ppm [-a] [-#bytes] [-w file_width] [-n file_height] [-s square_file_size] [file.pix] > file.ppm";
+    static char usage[] = "Usage: pix-ppm [-a] [-#bytes] [-w file_width] [-n file_height]\n\
+	[-s square_file_size] [-o file.ppm] [file.pix] [> file.ppm]";
 
     bu_setprogname(argv[0]);
 
+    /* important to store these before calling get_args().  they're
+     * also not necessarily constants so have to set here instead of
+     * with the declaration.
+     */
+    infp = stdin;
+    outfp = stdout;
+
     if (!get_args(argc, argv)) {
 	bu_exit (1, "%s\n", usage);
-    }
-
-    if (isatty(fileno(stdout))) {
-	bu_exit(0, "ERROR: %s will not write png data to a tty\n", bu_getprogname());
     }
 
     /* autosize input? */
@@ -129,7 +142,7 @@ main(int argc, char *argv[])
 	    file_width = (long)w;
 	    file_height = (long)h;
 	} else {
-	    bu_log("pix-ppm: unable to autosize\n");
+	    bu_log("%s: unable to autosize\n", bu_getprogname());
 	}
     }
 
@@ -138,7 +151,7 @@ main(int argc, char *argv[])
      */
     scanbuf = bu_malloc(SIZE, "scanbuf");
     if (fread(scanbuf, 1, SIZE, infp) == 0) {
-	bu_exit (1, "pix-ppm: Short read\n");
+	bu_exit (1, "%s: Short read\n", bu_getprogname());
     }
 
     if (pixbytes == 1) {
@@ -154,7 +167,7 @@ main(int argc, char *argv[])
 
     /* maximum color component value */
     printf("255\n");
-    fflush(stdout);
+    fflush(outfp);
 
     /*
      * now write them out in the right order, 'cause the
@@ -163,7 +176,7 @@ main(int argc, char *argv[])
 
     for (i = 0; i < file_height; i++) {
 	row = scanbuf + (file_height-1 - i) * ROWSIZE;
-	fwrite(row, 1, ROWSIZE, stdout);
+	fwrite(row, 1, ROWSIZE, outfp);
     }
 
     bu_free(scanbuf, "scanbuf");
