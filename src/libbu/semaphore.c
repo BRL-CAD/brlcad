@@ -323,7 +323,6 @@ bu_semaphore_reinit(unsigned int nsemaphores)
 #if !defined(PARALLEL) && !defined(DEFINED_BU_SEMAPHORES)
     return;					/* No support on this hardware */
 #else
-    unsigned int i;
 
     if (bu_nsemaphores != 0) {
 	free((void *)bu_semaphores);

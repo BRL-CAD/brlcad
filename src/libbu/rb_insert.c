@@ -65,7 +65,7 @@ _rb_insert(bu_rb_tree *tree, int order, struct bu_rb_node *new_node)
 	rb_right_child(new_node, order) = rb_null(tree);
     rb_size(new_node, order) = 1;
     if (tree->rbt_debug & BU_RB_DEBUG_OS)
-	bu_log("_rb_insert(%x): size(%x, %d)=%d\n",
+	bu_log("_rb_insert(%p): size(%p, %d)=%d\n",
 	       new_node, new_node, order, rb_size(new_node, order));
 
     /*
@@ -78,18 +78,18 @@ _rb_insert(bu_rb_tree *tree, int order, struct bu_rb_node *new_node)
 	parent = node;
 	++rb_size(parent, order);
 	if (tree->rbt_debug & BU_RB_DEBUG_OS)
-	    bu_log("_rb_insert(%x): size(%x, %d)=%d\n",
+	    bu_log("_rb_insert(%p): size(%p, %d)=%d\n",
 		   new_node, parent, order, rb_size(parent, order));
 	comparison = (*compare)(rb_data(new_node, order),
 				rb_data(node, order));
 	if (comparison < 0) {
 	    if (tree->rbt_debug & BU_RB_DEBUG_INSERT)
-		bu_log("_rb_insert(%x): <_%d <%x>, going left\n",
+		bu_log("_rb_insert(%p): <_%d <%p>, going left\n",
 		       new_node, order, node);
 	    node = rb_left_child(node, order);
 	} else {
 	    if (tree->rbt_debug & BU_RB_DEBUG_INSERT)
-		bu_log("_rb_insert(%x): >=_%d <%x>, going right\n",
+		bu_log("_rb_insert(%p): >=_%d <%p>, going right\n",
 		       new_node, order, node);
 	    node = rb_right_child(node, order);
 	    if (comparison == 0)
@@ -143,7 +143,7 @@ _rb_insert(bu_rb_tree *tree, int order, struct bu_rb_node *new_node)
     rb_set_color(rb_root(tree, order), order, RB_BLK);
 
     if (tree->rbt_debug & BU_RB_DEBUG_INSERT)
-	bu_log("_rb_insert(%x): comparison = %d, returning %d\n",
+	bu_log("_rb_insert(%p): comparison = %d, returning %d\n",
 	       new_node, comparison, result);
 
     return (result);
@@ -177,7 +177,7 @@ bu_rb_insert(bu_rb_tree *tree, void *data)
 	    (bu_rb_search(tree, order, data) != NULL))
 	{
 	    if (tree->rbt_debug & BU_RB_DEBUG_UNIQ)
-		bu_log("bu_rb_insert(<%x>, <%x>, TBD) will return %d\n",
+		bu_log("bu_rb_insert(<%p>, <%p>, TBD) will return %d\n",
 		       tree, data, -(order + 1));
 	    return (-(order + 1));
 	}
@@ -260,7 +260,7 @@ bu_rb_insert(bu_rb_tree *tree, void *data)
 	    rb_set_color(node, order, RB_BLK);
 	    rb_size(node, order) = 1;
 	    if (tree->rbt_debug & BU_RB_DEBUG_OS)
-		bu_log("bu_rb_insert(<%x>, <%x>, <%x>): size(%x, %d)=%d\n",
+		bu_log("bu_rb_insert(<%p>, <%p>, <%p>): size(%p, %d)=%d\n",
 		       tree, data, node, node, order, rb_size(node, order));
 	}
     } else {
@@ -268,7 +268,7 @@ bu_rb_insert(bu_rb_tree *tree, void *data)
 	for (order = 0; order < nm_orders; ++order)
 	    result += _rb_insert(tree, order, node);
 	if (tree->rbt_debug & BU_RB_DEBUG_UNIQ)
-	    bu_log("bu_rb_insert(<%x>, <%x>, <%x>) will return %d\n",
+	    bu_log("bu_rb_insert(<%p>, <%p>, <%p>) will return %d\n",
 		   tree, data, node, result);
     }
 

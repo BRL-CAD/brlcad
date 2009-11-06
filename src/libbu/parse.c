@@ -70,15 +70,15 @@
 		bu_bomb("NULL pointer"); \
 	} \
 	if (_p->ext_nbytes < 6) { \
-		bu_log("ERROR: BU_CK_GETPUT buffer only %d bytes, file %s, line %d\n", \
-		    _p->ext_nbytes, __FILE__, __LINE__); \
+		bu_log("ERROR: BU_CK_GETPUT buffer only %lu bytes, file %s, line %d\n", \
+		    (unsigned long)_p->ext_nbytes, __FILE__, __LINE__); \
 		bu_bomb("getput buffer too small"); \
 	} \
 	_i = (((unsigned char *)(_p->ext_buf))[0] << 8) | \
 	      ((unsigned char *)(_p->ext_buf))[1]; \
 	if (_i != BU_GETPUT_MAGIC_1) { \
-		bu_log("ERROR: BU_CK_GETPUT buffer x%x, magic1 s/b x%x, was %s(x%x), file %s, line %d\n", \
-		    _p->ext_buf, BU_GETPUT_MAGIC_1, \
+		bu_log("ERROR: BU_CK_GETPUT buffer %p, magic1 s/b %x, was %s(0x%lx), file %s, line %d\n", \
+		    (void *)_p->ext_buf, BU_GETPUT_MAGIC_1, \
 		    bu_identify_magic(_i), _i, __FILE__, __LINE__); \
 		bu_bomb("Bad getput buffer"); \
 	} \
@@ -87,16 +87,16 @@
 	       (((unsigned char *)(_p->ext_buf))[4] <<  8) | \
 		((unsigned char *)(_p->ext_buf))[5]; \
 	if (_len > _p->ext_nbytes) { \
-		bu_log("ERROR: BU_CK_GETPUT buffer x%x, expected len=%d, ext_nbytes=%d, file %s, line %d\n", \
-		    _p->ext_buf, _len, _p->ext_nbytes, \
+		bu_log("ERROR: BU_CK_GETPUT buffer %p, expected len=%ld, ext_nbytes=%lu, file %s, line %d\n", \
+		    (void *)_p->ext_buf, _len, (unsigned long)_p->ext_nbytes, \
 		    __FILE__, __LINE__); \
 		bu_bomb("Bad getput buffer"); \
 	} \
 	_i = (((unsigned char *)(_p->ext_buf))[_len-2] << 8) | \
 	      ((unsigned char *)(_p->ext_buf))[_len-1]; \
 	if (_i != BU_GETPUT_MAGIC_2) { \
-		bu_log("ERROR: BU_CK_GETPUT buffer x%x, magic2 s/b x%x, was %s(x%x), file %s, line %d\n", \
-		    _p->ext_buf, BU_GETPUT_MAGIC_2, \
+		bu_log("ERROR: BU_CK_GETPUT buffer %p, magic2 s/b %x, was %s(0x%lx), file %s, line %d\n", \
+		    (void *)_p->ext_buf, BU_GETPUT_MAGIC_2, \
 		    bu_identify_magic(_i), _i, __FILE__, __LINE__); \
 		bu_bomb("Bad getput buffer"); \
 	} \
@@ -330,7 +330,7 @@ bu_struct_import(genptr_t base, const struct bu_structparse *imp, const struct b
 		    cp += 4;
 
 		    /* don't read more than the buffer can hold */
-		    if (ip->sp_count < lenstr)
+		    if ((unsigned long)ip->sp_count < lenstr)
 			memcpy(loc, cp, ip->sp_count);
 		    else
 			memcpy(loc, cp, lenstr);
@@ -352,7 +352,7 @@ bu_struct_import(genptr_t base, const struct bu_structparse *imp, const struct b
 			cp[3];
 		    cp += 4;
 
-		    if (ip->sp_count < lenarray) {
+		    if ((unsigned long)ip->sp_count < lenarray) {
 			memcpy(loc, cp, ip->sp_count);
 		    } else {
 			memcpy(loc, cp, lenarray);
@@ -399,19 +399,22 @@ bu_struct_get(struct bu_external *ext, FILE *fp)
 	if (i == 0)
 	    return 0;
 
-	bu_log("ERROR: bu_struct_get bad fread (%d), file %s, line %d\n",
+	bu_log("ERROR: bu_struct_get bad fread (%ld), file %s, line %d\n",
 	       i, __FILE__, __LINE__);
 	bu_bomb("Bad fread");
     }
-    i = (((unsigned char *)(ext->ext_buf))[0] << 8) |
-	((unsigned char *)(ext->ext_buf))[1];
-    len = (((unsigned char *)(ext->ext_buf))[2] << 24) |
-	(((unsigned char *)(ext->ext_buf))[3] << 16) |
-	(((unsigned char *)(ext->ext_buf))[4] <<  8) |
-	((unsigned char *)(ext->ext_buf))[5];
+
+    i = (((unsigned char *)(ext->ext_buf))[0] << 8)
+	| ((unsigned char *)(ext->ext_buf))[1];
+
+    len = (((unsigned char *)(ext->ext_buf))[2] << 24)
+	| (((unsigned char *)(ext->ext_buf))[3] << 16)
+	| (((unsigned char *)(ext->ext_buf))[4] <<  8)
+	| ((unsigned char *)(ext->ext_buf))[5];
+
     if (i != BU_GETPUT_MAGIC_1) {
-	bu_log("ERROR: bad getput buffer header x%x, s/b x%x, was %s(x%x), file %s, line %d\n",
-	       ext->ext_buf, BU_GETPUT_MAGIC_1,
+	bu_log("ERROR: bad getput buffer header %p, s/b %x, was %s(0x%lx), file %s, line %d\n",
+	       (void *)ext->ext_buf, BU_GETPUT_MAGIC_1,
 	       bu_identify_magic(i), i, __FILE__, __LINE__);
 	bu_bomb("bad getput buffer");
     }
@@ -422,15 +425,15 @@ bu_struct_get(struct bu_external *ext, FILE *fp)
     i=fread((char *) ext->ext_buf + 6, 1, len-6, fp);	/* res_syscall */
     bu_semaphore_release(BU_SEM_SYSCALL);		/* unlock */
     if (i != len-6) {
-	bu_log("ERROR: bu_struct_get bad fread (%d), file %s, line %d\n",
+	bu_log("ERROR: bu_struct_get bad fread (%ld), file %s, line %d\n",
 	       i, __FILE__, __LINE__);
 	bu_bomb("Bad fread");
     }
     i = (((unsigned char *)(ext->ext_buf))[len-2] <<8) |
 	((unsigned char *)(ext->ext_buf))[len-1];
     if (i != BU_GETPUT_MAGIC_2) {
-	bu_log("ERROR: bad getput buffer x%x, s/b x%x, was %s(x%x), file %s, line %d\n",
-	       ext->ext_buf, BU_GETPUT_MAGIC_2,
+	bu_log("ERROR: bad getput buffer %p, s/b %x, was %s(0x%lx), file %s, line %d\n",
+	       (void *)ext->ext_buf, BU_GETPUT_MAGIC_2,
 	       bu_identify_magic(i), i, __FILE__, __LINE__);
 	bu_bomb("Bad getput buffer");
     }
@@ -452,8 +455,8 @@ bu_struct_wrap_buf(struct bu_external *ext, genptr_t buf)
 	(((unsigned char *)(ext->ext_buf))[4] <<  8) |
 	((unsigned char *)(ext->ext_buf))[5];
     if (i != BU_GETPUT_MAGIC_1) {
-	bu_log("ERROR: bad getput buffer header x%x, s/b x%x, was %s(x%x), file %s, line %d\n",
-	       ext->ext_buf, BU_GETPUT_MAGIC_1,
+	bu_log("ERROR: bad getput buffer header %p, s/b %x, was %s(0x%lx), file %s, line %d\n",
+	       (void *)ext->ext_buf, BU_GETPUT_MAGIC_1,
 	       bu_identify_magic(i), i, __FILE__, __LINE__);
 	bu_bomb("bad getput buffer");
     }
@@ -461,8 +464,8 @@ bu_struct_wrap_buf(struct bu_external *ext, genptr_t buf)
     i = (((unsigned char *)(ext->ext_buf))[len-2] <<8) |
 	((unsigned char *)(ext->ext_buf))[len-1];
     if (i != BU_GETPUT_MAGIC_2) {
-	bu_log("ERROR: bad getput buffer x%x, s/b x%x, was %s(x%x), file %s, line %s\n",
-	       ext->ext_buf, BU_GETPUT_MAGIC_2,
+	bu_log("ERROR: bad getput buffer %p, s/b %x, was %s(0x%lx), file %s, line %d\n",
+	       (void *)ext->ext_buf, BU_GETPUT_MAGIC_2,
 	       bu_identify_magic(i), i, __FILE__, __LINE__);
 	bu_bomb("Bad getput buffer");
     }
@@ -519,7 +522,8 @@ _bu_parse_double(const char *str, long int count, double *loc)
 	}
 
 	len = str - numstart;
-	if (len > sizeof(buf)-1)  len = sizeof(buf)-1;
+	if ((size_t)len > sizeof(buf)-1)
+	    len = sizeof(buf)-1;
 	strncpy(buf, numstart, len);
 	buf[len] = '\0';
 
@@ -582,7 +586,7 @@ _bu_struct_lookup(register const struct bu_structparse *sdp, register const char
 	    case 'c':
 	    case 's':
 		{
-		    register int i, j;
+		    register int j;
 
 		    /* copy the string, converting escaped double
 		     * quotes to just double quotes
@@ -1013,7 +1017,7 @@ bu_struct_print(const char *title, const struct bu_structparse *parsetab, const 
 			(struct bu_vls *)loc;
 
 		    bu_log_indent_delta(delta);
-		    bu_log(" %s=(vls_magic)%d (vls_offset)%d (vls_len)%d (vls_max)%d\n",
+		    bu_log(" %s=(vls_magic)0x%lx (vls_offset)%d (vls_len)%d (vls_max)%d\n",
 			   sdp->sp_name, vls->vls_magic,
 			   vls->vls_offset,
 			   vls->vls_len, vls->vls_max);
@@ -1445,7 +1449,7 @@ bu_vls_struct_print2(struct bu_vls *vls_out,
 
 
 void
-bu_parse_mm(register const struct bu_structparse *sdp, register const char *name, char *base, const char *value)
+bu_parse_mm(const struct bu_structparse *sdp, const char *name, char *base, const char *value)
     /* structure description */
     /* struct member name */
     /* begining of structure */
@@ -1453,8 +1457,11 @@ bu_parse_mm(register const struct bu_structparse *sdp, register const char *name
 {
     double *p = (double *)(base+sdp->sp_offset);
 
-    /* reconvert with optional units */
-    *p = bu_mm_value(value);
+    /* reconvert with optional units, name if-statement just to quell unused warning */
+    if (name)
+	*p = bu_mm_value(value);
+    else
+	*p = bu_mm_value(value);
 }
 
 
@@ -1695,7 +1702,7 @@ bu_shader_to_tcl_list(const char *in, struct bu_vls *vls)
  * Note: caller is responsible for freeing the returned string.
  */
 HIDDEN char *
-_bu_list_elem(const char *in, int index)
+_bu_list_elem(const char *in, int idx)
 {
     int depth=0;
     int count=0;
@@ -1716,7 +1723,7 @@ _bu_list_elem(const char *in, int index)
 	if (!*ptr)
 	    break;
 
-	if (depth == 0 && count == index)
+	if (depth == 0 && count == idx)
 	    start = ptr;
 
 	if (*ptr == '{') {
@@ -1963,7 +1970,7 @@ bu_fwrite_external(FILE *fp, const struct bu_external *ep)
 
     BU_CK_EXTERNAL(ep);
 
-    if ((got = fwrite(ep->ext_buf, 1, ep->ext_nbytes, fp)) != ep->ext_nbytes) {
+    if ((got = fwrite(ep->ext_buf, 1, ep->ext_nbytes, fp)) != (size_t)ep->ext_nbytes) {
 	perror("fwrite");
 	bu_log("bu_fwrite_external() attempted to write %ld, got %ld\n", (long)ep->ext_nbytes, (long)got);
 	return -1;
@@ -2054,7 +2061,7 @@ bu_next_token(char *str)
 
 
 void
-bu_structparse_get_terse_form(struct bu_vls *log, const struct bu_structparse *sp)
+bu_structparse_get_terse_form(struct bu_vls *logstr, const struct bu_structparse *sp)
 {
     struct bu_vls str;
     int i;
@@ -2062,7 +2069,7 @@ bu_structparse_get_terse_form(struct bu_vls *log, const struct bu_structparse *s
     bu_vls_init(&str);
 
     while (sp->sp_name != NULL) {
-	bu_vls_printf(log, "%s ", sp->sp_name);
+	bu_vls_printf(logstr, "%s ", sp->sp_name);
 	/* These types are specified by lengths, e.g. %80s */
 	if (strcmp(sp->sp_fmt, "%c") == 0 ||
 	    strcmp(sp->sp_fmt, "%s") == 0 ||
@@ -2070,20 +2077,20 @@ bu_structparse_get_terse_form(struct bu_vls *log, const struct bu_structparse *s
 	    strcmp(sp->sp_fmt, "%V") == 0) {
 	    if (sp->sp_count > 1) {
 		/* Make them all look like %###s */
-		bu_vls_printf(log, "%%%lds", sp->sp_count);
+		bu_vls_printf(logstr, "%%%lds", sp->sp_count);
 	    } else {
 		/* Singletons are specified by their actual character */
-		bu_vls_printf(log, "%%c");
+		bu_vls_printf(logstr, "%%c");
 	    }
 	} else {
 	    if (sp->sp_count < 2) {
-		bu_vls_printf(log, "%s ", sp->sp_fmt);
+		bu_vls_printf(logstr, "%s ", sp->sp_fmt);
 	    } else {
 		/* Vectors are specified by repetition, e.g. {%f %f %f} */
-		bu_vls_printf(log, "{%s", sp->sp_fmt);
+		bu_vls_printf(logstr, "{%s", sp->sp_fmt);
 		for (i = 1; i < sp->sp_count; i++)
-		    bu_vls_printf(log, " %s", sp->sp_fmt);
-		bu_vls_printf(log, "} ", sp->sp_fmt);
+		    bu_vls_printf(logstr, " %s", sp->sp_fmt);
+		bu_vls_printf(logstr, "} ");
 	    }
 	}
 	++sp;
@@ -2093,7 +2100,7 @@ bu_structparse_get_terse_form(struct bu_vls *log, const struct bu_structparse *s
 
 
 int
-bu_structparse_argv(struct bu_vls *log,
+bu_structparse_argv(struct bu_vls *logstr,
 		    int argc,
 		    char **argv,
 		    const struct bu_structparse *desc,
@@ -2106,7 +2113,7 @@ bu_structparse_argv(struct bu_vls *log,
     struct bu_vls str;
 
     if (desc == (struct bu_structparse *)NULL) {
-	bu_vls_printf(log, "bu_structparse_argv: NULL desc pointer\n");
+	bu_vls_printf(logstr, "bu_structparse_argv: NULL desc pointer\n");
 	return BRLCAD_ERROR;
     }
 
@@ -2124,7 +2131,7 @@ bu_structparse_argv(struct bu_vls *log,
 	     */
 	    loc = (char *)(base+((int)sdp->sp_offset));
 	    if (sdp->sp_fmt[0] != '%') {
-		bu_vls_printf(log, "bu_structparse_argv: unknown format\n");
+		bu_vls_printf(logstr, "bu_structparse_argv: unknown format\n");
 		return BRLCAD_ERROR;
 	    }
 
@@ -2139,7 +2146,7 @@ bu_structparse_argv(struct bu_vls *log,
 		     * to just double quotes
 		     */
 		    if (argc < 1) {
-			bu_vls_printf(log,
+			bu_vls_printf(logstr,
 				      "not enough values for \"%s\" argument: should be %ld",
 				      sdp->sp_name,
 				      sdp->sp_count);
@@ -2153,9 +2160,9 @@ bu_structparse_argv(struct bu_vls *log,
 			loc[ii] = '\0';
 		    if (sdp->sp_count > 1) {
 			loc[sdp->sp_count-1] = '\0';
-			bu_vls_printf(log, "%s %s ", sdp->sp_name, loc);
+			bu_vls_printf(logstr, "%s %s ", sdp->sp_name, loc);
 		    } else {
-			bu_vls_printf(log, "%s %c ", sdp->sp_name, *loc);
+			bu_vls_printf(logstr, "%s %c ", sdp->sp_name, *loc);
 		    }
 		    break;
 		case 'S': /* XXX - DEPRECATED [7.14] */
@@ -2174,19 +2181,19 @@ bu_structparse_argv(struct bu_vls *log,
 			assert(sdp->sp_count == 1);
 
 			if (argc < 1) {
-			    bu_vls_printf(log,
+			    bu_vls_printf(logstr,
 					  "not enough values for \"%V\" argument: should be %ld",
 					  sdp->sp_name,
 					  sdp->sp_count);
 			    return BRLCAD_ERROR;
 			}
 
-			bu_vls_printf(log, "%s ", sdp->sp_name);
+			bu_vls_printf(logstr, "%s ", sdp->sp_name);
 
 			bu_vls_init_if_uninit(vls);
 			bu_vls_strcpy(vls, argv[0]);
 
-			bu_vls_printf(log, "%s ", argv[0]);
+			bu_vls_printf(logstr, "%s ", argv[0]);
 			break;
 		    }
 		case 'i': {
@@ -2194,26 +2201,26 @@ bu_structparse_argv(struct bu_vls *log,
 		    register int tmpi;
 
 		    if (argc < 1) {
-			bu_vls_printf(log,
+			bu_vls_printf(logstr,
 				      "not enough values for \"%s\" argument: should have %ld",
 				      sdp->sp_name,
 				      sdp->sp_count);
 			return BRLCAD_ERROR;
 		    }
 
-		    bu_vls_printf(log, "%s ", sdp->sp_name);
+		    bu_vls_printf(logstr, "%s ", sdp->sp_name);
 
 		    /* Special case:  '=!' toggles a boolean */
 		    if (argv[0][0] == '!') {
 			*sh = *sh ? 0 : 1;
-			bu_vls_printf(log, "%hd ", *sh);
+			bu_vls_printf(logstr, "%hd ", *sh);
 			break;
 		    }
 		    /* Normal case: an integer */
 		    cp = *argv;
 		    for (ii = 0; ii < sdp->sp_count; ++ii) {
 			if (*cp == '\0') {
-			    bu_vls_printf(log,
+			    bu_vls_printf(logstr,
 					  "not enough values for \"%s\" argument: should have %ld",
 					  sdp->sp_name,
 					  sdp->sp_count);
@@ -2234,7 +2241,7 @@ bu_structparse_argv(struct bu_vls *log,
 			    (cp == *argv+1 &&
 			     (argv[0][0] == '+' ||
 			      argv[0][0] == '-'))) {
-			    bu_vls_printf(log,
+			    bu_vls_printf(logstr,
 					  "value \"%s\" to argument %s isn't an integer",
 					  argv[0],
 					  sdp->sp_name);
@@ -2246,9 +2253,9 @@ bu_structparse_argv(struct bu_vls *log,
 		    }
 
 		    if (sdp->sp_count > 1)
-			bu_vls_printf(log, "{%s} ", argv[0]);
+			bu_vls_printf(logstr, "{%s} ", argv[0]);
 		    else
-			bu_vls_printf(log, "%s ", argv[0]);
+			bu_vls_printf(logstr, "%s ", argv[0]);
 		    break;
 		}
 		case 'd': {
@@ -2257,26 +2264,26 @@ bu_structparse_argv(struct bu_vls *log,
 
 		    if (argc < 1) {
 			/* XXX - when was ii defined */
-			bu_vls_printf(log,
+			bu_vls_printf(logstr,
 				      "not enough values for \"%s\" argument: should have %ld",
 				      sdp->sp_name,
 				      sdp->sp_count);
 			return BRLCAD_ERROR;
 		    }
 
-		    bu_vls_printf(log, "%s ", sdp->sp_name);
+		    bu_vls_printf(logstr, "%s ", sdp->sp_name);
 
 		    /* Special case:  '=!' toggles a boolean */
 		    if (argv[0][0] == '!') {
 			*ip = *ip ? 0 : 1;
-			bu_vls_printf(log, "%d ", *ip);
+			bu_vls_printf(logstr, "%d ", *ip);
 			break;
 		    }
 		    /* Normal case: an integer */
 		    cp = *argv;
 		    for (ii = 0; ii < sdp->sp_count; ++ii) {
 			if (*cp == '\0') {
-			    bu_vls_printf(log,
+			    bu_vls_printf(logstr,
 					  "not enough values for \"%s\" argument: should have %ld",
 					  sdp->sp_name,
 					  sdp->sp_count);
@@ -2297,7 +2304,7 @@ bu_structparse_argv(struct bu_vls *log,
 			    (cp == *argv+1 &&
 			     (argv[0][0] == '+' ||
 			      argv[0][0] == '-'))) {
-			    bu_vls_printf(log,
+			    bu_vls_printf(logstr,
 					  "value \"%s\" to argument %s isn't an integer",
 					  argv[0],
 					  sdp->sp_name);
@@ -2308,9 +2315,9 @@ bu_structparse_argv(struct bu_vls *log,
 			BU_SP_SKIP_SEP(cp);
 		    }
 		    if (sdp->sp_count > 1)
-			bu_vls_printf(log, "{%s} ", argv[0]);
+			bu_vls_printf(logstr, "{%s} ", argv[0]);
 		    else
-			bu_vls_printf(log, "%s ", argv[0]);
+			bu_vls_printf(logstr, "%s ", argv[0]);
 		    break;
 		}
 		case 'f': {
@@ -2329,12 +2336,12 @@ bu_structparse_argv(struct bu_vls *log,
 			return BRLCAD_ERROR;
 		    }
 
-		    bu_vls_printf(log, "%s ", sdp->sp_name);
+		    bu_vls_printf(logstr, "%s ", sdp->sp_name);
 
 		    cp = *argv;
 		    for (ii = 0; ii < sdp->sp_count; ii++) {
 			if (*cp == '\0') {
-			    bu_vls_printf(log,
+			    bu_vls_printf(logstr,
 					  "not enough values for \"%s\" argument: should have %ld, only %d given",
 					  sdp->sp_name,
 					  sdp->sp_count,
@@ -2361,7 +2368,7 @@ bu_structparse_argv(struct bu_vls *log,
 			 * here.
 			 */
 			if (cp == (numstart + dot_seen)) {
-			    bu_vls_printf(log,
+			    bu_vls_printf(logstr,
 					  "value \"%s\" to argument %s isn't a float",
 					  argv[0],
 					  sdp->sp_name);
@@ -2385,7 +2392,7 @@ bu_structparse_argv(struct bu_vls *log,
 			bu_vls_strcpy(&str, numstart);
 			bu_vls_trunc(&str, cp-numstart);
 			if (sscanf(bu_vls_addr(&str), "%lf", &tmp_double) != 1) {
-			    bu_vls_printf(log,
+			    bu_vls_printf(logstr,
 					  "value \"%s\" to argument %s isn't a float",
 					  numstart,
 					  sdp->sp_name);
@@ -2399,13 +2406,13 @@ bu_structparse_argv(struct bu_vls *log,
 			BU_SP_SKIP_SEP(cp);
 		    }
 		    if (sdp->sp_count > 1)
-			bu_vls_printf(log, "{%s} ", argv[0]);
+			bu_vls_printf(logstr, "{%s} ", argv[0]);
 		    else
-			bu_vls_printf(log, "%s ", argv[0]);
+			bu_vls_printf(logstr, "%s ", argv[0]);
 		    break;
 		}
 		default: {
-		    bu_vls_printf(log,
+		    bu_vls_printf(logstr,
 				  "%s line:%d Parse error, unknown format: '%s' for element \"%s\"",
 				  __FILE__, __LINE__, sdp->sp_fmt,
 				  sdp->sp_name);
@@ -2426,7 +2433,7 @@ bu_structparse_argv(struct bu_vls *log,
 
 
 	if (sdp->sp_name == NULL) {
-	    bu_vls_printf(log, "invalid attribute %s\n", argv[0]);
+	    bu_vls_printf(logstr, "invalid attribute %s\n", argv[0]);
 	    return BRLCAD_ERROR;
 	}
     }
