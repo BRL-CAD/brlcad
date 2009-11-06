@@ -112,8 +112,14 @@ main(int argc, char *argv[])
     char *row;
     static char usage[] = "Usage: pix-ppm [-a] [-#bytes] [-w file_width] [-n file_height] [-s square_file_size] [file.pix] > file.ppm";
 
+    bu_setprogname(argv[0]);
+
     if (!get_args(argc, argv)) {
 	bu_exit (1, "%s\n", usage);
+    }
+
+    if (isatty(fileno(stdout))) {
+	bu_exit(0, "ERROR: %s will not write png data to a tty\n", bu_getprogname());
     }
 
     /* autosize input? */
