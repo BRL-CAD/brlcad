@@ -42,23 +42,21 @@
 #include "bu.h"
 #include "vmath.h"
 #include "bn.h"
+#include "fb.h"
 
+
+#define BYTESPERPIXEL 3
+#define ROWSIZE (file_width * BYTESPERPIXEL)
+#define SIZE (file_height * ROWSIZE)
 
 static long int file_width = 512L;		/* default input width */
 static long int file_height = 512L;		/* default input height */
 static int autosize = 0;			/* !0 to autosize input */
 static int fileinput = 0;			/* file of pipe on input? */
-static char *file_name;
-static FILE *infp, *outfp;
+static char *file_name = (char *)NULL;
+static FILE *infp = (FILE *)NULL;
+static FILE *outfp = (FILE *)NULL;
 
-#define BYTESPERPIXEL 3
-
-#define ROWSIZE (file_width * BYTESPERPIXEL)
-#define SIZE (file_height * ROWSIZE)
-
-static char usage[] = "\
-Usage: pix-png [-a] [-w file_width] [-n file_height]\n\
-	[-s square_file_size] [file.pix] > file.png\n";
 
 /**
  * gamma correction value.  0.6 for sane, 1.0 for insane, negative
@@ -72,7 +70,7 @@ get_args(int argc, register char **argv)
 {
     register int c;
 
-    while ((c = bu_getopt(argc, argv, "as:w:n:g:")) != EOF) {
+    while ((c = bu_getopt(argc, argv, "ao:s:w:n:g:h?")) != EOF) {
 	switch (c) {
 	    case 'a':
 		autosize = 1;
@@ -93,42 +91,50 @@ get_args(int argc, register char **argv)
 		file_height = atol(bu_optarg);
 		autosize = 0;
 		break;
+	    case 'o': {
+		if (!isatty(fileno(stdout))) {
+		    bu_log("WARNING: Specifying '-o' while redirecting output to a file is ambiguous.\n");
+		    bu_log("         Writing image output to \"%s\"\n", bu_optarg);
+		}
+		if (freopen(bu_optarg, "w+", stdout) == (FILE *)NULL) {
+		    bu_exit(1, "%s: cannot open \"%s\" for writing\n", bu_getprogname(), bu_optarg);
+		}
+		break;
+	    }
+		
 
-	    default:		/* '?' */
-		return(0);
+	    case '?':
+	    case 'h':
+	    default: /* help */
+		return 0;
 	}
     }
 
     if (bu_optind >= argc) {
 	/* no more args */
 	file_name = "-";
-	infp = stdin;
     } else {
 	file_name = argv[bu_optind];
 	if ((infp = fopen(file_name, "r")) == NULL) {
 	    perror(file_name);
-	    (void)fprintf(stderr,
-			  "pix-png: cannot open \"%s\" for reading\n",
-			  file_name);
-	    bu_exit(1, NULL);
+	    bu_exit(1, "%s: cannot open \"%s\" for reading\n", bu_getprogname(), file_name);
 	}
 	fileinput++;
     }
 
-    outfp = stdout;
     if (isatty(fileno(infp))) {
-	bu_log("ERROR: pix-png will not read pix data from a tty\n");
-	return 0; /* not ok */
+	bu_log("ERROR: %s will not read pix data from a tty\n", bu_getprogname());
+	return 0; /* usage */
     }
     if (isatty(fileno(outfp))) {
-	bu_log("ERROR: pix-png will not write png data to a tty\n");
-	return 0; /* not ok */
+	bu_log("ERROR: %s will not write png data to a tty\n", bu_getprogname());
+	return 0; /* usage */
+    }
+    if (argc > ++bu_optind) {
+	bu_log("%s: excess argument(s) ignored\n", bu_getprogname());
     }
 
-    if (argc > ++bu_optind)
-	(void)fprintf(stderr, "pix-png: excess argument(s) ignored\n");
-
-    return(1);		/* OK */
+    return 1; /* OK */
 }
 
 
@@ -143,10 +149,20 @@ main(int argc, char *argv[])
     png_structp png_p;
     png_infop info_p;
 
+    static char usage[] = "Usage: pix-png [-a] [-w file_width] [-n file_height]\n\
+	[-s square_file_size] [-o file.png] [file.pix] [> file.png]\n";
+
+    bu_setprogname(argv[0]);
+
+    /* important to store these before calling get_args().  they're
+     * also not necessarily constants so have to set here instead of
+     * with the declaration.
+     */
+    infp = stdin;
+    outfp = stdout;
 
     if (!get_args(argc, argv)) {
-	(void)fputs(usage, stderr);
-	bu_exit(1, NULL);
+	bu_exit(1, "%s\n", usage);
     }
 
     /* autosize input? */
@@ -155,7 +171,7 @@ main(int argc, char *argv[])
 	    file_width = (long)w;
 	    file_height = (long)h;
 	} else {
-	    fprintf(stderr, "pix-png: unable to autosize\n");
+	    bu_log("%s: unable to autosize\n", bu_getprogname());
 	}
     }
 
@@ -177,16 +193,16 @@ main(int argc, char *argv[])
 
     /* read the pix file */
     if (fread(scanbuf, SIZE, 1, infp) != 1)
-	bu_exit(1, "pix-png: Short read\n");
+	bu_exit(1, "%s: Short read\n", bu_getprogname());
 
     /* warn if we only read part of the input */
     if (fstat(fileno(infp), &sb) < 0) {
-	perror("pix-png: unable to stat file:");
-	return 1;
+	perror("unable to stat file:");
+	bu_exit(1, "ERROR: %s cannot proceed.", bu_getprogname());
     }
     if (SIZE * sizeof(unsigned char) < sb.st_size) {
 	bu_log("WARNING: Output PNG image dimensions are smaller than the PIX input image\n");
-	bu_log("Input image is %ld pixels, output image is %ld pixels\n", sb.st_size / 3, SIZE * sizeof(unsigned char) / 3);
+	bu_log("Input image is %lu pixels, output image is %ld pixels\n", (unsigned long)sb.st_size / 3, SIZE * sizeof(unsigned char) / 3);
 	if (fb_common_file_size(&w, &h, file_name, 3)) {
 	    bu_log("Input PIX dimensions appear to be %ldx%ld pixels.  ", w, h);
 	    if (w == h) {

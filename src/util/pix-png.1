@@ -44,10 +44,12 @@ pix-png	\- convert a BRL-CAD PIX format image to a PNG format image
 .B pix-png
 .RB [ \-a ]
 .RB [ \-g gamma ]
-.RB [ \-s squaresize]
-.RB [ \-w file_width]
-.RB [ \-n file_height]
- [PIX_file] > PNG_file
+.RB [ \-s squaresize ]
+.RB [ \-w file_width ]
+.RB [ \-n file_height ]
+.RB [ \-o PNG_file ]
+ [PIX_file]
+.RB [ > PNG_file ]
 .SH DESCRIPTION
 .I pix-png
 converts a
@@ -72,13 +74,6 @@ A value of 0.6 is a close approximation of PC display monitors.  A
 negative gamma value disables writing a gAMA chunk out entirely (and
 is the default).
 .TP
-.B \-n file_height
-tells
-.I pix-png
-that the input is
-.I file_height
-scanlines tall
-.TP
 .B \-s squaresize
 sets both the width and the height for the input to be
 .I squaresize
@@ -89,3 +84,25 @@ tells
 that the input is
 .I file_width
 pixels wide
+.TP
+.B \-n file_height
+tells
+.I pix-png
+that the input is
+.I file_height
+scanlines tall
+.TP
+.B \-o PNG_file
+tells
+.I pix-png
+to write output to the specified
+.I PNG_file
+instead of using an output redirect.  The
+.I pix-png
+command will not write out binary image data directly to a terminal
+device as a safeguard.
+.SH "SEE ALSO"
+brlcad(1), png-pix(1), pix-fb(1), pix(5).
+.SH "BUG REPORTS"
+Reports of bugs or problems should be submitted via electronic
+mail to <devs@brlcad.org>.
