@@ -68,7 +68,7 @@ get_args(int argc, register char **argv, long *width, long *height)
 {
     register int c;
 
-    while ((c = bu_getopt(argc, argv, "ao:s:w:n:g:h?")) != EOF) {
+    while ((c = bu_getopt(argc, argv, "ag:s:w:n:o:h?")) != EOF) {
 	switch (c) {
 	    case 'a':
 		autosize = 1;
@@ -97,7 +97,6 @@ get_args(int argc, register char **argv, long *width, long *height)
 		break;
 	    }
 		
-
 	    case '?':
 	    case 'h':
 	    default: /* help */
