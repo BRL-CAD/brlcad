@@ -125,7 +125,10 @@ ged_drawH_part2(int dashflag, struct bu_list *vhead, struct db_full_path *pathp,
 	GET_SOLID(sp, &_FreeSolid.l);
 	/* NOTICE:  The structure is dirty & not initialized for you! */
 
-	sp->s_dlist = BU_LIST_LAST(solid, &dgcdp->gdlp->gdl_headSolid)->s_dlist + 1;
+	if (BU_LIST_NON_EMPTY(&dgcdp->gdlp->gdl_headSolid)) {
+	    sp->s_dlist = BU_LIST_LAST(solid, &dgcdp->gdlp->gdl_headSolid)->s_dlist + 1;
+	} else
+	    sp->s_dlist = 1;
     } else {
 	/* Just updating an existing solid.
 	 *  'tsp' and 'pathpos' will not be used
@@ -1006,7 +1009,11 @@ _ged_invent_solid(struct ged	*gedp,
     sp->s_color[1] = sp->s_basecolor[1] = (rgb>> 8) & 0xFF;
     sp->s_color[2] = sp->s_basecolor[2] = (rgb    ) & 0xFF;
     sp->s_regionid = 0;
-    sp->s_dlist = BU_LIST_LAST(solid, &gdlp->gdl_headSolid)->s_dlist + 1;
+
+    if (BU_LIST_NON_EMPTY(&gdlp->gdl_headSolid)) {
+	sp->s_dlist = BU_LIST_LAST(solid, &gdlp->gdl_headSolid)->s_dlist + 1;
+    } else
+	sp->s_dlist = 1;
 
     sp->s_uflag = 0;
     sp->s_dflag = 0;
