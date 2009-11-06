@@ -111,17 +111,51 @@ get_args(int argc, char *argv[], long *width, long *height)
     return(1);		/* OK */
 }
 
-int
-main(int argc, char *argv[])
+
+void
+write_ppm(FILE *fp, char *data, long width, long height, int bytes_per_pixel)
 {
     int i;
     char *row;
 
+    if (bytes_per_pixel == 1) {
+	/* PGM magic number */
+	fprintf(fp, "P2\n");
+    } else {
+	/* PPM magic number */
+	fprintf(fp, "P6\n");
+    }
+
+    /* width height */
+    fprintf(fp, "%lu %lu\n", width, height);
+
+    /* maximum color component value */
+    fprintf(fp, "255\n");
+    fflush(fp);
+
+    /*
+     * now write them out in the right order, 'cause the
+     * input is upside down.
+     */
+
+    for (i = 0; i < height; i++) {
+	row = data + (height-1 - i) * width * bytes_per_pixel;
+	fwrite(row, 1, width * bytes_per_pixel, fp);
+    }
+
+}
+
+
+int
+main(int argc, char *argv[])
+{
     long int file_width = 512L; /* default input width */
     long int file_height = 512L; /* default input height */
 
     char usage[] = "Usage: pix-ppm [-a] [-#bytes] [-w file_width] [-n file_height]\n\
 	[-s square_file_size] [-o file.ppm] [file.pix] [> file.ppm]";
+
+    long size;
 
     bu_setprogname(argv[0]);
 
@@ -135,6 +169,8 @@ main(int argc, char *argv[])
     if (!get_args(argc, argv, &file_width, &file_height)) {
 	bu_exit (1, "%s\n", usage);
     }
+
+    size = file_width * pixbytes;
 
     /* autosize input? */
     if (fileinput && autosize) {
@@ -150,35 +186,13 @@ main(int argc, char *argv[])
     /*
      * gobble up the bytes
      */
-    scanbuf = bu_malloc(SIZE, "scanbuf");
-    if (fread(scanbuf, 1, SIZE, infp) == 0) {
+    scanbuf = bu_malloc(size, "scanbuf");
+    if (fread(scanbuf, 1, size, infp) == 0) {
 	bu_exit (1, "%s: Short read\n", bu_getprogname());
     }
 
-    if (pixbytes == 1) {
-	/* PGM magic number */
-	printf("P2\n");
-    } else {
-	/* PPM magic number */
-	printf("P6\n");
-    }
+    write_ppm(outfp, scanbuf, file_width, file_height, pixbytes);
 
-    /* width height */
-    printf("%lu %lu\n", file_width, file_height);
-
-    /* maximum color component value */
-    printf("255\n");
-    fflush(outfp);
-
-    /*
-     * now write them out in the right order, 'cause the
-     * input is upside down.
-     */
-
-    for (i = 0; i < file_height; i++) {
-	row = scanbuf + (file_height-1 - i) * ROWSIZE;
-	fwrite(row, 1, ROWSIZE, outfp);
-    }
 
     bu_free(scanbuf, "scanbuf");
     return 0;
