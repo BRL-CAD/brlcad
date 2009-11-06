@@ -45,11 +45,6 @@ static FILE *outfp = (FILE *)NULL;
 
 static int pixbytes = 3;
 
-#define ROWSIZE (file_width * pixbytes)
-#define SIZE (file_width * file_height * pixbytes)
-
-char *scanbuf;
-
 
 int
 get_args(int argc, char *argv[], long *width, long *height)
@@ -149,6 +144,8 @@ write_ppm(FILE *fp, char *data, long width, long height, int bytes_per_pixel)
 int
 main(int argc, char *argv[])
 {
+    char *scanbuf;
+
     long int file_width = 512L; /* default input width */
     long int file_height = 512L; /* default input height */
 
