@@ -23,6 +23,7 @@ changes made.  See document footer for additional details.
 * added -R non-recursive option to mged 'keep' command - Sean Morrison
 * fix crash of 'attach ogl' commands on OSX - Cliff Yapp
 * added an mged menu option to change display managers - Cliff Yapp
+* utilize new raytracing on old bspline/nurbs geometry - Sean Morrison
 
 
 ----------------------------------------------------------------------
