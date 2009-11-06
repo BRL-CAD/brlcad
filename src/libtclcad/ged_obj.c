@@ -56,6 +56,7 @@
 
 #include "solid.h"
 #include "dm.h"
+#include "dg.h"
 
 #ifdef DM_X
 #  ifdef WITH_TK
@@ -4900,8 +4901,13 @@ go_png(struct ged *gedp,
 		    *dbyte0 = (pixel & red_mask) >> 24;
 		    *dbyte1 = (pixel & green_mask) >> 16;
 		    *dbyte2 = (pixel & blue_mask) >> 8;
+#if defined(DM_WGL)
 		    *dbyte3 = pixel & alpha_mask;
+#else
+		    *dbyte3 = 255;
+#endif
 
+#if defined(DM_WGL)
 		    if (swap_bytes) {
 			unsigned char tmp_byte;
 
@@ -4915,6 +4921,7 @@ go_png(struct ged *gedp,
 			*dbyte0 = *dbyte3;
 			*dbyte3 = tmp_byte;
 		    }
+#endif
 		}
 	    }
 
