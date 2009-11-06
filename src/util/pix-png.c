@@ -49,8 +49,6 @@
 #define ROWSIZE (file_width * BYTESPERPIXEL)
 #define SIZE (file_height * ROWSIZE)
 
-static long int file_width = 512L;		/* default input width */
-static long int file_height = 512L;		/* default input height */
 static int autosize = 0;			/* !0 to autosize input */
 static int fileinput = 0;			/* file of pipe on input? */
 static char *file_name = (char *)NULL;
@@ -66,7 +64,7 @@ double out_gamma = -1.0;
 
 
 int
-get_args(int argc, register char **argv)
+get_args(int argc, register char **argv, long *width, long *height)
 {
     register int c;
 
@@ -80,23 +78,20 @@ get_args(int argc, register char **argv)
 		break;
 	    case 's':
 		/* square file size */
-		file_height = file_width = atol(bu_optarg);
+		*height = *width = atol(bu_optarg);
 		autosize = 0;
 		break;
 	    case 'w':
-		file_width = atol(bu_optarg);
+		*width = atol(bu_optarg);
 		autosize = 0;
 		break;
 	    case 'n':
-		file_height = atol(bu_optarg);
+		*height = atol(bu_optarg);
 		autosize = 0;
 		break;
 	    case 'o': {
-		if (!isatty(fileno(stdout))) {
-		    bu_log("WARNING: Specifying '-o' while redirecting output to a file is ambiguous.\n");
-		    bu_log("         Writing image output to \"%s\"\n", bu_optarg);
-		}
-		if (freopen(bu_optarg, "w+", stdout) == (FILE *)NULL) {
+		outfp = fopen(bu_optarg, "w+");
+		if (outfp == (FILE *)NULL) {
 		    bu_exit(1, "%s: cannot open \"%s\" for writing\n", bu_getprogname(), bu_optarg);
 		}
 		break;
@@ -138,6 +133,52 @@ get_args(int argc, register char **argv)
 }
 
 
+void
+write_png(FILE *outfp, unsigned char **scanlines, long int width, long int height)
+{
+    png_structp png_p;
+    png_infop info_p;
+
+    png_p = png_create_write_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
+    if (!png_p)
+	bu_exit(1, "Could not create PNG write structure\n");
+
+    info_p = png_create_info_struct(png_p);
+    if (!info_p)
+	bu_exit(1, "Could not create PNG info structure\n");
+
+    png_init_io(png_p, outfp);
+    png_set_filter(png_p, 0, PNG_FILTER_NONE);
+    png_set_compression_level(png_p, Z_BEST_COMPRESSION);
+    png_set_IHDR(png_p, info_p, width, height, 8,
+		 PNG_COLOR_TYPE_RGB, PNG_INTERLACE_NONE,
+		 PNG_COMPRESSION_TYPE_DEFAULT, PNG_FILTER_TYPE_DEFAULT);
+
+    /*
+     * From the PNG 1.0 Specification: the gAMA chunk specifies the
+     * gamma characteristic of the source device.
+     *
+     * In this interpretation, we set the value to 1.0; indicating we
+     * hadn't done any gamma correction.
+     *
+     * From the PNG 1.1 Specification:
+     *
+     * PNG images can specify, via the gAMA chunk, the power function
+     * relating the desired display output with the image samples.
+     *
+     * In this interpretation, we could set the value to 0.6,
+     * representing the value needed to un-do the 2.2 correction
+     * auto-applied by PowerPoint for PC monitors.
+     */
+    png_set_gAMA(png_p, info_p, out_gamma);
+
+    png_write_info(png_p, info_p);
+    png_write_image(png_p, scanlines);
+    png_write_end(png_p, NULL);
+    png_destroy_write_struct(&png_p, &info_p);
+}
+
+
 int
 main(int argc, char *argv[])
 {
@@ -146,8 +187,9 @@ main(int argc, char *argv[])
     unsigned char *scanbuf;
     unsigned char **rows;
     struct stat sb;
-    png_structp png_p;
-    png_infop info_p;
+
+    long int file_width = 512L; /* default input width */
+    long int file_height = 512L; /* default input height */
 
     static char usage[] = "Usage: pix-png [-a] [-w file_width] [-n file_height]\n\
 	[-s square_file_size] [-o file.png] [file.pix] [> file.png]\n";
@@ -161,7 +203,7 @@ main(int argc, char *argv[])
     infp = stdin;
     outfp = stdout;
 
-    if (!get_args(argc, argv)) {
+    if (!get_args(argc, argv, &file_width, &file_height)) {
 	bu_exit(1, "%s\n", usage);
     }
 
@@ -174,14 +216,6 @@ main(int argc, char *argv[])
 	    bu_log("%s: unable to autosize\n", bu_getprogname());
 	}
     }
-
-    png_p = png_create_write_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
-    if (!png_p)
-	bu_exit(1, "Could not create PNG write structure\n");
-
-    info_p = png_create_info_struct(png_p);
-    if (!info_p)
-	bu_exit(1, "Could not create PNG info structure\n");
 
     /* allocate space for the image */
     scanbuf = (unsigned char *)bu_calloc(SIZE, sizeof(unsigned char), "scanbuf");
@@ -213,39 +247,16 @@ main(int argc, char *argv[])
 	}
     }
 
-    png_init_io(png_p, outfp);
-    png_set_filter(png_p, 0, PNG_FILTER_NONE);
-    png_set_compression_level(png_p, Z_BEST_COMPRESSION);
-    png_set_IHDR(png_p, info_p, file_width, file_height, 8,
-		 PNG_COLOR_TYPE_RGB, PNG_INTERLACE_NONE,
-		 PNG_COMPRESSION_TYPE_DEFAULT, PNG_FILTER_TYPE_DEFAULT);
+    /* write out the data */
+    write_png(outfp, rows, file_width, file_height);
 
-    /*
-     * From the PNG 1.0 Specification: the gAMA chunk specifies the
-     * gamma characteristic of the source device.
-     *
-     * In this interpretation, we set the value to 1.0; indicating we
-     * hadn't done any gamma correction.
-     *
-     * From the PNG 1.1 Specification:
-     *
-     * PNG images can specify, via the gAMA chunk, the power function
-     * relating the desired display output with the image samples.
-     *
-     * In this interpretation, we could set the value to 0.6,
-     * representing the value needed to un-do the 2.2 correction
-     * auto-applied by PowerPoint for PC monitors.
-     */
-    png_set_gAMA(png_p, info_p, out_gamma);
-
-    png_write_info(png_p, info_p);
-    png_write_image(png_p, rows);
-    png_write_end(png_p, NULL);
-
+    /* user requested separate file and redirected output */
+    if (!isatty(fileno(stdout)) && outfp != stdout) {
+	write_png(stdout, rows, file_width, file_height);
+    }
 
     /* release resources */
 
-    png_destroy_write_struct(&png_p, &info_p);
     bu_free(scanbuf, "scanbuf");
     bu_free(rows, "rows");
 
