@@ -36,9 +36,6 @@
 #include "fb.h"
 
 
-static long int file_width = 512L;	/* default input width */
-static long int file_height = 512L;	/* default input height */
-
 static int autosize = 0;		/* !0 to autosize input */
 
 static int fileinput = 0;		/* file of pipe on input? */
@@ -55,7 +52,7 @@ char *scanbuf;
 
 
 int
-get_args(int argc, char *argv[])
+get_args(int argc, char *argv[], long *width, long *height)
 {
     int c;
 
@@ -69,15 +66,15 @@ get_args(int argc, char *argv[])
 		break;
 	    case 's':
 		/* square file size */
-		file_height = file_width = atol(bu_optarg);
+		*height = *width = atol(bu_optarg);
 		autosize = 0;
 		break;
 	    case 'w':
-		file_width = atol(bu_optarg);
+		*width = atol(bu_optarg);
 		autosize = 0;
 		break;
 	    case 'n':
-		file_height = atol(bu_optarg);
+		*height = atol(bu_optarg);
 		autosize = 0;
 		break;
 
@@ -119,6 +116,10 @@ main(int argc, char *argv[])
 {
     int i;
     char *row;
+
+    long int file_width = 512L; /* default input width */
+    long int file_height = 512L; /* default input height */
+
     static char usage[] = "Usage: pix-ppm [-a] [-#bytes] [-w file_width] [-n file_height]\n\
 	[-s square_file_size] [-o file.ppm] [file.pix] [> file.ppm]";
 
@@ -131,7 +132,7 @@ main(int argc, char *argv[])
     infp = stdin;
     outfp = stdout;
 
-    if (!get_args(argc, argv)) {
+    if (!get_args(argc, argv, &file_width, &file_height)) {
 	bu_exit (1, "%s\n", usage);
     }
 
