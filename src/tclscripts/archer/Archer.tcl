@@ -1461,6 +1461,7 @@ package provide Archer 1.0
 	}
     }
 
+    $itk_component(ged) refresh_off
     set mDbTitle [$itk_component(ged) title]
     set mDbUnits [$itk_component(ged) units]
 
@@ -1489,6 +1490,8 @@ package provide Archer 1.0
 	set mDefaultBindingMode $ROTATE_MODE
 	beginViewRotate
     }
+    $itk_component(ged) refresh_on
+    $itk_component(ged) refresh
     SetNormalCursor $this
 }
 
@@ -6877,11 +6880,17 @@ package provide Archer 1.0
 
 
 ::itcl::body Archer::applyPreferencesIfDiff {} {
+    $itk_component(ged) refresh_off
+
     applyGeneralPreferencesIfDiff
     applyViewAxesPreferencesIfDiff
     applyModelAxesPreferencesIfDiff
     applyGroundPlanePreferencesIfDiff
     applyDisplayPreferencesIfDiff
+
+    ::update
+    $itk_component(ged) refresh_on
+    $itk_component(ged) refresh
 }
 
 

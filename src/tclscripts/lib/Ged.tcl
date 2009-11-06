@@ -518,6 +518,7 @@ package provide cadwidgets::Ged 1.0
 	variable mMeasureStart
 	variable mMeasuringStickColorVDraw ffff00
 	variable mMouseRayCallbacks ""
+	variable mRefreshOn 1
 
 	method multi_pane {args}
 	method new_view {args}
@@ -1917,11 +1918,19 @@ package provide cadwidgets::Ged 1.0
 }
 
 ::itcl::body cadwidgets::Ged::refresh_off {} {
-    eval $mGed refresh_on 0
+    incr mRefreshOn -1
+
+    if {$mRefreshOn == 0} {
+	eval $mGed refresh_on 0
+    }
 }
 
 ::itcl::body cadwidgets::Ged::refresh_on {} {
-    eval $mGed refresh_on 1
+    incr mRefreshOn 1
+
+    if {$mRefreshOn == 1} {
+	eval $mGed refresh_on 1
+    }
 }
 
 ::itcl::body cadwidgets::Ged::regdef {args} {
