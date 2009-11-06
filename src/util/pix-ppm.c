@@ -72,6 +72,13 @@ get_args(int argc, char *argv[], long *width, long *height)
 		*height = atol(bu_optarg);
 		autosize = 0;
 		break;
+	    case 'o': {
+		outfp = fopen(bu_optarg, "w+");
+		if (outfp == (FILE *)NULL) {
+		    bu_exit(1, "%s: cannot open \"%s\" for writing\n", bu_getprogname(), bu_optarg);
+		}
+		break;
+	    }
 
 	    case '?':
 	    case 'h':
@@ -190,6 +197,10 @@ main(int argc, char *argv[])
 
     write_ppm(outfp, scanbuf, file_width, file_height, pixbytes);
 
+    /* user requested separate file and redirected output */
+    if (!isatty(fileno(stdout)) && outfp != stdout) {
+	write_ppm(stdout, scanbuf, file_width, file_height, pixbytes);
+    }
 
     bu_free(scanbuf, "scanbuf");
     return 0;
