@@ -14,6 +14,7 @@ changes made.  See document footer for additional details.
 --- 2009-10-XX  Release 7.16.2                                     ---
 ----------------------------------------------------------------------
 
+* improved NURBS geometry raytracing support - Keith Bowman
 * improved mged 'opendb' prompting - Sean Morrison, Jack Devanney
 * renamed [diu]stat tools to dstats/istats/ustats - Sean Morrison
 * improved obj-g ignoring textures and surface normals  - Keith Bowman
