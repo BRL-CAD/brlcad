@@ -623,6 +623,7 @@ man_MANS = \
 	pix-bw3.1 \
 	pix-orle.1 \
 	pix-png.1 \
+	pix-ppm.1 \
 	pix-ps.1 \
 	pix-rle.1 \
 	pix-sun.1 \
